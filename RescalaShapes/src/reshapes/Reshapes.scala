@@ -15,37 +15,8 @@ object Reshapes extends SimpleGUIApplication {
     val lineBtn = new Button { text = "Line" }
     val rectBtn = new Button { text = "Rectangle" }
     val circleBtn = new Button { text = "Circle" }
-    val drawPanel = new Panel() {
-      opaque = true
-      background = new Color(255, 255, 255)
-      val line = new Line
 
-      override def paint(g: Graphics2D) = {
-        g.setColor(java.awt.Color.WHITE)
-        g.fillRect(0, 0, size.getWidth().toInt, size.getHeight().toInt)
-
-        g.setColor(java.awt.Color.BLACK)
-        line.draw(g)
-      }
-
-      listenTo(mouse.clicks)
-      listenTo(mouse.moves)
-
-      reactions += {
-        case e: MousePressed =>
-          println("pressed " + e.point)
-          line.start = e.point
-          line.end = e.point
-          repaint()
-        case e: MouseReleased =>
-          println("released " + e.point)
-          line.end = e.point
-          this.repaint()
-        case e: MouseDragged =>
-          line.end = e.point
-          repaint()
-      }
-    }
+    val drawPanel = new DrawingPanel()
 
     val toolbox = new BoxPanel(Orientation.Horizontal) {
       contents += lineBtn
