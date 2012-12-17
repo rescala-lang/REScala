@@ -12,6 +12,7 @@ object Reshapes extends SimpleGUIApplication {
     title = "ReShapes";
     preferredSize = new Dimension(1000, 500)
 
+    val lineBtn = new Button { text = "Line" }
     val rectBtn = new Button { text = "Rectangle" }
     val circleBtn = new Button { text = "Circle" }
     val drawPanel = new Panel() {
@@ -47,6 +48,7 @@ object Reshapes extends SimpleGUIApplication {
     }
 
     val toolbox = new BoxPanel(Orientation.Horizontal) {
+      contents += lineBtn
       contents += rectBtn
       contents += circleBtn
     }
