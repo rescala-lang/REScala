@@ -2,7 +2,7 @@ package reshapes.figures
 import java.awt.Point
 import java.awt.Graphics2D
 
-class Line extends Drawable {
+class Rectangle extends Drawable {
 
   def update(path: List[Point]) = {
     start = path.first
@@ -10,6 +10,6 @@ class Line extends Drawable {
   }
 
   def draw(g: Graphics2D) = {
-    g.drawLine(start.x, start.y, end.x, end.y)
+    g.drawRect(start.x, start.y, math.abs(start.x - end.x), math.abs(start.y - end.y))
   }
 }
