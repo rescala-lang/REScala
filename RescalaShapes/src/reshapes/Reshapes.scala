@@ -20,14 +20,14 @@ object Reshapes extends SimpleGUIApplication {
     // GUI Elements and Layout
     val lineBtn = new Button { text = "Line" }
     val rectBtn = new Button { text = "Rectangle" }
-    val circleBtn = new Button { text = "Circle" }
+    val ovalBtn = new Button { text = "Oval" }
 
     val drawPanel = new DrawingPanel(newShapeSelected)
 
     val toolbox = new BoxPanel(Orientation.Horizontal) {
       contents += lineBtn
       contents += rectBtn
-      contents += circleBtn
+      contents += ovalBtn
     }
 
     contents = new BoxPanel(Orientation.Vertical) {
@@ -38,17 +38,15 @@ object Reshapes extends SimpleGUIApplication {
     // reactions
     listenTo(lineBtn)
     listenTo(rectBtn)
-    listenTo(circleBtn)
+    listenTo(ovalBtn)
 
     reactions += {
       case ButtonClicked(`lineBtn`) =>
         newShapeSelected(new Line())
-        println("line click")
       case ButtonClicked(`rectBtn`) =>
         newShapeSelected(new figures.Rectangle())
-        println("rect click")
-      case ButtonClicked(`circleBtn`) =>
-        println("circle click")
+      case ButtonClicked(`ovalBtn`) =>
+        newShapeSelected(new Oval())
     }
   }
 }
