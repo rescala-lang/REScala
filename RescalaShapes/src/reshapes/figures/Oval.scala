@@ -9,7 +9,7 @@ class Oval extends Drawable {
     end = path.last
   }
 
-  def draw(g: Graphics2D) = {
+  def doDraw(g: Graphics2D) = {
     var width = math.abs(start.x - end.x)
     var height = math.abs(start.y - end.y)
     var x = math.min(start.x, end.x)

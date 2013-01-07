@@ -5,21 +5,17 @@ import scala.events.behaviour.Signal
 import scala.events.behaviour.Var
 import reshapes.figures._
 import events.ImperativeEvent
+import java.awt.BasicStroke
 
-class DrawingPanel(shapeSelectedEvent: ImperativeEvent[Drawable]) extends Panel {
+/**
+ * Represents the panel where all shapes are drawn onto.
+ */
+class DrawingPanel(events: EventHolder) extends Panel {
   opaque = true
-  background = new Color(255, 255, 255)
 
   var currentPath: List[Point] = List()
   var shapes = List[Drawable]()
-  var currentShape: Drawable = new Line
-
-  shapeSelectedEvent += (shape => newShape(shape))
-
-  def newShape(shape: Drawable): Unit = {
-    shapes ::= shape
-    currentShape = shape
-  }
+  val currentShape = Signal { events.selectedShape() }
 
   override def paint(g: Graphics2D) = {
     g.setColor(java.awt.Color.WHITE)
@@ -34,18 +30,18 @@ class DrawingPanel(shapeSelectedEvent: ImperativeEvent[Drawable]) extends Panel 
 
   reactions += {
     case e: MousePressed =>
-      currentPath = List()
-      currentPath = currentPath ::: List(e.point)
-      currentShape.update(currentPath)
+      events.selectedShape() = currentShape.getValue.getClass().newInstance()
+      shapes ::= currentShape.getValue
+      currentPath = List(e.point)
+      currentShape.getValue.update(currentPath)
       repaint()
     case e: MouseDragged =>
       currentPath = currentPath ::: List(e.point)
-      currentShape.update(currentPath)
+      currentShape.getValue.update(currentPath)
       repaint()
     case e: MouseReleased =>
       currentPath = currentPath ::: List(e.point)
-      currentShape.update(currentPath)
+      currentShape.getValue.update(currentPath)
       repaint()
-      newShape(currentShape.getClass().newInstance())
   }
 }

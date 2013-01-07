@@ -16,14 +16,13 @@ object Example2 extends App {
    * println(dep.getValue)
    */
 
-  val a = new ImperativeEvent[Int]
-  val b = new ImperativeEvent[Int]
+  val e = new ImperativeEvent[Double]
 
-  val either = a || b
+  val all = e.list() // represents all assigned values
+  val window = e.last(5) // takes the last five assigned values
+  val mean = Signal { window().sum / (window().length + 1) } // 'mean' changes after 'e' is reassigned
 
-  either += (x => println("either: " + x))
-  a += (x => println("a: " + x))
+  mean.changed += { println(_) } // prints new value of 'mean' after new value
 
-  a(1)
-  b(2)
+  e(1); e(2); e(3); e(4); e(5); e(6)
 }

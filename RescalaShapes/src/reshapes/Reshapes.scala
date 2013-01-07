@@ -14,39 +14,55 @@ object Reshapes extends SimpleGUIApplication {
     title = "ReShapes";
     preferredSize = new Dimension(1000, 500)
 
-    // Events
-    val newShapeSelected = new ImperativeEvent[Drawable]
+    val events = new EventHolder
 
     // GUI Elements and Layout
     val lineBtn = new Button { text = "Line" }
     val rectBtn = new Button { text = "Rectangle" }
     val ovalBtn = new Button { text = "Oval" }
+    val strokeWidthInput = new TextField { text = events.strokeWidth.getValue.toString(); columns = 5 }
 
-    val drawPanel = new DrawingPanel(newShapeSelected)
+    contents = new BorderPanel {
+      add(new FlowPanel {
+        contents += new Label { text = "stroke width: " }
+        contents += strokeWidthInput
+      }, BorderPanel.Position.North)
 
-    val toolbox = new BoxPanel(Orientation.Horizontal) {
-      contents += lineBtn
-      contents += rectBtn
-      contents += ovalBtn
-    }
+      add(new BoxPanel(Orientation.Vertical) {
+        contents += lineBtn
+        contents += rectBtn
+        contents += ovalBtn
+      }, BorderPanel.Position.West)
 
-    contents = new BoxPanel(Orientation.Vertical) {
-      contents += toolbox
-      contents += drawPanel
+      add(new DrawingPanel(events), BorderPanel.Position.Center)
+      add(new InfoPanel(events), BorderPanel.Position.South)
     }
 
     // reactions
     listenTo(lineBtn)
     listenTo(rectBtn)
     listenTo(ovalBtn)
+    listenTo(strokeWidthInput)
 
     reactions += {
       case ButtonClicked(`lineBtn`) =>
-        newShapeSelected(new Line())
+        events.selectedShape() = new Line
       case ButtonClicked(`rectBtn`) =>
-        newShapeSelected(new figures.Rectangle())
+        events.selectedShape() = new figures.Rectangle
       case ButtonClicked(`ovalBtn`) =>
-        newShapeSelected(new Oval())
+        events.selectedShape() = new Oval
+      case EditDone(`strokeWidthInput`) =>
+        try {
+          events.strokeWidth() = strokeWidthInput.text.toInt match {
+            case i if i > 0 => i
+            case _ => strokeWidthInput.text = "1"; 1
+          }
+        } catch {
+          case e: NumberFormatException => strokeWidthInput.text = events.strokeWidth.getValue.toString()
+        }
     }
+
+    // default selected shape
+    events.selectedShape() = new Line
   }
 }
