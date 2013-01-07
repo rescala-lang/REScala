@@ -11,17 +11,22 @@ class DrawingPanel(shapeSelectedEvent: ImperativeEvent[Drawable]) extends Panel 
   background = new Color(255, 255, 255)
 
   var currentPath: List[Point] = List()
-  var shapes = List()
+  var shapes = List[Drawable]()
   var currentShape: Drawable = new Line()
 
-  shapeSelectedEvent += (x => currentShape = x)
+  shapeSelectedEvent += (shape => newShape(shape))
+
+  def newShape(shape: Drawable): Unit = {
+    shapes ::= shape
+    currentShape = shape;
+  }
 
   override def paint(g: Graphics2D) = {
     g.setColor(java.awt.Color.WHITE)
     g.fillRect(0, 0, size.getWidth().toInt, size.getHeight().toInt)
 
     g.setColor(java.awt.Color.BLACK)
-    currentShape.draw(g)
+    shapes.map(x => x.draw(g))
   }
 
   listenTo(mouse.clicks)
