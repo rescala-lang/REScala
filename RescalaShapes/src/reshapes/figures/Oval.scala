@@ -10,7 +10,12 @@ class Oval extends Drawable {
   }
 
   def draw(g: Graphics2D) = {
-    g.drawOval(start.x, start.y, math.abs(start.x - end.x), math.abs(start.y - end.y))
+    var width = math.abs(start.x - end.x)
+    var height = math.abs(start.y - end.y)
+    var x = math.min(start.x, end.x)
+    var y = math.min(start.y, end.y)
+
+    g.drawOval(x, y, width, height)
   }
 
 }

@@ -12,13 +12,13 @@ class DrawingPanel(shapeSelectedEvent: ImperativeEvent[Drawable]) extends Panel 
 
   var currentPath: List[Point] = List()
   var shapes = List[Drawable]()
-  var currentShape: Drawable = new Line()
+  var currentShape: Drawable = new Line
 
   shapeSelectedEvent += (shape => newShape(shape))
 
   def newShape(shape: Drawable): Unit = {
     shapes ::= shape
-    currentShape = shape;
+    currentShape = shape
   }
 
   override def paint(g: Graphics2D) = {
@@ -46,5 +46,6 @@ class DrawingPanel(shapeSelectedEvent: ImperativeEvent[Drawable]) extends Panel 
       currentPath = currentPath ::: List(e.point)
       currentShape.update(currentPath)
       repaint()
+      newShape(currentShape.getClass().newInstance())
   }
 }
