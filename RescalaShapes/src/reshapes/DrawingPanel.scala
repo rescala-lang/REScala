@@ -22,7 +22,7 @@ class DrawingPanel(events: EventHolder) extends Panel {
     g.fillRect(0, 0, size.getWidth().toInt, size.getHeight().toInt)
 
     g.setColor(java.awt.Color.BLACK)
-    shapes.map(x => x.draw(g))
+    events.allShapes.getValue.map(x => x.draw(g))
   }
 
   listenTo(mouse.clicks)
@@ -31,7 +31,7 @@ class DrawingPanel(events: EventHolder) extends Panel {
   reactions += {
     case e: MousePressed =>
       events.selectedShape() = currentShape.getValue.getClass().newInstance()
-      shapes ::= currentShape.getValue
+      events.allShapes() = currentShape.getValue :: events.allShapes.getValue
       currentPath = List(e.point)
       currentShape.getValue.update(currentPath)
       repaint()

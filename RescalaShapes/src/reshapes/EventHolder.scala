@@ -12,6 +12,7 @@ import java.awt.Color
 class EventHolder {
 
   val selectedShape: Var[Drawable] = new Var(new Line)
+  val allShapes: Var[List[Drawable]] = new Var(List[Drawable]())
   val strokeWidth: Var[Int] = new Var(1)
   val color: Var[Color] = new Var(Color.BLACK)
 
