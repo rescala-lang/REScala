@@ -11,13 +11,30 @@ import java.awt.Color
  */
 class EventHolder {
 
-  val selectedShape: Var[Drawable] = new Var(new Line)
+  val nextShape: Var[Drawable] = new Var(new Line)
+  val selectedShape: Var[Drawable] = new Var(null)
   val allShapes: Var[List[Drawable]] = new Var(List[Drawable]())
   val strokeWidth: Var[Int] = new Var(1)
   val color: Var[Color] = new Var(Color.BLACK)
 
-  selectedShape.changed += (shape => {
+  var mode: EditingMode = Drawing()
+  val modeChange = nextShape.changed || selectedShape.changed
+
+  nextShape.changed += (shape => {
     shape.strokeWidth = strokeWidth.getValue
     shape.color = color.getValue
+    allShapes.getValue map (x => x.selected = false)
+    mode = Drawing()
   })
+
+  selectedShape.changed += (shape => {
+    allShapes.getValue map (x => x.selected = false)
+    shape.selected = true
+    mode = Selection()
+  })
+
 }
+
+abstract class EditingMode
+case class Drawing extends EditingMode
+case class Selection extends EditingMode

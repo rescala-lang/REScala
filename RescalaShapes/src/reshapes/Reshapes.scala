@@ -10,11 +10,8 @@ import events.ImperativeEvent
 import scala.events.behaviour.Signal
 import java.awt.Color
 
-object Reshapes extends SimpleGUIApplication {
-  def top = new MainFrame {
-    title = "ReShapes";
-    preferredSize = new Dimension(1000, 500)
-
+object Reshapes extends SimpleSwingApplication {
+  lazy val ui = new BorderPanel {
     val events = new EventHolder
 
     // GUI Elements and Layout
@@ -23,24 +20,24 @@ object Reshapes extends SimpleGUIApplication {
     val ovalBtn = new Button { text = "Oval" }
     val strokeWidthInput = new TextField { text = events.strokeWidth.getValue.toString(); columns = 5 }
     val colorInput = new TextField { text = "0,0,0"; columns = 10 }
+    val shapePanel = new ShapePanel(events)
 
-    contents = new BorderPanel {
-      add(new FlowPanel {
-        contents += new Label { text = "stroke width: " }
-        contents += strokeWidthInput
-        contents += new Label { text = "stroke color: " }
-        contents += colorInput
-      }, BorderPanel.Position.North)
+    add(new FlowPanel {
+      contents += new Label { text = "stroke width: " }
+      contents += strokeWidthInput
+      contents += new Label { text = "stroke color: " }
+      contents += colorInput
+    }, BorderPanel.Position.North)
 
-      add(new BoxPanel(Orientation.Vertical) {
-        contents += lineBtn
-        contents += rectBtn
-        contents += ovalBtn
-      }, BorderPanel.Position.West)
+    add(new BoxPanel(Orientation.Vertical) {
+      contents += lineBtn
+      contents += rectBtn
+      contents += ovalBtn
+    }, BorderPanel.Position.West)
 
-      add(new DrawingPanel(events), BorderPanel.Position.Center)
-      add(new InfoPanel(events), BorderPanel.Position.South)
-    }
+    add(new DrawingPanel(events), BorderPanel.Position.Center)
+    add(new InfoPanel(events), BorderPanel.Position.South)
+    add(shapePanel, BorderPanel.Position.East)
 
     // reactions
     listenTo(lineBtn)
@@ -48,14 +45,15 @@ object Reshapes extends SimpleGUIApplication {
     listenTo(ovalBtn)
     listenTo(strokeWidthInput)
     listenTo(colorInput)
+    listenTo(mouse.clicks)
 
     reactions += {
       case ButtonClicked(`lineBtn`) =>
-        events.selectedShape() = new Line
+        events.nextShape() = new Line
       case ButtonClicked(`rectBtn`) =>
-        events.selectedShape() = new figures.Rectangle
+        events.nextShape() = new figures.Rectangle
       case ButtonClicked(`ovalBtn`) =>
-        events.selectedShape() = new Oval
+        events.nextShape() = new Oval
       case EditDone(`strokeWidthInput`) =>
         try {
           events.strokeWidth() = strokeWidthInput.text.toInt match {
@@ -83,5 +81,12 @@ object Reshapes extends SimpleGUIApplication {
 
     // default selected shape
     events.selectedShape() = new Line
+  }
+
+  def top = new MainFrame {
+    title = "ReShapes";
+    preferredSize = new Dimension(1000, 500)
+
+    contents = ui
   }
 }

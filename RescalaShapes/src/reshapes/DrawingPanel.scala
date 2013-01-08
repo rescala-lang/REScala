@@ -15,7 +15,7 @@ class DrawingPanel(events: EventHolder) extends Panel {
 
   var currentPath: List[Point] = List()
   var shapes = List[Drawable]()
-  val currentShape = Signal { events.selectedShape() }
+  val currentShape = Signal { events.nextShape() }
 
   override def paint(g: Graphics2D) = {
     g.setColor(java.awt.Color.WHITE)
@@ -30,18 +30,24 @@ class DrawingPanel(events: EventHolder) extends Panel {
 
   reactions += {
     case e: MousePressed =>
-      events.selectedShape() = currentShape.getValue.getClass().newInstance()
-      events.allShapes() = currentShape.getValue :: events.allShapes.getValue
       currentPath = List(e.point)
-      currentShape.getValue.update(currentPath)
+      events.mode match {
+        case Drawing() =>
+          events.nextShape() = currentShape.getValue.getClass().newInstance()
+          events.allShapes() = currentShape.getValue :: events.allShapes.getValue
+        case _ =>
+      }
       repaint()
     case e: MouseDragged =>
       currentPath = currentPath ::: List(e.point)
-      currentShape.getValue.update(currentPath)
-      repaint()
-    case e: MouseReleased =>
-      currentPath = currentPath ::: List(e.point)
-      currentShape.getValue.update(currentPath)
+      events.mode match {
+        case Drawing() =>
+          currentShape.getValue.update(currentPath)
+        case Selection() =>
+          events.selectedShape.getValue.move(currentPath.reverse(1), e.point)
+      }
       repaint()
   }
+
+  events.selectedShape.changed += (_ => repaint())
 }
