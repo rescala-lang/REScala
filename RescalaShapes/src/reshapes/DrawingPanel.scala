@@ -49,5 +49,5 @@ class DrawingPanel(events: EventHolder) extends Panel {
       repaint()
   }
 
-  events.selectedShape.changed += (_ => repaint())
+  events.canvasChange += (_ => repaint())
 }

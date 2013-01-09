@@ -20,6 +20,8 @@ class EventHolder {
   var mode: EditingMode = Drawing()
   val modeChange = nextShape.changed || selectedShape.changed
 
+  val canvasChange = selectedShape.changed || allShapes.changed
+
   nextShape.changed += (shape => {
     shape.strokeWidth = strokeWidth.getValue
     shape.color = color.getValue

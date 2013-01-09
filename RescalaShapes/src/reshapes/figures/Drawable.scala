@@ -10,6 +10,7 @@ abstract class Drawable(var start: Point = new Point(0, 0), var end: Point = new
   var strokeWidth = 1
   var color = Color.BLACK
   var selected = false
+  var current = Drawable.current
 
   def draw(g: Graphics2D) = {
     g.setStroke(new BasicStroke(strokeWidth + (if (selected) 1 else 0)))
@@ -27,7 +28,7 @@ abstract class Drawable(var start: Point = new Point(0, 0), var end: Point = new
   }
 
   override def toString(): String = {
-    this.getClass().getSimpleName() + " #" + Drawable.current.toString()
+    this.getClass().getSimpleName() + " #" + current.toString()
   }
 
   // methods needed to be implemented by sublclasses

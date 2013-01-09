@@ -11,6 +11,7 @@ class InfoPanel(events: EventHolder) extends FlowPanel {
   val modeLabel = new Label { text = "mode: " }
 
   events.nextShape.changed += (nextShape => currentShapeLabel.text = nextShape.toString())
+  events.selectedShape.changed += (selectedShape => currentShapeLabel.text = selectedShape.toString())
   events.allShapes.changed += (shapes => numberElementsLabel.text = "#elements: %d".format(shapes.size))
   events.modeChange += (_ => modeLabel.text = "mode: %s".format(events.mode.getClass().getSimpleName()))
 
