@@ -38,6 +38,7 @@ class ShapeView(shape: Drawable, events: EventHolder) extends BoxPanel(Orientati
     def apply() = {
       val deleteCmd = new DeleteCommand(events, assignedShape)
       deleteCmd.execute()
+      events.Commands() = deleteCmd :: events.Commands.getValue
     }
   }
 

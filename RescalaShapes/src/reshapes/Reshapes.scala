@@ -18,11 +18,13 @@ object Reshapes extends SimpleSwingApplication {
     val lineBtn = new Button { text = "Line" }
     val rectBtn = new Button { text = "Rectangle" }
     val ovalBtn = new Button { text = "Oval" }
+    val undoBtn = new Button { text = "<"; enabled = false }
     val strokeWidthInput = new TextField { text = events.strokeWidth.getValue.toString(); columns = 5 }
     val colorInput = new TextField { text = "0,0,0"; columns = 10 }
     val shapePanel = new ShapePanel(events)
 
     add(new FlowPanel {
+      contents += undoBtn
       contents += new Label { text = "stroke width: " }
       contents += strokeWidthInput
       contents += new Label { text = "stroke color: " }
@@ -43,6 +45,7 @@ object Reshapes extends SimpleSwingApplication {
     listenTo(lineBtn)
     listenTo(rectBtn)
     listenTo(ovalBtn)
+    listenTo(undoBtn)
     listenTo(strokeWidthInput)
     listenTo(colorInput)
     listenTo(mouse.clicks)
@@ -54,6 +57,9 @@ object Reshapes extends SimpleSwingApplication {
         events.nextShape() = new figures.Rectangle
       case ButtonClicked(`ovalBtn`) =>
         events.nextShape() = new Oval
+      case ButtonClicked(`undoBtn`) =>
+        events.Commands.getValue.first.revert()
+        events.Commands() = events.Commands.getValue.tail
       case EditDone(`strokeWidthInput`) =>
         try {
           events.strokeWidth() = strokeWidthInput.text.toInt match {
@@ -79,8 +85,7 @@ object Reshapes extends SimpleSwingApplication {
         }
     }
 
-    // default selected shape
-    events.selectedShape() = new Line
+    events.Commands.changed += (commands => undoBtn.enabled = commands.size > 0)
   }
 
   def top = new MainFrame {

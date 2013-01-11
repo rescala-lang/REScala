@@ -5,6 +5,7 @@ import scala.events.behaviour.Signal
 import scala.events.behaviour.Var
 import reshapes.figures.Line
 import java.awt.Color
+import reshapes.command.Command
 
 /**
  * Unifies all events which can occure during execution
@@ -16,6 +17,7 @@ class EventHolder {
   val allShapes: Var[List[Drawable]] = new Var(List[Drawable]())
   val strokeWidth: Var[Int] = new Var(1)
   val color: Var[Color] = new Var(Color.BLACK)
+  val Commands: Var[List[Command]] = new Var(List[Command]())
 
   var mode: EditingMode = Drawing()
   val modeChange = nextShape.changed || selectedShape.changed
