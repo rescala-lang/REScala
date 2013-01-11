@@ -13,7 +13,11 @@ abstract class Drawable(var start: Point = new Point(0, 0), var end: Point = new
   var current = Drawable.current
 
   def draw(g: Graphics2D) = {
-    g.setStroke(new BasicStroke(strokeWidth + (if (selected) 1 else 0)))
+    val stroke = if (!selected) new BasicStroke(strokeWidth) else new BasicStroke(strokeWidth,
+      BasicStroke.CAP_BUTT,
+      BasicStroke.JOIN_MITER,
+      10.0f, Array(10.0f), 0.0f)
+    g.setStroke(stroke)
     g.setColor(color)
     doDraw(g)
   }

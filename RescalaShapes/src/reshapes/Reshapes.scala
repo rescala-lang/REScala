@@ -11,20 +11,19 @@ import scala.events.behaviour.Signal
 import java.awt.Color
 
 object Reshapes extends SimpleSwingApplication {
-  lazy val ui = new BorderPanel {
-    val events = new EventHolder
+  val events = new EventHolder
+
+  val ui = new BorderPanel {
 
     // GUI Elements and Layout
     val lineBtn = new Button { text = "Line" }
     val rectBtn = new Button { text = "Rectangle" }
     val ovalBtn = new Button { text = "Oval" }
-    val undoBtn = new Button { text = "<"; enabled = false }
     val strokeWidthInput = new TextField { text = events.strokeWidth.getValue.toString(); columns = 5 }
     val colorInput = new TextField { text = "0,0,0"; columns = 10 }
     val shapePanel = new ShapePanel(events)
 
     add(new FlowPanel {
-      contents += undoBtn
       contents += new Label { text = "stroke width: " }
       contents += strokeWidthInput
       contents += new Label { text = "stroke color: " }
@@ -45,7 +44,6 @@ object Reshapes extends SimpleSwingApplication {
     listenTo(lineBtn)
     listenTo(rectBtn)
     listenTo(ovalBtn)
-    listenTo(undoBtn)
     listenTo(strokeWidthInput)
     listenTo(colorInput)
     listenTo(mouse.clicks)
@@ -57,14 +55,18 @@ object Reshapes extends SimpleSwingApplication {
         events.nextShape() = new figures.Rectangle
       case ButtonClicked(`ovalBtn`) =>
         events.nextShape() = new Oval
-      case ButtonClicked(`undoBtn`) =>
-        events.Commands.getValue.first.revert()
-        events.Commands() = events.Commands.getValue.tail
       case EditDone(`strokeWidthInput`) =>
         try {
           events.strokeWidth() = strokeWidthInput.text.toInt match {
             case i if i > 0 => i
             case _ => strokeWidthInput.text = "1"; 1
+          }
+
+          events.mode match {
+            case Selection() =>
+              events.selectedShape.getValue.strokeWidth = events.strokeWidth.getValue
+              repaint()
+            case _ =>
           }
         } catch {
           case e: NumberFormatException => strokeWidthInput.text = events.strokeWidth.getValue.toString()
@@ -80,18 +82,48 @@ object Reshapes extends SimpleSwingApplication {
               events.color() = new Color(rgb(0), rgb(1), rgb(2))
             case _ => throw new NumberFormatException
           }
+
+          events.mode match {
+            case Selection() =>
+              events.selectedShape.getValue.color = events.color.getValue
+              repaint()
+            case _ =>
+          }
         } catch {
           case _ => colorInput.text = "%d,%d,%d".format(events.color.getValue.getRed(), events.color.getValue.getGreen(), events.color.getValue.getBlue())
         }
     }
+  }
 
-    events.Commands.changed += (commands => undoBtn.enabled = commands.size > 0)
+  val menu = new MenuBar {
+    val save = new MenuItem("Save")
+    val load = new MenuItem("Load")
+    val quit = new MenuItem(Action("Quit") {
+      System.exit(0)
+    })
+    val undo = new MenuItem(Action("Undo") {
+      events.Commands.getValue.first.revert()
+      events.Commands() = events.Commands.getValue.tail
+    }) { enabled = false }
+
+    events.Commands.changed += (commands => undo.enabled = commands.size > 0)
+
+    contents += new Menu("File") {
+      contents += save
+      contents += load
+      contents += new Separator
+      contents += quit
+    }
+    contents += new Menu("Edit") {
+      contents += undo
+    }
   }
 
   def top = new MainFrame {
     title = "ReShapes";
     preferredSize = new Dimension(1000, 500)
 
+    menuBar = menu
     contents = ui
   }
 }
