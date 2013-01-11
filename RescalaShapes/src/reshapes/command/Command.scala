@@ -22,3 +22,15 @@ class DeleteCommand(events: EventHolder, shapeToDelete: Drawable) extends Comman
     events.allShapes() = shapeToDelete :: events.allShapes.getValue
   }
 }
+
+class CreateShapeCommand(events: EventHolder, shapeToCreate: Drawable) extends Command(events, shapeToCreate) {
+
+  def execute() {
+    events.allShapes() = shapeToCreate :: events.allShapes.getValue
+  }
+
+  def revert() {
+    var deleteCmd = new DeleteCommand(events, shapeToCreate)
+    deleteCmd.execute()
+  }
+}

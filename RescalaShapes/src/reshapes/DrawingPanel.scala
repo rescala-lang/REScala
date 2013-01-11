@@ -6,6 +6,7 @@ import scala.events.behaviour.Var
 import reshapes.figures._
 import events.ImperativeEvent
 import java.awt.BasicStroke
+import reshapes.command.CreateShapeCommand
 
 /**
  * Represents the panel where all shapes are drawn onto.
@@ -23,6 +24,7 @@ class DrawingPanel(events: EventHolder) extends Panel {
 
     g.setColor(java.awt.Color.BLACK)
     events.allShapes.getValue.map(x => x.draw(g))
+    //currentShape.getValue.draw(g)
   }
 
   listenTo(mouse.clicks)
@@ -34,7 +36,9 @@ class DrawingPanel(events: EventHolder) extends Panel {
       events.mode match {
         case Drawing() =>
           events.nextShape() = currentShape.getValue.getClass().newInstance()
-          events.allShapes() = currentShape.getValue :: events.allShapes.getValue
+          var command = new CreateShapeCommand(events, currentShape.getValue)
+          command.execute()
+          events.Commands() = command :: events.Commands.getValue
         case _ =>
       }
       repaint()
