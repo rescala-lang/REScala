@@ -4,6 +4,7 @@ import java.awt.Graphics2D
 import java.awt.BasicStroke
 import java.awt.Color
 
+@serializable
 abstract class Drawable(var start: Point = new Point(0, 0), var end: Point = new Point(0, 0)) {
   Drawable.current += 1
 

@@ -9,6 +9,10 @@ import reshapes.figures._
 import events.ImperativeEvent
 import scala.events.behaviour.Signal
 import java.awt.Color
+import java.io.FileOutputStream
+import scala.util.Marshal
+import java.io.FileInputStream
+import reshapes.command.CreateShapeCommand
 
 object Reshapes extends SimpleSwingApplication {
   val events = new EventHolder
@@ -96,8 +100,24 @@ object Reshapes extends SimpleSwingApplication {
   }
 
   val menu = new MenuBar {
-    val save = new MenuItem("Save")
-    val load = new MenuItem("Load")
+    val save = new MenuItem(Action("Save") {
+      val fileChooser = new FileChooser()
+      if (fileChooser.showDialog(null, "save") == FileChooser.Result.Approve) {
+        val out = new FileOutputStream(fileChooser.selectedFile)
+        out.write(Marshal.dump(events.allShapes.getValue))
+        out.close()
+      }
+    })
+    val load = new MenuItem(Action("Load") {
+      val fileChooser = new FileChooser()
+      if (fileChooser.showDialog(null, "load") == FileChooser.Result.Approve) {
+        val in = new FileInputStream(fileChooser.selectedFile)
+        val bytes = Stream.continually(in.read).takeWhile(-1 !=).map(_.toByte).toArray
+        val shapes = Marshal.load[List[Drawable]](bytes)
+        events.allShapes() = List[Drawable]()
+        shapes map (shape => (new CreateShapeCommand(events, shape)).execute())
+      }
+    })
     val quit = new MenuItem(Action("Quit") {
       System.exit(0)
     })

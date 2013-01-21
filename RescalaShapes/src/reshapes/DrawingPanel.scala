@@ -24,7 +24,6 @@ class DrawingPanel(events: EventHolder) extends Panel {
 
     g.setColor(java.awt.Color.BLACK)
     events.allShapes.getValue.map(x => x.draw(g))
-    //currentShape.getValue.draw(g)
   }
 
   listenTo(mouse.clicks)
