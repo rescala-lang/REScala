@@ -18,18 +18,38 @@ abstract class Drawable(var start: Point = new Point(0, 0), var end: Point = new
       BasicStroke.CAP_BUTT,
       BasicStroke.JOIN_MITER,
       10.0f, Array(10.0f), 0.0f)
+
+    if (selected) {
+      g.setColor(new Color(200, 200, 200))
+
+      g.drawOval(start.x - 5, start.y - 5, 10, 10)
+      g.drawOval(end.x - 5, end.y - 5, 10, 10)
+
+    }
+
     g.setStroke(stroke)
     g.setColor(color)
     doDraw(g)
   }
 
-  def move(from: Point, to: Point) = {
-    val deltaX = (if (from.x < to.x) 1 else -1) * math.abs(from.x - to.x)
-    val deltaY = (if (from.y < to.y) 1 else -1) * math.abs(from.y - to.y)
-    start.x += deltaX
-    end.x += deltaX
-    start.y += deltaY
-    end.y += deltaY
+  def moveOrResize(from: Point, to: Point) = {
+    if (isInCircle(start, 6, from)) {
+      start = to
+    } else if (isInCircle(end, 6, to)) {
+      end = to
+    } else {
+      val deltaX = (if (from.x < to.x) 1 else -1) * math.abs(from.x - to.x)
+      val deltaY = (if (from.y < to.y) 1 else -1) * math.abs(from.y - to.y)
+      start.x += deltaX
+      end.x += deltaX
+      start.y += deltaY
+      end.y += deltaY
+    }
+  }
+
+  def isInCircle(center: Point, radius: Int, point: Point): Boolean = {
+    val dist = math.sqrt((center.x - point.x) * (center.x - point.x) + (center.y - point.y) * (center.y - point.y))
+    dist <= radius
   }
 
   override def toString(): String = {

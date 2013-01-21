@@ -1,8 +1,9 @@
 package reshapes.command
 import reshapes.EventHolder
 import reshapes.figures.Drawable
+import java.awt.Point
 
-abstract class Command(events: EventHolder, shape: Drawable) {
+abstract class Command {
 
   def execute()
 
@@ -12,7 +13,7 @@ abstract class Command(events: EventHolder, shape: Drawable) {
 /**
  * Deletes a given shape
  */
-class DeleteCommand(events: EventHolder, shapeToDelete: Drawable) extends Command(events, shapeToDelete) {
+class DeleteCommand(events: EventHolder, shapeToDelete: Drawable) extends Command {
 
   def execute() = {
     events.allShapes() = events.allShapes.getValue filter (x => x != shapeToDelete)
@@ -23,7 +24,7 @@ class DeleteCommand(events: EventHolder, shapeToDelete: Drawable) extends Comman
   }
 }
 
-class CreateShapeCommand(events: EventHolder, shapeToCreate: Drawable) extends Command(events, shapeToCreate) {
+class CreateShapeCommand(events: EventHolder, shapeToCreate: Drawable) extends Command {
 
   def execute() {
     events.allShapes() = shapeToCreate :: events.allShapes.getValue

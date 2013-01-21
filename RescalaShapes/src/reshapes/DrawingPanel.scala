@@ -28,6 +28,7 @@ class DrawingPanel(events: EventHolder) extends Panel {
 
   listenTo(mouse.clicks)
   listenTo(mouse.moves)
+  listenTo(keys)
 
   reactions += {
     case e: MousePressed =>
@@ -47,7 +48,7 @@ class DrawingPanel(events: EventHolder) extends Panel {
         case Drawing() =>
           currentShape.getValue.update(currentPath)
         case Selection() =>
-          events.selectedShape.getValue.move(currentPath.reverse(1), e.point)
+          events.selectedShape.getValue.moveOrResize(currentPath.reverse(1), e.point)
       }
       repaint()
   }
