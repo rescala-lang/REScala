@@ -2,6 +2,8 @@ package reshapes.command
 import reshapes.EventHolder
 import reshapes.figures.Drawable
 import java.awt.Point
+import reshapes.Drawing
+import reshapes.figures.Line
 
 abstract class Command {
 
@@ -33,5 +35,22 @@ class CreateShapeCommand(events: EventHolder, shapeToCreate: Drawable) extends C
   def revert() {
     var deleteCmd = new DeleteCommand(events, shapeToCreate)
     deleteCmd.execute()
+  }
+}
+
+class EditShapeCommand(events: EventHolder, shapeBeforeEdit: Drawable, shapeAfterEdit: Drawable) extends Command {
+
+  def execute() {
+
+  }
+
+  def revert() {
+    shapeAfterEdit.start = shapeBeforeEdit.start
+    shapeAfterEdit.end = shapeBeforeEdit.end
+    shapeAfterEdit.strokeWidth = shapeBeforeEdit.strokeWidth
+    shapeAfterEdit.color = shapeBeforeEdit.color
+
+    events.selectedShape() = new Line() // XXX: hack to force selectedShape.changed event when events.selectedShape() == shapeAfterEdit
+    events.selectedShape() = shapeAfterEdit
   }
 }

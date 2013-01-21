@@ -3,6 +3,7 @@ import java.awt.Point
 import java.awt.Graphics2D
 import java.awt.BasicStroke
 import java.awt.Color
+import reshapes.util.MathUtil
 
 @serializable
 abstract class Drawable(var start: Point = new Point(0, 0), var end: Point = new Point(0, 0)) {
@@ -33,9 +34,9 @@ abstract class Drawable(var start: Point = new Point(0, 0), var end: Point = new
   }
 
   def moveOrResize(from: Point, to: Point) = {
-    if (isInCircle(start, 6, from)) {
+    if (MathUtil.isInCircle(start, 6, from)) {
       start = to
-    } else if (isInCircle(end, 6, to)) {
+    } else if (MathUtil.isInCircle(end, 6, to)) {
       end = to
     } else {
       val deltaX = (if (from.x < to.x) 1 else -1) * math.abs(from.x - to.x)
@@ -45,11 +46,6 @@ abstract class Drawable(var start: Point = new Point(0, 0), var end: Point = new
       start.y += deltaY
       end.y += deltaY
     }
-  }
-
-  def isInCircle(center: Point, radius: Int, point: Point): Boolean = {
-    val dist = math.sqrt((center.x - point.x) * (center.x - point.x) + (center.y - point.y) * (center.y - point.y))
-    dist <= radius
   }
 
   override def toString(): String = {

@@ -1,18 +1,35 @@
 package reshapes
 
-import scala.swing._
-import scala.events.scalareact
-import scala.events.behaviour.Var
-import util.Random
-import scala.swing.event._
-import reshapes.figures._
-import events.ImperativeEvent
-import scala.events.behaviour.Signal
 import java.awt.Color
-import java.io.FileOutputStream
-import scala.util.Marshal
 import java.io.FileInputStream
+import java.io.FileOutputStream
+
+import scala.Array.canBuildFrom
+import scala.annotation.serializable
+import scala.swing.event.ButtonClicked
+import scala.swing.event.EditDone
+import scala.swing.Dimension
+import scala.swing.Action
+import scala.swing.BorderPanel
+import scala.swing.BoxPanel
+import scala.swing.Button
+import scala.swing.FileChooser
+import scala.swing.FlowPanel
+import scala.swing.Label
+import scala.swing.MainFrame
+import scala.swing.Menu
+import scala.swing.MenuBar
+import scala.swing.MenuItem
+import scala.swing.Orientation
+import scala.swing.Separator
+import scala.swing.SimpleSwingApplication
+import scala.swing.TextField
+import scala.util.Marshal
+
 import reshapes.command.CreateShapeCommand
+import reshapes.figures.Drawable
+import reshapes.figures.Line
+import reshapes.figures.Oval
 
 object Reshapes extends SimpleSwingApplication {
   val events = new EventHolder
