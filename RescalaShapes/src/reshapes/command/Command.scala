@@ -7,9 +7,18 @@ import reshapes.figures.Line
 
 abstract class Command {
 
-  def execute()
+  def execute() = {
+    onExecute()
+    Events.Commands() = this :: Events.Commands.getValue
+  }
 
-  def revert() // revert as trait? (DeleteCommand with Revertable)
+  def revert() = {
+    onRevert()
+    Events.Commands() = Events.Commands.getValue.tail
+  }
+
+  def onExecute()
+  def onRevert()
 }
 
 /**
@@ -17,34 +26,34 @@ abstract class Command {
  */
 class DeleteCommand(shapeToDelete: Drawable) extends Command {
 
-  def execute() = {
+  def onExecute() = {
     Events.allShapes() = Events.allShapes.getValue filter (x => x != shapeToDelete)
   }
 
-  def revert() = {
+  def onRevert() = {
     Events.allShapes() = shapeToDelete :: Events.allShapes.getValue
   }
 }
 
 class CreateShapeCommand(shapeToCreate: Drawable) extends Command {
 
-  def execute() {
+  def onExecute() {
     Events.allShapes() = shapeToCreate :: Events.allShapes.getValue
   }
 
-  def revert() {
+  def onRevert() {
     var deleteCmd = new DeleteCommand(shapeToCreate)
-    deleteCmd.execute()
+    deleteCmd.onExecute()
   }
 }
 
 class EditShapeCommand(shapeBeforeEdit: Drawable, shapeAfterEdit: Drawable) extends Command {
 
-  def execute() {
+  def onExecute() {
 
   }
 
-  def revert() {
+  def onRevert() {
     shapeAfterEdit.start = shapeBeforeEdit.start
     shapeAfterEdit.end = shapeBeforeEdit.end
     shapeAfterEdit.strokeWidth = shapeBeforeEdit.strokeWidth

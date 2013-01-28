@@ -44,7 +44,6 @@ class DrawingPanel() extends Panel {
           Events.nextShape() = currentShape.getValue.getClass().newInstance()
           var command = new CreateShapeCommand(currentShape.getValue)
           command.execute()
-          Events.Commands() = command :: Events.Commands.getValue
         case Selection() =>
           shapeBeforeEdit = Marshal.load[Drawable](Marshal.dump[Drawable](Events.selectedShape.getValue))
         case _ =>
@@ -64,7 +63,6 @@ class DrawingPanel() extends Panel {
       Events.mode match {
         case Selection() =>
           var command = new EditShapeCommand(shapeBeforeEdit, Events.selectedShape.getValue)
-          Events.Commands() = command :: Events.Commands.getValue
         case _ =>
       }
   }

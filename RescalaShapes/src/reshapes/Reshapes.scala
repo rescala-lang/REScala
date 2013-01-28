@@ -29,7 +29,7 @@ import reshapes.figures.Drawable
 import reshapes.figures.Line
 import reshapes.figures.Oval
 import scala.swing.Frame
-import reshapes.actions.SaveAction
+import reshapes.actions._
 import reshapes.panels._
 
 object Reshapes extends SimpleSwingApplication {
@@ -118,36 +118,12 @@ object Reshapes extends SimpleSwingApplication {
   }
 
   val menu = new MenuBar {
-    val save = new MenuItem(Action("Save") {
-      val fileChooser = new FileChooser()
-      if (fileChooser.showDialog(null, "save") == FileChooser.Result.Approve) {
-        val out = new FileOutputStream(fileChooser.selectedFile)
-        out.write(Marshal.dump(Events.allShapes.getValue))
-        out.close()
-      }
-    })
-    val load = new MenuItem(Action("Load") {
-      val fileChooser = new FileChooser()
-      if (fileChooser.showDialog(null, "load") == FileChooser.Result.Approve) {
-        val in = new FileInputStream(fileChooser.selectedFile)
-        val bytes = Stream.continually(in.read).takeWhile(-1 !=).map(_.toByte).toArray
-        val shapes = Marshal.load[List[Drawable]](bytes)
-        Events.allShapes() = List[Drawable]()
-        shapes map (shape => (new CreateShapeCommand(shape)).execute())
-      }
-    })
-    val quit = new MenuItem(Action("Quit") {
-      System.exit(0)
-    })
-    val undo = new MenuItem(Action("Undo") {
-      Events.Commands.getValue.first.revert()
-      Events.Commands() = Events.Commands.getValue.tail
-    }) { enabled = false }
-    val redo = new MenuItem(Action("Redo") {
+    val save = new MenuItem(new SaveAction())
+    val load = new MenuItem(new LoadAction())
+    val quit = new MenuItem(new QuitAction())
+    val undo = new MenuItem(new UndoAction()) { enabled = false }
 
-    })
-
-    Events.Commands.changed += (commands => undo.enabled = commands.size > 0)
+    Events.Commands.changed += (commands => undo.enabled = !commands.isEmpty)
 
     contents += new Menu("File") {
       contents += save
@@ -157,7 +133,6 @@ object Reshapes extends SimpleSwingApplication {
     }
     contents += new Menu("Edit") {
       contents += undo
-      contents += redo
     }
   }
 
