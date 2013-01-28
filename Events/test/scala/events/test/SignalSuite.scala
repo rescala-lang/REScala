@@ -55,7 +55,6 @@ class SignalSuite extends FunSuite with ShouldMatchers {
     flowSignal.getValue should be("Second occurence")
     e(1)
     flowSignal.getValue should be("Second occurence")
-
   }
 
   ignore("Scala.react turns get triggered at most 2 * [event invocation + signal instanciation]") {

@@ -3,7 +3,6 @@ package reshapes
 import java.awt.Color
 import java.io.FileInputStream
 import java.io.FileOutputStream
-
 import scala.Array.canBuildFrom
 import scala.annotation.serializable
 import scala.swing.event.ButtonClicked
@@ -25,14 +24,16 @@ import scala.swing.Separator
 import scala.swing.SimpleSwingApplication
 import scala.swing.TextField
 import scala.util.Marshal
-
 import reshapes.command.CreateShapeCommand
 import reshapes.figures.Drawable
 import reshapes.figures.Line
 import reshapes.figures.Oval
+import scala.swing.Frame
+import reshapes.actions.SaveAction
+import reshapes.panels._
 
 object Reshapes extends SimpleSwingApplication {
-  val events = new EventHolder
+  //val events = new EventHolder
 
   val ui = new BorderPanel {
 
@@ -40,9 +41,9 @@ object Reshapes extends SimpleSwingApplication {
     val lineBtn = new Button { text = "Line" }
     val rectBtn = new Button { text = "Rectangle" }
     val ovalBtn = new Button { text = "Oval" }
-    val strokeWidthInput = new TextField { text = events.strokeWidth.getValue.toString(); columns = 5 }
+    val strokeWidthInput = new TextField { text = Events.strokeWidth.getValue.toString(); columns = 5 }
     val colorInput = new TextField { text = "0,0,0"; columns = 10 }
-    val shapePanel = new ShapePanel(events)
+    val shapePanel = new ShapePanel()
 
     add(new FlowPanel {
       contents += new Label { text = "stroke width: " }
@@ -57,8 +58,8 @@ object Reshapes extends SimpleSwingApplication {
       contents += ovalBtn
     }, BorderPanel.Position.West)
 
-    add(new DrawingPanel(events), BorderPanel.Position.Center)
-    add(new InfoPanel(events), BorderPanel.Position.South)
+    add(new DrawingPanel(), BorderPanel.Position.Center)
+    add(new InfoPanel(), BorderPanel.Position.South)
     add(shapePanel, BorderPanel.Position.East)
 
     // reactions
@@ -71,47 +72,47 @@ object Reshapes extends SimpleSwingApplication {
 
     reactions += {
       case ButtonClicked(`lineBtn`) =>
-        events.nextShape() = new Line
+        Events.nextShape() = new Line
       case ButtonClicked(`rectBtn`) =>
-        events.nextShape() = new figures.Rectangle
+        Events.nextShape() = new figures.Rectangle
       case ButtonClicked(`ovalBtn`) =>
-        events.nextShape() = new Oval
+        Events.nextShape() = new Oval
       case EditDone(`strokeWidthInput`) =>
         try {
-          events.strokeWidth() = strokeWidthInput.text.toInt match {
+          Events.strokeWidth() = strokeWidthInput.text.toInt match {
             case i if i > 0 => i
             case _ => strokeWidthInput.text = "1"; 1
           }
 
-          events.mode match {
+          Events.mode match {
             case Selection() =>
-              events.selectedShape.getValue.strokeWidth = events.strokeWidth.getValue
+              Events.selectedShape.getValue.strokeWidth = Events.strokeWidth.getValue
               repaint()
             case _ =>
           }
         } catch {
-          case e: NumberFormatException => strokeWidthInput.text = events.strokeWidth.getValue.toString()
+          case e: NumberFormatException => strokeWidthInput.text = Events.strokeWidth.getValue.toString()
         }
       case EditDone(`colorInput`) =>
         try {
           val input = colorInput.text.split(',') match {
             case empty if empty.length == 1 && empty(0).isEmpty() =>
-              events.color() = new Color(0, 0, 0)
+              Events.color() = new Color(0, 0, 0)
               colorInput.text = "0,0,0"
             case rgbStr if rgbStr.length == 3 =>
               val rgb = rgbStr.map(x => x.toInt)
-              events.color() = new Color(rgb(0), rgb(1), rgb(2))
+              Events.color() = new Color(rgb(0), rgb(1), rgb(2))
             case _ => throw new NumberFormatException
           }
 
-          events.mode match {
+          Events.mode match {
             case Selection() =>
-              events.selectedShape.getValue.color = events.color.getValue
+              Events.selectedShape.getValue.color = Events.color.getValue
               repaint()
             case _ =>
           }
         } catch {
-          case _ => colorInput.text = "%d,%d,%d".format(events.color.getValue.getRed(), events.color.getValue.getGreen(), events.color.getValue.getBlue())
+          case _ => colorInput.text = "%d,%d,%d".format(Events.color.getValue.getRed(), Events.color.getValue.getGreen(), Events.color.getValue.getBlue())
         }
     }
   }
@@ -121,7 +122,7 @@ object Reshapes extends SimpleSwingApplication {
       val fileChooser = new FileChooser()
       if (fileChooser.showDialog(null, "save") == FileChooser.Result.Approve) {
         val out = new FileOutputStream(fileChooser.selectedFile)
-        out.write(Marshal.dump(events.allShapes.getValue))
+        out.write(Marshal.dump(Events.allShapes.getValue))
         out.close()
       }
     })
@@ -131,19 +132,22 @@ object Reshapes extends SimpleSwingApplication {
         val in = new FileInputStream(fileChooser.selectedFile)
         val bytes = Stream.continually(in.read).takeWhile(-1 !=).map(_.toByte).toArray
         val shapes = Marshal.load[List[Drawable]](bytes)
-        events.allShapes() = List[Drawable]()
-        shapes map (shape => (new CreateShapeCommand(events, shape)).execute())
+        Events.allShapes() = List[Drawable]()
+        shapes map (shape => (new CreateShapeCommand(shape)).execute())
       }
     })
     val quit = new MenuItem(Action("Quit") {
       System.exit(0)
     })
     val undo = new MenuItem(Action("Undo") {
-      events.Commands.getValue.first.revert()
-      events.Commands() = events.Commands.getValue.tail
+      Events.Commands.getValue.first.revert()
+      Events.Commands() = Events.Commands.getValue.tail
     }) { enabled = false }
+    val redo = new MenuItem(Action("Redo") {
 
-    events.Commands.changed += (commands => undo.enabled = commands.size > 0)
+    })
+
+    Events.Commands.changed += (commands => undo.enabled = commands.size > 0)
 
     contents += new Menu("File") {
       contents += save
@@ -153,6 +157,7 @@ object Reshapes extends SimpleSwingApplication {
     }
     contents += new Menu("Edit") {
       contents += undo
+      contents += redo
     }
   }
 
@@ -162,5 +167,10 @@ object Reshapes extends SimpleSwingApplication {
 
     menuBar = menu
     contents = ui
+  }
+
+  def commandWindow = new Frame {
+    title = "Command list"
+    contents = new Button { text = "foo" }
   }
 }

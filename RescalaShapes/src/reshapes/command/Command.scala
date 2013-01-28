@@ -1,5 +1,5 @@
 package reshapes.command
-import reshapes.EventHolder
+import reshapes.Events
 import reshapes.figures.Drawable
 import java.awt.Point
 import reshapes.Drawing
@@ -15,30 +15,30 @@ abstract class Command {
 /**
  * Deletes a given shape
  */
-class DeleteCommand(events: EventHolder, shapeToDelete: Drawable) extends Command {
+class DeleteCommand(shapeToDelete: Drawable) extends Command {
 
   def execute() = {
-    events.allShapes() = events.allShapes.getValue filter (x => x != shapeToDelete)
+    Events.allShapes() = Events.allShapes.getValue filter (x => x != shapeToDelete)
   }
 
   def revert() = {
-    events.allShapes() = shapeToDelete :: events.allShapes.getValue
+    Events.allShapes() = shapeToDelete :: Events.allShapes.getValue
   }
 }
 
-class CreateShapeCommand(events: EventHolder, shapeToCreate: Drawable) extends Command {
+class CreateShapeCommand(shapeToCreate: Drawable) extends Command {
 
   def execute() {
-    events.allShapes() = shapeToCreate :: events.allShapes.getValue
+    Events.allShapes() = shapeToCreate :: Events.allShapes.getValue
   }
 
   def revert() {
-    var deleteCmd = new DeleteCommand(events, shapeToCreate)
+    var deleteCmd = new DeleteCommand(shapeToCreate)
     deleteCmd.execute()
   }
 }
 
-class EditShapeCommand(events: EventHolder, shapeBeforeEdit: Drawable, shapeAfterEdit: Drawable) extends Command {
+class EditShapeCommand(shapeBeforeEdit: Drawable, shapeAfterEdit: Drawable) extends Command {
 
   def execute() {
 
@@ -50,7 +50,7 @@ class EditShapeCommand(events: EventHolder, shapeBeforeEdit: Drawable, shapeAfte
     shapeAfterEdit.strokeWidth = shapeBeforeEdit.strokeWidth
     shapeAfterEdit.color = shapeBeforeEdit.color
 
-    events.selectedShape() = new Line() // XXX: hack to force selectedShape.changed event when events.selectedShape() == shapeAfterEdit
-    events.selectedShape() = shapeAfterEdit
+    Events.selectedShape() = new Line() // XXX: hack to force selectedShape.changed event when Events.selectedShape() == shapeAfterEdit
+    Events.selectedShape() = shapeAfterEdit
   }
 }
