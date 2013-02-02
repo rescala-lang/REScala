@@ -33,7 +33,6 @@ import reshapes.actions._
 import reshapes.panels._
 
 object Reshapes extends SimpleSwingApplication {
-  //val events = new EventHolder
 
   val ui = new BorderPanel {
 
@@ -122,6 +121,7 @@ object Reshapes extends SimpleSwingApplication {
     val load = new MenuItem(new LoadAction())
     val quit = new MenuItem(new QuitAction())
     val undo = new MenuItem(new UndoAction()) { enabled = false }
+    val cmdWindow = new MenuItem(Action("show command window") { commandWindow.visible = true })
 
     Events.Commands.changed += (commands => undo.enabled = !commands.isEmpty)
 
@@ -133,6 +133,8 @@ object Reshapes extends SimpleSwingApplication {
     }
     contents += new Menu("Edit") {
       contents += undo
+      contents += new Separator
+      contents += cmdWindow
     }
   }
 
@@ -142,10 +144,13 @@ object Reshapes extends SimpleSwingApplication {
 
     menuBar = menu
     contents = ui
+
+    commandWindow.visible = true
   }
 
   def commandWindow = new Frame {
     title = "Command list"
-    contents = new Button { text = "foo" }
+    preferredSize = new Dimension(300, 500)
+    contents = new CommandPanel()
   }
 }

@@ -39,7 +39,6 @@ class ShapeView(shape: Drawable) extends BoxPanel(Orientation.Horizontal) {
     def apply() = {
       val deleteCmd = new DeleteCommand(assignedShape)
       deleteCmd.execute()
-      Events.Commands() = deleteCmd :: Events.Commands.getValue
     }
   }
 
