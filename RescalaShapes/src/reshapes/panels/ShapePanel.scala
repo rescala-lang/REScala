@@ -9,28 +9,28 @@ import reshapes.Events
 /**
  * Lists all drawn shapes
  */
-class ShapePanel() extends ScrollPane(new BoxPanel(Orientation.Vertical)) {
+class ShapePanel(var events: Events) extends ScrollPane(new BoxPanel(Orientation.Vertical)) {
 
   val allShapesPanel = new BoxPanel(Orientation.Vertical)
 
   contents = allShapesPanel
 
-  Events.allShapes.changed += (shapes => updateAllShapesPanel(shapes))
+  events.allShapes.changed += (shapes => updateAllShapesPanel(shapes))
 
   def updateAllShapesPanel(shapes: List[Drawable]) = {
     allShapesPanel.contents.clear()
 
-    shapes map (shape => allShapesPanel.contents += new ShapeView(shape))
+    shapes map (shape => allShapesPanel.contents += new ShapeView(shape, events))
     repaint()
   }
 }
 
-class ShapeView(shape: Drawable) extends BoxPanel(Orientation.Horizontal) {
+class ShapeView(shape: Drawable, events: Events) extends BoxPanel(Orientation.Horizontal) {
   val selectButton = new Button
   selectButton.action = new Action(shape.toString()) {
     val assignedShape = shape
     def apply() = {
-      Events.selectedShape() = assignedShape
+      events.selectedShape() = assignedShape
     }
   }
   val deleteButton = new Button

@@ -2,8 +2,7 @@ package reshapes
 
 import java.awt.Color
 import scala.Array.canBuildFrom
-import scala.swing.event.ButtonClicked
-import scala.swing.event.EditDone
+import scala.swing.event._
 import scala.swing.Dimension
 import scala.swing.Action
 import scala.swing.BorderPanel
@@ -36,24 +35,47 @@ import scala.swing.TabbedPane
 import sun.reflect.generics.reflectiveObjects.NotImplementedException
 import scala.collection.mutable.MutableList
 import scala.events.behaviour.Var
+import scala.swing.event.SelectionChanged
+import scala.events.scalareact
+import scala.collection.mutable.HashMap
 
 object Reshapes extends SimpleSwingApplication {
 
   val tabbedPane = new TabbedPane()
+  val currentTabIndex = new Var(0)
   // as event/Var
-  val drawingPanels = new Var(MutableList[(String, TabbedPane.Page)]())
+  var CurrentEvents: Events = new Events()
+  val drawingPanels = new HashMap[Int, Events]()
+  drawingPanels(0) = CurrentEvents
+
+  // Panels
+  val infoPanel = new InfoPanel(CurrentEvents)
+  val shapePanel = new ShapePanel(CurrentEvents)
+  val strokeInputPanel = new StrokeInputPanel(CurrentEvents)
+  val shapeSelectionPanel = new ShapeSelectionPanel(CurrentEvents)
+  val drawingPanel = new DrawingPanel(CurrentEvents)
 
   val ui = new BorderPanel {
-
-    add(new InfoPanel(), BorderPanel.Position.South)
-    add(new ShapePanel(), BorderPanel.Position.East)
-    add(new StrokeInputPanel(), BorderPanel.Position.North)
-    add(new ShapeSelectionPanel(), BorderPanel.Position.West)
-    tabbedPane.pages += new TabbedPane.Page("newdrawing", new DrawingPanel())
+    add(infoPanel, BorderPanel.Position.South)
+    add(shapePanel, BorderPanel.Position.East)
+    add(strokeInputPanel, BorderPanel.Position.North)
+    add(shapeSelectionPanel, BorderPanel.Position.West)
+    tabbedPane.pages += new TabbedPane.Page("newdrawing", drawingPanel)
     add(tabbedPane, BorderPanel.Position.Center)
 
-    // reactions
-    //listenTo(mouse.clicks)
+    listenTo(tabbedPane.selection)
+
+    reactions += {
+      case SelectionChanged(`tabbedPane`) => {
+        val currentEvents = drawingPanels(tabbedPane.selection.index)
+        infoPanel.events = currentEvents
+        shapePanel.events = currentEvents
+        strokeInputPanel.events = currentEvents
+        shapeSelectionPanel.events = currentEvents
+        drawingPanel.events = currentEvents
+        CurrentEvents = currentEvents
+      }
+    }
   }
 
   val menu = new MenuBar {
@@ -65,7 +87,7 @@ object Reshapes extends SimpleSwingApplication {
     val undo = new MenuItem(new UndoAction()) { enabled = false }
     val cmdWindow = new MenuItem(Action("show command window") { commandWindow.visible = true })
 
-    Events.Commands.changed += (commands => undo.enabled = !commands.isEmpty)
+    CurrentEvents.Commands.changed += (commands => undo.enabled = !commands.isEmpty)
 
     contents += new Menu("File") {
       contents += newTab
@@ -96,11 +118,13 @@ object Reshapes extends SimpleSwingApplication {
   def commandWindow = new Frame {
     title = "Command list"
     preferredSize = new Dimension(300, 500)
-    contents = new CommandPanel()
+    contents = new CommandPanel(CurrentEvents)
   }
 
   def addTab() {
-    throw new NotImplementedException()
+    val event = new Events()
+    tabbedPane.pages += new TabbedPane.Page("newdrawing", new DrawingPanel(event))
+    drawingPanels(tabbedPane.pages.size - 1) = event
   }
 
   def removeTab() {

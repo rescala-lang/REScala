@@ -7,6 +7,7 @@ import reshapes.Events
 import java.io.FileInputStream
 import reshapes.figures.Drawable
 import reshapes.command.CreateShape
+import reshapes.Reshapes
 
 /**
  * Serializes all currently drawn shapes to a chosen file.
@@ -16,7 +17,7 @@ class SaveAction extends Action("Save") {
     val fileChooser = new FileChooser()
     if (fileChooser.showDialog(null, "save") == FileChooser.Result.Approve) {
       val out = new FileOutputStream(fileChooser.selectedFile)
-      out.write(Marshal.dump(Events.allShapes.getValue))
+      out.write(Marshal.dump(Reshapes.CurrentEvents.allShapes.getValue))
       out.close()
     }
   }
@@ -32,7 +33,7 @@ class LoadAction extends Action("Load") {
       val in = new FileInputStream(fileChooser.selectedFile)
       val bytes = Stream.continually(in.read).takeWhile(-1 !=).map(_.toByte).toArray
       val shapes = Marshal.load[List[Drawable]](bytes)
-      Events.allShapes() = List[Drawable]()
+      Reshapes.CurrentEvents.allShapes() = List[Drawable]()
       shapes map (shape => (new CreateShape(shape)).execute())
     }
   }
@@ -46,6 +47,6 @@ class QuitAction extends Action("Quit") {
 
 class UndoAction extends Action("Undo") {
   def apply() = {
-    Events.Commands.getValue.first.revert()
+    Reshapes.CurrentEvents.Commands.getValue.first.revert()
   }
 }

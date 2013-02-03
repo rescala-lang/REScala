@@ -9,7 +9,7 @@ import reshapes._
 /**
  * Panel for selection of shapes to draw.
  */
-class ShapeSelectionPanel extends BoxPanel(Orientation.Vertical) {
+class ShapeSelectionPanel(var events: Events) extends BoxPanel(Orientation.Vertical) {
 
   val lineBtn = new Button { text = "Line" }
   val rectBtn = new Button { text = "Rectangle" }
@@ -26,10 +26,10 @@ class ShapeSelectionPanel extends BoxPanel(Orientation.Vertical) {
 
   reactions += {
     case ButtonClicked(`lineBtn`) =>
-      Events.nextShape() = new Line
+      events.nextShape() = new Line
     case ButtonClicked(`rectBtn`) =>
-      Events.nextShape() = new figures.Rectangle
+      events.nextShape() = new figures.Rectangle
     case ButtonClicked(`ovalBtn`) =>
-      Events.nextShape() = new Oval
+      events.nextShape() = new Oval
   }
 }

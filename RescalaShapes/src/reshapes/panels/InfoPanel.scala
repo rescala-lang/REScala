@@ -5,16 +5,16 @@ import scala.swing._
 import java.awt.Color
 import reshapes.Events
 
-class InfoPanel() extends FlowPanel {
+class InfoPanel(var events: Events) extends FlowPanel {
 
   val currentShapeLabel = new Label { text = " " }
   val numberElementsLabel = new Label { text = "#elements: 0" }
   val modeLabel = new Label { text = "mode: " }
 
-  Events.nextShape.changed += (nextShape => currentShapeLabel.text = nextShape.toString())
-  Events.selectedShape.changed += (selectedShape => currentShapeLabel.text = selectedShape.toString())
-  Events.allShapes.changed += (shapes => numberElementsLabel.text = "#elements: %d".format(shapes.size))
-  Events.modeChange += (_ => modeLabel.text = "mode: %s".format(Events.mode.getClass().getSimpleName()))
+  events.nextShape.changed += (nextShape => currentShapeLabel.text = nextShape.toString())
+  events.selectedShape.changed += (selectedShape => currentShapeLabel.text = selectedShape.toString())
+  events.allShapes.changed += (shapes => numberElementsLabel.text = "#elements: %d".format(shapes.size))
+  events.modeChange += (_ => modeLabel.text = "mode: %s".format(events.mode.getClass().getSimpleName()))
 
   contents += currentShapeLabel
   contents += new Label { text = "|" }

@@ -11,7 +11,7 @@ import scala.events.scalareact
 /**
  * Unifies all events which can occure during execution
  */
-object Events {
+class Events {
 
   val nextShape: Var[Drawable] = new Var(new Line)
   val selectedShape: Var[Drawable] = new Var(null)
