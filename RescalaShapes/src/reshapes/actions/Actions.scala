@@ -6,7 +6,7 @@ import scala.util.Marshal
 import reshapes.Events
 import java.io.FileInputStream
 import reshapes.figures.Drawable
-import reshapes.command.CreateShapeCommand
+import reshapes.command.CreateShape
 
 /**
  * Serializes all currently drawn shapes to a chosen file.
@@ -33,7 +33,7 @@ class LoadAction extends Action("Load") {
       val bytes = Stream.continually(in.read).takeWhile(-1 !=).map(_.toByte).toArray
       val shapes = Marshal.load[List[Drawable]](bytes)
       Events.allShapes() = List[Drawable]()
-      shapes map (shape => (new CreateShapeCommand(shape)).execute())
+      shapes map (shape => (new CreateShape(shape)).execute())
     }
   }
 }

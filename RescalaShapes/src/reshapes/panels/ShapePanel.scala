@@ -3,7 +3,7 @@ import scala.swing._
 import scala.swing.event.ButtonClicked
 import scala.swing.event.MouseClicked
 import reshapes.figures.Drawable
-import reshapes.command.DeleteCommand
+import reshapes.command.DeleteShape
 import reshapes.Events
 
 /**
@@ -37,7 +37,7 @@ class ShapeView(shape: Drawable) extends BoxPanel(Orientation.Horizontal) {
   deleteButton.action = new Action("delete") {
     val assignedShape = shape
     def apply() = {
-      val deleteCmd = new DeleteCommand(assignedShape)
+      val deleteCmd = new DeleteShape(assignedShape)
       deleteCmd.execute()
     }
   }

@@ -31,7 +31,7 @@ abstract class Command {
 /**
  * Deletes a given shape
  */
-class DeleteCommand(shapeToDelete: Drawable) extends Command {
+class DeleteShape(shapeToDelete: Drawable) extends Command {
 
   def onExecute() = {
     Events.allShapes() = Events.allShapes.getValue filter (x => x != shapeToDelete)
@@ -46,14 +46,14 @@ class DeleteCommand(shapeToDelete: Drawable) extends Command {
   }
 }
 
-class CreateShapeCommand(shapeToCreate: Drawable) extends Command {
+class CreateShape(shapeToCreate: Drawable) extends Command {
 
   def onExecute() {
     Events.allShapes() = shapeToCreate :: Events.allShapes.getValue
   }
 
   def onRevert() {
-    var deleteCmd = new DeleteCommand(shapeToCreate)
+    var deleteCmd = new DeleteShape(shapeToCreate)
     deleteCmd.onExecute()
   }
 
@@ -62,7 +62,7 @@ class CreateShapeCommand(shapeToCreate: Drawable) extends Command {
   }
 }
 
-class EditShapeCommand(shapeBeforeEdit: Drawable, shapeAfterEdit: Drawable) extends Command {
+class EditShape(shapeBeforeEdit: Drawable, shapeAfterEdit: Drawable) extends Command {
 
   def onExecute() {
 

@@ -6,12 +6,12 @@ import scala.events.behaviour.Var
 import reshapes.figures._
 import events.ImperativeEvent
 import java.awt.BasicStroke
-import reshapes.command.CreateShapeCommand
+import reshapes.command.CreateShape
 import scala.util.Marshal
-import reshapes.command.EditShapeCommand
-import reshapes.Events
+import reshapes.command._
 import reshapes.Drawing
 import reshapes.Selection
+import reshapes.Events
 
 /**
  * Represents the panel where all shapes are drawn onto.
@@ -42,7 +42,7 @@ class DrawingPanel() extends Panel {
       Events.mode match {
         case Drawing() =>
           Events.nextShape() = currentShape.getValue.getClass().newInstance()
-          var command = new CreateShapeCommand(currentShape.getValue)
+          var command = new CreateShape(currentShape.getValue)
           command.execute()
         case Selection() =>
           shapeBeforeEdit = Marshal.load[Drawable](Marshal.dump[Drawable](Events.selectedShape.getValue))
@@ -62,7 +62,7 @@ class DrawingPanel() extends Panel {
     case e: MouseReleased =>
       Events.mode match {
         case Selection() =>
-          var command = new EditShapeCommand(shapeBeforeEdit, Events.selectedShape.getValue)
+          var command = new EditShape(shapeBeforeEdit, Events.selectedShape.getValue)
         case _ =>
       }
   }
