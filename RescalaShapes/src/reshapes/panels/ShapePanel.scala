@@ -9,13 +9,21 @@ import reshapes.Events
 /**
  * Lists all drawn shapes
  */
-class ShapePanel(var events: Events) extends ScrollPane(new BoxPanel(Orientation.Vertical)) {
+class ShapePanel(var _events: Events) extends ScrollPane(new BoxPanel(Orientation.Vertical)) {
+
+  def events = _events
+  def events_=(e: Events) {
+    _events.allShapes.changed -= updateAllShapesPanel
+    _events = e
+    e.allShapes.changed += updateAllShapesPanel
+    updateAllShapesPanel(e.allShapes.getValue)
+  }
 
   val allShapesPanel = new BoxPanel(Orientation.Vertical)
 
   contents = allShapesPanel
 
-  events.allShapes.changed += (shapes => updateAllShapesPanel(shapes))
+  events.allShapes.changed += updateAllShapesPanel
 
   def updateAllShapesPanel(shapes: List[Drawable]) = {
     allShapesPanel.contents.clear()

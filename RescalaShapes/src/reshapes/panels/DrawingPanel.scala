@@ -18,7 +18,7 @@ import reshapes.Events
  */
 class DrawingPanel(var events: Events) extends Panel {
   opaque = true
-
+  
   var currentPath: List[Point] = List()
   var shapes = List[Drawable]()
   val currentShape = Signal { events.nextShape() }

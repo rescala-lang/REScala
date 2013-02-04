@@ -52,7 +52,7 @@ abstract class Drawable(var start: Point = new Point(0, 0), var end: Point = new
     this.getClass().getSimpleName() + " #" + current.toString()
   }
 
-  // methods needed to be implemented by sublclasses
+  // methods needed to be implemented by subclasses
   def update(path: List[Point])
   def doDraw(g: Graphics2D)
 }

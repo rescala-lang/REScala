@@ -38,6 +38,7 @@ import scala.events.behaviour.Var
 import scala.swing.event.SelectionChanged
 import scala.events.scalareact
 import scala.collection.mutable.HashMap
+import java.util.Calendar
 
 object Reshapes extends SimpleSwingApplication {
 
@@ -45,34 +46,35 @@ object Reshapes extends SimpleSwingApplication {
   val currentTabIndex = new Var(0)
   // as event/Var
   var CurrentEvents: Events = new Events()
-  val drawingPanels = new HashMap[Int, Events]()
-  drawingPanels(0) = CurrentEvents
+  val panelEvents = new HashMap[Int, Events]()
+  //panelEvents(0) = CurrentEvents
 
   // Panels
-  val infoPanel = new InfoPanel(CurrentEvents)
-  val shapePanel = new ShapePanel(CurrentEvents)
-  val strokeInputPanel = new StrokeInputPanel(CurrentEvents)
-  val shapeSelectionPanel = new ShapeSelectionPanel(CurrentEvents)
-  val drawingPanel = new DrawingPanel(CurrentEvents)
+  var infoPanel = new InfoPanel(CurrentEvents)
+  var shapePanel = new ShapePanel(CurrentEvents)
+  var strokeInputPanel = new StrokeInputPanel(CurrentEvents)
+  var shapeSelectionPanel = new ShapeSelectionPanel(CurrentEvents)
+  //var drawingPanel = new DrawingPanel(CurrentEvents)
 
   val ui = new BorderPanel {
     add(infoPanel, BorderPanel.Position.South)
     add(shapePanel, BorderPanel.Position.East)
     add(strokeInputPanel, BorderPanel.Position.North)
     add(shapeSelectionPanel, BorderPanel.Position.West)
-    tabbedPane.pages += new TabbedPane.Page("newdrawing", drawingPanel)
+    //tabbedPane.pages += new TabbedPane.Page("newdrawing", drawingPanel)
     add(tabbedPane, BorderPanel.Position.Center)
 
     listenTo(tabbedPane.selection)
 
     reactions += {
       case SelectionChanged(`tabbedPane`) => {
-        val currentEvents = drawingPanels(tabbedPane.selection.index)
+        val currentEvents = panelEvents(tabbedPane.selection.index)
         infoPanel.events = currentEvents
         shapePanel.events = currentEvents
         strokeInputPanel.events = currentEvents
         shapeSelectionPanel.events = currentEvents
-        drawingPanel.events = currentEvents
+        //drawingPanel.events = currentEvents
+
         CurrentEvents = currentEvents
       }
     }
@@ -123,8 +125,9 @@ object Reshapes extends SimpleSwingApplication {
 
   def addTab() {
     val event = new Events()
-    tabbedPane.pages += new TabbedPane.Page("newdrawing", new DrawingPanel(event))
-    drawingPanels(tabbedPane.pages.size - 1) = event
+    panelEvents(tabbedPane.pages.size) = event
+    val panel = new DrawingPanel(event)
+    tabbedPane.pages += new TabbedPane.Page("newdrawing", panel)
   }
 
   def removeTab() {
