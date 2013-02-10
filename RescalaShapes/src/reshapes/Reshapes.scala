@@ -27,6 +27,7 @@ import reshapes.panels.StrokeInputPanel
 import reshapes.Events
 import sun.reflect.generics.reflectiveObjects.NotImplementedException
 import org.omg.CORBA.Environment
+import java.awt.Point
 
 object Reshapes extends SimpleSwingApplication {
 
@@ -96,6 +97,7 @@ object Reshapes extends SimpleSwingApplication {
   def top = new MainFrame {
     title = "ReShapes"
     preferredSize = new Dimension(1000, 500)
+    this.location = new Point(commandWindow.location.x + commandWindow.size.width, commandWindow.location.y)
 
     menuBar = menu
     contents = ui
