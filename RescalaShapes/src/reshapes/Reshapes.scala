@@ -1,44 +1,32 @@
 package reshapes
 
-import java.awt.Color
-import scala.Array.canBuildFrom
-import scala.swing.event._
+import scala.collection.mutable.HashMap
+import scala.events.behaviour.Var
+import scala.swing.event.SelectionChanged
 import scala.swing.Dimension
 import scala.swing.Action
 import scala.swing.BorderPanel
-import scala.swing.BoxPanel
-import scala.swing.Button
-import scala.swing.FlowPanel
 import scala.swing.Frame
-import scala.swing.Label
 import scala.swing.MainFrame
 import scala.swing.Menu
 import scala.swing.MenuBar
 import scala.swing.MenuItem
-import scala.swing.Orientation
 import scala.swing.Separator
 import scala.swing.SimpleSwingApplication
-import scala.swing.TextField
+import scala.swing.TabbedPane
 import reshapes.actions.LoadAction
 import reshapes.actions.QuitAction
 import reshapes.actions.SaveAction
 import reshapes.actions.UndoAction
-import reshapes.figures.Line
-import reshapes.figures.Oval
 import reshapes.panels.CommandPanel
 import reshapes.panels.DrawingPanel
 import reshapes.panels.InfoPanel
 import reshapes.panels.ShapePanel
 import reshapes.panels.ShapeSelectionPanel
 import reshapes.panels.StrokeInputPanel
-import scala.swing.TabbedPane
+import reshapes.Events
 import sun.reflect.generics.reflectiveObjects.NotImplementedException
-import scala.collection.mutable.MutableList
-import scala.events.behaviour.Var
-import scala.swing.event.SelectionChanged
-import scala.events.scalareact
-import scala.collection.mutable.HashMap
-import java.util.Calendar
+import org.omg.CORBA.Environment
 
 object Reshapes extends SimpleSwingApplication {
 
@@ -47,21 +35,19 @@ object Reshapes extends SimpleSwingApplication {
   // as event/Var
   var CurrentEvents: Events = new Events()
   val panelEvents = new HashMap[Int, Events]()
-  //panelEvents(0) = CurrentEvents
 
   // Panels
   var infoPanel = new InfoPanel(CurrentEvents)
   var shapePanel = new ShapePanel(CurrentEvents)
   var strokeInputPanel = new StrokeInputPanel(CurrentEvents)
   var shapeSelectionPanel = new ShapeSelectionPanel(CurrentEvents)
-  //var drawingPanel = new DrawingPanel(CurrentEvents)
+  var commandPanel = new CommandPanel(CurrentEvents)
 
   val ui = new BorderPanel {
     add(infoPanel, BorderPanel.Position.South)
     add(shapePanel, BorderPanel.Position.East)
     add(strokeInputPanel, BorderPanel.Position.North)
     add(shapeSelectionPanel, BorderPanel.Position.West)
-    //tabbedPane.pages += new TabbedPane.Page("newdrawing", drawingPanel)
     add(tabbedPane, BorderPanel.Position.Center)
 
     listenTo(tabbedPane.selection)
@@ -73,7 +59,7 @@ object Reshapes extends SimpleSwingApplication {
         shapePanel.events = currentEvents
         strokeInputPanel.events = currentEvents
         shapeSelectionPanel.events = currentEvents
-        //drawingPanel.events = currentEvents
+        commandPanel.events = currentEvents
 
         CurrentEvents = currentEvents
       }
@@ -108,7 +94,7 @@ object Reshapes extends SimpleSwingApplication {
   }
 
   def top = new MainFrame {
-    title = "ReShapes";
+    title = "ReShapes"
     preferredSize = new Dimension(1000, 500)
 
     menuBar = menu
@@ -120,7 +106,7 @@ object Reshapes extends SimpleSwingApplication {
   def commandWindow = new Frame {
     title = "Command list"
     preferredSize = new Dimension(300, 500)
-    contents = new CommandPanel(CurrentEvents)
+    contents = commandPanel
   }
 
   def addTab() {
