@@ -55,14 +55,16 @@ object Reshapes extends SimpleSwingApplication {
 
     reactions += {
       case SelectionChanged(`tabbedPane`) => {
-        val currentEvents = panelEvents(tabbedPane.selection.index)
-        infoPanel.events = currentEvents
-        shapePanel.events = currentEvents
-        strokeInputPanel.events = currentEvents
-        shapeSelectionPanel.events = currentEvents
-        commandPanel.events = currentEvents
+        if (tabbedPane.pages.size > 0) {
+          val currentEvents = panelEvents(tabbedPane.selection.index)
+          infoPanel.events = currentEvents
+          shapePanel.events = currentEvents
+          strokeInputPanel.events = currentEvents
+          shapeSelectionPanel.events = currentEvents
+          commandPanel.events = currentEvents
 
-        CurrentEvents = currentEvents
+          CurrentEvents = currentEvents
+        }
       }
     }
   }
@@ -118,7 +120,15 @@ object Reshapes extends SimpleSwingApplication {
     tabbedPane.pages += new TabbedPane.Page("newdrawing", panel)
   }
 
+  /**
+   * Removes the currently selected tab and its associated Event.
+   */
   def removeTab() {
-    throw new NotImplementedException()
+    if (tabbedPane.pages.size > 0) {
+      panelEvents.remove(tabbedPane.selection.index)
+      tabbedPane.pages.remove(tabbedPane.selection.index)
+    }
   }
+
+  addTab() // add one tab at startup
 }
