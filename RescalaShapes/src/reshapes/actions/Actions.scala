@@ -9,6 +9,7 @@ import reshapes.figures.Drawable
 import reshapes.command.CreateShape
 import reshapes.Reshapes
 import java.io.File
+import reshapes.command.MergeEvents
 
 /**
  * Serializes all currently drawn shapes to a chosen file.
@@ -52,5 +53,11 @@ class QuitAction extends Action("Quit") {
 class UndoAction extends Action("Undo") {
   def apply() = {
     Reshapes.CurrentEvents.Commands.getValue.first.revert()
+  }
+}
+
+class MergeAction(title: String, eventsToMergeWith: Events) extends Action("Merge with %s".format(title)) {
+  def apply() = {
+    new MergeEvents(eventsToMergeWith).execute()
   }
 }

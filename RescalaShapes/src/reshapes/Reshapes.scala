@@ -28,6 +28,7 @@ import reshapes.Events
 import sun.reflect.generics.reflectiveObjects.NotImplementedException
 import org.omg.CORBA.Environment
 import java.awt.Point
+import reshapes.actions.MergeAction
 
 object Reshapes extends SimpleSwingApplication {
 
@@ -64,6 +65,8 @@ object Reshapes extends SimpleSwingApplication {
           commandPanel.events = currentEvents
 
           CurrentEvents = currentEvents
+
+          menu.updateMerge()
         }
       }
     }
@@ -77,6 +80,7 @@ object Reshapes extends SimpleSwingApplication {
     val quit = new MenuItem(new QuitAction())
     val undo = new MenuItem(new UndoAction()) { enabled = false }
     val cmdWindow = new MenuItem(Action("show command window") { commandWindow.visible = true })
+    val mergeMenu = new Menu("Merge with...")
 
     CurrentEvents.Commands.changed += (commands => undo.enabled = !commands.isEmpty)
 
@@ -93,6 +97,15 @@ object Reshapes extends SimpleSwingApplication {
       contents += undo
       contents += new Separator
       contents += cmdWindow
+    }
+    contents += new Menu("Tools") {
+      contents += mergeMenu
+    }
+
+    def updateMerge() = {
+      mergeMenu.contents.clear()
+      val mergableTabs = tabbedPane.pages filter (tab => tab.index != tabbedPane.selection.index) // all tabs except currently selected
+      mergableTabs map (tab => mergeMenu.contents += new MenuItem(new MergeAction(tab.title, panelEvents(tab.index)))) // insert tabs in submenu
     }
   }
 
@@ -118,6 +131,7 @@ object Reshapes extends SimpleSwingApplication {
     panelEvents(tabbedPane.pages.size) = event
     val panel = new DrawingPanel(event)
     tabbedPane.pages += new TabbedPane.Page("drawing#%d".format(tabbedPane.pages.size + 1), panel)
+    menu.updateMerge()
   }
 
   /**
@@ -127,6 +141,7 @@ object Reshapes extends SimpleSwingApplication {
     if (tabbedPane.pages.size > 0) {
       panelEvents.remove(tabbedPane.selection.index)
       tabbedPane.pages.remove(tabbedPane.selection.index)
+      menu.updateMerge()
     }
   }
 

@@ -83,3 +83,28 @@ class EditShape(shapeBeforeEdit: Drawable, shapeAfterEdit: Drawable) extends Com
     "Edit %s".format(shapeAfterEdit)
   }
 }
+
+/**
+ * Adds all shapes of given Events with currently selected Events.
+ */
+class MergeEvents(eventToMerge: Events) extends Command {
+
+  var eventTitle: String = null
+  var shapes: List[Drawable] = null
+
+  def onExecute() {
+    eventTitle = eventToMerge.fileName.getValue
+    shapes = eventToMerge.allShapes.getValue
+
+    shapes map (shape => new CreateShape(shape).onExecute())
+  }
+
+  def onRevert() {
+    shapes map (shape => new DeleteShape(shape).onExecute())
+  }
+
+  override def getCommandDescription(): String = {
+    "Merge with %s".format(eventTitle)
+  }
+}
+
