@@ -19,6 +19,7 @@ class Events {
   val strokeWidth: Var[Int] = new Var(1)
   val color: Var[Color] = new Var(Color.BLACK)
   val Commands: Var[List[Command]] = new Var(List[Command]())
+  val fileName: Var[String] = new Var("unnamed")
 
   var mode: EditingMode = Drawing()
   val modeChange = nextShape.changed || selectedShape.changed

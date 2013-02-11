@@ -8,6 +8,7 @@ import java.io.FileInputStream
 import reshapes.figures.Drawable
 import reshapes.command.CreateShape
 import reshapes.Reshapes
+import java.io.File
 
 /**
  * Serializes all currently drawn shapes to a chosen file.
@@ -15,10 +16,13 @@ import reshapes.Reshapes
 class SaveAction extends Action("Save") {
   def apply() = {
     val fileChooser = new FileChooser()
+    fileChooser.selectedFile = new File(Reshapes.CurrentEvents.fileName.getValue)
     if (fileChooser.showDialog(null, "save") == FileChooser.Result.Approve) {
       val out = new FileOutputStream(fileChooser.selectedFile)
       out.write(Marshal.dump(Reshapes.CurrentEvents.allShapes.getValue))
       out.close()
+      Reshapes.CurrentEvents.fileName() = fileChooser.selectedFile.getName()
+      Reshapes.tabbedPane.pages(Reshapes.tabbedPane.selection.index).title = fileChooser.selectedFile.getName() // XXX
     }
   }
 }

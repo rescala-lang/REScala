@@ -117,7 +117,7 @@ object Reshapes extends SimpleSwingApplication {
     val event = new Events()
     panelEvents(tabbedPane.pages.size) = event
     val panel = new DrawingPanel(event)
-    tabbedPane.pages += new TabbedPane.Page("newdrawing", panel)
+    tabbedPane.pages += new TabbedPane.Page("drawing#%d".format(tabbedPane.pages.size + 1), panel)
   }
 
   /**
