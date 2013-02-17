@@ -7,6 +7,18 @@ import reshapes.figures.Line
 import java.awt.Color
 import reshapes.command.Command
 import scala.events.scalareact
+import java.net._
+import java.io.ObjectOutputStream
+import java.io.DataOutputStream
+import java.io.ObjectInputStream
+import java.io.DataInputStream
+import reshapes.command.CreateShape
+import java.io.IOException
+import org.omg.CORBA.portable.OutputStream
+import java.io.BufferedWriter
+import java.io.OutputStreamWriter
+import java.io.PrintWriter
+import scala.actors.Actor
 
 /**
  * Unifies all events which can occure during execution
@@ -48,6 +60,86 @@ class Events {
       self awaitNext accum
       println(accum.getValue)
     }
+  }
+
+}
+
+class NetworkEvents(serverHostname: String = "localhost", serverPort: Int = 9998, listenerPort: Int = 1337) extends Events {
+
+  val serverUpdatePort: Int = serverPort + 1
+  val serverInetAddress: InetAddress = InetAddress.getByName(serverHostname)
+
+  allShapes.changed += update
+
+  /**
+   * Registers this client with a server and tells him
+   * which port the server has to send updates to
+   */
+  def registerClient(serverHostname: String, serverPort: Int, portToRegister: Int) = {
+    try {
+      val socket = new Socket(serverInetAddress, serverPort)
+      val out = new PrintWriter(socket.getOutputStream(), true)
+
+      out.println("register %d".format(portToRegister))
+
+      out.close()
+      socket.close()
+    } catch {
+      case e: IOException =>
+        e.printStackTrace()
+    }
+  }
+
+  def startUpdateListener(port: Int) = {
+    new UpdateListener(port, this).start()
+  }
+
+  /**
+   * Sends a upate to the server
+   */
+  def update(shapes: List[Drawable]) = {
+    val socket = new Socket(serverInetAddress, serverUpdatePort)
+    val out = new ObjectOutputStream(new DataOutputStream(socket.getOutputStream()))
+
+    out.writeObject(shapes)
+
+    out.close()
+    socket.close()
+  }
+
+  // calls at startup
+  registerClient(serverHostname, serverPort, listenerPort)
+  startUpdateListener(listenerPort)
+}
+
+/**
+ * Listens for updates from server and updates allShapes
+ */
+class UpdateListener(port: Int, events: Events) extends Actor {
+  def act() {
+    println("start UpdateThread")
+    val listener = new ServerSocket(port)
+    while (true) {
+      val socket = listener.accept()
+      val in = new ObjectInputStream(new DataInputStream(socket.getInputStream()));
+
+      val shapes = in.readObject().asInstanceOf[List[Drawable]]
+      syncShapes(shapes)
+
+      in.close()
+      socket.close()
+    }
+    listener.close()
+  }
+
+  def syncShapes(shapes: List[Drawable]) = {
+    for (shape <- shapes) {
+      if (!events.allShapes.getValue.contains(shape)) {
+        println("adding shape " + shape.strokeWidth);
+        events.allShapes() = shape :: events.allShapes.getValue
+      }
+    }
+
   }
 }
 

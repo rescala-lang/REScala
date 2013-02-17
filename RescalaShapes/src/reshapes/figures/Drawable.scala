@@ -4,6 +4,7 @@ import java.awt.Graphics2D
 import java.awt.BasicStroke
 import java.awt.Color
 import reshapes.util.MathUtil
+import java.util.UUID
 
 @serializable
 abstract class Drawable(var start: Point = new Point(0, 0), var end: Point = new Point(0, 0)) {
@@ -13,6 +14,7 @@ abstract class Drawable(var start: Point = new Point(0, 0), var end: Point = new
   var color = Color.BLACK
   var selected = false
   var current = Drawable.current
+  val uuid = UUID.randomUUID()
 
   def draw(g: Graphics2D) = {
     val stroke = if (!selected) new BasicStroke(strokeWidth) else new BasicStroke(strokeWidth,
@@ -46,6 +48,11 @@ abstract class Drawable(var start: Point = new Point(0, 0), var end: Point = new
       start.y += deltaY
       end.y += deltaY
     }
+  }
+
+  override def equals(obj: Any): Boolean = obj match {
+    case obj: Drawable => obj.uuid == this.uuid
+    case _ => false
   }
 
   override def toString(): String = {

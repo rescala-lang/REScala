@@ -5,8 +5,10 @@ import java.awt.Point
 import reshapes.Drawing
 import reshapes.figures.Line
 import reshapes.Reshapes
+import java.util.UUID
 
-abstract class Command {
+@serializable
+abstract class Command() {
 
   def execute() = {
     onExecute()

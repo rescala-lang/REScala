@@ -45,7 +45,30 @@ object randomclient {
         e.printStackTrace()
     }
   }
+}
 
+object fooclient {
+  def main(args: Array[String]) {
+    val foo = new Foo()
+
+    try {
+      val ia = InetAddress.getByName("localhost")
+      val socket = new Socket(ia, 9999)
+      val out = new ObjectOutputStream(
+        new DataOutputStream(socket.getOutputStream()))
+      val in = new DataInputStream(socket.getInputStream())
+
+      out.writeObject(foo)
+      out.flush()
+
+      out.close()
+      in.close()
+      socket.close()
+    } catch {
+      case e: IOException =>
+        e.printStackTrace()
+    }
+  }
 }
 
 object randomserver {
@@ -53,8 +76,11 @@ object randomserver {
   def main(args: Array[String]): Unit = {
     try {
       val listener = new ServerSocket(9999);
-      while (true)
+      while (true) {
+        println("wait for connections")
         new ServerThread(listener.accept()).start();
+        println("foo")
+      }
       listener.close()
     } catch {
       case e: IOException =>
@@ -62,7 +88,6 @@ object randomserver {
         System.exit(-1)
     }
   }
-
 }
 
 case class ServerThread(socket: Socket) extends Thread("ServerThread") {
@@ -74,14 +99,19 @@ case class ServerThread(socket: Socket) extends Thread("ServerThread") {
       val in = new ObjectInputStream(
         new DataInputStream(socket.getInputStream()));
 
-      val filter = in.readObject().asInstanceOf[Int => Boolean];
+      //val filter = in.readObject().asInstanceOf[Int => Boolean];
+      val foo = in.readObject().asInstanceOf[Foo]
 
       while (true) {
         var succeeded = false;
         do {
+          /*
           val x = rand.nextInt(1000);
           succeeded = filter(x);
           if (succeeded) out.writeInt(x)
+          */
+          println("server received object foo " + foo.x + " " + foo.y)
+          succeeded = true
         } while (!succeeded);
         Thread.sleep(100)
       }
@@ -96,5 +126,10 @@ case class ServerThread(socket: Socket) extends Thread("ServerThread") {
         e.printStackTrace();
     }
   }
+}
 
+@serializable
+class Foo {
+  var x = 4
+  var y = 3
 }

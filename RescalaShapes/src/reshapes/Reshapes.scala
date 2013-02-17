@@ -29,6 +29,10 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException
 import org.omg.CORBA.Environment
 import java.awt.Point
 import reshapes.actions.MergeAction
+import scala.swing.Dialog
+import scala.swing.Label
+import scala.swing.Button
+import javax.swing.JOptionPane
 
 object Reshapes extends SimpleSwingApplication {
 
@@ -74,6 +78,7 @@ object Reshapes extends SimpleSwingApplication {
 
   val menu = new MenuBar {
     val newTab = new MenuItem(Action("New tab") { addTab() })
+    val newNetworkTab = new MenuItem(Action("New network tab") { addNetworkTab() })
     val closeTab = new MenuItem(Action("Remove selected tab") { removeTab() })
     val save = new MenuItem(new SaveAction())
     val load = new MenuItem(new LoadAction())
@@ -86,6 +91,7 @@ object Reshapes extends SimpleSwingApplication {
 
     contents += new Menu("File") {
       contents += newTab
+      contents += newNetworkTab
       contents += closeTab
       contents += new Separator
       contents += save
@@ -126,12 +132,24 @@ object Reshapes extends SimpleSwingApplication {
     contents = commandPanel
   }
 
-  def addTab() {
-    val event = new Events()
+  def addTab(event: Events = new Events()) {
     panelEvents(tabbedPane.pages.size) = event
     val panel = new DrawingPanel(event)
     tabbedPane.pages += new TabbedPane.Page("drawing#%d".format(tabbedPane.pages.size + 1), panel)
     menu.updateMerge()
+  }
+
+  def addNetworkTab() {
+    try {
+      val port = JOptionPane.showInputDialog(null, "What port?", "Listener Port", JOptionPane.INFORMATION_MESSAGE)
+      if (port != null) {
+        addTab(new NetworkEvents(listenerPort = port.toInt))
+      }
+    } catch {
+      case e: Exception =>
+        JOptionPane.showConfirmDialog(null, "Invalid port!")
+        addNetworkTab()
+    }
   }
 
   /**
