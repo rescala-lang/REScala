@@ -7,32 +7,36 @@ import reshapes.util.MathUtil
 import java.util.UUID
 
 @serializable
-abstract class Drawable(var start: Point = new Point(0, 0), var end: Point = new Point(0, 0)) {
+abstract class Drawable {
   Drawable.current += 1
 
   var strokeWidth = 1
   var color = Color.BLACK
   var selected = false
   var current = Drawable.current
+  var start: Point = null
+  var end: Point = null
   val uuid = UUID.randomUUID()
 
   def draw(g: Graphics2D) = {
-    val stroke = if (!selected) new BasicStroke(strokeWidth) else new BasicStroke(strokeWidth,
-      BasicStroke.CAP_BUTT,
-      BasicStroke.JOIN_MITER,
-      10.0f, Array(10.0f), 0.0f)
+    if (start != null && end != null) {
+      val stroke = if (!selected) new BasicStroke(strokeWidth) else new BasicStroke(strokeWidth,
+        BasicStroke.CAP_BUTT,
+        BasicStroke.JOIN_MITER,
+        10.0f, Array(10.0f), 0.0f)
 
-    if (selected) {
-      g.setColor(new Color(200, 200, 200))
+      if (selected) {
+        g.setColor(new Color(200, 200, 200))
 
-      g.drawOval(start.x - 5, start.y - 5, 10, 10)
-      g.drawOval(end.x - 5, end.y - 5, 10, 10)
+        g.drawOval(start.x - 5, start.y - 5, 10, 10)
+        g.drawOval(end.x - 5, end.y - 5, 10, 10)
 
+      }
+
+      g.setStroke(stroke)
+      g.setColor(color)
+      doDraw(g)
     }
-
-    g.setStroke(stroke)
-    g.setColor(color)
-    doDraw(g)
   }
 
   def moveOrResize(from: Point, to: Point) = {

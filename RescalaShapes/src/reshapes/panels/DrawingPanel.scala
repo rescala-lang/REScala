@@ -18,10 +18,11 @@ import reshapes.Events
  */
 class DrawingPanel(var events: Events) extends Panel {
   opaque = true
-  
+
   var currentPath: List[Point] = List()
   var shapes = List[Drawable]()
   val currentShape = Signal { events.nextShape() }
+  var currentlyDrawing: Drawable = null
   var shapeBeforeEdit: Drawable = null
 
   override def paint(g: Graphics2D) = {
@@ -30,6 +31,9 @@ class DrawingPanel(var events: Events) extends Panel {
 
     g.setColor(java.awt.Color.BLACK)
     events.allShapes.getValue.map(x => x.draw(g))
+    if (currentlyDrawing != null) {
+      currentlyDrawing.draw(g)
+    }
   }
 
   listenTo(mouse.clicks)
@@ -41,9 +45,8 @@ class DrawingPanel(var events: Events) extends Panel {
       currentPath = List(e.point)
       events.mode match {
         case Drawing() =>
-          events.nextShape() = currentShape.getValue.getClass().newInstance()
-          var command = new CreateShape(currentShape.getValue)
-          command.execute()
+          //events.nextShape() = currentShape.getValue.getClass().newInstance()
+          currentlyDrawing = currentShape.getValue.getClass().newInstance()
         case Selection() =>
           shapeBeforeEdit = Marshal.load[Drawable](Marshal.dump[Drawable](events.selectedShape.getValue))
         case _ =>
@@ -53,7 +56,8 @@ class DrawingPanel(var events: Events) extends Panel {
       currentPath = currentPath ::: List(e.point)
       events.mode match {
         case Drawing() =>
-          currentShape.getValue.update(currentPath)
+          //currentShape.getValue.update(currentPath)
+          currentlyDrawing.update(currentPath)
         case Selection() =>
           events.selectedShape.getValue.moveOrResize(currentPath.reverse(1), e.point)
         case _ =>
@@ -61,8 +65,12 @@ class DrawingPanel(var events: Events) extends Panel {
       repaint()
     case e: MouseReleased =>
       events.mode match {
+        case Drawing() =>
+          new CreateShape(currentlyDrawing).execute()
+          currentlyDrawing = null
         case Selection() =>
           var command = new EditShape(shapeBeforeEdit, events.selectedShape.getValue)
+          command.execute()
         case _ =>
       }
   }
