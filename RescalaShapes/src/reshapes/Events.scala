@@ -19,6 +19,7 @@ import java.io.BufferedWriter
 import java.io.OutputStreamWriter
 import java.io.PrintWriter
 import scala.actors.Actor
+import reshapes.network.TransportObject
 
 /**
  * Unifies all events which can occure during execution
@@ -69,7 +70,7 @@ class NetworkEvents(serverHostname: String = "localhost", serverPort: Int = 9998
   val serverUpdatePort: Int = serverPort + 1
   val serverInetAddress: InetAddress = InetAddress.getByName(serverHostname)
 
-  allShapes.changed += update
+  Commands.changed += (_ => update(allShapes.getValue))
 
   /**
    * Registers this client with a server and tells him
@@ -101,7 +102,7 @@ class NetworkEvents(serverHostname: String = "localhost", serverPort: Int = 9998
     val socket = new Socket(serverInetAddress, serverUpdatePort)
     val out = new ObjectOutputStream(new DataOutputStream(socket.getOutputStream()))
 
-    out.writeObject(shapes)
+    out.writeObject(new TransportObject(shapes, listenerPort))
 
     out.close()
     socket.close()
@@ -120,11 +121,14 @@ class UpdateListener(port: Int, events: Events) extends Actor {
     println("start UpdateThread")
     val listener = new ServerSocket(port)
     while (true) {
+      println("receiving update")
       val socket = listener.accept()
       val in = new ObjectInputStream(new DataInputStream(socket.getInputStream()));
 
       val shapes = in.readObject().asInstanceOf[List[Drawable]]
-      syncShapes(shapes)
+      events.allShapes() = List[Drawable]()
+      shapes map (shape => events.allShapes() = shape :: events.allShapes.getValue)
+      //syncShapes(shapes)
 
       in.close()
       socket.close()

@@ -32,8 +32,13 @@ object ReshapesServer {
   /**
    * Sends the given command to all registered clients.
    */
-  def sendUpdateToClients(shapes: List[Drawable]) = {
-    clients map (client => sendToClient(shapes, client))
+  def sendUpdateToClients(shapes: List[Drawable], sender: (InetAddress, Int)) = {
+    for (client <- clients) {
+      if (client._1 != sender._1 ||
+        (client._1 == sender._1 && client._2 != sender._2)) {
+        sendToClient(shapes, client)
+      }
+    }
   }
 
   def sendToClient(shapes: List[Drawable], client: (InetAddress, Int)) = {
@@ -86,9 +91,9 @@ class UpdateThread(port: Int) extends Actor {
       val socket = listener.accept()
       val in = new ObjectInputStream(new DataInputStream(socket.getInputStream()));
 
-      val shapes = in.readObject().asInstanceOf[List[Drawable]]
+      val shapes = in.readObject().asInstanceOf[TransportObject]
 
-      ReshapesServer.sendUpdateToClients(shapes)
+      ReshapesServer.sendUpdateToClients(shapes.shapes, (socket.getInetAddress(), shapes.senderPort))
 
       in.close()
       socket.close()
