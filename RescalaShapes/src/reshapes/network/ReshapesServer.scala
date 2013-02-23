@@ -9,7 +9,7 @@ import reshapes.command.Command
 
 object ReshapesServer {
 
-  val clients = MutableList[(InetAddress, Int)]()
+  var clients = MutableList[(InetAddress, Int)]()
 
   def main(args: Array[String]): Unit = {
     new CommandThread(9998).start()
@@ -29,26 +29,44 @@ object ReshapesServer {
     }
   }
 
+  def removeClient(client: (InetAddress, Int)) = {
+    println("ReshapesServer removing client " + client.toString())
+    clients = clients filter (c => c._1 != client._1 && c._2 != client._2)
+  }
+
   /**
-   * Sends the given command to all registered clients.
+   * Sends the given shapes to all registered clients except the original sender
    */
   def sendUpdateToClients(shapes: List[Drawable], sender: (InetAddress, Int)) = {
     for (client <- clients) {
       if (client._1 != sender._1 ||
         (client._1 == sender._1 && client._2 != sender._2)) {
-        sendToClient(shapes, client)
+        if (!sendToClient(shapes, client)) {
+          removeClient(sender)
+        }
       }
     }
   }
 
-  def sendToClient(shapes: List[Drawable], client: (InetAddress, Int)) = {
-    val socket = new Socket(client._1, client._2)
-    val out = new ObjectOutputStream(new DataOutputStream(socket.getOutputStream()))
+  /**
+   * Sends shapes to a client.
+   * returns true if shapes where successfully send, false otherwise (connection refused to client)
+   */
+  def sendToClient(shapes: List[Drawable], client: (InetAddress, Int)): Boolean = {
+    try {
+      val socket = new Socket(client._1, client._2)
+      val out = new ObjectOutputStream(new DataOutputStream(socket.getOutputStream()))
 
-    out.writeObject(shapes)
+      out.writeObject(shapes)
 
-    out.close()
-    socket.close()
+      out.close()
+      socket.close()
+    } catch {
+      case e: ConnectException =>
+        return false
+    }
+
+    true
   }
 }
 
