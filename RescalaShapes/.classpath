@@ -6,5 +6,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/scala-react-2"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/Events"/>
+	<classpathentry kind="lib" path="lib/continuations.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

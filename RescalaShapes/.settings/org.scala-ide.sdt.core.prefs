@@ -1,3 +1,4 @@
+#Sat Feb 23 11:34:20 CET 2013
 P=continuations\:enable
 Xcheck-null=false
 Xcheckinit=false
@@ -9,7 +10,7 @@ Xfuture=false
 Xlog-implicits=false
 Xmigration=false
 Xno-uescape=false
-Xpluginsdir=/home/florian/Applications/eclipse/configuration/org.eclipse.osgi/bundles/763/1/.cp/lib
+Xpluginsdir=C\:\\Program Files\\eclipse\\configuration\\org.eclipse.osgi\\bundles\\854\\1\\.cp\\lib
 Ybuild-manager-debug=false
 Yno-generic-signatures=false
 Yno-imports=false
