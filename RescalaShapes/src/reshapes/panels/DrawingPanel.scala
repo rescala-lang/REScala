@@ -45,8 +45,9 @@ class DrawingPanel(var events: Events) extends Panel {
       currentPath = List(e.point)
       events.mode match {
         case Drawing() =>
-          //events.nextShape() = currentShape.getValue.getClass().newInstance()
           currentlyDrawing = currentShape.getValue.getClass().newInstance()
+          currentlyDrawing.strokeWidth = events.strokeWidth.getValue
+          currentlyDrawing.color = events.color.getValue
         case Selection() =>
           shapeBeforeEdit = Marshal.load[Drawable](Marshal.dump[Drawable](events.selectedShape.getValue))
         case _ =>
@@ -56,7 +57,6 @@ class DrawingPanel(var events: Events) extends Panel {
       currentPath = currentPath ::: List(e.point)
       events.mode match {
         case Drawing() =>
-          //currentShape.getValue.update(currentPath)
           currentlyDrawing.update(currentPath)
         case Selection() =>
           events.selectedShape.getValue.moveOrResize(currentPath.reverse(1), e.point)
