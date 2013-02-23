@@ -65,9 +65,8 @@ class Events {
 
 }
 
-class NetworkEvents(serverHostname: String = "localhost", serverPort: Int = 9998, listenerPort: Int = 1337) extends Events {
+class NetworkEvents(serverHostname: String = "localhost", commandPort: Int = 9998, exchangePort: Int = 9999, listenerPort: Int = 1337) extends Events {
 
-  val serverUpdatePort: Int = serverPort + 1
   val serverInetAddress: InetAddress = InetAddress.getByName(serverHostname)
 
   Commands.changed += (_ => update(allShapes.getValue))
@@ -77,18 +76,13 @@ class NetworkEvents(serverHostname: String = "localhost", serverPort: Int = 9998
    * which port the server has to send updates to
    */
   def registerClient(serverHostname: String, serverPort: Int, portToRegister: Int) = {
-    try {
-      val socket = new Socket(serverInetAddress, serverPort)
-      val out = new PrintWriter(socket.getOutputStream(), true)
+    val socket = new Socket(serverInetAddress, serverPort)
+    val out = new PrintWriter(socket.getOutputStream(), true)
 
-      out.println("register %d".format(portToRegister))
+    out.println("register %d".format(portToRegister))
 
-      out.close()
-      socket.close()
-    } catch {
-      case e: IOException =>
-        e.printStackTrace()
-    }
+    out.close()
+    socket.close()
   }
 
   def startUpdateListener(port: Int) = {
@@ -99,7 +93,7 @@ class NetworkEvents(serverHostname: String = "localhost", serverPort: Int = 9998
    * Sends a upate to the server
    */
   def update(shapes: List[Drawable]) = {
-    val socket = new Socket(serverInetAddress, serverUpdatePort)
+    val socket = new Socket(serverInetAddress, exchangePort)
     val out = new ObjectOutputStream(new DataOutputStream(socket.getOutputStream()))
 
     out.writeObject(new TransportObject(shapes, listenerPort))
@@ -109,7 +103,7 @@ class NetworkEvents(serverHostname: String = "localhost", serverPort: Int = 9998
   }
 
   // calls at startup
-  registerClient(serverHostname, serverPort, listenerPort)
+  registerClient(serverHostname, commandPort, listenerPort)
   startUpdateListener(listenerPort)
 }
 

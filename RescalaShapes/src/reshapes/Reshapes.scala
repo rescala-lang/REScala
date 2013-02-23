@@ -33,6 +33,7 @@ import scala.swing.Dialog
 import scala.swing.Label
 import scala.swing.Button
 import javax.swing.JOptionPane
+import java.net.ConnectException
 
 object Reshapes extends SimpleSwingApplication {
 
@@ -140,15 +141,19 @@ object Reshapes extends SimpleSwingApplication {
   }
 
   def addNetworkTab() {
-    try {
-      val port = JOptionPane.showInputDialog(null, "What port?", "Listener Port", JOptionPane.INFORMATION_MESSAGE)
-      if (port != null) {
-        addTab(new NetworkEvents(listenerPort = port.toInt))
+    val dialog = new ServerDialog()
+    dialog.showDialog()
+    if (dialog.inputIsValid()) {
+      try {
+        addTab(new NetworkEvents(dialog.hostname, dialog.commandPort, dialog.exchangePort, dialog.listenerPort))
+      } catch {
+        case e: ConnectException =>
+          JOptionPane.showMessageDialog(null, "Server not available", "ConnectException", JOptionPane.ERROR_MESSAGE)
+        case e: Exception =>
+          e.printStackTrace()
+          JOptionPane.showMessageDialog(null, "Invalid input!")
+          addNetworkTab()
       }
-    } catch {
-      case e: Exception =>
-        JOptionPane.showConfirmDialog(null, "Invalid port!")
-        addNetworkTab()
     }
   }
 
