@@ -4,11 +4,6 @@ import java.awt.Graphics2D
 
 class Oval extends Drawable {
 
-  def update(path: List[Point]) = {
-    start = path.first
-    end = path.last
-  }
-
   def doDraw(g: Graphics2D) = {
     var width = math.abs(start.x - end.x)
     var height = math.abs(start.y - end.y)

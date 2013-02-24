@@ -30,7 +30,6 @@ abstract class Drawable {
 
         g.drawOval(start.x - 5, start.y - 5, 10, 10)
         g.drawOval(end.x - 5, end.y - 5, 10, 10)
-
       }
 
       g.setStroke(stroke)
@@ -54,6 +53,13 @@ abstract class Drawable {
     }
   }
 
+  def update(path: List[Point]) = {
+    start = path.first
+    end = path.last
+
+    doUpdate(path)
+  }
+
   override def equals(obj: Any): Boolean = obj match {
     case obj: Drawable => obj.uuid == this.uuid
     case _ => false
@@ -64,10 +70,29 @@ abstract class Drawable {
   }
 
   // methods needed to be implemented by subclasses
-  def update(path: List[Point])
+  def doUpdate(path: List[Point]) = {}
   def doDraw(g: Graphics2D)
 }
 
 object Drawable {
   private var current = 0
+}
+
+trait Movable extends Drawable {
+
+  def move(from: Point, to: Point) = {
+    val deltaX = (if (from.x < to.x) 1 else -1) * math.abs(from.x - to.x)
+    val deltaY = (if (from.y < to.y) 1 else -1) * math.abs(from.y - to.y)
+    start.x += deltaX
+    end.x += deltaX
+    start.y += deltaY
+    end.y += deltaY
+  }
+}
+
+trait Linne extends Drawable {
+
+  override def doDraw(g: Graphics2D) = {
+    g.drawLine(start.x, start.y, end.x, end.y)
+  }
 }

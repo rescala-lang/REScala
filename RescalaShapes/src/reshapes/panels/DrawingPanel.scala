@@ -49,7 +49,7 @@ class DrawingPanel(var events: Events) extends Panel {
           currentlyDrawing.strokeWidth = events.strokeWidth.getValue
           currentlyDrawing.color = events.color.getValue
         case Selection() =>
-          shapeBeforeEdit = Marshal.load[Drawable](Marshal.dump[Drawable](events.selectedShape.getValue))
+          shapeBeforeEdit = Marshal.load[Drawable](Marshal.dump[Drawable](events.selectedShape.getValue)) // hack to get a object copy
         case _ =>
       }
       repaint()

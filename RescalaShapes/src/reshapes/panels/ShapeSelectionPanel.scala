@@ -14,22 +14,27 @@ class ShapeSelectionPanel(var events: Events) extends BoxPanel(Orientation.Verti
   val lineBtn = new Button { text = "Line" }
   val rectBtn = new Button { text = "Rectangle" }
   val ovalBtn = new Button { text = "Oval" }
+  val freedrawBtn = new Button { text = "Freedraw" }
 
   contents += lineBtn
   contents += rectBtn
   contents += ovalBtn
+  contents += freedrawBtn
 
   // reactions
   listenTo(lineBtn)
   listenTo(rectBtn)
   listenTo(ovalBtn)
+  listenTo(freedrawBtn)
 
   reactions += {
     case ButtonClicked(`lineBtn`) =>
-      events.nextShape() = new Line
+      events.nextShape() = new Line with Movable
     case ButtonClicked(`rectBtn`) =>
       events.nextShape() = new figures.Rectangle
     case ButtonClicked(`ovalBtn`) =>
       events.nextShape() = new Oval
+    case ButtonClicked(`freedrawBtn`) =>
+      events.nextShape() = new Freedraw
   }
 }
