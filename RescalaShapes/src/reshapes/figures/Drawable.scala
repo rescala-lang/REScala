@@ -52,7 +52,7 @@ abstract class Drawable {
   }
 
   def doUpdate(path: List[Point]) = {}
-  def doDraw(g: Graphics2D) = {}
+  def doDraw(g: Graphics2D)
 }
 
 object Drawable {
@@ -64,10 +64,6 @@ trait Movable extends Drawable {
   def move(from: Point, to: Point) = {
     val deltaX = (if (from.x < to.x) 1 else -1) * math.abs(from.x - to.x)
     val deltaY = (if (from.y < to.y) 1 else -1) * math.abs(from.y - to.y)
-    start.x += deltaX
-    end.x += deltaX
-    start.y += deltaY
-    end.y += deltaY
 
     path = path map (point => new Point(point.x + deltaX, point.y + deltaY))
   }
