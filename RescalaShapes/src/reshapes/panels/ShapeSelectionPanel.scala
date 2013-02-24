@@ -29,7 +29,7 @@ class ShapeSelectionPanel(var events: Events) extends BoxPanel(Orientation.Verti
 
   reactions += {
     case ButtonClicked(`lineBtn`) =>
-      events.nextShape() = new Line with Movable
+      events.nextShape() = new Line
     case ButtonClicked(`rectBtn`) =>
       events.nextShape() = new figures.Rectangle
     case ButtonClicked(`ovalBtn`) =>

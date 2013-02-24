@@ -12,6 +12,7 @@ import reshapes.command._
 import reshapes.Drawing
 import reshapes.Selection
 import reshapes.Events
+import reshapes.util.MathUtil
 
 /**
  * Represents the panel where all shapes are drawn onto.
@@ -59,7 +60,13 @@ class DrawingPanel(var events: Events) extends Panel {
         case Drawing() =>
           currentlyDrawing.update(currentPath)
         case Selection() =>
-          events.selectedShape.getValue.moveOrResize(currentPath.reverse(1), e.point)
+          val shape = events.selectedShape.getValue
+          if ((MathUtil.isInCircle(shape.start, 6, e.point) || MathUtil.isInCircle(shape.end, 6, e.point))
+            && shape.isInstanceOf[Resizable]) {
+            shape.asInstanceOf[Resizable].resize(currentPath.reverse(1), e.point)
+          } else if (shape.isInstanceOf[Movable]) {
+            shape.asInstanceOf[Movable].move(currentPath.reverse(1), e.point)
+          }
         case _ =>
       }
       repaint()

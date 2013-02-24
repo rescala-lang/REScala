@@ -2,9 +2,9 @@ package reshapes.figures
 import java.awt.Point
 import java.awt.Graphics2D
 
-class Line extends Drawable {
+class Line extends Movable with Resizable {
 
-  def doDraw(g: Graphics2D) = {
+  override def doDraw(g: Graphics2D) = {
     g.drawLine(start.x, start.y, end.x, end.y)
   }
 }

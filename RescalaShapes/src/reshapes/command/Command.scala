@@ -72,8 +72,7 @@ class EditShape(shapeBeforeEdit: Drawable, shapeAfterEdit: Drawable) extends Com
   }
 
   def onRevert() {
-    shapeAfterEdit.start = shapeBeforeEdit.start
-    shapeAfterEdit.end = shapeBeforeEdit.end
+    shapeAfterEdit.path = shapeBeforeEdit.path
     shapeAfterEdit.strokeWidth = shapeBeforeEdit.strokeWidth
     shapeAfterEdit.color = shapeBeforeEdit.color
 

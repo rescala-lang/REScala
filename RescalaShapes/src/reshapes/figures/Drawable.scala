@@ -14,8 +14,13 @@ abstract class Drawable {
   var color = Color.BLACK
   var selected = false
   var current = Drawable.current
-  var start: Point = null
-  var end: Point = null
+  var path: List[Point] = null
+
+  //var start: Point = null
+  //var end: Point = null
+  def start = if (path == null) null else path.first
+  def end = if (path == null) null else path.last
+
   val uuid = UUID.randomUUID()
 
   def draw(g: Graphics2D) = {
@@ -25,37 +30,14 @@ abstract class Drawable {
         BasicStroke.JOIN_MITER,
         10.0f, Array(10.0f), 0.0f)
 
-      if (selected) {
-        g.setColor(new Color(200, 200, 200))
-
-        g.drawOval(start.x - 5, start.y - 5, 10, 10)
-        g.drawOval(end.x - 5, end.y - 5, 10, 10)
-      }
-
       g.setStroke(stroke)
       g.setColor(color)
       doDraw(g)
     }
   }
 
-  def moveOrResize(from: Point, to: Point) = {
-    if (MathUtil.isInCircle(start, 6, from)) {
-      start = to
-    } else if (MathUtil.isInCircle(end, 6, to)) {
-      end = to
-    } else {
-      val deltaX = (if (from.x < to.x) 1 else -1) * math.abs(from.x - to.x)
-      val deltaY = (if (from.y < to.y) 1 else -1) * math.abs(from.y - to.y)
-      start.x += deltaX
-      end.x += deltaX
-      start.y += deltaY
-      end.y += deltaY
-    }
-  }
-
   def update(path: List[Point]) = {
-    start = path.first
-    end = path.last
+    this.path = path
 
     doUpdate(path)
   }
@@ -69,9 +51,8 @@ abstract class Drawable {
     this.getClass().getSimpleName() + " #" + current.toString()
   }
 
-  // methods needed to be implemented by subclasses
   def doUpdate(path: List[Point]) = {}
-  def doDraw(g: Graphics2D)
+  def doDraw(g: Graphics2D) = {}
 }
 
 object Drawable {
@@ -87,12 +68,29 @@ trait Movable extends Drawable {
     end.x += deltaX
     start.y += deltaY
     end.y += deltaY
+
+    path = path map (point => new Point(point.x + deltaX, point.y + deltaY))
   }
 }
 
-trait Linne extends Drawable {
+trait Resizable extends Drawable {
 
-  override def doDraw(g: Graphics2D) = {
-    g.drawLine(start.x, start.y, end.x, end.y)
+  def resize(from: Point, to: Point) = {
+    if (MathUtil.isInCircle(start, 6, from)) {
+      path = to :: path.tail
+    } else if (MathUtil.isInCircle(end, 6, to)) {
+      path = (to :: path.reverse.tail).reverse
+    }
+  }
+
+  override def draw(g: Graphics2D) = {
+    super.draw(g)
+
+    if (start != null && end != null && selected) {
+      g.setColor(new Color(200, 200, 200))
+
+      g.drawOval(start.x - 5, start.y - 5, 10, 10)
+      g.drawOval(end.x - 5, end.y - 5, 10, 10)
+    }
   }
 }
