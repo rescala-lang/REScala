@@ -31,7 +31,7 @@ class InfoPanel(var _events: Events) extends FlowPanel {
   contents += modeLabel
 
   def updateCurrentShapeLabel(shape: Drawable) = {
-    currentShapeLabel.text = shape.toString()
+    currentShapeLabel.text = if (shape != null) shape.toString() else "";
   }
 
   def updateNumberElementsLabel(shapes: List[Drawable]) = {

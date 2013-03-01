@@ -34,6 +34,8 @@ import scala.swing.Label
 import scala.swing.Button
 import javax.swing.JOptionPane
 import java.net.ConnectException
+import scala.swing.event.KeyPressed
+import scala.swing.event.Key
 
 object Reshapes extends SimpleSwingApplication {
 
@@ -58,6 +60,7 @@ object Reshapes extends SimpleSwingApplication {
     add(tabbedPane, BorderPanel.Position.Center)
 
     listenTo(tabbedPane.selection)
+    listenTo(keys)
 
     reactions += {
       case SelectionChanged(`tabbedPane`) => {
@@ -74,6 +77,7 @@ object Reshapes extends SimpleSwingApplication {
           menu.updateMerge()
         }
       }
+      case KeyPressed(_, Key.Space, _, _) => println("ctrl pressed")
     }
   }
 

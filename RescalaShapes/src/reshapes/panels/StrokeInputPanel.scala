@@ -41,7 +41,17 @@ class StrokeInputPanel(var events: Events) extends FlowPanel {
   })
 
   contents += new Label { text = "stroke width: " }
-  contents += strokeWidthInput
+  contents += new Slider() {
+    min = 1
+    max = 50
+    value = min
+    minorTickSpacing = 1
+    paintTicks = true
+
+    reactions += {
+      case e: ValueChanged => events.strokeWidth() = value
+    }
+  }
   contents += showColorInput
 
   listenTo(strokeWidthInput)
