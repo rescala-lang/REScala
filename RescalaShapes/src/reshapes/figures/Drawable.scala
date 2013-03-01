@@ -83,10 +83,14 @@ trait Resizable extends Drawable {
     super.draw(g)
 
     if (start != null && end != null && selected) {
+      val origStroke = g.getStroke()
+      g.setStroke(new BasicStroke(1))
       g.setColor(new Color(200, 200, 200))
 
       g.drawOval(start.x - 5, start.y - 5, 10, 10)
       g.drawOval(end.x - 5, end.y - 5, 10, 10)
+
+      g.setStroke(origStroke)
     }
   }
 }
