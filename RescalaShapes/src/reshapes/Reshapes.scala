@@ -18,12 +18,7 @@ import reshapes.actions.LoadAction
 import reshapes.actions.QuitAction
 import reshapes.actions.SaveAction
 import reshapes.actions.UndoAction
-import reshapes.panels.CommandPanel
-import reshapes.panels.DrawingPanel
-import reshapes.panels.InfoPanel
-import reshapes.panels.ShapePanel
-import reshapes.panels.ShapeSelectionPanel
-import reshapes.panels.StrokeInputPanel
+import reshapes.panels._
 import reshapes.Events
 import sun.reflect.generics.reflectiveObjects.NotImplementedException
 import org.omg.CORBA.Environment

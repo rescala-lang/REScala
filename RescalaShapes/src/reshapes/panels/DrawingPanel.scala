@@ -14,6 +14,14 @@ import reshapes.Selection
 import reshapes.Events
 import reshapes.util.MathUtil
 
+trait ShowIntersection extends DrawingPanel {
+  override def paint(g: Graphics2D) = {
+    super.paint(g)
+
+    g.fillRect(10, 10, 50, 50)
+  }
+}
+
 /**
  * Represents the panel where all shapes are drawn onto.
  */

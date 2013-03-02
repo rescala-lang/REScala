@@ -55,12 +55,13 @@ class Events {
   })
 
   //val accum = Signal { strokeWidth() }
-  val accum = Signal { allShapes() }
+  //val accum = Signal { allShapes() }
+  val accum = Signal { Commands() }
 
   val flow2 = scalareact.Signal.flow("No occurence") { self =>
     while (true) {
       self awaitNext accum
-      //println(accum.getValue)
+      println(accum.getValue)
     }
   }
 
