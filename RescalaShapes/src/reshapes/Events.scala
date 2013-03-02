@@ -54,12 +54,13 @@ class Events {
     }
   })
 
-  val accum = Signal { strokeWidth() }
+  //val accum = Signal { strokeWidth() }
+  val accum = Signal { allShapes() }
 
   val flow2 = scalareact.Signal.flow("No occurence") { self =>
     while (true) {
       self awaitNext accum
-      println(accum.getValue)
+      //println(accum.getValue)
     }
   }
 
@@ -69,7 +70,7 @@ class NetworkEvents(serverHostname: String = "localhost", commandPort: Int = 999
 
   val serverInetAddress: InetAddress = InetAddress.getByName(serverHostname)
 
-  Commands.changed += (_ => update(allShapes.getValue))
+  val commandSignal = Signal { Commands() }
 
   /**
    * Registers this client with a server and tells him
@@ -89,17 +90,18 @@ class NetworkEvents(serverHostname: String = "localhost", commandPort: Int = 999
     new UpdateListener(port, this).start()
   }
 
-  /**
-   * Sends a upate to the server
-   */
-  def update(shapes: List[Drawable]) = {
-    val socket = new Socket(serverInetAddress, exchangePort)
-    val out = new ObjectOutputStream(new DataOutputStream(socket.getOutputStream()))
+  val cmdFlow = scalareact.Signal.flow("") { self =>
+    while (true) {
+      self awaitNext commandSignal
 
-    out.writeObject(new TransportObject(shapes, listenerPort))
+      val socket = new Socket(serverInetAddress, exchangePort)
+      val out = new ObjectOutputStream(new DataOutputStream(socket.getOutputStream()))
 
-    out.close()
-    socket.close()
+      out.writeObject(new TransportObject(allShapes.getValue, listenerPort))
+
+      out.close()
+      socket.close()
+    }
   }
 
   // calls at startup

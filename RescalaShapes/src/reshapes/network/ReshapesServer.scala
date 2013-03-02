@@ -10,6 +10,7 @@ import reshapes.command.Command
 object ReshapesServer {
 
   var clients = MutableList[(InetAddress, Int)]()
+  var currentShapes = List[Drawable]()
 
   def main(args: Array[String]): Unit = {
     new CommandThread(9998).start()
@@ -26,6 +27,7 @@ object ReshapesServer {
       print("\t registered clients: ")
       clients map (client => println("(%s, %d)".format(client._1, client._2)))
       print("\n")
+      sendToClient(currentShapes, (inetAddress, port))
     }
   }
 
@@ -38,6 +40,7 @@ object ReshapesServer {
    * Sends the given shapes to all registered clients except the original sender
    */
   def sendUpdateToClients(shapes: List[Drawable], sender: (InetAddress, Int)) = {
+    currentShapes = shapes
     for (client <- clients) {
       if (client._1 != sender._1 ||
         (client._1 == sender._1 && client._2 != sender._2)) {
