@@ -53,6 +53,8 @@ object Reshapes extends SimpleSwingApplication {
   var commandPanel = new CommandPanel(CurrentEvents)
 
   val ui = new BorderPanel {
+    this.focusable = true
+
     add(infoPanel, BorderPanel.Position.South)
     add(shapePanel, BorderPanel.Position.East)
     add(strokeInputPanel, BorderPanel.Position.North)
@@ -60,6 +62,7 @@ object Reshapes extends SimpleSwingApplication {
     add(tabbedPane, BorderPanel.Position.Center)
 
     listenTo(tabbedPane.selection)
+    listenTo(keys)
 
     reactions += {
       case SelectionChanged(`tabbedPane`) => {
@@ -76,6 +79,7 @@ object Reshapes extends SimpleSwingApplication {
           menu.updateMerge()
         }
       }
+      case KeyPressed(_, Key.Space, _, _) => println("space key")
     }
   }
 

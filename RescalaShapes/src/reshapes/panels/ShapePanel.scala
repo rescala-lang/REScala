@@ -60,7 +60,6 @@ class ShapeView(shape: Drawable, events: Events) extends BoxPanel(Orientation.Ho
     }
   }
 
-  //contents += selectButton
   contents += new Label(shape.toString())
   contents += deleteButton
 

@@ -54,8 +54,6 @@ class Events {
     }
   })
 
-  val e = new ImperativeEvent[Int]
-  //val accum = e.fold(0) { _ + _ }
   val accum = Signal { strokeWidth() }
 
   val flow2 = scalareact.Signal.flow("No occurence") { self =>
