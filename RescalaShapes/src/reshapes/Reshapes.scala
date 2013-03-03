@@ -80,6 +80,7 @@ object Reshapes extends SimpleSwingApplication {
 
   val menu = new MenuBar {
     val newTab = new MenuItem(Action("New tab") { addTab() })
+    val newTabPlus = new MenuItem(Action("New tab+") { addTabWithOptions() })
     val newNetworkTab = new MenuItem(Action("New network tab") { addNetworkTab() })
     val closeTab = new MenuItem(Action("Remove selected tab") { removeTab() })
     val save = new MenuItem(new SaveAction())
@@ -93,6 +94,7 @@ object Reshapes extends SimpleSwingApplication {
 
     contents += new Menu("File") {
       contents += newTab
+      contents += newTabPlus
       contents += newNetworkTab
       contents += closeTab
       contents += new Separator
@@ -135,8 +137,17 @@ object Reshapes extends SimpleSwingApplication {
   }
 
   def addTab(event: Events = new Events()) {
-    panelEvents(tabbedPane.pages.size) = event
-    val panel = new DrawingPanel(event)
+    addDrawingPanel(new DrawingPanel(event))
+  }
+
+  def addTabWithOptions(event: Events = new Events()) {
+    val dialog = new NewTabDialog()
+    dialog.showDialog()
+    addDrawingPanel(dialog.generateDrawingPanel(event))
+  }
+
+  def addDrawingPanel(panel: DrawingPanel) {
+    panelEvents(tabbedPane.pages.size) = panel.events
     tabbedPane.pages += new TabbedPane.Page("drawing#%d".format(tabbedPane.pages.size + 1), panel)
     menu.updateMerge()
   }

@@ -1,8 +1,22 @@
 package reshapes
 import scala.swing._
 import javax.swing.JOptionPane
+import reshapes.panels.DrawingPanel
+import reshapes.panels.ShowIntersection
 
-class ServerDialog extends Dialog {
+abstract class CustomDialog extends Dialog {
+  this.modal = true;
+
+  def showDialog() = {
+    this.visible = true
+  }
+
+  def hideDialog() = {
+    this.visible = false
+  }
+}
+
+class ServerDialog extends CustomDialog {
 
   val hostnameInput = new TextField(50) { text = "localhost" }
   val commandPortInput = new TextField(10) { text = "9998" }
@@ -13,8 +27,6 @@ class ServerDialog extends Dialog {
   var commandPort: Int = -1
   var exchangePort: Int = -1
   var listenerPort: Int = -1
-
-  this.modal = true;
 
   contents = new BoxPanel(Orientation.Vertical) {
     contents += new Label("Server hostname")
@@ -35,14 +47,6 @@ class ServerDialog extends Dialog {
     }
   }
 
-  def showDialog() = {
-    this.visible = true
-  }
-
-  def hideDialog() = {
-    this.visible = false
-  }
-
   def applyPorts() = {
     hostname = hostnameInput.text
     try {
@@ -59,3 +63,25 @@ class ServerDialog extends Dialog {
     hostname.length() > 0 && commandPort > 0 && exchangePort > 0 && listenerPort > 0
   }
 }
+
+class NewTabDialog extends CustomDialog {
+  val showIntersections = new CheckBox("show intersections")
+
+  contents = new BoxPanel(Orientation.Vertical) {
+    contents += showIntersections
+    contents += new Button(Action("OK") {
+      hideDialog()
+    })
+  }
+
+  /**
+   * Creates a custom drawing panel depending on checked dialog options
+   */
+  def generateDrawingPanel(events: Events): DrawingPanel = {
+    if (showIntersections.selected) {
+      return new DrawingPanel(events) with ShowIntersection
+    }
+    new DrawingPanel(events)
+  }
+}
+
