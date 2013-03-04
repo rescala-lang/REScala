@@ -1,6 +1,9 @@
 import java.io._
 import java.net.{ InetAddress, ServerSocket, Socket, SocketException }
 import java.util.Random
+import reshapes.figures._
+import java.awt.Point
+import reshapes.util.MathUtil
 
 /**
  * Simple client/server application using Java sockets.
@@ -13,123 +16,9 @@ import java.util.Random
 object randomclient {
 
   def main(args: Array[String]) {
-    val filter: Int => Boolean = try {
-      Integer.parseInt(args(0)) match {
-        case 1 => x: Int => x % 2 != 0
-        case 2 => x: Int => x % 2 == 0
-        case _ => x: Int => x != 0
-      }
-    } catch {
-      case _ => x: Int => x < 100
-    }
+    val line = new Rectangle()
+    line.update(List(new Point(0, 0), new Point(1, 1), new Point(2, 2), new Point(4, 4)))
 
-    try {
-      val ia = InetAddress.getByName("localhost")
-      val socket = new Socket(ia, 9999)
-      val out = new ObjectOutputStream(
-        new DataOutputStream(socket.getOutputStream()))
-      val in = new DataInputStream(socket.getInputStream())
-
-      out.writeObject(filter)
-      out.flush()
-
-      while (true) {
-        val x = in.readInt()
-        println("x = " + x)
-      }
-      out.close()
-      in.close()
-      socket.close()
-    } catch {
-      case e: IOException =>
-        e.printStackTrace()
-    }
+    println(MathUtil.getIntersectionsOfTwoLines((1, 1, 3, 3), (1, 3, 2, 1)))
   }
-}
-
-object fooclient {
-  def main(args: Array[String]) {
-    val foo = new Foo()
-
-    try {
-      val ia = InetAddress.getByName("localhost")
-      val socket = new Socket(ia, 9999)
-      val out = new ObjectOutputStream(
-        new DataOutputStream(socket.getOutputStream()))
-      val in = new DataInputStream(socket.getInputStream())
-
-      out.writeObject(foo)
-      out.flush()
-
-      out.close()
-      in.close()
-      socket.close()
-    } catch {
-      case e: IOException =>
-        e.printStackTrace()
-    }
-  }
-}
-
-object randomserver {
-
-  def main(args: Array[String]): Unit = {
-    try {
-      val listener = new ServerSocket(9999);
-      while (true) {
-        println("wait for connections")
-        new ServerThread(listener.accept()).start();
-        println("foo")
-      }
-      listener.close()
-    } catch {
-      case e: IOException =>
-        System.err.println("Could not listen on port: 9999.");
-        System.exit(-1)
-    }
-  }
-}
-
-case class ServerThread(socket: Socket) extends Thread("ServerThread") {
-
-  override def run(): Unit = {
-    val rand = new Random(System.currentTimeMillis());
-    try {
-      val out = new DataOutputStream(socket.getOutputStream());
-      val in = new ObjectInputStream(
-        new DataInputStream(socket.getInputStream()));
-
-      //val filter = in.readObject().asInstanceOf[Int => Boolean];
-      val foo = in.readObject().asInstanceOf[Foo]
-
-      while (true) {
-        var succeeded = false;
-        do {
-          /*
-          val x = rand.nextInt(1000);
-          succeeded = filter(x);
-          if (succeeded) out.writeInt(x)
-          */
-          println("server received object foo " + foo.x + " " + foo.y)
-          succeeded = true
-        } while (!succeeded);
-        Thread.sleep(100)
-      }
-
-      out.close();
-      in.close();
-      socket.close()
-    } catch {
-      case e: SocketException =>
-        () // avoid stack trace when stopping a client with Ctrl-C
-      case e: IOException =>
-        e.printStackTrace();
-    }
-  }
-}
-
-@serializable
-class Foo {
-  var x = 4
-  var y = 3
 }

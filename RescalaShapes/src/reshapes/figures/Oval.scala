@@ -13,4 +13,8 @@ class Oval extends Movable with Resizable {
     g.drawOval(x, y, width, height)
   }
 
+  def toLines(): List[(Int, Int, Int, Int)] = {
+    // todo: implement
+    List[(Int, Int, Int, Int)]()
+  }
 }

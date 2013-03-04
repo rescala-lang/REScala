@@ -16,8 +16,6 @@ abstract class Drawable {
   var current = Drawable.current
   var path: List[Point] = null
 
-  //var start: Point = null
-  //var end: Point = null
   def start = if (path == null) null else path.first
   def end = if (path == null) null else path.last
 
@@ -53,6 +51,10 @@ abstract class Drawable {
 
   def doUpdate(path: List[Point]) = {}
   def doDraw(g: Graphics2D)
+  /**
+   * returns a list of lines representing the shape
+   */
+  def toLines(): List[(Int, Int, Int, Int)]
 }
 
 object Drawable {

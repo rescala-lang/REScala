@@ -13,12 +13,35 @@ import reshapes.Drawing
 import reshapes.Selection
 import reshapes.Events
 import reshapes.util.MathUtil
+import scala.collection.mutable.MutableList
 
 trait ShowIntersection extends DrawingPanel {
   override def paint(g: Graphics2D) = {
     super.paint(g)
 
-    g.fillRect(10, 10, 50, 50)
+    //g.fillRect(10, 10, 50, 50)
+    getIntersectionPoints map (point => g.drawOval(point._1 - 3, point._2 - 3, 6, 6))
+  }
+
+  def getIntersectionPoints(): List[(Int, Int)] = {
+    val points = MutableList[(Int, Int)]()
+
+    if (events.allShapes.getValue.size == 0)
+      return points.toList
+
+    for (shape <- events.allShapes.getValue) {
+      for (otherShape <- events.allShapes.getValue.filter(s => s != shape)) {
+        for (line <- shape.toLines()) {
+          for (otherline <- otherShape.toLines()) {
+            val intersection = MathUtil.getIntersectionsOfTwoLines(line, otherline)
+            if (intersection != null)
+              points += intersection
+          }
+        }
+      }
+    }
+
+    points.toList
   }
 }
 
