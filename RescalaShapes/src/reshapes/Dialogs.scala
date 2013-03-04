@@ -65,7 +65,7 @@ class ServerDialog extends CustomDialog {
 }
 
 class NewTabDialog extends CustomDialog {
-  val showIntersections = new CheckBox("show intersections")
+  val showIntersections = new CheckBox("show intersections") { selected = true }
 
   contents = new BoxPanel(Orientation.Vertical) {
     contents += showIntersections

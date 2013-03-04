@@ -180,5 +180,5 @@ object Reshapes extends SimpleSwingApplication {
     }
   }
 
-  addTab() // add one tab at startup
+  //addTab() // add one tab at startup
 }

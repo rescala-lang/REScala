@@ -32,7 +32,7 @@ class StrokeInputPanel(var events: Events) extends FlowPanel {
     }
   }
 
-  val showColorInput = new Button(new Action("Show/Hide Colorinput") {
+  val showColorInput = new Button(new Action("Show Colorinput") {
     def apply() = {
       colorChooserWindow.visible = !colorChooserWindow.visible
     }

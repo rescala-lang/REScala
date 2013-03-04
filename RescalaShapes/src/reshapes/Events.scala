@@ -37,7 +37,7 @@ class Events {
   var mode: EditingMode = Drawing()
   val modeChange = nextShape.changed || selectedShape.changed
 
-  val canvasChange = selectedShape.changed || allShapes.changed || modeChange
+  val canvasChange = selectedShape.changed || allShapes.changed || modeChange || strokeWidth.changed
 
   nextShape.changed += (shape => {
     shape.strokeWidth = strokeWidth.getValue
@@ -51,6 +51,18 @@ class Events {
       allShapes.getValue map (x => x.selected = false)
       shape.selected = true
       mode = Selection()
+    }
+  })
+
+  strokeWidth.changed += (width => {
+    if (selectedShape.getValue != null) {
+      selectedShape.getValue.strokeWidth = width
+    }
+  })
+
+  color.changed += (newColor => {
+    if (selectedShape.getValue != null) {
+      selectedShape.getValue.color = newColor
     }
   })
 

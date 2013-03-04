@@ -19,7 +19,8 @@ trait ShowIntersection extends DrawingPanel {
   override def paint(g: Graphics2D) = {
     super.paint(g)
 
-    //g.fillRect(10, 10, 50, 50)
+    g.setColor(new Color(255, 0, 0))
+    g.setStroke(new BasicStroke())
     getIntersectionPoints map (point => g.drawOval(point._1 - 3, point._2 - 3, 6, 6))
   }
 
