@@ -14,30 +14,22 @@ abstract class Shape {
   var color = Color.BLACK
   var selected = false
   var current = Shape.current
-  var path: List[Point] = null
 
-  def start = if (path == null) null else path.first
-  def end = if (path == null) null else path.last
+  override def toString(): String = {
+    this.getClass().getSimpleName() + " #" + current.toString()
+  }
 }
 
 object Shape {
   private var current = 0
 }
 
-@serializable
-abstract class Drawable {
-  Drawable.current += 1
-
-  var strokeWidth = 1
-  var color = Color.BLACK
-  var selected = false
-  var current = Drawable.current
+trait Drawable extends Shape {
+  // the mouse path while drawing this shape
   var path: List[Point] = null
 
   def start = if (path == null) null else path.first
   def end = if (path == null) null else path.last
-
-  val uuid = UUID.randomUUID()
 
   def draw(g: Graphics2D) = {
     if (start != null && end != null) {
@@ -58,25 +50,17 @@ abstract class Drawable {
     doUpdate(path)
   }
 
-  override def equals(obj: Any): Boolean = obj match {
-    case obj: Drawable => obj.uuid == this.uuid
-    case _ => false
-  }
-
   override def toString(): String = {
     this.getClass().getSimpleName() + " #" + current.toString()
   }
 
   def doUpdate(path: List[Point]) = {}
   def doDraw(g: Graphics2D)
+
   /**
    * returns a list of lines representing the shape
    */
   def toLines(): List[(Int, Int, Int, Int)]
-}
-
-object Drawable {
-  private var current = 0
 }
 
 trait Movable extends Drawable {
