@@ -65,7 +65,7 @@ class ServerDialog extends CustomDialog {
 }
 
 class NewTabDialog extends CustomDialog {
-  val showIntersections = new CheckBox("show intersections") { selected = true }
+  val showIntersections = new CheckBox("show intersections")
 
   contents = new BoxPanel(Orientation.Vertical) {
     contents += showIntersections
@@ -75,9 +75,10 @@ class NewTabDialog extends CustomDialog {
   }
 
   /**
-   * Creates a custom drawing panel depending on checked dialog options
+   * Creates a custom drawing panel (with different traits) depending on checked dialog options
    */
   def generateDrawingPanel(events: Events): DrawingPanel = {
+    var panel = new DrawingPanel(events)
     if (showIntersections.selected) {
       return new DrawingPanel(events) with ShowIntersection
     }

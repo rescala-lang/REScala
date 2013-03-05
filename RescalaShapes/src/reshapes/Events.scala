@@ -73,7 +73,7 @@ class Events {
   val flow2 = scalareact.Signal.flow("No occurence") { self =>
     while (true) {
       self awaitNext accum
-      println(accum.getValue)
+      //println(accum.getValue)
     }
   }
 
@@ -99,6 +99,9 @@ class NetworkEvents(serverHostname: String = "localhost", commandPort: Int = 999
     socket.close()
   }
 
+  /**
+   * Starts a thread which listens to server updates.
+   */
   def startUpdateListener(port: Int) = {
     new UpdateListener(port, this).start()
   }
@@ -117,13 +120,12 @@ class NetworkEvents(serverHostname: String = "localhost", commandPort: Int = 999
     }
   }
 
-  // calls at startup
   registerClient(serverHostname, commandPort, listenerPort)
   startUpdateListener(listenerPort)
 }
 
 /**
- * Listens for updates from server and updates allShapes
+ * Listens for updates from server and updates events.allShapes
  */
 class UpdateListener(port: Int, events: Events) extends Actor {
   def act() {
@@ -137,22 +139,11 @@ class UpdateListener(port: Int, events: Events) extends Actor {
       val shapes = in.readObject().asInstanceOf[List[Drawable]]
       events.allShapes() = List[Drawable]()
       shapes map (shape => events.allShapes() = shape :: events.allShapes.getValue)
-      //syncShapes(shapes)
 
       in.close()
       socket.close()
     }
     listener.close()
-  }
-
-  def syncShapes(shapes: List[Drawable]) = {
-    for (shape <- shapes) {
-      if (!events.allShapes.getValue.contains(shape)) {
-        println("adding shape " + shape.strokeWidth);
-        events.allShapes() = shape :: events.allShapes.getValue
-      }
-    }
-
   }
 }
 

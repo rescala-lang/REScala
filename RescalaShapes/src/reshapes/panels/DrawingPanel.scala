@@ -14,6 +14,7 @@ import reshapes.Selection
 import reshapes.Events
 import reshapes.util.MathUtil
 import scala.collection.mutable.MutableList
+import scala.events.scalareact
 
 trait ShowIntersection extends DrawingPanel {
   override def paint(g: Graphics2D) = {
@@ -52,7 +53,7 @@ trait ShowIntersection extends DrawingPanel {
 class DrawingPanel(var events: Events) extends Panel {
   opaque = true
 
-  var currentPath: List[Point] = List()
+  var currentPath = new Var[List[Point]](List())
   var shapes = List[Drawable]()
   val currentShape = Signal { events.nextShape() }
   var currentlyDrawing: Drawable = null
@@ -71,11 +72,10 @@ class DrawingPanel(var events: Events) extends Panel {
 
   listenTo(mouse.clicks)
   listenTo(mouse.moves)
-  listenTo(keys)
 
   reactions += {
     case e: MousePressed =>
-      currentPath = List(e.point)
+      currentPath() = List(e.point)
       events.mode match {
         case Drawing() =>
           currentlyDrawing = currentShape.getValue.getClass().newInstance()
@@ -87,17 +87,17 @@ class DrawingPanel(var events: Events) extends Panel {
       }
       repaint()
     case e: MouseDragged =>
-      currentPath = currentPath ::: List(e.point)
+      currentPath() = currentPath.getValue ::: List(e.point)
       events.mode match {
         case Drawing() =>
-          currentlyDrawing.update(currentPath)
+          currentlyDrawing.update(currentPath.getValue)
         case Selection() =>
           val shape = events.selectedShape.getValue
           if ((MathUtil.isInCircle(shape.start, 6, e.point) || MathUtil.isInCircle(shape.end, 6, e.point))
             && shape.isInstanceOf[Resizable]) {
-            shape.asInstanceOf[Resizable].resize(currentPath.reverse(1), e.point)
+            shape.asInstanceOf[Resizable].resize(currentPath.getValue.reverse(1), e.point)
           } else if (shape.isInstanceOf[Movable]) {
-            shape.asInstanceOf[Movable].move(currentPath.reverse(1), e.point)
+            shape.asInstanceOf[Movable].move(currentPath.getValue.reverse(1), e.point)
           }
         case _ =>
       }

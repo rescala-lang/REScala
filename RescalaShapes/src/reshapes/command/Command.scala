@@ -18,6 +18,7 @@ abstract class Command() {
   def revert(): Unit = {
     // check if this command is latest command
     while (Reshapes.CurrentEvents.Commands.getValue.first != this) {
+      // if not then revert all commands which where executed after this
       Reshapes.CurrentEvents.Commands.getValue.first.revert()
     }
     onRevert()
@@ -49,6 +50,9 @@ class DeleteShape(shapeToDelete: Drawable) extends Command {
   }
 }
 
+/**
+ * Creates a new shape.
+ */
 class CreateShape(shapeToCreate: Drawable) extends Command {
 
   def onExecute() {
@@ -65,6 +69,9 @@ class CreateShape(shapeToCreate: Drawable) extends Command {
   }
 }
 
+/**
+ * Only implements onRevert() which restores a shape to state before resize, move, ...
+ */
 class EditShape(shapeBeforeEdit: Drawable, shapeAfterEdit: Drawable) extends Command {
 
   def onExecute() {
@@ -76,7 +83,7 @@ class EditShape(shapeBeforeEdit: Drawable, shapeAfterEdit: Drawable) extends Com
     shapeAfterEdit.strokeWidth = shapeBeforeEdit.strokeWidth
     shapeAfterEdit.color = shapeBeforeEdit.color
 
-    Reshapes.CurrentEvents.selectedShape() = new Line() // XXX: hack to force selectedShape.changed event when Events.selectedShape() == shapeAfterEdit
+    Reshapes.CurrentEvents.selectedShape() = new Line() // force to fire selectedShape.changed event when Events.selectedShape() == shapeAfterEdit
     Reshapes.CurrentEvents.selectedShape() = shapeAfterEdit
   }
 

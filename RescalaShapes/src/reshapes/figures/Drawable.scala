@@ -7,6 +7,24 @@ import reshapes.util.MathUtil
 import java.util.UUID
 
 @serializable
+abstract class Shape {
+  Shape.current += 1
+
+  var strokeWidth = 1
+  var color = Color.BLACK
+  var selected = false
+  var current = Shape.current
+  var path: List[Point] = null
+
+  def start = if (path == null) null else path.first
+  def end = if (path == null) null else path.last
+}
+
+object Shape {
+  private var current = 0
+}
+
+@serializable
 abstract class Drawable {
   Drawable.current += 1
 

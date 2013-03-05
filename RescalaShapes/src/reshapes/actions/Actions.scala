@@ -44,18 +44,27 @@ class LoadAction extends Action("Load") {
   }
 }
 
+/**
+ * Closes the application.
+ */
 class QuitAction extends Action("Quit") {
   def apply() = {
     System.exit(0)
   }
 }
 
+/**
+ * Reverts last command.
+ */
 class UndoAction extends Action("Undo") {
   def apply() = {
     Reshapes.CurrentEvents.Commands.getValue.first.revert()
   }
 }
 
+/**
+ * Merges current drawing panel with another panel.
+ */
 class MergeAction(title: String, eventsToMergeWith: Events) extends Action("Merge with %s".format(title)) {
   def apply() = {
     new MergeEvents(eventsToMergeWith).execute()
