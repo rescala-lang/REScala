@@ -11,6 +11,7 @@ object MathUtil {
   /**
    * returns the intersection points of two finite lines.
    * return null if the lines do not cross
+   * algorithm/formular copied from 'http://mathworld.wolfram.com/Line-LineIntersection.html'
    */
   def getIntersectionsOfTwoLines(line1: (Int, Int, Int, Int), line2: (Int, Int, Int, Int)): (Int, Int) = {
     val x1 = line1._1

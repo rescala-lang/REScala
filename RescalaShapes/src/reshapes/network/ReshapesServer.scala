@@ -31,6 +31,9 @@ object ReshapesServer {
     }
   }
 
+  /**
+   * Removes a client so he no longer receives updates.
+   */
   def removeClient(client: (InetAddress, Int)) = {
     println("ReshapesServer removing client " + client.toString())
     clients = clients filter (c => c._1 != client._1 && c._2 != client._2)

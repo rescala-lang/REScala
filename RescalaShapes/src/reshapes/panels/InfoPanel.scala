@@ -5,6 +5,9 @@ import scala.swing._
 import java.awt.Color
 import reshapes.Events
 
+/**
+ * Small info panel which displays infos like how many shapes are drawn or which shape is currently selected.
+ */
 class InfoPanel(var _events: Events) extends FlowPanel {
 
   def events = _events

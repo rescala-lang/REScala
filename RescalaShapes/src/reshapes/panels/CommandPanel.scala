@@ -2,6 +2,9 @@ package reshapes.panels
 import scala.swing._
 import reshapes.Events
 
+/**
+ * The CommandPanel listens all executes commands and makes it possible to revert them.
+ */
 class CommandPanel(var _events: Events) extends BoxPanel(Orientation.Vertical) {
 
   def events = _events
