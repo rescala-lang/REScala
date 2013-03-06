@@ -31,6 +31,7 @@ import javax.swing.JOptionPane
 import java.net.ConnectException
 import scala.swing.event.KeyPressed
 import scala.swing.event.Key
+import java.awt.Toolkit
 
 object Reshapes extends SimpleSwingApplication {
 
@@ -51,7 +52,13 @@ object Reshapes extends SimpleSwingApplication {
     this.focusable = true
 
     add(infoPanel, BorderPanel.Position.South)
-    add(shapePanel, BorderPanel.Position.East)
+
+    val eastPane = new TabbedPane() {
+      this.pages += new TabbedPane.Page("Shapes", shapePanel)
+      pages += new TabbedPane.Page("Commands", commandPanel)
+    }
+    //add(shapePanel, BorderPanel.Position.East)
+    add(eastPane, BorderPanel.Position.East)
     add(strokeInputPanel, BorderPanel.Position.North)
     add(shapeSelectionPanel, BorderPanel.Position.West)
     add(tabbedPane, BorderPanel.Position.Center)
@@ -86,7 +93,6 @@ object Reshapes extends SimpleSwingApplication {
     val load = new MenuItem(new LoadAction())
     val quit = new MenuItem(new QuitAction())
     val undo = new MenuItem(new UndoAction()) { enabled = false }
-    val cmdWindow = new MenuItem(Action("show command window") { commandWindow.visible = true })
     val mergeMenu = new Menu("Merge with...")
 
     CurrentEvents.Commands.changed += (commands => undo.enabled = !commands.isEmpty)
@@ -103,8 +109,6 @@ object Reshapes extends SimpleSwingApplication {
     }
     contents += new Menu("Edit") {
       contents += undo
-      contents += new Separator
-      contents += cmdWindow
     }
     contents += new Menu("Tools") {
       contents += mergeMenu
@@ -119,19 +123,10 @@ object Reshapes extends SimpleSwingApplication {
 
   def top = new MainFrame {
     title = "ReShapes"
-    preferredSize = new Dimension(1000, 500)
-    this.location = new Point(commandWindow.location.x + commandWindow.size.width, commandWindow.location.y)
+    this.maximize()
 
     menuBar = menu
     contents = ui
-
-    commandWindow.visible = true
-  }
-
-  def commandWindow = new Frame {
-    title = "Command list"
-    preferredSize = new Dimension(300, 500)
-    contents = commandPanel
   }
 
   def addTab(event: Events = new Events()) {
