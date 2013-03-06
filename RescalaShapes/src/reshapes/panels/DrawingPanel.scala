@@ -139,3 +139,17 @@ trait ShowCoordinateSystem extends DrawingPanel {
     }
   }
 }
+
+/**
+ * Writes the name of the shape besides them on drawing panel.
+ */
+trait ShowNameLabels extends DrawingPanel {
+  override def paint(g: Graphics2D) = {
+    super.paint(g)
+
+    g.setColor(new Color(200, 200, 200))
+    g.setStroke(new BasicStroke())
+    events.allShapes.getValue map (shape => g.drawString(shape.toString(), shape.start.x, shape.start.y))
+  }
+}
+

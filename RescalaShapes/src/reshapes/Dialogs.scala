@@ -4,6 +4,7 @@ import javax.swing.JOptionPane
 import reshapes.panels.DrawingPanel
 import reshapes.panels.ShowIntersection
 import reshapes.panels.ShowCoordinateSystem
+import reshapes.panels.ShowNameLabels
 
 abstract class CustomDialog extends Dialog {
   this.modal = true;
@@ -67,12 +68,15 @@ class ServerDialog extends CustomDialog {
 }
 
 class NewTabDialog extends CustomDialog {
+
   val showIntersections = new CheckBox("show intersections")
   val showCoordinates = new CheckBox("show coordinates")
+  val showNames = new CheckBox("show shape names")
 
   contents = new BoxPanel(Orientation.Vertical) {
     contents += showIntersections
     contents += showCoordinates
+    contents += showNames
     contents += new Button(Action("OK") {
       hideDialog()
     })
@@ -82,11 +86,14 @@ class NewTabDialog extends CustomDialog {
    * Creates a custom drawing panel (with different traits) depending on checked dialog options
    */
   def generateDrawingPanel(events: Events): DrawingPanel = {
-    val tuple = (showIntersections.selected, showCoordinates.selected)
+    val tuple = (showIntersections.selected, showCoordinates.selected, showNames.selected)
     tuple match {
-      case (true, false) => return new DrawingPanel(events) with ShowIntersection
-      case (false, true) => return new DrawingPanel(events) with ShowCoordinateSystem
-      case (true, true) => return new DrawingPanel(events) with ShowIntersection with ShowCoordinateSystem
+      case (true, false, false) => return new DrawingPanel(events) with ShowIntersection
+      case (false, true, false) => return new DrawingPanel(events) with ShowCoordinateSystem
+      case (true, true, false) => return new DrawingPanel(events) with ShowIntersection with ShowCoordinateSystem
+      case (false, false, true) => return new DrawingPanel(events) with ShowNameLabels
+      case (true, false, true) => return new DrawingPanel(events) with ShowIntersection with ShowNameLabels
+      case (true, true, true) => return new DrawingPanel(events) with ShowIntersection with ShowCoordinateSystem with ShowNameLabels
     }
     var panel = new DrawingPanel(events)
     if (showIntersections.selected) {
