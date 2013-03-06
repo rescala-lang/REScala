@@ -1,8 +1,6 @@
-
 \documentclass[12pt, accentcolor=tud9c, linedtoc, bigchapter, colorback, noresetcounter, numbersubsubsec]{tudreport}
 \usepackage[utf8]{inputenc}
 \usepackage{nomencl}
-\usepackage[ngerman]{babel}
 \usepackage{amsmath}
 \usepackage{listings}
 \usepackage{hyphenat}
@@ -25,16 +23,35 @@
 
 \chapter{Application features and manual}
 
+\section{Drawing shapes}
+
+select shape - click and move
+
+\section{Edit drawn shapes}
+
+\begin{itemize}
+    \item set stroke width and color
+    \item move shape
+    \item resize shape
+\end{itemize}
+
+\section{Revert commands}
+
+switch to Commands - click on command to revert
+
+\section{Add new tabs}
+
 \begin{enumerate}
-    \item Drawing shapes: line, oval, rectangle, freedraw, triangle
-    \item Edit shapes: moving, resize, delete, stroke
-    \item revert commands
-    \item add different drawing tabs
-    \item merge tabs
-    \item drawing tabs with additional infos: intersection points
+    \item normal tab
+    \item tab with more features (intersection)
     \item network tab
-    \item save/load
 \end{enumerate}
+
+\section{Merge tabs}
+
+select tab - click Tools->merge with\dots
+
+\section{Save and Load}
 
 \chapter{Application architecture}
 

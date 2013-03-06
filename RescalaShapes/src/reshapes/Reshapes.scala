@@ -123,7 +123,8 @@ object Reshapes extends SimpleSwingApplication {
 
   def top = new MainFrame {
     title = "ReShapes"
-    this.maximize()
+    //this.maximize()
+    preferredSize = new Dimension(700, 400)
 
     menuBar = menu
     contents = ui

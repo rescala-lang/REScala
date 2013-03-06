@@ -3,6 +3,7 @@ import scala.swing._
 import javax.swing.JOptionPane
 import reshapes.panels.DrawingPanel
 import reshapes.panels.ShowIntersection
+import reshapes.panels.ShowCoordinateSystem
 
 abstract class CustomDialog extends Dialog {
   this.modal = true;
@@ -42,6 +43,7 @@ class ServerDialog extends CustomDialog {
         applyPorts()
       })
       contents += new Button(Action("Cancel") {
+
         hideDialog()
       })
     }
@@ -60,15 +62,17 @@ class ServerDialog extends CustomDialog {
   }
 
   def inputIsValid(): Boolean = {
-    hostname.length() > 0 && commandPort > 0 && exchangePort > 0 && listenerPort > 0
+    hostname != null && hostname.length() > 0 && commandPort > 0 && exchangePort > 0 && listenerPort > 0
   }
 }
 
 class NewTabDialog extends CustomDialog {
   val showIntersections = new CheckBox("show intersections")
+  val showCoordinates = new CheckBox("show coordinates")
 
   contents = new BoxPanel(Orientation.Vertical) {
     contents += showIntersections
+    contents += showCoordinates
     contents += new Button(Action("OK") {
       hideDialog()
     })
@@ -78,6 +82,12 @@ class NewTabDialog extends CustomDialog {
    * Creates a custom drawing panel (with different traits) depending on checked dialog options
    */
   def generateDrawingPanel(events: Events): DrawingPanel = {
+    val tuple = (showIntersections.selected, showCoordinates.selected)
+    tuple match {
+      case (true, false) => return new DrawingPanel(events) with ShowIntersection
+      case (false, true) => return new DrawingPanel(events) with ShowCoordinateSystem
+      case (true, true) => return new DrawingPanel(events) with ShowIntersection with ShowCoordinateSystem
+    }
     var panel = new DrawingPanel(events)
     if (showIntersections.selected) {
       return new DrawingPanel(events) with ShowIntersection

@@ -119,3 +119,23 @@ trait ShowIntersection extends DrawingPanel {
     points.toList
   }
 }
+
+/**
+ * Draws a coordinate System onto the panel.
+ */
+trait ShowCoordinateSystem extends DrawingPanel {
+  override def paint(g: Graphics2D) = {
+    super.paint(g)
+
+    g.setColor(new Color(200, 200, 200))
+    g.setStroke(new BasicStroke())
+    for (i <- 0 until size.height if i % 20 == 0) {
+      g.drawLine(0, i, size.width, i)
+      g.drawString((i / 20).toString(), 0, i)
+    }
+    for (i <- 0 until size.width if i % 20 == 0) {
+      g.drawLine(i, 0, i, size.height)
+      g.drawString((i / 20).toString(), i, 10)
+    }
+  }
+}
