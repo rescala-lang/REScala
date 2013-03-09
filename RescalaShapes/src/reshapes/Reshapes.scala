@@ -18,7 +18,7 @@ import reshapes.actions.LoadAction
 import reshapes.actions.QuitAction
 import reshapes.actions.SaveAction
 import reshapes.actions.UndoAction
-import reshapes.panels._
+import reshapes.ui.panels._
 import reshapes.Events
 import sun.reflect.generics.reflectiveObjects.NotImplementedException
 import org.omg.CORBA.Environment
@@ -32,6 +32,8 @@ import java.net.ConnectException
 import scala.swing.event.KeyPressed
 import scala.swing.event.Key
 import java.awt.Toolkit
+import reshapes.ui.dialogs.ServerDialog
+import reshapes.ui.dialogs.NewTabDialog
 
 object Reshapes extends SimpleSwingApplication {
 
@@ -49,15 +51,12 @@ object Reshapes extends SimpleSwingApplication {
   var commandPanel = new CommandPanel(CurrentEvents)
 
   val ui = new BorderPanel {
-    this.focusable = true
-
     add(infoPanel, BorderPanel.Position.South)
 
     val eastPane = new TabbedPane() {
       this.pages += new TabbedPane.Page("Shapes", shapePanel)
       pages += new TabbedPane.Page("Commands", commandPanel)
     }
-    //add(shapePanel, BorderPanel.Position.East)
     add(eastPane, BorderPanel.Position.East)
     add(strokeInputPanel, BorderPanel.Position.North)
     add(shapeSelectionPanel, BorderPanel.Position.West)
@@ -169,4 +168,6 @@ object Reshapes extends SimpleSwingApplication {
       menu.updateMerge()
     }
   }
+
+  addTab()
 }

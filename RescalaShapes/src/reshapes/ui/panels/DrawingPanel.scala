@@ -1,4 +1,4 @@
-package reshapes.panels
+package reshapes.ui.panels
 import scala.swing._
 import scala.swing.event._
 import scala.events.behaviour.Signal
@@ -23,10 +23,10 @@ class DrawingPanel(var events: Events) extends Panel {
   opaque = true
 
   var currentPath = new Var[List[Point]](List())
-  var shapes = List[Drawable]()
+  var shapes = List[Shape]()
   val currentShape = Signal { events.nextShape() }
-  var currentlyDrawing: Drawable = null
-  var shapeBeforeEdit: Drawable = null
+  var currentlyDrawing: Shape = null
+  var shapeBeforeEdit: Shape = null
 
   override def paint(g: Graphics2D) = {
     g.setColor(java.awt.Color.WHITE)
@@ -51,7 +51,7 @@ class DrawingPanel(var events: Events) extends Panel {
           currentlyDrawing.strokeWidth = events.strokeWidth.getValue
           currentlyDrawing.color = events.color.getValue
         case Selection() =>
-          shapeBeforeEdit = Marshal.load[Drawable](Marshal.dump[Drawable](events.selectedShape.getValue)) // hack to get a object copy
+          shapeBeforeEdit = Marshal.load[Shape](Marshal.dump[Shape](events.selectedShape.getValue)) // hack to get a object copy
         case _ =>
       }
       repaint()

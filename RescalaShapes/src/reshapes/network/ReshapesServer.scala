@@ -2,7 +2,7 @@ package reshapes.network
 import java.net._
 import java.io._
 import scala.collection.mutable.MutableList
-import reshapes.figures.Drawable
+import reshapes.figures.Shape
 import scala.actors.Actor
 import scala.actors.Actor._
 import reshapes.command.Command
@@ -10,7 +10,7 @@ import reshapes.command.Command
 object ReshapesServer {
 
   var clients = MutableList[(InetAddress, Int)]()
-  var currentShapes = List[Drawable]()
+  var currentShapes = List[Shape]()
 
   def main(args: Array[String]): Unit = {
     new CommandThread(9998).start()
@@ -42,7 +42,7 @@ object ReshapesServer {
   /**
    * Sends the given shapes to all registered clients except the original sender
    */
-  def sendUpdateToClients(shapes: List[Drawable], sender: (InetAddress, Int)) = {
+  def sendUpdateToClients(shapes: List[Shape], sender: (InetAddress, Int)) = {
     currentShapes = shapes
     for (client <- clients) {
       if (client._1 != sender._1 ||
@@ -58,7 +58,7 @@ object ReshapesServer {
    * Sends shapes to a client.
    * returns true if shapes where successfully send, false otherwise (connection refused to client)
    */
-  def sendToClient(shapes: List[Drawable], client: (InetAddress, Int)): Boolean = {
+  def sendToClient(shapes: List[Shape], client: (InetAddress, Int)): Boolean = {
     try {
       val socket = new Socket(client._1, client._2)
       val out = new ObjectOutputStream(new DataOutputStream(socket.getOutputStream()))

@@ -1,6 +1,6 @@
 package reshapes.command
 import reshapes.Events
-import reshapes.figures.Drawable
+import reshapes.figures.Shape
 import java.awt.Point
 import reshapes.Drawing
 import reshapes.figures.Line
@@ -35,7 +35,7 @@ abstract class Command() {
 /**
  * Deletes a given shape
  */
-class DeleteShape(shapeToDelete: Drawable) extends Command {
+class DeleteShape(shapeToDelete: Shape) extends Command {
 
   def onExecute() = {
     Reshapes.CurrentEvents.allShapes() = Reshapes.CurrentEvents.allShapes.getValue filter (x => x != shapeToDelete)
@@ -53,7 +53,7 @@ class DeleteShape(shapeToDelete: Drawable) extends Command {
 /**
  * Creates a new shape.
  */
-class CreateShape(shapeToCreate: Drawable) extends Command {
+class CreateShape(shapeToCreate: Shape) extends Command {
 
   def onExecute() {
     Reshapes.CurrentEvents.allShapes() = shapeToCreate :: Reshapes.CurrentEvents.allShapes.getValue
@@ -72,7 +72,7 @@ class CreateShape(shapeToCreate: Drawable) extends Command {
 /**
  * Only implements onRevert() which restores a shape to state before resize, move, ...
  */
-class EditShape(shapeBeforeEdit: Drawable, shapeAfterEdit: Drawable) extends Command {
+class EditShape(shapeBeforeEdit: Shape, shapeAfterEdit: Shape) extends Command {
 
   def onExecute() {
 
@@ -98,7 +98,7 @@ class EditShape(shapeBeforeEdit: Drawable, shapeAfterEdit: Drawable) extends Com
 class MergeEvents(eventToMerge: Events) extends Command {
 
   var eventTitle: String = null
-  var shapes: List[Drawable] = null
+  var shapes: List[Shape] = null
 
   def onExecute() {
     eventTitle = eventToMerge.fileName.getValue

@@ -1,24 +1,16 @@
-import java.io._
-import java.net.{ InetAddress, ServerSocket, Socket, SocketException }
-import java.util.Random
-import reshapes.figures._
-import java.awt.Point
-import reshapes.util.MathUtil
+import scala.events.behaviour.Signal
+import scala.events.behaviour.Var
+object Test {
 
-/**
- * Simple client/server application using Java sockets.
- *
- * The server simply generates random integer values and
- * the clients provide a filter function to the server
- * to get only values they interested in (eg. even or
- * odd values, and so on).
- */
-object randomclient {
+  def main(args: Array[String]): Unit = {
+    val a = new Var(List(1, 2, 3))
+    val sum = Signal { "lenght is %d".format(a().size) }
 
-  def main(args: Array[String]) {
-    val line = new Rectangle()
-    line.update(List(new Point(0, 0), new Point(1, 1), new Point(2, 2), new Point(4, 4)))
+    sum.changed += (newVal => println(newVal))
 
-    println(MathUtil.getIntersectionsOfTwoLines((1, 1, 3, 3), (1, 3, 2, 1)))
+    //println(sum.getValue)
+    //println(sum.getValue)
+    a() = List(1, 2, 3, 4, 5)
   }
+
 }

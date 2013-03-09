@@ -1,14 +1,18 @@
-package reshapes.panels
+package reshapes.ui.panels
 import scala.events.ImperativeEvent
-import reshapes.figures.Drawable
+import reshapes.figures.Shape
 import scala.swing._
 import java.awt.Color
 import reshapes.Events
+import scala.events.behaviour.Signal
+import reshapes.Reshapes
 
 /**
  * Small info panel which displays infos like how many shapes are drawn or which shape is currently selected.
  */
 class InfoPanel(var _events: Events) extends FlowPanel {
+
+  var signal = Signal { println(Reshapes.CurrentEvents.allShapes().size) }
 
   def events = _events
   def events_=(e: Events) {
@@ -33,11 +37,11 @@ class InfoPanel(var _events: Events) extends FlowPanel {
   contents += new Label { text = "|" }
   contents += modeLabel
 
-  def updateCurrentShapeLabel(shape: Drawable) = {
+  def updateCurrentShapeLabel(shape: Shape) = {
     currentShapeLabel.text = if (shape != null) shape.toString() else "";
   }
 
-  def updateNumberElementsLabel(shapes: List[Drawable]) = {
+  def updateNumberElementsLabel(shapes: List[Shape]) = {
     numberElementsLabel.text = "#elements: %d".format(shapes.size)
   }
 

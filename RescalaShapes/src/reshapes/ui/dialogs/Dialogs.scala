@@ -1,10 +1,8 @@
-package reshapes
+package reshapes.ui.dialogs
 import scala.swing._
 import javax.swing.JOptionPane
-import reshapes.panels.DrawingPanel
-import reshapes.panels.ShowIntersection
-import reshapes.panels.ShowCoordinateSystem
-import reshapes.panels.ShowNameLabels
+import reshapes.Events
+import reshapes.ui.panels._
 
 abstract class CustomDialog extends Dialog {
   this.modal = true;
@@ -94,12 +92,8 @@ class NewTabDialog extends CustomDialog {
       case (false, false, true) => return new DrawingPanel(events) with ShowNameLabels
       case (true, false, true) => return new DrawingPanel(events) with ShowIntersection with ShowNameLabels
       case (true, true, true) => return new DrawingPanel(events) with ShowIntersection with ShowCoordinateSystem with ShowNameLabels
+      case _ => return new DrawingPanel(events)
     }
-    var panel = new DrawingPanel(events)
-    if (showIntersections.selected) {
-      return new DrawingPanel(events) with ShowIntersection
-    }
-    new DrawingPanel(events)
   }
 }
 

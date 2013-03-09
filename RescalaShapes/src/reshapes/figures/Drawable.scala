@@ -14,17 +14,6 @@ abstract class Shape {
   var color = Color.BLACK
   var selected = false
   var current = Shape.current
-
-  override def toString(): String = {
-    this.getClass().getSimpleName() + " #" + current.toString()
-  }
-}
-
-object Shape {
-  private var current = 0
-}
-
-trait Drawable extends Shape {
   // the mouse path while drawing this shape
   var path: List[Point] = null
 
@@ -63,7 +52,11 @@ trait Drawable extends Shape {
   def toLines(): List[(Int, Int, Int, Int)]
 }
 
-trait Movable extends Drawable {
+object Shape {
+  private var current = 0
+}
+
+trait Movable extends Shape {
 
   def move(from: Point, to: Point) = {
     val deltaX = (if (from.x < to.x) 1 else -1) * math.abs(from.x - to.x)
@@ -73,7 +66,7 @@ trait Movable extends Drawable {
   }
 }
 
-trait Resizable extends Drawable {
+trait Resizable extends Shape {
 
   def resize(from: Point, to: Point) = {
     if (MathUtil.isInCircle(start, 6, from)) {

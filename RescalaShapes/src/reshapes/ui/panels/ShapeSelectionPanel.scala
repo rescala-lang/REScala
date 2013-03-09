@@ -1,4 +1,4 @@
-package reshapes.panels
+package reshapes.ui.panels
 
 import scala.swing._
 import scala.swing.event._

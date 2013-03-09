@@ -1,6 +1,6 @@
 package reshapes
 import scala.events.ImperativeEvent
-import reshapes.figures.Drawable
+import reshapes.figures.Shape
 import scala.events.behaviour.Signal
 import scala.events.behaviour.Var
 import reshapes.figures.Line
@@ -26,9 +26,9 @@ import reshapes.network.TransportObject
  */
 class Events {
 
-  val nextShape: Var[Drawable] = new Var(new Line)
-  val selectedShape: Var[Drawable] = new Var(null)
-  val allShapes: Var[List[Drawable]] = new Var(List[Drawable]())
+  val nextShape: Var[Shape] = new Var(new Line)
+  val selectedShape: Var[Shape] = new Var(null)
+  val allShapes: Var[List[Shape]] = new Var(List[Shape]())
   val strokeWidth: Var[Int] = new Var(1)
   val color: Var[Color] = new Var(Color.BLACK)
   val Commands: Var[List[Command]] = new Var(List[Command]())
@@ -65,18 +65,6 @@ class Events {
       selectedShape.getValue.color = newColor
     }
   })
-
-  //val accum = Signal { strokeWidth() }
-  //val accum = Signal { allShapes() }
-  val accum = Signal { Commands() }
-
-  val flow2 = scalareact.Signal.flow("No occurence") { self =>
-    while (true) {
-      self awaitNext accum
-      //println(accum.getValue)
-    }
-  }
-
 }
 
 class NetworkEvents(serverHostname: String = "localhost", commandPort: Int = 9998, exchangePort: Int = 9999, listenerPort: Int = 1337) extends Events {
@@ -136,8 +124,8 @@ class UpdateListener(port: Int, events: Events) extends Actor {
       val socket = listener.accept()
       val in = new ObjectInputStream(new DataInputStream(socket.getInputStream()));
 
-      val shapes = in.readObject().asInstanceOf[List[Drawable]]
-      events.allShapes() = List[Drawable]()
+      val shapes = in.readObject().asInstanceOf[List[Shape]]
+      events.allShapes() = List[Shape]()
       shapes map (shape => events.allShapes() = shape :: events.allShapes.getValue)
 
       in.close()

@@ -5,7 +5,7 @@ import java.io.FileOutputStream
 import scala.util.Marshal
 import reshapes.Events
 import java.io.FileInputStream
-import reshapes.figures.Drawable
+import reshapes.figures.Shape
 import reshapes.command.CreateShape
 import reshapes.Reshapes
 import java.io.File
@@ -37,8 +37,8 @@ class LoadAction extends Action("Load") {
     if (fileChooser.showDialog(null, "load") == FileChooser.Result.Approve) {
       val in = new FileInputStream(fileChooser.selectedFile)
       val bytes = Stream.continually(in.read).takeWhile(-1 !=).map(_.toByte).toArray
-      val shapes = Marshal.load[List[Drawable]](bytes)
-      Reshapes.CurrentEvents.allShapes() = List[Drawable]()
+      val shapes = Marshal.load[List[Shape]](bytes)
+      Reshapes.CurrentEvents.allShapes() = List[Shape]()
       shapes map (shape => (new CreateShape(shape)).execute())
     }
   }
