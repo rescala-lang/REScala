@@ -34,6 +34,7 @@ import scala.swing.event.Key
 import java.awt.Toolkit
 import reshapes.ui.dialogs.ServerDialog
 import reshapes.ui.dialogs.NewTabDialog
+import scala.events.behaviour.Signal
 
 object Reshapes extends SimpleSwingApplication {
 
@@ -115,7 +116,7 @@ object Reshapes extends SimpleSwingApplication {
   def top = new MainFrame {
     title = "ReShapes"
     //this.maximize()
-    preferredSize = new Dimension(700, 400)
+    preferredSize = new Dimension(1000, 600)
 
     menuBar = menu
     contents = ui

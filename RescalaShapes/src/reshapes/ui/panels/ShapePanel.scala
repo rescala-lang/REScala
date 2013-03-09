@@ -16,11 +16,11 @@ import reshapes.Reshapes
 /**
  * Lists all drawn shapes
  */
-class ShapePanel() extends ScrollPane(new BoxPanel(Orientation.Vertical)) {
+class ShapePanel extends BoxPanel(Orientation.Vertical) {
 
   val allShapesPanel = new BoxPanel(Orientation.Vertical)
 
-  contents = allShapesPanel
+  contents += new ScrollPane(allShapesPanel)
 
   val allShapesChangedSignal = Signal {
     updateAllShapesPanel(Reshapes.CurrentEvents().allShapes())
@@ -30,7 +30,8 @@ class ShapePanel() extends ScrollPane(new BoxPanel(Orientation.Vertical)) {
     allShapesPanel.contents.clear()
 
     shapes map (shape => allShapesPanel.contents += new ShapeView(shape, Reshapes.CurrentEvents.getValue))
-    repaint()
+
+    this.peer.revalidate()
   }
 }
 
@@ -79,4 +80,6 @@ class ShapeView(shape: Shape, events: Events) extends BoxPanel(Orientation.Horiz
       this.background = NOT_SELECTED_COLOR
     }
   }
+
+  repaint()
 }
