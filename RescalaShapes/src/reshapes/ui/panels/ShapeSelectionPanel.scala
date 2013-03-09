@@ -9,7 +9,7 @@ import reshapes._
 /**
  * Panel for selection of shapes to draw.
  */
-class ShapeSelectionPanel(var events: Events) extends BoxPanel(Orientation.Vertical) {
+class ShapeSelectionPanel() extends BoxPanel(Orientation.Vertical) {
 
   val lineBtn = new Button { text = "Line" }
   val rectBtn = new Button { text = "Rectangle" }
@@ -32,14 +32,14 @@ class ShapeSelectionPanel(var events: Events) extends BoxPanel(Orientation.Verti
 
   reactions += {
     case ButtonClicked(`lineBtn`) =>
-      events.nextShape() = new Line
+      Reshapes.CurrentEvents.getValue.nextShape() = new Line
     case ButtonClicked(`rectBtn`) =>
-      events.nextShape() = new figures.Rectangle
+      Reshapes.CurrentEvents.getValue.nextShape() = new figures.Rectangle
     case ButtonClicked(`ovalBtn`) =>
-      events.nextShape() = new Oval
+      Reshapes.CurrentEvents.getValue.nextShape() = new Oval
     case ButtonClicked(`triangleBtn`) =>
-      events.nextShape() = new Triangle
+      Reshapes.CurrentEvents.getValue.nextShape() = new Triangle
     case ButtonClicked(`freedrawBtn`) =>
-      events.nextShape() = new Freedraw
+      Reshapes.CurrentEvents.getValue.nextShape() = new Freedraw
   }
 }

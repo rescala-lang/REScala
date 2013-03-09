@@ -25,11 +25,9 @@ abstract class EngineModule { self: Domain =>
     depStack(depStackSize) = null
   }
 
-  protected def depStackTop: Node = depStack(depStackSize-1)
-
+  protected def depStackTop: Node = depStack(depStackSize - 1)
 
   // -----------------------------------------------------------------
-
 
   /**
    * Nodes that throw this exception must ensure that the dependent stack is in clean state, i.e.,

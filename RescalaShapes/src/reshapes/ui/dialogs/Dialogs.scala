@@ -83,16 +83,16 @@ class NewTabDialog extends CustomDialog {
   /**
    * Creates a custom drawing panel (with different traits) depending on checked dialog options
    */
-  def generateDrawingPanel(events: Events): DrawingPanel = {
+  def generateDrawingPanel(event: Events): DrawingPanel = {
     val tuple = (showIntersections.selected, showCoordinates.selected, showNames.selected)
     tuple match {
-      case (true, false, false) => return new DrawingPanel(events) with ShowIntersection
-      case (false, true, false) => return new DrawingPanel(events) with ShowCoordinateSystem
-      case (true, true, false) => return new DrawingPanel(events) with ShowIntersection with ShowCoordinateSystem
-      case (false, false, true) => return new DrawingPanel(events) with ShowNameLabels
-      case (true, false, true) => return new DrawingPanel(events) with ShowIntersection with ShowNameLabels
-      case (true, true, true) => return new DrawingPanel(events) with ShowIntersection with ShowCoordinateSystem with ShowNameLabels
-      case _ => return new DrawingPanel(events)
+      case (true, false, false) => return new DrawingPanel(event) with ShowIntersection
+      case (false, true, false) => return new DrawingPanel(event) with ShowCoordinateSystem
+      case (true, true, false) => return new DrawingPanel(event) with ShowIntersection with ShowCoordinateSystem
+      case (false, false, true) => return new DrawingPanel(event) with ShowNameLabels
+      case (true, false, true) => return new DrawingPanel(event) with ShowIntersection with ShowNameLabels
+      case (true, true, true) => return new DrawingPanel(event) with ShowIntersection with ShowCoordinateSystem with ShowNameLabels
+      case _ => return new DrawingPanel(event)
     }
   }
 }

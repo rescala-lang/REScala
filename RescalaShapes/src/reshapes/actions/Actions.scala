@@ -17,12 +17,12 @@ import reshapes.command.MergeEvents
 class SaveAction extends Action("Save") {
   def apply() = {
     val fileChooser = new FileChooser()
-    fileChooser.selectedFile = new File(Reshapes.CurrentEvents.fileName.getValue)
+    fileChooser.selectedFile = new File(Reshapes.CurrentEvents.getValue.fileName.getValue)
     if (fileChooser.showDialog(null, "save") == FileChooser.Result.Approve) {
       val out = new FileOutputStream(fileChooser.selectedFile)
-      out.write(Marshal.dump(Reshapes.CurrentEvents.allShapes.getValue))
+      out.write(Marshal.dump(Reshapes.CurrentEvents.getValue.allShapes.getValue))
       out.close()
-      Reshapes.CurrentEvents.fileName() = fileChooser.selectedFile.getName()
+      Reshapes.CurrentEvents.getValue.fileName() = fileChooser.selectedFile.getName()
       Reshapes.tabbedPane.pages(Reshapes.tabbedPane.selection.index).title = fileChooser.selectedFile.getName() // XXX
     }
   }
@@ -38,7 +38,7 @@ class LoadAction extends Action("Load") {
       val in = new FileInputStream(fileChooser.selectedFile)
       val bytes = Stream.continually(in.read).takeWhile(-1 !=).map(_.toByte).toArray
       val shapes = Marshal.load[List[Shape]](bytes)
-      Reshapes.CurrentEvents.allShapes() = List[Shape]()
+      Reshapes.CurrentEvents.getValue.allShapes() = List[Shape]()
       shapes map (shape => (new CreateShape(shape)).execute())
     }
   }
@@ -58,7 +58,7 @@ class QuitAction extends Action("Quit") {
  */
 class UndoAction extends Action("Undo") {
   def apply() = {
-    Reshapes.CurrentEvents.Commands.getValue.first.revert()
+    Reshapes.CurrentEvents.getValue.Commands.getValue.first.revert()
   }
 }
 

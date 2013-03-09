@@ -4,11 +4,12 @@ import reshapes.Events
 import scala.swing.event._
 import reshapes.Selection
 import javax.swing.JColorChooser
+import reshapes.Reshapes
 
 /**
  * Panel for various customization of the stroke.
  */
-class StrokeInputPanel(var events: Events) extends FlowPanel {
+class StrokeInputPanel() extends FlowPanel {
 
   def colorChooserWindow = new Frame {
     title = "Choose color"
@@ -27,7 +28,7 @@ class StrokeInputPanel(var events: Events) extends FlowPanel {
     }
 
     def confirmColor() = {
-      events.color() = colorChooser.peer.getColor()
+      Reshapes.CurrentEvents.getValue.color() = colorChooser.peer.getColor()
       visible = false
     }
   }
@@ -47,7 +48,7 @@ class StrokeInputPanel(var events: Events) extends FlowPanel {
     paintTicks = true
 
     reactions += {
-      case e: ValueChanged => events.strokeWidth() = value
+      case e: ValueChanged => Reshapes.CurrentEvents.getValue.strokeWidth() = value
     }
   }
   contents += showColorInput

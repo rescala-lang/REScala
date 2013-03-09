@@ -259,7 +259,7 @@ abstract class ReactiveModule extends EngineModule { module: Domain =>
         case null =>
         case wref: WeakReference[Node] =>
           val d = wref.get
-          if ((d eq null) || !d.isInstanceOf[ManagesDependencies] /*|| d.isDisposed*/) dependents = null
+          if ((d eq null) || !d.isInstanceOf[ManagesDependencies] /*|| d.isDisposed*/ ) dependents = null
           if (d ne null) d.tick()
         case arr: Array[WeakReference[Node]] =>
           var i = 0
@@ -267,7 +267,7 @@ abstract class ReactiveModule extends EngineModule { module: Domain =>
             val wref = arr(i)
             if (wref ne null) {
               val d = wref.get
-              if ((d eq null) || !d.isInstanceOf[ManagesDependencies] /*|| d.isDisposed*/) {
+              if ((d eq null) || !d.isInstanceOf[ManagesDependencies] /*|| d.isDisposed*/ ) {
                 arr(i) = null
               }
               if (d ne null) d.tick()
@@ -338,8 +338,6 @@ abstract class ReactiveModule extends EngineModule { module: Domain =>
               }*/
               i += 1
             }
-
-
 
             val newDeps = new Array[WeakReference[Node]](oldSize * 2)
             compat.Platform.arraycopy(arr, 0, newDeps, 0, oldSize)

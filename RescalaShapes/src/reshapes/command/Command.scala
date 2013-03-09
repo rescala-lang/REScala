@@ -12,17 +12,17 @@ abstract class Command() {
 
   def execute() = {
     onExecute()
-    Reshapes.CurrentEvents.Commands() = this :: Reshapes.CurrentEvents.Commands.getValue
+    Reshapes.CurrentEvents.getValue.Commands() = this :: Reshapes.CurrentEvents.getValue.Commands.getValue
   }
 
   def revert(): Unit = {
     // check if this command is latest command
-    while (Reshapes.CurrentEvents.Commands.getValue.first != this) {
+    while (Reshapes.CurrentEvents.getValue.Commands.getValue.first != this) {
       // if not then revert all commands which where executed after this
-      Reshapes.CurrentEvents.Commands.getValue.first.revert()
+      Reshapes.CurrentEvents.getValue.Commands.getValue.first.revert()
     }
     onRevert()
-    Reshapes.CurrentEvents.Commands() = Reshapes.CurrentEvents.Commands.getValue.tail
+    Reshapes.CurrentEvents.getValue.Commands() = Reshapes.CurrentEvents.getValue.Commands.getValue.tail
   }
 
   def onExecute()
@@ -38,11 +38,11 @@ abstract class Command() {
 class DeleteShape(shapeToDelete: Shape) extends Command {
 
   def onExecute() = {
-    Reshapes.CurrentEvents.allShapes() = Reshapes.CurrentEvents.allShapes.getValue filter (x => x != shapeToDelete)
+    Reshapes.CurrentEvents.getValue.allShapes() = Reshapes.CurrentEvents.getValue.allShapes.getValue filter (x => x != shapeToDelete)
   }
 
   def onRevert() = {
-    Reshapes.CurrentEvents.allShapes() = shapeToDelete :: Reshapes.CurrentEvents.allShapes.getValue
+    Reshapes.CurrentEvents.getValue.allShapes() = shapeToDelete :: Reshapes.CurrentEvents.getValue.allShapes.getValue
   }
 
   override def getCommandDescription(): String = {
@@ -56,7 +56,7 @@ class DeleteShape(shapeToDelete: Shape) extends Command {
 class CreateShape(shapeToCreate: Shape) extends Command {
 
   def onExecute() {
-    Reshapes.CurrentEvents.allShapes() = shapeToCreate :: Reshapes.CurrentEvents.allShapes.getValue
+    Reshapes.CurrentEvents.getValue.allShapes() = shapeToCreate :: Reshapes.CurrentEvents.getValue.allShapes.getValue
   }
 
   def onRevert() {
@@ -83,8 +83,8 @@ class EditShape(shapeBeforeEdit: Shape, shapeAfterEdit: Shape) extends Command {
     shapeAfterEdit.strokeWidth = shapeBeforeEdit.strokeWidth
     shapeAfterEdit.color = shapeBeforeEdit.color
 
-    Reshapes.CurrentEvents.selectedShape() = new Line() // force to fire selectedShape.changed event when Events.selectedShape() == shapeAfterEdit
-    Reshapes.CurrentEvents.selectedShape() = shapeAfterEdit
+    Reshapes.CurrentEvents.getValue.selectedShape() = new Line() // force to fire selectedShape.changed event when Events.selectedShape() == shapeAfterEdit
+    Reshapes.CurrentEvents.getValue.selectedShape() = shapeAfterEdit
   }
 
   override def getCommandDescription(): String = {

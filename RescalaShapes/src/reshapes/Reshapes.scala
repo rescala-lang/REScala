@@ -40,15 +40,15 @@ object Reshapes extends SimpleSwingApplication {
   val tabbedPane = new TabbedPane()
   val currentTabIndex = new Var(0)
   // as event/Var
-  var CurrentEvents: Events = new Events()
+  var CurrentEvents = new Var(new Events())
   val panelEvents = new HashMap[Int, Events]()
 
   // Panels
-  var infoPanel = new InfoPanel(CurrentEvents)
-  var shapePanel = new ShapePanel(CurrentEvents)
-  var strokeInputPanel = new StrokeInputPanel(CurrentEvents)
-  var shapeSelectionPanel = new ShapeSelectionPanel(CurrentEvents)
-  var commandPanel = new CommandPanel(CurrentEvents)
+  var infoPanel = new InfoPanel()
+  var shapePanel = new ShapePanel()
+  var strokeInputPanel = new StrokeInputPanel()
+  var shapeSelectionPanel = new ShapeSelectionPanel()
+  var commandPanel = new CommandPanel()
 
   val ui = new BorderPanel {
     add(infoPanel, BorderPanel.Position.South)
@@ -63,24 +63,16 @@ object Reshapes extends SimpleSwingApplication {
     add(tabbedPane, BorderPanel.Position.Center)
 
     listenTo(tabbedPane.selection)
-    listenTo(keys)
 
     reactions += {
       case SelectionChanged(`tabbedPane`) => {
         if (tabbedPane.pages.size > 0) {
           val currentEvents = panelEvents(tabbedPane.selection.index)
-          infoPanel.events = currentEvents
-          shapePanel.events = currentEvents
-          strokeInputPanel.events = currentEvents
-          shapeSelectionPanel.events = currentEvents
-          commandPanel.events = currentEvents
-
-          CurrentEvents = currentEvents
+          CurrentEvents() = currentEvents
 
           menu.updateMerge()
         }
       }
-      case KeyPressed(_, Key.Space, _, _) => println("space key")
     }
   }
 
@@ -94,7 +86,7 @@ object Reshapes extends SimpleSwingApplication {
     val undo = new MenuItem(new UndoAction()) { enabled = false }
     val mergeMenu = new Menu("Merge with...")
 
-    CurrentEvents.Commands.changed += (commands => undo.enabled = !commands.isEmpty)
+    CurrentEvents.getValue.Commands.changed += (commands => undo.enabled = !commands.isEmpty)
 
     contents += new Menu("File") {
       contents += newTab
@@ -136,7 +128,7 @@ object Reshapes extends SimpleSwingApplication {
   }
 
   def addDrawingPanel(panel: DrawingPanel) {
-    panelEvents(tabbedPane.pages.size) = panel.events
+    panelEvents(tabbedPane.pages.size) = panel.event
     tabbedPane.pages += new TabbedPane.Page("drawing#%d".format(tabbedPane.pages.size + 1), panel)
     menu.updateMerge()
   }

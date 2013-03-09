@@ -10,30 +10,26 @@ import scala.events.behaviour.Var
 import reshapes.figures.Line
 import scala.swing.event.KeyPressed
 import scala.swing.event.Key
+import scala.events.behaviour.Signal
+import reshapes.Reshapes
 
 /**
  * Lists all drawn shapes
  */
-class ShapePanel(var _events: Events) extends ScrollPane(new BoxPanel(Orientation.Vertical)) {
-
-  def events = _events
-  def events_=(e: Events) {
-    _events.allShapes.changed -= updateAllShapesPanel
-    _events = e
-    e.allShapes.changed += updateAllShapesPanel
-    updateAllShapesPanel(e.allShapes.getValue)
-  }
+class ShapePanel() extends ScrollPane(new BoxPanel(Orientation.Vertical)) {
 
   val allShapesPanel = new BoxPanel(Orientation.Vertical)
 
   contents = allShapesPanel
 
-  events.allShapes.changed += updateAllShapesPanel
+  val allShapesChangedSignal = Signal {
+    updateAllShapesPanel(Reshapes.CurrentEvents().allShapes())
+  }
 
   def updateAllShapesPanel(shapes: List[Shape]) = {
     allShapesPanel.contents.clear()
 
-    shapes map (shape => allShapesPanel.contents += new ShapeView(shape, events))
+    shapes map (shape => allShapesPanel.contents += new ShapeView(shape, Reshapes.CurrentEvents.getValue))
     repaint()
   }
 }

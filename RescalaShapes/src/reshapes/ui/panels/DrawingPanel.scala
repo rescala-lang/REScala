@@ -15,16 +15,17 @@ import reshapes.Events
 import reshapes.util.MathUtil
 import scala.collection.mutable.MutableList
 import scala.events.scalareact
+import reshapes.Reshapes
 
 /**
  * Represents the panel where all shapes are drawn onto.
  */
-class DrawingPanel(var events: Events) extends Panel {
+class DrawingPanel(val event: Events) extends Panel {
   opaque = true
 
   var currentPath = new Var[List[Point]](List())
   var shapes = List[Shape]()
-  val currentShape = Signal { events.nextShape() }
+  val currentShape = Signal { Reshapes.CurrentEvents().nextShape() }
   var currentlyDrawing: Shape = null
   var shapeBeforeEdit: Shape = null
 
@@ -33,7 +34,7 @@ class DrawingPanel(var events: Events) extends Panel {
     g.fillRect(0, 0, size.getWidth().toInt, size.getHeight().toInt)
 
     g.setColor(java.awt.Color.BLACK)
-    events.allShapes.getValue.map(x => x.draw(g))
+    Reshapes.CurrentEvents.getValue.allShapes.getValue.map(x => x.draw(g))
     if (currentlyDrawing != null) {
       currentlyDrawing.draw(g)
     }
@@ -45,23 +46,23 @@ class DrawingPanel(var events: Events) extends Panel {
   reactions += {
     case e: MousePressed =>
       currentPath() = List(e.point)
-      events.mode match {
+      Reshapes.CurrentEvents.getValue.mode match {
         case Drawing() =>
           currentlyDrawing = currentShape.getValue.getClass().newInstance()
-          currentlyDrawing.strokeWidth = events.strokeWidth.getValue
-          currentlyDrawing.color = events.color.getValue
+          currentlyDrawing.strokeWidth = Reshapes.CurrentEvents.getValue.strokeWidth.getValue
+          currentlyDrawing.color = Reshapes.CurrentEvents.getValue.color.getValue
         case Selection() =>
-          shapeBeforeEdit = Marshal.load[Shape](Marshal.dump[Shape](events.selectedShape.getValue)) // hack to get a object copy
+          shapeBeforeEdit = Marshal.load[Shape](Marshal.dump[Shape](Reshapes.CurrentEvents.getValue.selectedShape.getValue)) // hack to get a object copy
         case _ =>
       }
       repaint()
     case e: MouseDragged =>
       currentPath() = currentPath.getValue ::: List(e.point)
-      events.mode match {
+      Reshapes.CurrentEvents.getValue.mode match {
         case Drawing() =>
           currentlyDrawing.update(currentPath.getValue)
         case Selection() =>
-          val shape = events.selectedShape.getValue
+          val shape = Reshapes.CurrentEvents.getValue.selectedShape.getValue
           if ((MathUtil.isInCircle(shape.start, 6, e.point) || MathUtil.isInCircle(shape.end, 6, e.point))
             && shape.isInstanceOf[Resizable]) {
             shape.asInstanceOf[Resizable].resize(currentPath.getValue.reverse(1), e.point)
@@ -72,18 +73,18 @@ class DrawingPanel(var events: Events) extends Panel {
       }
       repaint()
     case e: MouseReleased =>
-      events.mode match {
+      Reshapes.CurrentEvents.getValue.mode match {
         case Drawing() =>
           new CreateShape(currentlyDrawing).execute()
           currentlyDrawing = null
         case Selection() =>
-          var command = new EditShape(shapeBeforeEdit, events.selectedShape.getValue)
+          var command = new EditShape(shapeBeforeEdit, Reshapes.CurrentEvents.getValue.selectedShape.getValue)
           command.execute()
         case _ =>
       }
   }
 
-  events.canvasChange += (_ => repaint())
+  event.canvasChange += (_ => repaint())
 }
 
 /**
@@ -101,11 +102,11 @@ trait ShowIntersection extends DrawingPanel {
   def getIntersectionPoints(): List[(Int, Int)] = {
     val points = MutableList[(Int, Int)]()
 
-    if (events.allShapes.getValue.size == 0)
+    if (Reshapes.CurrentEvents.getValue.allShapes.getValue.size == 0)
       return points.toList
 
-    for (shape <- events.allShapes.getValue) {
-      for (otherShape <- events.allShapes.getValue.filter(s => s != shape)) {
+    for (shape <- Reshapes.CurrentEvents.getValue.allShapes.getValue) {
+      for (otherShape <- Reshapes.CurrentEvents.getValue.allShapes.getValue.filter(s => s != shape)) {
         for (line <- shape.toLines()) {
           for (otherline <- otherShape.toLines()) {
             val intersection = MathUtil.getIntersectionsOfTwoLines(line, otherline)
@@ -149,7 +150,7 @@ trait ShowNameLabels extends DrawingPanel {
 
     g.setColor(new Color(200, 200, 200))
     g.setStroke(new BasicStroke())
-    events.allShapes.getValue map (shape => g.drawString(shape.toString(), shape.start.x, shape.start.y))
+    Reshapes.CurrentEvents.getValue.allShapes.getValue map (shape => g.drawString(shape.toString(), shape.start.x, shape.start.y))
   }
 }
 
