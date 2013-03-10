@@ -39,8 +39,6 @@ class ShapeView(shape: Shape, events: Events) extends BoxPanel(Orientation.Horiz
   val SELECTED_COLOR = new Color(0, 153, 255)
   val NOT_SELECTED_COLOR = new Color(255, 255, 255)
 
-  var selected = false
-
   val selectButton = new Button
   selectButton.action = new Action(shape.toString()) {
     val assignedShape = shape
@@ -63,21 +61,18 @@ class ShapeView(shape: Shape, events: Events) extends BoxPanel(Orientation.Horiz
   this.background = NOT_SELECTED_COLOR
 
   listenTo(Mouse.clicks)
-  listenTo(keys)
 
   reactions += {
-    case e: MouseClicked => events.selectedShape() = shape
-    case KeyPressed(_, Key.Space, _, _) => println("ctrl pressed")
+    case e: MouseClicked =>
+      if (events.selectedShape.getValue != shape) events.selectedShape() = shape
+      else {
+        events.selectedShape() = null
+      }
   }
 
   events.selectedShape.changed += (s => toggleSelection(s == shape))
 
   def toggleSelection(selected: Boolean) = {
     this.background = if (selected) SELECTED_COLOR else NOT_SELECTED_COLOR
-    if (selected) {
-      this.background = SELECTED_COLOR
-    } else {
-      this.background = NOT_SELECTED_COLOR
-    }
   }
 }

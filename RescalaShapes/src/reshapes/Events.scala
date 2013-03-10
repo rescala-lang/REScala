@@ -47,10 +47,12 @@ class Events {
   })
 
   selectedShape.changed += (shape => {
+    allShapes.getValue map (x => x.selected = false)
     if (shape != null) {
-      allShapes.getValue map (x => x.selected = false)
       shape.selected = true
       mode = Selection()
+    } else {
+      mode = Drawing()
     }
   })
 
