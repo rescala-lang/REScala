@@ -88,7 +88,7 @@ object Reshapes extends SimpleSwingApplication {
     val undo = new MenuItem(new UndoAction()) { enabled = false }
     val mergeMenu = new Menu("Merge with...")
 
-    CurrentEvents.getValue.Commands.changed += (commands => undo.enabled = !commands.isEmpty)
+    Signal { undo.enabled = !CurrentEvents().Commands().isEmpty }
 
     contents += new Menu("File") {
       contents += newTab
