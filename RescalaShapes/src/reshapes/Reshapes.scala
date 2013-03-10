@@ -125,6 +125,7 @@ object Reshapes extends SimpleSwingApplication {
 
   def addTab(event: Events = new Events()) {
     val dialog = new NewTabDialog()
+    dialog.location = ui.locationOnScreen
     dialog.showDialog()
     if (dialog.dialogResult == DialogResult.OK) addDrawingPanel(dialog.generateDrawingPanel(event))
   }
@@ -138,6 +139,7 @@ object Reshapes extends SimpleSwingApplication {
 
   def addNetworkTab() {
     val dialog = new ServerDialog()
+    dialog.location = ui.locationOnScreen
     dialog.showDialog()
     if (dialog.inputIsValid() && dialog.dialogResult == DialogResult.OK) {
       try {
