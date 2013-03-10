@@ -13,8 +13,15 @@ object ReshapesServer {
   var currentShapes = List[Shape]()
 
   def main(args: Array[String]): Unit = {
-    new CommandThread(9998).start()
-    new UpdateThread(9999).start()
+    if (args.size >= 2) {
+      val commandThreadPort = args(0).toInt
+      val updateThreadPort = args(1).toInt
+
+      new CommandThread(commandThreadPort).start()
+      new UpdateThread(updateThreadPort).start()
+    } else {
+      println("invalid number of arguments")
+    }
   }
 
   /**
