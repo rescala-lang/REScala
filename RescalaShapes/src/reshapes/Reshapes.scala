@@ -42,7 +42,7 @@ object Reshapes extends SimpleSwingApplication {
   val currentTabIndex = new Var(0)
   // as event/Var
   var CurrentEvents = new Var(new Events())
-  val panelEvents = new HashMap[Int, Events]()
+  val panelEvents = new HashMap[TabbedPane.Page, Events]()
 
   // Panels
   var infoPanel = new InfoPanel()
@@ -68,7 +68,7 @@ object Reshapes extends SimpleSwingApplication {
     reactions += {
       case SelectionChanged(`tabbedPane`) => {
         if (tabbedPane.pages.size > 0) {
-          val currentEvents = panelEvents(tabbedPane.selection.index)
+          val currentEvents = panelEvents(tabbedPane.selection.page)
           CurrentEvents() = currentEvents
 
           menu.updateMerge()
@@ -109,7 +109,7 @@ object Reshapes extends SimpleSwingApplication {
     def updateMerge() = {
       mergeMenu.contents.clear()
       val mergableTabs = tabbedPane.pages filter (tab => tab.index != tabbedPane.selection.index) // all tabs except currently selected
-      mergableTabs map (tab => mergeMenu.contents += new MenuItem(new MergeAction(tab.title, panelEvents(tab.index)))) // insert tabs in submenu
+      mergableTabs map (tab => mergeMenu.contents += new MenuItem(new MergeAction(tab.title, panelEvents(tab)))) // insert tabs in submenu
     }
   }
 
@@ -129,8 +129,9 @@ object Reshapes extends SimpleSwingApplication {
   }
 
   def addDrawingPanel(panel: DrawingPanel) {
-    panelEvents(tabbedPane.pages.size) = panel.event
-    tabbedPane.pages += new TabbedPane.Page("drawing#%d".format(tabbedPane.pages.size + 1), panel)
+    val page = new TabbedPane.Page("drawing#%d".format(tabbedPane.pages.size + 1), panel)
+    panelEvents(page) = panel.event
+    tabbedPane.pages += page
     menu.updateMerge()
   }
 
@@ -156,7 +157,7 @@ object Reshapes extends SimpleSwingApplication {
    */
   def removeTab() {
     if (tabbedPane.pages.size > 0) {
-      panelEvents.remove(tabbedPane.selection.index)
+      panelEvents.remove(tabbedPane.selection.page)
       tabbedPane.pages.remove(tabbedPane.selection.index)
       menu.updateMerge()
     }
