@@ -68,4 +68,9 @@ You can save and load the currently selected tab with \textbf{File $\rightarrow$
 \section{Network tab}
 
 Besides drawing locally it is possible to draw with two or more people onto the same drawing pane over network.
-The first step to do so is to start the \textit{reshapes.network.ReshapesServer}. 
+The first step to do so is to start \textit{reshapes.network.ReshapesServer} with two command line arguments. 
+Both arguments specifiy the port the server listens to for new clients and updates. \\
+After the server is started the client can connect to the server with \textbf{File $\rightarrow$ New network tab}: \\
+\includegraphics[width=1\textwidth]{img/new_network_tab}
+
+The first three fields defines the hostname and ports of the server and the field \textbf{Client listener port} specifies the port to which the server sends updates.

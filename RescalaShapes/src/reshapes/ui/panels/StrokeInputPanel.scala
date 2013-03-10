@@ -14,6 +14,7 @@ class StrokeInputPanel() extends FlowPanel {
   def colorChooserWindow = new Frame {
     title = "Choose color"
 
+    // the ColorChooser wasn't available in the standard scala library so I had to use this construct.
     val colorChooser = new Component() {
       override lazy val peer = new JColorChooser()
     }

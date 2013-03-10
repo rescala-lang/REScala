@@ -82,8 +82,6 @@ class NetworkEvents(serverHostname: String = "localhost", commandPort: Int = 999
 
   val serverInetAddress: InetAddress = InetAddress.getByName(serverHostname)
 
-  val commandSignal = Signal { Commands() }
-
   /**
    * Registers this client with a server and tells him
    * which port the server has to send updates to
@@ -104,6 +102,8 @@ class NetworkEvents(serverHostname: String = "localhost", commandPort: Int = 999
   def startUpdateListener(port: Int) = {
     new UpdateListener(port, this).start()
   }
+
+  val commandSignal = Signal { Commands() }
 
   val cmdFlow = scalareact.Signal.flow("") { self =>
     while (true) {

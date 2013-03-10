@@ -22,6 +22,9 @@ class InfoPanel() extends FlowPanel {
   val currentShapeSignalSelectedShape = Signal {
     updateCurrentShapeLabel(Reshapes.CurrentEvents().selectedShape())
   }
+  val allShapeSignal = Signal {
+    updateNumberElementsLabel(Reshapes.CurrentEvents().allShapes())
+  }
 
   contents += currentShapeLabel
   contents += new Label { text = "|" }
