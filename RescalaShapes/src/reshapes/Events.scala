@@ -37,7 +37,7 @@ class Events {
   var mode: EditingMode = Drawing()
   val modeChange = nextShape.changed || selectedShape.changed
 
-  val canvasChange = selectedShape.changed || allShapes.changed || modeChange || strokeWidth.changed
+  val canvasChange = selectedShape.changed || allShapes.changed || modeChange || strokeWidth.changed || color.changed
 
   nextShape.changed += (shape => {
     shape.strokeWidth = strokeWidth.getValue
