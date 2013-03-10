@@ -4,10 +4,18 @@ import javax.swing.JOptionPane
 import reshapes.Events
 import reshapes.ui.panels._
 
+object DialogResult extends Enumeration {
+  type DialogResult = Value
+  val OK, CANCEL = Value
+}
+
 abstract class CustomDialog extends Dialog {
+  var dialogResult = DialogResult.CANCEL
+
   this.modal = true;
 
   def showDialog() = {
+    dialogResult = DialogResult.CANCEL
     this.visible = true
   }
 
@@ -39,10 +47,10 @@ class ServerDialog extends CustomDialog {
     contents += listenerPortInput
     contents += new BoxPanel(Orientation.Horizontal) {
       contents += new Button(Action("OK") {
+        dialogResult = DialogResult.OK
         applyPorts()
       })
       contents += new Button(Action("Cancel") {
-
         hideDialog()
       })
     }
@@ -76,6 +84,7 @@ class NewTabDialog extends CustomDialog {
     contents += showCoordinates
     contents += showNames
     contents += new Button(Action("OK") {
+      dialogResult = DialogResult.OK
       hideDialog()
     })
   }
@@ -96,4 +105,3 @@ class NewTabDialog extends CustomDialog {
     }
   }
 }
-

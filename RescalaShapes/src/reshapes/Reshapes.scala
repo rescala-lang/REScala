@@ -35,6 +35,7 @@ import java.awt.Toolkit
 import reshapes.ui.dialogs.ServerDialog
 import reshapes.ui.dialogs.NewTabDialog
 import scala.events.behaviour.Signal
+import reshapes.ui.dialogs.DialogResult
 
 object Reshapes extends SimpleSwingApplication {
 
@@ -125,7 +126,7 @@ object Reshapes extends SimpleSwingApplication {
   def addTab(event: Events = new Events()) {
     val dialog = new NewTabDialog()
     dialog.showDialog()
-    addDrawingPanel(dialog.generateDrawingPanel(event))
+    if (dialog.dialogResult == DialogResult.OK) addDrawingPanel(dialog.generateDrawingPanel(event))
   }
 
   def addDrawingPanel(panel: DrawingPanel) {
@@ -138,7 +139,7 @@ object Reshapes extends SimpleSwingApplication {
   def addNetworkTab() {
     val dialog = new ServerDialog()
     dialog.showDialog()
-    if (dialog.inputIsValid()) {
+    if (dialog.inputIsValid() && dialog.dialogResult == DialogResult.OK) {
       try {
         addTab(new NetworkEvents(dialog.hostname, dialog.commandPort, dialog.exchangePort, dialog.listenerPort))
       } catch {
@@ -162,6 +163,4 @@ object Reshapes extends SimpleSwingApplication {
       menu.updateMerge()
     }
   }
-
-  addTab()
 }

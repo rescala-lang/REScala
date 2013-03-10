@@ -80,6 +80,4 @@ class ShapeView(shape: Shape, events: Events) extends BoxPanel(Orientation.Horiz
       this.background = NOT_SELECTED_COLOR
     }
   }
-
-  repaint()
 }
