@@ -5,6 +5,7 @@ package animal.run
 //import animal.versions.event._
 import animal.versions.signal._
 
+// test
 object RunConsole extends App {
   implicit val world = new World
   
