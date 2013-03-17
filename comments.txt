@@ -1,0 +1,49 @@
+
+-----------------------------------
+How signals interact with state.
+
+> G
+Objects most of the times have no state. For example in the Animal class.
+The position of the animal for example is stored in the board.
+For example, is the energy of the animals changed in any place ?
+
+
+> G
+It seems to me that in a lot of cases signals are used to model fields whose
+values depends on other fields of the same object. In that way it is
+"elementary" fields are modeled as vars and dependent fields as signal expressions and
+there is no need for manual update.
+
+
+
+	/// I have tried to keep the number of Vars as small as possible.
+	/// 'state' is one of the few properties which has to be a Var
+	/// because its hard to define as dependent on other signals.
+	/// (although functionally dependent on pos and current world state (see nextAction))
+	
+ Can you elaborate a bit on why it is hard ?
+
+
+val isDead: Signal[Boolean]
+  /// actually, you would want to register an event handler right here, so that
+  /// an element that changes its state to dead could remove itself.
+  /// However, we have no control where in the 'update cycle' that happens.
+  /// If some other reaction happens after removing this element, but in the same cycle
+  /// the element is invalid
+
+Not sure I get it. can you fix the last sentence ? Removing the element should be a side effect,
+so isn't it executed at the end of a propagation cycle ?
+
+
+  /// This method exists so that i have have some imperative code that can
+  /// be called on each tick. This was necessary for some parts which don't work at all with events
+  /// If we were to disallow events completely, the size of this method would grow
+
+Shouldn't events work fine with imperative code ?
+
+
+
+-------------------------------------
+About the propagation model. Do we collect dependencies along the control flow ?
+I suspect this is actually not needed and most of the dependencies 
+in signal expressions could be collected syntactically.
