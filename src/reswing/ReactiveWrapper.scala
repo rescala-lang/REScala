@@ -3,6 +3,7 @@ package reswing
 import scala.events.behaviour.Signal
 import scala.events.behaviour.Var
 
+// TODO: not sure I get the sense of this class, can you add some comments ?
 protected class ReactiveWrapper[T](setter: T => Unit, init: T) {
   private val valueVar = new Var[T](init)
   private val outSignal = Signal { valueVar() }
