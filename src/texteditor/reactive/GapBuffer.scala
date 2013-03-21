@@ -3,6 +3,10 @@ package texteditor.reactive
 import scala.events.behaviour.Var
 import scala.events.behaviour.Signal
 
+
+/**
+ * TODO: add some comments to these classes 
+ */
 class CharacterIterator(buf: Array[Char], count: Int, caret: Int) extends Iterator[Char] {
   private var b = 0
   private var c = 0
@@ -21,6 +25,11 @@ class CharacterIterator(buf: Array[Char], count: Int, caret: Int) extends Iterat
   }
 }
 
+/**
+ * TODO: add some comments to these classes 
+ * TODO: can you elaborate a bit on what is going on here ? 
+ * In particular I'm referring to the Arry.copy thing :)
+ */
 class GapBuffer {
   private var buf = new Array[Char](0)
   private val size = new Var(0)
