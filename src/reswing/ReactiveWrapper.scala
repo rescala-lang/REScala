@@ -24,7 +24,8 @@ protected class ReactiveWrapper[T](setter: T => Unit, init: T) {
   private var inSignal : Signal[T] = null
   
   /**
-   * Sets the signal that will update the wrapped value by calling the Swing setter.
+   * Sets the in signal. The in signal is used to update 
+   * the wrapped value by calling the Swing setter.
    */
   def signal_=(signal: Signal[T]) {
     if (inSignal != null)
@@ -38,19 +39,20 @@ protected class ReactiveWrapper[T](setter: T => Unit, init: T) {
   }
   
   /**
-   * Gets the signal that holds the current value that is returned by the Swing getter.
+   * Gets the out signal.
+   * The value is the same that would be returned by the Swing getter.
    */
   def signal = outSignal
   
   /**
-   * Sets the current value.
+   * Sets the current value of the out signal.
    * Should be updated when the Swing setter method is called or
    * when the value changes by user interaction.
    */
   def value_=(value: T) = valueVar() = value
   
   /**
-   * Returns the current value.
+   * Returns the current value of the out signal.
    */
   def value = valueVar()
 }
