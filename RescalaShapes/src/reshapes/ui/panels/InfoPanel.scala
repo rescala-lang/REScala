@@ -16,25 +16,33 @@ class InfoPanel() extends FlowPanel {
   val currentShapeLabel = new Label { text = " " }
   val numberElementsLabel = new Label { text = "#elements: 0" }
 
-  val currentShapeSignalNextShape = Signal {
-    updateCurrentShapeLabel(Reshapes.CurrentEvents().nextShape())
+  val currentlyNextShape: Signal[String] = Signal {
+    Reshapes.CurrentEvents().nextShape()
+    if (Reshapes.CurrentEvents().nextShape() != null) {
+      "Next shape: %s".format(Reshapes.CurrentEvents().nextShape().toString())
+    } else {
+      ""
+    }
   }
-  val currentShapeSignalSelectedShape = Signal {
-    updateCurrentShapeLabel(Reshapes.CurrentEvents().selectedShape())
+
+  val currentlySelectedShape: Signal[String] = Signal {
+    Reshapes.CurrentEvents().selectedShape()
+    if (Reshapes.CurrentEvents().selectedShape() != null) {
+      Reshapes.CurrentEvents().selectedShape().toString()
+    } else {
+      ""
+    }
   }
-  val allShapeSignal = Signal {
-    updateNumberElementsLabel(Reshapes.CurrentEvents().allShapes())
+
+  val numberElements: Signal[String] = Signal {
+    "#elements: %d".format(Reshapes.CurrentEvents().allShapes().size)
   }
+
+  numberElements.changed += (newText => numberElementsLabel.text = newText)
+  currentlySelectedShape.changed += (newText => currentShapeLabel.text = newText)
+  currentlyNextShape.changed += (newText => currentShapeLabel.text = newText)
 
   contents += currentShapeLabel
   contents += new Label { text = "|" }
   contents += numberElementsLabel
-
-  def updateCurrentShapeLabel(shape: Shape) = {
-    currentShapeLabel.text = if (shape != null) shape.toString() else "";
-  }
-
-  def updateNumberElementsLabel(shapes: List[Shape]) = {
-    numberElementsLabel.text = "#elements: %d".format(shapes.size)
-  }
 }
