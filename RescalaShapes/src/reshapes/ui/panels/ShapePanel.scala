@@ -1,16 +1,18 @@
 package reshapes.ui.panels
-import scala.swing._
-import scala.swing.event.ButtonClicked
-import scala.swing.event.MouseClicked
-import reshapes.figures.Shape
-import reshapes.command.DeleteShape
-import reshapes.Events
-import scala.swing.event.MouseClicked
-import scala.events.behaviour.Var
-import reshapes.figures.Line
-import scala.swing.event.KeyPressed
-import scala.swing.event.Key
+import scala.annotation.serializable
 import scala.events.behaviour.Signal
+import scala.swing.event.MouseClicked
+import scala.swing.Color
+import scala.swing.Action
+import scala.swing.BoxPanel
+import scala.swing.Button
+import scala.swing.Label
+import scala.swing.Orientation
+import scala.swing.ScrollPane
+
+import reshapes.command.DeleteShape
+import reshapes.figures.Shape
+import reshapes.Events
 import reshapes.Reshapes
 
 /**
@@ -22,9 +24,11 @@ class ShapePanel extends BoxPanel(Orientation.Vertical) {
 
   contents += new ScrollPane(allShapesPanel)
 
-  val allShapesChangedSignal = Signal {
-    updateAllShapesPanel(Reshapes.CurrentEvents().allShapes())
+  val allShapesChangedSignal: Signal[List[Shape]] = Signal {
+    Reshapes.CurrentEvents().allShapes()
   }
+
+  allShapesChangedSignal.changed += updateAllShapesPanel
 
   def updateAllShapesPanel(shapes: List[Shape]) = {
     allShapesPanel.contents.clear()
