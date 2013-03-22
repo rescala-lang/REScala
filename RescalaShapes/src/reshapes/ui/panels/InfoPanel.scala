@@ -13,24 +13,23 @@ import scala.events.scalareact
  */
 class InfoPanel() extends FlowPanel {
 
-  val currentShapeLabel = new Label { text = " " }
-  val numberElementsLabel = new Label { text = "#elements: 0" }
+  val centerLabel = new Label { text = " " }
 
-  val currentlyNextShape: Signal[String] = Signal {
+  val nextShape: Signal[String] = Signal {
     Reshapes.CurrentEvents().nextShape()
     if (Reshapes.CurrentEvents().nextShape() != null) {
-      "Next shape: %s".format(Reshapes.CurrentEvents().nextShape().toString())
+      "next shape: %s".format(Reshapes.CurrentEvents().nextShape().toString())
     } else {
       ""
     }
   }
 
-  val currentlySelectedShape: Signal[String] = Signal {
+  val selectedShape: Signal[String] = Signal {
     Reshapes.CurrentEvents().selectedShape()
     if (Reshapes.CurrentEvents().selectedShape() != null) {
-      Reshapes.CurrentEvents().selectedShape().toString()
+      "selected: %s".format(Reshapes.CurrentEvents().selectedShape().toString())
     } else {
-      ""
+      "selected: [none]"
     }
   }
 
@@ -38,11 +37,23 @@ class InfoPanel() extends FlowPanel {
     "#elements: %d".format(Reshapes.CurrentEvents().allShapes().size)
   }
 
-  numberElements.changed += (newText => numberElementsLabel.text = newText)
-  currentlySelectedShape.changed += (newText => currentShapeLabel.text = newText)
-  currentlyNextShape.changed += (newText => currentShapeLabel.text = newText)
+  val currentStrokeWidth: Signal[String] = Signal {
+    "stroke width: %d".format(Reshapes.CurrentEvents().strokeWidth())
+  }
 
-  contents += currentShapeLabel
-  contents += new Label { text = "|" }
-  contents += numberElementsLabel
+  val currentColor: Signal[String] = Signal {
+    val color = Reshapes.CurrentEvents().color()
+    "color: %s-%s-%s".format(color.getRed(), color.getGreen(), color.getBlue())
+  }
+
+  val foobar: Signal[String] = Signal {
+    "%s | %s | %s | %s | %s".format(numberElements(), currentColor(), currentStrokeWidth(), nextShape(), selectedShape())
+  }
+
+  foobar.changed += (newText => centerLabel.text = newText)
+  //numberElements.changed += (newText => numberElementsLabel.text = newText)
+  //currentlySelectedShape.changed += (newText => currentShapeLabel.text = newText)
+  //currentlyNextShape.changed += (newText => currentShapeLabel.text = newText)
+
+  contents += centerLabel
 }
