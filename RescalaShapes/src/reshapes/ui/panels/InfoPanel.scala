@@ -46,14 +46,11 @@ class InfoPanel() extends FlowPanel {
     "color: %s-%s-%s".format(color.getRed(), color.getGreen(), color.getBlue())
   }
 
-  val foobar: Signal[String] = Signal {
+  val infoText: Signal[String] = Signal {
     "%s | %s | %s | %s | %s".format(numberElements(), currentColor(), currentStrokeWidth(), nextShape(), selectedShape())
   }
 
-  foobar.changed += (newText => centerLabel.text = newText)
-  //numberElements.changed += (newText => numberElementsLabel.text = newText)
-  //currentlySelectedShape.changed += (newText => currentShapeLabel.text = newText)
-  //currentlyNextShape.changed += (newText => currentShapeLabel.text = newText)
+  infoText.changed += (newText => centerLabel.text = newText)
 
   contents += centerLabel
 }
