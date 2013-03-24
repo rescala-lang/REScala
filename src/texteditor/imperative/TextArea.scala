@@ -50,6 +50,10 @@ class TextArea extends Component with Publisher {
   
   def lineCount = LineIterator(buffer.iterator).size
   
+  def wordCount = buffer.iterator.foldLeft((0, false)){(c, ch) =>
+    val alphanum = Character.isLetterOrDigit(ch)
+    (if (alphanum && !c._2) c._1 + 1 else c._1, alphanum)}._1
+  
   def selected = {
     val (dot, mark) = (caret.dot, caret.mark)
     val (start, end) = (min(dot, mark), max(dot, mark))
@@ -61,38 +65,68 @@ class TextArea extends Component with Publisher {
     caret.mark = 0
   }
   
+  def paste {
+    removeSelection
+    val c = clipboard.getContents(null);
+    if (c.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+      val str = c.getTransferData(DataFlavor.stringFlavor).asInstanceOf[String]
+      buffer.insert(str)
+      caret.offset += str.length
+      valueChanged
+    }
+  }
+  
+  def copy {
+    if (selected.nonEmpty) {
+      val s = new StringSelection(selected.mkString)
+      clipboard.setContents(s, s)
+    }
+  }
+  
+  // A caret has a position in the document referred to as a dot.
+  // The dot is where the caret is currently located in the model.
+  // There is a second position maintained by the caret that represents
+  // the other end of a selection called mark.
+  // If there is no selection the dot and mark will be equal.
+  // [same semantics as for: javax.swing.text.Caret]
   object caret extends Publisher {
+    // dot as offset
     def dot = buffer.caret
     def dot_=(value: Int) =
       if (value != buffer.caret && value >= 0 && value <= buffer.length) {
         buffer.caret = value
-        publish(new CaretUpdate(TextArea.this))
+        caretUpdated
       }
     
+    // dot as position (row and column)
     def dotPos = LineOffset.position(buffer.iterator, dot)
     def dotPos_=(value: Position) =
       dot = LineOffset.offset(buffer.iterator, value)
     
+    // mark as offset
     private var markOffset = 0
     def mark = markOffset
     def mark_=(value: Int) =
       if (value != markOffset && value >= 0 && value <= buffer.length) {
           markOffset = value
-          publish(new CaretUpdate(TextArea.this))
+          caretUpdated
       }
     
+    // mark as position (row and column)
     def markPos = LineOffset.position(buffer.iterator, mark)
     def markPos_=(value: Position) =
       mark = LineOffset.offset(buffer.iterator, value)
     
+    // caret location as offset
     def offset = buffer.caret
     def offset_=(value: Int) =
       if ((value != buffer.caret || value != markOffset) && value >= 0 && value <= buffer.length) {
         buffer.caret = value
         markOffset = value
-        publish(new CaretUpdate(TextArea.this))
+        caretUpdated
       }
     
+    // caret location as position (row and column)
     def position = LineOffset.position(buffer.iterator, dot)
     def position_=(value: Position) =
       offset = LineOffset.offset(buffer.iterator, value)
@@ -106,18 +140,30 @@ class TextArea extends Component with Publisher {
         blinkVisible = !blinkVisible
         repaint
     }
+    
+    protected def caretUpdated {
+      def it = LineIterator(buffer.iterator)
+      preferredSize = new Dimension(2 * padding + it.map(stringWidth(_)).max, (it.size + 1) * lineHeight)
+      
+      val point = pointFromPosition(caret.dotPos)
+      peer.scrollRectToVisible(new Rectangle(point.x - 8, point.y, 16, 2 * lineHeight))
+      
+      caret.steady.restart
+      repaint
+      
+      publish(new CaretUpdate(TextArea.this))
+    }
   }
   
   protected def posInLinebreak(p: Int) = p > 0 && p < buffer.length &&
     buffer(p - 1) == '\r' && buffer(p) == '\n'
-  
   
   protected def removeSelection {
     val selStart = min(caret.dot, caret.mark)
     val selEnd = max(caret.dot, caret.mark)
     caret.offset = selStart
     buffer.remove(selEnd - selStart)
-    publish(new ValueChanged(this))
+    valueChanged
   }
   
   protected def pointFromPosition(position: Position) = {
@@ -134,8 +180,8 @@ class TextArea extends Component with Publisher {
       if (it.hasNext) {
         var prefix = ""
         var col = 0
-        it.next.takeWhile({ ch =>
-          if (stringWidth(prefix + ch) < point.x) { prefix += ch; col += 1; true } else false })
+        it.next.takeWhile{ ch =>
+          if (stringWidth(prefix + ch) < point.x) { prefix += ch; col += 1; true } else false }
         col
       }
       else 0
@@ -147,50 +193,27 @@ class TextArea extends Component with Publisher {
       def shift = e.modifiers == Key.Modifier.Shift
       if (e.modifiers == Key.Modifier.Control)
         e.key match {
-          case Key.V => // Ctrl+V
-            removeSelection
-            val c = clipboard.getContents(null);
-            if (c.isDataFlavorSupported(DataFlavor.stringFlavor)) {
-              val str = c.getTransferData(DataFlavor.stringFlavor).asInstanceOf[String]
-              buffer.insert(str);
-              caret.offset += str.length
-              publish(new ValueChanged(this))
-            }
-            e.consume
-          case Key.C => // Ctrl+C
-            val str = selected.mkString
-            if (str.nonEmpty) {
-              val s = new StringSelection(str);
-              clipboard.setContents(s, s);
-              publish(new ValueChanged(this))
-            }
-            e.consume
-          case Key.A => // Ctrl+A
-            selectAll
-            e.consume
-          case c =>
+          case Key.V => paste
+          case Key.C => copy 
+          case Key.A => selectAll
+          case _ =>
         }
       else
         e.key match {
           case Key.Left => // left arrow
             val offset = caret.offset - (if (posInLinebreak(caret.offset - 1)) 2 else 1)
             if (shift) caret.dot = offset else caret.offset = offset
-            e.consume
           case Key.Right => // right arrow
             val offset = caret.offset + (if (posInLinebreak(caret.offset + 1)) 2 else 1)
             if (shift) caret.dot = offset else caret.offset = offset
-            e.consume
           case Key.Up => // up arrow
             val position = Position(max(0, caret.position.row - 1), caret.position.col)
             if (shift) caret.dotPos = position else caret.position = position
-            e.consume
           case Key.Down => // down arrow
             val position = Position(min(lineCount - 1, caret.position.row + 1), caret.position.col)
             if (shift) caret.dotPos = position else caret.position = position
-            e.consume
           case _ =>
         }
-      
     case e @ KeyTyped(_, _, _, _) =>
       if (e.modifiers != Key.Modifier.Control) {
         e.char match {
@@ -200,7 +223,7 @@ class TextArea extends Component with Publisher {
               buffer.remove(count);
             }
             else removeSelection
-            publish(new ValueChanged(this))
+            valueChanged
           case '\b' => // Backspace key
             if (selected.isEmpty) {
               val count = min(if (posInLinebreak(caret.dot - 1)) 2 else 1, caret.dot)
@@ -208,12 +231,12 @@ class TextArea extends Component with Publisher {
               buffer.remove(count);
             }
             else removeSelection
-            publish(new ValueChanged(this))
+            valueChanged
           case c => // character input
             removeSelection
             buffer.insert(c.toString)
             caret.offset += 1
-            publish(new ValueChanged(this))
+            valueChanged
         }
       }
   }
@@ -229,22 +252,10 @@ class TextArea extends Component with Publisher {
       caret.dotPos = positionFromPoint(e.point)
   }
   
-  reactions += {
-    case e @ ValueChanged(_) =>
-      caret.steady.restart
-      repaint
-  }
-  
-  caret.reactions += {
-    case e @ CaretUpdate(_) =>
-      def it = LineIterator(buffer.iterator)
-      preferredSize = new Dimension(2 * padding + it.map(stringWidth(_)).max, (it.size + 1) * lineHeight)
-      
-      val point = pointFromPosition(caret.dotPos)
-      peer.scrollRectToVisible(new Rectangle(point.x - 8, point.y, 16, 2 * lineHeight))
-      
-      caret.steady.restart
-      repaint
+  protected def valueChanged {
+    caret.steady.restart
+    repaint
+    publish(new ValueChanged(this))
   }
   
   override def paintComponent(g: Graphics2D) {

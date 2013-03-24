@@ -1,4 +1,4 @@
-package texteditor.reactive
+package texteditor.signals1
 
 import scala.events.behaviour.Signal
 import scala.swing.BorderPanel
@@ -13,7 +13,6 @@ import reswing.ReButton
 import reswing.ReButton.toButton
 import reswing.ReLabel
 import reswing.ReLabel.toLabel
-import texteditor.reactive.TextArea.toComponent
 
 object Application extends SimpleSwingApplication {
   // reactive components
@@ -27,21 +26,35 @@ object Application extends SimpleSwingApplication {
   val selectionLabel = new ReLabel(
     Signal { "Sel " + textArea.selected().size })
   
-  val countLabel = new ReLabel(Signal { "Ch " + textArea.charCount() })
+  val charCountLabel = new ReLabel(Signal { "Ch " + textArea.charCount() })
   
-  val button = new ReButton("Select All")
-  button.clicked += { _ => textArea.selectAll; textArea.requestFocus }
+  val wordCountLabel = new ReLabel(Signal { "Ch " + textArea.wordCount() })
+  
+  val selectAllButton = new ReButton("Select All")
+  selectAllButton.clicked += { _ => textArea.selectAll; textArea.requestFocus }
+  
+  val copyButton = new ReButton("Copy")
+  copyButton.clicked += { _ => textArea.copy; textArea.requestFocus }
+  
+  val pasteButton = new ReButton("Paste")
+  pasteButton.clicked += { _ => textArea.paste; textArea.requestFocus }
   
   // layout
   def top = new MainFrame {
+    title = "TextEditor (signals1)"
     preferredSize = new Dimension(400, 400)
     contents = new BorderPanel {
       layout(new ScrollPane(textArea)) = Position.Center
-      layout(button) = Position.North
+      layout(new GridPanel(1, 0) {
+        contents += selectAllButton
+        contents += copyButton
+        contents += pasteButton
+      }) = Position.North
       layout(new GridPanel(1, 0) {
         contents += positionLabel
         contents += selectionLabel
-        contents += countLabel
+        contents += charCountLabel
+        contents += wordCountLabel
       }) = Position.South
     }
   }

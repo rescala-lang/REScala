@@ -1,4 +1,4 @@
-package texteditor.imperative
+package texteditor.events
 
 /**
  * Iterates over `array` whose content has the size of `count`.
@@ -47,9 +47,9 @@ class GapBuffer {
   def caret = offset
   def caret_=(value: Int) {
     if (value >= 0 && value <= size) {
-      // the caret has moved
-      // which requires copying text from one segment to the other
-      // to ensure that the gap starts at the current caret position
+        // the caret has moved
+        // which requires copying text from one segment to the other
+        // to ensure that the gap starts at the current caret position
       val (cur, prev) = (value, caret)
       val (post, dist) = (buf.length - size + prev, math.abs(cur - prev))
       val (src, dest) = if (prev < cur) (post, prev) else (cur, post - dist)

@@ -1,4 +1,4 @@
-package texteditor.reactive
+package texteditor.signals0
 
 import scala.events.behaviour.Signal
 import scala.math.min

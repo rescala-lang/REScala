@@ -1,4 +1,4 @@
-package texteditor.reactive
+package texteditor.signals1
 
 import scala.events.ImperativeEvent
 import scala.events.behaviour.Signal

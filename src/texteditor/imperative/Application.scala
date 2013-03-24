@@ -14,42 +14,60 @@ import scala.swing.event.ButtonClicked
 object Application extends SimpleSwingApplication {
   // imperative components
   val textArea = new TextArea("Lorem ipsum dolor sit amet\nconsectetur adipisicing elit\nsed do eiusmod")
+  textArea.reactions += { case e @ ValueChanged(_) => textAreaValueChanged }
+  textArea.caret.reactions += { case e @ CaretUpdate(_) => textAreaCaretUpdated }
   
-  textArea.reactions += {
-    case e @ ValueChanged(_) => countLabel.text = "Ch " + textArea.charCount
+  def textAreaValueChanged {
+    charCountLabel.text = "Ch " + textArea.charCount
+    wordCountLabel.text = "Words " + textArea.wordCount
   }
   
-  textArea.caret.reactions += {
-    case e @ CaretUpdate(_) => {
-      val pos = textArea.caret.position
-      positionLabel.text = "Ln " + (pos.row + 1) + " : " + textArea.lineCount + "    Col " + (pos.col + 1)
-      selectionLabel.text = "Sel " + textArea.selected.length
-    }
+  def textAreaCaretUpdated {
+    val pos = textArea.caret.position
+    positionLabel.text = "Ln " + (pos.row + 1) + " : " + textArea.lineCount + "    Col " + (pos.col + 1)
+    selectionLabel.text = "Sel " + textArea.selected.length
   }
   
   val positionLabel = new Label
   val selectionLabel = new Label
-  val countLabel = new Label
+  val charCountLabel = new Label
+  val wordCountLabel = new Label
   
-  val button = new Button("Select All")
-  button.reactions += {
+  val selectAllButton = new Button("Select All")
+  selectAllButton.reactions += {
     case e @ ButtonClicked(_) => textArea.selectAll; textArea.requestFocus
   }
   
-  // trigger initial events manually
-  textArea.reactions(new ValueChanged(textArea))
-  textArea.caret.reactions(new CaretUpdate(textArea))
+  val copyButton = new Button("Copy")
+  copyButton.reactions += {
+    case e @ ButtonClicked(_) => textArea.copy; textArea.requestFocus
+  }
+  
+  val pasteButton = new Button("Paste")
+  pasteButton.reactions += {
+    case e @ ButtonClicked(_) => textArea.paste; textArea.requestFocus
+  }
+  
+  // update dependent values manually
+  textAreaValueChanged
+  textAreaCaretUpdated
   
   // layout
   def top = new MainFrame {
+    title = "TextEditor (imperative)"
     preferredSize = new Dimension(400, 400)
     contents = new BorderPanel {
       layout(new ScrollPane(textArea)) = Position.Center
-      layout(button) = Position.North
+      layout(new GridPanel(1, 0) {
+        contents += selectAllButton
+        contents += copyButton
+        contents += pasteButton
+      }) = Position.North
       layout(new GridPanel(1, 0) {
         contents += positionLabel
         contents += selectionLabel
-        contents += countLabel
+        contents += charCountLabel
+        contents += wordCountLabel
       }) = Position.South
     }
   }

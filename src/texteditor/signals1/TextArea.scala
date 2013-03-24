@@ -1,4 +1,4 @@
-package texteditor.reactive
+package texteditor.signals1
 
 import java.awt.Dimension
 import java.awt.Graphics2D
@@ -7,20 +7,23 @@ import java.awt.Rectangle
 import java.awt.SystemColor
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
-import java.awt.datatransfer.StringSelection
-
+import scala.events.ImperativeEvent
 import scala.events.behaviour.Signal
 import scala.events.behaviour.Var
 import scala.math.max
 import scala.math.min
 import scala.swing.Component
 import scala.swing.event.Key
-
+import scala.swing.event.KeyPressed
+import scala.swing.event.KeyTyped
+import scala.swing.event.MouseDragged
+import scala.swing.event.MouseEvent
 import reswing.ReComponent
 import texteditor.JScrollableComponent
 import texteditor.LineIterator
 import texteditor.LineOffset
 import texteditor.Position
+import java.awt.datatransfer.StringSelection
 
 class TextArea extends ReComponent {
   override protected lazy val peer = new Component with ComponentMixin {
@@ -50,42 +53,62 @@ class TextArea extends ReComponent {
   
   val lineCount = Signal{ LineIterator(buffer.iterable()).size }
   
+  val wordCount = Signal{ buffer.iterable().iterator.foldLeft((0, false)){(c, ch) =>
+    val alphanum = Character.isLetterOrDigit(ch)
+    (if (alphanum && !c._2) c._1 + 1 else c._1, alphanum)}._1
+  }
+  
   val selected = Signal{
     val (it, dot, mark) = (buffer.iterable(), caret.dot(), caret.mark())
     val (start, end) = (min(dot, mark), max(dot, mark))
     new Iterable[Char] { def iterator = it.iterator.slice(start, end) } : Iterable[Char]
   }
   
-  def selectAll {
-    caret.dot = charCount.getValue
-    caret.mark = 0
-  }
+  protected val selectedAll = new ImperativeEvent[Unit]
+  protected val pasted = new ImperativeEvent[Unit]
+  protected val copied = new ImperativeEvent[Unit]
   
+  def selectAll = selectedAll()
+  def paste = pasted()
+  def copy = copied()
+  
+  // A caret has a position in the document referred to as a dot.
+  // The dot is where the caret is currently located in the model.
+  // There is a second position maintained by the caret that represents
+  // the other end of a selection called mark.
+  // If there is no selection the dot and mark will be equal.
+  // [same semantics as for: javax.swing.text.Caret]
   object caret {
+    // dot as offset
     private val dotSignal = Signal{ buffer.caret() }
     def dot = dotSignal
     def dot_=(value: Int) = buffer.caret() = value
     
+    // dot as position (row and column)
     private val dotPosSignal = Signal{ LineOffset.position(buffer.iterable(), dot()) }
     def dotPos = dotPosSignal
     def dotPos_=(value: Position) = dot = LineOffset.offset(buffer.iterable.getValue, value)
     
     private val markVar = new Var(0)
     
+    // mark as offset
     private val markSignal = Signal{ markVar() }
     def mark = markSignal
-    def mark_=(value: Int) = markVar() = value
+    def mark_=(value: Int) = if (value >= 0 && value <= buffer.length.getValue) markVar() = value
     
+    // mark as position (row and column)
     private val markPosSignal = Signal{ LineOffset.position(buffer.iterable(), mark()) }
     def markPos = markPosSignal
     def markPos_=(value: Position) = mark = LineOffset.offset(buffer.iterable.getValue, value)
     
+    // caret location as offset
     def offset = dot
     def offset_=(value: Int) {
       dot = value
       mark = value
     }
     
+    // caret location as position (row and column)
     def position = dotPos
     def position_=(value: Position) = offset = LineOffset.offset(buffer.iterable.getValue, value)
     
@@ -97,13 +120,6 @@ class TextArea extends ReComponent {
   
   protected def posInLinebreak(p: Int) = p > 0 && p < buffer.length.getValue &&
     buffer(p - 1) == '\r' && buffer(p) == '\n'
-  
-  protected def removeSelection {
-    val selStart = min(caret.dot.getValue, caret.mark.getValue)
-    val selEnd = max(caret.dot.getValue, caret.mark.getValue)
-    caret.offset = selStart
-    buffer.remove(selEnd - selStart)
-  }
   
   protected def pointFromPosition(position: Position) = {
     val line = LineIterator(buffer.iterable.getValue).drop(position.row).next
@@ -119,93 +135,86 @@ class TextArea extends ReComponent {
       if (it.hasNext) {
         var prefix = ""
         var col = 0
-        it.next.takeWhile({ ch =>
-          if (stringWidth(prefix + ch) < point.x) { prefix += ch; col += 1; true } else false })
+        it.next.takeWhile{ ch =>
+          if (stringWidth(prefix + ch) < point.x) { prefix += ch; col += 1; true } else false }
         col
       }
       else 0
     Position(row, col)
   }
   
-  keys.pressed += { e =>
-    def shift = e.modifiers == Key.Modifier.Shift
-    if (e.modifiers == Key.Modifier.Control)
-      e.key match {
-        case Key.V => // Ctrl+V
-          removeSelection
-          val c = clipboard.getContents(null);
-          if (c.isDataFlavorSupported(DataFlavor.stringFlavor)) {
-            val str = c.getTransferData(DataFlavor.stringFlavor).asInstanceOf[String]
-            buffer.insert(str);
-            caret.offset = caret.offset.getValue + str.length
-          }
-          e.consume
-        case Key.C => // Ctrl+C
-          val str = selected.getValue.mkString
-          if (str.nonEmpty) {
-            val s = new StringSelection(str);
-            clipboard.setContents(s, s);
-          }
-          e.consume
-        case Key.A => // Ctrl+A
-          selectAll
-          e.consume
-        case c =>
-      }
-    else
-      e.key match {
-        case Key.Left => // left arrow
-          val offset = caret.offset.getValue - (if (posInLinebreak(caret.offset.getValue - 1)) 2 else 1)
-          if (shift) caret.dot = offset else caret.offset = offset
-          e.consume
-        case Key.Right => // right arrow
-          val offset = caret.offset.getValue + (if (posInLinebreak(caret.offset.getValue + 1)) 2 else 1)
-          if (shift) caret.dot = offset else caret.offset = offset
-          e.consume
-        case Key.Up => // up arrow
+  // Caret updated by pressed mouse button, pressed arrow keys, Ctrl+A or select all event
+  (keys.pressed && {e => e.modifiers != Key.Modifier.Control &&
+      (e.key == Key.Left || e.key == Key.Right || e.key == Key.Up || e.key == Key.Down)})
+    .map{e: KeyPressed =>
+      val offset = e.key match {
+        case Key.Left =>
+          caret.offset.getValue - (if (posInLinebreak(caret.offset.getValue - 1)) 2 else 1)
+        case Key.Right =>
+          caret.offset.getValue + (if (posInLinebreak(caret.offset.getValue + 1)) 2 else 1)
+        case Key.Up =>
           val position = Position(max(0, caret.position.getValue.row - 1), caret.position.getValue.col)
-          if (shift) caret.dotPos = position else caret.position = position
-          e.consume
-        case Key.Down => // down arrow
+          LineOffset.offset(buffer.iterable.getValue, position)
+        case Key.Down =>
           val position = Position(min(lineCount.getValue - 1, caret.position.getValue.row + 1), caret.position.getValue.col)
-          if (shift) caret.dotPos = position else caret.position = position
-          e.consume
-        case _ =>
+          LineOffset.offset(buffer.iterable.getValue, position)
       }
-  }
-  
-  keys.typed += { e =>
-    if (e.modifiers != Key.Modifier.Control) {
-      e.char match {
-        case '\u007f' => // Del key
-          if (selected.getValue.isEmpty) {
-            val count = if (posInLinebreak(caret.dot.getValue + 1)) 2 else 1
-            buffer.remove(count);
-          }
-          else removeSelection
-        case '\b' => // Backspace key
-          if (selected.getValue.isEmpty) {
-            val count = min(if (posInLinebreak(caret.dot.getValue - 1)) 2 else 1, caret.dot.getValue)
-            caret.offset = caret.offset.getValue - count
-            buffer.remove(count);
-          }
-          else removeSelection
-        case c => // character input
-          removeSelection
-          buffer.insert(c.toString)
-          caret.offset = caret.offset.getValue + 1
-      }
+      if (e.modifiers == Key.Modifier.Shift) (offset, caret.mark.getValue) else (offset, offset)
+    } ||
+  (keys.pressed && {e => e.modifiers == Key.Modifier.Control && e.key == Key.A})
+    .map{_: KeyPressed => (charCount.getValue, 0)} ||
+  (mouse.clicks.pressed || mouse.moves.dragged).map{e: MouseEvent =>
+      val position = positionFromPoint(e.point)
+      val offset = LineOffset.offset(buffer.iterable.getValue, position)
+      e match { case _: MouseDragged => (offset, caret.mark.getValue) case _ => (offset, offset) }
+    } ||
+  selectedAll.map{_: Unit => (charCount.getValue, 0)} +=
+  { _ match {
+    case (dot, mark) =>
+      caret.dot = dot
+      caret.mark = mark
     }
   }
   
-  mouse.clicks.pressed += { e =>
-    this.requestFocusInWindow
-    caret.position = positionFromPoint(e.point)
+  // Content change by pressed backspace, deletion or character key, Ctrl+V or paste event
+  (((keys.pressed && {e => e.modifiers == Key.Modifier.Control && e.key == Key.V}) || pasted) &&
+    {_ => clipboard.getContents(null).isDataFlavorSupported(DataFlavor.stringFlavor)})
+    .map{_: Any =>
+      (0, clipboard.getContents(null).getTransferData(DataFlavor.stringFlavor).asInstanceOf[String])} ||
+  (keys.typed && {e => e.modifiers != Key.Modifier.Control})
+    .map{(_: KeyTyped).char match {
+      case '\b' => if (selected.getValue.nonEmpty) (0, "")
+        else (-min(if (posInLinebreak(caret.dot.getValue - 1)) 2 else 1, caret.dot.getValue), "")
+      case '\u007f' => if (selected.getValue.nonEmpty) (0, "")
+        else ((if (posInLinebreak(caret.dot.getValue + 1)) 2 else 1), "")
+      case c => (0, c.toString)
+    }} +=
+  { _ match {
+    case (del, ins) =>
+      val selStart = min(caret.dot.getValue, caret.mark.getValue)
+      val selEnd = max(caret.dot.getValue, caret.mark.getValue)
+      caret.offset = selStart
+      buffer.remove(selEnd - selStart)
+      
+      if (del < 0)
+        caret.offset = caret.offset.getValue + del
+      buffer.remove(math.abs(del))
+      buffer.insert(ins)
+      caret.offset = caret.offset.getValue + ins.length
+    }
   }
   
-  mouse.moves.dragged += { e =>
-    caret.dotPos = positionFromPoint(e.point)
+  // Content copy by Ctrl+C or copy event
+  copied || (keys.pressed && {e => e.modifiers == Key.Modifier.Control && e.key == Key.C}) +=
+  { _ =>
+    if (selected.getValue.nonEmpty) {
+      val s = new StringSelection(selected.getValue.mkString);
+      clipboard.setContents(s, s);
+    }
   }
+  
+  // handle focus, scroll and paint updates
+  mouse.clicks.pressed += { _ => this.requestFocusInWindow }
   
   buffer.length.changed || caret.dot.changed += {_ =>
     val point = pointFromPosition(caret.position.getValue)

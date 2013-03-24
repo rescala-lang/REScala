@@ -38,6 +38,7 @@ class Position(val row: Int, val col: Int) extends Tuple2(row, col)
 
 object Position {
   def apply(row: Int, col: Int) = new Position(row, col)
+  implicit def fromTuple(tuple: (Int, Int)) = new Position(tuple._1, tuple._2)
 } 
 
 object LineOffset {
