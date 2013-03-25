@@ -11,7 +11,8 @@ import scala.collection.mutable.HashMap
 // chose version here
 //import animal.versions.observer.World
 //import animal.versions.event.World
-import animal.versions.event.World
+//import animal.versions.signalonly.World
+import animal.versions.signal.World
 
 object RunSwingWindow extends SimpleSwingApplication {
 

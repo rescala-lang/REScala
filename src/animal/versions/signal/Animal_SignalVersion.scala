@@ -85,30 +85,30 @@ class Board(val width: Int, val height: Int) {
 }
 
 
-abstract class BoardElement(implicit val world: World) {
+abstract class BoardElement(implicit val world: World) {  
+  
   /** A signal denoting if this element is dead ( = should be removed from the board) */
   val isDead: Signal[Boolean]
-  /// actually, you would want to register an event handler right here, so that
-  /// an element that changes its state to dead could remove itself.
-  /// However, we have no control where in the 'update cycle' that happens.
-  /// If some other reaction happens after removing this element, but in the same cycle
-  /// the element is invalid
+  lazy val dies = isDead changedTo true
   
   /** Some imperative code that is called each tick */
   def doStep(pos: Pos) {}
-  /// This method exists so that i have have some imperative code that can
-  /// be called on each tick. This was necessary for some parts which don't work at all with events
-  /// If we were to disallow events completely, the size of this method would grow
 }
 
 object Animal {
-  	val ViewRadius = 9
-	val StartEnergy = 100
-	val MaxAge = 100
-	val EatRate = 3
-	val HungryThreshold = 10
-	val FertileAge = 1
-	val PregnancyTime = 30
+	val StartEnergy = 200
+  	val ViewRadius = 9 // radius that animals can see the world around them
+	val MoveCost = 1 // energy required to move
+	val ProcreateCost = 10 // energy required to procreate
+	val MaxAge = 100 // maximum age in days when an animal dies, regardless of energy
+	val PlantEatRate = 3 // energy rate gained when eating plants
+	val ProcreateThreshold = 60 // minimum energy required for male animals to seek a mate
+	val FertileAge = 1 // minimum age in days for animals to be fertile
+	val PregnancyTime = 30 // time in hours for female sheep to be pregnant
+	val AttackThreshold = 100 // minimum energy for carnivores to attack
+	val AttackAmount = 50 // energy stolen when carnivores attack
+	val SleepThreshold = 30 // minimum energy for carnivores to start sleeping 
+	val SleepRate = 2 // energy gained while sleeping
 }
 
 abstract class Animal(override implicit val world: World) extends BoardElement {
@@ -117,39 +117,46 @@ abstract class Animal(override implicit val world: World) extends BoardElement {
 	trait AnimalState
 	case object Idling extends AnimalState
 	case class Eating(plant: Plant) extends AnimalState
+	case class Attacking(other: Animal) extends AnimalState
 	case class Moving(dir: Pos) extends AnimalState
 	case class Procreating(female: Animal) extends AnimalState
+	case object FallPrey extends AnimalState
+	case object Sleeping extends AnimalState
  
 	val state: Var[AnimalState] = Var(Idling)
-	/// I have tried to keep the number of Vars as small as possible.
-	/// 'state' is one of the few properties which has to be a Var
-	/// because its hard to define as dependent on other signals.
-	/// (although functionally dependent on pos and current world state (see nextAction))
 	
-	protected def nextAction (pos: Pos): AnimalState =  {
-	    val findPlant: PartialFunction[BoardElement, Plant] =  { case p: Plant => p }
+	// partial function for collecting food, dependant on state of the object
+	val findFood: Signal[PartialFunction[BoardElement, BoardElement]]
+	
+	// function for creating a state upon reaching target
+	def reachedState(target: BoardElement): AnimalState
+	
+	def savage = state() = FallPrey
+	
+	protected def nextAction(pos: Pos): AnimalState =  {
 		val neighbors = world.board.neighbors(pos)
-		val food = neighbors.collectFirst(findPlant)
-		
+		val food = neighbors.collectFirst(findFood.getValue)
 		val nextAction: AnimalState = food match {
-		  case Some(plant) => Eating(plant) // I'm near a plant, eat it!
-		  case None => // I have to look for plants nearby
-		    world.board.nearby(pos, Animal.ViewRadius).collectFirst(findPlant) match {
+		  case Some(target) => reachedState(target) // I'm near food, eat it!
+		  case None => // I have to look for food nearby
+		    world.board.nearby(pos, Animal.ViewRadius).collectFirst(findFood.getValue) match {
 		      case Some(target) => 
 		        val destination = world.board.getPosition(target)
-		        if(destination.isDefined) Moving(pos.directionTo(destination.get)) 
-		        else randomMove
+		        if(destination.isDefined) 
+		          Moving(pos.directionTo(destination.get)) 
+		        else 
+		          randomMove
 		      case None => randomMove
 		    }
 		}
 		nextAction
 	}
 	
-	protected def randomMove: AnimalState = {
-	   val randx = world.randomness.nextInt(2)
-	   val randy = world.randomness.nextInt(2)
-	   Moving(Pos(randx, randy))
-	}
+  protected def randomMove: AnimalState = {
+    val randx = 1 - world.randomness.nextInt(3)
+    val randy = 1 - world.randomness.nextInt(3)
+    Moving(Pos(randx, randy))
+  }
 
 	
 	val age = world.time.day.changed.iterate(1)(_ + 1)
@@ -158,85 +165,131 @@ abstract class Animal(override implicit val world: World) extends BoardElement {
 	val isFertile = Signal { isAdult() }
 	val isEating = Signal { state() match { 
 	  case Eating(_) => true
-	  case _ => false}
+	  case _ => false
+	}}
+	
+	val energyDrain = Signal { 
+	  1 + age() / 2 + (state() match {
+	    case Moving(_) => Animal.MoveCost
+	    case Procreating(_) => Animal.ProcreateCost
+	    case FallPrey => Animal.AttackAmount
+	    case _ => 0
+	  })
 	}
 	
-	val energyDrain = Signal { 1 + age() / 2}
-	val energyGain = Signal { if(isEating()) Animal.EatRate else 0}
-	val energy = world.time.tick.iterate(Animal.StartEnergy)(_ + energyGain.getValue - energyDrain.getValue)
+	val energyGain = Signal {
+	  state() match {
+	    case Eating(_) => Animal.PlantEatRate
+	    case Sleeping => Animal.SleepRate
+	    case Attacking(prey) => Animal.AttackAmount
+	    case _ => 0
+	  }
+	}
+	val energy: Signal[Int] = 
+	  world.time.tick.iterate(Animal.StartEnergy)(_ + energyGain.getValue - energyDrain.getValue)
 	
 	override val isDead = Signal { age() > Animal.MaxAge || energy() < 0}
-	
+
 	/** imperative 'AI' function */
 	override def doStep(pos: Pos) {
 	    state.getValue match {
 	      case Moving(dir) => world.board.moveIfPossible(pos, dir)
 	      case Eating(plant) => plant.takeEnergy(energyGain.getValue)
+	      case Attacking(prey) => prey.savage
 	      case Procreating(female: Female) => female.procreate(this)
-	      case Idling =>
+	      case _ =>
 	    }
 	    state.update(nextAction(pos))
 	}
 }
 
+class Carnivore(override implicit val world: World) extends Animal {
+  
+  val sleepy = Signal { energy() < Animal.SleepThreshold }
+  val canHunt = Signal { energy() > Animal.AttackThreshold }
+	
+  // only adult carnivores with min energy can hunt, others eat plants
+  val findFood: Signal[PartialFunction[BoardElement, BoardElement]] = Signal {
+     if(isAdult() && canHunt()) { case p: Herbivore => p}
+     else { case p: Plant => p }
+   }
+    
 
-class Female(override implicit val world: World) extends Animal {
-  /// This is the intended definition for procreation, in which we 'reset' a signal
-  /// pregnancy time, and listen to the 'changedTo(0)' event.
-  /// Not working yet, because nested signals seem not to be working in Scala.react
-  /*
-  val becomePregnant = new ImperativeEvent[Unit]
-  
-  val pregnancyTime: Signal[Int] = becomePregnant.reset(()){ _ =>
-    world.time.day.changed.iterate(Animal.PregnancyTime)(_ - 1)
+  override def reachedState(prey: BoardElement): AnimalState = prey match {
+    case p: Herbivore => Attacking(p)
+    case _ => Idling
   }
+  
+  
+  override protected def nextAction(pos: Pos): AnimalState =  {
+	  if(sleepy.getValue) Sleeping
+	  else super.nextAction(pos)
+  }
+}
 
-  val giveBirth = pregnancyTime.changedTo(0)
-  val isPregnant = Signal { pregnancyTime() < 0 }
-  */
+class Herbivore(override implicit val world: World) extends Animal {
   
-  val isPregnant = Var(false)
-  val pregnancyTime = Var(0)
-  /// Workaround for issue above: Stateful signals
+  val findFood: Signal[PartialFunction[BoardElement, BoardElement]] =
+    Signal {{ case p: Plant => p }}
   
-  val incrementer =  {_: Int =>
-     if(isPregnant.getValue){
-    	pregnancyTime.update(pregnancyTime.getValue + 1)
-    }
+  override def reachedState(plant: BoardElement): AnimalState = plant match {
+    case p: Plant => Eating(p)
+    case _ => Idling
   }
-  /// If we want to use signals here, we have to keep a reference to our handler
-  /// And (re-/dis-)attach it when we want the timer to increase.
-  /// This is a kinda forced application of reactivity.
-  /// It would be much simpler to put this operation in the imperative 'doStep' method
+}
+
+trait Female extends Animal {
+  
+  val mate: Var[Option[Animal]] = Var(None)
+  
+  val isPregnant = Signal { mate().isDefined }
+  
+  val becomePregnant = isPregnant.changedTo(true)  
+  
+  // counts down to 0
+  lazy val pregnancyTime: Signal[Int] = becomePregnant.reset(()){ _ =>
+    world.time.hour.changed.iterate(Animal.PregnancyTime)(_ - (if(isPregnant.getValue) 1 else 0))
+  }
+  
+  lazy val giveBirth = pregnancyTime.changedTo(0)
   
   override val isFertile = Signal { isAdult() && !isPregnant()}
-  /// Here we have an example of overriding a signal
   
-  val giveBirth = pregnancyTime.changed && {_ == Animal.PregnancyTime}
+  // override val energyDrain = Signal { super.energyDrain() * 2 }
+  // not possible
+  
   giveBirth += {_ =>
+    val father = mate.getValue.get
+    val child = createOffspring(father)
     world.board.getPosition(this).foreach{ mypos =>
       world.board.nearestFree(mypos).foreach { target =>
-        world.spawn(world.newAnimal, target)
+        world.spawn(child, target)
       }
     }
-    isPregnant.update(false)
-    world.time.hour.changed -= incrementer
+    mate.update(None)
   }
   
   def procreate(father: Animal) {
     if(isPregnant.getValue) return;
-    
-    isPregnant() = true
-    pregnancyTime() = 0
-    
-    world.time.hour.changed += incrementer
+    mate() = Some(father)
   }
   
+  
+  def createOffspring(father: Animal): Animal = {
+      val male = world.randomness.nextBoolean
+  	  val nHerbivores = List(this, father).map(_.isInstanceOf[Herbivore]).count(_ == true)
+  	  val herbivore = 
+  	    if (nHerbivores == 0) false // both parents are a carnivores, child is carnivore
+  	    else if (nHerbivores == 2) true // both parents are herbivores, child is herbivore
+  	    else world.randomness.nextBoolean // mixed parents, random
+  	  
+  	  world.newAnimal(herbivore, male)
+  }
 }
 
 
-class Male(override implicit val world: World) extends Animal {
-  val seeksMate = Signal { isFertile() && energy() > Animal.HungryThreshold }
+trait Male extends Animal {
+  val seeksMate = Signal { isFertile() && energy() > Animal.ProcreateThreshold }
   
   override def nextAction(pos: Pos): AnimalState = {
     if(seeksMate.getValue) {
@@ -264,14 +317,56 @@ class Male(override implicit val world: World) extends Animal {
 }
 
 
+class FemaleHerbivore(override implicit val world: World) extends Herbivore with Female
+class MaleHerbivore(override implicit val world: World) extends Herbivore with Male
+class FemaleCarnivore(override implicit val world: World) extends Carnivore with Female
+class MaleCarnivore(override implicit val world: World) extends Carnivore with Male
+
+
+object Plant {
+  val Energy = 100
+  val GrowTime = 50 // after how many hours plant grows (increments size)
+  val MaxSize = 6  // max size a plant reaches. then expands
+}
 
 class Plant(override implicit val world: World) extends BoardElement {
-  val energy = Var(100)
-  val isDead = Signal { energy() <= 0}
+  
+  val energy = Var(Plant.Energy)
+  
+  val isDead = Signal { energy() <= 0}  
+  
+  val age = world.time.hour.changed.iterate(0)(_ + 1)
+  val grows = age.changed && { _ % Plant.GrowTime == 0}
+  val size = grows.iterate(0)(acc => math.min(Plant.MaxSize, acc + 1))
+  val expands = size.changedTo(Plant.MaxSize)
+  
+  
+  expands += {_ => 
+    // germinate: spawn a new plant in proximity to this one
+    world.board.getPosition(this).foreach{ mypos =>
+      world.board.nearestFree(mypos).foreach { target =>
+        world.spawn(new Plant)
+      }
+    }
+  }
+
   
   /** takes amount away from the energy of this plant */
   def takeEnergy(amount: Int) = energy.update(energy.getValue - amount)
+}
+
+class Seed(override implicit val world: World) extends BoardElement {
   
+  val growTime = world.time.hour.changed.iterate(Plant.GrowTime)(_ - 1)
+  val isDead = Signal { growTime() <= 0 }
+  
+  dies += {_ => 
+  	world.board.getPosition(this).foreach{ mypos =>
+      world.board.nearestFree(mypos).foreach { target =>
+        world.spawn(new Plant)
+      }
+    }
+  }
 }
 
 class Time {
@@ -300,16 +395,24 @@ class World {
 
   val board = new Board(World.Width, World.Height)
   val time = new Time
-  val randomness = new Random(123)
+  val randomness = new Random(1)
   
   def tick = time.tick()
     
   def dump = board.dump
   def timestring = time.timestring.getValue
+   
+  def newAnimal(isHerbivore: Boolean, isMale: Boolean): Animal = {
+	  if(isHerbivore){
+	    if(isMale) new MaleHerbivore else new FemaleHerbivore
+	  }
+	  else {
+	    if(isMale) new MaleCarnivore else new FemaleCarnivore
+	  }
+  }
   
-  
-  /** returns a male or female animal at random */
-  def newAnimal: Animal = if(randomness.nextBoolean) new Male else new Female
+  /** returns an animal at random */
+  def newAnimal: Animal = newAnimal(randomness.nextBoolean, randomness.nextBoolean)
   
   /** batch spawns n Animals and m Plants */
   def batchSpawn(nAnimals: Int, mPlants: Int) {
@@ -318,9 +421,7 @@ class World {
   }
   
   /** spawns the given board element at the given position */
-  def spawn(element: BoardElement, pos: Pos) {
-     board.add(element, pos)
-  }
+  def spawn(element: BoardElement, pos: Pos) = board.add(element, pos)
   
   /** spawns the given Board element at a free random position in the world */
   def spawn(element: BoardElement){ 
@@ -341,7 +442,6 @@ class World {
   
   // each day, spawn a new plant
   time.day.changed += {_ =>
-    this spawn new Plant
     this spawn new Plant
   }
   
