@@ -50,7 +50,8 @@ class InfoPanel() extends FlowPanel {
     "%s | %s | %s | %s | %s".format(numberElements(), currentColor(), currentStrokeWidth(), nextShape(), selectedShape())
   }
 
-  infoText.changed += (newText => centerLabel.text = newText)
+  //infoText.changed += (newText => centerLabel.text = newText)
+  centerLabel.text = infoText.getValue
 
   contents += centerLabel
 }
