@@ -12,6 +12,8 @@ import scala.swing._
 import scala.swing.Swing._
 import scala.swing.Dialog._
 
+import scala.events.behaviour._
+
 object Main extends App {
   val tick = new ImperativeEvent[Unit]
 
@@ -27,6 +29,10 @@ object Main extends App {
     m.mediate(fetcher, parser, store, checker)
   }
 
+  val URLvalid : Signal[Boolean] = Signal {
+    // method checkURL should be changed
+  }
+  
   checker.urlIsInvalid += { _ => showInvalidUrlDialog() }
 
   val sleepTime = 20000
@@ -54,9 +60,13 @@ object Main extends App {
        , "http://www.scala-lang.org/featured/rss.xml"
        )
 
-  def showInvalidUrlDialog() {
-    Dialog.showMessage(null, "This url is not valid", "Invalid url", Message.Error, EmptyIcon)
+  URLvalid.changedTo(false) += {
+    _ => Dialog.showMessage(null, "This url is not valid", "Invalid url", Message.Error, EmptyIcon)
   }
+       
+//  def showInvalidUrlDialog() {
+//    Dialog.showMessage(null, "This url is not valid", "Invalid url", Message.Error, EmptyIcon)
+//  }
 
   private def setupGuiEvents() {
     app.requestURLAddition += { url => checker.check(url) }

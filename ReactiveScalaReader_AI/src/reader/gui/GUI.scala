@@ -13,11 +13,28 @@ import scala.swing.event._
 import java.net.URL
 import scala.events.ImperativeEvent
 
+import scala.events.behaviour._
+
 /**
  * Responsible for displaying the content of the given FeedStore
  * The connections between the displayed content is mainly coordinated
  * by an initialized content mediator
  */
+
+trait ReactiveText {
+  def text_=(s : String)
+  def text_=(value: Signal[String]) {    
+    this.text_=(value.getValue)
+    value.changed += {(t : String) => this.text_=(t)}
+  }
+}
+class ReactiveLabel extends Label with ReactiveText
+class ReactiveButton extends Button with ReactiveText {
+	// wrap the event to escala
+	val clicked = new ImperativeEvent[ButtonClicked]
+	reactions += { case c @ ButtonClicked(_) => clicked(c) }
+}
+
 class GUI(val store: FeedStore) extends SimpleSwingApplication {
 
   val requestURLAddition = new ImperativeEvent[String]
@@ -30,8 +47,17 @@ class GUI(val store: FeedStore) extends SimpleSwingApplication {
 
   (menuExit || frameExit) += { _ => shutdown(); sys.exit(0) }
 
-  val refreshButton = new EventButton("Refresh")
-  refreshButton += { _ => refresh() }
+//  val refreshButton = new EventButton("Refresh")
+//  refreshButton += { _ => refresh() }
+  
+  val button = new ReactiveButton
+  val label = new ReactiveLabel
+  
+  val refreshActive : Signal[Boolean] = Signal{
+    //shows actual state of refreshing
+  }
+  
+  label.text = Signal { if(refreshActive) "Refreshing..." else "Refresh" }
 
   val refreshCheckbox = new EventCheckBox("auto refresh") { selected = true }
 
@@ -63,10 +89,17 @@ class GUI(val store: FeedStore) extends SimpleSwingApplication {
     configure()
 
     val channels = store.channelsChanged
-    val channelList = new EventListView[RSSChannel](channels) {
-      renderer = ListView.Renderer(_.title)
-      listData = store.channels.sorted
-      peer.setVisibleRowCount(3)
+//    val channelList = new EventListView[RSSChannel](channels) {
+//      renderer = ListView.Renderer(_.title)
+//      listData = store.channels.sorted
+//      peer.setVisibleRowCount(3)
+//    }
+    
+    val channelList = Signal{
+      // Signal with channels
+//    	renderer = ListView.Renderer(_.title)
+//    	listData = store.channels.sorted
+//    	peer.setVisibleRowCount(3)
     }
 
     val itemList = new EventListView[RSSItem](new ImperativeEvent[Iterable[RSSItem]]) {
@@ -128,3 +161,4 @@ class GUI(val store: FeedStore) extends SimpleSwingApplication {
 
   override def quit() { frameExit() }
 }
+

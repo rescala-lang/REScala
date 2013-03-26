@@ -2,6 +2,7 @@ package reader.data
 
 import collection.mutable.Map
 import scala.events._
+import scala.events.behaviour._
 
 /**
  * The FeedStore stores RSSChannels and RSSItems.
@@ -12,6 +13,9 @@ class FeedStore {
   private var channelToItems: Map[RSSChannel,Set[RSSItem]] = Map()
 
   val channelsChanged            = new ImperativeEvent[List[RSSChannel]]
+//  val channelChanged = Signal{
+//    List[RSSChannel]
+//  }
   val itemAdded                  = new ImperativeEvent[RSSItem]
   val contentChange: Event[Unit] = channelsChanged.dropParam || itemAdded.dropParam
 
