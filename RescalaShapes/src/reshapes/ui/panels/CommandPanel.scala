@@ -1,6 +1,6 @@
 package reshapes.ui.panels
 import scala.swing._
-import reshapes.Events
+import reshapes.DrawingSpaceState
 import scala.events.behaviour.Signal
 import reshapes.Reshapes
 import reshapes.command.Command

@@ -1,5 +1,5 @@
 package reshapes.command
-import reshapes.Events
+import reshapes.DrawingSpaceState
 import reshapes.figures.Shape
 import java.awt.Point
 import reshapes.Drawing
@@ -95,7 +95,7 @@ class EditShape(shapeBeforeEdit: Shape, shapeAfterEdit: Shape) extends Command {
 /**
  * Adds all shapes of given Events with currently selected Events.
  */
-class MergeEvents(eventToMerge: Events) extends Command {
+class MergeEvents(eventToMerge: DrawingSpaceState) extends Command {
 
   var eventTitle: String = null
   var shapes: List[Shape] = null

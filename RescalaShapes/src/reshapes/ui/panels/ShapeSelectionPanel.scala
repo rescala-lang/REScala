@@ -2,7 +2,7 @@ package reshapes.ui.panels
 
 import scala.swing._
 import scala.swing.event._
-import reshapes.Events
+import reshapes.DrawingSpaceState
 import reshapes.figures._
 import reshapes._
 

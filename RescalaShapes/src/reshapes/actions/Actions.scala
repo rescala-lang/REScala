@@ -3,7 +3,7 @@ import scala.swing.Action
 import scala.swing.FileChooser
 import java.io.FileOutputStream
 import scala.util.Marshal
-import reshapes.Events
+import reshapes.DrawingSpaceState
 import java.io.FileInputStream
 import reshapes.figures.Shape
 import reshapes.command.CreateShape
@@ -65,7 +65,7 @@ class UndoAction extends Action("Undo") {
 /**
  * Merges current drawing panel with another panel.
  */
-class MergeAction(title: String, eventsToMergeWith: Events) extends Action("Merge with %s".format(title)) {
+class MergeAction(title: String, eventsToMergeWith: DrawingSpaceState) extends Action("Merge with %s".format(title)) {
   def apply() = {
     new MergeEvents(eventsToMergeWith).execute()
   }

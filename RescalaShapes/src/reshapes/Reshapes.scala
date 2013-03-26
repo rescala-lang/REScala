@@ -19,7 +19,7 @@ import reshapes.actions.QuitAction
 import reshapes.actions.SaveAction
 import reshapes.actions.UndoAction
 import reshapes.ui.panels._
-import reshapes.Events
+import reshapes.DrawingSpaceState
 import sun.reflect.generics.reflectiveObjects.NotImplementedException
 import org.omg.CORBA.Environment
 import java.awt.Point
@@ -42,8 +42,8 @@ object Reshapes extends SimpleSwingApplication {
   val tabbedPane = new TabbedPane()
   val currentTabIndex = new Var(0)
   // as event/Var
-  var CurrentEvents = new Var(new Events())
-  val panelEvents = new HashMap[TabbedPane.Page, Events]()
+  var CurrentEvents = new Var(new DrawingSpaceState())
+  val panelEvents = new HashMap[TabbedPane.Page, DrawingSpaceState]()
 
   // Panels
   var infoPanel = new InfoPanel()
@@ -123,7 +123,7 @@ object Reshapes extends SimpleSwingApplication {
     contents = ui
   }
 
-  def addTab(event: Events = new Events()) {
+  def addTab(event: DrawingSpaceState = new DrawingSpaceState()) {
     val dialog = new NewTabDialog()
     dialog.location = ui.locationOnScreen
     dialog.showDialog()
@@ -143,7 +143,7 @@ object Reshapes extends SimpleSwingApplication {
     dialog.showDialog()
     if (dialog.inputIsValid() && dialog.dialogResult == DialogResult.OK) {
       try {
-        addTab(new NetworkEvents(dialog.hostname, dialog.commandPort, dialog.exchangePort, dialog.listenerPort))
+        addTab(new NetworkSpaceState(dialog.hostname, dialog.commandPort, dialog.exchangePort, dialog.listenerPort))
       } catch {
         case e: ConnectException =>
           JOptionPane.showMessageDialog(null, "Server not available", "ConnectException", JOptionPane.ERROR_MESSAGE)

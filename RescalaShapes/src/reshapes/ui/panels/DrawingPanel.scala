@@ -11,7 +11,7 @@ import scala.util.Marshal
 import reshapes.command._
 import reshapes.Drawing
 import reshapes.Selection
-import reshapes.Events
+import reshapes.DrawingSpaceState
 import reshapes.util.MathUtil
 import scala.collection.mutable.MutableList
 import scala.events.scalareact
@@ -20,7 +20,7 @@ import reshapes.Reshapes
 /**
  * Represents the panel where all shapes are drawn onto.
  */
-class DrawingPanel(val event: Events) extends Panel {
+class DrawingPanel(val event: DrawingSpaceState) extends Panel {
   opaque = true
 
   var currentPath = new Var[List[Point]](List())

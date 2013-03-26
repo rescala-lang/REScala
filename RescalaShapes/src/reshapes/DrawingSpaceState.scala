@@ -24,7 +24,7 @@ import reshapes.network.TransportObject
 /**
  * Unifies all events which can occure during execution
  */
-class Events {
+class DrawingSpaceState {
 
   // defines which shape is drawn next for example reshapes.figures.Line if nextShape contains reference to line
   val nextShape: Var[Shape] = new Var(new Line)
@@ -78,7 +78,7 @@ class Events {
   })
 }
 
-class NetworkEvents(serverHostname: String = "localhost", commandPort: Int = 9998, exchangePort: Int = 9999, listenerPort: Int = 1337) extends Events {
+class NetworkSpaceState(serverHostname: String = "localhost", commandPort: Int = 9998, exchangePort: Int = 9999, listenerPort: Int = 1337) extends DrawingSpaceState {
 
   val serverInetAddress: InetAddress = InetAddress.getByName(serverHostname)
 
@@ -126,7 +126,7 @@ class NetworkEvents(serverHostname: String = "localhost", commandPort: Int = 999
 /**
  * Listens for updates from server and updates events.allShapes
  */
-class UpdateListener(port: Int, events: Events) extends Actor {
+class UpdateListener(port: Int, events: DrawingSpaceState) extends Actor {
   def act() {
     println("start UpdateThread")
     val listener = new ServerSocket(port)

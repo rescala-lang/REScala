@@ -12,7 +12,7 @@ import scala.swing.ScrollPane
 
 import reshapes.command.DeleteShape
 import reshapes.figures.Shape
-import reshapes.Events
+import reshapes.DrawingSpaceState
 import reshapes.Reshapes
 
 /**
@@ -39,7 +39,7 @@ class ShapePanel extends BoxPanel(Orientation.Vertical) {
   }
 }
 
-class ShapeView(shape: Shape, events: Events) extends BoxPanel(Orientation.Horizontal) {
+class ShapeView(shape: Shape, events: DrawingSpaceState) extends BoxPanel(Orientation.Horizontal) {
   val SELECTED_COLOR = new Color(0, 153, 255)
   val NOT_SELECTED_COLOR = new Color(255, 255, 255)
 
