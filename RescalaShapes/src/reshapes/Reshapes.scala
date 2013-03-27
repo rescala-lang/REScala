@@ -30,10 +30,11 @@ import reshapes.ui.panels.InfoPanel
 import reshapes.ui.panels.ShapePanel
 import reshapes.ui.panels.ShapeSelectionPanel
 import reshapes.ui.panels.StrokeInputPanel
-import reshapes.versions.signal._
 import reshapes.ui.panels.ShowIntersection
 import reshapes.ui.panels.ShowCoordinateSystem
 import reshapes.ui.panels.ShowNameLabels
+
+import reshapes.versions.signal._
 
 object Reshapes extends SimpleSwingApplication {
 
