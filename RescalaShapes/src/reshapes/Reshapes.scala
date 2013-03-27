@@ -139,7 +139,7 @@ object Reshapes extends SimpleSwingApplication {
       case (false, false, true) => return new DrawingPanel(state) with ShowNameLabels with DrawingPanelInteraction
       case (true, false, true) => return new DrawingPanel(state) with ShowIntersection with ShowNameLabels with DrawingPanelInteraction
       case (true, true, true) => return new DrawingPanel(state) with ShowIntersection with ShowCoordinateSystem with ShowNameLabels with DrawingPanelInteraction
-      case _ => return new DrawingPanel(state)
+      case _ => return new DrawingPanel(state) with DrawingPanelInteraction
     }
   }
 

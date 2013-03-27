@@ -15,6 +15,10 @@ import reshapes.command.Command
 import scala.events.Event
 import reshapes.figures.Shape
 import java.awt.Color
+import scala.swing.Button
+import scala.swing.Action
+import scala.swing.BoxPanel
+import scala.swing.Orientation
 
 trait DrawingSpaceStateInteraction extends DrawingSpaceState {
 
@@ -63,11 +67,21 @@ trait NetworkSpaceStateInteraction extends NetworkSpaceState {
 
 trait CommandPanelInteraction extends CommandPanel {
   var currentState: DrawingSpaceState = null
+  val commandPanel = new BoxPanel(Orientation.Vertical)
 
   Reshapes.CurrentEvents.changed += { state =>
     if (currentState != null) currentState.Commands.changed -= updateList
     currentState = state
     currentState.Commands.changed += updateList
+  }
+
+  def updateList(commands: List[Command]) = {
+    commandPanel.contents.clear()
+    commands.map(command => commandPanel.contents += new Button(Action(command.getCommandDescription()) {
+      command.revert()
+    }))
+    scrollPane.contents = commandPanel
+    repaint()
   }
 }
 

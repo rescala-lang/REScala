@@ -18,6 +18,12 @@ import reshapes.figures.Shape
 import java.awt.Color
 import scala.events.behaviour.Signal
 import reshapes.EditingMode
+import scala.swing.Button
+import scala.collection.mutable.MutableList
+import scala.swing.Action
+import scala.swing.BoxPanel
+import scala.swing.Orientation
+import scala.swing.Panel
 
 trait DrawingSpaceStateInteraction extends DrawingSpaceState {
 
@@ -93,11 +99,22 @@ trait NetworkSpaceStateInteraction extends NetworkSpaceState {
 
 trait CommandPanelInteraction extends CommandPanel {
 
-  val updateSignal: Signal[List[Command]] = Signal {
-    Reshapes.CurrentEvents().Commands()
+  val updateSignal: Signal[Panel] = Signal {
+    val panel = new BoxPanel(Orientation.Vertical)
+
+    for (command <- Reshapes.CurrentEvents().Commands()) {
+      panel.contents += new Button(Action(command.getCommandDescription()) {
+        command.revert()
+      })
+    }
+
+    panel
   }
 
-  updateSignal.changed += updateList
+  updateSignal.changed += { panel =>
+    scrollPane.contents = panel
+    repaint()
+  }
 }
 
 trait InfoPanelInteraction extends InfoPanel {
@@ -155,5 +172,7 @@ trait DrawingPanelInteraction extends DrawingPanel {
 
   val canvasChange = event.selectedShape.changed || event.allShapes.changed || modeChange || event.strokeWidth.changed || event.color.changed
 
-  canvasChange += (_ => repaint())
+  canvasChange += { _ =>
+    repaint()
+  }
 }

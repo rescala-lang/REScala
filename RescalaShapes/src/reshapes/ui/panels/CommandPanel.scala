@@ -10,17 +10,7 @@ import reshapes.command.Command
  */
 class CommandPanel extends BoxPanel(Orientation.Vertical) {
 
-  val commandPanel = new BoxPanel(Orientation.Vertical)
   val scrollPane = new ScrollPane()
 
   contents += scrollPane
-
-  def updateList(commands: List[Command]) = {
-    commandPanel.contents.clear()
-    commands.map(command => commandPanel.contents += new Button(Action(command.getCommandDescription()) {
-      command.revert()
-    }))
-    scrollPane.contents = commandPanel
-    repaint()
-  }
 }
