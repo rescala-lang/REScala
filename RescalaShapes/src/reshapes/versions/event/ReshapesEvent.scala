@@ -13,12 +13,10 @@ import reshapes.Selection
 import scala.events.ImperativeEvent
 import reshapes.command.Command
 import scala.events.Event
+import reshapes.figures.Shape
+import java.awt.Color
 
 trait DrawingSpaceStateInteraction extends DrawingSpaceState {
-
-  val modeChange = nextShape.changed || selectedShape.changed
-
-  val canvasChange = selectedShape.changed || allShapes.changed || modeChange || strokeWidth.changed || color.changed
 
   nextShape.changed += (shape => {
     shape.strokeWidth = strokeWidth.getValue
@@ -64,7 +62,7 @@ trait NetworkSpaceStateInteraction extends NetworkSpaceState {
 }
 
 trait CommandPanelInteraction extends CommandPanel {
-  var currentState: DrawingSpaceStateInteraction = null
+  var currentState: DrawingSpaceState = null
 
   Reshapes.CurrentEvents.changed += { state =>
     if (currentState != null) currentState.Commands.changed -= updateList
@@ -73,6 +71,71 @@ trait CommandPanelInteraction extends CommandPanel {
   }
 }
 
-trait DrawingPanelInteraction extends DrawingPanel {
-  //event.canvasChange += (_ => repaint())
+trait InfoPanelInteraction extends InfoPanel {
+  var currentState: DrawingSpaceState = null
+
+  var nextShape = ""
+  var selectedShape = ""
+  var numberElements = ""
+  var currentStrokeWidth = ""
+  var currentColor = ""
+
+  Reshapes.CurrentEvents.changed += { state =>
+    if (currentState != null) {
+      currentState.nextShape.changed -= updateNextShape
+      currentState.selectedShape.changed -= updateSelectedShape
+      currentState.allShapes.changed -= updateNumberElements
+      currentState.strokeWidth.changed -= updateCurrentStrokeWidth
+      currentState.color.changed -= updateCurrentColor
+    }
+    currentState = state
+    currentState.nextShape.changed += updateNextShape
+    currentState.selectedShape.changed += updateSelectedShape
+    currentState.allShapes.changed += updateNumberElements
+    currentState.strokeWidth.changed += updateCurrentStrokeWidth
+    currentState.color.changed += updateCurrentColor
+  }
+
+  def updateNextShape(shape: Shape) = {
+    if (shape != null) nextShape = "next shape: %s".format(shape.toString())
+    else nextShape = ""
+    updateCenterLabel()
+  }
+
+  def updateSelectedShape(shape: Shape) = {
+    if (shape != null) selectedShape = "selected: %s".format(shape.toString())
+    else selectedShape = ""
+    updateCenterLabel()
+  }
+
+  def updateNumberElements(shapes: List[Shape]) = {
+    numberElements = "#elements: %d".format(shapes.size)
+    updateCenterLabel()
+  }
+
+  def updateCurrentStrokeWidth(width: Int) = {
+    currentStrokeWidth = "stroke width: %d".format(width)
+    updateCenterLabel()
+  }
+
+  def updateCurrentColor(color: Color) = {
+    currentColor = "color: %d-%d-%d".format(color.getRed(), color.getGreen(), color.getBlue())
+    updateCenterLabel()
+  }
+
+  def updateCenterLabel() = {
+    centerLabel.text = "%s | %s | %s | %s | %s".format(numberElements, currentColor, currentStrokeWidth, nextShape, selectedShape)
+  }
+}
+
+trait ShapePanelInteraction extends ShapePanel {
+  var currentState: DrawingSpaceState = null
+
+  Reshapes.CurrentEvents.changed += { state =>
+    if (currentState != null) {
+      currentState.allShapes.changed -= updateAllShapesPanel
+    }
+    currentState = state
+    currentState.allShapes.changed += updateAllShapesPanel
+  }
 }

@@ -15,6 +15,7 @@ class InfoPanel() extends FlowPanel {
 
   val centerLabel = new Label { text = " " }
 
+  /*
   val nextShape: Signal[String] = Signal {
     Reshapes.CurrentEvents().nextShape()
     if (Reshapes.CurrentEvents().nextShape() != null) {
@@ -50,8 +51,8 @@ class InfoPanel() extends FlowPanel {
     "%s | %s | %s | %s | %s".format(numberElements(), currentColor(), currentStrokeWidth(), nextShape(), selectedShape())
   }
 
-  //infoText.changed += (newText => centerLabel.text = newText)
-  centerLabel.text = infoText.getValue
+  infoText.changed += (newText => centerLabel.text = newText)
+  */
 
   contents += centerLabel
 }

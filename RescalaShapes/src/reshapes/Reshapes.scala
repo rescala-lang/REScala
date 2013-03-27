@@ -1,12 +1,13 @@
 package reshapes
 
+import java.net.ConnectException
 import scala.collection.mutable.HashMap
 import scala.events.behaviour.Var
+import scala.events.behaviour.Signal
 import scala.swing.event.SelectionChanged
 import scala.swing.Dimension
 import scala.swing.Action
 import scala.swing.BorderPanel
-import scala.swing.Frame
 import scala.swing.MainFrame
 import scala.swing.Menu
 import scala.swing.MenuBar
@@ -14,43 +15,38 @@ import scala.swing.MenuItem
 import scala.swing.Separator
 import scala.swing.SimpleSwingApplication
 import scala.swing.TabbedPane
+import javax.swing.JOptionPane
 import reshapes.actions.LoadAction
+import reshapes.actions.MergeAction
 import reshapes.actions.QuitAction
 import reshapes.actions.SaveAction
 import reshapes.actions.UndoAction
-import reshapes.ui.panels._
-import reshapes.DrawingSpaceState
-import sun.reflect.generics.reflectiveObjects.NotImplementedException
-import org.omg.CORBA.Environment
-import java.awt.Point
-import reshapes.actions.MergeAction
-import scala.swing.Dialog
-import scala.swing.Label
-import scala.swing.Button
-import javax.swing.JOptionPane
-import java.net.ConnectException
-import scala.swing.event.KeyPressed
-import scala.swing.event.Key
-import java.awt.Toolkit
-import reshapes.ui.dialogs.ServerDialog
-import reshapes.ui.dialogs.NewTabDialog
-import scala.events.behaviour.Signal
 import reshapes.ui.dialogs.DialogResult
-
-/* change accordingly */
-import reshapes.versions.event._
+import reshapes.ui.dialogs.NewTabDialog
+import reshapes.ui.dialogs.ServerDialog
+import reshapes.ui.panels.CommandPanel
+import reshapes.ui.panels.DrawingPanel
+import reshapes.ui.panels.InfoPanel
+import reshapes.ui.panels.ShapePanel
+import reshapes.ui.panels.ShapeSelectionPanel
+import reshapes.ui.panels.StrokeInputPanel
+import reshapes.versions.event.CommandPanelInteraction
+import reshapes.versions.event.DrawingSpaceStateInteraction
+import reshapes.versions.event.NetworkSpaceStateInteraction
+import reshapes.versions.event.InfoPanelInteraction
+import reshapes.versions.event.ShapePanelInteraction
 
 object Reshapes extends SimpleSwingApplication {
 
   val tabbedPane = new TabbedPane()
   val currentTabIndex = new Var(0)
   // as event/Var
-  var CurrentEvents: Var[DrawingSpaceStateInteraction] = new Var(new DrawingSpaceState() with DrawingSpaceStateInteraction)
-  val panelEvents = new HashMap[TabbedPane.Page, DrawingSpaceStateInteraction]()
+  var CurrentEvents: Var[DrawingSpaceState] = new Var(new DrawingSpaceState() with DrawingSpaceStateInteraction)
+  val panelEvents = new HashMap[TabbedPane.Page, DrawingSpaceState]()
 
   // Panels
-  var infoPanel = new InfoPanel()
-  var shapePanel = new ShapePanel()
+  var infoPanel = new InfoPanel() with InfoPanelInteraction
+  var shapePanel = new ShapePanel() with ShapePanelInteraction
   var strokeInputPanel = new StrokeInputPanel()
   var shapeSelectionPanel = new ShapeSelectionPanel()
   var commandPanel = new CommandPanel() with CommandPanelInteraction

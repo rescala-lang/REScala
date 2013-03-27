@@ -1,27 +1,34 @@
 package reshapes.ui.panels
-import scala.swing._
-import scala.swing.event._
-import scala.events.behaviour.Signal
-import scala.events.behaviour.Var
-import reshapes.figures._
-import events.ImperativeEvent
 import java.awt.BasicStroke
-import reshapes.command.CreateShape
-import scala.util.Marshal
-import reshapes.command._
-import reshapes.Drawing
-import reshapes.Selection
-import reshapes.DrawingSpaceState
-import reshapes.util.MathUtil
+
+import scala.annotation.serializable
 import scala.collection.mutable.MutableList
-import scala.events.scalareact
+import scala.events.behaviour.Var
+import scala.events.behaviour.Signal
+import scala.swing.event.MouseDragged
+import scala.swing.event.MousePressed
+import scala.swing.event.MouseReleased
+import scala.swing.Color
+import scala.swing.Graphics2D
+import scala.swing.Point
+import scala.swing.Panel
+import scala.util.Marshal
+
+import reshapes.command.CreateShape
+import reshapes.command.EditShape
+import reshapes.figures.Movable
+import reshapes.figures.Resizable
+import reshapes.figures.Shape
+import reshapes.util.MathUtil
+import reshapes.Drawing
+import reshapes.DrawingSpaceState
 import reshapes.Reshapes
-import reshapes.versions.event.DrawingSpaceStateInteraction
+import reshapes.Selection
 
 /**
  * Represents the panel where all shapes are drawn onto.
  */
-class DrawingPanel(val event: DrawingSpaceStateInteraction) extends Panel {
+class DrawingPanel(val event: DrawingSpaceState) extends Panel {
   opaque = true
 
   var currentPath = new Var[List[Point]](List())
