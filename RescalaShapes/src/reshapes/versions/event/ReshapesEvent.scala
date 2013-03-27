@@ -144,6 +144,7 @@ trait InfoPanelInteraction extends InfoPanel {
 
 trait ShapePanelInteraction extends ShapePanel {
   var currentState: DrawingSpaceState = null
+  val allShapesPanel = new BoxPanel(Orientation.Vertical)
 
   Reshapes.CurrentEvents.changed += { state =>
     if (currentState != null) {
@@ -151,6 +152,16 @@ trait ShapePanelInteraction extends ShapePanel {
     }
     currentState = state
     currentState.allShapes.changed += updateAllShapesPanel
+  }
+
+  def updateAllShapesPanel(shapes: List[Shape]) = {
+    allShapesPanel.contents.clear()
+
+    shapes map (shape => allShapesPanel.contents += new ShapeView(shape, Reshapes.CurrentEvents.getValue))
+
+    scrollPane.contents = allShapesPanel
+
+    this.peer.revalidate()
   }
 }
 

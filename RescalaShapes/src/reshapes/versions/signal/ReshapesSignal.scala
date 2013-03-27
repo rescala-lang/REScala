@@ -159,11 +159,20 @@ trait InfoPanelInteraction extends InfoPanel {
 
 trait ShapePanelInteraction extends ShapePanel {
 
-  val allShapesChangedSignal: Signal[List[Shape]] = Signal {
-    Reshapes.CurrentEvents().allShapes()
+  val allShapesChanged: Signal[Panel] = Signal {
+    var panel = new BoxPanel(Orientation.Vertical)
+
+    for (shape <- Reshapes.CurrentEvents().allShapes()) {
+      panel.contents += new ShapeView(shape, Reshapes.CurrentEvents.getValue)
+    }
+
+    panel
   }
 
-  allShapesChangedSignal.changed += updateAllShapesPanel
+  allShapesChanged.changed += { panel =>
+    scrollPane.contents = panel
+    this.peer.revalidate()
+  }
 }
 
 trait DrawingPanelInteraction extends DrawingPanel {

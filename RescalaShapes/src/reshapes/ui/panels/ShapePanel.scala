@@ -20,17 +20,9 @@ import reshapes.Reshapes
  */
 class ShapePanel extends BoxPanel(Orientation.Vertical) {
 
-  val allShapesPanel = new BoxPanel(Orientation.Vertical)
+  val scrollPane = new ScrollPane()
 
-  contents += new ScrollPane(allShapesPanel)
-
-  def updateAllShapesPanel(shapes: List[Shape]) = {
-    allShapesPanel.contents.clear()
-
-    shapes map (shape => allShapesPanel.contents += new ShapeView(shape, Reshapes.CurrentEvents.getValue))
-
-    this.peer.revalidate()
-  }
+  contents += scrollPane
 }
 
 class ShapeView(shape: Shape, events: DrawingSpaceState) extends BoxPanel(Orientation.Horizontal) {
