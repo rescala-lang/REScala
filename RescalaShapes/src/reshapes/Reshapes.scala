@@ -30,8 +30,10 @@ import reshapes.ui.panels.InfoPanel
 import reshapes.ui.panels.ShapePanel
 import reshapes.ui.panels.ShapeSelectionPanel
 import reshapes.ui.panels.StrokeInputPanel
-
 import reshapes.versions.signal._
+import reshapes.ui.panels.ShowIntersection
+import reshapes.ui.panels.ShowCoordinateSystem
+import reshapes.ui.panels.ShowNameLabels
 
 object Reshapes extends SimpleSwingApplication {
 
@@ -123,7 +125,22 @@ object Reshapes extends SimpleSwingApplication {
     val dialog = new NewTabDialog()
     dialog.location = ui.locationOnScreen
     dialog.showDialog()
-    if (dialog.dialogResult == DialogResult.OK) addDrawingPanel(dialog.generateDrawingPanel(event))
+    if (dialog.dialogResult == DialogResult.OK) {
+      addDrawingPanel(generateDrawingPanel(dialog.showIntersections.selected,
+        dialog.showCoordinates.selected, dialog.showNames.selected, event))
+    }
+  }
+
+  def generateDrawingPanel(showIntersections: Boolean, showCoordinates: Boolean, showName: Boolean, state: DrawingSpaceState): DrawingPanel = {
+    (showIntersections, showCoordinates, showName) match {
+      case (true, false, false) => return new DrawingPanel(state) with ShowIntersection with DrawingPanelInteraction
+      case (false, true, false) => return new DrawingPanel(state) with ShowCoordinateSystem with DrawingPanelInteraction
+      case (true, true, false) => return new DrawingPanel(state) with ShowIntersection with ShowCoordinateSystem with DrawingPanelInteraction
+      case (false, false, true) => return new DrawingPanel(state) with ShowNameLabels with DrawingPanelInteraction
+      case (true, false, true) => return new DrawingPanel(state) with ShowIntersection with ShowNameLabels with DrawingPanelInteraction
+      case (true, true, true) => return new DrawingPanel(state) with ShowIntersection with ShowCoordinateSystem with ShowNameLabels with DrawingPanelInteraction
+      case _ => return new DrawingPanel(state)
+    }
   }
 
   def addDrawingPanel(panel: DrawingPanel) {

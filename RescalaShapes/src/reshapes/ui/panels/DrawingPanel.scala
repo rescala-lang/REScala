@@ -91,8 +91,6 @@ class DrawingPanel(val event: DrawingSpaceState) extends Panel {
         case _ =>
       }
   }
-
-  event.canvasChange += (_ => repaint())
 }
 
 /**

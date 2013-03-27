@@ -36,10 +36,6 @@ class DrawingSpaceState {
   val fileName: Var[String] = new Var("unnamed")
 
   var mode: EditingMode = Drawing()
-
-  val modeChange = nextShape.changed || selectedShape.changed
-
-  val canvasChange = selectedShape.changed || allShapes.changed || modeChange || strokeWidth.changed || color.changed
 }
 
 class NetworkSpaceState(val serverHostname: String = "localhost", val commandPort: Int = 9998, val exchangePort: Int = 9999, val listenerPort: Int = 1337) extends DrawingSpaceState {
