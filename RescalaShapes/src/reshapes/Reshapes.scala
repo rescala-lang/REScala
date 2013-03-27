@@ -30,17 +30,14 @@ import reshapes.ui.panels.InfoPanel
 import reshapes.ui.panels.ShapePanel
 import reshapes.ui.panels.ShapeSelectionPanel
 import reshapes.ui.panels.StrokeInputPanel
-import reshapes.versions.event.CommandPanelInteraction
-import reshapes.versions.event.DrawingSpaceStateInteraction
-import reshapes.versions.event.NetworkSpaceStateInteraction
-import reshapes.versions.event.InfoPanelInteraction
-import reshapes.versions.event.ShapePanelInteraction
+
+import reshapes.versions.signal._
 
 object Reshapes extends SimpleSwingApplication {
 
   val tabbedPane = new TabbedPane()
   val currentTabIndex = new Var(0)
-  // as event/Var
+
   var CurrentEvents: Var[DrawingSpaceState] = new Var(new DrawingSpaceState() with DrawingSpaceStateInteraction)
   val panelEvents = new HashMap[TabbedPane.Page, DrawingSpaceState]()
 

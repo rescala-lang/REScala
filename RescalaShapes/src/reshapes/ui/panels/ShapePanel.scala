@@ -24,14 +24,6 @@ class ShapePanel extends BoxPanel(Orientation.Vertical) {
 
   contents += new ScrollPane(allShapesPanel)
 
-  /*
-  val allShapesChangedSignal: Signal[List[Shape]] = Signal {
-    Reshapes.CurrentEvents().allShapes()
-  }
-
-  allShapesChangedSignal.changed += updateAllShapesPanel
-  */
-
   def updateAllShapesPanel(shapes: List[Shape]) = {
     allShapesPanel.contents.clear()
 
