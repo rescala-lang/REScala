@@ -139,3 +139,12 @@ trait ShapePanelInteraction extends ShapePanel {
     currentState.allShapes.changed += updateAllShapesPanel
   }
 }
+
+trait DrawingPanelInteraction extends DrawingPanel {
+
+  val modeChange = event.nextShape.changed || event.selectedShape.changed
+
+  val canvasChange = event.selectedShape.changed || event.allShapes.changed || modeChange || event.strokeWidth.changed || event.color.changed
+
+  canvasChange += (_ => repaint())
+}
