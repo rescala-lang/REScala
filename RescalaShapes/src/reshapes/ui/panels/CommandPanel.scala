@@ -13,11 +13,13 @@ class CommandPanel extends BoxPanel(Orientation.Vertical) {
   val commandPanel = new BoxPanel(Orientation.Vertical)
   val scrollPane = new ScrollPane()
 
+  /*
   val updateSignal: Signal[List[Command]] = Signal {
     Reshapes.CurrentEvents().Commands()
   }
 
   updateSignal.changed += updateList
+  */
 
   contents += scrollPane
 

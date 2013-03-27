@@ -37,20 +37,23 @@ import reshapes.ui.dialogs.NewTabDialog
 import scala.events.behaviour.Signal
 import reshapes.ui.dialogs.DialogResult
 
+/* change accordingly */
+import reshapes.versions.event._
+
 object Reshapes extends SimpleSwingApplication {
 
   val tabbedPane = new TabbedPane()
   val currentTabIndex = new Var(0)
   // as event/Var
-  var CurrentEvents = new Var(new DrawingSpaceState())
-  val panelEvents = new HashMap[TabbedPane.Page, DrawingSpaceState]()
+  var CurrentEvents: Var[DrawingSpaceStateInteraction] = new Var(new DrawingSpaceState() with DrawingSpaceStateInteraction)
+  val panelEvents = new HashMap[TabbedPane.Page, DrawingSpaceStateInteraction]()
 
   // Panels
   var infoPanel = new InfoPanel()
   var shapePanel = new ShapePanel()
   var strokeInputPanel = new StrokeInputPanel()
   var shapeSelectionPanel = new ShapeSelectionPanel()
-  var commandPanel = new CommandPanel()
+  var commandPanel = new CommandPanel() with CommandPanelInteraction
 
   val ui = new BorderPanel {
     add(infoPanel, BorderPanel.Position.South)
@@ -123,7 +126,7 @@ object Reshapes extends SimpleSwingApplication {
     contents = ui
   }
 
-  def addTab(event: DrawingSpaceState = new DrawingSpaceState()) {
+  def addTab(event: DrawingSpaceStateInteraction = new DrawingSpaceState() with DrawingSpaceStateInteraction) {
     val dialog = new NewTabDialog()
     dialog.location = ui.locationOnScreen
     dialog.showDialog()
@@ -143,7 +146,7 @@ object Reshapes extends SimpleSwingApplication {
     dialog.showDialog()
     if (dialog.inputIsValid() && dialog.dialogResult == DialogResult.OK) {
       try {
-        addTab(new NetworkSpaceState(dialog.hostname, dialog.commandPort, dialog.exchangePort, dialog.listenerPort))
+        addTab((new NetworkSpaceState(dialog.hostname, dialog.commandPort, dialog.exchangePort, dialog.listenerPort) with DrawingSpaceStateInteraction with NetworkSpaceStateInteraction))
       } catch {
         case e: ConnectException =>
           JOptionPane.showMessageDialog(null, "Server not available", "ConnectException", JOptionPane.ERROR_MESSAGE)

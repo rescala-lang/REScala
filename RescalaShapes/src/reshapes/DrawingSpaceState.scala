@@ -1,28 +1,22 @@
 package reshapes
-import scala.events.ImperativeEvent
-import reshapes.figures.Shape
-import scala.events.behaviour.Signal
-import scala.events.behaviour.Var
-import reshapes.figures.Line
 import java.awt.Color
-import reshapes.command.Command
-import scala.events.scalareact
-import java.net._
-import java.io.ObjectOutputStream
-import java.io.DataOutputStream
-import java.io.ObjectInputStream
 import java.io.DataInputStream
-import reshapes.command.CreateShape
-import java.io.IOException
-import org.omg.CORBA.portable.OutputStream
-import java.io.BufferedWriter
-import java.io.OutputStreamWriter
+import java.io.ObjectInputStream
 import java.io.PrintWriter
+import java.net.InetAddress
+import java.net.ServerSocket
+import java.net.Socket
+
 import scala.actors.Actor
-import reshapes.network.TransportObject
+import scala.annotation.serializable
+import scala.events.behaviour.Var
+
+import reshapes.command.Command
+import reshapes.figures.Line
+import reshapes.figures.Shape
 
 /**
- * Unifies all events which can occure during execution
+ * Represents the current state of one drawing space
  */
 class DrawingSpaceState {
 
@@ -42,43 +36,9 @@ class DrawingSpaceState {
   val fileName: Var[String] = new Var("unnamed")
 
   var mode: EditingMode = Drawing()
-  // event for changes in drawing mode between drawing shapes and selecting shapes
-  val modeChange = nextShape.changed || selectedShape.changed
-
-  // event which describes cases where a redraw is necassary
-  val canvasChange = selectedShape.changed || allShapes.changed || modeChange || strokeWidth.changed || color.changed
-
-  nextShape.changed += (shape => {
-    shape.strokeWidth = strokeWidth.getValue
-    shape.color = color.getValue
-    allShapes.getValue map (x => x.selected = false)
-    mode = Drawing()
-  })
-
-  selectedShape.changed += (shape => {
-    allShapes.getValue map (x => x.selected = false)
-    if (shape != null) {
-      shape.selected = true
-      mode = Selection()
-    } else {
-      mode = Drawing()
-    }
-  })
-
-  strokeWidth.changed += (width => {
-    if (selectedShape.getValue != null) {
-      selectedShape.getValue.strokeWidth = width
-    }
-  })
-
-  color.changed += (newColor => {
-    if (selectedShape.getValue != null) {
-      selectedShape.getValue.color = newColor
-    }
-  })
 }
 
-class NetworkSpaceState(serverHostname: String = "localhost", commandPort: Int = 9998, exchangePort: Int = 9999, listenerPort: Int = 1337) extends DrawingSpaceState {
+class NetworkSpaceState(val serverHostname: String = "localhost", val commandPort: Int = 9998, val exchangePort: Int = 9999, val listenerPort: Int = 1337) extends DrawingSpaceState {
 
   val serverInetAddress: InetAddress = InetAddress.getByName(serverHostname)
 
@@ -101,22 +61,6 @@ class NetworkSpaceState(serverHostname: String = "localhost", commandPort: Int =
    */
   def startUpdateListener(port: Int) = {
     new UpdateListener(port, this).start()
-  }
-
-  val commandSignal = Signal { Commands() }
-
-  val cmdFlow = scalareact.Signal.flow("") { self =>
-    while (true) {
-      self awaitNext commandSignal
-
-      val socket = new Socket(serverInetAddress, exchangePort)
-      val out = new ObjectOutputStream(new DataOutputStream(socket.getOutputStream()))
-
-      out.writeObject(new TransportObject(allShapes.getValue, listenerPort))
-
-      out.close()
-      socket.close()
-    }
   }
 
   registerClient(serverHostname, commandPort, listenerPort)

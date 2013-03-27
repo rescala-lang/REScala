@@ -3,6 +3,7 @@ import scala.swing._
 import javax.swing.JOptionPane
 import reshapes.DrawingSpaceState
 import reshapes.ui.panels._
+import reshapes.versions.event.DrawingSpaceStateInteraction
 
 object DialogResult extends Enumeration {
   type DialogResult = Value
@@ -92,7 +93,7 @@ class NewTabDialog extends CustomDialog {
   /**
    * Creates a custom drawing panel (with different traits) depending on checked dialog options
    */
-  def generateDrawingPanel(event: DrawingSpaceState): DrawingPanel = {
+  def generateDrawingPanel(event: DrawingSpaceStateInteraction): DrawingPanel = {
     val tuple = (showIntersections.selected, showCoordinates.selected, showNames.selected)
     tuple match {
       case (true, false, false) => return new DrawingPanel(event) with ShowIntersection

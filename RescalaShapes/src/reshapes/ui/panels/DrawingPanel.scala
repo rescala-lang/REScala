@@ -16,11 +16,12 @@ import reshapes.util.MathUtil
 import scala.collection.mutable.MutableList
 import scala.events.scalareact
 import reshapes.Reshapes
+import reshapes.versions.event.DrawingSpaceStateInteraction
 
 /**
  * Represents the panel where all shapes are drawn onto.
  */
-class DrawingPanel(val event: DrawingSpaceState) extends Panel {
+class DrawingPanel(val event: DrawingSpaceStateInteraction) extends Panel {
   opaque = true
 
   var currentPath = new Var[List[Point]](List())
