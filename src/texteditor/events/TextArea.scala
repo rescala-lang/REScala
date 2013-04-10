@@ -87,7 +87,8 @@ class TextArea extends ReComponent {
     val changed: Event[(Int, Int)] =
       // Caret updated by pressed mouse button, pressed arrow keys, Ctrl+A or select all event
       ((keys.pressed && {e => e.modifiers != Key.Modifier.Control &&
-          (e.key == Key.Left || e.key == Key.Right || e.key == Key.Up || e.key == Key.Down)})
+          (e.key == Key.Left || e.key == Key.Right || e.key == Key.Up || e.key == Key.Down||
+           e.key == Key.Home || e.key == Key.End)})
         .map{e: KeyPressed =>
           val offset = e.key match {
             case Key.Left =>
@@ -100,6 +101,17 @@ class TextArea extends ReComponent {
             case Key.Down =>
               val position = Position(min(LineIterator(buffer.iterator).size - 1, caret.position.row + 1), caret.position.col)
               LineOffset.offset(buffer.iterator, position)
+            case Key.Home =>
+              var offset = 0
+              for ((ch, i) <- buffer.iterator.zipWithIndex)
+               if (i < caret.offset && (ch == '\r' || ch == '\n'))
+                  offset = i + 1;
+              offset
+            case Key.End =>
+              caret.offset +
+	              buffer.iterator.drop(caret.offset).takeWhile{
+	               ch => ch != '\r' && ch != '\n'
+	              }.size
           }
           if (e.modifiers == Key.Modifier.Shift) (offset, caret.mark) else (offset, offset)
         } ||

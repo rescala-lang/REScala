@@ -184,6 +184,19 @@ class TextArea extends ReComponent {
         case Key.Down =>
           val position = Position(min(lineCount.getValue - 1, caret.position.getValue.row + 1), caret.position.getValue.col)
           if (shift) caret.dotPos = position else caret.position = position
+        case Key.Home =>
+          var offset = 0
+          for ((ch, i) <- buffer.iterable.getValue.iterator.zipWithIndex)
+            if (i < caret.offset.getValue && (ch == '\r' || ch == '\n'))
+              offset = i + 1;
+          if (shift) caret.dot = offset else caret.offset = offset
+        case Key.End =>
+          val offset = 
+            caret.offset.getValue +
+	          buffer.iterable.getValue.iterator.drop(caret.offset.getValue).takeWhile{
+	            ch => ch != '\r' && ch != '\n'
+	          }.size
+	      if (shift) caret.dot = offset else caret.offset = offset
         case _ =>
       }
   }

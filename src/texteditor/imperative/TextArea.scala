@@ -212,6 +212,19 @@ class TextArea extends Component with Publisher {
           case Key.Down => // down arrow
             val position = Position(min(lineCount - 1, caret.position.row + 1), caret.position.col)
             if (shift) caret.dotPos = position else caret.position = position
+          case Key.Home =>
+            var offset = 0
+            for ((ch, i) <- buffer.iterator.zipWithIndex)
+              if (i < caret.offset && (ch == '\r' || ch == '\n'))
+                offset = i + 1;
+            if (shift) caret.dot = offset else caret.offset = offset
+          case Key.End =>
+            val offset = 
+              caret.offset +
+	            buffer.iterator.drop(caret.offset).takeWhile{
+	              ch => ch != '\r' && ch != '\n'
+	            }.size
+	        if (shift) caret.dot = offset else caret.offset = offset
           case _ =>
         }
     case e @ KeyTyped(_, _, _, _) =>
