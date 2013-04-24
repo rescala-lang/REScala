@@ -11,8 +11,6 @@ import java.net._
 import scala.xml.Elem
 import scala.xml.NodeSeq
 
-import scala.events.behaviour._
-
 /**
  * The Fetcher is responsible to fetch the xml data
  * After fetching the data an event is triggered
@@ -24,10 +22,7 @@ class Fetcher {
 
   lazy val rssFetched = fetch1.after map { x: (URL,NodeSeq) => x.swap }
 
-//  lazy val urlAdded = new ImperativeEvent[URL]
-  val urlAdded = Signal{
-    
-  }
+  lazy val urlAdded = new ImperativeEvent[URL]
   lazy val urlRemoved: Event[URL] = removeURL.after map { arg_result: (URL,Unit) => arg_result._1 }
 
   lazy val startedFetching = fetch.before.map { _: Any => "Started fetching" }

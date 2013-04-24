@@ -1,7 +1,6 @@
 package reader.network
 
 import scala.events._
-import scala.events.behaviour._
 
 import java.net._
 
@@ -18,10 +17,6 @@ class UrlChecker {
    * @return Nothing is returned but events are fired, see below
    */
   val check = Observable( (url: String) => checkURL(url) )
-  
-  // this class need to be changed for using signal URLvalid
-  // class can consist only of method checkURL and signal can be created in class Main
-  val URLvalid :Signal[Boolean]
 
   // Tries to create a url from the string and returns it in Right
   // if not successful, a Left with an error message is returned

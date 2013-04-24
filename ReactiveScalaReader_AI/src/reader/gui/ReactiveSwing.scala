@@ -11,8 +11,6 @@ object ReactiveSwingConversions {
     implicit def eventCheckBoxToEvent(check: EventCheckBox): scala.events.Event[Boolean] = check.switched
 }
 
-
-
 class EventButton(text: String) extends Button(text) {
   val pressed = new ImperativeEvent[Button]
 
@@ -31,19 +29,16 @@ class EventCheckBox(text: String) extends CheckBox(text) {
 }
 
 class EventListView[A](evt: Event[Iterable[A]]) extends ListView[A] {
-  val selectedItemChanged = new ImperativeEvent[Option[A]] // just use selectedItemField
+  val selectedItemChanged = new ImperativeEvent[Option[A]]
 
   val wrappedEvent = evt
   evt.last(1).getValue.foreach { x => listData = x.toSeq }
 
   evt += { data: Iterable[A] => listData = data.toSeq }
 
-//  private var selectedItemField: Option[A] = getSelectedItem
-  var selectedItemField = Signal{
-    getSelectedItem
-  }
+  private var selectedItemField: Option[A] = getSelectedItem
 
-  def selectedItem: Option[A] = selectedItemField.getValue
+  def selectedItem: Option[A] = selectedItemField
 
   def selectedItem_=(item: Option[A]) = {
     selectedItemField = item
