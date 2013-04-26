@@ -1,13 +1,21 @@
 package reader.network
 
 import scala.events._
-
+import scala.events.behaviour._
 import java.net._
 
 class UrlChecker {
   type CheckArg = String
   type CheckResult = Either[String,URL]
   type AfterCheck = (CheckArg,CheckResult)
+  
+  //val UrlValidity = Var(false)
+  //val UrlValid: Signal[Boolean] = Signal{ UrlValidity == true} 
+  
+  val url = new Var("") 
+  
+  var UrlValid: Signal[Boolean] = Signal{checkURLSignal(url.toString)}
+  var ErrorMessage: Signal[String] = Signal{EM} 
 
   /**
    * Try to increase confidence that the String is a valid feed url
@@ -24,11 +32,29 @@ class UrlChecker {
     try {
       val u = new URL(url)
       u.getContent
+//      UrlValidity() = true
+      System.out.println("url true!!!!!" + UrlValid.getValue)
       Right(u)
     } catch {
       case e: UnknownHostException => Left(errorMessage(url,e))
       case e: MalformedURLException => Left(errorMessage(url,e))
     }
+  }
+  
+  var EM: String = ""
+  
+    private def checkURLSignal(url: String): Boolean = {
+      var valid = false
+    try {
+      val u = new URL(url)
+      u.getContent
+      Right(u)
+      valid = true
+    } catch {
+      case e: UnknownHostException => EM = errorMessage(url,e)
+      case e: MalformedURLException => EM = errorMessage(url,e)
+    }
+    return valid
   }
 
   private lazy val checkSuccessful: Event[CheckResult] =

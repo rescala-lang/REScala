@@ -21,13 +21,16 @@ object Main extends App {
   val app = new GUI(store)
   val checker = new UrlChecker
 
+  
+  
   setupGuiEvents()
 
   List(SimpleReporter, CentralizedEvents).foreach { m =>
     m.mediate(fetcher, parser, store, checker)
   }
 
-  checker.urlIsInvalid += { _ => showInvalidUrlDialog() }
+  checker.urlIsInvalid += { _ => showInvalidUrlDialog(); System.out.println(checker.UrlValid.getValue) }
+  checker.urlIsValid += { _ => System.out.println(checker.UrlValid.getValue)}
 
   val sleepTime = 20000
 
