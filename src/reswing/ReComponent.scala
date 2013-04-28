@@ -2,39 +2,45 @@ package reswing
 
 import java.awt.Dimension
 import java.awt.Graphics2D
+import java.awt.Point
+import java.awt.Rectangle
 
 import scala.events.ImperativeEvent
 import scala.events.behaviour.Signal
-import scala.events.behaviour.Var
 import scala.swing.Component
 import scala.swing.event._
 
-abstract class ReComponent() {
-  protected def peer: Component with ComponentMixin
+abstract class ReComponent(
+    val minimumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
+    val maximumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
+    val preferredSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal) {
+  
+  protected def connectSignal[T](signal: ImperativeSignal[T], init: T, setter: T => Unit) {
+    if (signal.inputSignal != null) {
+      setter(signal.getValue)
+      signal.inputSignal.changed += setter
+    }
+    else
+      signal(init)
+  }
+  
+  protected val peer: Component with ComponentMixin
   
   protected trait ComponentMixin extends Component {
-    val reMinimumSize = new ReactiveWrapper(minimumSize_=, minimumSize)
     override def minimumSize_=(x: Dimension) {
       super.minimumSize = x
-      reMinimumSize.value = x
+      ReComponent.this.minimumSize(x)
     }
     
-    val reMaximumSize = new ReactiveWrapper(maximumSize_=, maximumSize)
     override def maximumSize_=(x: Dimension) {
       super.maximumSize = x
-      reMaximumSize.value = x
+      ReComponent.this.maximumSize(x)
     }
     
-    val rePreferredSize = new ReactiveWrapper(preferredSize_=, preferredSize)
     override def preferredSize_=(x: Dimension) {
       super.preferredSize = x
-      rePreferredSize.value = x
+      ReComponent.this.preferredSize(x)
     }
-    
-    val reLocation = Var(location)
-    val reBounds = Var(bounds)
-    val reSize = Var(size)
-    val reHasFocus = Var(hasFocus)
     
     override def paintComponent(g: Graphics2D) = ReComponent.this.paintComponent(g)
     def __super__paintComponent(g: Graphics2D) = super.paintComponent(g)
@@ -43,27 +49,13 @@ abstract class ReComponent() {
     override def paintChildren(g: Graphics2D) = ReComponent.this.paintChildren(g)
     def __super__paintChildren(g: Graphics2D) = super.paintChildren(g)
     override def paint(g: Graphics2D) = {
-      reLocation() = location
-      reBounds() = bounds
-      reSize() = size
+      ReComponent.this.location(location)
+      ReComponent.this.bounds(bounds)
+      ReComponent.this.size(size)
       ReComponent.this.paint(g)
     }
     def __super__paint(g: Graphics2D) = super.paint(g)
   }
- 
-  def minimumSize = peer.reMinimumSize.signal
-  def minimumSize_=(x: Signal[Dimension]) = peer.reMinimumSize.signal = x
-  
-  def maximumSize = peer.reMaximumSize.signal
-  def maximumSize_=(x: Signal[Dimension]) = peer.reMaximumSize.signal = x
-  
-  def preferredSize = peer.rePreferredSize.signal
-  def preferredSize_=(x: Signal[Dimension]) = peer.rePreferredSize.signal = x
-  
-  val location = Signal{ peer.reLocation() }
-  val bounds = Signal{ peer.reBounds() }
-  val size = Signal{ peer.reSize() }
-  val hasFocus = Signal{ peer.reHasFocus() }
   
   protected def paintComponent(g: Graphics2D) = peer.__super__paintComponent(g)
   protected def paintBorder(g: Graphics2D) = peer.__super__paintBorder(g)
@@ -74,15 +66,24 @@ abstract class ReComponent() {
   val fontChanged = new ImperativeEvent[FontChanged]
   val foregroundChanged = new ImperativeEvent[ForegroundChanged]
   
+  val location: ImperativeSignal[Point] = ImperativeSignal.noSignal(peer location)
+  val bounds: ImperativeSignal[Rectangle] = ImperativeSignal.noSignal(peer bounds)
+  val size: ImperativeSignal[Dimension] = ImperativeSignal.noSignal(peer size)
+  val hasFocus: ImperativeSignal[Boolean] = ImperativeSignal.noSignal(peer hasFocus)
+  
+  connectSignal(minimumSize, peer minimumSize, peer minimumSize_=)
+  connectSignal(maximumSize, peer maximumSize, peer maximumSize_=)
+  connectSignal(preferredSize, peer preferredSize, peer preferredSize_=)
+  
   peer.listenTo(peer, peer.keys, peer.mouse.clicks, peer.mouse.moves, peer.mouse.wheel);
   
   peer.reactions += {
     case e @ BackgroundChanged(_) => backgroundChanged(e)
-    case e @ (FocusGained(_, _,_) | FocusLost(_, _, _)) => peer.reHasFocus() = peer.hasFocus
+    case e @ (FocusGained(_, _,_) | FocusLost(_, _, _)) => hasFocus(peer hasFocus)
     case e @ FontChanged(_) => fontChanged(e)
     case e @ ForegroundChanged(_) => foregroundChanged(e)
-    case e @ UIElementMoved(_) => peer.reLocation() = peer.location
-    case e @ UIElementResized(_) => peer.reSize() = peer.size; peer.reBounds() = peer.bounds
+    case e @ UIElementMoved(_) => location(peer.location)
+    case e @ UIElementResized(_) => size(peer size); bounds(peer bounds)
   }
   
   object mouse {

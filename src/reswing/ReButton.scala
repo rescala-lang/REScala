@@ -1,16 +1,28 @@
 package reswing
 
-import scala.swing.Button
+import java.awt.Dimension
+
 import scala.swing.Action
+import scala.swing.Button
 
-class ReButton(text0: String) extends ReAbstractButton {
-  override protected lazy val peer = new Button(text0) with AbstractButtonMixin
+import reswing.ImperativeSignal.toSignal
 
-  def this() = this("")
-  def this(a: Action) = {
-    this("")
-    peer.action = a
-  }
+class ReButton(
+    text: ImperativeSignal[String] = ImperativeSignal.noSignal,
+    action: Action = null,
+    minimumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
+    maximumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
+    preferredSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal)
+  extends ReAbstractButton(
+    text = text,
+    minimumSize = minimumSize,
+    maximumSize = maximumSize,
+    preferredSize = preferredSize) {
+  
+  override protected lazy val peer = new Button(text getValue) with AbstractButtonMixin
+  
+  if (action != null)
+    peer action = action
 }
 
 object ReButton {

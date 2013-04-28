@@ -7,12 +7,12 @@ import scala.swing.GridPanel
 import scala.swing.MainFrame
 import scala.swing.ScrollPane
 import scala.swing.SimpleSwingApplication
-
 import reswing.ReButton
 import reswing.ReButton.toButton
 import reswing.ReComponent.toComponent
 import reswing.ReLabel
 import reswing.ReLabel.toLabel
+import scala.swing.Label
 
 object Application extends SimpleSwingApplication {
   // event-based components (set initial value manually)
@@ -27,11 +27,11 @@ object Application extends SimpleSwingApplication {
   
   textArea.caret.changed += { _ =>
     val pos = textArea.caret.position
-    positionLabel.text = "Ln " + (pos.row + 1) + " : " + textArea.lineCount + "    Col " + (pos.col + 1)
+    (positionLabel: Label).text = "Ln " + (pos.row + 1) + " : " + textArea.lineCount + "    Col " + (pos.col + 1)
   }
-  textArea.selectionChanged += { it => selectionLabel.text = "Sel " + it.size }
-  textArea.charCountChanged += { count => charCountLabel.text = "Ch " + count }
-  textArea.wordCountChanged += { count => wordCountLabel.text = "Words " + count }
+  textArea.selectionChanged += { it => (selectionLabel: Label).text = "Sel " + it.size }
+  textArea.charCountChanged += { count => (charCountLabel: Label).text = "Ch " + count }
+  textArea.wordCountChanged += { count => (wordCountLabel: Label).text = "Words " + count }
   
   val selectAllButton = new ReButton("Select All")
   selectAllButton.clicked += { _ => textArea.selectAll; textArea.requestFocus }

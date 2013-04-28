@@ -246,7 +246,7 @@ class TextArea extends ReComponent {
   
   caret.changed += { _ =>
     def it = LineIterator(buffer.iterator)
-    preferredSize = new Dimension(2 * padding + it.map(stringWidth(_)).max, (it.size + 1) * lineHeight)
+    (this: Component).preferredSize = new Dimension(2 * padding + it.map(stringWidth(_)).max, (it.size + 1) * lineHeight)
     
     val point = pointFromPosition(caret.dotPos)
     peer.peer.scrollRectToVisible(new Rectangle(point.x - 8, point.y, 16, 2 * lineHeight))

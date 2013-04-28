@@ -1,26 +1,27 @@
 package reswing
 
-import scala.events.behaviour.Var
-import scala.events.behaviour.Signal
+import java.awt.Dimension
+
 import scala.swing.TextArea
 import scala.swing.event.ValueChanged
 
-class ReTextArea(text0: String, rows0: Int, columns0: Int) extends ReTextComponent {
-  override protected lazy val peer =
-    new TextArea(text0, rows0, columns0) with TextAreaMixin
+class ReTextArea(
+    text: String = "",
+    rows: Int = 0,
+    columns: Int = 0,
+    minimumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
+    maximumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
+    preferredSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal)
+  extends ReTextComponent(
+    minimumSize = minimumSize,
+    maximumSize = maximumSize,
+    preferredSize = preferredSize) {
   
-  protected trait TextAreaMixin extends TextArea with TextComponentMixin {
-    val reLineCount = new ReactiveWrapper(null, lineCount)
-  }
+  override protected lazy val peer = new TextArea(text, rows, columns) with ComponentMixin
   
-  def this(text: String) = this(text, 0, 0)
-  def this(rows: Int, columns: Int) = this("", rows, columns)
-  def this() = this("", 0, 0)
-  
-  def lineCount = peer.reLineCount.signal
-  
+  val lineCount: ImperativeSignal[Int] = ImperativeSignal.noSignal(peer lineCount)
   peer.reactions += {
-    case e @ ValueChanged(_) => peer.reLineCount.value = peer.lineCount
+    case e @ ValueChanged(_) => lineCount(peer lineCount)
   }
 }
 

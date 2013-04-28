@@ -1,66 +1,54 @@
 package reswing
 
-import scala.events.behaviour.Var
-import scala.events.behaviour.Signal
+import java.awt.Dimension
+
 import scala.events.ImperativeEvent
 import scala.swing.TextComponent
 import scala.swing.event.CaretUpdate
 import scala.swing.event.ValueChanged
 
-class ReTextComponent extends ReComponent {
-  override protected lazy val peer = new TextComponent with TextComponentMixin
+class ReTextComponent(
+    minimumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
+    maximumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
+    preferredSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal)
+  extends ReComponent(
+    minimumSize = minimumSize,
+    maximumSize = maximumSize,
+    preferredSize = preferredSize) {
   
-  protected trait TextComponentMixin extends TextComponent with ComponentMixin {
-    val reText = new ReactiveWrapper(text_=, text)
-    val reSelected = new ReactiveWrapper(null, selected)
-    
-    class ReCaret extends Caret {
-      private[reswing] val reDot = new ReactiveWrapper(dot_=, dot)
-      private[reswing] val reMark = new ReactiveWrapper(null, mark)
-      private[reswing] val rePosition = new ReactiveWrapper(position_=, position)
-    }
-    
-    object reCaret extends ReCaret
-  }
+  override protected lazy val peer = new TextComponent with ComponentMixin
   
-  def text = peer.reText.signal
-  def text_=(s: Signal[String]) = peer.reText.signal = s
+  val text: ImperativeSignal[String] = ImperativeSignal.noSignal
+  connectSignal(text, peer text, peer text_=)
   
-  def selected = peer.reSelected.signal
+  val selected: ImperativeSignal[String] = ImperativeSignal.noSignal
   
   val valueChanged = new ImperativeEvent[ValueChanged]
   peer.reactions += {
     case e @ ValueChanged(_) =>
-      peer.reText.value = peer.text
+      text(peer text)
       valueChanged(e)
   }
   
-  peer.reCaret.reactions += {
-    case e @ CaretUpdate(_) => {
-      if (peer.reSelected.value != peer.selected)
-    	  peer.reSelected.value = peer.selected
-    }
+  peer.caret.reactions += {
+    case e @ CaretUpdate(_) =>
+      selected(peer selected)
   }
   
   class ReCaret {
-    protected lazy val peer = ReTextComponent.this.peer.reCaret
+    protected lazy val peer = ReTextComponent.this.peer.caret
     
-    def dot = peer.reDot.signal
-    def dot_=(p: Signal[Int]) = peer.reDot.signal = p
-    
-    def mark = peer.reMark.signal
-    
-    def position = peer.rePosition.signal
-    def position_=(p: Signal[Int]) = peer.rePosition.signal = p
-    
+    val dot: ImperativeSignal[Int] = ImperativeSignal.noSignal(peer dot)
+    val mark: ImperativeSignal[Int] = ImperativeSignal.noSignal(peer mark)
+    val position: ImperativeSignal[Int] = ImperativeSignal.noSignal(peer position)
+  
     val caretUpdate = new ImperativeEvent[CaretUpdate]
     peer.reactions += {
-      case e @ CaretUpdate(_) => {
-        peer.reDot.value = peer.dot
-        peer.reMark.value = peer.mark
-        peer.rePosition.value = peer.position
+      case e @ CaretUpdate(_) =>
+        dot(peer dot)
+        mark(peer mark)
+        position(peer position)
         caretUpdate(e)
-      }
     }
   }
   
