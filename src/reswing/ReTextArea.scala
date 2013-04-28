@@ -7,7 +7,7 @@ import scala.swing.event.ValueChanged
 
 class ReTextArea(text0: String, rows0: Int, columns0: Int) extends ReTextComponent {
   override protected lazy val peer =
-    new TextArea(text0: String, rows0: Int, columns0: Int) with TextAreaMixin
+    new TextArea(text0, rows0, columns0) with TextAreaMixin
   
   protected trait TextAreaMixin extends TextArea with TextComponentMixin {
     val reLineCount = new ReactiveWrapper(null, lineCount)

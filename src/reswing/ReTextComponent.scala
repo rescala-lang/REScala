@@ -30,10 +30,9 @@ class ReTextComponent extends ReComponent {
   
   val valueChanged = new ImperativeEvent[ValueChanged]
   peer.reactions += {
-    case e @ ValueChanged(_) => {
+    case e @ ValueChanged(_) =>
       peer.reText.value = peer.text
       valueChanged(e)
-    }
   }
   
   peer.reCaret.reactions += {
