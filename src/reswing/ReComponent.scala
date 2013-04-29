@@ -10,11 +10,7 @@ import scala.events.behaviour.Signal
 import scala.swing.Component
 import scala.swing.event._
 
-abstract class ReComponent(
-    val minimumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
-    val maximumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
-    val preferredSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal) {
-  
+abstract class ReComponent {
   protected def connectSignal[T](signal: ImperativeSignal[T], init: T, setter: T => Unit) {
     if (signal.inputSignal != null) {
       setter(signal.getValue)
@@ -70,6 +66,10 @@ abstract class ReComponent(
   val bounds: ImperativeSignal[Rectangle] = ImperativeSignal.noSignal(peer bounds)
   val size: ImperativeSignal[Dimension] = ImperativeSignal.noSignal(peer size)
   val hasFocus: ImperativeSignal[Boolean] = ImperativeSignal.noSignal(peer hasFocus)
+  
+  lazy val minimumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal
+  lazy val maximumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal
+  lazy val preferredSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal
   
   connectSignal(minimumSize, peer minimumSize, peer minimumSize_=)
   connectSignal(maximumSize, peer maximumSize, peer maximumSize_=)

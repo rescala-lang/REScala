@@ -9,31 +9,31 @@ import scala.swing.GridPanel
 import scala.swing.MainFrame
 import scala.swing.ScrollPane
 import scala.swing.SimpleSwingApplication
-
 import reswing.ReButton
 import reswing.ReButton.toButton
 import reswing.ReLabel
 import reswing.ReLabel.toLabel
 import reswing.ReTextArea
 import reswing.ReTextArea.toTextArea
+import reswing.ImperativeSignal
 
 object ApplicationSwingTextArea extends SimpleSwingApplication {
   // reactive components
   val textArea = new ReTextArea("Lorem ipsum dolor sit amet\nconsectetur adipisicing elit\nsed do eiusmod")
   
-  val positionLabel = new ReLabel(Signal {
+  val positionLabel = ReLabel(Signal {
     val pos = min(textArea.caret.position(), textArea.text().length())
     val line = textArea.peer.getLineOfOffset(pos);
     val col = pos - textArea.peer.getLineStartOffset(line);
     "Ln " + (line + 1) + " : " + textArea.lineCount() + "    Col " + (col + 1)
   })
   
-  val selectionLabel = new ReLabel(
+  val selectionLabel = ReLabel(
     Signal { "Sel " + (if (textArea.selected() != null) textArea.selected().length() else 0) })
   
-  val countLabel = new ReLabel(Signal { "Ch " + textArea.text().length() })
+  val countLabel = ReLabel(Signal { "Ch " + textArea.text().length() })
   
-  val button = new ReButton("Select All")
+  val button = ReButton("Select All")
   button.clicked += { _ => textArea.selectAll; textArea.requestFocus }
   
   // layout

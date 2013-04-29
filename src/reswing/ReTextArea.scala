@@ -5,18 +5,7 @@ import java.awt.Dimension
 import scala.swing.TextArea
 import scala.swing.event.ValueChanged
 
-class ReTextArea(
-    text: String = "",
-    rows: Int = 0,
-    columns: Int = 0,
-    minimumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
-    maximumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
-    preferredSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal)
-  extends ReTextComponent(
-    minimumSize = minimumSize,
-    maximumSize = maximumSize,
-    preferredSize = preferredSize) {
-  
+class ReTextArea(text: String = "", rows: Int = 0, columns: Int = 0) extends ReTextComponent {
   override protected lazy val peer = new TextArea(text, rows, columns) with ComponentMixin
   
   val lineCount: ImperativeSignal[Int] = ImperativeSignal.noSignal(peer lineCount)
@@ -27,4 +16,21 @@ class ReTextArea(
 
 object ReTextArea {
   implicit def toTextArea(input : ReTextArea) : TextArea = input.peer
+  
+  def apply(
+      text: String = "",
+      rows: Int = 0,
+      columns: Int = 0,
+      minimumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
+      maximumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
+      preferredSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal) = {
+    def minimumSize0 = minimumSize
+    def maximumSize0 = maximumSize
+    def preferredSize0 = preferredSize
+    new ReTextArea(text, rows, columns) {
+      override lazy val minimumSize = minimumSize0
+      override lazy val maximumSize = maximumSize0
+      override lazy val preferredSize = preferredSize0
+    }: ReTextArea
+  }
 }

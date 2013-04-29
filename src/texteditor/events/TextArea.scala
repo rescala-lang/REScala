@@ -38,8 +38,6 @@ class TextArea extends ReComponent {
   protected val clipboard = Toolkit.getDefaultToolkit.getSystemClipboard
   protected val buffer = new GapBuffer
   
-  caret // force lazy object initialization
-  
   def this(text: String) {
     this
     buffer.insert(text)

@@ -9,19 +9,8 @@ import scala.swing.Swing.EmptyIcon
 import javax.swing.Icon
 import reswing.ImperativeSignal.toSignal
 
-class ReLabel(
-    val text: ImperativeSignal[String] = ImperativeSignal.noSignal,
-    icon: Icon = EmptyIcon,
-    align: Alignment.Value = Alignment.Center,
-    minimumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
-    maximumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
-    preferredSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal)
-  extends ReComponent(
-    minimumSize = minimumSize,
-    maximumSize = maximumSize,
-    preferredSize = preferredSize) {
-  
-  override protected lazy val peer = new Label(text getValue, icon, align) with LabelMixin
+class ReLabel extends ReComponent {
+  override protected lazy val peer = new Label with LabelMixin
 
   protected trait LabelMixin extends Label with ComponentMixin {
     override def text_=(s : String) {
@@ -30,9 +19,27 @@ class ReLabel(
     }
   }
   
+  lazy val text = ImperativeSignal.noSignal[String]
   connectSignal(text, peer text, peer text_=)
 }
 
 object ReLabel {
   implicit def toLabel(input : ReLabel) : Label = input.peer
+  
+  def apply(
+      text: ImperativeSignal[String] = ImperativeSignal.noSignal,
+      minimumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
+      maximumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
+      preferredSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal) = {
+    def text0 = text
+    def minimumSize0 = minimumSize
+    def maximumSize0 = maximumSize
+    def preferredSize0 = preferredSize
+    new ReLabel {
+      override lazy val minimumSize = minimumSize0
+      override lazy val maximumSize = maximumSize0
+      override lazy val preferredSize = preferredSize0
+      override lazy val text = text0
+    }: ReLabel
+  }
 }

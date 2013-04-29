@@ -6,16 +6,7 @@ import scala.swing.AbstractButton
 import scala.swing.event.ButtonClicked
 import java.awt.Dimension
 
-class ReAbstractButton(
-    val text: ImperativeSignal[String] = ImperativeSignal.noSignal,
-    minimumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
-    maximumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
-    preferredSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal)
-  extends ReComponent(
-    minimumSize = minimumSize,
-    maximumSize = maximumSize,
-    preferredSize = preferredSize) {
-  
+class ReAbstractButton extends ReComponent {
   override protected lazy val peer = new AbstractButton with AbstractButtonMixin
   
   protected trait AbstractButtonMixin extends AbstractButton with ComponentMixin {
@@ -25,6 +16,7 @@ class ReAbstractButton(
     }
   }
   
+  lazy val text = ImperativeSignal.noSignal[String]
   connectSignal(text, peer text, peer text_=)
   
   val clicked = new ImperativeEvent[ButtonClicked]
@@ -35,4 +27,21 @@ class ReAbstractButton(
 
 object ReAbstractButton {
   implicit def toButton(input : ReAbstractButton) : AbstractButton = input.peer
+  
+  def apply(
+      text: ImperativeSignal[String] = ImperativeSignal.noSignal,
+      minimumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
+      maximumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
+      preferredSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal) = {
+    def text0 = text
+    def minimumSize0 = minimumSize
+    def maximumSize0 = maximumSize
+    def preferredSize0 = preferredSize
+    new ReAbstractButton {
+      override lazy val minimumSize = minimumSize0
+      override lazy val maximumSize = maximumSize0
+      override lazy val preferredSize = preferredSize0
+      override lazy val text = text0
+    }: ReAbstractButton
+  }
 }

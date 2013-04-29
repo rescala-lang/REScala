@@ -7,15 +7,7 @@ import scala.swing.TextComponent
 import scala.swing.event.CaretUpdate
 import scala.swing.event.ValueChanged
 
-class ReTextComponent(
-    minimumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
-    maximumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
-    preferredSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal)
-  extends ReComponent(
-    minimumSize = minimumSize,
-    maximumSize = maximumSize,
-    preferredSize = preferredSize) {
-  
+class ReTextComponent extends ReComponent {
   override protected lazy val peer = new TextComponent with ComponentMixin
   
   val text: ImperativeSignal[String] = ImperativeSignal.noSignal
@@ -61,4 +53,18 @@ class ReTextComponent(
 
 object ReTextComponent {
   implicit def toTextComponent(input : ReTextComponent) : TextComponent = input.peer
+  
+  def apply(
+      minimumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
+      maximumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
+      preferredSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal) = {
+    def minimumSize0 = minimumSize
+    def maximumSize0 = maximumSize
+    def preferredSize0 = preferredSize
+    new ReLabel {
+      override lazy val minimumSize = minimumSize0
+      override lazy val maximumSize = maximumSize0
+      override lazy val preferredSize = preferredSize0
+    }: ReLabel
+  }
 }

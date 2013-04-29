@@ -24,6 +24,7 @@ import texteditor.LineIterator
 import texteditor.LineOffset
 import texteditor.Position
 import java.awt.datatransfer.StringSelection
+import reswing.ImperativeSignal
 
 class TextArea extends ReComponent {
   override protected lazy val peer = new Component with ComponentMixin {
@@ -35,19 +36,18 @@ class TextArea extends ReComponent {
   
   protected val padding = 5
   protected val clipboard = Toolkit.getDefaultToolkit.getSystemClipboard
-  protected val buffer = new GapBuffer
   
-  caret // force lazy object initialization
+  protected lazy val buffer = new GapBuffer
   
   def this(text: String) {
     this
     buffer.insert(text)
   }
   
-  Signal{
+  override lazy val preferredSize: ImperativeSignal[Dimension] = Signal{
     def it = LineIterator(buffer.iterable())
     new Dimension(2 * padding + it.map(stringWidth(_)).max, (it.size + 1) * lineHeight)
-  }.changed += { v => peer preferredSize = v }
+  }
   
   val charCount = Signal{ buffer.length() }
   

@@ -8,7 +8,6 @@ import java.awt.SystemColor
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection
-
 import scala.events.Event
 import scala.events.ImperativeEvent
 import scala.events.behaviour.Signal
@@ -20,12 +19,12 @@ import scala.swing.event.KeyPressed
 import scala.swing.event.KeyTyped
 import scala.swing.event.MouseDragged
 import scala.swing.event.MouseEvent
-
 import reswing.ReComponent
 import texteditor.JScrollableComponent
 import texteditor.LineIterator
 import texteditor.LineOffset
 import texteditor.Position
+import reswing.ImperativeSignal
 
 class TextArea(text: String) extends ReComponent {
   override protected lazy val peer = new Component with ComponentMixin {
@@ -40,10 +39,10 @@ class TextArea(text: String) extends ReComponent {
   
   def this() = this("")
   
-  Signal{
+  override lazy val preferredSize: ImperativeSignal[Dimension] = Signal{
     def it = LineIterator(content())
     new Dimension(2 * padding + it.map(stringWidth(_)).max, (it.size + 1) * lineHeight)
-  }.changed += { v => peer preferredSize = v }
+  }
   
   // keeps track of the current text content and the number of modifications
   protected lazy val contentModification: Signal[(Int, String)] =
