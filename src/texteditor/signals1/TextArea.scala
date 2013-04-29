@@ -47,7 +47,7 @@ class TextArea extends ReComponent {
   Signal{
     def it = LineIterator(buffer.iterable())
     new Dimension(2 * padding + it.map(stringWidth(_)).max, (it.size + 1) * lineHeight)
-  }.changed += { v => (this: Component).preferredSize = v }
+  }.changed += { v => peer preferredSize = v }
   
   val charCount = Signal{ buffer.length() }
   

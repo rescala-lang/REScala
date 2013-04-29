@@ -43,7 +43,7 @@ class TextArea(text: String) extends ReComponent {
   Signal{
     def it = LineIterator(content())
     new Dimension(2 * padding + it.map(stringWidth(_)).max, (it.size + 1) * lineHeight)
-  }.changed += { v => (this: Component).preferredSize = v }
+  }.changed += { v => peer preferredSize = v }
   
   // keeps track of the current text content and the number of modifications
   protected lazy val contentModification: Signal[(Int, String)] =
