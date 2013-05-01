@@ -1,11 +1,9 @@
 package reswing
 
 import java.awt.Dimension
-
 import scala.swing.Alignment
 import scala.swing.Label
 import scala.swing.Swing.EmptyIcon
-
 import javax.swing.Icon
 import reswing.ImperativeSignal.toSignal
 
@@ -30,16 +28,5 @@ object ReLabel {
       text: ImperativeSignal[String] = ImperativeSignal.noSignal,
       minimumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
       maximumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
-      preferredSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal) = {
-    def text0 = text
-    def minimumSize0 = minimumSize
-    def maximumSize0 = maximumSize
-    def preferredSize0 = preferredSize
-    new ReLabel {
-      override lazy val minimumSize = minimumSize0
-      override lazy val maximumSize = maximumSize0
-      override lazy val preferredSize = preferredSize0
-      override lazy val text = text0
-    }: ReLabel
-  }
+      preferredSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal) = Macros.applyBody
 }

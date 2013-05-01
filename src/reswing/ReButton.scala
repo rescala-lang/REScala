@@ -22,16 +22,5 @@ object ReButton {
       action: Action = null,
       minimumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
       maximumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
-      preferredSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal) = {
-    def text0 = text
-    def minimumSize0 = minimumSize
-    def maximumSize0 = maximumSize
-    def preferredSize0 = preferredSize
-    new ReButton(action) {
-      override lazy val minimumSize = minimumSize0
-      override lazy val maximumSize = maximumSize0
-      override lazy val preferredSize = preferredSize0
-      override lazy val text = text0
-    }: ReButton
-  }
+      preferredSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal) = Macros.applyBody
 }

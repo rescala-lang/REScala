@@ -23,14 +23,5 @@ object ReTextArea {
       columns: Int = 0,
       minimumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
       maximumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
-      preferredSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal) = {
-    def minimumSize0 = minimumSize
-    def maximumSize0 = maximumSize
-    def preferredSize0 = preferredSize
-    new ReTextArea(text, rows, columns) {
-      override lazy val minimumSize = minimumSize0
-      override lazy val maximumSize = maximumSize0
-      override lazy val preferredSize = preferredSize0
-    }: ReTextArea
-  }
+      preferredSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal) = Macros.applyBody
 }

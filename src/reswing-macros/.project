@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+	<name>reswing-macros</name>
+	<comment></comment>
+	<projects>
+	</projects>
+	<buildSpec>
+		<buildCommand>
+			<name>org.scala-ide.sdt.core.scalabuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+	</buildSpec>
+	<natures>
+		<nature>org.scala-ide.sdt.core.scalanature</nature>
+		<nature>org.eclipse.jdt.core.javanature</nature>
+	</natures>
+	<linkedResources>
+		<link>
+			<name>OUTPUT</name>
+			<type>2</type>
+			<locationURI>OUTPUT</locationURI>
+		</link>
+	</linkedResources>
+	<variableList>
+		<variable>
+			<name>OUTPUT</name>
+			<value>$%7BPARENT-2-PROJECT_LOC%7D/bin-reswing-macros</value>
+		</variable>
+	</variableList>
+</projectDescription>
