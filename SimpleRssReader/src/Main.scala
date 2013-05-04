@@ -12,6 +12,9 @@ object Main extends App {
   val fetch = new Fetcher(url1)
   System.out.println(fetch.listOfUrl)
   System.out.println(fetch.ChTitle)
+  
+  val g = new GUI
+  g.main(Array())
 
   
 }

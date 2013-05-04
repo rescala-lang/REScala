@@ -12,9 +12,9 @@ class UrlChecker {
   //val UrlValidity = Var(false)
   //val UrlValid: Signal[Boolean] = Signal{ UrlValidity == true} 
   
-  val url = new Var("") 
+  val urlA = new Var("") 
   
-  var UrlValid: Signal[Boolean] = Signal{checkURLSignal(url.toString)}
+  var UrlValid: Signal[Boolean] = Signal{checkURLSignal(urlA.toString)}
   var ErrorMessage: Signal[String] = Signal{EM} 
 
   /**
@@ -24,7 +24,14 @@ class UrlChecker {
    * @param url The string to check
    * @return Nothing is returned but events are fired, see below
    */
-  val check = Observable( (url: String) => checkURL(url) )
+  val check = Observable( (url: String) => checkURL(url) ) //help(url) )
+    
+  private def help(url: String) = {
+    urlA() = url
+    checkURL(url)
+  }
+  
+    //checkURL(url) )
 
   // Tries to create a url from the string and returns it in Right
   // if not successful, a Left with an error message is returned
@@ -33,7 +40,7 @@ class UrlChecker {
       val u = new URL(url)
       u.getContent
 //      UrlValidity() = true
-      System.out.println("url true!!!!!" + UrlValid.getValue)
+      //System.out.println("url true!!!!!" + UrlValid.getValue)
       Right(u)
     } catch {
       case e: UnknownHostException => Left(errorMessage(url,e))
@@ -44,6 +51,7 @@ class UrlChecker {
   var EM: String = ""
   
     private def checkURLSignal(url: String): Boolean = {
+    
       var valid = false
     try {
       val u = new URL(url)
@@ -57,13 +65,13 @@ class UrlChecker {
     return valid
   }
 
-  private lazy val checkSuccessful: Event[CheckResult] =
+  private lazy val checkSuccessful: Event[CheckResult] = null
     check.after && { t: AfterCheck => t._2.isRight } map { t: AfterCheck => t._2 }
 
-  private lazy val checkFailed: Event[CheckResult] =
+  private lazy val checkFailed: Event[CheckResult] = null
     check.after && { t: AfterCheck => t._2.isLeft } map { t: AfterCheck => t._2 }
 
-  private lazy val checkedOption: Event[Option[URL]] =
+  private lazy val checkedOption: Event[Option[URL]] = null
     (checkSuccessful || checkFailed) map { e: CheckResult => e match { case Right(u) => Some(u)
                                                                       case Left(_)  => None } }
 
