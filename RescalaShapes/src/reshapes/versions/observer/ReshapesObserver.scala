@@ -95,31 +95,31 @@ trait DrawingSpaceStateInteraction extends DrawingSpaceState {
   }
 
   def unregisterNextShapeObserver(obs: (Shape => Unit)) = {
-    nextShapeObservers = nextShapeObservers - obs
+    nextShapeObservers = nextShapeObservers.filterNot(_ == obs)
   }
 
   def unregisterSelectedShapeObserver(obs: (Shape => Unit)) = {
-    selectedShapeObservers = selectedShapeObservers - obs
+    selectedShapeObservers = selectedShapeObservers.filterNot(_ == obs)
   }
 
   def unregisterAllShapesObserver(obs: (List[Shape] => Unit)) = {
-    allShapesObservers = allShapesObservers - obs
+    allShapesObservers = allShapesObservers.filterNot(_ == obs)
   }
 
   def unregisterStrokeWidthObserver(obs: (Int => Unit)) = {
-    strokeWidthObservers = strokeWidthObservers - obs
+    strokeWidthObservers = strokeWidthObservers.filterNot(_ == obs)
   }
 
   def unregisterColorObserver(obs: (Color => Unit)) = {
-    colorObservers = colorObservers - obs
+    colorObservers = colorObservers.filterNot(_ == obs)
   }
 
   def unregisterCommandsObserver(obs: (List[Command] => Unit)) = {
-    CommandsObservers = CommandsObservers - obs
+    CommandsObservers = CommandsObservers.filterNot(_ == obs)
   }
 
   def unregisterFileNameObserver(obs: (String => Unit)) = {
-    fileNameObservers = fileNameObservers - obs
+    fileNameObservers = fileNameObservers.filterNot(_ == obs)
   }
 }
 

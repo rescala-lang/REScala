@@ -70,6 +70,7 @@ class DrawingPanel(val event: DrawingSpaceState) extends Panel {
         case Drawing() =>
           currentlyDrawing.update(currentPath.getValue)
         case Selection() =>
+          //TODO: if dragging or moving has to be determined in MousePressed case
           val shape = Reshapes.CurrentEvents.getValue.selectedShape.getValue
           if ((MathUtil.isInCircle(shape.start, 6, e.point) || MathUtil.isInCircle(shape.end, 6, e.point))
             && shape.isInstanceOf[Resizable]) {

@@ -17,9 +17,9 @@ abstract class Command() {
 
   def revert(): Unit = {
     // check if this command is latest command
-    while (Reshapes.CurrentEvents.getValue.Commands.getValue.first != this) {
+    while (Reshapes.CurrentEvents.getValue.Commands.getValue.head != this) {
       // if not then revert all commands which where executed after this
-      Reshapes.CurrentEvents.getValue.Commands.getValue.first.revert()
+      Reshapes.CurrentEvents.getValue.Commands.getValue.head.revert()
     }
     onRevert()
     Reshapes.CurrentEvents.getValue.Commands() = Reshapes.CurrentEvents.getValue.Commands.getValue.tail

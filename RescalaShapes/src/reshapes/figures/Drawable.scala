@@ -17,7 +17,7 @@ abstract class Shape {
   // the mouse path while drawing this shape
   var path: List[Point] = null
 
-  def start = if (path == null) null else path.first
+  def start = if (path == null) null else path.head
   def end = if (path == null) null else path.last
 
   def draw(g: Graphics2D) = {

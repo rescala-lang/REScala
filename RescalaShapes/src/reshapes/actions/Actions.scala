@@ -58,7 +58,7 @@ class QuitAction extends Action("Quit") {
  */
 class UndoAction extends Action("Undo") {
   def apply() = {
-    Reshapes.CurrentEvents.getValue.Commands.getValue.first.revert()
+    Reshapes.CurrentEvents.getValue.Commands.getValue.head.revert()
   }
 }
 

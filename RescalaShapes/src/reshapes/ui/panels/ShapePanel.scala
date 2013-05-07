@@ -50,7 +50,7 @@ class ShapeView(shape: Shape, events: DrawingSpaceState) extends BoxPanel(Orient
 
   this.background = NOT_SELECTED_COLOR
 
-  listenTo(Mouse.clicks)
+  listenTo(mouse.clicks)
 
   reactions += {
     case e: MouseClicked =>
