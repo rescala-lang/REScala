@@ -20,6 +20,7 @@ class SaveAction extends Action("Save") {
     fileChooser.selectedFile = new File(Reshapes.currentEvents.fileName)
     if (fileChooser.showDialog(null, "save") == FileChooser.Result.Approve) {
       val out = new FileOutputStream(fileChooser.selectedFile)
+      // object Marshal in package util is deprecated
       out.write(Marshal.dump(Reshapes.currentEvents.allShapes))
       out.close()
       Reshapes.currentEvents.fileName = fileChooser.selectedFile.getName()

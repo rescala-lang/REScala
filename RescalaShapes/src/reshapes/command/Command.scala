@@ -7,8 +7,7 @@ import reshapes.figures.Line
 import reshapes.Reshapes
 import java.util.UUID
 
-@serializable
-abstract class Command() {
+abstract class Command() extends Serializable {
 
   def execute() = {
     onExecute()

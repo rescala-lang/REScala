@@ -1,4 +1,5 @@
 package reshapes.figures
+
 import java.awt.Point
 import java.awt.Graphics2D
 import java.awt.BasicStroke
@@ -6,8 +7,7 @@ import java.awt.Color
 import reshapes.util.MathUtil
 import java.util.UUID
 
-@serializable
-abstract class Shape {
+abstract class Shape extends Serializable {
   Shape.current += 1
 
   var strokeWidth = 1

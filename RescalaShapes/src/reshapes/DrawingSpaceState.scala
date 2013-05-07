@@ -213,5 +213,5 @@ class UpdateListener(port: Int, events: DrawingSpaceState) extends Actor {
 */
 
 abstract class EditingMode
-case class Drawing extends EditingMode
-case class Selection extends EditingMode
+case class Drawing() extends EditingMode
+case class Selection() extends EditingMode

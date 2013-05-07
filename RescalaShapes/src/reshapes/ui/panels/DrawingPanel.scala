@@ -59,6 +59,7 @@ class DrawingPanel(val event: DrawingSpaceState) extends Panel {
           currentlyDrawing.color = Reshapes.currentEvents.color
         case Selection() =>
           // hack to get a object copy
+          // object Marshal in package util is deprecated
           shapeBeforeEdit = Marshal.load[Shape](Marshal.dump[Shape](Reshapes.currentEvents.selectedShape))
           Reshapes.currentEvents.mode match {
             case Drawing() =>
