@@ -29,7 +29,7 @@ class StrokeInputPanel() extends FlowPanel {
     }
 
     def confirmColor() = {
-      Reshapes.CurrentEvents.getValue.color() = colorChooser.peer.getColor()
+      Reshapes.currentEvents.color = colorChooser.peer.getColor()
       visible = false
     }
   }
@@ -49,7 +49,7 @@ class StrokeInputPanel() extends FlowPanel {
     paintTicks = true
 
     reactions += {
-      case e: ValueChanged => Reshapes.CurrentEvents.getValue.strokeWidth() = value
+      case e: ValueChanged => Reshapes.currentEvents.strokeWidth = value
     }
   }
   contents += showColorInput

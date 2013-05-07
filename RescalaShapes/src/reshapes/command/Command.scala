@@ -12,17 +12,17 @@ abstract class Command() {
 
   def execute() = {
     onExecute()
-    Reshapes.CurrentEvents.getValue.Commands() = this :: Reshapes.CurrentEvents.getValue.Commands.getValue
+    Reshapes.currentEvents.commands = this :: Reshapes.currentEvents.commands
   }
 
   def revert(): Unit = {
     // check if this command is latest command
-    while (Reshapes.CurrentEvents.getValue.Commands.getValue.head != this) {
+    while (Reshapes.currentEvents.commands.head != this) {
       // if not then revert all commands which where executed after this
-      Reshapes.CurrentEvents.getValue.Commands.getValue.head.revert()
+      Reshapes.currentEvents.commands.head.revert()
     }
     onRevert()
-    Reshapes.CurrentEvents.getValue.Commands() = Reshapes.CurrentEvents.getValue.Commands.getValue.tail
+    Reshapes.currentEvents.commands = Reshapes.currentEvents.commands.tail
   }
 
   def onExecute()
@@ -38,11 +38,11 @@ abstract class Command() {
 class DeleteShape(shapeToDelete: Shape) extends Command {
 
   def onExecute() = {
-    Reshapes.CurrentEvents.getValue.allShapes() = Reshapes.CurrentEvents.getValue.allShapes.getValue filter (x => x != shapeToDelete)
+    Reshapes.currentEvents.allShapes = Reshapes.currentEvents.allShapes filter (x => x != shapeToDelete)
   }
 
   def onRevert() = {
-    Reshapes.CurrentEvents.getValue.allShapes() = shapeToDelete :: Reshapes.CurrentEvents.getValue.allShapes.getValue
+    Reshapes.currentEvents.allShapes = shapeToDelete :: Reshapes.currentEvents.allShapes
   }
 
   override def getCommandDescription(): String = {
@@ -56,7 +56,7 @@ class DeleteShape(shapeToDelete: Shape) extends Command {
 class CreateShape(shapeToCreate: Shape) extends Command {
 
   def onExecute() {
-    Reshapes.CurrentEvents.getValue.allShapes() = shapeToCreate :: Reshapes.CurrentEvents.getValue.allShapes.getValue
+    Reshapes.currentEvents.allShapes = shapeToCreate :: Reshapes.currentEvents.allShapes
   }
 
   def onRevert() {
@@ -83,8 +83,8 @@ class EditShape(shapeBeforeEdit: Shape, shapeAfterEdit: Shape) extends Command {
     shapeAfterEdit.strokeWidth = shapeBeforeEdit.strokeWidth
     shapeAfterEdit.color = shapeBeforeEdit.color
 
-    Reshapes.CurrentEvents.getValue.selectedShape() = new Line() // force to fire selectedShape.changed event when Events.selectedShape() == shapeAfterEdit
-    Reshapes.CurrentEvents.getValue.selectedShape() = shapeAfterEdit
+    Reshapes.currentEvents.selectedShape = new Line() // force to fire selectedShape.changed event when Events.selectedShape() == shapeAfterEdit
+    Reshapes.currentEvents.selectedShape = shapeAfterEdit
   }
 
   override def getCommandDescription(): String = {
@@ -101,8 +101,8 @@ class MergeEvents(eventToMerge: DrawingSpaceState) extends Command {
   var shapes: List[Shape] = null
 
   def onExecute() {
-    eventTitle = eventToMerge.fileName.getValue
-    shapes = eventToMerge.allShapes.getValue
+    eventTitle = eventToMerge.fileName
+    shapes = eventToMerge.allShapes
 
     shapes map (shape => new CreateShape(shape).onExecute())
   }

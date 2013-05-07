@@ -1,6 +1,5 @@
 package reshapes.ui.panels
 import scala.annotation.serializable
-import scala.events.behaviour.Signal
 import scala.swing.event.MouseClicked
 import scala.swing.Color
 import scala.swing.Action
@@ -9,11 +8,11 @@ import scala.swing.Button
 import scala.swing.Label
 import scala.swing.Orientation
 import scala.swing.ScrollPane
-
 import reshapes.command.DeleteShape
 import reshapes.figures.Shape
 import reshapes.DrawingSpaceState
 import reshapes.Reshapes
+import reshapes.versions.observer.DrawingSpaceStateInteraction
 
 /**
  * Lists all drawn shapes
@@ -33,7 +32,7 @@ class ShapeView(shape: Shape, events: DrawingSpaceState) extends BoxPanel(Orient
   selectButton.action = new Action(shape.toString()) {
     val assignedShape = shape
     def apply() = {
-      events.selectedShape() = assignedShape
+      events.selectedShape = assignedShape
     }
   }
   val deleteButton = new Button
@@ -54,13 +53,15 @@ class ShapeView(shape: Shape, events: DrawingSpaceState) extends BoxPanel(Orient
 
   reactions += {
     case e: MouseClicked =>
-      if (events.selectedShape.getValue != shape) events.selectedShape() = shape
+      if (events.selectedShape != shape) events.selectedShape = shape
       else {
         events.selectedShape() = null
       }
   }
-
-  events.selectedShape.changed += (s => toggleSelection(s == shape))
+  
+  events.registerSelectedShapeObserver{
+    s => toggleSelection(s == shape)
+  }
 
   def toggleSelection(selected: Boolean) = {
     this.background = if (selected) SELECTED_COLOR else NOT_SELECTED_COLOR

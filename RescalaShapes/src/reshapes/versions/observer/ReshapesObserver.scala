@@ -15,15 +15,11 @@ import reshapes.network.TransportObject
 import reshapes.ui.panels._
 import reshapes.Drawing
 import reshapes.DrawingSpaceState
-import reshapes.NetworkSpaceState
 import reshapes.Reshapes
 import reshapes.Selection
-import scala.events.ImperativeEvent
 import reshapes.command.Command
-import scala.events.Event
 import reshapes.figures.Shape
 import java.awt.Color
-import scala.events.behaviour.Signal
 import reshapes.EditingMode
 import scala.swing.Button
 import scala.collection.mutable.MutableList
@@ -39,90 +35,9 @@ import scala.swing.Panel
  * setter/getter methods
  */
 trait DrawingSpaceStateInteraction extends DrawingSpaceState {
-
-  nextShape.changed += { shape =>
-    for (obs <- nextShapeObservers) obs(shape)
-    mode = Drawing()
-  }
-  selectedShape.changed += { shape =>
-    for (obs <- selectedShapeObservers) obs(shape)
-    if (shape != null) {
-      mode = Selection()
-      shape.selected = true
-    } else mode = Drawing()
-  }
-  allShapes.changed += { shapes => for (obs <- allShapesObservers) obs(shapes) }
-  strokeWidth.changed += { width => for (obs <- strokeWidthObservers) obs(width) }
-  color.changed += { newColor => for (obs <- colorObservers) obs(newColor) }
-  Commands.changed += { commands => for (obs <- CommandsObservers) obs(commands) }
-  fileName.changed += { name => for (obs <- fileNameObservers) obs(name) }
-
-  var nextShapeObservers: List[(Shape => Unit)] = Nil
-  var selectedShapeObservers: List[(Shape => Unit)] = Nil
-  var allShapesObservers: List[(List[Shape] => Unit)] = Nil
-  var strokeWidthObservers: List[(Int => Unit)] = Nil
-  var colorObservers: List[(Color => Unit)] = Nil
-  var CommandsObservers: List[(List[Command] => Unit)] = Nil
-  var fileNameObservers: List[(String => Unit)] = Nil
-
-  def registerNextShapeObserver(obs: (Shape => Unit)) = {
-    nextShapeObservers = obs :: nextShapeObservers
-  }
-
-  def registerSelectedShapeObserver(obs: (Shape => Unit)) = {
-    selectedShapeObservers = obs :: selectedShapeObservers
-  }
-
-  def registerAllShapesObserver(obs: (List[Shape] => Unit)) = {
-    allShapesObservers = obs :: allShapesObservers
-  }
-
-  def registerStrokeWidthObserver(obs: (Int => Unit)) = {
-    strokeWidthObservers = obs :: strokeWidthObservers
-  }
-
-  def registerColorObserver(obs: (Color => Unit)) = {
-    colorObservers = obs :: colorObservers
-  }
-
-  def registerCommandsObserver(obs: (List[Command] => Unit)) = {
-    CommandsObservers = obs :: CommandsObservers
-    println(CommandsObservers)
-  }
-
-  def registerFileNameObserver(obs: (String => Unit)) = {
-    fileNameObservers = obs :: fileNameObservers
-  }
-
-  def unregisterNextShapeObserver(obs: (Shape => Unit)) = {
-    nextShapeObservers = nextShapeObservers.filterNot(_ == obs)
-  }
-
-  def unregisterSelectedShapeObserver(obs: (Shape => Unit)) = {
-    selectedShapeObservers = selectedShapeObservers.filterNot(_ == obs)
-  }
-
-  def unregisterAllShapesObserver(obs: (List[Shape] => Unit)) = {
-    allShapesObservers = allShapesObservers.filterNot(_ == obs)
-  }
-
-  def unregisterStrokeWidthObserver(obs: (Int => Unit)) = {
-    strokeWidthObservers = strokeWidthObservers.filterNot(_ == obs)
-  }
-
-  def unregisterColorObserver(obs: (Color => Unit)) = {
-    colorObservers = colorObservers.filterNot(_ == obs)
-  }
-
-  def unregisterCommandsObserver(obs: (List[Command] => Unit)) = {
-    CommandsObservers = CommandsObservers.filterNot(_ == obs)
-  }
-
-  def unregisterFileNameObserver(obs: (String => Unit)) = {
-    fileNameObservers = fileNameObservers.filterNot(_ == obs)
-  }
 }
 
+/*
 trait NetworkSpaceStateInteraction extends NetworkSpaceState {
 
   val sendUpdateSignal: Signal[List[Shape]] = Signal {
@@ -140,12 +55,12 @@ trait NetworkSpaceStateInteraction extends NetworkSpaceState {
     socket.close()
   }
 }
-
+*/
 trait CommandPanelInteraction extends CommandPanel {
   var currentState: DrawingSpaceState = null
   val commandPanel = new BoxPanel(Orientation.Vertical)
 
-  Reshapes.CurrentEvents.changed += { state =>
+  Reshapes.registerCurrentEventsObserver{ state =>
     var currentState = state.asInstanceOf[DrawingSpaceStateInteraction].registerCommandsObserver(updateList)
   }
 
@@ -168,7 +83,7 @@ trait InfoPanelInteraction extends InfoPanel {
   var currentStrokeWidth = ""
   var currentColor = ""
 
-  Reshapes.CurrentEvents.changed += { state =>
+  Reshapes.registerCurrentEventsObserver{ state =>
     val currentState = state.asInstanceOf[DrawingSpaceStateInteraction]
     currentState.registerNextShapeObserver(updateNextShape)
     currentState.registerSelectedShapeObserver(updateSelectedShape)
@@ -213,14 +128,14 @@ trait ShapePanelInteraction extends ShapePanel {
   var currentState: DrawingSpaceState = null
   val allShapesPanel = new BoxPanel(Orientation.Vertical)
 
-  Reshapes.CurrentEvents.changed += { state =>
+  Reshapes.registerCurrentEventsObserver{ state =>
     state.asInstanceOf[DrawingSpaceStateInteraction].registerAllShapesObserver(updateAllShapesPanel)
   }
 
   def updateAllShapesPanel(shapes: List[Shape]) = {
     allShapesPanel.contents.clear()
 
-    shapes map (shape => allShapesPanel.contents += new ShapeView(shape, Reshapes.CurrentEvents.getValue))
+    shapes map (shape => allShapesPanel.contents += new ShapeView(shape, Reshapes.currentEvents))
 
     scrollPane.contents = allShapesPanel
 

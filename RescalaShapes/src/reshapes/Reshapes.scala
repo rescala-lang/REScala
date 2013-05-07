@@ -2,8 +2,6 @@ package reshapes
 
 import java.net.ConnectException
 import scala.collection.mutable.HashMap
-import scala.events.behaviour.Var
-import scala.events.behaviour.Signal
 import scala.swing.event.SelectionChanged
 import scala.swing.Dimension
 import scala.swing.Action
@@ -34,16 +32,31 @@ import reshapes.ui.panels.ShowIntersection
 import reshapes.ui.panels.ShowCoordinateSystem
 import reshapes.ui.panels.ShowNameLabels
 
-import reshapes.versions.signal._
+import reshapes.versions.observer._
 
 object Reshapes extends SimpleSwingApplication {
 
   val tabbedPane = new TabbedPane()
-  val currentTabIndex = new Var(0)
 
-  var CurrentEvents: Var[DrawingSpaceState] = new Var(new DrawingSpaceState() with DrawingSpaceStateInteraction)
   val panelEvents = new HashMap[TabbedPane.Page, DrawingSpaceState]()
 
+  private var _currentEvents: DrawingSpaceState = new DrawingSpaceState with DrawingSpaceStateInteraction
+  def currentEvents = _currentEvents
+  def currentEvents_=(events: DrawingSpaceState) {
+    _currentEvents = events
+    for (obs <- currentEventsObservers) obs(events)
+  }
+  
+  private var currentEventsObservers: List[(DrawingSpaceState => Unit)] = Nil
+
+  def registerCurrentEventsObserver(obs: (DrawingSpaceState => Unit)) = {
+    currentEventsObservers = obs :: currentEventsObservers
+  }
+  
+  def unregisterCurrentEventsObserver(obs: (DrawingSpaceState => Unit)) = {
+    currentEventsObservers = currentEventsObservers.filterNot(_ == obs)
+  }
+  
   // Panels
   var infoPanel = new InfoPanel() with InfoPanelInteraction
   var shapePanel = new ShapePanel() with ShapePanelInteraction
@@ -68,8 +81,7 @@ object Reshapes extends SimpleSwingApplication {
     reactions += {
       case SelectionChanged(`tabbedPane`) => {
         if (tabbedPane.pages.size > 0) {
-          val currentEvents = panelEvents(tabbedPane.selection.page)
-          CurrentEvents() = currentEvents
+          currentEvents = panelEvents(tabbedPane.selection.page)
 
           menu.updateMerge()
         }
@@ -79,7 +91,7 @@ object Reshapes extends SimpleSwingApplication {
 
   val menu = new MenuBar {
     val newTab = new MenuItem(Action("New tab") { addTab() })
-    val newNetworkTab = new MenuItem(Action("New network tab") { addNetworkTab() })
+//    val newNetworkTab = new MenuItem(Action("New network tab") { addNetworkTab() })
     val closeTab = new MenuItem(Action("Remove selected tab") { removeTab() })
     val save = new MenuItem(new SaveAction())
     val load = new MenuItem(new LoadAction())
@@ -87,11 +99,9 @@ object Reshapes extends SimpleSwingApplication {
     val undo = new MenuItem(new UndoAction()) { enabled = false }
     val mergeMenu = new Menu("Merge with...")
 
-    Signal { undo.enabled = !CurrentEvents().Commands().isEmpty }
-
     contents += new Menu("File") {
       contents += newTab
-      contents += newNetworkTab
+//      contents += newNetworkTab
       contents += closeTab
       contents += new Separator
       contents += save
@@ -151,6 +161,7 @@ object Reshapes extends SimpleSwingApplication {
     menu.updateMerge()
   }
 
+  /*
   def addNetworkTab() {
     val dialog = new ServerDialog()
     dialog.location = ui.locationOnScreen
@@ -168,6 +179,7 @@ object Reshapes extends SimpleSwingApplication {
       }
     }
   }
+  */
 
   /**
    * Removes the currently selected tab and its associated Event.

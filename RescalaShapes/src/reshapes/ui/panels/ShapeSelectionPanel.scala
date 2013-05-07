@@ -32,14 +32,14 @@ class ShapeSelectionPanel() extends BoxPanel(Orientation.Vertical) {
 
   reactions += {
     case ButtonClicked(`lineBtn`) =>
-      Reshapes.CurrentEvents.getValue.nextShape() = new Line
+      Reshapes.currentEvents.nextShape = new Line
     case ButtonClicked(`rectBtn`) =>
-      Reshapes.CurrentEvents.getValue.nextShape() = new figures.Rectangle
+      Reshapes.currentEvents.nextShape = new figures.Rectangle
     case ButtonClicked(`ovalBtn`) =>
-      Reshapes.CurrentEvents.getValue.nextShape() = new Oval
+      Reshapes.currentEvents.nextShape = new Oval
     case ButtonClicked(`triangleBtn`) =>
-      Reshapes.CurrentEvents.getValue.nextShape() = new Triangle
+      Reshapes.currentEvents.nextShape = new Triangle
     case ButtonClicked(`freedrawBtn`) =>
-      Reshapes.CurrentEvents.getValue.nextShape() = new Freedraw
+      Reshapes.currentEvents.nextShape = new Freedraw
   }
 }
