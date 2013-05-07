@@ -36,6 +36,7 @@ class DrawingPanel(val event: DrawingSpaceState) extends Panel {
   val currentShape = Signal { Reshapes.CurrentEvents().nextShape() }
   var currentlyDrawing: Shape = null
   var shapeBeforeEdit: Shape = null
+  var resizingMode = false
 
   override def paint(g: Graphics2D) = {
     g.setColor(java.awt.Color.WHITE)
@@ -61,6 +62,14 @@ class DrawingPanel(val event: DrawingSpaceState) extends Panel {
           currentlyDrawing.color = Reshapes.CurrentEvents.getValue.color.getValue
         case Selection() =>
           shapeBeforeEdit = Marshal.load[Shape](Marshal.dump[Shape](Reshapes.CurrentEvents.getValue.selectedShape.getValue)) // hack to get a object copy
+          Reshapes.CurrentEvents.getValue.mode match {
+            case Drawing() =>
+              currentlyDrawing.update(currentPath.getValue)
+            case Selection() =>
+              val shape = Reshapes.CurrentEvents.getValue.selectedShape.getValue
+              resizingMode = MathUtil.isInCircle(shape.start, 6, e.point) || MathUtil.isInCircle(shape.end, 6, e.point)
+            case _ =>
+          }
         case _ =>
       }
       repaint()
@@ -70,10 +79,8 @@ class DrawingPanel(val event: DrawingSpaceState) extends Panel {
         case Drawing() =>
           currentlyDrawing.update(currentPath.getValue)
         case Selection() =>
-          //TODO: if dragging or moving has to be determined in MousePressed case
           val shape = Reshapes.CurrentEvents.getValue.selectedShape.getValue
-          if ((MathUtil.isInCircle(shape.start, 6, e.point) || MathUtil.isInCircle(shape.end, 6, e.point))
-            && shape.isInstanceOf[Resizable]) {
+          if (resizingMode && shape.isInstanceOf[Resizable]) {
             shape.asInstanceOf[Resizable].resize(currentPath.getValue.reverse(1), e.point)
           } else if (shape.isInstanceOf[Movable]) {
             shape.asInstanceOf[Movable].move(currentPath.getValue.reverse(1), e.point)

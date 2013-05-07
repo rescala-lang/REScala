@@ -71,7 +71,7 @@ trait Resizable extends Shape {
   def resize(from: Point, to: Point) = {
     if (MathUtil.isInCircle(start, 6, from)) {
       path = to :: path.tail
-    } else if (MathUtil.isInCircle(end, 6, to)) {
+    } else if (MathUtil.isInCircle(end, 6, from)) {
       path = (to :: path.reverse.tail).reverse
     }
   }
