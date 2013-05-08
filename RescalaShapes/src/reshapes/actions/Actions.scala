@@ -39,8 +39,8 @@ class LoadAction extends Action("Load") {
       val in = new FileInputStream(fileChooser.selectedFile)
       val bytes = Stream.continually(in.read).takeWhile(-1 !=).map(_.toByte).toArray
       val shapes = Marshal.load[List[Shape]](bytes)
-      Reshapes.currentEvents.allShapes = List[Shape]()
-      shapes map (shape => (new CreateShape(shape)).execute())
+      Reshapes.currentEvents.clear
+      shapes map (shape => (new CreateShape(Reshapes.currentEvents, shape)).execute())
     }
   }
 }
@@ -68,6 +68,6 @@ class UndoAction extends Action("Undo") {
  */
 class MergeAction(title: String, eventsToMergeWith: DrawingSpaceState) extends Action("Merge with %s".format(title)) {
   def apply() = {
-    new MergeEvents(eventsToMergeWith).execute()
+    new MergeEvents(Reshapes.currentEvents, eventsToMergeWith).execute()
   }
 }

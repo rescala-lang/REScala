@@ -1,38 +1,33 @@
 package reshapes.ui.panels
+
 import java.awt.BasicStroke
 
-import scala.annotation.serializable
 import scala.collection.mutable.MutableList
+import scala.swing.Color
+import scala.swing.Graphics2D
+import scala.swing.Panel
+import scala.swing.Point
 import scala.swing.event.MouseDragged
 import scala.swing.event.MousePressed
 import scala.swing.event.MouseReleased
-import scala.swing.Color
-import scala.swing.Graphics2D
-import scala.swing.Point
-import scala.swing.Panel
-import scala.util.Marshal
 
+import reshapes.Drawing
+import reshapes.DrawingSpaceState
+import reshapes.Reshapes
+import reshapes.Selection
 import reshapes.command.CreateShape
 import reshapes.command.EditShape
 import reshapes.figures.Movable
 import reshapes.figures.Resizable
 import reshapes.figures.Shape
 import reshapes.util.MathUtil
-import reshapes.Drawing
-import reshapes.DrawingSpaceState
-import reshapes.Reshapes
-import reshapes.Selection
 
 /**
  * Represents the panel where all shapes are drawn onto.
  */
 class DrawingPanel(val event: DrawingSpaceState) extends Panel {
-  opaque = true
-
   private var currentPath = List.empty[Point]
-  private var shapes = List[Shape]()
   private var currentlyDrawing: Shape = null
-  private var shapeBeforeEdit: Shape = null
   private var resizingMode = false
 
   override def paint(g: Graphics2D) = {
@@ -40,10 +35,12 @@ class DrawingPanel(val event: DrawingSpaceState) extends Panel {
     g.fillRect(0, 0, size.getWidth().toInt, size.getHeight().toInt)
 
     g.setColor(java.awt.Color.BLACK)
-    Reshapes.currentEvents.allShapes.map(x => x.draw(g))
     if (currentlyDrawing != null) {
+      Reshapes.currentEvents.allShapes.filterNot(_ == Reshapes.currentEvents.selectedShape).map(_.draw(g))
       currentlyDrawing.draw(g)
     }
+    else
+      Reshapes.currentEvents.allShapes.map(_.draw(g))
   }
 
   listenTo(mouse.clicks)
@@ -54,21 +51,14 @@ class DrawingPanel(val event: DrawingSpaceState) extends Panel {
       currentPath = List(e.point)
       Reshapes.currentEvents.mode match {
         case Drawing() =>
-          currentlyDrawing = Reshapes.currentEvents.nextShape.getClass().newInstance()
-          currentlyDrawing.strokeWidth = Reshapes.currentEvents.strokeWidth
-          currentlyDrawing.color = Reshapes.currentEvents.color
+          currentlyDrawing = Reshapes.currentEvents.nextShape.copy(
+              strokeWidth = Reshapes.currentEvents.strokeWidth,
+              color = Reshapes.currentEvents.color,
+              current = {Shape.current += 1; Shape.current})
         case Selection() =>
-          // hack to get a object copy
-          // object Marshal in package util is deprecated
-          shapeBeforeEdit = Marshal.load[Shape](Marshal.dump[Shape](Reshapes.currentEvents.selectedShape))
-          Reshapes.currentEvents.mode match {
-            case Drawing() =>
-              currentlyDrawing.update(currentPath)
-            case Selection() =>
-              val shape = Reshapes.currentEvents.selectedShape
-              resizingMode = MathUtil.isInCircle(shape.start, 6, e.point) || MathUtil.isInCircle(shape.end, 6, e.point)
-            case _ =>
-          }
+          currentlyDrawing = Reshapes.currentEvents.selectedShape.copy()
+          val shape = currentlyDrawing
+          resizingMode = MathUtil.isInCircle(shape.start, 6, e.point) || MathUtil.isInCircle(shape.end, 6, e.point)
         case _ =>
       }
       repaint()
@@ -76,13 +66,13 @@ class DrawingPanel(val event: DrawingSpaceState) extends Panel {
       currentPath = currentPath ::: List(e.point)
       Reshapes.currentEvents.mode match {
         case Drawing() =>
-          currentlyDrawing.update(currentPath)
+          currentlyDrawing = currentlyDrawing.copy(path = currentPath)
         case Selection() =>
-          val shape = Reshapes.currentEvents.selectedShape
+          val shape = currentlyDrawing
           if (resizingMode && shape.isInstanceOf[Resizable]) {
-            shape.asInstanceOf[Resizable].resize(currentPath.reverse(1), e.point)
+            currentlyDrawing = shape.asInstanceOf[Resizable].resizedShape(currentPath.reverse(1), e.point)
           } else if (shape.isInstanceOf[Movable]) {
-            shape.asInstanceOf[Movable].move(currentPath.reverse(1), e.point)
+            currentlyDrawing = shape.asInstanceOf[Movable].movedShape(currentPath.reverse(1), e.point)
           }
         case _ =>
       }
@@ -90,13 +80,14 @@ class DrawingPanel(val event: DrawingSpaceState) extends Panel {
     case e: MouseReleased =>
       Reshapes.currentEvents.mode match {
         case Drawing() =>
-          new CreateShape(currentlyDrawing).execute()
-          currentlyDrawing = null
+          new CreateShape(Reshapes.currentEvents, currentlyDrawing).execute
         case Selection() =>
-          var command = new EditShape(shapeBeforeEdit, Reshapes.currentEvents.selectedShape)
-          command.execute()
+          new EditShape(Reshapes.currentEvents, Reshapes.currentEvents.selectedShape, currentlyDrawing).execute
+          Reshapes.currentEvents.selectedShape = currentlyDrawing
         case _ =>
       }
+      currentlyDrawing = null
+      repaint
   }
 }
 

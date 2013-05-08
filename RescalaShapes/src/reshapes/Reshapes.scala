@@ -40,7 +40,7 @@ object Reshapes extends SimpleSwingApplication {
 
   val panelEvents = new HashMap[TabbedPane.Page, DrawingSpaceState]()
 
-  private var _currentEvents: DrawingSpaceState = new DrawingSpaceState with DrawingSpaceStateInteraction
+  private var _currentEvents: DrawingSpaceState = new DrawingSpaceState
   def currentEvents = _currentEvents
   def currentEvents_=(events: DrawingSpaceState) {
     _currentEvents = events
@@ -132,7 +132,7 @@ object Reshapes extends SimpleSwingApplication {
     contents = ui
   }
 
-  def addTab(event: DrawingSpaceStateInteraction = new DrawingSpaceState() with DrawingSpaceStateInteraction) {
+  def addTab(event: DrawingSpaceState = new DrawingSpaceState) {
     val dialog = new NewTabDialog()
     dialog.location = ui.locationOnScreen
     dialog.showDialog()

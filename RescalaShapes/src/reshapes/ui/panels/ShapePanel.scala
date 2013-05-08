@@ -12,7 +12,6 @@ import reshapes.command.DeleteShape
 import reshapes.figures.Shape
 import reshapes.DrawingSpaceState
 import reshapes.Reshapes
-import reshapes.versions.observer.DrawingSpaceStateInteraction
 
 /**
  * Lists all drawn shapes
@@ -39,8 +38,8 @@ class ShapeView(shape: Shape, events: DrawingSpaceState) extends BoxPanel(Orient
   deleteButton.action = new Action("delete") {
     val assignedShape = shape
     def apply() = {
-      val deleteCmd = new DeleteShape(assignedShape)
-      deleteCmd.execute()
+      new DeleteShape(Reshapes.currentEvents, assignedShape).execute
+      events.selectedShape = null
     }
   }
 
@@ -55,7 +54,7 @@ class ShapeView(shape: Shape, events: DrawingSpaceState) extends BoxPanel(Orient
     case e: MouseClicked =>
       if (events.selectedShape != shape) events.selectedShape = shape
       else {
-        events.selectedShape() = null
+        events.selectedShape = null
       }
   }
   

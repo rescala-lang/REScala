@@ -28,15 +28,6 @@ import scala.swing.BoxPanel
 import scala.swing.Orientation
 import scala.swing.Panel
 
-/**
- * Change events in this class are used as setters.
- * The 'clean' way would be to reimplement DrawingSpaceState without
- * the usage of Var[] and just use the standard datatypes with scalas
- * setter/getter methods
- */
-trait DrawingSpaceStateInteraction extends DrawingSpaceState {
-}
-
 /*
 trait NetworkSpaceStateInteraction extends NetworkSpaceState {
 
@@ -61,7 +52,7 @@ trait CommandPanelInteraction extends CommandPanel {
   val commandPanel = new BoxPanel(Orientation.Vertical)
 
   Reshapes.registerCurrentEventsObserver{ state =>
-    var currentState = state.asInstanceOf[DrawingSpaceStateInteraction].registerCommandsObserver(updateList)
+    var currentState = state.registerCommandsObserver(updateList)
   }
 
   def updateList(commands: List[Command]) = {
@@ -84,7 +75,7 @@ trait InfoPanelInteraction extends InfoPanel {
   var currentColor = ""
 
   Reshapes.registerCurrentEventsObserver{ state =>
-    val currentState = state.asInstanceOf[DrawingSpaceStateInteraction]
+    val currentState = state
     currentState.registerNextShapeObserver(updateNextShape)
     currentState.registerSelectedShapeObserver(updateSelectedShape)
     currentState.registerAllShapesObserver(updateNumberElements)
@@ -129,7 +120,7 @@ trait ShapePanelInteraction extends ShapePanel {
   val allShapesPanel = new BoxPanel(Orientation.Vertical)
 
   Reshapes.registerCurrentEventsObserver{ state =>
-    state.asInstanceOf[DrawingSpaceStateInteraction].registerAllShapesObserver(updateAllShapesPanel)
+    state.registerAllShapesObserver(updateAllShapesPanel)
   }
 
   def updateAllShapesPanel(shapes: List[Shape]) = {
@@ -145,7 +136,7 @@ trait ShapePanelInteraction extends ShapePanel {
 
 trait DrawingPanelInteraction extends DrawingPanel {
 
-  val state = event.asInstanceOf[DrawingSpaceStateInteraction]
+  val state = event
   state.registerSelectedShapeObserver(canvasChange)
   state.registerAllShapesObserver(canvasChange)
   state.registerStrokeWidthObserver(canvasChange)

@@ -1,9 +1,16 @@
 package reshapes.figures
 import java.awt.Point
 import java.awt.Graphics2D
+import java.awt.Color
+import reshapes.DrawingSpaceState
 
-class Rectangle extends Movable with Resizable {
-
+class Rectangle(
+  drawingSpaceState: DrawingSpaceState,
+  strokeWidth: Int = 1,
+  color: Color = Color.BLACK,
+  current: Int = 0,
+  path: List[Point] = null)
+    extends Shape(drawingSpaceState, strokeWidth, color, current, path) with Movable with Resizable {
   def doDraw(g: Graphics2D) = {
     var width = math.abs(start.x - end.x)
     var height = math.abs(start.y - end.y)
@@ -12,7 +19,7 @@ class Rectangle extends Movable with Resizable {
 
     g.drawRect(x, y, width, height)
   }
-
+  
   def toLines(): List[(Int, Int, Int, Int)] = {
     var width = math.abs(start.x - end.x)
     var height = math.abs(start.y - end.y)
@@ -25,4 +32,12 @@ class Rectangle extends Movable with Resizable {
     List((topleft, topright), (topleft, bottomleft), (bottomleft, bottomright), (bottomright, topright)) map
       (points => (points._1._1, points._1._2, points._2._1, points._2._2))
   }
+  
+  override def copy(
+      drawingSpaceState: DrawingSpaceState,
+      strokeWidth: Int, 
+      color: Color,
+      current: Int,
+      path: List[Point]) =
+    new Rectangle(drawingSpaceState, strokeWidth, color, current, path)
 }

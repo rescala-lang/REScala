@@ -7,111 +7,94 @@ import reshapes.figures.Line
 import reshapes.Reshapes
 import java.util.UUID
 
-abstract class Command() extends Serializable {
-
-  def execute() = {
-    onExecute()
-    Reshapes.currentEvents.commands = this :: Reshapes.currentEvents.commands
+abstract class Command(val drawingSpaceState: DrawingSpaceState) {
+  def execute() =
+    drawingSpaceState.commands = this :: drawingSpaceState.commands
+  
+  def revert() {
+    // revert all commands which were executed after this command
+    while (drawingSpaceState.commands.head != this)
+      drawingSpaceState.commands.head.revert
+    drawingSpaceState.commands = drawingSpaceState.commands.tail
   }
-
-  def revert(): Unit = {
-    // check if this command is latest command
-    while (Reshapes.currentEvents.commands.head != this) {
-      // if not then revert all commands which where executed after this
-      Reshapes.currentEvents.commands.head.revert()
-    }
-    onRevert()
-    Reshapes.currentEvents.commands = Reshapes.currentEvents.commands.tail
-  }
-
-  def onExecute()
-  def onRevert()
-  def getCommandDescription(): String = {
-    "Abstract command"
-  }
+  
+  def getCommandDescription() = "Abstract command"
 }
 
 /**
  * Deletes a given shape
  */
-class DeleteShape(shapeToDelete: Shape) extends Command {
-
-  def onExecute() = {
-    Reshapes.currentEvents.allShapes = Reshapes.currentEvents.allShapes filter (x => x != shapeToDelete)
+class DeleteShape(drawingSpaceState: DrawingSpaceState, shapeToDelete: Shape)
+    extends Command(drawingSpaceState) {
+  override def execute() {
+    super.execute
+    drawingSpaceState removeShape shapeToDelete
   }
 
-  def onRevert() = {
-    Reshapes.currentEvents.allShapes = shapeToDelete :: Reshapes.currentEvents.allShapes
+  override def revert() {
+    super.revert
+    drawingSpaceState addShape shapeToDelete
   }
-
-  override def getCommandDescription(): String = {
-    "Delete %s".format(shapeToDelete)
-  }
+  
+  override def getCommandDescription() = "Delete %s".format(shapeToDelete)
 }
 
 /**
- * Creates a new shape.
+ * Creates a new shape
  */
-class CreateShape(shapeToCreate: Shape) extends Command {
-
-  def onExecute() {
-    Reshapes.currentEvents.allShapes = shapeToCreate :: Reshapes.currentEvents.allShapes
+class CreateShape(drawingSpaceState: DrawingSpaceState, shapeToCreate: Shape)
+    extends Command(drawingSpaceState) {
+  override def execute() {
+    super.execute
+    drawingSpaceState addShape shapeToCreate
   }
-
-  def onRevert() {
-    var deleteCmd = new DeleteShape(shapeToCreate)
-    deleteCmd.onExecute()
+  
+  override def revert() {
+    super.revert
+    drawingSpaceState removeShape shapeToCreate
   }
-
-  override def getCommandDescription(): String = {
-    "Create %s".format(shapeToCreate)
-  }
+  
+  override def getCommandDescription() = "Create %s".format(shapeToCreate)
 }
 
 /**
- * Only implements onRevert() which restores a shape to state before resize, move, ...
+ * Edits a shape, i.e. replaces a shape by a new one
  */
-class EditShape(shapeBeforeEdit: Shape, shapeAfterEdit: Shape) extends Command {
-
-  def onExecute() {
-
+class EditShape(drawingSpaceState: DrawingSpaceState, shapeBeforeEdit: Shape, shapeAfterEdit: Shape)
+    extends Command(drawingSpaceState) {
+  override def execute() {
+    super.execute
+    drawingSpaceState removeShape shapeBeforeEdit
+    drawingSpaceState addShape shapeAfterEdit
   }
 
-  def onRevert() {
-    shapeAfterEdit.path = shapeBeforeEdit.path
-    shapeAfterEdit.strokeWidth = shapeBeforeEdit.strokeWidth
-    shapeAfterEdit.color = shapeBeforeEdit.color
-
-    Reshapes.currentEvents.selectedShape = new Line() // force to fire selectedShape.changed event when Events.selectedShape() == shapeAfterEdit
-    Reshapes.currentEvents.selectedShape = shapeAfterEdit
+  override def revert() {
+    super.revert
+    drawingSpaceState removeShape shapeAfterEdit
+    drawingSpaceState addShape shapeBeforeEdit
   }
-
-  override def getCommandDescription(): String = {
-    "Edit %s".format(shapeAfterEdit)
-  }
+  
+  override def getCommandDescription() = "Edit %s".format(shapeAfterEdit)
 }
 
 /**
  * Adds all shapes of given Events with currently selected Events.
  */
-class MergeEvents(eventToMerge: DrawingSpaceState) extends Command {
-
-  var eventTitle: String = null
-  var shapes: List[Shape] = null
-
-  def onExecute() {
-    eventTitle = eventToMerge.fileName
-    shapes = eventToMerge.allShapes
-
-    shapes map (shape => new CreateShape(shape).onExecute())
+class MergeEvents(drawingSpaceState: DrawingSpaceState, eventToMerge: DrawingSpaceState)
+    extends Command(drawingSpaceState) {
+  val eventTitle = eventToMerge.fileName
+  val shapes: List[Shape] = eventToMerge.allShapes
+  
+  override def execute() {
+    super.execute
+    shapes foreach (drawingSpaceState addShape _)
   }
-
-  def onRevert() {
-    shapes map (shape => new DeleteShape(shape).onExecute())
+  
+  override def revert() {
+    super.revert
+    shapes foreach (drawingSpaceState removeShape _)
   }
-
-  override def getCommandDescription(): String = {
-    "Merge with %s".format(eventTitle)
-  }
+  
+  override def getCommandDescription() = "Merge with %s".format(eventTitle)
 }
 
