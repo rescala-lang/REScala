@@ -2,7 +2,7 @@ package reshapes.figures
 import java.awt.Graphics2D
 import java.awt.Color
 import java.awt.Point
-import reshapes.DrawingSpaceState
+import reshapes.drawing.DrawingSpaceState
 
 class Triangle(
   drawingSpaceState: DrawingSpaceState,

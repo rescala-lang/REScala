@@ -8,9 +8,9 @@ import scala.swing.Button
 import scala.swing.Label
 import scala.swing.Orientation
 import scala.swing.ScrollPane
-import reshapes.command.DeleteShape
+import reshapes.drawing.DeleteShape
 import reshapes.figures.Shape
-import reshapes.DrawingSpaceState
+import reshapes.drawing.DrawingSpaceState
 import reshapes.Reshapes
 
 /**
@@ -38,7 +38,7 @@ class ShapeView(shape: Shape, events: DrawingSpaceState) extends BoxPanel(Orient
   deleteButton.action = new Action("delete") {
     val assignedShape = shape
     def apply() = {
-      new DeleteShape(Reshapes.currentEvents, assignedShape).execute
+      Reshapes.currentEvents execute new DeleteShape(assignedShape)
       events.selectedShape = null
     }
   }
@@ -52,10 +52,10 @@ class ShapeView(shape: Shape, events: DrawingSpaceState) extends BoxPanel(Orient
 
   reactions += {
     case e: MouseClicked =>
-      if (events.selectedShape != shape) events.selectedShape = shape
-      else {
+      if (events.selectedShape != shape)
+        events.selectedShape = shape
+      else
         events.selectedShape = null
-      }
   }
   
   events.registerSelectedShapeObserver{

@@ -1,7 +1,6 @@
 package reshapes.ui.panels
 
 import java.awt.BasicStroke
-
 import scala.collection.mutable.MutableList
 import scala.swing.Color
 import scala.swing.Graphics2D
@@ -10,17 +9,16 @@ import scala.swing.Point
 import scala.swing.event.MouseDragged
 import scala.swing.event.MousePressed
 import scala.swing.event.MouseReleased
-
-import reshapes.Drawing
-import reshapes.DrawingSpaceState
+import reshapes.drawing.DrawingSpaceState
 import reshapes.Reshapes
-import reshapes.Selection
-import reshapes.command.CreateShape
-import reshapes.command.EditShape
+import reshapes.drawing.CreateShape
+import reshapes.drawing.EditShape
 import reshapes.figures.Movable
 import reshapes.figures.Resizable
 import reshapes.figures.Shape
 import reshapes.util.MathUtil
+import reshapes.drawing.Drawing
+import reshapes.drawing.Selection
 
 /**
  * Represents the panel where all shapes are drawn onto.
@@ -80,9 +78,9 @@ class DrawingPanel(val event: DrawingSpaceState) extends Panel {
     case e: MouseReleased =>
       Reshapes.currentEvents.mode match {
         case Drawing() =>
-          new CreateShape(Reshapes.currentEvents, currentlyDrawing).execute
+          Reshapes.currentEvents execute new CreateShape(currentlyDrawing)
         case Selection() =>
-          new EditShape(Reshapes.currentEvents, Reshapes.currentEvents.selectedShape, currentlyDrawing).execute
+          Reshapes.currentEvents execute new EditShape(Reshapes.currentEvents.selectedShape, currentlyDrawing)
           Reshapes.currentEvents.selectedShape = currentlyDrawing
         case _ =>
       }

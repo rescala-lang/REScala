@@ -2,7 +2,7 @@ package reshapes.figures
 import java.awt.Point
 import java.awt.Graphics2D
 import java.awt.Color
-import reshapes.DrawingSpaceState
+import reshapes.drawing.DrawingSpaceState
 
 class Rectangle(
   drawingSpaceState: DrawingSpaceState,

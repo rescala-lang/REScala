@@ -1,15 +1,16 @@
 package reshapes.actions
+
 import scala.swing.Action
 import scala.swing.FileChooser
 import java.io.FileOutputStream
 import scala.util.Marshal
-import reshapes.DrawingSpaceState
+import reshapes.drawing.DrawingSpaceState
 import java.io.FileInputStream
 import reshapes.figures.Shape
-import reshapes.command.CreateShape
+import reshapes.drawing.CreateShape
 import reshapes.Reshapes
 import java.io.File
-import reshapes.command.MergeEvents
+import reshapes.drawing.MergeEvents
 
 /**
  * Serializes all currently drawn shapes to a chosen file.
@@ -40,7 +41,7 @@ class LoadAction extends Action("Load") {
       val bytes = Stream.continually(in.read).takeWhile(-1 !=).map(_.toByte).toArray
       val shapes = Marshal.load[List[Shape]](bytes)
       Reshapes.currentEvents.clear
-      shapes map (shape => (new CreateShape(Reshapes.currentEvents, shape)).execute())
+      shapes map (shape => Reshapes.currentEvents execute new CreateShape(shape))
     }
   }
 }
@@ -59,7 +60,7 @@ class QuitAction extends Action("Quit") {
  */
 class UndoAction extends Action("Undo") {
   def apply() = {
-    Reshapes.currentEvents.commands.head.revert()
+    Reshapes.currentEvents revert Reshapes.currentEvents.commands.head
   }
 }
 
@@ -68,6 +69,6 @@ class UndoAction extends Action("Undo") {
  */
 class MergeAction(title: String, eventsToMergeWith: DrawingSpaceState) extends Action("Merge with %s".format(title)) {
   def apply() = {
-    new MergeEvents(Reshapes.currentEvents, eventsToMergeWith).execute()
+    Reshapes.currentEvents execute new MergeEvents(eventsToMergeWith)
   }
 }

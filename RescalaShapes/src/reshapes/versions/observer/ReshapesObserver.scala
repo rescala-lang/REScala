@@ -13,14 +13,14 @@ import java.net.Socket
 import scala.annotation.serializable
 import reshapes.network.TransportObject
 import reshapes.ui.panels._
-import reshapes.Drawing
-import reshapes.DrawingSpaceState
+import reshapes.drawing.Drawing
+import reshapes.drawing.DrawingSpaceState
 import reshapes.Reshapes
-import reshapes.Selection
-import reshapes.command.Command
+import reshapes.drawing.Selection
+import reshapes.drawing.Command
 import reshapes.figures.Shape
 import java.awt.Color
-import reshapes.EditingMode
+import reshapes.drawing.EditingMode
 import scala.swing.Button
 import scala.collection.mutable.MutableList
 import scala.swing.Action
@@ -52,13 +52,14 @@ trait CommandPanelInteraction extends CommandPanel {
   val commandPanel = new BoxPanel(Orientation.Vertical)
 
   Reshapes.registerCurrentEventsObserver{ state =>
-    var currentState = state.registerCommandsObserver(updateList)
+    state.registerCommandsObserver(updateList)
+    updateList(state.commands)
   }
 
   def updateList(commands: List[Command]) = {
     commandPanel.contents.clear()
     commands.map(command => commandPanel.contents += new Button(Action(command.getCommandDescription()) {
-      command.revert()
+      Reshapes.currentEvents revert command
     }))
     scrollPane.contents = commandPanel
     repaint()
@@ -75,12 +76,17 @@ trait InfoPanelInteraction extends InfoPanel {
   var currentColor = ""
 
   Reshapes.registerCurrentEventsObserver{ state =>
-    val currentState = state
-    currentState.registerNextShapeObserver(updateNextShape)
-    currentState.registerSelectedShapeObserver(updateSelectedShape)
-    currentState.registerAllShapesObserver(updateNumberElements)
-    currentState.registerStrokeWidthObserver(updateCurrentStrokeWidth)
-    currentState.registerColorObserver(updateCurrentColor)
+    state.registerNextShapeObserver(updateNextShape)
+    state.registerSelectedShapeObserver(updateSelectedShape)
+    state.registerAllShapesObserver(updateNumberElements)
+    state.registerStrokeWidthObserver(updateCurrentStrokeWidth)
+    state.registerColorObserver(updateCurrentColor)
+    
+    updateNextShape(state.nextShape)
+    updateSelectedShape(state.selectedShape)
+    updateNumberElements(state.allShapes)
+    updateCurrentStrokeWidth(state.strokeWidth)
+    updateCurrentColor(state.color)
   }
 
   def updateNextShape(shape: Shape) = {
@@ -121,6 +127,7 @@ trait ShapePanelInteraction extends ShapePanel {
 
   Reshapes.registerCurrentEventsObserver{ state =>
     state.registerAllShapesObserver(updateAllShapesPanel)
+    updateAllShapesPanel(state.allShapes)
   }
 
   def updateAllShapesPanel(shapes: List[Shape]) = {

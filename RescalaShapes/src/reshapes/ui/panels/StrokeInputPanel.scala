@@ -1,8 +1,8 @@
 package reshapes.ui.panels
 import scala.swing._
-import reshapes.DrawingSpaceState
+import reshapes.drawing.DrawingSpaceState
 import scala.swing.event._
-import reshapes.Selection
+import reshapes.drawing.Selection
 import javax.swing.JColorChooser
 import reshapes.Reshapes
 

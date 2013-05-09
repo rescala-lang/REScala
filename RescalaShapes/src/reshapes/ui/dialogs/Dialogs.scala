@@ -12,7 +12,7 @@ import reshapes.ui.panels.DrawingPanel
 import reshapes.ui.panels.ShowCoordinateSystem
 import reshapes.ui.panels.ShowIntersection
 import reshapes.ui.panels.ShowNameLabels
-import reshapes.DrawingSpaceState
+import reshapes.drawing.DrawingSpaceState
 
 object DialogResult extends Enumeration {
   type DialogResult = Value

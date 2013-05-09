@@ -2,10 +2,10 @@ package reshapes.ui.panels
 import reshapes.figures.Shape
 import scala.swing._
 import java.awt.Color
-import reshapes.DrawingSpaceState
+import reshapes.drawing.DrawingSpaceState
 import scala.events.behaviour.Signal
 import reshapes.Reshapes
-import reshapes.EditingMode
+import reshapes.drawing.EditingMode
 import scala.events.scalareact
 
 /**

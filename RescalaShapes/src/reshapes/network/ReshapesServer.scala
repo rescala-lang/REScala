@@ -5,7 +5,7 @@ import scala.collection.mutable.MutableList
 import reshapes.figures.Shape
 import scala.actors.Actor
 import scala.actors.Actor._
-import reshapes.command.Command
+import reshapes.drawing.Command
 
 object ReshapesServer {
 

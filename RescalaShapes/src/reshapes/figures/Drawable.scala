@@ -5,7 +5,7 @@ import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.Point
 
-import reshapes.DrawingSpaceState
+import reshapes.drawing.DrawingSpaceState
 import reshapes.util.MathUtil
 
 abstract class Shape(

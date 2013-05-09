@@ -1,4 +1,5 @@
-package reshapes
+package reshapes.drawing
+
 import java.awt.Color
 import java.io.DataInputStream
 import java.io.ObjectInputStream
@@ -10,7 +11,6 @@ import java.net.Socket
 import scala.actors.Actor
 import scala.annotation.serializable
 
-import reshapes.command.Command
 import reshapes.figures.Line
 import reshapes.figures.Shape
 
@@ -42,23 +42,35 @@ class DrawingSpaceState {
   def fileName = _fileName
   def mode = if (_selectedShape != null) Selection() else Drawing()
   
-  def addShape(shape: Shape) =
-    if (!(_allShapes contains shape)) {
-      _allShapes = shape :: _allShapes
+  def execute(command: Command) {
+    _commands ::= command
+    for (obs <- CommandsObservers)
+      obs(_commands)
+    
+    val allShapes = command execute _allShapes
+    if (allShapes != _allShapes) {
+      _allShapes = allShapes
       for (obs <- allShapesObservers)
         obs(_allShapes)
     }
+  }
   
-  def removeShape(shape: Shape) {
-    val size = _allShapes.size
-    _allShapes = _allShapes filterNot (_ == shape)
-    
-    if (size != _allShapes.size) {
-      if (selectedShape == shape)
-        selectedShape = null
+  def revert(command: Command) {
+    val count = (_commands indexOf command) + 1
+    if (count != -1) {
+      val allShapes = (_allShapes /: (_commands take count)) {
+        (shapes, command) => command revert shapes
+      }
       
-      for (obs <- allShapesObservers)
-        obs(_allShapes)
+      if (allShapes != _allShapes) {
+        _allShapes = allShapes
+        for (obs <- allShapesObservers)
+          obs(_allShapes)
+      }
+      
+      _commands = _commands drop count
+      for (obs <- CommandsObservers)
+        obs(_commands)
     }
   }
   
@@ -77,7 +89,7 @@ class DrawingSpaceState {
     }
   
   def selectedShape_=(shape: Shape) =
-    if (_selectedShape != shape && (_allShapes contains shape)) {
+    if (_selectedShape != shape && (shape == null || (_allShapes contains shape))) {
       _selectedShape = shape
       for (obs <- selectedShapeObservers)
         obs(shape)
@@ -97,12 +109,6 @@ class DrawingSpaceState {
         obs(color)
     }
   
-  def commands_=(commands: List[Command]) {
-    _commands = commands
-    for (obs <- CommandsObservers)
-      obs(commands)
-  }
-  
   def fileName_=(fileName: String) =
     if (_fileName != fileName) {
       _fileName = fileName
@@ -110,55 +116,55 @@ class DrawingSpaceState {
         obs(fileName)
     }
 
-  private var nextShapeObservers: List[(Shape => Unit)] = Nil
-  private var selectedShapeObservers: List[(Shape => Unit)] = Nil
-  private var allShapesObservers: List[(List[Shape] => Unit)] = Nil
-  private var strokeWidthObservers: List[(Int => Unit)] = Nil
-  private var colorObservers: List[(Color => Unit)] = Nil
-  private var CommandsObservers: List[(List[Command] => Unit)] = Nil
-  private var fileNameObservers: List[(String => Unit)] = Nil
+  private var nextShapeObservers: List[Shape => Unit] = Nil
+  private var selectedShapeObservers: List[Shape => Unit] = Nil
+  private var allShapesObservers: List[List[Shape] => Unit] = Nil
+  private var strokeWidthObservers: List[Int => Unit] = Nil
+  private var colorObservers: List[Color => Unit] = Nil
+  private var CommandsObservers: List[List[Command] => Unit] = Nil
+  private var fileNameObservers: List[String => Unit] = Nil
   
   def registerNextShapeObserver(obs: Shape => Unit) =
-    nextShapeObservers = obs :: nextShapeObservers
+    nextShapeObservers ::= obs
   
   def registerSelectedShapeObserver(obs: Shape => Unit) =
-    selectedShapeObservers = obs :: selectedShapeObservers
+    selectedShapeObservers ::= obs
   
   def registerAllShapesObserver(obs: List[Shape] => Unit) =
-    allShapesObservers = obs :: allShapesObservers
+    allShapesObservers ::= obs
   
   def registerStrokeWidthObserver(obs: Int => Unit) =
-    strokeWidthObservers = obs :: strokeWidthObservers
+    strokeWidthObservers ::= obs
   
   def registerColorObserver(obs: Color => Unit) =
-    colorObservers = obs :: colorObservers
+    colorObservers ::= obs
   
   def registerCommandsObserver(obs: List[Command] => Unit) =
-    CommandsObservers = obs :: CommandsObservers
+    CommandsObservers ::= obs
   
   def registerFileNameObserver(obs: String => Unit) =
-    fileNameObservers = obs :: fileNameObservers
+    fileNameObservers ::= obs
   
   def unregisterNextShapeObserver(obs: Shape => Unit) =
-    nextShapeObservers = nextShapeObservers.filterNot(_ == obs)
+    nextShapeObservers = nextShapeObservers filterNot (_ == obs)
   
   def unregisterSelectedShapeObserver(obs: Shape => Unit) =
-    selectedShapeObservers = selectedShapeObservers.filterNot(_ == obs)
+    selectedShapeObservers = selectedShapeObservers filterNot (_ == obs)
   
   def unregisterAllShapesObserver(obs: List[Shape] => Unit) =
-    allShapesObservers = allShapesObservers.filterNot(_ == obs)
+    allShapesObservers = allShapesObservers filterNot (_ == obs)
   
   def unregisterStrokeWidthObserver(obs: Int => Unit) =
-    strokeWidthObservers = strokeWidthObservers.filterNot(_ == obs)
+    strokeWidthObservers = strokeWidthObservers filterNot (_ == obs)
   
   def unregisterColorObserver(obs: Color => Unit) =
-    colorObservers = colorObservers.filterNot(_ == obs)
+    colorObservers = colorObservers filterNot (_ == obs)
   
   def unregisterCommandsObserver(obs: List[Command] => Unit) =
-    CommandsObservers = CommandsObservers.filterNot(_ == obs)
+    CommandsObservers = CommandsObservers filterNot (_ == obs)
   
   def unregisterFileNameObserver(obs: String => Unit) =
-    fileNameObservers = fileNameObservers.filterNot(_ == obs)
+    fileNameObservers = fileNameObservers filterNot (_ == obs)
 }
 
 /*
