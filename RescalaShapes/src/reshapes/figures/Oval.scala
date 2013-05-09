@@ -1,16 +1,19 @@
 package reshapes.figures
-import java.awt.Point
-import java.awt.Graphics2D
+
 import java.awt.Color
+import java.awt.Graphics2D
+import java.awt.Point
+
 import reshapes.drawing.DrawingSpaceState
 
 class Oval(
-  drawingSpaceState: DrawingSpaceState,
-  strokeWidth: Int = 1,
-  color: Color = Color.BLACK,
-  current: Int = 0,
-  path: List[Point] = null)
-    extends Shape(drawingSpaceState, strokeWidth, color, current, path) with Movable with Resizable {
+    drawingSpaceState: DrawingSpaceState,
+    strokeWidth: Int = 1,
+    color: Color = Color.BLACK,
+    current: Int = 0,
+    path: List[Point] = null)
+  extends Shape(drawingSpaceState, strokeWidth, color, current, path) with Movable with Resizable {
+  
   def doDraw(g: Graphics2D) = {
     var width = math.abs(start.x - end.x)
     var height = math.abs(start.y - end.y)
