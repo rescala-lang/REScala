@@ -1,5 +1,7 @@
 package reshapes
 
+import java.net.ConnectException
+
 import scala.collection.mutable.HashMap
 import scala.swing.Action
 import scala.swing.BorderPanel
@@ -15,13 +17,17 @@ import scala.swing.TabbedPane
 import scala.swing.event.SelectionChanged
 
 import drawing.DrawingSpaceState
+import javax.swing.JOptionPane
 import reshapes.actions.LoadAction
 import reshapes.actions.MergeAction
 import reshapes.actions.QuitAction
 import reshapes.actions.SaveAction
 import reshapes.actions.UndoAction
+import reshapes.drawing.DrawingSpaceState
+import reshapes.drawing.NetworkSpaceState
 import reshapes.ui.dialogs.DialogResult
 import reshapes.ui.dialogs.NewTabDialog
+import reshapes.ui.dialogs.ServerDialog
 import reshapes.ui.panels.CommandPanel
 import reshapes.ui.panels.DrawingPanel
 import reshapes.ui.panels.InfoPanel
@@ -74,7 +80,7 @@ object Reshapes extends SimpleSwingApplication {
     
     contents += new Menu("File") {
       contents += new MenuItem(Action("New tab") { addTab() })
-//      contents += new MenuItem(Action("New network tab") { addNetworkTab() })
+      contents += new MenuItem(Action("New network tab") { addNetworkTab() })
       contents += new MenuItem(Action("Remove selected tab") { removeCurrentTab() })
       contents += new Separator
       contents += new MenuItem(new SaveAction())
@@ -137,14 +143,14 @@ object Reshapes extends SimpleSwingApplication {
     menu.updateMerge()
   }
   
-  /*
+  
   def addNetworkTab() {
     val dialog = new ServerDialog()
     dialog.location = ui.locationOnScreen
     dialog.showDialog()
     if (dialog.inputIsValid() && dialog.dialogResult == DialogResult.OK) {
       try {
-        addTab((new NetworkSpaceState(dialog.hostname, dialog.commandPort, dialog.exchangePort, dialog.listenerPort) with DrawingSpaceStateInteraction with NetworkSpaceStateInteraction))
+        addTab((new NetworkSpaceState(dialog.hostname, dialog.commandPort, dialog.exchangePort, dialog.listenerPort) with NetworkSpaceStateInteraction))
       } catch {
         case e: ConnectException =>
           JOptionPane.showMessageDialog(null, "Server not available", "ConnectException", JOptionPane.ERROR_MESSAGE)
@@ -155,7 +161,7 @@ object Reshapes extends SimpleSwingApplication {
       }
     }
   }
-  */
+  
   
   def removeCurrentTab() {
     if (ui.tabbedPane.pages.size > 0) {

@@ -1,15 +1,13 @@
 package reshapes.drawing
 
 import java.awt.Color
-import java.io.DataInputStream
-import java.io.ObjectInputStream
 import java.io.PrintWriter
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.Socket
 
 import scala.actors.Actor
-import scala.annotation.serializable
+import scala.xml.XML
 
 import reshapes.figures.Line
 import reshapes.figures.Shape
@@ -167,7 +165,7 @@ class DrawingSpaceState {
     fileNameObservers = fileNameObservers filterNot (_ == obs)
 }
 
-/*
+
 class NetworkSpaceState(val serverHostname: String = "localhost", val commandPort: Int = 9998, val exchangePort: Int = 9999, val listenerPort: Int = 1337) extends DrawingSpaceState {
 
   val serverInetAddress: InetAddress = InetAddress.getByName(serverHostname)
@@ -189,6 +187,7 @@ class NetworkSpaceState(val serverHostname: String = "localhost", val commandPor
   /**
    * Starts a thread which listens to server updates.
    */
+  var updating = false
   def startUpdateListener(port: Int) = {
     new UpdateListener(port, this).start()
   }
@@ -196,32 +195,30 @@ class NetworkSpaceState(val serverHostname: String = "localhost", val commandPor
   registerClient(serverHostname, commandPort, listenerPort)
   startUpdateListener(listenerPort)
 }
-*/
+
 
 /**
  * Listens for updates from server and updates events.allShapes
  */
-/*
-class UpdateListener(port: Int, events: DrawingSpaceState) extends Actor {
+
+class UpdateListener(port: Int, events: NetworkSpaceState) extends Actor {
   def act() {
     println("start UpdateThread")
     val listener = new ServerSocket(port)
     while (true) {
       println("receiving update")
-      val socket = listener.accept()
-      val in = new ObjectInputStream(new DataInputStream(socket.getInputStream()));
-
-      val shapes = in.readObject().asInstanceOf[List[Shape]]
-      events.allShapes() = List[Shape]()
-      shapes map (shape => events.allShapes() = shape :: events.allShapes.getValue)
-
-      in.close()
-      socket.close()
+      val socket = listener.accept
+        val shapes = Shape.deserialize(XML.load(socket.getInputStream), events)
+        events.updating = true
+        events.clear
+        shapes map (shape => events execute new CreateShape(shape))
+        events.updating = false
+      socket.close
     }
     listener.close()
   }
 }
-*/
+
 
 abstract class EditingMode
 case class Drawing() extends EditingMode

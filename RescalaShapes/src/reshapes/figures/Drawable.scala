@@ -5,6 +5,13 @@ import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.Point
 
+import scala.xml.Attribute
+import scala.xml.Elem
+import scala.xml.Node
+import scala.xml.NodeSeq.seqToNodeSeq
+import scala.xml.Null
+import scala.xml.Text
+
 import reshapes.drawing.DrawingSpaceState
 import reshapes.util.MathUtil
 
@@ -13,11 +20,11 @@ abstract class Shape(
     val strokeWidth: Int = 1,
     val color: Color = Color.BLACK,
     val current: Int = 0,
-    val path: List[Point] = null /* the mouse path while drawing this shape */) {
+    val path: List[Point] = List.empty /* the mouse path while drawing this shape */) {
   
   def selected = drawingSpaceState.selectedShape == this
-  def start = if (path == null) null else path.head
-  def end = if (path == null) null else path.last
+  def start = if (path.isEmpty) null else path.head
+  def end = if (path.isEmpty) null else path.last
   
   def draw(g: Graphics2D) = {
     if (start != null && end != null) {
@@ -50,6 +57,72 @@ abstract class Shape(
 
 object Shape {
   var current = 0
+  
+  def serialize(shapes: List[Shape]): Elem = {
+    def shapePath(shape: Shape) =
+      shape.path map { p => <point x={ p.x.toString } y={ p.y.toString } /> }
+      
+      def shapeProps(shape: Shape, elem: Elem) =
+      elem %
+        Attribute(None, "stroke-width", Text(shape.strokeWidth.toString), Null) %
+        Attribute(None, "color", Text(shape.color.getRGB.toString), Null) %
+        Attribute(None, "current", Text(shape.current.toString), Null)
+        
+    
+    <shapes> {
+      shapes map {
+        case shape: Freedraw => shapeProps(shape, <freedraw> { shapePath(shape) } </freedraw>)
+        case shape: Line => shapeProps(shape, <line> { shapePath(shape) } </line>)
+        case shape: Oval => shapeProps(shape, <oval> { shapePath(shape) } </oval>)
+        case shape: Rectangle => shapeProps(shape, <rectangle> { shapePath(shape) } </rectangle>)
+        case shape: Triangle => shapeProps(shape, <triangle> { shapePath(shape) } </triangle>)
+        case shape => throw new UnsupportedOperationException("Saving type " + shape.getClass.getSimpleName + " not implemented.")
+      }
+    }  </shapes>
+  }
+  
+  def deserialize(data: Elem, drawingSpaceState: DrawingSpaceState): List[Shape] = {
+    def shapePath(elem: Node) =
+      (elem \ "point" map { p =>
+        new Point((p attribute "x").get.text.toInt, (p attribute "y").get.text.toInt)
+      }).toList
+    
+    if (data.label == "shapes")
+      (data.child collect {
+        case shape if shape.label == "freedraw" =>
+          new Freedraw(drawingSpaceState,
+              path = shapePath(shape),
+              strokeWidth = (shape attribute "stroke-width").get.text.toInt,
+              color = Color.decode((shape attribute "color").get.text),
+              current = (shape attribute "current").get.text.toInt)
+        case shape if shape.label == "line" =>
+          new Line(drawingSpaceState,
+              path = shapePath(shape),
+              strokeWidth = (shape attribute "stroke-width").get.text.toInt,
+              color = Color.decode((shape attribute "color").get.text),
+              current = (shape attribute "current").get.text.toInt)
+        case shape if shape.label == "oval" =>
+          new Oval(drawingSpaceState,
+              path = shapePath(shape),
+              strokeWidth = (shape attribute "stroke-width").get.text.toInt,
+              color = Color.decode((shape attribute "color").get.text),
+              current = (shape attribute "current").get.text.toInt)
+        case shape if shape.label == "rectangle" =>
+          new Rectangle(drawingSpaceState,
+              path = shapePath(shape),
+              strokeWidth = (shape attribute "stroke-width").get.text.toInt,
+              color = Color.decode((shape attribute "color").get.text),
+              current = (shape attribute "current").get.text.toInt)
+        case shape if shape.label == "triangle" =>
+          new Triangle(drawingSpaceState,
+              path = shapePath(shape),
+              strokeWidth = (shape attribute "stroke-width").get.text.toInt,
+              color = Color.decode((shape attribute "color").get.text),
+              current = (shape attribute "current").get.text.toInt)
+      }).toList
+    else
+      List.empty
+  }
 }
 
 trait Movable extends Shape {

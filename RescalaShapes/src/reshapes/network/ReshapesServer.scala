@@ -1,11 +1,19 @@
 package reshapes.network
-import java.net._
-import java.io._
-import scala.collection.mutable.MutableList
-import reshapes.figures.Shape
+
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.io.OutputStreamWriter
+import java.net.ConnectException
+import java.net.InetAddress
+import java.net.ServerSocket
+import java.net.Socket
+
 import scala.actors.Actor
-import scala.actors.Actor._
-import reshapes.drawing.Command
+import scala.collection.mutable.MutableList
+import scala.xml.XML
+
+import reshapes.Reshapes
+import reshapes.figures.Shape
 
 object ReshapesServer {
 
@@ -68,12 +76,10 @@ object ReshapesServer {
   def sendToClient(shapes: List[Shape], client: (InetAddress, Int)): Boolean = {
     try {
       val socket = new Socket(client._1, client._2)
-      val out = new ObjectOutputStream(new DataOutputStream(socket.getOutputStream()))
-
-      out.writeObject(shapes)
-
-      out.close()
-      socket.close()
+      val writer = new OutputStreamWriter(socket.getOutputStream)
+      XML.write(writer, Shape.serialize(shapes), "", false, null)
+      writer.close
+      socket.close
     } catch {
       case e: ConnectException =>
         return false
@@ -119,15 +125,10 @@ class UpdateThread(port: Int) extends Actor {
     println("start UpdateThread")
     val listener = new ServerSocket(port)
     while (true) {
-      val socket = listener.accept()
-      val in = new ObjectInputStream(new DataInputStream(socket.getInputStream()));
-
-      val shapes = in.readObject().asInstanceOf[TransportObject]
-
-      ReshapesServer.sendUpdateToClients(shapes.shapes, (socket.getInetAddress(), shapes.senderPort))
-
-      in.close()
-      socket.close()
+      val socket = listener.accept
+      val shapes = Shape.deserialize(XML.load(socket.getInputStream), Reshapes.currentEvents)
+      ReshapesServer.sendUpdateToClients(shapes, (socket.getInetAddress, socket.getPort))
+      socket.close
     }
     listener.close()
   }

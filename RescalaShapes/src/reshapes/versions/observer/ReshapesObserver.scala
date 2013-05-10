@@ -1,52 +1,39 @@
-/**
- * Because of the architecture of the application this file does not contain
- * a completly correct usage of observer pattern. It simply shows the difference
- * to event/signals 'in principal': Instead of each (gui-)panel defining its own
- * events/signals they have to DrawingSpaceStateInteraction as Observers and
- * DrawingSpaceStateInteraction explicitly calls the observer methods.
- */
 package reshapes.versions.observer
 
-import java.io.DataOutputStream
-import java.io.ObjectOutputStream
-import java.net.Socket
-import scala.annotation.serializable
-import reshapes.network.TransportObject
-import reshapes.ui.panels._
-import reshapes.drawing.Drawing
-import reshapes.drawing.DrawingSpaceState
-import reshapes.Reshapes
-import reshapes.drawing.Selection
-import reshapes.drawing.Command
-import reshapes.figures.Shape
 import java.awt.Color
-import reshapes.drawing.EditingMode
-import scala.swing.Button
-import scala.collection.mutable.MutableList
+import java.io.OutputStreamWriter
+import java.net.Socket
+
 import scala.swing.Action
 import scala.swing.BoxPanel
+import scala.swing.Button
 import scala.swing.Orientation
-import scala.swing.Panel
+import scala.xml.XML
 
-/*
+import reshapes.Reshapes
+import reshapes.drawing.Command
+import reshapes.drawing.DrawingSpaceState
+import reshapes.drawing.NetworkSpaceState
+import reshapes.figures.Shape
+import reshapes.ui.panels.CommandPanel
+import reshapes.ui.panels.DrawingPanel
+import reshapes.ui.panels.InfoPanel
+import reshapes.ui.panels.ShapePanel
+import reshapes.ui.panels.ShapeView
+
 trait NetworkSpaceStateInteraction extends NetworkSpaceState {
 
-  val sendUpdateSignal: Signal[List[Shape]] = Signal {
-    Commands()
-    allShapes.getValue
-  }
-
-  sendUpdateSignal.changed += { shapes =>
-    val socket = new Socket(serverInetAddress, exchangePort)
-    val out = new ObjectOutputStream(new DataOutputStream(socket.getOutputStream()))
-
-    out.writeObject(new TransportObject(shapes, listenerPort))
-
-    out.close()
-    socket.close()
+  registerAllShapesObserver{ shapes =>
+    if (!updating) {
+      val socket = new Socket(serverInetAddress, exchangePort)
+      val writer = new OutputStreamWriter(socket.getOutputStream)
+      XML.write(writer, Shape.serialize(shapes), "", false, null)
+      writer.close
+      socket.close
+    }
   }
 }
-*/
+
 trait CommandPanelInteraction extends CommandPanel {
   var currentState: DrawingSpaceState = null
   val commandPanel = new BoxPanel(Orientation.Vertical)
