@@ -14,13 +14,11 @@ class Line(
     path: List[Point] = List.empty)
   extends Shape(drawingSpaceState, strokeWidth, color, current, path) with Movable with Resizable {
   
-  def doDraw(g: Graphics2D) = {
+  override def doDraw(g: Graphics2D) =
     g.drawLine(start.x, start.y, end.x, end.y)
-  }
   
-  def toLines(): List[(Int, Int, Int, Int)] = {
-    List((start.x, start.y, end.x, end.y))
-  }
+  override def toLines() =
+    List((start, end))
   
   override def copy(
       drawingSpaceState: DrawingSpaceState,

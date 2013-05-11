@@ -1,10 +1,12 @@
 package reshapes.drawing
 
 import java.awt.Color
+import java.io.OutputStreamWriter
 import java.io.PrintWriter
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.Socket
+import java.net.SocketException
 
 import scala.actors.Actor
 import scala.xml.XML
@@ -21,7 +23,7 @@ class DrawingSpaceState {
   // currently selected shape inside the drawing space
   private var _selectedShape: Shape = null
   // currently drawn shapes
-  private var _allShapes: List[Shape] = List.empty
+  private var _shapes: List[Shape] = List.empty
   // current stroke width
   private var _strokeWidth: Int = 1
   // current stroke color
@@ -33,37 +35,48 @@ class DrawingSpaceState {
   
   def nextShape = _nextShape
   def selectedShape = _selectedShape
-  def allShapes = _allShapes
+  def shapes = _shapes
   def strokeWidth = _strokeWidth
   def color = _color
   def commands = _commands
   def fileName = _fileName
-  def mode = if (_selectedShape != null) Selection() else Drawing()
   
   def execute(command: Command) {
     _commands ::= command
     for (obs <- CommandsObservers)
       obs(_commands)
     
-    val allShapes = command execute _allShapes
-    if (allShapes != _allShapes) {
-      _allShapes = allShapes
-      for (obs <- allShapesObservers)
-        obs(_allShapes)
+    val shapes = command execute _shapes
+    if (shapes != _shapes) {
+      if (_selectedShape != null && !(shapes contains _selectedShape)) {
+        _selectedShape = null
+        for (obs <- selectedShapeObservers)
+          obs(_selectedShape)
+      }
+      
+      _shapes = shapes
+      for (obs <- shapesObservers)
+        obs(_shapes)
     }
   }
   
   def revert(command: Command) {
     val count = (_commands indexOf command) + 1
     if (count != -1) {
-      val allShapes = (_allShapes /: (_commands take count)) {
+      val shapes = (_shapes /: (_commands take count)) {
         (shapes, command) => command revert shapes
       }
       
-      if (allShapes != _allShapes) {
-        _allShapes = allShapes
-        for (obs <- allShapesObservers)
-          obs(_allShapes)
+      if (shapes != _shapes) {
+        if (_selectedShape != null && !(shapes contains _selectedShape)) {
+          _selectedShape = null
+          for (obs <- selectedShapeObservers)
+           obs(_selectedShape)
+        }
+        
+        _shapes = shapes
+        for (obs <- shapesObservers)
+          obs(_shapes)
       }
       
       _commands = _commands drop count
@@ -73,10 +86,10 @@ class DrawingSpaceState {
   }
   
   def clear() =
-    if (_allShapes.nonEmpty) {
-      _allShapes = List.empty
-      for (obs <- allShapesObservers)
-        obs(_allShapes)
+    if (_shapes.nonEmpty) {
+      _shapes = List.empty
+      for (obs <- shapesObservers)
+        obs(_shapes)
     }
     
   def nextShape_=(shape: Shape) =
@@ -87,7 +100,7 @@ class DrawingSpaceState {
     }
   
   def selectedShape_=(shape: Shape) =
-    if (_selectedShape != shape && (shape == null || (_allShapes contains shape))) {
+    if (_selectedShape != shape && (shape == null || (_shapes contains shape))) {
       _selectedShape = shape
       for (obs <- selectedShapeObservers)
         obs(shape)
@@ -116,7 +129,7 @@ class DrawingSpaceState {
 
   private var nextShapeObservers: List[Shape => Unit] = Nil
   private var selectedShapeObservers: List[Shape => Unit] = Nil
-  private var allShapesObservers: List[List[Shape] => Unit] = Nil
+  private var shapesObservers: List[List[Shape] => Unit] = Nil
   private var strokeWidthObservers: List[Int => Unit] = Nil
   private var colorObservers: List[Color => Unit] = Nil
   private var CommandsObservers: List[List[Command] => Unit] = Nil
@@ -128,8 +141,8 @@ class DrawingSpaceState {
   def registerSelectedShapeObserver(obs: Shape => Unit) =
     selectedShapeObservers ::= obs
   
-  def registerAllShapesObserver(obs: List[Shape] => Unit) =
-    allShapesObservers ::= obs
+  def registerShapesObserver(obs: List[Shape] => Unit) =
+    shapesObservers ::= obs
   
   def registerStrokeWidthObserver(obs: Int => Unit) =
     strokeWidthObservers ::= obs
@@ -149,8 +162,8 @@ class DrawingSpaceState {
   def unregisterSelectedShapeObserver(obs: Shape => Unit) =
     selectedShapeObservers = selectedShapeObservers filterNot (_ == obs)
   
-  def unregisterAllShapesObserver(obs: List[Shape] => Unit) =
-    allShapesObservers = allShapesObservers filterNot (_ == obs)
+  def unregisterShapesObserver(obs: List[Shape] => Unit) =
+    shapesObservers = shapesObservers filterNot (_ == obs)
   
   def unregisterStrokeWidthObserver(obs: Int => Unit) =
     strokeWidthObservers = strokeWidthObservers filterNot (_ == obs)
@@ -163,63 +176,63 @@ class DrawingSpaceState {
   
   def unregisterFileNameObserver(obs: String => Unit) =
     fileNameObservers = fileNameObservers filterNot (_ == obs)
+  
+  def dispose { }
 }
 
 
-class NetworkSpaceState(val serverHostname: String = "localhost", val commandPort: Int = 9998, val exchangePort: Int = 9999, val listenerPort: Int = 1337) extends DrawingSpaceState {
-
+class NetworkSpaceState(
+    val serverHostname: String = "localhost",
+    val commandPort: Int = 9998,
+    val exchangePort: Int = 9999,
+    val listenerPort: Int = 1337) extends DrawingSpaceState {
   val serverInetAddress: InetAddress = InetAddress.getByName(serverHostname)
-
-  /**
-   * Registers this client with a server and tells him
-   * which port the server has to send updates to
-   */
-  def registerClient(serverHostname: String, serverPort: Int, portToRegister: Int) = {
-    val socket = new Socket(serverInetAddress, serverPort)
-    val out = new PrintWriter(socket.getOutputStream(), true)
-
-    out.println("register %d".format(portToRegister))
-
-    out.close()
-    socket.close()
+  
+  // Register this client with a server and tell it
+  // which port the server has to send updates to
+  {
+    val socket = new Socket(serverInetAddress, commandPort)
+    val out = new PrintWriter(socket.getOutputStream, true)
+    out.println("register %d" format listenerPort)
+    out.close
+    socket.close
   }
-
-  /**
-   * Starts a thread which listens to server updates.
-   */
-  var updating = false
-  def startUpdateListener(port: Int) = {
-    new UpdateListener(port, this).start()
-  }
-
-  registerClient(serverHostname, commandPort, listenerPort)
-  startUpdateListener(listenerPort)
-}
-
-
-/**
- * Listens for updates from server and updates events.allShapes
- */
-
-class UpdateListener(port: Int, events: NetworkSpaceState) extends Actor {
-  def act() {
-    println("start UpdateThread")
-    val listener = new ServerSocket(port)
-    while (true) {
-      println("receiving update")
-      val socket = listener.accept
-        val shapes = Shape.deserialize(XML.load(socket.getInputStream), events)
-        events.updating = true
-        events.clear
-        shapes map (shape => events execute new CreateShape(shape))
-        events.updating = false
+  
+  // listen for updates and send updates
+  private val listener = new ServerSocket(listenerPort)
+  private var updating = false
+  new Actor {
+    def act() {
+      println("start UpdateThread")
+      try {
+        while (true) {
+          println("receiving update")
+          val socket = listener.accept
+          val shapes = Shape.deserialize(XML.load(socket.getInputStream), NetworkSpaceState.this)
+          updating = true
+          clear
+          for (shape <- shapes)
+            execute(new CreateShape(shape))
+          updating = false
+          socket.close
+        }
+      }
+      catch {
+        case e: SocketException =>
+      }
+    }
+  }.start
+  
+  registerShapesObserver{ shapes =>
+    if (!updating) {
+      val socket = new Socket(serverInetAddress, exchangePort)
+      val writer = new OutputStreamWriter(socket.getOutputStream)
+      XML.write(writer, Shape.serialize(shapes), "", false, null)
+      writer.close
       socket.close
     }
-    listener.close()
   }
+  
+  override def dispose =
+    listener.close
 }
-
-
-abstract class EditingMode
-case class Drawing() extends EditingMode
-case class Selection() extends EditingMode

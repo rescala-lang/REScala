@@ -14,13 +14,12 @@ class Triangle(
     path: List[Point] = List.empty)
   extends Shape(drawingSpaceState, strokeWidth, color, current, path) with Movable with Resizable {
   
-  def doDraw(g: Graphics2D) = {
-    toLines map (line => g.drawLine(line._1, line._2, line._3, line._4))
-  }
+  override def doDraw(g: Graphics2D) =
+    for ((a, b) <- toLines)
+      g.drawLine(a.x, a.y, b.x, b.y)
   
-  def toLines(): List[(Int, Int, Int, Int)] = {
-    List((start.x, start.y, end.x, end.y), (start.x, start.y, start.x, end.y), (start.x, end.y, end.x, end.y))
-  }
+  override def toLines() =
+    List((start, end), (start, new Point(start.x, end.y)), (new Point(start.x, end.y), end))
   
   override def copy(
       drawingSpaceState: DrawingSpaceState,

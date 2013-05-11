@@ -1,45 +1,46 @@
 package reshapes.ui.panels
 
-import scala.swing._
-import scala.swing.event._
+import scala.swing.BoxPanel
+import scala.swing.Button
+import scala.swing.Orientation
+import scala.swing.event.ButtonClicked
+
+import reshapes.Reshapes
 import reshapes.drawing.DrawingSpaceState
-import reshapes.figures._
-import reshapes._
+import reshapes.figures.Freedraw
+import reshapes.figures.Line
+import reshapes.figures.Oval
+import reshapes.figures.Rectangle
+import reshapes.figures.Triangle
 
 /**
- * Panel for selection of shapes to draw.
+ * Panel for selection of shapes to draw
  */
-class ShapeSelectionPanel() extends BoxPanel(Orientation.Vertical) {
-
+class ShapeSelectionPanel extends BoxPanel(Orientation.Vertical) {
   val lineBtn = new Button { text = "Line" }
   val rectBtn = new Button { text = "Rectangle" }
   val ovalBtn = new Button { text = "Oval" }
   val triangleBtn = new Button { text = "Triangle" }
   val freedrawBtn = new Button { text = "Freedraw" }
-
+  
   contents += lineBtn
   contents += rectBtn
   contents += ovalBtn
   contents += triangleBtn
   contents += freedrawBtn
-
-  // reactions
-  listenTo(lineBtn)
-  listenTo(rectBtn)
-  listenTo(ovalBtn)
-  listenTo(triangleBtn)
-  listenTo(freedrawBtn)
-
+  
+  listenTo(lineBtn, rectBtn, ovalBtn, triangleBtn, freedrawBtn)
+  
   reactions += {
     case ButtonClicked(`lineBtn`) =>
-      Reshapes.currentEvents.nextShape = new Line(Reshapes.currentEvents)
+      Reshapes.drawingSpaceState.nextShape = new Line(Reshapes.drawingSpaceState)
     case ButtonClicked(`rectBtn`) =>
-      Reshapes.currentEvents.nextShape = new figures.Rectangle(Reshapes.currentEvents)
+      Reshapes.drawingSpaceState.nextShape = new Rectangle(Reshapes.drawingSpaceState)
     case ButtonClicked(`ovalBtn`) =>
-      Reshapes.currentEvents.nextShape = new Oval(Reshapes.currentEvents)
+      Reshapes.drawingSpaceState.nextShape = new Oval(Reshapes.drawingSpaceState)
     case ButtonClicked(`triangleBtn`) =>
-      Reshapes.currentEvents.nextShape = new Triangle(Reshapes.currentEvents)
+      Reshapes.drawingSpaceState.nextShape = new Triangle(Reshapes.drawingSpaceState)
     case ButtonClicked(`freedrawBtn`) =>
-      Reshapes.currentEvents.nextShape = new Freedraw(Reshapes.currentEvents)
+      Reshapes.drawingSpaceState.nextShape = new Freedraw(Reshapes.drawingSpaceState)
   }
 }

@@ -52,9 +52,9 @@ class EditShape(shapeBeforeEdit: Shape, shapeAfterEdit: Shape) extends Command {
 /**
  * Adds all shapes of given Events with currently selected Events.
  */
-class MergeEvents(eventToMerge: DrawingSpaceState) extends Command {
+class MergeDrawingSpaces(eventToMerge: DrawingSpaceState) extends Command {
   val eventTitle = eventToMerge.fileName
-  val otherShapes = eventToMerge.allShapes
+  val otherShapes = eventToMerge.shapes
   
   override def execute(shapes: List[Shape]) =
     otherShapes ::: shapes

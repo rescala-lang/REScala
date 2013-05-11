@@ -52,7 +52,7 @@ abstract class Shape(
   def doUpdate(path: List[Point]) = {}
   def doDraw(g: Graphics2D)
   
-  def toLines(): List[(Int, Int, Int, Int)]
+  def toLines(): List[(Point, Point)]
 }
 
 object Shape {

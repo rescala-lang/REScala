@@ -126,7 +126,7 @@ class UpdateThread(port: Int) extends Actor {
     val listener = new ServerSocket(port)
     while (true) {
       val socket = listener.accept
-      val shapes = Shape.deserialize(XML.load(socket.getInputStream), Reshapes.currentEvents)
+      val shapes = Shape.deserialize(XML.load(socket.getInputStream), Reshapes.drawingSpaceState)
       ReshapesServer.sendUpdateToClients(shapes, (socket.getInetAddress, socket.getPort))
       socket.close
     }

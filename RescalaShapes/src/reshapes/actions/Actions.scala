@@ -9,7 +9,7 @@ import scala.xml.XML
 import reshapes.Reshapes
 import reshapes.drawing.CreateShape
 import reshapes.drawing.DrawingSpaceState
-import reshapes.drawing.MergeEvents
+import reshapes.drawing.MergeDrawingSpaces
 import reshapes.figures.Shape
 
 /**
@@ -18,11 +18,11 @@ import reshapes.figures.Shape
 class SaveAction extends Action("Save") {
   def apply() = {
     val fileChooser = new FileChooser()
-    fileChooser.selectedFile = new File(Reshapes.currentEvents.fileName)
+    fileChooser.selectedFile = new File(Reshapes.drawingSpaceState.fileName)
     if (fileChooser.showDialog(null, "save") == FileChooser.Result.Approve) {
       XML.save(fileChooser.selectedFile.getCanonicalPath,
-               Shape.serialize(Reshapes.currentEvents.allShapes))
-      Reshapes.currentEvents.fileName = fileChooser.selectedFile.getName()
+               Shape.serialize(Reshapes.drawingSpaceState.shapes))
+      Reshapes.drawingSpaceState.fileName = fileChooser.selectedFile.getName()
       Reshapes.ui.tabbedPane.pages(Reshapes.ui.tabbedPane.selection.index).title = fileChooser.selectedFile.getName()
     }
   }
@@ -35,10 +35,10 @@ class LoadAction extends Action("Load") {
   def apply() = {
     val fileChooser = new FileChooser()
     if (fileChooser.showDialog(null, "load") == FileChooser.Result.Approve) {
-      Reshapes.currentEvents.clear
+      Reshapes.drawingSpaceState.clear
       Shape.deserialize(XML.loadFile(fileChooser.selectedFile),
-                        Reshapes.currentEvents) map (shape =>
-        Reshapes.currentEvents execute new CreateShape(shape))
+                        Reshapes.drawingSpaceState) map (shape =>
+        Reshapes.drawingSpaceState execute new CreateShape(shape))
     }
   }
 }
@@ -57,7 +57,7 @@ class QuitAction extends Action("Quit") {
  */
 class UndoAction extends Action("Undo") {
   def apply() = {
-    Reshapes.currentEvents revert Reshapes.currentEvents.commands.head
+    Reshapes.drawingSpaceState revert Reshapes.drawingSpaceState.commands.head
   }
 }
 
@@ -66,6 +66,6 @@ class UndoAction extends Action("Undo") {
  */
 class MergeAction(title: String, eventsToMergeWith: DrawingSpaceState) extends Action("Merge with %s".format(title)) {
   def apply() = {
-    Reshapes.currentEvents execute new MergeEvents(eventsToMergeWith)
+    Reshapes.drawingSpaceState execute new MergeDrawingSpaces(eventsToMergeWith)
   }
 }

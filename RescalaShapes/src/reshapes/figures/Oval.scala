@@ -14,19 +14,16 @@ class Oval(
     path: List[Point] = List.empty)
   extends Shape(drawingSpaceState, strokeWidth, color, current, path) with Movable with Resizable {
   
-  def doDraw(g: Graphics2D) = {
-    var width = math.abs(start.x - end.x)
-    var height = math.abs(start.y - end.y)
-    var x = math.min(start.x, end.x)
-    var y = math.min(start.y, end.y)
-
+  override def doDraw(g: Graphics2D) {
+    val width = math.abs(start.x - end.x)
+    val height = math.abs(start.y - end.y)
+    val x = math.min(start.x, end.x)
+    val y = math.min(start.y, end.y)
     g.drawOval(x, y, width, height)
   }
   
-  def toLines(): List[(Int, Int, Int, Int)] = {
-    // todo: implement
-    List[(Int, Int, Int, Int)]()
-  }
+  override def toLines() =
+    throw new NotImplementedError
   
   override def copy(
       drawingSpaceState: DrawingSpaceState,

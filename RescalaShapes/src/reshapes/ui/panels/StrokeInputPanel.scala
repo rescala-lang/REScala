@@ -1,55 +1,57 @@
 package reshapes.ui.panels
-import scala.swing._
-import reshapes.drawing.DrawingSpaceState
-import scala.swing.event._
-import reshapes.drawing.Selection
+
+import scala.swing.Action
+import scala.swing.BoxPanel
+import scala.swing.Button
+import scala.swing.Component
+import scala.swing.FlowPanel
+import scala.swing.Frame
+import scala.swing.Label
+import scala.swing.Orientation
+import scala.swing.Slider
+import scala.swing.event.ValueChanged
+
 import javax.swing.JColorChooser
 import reshapes.Reshapes
 
 /**
  * Panel for various customization of the stroke.
  */
-class StrokeInputPanel() extends FlowPanel {
-
+class StrokeInputPanel extends FlowPanel {
   def colorChooserWindow = new Frame {
     title = "Choose color"
-
-    // the ColorChooser wasn't available in the standard scala library so I had to use this construct.
-    val colorChooser = new Component() {
-      override lazy val peer = new JColorChooser()
+    
+    val colorChooser = new Component {
+      override lazy val peer = new JColorChooser
     }
-
+    
     contents = new BoxPanel(Orientation.Vertical) {
       contents += colorChooser
-      contents += new Button(new Action("OK") {
-        def apply() = {
-          confirmColor()
-        }
-      })
+      contents += new Button(Action("OK") { confirmColor() })
     }
-
-    def confirmColor() = {
-      Reshapes.currentEvents.color = colorChooser.peer.getColor()
+    
+    def confirmColor() {
+      Reshapes.drawingSpaceState.color = colorChooser.peer.getColor()
       visible = false
     }
   }
-
+  
   val showColorInput = new Button(new Action("Show Colorinput") {
     def apply() = {
       colorChooserWindow.visible = !colorChooserWindow.visible
     }
   })
-
+  
   contents += new Label { text = "stroke width: " }
-  contents += new Slider() {
+  contents += new Slider {
     min = 1
     max = 50
     value = min
     minorTickSpacing = 1
     paintTicks = true
-
+    
     reactions += {
-      case e: ValueChanged => Reshapes.currentEvents.strokeWidth = value
+      case e: ValueChanged => Reshapes.drawingSpaceState.strokeWidth = value
     }
   }
   contents += showColorInput

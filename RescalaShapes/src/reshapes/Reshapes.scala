@@ -23,9 +23,7 @@ import reshapes.actions.MergeAction
 import reshapes.actions.QuitAction
 import reshapes.actions.SaveAction
 import reshapes.actions.UndoAction
-import reshapes.drawing.DrawingSpaceState
 import reshapes.drawing.NetworkSpaceState
-import reshapes.ui.dialogs.DialogResult
 import reshapes.ui.dialogs.NewTabDialog
 import reshapes.ui.dialogs.ServerDialog
 import reshapes.ui.panels.CommandPanel
@@ -37,22 +35,24 @@ import reshapes.ui.panels.ShowCoordinateSystem
 import reshapes.ui.panels.ShowIntersection
 import reshapes.ui.panels.ShowNameLabels
 import reshapes.ui.panels.StrokeInputPanel
-
-import reshapes.versions.observer._
+import reshapes.versions.observer.CommandPanelInteraction
+import reshapes.versions.observer.DrawingPanelInteraction
+import reshapes.versions.observer.InfoPanelInteraction
+import reshapes.versions.observer.ShapePanelInteraction
 
 object Reshapes extends SimpleSwingApplication {
-  private val panelEvents = new HashMap[TabbedPane.Page, DrawingSpaceState]
-  private var currentEventsObservers: List[DrawingSpaceState => Unit] = Nil
+  private val panelDrawingSpaceStates = new HashMap[TabbedPane.Page, DrawingSpaceState]
+  private var drawingSpaceStateObservers: List[DrawingSpaceState => Unit] = Nil
   
-  def registerCurrentEventsObserver(obs: DrawingSpaceState => Unit) =
-    currentEventsObservers ::= obs
+  def registerDrawingSpaceStateObserver(obs: DrawingSpaceState => Unit) =
+    drawingSpaceStateObservers ::= obs
   
-  def unregisterCurrentEventsObserver(obs: DrawingSpaceState => Unit) =
-    currentEventsObservers = currentEventsObservers filterNot (_ == obs)
+  def unregisterDrawingSpaceStateObserver(obs: DrawingSpaceState => Unit) =
+    drawingSpaceStateObservers = drawingSpaceStateObservers filterNot (_ == obs)
   
-  def currentEvents: DrawingSpaceState =
+  def drawingSpaceState =
     if (ui.tabbedPane.selection.index != -1)
-      panelEvents(ui.tabbedPane.selection.page)
+      panelDrawingSpaceStates(ui.tabbedPane.selection.page)
     else
       null
   
@@ -76,7 +76,7 @@ object Reshapes extends SimpleSwingApplication {
   }
     
   val menu = new MenuBar {
-    val mergeMenu = new Menu("Merge with...")
+    val merge = new Menu("Merge with...")
     
     contents += new Menu("File") {
       contents += new MenuItem(Action("New tab") { addTab() })
@@ -94,80 +94,83 @@ object Reshapes extends SimpleSwingApplication {
     }
     
     contents += new Menu("Tools") {
-      contents += mergeMenu
+      contents += merge
     }
     
-    def updateMerge() = {
-      mergeMenu.contents.clear()
-      val mergableTabs = ui.tabbedPane.pages filter (tab => tab.index != ui.tabbedPane.selection.index) // all tabs except currently selected
-      mergableTabs map (tab => mergeMenu.contents += new MenuItem(new MergeAction(tab.title, panelEvents(tab)))) // insert tabs in submenu
+    def updateMerge() {
+      merge.contents.clear()
+      for (tab <- ui.tabbedPane.pages)
+        if (tab.index != ui.tabbedPane.selection.index)
+          merge.contents += new MenuItem(new MergeAction(tab.title, panelDrawingSpaceStates(tab)))
     }
   }
+  
+  val newTabDialog = new NewTabDialog
+  
+  val serverDialog = new ServerDialog
   
   listenTo(ui.tabbedPane.selection)
   
   reactions += {
     case SelectionChanged(ui.tabbedPane) =>
-      for (obs <- currentEventsObservers)
-        obs(currentEvents)
+      for (obs <- drawingSpaceStateObservers)
+        obs(drawingSpaceState)
       if (ui.tabbedPane.pages.size > 0)
         menu.updateMerge()
   }
   
-  def addTab(event: DrawingSpaceState = new DrawingSpaceState) {
-    val dialog = new NewTabDialog()
-    dialog.location = ui.locationOnScreen
-    dialog.showDialog()
-    if (dialog.dialogResult == DialogResult.OK) {
-      addDrawingPanel(generateDrawingPanel(dialog.showIntersections.selected,
-        dialog.showCoordinates.selected, dialog.showNames.selected, event))
-    }
-  }
+  def addTab(state: DrawingSpaceState = new DrawingSpaceState) =
+    if (newTabDialog.showDialog(ui.locationOnScreen))
+      addDrawingPanel(
+          generateDrawingPanel(
+              newTabDialog.showIntersections.selected,
+              newTabDialog.showCoordinates.selected,
+              newTabDialog.showNames.selected,
+              state))
   
-  def generateDrawingPanel(showIntersections: Boolean, showCoordinates: Boolean, showName: Boolean, state: DrawingSpaceState): DrawingPanel = {
+  def generateDrawingPanel(showIntersections: Boolean, showCoordinates: Boolean, showName: Boolean, state: DrawingSpaceState): DrawingPanel =
     (showIntersections, showCoordinates, showName) match {
-      case (true, false, false) => return new DrawingPanel(state) with ShowIntersection with DrawingPanelInteraction
-      case (false, true, false) => return new DrawingPanel(state) with ShowCoordinateSystem with DrawingPanelInteraction
-      case (true, true, false) => return new DrawingPanel(state) with ShowIntersection with ShowCoordinateSystem with DrawingPanelInteraction
-      case (false, false, true) => return new DrawingPanel(state) with ShowNameLabels with DrawingPanelInteraction
-      case (true, false, true) => return new DrawingPanel(state) with ShowIntersection with ShowNameLabels with DrawingPanelInteraction
-      case (true, true, true) => return new DrawingPanel(state) with ShowIntersection with ShowCoordinateSystem with ShowNameLabels with DrawingPanelInteraction
-      case _ => return new DrawingPanel(state) with DrawingPanelInteraction
+      case (true, false, false) => new DrawingPanel(state) with ShowIntersection with DrawingPanelInteraction
+      case (false, true, false) => new DrawingPanel(state) with ShowCoordinateSystem with DrawingPanelInteraction
+      case (true, true, false) => new DrawingPanel(state) with ShowIntersection with ShowCoordinateSystem with DrawingPanelInteraction
+      case (false, false, true) => new DrawingPanel(state) with ShowNameLabels with DrawingPanelInteraction
+      case (true, false, true) => new DrawingPanel(state) with ShowIntersection with ShowNameLabels with DrawingPanelInteraction
+      case (true, true, true) => new DrawingPanel(state) with ShowIntersection with ShowCoordinateSystem with ShowNameLabels with DrawingPanelInteraction
+      case _ => new DrawingPanel(state) with DrawingPanelInteraction
     }
-  }
   
   def addDrawingPanel(panel: DrawingPanel) {
     val page = new TabbedPane.Page("drawing#%d".format(ui.tabbedPane.pages.size + 1), panel)
-    panelEvents(page) = panel.event
+    panelDrawingSpaceStates(page) = panel.state
     ui.tabbedPane.pages += page
     menu.updateMerge()
   }
   
-  
   def addNetworkTab() {
-    val dialog = new ServerDialog()
-    dialog.location = ui.locationOnScreen
-    dialog.showDialog()
-    if (dialog.inputIsValid() && dialog.dialogResult == DialogResult.OK) {
+    if (serverDialog.showDialog(ui.locationOnScreen) && serverDialog.inputIsValid())
       try {
-        addTab((new NetworkSpaceState(dialog.hostname, dialog.commandPort, dialog.exchangePort, dialog.listenerPort) with NetworkSpaceStateInteraction))
-      } catch {
+        addTab(new NetworkSpaceState(
+            serverDialog.hostname,
+            serverDialog.commandPort,
+            serverDialog.exchangePort,
+            serverDialog.listenerPort))
+      }
+      catch {
         case e: ConnectException =>
           JOptionPane.showMessageDialog(null, "Server not available", "ConnectException", JOptionPane.ERROR_MESSAGE)
         case e: Exception =>
-          e.printStackTrace()
+          e.printStackTrace
           JOptionPane.showMessageDialog(null, "Invalid input!")
-          addNetworkTab()
+          addNetworkTab
       }
-    }
   }
-  
   
   def removeCurrentTab() {
     if (ui.tabbedPane.pages.size > 0) {
-      panelEvents.remove(ui.tabbedPane.selection.page)
-      ui.tabbedPane.pages.remove(ui.tabbedPane.selection.index)
-      menu.updateMerge()
+      panelDrawingSpaceStates(ui.tabbedPane.selection.page).dispose
+      panelDrawingSpaceStates remove ui.tabbedPane.selection.page
+      ui.tabbedPane.pages remove ui.tabbedPane.selection.index
+      menu.updateMerge
     }
   }
 }
