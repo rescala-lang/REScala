@@ -1,5 +1,6 @@
 package reshapes
 
+import java.net.BindException
 import java.net.ConnectException
 
 import scala.collection.mutable.HashMap
@@ -158,6 +159,8 @@ object Reshapes extends SimpleSwingApplication {
       catch {
         case e: ConnectException =>
           JOptionPane.showMessageDialog(null, "Server not available", "ConnectException", JOptionPane.ERROR_MESSAGE)
+        case e: BindException =>
+          JOptionPane.showMessageDialog(null, "Port cannot be bound", "BindException", JOptionPane.ERROR_MESSAGE)
         case e: Exception =>
           e.printStackTrace
           JOptionPane.showMessageDialog(null, "Invalid input!")

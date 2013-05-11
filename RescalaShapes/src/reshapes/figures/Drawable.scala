@@ -63,10 +63,10 @@ object Shape {
       shape.path map { p => <point x={ p.x.toString } y={ p.y.toString } /> }
       
       def shapeProps(shape: Shape, elem: Elem) =
-      elem %
-        Attribute(None, "stroke-width", Text(shape.strokeWidth.toString), Null) %
-        Attribute(None, "color", Text(shape.color.getRGB.toString), Null) %
-        Attribute(None, "current", Text(shape.current.toString), Null)
+        elem %
+          Attribute(None, "stroke-width", Text(shape.strokeWidth.toString), Null) %
+          Attribute(None, "color", Text(shape.color.getRGB.toString), Null) %
+          Attribute(None, "current", Text(shape.current.toString), Null)
         
     
     <shapes> {

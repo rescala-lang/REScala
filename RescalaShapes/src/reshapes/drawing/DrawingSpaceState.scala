@@ -9,6 +9,9 @@ import java.net.Socket
 import java.net.SocketException
 
 import scala.actors.Actor
+import scala.xml.Attribute
+import scala.xml.Null
+import scala.xml.Text
 import scala.xml.XML
 
 import reshapes.figures.Line
@@ -225,9 +228,11 @@ class NetworkSpaceState(
   
   registerShapesObserver{ shapes =>
     if (!updating) {
+      println("sending update")
       val socket = new Socket(serverInetAddress, exchangePort)
       val writer = new OutputStreamWriter(socket.getOutputStream)
-      XML.write(writer, Shape.serialize(shapes), "", false, null)
+      val port = Attribute(None, "port", Text(listenerPort.toString), Null)
+      XML.write(writer, Shape.serialize(shapes) % port, "", false, null)
       writer.close
       socket.close
     }
