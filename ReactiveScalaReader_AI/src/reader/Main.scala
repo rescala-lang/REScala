@@ -29,8 +29,8 @@ object Main extends App {
     m.mediate(fetcher, parser, store, checker)
   }
 
-  checker.urlIsInvalid += { _ => showInvalidUrlDialog(); System.out.println(checker.UrlValid.getValue) }
-  checker.urlIsValid += { _ => System.out.println(checker.UrlValid.getValue)}
+  checker.urlIsInvalid += { _ => showInvalidUrlDialog();System.out.println("!!!!!!! URL is Invalid" + checker.UrlValid.getValue) }
+  checker.urlIsValid += { _ => System.out.println("!!!!!!! URL is valid" + checker.UrlValid.getValue)}
 
   val sleepTime = 20000
 
@@ -52,7 +52,6 @@ object Main extends App {
 
   def defaultURLs: Seq[String] = 
     Seq( "http://www.faz.net/aktuell/politik/?rssview=1"
-       , "https://bitbucket.org/ipls/feedtest/rss?token=e529f098840207ac321eedac745fa5df"
        , "http://feeds.gawker.com/lifehacker/full"
        , "http://www.scala-lang.org/featured/rss.xml"
        )

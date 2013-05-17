@@ -9,13 +9,10 @@ class UrlChecker {
   type CheckResult = Either[String,URL]
   type AfterCheck = (CheckArg,CheckResult)
   
-  //val UrlValidity = Var(false)
-  //val UrlValid: Signal[Boolean] = Signal{ UrlValidity == true} 
   
   val urlA = new Var("") 
   
-  var UrlValid: Signal[Boolean] = Signal{checkURLSignal(urlA.toString)}
-  var ErrorMessage: Signal[String] = Signal{EM} 
+  
 
   /**
    * Try to increase confidence that the String is a valid feed url
@@ -24,14 +21,14 @@ class UrlChecker {
    * @param url The string to check
    * @return Nothing is returned but events are fired, see below
    */
-  val check = Observable( (url: String) => checkURL(url) ) //help(url) )
+  val check = Observable( (url: String) => help(url) )
     
   private def help(url: String) = {
     urlA() = url
     checkURL(url)
   }
   
-    //checkURL(url) )
+
 
   // Tries to create a url from the string and returns it in Right
   // if not successful, a Left with an error message is returned
@@ -39,8 +36,6 @@ class UrlChecker {
     try {
       val u = new URL(url)
       u.getContent
-//      UrlValidity() = true
-      //System.out.println("url true!!!!!" + UrlValid.getValue)
       Right(u)
     } catch {
       case e: UnknownHostException => Left(errorMessage(url,e))
@@ -48,30 +43,33 @@ class UrlChecker {
     }
   }
   
+  var UrlValid: Signal[Boolean] = Signal{checkURLSignal(urlA.toString)}
+  var ErrorMessage: Signal[String] = Signal{EM} 
+  
   var EM: String = ""
   
     private def checkURLSignal(url: String): Boolean = {
-    
-      var valid = false
+    System.out.println("here")
+      var valid = true
     try {
       val u = new URL(url)
       u.getContent
       Right(u)
-      valid = true
+      System.out.println("here")
     } catch {
-      case e: UnknownHostException => EM = errorMessage(url,e)
-      case e: MalformedURLException => EM = errorMessage(url,e)
+      case e: UnknownHostException => valid = false //EM
+      case e: MalformedURLException => valid = false //EM
     }
     return valid
   }
 
-  private lazy val checkSuccessful: Event[CheckResult] = null
+  private lazy val checkSuccessful: Event[CheckResult] = 
     check.after && { t: AfterCheck => t._2.isRight } map { t: AfterCheck => t._2 }
 
-  private lazy val checkFailed: Event[CheckResult] = null
+  private lazy val checkFailed: Event[CheckResult] = 
     check.after && { t: AfterCheck => t._2.isLeft } map { t: AfterCheck => t._2 }
 
-  private lazy val checkedOption: Event[Option[URL]] = null
+  private lazy val checkedOption: Event[Option[URL]] = 
     (checkSuccessful || checkFailed) map { e: CheckResult => e match { case Right(u) => Some(u)
                                                                       case Left(_)  => None } }
 
