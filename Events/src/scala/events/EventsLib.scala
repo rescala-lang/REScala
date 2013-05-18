@@ -722,7 +722,8 @@ class CausedByFilter(e: Event[_]) extends Function0[Boolean] {
 /*
  * Implementation of an observable variable
  */
-class Variable[T](private var v: T) extends scala.events.reactive.Reactive[T] {
+@deprecated("Old implementation, use Var/Signal")
+class Variable[T](private var v: T) {
   def value: T = this.v
 
   def value_=(v: T) = {
@@ -744,6 +745,7 @@ class Variable[T](private var v: T) extends scala.events.reactive.Reactive[T] {
   def event[U](evf: T => Event[U]) = new EventNodeRef(this, evf)
 }
 
+@deprecated("Old implementation, use Var/Signal")
 object Variable {
   def apply[T](v: T) = new Variable(v)
   def unapply[T](v: Variable[T]): Option[T] = Some(v())
@@ -752,6 +754,7 @@ object Variable {
 /*
  * Implementation of an observable list
  */
+@deprecated("Old implementation, use Var/Signal")
 class VarList[T] private(private val buffer: ListBuffer[T]) extends Iterable[T] {
 
   def this() = this(new ListBuffer[T])
@@ -794,6 +797,7 @@ class VarList[T] private(private val buffer: ListBuffer[T]) extends Iterable[T] 
   lazy val elementRemoved = new ImperativeEvent[T]
 }
 
+@deprecated("Old implementation, use Var/Signal")
 object VarList {
   def apply[T](a: Array[T]) = {
     val result = new VarList[T]()

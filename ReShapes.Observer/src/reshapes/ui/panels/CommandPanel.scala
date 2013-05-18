@@ -6,7 +6,7 @@ import scala.swing.Button
 import scala.swing.Orientation
 import scala.swing.ScrollPane
 
-import reshapes.Reshapes
+import reshapes.ReShapes
 import reshapes.drawing.Command
 import reshapes.drawing.DrawingSpaceState
 
@@ -22,7 +22,7 @@ class CommandPanel extends BoxPanel(Orientation.Vertical) {
   
   private var currentState: DrawingSpaceState = null
   
-  Reshapes.registerDrawingSpaceStateObserver{ state =>
+  ReShapes.registerDrawingSpaceStateObserver{ state =>
     if (currentState != null)
       currentState.unregisterCommandsObserver(updateList)
     

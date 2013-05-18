@@ -5,7 +5,7 @@ import java.awt.Color
 import scala.swing.FlowPanel
 import scala.swing.Label
 
-import reshapes.Reshapes
+import reshapes.ReShapes
 import reshapes.drawing.DrawingSpaceState
 import reshapes.figures.Shape
 
@@ -25,7 +25,7 @@ class InfoPanel extends FlowPanel {
   private var currentStrokeWidth = ""
   private var currentColor = ""
     
-  Reshapes.registerDrawingSpaceStateObserver{ state =>
+  ReShapes.registerDrawingSpaceStateObserver{ state =>
     if (currentState != null) {
       currentState.unregisterNextShapeObserver(updateNextShape)
       currentState.unregisterSelectedShapeObserver(updateSelectedShape)

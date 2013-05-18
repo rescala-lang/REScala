@@ -37,7 +37,7 @@ import reshapes.ui.panels.ShowIntersection
 import reshapes.ui.panels.ShowNameLabels
 import reshapes.ui.panels.StrokeInputPanel
 
-object Reshapes extends SimpleSwingApplication {
+object ReShapes extends SimpleSwingApplication {
   private val panelDrawingSpaceStates = new HashMap[TabbedPane.Page, (DrawingSpaceState, NetworkSpaceState)]
   private var drawingSpaceStateObservers: List[DrawingSpaceState => Unit] = Nil
   

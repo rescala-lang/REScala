@@ -13,7 +13,7 @@ import scala.xml.Elem
 import scala.xml.NodeSeq.seqToNodeSeq
 import scala.xml.XML
 
-object ReshapesServer {
+object ReShapesServer {
   var clients: List[(InetAddress, Int)] = List.empty
   var currentShapes: Elem = null
   
@@ -99,7 +99,7 @@ class CommandThread(port: Int) extends Actor {
       command match {
         case registerCmd if registerCmd.toLowerCase.startsWith("register ") =>
           val clientPort = registerCmd.split(" ")(1).toInt
-          ReshapesServer.registerClient(clientSocket.getInetAddress, clientPort)
+          ReShapesServer.registerClient(clientSocket.getInetAddress, clientPort)
         case _ => println("unkown command: " + command)
       }
       
@@ -121,7 +121,7 @@ class UpdateThread(port: Int) extends Actor {
       val socket = listener.accept
       val shapes = XML.load(socket.getInputStream)
       
-      ReshapesServer.sendUpdateToClients(
+      ReShapesServer.sendUpdateToClients(
           shapes.copy(attributes = shapes.attributes.remove("port")),
           (socket.getInetAddress, (shapes attribute "port").get.text.toInt))
       socket.close

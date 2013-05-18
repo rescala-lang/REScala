@@ -5,7 +5,7 @@ import scala.swing.Button
 import scala.swing.Orientation
 import scala.swing.event.ButtonClicked
 
-import reshapes.Reshapes
+import reshapes.ReShapes
 import reshapes.drawing.DrawingSpaceState
 import reshapes.figures.Freedraw
 import reshapes.figures.Line
@@ -33,14 +33,14 @@ class ShapeSelectionPanel extends BoxPanel(Orientation.Vertical) {
   
   reactions += {
     case ButtonClicked(`lineBtn`) =>
-      Reshapes.drawingSpaceState.nextShape = new Line(Reshapes.drawingSpaceState)
+      ReShapes.drawingSpaceState.nextShape = new Line(ReShapes.drawingSpaceState)
     case ButtonClicked(`rectBtn`) =>
-      Reshapes.drawingSpaceState.nextShape = new Rectangle(Reshapes.drawingSpaceState)
+      ReShapes.drawingSpaceState.nextShape = new Rectangle(ReShapes.drawingSpaceState)
     case ButtonClicked(`ovalBtn`) =>
-      Reshapes.drawingSpaceState.nextShape = new Oval(Reshapes.drawingSpaceState)
+      ReShapes.drawingSpaceState.nextShape = new Oval(ReShapes.drawingSpaceState)
     case ButtonClicked(`triangleBtn`) =>
-      Reshapes.drawingSpaceState.nextShape = new Triangle(Reshapes.drawingSpaceState)
+      ReShapes.drawingSpaceState.nextShape = new Triangle(ReShapes.drawingSpaceState)
     case ButtonClicked(`freedrawBtn`) =>
-      Reshapes.drawingSpaceState.nextShape = new Freedraw(Reshapes.drawingSpaceState)
+      ReShapes.drawingSpaceState.nextShape = new Freedraw(ReShapes.drawingSpaceState)
   }
 }

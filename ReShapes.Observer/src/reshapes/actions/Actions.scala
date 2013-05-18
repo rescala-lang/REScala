@@ -6,7 +6,7 @@ import scala.swing.Action
 import scala.swing.FileChooser
 import scala.xml.XML
 
-import reshapes.Reshapes
+import reshapes.ReShapes
 import reshapes.drawing.CreateShape
 import reshapes.drawing.DrawingSpaceState
 import reshapes.drawing.MergeDrawingSpaces
@@ -18,12 +18,12 @@ import reshapes.figures.Shape
 class SaveAction extends Action("Save") {
   def apply() = {
     val fileChooser = new FileChooser()
-    fileChooser.selectedFile = new File(Reshapes.drawingSpaceState.fileName)
+    fileChooser.selectedFile = new File(ReShapes.drawingSpaceState.fileName)
     if (fileChooser.showDialog(null, "save") == FileChooser.Result.Approve) {
       XML.save(fileChooser.selectedFile.getCanonicalPath,
-               Shape.serialize(Reshapes.drawingSpaceState.shapes))
-      Reshapes.drawingSpaceState.fileName = fileChooser.selectedFile.getName()
-      Reshapes.ui.tabbedPane.pages(Reshapes.ui.tabbedPane.selection.index).title = fileChooser.selectedFile.getName()
+               Shape.serialize(ReShapes.drawingSpaceState.shapes))
+      ReShapes.drawingSpaceState.fileName = fileChooser.selectedFile.getName()
+      ReShapes.ui.tabbedPane.pages(ReShapes.ui.tabbedPane.selection.index).title = fileChooser.selectedFile.getName()
     }
   }
 }
@@ -35,10 +35,10 @@ class LoadAction extends Action("Load") {
   def apply() = {
     val fileChooser = new FileChooser()
     if (fileChooser.showDialog(null, "load") == FileChooser.Result.Approve) {
-      Reshapes.drawingSpaceState.clear
+      ReShapes.drawingSpaceState.clear
       Shape.deserialize(XML.loadFile(fileChooser.selectedFile),
-                        Reshapes.drawingSpaceState) map (shape =>
-        Reshapes.drawingSpaceState execute new CreateShape(shape))
+                        ReShapes.drawingSpaceState) map (shape =>
+        ReShapes.drawingSpaceState execute new CreateShape(shape))
     }
   }
 }
@@ -57,7 +57,7 @@ class QuitAction extends Action("Quit") {
  */
 class UndoAction extends Action("Undo") {
   def apply() = {
-    Reshapes.drawingSpaceState revert Reshapes.drawingSpaceState.commands.head
+    ReShapes.drawingSpaceState revert ReShapes.drawingSpaceState.commands.head
   }
 }
 
@@ -66,6 +66,6 @@ class UndoAction extends Action("Undo") {
  */
 class MergeAction(title: String, eventsToMergeWith: DrawingSpaceState) extends Action("Merge with %s".format(title)) {
   def apply() = {
-    Reshapes.drawingSpaceState execute new MergeDrawingSpaces(eventsToMergeWith)
+    ReShapes.drawingSpaceState execute new MergeDrawingSpaces(eventsToMergeWith)
   }
 }

@@ -12,7 +12,7 @@ import scala.swing.Slider
 import scala.swing.event.ValueChanged
 
 import javax.swing.JColorChooser
-import reshapes.Reshapes
+import reshapes.ReShapes
 
 /**
  * Panel for various customization of the stroke.
@@ -31,7 +31,7 @@ class StrokeInputPanel extends FlowPanel {
     }
     
     def confirmColor() {
-      Reshapes.drawingSpaceState.color = colorChooser.peer.getColor()
+      ReShapes.drawingSpaceState.color = colorChooser.peer.getColor()
       visible = false
     }
   }
@@ -51,7 +51,7 @@ class StrokeInputPanel extends FlowPanel {
     paintTicks = true
     
     reactions += {
-      case e: ValueChanged => Reshapes.drawingSpaceState.strokeWidth = value
+      case e: ValueChanged => ReShapes.drawingSpaceState.strokeWidth = value
     }
   }
   contents += showColorInput

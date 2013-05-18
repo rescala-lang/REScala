@@ -1,7 +1,6 @@
 package scala.events
 package behaviour
 import scala.collection.mutable._
-
 import scala.events.scalareact
 
 /**
@@ -11,8 +10,9 @@ class EventStreamWrapper[P, V](reactive: scalareact.Reactive[P, V]) extends scal
   protected val e = new ImperativeEvent[P]
   val event: Event[P] = e
   
-  observe(reactive){
-    value =>  e(value)
+  val observer = observe(reactive){
+    value => 
+      e(value)
   }
 }
 
@@ -20,9 +20,15 @@ class EventStreamWrapper[P, V](reactive: scalareact.Reactive[P, V]) extends scal
  * Wraps a scala.react reactive into an EScala reactive
  */
 trait ReactivityWrapper[A, V] {  self: scalareact.TotalReactive[A, V] =>
-   protected lazy val esWrapper = new EventStreamWrapper(self)
+  
+   def getValue: V
+   def apply: A
    
-   lazy val changed: Event[A] = esWrapper.event
+   // we explicitly have to hold a reference to observer. Scala.react uses weak references and expects us to keep it.
+   // also can not be made lazy!
+   protected val wrapper = new EventStreamWrapper(self)
+   protected val observer = wrapper.observer
+   lazy val changed: Event[A] = wrapper.event
    
    /** Convenience function filtering to events which change this reactive to value */
    def changedTo(value: V) : Event[Unit] = changed && {_ == value} dropParam
@@ -39,54 +45,75 @@ trait ReactivityWrapper[A, V] {  self: scalareact.TotalReactive[A, V] =>
    /** Switch back and forth between this and the other Signal on occurrence of event e */
    def toggle(e: Event[_])(other: Signal[V]) = Signal.toggle(e, self, other)
 
-   /** Delays this event by n occurrences */
-   def delay(n: Int) = Signal.delay(changed, n)
+   /** Delays this signal by n occurrences */
+   def delay(n: Int) = Signal.delay(changed, self.getValue, n)
 }
 
 class Var[A](init: A) extends scalareact.Var[A](init, scalareact.owner) with ReactivityWrapper[A, A] {
-    override def update(a: A) {
-      super.update(a)
-      scalareact.engine.runTurn
+
+  override def apply(): A = {
+    // this is a workaround. in case we are out of turn, we fall back to the 'getValue' method.
+    // this allows statements like a() += 1
+     try{ super.apply }
+     catch {
+    	case e: Throwable => getValue
+   	 }
+   }
+
+  override def update(a: A) {
+	  scalareact.engine.doAndTurn {
+	    super.update(a)
+	  }
   }
+  
+  def updateNoTurn(a: A) = super.update(a)
 }
 
 object Var {
   def apply[A](init: A): Var[A] = new Var(init)
   
   // implicit conversion to a signal (Read-only)
-  implicit def toSignal[A](v: Var[A]) = Signal { v() }
+  implicit def varToSignal[A](v: Var[A]) = Signal { v() }
 }
 
 class Signal[A](op: => A) extends scalareact.StrictOpSignal[A](op) with ReactivityWrapper[A, A] {
-  
+
+  /*
   override def apply(): A = {
-    try{ super.apply() }
+    try{ super.apply }
     catch {
-    	case e: Exception => System.err.println("You can not use apply out-of-turn. Make sure you did not call a signal expression, and use getValue!")
-    	getValue
+    	case e: Exception => 
+    	  System.err.println("DEBUG: You should use getValue to access a signal value from the outside. e = " + e)
+    	  getValue
    	}
   }
+  */
 }
 
 object Signal {
 
-  // creates a signal. Although it looks nicer, its a bad idea to make this implicit!
   def apply[T](op: => T): Signal[T] = {
-    val signal = new Signal(op)
-    scalareact.engine.runTurn
+    var signal: Signal[T] = null
+    scalareact.engine.doAndTurn {
+    	signal = new Signal(op)      
+    }
     signal
   }
   
   /** folds events with a given fold function to create a Signal */
   def fold[T,A](e : Event[T], init : A)(fold : (A,T) => A): Signal[A]  = {
 	  val acc : Var[A] = Var(init)
-	  e += {(newValue) =>
-	   //scalareact.engine.runTurn
-	   val old = acc.getValue
-	   acc() = fold(old, newValue)
-	   //scalareact.engine.runTurn
+	  
+	  val reaction = {(newValue: T) =>	    
+	    scalareact.engine.doAndTurn {
+	      val old = acc.getValue
+	      acc.updateNoTurn(fold(old, newValue))
+	    }
+
 	  }
-	  return acc
+	  
+	  e += reaction
+	  acc
   }
   
   /** iterates a value on the occurrence of the event. */
@@ -139,13 +166,16 @@ object Signal {
   }
   
   /** Like latest, but delays the value of the resulting signal by n occurrences */
-  def delay[T](e: Event[T], n: Int): Signal[T] = {
-    val history = last(e, n)
-    Signal { history().last }
+  def delay[T](e: Event[T], init: T, n: Int): Signal[T] = {
+    val history = last(e, n + 1)
+    Signal {
+        val h = history()
+    	if(h.isEmpty) init else h.last
+    }
   }
   
   /** Delays this signal by n occurrences */
-  def delay[T](signal: Signal[T], n: Int): Signal[T] = delay(signal.changed, n)
+  def delay[T](signal: Signal[T], n: Int): Signal[T] = delay(signal.changed, signal.getValue, n)
   
    /** lifts a function A => B to work on scalareact reactives */
   def lift[A,B](f : A => B) : (scalareact.TotalReactive[A, A] => Signal[B]) = {

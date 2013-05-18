@@ -9,7 +9,7 @@ import scala.swing.Orientation
 import scala.swing.ScrollPane
 import scala.swing.event.MouseClicked
 
-import reshapes.Reshapes
+import reshapes.ReShapes
 import reshapes.drawing.DeleteShape
 import reshapes.drawing.DrawingSpaceState
 import reshapes.figures.Shape
@@ -25,7 +25,7 @@ class ShapePanel extends BoxPanel(Orientation.Vertical) {
   
   var currentState: DrawingSpaceState = null
   
-  Reshapes.registerDrawingSpaceStateObserver{ state =>
+  ReShapes.registerDrawingSpaceStateObserver{ state =>
     if (currentState != null)
       currentState.unregisterShapesObserver(updateShapesPanel)
     
