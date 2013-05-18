@@ -36,13 +36,9 @@ import reshapes.ui.panels.ShowCoordinateSystem
 import reshapes.ui.panels.ShowIntersection
 import reshapes.ui.panels.ShowNameLabels
 import reshapes.ui.panels.StrokeInputPanel
-import reshapes.versions.observer.CommandPanelInteraction
-import reshapes.versions.observer.DrawingPanelInteraction
-import reshapes.versions.observer.InfoPanelInteraction
-import reshapes.versions.observer.ShapePanelInteraction
 
 object Reshapes extends SimpleSwingApplication {
-  private val panelDrawingSpaceStates = new HashMap[TabbedPane.Page, DrawingSpaceState]
+  private val panelDrawingSpaceStates = new HashMap[TabbedPane.Page, (DrawingSpaceState, NetworkSpaceState)]
   private var drawingSpaceStateObservers: List[DrawingSpaceState => Unit] = Nil
   
   def registerDrawingSpaceStateObserver(obs: DrawingSpaceState => Unit) =
@@ -52,8 +48,9 @@ object Reshapes extends SimpleSwingApplication {
     drawingSpaceStateObservers = drawingSpaceStateObservers filterNot (_ == obs)
   
   def drawingSpaceState =
-    if (ui.tabbedPane.selection.index != -1)
-      panelDrawingSpaceStates(ui.tabbedPane.selection.page)
+    if (ui.tabbedPane.selection.index != -1
+          && (panelDrawingSpaceStates contains ui.tabbedPane.selection.page))
+        panelDrawingSpaceStates(ui.tabbedPane.selection.page)._1
     else
       null
   
@@ -68,11 +65,11 @@ object Reshapes extends SimpleSwingApplication {
     val tabbedPane = new TabbedPane
     layout(tabbedPane) = Position.Center
     layout(new StrokeInputPanel) = Position.North
-    layout(new InfoPanel with InfoPanelInteraction) = Position.South
+    layout(new InfoPanel) = Position.South
     layout(new ShapeSelectionPanel) = Position.West
     layout(new TabbedPane() {
-      pages += new TabbedPane.Page("Shapes", new ShapePanel with ShapePanelInteraction)
-      pages += new TabbedPane.Page("Commands", new CommandPanel with CommandPanelInteraction)
+      pages += new TabbedPane.Page("Shapes", new ShapePanel)
+      pages += new TabbedPane.Page("Commands", new CommandPanel)
     }) = Position.East
   }
     
@@ -102,7 +99,7 @@ object Reshapes extends SimpleSwingApplication {
       merge.contents.clear()
       for (tab <- ui.tabbedPane.pages)
         if (tab.index != ui.tabbedPane.selection.index)
-          merge.contents += new MenuItem(new MergeAction(tab.title, panelDrawingSpaceStates(tab)))
+          merge.contents += new MenuItem(new MergeAction(tab.title, panelDrawingSpaceStates(tab)._1))
     }
   }
   
@@ -127,22 +124,26 @@ object Reshapes extends SimpleSwingApplication {
               newTabDialog.showIntersections.selected,
               newTabDialog.showCoordinates.selected,
               newTabDialog.showNames.selected,
-              state))
+              state),
+              state match {
+                case state: NetworkSpaceState => state
+                case _ => null
+              })
   
   def generateDrawingPanel(showIntersections: Boolean, showCoordinates: Boolean, showName: Boolean, state: DrawingSpaceState): DrawingPanel =
     (showIntersections, showCoordinates, showName) match {
-      case (true, false, false) => new DrawingPanel(state) with ShowIntersection with DrawingPanelInteraction
-      case (false, true, false) => new DrawingPanel(state) with ShowCoordinateSystem with DrawingPanelInteraction
-      case (true, true, false) => new DrawingPanel(state) with ShowIntersection with ShowCoordinateSystem with DrawingPanelInteraction
-      case (false, false, true) => new DrawingPanel(state) with ShowNameLabels with DrawingPanelInteraction
-      case (true, false, true) => new DrawingPanel(state) with ShowIntersection with ShowNameLabels with DrawingPanelInteraction
-      case (true, true, true) => new DrawingPanel(state) with ShowIntersection with ShowCoordinateSystem with ShowNameLabels with DrawingPanelInteraction
-      case _ => new DrawingPanel(state) with DrawingPanelInteraction
+      case (true, false, false) => new DrawingPanel(state) with ShowIntersection
+      case (false, true, false) => new DrawingPanel(state) with ShowCoordinateSystem
+      case (true, true, false) => new DrawingPanel(state) with ShowIntersection with ShowCoordinateSystem
+      case (false, false, true) => new DrawingPanel(state) with ShowNameLabels
+      case (true, false, true) => new DrawingPanel(state) with ShowIntersection with ShowNameLabels
+      case (true, true, true) => new DrawingPanel(state) with ShowIntersection with ShowCoordinateSystem with ShowNameLabels
+      case _ => new DrawingPanel(state)
     }
   
-  def addDrawingPanel(panel: DrawingPanel) {
+  def addDrawingPanel(panel: DrawingPanel, networkSpaceState: NetworkSpaceState) {
     val page = new TabbedPane.Page("drawing#%d".format(ui.tabbedPane.pages.size + 1), panel)
-    panelDrawingSpaceStates(page) = panel.state
+    panelDrawingSpaceStates(page) = (panel.state, networkSpaceState)
     ui.tabbedPane.pages += page
     menu.updateMerge()
   }
@@ -170,7 +171,9 @@ object Reshapes extends SimpleSwingApplication {
   
   def removeCurrentTab() {
     if (ui.tabbedPane.pages.size > 0) {
-      panelDrawingSpaceStates(ui.tabbedPane.selection.page).dispose
+      val (_, networkSpaceState) = panelDrawingSpaceStates(ui.tabbedPane.selection.page)
+      if (networkSpaceState != null)
+        networkSpaceState.dispose
       panelDrawingSpaceStates remove ui.tabbedPane.selection.page
       ui.tabbedPane.pages remove ui.tabbedPane.selection.index
       menu.updateMerge

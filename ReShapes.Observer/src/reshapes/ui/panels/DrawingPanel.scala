@@ -20,14 +20,14 @@ import reshapes.figures.Shape
 import reshapes.util.MathUtil
 
 /**
- * Represents the panel where all shapes are drawn onto.
+ * Represents the panel where all shapes are drawn onto
  */
 class DrawingPanel(val state: DrawingSpaceState) extends Panel {
   private var point: Point = null
   private var currentShape: Shape = null
   private var resizingMode: Boolean = false
   
-  override def paint(g: Graphics2D) = {
+  override def paint(g: Graphics2D) {
     g.setColor(java.awt.Color.WHITE)
     g.fillRect(0, 0, size.getWidth().toInt, size.getHeight().toInt)
     
@@ -83,10 +83,17 @@ class DrawingPanel(val state: DrawingSpaceState) extends Panel {
       currentShape = null
       repaint
   }
+  
+  state.registerSelectedShapeObserver(canvasChange)
+  state.registerShapesObserver(canvasChange)
+  state.registerStrokeWidthObserver(canvasChange)
+  state.registerColorObserver(canvasChange)
+  
+  def canvasChange(x: Any) = repaint
 }
 
 /**
- * This trait draws intersection points between all drawn shapes.
+ * This trait draws intersection points between all drawn shapes
  */
 trait ShowIntersection extends DrawingPanel {
   override def paint(g: Graphics2D) {
@@ -115,7 +122,7 @@ trait ShowIntersection extends DrawingPanel {
 }
 
 /**
- * Draws a coordinate System onto the panel.
+ * Draws a coordinate System onto the panel
  */
 trait ShowCoordinateSystem extends DrawingPanel {
   override def paint(g: Graphics2D) {
@@ -137,7 +144,7 @@ trait ShowCoordinateSystem extends DrawingPanel {
 }
 
 /**
- * Writes the name of the shape besides them on drawing panel.
+ * Writes the name of the shape besides them on drawing panel
  */
 trait ShowNameLabels extends DrawingPanel {
   override def paint(g: Graphics2D) {

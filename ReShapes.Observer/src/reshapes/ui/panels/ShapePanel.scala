@@ -9,6 +9,7 @@ import scala.swing.Orientation
 import scala.swing.ScrollPane
 import scala.swing.event.MouseClicked
 
+import reshapes.Reshapes
 import reshapes.drawing.DeleteShape
 import reshapes.drawing.DrawingSpaceState
 import reshapes.figures.Shape
@@ -17,8 +18,30 @@ import reshapes.figures.Shape
  * Lists all drawn shapes
  */
 class ShapePanel extends BoxPanel(Orientation.Vertical) {
-  val scrollPane = new ScrollPane()
-  contents += scrollPane
+  val shapesPanel = new BoxPanel(Orientation.Vertical)
+  contents += new ScrollPane {
+    contents = shapesPanel
+  }
+  
+  var currentState: DrawingSpaceState = null
+  
+  Reshapes.registerDrawingSpaceStateObserver{ state =>
+    if (currentState != null)
+      currentState.unregisterShapesObserver(updateShapesPanel)
+    
+    currentState = state
+    if (currentState != null)
+      currentState.registerShapesObserver(updateShapesPanel)
+    
+    updateShapesPanel(if (currentState != null) state.shapes else List.empty)
+  }
+  
+  def updateShapesPanel(shapes: List[Shape]) {
+    shapesPanel.contents.clear
+    for (shape <- shapes)
+      shapesPanel.contents += new ShapeView(shape, currentState)
+    repaint
+  }
 }
 
 class ShapeView(shape: Shape, state: DrawingSpaceState) extends BoxPanel(Orientation.Horizontal) {

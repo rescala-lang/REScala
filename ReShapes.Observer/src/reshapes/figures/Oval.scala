@@ -23,7 +23,8 @@ class Oval(
   }
   
   override def toLines() =
-    throw new NotImplementedError
+    // TODO: implement method
+    List.empty
   
   override def copy(
       drawingSpaceState: DrawingSpaceState,

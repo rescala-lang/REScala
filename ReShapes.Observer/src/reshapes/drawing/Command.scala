@@ -7,7 +7,7 @@ abstract class Command {
   
   def revert(shapes: List[Shape]): List[Shape]
   
-  def getCommandDescription(): String
+  def description: String
 }
 
 /**
@@ -20,7 +20,7 @@ class DeleteShape(shapeToDelete: Shape) extends Command {
   override def revert(shapes: List[Shape]) =
     shapeToDelete :: shapes
   
-  override def getCommandDescription() = "Delete %s".format(shapeToDelete)
+  override def description = "Delete %s".format(shapeToDelete)
 }
 
 /**
@@ -33,7 +33,7 @@ class CreateShape(shapeToCreate: Shape) extends Command {
   override def revert(shapes: List[Shape]) =
     shapes filterNot (_ == shapeToCreate)
   
-  override def getCommandDescription() = "Create %s".format(shapeToCreate)
+  override def description = "Create %s".format(shapeToCreate)
 }
 
 /**
@@ -46,7 +46,7 @@ class EditShape(shapeBeforeEdit: Shape, shapeAfterEdit: Shape) extends Command {
   override def revert(shapes: List[Shape]) =
     shapeBeforeEdit :: shapes filterNot (_ == shapeAfterEdit)
   
-  override def getCommandDescription() = "Edit %s".format(shapeAfterEdit)
+  override def description = "Edit %s".format(shapeAfterEdit)
 }
 
 /**
@@ -62,6 +62,6 @@ class MergeDrawingSpaces(eventToMerge: DrawingSpaceState) extends Command {
   override def revert(shapes: List[Shape]) =
     shapes filterNot (otherShapes contains _)
   
-  override def getCommandDescription() = "Merge with %s".format(eventTitle)
+  override def description = "Merge with %s".format(eventTitle)
 }
 
