@@ -91,8 +91,8 @@ class CommandThread(port: Int) extends Actor {
     println("start CommandThread")
     val listener = new ServerSocket(port)
     while (true) {
-      val clientSocket = listener.accept()
-      val in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()))
+      val clientSocket = listener.accept
+      val in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream))
       
       val command = in.readLine()
       println("CommandThread new command: '%s'" format command)

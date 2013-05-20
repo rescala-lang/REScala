@@ -46,7 +46,7 @@ class DrawingSpaceState {
   
   def execute(command: Command) {
     _commands ::= command
-    for (obs <- CommandsObservers)
+    for (obs <- commandsObservers)
       obs(_commands)
     
     val shapes = command execute _shapes
@@ -65,7 +65,7 @@ class DrawingSpaceState {
   
   def revert(command: Command) {
     val count = (_commands indexOf command) + 1
-    if (count != -1) {
+    if (count != 0) {
       val shapes = (_shapes /: (_commands take count)) {
         (shapes, command) => command revert shapes
       }
@@ -83,7 +83,7 @@ class DrawingSpaceState {
       }
       
       _commands = _commands drop count
-      for (obs <- CommandsObservers)
+      for (obs <- commandsObservers)
         obs(_commands)
     }
   }
@@ -135,7 +135,7 @@ class DrawingSpaceState {
   private var shapesObservers: List[List[Shape] => Unit] = Nil
   private var strokeWidthObservers: List[Int => Unit] = Nil
   private var colorObservers: List[Color => Unit] = Nil
-  private var CommandsObservers: List[List[Command] => Unit] = Nil
+  private var commandsObservers: List[List[Command] => Unit] = Nil
   private var fileNameObservers: List[String => Unit] = Nil
   
   def registerNextShapeObserver(obs: Shape => Unit) =
@@ -154,7 +154,7 @@ class DrawingSpaceState {
     colorObservers ::= obs
   
   def registerCommandsObserver(obs: List[Command] => Unit) =
-    CommandsObservers ::= obs
+    commandsObservers ::= obs
   
   def registerFileNameObserver(obs: String => Unit) =
     fileNameObservers ::= obs
@@ -175,7 +175,7 @@ class DrawingSpaceState {
     colorObservers = colorObservers filterNot (_ == obs)
   
   def unregisterCommandsObserver(obs: List[Command] => Unit) =
-    CommandsObservers = CommandsObservers filterNot (_ == obs)
+    commandsObservers = commandsObservers filterNot (_ == obs)
   
   def unregisterFileNameObserver(obs: String => Unit) =
     fileNameObservers = fileNameObservers filterNot (_ == obs)
@@ -185,10 +185,11 @@ class DrawingSpaceState {
 
 
 class NetworkSpaceState(
+    val drawingStateSpace: DrawingSpaceState,
     val serverHostname: String = "localhost",
     val commandPort: Int = 9998,
     val exchangePort: Int = 9999,
-    val listenerPort: Int = 1337) extends DrawingSpaceState {
+    val listenerPort: Int = 1337) {
   val serverInetAddress: InetAddress = InetAddress.getByName(serverHostname)
   
   // Register this client with a server and tell it
@@ -211,11 +212,11 @@ class NetworkSpaceState(
         while (true) {
           println("receiving update")
           val socket = listener.accept
-          val shapes = Shape.deserialize(XML.load(socket.getInputStream), NetworkSpaceState.this)
+          val shapes = Shape.deserialize(XML.load(socket.getInputStream), drawingStateSpace)
           updating = true
-          clear
+          drawingStateSpace.clear
           for (shape <- shapes)
-            execute(new CreateShape(shape))
+            drawingStateSpace execute new CreateShape(shape)
           updating = false
           socket.close
         }
@@ -226,7 +227,7 @@ class NetworkSpaceState(
     }
   }.start
   
-  registerShapesObserver{ shapes =>
+  drawingStateSpace.registerShapesObserver{ shapes =>
     if (!updating) {
       println("sending update")
       val socket = new Socket(serverInetAddress, exchangePort)
@@ -238,6 +239,5 @@ class NetworkSpaceState(
     }
   }
   
-  override def dispose =
-    listener.close
+  def dispose = listener.close
 }

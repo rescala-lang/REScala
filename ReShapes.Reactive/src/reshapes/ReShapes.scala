@@ -4,6 +4,8 @@ import java.net.BindException
 import java.net.ConnectException
 
 import scala.collection.mutable.HashMap
+import scala.events.behaviour.Signal
+import scala.events.behaviour.Var
 import scala.swing.Action
 import scala.swing.BorderPanel
 import scala.swing.BorderPanel.Position
@@ -36,6 +38,7 @@ import reshapes.ui.panels.ShowCoordinateSystem
 import reshapes.ui.panels.ShowIntersection
 import reshapes.ui.panels.ShowNameLabels
 import reshapes.ui.panels.StrokeInputPanel
+import reshapes.util.ReactiveUtil.bilateralEvents
 
 object ReShapes extends SimpleSwingApplication {
   private val panelDrawingSpaceStates = new HashMap[TabbedPane.Page, (DrawingSpaceState, NetworkSpaceState)]
@@ -46,6 +49,9 @@ object ReShapes extends SimpleSwingApplication {
   
   def unregisterDrawingSpaceStateObserver(obs: DrawingSpaceState => Unit) =
     drawingSpaceStateObservers = drawingSpaceStateObservers filterNot (_ == obs)
+  
+  val drawingSpaceStateVar = Var[DrawingSpaceState](null)
+  val drawingSpaceStateSignal = Signal { drawingSpaceStateVar() }
   
   def drawingSpaceState =
     if (ui.tabbedPane.selection.index != -1
@@ -63,13 +69,17 @@ object ReShapes extends SimpleSwingApplication {
   
   val ui = new BorderPanel {
     val tabbedPane = new TabbedPane
+    val strokeInputPanel = new StrokeInputPanel
+    val shapePanel = new ShapePanel
+    val commandPanel = new CommandPanel
+    
     layout(tabbedPane) = Position.Center
-    layout(new StrokeInputPanel) = Position.North
+    layout(strokeInputPanel) = Position.North
     layout(new InfoPanel) = Position.South
     layout(new ShapeSelectionPanel) = Position.West
-    layout(new TabbedPane() {
-      pages += new TabbedPane.Page("Shapes", new ShapePanel)
-      pages += new TabbedPane.Page("Commands", new CommandPanel)
+    layout(new TabbedPane {
+      pages += new TabbedPane.Page("Shapes", shapePanel)
+      pages += new TabbedPane.Page("Commands", commandPanel)
     }) = Position.East
   }
     
@@ -78,17 +88,17 @@ object ReShapes extends SimpleSwingApplication {
     
     contents += new Menu("File") {
       contents += new MenuItem(Action("New tab") { addTab() })
-      contents += new MenuItem(Action("New network tab") { addNetworkTab() })
-      contents += new MenuItem(Action("Remove selected tab") { removeCurrentTab() })
+      contents += new MenuItem(Action("New network tab") { addNetworkTab })
+      contents += new MenuItem(Action("Remove selected tab") { removeCurrentTab })
       contents += new Separator
-      contents += new MenuItem(new SaveAction())
-      contents += new MenuItem(new LoadAction())
+      contents += new MenuItem(new SaveAction)
+      contents += new MenuItem(new LoadAction)
       contents += new Separator
-      contents += new MenuItem(new QuitAction())
+      contents += new MenuItem(new QuitAction)
     }
     
     contents += new Menu("Edit") {
-      contents += new MenuItem(new UndoAction()) { enabled = false }
+      contents += new MenuItem(new UndoAction) { enabled = false }
     }
     
     contents += new Menu("Tools") {
@@ -96,7 +106,7 @@ object ReShapes extends SimpleSwingApplication {
     }
     
     def updateMerge() {
-      merge.contents.clear()
+      merge.contents.clear
       for (tab <- ui.tabbedPane.pages)
         if (tab.index != ui.tabbedPane.selection.index)
           merge.contents += new MenuItem(new MergeAction(tab.title, panelDrawingSpaceStates(tab)._1))
@@ -113,24 +123,36 @@ object ReShapes extends SimpleSwingApplication {
     case SelectionChanged(ui.tabbedPane) =>
       for (obs <- drawingSpaceStateObservers)
         obs(drawingSpaceState)
+      drawingSpaceStateVar() = drawingSpaceState
       if (ui.tabbedPane.pages.size > 0)
-        menu.updateMerge()
+        menu.updateMerge
   }
   
-  def addTab(state: DrawingSpaceState = new DrawingSpaceState) =
-    if (newTabDialog.showDialog(ui.locationOnScreen))
-      addDrawingPanel(
-          generateDrawingPanel(
-              newTabDialog.showIntersections.selected,
-              newTabDialog.showCoordinates.selected,
-              newTabDialog.showNames.selected,
-              state),
-              state match {
-                case state: NetworkSpaceState => state
-                case _ => null
-              })
+  def addTab(networkSpaceState: DrawingSpaceState => NetworkSpaceState = {_ => null}) = {
+    if (newTabDialog.showDialog(ui.locationOnScreen)) {
+      val (state, panel) = bilateralEvents{ event =>
+        lazy val panel = generateDrawingPanel(
+            newTabDialog.showIntersections.selected,
+            newTabDialog.showCoordinates.selected,
+            newTabDialog.showNames.selected,
+            state)
+        
+        lazy val state: DrawingSpaceState = new DrawingSpaceState {
+          def isCurrentState(x: Any) = drawingSpaceStateSignal.getValue == this
+          
+          override lazy val strokeWidth = Signal { ui.strokeInputPanel.strokeWidth() }
+          override lazy val color = Signal { ui.strokeInputPanel.color() }
+          override lazy val executed = event(panel.drawn)
+          override lazy val reverted = ui.commandPanel.revert && isCurrentState _
+        }
+        
+        (state, panel)
+      }
+      addDrawingPanel(panel, networkSpaceState(state))
+    }
+  }
   
-  def generateDrawingPanel(showIntersections: Boolean, showCoordinates: Boolean, showName: Boolean, state: DrawingSpaceState): DrawingPanel =
+  def generateDrawingPanel(showIntersections: Boolean, showCoordinates: Boolean, showName: Boolean, state: => DrawingSpaceState): DrawingPanel =
     (showIntersections, showCoordinates, showName) match {
       case (true, false, false) => new DrawingPanel(state) with ShowIntersection
       case (false, true, false) => new DrawingPanel(state) with ShowCoordinateSystem
@@ -145,18 +167,19 @@ object ReShapes extends SimpleSwingApplication {
     val page = new TabbedPane.Page("drawing#%d".format(ui.tabbedPane.pages.size + 1), panel)
     panelDrawingSpaceStates(page) = (panel.state, networkSpaceState)
     ui.tabbedPane.pages += page
-    menu.updateMerge()
+    menu.updateMerge
   }
   
   def addNetworkTab() {
-    if (serverDialog.showDialog(ui.locationOnScreen) && serverDialog.inputIsValid())
-      try {
-        addTab(new NetworkSpaceState(
+    if (serverDialog.showDialog(ui.locationOnScreen) && serverDialog.inputIsValid)
+      try
+        addTab({drawingSpaceState =>
+          new NetworkSpaceState(
+            drawingSpaceState,
             serverDialog.hostname,
             serverDialog.commandPort,
             serverDialog.exchangePort,
-            serverDialog.listenerPort))
-      }
+            serverDialog.listenerPort)})
       catch {
         case e: ConnectException =>
           JOptionPane.showMessageDialog(null, "Server not available", "ConnectException", JOptionPane.ERROR_MESSAGE)

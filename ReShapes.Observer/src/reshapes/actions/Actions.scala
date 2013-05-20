@@ -22,8 +22,8 @@ class SaveAction extends Action("Save") {
     if (fileChooser.showDialog(null, "save") == FileChooser.Result.Approve) {
       XML.save(fileChooser.selectedFile.getCanonicalPath,
                Shape.serialize(ReShapes.drawingSpaceState.shapes))
-      ReShapes.drawingSpaceState.fileName = fileChooser.selectedFile.getName()
-      ReShapes.ui.tabbedPane.pages(ReShapes.ui.tabbedPane.selection.index).title = fileChooser.selectedFile.getName()
+      ReShapes.drawingSpaceState.fileName = fileChooser.selectedFile.getName
+      ReShapes.ui.tabbedPane.pages(ReShapes.ui.tabbedPane.selection.index).title = fileChooser.selectedFile.getName
     }
   }
 }
@@ -33,12 +33,12 @@ class SaveAction extends Action("Save") {
  */
 class LoadAction extends Action("Load") {
   def apply() = {
-    val fileChooser = new FileChooser()
+    val fileChooser = new FileChooser
     if (fileChooser.showDialog(null, "load") == FileChooser.Result.Approve) {
       ReShapes.drawingSpaceState.clear
-      Shape.deserialize(XML.loadFile(fileChooser.selectedFile),
-                        ReShapes.drawingSpaceState) map (shape =>
-        ReShapes.drawingSpaceState execute new CreateShape(shape))
+      for (shape <- Shape.deserialize(XML.loadFile(fileChooser.selectedFile),
+                                      ReShapes.drawingSpaceState))
+        ReShapes.drawingSpaceState execute new CreateShape(shape)
     }
   }
 }

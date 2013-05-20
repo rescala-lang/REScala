@@ -48,7 +48,7 @@ class ShapeView(shape: Shape, state: DrawingSpaceState) extends BoxPanel(Orienta
   val SELECTED_COLOR = new Color(0, 153, 255)
   val NOT_SELECTED_COLOR = new Color(255, 255, 255)
   
-  val selectButton = new Button(Action(shape.toString()) {
+  val selectButton = new Button(Action(shape.toString) {
       state.selectedShape = shape
   })
   

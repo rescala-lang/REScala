@@ -8,11 +8,12 @@ import scala.swing.Label
 import scala.swing.Orientation
 import scala.swing.ScrollPane
 import scala.swing.event.MouseClicked
-
 import reshapes.ReShapes
 import reshapes.drawing.DeleteShape
 import reshapes.drawing.DrawingSpaceState
 import reshapes.figures.Shape
+import scala.events.Event
+import scala.events.ImperativeEvent
 
 /**
  * Lists all drawn shapes
@@ -48,12 +49,14 @@ class ShapeView(shape: Shape, state: DrawingSpaceState) extends BoxPanel(Orienta
   val SELECTED_COLOR = new Color(0, 153, 255)
   val NOT_SELECTED_COLOR = new Color(255, 255, 255)
   
-  val selectButton = new Button(Action(shape.toString()) {
+  val deleted = new ImperativeEvent[DeleteShape]
+  
+  val selectButton = new Button(Action(shape.toString) {
       state.selectedShape = shape
   })
   
   val deleteButton = new Button(Action("delete") {
-    state execute new DeleteShape(shape)
+    deleted(new DeleteShape(shape)) 
   })
   
   contents += new Label(shape.toString)

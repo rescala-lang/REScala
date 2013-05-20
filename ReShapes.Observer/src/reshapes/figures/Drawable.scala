@@ -47,7 +47,7 @@ abstract class Shape(
       path: List[Point] = path): Shape
   
   override def toString(): String =
-    this.getClass().getSimpleName() + " #" + current.toString()
+    this.getClass.getSimpleName + " #" + current.toString
   
   def doUpdate(path: List[Point]) = {}
   def doDraw(g: Graphics2D)
@@ -143,7 +143,7 @@ trait Resizable extends Shape {
   override def draw(g: Graphics2D) = {
     super.draw(g)
     if (start != null && end != null && selected) {
-      val origStroke = g.getStroke()
+      val origStroke = g.getStroke
       g.setStroke(new BasicStroke(1))
       g.setColor(new Color(200, 200, 200))
       

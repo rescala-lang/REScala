@@ -29,7 +29,7 @@ class DrawingPanel(val state: DrawingSpaceState) extends Panel {
   
   override def paint(g: Graphics2D) {
     g.setColor(java.awt.Color.WHITE)
-    g.fillRect(0, 0, size.getWidth().toInt, size.getHeight().toInt)
+    g.fillRect(0, 0, size.width, size.height)
     
     g.setColor(java.awt.Color.BLACK)
     if (currentShape != null) {
@@ -99,7 +99,7 @@ trait ShowIntersection extends DrawingPanel {
   override def paint(g: Graphics2D) {
     super.paint(g)
     g.setColor(new Color(255, 0, 0))
-    g.setStroke(new BasicStroke())
+    g.setStroke(new BasicStroke)
     for (point <- getIntersectionPoints)
       g.drawOval(point.x - 3, point.y - 3, 6, 6)
   }
@@ -110,8 +110,8 @@ trait ShowIntersection extends DrawingPanel {
     for (shape <- state.shapes)
       for (otherShape <- state.shapes)
         if (shape != otherShape)
-          for (line <- shape.toLines())
-            for (otherLine <- otherShape.toLines()) {
+          for (line <- shape.toLines)
+            for (otherLine <- otherShape.toLines) {
               val intersection = MathUtil.getIntersectionsOfTwoLines(line, otherLine)
               if (intersection != null)
                 points += intersection

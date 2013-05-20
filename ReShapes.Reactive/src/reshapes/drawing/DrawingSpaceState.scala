@@ -9,6 +9,10 @@ import java.net.Socket
 import java.net.SocketException
 
 import scala.actors.Actor
+import scala.events.Event
+import scala.events.behaviour.Signal
+import scala.events.behaviour.Var
+import scala.events.emptyevent
 import scala.xml.Attribute
 import scala.xml.Null
 import scala.xml.Text
@@ -28,26 +32,28 @@ class DrawingSpaceState {
   // currently drawn shapes
   private var _shapes: List[Shape] = List.empty
   // current stroke width
-  private var _strokeWidth: Int = 1
+  lazy val strokeWidth = Signal { 1 }
   // current stroke color
-  private var _color: Color = Color.BLACK
+  lazy val color = Signal { Color.BLACK }
   // all executed commands
-  private var _commands: List[Command] = List.empty
+  private val _commandsVar = Var(List.empty[Command])
+  val commands = Signal { _commandsVar() }
   // filename after saving
   private var _fileName: String = "unnamed"
   
   def nextShape = _nextShape
   def selectedShape = _selectedShape
   def shapes = _shapes
-  def strokeWidth = _strokeWidth
-  def color = _color
-  def commands = _commands
   def fileName = _fileName
   
+  lazy val executed: Event[Command] = emptyevent
+  lazy val reverted: Event[Command] = emptyevent
+  
+  executed += execute _
+  reverted += revert _
+  
   def execute(command: Command) {
-    _commands ::= command
-    for (obs <- CommandsObservers)
-      obs(_commands)
+    _commandsVar() ::= command
     
     val shapes = command execute _shapes
     if (shapes != _shapes) {
@@ -64,9 +70,9 @@ class DrawingSpaceState {
   }
   
   def revert(command: Command) {
-    val count = (_commands indexOf command) + 1
-    if (count != -1) {
-      val shapes = (_shapes /: (_commands take count)) {
+    val count = (_commandsVar.getValue indexOf command) + 1
+    if (count != 0) {
+      val shapes = (_shapes /: (_commandsVar.getValue take count)) {
         (shapes, command) => command revert shapes
       }
       
@@ -82,9 +88,7 @@ class DrawingSpaceState {
           obs(_shapes)
       }
       
-      _commands = _commands drop count
-      for (obs <- CommandsObservers)
-        obs(_commands)
+      _commandsVar() = _commandsVar.getValue drop count
     }
   }
   
@@ -109,20 +113,6 @@ class DrawingSpaceState {
         obs(shape)
     }
   
-  def strokeWidth_=(width: Int) =
-    if (_strokeWidth != width) {
-      _strokeWidth = width
-      for (obs <- strokeWidthObservers)
-        obs(width)
-    }
-  
-  def color_=(color: Color) =
-    if (_color != color) {
-      _color = color
-      for (obs <- colorObservers)
-        obs(color)
-    }
-  
   def fileName_=(fileName: String) =
     if (_fileName != fileName) {
       _fileName = fileName
@@ -133,9 +123,6 @@ class DrawingSpaceState {
   private var nextShapeObservers: List[Shape => Unit] = Nil
   private var selectedShapeObservers: List[Shape => Unit] = Nil
   private var shapesObservers: List[List[Shape] => Unit] = Nil
-  private var strokeWidthObservers: List[Int => Unit] = Nil
-  private var colorObservers: List[Color => Unit] = Nil
-  private var CommandsObservers: List[List[Command] => Unit] = Nil
   private var fileNameObservers: List[String => Unit] = Nil
   
   def registerNextShapeObserver(obs: Shape => Unit) =
@@ -146,15 +133,6 @@ class DrawingSpaceState {
   
   def registerShapesObserver(obs: List[Shape] => Unit) =
     shapesObservers ::= obs
-  
-  def registerStrokeWidthObserver(obs: Int => Unit) =
-    strokeWidthObservers ::= obs
-  
-  def registerColorObserver(obs: Color => Unit) =
-    colorObservers ::= obs
-  
-  def registerCommandsObserver(obs: List[Command] => Unit) =
-    CommandsObservers ::= obs
   
   def registerFileNameObserver(obs: String => Unit) =
     fileNameObservers ::= obs
@@ -168,27 +146,16 @@ class DrawingSpaceState {
   def unregisterShapesObserver(obs: List[Shape] => Unit) =
     shapesObservers = shapesObservers filterNot (_ == obs)
   
-  def unregisterStrokeWidthObserver(obs: Int => Unit) =
-    strokeWidthObservers = strokeWidthObservers filterNot (_ == obs)
-  
-  def unregisterColorObserver(obs: Color => Unit) =
-    colorObservers = colorObservers filterNot (_ == obs)
-  
-  def unregisterCommandsObserver(obs: List[Command] => Unit) =
-    CommandsObservers = CommandsObservers filterNot (_ == obs)
-  
   def unregisterFileNameObserver(obs: String => Unit) =
     fileNameObservers = fileNameObservers filterNot (_ == obs)
-  
-  def dispose { }
 }
 
-
 class NetworkSpaceState(
+    val drawingStateSpace: DrawingSpaceState,
     val serverHostname: String = "localhost",
     val commandPort: Int = 9998,
     val exchangePort: Int = 9999,
-    val listenerPort: Int = 1337) extends DrawingSpaceState {
+    val listenerPort: Int = 1337) {
   val serverInetAddress: InetAddress = InetAddress.getByName(serverHostname)
   
   // Register this client with a server and tell it
@@ -211,11 +178,11 @@ class NetworkSpaceState(
         while (true) {
           println("receiving update")
           val socket = listener.accept
-          val shapes = Shape.deserialize(XML.load(socket.getInputStream), NetworkSpaceState.this)
+          val shapes = Shape.deserialize(XML.load(socket.getInputStream), drawingStateSpace)
           updating = true
-          clear
+          drawingStateSpace.clear
           for (shape <- shapes)
-            execute(new CreateShape(shape))
+            drawingStateSpace execute new CreateShape(shape)
           updating = false
           socket.close
         }
@@ -226,7 +193,7 @@ class NetworkSpaceState(
     }
   }.start
   
-  registerShapesObserver{ shapes =>
+  drawingStateSpace.registerShapesObserver{ shapes =>
     if (!updating) {
       println("sending update")
       val socket = new Socket(serverInetAddress, exchangePort)
@@ -238,6 +205,5 @@ class NetworkSpaceState(
     }
   }
   
-  override def dispose =
-    listener.close
+  def dispose = listener.close
 }

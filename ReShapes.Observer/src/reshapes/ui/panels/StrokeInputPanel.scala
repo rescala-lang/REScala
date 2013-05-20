@@ -27,11 +27,11 @@ class StrokeInputPanel extends FlowPanel {
     
     contents = new BoxPanel(Orientation.Vertical) {
       contents += colorChooser
-      contents += new Button(Action("OK") { confirmColor() })
+      contents += new Button(Action("OK") { confirmColor })
     }
     
     def confirmColor() {
-      ReShapes.drawingSpaceState.color = colorChooser.peer.getColor()
+      ReShapes.drawingSpaceState.color = colorChooser.peer.getColor
       visible = false
     }
   }

@@ -1,7 +1,6 @@
 package reshapes.ui.panels
 
 import java.awt.BasicStroke
-
 import scala.collection.mutable.ListBuffer
 import scala.swing.Color
 import scala.swing.Graphics2D
@@ -10,7 +9,6 @@ import scala.swing.Point
 import scala.swing.event.MouseDragged
 import scala.swing.event.MousePressed
 import scala.swing.event.MouseReleased
-
 import reshapes.drawing.CreateShape
 import reshapes.drawing.DrawingSpaceState
 import reshapes.drawing.EditShape
@@ -18,18 +16,22 @@ import reshapes.figures.Movable
 import reshapes.figures.Resizable
 import reshapes.figures.Shape
 import reshapes.util.MathUtil
+import scala.events.ImperativeEvent
+import reshapes.drawing.Command
+import scala.events.Event
 
 /**
  * Represents the panel where all shapes are drawn onto
  */
-class DrawingPanel(val state: DrawingSpaceState) extends Panel {
+class DrawingPanel(state0: => DrawingSpaceState) extends Panel {
+  lazy val state = state0
   private var point: Point = null
   private var currentShape: Shape = null
   private var resizingMode: Boolean = false
   
   override def paint(g: Graphics2D) {
     g.setColor(java.awt.Color.WHITE)
-    g.fillRect(0, 0, size.getWidth().toInt, size.getHeight().toInt)
+    g.fillRect(0, 0, size.width, size.height)
     
     g.setColor(java.awt.Color.BLACK)
     if (currentShape != null) {
@@ -43,6 +45,8 @@ class DrawingPanel(val state: DrawingSpaceState) extends Panel {
         shape.draw(g)
   }
   
+  lazy val drawn = new ImperativeEvent[Command]
+  
   listenTo(mouse.clicks, mouse.moves)
   
   reactions += {
@@ -52,8 +56,8 @@ class DrawingPanel(val state: DrawingSpaceState) extends Panel {
         case null =>
           currentShape = state.nextShape.copy(
               path = List(point),
-              strokeWidth = state.strokeWidth,
-              color = state.color,
+              strokeWidth = state.strokeWidth.getValue,
+              color = state.color.getValue,
               current = {Shape.current += 1; Shape.current})
         case selectedShape =>
           currentShape = selectedShape.copy()
@@ -75,9 +79,9 @@ class DrawingPanel(val state: DrawingSpaceState) extends Panel {
     case e: MouseReleased =>
       state.selectedShape match {
         case null =>
-          state execute new CreateShape(currentShape)
+          drawn(new CreateShape(currentShape))
         case selectedShape =>
-          state execute new EditShape(selectedShape, currentShape)
+          drawn(new EditShape(selectedShape, currentShape))
           state.selectedShape = currentShape
       }
       currentShape = null
@@ -86,8 +90,9 @@ class DrawingPanel(val state: DrawingSpaceState) extends Panel {
   
   state.registerSelectedShapeObserver(canvasChange)
   state.registerShapesObserver(canvasChange)
-  state.registerStrokeWidthObserver(canvasChange)
-  state.registerColorObserver(canvasChange)
+  
+  state.strokeWidth.changed += canvasChange
+  state.color.changed += canvasChange
   
   def canvasChange(x: Any) = repaint
 }
@@ -99,7 +104,7 @@ trait ShowIntersection extends DrawingPanel {
   override def paint(g: Graphics2D) {
     super.paint(g)
     g.setColor(new Color(255, 0, 0))
-    g.setStroke(new BasicStroke())
+    g.setStroke(new BasicStroke)
     for (point <- getIntersectionPoints)
       g.drawOval(point.x - 3, point.y - 3, 6, 6)
   }
@@ -110,8 +115,8 @@ trait ShowIntersection extends DrawingPanel {
     for (shape <- state.shapes)
       for (otherShape <- state.shapes)
         if (shape != otherShape)
-          for (line <- shape.toLines())
-            for (otherLine <- otherShape.toLines()) {
+          for (line <- shape.toLines)
+            for (otherLine <- otherShape.toLines) {
               val intersection = MathUtil.getIntersectionsOfTwoLines(line, otherLine)
               if (intersection != null)
                 points += intersection

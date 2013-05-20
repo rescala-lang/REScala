@@ -71,7 +71,7 @@ class InfoPanel extends FlowPanel {
   }
   
   def updateCurrentColor(color: Color) {
-    currentColor = "color: %d-%d-%d" format (color.getRed(), color.getGreen(), color.getBlue())
+    currentColor = "color: %d-%d-%d" format (color.getRed, color.getGreen, color.getBlue)
     updateCenterLabel
   }
   

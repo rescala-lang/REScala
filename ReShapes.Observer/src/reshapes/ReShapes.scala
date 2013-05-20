@@ -67,7 +67,7 @@ object ReShapes extends SimpleSwingApplication {
     layout(new StrokeInputPanel) = Position.North
     layout(new InfoPanel) = Position.South
     layout(new ShapeSelectionPanel) = Position.West
-    layout(new TabbedPane() {
+    layout(new TabbedPane {
       pages += new TabbedPane.Page("Shapes", new ShapePanel)
       pages += new TabbedPane.Page("Commands", new CommandPanel)
     }) = Position.East
@@ -77,18 +77,18 @@ object ReShapes extends SimpleSwingApplication {
     val merge = new Menu("Merge with...")
     
     contents += new Menu("File") {
-      contents += new MenuItem(Action("New tab") { addTab() })
-      contents += new MenuItem(Action("New network tab") { addNetworkTab() })
-      contents += new MenuItem(Action("Remove selected tab") { removeCurrentTab() })
+      contents += new MenuItem(Action("New tab") { addTab(new DrawingSpaceState, null) })
+      contents += new MenuItem(Action("New network tab") { addNetworkTab })
+      contents += new MenuItem(Action("Remove selected tab") { removeCurrentTab })
       contents += new Separator
-      contents += new MenuItem(new SaveAction())
-      contents += new MenuItem(new LoadAction())
+      contents += new MenuItem(new SaveAction)
+      contents += new MenuItem(new LoadAction)
       contents += new Separator
-      contents += new MenuItem(new QuitAction())
+      contents += new MenuItem(new QuitAction)
     }
     
     contents += new Menu("Edit") {
-      contents += new MenuItem(new UndoAction()) { enabled = false }
+      contents += new MenuItem(new UndoAction) { enabled = false }
     }
     
     contents += new Menu("Tools") {
@@ -96,7 +96,7 @@ object ReShapes extends SimpleSwingApplication {
     }
     
     def updateMerge() {
-      merge.contents.clear()
+      merge.contents.clear
       for (tab <- ui.tabbedPane.pages)
         if (tab.index != ui.tabbedPane.selection.index)
           merge.contents += new MenuItem(new MergeAction(tab.title, panelDrawingSpaceStates(tab)._1))
@@ -114,21 +114,18 @@ object ReShapes extends SimpleSwingApplication {
       for (obs <- drawingSpaceStateObservers)
         obs(drawingSpaceState)
       if (ui.tabbedPane.pages.size > 0)
-        menu.updateMerge()
+        menu.updateMerge
   }
   
-  def addTab(state: DrawingSpaceState = new DrawingSpaceState) =
+  def addTab(drawingSpaceState: DrawingSpaceState, networkSpaceState: NetworkSpaceState) =
     if (newTabDialog.showDialog(ui.locationOnScreen))
       addDrawingPanel(
           generateDrawingPanel(
               newTabDialog.showIntersections.selected,
               newTabDialog.showCoordinates.selected,
               newTabDialog.showNames.selected,
-              state),
-              state match {
-                case state: NetworkSpaceState => state
-                case _ => null
-              })
+              drawingSpaceState),
+          networkSpaceState)
   
   def generateDrawingPanel(showIntersections: Boolean, showCoordinates: Boolean, showName: Boolean, state: DrawingSpaceState): DrawingPanel =
     (showIntersections, showCoordinates, showName) match {
@@ -145,17 +142,21 @@ object ReShapes extends SimpleSwingApplication {
     val page = new TabbedPane.Page("drawing#%d".format(ui.tabbedPane.pages.size + 1), panel)
     panelDrawingSpaceStates(page) = (panel.state, networkSpaceState)
     ui.tabbedPane.pages += page
-    menu.updateMerge()
+    menu.updateMerge
   }
   
   def addNetworkTab() {
-    if (serverDialog.showDialog(ui.locationOnScreen) && serverDialog.inputIsValid())
+    if (serverDialog.showDialog(ui.locationOnScreen) && serverDialog.inputIsValid)
       try {
-        addTab(new NetworkSpaceState(
-            serverDialog.hostname,
-            serverDialog.commandPort,
-            serverDialog.exchangePort,
-            serverDialog.listenerPort))
+        val state = new DrawingSpaceState
+        addTab(
+            state,
+            new NetworkSpaceState(
+                state,
+                serverDialog.hostname,
+                serverDialog.commandPort,
+                serverDialog.exchangePort,
+                serverDialog.listenerPort))
       }
       catch {
         case e: ConnectException =>

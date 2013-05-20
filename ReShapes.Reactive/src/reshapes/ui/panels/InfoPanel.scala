@@ -30,8 +30,9 @@ class InfoPanel extends FlowPanel {
       currentState.unregisterNextShapeObserver(updateNextShape)
       currentState.unregisterSelectedShapeObserver(updateSelectedShape)
       currentState.unregisterShapesObserver(updateNumberElements)
-      currentState.unregisterStrokeWidthObserver(updateCurrentStrokeWidth)
-      currentState.unregisterColorObserver(updateCurrentColor)
+      
+      currentState.strokeWidth.changed -= updateCurrentStrokeWidth
+      currentState.color.changed -= updateCurrentColor
     }
     
     currentState = state
@@ -39,15 +40,16 @@ class InfoPanel extends FlowPanel {
       currentState.registerNextShapeObserver(updateNextShape)
       currentState.registerSelectedShapeObserver(updateSelectedShape)
       currentState.registerShapesObserver(updateNumberElements)
-      currentState.registerStrokeWidthObserver(updateCurrentStrokeWidth)
-      currentState.registerColorObserver(updateCurrentColor)
+      
+      currentState.strokeWidth.changed += updateCurrentStrokeWidth
+      currentState.color.changed += updateCurrentColor
     }
     
     updateNextShape(if (currentState != null) state.nextShape else null)
     updateSelectedShape(if (currentState != null) state.selectedShape else null)
     updateNumberElements(if (currentState != null) state.shapes else List.empty)
-    updateCurrentStrokeWidth(if (currentState != null) state.strokeWidth else 1)
-    updateCurrentColor(if (currentState != null) state.color else Color.BLACK)
+    updateCurrentStrokeWidth(if (currentState != null) state.strokeWidth.getValue else 1)
+    updateCurrentColor(if (currentState != null) state.color.getValue else Color.BLACK)
   }
   
   def updateNextShape(shape: Shape) {
@@ -71,7 +73,7 @@ class InfoPanel extends FlowPanel {
   }
   
   def updateCurrentColor(color: Color) {
-    currentColor = "color: %d-%d-%d" format (color.getRed(), color.getGreen(), color.getBlue())
+    currentColor = "color: %d-%d-%d" format (color.getRed, color.getGreen, color.getBlue)
     updateCenterLabel
   }
   

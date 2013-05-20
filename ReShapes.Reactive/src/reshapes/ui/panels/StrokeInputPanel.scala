@@ -1,5 +1,8 @@
 package reshapes.ui.panels
 
+import java.awt.Color
+
+import scala.events.behaviour.Var
 import scala.swing.Action
 import scala.swing.BoxPanel
 import scala.swing.Button
@@ -12,7 +15,6 @@ import scala.swing.Slider
 import scala.swing.event.ValueChanged
 
 import javax.swing.JColorChooser
-import reshapes.ReShapes
 
 /**
  * Panel for various customization of the stroke.
@@ -27,11 +29,11 @@ class StrokeInputPanel extends FlowPanel {
     
     contents = new BoxPanel(Orientation.Vertical) {
       contents += colorChooser
-      contents += new Button(Action("OK") { confirmColor() })
+      contents += new Button(Action("OK") { confirmColor })
     }
     
     def confirmColor() {
-      ReShapes.drawingSpaceState.color = colorChooser.peer.getColor()
+      StrokeInputPanel.this.color() = colorChooser.peer.getColor
       visible = false
     }
   }
@@ -42,6 +44,9 @@ class StrokeInputPanel extends FlowPanel {
     }
   })
   
+  val strokeWidth = Var(1)
+  val color = Var(Color.BLACK)
+  
   contents += new Label { text = "stroke width: " }
   contents += new Slider {
     min = 1
@@ -51,7 +56,7 @@ class StrokeInputPanel extends FlowPanel {
     paintTicks = true
     
     reactions += {
-      case e: ValueChanged => ReShapes.drawingSpaceState.strokeWidth = value
+      case e: ValueChanged => StrokeInputPanel.this.strokeWidth() = value
     }
   }
   contents += showColorInput
