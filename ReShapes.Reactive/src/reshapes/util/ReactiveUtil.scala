@@ -25,7 +25,7 @@ object ReactiveUtil {
   }
   
   /**
-   * Enables two more objects that are using event streams from each other
+   * Enables two or more objects that are using event streams from each other
    * to establish a connection of these streams.
    * This solves a problem that arises in situations of the following kind:
    * 
@@ -67,7 +67,7 @@ object ReactiveUtil {
    * }
    * }}}
    * 
-   * This will construct both object when they are returned as pair
+   * This will construct both objects when they are returned as a pair
    * from the function passed to `bilateralEvents` and will establish
    * the event stream connection after object construction has completed,
    * thus circumventing the stack overflow issue.

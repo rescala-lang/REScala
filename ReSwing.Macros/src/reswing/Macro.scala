@@ -24,7 +24,7 @@ private object Macros {
    *     override def size_=(s: Dimension) = Macros.defaultSetterOverride
    *   }
    *   
-   *   lazy val text = ImperativeSignal.noSignal[String]
+   *   lazy val size = ImperativeSignal.noSignal[Dimension]
    * }
    * }}}
    * 
@@ -37,8 +37,9 @@ private object Macros {
    *       super.size = s
    *       ReComponent.this.size(s)
    *     }
+   *   }
    *   
-   *   lazy val text = ImperativeSignal.noSignal[Dimension]
+   *   lazy val size = ImperativeSignal.noSignal[Dimension]
    * }
    * }}}
    */
