@@ -4,7 +4,44 @@ import scala.collection.mutable.ListBuffer
 import scala.reflect.macros.Context
 import scala.language.experimental.macros
 
-object Macros {
+private object Macros {
+  /**
+   * Creates a default method body for overridden setters that will call
+   * the base class implementation and then update the respective
+   * [[ImperativeSignal]].
+   * 
+   * Therefore the setter has to be defined in an inner trait whose name is
+   * based on the name of the outer class. For the trait name "ComponentMixin",
+   * the name of the outer class is expected to be "ReComponent".
+   * Additionally, for a setter name "size_=", a [[ImperativeSignal]] with
+   * the name "size" must exist in the outer class.
+   * 
+   * The following code:
+   * 
+   * {{{
+   * class ReComponent {
+   *   protected trait ComponentMixin extends Component {
+   *     override def size_=(s: Dimension) = Macros.defaultSetterOverride
+   *   }
+   *   
+   *   lazy val text = ImperativeSignal.noSignal[String]
+   * }
+   * }}}
+   * 
+   * will be expanded to:
+   * 
+   * {{{
+   * class ReComponent {
+   *   protected trait ComponentMixin extends Component {
+   *     override def size_=(s: Dimension) {
+   *       super.size = s
+   *       ReComponent.this.size(s)
+   *     }
+   *   
+   *   lazy val text = ImperativeSignal.noSignal[Dimension]
+   * }
+   * }}}
+   */
   def defaultSetterOverride = macro defaultSetterOverrideImpl
   def defaultSetterOverrideImpl(c: Context): c.Expr[Any] = {
     import c.universe._
@@ -53,6 +90,18 @@ object Macros {
     c.literalUnit
   }
   
+  /**
+   * Creates a default method body that creates an object based on the
+   * method parameters. The method is supposed to be placed in the
+   * companion object of the class that should be instantiated.
+   * 
+   * All method arguments which a `lazy val` of the same name is
+   * defined for in the type to be instantiated, this value will
+   * be overridden and set to the value passed as argument.
+   * 
+   * All other argument values will be passed to the type constructor
+   * as named arguments.
+   */
   def defaultObjectCreation = macro defaultObjectCreationImpl
   def defaultObjectCreationImpl(c: Context): c.Expr[Any] = {
     import c.universe._

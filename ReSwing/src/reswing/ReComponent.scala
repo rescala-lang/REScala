@@ -12,6 +12,14 @@ import scala.swing.event._
 import reswing.ImperativeSignal.toSignal
 
 abstract class ReComponent {
+  /**
+   * Connects the [[ImperativeSignal]] to a setter. This will cause the setter
+   * to be called every time the signal changes.
+   * If the signal has been set (e.g. by overriding it in a sub-class),
+   * the setter will be called immediately with the respective value.
+   * Otherwise, the signal will hold the value `init` after this method has
+   * been executed.
+   */
   protected def connectSignal[T](signal: ImperativeSignal[T], init: T, setter: T => Unit) {
     if (signal.inputSignal != null) {
       setter(signal.getValue)

@@ -47,12 +47,12 @@ object ReSlider {
   implicit def toLabel(input : ReSlider) : Slider = input.peer
   
   def apply(
-      paintLabels: OptionalArgument[Boolean] = ReSwingNone,
-      paintTicks: OptionalArgument[Boolean] = ReSwingNone,
-      paintTrack: OptionalArgument[Boolean] = ReSwingNone,
-      snapToTicks: OptionalArgument[Boolean] = ReSwingNone,
-      minorTickSpacing: OptionalArgument[Int] = ReSwingNone,
-      majorTickSpacing: OptionalArgument[Int] = ReSwingNone,
+      paintLabels: OptionalArgument[Boolean] = NoArgument,
+      paintTicks: OptionalArgument[Boolean] = NoArgument,
+      paintTrack: OptionalArgument[Boolean] = NoArgument,
+      snapToTicks: OptionalArgument[Boolean] = NoArgument,
+      minorTickSpacing: OptionalArgument[Int] = NoArgument,
+      majorTickSpacing: OptionalArgument[Int] = NoArgument,
       min: ImperativeSignal[Int] = ImperativeSignal.noSignal,
       max: ImperativeSignal[Int] = ImperativeSignal.noSignal,
       value: ImperativeSignal[Int] = ImperativeSignal.noSignal,
