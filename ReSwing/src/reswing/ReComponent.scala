@@ -24,20 +24,9 @@ abstract class ReComponent {
   protected def peer: Component with ComponentMixin
   
   protected trait ComponentMixin extends Component {
-    override def minimumSize_=(x: Dimension) {
-      super.minimumSize = x
-      ReComponent.this.minimumSize(x)
-    }
-    
-    override def maximumSize_=(x: Dimension) {
-      super.maximumSize = x
-      ReComponent.this.maximumSize(x)
-    }
-    
-    override def preferredSize_=(x: Dimension) {
-      super.preferredSize = x
-      ReComponent.this.preferredSize(x)
-    }
+    override def minimumSize_=(x: Dimension) = Macros.defaultSetterOverride
+    override def maximumSize_=(x: Dimension) = Macros.defaultSetterOverride
+    override def preferredSize_=(x: Dimension) = Macros.defaultSetterOverride
     
     override def paintComponent(g: Graphics2D) = ReComponent.this.paintComponent(g)
     def __super__paintComponent(g: Graphics2D) = super.paintComponent(g)

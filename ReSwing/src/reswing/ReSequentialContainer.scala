@@ -13,6 +13,7 @@ trait ReSequentialContainer extends ReComponent {
   connectSignal(contents, peer.contents, { components: Seq[Component] =>
     peer.contents.clear
     peer.contents ++= components
+    peer.repaint
   })
   
   peer.reactions += {

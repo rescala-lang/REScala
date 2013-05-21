@@ -8,10 +8,7 @@ class ReLabel extends ReComponent {
   override protected lazy val peer = new Label with LabelMixin
 
   protected trait LabelMixin extends Label with ComponentMixin {
-    override def text_=(s : String) {
-      super.text = s
-      ReLabel.this.text(s)
-    }
+    override def text_=(s : String) = Macros.defaultSetterOverride
   }
   
   lazy val text = ImperativeSignal.noSignal[String]
@@ -25,5 +22,6 @@ object ReLabel {
       text: ImperativeSignal[String] = ImperativeSignal.noSignal,
       minimumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
       maximumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
-      preferredSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal) = Macros.applyBody
+      preferredSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal) =
+        Macros.defaultObjectCreation
 }

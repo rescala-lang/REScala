@@ -20,5 +20,6 @@ object ReButton {
       action: Action = null,
       minimumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
       maximumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
-      preferredSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal) = Macros.applyBody
+      preferredSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal) =
+        Macros.defaultObjectCreation
 }

@@ -1,12 +1,60 @@
 package reswing
 
+import scala.collection.mutable.ListBuffer
 import scala.reflect.macros.Context
 import scala.language.experimental.macros
-import scala.collection.mutable.{ListBuffer, Stack}
 
 object Macros {
-  def applyBody = macro applyBodyImpl
-  def applyBodyImpl(c: Context): c.Expr[Any] = {
+  def defaultSetterOverride = macro defaultSetterOverrideImpl
+  def defaultSetterOverrideImpl(c: Context): c.Expr[Any] = {
+    import c.universe._
+    
+    c.enclosingClass match {
+      case ClassDef(mods, name, tparams, impl) =>
+        if (!name.encoded.endsWith("Mixin"))
+          c.error(c.enclosingPosition, "Macro must be called inside a trait whose name ends with 'Mixin'")
+        val className = newTypeName("Re" + name.encoded.substring(0, name.encoded.length - 5))
+        
+        c.enclosingMethod match {
+          case DefDef(mods, name, tparams, vparamss, tpt, rhs) =>
+            val paramName = vparamss match {
+              case List(List(ValDef(mods, name, tpt, rhs))) => newTermName(name.encoded)
+              case _ => null
+            }
+            
+            if (paramName == null || !name.encoded.endsWith("_$eq"))
+              c.error(c.enclosingPosition, "Macro must be called inside a setter method of the form: method=_(<one parameter>)")
+            
+            val methodName = newTermName(name.encoded)
+            val methodBaseName = newTermName(name.encoded.substring(0, name.encoded.length - 4))
+            
+            val body = Block(
+              List(
+                Apply(
+                  Select(
+                    Super(This(tpnme.EMPTY), tpnme.EMPTY),
+                    methodName),
+                  List(Ident(paramName)))),
+              Apply(
+                Select(
+                  Select(
+                    This(className), methodBaseName),
+                    newTermName("apply")),
+                List(Ident(paramName))))
+            
+            return c.Expr[Any](body)
+            
+          case _ => c.error(c.enclosingPosition, "Macro must be called inside method")
+        }
+      case _ => c.error(c.enclosingPosition, "Method must be inside class definition")
+    }
+    
+    // dummy value, we will never end up here and an error has occurred
+    c.literalUnit
+  }
+  
+  def defaultObjectCreation = macro defaultObjectCreationImpl
+  def defaultObjectCreationImpl(c: Context): c.Expr[Any] = {
     import c.universe._
     
     c.enclosingClass match {
