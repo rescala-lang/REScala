@@ -16,7 +16,8 @@ class ReAbstractButton extends ReComponent {
   lazy val text = ImperativeSignal.noSignal[String]
   connectSignal(text, peer.text, peer.text_=)
   
-  val clicked = new ImperativeEvent[ButtonClicked]
+  final val clicked = new ImperativeEvent[ButtonClicked]
+  
   peer.reactions += {
     case e @ ButtonClicked(_) => clicked(e)
   }

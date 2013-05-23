@@ -23,8 +23,7 @@ import scala.events.Event
 /**
  * Represents the panel where all shapes are drawn onto
  */
-class DrawingPanel(state0: => DrawingSpaceState) extends Panel {
-  lazy val state = state0
+class DrawingPanel(val state: DrawingSpaceState) extends Panel {
   private var point: Point = null
   private var currentShape: Shape = null
   private var resizingMode: Boolean = false
@@ -36,12 +35,12 @@ class DrawingPanel(state0: => DrawingSpaceState) extends Panel {
     g.setColor(java.awt.Color.BLACK)
     if (currentShape != null) {
       currentShape.draw(g)
-      for (shape <- state.shapes)
+      for (shape <- state.shapes.getValue)
         if (!shape.selected)
           shape.draw(g)
     }
     else
-      for (shape <- state.shapes)
+      for (shape <- state.shapes.getValue)
         shape.draw(g)
   }
   
@@ -52,9 +51,9 @@ class DrawingPanel(state0: => DrawingSpaceState) extends Panel {
   reactions += {
     case e: MousePressed =>
       point = e.point
-      state.selectedShape match {
+      state.selectedShape.getValue match {
         case null =>
-          currentShape = state.nextShape.copy(
+          currentShape = state.nextShape.getValue.copy(
               path = List(point),
               strokeWidth = state.strokeWidth.getValue,
               color = state.color.getValue,
@@ -65,7 +64,7 @@ class DrawingPanel(state0: => DrawingSpaceState) extends Panel {
                          MathUtil.isInCircle(currentShape.end, 6, e.point)
       }
     case e: MouseDragged =>
-      state.selectedShape match {
+      state.selectedShape.getValue match {
         case null =>
           currentShape = currentShape.copy(path = e.point :: currentShape.path)
         case _ =>
@@ -77,20 +76,19 @@ class DrawingPanel(state0: => DrawingSpaceState) extends Panel {
       point = e.point
       repaint
     case e: MouseReleased =>
-      state.selectedShape match {
+      state.selectedShape.getValue match {
         case null =>
           drawn(new CreateShape(currentShape))
         case selectedShape =>
           drawn(new EditShape(selectedShape, currentShape))
-          state.selectedShape = currentShape
+          state.select(currentShape)
       }
       currentShape = null
       repaint
   }
   
-  state.registerSelectedShapeObserver(canvasChange)
-  state.registerShapesObserver(canvasChange)
-  
+  state.selectedShape.changed += canvasChange
+  state.shapes.changed += canvasChange
   state.strokeWidth.changed += canvasChange
   state.color.changed += canvasChange
   
@@ -112,8 +110,8 @@ trait ShowIntersection extends DrawingPanel {
   def getIntersectionPoints() = {
     val points = new ListBuffer[Point]
     
-    for (shape <- state.shapes)
-      for (otherShape <- state.shapes)
+    for (shape <- state.shapes.getValue)
+      for (otherShape <- state.shapes.getValue)
         if (shape != otherShape)
           for (line <- shape.toLines)
             for (otherLine <- otherShape.toLines) {
@@ -158,7 +156,7 @@ trait ShowNameLabels extends DrawingPanel {
     g.setColor(new Color(200, 200, 200))
     g.setStroke(new BasicStroke)
     
-    for (shape <- state.shapes)
+    for (shape <- state.shapes.getValue)
       g.drawString(shape.toString, shape.start.x, shape.start.y)
   }
 }

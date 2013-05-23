@@ -13,9 +13,10 @@ class ReTextComponent extends ReComponent {
   val text: ImperativeSignal[String] = ImperativeSignal.noSignal
   connectSignal(text, peer.text, peer.text_=)
   
-  val selected: ImperativeSignal[String] = ImperativeSignal.noSignal
+  final val selected: ImperativeSignal[String] = ImperativeSignal.noSignal
   
-  val valueChanged = new ImperativeEvent[ValueChanged]
+  final val valueChanged = new ImperativeEvent[ValueChanged]
+  
   peer.reactions += {
     case e @ ValueChanged(_) =>
       text(peer.text)
@@ -30,11 +31,12 @@ class ReTextComponent extends ReComponent {
   class ReCaret {
     protected lazy val peer = ReTextComponent.this.peer.caret
     
-    val dot: ImperativeSignal[Int] = ImperativeSignal.noSignal(peer.dot)
-    val mark: ImperativeSignal[Int] = ImperativeSignal.noSignal(peer.mark)
-    val position: ImperativeSignal[Int] = ImperativeSignal.noSignal(peer.position)
+    final val dot: ImperativeSignal[Int] = ImperativeSignal.noSignal(peer.dot)
+    final val mark: ImperativeSignal[Int] = ImperativeSignal.noSignal(peer.mark)
+    final val position: ImperativeSignal[Int] = ImperativeSignal.noSignal(peer.position)
   
-    val caretUpdate = new ImperativeEvent[CaretUpdate]
+    final val caretUpdate = new ImperativeEvent[CaretUpdate]
+    
     peer.reactions += {
       case e @ CaretUpdate(_) =>
         dot(peer.dot)

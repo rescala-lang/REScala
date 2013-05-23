@@ -19,7 +19,7 @@ import reswing.ReButton.toButton
  * The CommandPanel lists all executed commands and makes it possible to revert them
  */
 class CommandPanel extends BoxPanel(Orientation.Vertical) {
-  def state = ReShapes.drawingSpaceStateSignal
+  def state = ReShapes.drawingSpaceState
   
   val commands = Signal { if (state() != null) state().commands() else List.empty }
   

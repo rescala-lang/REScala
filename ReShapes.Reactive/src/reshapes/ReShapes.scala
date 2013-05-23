@@ -42,23 +42,8 @@ import reshapes.util.ReactiveUtil.bilateralEvents
 
 object ReShapes extends SimpleSwingApplication {
   private val panelDrawingSpaceStates = new HashMap[TabbedPane.Page, (DrawingSpaceState, NetworkSpaceState)]
-  private var drawingSpaceStateObservers: List[DrawingSpaceState => Unit] = Nil
   
-  def registerDrawingSpaceStateObserver(obs: DrawingSpaceState => Unit) =
-    drawingSpaceStateObservers ::= obs
-  
-  def unregisterDrawingSpaceStateObserver(obs: DrawingSpaceState => Unit) =
-    drawingSpaceStateObservers = drawingSpaceStateObservers filterNot (_ == obs)
-  
-  val drawingSpaceStateVar = Var[DrawingSpaceState](null)
-  val drawingSpaceStateSignal = Signal { drawingSpaceStateVar() }
-  
-  def drawingSpaceState =
-    if (ui.tabbedPane.selection.index != -1
-          && (panelDrawingSpaceStates contains ui.tabbedPane.selection.page))
-        panelDrawingSpaceStates(ui.tabbedPane.selection.page)._1
-    else
-      null
+  val drawingSpaceState = Var[DrawingSpaceState](null)
   
   def top = new MainFrame {
     title = "ReShapes"
@@ -70,13 +55,14 @@ object ReShapes extends SimpleSwingApplication {
   val ui = new BorderPanel {
     val tabbedPane = new TabbedPane
     val strokeInputPanel = new StrokeInputPanel
+    val shapeSelectionPanel = new ShapeSelectionPanel
     val shapePanel = new ShapePanel
     val commandPanel = new CommandPanel
     
     layout(tabbedPane) = Position.Center
     layout(strokeInputPanel) = Position.North
     layout(new InfoPanel) = Position.South
-    layout(new ShapeSelectionPanel) = Position.West
+    layout(shapeSelectionPanel) = Position.West
     layout(new TabbedPane {
       pages += new TabbedPane.Page("Shapes", shapePanel)
       pages += new TabbedPane.Page("Commands", commandPanel)
@@ -121,9 +107,13 @@ object ReShapes extends SimpleSwingApplication {
   
   reactions += {
     case SelectionChanged(ui.tabbedPane) =>
-      for (obs <- drawingSpaceStateObservers)
-        obs(drawingSpaceState)
-      drawingSpaceStateVar() = drawingSpaceState
+      drawingSpaceState() =
+        if (ui.tabbedPane.selection.index != -1
+              && (panelDrawingSpaceStates contains ui.tabbedPane.selection.page))
+            panelDrawingSpaceStates(ui.tabbedPane.selection.page)._1
+        else
+          null
+      
       if (ui.tabbedPane.pages.size > 0)
         menu.updateMerge
   }
@@ -138,11 +128,12 @@ object ReShapes extends SimpleSwingApplication {
             state)
         
         lazy val state: DrawingSpaceState = new DrawingSpaceState {
-          def isCurrentState(x: Any) = drawingSpaceStateSignal.getValue == this
+          def isCurrentState(x: Any) = drawingSpaceState.getValue == this
           
+          override lazy val nextShape = Signal { ui.shapeSelectionPanel.nextShape().copy(this) }
           override lazy val strokeWidth = Signal { ui.strokeInputPanel.strokeWidth() }
           override lazy val color = Signal { ui.strokeInputPanel.color() }
-          override lazy val executed = event(panel.drawn)
+          override lazy val executed = event(panel.drawn) || ui.shapePanel.deleted
           override lazy val reverted = ui.commandPanel.revert && isCurrentState _
         }
         

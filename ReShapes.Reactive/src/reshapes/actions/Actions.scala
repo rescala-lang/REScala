@@ -18,11 +18,11 @@ import reshapes.figures.Shape
 class SaveAction extends Action("Save") {
   def apply() = {
     val fileChooser = new FileChooser()
-    fileChooser.selectedFile = new File(ReShapes.drawingSpaceState.fileName)
+    fileChooser.selectedFile = new File(ReShapes.drawingSpaceState.getValue.fileName.getValue)
     if (fileChooser.showDialog(null, "save") == FileChooser.Result.Approve) {
       XML.save(fileChooser.selectedFile.getCanonicalPath,
-               Shape.serialize(ReShapes.drawingSpaceState.shapes))
-      ReShapes.drawingSpaceState.fileName = fileChooser.selectedFile.getName
+               Shape.serialize(ReShapes.drawingSpaceState.getValue.shapes.getValue))
+      ReShapes.drawingSpaceState.getValue.fileName() = fileChooser.selectedFile.getName
       ReShapes.ui.tabbedPane.pages(ReShapes.ui.tabbedPane.selection.index).title = fileChooser.selectedFile.getName
     }
   }
@@ -35,10 +35,10 @@ class LoadAction extends Action("Load") {
   def apply() = {
     val fileChooser = new FileChooser()
     if (fileChooser.showDialog(null, "load") == FileChooser.Result.Approve) {
-      ReShapes.drawingSpaceState.clear
+      ReShapes.drawingSpaceState.getValue.clear
       for (shape <- Shape.deserialize(XML.loadFile(fileChooser.selectedFile),
-                                      ReShapes.drawingSpaceState))
-        ReShapes.drawingSpaceState execute new CreateShape(shape)
+                                      ReShapes.drawingSpaceState.getValue))
+        ReShapes.drawingSpaceState.getValue execute new CreateShape(shape)
     }
   }
 }
@@ -57,7 +57,7 @@ class QuitAction extends Action("Quit") {
  */
 class UndoAction extends Action("Undo") {
   def apply() = {
-    ReShapes.drawingSpaceState revert ReShapes.drawingSpaceState.commands.getValue.head
+    ReShapes.drawingSpaceState.getValue revert ReShapes.drawingSpaceState.getValue.commands.getValue.head
   }
 }
 
@@ -66,6 +66,6 @@ class UndoAction extends Action("Undo") {
  */
 class MergeAction(title: String, eventsToMergeWith: DrawingSpaceState) extends Action("Merge with %s".format(title)) {
   def apply() = {
-    ReShapes.drawingSpaceState execute new MergeDrawingSpaces(eventsToMergeWith)
+    ReShapes.drawingSpaceState.getValue execute new MergeDrawingSpaces(eventsToMergeWith)
   }
 }

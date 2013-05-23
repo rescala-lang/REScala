@@ -1,83 +1,43 @@
 package reshapes.ui.panels
 
-import java.awt.Color
-
+import scala.events.behaviour.Signal
 import scala.swing.FlowPanel
-import scala.swing.Label
 
 import reshapes.ReShapes
-import reshapes.drawing.DrawingSpaceState
-import reshapes.figures.Shape
+import reswing.ImperativeSignal.fromSignal
+import reswing.ReLabel
+import reswing.ReLabel.toLabel
 
 /**
  * Small info panel which displays information like how many shapes are drawn
  * or which shape is currently selected
  */
 class InfoPanel extends FlowPanel {
-  val centerLabel = new Label { text = " " }
-  contents += centerLabel
+  def state = ReShapes.drawingSpaceState
   
-  private var currentState: DrawingSpaceState = null
+  val shapeCount = Signal {
+    if (state() != null) "#elements: %d" format state().shapes().size else "" }
   
-  private var nextShape = ""
-  private var selectedShape = ""
-  private var numberElements = ""
-  private var currentStrokeWidth = ""
-  private var currentColor = ""
-    
-  ReShapes.registerDrawingSpaceStateObserver{ state =>
-    if (currentState != null) {
-      currentState.unregisterNextShapeObserver(updateNextShape)
-      currentState.unregisterSelectedShapeObserver(updateSelectedShape)
-      currentState.unregisterShapesObserver(updateNumberElements)
-      
-      currentState.strokeWidth.changed -= updateCurrentStrokeWidth
-      currentState.color.changed -= updateCurrentColor
-    }
-    
-    currentState = state
-    if (currentState != null){
-      currentState.registerNextShapeObserver(updateNextShape)
-      currentState.registerSelectedShapeObserver(updateSelectedShape)
-      currentState.registerShapesObserver(updateNumberElements)
-      
-      currentState.strokeWidth.changed += updateCurrentStrokeWidth
-      currentState.color.changed += updateCurrentColor
-    }
-    
-    updateNextShape(if (currentState != null) state.nextShape else null)
-    updateSelectedShape(if (currentState != null) state.selectedShape else null)
-    updateNumberElements(if (currentState != null) state.shapes else List.empty)
-    updateCurrentStrokeWidth(if (currentState != null) state.strokeWidth.getValue else 1)
-    updateCurrentColor(if (currentState != null) state.color.getValue else Color.BLACK)
+  val color = Signal {
+    if (state() != null)
+      "color: %d-%d-%d" format
+        (state().color().getRed, state().color().getGreen, state().color().getBlue)
+    else ""
   }
   
-  def updateNextShape(shape: Shape) {
-    nextShape = if (shape != null) "next shape: %s" format shape.toString else ""
-    updateCenterLabel
+  val strokeWidth = Signal {
+    if (state() != null) "stroke width: %d" format state().strokeWidth() else "" }
+  
+  val nextShape = Signal {
+    if (state() != null) "next shape: %s" format state().nextShape().toString else "" }
+  
+  val selectedShape = Signal {
+    if (state() != null && state().selectedShape() != null)
+      "selected: %s" format state().selectedShape().toString
+    else ""
   }
   
-  def updateSelectedShape(shape: Shape) {
-    selectedShape = if (shape != null) "selected: %s" format shape.toString else ""
-    updateCenterLabel
-  }
-  
-  def updateNumberElements(shapes: List[Shape]) {
-    numberElements = "#elements: %d" format shapes.size
-    updateCenterLabel
-  }
-  
-  def updateCurrentStrokeWidth(width: Int) {
-    currentStrokeWidth = "stroke width: %d" format width
-    updateCenterLabel
-  }
-  
-  def updateCurrentColor(color: Color) {
-    currentColor = "color: %d-%d-%d" format (color.getRed, color.getGreen, color.getBlue)
-    updateCenterLabel
-  }
-  
-  def updateCenterLabel() =
-    centerLabel.text = "%s | %s | %s | %s | %s" format
-      (numberElements, currentColor, currentStrokeWidth, nextShape, selectedShape)
+  contents += ReLabel(Signal {
+    "%s | %s | %s | %s | %s" format
+      (shapeCount(), color(), strokeWidth(), nextShape(), selectedShape()) } )
 }

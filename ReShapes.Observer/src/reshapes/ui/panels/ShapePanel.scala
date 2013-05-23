@@ -48,10 +48,6 @@ class ShapeView(shape: Shape, state: DrawingSpaceState) extends BoxPanel(Orienta
   val SELECTED_COLOR = new Color(0, 153, 255)
   val NOT_SELECTED_COLOR = new Color(255, 255, 255)
   
-  val selectButton = new Button(Action(shape.toString) {
-      state.selectedShape = shape
-  })
-  
   val deleteButton = new Button(Action("delete") {
     state execute new DeleteShape(shape)
   })
@@ -68,11 +64,7 @@ class ShapeView(shape: Shape, state: DrawingSpaceState) extends BoxPanel(Orienta
       state.selectedShape = if (state.selectedShape != shape) shape else null
   }
   
-  state.registerSelectedShapeObserver{
-    s => toggleSelection(s == shape)
-  }
-  
-  def toggleSelection(selected: Boolean) {
-    this.background = if (selected) SELECTED_COLOR else NOT_SELECTED_COLOR
+  state.registerSelectedShapeObserver{ selected =>
+    background = if (selected == shape) SELECTED_COLOR else NOT_SELECTED_COLOR
   }
 }

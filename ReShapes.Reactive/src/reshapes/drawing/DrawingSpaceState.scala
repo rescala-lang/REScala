@@ -7,7 +7,6 @@ import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.Socket
 import java.net.SocketException
-
 import scala.actors.Actor
 import scala.events.Event
 import scala.events.behaviour.Signal
@@ -17,75 +16,63 @@ import scala.xml.Attribute
 import scala.xml.Null
 import scala.xml.Text
 import scala.xml.XML
-
 import reshapes.figures.Line
 import reshapes.figures.Shape
+import scala.events.ImperativeEvent
 
 /**
  * Represents the current state of one drawing space
  */
 class DrawingSpaceState {
   // selected shape to be drawn
-  private var _nextShape: Shape = new Line(this)
+  lazy val nextShape = Signal[Shape] { new Line(this) }
   // currently selected shape inside the drawing space
-  private var _selectedShape: Shape = null
+  private val _selectedShape = Var[Shape](null)
+  final val selectedShape = Signal { _selectedShape() }
   // currently drawn shapes
-  private var _shapes: List[Shape] = List.empty
+  private val _shapes = Var(List.empty[Shape])
+  final val shapes = Signal { _shapes() }
   // current stroke width
   lazy val strokeWidth = Signal { 1 }
   // current stroke color
   lazy val color = Signal { Color.BLACK }
   // all executed commands
   private val _commandsVar = Var(List.empty[Command])
-  val commands = Signal { _commandsVar() }
+  final val commands = Signal { _commandsVar() }
   // filename after saving
-  private var _fileName: String = "unnamed"
-  
-  def nextShape = _nextShape
-  def selectedShape = _selectedShape
-  def shapes = _shapes
-  def fileName = _fileName
+  val fileName = Var("unnamed")
   
   lazy val executed: Event[Command] = emptyevent
   lazy val reverted: Event[Command] = emptyevent
   
-  executed += execute _
-  reverted += revert _
+  final val execute = new ImperativeEvent[Command]
+  final val revert = new ImperativeEvent[Command]
+  final val select = new ImperativeEvent[Shape]
   
-  def execute(command: Command) {
+  executed || execute += { command =>
     _commandsVar() ::= command
     
-    val shapes = command execute _shapes
+    val shapes = command execute _shapes()
     if (shapes != _shapes) {
-      if (_selectedShape != null && !(shapes contains _selectedShape)) {
-        _selectedShape = null
-        for (obs <- selectedShapeObservers)
-          obs(_selectedShape)
-      }
+      if (_selectedShape != null && !(shapes contains _selectedShape))
+        _selectedShape() = null
       
-      _shapes = shapes
-      for (obs <- shapesObservers)
-        obs(_shapes)
+      _shapes() = shapes
     }
   }
   
-  def revert(command: Command) {
+  reverted || revert += { command =>
     val count = (_commandsVar.getValue indexOf command) + 1
     if (count != 0) {
-      val shapes = (_shapes /: (_commandsVar.getValue take count)) {
+      val shapes = (_shapes() /: (_commandsVar.getValue take count)) {
         (shapes, command) => command revert shapes
       }
       
       if (shapes != _shapes) {
-        if (_selectedShape != null && !(shapes contains _selectedShape)) {
-          _selectedShape = null
-          for (obs <- selectedShapeObservers)
-           obs(_selectedShape)
-        }
+        if (_selectedShape != null && !(shapes contains _selectedShape))
+          _selectedShape() = null
         
-        _shapes = shapes
-        for (obs <- shapesObservers)
-          obs(_shapes)
+        _shapes() = shapes
       }
       
       _commandsVar() = _commandsVar.getValue drop count
@@ -93,61 +80,15 @@ class DrawingSpaceState {
   }
   
   def clear() =
-    if (_shapes.nonEmpty) {
-      _shapes = List.empty
-      for (obs <- shapesObservers)
-        obs(_shapes)
-    }
-    
-  def nextShape_=(shape: Shape) =
-    if (_nextShape != shape) {
-      _nextShape = shape
-      for (obs <- nextShapeObservers)
-        obs(shape)
+    if (_shapes().nonEmpty) {
+      _shapes() = List.empty
     }
   
-  def selectedShape_=(shape: Shape) =
-    if (_selectedShape != shape && (shape == null || (_shapes contains shape))) {
-      _selectedShape = shape
-      for (obs <- selectedShapeObservers)
-        obs(shape)
+  select += { shape =>
+    if (_selectedShape() != shape && (shape == null || (_shapes() contains shape))) {
+      _selectedShape() = shape
     }
-  
-  def fileName_=(fileName: String) =
-    if (_fileName != fileName) {
-      _fileName = fileName
-      for (obs <- fileNameObservers)
-        obs(fileName)
-    }
-
-  private var nextShapeObservers: List[Shape => Unit] = Nil
-  private var selectedShapeObservers: List[Shape => Unit] = Nil
-  private var shapesObservers: List[List[Shape] => Unit] = Nil
-  private var fileNameObservers: List[String => Unit] = Nil
-  
-  def registerNextShapeObserver(obs: Shape => Unit) =
-    nextShapeObservers ::= obs
-  
-  def registerSelectedShapeObserver(obs: Shape => Unit) =
-    selectedShapeObservers ::= obs
-  
-  def registerShapesObserver(obs: List[Shape] => Unit) =
-    shapesObservers ::= obs
-  
-  def registerFileNameObserver(obs: String => Unit) =
-    fileNameObservers ::= obs
-  
-  def unregisterNextShapeObserver(obs: Shape => Unit) =
-    nextShapeObservers = nextShapeObservers filterNot (_ == obs)
-  
-  def unregisterSelectedShapeObserver(obs: Shape => Unit) =
-    selectedShapeObservers = selectedShapeObservers filterNot (_ == obs)
-  
-  def unregisterShapesObserver(obs: List[Shape] => Unit) =
-    shapesObservers = shapesObservers filterNot (_ == obs)
-  
-  def unregisterFileNameObserver(obs: String => Unit) =
-    fileNameObservers = fileNameObservers filterNot (_ == obs)
+  }
 }
 
 class NetworkSpaceState(
@@ -193,7 +134,7 @@ class NetworkSpaceState(
     }
   }.start
   
-  drawingStateSpace.registerShapesObserver{ shapes =>
+  drawingStateSpace.shapes.changed += { shapes =>
     if (!updating) {
       println("sending update")
       val socket = new Socket(serverInetAddress, exchangePort)

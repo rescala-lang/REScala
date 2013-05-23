@@ -21,15 +21,15 @@ class InfoPanel extends FlowPanel {
   
   private var nextShape = ""
   private var selectedShape = ""
-  private var numberElements = ""
-  private var currentStrokeWidth = ""
-  private var currentColor = ""
+  private var shapeCount = ""
+  private var strokeWidth = ""
+  private var color = ""
     
   ReShapes.registerDrawingSpaceStateObserver{ state =>
     if (currentState != null) {
       currentState.unregisterNextShapeObserver(updateNextShape)
       currentState.unregisterSelectedShapeObserver(updateSelectedShape)
-      currentState.unregisterShapesObserver(updateNumberElements)
+      currentState.unregisterShapesObserver(updateElementCount)
       currentState.unregisterStrokeWidthObserver(updateCurrentStrokeWidth)
       currentState.unregisterColorObserver(updateCurrentColor)
     }
@@ -38,14 +38,14 @@ class InfoPanel extends FlowPanel {
     if (currentState != null){
       currentState.registerNextShapeObserver(updateNextShape)
       currentState.registerSelectedShapeObserver(updateSelectedShape)
-      currentState.registerShapesObserver(updateNumberElements)
+      currentState.registerShapesObserver(updateElementCount)
       currentState.registerStrokeWidthObserver(updateCurrentStrokeWidth)
       currentState.registerColorObserver(updateCurrentColor)
     }
     
     updateNextShape(if (currentState != null) state.nextShape else null)
     updateSelectedShape(if (currentState != null) state.selectedShape else null)
-    updateNumberElements(if (currentState != null) state.shapes else List.empty)
+    updateElementCount(if (currentState != null) state.shapes else List.empty)
     updateCurrentStrokeWidth(if (currentState != null) state.strokeWidth else 1)
     updateCurrentColor(if (currentState != null) state.color else Color.BLACK)
   }
@@ -60,22 +60,23 @@ class InfoPanel extends FlowPanel {
     updateCenterLabel
   }
   
-  def updateNumberElements(shapes: List[Shape]) {
-    numberElements = "#elements: %d" format shapes.size
+  def updateElementCount(shapes: List[Shape]) {
+    shapeCount = "#elements: %d" format shapes.size
     updateCenterLabel
   }
   
   def updateCurrentStrokeWidth(width: Int) {
-    currentStrokeWidth = "stroke width: %d" format width
+    strokeWidth = "stroke width: %d" format width
     updateCenterLabel
   }
   
-  def updateCurrentColor(color: Color) {
-    currentColor = "color: %d-%d-%d" format (color.getRed, color.getGreen, color.getBlue)
+  def updateCurrentColor(shapeColor: Color) {
+    color = "color: %d-%d-%d" format
+      (shapeColor.getRed, shapeColor.getGreen, shapeColor.getBlue)
     updateCenterLabel
   }
   
   def updateCenterLabel() =
     centerLabel.text = "%s | %s | %s | %s | %s" format
-      (numberElements, currentColor, currentStrokeWidth, nextShape, selectedShape)
+      (shapeCount, color, strokeWidth, nextShape, selectedShape)
 }

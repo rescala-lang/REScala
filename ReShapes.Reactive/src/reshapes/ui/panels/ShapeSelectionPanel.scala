@@ -1,27 +1,29 @@
 package reshapes.ui.panels
 
+import scala.events.behaviour.Signal
 import scala.swing.BoxPanel
-import scala.swing.Button
 import scala.swing.Orientation
-import scala.swing.event.ButtonClicked
 
 import reshapes.ReShapes
-import reshapes.drawing.DrawingSpaceState
 import reshapes.figures.Freedraw
 import reshapes.figures.Line
 import reshapes.figures.Oval
 import reshapes.figures.Rectangle
+import reshapes.figures.Shape
 import reshapes.figures.Triangle
+import reswing.ReButton
 
 /**
  * Panel for selection of shapes to draw
  */
 class ShapeSelectionPanel extends BoxPanel(Orientation.Vertical) {
-  val lineBtn = new Button { text = "Line" }
-  val rectBtn = new Button { text = "Rectangle" }
-  val ovalBtn = new Button { text = "Oval" }
-  val triangleBtn = new Button { text = "Triangle" }
-  val freedrawBtn = new Button { text = "Freedraw" }
+  def state = ReShapes.drawingSpaceState.getValue
+  
+  val lineBtn = ReButton("Line")
+  val rectBtn = ReButton("Rectangle")
+  val ovalBtn = ReButton("Oval")
+  val triangleBtn = ReButton("Triangle")
+  val freedrawBtn = ReButton("Freedraw")
   
   contents += lineBtn
   contents += rectBtn
@@ -29,18 +31,10 @@ class ShapeSelectionPanel extends BoxPanel(Orientation.Vertical) {
   contents += triangleBtn
   contents += freedrawBtn
   
-  listenTo(lineBtn, rectBtn, ovalBtn, triangleBtn, freedrawBtn)
-  
-  reactions += {
-    case ButtonClicked(`lineBtn`) =>
-      ReShapes.drawingSpaceState.nextShape = new Line(ReShapes.drawingSpaceState)
-    case ButtonClicked(`rectBtn`) =>
-      ReShapes.drawingSpaceState.nextShape = new Rectangle(ReShapes.drawingSpaceState)
-    case ButtonClicked(`ovalBtn`) =>
-      ReShapes.drawingSpaceState.nextShape = new Oval(ReShapes.drawingSpaceState)
-    case ButtonClicked(`triangleBtn`) =>
-      ReShapes.drawingSpaceState.nextShape = new Triangle(ReShapes.drawingSpaceState)
-    case ButtonClicked(`freedrawBtn`) =>
-      ReShapes.drawingSpaceState.nextShape = new Freedraw(ReShapes.drawingSpaceState)
-  }
+  val nextShape: Signal[Shape] =
+	  ((lineBtn.clicked map {_: Any => new Line(state) }) ||
+	   (rectBtn.clicked map {_: Any => new Rectangle(state) }) ||
+	   (ovalBtn.clicked map {_: Any => new Oval(state) }) ||
+	   (triangleBtn.clicked map {_: Any => new Triangle(state) }) ||
+	   (freedrawBtn.clicked map {_: Any => new Freedraw(state) })) latest { new Line(state) }
 }

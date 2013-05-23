@@ -56,14 +56,14 @@ abstract class ReComponent {
   protected def paintChildren(g: Graphics2D) = peer.__super__paintChildren(g)
   def paint(g: Graphics2D) = peer.__super__paint(g)
   
-  val backgroundChanged = new ImperativeEvent[BackgroundChanged]
-  val fontChanged = new ImperativeEvent[FontChanged]
-  val foregroundChanged = new ImperativeEvent[ForegroundChanged]
+  final val backgroundChanged = new ImperativeEvent[BackgroundChanged]
+  final val fontChanged = new ImperativeEvent[FontChanged]
+  final val foregroundChanged = new ImperativeEvent[ForegroundChanged]
   
-  val location = ImperativeSignal.noSignal(peer.location)
-  val bounds = ImperativeSignal.noSignal(peer.bounds)
-  val size = ImperativeSignal.noSignal(peer.size)
-  val hasFocus = ImperativeSignal.noSignal(peer.hasFocus)
+  final val location = ImperativeSignal.noSignal(peer.location)
+  final val bounds = ImperativeSignal.noSignal(peer.bounds)
+  final val size = ImperativeSignal.noSignal(peer.size)
+  final val hasFocus = ImperativeSignal.noSignal(peer.hasFocus)
   
   lazy val minimumSize = ImperativeSignal.noSignal[Dimension]
   lazy val maximumSize = ImperativeSignal.noSignal[Dimension]

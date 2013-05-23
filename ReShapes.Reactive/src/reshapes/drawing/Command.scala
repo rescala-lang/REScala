@@ -57,10 +57,10 @@ class MergeDrawingSpaces(eventToMerge: DrawingSpaceState) extends Command {
   val otherShapes = eventToMerge.shapes
   
   override def execute(shapes: List[Shape]) =
-    otherShapes ::: shapes
+    otherShapes.getValue ::: shapes
 
   override def revert(shapes: List[Shape]) =
-    shapes filterNot (otherShapes contains _)
+    shapes filterNot (otherShapes.getValue contains _)
   
   override def description = "Merge with %s".format(eventTitle)
 }

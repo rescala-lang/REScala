@@ -8,7 +8,7 @@ import scala.swing.event.ValueChanged
 class ReTextArea(text: String = "", rows: Int = 0, columns: Int = 0) extends ReTextComponent {
   override protected lazy val peer = new TextArea(text, rows, columns) with ComponentMixin
   
-  val lineCount: ImperativeSignal[Int] = ImperativeSignal.noSignal(peer.lineCount)
+  final val lineCount: ImperativeSignal[Int] = ImperativeSignal.noSignal(peer.lineCount)
   peer.reactions += {
     case e @ ValueChanged(_) => lineCount(peer.lineCount)
   }

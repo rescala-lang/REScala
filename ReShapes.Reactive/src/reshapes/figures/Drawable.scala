@@ -22,7 +22,7 @@ abstract class Shape(
     val current: Int = 0,
     val path: List[Point] = List.empty /* the mouse path while drawing this shape */) {
   
-  def selected = drawingSpaceState.selectedShape == this
+  def selected = drawingSpaceState.selectedShape.getValue == this
   def start = if (path.isEmpty) null else path.head
   def end = if (path.isEmpty) null else path.last
   

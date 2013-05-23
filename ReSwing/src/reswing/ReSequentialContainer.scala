@@ -14,6 +14,7 @@ trait ReSequentialContainer extends ReComponent {
     peer.contents.clear
     peer.contents ++= components
     peer.repaint
+    peer.peer.validate
   })
   
   peer.reactions += {
