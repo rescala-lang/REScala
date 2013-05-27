@@ -24,6 +24,7 @@ import reshapes.actions.MergeAction
 import reshapes.actions.QuitAction
 import reshapes.actions.SaveAction
 import reshapes.actions.UndoAction
+import reshapes.drawing.Command
 import reshapes.drawing.NetworkSpaceState
 import reshapes.ui.dialogs.NewTabDialog
 import reshapes.ui.dialogs.ServerDialog
@@ -88,7 +89,23 @@ object ReShapes extends SimpleSwingApplication {
     }
     
     contents += new Menu("Edit") {
-      contents += new MenuItem(new UndoAction) { enabled = false }
+      contents += new MenuItem(new UndoAction) {
+        enabled = false
+        
+        def updateCommands(commands: List[Command]) =
+          enabled = commands.nonEmpty
+        
+        private var currentState: DrawingSpaceState = null
+        registerDrawingSpaceStateObserver{ state =>
+          if (currentState != null)
+            currentState.unregisterCommandsObserver(updateCommands)
+          currentState = state
+          if (currentState != null)
+            currentState.registerCommandsObserver(updateCommands)
+          
+          updateCommands(if (currentState != null) currentState.commands else List.empty)
+        }
+      }
     }
     
     contents += new Menu("Tools") {

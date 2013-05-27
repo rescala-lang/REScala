@@ -4,11 +4,14 @@ import java.net.BindException
 import java.net.ConnectException
 
 import scala.collection.mutable.HashMap
+import scala.events.Event
+import scala.events.ImperativeEvent
 import scala.events.behaviour.Signal
 import scala.events.behaviour.Var
 import scala.swing.Action
 import scala.swing.BorderPanel
 import scala.swing.BorderPanel.Position
+import scala.swing.Component
 import scala.swing.Dimension
 import scala.swing.MainFrame
 import scala.swing.Menu
@@ -22,10 +25,9 @@ import scala.swing.event.SelectionChanged
 import drawing.DrawingSpaceState
 import javax.swing.JOptionPane
 import reshapes.actions.LoadAction
-import reshapes.actions.MergeAction
-import reshapes.actions.QuitAction
 import reshapes.actions.SaveAction
-import reshapes.actions.UndoAction
+import reshapes.drawing.Command
+import reshapes.drawing.MergeDrawingSpaces
 import reshapes.drawing.NetworkSpaceState
 import reshapes.ui.dialogs.NewTabDialog
 import reshapes.ui.dialogs.ServerDialog
@@ -38,7 +40,10 @@ import reshapes.ui.panels.ShowCoordinateSystem
 import reshapes.ui.panels.ShowIntersection
 import reshapes.ui.panels.ShowNameLabels
 import reshapes.ui.panels.StrokeInputPanel
+import reshapes.util.ReactiveUtil.UnionEvent
 import reshapes.util.ReactiveUtil.bilateralEvents
+import reswing.ReMenu
+import reswing.ReMenuItem
 
 object ReShapes extends SimpleSwingApplication {
   private val panelDrawingSpaceStates = new HashMap[TabbedPane.Page, (DrawingSpaceState, NetworkSpaceState)]
@@ -70,7 +75,30 @@ object ReShapes extends SimpleSwingApplication {
   }
     
   val menu = new MenuBar {
-    val merge = new Menu("Merge with...")
+    val undo = ReMenuItem("Undo", enabled = Signal {
+      drawingSpaceState() != null && drawingSpaceState().commands().nonEmpty })
+    
+    val merge = new ReMenu() {
+      override lazy val text = overrideSignal("Merge with...")
+      override lazy val contents = overrideSignal(Signal {
+        itemsEvents() map { case (btn, _) => btn } })
+      final lazy val merged = UnionEvent(Signal {
+        itemsEvents() map { case (_, ev) => ev } })
+      
+      lazy val update = new ImperativeEvent[Unit]
+      
+      private lazy val itemsEvents: Signal[Seq[(Component, Event[Command])]] =
+        (update map { _: Any =>
+          (ui.tabbedPane.pages filter
+            { tab => tab.index != ui.tabbedPane.selection.index } map
+            { tab =>
+              val item = ReMenuItem(tab.title)
+              val command = item.clicked map { _: Any =>
+                new MergeDrawingSpaces(panelDrawingSpaceStates(tab)._1) }
+              (item: Component, command)
+            })
+        }) latest Seq.empty
+    }
     
     contents += new Menu("File") {
       contents += new MenuItem(Action("New tab") { addTab() })
@@ -80,22 +108,18 @@ object ReShapes extends SimpleSwingApplication {
       contents += new MenuItem(new SaveAction)
       contents += new MenuItem(new LoadAction)
       contents += new Separator
-      contents += new MenuItem(new QuitAction)
+      contents += (new ReMenuItem {
+        override lazy val text = overrideSignal("Quit")
+        clicked += { _ => exit(0) }
+      }: ReMenuItem)
     }
     
     contents += new Menu("Edit") {
-      contents += new MenuItem(new UndoAction) { enabled = false }
+      contents += undo
     }
     
     contents += new Menu("Tools") {
       contents += merge
-    }
-    
-    def updateMerge() {
-      merge.contents.clear
-      for (tab <- ui.tabbedPane.pages)
-        if (tab.index != ui.tabbedPane.selection.index)
-          merge.contents += new MenuItem(new MergeAction(tab.title, panelDrawingSpaceStates(tab)._1))
     }
   }
   
@@ -115,10 +139,10 @@ object ReShapes extends SimpleSwingApplication {
           null
       
       if (ui.tabbedPane.pages.size > 0)
-        menu.updateMerge
+        menu.merge.update()
   }
   
-  def addTab(networkSpaceState: DrawingSpaceState => NetworkSpaceState = {_ => null}) = {
+  def addTab(networkSpaceState: DrawingSpaceState => NetworkSpaceState = {_ => null}): Unit = {
     if (newTabDialog.showDialog(ui.locationOnScreen)) {
       val (state, panel) = bilateralEvents{ event =>
         lazy val panel = generateDrawingPanel(
@@ -133,8 +157,10 @@ object ReShapes extends SimpleSwingApplication {
           override lazy val nextShape = Signal { ui.shapeSelectionPanel.nextShape().copy(this) }
           override lazy val strokeWidth = Signal { ui.strokeInputPanel.strokeWidth() }
           override lazy val color = Signal { ui.strokeInputPanel.color() }
-          override lazy val executed = event(panel.drawn) || ui.shapePanel.deleted
-          override lazy val reverted = ui.commandPanel.revert && isCurrentState _
+          override lazy val executed =
+            (event(panel.drawn) || ui.shapePanel.deleted || menu.merge.merged) && isCurrentState _
+          override lazy val reverted = (ui.commandPanel.revert ||
+              menu.undo.clicked map {_: Any => commands.getValue.head }) && isCurrentState _
         }
         
         (state, panel)
@@ -158,7 +184,7 @@ object ReShapes extends SimpleSwingApplication {
     val page = new TabbedPane.Page("drawing#%d".format(ui.tabbedPane.pages.size + 1), panel)
     panelDrawingSpaceStates(page) = (panel.state, networkSpaceState)
     ui.tabbedPane.pages += page
-    menu.updateMerge
+    menu.merge.update()
   }
   
   def addNetworkTab() {
@@ -190,7 +216,7 @@ object ReShapes extends SimpleSwingApplication {
         networkSpaceState.dispose
       panelDrawingSpaceStates remove ui.tabbedPane.selection.page
       ui.tabbedPane.pages remove ui.tabbedPane.selection.index
-      menu.updateMerge
+      menu.merge.update()
     }
   }
 }

@@ -80,14 +80,12 @@ class DrawingSpaceState {
   }
   
   def clear() =
-    if (_shapes().nonEmpty) {
+    if (_shapes().nonEmpty)
       _shapes() = List.empty
-    }
   
   select += { shape =>
-    if (_selectedShape() != shape && (shape == null || (_shapes() contains shape))) {
+    if (_selectedShape() != shape && (shape == null || (_shapes() contains shape)))
       _selectedShape() = shape
-    }
   }
 }
 

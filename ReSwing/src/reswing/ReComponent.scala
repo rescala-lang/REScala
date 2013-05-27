@@ -2,14 +2,11 @@ package reswing
 
 import java.awt.Dimension
 import java.awt.Graphics2D
-import java.awt.Point
-import java.awt.Rectangle
 
 import scala.events.ImperativeEvent
+import scala.events.behaviour.Signal
 import scala.swing.Component
 import scala.swing.event._
-
-import reswing.ImperativeSignal.toSignal
 
 abstract class ReComponent {
   /**
@@ -29,12 +26,16 @@ abstract class ReComponent {
       signal(init)
   }
   
+  def overrideSignal[T](signal: Signal[T]): ImperativeSignal[T] = signal
+  def overrideSignal[T](value: T): ImperativeSignal[T] = value
+  
   protected def peer: Component with ComponentMixin
   
   protected trait ComponentMixin extends Component {
     override def minimumSize_=(x: Dimension) = Macros.defaultSetterOverride
     override def maximumSize_=(x: Dimension) = Macros.defaultSetterOverride
     override def preferredSize_=(x: Dimension) = Macros.defaultSetterOverride
+    override def enabled_=(x: Boolean) = Macros.defaultSetterOverride
     
     override def paintComponent(g: Graphics2D) = ReComponent.this.paintComponent(g)
     def __super__paintComponent(g: Graphics2D) = super.paintComponent(g)
@@ -68,10 +69,12 @@ abstract class ReComponent {
   lazy val minimumSize = ImperativeSignal.noSignal[Dimension]
   lazy val maximumSize = ImperativeSignal.noSignal[Dimension]
   lazy val preferredSize = ImperativeSignal.noSignal[Dimension]
+  lazy val enabled = ImperativeSignal.noSignal[Boolean]
   
   connectSignal(minimumSize, peer.minimumSize, peer.minimumSize_=)
   connectSignal(maximumSize, peer.maximumSize, peer.maximumSize_=)
   connectSignal(preferredSize, peer.preferredSize, peer.preferredSize_=)
+  connectSignal(enabled, peer.enabled, peer.enabled_=)
   
   peer.listenTo(peer, peer.keys, peer.mouse.clicks, peer.mouse.moves, peer.mouse.wheel);
   

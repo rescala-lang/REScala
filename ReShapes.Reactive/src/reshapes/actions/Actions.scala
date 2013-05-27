@@ -8,8 +8,6 @@ import scala.xml.XML
 
 import reshapes.ReShapes
 import reshapes.drawing.CreateShape
-import reshapes.drawing.DrawingSpaceState
-import reshapes.drawing.MergeDrawingSpaces
 import reshapes.figures.Shape
 
 /**
@@ -40,32 +38,5 @@ class LoadAction extends Action("Load") {
                                       ReShapes.drawingSpaceState.getValue))
         ReShapes.drawingSpaceState.getValue execute new CreateShape(shape)
     }
-  }
-}
-
-/**
- * Closes the application
- */
-class QuitAction extends Action("Quit") {
-  def apply() = {
-    System.exit(0)
-  }
-}
-
-/**
- * Reverts last command
- */
-class UndoAction extends Action("Undo") {
-  def apply() = {
-    ReShapes.drawingSpaceState.getValue revert ReShapes.drawingSpaceState.getValue.commands.getValue.head
-  }
-}
-
-/**
- * Merges current drawing panel with another panel
- */
-class MergeAction(title: String, eventsToMergeWith: DrawingSpaceState) extends Action("Merge with %s".format(title)) {
-  def apply() = {
-    ReShapes.drawingSpaceState.getValue execute new MergeDrawingSpaces(eventsToMergeWith)
   }
 }

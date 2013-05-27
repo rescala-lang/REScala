@@ -3,17 +3,17 @@ package reswing
 import java.awt.Dimension
 
 import scala.swing.Action
-import scala.swing.Button
+import scala.swing.MenuItem
 
-class ReButton(action: Action = null) extends ReAbstractButton {
-  override protected lazy val peer = new Button(text.getValue) with AbstractButtonMixin
+class ReMenuItem(action: Action = null) extends ReAbstractButton {
+  override protected lazy val peer = new MenuItem(text.getValue) with AbstractButtonMixin
   
   if (action != null)
     peer.action = action
 }
 
-object ReButton {
-  implicit def toButton(input : ReButton) : Button = input.peer
+object ReMenuItem {
+  implicit def toMenuItem(input : ReMenuItem) : MenuItem = input.peer
   
   def apply(
       text: ImperativeSignal[String] = ImperativeSignal.noSignal,

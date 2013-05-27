@@ -2,22 +2,19 @@ package reswing
 
 import java.awt.Dimension
 
-import scala.swing.Action
-import scala.swing.Button
+import scala.swing.Component
+import scala.swing.Menu
 
-class ReButton(action: Action = null) extends ReAbstractButton {
-  override protected lazy val peer = new Button(text.getValue) with AbstractButtonMixin
-  
-  if (action != null)
-    peer.action = action
+class ReMenu extends ReMenuItem with ReSequentialContainer {
+  override protected lazy val peer = new Menu(text.getValue) with AbstractButtonMixin
 }
 
-object ReButton {
-  implicit def toButton(input : ReButton) : Button = input.peer
+object ReMenu {
+  implicit def toMenuItem(input : ReMenu) : Menu = input.peer
   
   def apply(
       text: ImperativeSignal[String] = ImperativeSignal.noSignal,
-      action: Action = null,
+      contents: ImperativeSignal[Seq[Component]] = ImperativeSignal.noSignal,
       minimumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
       maximumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
       preferredSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,

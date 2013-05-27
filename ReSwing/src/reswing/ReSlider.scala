@@ -59,6 +59,7 @@ object ReSlider {
       extent: ImperativeSignal[Int] = ImperativeSignal.noSignal,
       minimumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
       maximumSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
-      preferredSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal) =
+      preferredSize: ImperativeSignal[Dimension] = ImperativeSignal.noSignal,
+      enabled: ImperativeSignal[Boolean] = ImperativeSignal.noSignal) =
         Macros.defaultObjectCreation
 }
