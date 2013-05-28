@@ -33,7 +33,7 @@ class LoadAction extends Action("Load") {
   def apply() = {
     val fileChooser = new FileChooser()
     if (fileChooser.showDialog(null, "load") == FileChooser.Result.Approve) {
-      ReShapes.drawingSpaceState.getValue.clear
+      ReShapes.drawingSpaceState.getValue.clear()
       for (shape <- Shape.deserialize(XML.loadFile(fileChooser.selectedFile),
                                       ReShapes.drawingSpaceState.getValue))
         ReShapes.drawingSpaceState.getValue execute new CreateShape(shape)

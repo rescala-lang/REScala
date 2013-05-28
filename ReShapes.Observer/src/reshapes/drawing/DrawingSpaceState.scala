@@ -93,6 +93,10 @@ class DrawingSpaceState {
       _shapes = List.empty
       for (obs <- shapesObservers)
         obs(_shapes)
+      
+      _commands = List.empty
+      for (obs <- commandsObservers)
+        obs(_commands)
     }
     
   def nextShape_=(shape: Shape) =
@@ -179,13 +183,12 @@ class DrawingSpaceState {
   
   def unregisterFileNameObserver(obs: String => Unit) =
     fileNameObservers = fileNameObservers filterNot (_ == obs)
-  
-  def dispose { }
 }
 
 
 class NetworkSpaceState(
     val drawingStateSpace: DrawingSpaceState,
+    val shapeUpdateRunner: (=> Unit) => Unit,
     val serverHostname: String = "localhost",
     val commandPort: Int = 9998,
     val exchangePort: Int = 9999,
@@ -206,21 +209,22 @@ class NetworkSpaceState(
   private val listener = new ServerSocket(listenerPort)
   private var updating = false
   new Actor {
-    def act() {
+    def act {
       println("start UpdateThread")
-      try {
+      try
         while (true) {
           println("receiving update")
           val socket = listener.accept
           val shapes = Shape.deserialize(XML.load(socket.getInputStream), drawingStateSpace)
-          updating = true
-          drawingStateSpace.clear
-          for (shape <- shapes)
-            drawingStateSpace execute new CreateShape(shape)
-          updating = false
+          shapeUpdateRunner {
+            updating = true
+            drawingStateSpace.clear
+            for (shape <- shapes)
+              drawingStateSpace execute new CreateShape(shape)
+            updating = false
+          }
           socket.close
         }
-      }
       catch {
         case e: SocketException =>
       }

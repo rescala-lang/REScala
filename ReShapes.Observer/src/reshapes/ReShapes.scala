@@ -14,6 +14,7 @@ import scala.swing.MenuBar
 import scala.swing.MenuItem
 import scala.swing.Separator
 import scala.swing.SimpleSwingApplication
+import scala.swing.Swing
 import scala.swing.TabbedPane
 import scala.swing.event.SelectionChanged
 
@@ -170,6 +171,7 @@ object ReShapes extends SimpleSwingApplication {
             state,
             new NetworkSpaceState(
                 state,
+                Swing.onEDTWait,
                 serverDialog.hostname,
                 serverDialog.commandPort,
                 serverDialog.exchangePort,

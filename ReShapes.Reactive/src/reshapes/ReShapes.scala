@@ -19,6 +19,7 @@ import scala.swing.MenuBar
 import scala.swing.MenuItem
 import scala.swing.Separator
 import scala.swing.SimpleSwingApplication
+import scala.swing.Swing
 import scala.swing.TabbedPane
 import scala.swing.event.SelectionChanged
 
@@ -158,7 +159,7 @@ object ReShapes extends SimpleSwingApplication {
           override lazy val strokeWidth = Signal { ui.strokeInputPanel.strokeWidth() }
           override lazy val color = Signal { ui.strokeInputPanel.color() }
           override lazy val executed =
-            (event(panel.drawn) || ui.shapePanel.deleted || menu.merge.merged) && isCurrentState _
+            event(panel.drawn || ui.shapePanel.deleted || menu.merge.merged) && isCurrentState _
           override lazy val reverted = (ui.commandPanel.revert ||
               menu.undo.clicked map {_: Any => commands.getValue.head }) && isCurrentState _
         }
@@ -193,6 +194,7 @@ object ReShapes extends SimpleSwingApplication {
         addTab({drawingSpaceState =>
           new NetworkSpaceState(
             drawingSpaceState,
+            Swing.onEDTWait,
             serverDialog.hostname,
             serverDialog.commandPort,
             serverDialog.exchangePort,

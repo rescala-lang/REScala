@@ -7,8 +7,10 @@ import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.Socket
 import java.net.SocketException
+
 import scala.actors.Actor
 import scala.events.Event
+import scala.events.ImperativeEvent
 import scala.events.behaviour.Signal
 import scala.events.behaviour.Var
 import scala.events.emptyevent
@@ -16,9 +18,9 @@ import scala.xml.Attribute
 import scala.xml.Null
 import scala.xml.Text
 import scala.xml.XML
+
 import reshapes.figures.Line
 import reshapes.figures.Shape
-import scala.events.ImperativeEvent
 
 /**
  * Represents the current state of one drawing space
@@ -27,70 +29,56 @@ class DrawingSpaceState {
   // selected shape to be drawn
   lazy val nextShape = Signal[Shape] { new Line(this) }
   // currently selected shape inside the drawing space
-  private val _selectedShape = Var[Shape](null)
-  final val selectedShape = Signal { _selectedShape() }
+  final lazy val selectedShape: Signal[Shape] =
+    ((shapes.changed && { shapes =>
+       !(shapes contains selectedShape.getValue) } map {_: Any => null}) ||
+     (select && { shape =>
+       shape == null || (shapes.getValue contains shape) })) latest null
   // currently drawn shapes
-  private val _shapes = Var(List.empty[Shape])
-  final val shapes = Signal { _shapes() }
+  final lazy val shapes = Signal { commandsShapes() match { case (_, shapes) => shapes } }
+  // all executed commands
+  final lazy val commands = Signal { commandsShapes() match { case (commands, _) => commands } }
   // current stroke width
   lazy val strokeWidth = Signal { 1 }
   // current stroke color
   lazy val color = Signal { Color.BLACK }
-  // all executed commands
-  private val _commandsVar = Var(List.empty[Command])
-  final val commands = Signal { _commandsVar() }
   // filename after saving
   val fileName = Var("unnamed")
   
+  // can be
   lazy val executed: Event[Command] = emptyevent
   lazy val reverted: Event[Command] = emptyevent
   
-  final val execute = new ImperativeEvent[Command]
-  final val revert = new ImperativeEvent[Command]
-  final val select = new ImperativeEvent[Shape]
+  final lazy val execute = new ImperativeEvent[Command]
+  final lazy val revert = new ImperativeEvent[Command]
+  final lazy val clear = new ImperativeEvent[Unit]
+  final lazy val select = new ImperativeEvent[Shape]
   
-  executed || execute += { command =>
-    _commandsVar() ::= command
-    
-    val shapes = command execute _shapes()
-    if (shapes != _shapes) {
-      if (_selectedShape != null && !(shapes contains _selectedShape))
-        _selectedShape() = null
-      
-      _shapes() = shapes
-    }
-  }
-  
-  reverted || revert += { command =>
-    val count = (_commandsVar.getValue indexOf command) + 1
-    if (count != 0) {
-      val shapes = (_shapes() /: (_commandsVar.getValue take count)) {
-        (shapes, command) => command revert shapes
-      }
-      
-      if (shapes != _shapes) {
-        if (_selectedShape != null && !(shapes contains _selectedShape))
-          _selectedShape() = null
-        
-        _shapes() = shapes
-      }
-      
-      _commandsVar() = _commandsVar.getValue drop count
-    }
-  }
-  
-  def clear() =
-    if (_shapes().nonEmpty)
-      _shapes() = List.empty
-  
-  select += { shape =>
-    if (_selectedShape() != shape && (shape == null || (_shapes() contains shape)))
-      _selectedShape() = shape
-  }
+  private lazy val commandsShapes: Signal[(List[Command], List[Shape])] =
+    (((executed || execute) map { command: Command =>
+        val _commands = command :: commands.getValue
+        val _shapes = command execute shapes.getValue
+        (_commands, _shapes)
+      }) ||
+     ((reverted || revert) map { command: Command =>
+        val count = (commands.getValue indexOf command) + 1
+        if (count != 0) {
+          val _shapes = (shapes.getValue /: (commands.getValue take count)) {
+            (shapes, command) => command revert shapes
+          }
+          (commands.getValue drop count, _shapes)
+        }
+        else
+          (commands.getValue, shapes.getValue)
+      }) ||
+     (clear map { _: Unit =>
+       (List.empty, List.empty)
+     })) latest (List.empty, List.empty)
 }
 
 class NetworkSpaceState(
     val drawingStateSpace: DrawingSpaceState,
+    val shapeUpdateRunner: (=> Unit) => Unit,
     val serverHostname: String = "localhost",
     val commandPort: Int = 9998,
     val exchangePort: Int = 9999,
@@ -111,21 +99,22 @@ class NetworkSpaceState(
   private val listener = new ServerSocket(listenerPort)
   private var updating = false
   new Actor {
-    def act() {
+    def act {
       println("start UpdateThread")
-      try {
+      try
         while (true) {
           println("receiving update")
           val socket = listener.accept
           val shapes = Shape.deserialize(XML.load(socket.getInputStream), drawingStateSpace)
-          updating = true
-          drawingStateSpace.clear
-          for (shape <- shapes)
-            drawingStateSpace execute new CreateShape(shape)
-          updating = false
+          shapeUpdateRunner {
+            updating = true
+            drawingStateSpace.clear()
+            for (shape <- shapes)
+              drawingStateSpace execute new CreateShape(shape)
+            updating = false
+          }
           socket.close
         }
-      }
       catch {
         case e: SocketException =>
       }
