@@ -1,14 +1,21 @@
 package reader.data
 
-import reader.common.implicits._
-import reader.XMLFixtures._
-import reader.testHelpers._
+import java.net.URL
 
 import org.junit.runner.RunWith
+import org.scalatest.BeforeAndAfter
+import org.scalatest.FlatSpec
 import org.scalatest.junit.JUnitRunner
-import org.scalatest._
-import org.scalatest.matchers._
-import java.net.URL
+import org.scalatest.matchers.ShouldMatchers
+
+import reader.EventShouldFireWrapper.convertToEventShouldFireWrapper
+import reader.XMLFixtures.completeRSS2Items
+import reader.XMLFixtures.corruptDateItem
+import reader.XMLFixtures.missingLinkChannel
+import reader.XMLFixtures.missingLinkItem
+import reader.XMLFixtures.simpleChannel
+import reader.XMLFixtures.simpleItem
+import reader.common.implicits.stringToUrl
 
 @RunWith(classOf[JUnitRunner])
 class XmlParserSpec extends FlatSpec with ShouldMatchers with BeforeAndAfter {
@@ -70,17 +77,17 @@ class XmlParserSpec extends FlatSpec with ShouldMatchers with BeforeAndAfter {
   }
 
   it should "fire an event after parsing a channel" in {
-    shouldFire(parser.channelParsed) {
+    parser.channelParsed shouldFireIn {
       parser.parseChannelWithoutURL(simpleChannel)
     }
 
-    shouldFire(parser.channelParsed) {
+    parser.channelParsed shouldFireIn {
       parser.parseChannelWithURL(simpleChannel, new URL("http://www.what.ever"))
     }
   }
 
   it should "fire an event after parsing an item" in {
-    shouldFire(parser.itemParsed) {
+    parser.itemParsed shouldFireIn {
       parser.parseItem(simpleItem)
     }
   }
@@ -105,7 +112,7 @@ class XmlParserSpec extends FlatSpec with ShouldMatchers with BeforeAndAfter {
   }
 
   it should "fire channelParsed after parseRSS" in {
-    shouldFire(parser.channelParsed) {
+    parser.channelParsed shouldFireIn {
       parser.parseRSS(completeRSS2Items,new URL("http://www.test.de"))
     }
   }

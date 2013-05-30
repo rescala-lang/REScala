@@ -1,14 +1,14 @@
 package reader.gui
 
-import reader.data._
-
-import scala.swing._
+import reader.data.FeedStore
+import reader.data.RSSChannel
+import reader.data.RSSItem
 
 trait ContentMediator {
-  def mediate( channelList: EventListView[RSSChannel]
-             , itemList: EventListView[RSSItem]
-             , renderArea: RssItemRenderPane
-             , store: FeedStore): Unit
+  def mediate(channelList: EventListView[RSSChannel],
+              itemList: EventListView[RSSItem],
+              renderArea: RssItemRenderPane,
+              store: FeedStore): Unit
 }
 
 /**
@@ -19,44 +19,29 @@ trait ContentMediator {
 *   - the store for the feeds
 */
 object SyncAll extends ContentMediator {
-  def mediate( channelList: EventListView[RSSChannel]
-             , itemList: EventListView[RSSItem]
-             , renderArea: RssItemRenderPane
-             , store: FeedStore) {
-
-    updateItemsListOnAddition
-    displayItemsForSelectedChannel
-    renderSelectedItem
-
-    def updateItemsListOnAddition {
-      store.itemAdded += { item =>
-        for {
-          selected <- channelList.selectedItem
-          src <- item.srcChannel
-          if (src == selected)
-        } displayChannelsItems(src)
-      }
+  def mediate(channelList: EventListView[RSSChannel],
+              itemList: EventListView[RSSItem],
+              renderArea: RssItemRenderPane,
+              store: FeedStore) {
+    store.itemAdded += { item =>
+      for {
+        selected <- channelList.selectedItem
+        src <- item.srcChannel
+        if (src == selected)
+      } displayChannelsItems(src)
     }
-
-    def displayItemsForSelectedChannel {
-      channelList.selectedItemChanged += { maybeChannel: Option[RSSChannel] =>
-        maybeChannel.foreach { channel => displayChannelsItems(channel) }
-      }
+    
+    channelList.selectedItemChanged += { maybeChannel: Option[RSSChannel] =>
+      for (channel <- maybeChannel) displayChannelsItems(channel)
     }
-
-    def renderSelectedItem {
-      itemList.selectedItemChanged += { maybeItem =>
-        maybeItem.foreach { item =>
-          renderArea.content_=(item)
-        }
-      }
+    
+    itemList.selectedItemChanged += { maybeItem =>
+      for (item <- maybeItem) renderArea.renderItem(item)
     }
-
+    
     def displayChannelsItems(channel: RSSChannel) = {
-      store.itemsFor(channel).foreach {  items =>
-        itemList.listData = items.toSeq.sorted
-        itemList.repaint
-      }
+      itemList.listData = store.channels.getValue(channel).getValue.toSeq.sorted
+      itemList.repaint
     }
   }
 }

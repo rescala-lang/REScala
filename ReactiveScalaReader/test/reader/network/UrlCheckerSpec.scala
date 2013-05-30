@@ -1,38 +1,32 @@
 package reader.network
 
-import reader.network._
-
-import reader.testHelpers._
-
-import org.scalatest._
-import org.scalatest.matchers._
-
 import org.junit.runner.RunWith
+import org.scalatest.BeforeAndAfter
+import org.scalatest.FunSpec
 import org.scalatest.junit.JUnitRunner
+import org.scalatest.matchers.ShouldMatchers
 
-import java.net.URL
+import reader.EventShouldFireWrapper.convertToEventShouldFireWrapper
 
 @RunWith(classOf[JUnitRunner])
 class UrlCheckerSpec extends FunSpec with ShouldMatchers with BeforeAndAfter {
-
   var checker: UrlChecker = _
-
+  
   before {
     checker = new UrlChecker
   }
-
+  
   describe("The url checker") {
     it("should accept valid urls") {
-      shouldFire(checker.urlIsValid) {
+      checker.urlIsValid shouldFireIn {
         checker.check("http://feeds.rssboard.org/rssboard")
       }
     }
-
+    
     it("should not accept invalid urls") {
-      shouldFire(checker.urlIsInvalid) {
+      checker.urlIsInvalid shouldFireIn {
         checker.check("garbage")
       }
     }
   }
-
 }

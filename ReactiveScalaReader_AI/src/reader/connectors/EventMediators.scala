@@ -1,15 +1,15 @@
 package reader.connectors
 
-import scala.events._
-import reader.network._
-import reader.data._
-import reader.gui._
+import reader.data.FeedStore
+import reader.data.XmlParser
+import reader.network.Fetcher
+import reader.network.UrlChecker
 
 trait EventMediator {
-  def mediate( fetcher: Fetcher
-             , parser: XmlParser
-             , store: FeedStore
-             , checker: UrlChecker): Unit
+  def mediate(fetcher: Fetcher,
+              parser: XmlParser,
+              store: FeedStore,
+              checker: UrlChecker): Unit
 }
 
 /**
@@ -22,33 +22,30 @@ trait EventMediator {
  *   4. if the checker has a valid (checked) url then it is added to the fetcher
  */
 object CentralizedEvents extends EventMediator {
-
   def mediate(fetcher: Fetcher, parser: XmlParser, store: FeedStore, checker: UrlChecker) {
-    fetcher.rssFetched += { xmlAndUrl => parser.parseRSS(xmlAndUrl._1, xmlAndUrl._2) }
+    fetcher.rssFetched += { case (xml, url) => parser.parseRSS(xml, url) }
 
     parser.channelParsed += { store.addChannel(_) }
     parser.itemParsed += { store.addItem(_) }
 
     checker.checkedURL += { url => fetcher.addURL(url) }
   }
-
 }
 
 object SimpleReporter extends EventMediator {
-
   def mediate(fetcher: Fetcher, parser: XmlParser, store: FeedStore, checker: UrlChecker) {
-    store.channelsChanged += { x => println("Channels in store changed. Size: " + x.size) }
-
+    store.channels.changed += { x => println("Channels in store changed. Size: " + x.size) }
+    
     fetcher.rssFetched += { _ => println("New content fetched") }
-
+    
     parser.channelParsed += { _ => println("A channel was parsed") }
     parser.itemParsed    += { _ => println("An item was parsed")   }
-
+    
     fetcher.startedFetching += { println(_) }
     fetcher.finishedFetching += { println(_) }
-
+    
     (fetcher.startedFetching and fetcher.finishedFetching) += { _ => println("One sync done.") }
-
+    
     (checker.checkedURL and checker.urlIsInvalid) += { t => println("Invalid url: " + t._1) }
     (checker.checkedURL and checker.urlIsValid)   += { t => println("Valid url: "   + t._1) }
   }

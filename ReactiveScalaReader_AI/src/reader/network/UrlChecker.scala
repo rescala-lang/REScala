@@ -1,19 +1,17 @@
 package reader.network
 
-import scala.events._
-import scala.events.behaviour._
-import java.net._
+import java.net.MalformedURLException
+import java.net.URL
+import java.net.UnknownHostException
+
+import scala.events.Event
+import scala.events.Observable
 
 class UrlChecker {
   type CheckArg = String
-  type CheckResult = Either[String,URL]
-  type AfterCheck = (CheckArg,CheckResult)
+  type CheckResult = Either[String, URL]
+  type AfterCheck = (CheckArg, CheckResult)
   
-  
-  val urlA = new Var("") 
-  
-  
-
   /**
    * Try to increase confidence that the String is a valid feed url
    * by performing some simple checks.
@@ -21,69 +19,43 @@ class UrlChecker {
    * @param url The string to check
    * @return Nothing is returned but events are fired, see below
    */
-  val check = Observable( (url: String) => help(url) )
-    
-  private def help(url: String) = {
-    urlA() = url
-    checkURL(url)
+  val check = Observable {
+    // Tries to create a url from the string and returns it in Right
+    // if not successful, a Left with an error message is returned
+    (url: String) =>
+      try {
+        val u = new URL(url)
+        u.getContent
+        Right(u)
+      }
+      catch {
+        case e: UnknownHostException => Left(errorMessage(url, e))
+        case e: MalformedURLException => Left(errorMessage(url, e))
+      }
   }
   
-
-
-  // Tries to create a url from the string and returns it in Right
-  // if not successful, a Left with an error message is returned
-  private def checkURL(url: String): CheckResult = {
-    try {
-      val u = new URL(url)
-      u.getContent
-      Right(u)
-    } catch {
-      case e: UnknownHostException => Left(errorMessage(url,e))
-      case e: MalformedURLException => Left(errorMessage(url,e))
-    }
-  }
-  
-  var UrlValid: Signal[Boolean] = Signal{checkURLSignal(urlA.toString)}
-  var ErrorMessage: Signal[String] = Signal{EM} 
-  
-  var EM: String = ""
-  
-    private def checkURLSignal(url: String): Boolean = {
-    System.out.println("here")
-      var valid = true
-    try {
-      val u = new URL(url)
-      u.getContent
-      Right(u)
-      System.out.println("here")
-    } catch {
-      case e: UnknownHostException => valid = false //EM
-      case e: MalformedURLException => valid = false //EM
-    }
-    return valid
-  }
-
-  private lazy val checkSuccessful: Event[CheckResult] = 
+  private lazy val checkSuccessful: Event[CheckResult] =
     check.after && { t: AfterCheck => t._2.isRight } map { t: AfterCheck => t._2 }
-
-  private lazy val checkFailed: Event[CheckResult] = 
+  
+  private lazy val checkFailed: Event[CheckResult] =
     check.after && { t: AfterCheck => t._2.isLeft } map { t: AfterCheck => t._2 }
-
-  private lazy val checkedOption: Event[Option[URL]] = 
-    (checkSuccessful || checkFailed) map { e: CheckResult => e match { case Right(u) => Some(u)
-                                                                      case Left(_)  => None } }
+  
+  private lazy val checkedOption: Event[Option[URL]] =
+    (checkSuccessful || checkFailed) map { (_: CheckResult) match {
+      case Right(u) => Some(u)
+      case Left(_)  => None
+    }}
 
   /** Fired for every valid url checked */
-  lazy val checkedURL = new ImperativeEvent[URL]
-  checkedOption += { opt => opt foreach { checkedURL(_) } }
-
+  lazy val checkedURL: Event[URL] = checkedOption &&
+    { t: Option[URL] => t.isDefined } map { t: Option[URL] => t.get }
+  
   /** Only fires if the checked url is valid */
-  lazy val urlIsValid: Event[Unit]   = checkSuccessful.dropParam
-
+  lazy val urlIsValid: Event[Unit] = checkSuccessful.dropParam
+  
   /** Only fires if the checked url is invalid */
   lazy val urlIsInvalid: Event[Unit] = checkFailed.dropParam
-
+  
   private def errorMessage(url: String, e: Exception): String =
     "Error while checking '" + url + "' - " + e.getMessage
-
 }

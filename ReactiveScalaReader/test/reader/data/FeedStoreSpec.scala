@@ -1,13 +1,13 @@
 package reader.data
 
-import reader.common.implicits._
-import reader.testHelpers._
-
-import org.scalatest.FlatSpec
-import org.scalatest.matchers.ShouldMatchers
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
 import org.scalatest.BeforeAndAfter
+import org.scalatest.FlatSpec
+import org.scalatest.junit.JUnitRunner
+import org.scalatest.matchers.ShouldMatchers
+
+import reader.EventShouldFireWrapper.convertToEventShouldFireWrapper
+import reader.common.implicits.stringToUrl
 
 @RunWith(classOf[JUnitRunner])
 class FeedStoreSpec extends FlatSpec with ShouldMatchers with BeforeAndAfter {
@@ -51,17 +51,17 @@ class FeedStoreSpec extends FlatSpec with ShouldMatchers with BeforeAndAfter {
   }
 
   it should "not fire channels changed if the channel has already been added" in {
-    shouldFire(store.channelsChanged) { store.addChannel(channel) }
+    store.channelsChanged shouldFireIn { store.addChannel(channel) }
 
-    shouldNotFire(store.channelsChanged) { store.addChannel(channel) }
+    store.channelsChanged shouldNotFireIn { store.addChannel(channel) }
   }
 
   it should "only fire itemAdded if the item is new" in {
     store.addChannel(channel)
 
-    shouldFire(store.itemAdded) { store.addItem(item) }
+    store.itemAdded shouldFireIn { store.addItem(item) }
 
-    shouldNotFire(store.itemAdded) { store.addItem(item) }
+    store.itemAdded shouldNotFireIn { store.addItem(item) }
   }
 
 }
