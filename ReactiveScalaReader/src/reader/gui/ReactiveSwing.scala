@@ -34,7 +34,6 @@ class EventCheckBox(text: String) extends CheckBox(text) {
 class EventListView[A](evt: Event[Iterable[A]]) extends ListView[A] {
   val selectedItemChanged = new ImperativeEvent[Option[A]]
   
-  val wrappedEvent = evt
   evt += { data => listData = data.toSeq }
   
   private var selectedItemField: Option[A] = getSelectedItem
@@ -66,6 +65,5 @@ class EventListView[A](evt: Event[Iterable[A]]) extends ListView[A] {
 }
 
 class EventText[A](evt: Event[A]) extends Label {
-  val wrappedEvent = evt
   evt += { v => text = v.toString }
 }

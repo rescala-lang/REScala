@@ -3,35 +3,39 @@ package reader.gui
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.Toolkit
+
+import scala.annotation.migration
 import scala.events.ImperativeEvent
+import scala.events.behaviour.Signal
 import scala.swing._
+
 import javax.swing.ImageIcon
 import reader.data.FeedStore
 import reader.data.RSSChannel
 import reader.data.RSSItem
 import reader.gui.ReactiveSwingConversions.eventButtonToEvent
-import scala.events.behaviour.Signal
 
 /**
  * Responsible for displaying the content of the given FeedStore
  * The connections between the displayed content is mainly coordinated
  * by an initialized content mediator
  */
-class GUI(val store: FeedStore) extends SimpleSwingApplication {
+class GUI(val store: FeedStore,
+          val itemStatus: Signal[Any] = new Signal)
+            extends SimpleSwingApplication {
   val requestURLAddition = new ImperativeEvent[String]
   
   val notifications = new ImperativeEvent[Any]
-  val itemStatus = new ImperativeEvent[Any]
   val refresh = new ImperativeEvent[Unit]
   val menuExit = new ImperativeEvent[Unit]
   val frameExit = new ImperativeEvent[Unit]
   
   (menuExit || frameExit) += { _ => quit }
   
-  val refreshButton = new EventButton("Refresh")
+  val refreshButton = new ReButton("Refresh")
   refreshButton += { _ => refresh() }
   
-  val refreshCheckbox = new EventCheckBox("auto refresh") { selected = true }
+  val refreshCheckbox = new ReCheckBox("auto refresh") { selected = true }
   
   def refreshAllowed = refreshCheckbox.selected
   
@@ -60,28 +64,32 @@ class GUI(val store: FeedStore) extends SimpleSwingApplication {
     val (framewidth, frameheight) = (840, 480)
     configure
     
-    val channels = Signal { store.channels().keys.toList }
-    val channelList = new EventListView[RSSChannel](channels.changed) {
+    val channelList = new ReListView[RSSChannel](Signal { store.channels().keys.toIterable }) {
       renderer = ListView.Renderer(_.title)
-      listData = channels.getValue.sorted
       peer.setVisibleRowCount(3)
     }
     
-    val itemList = new EventListView[RSSItem](new ImperativeEvent[Iterable[RSSItem]]) {
+    val selectedChannelItems = Signal { channelList.selectedItem() match {
+      case Some(channel) => store.channels().get(channel) match {
+        case Some(item) => item().toIterable
+        case _ => Iterable.empty
+      }
+      case _ => Iterable.empty
+    } }
+    
+    val itemList = new ReListView[RSSItem](selectedChannelItems) {
       renderer = ListView.Renderer(_.title)
     }
     
-    val renderArea = new RssItemRenderPane
+    val renderArea = new RssItemRenderPane(itemList.selectedItem)
     
-    val statusBar = new EventText(notifications)
+    val statusBar = new ReText(notifications latest "")
     statusBar.preferredSize = new Dimension(framewidth / 2, 15)
     statusBar.horizontalAlignment = Alignment.Left
     
-    val itemCountStatus = new EventText(itemStatus)
+    val itemCountStatus = new ReText(itemStatus)
     itemCountStatus.preferredSize = new Dimension(framewidth / 2, 15)
     itemCountStatus.horizontalAlignment = Alignment.Right
-    
-    val mediator = SyncAll.mediate(channelList, itemList, renderArea, store)
     
     contents = new BorderPanel {
       val topPane = new GridPanel(1, 1) {

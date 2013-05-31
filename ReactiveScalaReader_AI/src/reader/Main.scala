@@ -21,7 +21,12 @@ object Main extends App {
   val fetcher = new Fetcher
   val parser = new XmlParser
   val store = new FeedStore
-  val app = new GUI(store)
+  val app = new GUI(
+      store,
+      Signal[Any] {
+        val itemCount = (store.channels() map { case (_, items) => items().size }).sum
+       "Channels: " + store.channels().size + " Items: " + itemCount
+      })
   val checker = new UrlChecker
   
   setupGuiEvents
@@ -62,18 +67,15 @@ object Main extends App {
   private def setupGuiEvents {
     app.requestURLAddition += { url => checker.check(url) }
     
-    fetcher.startedFetching += { _ => app.notifications("Started fetching.") }
-    fetcher.startedFetching += { _ => app.refreshButton.enabled = false }
+    fetcher.startedFetching += { _ =>
+      app.notifications("Started fetching.")
+      app.refreshButton.enabled = false }
     
-    fetcher.finishedFetching += { _ => app.notifications("Finished fetching.") }
-    fetcher.finishedFetching += { _ => app.refreshButton.enabled = true }
+    fetcher.finishedFetching += { _ =>
+      app.notifications("Finished fetching.")
+      app.refreshButton.enabled = true }
     
     store.itemAdded += { x => app.notifications((x.srcChannel map (_.title) getOrElse "<unknown>") + ": " + x.title) }
-    
-    Signal {
-      val itemCount = (store.channels() map { case (_, items) => items().size }).sum
-      "Channels: " + store.channels().size + " Items: " + itemCount
-    }.changed += { v => app.itemStatus(v) }
     
     val guardedTick = tick && { _ => app.refreshAllowed }
     

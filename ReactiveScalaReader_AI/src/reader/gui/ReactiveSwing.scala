@@ -1,7 +1,8 @@
 package reader.gui
 
-import scala.events.Event
 import scala.events.ImperativeEvent
+import scala.events.behaviour.Signal
+import scala.events.behaviour.Var
 import scala.swing.Button
 import scala.swing.CheckBox
 import scala.swing.Label
@@ -10,18 +11,18 @@ import scala.swing.event.ButtonClicked
 import scala.swing.event.SelectionChanged
 
 object ReactiveSwingConversions {
-  implicit def eventButtonToEvent(btn: EventButton): scala.events.Event[Button] = btn.pressed
-  implicit def eventCheckBoxToEvent(check: EventCheckBox): scala.events.Event[Boolean] = check.switched
+  implicit def eventButtonToEvent(btn: ReButton): scala.events.Event[Button] = btn.pressed
+  implicit def eventCheckBoxToEvent(check: ReCheckBox): scala.events.Event[Boolean] = check.switched
 }
 
-class EventButton(text: String) extends Button(text) {
+class ReButton(text: String) extends Button(text) {
   val pressed = new ImperativeEvent[Button]
   
   listenTo(this)
   reactions += { case ButtonClicked(_) => pressed(this) }
 }
 
-class EventCheckBox(text: String) extends CheckBox(text) {
+class ReCheckBox(text: String) extends CheckBox(text) {
   val switched = new ImperativeEvent[Boolean]
   
   val activated = switched && { _ => selected  }
@@ -31,20 +32,11 @@ class EventCheckBox(text: String) extends CheckBox(text) {
   reactions += { case _ => switched(selected) }
 }
 
-class EventListView[A](evt: Event[Iterable[A]]) extends ListView[A] {
-  val selectedItemChanged = new ImperativeEvent[Option[A]]
+class ReListView[A](s: Signal[Iterable[A]]) extends ListView[A] {
+  private val selectedItemVar = Var[Option[A]](None)
+  val selectedItem = Signal { selectedItemVar() }
   
-  val wrappedEvent = evt
-  evt += { data => listData = data.toSeq }
-  
-  private var selectedItemField: Option[A] = getSelectedItem
-  
-  def selectedItem: Option[A] = selectedItemField
-  
-  def selectedItem_=(item: Option[A]) = {
-    selectedItemField = item
-    selectedItemChanged(item)
-  }
+  s.changed += { data => listData = data.toSeq }
   
   private def getSelectedItem: Option[A] = {
     val i = selection.leadIndex
@@ -61,11 +53,10 @@ class EventListView[A](evt: Event[Iterable[A]]) extends ListView[A] {
   listenTo(selection)
   
   reactions += {
-    case SelectionChanged(_) => selectedItem = getSelectedItem
+    case SelectionChanged(_) => selectedItemVar() = getSelectedItem
   }
 }
 
-class EventText[A](evt: Event[A]) extends Label {
-  val wrappedEvent = evt
-  evt += { v => text = v.toString }
+class ReText[A](s: Signal[A]) extends Label {
+  s.changed += { v => text = v.toString }
 }

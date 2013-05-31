@@ -40,7 +40,7 @@ class Fetcher {
   def addURL(url: URL) {
     try url.getContent
     catch { case _: UnknownHostException => return }
-
+    
     if (!(urlsToFetch.getValue contains url)) {
       urlsToFetch() += url
       fetch(url) // immediately perform a fetch
