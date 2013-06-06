@@ -3,9 +3,9 @@ package animal.versions.observer
 import animal.types.Pos
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.Map
-import scala.events.ImperativeEvent
-import scala.events.behaviour.Signal
-import scala.events.behaviour.Var
+import react.events.ImperativeEvent
+import react.Signal
+import react.Var
 import scala.util.Random
 
 
@@ -95,7 +95,7 @@ abstract class BoardElement(implicit val world: World) {
   }
   
   def unregisterDiesObserver(obs: (Unit => Unit)){
-   diesObservers = diesObservers - obs
+   diesObservers = diesObservers.filterNot(_ == obs)
   }
   
   /** handlers */
@@ -439,15 +439,15 @@ class Time {
   }
   
   def unregisterTickObserver(obs: (Unit => Unit)){
-   tickObservers = tickObservers - obs
+   tickObservers = tickObservers.filterNot(_ == obs)
   }
   
   def unregisterDayChangedObserver(obs: (Unit => Unit)){
-    dailyObservers =  dailyObservers - obs
+    dailyObservers =  dailyObservers.filterNot(_ == obs)
   }
   
   def unregisterWeekChangedObserver(obs: (Unit => Unit)){
-    weeklyObservers =  weeklyObservers - obs
+    weeklyObservers =  weeklyObservers.filterNot(_ == obs)
   }
 }
 
