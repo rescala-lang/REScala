@@ -6,9 +6,9 @@ import scala.events.ImperativeEvent
 import scala.events.behaviour.Signal
 
 object ReactiveUtil {
-  private class BilateralEvent {
+  private class BilateralValue {
     private trait Connectable extends Event[Any] {
-      def connect(): Unit
+      def connect: Unit
     }
     
     private val events = ListBuffer[Event[Any] with Connectable]()
@@ -17,10 +17,21 @@ object ReactiveUtil {
     
     def apply[T](e: => Event[T]): Event[T] = {
       val ev = new ImperativeEvent[T] with Connectable {
-        override def connect() = e += apply _
+        override def connect = e += apply _
       }
       events += ev
       ev
+    }
+    
+    def apply[T](s: => Signal[T], init: T = null.asInstanceOf[T]): Signal[T] = {
+      val ev = new ImperativeEvent[T] with Connectable {
+        override def connect {
+          s.changed += apply _
+          apply(s.getValue)
+        }
+      }
+      events += ev
+      ev latest init
     }
   }
   
@@ -52,15 +63,15 @@ object ReactiveUtil {
    * As a solution, the following code can be used:
    * 
    * {{{
-   * val (o1, o2) = bilateralEvents{ event =>
+   * val (o1, o2) = bilateralValues{ value =>
    *   lazy val o1: { val ev: Event[Unit] } = new {
    *     lazy val ev: Event[Unit] = new ImperativeEvent[Unit]
-   *     event(o2.ev) += {_ => /* react on event */ }
+   *     value(o2.ev) += {_ => /* react on event */ }
    *   }
    *   
    *   lazy val o2: { val ev: Event[Unit] } = new {
    *     lazy val ev: Event[Unit] = new ImperativeEvent[Unit]
-   *     event(o1.ev) += {_ => /* react on event */ }
+   *     value(o1.ev) += {_ => /* react on event */ }
    *   }
    *   
    *   (o1, o2)
@@ -68,12 +79,12 @@ object ReactiveUtil {
    * }}}
    * 
    * This will construct both objects when they are returned as a pair
-   * from the function passed to `bilateralEvents` and will establish
+   * from the function passed to `bilateralValues` and will establish
    * the event stream connection after object construction has completed,
    * thus circumventing the stack overflow issue.
    */
-  def bilateralEvents[T <: AnyRef](body: BilateralEvent => T): T = {
-    val connect = new BilateralEvent
+  def bilateralValues[T <: AnyRef](body: BilateralValue => T): T = {
+    val connect = new BilateralValue
     val res = body(connect)
     connect.applyConnections
     res

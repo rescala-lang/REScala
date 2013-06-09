@@ -42,7 +42,7 @@ import reshapes.ui.panels.ShowIntersection
 import reshapes.ui.panels.ShowNameLabels
 import reshapes.ui.panels.StrokeInputPanel
 import reshapes.util.ReactiveUtil.UnionEvent
-import reshapes.util.ReactiveUtil.bilateralEvents
+import reshapes.util.ReactiveUtil.bilateralValues
 import reswing.ReMenu
 import reswing.ReMenuItem
 
@@ -111,7 +111,7 @@ object ReShapes extends SimpleSwingApplication {
       contents += new Separator
       contents += (new ReMenuItem {
         override lazy val text = overrideSignal("Quit")
-        clicked += { _ => exit(0) }
+        clicked += { _ => quit }
       }: ReMenuItem)
     }
     
@@ -145,7 +145,7 @@ object ReShapes extends SimpleSwingApplication {
   
   def addTab(networkSpaceState: DrawingSpaceState => NetworkSpaceState = {_ => null}): Unit = {
     if (newTabDialog.showDialog(ui.locationOnScreen)) {
-      val (state, panel) = bilateralEvents{ event =>
+      val (state, panel) = bilateralValues{ value =>
         lazy val panel = generateDrawingPanel(
             newTabDialog.showIntersections.selected,
             newTabDialog.showCoordinates.selected,
@@ -159,7 +159,7 @@ object ReShapes extends SimpleSwingApplication {
           override lazy val strokeWidth = Signal { ui.strokeInputPanel.strokeWidth() }
           override lazy val color = Signal { ui.strokeInputPanel.color() }
           override lazy val executed =
-            event(panel.drawn || ui.shapePanel.deleted || menu.merge.merged) && isCurrentState _
+            value(panel.drawn || ui.shapePanel.deleted || menu.merge.merged) && isCurrentState _
           override lazy val reverted = (ui.commandPanel.revert ||
               menu.undo.clicked map {_: Any => commands.getValue.head }) && isCurrentState _
         }

@@ -86,7 +86,7 @@ object ReShapes extends SimpleSwingApplication {
       contents += new MenuItem(new SaveAction)
       contents += new MenuItem(new LoadAction)
       contents += new Separator
-      contents += new MenuItem(new QuitAction)
+      contents += new MenuItem(new QuitAction(ReShapes.this))
     }
     
     contents += new Menu("Edit") {

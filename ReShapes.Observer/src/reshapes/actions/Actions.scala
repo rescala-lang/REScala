@@ -4,6 +4,7 @@ import java.io.File
 
 import scala.swing.Action
 import scala.swing.FileChooser
+import scala.swing.SwingApplication
 import scala.xml.XML
 
 import reshapes.ReShapes
@@ -46,26 +47,22 @@ class LoadAction extends Action("Load") {
 /**
  * Closes the application
  */
-class QuitAction extends Action("Quit") {
-  def apply() = {
-    System.exit(0)
-  }
+class QuitAction(app: SwingApplication) extends Action("Quit") {
+  def apply() = app.quit
 }
 
 /**
  * Reverts last command
  */
 class UndoAction extends Action("Undo") {
-  def apply() = {
+  def apply() =
     ReShapes.drawingSpaceState revert ReShapes.drawingSpaceState.commands.head
-  }
 }
 
 /**
  * Merges current drawing panel with another panel
  */
 class MergeAction(title: String, eventsToMergeWith: DrawingSpaceState) extends Action("Merge with %s".format(title)) {
-  def apply() = {
+  def apply() =
     ReShapes.drawingSpaceState execute new MergeDrawingSpaces(eventsToMergeWith)
-  }
 }
