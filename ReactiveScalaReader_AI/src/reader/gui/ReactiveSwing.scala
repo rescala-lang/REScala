@@ -10,26 +10,19 @@ import scala.swing.ListView
 import scala.swing.event.ButtonClicked
 import scala.swing.event.SelectionChanged
 
-object ReactiveSwingConversions {
-  implicit def eventButtonToEvent(btn: ReButton): scala.events.Event[Button] = btn.pressed
-  implicit def eventCheckBoxToEvent(check: ReCheckBox): scala.events.Event[Boolean] = check.switched
-}
-
 class ReButton(text: String) extends Button(text) {
   val pressed = new ImperativeEvent[Button]
-  
-  listenTo(this)
   reactions += { case ButtonClicked(_) => pressed(this) }
 }
 
 class ReCheckBox(text: String) extends CheckBox(text) {
-  val switched = new ImperativeEvent[Boolean]
+  private val selectedVar = Var(false)
+  val checked = Signal { selectedVar() }
   
-  val activated = switched && { _ => selected  }
-  val deactivated = switched && { _ => !selected }
+  val activated = checked.changed && (v => v)
+  val deactivated = checked.changed && (! _)
   
-  listenTo(this)
-  reactions += { case _ => switched(selected) }
+  reactions += { case _ => selectedVar() = selected }
 }
 
 class ReListView[A](s: Signal[Iterable[A]]) extends ListView[A] {
@@ -49,7 +42,7 @@ class ReListView[A](s: Signal[Iterable[A]]) extends ListView[A] {
     for (index <- selected)
       selectIndices(index)
   }
-
+  
   listenTo(selection)
   
   reactions += {

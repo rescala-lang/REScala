@@ -9,15 +9,8 @@ import scala.swing.ListView
 import scala.swing.event.ButtonClicked
 import scala.swing.event.SelectionChanged
 
-object ReactiveSwingConversions {
-  implicit def eventButtonToEvent(btn: EventButton): scala.events.Event[Button] = btn.pressed
-  implicit def eventCheckBoxToEvent(check: EventCheckBox): scala.events.Event[Boolean] = check.switched
-}
-
 class EventButton(text: String) extends Button(text) {
   val pressed = new ImperativeEvent[Button]
-  
-  listenTo(this)
   reactions += { case ButtonClicked(_) => pressed(this) }
 }
 
@@ -27,7 +20,6 @@ class EventCheckBox(text: String) extends CheckBox(text) {
   val activated = switched && { _ => selected  }
   val deactivated = switched && { _ => !selected }
   
-  listenTo(this)
   reactions += { case _ => switched(selected) }
 }
 

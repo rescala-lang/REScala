@@ -41,10 +41,7 @@ object SimpleReporter extends EventMediator {
     parser.channelParsed += { _ => println("A channel was parsed") }
     parser.itemParsed    += { _ => println("An item was parsed")   }
     
-    fetcher.startedFetching += { println(_) }
-    fetcher.finishedFetching += { println(_) }
-    
-    (fetcher.startedFetching and fetcher.finishedFetching) += { _ => println("One sync done.") }
+    (fetcher.startedFetching || fetcher.finishedFetching) += println _
     
     (checker.checkedURL and checker.urlIsInvalid) += { t => println("Invalid url: " + t._1) }
     (checker.checkedURL and checker.urlIsValid)   += { t => println("Valid url: "   + t._1) }

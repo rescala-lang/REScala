@@ -10,6 +10,7 @@ import reader.common.implicits.stringToUrl
 import reader.connectors.CentralizedEvents
 import reader.connectors.SimpleReporter
 import reader.data.FeedStore
+import reader.data.RSSItem
 import reader.data.XmlParser
 import reader.gui.GUI
 import reader.network.Fetcher
@@ -21,12 +22,21 @@ object Main extends App {
   val fetcher = new Fetcher
   val parser = new XmlParser
   val store = new FeedStore
-  val app = new GUI(store)
+  val app = new GUI(
+      store,
+      fetcher.startedFetching ||
+      fetcher.finishedFetching ||
+      (store.itemAdded map { x: RSSItem =>
+        (x.srcChannel map (_.title) getOrElse "<unknown>") + ": " + x.title }),
+      store.contentChanged map { _: Unit =>
+        val itemCount = (store.channels map { c => (store itemsFor c).get.size }).sum
+        "Channels: " + store.channels.size + " Items: " + itemCount
+      })
   val checker = new UrlChecker
   
   setupGuiEvents
   
-  List(SimpleReporter, CentralizedEvents).foreach { m =>
+  List(SimpleReporter, CentralizedEvents) foreach { m =>
     m.mediate(fetcher, parser, store, checker)
   }
   
@@ -61,20 +71,6 @@ object Main extends App {
   
   private def setupGuiEvents {
     app.requestURLAddition += { url => checker.check(url) }
-    
-    fetcher.startedFetching += { _ =>
-      app.notifications("Started fetching.")
-      app.refreshButton.enabled = false }
-    
-    fetcher.finishedFetching += { _ =>
-      app.notifications("Finished fetching.")
-      app.refreshButton.enabled = true }
-    
-    store.itemAdded += { x => app.notifications((x.srcChannel map (_.title) getOrElse "<unknown>") + ": " + x.title) }
-    store.contentChanged += { _ =>
-      val itemCount = (store.channels map { c => (store itemsFor c).get.size }).sum
-      app.itemStatus("Channels: " + store.channels.size + " Items: " + itemCount)
-    }
     
     val guardedTick = tick && { _ => app.refreshAllowed }
     

@@ -1,28 +1,32 @@
 package reader
 
 import scala.events.ImperativeEvent
+import scala.events.behaviour.Signal
 import scala.io.Source
 import scala.swing.Dialog
 import scala.swing.Dialog.Message
 import scala.swing.Swing.EmptyIcon
+
 import reader.common.implicits.stringToUrl
 import reader.connectors.CentralizedEvents
 import reader.connectors.SimpleReporter
 import reader.data.FeedStore
+import reader.data.RSSItem
 import reader.data.XmlParser
 import reader.gui.GUI
 import reader.network.Fetcher
 import reader.network.UrlChecker
-import scala.events.behaviour.Signal
 
 object Main extends App {
   val tick = new ImperativeEvent[Unit]
-  
   val fetcher = new Fetcher
   val parser = new XmlParser
   val store = new FeedStore
   val app = new GUI(
       store,
+      (fetcher.state.changed ||
+        (store.itemAdded map { x: RSSItem =>
+          (x.srcChannel map (_.title) getOrElse "<unknown>") + ": " + x.title })) latest "",
       Signal[Any] {
         val itemCount = (store.channels() map { case (_, items) => items().size }).sum
        "Channels: " + store.channels().size + " Items: " + itemCount
@@ -31,7 +35,7 @@ object Main extends App {
   
   setupGuiEvents
   
-  List(SimpleReporter, CentralizedEvents).foreach { m =>
+  List(SimpleReporter, CentralizedEvents) foreach { m =>
     m.mediate(fetcher, parser, store, checker)
   }
   
@@ -66,16 +70,6 @@ object Main extends App {
   
   private def setupGuiEvents {
     app.requestURLAddition += { url => checker.check(url) }
-    
-    fetcher.startedFetching += { _ =>
-      app.notifications("Started fetching.")
-      app.refreshButton.enabled = false }
-    
-    fetcher.finishedFetching += { _ =>
-      app.notifications("Finished fetching.")
-      app.refreshButton.enabled = true }
-    
-    store.itemAdded += { x => app.notifications((x.srcChannel map (_.title) getOrElse "<unknown>") + ": " + x.title) }
     
     val guardedTick = tick && { _ => app.refreshAllowed }
     

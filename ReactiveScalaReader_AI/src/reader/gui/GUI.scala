@@ -4,7 +4,7 @@ import java.awt.Dimension
 import java.awt.Point
 import java.awt.Toolkit
 
-import scala.annotation.migration
+import scala.events.Event
 import scala.events.ImperativeEvent
 import scala.events.behaviour.Signal
 import scala.swing._
@@ -13,34 +13,26 @@ import javax.swing.ImageIcon
 import reader.data.FeedStore
 import reader.data.RSSChannel
 import reader.data.RSSItem
-import reader.gui.ReactiveSwingConversions.eventButtonToEvent
 
 /**
  * Responsible for displaying the content of the given FeedStore
  * The connections between the displayed content is mainly coordinated
  * by an initialized content mediator
  */
-class GUI(val store: FeedStore,
-          val itemStatus: Signal[Any] = new Signal)
+class GUI(store: FeedStore,
+          notifications: Signal[Any] = new Signal,
+          itemStatus: Signal[Any] = new Signal)
             extends SimpleSwingApplication {
+  val refreshButton = new ReButton("Refresh")
+  val refresh = refreshButton.pressed.dropParam: Event[Unit]
+  
   val requestURLAddition = new ImperativeEvent[String]
   
-  val notifications = new ImperativeEvent[Any]
-  val refresh = new ImperativeEvent[Unit]
-  val menuExit = new ImperativeEvent[Unit]
-  val frameExit = new ImperativeEvent[Unit]
-  
-  (menuExit || frameExit) += { _ => quit }
-  
-  val refreshButton = new ReButton("Refresh")
-  refreshButton += { _ => refresh() }
-  
   val refreshCheckbox = new ReCheckBox("auto refresh") { selected = true }
-  
   def refreshAllowed = refreshCheckbox.selected
   
   def top = new MainFrame {
-    val quitAction = swing.Action("Quit") { menuExit() }
+    val quitAction = swing.Action("Quit") { quit }
     val urlDialogAction = swing.Action("Add url") {
       val input = Dialog.showInput(null,
                                    "Please enter a feed url:",
@@ -69,13 +61,15 @@ class GUI(val store: FeedStore,
       peer.setVisibleRowCount(3)
     }
     
-    val selectedChannelItems = Signal { channelList.selectedItem() match {
-      case Some(channel) => store.channels().get(channel) match {
-        case Some(item) => item().toIterable
+    val selectedChannelItems = Signal {
+      channelList.selectedItem() match {
+        case Some(channel) => store.channels().get(channel) match {
+          case Some(item) => item().toIterable
+          case _ => Iterable.empty
+        }
         case _ => Iterable.empty
       }
-      case _ => Iterable.empty
-    } }
+    }
     
     val itemList = new ReListView[RSSItem](selectedChannelItems) {
       renderer = ListView.Renderer(_.title)
@@ -83,7 +77,7 @@ class GUI(val store: FeedStore,
     
     val renderArea = new RssItemRenderPane(itemList.selectedItem)
     
-    val statusBar = new ReText(notifications latest "")
+    val statusBar = new ReText(notifications)
     statusBar.preferredSize = new Dimension(framewidth / 2, 15)
     statusBar.horizontalAlignment = Alignment.Left
     

@@ -11,7 +11,7 @@ import scala.events.behaviour.Signal
 /**
 * Displays the content of an single RSS Item
 */
-class RssItemRenderPane(val item: Signal[Option[RSSItem]]) extends EditorPane {
+class RssItemRenderPane(item: Signal[Option[RSSItem]]) extends EditorPane {
   super.editable = false
   super.contentType = "text/html"
     

@@ -4,6 +4,8 @@ import java.awt.Dimension
 import java.awt.Point
 import java.awt.Toolkit
 
+import scala.events.emptyevent
+import scala.events.Event
 import scala.events.ImperativeEvent
 import scala.swing._
 
@@ -11,33 +13,26 @@ import javax.swing.ImageIcon
 import reader.data.FeedStore
 import reader.data.RSSChannel
 import reader.data.RSSItem
-import reader.gui.ReactiveSwingConversions.eventButtonToEvent
 
 /**
  * Responsible for displaying the content of the given FeedStore
  * The connections between the displayed content is mainly coordinated
  * by an initialized content mediator
  */
-class GUI(val store: FeedStore) extends SimpleSwingApplication {
+class GUI(store: FeedStore,
+          notifications: Event[Any] = emptyevent,
+          itemStatus: Event[Any] = emptyevent)
+            extends SimpleSwingApplication {
+  val refreshButton = new EventButton("Refresh")
+  val refresh = refreshButton.pressed.dropParam: Event[Unit]
+  
   val requestURLAddition = new ImperativeEvent[String]
   
-  val notifications = new ImperativeEvent[Any]
-  val itemStatus = new ImperativeEvent[Any]
-  val refresh = new ImperativeEvent[Unit]
-  val menuExit = new ImperativeEvent[Unit]
-  val frameExit = new ImperativeEvent[Unit]
-  
-  (menuExit || frameExit) += { _ => quit }
-  
-  val refreshButton = new EventButton("Refresh")
-  refreshButton += { _ => refresh() }
-  
   val refreshCheckbox = new EventCheckBox("auto refresh") { selected = true }
-  
   def refreshAllowed = refreshCheckbox.selected
   
   def top = new MainFrame {
-    val quitAction = swing.Action("Quit") { menuExit() }
+    val quitAction = swing.Action("Quit") { quit }
     val urlDialogAction = swing.Action("Add url") {
       val input = Dialog.showInput(null,
                                    "Please enter a feed url:",

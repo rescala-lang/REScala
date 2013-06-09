@@ -18,9 +18,9 @@ import scala.xml.XML
  */
 class Fetcher {
   lazy val rssFetched: Event[(NodeSeq, URL)] = fetch.after map { (_: (URL, NodeSeq)).swap }
-  
-  lazy val startedFetching = fetch.before map { _: Any => "Started fetching" }
-  lazy val finishedFetching = fetch.after map { _: Any => "Finished fetching" }
+  lazy val state =
+    ((fetch.before map { _: Any => "Started fetching" }) ||
+     (fetch.after map { _: Any => "Finished fetching" })) latest ""
   
   private val urlsToFetch = Var(Set.empty[URL])
   val currentURLs = Signal { urlsToFetch() }
