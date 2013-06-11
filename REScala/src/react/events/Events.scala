@@ -59,13 +59,14 @@ trait Event[+T] extends DepHolder {
   //lazy val latest : Signal[Option[T @uncheckedVariance]] = Signal.latestOption(this)
 
   // def hold: Signal[T] =
+  
   def fold[A](init: A)(fold: (A, T) => A): Signal[A] = IFunctions.fold(this, init)(fold)
   def iterate[A](init: A)(f: A => A): Signal[A] = IFunctions.iterate(this, init)(f)
-  //def set[A](init: A)(f: (T=>A)): Signal[A] = Signal.set(this,init)(f)
-  //def set[A,T](init: A)(f: (T=>A)): Signal[A] = Signal.set(this,init)(f)
+  
+  def set[B >: T,A](init: B)(f: (B=>A)): Signal[A] = IFunctions.set(this,init)(f)
 
   def latest[S >: T](init: S): Signal[S] = IFunctions.latest(this, init)
-  //def reset[S >: T, A](init : S)(f : (S) => Signal[A]) : Signal[A] = Signal.reset(this, init)(f)
+  def reset[S >: T, A](init : S)(f : (S) => Signal[A]) : Signal[A] = IFunctions.reset(this, init)(f)
   
   def last[S >: T](n: Int): Signal[List[S]] = IFunctions.last[S](this, n)
   def list[S >: T](): Signal[List[S]] = IFunctions.list[S](this)

@@ -17,7 +17,7 @@ import react.events.ChangedEventNode
 
 
 
-class VarSynt[T](initval: T) extends DepHolder {
+class VarSynt[T](initval: T) extends DepHolder with Var[T] {
   private[this] var value: T = initval
   def setVal(newval: T): Unit = {
     value = newval // .asInstanceOf[T] // to make it covariant ?
@@ -28,12 +28,18 @@ class VarSynt[T](initval: T) extends DepHolder {
     notifyDependents(value)
     ReactiveEngine.startEvaluation
   }  
+  def getValue = value
   def getVal = value
   
+  def update(v: T) = setVal(v)
+  
   def apply(s: SignalSynt[_]) = {
+    if (level >= s.level) s.level = level + 1
     s.reactivesDependsOnCurrent += this 
     getVal
   }
+  
+  def apply = getVal
   
   /* Testing */
   val timestamps = ListBuffer[Stamp]()
@@ -50,7 +56,7 @@ object VarSynt {
  * A time changing value
  */
 class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: SignalSynt[T] => T)
-  extends Dependent with DepHolder {
+  extends Dependent with DepHolder with Signal[T] {
 
   val timestamps = ListBuffer[Stamp]() // Testing
 
@@ -62,6 +68,7 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
   val reactivesDependsOnCurrent = ListBuffer[DepHolder]()
   private[this] var currentValue = reEvaluate()
   def getVal = currentValue
+  def getValue = currentValue
 
   def triggerReevaluation() = reEvaluate
 
@@ -75,7 +82,7 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
     dependOn ++= reactivesDependsOnCurrent
     reactivesDependsOnCurrent.map(_.addDependent(this))
 
-    /* Notify dependents only of the value chenged */
+    /* Notify dependents only of the value changed */
     if (tmp != currentValue) {
       currentValue = tmp
       timestamps += TS.newTs // Testing
@@ -89,10 +96,14 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
     ReactiveEngine.addToEvalQueue(this)
   }
   
+  /* Called by the reactives encountered in the evaluation */
   def apply(s: SignalSynt[_]) = {
+    if (level >= s.level) s.level = level + 1
     s.reactivesDependsOnCurrent += this 
     getVal
   }
+  
+  def apply() = getVal
 
   /* To add handlers */
   def +=(handler: Dependent) {
@@ -124,6 +135,8 @@ object SignalSynt {
   def apply[T](r1: DH,r2: DH,r3: DH,r4: DH,r5: DH)(expr: SignalSynt[T]=>T): SignalSynt[T] = apply(List(r1,r2,r3,r4,r5))(expr)
 }
 
-
+object SignalSynt1 {
+  def apply[T](expr: =>T): SignalSynt[T] = new SignalSynt(null)(null)
+}
 
 

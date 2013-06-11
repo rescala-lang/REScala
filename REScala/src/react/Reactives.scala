@@ -31,7 +31,7 @@ trait DepHolder extends Reactive {
 /* A node that depends on other nodes */
 trait Dependent extends Reactive {
   val dependOn = new ListBuffer[DepHolder]
-  // TODO: add level cheking t have glitch freedom
+  // TODO: add level checking to have glitch freedom ?
   def addDependOn(dep: DepHolder) = dependOn += dep    
   def removeDependOn(dep: DepHolder) = dependOn -= dep
   
@@ -43,8 +43,21 @@ trait Dependent extends Reactive {
 
 
 
+trait Var[T] extends DepHolder {
+  def setVal(newval: T): Unit 
+  def getValue: T
+  def getVal: T
+  def update(v: T)
+  
+  def apply(): T
+  def apply(s: SignalSynt[_]): T
+  
+  /* Testing */
+  val timestamps: ListBuffer[Stamp]
+}
 
-class Var[T](initval: T) extends DepHolder {
+
+class StaticVar[T](initval: T) extends DepHolder with Var[T] {
   private[this] var value: T = initval
   def setVal(newval: T): Unit = {
     value = newval // .asInstanceOf[T] // to make it covariant ?
@@ -60,27 +73,94 @@ class Var[T](initval: T) extends DepHolder {
   
   def update(v: T) = setVal(v)
   
+  def apply(s: SignalSynt[_]) = {
+    if (level >= s.level) s.level = level + 1
+    s.reactivesDependsOnCurrent += this 
+    getVal
+  }
+  
+  def apply = getVal
+  
   /* Testing */
   val timestamps = ListBuffer[Stamp]()
 }
 object Var {
-  def apply[T](initval: T) = new Var(initval)
+  def apply[T](initval: T) = new StaticVar(initval)
 }
 
 
 
+
+trait Signal[+T] extends Dependent with DepHolder {
+  
+  def getValue: T
+  def getVal: T
+  
+  def triggerReevaluation()
+  
+  def reEvaluate(): T 
+ 
+  /* To add handlers */
+  def +=(handler: Dependent) 
+  def -=(handler: Dependent)
+
+  
+  def apply(): T
+  def apply(s: SignalSynt[_]): T
+
+  /**
+   * Create an event that fires every time the signal changes. It fires the tuple
+   *  (oldVal, newVal) for the signal. The first tuple is (null, newVal)
+   */
+  def change[U >: T]: Event[(U, U)]
+  
+  /**
+   * Create an event that fires every time the signal changes. The value associated
+   * to the event is the new value of the signal
+   */
+  def changed[U >: T]: Event[U] = change map ((x: (U,U))=>{ x._2 })
+
+  /** Convenience function filtering to events which change this reactive to value */
+  def changedTo[V](value: V): Event[Unit] = change && { _._2 == value } dropParam
+  
+  /** Return a Signal that gets updated only when e fires, and has the value of this Signal */
+  def snapshot(e : Event[_]): Signal[T] = IFunctions.snapshot(e,this)
+
+  /** Switch to (and keep) event value on occurrence of e*/  // TODO: check types
+  def switchTo[U >: T](e : Event[U]): Signal[U] = IFunctions.switchTo(e, this)
+
+  /** Switch to (and keep) event value on occurrence of e*/ // TODO: check types
+  def switchOnce[V >: T](e : Event[_])(newSignal : Signal[V]): Signal[V] = IFunctions.switchOnce(e, this, newSignal)
+
+  /** Switch back and forth between this and the other Signal on occurrence of event e */
+  def toggle[V](e: Event[_])(other: Signal[V]) = IFunctions.toggle(e, this, other)
+
+  /** Delays this signal by n occurrences */
+  def delay(n: Int) = IFunctions.delay(change, this.getValue, n)
+
+  
+  /* Testing */
+  val timestamps :ListBuffer[Stamp]
+}
 
 
 /**
  * A time changing value
  */
-class Signal[+T](reactivesDependsOn: List[DepHolder])(expr: =>T)
-  extends Dependent with DepHolder {
+class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: =>T)
+  extends Dependent with DepHolder with Signal[T] {
 
   private[this] var currentValue = expr
   
   def getValue = currentValue
   def getVal = currentValue
+  
+  def apply(): T = currentValue
+  def apply(s: SignalSynt[_]) = {
+    if (level >= s.level) s.level = level + 1
+    s.reactivesDependsOnCurrent += this 
+    getVal
+  }
   
   reactivesDependsOn.map( r => {
     if (r.level >= level) level = r.level + 1 // For glitch freedom  
@@ -112,42 +192,9 @@ class Signal[+T](reactivesDependsOn: List[DepHolder])(expr: =>T)
     addDependent(handler)
   }
   def -=(handler: Dependent) = removeDependent(handler)
-
-  // TODO
-  // def apply[U](s: Signal[U]) = 10
-
-  /**
-   * Create an event that fires every time the signal changes. It fires the tuple
-   *  (oldVal, newVal) for the signal. The first tuple is (null, newVal)
-   */
+  
   def change[U >: T]: Event[(U, U)] = new ChangedEventNode[(U, U)](this)
-  
-  /**
-   * Create an event that fires every time the signal changes. The value associated
-   * to the event is the new value of the signal
-   */
-  def changed[U >: T]: Event[U] = change map ((x: (U,U))=>{ x._2 })
-
-  /** Convenience function filtering to events which change this reactive to value */
-  def changedTo[V](value: V): Event[Unit] = change && { _._2 == value } dropParam
-  
-  /** Return a Signal that gets updated only when e fires, and has the value of this Signal */
-  def snapshot(e : Event[_]): Signal[T] = IFunctions.snapshot(e,this)
-
-  /** Switch to (and keep) event value on occurrence of e*/
-  // def switchTo(e : Event[V]): Signal[V] = Signal.switchTo(e, self)
-
-  /** Switch to (and keep) event value on occurrence of e*/
-  //def switchOnce(e : Event[_])(newSignal : Signal[V]): Signal[V] = Signal.switchOnce(e, self, newSignal)
-
-  /** Switch back and forth between this and the other Signal on occurrence of event e */
-  def toggle[V](e: Event[_])(other: Signal[V]) = IFunctions.toggle(e, this, other)
-
-  /** Delays this signal by n occurrences */
-  def delay(n: Int) = IFunctions.delay(change, this.getValue, n)
-
-  
-  
+ 
   /* Testing */
   val timestamps = ListBuffer[Stamp]()
 }
@@ -160,7 +207,7 @@ class Signal[+T](reactivesDependsOn: List[DepHolder])(expr: =>T)
 object Signal {
   
   def apply[T](reactivesDependsOn: List[DepHolder])(expr: => T) =
-    new Signal(reactivesDependsOn)(expr)
+    new StaticSignal(reactivesDependsOn)(expr)
   
   type DH = DepHolder
   def apply[T]()(expr: =>T): Signal[T] = apply(List())(expr)
