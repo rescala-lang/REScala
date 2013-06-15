@@ -9,7 +9,7 @@ import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import react.Signal
 import react.DepHolder
-import react.Var
+import react._
 
 class VarTestSuite extends AssertionsForJUnit with MockitoSugar {
 
@@ -42,7 +42,7 @@ class VarTestSuite extends AssertionsForJUnit with MockitoSugar {
   
   @Test def varNotifiesSignalOfChanges() {
     val v = Var(1)
-    val s = Signal(List(v)){ v.getValue + 1 }
+    val s = StaticSignal(List(v)){ v.getValue + 1 }
     assert(v.getValue == 1)
 
     assert(s.getVal == 2)

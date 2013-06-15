@@ -46,9 +46,9 @@ class GlitchFreedomTestSuite extends AssertionsForJUnit with MockitoSugar {
   @Test def noGlitchesInSimpleCase() = {
     
     v1 = Var(1)
-    s1 = Signal(v1) { 2 * v1.getValue }
-    s2 = Signal(v1) { 3 * v1.getValue }
-    s3 = Signal(s1, s2) { s1.getVal + s2.getVal }
+    s1 = StaticSignal(v1) { 2 * v1.getValue }
+    s2 = StaticSignal(v1) { 3 * v1.getValue }
+    s3 = StaticSignal(s1, s2) { s1.getVal + s2.getVal }
 
     v1.setVal(3)
 
@@ -64,9 +64,9 @@ class GlitchFreedomTestSuite extends AssertionsForJUnit with MockitoSugar {
     
     v1 = Var(1)
     
-    s1 = Signal(v1){ 2 * v1.getValue }
-    s2 = Signal(v1){ 3 * v1.getValue }
-    s3 = Signal(s1,s2){ s1.getVal + s2.getVal }
+    s1 = StaticSignal(v1){ 2 * v1.getValue }
+    s2 = StaticSignal(v1){ 3 * v1.getValue }
+    s3 = StaticSignal(s1,s2){ s1.getVal + s2.getVal }
 
     
     v1.setVal(3)

@@ -135,7 +135,7 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
     var test = 0
     
     // val s: SignalSynt[Int] = SignalSynt[Int](v1, v2, v3) { s =>
-    val s: SignalSynt[Int] = SignalSynt[Int](){ s =>
+    val s: SignalSynt[Int] = SignalSynt[Int]{ s: SignalSynt[Int]=>
       i += 1
       if (v1(s)) v2(s) else v3(s)
     }

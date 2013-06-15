@@ -13,7 +13,7 @@ import react.VarSynt
 import react.Var
 import react._
 
-import macro.SignalMacro.SignalXXX
+import macro.SignalMacro.{SignalM => Signal}
 
 
 
@@ -35,7 +35,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
   @Test def signalReEvaluatesTheExpression() {
     v  = VarSynt(0)
     var i = 1
-    var s: Signal[Int] = SignalXXX[Int]{ v() ; i }
+    var s: Signal[Int] = Signal[Int]{ v() ; i }
     i = 2
     v.setVal(2)
     assert(s.getVal == 2)
@@ -43,7 +43,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
   
   @Test def theExpressionIsNoteEvaluatedEveryTimeGetValIsCalled() {
     var a = 10
-    var s: Signal[Int] = SignalXXX[Int]{ 1 + 1 + a }
+    var s: Signal[Int] = Signal[Int]{ 1 + 1 + a }
     assert(s.getVal === 12)
     a = 11
     assert(s.getVal === 12)
@@ -51,7 +51,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
   
 
   @Test def simpleSignalReturnsCorrectExpressions() {
-    var s: Signal[Int] = SignalXXX( 1 + 1 + 1 )
+    var s: Signal[Int] = Signal( 1 + 1 + 1 )
     assert(s.getVal === 3)
   }
 
@@ -59,8 +59,8 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
     
     var a = 0
     val v = VarSynt(10)
-    var s1: Signal[Int] = SignalXXX{ a +=1; v() % 10 }
-    var s2: Signal[Int] = SignalXXX{ s1; a }
+    var s1: Signal[Int] = Signal{ a +=1; v() % 10 }
+    var s2: Signal[Int] = Signal{ s1; a }
     
     
     assert(a == 1)
@@ -75,9 +75,9 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
     var test = 0
     v = VarSynt(1)
     
-    s1 = SignalXXX{ 2 * v() }
-    s2 = SignalXXX{ 3 * v() }
-    s3 = SignalXXX{ s1() + s2() }
+    s1 = Signal{ 2 * v() }
+    s2 = Signal{ 3 * v() }
+    s3 = Signal{ s1() + s2() }
       
     s1 += Handler{ test += 1 }
     s2 += Handler{ test += 1 }
@@ -95,9 +95,9 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
     var test = 0
     v = VarSynt(1)
     
-    s1 = SignalXXX{ 2 * v() }
-    s2 = SignalXXX{ 3 * v() }
-    s3 = SignalXXX{ s1() + s2() }
+    s1 = Signal{ 2 * v() }
+    s2 = Signal{ 3 * v() }
+    s3 = Signal{ s1() + s2() }
     
     s3.getVal
     
