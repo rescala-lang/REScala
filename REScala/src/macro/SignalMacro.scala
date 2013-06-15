@@ -13,9 +13,9 @@ import scala.collection.mutable.ListBuffer
 
 object SignalMacro {
 
-  def SignalXXX[A](expression: A): Signal[A] = macro Signal_XXX[A]
+  def SignalM[A](expression: A): Signal[A] = macro SignalMacro[A]
 
-  def Signal_XXX[A: c.WeakTypeTag](c: Context)(expression: c.Expr[A]): c.Expr[SignalSynt[A]] = {
+  def SignalMacro[A: c.WeakTypeTag](c: Context)(expression: c.Expr[A]): c.Expr[SignalSynt[A]] = {
     import c.universe._
     
 
@@ -59,7 +59,7 @@ object SignalMacro {
       t)
 
     val body = reify {
-      SignalSynt[A]() { c.Expr[SignalSynt[A] => A](function).splice }
+      SignalSynt[A] { c.Expr[SignalSynt[A] => A](function).splice }
     }.tree             
                  
                  

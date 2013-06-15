@@ -204,7 +204,7 @@ class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: =>T)
 /**
  * Create a Signal
  */
-object Signal {
+object StaticSignal {
   
   def apply[T](reactivesDependsOn: List[DepHolder])(expr: => T) =
     new StaticSignal(reactivesDependsOn)(expr)
