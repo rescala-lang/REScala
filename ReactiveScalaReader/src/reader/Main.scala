@@ -18,7 +18,7 @@ import reader.network.UrlChecker
 
 object Main extends App {
   val tick = new ImperativeEvent[Unit]
-  
+  val checker = new UrlChecker
   val fetcher = new Fetcher
   val parser = new XmlParser
   val store = new FeedStore
@@ -32,7 +32,6 @@ object Main extends App {
         val itemCount = (store.channels map { c => (store itemsFor c).get.size }).sum
         "Channels: " + store.channels.size + " Items: " + itemCount
       })
-  val checker = new UrlChecker
   
   setupGuiEvents
   
@@ -55,7 +54,7 @@ object Main extends App {
     urls <- loadURLs(file)
   } yield urls
   
-  (readUrls getOrElse defaultURLs) foreach (fetcher.addURL(_))
+  (readUrls getOrElse defaultURLs) foreach (checker.check(_))
   
   while (true) { tick(); Thread.sleep(sleepTime) }
   

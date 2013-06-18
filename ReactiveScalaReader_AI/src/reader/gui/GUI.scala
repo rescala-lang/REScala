@@ -64,7 +64,7 @@ class GUI(store: FeedStore,
     val selectedChannelItems = Signal {
       channelList.selectedItem() match {
         case Some(channel) => store.channels().get(channel) match {
-          case Some(item) => item().toIterable
+          case Some(items) => items().toIterable
           case _ => Iterable.empty
         }
         case _ => Iterable.empty

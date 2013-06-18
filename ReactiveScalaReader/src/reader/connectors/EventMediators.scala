@@ -25,10 +25,10 @@ object CentralizedEvents extends EventMediator {
   def mediate(fetcher: Fetcher, parser: XmlParser, store: FeedStore, checker: UrlChecker) {
     fetcher.rssFetched += { case (xml, url) => parser.parseRSS(xml, url) }
 
-    parser.channelParsed += { store.addChannel(_) }
-    parser.itemParsed += { store.addItem(_) }
+    parser.channelParsed += store.addChannel _
+    parser.itemParsed += store.addItem _
 
-    checker.checkedURL += { url => fetcher.addURL(url) }
+    checker.checkedURL += fetcher.addURL _
   }
 }
 

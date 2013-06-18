@@ -16,14 +16,20 @@ import scala.xml.XML
  * The Fetcher is responsible to fetch the xml data
  * After fetching the data an event is triggered
  */
-class Fetcher {
+class Fetcher(val urls: Signal[Set[URL]]) {
   lazy val rssFetched: Event[(NodeSeq, URL)] = fetch.after map { (_: (URL, NodeSeq)).swap }
   lazy val state =
     ((fetch.before map { _: Any => "Started fetching" }) ||
      (fetch.after map { _: Any => "Finished fetching" })) latest ""
   
-  private val urlsToFetch = Var(Set.empty[URL])
-  val currentURLs = Signal { urlsToFetch() }
+  val firstFetchInitiated = collection.mutable.Set.empty[URL]
+  
+  urls.changed += { urls =>
+    for (url <- urls filterNot (firstFetchInitiated contains _)) {
+      firstFetchInitiated += url
+      fetch(url)
+    }
+  }
   
   def loadMethod(url: URL) =
     try
@@ -34,28 +40,11 @@ class Fetcher {
       case _: SocketException => NodeSeq.Empty
     }
   
-  /**
-   * Add the given URL to the list of urls to fetch
-   */
-  def addURL(url: URL) {
-    try url.getContent
-    catch { case _: UnknownHostException => return }
-    
-    if (!(urlsToFetch.getValue contains url)) {
-      urlsToFetch() += url
-      fetch(url) // immediately perform a fetch
-    }
-  }
-  
-  /**
-   * Removes the url from the list of urls to fetch
-   * Does NOT remove the channel from the content!
-   */
-  val removeURL = Observable { (url: URL) => urlsToFetch() -= url }
+  private val fetch = Observable(loadMethod)
   
   /**
    * Fetch the channels from the list of urls
    */
-  val fetch = Observable(loadMethod)
-  def fetchAll = { urlsToFetch.getValue foreach (fetch(_)) }
+  
+  def fetchAll = { urls.getValue foreach (fetch(_)) }
 }

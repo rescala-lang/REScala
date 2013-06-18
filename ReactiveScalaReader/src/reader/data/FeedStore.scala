@@ -33,13 +33,11 @@ class FeedStore {
    *   - the item is not yet stored
    * if all of these hold, return true
    */
-  private def addItemAllowed(item: RSSItem): Boolean = {
-    val res = for { channel <- item.srcChannel
-                    items   <- channelToItems get channel
-                    if (!(items contains item))
-                  } yield Some(true)
-    res.isDefined
-  }
+  private def addItemAllowed(item: RSSItem): Boolean =
+    (for { channel <- item.srcChannel
+           items   <- channelToItems get channel
+           if (!(items contains item))
+         } yield ()).isDefined
   
   def addItem(item: RSSItem) =
     if (addItemAllowed(item)) {

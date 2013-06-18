@@ -1,5 +1,7 @@
 package reader
 
+import java.net.URL
+
 import scala.events.ImperativeEvent
 import scala.events.behaviour.Signal
 import scala.io.Source
@@ -7,7 +9,6 @@ import scala.swing.Dialog
 import scala.swing.Dialog.Message
 import scala.swing.Swing.EmptyIcon
 
-import reader.common.implicits.stringToUrl
 import reader.connectors.CentralizedEvents
 import reader.connectors.SimpleReporter
 import reader.data.FeedStore
@@ -19,7 +20,8 @@ import reader.network.UrlChecker
 
 object Main extends App {
   val tick = new ImperativeEvent[Unit]
-  val fetcher = new Fetcher
+  val checker = new UrlChecker
+  val fetcher = new Fetcher(checker.checkedURL.fold(Set.empty[URL])(_ + _))
   val parser = new XmlParser
   val store = new FeedStore
   val app = new GUI(
@@ -31,7 +33,6 @@ object Main extends App {
         val itemCount = (store.channels() map { case (_, items) => items().size }).sum
        "Channels: " + store.channels().size + " Items: " + itemCount
       })
-  val checker = new UrlChecker
   
   setupGuiEvents
   
@@ -54,7 +55,7 @@ object Main extends App {
     urls <- loadURLs(file)
   } yield urls
   
-  (readUrls getOrElse defaultURLs) foreach (fetcher.addURL(_))
+  (readUrls getOrElse defaultURLs) foreach (checker.check(_))
   
   while (true) { tick(); Thread.sleep(sleepTime) }
   

@@ -33,6 +33,8 @@ class Fetcher {
       case _: SocketException => NodeSeq.Empty
     }
   
+  private val fetch = Observable(loadMethod)
+  
   private var urlsToFetch = Set.empty[URL]
   def currentURLs = urlsToFetch.toList
   
@@ -64,6 +66,5 @@ class Fetcher {
   /**
    * Fetch the channels from the list of urls
    */
-  val fetch = Observable(loadMethod)
   def fetchAll = { urlsToFetch foreach (fetch(_)) }
 }

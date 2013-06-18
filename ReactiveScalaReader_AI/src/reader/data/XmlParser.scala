@@ -128,7 +128,7 @@ class XmlParser {
   def parseRSS(data: NodeSeq, url: URL): Option[(RSSChannel, Seq[RSSItem])] = {
     val channelXML = data \ "channel"
     val itemXML = channelXML \ "item"
-    // NOTE: we are not using parseItemObservable
+    // NOTE: we are not using parseItem
     //       because of the call to RSSItem.changeSource below
     val itemsOpt = sequence((itemXML map { parseItemSilent(_) }).toList)
     
