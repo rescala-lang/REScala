@@ -1,7 +1,12 @@
 package examples.elevator
-import scala.events.behaviour._
-import scala.events._
+import react.SignalSynt
+import react.events._
+import react.Var
+import react.Signal
+import macro.SignalMacro.{SignalM => Signal}
+import react.time.Timer
 import scala.swing._
+import examples.datastructures._
 
 class Elevator(val nFloors : Int) { // , ticker : => Event[Unit]
 	// some constants
@@ -46,7 +51,7 @@ class Elevator(val nFloors : Int) { // , ticker : => Event[Unit]
 	}
 	val currentFloor = Signal { 
 	  val p = position()
-	  FloorPos.indexOf(FloorPos.sortBy(f => math.abs(f - p)).first)
+	  FloorPos.indexOf(FloorPos.sortBy(f => math.abs(f - p)).head)
 	}	
 	val reached = Signal { stopped() && position() == destination() }
 	val reachedFloor : Event[Int] = reached.changed && {_ == true} map 

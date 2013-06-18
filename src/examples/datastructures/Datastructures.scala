@@ -1,5 +1,12 @@
-package examples.elevator
-import scala.events.behaviour._
+package examples.datastructures
+
+
+
+import react.events.ImperativeEvent
+import react.SignalSynt
+import react.Var
+import react.Signal
+import macro.SignalMacro.{SignalM => Signal}
 import scala.collection.immutable.Queue
 import scala.collection.immutable.Stack
 
@@ -8,7 +15,7 @@ import scala.collection.immutable.Stack
  * (wraps scala.collection.immutable.Queue)
  */
 class SQueue[T] {
-	val _queue = new Var(Queue[T]())
+	val _queue = Var(Queue[T]())
 	
 	// some signals
 	lazy val head = Signal {
@@ -38,7 +45,7 @@ object SQueue {
 
 
 class SStack[T] {
-	val _stack = new Var(Stack[T]())
+	val _stack =  Var(Stack[T]())
 	
 	// some signals
 	lazy val top = Signal {

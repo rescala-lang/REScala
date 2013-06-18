@@ -5,6 +5,7 @@ import react.SignalSynt
 import react.Var
 import react.Signal
 import macro.SignalMacro.{SignalM => Signal}
+import react.time.Timer
 
 
 object ContinuousTest extends Application {
