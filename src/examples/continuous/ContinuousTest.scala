@@ -1,8 +1,10 @@
 package examples.continuous
 
-import scala.events.behaviour._
-import scala.events._
-import scala.events.behaviour._
+import react.events.ImperativeEvent
+import react.SignalSynt
+import react.Var
+import react.Signal
+import macro.SignalMacro.{SignalM => Signal}
 
 
 object ContinuousTest extends Application {

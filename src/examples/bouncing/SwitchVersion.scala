@@ -1,7 +1,11 @@
 package examples.bouncing
 
-import scala.events._
-import scala.events.behaviour._
+import react.events.ImperativeEvent
+import react.SignalSynt
+import react.Var
+import react.Signal
+import macro.SignalMacro.{SignalM => Signal}
+
 
 import swing.{Panel, MainFrame, SimpleSwingApplication}
 import java.awt.{Color, Graphics2D, Dimension}
@@ -12,7 +16,7 @@ object SwitchVersionStart {
 	def main(args: Array[String]){
 		val app = new SwitchVersionFrame
 		app.main(args)
-		while (true) {      
+		while (true) {
 			Thread sleep 20
 			app.tick()
 		}
@@ -54,15 +58,15 @@ class SwitchVersionFrame extends SimpleSwingApplication {
   
   // VERSION 3: // working, but a little long
   
-  val x : Signal[Int] = tick.fold(initPosition.x) {(pos, _) => pos + speedX()}
-  val y : Signal[Int] = tick.fold(initPosition.y) {(pos, _) => pos + speedY()}
+  import SignalConversions._
+  
+  val x: Signal[Int] = tick.fold(initPosition.x) {(pos, _) => pos + speedX.getVal}
+  val y: Signal[Int] = tick.fold(initPosition.y) {(pos, _) => pos + speedY.getVal}
   
   val xBounce = x.changed && (x => x < 0 || x + Size > Max_X)
   val yBounce = y.changed && (y => y < 0 || y + Size > Max_Y)
   
-  
-  import scala.events.behaviour.SignalConversions._
-  val speedX = Signal {speed.x}.toggle(xBounce) {- speed.x }  
+  val speedX = Signal {speed.x}.toggle(xBounce) {toSignal(- speed.x) }  
   val speedY = yBounce.toggle(speed.y, - speed.y)
   
   tick += {_ => frame.repaint()}
@@ -73,8 +77,18 @@ class SwitchVersionFrame extends SimpleSwingApplication {
     contents = new Panel() {
       preferredSize = new Dimension(600, 600)
       override def paintComponent(g: Graphics2D) {
-	    g.fillOval(10, 10, Size, Size)
+	    g.fillOval(x.getVal, y.getVal, Size, Size)
       }
     }    
   }
 }
+
+
+
+
+object SignalConversions {  
+  // this is dangerous: do we want expressions to be constant or changing??
+  implicit def toSignal[T](op: =>T): Signal[T] = Signal(op)
+}
+
+

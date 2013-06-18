@@ -3,7 +3,7 @@ package examples.tempconverter
 import swing._
 import event._
 
-object TempConverter extends SimpleGUIApplication {
+object TempConverter extends SimpleSwingApplication {
   def top = new MainFrame {
     title = "Celsius/Fahrenheit Converter"
     object celsius extends TextField { columns = 5 }

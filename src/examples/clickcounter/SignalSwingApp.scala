@@ -1,8 +1,11 @@
 package examples.clickcounter
 
 // Escala lib + behaviour extensions
-import scala.events._
-import scala.events.behaviour._
+import react.events.ImperativeEvent
+import react.SignalSynt
+import react.Var
+import react.Signal
+import macro.SignalMacro.{SignalM => Signal}
 
 // Scala swing events
 import scala.swing._
@@ -23,7 +26,7 @@ class ReactiveButton extends Button with ReactiveText {
 	reactions += { case c @ ButtonClicked(_) => clicked(c) }
 }
 
-object SignalSwingApp extends SimpleGUIApplication {
+object SignalSwingApp extends SimpleSwingApplication {
   def top = new MainFrame {
     title = "Reactive Swing App"
 
@@ -31,7 +34,7 @@ object SignalSwingApp extends SimpleGUIApplication {
     val button = new ReactiveButton
     
     
-    val nClicks = Signal.fold(button.clicked, 0) {(x, _) => x + 1}
+    val nClicks = button.clicked.fold(0) {(x, _) => x + 1}
      
     // Signal to set label text
     label.text = Signal { (if(nClicks() == 0) "No" else nClicks()) + " clicks registered" }

@@ -3,7 +3,7 @@ package examples.clickcounter
 import scala.swing._
 import scala.swing.event._
 
-object ReactiveSwingApp extends SimpleGUIApplication {
+object ReactiveSwingApp extends SimpleSwingApplication {
   def top = new MainFrame {
     title = "Reactive Swing App"
     val button = new Button {

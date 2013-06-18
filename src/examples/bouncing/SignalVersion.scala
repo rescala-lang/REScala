@@ -1,6 +1,11 @@
 package examples.bouncing
 
-import scala.events.behaviour._
+import react.events.ImperativeEvent
+import react.SignalSynt
+import react.Var
+import react.Signal
+import macro.SignalMacro.{SignalM => Signal}
+
 
 import swing.{Panel, MainFrame, SimpleSwingApplication}
 import java.awt.{Color, Graphics2D, Dimension}
@@ -40,7 +45,7 @@ class SignalVersionFrame extends SimpleSwingApplication {
 	if ((d / width) % 2 == 0) d % width else width - d % width
   }
   
-  tick.changed += ((_ : Int) => frame.repaint)
+  tick.toSignal.changed += ((_ : Int) => frame.repaint)
   
   // drawing code
   def top = frame  
