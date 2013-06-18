@@ -4,6 +4,7 @@ import scala.events.ImperativeEvent
 import scala.io.Source
 import scala.swing.Dialog
 import scala.swing.Dialog.Message
+import scala.swing.Swing
 import scala.swing.Swing.EmptyIcon
 
 import reader.common.implicits.stringToUrl
@@ -56,7 +57,7 @@ object Main extends App {
   
   (readUrls getOrElse defaultURLs) foreach (checker.check(_))
   
-  while (true) { tick(); Thread.sleep(sleepTime) }
+  while (true) { Swing.onEDTWait { tick() }; Thread.sleep(sleepTime) }
   
   // ---------------------------------------------------------------------------
   

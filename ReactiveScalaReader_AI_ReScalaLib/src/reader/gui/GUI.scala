@@ -74,8 +74,6 @@ class GUI(store: FeedStore,
       }
     }
     
-    selectedChannelItems.changed += { a => println(">>>" + a.size) }
-    
     val itemList = new ReListView[RSSItem](selectedChannelItems) {
       renderer = ListView.Renderer(_.title)
     }
