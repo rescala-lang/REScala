@@ -8,6 +8,7 @@ import scala.collection.mutable.Map
 import scala.util.Random
 import animal.types.Pos.fromTuple
 import scala.Option.option2Iterable
+import macro.SignalMacro.{SignalM => Signal}
 
 
 object Board {
@@ -127,11 +128,11 @@ abstract class Animal(override implicit val world: World) extends BoardElement {
 	case object Sleeping extends AnimalState
  
 	val ticks: Var[Int] = Var(0)
-	val age = Signal(List(ticks)) { ticks.getVal / 24 }
+	val age = Signal { ticks() / 24 }
 	val state: Var[AnimalState] = Var(Idling)	
 	val energy = Var(Animal.StartEnergy)
 	
-	override val isDead = Signal(List(age, energy)) { age.getVal > Animal.MaxAge || energy.getVal < 0}
+	override val isDead = Signal{ age() > Animal.MaxAge || energy() < 0}
 	
 	// partial function for collecting food, dependant on state of the object
 	val findFood: Signal[PartialFunction[BoardElement, BoardElement]]
@@ -166,15 +167,15 @@ abstract class Animal(override implicit val world: World) extends BoardElement {
     Moving(Pos(randx, randy))
   }
 	
-	val isAdult =  Signal(List(age)) { age.getVal > Animal.FertileAge }
-	val isFertile = Signal(List(isAdult)) { isAdult.getVal }
-	val isEating = Signal(List(state)) { state.getVal match { 
+	val isAdult =  Signal { age() > Animal.FertileAge }
+	val isFertile = Signal { isAdult() }
+	val isEating = Signal { state() match { 
 	  case Eating(_) => true
 	  case _ => false
 	}}
 	
-	val energyDrain = Signal(List(age, state)) { 
-	  1 + age.getVal / 2 + (state.getVal match {
+	val energyDrain = Signal { 
+	  1 + age() / 2 + (state() match {
 	    case Moving(_) => Animal.MoveCost
 	    case Procreating(_) => Animal.ProcreateCost
 	    case FallPrey => Animal.AttackAmount
@@ -182,8 +183,8 @@ abstract class Animal(override implicit val world: World) extends BoardElement {
 	  })
 	}
 	
-	val energyGain = Signal(List(state)) {
-	  state.getVal match {
+	val energyGain = Signal {
+	  state() match {
 	    case Eating(_) => Animal.PlantEatRate
 	    case Sleeping => Animal.SleepRate
 	    case Attacking(prey) => Animal.AttackAmount
@@ -215,13 +216,13 @@ abstract class Animal(override implicit val world: World) extends BoardElement {
 
 class Carnivore(override implicit val world: World) extends Animal {
   
-  val sleepy = Signal(List(energy)) { energy.getVal < Animal.SleepThreshold }
-  val canHunt = Signal(List(energy)) { energy.getVal > Animal.AttackThreshold }
+  val sleepy = Signal{ energy() < Animal.SleepThreshold }
+  val canHunt = Signal { energy() > Animal.AttackThreshold }
 	
   // only adult carnivores with min energy can hunt, others eat plants
-  val findFood: Signal[PartialFunction[BoardElement, BoardElement]] = Signal(List(isAdult, canHunt)) {
-     if(isAdult.getVal && canHunt.getVal) { case p: Herbivore => p}
-     else { case p: Plant => p }
+  val findFood: Signal[PartialFunction[BoardElement, BoardElement]] = SignalSynt { (s: SignalSynt[PartialFunction[BoardElement, BoardElement]]) =>  
+     if(isAdult(s) && canHunt(s)) { case p: Herbivore => p} : PartialFunction[BoardElement, BoardElement]
+     else { case p: Plant => p }                            : PartialFunction[BoardElement, BoardElement] 
    }
     
 
@@ -240,7 +241,7 @@ class Carnivore(override implicit val world: World) extends Animal {
 class Herbivore(override implicit val world: World) extends Animal {
   
   val findFood: Signal[PartialFunction[BoardElement, BoardElement]] =
-    Signal(Nil) {{ case p: Plant => p }}
+    SignalSynt { (s: SignalSynt[PartialFunction[BoardElement, BoardElement]]) =>  { case p: Plant => p } :PartialFunction[BoardElement, BoardElement] }
   
   override def reachedState(plant: BoardElement): AnimalState = plant match {
     case p: Plant => Eating(p)
@@ -252,11 +253,11 @@ trait Female extends Animal {
   
   val mate: Var[Option[Animal]] = Var(None)
   
-  val isPregnant = Signal(List(mate)) { mate.getVal.isDefined }
+  val isPregnant = Signal { mate().isDefined }
   
   val pregnancyTime = Var(Animal.PregnancyTime) // counts down to 0
   
-  override val isFertile = Signal(List(isAdult, isPregnant)) { isAdult.getVal && !isPregnant.getVal}
+  override val isFertile = Signal { isAdult() && !isPregnant()}
   
   
   def giveBirth {
@@ -301,7 +302,7 @@ trait Female extends Animal {
 
 
 trait Male extends Animal {
-  val seeksMate = Signal(List(isFertile, energy)) { isFertile.getVal && energy.getVal > Animal.ProcreateThreshold }
+  val seeksMate = Signal { isFertile() && energy() > Animal.ProcreateThreshold }
   
   override def nextAction(pos: Pos): AnimalState = {
     if(seeksMate.getVal) {
@@ -345,10 +346,10 @@ class Plant(override implicit val world: World) extends BoardElement {
   
   val energy = Var(Plant.Energy)
   
-  val isDead = Signal(List(energy)) { energy.getVal <= 0}  
+  val isDead = Signal { energy() <= 0}  
   
   val age = Var(0)
-  val size = Signal(List(age)) { math.min(Plant.MaxSize, age.getVal / Plant.GrowTime) } 
+  val size = Signal { math.min(Plant.MaxSize, age() / Plant.GrowTime) } 
   
   
   def germinate{
@@ -380,7 +381,7 @@ class Plant(override implicit val world: World) extends BoardElement {
 class Seed(override implicit val world: World) extends BoardElement {
   
   val growTime = world.time.hour.changed.iterate(Plant.GrowTime)(_ - 1)
-  val isDead = Signal(List(growTime)) { growTime.getVal <= 0 }
+  val isDead = Signal { growTime() <= 0 }
   
   dies += {_ => 
   	world.board.getPosition(this).foreach{ mypos =>
@@ -394,10 +395,10 @@ class Seed(override implicit val world: World) extends BoardElement {
 class Time {
   
   val hours = Var(0)
-  val day = Signal(List(hours)) { hours.getVal / 24 }
-  val hour = Signal(List(hours)) { hours.getVal % 24}
-  val week = Signal(List(day)) { day.getVal / 7}
-  val timestring = Signal(List(week, day, hour)) { "Week " + week.getVal + ", Day " + day.getVal + " hour:" + hour.getVal }
+  val day = Signal { hours() / 24 }
+  val hour = Signal { hours() % 24}
+  val week = Signal { day() / 7}
+  val timestring = Signal { "Week " + week() + ", Day " + day() + " hour:" + hour() }
   val newWeek = week.changed
   
   def tick {
