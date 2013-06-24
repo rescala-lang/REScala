@@ -41,6 +41,8 @@ class VarSynt[T](initval: T) extends DepHolder with Var[T] {
   
   def apply = getVal
   
+  def toSignal = SignalSynt{s: SignalSynt[T] => this(s)}
+  
   /* Testing */
   val timestamps = ListBuffer[Stamp]()
 }

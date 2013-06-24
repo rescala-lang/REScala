@@ -52,6 +52,8 @@ trait Var[T] extends DepHolder {
   def apply(): T
   def apply(s: SignalSynt[_]): T
   
+  def toSignal: Signal[T]
+  
   /* Testing */
   val timestamps: ListBuffer[Stamp]
 }
@@ -80,6 +82,8 @@ class StaticVar[T](initval: T) extends DepHolder with Var[T] {
   }
   
   def apply = getVal
+  
+  def toSignal = StaticSignal(this){this.getVal}
   
   /* Testing */
   val timestamps = ListBuffer[Stamp]()
@@ -133,7 +137,7 @@ trait Signal[+T] extends Dependent with DepHolder {
   def switchOnce[V >: T](e : Event[_])(newSignal : Signal[V]): Signal[V] = IFunctions.switchOnce(e, this, newSignal)
 
   /** Switch back and forth between this and the other Signal on occurrence of event e */
-  def toggle[V](e: Event[_])(other: Signal[V]) = IFunctions.toggle(e, this, other)
+  def toggle[V >: T](e: Event[_])(other: Signal[V]) = IFunctions.toggle(e, this, other)
 
   /** Delays this signal by n occurrences */
   def delay(n: Int) = IFunctions.delay(change, this.getValue, n)
