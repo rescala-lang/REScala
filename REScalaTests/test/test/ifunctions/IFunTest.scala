@@ -529,6 +529,51 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
   
  
   
+  
+  
+/* switched */ 
+  @Test def switched_canSimulateSnaphot() {
+    
+    import IFunctions._
+    
+    def snapshot[T,A](s: Signal[A])(e: Event[T]): Signal[A] = {
+        return IFunctions.switch(e)(s)(new Factory[T, A] {
+          override def apply(eVal: T): (Signal[A],Factory[T, A]) = {
+            val freeze = s.getVal
+            return (StaticSignal(){freeze}, this)
+          }
+        })
+      }
+ 
+  def snapshot_theInitialValueIsSetCorrectly() {
+    val e = new ImperativeEvent[Int]()
+    val v1 =  Var(1)
+    val s1 = StaticSignal(v1){ v1.getValue + 1 }
+    val s = snapshot(s1)(e)
+    
+    assert(s.getValue == 2)
+  }
+  
+  def snapshot_takesASnapshotWhenTheEventOccurs() {
+    val e = new ImperativeEvent[Int]()
+    val v1 =  Var(1)
+    val s1 = StaticSignal(v1){ v1.getValue + 1 }
+    val s = snapshot(s1)(e)
+    
+    e(1)
+    assert(s.getValue == 2)
+    
+    v1.setVal(2)
+    assert(s.getValue == 2)
+    e(1)
+    assert(s.getValue == 3)
+  }
+  
+  snapshot_theInitialValueIsSetCorrectly()
+  snapshot_takesASnapshotWhenTheEventOccurs()
+  
+  }
+  
 }
 
 

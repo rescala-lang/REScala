@@ -11,10 +11,6 @@ import scala.collection.mutable.ListBuffer
 
 object PulsingCircle extends SimpleSwingApplication {
   
-  /* Static model */
-  
-  
-  
   /*
   class Point(val x: Double,val y: Double) {
     def move(delta: Delta) = new Point(x + delta.x, y + delta.y)
@@ -72,8 +68,7 @@ object PulsingCircle extends SimpleSwingApplication {
     contents = new Panel() {
       preferredSize = new Dimension(600, 600)
       override def paintComponent(g: Graphics2D) {    
-        toDraw.map(x => x(g))
-	    
+        toDraw.map(x => x(g)) 
       }
     }    
   }
