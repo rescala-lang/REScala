@@ -169,7 +169,7 @@ object ReShapes extends SimpleSwingApplication {
           override lazy val executed: Event[Command] =
             value(panel.drawn || ui.shapePanel.deleted || menu.merge.merged) && isCurrentState _
           override lazy val reverted: Event[Command] = (ui.commandPanel.revert ||
-              menu.undo.clicked map {_: Any => commands.getValue.head }) && isCurrentState _
+              (menu.undo.clicked map {_: Any => commands.getValue.head })) && isCurrentState _
         }
         
         (state, panel)
