@@ -8,6 +8,7 @@ import java.awt.SystemColor
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection
+
 import scala.math.max
 import scala.math.min
 import scala.swing.Component
@@ -16,15 +17,15 @@ import scala.swing.event.Key
 import scala.swing.event.KeyPressed
 import scala.swing.event.KeyTyped
 import scala.swing.event.MouseDragged
-import scala.swing.event.MousePressed
+import scala.swing.event.MouseEvent
+
+import react.events.Event
+import react.events.ImperativeEvent
+import reswing.ReComponent
 import texteditor.JScrollableComponent
 import texteditor.LineIterator
 import texteditor.LineOffset
 import texteditor.Position
-import scala.events.Event
-import scala.events.ImperativeEvent
-import reswing.ReComponent
-import scala.swing.event.MouseEvent
 
 class TextArea extends ReComponent {
   override protected lazy val peer = new Component with ComponentMixin {

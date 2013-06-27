@@ -8,9 +8,7 @@ import java.awt.SystemColor
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection
-import scala.events.Event
-import scala.events.ImperativeEvent
-import scala.events.behaviour.Signal
+
 import scala.math.max
 import scala.math.min
 import scala.swing.Component
@@ -19,20 +17,28 @@ import scala.swing.event.KeyPressed
 import scala.swing.event.KeyTyped
 import scala.swing.event.MouseDragged
 import scala.swing.event.MouseEvent
+
+import macro.SignalMacro.{SignalM => Signal}
+import react.Signal
+import react.SignalSynt
+import react.events.Event
+import react.events.ImperativeEvent
+import reswing.ImperativeSignal
+import reswing.ImperativeSignal.fromSignal
+import reswing.ImperativeSignal.toSignal
 import reswing.ReComponent
 import texteditor.JScrollableComponent
 import texteditor.LineIterator
 import texteditor.LineOffset
 import texteditor.Position
-import reswing.ImperativeSignal
 
 class TextArea(text: String) extends ReComponent {
   override protected lazy val peer = new Component with ComponentMixin {
     override lazy val peer: JScrollableComponent = new JScrollableComponent with SuperMixin
   }
   
-  import peer.peer.metrics.stringWidth
-  import peer.peer.{unitHeight => lineHeight}
+  protected def stringWidth = peer.peer.metrics.stringWidth _
+  protected def lineHeight = peer.peer.unitHeight
   
   protected val padding = 5
   protected val clipboard = Toolkit.getDefaultToolkit.getSystemClipboard
@@ -199,9 +205,9 @@ class TextArea(text: String) extends ReComponent {
         val offset = LineOffset.offset(content.getValue, position)
         e match { case _: MouseDragged => (offset, caret.mark.getValue) case _ => (offset, offset) }
       } ||
-    contentChanged.then(contentModification.changed)
-      .map{change: ((Int, String), _) =>
-        val ((del, ins), _) = change
+    contentChanged
+      .map{change: (Int, String) =>
+        val (del, ins) = change
         
         val selStart = min(caret.dot.getValue, caret.mark.getValue)
         val offset = ins.length + (if (del < 0) selStart + del else selStart)

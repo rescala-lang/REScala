@@ -1,7 +1,9 @@
 package texteditor.signals0
 
-import scala.events.behaviour.Var
-import scala.events.behaviour.Signal
+import macro.SignalMacro.{SignalM => Signal}
+import react.SignalSynt
+import react.StaticVar
+import react.Var
 
 /**
  * Iterates over `array` whose content has the size of `count`.
@@ -44,9 +46,9 @@ class CharacterIterator(buf: Array[Char], count: Int, caret: Int) extends Iterat
  */
 class GapBuffer {
   private var buf = new Array[Char](0)
-  private val size = new Var(0)
+  private val size = Var(0)
   
-  val caret = new Var(0) {
+  val caret = new StaticVar(0) {
     override def update(value: Int) {
       if (value >= 0 && value <= size()) {
         // the caret has moved

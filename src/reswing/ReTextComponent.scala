@@ -2,10 +2,11 @@ package reswing
 
 import java.awt.Dimension
 
-import scala.events.ImperativeEvent
 import scala.swing.TextComponent
 import scala.swing.event.CaretUpdate
 import scala.swing.event.ValueChanged
+
+import react.events.ImperativeEvent
 
 class ReTextComponent extends ReComponent {
   override protected lazy val peer = new TextComponent with ComponentMixin

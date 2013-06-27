@@ -5,8 +5,6 @@ import java.awt.Dimension
 import scala.swing.Action
 import scala.swing.Button
 
-import reswing.ImperativeSignal.toSignal
-
 class ReButton(action: Action = null) extends ReAbstractButton {
   override protected lazy val peer = new Button(text getValue) with AbstractButtonMixin
   

@@ -1,11 +1,8 @@
 package reswing
 
 import java.awt.Dimension
-import scala.swing.Alignment
+
 import scala.swing.Label
-import scala.swing.Swing.EmptyIcon
-import javax.swing.Icon
-import reswing.ImperativeSignal.toSignal
 
 class ReLabel extends ReComponent {
   override protected lazy val peer = new Label with LabelMixin

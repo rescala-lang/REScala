@@ -5,10 +5,11 @@ import java.awt.Graphics2D
 import java.awt.Point
 import java.awt.Rectangle
 
-import scala.events.ImperativeEvent
-import scala.events.behaviour.Signal
 import scala.swing.Component
 import scala.swing.event._
+
+import react.events.ImperativeEvent
+import reswing.ImperativeSignal.toSignal
 
 abstract class ReComponent {
   protected def connectSignal[T](signal: ImperativeSignal[T], init: T, setter: T => Unit) {

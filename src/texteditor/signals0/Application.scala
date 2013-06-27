@@ -1,6 +1,5 @@
 package texteditor.signals0
 
-import scala.events.behaviour.Signal
 import scala.swing.BorderPanel
 import scala.swing.BorderPanel.Position
 import scala.swing.Dimension
@@ -9,10 +8,10 @@ import scala.swing.MainFrame
 import scala.swing.ScrollPane
 import scala.swing.SimpleSwingApplication
 
+import macro.SignalMacro.{SignalM => Signal}
+import react.SignalSynt
 import reswing.ReButton
-import reswing.ReButton.toButton
 import reswing.ReLabel
-import reswing.ReLabel.toLabel
 
 object Application extends SimpleSwingApplication {
   // reactive components

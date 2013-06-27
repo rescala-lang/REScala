@@ -188,6 +188,8 @@ class TextArea extends Component with Publisher {
     Position(row, col)
   }
   
+  listenTo(keys, mouse.clicks, mouse.moves);
+  
   keys.reactions += {
     case e @ KeyPressed(_, _, _, _) =>
       def shift = e.modifiers == Key.Modifier.Shift

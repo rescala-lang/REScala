@@ -1,7 +1,9 @@
 package reswing
 
-import scala.events.ImperativeEvent
-import scala.events.behaviour.Signal
+import macro.SignalMacro.{SignalM => Signal}
+import react.Signal
+import react.SignalSynt
+import react.events.ImperativeEvent
 
 /**
  * Provides a signal that is used to update Swing values, but also

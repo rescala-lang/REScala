@@ -8,26 +8,29 @@ import java.awt.SystemColor
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection
-import scala.events.behaviour.Signal
-import scala.events.behaviour.Var
+
 import scala.math.max
 import scala.math.min
 import scala.swing.Component
 import scala.swing.event.Key
+
+import macro.SignalMacro.{SignalM => Signal}
+import react.SignalSynt
+import react.Var
+import reswing.ImperativeSignal
 import reswing.ReComponent
 import texteditor.JScrollableComponent
 import texteditor.LineIterator
 import texteditor.LineOffset
 import texteditor.Position
-import reswing.ImperativeSignal
 
 class TextArea extends ReComponent {
   override protected lazy val peer = new Component with ComponentMixin {
     override lazy val peer: JScrollableComponent = new JScrollableComponent with SuperMixin
   }
   
-  import peer.peer.metrics.stringWidth
-  import peer.peer.{unitHeight => lineHeight}
+  protected def stringWidth = peer.peer.metrics.stringWidth _
+  protected def lineHeight = peer.peer.unitHeight
   
   protected val padding = 5
   protected val clipboard = Toolkit.getDefaultToolkit.getSystemClipboard
@@ -98,7 +101,7 @@ class TextArea extends ReComponent {
     def dotPos = dotPosSignal
     def dotPos_=(value: Position) = dot = LineOffset.offset(buffer.iterable.getValue, value)
     
-    private val markVar = new Var(0)
+    private val markVar = Var(0)
     
     // mark as offset
     private val markSignal = Signal{ markVar() }

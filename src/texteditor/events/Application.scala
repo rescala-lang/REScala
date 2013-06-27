@@ -4,15 +4,13 @@ import scala.swing.BorderPanel
 import scala.swing.BorderPanel.Position
 import scala.swing.Dimension
 import scala.swing.GridPanel
+import scala.swing.Label
 import scala.swing.MainFrame
 import scala.swing.ScrollPane
 import scala.swing.SimpleSwingApplication
+
 import reswing.ReButton
-import reswing.ReButton.toButton
-import reswing.ReComponent.toComponent
 import reswing.ReLabel
-import reswing.ReLabel.toLabel
-import scala.swing.Label
 
 object Application extends SimpleSwingApplication {
   // event-based components (set initial value manually)

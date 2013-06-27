@@ -1,9 +1,9 @@
 package texteditor.events
 
-import scala.events.ImperativeEvent
 import scala.swing.event.Event
 
 import javax.swing
+import react.events.ImperativeEvent
 
 case class TimerEvent(val source: Timer) extends Event
 

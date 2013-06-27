@@ -39,9 +39,19 @@ object ApplicationSwingTextArea extends SimpleSwingApplication {
   val selectionLabel = new Label
   val countLabel = new Label
   
-  val button = new Button("Select All")
-  button.reactions += {
+  val selectAllButton = new Button("Select All")
+  selectAllButton.reactions += {
     case e @ ButtonClicked(_) => textArea.selectAll; textArea.requestFocus
+  }
+  
+  val copyButton = new Button("Copy")
+  copyButton.reactions += {
+    case e @ ButtonClicked(_) => textArea.copy; textArea.requestFocus
+  }
+  
+  val pasteButton = new Button("Paste")
+  pasteButton.reactions += {
+    case e @ ButtonClicked(_) => textArea.paste; textArea.requestFocus
   }
   
   // trigger initial events manually
@@ -53,7 +63,11 @@ object ApplicationSwingTextArea extends SimpleSwingApplication {
     preferredSize = new Dimension(400, 400)
     contents = new BorderPanel {
       layout(new ScrollPane(textArea)) = Position.Center
-      layout(button) = Position.North
+      layout(new GridPanel(1, 0) {
+        contents += selectAllButton
+        contents += copyButton
+        contents += pasteButton
+      }) = Position.North
       layout(new GridPanel(1, 0) {
         contents += positionLabel
         contents += selectionLabel

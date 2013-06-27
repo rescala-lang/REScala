@@ -1,10 +1,11 @@
 package reswing
 
-import scala.events.behaviour.Signal
-import scala.events.ImperativeEvent
+import java.awt.Dimension
+
 import scala.swing.AbstractButton
 import scala.swing.event.ButtonClicked
-import java.awt.Dimension
+
+import react.events.ImperativeEvent
 
 class ReAbstractButton extends ReComponent {
   override protected lazy val peer = new AbstractButton with AbstractButtonMixin
