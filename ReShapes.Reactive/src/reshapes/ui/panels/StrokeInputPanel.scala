@@ -1,7 +1,7 @@
 package reshapes.ui.panels
 
 import java.awt.Color
-import scala.events.behaviour.Var
+
 import scala.swing.Action
 import scala.swing.BoxPanel
 import scala.swing.Button
@@ -10,11 +10,11 @@ import scala.swing.FlowPanel
 import scala.swing.Frame
 import scala.swing.Label
 import scala.swing.Orientation
-import scala.swing.Slider
-import scala.swing.event.ValueChanged
+
 import javax.swing.JColorChooser
-import reswing.ReSlider
+import react.Var
 import reswing.ReButton
+import reswing.ReSlider
 
 /**
  * Panel for various customization of the stroke.

@@ -1,9 +1,10 @@
 package reshapes.util
 
 import scala.collection.mutable.ListBuffer
-import scala.events.Event
-import scala.events.ImperativeEvent
-import scala.events.behaviour.Signal
+
+import react.Signal
+import react.events.Event
+import react.events.ImperativeEvent
 
 object ReactiveUtil {
   private class BilateralValue {

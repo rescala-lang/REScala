@@ -1,9 +1,9 @@
 package reshapes.ui.panels
 
-import scala.events.behaviour.Signal
 import scala.swing.BoxPanel
 import scala.swing.Orientation
 
+import react.Signal
 import reshapes.ReShapes
 import reshapes.figures.Freedraw
 import reshapes.figures.Line

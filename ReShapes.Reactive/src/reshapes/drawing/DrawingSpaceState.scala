@@ -9,16 +9,17 @@ import java.net.Socket
 import java.net.SocketException
 
 import scala.actors.Actor
-import scala.events.Event
-import scala.events.ImperativeEvent
-import scala.events.behaviour.Signal
-import scala.events.behaviour.Var
-import scala.events.emptyevent
 import scala.xml.Attribute
 import scala.xml.Null
 import scala.xml.Text
 import scala.xml.XML
 
+import macro.SignalMacro.{SignalM => Signal}
+import react.Signal
+import react.SignalSynt
+import react.Var
+import react.events.Event
+import react.events.ImperativeEvent
 import reshapes.figures.Line
 import reshapes.figures.Shape
 
@@ -27,7 +28,7 @@ import reshapes.figures.Shape
  */
 class DrawingSpaceState {
   // selected shape to be drawn
-  lazy val nextShape = Signal[Shape] { new Line(this) }
+  lazy val nextShape: Signal[Shape] = Signal[Shape] { new Line(this) }
   // currently selected shape inside the drawing space
   final lazy val selectedShape: Signal[Shape] =
     ((shapes.changed && { shapes =>
@@ -35,9 +36,9 @@ class DrawingSpaceState {
      (select && { shape =>
        shape == null || (shapes.getValue contains shape) })) latest null
   // currently drawn shapes
-  final lazy val shapes = Signal { commandsShapes() match { case (_, shapes) => shapes } }
+  final lazy val shapes: Signal[List[Shape]] = Signal { commandsShapes() match { case (_, shapes) => shapes } }
   // all executed commands
-  final lazy val commands = Signal { commandsShapes() match { case (commands, _) => commands } }
+  final lazy val commands: Signal[List[Command]] = Signal { commandsShapes() match { case (commands, _) => commands } }
   // current stroke width
   lazy val strokeWidth = Signal { 1 }
   // current stroke color
@@ -46,8 +47,8 @@ class DrawingSpaceState {
   val fileName = Var("unnamed")
   
   // can be
-  lazy val executed: Event[Command] = emptyevent
-  lazy val reverted: Event[Command] = emptyevent
+  lazy val executed: Event[Command] = new ImperativeEvent
+  lazy val reverted: Event[Command] = new ImperativeEvent
   
   final lazy val execute = new ImperativeEvent[Command]
   final lazy val revert = new ImperativeEvent[Command]

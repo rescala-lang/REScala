@@ -4,10 +4,6 @@ import java.net.BindException
 import java.net.ConnectException
 
 import scala.collection.mutable.HashMap
-import scala.events.Event
-import scala.events.ImperativeEvent
-import scala.events.behaviour.Signal
-import scala.events.behaviour.Var
 import scala.swing.Action
 import scala.swing.BorderPanel
 import scala.swing.BorderPanel.Position
@@ -25,11 +21,18 @@ import scala.swing.event.SelectionChanged
 
 import drawing.DrawingSpaceState
 import javax.swing.JOptionPane
+import macro.SignalMacro.{SignalM => Signal}
+import react.Signal
+import react.SignalSynt
+import react.Var
+import react.events.Event
+import react.events.ImperativeEvent
 import reshapes.actions.LoadAction
 import reshapes.actions.SaveAction
 import reshapes.drawing.Command
 import reshapes.drawing.MergeDrawingSpaces
 import reshapes.drawing.NetworkSpaceState
+import reshapes.figures.Shape
 import reshapes.ui.dialogs.NewTabDialog
 import reshapes.ui.dialogs.ServerDialog
 import reshapes.ui.panels.CommandPanel
@@ -43,8 +46,12 @@ import reshapes.ui.panels.ShowNameLabels
 import reshapes.ui.panels.StrokeInputPanel
 import reshapes.util.ReactiveUtil.UnionEvent
 import reshapes.util.ReactiveUtil.bilateralValues
+import reswing.ImperativeSignal.fromValue
+import reswing.ImperativeSignal.toSignal
 import reswing.ReMenu
+import reswing.ReMenu.toMenuItem
 import reswing.ReMenuItem
+import reswing.ReMenuItem.toMenuItem
 
 object ReShapes extends SimpleSwingApplication {
   private val panelDrawingSpaceStates = new HashMap[TabbedPane.Page, (DrawingSpaceState, NetworkSpaceState)]
@@ -155,12 +162,13 @@ object ReShapes extends SimpleSwingApplication {
         lazy val state: DrawingSpaceState = new DrawingSpaceState {
           def isCurrentState(x: Any) = drawingSpaceState.getValue == this
           
-          override lazy val nextShape = Signal { ui.shapeSelectionPanel.nextShape().copy(this) }
+          override lazy val nextShape: Signal[Shape] = Signal { ui.shapeSelectionPanel.nextShape().copy(this) }
           override lazy val strokeWidth = Signal { ui.strokeInputPanel.strokeWidth() }
           override lazy val color = Signal { ui.strokeInputPanel.color() }
-          override lazy val executed =
+          
+          override lazy val executed: Event[Command] =
             value(panel.drawn || ui.shapePanel.deleted || menu.merge.merged) && isCurrentState _
-          override lazy val reverted = (ui.commandPanel.revert ||
+          override lazy val reverted: Event[Command] = (ui.commandPanel.revert ||
               menu.undo.clicked map {_: Any => commands.getValue.head }) && isCurrentState _
         }
         

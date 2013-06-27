@@ -1,7 +1,5 @@
 package reshapes.ui.panels
 
-import scala.events.Event
-import scala.events.behaviour.Signal
 import scala.swing.BoxPanel
 import scala.swing.Color
 import scala.swing.Component
@@ -9,15 +7,16 @@ import scala.swing.Label
 import scala.swing.Orientation
 import scala.swing.ScrollPane
 
+import macro.SignalMacro.{SignalM => Signal}
+import react.SignalSynt
+import react.events.Event
 import reshapes.ReShapes
 import reshapes.drawing.DeleteShape
 import reshapes.drawing.DrawingSpaceState
 import reshapes.figures.Shape
 import reshapes.util.ReactiveUtil.UnionEvent
-import reswing.ImperativeSignal.fromValue
 import reswing.ReBoxPanel
 import reswing.ReButton
-import reswing.ReButton.toButton
 
 /**
  * Lists all drawn shapes

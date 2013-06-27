@@ -1,12 +1,11 @@
 package reshapes.ui.panels
 
-import scala.events.behaviour.Signal
 import scala.swing.FlowPanel
 
+import macro.SignalMacro.{SignalM => Signal}
+import react.SignalSynt
 import reshapes.ReShapes
-import reswing.ImperativeSignal.fromSignal
 import reswing.ReLabel
-import reswing.ReLabel.toLabel
 
 /**
  * Small info panel which displays information like how many shapes are drawn

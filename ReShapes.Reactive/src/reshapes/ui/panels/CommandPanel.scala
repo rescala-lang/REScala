@@ -1,19 +1,18 @@
 package reshapes.ui.panels
 
-import scala.events.Event
-import scala.events.behaviour.Signal
 import scala.swing.BoxPanel
 import scala.swing.Component
 import scala.swing.Orientation
 import scala.swing.ScrollPane
 
+import macro.SignalMacro.{SignalM => Signal}
+import react.SignalSynt
+import react.events.Event
 import reshapes.ReShapes
 import reshapes.drawing.Command
 import reshapes.util.ReactiveUtil.UnionEvent
-import reswing.ImperativeSignal.fromValue
 import reswing.ReBoxPanel
 import reswing.ReButton
-import reswing.ReButton.toButton
 
 /**
  * The CommandPanel lists all executed commands and makes it possible to revert them

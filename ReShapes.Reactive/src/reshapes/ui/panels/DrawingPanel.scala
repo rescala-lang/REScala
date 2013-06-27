@@ -1,6 +1,7 @@
 package reshapes.ui.panels
 
 import java.awt.BasicStroke
+
 import scala.collection.mutable.ListBuffer
 import scala.swing.Color
 import scala.swing.Graphics2D
@@ -9,6 +10,9 @@ import scala.swing.Point
 import scala.swing.event.MouseDragged
 import scala.swing.event.MousePressed
 import scala.swing.event.MouseReleased
+
+import react.events.ImperativeEvent
+import reshapes.drawing.Command
 import reshapes.drawing.CreateShape
 import reshapes.drawing.DrawingSpaceState
 import reshapes.drawing.EditShape
@@ -16,9 +20,6 @@ import reshapes.figures.Movable
 import reshapes.figures.Resizable
 import reshapes.figures.Shape
 import reshapes.util.MathUtil
-import scala.events.ImperativeEvent
-import reshapes.drawing.Command
-import scala.events.Event
 
 /**
  * Represents the panel where all shapes are drawn onto

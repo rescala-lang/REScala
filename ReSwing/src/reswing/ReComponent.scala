@@ -3,10 +3,13 @@ package reswing
 import java.awt.Dimension
 import java.awt.Graphics2D
 
-import scala.events.ImperativeEvent
-import scala.events.behaviour.Signal
 import scala.swing.Component
 import scala.swing.event._
+
+import macro.SignalMacro.{SignalM => Signal}
+import react.Signal
+import react.SignalSynt
+import react.events.ImperativeEvent
 
 abstract class ReComponent {
   /**
