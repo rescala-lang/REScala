@@ -1,13 +1,7 @@
 package reader.data
 
-import react.events.Event
 import react.Signal
-import macro.SignalMacro.SignalM
-import react.Var
-import react.events.ImperativeEvent
-import react.SignalSynt
-
-import macro.SignalMacro.SignalM
+import react.events.Event
 
 /**
  * The FeedStore stores RSSChannels and RSSItems.

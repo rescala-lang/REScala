@@ -5,7 +5,6 @@ import java.net.URL
 import java.net.UnknownHostException
 
 import react.events.Event
-import react.events.ImperativeEvent
 import reactex.Observable
 
 class UrlChecker {

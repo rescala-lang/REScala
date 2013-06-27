@@ -8,6 +8,7 @@ import scala.swing.Dialog.Message
 import scala.swing.Swing
 import scala.swing.Swing.EmptyIcon
 
+import macro.SignalMacro.{SignalM => Signal}
 import react.SignalSynt
 import react.events.ImperativeEvent
 import reader.connectors.CentralizedEvents
@@ -18,8 +19,6 @@ import reader.data.XmlParser
 import reader.gui.GUI
 import reader.network.Fetcher
 import reader.network.UrlChecker
-
-import macro.SignalMacro.SignalM
 
 object Main extends App {
   val tick = new ImperativeEvent[Unit]
@@ -32,7 +31,7 @@ object Main extends App {
       (fetcher.state.changed ||
         (store.itemAdded map { x: RSSItem =>
           (x.srcChannel map (_.title) getOrElse "<unknown>") + ": " + x.title })) latest "",
-      SignalM[Any] {
+      Signal[Any] {
         val itemCount = (store.channels() map { case (_, items) => items().size }).sum
        "Channels: " + store.channels().size + " Items: " + itemCount
       })

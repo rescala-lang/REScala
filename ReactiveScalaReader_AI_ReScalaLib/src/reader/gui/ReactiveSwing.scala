@@ -7,12 +7,11 @@ import scala.swing.ListView
 import scala.swing.event.ButtonClicked
 import scala.swing.event.SelectionChanged
 
+import macro.SignalMacro.{SignalM => Signal}
 import react.Signal
 import react.SignalSynt
 import react.Var
 import react.events.ImperativeEvent
-
-import macro.SignalMacro.SignalM
 
 class ReButton(text: String) extends Button(text) {
   val pressed = new ImperativeEvent[Button]
@@ -21,7 +20,7 @@ class ReButton(text: String) extends Button(text) {
 
 class ReCheckBox(text: String) extends CheckBox(text) {
   private val selectedVar = Var(false)
-  val checked = SignalM { selectedVar() }
+  val checked = Signal { selectedVar() }
   
   val activated = checked.changed && (v => v)
   val deactivated = checked.changed && (! _)
@@ -31,7 +30,7 @@ class ReCheckBox(text: String) extends CheckBox(text) {
 
 class ReListView[A](s: Signal[Iterable[A]]) extends ListView[A] {
   private val selectedItemVar = Var[Option[A]](None)
-  val selectedItem = SignalM { selectedItemVar() }
+  val selectedItem = Signal { selectedItemVar() }
   
   s.changed += { data => listData = data.toSeq }
   

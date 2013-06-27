@@ -7,7 +7,7 @@ import java.awt.Toolkit
 import scala.swing._
 
 import javax.swing.ImageIcon
-import macro.SignalMacro.SignalM
+import macro.SignalMacro.{SignalM => Signal}
 import react.Signal
 import react.SignalSynt
 import react.StaticSignal
@@ -59,12 +59,12 @@ class GUI(store: FeedStore,
     val (framewidth, frameheight) = (840, 480)
     configure
     
-    val channelList = new ReListView[RSSChannel](SignalM { store.channels().keys.toIterable }) {
+    val channelList = new ReListView[RSSChannel](Signal { store.channels().keys.toIterable }) {
       renderer = ListView.Renderer(_.title)
       peer.setVisibleRowCount(3)
     }
     
-    val selectedChannelItems = SignalM {
+    val selectedChannelItems = Signal {
       channelList.selectedItem() match {
         case Some(channel) => store.channels().get(channel) match {
           case Some(items) => items().toIterable
