@@ -132,6 +132,29 @@ class ImperativeEvent[T] extends EventNode[T] {
     notifyDependents(v)
     ReactiveEngine.startEvaluation
   }
+  
+//  
+//  // Gerold: Added the possibility to register 'child events' with imperative events
+//  lazy val sinkMap : collection.mutable.Map[EventNode[T], Sink] = 
+//    new collection.mutable.HashMap()
+//  def sinkForEvent(target : EventNode[T]) : Sink = {
+//    lazy val react = (id: Int, v: T, reacts: ListBuffer[(() => Unit, Trace)]) => {
+//      target.reactions(id, v, reacts)
+//    }
+//    sinkMap.getOrElseUpdate(target, react)
+//  }
+//  
+//  def +=:(target : EventNode[T]){
+//   //this += sinkForEvent(target)
+//  }
+//  
+//  def -=:(target : EventNode[T]){
+//    //this -= sinkForEvent(target)
+//  }
+  
+
+
+
 
   /* Testing */
   val timestamps = ListBuffer[Stamp]()
