@@ -1,22 +1,26 @@
 package examples.timer
-import scala.events.behaviour._
-import scala.events._
-import scala.events.behaviour.Timer
+import react._
+import macro.SignalMacro.{SignalM => Signal}
+import react.time._
+
 
 
 object SnapshotTest extends Application {
 	val simulationTime = Timer.create(50)
 	val sampleTime = Timer.create(1000)
 	
-	import scala.events.behaviour.SignalConversions._
+	// import react.conversions.SignalConversions._
 	
-	lazy val speed : Signal[Double] = Signal { 3.0 }
-	lazy val position = simulationTime integral 3.0
-	lazy val sampled = position snapshot sampleTime.tick
+	val speed : Signal[Double] = Signal { 3.0 }
+	val position = simulationTime integral speed // 3.0
+	val sampled = position snapshot sampleTime.tick
 	
+	println("aaaaa")
 	position.changed += {_ => print('.')}
 	sampled.changed += {println(_)}
 	
 	// position.changed += {_ => println(sampled())}
+	println("bbb")
 	Timer.runAll
+	println("ccc")
 }

@@ -1,8 +1,8 @@
 package examples.timer
-import scala.events.behaviour._
-import scala.events._
-import scala.events.behaviour._
-import scala.events.behaviour.SignalConversions._
+import react._
+import macro.SignalMacro.{SignalM => Signal}
+import react.conversions.SignalConversions._
+import react.time.Timer
 
 
 object TimeWindowTest extends Application {

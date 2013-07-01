@@ -1,6 +1,7 @@
 package examples.range
 
-import scala.events.behaviour._
+import react._
+import macro.SignalMacro.{SignalM => Signal}
 
 class Range1(protected var _start : Int, protected var _length : Int){
   protected var _end = _start + _length // backs up end
@@ -35,7 +36,7 @@ class Range3(val start : Var[Int], val length : Var[Int]) {
 	def end_=(e : Int) = length() = e - start()
 	
 	// invariant
-	length.changed += {(x : Int) => 
+	length.toSignal.changed += {(x : Int) => 
 	  if(x < 0) throw new IllegalArgumentException}
 	
 	// convenience functions

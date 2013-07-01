@@ -6,7 +6,6 @@ import react.SignalSynt
 import react.Var
 import react.Signal
 import macro.SignalMacro.{SignalM => Signal}
-import react.time.Timer
 import scala.swing._
 import examples.datastructures._
 

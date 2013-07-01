@@ -58,7 +58,7 @@ class SwitchVersionFrame extends SimpleSwingApplication {
   
   // VERSION 3: // working, but a little long
   
-  import SignalConversions._
+  import react.conversions.SignalConversions._
   
   val x: Signal[Int] = tick.fold(initPosition.x) {(pos, _) => pos + speedX.getVal}
   val y: Signal[Int] = tick.fold(initPosition.y) {(pos, _) => pos + speedY.getVal}
@@ -66,7 +66,7 @@ class SwitchVersionFrame extends SimpleSwingApplication {
   val xBounce = x.changed && (x => x < 0 || x + Size > Max_X)
   val yBounce = y.changed && (y => y < 0 || y + Size > Max_Y)
   
-  val speedX = Signal {speed.x}.toggle(xBounce) {toSignal(- speed.x) }  
+  val speedX = Signal {speed.x}.toggle(xBounce) {- speed.x }  
   val speedY = yBounce.toggle(speed.y, - speed.y)
   
   tick += {_ => frame.repaint()}
@@ -83,12 +83,5 @@ class SwitchVersionFrame extends SimpleSwingApplication {
   }
 }
 
-
-
-
-object SignalConversions {  
-  // this is dangerous: do we want expressions to be constant or changing??
-  implicit def toSignal[T](op: =>T): Signal[T] = Signal(op)
-}
 
 
