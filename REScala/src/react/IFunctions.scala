@@ -54,7 +54,7 @@ object IFunctions {
   def snapshot[V](e : Event[_], s: Signal[V]): Signal[V] = fold(e, s.getVal)((_,_) => s.getVal)
    
   
-   /** Switch to a new Signal once, on the occurrence of event e */
+   /** Switch to a signal once, on the occurrence of event e */
    def switchTo[T](e : Event[T], original: Signal[T]): Signal[T] = {
     val latest = latestOption(e)
     StaticSignal(latest,original){ latest.getVal match {

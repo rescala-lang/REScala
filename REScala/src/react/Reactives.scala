@@ -253,9 +253,11 @@ object ReactiveEngine {
   
   /* Evaluates all the elements in the queue */
   def startEvaluation = {
+    this.synchronized {
     while (!evalQueue.isEmpty) {
       val head = evalQueue.dequeue
       head.triggerReevaluation
+    }
     }
   }
 }
