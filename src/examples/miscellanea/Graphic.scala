@@ -1,9 +1,8 @@
-package miscellanea
+package examples.miscellanea
 
 import swing.{Panel, MainFrame, SimpleSwingApplication}
-import java.awt.{Color, Graphics2D, Dimension}
+import java.awt.{Graphics2D, Dimension}
 import java.awt.Point
-import scala.swing.Swing
 
 object ImperativeVersion extends SimpleSwingApplication {
   val Size = 50

@@ -1,4 +1,4 @@
-package miscellanea
+package examples.miscellanea
 
 import react._
 import macro.SignalMacro.{SignalM => Signal}
