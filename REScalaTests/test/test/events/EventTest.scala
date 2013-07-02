@@ -56,6 +56,14 @@ class EventTest extends AssertionsForJUnit with MockitoSugar {
     e1(10)
     assert(test == 10)
   }
+  
+  @Test def eventsWithoutParamsIsCalled = {
+    var test = 0
+    val e1 = new ImperativeEvent[Unit]()
+    e1 += ( _ => { test += 1 })
+    e1()
+    assert(test == 1)
+  }
  
   
 }
