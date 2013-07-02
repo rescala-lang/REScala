@@ -8,22 +8,9 @@ import java.awt.Point
 import scala.collection.mutable.ListBuffer
 
 
-object PathDrawing extends SimpleSwingApplication {
+object SmashingParticles extends SimpleSwingApplication {
   
-  /*
-  class Point(val x: Double,val y: Double) {
-    def move(delta: Delta) = new Point(x + delta.x, y + delta.y)
-    override def toString = "Point("+ x + "," + y +")"
-  }
-  
-  class Line(m: Double, q: Double) {
-    def translate(delta: Float) = new Line(m, q + delta)
-    def rotate(delta: Float) = new Line(m + delta, q)
-    override def toString = "Line("+ m + "," + q +")"
-  }
  
-  */
-  
   val toDraw = ListBuffer[Function1[Graphics2D,Unit]]()
   type Delta = Point
   
@@ -60,8 +47,7 @@ object PathDrawing extends SimpleSwingApplication {
       }
     }
   }
-  
-  
+ 
   // drawing code
   def top = frame  
   val frame = new MainFrame {
