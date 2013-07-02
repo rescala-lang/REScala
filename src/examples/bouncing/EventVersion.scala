@@ -28,26 +28,35 @@ class EventVersion extends SimpleSwingApplication {
   val Max_Y = 600
   val speed = new Point(10,8)
   
-  val x = Var(20)
-  val y = Var(20)
+  class Coord(private var _n: Int) {
+    val changed = new ImperativeEvent[Int]
+    def n: Int = _n
+    def n_=(newVal: Int) {
+      _n = newVal
+      changed(n)
+    }
+  }
+
+  val x = new Coord(20)
+  val y = new Coord(20)
   
   def tick() {
-    x() += speed.x
-	y() += speed.y
+    x.n += speed.x
+	y.n += speed.y
+	hasTicked()
   }
   
-  // Compile with EScala as compiler plugin
-  /*   
+  val hasTicked = new ImperativeEvent[Unit] // Can be afterExec
+     
   // handle bouncing
-  evt xBounce = x.changed && (x => x < 0 || x + Size > Max_X)
-  evt yBounce = y.changed && (y => y < 0 || y + Size > Max_Y)
+  val xBounce = x.changed && (x => x < 0 || x + Size > Max_X)
+  val yBounce = y.changed && (y => y < 0 || y + Size > Max_Y)
   xBounce += {_ => speed.x = -speed.x }
   yBounce += {_ => speed.y = -speed.y }
   
-  // handle repaint
-  evt hasTicked[Unit] = afterExec(tick)
-  hasTicked += { frame.repaint }  
-  */
+  // handle repaint  
+  hasTicked += { _ => frame.repaint }  
+  
   
   // drawing code
   def top = frame  
@@ -55,7 +64,7 @@ class EventVersion extends SimpleSwingApplication {
     contents = new Panel() {
       preferredSize = new Dimension(600, 600)
       override def paintComponent(g: Graphics2D) {
-	    g.fillOval(x(),y(), Size, Size)
+	    g.fillOval(x.n,y.n, Size, Size)
       }
     }
   }
