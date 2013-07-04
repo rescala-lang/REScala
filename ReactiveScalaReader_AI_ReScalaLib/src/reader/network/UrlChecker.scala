@@ -5,7 +5,7 @@ import java.net.URL
 import java.net.UnknownHostException
 
 import react.events.Event
-import reactex.Observable
+import react.events.Observable
 
 class UrlChecker {
   type CheckArg = String
@@ -35,26 +35,26 @@ class UrlChecker {
   }
   
   private lazy val checkSuccessful: Event[CheckResult] =
-    check.after && { t: AfterCheck => t._2.isRight } map { t: AfterCheck => t._2 }
+    check.after && { t: AfterCheck => t._2.isRight } map { t: AfterCheck => t._2 } //#EVT //#EF //#EF
   
   private lazy val checkFailed: Event[CheckResult] =
-    check.after && { t: AfterCheck => t._2.isLeft } map { t: AfterCheck => t._2 }
+    check.after && { t: AfterCheck => t._2.isLeft } map { t: AfterCheck => t._2 } //#EVT //#EF //#EF
   
   private lazy val checkedOption: Event[Option[URL]] =
-    (checkSuccessful || checkFailed) map { (_: CheckResult) match {
+    (checkSuccessful || checkFailed) map { (_: CheckResult) match { //#EVT //#EF //#EF
       case Right(u) => Some(u)
       case Left(_)  => None
     }}
 
   /** Fired for every valid url checked */
-  lazy val checkedURL: Event[URL] = checkedOption &&
+  lazy val checkedURL: Event[URL] = checkedOption && //#EVT //#EF //#EF
     { t: Option[URL] => t.isDefined } map { t: Option[URL] => t.get }
   
   /** Only fires if the checked url is valid */
-  lazy val urlIsValid: Event[Unit] = checkSuccessful.dropParam
+  lazy val urlIsValid: Event[Unit] = checkSuccessful.dropParam //#EVT //#EF
   
   /** Only fires if the checked url is invalid */
-  lazy val urlIsInvalid: Event[Unit] = checkFailed.dropParam
+  lazy val urlIsInvalid: Event[Unit] = checkFailed.dropParam  //#EVT //#EF
   
   private def errorMessage(url: String, e: Exception): String =
     "Error while checking '" + url + "' - " + e.getMessage

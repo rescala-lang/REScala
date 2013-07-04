@@ -23,19 +23,19 @@ trait EventMediator {
  */
 object CentralizedEvents extends EventMediator {
   def mediate(fetcher: Fetcher, parser: XmlParser, store: FeedStore, checker: UrlChecker) {
-    fetcher.rssFetched += { case (xml, url) => parser.parseRSS(xml, url) }
+    fetcher.rssFetched += { case (xml, url) => parser.parseRSS(xml, url) } //#HDL
   }
 }
 
 object SimpleReporter extends EventMediator {
   def mediate(fetcher: Fetcher, parser: XmlParser, store: FeedStore, checker: UrlChecker) {
-    store.channels.changed += { x => println("Channels in store changed. Size: " + x.size) }
+    store.channels.changed += { x => println("Channels in store changed. Size: " + x.size) } //#HDL //#IF
     
-    fetcher.rssFetched += { _ => println("New content fetched") }
+    fetcher.rssFetched += { _ => println("New content fetched") } //#HDL
     
-    parser.channelParsed += { _ => println("A channel was parsed") }
-    parser.itemParsed    += { _ => println("An item was parsed")   }
+    parser.channelParsed += { _ => println("A channel was parsed") } //#HDL
+    parser.itemParsed    += { _ => println("An item was parsed")   } //#HDL
     
-    fetcher.state.changed += println _
+    fetcher.state.changed += println _ //#IF //#HDL
   }
 }

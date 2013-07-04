@@ -28,11 +28,10 @@ object Main extends App {
   val store = new FeedStore(parser.channelParsed, parser.itemParsed)
   val app = new GUI(
       store,
-      (fetcher.state.changed ||
-        (store.itemAdded map { x: RSSItem =>
-          (x.srcChannel map (_.title) getOrElse "<unknown>") + ": " + x.title })) latest "",
-      Signal[Any] {
-        val itemCount = (store.channels() map { case (_, items) => items().size }).sum
+      (fetcher.state.changed ||   //#EF //#IF
+        (store.itemAdded map { x: RSSItem => //#EF
+          (x.srcChannel map (_.title) getOrElse "<unknown>") + ": " + x.title })) latest "", //#IF
+      Signal[Any] { val itemCount = (store.channels() map { case (_, items) => items().size }).sum //#SIG
        "Channels: " + store.channels().size + " Items: " + itemCount
       })
   
@@ -72,11 +71,11 @@ object Main extends App {
     Dialog.showMessage(null, "This url is not valid", "Invalid url", Message.Error, EmptyIcon)
   
   private def setupGuiEvents {
-    app.requestURLAddition += { url => checker.check(url) }
+    app.requestURLAddition += { url => checker.check(url) } //#HDL
     
-    val guardedTick = tick && { _ => app.refreshAllowed }
+    val guardedTick = tick && { _ => app.refreshAllowed } //#HDL //#EF
     
-    (app.refresh || guardedTick) += { _ => fetcher.fetchAll }
+    (app.refresh || guardedTick) += { _ => fetcher.fetchAll } //#EF //#HDL
   }
   
   private def loadURLs(path: String): Option[Seq[String]] = {

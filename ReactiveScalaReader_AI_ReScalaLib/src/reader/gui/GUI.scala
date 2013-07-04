@@ -27,9 +27,9 @@ class GUI(store: FeedStore,
           itemStatus: Signal[Any] = StaticSignal(){ () })
             extends SimpleSwingApplication {
   val refreshButton = new ReButton("Refresh")
-  val refresh = refreshButton.pressed.dropParam: Event[Unit]
+  val refresh: Event[Unit] = refreshButton.pressed.dropParam: Event[Unit] //#EF
   
-  val requestURLAddition = new ImperativeEvent[String]
+  val requestURLAddition = new ImperativeEvent[String] //#EVT
   
   val refreshCheckbox = new ReCheckBox("auto refresh") { selected = true }
   def refreshAllowed = refreshCheckbox.selected
@@ -59,12 +59,12 @@ class GUI(store: FeedStore,
     val (framewidth, frameheight) = (840, 480)
     configure
     
-    val channelList = new ReListView[RSSChannel](Signal { store.channels().keys.toIterable }) {
+    val channelList = new ReListView[RSSChannel](Signal { store.channels().keys.toIterable }) { //#SIG
       renderer = ListView.Renderer(_.title)
       peer.setVisibleRowCount(3)
     }
     
-    val selectedChannelItems = Signal {
+    val selectedChannelItems = Signal { //#SIG
       channelList.selectedItem() match {
         case Some(channel) => store.channels().get(channel) match {
           case Some(items) => items().toIterable

@@ -12,27 +12,28 @@ import react.Signal
 import react.SignalSynt
 import react.Var
 import react.events.ImperativeEvent
+import react.events.Event
 
 class ReButton(text: String) extends Button(text) {
-  val pressed = new ImperativeEvent[Button]
+  val pressed = new ImperativeEvent[Button] //#EVT
   reactions += { case ButtonClicked(_) => pressed(this) }
 }
 
 class ReCheckBox(text: String) extends CheckBox(text) {
-  private val selectedVar = Var(false)
-  val checked = Signal { selectedVar() }
+  private val selectedVar = Var(false) //#VAR
+  val checked: Signal[Boolean] = Signal { selectedVar() } //#SIG
   
-  val activated = checked.changed && (v => v)
-  val deactivated = checked.changed && (! _)
+  val activated: Event[Boolean] = checked.changed && (v => v) //#IF //#EF
+  val deactivated: Event[Boolean] = checked.changed && (! _) //#IF //#EF
   
-  reactions += { case _ => selectedVar() = selected }
+  reactions += { case _ => selectedVar() = selected } //#HDL
 }
 
 class ReListView[A](s: Signal[Iterable[A]]) extends ListView[A] {
-  private val selectedItemVar = Var[Option[A]](None)
-  val selectedItem = Signal { selectedItemVar() }
+  private val selectedItemVar = Var[Option[A]](None)  //#VAR
+  val selectedItem = Signal { selectedItemVar() }   //#SIG
   
-  s.changed += { data => listData = data.toSeq }
+  s.changed += { data => listData = data.toSeq } //#HDL //#IF
   
   private def getSelectedItem: Option[A] = {
     val i = selection.leadIndex
@@ -48,11 +49,11 @@ class ReListView[A](s: Signal[Iterable[A]]) extends ListView[A] {
   
   listenTo(selection)
   
-  reactions += {
+  reactions += { //#HDL
     case SelectionChanged(_) => selectedItemVar() = getSelectedItem
   }
 }
 
 class ReText[A](s: Signal[A]) extends Label {
-  s.changed += { v => text = v.toString }
+  s.changed += { v => text = v.toString } //#HDL //#IF
 }
