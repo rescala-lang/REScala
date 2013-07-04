@@ -8,6 +8,7 @@ import react.SignalSynt
 import react.Var
 import react.Signal
 import scala.util.Random
+import react.events.Event
 import animal.types.Pos.fromTuple
 import scala.Option.option2Iterable
 import macro.SignalMacro.{SignalM => Signal}
@@ -92,7 +93,7 @@ abstract class BoardElement(implicit val world: World) {
   
   /** A signal denoting if this element is dead ( = should be removed from the board) */
   val isDead: Signal[Boolean]   //#SIG
-  lazy val dies = isDead changedTo true //#EVT //#IF
+  lazy val dies: Event[Unit] = isDead changedTo true //#EVT //#IF
   
   /** Some imperative code that is called each tick */
   def doStep(pos: Pos) {}
@@ -163,7 +164,7 @@ abstract class Animal(override implicit val world: World) extends BoardElement {
   }
 
 	
-	val age = world.time.day.changed.iterate(1)(_ + 1) //#SIG //#IF
+	val age: Signal[Int] = world.time.day.changed.iterate(1)(_ + 1) //#SIG //#IF
 	
 	val isAdult =  Signal { age() > Animal.FertileAge } //#SIG
 	val isFertile = Signal { isAdult() } //#SIG
@@ -189,8 +190,7 @@ abstract class Animal(override implicit val world: World) extends BoardElement {
 	    case _ => 0
 	  }
 	}
-	val energy: Signal[Int] = 
-	  world.time.tick.iterate(Animal.StartEnergy)(_ + energyGain.getVal - energyDrain.getVal) //#SIG //#IF
+	val energy: Signal[Int] = world.time.tick.iterate(Animal.StartEnergy)(_ + energyGain.getVal - energyDrain.getVal) //#SIG //#IF
 	
 	override val isDead = Signal { age() > Animal.MaxAge || energy() < 0} //#SIG
 
@@ -248,7 +248,7 @@ trait Female extends Animal {
   
   val isPregnant = Signal { mate().isDefined } //#SIG
   
-  val becomePregnant = isPregnant.changedTo(true) //#EVT //#IF
+  val becomePregnant: Event[Unit] = isPregnant.changedTo(true) //#EVT //#IF
   
   // counts down to 0
   lazy val pregnancyTime: Signal[Int] = Signal { 10 } //#SIG
@@ -259,7 +259,7 @@ trait Female extends Animal {
    */
   
   
-  lazy val giveBirth = pregnancyTime.changedTo(0) //#EVT //#IF
+  lazy val giveBirth: Event[Unit] = pregnancyTime.changedTo(0) //#EVT //#IF
   
   override val isFertile = Signal { isAdult() && !isPregnant()} //#SIG
   
@@ -343,10 +343,10 @@ class Plant(override implicit val world: World) extends BoardElement {
   
   val isDead = Signal{ energy() <= 0}  //#SIG
   
-  val age = world.time.hour.changed.iterate(0)(_ + 1) //#SIG //#IF
-  val grows = age.changed && { _ % Plant.GrowTime == 0} //#IF //#EVT
-  val size = grows.iterate(0)(acc => math.min(Plant.MaxSize, acc + 1)) //#SIG //#IF
-  val expands = size.changedTo(Plant.MaxSize) //#IF //#EVT
+  val age: Signal[Int] = world.time.hour.changed.iterate(0)(_ + 1) //#SIG //#IF
+  val grows: Event[Int] = age.changed && { _ % Plant.GrowTime == 0} //#IF //#EVT
+  val size: Signal[Int] = grows.iterate(0)(acc => math.min(Plant.MaxSize, acc + 1)) //#SIG //#IF
+  val expands: Event[Unit] = size.changedTo(Plant.MaxSize) //#IF //#EVT
   
   
   expands += {_ => //#HDL
@@ -365,7 +365,7 @@ class Plant(override implicit val world: World) extends BoardElement {
 
 class Seed(override implicit val world: World) extends BoardElement {
   
-  val growTime = world.time.hour.changed.iterate(Plant.GrowTime)(_ - 1) //#SIG //#IF
+  val growTime: Signal[Int] = world.time.hour.changed.iterate(Plant.GrowTime)(_ - 1) //#SIG //#IF
   val isDead = Signal{ growTime() <= 0 } //#SIG
   
   dies += {_ => //#HDL
@@ -380,12 +380,12 @@ class Seed(override implicit val world: World) extends BoardElement {
 class Time {
   val tick = new ImperativeEvent[Unit]
 
-  val hours = tick.iterate(0)(_ + 1) //#SIG //#IF
+  val hours: Signal[Int] = tick.iterate(0)(_ + 1) //#SIG //#IF
   val day = Signal { hours() / 24 } //#SIG
   val hour = Signal { hours() % 24} //#SIG
   val week = Signal { day() / 7} //#SIG
   val timestring = Signal { "Week " + week() + ", Day " + day() + " hour:" + hour() } //#SIG
-  val newWeek = week.changed //#IF //#EVT
+  val newWeek: Event[Int] = week.changed //#IF //#EVT
 }
 
 object World {
