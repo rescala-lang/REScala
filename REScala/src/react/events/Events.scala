@@ -34,12 +34,12 @@ trait Event[+T] extends DepHolder {
   /**
    * Events conjunction
    */
-  //def and[U, V, S >: T](other: Event[U], merge: (S, U) => V) = new EventNodeAnd[S, U, V](this, other, merge)
+  def and[U, V, S >: T](other: Event[U], merge: (S, U) => V) = new EventNodeAnd[S, U, V](this, other, merge)
 
   /*
   * Event conjunction with a merge method creating a tuple of both event parameters
   */
-  //def &&[U, S >: T](other: Event[U]) = new EventNodeAnd[S, U, (S, U)](this, other, (p1: S, p2: U) => (p1, p2))
+  def &&[U, S >: T](other: Event[U]) = new EventNodeAnd[S, U, (S, U)](this, other, (p1: S, p2: U) => (p1, p2))
 
   /**
    * Transform the event parameter
@@ -225,7 +225,7 @@ class InnerEventNode[T](d: DepHolder) extends EventNode[T] with Dependent {
 class EventNodeOr[T](ev1: Event[_ <: T], ev2: Event[_ <: T]) extends EventNode[T] with Dependent {
 
   /*
-   * The event is wxecuted once and only once even if both sources fire in the
+   * The event is executed once and only once even if both sources fire in the
    * same propagation cycle because the engine queue removes duplicates.
    */
   
@@ -250,6 +250,50 @@ class EventNodeOr[T](ev1: Event[_ <: T], ev2: Event[_ <: T]) extends EventNode[T
   val timestamps = ListBuffer[Stamp]()
   override def toString = "(" + ev1 + " || " + ev2 + ")"
 }
+
+
+/*
+ * Implementation of event conjunction
+ */
+class EventNodeAnd[T1, T2, T](ev1: Event[T1], ev2: Event[T2], merge: (T1, T2) => T) 
+                                                extends EventNode[T] with Dependent {
+ 
+  // The round id of the last received event
+  var lastRound = -1
+
+  level = (ev1.level max ev2.level) + 1 // For glitch freedom  
+  ev1.addDependent(this) // To be notified in the future
+  ev2.addDependent(this)
+  dependOn ++= List(ev1,ev2)
+  
+  var storedValEv1: T1 = _
+  var storedValEv2: T2 = _
+  
+  def triggerReevaluation() {
+    timestamps += TS.newTs // Testing
+    notifyDependents(merge(storedValEv1,storedValEv2))
+  }
+  
+  override def dependsOnchanged(change: Any, dep: DepHolder) = {
+    
+    val round = TS.getCurrentTs match { case Stamp(round,_) => round }    
+    if(lastRound == round) {
+      if (dep == ev1) storedValEv1 = change.asInstanceOf[T1]
+      if (dep == ev2) storedValEv2 = change.asInstanceOf[T2]
+      ReactiveEngine.addToEvalQueue(this)
+    }
+    if (dep == ev1) storedValEv1 = change.asInstanceOf[T1]
+    if (dep == ev2) storedValEv2 = change.asInstanceOf[T2]
+    lastRound = round
+  }
+  /* Testing */
+  val timestamps = ListBuffer[Stamp]()
+  override def toString = "(" + ev1 + " and " + ev2 + ")"
+  
+}
+
+
+
 
 
 /*
@@ -349,6 +393,9 @@ object emptyevent extends Event[Nothing] {
   def +=(react: Nothing => Unit) { /* do nothing */ }
   def -=(react: Nothing => Unit) { /* do nothing */ }
 }
+
+
+
 
 
 /*
