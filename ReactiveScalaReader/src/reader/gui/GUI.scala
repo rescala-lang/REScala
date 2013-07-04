@@ -4,9 +4,7 @@ import java.awt.Dimension
 import java.awt.Point
 import java.awt.Toolkit
 
-import scala.events.emptyevent
-import scala.events.Event
-import scala.events.ImperativeEvent
+import react.events._
 import scala.swing._
 
 import javax.swing.ImageIcon

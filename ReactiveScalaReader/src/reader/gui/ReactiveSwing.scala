@@ -1,7 +1,6 @@
 package reader.gui
 
-import scala.events.Event
-import scala.events.ImperativeEvent
+import react.events._
 import scala.swing.Button
 import scala.swing.CheckBox
 import scala.swing.Label

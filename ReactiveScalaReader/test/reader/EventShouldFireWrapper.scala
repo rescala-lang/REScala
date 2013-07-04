@@ -1,6 +1,6 @@
 package reader
 
-import scala.events._
+import react.events._
 
 class EventShouldFireWrapper[T](evt: Event[T]) {
   def shouldFireIn(action: => Unit) = {

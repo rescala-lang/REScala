@@ -2,8 +2,8 @@ package reader.data
 
 import scala.annotation.migration
 import scala.collection.mutable.Map
-import scala.events.Event
-import scala.events.ImperativeEvent
+import react.events._
+
 
 /**
  * The FeedStore stores RSSChannels and RSSItems.

@@ -4,6 +4,7 @@ import reader.data.FeedStore
 import reader.data.XmlParser
 import reader.network.Fetcher
 import reader.network.UrlChecker
+import react.events._
 
 trait EventMediator {
   def mediate(fetcher: Fetcher,
@@ -43,7 +44,7 @@ object SimpleReporter extends EventMediator {
     
     (fetcher.startedFetching || fetcher.finishedFetching) += println _
     
-    (checker.checkedURL and checker.urlIsInvalid) += { t => println("Invalid url: " + t._1) }
-    (checker.checkedURL and checker.urlIsValid)   += { t => println("Valid url: "   + t._1) }
+    (checker.checkedURL && checker.urlIsInvalid) += { t => println("Invalid url: " + t._1) }
+    (checker.checkedURL && checker.urlIsValid)   += { t => println("Valid url: "   + t._1) }
   }
 }

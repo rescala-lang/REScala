@@ -5,9 +5,7 @@ import java.net.SocketTimeoutException
 import java.net.URL
 import java.net.UnknownHostException
 
-import scala.events.Event
-import scala.events.ImperativeEvent
-import scala.events.Observable
+import react.events._
 import scala.xml.NodeSeq
 import scala.xml.XML
 
