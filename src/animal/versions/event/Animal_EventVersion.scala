@@ -145,13 +145,13 @@ abstract class Animal(override implicit val world: World) extends BoardElement {
   def savage = state = FallPrey
 
   // dies event, gets triggered once at the moment this animal dies
-  val dies = world.time.tick && (_ => !isDead && age > Animal.MaxAge || energy < 0)
+  val dies = world.time.tick && (_ => !isDead && age > Animal.MaxAge || energy < 0) //#EVT //#EF
 
   // handler that makes sure the dies event gets only fired once
-  dies += { _ => isDead = true }
+  dies += { _ => isDead = true } //#HDL
 
   // handle updates
-  val tickHandler = { _: Unit =>
+  val tickHandler = { _: Unit => //#HDL
     
     val energyGain = state match {
 	    case Eating(_) => Animal.PlantEatRate
@@ -171,7 +171,7 @@ abstract class Animal(override implicit val world: World) extends BoardElement {
   }
 
   // handle aging
-  val dailyHandler = { _: Unit =>
+  val dailyHandler = { _: Unit => //#HDL
     age += 1
   }
 
@@ -259,13 +259,13 @@ trait Female extends Animal {
   
   val becomePregnant = new ImperativeEvent[Unit]
   
-  world.time.tick && (_ => isPregnant) += { _: Unit => 
+  world.time.tick && (_ => isPregnant) += { _: Unit => //#EVT //#EF
     pregnancyTime += 1 
   }  
   
-  val giveBirth = world.time.tick && (_ => pregnancyTime == Animal.PregnancyTime)
+  val giveBirth = world.time.tick && (_ => pregnancyTime == Animal.PregnancyTime) //#EVT //#EF
   
-  giveBirth += {_ =>
+  giveBirth += {_ =>  //#HDL
     val father = mate.get
     val child = createOffspring(father)
     world.board.getPosition(this).foreach{ mypos =>
@@ -344,16 +344,16 @@ class Plant(override implicit val world: World) extends BoardElement {
   var age = 0
   var size = 0
   
-  val grows = new ImperativeEvent[Unit]
-  val expands = grows && (_ => size == Plant.MaxSize)
+  val grows = new ImperativeEvent[Unit]  //#EVT
+  val expands = grows && (_ => size == Plant.MaxSize) //#EVT  //#EF
 
   // dies event, gets triggered once
-  val dies = world.time.tick && (_ => !isDead && energy < 0)
+  val dies = world.time.tick && (_ => !isDead && energy < 0)  //#EVT  //#EF
 
   // handler that makes sure the dies event gets only fired once
-  dies += { _ => isDead = true }
+  dies += { _ => isDead = true }  //#HDL
   
-  expands += {_ => 
+  expands += {_ =>   //#HDL
     // germinate: spawn a new plant in proximity to this one
     world.board.getPosition(this).foreach{ mypos =>
       world.board.nearestFree(mypos).foreach { target =>
@@ -362,7 +362,7 @@ class Plant(override implicit val world: World) extends BoardElement {
     }
  }
 
-  val tickHandler = { _: Unit => 
+  val tickHandler = { _: Unit =>   //#HDL
     age += 1
     
     if(age % Plant.GrowTime == 0){
@@ -381,7 +381,7 @@ class Plant(override implicit val world: World) extends BoardElement {
 }
 
 class Time {
-  val tick = new ImperativeEvent[Unit]
+  val tick = new ImperativeEvent[Unit]  
 
   var hours = 0
   var hour = 0
@@ -390,7 +390,7 @@ class Time {
   var timestring = ""
 
   // imperative update of mutable values
-  tick += { _ =>
+  tick += { _ =>  //#HDL
     hours += 1
     hour = hours % 24
     day = hours / 24
@@ -400,8 +400,8 @@ class Time {
   }
 
   // filter event stream
-  val dayChanged = tick && (_ => hour == 0)
-  val weekChanged = dayChanged && (_ => day % 7 == 0)
+  val dayChanged = tick && (_ => hour == 0)  //#EVT  //#EF
+  val weekChanged = dayChanged && (_ => day % 7 == 0)   //#EVT  //#EF
 }
 
 object World {
@@ -454,11 +454,11 @@ class World {
     board.add(element, pos)
 
     // register handlers
-    time.tick += element.tickHandler
-    time.dayChanged += element.dailyHandler
+    time.tick += element.tickHandler //#HDL
+    time.dayChanged += element.dailyHandler //#HDL
 
     // register unspawning
-    element.dies += { _ => unspawn(element) }
+    element.dies += { _ => unspawn(element) } //#HDL
   }
 
   /** removed the given Board element from the world */
@@ -470,7 +470,7 @@ class World {
   }
 
   // tick board elements
-  time.tick += { _ =>
+  time.tick += { _ =>  //#HDL
     board.elements.foreach {
       _ match {
         case (pos, be) => be.doStep(pos)
@@ -479,12 +479,12 @@ class World {
   }
 
   // each day, spawn a new plant
-  time.dayChanged += { _ =>
+  time.dayChanged += { _ =>  //#HDL
     this spawn new Plant
   }
 
   //each week, spawn a new animal
-  time.weekChanged += { _ =>
+  time.weekChanged += { _ =>  //#HDL
     this spawn newAnimal
   }
 
