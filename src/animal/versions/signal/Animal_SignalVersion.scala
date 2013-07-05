@@ -251,12 +251,9 @@ trait Female extends Animal {
   val becomePregnant: Event[Unit] = isPregnant.changedTo(true) //#EVT //#IF
   
   // counts down to 0
-  lazy val pregnancyTime: Signal[Int] = Signal { 10 } //#SIG
-  /*
-  becomePregnant.reset(()){ _ =>
+  lazy val pregnancyTime: Signal[Int] = becomePregnant.reset(()){ _ => //#SIG
     world.time.hour.changed.iterate(Animal.PregnancyTime)(_ - (if(isPregnant.getValue) 1 else 0))
   }
-   */
   
   
   lazy val giveBirth: Event[Unit] = pregnancyTime.changedTo(0) //#EVT //#IF

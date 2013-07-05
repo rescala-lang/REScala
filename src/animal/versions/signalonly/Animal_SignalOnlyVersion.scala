@@ -90,7 +90,6 @@ abstract class BoardElement(implicit val world: World) {
   
   /** A signal denoting if this element is dead ( = should be removed from the board) */
   val isDead: Signal[Boolean] //#SIG
-  lazy val dies = isDead changedTo true //#EVT
   
   /** Replacement for tick handler / event */
   def tick {}
@@ -383,12 +382,16 @@ class Seed(override implicit val world: World) extends BoardElement {
   val growTime = world.time.hour.changed.iterate(Plant.GrowTime)(_ - 1) //#SIG //#IF
   val isDead = Signal { growTime() <= 0 }  //#SIG
   
-  dies += {_ => //#HDL
-  	world.board.getPosition(this).foreach{ mypos =>
+  var alive = true
+  override def tick {
+    if(alive && isDead()){
+      alive = false
+      world.board.getPosition(this).foreach{ mypos =>
       world.board.nearestFree(mypos).foreach { target =>
         world.spawn(new Plant)
       }
     }
+   } 
   }
 }
 
