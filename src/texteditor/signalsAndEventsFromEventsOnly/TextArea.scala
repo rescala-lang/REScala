@@ -47,29 +47,29 @@ class TextArea extends ReComponent {
     buffer.insert(text)
   }
   
-  override lazy val preferredSize: ImperativeSignal[Dimension] = Signal{
+  override lazy val preferredSize: ImperativeSignal[Dimension] = Signal{ //#SIG
     def it = LineIterator(buffer.iterable())
     new Dimension(2 * padding + it.map(stringWidth(_)).max, (it.size + 1) * lineHeight)
   }
   
-  val charCount = Signal{ buffer.length() }
+  val charCount = Signal{ buffer.length() } //#SIG
   
-  val lineCount = Signal{ LineIterator(buffer.iterable()).size }
+  val lineCount = Signal{ LineIterator(buffer.iterable()).size } //#SIG
   
-  val wordCount = Signal{ buffer.iterable().iterator.foldLeft((0, false)){(c, ch) =>
+  val wordCount = Signal{ buffer.iterable().iterator.foldLeft((0, false)){(c, ch) => //#SIG
     val alphanum = Character.isLetterOrDigit(ch)
     (if (alphanum && !c._2) c._1 + 1 else c._1, alphanum)}._1
   }
   
-  val selected = Signal{
+  val selected = Signal{  //#SIG
     val (it, dot, mark) = (buffer.iterable(), caret.dot(), caret.mark())
     val (start, end) = (min(dot, mark), max(dot, mark))
     new Iterable[Char] { def iterator = it.iterator.slice(start, end) } : Iterable[Char]
   }
   
-  protected val selectedAll = new ImperativeEvent[Unit]
-  protected val pasted = new ImperativeEvent[Unit]
-  protected val copied = new ImperativeEvent[Unit]
+  protected val selectedAll = new ImperativeEvent[Unit]  //#EVT
+  protected val pasted = new ImperativeEvent[Unit]  //#EVT
+  protected val copied = new ImperativeEvent[Unit]   //#EVT
   
   def selectAll = selectedAll()
   def paste = pasted()
@@ -83,24 +83,24 @@ class TextArea extends ReComponent {
   // [same semantics as for: javax.swing.text.Caret]
   object caret {
     // dot as offset
-    private val dotSignal = Signal{ buffer.caret() }
+    private val dotSignal = Signal{ buffer.caret() } //#SIG
     def dot = dotSignal
     def dot_=(value: Int) = buffer.caret() = value
     
     // dot as position (row and column)
-    private val dotPosSignal = Signal{ LineOffset.position(buffer.iterable(), dot()) }
+    private val dotPosSignal = Signal{ LineOffset.position(buffer.iterable(), dot()) } //#SIG
     def dotPos = dotPosSignal
     def dotPos_=(value: Position) = dot = LineOffset.offset(buffer.iterable.getValue, value)
     
-    private val markVar = Var(0)
+    private val markVar = Var(0) //#VAR
     
     // mark as offset
-    private val markSignal = Signal{ markVar() }
+    private val markSignal = Signal{ markVar() } //#SIG
     def mark = markSignal
     def mark_=(value: Int) = if (value >= 0 && value <= buffer.length.getValue) markVar() = value
     
     // mark as position (row and column)
-    private val markPosSignal = Signal{ LineOffset.position(buffer.iterable(), mark()) }
+    private val markPosSignal = Signal{ LineOffset.position(buffer.iterable(), mark()) } //#SIG
     def markPos = markPosSignal
     def markPos_=(value: Position) = mark = LineOffset.offset(buffer.iterable.getValue, value)
     
@@ -117,8 +117,8 @@ class TextArea extends ReComponent {
     
     protected[TextArea] val blink = new Timer(500) start
     protected[TextArea] val steady = new Timer(500, false)
-    protected[TextArea] val visible = Signal{ hasFocus() }.toggle(blink.fired)(
-        Signal{ hasFocus() && steady.running() })
+    protected[TextArea] val visible = Signal{ hasFocus() }.toggle(blink.fired)(  //#SIG  //#IF
+        Signal{ hasFocus() && steady.running() }) //#SIG
   }
   
   protected def posInLinebreak(p: Int) = p > 0 && p < buffer.length.getValue &&
@@ -147,10 +147,10 @@ class TextArea extends ReComponent {
   }
   
   // Caret updated by pressed mouse button, pressed arrow keys, Ctrl+A or select all event
-  (keys.pressed && {e => e.modifiers != Key.Modifier.Control &&
+  (keys.pressed && {e => e.modifiers != Key.Modifier.Control &&  //#EF
       (e.key == Key.Left || e.key == Key.Right || e.key == Key.Up || e.key == Key.Down ||
        e.key == Key.Home || e.key == Key.End)})
-    .map{e: KeyPressed =>
+    .map{e: KeyPressed =>  //#EF
       val offset = e.key match {
         case Key.Left =>
           caret.offset.getValue - (if (posInLinebreak(caret.offset.getValue - 1)) 2 else 1)
@@ -175,15 +175,15 @@ class TextArea extends ReComponent {
 	          }.size
       }
       if (e.modifiers == Key.Modifier.Shift) (offset, caret.mark.getValue) else (offset, offset)
-    } ||
-  (keys.pressed && {e => e.modifiers == Key.Modifier.Control && e.key == Key.A})
-    .map{_: KeyPressed => (charCount.getValue, 0)} ||
-  (mouse.clicks.pressed || mouse.moves.dragged).map{e: MouseEvent =>
+    } ||  //#EF
+  (keys.pressed && {e => e.modifiers == Key.Modifier.Control && e.key == Key.A}) //#EF
+    .map{_: KeyPressed => (charCount.getValue, 0)} ||  //#EF
+  (mouse.clicks.pressed || mouse.moves.dragged).map{e: MouseEvent => //#EF //#EF //#EF
       val position = positionFromPoint(e.point)
       val offset = LineOffset.offset(buffer.iterable.getValue, position)
       e match { case _: MouseDragged => (offset, caret.mark.getValue) case _ => (offset, offset) }
-    } ||
-  selectedAll.map{_: Unit => (charCount.getValue, 0)} +=
+    } ||  //#EF
+  selectedAll.map{_: Unit => (charCount.getValue, 0)} +=  //#HDL
   { _ match {
     case (dot, mark) =>
       caret.dot = dot
@@ -192,18 +192,18 @@ class TextArea extends ReComponent {
   }
   
   // Content change by pressed backspace, deletion or character key, Ctrl+V or paste event
-  (((keys.pressed && {e => e.modifiers == Key.Modifier.Control && e.key == Key.V}) || pasted) &&
+  (((keys.pressed && {e => e.modifiers == Key.Modifier.Control && e.key == Key.V}) || pasted) && //#EF //#EF //#EF
     {_ => clipboard.getContents(null).isDataFlavorSupported(DataFlavor.stringFlavor)})
-    .map{_: Any =>
-      (0, clipboard.getContents(null).getTransferData(DataFlavor.stringFlavor).asInstanceOf[String])} ||
-  (keys.typed && {e => e.modifiers != Key.Modifier.Control})
-    .map{(_: KeyTyped).char match {
+    .map{_: Any =>  //#EF
+      (0, clipboard.getContents(null).getTransferData(DataFlavor.stringFlavor).asInstanceOf[String])} || //#EF
+  (keys.typed && {e => e.modifiers != Key.Modifier.Control})  //#EF
+    .map{(_: KeyTyped).char match {  //#EF
       case '\b' => if (selected.getValue.nonEmpty) (0, "")
         else (-min(if (posInLinebreak(caret.dot.getValue - 1)) 2 else 1, caret.dot.getValue), "")
       case '\u007f' => if (selected.getValue.nonEmpty) (0, "")
         else ((if (posInLinebreak(caret.dot.getValue + 1)) 2 else 1), "")
       case c => (0, c.toString)
-    }} +=
+    }} +=   //#HDL
   { _ match {
     case (del, ins) =>
       val selStart = min(caret.dot.getValue, caret.mark.getValue)
@@ -220,7 +220,7 @@ class TextArea extends ReComponent {
   }
   
   // Content copy by Ctrl+C or copy event
-  copied || (keys.pressed && {e => e.modifiers == Key.Modifier.Control && e.key == Key.C}) +=
+  copied || (keys.pressed && {e => e.modifiers == Key.Modifier.Control && e.key == Key.C}) += //#EF //#EF //#HDL
   { _ =>
     if (selected.getValue.nonEmpty) {
       val s = new StringSelection(selected.getValue.mkString);
@@ -229,16 +229,16 @@ class TextArea extends ReComponent {
   }
   
   // handle focus, scroll and paint updates
-  mouse.clicks.pressed += { _ => this.requestFocusInWindow }
+  mouse.clicks.pressed += { _ => this.requestFocusInWindow }  //#HDL
   
-  buffer.length.changed || caret.dot.changed += {_ =>
+  buffer.length.changed || caret.dot.changed += {_ =>  //#EF //#HDL
     val point = pointFromPosition(caret.position.getValue)
     peer.peer.scrollRectToVisible(new Rectangle(point.x - 8, point.y, 16, 2 * lineHeight))
     caret.steady.restart
   }
   
-  buffer.length.changed || caret.visible.changed ||
-    caret.dot.changed || caret.mark.changed += {_ => this.repaint }
+  buffer.length.changed || caret.visible.changed || //#EF //#EF
+    caret.dot.changed || caret.mark.changed += {_ => this.repaint }  //#EF //#HDL
   
   override def paintComponent(g: Graphics2D) {
     super.paintComponent(g)

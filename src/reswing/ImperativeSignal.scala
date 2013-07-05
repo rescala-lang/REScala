@@ -18,11 +18,11 @@ import react.events.ImperativeEvent
  * and to use a property in signal expressions.
  */
 class ImperativeSignal[T] private (private[reswing] val inputSignal: Signal[T]) {
-  private val event = new ImperativeEvent[T]
-  private val signal = if (inputSignal != null)
-      (inputSignal.changed || event) latest inputSignal.getValue
+  private val event = new ImperativeEvent[T] //#EVT
+  private val signal = if (inputSignal != null) //#SIG
+      (inputSignal.changed || event) latest inputSignal.getValue //#IF //#IF
     else
-      event latest null.asInstanceOf[T]
+      event latest null.asInstanceOf[T] //#IF
   
   private[reswing] def apply(value: T) = event(value)
 }
@@ -30,7 +30,7 @@ class ImperativeSignal[T] private (private[reswing] val inputSignal: Signal[T]) 
 object ImperativeSignal {
   implicit def toSignal[T](signal: ImperativeSignal[T]) = signal.signal
   implicit def fromSignal[T](signal: Signal[T]) = new ImperativeSignal(signal)
-  implicit def fromValue[T](value: T) = new ImperativeSignal(Signal{ value })
+  implicit def fromValue[T](value: T) = new ImperativeSignal(Signal{ value }) //#SIG
   
   def noSignal[T] = new ImperativeSignal[T](null)
   def noSignal[T](value: T) = {

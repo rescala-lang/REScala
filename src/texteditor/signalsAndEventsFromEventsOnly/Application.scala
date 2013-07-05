@@ -17,26 +17,26 @@ object Application extends SimpleSwingApplication {
   // reactive components
   val textArea = new TextArea("Lorem ipsum dolor sit amet\nconsectetur adipisicing elit\nsed do eiusmod")
   
-  val positionLabel = ReLabel(Signal {
+  val positionLabel = ReLabel(Signal { //#SIG
     val pos = textArea.caret.position()
     "Ln " + (pos.row + 1) + " : " + textArea.lineCount() + "    Col " + (pos.col + 1)
   })
   
   val selectionLabel = ReLabel(
-    Signal { "Sel " + textArea.selected().size })
+    Signal { "Sel " + textArea.selected().size }) //#SIG
   
-  val charCountLabel = ReLabel(Signal { "Ch " + textArea.charCount() })
+  val charCountLabel = ReLabel(Signal { "Ch " + textArea.charCount() })  //#SIG
   
-  val wordCountLabel = ReLabel(Signal { "Ch " + textArea.wordCount() })
+  val wordCountLabel = ReLabel(Signal { "Ch " + textArea.wordCount() })  //#SIG
   
   val selectAllButton = ReButton("Select All")
-  selectAllButton.clicked += { _ => textArea.selectAll; textArea.requestFocus }
+  selectAllButton.clicked += { _ => textArea.selectAll; textArea.requestFocus } //#HDL
   
   val copyButton = ReButton("Copy")
-  copyButton.clicked += { _ => textArea.copy; textArea.requestFocus }
+  copyButton.clicked += { _ => textArea.copy; textArea.requestFocus } //#HDL
   
   val pasteButton = ReButton("Paste")
-  pasteButton.clicked += { _ => textArea.paste; textArea.requestFocus }
+  pasteButton.clicked += { _ => textArea.paste; textArea.requestFocus } //#HDL
   
   // layout
   def top = new MainFrame {

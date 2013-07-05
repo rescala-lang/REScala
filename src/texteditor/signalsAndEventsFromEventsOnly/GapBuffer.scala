@@ -46,9 +46,9 @@ class CharacterIterator(buf: Array[Char], count: Int, caret: Int) extends Iterat
  */
 class GapBuffer {
   private var buf = new Array[Char](0)
-  private val size = Var(0)
+  private val size = Var(0) //#VAR
   
-  val caret = new StaticVar(0) {
+  val caret = new StaticVar(0) {  //#VAR still true ?
     override def update(value: Int) {
       if (value >= 0 && value <= size()) {
         // the caret has moved
@@ -64,12 +64,12 @@ class GapBuffer {
     }
   }
   
-  val iterable = Signal{
+  val iterable = Signal{  //#SIG
     val (b, s) = (buf, size())
     new Iterable[Char] { def iterator = new CharacterIterator(b, s, caret.getValue) } : Iterable[Char]
   }
   
-  val length = Signal { size() }
+  val length = Signal { size() }  //#SIG
   
   def apply(i: Int) = buf(if (i >= caret.getValue) i + (buf.length - size.getValue) else i)
   
