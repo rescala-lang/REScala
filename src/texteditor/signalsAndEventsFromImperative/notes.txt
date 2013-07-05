@@ -1,6 +1,9 @@
 
 
 
+based on the imperative version but uses REScala events and signals to express dependencies (e.g. line count etc.)
+
+
 The swing interface is wrapped to make each settable field dependent from a signal.
 Example:
 

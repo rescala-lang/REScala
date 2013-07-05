@@ -1,4 +1,4 @@
-package texteditor.signals0
+package texteditor.signalsAndEventsFromImperative
 
 import scala.math.min
 import scala.swing.BorderPanel

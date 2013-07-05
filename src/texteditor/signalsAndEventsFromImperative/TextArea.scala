@@ -1,4 +1,4 @@
-package texteditor.signals0
+package texteditor.signalsAndEventsFromImperative
 
 import java.awt.Dimension
 import java.awt.Graphics2D

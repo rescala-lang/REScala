@@ -1,4 +1,4 @@
-package texteditor.signals1
+package texteditor.signalsAndEventsFromImperative
 
 import macro.SignalMacro.{SignalM => Signal}
 import react.SignalSynt

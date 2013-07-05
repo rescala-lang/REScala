@@ -1,4 +1,4 @@
-package texteditor.signals0
+package texteditor.signalsAndEventsFromEventsOnly
 
 import javax.swing
 import macro.SignalMacro.{SignalM => Signal}
