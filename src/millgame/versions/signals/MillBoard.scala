@@ -1,7 +1,10 @@
 package millgame.versions.signals
 import millgame.types._
 import react.events._
-import react._
+import react.SignalSynt
+import react.Var
+import react.Signal
+import macro.SignalMacro.{SignalM => Signal}
 
 object MillBoard {
   
@@ -20,16 +23,16 @@ class MillBoard {
     def stones = stones2.getVal
   
 	/* spiral-indexed board slots, starting innermost lower left, going clockwise */
-    val stones2: Var[Vector[Slot]] = new Var(Vector.fill(24)(Empty))	
+    val stones2: Var[Vector[Slot]] = Var(Vector.fill(24)(Empty))	
 	
 	/* slots by the 16 lines of the game */
-	val lines = Signal(stones2) {
-      MillBoard.Lines.map(line => line.map(stones2.getVal(_))) 
+	val lines = Signal {
+      MillBoard.Lines.map(line => line.map(stones2()(_))) 
     }
 	
 	/* lines mapped to owners */
-	val lineOwners: Signal[Vector[Slot]] = Signal(lines) {
-	  lines.getVal.map(line => if(line.forall(_ == line.head)) line.head else Empty).toVector
+	val lineOwners: Signal[Vector[Slot]] = Signal {
+	  lines().map(line => if(line.forall(_ == line.head)) line.head else Empty).toVector
 	}
 	
 	
@@ -69,11 +72,11 @@ class MillBoard {
 	  else (change._1 zip change._2).collectFirst {case (old, n) if old != n => n}.get
 	}
 	
-	val numStones: Signal[(Slot => Int)] = Signal(stones2) {
+	val numStones: Signal[(Slot => Int)] = Signal {
 	  (color: Slot) => stones2.getVal.count(_ == color)
 	}
-	val blackStones = Signal(numStones) { numStones.getVal(Black) }
-	val whiteStones = Signal(numStones) { numStones.getVal(White) }
+	val blackStones = Signal { numStones()(Black) }
+	val whiteStones = Signal { numStones()(White) }
 	val numStonesChanged: Event[(Slot, Int)] = 
 	  blackStones.changed.map( (Black, _: Int)) || whiteStones.changed.map((White, _: Int))
 }

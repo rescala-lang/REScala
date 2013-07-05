@@ -3,7 +3,10 @@ package millgame.versions.signals
 import millgame.types._
 import millgame.versions.signals._
 import react.events._
-import react._
+import react.SignalSynt
+import react.Var
+import react.Signal
+import macro.SignalMacro.{SignalM => Signal}
 
 abstract class Gamestate {
   def getPlayer: Slot
@@ -59,10 +62,16 @@ class MillGame {
     // -- changeState(RemoveStone(color))
   }
 
-  val winState = Signal(remainCount2, board.numStones) {
+  val winState: Signal[Option[Slot]] = Signal {
+    val remain: Map[Slot, Int] = remainCount2()
+    val stones = board.numStones()
+    
     val won = for (player: Slot <- List(Black, White))
-      yield (player, remainCount2.getVal(player) == 0 && board.numStones.getVal(player) < 3)
-    won.collectFirst{ case (winner, true) => winner }
+      yield (player, remain(player) == 0 && stones(player) < 3)
+      
+    // TODO: Why do we get a type error here?
+    //val foo = won.collectFirst { case (winner, true) => winner }
+    None
    }
   
   val gameWon: Event[Slot] = winState.changed && (_.isDefined) map {(_: Option[Slot]) match { case Some(winner) => winner}}
