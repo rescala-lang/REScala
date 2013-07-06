@@ -1,9 +1,11 @@
 package texteditor.signalsAndEventsFromImperative
 
 import macro.SignalMacro.{SignalM => Signal}
+import react.Signal
 import react.SignalSynt
 import react.StaticVar
 import react.Var
+import react.events.ImperativeEvent
 
 /**
  * Iterates over `array` whose content has the size of `count`.
@@ -45,31 +47,35 @@ class CharacterIterator(buf: Array[Char], count: Int, caret: Int) extends Iterat
  * Moving the caret requires copying text from one segment to the other.
  */
 class GapBuffer {
-  private var buf = new Array[Char](0)
-  private val size = Var(0)
+    val caretChanged = new ImperativeEvent[Int] //#EVT
   
-  val caret = new StaticVar(0) {
-    override def update(value: Int) {
-      if (value >= 0 && value <= size()) {
+  private var buf = new Array[Char](0)
+  private val size = Var(0) //#VAR
+  private val offsets: Signal[(Int, Int)] = (caretChanged && //#SIG //#EF
+      { offset => offset >= 0 && offset <= size.getValue }
+      map { offset: Int => (offsets.getValue._2, offset) }) latest (0, 0) //#EF //#IF
+  
+  offsets.changed += { //#HDL
+    _ match {
+      case (prev, cur) =>
         // the caret has moved
         // which requires copying text from one segment to the other
         // to ensure that the gap starts at the current caret position
-        val (cur, prev) = (value, getValue)
         val (post, dist) = (buf.length - size() + prev, math.abs(cur - prev))
         val (src, dest) = if (prev < cur) (post, prev) else (cur, post - dist)
         
         Array.copy(buf, src, buf, dest, dist)
-        super.update(cur)
-      }
     }
   }
   
-  val iterable = Signal{
+  val caret = Signal { offsets()._2 } //#SIG
+  
+  val iterable = Signal{  //#SIG
     val (b, s) = (buf, size())
     new Iterable[Char] { def iterator = new CharacterIterator(b, s, caret.getValue) } : Iterable[Char]
   }
   
-  val length = Signal { size() }
+  val length = Signal { size() }  //#SIG
   
   def apply(i: Int) = buf(if (i >= caret.getValue) i + (buf.length - size.getValue) else i)
   

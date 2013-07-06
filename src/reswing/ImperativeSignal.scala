@@ -20,7 +20,7 @@ import react.events.ImperativeEvent
 class ImperativeSignal[T] private (private[reswing] val inputSignal: Signal[T]) {
   private val event = new ImperativeEvent[T] //#EVT
   private val signal = if (inputSignal != null) //#SIG
-      (inputSignal.changed || event) latest inputSignal.getValue //#IF //#IF
+      (inputSignal.changed || event) latest inputSignal.getValue //#EF //#IF
     else
       event latest null.asInstanceOf[T] //#IF
   

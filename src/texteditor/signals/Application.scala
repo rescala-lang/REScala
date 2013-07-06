@@ -1,4 +1,4 @@
-package texteditor.signals2
+package texteditor.signals
 
 import scala.swing.BorderPanel
 import scala.swing.BorderPanel.Position
