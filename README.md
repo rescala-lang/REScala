@@ -11,7 +11,7 @@ position.
   observables (Swing Reactors)
   
 - **events**  
-  REcala events (but no signals)  
+  REScala events (but no signals)  
   event stream composition is a bit complex, but this reduces the number of 
   places where the caret needs to be updated
   
@@ -22,7 +22,7 @@ position.
 - **signalsAndEventsFromEventsOnly**  
   based on the *events* version but uses REScala signals
   
-- **signal**  
+- **signals**  
   based on the *signals1* version  
   this version does not use a mutable data structure (gap buffer) to represent 
   the text, state is represented using signals and events only. There is just 
