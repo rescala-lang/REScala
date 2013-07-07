@@ -34,7 +34,7 @@ class DrawingSpaceState {
     ((shapes.changed && { shapes =>  //#IF  //#EF
        !(shapes contains selectedShape.getValue) } map {_: Any => null}) ||
      (select && { shape =>  //#EF
-       shape == null || (shapes.getValue contains shape) })) latest null
+       shape == null || (shapes.getValue contains shape) })) latest null  //#IF
   // currently drawn shapes
   final lazy val shapes: Signal[List[Shape]] = Signal { commandsShapes() match { case (_, shapes) => shapes } }  //#SIG
   // all executed commands

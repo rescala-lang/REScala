@@ -95,17 +95,17 @@ object ReShapes extends SimpleSwingApplication {
       
       lazy val update = new ImperativeEvent[Unit]   //#EVT
       
-      private lazy val itemsEvents: Signal[Seq[(Component, Event[Command])]] =
+      private lazy val itemsEvents: Signal[Seq[(Component, Event[Command])]] =  //#SIG
         (update map { _: Any =>  //#EF
           (ui.tabbedPane.pages filter
             { tab => tab.index != ui.tabbedPane.selection.index } map
             { tab =>
-              val item = ReMenuItem(tab.title)  // ?
-              val command = item.clicked map { _: Any =>
+              val item = ReMenuItem(tab.title)  //#SIG //#IS( //#EVT //#EF //#IF //#IF 
+              val command = item.clicked map { _: Any =>  //#EF
                 new MergeDrawingSpaces(panelDrawingSpaceStates(tab)._1) }
               (item: Component, command)
             })
-        }) latest Seq.empty
+        }) latest Seq.empty  //#IF
     }
     
     contents += new Menu("File") {
@@ -117,8 +117,8 @@ object ReShapes extends SimpleSwingApplication {
       contents += new MenuItem(new LoadAction)
       contents += new Separator
       contents += (new ReMenuItem {
-        override lazy val text = overrideSignal("Quit")
-        clicked += { _ => quit }
+        override lazy val text = overrideSignal("Quit")  //#SIG //#IS( //#EVT //#EF //#IF //#IF )
+        clicked += { _ => quit }  //#HDL
       }: ReMenuItem)
     }
     

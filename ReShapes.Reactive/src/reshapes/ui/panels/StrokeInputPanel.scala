@@ -55,5 +55,5 @@ class ColorWindow extends Frame {
     })
   }
   
-  val color = Var(Color.BLACK)
+  val color = Var(Color.BLACK) //#VAR
 }
