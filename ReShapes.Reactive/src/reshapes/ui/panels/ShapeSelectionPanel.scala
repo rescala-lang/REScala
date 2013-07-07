@@ -19,7 +19,7 @@ import reswing.ReButton
 class ShapeSelectionPanel extends BoxPanel(Orientation.Vertical) {
   def state = ReShapes.drawingSpaceState.getValue
   
-  val lineBtn = ReButton("Line")
+  val lineBtn = ReButton("Line")  // ?
   val rectBtn = ReButton("Rectangle")
   val ovalBtn = ReButton("Oval")
   val triangleBtn = ReButton("Triangle")
@@ -31,10 +31,10 @@ class ShapeSelectionPanel extends BoxPanel(Orientation.Vertical) {
   contents += triangleBtn
   contents += freedrawBtn
   
-  val nextShape: Signal[Shape] =
-	  ((lineBtn.clicked map {_: Any => new Line(state) }) ||
-	   (rectBtn.clicked map {_: Any => new Rectangle(state) }) ||
-	   (ovalBtn.clicked map {_: Any => new Oval(state) }) ||
-	   (triangleBtn.clicked map {_: Any => new Triangle(state) }) ||
-	   (freedrawBtn.clicked map {_: Any => new Freedraw(state) })) latest { new Line(state) }
+  val nextShape: Signal[Shape] = //#SIG
+	  ((lineBtn.clicked map {_: Any => new Line(state) }) || //#EF //#EF
+	   (rectBtn.clicked map {_: Any => new Rectangle(state) }) || //#EF //#EF
+	   (ovalBtn.clicked map {_: Any => new Oval(state) }) || //#EF //#EF
+	   (triangleBtn.clicked map {_: Any => new Triangle(state) }) || //#EF //#EF
+	   (freedrawBtn.clicked map {_: Any => new Freedraw(state) })) latest { new Line(state) } //#EF //#IF
 }

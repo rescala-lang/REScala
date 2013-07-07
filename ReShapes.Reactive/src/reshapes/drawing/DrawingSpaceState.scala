@@ -28,40 +28,40 @@ import reshapes.figures.Shape
  */
 class DrawingSpaceState {
   // selected shape to be drawn
-  lazy val nextShape: Signal[Shape] = Signal[Shape] { new Line(this) }
+  lazy val nextShape: Signal[Shape] = Signal[Shape] { new Line(this) } //#SIG
   // currently selected shape inside the drawing space
-  final lazy val selectedShape: Signal[Shape] =
-    ((shapes.changed && { shapes =>
+  final lazy val selectedShape: Signal[Shape] =  //#SIG
+    ((shapes.changed && { shapes =>  //#IF  //#EF
        !(shapes contains selectedShape.getValue) } map {_: Any => null}) ||
-     (select && { shape =>
+     (select && { shape =>  //#EF
        shape == null || (shapes.getValue contains shape) })) latest null
   // currently drawn shapes
-  final lazy val shapes: Signal[List[Shape]] = Signal { commandsShapes() match { case (_, shapes) => shapes } }
+  final lazy val shapes: Signal[List[Shape]] = Signal { commandsShapes() match { case (_, shapes) => shapes } }  //#SIG
   // all executed commands
-  final lazy val commands: Signal[List[Command]] = Signal { commandsShapes() match { case (commands, _) => commands } }
+  final lazy val commands: Signal[List[Command]] = Signal { commandsShapes() match { case (commands, _) => commands } } //#SIG
   // current stroke width
-  lazy val strokeWidth = Signal { 1 }
+  lazy val strokeWidth = Signal { 1 } //#SIG
   // current stroke color
-  lazy val color = Signal { Color.BLACK }
+  lazy val color = Signal { Color.BLACK } //#SIG
   // filename after saving
-  val fileName = Var("unnamed")
+  val fileName = Var("unnamed") //#VAR
   
   // can be
-  lazy val executed: Event[Command] = new ImperativeEvent
-  lazy val reverted: Event[Command] = new ImperativeEvent
+  lazy val executed: Event[Command] = new ImperativeEvent  //#EVT
+  lazy val reverted: Event[Command] = new ImperativeEvent  //#EVT
   
-  final lazy val execute = new ImperativeEvent[Command]
-  final lazy val revert = new ImperativeEvent[Command]
-  final lazy val clear = new ImperativeEvent[Unit]
-  final lazy val select = new ImperativeEvent[Shape]
+  final lazy val execute = new ImperativeEvent[Command]  //#EVT
+  final lazy val revert = new ImperativeEvent[Command]  //#EVT
+  final lazy val clear = new ImperativeEvent[Unit]  //#EVT
+  final lazy val select = new ImperativeEvent[Shape]  //#EVT
   
-  private lazy val commandsShapes: Signal[(List[Command], List[Shape])] =
-    (((executed || execute) map { command: Command =>
+  private lazy val commandsShapes: Signal[(List[Command], List[Shape])] =  //#SIG
+    (((executed || execute) map { command: Command =>  //#EF  //#EF
         val _commands = command :: commands.getValue
         val _shapes = command execute shapes.getValue
         (_commands, _shapes)
       }) ||
-     ((reverted || revert) map { command: Command =>
+     ((reverted || revert) map { command: Command => //#EF  //#EF
         val count = (commands.getValue indexOf command) + 1
         if (count != 0) {
           val _shapes = (shapes.getValue /: (commands.getValue take count)) {
@@ -72,9 +72,9 @@ class DrawingSpaceState {
         else
           (commands.getValue, shapes.getValue)
       }) ||
-     (clear map { _: Unit =>
+     (clear map { _: Unit =>   //#EF
        (List.empty, List.empty)
-     })) latest (List.empty, List.empty)
+     })) latest (List.empty, List.empty)   //#EF
 }
 
 class NetworkSpaceState(
@@ -122,7 +122,7 @@ class NetworkSpaceState(
     }
   }.start
   
-  drawingStateSpace.shapes.changed += { shapes =>
+  drawingStateSpace.shapes.changed += { shapes =>  //#IF //#HDL
     if (!updating) {
       println("sending update")
       val socket = new Socket(serverInetAddress, exchangePort)

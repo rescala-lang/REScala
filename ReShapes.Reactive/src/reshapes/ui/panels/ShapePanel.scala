@@ -24,20 +24,20 @@ import reswing.ReButton
 class ShapePanel extends BoxPanel(Orientation.Vertical) {
   def state = ReShapes.drawingSpaceState
   
-  val shapes = Signal { if (state() != null) state().shapes() else List.empty }
+  val shapes = Signal { if (state() != null) state().shapes() else List.empty } //#SIG
   
-  val shapeViews = Signal { shapes() map { shape => new ShapeView(shape, state()) } }
+  val shapeViews = Signal { shapes() map { shape => new ShapeView(shape, state()) } } //#SIG
   
   val shapesPanel = ReBoxPanel(
     orientation = Orientation.Vertical,
-    contents = Signal[Seq[Component]] {
+    contents = Signal[Seq[Component]] {  //#SIG
       shapeViews() map { shapeView: ShapeView => shapeView: Component } })
   
   contents += new ScrollPane {
     contents = shapesPanel
   }
   
-  val deleted = UnionEvent(Signal { shapeViews() map { shapeView => shapeView.deleted } })
+  val deleted = UnionEvent(Signal { shapeViews() map { shapeView => shapeView.deleted } }) //#UE( //#EVT //#EF //#IF //#IF )
 }
 
 class ShapeView(shape: Shape, state: DrawingSpaceState) extends ReBoxPanel(Orientation.Horizontal) {
@@ -46,17 +46,17 @@ class ShapeView(shape: Shape, state: DrawingSpaceState) extends ReBoxPanel(Orien
   
   val deleteButton = ReButton("delete")
   
-  val deleted: Event[DeleteShape] =
-    deleteButton.clicked map { _: Any => new DeleteShape(shape) }
+  val deleted: Event[DeleteShape] = //#EVT
+    deleteButton.clicked map { _: Any => new DeleteShape(shape) } //#EF
   
   peer.background = NOT_SELECTED_COLOR
   peer.contents += new Label(shape.toString)
   peer.contents += deleteButton
   
-  mouse.clicks.clicked += { _ =>
+  mouse.clicks.clicked += { _ =>  //#HDL
     state.select(if (state.selectedShape.getValue != shape) shape else null) }
   
-  state.selectedShape.changed += { selected =>
+  state.selectedShape.changed += { selected =>   //#HDL
     peer.background = if (selected == shape) SELECTED_COLOR else NOT_SELECTED_COLOR
   }
 }

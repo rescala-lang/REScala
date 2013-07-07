@@ -45,7 +45,7 @@ class DrawingPanel(val state: DrawingSpaceState) extends Panel {
         shape.draw(g)
   }
   
-  lazy val drawn = new ImperativeEvent[Command]
+  lazy val drawn = new ImperativeEvent[Command]  //#EVT
   
   listenTo(mouse.clicks, mouse.moves)
   
