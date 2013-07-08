@@ -21,6 +21,7 @@ import scala.swing.event.MouseEvent
 import macro.SignalMacro.{SignalM => Signal}
 import react.SignalSynt
 import react.Var
+import react.Signal
 import react.events.ImperativeEvent
 import reswing.ImperativeSignal
 import reswing.ReComponent
@@ -117,7 +118,7 @@ class TextArea extends ReComponent {
     
     protected[TextArea] val blink = new Timer(500) start
     protected[TextArea] val steady = new Timer(500, false)
-    protected[TextArea] val visible = Signal{ hasFocus() }.toggle(blink.fired)(  //#SIG  //#IF
+    protected[TextArea] val visible: Signal[Boolean] = Signal{ hasFocus() }.toggle(blink.fired)(  //#SIG  //#IF
         Signal{ hasFocus() && steady.running() }) //#SIG
   }
   
