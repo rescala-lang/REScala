@@ -4,6 +4,7 @@ package millgame.ui
 /// Chose version here:
 //import millgame.versions.events.MillGame
 import millgame.versions.signals.MillGame
+//import millgame.versions.signalonly.MillGame
 
 import millgame.types._
 import millgame.types.Pos

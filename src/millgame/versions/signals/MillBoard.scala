@@ -74,6 +74,10 @@ class MillBoard {
 	
 	/// NOTE: Workaround because change fires even when there is no value change
 	val lineOwnersChanged = lineOwners.change && ((c: (Vector[Slot], Vector[Slot])) => c._2 != c._1) //#EVT //#IF
+	val lineOwnersNotChanged = lineOwners.change.\(lineOwnersChanged)
+	lineOwnersNotChanged += { x =>
+	  println("not changed: " + x)
+	}
 	val millOpenedOrClosed = lineOwners.change.map { //#EVT //#IF
 	  change: (Vector[Slot], Vector[Slot]) => 
 	  /// NOTE: Workaround because change event fires (null, new) tuple

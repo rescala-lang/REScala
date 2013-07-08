@@ -48,7 +48,9 @@ class MillBoard {
 	  val previousOwners = lineOwners
 	  stones(i) = color
 	  
-	  val mill = previousOwners.zip(lineOwners).collectFirst { case (a, b) if a != b => b }
+	  val mill = previousOwners.zip(lineOwners).collectFirst {
+	    case (a, b) if a != b && b != Empty => b 
+	  }
 	  
 	  // possible fire mill closed event
 	  mill.foreach(millClosed(_))
