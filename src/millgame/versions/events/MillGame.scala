@@ -48,27 +48,25 @@ class MillGame {
 
   val board = new MillBoard
   var state: Gamestate = PlaceStone(White)
-  var remainCount: Map[Slot, Int] = Map(Black -> 4, White -> 4)
+  var remainCount: Map[Slot, Int] = Map(Black -> 9, White -> 9)
   
   def stateText = state.text 
 
-  val remainCountChanged = new ImperativeEvent[Map[Slot, Int]]
-
-  val gameWon = new ImperativeEvent[Slot]
-
-  val stateChanged = new ImperativeEvent[Gamestate]
+  val remainCountChanged = new ImperativeEvent[Map[Slot, Int]] //#EVT
+  val gameWon = new ImperativeEvent[Slot] //#EVT
+  val stateChanged = new ImperativeEvent[Gamestate] //#EVT
+  
   private def changeState(to: Gamestate) {
     state = to
     stateChanged(state)
   }
-  
    
   /* Event based game logic: */
-   board.millClosed += { color =>
+   board.millClosed += { color => //#HDL
     changeState(RemoveStone(color))
   }
 
-  board.numStonesChanged += {
+  board.numStonesChanged += { //#HDL
     case (color, n) =>
       if (remainCount(color) == 0 && n < 3) {
         gameWon(color.other)

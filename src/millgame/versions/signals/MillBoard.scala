@@ -20,21 +20,27 @@ object MillBoard {
 
 class MillBoard {
   
+    /* wrap stones Var, to have the same interface as other versions */
     def stones = stonesVar.getVal
   
 	/* spiral-indexed board slots, starting innermost lower left, going clockwise */
-    val stonesVar: Var[Vector[Slot]] = Var(Vector.fill(24)(Empty))	
+    val stonesVar: Var[Vector[Slot]] = Var(Vector.fill(24)(Empty)) //#VAR
 	
 	/* slots by the 16 lines of the game */
-	val lines = Signal {
+	val lines = Signal { //#SIG
       MillBoard.Lines.map(line => line.map(stonesVar()(_))) 
     }
 	
 	/* lines mapped to owners */
-	val lineOwners: Signal[Vector[Slot]] = Signal {
+	val lineOwners: Signal[Vector[Slot]] = Signal { //#SIG
 	  lines().map(line => if(line.forall(_ == line.head)) line.head else Empty).toVector
 	}
 	
+	/* debug
+	lineOwners.changed += { (owner:Vector[Slot]) => 
+	  println(owner.mkString(","))
+	}
+	*/
 	
 	/* access slot state by index */
 	def apply(i: Int) = stonesVar.getVal(i)	
@@ -66,28 +72,26 @@ class MillBoard {
 	  /// to trigger fine-grained changes like this
 	}
 	
-	
 	/// NOTE: Workaround because change fires even when there is no value change
-	val lineOwnersChanged = lineOwners.change && ((c: (Vector[Slot], Vector[Slot])) => c._2 != c._1)
-	val millOpenedOrClosed = lineOwners.change.map { 
+	val lineOwnersChanged = lineOwners.change && ((c: (Vector[Slot], Vector[Slot])) => c._2 != c._1) //#EVT //#IF
+	val millOpenedOrClosed = lineOwners.change.map { //#EVT //#IF
 	  change: (Vector[Slot], Vector[Slot]) => 
 	  /// NOTE: Workaround because change event fires (null, new) tuple
 	  if (change._1 eq null) change._2.find(_ != Empty).get
 	  else (change._1 zip change._2).collectFirst {case (old, n) if old != n => n}.get
 	}
 
-	val millClosed: Event[Slot] = millOpenedOrClosed && {(_: Slot) != Empty}
+	val millClosed: Event[Slot] = millOpenedOrClosed && {(_: Slot) != Empty} //#EVT
 	
-	val numStones: Signal[(Slot => Int)] = Signal {
+	val numStones: Signal[(Slot => Int)] = Signal { //#SIG
 	  val stones = stonesVar()
 	  (color: Slot) => stones.count(_ == color)
 	}
-	val blackStones = Signal { numStones()(Black) }
-	val whiteStones = Signal { numStones()(White) }
-	val numStonesChanged: Event[(Slot, Int)] = 
+	val blackStones = Signal { numStones()(Black) } //#SIG
+	val whiteStones = Signal { numStones()(White) } //#SIG
+	val numStonesChanged: Event[(Slot, Int)] =  //#EVT //#IF
 	  blackStones.changed.map( (Black, _: Int)) || whiteStones.changed.map((White, _: Int))
 }
-
 
 object Test extends Application {
   	val mill = new MillBoard

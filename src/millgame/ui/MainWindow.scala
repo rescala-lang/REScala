@@ -19,15 +19,15 @@ object MainWindow extends SimpleSwingApplication {
 
   var game = new MillGame
   
-  game.stateChanged += { state =>
+  game.stateChanged += { state => //#HDL
     ui.statusBar.text = state.text
   }
   
-  game.gameWon += { winner =>
+  game.gameWon += { winner => //#HDL
      Dialog.showMessage(ui, "Game won by " + winner, "Game ended", Dialog.Message.Info)
   }
   
-  game.remainCountChanged += { count =>
+  game.remainCountChanged += { count => //#HDL
     ui.counterBar.text = 
     "White: " + count(White) + " / " +
     "Black: " + count(Black)

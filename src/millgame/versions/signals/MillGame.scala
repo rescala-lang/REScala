@@ -54,43 +54,28 @@ class MillGame {
 
   val board = new MillBoard
 
-  val state: Var[Gamestate] = Var(PlaceStone(White))
-  val remainCount: Var[Map[Slot, Int]] = Var(Map(Black -> 4, White -> 4))
+  val state: Var[Gamestate] = Var(PlaceStone(White))  //#VAR
+  val remainCount: Var[Map[Slot, Int]] = Var(Map(Black -> 9, White -> 9)) //#VAR
   
-  val remainCountChanged = Signal{remainCount()}.changed
-  val stateChanged = Signal{ state()}.changed
+  val remainCountChanged = Signal{remainCount()}.changed //#EVT //#IF
+  val stateChanged = Signal{ state()}.changed //#EVT //#IF
   def stateText = state().text
-
-
-  /*
-  val winState: Signal[Option[Slot]] = SignalSynt { (s: SignalSynt[Option[Slot]]) =>  
-    val remain: Map[Slot, Int] = remainCount(s)
-    val stones = board.numStones(s)
-    val won = for (player: Slot <- List(Black, White))
-      yield (player, remain(player) == 0 && stones(player) < 3)
-      
-    // ERROR: This yields a type error when using the macro!
-    won.collectFirst { case (winner, true) => winner }
-   }
-  
-  val gameWon: Event[Slot] = winState.changed && (_.isDefined) map {(_: Option[Slot]).get }
-  * */
   
   
   /* Event based game logic: */
-  board.millClosed += { color =>
+  board.millClosed += { color => //#HDL
     state() = RemoveStone(color)
   }
 
-  board.numStonesChanged += {
+  board.numStonesChanged += { //#HDL
     case (color, n) =>
       if (remainCount.getValue(color) == 0 && n < 3) {
         state() = GameOver(color.other)  
       }
   }
   
-  val gameEnd = stateChanged && ((_: Gamestate) match {case GameOver(_) => true; case _ => false})
-  val gameWon: Event[Slot] = gameEnd.map {(_: Gamestate) match {case GameOver(w) => w; case _ => null}}
+  val gameEnd = stateChanged && ((_: Gamestate) match {case GameOver(_) => true; case _ => false}) //#EVT
+  val gameWon: Event[Slot] = gameEnd.map {(_: Gamestate) match {case GameOver(w) => w; case _ => null}} //#EVT
 
   private def nextState(player: Slot): Gamestate =
     if (remainCount()(player) > 0) PlaceStone(player)

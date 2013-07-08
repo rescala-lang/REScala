@@ -28,6 +28,12 @@ class MillBoard {
 	/* access slot state by index */
 	def apply(i: Int) = stones(i)
 	
+	def numStones(color: Slot) = stones.count(_ == color)
+	
+	val millClosed = new ImperativeEvent[Slot] //#EVT
+	
+	val numStonesChanged = new ImperativeEvent[(Slot, Int)] //#EVT
+	
 	/* several test methods*/
 	def canPlace(i: Int) = stones(i) == Empty
 	def canRemove(i: Int) = stones(i) != Empty
@@ -45,7 +51,7 @@ class MillBoard {
 	  val mill = previousOwners.zip(lineOwners).collectFirst { case (a, b) if a != b => b }
 	  
 	  // possible fire mill closed event
-	  mill.foreach(millClosed(_)) 
+	  mill.foreach(millClosed(_))
 	  
 	  // fire numStonesChanged event
 	  numStonesChanged(color, numStones(color))
@@ -63,11 +69,7 @@ class MillBoard {
 	  stones(i) = Empty
 	  place(j, color)
 	}
-	
-	def numStones(color: Slot) = stones.count(_ == color)
-	
-	val millClosed = new ImperativeEvent[Slot]
-	val numStonesChanged = new ImperativeEvent[(Slot, Int)]
+
 }
 
 
