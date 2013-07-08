@@ -58,18 +58,18 @@ class TextArea extends ReComponent {
     buffer.iterator.slice(start, end)
   }
   
-  lazy val charCountChanged: Event[Int] = changed.map((_: Iterator[Char]).length)
-  lazy val lineCountChanged: Event[Int] = changed.map(LineIterator(_: Iterator[Char]).length)
-  lazy val wordCountChanged: Event[Int] = changed.map{_: Iterator[Char] => wordCount}
-  lazy val selectionChanged: Event[Iterable[Char]] = caret.changed.map{pos: (Int, Int) =>
+  lazy val charCountChanged: Event[Int] = changed.map((_: Iterator[Char]).length) //#EVT //#EF
+  lazy val lineCountChanged: Event[Int] = changed.map(LineIterator(_: Iterator[Char]).length) //#EVT //#EF
+  lazy val wordCountChanged: Event[Int] = changed.map{_: Iterator[Char] => wordCount} //#EVT //#EF
+  lazy val selectionChanged: Event[Iterable[Char]] = caret.changed.map{pos: (Int, Int) => //#EVT //#EF
     val (dot, mark) = pos
     val (start, end) = (min(dot, mark), max(dot, mark))
     new Iterable[Char] { def iterator = buffer.iterator.slice(start, end) } : Iterable[Char]
   }
   
-  protected lazy val selectedAll = new ImperativeEvent[Unit]
-  protected lazy val pasted = new ImperativeEvent[Unit]
-  protected lazy val copied = new ImperativeEvent[Unit]
+  protected lazy val selectedAll = new ImperativeEvent[Unit] //#EVT
+  protected lazy val pasted = new ImperativeEvent[Unit] //#EVT
+  protected lazy val copied = new ImperativeEvent[Unit] //#EVT
   
   def selectAll = selectedAll()
   def paste = pasted()
@@ -82,13 +82,13 @@ class TextArea extends ReComponent {
   // If there is no selection the dot and mark will be equal.
   // [same semantics as for: javax.swing.text.Caret]
   object caret extends Publisher {
-    private lazy val change = new ImperativeEvent[(Int, Int)]
-    val changed: Event[(Int, Int)] =
+    private lazy val change = new ImperativeEvent[(Int, Int)]  //#EVT
+    val changed: Event[(Int, Int)] = //#EVT
       // Caret updated by pressed mouse button, pressed arrow keys, Ctrl+A or select all event
-      ((keys.pressed && {e => e.modifiers != Key.Modifier.Control &&
+      ((keys.pressed && {e => e.modifiers != Key.Modifier.Control && //#EF
           (e.key == Key.Left || e.key == Key.Right || e.key == Key.Up || e.key == Key.Down||
            e.key == Key.Home || e.key == Key.End)})
-        .map{e: KeyPressed =>
+        .map{e: KeyPressed => //#EF
           val offset = e.key match {
             case Key.Left =>
               caret.offset - (if (posInLinebreak(caret.offset - 1)) 2 else 1)
@@ -114,16 +114,16 @@ class TextArea extends ReComponent {
           }
           if (e.modifiers == Key.Modifier.Shift) (offset, caret.mark) else (offset, offset)
         } ||
-      (keys.pressed && {e => e.modifiers == Key.Modifier.Control && e.key == Key.A})
-        .map{_: KeyPressed => (buffer.length, 0)} ||
-      (mouse.clicks.pressed || mouse.moves.dragged).map{e: MouseEvent =>
+      (keys.pressed && {e => e.modifiers == Key.Modifier.Control && e.key == Key.A}) //#EF
+        .map{_: KeyPressed => (buffer.length, 0)} || //#EF //#EF
+      (mouse.clicks.pressed || mouse.moves.dragged).map{e: MouseEvent => //#EF //#EF
           val position = positionFromPoint(e.point)
           val offset = LineOffset.offset(buffer.iterator, position)
           e match { case _: MouseDragged => (offset, caret.mark) case _ => (offset, offset) }
-        } ||
-      selectedAll.map{_: Unit => (0, buffer.length)} ||
+        } ||  //#EF
+      selectedAll.map{_: Unit => (0, buffer.length)} || //#EF //#EF
       change)
-    .map{pos: (Int, Int) => pos match {
+    .map{pos: (Int, Int) => pos match { //#EF
       case (dot, mark) =>
         buffer.caret = dot
         if ((mark != buffer.caret || mark != markOffset) && mark >= 0 && mark <= buffer.length)
@@ -132,7 +132,7 @@ class TextArea extends ReComponent {
       (buffer.caret, markOffset)
     }
     
-    changed += { _ match {
+    changed += { _ match { //#HDL
       case (dot, mark) =>
         buffer.caret = dot
         if ((mark != buffer.caret || mark != markOffset) && mark >= 0 && mark <= buffer.length)
@@ -169,19 +169,19 @@ class TextArea extends ReComponent {
     protected[TextArea] val steady = new Timer(500, false)
     protected[TextArea] var blinkVisible = false
     protected[TextArea] def visible = peer.hasFocus && (steady.running || blinkVisible)
-    blink.fired += { _ =>
+    blink.fired += { _ =>  //#HDL
         blinkVisible = !blinkVisible
         peer.repaint
     }
   }
   
   // Content change by pressed backspace, deletion or character key, Ctrl+V or paste event
-  val changed: Event[Iterator[Char]] =
-    ((((keys.pressed && {e => e.modifiers == Key.Modifier.Control && e.key == Key.V}) || pasted) &&
+  val changed: Event[Iterator[Char]] =  //#EVT
+    ((((keys.pressed && {e => e.modifiers == Key.Modifier.Control && e.key == Key.V}) || pasted) && //#EF //#EF //#EF
       {_ => clipboard.getContents(null).isDataFlavorSupported(DataFlavor.stringFlavor)})
-      .map{_: Any =>
-        (0, clipboard.getContents(null).getTransferData(DataFlavor.stringFlavor).asInstanceOf[String])} ||
-    (keys.typed && {e => e.modifiers != Key.Modifier.Control})
+      .map{_: Any => //#EF
+        (0, clipboard.getContents(null).getTransferData(DataFlavor.stringFlavor).asInstanceOf[String])} || //#EF
+    (keys.typed && {e => e.modifiers != Key.Modifier.Control}) //#EF
       .map{(_: KeyTyped).char match {
         case '\b' => if (caret.dot != caret.mark) (0, "")
           else (-min(if (posInLinebreak(caret.dot - 1)) 2 else 1, caret.dot), "")
@@ -189,7 +189,7 @@ class TextArea extends ReComponent {
           else ((if (posInLinebreak(caret.dot + 1)) 2 else 1), "")
         case c => (0, c.toString)
       }})
-  .map{(change: (Int, String)) => change match {
+  .map{(change: (Int, String)) => change match {  //#EF
     case (del, ins) =>
       val selStart = min(caret.dot, caret.mark)
       val selEnd = max(caret.dot, caret.mark)
@@ -206,7 +206,7 @@ class TextArea extends ReComponent {
   }
   
   // Content copy by Ctrl+C or copy event
-  copied || (keys.pressed && {e => e.modifiers == Key.Modifier.Control && e.key == Key.C}) += { _ =>
+  copied || (keys.pressed && {e => e.modifiers == Key.Modifier.Control && e.key == Key.C}) += { _ => //#EF //#EF //#HDL
     if (caret.dot != caret.mark) {
       val (dot, mark) = (caret.dot, caret.mark)
       val (start, end) = (min(dot, mark), max(dot, mark))
@@ -241,9 +241,9 @@ class TextArea extends ReComponent {
   }
   
   // handle focus, scroll and paint updates
-  mouse.clicks.pressed += { _ => this.requestFocusInWindow }
+  mouse.clicks.pressed += { _ => this.requestFocusInWindow } //#HDL
   
-  caret.changed += { _ =>
+  caret.changed += { _ =>  //#HDL
     def it = LineIterator(buffer.iterator)
     peer preferredSize = new Dimension(2 * padding + it.map(stringWidth(_)).max, (it.size + 1) * lineHeight)
     
