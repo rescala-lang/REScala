@@ -39,8 +39,7 @@ class TextArea extends ReComponent {
   protected def lineHeight = peer.peer.unitHeight
   
   protected val padding = 5
-  protected val clipboard = Toolkit.getDefaultToolkit.getSystemClipboard
-  
+  protected val clipboard = Toolkit.getDefaultToolkit.getSystemClipboard  
   protected lazy val buffer = new GapBuffer
   
   def this(text: String) {
