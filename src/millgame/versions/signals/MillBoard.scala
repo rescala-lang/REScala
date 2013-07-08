@@ -20,14 +20,14 @@ object MillBoard {
 
 class MillBoard {
   
-    def stones = stones2.getVal
+    def stones = stonesVar.getVal
   
 	/* spiral-indexed board slots, starting innermost lower left, going clockwise */
-    val stones2: Var[Vector[Slot]] = Var(Vector.fill(24)(Empty))	
+    val stonesVar: Var[Vector[Slot]] = Var(Vector.fill(24)(Empty))	
 	
 	/* slots by the 16 lines of the game */
 	val lines = Signal {
-      MillBoard.Lines.map(line => line.map(stones2()(_))) 
+      MillBoard.Lines.map(line => line.map(stonesVar()(_))) 
     }
 	
 	/* lines mapped to owners */
@@ -37,8 +37,10 @@ class MillBoard {
 	
 	
 	/* access slot state by index */
-	def apply(i: Int) = stones2.getVal(i)	
-	def update(i: Int, color: Slot) = stones2.setVal(stones2.getVal.updated(i, color))
+	def apply(i: Int) = stonesVar.getVal(i)	
+	def update(i: Int, color: Slot) = {
+	  stonesVar.setVal(stonesVar.getVal.updated(i, color))
+	}
 	
 	/* several test methods*/
 	def canPlace(i: Int) = this(i) == Empty
@@ -73,7 +75,7 @@ class MillBoard {
 	}
 	
 	val numStones: Signal[(Slot => Int)] = Signal {
-	  (color: Slot) => stones2.getVal.count(_ == color)
+	  (color: Slot) => stonesVar().count(_ == color)
 	}
 	val blackStones = Signal { numStones()(Black) }
 	val whiteStones = Signal { numStones()(White) }

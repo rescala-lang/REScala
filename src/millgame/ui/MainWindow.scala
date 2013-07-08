@@ -1,13 +1,17 @@
 package millgame.ui
 
-import millgame.versions.events.MillGame
+
+/// Chose version here:
+//import millgame.versions.events.MillGame
+import millgame.versions.signals.MillGame
+
 import millgame.types._
 import millgame.types.Pos
 import millgame.types.Pos._
-import swing._
 import java.awt.Dimension
-import scala.swing.event.MouseClicked
+import swing._
 import javax.swing.UIManager
+import scala.swing.event.MouseClicked
 import scala.swing.event.MouseReleased
 
 
@@ -44,7 +48,7 @@ object MainWindow extends SimpleSwingApplication {
   
   lazy val ui = new BoxPanel(Orientation.Vertical) {
 
-    val statusBar = new Label(game.state.text) {
+    val statusBar = new Label(game.stateText) {
       preferredSize = new Dimension(Integer.MAX_VALUE, 64)
       font = new Font("Tahoma", java.awt.Font.PLAIN, 32)
     }

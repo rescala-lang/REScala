@@ -51,65 +51,54 @@ case class GameOver(winner: Slot) extends Gamestate {
 class MillGame {
 
   val board = new MillBoard
+
+  val state: Var[Gamestate] = Var(PlaceStone(White))
+  val remainCount: Var[Map[Slot, Int]] = Var(Map(Black -> 4, White -> 4))
   
-  var state: Gamestate = PlaceStone(White)
-  val state2: Var[Gamestate] = Var(PlaceStone(White))
-  var remainCount: Map[Slot, Int] = Map(Black -> 4, White -> 4)
-  val remainCount2: Var[Map[Slot, Int]] = Var(Map(Black -> 4, White -> 4))
+  val remainCountChanged = Signal{remainCount()}.changed
+  val stateChanged = Signal{ state()}.changed
+  def stateText = state().text
 
-  board.millClosed += { color =>
-    state2.setVal(RemoveStone(color))
-    // -- changeState(RemoveStone(color))
-  }
 
-  val winState: Signal[Option[Slot]] = Signal {
-    val remain: Map[Slot, Int] = remainCount2()
-    val stones = board.numStones()
-    
+  val winState: Signal[Option[Slot]] = SignalSynt { (s: SignalSynt[Option[Slot]]) =>  
+    val remain: Map[Slot, Int] = remainCount(s)
+    val stones = board.numStones(s)
     val won = for (player: Slot <- List(Black, White))
       yield (player, remain(player) == 0 && stones(player) < 3)
       
-    // TODO: Why do we get a type error here?
-    //val foo = won.collectFirst { case (winner, true) => winner }
-    None
+    // ERROR: This yields a type error when using the macro!
+    won.collectFirst { case (winner, true) => winner }
    }
   
-  val gameWon: Event[Slot] = winState.changed && (_.isDefined) map {(_: Option[Slot]) match { case Some(winner) => winner}}
+  val gameWon: Event[Slot] = winState.changed && (_.isDefined) map {(_: Option[Slot]).get }
+  
+  /* Event based game logic: */
+  board.millClosed += { color =>
+    state() = RemoveStone(color)
+  }
 
   board.numStonesChanged += {
     case (color, n) =>
-      if (remainCount(color) == 0 && n < 3) {
-        // -- changeState(GameOver(color.other))
-        // -- gameWon(color.other)
+      if (remainCount.getValue(color) == 0 && n < 3) {
+        state() = GameOver(color.other)  
       }
-  }
-  
-  val remainCountChanged = new ImperativeEvent[Map[Slot, Int]]
-
-
-  val stateChanged = new ImperativeEvent[Gamestate]
-  
-  
-  private def changeState(to: Gamestate) {
-    state = to
-    stateChanged(state)
   }
 
   private def nextState(player: Slot): Gamestate =
-    if (remainCount(player) > 0) PlaceStone(player)
+    if (remainCount()(player) > 0) PlaceStone(player)
     else if (board.numStones.getVal(player) == 3) JumpStoneSelect(player)
     else MoveStoneSelect(player)
 
   private def decrementCount(player: Slot) {
-    remainCount = remainCount.updated(player, remainCount(player) - 1)
-    remainCountChanged(remainCount)
+    val currentCount = remainCount.getValue
+    remainCount() = currentCount.updated(player, currentCount(player) - 1)
   }
 
-  def playerInput(i: Int): Boolean = state match {
+  def playerInput(i: Int): Boolean = state.getValue match {
 
     case PlaceStone(player) =>
       if (board.canPlace(i)) {
-        changeState(nextState(player.other))
+        state() = (nextState(player.other))
         decrementCount(player)
         board.place(i, player)
         true
@@ -117,40 +106,42 @@ class MillGame {
 
     case remove @ RemoveStone(player) =>
       if (board(i) == remove.color) {
+        state() = (nextState(player.other))
+        /// NOTE: Removing the stone can trigger events which change the state
+        /// therefore, remove has to be called after the change state
         board.remove(i)
-        changeState(nextState(player.other))
         true
       } else false
 
     case MoveStoneSelect(player) =>
       if (board(i) == player) {
-        changeState(MoveStoneDrop(player, i))
+        state() = (MoveStoneDrop(player, i))
         true
       } else false
 
     case MoveStoneDrop(player, stone) =>
       if (board.canMove(stone, i)) {
-        changeState(nextState(player.other))
+        state() = (nextState(player.other))
         board.move(stone, i)
         true
       } else {
-        changeState(MoveStoneSelect(player))
+        state() = (MoveStoneSelect(player))
         false
       }
 
     case JumpStoneSelect(player) =>
       if (board(i) == player) {
-        changeState(JumpStoneDrop(player, i))
+        state() = (JumpStoneDrop(player, i))
         true
       } else false
 
     case JumpStoneDrop(player, stone) =>
       if (board.canJump(stone, i)) {
-        changeState(nextState(player.other))
+        state() = (nextState(player.other))
         board.move(stone, i)
         true
       } else {
-        changeState(MoveStoneSelect(player))
+        state() = (MoveStoneSelect(player))
         false
       }
 

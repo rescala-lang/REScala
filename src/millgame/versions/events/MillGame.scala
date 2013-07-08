@@ -48,20 +48,10 @@ class MillGame {
 
   val board = new MillBoard
   var state: Gamestate = PlaceStone(White)
-  var remainCount: Map[Slot, Int] = Map(Black -> 9, White -> 9)
-
-  board.millClosed += { color =>
-    changeState(RemoveStone(color))
-  }
-
-  board.numStonesChanged += {
-    case (color, n) =>
-      if (remainCount(color) == 0 && n < 3) {
-        changeState(GameOver(color.other))
-        gameWon(color.other)
-      }
-  }
+  var remainCount: Map[Slot, Int] = Map(Black -> 4, White -> 4)
   
+  def stateText = state.text 
+
   val remainCountChanged = new ImperativeEvent[Map[Slot, Int]]
 
   val gameWon = new ImperativeEvent[Slot]
@@ -71,6 +61,21 @@ class MillGame {
     state = to
     stateChanged(state)
   }
+  
+   
+  /* Event based game logic: */
+   board.millClosed += { color =>
+    changeState(RemoveStone(color))
+  }
+
+  board.numStonesChanged += {
+    case (color, n) =>
+      if (remainCount(color) == 0 && n < 3) {
+        gameWon(color.other)
+        changeState(GameOver(color.other))
+      }
+  }
+  
 
   private def nextState(player: Slot): Gamestate =
     if (remainCount(player) > 0) PlaceStone(player)
@@ -94,8 +99,10 @@ class MillGame {
 
     case remove @ RemoveStone(player) =>
       if (board(i) == remove.color) {
-        board.remove(i)
         changeState(nextState(player.other))
+        /// NOTE: Removing the stone can trigger events which change the state
+        /// therefore, remove has to be called after the change state
+        board.remove(i) 
         true
       } else false
 
