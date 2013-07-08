@@ -7,6 +7,7 @@ import react.SignalSynt
 import react.Var
 import react.Signal
 import macro.SignalMacro.{SignalM => Signal}
+import millgame.types.Empty
 
 abstract class Gamestate {
   def getPlayer: Slot
@@ -19,6 +20,7 @@ case class PlaceStone(val player: Slot) extends Gamestate {
 }
 
 case class RemoveStone(val player: Slot) extends Gamestate {
+  assert(player != Empty)
   def getPlayer = player
   def color = player.other
   def text = player + " to REMOVE a " + color + " stone"
@@ -60,6 +62,7 @@ class MillGame {
   def stateText = state().text
 
 
+  /*
   val winState: Signal[Option[Slot]] = SignalSynt { (s: SignalSynt[Option[Slot]]) =>  
     val remain: Map[Slot, Int] = remainCount(s)
     val stones = board.numStones(s)
@@ -71,6 +74,8 @@ class MillGame {
    }
   
   val gameWon: Event[Slot] = winState.changed && (_.isDefined) map {(_: Option[Slot]).get }
+  * */
+  
   
   /* Event based game logic: */
   board.millClosed += { color =>
@@ -83,6 +88,9 @@ class MillGame {
         state() = GameOver(color.other)  
       }
   }
+  
+  val gameEnd = stateChanged && ((_: Gamestate) match {case GameOver(_) => true; case _ => false})
+  val gameWon: Event[Slot] = gameEnd.map {(_: Gamestate) match {case GameOver(w) => w; case _ => null}}
 
   private def nextState(player: Slot): Gamestate =
     if (remainCount()(player) > 0) PlaceStone(player)

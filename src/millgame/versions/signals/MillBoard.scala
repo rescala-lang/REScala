@@ -67,15 +67,20 @@ class MillBoard {
 	}
 	
 	
-	val millClosed: Event[Slot] = lineOwners.change.map { 
+	/// NOTE: Workaround because change fires even when there is no value change
+	val lineOwnersChanged = lineOwners.change && ((c: (Vector[Slot], Vector[Slot])) => c._2 != c._1)
+	val millOpenedOrClosed = lineOwners.change.map { 
 	  change: (Vector[Slot], Vector[Slot]) => 
-	  // workaround because change event fires (null, new) tuple
+	  /// NOTE: Workaround because change event fires (null, new) tuple
 	  if (change._1 eq null) change._2.find(_ != Empty).get
 	  else (change._1 zip change._2).collectFirst {case (old, n) if old != n => n}.get
 	}
+
+	val millClosed: Event[Slot] = millOpenedOrClosed && {(_: Slot) != Empty}
 	
 	val numStones: Signal[(Slot => Int)] = Signal {
-	  (color: Slot) => stonesVar().count(_ == color)
+	  val stones = stonesVar()
+	  (color: Slot) => stones.count(_ == color)
 	}
 	val blackStones = Signal { numStones()(Black) }
 	val whiteStones = Signal { numStones()(White) }
