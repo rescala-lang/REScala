@@ -19,11 +19,11 @@ import reswing.ReButton
 class ShapeSelectionPanel extends BoxPanel(Orientation.Vertical) {
   def state = ReShapes.drawingSpaceState.getValue
   
-  val lineBtn = ReButton("Line")  // ?
-  val rectBtn = ReButton("Rectangle")
-  val ovalBtn = ReButton("Oval")
-  val triangleBtn = ReButton("Triangle")
-  val freedrawBtn = ReButton("Freedraw")
+  val lineBtn = ReButton("Line")  //#EVT
+  val rectBtn = ReButton("Rectangle") //#EVT
+  val ovalBtn = ReButton("Oval") //#EVT
+  val triangleBtn = ReButton("Triangle") //#EVT
+  val freedrawBtn = ReButton("Freedraw") //#EVT
   
   contents += lineBtn
   contents += rectBtn

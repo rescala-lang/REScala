@@ -29,7 +29,7 @@ class StrokeInputPanel extends FlowPanel {
       minorTickSpacing = 1,
       paintTicks = true)
   
-  private val showColorWindow = ReButton("Show Colorinput")
+  private val showColorWindow = ReButton("Show Colorinput") //#EVT
   showColorWindow.clicked += {_ => colorWindow.visible = !colorWindow.visible} //#HDL
   
   contents += new Label { text = "stroke width: " }
