@@ -19,7 +19,8 @@ import reader.data.RSSItem
  */
 class GUI(store: FeedStore,
           notifications: Event[Any] = emptyevent,
-          itemStatus: Event[Any] = emptyevent)
+          itemStatus: Event[Any] = emptyevent,
+          fetcherState: Event[Any] = emptyevent)
             extends SimpleSwingApplication {
   val refreshButton = new EventButton("Refresh")
   val refresh = refreshButton.pressed.dropParam: Event[Unit]
@@ -68,12 +69,16 @@ class GUI(store: FeedStore,
     val renderArea = new RssItemRenderPane
     
     val statusBar = new EventText(notifications)
-    statusBar.preferredSize = new Dimension(framewidth / 2, 15)
+    statusBar.preferredSize = new Dimension(framewidth / 3, 15)
     statusBar.horizontalAlignment = Alignment.Left
     
     val itemCountStatus = new EventText(itemStatus)
-    itemCountStatus.preferredSize = new Dimension(framewidth / 2, 15)
+    itemCountStatus.preferredSize = new Dimension(framewidth / 3, 15)
     itemCountStatus.horizontalAlignment = Alignment.Right
+    
+    val fetcherStatus = new EventText(fetcherState)
+    fetcherStatus.preferredSize = new Dimension(framewidth / 3, 15)
+    fetcherStatus.horizontalAlignment = Alignment.Right
     
     val mediator = SyncAll.mediate(channelList, itemList, renderArea, store)
     
@@ -98,9 +103,10 @@ class GUI(store: FeedStore,
                                    splitPane)
       
       add(mainPane, BorderPanel.Position.Center)
-      add(new GridPanel(1, 2) {
+      add(new GridPanel(1, 3) {
         contents += statusBar
         contents += itemCountStatus
+        contents += fetcherStatus
       }, BorderPanel.Position.South)
     }
     

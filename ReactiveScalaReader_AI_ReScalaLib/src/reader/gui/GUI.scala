@@ -24,7 +24,8 @@ import reader.data.RSSItem
  */
 class GUI(store: FeedStore,
           notifications: Signal[Any] = StaticSignal(){ () },
-          itemStatus: Signal[Any] = StaticSignal(){ () })
+          itemStatus: Signal[Any] = StaticSignal(){ () },
+          fetcherState: Signal[Any] = StaticSignal(){ () })
             extends SimpleSwingApplication {
   val refreshButton = new ReButton("Refresh")
   val refresh: Event[Unit] = refreshButton.pressed.dropParam: Event[Unit] //#EF
@@ -81,12 +82,16 @@ class GUI(store: FeedStore,
     val renderArea = new RssItemRenderPane(itemList.selectedItem)
     
     val statusBar = new ReText(notifications)
-    statusBar.preferredSize = new Dimension(framewidth / 2, 15)
+    statusBar.preferredSize = new Dimension(framewidth / 3, 15)
     statusBar.horizontalAlignment = Alignment.Left
     
     val itemCountStatus = new ReText(itemStatus)
-    itemCountStatus.preferredSize = new Dimension(framewidth / 2, 15)
+    itemCountStatus.preferredSize = new Dimension(framewidth / 3, 15)
     itemCountStatus.horizontalAlignment = Alignment.Right
+    
+    val fetcherStatus = new ReText(fetcherState)
+    fetcherStatus.preferredSize = new Dimension(framewidth / 3, 15)
+    fetcherStatus.horizontalAlignment = Alignment.Right
     
     contents = new BorderPanel {
       val topPane = new GridPanel(1, 1) {
@@ -109,9 +114,10 @@ class GUI(store: FeedStore,
                                    splitPane)
       
       add(mainPane, BorderPanel.Position.Center)
-      add(new GridPanel(1, 2) {
+      add(new GridPanel(1, 3) {
         contents += statusBar
         contents += itemCountStatus
+        contents += fetcherStatus
       }, BorderPanel.Position.South)
     }
     

@@ -28,12 +28,13 @@ object Main extends App {
   val store = new FeedStore(parser.channelParsed, parser.itemParsed)
   val app = new GUI(
       store,
-      (fetcher.state.changed ||   //#EF //#IF
-        (store.itemAdded map { x: RSSItem => //#EF
-          (x.srcChannel map (_.title) getOrElse "<unknown>") + ": " + x.title })) latest "", //#IF
-      Signal[Any] { val itemCount = (store.channels() map { case (_, items) => items().size }).sum //#SIG
-       "Channels: " + store.channels().size + " Items: " + itemCount
-      })
+      (store.itemAdded map { x: RSSItem => //#EF
+        (x.srcChannel map (_.title) getOrElse "<unknown>") + ": " + x.title }) latest "", //#IF
+      Signal[Any] { //#SIG
+        val itemCount = (store.channels() map { case (_, items) => items().size }).sum 
+        "Channels: " + store.channels().size + " Items: " + itemCount
+      },
+      fetcher.state)
   
   setupGuiEvents
   
