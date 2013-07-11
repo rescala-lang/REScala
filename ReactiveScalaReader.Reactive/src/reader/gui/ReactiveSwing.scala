@@ -23,10 +23,10 @@ class ReCheckBox(text: String) extends CheckBox(text) {
   private val selectedVar = Var(false) //#VAR
   val checked: Signal[Boolean] = Signal { selectedVar() } //#SIG
   
-  val activated: Event[Boolean] = checked.changed && (v => v) //#IF //#EF
-  val deactivated: Event[Boolean] = checked.changed && (! _) //#IF //#EF
+  val activated: Event[Boolean] = checked.changed && (v => v) //#EVT //#IF //#EF
+  val deactivated: Event[Boolean] = checked.changed && (! _) //#EVT //#IF //#EF
   
-  reactions += { case _ => selectedVar() = selected } //#HDL
+  reactions += { case _ => selectedVar() = selected }
 }
 
 class ReListView[A](s: Signal[Iterable[A]]) extends ListView[A] {
@@ -49,7 +49,7 @@ class ReListView[A](s: Signal[Iterable[A]]) extends ListView[A] {
   
   listenTo(selection)
   
-  reactions += { //#HDL
+  reactions += {
     case SelectionChanged(_) => selectedItemVar() = getSelectedItem
   }
 }

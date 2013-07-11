@@ -74,7 +74,7 @@ object Main extends App {
   private def setupGuiEvents {
     app.requestURLAddition += { url => checker.check(url) } //#HDL
     
-    val guardedTick = tick && { _ => app.refreshAllowed } //#HDL //#EF
+    val guardedTick = tick && { _ => app.refreshAllowed } //#EVT //#EF
     
     (app.refresh || guardedTick) += { _ => fetcher.fetchAll } //#EF //#HDL
   }
