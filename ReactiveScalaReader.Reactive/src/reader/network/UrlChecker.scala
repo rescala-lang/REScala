@@ -19,7 +19,7 @@ class UrlChecker {
    * @param url The string to check
    * @return Nothing is returned but events are fired, see below
    */
-  val check = Observable {
+  val check = Observable { //#EVT //#EVT
     // Tries to create a url from the string and returns it in Right
     // if not successful, a Left with an error message is returned
     (url: String) =>

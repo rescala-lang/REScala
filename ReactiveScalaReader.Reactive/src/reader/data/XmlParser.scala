@@ -68,7 +68,7 @@ class XmlParser {
     parseChannel(xmlNode, Some(url))
   }
   
-  private val parseChannel = Observable {
+  private val parseChannel = Observable { //#EVT //#EVT
     (args: (NodeSeq, Option[URL])) =>
       val (xmlNode, url) = args
       
@@ -95,7 +95,7 @@ class XmlParser {
    * 	None if the xml could not be parsed
    * 	Some(RssItem) otherwise
    */
-  val parseItem = Observable {
+  val parseItem = Observable { //#EVT //#EVT
     (xmlNode: Node) => parseItemSilent(xmlNode)
   }
   

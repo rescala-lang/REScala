@@ -40,7 +40,7 @@ class Fetcher(val urls: Signal[Set[URL]]) {
       case _: SocketException => NodeSeq.Empty
     }
   
-  private val fetch = Observable(loadMethod)
+  private val fetch = Observable(loadMethod) //#EVT //#EVT
   
   /**
    * Fetch the channels from the list of urls
