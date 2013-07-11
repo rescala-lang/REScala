@@ -9,23 +9,23 @@ import scala.swing.event.ButtonClicked
 import scala.swing.event.SelectionChanged
 
 class EventButton(text: String) extends Button(text) {
-  val pressed = new ImperativeEvent[Button]
-  reactions += { case ButtonClicked(_) => pressed(this) }
+  val pressed = new ImperativeEvent[Button]  //#EVT
+  reactions += { case ButtonClicked(_) => pressed(this) }  //#HDL
 }
 
 class EventCheckBox(text: String) extends CheckBox(text) {
-  val switched = new ImperativeEvent[Boolean]
+  val switched = new ImperativeEvent[Boolean]  //#EVT
   
-  val activated = switched && { _ => selected  }
-  val deactivated = switched && { _ => !selected }
+  val activated = switched && { _ => selected  }  //#EVT //#EF
+  val deactivated = switched && { _ => !selected }  //#EVT //#EF
   
   reactions += { case _ => switched(selected) }
 }
 
 class EventListView[A](evt: Event[Iterable[A]]) extends ListView[A] {
-  val selectedItemChanged = new ImperativeEvent[Option[A]]
+  val selectedItemChanged = new ImperativeEvent[Option[A]]  //#EVT
   
-  evt += { data => listData = data.toSeq }
+  evt += { data => listData = data.toSeq }  //#HDL
   
   private var selectedItemField: Option[A] = getSelectedItem
   
@@ -56,5 +56,5 @@ class EventListView[A](evt: Event[Iterable[A]]) extends ListView[A] {
 }
 
 class EventText[A](evt: Event[A]) extends Label {
-  evt += { v => text = v.toString }
+  evt += { v => text = v.toString } //#HDL
 }

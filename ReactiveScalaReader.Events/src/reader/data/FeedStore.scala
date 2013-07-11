@@ -13,9 +13,9 @@ import react.events._
 class FeedStore {
   private val channelToItems = Map.empty[RSSChannel, Set[RSSItem]]
   
-  val channelsChanged = new ImperativeEvent[List[RSSChannel]]
-  val itemAdded = new ImperativeEvent[RSSItem]
-  val contentChanged: Event[Unit] = channelsChanged.dropParam || itemAdded.dropParam
+  val channelsChanged = new ImperativeEvent[List[RSSChannel]] //#EVT
+  val itemAdded = new ImperativeEvent[RSSItem] //#EVT
+  val contentChanged: Event[Unit] = channelsChanged.dropParam || itemAdded.dropParam //#EVT //#EF
   
   def channels = channelToItems.keys.toList
   

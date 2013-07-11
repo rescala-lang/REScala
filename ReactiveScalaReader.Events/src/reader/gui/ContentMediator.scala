@@ -23,7 +23,7 @@ object SyncAll extends ContentMediator {
               itemList: EventListView[RSSItem],
               renderArea: RssItemRenderPane,
               store: FeedStore) {
-    store.itemAdded += { item =>
+    store.itemAdded += { item => //#HDL
       for {
         selected <- channelList.selectedItem
         src <- item.srcChannel
@@ -31,11 +31,11 @@ object SyncAll extends ContentMediator {
       } displayChannelsItems(src)
     }
     
-    channelList.selectedItemChanged += { maybeChannel: Option[RSSChannel] =>
+    channelList.selectedItemChanged += { maybeChannel: Option[RSSChannel] =>  //#HDL
       for (channel <- maybeChannel) displayChannelsItems(channel)
     }
     
-    itemList.selectedItemChanged += { maybeItem =>
+    itemList.selectedItemChanged += { maybeItem =>  //#HDL
       for (item <- maybeItem) renderArea.renderItem(item)
     }
     

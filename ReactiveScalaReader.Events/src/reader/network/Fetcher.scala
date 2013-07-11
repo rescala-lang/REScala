@@ -14,13 +14,13 @@ import scala.xml.XML
  * After fetching the data an event is triggered
  */
 class Fetcher {
-  lazy val rssFetched: Event[(NodeSeq, URL)] = fetch.after map { (_: (URL, NodeSeq)).swap }
+  lazy val rssFetched: Event[(NodeSeq, URL)] = fetch.after map { (_: (URL, NodeSeq)).swap } //#EVT //#EF
   
-  lazy val urlAdded = new ImperativeEvent[URL]
-  lazy val urlRemoved = new ImperativeEvent[URL]
+  lazy val urlAdded = new ImperativeEvent[URL] //#EVT
+  lazy val urlRemoved = new ImperativeEvent[URL] //#EVT
   
-  lazy val startedFetching = fetch.before map { _: Any => "Started fetching" }
-  lazy val finishedFetching = fetch.after map { _: Any => "Finished fetching" }
+  lazy val startedFetching = fetch.before map { _: Any => "Started fetching" } //#EVT //#EF
+  lazy val finishedFetching = fetch.after map { _: Any => "Finished fetching" } //#EVT //#EF
   
   def loadMethod(url: URL) =
     try
@@ -31,7 +31,7 @@ class Fetcher {
       case _: SocketException => NodeSeq.Empty
     }
   
-  private val fetch = Observable(loadMethod)
+  private val fetch = Observable(loadMethod)  //#EVT //#EVT
   
   private var urlsToFetch = Set.empty[URL]
   def currentURLs = urlsToFetch.toList
@@ -54,7 +54,7 @@ class Fetcher {
    * Removes the url from the list of urls to fetch
    * Does NOT remove the channel from the content!
    */
-  val removeURL = Observable { (url: URL) =>
+  val removeURL = Observable { (url: URL) =>  //#EVT //#EVT
     if (!(urlsToFetch contains url)) {
       urlsToFetch -= url
       urlRemoved(url)

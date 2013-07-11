@@ -23,9 +23,9 @@ class GUI(store: FeedStore,
           fetcherState: Event[Any] = emptyevent)
             extends SimpleSwingApplication {
   val refreshButton = new EventButton("Refresh")
-  val refresh = refreshButton.pressed.dropParam: Event[Unit]
+  val refresh = refreshButton.pressed.dropParam: Event[Unit] //#EVT
   
-  val requestURLAddition = new ImperativeEvent[String]
+  val requestURLAddition = new ImperativeEvent[String]  //#EVT
   
   val refreshCheckbox = new EventCheckBox("auto refresh") { selected = true }
   def refreshAllowed = refreshCheckbox.selected
@@ -62,7 +62,7 @@ class GUI(store: FeedStore,
       peer.setVisibleRowCount(3)
     }
     
-    val itemList = new EventListView[RSSItem](new ImperativeEvent[Iterable[RSSItem]]) {
+    val itemList = new EventListView[RSSItem](new ImperativeEvent[Iterable[RSSItem]]) { //#EVT
       renderer = ListView.Renderer(_.title)
     }
     

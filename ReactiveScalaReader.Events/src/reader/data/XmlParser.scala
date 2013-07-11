@@ -19,21 +19,21 @@ import reader.common.sequence
 *
 */
 class XmlParser {
-  val explicitItemParsed = new ImperativeEvent[RSSItem]
+  val explicitItemParsed = new ImperativeEvent[RSSItem]  //#EVT
   
   // only for clarity in event expressions below
   private def discardArgument[A](tuple: (Any,A)): A = tuple._2
   private def parseSuccessfull[A](res: Option[A]): Boolean = res.isDefined
   
-  lazy val itemParsed: Event[RSSItem] =
-    ((parseItem.after map discardArgument[Option[RSSItem]]) &&
-        { parseSuccessfull(_) } map { o: Option[RSSItem] => o.get }) || explicitItemParsed
+  lazy val itemParsed: Event[RSSItem] =  //#EVT
+    ((parseItem.after map discardArgument[Option[RSSItem]]) && //#EF //#EF
+        { parseSuccessfull(_) } map { o: Option[RSSItem] => o.get }) || explicitItemParsed //#EF //#EF
   
-  lazy val channelParsed: Event[RSSChannel] =
-    (parseChannel.after map discardArgument[Option[RSSChannel]]) &&
-        { parseSuccessfull(_) } map { o: Option[RSSChannel] => o.get }
+  lazy val channelParsed: Event[RSSChannel] = //#EVT
+    (parseChannel.after map discardArgument[Option[RSSChannel]]) && //#EF //#EF
+        { parseSuccessfull(_) } map { o: Option[RSSChannel] => o.get } //#EF
   
-  lazy val entityParsed  = channelParsed.dropParam || itemParsed.dropParam
+  lazy val entityParsed  = channelParsed.dropParam || itemParsed.dropParam //#EVT //#EF
   
   val dateFormat = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z", Locale.ENGLISH)
   
@@ -66,7 +66,7 @@ class XmlParser {
     parseChannel(xmlNode, Some(url))
   }
   
-  private val parseChannel = Observable {
+  private val parseChannel = Observable {  //#EVT //#EVT
     (args: (NodeSeq, Option[URL])) =>
       val (xmlNode, url) = args
       
@@ -93,7 +93,7 @@ class XmlParser {
    * 	None if the xml could not be parsed
    * 	Some(RssItem) otherwise
    */
-  val parseItem = Observable {
+  val parseItem = Observable {  //#EVT //#EVT
     (xmlNode: Node) => parseItemSilent(xmlNode)
   }
   
