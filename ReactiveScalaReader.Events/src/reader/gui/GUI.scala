@@ -23,7 +23,7 @@ class GUI(store: FeedStore,
           fetcherState: Event[Any] = emptyevent)
             extends SimpleSwingApplication {
   val refreshButton = new EventButton("Refresh")
-  val refresh = refreshButton.pressed.dropParam: Event[Unit] //#EVT
+  val refresh = refreshButton.pressed.dropParam: Event[Unit] //#EVT //#EF
   
   val requestURLAddition = new ImperativeEvent[String]  //#EVT
   
