@@ -87,7 +87,7 @@ abstract class BoardElement(implicit val world: World) {
   def isDead: Boolean
 
   /** event that gets fired when this element dies (should be removed) */
-  val dies: Event[Unit]
+  val dies: Event[Unit] //abstract(//#EVT)
 
   /** handlers */
   val tickHandler: (Unit => Unit)

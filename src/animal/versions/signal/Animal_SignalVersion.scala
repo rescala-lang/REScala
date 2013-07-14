@@ -92,7 +92,7 @@ class Board(val width: Int, val height: Int) {
 abstract class BoardElement(implicit val world: World) {  
   
   /** A signal denoting if this element is dead ( = should be removed from the board) */
-  val isDead: Signal[Boolean]   //#SIG
+  val isDead: Signal[Boolean]   // Abstract (//#SIG)
   lazy val dies: Event[Unit] = isDead changedTo true //#EVT //#IF
   
   /** Some imperative code that is called each tick */
@@ -130,7 +130,7 @@ abstract class Animal(override implicit val world: World) extends BoardElement {
 	val state: Var[AnimalState] = Var(Idling) //#VAR
 	
 	// partial function for collecting food, dependant on state of the object
-	val findFood: Signal[PartialFunction[BoardElement, BoardElement]]  //#SIG
+	val findFood: Signal[PartialFunction[BoardElement, BoardElement]]  // Abstract (//#SIG)
 	
 	// function for creating a state upon reaching target
 	def reachedState(target: BoardElement): AnimalState
@@ -164,7 +164,7 @@ abstract class Animal(override implicit val world: World) extends BoardElement {
   }
 
 	
-	val age: Signal[Int] = world.time.day.changed.iterate(1)(_ + 1) //#SIG //#IF
+	val age: Signal[Int] = world.time.day.changed.iterate(1)(_ + 1) //#SIG //#IF //#IF
 	
 	val isAdult =  Signal { age() > Animal.FertileAge } //#SIG
 	val isFertile = Signal { isAdult() } //#SIG
@@ -251,8 +251,8 @@ trait Female extends Animal {
   val becomePregnant: Event[Unit] = isPregnant.changedTo(true) //#EVT //#IF
   
   // counts down to 0
-  lazy val pregnancyTime: Signal[Int] = becomePregnant.reset(()){ _ => //#SIG
-    world.time.hour.changed.iterate(Animal.PregnancyTime)(_ - (if(isPregnant.getValue) 1 else 0))
+  lazy val pregnancyTime: Signal[Int] = becomePregnant.reset(()){ _ => //#SIG  //#IF
+    world.time.hour.changed.iterate(Animal.PregnancyTime)(_ - (if(isPregnant.getValue) 1 else 0)) //#IF //#IF //#SIG
   }
   
   
@@ -263,7 +263,7 @@ trait Female extends Animal {
   // override val energyDrain = Signal { super.energyDrain() * 2 }
   // not possible
   
-  giveBirth += {_ =>
+  giveBirth += {_ => //#HDL
     val father = mate.getVal.get
     val child = createOffspring(father)
     world.board.getPosition(this).foreach{ mypos =>
@@ -340,8 +340,8 @@ class Plant(override implicit val world: World) extends BoardElement {
   
   val isDead = Signal{ energy() <= 0}  //#SIG
   
-  val age: Signal[Int] = world.time.hour.changed.iterate(0)(_ + 1) //#SIG //#IF
-  val grows: Event[Int] = age.changed && { _ % Plant.GrowTime == 0} //#IF //#EVT
+  val age: Signal[Int] = world.time.hour.changed.iterate(0)(_ + 1) //#SIG //#IF //#IF
+  val grows: Event[Int] = age.changed && { _ % Plant.GrowTime == 0} //#IF //#EVT //#EF
   val size: Signal[Int] = grows.iterate(0)(acc => math.min(Plant.MaxSize, acc + 1)) //#SIG //#IF
   val expands: Event[Unit] = size.changedTo(Plant.MaxSize) //#IF //#EVT
   
@@ -362,7 +362,7 @@ class Plant(override implicit val world: World) extends BoardElement {
 
 class Seed(override implicit val world: World) extends BoardElement {
   
-  val growTime: Signal[Int] = world.time.hour.changed.iterate(Plant.GrowTime)(_ - 1) //#SIG //#IF
+  val growTime: Signal[Int] = world.time.hour.changed.iterate(Plant.GrowTime)(_ - 1) //#SIG //#IF //#IF
   val isDead = Signal{ growTime() <= 0 } //#SIG
   
   dies += {_ => //#HDL
@@ -434,7 +434,7 @@ class World {
   }
   
   // tick / clear board elements
-  time.hour.changed += {x  => //#HDL
+  time.hour.changed += {x  => //#HDL //#IF
     board.elements.foreach { _ match {
       	case (pos, be) =>
       	  if(be.isDead.getVal)
@@ -446,12 +446,12 @@ class World {
   
   
   // each day, spawn a new plant
-  time.day.changed += {_ => //#HDL
+  time.day.changed += {_ => //#HDL //#IF
     this spawn new Plant
   }
   
   //each week, spawn a new animal
-  time.week.changed += {_ =>  //#HDL
+  time.week.changed += {_ =>  //#HDL  //#IF
     this spawn newAnimal
   }
 }
