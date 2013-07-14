@@ -31,13 +31,13 @@ object Application extends SimpleSwingApplication {
   textArea.charCountChanged += { count => (charCountLabel: Label).text = "Ch " + count } //#HDL
   textArea.wordCountChanged += { count => (wordCountLabel: Label).text = "Words " + count } //#HDL
   
-  val selectAllButton = ReButton("Select All") // ?
+  val selectAllButton = ReButton("Select All") //#EVT
   selectAllButton.clicked += { _ => textArea.selectAll; textArea.requestFocus } //#HDL
   
-  val copyButton = ReButton("Copy")
+  val copyButton = ReButton("Copy") //#EVT
   copyButton.clicked += { _ => textArea.copy; textArea.requestFocus } //#HDL
   
-  val pasteButton = ReButton("Paste")
+  val pasteButton = ReButton("Paste") //#EVT
   pasteButton.clicked += { _ => textArea.paste; textArea.requestFocus } //#HDL
   
   // layout
