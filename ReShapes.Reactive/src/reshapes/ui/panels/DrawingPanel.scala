@@ -88,10 +88,10 @@ class DrawingPanel(val state: DrawingSpaceState) extends Panel {
       repaint
   }
   
-  state.selectedShape.changed += canvasChange  //#IF //#HDL
-  state.shapes.changed += canvasChange   //#IF //#HDL
-  state.strokeWidth.changed += canvasChange   //#IF //#HDL
-  state.color.changed += canvasChange   //#IF //#HDL
+  (state.selectedShape.changed ||  //#IF //#EF
+  state.shapes.changed ||   //#IF //#EF
+  state.strokeWidth.changed ||   //#IF //#EF
+  state.color.changed) += canvasChange   //#IF //#HDL
   
   def canvasChange(x: Any) = repaint
 }

@@ -24,17 +24,17 @@ class CommandPanel extends BoxPanel(Orientation.Vertical) {
   
   val buttonsEvents = Signal { //#SIG
     commands() map { command =>
-      val button = ReButton(command.description) //#IS( //#EVT //#EF //#IF //#IF )
+      val button = ReButton(command.description) //#IS( //#EVT )
       (button: Component, button.clicked map {_: Any => command}) }
   }
   
-  val revert = UnionEvent(Signal {  //#UE( //#EVT //#EF //#IF //#IF )
+  val revert = UnionEvent(Signal { //#SIG //#UE( //#EVT //#IF )
     buttonsEvents() map { case (_, ev) => ev: Event[Command] }
   })
   
   val commandPanel = ReBoxPanel(
     orientation = Orientation.Vertical,
-    contents = Signal { (buttonsEvents() map { case (btn, _) => btn }): Seq[Component] }) //#SIG //#IS( //#EVT //#EF //#IF //#IF )
+    contents = Signal { (buttonsEvents() map { case (btn, _) => btn }): Seq[Component] }) //#SIG //#IS( // )
   
   contents += new ScrollPane {
     contents = commandPanel

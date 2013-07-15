@@ -71,10 +71,10 @@ class DrawingSpaceState {
         }
         else
           (commands.getValue, shapes.getValue)
-      }) ||
+      }) ||  //#EF
      (clear map { _: Unit =>   //#EF
        (List.empty, List.empty)
-     })) latest (List.empty, List.empty)   //#EF
+     })) latest (List.empty, List.empty)   //#IF
 }
 
 class NetworkSpaceState(

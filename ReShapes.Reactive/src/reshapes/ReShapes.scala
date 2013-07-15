@@ -83,14 +83,14 @@ object ReShapes extends SimpleSwingApplication {
   }
     
   val menu = new MenuBar {
-    val undo = ReMenuItem("Undo", enabled = Signal {  //#SIG //#IS( //#EVT //#EF //#IF //#IF )
+    val undo = ReMenuItem("Undo", enabled = Signal {  //#SIG //#IS( // )
       drawingSpaceState() != null && drawingSpaceState().commands().nonEmpty })
     
     val merge = new ReMenu() {
-      override lazy val text = overrideSignal("Merge with...") //#SIG //#IS( //#EVT //#EF //#IF //#IF )
-      override lazy val contents = overrideSignal(Signal { //#SIG //#IS( //#EVT //#EF //#IF //#IF )
+      override lazy val text = overrideSignal("Merge with...") //#SIG //#IS( // )
+      override lazy val contents = overrideSignal(Signal { //#SIG //#IS( // )
         itemsEvents() map { case (btn, _) => btn } })
-      final lazy val merged = UnionEvent(Signal { //#UE( //#EVT //#EF //#IF //#IF )
+      final lazy val merged = UnionEvent(Signal { //#SIG //#UE( //#EVT //#IF )
         itemsEvents() map { case (_, ev) => ev } })
       
       lazy val update = new ImperativeEvent[Unit]   //#EVT
@@ -100,7 +100,7 @@ object ReShapes extends SimpleSwingApplication {
           (ui.tabbedPane.pages filter
             { tab => tab.index != ui.tabbedPane.selection.index } map
             { tab =>
-              val item = ReMenuItem(tab.title) //#IS( //#EVT //#EF //#IF //#IF 
+              val item = ReMenuItem(tab.title) //#IS( // )
               val command = item.clicked map { _: Any =>  //#EF
                 new MergeDrawingSpaces(panelDrawingSpaceStates(tab)._1) }
               (item: Component, command)
@@ -117,7 +117,7 @@ object ReShapes extends SimpleSwingApplication {
       contents += new MenuItem(new LoadAction)
       contents += new Separator
       contents += (new ReMenuItem {
-        override lazy val text = overrideSignal("Quit")  //#SIG //#IS( //#EVT //#EF //#IF //#IF )
+        override lazy val text = overrideSignal("Quit")  //#IS( // )
         clicked += { _ => quit }  //#HDL
       }: ReMenuItem)
     }

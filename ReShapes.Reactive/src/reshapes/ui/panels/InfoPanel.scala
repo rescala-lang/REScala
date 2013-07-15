@@ -36,7 +36,7 @@ class InfoPanel extends FlowPanel {
     else ""
   }
   
-  contents += ReLabel(Signal {   //#SIG //#IS( //#EVT //#EF //#IF //#IF )
+  contents += ReLabel(Signal {   //#SIG //#IS( //)
     "%s | %s | %s | %s | %s" format
       (shapeCount(), color(), strokeWidth(), nextShape(), selectedShape()) } )
 }
