@@ -25,7 +25,7 @@ class ShapePanel extends BoxPanel(Orientation.Vertical) {
   
   var currentState: DrawingSpaceState = null
   
-  ReShapes.drawingSpaceStateChanged += { state =>
+  ReShapes.drawingSpaceStateChanged += { state => //#HDL
     if (currentState != null)
       currentState.shapesChanged -= updateShapesPanel
     
@@ -59,7 +59,7 @@ class ShapeView(shape: Shape, state: DrawingSpaceState) extends BoxPanel(Orienta
   
   listenTo(mouse.clicks)
   
-  reactions += {
+  reactions += {  //#HDL
     case e: MouseClicked =>
       state.selectedShape = if (state.selectedShape != shape) shape else null
   }

@@ -92,7 +92,7 @@ object ReShapes extends SimpleSwingApplication {
           enabled = commands.nonEmpty
         
         private var currentState: DrawingSpaceState = null
-        drawingSpaceStateChanged += { state =>
+        drawingSpaceStateChanged += { state => //#HDL
           if (currentState != null)
             currentState.commandsChanged -= updateCommands
           currentState = state

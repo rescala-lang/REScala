@@ -25,7 +25,7 @@ class InfoPanel extends FlowPanel {
   private var strokeWidth = ""
   private var color = ""
   
-  ReShapes.drawingSpaceStateChanged += { state =>
+  ReShapes.drawingSpaceStateChanged += { state => //#HDL
     if (currentState != null) {
       currentState.nextShapeChanged -= updateNextShape
       currentState.selectedShapeChanged -= updateSelectedShape

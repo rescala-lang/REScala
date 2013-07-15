@@ -17,11 +17,11 @@ import reshapes.figures.Triangle
  * Panel for selection of shapes to draw
  */
 class ShapeSelectionPanel extends BoxPanel(Orientation.Vertical) {
-  val lineBtn = new Button { text = "Line" }
-  val rectBtn = new Button { text = "Rectangle" }
-  val ovalBtn = new Button { text = "Oval" }
-  val triangleBtn = new Button { text = "Triangle" }
-  val freedrawBtn = new Button { text = "Freedraw" }
+  val lineBtn = new Button { text = "Line" }  //#EVT
+  val rectBtn = new Button { text = "Rectangle" } //#EVT
+  val ovalBtn = new Button { text = "Oval" }  //#EVT
+  val triangleBtn = new Button { text = "Triangle" }  //#EVT
+  val freedrawBtn = new Button { text = "Freedraw" }  //#EVT
   
   contents += lineBtn
   contents += rectBtn
@@ -31,8 +31,8 @@ class ShapeSelectionPanel extends BoxPanel(Orientation.Vertical) {
   
   listenTo(lineBtn, rectBtn, ovalBtn, triangleBtn, freedrawBtn)
   
-  reactions += {
-    case ButtonClicked(`lineBtn`) =>
+  reactions += {  //#HDL
+    case ButtonClicked(`lineBtn`) =>  
       ReShapes.drawingSpaceState.nextShape = new Line(ReShapes.drawingSpaceState)
     case ButtonClicked(`rectBtn`) =>
       ReShapes.drawingSpaceState.nextShape = new Rectangle(ReShapes.drawingSpaceState)

@@ -22,7 +22,7 @@ class CommandPanel extends BoxPanel(Orientation.Vertical) {
   
   private var currentState: DrawingSpaceState = null
   
-  ReShapes.drawingSpaceStateChanged += { state =>
+  ReShapes.drawingSpaceStateChanged += { state => //#HDL
     if (currentState != null)
       currentState.commandsChanged -= updateList
     
@@ -36,9 +36,9 @@ class CommandPanel extends BoxPanel(Orientation.Vertical) {
   def updateList(commands: List[Command]) {
     commandPanel.contents.clear
     for (command <- commands)
-      commandPanel.contents +=
-        new Button(Action(command.description)
-            { currentState revert command })
+      commandPanel.contents +=                // Hides an event and a callback  
+        new Button(Action(command.description) //#EVT //HDL
+            { currentState revert command })  
     repaint
   }
 }
