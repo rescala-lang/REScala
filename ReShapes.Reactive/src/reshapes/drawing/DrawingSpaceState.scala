@@ -46,35 +46,43 @@ class DrawingSpaceState {
   // filename after saving
   val fileName = Var("unnamed") //#VAR
   
-  // can be
+  // can be overridden in order to declare events declaratively
   lazy val executed: Event[Command] = new ImperativeEvent  //#EVT
   lazy val reverted: Event[Command] = new ImperativeEvent  //#EVT
   
+  // events that can be called imperatively
   final lazy val execute = new ImperativeEvent[Command]  //#EVT
   final lazy val revert = new ImperativeEvent[Command]  //#EVT
   final lazy val clear = new ImperativeEvent[Unit]  //#EVT
   final lazy val select = new ImperativeEvent[Shape]  //#EVT
   
-  private lazy val commandsShapes: Signal[(List[Command], List[Shape])] =  //#SIG
-    (((executed || execute) map { command: Command =>  //#EF  //#EF
-        val _commands = command :: commands.getValue
-        val _shapes = command execute shapes.getValue
-        (_commands, _shapes)
-      }) ||
-     ((reverted || revert) map { command: Command => //#EF  //#EF
-        val count = (commands.getValue indexOf command) + 1
-        if (count != 0) {
-          val _shapes = (shapes.getValue /: (commands.getValue take count)) {
-            (shapes, command) => command revert shapes
+  private abstract class CommandType
+  private case class Execute(command: Command) extends CommandType
+  private case class Revert(command: Command) extends CommandType
+  private case class Clear extends CommandType
+  
+  private lazy val commandInvoked: Event[CommandType] =
+    ((executed || execute) map { command: Command => Execute(command) }) || //#EF //#EF //#EF
+    ((reverted || revert) map { command: Command => Revert(command) }) || //#EF //#EF //#EF
+    (clear map { _: Unit => Clear() }) //#EF
+  
+  private lazy val commandsShapes: Signal[(List[Command], List[Shape])] = //#SIG
+    commandInvoked.fold((List.empty[Command], List.empty[Shape])) { //#IF
+      case ((commands, shapes), commandType) => commandType match {
+        case Execute(command) =>
+          (command :: commands, command execute shapes)
+        case Revert(command) =>
+          commands indexOf command match {
+            case -1 => (commands, shapes)
+            case index =>
+              val count = index + 1
+              (commands drop count,
+               (shapes /: (commands take count)) { (shapes, command) => command revert shapes })
           }
-          (commands.getValue drop count, _shapes)
-        }
-        else
-          (commands.getValue, shapes.getValue)
-      }) ||  //#EF
-     (clear map { _: Unit =>   //#EF
-       (List.empty, List.empty)
-     })) latest (List.empty, List.empty)   //#IF
+        case Clear() =>
+          (List.empty, List.empty)
+      }
+    }
 }
 
 class NetworkSpaceState(
