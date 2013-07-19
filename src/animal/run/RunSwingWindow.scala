@@ -29,6 +29,7 @@ object RunSwingWindow extends SimpleSwingApplication {
     while (true) {
       world.tick
       // gui
+      statusBar.text = world.status
       frame.boardString = world.dump
       frame.repaint      
       Thread sleep sleeptime
@@ -52,13 +53,18 @@ object RunSwingWindow extends SimpleSwingApplication {
 
     def get(symbol: String) = images(symbol)
   }
+  
+   val statusBar = new Label {
+      preferredSize = new Dimension(32, 32)
+      font = new Font("Tahoma", java.awt.Font.PLAIN, 16)
+   }
 
   // drawing code
   def top = frame
   val frame = new MainFrame {
     var boardString = ""
 
-    contents = new Panel() {
+    val panel = new Panel() {
       preferredSize = new Dimension(1200, 600)
       override def paintComponent(g: Graphics2D) {
 
@@ -73,6 +79,11 @@ object RunSwingWindow extends SimpleSwingApplication {
             }
         }
       }
+    }
+    
+    contents = new BoxPanel(Orientation.Vertical) {
+      contents += statusBar
+      contents += panel
     }
   }
 }

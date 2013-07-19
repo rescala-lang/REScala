@@ -27,7 +27,10 @@ class Board(val width: Int, val height: Int) {
   }
   
   /** removes the board element if present in the board */
-  def remove(be: BoardElement) = getPosition(be).foreach(clear(_))
+  def remove(be: BoardElement): Unit = getPosition(be).foreach(remove(_))
+  def remove(pos: (Int, Int)) = {
+    val e = elements.remove(pos)
+  }
   
   /** @return the elements in this board nearby pos */
   def nearby(pos: (Int, Int), range: Int) = Board.proximity(pos, range).map(elements.get).flatten
@@ -39,7 +42,7 @@ class Board(val width: Int, val height: Int) {
   def isFree(pos: (Int, Int)) = ! elements.contains(pos)
   
   /** clears the current element from pos */
-  def clear(pos: (Int, Int)) = elements.remove(pos)
+  private def clear(pos: (Int, Int)) = elements.remove(pos)
   
   /** @return the nearest free position to pos */
   def nearestFree(pos: (Int, Int)) = Board.proximity(pos, 1).find(isFree)
@@ -49,7 +52,7 @@ class Board(val width: Int, val height: Int) {
     val newPos = pos + dir
     if(isFree(newPos) && !isFree(pos)){
       val e = clear(pos)
-      add(e.get, newPos)
+      elements.put(newPos, e.get)
     }
   }
   
@@ -471,6 +474,7 @@ class World {
   def tick = time.tick
   def dump = board.dump
   def timestring = time.timestring
+  def status = "Status string not implemented yet."
   
   
   def newAnimal(isHerbivore: Boolean, isMale: Boolean): Animal = {

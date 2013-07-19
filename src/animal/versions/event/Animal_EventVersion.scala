@@ -21,13 +21,30 @@ object Board {
 class Board(val width: Int, val height: Int) {
   val elements: Map[(Int, Int), BoardElement] = new HashMap
   
+  val elementSpawned = new ImperativeEvent[BoardElement] //#EVT  == after(add)
+  val elementRemoved = new ImperativeEvent[BoardElement] //#EVT  == after(remove)
+  val elementsChanged = elementSpawned || elementRemoved //#EVT
+  val animalSpawned = elementSpawned && (_.isInstanceOf[Animal]) //#EVT
+  val animalRemoved = elementRemoved && (_.isInstanceOf[Animal]) //#EVT
+  var animalsBorn = 0
+  var animalsDied = 0
+  var animalsAlive = 0
+ 
+  animalSpawned += {_ => animalsBorn += 1; animalsAlive += 1 } //#HDL  
+  animalRemoved += {_ => animalsDied += 1; animalsAlive -= 1 } //#HDL
+  
   /** adds a board element at given position */
   def add(be: BoardElement, pos: (Int, Int)) {
     elements.put(pos, be)
+    elementSpawned(be)
   }
   
   /** removes the board element if present in the board */
-  def remove(be: BoardElement) = getPosition(be).foreach(clear(_))
+  def remove(be: BoardElement): Unit = getPosition(be).foreach(remove(_))
+  def remove(pos: (Int, Int)) = {
+    val e = elements.remove(pos)
+    if(e.isDefined) elementRemoved(e.get)
+  }
   
   /** @return the elements in this board nearby pos */
   def nearby(pos: (Int, Int), range: Int) = Board.proximity(pos, range).map(elements.get).flatten
@@ -39,7 +56,7 @@ class Board(val width: Int, val height: Int) {
   def isFree(pos: (Int, Int)) = ! elements.contains(pos)
   
   /** clears the current element from pos */
-  def clear(pos: (Int, Int)) = elements.remove(pos)
+  private def clear(pos: (Int, Int)) = elements.remove(pos)
   
   /** @return the nearest free position to pos */
   def nearestFree(pos: (Int, Int)) = Board.proximity(pos, 1).find(isFree)
@@ -49,7 +66,7 @@ class Board(val width: Int, val height: Int) {
     val newPos = pos + dir
     if(isFree(newPos) && !isFree(pos)){
       val e = clear(pos)
-      add(e.get, newPos)
+      elements.put(newPos, e.get)
     }
   }
   
@@ -420,10 +437,18 @@ class World {
   val board = new Board(World.Width, World.Height)
   val time = new Time
   val randomness = new Random
+  
+  var statusString = ""
+  board.elementsChanged += {_ => //#HDL
+     statusString = 
+       "Animals alive:" + board.animalsAlive + 
+       "; Total born: " + board.animalsBorn
+  }
 
   def tick = time.tick()
   def dump = board.dump
   def timestring = time.timestring
+  def status = statusString
 
   def newAnimal(isHerbivore: Boolean, isMale: Boolean): Animal = {
 	  if(isHerbivore){
