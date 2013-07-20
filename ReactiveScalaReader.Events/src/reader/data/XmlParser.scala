@@ -18,7 +18,7 @@ import reader.common.sequence
 * internal represantation of the RSS Feed
 *
 */
-class XmlParser {
+class XmlParser { // TODO: candidate for refactoring
   val explicitItemParsed = new ImperativeEvent[RSSItem]  //#EVT
   
   // only for clarity in event expressions below

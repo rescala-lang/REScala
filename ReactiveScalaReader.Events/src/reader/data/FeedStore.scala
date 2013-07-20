@@ -15,7 +15,7 @@ class FeedStore {
   
   val channelsChanged = new ImperativeEvent[List[RSSChannel]] //#EVT
   val itemAdded = new ImperativeEvent[RSSItem] //#EVT
-  val contentChanged: Event[Unit] = channelsChanged.dropParam || itemAdded.dropParam //#EVT //#EF
+  val contentChanged: Event[Unit] = channelsChanged.dropParam || itemAdded.dropParam //#EVT //#EF //#EF //#EF
   
   def channels = channelToItems.keys.toList
   

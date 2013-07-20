@@ -54,7 +54,7 @@ class Fetcher {
    * Removes the url from the list of urls to fetch
    * Does NOT remove the channel from the content!
    */
-  val removeURL = Observable { (url: URL) =>  //#EVT //#EVT
+  val removeURL = Observable { (url: URL) =>  //never used
     if (!(urlsToFetch contains url)) {
       urlsToFetch -= url
       urlRemoved(url)

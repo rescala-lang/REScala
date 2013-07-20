@@ -18,7 +18,7 @@ import reader.network.Fetcher
 import reader.network.UrlChecker
 
 object Main extends App {
-  val tick = new ImperativeEvent[Unit]
+  val tick = new ImperativeEvent[Unit] //#EVT
   val checker = new UrlChecker
   val fetcher = new Fetcher
   val parser = new XmlParser
