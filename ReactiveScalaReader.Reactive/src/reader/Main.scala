@@ -21,7 +21,7 @@ import reader.network.Fetcher
 import reader.network.UrlChecker
 
 object Main extends App {
-  val tick = new ImperativeEvent[Unit]
+  val tick = new ImperativeEvent[Unit]  //#EVT
   val checker = new UrlChecker
   val fetcher = new Fetcher(checker.checkedURL.fold(Set.empty[URL])(_ + _))
   val parser = new XmlParser
@@ -42,7 +42,7 @@ object Main extends App {
     m.mediate(fetcher, parser, store, checker)
   }
   
-  checker.urlIsInvalid += { _ => showInvalidUrlDialog }
+  checker.urlIsInvalid += { _ => showInvalidUrlDialog } //#HDL
   
   val sleepTime = 5000 //20000
   

@@ -16,7 +16,7 @@ import react.events.Event
 
 class ReButton(text: String) extends Button(text) {
   val pressed = new ImperativeEvent[Button] //#EVT
-  reactions += { case ButtonClicked(_) => pressed(this) }
+  reactions += { case ButtonClicked(_) => pressed(this) } //#HDL  
 }
 
 class ReCheckBox(text: String) extends CheckBox(text) {
@@ -29,7 +29,7 @@ class ReCheckBox(text: String) extends CheckBox(text) {
   reactions += { case _ => selectedVar() = selected }
 }
 
-class ReListView[A](s: Signal[Iterable[A]]) extends ListView[A] {
+class ReListView[A](s: Signal[Iterable[A]]) extends ListView[A] { // ? use of s
   private val selectedItemVar = Var[Option[A]](None)  //#VAR
   val selectedItem = Signal { selectedItemVar() }   //#SIG
   
