@@ -55,7 +55,7 @@ class GapBuffer {
       { offset => offset >= 0 && offset <= size.getValue }
       map { offset: Int => (offsets.getValue._2, offset) }) latest (0, 0) //#EF //#IF
   
-  offsets.changed += { //#HDL
+  offsets.changed += { //#IF //#HDL
     _ match {
       case (prev, cur) =>
         // the caret has moved

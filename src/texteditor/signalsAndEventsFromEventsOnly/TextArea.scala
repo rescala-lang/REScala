@@ -47,6 +47,7 @@ class TextArea extends ReComponent {
     buffer.insert(text)
   }
   
+  // Used in from the superclass, note the override.
   override lazy val preferredSize: ImperativeSignal[Dimension] = Signal{ //#SIG
     def it = LineIterator(buffer.iterable())
     new Dimension(2 * padding + it.map(stringWidth(_)).max, (it.size + 1) * lineHeight)
@@ -231,14 +232,14 @@ class TextArea extends ReComponent {
   // handle focus, scroll and paint updates
   mouse.clicks.pressed += { _ => this.requestFocusInWindow }  //#HDL
   
-  buffer.length.changed || caret.dot.changed += {_ =>  //#EF //#HDL
+  buffer.length.changed || caret.dot.changed += {_ =>  //#EF //#HDL  //#IF //#IF
     val point = pointFromPosition(caret.position.getValue)
     peer.peer.scrollRectToVisible(new Rectangle(point.x - 8, point.y, 16, 2 * lineHeight))
     caret.steady.restart
   }
-  
-  buffer.length.changed || caret.visible.changed || //#EF //#EF
-    caret.dot.changed || caret.mark.changed += {_ => this.repaint }  //#EF //#HDL
+  // TODO: Compare with the event version
+  buffer.length.changed || caret.visible.changed || //#EF //#EF //#IF //#IF
+    caret.dot.changed || caret.mark.changed += {_ => this.repaint }  //#IF //#IF //#EF //#HDL
   
   override def paintComponent(g: Graphics2D) {
     super.paintComponent(g)

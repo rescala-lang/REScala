@@ -189,7 +189,7 @@ class TextArea extends ReComponent {
           else ((if (posInLinebreak(caret.dot + 1)) 2 else 1), "")
         case c => (0, c.toString)
       }})
-  .map{(change: (Int, String)) => change match {  //#EF
+  .map{(change: (Int, String)) => change match {  //#EF // TODO: conceptually it is a handler...
     case (del, ins) =>
       val selStart = min(caret.dot, caret.mark)
       val selEnd = max(caret.dot, caret.mark)
