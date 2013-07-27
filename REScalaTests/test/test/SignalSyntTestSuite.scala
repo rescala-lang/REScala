@@ -163,7 +163,18 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
     
   }
   
-  
+   @Test def dependantIsOnlyInvokedOnValueChanges() {
+    var changes = 0
+    val v = VarSynt(1)
+    val s: SignalSynt[Int] = SignalSynt[Int]{ s: SignalSynt[Int]=>
+      changes += 1; v(s) + 1 }
+    assert(changes == 1)
+    assert(s.getVal == 2)
+    v.setVal(2)
+    assert(changes == 2)
+    v.setVal(2)
+    assert(changes == 3) // is actually 3
+  }
   
 }
 
