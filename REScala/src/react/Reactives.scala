@@ -62,13 +62,18 @@ trait Var[T] extends DepHolder {
 class StaticVar[T](initval: T) extends DepHolder with Var[T] {
   private[this] var value: T = initval
   def setVal(newval: T): Unit = {
+    val old = value
+    if(newval != old) {
     value = newval // .asInstanceOf[T] // to make it covariant ?
-    
     TS.nextRound  // Testing
     timestamps += TS.newTs // testing
 
     notifyDependents(value)
     ReactiveEngine.startEvaluation
+    }
+    else {
+      timestamps += TS.newTs // testing
+    }
   }  
   def getValue = value
   def getVal = value
