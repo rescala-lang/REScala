@@ -27,6 +27,15 @@ trait DepHolder extends Reactive {
   def addDependent(dep: Dependent) = dependents += dep    
   def removeDependent(dep: Dependent) = dependents -= dep
   def notifyDependents(change: Any): Unit = dependents.foreach(_.dependsOnchanged(change,this)) 
+  
+  /* To add handlers */
+  def +=(handler: Dependent) {
+    handler.level = level + 1 // For glitch freedom 
+    addDependent(handler)
+  }
+  def -=(handler: Dependent) = removeDependent(handler)
+  
+  
 }
 
 /* A node that depends on other nodes */
@@ -39,7 +48,7 @@ trait Dependent extends Reactive {
   def triggerReevaluation() 
   
   /* A node on which this one depends is changed */
-  def dependsOnchanged(change:Any,dep: DepHolder)
+  def dependsOnchanged(change:Any, dep: DepHolder)
 }
 
 
@@ -108,11 +117,6 @@ trait Signal[+T] extends Dependent with DepHolder {
   def triggerReevaluation()
   
   def reEvaluate(): T 
- 
-  /* To add handlers */
-  def +=(handler: Dependent) 
-  def -=(handler: Dependent)
-
   
   def apply(): T
   def apply(s: SignalSynt[_]): T
@@ -198,13 +202,6 @@ class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: =>T)
       ReactiveEngine.addToEvalQueue(this)
     }    
   }
-  
-  /* To add handlers */
-  def +=(handler: Dependent) {
-    handler.level = level + 1 // For glitch freedom 
-    addDependent(handler)
-  }
-  def -=(handler: Dependent) = removeDependent(handler)
   
   def change[U >: T]: Event[(U, U)] = new ChangedEventNode[(U, U)](this)
  

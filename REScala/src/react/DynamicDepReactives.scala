@@ -103,14 +103,6 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
   }
   
   def apply() = getVal
-
-  /* To add handlers */
-  def +=(handler: Dependent) {
-    handler.level = level + 1 // For glitch freedom 
-    addDependent(handler)
-  }
-  def -=(handler: Dependent) = removeDependent(handler)
-  
   
   def change[U >: T]: Event[(U, U)] = new ChangedEventNode[(U, U)](this)
 
