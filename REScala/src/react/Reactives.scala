@@ -124,17 +124,6 @@ trait Signal[+T] extends Dependent with DepHolder {
 
 
 
-/* A callback called when a signal changes */
-class Handler[T] (exp: =>T) extends Dependent {
-    override def dependsOnchanged(change: Any,dep: DepHolder) = exp
-    def triggerReevaluation = exp
-}
-object Handler {
-	def apply[T] (exp: =>T) = new Handler(exp)
-	//def apply[T] (fun: T=>Unit) = new Handler(fun)
-}
-
-
 /**
  * Then engine that schedules the (glitch-free) evaluation
  * of the nodes in the dependency graph. 

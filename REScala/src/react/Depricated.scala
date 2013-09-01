@@ -119,3 +119,19 @@ object StaticSignal {
   def apply[T](r1: DH,r2: DH,r3: DH,r4: DH)(expr: =>T): Signal[T] = apply(List(r1,r2,r3,r4))(expr)
   def apply[T](r1: DH,r2: DH,r3: DH,r4: DH,r5: DH)(expr: =>T): Signal[T] = apply(List(r1,r2,r3,r4,r5))(expr)
 }
+
+
+
+
+/* TODO: Do we really need two types of handlers? Can we use EventHandler? */
+object Handler {
+	//def apply[T] (exp: => T) = new EventHandler((_: Unit) => exp)
+  def apply[T] (exp: => T) = new Handler(exp)
+}
+
+class Handler[T] (exp: =>T) extends Dependent {
+    override def dependsOnchanged(change: Any,dep: DepHolder) = exp
+    def triggerReevaluation = exp
+}
+
+
