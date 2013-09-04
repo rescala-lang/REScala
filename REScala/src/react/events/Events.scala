@@ -97,7 +97,7 @@ class EventHandler[T] (fun: T=>Unit) extends Dependent {
       case _ => false
     }
 }
-object EventHandler{
+object EventHandler {
 	def apply[T] (fun: T=>Unit) = new EventHandler(fun)
 }
 
@@ -105,18 +105,17 @@ object EventHandler{
 /*
  *  Base class for events.
  */
-abstract class EventNode[T] extends Event[T]  with DepHolder {
+abstract class EventNode[T] extends Event[T] with DepHolder {
 
-  def +=(react: T => Unit) {
-    val handler = EventHandler(react)
-    handler.level = level + 1 // For glitch freedom 
-    addDependent(handler)
-  }
-  // TODO: won't work, because of the handler wrapper
-  def -=(react: T => Unit) {
-    val handler = EventHandler(react)
-    removeDependent(handler)
-  }
+  // memorize handler wrappers, so we can remove them
+  lazy val handlers : collection.mutable.Map[(T => Unit), EventHandler[T]] =
+    new collection.mutable.HashMap()
+  
+  def getHandler(react: T => Unit) : EventHandler[T] = 
+    handlers.getOrElseUpdate(react, EventHandler(react))
+    
+  def +=(react: T => Unit) = this += getHandler(react)
+  def -=(react: T => Unit) = this -= getHandler(react)
 }
 
 
@@ -132,29 +131,6 @@ class ImperativeEvent[T] extends EventNode[T] {
     notifyDependents(v)
     ReactiveEngine.startEvaluation
   }
-  
-//  
-//  // Gerold: Added the possibility to register 'child events' with imperative events
-//  lazy val sinkMap : collection.mutable.Map[EventNode[T], Sink] = 
-//    new collection.mutable.HashMap()
-//  def sinkForEvent(target : EventNode[T]) : Sink = {
-//    lazy val react = (id: Int, v: T, reacts: ListBuffer[(() => Unit, Trace)]) => {
-//      target.reactions(id, v, reacts)
-//    }
-//    sinkMap.getOrElseUpdate(target, react)
-//  }
-//  
-//  def +=:(target : EventNode[T]){
-//   //this += sinkForEvent(target)
-//  }
-//  
-//  def -=:(target : EventNode[T]){
-//    //this -= sinkForEvent(target)
-//  }
-  
-
-
-
 
   /* Testing */
   val timestamps = ListBuffer[Stamp]()
@@ -226,8 +202,10 @@ class EventNodeOr[T](ev1: Event[_ <: T], ev2: Event[_ <: T]) extends EventNode[T
 
   /*
    * The event is executed once and only once even if both sources fire in the
-   * same propagation cycle because the engine queue removes duplicates.
+   * same propagation cycle. This is made sure by waiting for the event to fire
+   * before it can be added again
    */
+  var inQueue = false
   
   level = (ev1.level max ev2.level) + 1 // For glitch freedom  
   ev1.addDependent(this) // To be notified in the future
@@ -239,11 +217,15 @@ class EventNodeOr[T](ev1: Event[_ <: T], ev2: Event[_ <: T]) extends EventNode[T
   def triggerReevaluation() {
     timestamps += TS.newTs // Testing
     notifyDependents(storedVal)
+    inQueue = false
   }
   
-  override def dependsOnchanged(change: Any,dep: DepHolder) = {
+  override def dependsOnchanged(change: Any, dep: DepHolder) = {
     storedVal = change
-    ReactiveEngine.addToEvalQueue(this)
+    if(!inQueue) {
+      inQueue = true
+      ReactiveEngine.addToEvalQueue(this)
+    }
   }
   
   /* Testing */

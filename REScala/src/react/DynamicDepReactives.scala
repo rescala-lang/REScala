@@ -4,9 +4,6 @@ import scala.collection.mutable.ListBuffer
 import react.events.Event
 import react.events.ChangedEventNode
 
-
-
-/* A node that has nodes that depend on it */
 //trait FixedDepHolder extends Reactive {
 //  val fixedDependents = new ListBuffer[Dependent]
 //  def addFixedDependent(dep: Dependent) = fixedDependents += dep    
@@ -14,19 +11,22 @@ import react.events.ChangedEventNode
   // def notifyDependents(change: Any): Unit = dependents.map(_.dependsOnchanged(change,this)) 
 //}
 
-
-
-
+/* A node that has nodes that depend on it */
 class VarSynt[T](initval: T) extends DepHolder with Var[T] {
   private[this] var value: T = initval
   def setVal(newval: T): Unit = {
-    value = newval // .asInstanceOf[T] // to make it covariant ?
-    
-    TS.nextRound  // Testing
-    timestamps += TS.newTs // testing
-
-    notifyDependents(value)
-    ReactiveEngine.startEvaluation
+    val old = value
+    if(newval != old) {
+	    value = newval // .asInstanceOf[T] // to make it covariant ?
+	    TS.nextRound  // Testing
+	    timestamps += TS.newTs // testing
+	
+	    notifyDependents(value)
+	    ReactiveEngine.startEvaluation
+    }
+    else {
+      timestamps += TS.newTs // testing
+    }
   }  
   def getValue = value
   def getVal = value
@@ -51,12 +51,7 @@ object VarSynt {
 }
 
 
-
-
-
-/**
- * A time changing value
- */
+/* A dependant reactive value with dynamic dependencies (depending signals can change during evaluation) */
 class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: SignalSynt[T] => T)
   extends Dependent with DepHolder with Signal[T] {
   
@@ -108,14 +103,6 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
   }
   
   def apply() = getVal
-
-  /* To add handlers */
-  def +=(handler: Dependent) {
-    handler.level = level + 1 // For glitch freedom 
-    addDependent(handler)
-  }
-  def -=(handler: Dependent) = removeDependent(handler)
-  
   
   def change[U >: T]: Event[(U, U)] = new ChangedEventNode[(U, U)](this)
 

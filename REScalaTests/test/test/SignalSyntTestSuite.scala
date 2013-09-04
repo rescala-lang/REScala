@@ -173,7 +173,7 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
     v.setVal(2)
     assert(changes == 2)
     v.setVal(2)
-    assert(changes == 3) // is actually 3
+    assert(changes == 2) // is actually 3
   }
   
 }

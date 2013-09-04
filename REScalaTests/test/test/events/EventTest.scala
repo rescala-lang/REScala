@@ -72,7 +72,7 @@ class EventTest extends AssertionsForJUnit with MockitoSugar {
     def f(x: Int) { test += 1 }
     
     val e1 = new ImperativeEvent[Int]()
-    e1 += f
+    e1 += f _
     
     e1(10)
     e1(10)

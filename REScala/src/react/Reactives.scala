@@ -6,14 +6,15 @@ import scala.collection.mutable.PriorityQueue
 import scala.reflect.runtime.universe._
 import react.events._
 
-
+/* A Reactive is a value type which has a dependency to other Reactives */
 trait Reactive extends Ordered[Reactive] {
   var level: Int = 0
   override def compare(other: Reactive): Int = 
     other.level - this.level
 }
+
 object Reactive {
-  /* All subclasses of Reactive are now comparable */
+  /* Reactive are comparable by their level */
   implicit def ord[T <: Reactive]: Ordering[T] = new Ordering[T] { 
     def compare(x: T, y: T) = x.compare(y)
   }
@@ -25,7 +26,16 @@ trait DepHolder extends Reactive {
   val dependents = new ListBuffer[Dependent]
   def addDependent(dep: Dependent) = dependents += dep    
   def removeDependent(dep: Dependent) = dependents -= dep
-  def notifyDependents(change: Any): Unit = dependents.map(_.dependsOnchanged(change,this)) 
+  def notifyDependents(change: Any): Unit = dependents.foreach(_.dependsOnchanged(change,this)) 
+  
+  /* To add handlers */
+  def +=(handler: Dependent) {
+    handler.level = level + 1 // For glitch freedom 
+    addDependent(handler)
+  }
+  def -=(handler: Dependent) = removeDependent(handler)
+  
+  
 }
 
 /* A node that depends on other nodes */
@@ -38,11 +48,11 @@ trait Dependent extends Reactive {
   def triggerReevaluation() 
   
   /* A node on which this one depends is changed */
-  def dependsOnchanged(change:Any,dep: DepHolder)
+  def dependsOnchanged(change:Any, dep: DepHolder)
 }
 
 
-
+/* A root Reactive value without dependencies which can be set */
 trait Var[T] extends DepHolder {
   def setVal(newval: T): Unit 
   def getValue: T
@@ -62,13 +72,18 @@ trait Var[T] extends DepHolder {
 class StaticVar[T](initval: T) extends DepHolder with Var[T] {
   private[this] var value: T = initval
   def setVal(newval: T): Unit = {
+    val old = value
+    if(newval != old) {
     value = newval // .asInstanceOf[T] // to make it covariant ?
-    
     TS.nextRound  // Testing
     timestamps += TS.newTs // testing
 
     notifyDependents(value)
     ReactiveEngine.startEvaluation
+    }
+    else {
+      timestamps += TS.newTs // testing
+    }
   }  
   def getValue = value
   def getVal = value
@@ -93,8 +108,7 @@ object Var {
 }
 
 
-
-
+/* An inner node which depends on other values */
 trait Signal[+T] extends Dependent with DepHolder {
   
   def getValue: T
@@ -103,11 +117,6 @@ trait Signal[+T] extends Dependent with DepHolder {
   def triggerReevaluation()
   
   def reEvaluate(): T 
- 
-  /* To add handlers */
-  def +=(handler: Dependent) 
-  def -=(handler: Dependent)
-
   
   def apply(): T
   def apply(s: SignalSynt[_]): T
@@ -148,11 +157,11 @@ trait Signal[+T] extends Dependent with DepHolder {
 }
 
 
-/**
- * A time changing value
- */
+/* A dependent reactive value */
 class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: =>T)
   extends Dependent with DepHolder with Signal[T] {
+  
+  var inQueue = false
 
   private[this] var currentValue = expr
   
@@ -166,7 +175,7 @@ class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: =>T)
     getVal
   }
   
-  reactivesDependsOn.map( r => {
+  reactivesDependsOn.foreach( r => {
     if (r.level >= level) level = r.level + 1 // For glitch freedom  
     r.addDependent(this) // To be notified in the future
   }) // check
@@ -176,6 +185,7 @@ class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: =>T)
   def triggerReevaluation() = reEvaluate
   
   def reEvaluate(): T = {
+    inQueue = false
     val tmp = expr
     if (tmp != currentValue) {
       currentValue = tmp
@@ -187,15 +197,11 @@ class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: =>T)
     tmp
   }
   override def dependsOnchanged(change: Any,dep: DepHolder) = {
-    ReactiveEngine.addToEvalQueue(this)
+    if(!inQueue){
+      inQueue = true
+      ReactiveEngine.addToEvalQueue(this)
+    }    
   }
-  
-  /* To add handlers */
-  def +=(handler: Dependent) {
-    handler.level = level + 1 // For glitch freedom 
-    addDependent(handler)
-  }
-  def -=(handler: Dependent) = removeDependent(handler)
   
   def change[U >: T]: Event[(U, U)] = new ChangedEventNode[(U, U)](this)
  
@@ -223,14 +229,12 @@ object StaticSignal {
 }
 
 
-/**
- * A callback called when a signal changes
- */
+/* A callback called when a signal changes */
 class Handler[T] (exp: =>T) extends Dependent {
     override def dependsOnchanged(change: Any,dep: DepHolder) = exp
     def triggerReevaluation = exp
 }
-object Handler{
+object Handler {
 	def apply[T] (exp: =>T) = new Handler(exp)
 	//def apply[T] (fun: T=>Unit) = new Handler(fun)
 }
@@ -244,11 +248,12 @@ object ReactiveEngine {
   
   var evalQueue = new PriorityQueue[Dependent]
 
-  /* The queue behaves as an ordered set. Duplicates are discarded */
+  /* Adds a dependant to the eval queue, duplicates are allowed */
   def addToEvalQueue(dep: Dependent): Unit = {
-    if (evalQueue.exists(_ eq dep)) return
+    //if (evalQueue.exists(_ eq dep)) return
     evalQueue += dep
   }
+  
   def removeFromEvalQueue(dep: Dependent) = evalQueue = evalQueue.filter(_ eq dep)
   
   /* Evaluates all the elements in the queue */
@@ -289,15 +294,3 @@ object TS {
     _sequenceNum = 0
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-

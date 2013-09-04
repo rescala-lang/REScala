@@ -51,6 +51,32 @@ class VarTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(s.getVal == 3)
 
   }
+  
+  @Test def changeEventOnlyTriggeredOnValueChange() {
+    var changes = 0
+    val v = Var(1)
+    val changed = StaticSignal(List(v)){ v.getValue }.change
+    changed += {_ => changes += 1}
+
+    v.setVal(2)
+    assert(changes == 1)
+    v.setVal(3)
+    assert(changes == 2)
+    v.setVal(3)
+    assert(changes == 2)
+  }
+  
+  @Test def dependantIsOnlyInvokedOnValueChange() {
+    var changes = 0
+    val v = Var(1)
+    val s = StaticSignal(List(v)){ changes += 1; v.getValue + 1 }
+    assert(s.getVal == 2)
+    v.setVal(2)
+    assert(changes == 2)
+    v.setVal(2)
+    assert(changes == 2)
+  }
+
 
 }
 
