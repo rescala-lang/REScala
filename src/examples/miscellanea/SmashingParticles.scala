@@ -23,7 +23,8 @@ object SmashingParticles extends SimpleSwingApplication {
 
   
   val base = Var(0)
-  val time = Signal{base() % 200} // time is cyclic :)
+  val simpleTime = Signal{base()}
+  val time = Signal{simpleTime() % 200} // cyclic time :)
   
   
   val point1 = Signal{ new Point(20+time(), 20+time())}

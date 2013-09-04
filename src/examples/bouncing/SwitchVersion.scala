@@ -69,7 +69,7 @@ class SwitchVersionFrame extends SimpleSwingApplication {
   val speedX = Signal {speed.x}.toggle(xBounce) {- speed.x }  
   val speedY = yBounce.toggle(speed.y, - speed.y)
   
-  tick += {_ => frame.repaint()}
+  tick += {_: Unit => frame.repaint()}
   
   // drawing code
   def top = frame  

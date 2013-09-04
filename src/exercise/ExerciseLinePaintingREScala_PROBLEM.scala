@@ -58,8 +58,8 @@ object ExercisePaintingREScala_PROBLEM extends SimpleSwingApplication {
     /* Compose reactive values */
     val mouseChangePosition = mouseMovedE || mouseDraggedE
     val mousePressedOrReleased = mousePressedE || mouseReleasedE
-    val mousePosMoving = mouseChangePosition.latest(new Point(0, 0))
-    val pressed = mousePressedOrReleased.toggle(Signal{false}, Signal{true})
+    val mousePosMoving: Signal[Point] = mouseChangePosition.latest(new Point(0, 0))
+    val pressed: Signal[Boolean] = mousePressedOrReleased.toggle(Signal{false}, Signal{true})
     
 
     val center = Signal { new Point(mousePosMoving().x, mousePosMoving().y) }

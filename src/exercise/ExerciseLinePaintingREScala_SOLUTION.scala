@@ -65,7 +65,7 @@ object ExercisePaintingREScala_SOLUTION extends SimpleSwingApplication {
     
  
     val SPEED = 10
-    val RANGE = 100
+    val RANGE = 60
     val changing = Signal{time() / SPEED }
     val xVal = Signal{ Math.sin(changing()) * RANGE } 
     val yVal = Signal{ Math.cos(changing()) * RANGE } 
@@ -75,7 +75,7 @@ object ExercisePaintingREScala_SOLUTION extends SimpleSwingApplication {
         new Point(mousePosMoving().x + xVal().asInstanceOf[Int], 
                   mousePosMoving().y + yVal().asInstanceOf[Int]) 
       else
-        new Point(40 + mousePosMoving().x, 40 + mousePosMoving().y)
+        new Point(120 + mousePosMoving().x, 120 + mousePosMoving().y)
     }
     new Oval(center, Signal{20})
     
