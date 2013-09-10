@@ -1,67 +1,49 @@
 package examples.pong
 
 import react.events.ImperativeEvent
-import react.SignalSynt
-import react.Var
-import react.Signal
-import macro.SignalMacro.{SignalM => Signal}
-import swing.{Panel, MainFrame, SimpleSwingApplication}
-import java.awt.{Color, Graphics2D, Dimension}
 import java.awt.Point
-import scala.swing.Swing
-import scala.swing.event._
+import react.Signal
+import react.SignalSynt
+import macro.SignalMacro.{SignalM => Signal}
+import java.awt.Rectangle
 
-object PongStarter {
-	def main(args: Array[String]){
-		val app = new PongWindow
-		app.main(args)
-		while (true) {
-			Thread sleep 20
-			app.tick()
-		}
-	}
-}
-
-class PongWindow extends SimpleSwingApplication {
-  val Size = 20
+object Pong {
   val Max_X = 800
   val Max_Y = 400
+}
+
+class Pong(val tick: ImperativeEvent[Unit], val mouse: Mouse) {
+  import react.conversions.SignalConversions._
   
-  val tick = new ImperativeEvent[Unit]  
-  tick += {_: Unit => frame.repaint()}
+  val Size = 20
   
-     /* EScala events */
-    val mouseMovedE = new ImperativeEvent[Point]()
-    val mousePressedE = new ImperativeEvent[Point]()
-    val mouseDraggedE = new ImperativeEvent[Point]()
-    val mouseReleasedE = new ImperativeEvent[Point]()
-    val cKeyTypedE = new ImperativeEvent[Unit]()
-    
-    /* Bind the EScala events to the Swing events */
-    reactions += {
-      case e: MouseMoved  => { mouseMovedE(e.point) }
-      case e: MousePressed  => mousePressedE(e.point)
-      case e: MouseDragged  => { mouseDraggedE(e.point) }
-      case e: MouseReleased => mouseReleasedE(e.point)
-      case KeyTyped(_,'c',_,_) => cKeyTypedE()
-    }
-    
-    /* Compose reactive values */
-    val mouseChangePosition = mouseMovedE || mouseDraggedE
-    val mousePressedOrReleased = mousePressedE || mouseReleasedE
-    val mousePosMoving: Signal[Point] = mouseChangePosition.latest(new Point(0, 0))
-    val pressed: Signal[Boolean] = mousePressedOrReleased.toggle(Signal{false}, Signal{true})
+  val LeftRacketPos = 30
+  val RightRacketPos = 770
   
-  val ball = new Ball(tick, null, null)
+  val initPosition = new Point(20, 10)
+  val speed = new Point(10,8)
   
-  // drawing code
-  def top = frame  
-  val frame = new MainFrame {
-    contents = new Panel() {
-      preferredSize = new Dimension(Max_X, Max_Y)
-      override def paintComponent(g: Graphics2D) {
-	    g.fillOval(ball.x.getVal, ball.y.getVal, Size, Size)
-      }
-    }    
-  }
+  val x: Signal[Int] = tick.fold(initPosition.x) {(pos, _) => pos + speedX.getVal}
+  val y: Signal[Int] = tick.fold(initPosition.y) {(pos, _) => pos + speedY.getVal}
+  
+  
+  val mouseY = Signal{ mouse.position().getY().toInt}
+ 
+  val leftRacket = new Racket(LeftRacketPos, mouseY)  
+  val rightRacket = new Racket(RightRacketPos, y)
+  
+  val rackets = Signal { List(leftRacket, rightRacket) }
+  val areas = Signal { rackets().map(_.area())}
+  val ballInRacket = Signal { areas().exists(_.contains(x(), y()))}
+  val collisionRacket = ballInRacket.changedTo(true)
+  
+  val leftWall = x.changed && (x => x < 0)
+  val rightWall = x.changed && (x => x + Size > Pong.Max_X)
+  
+  val xBounce = leftWall || rightWall || collisionRacket
+  val yBounce = y.changed && (y => y < 0 || y + Size > Pong.Max_Y)
+  
+  val speedX = xBounce.toggle(speed.x, - speed.x)
+  val speedY = yBounce.toggle(speed.y, - speed.y)
+  
 }
