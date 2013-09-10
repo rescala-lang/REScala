@@ -1,4 +1,4 @@
-package examples.pong
+package examples.pong.ui
 
 import scala.swing.Reactor
 import scala.swing.Component

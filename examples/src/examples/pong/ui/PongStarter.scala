@@ -1,5 +1,6 @@
-package examples.pong
+package examples.pong.ui
 
+import examples.pong._
 import react.events.ImperativeEvent
 import react.SignalSynt
 import react.Var
@@ -11,6 +12,12 @@ import java.awt.Point
 import scala.swing.Swing
 import scala.swing.event._
 import java.awt.Font
+
+
+/**
+ * Exercise note: Do not edit any code in this file.
+ * Only the file Pong.scala needs to be changed.
+ */
 
 object PongStarter {
   def main(args: Array[String]) {

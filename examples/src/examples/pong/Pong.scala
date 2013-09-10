@@ -6,6 +6,7 @@ import react.Signal
 import react.SignalSynt
 import macro.SignalMacro.{SignalM => Signal}
 import java.awt.Rectangle
+import examples.pong.ui.Mouse
 
 object Pong {
   val Max_X = 800
