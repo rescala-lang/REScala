@@ -8,14 +8,14 @@ import scala.swing.TextArea
 import scala.swing.event.ValueChanged
 
 class ReTextArea(
-    text: ReSwingValue[String] = ReSwingValue.noValue,
-    background: ReSwingValue[Color] = ReSwingValue.noValue,
-    foreground: ReSwingValue[Color] = ReSwingValue.noValue,
-    font: ReSwingValue[Font] = ReSwingValue.noValue,
-    enabled: ReSwingValue[Boolean] = ReSwingValue.noValue,
-    minimumSize: ReSwingValue[Dimension] = ReSwingValue.noValue,
-    maximumSize: ReSwingValue[Dimension] = ReSwingValue.noValue,
-    preferredSize: ReSwingValue[Dimension] = ReSwingValue.noValue,
+    text: ReSwingValue[String] = (),
+    background: ReSwingValue[Color] = (),
+    foreground: ReSwingValue[Color] = (),
+    font: ReSwingValue[Font] = (),
+    enabled: ReSwingValue[Boolean] = (),
+    minimumSize: ReSwingValue[Dimension] = (),
+    maximumSize: ReSwingValue[Dimension] = (),
+    preferredSize: ReSwingValue[Dimension] = (),
     rows: Int = 0,
     columns: Int = 0)
   extends
@@ -24,11 +24,8 @@ class ReTextArea(
   
   override protected lazy val peer = new TextArea(text.getValue, rows, columns) with ComponentMixin
   
-  val lineCount: ReSwingValue[Int] = peer.lineCount
-  
-  peer.reactions += {
-    case e @ ValueChanged(_) => lineCount() = peer.lineCount
-  }
+  val lineCount: ReSwingValue[Int] = ()
+  lineCount using (peer.lineCount _, (peer, classOf[ValueChanged]))
 }
 
 object ReTextArea {

@@ -7,14 +7,14 @@ import scala.swing.Font
 import scala.swing.Label
 
 class ReLabel(
-    val text: ReSwingValue[String] = ReSwingValue.noValue,
-    background: ReSwingValue[Color] = ReSwingValue.noValue,
-    foreground: ReSwingValue[Color] = ReSwingValue.noValue,
-    font: ReSwingValue[Font] = ReSwingValue.noValue,
-    enabled: ReSwingValue[Boolean] = ReSwingValue.noValue,
-    minimumSize: ReSwingValue[Dimension] = ReSwingValue.noValue,
-    maximumSize: ReSwingValue[Dimension] = ReSwingValue.noValue,
-    preferredSize: ReSwingValue[Dimension] = ReSwingValue.noValue)
+    val text: ReSwingValue[String] = (),
+    background: ReSwingValue[Color] = (),
+    foreground: ReSwingValue[Color] = (),
+    font: ReSwingValue[Font] = (),
+    enabled: ReSwingValue[Boolean] = (),
+    minimumSize: ReSwingValue[Dimension] = (),
+    maximumSize: ReSwingValue[Dimension] = (),
+    preferredSize: ReSwingValue[Dimension] = ())
   extends
     ReComponent(background, foreground, font, enabled,
                 minimumSize, maximumSize, preferredSize) {

@@ -9,44 +9,37 @@ import scala.swing.event.CaretUpdate
 import scala.swing.event.ValueChanged
 
 class ReTextComponent(
-    val text: ReSwingValue[String] = ReSwingValue.noValue,
-    background: ReSwingValue[Color] = ReSwingValue.noValue,
-    foreground: ReSwingValue[Color] = ReSwingValue.noValue,
-    font: ReSwingValue[Font] = ReSwingValue.noValue,
-    enabled: ReSwingValue[Boolean] = ReSwingValue.noValue,
-    minimumSize: ReSwingValue[Dimension] = ReSwingValue.noValue,
-    maximumSize: ReSwingValue[Dimension] = ReSwingValue.noValue,
-    preferredSize: ReSwingValue[Dimension] = ReSwingValue.noValue)
+    val text: ReSwingValue[String] = (),
+    background: ReSwingValue[Color] = (),
+    foreground: ReSwingValue[Color] = (),
+    font: ReSwingValue[Font] = (),
+    enabled: ReSwingValue[Boolean] = (),
+    minimumSize: ReSwingValue[Dimension] = (),
+    maximumSize: ReSwingValue[Dimension] = (),
+    preferredSize: ReSwingValue[Dimension] = ())
   extends
     ReComponent(background, foreground, font, enabled,
                 minimumSize, maximumSize, preferredSize) {
   
   override protected lazy val peer = new TextComponent with ComponentMixin
   
-  text using (peer.text _, peer.text_= _, "text")
-  text force ("editable", peer.editable_= _, false)
+  val selected: ReSwingValue[String] = ()
   
-  val selected: ReSwingValue[String] = peer.selected
+  (selected using (peer.selected _, (peer, classOf[CaretUpdate])))
   
-  peer.reactions += {
-    case e @ ValueChanged(_) => text() = peer.text
-  }
-  
-  peer.caret.reactions += {
-    case e @ CaretUpdate(_) => selected() = peer.selected
-  }
+  (text using (peer.text _, peer.text_= _, (peer, classOf[ValueChanged]))
+        force ("editable", peer.editable_= _, false))
   
   class ReCaret {
     protected lazy val peer = ReTextComponent.this.peer.caret
     
-    val dot: ReSwingValue[Int] = peer.dot
-    val mark: ReSwingValue[Int] = peer.mark
-    val position: ReSwingValue[Int] = peer.position
-  
-    peer.reactions += {
-      case e @ CaretUpdate(_) =>
-        dot() = peer.dot; mark() = peer.mark; position() = peer.position
-    }
+    val dot: ReSwingValue[Int] = ()
+    val mark: ReSwingValue[Int] = ()
+    val position: ReSwingValue[Int] = ()
+    
+    dot using (peer.dot _, (peer, classOf[CaretUpdate]))
+    mark using (peer.mark _, (peer, classOf[CaretUpdate]))
+    position using (peer.position _, (peer, classOf[CaretUpdate]))
   }
   
   object ReCaret {

@@ -52,7 +52,7 @@ final case class ReSwingSignalValue[T](
 }
 
 object ReSwingValue {
-  def noValue[T] = ReSwingNoValue[T](false)
+  implicit def toReSwingValue[T](value: Unit) = ReSwingNoValue[T](false)
   implicit def toReSwingValue[T](value: T) = ReSwingValueValue(value, false)
   implicit def toReSwingValue[T](value: Event[T]) = ReSwingEventValue(value, false)
   implicit def toReSwingValue[T](value: Signal[T]) = ReSwingSignalValue(value, true)

@@ -9,30 +9,27 @@ import scala.swing.Graphics2D
 import scala.swing.event._
 
 abstract class ReComponent(
-    val background: ReSwingValue[Color] = ReSwingValue.noValue,
-    val foreground: ReSwingValue[Color] = ReSwingValue.noValue,
-    val font: ReSwingValue[Font] = ReSwingValue.noValue,
-    val enabled: ReSwingValue[Boolean] = ReSwingValue.noValue,
-    minimumSize: ReSwingValue[Dimension] = ReSwingValue.noValue,
-    maximumSize: ReSwingValue[Dimension] = ReSwingValue.noValue,
-    preferredSize: ReSwingValue[Dimension] = ReSwingValue.noValue)
+    val background: ReSwingValue[Color] = (),
+    val foreground: ReSwingValue[Color] = (),
+    val font: ReSwingValue[Font] = (),
+    val enabled: ReSwingValue[Boolean] = (),
+    minimumSize: ReSwingValue[Dimension] = (),
+    maximumSize: ReSwingValue[Dimension] = (),
+    preferredSize: ReSwingValue[Dimension] = ())
   extends
     ReUIElement(minimumSize, maximumSize, preferredSize) {
   
   protected def peer: Component with ComponentMixin
   
+  val hasFocus: ReSwingValue[Boolean] = ()
+  
+  hasFocus using (peer.hasFocus _, (peer, classOf[FocusGained]),
+                                   (peer, classOf[FocusLost]))
+  
   background using (peer.background _, peer.background_= _, "background")
   foreground using (peer.foreground _, peer.foreground_= _, "foreground")
   font using (peer.font _, peer.font_= _, "font")
   enabled using (peer.enabled _, peer.enabled_= _, "enabled")
-  
-  val hasFocus: ReSwingValue[Boolean] = peer.hasFocus
-  
-  peer.reactions += {
-    case e @ (FocusGained(_, _,_) | FocusLost(_, _, _)) => hasFocus() = peer.hasFocus
-  }
-  
-  peer.listenTo(peer.keys, peer.mouse.clicks, peer.mouse.moves, peer.mouse.wheel);
   
   object mouse {
     object clicks {
@@ -40,6 +37,7 @@ abstract class ReComponent(
       val pressed = new ReSwingEvent[MousePressed]
       val released = new ReSwingEvent[MouseReleased]
       
+      peer.mouse.clicks.listenTo(peer.mouse.clicks)
       peer.mouse.clicks.reactions += {
         case e @ MouseClicked(_, _, _, _, _) => clicked(e)
         case e @ MousePressed(_, _, _, _, _) => pressed(e)
@@ -53,6 +51,7 @@ abstract class ReComponent(
       val exited = new ReSwingEvent[MouseExited]
       val moved = new ReSwingEvent[MouseMoved]
       
+      peer.mouse.moves.listenTo(peer.mouse.moves)
       peer.mouse.moves.reactions += {
         case e @ MouseDragged(_, _, _) => dragged(e)
         case e @ MouseEntered(_, _, _) => entered(e)
@@ -64,6 +63,7 @@ abstract class ReComponent(
     object wheel {
       val moved = new ReSwingEvent[MouseWheelMoved]
       
+      peer.mouse.wheel.listenTo(peer.mouse.wheel)
       peer.mouse.wheel.reactions += {
         case e @ MouseWheelMoved(_, _, _, _) => moved(e)
       }
@@ -75,6 +75,7 @@ abstract class ReComponent(
     val released = new ReSwingEvent[KeyReleased]
     val typed = new ReSwingEvent[KeyTyped]
     
+    peer.keys.listenTo(peer.keys)
     peer.keys.reactions += {
       case e @ KeyPressed(_, _, _, _) => pressed(e)
       case e @ KeyReleased(_, _, _, _) => released(e)
