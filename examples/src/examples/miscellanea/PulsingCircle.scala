@@ -74,6 +74,3 @@ object PulsingCircle extends SimpleSwingApplication {
   }
   
 }
-
-
-

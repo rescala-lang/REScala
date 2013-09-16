@@ -1,6 +1,9 @@
 package examples.eventtests
-import scala.events._
-import scala.events.behaviour._
+import react.SignalSynt
+import react.events._
+import react.Var
+import react.Signal
+import macro.SignalMacro.{SignalM => Signal}
 
 class Keyboard {
 	protected lazy val press : Event[String] = new ImperativeEvent[String]

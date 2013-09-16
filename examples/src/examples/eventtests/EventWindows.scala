@@ -1,7 +1,9 @@
 package examples.eventtests
-import scala.events.behaviour._
-import scala.events._
-import scala.events.behaviour.SignalConversions
+import react.SignalSynt
+import react.events._
+import react.Var
+import react.Signal
+import macro.SignalMacro.{SignalM => Signal}
 
 object EventWindows extends Application {
 	
