@@ -9,46 +9,40 @@ sealed abstract class ReSwingValue[T] {
   protected val event = new ImperativeEvent[T]
   protected def signal: Signal[T]
   private[reswing] def fixed: Boolean
-  private[reswing] def apply(current: T, setter: T => Unit)
+  private[reswing] def update(setter: (T, T => Unit))
   private[reswing] def update(value: T) = event(value)
 }
 
 final case class ReSwingNoValue[T](
     private[reswing] val fixed: Boolean) extends ReSwingValue[T] {
   protected val signal = event latest null.asInstanceOf[T]
-  private[reswing] def apply(current: T, setter: T => Unit) {
-    event(current)
-  }
+  private[reswing] def update(setter: (T, T => Unit)) =
+    setter match { case (current, setter) => event(current) }
 }
 
 final case class ReSwingValueValue[T](
     private val value: T,
     private[reswing] val fixed: Boolean) extends ReSwingValue[T] {
   protected val signal = event latest value
-  private[reswing] def apply(current: T, setter: T => Unit) {
-    setter(value)
-    event(value)
-  }
+  private[reswing] def update(setter: (T, T => Unit)) =
+    setter match { case (current, setter) => setter(value); event(value) }
 }
 
 final case class ReSwingEventValue[T](
     private val value: Event[T],
     private[reswing] val fixed: Boolean) extends ReSwingValue[T] {
   protected val signal = (value || event) latest null.asInstanceOf[T]
-  private[reswing] def apply(current: T, setter: T => Unit) {
-    value += setter
-    event(current)
-  }
+  private[reswing] def update(setter: (T, T => Unit)) =
+    setter match { case (current, setter) => value += setter; event(current) }
 }
 
 final case class ReSwingSignalValue[T](
     private val value: Signal[T],
     private[reswing] val fixed: Boolean) extends ReSwingValue[T] {
   protected val signal = (value.changed || event) latest value.getValue
-  private[reswing] def apply(current: T, setter: T => Unit) {
-    value.changed += setter
-    setter(value.getValue)
-  }
+  private[reswing] def update(setter: (T, T => Unit)) =
+    setter match { case (current, setter) =>
+      value.changed += setter; setter(value.getValue) }
 }
 
 object ReSwingValue {
