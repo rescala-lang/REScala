@@ -111,11 +111,11 @@ abstract class EventNode[T] extends Event[T] with DepHolder {
   lazy val handlers : collection.mutable.Map[(T => Unit), EventHandler[T]] =
     new collection.mutable.HashMap()
   
-  def getHandler(react: T => Unit) : EventHandler[T] = 
-    handlers.getOrElseUpdate(react, EventHandler(react))
+  def getHandler(react: T => Unit) : EventHandler[T] = EventHandler(react)
+    //handlers.getOrElseUpdate(react, EventHandler(react))
     
-  def +=(react: T => Unit) = this += getHandler(react)
-  def -=(react: T => Unit) = this -= getHandler(react)
+  def +=(react: T => Unit) = this addDependent getHandler(react)
+  def -=(react: T => Unit) = this addDependent getHandler(react)
 }
 
 
