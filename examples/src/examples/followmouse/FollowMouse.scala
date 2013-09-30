@@ -19,7 +19,7 @@ object FollowMouseStarter {
     val app = new FollowMouse
     app.main(args)
     while (true) {
-      Thread sleep 50
+      Thread sleep 10
       app.tick()
     }
   }
@@ -57,15 +57,12 @@ class FollowMouse extends SimpleSwingApplication {
     title = "Rotating around the mouse"
     resizable = false
     contents = new Panel() {
+      
+    	/** forward mouse events to EScala wrapper class. Should be replaced once reactive GUI lib is complete */
       listenTo(mouse.moves, mouse.clicks)
+      reactions += FollowMouse.this.mouse.react
 
-      /** forward mouse events to EScala wrapper class. Should be replaced once reactive GUI lib is complete */
-      reactions += {
-        case e: MouseMoved => { FollowMouse.this.mouse.mouseMovedE(e.point) }
-        case e: MousePressed => FollowMouse.this.mouse.mousePressedE(e.point)
-        case e: MouseDragged => { FollowMouse.this.mouse.mouseDraggedE(e.point) }
-        case e: MouseReleased => FollowMouse.this.mouse.mouseReleasedE(e.point)
-      }
+
 
       preferredSize = new Dimension(Max_X, Max_Y)
       val scoreFont = new Font("Tahoma", java.awt.Font.PLAIN, 32)

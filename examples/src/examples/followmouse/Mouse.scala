@@ -26,4 +26,12 @@ class Mouse {
 	val position: Signal[Point] = mouseChangePosition.latest(new Point(0, 0))
 	val pressed: Signal[Boolean] = mousePressedOrReleased.toggle(Signal{false}, Signal{true}) // TODO: solve this more robust
 	
+	/* Scala swing reaction */
+	val react: scala.swing.Reactions.Reaction =  {
+        case e: MouseMoved => { mouseMovedE(e.point) }
+        case e: MousePressed => mousePressedE(e.point)
+        case e: MouseDragged => { mouseDraggedE(e.point) }
+        case e: MouseReleased => mouseReleasedE(e.point)
+     }
+	
 }

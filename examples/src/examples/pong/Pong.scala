@@ -48,7 +48,6 @@ class Pong(val tick: ImperativeEvent[Unit], val mouse: Mouse) {
   val speedX = xBounce.toggle(speed.x, - speed.x)
   val speedY = yBounce.toggle(speed.y, - speed.y)
   
-  
   val pointsPlayer = rightWall.iterate(0)(_ + 1)
   val pointsComputer = leftWall.iterate(0)(_ + 1)
   

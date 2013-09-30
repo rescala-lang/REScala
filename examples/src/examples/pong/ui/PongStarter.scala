@@ -24,7 +24,7 @@ object PongStarter {
     val app = new PongWindow
     app.main(args)
     while (true) {
-      Thread sleep 30
+      Thread sleep 20
       app.tick()
     }
   }
@@ -44,15 +44,10 @@ class PongWindow extends SimpleSwingApplication {
     title = "Pong"
     resizable = false
     contents = new Panel() {
+      
+       /** forward mouse events to EScala wrapper class. Should be replaced once reactive GUI lib is complete */
       listenTo(mouse.moves, mouse.clicks)
-
-      /** forward mouse events to EScala wrapper class. Should be replaced once reactive GUI lib is complete */
-      reactions += {
-        case e: MouseMoved => { PongWindow.this.mouse.mouseMovedE(e.point) }
-        case e: MousePressed => PongWindow.this.mouse.mousePressedE(e.point)
-        case e: MouseDragged => { PongWindow.this.mouse.mouseDraggedE(e.point) }
-        case e: MouseReleased => PongWindow.this.mouse.mouseReleasedE(e.point)
-      }
+      reactions += PongWindow.this.mouse.react
 
       preferredSize = new Dimension(Pong.Max_X, Pong.Max_Y)
       val scoreFont = new Font("Tahoma", java.awt.Font.PLAIN, 32)
