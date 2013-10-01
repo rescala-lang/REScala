@@ -16,7 +16,7 @@ trait Reactive extends Ordered[Reactive] {
 object Reactive {
   /* Reactive are comparable by their level */
   implicit def ord[T <: Reactive]: Ordering[T] = new Ordering[T] { 
-    def compare(x: T, y: T) = x.compare(y)
+    def compare(x: T, y: T) = if(x == null) -1 else x compare y
   }
 }
 
@@ -134,10 +134,15 @@ object ReactiveEngine {
   /* Evaluates all the elements in the queue */
   def startEvaluation = {
     this.synchronized {
-    while (!evalQueue.isEmpty) {
-      val head = evalQueue.dequeue
-      head.triggerReevaluation
-    }
+        val localStamp = TS.getCurrentTs
+	    // DEBUG: println("Start eval: " + Thread.currentThread() + "  " + localStamp + " (init. queue: " + evalQueue.length + ")")
+	    var counter = 0
+	    while (!evalQueue.isEmpty) {
+	      counter += 1
+	      val head = evalQueue.dequeue
+	      head.triggerReevaluation
+	    }
+    	// DEBUG: println("End eval: " + Thread.currentThread() + "  " + localStamp + " (" + counter + " rounds)")
     }
   }
 }
