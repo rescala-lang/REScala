@@ -127,6 +127,8 @@ object ReactiveEngine {
   def addToEvalQueue(dep: Dependent): Unit = {
     //if (evalQueue.exists(_ eq dep)) return
     evalQueue += dep
+    if(evalQueue.toList.contains((_: Any) == null))
+      System.err.println("eval queue contains null element after insertion of " + dep)
   }
   
   def removeFromEvalQueue(dep: Dependent) = evalQueue = evalQueue.filter(_ eq dep)
@@ -140,7 +142,13 @@ object ReactiveEngine {
 	    while (!evalQueue.isEmpty) {
 	      counter += 1
 	      val head = evalQueue.dequeue
-	      head.triggerReevaluation
+	      if(head == null) {
+	        System.err.println("priority deque yielded null")
+	        // not sure why this happens, null is never inserted
+	      } 
+	      else {
+	    	  head.triggerReevaluation	        
+	      }
 	    }
     	// DEBUG: println("End eval: " + Thread.currentThread() + "  " + localStamp + " (" + counter + " rounds)")
     }

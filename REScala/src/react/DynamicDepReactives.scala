@@ -25,6 +25,7 @@ class VarSynt[T](initval: T) extends DepHolder with Var[T] {
 	    ReactiveEngine.startEvaluation
     }
     else {
+      //DEBUG: System.err.println("DEBUG OUTPUT: no update: " + newval + " == " + value)
       timestamps += TS.newTs // testing
     }
   }  
