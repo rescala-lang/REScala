@@ -2,6 +2,7 @@ package reswing
 
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.Map
+import scala.language.implicitConversions
 import scala.swing.Publisher
 import scala.swing.Swing
 import scala.swing.UIElement

@@ -1,5 +1,6 @@
 package reswing
 
+import scala.language.implicitConversions
 import scala.swing.Dimension
 import scala.swing.Point
 import scala.swing.Rectangle
