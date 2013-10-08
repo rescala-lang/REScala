@@ -6,8 +6,8 @@ import scala.swing.SequentialContainer
 import scala.swing.event.ComponentAdded
 import scala.swing.event.ComponentRemoved
 
-trait ReSequentialContainer extends ReComponent {
-  override protected def peer: Component with SequentialContainer with ComponentMixin
+trait ReSequentialContainer extends ReUIElement {
+  protected def peer: SequentialContainer
   
   def contents: ReSwingValue[CompList]
 
@@ -30,5 +30,6 @@ trait ReSequentialContainer extends ReComponent {
 }
 
 object ReSequentialContainer {
-  implicit def toButton(component: ReSequentialContainer): SequentialContainer = component.peer
+  implicit def toSequentialContainer(component: ReSequentialContainer): SequentialContainer =
+    component.peer
 }

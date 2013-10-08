@@ -21,5 +21,5 @@ abstract class RePanel(
 }
 
 object RePanel {
-  implicit def toComponent(component: RePanel): Panel = component.peer
+  implicit def toPanel(component: RePanel): Panel = component.peer
 }

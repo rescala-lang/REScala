@@ -32,5 +32,5 @@ class ReAbstractButton(
 }
 
 object ReAbstractButton {
-  implicit def toButton(component: ReAbstractButton): AbstractButton = component.peer
+  implicit def toAbstractButton(component: ReAbstractButton): AbstractButton = component.peer
 }

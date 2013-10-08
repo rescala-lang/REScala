@@ -26,5 +26,5 @@ class ReBoxPanel(
 }
 
 object ReBoxPanel {
-  implicit def toComponent(component: ReBoxPanel): BoxPanel = component.peer
+  implicit def toBoxPanel(component: ReBoxPanel): BoxPanel = component.peer
 }
