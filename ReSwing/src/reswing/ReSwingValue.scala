@@ -5,6 +5,9 @@ import react.Signal
 import react.events.Event
 import react.events.ImperativeEvent
 
+/**
+ * Combines reactive values from the application and from the `Swing` library
+ */
 sealed abstract class ReSwingValue[T] {
   protected val event = new ImperativeEvent[T]
   protected def signal: Signal[T]
@@ -46,9 +49,30 @@ final case class ReSwingSignalValue[T](
 }
 
 object ReSwingValue {
+  /**
+   * Does not cause the `Swing` library to use a specific value.
+   */
   implicit def toReSwingValue[T](value: Unit) = ReSwingNoValue[T](false)
+  
+  /**
+   * Sets the given value once.
+   * After this, does not cause the `Swing` library to use a specific value.
+   */
   implicit def toReSwingValue[T](value: T) = ReSwingValueValue(value, false)
+  
+  /**
+   * Sets the value whenever the given [[react.events.Event]] changes.
+   */
   implicit def toReSwingValue[T](value: Event[T]) = ReSwingEventValue(value, false)
+  
+  /**
+   * Sets the value to the value of the given [[react.Signal]] and causes
+   * the `Swing` library to always use the current `Signal` value.
+   */
   implicit def toReSwingValue[T](value: Signal[T]) = ReSwingSignalValue(value, true)
+  
+  /**
+   * Returns the [[react.Signal]] representing the value.
+   */
   implicit def toSignal[T](value: ReSwingValue[T]) = value.signal
 }
