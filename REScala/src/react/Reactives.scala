@@ -121,19 +121,21 @@ trait Signal[+T] extends Dependent with DepHolder {
  */
 object ReactiveEngine {
   
-  var evalQueue = new PriorityQueue[Dependent]
+  private var evalQueue = new PriorityQueue[Dependent]
 
   /* Adds a dependant to the eval queue, duplicates are allowed */
   def addToEvalQueue(dep: Dependent): Unit = {
-    //if (evalQueue.exists(_ eq dep)) return
-    evalQueue += dep
+    evalQueue.synchronized {
+      //if (evalQueue.exists(_ eq dep)) return
+      evalQueue += dep
+    }
   }
   
-  def removeFromEvalQueue(dep: Dependent) = evalQueue = evalQueue.filter(_ eq dep)
+//  def removeFromEvalQueue(dep: Dependent) = evalQueue = evalQueue.filter(_ eq dep)
   
   /* Evaluates all the elements in the queue */
   def startEvaluation = {
-    this.synchronized {
+    evalQueue.synchronized {
         val localStamp = TS.getCurrentTs
 	    // DEBUG: println("Start eval: " + Thread.currentThread() + "  " + localStamp + " (init. queue: " + evalQueue.length + ")")
 	    var counter = 0
