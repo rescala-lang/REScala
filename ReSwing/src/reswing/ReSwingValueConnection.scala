@@ -146,11 +146,11 @@ private[reswing] abstract trait ReSwingValueConnection {
     }
   }
   
-  private lazy val changingReactions = Map.empty[Class[_], ListBuffer[Unit => Unit]]
-  private lazy val changingProperties = Map.empty[String, ListBuffer[Unit => Unit]]
-  private lazy val enforcedProperties = Map.empty[String, Unit => Unit]
+  private val changingReactions = Map.empty[Class[_], ListBuffer[Unit => Unit]]
+  private val changingProperties = Map.empty[String, ListBuffer[Unit => Unit]]
+  private val enforcedProperties = Map.empty[String, Unit => Unit]
   
-  private lazy val reactor = new Reactor {
+  private val reactor = new Reactor {
     reactions += { case e: Event =>
       for (signals <- changingReactions.get(e.getClass))
         for (signal <- signals)
