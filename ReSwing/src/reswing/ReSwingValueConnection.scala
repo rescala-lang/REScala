@@ -4,6 +4,7 @@ import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.Map
 import scala.language.implicitConversions
 import scala.swing.Publisher
+import scala.swing.Reactor
 import scala.swing.Swing
 import scala.swing.UIElement
 import scala.swing.event.Event
@@ -43,7 +44,7 @@ import scala.swing.event.Event
  *   protected def peer: UIElement
  *   
  *   val size: ReSwingValue[Dimension] = ()
- *   protected def initSizeValue = {
+ *   protected def initSizeValue {
  *     size using (peer.size _, (peer, classOf[UIElementResized]))
  *   }
  *   initSizeValue
@@ -54,7 +55,7 @@ import scala.swing.event.Event
  * extends ReUIElement {
  *   protected def peer: Window
  *   
- *   override protected def initSizeValue = {
+ *   override protected def initSizeValue {
  *     size using (peer.size _, peer.size_= _, (peer, classOf[UIElementResized]))
  *   }
  * }
@@ -120,9 +121,7 @@ private[reswing] abstract trait ReSwingValueConnection {
                 Swing.onEDT { if (getter() != value.getValue) setter.get(value.getValue) } }
           
           case Right((publisher, reaction)) =>
-            publisher.listenTo(publisher)
-            publisher.reactions += reactionListener
-            
+            reactor.listenTo(publisher)
             val changingReaction = changingReactions.getOrElseUpdate(reaction, ListBuffer())
             if (!value.fixed)
               changingReaction += { _ => value() = getter() }
@@ -151,11 +150,13 @@ private[reswing] abstract trait ReSwingValueConnection {
   private lazy val changingProperties = Map.empty[String, ListBuffer[Unit => Unit]]
   private lazy val enforcedProperties = Map.empty[String, Unit => Unit]
   
-  private lazy val reactionListener = PartialFunction({ e: Event =>
-    for (signals <- changingReactions.get(e.getClass))
-      for (signal <- signals)
-        signal()
-  })
+  private lazy val reactor = new Reactor {
+    reactions += { case e: Event =>
+      for (signals <- changingReactions.get(e.getClass))
+        for (signal <- signals)
+          signal()
+    }
+  }
   
   peer.peer.addPropertyChangeListener(new java.beans.PropertyChangeListener {
     def propertyChange(e: java.beans.PropertyChangeEvent) {

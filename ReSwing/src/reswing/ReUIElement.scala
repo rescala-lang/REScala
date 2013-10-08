@@ -18,7 +18,7 @@ abstract class ReUIElement(
   val location: ReSwingValue[Point] = ()
   val bounds: ReSwingValue[Rectangle] = ()
   
-  protected def initSizeValues = {
+  protected def initSizeValues {
     size using (peer.size _, (peer, classOf[UIElementResized]))
     location using (peer.location _, (peer, classOf[UIElementMoved]))
     bounds using (peer.bounds _, (peer, classOf[UIElementResized]),
