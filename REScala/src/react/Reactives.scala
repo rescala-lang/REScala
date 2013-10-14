@@ -5,12 +5,15 @@ import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.PriorityQueue
 import scala.reflect.runtime.universe._
 import react.events._
+import react.log._
 
 /* A Reactive is a value type which has a dependency to other Reactives */
 trait Reactive extends Ordered[Reactive] {
   var level: Int = 0
   override def compare(other: Reactive): Int = 
     other.level - this.level
+    
+  ReactiveEngine.log log LogCreateNode(LogNode(this))
 }
 
 object Reactive {
@@ -24,7 +27,10 @@ object Reactive {
 /* A node that has nodes that depend on it */
 trait DepHolder extends Reactive {
   val dependents = new ListBuffer[Dependent]
-  def addDependent(dep: Dependent) = dependents += dep    
+  def addDependent(dep: Dependent) = {
+    dependents += dep
+    ReactiveEngine.log log LogAttachNode(LogNode(dep), LogNode(this))
+  }
   def removeDependent(dep: Dependent) = dependents -= dep
   def notifyDependents(change: Any): Unit = dependents.foreach(_.dependsOnchanged(change,this))  
 }
@@ -33,7 +39,10 @@ trait DepHolder extends Reactive {
 trait Dependent extends Reactive {
   val dependOn = new ListBuffer[DepHolder]
   // TODO: add level checking to have glitch freedom ?
-  def addDependOn(dep: DepHolder) = dependOn += dep    
+  def addDependOn(dep: DepHolder) = {
+    dependOn += dep
+    ReactiveEngine.log log LogAttachNode(LogNode(this), LogNode(dep))
+  }
   def removeDependOn(dep: DepHolder) = dependOn -= dep
   
   def triggerReevaluation() 
@@ -121,12 +130,16 @@ trait Signal[+T] extends Dependent with DepHolder {
  */
 object ReactiveEngine {
   
+  val log = new Logging
+  
   private var evalQueue = new PriorityQueue[Dependent]
 
   /* Adds a dependant to the eval queue, duplicates are allowed */
   def addToEvalQueue(dep: Dependent): Unit = {
     evalQueue.synchronized {
       //if (evalQueue.exists(_ eq dep)) return
+      
+      log log LogScheduleNode(LogNode(dep))
       evalQueue += dep
       
       // DEBUG:
@@ -151,7 +164,9 @@ object ReactiveEngine {
 	        // not sure why this happens, null is never inserted
 	      } 
 	      else {
-	    	  head.triggerReevaluation	        
+	    	  log log LogStartEvalNode(LogNode(head))
+	    	  head.triggerReevaluation
+	    	  log log LogEndEvalNode(LogNode(head))
 	      }
 	    }
     	// DEBUG: println("End eval: " + Thread.currentThread() + "  " + localStamp + " (" + counter + " rounds)")

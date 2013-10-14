@@ -20,9 +20,11 @@ class VarSynt[T](initval: T) extends DepHolder with Var[T] {
 	    value = newval // .asInstanceOf[T] // to make it covariant ?
 	    TS.nextRound  // Testing
 	    timestamps += TS.newTs // testing
-	
+	    
+	    ReactiveEngine.log log react.log.LogStartEvalNode(react.log.LogNode(this))
 	    notifyDependents(value)
 	    ReactiveEngine.startEvaluation
+	    ReactiveEngine.log log react.log.LogEndEvalNode(react.log.LogNode(this))
     }
     else {
       //DEBUG: System.err.println("DEBUG OUTPUT: no update: " + newval + " == " + value)
