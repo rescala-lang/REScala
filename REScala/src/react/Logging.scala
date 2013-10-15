@@ -3,6 +3,7 @@ package react
 import scala.reflect.runtime.universe._
 import java.io.PrintStream
 import react.events.ImperativeEvent
+import react.events.Event
 
 class Inspect {
 	scala.reflect.runtime.universe
@@ -27,11 +28,37 @@ trait LogRecorder extends Logger {
 }
 
 
-case class LogNode(reactive: Reactive, generictype: Type = null) {
+case class LogNode(reactive: Reactive) {
   // CAREFUL: reference to node might impair garbage collection
+  // Possible solution: somehow discard reference to 'reactive', store only what is needed
   val identifier = System identityHashCode reactive
-  val nodetype = reactive.getClass
   val level = reactive.level
+  val nodetype = reactive.getClass
+  
+  lazy val typename = getParametricType(reactive) // "lazy" is key here!  
+  private def getParametricType(r: Reactive, primitive: Boolean = false): String = {
+    // ugly, but still better than fiddling with TypeTags or other reflection
+    val typename = r.getClass.getSimpleName
+    if(r.isInstanceOf[Var[_]]){
+      val thistype = if(primitive) "Var" else typename
+      val value = r.asInstanceOf[Var[_]].getValue
+      return thistype + "["+ getInner(value) + "]"
+    }
+    else if(r.isInstanceOf[Signal[_]]){
+      val thistype = if(primitive) "Signal" else typename
+      val value = r.asInstanceOf[Signal[_]].getValue
+      return thistype + "["+ getInner(value) + "]"
+    }
+    else if(r.isInstanceOf[Event[_]]) {
+      return typename
+    }
+    def getInner(value: Any) = 
+      if(value == null) "?" else 
+      if(value.isInstanceOf[Reactive]) getParametricType(value.asInstanceOf[Reactive]) 
+      else value.getClass.getSimpleName
+      
+    return reactive.getClass.getSimpleName // should not be reached
+  }
 }
 class LogEvent
 case class LogMessage(string: String) extends LogEvent
@@ -95,7 +122,7 @@ class DotGraphLogger(out: PrintStream) extends Logger(out) with LogRecorder {
     out.println("digraph G {")
     for(e <- logevents) { e match {
       case LogCreateNode(node) => 
-        out.println(node.identifier + " [label=<<B>" + label(node) + ">]")
+        out.println(node.identifier + " [label=<" + label(node) + ">]")
       case LogAttachNode(node, parent) =>
         out.println(parent.identifier + " -> " + node.identifier)
       case LogIFAttach(node, parent) =>
@@ -118,7 +145,7 @@ class DotGraphLogger(out: PrintStream) extends Logger(out) with LogRecorder {
   
   private var snapshotDone = false
   
-  private def label(node: LogNode) = node.nodetype.getSimpleName
+  private def label(node: LogNode) = node.typename
 }
 
 }

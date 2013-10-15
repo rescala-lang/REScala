@@ -1,9 +1,9 @@
 digraph G {
-548555930 [label=<<B>VarSynt</B>>]
-55737418 [label=<<B>VarSynt</B>>]
-475914234 [label=<<B>VarSynt</B>>]
-1649154478 [label=<<B>StaticSignal</B>>]
-548555930 -> 1649154478
-55737418 -> 1649154478
-475914234 -> 1649154478
+503457264 [label=<VarSynt[Integer]>]
+1803412942 [label=<VarSynt[Integer]>]
+377122436 [label=<VarSynt[Integer]>]
+2023748625 [label=<StaticSignal[Integer]>]
+503457264 -> 2023748625
+1803412942 -> 2023748625
+377122436 -> 2023748625
 }
