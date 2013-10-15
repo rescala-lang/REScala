@@ -11,12 +11,39 @@ class Inspect {
 
 package log {
   
+object Logging {
+  val DefaultPathPrefix = "./logs/"
+}
+  
 class Logging {
   val loggers = new scala.collection.mutable.MutableList[Logger]
   def addLogger(logger: Logger) = loggers += logger
   def log(logevent: LogEvent) = loggers foreach (_ log logevent)
-}
   
+  def enableDefaultLogging {   
+    val maybeName = for(main <- 
+      Thread.getAllStackTraces.keySet().toArray().find(_.asInstanceOf[Thread].getName == "main")) 
+      yield main.asInstanceOf[Thread].getStackTrace.last.getFileName
+    val name = maybeName.getOrElse("LOG").takeWhile(_ != '.')
+    
+    val dotfile = Logging.DefaultPathPrefix + name + ".dot"
+    val dotGraphLogger = new react.log.DotGraphLogger(
+      new java.io.PrintStream(
+      new java.io.FileOutputStream(dotfile, false)))
+    
+    val reactplayerfile = Logging.DefaultPathPrefix + name + ".txt"
+    val reactplayerLogger = new react.log.ReactPlayerLog(
+      new java.io.PrintStream(
+      new java.io.FileOutputStream(reactplayerfile, false)))
+   
+    //addLogger(new SimpleLogger(System.out))
+    addLogger(reactplayerLogger)
+    addLogger(dotGraphLogger)
+    
+    scala.sys.addShutdownHook{ dotGraphLogger.snapshotOnce }
+  }
+}
+
 abstract class Logger(out: PrintStream) {
   def log(logevent: LogEvent)
 }
@@ -52,6 +79,7 @@ case class LogNode(reactive: Reactive) {
     else if(r.isInstanceOf[Event[_]]) {
       return typename
     }
+
     def getInner(value: Any) = 
       if(value == null) "?" else 
       if(value.isInstanceOf[Reactive]) getParametricType(value.asInstanceOf[Reactive]) 
@@ -119,14 +147,28 @@ class DotGraphLogger(out: PrintStream) extends Logger(out) with LogRecorder {
   
   def snapshot {
     if(logevents.isEmpty) return
+    
+    val existingLinks = new collection.mutable.HashSet[(Int, Int)]
+    def doIfLinkNotPresent(fromTo: (Int, Int))(body: => Unit){
+      if(!existingLinks.contains(fromTo)){
+        existingLinks.add(fromTo)
+        existingLinks.add(fromTo.swap)
+        body
+      }
+    }
+    
     out.println("digraph G {")
     for(e <- logevents) { e match {
       case LogCreateNode(node) => 
         out.println(node.identifier + " [label=<" + label(node) + ">]")
-      case LogAttachNode(node, parent) =>
-        out.println(parent.identifier + " -> " + node.identifier)
+      case LogAttachNode(node, parent) => 
+        doIfLinkNotPresent(node.identifier, parent.identifier) {
+        	out.println(parent.identifier + " -> " + node.identifier)
+        }
       case LogIFAttach(node, parent) =>
-        out.println(parent.identifier + " -> " + node.identifier + " [style = dashed]")
+        doIfLinkNotPresent(node.identifier, parent.identifier) {
+        	out.println(parent.identifier + " -> " + node.identifier + " [style = dashed]")
+        }
       
       case LogMessage(s) => out.println("// " + s)
       case other => 
