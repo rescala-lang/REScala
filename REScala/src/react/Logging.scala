@@ -1,15 +1,11 @@
-package react
+package react.log
 
+import react._
 import scala.reflect.runtime.universe._
 import java.io.PrintStream
 import react.events.ImperativeEvent
 import react.events.Event
 
-class Inspect {
-	scala.reflect.runtime.universe
-}
-
-package log {
   
 object Logging {
   val DefaultPathPrefix = "./logs/"
@@ -37,10 +33,9 @@ class Logging {
       new java.io.FileOutputStream(reactplayerfile, false)))
    
     //addLogger(new SimpleLogger(System.out))
+    //addLogger(new StatisticsLogger(System.out))
     addLogger(reactplayerLogger)
     addLogger(dotGraphLogger)
-    
-    scala.sys.addShutdownHook{ dotGraphLogger.snapshotOnce }
   }
 }
 
@@ -52,6 +47,20 @@ trait LogRecorder extends Logger {
   val logevents = new scala.collection.mutable.ListBuffer[LogEvent]
   def log(logevent: LogEvent) = logevents += logevent
   def clear = logevents.clear
+  
+  def snapshot
+  
+  
+  /** Performs a snapshot the first time this is called, subsequent calls are ignored */
+  def snapshotOnce {
+    if(snapshotDone) return
+    snapshotDone = true
+    snapshot    
+  }
+  private var snapshotDone = false
+  
+  // If the snapshot was never called manually, snapshot on program exit
+  scala.sys.addShutdownHook{ snapshotOnce }
 }
 
 
@@ -62,7 +71,7 @@ case class LogNode(reactive: Reactive) {
   val level = reactive.level
   val nodetype = reactive.getClass
   
-  lazy val typename = getParametricType(reactive) // "lazy" is key here!  
+  lazy val typename = getParametricType(reactive) // "lazy" is key here!
   private def getParametricType(r: Reactive, primitive: Boolean = false): String = {
     // ugly, but still better than fiddling with TypeTags or other reflection
     val typename = r.getClass.getSimpleName
@@ -177,17 +186,48 @@ class DotGraphLogger(out: PrintStream) extends Logger(out) with LogRecorder {
     //clear
   }
   
-  
-  /** Performs a snapshot the first time this is called, subsequent calls are ignored */
-  def snapshotOnce {
-    if(snapshotDone) return
-    snapshotDone = true
-    snapshot    
-  }
-  
-  private var snapshotDone = false
-  
   private def label(node: LogNode) = node.typename
 }
 
+
+class StatisticsLogger(out: PrintStream) extends Logger(out) with LogRecorder {
+  def snapshot {
+    def mean[T]( ts: Iterable[T] )( implicit num: Numeric[T] ) = 
+    	num.toFloat(ts.sum) / ts.size
+    
+    val nodes = logevents.collect{ case LogCreateNode(node) => node }
+    val nNodes = nodes.size
+    val attaches = logevents.collect { case LogAttachNode(node, parent) => (parent.identifier, node.identifier) }
+    val nAttaches = attaches.size
+    val edges = attaches.toSet
+    val nEdges = edges.size
+    val nChildren = edges.groupBy(_._1).mapValues(_.size).toSeq
+    val nParents = edges.groupBy(_._2).mapValues(_.size).toSeq
+    val averageChildren = mean(nChildren.map(_._2))
+    val averageParents = mean(nParents.map(_._2))
+    val nodetypes = nodes.map(_.typename)
+    val nodetypeDistribution = nodetypes
+    	.groupBy(identity)
+    	.mapValues(_.size).toSeq
+    	.sortBy(_._2).reverse
+    val stamps = logevents.collect { case LogRound(stamp) => stamp }
+    val rounds = stamps.map(_.sequenceNum).toSet.size
+    val turns = stamps.map (s => (s.sequenceNum, s.roundNum)).toSet.size
+    val averageTurns = turns.toFloat / rounds
+    
+    out.println("Nodes: " + nNodes)
+    out.println("Edges: " + nEdges)
+    out.println("Attach dependant: " + nAttaches)
+    out.println("Average dependants: "+ averageChildren)
+    out.println("Average depend-ons: " + averageParents)
+    out.println("Total rounds: " + rounds)
+    out.println("Total turns: " + turns)
+    out.println("Average turns: " + averageTurns)
+    out.println("Node connectivity: ")
+    out.println("Total notify dependents: ")
+    
+    out.println("Node types: ")
+    out.println(nodetypeDistribution.collect{
+      case (s, c) => s + "\t" + c}.mkString("\t","\n\t",""))
+  }
 }

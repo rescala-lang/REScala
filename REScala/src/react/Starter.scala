@@ -8,16 +8,14 @@ object Starter extends App {
 
   println("start!")
   
-  val reactplayerLogger = new ReactPlayerLog(
+  // Adding some loggers
+  ReactiveEngine.log addLogger new ReactPlayerLog(
       new java.io.PrintStream(
-      new java.io.FileOutputStream("./logs/Starter.txt", false)))
-  
-  val dotLogger = new DotGraphLogger(
+      new java.io.FileOutputStream("./logs/Starter.txt", false))) 
+  ReactiveEngine.log addLogger new DotGraphLogger(
       new java.io.PrintStream(
-      new java.io.FileOutputStream("./logs/starter.dot", false)))
- 
-  ReactiveEngine.log addLogger reactplayerLogger
-  ReactiveEngine.log addLogger dotLogger
+      new java.io.FileOutputStream("./logs/starter.dot", false))) 
+  ReactiveEngine.log addLogger new StatisticsLogger(System.out)
   
   val v1 = Var(1)
   val v2 = Var(2)
@@ -32,9 +30,6 @@ object Starter extends App {
   v2() = 10
 
   println(s.getVal)
-  
-  dotLogger.snapshot
-  
   
 }
 
