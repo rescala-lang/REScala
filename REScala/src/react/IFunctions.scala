@@ -1,17 +1,19 @@
 package react
 
 import react.events._
+import react.log._
 
 
 object IFunctions {
 
-  
 
   /** folds events with a given fold function to create a Signal */
   def fold[T,A](e: Event[T], init: A)(f: (A,T)=>A): Signal[A] = {
       val v: Var[A] = Var(init)
 	  e += {(newVal: T) => v.setVal(f(v.getValue,newVal)) }
-	  StaticSignal(v){v.getValue}
+	  val result = StaticSignal(v){v.getValue}
+	  ReactiveEngine.log log LogIFAttach(LogNode(result), LogNode(e)) // log the 'virtual' dependency
+	  return result
   }
 
   /** Iterates a value on the occurrence of the event. */

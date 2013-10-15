@@ -41,7 +41,7 @@ case class LogPulseNode(Node: LogNode) extends LogEvent
 case class LogStartEvalNode(node: LogNode) extends LogEvent
 case class LogEndEvalNode(node: LogNode) extends LogEvent
 case class LogRound(stamp: Stamp) extends LogEvent
-
+case class LogIFAttach(node: LogNode, parent: LogNode) extends LogEvent // "virtual" association through IF
 
 
 class ReactPlayerLog(out: PrintStream) extends Logger(out) {
@@ -92,6 +92,8 @@ class DotGraphLogger(out: PrintStream) extends Logger(out) with LogRecorder {
         out.println(node.identifier + " [label=<" + label(node) + ">]")
       case LogAttachNode(node, parent) =>
         out.println(parent.identifier + " -> " + node.identifier)
+      case LogIFAttach(node, parent) =>
+        out.println(parent.identifier + " -> " + node.identifier + " [style = dashed]")
       
       case LogRound(_) => 
       case other => out.println("// " + other)
