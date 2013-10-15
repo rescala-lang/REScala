@@ -1,0 +1,16 @@
+digraph G {
+548555930 [label=<VarSynt>]
+55737418 [label=<VarSynt>]
+475914234 [label=<VarSynt>]
+1649154478 [label=<StaticSignal>]
+548555930 -> 1649154478
+55737418 -> 1649154478
+475914234 -> 1649154478
+// LogStartEvalNode(LogNode(react.VarSynt@3527c4a))
+// LogEndEvalNode(LogNode(react.VarSynt@3527c4a))
+// LogPulseNode(LogNode(react.VarSynt@3527c4a))
+// LogScheduleNode(LogNode(react.StaticSignal@624c19ae))
+// LogStartEvalNode(LogNode(react.StaticSignal@624c19ae))
+// LogPulseNode(LogNode(react.StaticSignal@624c19ae))
+// LogEndEvalNode(LogNode(react.StaticSignal@624c19ae))
+}

@@ -20,6 +20,30 @@ abstract class Logger(out: PrintStream) {
   def log(logevent: LogEvent)
 }
 
+trait LogRecorder extends Logger {
+  val logevents = new scala.collection.mutable.ListBuffer[LogEvent]
+  def log(logevent: LogEvent) = logevents += logevent
+  def clear = logevents.clear
+}
+
+
+case class LogNode(reactive: Reactive) {
+  // CAREFUL: reference to node might impair garbage collection
+  val identifier = System identityHashCode reactive
+  val nodetype = reactive.getClass
+  val level = reactive.level
+}
+class LogEvent
+case class LogCreateNode(node: LogNode) extends LogEvent
+case class LogAttachNode(node: LogNode, parent: LogNode) extends LogEvent
+case class LogScheduleNode(node: LogNode) extends LogEvent
+case class LogPulseNode(Node: LogNode) extends LogEvent
+case class LogStartEvalNode(node: LogNode) extends LogEvent
+case class LogEndEvalNode(node: LogNode) extends LogEvent
+case class LogRound(stamp: Stamp) extends LogEvent
+
+
+
 class ReactPlayerLog(out: PrintStream) extends Logger(out) {
   var timestamp = 0
   def log(logevent: LogEvent) = logevent match {
@@ -58,25 +82,35 @@ class ReactPlayerLog(out: PrintStream) extends Logger(out) {
   }
 }
 
-class LogRecorder {
-  val logevents = new scala.collection.mutable.ListBuffer[LogEvent]
-  def log(logevent: LogEvent) = logevents += logevent
+/** Outputs a graph in dot format, at the moment the "snapshot" function is called */
+class DotGraphLogger(out: PrintStream) extends Logger(out) with LogRecorder {
+  
+  def snapshot {
+    out.println("digraph G {")
+    for(e <- logevents) { e match {
+      case LogCreateNode(node) => 
+        out.println(node.identifier + " [label=<" + label(node) + ">]")
+      case LogAttachNode(node, parent) =>
+        out.println(parent.identifier + " -> " + node.identifier)
+      
+      case LogRound(_) => 
+      case other => out.println("// " + other)
+    }}
+    out.println("}")
+    clear
+  }
+  
+  
+  /** Performs a snapshot the first time this is called, subsequent calls are ignored */
+  def snapshotOnce {
+    if(snapshotDone) return
+    snapshotDone = true
+    snapshot    
+  }
+  
+  private var snapshotDone = false
+  
+  private def label(node: LogNode) = node.nodetype.getSimpleName
 }
-
-
-case class LogNode(reactive: Reactive) {
-  // CAREFUL: reference to node might impair garbage collection
-  val identifier = System identityHashCode reactive
-  val nodetype = reactive.getClass
-  val level = reactive.level
-}
-class LogEvent
-case class LogCreateNode(node: LogNode) extends LogEvent
-case class LogAttachNode(node: LogNode, parent: LogNode) extends LogEvent
-case class LogScheduleNode(node: LogNode) extends LogEvent
-case class LogPulseNode(Node: LogNode) extends LogEvent
-case class LogStartEvalNode(node: LogNode) extends LogEvent
-case class LogEndEvalNode(node: LogNode) extends LogEvent
-case class LogRound(stamp: Stamp) extends LogEvent
 
 }

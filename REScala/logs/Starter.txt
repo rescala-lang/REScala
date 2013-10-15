@@ -1,0 +1,43 @@
+NodeCreate : 0
+> Node = 548555930
+> Type = VarNode
+NodeCreate : 0
+> Node = 55737418
+> Type = VarNode
+NodeCreate : 0
+> Node = 475914234
+> Type = VarNode
+NodeCreate : 0
+> Node = 1649154478
+> Type = StaticSignal
+NodeAttach : 0
+> Node = 1649154478
+> Parent = 548555930
+NodeAttach : 0
+> Node = 1649154478
+> Parent = 55737418
+NodeAttach : 0
+> Node = 1649154478
+> Parent = 475914234
+NodeEvaluateBegin : 0
+> Node = 55737418
+> Transaction = 0
+> Type = VarNode
+NodeEvaluateEnd : 1000
+> Node = 55737418
+> Transaction = 0
+> Type = VarNode
+NodePulse : 1000
+> Node = 55737418
+> Transaction = 0
+NodeEvaluateBegin : 1000
+> Node = 1649154478
+> Transaction = 1
+> Type = StaticSignal
+NodePulse : 1001
+> Node = 1649154478
+> Transaction = 1
+NodeEvaluateEnd : 1001
+> Node = 1649154478
+> Transaction = 1
+> Type = StaticSignal

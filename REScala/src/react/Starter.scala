@@ -7,11 +7,17 @@ import react.log._
 object Starter extends App {
 
   println("start!")
- 
-  ReactiveEngine.log addLogger
-    new ReactPlayerLog(
+  
+  val reactplayerLogger = new ReactPlayerLog(
       new java.io.PrintStream(
       new java.io.FileOutputStream("./logs/Starter.txt", false)))
+  
+  val dotLogger = new DotGraphLogger(
+      new java.io.PrintStream(
+      new java.io.FileOutputStream("./logs/starter.dot", false)))
+ 
+  ReactiveEngine.log addLogger reactplayerLogger
+  ReactiveEngine.log addLogger dotLogger
   
   val v1 = Var(1)
   val v2 = Var(2)
@@ -26,6 +32,8 @@ object Starter extends App {
   v2() = 10
 
   println(s.getVal)
+  
+  dotLogger.snapshot
   
   
 }
