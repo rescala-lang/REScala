@@ -32,7 +32,10 @@ trait DepHolder extends Reactive {
     ReactiveEngine.log log LogAttachNode(LogNode(dep), LogNode(this))
   }
   def removeDependent(dep: Dependent) = dependents -= dep
-  def notifyDependents(change: Any): Unit = dependents.foreach(_.dependsOnchanged(change,this))  
+  def notifyDependents(change: Any): Unit = {
+    ReactiveEngine.log log react.log.LogPulseNode(react.log.LogNode(this))
+    dependents.foreach(_.dependsOnchanged(change,this))  
+  }
 }
 
 /* A node that depends on other nodes */
@@ -185,11 +188,14 @@ object TS {
   def nextRound {
     _roundNum += 1
     _sequenceNum = 0
+    
+    ReactiveEngine.log log LogRound(getCurrentTs)
   }
   
   def newTs = {
     val ts = new Stamp(_roundNum,_sequenceNum)
     _sequenceNum += 1
+    ReactiveEngine.log log LogRound(ts)
     ts
   } 
   

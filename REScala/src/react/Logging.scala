@@ -23,6 +23,7 @@ abstract class Logger(out: PrintStream) {
 class ReactPlayerLog(out: PrintStream) extends Logger(out) {
   var timestamp = 0
   def log(logevent: LogEvent) = logevent match {
+    case LogRound(round) => timestamp = round.roundNum * 1000 + round.sequenceNum
     case LogCreateNode(node) =>
       out.println("NodeCreate : " + timestamp)
       out.println("> Node = " + node.identifier)
@@ -30,7 +31,11 @@ class ReactPlayerLog(out: PrintStream) extends Logger(out) {
     case LogAttachNode(node, parent) =>
       out.println("NodeAttach : " + timestamp)
       out.println("> Node = " + node.identifier)
-      out.println("> Parent = " + parent.identifier)
+      out.println("> Parent = " + parent.identifier)      
+    case LogPulseNode(node) =>
+      out.println("NodePulse : " + timestamp)
+      out.println("> Node = " + node.identifier)
+      out.println("> Transaction = " + node.level)
     case LogStartEvalNode(node) =>
       out.println("NodeEvaluateBegin : " + timestamp)
       out.println("> Node = " + node.identifier)
@@ -69,8 +74,9 @@ class LogEvent
 case class LogCreateNode(node: LogNode) extends LogEvent
 case class LogAttachNode(node: LogNode, parent: LogNode) extends LogEvent
 case class LogScheduleNode(node: LogNode) extends LogEvent
+case class LogPulseNode(Node: LogNode) extends LogEvent
 case class LogStartEvalNode(node: LogNode) extends LogEvent
 case class LogEndEvalNode(node: LogNode) extends LogEvent
-case class LogRound(stamp: Stamp)
+case class LogRound(stamp: Stamp) extends LogEvent
 
 }
