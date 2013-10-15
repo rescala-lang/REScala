@@ -27,13 +27,14 @@ trait LogRecorder extends Logger {
 }
 
 
-case class LogNode(reactive: Reactive) {
+case class LogNode(reactive: Reactive, generictype: Type = null) {
   // CAREFUL: reference to node might impair garbage collection
   val identifier = System identityHashCode reactive
   val nodetype = reactive.getClass
   val level = reactive.level
 }
 class LogEvent
+case class LogMessage(string: String) extends LogEvent
 case class LogCreateNode(node: LogNode) extends LogEvent
 case class LogAttachNode(node: LogNode, parent: LogNode) extends LogEvent
 case class LogScheduleNode(node: LogNode) extends LogEvent
@@ -43,6 +44,10 @@ case class LogEndEvalNode(node: LogNode) extends LogEvent
 case class LogRound(stamp: Stamp) extends LogEvent
 case class LogIFAttach(node: LogNode, parent: LogNode) extends LogEvent // "virtual" association through IF
 
+
+class SimpleLogger(out: PrintStream) extends Logger(out) {
+  def log(logevent: LogEvent) = out.println(logevent)
+}
 
 class ReactPlayerLog(out: PrintStream) extends Logger(out) {
   var timestamp = 0
@@ -86,20 +91,21 @@ class ReactPlayerLog(out: PrintStream) extends Logger(out) {
 class DotGraphLogger(out: PrintStream) extends Logger(out) with LogRecorder {
   
   def snapshot {
+    if(logevents.isEmpty) return
     out.println("digraph G {")
     for(e <- logevents) { e match {
       case LogCreateNode(node) => 
-        out.println(node.identifier + " [label=<" + label(node) + ">]")
+        out.println(node.identifier + " [label=<<B>" + label(node) + ">]")
       case LogAttachNode(node, parent) =>
         out.println(parent.identifier + " -> " + node.identifier)
       case LogIFAttach(node, parent) =>
         out.println(parent.identifier + " -> " + node.identifier + " [style = dashed]")
       
-      case LogRound(_) => 
-      case other => out.println("// " + other)
+      case LogMessage(s) => out.println("// " + s)
+      case other => 
     }}
     out.println("}")
-    clear
+    //clear
   }
   
   
