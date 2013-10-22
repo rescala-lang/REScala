@@ -1,51 +1,86 @@
 package reswing
 
+import scala.collection.mutable.ListBuffer
 import scala.language.implicitConversions
 import react.Signal
 import react.events.Event
 import react.events.ImperativeEvent
 
 /**
+ * Provides lazy values that can be checked for if they already hold a defined
+ * value, i.e. if they have already been accessed
+ */
+final class Lazy[T](init: => T) {
+  private var defined = false
+  private lazy val value = init
+  
+  def isDefined = defined
+  def apply() = { defined = true; value }
+}
+
+object Lazy {
+  def apply[T](value: => T) = new Lazy(value)
+}
+
+/**
  * Combines reactive values from the application and from the `Swing` library
  */
 sealed abstract class ReSwingValue[T] {
-  protected val event = new ImperativeEvent[T]
-  protected def signal: Signal[T]
+  protected def signal: Lazy[Signal[T]]
+  protected val event = Lazy { new ImperativeEvent[T] }
+  protected var latestValue = null.asInstanceOf[T]
+  
+  final private val inits = ListBuffer.empty[Unit => Unit]
+  
+  final protected def toSignal = {
+    if (!signal.isDefined) {
+      signal()
+      for (init <- inits)
+        init()
+      inits.clear
+    }
+    signal()
+  }
+  
   private[reswing] def fixed: Boolean
-  private[reswing] def update(setter: (T, T => Unit))
-  private[reswing] def update(value: T) = event(value)
+  private[reswing] def getValue: T
+  private[reswing] def use(setter: T => Unit)
+  
+  final private[reswing] def update(value: T) =
+    { latestValue = value; if (event.isDefined) event()(value) }
+  final private[reswing] def init(init: Unit => Unit)
+    { if (signal.isDefined) init() else inits += init }
 }
 
 final case class ReSwingNoValue[T](
     private[reswing] val fixed: Boolean) extends ReSwingValue[T] {
-  protected val signal = event latest null.asInstanceOf[T]
-  private[reswing] def update(setter: (T, T => Unit)) =
-    setter match { case (current, setter) => event(current) }
+  protected val signal = Lazy { event() latest latestValue }
+  private[reswing] def getValue = latestValue
+  private[reswing] def use(setter: T => Unit) { }
 }
 
 final case class ReSwingValueValue[T](
     private val value: T,
     private[reswing] val fixed: Boolean) extends ReSwingValue[T] {
-  protected val signal = event latest value
-  private[reswing] def update(setter: (T, T => Unit)) =
-    setter match { case (current, setter) => setter(value); event(value) }
+  protected val signal = Lazy { event() latest latestValue }
+  private[reswing] def getValue = latestValue
+  private[reswing] def use(setter: T => Unit) = setter(value)
 }
 
 final case class ReSwingEventValue[T](
     private val value: Event[T],
     private[reswing] val fixed: Boolean) extends ReSwingValue[T] {
-  protected val signal = (value || event) latest null.asInstanceOf[T]
-  private[reswing] def update(setter: (T, T => Unit)) =
-    setter match { case (current, setter) => value += setter; event(current) }
+  protected val signal = Lazy { (value || event()) latest latestValue }
+  private[reswing] def getValue = latestValue
+  private[reswing] def use(setter: T => Unit) = value += setter
 }
 
 final case class ReSwingSignalValue[T](
     private val value: Signal[T],
     private[reswing] val fixed: Boolean) extends ReSwingValue[T] {
-  protected val signal = (value.changed || event) latest value.getValue
-  private[reswing] def update(setter: (T, T => Unit)) =
-    setter match { case (current, setter) =>
-      value.changed += setter; setter(value.getValue) }
+  protected val signal = Lazy { (value.changed || event()) latest value.getValue }
+  private[reswing] def getValue = value.getValue
+  private[reswing] def use(setter: T => Unit) { value.changed += setter; setter(value.getValue) }
 }
 
 object ReSwingValue {
@@ -74,5 +109,5 @@ object ReSwingValue {
   /**
    * Returns the [[react.Signal]] representing the value.
    */
-  implicit def toSignal[T](value: ReSwingValue[T]) = value.signal
+  implicit def toSignal[T](value: ReSwingValue[T]) = value.toSignal
 }

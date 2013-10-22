@@ -105,30 +105,40 @@ private[reswing] abstract trait ReSwingValueConnection {
     
     private def using(getter: () => T, setter: Option[T => Unit],
         names: Seq[ChangingProperty]): this.type = {
-      setter match {
-        case Some(setter) => value() = (getter(), setter)
-        case _ => value() = getter()
-      }
+      value() = getter()
+      if (setter.isDefined)
+        value use setter.get
       
-      for (name <- names)
-        name match {
-          case Left(name) =>
-            val changingProperty = changingProperties.getOrElseUpdate(name, ListBuffer())
-            if (!value.fixed)
-              changingProperty += { _ => value() = getter() }
-            else if (setter.isDefined)
-              changingProperty += { _ =>
+      if (value.fixed && setter.isDefined)
+        for (name <- names)
+          name match {
+            case Left(name) =>
+              changingProperties getOrElseUpdate (name, ListBuffer()) += { _ =>
                 Swing.onEDT { if (getter() != value.getValue) setter.get(value.getValue) } }
-          
-          case Right((publisher, reaction)) =>
-            reactor.listenTo(publisher)
-            val changingReaction = changingReactions.getOrElseUpdate(reaction, ListBuffer())
-            if (!value.fixed)
-              changingReaction += { _ => value() = getter() }
-            else if (setter.isDefined)
-              changingReaction += { _ =>
+            
+            case Right((publisher, reaction)) =>
+              reactor.listenTo(publisher)
+              changingReactions getOrElseUpdate (reaction, ListBuffer()) += { _ =>
                 Swing.onEDT { if (getter() != value.getValue) setter.get(value.getValue) } }
+          }
+      
+      if (!value.fixed)
+        value init { _ =>
+          println("**")
+          value() = getter()
+          for (name <- names)
+            name match {
+              case Left(name) =>
+                changingProperties getOrElseUpdate (name, ListBuffer()) += { _ =>
+                  value() = getter() }
+              
+              case Right((publisher, reaction)) =>
+                reactor.listenTo(publisher)
+                changingReactions.getOrElseUpdate(reaction, ListBuffer()) += { _ =>
+                  value() = getter() }
+            }
         }
+      
       this
     }
     
