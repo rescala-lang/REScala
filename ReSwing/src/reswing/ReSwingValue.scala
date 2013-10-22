@@ -52,33 +52,30 @@ sealed abstract class ReSwingValue[T] {
     { if (signal.isDefined) init() else inits += init }
 }
 
-final case class ReSwingNoValue[T](
-    private[reswing] val fixed: Boolean) extends ReSwingValue[T] {
+final case class ReSwingNoValue[T] extends ReSwingValue[T] {
   protected val signal = Lazy { event() latest latestValue }
+  private[reswing] def fixed = false
   private[reswing] def getValue = latestValue
   private[reswing] def use(setter: T => Unit) { }
 }
 
-final case class ReSwingValueValue[T](
-    private val value: T,
-    private[reswing] val fixed: Boolean) extends ReSwingValue[T] {
+final case class ReSwingValueValue[T](private val value: T) extends ReSwingValue[T] {
   protected val signal = Lazy { event() latest latestValue }
+  private[reswing] def fixed = false
   private[reswing] def getValue = latestValue
   private[reswing] def use(setter: T => Unit) = setter(value)
 }
 
-final case class ReSwingEventValue[T](
-    private val value: Event[T],
-    private[reswing] val fixed: Boolean) extends ReSwingValue[T] {
+final case class ReSwingEventValue[T](private val value: Event[T]) extends ReSwingValue[T] {
   protected val signal = Lazy { (value || event()) latest latestValue }
+  private[reswing] def fixed = false
   private[reswing] def getValue = latestValue
   private[reswing] def use(setter: T => Unit) = value += setter
 }
 
-final case class ReSwingSignalValue[T](
-    private val value: Signal[T],
-    private[reswing] val fixed: Boolean) extends ReSwingValue[T] {
+final case class ReSwingSignalValue[T](private val value: Signal[T]) extends ReSwingValue[T] {
   protected val signal = Lazy { (value.changed || event()) latest value.getValue }
+  private[reswing] def fixed = true
   private[reswing] def getValue = value.getValue
   private[reswing] def use(setter: T => Unit) { value.changed += setter; setter(value.getValue) }
 }
@@ -87,24 +84,24 @@ object ReSwingValue {
   /**
    * Does not cause the `Swing` library to use a specific value.
    */
-  implicit def toReSwingValue[T](value: Unit) = ReSwingNoValue[T](false)
+  implicit def toReSwingValue[T](value: Unit) = ReSwingNoValue[T]
   
   /**
    * Sets the given value once.
    * After this, does not cause the `Swing` library to use a specific value.
    */
-  implicit def toReSwingValue[T](value: T) = ReSwingValueValue(value, false)
+  implicit def toReSwingValue[T](value: T) = ReSwingValueValue(value)
   
   /**
    * Sets the value whenever the given [[react.events.Event]] changes.
    */
-  implicit def toReSwingValue[T](value: Event[T]) = ReSwingEventValue(value, false)
+  implicit def toReSwingValue[T](value: Event[T]) = ReSwingEventValue(value)
   
   /**
    * Sets the value to the value of the given [[react.Signal]] and causes
    * the `Swing` library to always use the current `Signal` value.
    */
-  implicit def toReSwingValue[T](value: Signal[T]) = ReSwingSignalValue(value, true)
+  implicit def toReSwingValue[T](value: Signal[T]) = ReSwingSignalValue(value)
   
   /**
    * Returns the [[react.Signal]] representing the value.

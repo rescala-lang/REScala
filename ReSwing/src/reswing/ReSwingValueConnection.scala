@@ -109,22 +109,25 @@ private[reswing] abstract trait ReSwingValueConnection {
       if (setter.isDefined)
         value use setter.get
       
-      if (value.fixed && setter.isDefined)
+      if (value.fixed && setter.isDefined) {
+        val set = setter.get
         for (name <- names)
           name match {
             case Left(name) =>
               changingProperties getOrElseUpdate (name, ListBuffer()) += { _ =>
-                Swing.onEDT { if (getter() != value.getValue) setter.get(value.getValue) } }
+                if (getter() != value.getValue)
+                  Swing.onEDT { if (getter() != value.getValue) set(value.getValue) } }
             
             case Right((publisher, reaction)) =>
-              reactor.listenTo(publisher)
+              reactor listenTo publisher
               changingReactions getOrElseUpdate (reaction, ListBuffer()) += { _ =>
-                Swing.onEDT { if (getter() != value.getValue) setter.get(value.getValue) } }
+                if (getter() != value.getValue)
+                  Swing.onEDT { if (getter() != value.getValue) set(value.getValue) } }
           }
+      }
       
       if (!value.fixed)
         value init { _ =>
-          println("**")
           value() = getter()
           for (name <- names)
             name match {
@@ -133,7 +136,7 @@ private[reswing] abstract trait ReSwingValueConnection {
                   value() = getter() }
               
               case Right((publisher, reaction)) =>
-                reactor.listenTo(publisher)
+                reactor listenTo publisher
                 changingReactions.getOrElseUpdate(reaction, ListBuffer()) += { _ =>
                   value() = getter() }
             }
@@ -162,15 +165,14 @@ private[reswing] abstract trait ReSwingValueConnection {
   
   private val reactor = new Reactor {
     reactions += { case e: Event =>
-      for (signals <- changingReactions.get(e.getClass))
-        for (signal <- signals)
-          signal()
+      for (signals <- changingReactions get e.getClass; signal <- signals)
+        signal()
     }
   }
   
   peer.peer.addPropertyChangeListener(new java.beans.PropertyChangeListener {
     def propertyChange(e: java.beans.PropertyChangeEvent) {
-      enforcedProperties.get(e.getPropertyName) match {
+      enforcedProperties get e.getPropertyName match {
         case Some(setter) => setter()
         case _ => changingProperties.get(e.getPropertyName) match {
           case Some(signals) => for (signal <- signals) signal()
