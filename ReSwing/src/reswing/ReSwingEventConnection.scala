@@ -17,15 +17,18 @@ import scala.swing.event.Event
  * extends ReSwingEventConnection {
  *   protected def peer: Window
  *   
- *   val windowActivated = event using (peer, classOf[WindowActivated])
+ *   val windowActivated = ReSwingEvent using classOf[WindowActivated]
  * }
  * }}}
  */
 private[reswing] abstract trait ReSwingEventConnection {
   protected def peer: UIElement
   
-  protected object event {
-    def using[T](publisher: Publisher, reaction: Class[T]) = {
+  protected object ReSwingEvent {
+    def using[T](reaction: Class[T]): ReSwingEvent[T] =
+      using(peer, reaction)
+    
+    def using[T](publisher: Publisher, reaction: Class[T]): ReSwingEvent[T]  = {
       val event: ReSwingEvent[T] = new ReSwingEvent[T]({ event =>
         reactor listenTo publisher
         reactor.reactions += { case e: Event =>

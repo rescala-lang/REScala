@@ -20,7 +20,6 @@ class ReButton(
   extends
     ReAbstractButton(text, background, foreground, font, enabled,
                      minimumSize, maximumSize, preferredSize) {
-  
   override protected lazy val peer = new Button with ComponentMixin
   
   if (action != null)

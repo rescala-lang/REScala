@@ -19,7 +19,7 @@ trait ReSequentialContainer extends ReUIElement {
         peer.repaint
         peer.peer.validate
       },
-      (peer, classOf[ComponentAdded]), (peer, classOf[ComponentRemoved]))
+      classOf[ComponentAdded], classOf[ComponentRemoved])
   
   protected implicit def addContent(contents: ReSwingValue[CompList]) =
     new AddContent(contents)

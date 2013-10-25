@@ -33,7 +33,18 @@ import scala.swing.event.Event
  * }
  * }}}
  * 
- * If a value can be read only but not be passed to the constructor of a
+ * If a value should be read-only, the following syntax can be used:
+ * 
+ * {{{
+ * abstract class ReComponent(
+ * extends ReSwingValueConnection {
+ *   protected def peer: Component
+ *   
+ *   val hasFocus = ReSwingValue using (peer.hasFocus _, classOf[FocusGained], classOf[FocusLost])
+ * }
+ * }}}
+ * 
+ * If a value can be read-only but not be passed to the constructor of a
  * base class but sub-classes may add the feature to pass the value to their
  * constructor, the connections should be established in a method that can be
  * overridden in sub-classes, e.g.:
@@ -43,9 +54,9 @@ import scala.swing.event.Event
  * extends ReSwingValueConnection {
  *   protected def peer: UIElement
  *   
- *   val size: ReSwingValue[Dimension] = ()
+ *   val size = ReSwingValue[Dimension]
  *   protected def initSizeValue {
- *     size using (peer.size _, (peer, classOf[UIElementResized]))
+ *     size using (peer.size _, classOf[UIElementResized])
  *   }
  *   initSizeValue
  * }
@@ -56,7 +67,7 @@ import scala.swing.event.Event
  *   protected def peer: Window
  *   
  *   override protected def initSizeValue {
- *     size using (peer.size _, peer.size_= _, (peer, classOf[UIElementResized]))
+ *     size using (peer.size _, peer.size_= _, classOf[UIElementResized])
  *   }
  * }
  * }}}
@@ -72,6 +83,11 @@ private[reswing] abstract trait ReSwingValueConnection {
   
   protected implicit def toChangingProperty(reaction: (Publisher, Class[_])) =
     Right(reaction): ChangingProperty
+  
+  protected implicit def toChangingProperty(reaction: Class[_]) =
+    Right((peer, reaction)): ChangingProperty
+  
+  protected def ReSwingValue[T] = (): ReSwingValue[T]
   
   /**
    * Represents a `Swing` property that is used to react on value changes
@@ -91,7 +107,7 @@ private[reswing] abstract trait ReSwingValueConnection {
      * The value will be updated when any of the given properties change.
      * This can be used for `Swing` properties that are read-only.
      */
-    def using(getter: () => T, names: ChangingProperty*): this.type =
+    def using(getter: () => T, names: ChangingProperty*): ReSwingValue[T] =
       using(getter, None, names)
     
     /**
@@ -100,11 +116,11 @@ private[reswing] abstract trait ReSwingValueConnection {
      * value changes will be propagated to the `Swing` library.
      * This can be used for `Swing` properties that can be read and written.
      */
-    def using(getter: () => T, setter: T => Unit, names: ChangingProperty*): this.type =
+    def using(getter: () => T, setter: T => Unit, names: ChangingProperty*): ReSwingValue[T] =
       using(getter, Some(setter), names)
     
     private def using(getter: () => T, setter: Option[T => Unit],
-        names: Seq[ChangingProperty]): this.type = {
+        names: Seq[ChangingProperty]): ReSwingValue[T] = {
       value() = getter()
       if (setter.isDefined)
         value use setter.get
@@ -142,7 +158,7 @@ private[reswing] abstract trait ReSwingValueConnection {
             }
         }
       
-      this
+      value
     }
     
     /**

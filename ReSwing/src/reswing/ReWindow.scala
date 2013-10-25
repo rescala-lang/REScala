@@ -27,19 +27,19 @@ abstract class ReWindow(
   protected def peer: Window
   
   override protected def initSizeValues = {
-    size using (peer.size _, peer.size_= _, (peer, classOf[UIElementResized]))
-    location using (peer.location _, peer.location_= _, (peer, classOf[UIElementMoved]))
-    bounds using (peer.bounds _, peer.bounds_= _, (peer, classOf[UIElementResized]),
-                                                  (peer, classOf[UIElementMoved]))
+    size using (peer.size _, peer.size_= _, classOf[UIElementResized])
+    location using (peer.location _, peer.location_= _, classOf[UIElementMoved])
+    bounds using (peer.bounds _, peer.bounds_= _, classOf[UIElementResized],
+                                                  classOf[UIElementMoved])
   }
   
-  val windowActivated = event using (peer, classOf[WindowActivated])
-  val windowClosed = event using (peer, classOf[WindowClosed])
-  val windowClosing = event using (peer, classOf[WindowClosing])
-  val windowDeactivated = event using (peer, classOf[WindowDeactivated])
-  val windowDeiconified = event using (peer, classOf[WindowDeiconified])
-  val windowIconified = event using (peer, classOf[WindowIconified])
-  val windowOpened = event using (peer, classOf[WindowOpened])
+  val windowActivated = ReSwingEvent using (peer, classOf[WindowActivated])
+  val windowClosed = ReSwingEvent using (peer, classOf[WindowClosed])
+  val windowClosing = ReSwingEvent using (peer, classOf[WindowClosing])
+  val windowDeactivated = ReSwingEvent using (peer, classOf[WindowDeactivated])
+  val windowDeiconified = ReSwingEvent using (peer, classOf[WindowDeiconified])
+  val windowIconified = ReSwingEvent using (peer, classOf[WindowIconified])
+  val windowOpened = ReSwingEvent using (peer, classOf[WindowOpened])
 }
 
 object ReWindow {

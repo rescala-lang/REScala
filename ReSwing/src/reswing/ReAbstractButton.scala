@@ -19,12 +19,11 @@ class ReAbstractButton(
   extends
     ReComponent(background, foreground, font, enabled,
                 minimumSize, maximumSize, preferredSize) {
-  
   override protected lazy val peer = new AbstractButton with ComponentMixin
   
   text using (peer.text _, peer.text_= _, "text")
   
-  val clicked = event using (peer, classOf[ButtonClicked])
+  val clicked = ReSwingEvent using classOf[ButtonClicked]
 }
 
 object ReAbstractButton {

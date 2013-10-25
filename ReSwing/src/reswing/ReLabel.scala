@@ -18,7 +18,6 @@ class ReLabel(
   extends
     ReComponent(background, foreground, font, enabled,
                 minimumSize, maximumSize, preferredSize) {
-  
   override protected lazy val peer = new Label with ComponentMixin
   
   text using (peer.text _, peer.text_= _, "text")
