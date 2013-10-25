@@ -1,4 +1,6 @@
 import scala.swing.Component
+import scala.swing.Swing
+import javax.swing.SwingUtilities
 
 package object reswing {
   type CompItem = Component
@@ -10,4 +12,10 @@ package object reswing {
   object CompList {
     def apply(elems: CompItem*) = Seq(elems: _*)
   }
+  
+  def inSyncEDT(op: => Unit) =
+    if (SwingUtilities.isEventDispatchThread)
+      op
+    else
+      Swing onEDTWait op
 }

@@ -122,24 +122,24 @@ private[reswing] abstract trait ReSwingValueConnection {
     private def using(getter: () => T, setter: Option[T => Unit],
         names: Seq[ChangingProperty]): ReSwingValue[T] = {
       value() = getter()
-      if (setter.isDefined)
-        value use setter.get
-      
-      if (value.fixed && setter.isDefined) {
+      if (setter.isDefined) {
         val set = setter.get
-        for (name <- names)
-          name match {
-            case Left(name) =>
-              changingProperties getOrElseUpdate (name, ListBuffer()) += { _ =>
-                if (getter() != value.getValue)
-                  Swing.onEDT { if (getter() != value.getValue) set(value.getValue) } }
-            
-            case Right((publisher, reaction)) =>
-              reactor listenTo publisher
-              changingReactions getOrElseUpdate (reaction, ListBuffer()) += { _ =>
-                if (getter() != value.getValue)
-                  Swing.onEDT { if (getter() != value.getValue) set(value.getValue) } }
-          }
+        value use { v => inSyncEDT { set(v) } }
+      
+        if (value.fixed)
+          for (name <- names)
+            name match {
+              case Left(name) =>
+                changingProperties getOrElseUpdate (name, ListBuffer()) += { _ =>
+                  if (getter() != value.getValue)
+                    Swing onEDT { if (getter() != value.getValue) set(value.getValue) } }
+              
+              case Right((publisher, reaction)) =>
+                reactor listenTo publisher
+                changingReactions getOrElseUpdate (reaction, ListBuffer()) += { _ =>
+                  if (getter() != value.getValue)
+                    Swing onEDT { if (getter() != value.getValue) set(value.getValue) } }
+            }
       }
       
       if (!value.fixed)
@@ -169,7 +169,7 @@ private[reswing] abstract trait ReSwingValueConnection {
     def force[U](name: String, setter: U => Unit, forcedValue: U): this.type = {
       if (value.fixed) {
         setter(forcedValue)
-        enforcedProperties += name -> { _ => Swing.onEDT { setter(forcedValue) } }
+        enforcedProperties += name -> { _ => Swing onEDT { setter(forcedValue) } }
       }
       this
     }
@@ -190,7 +190,7 @@ private[reswing] abstract trait ReSwingValueConnection {
     def propertyChange(e: java.beans.PropertyChangeEvent) {
       enforcedProperties get e.getPropertyName match {
         case Some(setter) => setter()
-        case _ => changingProperties.get(e.getPropertyName) match {
+        case _ => changingProperties get e.getPropertyName match {
           case Some(signals) => for (signal <- signals) signal()
           case _ =>
         }

@@ -22,17 +22,17 @@ class ReTextComponent(
                 minimumSize, maximumSize, preferredSize) {
   override protected lazy val peer = new TextComponent with ComponentMixin
   
-  val selected = ReSwingValue using (peer.selected _, classOf[CaretUpdate])
+  val selected = ReSwingValue using (peer.selected _, (caret.peer, classOf[CaretUpdate]))
   
   (text using (peer.text _, peer.text_= _, classOf[ValueChanged])
         force ("editable", peer.editable_= _, false))
   
   class ReCaret {
-    protected lazy val peer = ReTextComponent.this.peer.caret
+    protected[ReTextComponent] val peer = ReTextComponent.this.peer.caret
     
-    val dot = ReSwingValue using (peer.dot _, classOf[CaretUpdate])
-    val mark = ReSwingValue using (peer.mark _, classOf[CaretUpdate])
-    val position = ReSwingValue using (peer.position _, classOf[CaretUpdate])
+    val dot = ReSwingValue using (peer.dot _, (peer, classOf[CaretUpdate]))
+    val mark = ReSwingValue using (peer.mark _, (peer, classOf[CaretUpdate]))
+    val position = ReSwingValue using (peer.position _, (peer, classOf[CaretUpdate]))
   }
   
   object ReCaret {
