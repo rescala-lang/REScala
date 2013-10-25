@@ -36,7 +36,7 @@ import scala.swing.event.Event
  * If a value should be read-only, the following syntax can be used:
  * 
  * {{{
- * abstract class ReComponent(
+ * abstract class ReComponent
  * extends ReSwingValueConnection {
  *   protected def peer: Component
  *   

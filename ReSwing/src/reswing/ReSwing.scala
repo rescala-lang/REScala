@@ -1,6 +1,8 @@
+import scala.language.implicitConversions
 import scala.swing.Component
 import scala.swing.Swing
 import javax.swing.SwingUtilities
+import react.events.Event
 
 package object reswing {
   type CompItem = Component
@@ -18,4 +20,6 @@ package object reswing {
       op
     else
       Swing onEDTWait op
+  
+  implicit def toEvent[T](value: Unit): Event[T] = null
 }

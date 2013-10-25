@@ -3,7 +3,7 @@ package reswing
 import scala.swing.Publisher
 import scala.swing.Reactor
 import scala.swing.UIElement
-import scala.swing.event.Event
+import react.events.Event
 
 /**
  * Introduces methods to connect a [[ReSwingEvent]] to the corresponding
@@ -20,9 +20,37 @@ import scala.swing.event.Event
  *   val windowActivated = ReSwingEvent using classOf[WindowActivated]
  * }
  * }}}
+ * 
+ * Also introduces methods to connect a [[react.events.Event]] to the
+ * underlying `Swing` component that will execute a specific method whenever
+ * the event fires:
+ * 
+ * {{{
+ * abstract class ReUIElement(
+ *   repaint: Event[Unit] = ())
+ * extends ReSwingEventConnection {
+ *   protected def peer: UIElement
+ *   
+ *   repaint using peer.repaint _
+ * }
+ * }}}
  */
 private[reswing] abstract trait ReSwingEventConnection {
   protected def peer: UIElement
+  
+  final protected implicit class EventConnector[T] private[ReSwingEventConnection]
+      (value: Event[T]) {
+    def using(setter: T => Unit): Event[T] = {
+      if (value != null) 
+        value += { v => inSyncEDT { setter(v) } }
+      value
+    }
+    def using(setter: () => Unit): Event[T] = {
+      if (value != null) 
+        value += { v => inSyncEDT { setter() } }
+      value
+    }
+  }
   
   protected object ReSwingEvent {
     def using[T](reaction: Class[T]): ReSwingEvent[T] =
@@ -31,14 +59,14 @@ private[reswing] abstract trait ReSwingEventConnection {
     def using[T](publisher: Publisher, reaction: Class[T]): ReSwingEvent[T]  = {
       val event: ReSwingEvent[T] = new ReSwingEvent[T]({ event =>
         reactor listenTo publisher
-        reactor.reactions += { case e: Event =>
+        reactor.reactions += { case e =>
           if (reaction isInstance e)
             event(e.asInstanceOf[T])
         }
       })
       event
     }
-    
-    private val reactor = new Reactor { }
   }
+  
+  private val reactor = new Reactor { }
 }
