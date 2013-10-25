@@ -24,11 +24,7 @@ class ReAbstractButton(
   
   text using (peer.text _, peer.text_= _, "text")
   
-  val clicked = new ReSwingEvent[ButtonClicked]
-  
-  peer.reactions += {
-    case e @ ButtonClicked(_) => clicked(e)
-  }
+  val clicked = event using (peer, classOf[ButtonClicked])
 }
 
 object ReAbstractButton {

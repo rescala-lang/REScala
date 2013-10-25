@@ -33,23 +33,13 @@ abstract class ReWindow(
                                                   (peer, classOf[UIElementMoved]))
   }
   
-  val windowActivated = new ReSwingEvent[WindowActivated]
-  val windowClosed = new ReSwingEvent[WindowClosed]
-  val windowClosing = new ReSwingEvent[WindowClosing]
-  val windowDeactivated = new ReSwingEvent[WindowDeactivated]
-  val windowDeiconified = new ReSwingEvent[WindowDeiconified]
-  val windowIconified = new ReSwingEvent[WindowIconified]
-  val windowOpened = new ReSwingEvent[WindowOpened]
-  
-  peer.reactions += {
-    case e @ WindowActivated(_) => windowActivated(e)
-    case e @ WindowClosed(_) => windowClosed(e)
-    case e @ WindowClosing(_) => windowClosing(e)
-    case e @ WindowDeactivated(_) => windowDeactivated(e)
-    case e @ WindowDeiconified(_) => windowDeiconified(e)
-    case e @ WindowIconified(_) => windowIconified(e)
-    case e @ WindowOpened(_) => windowOpened(e)
-  }
+  val windowActivated = event using (peer, classOf[WindowActivated])
+  val windowClosed = event using (peer, classOf[WindowClosed])
+  val windowClosing = event using (peer, classOf[WindowClosing])
+  val windowDeactivated = event using (peer, classOf[WindowDeactivated])
+  val windowDeiconified = event using (peer, classOf[WindowDeiconified])
+  val windowIconified = event using (peer, classOf[WindowIconified])
+  val windowOpened = event using (peer, classOf[WindowOpened])
 }
 
 object ReWindow {

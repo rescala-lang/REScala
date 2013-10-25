@@ -7,22 +7,6 @@ import react.events.Event
 import react.events.ImperativeEvent
 
 /**
- * Provides lazy values that can be checked for if they already hold a defined
- * value, i.e. if they have already been accessed
- */
-final class Lazy[T](init: => T) {
-  private var defined = false
-  private lazy val value = init
-  
-  def isDefined = defined
-  def apply() = { defined = true; value }
-}
-
-object Lazy {
-  def apply[T](value: => T) = new Lazy(value)
-}
-
-/**
  * Combines reactive values from the application and from the `Swing` library
  */
 sealed abstract class ReSwingValue[T] {
@@ -46,13 +30,13 @@ sealed abstract class ReSwingValue[T] {
   private[reswing] def getValue: T
   private[reswing] def use(setter: T => Unit)
   
-  final private[reswing] def update(value: T) =
+  final private[reswing] def update(value: T)
     { latestValue = value; if (event.isDefined) event()(value) }
   final private[reswing] def init(init: Unit => Unit)
     { if (signal.isDefined) init() else inits += init }
 }
 
-final case class ReSwingNoValue[T] extends ReSwingValue[T] {
+final case class ReSwingNoValue[T]() extends ReSwingValue[T] {
   protected val signal = Lazy { event() latest latestValue }
   private[reswing] def fixed = false
   private[reswing] def getValue = latestValue

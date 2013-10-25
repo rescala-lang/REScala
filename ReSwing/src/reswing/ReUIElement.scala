@@ -11,7 +11,9 @@ import scala.swing.event.UIElementResized
 abstract class ReUIElement(
     val minimumSize: ReSwingValue[Dimension] = (),
     val maximumSize: ReSwingValue[Dimension] = (),
-    val preferredSize: ReSwingValue[Dimension] = ()) extends ReSwingValueConnection {
+    val preferredSize: ReSwingValue[Dimension] = ())
+  extends
+    ReSwingValueConnection with ReSwingEventConnection {
   protected def peer: UIElement
   
   val size: ReSwingValue[Dimension] = ()

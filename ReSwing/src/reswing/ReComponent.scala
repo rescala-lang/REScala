@@ -33,54 +33,27 @@ abstract class ReComponent(
   
   object mouse {
     object clicks {
-      val clicked = new ReSwingEvent[MouseClicked]
-      val pressed = new ReSwingEvent[MousePressed]
-      val released = new ReSwingEvent[MouseReleased]
-      
-      peer.mouse.clicks.listenTo(peer.mouse.clicks)
-      peer.mouse.clicks.reactions += {
-        case e @ MouseClicked(_, _, _, _, _) => clicked(e)
-        case e @ MousePressed(_, _, _, _, _) => pressed(e)
-        case e @ MouseReleased(_, _, _, _, _) => released(e)
-      }
+      val clicked = event using (peer.mouse.clicks, classOf[MouseClicked])
+      val pressed = event using (peer.mouse.clicks, classOf[MousePressed])
+      val released = event using (peer.mouse.clicks, classOf[MouseReleased])
     }
     
     object moves {
-      val dragged = new ReSwingEvent[MouseDragged]
-      val entered = new ReSwingEvent[MouseEntered]
-      val exited = new ReSwingEvent[MouseExited]
-      val moved = new ReSwingEvent[MouseMoved]
-      
-      peer.mouse.moves.listenTo(peer.mouse.moves)
-      peer.mouse.moves.reactions += {
-        case e @ MouseDragged(_, _, _) => dragged(e)
-        case e @ MouseEntered(_, _, _) => entered(e)
-        case e @ MouseExited(_, _, _) => exited(e)
-        case e @ MouseMoved(_, _, _) => moved(e)
-      }
+      val dragged = event using (peer.mouse.moves, classOf[MouseDragged])
+      val entered = event using (peer.mouse.moves, classOf[MouseEntered])
+      val exited = event using (peer.mouse.moves, classOf[MouseExited])
+      val moved = event using (peer.mouse.moves, classOf[MouseMoved])
     }
     
     object wheel {
-      val moved = new ReSwingEvent[MouseWheelMoved]
-      
-      peer.mouse.wheel.listenTo(peer.mouse.wheel)
-      peer.mouse.wheel.reactions += {
-        case e @ MouseWheelMoved(_, _, _, _) => moved(e)
-      }
+      val dragged = event using (peer.mouse.wheel, classOf[MouseWheelMoved])
     }
   }
   
   object keys {
-    val pressed = new ReSwingEvent[KeyPressed]
-    val released = new ReSwingEvent[KeyReleased]
-    val typed = new ReSwingEvent[KeyTyped]
-    
-    peer.keys.listenTo(peer.keys)
-    peer.keys.reactions += {
-      case e @ KeyPressed(_, _, _, _) => pressed(e)
-      case e @ KeyReleased(_, _, _, _) => released(e)
-      case e @ KeyTyped(_, _, _, _) => typed(e)
-    }
+    val pressed = event using (peer.keys, classOf[KeyPressed])
+    val released = event using (peer.keys, classOf[KeyReleased])
+    val typed = event using (peer.keys, classOf[KeyTyped])
   }
   
   protected trait ComponentMixin extends Component {
