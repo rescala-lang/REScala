@@ -79,9 +79,9 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
     s2 = Signal{ 3 * v() }
     s3 = Signal{ s1() + s2() }
       
-    s1 += Handler{ test += 1 }
-    s2 += Handler{ test += 1 }
-    s3 += Handler{ test += 1 }
+    s1 addDependent Handler{ test += 1 }
+    s2 addDependent Handler{ test += 1 }
+    s3 addDependent Handler{ test += 1 }
     
     assert(test == 0)
     

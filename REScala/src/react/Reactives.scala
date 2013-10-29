@@ -5,18 +5,21 @@ import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.PriorityQueue
 import scala.reflect.runtime.universe._
 import react.events._
+import react.log._
 
 /* A Reactive is a value type which has a dependency to other Reactives */
 trait Reactive extends Ordered[Reactive] {
   var level: Int = 0
   override def compare(other: Reactive): Int = 
     other.level - this.level
+    
+  ReactiveEngine.log log LogCreateNode(LogNode(this))
 }
 
 object Reactive {
   /* Reactive are comparable by their level */
   implicit def ord[T <: Reactive]: Ordering[T] = new Ordering[T] { 
-    def compare(x: T, y: T) = x.compare(y)
+    def compare(x: T, y: T) = if(x == null) -1 else x compare y
   }
 }
 
@@ -24,25 +27,25 @@ object Reactive {
 /* A node that has nodes that depend on it */
 trait DepHolder extends Reactive {
   val dependents = new ListBuffer[Dependent]
-  def addDependent(dep: Dependent) = dependents += dep    
-  def removeDependent(dep: Dependent) = dependents -= dep
-  def notifyDependents(change: Any): Unit = dependents.foreach(_.dependsOnchanged(change,this)) 
-  
-  /* To add handlers */
-  def +=(handler: Dependent) {
-    handler.level = level + 1 // For glitch freedom 
-    addDependent(handler)
+  def addDependent(dep: Dependent) = {
+    dependents += dep
+    ReactiveEngine.log log LogAttachNode(LogNode(dep), LogNode(this))
   }
-  def -=(handler: Dependent) = removeDependent(handler)
-  
-  
+  def removeDependent(dep: Dependent) = dependents -= dep
+  def notifyDependents(change: Any): Unit = {
+    ReactiveEngine.log log react.log.LogPulseNode(react.log.LogNode(this))
+    dependents.foreach(_.dependsOnchanged(change,this))  
+  }
 }
 
 /* A node that depends on other nodes */
 trait Dependent extends Reactive {
   val dependOn = new ListBuffer[DepHolder]
   // TODO: add level checking to have glitch freedom ?
-  def addDependOn(dep: DepHolder) = dependOn += dep    
+  def addDependOn(dep: DepHolder) = {
+    dependOn += dep
+    ReactiveEngine.log log LogAttachNode(LogNode(this), LogNode(dep))
+  }
   def removeDependOn(dep: DepHolder) = dependOn -= dep
   
   def triggerReevaluation() 
@@ -69,42 +72,8 @@ trait Var[T] extends DepHolder {
 }
 
 
-class StaticVar[T](initval: T) extends DepHolder with Var[T] {
-  private[this] var value: T = initval
-  def setVal(newval: T): Unit = {
-    val old = value
-    if(newval != old) {
-    value = newval // .asInstanceOf[T] // to make it covariant ?
-    TS.nextRound  // Testing
-    timestamps += TS.newTs // testing
-
-    notifyDependents(value)
-    ReactiveEngine.startEvaluation
-    }
-    else {
-      timestamps += TS.newTs // testing
-    }
-  }  
-  def getValue = value
-  def getVal = value
-  
-  def update(v: T) = setVal(v)
-  
-  def apply(s: SignalSynt[_]) = {
-    if (level >= s.level) s.level = level + 1
-    s.reactivesDependsOnCurrent += this 
-    getVal
-  }
-  
-  def apply = getVal
-  
-  def toSignal = StaticSignal(this){this.getVal}
-  
-  /* Testing */
-  val timestamps = ListBuffer[Stamp]()
-}
 object Var {
-  def apply[T](initval: T) = new StaticVar(initval)
+  def apply[T](initval: T) = new VarSynt(initval)
 }
 
 
@@ -149,95 +118,13 @@ trait Signal[+T] extends Dependent with DepHolder {
   def toggle[V >: T](e: Event[_])(other: Signal[V]) = IFunctions.toggle(e, this, other)
 
   /** Delays this signal by n occurrences */
-  def delay(n: Int) = IFunctions.delay(change, this.getValue, n)
+  def delay(n: Int) = IFunctions.delay(this, n)
 
   
   /* Testing */
   val timestamps :ListBuffer[Stamp]
 }
 
-
-/* A dependent reactive value */
-class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: =>T)
-  extends Dependent with DepHolder with Signal[T] {
-  
-  var inQueue = false
-
-  private[this] var currentValue = expr
-  
-  def getValue = currentValue
-  def getVal = currentValue
-  
-  def apply(): T = currentValue
-  def apply(s: SignalSynt[_]) = {
-    if (level >= s.level) s.level = level + 1
-    s.reactivesDependsOnCurrent += this 
-    getVal
-  }
-  
-  reactivesDependsOn.foreach( r => {
-    if (r.level >= level) level = r.level + 1 // For glitch freedom  
-    r.addDependent(this) // To be notified in the future
-  }) // check
-  dependOn ++= reactivesDependsOn
-  
-  
-  def triggerReevaluation() = reEvaluate
-  
-  def reEvaluate(): T = {
-    inQueue = false
-    val tmp = expr
-    if (tmp != currentValue) {
-      currentValue = tmp
-      timestamps += TS.newTs // Testing
-      notifyDependents(currentValue)
-    } else {
-      timestamps += TS.newTs // Testing
-    }
-    tmp
-  }
-  override def dependsOnchanged(change: Any,dep: DepHolder) = {
-    if(!inQueue){
-      inQueue = true
-      ReactiveEngine.addToEvalQueue(this)
-    }    
-  }
-  
-  def change[U >: T]: Event[(U, U)] = new ChangedEventNode[(U, U)](this)
- 
-  /* Testing */
-  val timestamps = ListBuffer[Stamp]()
-}
-
-
-
-/**
- * Create a Signal
- */
-object StaticSignal {
-  
-  def apply[T](reactivesDependsOn: List[DepHolder])(expr: => T) =
-    new StaticSignal(reactivesDependsOn)(expr)
-  
-  type DH = DepHolder
-  def apply[T]()(expr: =>T): Signal[T] = apply(List())(expr)
-  def apply[T](r1: DH)(expr: =>T): Signal[T] = apply(List(r1))(expr)
-  def apply[T](r1: DH,r2: DH)(expr: =>T): Signal[T] = apply(List(r1,r2))(expr)
-  def apply[T](r1: DH,r2: DH,r3: DH)(expr: =>T): Signal[T] = apply(List(r1,r2,r3))(expr)
-  def apply[T](r1: DH,r2: DH,r3: DH,r4: DH)(expr: =>T): Signal[T] = apply(List(r1,r2,r3,r4))(expr)
-  def apply[T](r1: DH,r2: DH,r3: DH,r4: DH,r5: DH)(expr: =>T): Signal[T] = apply(List(r1,r2,r3,r4,r5))(expr)
-}
-
-
-/* A callback called when a signal changes */
-class Handler[T] (exp: =>T) extends Dependent {
-    override def dependsOnchanged(change: Any,dep: DepHolder) = exp
-    def triggerReevaluation = exp
-}
-object Handler {
-	def apply[T] (exp: =>T) = new Handler(exp)
-	//def apply[T] (fun: T=>Unit) = new Handler(fun)
-}
 
 
 /**
@@ -246,27 +133,49 @@ object Handler {
  */
 object ReactiveEngine {
   
-  var evalQueue = new PriorityQueue[Dependent]
+  val log = new Logging
+  
+  private var evalQueue = new PriorityQueue[Dependent]
 
   /* Adds a dependant to the eval queue, duplicates are allowed */
   def addToEvalQueue(dep: Dependent): Unit = {
-    //if (evalQueue.exists(_ eq dep)) return
-    evalQueue += dep
+    evalQueue.synchronized {
+      //if (evalQueue.exists(_ eq dep)) return
+      
+      log log LogScheduleNode(LogNode(dep))
+      evalQueue += dep
+      
+      // DEBUG:
+      //if(evalQueue.toList.contains((_: Any) == null))
+      //  System.err.println("eval queue contains null element after insertion of " + dep)
+    }
   }
   
   def removeFromEvalQueue(dep: Dependent) = evalQueue = evalQueue.filter(_ eq dep)
   
   /* Evaluates all the elements in the queue */
   def startEvaluation = {
-    this.synchronized {
-    while (!evalQueue.isEmpty) {
-      val head = evalQueue.dequeue
-      head.triggerReevaluation
-    }
+    evalQueue.synchronized {
+        val localStamp = TS.getCurrentTs
+	    // DEBUG: println("Start eval: " + Thread.currentThread() + "  " + localStamp + " (init. queue: " + evalQueue.length + ")")
+	    var counter = 0
+	    while (!evalQueue.isEmpty) {
+	      counter += 1
+	      val head = evalQueue.dequeue
+	      if(head == null) {
+	        System.err.println("priority deque yielded null")
+	        // not sure why this happens, null is never inserted
+	      } 
+	      else {
+	    	  log log LogStartEvalNode(LogNode(head))
+	    	  head.triggerReevaluation
+	    	  log log LogEndEvalNode(LogNode(head))
+	      }
+	    }
+    	// DEBUG: println("End eval: " + Thread.currentThread() + "  " + localStamp + " (" + counter + " rounds)")
     }
   }
 }
-
 
 
 // TODO: check the use of these classes. Originally was only for testing
@@ -279,11 +188,14 @@ object TS {
   def nextRound {
     _roundNum += 1
     _sequenceNum = 0
+    
+    ReactiveEngine.log log LogRound(getCurrentTs)
   }
   
   def newTs = {
     val ts = new Stamp(_roundNum,_sequenceNum)
     _sequenceNum += 1
+    ReactiveEngine.log log LogRound(ts)
     ts
   } 
   

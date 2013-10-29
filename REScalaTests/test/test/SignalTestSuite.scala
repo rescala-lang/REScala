@@ -95,9 +95,9 @@ class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
     s2 = StaticSignal(v){ 3 * v.getValue }
     s3 = StaticSignal(s1,s2){ s1.getVal + s2.getVal }
       
-    s1 += Handler{ test += 1 }
-    s2 += Handler{ test += 1 }
-    s3 += Handler{ test += 1 }
+    s1 addDependent Handler{ test += 1 }
+    s2 addDependent Handler{ test += 1 }
+    s3 addDependent Handler{ test += 1 }
     
     assert(test == 0)
     

@@ -111,11 +111,11 @@ abstract class EventNode[T] extends Event[T] with DepHolder {
   lazy val handlers : collection.mutable.Map[(T => Unit), EventHandler[T]] =
     new collection.mutable.HashMap()
   
-  def getHandler(react: T => Unit) : EventHandler[T] = 
+  def getHandler(react: T => Unit) : EventHandler[T] =
     handlers.getOrElseUpdate(react, EventHandler(react))
     
-  def +=(react: T => Unit) = this += getHandler(react)
-  def -=(react: T => Unit) = this -= getHandler(react)
+  def +=(react: T => Unit) = this addDependent getHandler(react)
+  def -=(react: T => Unit) = this removeDependent getHandler(react)
 }
 
 
@@ -202,10 +202,9 @@ class EventNodeOr[T](ev1: Event[_ <: T], ev2: Event[_ <: T]) extends EventNode[T
 
   /*
    * The event is executed once and only once even if both sources fire in the
-   * same propagation cycle. This is made sure by waiting for the event to fire
-   * before it can be added again
+   * same propagation cycle. This is made sure by adding the node only once per cycle
    */
-  var inQueue = false
+  var lastRoundAdded = 0
   
   level = (ev1.level max ev2.level) + 1 // For glitch freedom  
   ev1.addDependent(this) // To be notified in the future
@@ -217,13 +216,13 @@ class EventNodeOr[T](ev1: Event[_ <: T], ev2: Event[_ <: T]) extends EventNode[T
   def triggerReevaluation() {
     timestamps += TS.newTs // Testing
     notifyDependents(storedVal)
-    inQueue = false
   }
   
   override def dependsOnchanged(change: Any, dep: DepHolder) = {
+    val currentRound = TS.getCurrentTs.roundNum
     storedVal = change
-    if(!inQueue) {
-      inQueue = true
+    if(currentRound > lastRoundAdded) {
+      lastRoundAdded = currentRound
       ReactiveEngine.addToEvalQueue(this)
     }
   }

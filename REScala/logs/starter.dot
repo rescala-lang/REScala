@@ -1,0 +1,9 @@
+digraph G {
+503457264 [label=<VarSynt[Integer]>]
+1803412942 [label=<VarSynt[Integer]>]
+377122436 [label=<VarSynt[Integer]>]
+2023748625 [label=<StaticSignal[Integer]>]
+503457264 -> 2023748625
+1803412942 -> 2023748625
+377122436 -> 2023748625
+}
