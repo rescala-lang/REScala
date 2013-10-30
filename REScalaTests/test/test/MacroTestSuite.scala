@@ -111,7 +111,6 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
 
 
   
-  
 }
 
 

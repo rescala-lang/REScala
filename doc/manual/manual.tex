@@ -1,0 +1,434 @@
+
+% This is LLNCS.DEM the demonstration file of
+% the LaTeX macro package from Springer-Verlag
+% for Lecture Notes in Computer Science,
+% version 2.4 for LaTeX2e as of 16. April 2010
+%
+\documentclass{llncs}
+%
+%\synctex=1
+
+\usepackage[linesnumbered,ruled,vlined]{algorithm2e}
+
+%\usepackage[T1]{fontenc}
+%\usepackage{lmodern}
+
+\usepackage{graphicx}
+\usepackage{epsfig}
+
+\usepackage{array}
+%\setlength{\extrarowheight}{0pt}
+
+
+%\usepackage{bigstrut}
+%    \setlength\bigstrutjot{3pt}
+
+
+\usepackage{amssymb}
+%\usepackage{MnSymbol}
+\usepackage{bm}
+\usepackage{amsmath}
+
+\usepackage{bussproofs}
+\usepackage[USenglish]{babel}
+
+\usepackage{subfigure}
+
+\usepackage{times}
+
+\usepackage{booktabs}
+
+\usepackage{float}
+
+\usepackage{multirow}
+
+
+\usepackage{todonotes}
+
+%\usepackage[T1]{fontenc}
+%\usepackage{cmbright}
+
+
+% \fontencoding{T1}
+%  \fontfamily{garamond}
+%  \fontseries{m}
+%  \fontshape{it}
+%  \fontsize{12}{15}
+%  \selectfont
+
+% correct bad hyphenation here
+\hyphenation{op-tical net-works semi-conduc-tor}
+
+\newcommand{\code}[1]{{\fontfamily{cmtt}\small\selectfont#1}}
+\newcommand{\codefs}[1]{{\fontfamily{cmtt}\scriptsize\selectfont#1}}
+
+
+%\usepackage{fancyvrb}
+%\DefineVerbatimEnvironment{codenv}{Verbatim}{fontfamily=ssf}
+%cmss
+%{\begin{Verbatim}[fontfamily=cmss]}% 
+%{\end{Verbatim}}%
+
+% multiline comments
+\usepackage{verbatim} 
+
+\usepackage{color}
+\usepackage{listings}
+
+%  basicstyle=\sffamily\small,
+
+
+\lstdefinelanguage{Scala}{
+	morekeywords={},
+	morekeywords=[2]{
+		public, private, protected,
+		abstract,case,catch,class,def,
+		do,else,extends,false,final,finally,
+		for,if,implicit,import,match,mixin,
+		new,null,object,override,package,
+		private,protected,requires,return,sealed,
+		super,this,throw,trait,true,try,
+		type,val,var,while,with,yield,
+		lazy,evt,observable,imperative,
+                after,before},
+	otherkeywords={=>,<-,<\%,<:,>:,\#,@},
+	sensitive=true,
+	morecomment=[l]{//},
+	morecomment=[n]{/*}{*/},
+	morestring=[b]",
+	morestring=[b]',
+	morestring=[b]"""
+}
+\lstloadlanguages{Scala}
+
+\lstset{
+  backgroundcolor=\color{white},%\fontfamily{cmtt}
+  basicstyle=\fontfamily{cmtt}\scriptsize,
+  basewidth=0.5em,
+  showstringspaces=false,
+  keywordstyle=\fontfamily{pcr}\color[rgb]{0,0,0}\bfseries,
+  %commentstyle=\color[rgb]{0.133,0.545,0.133},
+  %stringstyle=\color[rgb]{0.627,0.126,0.941},
+  breaklines=false,
+  frame=none
+  breaklines=false,
+  frame=none,
+  numbers=left, numberstyle=\tiny, stepnumber=1, numbersep=5pt,
+  %frameround=fttt,
+  %frame=single,
+  escapeinside={(*@}{@*)},
+  %columns=fullflexible
+}
+
+
+\lstnewenvironment{codenv}{\lstset{language=Scala}}{}
+\lstnewenvironment{codenvOpt}[1]{\lstset{language=Scala,#1}}{}
+
+
+\newenvironment{bluetext}{\color{blue}}{\ignorespacesafterend}
+\newenvironment{redtext}{\color{red}}{\ignorespacesafterend}
+\newcommand{\bygerold}[1]{ \begin{bluetext} #1 \end{bluetext}}
+\newcommand{\commentbygerold}[1]{\\\begin{redtext} #1 \end{redtext}\\}
+
+%\newenvironment{codenv}{\small \begin{itshape}}{ \end{itshape}}
+
+
+
+%\renewcommand*{\bibfont}{\footnotesize}
+
+
+
+% Avoid (not that) big pictures alone in a blank page
+\renewcommand{\topfraction}{0.85}
+\renewcommand{\textfraction}{0.1}
+\renewcommand{\floatpagefraction}{0.75}
+
+\usepackage{xspace}
+\newcommand{\REScala}{{\small \sc{REScala}}\xspace}
+
+
+\newcommand{\mm}[1]{\todo[color=green!40]{#1}}
+\newcommand{\jd}[1]{\todo[color=blue!40]{#1}}
+\newcommand{\gs}[1]{\todo[color=red!40]{#1}}
+
+\usepackage{color}
+
+
+\hyphenation{Res-ca-la}
+
+
+\newcommand{\str}[1]{{\sf\selectfont @#1@}\newline}
+
+
+\begin{document}
+
+% Allows default copyright year (200X to be over-ridden - IF NEED BE.
+
+% Allows default copyright data (0-89791-88-6/97/05) to be over-ridden.
+% --- End of Author Metadata ---
+
+%\copyrightdata{XXXXXX}
+
+
+\pagestyle{headings}  % switches on printing of running heads
+%\pagestyle{plain}  
+%
+\title{REScala Users Manual}
+%
+%\titlerunning{}
+% abbreviated title (for running head)
+%                                     also used for the TOC unless
+%                                     \toctitle is used
+%
+\author{Guido Salvaneschi\\
+with\\
+Gerold Hintz, Pascal Weisenburger}
+%
+\authorrunning{Salvaneschi et
+  al.} % abbreviated author list (for running head)
+%
+
+\institute{
+%  Software Technology Group\\
+  Technische Universit\"at Darmstadt\\
+\code{salvaneschi@informatik.tu-darmstadt.de}
+% \and Software Technology Group\\
+% Technische Universit\"at Darmstadt
+% \code{mezini@informatik.tu-darmstadt.de}
+}
+
+\maketitle              % typeset the title of the contribution
+
+
+
+
+
+
+
+\begin{abstract}
+Intro
+\end{abstract}
+
+%\category{D.1.3}{Software}{Programming Techniques}[Concurrent
+%Programming]\category{\hspace{-2mm}D.3.3}{Programming
+%  Languages}{Language Constructs and Features}
+
+%\terms{Languages, Design}
+
+\keywords Functional-reactive Programming, Scala, Event-driven
+Programming
+
+\section{Signals and Vars}
+
+A signal language concept for expressing functional dependencies among
+values in a declarative way. Intuitively, a reactive value can depend
+on variables -- sources of change without further dependencies -- or
+on other reactive values.  When any of the dependency sources changes,
+the expression defining the reactive value is automatically recomputed
+by the language runtime to keep the reactive value up-to-date.
+
+
+\section{Events}
+
+
+\section{Imperative events}
+
+\subsubsection{Defining  Events}
+
+REScala supports imperative events. Imperative events are defined by
+the \code{ImperativeEvent[T]} type. The value of the parameter
+\code{T} defines the value that is attached to an event.
+
+Fir example the following code snippet defines and imperative events
+whose attached value is an integer:
+\begin{codenv}
+val e = new ImperativeEvent[Int]()
+\end{codenv}
+
+\subsubsection{Registering Handlers}
+
+Handlers can be defined attaching a code block to the event. The
+\code{+=} operator attaches the handler to the event.
+
+\begin{codenv}
+val e = new ImperativeEvent[Int]()
+
+e += { println() }
+\end{codenv}
+
+- Other ways to register a handler ? Alternative syntax for handlers
+
+
+When a handler is registered to an event, the handler is executed
+every time the event is fired. If multiple handlers are registered,
+all of them are executed when the event is fired. Applications should
+not rely on any specific execution order for handler execution.
+
+\begin{codenv}
+val e = new ImperativeEvent[Int]()
+
+e += { println() }
+\end{codenv}
+
+
+The signature of the event handlers must conform the signature of the
+events.
+
+
+
+
+
+\subsubsection{Firing Events}
+
+
+Events can be fired with the same syntax of a method call. For example
+the event \code{e} in the following example is fired by the
+\code{e(10)} call.
+
+\begin{codenv}
+val e = new ImperativeEvent[Int]()
+e(10)
+\end{codenv}
+
+
+
+\subsubsection{Registering Handlers}
+
+Handlers can be unregistered from events by the \code{-=} operator.
+
+\begin{codenv}
+val e = new ImperativeEvent[Int]()
+
+e += { println() }
+
+
+e += { println() }
+\end{codenv}
+
+
+
+
+\section{Declarative Events}
+
+
+REScala supports declarative events, which are defined as a
+combination of other events. For this purpose it offers operators like
+$e_1||e_2$ (occurrence of one among $e_1$ or $e_2$), $e_1\&\&p$ ($e_1$
+occurs and the predicate $p$ is satisfied), $e_1.map(f)$ (the event
+obtained by applying $f$ to $e_1$).  Event composition allows to
+express the application logic in a clear and declarative way. Also,
+the update logic is better localized because a single expression
+models all the sources and the transformations that define an event
+occurrence.
+
+\section{Conversion Functions}
+
+The \REScala interface between signals and events exposed by the
+\code{Signal} trait.
+\vspace{2mm}
+
+\begin{scriptsize}
+\noindent
+  {\sf -- Creates a signal by folding events with a given function.}\\
+  \hspace*{2mm}\codefs{fold[T,A](e: Event[T], init: A)(f :(A,T)=>A): Signal[A]}
+
+\noindent
+  {\sf-- Returns a value computed by \code{f} on the occurrence of an event.}\\
+  \hspace*{2mm}\codefs{iterate[A](e: Event[\_], init: A)(f: A=>A)
+    :Signal[A]}
+
+  \noindent
+  {\sf-- Returns a signal holding the latest value of the event \code{e}.}\\
+  \hspace*{2mm}\codefs{hold[T](e: Event[T], init: T): Signal[T]}
+
+  \noindent
+  {\sf-- Holds the latest value of an event as \code{Some(val)} or \code{None}.}\\
+  \hspace*{2mm}\codefs{holdOption[T](e: Event[T]): Signal[Option[T]]}
+
+\noindent
+  {\sf-- Returns a signal which holds the last \code{n} events.}\\
+  \hspace*{2mm}\codefs{last[T](e: Event[T], n: Int): Signal[List[T]]}
+
+\noindent
+  {\sf-- Collects the event values in a reactive list.}\\
+  \hspace*{2mm}\codefs{list[T](e: Event[T]): Signal[List[T]]}
+
+\noindent
+  {\sf-- On the event, sets the signal to one generated by the factory.}\\
+  \hspace*{2mm}\codefs{reset[T,A](e: Event[T], init: T)(f: (T)=>Signal[A]): Signal[A]}
+
+\noindent
+  {\sf-- Switches the value of the signal on the occurrence of \code{e}.}\\
+  \hspace*{2mm}\codefs{switchTo[U](e :Event[U])(f: U=>T): Signal[T]}\\
+  \hspace*{2mm}\codefs{switchTo(e: Event[T]): Signal[T]}
+
+  \noindent
+  {\sf-- Switches to a new signal once, on the occurrence of \code{e}.}\\
+  \hspace*{2mm}\codefs{switchOnce(e: Event[\_])(op: =>T): Signal[T]}\\
+  \hspace*{2mm}\codefs{switchOnce(e: Event[\_], newSignal: Signal[T]): Signal[T]}
+
+  \noindent
+  {\sf-- Switches between signals on the event \code{e}.}\\
+  \hspace*{2mm}\codefs{toggle(e: =>Event[\_])(op: =>T): Signal[T]}\\
+  \hspace*{2mm}\codefs{toggle(e: =>Event[\_], other: Signal[T]): Signal[T]}
+
+\noindent
+  {\sf-- Returns a signal updated only when \code{e} fires.}\\
+  \hspace*{2mm}\codefs{snapshot(e: Event[\_]): Signal[T]}
+
+\noindent
+\hspace{-1.8mm}
+\fbox{\parbox[100]{0.98\linewidth}{
+  {\sf -- Open interface between signals and events.}\\
+  \hspace*{2mm}\codefs{switch(e: Event[T])(fact: Factory[T,A]): Signal[A]}\\
+  \hspace*{2mm}\codefs{Factory[T,A].apply(eVal: T): (Signal[A], Factory[T,A])}
+}}
+
+%  \hspace*{2mm}\codefs{switch(init :Signal[A])(fact :Factory[T,A]) :Signal[A]}\\
+%  \hspace*{2mm}\codefs{Factory[T,A].apply(eVal :T) :(Signal[A], Factory[T,A])}
+\end{scriptsize}
+
+
+
+
+\section{Related Work}~\label{sec:related}
+
+REScala builds on ideas originally developed in
+EScala~\cite{Gasiunas:2011:EME:1960275.1960303} -- which supports
+event combination and implicit events.
+
+Other reactive languages directly represent time-changing values and
+remove inversion of control. Among the others, we mention
+FrTime~\cite{DBLP:conf/esop/CooperK06} (Scheme),
+FlapJax~\cite{Meyerovich:2009:FPL:1640089.1640091} (Javascript),
+AmbientTalk/R~\cite{ambienttalkR} and
+Scala.React~\cite{EPFL-REPORT-148043} (Scala).
+
+
+\section{Acknowledgments}
+This work has been supported by the German Federal Ministry of
+Education and Research (Bundesministerium f\"ur Bildung und Forschung,
+BMBF) under grant No.\\
+16BY1206E and by the European Research Council, grant No. 321217.
+
+\bibliographystyle{abbrv}
+\bibliography{report}
+
+
+
+
+\end{document}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
