@@ -1,6 +1,9 @@
 package react
 
 import react.log._
+import react.log.StatisticsLogger
+import react.log.ReactPlayerLog
+import react.log.DotGraphLogger
 
 
 

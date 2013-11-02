@@ -3,19 +3,22 @@ package react.log
 import react._
 import scala.reflect.runtime.universe._
 import java.io.PrintStream
-import react.events.ImperativeEvent
 import react.events.Event
+import java.io.File
 
   
 object Logging {
   val DefaultPathPrefix = "./logs/"
+  val DefaultSourceFolder = "./src/"
 }
   
 class Logging {
   val loggers = new scala.collection.mutable.MutableList[Logger]
-  def addLogger(logger: Logger) = loggers += logger
-  def log(logevent: LogEvent) = loggers foreach (_ log logevent)
   
+  def addLogger(logger: Logger) = loggers += logger
+  
+  def log(logevent: LogEvent) = loggers foreach (_ log logevent)
+    
   def enableDefaultLogging {   
     val maybeName = for(main <- 
       Thread.getAllStackTraces.keySet().toArray().find(_.asInstanceOf[Thread].getName == "main")) 
@@ -31,12 +34,19 @@ class Logging {
     val reactplayerLogger = new react.log.ReactPlayerLog(
       new java.io.PrintStream(
       new java.io.FileOutputStream(reactplayerfile, false)))
+    
+    val statsfile = Logging.DefaultPathPrefix + name + "_stats.txt"
+    val statslogger = new StatisticsLogger(
+      new java.io.PrintStream(
+      new java.io.FileOutputStream(statsfile, false)));
    
     //addLogger(new SimpleLogger(System.out))
-    //addLogger(new StatisticsLogger(System.out))
     addLogger(reactplayerLogger)
     addLogger(dotGraphLogger)
+    addLogger(statslogger)
   }
+  
+  
 }
 
 abstract class Logger(out: PrintStream) {
@@ -67,11 +77,13 @@ trait LogRecorder extends Logger {
 case class LogNode(reactive: Reactive) {
   // CAREFUL: reference to node might impair garbage collection
   // Possible solution: somehow discard reference to 'reactive', store only what is needed
+
   val identifier = System identityHashCode reactive
   val level = reactive.level
   val nodetype = reactive.getClass
-  
+  val meta = SrcReader.getMetaInfo(reactive) // important: This MUST be called when the reactive is first created
   lazy val typename = getParametricType(reactive) // "lazy" is key here!
+  
   private def getParametricType(r: Reactive, primitive: Boolean = false): String = {
     // ugly, but still better than fiddling with TypeTags or other reflection
     val typename = r.getClass.getSimpleName
@@ -107,6 +119,9 @@ case class LogStartEvalNode(node: LogNode) extends LogEvent
 case class LogEndEvalNode(node: LogNode) extends LogEvent
 case class LogRound(stamp: Stamp) extends LogEvent
 case class LogIFAttach(node: LogNode, parent: LogNode) extends LogEvent // "virtual" association through IF
+
+
+
 
 
 class SimpleLogger(out: PrintStream) extends Logger(out) {
@@ -186,7 +201,9 @@ class DotGraphLogger(out: PrintStream) extends Logger(out) with LogRecorder {
     //clear
   }
   
-  private def label(node: LogNode) = node.typename
+  private def label(node: LogNode): String = 
+    (if(node.meta.varname != NodeMetaInfo.NoVarName) "<B>" + node.meta.varname + "</B><BR/>" else "") + 
+    node.typename
 }
 
 
