@@ -1,9 +1,10 @@
 digraph G {
-503457264 [label=<VarSynt[Integer]>]
-1803412942 [label=<VarSynt[Integer]>]
-377122436 [label=<VarSynt[Integer]>]
-2023748625 [label=<StaticSignal[Integer]>]
-503457264 -> 2023748625
-1803412942 -> 2023748625
-377122436 -> 2023748625
+node [shape=box]
+1953349552 [label=<VarSynt[Integer]> style=filled fillcolor=coral1]
+1680230135 [label=<VarSynt[Integer]> style=filled fillcolor=coral1]
+217920895 [label=<VarSynt[Integer]> style=filled fillcolor=coral1]
+2094876204 [label=<StaticSignal[Integer]> style=filled fillcolor=cornflowerblue]
+1953349552 -> 2094876204
+1680230135 -> 2094876204
+217920895 -> 2094876204
 }

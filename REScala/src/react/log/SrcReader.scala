@@ -65,7 +65,7 @@ object SrcReader {
     fileVarnames.getOrElseUpdate(file.getPath(), parseFile(file))
   }
   
-  val varRegex = new scala.util.matching.Regex("^\\s*(?:val|var|def)\\s+(\\w+)\\s+=", "varname")
+  val varRegex = new scala.util.matching.Regex("^\\s*(?:val|var|def)\\s+(\\w+)(?::.*)?\\s+=", "varname")
   private def parseFile(file: File): Map[Int, String] = {
     val lines = scala.io.Source.fromFile(file).getLines
     val vardefs = for {(line: String, i: Int) <- lines.zipWithIndex

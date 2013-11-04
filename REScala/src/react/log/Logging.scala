@@ -5,11 +5,31 @@ import scala.reflect.runtime.universe._
 import java.io.PrintStream
 import react.events.Event
 import java.io.File
+import react.events.EventHandler
+import react.events.ImperativeEvent
 
   
 object Logging {
   val DefaultPathPrefix = "./logs/"
   val DefaultSourceFolder = "./src/"
+}
+
+object ReactiveTypes {
+  
+  val HandlerClass = classOf[EventHandler[_]]
+  val ImperativeClass = classOf[ImperativeEvent[_]]
+  val EventClass = classOf[Event[_]]
+  val VarClass = classOf[Var[_]]
+  val SignalClass = classOf[Signal[_]]
+  // Some leaf classes:
+  val VarLeafClass = classOf[VarSynt[_]]
+  val SignalLeafClass = classOf[SignalSynt[_]]
+  
+  /** Simplifies the type of a reactive to one of the given basic types */
+  def getSimpleType(reactive: Reactive): Class[_] = {
+	List(ImperativeClass, VarClass, SignalClass, HandlerClass, EventClass).
+		find(_.isInstance(reactive)) getOrElse (throw new RuntimeException("Class not found"))
+  }
 }
   
 class Logging {
@@ -46,7 +66,6 @@ class Logging {
     addLogger(statslogger)
   }
   
-  
 }
 
 abstract class Logger(out: PrintStream) {
@@ -81,18 +100,20 @@ case class LogNode(reactive: Reactive) {
   val identifier = System identityHashCode reactive
   val level = reactive.level
   val nodetype = reactive.getClass
+  val simpletype = ReactiveTypes.getSimpleType(reactive)
   val meta = SrcReader.getMetaInfo(reactive) // important: This MUST be called when the reactive is first created
   lazy val typename = getParametricType(reactive) // "lazy" is key here!
   
   private def getParametricType(r: Reactive, primitive: Boolean = false): String = {
     // ugly, but still better than fiddling with TypeTags or other reflection
     val typename = r.getClass.getSimpleName
-    if(r.isInstanceOf[Var[_]]){
+    
+    if(ReactiveTypes.VarClass.isInstance(r)){
       val thistype = if(primitive) "Var" else typename
       val value = r.asInstanceOf[Var[_]].getValue
       return thistype + "["+ getInner(value) + "]"
     }
-    else if(r.isInstanceOf[Signal[_]]){
+    else if(ReactiveTypes.SignalClass.isInstance(r)){
       val thistype = if(primitive) "Signal" else typename
       val value = r.asInstanceOf[Signal[_]].getValue
       return thistype + "["+ getInner(value) + "]"
@@ -119,10 +140,6 @@ case class LogStartEvalNode(node: LogNode) extends LogEvent
 case class LogEndEvalNode(node: LogNode) extends LogEvent
 case class LogRound(stamp: Stamp) extends LogEvent
 case class LogIFAttach(node: LogNode, parent: LogNode) extends LogEvent // "virtual" association through IF
-
-
-
-
 
 class SimpleLogger(out: PrintStream) extends Logger(out) {
   def log(logevent: LogEvent) = out.println(logevent)
@@ -159,9 +176,9 @@ class ReactPlayerLog(out: PrintStream) extends Logger(out) {
  
   val VarNodeClass = classOf[VarSynt[_]]
   val FunctionNodeClass = classOf[SignalSynt[_]]
-  def getTypeName(node: LogNode): String = node.nodetype match {
-    case VarNodeClass => "VarNode"
-    case FunctionNodeClass => "FunctionNode"
+  def getTypeName(node: LogNode): String = node.simpletype match {
+    case ReactiveTypes.VarClass => "VarNode"
+    case ReactiveTypes.SignalClass => "FunctionNode"
     case x => x.getSimpleName
   }
 }
@@ -182,9 +199,10 @@ class DotGraphLogger(out: PrintStream) extends Logger(out) with LogRecorder {
     }
     
     out.println("digraph G {")
+    out.println("node [shape=box]")
     for(e <- logevents) { e match {
       case LogCreateNode(node) => 
-        out.println(node.identifier + " [label=<" + label(node) + ">]")
+        out.println(node.identifier + " [label=<" + label(node) + "> " + style(node) + "]")
       case LogAttachNode(node, parent) => 
         doIfLinkNotPresent(node.identifier, parent.identifier) {
         	out.println(parent.identifier + " -> " + node.identifier)
@@ -201,6 +219,17 @@ class DotGraphLogger(out: PrintStream) extends Logger(out) with LogRecorder {
     //clear
   }
   
+  private def style(node: LogNode): String = {    
+    "style=filled fillcolor=" + (node.simpletype match {
+      case ReactiveTypes.ImperativeClass => "brown1"
+      case ReactiveTypes.VarClass => "coral1"
+      case ReactiveTypes.SignalClass => "cornflowerblue"
+      case ReactiveTypes.EventClass => "aquamarine1"
+      case ReactiveTypes.HandlerClass => "gold"
+      case _ => "white"
+    })
+  }
+    
   private def label(node: LogNode): String = 
     (if(node.meta.varname != NodeMetaInfo.NoVarName) "<B>" + node.meta.varname + "</B><BR/>" else "") + 
     node.typename
