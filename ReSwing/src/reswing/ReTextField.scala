@@ -4,11 +4,11 @@ import scala.language.implicitConversions
 import scala.swing.Color
 import scala.swing.Dimension
 import scala.swing.Font
-import scala.swing.TextArea
-import scala.swing.event.ValueChanged
+import scala.swing.TextField
+import scala.swing.event.EditDone
 import react.events.Event
 
-class ReTextArea(
+class ReTextField(
     text: ReSwingValue[String] = (),
     editable: ReSwingValue[Boolean] = (),
     cut: Event[Unit] = (),
@@ -22,18 +22,17 @@ class ReTextArea(
     minimumSize: ReSwingValue[Dimension] = (),
     maximumSize: ReSwingValue[Dimension] = (),
     preferredSize: ReSwingValue[Dimension] = (),
-    rows: Int = 0,
     columns: Int = 0)
   extends
     ReTextComponent(text, editable, cut, copy, paste, selectAll,
                     background, foreground, font, enabled,
                     minimumSize, maximumSize, preferredSize) {
   override protected lazy val peer =
-    new TextArea(if (text == null) null else text.getValue, rows, columns) with ComponentMixin
+    new TextField(if (text == null) null else text.getValue, columns) with ComponentMixin
   
-  val lineCount = ReSwingValue using (peer.lineCount _, classOf[ValueChanged])
+  val editDone = ReSwingEvent using classOf[EditDone]
 }
 
-object ReTextArea {
-  implicit def toTextArea(component: ReTextArea): TextArea = component.peer
+object ReTextField {
+  implicit def toTextField(component: ReTextField): TextField = component.peer
 }

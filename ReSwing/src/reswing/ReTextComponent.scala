@@ -11,6 +11,7 @@ import react.events.Event
 
 class ReTextComponent(
     val text: ReSwingValue[String] = (),
+    val editable: ReSwingValue[Boolean] = (),
     cut: Event[Unit] = (),
     copy: Event[Unit] = (),
     paste: Event[Unit] = (),
@@ -31,6 +32,8 @@ class ReTextComponent(
   
   (text using (peer.text _, peer.text_= _, classOf[ValueChanged])
         force ("editable", peer.editable_= _, false))
+  
+  editable using (peer.editable _, peer.editable_= _, "editable")
   
   cut using peer.cut _
   copy using peer.copy _
