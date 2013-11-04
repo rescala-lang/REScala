@@ -47,7 +47,7 @@ private[reswing] abstract trait ReSwingEventConnection {
     }
     def using(setter: () => Unit): Event[T] = {
       if (value != null) 
-        value += { v => inSyncEDT { setter() } }
+        value += { _ => inSyncEDT { setter() } }
       value
     }
   }
@@ -57,11 +57,13 @@ private[reswing] abstract trait ReSwingEventConnection {
       using(peer, reaction)
     
     def using[T](publisher: Publisher, reaction: Class[T]): ReSwingEvent[T]  = {
-      val event: ReSwingEvent[T] = new ReSwingEvent[T]({ event =>
-        reactor listenTo publisher
-        reactor.reactions += { case e =>
-          if (reaction isInstance e)
-            event(e.asInstanceOf[T])
+      val event = new ReSwingEvent[T]({ event =>
+        inSyncEDT {
+          reactor listenTo publisher
+          reactor.reactions += { case e =>
+            if (reaction isInstance e)
+              event(e.asInstanceOf[T])
+          }
         }
       })
       event

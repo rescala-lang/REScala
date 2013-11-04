@@ -10,8 +10,6 @@ import scala.swing.event.UIElementMoved
 import scala.swing.event.UIElementResized
 import scala.swing.event._
 
-import reswing.ReSwingValue.toReSwingValue
-
 abstract class ReWindow(
     val contents: ReSwingValue[Component] = (),
     override val size: ReSwingValue[Dimension] = (),

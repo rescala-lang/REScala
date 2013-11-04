@@ -14,13 +14,13 @@ sealed abstract class ReSwingValue[T] {
   protected val event = Lazy { new ImperativeEvent[T] }
   protected var latestValue = null.asInstanceOf[T]
   
-  final private val inits = ListBuffer.empty[Unit => Unit]
+  final private val inits = ListBuffer.empty[ReSwingValue[T] => Unit]
   
   final protected def toSignal = {
     if (!signal.isDefined) {
       signal()
       for (init <- inits)
-        init()
+        init(this)
       inits.clear
     }
     signal()
@@ -32,8 +32,8 @@ sealed abstract class ReSwingValue[T] {
   
   final private[reswing] def update(value: T)
     { latestValue = value; if (event.isDefined) event()(value) }
-  final private[reswing] def init(init: Unit => Unit)
-    { if (signal.isDefined) init() else inits += init }
+  final private[reswing] def init(init: ReSwingValue[T] => Unit)
+    { if (signal.isDefined) init(this) else inits += init }
 }
 
 final case class ReSwingNoValue[T]() extends ReSwingValue[T] {
@@ -68,24 +68,24 @@ object ReSwingValue {
   /**
    * Does not cause the `Swing` library to use a specific value.
    */
-  implicit def toReSwingValue[T](value: Unit) = ReSwingNoValue[T]
+  implicit def apply[T](value: Unit) = ReSwingNoValue[T]
   
   /**
    * Sets the given value once.
    * After this, does not cause the `Swing` library to use a specific value.
    */
-  implicit def toReSwingValue[T](value: T) = ReSwingValueValue(value)
+  implicit def apply[T](value: T) = ReSwingValueValue(value)
   
   /**
    * Sets the value whenever the given [[react.events.Event]] changes.
    */
-  implicit def toReSwingValue[T](value: Event[T]) = ReSwingEventValue(value)
+  implicit def apply[T](value: Event[T]) = ReSwingEventValue(value)
   
   /**
    * Sets the value to the value of the given [[react.Signal]] and causes
    * the `Swing` library to always use the current `Signal` value.
    */
-  implicit def toReSwingValue[T](value: Signal[T]) = ReSwingSignalValue(value)
+  implicit def apply[T](value: Signal[T]) = ReSwingSignalValue(value)
   
   /**
    * Returns the [[react.Signal]] representing the value.

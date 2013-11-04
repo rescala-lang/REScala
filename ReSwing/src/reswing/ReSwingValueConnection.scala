@@ -121,44 +121,47 @@ private[reswing] abstract trait ReSwingValueConnection {
     
     private def using(getter: () => T, setter: Option[T => Unit],
         names: Seq[ChangingProperty]): ReSwingValue[T] = {
-      if (value != null) {
-        value() = getter()
-        if (setter.isDefined) {
-          val set = setter.get
-          value use { v => inSyncEDT { set(v) } }
-          
-          if (value.fixed)
-            for (name <- names)
-              name match {
-                case Left(name) =>
-                  changingProperties getOrElseUpdate (name, ListBuffer()) += { _ =>
-                    if (getter() != value.getValue)
-                      Swing onEDT { if (getter() != value.getValue) set(value.getValue) } }
-                
-                case Right((publisher, reaction)) =>
-                  reactor listenTo publisher
-                  changingReactions getOrElseUpdate (reaction, ListBuffer()) += { _ =>
-                    if (getter() != value.getValue)
-                      Swing onEDT { if (getter() != value.getValue) set(value.getValue) } }
-              }
-        }
-        
-        if (!value.fixed)
-          value init { _ =>
-            value() = getter()
-            for (name <- names)
-              name match {
-                case Left(name) =>
-                  changingProperties getOrElseUpdate (name, ListBuffer()) += { _ =>
-                    value() = getter() }
-                
-                case Right((publisher, reaction)) =>
-                  reactor listenTo publisher
-                  changingReactions.getOrElseUpdate(reaction, ListBuffer()) += { _ =>
-                    value() = getter() }
-              }
+      if (value != null)
+        inSyncEDT {
+          value() = getter()
+          if (setter.isDefined) {
+            val set = setter.get
+            value use { v => inSyncEDT { set(v) } }
+            
+            if (value.fixed)
+              for (name <- names)
+                name match {
+                  case Left(name) =>
+                    changingProperties getOrElseUpdate (name, ListBuffer()) += { _ =>
+                      if (getter() != value.getValue)
+                        Swing onEDT { if (getter() != value.getValue) set(value.getValue) } }
+                  
+                  case Right((publisher, reaction)) =>
+                    reactor listenTo publisher
+                    changingReactions getOrElseUpdate (reaction, ListBuffer()) += { _ =>
+                      if (getter() != value.getValue)
+                        Swing onEDT { if (getter() != value.getValue) set(value.getValue) } }
+                }
           }
-      }
+          
+          if (!value.fixed)
+            value init { value =>
+              inSyncEDT {
+                value() = getter()
+                for (name <- names)
+                  name match {
+                    case Left(name) =>
+                      changingProperties getOrElseUpdate (name, ListBuffer()) += { _ =>
+                        value() = getter() }
+                    
+                    case Right((publisher, reaction)) =>
+                      reactor listenTo publisher
+                      changingReactions.getOrElseUpdate(reaction, ListBuffer()) += { _ =>
+                        value() = getter() }
+                  }
+              }
+            }
+        }
       value
     }
     
@@ -168,10 +171,11 @@ private[reswing] abstract trait ReSwingValueConnection {
      * i.e. a value that should not be changed by the library.
      */
     def force[U](name: String, setter: U => Unit, forcedValue: U): ReSwingValue[T] = {
-      if (value != null && value.fixed) {
-        setter(forcedValue)
-        enforcedProperties += name -> { _ => Swing onEDT { setter(forcedValue) } }
-      }
+      if (value != null && value.fixed)
+        inSyncEDT {
+          setter(forcedValue)
+          enforcedProperties += name -> { _ => Swing onEDT { setter(forcedValue) } }
+        }
       value
     }
   }
