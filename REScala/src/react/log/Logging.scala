@@ -261,6 +261,21 @@ class StatisticsLogger(out: PrintStream) extends Logger(out) with LogRecorder {
     val turns = stamps.map (s => (s.sequenceNum, s.roundNum)).toSet.size
     val averageTurns = turns.toFloat / rounds
     
+    val nNodesOverRounds: List[Int] = logevents.foldLeft((List(0), 0)) {(accum, e: LogEvent) => 
+      val (stats, latest) = accum
+      e match {
+        case LogRound(Stamp(round, _)) if round > latest => (0 :: stats, round)
+        case LogCreateNode(_) => ((stats.head + 1) :: stats.tail, latest)
+        case _ => accum
+      }
+     }._1.reverse
+    val nNodesOverTurns: List[Int] = logevents.foldLeft(List(0)) {(stats, e: LogEvent) => e match {
+        case LogRound(_)  => 0 :: stats
+        case LogCreateNode(_) => (stats.head + 1) :: stats.tail
+        case _ => stats
+      }
+     }.reverse
+    
     out.println("Nodes: " + nNodes)
     out.println("Edges: " + nEdges)
     out.println("Attach dependant: " + nAttaches)
@@ -269,9 +284,9 @@ class StatisticsLogger(out: PrintStream) extends Logger(out) with LogRecorder {
     out.println("Total rounds: " + rounds)
     out.println("Total turns: " + turns)
     out.println("Average turns: " + averageTurns)
+    //out.println("Created nodes per round: " + nNodesOverRounds)
     out.println("Node connectivity: ")
-    out.println("Total notify dependents: ")
-    
+    out.println("Total notify dependents: ")    
     out.println("Node types: ")
     out.println(nodetypeDistribution.collect{
       case (s, c) => s + "\t" + c}.mkString("\t","\n\t",""))
