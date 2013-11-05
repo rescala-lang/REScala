@@ -55,7 +55,7 @@ class Logging {
       new java.io.PrintStream(
       new java.io.FileOutputStream(reactplayerfile, false)))
     
-    val statsfile = Logging.DefaultPathPrefix + name + "_stats.txt"
+    val statsfile = Logging.DefaultPathPrefix + name + "_stats.yaml"
     val statslogger = new StatisticsLogger(
       new java.io.PrintStream(
       new java.io.FileOutputStream(statsfile, false)));
@@ -130,7 +130,7 @@ case class LogNode(reactive: Reactive) {
     return reactive.getClass.getSimpleName // should not be reached
   }
 }
-class LogEvent
+class LogEvent { val time = System.currentTimeMillis }
 case class LogMessage(string: String) extends LogEvent
 case class LogCreateNode(node: LogNode) extends LogEvent
 case class LogAttachNode(node: LogNode, parent: LogNode) extends LogEvent
@@ -249,6 +249,8 @@ class StatisticsLogger(out: PrintStream) extends Logger(out) with LogRecorder {
     val nEdges = edges.size
     val nChildren = edges.groupBy(_._1).mapValues(_.size).toSeq
     val nParents = edges.groupBy(_._2).mapValues(_.size).toSeq
+    val pulses = logevents.collect {case l @ LogPulseNode(_) => l}
+    val nPulses = pulses.size
     val averageChildren = mean(nChildren.map(_._2))
     val averageParents = mean(nParents.map(_._2))
     val nodetypes = nodes.map(_.typename)
@@ -256,10 +258,23 @@ class StatisticsLogger(out: PrintStream) extends Logger(out) with LogRecorder {
     	.groupBy(identity)
     	.mapValues(_.size).toSeq
     	.sortBy(_._2).reverse
-    val stamps = logevents.collect { case LogRound(stamp) => stamp }
-    val rounds = stamps.map(_.sequenceNum).toSet.size
-    val turns = stamps.map (s => (s.sequenceNum, s.roundNum)).toSet.size
-    val averageTurns = turns.toFloat / rounds
+    val turns = logevents.collect { case l @ LogRound(_) => l }
+    val totalTime = if(turns.isEmpty) 0 else turns.last.time - turns.head.time
+    val totalSeconds = totalTime.toFloat / 1000
+    val logeventsPerSecond = logevents.size / totalSeconds
+    val stamps = turns.map(_.stamp)
+    val rounds = turns.foldLeft((Nil: List[LogRound], 0)) {(accum, e: LogEvent) => 
+      val (rounds, latest) = accum
+      e match {
+        case round @ LogRound(Stamp(r, _)) if r > latest => (round :: rounds, r)
+        case _ => accum
+      }
+     }._1.reverse    
+    val nRounds = rounds.size
+    val turnsPerRound = stamps.groupBy(_.roundNum).mapValues(_.size).toList.sorted.map(_._2)
+    val nTurns = stamps.size
+    val averageTurns = nTurns.toFloat / nRounds
+    val millisPerRound = rounds.map(_.time).sliding(2).map(x => x.reverse.reduce(_ - _))
     
     val nNodesOverRounds: List[Int] = logevents.foldLeft((List(0), 0)) {(accum, e: LogEvent) => 
       val (stats, latest) = accum
@@ -275,20 +290,39 @@ class StatisticsLogger(out: PrintStream) extends Logger(out) with LogRecorder {
         case _ => stats
       }
      }.reverse
+     
+    val nNodesOverRoundsCum = nNodesOverRounds.scan(0)(_ + _)
+    val nPulseOverRounds: List[Int] = logevents.foldLeft((List(0), 0)) {(accum, e: LogEvent) => 
+      val (stats, latest) = accum
+      e match {
+        case LogRound(Stamp(round, _)) if round > latest => (0 :: stats, round)
+        case LogPulseNode(_) => ((stats.head + 1) :: stats.tail, latest)
+        case _ => accum
+      }
+     }._1.reverse
     
+    out.println("# REScala stats (this is YAML)")
+    out.println("Total log events: " + logevents.size)
+    out.println("Total running time: " + totalSeconds + " sec")
     out.println("Nodes: " + nNodes)
     out.println("Edges: " + nEdges)
-    out.println("Attach dependant: " + nAttaches)
+    out.println("Attaches: " + nAttaches)
+    out.println("Total rounds: " + nRounds)
+    out.println("Total turns: " + nTurns)
+    out.println("Total pulses: " + nPulses)   
     out.println("Average dependants: "+ averageChildren)
     out.println("Average depend-ons: " + averageParents)
-    out.println("Total rounds: " + rounds)
-    out.println("Total turns: " + turns)
-    out.println("Average turns: " + averageTurns)
-    //out.println("Created nodes per round: " + nNodesOverRounds)
-    out.println("Node connectivity: ")
-    out.println("Total notify dependents: ")    
+    out.println("Average attaches per edge per round: " + nAttaches.toFloat / nEdges / nRounds)
+    out.println("Average turns per round: " + averageTurns)
+    out.println("Average log events per second: " + logeventsPerSecond)
+    out.println("Turns per round: " + turnsPerRound.mkString("[", ", ", "]"))
+    out.println("Time per round: " + millisPerRound.mkString("[", ", ", "]"))
+    out.println("Created nodes per round: " + nNodesOverRounds.mkString("[", ", ", "]"))
+    out.println("Cumulative nodes per round: " + nNodesOverRoundsCum.mkString("[", ", ", "]"))
+    out.println("Pulses per round: " + nPulseOverRounds.mkString("[", ", ", "]"))
+    //out.println("Node connectivity: ")
     out.println("Node types: ")
     out.println(nodetypeDistribution.collect{
-      case (s, c) => s + "\t" + c}.mkString("\t","\n\t",""))
+      case (s, c) => s + ": " + c}.mkString("  ","\n  ",""))
   }
 }
