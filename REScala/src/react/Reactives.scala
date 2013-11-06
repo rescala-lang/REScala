@@ -6,6 +6,7 @@ import scala.collection.mutable.PriorityQueue
 import scala.reflect.runtime.universe._
 import react.events._
 import react.log._
+import react.log.Logging
 
 /* A Reactive is a value type which has a dependency to other Reactives */
 trait Reactive extends Ordered[Reactive] {

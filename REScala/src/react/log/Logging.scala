@@ -1,0 +1,328 @@
+package react.log
+
+import react._
+import scala.reflect.runtime.universe._
+import java.io.PrintStream
+import react.events.Event
+import java.io.File
+import react.events.EventHandler
+import react.events.ImperativeEvent
+
+  
+object Logging {
+  val DefaultPathPrefix = "./logs/"
+  val DefaultSourceFolder = "./src/"
+}
+
+object ReactiveTypes {
+  
+  val HandlerClass = classOf[EventHandler[_]]
+  val ImperativeClass = classOf[ImperativeEvent[_]]
+  val EventClass = classOf[Event[_]]
+  val VarClass = classOf[Var[_]]
+  val SignalClass = classOf[Signal[_]]
+  // Some leaf classes:
+  val VarLeafClass = classOf[VarSynt[_]]
+  val SignalLeafClass = classOf[SignalSynt[_]]
+  
+  /** Simplifies the type of a reactive to one of the given basic types */
+  def getSimpleType(reactive: Reactive): Class[_] = {
+	List(ImperativeClass, VarClass, SignalClass, HandlerClass, EventClass).
+		find(_.isInstance(reactive)) getOrElse (throw new RuntimeException("Class not found"))
+  }
+}
+  
+class Logging {
+  val loggers = new scala.collection.mutable.MutableList[Logger]
+  
+  def addLogger(logger: Logger) = loggers += logger
+  
+  def log(logevent: LogEvent) = loggers foreach (_ log logevent)
+    
+  def enableDefaultLogging {   
+    val maybeName = for(main <- 
+      Thread.getAllStackTraces.keySet().toArray().find(_.asInstanceOf[Thread].getName == "main")) 
+      yield main.asInstanceOf[Thread].getStackTrace.last.getFileName
+    val name = maybeName.getOrElse("LOG").takeWhile(_ != '.')
+    
+    val dotfile = Logging.DefaultPathPrefix + name + ".dot"
+    val dotGraphLogger = new react.log.DotGraphLogger(
+      new java.io.PrintStream(
+      new java.io.FileOutputStream(dotfile, false)))
+    
+    val reactplayerfile = Logging.DefaultPathPrefix + name + ".txt"
+    val reactplayerLogger = new react.log.ReactPlayerLog(
+      new java.io.PrintStream(
+      new java.io.FileOutputStream(reactplayerfile, false)))
+    
+    val statsfile = Logging.DefaultPathPrefix + name + "_stats.yaml"
+    val statslogger = new StatisticsLogger(
+      new java.io.PrintStream(
+      new java.io.FileOutputStream(statsfile, false)));
+   
+    //addLogger(new SimpleLogger(System.out))
+    addLogger(reactplayerLogger)
+    addLogger(dotGraphLogger)
+    addLogger(statslogger)
+  }
+  
+}
+
+abstract class Logger(out: PrintStream) {
+  def log(logevent: LogEvent)
+}
+
+trait LogRecorder extends Logger {
+  val logevents = new scala.collection.mutable.ListBuffer[LogEvent]
+  def log(logevent: LogEvent) = logevents += logevent
+  def clear = logevents.clear
+  
+  def snapshot
+  
+  
+  /** Performs a snapshot the first time this is called, subsequent calls are ignored */
+  def snapshotOnce {
+    if(snapshotDone) return
+    snapshotDone = true
+    snapshot    
+  }
+  private var snapshotDone = false
+  
+  // If the snapshot was never called manually, snapshot on program exit
+  scala.sys.addShutdownHook{ snapshotOnce }
+}
+
+
+case class LogNode(reactive: Reactive) {
+  // CAREFUL: reference to node might impair garbage collection
+  // Possible solution: somehow discard reference to 'reactive', store only what is needed
+
+  val identifier = System identityHashCode reactive
+  val level = reactive.level
+  val nodetype = reactive.getClass
+  val simpletype = ReactiveTypes.getSimpleType(reactive)
+  val meta = SrcReader.getMetaInfo(reactive) // important: This MUST be called when the reactive is first created
+  lazy val typename = getParametricType(reactive) // "lazy" is key here!
+  
+  private def getParametricType(r: Reactive, primitive: Boolean = false): String = {
+    // ugly, but still better than fiddling with TypeTags or other reflection
+    val typename = r.getClass.getSimpleName
+    
+    if(ReactiveTypes.VarClass.isInstance(r)){
+      val thistype = if(primitive) "Var" else typename
+      val value = r.asInstanceOf[Var[_]].getValue
+      return thistype + "["+ getInner(value) + "]"
+    }
+    else if(ReactiveTypes.SignalClass.isInstance(r)){
+      val thistype = if(primitive) "Signal" else typename
+      val value = r.asInstanceOf[Signal[_]].getValue
+      return thistype + "["+ getInner(value) + "]"
+    }
+    else if(r.isInstanceOf[Event[_]]) {
+      return typename
+    }
+
+    def getInner(value: Any) = 
+      if(value == null) "?" else 
+      if(value.isInstanceOf[Reactive]) getParametricType(value.asInstanceOf[Reactive]) 
+      else value.getClass.getSimpleName
+      
+    return reactive.getClass.getSimpleName // should not be reached
+  }
+}
+class LogEvent { val time = System.currentTimeMillis }
+case class LogMessage(string: String) extends LogEvent
+case class LogCreateNode(node: LogNode) extends LogEvent
+case class LogAttachNode(node: LogNode, parent: LogNode) extends LogEvent
+case class LogScheduleNode(node: LogNode) extends LogEvent
+case class LogPulseNode(Node: LogNode) extends LogEvent
+case class LogStartEvalNode(node: LogNode) extends LogEvent
+case class LogEndEvalNode(node: LogNode) extends LogEvent
+case class LogRound(stamp: Stamp) extends LogEvent
+case class LogIFAttach(node: LogNode, parent: LogNode) extends LogEvent // "virtual" association through IF
+
+class SimpleLogger(out: PrintStream) extends Logger(out) {
+  def log(logevent: LogEvent) = out.println(logevent)
+}
+
+class ReactPlayerLog(out: PrintStream) extends Logger(out) {
+  var timestamp = 0
+  def log(logevent: LogEvent) = logevent match {
+    case LogRound(round) => timestamp = round.roundNum * 1000 + round.sequenceNum
+    case LogCreateNode(node) =>
+      out.println("NodeCreate : " + timestamp)
+      out.println("> Node = " + node.identifier)
+      out.println("> Type = " + getTypeName(node))
+    case LogAttachNode(node, parent) =>
+      out.println("NodeAttach : " + timestamp)
+      out.println("> Node = " + node.identifier)
+      out.println("> Parent = " + parent.identifier)      
+    case LogPulseNode(node) =>
+      out.println("NodePulse : " + timestamp)
+      out.println("> Node = " + node.identifier)
+      out.println("> Transaction = " + node.level)
+    case LogStartEvalNode(node) =>
+      out.println("NodeEvaluateBegin : " + timestamp)
+      out.println("> Node = " + node.identifier)
+      out.println("> Transaction = " + node.level)
+      out.println("> Type = " + getTypeName(node))
+    case LogEndEvalNode(node) =>
+      out.println("NodeEvaluateEnd : " + timestamp)
+      out.println("> Node = " + node.identifier)
+      out.println("> Transaction = " + node.level)
+      out.println("> Type = " + getTypeName(node))      
+    case _ =>
+  }
+ 
+  val VarNodeClass = classOf[VarSynt[_]]
+  val FunctionNodeClass = classOf[SignalSynt[_]]
+  def getTypeName(node: LogNode): String = node.simpletype match {
+    case ReactiveTypes.VarClass => "VarNode"
+    case ReactiveTypes.SignalClass => "FunctionNode"
+    case x => x.getSimpleName
+  }
+}
+
+/** Outputs a graph in dot format, at the moment the "snapshot" function is called */
+class DotGraphLogger(out: PrintStream) extends Logger(out) with LogRecorder {
+  
+  def snapshot {
+    if(logevents.isEmpty) return
+    
+    val existingLinks = new collection.mutable.HashSet[(Int, Int)]
+    def doIfLinkNotPresent(fromTo: (Int, Int))(body: => Unit){
+      if(!existingLinks.contains(fromTo)){
+        existingLinks.add(fromTo)
+        existingLinks.add(fromTo.swap)
+        body
+      }
+    }
+    
+    out.println("digraph G {")
+    out.println("node [shape=box]")
+    for(e <- logevents) { e match {
+      case LogCreateNode(node) => 
+        out.println(node.identifier + " [label=<" + label(node) + "> " + style(node) + "]")
+      case LogAttachNode(node, parent) => 
+        doIfLinkNotPresent(node.identifier, parent.identifier) {
+        	out.println(parent.identifier + " -> " + node.identifier)
+        }
+      case LogIFAttach(node, parent) =>
+        doIfLinkNotPresent(node.identifier, parent.identifier) {
+        	out.println(parent.identifier + " -> " + node.identifier + " [style = dashed]")
+        }
+      
+      case LogMessage(s) => out.println("// " + s)
+      case other => 
+    }}
+    out.println("}")
+    //clear
+  }
+  
+  private def style(node: LogNode): String = {    
+    "style=filled fillcolor=" + (node.simpletype match {
+      case ReactiveTypes.ImperativeClass => "brown1"
+      case ReactiveTypes.VarClass => "coral1"
+      case ReactiveTypes.SignalClass => "cornflowerblue"
+      case ReactiveTypes.EventClass => "aquamarine1"
+      case ReactiveTypes.HandlerClass => "gold"
+      case _ => "white"
+    })
+  }
+    
+  private def label(node: LogNode): String = 
+    (if(node.meta.varname != NodeMetaInfo.NoVarName) "<B>" + node.meta.varname + "</B><BR/>" else "") + 
+    node.typename
+}
+
+
+class StatisticsLogger(out: PrintStream) extends Logger(out) with LogRecorder {
+  def snapshot {
+    def mean[T]( ts: Iterable[T] )( implicit num: Numeric[T] ) = 
+    	num.toFloat(ts.sum) / ts.size
+    
+    val nodes = logevents.collect{ case LogCreateNode(node) => node }
+    val nNodes = nodes.size
+    val attaches = logevents.collect { case LogAttachNode(node, parent) => (parent.identifier, node.identifier) }
+    val nAttaches = attaches.size
+    val edges = attaches.toSet
+    val nEdges = edges.size
+    val nChildren = edges.groupBy(_._1).mapValues(_.size).toSeq
+    val nParents = edges.groupBy(_._2).mapValues(_.size).toSeq
+    val pulses = logevents.collect {case l @ LogPulseNode(_) => l}
+    val nPulses = pulses.size
+    val averageChildren = mean(nChildren.map(_._2))
+    val averageParents = mean(nParents.map(_._2))
+    val nodetypes = nodes.map(_.typename)
+    val nodetypeDistribution = nodetypes
+    	.groupBy(identity)
+    	.mapValues(_.size).toSeq
+    	.sortBy(_._2).reverse
+    val turns = logevents.collect { case l @ LogRound(_) => l }
+    val totalTime = if(turns.isEmpty) 0 else turns.last.time - turns.head.time
+    val totalSeconds = totalTime.toFloat / 1000
+    val logeventsPerSecond = logevents.size / totalSeconds
+    val stamps = turns.map(_.stamp)
+    val rounds = turns.foldLeft((Nil: List[LogRound], 0)) {(accum, e: LogEvent) => 
+      val (rounds, latest) = accum
+      e match {
+        case round @ LogRound(Stamp(r, _)) if r > latest => (round :: rounds, r)
+        case _ => accum
+      }
+     }._1.reverse    
+    val nRounds = rounds.size
+    val turnsPerRound = stamps.groupBy(_.roundNum).mapValues(_.size).toList.sorted.map(_._2)
+    val nTurns = stamps.size
+    val averageTurns = nTurns.toFloat / nRounds
+    val millisPerRound = rounds.map(_.time).sliding(2).map(x => x.reverse.reduce(_ - _))
+    
+    val nNodesOverRounds: List[Int] = logevents.foldLeft((List(0), 0)) {(accum, e: LogEvent) => 
+      val (stats, latest) = accum
+      e match {
+        case LogRound(Stamp(round, _)) if round > latest => (0 :: stats, round)
+        case LogCreateNode(_) => ((stats.head + 1) :: stats.tail, latest)
+        case _ => accum
+      }
+     }._1.reverse
+    val nNodesOverTurns: List[Int] = logevents.foldLeft(List(0)) {(stats, e: LogEvent) => e match {
+        case LogRound(_)  => 0 :: stats
+        case LogCreateNode(_) => (stats.head + 1) :: stats.tail
+        case _ => stats
+      }
+     }.reverse
+     
+    val nNodesOverRoundsCum = nNodesOverRounds.scan(0)(_ + _)
+    val nPulseOverRounds: List[Int] = logevents.foldLeft((List(0), 0)) {(accum, e: LogEvent) => 
+      val (stats, latest) = accum
+      e match {
+        case LogRound(Stamp(round, _)) if round > latest => (0 :: stats, round)
+        case LogPulseNode(_) => ((stats.head + 1) :: stats.tail, latest)
+        case _ => accum
+      }
+     }._1.reverse
+    
+    out.println("# REScala stats (this is YAML)")
+    out.println("Total log events: " + logevents.size)
+    out.println("Total running time: " + totalSeconds + " sec")
+    out.println("Nodes: " + nNodes)
+    out.println("Edges: " + nEdges)
+    out.println("Attaches: " + nAttaches)
+    out.println("Total rounds: " + nRounds)
+    out.println("Total turns: " + nTurns)
+    out.println("Total pulses: " + nPulses)   
+    out.println("Average dependants: "+ averageChildren)
+    out.println("Average depend-ons: " + averageParents)
+    out.println("Average attaches per edge per round: " + nAttaches.toFloat / nEdges / nRounds)
+    out.println("Average turns per round: " + averageTurns)
+    out.println("Average log events per second: " + logeventsPerSecond)
+    out.println("Turns per round: " + turnsPerRound.mkString("[", ", ", "]"))
+    out.println("Time per round: " + millisPerRound.mkString("[", ", ", "]"))
+    out.println("Created nodes per round: " + nNodesOverRounds.mkString("[", ", ", "]"))
+    out.println("Cumulative nodes per round: " + nNodesOverRoundsCum.mkString("[", ", ", "]"))
+    out.println("Pulses per round: " + nPulseOverRounds.mkString("[", ", ", "]"))
+    //out.println("Node connectivity: ")
+    out.println("Node types: ")
+    out.println(nodetypeDistribution.collect{
+      case (s, c) => s + ": " + c}.mkString("  ","\n  ",""))
+  }
+}
