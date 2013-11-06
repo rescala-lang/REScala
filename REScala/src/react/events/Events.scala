@@ -20,11 +20,13 @@ trait Event[+T] extends DepHolder {
    * Event filtered with a predicate
    */
   def &&[U >: T](pred: U => Boolean) = new EventNodeFilter[U](this, pred)
+  def filter[U >: T](pred: U => Boolean) = &&[U](pred)
 
   /**
    * Event filtered with a boolean variable
    */
   def &&[U >: T](pred: =>Boolean) = new EventNodeFilter[U](this, _ => pred)
+  def filter[U >: T](pred: =>Boolean) = &&[U](pred)
   
   /**
    * Event is triggered except if the other one is triggered
