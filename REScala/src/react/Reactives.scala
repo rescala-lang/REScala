@@ -49,7 +49,7 @@ trait Dependent extends Reactive {
   }
   def removeDependOn(dep: DepHolder) = dependOn -= dep
   
-  def triggerReevaluation() 
+  protected[react] def triggerReevaluation() 
   
   /* A node on which this one depends is changed */
   def dependsOnchanged(change:Any, dep: DepHolder)
@@ -84,9 +84,9 @@ trait Signal[+T] extends Dependent with DepHolder {
   def getValue: T
   def getVal: T
   
-  def triggerReevaluation()
+  protected[react] def triggerReevaluation()
   
-  def reEvaluate(): T 
+  protected[react] def reEvaluate(): T 
   
   def apply(): T
   def apply(s: SignalSynt[_]): T
@@ -123,7 +123,7 @@ trait Signal[+T] extends Dependent with DepHolder {
 
   
   /* Testing */
-  val timestamps :ListBuffer[Stamp]
+  protected[react] val timestamps :ListBuffer[Stamp]
 }
 
 
