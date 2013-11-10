@@ -1,15 +1,12 @@
-package test
+package react.test
 
 
 import react.Handler
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito.verify
-import org.mockito.Mockito.times
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-
-
 import react._
 import react.DepHolder
 import react.Var

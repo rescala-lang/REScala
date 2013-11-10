@@ -1,4 +1,4 @@
-package test
+package react.test
 
 
 
@@ -13,7 +13,10 @@ import react.VarSynt
 import react.Var
 import react._
 
+import react._
+import react.Signal
 import macro.SignalMacro.{SignalM => Signal}
+import react.events._
 
 
 

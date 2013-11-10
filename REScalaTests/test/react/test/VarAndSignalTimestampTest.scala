@@ -1,20 +1,13 @@
-package test
+package react.test
 
 
 import scala.collection.mutable.ListBuffer
 import org.junit.Before
 import org.junit.After
 import org.junit.Test
-import org.mockito.Mockito.verify
-import org.mockito.Mockito.times
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-
-
-import react.Signal
-import react.DepHolder
 import react.Var
-import react.Handler
 import react._
 
 

@@ -1,17 +1,10 @@
-package test.ifunctions
-
-
-
-import org.junit.Before
+package react.test.ifunctions
 import org.junit.Test
-import org.mockito.Mockito.verify
-import org.mockito.Mockito.times
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-
-
 import react._
 import react.events._
+import react.IFunctions.Factory
 
 
 class IFunTest extends AssertionsForJUnit with MockitoSugar {

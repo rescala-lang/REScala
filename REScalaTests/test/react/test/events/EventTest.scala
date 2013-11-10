@@ -1,17 +1,11 @@
-package test.events
+package react.test.events
 
 
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import org.mockito.Mockito.verify
-import org.mockito.Mockito.times
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-
-import scala.collection.immutable.Set
-
-
 import react._
 import react.events._
 //import eevents.lib._

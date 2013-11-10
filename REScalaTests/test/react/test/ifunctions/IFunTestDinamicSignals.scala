@@ -1,21 +1,18 @@
-package test.ifunctions
-
-
-
-import org.junit.Before
+package react.test.ifunctions
 import org.junit.Test
-import org.mockito.Mockito.verify
-import org.mockito.Mockito.times
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 
-
-import macro.SignalMacro.{SignalM => Signal}
-import react.Signal
-import react.SignalSynt
 import react.IFunctions
 import react.Var
 import react.events._
+import react.Signal
+
+import react._
+import react.Signal
+import macro.SignalMacro.{SignalM => Signal}
+import react.events._
+
 
 
 class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
