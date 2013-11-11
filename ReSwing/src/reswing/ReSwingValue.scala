@@ -18,7 +18,6 @@ sealed abstract class ReSwingValue[T] {
   
   final protected def toSignal = {
     if (!signal.isDefined) {
-      signal()
       for (init <- inits)
         init(this)
       inits.clear

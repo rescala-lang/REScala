@@ -43,7 +43,7 @@ abstract class ReComponent(
     }
     
     object wheel {
-      val dragged = ReSwingEvent using (peer.mouse.wheel, classOf[MouseWheelMoved])
+      val moved = ReSwingEvent using (peer.mouse.wheel, classOf[MouseWheelMoved])
     }
   }
   
