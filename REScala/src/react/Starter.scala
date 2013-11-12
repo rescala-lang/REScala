@@ -12,13 +12,14 @@ object Starter extends App {
   println("start!")
   
   // Adding some loggers
-  ReactiveEngine.log addLogger new ReactPlayerLog(
+  implicit val log = ReactiveEngine.log
+  log addLogger new ReactPlayerLog(
       new java.io.PrintStream(
       new java.io.FileOutputStream("./logs/Starter.txt", false))) 
-  ReactiveEngine.log addLogger new DotGraphLogger(
+  log addLogger new DotGraphLogger(
       new java.io.PrintStream(
-      new java.io.FileOutputStream("./logs/starter.dot", false))) 
-  ReactiveEngine.log addLogger new StatisticsLogger(System.out)
+      new java.io.FileOutputStream("./logs/starter.dot", false)))
+  log addLogger new StatisticsLogger(System.out)
   
   val v1 = Var(1)
   val v2 = Var(2)
