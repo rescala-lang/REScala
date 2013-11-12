@@ -17,6 +17,9 @@ import scala.swing.event.MouseReleased
 
 
 object MainWindow extends SimpleSwingApplication {
+  
+  /* Uncomment to enable logging: */
+  //react.ReactiveEngine.log.enableAllLogging
 
   var game = new MillGame
   

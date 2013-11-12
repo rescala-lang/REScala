@@ -1,0 +1,68 @@
+# REScala stats (this is YAML)
+Total log events: 27881
+Total running time: 17.031 sec
+Nodes: 36
+Edges: 35
+Attaches: 23182
+Total rounds: 30
+Total turns: 1267
+Total pulses: 187
+Average dependants: 1.1666666
+Average depend-ons: 1.060606
+Average attaches per edge per round: 22.078094
+Average turns per round: 42.233334
+Average log events per second: 1637.0736
+Turns per round: [14, 7, 6, 110, 7, 6, 110, 7, 6, 110, 7, 6, 110, 7, 6, 114, 10, 7, 110, 7, 6, 110, 7, 6, 110, 7, 6, 115, 9, 7, 117]
+Time per round: [31, 0, 1984, 0, 0, 1344, 0, 0, 1391, 0, 0, 750, 0, 0, 203, 1094, 0, 2234, 0, 0, 3359, 16, 0, 1109, 0, 0, 141, 1391, 15]
+Created nodes per round: [36, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+Cumulative nodes per round: [0, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36]
+Pulses per round: [7, 4, 4, 8, 4, 4, 8, 4, 4, 8, 4, 4, 8, 4, 4, 13, 6, 4, 8, 4, 4, 8, 4, 4, 8, 4, 4, 13, 6, 4, 14]
+Node types: 
+  EventNodeMap: 8
+  ChangedEventNode: 7
+  EventHandler: 6
+  EventNodeFilter: 3
+  SignalSynt[Vector]: 2
+  SignalSynt[Integer]: 2
+  EventNodeOr: 1
+  VarSynt[Map2]: 1
+  VarSynt[Vector]: 1
+  SignalSynt[PlaceStone]: 1
+  SignalSynt[Map2]: 1
+  VarSynt[PlaceStone]: 1
+  EventNodeExcept: 1
+  SignalSynt[$anonfun$apply$9]: 1
+Time per node: 
+  526925932 [lines]: 1922
+  1553752794 [millOpenedOrClosed]: 31
+  792314436 [gameEnd]: 16
+  1307015742 [?]: 16
+  1026326193 [lineOwners]: 16
+  1349737121 [stateChanged]: 15
+  396899735 [state]: 15
+  1288516340 [numStones]: 0
+  20219443 [?]: 0
+  850806814 [?]: 0
+  1549250874 [whiteStones]: 0
+  409638510 [millOpenedOrClosed]: 0
+  783937257 [lineOwnersNotChanged]: 0
+  768635918 [stateChanged]: 0
+  1564001172 [?]: 0
+  631984887 [lineOwnersChanged]: 0
+  1088216203 [remainCountChanged]: 0
+  2080228357 [?]: 0
+  1860213255 [?]: 0
+  1201212782 [?]: 0
+  445208196 [lineOwnersNotChanged]: 0
+  1521935075 [remainCount]: 0
+  229123781 [lineOwnersChanged]: 0
+  1690686392 [?]: 0
+  1812529071 [millClosed]: 0
+  920051935 [remainCountChanged]: 0
+  579026229 [blackStones]: 0
+  1861167591 [?]: 0
+  1571916144 [?]: 0
+  385409610 [stateChanged]: 0
+  1430613145 [remainCountChanged]: 0
+  1738863073 [stonesVar]: 0
+  504800119 [?]: 0
