@@ -5,7 +5,6 @@ import scala.swing.Swing._
 import scala.swing.{MainFrame, Panel, SimpleSwingApplication}
 import scala.swing.event._
 import java.awt.{Color, Dimension, Graphics, Graphics2D, Point, geom}
-
 import react.events._
 
 /**
@@ -16,6 +15,9 @@ import react.events._
 
 
 object LinePaintingEScala extends SimpleSwingApplication {
+  
+  /* Uncomment to enable logging: */
+  //react.ReactiveEngine.log.enableAllLogging
   
   lazy val ui = new Panel {
     background = Color.white

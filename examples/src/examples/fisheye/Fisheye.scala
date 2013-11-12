@@ -13,13 +13,12 @@ import scala.swing.event._
 import java.awt.Font
 import java.awt.Rectangle
 import java.awt.Point
-import react.ReactiveEngine
 
 object FisheyeStarter {
 
   def main(args: Array[String]) {
     /* Uncomment to enable logging: */
-	//ReactiveEngine.log.enableDefaultLogging
+	//react.ReactiveEngine.log.enableAllLogging
 	
     val app = new Fisheye
     app.main(args)

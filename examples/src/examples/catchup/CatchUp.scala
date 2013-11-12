@@ -17,6 +17,9 @@ import java.awt.Rectangle
 
 object CatchUpStarter {
   def main(args: Array[String]) {
+     /* Uncomment to enable logging: */
+	//react.ReactiveEngine.log.enableAllLogging
+	
     val app = new CatchUp
     app.main(args)
     while (true) {

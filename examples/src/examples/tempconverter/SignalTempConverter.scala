@@ -16,6 +16,10 @@ import scala.swing.event._
 
 
 object SignalTempConverter extends SimpleSwingApplication {
+  
+  /* Uncomment to enable logging: */
+  //react.ReactiveEngine.log.enableAllLogging
+  
   def top = new MainFrame {
     title = "Celsius/Fahrenheit Converter"
     object celsius extends ReactiveTextfield { columns = 5 }

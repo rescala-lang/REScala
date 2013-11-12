@@ -18,6 +18,9 @@ import react._
 
 object LinePaintingREScala extends SimpleSwingApplication {
   
+  /* Uncomment to enable logging: */
+  //react.ReactiveEngine.log.enableAllLogging
+  
   lazy val ui = new Panel {
     background = Color.white
     preferredSize = (1000,500)

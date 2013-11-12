@@ -10,6 +10,9 @@ import scala.collection.mutable.ListBuffer
 
 object PulsingCircle extends SimpleSwingApplication {
   
+  /* Uncomment to enable logging: */
+  //react.ReactiveEngine.log.enableAllLogging
+  
   /*
   class Point(val x: Double,val y: Double) {
     def move(delta: Delta) = new Point(x + delta.x, y + delta.y)
