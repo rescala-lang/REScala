@@ -32,11 +32,23 @@ object ReactiveTypes {
 }
 
 class Logging {
+  implicit val self = this
+  
   val loggers = new scala.collection.mutable.MutableList[Logger]
 
-  def addLogger(logger: Logger) = loggers += logger
+  def addLogger(logger: => Logger) = { loggers += logger }
 
   def log(logevent: LogEvent) = loggers foreach (_ log logevent)
+  
+  lazy val logrecorder = {
+    val recorder = new LogRecorder {
+        val logevents = new scala.collection.mutable.ListBuffer[LogEvent]
+        def log(logevent: LogEvent) = logevents += logevent
+    }
+    // recorder is only added once
+    this addLogger recorder
+    recorder
+  }
 
   def enableAllLogging {
     val maybeName = for (
@@ -44,37 +56,63 @@ class Logging {
     ) yield main.asInstanceOf[Thread].getStackTrace.last.getFileName
     val name = maybeName.getOrElse("LOG").takeWhile(_ != '.')
 
-    val dotfile = Logging.DefaultPathPrefix + name + ".dot"
     val dotGraphLogger = new react.log.DotGraphLogger(
       new java.io.PrintStream(
-        new java.io.FileOutputStream(dotfile, false)))
+        new java.io.FileOutputStream(
+            Logging.DefaultPathPrefix + name + ".dot", false)))
+     
+    val dotHeatLogger = new react.log.DotGraphLogger(
+      new java.io.PrintStream(
+        new java.io.FileOutputStream(
+            Logging.DefaultPathPrefix + name + "_heat.dot", false)),
+        drawHeatmap = true)
 
-    val reactplayerfile = Logging.DefaultPathPrefix + name + ".txt"
     val reactplayerLogger = new react.log.ReactPlayerLog(
       new java.io.PrintStream(
-        new java.io.FileOutputStream(reactplayerfile, false)))
+        new java.io.FileOutputStream(
+            Logging.DefaultPathPrefix + name + ".txt", false)))
 
-    val statsfile = Logging.DefaultPathPrefix + name + "_stats.yaml"
     val statslogger = new StatisticsLogger(
       new java.io.PrintStream(
-        new java.io.FileOutputStream(statsfile, false)));
+        new java.io.FileOutputStream(
+            Logging.DefaultPathPrefix + name + "_stats.yaml", false)));
 
-    //addLogger(new SimpleLogger(System.out))
     addLogger(reactplayerLogger)
     addLogger(dotGraphLogger)
+    addLogger(dotHeatLogger)
     addLogger(statslogger)
   }
-
 }
 
-abstract class Logger(out: PrintStream) {
+
+abstract class Logger {
   def log(logevent: LogEvent)
 }
 
+/** A Logger that records events */
 trait LogRecorder extends Logger {
-  val logevents = new scala.collection.mutable.ListBuffer[LogEvent]
-  def log(logevent: LogEvent) = logevents += logevent
-  def clear = logevents.clear
+  val logevents: Iterable[LogEvent]
+}
+
+/** A Logger which prints to some output stream */
+trait PrintStreamLogger {
+  val out: PrintStream
+  
+  //prevents accidently printing to System.out
+  def print(x: Any) = out.print(x)
+  def println(x: Any) = out.println(x)
+}
+
+/** A simple logger which prints all events to the output stream */
+class TextLogger(val out: PrintStream) extends Logger with PrintStreamLogger {
+  def log(logevent: LogEvent) = println(logevent)
+}
+
+/** All RecordedLoggers share the same logrecoder in the implicit logging class */
+abstract class RecordedLogger(implicit val logging: Logging) extends Logger {
+  
+  val logevents: Iterable[LogEvent] = logging.logrecorder.logevents
+  def log(logevent: LogEvent) = ()
 
   def snapshot
 
@@ -135,11 +173,9 @@ case class LogEndEvalNode(node: LogNode) extends LogEvent
 case class LogRound(stamp: Stamp) extends LogEvent
 case class LogIFAttach(node: LogNode, parent: LogNode) extends LogEvent // "virtual" association through IF
 
-class SimpleLogger(out: PrintStream) extends Logger(out) {
-  def log(logevent: LogEvent) = out.println(logevent)
-}
 
-class ReactPlayerLog(out: PrintStream) extends Logger(out) {
+
+class ReactPlayerLog(val out: PrintStream) extends Logger with PrintStreamLogger {
   var timestamp = 0
   def log(logevent: LogEvent) = logevent match {
     case LogRound(round) => timestamp = round.roundNum * 1000 + round.sequenceNum
@@ -178,8 +214,9 @@ class ReactPlayerLog(out: PrintStream) extends Logger(out) {
 }
 
 /** Outputs a graph in dot format, at the moment the "snapshot" function is called */
-class DotGraphLogger(out: PrintStream, drawHeatmap: Boolean = true)
-  extends Logger(out) with LogRecorder {
+class DotGraphLogger(out: PrintStream, drawHeatmap: Boolean = false)
+  (override implicit val logging: Logging)
+  extends RecordedLogger {
   
   private val style = if(drawHeatmap) heatmapStyle _ else normalStyle _
 
@@ -308,7 +345,8 @@ object StatisticsLogger {
   }
 }
 
-class StatisticsLogger(out: PrintStream) extends Logger(out) with LogRecorder {
+class StatisticsLogger(out: PrintStream)
+ (override implicit val logging: Logging) extends RecordedLogger {
   def snapshot {
     def mean[T](ts: Iterable[T])(implicit num: Numeric[T]) =
       num.toFloat(ts.sum) / ts.size
