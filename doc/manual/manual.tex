@@ -253,25 +253,149 @@ requires to conform some syntactic conventions.
 \paragraph{Defining Vars} Programmers express reactive computations
 starting from vars. Vars wrap normal Scala values. For example
 \code{Var(2)} create a var with an \code[Int] value and initializes it
-to the value 2.
+to the value 2. Vars are parametric types. A var that carries integers
+has the type \code{Var[Int]}. The following are all valid vars
+declarations.
+
+\begin{codenv}
+val a = Var(0) 
+val b = Var("Hello World")  
+val c = Var(false)  
+val d: Var[Int] = Var(30) 
+val e: Var[String] = Var("REScala")  
+val f: Var[Boolean] = Var(false)  
+\end{codenv}
+
 
 \paragraph{Assigning Vars} Vars can be directly modified with the
 \code{()=} operator. For example \code{v()=3} replaces the current
-value of the \code{v} var with \code{3}.
+value of the \code{v} var with \code{3}. 
 
 \paragraph{Defining Signals} Signals are defined by the syntax
-\code{Signal\{}{\it sigexpr}\code{\}}.
+\code{Signal\{}{\it sigexpr}\code{\}}, where {\it sigexpr} is a side
+effect-free expression. Signals are parametric types. A signal that
+carries integers has the type \code{Signal[Int]}.
 
 \paragraph{Signal expressions} When, inside a signal expression
 defining a signal \code{s}, a var or a signal is called with the
 \code{()} operator, the var of the signal are added to the values
 \code{s} depends on. In that case \code{s} {\it is a dependency} of
-the vars and the signals in the signal expression.
-
-\paragraph{Reading reactive values} The current value of
-
+the vars and the signals in the signal expression. All the following
+are valid signal declarations.
 
 
+\begin{codenv}
+val a = Var(0) 
+val s: Signal[Int] = Signal{ a() + 1 }
+\end{codenv}
+
+\begin{codenv}
+val a = Var(0) 
+val b = Var(0) 
+val s = Signal{ a() + b() } // Multiple vars is a signal expression
+\end{codenv}
+
+\begin{codenv}
+val a = Var(0) 
+val b = Var(0)
+val c = Var(0)
+val s = Signal{ a() + b() }
+val t = Signal{ s() * c() + 10 } // Mix signals and vars in signal expressions
+\end{codenv}
+
+\begin{codenv}
+val a = Var(0) 
+val b = Var(0)
+val c = Var(0)
+val s = Signal{ a() + b() }
+val t = Signal{ s() * c() + 10 }
+val u = Signal{ s() * t() } // A signal that depends on other signals
+\end{codenv}
+
+
+\begin{codenv}
+val a = Var(0) 
+val b = Var(2)
+val c = Var(true)
+val s = Signal{ if (c()) a() else b() }
+\end{codenv}
+
+\begin{codenv}
+def factorial(n: Int) = ...
+val a = Var(0) 
+val s: Signal[Int] = Signal{ // A signal expression can be any code block
+  val tmp = a() * 2
+  val k = factorial(tmp)
+  k + 2  // Returns an Int
+}
+\end{codenv}
+
+
+
+
+\paragraph{Reading reactive values} The current value of a signal or a
+var can be accessed using the \code{getVal} method. For example:
+
+\begin{codenv}
+val a = Var(0) 
+val b = Var(2)
+val c = Var(true)
+val s: Signal[Int] = Signal{ a() + b() }
+val t: Signal[Boolean] = Signal{ !c() }
+
+val x: Int = a.getVal 
+val y: Int = s.getVal 
+val x: Boolean = t.getVal 
+\end{codenv}
+
+
+
+\subsubsection{Example: speed}
+The following example computes the displacement \code{space} of a
+particle that is moving at constant speed \code{SPEED}. The
+application prints all the values of the displacement.
+
+\begin{codenv}
+val SPEED = 10
+val time = Var(0)  
+val space = Signal{ SPEED * time() } (*@\label{sigexpr}@*)
+  
+space.changed += ((x: Int) => println(x)) (*@\label{conversion}@*)
+  
+while (true) {
+  Thread sleep 20
+  time() = time.getVal + 1  (*@\label{increasetime}@*)
+}
+
+-- output --
+10
+20
+30
+40
+ ...
+\end{codenv}
+
+
+The application behaves as follows. Every 20 milliseconds, the value
+of the \code{time} var is increased by 1 (Line~\ref{increasetime}).
+When the value of the \code{time} var changes, the signal expression
+at Line~\ref{sigexpr} is executed and the value of \code{space} is
+updated. Finally, the current value of the \code{space} signal every
+time the value of the signal changes. Technically, this is achieved by
+converting the \code{space} signal to an event that is fired every
+time the signal changes its value (Line~\ref{conversion}). The
+conversion is performed by the \code{changed} operator. The \code{+=}
+operator attaches an handler to the event returned by the
+\code{changed} operator. When the event fires, the handler is
+executed.
+
+Line~\ref{conversion} is equivalent to the following code:
+
+\begin{codenv}
+val e: Event[Int] = space.changed
+val handler:  (Int => Unit) =  ((x: Int) => println(x))
+e += handler
+\end{codenv}
 
 
 \section{Events}
