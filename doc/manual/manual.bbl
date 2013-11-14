@@ -1,0 +1,46 @@
+\begin{thebibliography}{1}
+
+\bibitem{rective-progr-survey}
+E.~Bainomugisha, A.~Lombide~Carreton, T.~Van~Cutsem, S.~Mostinckx, and
+  W.~De~Meuter.
+\newblock A survey on reactive programming.
+\newblock {\em ACM Comput. Surv. (To appear)}, 2013.
+
+\bibitem{DBLP:conf/esop/CooperK06}
+G.~H. Cooper and S.~Krishnamurthi.
+\newblock Embedding dynamic dataflow in a call-by-value language.
+\newblock In {\em ESOP}, pages 294--308, 2006.
+
+\bibitem{Gasiunas:2011:EME:1960275.1960303}
+V.~Gasiunas, L.~Satabin, M.~Mezini, A.~N\'{u}\~{n}ez, and J.~Noy{\'e}.
+\newblock {EScala}: modular event-driven object interactions in {Scala}.
+\newblock AOSD '11, pages 227--240. ACM, 2011.
+
+\bibitem{ambienttalkR}
+A.~Lombide~Carreton, S.~Mostinckx, T.~Cutsem, and W.~Meuter.
+\newblock Loosely-coupled distributed reactive programming in mobile ad hoc
+  networks.
+\newblock In J.~Vitek, editor, {\em Objects, Models, Components, Patterns},
+  volume 6141 of {\em Lecture Notes in Computer Science}, pages 41--60.
+  Springer Berlin Heidelberg, 2010.
+
+\bibitem{EPFL-REPORT-148043}
+I.~Maier and M.~Odersky.
+\newblock Deprecating the {O}bserver {P}attern with {S}cala.react.
+\newblock Technical report, 2012.
+
+\bibitem{Meyerovich:2009:FPL:1640089.1640091}
+L.~A. Meyerovich, A.~Guha, J.~Baskin, G.~H. Cooper, M.~Greenberg, A.~Bromfield,
+  and S.~Krishnamurthi.
+\newblock Flapjax: a programming language for ajax applications.
+\newblock OOPSLA '09, pages 1--20. ACM, 2009.
+
+\bibitem{Salvaneschi:2013:RBO:2451436.2451442}
+G.~Salvaneschi and M.~Mezini.
+\newblock Reactive behavior in object-oriented applications: an analysis and a
+  research roadmap.
+\newblock In {\em Proceedings of the 12th annual international conference on
+  Aspect-oriented software development}, AOSD '13, pages 37--48, New York, NY,
+  USA, 2013. ACM.
+
+\end{thebibliography}
