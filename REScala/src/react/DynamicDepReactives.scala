@@ -17,13 +17,13 @@ class VarSynt[T](initval: T) extends DepHolder with Var[T] {
   def setVal(newval: T): Unit = {
     val old = value
     if(newval != old) {
-    	ReactiveEngine.log log react.log.LogStartEvalNode(react.log.LogNode(this))
+    	ReactiveEngine.log log react.log.LogStartEvalNode(ReactiveEngine.log.node(this))
     	
 	    value = newval // .asInstanceOf[T] // to make it covariant ?
 	    TS.nextRound  // Testing
 	    timestamps += TS.newTs // testing
 	    
-	    ReactiveEngine.log log react.log.LogEndEvalNode(react.log.LogNode(this))
+	    ReactiveEngine.log log react.log.LogEndEvalNode(ReactiveEngine.log.node(this))
 	       
 	    notifyDependents(value)
 	    ReactiveEngine.startEvaluation
@@ -84,9 +84,9 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
     reactivesDependsOnCurrent.clear
     timestamps += TS.newTs // Testing
     
-    ReactiveEngine.log log react.log.LogStartEvalNode(react.log.LogNode(this))
+    ReactiveEngine.log log react.log.LogStartEvalNode(ReactiveEngine.log.node(this))
     val tmp = expr(this)  // Evaluation
-    ReactiveEngine.log log react.log.LogEndEvalNode(react.log.LogNode(this))
+    ReactiveEngine.log log react.log.LogEndEvalNode(ReactiveEngine.log.node(this))
     
     dependOn ++= reactivesDependsOnCurrent
     reactivesDependsOnCurrent.map(_.addDependent(this))

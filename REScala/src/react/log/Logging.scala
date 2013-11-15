@@ -7,10 +7,64 @@ import react.events.Event
 import java.io.File
 import react.events.EventHandler
 import react.events.ImperativeEvent
+import react.ReactiveEngine
 
-object Logging {
-  val DefaultPathPrefix = "./logs/"
-  val DefaultSourceFolder = "./src/"
+abstract class Logging {
+  def log(logevent: LogEvent)
+  def node(reactive: Reactive): LogNode
+}
+
+abstract class Logger {
+  def log(logevent: LogEvent)
+}
+
+abstract class LogNode(reactive: Reactive){
+  val identifier: Int
+  val level: Int
+  val nodetype: Class[_]
+  val simpletype: Class[_]
+  val typename: String
+  val meta: NodeMetaInfo
+}
+
+class LogEvent { val time = System.currentTimeMillis }
+case class LogMessage(string: String) extends LogEvent
+case class LogCreateNode(node: LogNode) extends LogEvent
+case class LogAttachNode(node: LogNode, parent: LogNode) extends LogEvent
+case class LogScheduleNode(node: LogNode) extends LogEvent
+case class LogPulseNode(Node: LogNode) extends LogEvent
+case class LogStartEvalNode(node: LogNode) extends LogEvent
+case class LogEndEvalNode(node: LogNode) extends LogEvent
+case class LogRound(stamp: Stamp) extends LogEvent
+case class LogIFAttach(node: LogNode, parent: LogNode) extends LogEvent // "virtual" association through IF
+
+
+/** A Logging stub, that performs no logging */
+object NoLogging extends Logging {
+  def log(logevent: LogEvent) {}
+  def node(reactive: Reactive): LogNode = null
+}
+
+// -- Everything below here should be moved out of the project --
+
+/** A Logger that records events */
+trait LogRecorder extends Logger {
+  val logevents: Iterable[LogEvent]
+}
+
+
+/** A Logger which prints to some output stream */
+trait PrintStreamLogger {
+  val out: PrintStream
+  
+  //prevents accidently printing to System.out
+  def print(x: Any) = out.print(x)
+  def println(x: Any) = out.println(x)
+}
+
+/** A simple logger which prints all events to the output stream */
+class TextLogger(val out: PrintStream) extends Logger with PrintStreamLogger {
+  def log(logevent: LogEvent) = println(logevent)
 }
 
 object ReactiveTypes {
@@ -31,8 +85,16 @@ object ReactiveTypes {
   }
 }
 
-class Logging {
+
+object MyLogging {
+  val DefaultPathPrefix = "./logs/"
+  val DefaultSourceFolder = "./src/"
+}
+
+class MyLogging extends Logging {
   implicit val self = this
+  
+  def node(reactive: Reactive): LogNode = LogNodeImpl(reactive)
   
   val loggers = new scala.collection.mutable.MutableList[Logger]
 
@@ -49,9 +111,14 @@ class Logging {
     this addLogger recorder
     recorder
   }
+}
 
-  def enableAllLogging {
-    val maybeName = for (
+
+/** enables all Logging for the MyLogging class
+ *   Instanciate: new MyLogging with AllLoggingEnabled */
+trait AllLoggingEnabled { self: MyLogging =>
+    
+  val maybeName = for (
       main <- Thread.getAllStackTraces.keySet().toArray().find(_.asInstanceOf[Thread].getName == "main")
     ) yield main.asInstanceOf[Thread].getStackTrace.last.getFileName
     val name = maybeName.getOrElse("LOG").takeWhile(_ != '.')
@@ -59,57 +126,33 @@ class Logging {
     val dotGraphLogger = new react.log.DotGraphLogger(
       new java.io.PrintStream(
         new java.io.FileOutputStream(
-            Logging.DefaultPathPrefix + name + ".dot", false)))
+            MyLogging.DefaultPathPrefix + name + ".dot", false)))
      
     val dotHeatLogger = new react.log.DotGraphLogger(
       new java.io.PrintStream(
         new java.io.FileOutputStream(
-            Logging.DefaultPathPrefix + name + "_heat.dot", false)),
+            MyLogging.DefaultPathPrefix + name + "_heat.dot", false)),
         drawHeatmap = true)
 
     val reactplayerLogger = new react.log.ReactPlayerLog(
       new java.io.PrintStream(
         new java.io.FileOutputStream(
-            Logging.DefaultPathPrefix + name + ".txt", false)))
+            MyLogging.DefaultPathPrefix + name + ".txt", false)))
 
     val statslogger = new StatisticsLogger(
       new java.io.PrintStream(
         new java.io.FileOutputStream(
-            Logging.DefaultPathPrefix + name + "_stats.yaml", false)));
+            MyLogging.DefaultPathPrefix + name + "_stats.yaml", false)));
 
     addLogger(reactplayerLogger)
     addLogger(dotGraphLogger)
     addLogger(dotHeatLogger)
-    addLogger(statslogger)
-  }
+    addLogger(statslogger)  
 }
 
-
-abstract class Logger {
-  def log(logevent: LogEvent)
-}
-
-/** A Logger that records events */
-trait LogRecorder extends Logger {
-  val logevents: Iterable[LogEvent]
-}
-
-/** A Logger which prints to some output stream */
-trait PrintStreamLogger {
-  val out: PrintStream
-  
-  //prevents accidently printing to System.out
-  def print(x: Any) = out.print(x)
-  def println(x: Any) = out.println(x)
-}
-
-/** A simple logger which prints all events to the output stream */
-class TextLogger(val out: PrintStream) extends Logger with PrintStreamLogger {
-  def log(logevent: LogEvent) = println(logevent)
-}
 
 /** All RecordedLoggers share the same logrecoder in the implicit logging class */
-abstract class RecordedLogger(implicit val logging: Logging) extends Logger {
+abstract class RecordedLogger(implicit val logging: MyLogging) extends Logger {
   
   val logevents: Iterable[LogEvent] = logging.logrecorder.logevents
   def log(logevent: LogEvent) = ()
@@ -128,7 +171,9 @@ abstract class RecordedLogger(implicit val logging: Logging) extends Logger {
   scala.sys.addShutdownHook { snapshotOnce }
 }
 
-case class LogNode(reactive: Reactive) {
+
+
+case class LogNodeImpl(reactive: Reactive) extends LogNode(reactive) {
   // CAREFUL: reference to node might impair garbage collection
   // Possible solution: somehow discard reference to 'reactive', store only what is needed
 
@@ -162,16 +207,6 @@ case class LogNode(reactive: Reactive) {
     return reactive.getClass.getSimpleName // should not be reached
   }
 }
-class LogEvent { val time = System.currentTimeMillis }
-case class LogMessage(string: String) extends LogEvent
-case class LogCreateNode(node: LogNode) extends LogEvent
-case class LogAttachNode(node: LogNode, parent: LogNode) extends LogEvent
-case class LogScheduleNode(node: LogNode) extends LogEvent
-case class LogPulseNode(Node: LogNode) extends LogEvent
-case class LogStartEvalNode(node: LogNode) extends LogEvent
-case class LogEndEvalNode(node: LogNode) extends LogEvent
-case class LogRound(stamp: Stamp) extends LogEvent
-case class LogIFAttach(node: LogNode, parent: LogNode) extends LogEvent // "virtual" association through IF
 
 
 
@@ -215,7 +250,7 @@ class ReactPlayerLog(val out: PrintStream) extends Logger with PrintStreamLogger
 
 /** Outputs a graph in dot format, at the moment the "snapshot" function is called */
 class DotGraphLogger(out: PrintStream, drawHeatmap: Boolean = false)
-  (override implicit val logging: Logging)
+  (override implicit val logging: MyLogging)
   extends RecordedLogger {
   
   private val style = if(drawHeatmap) heatmapStyle _ else normalStyle _
@@ -346,7 +381,7 @@ object StatisticsLogger {
 }
 
 class StatisticsLogger(out: PrintStream)
- (override implicit val logging: Logging) extends RecordedLogger {
+ (override implicit val logging: MyLogging) extends RecordedLogger {
   def snapshot {
     def mean[T](ts: Iterable[T])(implicit num: Numeric[T]) =
       num.toFloat(ts.sum) / ts.size

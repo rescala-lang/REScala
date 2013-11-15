@@ -29,7 +29,7 @@ object SrcReader {
 	NodeMetaInfo(varname)
   }
 
-  var sourceFolder = Logging.DefaultSourceFolder
+  var sourceFolder = MyLogging.DefaultSourceFolder
   def setSourceFolder(s: String) { sourceFolder = s }
   
   lazy val sourceFiles = findSourceFiles(new File(sourceFolder))

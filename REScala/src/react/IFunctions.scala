@@ -13,7 +13,7 @@ object IFunctions {
       val v: Var[A] = Var(init)
 	  e += {(newVal: T) => v.setVal(f(v.getValue,newVal)) }
 	  val result = StaticSignal(v){v.getValue}
-	  ReactiveEngine.log log LogIFAttach(LogNode(result), LogNode(e)) // log the 'virtual' dependency
+	  ReactiveEngine.log log LogIFAttach(ReactiveEngine.log.node(result), ReactiveEngine.log.node(e)) // log the 'virtual' dependency
 	  return result
   }
 

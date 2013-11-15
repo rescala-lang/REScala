@@ -11,15 +11,8 @@ object Starter extends App {
 
   println("start!")
   
-  // Adding some loggers
-  implicit val log = ReactiveEngine.log
-  log addLogger new ReactPlayerLog(
-      new java.io.PrintStream(
-      new java.io.FileOutputStream("./logs/Starter.txt", false))) 
-  log addLogger new DotGraphLogger(
-      new java.io.PrintStream(
-      new java.io.FileOutputStream("./logs/starter.dot", false)))
-  log addLogger new StatisticsLogger(System.out)
+  // Enable default logging
+  react.ReactiveEngine.log = new MyLogging with AllLoggingEnabled
   
   val v1 = Var(1)
   val v2 = Var(2)
