@@ -104,7 +104,7 @@
 
 \lstset{
   backgroundcolor=\color{white},%\fontfamily{cmtt}
-  basicstyle=\fontfamily{cmtt}\scriptsize,
+  basicstyle=\fontfamily{cmtt}\footnotesize,
   basewidth=0.5em,
   showstringspaces=false,
   keywordstyle=\fontfamily{pcr}\color[rgb]{0,0,0}\bfseries,
@@ -400,49 +400,117 @@ e += handler
 
 \section{Events}
 
+\REScala supports different kind of events. Imperative events are
+directly triggers from the user, declarative events are triggered when
+the events they depend on are triggered. In reactive applications,
+events are typically used to model changes that happen at discrete
+points in time. For example a mouse click from the user. Some
+generalities about \REScala events.
+
+\begin{itemize}
+
+\item Events carry a value. The value is associated to the event when
+  the event is fired and received by all the registered handlers.
+
+\item Events are generic, like \code{Event[T]} and
+  \code{ImpertiveEvent[T]} where \code{T} is the value carried by the
+  event.
+
+\item Both imperative events and declarative events are subtypes of
+  \code{Event[T]} and can referred to generically.
+
+\end{itemize}
 
 \subsection{Imperative events}
 
+\REScala imperative events are triggered imperatively by the
+programmer. One can think to imperative events as a generalization of
+a method call which supports (multiple) bodies that can be registered
+and unregistered dynamically.
+
 \subsubsection{Defining  Events}
 
-REScala supports imperative events. Imperative events are defined by
-the \code{ImperativeEvent[T]} type. The value of the parameter
-\code{T} defines the value that is attached to an event.
+Imperative events are defined by the \code{ImperativeEvent[T]}
+type. The value of the parameter \code{T} defines the value that is
+attached to the event. An event with no parameter attached has
+signature \code{ImpertiveEvent[Unit]}. The following code snippet show
+valid events definitions:
 
-Fir example the following code snippet defines and imperative events
-whose attached value is an integer:
 \begin{codenv}
-val e = new ImperativeEvent[Int]()
+val e1 = new ImperativeEvent[Unit]()
+val e1 = new ImperativeEvent[Int]()
+val e2 = new ImperativeEvent[String]()
+val e3 = new ImperativeEvent[Boolean]()
+val e5: ImperativeEvent[Int] = new ImperativeEvent[Int]()
+class Foo
+val e4 = new ImperativeEvent[Foo]()
 \end{codenv}
+
+It is possible to attach more than one value to the same event. This
+is easily accomplished by using a tuple as a generic parameter
+type. For example:
+
+\begin{codenv}
+val e1 = new ImperativeEvent[(Int,Int)]()
+val e2 = new ImperativeEvent[(String,String)]()
+val e2 = new ImperativeEvent[(String,Int)]()
+val e3 = new ImperativeEvent[(Boolean,String,Int)]()
+val e5: ImperativeEvent[(Int,Int)] = new ImperativeEvent[(Int,Int)]()
+\end{codenv}
+
+Note that since an imperative event is also an event. Therefore the
+following declaration is also valid:
+
+\begin{codenv}
+val e1: Event[Int] = new ImperativeEvent[Int]()
+\end{codenv}
+
+
 
 \subsubsection{Registering Handlers}
 
-Handlers can be defined attaching a code block to the event. The
-\code{+=} operator attaches the handler to the event.
+Handlers are code blocks that are executed when the event fires. The
+\code{+=} operator attaches the handler to the event. The handler is a
+first class function that receives the attached value as a parameter.
+The following are valid ways to attach a handler to an event:
 
 \begin{codenv}
-val e = new ImperativeEvent[Int]()
-
-e += { println() }
+var state = 0
+val e1 = new ImperativeEvent[Int]()
+e1 += { println(_) }
+e1 += { println(_) }
+e1 += (x => println(x))
+e1 += ((x: Int) => println(x))
+e1 += (x => {  // Multiple statements in the handler
+  state = x 
+  println(x)
+})
 \end{codenv}
 
-- Other ways to register a handler ? Alternative syntax for handlers
-
-
-When a handler is registered to an event, the handler is executed
-every time the event is fired. If multiple handlers are registered,
-all of them are executed when the event is fired. Applications should
-not rely on any specific execution order for handler execution.
+The signature of the handler must conform the signature of the event,
+since the handler is supposed to process the attached value and
+perform side effects:
 
 \begin{codenv}
-val e = new ImperativeEvent[Int]()
-
-e += { println() }
+val e2 = new ImperativeEvent[(Int,String)]()
+e2 += (x => {
+  println(x._1)
+  println(x._2)
+})
+e2 += (x: (Int,String) => {
+  println(x)
+})
 \end{codenv}
 
+Note that events without arguments still need a \code{Unit} argument
+in the handler.
 
-The signature of the event handlers must conform the signature of the
-events.
+\begin{codenv}
+val e1 = new ImperativeEvent[Int]()
+e1 += { x => println() }
+e1 += { (x: Unit) => println() }
+\end{codenv}
+
 
 
 
@@ -450,29 +518,75 @@ events.
 
 \subsubsection{Firing Events}
 
+Events can be fired with the same syntax of a method call. When an
+event is fired, a proper value must be attached that conforms the
+signature of the event. For example:
 
-Events can be fired with the same syntax of a method call. For example
-the event \code{e} in the following example is fired by the
-\code{e(10)} call.
+\begin{codenv}
+val e1 = new ImperativeEvent[Int]()
+val e1 = new ImperativeEvent[Boolean]()
+val e1 = new ImperativeEvent[(Int,String)]()
+e1(10)
+e1(false)
+e1((10,"Hallo"))
+\end{codenv}
+
+
+When a handler is registered to an event, the handler is executed
+every time the event is fired. The actual parameter is provided to the
+handler.
+\begin{codenv}
+val e = new ImperativeEvent[Int]()
+e += { x => println(x) }
+e(10)
+e(10)
+-- output ----
+10
+10
+\end{codenv}
+
+If multiple handlers are registered, all of them are executed when the
+event is fired. Applications should not rely on any specific execution
+order for handler execution.
 
 \begin{codenv}
 val e = new ImperativeEvent[Int]()
+e += { x => println(x) }
+e += { x => println("n: " + x)}
 e(10)
+e(10)
+-- output ----
+10
+n: 10
+10
+n: 10
 \end{codenv}
 
 
 
-\subsubsection{Registering Handlers}
+
+
+\subsubsection{Unegistering Handlers}
 
 Handlers can be unregistered from events by the \code{-=} operator.
 
 \begin{codenv}
 val e = new ImperativeEvent[Int]()
+val handler1 = { x: Int => println(x) 
+val handler2 = { x: Int => println("n: " + x) }
 
-e += { println() }
+e += handler1
+e += handler2
+e(10)
+e -= handler2
+e(10)
+e -= handler1
+e(10)
 
-
-e += { println() }
+-- output ----
+10
+n: 10
+10
 \end{codenv}
 
 
@@ -480,20 +594,124 @@ e += { println() }
 
 \subsection{Declarative Events}
 
-
-REScala supports declarative events, which are defined as a
+\REScala supports declarative events, which are defined as a
 combination of other events. For this purpose it offers operators like
-$e_1||e_2$ (occurrence of one among $e_1$ or $e_2$), $e_1\&\&p$ ($e_1$
-occurs and the predicate $p$ is satisfied), $e_1.map(f)$ (the event
-obtained by applying $f$ to $e_1$).  Event composition allows to
+$e_1||e_2$ , $e_1\&\&p$ , $e_1.map(f)$. Event composition allows to
 express the application logic in a clear and declarative way. Also,
 the update logic is better localized because a single expression
 models all the sources and the transformations that define an event
 occurrence.
 
 
+\subsubsection{Defining Declarative Events}
+
+Declarative events are defined by composing other events. The
+following code snippet shows valid definitions for declarative events.
+
+\begin{codenv}
+val e1 = new ImperativeEvent[Int]()
+val e2 = new ImperativeEvent[Int]()
+
+val e3 = e1 || e2
+val e4 = e1 && ((x: Int)=> x>10)
+val e5 = e1 map ((x: Int)=> x.toString)
+\end{codenv}
 
 
+\subsubsection{OR Events}
+
+The event $e_1 || e_2$ is fired upon the occurrence of one among $e_1$
+or $e_2$. Note that the events that appear in the event expression
+must have the same parameter type (\code{Int} in the next example).
+
+\begin{codenv}
+val e1 = new ImperativeEvent[Int]()
+val e2 = new ImperativeEvent[Int]()
+val e1_OR_e2 = e1 || e2
+e1_OR_e2 += ((x: Int) => println(x))
+e1(10)
+e2(10)
+-- output ----
+10
+10
+\end{codenv}
+
+
+\subsubsection{Predicate Events}
+
+The event $e_1 \&\& p$ is fired if $e_1$ occurs and the predicate $p$
+is satisfied. The predicate is a function that accepts the event
+parameter as a formal parameter and returns \code{Boolean}. In other
+words the $\&\&$ operator filter the events according to their
+parameter and a predicate.
+
+\begin{codenv}
+val e = new ImperativeEvent[Int]()
+val e_AND: Event[Int] = e && ((x: Int) => x>10)
+e_AND += ((x: Int) => println(x))
+e(5)
+e(15)
+-- output ----
+15
+\end{codenv}
+
+
+\subsubsection{Map Events}
+
+The event $e_1 map f$ is obtained by applying $f$ to the value carried
+by $e_1$. The map function must take the event parameter as a formal
+parameter. The return type of the map function is the type parameter
+value of the resulting event.
+
+\begin{codenv}
+val e = new ImperativeEvent[Int]()
+val e_MAP: Event[String] = e map ((x: Int) => x.toString) 
+e_MAP += ((x: String) => println("Here: " + x))
+e(5)
+e(15)
+-- output ----
+Here: 5
+Here: 15
+\end{codenv}
+
+
+
+
+\subsubsection{dropParam}
+
+The $dropParam$ operator transforms an event into an event with
+\code{Unit} parameter. In the following example the $dropParam$
+operator transforms an \code{Event[Into]} into an \code{Event[Unit]}.
+
+\begin{codenv}
+val e = new ImperativeEvent[Int]()
+val e_drop: Event[Unit] = e.dropParam  
+e_drop += (_ => println("*"))
+e(10)
+e(10)
+-- output ----
+*
+*
+\end{codenv}
+
+The typical use case for the $dropParam$ operator is to enforce
+compatibility among events with different types. For example the
+following snippet is rejected by the compiler since it attempts to
+combine two events of different types with the $||$ operator.
+
+\begin{codenv}     /* WRONG - DON'T DO THIS */
+val e1 = new ImperativeEvent[Int]()
+val e2 = new ImperativeEvent[Unit]()
+val e1_OR_e2 = e1 || e2  // Compiler error
+\end{codenv}
+
+The following example is correct.
+
+\begin{codenv}
+val e1 = new ImperativeEvent[Int]()
+val e2 = new ImperativeEvent[Unit]()
+val e1_OR_e2: Event[Unit] = e1.dropParam || e2
+\end{codenv}
 
 
 
@@ -577,6 +795,9 @@ Returns a signal updated only when \code{e} fires.\\
 
 
 \section{Technicalities}~\label{sec:technicalities}
+
+
+\subsection{Imports and dependencies}
 
 To work with REScala you need to properly import the reactive
 abstractions offered by the language. The following imports are
