@@ -1,18 +1,13 @@
 package react
 
 import react.log._
-import react.log.StatisticsLogger
-import react.log.ReactPlayerLog
-import react.log.DotGraphLogger
-
-
 
 object Starter extends App {
 
   println("start!")
   
-  // Enable default logging
-  react.ReactiveEngine.log = new MyLogging with AllLoggingEnabled
+  // Enable default logging (with REScalaLogging project referenced)
+  //react.ReactiveEngine.log = new MyLogging with AllLoggingEnabled
   
   val v1 = Var(1)
   val v2 = Var(2)
