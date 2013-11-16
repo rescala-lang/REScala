@@ -25,7 +25,7 @@ class ReactiveListSpec extends FunSpec {
 	            collection(1) = 4
 	            assertResult(4, "incorrect after change")(secondElement())
 	        }
-	        	it("should allow for reactive access with reactive index") {
+	        it("should allow for reactive access with reactive index") {
 	            val collection = new ReactiveList[Int](1,2,3,4,5)
 	            val idx = Var(0)
 	            val secondElement = collection(idx.toSignal)
