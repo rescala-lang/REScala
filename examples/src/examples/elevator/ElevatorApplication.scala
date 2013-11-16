@@ -7,6 +7,10 @@ import java.awt.event.ActionEvent
 import scala.swing.event.ButtonClicked
 
 object ElevatorApplication extends Application {
+  
+  /* Uncomment to enable logging: */
+  //react.ReactiveEngine.log.enableAllLogging
+  
   val elevator = new Elevator(3)
   val app = new ElevatorFrame(elevator)
   app.main(Array())

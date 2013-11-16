@@ -16,6 +16,9 @@ import java.awt.Font
 
 object FollowMouseStarter {
   def main(args: Array[String]) {
+    /* Uncomment to enable logging: */
+	//react.ReactiveEngine.log.enableAllLogging
+	
     val app = new FollowMouse
     app.main(args)
     while (true) {

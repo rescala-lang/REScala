@@ -5,6 +5,9 @@ import java.awt.{Graphics2D, Dimension}
 import java.awt.Point
 
 object ImperativeVersion extends SimpleSwingApplication {
+  /* Uncomment to enable logging: */
+  //react.ReactiveEngine.log.enableAllLogging
+  
   val Size = 50
   val Max_X = 600
   val Max_Y = 600
