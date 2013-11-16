@@ -4,8 +4,9 @@ import react._
 import macro.SignalMacro.{SignalM => Signal}
 import scala.collection.immutable.List
 
-class ReactiveList[A](vals: A*) extends ReactiveSeqLike[A] {
+class ReactiveList[A](list: List[A]) extends ReactiveSeqLike[A] {
 	type InternalType[A] = List[A]
+	protected val internalCollection = Var(list)
 	
-	protected val internalCollection = Var(List[A](vals: _*))
+	def this(vals: A*) = this(List(vals: _*))
 } 
