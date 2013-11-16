@@ -13,7 +13,7 @@ import scala.swing.Swing
 import scala.swing.event._
 import java.awt.Font
 import react.ReactiveEngine
-import react.log.StatisticsLogger
+//import react.log.StatisticsLogger
 
 
 /**
