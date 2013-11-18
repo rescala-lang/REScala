@@ -1,6 +1,7 @@
 package react.conversions
 
 import react._
+import react.events._
 
 
 /**
@@ -14,3 +15,33 @@ object SignalConversions {
   implicit def toVal[T](const: T): Signal[T] = SignalSynt((s: SignalSynt[T]) => (const))
   
 }
+
+
+object EventConversions {
+
+  // implicitly drop event parameter if not used
+  implicit def dropParam[T](ev: Event[T]) = ev.dropParam
+  
+  
+
+  // One can remove parameters at all for handlers of Event[Unit]
+  // Presumably dangerous ...
+  // implicit def dropParam[T](h: T): Function1[Unit,T] = { _ => h}
+     
+  // val e = new ImperativeEvent[Unit]()
+  // e += { x => println()}
+  // e += {println()}
+  // e += println()
+  
+
+  
+}
+
+
+
+
+
+
+
+
+
