@@ -7,31 +7,27 @@ import scala.collection.generic._
 import scala.language.higherKinds
 
 trait ReactiveSetLike[A] {
-	type InternalType[A] <: SetLike[A, InternalType[A]] with Set[A]
+	type InternalType[A] <: SetLike[Signal[A], InternalType[A]] with Set[Signal[A]]
 	
-	protected val internalCollection: Var[Signal[InternalType[A]]]
+	protected val internalCollection: Var[InternalType[A]]
 	def signal[B] = SignalSynt[B](internalCollection) _
 	
 	def +=(elem: A) {
-	    internalCollection() = SignalSynt[InternalType[A]](internalCollection) {
-	        (x: SignalSynt[InternalType[A]]) => internalCollection(x)(x) + elem
-	    }
+	    internalCollection() += Signal(elem)
 	}
 	
 	def +=(elem: Signal[A]) {
-	    internalCollection() = SignalSynt[InternalType[A]](internalCollection) {
-	        (x: SignalSynt[InternalType[A]]) => internalCollection(x)(x) + elem(x)
-	    }
+	    internalCollection() += elem
 	}
 	
 	def -=(elem: A) {
-	    internalCollection() = SignalSynt[InternalType[A]](internalCollection) {
-	        (x: SignalSynt[InternalType[A]]) => internalCollection(x)(x) - elem
-	    }
+	    internalCollection() -= Signal(elem)
 	}
 	
-	def contains(elem: A): Signal[Boolean] = signal[Boolean] {
-	    (x: SignalSynt[Boolean]) => internalCollection(x)(x).contains(elem)
-	}
+	
+	def contains(elem: A): Signal[Boolean] = Signal (internalCollection().exists(_() == elem))
+	
+	def containsD(elem: A): Boolean = internalCollection().exists(_() == elem)
+	
 	//lazy val size = Signal(internalCollection()().size) //TODO: abstract these
 }
