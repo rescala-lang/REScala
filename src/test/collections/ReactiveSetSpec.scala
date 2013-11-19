@@ -20,5 +20,30 @@ class ReactiveSetSpec extends FunSpec {
 	        collection += 3
 	        assertResult(true)(contains3())
 	    }
+	    
+	    it("should allow reactive inserts") {
+	        val collection = new ReactiveHashSet[Int]
+	        val contains3 = collection.contains(3)
+	        val three = Var(2)
+	        collection += three.toSignal
+	        assertResult(false)(contains3())
+	        three() = 3
+	        assertResult(true)(contains3())
+	    }
+	    
+	    it("should allow mixing inserts") {
+	        val collection = new ReactiveHashSet[Int]
+	        val contains3 = collection.contains(3)
+	        val three = Var(2)
+	        
+	        collection += three.toSignal
+	        assertResult(false)(contains3())
+	        collection += 3
+	        assertResult(true)(contains3())
+	        three() = 3
+	        assertResult(true)(contains3())
+	        three() = 2
+	        assertResult(true)(contains3())
+	    }
 	}
 }
