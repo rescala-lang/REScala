@@ -630,7 +630,9 @@ n: 10
 
 \subsubsection{Unegistering Handlers}
 
-Handlers can be unregistered from events by the \code{-=} operator.
+Handlers can be unregistered from events with the \code{-=}
+operator. When a handler is unregistered, is not executed when the
+event is fired.
 
 \begin{codenv}
 val e = new ImperativeEvent[Int]()
@@ -668,7 +670,8 @@ occurrence.
 \subsubsection{Defining Declarative Events}
 
 Declarative events are defined by composing other events. The
-following code snippet shows valid definitions for declarative events.
+following code snippet shows some examples of valid definitions for
+declarative events.
 
 \begin{codenv}
 val e1 = new ImperativeEvent[Int]()
@@ -679,6 +682,11 @@ val e4 = e1 && ((x: Int)=> x>10)
 val e5 = e1 map ((x: Int)=> x.toString)
 \end{codenv}
 
+
+\subsection{Event Operators}
+
+This section presents in details the operators that allow one to
+compose events into declarative events.
 
 \subsubsection{OR Events}
 
@@ -701,10 +709,10 @@ e2(10)
 
 \subsubsection{Predicate Events}
 
-The event $e_1 \&\& p$ is fired if $e_1$ occurs and the predicate $p$
-is satisfied. The predicate is a function that accepts the event
+The event $e \&\& p$ is fired if $e$ occurs and the predicate $p$ is
+satisfied. The predicate is a function that accepts the event
 parameter as a formal parameter and returns \code{Boolean}. In other
-words the $\&\&$ operator filter the events according to their
+words the $\&\&$ operator filters the events according to their
 parameter and a predicate.
 
 \begin{codenv}
@@ -720,8 +728,8 @@ e(15)
 
 \subsubsection{Map Events}
 
-The event $e_1 map f$ is obtained by applying $f$ to the value carried
-by $e_1$. The map function must take the event parameter as a formal
+The event $e\,map f$ is obtained by applying $f$ to the value carried
+by $e$. The map function must take the event parameter as a formal
 parameter. The return type of the map function is the type parameter
 value of the resulting event.
 
@@ -743,7 +751,7 @@ Here: 15
 
 The $dropParam$ operator transforms an event into an event with
 \code{Unit} parameter. In the following example the $dropParam$
-operator transforms an \code{Event[Into]} into an \code{Event[Unit]}.
+operator transforms an \code{Event[Int]} into an \code{Event[Unit]}.
 
 \begin{codenv}
 val e = new ImperativeEvent[Int]()
@@ -767,7 +775,8 @@ val e2 = new ImperativeEvent[Unit]()
 val e1_OR_e2 = e1 || e2  // Compiler error
 \end{codenv}
 
-The following example is correct.
+The following example is correct. The $dropParam$ operator allows
+one to make the events compatible with each other.
 
 \begin{codenv}
 val e1 = new ImperativeEvent[Int]()
@@ -785,7 +794,7 @@ val e1_OR_e2: Event[Unit] = e1.dropParam || e2
 
 \REScala provides functions that interface signals and events. Some of
 those functions can be called on a signal providing an event as the
-first parameter or can be called on an event providing signal as the
+first parameter or can be called on an event providing a signal as the
 first parameter. While the behavior is the same, the signature of the
 function is obviously different. For example, the function
 \code{snapshot} can returns a signal that is updated on an event
@@ -802,7 +811,7 @@ s.snapshot[V](e : Event[_]): Signal[V]
 
 
 For simplicity, in those cases, we document the signature of the
-function will all the interested objects in the parameters. For
+function with all the interested objects in the parameters. For
 example:
 
 \begin{codenv}
@@ -1110,8 +1119,8 @@ parameter, once, on the occurrence of the event \code{e}.
 
 
 \section{Common Pitfalls}~\label{sec:pitfalls} In this section we
-collect some mistakes that are common to users that are new to
-reactive programming and \REScala. 
+collect the most common pitfalls for users that are new to reactive
+programming and \REScala.
 
 
 \subsection{Accessing values in signal expressions} The \code{()}
@@ -1129,11 +1138,11 @@ The following code instead establishes only a dependency between
 \begin{codenv}
 val s = Signal{ a.getVal + b() }
 \end{codenv}
-In other words, if \code{a} is updated, \code{s} is not automatically
-updated. With the exception of rare cases in which this behavior is
-desirable, this is almost certainly a mistake. As a rule of dumb,
-signals and vars appear in signal expressions with the \code{()}
-operator.
+In other words, in the last example, if \code{a} is updated, \code{s}
+is not automatically updated. With the exception of the rare cases in
+which this behavior is desirable, using \code{getVal} inside a signal
+expression is almost certainly a mistake. As a rule of dumb, signals
+and vars appear in signal expressions with the \code{()} operator.
 
 
 \subsection{Attempting to assign a signal} Signals are not
@@ -1160,7 +1169,7 @@ foo(c)
 \end{codenv}
 
 A possible solution is to refactor the code above to a more functional
-style. For example by removing the variable \code{c} and replacing it
+style. For example, by removing the variable \code{c} and replacing it
 directly with the signal.
 \begin{codenv}
 val c = Signal{ 
@@ -1184,8 +1193,8 @@ val s = Signal{ a() + t() }
 val t = Signal{ a() + s() + 1 }
 \end{codenv}
 
-creates a mutual dependencies between \code{s} and \code{t}. Similarly
-indirect cyclic dependencies must be avoided.
+creates a mutual dependencies between \code{s} and
+\code{t}. Similarly, indirect cyclic dependencies must be avoided.
 
 
 
@@ -1209,15 +1218,15 @@ One may expect that after increasing the value of \code{foo.x} in
 Line~\ref{same}, the signal expression is evaluated again and updated
 to 12. The reason why the application behaves differently is that
 signals and vars hold {\it references} to objects, not the objects
-themselves. When the statement in line Line~\ref{same} is executed,
-the value of the \code{x} field changes, but the reference hold by the
+themselves. When the statement in Line~\ref{same} is executed, the
+value of the \code{x} field changes, but the reference hold by the
 \code{varFoo} var is the same. For this reason, no change is detected
-by the var, the var does not propagate the change to the signal and
+by the var, the var does not propagate the change to the signal, and
 the signal is not reevaluated.
 
 A solution to this problem is to use immutable objects. Since the
 objects cannot be modified, the only way to change a filed is to
-create an entirely new object and assign it to the var. As a result
+create an entirely new object and assign it to the var. As a result,
 the var is reevaluated.
 
 \begin{codenv}
@@ -1231,12 +1240,12 @@ varFoo()= newFoo(2)
 // s.getVal == 12 
 \end{codenv}
 
-Alternatively one can still use mutable objects but assign again the
+Alternatively, one can still use mutable objects but assign again the
 var to force the reevaluation. However this style of programming is
 confusing for the reader and should be avoided when possible.
 
 \begin{codenv}
-class Foo(init: Int){
+class Foo(init: Int){   /* WRONG - DON'T DO IT */
   var x = init
 }
 val foo = new Foo(1)
@@ -1304,9 +1313,9 @@ that are necessary to correctly run the current the library.
 
 \subsection{Imports and dependencies}
 
-To work with \REScala you need to properly import the reactive
+To work with \REScala programmers need to properly import the reactive
 abstractions offered by the language. The following imports are
-normally sufficient for all \REScala functionalities:
+normally sufficient for all the basic functionalities of \REScala:
 
 \begin{codenv}
 import react._
@@ -1315,9 +1324,10 @@ import macro.SignalMacro.{SignalM => Signal}
 \end{codenv}
 
 Note that signal expressions are currently implemented as macros,
-i.e. the body of a signal expression is macroexpanded. To use macros
-for signal expressions, the macro \code{SignalM} is imported and
-renamed to \code{Signal} (Line 3).
+i.e. the body of a signal expression is analyzed to detect the
+reactive values and establish the dependencies. To use macros for
+signal expressions, the macro \code{SignalM} is imported and renamed
+to \code{Signal} (Line 3).
 
 
 
@@ -1357,7 +1367,9 @@ Scala.React~\cite{EPFL-REPORT-148043} (Scala).
 \section{Acknowledgments}\label{sec:ack}
 
 Several people contributed to this manual with their comments. Among
-the others Gerold Hintz and Pascal Weisenburger.
+the others...
+
+%Gerold Hintz and Pascal Weisenburger.
 
 
 
