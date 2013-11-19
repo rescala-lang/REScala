@@ -166,10 +166,13 @@
 
 \title{REScala Reference Manual}
 
-\date{November 2013}
 
 \author{Guido Salvaneschi\\ Technical University of Darmstadt\\
 \code{salvaneschi@informatik.tu-darmstadt.de}\\}
+
+
+\date{November 2013\\ \vspace*{10mm} Version 0.1}
+
 
 
 \begin{document}
@@ -192,22 +195,38 @@
 \section{Introduction}
 
 This manual covers the main features of the \REScala programming
-language. The manual introduces the concepts related to functional
-reactive programming and event-based programming from a practical
-perspective. The readers interested in a more general presentation of
-these topics can refer to Section~\ref{sec:related} for the essential
-references.
+language. Section~\ref{sec:sig-and-vars} presents time-changing values
+in \REScala, Section~\ref{sec:events} describes events,
+Section~\ref{sec:conv-fun} covers the conversion functions between
+events and time-changing values, Section~\ref{sec:technicalities}
+presents technical details that are necessary to correctly run
+\REScala, Section~\ref{sec:related} outlines the related work.
+
 
 \paragraph{Intended audience and prerequisites} This manuscript is
 mainly intended for students who approach reactive programming in
-Scala for the first time.  The manual assumes a basic knowledge of the
-Scala~\cite{scala} language. No previous knowledge of reactive
-programming is assumed.
+Scala for the first time.  The manual assumes basic knowledge of the
+Scala~\cite{scala} language and of functional programming (high-order
+functions, anonymous functions, etc.). No previous knowledge of
+reactive programming is assumed.
 
 While a major aspect of \REScala's design is the integration of events
-and signals, these two features can be used separately. A likely
-scenario is the use of \REScala events only to design application that
-do not need time-changing values.
+and signals, they can be used separately. For example a programmer can
+use only \REScala events to design application that do not need
+time-changing values.
+
+\paragraph{Scope} The manual covers the basic features of
+\REScala. Some functionalities, including implicit events and
+high-order signals are intentionally not covered, other, like event
+polymorphism, are only sketched. More details can be found
+in~\cite{rescala,Gasiunas:2011:EME:1960275.1960303}.
+
+The manual introduces the concepts related to functional reactive
+programming and event-based programming from a practical
+perspective. The readers interested in a more general presentation of
+these topics can find in Section~\ref{sec:related} the essential
+references.
+
 
 
 \newpage
@@ -217,7 +236,7 @@ do not need time-changing values.
 
 
 
-\section{Signals and Vars}
+\section{Signals and Vars}\label{sec:sig-and-vars}
 
 A signal is language concept for expressing functional dependencies
 among values in a declarative way. Intuitively, a reactive value can
@@ -241,18 +260,18 @@ println(a,b,c) // -> (4,3,7)
 \end{codenv}
 
 Line~\ref{sum} specifies the value of \code{c} as a function of
-\code{a} and \code{b}. Since Line~\ref{sum} defines a statement, the
-relation $c = a + b$ is valid after the execution of
+\code{a} and \code{b}. Since Line~\ref{sum} defines a {\it statement},
+the relation $c = a + b$ is valid after the execution of
 Line~\ref{sum}. Clearly, when the value of \code{a} is updated, the
 relation $c = a + b$ is not valid anymore (Line~\ref{nomore}). To make
 sure that the relation still holds, the programmer needs to recompute
 the expression and reassign \code{c}, like in line \ref{update}.
 \\
 
-Reactive programming and REScala provide abstraction to express {\em
-  constraints} in addition to statements. In REScala the programmer
+Reactive programming and \REScala provide abstractions to express {\em
+  constraints} in addition to statements. In \REScala, the programmer
 can specify that the constraint $c := a + b$ {\em always} holds during
-the execution of a program, and every time \code{a} o \code{b} change,
+the execution of a program. Every time \code{a} or \code{b} change,
 the value of \code{c} is automatically recomputed.
 
 For example:
@@ -261,27 +280,30 @@ val a = Var(2)
 val b = Var(3)
 val c = Signal{ a() + b() }   (*@\label{sumS}@*)
 println(a.getVal,b.getVal,c.getVal) // -> (2,3,5)
-a()= 4
-println(a,b,c) // -> (2,4,5) (*@\label{updated}@*)
+a()= 4  (*@\label{updated}@*)
 println(a.getVal,b.getVal,c.getVal) // -> (4,3,7)
 \end{codenv}
 
-In the code above, the \code{Signal} in Line~\ref{sumS} defines the
-constraint $c := a + b$. When one of the variables involved in the
-constraint is updated (Line~\ref{updated}), the expression in the
+In the code above, the signal in Line~\ref{sumS} defines the
+constraint $c := a + b$. When one of the reactive values involved in
+the constraint is updated (Line~\ref{updated}), the expression in the
 constraint is recomputed behind the scenes, and the value of \code{a}
 is automatically updated.
 
-As the reader may have noticed, expressing constraints in REScala
-requires to conform some syntactic conventions. 
+As the reader may have noticed, expressing constraints in \REScala
+requires to conform some syntactic conventions which are discussed in
+the next sections.
 
 
-\paragraph{Defining Vars} Programmers express reactive computations
-starting from vars. Vars wrap normal Scala values. For example
-\code{Var(2)} create a var with an \code[Int] value and initializes it
-to the value 2. Vars are parametric types. A var that carries integers
-has the type \code{Var[Int]}. The following are all valid vars
-declarations.
+\subsection{Vars}
+
+
+\subsubsection{Defining Vars} Programmers express reactive
+computations starting from vars. Vars wrap normal Scala values. For
+example, \code{Var(2)} creates a var with an \code[Int] value and
+initializes the var to the value 2. Vars are parametric types. A var
+that carries integer values has type \code{Var[Int]}. The following
+code snippet shows valid var declarations.
 
 \begin{codenv}
 val a = Var(0) 
@@ -293,51 +315,46 @@ val f: Var[Boolean] = Var(false)
 \end{codenv}
 
 
-\paragraph{Assigning Vars} Vars can be directly modified with the
+\subsubsection{Assigning Vars} Vars can be directly modified with the
 \code{()=} operator. For example \code{v()=3} replaces the current
-value of the \code{v} var with \code{3}. 
+value of the \code{v} var with \code{3}. Therefore, vars are changed
+imperatively by the programmer.
 
-\paragraph{Defining Signals} Signals are defined by the syntax
+
+
+\subsection{Signals}
+
+\subsubsection{Defining Signals} Signals are defined by the syntax
 \code{Signal\{}{\it sigexpr}\code{\}}, where {\it sigexpr} is a side
 effect-free expression. Signals are parametric types. A signal that
-carries integers has the type \code{Signal[Int]}.
+carries integer values has the type \code{Signal[Int]}.
 
-\paragraph{Signal expressions} When, inside a signal expression
+\subsubsection{Signal expressions} When, inside a signal expression
 defining a signal \code{s}, a var or a signal is called with the
-\code{()} operator, the var of the signal are added to the values
-\code{s} depends on. In that case \code{s} {\it is a dependency} of
-the vars and the signals in the signal expression. All the following
-code snippets define valid signal declarations.
-
+\code{()} operator, the var or the signal are added to the values
+\code{s} depends on. In that case, \code{s} {\it is a dependency} of
+the vars and the signals in the signal expression. For example in the
+code snippet:
 
 \begin{codenv}
-val a = Var(0) 
-val s: Signal[Int] = Signal{ a() + 1 }
+  val a = Var(0) val b = Var(0) val s = Signal{ a() + b() } //
+  Multiple vars is a signal expression
 \end{codenv}
+
+The signal \code{s} is a dependency of the vars \code{a} and \code{b},
+meaning that the values of \code{s} depends on both \code{a} and
+\code{b}. The following code snippets define valid signal
+declarations.
 
 \begin{codenv}
 val a = Var(0) 
 val b = Var(0) 
+val c = Var(0)
+val r: Signal[Int] = Signal{ a() + 1 } // Explicit type in var decl
 val s = Signal{ a() + b() } // Multiple vars is a signal expression
-\end{codenv}
-
-\begin{codenv}
-val a = Var(0) 
-val b = Var(0)
-val c = Var(0)
-val s = Signal{ a() + b() }
 val t = Signal{ s() * c() + 10 } // Mix signals and vars in signal expressions
-\end{codenv}
-
-\begin{codenv}
-val a = Var(0) 
-val b = Var(0)
-val c = Var(0)
-val s = Signal{ a() + b() }
-val t = Signal{ s() * c() + 10 }
 val u = Signal{ s() * t() } // A signal that depends on other signals
 \end{codenv}
-
 
 \begin{codenv}
 val a = Var(0) 
@@ -358,9 +375,9 @@ val s: Signal[Int] = Signal{ // A signal expression can be any code block
 
 
 
-
-\paragraph{Reading reactive values} The current value of a signal or a
-var can be accessed using the \code{getVal} method. For example:
+\subsubsection{Accessing reactive values} The current value of a
+signal or a var can be accessed using the \code{getVal} method. For
+example:
 
 \begin{codenv}
 val a = Var(0) 
@@ -368,18 +385,19 @@ val b = Var(2)
 val c = Var(true)
 val s: Signal[Int] = Signal{ a() + b() }
 val t: Signal[Boolean] = Signal{ !c() }
-
 val x: Int = a.getVal 
 val y: Int = s.getVal 
-val x: Boolean = t.getVal 
+val z: Boolean = t.getVal 
+println(z)
 \end{codenv}
 
 
 
-\subsubsection{Example: speed}
+\subsection{Example: speed}
 The following example computes the displacement \code{space} of a
 particle that is moving at constant speed \code{SPEED}. The
-application prints all the values of the displacement.
+application prints all the values associated to the displacement over
+time.
 
 \begin{codenv}
 val SPEED = 10
@@ -405,17 +423,18 @@ while (true) {
 The application behaves as follows. Every 20 milliseconds, the value
 of the \code{time} var is increased by 1 (Line~\ref{increasetime}).
 When the value of the \code{time} var changes, the signal expression
-at Line~\ref{sigexpr} is executed and the value of \code{space} is
-updated. Finally, the current value of the \code{space} signal every
-time the value of the signal changes. Technically, this is achieved by
-converting the \code{space} signal to an event that is fired every
-time the signal changes its value (Line~\ref{conversion}). The
-conversion is performed by the \code{changed} operator. The \code{+=}
-operator attaches an handler to the event returned by the
-\code{changed} operator. When the event fires, the handler is
-executed.
+at Line~\ref{sigexpr} is reevaluated and the value of \code{space} is
+updated. Finally, the current value of the \code{space} signal is
+printed every time the value of the signal changes. 
 
-Line~\ref{conversion} is equivalent to the following code:
+Printing the value of a signal deserves some more considerations.
+Technically, this is achieved by converting the \code{space} signal to
+an event that is fired every time the signal changes its value
+(Line~\ref{conversion}). The conversion is performed by the
+\code{changed} operator. The \code{+=} operator attaches an handler to
+the event returned by the \code{changed} operator. When the event
+fires, the handler is executed. Line~\ref{conversion} is equivalent to
+the following code:
 
 \begin{codenv}
 val e: Event[Int] = space.changed
@@ -424,6 +443,12 @@ e += handler
 \end{codenv}
 
 
+Note that using \code{println(space.getVal)} would also print the
+value of the signal, but only at the point in time in which the print
+statement is executed. Instead, the approach described so far prints
+{\it all} values of the signal. More details about converting signals
+into events and back are provided in Section~\ref{sec:conv-fun}.
+
 
 \newpage
 
@@ -431,23 +456,25 @@ e += handler
 
 
 
-\section{Events}
+\section{Events}\label{sec:events}
 
 \REScala supports different kind of events. Imperative events are
-directly triggers from the user, declarative events are triggered when
-the events they depend on are triggered. In reactive applications,
-events are typically used to model changes that happen at discrete
-points in time. For example a mouse click from the user. Some
-generalities about \REScala events.
+directly triggered from the user. Declarative events trigger when the
+events they depend on trigger. In reactive applications, events are
+typically used to model changes that happen at discrete points in
+time. For example a mouse click from the user or the arrival of a new
+network packet. Some features of \REScala events are valid for all
+event types.
 
 \begin{itemize}
 
 \item Events carry a value. The value is associated to the event when
-  the event is fired and received by all the registered handlers.
+  the event is fired and received by all the registered handlers when
+  each handler is executed.
 
-\item Events are generic, like \code{Event[T]} and
-  \code{ImpertiveEvent[T]} where \code{T} is the value carried by the
-  event.
+\item Events are generic types parametrized with the type of value
+  they carry, like \code{Event[T]} and \code{ImpertiveEvent[T]} where
+  \code{T} is the value carried by the event.
 
 \item Both imperative events and declarative events are subtypes of
   \code{Event[T]} and can referred to generically.
@@ -458,8 +485,8 @@ generalities about \REScala events.
 
 \REScala imperative events are triggered imperatively by the
 programmer. One can think to imperative events as a generalization of
-a method call which supports (multiple) bodies that can be registered
-and unregistered dynamically.
+a method call which supports (multiple) bodies that are registered and
+unregistered dynamically.
 
 \subsubsection{Defining  Events}
 
@@ -471,12 +498,12 @@ valid events definitions:
 
 \begin{codenv}
 val e1 = new ImperativeEvent[Unit]()
-val e1 = new ImperativeEvent[Int]()
-val e2 = new ImperativeEvent[String]()
-val e3 = new ImperativeEvent[Boolean]()
+val e2 = new ImperativeEvent[Int]()
+val e3 = new ImperativeEvent[String]()
+val e4 = new ImperativeEvent[Boolean]()
 val e5: ImperativeEvent[Int] = new ImperativeEvent[Int]()
 class Foo
-val e4 = new ImperativeEvent[Foo]()
+val e6 = new ImperativeEvent[Foo]()
 \end{codenv}
 
 It is possible to attach more than one value to the same event. This
@@ -486,12 +513,12 @@ type. For example:
 \begin{codenv}
 val e1 = new ImperativeEvent[(Int,Int)]()
 val e2 = new ImperativeEvent[(String,String)]()
-val e2 = new ImperativeEvent[(String,Int)]()
-val e3 = new ImperativeEvent[(Boolean,String,Int)]()
+val e3 = new ImperativeEvent[(String,Int)]()
+val e4 = new ImperativeEvent[(Boolean,String,Int)]()
 val e5: ImperativeEvent[(Int,Int)] = new ImperativeEvent[(Int,Int)]()
 \end{codenv}
 
-Note that since an imperative event is also an event. Therefore the
+Note that an imperative event is also an event. Therefore the
 following declaration is also valid:
 
 \begin{codenv}
@@ -505,16 +532,15 @@ val e1: Event[Int] = new ImperativeEvent[Int]()
 Handlers are code blocks that are executed when the event fires. The
 \code{+=} operator attaches the handler to the event. The handler is a
 first class function that receives the attached value as a parameter.
-The following are valid ways to attach a handler to an event:
+The following are valid handler definitions.
 
 \begin{codenv}
 var state = 0
-val e1 = new ImperativeEvent[Int]()
-e1 += { println(_) }
-e1 += { println(_) }
-e1 += (x => println(x))
-e1 += ((x: Int) => println(x))
-e1 += (x => {  // Multiple statements in the handler
+val e = new ImperativeEvent[Int]()
+e += { println(_) }
+e += (x => println(x))
+e += ((x: Int) => println(x))
+e += (x => {  // Multiple statements in the handler
   state = x 
   println(x)
 })
@@ -522,15 +548,17 @@ e1 += (x => {  // Multiple statements in the handler
 
 The signature of the handler must conform the signature of the event,
 since the handler is supposed to process the attached value and
-perform side effects:
+perform side effects. For example is the event is of type
+\code{Event[(Int,Int)]} the handler must be of type \code{(Int,Int) =>
+  Unit}.
 
 \begin{codenv}
-val e2 = new ImperativeEvent[(Int,String)]()
-e2 += (x => {
+val e = new ImperativeEvent[(Int,String)]()
+e += (x => {
   println(x._1)
   println(x._2)
 })
-e2 += (x: (Int,String) => {
+e += (x: (Int,String) => {
   println(x)
 })
 \end{codenv}
@@ -539,9 +567,9 @@ Note that events without arguments still need a \code{Unit} argument
 in the handler.
 
 \begin{codenv}
-val e1 = new ImperativeEvent[Int]()
-e1 += { x => println() }
-e1 += { (x: Unit) => println() }
+val e = new ImperativeEvent[Int]()
+e += { x => println() }
+e += { (x: Unit) => println() }
 \end{codenv}
 
 
@@ -552,22 +580,23 @@ e1 += { (x: Unit) => println() }
 \subsubsection{Firing Events}
 
 Events can be fired with the same syntax of a method call. When an
-event is fired, a proper value must be attached that conforms the
-signature of the event. For example:
+event is fired, a proper value must be associated to the event
+call. Clearly, the value must conform the signature of the event. For
+example:
 
 \begin{codenv}
 val e1 = new ImperativeEvent[Int]()
-val e1 = new ImperativeEvent[Boolean]()
-val e1 = new ImperativeEvent[(Int,String)]()
+val e2 = new ImperativeEvent[Boolean]()
+val e3 = new ImperativeEvent[(Int,String)]()
 e1(10)
-e1(false)
-e1((10,"Hallo"))
+e2(false)
+e3((10,"Hallo"))
 \end{codenv}
-
 
 When a handler is registered to an event, the handler is executed
 every time the event is fired. The actual parameter is provided to the
 handler.
+
 \begin{codenv}
 val e = new ImperativeEvent[Int]()
 e += { x => println(x) }
@@ -752,7 +781,7 @@ val e1_OR_e2: Event[Unit] = e1.dropParam || e2
 
 
 
-\section{Conversion Functions}
+\section{Conversion Functions}\label{sec:conv-fun}
 
 \REScala provides functions that interface signals and events. Some of
 those functions can be called on a signal providing an event as the
@@ -764,8 +793,8 @@ occurrence. Hence, the function can be exposed both on the
 \code{Signal} and the \code{Event} interface. For example:
 
 \begin{codenv}
-val e  = ... // An event
-val s = ... // A signal
+val e: Event[V]  = ... // An event
+val s: Signal[V] = ... // A signal
 
 e.snapshot[V](s: Signal[V]): Signal[V]
 s.snapshot[V](e : Event[_]): Signal[V]
@@ -781,7 +810,7 @@ def snapshot[V](e : Event[_], s: Signal[V]): Signal[V]
 \end{codenv}
 
 
-\subsubsection*{Fold}
+\subsubsection{Fold}
 The \code{fold} function creates a signal by folding events with a
 given function. Initially the signal holds the \code{init}
 value. Every time a new event arrives, the function \code{f} is
@@ -805,7 +834,7 @@ assert(s.getValue == 13)
 \end{codenv}
 
 
-\subsubsection*{Iterate}
+\subsubsection{Iterate}
 Returns a value computed by \code{f} on the occurrence of an
 event. Differently from \code{fold}, there is no accumulator, i.e. the
 value of the signal does not depend on the previous values but only on
@@ -836,7 +865,7 @@ assert(s.getVal == 10)
 
 
 
-\subsubsection*{Latest/latestOption}
+\subsubsection{Latest/latestOption}
 Returns a signal holding the latest value of the event \code{e}. The
 initial value of the signal is set to \code{init}.
 \\
@@ -885,7 +914,7 @@ assert(s.getVal == Option(1))
 \end{codenv}
 
 
-\subsubsection*{Last}
+\subsubsection{Last}
 
 The \code{last} function generalizes the \code{latest} function and
 returns a signal which holds the last \code{n} events.
@@ -916,7 +945,7 @@ assert(s.getVal == List(6,5,4,3,2))
 
 
 
-\subsubsection*{List}
+\subsubsection{List}
 Collects the event values in a (growing) list. This function should be
 used carefully. Since the entire history of events is maintained, the
 function can potentially introduce a memory overflow.
@@ -926,7 +955,7 @@ function can potentially introduce a memory overflow.
 
 
 
-\subsubsection*{Snapshot}
+\subsubsection{Snapshot}
 Returns a signal updated only when \code{e} fires. If \code{s} in the
 meanwhile changes its value, the change is ignored. When the event
 \code{e} fires, the resulting signal is updated ti the current value
@@ -954,7 +983,7 @@ assert(s.getValue == 3)
 
 
 
-\subsubsection*{Changed/change} 
+\subsubsection{Changed/change} 
 
 The \code{changed} applies to a signal and returns an event that is
 fired every time the signal changes its value. 
@@ -998,7 +1027,7 @@ e += ((x:(Int,Int))=>{ ... })
 
 
 
-\subsubsection*{Reset}
+\subsubsection{Reset}
 
 When the \code{reset} function is called for the first time, the
 \code{init} value is used by the factory to determine the signal
@@ -1038,7 +1067,7 @@ assert(s3.getVal == 12)
 
 
 
-\subsubsection*{Switch/toggle}
+\subsubsection{Switch/toggle}
 
 
 The \code{toggle} function switches alternatively between the given
@@ -1082,7 +1111,7 @@ parameter, once, on the occurrence of the event \code{e}.
 
 \section{Common Pitfalls}~\label{sec:pitfalls} In this section we
 collect some mistakes that are common to users that are new to
-reactive programming and REScala. 
+reactive programming and \REScala. 
 
 
 \subsection{Accessing values in signal expressions} The \code{()}
@@ -1275,9 +1304,9 @@ that are necessary to correctly run the current the library.
 
 \subsection{Imports and dependencies}
 
-To work with REScala you need to properly import the reactive
+To work with \REScala you need to properly import the reactive
 abstractions offered by the language. The following imports are
-normally sufficient for all REScala functionalities:
+normally sufficient for all \REScala functionalities:
 
 \begin{codenv}
 import react._
@@ -1299,14 +1328,16 @@ renamed to \code{Signal} (Line 3).
 
 \section{Essential Related Work}~\label{sec:related}
 
-A complete bibliography on reactive programming is beyond the scope of
+
+A more academic presentation of \REScala is in \cite{rescala}. A
+complete bibliography on reactive programming is beyond the scope of
 this work. The interested reader can refer
 to~\cite{rective-progr-survey} for an overview of reactive programming
 and to~\cite{Salvaneschi:2013:RBO:2451436.2451442} for the issues
 concerning the integration of RP with object-oriented programming.
 
 
-REScala builds on ideas originally developed in
+\REScala builds on ideas originally developed in
 EScala~\cite{Gasiunas:2011:EME:1960275.1960303} -- which supports
 event combination and implicit events. Other reactive languages
 directly represent time-changing values and remove inversion of
@@ -1323,7 +1354,7 @@ Scala.React~\cite{EPFL-REPORT-148043} (Scala).
 
 
 
-\section{Acknowledgments}
+\section{Acknowledgments}\label{sec:ack}
 
 Several people contributed to this manual with their comments. Among
 the others Gerold Hintz and Pascal Weisenburger.
