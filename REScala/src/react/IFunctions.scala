@@ -53,11 +53,14 @@ object IFunctions {
   def last[T](e : Event[T], n : Int) : Signal[List[T]] = fold(e, List[T]())((acc, v) => (v :: acc).take(n)) 
   
   
-  /** Return a Signal that gets updated only when e fires, and has the value of this Signal */
+  /** Return a Signal that is updated only when e fires, and has the value of the signal s */
   def snapshot[V](e : Event[_], s: Signal[V]): Signal[V] = fold(e, s.getVal)((_,_) => s.getVal)
    
   
-   /** Switch to a signal once, on the occurrence of event e */
+   /** Switch to a signal once, on the occurrence of event e. Initially the 
+    *  return value is set to the original signal. When the event fires,
+    *  the result is a constant signal whose value is the value of the event. 
+    */
    def switchTo[T](e : Event[T], original: Signal[T]): Signal[T] = {
     val latest = latestOption(e)
     StaticSignal(latest,original){ latest.getVal match {
@@ -66,7 +69,7 @@ object IFunctions {
     }}
   }
   
-  /** Switch to a new Signal once, on the occurrence of event e */
+  /** Switch to a new Signal once, on the occurrence of event e. */
   def switchOnce[T](e: Event[_], original: Signal[T], newSignal: Signal[T]): Signal[T] = {
     val latest = latestOption(e)
     StaticSignal(latest,original,newSignal){ latest.getVal match {

@@ -68,6 +68,8 @@ trait Event[+T] extends DepHolder {
   def set[B >: T,A](init: B)(f: (B=>A)): Signal[A] = IFunctions.set(this,init)(f)
 
   def latest[S >: T](init: S): Signal[S] = IFunctions.latest(this, init)
+  def latestOption[S >: T]:  Signal[Option[T]] = IFunctions.latestOption[T](this)
+  
   def reset[S >: T, A](init : S)(f : (S) => Signal[A]) : Signal[A] = IFunctions.reset(this, init)(f)
   
   def last[S >: T](n: Int): Signal[List[S]] = IFunctions.last[S](this, n)
