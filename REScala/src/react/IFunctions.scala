@@ -20,6 +20,11 @@ object IFunctions {
   /** Iterates a value on the occurrence of the event. */
   def iterate[A](e: Event[_], init: A)(f: A=>A): Signal[A] = fold(e,init)( (acc,_)=>f(acc) )
   
+  /** Counts the occurrences of the event. Starts from 0, when the event has never been
+   *  fired yet. The argument of the event is simply discarded.
+   */
+  def count(e: Event[_]): Signal[Int] = fold(e,0)((acc,_)=>acc+1)
+  
    /** Calls f on each occurrence of event e, setting the Signal to the generated value.
     *  The initial signal is obtained by f(init) 
     */

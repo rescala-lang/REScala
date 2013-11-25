@@ -64,6 +64,7 @@ trait Event[+T] extends DepHolder {
   
   def fold[A](init: A)(fold: (A, T) => A): Signal[A] = IFunctions.fold(this, init)(fold)
   def iterate[A](init: A)(f: A => A): Signal[A] = IFunctions.iterate(this, init)(f)
+  def count: Signal[Int] = IFunctions.count(this)
   
   def set[B >: T,A](init: B)(f: (B=>A)): Signal[A] = IFunctions.set(this,init)(f)
 
