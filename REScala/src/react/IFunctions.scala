@@ -2,20 +2,14 @@ package react
 
 import react.events._
 import react.log._
+import scala.collection.mutable.ListBuffer
+
 
 
 object IFunctions {
 
-  
-
   /** folds events with a given fold function to create a Signal */
-  def fold[T,A](e: Event[T], init: A)(f: (A,T)=>A): Signal[A] = {
-      val v: Var[A] = Var(init)
-	  e += {(newVal: T) => v.setVal(f(v.getValue,newVal)) }
-	  val result = StaticSignal(v){v.getValue}
-	  ReactiveEngine.log log LogIFAttach(ReactiveEngine.log.node(result), ReactiveEngine.log.node(e)) // log the 'virtual' dependency
-	  return result
-  }
+  def fold[T,A](e: Event[T], init: A)(f: (A,T)=>A): Signal[A] = new FoldedSignal(e, init, f)  
 
   /** Iterates a value on the occurrence of the event. */
   def iterate[A](e: Event[_], init: A)(f: A=>A): Signal[A] = fold(e,init)( (acc,_)=>f(acc) )
@@ -136,6 +130,68 @@ object IFunctions {
 
 
   
+}
+
+
+class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T,E) => T)
+  extends Dependent with DepHolder with Signal[T] {
+
+  // The value of this signal
+  private[this] var currentValue: T = init
+  
+  // The cached value of the last occurence of e
+  private[this] var lastEvent: E = _ 
+  
+  private[this] var inQueue = false
+  
+  // Testing
+  val timestamps = ListBuffer[Stamp]()
+  
+  def getValue = currentValue
+  def getVal = currentValue
+  
+  def apply(): T = currentValue
+  def apply(s: SignalSynt[_]) = {
+    if (level >= s.level) s.level = level + 1
+    s.reactivesDependsOnCurrent += this 
+    getVal
+  }
+  
+  // The only dependant is e
+  dependOn += e
+  e.addDependent(this)
+  this.level = e.level + 1
+  
+  def triggerReevaluation() = reEvaluate
+  
+  def reEvaluate(): T = {
+    inQueue = false
+    val tmp = f(currentValue, lastEvent)
+    if (tmp != currentValue) {
+      currentValue = tmp
+      timestamps += TS.newTs // Testing
+      notifyDependents(currentValue)
+    } else {
+      timestamps += TS.newTs // Testing
+    }
+    tmp
+  }
+  override def dependsOnchanged(change: Any, dep: DepHolder) = {
+    if(dep eq e){
+      lastEvent = change.asInstanceOf[E]
+    }
+    else {
+       // this would be an implementation error
+      throw new RuntimeException("Folded Signals can only depend on a single event node")
+    }
+    
+    if(!inQueue){
+      inQueue = true
+      ReactiveEngine.addToEvalQueue(this)
+    }
+  }
+  
+  def change[U >: T]: Event[(U, U)] = new ChangedEventNode[(U, U)](this)
 }
 
 
