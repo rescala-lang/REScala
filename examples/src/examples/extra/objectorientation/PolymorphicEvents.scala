@@ -1,4 +1,5 @@
-package examples.eventtests
+package examples.extra.objectorientation
+import react.events._
 import react.SignalSynt
 import react.events._
 import react.Var

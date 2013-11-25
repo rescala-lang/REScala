@@ -1,11 +1,9 @@
 package examples.catchup
 
 import examples.catchup._
-import react.events.ImperativeEvent
-import react.SignalSynt
-import react.Var
-import react.Signal
-import macro.SignalMacro.{ SignalM => Signal }
+import react.events._
+import react._
+import macro.SignalMacro.{SignalM => Signal}
 import swing.{ Panel, MainFrame, SimpleSwingApplication }
 import java.awt.{ Color, Graphics2D, Dimension }
 import java.awt.Point
@@ -16,10 +14,7 @@ import java.awt.Rectangle
 
 
 object CatchUpStarter {
-  def main(args: Array[String]) {
-     /* Uncomment to enable logging: */
-	//react.ReactiveEngine.log.enableAllLogging
-	
+  def main(args: Array[String]) {	
     val app = new CatchUp
     app.main(args)
     while (true) {
@@ -43,6 +38,7 @@ class CatchUp extends SimpleSwingApplication {
   val tick = new ImperativeEvent[Unit]  
   val time = tick.iterate(0.0){ acc: Double => (acc + 0.1) % (math.Pi * 2)}  
   
+  // Mouse position
   val mouse = new Mouse
   val mouseX = Signal { mouse.position().getX.toInt }
   val mouseY = Signal { mouse.position().getY.toInt }
@@ -53,6 +49,7 @@ class CatchUp extends SimpleSwingApplication {
   val x = Signal { mouseX() + xOffset().toInt }
   val y = Signal { mouseY() + yOffset().toInt }
   
+  // Old mouse position, some time ago
   val mouseDelayed = mouse.position.delay(20)
   val delayedX = Signal { mouseDelayed().getX.toInt }
   val delayedY = Signal { mouseDelayed().getY.toInt }
@@ -66,11 +63,17 @@ class CatchUp extends SimpleSwingApplication {
   
   val scoreString = Signal { "You caught up " + numberOfHits() + " times."}
   
-  // redraw code
+  // GUI redrawing code
   val stateChanged = mouse.position.changed || tick  
   stateChanged += { _ => frame.repaint() }
 
-  // drawing code
+  
+  
+  
+  
+  
+  
+  // GUI
   def top = frame
   val frame: MainFrame = new MainFrame {
     title = "Catch up!"
@@ -78,7 +81,9 @@ class CatchUp extends SimpleSwingApplication {
     contents = new Panel() {
       listenTo(mouse.moves, mouse.clicks)
 
-      /** forward mouse events to EScala wrapper class. Should be replaced once reactive GUI lib is complete */
+      /** forward mouse events to EScala wrapper class. 
+       *  Should be replaced once reactive GUI lib is complete 
+       */
       reactions += {
         case e: MouseMoved => { CatchUp.this.mouse.mouseMovedE(e.point) }
         case e: MousePressed => CatchUp.this.mouse.mousePressedE(e.point)

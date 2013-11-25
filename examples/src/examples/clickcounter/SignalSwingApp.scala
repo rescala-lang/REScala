@@ -24,12 +24,9 @@ class ReactiveButton extends Button with ReactiveText {
 }
 
 
-// Now the application
+// The application
 object SignalSwingApp extends SimpleSwingApplication {
-  
-   /* Uncomment to enable logging: */
-  //react.ReactiveEngine.log.enableAllLogging
-		
+  		
   def top = new MainFrame {
     title = "Reactive Swing App"
 

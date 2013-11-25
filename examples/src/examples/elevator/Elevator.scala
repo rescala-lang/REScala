@@ -7,7 +7,7 @@ import macro.SignalMacro.{SignalM => Signal}
 import scala.swing._
 import examples.datastructures._
 
-class Elevator(val nFloors : Int) { // , ticker : => Event[Unit]
+class Elevator(val nFloors : Int) { 
 	// some constants
 	val FloorHeight = 120
 	val MaxSpeed = 10

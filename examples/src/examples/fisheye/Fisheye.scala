@@ -17,9 +17,6 @@ import java.awt.Point
 object FisheyeStarter {
 
   def main(args: Array[String]) {
-    /* Uncomment to enable logging: */
-	//react.ReactiveEngine.log.enableAllLogging
-	
     val app = new Fisheye
     app.main(args)
   }
@@ -49,11 +46,8 @@ class Box(val color: java.awt.Color, val xOffset: Signal[Int])(implicit val mous
   val effectiveColor = Signal { Color.getHSBColor(hsv(0), 0.6f + 0.4f * interpolationValue().toFloat, hsv(2)) }
 
   // define the box
-  val area = Signal {
-    new Rectangle(xOffset(),
-      Box.YPos,
-      effectiveSize(),
-      effectiveSize())
+  val area = Signal { 
+    new Rectangle(xOffset(), Box.YPos, effectiveSize(), effectiveSize()) 
   }
 }
 
@@ -87,7 +81,7 @@ class Fisheye extends SimpleSwingApplication {
     resizable = false
     contents = new Panel() {
 
-      /** forward mouse events to EScala wrapper class. Should be replaced once reactive GUI lib is complete */
+      /** forward mouse events to EScala wrapper class. To replace once reactive GUI lib is complete */
       listenTo(mouse.moves, mouse.clicks)
       reactions += Fisheye.this.mouse.react
 

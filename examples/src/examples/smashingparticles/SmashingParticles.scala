@@ -1,4 +1,4 @@
-package examples.miscellanea
+package examples.smashingparticles
 
 import react._
 import macro.SignalMacro.{SignalM => Signal}
@@ -9,10 +9,6 @@ import scala.collection.mutable.ListBuffer
 
 
 object SmashingParticles extends SimpleSwingApplication {
-  
-  /* Uncomment to enable logging: */
-  //react.ReactiveEngine.log.enableAllLogging
-  
  
   val toDraw = ListBuffer[Function1[Graphics2D,Unit]]()
   type Delta = Point

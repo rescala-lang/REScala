@@ -1,4 +1,4 @@
-package examples.eventtests
+package examples.meanwindow
 import react.SignalSynt
 import react.events._
 import react.Var
@@ -12,7 +12,6 @@ object EventWindows extends Application {
 	val all = e.list()
 	val window = e.last(5)
 	val mean = Signal { window().sum / (window().length + 1)}
-	
 	mean.changed += {println(_)}
 	
 	

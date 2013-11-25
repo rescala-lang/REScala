@@ -16,9 +16,6 @@ import java.awt.Font
 
 object FollowMouseStarter {
   def main(args: Array[String]) {
-    /* Uncomment to enable logging: */
-	//react.ReactiveEngine.log.enableAllLogging
-	
     val app = new FollowMouse
     app.main(args)
     while (true) {
@@ -36,7 +33,8 @@ class FollowMouse extends SimpleSwingApplication {
   val Range = 100
   
   
-
+  // The whole logic
+  
   val tick = new ImperativeEvent[Unit]  
   val time = tick.iterate(0.0){ acc: Double => (acc + 0.1) % (math.Pi * 2)}  
   
@@ -49,6 +47,9 @@ class FollowMouse extends SimpleSwingApplication {
   
   val x = Signal { mouseX() + xOffset().toInt }
   val y = Signal { mouseY() + yOffset().toInt }
+  
+  
+  
   
   // redraw code
   val stateChanged = mouse.position.changed || tick  

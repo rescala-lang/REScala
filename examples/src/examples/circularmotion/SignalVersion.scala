@@ -8,7 +8,7 @@ import macro.SignalMacro.{SignalM => Signal}
 
 object SignalVersion extends App {
 
-  // Time and radius change 
+  // Time and radius change over time
   val time = Var(0)
   val radius = Signal{ time() % 10 } // The circle expands periodically
   
@@ -23,7 +23,7 @@ object SignalVersion extends App {
   
   
   // Print all the results.
-  // Note that the order in which the items are printed is not enforced.
+  // Note that the order in which the items are printed is not deterministic.
   radius.changed += {x => print(f"Radius: $x%d  ") }
   speed.changed += {x => print(f"Speed: $x%.2f  ") }
   angle.changed += {x => print(f"Angle: $x%.2f  ") }
