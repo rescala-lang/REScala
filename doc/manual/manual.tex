@@ -171,7 +171,7 @@
 \code{salvaneschi@informatik.tu-darmstadt.de}\\}
 
 
-\date{November 2013\\ \vspace*{10mm} Version 0.1}
+\date{November 2013\\ \vspace*{10mm} Version 0.2}
 
 
 
@@ -792,13 +792,98 @@ val e1_OR_e2: Event[Unit] = e1.dropParam || e2
 
 \section{Conversion Functions}\label{sec:conv-fun}
 
-\REScala provides functions that interface signals and events. Some of
-those functions can be called on a signal providing an event as the
-first parameter or can be called on an event providing a signal as the
-first parameter. While the behavior is the same, the signature of the
-function is obviously different. For example, the function
-\code{snapshot} can returns a signal that is updated on an event
-occurrence. Hence, the function can be exposed both on the
+\REScala provides functions that interface signals and
+events. Conversion functions are fundamental to introduce
+time-changing values into OO applications -- which are usually
+event-based.
+
+
+
+\subsection{Basic Conversion Functions}
+
+This section covers the basic conversions between signals and events.
+Figure~\ref{fig:event-signal} shows how basic conversion functions can
+bridge signals and events. Events (Figure~\ref{fig:event-signal},
+left) occur at discrete point in time (x axis) and have an associate
+value (y axis). Signals, instead, hold a value for a continuous
+interval of time (Figure~\ref{fig:event-signal}, right). The
+\code{latest} conversion functions creates a signal from an event. The
+signal holds the value associated to an event. The value is hold until
+the vent is fired again and a new value is available. The
+\code{changed} conversion function creates an event from a signal. The
+function fires a new event every time a signal changes its value.
+
+
+
+\begin{figure}[tp]
+\begin{center}
+  \includegraphics[width=0.98\textwidth]{images/event-signal.png}
+\end{center}
+\vspace{-6mm}
+\caption{Basic conversion functions.}
+\label{fig:event-signal}
+\end{figure}
+
+
+
+\subsubsection{Event to Signal: Latest}
+Returns a signal holding the latest value of the event \code{e}. The
+initial value of the signal is set to \code{init}.
+\\
+
+\code{latest[T](e: Event[T], init: T): Signal[T]}
+\\
+
+\noindent
+Example:
+
+\begin{codenv}
+val e = new ImperativeEvent[Int]() 
+val s: Signal[Int] = e.latest(10)
+assert(s.getVal == 10)
+e(1)
+assert(s.getVal == 1)
+e(2)
+assert(s.getVal == 2)
+e(1)
+assert(s.getVal == 1)
+\end{codenv}
+
+
+\subsubsection{Signal to Event: Changed} 
+
+The \code{changed} function applies to a signal and returns an event
+that is fired every time the signal changes its value.
+\\
+
+\code{def change[U >: T]: Event[U]}
+\\
+
+\noindent
+Example:
+
+\begin{codenv}
+var test = 0
+val v =  Var(1)
+val s = Signal{ v() + 1 }
+val e: Event[Int] = s1.changed
+e += ((x:Int)=>{test+=1}) 
+v.setVal 2
+assert(test == 1)
+v.setVal 3
+assert(test == 2)
+\end{codenv}
+
+
+
+\subsection{Advanced Conversion Functions}
+
+Some of the conversion functions can be called on a signal providing
+an event as the first parameter or can be called on an event providing
+a signal as the first parameter. While the behavior is the same, the
+signature of the function is obviously different. For example, the
+function \code{snapshot} can returns a signal that is updated on an
+event occurrence. Hence, the function can be exposed both on the
 \code{Signal} and the \code{Event} interface. For example:
 
 \begin{codenv}
@@ -874,29 +959,7 @@ assert(s.getVal == 10)
 
 
 
-\subsubsection{Latest/latestOption}
-Returns a signal holding the latest value of the event \code{e}. The
-initial value of the signal is set to \code{init}.
-\\
-
-\code{latest[T](e: Event[T], init: T): Signal[T]}
-\\
-
-\noindent
-Example:
-
-\begin{codenv}
-val e = new ImperativeEvent[Int]() 
-val s: Signal[Int] = e.latest(10)
-assert(s.getVal == 10)
-e(1)
-assert(s.getVal == 1)
-e(2)
-assert(s.getVal == 2)
-e(1)
-assert(s.getVal == 1)
-\end{codenv}
-
+\subsubsection{LatestOption}
 
 The \code{latestOption} function is a variant of the \code{latest}
 function which uses the \code{Option} type to distinguish the case in
@@ -992,31 +1055,7 @@ assert(s.getValue == 3)
 
 
 
-\subsubsection{Changed/change} 
-
-The \code{changed} applies to a signal and returns an event that is
-fired every time the signal changes its value. 
-\\
-
-\code{def change[U >: T]: Event[U]}
-\\
-
-\noindent
-Example:
-
-\begin{codenv}
-var test = 0
-val v =  Var(1)
-val s = Signal{ v() + 1 }
-val e: Event[Int] = s1.changed
-e += ((x:Int)=>{test+=1}) 
-v.setVal 2
-assert(test == 1)
-v.setVal 3
-assert(test == 2)
-\end{codenv}
-
-
+\subsubsection{Change} 
 
 The \code{change} function is similar to \code{changed}, but it
 provides both the old and the new value of the signal in a tuple.
@@ -1366,10 +1405,8 @@ Scala.React~\cite{EPFL-REPORT-148043} (Scala).
 
 \section{Acknowledgments}\label{sec:ack}
 
-Several people contributed to this manual with their comments. Among
-the others...
-
-%Gerold Hintz and Pascal Weisenburger.
+Several people contributed to this manual with their ideas and
+comments. Among the others Gerold Hintz and Pascal Weisenburger.
 
 
 
