@@ -3,6 +3,9 @@ package examples.range
 import react._
 import macro.SignalMacro.{SignalM => Signal}
 
+
+
+
 class Range1(protected var _start : Int, protected var _length : Int){
   protected var _end = _start + _length // backs up end
   
@@ -29,10 +32,11 @@ class Range2(var start : Int, var length : Int){
   def end_=(e : Int) = length = e - start  
 }
 
+
 class Range3(val start : Var[Int], val length : Var[Int]) {
 	// end is a signal, leading to transparent caching
-	lazy val end = Signal { start() + length()}
-	lazy val last = Signal { end() - 1 }
+	lazy val end = Signal{ start() + length()}
+	lazy val last = Signal{ end() - 1 }
 	def end_=(e : Int) = length() = e - start()
 	
 	// invariant
@@ -50,3 +54,7 @@ class Range3(val start : Var[Int], val length : Var[Int]) {
 class Range(val start : Int, val length : Int) {
 	lazy val end = start + length
 }
+
+
+
+

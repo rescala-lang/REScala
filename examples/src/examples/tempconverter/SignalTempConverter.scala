@@ -1,7 +1,7 @@
 package examples.tempconverter
 
 
-// Escala lib + behaviour extensions
+// EScala lib + behaviour extensions
 import react.events.ImperativeEvent
 import react.SignalSynt
 import react.Var
@@ -16,10 +16,7 @@ import scala.swing.event._
 
 
 object SignalTempConverter extends SimpleSwingApplication {
-  
-  /* Uncomment to enable logging: */
-  //react.ReactiveEngine.log.enableAllLogging
-  
+   
   def top = new MainFrame {
     title = "Celsius/Fahrenheit Converter"
     object celsius extends ReactiveTextfield { columns = 5 }

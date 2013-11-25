@@ -7,17 +7,9 @@ import scala.swing.event._
 import java.awt.{Color, Dimension, Graphics, Graphics2D, Point, geom}
 import react.events._
 
-/**
- * Dragging the mouse draws a simple graph
- * 
- * @author Frank Teubler, Ingo Maier
- */
 
 
 object LinePaintingEScala extends SimpleSwingApplication {
-  
-  /* Uncomment to enable logging: */
-  //react.ReactiveEngine.log.enableAllLogging
   
   lazy val ui = new Panel {
     background = Color.white

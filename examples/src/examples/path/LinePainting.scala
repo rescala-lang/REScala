@@ -6,11 +6,6 @@ import scala.swing.{MainFrame, Panel, SimpleSwingApplication}
 import scala.swing.event._
 import java.awt.{Color, Dimension, Graphics, Graphics2D, Point, geom}
 
-/**
- * Dragging the mouse draws a simple graph
- * 
- * @author Frank Teubler, Ingo Maier
- */
 
 
 object LinePainting extends SimpleSwingApplication {
