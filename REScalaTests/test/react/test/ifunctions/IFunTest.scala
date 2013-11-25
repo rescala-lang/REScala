@@ -312,8 +312,10 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     
     e(1)
     assert(s2.getVal == 1)
-    e(2)
-    assert(s2.getVal == 2)
+    e(100)
+    assert(s2.getVal == 100)
+    v1.setVal(2)
+    assert(s2.getVal == 100)
   }
   
   
@@ -384,6 +386,10 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     //assert(s3.getVal == 1)
     v1.setVal(1)
     assert(s3.getVal == 2)
+    e(101)
+    assert(s3.getVal == 11)
+    v2.setVal(11)
+    assert(s3.getVal == 12)
   }
   
   
