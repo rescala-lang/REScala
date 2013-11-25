@@ -12,8 +12,6 @@ import scala.swing.Swing
 
 object EventVersionStart {
 	def main(args: Array[String]){
-		/* Uncomment to enable logging: */
-		//react.ReactiveEngine.log.enableAllLogging
 		val app = new EventVersion
 		app.main(args)
 		while (true) {      

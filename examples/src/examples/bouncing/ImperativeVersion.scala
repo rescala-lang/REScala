@@ -15,8 +15,6 @@ object ImperativeVersion extends SimpleSwingApplication {
   
   override def main(args: Array[String]){
     super.main(args)
-    /* Uncomment to enable logging: */
-	//react.ReactiveEngine.log.enableAllLogging
     while (true) {      
 	  tick
       Thread sleep 20

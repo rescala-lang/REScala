@@ -10,7 +10,7 @@ import java.awt.{Color, Graphics2D, Dimension}
 import java.awt.Point
 import scala.swing.Swing
 
-object SwitchVersionStart {
+object FoldVersionStart {
 	def main(args: Array[String]){
 		val app = new SwitchVersionFrame
 		app.main(args)
@@ -21,7 +21,7 @@ object SwitchVersionStart {
 	}
 }
 
-class SwitchVersionFrame extends SimpleSwingApplication {
+class FoldVersionFrame extends SimpleSwingApplication {
   val Size = 50
   val Max_X = 600
   val Max_Y = 600
@@ -30,18 +30,17 @@ class SwitchVersionFrame extends SimpleSwingApplication {
   
   val tick = new ImperativeEvent[Unit]
   
-  
-  // Using switch
-  import react.conversions.SignalConversions._
-  
-  val x: Signal[Int] = tick.fold(initPosition.x) {(pos, _) => pos + speedX.getVal}
-  val y: Signal[Int] = tick.fold(initPosition.y) {(pos, _) => pos + speedY.getVal}
-  
-  val xBounce = x.changed && (x => x < 0 || x + Size > Max_X)
-  val yBounce = y.changed && (y => y < 0 || y + Size > Max_Y)
-  
-  val speedX = Signal {speed.x}.toggle(xBounce) {- speed.x }  
-  val speedY = yBounce.toggle(speed.y, - speed.y)
+    
+  // Implementing switch with fold
+  val xx : Signal[Int] = tick.fold(initPosition.x) 
+  	{(pos, _) => pos + (if(xSwitch()) speed.x else -speed.x)}
+ 
+  val yy : Signal[Int] = tick.fold(initPosition.y) 
+  	{(pos, _) => pos + (if(ySwitch()) speed.y else -speed.y)}
+
+  val xSwitch = (xx.changed && (x => x < 0 || x + Size > Max_X)).fold(false){(a, _) => ! a}
+  val ySwitch = (yy.changed && (y => y < 0 || y + Size > Max_Y)).fold(false){(a, _) => ! a}
+
   
   tick += {_: Unit => frame.repaint()}
   
@@ -51,7 +50,7 @@ class SwitchVersionFrame extends SimpleSwingApplication {
     contents = new Panel() {
       preferredSize = new Dimension(600, 600)
       override def paintComponent(g: Graphics2D) {
-	    g.fillOval(x.getVal, y.getVal, Size, Size)
+	    g.fillOval(xx.getVal, yy.getVal, Size, Size)
       }
     }    
   }
