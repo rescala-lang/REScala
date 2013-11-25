@@ -1,9 +1,7 @@
 package examples.bouncing
 
-import react.events.ImperativeEvent
-import react.SignalSynt
-import react.Var
-import react.Signal
+import react.events._
+import react._
 import macro.SignalMacro.{SignalM => Signal}
 import swing.{Panel, MainFrame, SimpleSwingApplication}
 import java.awt.{Color, Graphics2D, Dimension}
