@@ -56,9 +56,8 @@ object IFunctions {
 	  if(acc.length >= n) acc.dequeue
 	  //v +=: acc // (prepend)
 	  acc += v // (append)
-	  acc.clone
+	  acc
   }
-  
   
   /** Return a Signal that is updated only when e fires, and has the value of the signal s */
   def snapshot[V](e : Event[_], s: Signal[V]): Signal[V] = fold(e, s.getVal)((_,_) => s.getVal)
