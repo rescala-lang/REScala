@@ -33,37 +33,37 @@ class ReactiveSetSpec extends FunSpec {
 	    it("should allow reactive inserts") {
 	        val f = fixture
 	        import f._
-	        val three = Var(2)
-	        collection += three.toSignal
+	        val a = Var(2)
+	        collection += a.toSignal
 	        assertResult(false)(contains3())
-	        three() = 3
+	        a() = 3
 	        assertResult(true)(contains3())
-	        three() = 2
+	        a() = 2
 	        assertResult(false)(contains3())
 	    }
 	    
 	    it("should allow mixing inserts") {
 	        val f = fixture
 	        import f._
-	        val three = Var(2)
+	        val a = Var(2)
 	        
-	        collection += three.toSignal
+	        collection += a.toSignal
 	        assertResult(false)(contains3())
 	        collection += 3
 	        assertResult(true)(contains3())
-	        three() = 3
+	        a() = 3
 	        assertResult(true)(contains3())
-	        three() = 2
+	        a() = 2
 	        assertResult(true)(contains3())
 	    }
 	    
 	    it("should allow mixing inserts with fix removal") {
 	        val f = fixture
 	        import f._
-	        val three = Var(2)
-	        collection += three.toSignal
+	        val a = Var(2)
+	        collection += a.toSignal
 	        assertResult(false)(contains3())
-	        three() = 3
+	        a() = 3
 	        assertResult(true)(contains3())
 	        collection -= 3
 	        assertResult(false)(contains3())
@@ -134,11 +134,11 @@ class ReactiveSetSpec extends FunSpec {
 	            val f = fixture
 	            import f._
 	            
-	            val two = Var(2)
-	            val three = Var(3)
+	            val b = Var(2)
+	            val a = Var(3)
 	            collection += 1
-	            collection += two.toSignal
-	            collection += three.toSignal
+	            collection += b.toSignal
+	            collection += a.toSignal
 	            
 	            val filtered = collection.filter(_ % 2 == 0)
 	            assertResult(true)(filtered.contains(2)())
@@ -148,10 +148,10 @@ class ReactiveSetSpec extends FunSpec {
 	            collection += 4
 	            assertResult(true)(filtered.contains(4)())
 	            
-	            two() = 3
+	            b() = 3
 	            assertResult(false)(filtered.contains(2)())
 	            
-	            three() = 2
+	            a() = 2
 	            assertResult(true)(filtered.contains(2)())
 	            
 	            collection -= 4
@@ -162,27 +162,27 @@ class ReactiveSetSpec extends FunSpec {
 	        	val f = fixture
 	            import f._
 	            
-	            val two = Var(2)
-	            val three = Var(3)
+	            val b = Var(2)
+	            val a = Var(3)
 	            
 	            val filteredCollection = collection.filter(_ % 2 == 0)
 	            val filteredContains2 = filteredCollection.contains(2)
 	            
-	            collection += two.toSignal
+	            collection += b.toSignal
 	            assertResult(true)(filteredContains2())
 	            
-	            filteredCollection -= two.toSignal
-	            filteredCollection += three.toSignal
+	            filteredCollection -= b.toSignal
+	            filteredCollection += a.toSignal
 	            assertResult(false)(filteredContains2())
 	            
-	            three() = 2
+	            a() = 2
 	            assertResult(true)(filteredContains2())
 	            
-	            two() = 3
+	            b() = 3
 	            assertResult(false)(contains2())
 	            assertResult(true)(filteredContains2())
 	            
-	            three() = 3
+	            a() = 3
 	            assertResult(false)(contains2())
 	            assertResult(false)(filteredContains2())
 	        }
