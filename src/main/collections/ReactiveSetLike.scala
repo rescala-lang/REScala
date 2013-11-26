@@ -6,12 +6,11 @@ import scala.collection._
 import scala.collection.generic._
 import scala.language.higherKinds
 
-trait ReactiveSetLike[A] {
+trait ReactiveSetLike[A, ConcreteType[A]] {
 	type InternalType[A] <: SetLike[A, InternalType[A]] with Set[A]
 	
-	/** requires to be defined early! */
-	protected val internalCollection: Var[InternalType[A]]
-	protected val collectionSignal: Var[Signal[InternalType[A]]] = Var(internalCollection.toSignal)
+	protected val collectionSignal: Var[Signal[InternalType[A]]] 
+	protected def wrapSignal(signal: Signal[InternalType[A]]): ConcreteType[A]
 	
 	def +=(elem: A) {
 	    (+=)(Signal(elem))
@@ -36,7 +35,13 @@ trait ReactiveSetLike[A] {
 	    }
 	}
 	
-	def signal[B] = SignalSynt[B](collectionSignal,collectionSignal()) _
+	protected def signal[B] = SignalSynt[B](collectionSignal) _ //why don't I need the current collectionSignal()? 
+	
+	
+	def filter(f: A => Boolean): ConcreteType[A] = wrapSignal(signal[InternalType[A]] {
+	    (x: SignalSynt[InternalType[A]]) => collectionSignal(x)(x).filter(f)
+	})
+	
 	def contains(elem: A): Signal[Boolean] = signal[Boolean] {
 	    (x: SignalSynt[Boolean]) => collectionSignal(x)(x).contains(elem)
 	}

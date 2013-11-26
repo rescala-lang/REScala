@@ -128,5 +128,64 @@ class ReactiveSetSpec extends FunSpec {
 	            assertResult(false)(contains3())
 	        }
 	    }
+	    
+	    describe("'s filter method") {
+	        it("should update the result reactively") {
+	            val f = fixture
+	            import f._
+	            
+	            val two = Var(2)
+	            val three = Var(3)
+	            collection += 1
+	            collection += two.toSignal
+	            collection += three.toSignal
+	            
+	            val filtered = collection.filter(_ % 2 == 0)
+	            assertResult(true)(filtered.contains(2)())
+	            assertResult(false)(filtered.contains(3)())
+	            assertResult(false)(filtered.contains(4)())
+	            
+	            collection += 4
+	            assertResult(true)(filtered.contains(4)())
+	            
+	            two() = 3
+	            assertResult(false)(filtered.contains(2)())
+	            
+	            three() = 2
+	            assertResult(true)(filtered.contains(2)())
+	            
+	            collection -= 4
+	            assertResult(false)(filtered.contains(4)())
+	        }
+	        
+	        it("should return a fully reactive collection") {
+	        	val f = fixture
+	            import f._
+	            
+	            val two = Var(2)
+	            val three = Var(3)
+	            
+	            val filteredCollection = collection.filter(_ % 2 == 0)
+	            val filteredContains2 = filteredCollection.contains(2)
+	            
+	            collection += two.toSignal
+	            assertResult(true)(filteredContains2())
+	            
+	            filteredCollection -= two.toSignal
+	            filteredCollection += three.toSignal
+	            assertResult(false)(filteredContains2())
+	            
+	            three() = 2
+	            assertResult(true)(filteredContains2())
+	            
+	            two() = 3
+	            assertResult(false)(contains2())
+	            assertResult(true)(filteredContains2())
+	            
+	            three() = 3
+	            assertResult(false)(contains2())
+	            assertResult(false)(filteredContains2())
+	        }
+	    }
 	}
 }
