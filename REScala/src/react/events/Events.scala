@@ -1,8 +1,10 @@
 package react.events
 
 import scala.collection.mutable.ListBuffer
+import scala.collection.LinearSeq
 import scala.reflect.runtime.universe._
 import react._
+
 
 
 trait Event[+T] extends DepHolder {
@@ -73,7 +75,7 @@ trait Event[+T] extends DepHolder {
   
   def reset[S >: T, A](init : S)(f : (S) => Signal[A]) : Signal[A] = IFunctions.reset(this, init)(f)
   
-  def last[S >: T](n: Int): Signal[List[S]] = IFunctions.last[S](this, n)
+  def last[S >: T](n: Int): Signal[LinearSeq[S]] = IFunctions.last[S](this, n)
   def list[S >: T](): Signal[List[S]] = IFunctions.list[S](this)
   
   def toggle[A](a: Signal[A], b: Signal[A]): Signal[A] = IFunctions.toggle(this, a, b)

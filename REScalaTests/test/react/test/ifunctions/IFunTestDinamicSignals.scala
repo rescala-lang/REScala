@@ -2,16 +2,10 @@ package react.test.ifunctions
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-
-// import react.IFunctions
-// import react.Var
-//import react.events._
-// import react.Signal
-
 import react._
-//import react.Signal
 import macro.SignalMacro.{SignalM => Signal}
 import react.events._
+import scala.collection.LinearSeq
 
 
 
@@ -144,26 +138,26 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
 /* last */ 
   @Test def last_theInitialValueIsSetCorrectly() {
     val e = new ImperativeEvent[Int]()
-    val s: Signal[List[Int]] = e.last(5)
+    val s: Signal[LinearSeq[Int]] = e.last(5)
     
     assert(s.getValue == List())
   }
 
   @Test def last_collectsTheLastNEvents() {
     val e = new ImperativeEvent[Int]() 
-    val s: Signal[List[Int]] = e.last(5)
+    val s: Signal[LinearSeq[Int]] = e.last(5)
     
     
-    assert(s.getValue == List())
+    assert(s.getValue == LinearSeq())
     e(1)
-    assert(s.getValue == List(1))
+    assert(s.getValue == LinearSeq(1))
     e(2)
-    assert(s.getValue == List(2,1))
+    assert(s.getValue == LinearSeq(1,2))
     
     e(3);e(4);e(5)
-    assert(s.getValue == List(5,4,3,2,1))
+    assert(s.getValue == LinearSeq(1,2,3,4,5))
     e(6)
-    assert(s.getValue == List(6,5,4,3,2))
+    assert(s.getValue == LinearSeq(2,3,4,5,6))
   }
   
 /* list */ 

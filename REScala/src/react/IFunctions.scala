@@ -3,6 +3,7 @@ package react
 import react.events._
 import react.log._
 import scala.collection.mutable.ListBuffer
+import scala.collection.LinearSeq
 
 
 
@@ -49,7 +50,14 @@ object IFunctions {
   /** Returns a signal which holds the last n events in a list. At the beginning the
    *  list increases in size up to when n values are available
    */
-  def last[T](e : Event[T], n : Int) : Signal[List[T]] = fold(e, List[T]())((acc, v) => (v :: acc).take(n)) 
+  def last[T](e : Event[T], n : Int) : Signal[LinearSeq[T]] = 
+    fold(e, new collection.mutable.Queue[T]){
+	  (acc: collection.mutable.Queue[T], v: T) =>
+	  if(acc.length >= n) acc.dequeue
+	  //v +=: acc // (prepend)
+	  acc += v // (append)
+	  acc.clone
+  }
   
   
   /** Return a Signal that is updated only when e fires, and has the value of the signal s */
@@ -88,10 +96,10 @@ object IFunctions {
   
   /** Like latest, but delays the value of the resulting signal by n occurrences */
   def delay[T](e: Event[T], init: T, n: Int): Signal[T] = {
-    val history: Signal[List[T]] = last(e, n + 1)
+    val history: Signal[LinearSeq[T]] = last(e, n + 1)
     StaticSignal(history){
         val h = history.getVal
-    	if(h.size <= n) init else h.last
+    	if(h.size <= n) init else h.head
     }
   }
   
@@ -127,9 +135,6 @@ object IFunctions {
     e += handleSignal
     return SignalSynt{s: SignalSynt[A]=> ref(s)(s) } // cannot express without high order
   }
-
-
-  
 }
 
 
@@ -166,8 +171,14 @@ class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T,E) => T)
   
   def reEvaluate(): T = {
     inQueue = false
+   
+    val hashBefore = currentValue.hashCode 
+    ReactiveEngine.log log react.log.LogStartEvalNode(ReactiveEngine.log.node(this))    
     val tmp = f(currentValue, lastEvent)
-    if (tmp != currentValue) {
+    ReactiveEngine.log log react.log.LogEndEvalNode(ReactiveEngine.log.node(this))
+    val hashAfter = tmp.hashCode
+    // support mutable values by using hashValue rather than ==
+    if (hashAfter != hashBefore) { 
       currentValue = tmp
       timestamps += TS.newTs // Testing
       notifyDependents(currentValue)
