@@ -6,12 +6,12 @@ import react.time.Timer
 
 
 object TimeWindowTest extends Application {
-  val timer = Timer.create(250)
+  val timer = Timer(250)
   
   //val eachTwoSeconds = timer.repeatedly(2.0)
   //eachTwoSeconds += {(Unit) => println("two seconds passed")}
   
-  val sinWindow = timer.timeWindow(1.0)(math.sin(timer.time()))  
+  val sinWindow = timer.timeWindow(1.0)(Signal{math.sin(timer.time())})  
   sinWindow.changed += {println(_)}
   
   Timer.runAll
