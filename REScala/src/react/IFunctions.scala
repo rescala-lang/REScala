@@ -171,11 +171,11 @@ class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T,E) => T)
   def reEvaluate(): T = {
     inQueue = false
    
-    val hashBefore = currentValue.hashCode 
+    val hashBefore = if (currentValue == null) 0 else currentValue.hashCode 
     ReactiveEngine.log log react.log.LogStartEvalNode(ReactiveEngine.log.node(this))    
     val tmp = f(currentValue, lastEvent)
     ReactiveEngine.log log react.log.LogEndEvalNode(ReactiveEngine.log.node(this))
-    val hashAfter = tmp.hashCode
+    val hashAfter = if (tmp == null) 0 else tmp.hashCode
     // support mutable values by using hashValue rather than ==
     if (hashAfter != hashBefore) { 
       currentValue = tmp
