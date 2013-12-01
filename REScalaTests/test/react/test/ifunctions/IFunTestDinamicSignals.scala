@@ -2,16 +2,10 @@ package react.test.ifunctions
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-
-import react.IFunctions
-import react.Var
-import react.events._
-import react.Signal
-
 import react._
-import react.Signal
 import macro.SignalMacro.{SignalM => Signal}
 import react.events._
+import scala.collection.LinearSeq
 
 
 
@@ -84,6 +78,21 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
     assert(s.getValue == 10)
   }
   
+  /* count */
+  @Test def count_theInitialValueIsSetCorrectly() {
+    val e = new ImperativeEvent[Int]()
+    val s: Signal[Int] = e.count
+    assert(s.getValue == 0)
+  }
+
+  @Test def count_theResultSignalIncreasesWhenEventsOccur() {
+    val e = new ImperativeEvent[Int]()
+    val s: Signal[Int] = e.count
+    e(1)
+    e(1)
+    assert(s.getValue == 2)
+  }
+  
 /* latest */  
   @Test def latest_theInitialValueIsSetCorrectly() {
     val e = new ImperativeEvent[Int]()
@@ -129,26 +138,26 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
 /* last */ 
   @Test def last_theInitialValueIsSetCorrectly() {
     val e = new ImperativeEvent[Int]()
-    val s: Signal[List[Int]] = e.last(5)
+    val s: Signal[LinearSeq[Int]] = e.last(5)
     
     assert(s.getValue == List())
   }
 
   @Test def last_collectsTheLastNEvents() {
     val e = new ImperativeEvent[Int]() 
-    val s: Signal[List[Int]] = e.last(5)
+    val s: Signal[LinearSeq[Int]] = e.last(5)
     
     
-    assert(s.getValue == List())
+    assert(s.getValue == LinearSeq())
     e(1)
-    assert(s.getValue == List(1))
+    assert(s.getValue == LinearSeq(1))
     e(2)
-    assert(s.getValue == List(2,1))
+    assert(s.getValue == LinearSeq(1,2))
     
     e(3);e(4);e(5)
-    assert(s.getValue == List(5,4,3,2,1))
+    assert(s.getValue == LinearSeq(1,2,3,4,5))
     e(6)
-    assert(s.getValue == List(6,5,4,3,2))
+    assert(s.getValue == LinearSeq(2,3,4,5,6))
   }
   
 /* list */ 
@@ -320,8 +329,10 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
     
     e(1)
     assert(s2.getVal == 1)
-    e(2)
-    assert(s2.getVal == 2)
+    e(100)
+    assert(s2.getVal == 100)
+    v1.setVal(2)
+    assert(s2.getVal == 100)
   }
   
   
@@ -392,6 +403,10 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
     //assert(s3.getVal == 1)
     v1.setVal(1)
     assert(s3.getVal == 2)
+    e(101)
+    assert(s3.getVal == 11)
+    v2.setVal(11)
+    assert(s3.getVal == 12)
   }
   
   
@@ -528,6 +543,22 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
     assert(test == 1)
   }
   
+  
+  
+    @Test def xxxx =  {
+       
+    val a = Var(3)
+    val b = Var(Signal(a()))
+    val c = SignalSynt[Int](b){(x: SignalSynt[Int]) => b(x)(x)}
+    println(c.getVal) //outputs 3
+    a() = 4
+    println(c.getVal) //outputs 4
+    b() = Signal(5)
+    println(c.getVal) //outputs 4
+    
+    
+    
+  }
  
   
 }

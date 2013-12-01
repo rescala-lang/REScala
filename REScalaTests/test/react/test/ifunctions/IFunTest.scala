@@ -5,6 +5,7 @@ import org.scalatest.mock.MockitoSugar
 import react._
 import react.events._
 import react.IFunctions.Factory
+import scala.collection.LinearSeq
 
 
 class IFunTest extends AssertionsForJUnit with MockitoSugar {
@@ -121,26 +122,26 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
 /* last */ 
   @Test def last_theInitialValueIsSetCorrectly() {
     val e = new ImperativeEvent[Int]()
-    val s: Signal[List[Int]] = e.last(5)
+    val s: Signal[LinearSeq[Int]] = e.last(5)
     
     assert(s.getValue == List())
   }
 
   @Test def last_collectsTheLastNEvents() {
     val e = new ImperativeEvent[Int]() 
-    val s: Signal[List[Int]] = e.last(5)
+    val s: Signal[LinearSeq[Int]] = e.last(5)
     
     
-    assert(s.getValue == List())
+    assert(s.getValue == LinearSeq())
     e(1)
-    assert(s.getValue == List(1))
+    assert(s.getValue == LinearSeq(1))
     e(2)
-    assert(s.getValue == List(2,1))
+    assert(s.getValue == LinearSeq(1,2))
     
     e(3);e(4);e(5)
-    assert(s.getValue == List(5,4,3,2,1))
+    assert(s.getValue == LinearSeq(1,2,3,4,5))
     e(6)
-    assert(s.getValue == List(6,5,4,3,2))
+    assert(s.getValue == LinearSeq(2,3,4,5,6))
   }
   
 /* list */ 
@@ -254,10 +255,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     assert(s.getVal == 2)
     e(6)
     assert(s.getVal == 3)
-    
-    
   }
-  
  
 /* delay[T](signal: Signal[T], n: Int): Signal[T] */ 
   @Test def delay1_theInitialValueIsSetCorrectly() {
@@ -286,9 +284,6 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     assert(s.getVal == 3)
     v1.setVal(6)
     assert(s.getVal == 4)
-
-    
-    
   }
   
   
@@ -312,8 +307,10 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     
     e(1)
     assert(s2.getVal == 1)
-    e(2)
-    assert(s2.getVal == 2)
+    e(100)
+    assert(s2.getVal == 100)
+    v1.setVal(2)
+    assert(s2.getVal == 100)
   }
   
   
@@ -384,6 +381,10 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     //assert(s3.getVal == 1)
     v1.setVal(1)
     assert(s3.getVal == 2)
+    e(101)
+    assert(s3.getVal == 11)
+    v2.setVal(11)
+    assert(s3.getVal == 12)
   }
   
   

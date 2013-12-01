@@ -15,8 +15,11 @@ import react.events.ChangedEventNode
 class VarSynt[T](initval: T) extends DepHolder with Var[T] {
   private[this] var value: T = initval
   def setVal(newval: T): Unit = {
+    
     val old = value
-    if(newval != old) {
+    // support mutable values by using hashValue rather than ==
+    //val hashBefore = old.hashCode
+    if(old != newval) {
     	ReactiveEngine.log log react.log.LogStartEvalNode(ReactiveEngine.log.node(this))
     	
 	    value = newval // .asInstanceOf[T] // to make it covariant ?
@@ -84,15 +87,18 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
     reactivesDependsOnCurrent.clear
     timestamps += TS.newTs // Testing
     
+    // support mutable values by using hashValue rather than ==
+    //val hashBefore = currentValue.hashCode 
     ReactiveEngine.log log react.log.LogStartEvalNode(ReactiveEngine.log.node(this))
     val tmp = expr(this)  // Evaluation
     ReactiveEngine.log log react.log.LogEndEvalNode(ReactiveEngine.log.node(this))
+    //val hashAfter = tmp.hashCode
     
     dependOn ++= reactivesDependsOnCurrent
     reactivesDependsOnCurrent.map(_.addDependent(this))
 
-    /* Notify dependents only of the value changed */
-    if (tmp != currentValue) {
+    /* Notify dependents only of the value changed */    
+    if (currentValue != tmp) {
       currentValue = tmp
       timestamps += TS.newTs // Testing
       notifyDependents(currentValue)
