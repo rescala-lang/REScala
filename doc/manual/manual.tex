@@ -337,8 +337,9 @@ the vars and the signals in the signal expression. For example in the
 code snippet:
 
 \begin{codenv}
-  val a = Var(0) val b = Var(0) val s = Signal{ a() + b() } //
-  Multiple vars is a signal expression
+  val a = Var(0) 
+  val b = Var(0) 
+  val s = Signal{ a() + b() } // Multiple vars in a signal expression
 \end{codenv}
 
 The signal \code{s} is a dependency of the vars \code{a} and \code{b},
@@ -764,10 +765,10 @@ e(10)
 *
 \end{codenv}
 
-The typical use case for the $dropParam$ operator is to enforce
-compatibility among events with different types. For example the
-following snippet is rejected by the compiler since it attempts to
-combine two events of different types with the $||$ operator.
+The typical use case for the $dropParam$ operator is to make events
+with different types compatible. For example the following snippet is
+rejected by the compiler since it attempts to combine two events of
+different types with the $||$ operator.
 
 \begin{codenv}     /* WRONG - DON'T DO THIS */
 val e1 = new ImperativeEvent[Int]()
