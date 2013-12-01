@@ -3,18 +3,14 @@ package react.test
 
 
 
-import react.Handler
+
 import org.junit.Before
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import react.DepHolder
-import react.VarSynt
-import react.Var
-import react._
+
 
 import react._
-import react.Signal
 import macro.SignalMacro.{SignalM => Signal}
 import react.events._
 
@@ -112,7 +108,33 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
  
   }
 
+  
+  @Test def conversionFunctionsWorkInSignals =  {
+    
+    var test = 0 
+    val e = new ImperativeEvent[Int]()
+    val s: Signal[Int] = Signal{ 2 * e.latest(0)() }
 
+    s.change += { _ => test += 1 }
+    e(2)
+    e(3)
+    assert(test == 2)
+  }
+
+  
+  @Test def signalsNestedInVars =  {
+   
+    val a = Var(3)
+    val b = Var(Signal(a()))
+    val c = Signal(b()())
+    assert(c.getVal == 3)
+    a() = 4
+    assert(c.getVal == 4)
+    b() = Signal(5)
+    assert(c.getVal == 5)
+  
+  }
+  
   
 }
 
