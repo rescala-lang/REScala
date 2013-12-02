@@ -31,18 +31,28 @@ object SignalMacro {
         tree match {
           case Apply(Select(depHolder, apply), List())
               if depHolder.tpe <:< typeOf[DepHolder] && apply.decoded == "apply" =>
-            Apply(super.transform(Select(depHolder, newTermName("apply"))), List(Ident(signalSyntName)))
+            super.transform(Apply(Select(depHolder, apply), List(Ident(signalSyntName))))
           
-          case depHolder if depHolder.tpe <:< typeOf[DepHolder] =>
+          case depHolder if depHolder.tpe != null && depHolder.tpe <:< typeOf[DepHolder] =>
             depHolder match {
-              case Apply(_, args) =>
-                if (args exists { _ exists { _.isInstanceOf[IdentContextApi] } })
-                  c.error(depHolder.pos, "Another Signal cannot be used inside a Signal expression " +
-                                         "if it is depends on local values")
-                
+              case Apply(_, _) | Select(_, _)
+                  if !(depHolder exists {
+                        _ match {
+                          case Apply(Select(depHolder, apply), List())
+                            if depHolder.tpe <:< typeOf[DepHolder] && apply.decoded == "apply" => true
+                          case _ => false
+                        }
+                      }) =>
                 val signalName = newTermName(c.fresh("s$"))
-                signalValues += ValDef(Modifiers(), signalName, TypeTree(), depHolder)
-                Ident(signalName)
+                val signalDef = ValDef(Modifiers(), signalName, TypeTree(), depHolder)
+                
+                if ((c typeCheck (c resetAllAttrs signalDef, WildcardType, true)) != EmptyTree) {
+                  signalValues += signalDef
+                  Ident(signalName)
+                }
+                else
+                  super.transform(tree)
+              
               case _ =>
                 super.transform(tree)
             }
