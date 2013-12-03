@@ -13,14 +13,9 @@ object AdvancedTimeElapsing extends App {
   val tick = new ImperativeEvent[Unit]()
   
   val numTics = tick.count
-  val seconds = Signal{ numTics() % 60 }
-  
-  val tmpMinutes = seconds.changedTo(0).count
-  val minutes = Signal{ tmpMinutes() % 60 }
-
-  val tmpHours = minutes.changedTo(0).count
-  val hours = Signal{ tmpHours() % 24 } 
-  
+  val seconds = Signal{ numTics() % 60 }  
+  val minutes = Signal{ seconds.changedTo(0).count() % 60 }
+  val hours = Signal{ minutes.changedTo(0).count() % 24 } 
   val days = hours.changedTo(0).count
   
 
