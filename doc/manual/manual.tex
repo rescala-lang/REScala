@@ -573,8 +573,19 @@ e += { x => println() }
 e += { (x: Unit) => println() }
 \end{codenv}
 
+Scala allows one to refer to a method using the partially applied
+function syntax. This approach can be used to directly register a
+method as an event handler. For example:
 
-
+\begin{codenv}
+def m1(x: Int) = { 
+  val y = x + 1
+  println(y) 
+}    
+val e = new ImperativeEvent[Int]
+e += m1 _
+e(10)
+\end{codenv}
 
 
 
