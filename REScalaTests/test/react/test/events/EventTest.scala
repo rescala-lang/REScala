@@ -100,6 +100,36 @@ class EventTest extends AssertionsForJUnit with MockitoSugar {
     assert(test == 2)
 
   }
+  
+  
+  @Test def eventsWithMethodHandlersWithNoParameters = {
+    
+    
+    import react.conversions.EventConversions.emptyToUnit
+    
+    var test = 0
+    val e = new ImperativeEvent[Unit]
+    def m1 = { test += 1 }
+    
+    e += m1 _
+    e()
+    e()
+    assert(test == 2)
+       
+  }
+  
+  @Test def eventsWithMethodHandlersWithParameter = {
+    
+    var test = 0
+    val e = new ImperativeEvent[Int]
+    def m1(x: Int) = { test += 1 }
+    
+    e += m1 _
+    e(10)
+    e(10)
+    assert(test == 2)
+       
+  }
    
 }
 

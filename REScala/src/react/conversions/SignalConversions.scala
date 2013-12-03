@@ -23,6 +23,16 @@ object EventConversions {
   implicit def dropParam[T](ev: Event[T]) = ev.dropParam
   
   
+  /**
+   *  Use methods without params as handlers
+   *  
+   *  val e = new ImperativeEvent[Unit]
+   *  def m1 = { test += 1 }
+   *  e += m1 _  
+   */ 
+  implicit def emptyToUnit(x: ()=>Unit) = {(y: Unit) => x()}
+  
+  
 
   // One can remove parameters at all for handlers of Event[Unit]
   // Presumably dangerous ...

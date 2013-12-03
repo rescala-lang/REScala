@@ -127,6 +127,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
     val a = Var(3)
     val b = Var(Signal(a()))
     val c = Signal(b()())
+    
     assert(c.getVal == 3)
     a() = 4
     assert(c.getVal == 4)
