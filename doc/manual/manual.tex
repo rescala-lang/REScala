@@ -626,7 +626,7 @@ order for handler execution.
 \begin{codenv}
 val e = new ImperativeEvent[Int]()
 e += { x => println(x) }
-e += { x => println("n: " + x)}
+e += { x => println(f"n: $x")}  (*@\label{$}@*)
 e(10)
 e(10)
 -- output ----
@@ -635,6 +635,7 @@ n: 10
 10
 n: 10
 \end{codenv}
+
 
 
 
@@ -649,7 +650,7 @@ event is fired.
 \begin{codenv}
 val e = new ImperativeEvent[Int]()
 val handler1 = { x: Int => println(x) 
-val handler2 = { x: Int => println("n: " + x) }
+val handler2 = { x: Int => println(f"n: $x") } (*@\label{$}@*)
 
 e += handler1
 e += handler2
@@ -748,7 +749,7 @@ value of the resulting event.
 \begin{codenv}
 val e = new ImperativeEvent[Int]()
 val e_MAP: Event[String] = e map ((x: Int) => x.toString) 
-e_MAP += ((x: String) => println("Here: " + x))
+e_MAP += ((x: String) => println("Here: $x")) (*@\label{$}@*)
 e(5)
 e(15)
 -- output ----
