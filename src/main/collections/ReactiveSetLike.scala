@@ -6,28 +6,33 @@ import scala.collection._
 import scala.collection.generic._
 import scala.language.higherKinds
 
-trait ReactiveSetLike[A] {
-	type InternalType[A] <: SetLike[Signal[A], InternalType[A]] with Set[Signal[A]]
+trait ReactiveSetLike[A, ConcreteType[_]] extends ReactiveGenTraversableLike[A, ConcreteType] {
+	type InternalType[A] <: SetLike[A, InternalType[A]] with Set[A]
 	
-	protected val internalCollection: Var[InternalType[A]]
-	def signal[B] = SignalSynt[B](internalCollection) _
 	
 	def +=(elem: A) {
-	    internalCollection() += Signal(elem)
+	    (+=)(Signal(elem))
 	}
 	
 	def +=(elem: Signal[A]) {
-	    internalCollection() += elem
+	    //creates a chain of collections that remembers all changes and repeats them one by one if sth. changes
+	    val signal = collectionSignal() 
+	    collectionSignal() = SignalSynt[InternalType[A]](signal, elem) {
+	        (x: SignalSynt[InternalType[A]]) => signal(x) + elem(x)
+	    }
 	}
 	
 	def -=(elem: A) {
-	    internalCollection() -= Signal(elem)
+	    (-=)(Signal(elem))
+	}
+	
+	def -=(elem: Signal[A]) {
+	    val signal = collectionSignal() 
+	    collectionSignal() = Signal( signal() - elem() )
+	    
 	}
 	
 	
-	def contains(elem: A): Signal[Boolean] = Signal (internalCollection().exists(_() == elem))
-	
-	def containsD(elem: A): Boolean = internalCollection().exists(_() == elem)
-	
-	//lazy val size = Signal(internalCollection()().size) //TODO: abstract these
+	def contains(elem: A): Signal[Boolean] = Signal(collectionSignal()().contains(elem))
+	lazy val size = signal[Int]((x: SignalSynt[Int]) => collectionSignal(x)(x).size) 
 }
