@@ -172,9 +172,9 @@ class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T,E) => T)
     inQueue = false
    
     val hashBefore = if (currentValue == null) 0 else currentValue.hashCode 
-    ReactiveEngine.log log react.log.LogStartEvalNode(ReactiveEngine.log.node(this))    
+    ReactiveEngine.log.log("LogStartEvalNode", this)
     val tmp = f(currentValue, lastEvent)
-    ReactiveEngine.log log react.log.LogEndEvalNode(ReactiveEngine.log.node(this))
+    ReactiveEngine.log.log("LogEndEvalNode", this)
     val hashAfter = if (tmp == null) 0 else tmp.hashCode
     // support mutable values by using hashValue rather than ==
     if (hashAfter != hashBefore) { 
@@ -182,7 +182,7 @@ class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T,E) => T)
       timestamps += TS.newTs // Testing
       notifyDependents(currentValue)
     } else {
-      ReactiveEngine.log log react.log.LogStopPropagation(ReactiveEngine.log.node(this))
+      ReactiveEngine.log.log("LogStopPropagation", this)
       timestamps += TS.newTs // Testing
     }
     tmp

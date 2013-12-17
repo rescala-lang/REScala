@@ -3,7 +3,6 @@ package react
 import scala.collection.mutable.ListBuffer
 import react.events.Event
 import react.events.ChangedEventNode
-import react.log.LogStopPropagation
 
 //trait FixedDepHolder extends Reactive {
 //  val fixedDependents = new ListBuffer[Dependent]
@@ -21,20 +20,20 @@ class VarSynt[T](initval: T) extends DepHolder with Var[T] {
     // support mutable values by using hashValue rather than ==
     //val hashBefore = old.hashCode
     if(old != newval) {
-    	ReactiveEngine.log log react.log.LogStartEvalNode(ReactiveEngine.log.node(this))
-    	
+    	ReactiveEngine.log.log("LogStartEvalNode", this)
+
 	    value = newval // .asInstanceOf[T] // to make it covariant ?
 	    TS.nextRound  // Testing
 	    timestamps += TS.newTs // testing
-	    
-	    ReactiveEngine.log log react.log.LogEndEvalNode(ReactiveEngine.log.node(this))
+
+	    ReactiveEngine.log.log("LogEndEvalNode", this)
 	       
 	    notifyDependents(value)
 	    ReactiveEngine.startEvaluation
 	    
     }
     else {
-      ReactiveEngine.log log react.log.LogStopPropagation(ReactiveEngine.log.node(this))
+      ReactiveEngine.log.log("LogStopPropagation", this)
       //DEBUG: System.err.println("DEBUG OUTPUT: no update: " + newval + " == " + value)
       timestamps += TS.newTs // testing
     }
@@ -91,9 +90,9 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
     
     // support mutable values by using hashValue rather than ==
     //val hashBefore = currentValue.hashCode 
-    ReactiveEngine.log log react.log.LogStartEvalNode(ReactiveEngine.log.node(this))
-    val tmp = expr(this)  // Evaluation
-    ReactiveEngine.log log react.log.LogEndEvalNode(ReactiveEngine.log.node(this))
+    ReactiveEngine.log.log("LogStartEvalNode", this)
+    val tmp = expr(this)  // Evaluation)
+    ReactiveEngine.log.log("LogEndEvalNode", this)
     //val hashAfter = tmp.hashCode
     
     dependOn ++= reactivesDependsOnCurrent
@@ -105,7 +104,7 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
       timestamps += TS.newTs // Testing
       notifyDependents(currentValue)
     } else {
-      ReactiveEngine.log log react.log.LogStopPropagation(ReactiveEngine.log.node(this))
+      ReactiveEngine.log.log("LogStopPropagation", this)
       timestamps += TS.newTs // Testing
     }
     tmp
