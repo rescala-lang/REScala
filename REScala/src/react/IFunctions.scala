@@ -182,6 +182,7 @@ class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T,E) => T)
       timestamps += TS.newTs // Testing
       notifyDependents(currentValue)
     } else {
+      ReactiveEngine.log log react.log.LogStopPropagation(ReactiveEngine.log.node(this))
       timestamps += TS.newTs // Testing
     }
     tmp

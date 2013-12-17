@@ -35,7 +35,7 @@ case class LogPulseNode(Node: LogNode) extends LogEvent
 case class LogStartEvalNode(node: LogNode) extends LogEvent
 case class LogEndEvalNode(node: LogNode) extends LogEvent
 case class LogRound(stamp: Stamp) extends LogEvent
-case class LogIFAttach(node: LogNode, parent: LogNode) extends LogEvent // "virtual" association through IF
+case class LogStopPropagation(node: LogNode) extends LogEvent
 
 
 /** A Logging stub, that performs no logging */

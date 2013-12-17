@@ -3,6 +3,7 @@ package react
 import scala.collection.mutable.ListBuffer
 import react.events.Event
 import react.events.ChangedEventNode
+import react.log.LogStopPropagation
 
 //trait FixedDepHolder extends Reactive {
 //  val fixedDependents = new ListBuffer[Dependent]
@@ -33,6 +34,7 @@ class VarSynt[T](initval: T) extends DepHolder with Var[T] {
 	    
     }
     else {
+      ReactiveEngine.log log react.log.LogStopPropagation(ReactiveEngine.log.node(this))
       //DEBUG: System.err.println("DEBUG OUTPUT: no update: " + newval + " == " + value)
       timestamps += TS.newTs // testing
     }
@@ -103,6 +105,7 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
       timestamps += TS.newTs // Testing
       notifyDependents(currentValue)
     } else {
+      ReactiveEngine.log log react.log.LogStopPropagation(ReactiveEngine.log.node(this))
       timestamps += TS.newTs // Testing
     }
     tmp
