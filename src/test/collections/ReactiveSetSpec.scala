@@ -140,7 +140,7 @@ class ReactiveSetSpec extends FunSpec {
 	            collection += b.toSignal
 	            collection += a.toSignal
 	            
-	            val filtered = collection.filter(_ % 2 == 0)
+	            val filtered = collection.filter(Var((x: Int) => x % 2 == 0).toSignal)
 	            assertResult(true)(filtered.contains(2)())
 	            assertResult(false)(filtered.contains(3)())
 	            assertResult(false)(filtered.contains(4)())
@@ -165,7 +165,7 @@ class ReactiveSetSpec extends FunSpec {
 	            val b = Var(2)
 	            val a = Var(3)
 	            
-	            val filteredCollection = collection.filter(_ % 2 == 0)
+	            val filteredCollection = collection.filter(Var((x: Int) => x % 2 == 0).toSignal)
 	            val filteredContains2 = filteredCollection.contains(2)
 	            
 	            collection += b.toSignal
@@ -196,7 +196,7 @@ class ReactiveSetSpec extends FunSpec {
 	            collection += 1
 	            collection += a.toSignal
 	            
-	            val transformed = collection.map((_: Int) * 2)
+	            val transformed = collection.map(Var((x: Int) => x * 2).toSignal)
 	            val transformedContains2 = transformed.contains(2)
 	            val transformedContains4 = transformed.contains(4)
 	            val transformedContains6 = transformed.contains(6)
@@ -232,7 +232,7 @@ class ReactiveSetSpec extends FunSpec {
             collection += a.toSignal
             collection -= b.toSignal
             
-            val sum = collection.foldLeft(0)(_+_)
+            val sum = collection.foldLeft(0)(Var((x: Int, y: Int) => x + y).toSignal)
             
             assertResult(4)(sum())
             
@@ -256,7 +256,7 @@ class ReactiveSetSpec extends FunSpec {
             collection += a.toSignal
             collection -= b.toSignal
             
-            val moments = collection.flatMap(x => List(x,x*x))
+            val moments = collection.flatMap(Var((x: Int) => List(x,x*x)).toSignal)
             val momentContains1 = moments.contains(1)
             val momentContains9 = moments.contains(9)
             val momentContains11 = moments.contains(11)
