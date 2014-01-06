@@ -6,7 +6,7 @@ import scala.collection._
 import scala.collection.generic._
 import scala.language.higherKinds
 
-trait ReactiveSetLike[A, ConcreteType[_]] extends ReactiveGenTraversableLike[A, ConcreteType] {
+trait ReactiveSetLike[A, ConcreteType[_]] extends ReactiveGenTraversableLike1[A, ConcreteType] {
 	type InternalType[A] <: SetLike[A, InternalType[A]] with Set[A]
 	
 	

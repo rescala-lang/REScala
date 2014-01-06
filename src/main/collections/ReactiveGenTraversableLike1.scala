@@ -6,7 +6,8 @@ import scala.collection._
 import scala.collection.generic._
 import scala.language.higherKinds
 
-trait ReactiveGenTraversableLike[A, ConcreteType[_]] {
+// 
+trait ReactiveGenTraversableLike1[A, ConcreteType[_]] { 
 	type InternalType[A] <: GenTraversableLike[A, InternalType[A]]
 	
 	type CBF[B] = CanBuildFrom[InternalType[A], B, InternalType[B]]
