@@ -8,43 +8,27 @@ class ProofOfConcept[T](set: Set[T]) extends SignalWrapper {
 	type InternalType = Set[T]
 	override protected val internalValue: Var[Signal[InternalType]]  = Var(Var(set).toSignal)
 	
-	val size: () => Signal[Int] = fn0c(_.size)
-	val head: () => Signal[T] = fn0c(_.head)
+	val size = liftPure0(_.size) _
+	val head = liftPure0(_.head) _
 	
 	
-	val duplicate: () => Unit = fn0m {
-	    xs => xs ++ xs
-	}
+	val duplicate = liftMutating0(xs => xs ++ xs) _
 	
-	val contains: Signal[T] => Signal[Boolean] = fn1c(_.contains(_: T))
+	val contains: Signal[T] => Signal[Boolean] = liftPure1(_.contains(_))
 	
-	val add: Signal[T] => Unit = fn1m {
-	    (xs,x1: T) => xs + x1
-	}
+	val add = liftMutating1(_ + (_: T)) _
 	
-	val remove: Signal[T] => Unit = fn1m {
-	    (xs,x1: T) => xs - x1
-	}
+	def remove = liftMutating1(_ - (_: T)) _
 	
-	val filter: Signal[T => Boolean] => Signal[Set[T]] = fn1c {
-	    (xs, f: T => Boolean) => xs.filter(f)
-	}
+	val filter = liftPure1(_.filter(_: T => Boolean)) _
 	
-	val filterSelf: Signal[T => Boolean] => Unit = fn1m {
-	    (xs, f: T => Boolean) => xs.filter(f)
-	}
+	val filterSelf = liftMutating1(_.filter(_: T => Boolean)) _
 	
-	def map[B]: Signal[T => B] => Signal[Set[B]] = fn1c {
-	    (xs, f: T => B) => xs.map(f)
-	}
+	def map[B] = liftPure1(_.map(_: T => B)) _
 	
-	def flatMap[B]: Signal[T => GenTraversableOnce[B]] => Signal[Set[B]] = fn1c {
-	    (xs, f: T => GenTraversableOnce[B]) => xs.flatMap(f)
-	}
+	def flatMap[B] = liftPure1(_.flatMap(_: T => GenTraversableOnce[B])) _
 	
-	def fold[B >: T]: (Signal[(B, B) => B], Signal[B]) => Signal[B] = fn2c {
-	    (xs, f: (B, B) => B, z: B) => xs.fold(z)(f)
-	}
+	def fold[B >: T] = liftPure2(_.fold(_: B)(_: (B, B) => B)) _
 	
 	//aliases
 	def +=(elem: Signal[T]) { add(elem) }
