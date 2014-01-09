@@ -18,22 +18,14 @@ trait ReactiveSeqLike[A, ConcreteType[_]] extends ReactiveGenTraversableLike1[A,
 	    }
 	}
 	
-	def append(firstValue: A, values: A*)(implicit cbf: CBF[A]) {
-	    append(Signal(firstValue), values.map(Var(_).toSignal):_*)
-	}
-	
 	def update(idx: Signal[Int], elem: Signal[A])(implicit cbf: CBF[A]) {
 		val signal = collectionSignal() 
 	    collectionSignal() = SignalSynt[InternalType[A]](signal, idx, elem) {
 	        (x: SignalSynt[InternalType[A]]) => signal(x).updated(idx(x), elem(x))
 	    }
 	}
-	def update(idx: Int, elem: Signal[A])(implicit cbf: CBF[A]) { update(Var(idx).toSignal, elem) }
-	def update(idx: Signal[Int], elem: A)(implicit cbf: CBF[A]) { update(idx, Var(elem).toSignal) }
-	def update(idx: Int, elem: A)(implicit cbf: CBF[A]) { update(idx, Var(elem).toSignal) }
 	
 	//Basic accessing functions
-	def apply(idx: Int): Signal[A] = Signal(collectionSignal()()(idx))
 	def apply(idx: Signal[Int]): Signal[A] = Signal(collectionSignal()()(idx()))
 	
 	lazy val length = Signal(collectionSignal()().length)

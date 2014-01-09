@@ -27,8 +27,6 @@ trait ReactiveGenTraversableLike1[A, ConcreteType[_]] {
 	    
 	def flatMap[B: CBF](f: Signal[A => GenTraversableOnce[B]]) = 
 	    (wrapHigherOrderFunction(_.flatMap[B, InternalType[B]])_ andThen wrapSignal)(f)
-	
-	def foldLeft[B](z: B)(f: Signal[(B, A) => B]): Signal[B] = foldLeft(Signal(z))(f)
 	    
 	def foldLeft[B](z: Signal[B])(f: Signal[(B, A) => B]): Signal[B] = signal[B] {
 	   (x: SignalSynt[B]) => collectionSignal(x)(x).foldLeft[B](z(x))(f(x))

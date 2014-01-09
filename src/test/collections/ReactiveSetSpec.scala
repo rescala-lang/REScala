@@ -3,6 +3,7 @@ package test.collections
 import org.scalatest._
 import main.collections._
 import react._
+import react.conversions.SignalConversions.toVal
 
 class ReactiveSetSpec extends FunSpec {
     

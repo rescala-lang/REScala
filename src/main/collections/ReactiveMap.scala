@@ -13,10 +13,6 @@ trait ReactiveMap[A,B, ConcreteType[_,_]] {
 	protected val collectionSignal: Var[Signal[Map[A,B]]] 
 	protected def wrapSignal(signal: Signal[Map[A,B]]): ConcreteType[A,B]
 	
-	def +=(elem: (A,B)) {
-	    +=(Signal(elem))
-	}
-	
 	def +=(elem: Signal[(A,B)]) {
 	    val signal = collectionSignal() 
 		collectionSignal() = SignalSynt[Map[A,B]](signal, elem) {
@@ -39,7 +35,6 @@ trait ReactiveMap[A,B, ConcreteType[_,_]] {
 	}
 	
 	lazy val size = Signal(collectionSignal()().size)
-	def get(key: A): Signal[Option[B]] = Signal(collectionSignal()().get(key))
 	def get(key: Signal[A]): Signal[Option[B]] = Signal(collectionSignal()().get(key()))
 	
 	private def wrapHigherOrderFunction[C](hf: Map[A,B] => (((A,B)) => C) => Map[A,B])(f: Signal[((A,B)) => C]) = SignalSynt[Map[A,B]] {
@@ -52,8 +47,6 @@ trait ReactiveMap[A,B, ConcreteType[_,_]] {
 	
 	def flatMap(f: Signal[((A,B)) => GenTraversableOnce[B]])(implicit CBT: CanBuildFrom[Map[A,B],B,Map[A,B]]) = 
 	    (wrapHigherOrderFunction(_.flatMap[B, Map[A,B]])_ andThen wrapSignal)(f)
-	
-	def foldLeft(z: B)(f: Signal[(B, (A,B)) => B]): Signal[B] = foldLeft(Signal(z))(f)
 	    
 	def foldLeft(z: Signal[B])(f: Signal[(B, (A,B)) => B]): Signal[B] = SignalSynt[B](f,z) {
 	   (x: SignalSynt[B]) => collectionSignal(x)(x).foldLeft[B](z(x))(f(x))
