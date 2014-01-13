@@ -1,9 +1,11 @@
 package reswing
 
+import java.awt.event.HierarchyEvent
+import java.awt.event.HierarchyListener
+import scala.collection.mutable.ListBuffer
 import scala.swing.Publisher
 import scala.swing.Reactor
 import scala.swing.UIElement
-import react.events.Event
 
 /**
  * Introduces methods to connect a [[ReSwingEvent]] to the corresponding
@@ -39,15 +41,19 @@ private[reswing] abstract trait ReSwingEventConnection {
   protected def peer: UIElement
   
   final protected implicit class EventConnector[T] private[ReSwingEventConnection]
-      (value: Event[T]) {
-    def using(setter: T => Unit): Event[T] = {
-      if (value != null) 
-        value += { v => inSyncEDT { setter(v) } }
+      (value: ReSwingEvent[T]) {
+    def using(setter: T => Unit): ReSwingEvent[T] = {
+      if (value.isInstanceOf[ReSwingEventIn[_]])
+        delayedInitEvents += { _ =>
+          value += { v => inSyncEDT { setter(v) } }
+        }
       value
     }
-    def using(setter: () => Unit): Event[T] = {
-      if (value != null) 
-        value += { _ => inSyncEDT { setter() } }
+    def using(setter: () => Unit): ReSwingEvent[T] = {
+      if (value.isInstanceOf[ReSwingEventIn[_]])
+        delayedInitEvents += { _ =>
+          value += { _ => inSyncEDT { setter() } }
+        }
       value
     }
   }
@@ -57,7 +63,7 @@ private[reswing] abstract trait ReSwingEventConnection {
       using(peer, reaction)
     
     def using[T](publisher: Publisher, reaction: Class[T]): ReSwingEvent[T]  = {
-      val event = new ReSwingEvent[T]({ event =>
+      val event = new ReSwingEventOut[T]({ event =>
         inSyncEDT {
           reactor listenTo publisher
           reactor.reactions += { case e =>
@@ -71,4 +77,15 @@ private[reswing] abstract trait ReSwingEventConnection {
   }
   
   private val reactor = new Reactor { }
+  private val delayedInitEvents = ListBuffer.empty[Unit => Unit]
+  
+  peer.peer.addHierarchyListener(new HierarchyListener {
+    def hierarchyChanged(e: HierarchyEvent) =
+      if ((e.getChangeFlags & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0) {
+        for (init <- delayedInitEvents)
+          init()
+        delayedInitEvents.clear
+        peer.peer.removeHierarchyListener(this)
+      }
+  })
 }

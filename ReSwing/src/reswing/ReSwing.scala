@@ -20,6 +20,4 @@ package object reswing {
       op
     else
       Swing onEDTWait op
-  
-  implicit def toEvent[T](value: Unit): Event[T] = null
 }
