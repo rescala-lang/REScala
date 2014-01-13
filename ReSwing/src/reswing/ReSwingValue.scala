@@ -14,13 +14,12 @@ sealed abstract class ReSwingValue[T] {
   protected val event = Lazy { new ImperativeEvent[T] }
   protected var latestValue = null.asInstanceOf[T]
   
-  final private val inits = ListBuffer.empty[ReSwingValue[T] => Unit]
+  private var init = null: ReSwingValue[T] => Unit
   
   final protected def toSignal = {
-    if (!signal.isDefined) {
-      for (init <- inits)
-        init(this)
-      inits.clear
+    if (!signal.isDefined && init != null) {
+      init(this)
+      init = null
     }
     signal()
   }
@@ -31,8 +30,8 @@ sealed abstract class ReSwingValue[T] {
   
   final private[reswing] def update(value: T)
     { latestValue = value; if (event.isDefined) event()(value) }
-  final private[reswing] def init(init: ReSwingValue[T] => Unit)
-    { if (signal.isDefined) init(this) else inits += init }
+  final private[reswing] def initLazily(initLazily: ReSwingValue[T] => Unit)
+    { if (signal.isDefined) initLazily(this) else init = initLazily }
 }
 
 final case class ReSwingNoValue[T]() extends ReSwingValue[T] {
@@ -49,18 +48,18 @@ final case class ReSwingValueValue[T](private val value: T) extends ReSwingValue
   private[reswing] def use(setter: T => Unit) = setter(value)
 }
 
-final case class ReSwingEventValue[T](private val value: Event[T]) extends ReSwingValue[T] {
-  protected val signal = Lazy { (value || event()) latest latestValue }
+final case class ReSwingEventValue[T](private val value: Lazy[Event[T]]) extends ReSwingValue[T] {
+  protected val signal = Lazy { (value() || event()) latest latestValue }
   private[reswing] def fixed = false
   private[reswing] def getValue = latestValue
-  private[reswing] def use(setter: T => Unit) = value += setter
+  private[reswing] def use(setter: T => Unit) = value() += setter
 }
 
-final case class ReSwingSignalValue[T](private val value: Signal[T]) extends ReSwingValue[T] {
-  protected val signal = Lazy { (value.changed || event()) latest value.getValue }
+final case class ReSwingSignalValue[T](private val value: Lazy[Signal[T]]) extends ReSwingValue[T] {
+  protected val signal = Lazy { (value().changed || event()) latest value().getValue }
   private[reswing] def fixed = true
-  private[reswing] def getValue = value.getValue
-  private[reswing] def use(setter: T => Unit) { value.changed += setter; setter(value.getValue) }
+  private[reswing] def getValue = value().getValue
+  private[reswing] def use(setter: T => Unit) { value().changed += setter; setter(value().getValue) }
 }
 
 object ReSwingValue {
@@ -78,13 +77,13 @@ object ReSwingValue {
   /**
    * Sets the value whenever the given [[react.events.Event]] changes.
    */
-  implicit def apply[T](value: Event[T]) = ReSwingEventValue(value)
+  implicit def apply[T](value: => Event[T]) = ReSwingEventValue(Lazy { value })
   
   /**
    * Sets the value to the value of the given [[react.Signal]] and causes
    * the `Swing` library to always use the current `Signal` value.
    */
-  implicit def apply[T](value: Signal[T]) = ReSwingSignalValue(value)
+  implicit def apply[T](value: => Signal[T]) = ReSwingSignalValue(Lazy { value })
   
   /**
    * Returns the [[react.Signal]] representing the value.

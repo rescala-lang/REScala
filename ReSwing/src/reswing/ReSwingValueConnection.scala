@@ -1,5 +1,7 @@
 package reswing
 
+import java.awt.event.HierarchyEvent
+import java.awt.event.HierarchyListener
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.Map
 import scala.language.implicitConversions
@@ -124,30 +126,31 @@ private[reswing] abstract trait ReSwingValueConnection {
       if (value != null)
         inSyncEDT {
           value() = getter()
-          if (setter.isDefined) {
-            val set = setter.get
-            value use { v => inSyncEDT { set(v) } }
-            
-            if (value.fixed)
-              for (name <- names)
-                name match {
-                  case Left(name) =>
-                    changingProperties getOrElseUpdate (name, ListBuffer()) += { _ =>
-                      if (getter() != value.getValue)
-                        Swing onEDT { if (getter() != value.getValue) set(value.getValue) } }
-                  
-                  case Right((publisher, reaction)) =>
-                    reactor listenTo publisher
-                    changingReactions getOrElseUpdate (reaction, ListBuffer()) += { _ =>
-                      if (getter() != value.getValue)
-                        Swing onEDT { if (getter() != value.getValue) set(value.getValue) } }
-                }
-          }
+          if (setter.isDefined)
+            delayedValues += value
           
-          if (!value.fixed)
-            value init { value =>
-              inSyncEDT {
-                value() = getter()
+          value initLazily { value =>
+            if (setter.isDefined) {
+              val set = setter.get
+              value use { v => inSyncEDT { set(v) } }
+              
+              if (value.fixed)
+                for (name <- names)
+                  name match {
+                    case Left(name) =>
+                      changingProperties getOrElseUpdate (name, ListBuffer()) += { _ =>
+                        if (getter() != value.getValue)
+                          Swing onEDT { if (getter() != value.getValue) set(value.getValue) } }
+                    
+                    case Right((publisher, reaction)) =>
+                      reactor listenTo publisher
+                      changingReactions getOrElseUpdate (reaction, ListBuffer()) += { _ =>
+                        if (getter() != value.getValue)
+                          Swing onEDT { if (getter() != value.getValue) set(value.getValue) } }
+                  }
+            }
+            
+            if (!value.fixed)
                 for (name <- names)
                   name match {
                     case Left(name) =>
@@ -159,8 +162,7 @@ private[reswing] abstract trait ReSwingValueConnection {
                       changingReactions.getOrElseUpdate(reaction, ListBuffer()) += { _ =>
                         value() = getter() }
                   }
-              }
-            }
+          }
         }
       value
     }
@@ -180,6 +182,7 @@ private[reswing] abstract trait ReSwingValueConnection {
     }
   }
   
+  private val delayedValues = ListBuffer.empty[ReSwingValue[_]]
   private val changingReactions = Map.empty[Class[_], ListBuffer[Unit => Unit]]
   private val changingProperties = Map.empty[String, ListBuffer[Unit => Unit]]
   private val enforcedProperties = Map.empty[String, Unit => Unit]
@@ -190,6 +193,16 @@ private[reswing] abstract trait ReSwingValueConnection {
         signal()
     }
   }
+  
+  peer.peer.addHierarchyListener(new HierarchyListener {
+    def hierarchyChanged(e: HierarchyEvent) =
+      if ((e.getChangeFlags & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0) {
+        for (value <- delayedValues)
+          value: react.Signal[_] // force lazy value initialization
+        delayedValues.clear
+        peer.peer.removeHierarchyListener(this)
+      }
+  })
   
   peer.peer.addPropertyChangeListener(new java.beans.PropertyChangeListener {
     def propertyChange(e: java.beans.PropertyChangeEvent) {
