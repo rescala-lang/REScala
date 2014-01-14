@@ -130,27 +130,29 @@ private[reswing] abstract trait ReSwingValueConnection {
             delayedValues += value
           
           value initLazily { value =>
-            if (setter.isDefined) {
-              val set = setter.get
-              value use { v => inSyncEDT { set(v) } }
+            inSyncEDT {
+              if (setter.isDefined) {
+                val set = setter.get
+                value use { v => inSyncEDT { set(v) } }
+                
+                if (value.fixed)
+                  for (name <- names)
+                    name match {
+                      case Left(name) =>
+                        changingProperties getOrElseUpdate (name, ListBuffer()) += { _ =>
+                          if (getter() != value.getValue)
+                            Swing onEDT { if (getter() != value.getValue) set(value.getValue) } }
+                      
+                      case Right((publisher, reaction)) =>
+                        reactor listenTo publisher
+                        changingReactions getOrElseUpdate (reaction, ListBuffer()) += { _ =>
+                          if (getter() != value.getValue)
+                            Swing onEDT { if (getter() != value.getValue) set(value.getValue) } }
+                    }
+              }
               
-              if (value.fixed)
-                for (name <- names)
-                  name match {
-                    case Left(name) =>
-                      changingProperties getOrElseUpdate (name, ListBuffer()) += { _ =>
-                        if (getter() != value.getValue)
-                          Swing onEDT { if (getter() != value.getValue) set(value.getValue) } }
-                    
-                    case Right((publisher, reaction)) =>
-                      reactor listenTo publisher
-                      changingReactions getOrElseUpdate (reaction, ListBuffer()) += { _ =>
-                        if (getter() != value.getValue)
-                          Swing onEDT { if (getter() != value.getValue) set(value.getValue) } }
-                  }
-            }
-            
-            if (!value.fixed)
+              if (!value.fixed) {
+                value() = getter()
                 for (name <- names)
                   name match {
                     case Left(name) =>
@@ -162,6 +164,8 @@ private[reswing] abstract trait ReSwingValueConnection {
                       changingReactions.getOrElseUpdate(reaction, ListBuffer()) += { _ =>
                         value() = getter() }
                   }
+              }
+            }
           }
         }
       value
