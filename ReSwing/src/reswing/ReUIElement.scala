@@ -16,16 +16,10 @@ abstract class ReUIElement(
     ReSwingValueConnection with ReSwingEventConnection {
   protected def peer: UIElement
   
-  val size = ReSwingValue[Dimension]
-  val location = ReSwingValue[Point]
-  val bounds = ReSwingValue[Rectangle]
-  
-  protected def initSizeValues {
-    size using (peer.size _, classOf[UIElementResized])
-    location using (peer.location _, classOf[UIElementMoved])
-    bounds using (peer.bounds _, classOf[UIElementResized], classOf[UIElementMoved])
-  }
-  initSizeValues
+  val size = ReSwingValue using (peer.size _, classOf[UIElementResized])
+  val location = ReSwingValue using (peer.location _, classOf[UIElementMoved])
+  val bounds = ReSwingValue using (peer.bounds _, classOf[UIElementResized],
+                                                  classOf[UIElementMoved])
   
   minimumSize using (peer.minimumSize _, peer.minimumSize_= _, "minimumSize")
   maximumSize using (peer.maximumSize _, peer.maximumSize_= _, "maximumSize")

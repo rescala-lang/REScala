@@ -24,12 +24,10 @@ abstract class ReWindow(
     ReRootPanel {
   protected def peer: Window
   
-  override protected def initSizeValues = {
-    size using (peer.size _, peer.size_= _, classOf[UIElementResized])
-    location using (peer.location _, peer.location_= _, classOf[UIElementMoved])
-    bounds using (peer.bounds _, peer.bounds_= _, classOf[UIElementResized],
-                                                  classOf[UIElementMoved])
-  }
+  size using (peer.size _, peer.size_= _, classOf[UIElementResized])
+  location using (peer.location _, peer.location_= _, classOf[UIElementMoved])
+  bounds using (peer.bounds _, peer.bounds_= _, classOf[UIElementResized],
+                                                classOf[UIElementMoved])
   
   val windowActivated = ReSwingEvent using (peer, classOf[WindowActivated])
   val windowClosed = ReSwingEvent using (peer, classOf[WindowClosed])

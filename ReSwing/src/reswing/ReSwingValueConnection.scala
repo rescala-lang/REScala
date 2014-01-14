@@ -45,34 +45,6 @@ import scala.swing.event.Event
  *   val hasFocus = ReSwingValue using (peer.hasFocus _, classOf[FocusGained], classOf[FocusLost])
  * }
  * }}}
- * 
- * If a value can be read-only but not be passed to the constructor of a
- * base class but sub-classes may add the feature to pass the value to their
- * constructor, the connections should be established in a method that can be
- * overridden in sub-classes, e.g.:
- * 
- * {{{
- * abstract class ReUIElement
- * extends ReSwingValueConnection {
- *   protected def peer: UIElement
- *   
- *   val size = ReSwingValue[Dimension]
- *   protected def initSizeValue {
- *     size using (peer.size _, classOf[UIElementResized])
- *   }
- *   initSizeValue
- * }
- * 
- * abstract class ReWindow(
- *   override val size: ReSwingValue[Dimension] = ())
- * extends ReUIElement {
- *   protected def peer: Window
- *   
- *   override protected def initSizeValue {
- *     size using (peer.size _, peer.size_= _, classOf[UIElementResized])
- *   }
- * }
- * }}}
  */
 private[reswing] abstract trait ReSwingValueConnection {
   protected def peer: UIElement

@@ -29,7 +29,7 @@ import scala.swing.UIElement
  * 
  * {{{
  * abstract class ReUIElement(
- *   repaint: Event[Unit] = ())
+ *   repaint: ReSwingEvent[Unit] = ())
  * extends ReSwingEventConnection {
  *   protected def peer: UIElement
  *   
