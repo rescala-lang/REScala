@@ -81,6 +81,8 @@ trait Event[+T] extends DepHolder {
   def toggle[A](a: Signal[A], b: Signal[A]): Signal[A] = IFunctions.toggle(this, a, b)
   def snapshot[A](s: Signal[A]): Signal[A] = IFunctions.snapshot(this, s)
   
+  def switchOnce[T](oldS: Signal[T], newS: Signal[T]): Signal[T] = IFunctions.switchOnce(this, oldS, newS)
+  
   def delay[S >: T](init: S, n: Int): Signal[S] = IFunctions.delay(this, init, n)
   // TODO: make another delay that returns an event
   
