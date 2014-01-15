@@ -4,17 +4,17 @@ import react._
 import main.abstraction._
 import scala.collection.GenTraversableOnce
 
-class ProofOfConcept[T](set: Signal[Set[T]]) extends SignalWrapper {
+class SimpleReactiveSet[T](set: Signal[Set[T]]) extends SignalWrapper {
 	type InternalType = Set[T]
 	override protected val internalValue: Var[Signal[InternalType]]  = Var(set)
 	
-	implicit def Wrapping[T] = new SignalWrappable[Set[T], ProofOfConcept[T]] {
-	    def wrap(unwrapped: Signal[Set[T]]): ProofOfConcept[T] = new ProofOfConcept(unwrapped)
+	private implicit def Wrapping[T] = new SignalWrappable[Set[T], SimpleReactiveSet[T]] {
+	    def wrap(unwrapped: Signal[Set[T]]): SimpleReactiveSet[T] = new SimpleReactiveSet(unwrapped)
 	}
 	
+	//wrapped functions
 	val size = liftPure0(_.size) _
 	val head = liftPure0(_.head) _
-	
 	
 	val duplicate = liftMutating0(xs => xs ++ xs) _
 	

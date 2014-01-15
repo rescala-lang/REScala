@@ -8,6 +8,8 @@ abstract class SignalWrapper {
 	type InternalType;
 	
 	protected val internalValue: Var[Signal[InternalType]] 
+	
+	def toValue: InternalType = internalValue()()
 	    
 	protected def wrap[WrappedType, WrapperType](implicit wrapping: SignalWrappable[WrappedType, WrapperType]):
 		Signal[WrappedType] => WrapperType = (unwrapped: Signal[WrappedType]) => wrapping.wrap(unwrapped)

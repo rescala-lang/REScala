@@ -9,13 +9,9 @@ import scala.language.higherKinds
 trait ReactiveSeqLike[A, ConcreteType[_]] extends ReactiveGenTraversableLike1[A, ConcreteType] {
 	type InternalKind[A] <: SeqLike[A, InternalKind[A]]
 	
-	
 	//Basic mutating functions
-	
 	val add = liftMutating1((xs: InternalType, x: A) => (xs :+ x).asInstanceOf[InternalType]) _
-	
-	//def append(values: ReactiveSeqLike[A, ConcreteType])(implicit cbf: CBF[A]) =
-	//    liftMutating2(appendImpl _)(firstValue, Signal(values.map(_.apply))
+	val append = liftMutating1((xs: InternalType, ys: InternalType) => (xs ++ ys).asInstanceOf[InternalType]) _
 	
 	val update = liftMutating2(_.updated(_: Int, _: A).asInstanceOf[InternalKind[A]])_
 	

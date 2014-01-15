@@ -4,10 +4,10 @@ import org.scalatest._
 import react._
 import react.conversions.SignalConversions.toVal
 
-class ProofOfConceptSpec extends FunSpec {
+class SimpleReactiveSetSpec extends FunSpec {
 	describe("IntList") {
         it("should provide a reactive length") {
-            val sut = new ProofOfConcept(Set(1,2,3))
+            val sut = new SimpleReactiveSet(Set(1,2,3))
             val res = sut.size()
             assertResult(3)(res())
             sut += Var(4).toSignal
@@ -18,13 +18,13 @@ class ProofOfConceptSpec extends FunSpec {
         } 
         
         it("should provide a constant head") {
-            val sut = new ProofOfConcept(Set(1,2,3))
+            val sut = new SimpleReactiveSet(Set(1,2,3))
             assertResult(1)(sut.head()())
         }
         
         
         it("should allow reactive checks") {
-            val sut = new ProofOfConcept(Set[Int]())
+            val sut = new SimpleReactiveSet(Set[Int]())
             val res = sut.contains(Var(3).toSignal)
             
             assertResult(false)(res())
@@ -33,7 +33,7 @@ class ProofOfConceptSpec extends FunSpec {
         }
         
         it("should allow fully reactive inserts and removes") {
-            val sut = new ProofOfConcept(Set(1,2,3))
+            val sut = new SimpleReactiveSet(Set(1,2,3))
             val contains3 = sut.contains(Var(3).toSignal)
             val contains4 = sut.contains(Var(4).toSignal)
             
@@ -71,28 +71,28 @@ class ProofOfConceptSpec extends FunSpec {
         }
         
         it("should allow fully reactive higher order functions") {
-        	val sut = new ProofOfConcept(Set(1,2,3))
-        	val filterResult: ProofOfConcept[Int] = sut.filter(Var((_: Int) % 2 == 0).toSignal)
+        	val sut = new SimpleReactiveSet(Set(1,2,3))
+        	val filterResult: SimpleReactiveSet[Int] = sut.filter(Var((_: Int) % 2 == 0).toSignal)
         	val mapResult = sut.map(Var((_: Int) * 2).toSignal)
         	val foldResult = sut.fold(Var(1).toSignal, Var((_: Int) + (_: Int)).toSignal)
         	val flatMapResult = sut.flatMap(Var((x: Int) => List(x, 2*x, 3*x)).toSignal)
         	
-        	assertResult(Set(2))(filterResult())
-        	assertResult(Set(2,4,6))(mapResult())
+        	assertResult(Set(2))(filterResult().toValue)
+        	assertResult(Set(2,4,6))(mapResult().toValue)
         	assertResult(7)(foldResult())
         	assertResult(Set(1,2,3,4,6,9))(flatMapResult())
         	
         	sut += Var(4).toSignal
         	
-        	assertResult(Set(2,4))(filterResult())
-        	assertResult(Set(2,4,6,8))(mapResult())
+        	assertResult(Set(2,4))(filterResult().toValue)
+        	assertResult(Set(2,4,6,8))(mapResult().toValue)
         	assertResult(11)(foldResult())
         	assertResult(Set(1,2,3,4,6,8,9,12))(flatMapResult())
         }
         
         
         it("should allow fully reactive higher order functions that modify self") {
-            val sut = new ProofOfConcept(Set(1,2,3))
+            val sut = new SimpleReactiveSet(Set(1,2,3))
             val res = sut.contains(Var(3).toSignal)
             val f = Var((_: Int) % 2 == 0)
             
