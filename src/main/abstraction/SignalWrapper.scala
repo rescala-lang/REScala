@@ -2,13 +2,23 @@ package main.abstraction
 
 import react._
 import macro.SignalMacro.{SignalM => Signal}
+import scala.language.higherKinds
 
 abstract class SignalWrapper {
 	type InternalType;
 	
 	protected val internalValue: Var[Signal[InternalType]] 
-
 	    
+	protected def wrap0[WrappedType, WrapperType](implicit wrapping: SignalWrappable0[WrappedType, WrapperType]):
+		Signal[WrappedType] => WrapperType = (unwrapped: Signal[WrappedType]) => wrapping.wrap(unwrapped)
+	protected def wrap1[WrappedType[_], WrapperType[_], A](implicit wrapping: SignalWrappable1[WrappedType, WrapperType]):
+		Signal[WrappedType[A]] => WrapperType[A] = (unwrapped: Signal[WrappedType[A]]) => wrapping.wrap(unwrapped)
+	protected def wrap2[WrappedType[_,_], WrapperType[_,_], A, B](implicit wrapping: SignalWrappable2[WrappedType, WrapperType]):
+		Signal[WrappedType[A,B]] => WrapperType[A,B] = (unwrapped: Signal[WrappedType[A,B]]) => wrapping.wrap(unwrapped)	    
+	protected def wrap3[WrappedType[_,_,_], WrapperType[_,_,_], A, B, C](implicit wrapping: SignalWrappable3[WrappedType, WrapperType]):
+		Signal[WrappedType[A,B,C]] => WrapperType[A,B,C] = (unwrapped: Signal[WrappedType[A,B,C]]) => wrapping.wrap(unwrapped)
+		
+	
 	protected def liftPure0[ResultT](f: InternalType => ResultT)(): Signal[ResultT] = 
 	    Signal(f(internalValue()()))
 

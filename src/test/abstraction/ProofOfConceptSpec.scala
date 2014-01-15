@@ -2,6 +2,7 @@ package test.abstraction
 
 import org.scalatest._
 import react._
+import react.conversions.SignalConversions.toVal
 
 class ProofOfConceptSpec extends FunSpec {
 	describe("IntList") {
@@ -71,7 +72,7 @@ class ProofOfConceptSpec extends FunSpec {
         
         it("should allow fully reactive higher order functions") {
         	val sut = new ProofOfConcept(Set(1,2,3))
-        	val filterResult = sut.filter(Var((_: Int) % 2 == 0).toSignal)
+        	val filterResult: ProofOfConcept[Int] = sut.filter(Var((_: Int) % 2 == 0).toSignal)
         	val mapResult = sut.map(Var((_: Int) * 2).toSignal)
         	val foldResult = sut.fold(Var(1).toSignal, Var((_: Int) + (_: Int)).toSignal)
         	val flatMapResult = sut.flatMap(Var((x: Int) => List(x, 2*x, 3*x)).toSignal)
