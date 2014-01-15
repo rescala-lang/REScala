@@ -9,8 +9,10 @@ class ReactiveHashMap[A,B](map: Signal[Map[A,B]]) extends ReactiveMap[A,B, React
 	
 	def this(map: HashMap[A,B]) = this(Var(map).toSignal)
 	def this(pairs: (A,B)*) = this(HashMap(pairs:_*))
-	
-	implicit object wrapping extends SignalWrappable2[Map, ReactiveHashMap] {
-	    def wrap[A,B](unwrapped: Signal[Map[A,B]]): ReactiveHashMap[A,B] = new ReactiveHashMap(unwrapped)
+}
+
+object ReactiveHashMap {
+    implicit def wrapping[C,D] = new SignalWrappable[Map[C,D], ReactiveHashMap[C,D]] {
+	    def wrap(unwrapped: Signal[Map[C,D]]): ReactiveHashMap[C,D] = new ReactiveHashMap(unwrapped)
 	}
 }

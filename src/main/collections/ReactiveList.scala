@@ -13,7 +13,7 @@ class ReactiveList[A](list: Signal[List[A]]) extends ReactiveSeqLike[A, Reactive
 	def this(set: List[A]) = this(Var(set).toSignal)
 	def this(vals: A*) = this(List(vals: _*))
 	
-	implicit object wrapping extends SignalWrappable1[List, ReactiveList] {
-	    def wrap[T](unwrapped: Signal[List[T]]): ReactiveList[T] = new ReactiveList(unwrapped)
+	implicit def wrapping[B] = new SignalWrappable[List[B], ReactiveList[B]] {
+	    def wrap(unwrapped: Signal[List[B]]): ReactiveList[B] = new ReactiveList(unwrapped)
 	}
 } 

@@ -11,7 +11,7 @@ class ReactiveHashSet[A](set: Signal[HashSet[A]]) extends ReactiveSetLike[A, Rea
 	def this(set: HashSet[A]) = this(Var(set).toSignal)
 	def this(vals: A*) = this(HashSet(vals: _*))
 	
-	implicit object wrapping extends SignalWrappable1[HashSet, ReactiveHashSet] {
-	    def wrap[T](unwrapped: Signal[HashSet[T]]): ReactiveHashSet[T] = new ReactiveHashSet(unwrapped)
+	implicit def wrapping[B] = new SignalWrappable[HashSet[B], ReactiveHashSet[B]] {
+	    def wrap(unwrapped: Signal[HashSet[B]]): ReactiveHashSet[B] = new ReactiveHashSet(unwrapped)
 	}
 }

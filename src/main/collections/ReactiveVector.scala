@@ -13,7 +13,7 @@ class ReactiveVector[A](Vector: Signal[Vector[A]]) extends ReactiveSeqLike[A, Re
 	def this(set: Vector[A]) = this(Var(set).toSignal)
 	def this(vals: A*) = this(Vector(vals: _*))
 	
-	implicit object wrapping extends SignalWrappable1[Vector, ReactiveVector] {
-	    def wrap[T](unwrapped: Signal[Vector[T]]): ReactiveVector[T] = new ReactiveVector(unwrapped)
+	implicit def wrapping[B] = new SignalWrappable[Vector[B], ReactiveVector[B]] {
+	    def wrap(unwrapped: Signal[Vector[B]]): ReactiveVector[B] = new ReactiveVector(unwrapped)
 	}
 } 

@@ -27,18 +27,16 @@ trait ReactiveMap[A,B, ConcreteType[_,_]] extends SignalWrapper {
 	    remove(key)
 	}
 	
-	implicit val wrapping: SignalWrappable2[InternalKind, ConcreteType]
+	private type SelfWrappable[A,B] = SignalWrappable[InternalKind[A,B], ConcreteType[A,B]]
 	
-	val filter = liftPure1(_.filter(_: ((A,B)) => Boolean)) _ andThen wrap2
+	def filter(f: Signal[((A,B)) => Boolean])(implicit ev: SelfWrappable[A,B]): ConcreteType[A,B] = 
+	    (liftPure1(_.filter(_: ((A,B)) => Boolean)) _ andThen wrap)(f)
 	
-	//def map[C, That, WrappedThat](f: Signal[((A,B)) => C])(implicit cbf: CanBuildFrom[Map[A,B],C,That], wrapping: SignalWrappable0[That, WrappedThat]): Any =  
-	//    (liftPure1(_.map(_: ((A,B)) => C)) _ andThen wrap0)(f)
-	
-	def map[C, D](f: Signal[((A,B)) => (C,D)]): ConcreteType[C,D] =  
-	    (liftPure1(_.map(_: ((A,B)) => (C,D))(scala.collection.immutable.Map.canBuildFrom[C,D])) _ andThen wrap2)(f)
+	def map[C, That, WrappedThat](f: Signal[((A, B)) => C])(implicit cbf: CanBuildFrom[Map[_,_], C, That], wrapping: SignalWrappable[That, WrappedThat]): WrappedThat =    
+	    (liftPure1(_.map(_: ((A,B)) => C)) _ andThen wrap)(f)
 	    
-	def flatMap[C, D](f: Signal[((A,B)) => GenTraversableOnce[(C,D)]]): ConcreteType[C,D] =  
-	    (liftPure1(_.flatMap(_: ((A,B)) => GenTraversableOnce[(C,D)])(scala.collection.immutable.Map.canBuildFrom[C,D])) _ andThen wrap2)(f)    
+	def flatMap[C, That, WrappedThat](f: Signal[((A, B)) => GenTraversableOnce[C]])(implicit cbf: CanBuildFrom[Map[_,_], C, That], wrapping: SignalWrappable[That, WrappedThat]): WrappedThat =    
+	    (liftPure1(_.flatMap(_: ((A,B)) => GenTraversableOnce[C])) _ andThen wrap)(f)    
 	    
 	def foldLeft[C](z: Signal[C])(op: Signal[(C, (A,B)) => C]) = 
 	    liftPure2(_.foldLeft(_: C)(_: (C, (A,B)) => C))(z, op)

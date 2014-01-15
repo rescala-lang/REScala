@@ -11,7 +11,7 @@ class ReactiveListSet[A](set: Signal[ListSet[A]]) extends ReactiveSetLike[A, Rea
 	def this(set: ListSet[A]) = this(Var(set).toSignal)
 	def this(vals: A*) = this(ListSet(vals: _*))
 	
-	implicit object wrapping extends SignalWrappable1[ListSet, ReactiveListSet] {
-	    def wrap[T](unwrapped: Signal[ListSet[T]]): ReactiveListSet[T] = new ReactiveListSet(unwrapped)
+	implicit def wrapping[B] = new SignalWrappable[ListSet[B], ReactiveListSet[B]] {
+	    def wrap(unwrapped: Signal[ListSet[B]]): ReactiveListSet[B] = new ReactiveListSet(unwrapped)
 	}
 }

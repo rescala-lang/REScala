@@ -10,7 +10,11 @@ class ReactiveListMap[A,B](map: Signal[Map[A,B]]) extends ReactiveMap[A,B, React
 	def this(map: ListMap[A,B]) = this(Var(map).toSignal)
 	def this(pairs: (A,B)*) = this(ListMap(pairs:_*))
 	
-	implicit object wrapping extends SignalWrappable2[Map, ReactiveListMap] {
-	    def wrap[A,B](unwrapped: Signal[Map[A,B]]): ReactiveListMap[A,B] = new ReactiveListMap(unwrapped)
+	
+}
+
+object ReactiveListMap {
+    implicit def wrapping[C,D] = new SignalWrappable[Map[C,D], ReactiveListMap[C,D]] {
+	    def wrap(unwrapped: Signal[Map[C,D]]): ReactiveListMap[C,D] = new ReactiveListMap(unwrapped)
 	}
 }
