@@ -24,6 +24,11 @@ abstract class ReUIElement(
   minimumSize using (peer.minimumSize _, peer.minimumSize_= _, "minimumSize")
   maximumSize using (peer.maximumSize _, peer.maximumSize_= _, "maximumSize")
   preferredSize using (peer.preferredSize _, peer.preferredSize_= _, "preferredSize")
+  
+  def initReactiveLayer {
+    initReSwingValueConnection
+    initReSwingEventConnection
+  }
 }
 
 object ReUIElement {

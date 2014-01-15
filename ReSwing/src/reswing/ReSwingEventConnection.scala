@@ -82,10 +82,14 @@ private[reswing] abstract trait ReSwingEventConnection {
   peer.peer.addHierarchyListener(new HierarchyListener {
     def hierarchyChanged(e: HierarchyEvent) =
       if ((e.getChangeFlags & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0) {
-        for (init <- delayedInitEvents)
-          init()
-        delayedInitEvents.clear
+        initReSwingEventConnection
         peer.peer.removeHierarchyListener(this)
       }
   })
+  
+  protected def initReSwingEventConnection {
+    for (init <- delayedInitEvents)
+      init()
+    delayedInitEvents.clear
+  }
 }

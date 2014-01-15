@@ -170,16 +170,6 @@ private[reswing] abstract trait ReSwingValueConnection {
     }
   }
   
-  peer.peer.addHierarchyListener(new HierarchyListener {
-    def hierarchyChanged(e: HierarchyEvent) =
-      if ((e.getChangeFlags & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0) {
-        for (value <- delayedValues)
-          value: react.Signal[_] // force lazy value initialization
-        delayedValues.clear
-        peer.peer.removeHierarchyListener(this)
-      }
-  })
-  
   peer.peer.addPropertyChangeListener(new java.beans.PropertyChangeListener {
     def propertyChange(e: java.beans.PropertyChangeEvent) {
       enforcedProperties get e.getPropertyName match {
@@ -191,4 +181,18 @@ private[reswing] abstract trait ReSwingValueConnection {
       }
     }
   })
+  
+  peer.peer.addHierarchyListener(new HierarchyListener {
+    def hierarchyChanged(e: HierarchyEvent) =
+      if ((e.getChangeFlags & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0) {
+        initReSwingValueConnection
+        peer.peer.removeHierarchyListener(this)
+      }
+  })
+  
+  protected def initReSwingValueConnection {
+    for (value <- delayedValues)
+      value: react.Signal[_] // force lazy value initialization
+    delayedValues.clear
+  }
 }
