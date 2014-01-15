@@ -29,7 +29,7 @@ class ReTextArea(
                     background, foreground, font, enabled,
                     minimumSize, maximumSize, preferredSize) {
   override protected lazy val peer =
-    new TextArea(if (text == null) null else text.getValue, rows, columns) with ComponentMixin
+    new TextArea(null, rows, columns) with ComponentMixin
   
   val lineCount = ReSwingValue using (peer.lineCount _, classOf[ValueChanged])
 }
