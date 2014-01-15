@@ -4,6 +4,7 @@ import org.scalatest._
 import main.collections._
 import react._
 import react.conversions.SignalConversions.toVal
+import scala.collection.Map.canBuildFrom
 
 class ReactiveMapSpec extends FunSpec {
 	describe("HashMap") {
@@ -16,7 +17,7 @@ class ReactiveMapSpec extends FunSpec {
 	    
 	    it("should have reactive size") {
 	        val collection = new ReactiveHashMap[Int, Int]
-	        val res = collection.size
+	        val res = collection.size()
 	        assertResult(0, "Fails before change")(res())
 	        collection += 3 -> 2
 	        assertResult(1, "Fails after change")(res())
@@ -82,6 +83,34 @@ class ReactiveMapSpec extends FunSpec {
 	        d() = 3
 	        assertResult(Some(1))(c())
 	        
+	    }
+	    
+	    it("should provide reactive higher order functions") {
+	        val collection = new ReactiveHashMap[Int, Int]
+	        
+	        val c = Var(3->3)
+	        val filtered = collection.filter((p: (Int, Int)) => p._1 != p._2)
+	        val mapped = collection.map((p: (Int, Int)) => (p._1, p._1 * p._2))
+	        val folded = collection.foldLeft(0)(( sum: Int, p: (Int, Int)) => sum + p._2)
+	        val filteredA = filtered.get(2)
+	        val filteredB = filtered.get(3)
+	        val mappedA = mapped.get(3)
+	        
+	        collection += 1->4
+	        collection += 2->3
+	        collection += c.toSignal
+	        collection += 4->1
+	        
+	        assertResult(Some(3))(filteredA())
+	        assertResult(None)(filteredB())
+	        assertResult(11)(folded())
+	        assertResult(Some(9))(mappedA())
+	        
+	        c() = 3->2
+	        assertResult(Some(3))(filteredA())
+	        assertResult(Some(2))(filteredB())
+	        assertResult(10)(folded())
+	        assertResult(Some(6))(mappedA())
 	    }
 	}
 }

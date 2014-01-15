@@ -7,32 +7,20 @@ import scala.collection.generic._
 import scala.language.higherKinds
 
 trait ReactiveSetLike[A, ConcreteType[_]] extends ReactiveGenTraversableLike1[A, ConcreteType] {
-	type InternalType[A] <: SetLike[A, InternalType[A]] with Set[A]
+	type InternalKind[B] <: SetLike[B, InternalKind[B]] with Set[B]
 	
+	val add = liftMutating1(_ + (_: A)) _
+	val remove = liftMutating1(_ - (_: A)) _ 
+	 
+	val contains = liftPure1(_.contains(_: A)) _
+	val size = liftPure0(_.size) _ 
 	
-	def +=(elem: A) {
-	    (+=)(Signal(elem))
-	}
-	
+	//aliases
 	def +=(elem: Signal[A]) {
-	    //creates a chain of collections that remembers all changes and repeats them one by one if sth. changes
-	    val signal = collectionSignal() 
-	    collectionSignal() = SignalSynt[InternalType[A]](signal, elem) {
-	        (x: SignalSynt[InternalType[A]]) => signal(x) + elem(x)
-	    }
-	}
-	
-	def -=(elem: A) {
-	    (-=)(Signal(elem))
+	    add(elem)
 	}
 	
 	def -=(elem: Signal[A]) {
-	    val signal = collectionSignal() 
-	    collectionSignal() = Signal( signal() - elem() )
-	    
+	    remove(elem)
 	}
-	
-	
-	def contains(elem: A): Signal[Boolean] = Signal(collectionSignal()().contains(elem))
-	lazy val size = signal[Int]((x: SignalSynt[Int]) => collectionSignal(x)(x).size) 
 }

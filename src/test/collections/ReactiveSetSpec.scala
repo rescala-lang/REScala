@@ -17,7 +17,7 @@ class ReactiveSetSpec extends FunSpec {
 	    it("should allow fixed manipulation") {
 	        val f = fixture
 	        import f._
-	        assertResult(false)(collection.contains(3)())
+	        assertResult(false)(collection.contains(3)()) 
 	        collection += 3
 	        assertResult(true)(collection.contains(3)())
 	    }
@@ -141,7 +141,7 @@ class ReactiveSetSpec extends FunSpec {
 	            collection += b.toSignal
 	            collection += a.toSignal
 	            
-	            val filtered = collection.filter(Var((x: Int) => x % 2 == 0).toSignal)
+	            val filtered: ReactiveHashSet[Int] = collection.filter(Var((x: Int) => x % 2 == 0).toSignal)
 	            assertResult(true)(filtered.contains(2)())
 	            assertResult(false)(filtered.contains(3)())
 	            assertResult(false)(filtered.contains(4)())
@@ -212,7 +212,7 @@ class ReactiveSetSpec extends FunSpec {
 	            assertResult(false)(transformedContains6())
 	            
 	            
-	            transformed -= collection.size
+	            transformed -= collection.size()
 	            collection -= 2
 	            assertResult(true)(transformedContains2())
 	            assertResult(false)(transformedContains4())
