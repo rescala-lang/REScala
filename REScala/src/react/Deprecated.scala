@@ -21,6 +21,7 @@ class StaticVar[T](initval: T) extends DepHolder with Var[T] {
     ReactiveEngine.startEvaluation
     }
     else {
+      ReactiveEngine.log.log("LogStopPropagation", this)
       timestamps += TS.newTs // testing
     }
   }  
@@ -85,6 +86,7 @@ class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: =>T)
       timestamps += TS.newTs // Testing
       notifyDependents(currentValue)
     } else {
+      ReactiveEngine.log.log("LogStopPropagation", this)
       timestamps += TS.newTs // Testing
     }
     tmp

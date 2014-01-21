@@ -14,7 +14,7 @@ trait Reactive extends Ordered[Reactive] {
   override def compare(other: Reactive): Int = 
     other.level - this.level
     
-  ReactiveEngine.log log LogCreateNode(ReactiveEngine.log.node(this))
+   ReactiveEngine.log.log("LogCreateNode", this)
 }
 
 object Reactive {
@@ -30,11 +30,11 @@ trait DepHolder extends Reactive {
   val dependents = new ListBuffer[Dependent]
   def addDependent(dep: Dependent) = {
     dependents += dep
-    ReactiveEngine.log log LogAttachNode(ReactiveEngine.log.node(dep), ReactiveEngine.log.node(this))
+    ReactiveEngine.log.log("LogAttachNode", dep, this)
   }
   def removeDependent(dep: Dependent) = dependents -= dep
   def notifyDependents(change: Any): Unit = {
-    ReactiveEngine.log log react.log.LogPulseNode(ReactiveEngine.log.node(this))
+    ReactiveEngine.log.log("LogPulseNode", this)
     dependents.foreach(_.dependsOnchanged(change,this))  
   }
 }
@@ -45,7 +45,7 @@ trait Dependent extends Reactive {
   // TODO: add level checking to have glitch freedom ?
   def addDependOn(dep: DepHolder) = {
     dependOn += dep
-    ReactiveEngine.log log LogAttachNode(ReactiveEngine.log.node(this), ReactiveEngine.log.node(dep))
+    ReactiveEngine.log.log("LogAttachNode", this, dep)
   }
   def removeDependOn(dep: DepHolder) = dependOn -= dep
   
@@ -144,7 +144,7 @@ object ReactiveEngine {
     evalQueue.synchronized {
       //if (evalQueue.exists(_ eq dep)) return
       
-      log log LogScheduleNode(ReactiveEngine.log.node(dep))
+      ReactiveEngine.log.log("LogScheduleNode", dep)
       evalQueue += dep
       
       // DEBUG:
@@ -169,9 +169,9 @@ object ReactiveEngine {
 	        // not sure why this happens, null is never inserted
 	      } 
 	      else {
-	    	  log log LogStartEvalNode(ReactiveEngine.log.node(head))
+	    	  log.log("LogStartEvalNode", head)
 	    	  head.triggerReevaluation
-	    	  log log LogEndEvalNode(ReactiveEngine.log.node(head))
+	    	  log.log("LogEndEvalNode", head)
 	      }
 	    }
     	// DEBUG: println("End eval: " + Thread.currentThread() + "  " + localStamp + " (" + counter + " rounds)")
@@ -191,13 +191,13 @@ object TS {
     _roundNum += 1
     _sequenceNum = 0
     
-    ReactiveEngine.log log LogRound(getCurrentTs)
+    ReactiveEngine.log.log("LogRound", getCurrentTs)
   }
   
   def newTs = {
     val ts = new Stamp(_roundNum,_sequenceNum)
     _sequenceNum += 1
-    ReactiveEngine.log log LogRound(ts)
+    ReactiveEngine.log.log("LogRound",ts)
     ts
   } 
   
