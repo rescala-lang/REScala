@@ -8,18 +8,21 @@ import java.awt.{Color, Graphics2D, Dimension}
 import java.awt.Point
 import scala.swing.Swing
 
-object SwitchVersionStart {
-	def main(args: Array[String]){
-		val app = new SwitchVersionFrame
-		app.main(args)
-		while (true) {
-			Thread sleep 20
-			app.tick()
-		}
-	}
+object SwitchVersion extends SimpleSwingApplication {
+  override def main(args: Array[String]) {
+    super.main(args)
+    while (true) {
+	  Swing onEDTWait { application.tick() }
+      Thread sleep 20
+    }
+  }
+  
+  def top = application.frame
+  
+  lazy val application = new SwitchVersion
 }
 
-class SwitchVersionFrame extends SimpleSwingApplication {
+class SwitchVersion {
   val Size = 50
   val Max_X = 600
   val Max_Y = 600
@@ -44,7 +47,6 @@ class SwitchVersionFrame extends SimpleSwingApplication {
   tick += {_: Unit => frame.repaint()}
   
   // drawing code
-  def top = frame  
   val frame = new MainFrame {
     contents = new Panel() {
       preferredSize = new Dimension(600, 600)

@@ -8,18 +8,21 @@ import java.awt.{Color, Graphics2D, Dimension}
 import java.awt.Point
 import scala.swing.Swing
 
-object SignalVersionStart {
-	def main(args: Array[String]){
-		val app = new SignalVersionFrame
-		app.main(args)
-		while (true) {      
-			Thread sleep 20
-			app.tick() += 1
-		}
-	}
+object SignalVersion extends SimpleSwingApplication {
+  override def main(args: Array[String]) {
+    super.main(args)
+    while (true) {
+	  Swing onEDTWait { application.tick() += 1 }
+      Thread sleep 20
+    }
+  }
+  
+  def top = application.frame
+  
+  lazy val application = new SignalVersion
 }
 
-class SignalVersionFrame extends SimpleSwingApplication {
+class SignalVersion {
   val Size = 50
   val Max_X = 600
   val Max_Y = 600
@@ -43,8 +46,7 @@ class SignalVersionFrame extends SimpleSwingApplication {
   
   tick.toSignal.changed += ((_ : Int) => frame.repaint)
   
-  // drawing code
-  def top = frame  
+  // drawing code 
   val frame = new MainFrame {
     contents = new Panel() {
       preferredSize = new Dimension(600, 600)
