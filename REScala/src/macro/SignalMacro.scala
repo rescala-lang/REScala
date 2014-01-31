@@ -43,8 +43,13 @@ object SignalMacro {
                           case _ => false
                         }
                       }) =>
+                
+                val modifiers = depHolder match {
+                  case Select(This(_), _) => Modifiers(Flag.LAZY)
+                  case _ => Modifiers()
+                }
                 val signalName = newTermName(c.fresh("s$"))
-                val signalDef = ValDef(Modifiers(), signalName, TypeTree(), depHolder)
+                val signalDef = ValDef(modifiers, signalName, TypeTree(), depHolder)
                 
                 if ((c typeCheck (c resetAllAttrs signalDef, WildcardType, true)) != EmptyTree) {
                   signalValues += signalDef
