@@ -6,23 +6,26 @@ import java.awt.event.ActionListener
 import java.awt.event.ActionEvent
 import scala.swing.event.ButtonClicked
 
-object ElevatorApplication extends Application {
+object ElevatorApplication extends SimpleSwingApplication {
   
   /* Uncomment to enable logging: */
   //react.ReactiveEngine.log.enableAllLogging
   
-  val elevator = new Elevator(3)
-  val app = new ElevatorFrame(elevator)
-  app.main(Array())
-	while (true) {      
-		Thread sleep 50
-		elevator.tick()
-	}
+  lazy val elevator = new Elevator(3)
+  lazy val application = new ElevatorApplication(elevator)
+  def top = application.frame
+  
+  override def main(args: Array[String]) {
+    super.main(args)
+    while (true) {
+      Swing onEDTWait { elevator.tick() }
+      Thread sleep 50
+    }
+  }
 }
 
-class ElevatorFrame(val elevator : Elevator) extends SimpleSwingApplication {
+class ElevatorApplication(val elevator : Elevator) {
   // drawing code
-  def top = frame 
   val frame = new MainFrame {
     contents = new GridPanel(0,2) {
       contents += new ElevatorPainter(elevator)

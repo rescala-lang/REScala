@@ -6,6 +6,9 @@ import java.awt.Point
 import scala.swing.Swing
 
 object ImperativeVersion extends SimpleSwingApplication {
+  lazy val application = new ImperativeVersion
+  def top = application.frame
+  
   override def main(args: Array[String]) {
     super.main(args)
     while (true) {
@@ -13,10 +16,6 @@ object ImperativeVersion extends SimpleSwingApplication {
       Thread sleep 20
     }
   }
-  
-  def top = application.frame
-  
-  lazy val application = new ImperativeVersion
 }
 
 class ImperativeVersion {

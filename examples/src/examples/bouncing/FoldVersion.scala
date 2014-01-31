@@ -11,6 +11,9 @@ import java.awt.Point
 import scala.swing.Swing
 
 object FoldVersion extends SimpleSwingApplication {
+  lazy val application = new FoldVersion
+  def top = application.frame
+  
   override def main(args: Array[String]) {
     super.main(args)
     while (true) {
@@ -18,10 +21,6 @@ object FoldVersion extends SimpleSwingApplication {
       Thread sleep 20
     }
   }
-  
-  def top = application.frame
-  
-  lazy val application = new FoldVersion
 }
 
 class FoldVersion {

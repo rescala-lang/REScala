@@ -2,13 +2,28 @@ package examples.smashingparticles
 
 import react._
 import macro.SignalMacro.{SignalM => Signal}
-import swing.{Panel, MainFrame, SimpleSwingApplication}
+import swing.{Swing, Panel, MainFrame, SimpleSwingApplication}
 import java.awt.{Graphics2D, Dimension}
 import java.awt.Point
 import scala.collection.mutable.ListBuffer
 
-
 object SmashingParticles extends SimpleSwingApplication {
+  lazy val application = new SmashingParticles
+  def top = application.frame
+  
+  override def main(args: Array[String]) {
+    super.main(args)
+    while (true) {
+	  Swing onEDTWait {
+	    application.base() += 1
+        application.frame.repaint
+      }
+      Thread sleep 20
+    }
+  }
+}
+
+class SmashingParticles {
  
   val toDraw = ListBuffer[Function1[Graphics2D,Unit]]()
   type Delta = Point
@@ -35,19 +50,8 @@ object SmashingParticles extends SimpleSwingApplication {
   val point4 = Signal{ new Point(160+ time(), 160+time())}
   new Oval(point4, time)
   
- 
-
   
-  override def main(args: Array[String]){
-    super.main(args)
-    while (true) { {      
-	  frame.repaint
-        Thread sleep 20
-        base()= base.getVal + 1
-      }
-    }
-  }
- 
+  
   // drawing code
   def top = frame  
   val frame = new MainFrame {

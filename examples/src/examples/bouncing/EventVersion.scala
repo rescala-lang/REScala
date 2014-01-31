@@ -9,6 +9,9 @@ import java.awt.Point
 import scala.swing.Swing
 
 object EventVersion extends SimpleSwingApplication {
+  lazy val application = new EventVersion
+  def top = application.frame
+  
   override def main(args: Array[String]) {
     super.main(args)
     while (true) {
@@ -16,10 +19,6 @@ object EventVersion extends SimpleSwingApplication {
       Thread sleep 20
     }
   }
-  
-  def top = application.frame
-  
-  lazy val application = new EventVersion
 }
 
 class EventVersion {

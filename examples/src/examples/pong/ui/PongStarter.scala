@@ -19,21 +19,23 @@ import java.awt.Font
  * Only the file Pong.scala needs to be changed.
  */
 
-object PongStarter {
-  def main(args: Array[String]) {
-     /* Uncomment to enable logging: */
-	//react.ReactiveEngine.log.enableAllLogging
-    
-    val app = new PongWindow
-    app.main(args)
+object PongStarter extends SimpleSwingApplication {
+  /* Uncomment to enable logging: */
+  //react.ReactiveEngine.log.enableAllLogging
+  
+  lazy val application = new PongWindow
+  def top = application.frame
+  
+  override def main(args: Array[String]) {
+    super.main(args)
     while (true) {
+	  Swing onEDTWait { application.tick() }
       Thread sleep 20
-      app.tick()
     }
   }
 }
 
-class PongWindow extends SimpleSwingApplication {
+class PongWindow {
 
   val tick = new ImperativeEvent[Unit]
   tick += { _: Unit => frame.repaint() }
@@ -42,7 +44,6 @@ class PongWindow extends SimpleSwingApplication {
   val ball = new Pong(tick, mouse)
 
   // drawing code
-  def top = frame
   val frame: MainFrame = new MainFrame {
     title = "Pong"
     resizable = false

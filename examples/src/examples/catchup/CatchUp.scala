@@ -13,18 +13,20 @@ import java.awt.Font
 import java.awt.Rectangle
 
 
-object CatchUpStarter {
-  def main(args: Array[String]) {	
-    val app = new CatchUp
-    app.main(args)
+object CatchUp extends SimpleSwingApplication {
+  lazy val application = new CatchUp
+  def top = application.frame
+  
+  override def main(args: Array[String]) {
+    super.main(args)
     while (true) {
+      Swing onEDTWait { application.tick() }
       Thread sleep 50
-      app.tick()
     }
   }
 }
 
-class CatchUp extends SimpleSwingApplication {
+class CatchUp {
   
   val Max_X = 800
   val Max_Y = 700
@@ -74,7 +76,6 @@ class CatchUp extends SimpleSwingApplication {
   
   
   // GUI
-  def top = frame
   val frame: MainFrame = new MainFrame {
     title = "Catch up!"
     resizable = false
