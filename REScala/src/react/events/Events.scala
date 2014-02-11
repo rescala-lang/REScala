@@ -403,7 +403,7 @@ class Observable[T, U](body: T => U) extends (T => U) {
   def apply(t: T): U = {
     before(t)
     val res = body(t)
-    after(t, res)
+    after((t, res))
     res
   }
 }

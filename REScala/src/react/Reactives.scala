@@ -156,7 +156,7 @@ object ReactiveEngine {
   def removeFromEvalQueue(dep: Dependent) = evalQueue = evalQueue.filter(_ eq dep)
   
   /* Evaluates all the elements in the queue */
-  def startEvaluation = {
+  def startEvaluation() = {
     evalQueue.synchronized {
         val localStamp = TS.getCurrentTs
 	    // DEBUG: println("Start eval: " + Thread.currentThread() + "  " + localStamp + " (init. queue: " + evalQueue.length + ")")
@@ -187,7 +187,7 @@ object TS {
   private var _roundNum = 0
   private var _sequenceNum = 0
   
-  def nextRound {
+  def nextRound() {
     _roundNum += 1
     _sequenceNum = 0
     
@@ -203,7 +203,7 @@ object TS {
   
   def getCurrentTs = new Stamp(_roundNum,_sequenceNum)
   
-  def reset {
+  def reset() {
     _roundNum = 0
     _sequenceNum = 0
   }
