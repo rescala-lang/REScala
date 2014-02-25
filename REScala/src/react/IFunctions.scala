@@ -119,7 +119,9 @@ object IFunctions {
   }
   
   /** Generates a signal from an initial signal and a factory for subsequent ones */
-  def switch[T,A](e: Event[T])(init : Signal[A])(factory : Factory[T,A]) : Signal[A] = {
+  def switch[T,A](e: Event[T])(init : Signal[A])(factory : Factory[T,A]): Signal[A] =  
+	new SwitchedSignal(e, init, factory)
+  /*{
     
     val ref : Var[Signal[A]] = Var(init)
     val fac : Var[Factory[T,A]] = Var(factory)
@@ -133,7 +135,7 @@ object IFunctions {
     
     e += handleSignal
     return SignalSynt{s: SignalSynt[A]=> ref(s)(s) } // cannot express without high order
-  }
+  }*/
 }
 
 
@@ -205,4 +207,77 @@ class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T,E) => T)
   def change[U >: T]: Event[(U, U)] = new ChangedEventNode[(U, U)](this)
 }
 
+class SwitchedSignal[+T, +E](e: Event[E], init: Signal[T], factory: IFunctions.Factory[E, T])
+  extends Dependent with DepHolder with Signal[T] {
 
+  // The "inner" signal
+  private[this] var currentSignal: Signal[T] = init
+  // the current factory being called on the next occurence of e
+  private[this] var currentFactory: IFunctions.Factory[E, T] = factory
+  
+  private[this] var inQueue = false
+  
+  // Testing
+  val timestamps = ListBuffer[Stamp]()
+  
+  def getValue = currentSignal.getValue
+  def getVal = currentSignal.getVal
+  
+  def apply(): T = currentSignal.apply()
+  def apply(s: SignalSynt[_]) = {
+    if (level >= s.level) s.level = level + 1
+    s.reactivesDependsOnCurrent += this 
+    getVal
+  }
+  
+  private def removeInner(s: Signal[_]){
+    dependOn -= s
+    s.removeDependent(this)
+  }
+  
+  private def addInner(s: Signal[_]){
+    dependOn += s
+    s.addDependent(this)
+    this.level = math.max(e.level, s.level) + 1
+  }
+  
+  // Switched signal depends on event and the current signal
+  dependOn += e
+  e.addDependent(this)
+  addInner(currentSignal)
+  
+  def triggerReevaluation() = reEvaluate
+  
+  def reEvaluate(): T = {
+    inQueue = false
+   
+    ReactiveEngine.log.log("LogStartEvalNode", this)
+    val inner = currentSignal.reEvaluate
+    ReactiveEngine.log.log("LogEndEvalNode", this)
+    inner
+  }
+  
+  override def dependsOnchanged(change: Any, dep: DepHolder) = {
+    if(dep eq e){
+      val event = change.asInstanceOf[E]
+      val (newSignal, newFactory) = currentFactory.apply(event)
+      if (newSignal ne currentSignal){
+        removeInner(currentSignal)
+        currentSignal = newSignal
+        addInner(currentSignal)
+      }
+      // hack?
+      val value = reEvaluate
+      notifyDependents(value)
+    }
+    else {
+    }
+    
+    if(!inQueue){
+      inQueue = true
+      ReactiveEngine.addToEvalQueue(this)
+    }
+  }
+  
+  def change[U >: T]: Event[(U, U)] = new ChangedEventNode[(U, U)](this)
+}
