@@ -1,6 +1,6 @@
 organization := "de.tuda.stg"
 
-name := "REScala"
+name := "rescala"
 
 version := "0.0.0"
 
