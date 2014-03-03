@@ -1,4 +1,4 @@
-organization := "stg"
+organization := "de.tuda.stg"
 
 name := "REScala"
 
