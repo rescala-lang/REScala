@@ -28,7 +28,7 @@ trait DepHolder extends Reactive {
   val dependents = new ListBuffer[Dependent]
   def addDependent(dep: Dependent) = {
     dependents += dep
-    ReactiveEngine.log.nodeAttached(this, dep)
+    ReactiveEngine.log.nodeAttached(dep, this)
   }
   def removeDependent(dep: Dependent) = dependents -= dep
   def notifyDependents(change: Any): Unit = {

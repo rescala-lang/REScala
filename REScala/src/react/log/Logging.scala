@@ -8,7 +8,7 @@ import react.Stamp
  */
 abstract class Logging {
   def nodeCreated(r: Reactive)
-  def nodeAttached(r: Reactive, dependent: Reactive)
+  def nodeAttached(dependent: Reactive, r: Reactive)
   def nodePulsed(r: Reactive)
   def nodeScheduled(r: Reactive)
   def nodeEvaluationStarted(r: Reactive)
@@ -21,7 +21,7 @@ abstract class Logging {
 /** A Logging stub, that performs no logging */
 object NoLogging extends Logging {
   def nodeCreated(r: Reactive) {}
-  def nodeAttached(r: Reactive, dependent: Reactive) {}
+  def nodeAttached(dependent: Reactive, r: Reactive) {}
   def nodePulsed(r: Reactive) {}
   def nodeScheduled(r: Reactive) {}
   def nodeEvaluationStarted(r: Reactive) {}
