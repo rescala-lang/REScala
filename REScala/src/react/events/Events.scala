@@ -40,7 +40,7 @@ trait Event[+T] extends DepHolder {
    */
   def and[U, V, S >: T](other: Event[U], merge: (S, U) => V) = new EventNodeAnd[S, U, V](this, other, merge)
 
-  /*
+  /**
   * Event conjunction with a merge method creating a tuple of both event parameters
   */
   def &&[U, S >: T](other: Event[U]) = new EventNodeAnd[S, U, (S, U)](this, other, (p1: S, p2: U) => (p1, p2))
@@ -71,6 +71,7 @@ trait Event[+T] extends DepHolder {
   def set[B >: T,A](init: B)(f: (B=>A)): Signal[A] = IFunctions.set(this,init)(f)
 
   def latest[S >: T](init: S): Signal[S] = IFunctions.latest(this, init)
+  def hold[S >: T]:  Signal[Option[T]] = IFunctions.latestOption[T](this)
   def latestOption[S >: T]:  Signal[Option[T]] = IFunctions.latestOption[T](this)
   
   def reset[S >: T, A](init : S)(f : (S) => Signal[A]) : Signal[A] = IFunctions.reset(this, init)(f)
@@ -403,7 +404,7 @@ class Observable[T, U](body: T => U) extends (T => U) {
   def apply(t: T): U = {
     before(t)
     val res = body(t)
-    after(t, res)
+    after((t, res))
     res
   }
 }
