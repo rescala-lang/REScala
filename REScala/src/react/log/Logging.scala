@@ -1,17 +1,32 @@
 package react.log
 
+import react.Reactive
+import react.Stamp
+
 /**
- * Highly abstract interface for logging.
- * 
- * @param event The type of the event to log. Supported events in "REScalaLogging":
- * LogMessage, LogCreateNode, LogAttachNode, LogScheduleNode, LogPulseNode, 
- * LogStartEvalNode, LogEndEvalNode, LogRound, LogStopPropagation
+ * Interface for logging.
  */
 abstract class Logging {
-  def log(event: String, params: Object*)
+  def nodeCreated(r: Reactive)
+  def nodeAttached(dependent: Reactive, r: Reactive)
+  def nodePulsed(r: Reactive)
+  def nodeScheduled(r: Reactive)
+  def nodeEvaluationStarted(r: Reactive)
+  def nodeEvaluationEnded(r: Reactive)
+  def nodePropagationStopped(r: Reactive)
+  def logRound(ts: Stamp)
+  def logMessage(s: String)
 }
 
 /** A Logging stub, that performs no logging */
 object NoLogging extends Logging {
-  def log(event: String, params: Object*) {}
+  def nodeCreated(r: Reactive) {}
+  def nodeAttached(dependent: Reactive, r: Reactive) {}
+  def nodePulsed(r: Reactive) {}
+  def nodeScheduled(r: Reactive) {}
+  def nodeEvaluationStarted(r: Reactive) {}
+  def nodeEvaluationEnded(r: Reactive) {}
+  def nodePropagationStopped(r: Reactive) {}
+  def logRound(ts: Stamp) {}
+  def logMessage(s: String) {}
 }
