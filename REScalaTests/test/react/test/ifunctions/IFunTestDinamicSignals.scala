@@ -323,15 +323,15 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
 
   @Test def switchTo_theEventSwitchesTheValueToTheValueOfTheEvent() {
     val e = new ImperativeEvent[Int]()
-    val v1 =  Var(1)
-    val s1 = Signal{ v1() + 1 }
+    val v =  Var(1)
+    val s1 = Signal{ v() + 1 }
     val s2 = IFunctions.switchTo(e,s1)
     
     e(1)
     assert(s2.getVal == 1)
     e(100)
     assert(s2.getVal == 100)
-    v1.setVal(2)
+    v.setVal(2)
     assert(s2.getVal == 100)
   }
   

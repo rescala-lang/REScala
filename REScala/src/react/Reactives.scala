@@ -119,7 +119,7 @@ trait Signal[+T] extends Dependent with DepHolder {
   def toggle[V >: T](e: Event[_])(other: Signal[V]) = IFunctions.toggle(e, this, other)
 
   /** Delays this signal by n occurrences */
-  def delay(n: Int) = IFunctions.delay(this, n)
+  def delay(n: Int): Signal[T] = IFunctions.delay(this, n)
 
   
   /* Testing */

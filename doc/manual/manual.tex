@@ -942,10 +942,10 @@ assert(s.getValue == 13)
 
 
 \subsubsection{Iterate}
-Returns a value computed by \code{f} on the occurrence of an
-event. Differently from \code{fold}, there is no accumulator, i.e. the
-value of the signal does not depend on the previous values but only on
-the value carried by the event.
+Returns a signal holding the value computed by \code{f} on the
+occurrence of an event. Differently from \code{fold}, there is no
+accumulator, i.e. the value of the signal does not depend on the
+previous values but only on the value carried by the event.
 \\
 
 \code{iterate[A](e: Event[\_], init: A)(f: A=>A) :Signal[A]}
@@ -1040,14 +1040,37 @@ function can potentially introduce a memory overflow.
 
 
 
+
+\subsubsection{Count}
+
+Returns a signal that counts the occurrences of the event. Initially,
+when the event has never been fired yet, the signal holds the value
+0. The argument of the event is simply discarded.
+\\
+ 
+\code{count(e: Event[\_]): Signal[Int]}
+\\
+
+\begin{codenv}
+val e = new ImperativeEvent[Int]()
+val s: Signal[Int] = e.count
+assert(s.getValue == 0)
+e(1)
+e(3)
+assert(s.getValue == 2)
+\end{codenv}
+
+
+
+
 \subsubsection{Snapshot}
 Returns a signal updated only when \code{e} fires. If \code{s} in the
 meanwhile changes its value, the change is ignored. When the event
-\code{e} fires, the resulting signal is updated ti the current value
+\code{e} fires, the resulting signal is updated to the current value
 of \code{s}.
 \\
 
-\code{def snapshot[V](e : Event[\_], s: Signal[V]): Signal[V]}
+\code{snapshot[V](e : Event[\_], s: Signal[V]): Signal[V]}
 \\
 
 \noindent
@@ -1055,12 +1078,12 @@ Example:
 
 \begin{codenv}
 val e = new ImperativeEvent[Int]()
-val v1 =  Var(1)
-val s1 = Signal{ v1() + 1 }
+val v =  Var(1)
+val s1 = Signal{ v() + 1 }
 val s = e.snapshot(s1)
 e(1)
 assert(s.getValue == 2)    
-v1.setVal(2)
+v.setVal(2)
 assert(s.getValue == 2)
 e(1)
 assert(s.getValue == 3)
@@ -1087,16 +1110,42 @@ e += ((x:(Int,Int))=>{ ... })
 \end{codenv}
 
 
+\subsubsection{ChangeTo} 
+
+The \code{changeTo} function is similar to \code{changed}, but it
+fires an event only when the signal changes its value to a given
+value.
+\\
+
+\code{changedTo[V](value: V): Event[Unit]}
+\\
+
+\begin{codenv}
+var test = 0
+val v =  Var(1)
+val s = Signal{ v() + 1 }
+val e: Event[Unit] = s.changedTo(3)
+e += ((x:Unit)=>{test+=1}) 
+
+assert(test == 0)
+v setVal 2
+assert(test == 1)
+v setVal 3
+assert(test == 1)
+\end{codenv}
+
+
 
 \subsubsection{Reset}
 
 When the \code{reset} function is called for the first time, the
 \code{init} value is used by the factory to determine the signal
 returned by the \code{reset} function. When the event occurs the
-factory is applied to the event value to determine the new signal.
+ factory is applied to the event value to determine the new signal.
 \\
 
-\code{reset[T,A](e: Event[T], init: T)(factory: (T)=>Signal[A]): Signal[A]}
+\code{reset[T,A](e: Event[T], init: T)(factory: (T)=>Signal[A]):
+Signal[A]}
 \\
 
 \noindent
