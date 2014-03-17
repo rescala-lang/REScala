@@ -259,6 +259,7 @@ class SwitchedSignal[+T, +E](e: Event[E], init: Signal[T], factory: IFunctions.F
       if (newSignal ne currentSignal) {
         removeInner(currentSignal)
         currentSignal = newSignal
+        currentFactory = newFactory
         addInner(currentSignal)
       }
       // hack?
