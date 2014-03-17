@@ -5,12 +5,11 @@ import java.awt.Point
 import java.awt.Toolkit
 
 import scala.swing._
+import reswing._
 
 import javax.swing.ImageIcon
 import macro.SignalMacro.{SignalM => Signal}
 import react.Signal
-import react.SignalSynt
-import react.StaticSignal
 import react.events.Event
 import react.events.ImperativeEvent
 import reader.data.FeedStore
@@ -23,16 +22,16 @@ import reader.data.RSSItem
  * by an initialized content mediator
  */
 class GUI(store: FeedStore,
-          notifications: Signal[Any] = StaticSignal(){ () },
-          itemStatus: Signal[Any] = StaticSignal(){ () },
-          fetcherState: Signal[Any] = StaticSignal(){ () })
+          notifications: Signal[String] = Signal { "" },
+          itemStatus: Signal[String] = Signal { "" },
+          fetcherState: Signal[String] = Signal { "" })
             extends SimpleSwingApplication {
   val refreshButton = new ReButton("Refresh")
-  val refresh: Event[Unit] = refreshButton.pressed.dropParam: Event[Unit] //#EVT //#EF
+  val refresh: Event[Unit] = refreshButton.clicked.dropParam: Event[Unit] //#EVT //#EF
   
   val requestURLAddition = new ImperativeEvent[String] //#EVT
   
-  val refreshCheckbox = new ReCheckBox("auto refresh") { selected = true }
+  val refreshCheckbox = new ReCheckBox("auto refresh", selected = true)
   def refreshAllowed = refreshCheckbox.selected
   
   def top = new MainFrame {
@@ -60,38 +59,38 @@ class GUI(store: FeedStore,
     val (framewidth, frameheight) = (840, 480)
     configure
     
-    val channelList = new ReListView[RSSChannel](Signal { store.channels().keys.toIterable }) { //#SIG
-      renderer = ListView.Renderer(_.title)
-      peer.setVisibleRowCount(3)
+    val channelList = new ReListViewEx[RSSChannel](Signal { store.channels().keys.toSeq }, //#SIG
+        visibleRowCount = 3) {
+      peer.renderer = ListView.Renderer(_.title)
     }
     
     val selectedChannelItems = Signal { //#SIG
       channelList.selectedItem() match {
         case Some(channel) => store.channels().get(channel) match {
-          case Some(items) => items().toIterable
-          case _ => Iterable.empty
+          case Some(items) => items().toSeq
+          case _ => Seq.empty
         }
-        case _ => Iterable.empty
+        case _ => Seq.empty
       }
     }
     
-    val itemList = new ReListView[RSSItem](selectedChannelItems) {
-      renderer = ListView.Renderer(_.title)
+    val itemList = new ReListViewEx[RSSItem](selectedChannelItems) {
+      peer.renderer = ListView.Renderer(_.title)
     }
     
     val renderArea = new RssItemRenderPane(itemList.selectedItem)
     
-    val statusBar = new ReText(notifications)
-    statusBar.preferredSize = new Dimension(framewidth / 3, 15)
-    statusBar.horizontalAlignment = Alignment.Left
+    val statusBar = new ReLabel(notifications,
+        preferredSize = ReSwingValue(new Dimension(framewidth / 3, 15)),
+        horizontalAlignment = Alignment.Left)
     
-    val itemCountStatus = new ReText(itemStatus)
-    itemCountStatus.preferredSize = new Dimension(framewidth / 3, 15)
-    itemCountStatus.horizontalAlignment = Alignment.Right
+    val itemCountStatus = new ReLabel(itemStatus,
+        preferredSize = ReSwingValue(new Dimension(framewidth / 3, 15)),
+        horizontalAlignment = Alignment.Left)
     
-    val fetcherStatus = new ReText(fetcherState)
-    fetcherStatus.preferredSize = new Dimension(framewidth / 3, 15)
-    fetcherStatus.horizontalAlignment = Alignment.Right
+    val fetcherStatus = new ReLabel(fetcherState,
+        preferredSize = ReSwingValue(new Dimension(framewidth / 3, 15)),
+        horizontalAlignment = Alignment.Left)
     
     contents = new BorderPanel {
       val topPane = new GridPanel(1, 1) {
