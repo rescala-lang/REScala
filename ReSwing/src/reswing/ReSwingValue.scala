@@ -17,10 +17,7 @@ sealed abstract class ReSwingValue[T] {
   private var init = null: ReSwingValue[T] => Unit
   
   final protected def toSignal = {
-    if (!signal.isDefined && init != null) {
-      init(this)
-      init = null
-    }
+    initPerform
     signal()
   }
   
@@ -32,6 +29,8 @@ sealed abstract class ReSwingValue[T] {
     { latestValue = value; if (event.isDefined) event()(value) }
   final private[reswing] def initLazily(initLazily: ReSwingValue[T] => Unit)
     { if (signal.isDefined) initLazily(this) else init = initLazily }
+  final private[reswing] def initPerform
+    { if (init != null) { init(this); init = null } }
 }
 
 final case class ReSwingNoValue[T]() extends ReSwingValue[T] {

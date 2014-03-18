@@ -192,7 +192,7 @@ private[reswing] abstract trait ReSwingValueConnection {
   
   protected def initReSwingValueConnection {
     for (value <- delayedValues)
-      value: react.Signal[_] // force lazy value initialization
+      value.initPerform
     delayedValues.clear
   }
 }
