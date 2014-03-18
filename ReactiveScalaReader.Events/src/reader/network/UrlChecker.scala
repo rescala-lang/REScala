@@ -1,5 +1,6 @@
 package reader.network
 
+import java.io.FileNotFoundException
 import java.net.MalformedURLException
 import java.net.URL
 import java.net.UnknownHostException
@@ -30,6 +31,7 @@ class UrlChecker {
       catch {
         case e: UnknownHostException => Left(errorMessage(url, e))
         case e: MalformedURLException => Left(errorMessage(url, e))
+        case e: FileNotFoundException => Left(errorMessage(url, e))
       }
   }
   
