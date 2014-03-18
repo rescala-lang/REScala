@@ -3,10 +3,11 @@ package reader.gui
 import reader.data.FeedStore
 import reader.data.RSSChannel
 import reader.data.RSSItem
+import scala.swing.ListView
 
 trait ContentMediator {
-  def mediate(channelList: EventListView[RSSChannel],
-              itemList: EventListView[RSSItem],
+  def mediate(channelList: ReListViewEx[RSSChannel],
+              itemList: ReListViewEx[RSSItem],
               renderArea: RssItemRenderPane,
               store: FeedStore): Unit
 }
@@ -19,8 +20,8 @@ trait ContentMediator {
 *   - the store for the feeds
 */
 object SyncAll extends ContentMediator {
-  def mediate(channelList: EventListView[RSSChannel],
-              itemList: EventListView[RSSItem],
+  def mediate(channelList: ReListViewEx[RSSChannel],
+              itemList: ReListViewEx[RSSItem],
               renderArea: RssItemRenderPane,
               store: FeedStore) {
     store.itemAdded += { item => 
@@ -41,8 +42,9 @@ object SyncAll extends ContentMediator {
     
     def displayChannelsItems(channel: RSSChannel) = {
       store itemsFor channel foreach { items =>
-        itemList.listData = items.toSeq.sorted
-        itemList.repaint
+        val listView = itemList: ListView[RSSItem]
+        listView.listData = items.toSeq.sorted
+        listView.repaint
       }
     }
   }
