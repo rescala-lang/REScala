@@ -1,4 +1,4 @@
-package macro
+package `macro`
 
 import scala.collection.mutable.ListBuffer
 import scala.language.experimental.macros
@@ -29,7 +29,7 @@ object SignalMacro {
     // every Signal { ... } macro instance gets expanded into a SignalSynt
     val signalSyntName = newTermName(c.fresh("s$"))
     
-    // the signal values 
+    // the signal values that will be pulled out of the Signal expression
     val signalValues = ListBuffer.empty[ValDef]
     
     object transformer extends Transformer {
@@ -81,15 +81,28 @@ object SignalMacro {
                 val signalName = newTermName(c.fresh("s$"))
                 val signalDef = ValDef(modifiers, signalName, TypeTree(), depHolder)
                 
-                // ensure that the signal value can be pulled out of the ignal expression
+//                // instead of using the type checker below, inspecting the
+//                // symbol and term positions would be a cleaner solution,
+//                // but the position does not always give us the range
+//                // (but only a single point) which is needed here
+//                val macroExpressionLocalIdentifier = depHolder match {
+//                  case Select(a @ Ident(_), _) =>
+//                    expression.tree.pos.includes(a.symbol.asTerm.pos)
+//                  case _ => false
+//                }
+                
+                // ensure that the signal value can be pulled out of the Signal expression
                 // by invoking the type-checker to see if it can stand on its own
                 // outside the signal expression
-                if ((c typeCheck (c resetAllAttrs signalDef, WildcardType, true)) != EmptyTree) {
+                try {
+                  c typeCheck (c resetAllAttrs signalDef)
                   signalValues += signalDef
                   Ident(signalName)
                 }
-                else
-                  super.transform(tree)
+                catch {
+                  case _: Throwable =>
+                    super.transform(tree)
+                }
               
               case _ =>
                 super.transform(tree)
