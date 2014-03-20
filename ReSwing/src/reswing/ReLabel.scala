@@ -8,7 +8,6 @@ import scala.swing.Font
 import scala.swing.Label
 
 import javax.swing.Icon
-import reswing.ReSwingValue.apply
 
 class ReLabel(
     val text: ReSwingValue[String] = (),

@@ -12,6 +12,12 @@ import react.events.Event
 class ReTextComponent(
     val text: ReSwingValue[String] = (),
     val editable: ReSwingValue[Boolean] = (),
+    `caret.position`: ReSwingValue[Int] = (),
+    `caret.markDot`: ReSwingValue[(Int, Int)] = (),
+    `caret.visible`: ReSwingValue[Boolean] = (),
+    `caret.selectionVisible`: ReSwingValue[Boolean] = (),
+    `caret.blinkRate`: ReSwingValue[Int] = (),
+    `caret.color`: ReSwingValue[Color] = (),
     cut: ReSwingEvent[Unit] = (),
     copy: ReSwingEvent[Unit] = (),
     paste: ReSwingEvent[Unit] = (),
@@ -40,19 +46,37 @@ class ReTextComponent(
   paste using peer.paste _
   selectAll using peer.selectAll _
   
-  class ReCaret {
+  class ReCaret(
+      val position: ReSwingValue[Int],
+      val markDot: ReSwingValue[(Int, Int)],
+      val visible: ReSwingValue[Boolean],
+      val selectionVisible: ReSwingValue[Boolean],
+      val blinkRate: ReSwingValue[Int],
+      val color: ReSwingValue[Color]) {
     protected[ReTextComponent] val peer = ReTextComponent.this.peer.caret
     
     val dot = ReSwingValue using (peer.dot _, (peer, classOf[CaretUpdate]))
     val mark = ReSwingValue using (peer.mark _, (peer, classOf[CaretUpdate]))
-    val position = ReSwingValue using (peer.position _, (peer, classOf[CaretUpdate]))
+    
+    position using (peer.position _, peer.position_= _, (peer, classOf[CaretUpdate]))
+    
+    markDot using (
+        { () => (peer.mark, peer.dot) },
+        { _ match { case(mark, dot) => peer.position = mark; peer.moveDot(dot) } },
+        (peer, classOf[CaretUpdate]))
+    
+    visible using (peer.visible _, peer.visible_= _)
+    selectionVisible using (peer.selectionVisible _, peer.selectionVisible_= _)
+    blinkRate using (peer.blinkRate _, peer.blinkRate_= _)
+    color using (peer.color _, peer.color_= _)
   }
   
   object ReCaret {
     implicit def toCaret(caret: ReCaret) = caret.peer
   }
   
-  object caret extends ReCaret
+  object caret extends ReCaret(`caret.position`, `caret.markDot`,
+      `caret.visible`, `caret.selectionVisible`, `caret.blinkRate`, `caret.color`)
 }
 
 object ReTextComponent {

@@ -5,6 +5,7 @@ import scala.swing.Color
 import scala.swing.Dimension
 import scala.swing.Font
 import scala.swing.ListView
+import scala.swing.ListView.IntervalMode
 import scala.swing.event.ListSelectionChanged
 import scala.swing.event.ListElementsAdded
 import scala.swing.event.ListChanged
@@ -17,10 +18,7 @@ class ReListView[A](
     val selectionBackground: ReSwingValue[Color] = (),
     val selectIndices: ReSwingEvent[Seq[Int]] = (),
     val ensureIndexIsVisible: ReSwingEvent[Int] = (),
-    cut: ReSwingEvent[Unit] = (),
-    copy: ReSwingEvent[Unit] = (),
-    paste: ReSwingEvent[Unit] = (),
-    selectAll: ReSwingEvent[Unit] = (),
+    `selection.intervalMode`: ReSwingValue[IntervalMode.Value] = (),
     background: ReSwingValue[Color] = (),
     foreground: ReSwingValue[Color] = (),
     font: ReSwingValue[Font] = (),
@@ -45,11 +43,20 @@ class ReListView[A](
   val intervalRemoved = ReSwingEvent using classOf[ListElementsRemoved[A]]
   val intervalAdded = ReSwingEvent using classOf[ListElementsAdded[A]]
   
-  class ReSelection {
+  class ReSelection(
+      intervalMode: ReSwingValue[IntervalMode.Value]) {
     protected[ReListView] val peer = ReListView.this.peer.selection
     
     val leadIndex = ReSwingValue using (peer.leadIndex _, (peer, classOf[ListSelectionChanged[_]]))
     val anchorIndex = ReSwingValue using (peer.anchorIndex _, (peer, classOf[ListSelectionChanged[_]]))
+    val indices = ReSwingValue using (
+        { () => ReListView.this.peer.peer.getSelectedIndices.toSet },
+        (peer, classOf[ListSelectionChanged[_]]))
+    val items = ReSwingValue using (
+        { () => ReListView.this.peer.peer.getSelectedValues.map(_.asInstanceOf[A]).toSeq },
+        (peer, classOf[ListSelectionChanged[_]]))
+    
+    intervalMode using (peer.intervalMode _, peer.intervalMode_= _)
     
     val changed = ReSwingEvent using (peer, classOf[ListSelectionChanged[A]])
   }
@@ -58,7 +65,7 @@ class ReListView[A](
     implicit def toSelection(selection: ReSelection) = selection.peer
   }
   
-  object selection extends ReSelection
+  object selection extends ReSelection(`selection.intervalMode`)
 }
 
 object ReListView {

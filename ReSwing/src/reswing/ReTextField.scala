@@ -1,6 +1,7 @@
 package reswing
 
 import scala.language.implicitConversions
+import scala.swing.Alignment
 import scala.swing.Color
 import scala.swing.Dimension
 import scala.swing.Font
@@ -11,6 +12,13 @@ import react.events.Event
 class ReTextField(
     text: ReSwingValue[String] = (),
     editable: ReSwingValue[Boolean] = (),
+    `caret.position`: ReSwingValue[Int] = (),
+    `caret.markDot`: ReSwingValue[(Int, Int)] = (),
+    `caret.visible`: ReSwingValue[Boolean] = (),
+    `caret.selectionVisible`: ReSwingValue[Boolean] = (),
+    `caret.blinkRate`: ReSwingValue[Int] = (),
+    `caret.color`: ReSwingValue[Color] = (),
+    val horizontalAlignment: ReSwingValue[Alignment.Value] = (),
     cut: ReSwingEvent[Unit] = (),
     copy: ReSwingEvent[Unit] = (),
     paste: ReSwingEvent[Unit] = (),
@@ -24,11 +32,17 @@ class ReTextField(
     preferredSize: ReSwingValue[Dimension] = (),
     columns: Int = 0)
   extends
-    ReTextComponent(text, editable, cut, copy, paste, selectAll,
+    ReTextComponent(text, editable, `caret.position`, `caret.markDot`,
+                    `caret.visible`, `caret.selectionVisible`,
+                    `caret.blinkRate`, `caret.color`,
+                    cut, copy, paste, selectAll,
                     background, foreground, font, enabled,
                     minimumSize, maximumSize, preferredSize) {
   override protected lazy val peer =
-    new TextField(if (text == null) null else text.getValue, columns) with ComponentMixin
+    new TextField(null, columns) with ComponentMixin
+  
+  horizontalAlignment using (peer.horizontalAlignment _,
+                             peer.horizontalAlignment= _, "horizontalAlignment")
   
   val editDone = ReSwingEvent using classOf[EditDone]
 }
