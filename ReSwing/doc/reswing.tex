@@ -89,16 +89,18 @@
 
 {\bf Can we show the (complete?) interface of a RESwing component? I
   would expect there are some interesting things such as signals in
-  the interface ecc..}
+  the interface ecc.. -- the complete interface can maybe get a bit
+  large. Very small but representative parts of the interface are
+  shown in Figure 5 and 6.}
 
 The RESwing library is an extension of the Scala Swing library, which
-wraps around Java Swing.  the Scala Swing library mirrors the Java
+wraps around Java Swing. The Scala Swing library mirrors the Java
 Swing class hierarchy and every component holds a reference to the
 underlying Java Swing component. Building on Scala Swing, the RESwing
 library adds another layer to this architecture. It provides its own
 class hierarchy containing all reactively enabled
-components. \ref{fig:overview} shows a small, representative part of
-these class hierarchies.
+components. Figure~\ref{fig:overview} shows a small, representative
+part of these class hierarchies.
 
 \begin{figure}[htp]
   \centering
@@ -107,15 +109,19 @@ these class hierarchies.
   \label{fig:overview}
 \end{figure}
 
-The ReSwing library provides reactive values for properties of Swing
-components. Since it is possible to define a signal for these values
-and signals are defined once the signal is created and are not
-re-assignable, properties in the ReSwing library are passed to the
-components' constructors and cannot be assigned later {\bf Not
-  clear}. This also results in a slightly different approach when
-constructing ReSwing components as shown in
+The RESwing library provides reactive values for certain  properties
+of the Swing components. User code can provide signals to be used for
+these reactive values. As signals induce a highly declarative way of
+expressing the computation of values, they are not re-assignable once
+they are declared.
+
+For that reason, reactive properties to be used with the RESwing
+library are passed to the components' constructors and cannot be
+assigned later. This also results in a slightly different approach
+when constructing ReSwing components as shown in
 Figure~\ref{lst:scala-swing-example} and
 Figure~\ref{lst:reswing-example}.
+{\bf I hope this is clearer now}
 
 
 \begin{figure}[htp]
@@ -142,11 +148,17 @@ val label = new ReLabel(
 \end{figure}
 
 
-\subsection{ReSwing Events}
+\subsection{RESwing Events}
 \label{sec:events}
 The RESwing library provides REScala events for discrete changes,
-e.g., button clicks. Events exposed by ReSwing components correspond
-to Scala Swing events.  {\bf But more expressive power ? What about
+e.g., button clicks. Events exposed by RESwing components correspond
+to Scala Swing events, but integrate with the REScala event system.
+This means all REScala event combinators and interface functions can
+be used with these events. Every RESwing event passes the triggering
+Swing event on. For example for a Swing \code{ButtonClicked} event, a
+REScala event of type \code{Event[ButtonClicked]} is fired.
+
+{\bf But more expressive power ? What about
   the parameter type ? What about combinators?}
 
 
@@ -159,32 +171,40 @@ system and the REScala signal and event system. Clients can define
 reactive values that are passed to the RESwing interface. When these
 values change, the GUI interface is updated accordingly. Also, changes
 made by the user are reflected in the reactive values which the
-ReSwing library provides.
+RESwing library provides.
 
 Certain values can be changed by both the application and the user,
 i.e., they have multiple input sources. For example, the value
-representing the text in a text input field is changed from the user
-when she enters the text, ... {\bf What about the application?}. The
-library ensures consistency between values set by the application and
-those resulting from user interaction. This is achieved by disallowing
-the user to make changes in certain cases.
+representing the text in a text input field can be changed by the
+user by entering text, but it can also be set by the application.
+The library ensures consistency between values set by the application
+and those resulting from user interaction. This is achieved by
+disallowing the user to make changes in certain cases.
 
 
 There are three different ways to initialize a reactive value. This
 aspect determines how changes to the reactive value are handled: {\bf
-  show also the changes of the value}.
+  show also the changes of the value -- I extended the text, I hope
+  it is clearer now who can change which value when}.
 
 \begin{itemize}
-\item \emph{Immediate value} will set the reactive value to the given
-  value immediately upon creation. The user can change the value
-  afterwards. {\bf How? Can you show it in the example?}
+\item \emph{Immediate value initialization} will set the reactive
+  value to the value given by the client code immediately upon
+  creation. The user running the application can potentially change
+  the value afterwards by interacting with the user interface.
+  The reactive value will automatically reflect any the changes made
+  by the user when accessed from client code.
+  {\bf How? Can you show it in the example? -- I labeled the example
+  in Figure 4 appropriately}
 \item \emph{Event initialization} will update the reactive value on
-  each event occurrence. The user can change the value by triggering
-  an event in the stream with the new value.
+  each event occurrence. Client code can change the value by
+  triggering an event in the stream with the new value. The user can
+  also change the value by interacting with the user interface.
+  The reactive value will automatically reflect any the changes made
+  by the application user or client code.
 \item \emph{Signal initialization} ensures that the reactive value
-  always holds the value given by the signal. Hence, the user is not
-  allowed to change the value after the initialization but the value
-  automatically reflects the changes in the signal.
+  always holds the value given by the signal. Hence, the application
+  user is not allowed to change the value through the user interface.
 \end{itemize}
 
 For all these cases, the respective value is passed to the constructor
@@ -193,16 +213,19 @@ Figure~\ref{lst:initializing-reactive-values}.
 
 \begin{figure}[h]
 \begin{codenv}
-val value: String
+// Immediate value initialization (using a string value)
+val string: String
 val label = new ReTextArea(
-    text = value 
+    text = string 
 )
 
+// Event initialization (using a string event value)
 val event: Event[String]
 val label = new ReTextArea(
     text = event
 )
 
+// Signal initialization (using a string signal value)
 val signal: Signal[String] 
 val label = new ReTextArea( 
     text = signal 
@@ -215,12 +238,17 @@ val label = new ReTextArea(
 
 After a component instance has been constructed, all reactive values
 can be treated as signals when accessing the properties (e.g.,
-\code{Signal \{ label.text() \}}). {\bf why not directly the signal? I
-  would expect text is a signal}
+\code{Signal \{ label.text() \}}). Meaning no matter which of the
+methods described above was used to initialize the reactive value, it
+can be uniformly accessed and read as signal.
+{\bf why not directly the signal? I would expect text is a signal --
+Yes, \code{label.text} is a signal (or more precisely can be
+implicitly casted to signal and thus just be used as signal),
+\code{Signal \{ label.text() \}} was just an example}
 
 
 
-\subsection{Extending the RESwing Library}
+\subsection{Extending the RESwing Library by Reactive Values}
 \label{sec:defining-reactive-values}
 The library offers a declarative syntax to define which reactive value
 should map to which property of the underlying Swing component. Using
@@ -229,19 +257,23 @@ the ReSwing library to the Scala Swing library and vice versa.
 
 For a reactive property, you need to specify:
 \begin{itemize}
-\item the \emph{getter} of the underlying Swing property to retrieve the value
+\item the \emph{getter} of the underlying Swing property to retrieve
+  the value
 \item the \emph{setter} of the underlying Swing property to set the
-  value (if the reactive property can be changed by the application)
+  value (if the reactive property can be changed by client code,
+  otherwise the reactive value will be read-only, i.e. changes by the
+  user running the application will be reflected, but client code
+  cannot directly change the value)
 \item a way to identify changes of the underlying Swing property,
   either by giving the bound property name or a Scala Swing event type
 \end{itemize}
 Additionally it is possible to force other properties to hold a
 specified value, if the reactive value should not be changeable by the
 user. This can be the case if the reactive value is initialized with a
-signal as described in \ref{sec:reactive-values}.
+signal as described in section~\ref{sec:reactive-values}.
 
 Examples of some reactive values defined in different ways are given
-in \ref{lst:defining-reactive-values}.
+in Figure~\ref{lst:defining-reactive-values}.
 
 \begin{figure}
 \begin{codenv}
@@ -263,9 +295,39 @@ abstract class ReComponent extends ReUIElement {
 \end{codenv}
 \caption{Defining Reactive Values.}
 \label{lst:defining-reactive-values}
-\vspace{-4mm}
+%\vspace{-4mm}
 \end{figure}
 
+\subsection{Extending the RESwing Library by Events}
+\label{sec:defining-events}
+Similar to defining RESwing values as outlined in
+section~\ref{sec:defining-reactive-values}, it is also possible to
+\begin{itemize}
+\item define events that get fired when the underlying Swing
+  component fires an event or
+\item declare events that offer client code the possibility to
+  trigger certain actions by passing an event stream to the
+  component.
+\end{itemize}
+
+Examples of these two use cases are given in
+Figure~\ref{lst:defining-events}.
+
+\begin{figure}
+\begin{codenv}
+class ReButton extends ReComponent {
+  val clicked = ReSwingEvent using classOf[ButtonClicked]
+}
+
+class ReTextComponent(selectAll: ReSwingEvent[Unit] = ())
+                            extends ReComponent {
+  selectAll using peer.selectAll _
+}
+\end{codenv}
+\caption{Defining Events.}
+\label{lst:defining-events}
+\vspace{-4mm}
+\end{figure}
 
 
 \end{document}
