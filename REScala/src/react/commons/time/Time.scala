@@ -1,4 +1,4 @@
-package react.time
+package react.commons.time
 
 import react.events._
 import react.SignalSynt
