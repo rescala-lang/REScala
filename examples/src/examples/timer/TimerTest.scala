@@ -1,10 +1,9 @@
 package examples.timer
-import react._
+import react.commons.time._
 import macro.SignalMacro.{SignalM => Signal}
 import react.conversions.SignalConversions._
-import react.time.Timer
 
-object TimerTest extends Application {
+object TimerTest extends App {
   
   val timer1 = Timer(250)
   val timer2 = Timer(500)

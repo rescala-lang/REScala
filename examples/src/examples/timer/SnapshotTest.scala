@@ -1,10 +1,10 @@
 package examples.timer
 import react._
 import macro.SignalMacro.{SignalM => Signal}
-import react.time._
+import react.commons.time._
 
 
-object SnapshotTest extends Application {
+object SnapshotTest extends App {
 	val simulationTime = Timer(50)
 	val sampleTime = Timer(1000)
 	

@@ -2,10 +2,10 @@ package examples.timer
 import react._
 import macro.SignalMacro.{SignalM => Signal}
 import react.conversions.SignalConversions._
-import react.time.Timer
+import react.commons.time._
 
 
-object TimeWindowTest extends Application {
+object TimeWindowTest extends App {
   val timer = Timer(250)
   
   //val eachTwoSeconds = timer.repeatedly(2.0)
