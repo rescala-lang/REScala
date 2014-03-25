@@ -22,7 +22,7 @@ object DropdownSample {
   }
 }*/
 
-object DropdownSample1 extends SimpleSwingApplication {
+object DropdownSample0 extends SimpleSwingApplication {
   
   
   val inputField = new ReTextField(text = "Berlin, Paris, London, Rome", columns = 50)
