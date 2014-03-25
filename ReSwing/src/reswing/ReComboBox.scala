@@ -23,8 +23,6 @@ class ReComboBox[A](
                 minimumSize, maximumSize, preferredSize) {
   override protected lazy val peer = new ComboBox[A](items) with ComponentMixin
   
-  final case class Leaf
-  
   class ReSelection(
       val index: ReSwingValue[Int],
       val item: ReSwingValue[A]) {

@@ -1,6 +1,7 @@
 package reswing
 
 import scala.language.implicitConversions
+import scala.collection.JavaConverters._
 import scala.swing.Color
 import scala.swing.Dimension
 import scala.swing.Font
@@ -31,6 +32,8 @@ class ReListView[A](
                 minimumSize, maximumSize, preferredSize) {
   override protected lazy val peer = new ListView[A] with ComponentMixin
   
+  protected val javaPeer = peer.peer.asInstanceOf[javax.swing.JList[_]]
+  
   listData using (peer.listData _, peer.listData_= _, classOf[ListChanged[_]])
   visibleRowCount using (peer.visibleRowCount _, peer.visibleRowCount_= _, "visibleRowCount")
   selectionForeground using (peer.selectionForeground _, peer.selectionForeground_= _, "selectionForeground")
@@ -50,10 +53,10 @@ class ReListView[A](
     val leadIndex = ReSwingValue using (peer.leadIndex _, (peer, classOf[ListSelectionChanged[_]]))
     val anchorIndex = ReSwingValue using (peer.anchorIndex _, (peer, classOf[ListSelectionChanged[_]]))
     val indices = ReSwingValue using (
-        { () => ReListView.this.peer.peer.getSelectedIndices.toSet },
+        { () => javaPeer.getSelectedIndices.toSet },
         (peer, classOf[ListSelectionChanged[_]]))
     val items = ReSwingValue using (
-        { () => ReListView.this.peer.peer.getSelectedValues.map(_.asInstanceOf[A]).toSeq },
+        { () => javaPeer.getSelectedValuesList.asScala.map(_.asInstanceOf[A]).toSeq },
         (peer, classOf[ListSelectionChanged[_]]))
     
     intervalMode using (peer.intervalMode _, peer.intervalMode_= _)
