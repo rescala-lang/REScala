@@ -22,14 +22,15 @@ import reswing.ReSlider
 class StrokeInputPanel extends FlowPanel {
   private val colorWindow = new ColorWindow
   
-  private val slider = ReSlider(
+  private val slider = new ReSlider(
       min = 1,
       max = 50,
       value = 1,
       minorTickSpacing = 1,
+      labels = scala.collection.Map.empty[Int, Label],
       paintTicks = true)
   
-  private val showColorWindow = ReButton("Show Colorinput") 
+  private val showColorWindow = new ReButton("Show Colorinput") 
   showColorWindow.clicked += {_ => colorWindow.visible = !colorWindow.visible}
   
   contents += new Label { text = "stroke width: " }
