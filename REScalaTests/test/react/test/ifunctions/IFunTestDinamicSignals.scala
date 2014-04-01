@@ -542,60 +542,6 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
     //println(c.getVal) //outputs 4
 
   }
-
-  @Test def higherOrderSignals = {
-    val tick = new ImperativeEvent[Unit]
-    val count = tick.iterate(0)(_ + 1)
-    val doubled = Signal { count() * 2 }
-    val mod2 = Signal { count() % 2 }
-
-    val listOfSignals = Signal { List(doubled, count) }
-    val selected = Signal { listOfSignals()(mod2()) }
-    val dereferenced = Signal { selected()() }
-
-    var dereferencedChanged = false
-    dereferenced.changed += { _ => dereferencedChanged = true }
-
-    tick()
-    assert(dereferencedChanged == true)
-    dereferencedChanged = false
-    assert(dereferenced.getValue == 1)
-    tick()
-    assert(dereferencedChanged == true)
-    dereferencedChanged = false
-    assert(dereferenced.getValue == 4)
-  }
-
-  @Test def switch_withHigherOrder = {
-    val tick = new ImperativeEvent[Unit]
-    val count = tick.iterate(0)(_ + 1)
-    val doubled = Signal { count() * 2 }
-    val mod2 = Signal { count() % 2 }
-
-    val listOfSignals = Signal { List(doubled, count) }
-
-    val s = IFunctions.switch(mod2.changed)(count)(new IFunctions.Factory[Int, Int] {
-      override def apply(eVal: Int): (Signal[Int], IFunctions.Factory[Int, Int]) = {
-        val selected = Signal { listOfSignals()(eVal) }
-        val dereferenced = Signal { selected()() }
-        (dereferenced, this)
-      }
-    })
-
-    var changeCount = 0
-    var lastChangevalue = 0
-    s.changed += {x => changeCount += 1; lastChangevalue = x}
-
-    tick()
-    assert(lastChangevalue == s.getValue)
-    assert(s.getValue == 1)
-    assert(changeCount == 1)
-
-    tick()
-    assert(lastChangevalue == s.getValue)
-    assert(s.getValue == 4)
-    //assert(changeCount == 2) // fails
-  }
 }
 
 
