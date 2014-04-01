@@ -23,10 +23,8 @@ import react.Signal
 import react.SignalSynt
 import react.events.Event
 import react.events.ImperativeEvent
-import reswing.ImperativeSignal
-import reswing.ImperativeSignal.fromSignal
-import reswing.ImperativeSignal.toSignal
 import reswing.ReComponent
+import reswing.ReSwingValue
 import texteditor.JScrollableComponent
 import texteditor.LineIterator
 import texteditor.LineOffset
@@ -45,10 +43,11 @@ class TextArea(text: String) extends ReComponent {
   
   def this() = this("")
   
-  override lazy val preferredSize: ImperativeSignal[Dimension] = Signal{
+  override val preferredSize: ReSwingValue[Dimension] = Signal{
     def it = LineIterator(content())
     new Dimension(2 * padding + it.map(stringWidth(_)).max, (it.size + 1) * lineHeight)
   }
+  preferredSize using (peer.preferredSize _, peer.preferredSize_= _, "preferredSize")
   
   // keeps track of the current text content and the number of modifications
   protected lazy val contentModification: Signal[(Int, String)] =
@@ -279,7 +278,7 @@ class TextArea(text: String) extends ReComponent {
         endX = padding + stringWidth(start + middle)
         
         g.setColor(SystemColor.textHighlight)
-        g.fillRect(middleX, lineIndex * lineHeight + lineHeight - this.font.getSize, endX - middleX, lineHeight)
+        g.fillRect(middleX, lineIndex * lineHeight + lineHeight - font.getValue.getSize, endX - middleX, lineHeight)
       }
       else
         start = line
@@ -298,7 +297,7 @@ class TextArea(text: String) extends ReComponent {
     if (caret.visible.getValue) {
       def point = pointFromPosition(caret.position.getValue)
       g.setColor(SystemColor.textText)
-      g.drawLine(point.x, point.y + lineHeight - this.font.getSize, point.x, point.y + lineHeight)
+      g.drawLine(point.x, point.y + lineHeight - font.getValue.getSize, point.x, point.y + lineHeight)
     }
   }
 }

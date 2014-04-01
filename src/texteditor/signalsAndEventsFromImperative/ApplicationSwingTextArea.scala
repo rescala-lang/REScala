@@ -19,19 +19,19 @@ object ApplicationSwingTextArea extends SimpleSwingApplication {
   // reactive components
   val textArea = new ReTextArea("Lorem ipsum dolor sit amet\nconsectetur adipisicing elit\nsed do eiusmod")
   
-  val positionLabel = ReLabel(Signal {
+  val positionLabel = new ReLabel(Signal {
     val pos = min(textArea.caret.position(), textArea.text().length())
     val line = textArea.peer.getLineOfOffset(pos);
     val col = pos - textArea.peer.getLineStartOffset(line);
     "Ln " + (line + 1) + " : " + textArea.lineCount() + "    Col " + (col + 1)
   })
   
-  val selectionLabel = ReLabel(
+  val selectionLabel = new ReLabel(
     Signal { "Sel " + (if (textArea.selected() != null) textArea.selected().length() else 0) })
   
-  val countLabel = ReLabel(Signal { "Ch " + textArea.text().length() })
+  val countLabel = new ReLabel(Signal { "Ch " + textArea.text().length() })
   
-  val button = ReButton("Select All")
+  val button = new ReButton("Select All")
   button.clicked += { _ => textArea.selectAll; textArea.requestFocus }
   
   // layout

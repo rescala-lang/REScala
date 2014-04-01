@@ -17,8 +17,8 @@ import scala.swing.event.Key
 import macro.SignalMacro.{SignalM => Signal}
 import react.SignalSynt
 import react.Var
-import reswing.ImperativeSignal
 import reswing.ReComponent
+import reswing.ReSwingValue
 import texteditor.JScrollableComponent
 import texteditor.LineIterator
 import texteditor.LineOffset
@@ -42,10 +42,11 @@ class TextArea extends ReComponent {
     buffer.insert(text)
   }
   
-  override lazy val preferredSize: ImperativeSignal[Dimension] = Signal{
+  override val preferredSize: ReSwingValue[Dimension] = Signal{
     def it = LineIterator(buffer.iterable())
     new Dimension(2 * padding + it.map(stringWidth(_)).max, (it.size + 1) * lineHeight)
   }
+  preferredSize using (peer.preferredSize _, peer.preferredSize_= _, "preferredSize")
   
   val charCount = Signal{ buffer.length() }
   
@@ -271,7 +272,7 @@ class TextArea extends ReComponent {
         endX = padding + stringWidth(start + middle)
         
         g.setColor(SystemColor.textHighlight)
-        g.fillRect(middleX, lineIndex * lineHeight + lineHeight - this.font.getSize, endX - middleX, lineHeight)
+        g.fillRect(middleX, lineIndex * lineHeight + lineHeight - font.getValue.getSize, endX - middleX, lineHeight)
       }
       else
         start = line
@@ -290,7 +291,7 @@ class TextArea extends ReComponent {
     if (caret.visible.getValue) {
       def point = pointFromPosition(caret.position.getValue)
       g.setColor(SystemColor.textText)
-      g.drawLine(point.x, point.y + lineHeight - this.font.getSize, point.x, point.y + lineHeight)
+      g.drawLine(point.x, point.y + lineHeight - font.getValue.getSize, point.x, point.y + lineHeight)
     }
   }
 }

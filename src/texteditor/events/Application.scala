@@ -16,12 +16,12 @@ object Application extends SimpleSwingApplication {
   // event-based components (set initial value manually)
   val textArea = new TextArea("Lorem ipsum dolor sit amet\nconsectetur adipisicing elit\nsed do eiusmod")
   
-  val positionLabel = ReLabel({
+  val positionLabel = new ReLabel({
     val pos = textArea.caret.position
     "Ln " + (pos.row + 1) + " : " + textArea.lineCount + "    Col " + (pos.col + 1)})
-  val selectionLabel = ReLabel("Sel " + textArea.selected.size)
-  val charCountLabel = ReLabel("Ch " + textArea.charCount)
-  val wordCountLabel = ReLabel("Words " + textArea.wordCount)
+  val selectionLabel = new ReLabel("Sel " + textArea.selected.size)
+  val charCountLabel = new ReLabel("Ch " + textArea.charCount)
+  val wordCountLabel = new ReLabel("Words " + textArea.wordCount)
   
   textArea.caret.changed += { _ =>
     val pos = textArea.caret.position
@@ -31,13 +31,13 @@ object Application extends SimpleSwingApplication {
   textArea.charCountChanged += { count => (charCountLabel: Label).text = "Ch " + count }
   textArea.wordCountChanged += { count => (wordCountLabel: Label).text = "Words " + count }
   
-  val selectAllButton = ReButton("Select All")
+  val selectAllButton = new ReButton("Select All")
   selectAllButton.clicked += { _ => textArea.selectAll; textArea.requestFocus }
   
-  val copyButton = ReButton("Copy")
+  val copyButton = new ReButton("Copy")
   copyButton.clicked += { _ => textArea.copy; textArea.requestFocus }
   
-  val pasteButton = ReButton("Paste")
+  val pasteButton = new ReButton("Paste")
   pasteButton.clicked += { _ => textArea.paste; textArea.requestFocus }
   
   // layout

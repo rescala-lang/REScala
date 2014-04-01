@@ -17,25 +17,25 @@ object Application extends SimpleSwingApplication {
   // reactive components
   val textArea = new TextArea("Lorem ipsum dolor sit amet\nconsectetur adipisicing elit\nsed do eiusmod")
   
-  val positionLabel = ReLabel(Signal {
+  val positionLabel = new ReLabel(Signal {
     val pos = textArea.caret.position()
     "Ln " + (pos.row + 1) + " : " + textArea.lineCount() + "    Col " + (pos.col + 1)
   })
   
-  val selectionLabel = ReLabel(
+  val selectionLabel = new ReLabel(
     Signal { "Sel " + textArea.selected().size })
   
-  val charCountLabel = ReLabel(Signal { "Ch " + textArea.charCount() })
+  val charCountLabel = new ReLabel(Signal { "Ch " + textArea.charCount() })
   
-  val wordCountLabel = ReLabel(Signal { "Ch " + textArea.wordCount() })
+  val wordCountLabel = new ReLabel(Signal { "Ch " + textArea.wordCount() })
   
-  val selectAllButton = ReButton("Select All")
+  val selectAllButton = new ReButton("Select All")
   selectAllButton.clicked += { _ => textArea.selectAll; textArea.requestFocus }
   
-  val copyButton = ReButton("Copy")
+  val copyButton = new ReButton("Copy")
   copyButton.clicked += { _ => textArea.copy; textArea.requestFocus }
   
-  val pasteButton = ReButton("Paste")
+  val pasteButton = new ReButton("Paste")
   pasteButton.clicked += { _ => textArea.paste; textArea.requestFocus }
   
   // layout

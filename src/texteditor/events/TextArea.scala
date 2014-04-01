@@ -281,7 +281,7 @@ class TextArea extends ReComponent {
         endX = padding + stringWidth(start + middle)
         
         g.setColor(SystemColor.textHighlight)
-        g.fillRect(middleX, lineIndex * lineHeight + lineHeight - this.font.getSize, endX - middleX, lineHeight)
+        g.fillRect(middleX, lineIndex * lineHeight + lineHeight - font.getValue.getSize, endX - middleX, lineHeight)
       }
       else
         start = line
@@ -300,7 +300,7 @@ class TextArea extends ReComponent {
     if (caret.visible) {
       def point = pointFromPosition(caret.position)
       g.setColor(SystemColor.textText)
-      g.drawLine(point.x, point.y + lineHeight - this.font.getSize, point.x, point.y + lineHeight)
+      g.drawLine(point.x, point.y + lineHeight - font.getValue.getSize, point.x, point.y + lineHeight)
     }
   }
 }
