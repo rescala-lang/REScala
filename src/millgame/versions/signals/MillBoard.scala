@@ -47,6 +47,11 @@ class MillBoard {
 	def update(i: Int, color: Slot) = {
 	  stonesVar.setVal(stonesVar.getVal.updated(i, color))
 	}
+	def update(indexColor: Map[Int, Slot]) = {
+	  stonesVar.setVal(stonesVar.getVal.zipWithIndex.map({
+	    case (color, i) => indexColor.getOrElse(i, color)
+	  }))
+	}
 	
 	/* several test methods*/
 	def canPlace(i: Int) = this(i) == Empty
@@ -63,13 +68,17 @@ class MillBoard {
 	def remove(i: Int) =  this(i) = Empty
 	
 	def move(i: Int, j: Int) = {
-	  this(j) = this(i)
-	  this(i) = Empty
-	  /// NOTE: this is an interesting detail: In the signal version, we have to make sure to
-	  /// place the new stone FIRST, then delete the old one. Otherwise we might have < 3 stones,
+	  /// NOTE: this is an interesting detail in the signal version
+	  /// If we delete the new stone FIRST, we might have < 3 stones,
 	  /// which gets propagated and triggers the end of the game!
+	  /// But otherwise we have an additional stone on the board that
+	  /// may created a mill where none should exist.
 	  /// "move" actually is an atomic operation on the board, and we probably want events
 	  /// to trigger fine-grained changes like this
+	  /// This is why we need an additional update member, that can perform
+	  /// multiple updates atomically.
+	  
+	  this() = Map(i -> Empty, j -> stones(i))
 	}
 	
 	/// NOTE: Workaround because change fires even when there is no value change
