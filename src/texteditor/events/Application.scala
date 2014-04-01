@@ -23,22 +23,22 @@ object Application extends SimpleSwingApplication {
   val charCountLabel = ReLabel("Ch " + textArea.charCount)
   val wordCountLabel = ReLabel("Words " + textArea.wordCount)
   
-  textArea.caret.changed += { _ =>
+  textArea.caret.changed += { _ => //#HDL
     val pos = textArea.caret.position
     (positionLabel: Label).text = "Ln " + (pos.row + 1) + " : " + textArea.lineCount + "    Col " + (pos.col + 1)
   }
-  textArea.selectionChanged += { it => (selectionLabel: Label).text = "Sel " + it.size }
-  textArea.charCountChanged += { count => (charCountLabel: Label).text = "Ch " + count }
-  textArea.wordCountChanged += { count => (wordCountLabel: Label).text = "Words " + count }
+  textArea.selectionChanged += { it => (selectionLabel: Label).text = "Sel " + it.size } //#HDL
+  textArea.charCountChanged += { count => (charCountLabel: Label).text = "Ch " + count } //#HDL
+  textArea.wordCountChanged += { count => (wordCountLabel: Label).text = "Words " + count } //#HDL
   
-  val selectAllButton = ReButton("Select All")
-  selectAllButton.clicked += { _ => textArea.selectAll; textArea.requestFocus }
+  val selectAllButton = ReButton("Select All") //#EVT
+  selectAllButton.clicked += { _ => textArea.selectAll; textArea.requestFocus } //#HDL
   
-  val copyButton = ReButton("Copy")
-  copyButton.clicked += { _ => textArea.copy; textArea.requestFocus }
+  val copyButton = ReButton("Copy") //#EVT
+  copyButton.clicked += { _ => textArea.copy; textArea.requestFocus } //#HDL
   
-  val pasteButton = ReButton("Paste")
-  pasteButton.clicked += { _ => textArea.paste; textArea.requestFocus }
+  val pasteButton = ReButton("Paste") //#EVT
+  pasteButton.clicked += { _ => textArea.paste; textArea.requestFocus } //#HDL
   
   // layout
   def top = new MainFrame {
