@@ -1,4 +1,4 @@
 REScala
 =======
 
-REScala - remplementation keeping only the EScala interface
+REScala - reimplementation keeping only the EScala interface
