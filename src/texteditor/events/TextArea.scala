@@ -256,6 +256,7 @@ class TextArea extends ReComponent {
   
   override def paintComponent(g: Graphics2D) {
     super.paintComponent(g)
+    g.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON)
     g.setColor(SystemColor.text)
     g.fillRect(0, 0, peer.size.width, peer.size.height + lineHeight)
     

@@ -3,7 +3,6 @@ package texteditor.signalsAndEventsFromImperative
 import macro.SignalMacro.{SignalM => Signal}
 import react.Signal
 import react.SignalSynt
-import react.StaticVar
 import react.Var
 import react.events.ImperativeEvent
 

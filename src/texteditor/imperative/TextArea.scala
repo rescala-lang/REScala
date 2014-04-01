@@ -275,6 +275,7 @@ class TextArea extends Component with Publisher {
   
   override def paintComponent(g: Graphics2D) {
     super.paintComponent(g)
+    g.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON)
     g.setColor(SystemColor.text)
     g.fillRect(0, 0, size.width, size.height + lineHeight)
     
