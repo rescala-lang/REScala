@@ -22,20 +22,19 @@ object Application extends SimpleSwingApplication {
     "Ln " + (pos.row + 1) + " : " + textArea.lineCount() + "    Col " + (pos.col + 1)
   })
   
-  val selectionLabel = new ReLabel(
-    Signal { "Sel " + textArea.selected().size }) //#SIG
+  val selectionLabel = new ReLabel(Signal { "Sel " + textArea.selected().size }) //#SIG //#IS( // )
   
-  val charCountLabel = new ReLabel(Signal { "Ch " + textArea.charCount() })  //#SIG
+  val charCountLabel = new ReLabel(Signal { "Ch " + textArea.charCount() })  //#SIG //#IS( // )
   
-  val wordCountLabel = new ReLabel(Signal { "Ch " + textArea.wordCount() })  //#SIG
-  
-  val selectAllButton = new ReButton("Select All")
+  val wordCountLabel = new ReLabel(Signal { "Ch " + textArea.wordCount() })  //#SIG //#IS( // )
+  // TODO: refactoring to signals ?
+  val selectAllButton = new ReButton("Select All")  //#EVT
   selectAllButton.clicked += { _ => textArea.selectAll; textArea.requestFocus } //#HDL
   
-  val copyButton = new ReButton("Copy")
+  val copyButton = new ReButton("Copy")  //#EVT
   copyButton.clicked += { _ => textArea.copy; textArea.requestFocus } //#HDL
   
-  val pasteButton = new ReButton("Paste")
+  val pasteButton = new ReButton("Paste")  //#EVT
   pasteButton.clicked += { _ => textArea.paste; textArea.requestFocus } //#HDL
   
   // layout
