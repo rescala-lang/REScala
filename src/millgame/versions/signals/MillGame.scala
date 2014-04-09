@@ -77,6 +77,8 @@ class MillGame {
   val gameEnd = stateChanged && ((_: Gamestate) match {case GameOver(_) => true; case _ => false}) //#EVT
   val gameWon: Event[Slot] = gameEnd.map {(_: Gamestate) match {case GameOver(w) => w; case _ => null}} //#EVT
 
+  def possibleMoves = board.possibleMoves.getVal
+  
   private def nextState(player: Slot): Gamestate =
     if (remainCount()(player) > 0) PlaceStone(player)
     else if (board.numStones.getVal(player) == 3) JumpStoneSelect(player)

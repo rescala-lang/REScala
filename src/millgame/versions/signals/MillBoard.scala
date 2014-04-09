@@ -42,6 +42,13 @@ class MillBoard {
 	}
 	*/
 	
+	val possibleMoves: Signal[Seq[(Int, Int)]] = Signal {
+	  val range = 0 until stonesVar().size
+	  range flatMap { from =>
+	    range collect { case to if canMove(from, to) => (from, to) }
+	  }
+	}
+	
 	/* access slot state by index */
 	def apply(i: Int) = stonesVar.getVal(i)	
 	def update(i: Int, color: Slot) = {

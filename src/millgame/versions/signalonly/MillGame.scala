@@ -63,7 +63,7 @@ class MillGame {
   val gameEnd = stateChanged && ((_: Gamestate) match {case GameOver(_) => true; case _ => false}) //#EVT
   val gameWon: Event[Slot] = gameEnd.map {(_: Gamestate) match {case GameOver(w) => w; case _ => null}} //#EVT
   def stateText = state().text
-  
+  def possibleMoves = board.possibleMoves.getVal
   
   /* Event based game logic: */
   board.addMillClosedListener({ color =>

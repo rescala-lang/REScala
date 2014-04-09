@@ -13,7 +13,9 @@ import java.awt.Dimension
 import swing._
 import javax.swing.UIManager
 import scala.swing.event.MouseClicked
+import scala.swing.event.MouseMoved
 import scala.swing.event.MouseReleased
+import java.awt.BasicStroke
 
 
 object MainWindow extends SimpleSwingApplication {
@@ -21,7 +23,7 @@ object MainWindow extends SimpleSwingApplication {
   /* Uncomment to enable logging: */
   //react.ReactiveEngine.log.enableAllLogging
 
-  var game = new MillGame
+  val game = new MillGame
   
   game.stateChanged += { state => //#HDL
     ui.statusBar.text = state.text
@@ -84,8 +86,9 @@ class MillDrawer extends Component {
   val MiddlePercent = 2f / 3
   val InnerPercent = 1f / 3
   
+  var highlightedIndex = -1
   var squareSize = 0
-  var coordinates = Array.fill(24)((0,0))
+  val coordinates = Array.fill(24)((0,0))
   
   def computeCoordinates {
     val smaller = math.min(size.width, size.height)
@@ -130,6 +133,13 @@ class MillDrawer extends Component {
         g.drawLine(startX, startY, endX, endY)
       }
       
+      // draw possible moves
+      g.setStroke(new BasicStroke(4))
+      for ((from, to) <- MainWindow.game.possibleMoves filter (_._1 == highlightedIndex))
+        g.drawLine(
+            coordinates(from)._1, coordinates(from)._2,
+            coordinates(to)._1, coordinates(to)._2)
+      
       // draw dots
       coordinates.foreach {case (x,y) => g.fillOval(x - DotSize/2, y - DotSize/2, DotSize, DotSize)}
       
@@ -143,8 +153,14 @@ class MillDrawer extends Component {
       }
   }
   
-  listenTo(mouse.clicks)
+  listenTo(mouse.clicks, mouse.moves)
     reactions += {
+      case e: MouseMoved =>
+        val index = coordinates.indexWhere(point => Pos(e.point.x, e.point.y).distance(point) < ClickArea)
+        if (index != highlightedIndex) {
+          highlightedIndex = index
+          repaint
+        }
       case e: MouseReleased =>
         val clickedIndex = coordinates.indexWhere(point => Pos(e.point.x, e.point.y).distance(point) < ClickArea)
         

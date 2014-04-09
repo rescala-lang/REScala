@@ -36,6 +36,13 @@ class MillBoard {
 	  lines().map(line => if(line.forall(_ == line.head)) line.head else Empty).toVector
 	}
 	
+	val possibleMoves: Signal[Seq[(Int, Int)]] = Signal {
+	  val range = 0 until stonesVar().size
+	  range flatMap { from =>
+	    range collect { case to if canMove(from, to) => (from, to) }
+	  }
+	}
+	
 	/* observers */
 	var millClosedListerer: List[(Slot => Unit)] = Nil
 	var numStonesChangedListener: List[(((Slot, Int)) => Unit)] = Nil

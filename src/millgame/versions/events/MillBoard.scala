@@ -34,6 +34,13 @@ class MillBoard {
 	
 	val numStonesChanged = new ImperativeEvent[(Slot, Int)] //#EVT
 	
+	def possibleMoves: Seq[(Int, Int)] = {
+	  val range = 0 until stones.size
+	  range flatMap { from =>
+	    range collect { case to if canMove(from, to) => (from, to) }
+	  }
+	}
+	
 	/* several test methods*/
 	def canPlace(i: Int) = stones(i) == Empty
 	def canRemove(i: Int) = stones(i) != Empty

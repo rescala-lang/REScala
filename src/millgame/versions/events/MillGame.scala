@@ -55,6 +55,7 @@ class MillGame {
   val remainCountChanged = new ImperativeEvent[Map[Slot, Int]] //#EVT
   val gameWon = new ImperativeEvent[Slot] //#EVT
   val stateChanged = new ImperativeEvent[Gamestate] //#EVT
+  def possibleMoves = board.possibleMoves
   
   private def changeState(to: Gamestate) {
     state = to
