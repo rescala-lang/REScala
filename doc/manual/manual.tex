@@ -748,7 +748,7 @@ value of the resulting event.
 \begin{codenv}
 val e = new ImperativeEvent[Int]()
 val e_MAP: Event[String] = e map ((x: Int) => x.toString) 
-e_MAP += ((x: String) => println("Here: $x")) (*@\label{$}@*)
+e_MAP += ((x: String) => println(s"Here: $x")) (*@\label{$}@*)
 e(5)
 e(15)
 -- output ----
