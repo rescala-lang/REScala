@@ -141,10 +141,10 @@ object SignalMacro {
     val block = Typed(Block(signalValues.toList, body), TypeTree(weakTypeOf[Signal[A]]))
     
     
-//    out.append((c resetAllAttrs block) + "\n\n")
+//    out.append((c resetLocalAttrs block) + "\n\n")
 //    out.close
     
     
-    c.Expr[Signal[A]](c resetAllAttrs block)
+    c.Expr[Signal[A]](c resetLocalAttrs block)
   }
 }
