@@ -39,9 +39,9 @@ class MillBoard {
 	def canRemove(i: Int) = stones(i) != Empty
 	def canJump(i: Int, j: Int) = canRemove(i) && canPlace(j)
 	def canMove(i: Int, j: Int) = canJump(i, j) && (
-		math.abs(i - j) == 1 || 
-		(math.abs(i - j) == 8 && i % 2 != 0 && j % 2 != 0) ||
-		math.abs(i - j) == 7 && math.min(i, j) % 8 == 0
+		(math.abs(i - j) == 1 && math.max(i, j) % 8 != 0) || 
+		(math.abs(i - j) == 8 && i % 2 != 0) ||
+		(math.abs(i - j) == 7 && math.min(i, j) % 8 == 0)
 		)
 
 	def place(i: Int, color: Slot) {
