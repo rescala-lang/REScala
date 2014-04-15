@@ -42,10 +42,17 @@ class MillBoard {
 	}
 	*/
 	
-	val possibleMoves: Signal[Seq[(Int, Int)]] = Signal {
+	val possibleMoves: Signal[Seq[(Int, Int)]] = Signal { //#SIG
 	  val range = 0 until stonesVar().size
 	  range flatMap { from =>
 	    range collect { case to if canMove(from, to) => (from, to) }
+	  }
+	}
+	
+	val possibleJumps: Signal[Seq[(Int, Int)]] = Signal { //#SIG
+	  val range = 0 until stonesVar().size
+	  range flatMap { from =>
+	    range collect { case to if canJump(from, to) => (from, to) }
 	  }
 	}
 	

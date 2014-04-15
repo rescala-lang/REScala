@@ -50,12 +50,19 @@ class MillGame {
   var state: Gamestate = PlaceStone(White)
   var remainCount: Map[Slot, Int] = Map(Black -> 9, White -> 9)
   
-  def stateText = state.text 
+  def possibleMoves: Seq[(Int, Int)] = {
+    state match {
+      case PlaceStone(_) | RemoveStone(_) | GameOver(_) => Seq.empty
+      case state @ (MoveStoneSelect(_) |MoveStoneDrop(_, _)) =>
+        board.possibleMoves filter { case (from, to) => board.stones(from) == state.getPlayer }
+      case state @ (JumpStoneSelect(_) | JumpStoneDrop(_, _)) =>
+        board.possibleJumps filter { case (from, to) => board.stones(from) == state.getPlayer }
+    }
+  }
 
   val remainCountChanged = new ImperativeEvent[Map[Slot, Int]] //#EVT
   val gameWon = new ImperativeEvent[Slot] //#EVT
   val stateChanged = new ImperativeEvent[Gamestate] //#EVT
-  def possibleMoves = board.possibleMoves
   
   private def changeState(to: Gamestate) {
     state = to
@@ -98,10 +105,8 @@ class MillGame {
 
     case remove @ RemoveStone(player) =>
       if (board(i) == remove.color) {
+        board.remove(i)
         changeState(nextState(player.other))
-        /// NOTE: Removing the stone can trigger events which change the state
-        /// therefore, remove has to be called after the change state
-        board.remove(i) 
         true
       } else false
 

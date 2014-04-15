@@ -2,9 +2,9 @@ package millgame.ui
 
 
 /// Chose version here:
-//import millgame.versions.events.MillGame
-import millgame.versions.signals.MillGame
-//import millgame.versions.signalonly.MillGame
+//import millgame.versions.events._
+import millgame.versions.signals._
+//import millgame.versions.signalonly._
 
 import millgame.types._
 import millgame.types.Pos
@@ -54,7 +54,7 @@ object MainWindow extends SimpleSwingApplication {
   
   lazy val ui = new BoxPanel(Orientation.Vertical) {
 
-    val statusBar = new Label(game.stateText) {
+    val statusBar = new Label(game.state.text) {
       preferredSize = new Dimension(Integer.MAX_VALUE, 64)
       font = new Font("Tahoma", java.awt.Font.PLAIN, 32)
     }
@@ -122,8 +122,35 @@ class MillDrawer extends Component {
       g.setColor(new java.awt.Color(239, 228, 176))
       g.fill3DRect(coordinates(16)._1 - StoneSize, coordinates(16)._2 - StoneSize, squareSize + StoneSize*2, squareSize + StoneSize*2 ,true)
             
+      // draw possible moves
+      g.setColor(new java.awt.Color(150, 142, 110))
+      g.setStroke(new BasicStroke(5))
+      
+      val selectedIndex = MainWindow.game.state match {
+        case MoveStoneDrop(_, index) => index
+        case JumpStoneDrop(_, index) => index
+        case _ => -1
+      }
+      
+      val possibleMoves =
+        if (selectedIndex == -1)
+          MainWindow.game.possibleMoves filter {
+            case (from, to) => from == highlightedIndex || to == highlightedIndex
+          }
+        else
+          MainWindow.game.possibleMoves filter (_ == (selectedIndex, highlightedIndex)) match {
+            case Nil => MainWindow.game.possibleMoves filter (_._1 == selectedIndex)
+            case l => l
+          }
+      
+      for ((from, to) <- possibleMoves)
+        g.drawLine(
+            coordinates(from)._1, coordinates(from)._2,
+            coordinates(to)._1, coordinates(to)._2)
+      
       // draw lines
       g.setColor(java.awt.Color.BLACK)
+      g.setStroke(new BasicStroke())
       g.drawRect(coordinates(16)._1, coordinates(16)._2, squareSize, squareSize)
       g.drawRect(coordinates(8)._1, coordinates(8)._2, (squareSize * MiddlePercent).toInt, (squareSize * MiddlePercent).toInt)
       g.drawRect(coordinates(0)._1, coordinates(0)._2, (squareSize * InnerPercent).toInt, (squareSize * InnerPercent).toInt)
@@ -132,13 +159,6 @@ class MillDrawer extends Component {
         val (endX, endY) = coordinates(i + 16)
         g.drawLine(startX, startY, endX, endY)
       }
-      
-      // draw possible moves
-      g.setStroke(new BasicStroke(4))
-      for ((from, to) <- MainWindow.game.possibleMoves filter (_._1 == highlightedIndex))
-        g.drawLine(
-            coordinates(from)._1, coordinates(from)._2,
-            coordinates(to)._1, coordinates(to)._2)
       
       // draw dots
       coordinates.foreach {case (x,y) => g.fillOval(x - DotSize/2, y - DotSize/2, DotSize, DotSize)}

@@ -54,30 +54,40 @@ class MillGame {
 
   val board = new MillBoard
 
-  val state: Var[Gamestate] = Var(PlaceStone(White))  //#VAR
+  val stateVar: Var[Gamestate] = Var(PlaceStone(White))  //#VAR
   val remainCount: Var[Map[Slot, Int]] = Var(Map(Black -> 9, White -> 9)) //#VAR
   
-  val remainCountChanged = Signal{remainCount()}.changed //#EVT //#IF
-  val stateChanged = Signal{ state()}.changed //#EVT //#IF
-  def stateText = state().text
+  def state = stateVar.getVal
   
+  val remainCountChanged = Signal{remainCount()}.changed //#EVT //#IF
+  val stateChanged = Signal{ stateVar() }.changed //#EVT //#IF
+  
+  val possibleNextMoves: Signal[Seq[(Int, Int)]] = Signal { //#SIG
+    stateVar() match {
+      case PlaceStone(_) | RemoveStone(_) | GameOver(_) => Seq.empty
+      case state @ (MoveStoneSelect(_) |MoveStoneDrop(_, _)) =>
+        board.possibleMoves() filter { case (from, to) => board.stones(from) == state.getPlayer }
+      case state @ (JumpStoneSelect(_) | JumpStoneDrop(_, _)) =>
+        board.possibleJumps() filter { case (from, to) => board.stones(from) == state.getPlayer }
+    }
+  }
+  
+  def possibleMoves = possibleNextMoves.getVal
   
   /* Event based game logic: */
   board.millClosed += { color => //#HDL
-    state() = RemoveStone(color)
+    stateVar() = RemoveStone(color)
   }
 
   board.numStonesChanged += { //#HDL
     case (color, n) =>
       if (remainCount.getValue(color) == 0 && n < 3) {
-        state() = GameOver(color.other)  
+        stateVar() = GameOver(color.other)  
       }
   }
   
   val gameEnd = stateChanged && ((_: Gamestate) match {case GameOver(_) => true; case _ => false}) //#EVT
   val gameWon: Event[Slot] = gameEnd.map {(_: Gamestate) match {case GameOver(w) => w; case _ => null}} //#EVT
-
-  def possibleMoves = board.possibleMoves.getVal
   
   private def nextState(player: Slot): Gamestate =
     if (remainCount()(player) > 0) PlaceStone(player)
@@ -89,11 +99,11 @@ class MillGame {
     remainCount() = currentCount.updated(player, currentCount(player) - 1)
   }
 
-  def playerInput(i: Int): Boolean = state.getValue match {
+  def playerInput(i: Int): Boolean = state match {
 
     case PlaceStone(player) =>
       if (board.canPlace(i)) {
-        state() = (nextState(player.other))
+        stateVar() = (nextState(player.other))
         decrementCount(player)
         board.place(i, player)
         true
@@ -101,42 +111,40 @@ class MillGame {
 
     case remove @ RemoveStone(player) =>
       if (board(i) == remove.color) {
-        state() = (nextState(player.other))
-        /// NOTE: Removing the stone can trigger events which change the state
-        /// therefore, remove has to be called after the change state
         board.remove(i)
+        stateVar() = (nextState(player.other))
         true
       } else false
 
     case MoveStoneSelect(player) =>
       if (board(i) == player) {
-        state() = (MoveStoneDrop(player, i))
+        stateVar() = (MoveStoneDrop(player, i))
         true
       } else false
 
     case MoveStoneDrop(player, stone) =>
       if (board.canMove(stone, i)) {
-        state() = (nextState(player.other))
+        stateVar() = (nextState(player.other))
         board.move(stone, i)
         true
       } else {
-        state() = (MoveStoneSelect(player))
+        stateVar() = (MoveStoneSelect(player))
         false
       }
 
     case JumpStoneSelect(player) =>
       if (board(i) == player) {
-        state() = (JumpStoneDrop(player, i))
+        stateVar() = (JumpStoneDrop(player, i))
         true
       } else false
 
     case JumpStoneDrop(player, stone) =>
       if (board.canJump(stone, i)) {
-        state() = (nextState(player.other))
+        stateVar() = (nextState(player.other))
         board.move(stone, i)
         true
       } else {
-        state() = (MoveStoneSelect(player))
+        stateVar() = (MoveStoneSelect(player))
         false
       }
 
