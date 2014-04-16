@@ -640,16 +640,16 @@ n: 10
 
 
 
-\subsubsection{Unegistering Handlers}
+\subsubsection{Unregistering Handlers}
 
 Handlers can be unregistered from events with the \code{-=}
-operator. When a handler is unregistered, is not executed when the
+operator. When a handler is unregistered, it is not executed when the
 event is fired.
 
 \begin{codenv}
 val e = new ImperativeEvent[Int]()
-val handler1 = { x: Int => println(x) 
-val handler2 = { x: Int => println(f"n: $x") } (*@\label{$}@*)
+val handler1 = { x: Int => println(x) }
+val handler2 = { x: Int => println(s"n: $x") } (*@\label{$}@*)
 
 e += handler1
 e += handler2
