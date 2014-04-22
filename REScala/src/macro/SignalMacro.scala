@@ -34,27 +34,57 @@ object SignalMacro {
       case defTree: DefTree => defTree.symbol -> defTree
     }).toMap
     
+    // collect expression annotated to be unchecked and do not issue warnings
+    // for those (use the standard Scala unchecked annotation for that purpose)
+    val uncheckedExpressions = (expression.tree collect {
+      case tree @ Typed(_, _)
+          if (tree.tpe match {
+            case AnnotatedType(annotations, _, _) =>
+              annotations exists { _.tpe <:< typeOf[unchecked] }
+            case _ => false
+          }) =>
+        def uncheckedSubExpressions(tree: Tree): List[Tree] = tree match {
+          case Select(expr, _) => expr :: uncheckedSubExpressions(expr)
+          case Apply(expr, _) => expr :: uncheckedSubExpressions(expr)
+          case Typed(expr, _) => expr :: uncheckedSubExpressions(expr)
+          case Block(_, expr) => expr :: Nil
+          case _ => Nil
+        }
+        uncheckedSubExpressions(tree)
+    }).flatten.toSet
+    
     // generate warning for some common cases where called functions are 
     // either unnecessary (if free of side effects) or have side effects
+    def isMethodWithPotentialNonLocalSideEffects(tree: Tree) = tree match {
+      case fun @ (Apply(_, _) | Select(_, _))
+          if !(uncheckedExpressions contains fun) =>
+        fun exists {
+          case Apply(fun, _) =>
+            !(fun exists {
+              case Select(_, nme.CONSTRUCTOR) => true
+              case tree: SymTree => definedSymbols contains tree.symbol
+              case _ => false
+            })
+          case _ => false
+        }
+      case _ => false
+    }
+    
+    def potentialSideEffectWarning(pos: Position) =
+      c.warning(pos,
+          "Statement is either unnecessary or has side effects. " +
+          "Signal expressions should have no side effects.")
+    
     expression.tree foreach {
       case Block(stats, _) =>
-        stats foreach {
-          case stat @ Apply(_, _) 
-            if (stat exists {
-              case stat @ Apply(fun, _) =>
-                !(fun exists {
-                  case t @ Select(_, nme.CONSTRUCTOR) => true
-                  case tree: SymTree => definedSymbols contains tree.symbol
-                  case _ => false
-                })
-              case _ => false
-            }) =>
-            c.warning(stat.pos,
-                "Statement is either unnecessary or has side effects. " +
-                "Signal expressions should have no side effects.")
-          case _ =>
+        stats foreach { stat =>
+          if (isMethodWithPotentialNonLocalSideEffects(stat))
+            potentialSideEffectWarning(stat.pos)
         }
-      case _ =>
+      case tree =>
+        if (isMethodWithPotentialNonLocalSideEffects(tree) &&
+            tree.tpe =:= typeOf[Unit])
+          potentialSideEffectWarning(tree.pos)
     }
     
     // the argument that is used by the SignalSynt class to assemble dynamic
@@ -125,35 +155,44 @@ object SignalMacro {
               !reactive.symbol.asTerm.isVal &&
               !reactive.symbol.asTerm.isVar &&
               !reactive.symbol.asTerm.isAccessor &&
-              !(reactive exists {
+              (reactive filter {
                 case Apply(Select(chainedReactive, apply), List())
                     if isReactive(chainedReactive) && apply.decoded == "apply" =>
-                  def reactiveMethodObjectType(tree: Tree = reactive): Type =
-                    if (tree.symbol != reactive.symbol)
-                      tree.tpe
-                    else if (tree.children.nonEmpty)
-                      reactiveMethodObjectType(tree.children.head)
-                    else
-                      NoType
-                  
-                  // issue no warning if the reactive is retrieved from a container
-                  // determined by the generic type parameter
-                  reactiveMethodObjectType() match {
-                    case TypeRef(_, _, args) if !(args contains reactive.tpe) =>
-                      potentialReactiveConstructionWarning(reactive.pos)
-                    case _ =>
+                  if (!(uncheckedExpressions contains reactive)) {
+                    def methodObjectType(method: Tree) = {
+                      def methodObjectType(tree: Tree): Type =
+                        if (tree.symbol != method.symbol)
+                          tree.tpe
+                        else if (tree.children.nonEmpty)
+                          methodObjectType(tree.children.head)
+                        else
+                          NoType
+                      
+                      methodObjectType(method)
+                    }
+                    
+                    // issue no warning if the reactive is retrieved from a container
+                    // determined by the generic type parameter
+                    methodObjectType(reactive) match {
+                      case TypeRef(_, _, args) =>
+                        if (!(args contains reactive.tpe))
+                          potentialReactiveConstructionWarning(reactive.pos)
+                      case _ =>
+                        potentialReactiveConstructionWarning(reactive.pos)
+                    }
                   }
                   
                   true
                 case tree: SymTree =>
                   definedSymbols get tree.symbol match {
                     case Some(defTree) if !(reactive exists { _ == defTree }) =>
-                      potentialReactiveConstructionWarning(reactive.pos)
+                      if (!(uncheckedExpressions contains reactive))
+                        potentialReactiveConstructionWarning(reactive.pos)
                       true
                     case _ => false
                   }
                 case _ => false
-              }) =>
+              }).isEmpty =>
             
             // create the signal definition to be cut out of the
             // macro expression and its substitution variable
