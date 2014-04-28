@@ -154,6 +154,8 @@ class WrappedEvent[T](wrapper: Signal[Event[T]]) extends EventNode[T] with Depen
     // tie to new event stream
     newEvent.addDependent(this)
     addDependOn(newEvent)
+    // remember current event
+    currentEvent = newEvent
   }
   
   def triggerReevaluation {
