@@ -25,12 +25,6 @@ object IFunctions {
    */
   def set[F, G](e: Event[F], init: F)(f: F => G): Signal[G] = fold(e, f(init))((_, v) => f(v))
 
-  /*
-  def reset[T, A](e: Event[T], init: T)(factory: (T) => Signal[A]): Signal[A] = {
-    val ref: Signal[Signal[A]] = set(e, init)(factory)
-    Signal{ ref()() }
-  }
-  */
   /** calls factory on each occurrence of event e, resetting the Signal to a newly generated one */
   def reset[T, A](e: Event[T], init: T)(factory: (T) => Signal[A]): Signal[A] = {
     val ref: Signal[Signal[A]] = set(e, init)(factory)
@@ -118,7 +112,10 @@ object IFunctions {
   /** Generates a signal from an initial signal and a factory for subsequent ones */
   def switch[T, A](e: Event[T])(init: Signal[A])(factory: Factory[T, A]): Signal[A] =
     new SwitchedSignal(e, init, factory)
-
+  
+  /** Unwraps an event wrapped in a signal */
+  def unwrap[T](wrappedEvent: Signal[Event[T]]): Event[T] = 
+    new WrappedEvent(wrappedEvent)
 }
 
 class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T, E) => T)
