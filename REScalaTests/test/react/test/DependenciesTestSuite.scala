@@ -40,12 +40,48 @@ class DependenciesTestSuite extends AssertionsForJUnit with MockitoSugar {
     val v3 = Var(true)
     val s = Signal { if (v3()) v1() else v2() }
     assert(v1.dependents.size == 1)
-    // TODO why is v2.dependents.size 0!?
+    assert(v2.dependents.size == 0)
+    assert(v3.dependents.size == 1)
+    assert(s.dependents.size == 0)
+    assert(s.dependOn.size == 2)
+  }
+
+  @Test def explicitReevaluationDoesNotChangeDependencies() {
+    val v1 = Var(0)
+    val v2 = Var(2)
+    val v3 = Var(true)
+    val s = Signal { if (v3()) v1() else v2() }
+    assert(v1.dependents.size == 1)
+    assert(v2.dependents.size == 0)
+    assert(v3.dependents.size == 1)
+    assert(s.dependents.size == 0)
+    assert(s.dependOn.size == 2)
+
+    s.triggerReevaluation()
+    assert(v1.dependents.size == 1)
+    assert(v2.dependents.size == 0)
+    assert(v3.dependents.size == 1)
+    assert(s.dependents.size == 0)
+    assert(s.dependOn.size == 2)
+  }
+
+  @Test def implicitReevaluationChangesDependenciesCorrectly() {
+    val v1 = Var(0)
+    val v2 = Var(2)
+    val v3 = Var(true)
+    val s = Signal { if (v3()) v1() else v2() }
+    assert(v1.dependents.size == 1)
+    assert(v2.dependents.size == 0)
+    assert(v3.dependents.size == 1)
+    assert(s.dependents.size == 0)
+    assert(s.dependOn.size == 2)
+
+    v3.setVal(false)
+    assert(v1.dependents.size == 0)
     assert(v2.dependents.size == 1)
     assert(v3.dependents.size == 1)
     assert(s.dependents.size == 0)
-    // TODO why is s.dependOn.size 2!?
-    assert(s.dependOn.size == 3)
+    assert(s.dependOn.size == 2)
   }
 
   @Test def signalsCanHaveDependents() {
