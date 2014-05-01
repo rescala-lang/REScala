@@ -160,7 +160,7 @@ class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T, E) => T)
   }
 
   // The only dependant is e
-  dependOn += e
+  addDependOn(e)
   e.addDependent(this)
   this.level = e.level + 1
 
@@ -226,18 +226,18 @@ class SwitchedSignal[+T, +E](e: Event[E], init: Signal[T], factory: IFunctions.F
   }
 
   private def removeInner(s: Signal[_]) {
-    dependOn -= s
+    removeDependOn(s)
     s.removeDependent(this)
   }
 
   private def addInner(s: Signal[_]) {
-    dependOn += s
+    addDependOn(s)
     s.addDependent(this)
     this.level = math.max(e.level, s.level) + 1
   }
 
   // Switched signal depends on event and the current signal
-  dependOn += e
+  addDependOn(e)
   e.addDependent(this)
   addInner(currentSignal)
 
