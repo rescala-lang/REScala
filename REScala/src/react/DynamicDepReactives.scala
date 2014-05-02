@@ -22,7 +22,7 @@ class VarSynt[T](initval: T) extends DepHolder with Var[T] {
     if (old != newval) {
       ReactiveEngine.log.nodeEvaluationStarted(this)
 
-      value = newval // .asInstanceOf[T] // to make it covariant ?
+      value = newval
       TS.nextRound // Testing
       timestamps += TS.newTs // testing
 
@@ -42,7 +42,7 @@ class VarSynt[T](initval: T) extends DepHolder with Var[T] {
 
   def update(v: T) = setVal(v)
 
-  def apply(s: SignalSynt[_]) = {
+  override def apply(s: SignalSynt[_]) = {
     if (level >= s.level) s.level = level + 1
     s.reactivesDependsOnCurrent += this
     getVal

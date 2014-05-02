@@ -69,24 +69,6 @@ class "Event[+T]" as Event extends DepHolder {
   rest omitted ...
 }
 
-class "EventHandler[T]" as EventHandler extends Dependent {
-  +val f: T => Unit
-  +var storedVal: T
-}
-
-abstract class "EventNode[T]" as EventNode {
-  +lazy val handlers: Map[(T => Unit), EventHandler[T]]
-  __
-  +getHandler(T => Unit): EventHandler[T]
-}
-
-Event <|-- EventNode
-DepHolder <|-- EventNode
-
-class "ImperativeEvent[T]" as ImperativeEvent extends EventNode {
-  val timestamps: ListBuffer[Stamp]
-}
-
 class Signal << (T,#4682b4) >>
 class Var << (T,#4682b4) >>
 class DepHolder << (T,#4682b4) >>
