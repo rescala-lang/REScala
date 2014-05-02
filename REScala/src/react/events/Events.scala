@@ -108,15 +108,15 @@ class EventHandler[T] (fun: T=>Unit) extends Dependent {
       case _ => false
     }
 }
+
 object EventHandler {
-	def apply[T] (fun: T=>Unit) = new EventHandler(fun)
+  def apply[T] (fun: T=>Unit) = new EventHandler(fun)
 }
 
-
 /*
- *  Base class for events.
+ *  Base trait for events.
  */
-abstract class EventNode[T] extends Event[T] with DepHolder with TimeStamped {
+trait EventNode[T] extends Event[T] with DepHolder with TimeStamped {
 
   // memorize handler wrappers, so we can remove them
   lazy val handlers : collection.mutable.Map[(T => Unit), EventHandler[T]] =
