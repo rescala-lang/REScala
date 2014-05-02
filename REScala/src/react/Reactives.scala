@@ -112,7 +112,7 @@ trait Signal[+T] extends ReactiveValue[T] with Dependent with DepHolder with Tim
 }
 
 /**
- * Then engine that schedules the (glitch-free) evaluation
+ * The engine that schedules the (glitch-free) evaluation
  * of the nodes in the dependency graph.
  */
 object ReactiveEngine {
