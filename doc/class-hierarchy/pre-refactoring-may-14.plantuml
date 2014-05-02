@@ -1,0 +1,96 @@
+@startuml
+class Reactive {
+  +var level: Int
+}
+
+class DepHolder extends Reactive {
+  +val dependents: ListBuffer[Dependent]
+  __
+  +addDependent(Dependent)
+  +removeDependent(Dependent)
+  +notifyDependents(Any)
+}
+
+class Dependent extends Reactive {
+  +val dependOn: ListBuffer[DepHolder]
+  __
+  +addDependOn(DepHolder)
+  +removeDependOn(DepHolder)
+  +dependsOnchanged(Any, DepHolder)
+  #triggerReevaluation()
+}
+
+class "Var[T]" as Var extends DepHolder {
+  +val timestamps: ListBuffer[Stamp]
+  __
+  +setVal(T): Unit
+  +update(T)
+  +toSignal(): Signal[T]
+  ..
+  +getValue(): T
+  +getVal(): T
+  +apply(): T
+  +apply(SignalSynt[_]): T
+}
+
+class "Signal[+T]" as Signal {
+  #val timestamps: ListBuffer[Stamp]
+  __
+  +getValue(): T
+  +getVal(): T
+  +apply(): T
+  +apply(SignalSynt[_]): T
+  ..
+  #reEvaluate(): T
+  .. events ..
+  +change[U >: T]: Event[(U, U)]
+  +changed[U >: T](): Event[U]
+  +changedTo[V](V): Event[Unit]
+  +snapshot(Event[_]): Signal[T]
+  +switchTo[U >: T](Event[U]): Signal[U]
+  +switchOnce[V >: T](Event[_])(Signal[V]): Signal[V]
+  +toggle[V >: T](Event[_])(Signal[V])
+  +delay(Int): Signal[T]
+}
+
+DepHolder <|-- Signal
+Dependent <|-- Signal
+
+class "Event[+T]" as Event extends DepHolder {
+  __
+  ++=(T => Unit)
+  +-=(T => Unit)
+  +||(Event)
+  +&&(Event)
+  +filter[U >: T](U => Boolean): Event[U]
+  +\\\[U >: T](Event[U]): Event[U]
+  +map[U, S >: T](S => U): Event[U]
+  ..
+  rest omitted ...
+}
+
+class "EventHandler[T]" as EventHandler extends Dependent {
+  +val f: T => Unit
+  +var storedVal: T
+}
+
+abstract class "EventNode[T]" as EventNode {
+  +lazy val handlers: Map[(T => Unit), EventHandler[T]]
+  __
+  +getHandler(T => Unit): EventHandler[T]
+}
+
+Event <|-- EventNode
+DepHolder <|-- EventNode
+
+class "ImperativeEvent[T]" as ImperativeEvent extends EventNode {
+  val timestamps: ListBuffer[Stamp]
+}
+
+class Signal << (T,#4682b4) >>
+class Var << (T,#4682b4) >>
+class DepHolder << (T,#4682b4) >>
+class Dependent << (T,#4682b4) >>
+class Reactive << (T,#4682b4) >>
+class Event << (T,#4682b4) >>
+@enduml
