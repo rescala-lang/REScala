@@ -6,7 +6,7 @@ import react.Stamp
 /**
  * Interface for logging.
  */
-abstract class Logging {
+trait Logging {
   def nodeCreated(r: Reactive)
   def nodeAttached(dependent: Reactive, r: Reactive)
   def nodePulsed(r: Reactive)
