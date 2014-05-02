@@ -1,5 +1,6 @@
 package react.events
 
+import scala.collection.mutable.Buffer
 import scala.collection.mutable.ListBuffer
 import scala.collection.LinearSeq
 import scala.reflect.runtime.universe._
@@ -29,7 +30,7 @@ trait Event[+T] extends DepHolder {
    */
   def &&[U >: T](pred: =>Boolean) = new EventNodeFilter[U](this, _ => pred)
   def filter[U >: T](pred: =>Boolean) = &&[U](pred)
-  
+
   /**
    * Event is triggered except if the other one is triggered
    */
@@ -55,52 +56,52 @@ trait Event[+T] extends DepHolder {
    */
   def dropParam[S >: T] = new EventNodeMap[S, Unit](this, (_: Any) => ())
 
-  
-  
-  
+
+
+
   /** The latest parameter value of this event occurrence */
   //import annotation.unchecked.uncheckedVariance
   //lazy val latest : Signal[Option[T @uncheckedVariance]] = Signal.latestOption(this)
 
   // def hold: Signal[T] =
-  
+
   def fold[A](init: A)(fold: (A, T) => A): Signal[A] = IFunctions.fold(this, init)(fold)
   def iterate[A](init: A)(f: A => A): Signal[A] = IFunctions.iterate(this, init)(f)
   def count: Signal[Int] = IFunctions.count(this)
-  
+
   def set[B >: T,A](init: B)(f: (B=>A)): Signal[A] = IFunctions.set(this,init)(f)
 
   def latest[S >: T](init: S): Signal[S] = IFunctions.latest(this, init)
   def hold[S >: T]:  Signal[Option[T]] = IFunctions.latestOption[T](this)
   def latestOption[S >: T]:  Signal[Option[T]] = IFunctions.latestOption[T](this)
-  
+
   def reset[S >: T, A](init : S)(f : (S) => Signal[A]) : Signal[A] = IFunctions.reset(this, init)(f)
-  
+
   def last[S >: T](n: Int): Signal[LinearSeq[S]] = IFunctions.last[S](this, n)
   def list[S >: T](): Signal[List[S]] = IFunctions.list[S](this)
-  
+
   def toggle[A](a: Signal[A], b: Signal[A]): Signal[A] = IFunctions.toggle(this, a, b)
   def snapshot[A](s: Signal[A]): Signal[A] = IFunctions.snapshot(this, s)
-  
+
   def switchOnce[T](oldS: Signal[T], newS: Signal[T]): Signal[T] = IFunctions.switchOnce(this, oldS, newS)
-  
+
   def delay[S >: T](init: S, n: Int): Signal[S] = IFunctions.delay(this, init, n)
   // TODO: make another delay that returns an event
-  
+
 }
 
 
 
 /**
- * Wrapper for an anonymous function 
+ * Wrapper for an anonymous function
  */
 class EventHandler[T] (fun: T=>Unit) extends Dependent {
     val f = fun
     var storedVal: T = _
     override def dependsOnchanged(change: Any, dep: DepHolder) {
-      storedVal = change.asInstanceOf[T]  // ?? 
+      storedVal = change.asInstanceOf[T]  // ??
       ReactiveEngine.addToEvalQueue(this)
-    }  
+    }
     def triggerReevaluation = fun(storedVal)
     override def equals(other: Any) = other match {
       case other: EventHandler[T] => fun.equals(other.f)
@@ -120,10 +121,10 @@ abstract class EventNode[T] extends Event[T] with DepHolder {
   // memorize handler wrappers, so we can remove them
   lazy val handlers : collection.mutable.Map[(T => Unit), EventHandler[T]] =
     new collection.mutable.HashMap()
-  
+
   def getHandler(react: T => Unit) : EventHandler[T] =
     handlers.getOrElseUpdate(react, EventHandler(react))
-    
+
   def +=(react: T => Unit) = this addDependent getHandler(react)
   def -=(react: T => Unit) = this removeDependent getHandler(react)
 }
@@ -133,17 +134,17 @@ abstract class EventNode[T] extends Event[T] with DepHolder {
  * An implementation of an imperative event
  */
 class ImperativeEvent[T] extends EventNode[T] {
-  
+
   /* Trigger the event */
-  def apply(v: T): Unit = {   
-    TS.nextRound 
+  def apply(v: T): Unit = {
+    TS.nextRound
     timestamps += TS.newTs
     notifyDependents(v)
     ReactiveEngine.startEvaluation
   }
 
   /* Testing */
-  val timestamps = ListBuffer[Stamp]()
+  val timestamps: Buffer[Stamp] = ListBuffer()
   override def toString = getClass.getName
 }
 
@@ -154,22 +155,22 @@ class ImperativeEvent[T] extends EventNode[T] {
  */
 class ChangedEventNode[T](d: DepHolder) extends EventNode[T] with Dependent {
 
-  level = d.level + 1 // Static, for glitch freedom  
+  level = d.level + 1 // Static, for glitch freedom
   d.addDependent(this) // To be notified in the future
   dependOn += d
-  
+
   var storedVal: (Any,Any) = (null, null)
-  
+
   def triggerReevaluation() {
     timestamps += TS.newTs // Testing
     notifyDependents(storedVal)
   }
-  
+
   override def dependsOnchanged(change: Any,dep: DepHolder) = {
     storedVal = (storedVal._2,change)
     ReactiveEngine.addToEvalQueue(this)
   }
-  
+
   /* Testing */
   val timestamps = ListBuffer[Stamp]()
   override def toString = "(" + " InnerNode" + d + ")"
@@ -182,24 +183,24 @@ class ChangedEventNode[T](d: DepHolder) extends EventNode[T] with Dependent {
  */
 class InnerEventNode[T](d: DepHolder) extends EventNode[T] with Dependent {
 
-  level = d.level + 1 // For glitch freedom  
+  level = d.level + 1 // For glitch freedom
   d.addDependent(this) // To be notified in the future
   dependOn += d
-  
+
   var storedVal: Any = _
-  
+
   def triggerReevaluation() {
     timestamps += TS.newTs // Testing
     notifyDependents(storedVal)
   }
-  
+
   override def dependsOnchanged(change: Any,dep: DepHolder) = {
     storedVal = change
     ReactiveEngine.addToEvalQueue(this)
   }
-  
+
   /* Testing */
-  val timestamps = ListBuffer[Stamp]()
+  val timestamps: Buffer[Stamp] = ListBuffer()
   override def toString = "(" + " InnerNode" + d + ")"
 }
 
@@ -215,19 +216,19 @@ class EventNodeOr[T](ev1: Event[_ <: T], ev2: Event[_ <: T]) extends EventNode[T
    * same propagation cycle. This is made sure by adding the node only once per cycle
    */
   var lastRoundAdded = 0
-  
-  level = (ev1.level max ev2.level) + 1 // For glitch freedom  
+
+  level = (ev1.level max ev2.level) + 1 // For glitch freedom
   ev1.addDependent(this) // To be notified in the future
   ev2.addDependent(this)
   dependOn ++= List(ev1,ev2)
-  
+
   var storedVal: Any = _
-  
+
   def triggerReevaluation() {
     timestamps += TS.newTs // Testing
     notifyDependents(storedVal)
   }
-  
+
   override def dependsOnchanged(change: Any, dep: DepHolder) = {
     val currentRound = TS.getCurrentTs.roundNum
     storedVal = change
@@ -236,9 +237,9 @@ class EventNodeOr[T](ev1: Event[_ <: T], ev2: Event[_ <: T]) extends EventNode[T
       ReactiveEngine.addToEvalQueue(this)
     }
   }
-  
+
   /* Testing */
-  val timestamps = ListBuffer[Stamp]()
+  val timestamps: Buffer[Stamp] = ListBuffer()
   override def toString = "(" + ev1 + " || " + ev2 + ")"
 }
 
@@ -246,28 +247,28 @@ class EventNodeOr[T](ev1: Event[_ <: T], ev2: Event[_ <: T]) extends EventNode[T
 /*
  * Implementation of event conjunction
  */
-class EventNodeAnd[T1, T2, T](ev1: Event[T1], ev2: Event[T2], merge: (T1, T2) => T) 
+class EventNodeAnd[T1, T2, T](ev1: Event[T1], ev2: Event[T2], merge: (T1, T2) => T)
                                                 extends EventNode[T] with Dependent {
- 
+
   // The round id of the last received event
   var lastRound = -1
 
-  level = (ev1.level max ev2.level) + 1 // For glitch freedom  
+  level = (ev1.level max ev2.level) + 1 // For glitch freedom
   ev1.addDependent(this) // To be notified in the future
   ev2.addDependent(this)
   dependOn ++= List(ev1,ev2)
-  
+
   var storedValEv1: T1 = _
   var storedValEv2: T2 = _
-  
+
   def triggerReevaluation() {
     timestamps += TS.newTs // Testing
     notifyDependents(merge(storedValEv1,storedValEv2))
   }
-  
+
   override def dependsOnchanged(change: Any, dep: DepHolder) = {
-    
-    val round = TS.getCurrentTs match { case Stamp(round,_) => round }    
+
+    val round = TS.getCurrentTs match { case Stamp(round,_) => round }
     if(lastRound == round) {
       if (dep == ev1) storedValEv1 = change.asInstanceOf[T1]
       if (dep == ev2) storedValEv2 = change.asInstanceOf[T2]
@@ -278,9 +279,9 @@ class EventNodeAnd[T1, T2, T](ev1: Event[T1], ev2: Event[T2], merge: (T1, T2) =>
     lastRound = round
   }
   /* Testing */
-  val timestamps = ListBuffer[Stamp]()
+  val timestamps: Buffer[Stamp] = ListBuffer()
   override def toString = "(" + ev1 + " and " + ev2 + ")"
-  
+
 }
 
 
@@ -292,24 +293,24 @@ class EventNodeAnd[T1, T2, T](ev1: Event[T1], ev2: Event[T2], merge: (T1, T2) =>
  */
 class EventNodeFilter[T](ev: Event[T], f: T => Boolean) extends EventNode[T] with Dependent {
 
-  level = ev.level + 1   // For glitch freedom  
+  level = ev.level + 1   // For glitch freedom
   ev.addDependent(this) // To be notified in the future
   dependOn += ev
-  
+
   var storedVal: T = _
-  
+
   def triggerReevaluation() {
     timestamps += TS.newTs // Testing
     if(f(storedVal)) notifyDependents(storedVal)
   }
-  
+
   override def dependsOnchanged(change: Any,dep: DepHolder) = {
     storedVal = change.asInstanceOf[T]
     ReactiveEngine.addToEvalQueue(this)
   }
-  
+
   /* Testing */
-  val timestamps = ListBuffer[Stamp]()
+  val timestamps: Buffer[Stamp] = ListBuffer()
   override def toString = "(" + ev + " && <predicate>)"
 }
 
@@ -317,27 +318,27 @@ class EventNodeFilter[T](ev: Event[T], f: T => Boolean) extends EventNode[T] wit
 /*
  * Implements transformation of event parameter
  */
-class EventNodeMap[T, U](ev: Event[T], f: T => U) 
+class EventNodeMap[T, U](ev: Event[T], f: T => U)
   extends EventNode[U] with Dependent {
 
-  level = ev.level + 1   // For glitch freedom  
+  level = ev.level + 1   // For glitch freedom
   ev.addDependent(this) // To be notified in the future
   dependOn += ev
-  
+
   var storedVal: T = _
-  
+
   def triggerReevaluation() {
     timestamps += TS.newTs // Testing
     notifyDependents(f(storedVal))
   }
-  
+
   override def dependsOnchanged(change: Any,dep: DepHolder) = {
     storedVal = change.asInstanceOf[T]
     ReactiveEngine.addToEvalQueue(this)
   }
-  
+
   /* Testing */
-  val timestamps = ListBuffer[Stamp]()
+  val timestamps: Buffer[Stamp] = ListBuffer()
   override def toString = "(" + ev + " && <predicate>)"
 }
 
@@ -345,26 +346,26 @@ class EventNodeMap[T, U](ev: Event[T], f: T => U)
 /*
  * Implementation of event except
  */
-class EventNodeExcept[T](accepted: Event[T], except: Event[T]) 
+class EventNodeExcept[T](accepted: Event[T], except: Event[T])
   extends EventNode[T] with Dependent {
 
   // The id of the last received event
   var lastTSAccepted = Stamp(-1,-1) // No round yet
   var lastTSExcept= Stamp(-1,-1)
 
-  level = (accepted.level max except.level) + 1 // For glitch freedom  
+  level = (accepted.level max except.level) + 1 // For glitch freedom
   accepted.addDependent(this) // To be notified in the future
   except.addDependent(this)
   dependOn ++= List(accepted,except)
-  
+
   var storedVal: Any = _
-  
+
   def triggerReevaluation() {
     timestamps += TS.newTs // Testing
     // Fire only if accepted is the one that fired and except did'fire
     if (lastTSAccepted.roundNum > lastTSExcept.roundNum ) notifyDependents(storedVal)
   }
-  
+
   override def dependsOnchanged(change: Any, dep: DepHolder) = {
     if (dep == accepted) {
       lastTSAccepted = TS.getCurrentTs
@@ -373,9 +374,9 @@ class EventNodeExcept[T](accepted: Event[T], except: Event[T])
     }
     if (dep == except) lastTSExcept = TS.getCurrentTs
   }
-  
+
   /* Testing */
-  val timestamps = ListBuffer[Stamp]()
+  val timestamps: Buffer[Stamp] = ListBuffer()
   override def toString = "(" + accepted + " \\ " + except + ")"
 }
 
@@ -412,4 +413,3 @@ class Observable[T, U](body: T => U) extends (T => U) {
 object Observable {
   def apply[T,U](f: T => U) = new Observable(f)
 }
-

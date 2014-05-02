@@ -1,5 +1,6 @@
 package react
 
+import scala.collection.mutable.Buffer
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.PriorityQueue
 import scala.reflect.runtime.universe._
@@ -25,7 +26,7 @@ object Reactive {
 
 /* A node that has nodes that depend on it */
 trait DepHolder extends Reactive {
-  val dependents = new ListBuffer[Dependent]
+  val dependents: Buffer[Dependent] = ListBuffer()
   def addDependent(dep: Dependent) = {
     dependents += dep
     ReactiveEngine.log.nodeAttached(dep, this)
@@ -39,7 +40,7 @@ trait DepHolder extends Reactive {
 
 /* A node that depends on other nodes */
 trait Dependent extends Reactive {
-  val dependOn = new ListBuffer[DepHolder]
+  val dependOn: Buffer[DepHolder] = ListBuffer()
   // TODO: add level checking to have glitch freedom ?
   def addDependOn(dep: DepHolder) = {
     dependOn += dep
@@ -66,7 +67,7 @@ trait Var[T] extends DepHolder {
   def toSignal: Signal[T]
 
   /* Testing */
-  val timestamps: ListBuffer[Stamp]
+  val timestamps: Buffer[Stamp]
 }
 
 object Var {
@@ -117,7 +118,7 @@ trait Signal[+T] extends Dependent with DepHolder {
   def delay(n: Int): Signal[T] = IFunctions.delay(this, n)
 
   /* Testing */
-  protected[react] val timestamps: ListBuffer[Stamp]
+  protected[react] val timestamps: Buffer[Stamp]
 }
 
 /**
