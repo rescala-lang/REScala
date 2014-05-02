@@ -55,7 +55,7 @@ trait Dependent extends Reactive {
 }
 
 /* A root Reactive value without dependencies which can be set */
-trait Var[T] extends DepHolder {
+trait Var[T] extends DepHolder with TimeStamped {
   def setVal(newval: T): Unit
   def getValue: T
   def getVal: T
@@ -65,9 +65,6 @@ trait Var[T] extends DepHolder {
   def apply(s: SignalSynt[_]): T
 
   def toSignal: Signal[T]
-
-  /* Testing */
-  val timestamps: Buffer[Stamp]
 }
 
 object Var {
@@ -75,7 +72,7 @@ object Var {
 }
 
 /* An inner node which depends on other values */
-trait Signal[+T] extends Dependent with DepHolder {
+trait Signal[+T] extends Dependent with DepHolder with TimeStamped {
 
   def getValue: T
   def getVal: T
@@ -116,9 +113,6 @@ trait Signal[+T] extends Dependent with DepHolder {
 
   /** Delays this signal by n occurrences */
   def delay(n: Int): Signal[T] = IFunctions.delay(this, n)
-
-  /* Testing */
-  protected[react] val timestamps: Buffer[Stamp]
 }
 
 /**
@@ -173,6 +167,10 @@ object ReactiveEngine {
 
 // TODO: check the use of these classes. Originally was only for testing
 sealed case class Stamp(roundNum: Int, sequenceNum: Int)
+
+trait TimeStamped {
+  val timestamps: Buffer[Stamp] = ListBuffer()
+}
 
 object TS {
   private var _roundNum = 0

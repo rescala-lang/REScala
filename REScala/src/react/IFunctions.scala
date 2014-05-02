@@ -119,17 +119,17 @@ object IFunctions {
   def switch[T, A](e: Event[T])(init: Signal[A])(factory: Factory[T, A]): Signal[A] =
     new SwitchedSignal(e, init, factory)
   /*{
-    
+
     val ref : Var[Signal[A]] = Var(init)
     val fac : Var[Factory[T,A]] = Var(factory)
-    
+
     val handleSignal = {(eventValue : T) =>
       val currentFactory = fac()
       val (newSignal, newFactory) = currentFactory(eventValue)
       fac() = newFactory
       ref() = newSignal
     }
-    
+
     e += handleSignal
     return SignalSynt{s: SignalSynt[A]=> ref(s)(s) } // cannot express without high order
   }*/
@@ -145,9 +145,6 @@ class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T, E) => T)
   private[this] var lastEvent: E = _
 
   private[this] var inQueue = false
-
-  // Testing
-  val timestamps = ListBuffer[Stamp]()
 
   def getValue = currentValue
   def getVal = currentValue
@@ -211,9 +208,6 @@ class SwitchedSignal[+T, +E](e: Event[E], init: Signal[T], factory: IFunctions.F
   private[this] var currentFactory: IFunctions.Factory[E, T] = factory
 
   private[this] var inQueue = false
-
-  // Testing
-  val timestamps = ListBuffer[Stamp]()
 
   def getValue = currentSignal.getValue
   def getVal = currentSignal.getVal

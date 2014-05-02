@@ -39,9 +39,6 @@ class StaticVar[T](initval: T) extends DepHolder with Var[T] {
   def apply = getVal
 
   def toSignal = StaticSignal(this) { this.getVal }
-
-  /* Testing */
-  val timestamps = ListBuffer[Stamp]()
 }
 /**
  * Create a StaticVar
@@ -69,7 +66,7 @@ class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: => T)
   }
 
   reactivesDependsOn.foreach(r => {
-    if (r.level >= level) level = r.level + 1 // For glitch freedom  
+    if (r.level >= level) level = r.level + 1 // For glitch freedom
     r.addDependent(this) // To be notified in the future
   }) // check
   dependOn ++= reactivesDependsOn
@@ -97,9 +94,6 @@ class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: => T)
   }
 
   def change[U >: T]: Event[(U, U)] = new ChangedEventNode[(U, U)](this)
-
-  /* Testing */
-  val timestamps = ListBuffer[Stamp]()
 }
 
 /**
@@ -129,4 +123,3 @@ class Handler[T](exp: => T) extends Dependent {
   override def dependsOnchanged(change: Any, dep: DepHolder) = exp
   def triggerReevaluation = exp
 }
-

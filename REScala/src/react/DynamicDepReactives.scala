@@ -6,9 +6,9 @@ import react.events.ChangedEventNode
 
 //trait FixedDepHolder extends Reactive {
 //  val fixedDependents = new ListBuffer[Dependent]
-//  def addFixedDependent(dep: Dependent) = fixedDependents += dep    
+//  def addFixedDependent(dep: Dependent) = fixedDependents += dep
 //  def removeFixedDependent(dep: Dependent) = fixedDependents -= dep
-// def notifyDependents(change: Any): Unit = dependents.map(_.dependsOnchanged(change,this)) 
+// def notifyDependents(change: Any): Unit = dependents.map(_.dependsOnchanged(change,this))
 //}
 
 /* A node that has nodes that depend on it */
@@ -52,9 +52,8 @@ class VarSynt[T](initval: T) extends DepHolder with Var[T] {
 
   def toSignal = SignalSynt { s: SignalSynt[T] => this(s) }
 
-  /* Testing */
-  val timestamps = ListBuffer[Stamp]()
 }
+
 object VarSynt {
   def apply[T](initval: T) = new VarSynt(initval)
 }
@@ -64,8 +63,6 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
   extends Dependent with DepHolder with Signal[T] {
 
   def this(expr: SignalSynt[T] => T) = this(List())(expr)
-
-  val timestamps = ListBuffer[Stamp]() // Testing
 
   reactivesDependsOnUpperBound.map(r => { // For glitch freedom
     if (r.level >= level) level = r.level + 1
@@ -82,12 +79,12 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
   def reEvaluate(): T = {
 
     /* Collect dependencies during the evaluation */
-    reactivesDependsOnCurrent.map(_.removeDependent(this)) // remove me from the dependencies of the vars I depend on ! 
+    reactivesDependsOnCurrent.map(_.removeDependent(this)) // remove me from the dependencies of the vars I depend on !
     reactivesDependsOnCurrent.clear
     timestamps += TS.newTs // Testing
 
     // support mutable values by using hashValue rather than ==
-    //val hashBefore = currentValue.hashCode 
+    //val hashBefore = currentValue.hashCode
     ReactiveEngine.log.nodeEvaluationStarted(this)
     val tmp = expr(this) // Evaluation)
     ReactiveEngine.log.nodeEvaluationEnded(this)
@@ -141,4 +138,3 @@ object SignalSynt {
   def apply[T](r1: DH, r2: DH, r3: DH, r4: DH)(expr: SignalSynt[T] => T): SignalSynt[T] = apply(List(r1, r2, r3, r4))(expr)
   def apply[T](r1: DH, r2: DH, r3: DH, r4: DH, r5: DH)(expr: SignalSynt[T] => T): SignalSynt[T] = apply(List(r1, r2, r3, r4, r5))(expr)
 }
-

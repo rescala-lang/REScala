@@ -116,7 +116,7 @@ object EventHandler {
 /*
  *  Base class for events.
  */
-abstract class EventNode[T] extends Event[T] with DepHolder {
+abstract class EventNode[T] extends Event[T] with DepHolder with TimeStamped {
 
   // memorize handler wrappers, so we can remove them
   lazy val handlers : collection.mutable.Map[(T => Unit), EventHandler[T]] =
@@ -143,8 +143,6 @@ class ImperativeEvent[T] extends EventNode[T] {
     ReactiveEngine.startEvaluation
   }
 
-  /* Testing */
-  val timestamps: Buffer[Stamp] = ListBuffer()
   override def toString = getClass.getName
 }
 
@@ -171,8 +169,6 @@ class ChangedEventNode[T](d: DepHolder) extends EventNode[T] with Dependent {
     ReactiveEngine.addToEvalQueue(this)
   }
 
-  /* Testing */
-  val timestamps = ListBuffer[Stamp]()
   override def toString = "(" + " InnerNode" + d + ")"
 }
 
@@ -199,8 +195,6 @@ class InnerEventNode[T](d: DepHolder) extends EventNode[T] with Dependent {
     ReactiveEngine.addToEvalQueue(this)
   }
 
-  /* Testing */
-  val timestamps: Buffer[Stamp] = ListBuffer()
   override def toString = "(" + " InnerNode" + d + ")"
 }
 
@@ -238,8 +232,6 @@ class EventNodeOr[T](ev1: Event[_ <: T], ev2: Event[_ <: T]) extends EventNode[T
     }
   }
 
-  /* Testing */
-  val timestamps: Buffer[Stamp] = ListBuffer()
   override def toString = "(" + ev1 + " || " + ev2 + ")"
 }
 
@@ -278,10 +270,8 @@ class EventNodeAnd[T1, T2, T](ev1: Event[T1], ev2: Event[T2], merge: (T1, T2) =>
     if (dep == ev2) storedValEv2 = change.asInstanceOf[T2]
     lastRound = round
   }
-  /* Testing */
-  val timestamps: Buffer[Stamp] = ListBuffer()
-  override def toString = "(" + ev1 + " and " + ev2 + ")"
 
+  override def toString = "(" + ev1 + " and " + ev2 + ")"
 }
 
 
@@ -309,8 +299,6 @@ class EventNodeFilter[T](ev: Event[T], f: T => Boolean) extends EventNode[T] wit
     ReactiveEngine.addToEvalQueue(this)
   }
 
-  /* Testing */
-  val timestamps: Buffer[Stamp] = ListBuffer()
   override def toString = "(" + ev + " && <predicate>)"
 }
 
@@ -337,8 +325,6 @@ class EventNodeMap[T, U](ev: Event[T], f: T => U)
     ReactiveEngine.addToEvalQueue(this)
   }
 
-  /* Testing */
-  val timestamps: Buffer[Stamp] = ListBuffer()
   override def toString = "(" + ev + " && <predicate>)"
 }
 
@@ -375,8 +361,6 @@ class EventNodeExcept[T](accepted: Event[T], except: Event[T])
     if (dep == except) lastTSExcept = TS.getCurrentTs
   }
 
-  /* Testing */
-  val timestamps: Buffer[Stamp] = ListBuffer()
   override def toString = "(" + accepted + " \\ " + except + ")"
 }
 
