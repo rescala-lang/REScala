@@ -1,0 +1,85 @@
+@startuml
+class Reactive {
+  +var level: Int
+}
+
+class DepHolder extends Reactive {
+  +val dependents: Buffer[Dependent]
+  __
+  +addDependent(Dependent)
+  +removeDependent(Dependent)
+  +notifyDependents(Any)
+}
+
+class Dependent extends Reactive {
+  +val dependOn: Buffer[DepHolder]
+  __
+  +addDependOn(DepHolder)
+  +removeDependOn(DepHolder)
+  +dependsOnchanged(Any, DepHolder)
+  #triggerReevaluation()
+}
+
+class "Var[T]" as Var {
+  __
+  +setVal(T): Unit
+  +update(T)
+  +toSignal(): Signal[T]
+}
+
+TimeStamped <|.. Var
+DepHolder <|-- Var
+ReactiveValue <|-- Var
+
+class "Signal[+T]" as Signal {
+  __
+  #reEvaluate(): T
+  .. events ..
+  +change[U >: T]: Event[(U, U)]
+  +changed[U >: T](): Event[U]
+  +changedTo[V](V): Event[Unit]
+  +snapshot(Event[_]): Signal[T]
+  +switchTo[U >: T](Event[U]): Signal[U]
+  +switchOnce[V >: T](Event[_])(Signal[V]): Signal[V]
+  +toggle[V >: T](Event[_])(Signal[V])
+  +delay(Int): Signal[T]
+}
+
+DepHolder <|-- Signal
+Dependent <|-- Signal
+TimeStamped <|.. Signal
+ReactiveValue <|-- Signal
+
+class "Event[+T]" as Event extends DepHolder {
+  __
+  ++=(T => Unit)
+  +-=(T => Unit)
+  +||(Event)
+  +&&(Event)
+  +filter[U >: T](U => Boolean): Event[U]
+  +\\\[U >: T](Event[U]): Event[U]
+  +map[U, S >: T](S => U): Event[U]
+  ..
+  rest omitted ...
+}
+
+class TimeStamped {
+  val timestamps: Buffer[Stamp]
+}
+
+class "ReactiveValue[+T]" as ReactiveValue {
+  +getVal(): T
+  +getValue(): T
+  +apply(): T
+  +apply(SignalSynt[_]): T
+}
+
+class Signal << (T,#4682b4) >>
+class Var << (T,#4682b4) >>
+class DepHolder << (T,#4682b4) >>
+class Dependent << (T,#4682b4) >>
+class Reactive << (T,#4682b4) >>
+class Event << (T,#4682b4) >>
+class TimeStamped << (T,#4682b4) >>
+class ReactiveValue << (T,#4682b4) >>
+@enduml
