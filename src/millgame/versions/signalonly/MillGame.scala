@@ -6,7 +6,7 @@ import react.events._
 import react.SignalSynt
 import react.Var
 import react.Signal
-import macro.SignalMacro.{SignalM => Signal}
+import `macro`.SignalMacro.{SignalM => Signal}
 import millgame.types.Empty
 
 abstract class Gamestate {
@@ -146,7 +146,7 @@ class MillGame {
         board.move(stone, i)
         true
       } else {
-        stateVar() = (MoveStoneSelect(player))
+        stateVar() = (JumpStoneSelect(player))
         false
       }
 

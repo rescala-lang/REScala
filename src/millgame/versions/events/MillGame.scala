@@ -138,7 +138,7 @@ class MillGame {
         board.move(stone, i)
         true
       } else {
-        changeState(MoveStoneSelect(player))
+        changeState(JumpStoneSelect(player))
         false
       }
 
