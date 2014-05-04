@@ -43,7 +43,7 @@ class GlitchFreedomTestSuite extends AssertionsForJUnit with MockitoSugar {
     s2 = StaticSignal(v1) { 3 * v1.getValue }
     s3 = StaticSignal(s1, s2) { s1.getValue + s2.getValue }
 
-    v1.setVal(3)
+    v1.setValue(3)
 
     assert(v1.timestamps.toList match { case List(Stamp(1, 0)) => true })
     assert(s1.timestamps.toList match { case List(Stamp(1, x)) if x in Set(1, 2) => true })
@@ -62,7 +62,7 @@ class GlitchFreedomTestSuite extends AssertionsForJUnit with MockitoSugar {
     s3 = StaticSignal(s1,s2){ s1.getValue + s2.getValue }
 
 
-    v1.setVal(3)
+    v1.setValue(3)
 
     assert(v1.timestamps.toList match { case List(Stamp(1,0)) => true })
     assert(s1.timestamps.toList match { case List(Stamp(1,x)) if x in Set(1,2) => true })

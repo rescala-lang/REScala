@@ -12,7 +12,7 @@ import react.events._
 class StaticVar[T](initval: T) extends DepHolder with Var[T] {
   private[this] var value: T = initval
 
-  def setVal(newval: T): Unit = {
+  def setValue(newval: T): Unit = {
     val old = value
     if (newval != old) {
       value = newval // .asInstanceOf[T] // to make it covariant ?
@@ -29,7 +29,7 @@ class StaticVar[T](initval: T) extends DepHolder with Var[T] {
 
   def getValue = value
 
-  def update(v: T) = setVal(v)
+  def update(v: T) = setValue(v)
 
   def apply = getValue
 

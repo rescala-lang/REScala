@@ -23,7 +23,7 @@ class Dependent extends Reactive {
 class "Var[T]" as Var extends DepHolder {
   +val timestamps: ListBuffer[Stamp]
   __
-  +setVal(T): Unit
+  +setValue(T): Unit
   +update(T)
   +toSignal(): Signal[T]
   ..

@@ -880,9 +880,9 @@ val v =  Var(1)
 val s = Signal{ v() + 1 }
 val e: Event[Int] = s.changed
 e += ((x:Int)=>{test+=1})
-v.setVal(2)
+v.setValue(2)
 assert(test == 1)
-v.setVal(3)
+v.setValue(3)
 assert(test == 2)
 \end{codenv}
 
@@ -1082,7 +1082,7 @@ val s1 = Signal{ v() + 1 }
 val s = e.snapshot(s1)
 e(1)
 assert(s.getValue == 2)
-v.setVal(2)
+v.setValue(2)
 assert(s.getValue == 2)
 e(1)
 assert(s.getValue == 3)
@@ -1127,9 +1127,9 @@ val e: Event[Unit] = s.changedTo(3)
 e += ((x:Unit)=>{test+=1})
 
 assert(test == 0)
-v setVal(2)
+v setValue(2)
 assert(test == 1)
-v setVal(3)
+v setValue(3)
 assert(test == 1)
 \end{codenv}
 
@@ -1164,11 +1164,11 @@ def factory(x: Int) = x%2 match {
 val s3 = e.reset(100)(factory)
 
 assert(s3.getValue == 1)
-v1.setVal(1)
+v1.setValue(1)
 assert(s3.getValue == 2)
 e(101)
 assert(s3.getValue == 11)
-v2.setVal(11)
+v2.setValue(11)
 assert(s3.getValue == 12)
 \end{codenv}
 

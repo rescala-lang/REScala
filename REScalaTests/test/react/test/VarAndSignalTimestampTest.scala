@@ -13,38 +13,26 @@ import react._
 
 
 class VarAndSignalTimestampTest extends AssertionsForJUnit with MockitoSugar {
-  
+
   @Before def initialize() {
-    TS.reset      
+    TS.reset
   }
   @After def cleanup() {
-    TS.reset      
+    TS.reset
   }
-  
+
   @Test def xxx =  {
     val v = Var(10)
-    v.setVal(11)
+    v.setValue(11)
     assert( v.timestamps equals ListBuffer(Stamp(1,0)) )
   }
-  
+
   @Test def xxxx =  {
     val v = Var(10)
-    val s = StaticSignal(v){ v.getValue + 1 }   
-    v.setVal(11)
+    val s = StaticSignal(v){ v.getValue + 1 }
+    v.setValue(11)
     assert( v.timestamps equals ListBuffer(Stamp(1,0)) )
     assert( s.timestamps equals ListBuffer(Stamp(1,1)) )
   }
-  
+
 }
-
-
-
-
-
-
-
-
-
-
-
-

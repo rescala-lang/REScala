@@ -15,7 +15,7 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
     var i = 1
     var s: SignalSynt[Int] = SignalSynt[Int](v){s=> v(s) + i }
     i = 2
-    v.setVal(2)
+    v.setValue(2)
     assert(s.getValue == 4)
   }
 
@@ -42,9 +42,9 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
 
 
     assert(a == 1)
-    v.setVal(11)
+    v.setValue(11)
     assert(a == 2)
-    v.setVal(21)
+    v.setValue(21)
     assert(a == 3)
   }
 
@@ -63,7 +63,7 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
 
     assert(test == 0)
 
-    v.setVal(3)
+    v.setValue(3)
     assert(test == 3)
 
   }
@@ -101,20 +101,20 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
 
     assert(i == 1)
     assert(s.getValue == 0)
-    v2.setVal(1)
+    v2.setValue(1)
     assert(i == 2)
     assert(s.getValue == 1)
-    v3.setVal(11) // No effect
+    v3.setValue(11) // No effect
     assert(i == 2)
     assert(s.getValue == 1)
 
-    v1.setVal(false)
+    v1.setValue(false)
     assert(i == 3)
     assert(s.getValue == 11)
-    v3.setVal(12)
+    v3.setValue(12)
     assert(i == 4)
     assert(s.getValue == 12)
-    v2.setVal(2) // No effect
+    v2.setValue(2) // No effect
     assert(i == 4)
     assert(s.getValue == 12)
   }
@@ -139,20 +139,20 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
     e += ((x:(Int,Int))=>(test+=1))
 
     assert(test == 0)
-    v2.setVal(1)
+    v2.setValue(1)
     assert(test == 1)
 
-    v1.setVal(false)
+    v1.setValue(false)
     assert(test == 2)
-    v3.setVal(11)
+    v3.setValue(11)
     assert(test == 3)
 
-    v2.setVal(2)
+    v2.setValue(2)
     assert(test == 3)
 
-    v1.setVal(true)
+    v1.setValue(true)
     assert(test == 4)
-    v2.setVal(3)
+    v2.setValue(3)
     assert(test == 5)
 
 
@@ -165,9 +165,9 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
       changes += 1; v(s) + 1 }
     assert(changes == 1)
     assert(s.getValue == 2)
-    v.setVal(2)
+    v.setValue(2)
     assert(changes == 2)
-    v.setVal(2)
+    v.setValue(2)
     assert(changes == 2) // is actually 3
   }
 

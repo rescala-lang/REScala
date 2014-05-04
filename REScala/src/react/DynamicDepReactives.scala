@@ -17,7 +17,7 @@ class VarSynt[T](initval: T) extends DepHolder with Var[T] {
 
   def getValue = value
 
-  def setVal(newval: T): Unit = {
+  def setValue(newval: T): Unit = {
 
     val old = value
     // support mutable values by using hashValue rather than ==
@@ -41,7 +41,7 @@ class VarSynt[T](initval: T) extends DepHolder with Var[T] {
     }
   }
 
-  def update(v: T) = setVal(v)
+  def update(v: T) = setValue(v)
 
   def apply() = getValue
 

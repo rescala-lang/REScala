@@ -70,7 +70,7 @@ trait ReactiveValue[+T] extends DepHolder {
 
 /* A root Reactive value without dependencies which can be set */
 trait Var[T] extends ReactiveValue[T] with DepHolder with TimeStamped {
-  def setVal(newval: T): Unit
+  def setValue(newval: T): Unit
   def update(v: T)
 
   def toSignal: Signal[T]

@@ -38,11 +38,11 @@ class SignalsAndVarsTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(s1.getValue == 3)
     assert(test == 0)
 
-    v2.setVal(3)
+    v2.setValue(3)
     assert(s1.getValue == 4)
     assert(test == 1)
 
-    v2.setVal(3)
+    v2.setValue(3)
     assert(s1.getValue == 4)
     assert(test == 1)
 

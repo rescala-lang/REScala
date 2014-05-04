@@ -50,7 +50,7 @@ class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
     var i = 1
     var s: Signal[Int] = StaticSignal[Int](v) { i }
     i = 2
-    v.setVal(2)
+    v.setValue(2)
     assert(s.getValue == 2)
   }
 
@@ -77,9 +77,9 @@ class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
 
 
     assert(a == 1)
-    v.setVal(11)
+    v.setValue(11)
     assert(a == 2)
-    v.setVal(21)
+    v.setValue(21)
     assert(a == 3)
   }
 
@@ -98,7 +98,7 @@ class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
 
     assert(test == 0)
 
-    v.setVal(3)
+    v.setValue(3)
     assert(test == 3)
 
   }
