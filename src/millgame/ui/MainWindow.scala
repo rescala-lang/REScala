@@ -2,13 +2,12 @@ package millgame.ui
 
 
 /// Chose version here:
-//import millgame.versions.events._
-import millgame.versions.signals._
+import millgame.versions.events._
+//import millgame.versions.signals._
 //import millgame.versions.signalonly._
 
 import millgame.types._
-import millgame.types.Pos
-import millgame.types.Pos._
+import millgame.types.Point
 import java.awt.Dimension
 import swing._
 import javax.swing.UIManager
@@ -86,7 +85,7 @@ class MillDrawer extends Component {
   val MiddlePercent = 2f / 3
   val InnerPercent = 1f / 3
   
-  var highlightedIndex = -1
+  var highlightedIndex = SlotIndex(-1)
   var squareSize = 0
   val coordinates = Array.fill(24)((0,0))
   
@@ -95,9 +94,9 @@ class MillDrawer extends Component {
     squareSize = (smaller * SizePercent).toInt  
     
     val midX = size.width / 2
-    val midY = size.height / 2    
-    val xFactors = List.make(3, List(-1, -1, -1, 0, 1, 1, 1,0)).flatten
-    val yFactors = List.make(3, List(-1, 0, 1, 1, 1, 0, -1, -1)).flatten
+    val midY = size.height / 2
+    val xFactors = List.fill(3)(List(-1, -1, -1, 0, 1, 1, 1,0)).flatten
+    val yFactors = List.fill(3)(List(-1, 0, 1, 1, 1, 0, -1, -1)).flatten
     for((i, (xF, yF)) <- coordinates.indices.zip(xFactors.zip(yFactors)))
     {
       val distance = (i / 8 match {
@@ -123,17 +122,17 @@ class MillDrawer extends Component {
       g.fill3DRect(coordinates(16)._1 - StoneSize, coordinates(16)._2 - StoneSize, squareSize + StoneSize*2, squareSize + StoneSize*2 ,true)
             
       // draw possible moves
-      g.setColor(new java.awt.Color(150, 142, 110))
+      g.setColor(new Color(0, 0, 0, 80))
       g.setStroke(new BasicStroke(5))
       
       val selectedIndex = MainWindow.game.state match {
         case MoveStoneDrop(_, index) => index
         case JumpStoneDrop(_, index) => index
-        case _ => -1
+        case _ => SlotIndex(-1)
       }
       
       val possibleMoves =
-        if (selectedIndex == -1)
+        if (selectedIndex == SlotIndex(-1))
           MainWindow.game.possibleMoves filter {
             case (from, to) => from == highlightedIndex || to == highlightedIndex
           }
@@ -145,8 +144,8 @@ class MillDrawer extends Component {
       
       for ((from, to) <- possibleMoves)
         g.drawLine(
-            coordinates(from)._1, coordinates(from)._2,
-            coordinates(to)._1, coordinates(to)._2)
+            coordinates(from.index)._1, coordinates(from.index)._2,
+            coordinates(to.index)._1, coordinates(to.index)._2)
       
       // draw lines
       g.setColor(java.awt.Color.BLACK)
@@ -164,28 +163,29 @@ class MillDrawer extends Component {
       coordinates.foreach {case (x,y) => g.fillOval(x - DotSize/2, y - DotSize/2, DotSize, DotSize)}
       
       // draw stones
-      MainWindow.game.board.stones.zipWithIndex.foreach {
-        case (color, i) if color != Empty =>
-          val (x, y) = coordinates(i)
-          g.setColor(color match { case Black => java.awt.Color.BLACK; case White => java.awt.Color.WHITE })
+      MillBoard.indices foreach { slot =>
+        val color = MainWindow.game.board(slot)
+        if (MainWindow.game.board(slot) != Empty) {
+          val (x, y) = coordinates(slot.index)
+          g.setColor(if (color == Black) java.awt.Color.BLACK else java.awt.Color.WHITE)
           g.fillOval(x - StoneSize / 2, y - StoneSize / 2, StoneSize, StoneSize)
-        case _ =>
+        }
       }
   }
   
   listenTo(mouse.clicks, mouse.moves)
     reactions += {
       case e: MouseMoved =>
-        val index = coordinates.indexWhere(point => Pos(e.point.x, e.point.y).distance(point) < ClickArea)
+        val index = coordinates.indexWhere(point => Point(e.point.x, e.point.y).distance(point) < ClickArea)
         if (index != highlightedIndex) {
-          highlightedIndex = index
+          highlightedIndex = SlotIndex(index)
           repaint
         }
       case e: MouseReleased =>
-        val clickedIndex = coordinates.indexWhere(point => Pos(e.point.x, e.point.y).distance(point) < ClickArea)
+        val clickedIndex = coordinates.indexWhere(point => Point(e.point.x, e.point.y).distance(point) < ClickArea)
         
         if(clickedIndex >= 0){
-          MainWindow.game.playerInput(clickedIndex)
+          MainWindow.game.playerInput(SlotIndex(clickedIndex))
           repaint
         }
     }

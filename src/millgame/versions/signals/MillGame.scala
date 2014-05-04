@@ -14,35 +14,34 @@ abstract class Gamestate {
   def text: String
 }
 
-case class PlaceStone(val player: Slot) extends Gamestate {
+case class PlaceStone(player: Slot) extends Gamestate {
   def getPlayer = player
   def text = player + " to PLACE a stone"
 }
 
-case class RemoveStone(val player: Slot) extends Gamestate {
-  assert(player != Empty)
+case class RemoveStone(player: Slot) extends Gamestate {
   def getPlayer = player
   def color = player.other
   def text = player + " to REMOVE a " + color + " stone"
 }
 
-case class MoveStoneSelect(val player: Slot) extends Gamestate {
+case class MoveStoneSelect(player: Slot) extends Gamestate {
   def getPlayer = player
   def text = player + " to MOVE a stone"
 }
 
-case class MoveStoneDrop(val player: Slot, index: Int) extends Gamestate {
+case class MoveStoneDrop(player: Slot, index: SlotIndex) extends Gamestate {
   def getPlayer = player
-  def text = player + " to select destination for stone " + index
+  def text = player + " to select destination for stone at position " + index
 }
 
-case class JumpStoneSelect(val player: Slot) extends Gamestate {
+case class JumpStoneSelect(player: Slot) extends Gamestate {
   def getPlayer = player
   def text = player + " to JUMP with a stone"
 }
-case class JumpStoneDrop(val player: Slot, index: Int) extends Gamestate {
+case class JumpStoneDrop(player: Slot, index: SlotIndex) extends Gamestate {
   def getPlayer = player
-  def text = player + " to select destination for stone " + index
+  def text = player + " to select destination for stone at position " + index
 }
 
 case class GameOver(winner: Slot) extends Gamestate {
@@ -62,13 +61,13 @@ class MillGame {
   val remainCountChanged = Signal{remainCount()}.changed //#EVT //#IF
   val stateChanged = Signal{ stateVar() }.changed //#EVT //#IF
   
-  val possibleNextMoves: Signal[Seq[(Int, Int)]] = Signal { //#SIG
+  val possibleNextMoves: Signal[Seq[(SlotIndex, SlotIndex)]] = Signal { //#SIG
     stateVar() match {
       case PlaceStone(_) | RemoveStone(_) | GameOver(_) => Seq.empty
       case state @ (MoveStoneSelect(_) |MoveStoneDrop(_, _)) =>
-        board.possibleMoves() filter { case (from, to) => board.stones(from) == state.getPlayer }
+        board.possibleMoves() filter { case (from, to) => board(from) == state.getPlayer }
       case state @ (JumpStoneSelect(_) | JumpStoneDrop(_, _)) =>
-        board.possibleJumps() filter { case (from, to) => board.stones(from) == state.getPlayer }
+        board.possibleJumps() filter { case (from, to) => board(from) == state.getPlayer }
     }
   }
   
@@ -99,10 +98,10 @@ class MillGame {
     remainCount() = currentCount.updated(player, currentCount(player) - 1)
   }
 
-  def playerInput(i: Int): Boolean = state match {
+  def playerInput(i: SlotIndex): Boolean = state match {
 
     case PlaceStone(player) =>
-      if (board.canPlace(i)) {
+      if (board.canPlace.getVal(i)) {
         stateVar() = (nextState(player.other))
         decrementCount(player)
         board.place(i, player)
@@ -123,7 +122,7 @@ class MillGame {
       } else false
 
     case MoveStoneDrop(player, stone) =>
-      if (board.canMove(stone, i)) {
+      if (board.canMove.getVal(stone, i)) {
         stateVar() = (nextState(player.other))
         board.move(stone, i)
         true
@@ -139,7 +138,7 @@ class MillGame {
       } else false
 
     case JumpStoneDrop(player, stone) =>
-      if (board.canJump(stone, i)) {
+      if (board.canJump.getVal(stone, i)) {
         stateVar() = (nextState(player.other))
         board.move(stone, i)
         true

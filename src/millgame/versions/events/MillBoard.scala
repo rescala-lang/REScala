@@ -3,97 +3,94 @@ import millgame.types._
 import react.events._
 
 object MillBoard {
+  val borders = (0 to 23 by 2) map { init => 
+    List.iterate(init, 3) { x =>
+      (x + 1) - (if ((x + 1) % ((init / 8 + 1) * 8) == 0) 8 else 0)
+    } map { SlotIndex(_) }
+  }
   
-  	val Borders = (0 to 23 by 2).map(init => 
-	  	List.iterate(init, 3)(x => (x + 1) -
-	  	   (if ((x + 1) % ( (init / 8 + 1) * 8) == 0) 8 else 0)
-	  	)
-	)
-	val Crosses = (1 to 8 by 2).map(List.iterate(_, 3)(x => x + 8))
-	
-	val Lines = Borders ++ Crosses
+  val crosses = (1 to 8 by 2) map { List.iterate(_, 3)(_ + 8) map { SlotIndex(_) } }
+  
+  val lines = borders ++ crosses
+  
+  val indices = (0 until 24) map { SlotIndex(_) }
+  
+  def isConnected(from: SlotIndex, to: SlotIndex) = {
+    val i = from.index
+    val j = to.index
+    (math.abs(i - j) == 1 && math.max(i, j) % 8 != 0) || 
+    (math.abs(i - j) == 8 && i % 2 != 0) ||
+    (math.abs(i - j) == 7 && math.min(i, j) % 8 == 0)
+  }
 }
 
 class MillBoard {
   
 	/* spiral-indexed board slots, starting innermost lower left, going clockwise */
-	var stones: Array[Slot] = Array.fill(24)(Empty)
+	var stones: Array[Slot] = Array.fill(MillBoard.indices.size)(Empty)
 	
 	/* slots by the 16 lines of the game */
-	def lines = MillBoard.Lines.map(line => line.map(stones(_)))
+	def lines = MillBoard.lines map { _ map { slot => stones(slot.index) } }
 	
 	/* lines mapped to owners */
-	def lineOwners = lines.map(line => if(line.forall(_ == line.head)) line.head else Empty)
+	def lineOwners = lines map { line =>
+	  if(line forall { _ == line.head }) line.head else Empty
+	}
 	
 	/* access slot state by index */
-	def apply(i: Int) = stones(i)
+	def apply(slot: SlotIndex) = stones(slot.index)
 	
-	def numStones(color: Slot) = stones.count(_ == color)
+	def numStones(color: Slot) = stones count { _ == color }
 	
 	val millClosed = new ImperativeEvent[Slot] //#EVT
 	
 	val numStonesChanged = new ImperativeEvent[(Slot, Int)] //#EVT
 	
-	def possibleMoves: Seq[(Int, Int)] = {
-	  val range = 0 until stones.size
-	  range flatMap { from =>
-	    range collect { case to if canMove(from, to) => (from, to) }
+	def possibleMoves: Seq[(SlotIndex, SlotIndex)] = {
+	  MillBoard.indices flatMap { from =>
+	    MillBoard.indices collect { case to if canMove(from, to) => from -> to }
 	  }
 	}
 	
-	def possibleJumps: Seq[(Int, Int)] = {
-	  val range = 0 until stones.size
-	  range flatMap { from =>
-	    range collect { case to if canJump(from, to) => (from, to) }
+	def possibleJumps: Seq[(SlotIndex, SlotIndex)] = {
+	  MillBoard.indices flatMap { from =>
+	    MillBoard.indices collect { case to if canJump(from, to) => from -> to }
 	  }
 	}
 	
 	/* several test methods*/
-	def canPlace(i: Int) = stones(i) == Empty
-	def canRemove(i: Int) = stones(i) != Empty
-	def canJump(i: Int, j: Int) = canRemove(i) && canPlace(j)
-	def canMove(i: Int, j: Int) = canJump(i, j) && (
-		(math.abs(i - j) == 1 && math.max(i, j) % 8 != 0) || 
-		(math.abs(i - j) == 8 && i % 2 != 0) ||
-		(math.abs(i - j) == 7 && math.min(i, j) % 8 == 0)
-		)
+	def canPlace(slot: SlotIndex) = this(slot) == Empty
+	def canRemove(slot: SlotIndex) = this(slot) != Empty
+	def canJump(from: SlotIndex, to: SlotIndex) =
+	  canRemove(from) && canPlace(to)
+	def canMove(from: SlotIndex, to: SlotIndex) =
+	  canJump(from, to) && MillBoard.isConnected(from, to)
 
-	def place(i: Int, color: Slot) {
+	def place(slot: SlotIndex, color: Slot) {
 	  val previousOwners = lineOwners
-	  stones(i) = color
+	  stones(slot.index) = color
 	  
-	  val mill = previousOwners.zip(lineOwners).collectFirst {
+	  val mill = previousOwners zip lineOwners collectFirst {
 	    case (a, b) if a != b && b != Empty => b 
 	  }
 	  
 	  // possible fire mill closed event
-	  mill.foreach(millClosed(_))
+	  mill foreach { millClosed(_) }
 	  
 	  // fire numStonesChanged event
 	  numStonesChanged(color, numStones(color))
 	}
 	
-	def remove(i: Int) = {
-	  val color = stones(i)
-	  stones(i) = Empty
+	def remove(slot: SlotIndex) = {
+	  val color = stones(slot.index)
+	  stones(slot.index) = Empty
 	  // fire numStonesChanged event
 	  numStonesChanged(color, numStones(color))
 	}
 	
-	def move(i: Int, j: Int) = { 
-	  val color = stones(i)
-	  stones(i) = Empty
-	  place(j, color)
+	def move(from: SlotIndex, to: SlotIndex) = { 
+	  val color = stones(from.index)
+	  stones(from.index) = Empty
+	  place(to, color)
 	}
-
-}
-
-
-object Test extends Application {
-  	val mill = new MillBoard
-  	mill.stones(0) = Black
-  	mill.stones(1) = Black
-  	mill.stones(2) = Black
-  	
-  	println(mill.lineOwners)
 }

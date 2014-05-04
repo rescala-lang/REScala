@@ -4,22 +4,31 @@ import react.events._
 import react.SignalSynt
 import react.Var
 import react.Signal
-import macro.SignalMacro.{SignalM => Signal}
+import `macro`.SignalMacro.{SignalM => Signal}
 
 object MillBoard {
+  val borders = (0 to 23 by 2) map { init => 
+    List.iterate(init, 3) { x =>
+      (x + 1) - (if ((x + 1) % ((init / 8 + 1) * 8) == 0) 8 else 0)
+    } map { SlotIndex(_) }
+  }
   
-  	val Borders = (0 to 23 by 2).map(init => 
-	  	List.iterate(init, 3)(x => (x + 1) -
-	  	   (if ((x + 1) % ( (init / 8 + 1) * 8) == 0) 8 else 0)
-	  	)
-	)
-	val Crosses = (1 to 8 by 2).map(List.iterate(_, 3)(x => x + 8))
-	
-	val Lines = Borders ++ Crosses
+  val crosses = (1 to 8 by 2) map { List.iterate(_, 3)(_ + 8) map { SlotIndex(_) } }
+  
+  val lines = borders ++ crosses
+  
+  val indices = (0 until 24) map { SlotIndex(_) }
+  
+  def isConnected(from: SlotIndex, to: SlotIndex) = {
+    val i = from.index
+    val j = to.index
+    (math.abs(i - j) == 1 && math.max(i, j) % 8 != 0) || 
+    (math.abs(i - j) == 8 && i % 2 != 0) ||
+    (math.abs(i - j) == 7 && math.min(i, j) % 8 == 0)
+  }
 }
 
 class MillBoard {
-  
     /* wrap stones Var, to have the same interface as other versions */
     def stones = stonesVar.getVal
   
@@ -28,26 +37,14 @@ class MillBoard {
 	
 	/* slots by the 16 lines of the game */
 	val lines = Signal { //#SIG
-      MillBoard.Lines.map(line => line.map(stonesVar()(_))) 
+      MillBoard.lines map { _ map { slot => stonesVar()(slot.index) } }
     }
 	
 	/* lines mapped to owners */
 	val lineOwners: Signal[Vector[Slot]] = Signal { //#SIG
-	  lines().map(line => if(line.forall(_ == line.head)) line.head else Empty).toVector
-	}
-	
-	val possibleMoves: Signal[Seq[(Int, Int)]] = Signal { //#SIG
-	  val range = 0 until stonesVar().size
-	  range flatMap { from =>
-	    range collect { case to if canMove(from, to) => (from, to) }
-	  }
-	}
-	
-	val possibleJumps: Signal[Seq[(Int, Int)]] = Signal { //#SIG
-	  val range = 0 until stonesVar().size
-	  range flatMap { from =>
-	    range collect { case to if canJump(from, to) => (from, to) }
-	  }
+	  (lines() map { line =>
+	    if(line forall { _ == line.head }) line.head else Empty
+	  }).toVector
 	}
 	
 	/* observers */
@@ -59,56 +56,73 @@ class MillBoard {
 	def notifyStonesChanged(c: (Slot, Int)) = numStonesChangedListener.foreach(_(c))
 	
 	/* access slot state by index */
-	def apply(i: Int) = stonesVar.getVal(i)	
-	def update(i: Int, color: Slot) = {
-	  stonesVar.setVal(stonesVar.getVal.updated(i, color))
+	def apply(slot: SlotIndex) = stonesVar.getVal(slot.index)	
+	def update(slot: SlotIndex, color: Slot) = {
+	  stonesVar.setVal(stonesVar.getVal.updated(slot.index, color))
 	}
 	
-	/* several test methods*/
-	def canPlace(i: Int) = this(i) == Empty
-	def canRemove(i: Int) = this(i) != Empty
-	def canJump(i: Int, j: Int) = canRemove(i) && canPlace(j)
-	def canMove(i: Int, j: Int) = canJump(i, j) && (
-		(math.abs(i - j) == 1 && math.max(i, j) % 8 != 0) || 
-		(math.abs(i - j) == 8 && i % 2 != 0) ||
-		(math.abs(i - j) == 7 && math.min(i, j) % 8 == 0)
-		)
+	val color: Signal[SlotIndex => Slot] = Signal { //#SIG
+	  val stones = stonesVar()
+	  slot => stones(slot.index)
+	}
+	
+	/* several test signals*/
+	val canPlace: Signal[SlotIndex => Boolean] = Signal { //#SIG
+	  val col = color()
+	  slot => col(slot) == Empty }
+	val canRemove: Signal[SlotIndex => Boolean] = Signal { //#SIG
+	  val col = color()
+	  slot => col(slot) != Empty }
+	val canJump: Signal[(SlotIndex, SlotIndex) => Boolean] = Signal { //#SIG
+	  val removeAllowed = canRemove()
+	  val placeAllowed = canPlace()
+	  (from, to) => removeAllowed(from) && placeAllowed(to) }
+	val canMove: Signal[(SlotIndex, SlotIndex) => Boolean] = Signal { //#SIG
+	  val jumpAllowed = canJump()
+	  (from, to) => jumpAllowed(from, to) && MillBoard.isConnected(from, to) }
 
-	def place(i: Int, color: Slot) {
+	def place(slot: SlotIndex, color: Slot) {
 	  val previousOwners = lineOwners.getValue
-	  this(i) = color
-	  val mill = previousOwners.zip(lineOwners.getValue).collectFirst { case (a, b) if a != b => b }
+	  this(slot) = color
+	  val mill = previousOwners zip lineOwners.getValue collectFirst {
+	    case (a, b) if a != b => b
+	  }
 	  
 	  // possible fire mill closed event
-	  mill.foreach(notifyMillClosed(_))
+	  mill foreach { notifyMillClosed(_) }
 	  
 	  // fire numStonesChanged event
 	  notifyStonesChanged((color, numStones.getValue(color)))
 	}
 	
-	def remove(i: Int) = {
-	  val color = stones(i)
-	  this(i) = Empty
+	def remove(slot: SlotIndex) = {
+	  val color = this(slot)
+	  this(slot) = Empty
 
 	  // fire numStonesChanged event
 	  notifyStonesChanged((color, numStones.getValue(color)))
 	}
 	
-	def move(i: Int, j: Int) = { 
-	  val color = stones(i)
-	  this(i) = Empty
-	  place(j, color)
+	def move(from: SlotIndex, to: SlotIndex) = { 
+	  val color = this(from)
+	  this(from) = Empty
+	  place(to, color)
+	}
+	
+	val possibleMoves: Signal[Seq[(SlotIndex, SlotIndex)]] = Signal { //#SIG
+	  MillBoard.indices flatMap { from =>
+	    MillBoard.indices collect { case to if canMove()(from, to) => from -> to }
+	  }
+	}
+	
+	val possibleJumps: Signal[Seq[(SlotIndex, SlotIndex)]] = Signal { //#SIG
+	  MillBoard.indices flatMap { from =>
+	    MillBoard.indices collect { case to if canJump()(from, to) => from -> to }
+	  }
 	}
 	
 	val numStones: Signal[(Slot => Int)] = Signal { //#SIG
 	  val stones = stonesVar()
 	  (color: Slot) => stones.count(_ == color)
 	}
-}
-
-object Test extends Application {
-  	val mill = new MillBoard
-  	mill(0) = Black
-  	mill(1) = Black
-  	mill(2) = Black
 }

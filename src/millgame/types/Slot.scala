@@ -1,12 +1,10 @@
 package millgame.types
 
-class Slot {
-  def other = this match {
-    case Black => White
-    case White => Black
-  }
-}
+sealed abstract class Slot { def other: Slot }
+case object Empty extends Slot { val other = Empty }
+case object Black extends Slot { val other = White }
+case object White extends Slot { val other = Black }
 
-case object Empty extends Slot
-case object Black extends Slot
-case object White extends Slot
+final case class SlotIndex(index: Int) extends AnyVal {
+  override def toString = "#" + index
+}

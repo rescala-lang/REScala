@@ -9,34 +9,34 @@ abstract class Gamestate {
   def text: String
 }
 
-case class PlaceStone(val player: Slot) extends Gamestate {
+case class PlaceStone(player: Slot) extends Gamestate {
   def getPlayer = player
   def text = player + " to PLACE a stone"
 }
 
-case class RemoveStone(val player: Slot) extends Gamestate {
+case class RemoveStone(player: Slot) extends Gamestate {
   def getPlayer = player
   def color = player.other
   def text = player + " to REMOVE a " + color + " stone"
 }
 
-case class MoveStoneSelect(val player: Slot) extends Gamestate {
+case class MoveStoneSelect(player: Slot) extends Gamestate {
   def getPlayer = player
   def text = player + " to MOVE a stone"
 }
 
-case class MoveStoneDrop(val player: Slot, index: Int) extends Gamestate {
+case class MoveStoneDrop(player: Slot, index: SlotIndex) extends Gamestate {
   def getPlayer = player
-  def text = player + " to select destination for stone " + index
+  def text = player + " to select destination for stone at position " + index
 }
 
-case class JumpStoneSelect(val player: Slot) extends Gamestate {
+case class JumpStoneSelect(player: Slot) extends Gamestate {
   def getPlayer = player
   def text = player + " to JUMP with a stone"
 }
-case class JumpStoneDrop(val player: Slot, index: Int) extends Gamestate {
+case class JumpStoneDrop(player: Slot, index: SlotIndex) extends Gamestate {
   def getPlayer = player
-  def text = player + " to select destination for stone " + index
+  def text = player + " to select destination for stone at position " + index
 }
 
 case class GameOver(winner: Slot) extends Gamestate {
@@ -50,13 +50,13 @@ class MillGame {
   var state: Gamestate = PlaceStone(White)
   var remainCount: Map[Slot, Int] = Map(Black -> 9, White -> 9)
   
-  def possibleMoves: Seq[(Int, Int)] = {
+  def possibleMoves: Seq[(SlotIndex, SlotIndex)] = {
     state match {
       case PlaceStone(_) | RemoveStone(_) | GameOver(_) => Seq.empty
       case state @ (MoveStoneSelect(_) |MoveStoneDrop(_, _)) =>
-        board.possibleMoves filter { case (from, to) => board.stones(from) == state.getPlayer }
+        board.possibleMoves filter { case (from, to) => board(from) == state.getPlayer }
       case state @ (JumpStoneSelect(_) | JumpStoneDrop(_, _)) =>
-        board.possibleJumps filter { case (from, to) => board.stones(from) == state.getPlayer }
+        board.possibleJumps filter { case (from, to) => board(from) == state.getPlayer }
     }
   }
 
@@ -93,7 +93,7 @@ class MillGame {
     remainCountChanged(remainCount)
   }
 
-  def playerInput(i: Int): Boolean = state match {
+  def playerInput(i: SlotIndex): Boolean = state match {
 
     case PlaceStone(player) =>
       if (board.canPlace(i)) {
