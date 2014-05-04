@@ -116,7 +116,7 @@ object EventHandler {
 /*
  *  Base trait for events.
  */
-trait EventNode[T] extends Event[T] with DepHolder with TimeStamped {
+trait EventNode[T] extends Event[T] with DepHolder {
 
   // memorize handler wrappers, so we can remove them
   lazy val handlers : collection.mutable.Map[(T => Unit), EventHandler[T]] =

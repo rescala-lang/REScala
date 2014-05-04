@@ -9,7 +9,7 @@ import react.log._
 import react.log.Logging
 
 /* A Reactive is a value type which has a dependency to other Reactives */
-trait Reactive extends Ordered[Reactive] {
+trait Reactive extends Ordered[Reactive] with TimeStamped {
   var level: Int = 0
   override def compare(other: Reactive): Int =
     other.level - this.level
@@ -54,7 +54,7 @@ trait Dependent extends Reactive {
   def dependsOnchanged(change: Any, dep: DepHolder)
 }
 
-trait ReactiveValue[+T] extends DepHolder with TimeStamped {
+trait ReactiveValue[+T] extends DepHolder {
   def getValue: T
 
   def apply(): T
