@@ -57,7 +57,26 @@ trait Dependent extends Reactive {
   def dependsOnchanged(change: Any, dep: DepHolder)
 }
 
-trait ReactiveValue[+T] extends DepHolder {
+trait ChangeEvents[+T] {
+  this: DepHolder =>
+
+  /**
+   * Create an event that fires every time the signal changes. It fires the tuple
+   *  (oldVal, newVal) for the signal. The first tuple is (null, newVal)
+   */
+  lazy val change: Event[(T, T)] = new ChangedEventNode(this)
+
+  /**
+   * Create an event that fires every time the signal changes. The value associated
+   * to the event is the new value of the signal
+   */
+  lazy val changed: Event[T] = change map ((x: (T, T)) => { x._2 })
+
+    /** Convenience function filtering to events which change this reactive to value */
+  def changedTo[V](value: V): Event[Unit] = change && { _._2 == value } dropParam
+}
+
+trait ReactiveValue[+T] extends ChangeEvents[T] with DepHolder {
   def getValue: T
 
   def apply(): T
@@ -84,23 +103,9 @@ object Var {
 }
 
 /* An inner node which depends on other values */
-trait Signal[+T] extends ReactiveValue[T] with Dependent {
-
-
-  /**
-   * Create an event that fires every time the signal changes. It fires the tuple
-   *  (oldVal, newVal) for the signal. The first tuple is (null, newVal)
-   */
-  def change[U >: T]: Event[(U, U)]
-
-  /**
-   * Create an event that fires every time the signal changes. The value associated
-   * to the event is the new value of the signal
-   */
-  def changed[U >: T]: Event[U] = change map ((x: (U, U)) => { x._2 })
-
-  /** Convenience function filtering to events which change this reactive to value */
-  def changedTo[V](value: V): Event[Unit] = change && { _._2 == value } dropParam
+trait Signal[+T]
+    extends ReactiveValue[T]
+    with Dependent {
 
   /** Return a Signal that gets updated only when e fires, and has the value of this Signal */
   def snapshot(e: Event[_]): Signal[T] = IFunctions.snapshot(e, this)

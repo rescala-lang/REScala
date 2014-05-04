@@ -190,8 +190,6 @@ class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T, E) => T)
       ReactiveEngine.addToEvalQueue(this)
     }
   }
-
-  def change[U >: T]: Event[(U, U)] = new ChangedEventNode[(U, U)](this)
 }
 
 class SwitchedSignal[+T, +E](e: Event[E], init: Signal[T], factory: IFunctions.Factory[E, T])
@@ -256,6 +254,4 @@ class SwitchedSignal[+T, +E](e: Event[E], init: Signal[T], factory: IFunctions.F
       ReactiveEngine.addToEvalQueue(this)
     }
   }
-
-  def change[U >: T]: Event[(U, U)] = new ChangedEventNode[(U, U)](this)
 }

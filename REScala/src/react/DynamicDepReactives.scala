@@ -105,9 +105,6 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
   }
 
   def apply() = getValue
-
-  def change[U >: T]: Event[(U, U)] = new ChangedEventNode[(U, U)](this)
-
 }
 
 /**

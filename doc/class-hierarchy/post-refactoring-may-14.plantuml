@@ -12,12 +12,21 @@ class DepHolder extends Reactive {
   +notifyDependents(Any)
 }
 
-class "ReactiveValue[+T]" as ReactiveValue extends DepHolder {
+class "ChangeEvents[+T]" as ChangeEvents {
+  +lazy val change: Event[T,T]
+  +lazy val changed: Event[T]
+  __
+}
+ChangeEvents ..> DepHolder
+
+class "ReactiveValue[+T]" as ReactiveValue {
   +getValue(): T
   +apply(): T
   +apply(SignalSynt[_]): T
   #reEvaluate(): T
 }
+ReactiveValue --|> ChangeEvents
+ReactiveValue --|> DepHolder
 
 class Dependent extends Reactive {
   +val dependOn: Buffer[DepHolder]
@@ -72,4 +81,5 @@ class Dependent << (T,#4682b4) >>
 class Reactive << (T,#4682b4) >>
 class Event << (T,#4682b4) >>
 class ReactiveValue << (T,#4682b4) >>
+class ChangeEvents << (T,#4682b4) >>
 @enduml

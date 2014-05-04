@@ -84,8 +84,6 @@ class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: => T)
       ReactiveEngine.addToEvalQueue(this)
     }
   }
-
-  def change[U >: T]: Event[(U, U)] = new ChangedEventNode[(U, U)](this)
 }
 
 /**
