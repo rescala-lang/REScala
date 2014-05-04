@@ -42,13 +42,7 @@ class VarSynt[T](initval: T) extends DepHolder with Var[T] {
 
   def update(v: T) = setVal(v)
 
-  override def apply(s: SignalSynt[_]) = {
-    if (level >= s.level) s.level = level + 1
-    s.reactivesDependsOnCurrent += this
-    getVal
-  }
-
-  def apply = getVal
+  def apply() = getVal
 
   def toSignal = SignalSynt { s: SignalSynt[T] => this(s) }
 
@@ -106,13 +100,6 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
   }
   override def dependsOnchanged(change: Any, dep: DepHolder) = {
     ReactiveEngine.addToEvalQueue(this)
-  }
-
-  /* Called by the reactives encountered in the evaluation */
-  def apply(s: SignalSynt[_]) = {
-    if (level >= s.level) s.level = level + 1
-    s.reactivesDependsOnCurrent += this
-    getVal
   }
 
   def apply() = getVal

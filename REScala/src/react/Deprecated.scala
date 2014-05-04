@@ -30,12 +30,6 @@ class StaticVar[T](initval: T) extends DepHolder with Var[T] {
 
   def update(v: T) = setVal(v)
 
-  def apply(s: SignalSynt[_]) = {
-    if (level >= s.level) s.level = level + 1
-    s.reactivesDependsOnCurrent += this
-    getVal
-  }
-
   def apply = getVal
 
   def toSignal = StaticSignal(this) { this.getVal }
@@ -59,11 +53,6 @@ class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: => T)
   def getVal = currentValue
 
   def apply(): T = currentValue
-  def apply(s: SignalSynt[_]) = {
-    if (level >= s.level) s.level = level + 1
-    s.reactivesDependsOnCurrent += this
-    getVal
-  }
 
   reactivesDependsOn.foreach(r => {
     if (r.level >= level) level = r.level + 1 // For glitch freedom

@@ -54,11 +54,17 @@ trait Dependent extends Reactive {
   def dependsOnchanged(change: Any, dep: DepHolder)
 }
 
-trait ReactiveValue[+T] {
+trait ReactiveValue[+T] extends DepHolder {
   def getVal: T
   def getValue: T
+
   def apply(): T
-  def apply(s: SignalSynt[_]): T
+
+  def apply(s: SignalSynt[_]): T = {
+    if (level >= s.level) s.level = level + 1
+    s.reactivesDependsOnCurrent += this
+    getVal
+  }
 }
 
 /* A root Reactive value without dependencies which can be set */

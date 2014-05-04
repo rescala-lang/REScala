@@ -150,11 +150,6 @@ class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T, E) => T)
   def getVal = currentValue
 
   def apply(): T = currentValue
-  def apply(s: SignalSynt[_]) = {
-    if (level >= s.level) s.level = level + 1
-    s.reactivesDependsOnCurrent += this
-    getVal
-  }
 
   // The only dependant is e
   dependOn += e
@@ -213,11 +208,6 @@ class SwitchedSignal[+T, +E](e: Event[E], init: Signal[T], factory: IFunctions.F
   def getVal = currentSignal.getVal
 
   def apply(): T = currentSignal.apply()
-  def apply(s: SignalSynt[_]) = {
-    if (level >= s.level) s.level = level + 1
-    s.reactivesDependsOnCurrent += this
-    getVal
-  }
 
   private def removeInner(s: Signal[_]) {
     dependOn -= s
