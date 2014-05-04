@@ -6,6 +6,7 @@ import millgame.versions.events._
 //import millgame.versions.signals._
 //import millgame.versions.signalonly._
 
+import millgame._
 import millgame.types._
 import millgame.types.Point
 import java.awt.Dimension
