@@ -54,7 +54,7 @@ trait Dependent extends Reactive {
   def dependsOnchanged(change: Any, dep: DepHolder)
 }
 
-trait ReactiveValue[+T] extends DepHolder {
+trait ReactiveValue[+T] extends DepHolder with TimeStamped {
   def getValue: T
 
   def apply(): T
@@ -69,7 +69,7 @@ trait ReactiveValue[+T] extends DepHolder {
 }
 
 /* A root Reactive value without dependencies which can be set */
-trait Var[T] extends ReactiveValue[T] with DepHolder with TimeStamped {
+trait Var[T] extends ReactiveValue[T] {
   def setValue(newval: T): Unit
   def update(v: T)
 
@@ -81,7 +81,7 @@ object Var {
 }
 
 /* An inner node which depends on other values */
-trait Signal[+T] extends ReactiveValue[T] with Dependent with DepHolder with TimeStamped {
+trait Signal[+T] extends ReactiveValue[T] with Dependent {
 
 
   /**
