@@ -1,8 +1,8 @@
 @startuml
 class Reactive {
   +var level: Int
+  +val timestamps: Buffer[Stamp]
 }
-TimeStamped <|.. Reactive
 
 class DepHolder extends Reactive {
   +val dependents: Buffer[Dependent]
@@ -65,16 +65,11 @@ class "Event[+T]" as Event extends DepHolder {
   rest omitted ...
 }
 
-class TimeStamped {
-  val timestamps: Buffer[Stamp]
-}
-
 class Signal << (T,#4682b4) >>
 class Var << (T,#4682b4) >>
 class DepHolder << (T,#4682b4) >>
 class Dependent << (T,#4682b4) >>
 class Reactive << (T,#4682b4) >>
 class Event << (T,#4682b4) >>
-class TimeStamped << (T,#4682b4) >>
 class ReactiveValue << (T,#4682b4) >>
 @enduml

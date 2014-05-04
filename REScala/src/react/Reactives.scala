@@ -9,7 +9,10 @@ import react.log._
 import react.log.Logging
 
 /* A Reactive is a value type which has a dependency to other Reactives */
-trait Reactive extends Ordered[Reactive] with TimeStamped {
+trait Reactive extends Ordered[Reactive] {
+  // testing
+  val timestamps: Buffer[Stamp] = ListBuffer()
+
   var level: Int = 0
   override def compare(other: Reactive): Int =
     other.level - this.level
@@ -167,10 +170,6 @@ object ReactiveEngine {
 
 // TODO: check the use of these classes. Originally was only for testing
 sealed case class Stamp(roundNum: Int, sequenceNum: Int)
-
-trait TimeStamped {
-  val timestamps: Buffer[Stamp] = ListBuffer()
-}
 
 object TS {
   private var _roundNum = 0
