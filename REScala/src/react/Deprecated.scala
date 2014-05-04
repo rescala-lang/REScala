@@ -53,7 +53,6 @@ class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: => T)
   private[this] var currentValue = expr
 
   def getValue = currentValue
-  def getVal = currentValue
 
   def apply(): T = currentValue
 

@@ -147,7 +147,6 @@ class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T, E) => T)
   private[this] var inQueue = false
 
   def getValue = currentValue
-  def getVal = currentValue
 
   def apply(): T = currentValue
 

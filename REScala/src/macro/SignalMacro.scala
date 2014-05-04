@@ -46,6 +46,7 @@ object SignalMacro {
         def uncheckedSubExpressions(tree: Tree): List[Tree] = tree match {
           case Select(expr, _) => expr :: uncheckedSubExpressions(expr)
           case Apply(expr, _) => expr :: uncheckedSubExpressions(expr)
+          case TypeApply(expr, _) => expr :: uncheckedSubExpressions(expr)
           case Typed(expr, _) => expr :: uncheckedSubExpressions(expr)
           case Block(_, expr) => expr :: Nil
           case _ => Nil
@@ -56,7 +57,7 @@ object SignalMacro {
     // generate warning for some common cases where called functions are 
     // either unnecessary (if free of side effects) or have side effects
     def isMethodWithPotentialNonLocalSideEffects(tree: Tree) = tree match {
-      case fun @ (Apply(_, _) | Select(_, _))
+      case fun @ (TypeApply(_, _) | Apply(_, _) | Select(_, _))
           if !(uncheckedExpressions contains fun) =>
         fun exists {
           case Apply(fun, _) =>
@@ -92,7 +93,7 @@ object SignalMacro {
     // every Signal { ... } macro instance gets expanded into a SignalSynt
     val signalSyntArgName = newTermName(c.fresh("s$"))
     val signalSyntArgIdent = Ident(signalSyntArgName)
-    signalSyntArgIdent.tpe = weakTypeOf[SignalSynt[A]]
+    signalSyntArgIdent setType weakTypeOf[SignalSynt[A]]
     
     // the signal values that will be cut out of the Signal expression
     val signalValues = ListBuffer.empty[ValDef]
@@ -125,7 +126,7 @@ object SignalMacro {
           case tree @ Apply(Select(reactive, apply), List())
               if isReactive(reactive) && apply.decoded == "apply" =>
             val reactiveApply = Select(reactive, newTermName("apply"))
-            reactiveApply.tpe = tree.tpe
+            reactiveApply setType tree.tpe
             Apply(super.transform(reactiveApply), List(signalSyntArgIdent))
           
           // cut signal values out of the signal expression, that could
@@ -140,8 +141,8 @@ object SignalMacro {
           //   Signal { s() }
           // and creates a signal value
           //   val s = event.count
-          case reactive @ (Apply(_, _) | Select(_, _))
-              if isReactive(reactive) &&
+          case reactive @ (TypeApply(_, _) | Apply(_, _) | Select(_, _))
+          if isReactive(reactive) &&
               // make sure that the expression e to be cut out
               // - refers to a term that is not a val or var
               //   or an accessor for a field
@@ -202,7 +203,7 @@ object SignalMacro {
             signalValues += signalDef
             
             val ident = Ident(signalName)
-            ident.tpe = reactive.tpe
+            ident setType reactive.tpe
             ident
           
           case _ =>

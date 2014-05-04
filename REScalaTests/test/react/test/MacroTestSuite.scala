@@ -109,7 +109,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
   }
 
 
-  @Test def conversionFunctionsWorkInSignals =  {
+  @Test def conversionFunctionWithArgumentInSignal =  {
 
     var test = 0
     val e = new ImperativeEvent[Int]()
@@ -121,6 +121,22 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(s.getValue == 4)
     e(3)
     assert(s.getValue == 6)
+    assert(test == 2)
+  }
+
+
+  @Test def conversionFunctionWithoutArgumentInSignal =  {
+
+    var test = 0
+    val e = new ImperativeEvent[Int]()
+    val s: Signal[Option[Int]] = Signal{ e.latestOption() }
+
+    s.change += { _ => test += 1 }
+    assert(s.getValue == None)
+    e(2)
+    assert(s.getValue == Some(2))
+    e(3)
+    assert(s.getValue == Some(3))
     assert(test == 2)
   }
 
@@ -327,5 +343,37 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(sig.getValue == 10)
     v1() = 80
     assert(sig.getValue == 80)
+  }
+
+
+  @Test def functionAsGetterForSignal = {
+    import scala.language.reflectiveCalls
+
+    def getSignal(obj: {def signal: Signal[Int]}) = obj.signal
+
+    val v = Var { 20 }
+    val o = new { val signal = Signal { v() } }
+
+    val sig = Signal { getSignal(o)() }
+
+    assert(sig.getValue == 20)
+    v() = 30
+    assert(sig.getValue == 30)
+  }
+
+
+  @Test def functionAsGetterForEventAndConversionFunction = {
+    import scala.language.reflectiveCalls
+
+    def getSignal(obj: {def evt: Event[Int]}) = obj.evt
+
+    val e = new ImperativeEvent[Int]
+    val o = new { val evt = e }
+
+    val sig = Signal { getSignal(o).latestOption() }
+
+    assert(sig.getValue == None)
+    e(30)
+    assert(sig.getValue == Some(30))
   }
 }
