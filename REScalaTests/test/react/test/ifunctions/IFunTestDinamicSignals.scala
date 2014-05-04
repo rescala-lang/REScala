@@ -257,11 +257,11 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
 
     // Now starts changing
     e(4)
-    assert(s.getVal == 1)
+    assert(s.getValue == 1)
     e(5)
-    assert(s.getVal == 2)
+    assert(s.getValue == 2)
     e(6)
-    assert(s.getVal == 3)
+    assert(s.getValue == 3)
 
   }
 
@@ -271,7 +271,7 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
     val s1 = Signal { v1() + 1 }
     val s = IFunctions.delay(s1, 3)
 
-    assert(s.getVal == 2)
+    assert(s.getValue == 2)
   }
 
   @Test def delay1_takesASnapshotWhenTheEventOccurs() {
@@ -281,17 +281,17 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
 
     // Initially remains the same for n times
     v1.setVal(2)
-    assert(s.getVal == 2)
+    assert(s.getValue == 2)
     v1.setVal(3)
-    assert(s.getVal == 2)
+    assert(s.getValue == 2)
     v1.setVal(4)
-    assert(s.getVal == 2)
+    assert(s.getValue == 2)
 
     // Now starts changing
     v1.setVal(5)
-    assert(s.getVal == 3)
+    assert(s.getValue == 3)
     v1.setVal(6)
-    assert(s.getVal == 4)
+    assert(s.getValue == 4)
 
   }
 
@@ -302,9 +302,9 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
     val s1 = Signal { v1() + 1 }
     val s2 = IFunctions.switchTo(e, s1)
 
-    assert(s2.getVal == 2)
+    assert(s2.getValue == 2)
     v1.setVal(2)
-    assert(s2.getVal == 3)
+    assert(s2.getValue == 3)
   }
 
   @Test def switchTo_theEventSwitchesTheValueToTheValueOfTheEvent() {
@@ -312,13 +312,13 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
     val v1 =  Var(1)
     val s1 = Signal{ v1() + 1 }
     val s2 = IFunctions.switchTo(e,s1)
-    
+
     e(1)
-    assert(s2.getVal == 1)
+    assert(s2.getValue == 1)
     e(100)
-    assert(s2.getVal == 100)
+    assert(s2.getValue == 100)
     v1.setVal(2)
-    assert(s2.getVal == 100)
+    assert(s2.getValue == 100)
   }
 
   /* switchOnce */
@@ -330,9 +330,9 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
     val s2 = Signal { v2() + 1 }
     val s3 = IFunctions.switchOnce(e, s1, s2)
 
-    assert(s3.getVal == 1)
+    assert(s3.getValue == 1)
     v1.setVal(1)
-    assert(s3.getVal == 2)
+    assert(s3.getValue == 2)
   }
 
   @Test def switchOnce_theEventSwitchesTheValueToTheValueOfTheOtherSignal() {
@@ -344,10 +344,10 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
     val s3 = IFunctions.switchOnce(e, s1, s2)
 
     e(1)
-    assert(s3.getVal == 11)
+    assert(s3.getValue == 11)
     e(2)
     v2.setVal(11)
-    assert(s3.getVal == 12)
+    assert(s3.getValue == 12)
   }
 
   @Test def switch_canImplementSnapshot() {
@@ -355,7 +355,7 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
       val init = Signal(s.getValue)
       IFunctions.switch(e)(init)(new IFunctions.Factory[E, T] {
         override def apply(eVal: E): (Signal[T], IFunctions.Factory[E, T]) = {
-          val freeze = s.getVal
+          val freeze = s.getValue
           (Signal(freeze), this)
         }
       })
@@ -389,9 +389,9 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
     }
     val s3 = IFunctions.reset(e, 100)(factory)
 
-    assert(s3.getVal == 1)
+    assert(s3.getValue == 1)
     v1.setVal(1)
-    assert(s3.getVal == 2)
+    assert(s3.getValue == 2)
 
   }
 
@@ -409,13 +409,13 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
 
     val s3 = IFunctions.reset(e, 100)(factory)
 
-    //assert(s3.getVal == 1)
+    //assert(s3.getValue == 1)
     v1.setVal(1)
-    assert(s3.getVal == 2)
+    assert(s3.getValue == 2)
     e(101)
-    assert(s3.getVal == 11)
+    assert(s3.getValue == 11)
     v2.setVal(11)
-    assert(s3.getVal == 12)
+    assert(s3.getValue == 12)
   }
 
   /* lift */
@@ -427,9 +427,9 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
     val lifted_f = IFunctions.lift(f)
     val s2 = lifted_f(s1)
 
-    assert(s2.getVal == 3)
+    assert(s2.getValue == 3)
     v.setVal(2)
-    assert(s2.getVal == 4)
+    assert(s2.getValue == 4)
   }
 
   /* change */
@@ -535,16 +535,11 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
     val a = Var(3)
     val b = Var(Signal(a()))
     val c = SignalSynt[Int](b) { (x: SignalSynt[Int]) => b(x)(x) }
-    //println(c.getVal) //outputs 3
+    //println(c.getValue) //outputs 3
     a() = 4
-    //println(c.getVal) //outputs 4
+    //println(c.getValue) //outputs 4
     b() = Signal(5)
-    //println(c.getVal) //outputs 4
+    //println(c.getValue) //outputs 4
 
   }
 }
-
-
-
-
-

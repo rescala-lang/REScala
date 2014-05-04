@@ -55,7 +55,6 @@ trait Dependent extends Reactive {
 }
 
 trait ReactiveValue[+T] extends DepHolder {
-  def getVal: T
   def getValue: T
 
   def apply(): T
@@ -63,8 +62,10 @@ trait ReactiveValue[+T] extends DepHolder {
   def apply(s: SignalSynt[_]): T = {
     if (level >= s.level) s.level = level + 1
     s.reactivesDependsOnCurrent += this
-    getVal
+    getValue
   }
+
+  protected[react] def reEvaluate(): T
 }
 
 /* A root Reactive value without dependencies which can be set */
@@ -82,9 +83,6 @@ object Var {
 /* An inner node which depends on other values */
 trait Signal[+T] extends ReactiveValue[T] with Dependent with DepHolder with TimeStamped {
 
-  protected[react] def triggerReevaluation()
-
-  protected[react] def reEvaluate(): T
 
   /**
    * Create an event that fires every time the signal changes. It fires the tuple

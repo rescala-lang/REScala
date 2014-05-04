@@ -14,34 +14,34 @@ import react._
 
 
 class GlitchFreedomTestSuite extends AssertionsForJUnit with MockitoSugar {
-  
-  
+
+
   class SuperInt(n: Int){ def in(s: Set[Int]) = s.contains(n) }
-  implicit def superInt(n: Int) = new SuperInt(n: Int) 
-  
-  
+  implicit def superInt(n: Int) = new SuperInt(n: Int)
+
+
   var v1: Var[Int] = _
   var v2: Var[Int] = _
   var v3: Var[Int] = _
   var s1: Signal[Int] = _
   var s2: Signal[Int] = _
   var s3: Signal[Int] = _
-  
+
 
 
   @Before def initialize() {
-    TS.reset      
+    TS.reset
   }
   @After def cleanup() {
-    TS.reset    
+    TS.reset
   }
 
   @Test def noGlitchesInSimpleCase() = {
-    
+
     v1 = Var(1)
     s1 = StaticSignal(v1) { 2 * v1.getValue }
     s2 = StaticSignal(v1) { 3 * v1.getValue }
-    s3 = StaticSignal(s1, s2) { s1.getVal + s2.getVal }
+    s3 = StaticSignal(s1, s2) { s1.getValue + s2.getValue }
 
     v1.setVal(3)
 
@@ -51,17 +51,17 @@ class GlitchFreedomTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(s3.timestamps.toList match { case List(Stamp(1, 3)) => true })
 
   }
-  
-  
+
+
    @Test def noGlitches() =  {
-    
+
     v1 = Var(1)
-    
+
     s1 = StaticSignal(v1){ 2 * v1.getValue }
     s2 = StaticSignal(v1){ 3 * v1.getValue }
-    s3 = StaticSignal(s1,s2){ s1.getVal + s2.getVal }
+    s3 = StaticSignal(s1,s2){ s1.getValue + s2.getValue }
 
-    
+
     v1.setVal(3)
 
     assert(v1.timestamps.toList match { case List(Stamp(1,0)) => true })
@@ -72,21 +72,9 @@ class GlitchFreedomTestSuite extends AssertionsForJUnit with MockitoSugar {
   }
 
 
-  
-  
-  
 
-  
+
+
+
+
 }
-
-
-
-
-
-
-
-
-
-
-
-

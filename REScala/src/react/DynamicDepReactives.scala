@@ -14,6 +14,9 @@ import react.events.ChangedEventNode
 /* A node that has nodes that depend on it */
 class VarSynt[T](initval: T) extends DepHolder with Var[T] {
   private[this] var value: T = initval
+
+  def getValue = value
+
   def setVal(newval: T): Unit = {
 
     val old = value
@@ -37,15 +40,14 @@ class VarSynt[T](initval: T) extends DepHolder with Var[T] {
       timestamps += TS.newTs // testing
     }
   }
-  def getValue = value
-  def getVal = value
 
   def update(v: T) = setVal(v)
 
-  def apply() = getVal
+  def apply() = getValue
 
   def toSignal = SignalSynt { s: SignalSynt[T] => this(s) }
 
+  def reEvaluate(): T = value
 }
 
 object VarSynt {
@@ -65,7 +67,7 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
   /* Initial evaluation */
   val reactivesDependsOnCurrent = ListBuffer[DepHolder]()
   private[this] var currentValue = reEvaluate()
-  def getVal = currentValue
+
   def getValue = currentValue
 
   def triggerReevaluation() = reEvaluate
@@ -102,7 +104,7 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
     ReactiveEngine.addToEvalQueue(this)
   }
 
-  def apply() = getVal
+  def apply() = getValue
 
   def change[U >: T]: Event[(U, U)] = new ChangedEventNode[(U, U)](this)
 

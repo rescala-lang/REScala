@@ -60,7 +60,7 @@ object IFunctions {
     }
 
   /** Return a Signal that is updated only when e fires, and has the value of the signal s */
-  def snapshot[V](e: Event[_], s: Signal[V]): Signal[V] = fold(e, s.getVal)((_, _) => s.getVal)
+  def snapshot[V](e: Event[_], s: Signal[V]): Signal[V] = fold(e, s.getValue)((_, _) => s.getValue)
 
   /**
    * Switch to a signal once, on the occurrence of event e. Initially the
@@ -70,8 +70,8 @@ object IFunctions {
   def switchTo[T](e: Event[T], original: Signal[T]): Signal[T] = {
     val latest = latestOption(e)
     StaticSignal(latest, original) {
-      latest.getVal match {
-        case None => original.getVal
+      latest.getValue match {
+        case None => original.getValue
         case Some(x) => x
       }
     }
@@ -81,9 +81,9 @@ object IFunctions {
   def switchOnce[T](e: Event[_], original: Signal[T], newSignal: Signal[T]): Signal[T] = {
     val latest = latestOption(e)
     StaticSignal(latest, original, newSignal) {
-      latest.getVal match {
-        case None => original.getVal
-        case Some(_) => newSignal.getVal
+      latest.getValue match {
+        case None => original.getValue
+        case Some(_) => newSignal.getValue
       }
     }
   }
@@ -91,23 +91,23 @@ object IFunctions {
   /** Switch back and forth between two signals on occurrence of event e */
   def toggle[T](e: Event[_], a: Signal[T], b: Signal[T]): Signal[T] = {
     val switched: Signal[Boolean] = iterate(e, false) { !_ }
-    StaticSignal(switched, a, b) { if (switched.getVal) b.getVal else a.getVal }
+    StaticSignal(switched, a, b) { if (switched.getValue) b.getValue else a.getValue }
   }
 
   /** Like latest, but delays the value of the resulting signal by n occurrences */
   def delay[T](e: Event[T], init: T, n: Int): Signal[T] = {
     val history: Signal[LinearSeq[T]] = last(e, n + 1)
     StaticSignal(history) {
-      val h = history.getVal
+      val h = history.getValue
       if (h.size <= n) init else h.head
     }
   }
 
   /** Delays this signal by n occurrences */
-  def delay[T](signal: Signal[T], n: Int): Signal[T] = delay(signal.changed, signal.getVal, n)
+  def delay[T](signal: Signal[T], n: Int): Signal[T] = delay(signal.changed, signal.getValue, n)
 
   /** lifts a function A => B to work on reactives */
-  def lift[A, B](f: A => B): (Signal[A] => Signal[B]) = (a => StaticSignal[B](a) { f(a.getVal) })
+  def lift[A, B](f: A => B): (Signal[A] => Signal[B]) = (a => StaticSignal[B](a) { f(a.getValue) })
 
   // TODO: work in progress
   /** Generates a signal from an event occurrence */
@@ -205,7 +205,6 @@ class SwitchedSignal[+T, +E](e: Event[E], init: Signal[T], factory: IFunctions.F
   private[this] var inQueue = false
 
   def getValue = currentSignal.getValue
-  def getVal = currentSignal.getVal
 
   def apply(): T = currentSignal.apply()
 

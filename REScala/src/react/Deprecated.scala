@@ -11,6 +11,7 @@ import react.events._
 /* An implementation of Var with static dependencies */
 class StaticVar[T](initval: T) extends DepHolder with Var[T] {
   private[this] var value: T = initval
+
   def setVal(newval: T): Unit = {
     val old = value
     if (newval != old) {
@@ -25,14 +26,16 @@ class StaticVar[T](initval: T) extends DepHolder with Var[T] {
       timestamps += TS.newTs // testing
     }
   }
+
   def getValue = value
-  def getVal = value
 
   def update(v: T) = setVal(v)
 
-  def apply = getVal
+  def apply = getValue
 
-  def toSignal = StaticSignal(this) { this.getVal }
+  def toSignal = StaticSignal(this) { this.getValue }
+
+  def reEvaluate(): T = value
 }
 /**
  * Create a StaticVar
