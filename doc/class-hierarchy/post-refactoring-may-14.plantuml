@@ -2,6 +2,7 @@
 class Reactive {
   +var level: Int
 }
+TimeStamped <|.. Reactive
 
 class DepHolder extends Reactive {
   +val dependents: Buffer[Dependent]
@@ -9,6 +10,13 @@ class DepHolder extends Reactive {
   +addDependent(Dependent)
   +removeDependent(Dependent)
   +notifyDependents(Any)
+}
+
+class "ReactiveValue[+T]" as ReactiveValue extends DepHolder {
+  +getValue(): T
+  +apply(): T
+  +apply(SignalSynt[_]): T
+  #reEvaluate(): T
 }
 
 class Dependent extends Reactive {
@@ -27,14 +35,10 @@ class "Var[T]" as Var {
   +toSignal(): Signal[T]
 }
 
-TimeStamped <|.. Var
-DepHolder <|-- Var
 ReactiveValue <|-- Var
 
 class "Signal[+T]" as Signal {
   __
-  #reEvaluate(): T
-  .. events ..
   +change[U >: T]: Event[(U, U)]
   +changed[U >: T](): Event[U]
   +changedTo[V](V): Event[Unit]
@@ -45,9 +49,7 @@ class "Signal[+T]" as Signal {
   +delay(Int): Signal[T]
 }
 
-DepHolder <|-- Signal
 Dependent <|-- Signal
-TimeStamped <|.. Signal
 ReactiveValue <|-- Signal
 
 class "Event[+T]" as Event extends DepHolder {
@@ -65,13 +67,6 @@ class "Event[+T]" as Event extends DepHolder {
 
 class TimeStamped {
   val timestamps: Buffer[Stamp]
-}
-
-class "ReactiveValue[+T]" as ReactiveValue {
-  +getVal(): T
-  +getValue(): T
-  +apply(): T
-  +apply(SignalSynt[_]): T
 }
 
 class Signal << (T,#4682b4) >>
