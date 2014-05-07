@@ -81,7 +81,6 @@ class DependenciesTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(v2.dependents.size == 1)
     assert(v3.dependents.size == 1)
     assert(s.dependents.size == 0)
-    // TODO why is s.dependOn.size 3!?
     assert(s.dependOn.size == 2)
   }
 

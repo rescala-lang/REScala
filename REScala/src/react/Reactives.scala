@@ -54,10 +54,9 @@ trait Dependent extends Reactive {
       ReactiveEngine.log.nodeAttached(this, dep)
     }
   }
-  def addAllDependOn(deps: TraversableOnce[DepHolder]) = {
-    for (dep <- deps) {
-      addDependOn(dep)
-    }
+  def setDependOn(deps: TraversableOnce[DepHolder]) = {
+    dependOn.clear
+    dependOn ++= deps
   }
   def removeDependOn(dep: DepHolder) = dependOn -= dep
 
