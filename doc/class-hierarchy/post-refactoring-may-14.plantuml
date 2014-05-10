@@ -49,7 +49,6 @@ class "Signal[+T]" as Signal {
 }
 Dependent <|-- Signal
 ReactiveValue <|-- Signal
-Foldable <|-- Signal
 
 class "Event[+T]" as Event {
   __
@@ -65,17 +64,15 @@ class "Event[+T]" as Event {
 }
 DepHolder <|-- Event
 
-class Foldable {
+class "FoldableReactive[+A]" as FoldableReactive {
   __
-  + {abstract} fold[A, B](Event[A], B)((B, A) => B): ReactiveValue[B]
+  + {abstract} fold[B](B)((B, A) => B): ReactiveValue[B]
   ..
-  +iterate[A](Event[_], A)(A => A): ReactiveValue[A]
-  +count(Event[_]): ReactiveValue[Int]
-  +set[A, B](Event[A], A)(A: A => B): ReactiveValue[B]
-  +latest[A]( Event[A], A): ReactiveValue[A]
-  +latestOption[A](Event[A]): ReactiveValue[Option[A]]
-  +list[A](Event[A]): ReactiveValue[Seq[A]]
-  +last[A](Event[A], Int): ReactiveValue[Seq[A]]
+  +iterate[B](B)(f: B => B): ReactiveValue[B]
+  +count(): ReactiveValue[Int]
+  +latestOption(): ReactiveValue[Option[A]]
+  +list(): ReactiveValue[Seq[A]]
+  +last(Int): ReactiveValue[Seq[A]]
 }
 
 class "Changing[+T]" as Changing {
@@ -94,5 +91,5 @@ class Reactive << (T,#4682b4) >>
 class Event << (T,#4682b4) >>
 class ReactiveValue << (T,#4682b4) >>
 class Changing << (T,#4682b4) >>
-class Foldable << (T,#4682b4) >>
+class FoldableReactive << (T,#4682b4) >>
 @enduml

@@ -103,64 +103,48 @@ object Var {
   def apply[T](initval: T) = new VarSynt(initval)
 }
 
-trait Foldable {
-  /** folds with a given fold function to create a reactive value */
-  def fold[T, A](e: Event[T], init: A)(f: (A, T) => A): ReactiveValue[A]
+trait FoldableReactive[+A] {
+  def fold[B](init: B)(f: (B, A) => B): ReactiveValue[B]
 
   /* ---------- derived methods follow ---------- */
 
   /** Iterates a value on the occurrence of the event. */
-  def iterate[A](e: Event[_], init: A)(f: A => A): ReactiveValue[A] =
-    fold(e, init)((acc, _) => f(acc))
+  def iterate[B](init: B)(f: B => B): ReactiveValue[B] =
+    fold(init)((acc, _) => f(acc))
 
   /**
     * Counts the occurrences of the event. Starts from 0, when the event has never been
     *  fired yet. The argument of the event is simply discarded.
     */
-  def count(e: Event[_]): ReactiveValue[Int] = fold(e, 0)((acc, _) => acc + 1)
+  def count: ReactiveValue[Int] = fold(0)((acc, _) => acc + 1)
 
-  /**
-    * Calls f on each occurrence of event e, setting the Signal to the generated value.
-    *  The initial signal is obtained by f(init)
-    */
-  def set[F, G](e: Event[F], init: F)(f: F => G): ReactiveValue[G] =
-    fold(e, f(init))((_, v) => f(v))
-
-  /** returns a signal holding the latest value of the event. */
-  def latest[T](e: Event[T], init: T): ReactiveValue[T] =
-    fold(e, init)((_, v) => v)
-
-  /** Holds the latest value of an event as an Option, None before the first event occured */
-  def latestOption[T](e: Event[T]): ReactiveValue[Option[T]] =
-    latest(e.map((x: T) => Some(x)), None)
+  /** Holds the latest value of an event as an Option, None before the
+    * first event occured */
+  def latestOption: ReactiveValue[Option[A]] =
+    fold(None: Option[A])((acc, v) => Some(v))
 
   /** collects events resulting in a variable holding a list of all values. */
-  def list[T](e: Event[T]): ReactiveValue[Seq[T]] =
-    fold(e, List[T]())((acc, v) => v :: acc)
+  def list: ReactiveValue[Seq[A]] =
+    fold(List[A]())((acc, v) => v :: acc)
 
   /**
    * Returns a signal which holds the last n events in a list. At the beginning the
    *  list increases in size up to when n values are available
    */
-  def last[T](e: Event[T], n: Int): ReactiveValue[Seq[T]] =
-    fold(e, Seq[T]()) { (acc,v) => acc.takeRight(n-1) :+ v }
+  def last(n: Int): ReactiveValue[Seq[A]] =
+    fold(Seq[A]()) { (acc,v) => acc.takeRight(n-1) :+ v }
 }
 
 /* An inner node which depends on other values */
 trait Signal[+T]
     extends ReactiveValue[T]
-    with Dependent
-    with Foldable {
-
-    /** folds with a given fold function to create a reactive value */
-  override def fold[T, A](e: Event[T], init: A)(f: (A, T) => A): ReactiveValue[A] =
-    new FoldedSignal(e, init, f)
+    with Dependent {
 
   /** Return a Signal that gets updated only when e fires, and has the value of this Signal */
   def snapshot(e: Event[_]): Signal[T] = IFunctions.snapshot(e, this)
 
   /** Switch to (and keep) event value on occurrence of e*/ // TODO: check types
-  def switchTo[U >: T](e: Event[U]): Signal[U] = IFunctions.switchTo(e, this)
+  def switchTo[U >: T](e: Event[U]): ReactiveValue[U] = IFunctions.switchTo(e, this)
 
   /** Switch to (and keep) event value on occurrence of e*/ // TODO: check types
   def switchOnce[V >: T](e: Event[_])(newSignal: Signal[V]): Signal[V] = IFunctions.switchOnce(e, this, newSignal)
