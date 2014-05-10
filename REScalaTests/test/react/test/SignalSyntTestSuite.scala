@@ -68,7 +68,7 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
 
   }
 
-  @Test def levelIsCorrectlyComputed =  {
+  @Test def levelIsCorrectlyComputed() =  {
 
     var test = 0
     val v = VarSynt(1)

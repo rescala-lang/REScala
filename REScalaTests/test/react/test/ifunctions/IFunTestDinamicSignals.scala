@@ -3,7 +3,7 @@ import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import react._
-import macro.SignalMacro.{ SignalM => Signal }
+import `macro`.SignalMacro.{ SignalM => Signal }
 import react.events._
 import scala.collection.LinearSeq
 
@@ -464,9 +464,9 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
     e += ((x: (Int, Int)) => { test = x })
 
     v1 setValue 2
-    assert(test == (null, 3))
+    assert(test == ((null, 3)))
     v1 setValue 3
-    assert(test == (3, 4))
+    assert(test == ((3, 4)))
   }
 
   /* changed */
@@ -530,7 +530,7 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
     assert(test == 1)
   }
 
-  @Test def xxxx = {
+  @Test def xxxx() = {
 
     val a = Var(3)
     val b = Var(Signal(a()))

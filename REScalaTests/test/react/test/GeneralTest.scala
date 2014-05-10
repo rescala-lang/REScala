@@ -12,33 +12,21 @@ import react._
 
 
 class GeneralEventTest extends AssertionsForJUnit with MockitoSugar {
-  
+
 
   @Before def initialize() {
-    TS.reset      
+    TS.reset
   }
   @After def cleanup() {
-    TS.reset    
+    TS.reset
   }
 
-  @Test def predicateEventIsExecutedOnlyIfThePredicateIsTrue = {
+  @Test def predicateEventIsExecutedOnlyIfThePredicateIsTrue() = {
     var test = 0
-    
+
     assert( true )
-    
-   
+
+
   }
-  
+
 }
-
-
-
-
-
-
-
-
-
-
-
-

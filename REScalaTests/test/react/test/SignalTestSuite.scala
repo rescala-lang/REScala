@@ -1,6 +1,5 @@
 package react.test
 
-
 import react.Handler
 import org.junit.Before
 import org.junit.Test
@@ -13,14 +12,11 @@ import react.Var
 
 class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
 
-
   var dh: DepHolder = _
   var v:  Var[Int]  = _
   var s1: Signal[Int] = _
   var s2: Signal[Int] = _
   var s3: Signal[Int] = _
-
-
 
   @Before def initialize() {}
 
@@ -42,8 +38,6 @@ class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
     verify(s3).dependsOnchanged({},dh)
 
   }
-
-
 
   @Test def signalReEvaluatesTheExpression() {
     v  = Var(0)
@@ -103,7 +97,7 @@ class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
 
   }
 
-  @Test def levelIsCorrectlyComputed =  {
+  @Test def levelIsCorrectlyComputed() =  {
 
     var test = 0
     v = Var(1)
@@ -116,12 +110,6 @@ class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(s1.level == 1)
     assert(s2.level == 1)
     assert(s3.level == 2)
-
-
   }
-
-
-
-
 
 }

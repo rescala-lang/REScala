@@ -89,7 +89,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
 
   }
 
-  @Test def levelIsCorrectlyComputed =  {
+  @Test def levelIsCorrectlyComputed() =  {
 
     var test = 0
     v = VarSynt(1)
@@ -109,7 +109,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
   }
 
 
-  @Test def conversionFunctionWithArgumentInSignal =  {
+  @Test def conversionFunctionWithArgumentInSignal() =  {
 
     var test = 0
     val e = new ImperativeEvent[Int]()
@@ -125,7 +125,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
   }
 
 
-  @Test def conversionFunctionWithoutArgumentInSignal =  {
+  @Test def conversionFunctionWithoutArgumentInSignal() =  {
 
     var test = 0
     val e = new ImperativeEvent[Int]()
@@ -141,7 +141,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
   }
 
 
-  @Test def conversionFunctionsWorkInSignalsInObjectConstructionInOverridenDef =  {
+  @Test def conversionFunctionsWorkInSignalsInObjectConstructionInOverridenDef() =  {
     // a previous macro implementation yielded wrong results for code of the
     // following form, see:
     // https://github.com/guidosalva/examples/pull/4/files#r11724000
@@ -149,9 +149,9 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
     var e = null: ImperativeEvent[Int]
     var s = null: Signal[Int]
 
-    abstract class A { def obj: Unit }
+    abstract class A { def obj(): Unit }
     val a = new A {
-      def obj = new {
+      def obj() = new {
         val evt = new ImperativeEvent[Int]()
         val sig: Signal[Int] = Signal{ 2 * evt.latest(0)() }
 
@@ -160,7 +160,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
       }
     }
 
-    a.obj
+    a.obj()
     s.change += { _ => test += 1 }
     assert(s.getValue == 0)
     e(2)
@@ -171,7 +171,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
   }
 
 
-  @Test def signalsNestedInVars =  {
+  @Test def signalsNestedInVars() =  {
 
     val a = Var(3)
     val b = Var(Signal(a()))
@@ -186,7 +186,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
   }
 
 
-  @Test def nestedDefinedSignals = {
+  @Test def nestedDefinedSignals() = {
     val a = Var(3)
     val b = Signal {
       val c = Signal { a() }
@@ -201,7 +201,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
   }
 
 
-  @Test def useOfInsideSignal = {
+  @Test def useOfInsideSignal() = {
     val outside = Var(1)
     val inside = Var(10)
 
@@ -219,7 +219,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
   }
 
 
-  @Test def useOfOutsideSignal = {
+  @Test def useOfOutsideSignal() = {
     val outside = Var(1)
     val inside = Var(10)
 
@@ -240,7 +240,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
   }
 
 
-  @Test def patternMatchingAndWildcard = {
+  @Test def patternMatchingAndWildcard() = {
     val v1 = Var(List(1, 2))
     val v2 = Var(100)
 
@@ -263,7 +263,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
   }
 
 
-  @Test def patternMatchingAnonymousFunction = {
+  @Test def patternMatchingAnonymousFunction() = {
     val s1 = Signal { List(Some(1), Some(2), None, Some(4), None) }
     val s2 = Signal {
       s1() collect { case Some(n) => n }
@@ -271,7 +271,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(s2.getValue == List(1, 2, 4))
   }
 
-  @Test def outerAndInnerValues = {
+  @Test def outerAndInnerValues() = {
     val v = Var(0)
     object obj {
       def sig = Signal { v() }
@@ -300,7 +300,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
   }
 
 
-  @Test def chainedSignals1 = {
+  @Test def chainedSignals1() = {
     import scala.language.reflectiveCalls
 
     val v1 = Var { 1 }
@@ -319,7 +319,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
   }
 
 
-  @Test def chainedSignals2 = {
+  @Test def chainedSignals2() = {
     import scala.language.reflectiveCalls
 
     val v1 = Var { 20 }
@@ -346,7 +346,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
   }
 
 
-  @Test def functionAsGetterForSignal = {
+  @Test def functionAsGetterForSignal() = {
     import scala.language.reflectiveCalls
 
     def getSignal(obj: {def signal: Signal[Int]}) = obj.signal
@@ -362,7 +362,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
   }
 
 
-  @Test def functionAsGetterForEventAndConversionFunction = {
+  @Test def functionAsGetterForEventAndConversionFunction() = {
     import scala.language.reflectiveCalls
 
     def getSignal(obj: {def evt: Event[Int]}) = obj.evt

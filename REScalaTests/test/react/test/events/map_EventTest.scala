@@ -13,16 +13,16 @@ import react._
 
 
 class map_EventTest extends AssertionsForJUnit with MockitoSugar {
-  
+
 
   @Before def initialize() {
-    TS.reset      
+    TS.reset
   }
   @After def cleanup() {
-    TS.reset    
+    TS.reset
   }
 
-  @Test def handlerOf_map_IsExecuted = {
+  @Test def handlerOf_map_IsExecuted() = {
     var test = 0
     val e1 = new ImperativeEvent[Int]()
     val e1_map = e1 map ((x: Int) => (x * 2))
@@ -33,7 +33,7 @@ class map_EventTest extends AssertionsForJUnit with MockitoSugar {
     assert(test == 2)
   }
 
-  @Test def theFunctionPassedTo_map_isApplied = {
+  @Test def theFunctionPassedTo_map_isApplied() = {
     var test = 0
     val e1 = new ImperativeEvent[Int]()
     val e1_map = e1 map ((x: Int) => (x * 2))
@@ -43,17 +43,5 @@ class map_EventTest extends AssertionsForJUnit with MockitoSugar {
     e1(10)
     assert(test == 20)
   }
-  
+
 }
-
-
-
-
-
-
-
-
-
-
-
-

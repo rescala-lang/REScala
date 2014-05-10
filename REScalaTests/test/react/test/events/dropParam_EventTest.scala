@@ -13,16 +13,16 @@ import react._
 
 
 class dropParam_EventTest extends AssertionsForJUnit with MockitoSugar {
-  
+
 
   @Before def initialize() {
-    TS.reset      
+    TS.reset
   }
   @After def cleanup() {
-    TS.reset    
+    TS.reset
   }
 
-  @Test def handlerOf_dropParam_IsExecuted = {
+  @Test def handlerOf_dropParam_IsExecuted() = {
     var test = 0
     val e1 = new ImperativeEvent[Int]()
     val e1_drop: EventNode[Unit] = e1.dropParam
@@ -32,17 +32,5 @@ class dropParam_EventTest extends AssertionsForJUnit with MockitoSugar {
     e1(10)
     assert(test == 2)
   }
-  
+
 }
-
-
-
-
-
-
-
-
-
-
-
-

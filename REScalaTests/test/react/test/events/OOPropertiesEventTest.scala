@@ -13,52 +13,52 @@ import react._
 
 /**
  * Demonstrates some of the features and of the limitations of the
- * current implementation w.r.t. OO design, like inheritance, 
- * polymorphism, overriding, etc... 
+ * current implementation w.r.t. OO design, like inheritance,
+ * polymorphism, overriding, etc...
  */
 class OOPropertiesEventTest extends AssertionsForJUnit with MockitoSugar {
-  
+
 
   @Before def initialize() {
-    TS.reset      
+    TS.reset
   }
   @After def cleanup() {
-    TS.reset    
+    TS.reset
   }
 
-  @Test def eventsAreInherited = {
-    
+  @Test def eventsAreInherited() = {
+
     var test = 0
-    
+
     class A {
       val e1 = new ImperativeEvent[Int]()
       e1 += ( (x: Int) => { test+=1 })
-    } 
-    class B extends A {
-      e1(10)      
     }
-    new B()
-    assert(test == 1)
-  }
-  
-
-   @Test def canTriggerEventsInSuperclass = {
-    
-    var test = 0
-    
-    class A {
-      val e1 = new ImperativeEvent[Int]()
-    } 
     class B extends A {
-      e1 += ( (x: Int) => { test+=1 })
-      e1(10)      
+      e1(10)
     }
     new B()
     assert(test == 1)
   }
 
-   
-  @Test def issueWithOverridingEvents {
+
+   @Test def canTriggerEventsInSuperclass() = {
+
+    var test = 0
+
+    class A {
+      val e1 = new ImperativeEvent[Int]()
+    }
+    class B extends A {
+      e1 += ( (x: Int) => { test+=1 })
+      e1(10)
+    }
+    new B()
+    assert(test == 1)
+  }
+
+
+  @Test def issueWithOverridingEvents() {
 
     try {
       var test = 0
@@ -83,12 +83,12 @@ class OOPropertiesEventTest extends AssertionsForJUnit with MockitoSugar {
     assert(false)
   }
 
-  
-  
+
+
   class X {}
   class Y extends X {}
 
-  @Test def refine = {
+  @Test def refine() = {
 
     var test = 0
 
@@ -107,15 +107,3 @@ class OOPropertiesEventTest extends AssertionsForJUnit with MockitoSugar {
   }
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
