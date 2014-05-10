@@ -32,8 +32,15 @@ object Reactive {
 trait DepHolder extends Reactive {
   val dependents: Buffer[Dependent] = ListBuffer()
   def addDependent(dep: Dependent) = {
-    dependents += dep
-    ReactiveEngine.log.nodeAttached(dep, this)
+    if (!dependents.contains(dep)) {
+      dependents += dep
+      ReactiveEngine.log.nodeAttached(dep, this)
+    }
+  }
+  def addAllDependent(deps: TraversableOnce[Dependent]) = {
+    for (dep <- deps) {
+      addDependent(dep)
+    }
   }
   def removeDependent(dep: Dependent) = dependents -= dep
   def notifyDependents(change: Any): Unit = {
@@ -47,8 +54,14 @@ trait Dependent extends Reactive {
   val dependOn: Buffer[DepHolder] = ListBuffer()
   // TODO: add level checking to have glitch freedom ?
   def addDependOn(dep: DepHolder) = {
-    dependOn += dep
-    ReactiveEngine.log.nodeAttached(this, dep)
+    if (!dependOn.contains(dep)) {
+      dependOn += dep
+      ReactiveEngine.log.nodeAttached(this, dep)
+    }
+  }
+  def setDependOn(deps: TraversableOnce[DepHolder]) = {
+    dependOn.clear
+    dependOn ++= deps
   }
   def removeDependOn(dep: DepHolder) = dependOn -= dep
 

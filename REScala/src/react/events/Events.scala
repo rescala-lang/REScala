@@ -155,7 +155,7 @@ class ChangedEventNode[T](d: DepHolder) extends EventNode[T] with Dependent {
 
   level = d.level + 1 // Static, for glitch freedom
   d.addDependent(this) // To be notified in the future
-  dependOn += d
+  addDependOn(d)
 
   var storedVal: (Any,Any) = (null, null)
 
@@ -181,7 +181,7 @@ class InnerEventNode[T](d: DepHolder) extends EventNode[T] with Dependent {
 
   level = d.level + 1 // For glitch freedom
   d.addDependent(this) // To be notified in the future
-  dependOn += d
+  addDependOn(d)
 
   var storedVal: Any = _
 
@@ -214,7 +214,7 @@ class EventNodeOr[T](ev1: Event[_ <: T], ev2: Event[_ <: T]) extends EventNode[T
   level = (ev1.level max ev2.level) + 1 // For glitch freedom
   ev1.addDependent(this) // To be notified in the future
   ev2.addDependent(this)
-  dependOn ++= List(ev1,ev2)
+  setDependOn(List(ev1,ev2))
 
   var storedVal: Any = _
 
@@ -248,7 +248,7 @@ class EventNodeAnd[T1, T2, T](ev1: Event[T1], ev2: Event[T2], merge: (T1, T2) =>
   level = (ev1.level max ev2.level) + 1 // For glitch freedom
   ev1.addDependent(this) // To be notified in the future
   ev2.addDependent(this)
-  dependOn ++= List(ev1,ev2)
+  setDependOn(List(ev1,ev2))
 
   var storedValEv1: T1 = _
   var storedValEv2: T2 = _
@@ -285,7 +285,7 @@ class EventNodeFilter[T](ev: Event[T], f: T => Boolean) extends EventNode[T] wit
 
   level = ev.level + 1   // For glitch freedom
   ev.addDependent(this) // To be notified in the future
-  dependOn += ev
+  addDependOn(ev)
 
   var storedVal: T = _
 
@@ -311,7 +311,7 @@ class EventNodeMap[T, U](ev: Event[T], f: T => U)
 
   level = ev.level + 1   // For glitch freedom
   ev.addDependent(this) // To be notified in the future
-  dependOn += ev
+  addDependOn(ev)
 
   var storedVal: T = _
 
@@ -342,7 +342,7 @@ class EventNodeExcept[T](accepted: Event[T], except: Event[T])
   level = (accepted.level max except.level) + 1 // For glitch freedom
   accepted.addDependent(this) // To be notified in the future
   except.addDependent(this)
-  dependOn ++= List(accepted,except)
+  setDependOn(List(accepted,except))
 
   var storedVal: Any = _
 

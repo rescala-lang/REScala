@@ -86,7 +86,7 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
     ReactiveEngine.log.nodeEvaluationEnded(this)
     //val hashAfter = tmp.hashCode
 
-    dependOn ++= reactivesDependsOnCurrent
+    setDependOn(reactivesDependsOnCurrent)
     reactivesDependsOnCurrent.map(_.addDependent(this))
 
     /* Notify dependents only of the value changed */
