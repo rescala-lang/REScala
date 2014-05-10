@@ -4,32 +4,16 @@ class Reactive {
   +val timestamps: Buffer[Stamp]
 }
 
-class DepHolder extends Reactive {
+class DepHolder {
   +val dependents: Buffer[Dependent]
   __
   +addDependent(Dependent)
   +removeDependent(Dependent)
   +notifyDependents(Any)
 }
+Reactive <|-- DepHolder
 
-class "ChangeEvents[+T]" as ChangeEvents {
-  +lazy val change: Event[T,T]
-  +lazy val changed: Event[T]
-  __
-  +def changedTo[V](value: V): Event[Unit]
-}
-ChangeEvents ..> DepHolder
-
-class "ReactiveValue[+T]" as ReactiveValue {
-  +getValue(): T
-  +apply(): T
-  +apply(SignalSynt[_]): T
-  #reEvaluate(): T
-}
-ReactiveValue --|> ChangeEvents
-ReactiveValue --|> DepHolder
-
-class Dependent extends Reactive {
+class Dependent {
   +val dependOn: Buffer[DepHolder]
   __
   +addDependOn(DepHolder)
@@ -37,6 +21,15 @@ class Dependent extends Reactive {
   +dependsOnchanged(Any, DepHolder)
   #triggerReevaluation()
 }
+Reactive <|-- Dependent
+
+class "ReactiveValue[+T]" as ReactiveValue {
+  +getValue(): T
+  +apply(): T
+  +apply(SignalSynt[_]): T
+  #reEvaluate(): T
+}
+DepHolder <|-- ReactiveValue
 
 class "Var[T]" as Var {
   __
@@ -44,7 +37,6 @@ class "Var[T]" as Var {
   +update(T)
   +toSignal(): Signal[T]
 }
-
 ReactiveValue <|-- Var
 
 class "Signal[+T]" as Signal {
@@ -55,11 +47,11 @@ class "Signal[+T]" as Signal {
   +toggle[V >: T](Event[_])(Signal[V])
   +delay(Int): Signal[T]
 }
-
 Dependent <|-- Signal
 ReactiveValue <|-- Signal
+Foldable <|-- Signal
 
-class "Event[+T]" as Event extends DepHolder {
+class "Event[+T]" as Event {
   __
   ++=(T => Unit)
   +-=(T => Unit)
@@ -71,6 +63,28 @@ class "Event[+T]" as Event extends DepHolder {
   ..
   rest omitted ...
 }
+DepHolder <|-- Event
+
+class Foldable {
+  __
+  + {abstract} fold[A, B](Event[A], B)((B, A) => B): ReactiveValue[B]
+  ..
+  +iterate[A](Event[_], A)(A => A): ReactiveValue[A]
+  +count(Event[_]): ReactiveValue[Int]
+  +set[A, B](Event[A], A)(A: A => B): ReactiveValue[B]
+  +latest[A]( Event[A], A): ReactiveValue[A]
+  +latestOption[A](Event[A]): ReactiveValue[Option[A]]
+  +list[A](Event[A]): ReactiveValue[Seq[A]]
+  +last[A](Event[A], Int): ReactiveValue[Seq[A]]
+}
+
+class "Changing[+T]" as Changing {
+  +lazy val change: Event[T,T]
+  +lazy val changed: Event[T]
+  __
+  +def changedTo[V](value: V): Event[Unit]
+}
+Changing <|-- ReactiveValue
 
 class Signal << (T,#4682b4) >>
 class Var << (T,#4682b4) >>
@@ -79,5 +93,6 @@ class Dependent << (T,#4682b4) >>
 class Reactive << (T,#4682b4) >>
 class Event << (T,#4682b4) >>
 class ReactiveValue << (T,#4682b4) >>
-class ChangeEvents << (T,#4682b4) >>
+class Changing << (T,#4682b4) >>
+class Foldable << (T,#4682b4) >>
 @enduml
