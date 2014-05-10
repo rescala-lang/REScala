@@ -30,6 +30,7 @@ class "ReactiveValue[+T]" as ReactiveValue {
   #reEvaluate(): T
 }
 DepHolder <|-- ReactiveValue
+FoldableReactive <|-- ReactiveValue
 
 class "Var[T]" as Var {
   __

@@ -77,7 +77,10 @@ trait Changing[+T] {
   def changedTo[V](value: V): Event[Unit] = (changed && { _ == value }).dropParam
 }
 
-trait ReactiveValue[+T] extends Changing[T] with DepHolder {
+trait ReactiveValue[+T] extends Changing[T] with FoldableReactive[T] with DepHolder {
+  override def fold[B](init: B)(f: (B, T) => B): ReactiveValue[B] =
+    new FoldedSignal(changed, init, f)
+
   def getValue: T
 
   def apply(): T
