@@ -73,7 +73,7 @@ trait ChangeEvents[+T] {
   lazy val changed: Event[T] = change map ((x: (T, T)) => { x._2 })
 
     /** Convenience function filtering to events which change this reactive to value */
-  def changedTo[V](value: V): Event[Unit] = change && { _._2 == value } dropParam
+  def changedTo[V](value: V): Event[Unit] = (changed && { _ == value }).dropParam
 }
 
 trait ReactiveValue[+T] extends ChangeEvents[T] with DepHolder {

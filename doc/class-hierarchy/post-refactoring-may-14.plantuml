@@ -16,6 +16,7 @@ class "ChangeEvents[+T]" as ChangeEvents {
   +lazy val change: Event[T,T]
   +lazy val changed: Event[T]
   __
+  +def changedTo[V](value: V): Event[Unit]
 }
 ChangeEvents ..> DepHolder
 
@@ -48,9 +49,6 @@ ReactiveValue <|-- Var
 
 class "Signal[+T]" as Signal {
   __
-  +change[U >: T]: Event[(U, U)]
-  +changed[U >: T](): Event[U]
-  +changedTo[V](V): Event[Unit]
   +snapshot(Event[_]): Signal[T]
   +switchTo[U >: T](Event[U]): Signal[U]
   +switchOnce[V >: T](Event[_])(Signal[V]): Signal[V]
