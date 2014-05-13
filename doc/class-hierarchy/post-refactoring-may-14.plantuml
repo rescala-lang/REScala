@@ -85,6 +85,10 @@ class "Changing[+A]" as Changing {
 }
 Changing <|-- ReactiveValue
 
+Signal <|-- SignalSynt
+Signal <|-- StaticSignal
+Var <|-- VarSynt
+Var <|-- StaticVar
 
 class Signal << (T,#4682b4) >>
 class Var << (T,#4682b4) >>
