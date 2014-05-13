@@ -90,21 +90,23 @@ trait Changing[+T] {
   def changedTo[V](value: V): Event[Unit] = (changed && { _ == value }).dropParam
 }
 
-trait ReactiveValue[+T] extends Changing[T] with FoldableReactive[T] with DepHolder {
-  override def fold[B](init: B)(f: (B, T) => B): ReactiveValue[B] =
+trait ReactiveValue[+A] extends Changing[A] with FoldableReactive[A] with DepHolder {
+  override def fold[B](init: B)(f: (B, A) => B): ReactiveValue[B] =
     new FoldedSignal(changed, init, f)
 
-  def getValue: T
+  def getValue: A
 
-  def apply(): T
+  def apply(): A
 
-  def apply(s: SignalSynt[_]): T = {
+  def apply(s: SignalSynt[_]): A = {
     if (level >= s.level) s.level = level + 1
     s.reactivesDependsOnCurrent += this
     getValue
   }
 
-  protected[react] def reEvaluate(): T
+  def map[B](f: A => B): ReactiveValue[B]
+
+  protected[react] def reEvaluate(): A
 }
 
 /* A root Reactive value without dependencies which can be set */

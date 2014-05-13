@@ -23,43 +23,44 @@ class Dependent {
 }
 Reactive <|-- Dependent
 
-class "ReactiveValue[+T]" as ReactiveValue {
-  +getValue(): T
-  +apply(): T
-  +apply(SignalSynt[_]): T
-  #reEvaluate(): T
+class "ReactiveValue[+A]" as ReactiveValue {
+  +getValue(): A
+  +apply(): A
+  +apply(SignalSynt[_]): A
+  #reEvaluate(): A
+  +map[B](f: A => B): ReactiveValue[B]
 }
 DepHolder <|-- ReactiveValue
 FoldableReactive <|-- ReactiveValue
 
-class "Var[T]" as Var {
+class "Var[A]" as Var {
   __
-  +setValue(T): Unit
-  +update(T)
-  +toSignal(): Signal[T]
+  +setValue(A): Unit
+  +update(A)
+  +toSignal(): Signal[A]
 }
 ReactiveValue <|-- Var
 
-class "Signal[+T]" as Signal {
+class "Signal[+A]" as Signal {
   __
-  +snapshot(Event[_]): Signal[T]
-  +switchTo[U >: T](Event[U]): Signal[U]
-  +switchOnce[V >: T](Event[_])(Signal[V]): Signal[V]
-  +toggle[V >: T](Event[_])(Signal[V])
-  +delay(Int): Signal[T]
+  +snapshot(Event[_]): Signal[A]
+  +switchTo[U >: A](Event[U]): Signal[U]
+  +switchOnce[V >: A](Event[_])(Signal[V]): Signal[V]
+  +toggle[V >: A](Event[_])(Signal[V])
+  +delay(Int): Signal[A]
 }
 Dependent <|-- Signal
 ReactiveValue <|-- Signal
 
-class "Event[+T]" as Event {
+class "Event[+A]" as Event {
   __
-  ++=(T => Unit)
-  +-=(T => Unit)
+  ++=(A => Unit)
+  +-=(A => Unit)
   +||(Event)
   +&&(Event)
-  +filter[U >: T](U => Boolean): Event[U]
-  +\\\[U >: T](Event[U]): Event[U]
-  +map[U, S >: T](S => U): Event[U]
+  +filter[U >: A](U => Boolean): Event[U]
+  +\\\[U >: A](Event[U]): Event[U]
+  +map[U, S >: A](S => U): Event[U]
   ..
   rest omitted ...
 }
@@ -76,13 +77,14 @@ class "FoldableReactive[+A]" as FoldableReactive {
   +last(Int): ReactiveValue[Seq[A]]
 }
 
-class "Changing[+T]" as Changing {
-  +lazy val change: Event[T,T]
-  +lazy val changed: Event[T]
+class "Changing[+A]" as Changing {
+  +lazy val change: Event[A,A]
+  +lazy val changed: Event[A]
   __
   +def changedTo[V](value: V): Event[Unit]
 }
 Changing <|-- ReactiveValue
+
 
 class Signal << (T,#4682b4) >>
 class Var << (T,#4682b4) >>

@@ -48,6 +48,8 @@ class VarSynt[T](initval: T) extends DepHolder with Var[T] {
   def toSignal = SignalSynt { s: SignalSynt[T] => this(s) }
 
   def reEvaluate(): T = value
+
+  def map[B](f: T => B): Var[B] = VarSynt(f(getValue))
 }
 
 object VarSynt {
@@ -105,6 +107,9 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
   }
 
   def apply() = getValue
+
+  def map[B](f: T => B): Signal[B] =
+    SignalSynt(List(this)) { s: SignalSynt[B] => f(this(s)) }
 }
 
 /**

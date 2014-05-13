@@ -9,7 +9,7 @@ import react.events._
  */
 
 /* An implementation of Var with static dependencies */
-class StaticVar[T](initval: T) extends DepHolder with Var[T] {
+class StaticVar[T](initval: T) extends Var[T] {
   private[this] var value: T = initval
 
   def setValue(newval: T): Unit = {
@@ -36,6 +36,8 @@ class StaticVar[T](initval: T) extends DepHolder with Var[T] {
   def toSignal = StaticSignal(this) { this.getValue }
 
   def reEvaluate(): T = value
+
+  def map[B](f: T => B): Var[B] = StaticVar(f(getValue))
 }
 /**
  * Create a StaticVar
@@ -45,8 +47,7 @@ object StaticVar {
 }
 
 /* A dependent reactive value which has static dependencies */
-class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: => T)
-  extends Dependent with DepHolder with Signal[T] {
+class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: => T) extends Signal[T] {
 
   var inQueue = false
 
@@ -77,12 +78,15 @@ class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: => T)
     }
     tmp
   }
+
   override def dependsOnchanged(change: Any, dep: DepHolder) = {
     if (!inQueue) {
       inQueue = true
       ReactiveEngine.addToEvalQueue(this)
     }
   }
+
+  def map[B](f: T => B): Signal[B] = StaticSignal(List(this))(f(this()))
 }
 
 /**
