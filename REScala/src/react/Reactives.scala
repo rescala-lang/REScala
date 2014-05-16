@@ -90,8 +90,8 @@ trait Changing[+T] {
   def changedTo[V](value: V): Event[Unit] = (changed && { _ == value }).dropParam
 }
 
-trait ReactiveValue[+A] extends Changing[A] with FoldableReactive[A] with DepHolder {
-  override def fold[B](init: B)(f: (B, A) => B): ReactiveValue[B] =
+trait Signal[+A] extends Changing[A] with FoldableReactive[A] with DepHolder {
+  override def fold[B](init: B)(f: (B, A) => B): Signal[B] =
     new FoldedSignal(changed, init, f)
 
   def getValue: A
@@ -104,13 +104,29 @@ trait ReactiveValue[+A] extends Changing[A] with FoldableReactive[A] with DepHol
     getValue
   }
 
-  def map[B](f: A => B): ReactiveValue[B]
+  def map[B](f: A => B): Signal[B]
 
   protected[react] def reEvaluate(): A
+
+  /** Return a Signal that gets updated only when e fires, and has the value of this Signal */
+  def snapshot(e: Event[_]): Signal[A] = IFunctions.snapshot(e, this)
+
+  /** Switch to (and keep) event value on occurrence of e*/ // TODO: check types
+  def switchTo[U >: A](e: Event[U]): Signal[U] = IFunctions.switchTo(e, this)
+
+  /** Switch to (and keep) event value on occurrence of e*/ // TODO: check types
+  def switchOnce[V >: A](e: Event[_])(newSignal: Signal[V]): Signal[V] = IFunctions.switchOnce(e, this, newSignal)
+
+  /** Switch back and forth between this and the other Signal on occurrence of event e */
+  def toggle[V >: A](e: Event[_])(other: Signal[V]) = IFunctions.toggle(e, this, other)
+
+  /** Delays this signal by n occurrences */
+  def delay(n: Int): Signal[A] = IFunctions.delay(this, n)
+
 }
 
 /* A root Reactive value without dependencies which can be set */
-trait Var[T] extends ReactiveValue[T] {
+trait Var[T] extends Signal[T] {
   def setValue(newval: T): Unit
   def update(v: T)
 
@@ -122,58 +138,39 @@ object Var {
 }
 
 trait FoldableReactive[+A] {
-  def fold[B](init: B)(f: (B, A) => B): ReactiveValue[B]
+  def fold[B](init: B)(f: (B, A) => B): Signal[B]
 
   /* ---------- derived methods follow ---------- */
 
   /** Iterates a value on the occurrence of the event. */
-  def iterate[B](init: B)(f: B => B): ReactiveValue[B] =
+  def iterate[B](init: B)(f: B => B): Signal[B] =
     fold(init)((acc, _) => f(acc))
 
   /**
     * Counts the occurrences of the event. Starts from 0, when the event has never been
     *  fired yet. The argument of the event is simply discarded.
     */
-  def count: ReactiveValue[Int] = fold(0)((acc, _) => acc + 1)
+  def count: Signal[Int] = fold(0)((acc, _) => acc + 1)
 
   /** Holds the latest value of an event as an Option, None before the
     * first event occured */
-  def latestOption: ReactiveValue[Option[A]] =
+  def latestOption: Signal[Option[A]] =
     fold(None: Option[A])((acc, v) => Some(v))
 
   /** collects events resulting in a variable holding a list of all values. */
-  def list: ReactiveValue[Seq[A]] =
+  def list: Signal[Seq[A]] =
     fold(List[A]())((acc, v) => v :: acc)
 
   /**
    * Returns a signal which holds the last n events in a list. At the beginning the
    *  list increases in size up to when n values are available
    */
-  def last(n: Int): ReactiveValue[Seq[A]] =
+  def last(n: Int): Signal[Seq[A]] =
     fold(Seq[A]()) { (acc,v) => acc.takeRight(n-1) :+ v }
 }
 
 /* An inner node which depends on other values */
-trait Signal[+T]
-    extends ReactiveValue[T]
-    with Dependent {
-
-  /** Return a Signal that gets updated only when e fires, and has the value of this Signal */
-  def snapshot(e: Event[_]): Signal[T] = IFunctions.snapshot(e, this)
-
-  /** Switch to (and keep) event value on occurrence of e*/ // TODO: check types
-  def switchTo[U >: T](e: Event[U]): ReactiveValue[U] = IFunctions.switchTo(e, this)
-
-  /** Switch to (and keep) event value on occurrence of e*/ // TODO: check types
-  def switchOnce[V >: T](e: Event[_])(newSignal: Signal[V]): Signal[V] = IFunctions.switchOnce(e, this, newSignal)
-
-  /** Switch back and forth between this and the other Signal on occurrence of event e */
-  def toggle[V >: T](e: Event[_])(other: Signal[V]) = IFunctions.toggle(e, this, other)
-
-  /** Delays this signal by n occurrences */
-  def delay(n: Int): Signal[T] = IFunctions.delay(this, n)
-
-}
+trait DependentSignal[+T] extends Signal[T] with Dependent
 
 /**
  * The engine that schedules the (glitch-free) evaluation

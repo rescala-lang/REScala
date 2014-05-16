@@ -58,7 +58,7 @@ object VarSynt {
 
 /* A dependant reactive value with dynamic dependencies (depending signals can change during evaluation) */
 class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: SignalSynt[T] => T)
-  extends Dependent with DepHolder with Signal[T] {
+  extends DependentSignal[T] {
 
   def this(expr: SignalSynt[T] => T) = this(List())(expr)
 

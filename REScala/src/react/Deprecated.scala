@@ -47,7 +47,7 @@ object StaticVar {
 }
 
 /* A dependent reactive value which has static dependencies */
-class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: => T) extends Signal[T] {
+class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: => T) extends DependentSignal[T] {
 
   var inQueue = false
 
@@ -98,12 +98,12 @@ object StaticSignal {
     new StaticSignal(reactivesDependsOn)(expr)
 
   type DH = DepHolder
-  def apply[T]()(expr: => T): Signal[T] = apply(List())(expr)
-  def apply[T](r1: DH)(expr: => T): Signal[T] = apply(List(r1))(expr)
-  def apply[T](r1: DH, r2: DH)(expr: => T): Signal[T] = apply(List(r1, r2))(expr)
-  def apply[T](r1: DH, r2: DH, r3: DH)(expr: => T): Signal[T] = apply(List(r1, r2, r3))(expr)
-  def apply[T](r1: DH, r2: DH, r3: DH, r4: DH)(expr: => T): Signal[T] = apply(List(r1, r2, r3, r4))(expr)
-  def apply[T](r1: DH, r2: DH, r3: DH, r4: DH, r5: DH)(expr: => T): Signal[T] = apply(List(r1, r2, r3, r4, r5))(expr)
+  def apply[T]()(expr: => T): DependentSignal[T] = apply(List())(expr)
+  def apply[T](r1: DH)(expr: => T): DependentSignal[T] = apply(List(r1))(expr)
+  def apply[T](r1: DH, r2: DH)(expr: => T): DependentSignal[T] = apply(List(r1, r2))(expr)
+  def apply[T](r1: DH, r2: DH, r3: DH)(expr: => T): DependentSignal[T] = apply(List(r1, r2, r3))(expr)
+  def apply[T](r1: DH, r2: DH, r3: DH, r4: DH)(expr: => T): DependentSignal[T] = apply(List(r1, r2, r3, r4))(expr)
+  def apply[T](r1: DH, r2: DH, r3: DH, r4: DH, r5: DH)(expr: => T): DependentSignal[T] = apply(List(r1, r2, r3, r4, r5))(expr)
 }
 
 /* TODO: Do we really need two types of handlers? Can we use EventHandler? */

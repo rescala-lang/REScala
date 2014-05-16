@@ -4,16 +4,17 @@ import scala.collection.mutable.ListBuffer
 import scala.language.experimental.macros
 import scala.reflect.macros.Context
 
+import react.DependentSignal
 import react.Signal
 import react.SignalSynt
 import react.Var
 
 object SignalMacro {
 
-  def SignalM[A](expression: A): Signal[A] = macro SignalMacro[A]
+  def SignalM[A](expression: A): DependentSignal[A] = macro SignalMacro[A]
 
   def SignalMacro[A: c.WeakTypeTag](c: Context)(expression: c.Expr[A]):
-      c.Expr[Signal[A]] = {
+      c.Expr[DependentSignal[A]] = {
     import c.universe._
 
 
@@ -241,13 +242,13 @@ object SignalMacro {
     // by the object, but were cut out of the signal expression during the code
     // transformation
     val block =
-      Typed(Block(signalValues.toList, body), TypeTree(weakTypeOf[Signal[A]]))
+      Typed(Block(signalValues.toList, body), TypeTree(weakTypeOf[DependentSignal[A]]))
 
 
 //    out.append((c resetLocalAttrs block) + "\n\n")
 //    out.close
 
 
-    c.Expr[Signal[A]](c resetLocalAttrs block)
+    c.Expr[DependentSignal[A]](c resetLocalAttrs block)
   }
 }

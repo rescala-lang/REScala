@@ -14,9 +14,9 @@ class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
 
   var dh: DepHolder = _
   var v:  Var[Int]  = _
-  var s1: Signal[Int] = _
-  var s2: Signal[Int] = _
-  var s3: Signal[Int] = _
+  var s1: DependentSignal[Int] = _
+  var s2: DependentSignal[Int] = _
+  var s3: DependentSignal[Int] = _
 
   @Before def initialize() {}
 
@@ -24,9 +24,9 @@ class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
 
     dh = new {} with DepHolder {}
     v  = Var(0)
-    s1 = mock[Signal[Int]]
-    s2 = mock[Signal[Int]]
-    s3 = mock[Signal[Int]]
+    s1 = mock[DependentSignal[Int]]
+    s2 = mock[DependentSignal[Int]]
+    s3 = mock[DependentSignal[Int]]
 
     dh.addDependent(s1)
     dh.addDependent(s2)
