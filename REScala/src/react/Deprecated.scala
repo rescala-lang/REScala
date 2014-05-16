@@ -33,8 +33,6 @@ class StaticVar[T](initval: T) extends Var[T] {
 
   def apply = getValue
 
-  def toSignal = StaticSignal(this) { this.getValue }
-
   def reEvaluate(): T = value
 
   def map[B](f: T => B): Var[B] = StaticVar(f(getValue))

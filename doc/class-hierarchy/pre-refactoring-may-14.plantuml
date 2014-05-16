@@ -25,7 +25,6 @@ class "Var[T]" as Var extends DepHolder {
   __
   +setValue(T): Unit
   +update(T)
-  +toSignal(): Signal[T]
   ..
   +getValue(): T
   +getVal(): T

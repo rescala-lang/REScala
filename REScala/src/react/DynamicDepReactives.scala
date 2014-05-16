@@ -45,8 +45,6 @@ class VarSynt[T](initval: T) extends DepHolder with Var[T] {
 
   def apply() = getValue
 
-  def toSignal = SignalSynt { s: SignalSynt[T] => this(s) }
-
   def reEvaluate(): T = value
 
   def map[B](f: T => B): Var[B] = VarSynt(f(getValue))

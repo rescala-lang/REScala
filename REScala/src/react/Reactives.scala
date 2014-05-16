@@ -129,8 +129,6 @@ trait Signal[+A] extends Changing[A] with FoldableReactive[A] with DepHolder {
 trait Var[T] extends Signal[T] {
   def setValue(newval: T): Unit
   def update(v: T)
-
-  def toSignal: Signal[T]
 }
 
 object Var {

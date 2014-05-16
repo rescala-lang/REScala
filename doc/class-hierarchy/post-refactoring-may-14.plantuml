@@ -42,7 +42,6 @@ class "Var[A]" as Var {
   __
   +setValue(A): Unit
   +update(A)
-  +toSignal(): Signal[A]
 }
 Signal <|-- Var
 
