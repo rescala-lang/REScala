@@ -16,7 +16,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     val e = new ImperativeEvent[Int]()
     val f = (x:Int,y:Int)=>(x+y)
     val s: Signal[Int] = e.fold(10)(f)
-    assert(s.getValue == 10)
+    assert(s.get == 10)
   }
 
   @Test def fold_theResultSignalIncreasesWhenEventsOccur() {
@@ -25,7 +25,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     val s: Signal[Int] = e.fold(10)(f)
     e(1)
     e(1)
-    assert(s.getValue == 12)
+    assert(s.get == 12)
   }
 
 
@@ -34,7 +34,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     val e = new ImperativeEvent[Int]()
     val f = (x:Int)=>(x)
     val s: Signal[Int] = e.iterate(10)(f)
-    assert(s.getValue == 10)
+    assert(s.get == 10)
   }
 
   @Test def iterate_theFunctionisExecutedEveryTimeTheEventFires() {
@@ -70,11 +70,11 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     val f = (x:Int)=>{test+=x; x}  // TODO: I would expect that f is A=>Unit, since the result is never used
     val s: Signal[Int] = e.iterate(10)(f)
     e(1)
-    assert(s.getValue == 10)
+    assert(s.get == 10)
     e(2)
-    assert(s.getValue == 10)
+    assert(s.get == 10)
     e(1)
-    assert(s.getValue == 10)
+    assert(s.get == 10)
   }
 
 /* latest */
@@ -82,7 +82,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     val e = new ImperativeEvent[Int]()
     val s: Signal[Int] = e.latest(10)
 
-    assert(s.getValue == 10)
+    assert(s.get == 10)
   }
 
   @Test def latest_theFunctionisExecutedEveryTimeTheEventFires() {
@@ -90,11 +90,11 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     val s: Signal[Int] = e.latest(10)
 
     e(1)
-    assert(s.getValue == 1)
+    assert(s.get == 1)
     e(2)
-    assert(s.getValue == 2)
+    assert(s.get == 2)
     e(1)
-    assert(s.getValue == 1)
+    assert(s.get == 1)
   }
 
 
@@ -103,7 +103,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     val e = new ImperativeEvent[Int]()
     val s: Signal[Option[Int]] = IFunctions.latestOption(e)
 
-    assert(s.getValue == None)
+    assert(s.get == None)
   }
 
   @Test def latestOption_theFunctionisExecutedEveryTimeTheEventFires() {
@@ -111,11 +111,11 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     val s: Signal[Option[Int]] = IFunctions.latestOption(e)
 
     e(1)
-    assert(s.getValue == Option(1))
+    assert(s.get == Option(1))
     e(2)
-    assert(s.getValue == Option(2))
+    assert(s.get == Option(2))
     e(1)
-    assert(s.getValue == Option(1))
+    assert(s.get == Option(1))
   }
 
 
@@ -124,7 +124,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     val e = new ImperativeEvent[Int]()
     val s: Signal[LinearSeq[Int]] = e.last(5)
 
-    assert(s.getValue == List())
+    assert(s.get == List())
   }
 
   @Test def last_collectsTheLastNEvents() {
@@ -132,16 +132,16 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     val s: Signal[LinearSeq[Int]] = e.last(5)
 
 
-    assert(s.getValue == LinearSeq())
+    assert(s.get == LinearSeq())
     e(1)
-    assert(s.getValue == LinearSeq(1))
+    assert(s.get == LinearSeq(1))
     e(2)
-    assert(s.getValue == LinearSeq(1,2))
+    assert(s.get == LinearSeq(1,2))
 
     e(3);e(4);e(5)
-    assert(s.getValue == LinearSeq(1,2,3,4,5))
+    assert(s.get == LinearSeq(1,2,3,4,5))
     e(6)
-    assert(s.getValue == LinearSeq(2,3,4,5,6))
+    assert(s.get == LinearSeq(2,3,4,5,6))
   }
 
 /* list */
@@ -149,55 +149,55 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     val e = new ImperativeEvent[Int]()
     val s = e.list
 
-    assert(s.getValue == List())
+    assert(s.get == List())
   }
 
   @Test def list_theFunctionisExecutedEveryTimeTheEventFires() {
     val e = new ImperativeEvent[Int]()
     val s = e.list
 
-    assert(s.getValue == List())
+    assert(s.get == List())
     e(1)
-    assert(s.getValue == List(1))
+    assert(s.get == List(1))
     e(2)
-    assert(s.getValue == List(2,1))
+    assert(s.get == List(2,1))
 
     e(3);e(4);e(5);e(6)
-    assert(s.getValue == List(6,5,4,3,2,1))
+    assert(s.get == List(6,5,4,3,2,1))
   }
 
 /* toggle */
   @Test def toggle_theInitialValueIsSetCorrectly() {
     val e = new ImperativeEvent[Int]()
     val v1 = Var(1)
-    val s1 = StaticSignal(v1){ v1.getValue + 1 }
+    val s1 = StaticSignal(v1){ v1.get + 1 }
     val v2 =  Var(11)
-    val s2 = StaticSignal(v2){ v2.getValue + 1 }
+    val s2 = StaticSignal(v2){ v2.get + 1 }
     val s = e.toggle(s1,s1)
 
-    assert(s.getValue == 2)
+    assert(s.get == 2)
   }
 
   @Test def toggle_theEventSwitchesTheSignal() {
     val e = new ImperativeEvent[Int]()
     val v1 =  Var(1)
-    val s1 = StaticSignal(v1){ v1.getValue + 1 }
+    val s1 = StaticSignal(v1){ v1.get + 1 }
     val v2 =  Var(11)
-    val s2 = StaticSignal(v2){ v2.getValue + 1 }
+    val s2 = StaticSignal(v2){ v2.get + 1 }
     val s = e.toggle(s1,s2)
 
-    assert(s.getValue == 2)
+    assert(s.get == 2)
     e(1)
-    assert(s.getValue == 12)
+    assert(s.get == 12)
     v2.setValue(12)
-    assert(s.getValue == 13)
+    assert(s.get == 13)
     v1.setValue(2)
-    assert(s.getValue == 13)
+    assert(s.get == 13)
     e(1)
     v1.setValue(3)
-    assert(s.getValue == 4)
+    assert(s.get == 4)
     v2.setValue(13)
-    assert(s.getValue == 4)
+    assert(s.get == 4)
 
   }
 
@@ -206,25 +206,25 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
   @Test def snapshot_theInitialValueIsSetCorrectly() {
     val e = new ImperativeEvent[Int]()
     val v1 =  Var(1)
-    val s1 = StaticSignal(v1){ v1.getValue + 1 }
+    val s1 = StaticSignal(v1){ v1.get + 1 }
     val s = e.snapshot(s1)
 
-    assert(s.getValue == 2)
+    assert(s.get == 2)
   }
 
   @Test def snapshot_takesASnapshotWhenTheEventOccurs() {
     val e = new ImperativeEvent[Int]()
     val v1 =  Var(1)
-    val s1 = StaticSignal(v1){ v1.getValue + 1 }
+    val s1 = StaticSignal(v1){ v1.get + 1 }
     val s = e.snapshot(s1)
 
     e(1)
-    assert(s.getValue == 2)
+    assert(s.get == 2)
 
     v1.setValue(2)
-    assert(s.getValue == 2)
+    assert(s.get == 2)
     e(1)
-    assert(s.getValue == 3)
+    assert(s.get == 3)
   }
 
 
@@ -233,7 +233,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     val e = new ImperativeEvent[Int]()
     val s = e.delay(0,3)
 
-    assert(s.getValue == 0)
+    assert(s.get == 0)
   }
 
   @Test def delay_takesASnapshotWhenTheEventOccurs() {
@@ -242,48 +242,48 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
 
     // Initially remains the same for n times
     e(1)
-    assert(s.getValue == 0)
+    assert(s.get == 0)
     e(2)
-    assert(s.getValue == 0)
+    assert(s.get == 0)
     e(3)
-    assert(s.getValue == 0)
+    assert(s.get == 0)
 
     // Now starts changing
     e(4)
-    assert(s.getValue == 1)
+    assert(s.get == 1)
     e(5)
-    assert(s.getValue == 2)
+    assert(s.get == 2)
     e(6)
-    assert(s.getValue == 3)
+    assert(s.get == 3)
   }
 
 /* delay[T](signal: Signal[T], n: Int): Signal[T] */
   @Test def delay1_theInitialValueIsSetCorrectly() {
     val v1 =  Var(1)
-    val s1 = StaticSignal(v1){ v1.getValue + 1 }
+    val s1 = StaticSignal(v1){ v1.get + 1 }
     val s = IFunctions.delay(s1,3)
 
-    assert(s.getValue == 2)
+    assert(s.get == 2)
   }
 
   @Test def delay1_takesASnapshotWhenTheEventOccurs() {
     val v1 =  Var(1)
-    val s1 = StaticSignal(v1){ v1.getValue + 1 }
+    val s1 = StaticSignal(v1){ v1.get + 1 }
     val s = IFunctions.delay(s1,3)
 
     // Initially remains the same for n times
     v1.setValue(2)
-    assert(s.getValue == 2)
+    assert(s.get == 2)
     v1.setValue(3)
-    assert(s.getValue == 2)
+    assert(s.get == 2)
     v1.setValue(4)
-    assert(s.getValue == 2)
+    assert(s.get == 2)
 
     // Now starts changing
     v1.setValue(5)
-    assert(s.getValue == 3)
+    assert(s.get == 3)
     v1.setValue(6)
-    assert(s.getValue == 4)
+    assert(s.get == 4)
   }
 
 
@@ -291,26 +291,26 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
   @Test def switchTo_theInitialValueIsSetToTheSignal() {
     val e = new ImperativeEvent[Int]()
     val v1 =  Var(1)
-    val s1 = StaticSignal(v1){ v1.getValue + 1 }
+    val s1 = StaticSignal(v1){ v1.get + 1 }
     val s2 = IFunctions.switchTo(e,s1)
 
-    assert(s2.getValue == 2)
+    assert(s2.get == 2)
     v1.setValue(2)
-    assert(s2.getValue == 3)
+    assert(s2.get == 3)
   }
 
   @Test def switchTo_theEventSwitchesTheValueToTheValueOfTheEvent() {
     val e = new ImperativeEvent[Int]()
     val v1 =  Var(1)
-    val s1 = StaticSignal(v1){ v1.getValue + 1 }
+    val s1 = StaticSignal(v1){ v1.get + 1 }
     val s2 = IFunctions.switchTo(e,s1)
 
     e(1)
-    assert(s2.getValue == 1)
+    assert(s2.get == 1)
     e(100)
-    assert(s2.getValue == 100)
+    assert(s2.get == 100)
     v1.setValue(2)
-    assert(s2.getValue == 100)
+    assert(s2.get == 100)
   }
 
 
@@ -319,28 +319,28 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     val e = new ImperativeEvent[Int]()
     val v1 =  Var(0)
     val v2 =  Var(10)
-    val s1 = StaticSignal(v1){ v1.getValue + 1 }
-    val s2 = StaticSignal(v2){ v2.getValue + 1 }
+    val s1 = StaticSignal(v1){ v1.get + 1 }
+    val s2 = StaticSignal(v2){ v2.get + 1 }
     val s3 = IFunctions.switchOnce(e,s1,s2)
 
-    assert(s3.getValue == 1)
+    assert(s3.get == 1)
     v1.setValue(1)
-    assert(s3.getValue == 2)
+    assert(s3.get == 2)
   }
 
   @Test def switchOnce_theEventSwitchesTheValueToTheValueOfTheOtherSignal() {
     val e = new ImperativeEvent[Int]()
     val v1 =  Var(0)
     val v2 =  Var(10)
-    val s1 = StaticSignal(v1){ v1.getValue + 1 }
-    val s2 = StaticSignal(v2){ v2.getValue + 1 }
+    val s1 = StaticSignal(v1){ v1.get + 1 }
+    val s2 = StaticSignal(v2){ v2.get + 1 }
     val s3 = IFunctions.switchOnce(e,s1,s2)
 
     e(1)
-    assert(s3.getValue == 11)
+    assert(s3.get == 11)
     e(2)
     v2.setValue(11)
-    assert(s3.getValue == 12)
+    assert(s3.get == 12)
   }
 
 
@@ -349,8 +349,8 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     val e = new ImperativeEvent[Int]()
     val v1 =  Var(0)
     val v2 =  Var(10)
-    val s1 = StaticSignal(v1){ v1.getValue + 1 }
-    val s2 = StaticSignal(v2){ v2.getValue + 1 }
+    val s1 = StaticSignal(v1){ v1.get + 1 }
+    val s2 = StaticSignal(v2){ v2.get + 1 }
 
     def factory(x: Int) = x%2 match {
       case 0 => s1
@@ -358,9 +358,9 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     }
     val s3 = IFunctions.reset(e,100)(factory)
 
-    assert(s3.getValue == 1)
+    assert(s3.get == 1)
     v1.setValue(1)
-    assert(s3.getValue == 2)
+    assert(s3.get == 2)
 
   }
 
@@ -368,8 +368,8 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     val e = new ImperativeEvent[Int]()
     val v1 =  Var(0)
     val v2 =  Var(10)
-    val s1 = StaticSignal(v1){ v1.getValue + 1 }
-    val s2 = StaticSignal(v2){ v2.getValue + 1 }
+    val s1 = StaticSignal(v1){ v1.get + 1 }
+    val s2 = StaticSignal(v2){ v2.get + 1 }
 
     def factory(x: Int) = x%2 match {
       case 0 => s1
@@ -378,13 +378,13 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
 
     val s3 = IFunctions.reset(e,100)(factory)
 
-    //assert(s3.getValue == 1)
+    //assert(s3.get == 1)
     v1.setValue(1)
-    assert(s3.getValue == 2)
+    assert(s3.get == 2)
     e(101)
-    assert(s3.getValue == 11)
+    assert(s3.get == 11)
     v2.setValue(11)
-    assert(s3.getValue == 12)
+    assert(s3.get == 12)
   }
 
 
@@ -401,15 +401,15 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
 /* lift */
   @Test def lift_createsAFunctionThatWorksWithSignals() {
     val v =  Var(1)
-    val s1 = StaticSignal(v){ v.getValue + 1 }
+    val s1 = StaticSignal(v){ v.get + 1 }
     def f(x: Int): Int = x + 1
 
     val lifted_f = IFunctions.lift(f)
     val s2 = lifted_f(s1)
 
-    assert(s2.getValue == 3)
+    assert(s2.get == 3)
     v.setValue(2)
-    assert(s2.getValue == 4)
+    assert(s2.get == 4)
   }
 
 
@@ -425,7 +425,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
   @Test def change_isNotTriggeredOnCreation() {
     var test = 0
     val v1 =  Var(1)
-    val s1 = StaticSignal(v1){ v1.getValue + 1 }
+    val s1 = StaticSignal(v1){ v1.get + 1 }
     val e: Event[(Int,Int)] = s1.change
     e += ((x:(Int,Int))=>{test+=1})
 
@@ -435,7 +435,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
   @Test def change_isTriggeredWhenTheSignalChanges() {
     var test = 0
     val v1 =  Var(1)
-    val s1 = StaticSignal(v1){ v1.getValue + 1 }
+    val s1 = StaticSignal(v1){ v1.get + 1 }
     val e: Event[(Int,Int)] = s1.change
     e += ((x:(Int,Int))=>{test+=1})
 
@@ -448,7 +448,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
   @Test def change_theValueOfTheEventReflectsTheChangeInTheSignal() {
     var test = (0,0)
     val v1 =  Var(1)
-    val s1 = StaticSignal(v1){ v1.getValue + 1 }
+    val s1 = StaticSignal(v1){ v1.get + 1 }
     val e: Event[(Int,Int)] = s1.change
     e += ((x:(Int,Int))=>{test = x})
 
@@ -463,7 +463,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
   @Test def changed_isNotTriggeredOnCreation() {
     var test = 0
     val v1 =  Var(1)
-    val s1 = StaticSignal(v1){ v1.getValue + 1 }
+    val s1 = StaticSignal(v1){ v1.get + 1 }
     val e: Event[Int] = s1.changed
     e += ((x:Int)=>{test+=1})
 
@@ -473,7 +473,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
   @Test def changed_isTriggeredWhenTheSignalChanges() {
     var test = 0
     val v1 =  Var(1)
-    val s1 = StaticSignal(v1){ v1.getValue + 1 }
+    val s1 = StaticSignal(v1){ v1.get + 1 }
     val e: Event[Int] = s1.changed
     e += ((x:Int)=>{test+=1})
 
@@ -486,7 +486,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
   @Test def changed_theValueOfTheEventReflectsTheChangeInTheSignal() {
     var test = 0
     val v1 =  Var(1)
-    val s1 = StaticSignal(v1){ v1.getValue + 1 }
+    val s1 = StaticSignal(v1){ v1.get + 1 }
     val e: Event[Int] = s1.changed
     e += ((x:Int)=>{test = x})
 
@@ -501,7 +501,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
   @Test def changedTo_isNotTriggeredOnCreation() {
     var test = 0
     val v1 =  Var(1)
-    val s1 = StaticSignal(v1){ v1.getValue + 1 }
+    val s1 = StaticSignal(v1){ v1.get + 1 }
     val e: Event[Unit] = s1.changedTo(1)
     e += ((x:Unit)=>{test+=1})
 
@@ -511,7 +511,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
   @Test def changedTo_isTriggeredWhenTheSignalHasTheGivenValue() {
     var test = 0
     val v1 =  Var(1)
-    val s1 = StaticSignal(v1){ v1.getValue + 1 }
+    val s1 = StaticSignal(v1){ v1.get + 1 }
     val e: Event[Unit] = s1.changedTo(3)
     e += ((x:Unit)=>{test+=1})
 
@@ -533,7 +533,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     def snapshot[T,A](s: Signal[A])(e: Event[T]): Signal[A] = {
         return IFunctions.switch(e)(s)(new Factory[T, A] {
           override def apply(eVal: T): (Signal[A],Factory[T, A]) = {
-            val freeze = s.getValue
+            val freeze = s.get
             return (StaticSignal(){freeze}, this)
           }
         })
@@ -542,25 +542,25 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
   def snapshot_theInitialValueIsSetCorrectly() {
     val e = new ImperativeEvent[Int]()
     val v1 =  Var(1)
-    val s1 = StaticSignal(v1){ v1.getValue + 1 }
+    val s1 = StaticSignal(v1){ v1.get + 1 }
     val s = snapshot(s1)(e)
 
-    assert(s.getValue == 2)
+    assert(s.get == 2)
   }
 
   def snapshot_takesASnapshotWhenTheEventOccurs() {
     val e = new ImperativeEvent[Int]()
     val v1 =  Var(1)
-    val s1 = StaticSignal(v1){ v1.getValue + 1 }
+    val s1 = StaticSignal(v1){ v1.get + 1 }
     val s = snapshot(s1)(e)
 
     e(1)
-    assert(s.getValue == 2)
+    assert(s.get == 2)
 
     v1.setValue(2)
-    assert(s.getValue == 2)
+    assert(s.get == 2)
     e(1)
-    assert(s.getValue == 3)
+    assert(s.get == 3)
   }
 
   snapshot_theInitialValueIsSetCorrectly()

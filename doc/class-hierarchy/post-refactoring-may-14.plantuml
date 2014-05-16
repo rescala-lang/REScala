@@ -24,7 +24,7 @@ class Dependent {
 Reactive <|-- Dependent
 
 class "Signal[+A]" as Signal {
-  +getValue(): A
+  +get(): A
   +apply(): A
   +apply(SignalSynt[_]): A
   #reEvaluate(): A

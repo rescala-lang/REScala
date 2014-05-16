@@ -27,15 +27,15 @@ class StaticVar[T](initval: T) extends Var[T] {
     }
   }
 
-  def getValue = value
+  def get = value
 
   def update(v: T) = setValue(v)
 
-  def apply = getValue
+  def apply = get
 
   def reEvaluate(): T = value
 
-  def map[B](f: T => B): Var[B] = StaticVar(f(getValue))
+  def map[B](f: T => B): Var[B] = StaticVar(f(get))
 }
 /**
  * Create a StaticVar
@@ -51,7 +51,7 @@ class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: => T) extends 
 
   private[this] var currentValue = expr
 
-  def getValue = currentValue
+  def get = currentValue
 
   def apply(): T = currentValue
 

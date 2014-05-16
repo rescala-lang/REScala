@@ -32,18 +32,18 @@ class SignalsAndVarsTestSuite extends AssertionsForJUnit with MockitoSugar {
     v1 = Var(1)
     v2 = Var(2)
 
-    s1 = StaticSignal(List(v1,v2)){ v1.getValue + v2.getValue }
+    s1 = StaticSignal(List(v1,v2)){ v1.get + v2.get }
     s1 addDependent Handler{ test += 1 }
 
-    assert(s1.getValue == 3)
+    assert(s1.get == 3)
     assert(test == 0)
 
     v2.setValue(3)
-    assert(s1.getValue == 4)
+    assert(s1.get == 4)
     assert(test == 1)
 
     v2.setValue(3)
-    assert(s1.getValue == 4)
+    assert(s1.get == 4)
     assert(test == 1)
 
   }

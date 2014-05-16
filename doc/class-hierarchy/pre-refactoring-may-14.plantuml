@@ -26,7 +26,7 @@ class "Var[T]" as Var extends DepHolder {
   +setValue(T): Unit
   +update(T)
   ..
-  +getValue(): T
+  +get(): T
   +getVal(): T
   +apply(): T
   +apply(SignalSynt[_]): T
@@ -35,7 +35,7 @@ class "Var[T]" as Var extends DepHolder {
 class "Signal[+T]" as Signal {
   #val timestamps: ListBuffer[Stamp]
   __
-  +getValue(): T
+  +get(): T
   +getVal(): T
   +apply(): T
   +apply(SignalSynt[_]): T

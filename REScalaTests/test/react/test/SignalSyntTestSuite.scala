@@ -16,21 +16,21 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
     var s: SignalSynt[Int] = SignalSynt[Int](v){s=> v(s) + i }
     i = 2
     v.setValue(2)
-    assert(s.getValue == 4)
+    assert(s.get == 4)
   }
 
   @Test def theExpressionIsNoteEvaluatedEveryTimeGetValIsCalled() {
     var a = 10
     val s: SignalSynt[Int] = SignalSynt[Int](List())(s=> 1 + 1 + a )
-    assert(s.getValue === 12)
+    assert(s.get === 12)
     a = 11
-    assert(s.getValue === 12)
+    assert(s.get === 12)
   }
 
 
   @Test def simpleSignalReturnsCorrectExpressions() {
     var s: SignalSynt[Int] = SignalSynt[Int](List())(s=> 1 + 1 + 1 )
-    assert(s.getValue === 3)
+    assert(s.get === 3)
   }
 
   @Test def theExpressionIsEvaluatedOnlyOnce() {
@@ -73,9 +73,9 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
     var test = 0
     val v = VarSynt(1)
 
-    val s1 = SignalSynt[Int](v){s=> 2 * v.getValue }
-    val s2 = SignalSynt[Int](v){s=> 3 * v.getValue }
-    val s3 = SignalSynt[Int](s1,s2){s=> s1.getValue + s2.getValue }
+    val s1 = SignalSynt[Int](v){s=> 2 * v.get }
+    val s2 = SignalSynt[Int](v){s=> 3 * v.get }
+    val s3 = SignalSynt[Int](s1,s2){s=> s1.get + s2.get }
 
     assert(v.level == 0)
     assert(s1.level == 1)
@@ -100,23 +100,23 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
     }
 
     assert(i == 1)
-    assert(s.getValue == 0)
+    assert(s.get == 0)
     v2.setValue(1)
     assert(i == 2)
-    assert(s.getValue == 1)
+    assert(s.get == 1)
     v3.setValue(11) // No effect
     assert(i == 2)
-    assert(s.getValue == 1)
+    assert(s.get == 1)
 
     v1.setValue(false)
     assert(i == 3)
-    assert(s.getValue == 11)
+    assert(s.get == 11)
     v3.setValue(12)
     assert(i == 4)
-    assert(s.getValue == 12)
+    assert(s.get == 12)
     v2.setValue(2) // No effect
     assert(i == 4)
-    assert(s.getValue == 12)
+    assert(s.get == 12)
   }
 
 
@@ -164,7 +164,7 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
     val s: SignalSynt[Int] = SignalSynt[Int]{ s: SignalSynt[Int]=>
       changes += 1; v(s) + 1 }
     assert(changes == 1)
-    assert(s.getValue == 2)
+    assert(s.get == 2)
     v.setValue(2)
     assert(changes == 2)
     v.setValue(2)

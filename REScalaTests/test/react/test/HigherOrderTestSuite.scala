@@ -15,10 +15,10 @@ class HigherOrderTestSuite extends AssertionsForJUnit with MockitoSugar {
     val s1: Signal[Int] = Signal { v() }
     val s2: Signal[Signal[Int]] = Signal { s1 }
 
-    assert(s2.getValue.getValue == 42)
+    assert(s2.get.get == 42)
 
     v()= 0
-    assert(s2.getValue.getValue == 0)
+    assert(s2.get.get == 0)
   }
 
 
@@ -28,10 +28,10 @@ class HigherOrderTestSuite extends AssertionsForJUnit with MockitoSugar {
     val s2: Signal[Signal[Int]] = Signal { s1 }
     val sDeref = Signal { s2()() }
 
-    assert(sDeref.getValue == 42)
+    assert(sDeref.get == 42)
 
     v()= 0
-    assert(sDeref.getValue == 0)
+    assert(sDeref.get == 0)
   }
 
 
@@ -90,7 +90,7 @@ class HigherOrderTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(sDerefChanged)
     assert(sHigherChanged)
 
-    assert(sDeref.getValue == 1234)
+    assert(sDeref.get == 1234)
   }
 
 
@@ -123,7 +123,7 @@ class HigherOrderTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(sDeref2_bChanged)
 
 
-    assert(s2.getValue.getValue.getValue == 0)
+    assert(s2.get.get.get == 0)
   }
 
 
@@ -143,11 +143,11 @@ class HigherOrderTestSuite extends AssertionsForJUnit with MockitoSugar {
     tick( () )
     assert(dereferencedChanged == true)
     dereferencedChanged = false
-    assert(dereferenced.getValue == 1)
+    assert(dereferenced.get == 1)
     tick(())
     assert(dereferencedChanged == true)
     dereferencedChanged = false
-    assert(dereferenced.getValue == 4)
+    assert(dereferenced.get == 4)
   }
 
   @Test def switch_withHigherOrder() = {
@@ -171,13 +171,13 @@ class HigherOrderTestSuite extends AssertionsForJUnit with MockitoSugar {
     s.changed += { x => changeCount += 1; lastChangevalue = x }
 
     tick(())
-    assert(lastChangevalue == s.getValue)
-    assert(s.getValue == 1)
+    assert(lastChangevalue == s.get)
+    assert(s.get == 1)
     assert(changeCount == 1)
 
     tick(())
-    assert(lastChangevalue == s.getValue)
-    assert(s.getValue == 4)
+    assert(lastChangevalue == s.get)
+    assert(s.get == 4)
     //assert(changeCount == 2) // fails
   }
 

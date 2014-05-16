@@ -45,28 +45,28 @@ class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
     var s: Signal[Int] = StaticSignal[Int](v) { i }
     i = 2
     v.setValue(2)
-    assert(s.getValue == 2)
+    assert(s.get == 2)
   }
 
   @Test def theExpressionIsNoteEvaluatedEveryTimeGetValIsCalled() {
     var a = 10
     var s: Signal[Int] = StaticSignal(List())( 1 + 1 + a )
-    assert(s.getValue === 12)
+    assert(s.get === 12)
     a = 11
-    assert(s.getValue === 12)
+    assert(s.get === 12)
   }
 
 
   @Test def simpleSignalReturnsCorrectExpressions() {
     var s: Signal[Int] = StaticSignal(List())( 1 + 1 + 1 )
-    assert(s.getValue === 3)
+    assert(s.get === 3)
   }
 
   @Test def theExpressionIsEvaluatedOnlyOnce() {
 
     var a = 0
     val v = Var(10)
-    var s1: Signal[Int] = StaticSignal(v){ a +=1; v.getValue % 10 }
+    var s1: Signal[Int] = StaticSignal(v){ a +=1; v.get % 10 }
     var s2: Signal[Int] = StaticSignal(s1){ a }
 
 
@@ -82,9 +82,9 @@ class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
     var test = 0
     v = Var(1)
 
-    s1 = StaticSignal(v){ 2 * v.getValue }
-    s2 = StaticSignal(v){ 3 * v.getValue }
-    s3 = StaticSignal(s1,s2){ s1.getValue + s2.getValue }
+    s1 = StaticSignal(v){ 2 * v.get }
+    s2 = StaticSignal(v){ 3 * v.get }
+    s3 = StaticSignal(s1,s2){ s1.get + s2.get }
 
     s1 addDependent Handler{ test += 1 }
     s2 addDependent Handler{ test += 1 }
@@ -102,9 +102,9 @@ class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
     var test = 0
     v = Var(1)
 
-    s1 = StaticSignal(v){ 2 * v.getValue }
-    s2 = StaticSignal(v){ 3 * v.getValue }
-    s3 = StaticSignal(s1,s2){ s1.getValue + s2.getValue }
+    s1 = StaticSignal(v){ 2 * v.get }
+    s2 = StaticSignal(v){ 3 * v.get }
+    s3 = StaticSignal(s1,s2){ s1.get + s2.get }
 
     assert(v.level == 0)
     assert(s1.level == 1)

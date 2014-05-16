@@ -15,7 +15,7 @@ import react.events.ChangedEventNode
 class VarSynt[T](initval: T) extends Var[T] {
   private[this] var value: T = initval
 
-  def getValue = value
+  def get = value
 
   def setValue(newval: T): Unit = {
 
@@ -43,11 +43,11 @@ class VarSynt[T](initval: T) extends Var[T] {
 
   def update(v: T) = setValue(v)
 
-  def apply() = getValue
+  def apply() = get
 
   def reEvaluate(): T = value
 
-  def map[B](f: T => B): Var[B] = VarSynt(f(getValue))
+  def map[B](f: T => B): Var[B] = VarSynt(f(get))
 }
 
 object VarSynt {
@@ -68,7 +68,7 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
   val reactivesDependsOnCurrent = ListBuffer[DepHolder]()
   private[this] var currentValue = reEvaluate()
 
-  def getValue = currentValue
+  def get = currentValue
 
   def triggerReevaluation() = reEvaluate
 
@@ -104,7 +104,7 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
     ReactiveEngine.addToEvalQueue(this)
   }
 
-  def apply() = getValue
+  def apply() = get
 
   def map[B](f: T => B): Signal[B] =
     SignalSynt(List(this)) { s: SignalSynt[B] => f(this(s)) }

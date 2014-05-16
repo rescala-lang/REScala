@@ -278,9 +278,9 @@ For example:
 val a = Var(2)
 val b = Var(3)
 val c = Signal{ a() + b() }   (*@\label{sumS}@*)
-println(a.getValue,b.getValue,c.getValue) // -> (2,3,5)
+println(a.get,b.get,c.get) // -> (2,3,5)
 a()= 4  (*@\label{updated}@*)
-println(a.getValue,b.getValue,c.getValue) // -> (4,3,7)
+println(a.get,b.get,c.get) // -> (4,3,7)
 \end{codenv}
 
 In the code above, the signal in Line~\ref{sumS} defines the
@@ -376,7 +376,7 @@ val s: Signal[Int] = Signal{ // A signal expression can be any code block
 
 
 \subsubsection{Accessing reactive values} The current value of a
-signal or a var can be accessed using the \code{getValue} method. For
+signal or a var can be accessed using the \code{get} method. For
 example:
 
 \begin{codenv}
@@ -385,9 +385,9 @@ val b = Var(2)
 val c = Var(true)
 val s: Signal[Int] = Signal{ a() + b() }
 val t: Signal[Boolean] = Signal{ !c() }
-val x: Int = a.getValue
-val y: Int = s.getValue
-val z: Boolean = t.getValue
+val x: Int = a.get
+val y: Int = s.get
+val z: Boolean = t.get
 println(z)
 \end{codenv}
 
@@ -408,7 +408,7 @@ space.changed += ((x: Int) => println(x)) (*@\label{conversion}@*)
 
 while (true) {
   Thread sleep 20
-  time() = time.getValue + 1  (*@\label{increasetime}@*)
+  time() = time.get + 1  (*@\label{increasetime}@*)
 }
 
 -- output --
@@ -443,7 +443,7 @@ e += handler
 \end{codenv}
 
 
-Note that using \code{println(space.getValue)} would also print the
+Note that using \code{println(space.get)} would also print the
 value of the signal, but only at the point in time in which the print
 statement is executed. Instead, the approach described so far prints
 {\it all} values of the signal. More details about converting signals
@@ -852,13 +852,13 @@ Example:
 \begin{codenv}
 val e = new ImperativeEvent[Int]()
 val s: Signal[Int] = e.latest(10)
-assert(s.getValue == 10)
+assert(s.get == 10)
 e(1)
-assert(s.getValue == 1)
+assert(s.get == 1)
 e(2)
-assert(s.getValue == 2)
+assert(s.get == 2)
 e(1)
-assert(s.getValue == 1)
+assert(s.get == 1)
 \end{codenv}
 
 
@@ -936,7 +936,7 @@ val f = (x:Int,y:Int)=>(x+y)
 val s: Signal[Int] = e.fold(10)(f)
 e(1)
 e(2)
-assert(s.getValue == 13)
+assert(s.get == 13)
 \end{codenv}
 
 
@@ -960,13 +960,13 @@ val f = (x:Int)=>{test=x; x+1}
 val s: Signal[Int] = e.iterate(10)(f)
 e(1)
 assert(test == 10)
-assert(s.getValue == 10)
+assert(s.get == 10)
 e(2)
 assert(test == 11)
-assert(s.getValue == 10)
+assert(s.get == 10)
 e(1)
 assert(test == 12)
-assert(s.getValue == 10)
+assert(s.get == 10)
 \end{codenv}
 
 
@@ -988,13 +988,13 @@ Example:
 \begin{codenv}
 val e = new ImperativeEvent[Int]()
 val s: Signal[Option[Int]] = e.latestOption(e)
-assert(s.getValue == None)
+assert(s.get == None)
 e(1)
-assert(s.getValue == Option(1))
+assert(s.get == Option(1))
 e(2)
-assert(s.getValue == Option(2))
+assert(s.get == Option(2))
 e(1)
-assert(s.getValue == Option(1))
+assert(s.get == Option(1))
 \end{codenv}
 
 
@@ -1015,16 +1015,16 @@ programmer. Example:
 val e = new ImperativeEvent[Int]()
 val s: Signal[List[Int]] = e.last(5)
 
-assert(s.getValue == List())
+assert(s.get == List())
 e(1)
-assert(s.getValue == List(1))
+assert(s.get == List(1))
 e(2)
-assert(s.getValue == List(2,1))
+assert(s.get == List(2,1))
 
 e(3);e(4);e(5)
-assert(s.getValue == List(5,4,3,2,1))
+assert(s.get == List(5,4,3,2,1))
 e(6)
-assert(s.getValue == List(6,5,4,3,2))
+assert(s.get == List(6,5,4,3,2))
 \end{codenv}
 
 
@@ -1053,10 +1053,10 @@ when the event has never been fired yet, the signal holds the value
 \begin{codenv}
 val e = new ImperativeEvent[Int]()
 val s: Signal[Int] = e.count
-assert(s.getValue == 0)
+assert(s.get == 0)
 e(1)
 e(3)
-assert(s.getValue == 2)
+assert(s.get == 2)
 \end{codenv}
 
 
@@ -1081,11 +1081,11 @@ val v =  Var(1)
 val s1 = Signal{ v() + 1 }
 val s = e.snapshot(s1)
 e(1)
-assert(s.getValue == 2)
+assert(s.get == 2)
 v.setValue(2)
-assert(s.getValue == 2)
+assert(s.get == 2)
 e(1)
-assert(s.getValue == 3)
+assert(s.get == 3)
 \end{codenv}
 
 
@@ -1163,13 +1163,13 @@ def factory(x: Int) = x%2 match {
 }
 val s3 = e.reset(100)(factory)
 
-assert(s3.getValue == 1)
+assert(s3.get == 1)
 v1.setValue(1)
-assert(s3.getValue == 2)
+assert(s3.get == 2)
 e(101)
-assert(s3.getValue == 11)
+assert(s3.get == 11)
 v2.setValue(11)
-assert(s3.getValue == 12)
+assert(s3.get == 12)
 \end{codenv}
 
 
@@ -1226,7 +1226,7 @@ programming and \REScala.
 \subsection{Accessing values in signal expressions} The \code{()}
 operator used on a signal or a var, inside a signal expression,
 returns the signal/var value {\it and} creates a dependency. The
-\code{getValue} operator returns the current value but does {\it not}
+\code{get} operator returns the current value but does {\it not}
 create a dependency. For example the following signal declaration
 creates a dependency between \code{a} and \code{s}, and a dependency
 between \code{b} and \code{s}.
@@ -1236,11 +1236,11 @@ val s = Signal{ a() + b() }
 The following code instead establishes only a dependency between
 \code{b} and \code{s}.
 \begin{codenv}
-val s = Signal{ a.getValue + b() }
+val s = Signal{ a.get + b() }
 \end{codenv}
 In other words, in the last example, if \code{a} is updated, \code{s}
 is not automatically updated. With the exception of the rare cases in
-which this behavior is desirable, using \code{getValue} inside a signal
+which this behavior is desirable, using \code{get} inside a signal
 expression is almost certainly a mistake. As a rule of dumb, signals
 and vars appear in signal expressions with the \code{()} operator.
 
@@ -1277,7 +1277,7 @@ val c = Signal{
   sum * 2
 }
  ...
-foo(c.getValue)
+foo(c.get)
 \end{codenv}
 
 
@@ -1309,9 +1309,9 @@ val foo = new Foo(1)
 
 val varFoo = Var(foo)
 val s = Signal{ varFoo().x + 10 }
-// s.getValue == 11
+// s.get == 11
 foo.x = 2 (*@\label{same}@*)
-// s.getValue == 11
+// s.get == 11
 \end{codenv}
 
 One may expect that after increasing the value of \code{foo.x} in
@@ -1335,9 +1335,9 @@ val foo = new Foo(1)
 
 val varFoo = Var(foo)
 val s = Signal{ varFoo().x + 10 }
-// s.getValue == 11
+// s.get == 11
 varFoo()= newFoo(2)
-// s.getValue == 12
+// s.get == 12
 \end{codenv}
 
 Alternatively, one can still use mutable objects but assign again the
@@ -1352,10 +1352,10 @@ val foo = new Foo(1)
 
 val varFoo = Var(foo)
 val s = Signal{ varFoo().x + 10 }
-// s.getValue == 11
+// s.get == 11
 foo.x = 2 (*@\label{same}@*)
 varFoo()=foo
-// s.getValue == 11
+// s.get == 11
 \end{codenv}
 
 
@@ -1384,7 +1384,7 @@ has a constant value 2 and is not updated when the var changes.
 
 \begin{codenv}
 val a = Var(1)
-val b = increment(a.getValue)
+val b = increment(a.get)
 val s = Signal{ b + 1 }
 \end{codenv}
 

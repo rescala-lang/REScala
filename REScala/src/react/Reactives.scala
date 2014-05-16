@@ -94,14 +94,14 @@ trait Signal[+A] extends Changing[A] with FoldableReactive[A] with DepHolder {
   override def fold[B](init: B)(f: (B, A) => B): Signal[B] =
     new FoldedSignal(changed, init, f)
 
-  def getValue: A
+  def get: A
 
   def apply(): A
 
   def apply(s: SignalSynt[_]): A = {
     if (level >= s.level) s.level = level + 1
     s.reactivesDependsOnCurrent += this
-    getValue
+    get
   }
 
   def map[B](f: A => B): Signal[B]
