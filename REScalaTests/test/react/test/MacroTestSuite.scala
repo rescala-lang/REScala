@@ -36,7 +36,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
     var i = 1
     var s: Signal[Int] = Signal[Int]{ v(): @unchecked; i }
     i = 2
-    v.setValue(2)
+    v.set(2)
     assert(s.get == 2)
   }
 
@@ -63,9 +63,9 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
 
 
     assert(a == 1)
-    v.setValue(11)
+    v.set(11)
     assert(a == 2)
-    v.setValue(21)
+    v.set(21)
     assert(a == 3)
   }
 
@@ -84,7 +84,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
 
     assert(test == 0)
 
-    v.setValue(3)
+    v.set(3)
     assert(test == 3)
 
   }

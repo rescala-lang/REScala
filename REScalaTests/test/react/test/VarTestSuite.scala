@@ -32,7 +32,7 @@ class VarTestSuite extends AssertionsForJUnit with MockitoSugar {
 
   @Test def getValReturnsCorrectValue() {
     val v = Var(1)
-    v.setValue(10)
+    v.set(10)
     assert(v.get == 10)
   }
 
@@ -43,7 +43,7 @@ class VarTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(v.get == 1)
 
     assert(s.get == 2)
-    v.setValue(2)
+    v.set(2)
     assert(v.get == 2)
     assert(s.get == 3)
 
@@ -55,11 +55,11 @@ class VarTestSuite extends AssertionsForJUnit with MockitoSugar {
     val changed = StaticSignal(List(v)){ v.get }.change
     changed += {_ => changes += 1}
 
-    v.setValue(2)
+    v.set(2)
     assert(changes == 1)
-    v.setValue(3)
+    v.set(3)
     assert(changes == 2)
-    v.setValue(3)
+    v.set(3)
     assert(changes == 2)
   }
 
@@ -68,9 +68,9 @@ class VarTestSuite extends AssertionsForJUnit with MockitoSugar {
     val v = Var(1)
     val s = StaticSignal(List(v)){ changes += 1; v.get + 1 }
     assert(s.get == 2)
-    v.setValue(2)
+    v.set(2)
     assert(changes == 2)
-    v.setValue(2)
+    v.set(2)
     assert(changes == 2)
   }
 

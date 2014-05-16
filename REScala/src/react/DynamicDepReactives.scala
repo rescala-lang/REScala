@@ -17,7 +17,7 @@ class VarSynt[T](initval: T) extends Var[T] {
 
   def get = value
 
-  def setValue(newval: T): Unit = {
+  def set(newval: T): Unit = {
 
     val old = value
     // support mutable values by using hashValue rather than ==
@@ -41,7 +41,7 @@ class VarSynt[T](initval: T) extends Var[T] {
     }
   }
 
-  def update(v: T) = setValue(v)
+  def update(v: T) = set(v)
 
   def apply() = get
 

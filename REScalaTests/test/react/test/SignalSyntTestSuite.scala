@@ -15,7 +15,7 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
     var i = 1
     var s: SignalSynt[Int] = SignalSynt[Int](v){s=> v(s) + i }
     i = 2
-    v.setValue(2)
+    v.set(2)
     assert(s.get == 4)
   }
 
@@ -42,9 +42,9 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
 
 
     assert(a == 1)
-    v.setValue(11)
+    v.set(11)
     assert(a == 2)
-    v.setValue(21)
+    v.set(21)
     assert(a == 3)
   }
 
@@ -63,7 +63,7 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
 
     assert(test == 0)
 
-    v.setValue(3)
+    v.set(3)
     assert(test == 3)
 
   }
@@ -101,20 +101,20 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
 
     assert(i == 1)
     assert(s.get == 0)
-    v2.setValue(1)
+    v2.set(1)
     assert(i == 2)
     assert(s.get == 1)
-    v3.setValue(11) // No effect
+    v3.set(11) // No effect
     assert(i == 2)
     assert(s.get == 1)
 
-    v1.setValue(false)
+    v1.set(false)
     assert(i == 3)
     assert(s.get == 11)
-    v3.setValue(12)
+    v3.set(12)
     assert(i == 4)
     assert(s.get == 12)
-    v2.setValue(2) // No effect
+    v2.set(2) // No effect
     assert(i == 4)
     assert(s.get == 12)
   }
@@ -139,20 +139,20 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
     e += ((x:(Int,Int))=>(test+=1))
 
     assert(test == 0)
-    v2.setValue(1)
+    v2.set(1)
     assert(test == 1)
 
-    v1.setValue(false)
+    v1.set(false)
     assert(test == 2)
-    v3.setValue(11)
+    v3.set(11)
     assert(test == 3)
 
-    v2.setValue(2)
+    v2.set(2)
     assert(test == 3)
 
-    v1.setValue(true)
+    v1.set(true)
     assert(test == 4)
-    v2.setValue(3)
+    v2.set(3)
     assert(test == 5)
 
 
@@ -165,9 +165,9 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
       changes += 1; v(s) + 1 }
     assert(changes == 1)
     assert(s.get == 2)
-    v.setValue(2)
+    v.set(2)
     assert(changes == 2)
-    v.setValue(2)
+    v.set(2)
     assert(changes == 2) // is actually 3
   }
 

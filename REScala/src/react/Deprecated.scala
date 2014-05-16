@@ -12,7 +12,7 @@ import react.events._
 class StaticVar[T](initval: T) extends Var[T] {
   private[this] var value: T = initval
 
-  def setValue(newval: T): Unit = {
+  def set(newval: T): Unit = {
     val old = value
     if (newval != old) {
       value = newval // .asInstanceOf[T] // to make it covariant ?
@@ -29,7 +29,7 @@ class StaticVar[T](initval: T) extends Var[T] {
 
   def get = value
 
-  def update(v: T) = setValue(v)
+  def update(v: T) = set(v)
 
   def apply = get
 

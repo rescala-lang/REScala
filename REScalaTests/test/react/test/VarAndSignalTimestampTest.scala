@@ -23,14 +23,14 @@ class VarAndSignalTimestampTest extends AssertionsForJUnit with MockitoSugar {
 
   @Test def xxx() =  {
     val v = Var(10)
-    v.setValue(11)
+    v.set(11)
     assert( v.timestamps equals ListBuffer(Stamp(1,0)) )
   }
 
   @Test def xxxx() =  {
     val v = Var(10)
     val s = StaticSignal(v){ v.get + 1 }
-    v.setValue(11)
+    v.set(11)
     assert( v.timestamps equals ListBuffer(Stamp(1,0)) )
     assert( s.timestamps equals ListBuffer(Stamp(1,1)) )
   }

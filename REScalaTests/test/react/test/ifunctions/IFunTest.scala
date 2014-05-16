@@ -189,14 +189,14 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     assert(s.get == 2)
     e(1)
     assert(s.get == 12)
-    v2.setValue(12)
+    v2.set(12)
     assert(s.get == 13)
-    v1.setValue(2)
+    v1.set(2)
     assert(s.get == 13)
     e(1)
-    v1.setValue(3)
+    v1.set(3)
     assert(s.get == 4)
-    v2.setValue(13)
+    v2.set(13)
     assert(s.get == 4)
 
   }
@@ -221,7 +221,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     e(1)
     assert(s.get == 2)
 
-    v1.setValue(2)
+    v1.set(2)
     assert(s.get == 2)
     e(1)
     assert(s.get == 3)
@@ -272,17 +272,17 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     val s = IFunctions.delay(s1,3)
 
     // Initially remains the same for n times
-    v1.setValue(2)
+    v1.set(2)
     assert(s.get == 2)
-    v1.setValue(3)
+    v1.set(3)
     assert(s.get == 2)
-    v1.setValue(4)
+    v1.set(4)
     assert(s.get == 2)
 
     // Now starts changing
-    v1.setValue(5)
+    v1.set(5)
     assert(s.get == 3)
-    v1.setValue(6)
+    v1.set(6)
     assert(s.get == 4)
   }
 
@@ -295,7 +295,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     val s2 = IFunctions.switchTo(e,s1)
 
     assert(s2.get == 2)
-    v1.setValue(2)
+    v1.set(2)
     assert(s2.get == 3)
   }
 
@@ -309,7 +309,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     assert(s2.get == 1)
     e(100)
     assert(s2.get == 100)
-    v1.setValue(2)
+    v1.set(2)
     assert(s2.get == 100)
   }
 
@@ -324,7 +324,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     val s3 = IFunctions.switchOnce(e,s1,s2)
 
     assert(s3.get == 1)
-    v1.setValue(1)
+    v1.set(1)
     assert(s3.get == 2)
   }
 
@@ -339,7 +339,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     e(1)
     assert(s3.get == 11)
     e(2)
-    v2.setValue(11)
+    v2.set(11)
     assert(s3.get == 12)
   }
 
@@ -359,7 +359,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     val s3 = IFunctions.reset(e,100)(factory)
 
     assert(s3.get == 1)
-    v1.setValue(1)
+    v1.set(1)
     assert(s3.get == 2)
 
   }
@@ -379,11 +379,11 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     val s3 = IFunctions.reset(e,100)(factory)
 
     //assert(s3.get == 1)
-    v1.setValue(1)
+    v1.set(1)
     assert(s3.get == 2)
     e(101)
     assert(s3.get == 11)
-    v2.setValue(11)
+    v2.set(11)
     assert(s3.get == 12)
   }
 
@@ -408,7 +408,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     val s2 = lifted_f(s1)
 
     assert(s2.get == 3)
-    v.setValue(2)
+    v.set(2)
     assert(s2.get == 4)
   }
 
@@ -439,9 +439,9 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     val e: Event[(Int,Int)] = s1.change
     e += ((x:(Int,Int))=>{test+=1})
 
-    v1 setValue 2
+    v1 set 2
     assert(test == 1)
-    v1 setValue 3
+    v1 set 3
     assert(test == 2)
   }
 
@@ -452,9 +452,9 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     val e: Event[(Int,Int)] = s1.change
     e += ((x:(Int,Int))=>{test = x})
 
-    v1 setValue 2
+    v1 set 2
     assert(test == ((null,3)))
-    v1 setValue 3
+    v1 set 3
     assert(test == ((3,4)))
   }
 
@@ -477,9 +477,9 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     val e: Event[Int] = s1.changed
     e += ((x:Int)=>{test+=1})
 
-    v1 setValue 2
+    v1 set 2
     assert(test == 1)
-    v1 setValue 3
+    v1 set 3
     assert(test == 2)
   }
 
@@ -490,9 +490,9 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     val e: Event[Int] = s1.changed
     e += ((x:Int)=>{test = x})
 
-    v1 setValue 2
+    v1 set 2
     assert(test == 3)
-    v1 setValue 3
+    v1 set 3
     assert(test == 4)
   }
 
@@ -515,9 +515,9 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     val e: Event[Unit] = s1.changedTo(3)
     e += ((x:Unit)=>{test+=1})
 
-    v1 setValue 2
+    v1 set 2
     assert(test == 1)
-    v1 setValue 3
+    v1 set 3
     assert(test == 1)
   }
 
@@ -557,7 +557,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     e(1)
     assert(s.get == 2)
 
-    v1.setValue(2)
+    v1.set(2)
     assert(s.get == 2)
     e(1)
     assert(s.get == 3)

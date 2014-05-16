@@ -40,7 +40,7 @@ FoldableReactive <|-- Signal
 
 class "Var[A]" as Var {
   __
-  +setValue(A): Unit
+  +set(A): Unit
   +update(A): Unit
 }
 Signal <|-- Var
