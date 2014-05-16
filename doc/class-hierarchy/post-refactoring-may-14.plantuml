@@ -23,6 +23,44 @@ class Dependent {
 }
 Reactive <|-- Dependent
 
+class "Event[+A]" as Event {
+  __
+  ++=(A => Unit)
+  +-=(A => Unit)
+  +||(Event)
+  +&&(Event)
+  +filter[U >: A](U => Boolean): Event[U]
+  +\\\[U >: A](Event[U]): Event[U]
+  +map[U, S >: A](S => U): Event[U]
+  ..
+  rest omitted ...
+}
+DepHolder <|-- Event
+
+class "EventHandler[A]" as EventHandler {
+}
+Dependent <|-- EventHandler
+
+class "EventNode[A]" as EventNode {
+  +val handlers: Map[A=>Unit,EventHandler[A]]
+  +getHandler(A => Unit): EventHandler[A]
+}
+Event <|-- EventNode
+
+class "ImperativeEvent[A]" as ImperativeEvent {
+  +apply(A): Unit
+}
+EventNode <|-- ImperativeEvent
+
+class "ChangedEventNode[A]" as ChangedEventNode
+EventNode <|-- ChangedEventNode
+
+class "EventNode..." as MiscEvents
+EventNode <|-- MiscEvents
+
+class "EventNodeAnd[A]" as EventNodeAnd
+EventNode <|-- EventNodeAnd
+
 class "Signal[+A]" as Signal {
   +get(): A
   +apply(): A
@@ -48,20 +86,6 @@ Signal <|-- Var
 class "DependentSignal[+A]" as DependentSignal
 Dependent <|-- DependentSignal
 Signal <|-- DependentSignal
-
-class "Event[+A]" as Event {
-  __
-  ++=(A => Unit)
-  +-=(A => Unit)
-  +||(Event)
-  +&&(Event)
-  +filter[U >: A](U => Boolean): Event[U]
-  +\\\[U >: A](Event[U]): Event[U]
-  +map[U, S >: A](S => U): Event[U]
-  ..
-  rest omitted ...
-}
-DepHolder <|-- Event
 
 class "FoldableReactive[+A]" as FoldableReactive {
   __
@@ -92,8 +116,9 @@ class Var << (T,#4682b4) >>
 class DepHolder << (T,#4682b4) >>
 class Dependent << (T,#4682b4) >>
 class Reactive << (T,#4682b4) >>
-class Event << (T,#4682b4) >>
 class DependentSignal << (T,#4682b4) >>
 class Changing << (T,#4682b4) >>
 class FoldableReactive << (T,#4682b4) >>
+class Event << (T,#4682b4) >>
+class EventNode << (T,#4682b4) >>
 @enduml

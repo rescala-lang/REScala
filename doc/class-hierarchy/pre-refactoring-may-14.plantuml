@@ -55,7 +55,7 @@ class "Signal[+T]" as Signal {
 DepHolder <|-- Signal
 Dependent <|-- Signal
 
-class "Event[+T]" as Event extends DepHolder {
+class "Event[+A]" as Event extends DepHolder {
   __
   ++=(T => Unit)
   +-=(T => Unit)
@@ -68,6 +68,29 @@ class "Event[+T]" as Event extends DepHolder {
   rest omitted ...
 }
 
+class "EventHandler[A]" as EventHandler {
+}
+Dependent <|-- EventHandler
+
+class "EventNode[A]" as EventNode {
+  +val handlers: Map[A=>Unit,EventHandler[A]]
+  +getHandler(A => Unit): EventHandler[A]
+}
+Event <|-- EventNode
+
+class "ImperativeEvent[A]" as ImperativeEvent {
+  +apply(A): Unit
+}
+EventNode <|-- ImperativeEvent
+
+class "ChangedEventNode[A]" as ChangedEventNode
+EventNode <|-- ChangedEventNode
+
+class "..." as MiscEvents
+EventNode <|-- MiscEvents
+
+class "EventNodeAnd[A]" as EventNodeAnd
+EventNode <|-- EventNodeAnd
 
 Signal <|-- SignalSynt
 Signal <|-- StaticSignal
@@ -80,4 +103,5 @@ class DepHolder << (T,#4682b4) >>
 class Dependent << (T,#4682b4) >>
 class Reactive << (T,#4682b4) >>
 class Event << (T,#4682b4) >>
+class EventNode << (T,#4682b4) >>
 @enduml
