@@ -136,7 +136,7 @@ object IFunctions {
 }
 
 class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T, E) => T)
-  extends Dependent with DepHolder with Signal[T] {
+  extends DependentSignal[T] {
 
   // The value of this signal
   private[this] var currentValue: T = init
@@ -196,7 +196,7 @@ class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T, E) => T)
 }
 
 class SwitchedSignal[+T, +E](e: Event[E], init: Signal[T], factory: IFunctions.Factory[E, T])
-  extends Dependent with DepHolder with Signal[T] {
+  extends DependentSignal[T] {
 
   // The "inner" signal
   private[this] var currentSignal: Signal[T] = init

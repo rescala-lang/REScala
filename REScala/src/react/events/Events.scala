@@ -116,7 +116,7 @@ object EventHandler {
 /*
  *  Base trait for events.
  */
-trait EventNode[T] extends Event[T] with DepHolder {
+trait EventNode[T] extends Event[T] {
 
   // memorize handler wrappers, so we can remove them
   lazy val handlers : collection.mutable.Map[(T => Unit), EventHandler[T]] =
@@ -151,7 +151,7 @@ class ImperativeEvent[T] extends EventNode[T] {
 /*
  * Used to model the change event of a signal. Keeps the last value
  */
-class ChangedEventNode[T](d: DepHolder) extends EventNode[T] with Dependent {
+class ChangedEventNode[T](d: DepHolder) extends EventNode[T] with DepHolder with Dependent {
 
   level = d.level + 1 // Static, for glitch freedom
   d.addDependent(this) // To be notified in the future
@@ -203,7 +203,9 @@ class InnerEventNode[T](d: DepHolder) extends EventNode[T] with Dependent {
 /*
  * Implementation of event disjunction
  */
-class EventNodeOr[T](ev1: Event[_ <: T], ev2: Event[_ <: T]) extends EventNode[T] with Dependent {
+class EventNodeOr[T](ev1: Event[_ <: T], ev2: Event[_ <: T])
+    extends EventNode[T]
+    with Dependent {
 
   /*
    * The event is executed once and only once even if both sources fire in the

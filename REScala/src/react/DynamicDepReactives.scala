@@ -12,7 +12,7 @@ import react.events.ChangedEventNode
 //}
 
 /* A node that has nodes that depend on it */
-class VarSynt[T](initval: T) extends DepHolder with Var[T] {
+class VarSynt[T](initval: T) extends Var[T] {
   private[this] var value: T = initval
 
   def getValue = value
