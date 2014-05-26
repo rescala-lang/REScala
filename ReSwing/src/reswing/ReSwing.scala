@@ -1,8 +1,6 @@
-import scala.language.implicitConversions
 import scala.swing.Component
 import scala.swing.Swing
 import javax.swing.SwingUtilities
-import react.events.Event
 
 package object reswing {
   type CompItem = Component

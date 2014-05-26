@@ -1,8 +1,8 @@
 package reswing
 
 import scala.language.implicitConversions
-import react.events.Event
-import react.events.ImperativeEvent
+import rescala.events.Event
+import rescala.events.ImperativeEvent
 
 /**
  * Represents `Swing` events that are fired by the library or passed to the

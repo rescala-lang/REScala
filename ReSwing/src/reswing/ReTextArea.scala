@@ -6,7 +6,6 @@ import scala.swing.Dimension
 import scala.swing.Font
 import scala.swing.TextArea
 import scala.swing.event.ValueChanged
-import react.events.Event
 
 class ReTextArea(
     text: ReSwingValue[String] = (),

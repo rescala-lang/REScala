@@ -112,14 +112,14 @@ private[reswing] abstract trait ReSwingValueConnection {
                     name match {
                       case Left(name) =>
                         changingProperties getOrElseUpdate (name, ListBuffer()) += { _ =>
-                          if (getter() != value.getValue)
-                            Swing onEDT { if (getter() != value.getValue) set(value.getValue) } }
+                          if (getter() != value.get)
+                            Swing onEDT { if (getter() != value.get) set(value.get) } }
                       
                       case Right((publisher, reaction)) =>
                         reactor listenTo publisher
                         changingReactions getOrElseUpdate (reaction, ListBuffer()) += { _ =>
-                          if (getter() != value.getValue)
-                            Swing onEDT { if (getter() != value.getValue) set(value.getValue) } }
+                          if (getter() != value.get)
+                            Swing onEDT { if (getter() != value.get) set(value.get) } }
                     }
               }
               
