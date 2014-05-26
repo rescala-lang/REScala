@@ -1,7 +1,7 @@
 package reader.gui
 
 import scala.swing.ListView
-import react.events.ImperativeEvent
+import rescala.events.ImperativeEvent
 import reswing.ReListView
 import reswing.ReSwingValue
 

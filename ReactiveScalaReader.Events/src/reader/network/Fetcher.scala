@@ -5,7 +5,7 @@ import java.net.SocketTimeoutException
 import java.net.URL
 import java.net.UnknownHostException
 
-import react.events._
+import rescala.events._
 import scala.xml.NodeSeq
 import scala.xml.XML
 

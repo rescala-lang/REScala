@@ -10,9 +10,9 @@ import java.util.Locale
 import scala.xml.Node
 import scala.xml.NodeSeq
 
-import react.events.Event
-import react.events.ImperativeEvent
-import react.events.Observable
+import rescala.events.Event
+import rescala.events.ImperativeEvent
+import rescala.events.Observable
 import reader.common.sequence
 
 /**

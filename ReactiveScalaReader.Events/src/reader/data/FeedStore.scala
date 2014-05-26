@@ -2,7 +2,7 @@ package reader.data
 
 import scala.annotation.migration
 import scala.collection.mutable.Map
-import react.events._
+import rescala.events._
 
 
 /**

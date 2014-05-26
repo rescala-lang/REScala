@@ -1,6 +1,6 @@
 package reader.gui
 
-import macro.SignalMacro.{SignalM => Signal}
+import makro.SignalMacro.{SignalM => Signal}
 import reswing.ReListView
 import reswing.ReSwingValue
 

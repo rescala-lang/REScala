@@ -5,7 +5,7 @@ import java.net.MalformedURLException
 import java.net.URL
 import java.net.UnknownHostException
 
-import react.events._
+import rescala.events._
 
 class UrlChecker {
   type CheckArg = String

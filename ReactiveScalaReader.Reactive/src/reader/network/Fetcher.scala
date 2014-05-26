@@ -8,9 +8,9 @@ import java.net.UnknownHostException
 import scala.xml.NodeSeq
 import scala.xml.XML
 
-import react.Signal
-import react.events.Event
-import react.events.Observable
+import rescala.Signal
+import rescala.events.Event
+import rescala.events.Observable
 
 /**
  * The Fetcher is responsible to fetch the xml data
@@ -46,5 +46,5 @@ class Fetcher(val urls: Signal[Set[URL]]) {
    * Fetch the channels from the list of urls
    */
   
-  def fetchAll = { urls.getValue foreach (fetch(_)) }
+  def fetchAll = { urls.get foreach (fetch(_)) }
 }

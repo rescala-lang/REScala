@@ -4,7 +4,7 @@ import reader.data.FeedStore
 import reader.data.XmlParser
 import reader.network.Fetcher
 import reader.network.UrlChecker
-import react.events._
+import rescala.events._
 
 trait EventMediator {
   def mediate(fetcher: Fetcher,

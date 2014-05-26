@@ -8,10 +8,10 @@ import scala.swing._
 import reswing._
 
 import javax.swing.ImageIcon
-import macro.SignalMacro.{SignalM => Signal}
-import react.Signal
-import react.events.Event
-import react.events.ImperativeEvent
+import makro.SignalMacro.{SignalM => Signal}
+import rescala.Signal
+import rescala.events.Event
+import rescala.events.ImperativeEvent
 import reader.data.FeedStore
 import reader.data.RSSChannel
 import reader.data.RSSItem

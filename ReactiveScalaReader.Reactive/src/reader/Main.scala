@@ -8,9 +8,9 @@ import scala.swing.Dialog.Message
 import scala.swing.Swing
 import scala.swing.Swing.EmptyIcon
 
-import macro.SignalMacro.{SignalM => Signal}
-import react.SignalSynt
-import react.events.ImperativeEvent
+import makro.SignalMacro.{SignalM => Signal}
+import rescala.SignalSynt
+import rescala.events.ImperativeEvent
 import reader.connectors.CentralizedEvents
 import reader.connectors.SimpleReporter
 import reader.data.FeedStore
@@ -73,7 +73,7 @@ object Main extends App {
   private def setupGuiEvents {
     app.requestURLAddition += { url => checker.check(url) } //#HDL
     
-    val guardedTick = tick && { _ => app.refreshAllowed.getVal } //#EVT //#EF
+    val guardedTick = tick && { _ => app.refreshAllowed.get } //#EVT //#EF
     
     (app.refresh || guardedTick) += { _ => fetcher.fetchAll } //#EF //#HDL
   }

@@ -3,7 +3,7 @@ package reader.gui
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.Toolkit
-import react.events._
+import rescala.events._
 import scala.swing._
 import javax.swing.ImageIcon
 import reader.data.FeedStore

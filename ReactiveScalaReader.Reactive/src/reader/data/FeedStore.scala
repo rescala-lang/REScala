@@ -1,7 +1,7 @@
 package reader.data
 
-import react.Signal
-import react.events.Event
+import rescala.Signal
+import rescala.events.Event
 
 /**
  * The FeedStore stores RSSChannels and RSSItems.
@@ -20,8 +20,8 @@ class FeedStore (
   
   val itemAdded: Event[RSSItem] = addItem && { item => //#EVT //#EF
     (for { channel <- item.srcChannel
-           items   <- channels.getValue get channel
-           if (!(items.getValue contains item))
+           items   <- channels.get get channel
+           if (!(items.get contains item))
          } yield ()).isDefined
   }
 }

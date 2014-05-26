@@ -1,6 +1,6 @@
 package reader
 
-import react.events._
+import rescala.events._
 import scala.io.Source
 import scala.swing.Dialog
 import scala.swing.Dialog.Message

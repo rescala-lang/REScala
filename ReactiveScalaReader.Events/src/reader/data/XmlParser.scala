@@ -7,7 +7,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-import react.events._
+import rescala.events._
 import scala.xml.Node
 import scala.xml.NodeSeq
 
