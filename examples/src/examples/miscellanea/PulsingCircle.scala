@@ -52,11 +52,11 @@ object PulsingCircle extends SimpleSwingApplication {
   
   override def main(args: Array[String]){
     super.main(args)
-    while (true) { {      
+    while (true) {       
 	  frame.repaint
         Thread sleep 20
         base()= base.getVal + 1
-      }
+      
     }
   }
   
