@@ -14,12 +14,9 @@ import java.awt.Font
 import java.awt.Rectangle
 import java.awt.Point
 
-object FisheyeStarter {
-
-  def main(args: Array[String]) {
-    val app = new Fisheye
-    app.main(args)
-  }
+object Fisheye extends SimpleSwingApplication {
+  lazy val application = new Fisheye
+  def top = application.frame
 }
 
 object Box {
@@ -51,7 +48,7 @@ class Box(val color: java.awt.Color, val xOffset: Signal[Int])(implicit val mous
   }
 }
 
-class Fisheye extends SimpleSwingApplication {
+class Fisheye {
 
   val Max_X = 500
   val Max_Y = 200
@@ -75,7 +72,6 @@ class Fisheye extends SimpleSwingApplication {
   mouse.position.changed += { _ => frame.repaint() }
 
   // drawing code
-  def top = frame
   val frame: MainFrame = new MainFrame {
     title = "Fisheye boxes"
     resizable = false

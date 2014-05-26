@@ -8,18 +8,20 @@ import java.awt.{Color, Graphics2D, Dimension}
 import java.awt.Point
 import scala.swing.Swing
 
-object EventVersionStart {
-	def main(args: Array[String]){
-		val app = new EventVersion
-		app.main(args)
-		while (true) {      
-			Thread sleep 20
-			app.tick
-		}
-	}
+object EventVersion extends SimpleSwingApplication {
+  lazy val application = new EventVersion
+  def top = application.frame
+  
+  override def main(args: Array[String]) {
+    super.main(args)
+    while (true) {
+	  Swing onEDTWait { application.tick }
+      Thread sleep 20
+    }
+  }
 }
 
-class EventVersion extends SimpleSwingApplication {
+class EventVersion {
   val Size = 50
   val Max_X = 600
   val Max_Y = 600
@@ -56,7 +58,6 @@ class EventVersion extends SimpleSwingApplication {
   
   
   // drawing code
-  def top = frame  
   val frame = new MainFrame {
     contents = new Panel() {
       preferredSize = new Dimension(600, 600)

@@ -14,18 +14,20 @@ import scala.swing.event._
 import java.awt.Font
 
 
-object FollowMouseStarter {
-  def main(args: Array[String]) {
-    val app = new FollowMouse
-    app.main(args)
+object FollowMouse extends SimpleSwingApplication {
+  lazy val application = new FollowMouse
+  def top = application.frame
+  
+  override def main(args: Array[String]) {
+    super.main(args)
     while (true) {
+	  Swing onEDTWait { application.tick() }
       Thread sleep 10
-      app.tick()
     }
   }
 }
 
-class FollowMouse extends SimpleSwingApplication {
+class FollowMouse {
   
   val Max_X = 700
   val Max_Y = 600
