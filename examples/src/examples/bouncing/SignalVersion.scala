@@ -1,8 +1,8 @@
 package examples.bouncing
 
-import react.events._
-import react._
-import macro.SignalMacro.{SignalM => Signal}
+import rescala.events._
+import rescala._
+import makro.SignalMacro.{SignalM => Signal}
 import swing.{Panel, MainFrame, SimpleSwingApplication}
 import java.awt.{Color, Graphics2D, Dimension}
 import java.awt.Point
@@ -43,14 +43,14 @@ class SignalVersion {
 	if ((d / width) % 2 == 0) d % width else width - d % width
   }
   
-  tick.toSignal.changed += ((_ : Int) => frame.repaint)
+  tick.changed += ((_ : Int) => frame.repaint)
   
   // drawing code 
   val frame = new MainFrame {
     contents = new Panel() {
       preferredSize = new Dimension(600, 600)
       override def paintComponent(g: Graphics2D) {
-	    g.fillOval(x.getValue, y.getValue, Size, Size)
+	    g.fillOval(x.get, y.get, Size, Size)
       }
     }
   }

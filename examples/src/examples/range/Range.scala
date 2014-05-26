@@ -1,7 +1,7 @@
 package examples.range
 
-import react._
-import macro.SignalMacro.{SignalM => Signal}
+import rescala._
+import makro.SignalMacro.{SignalM => Signal}
 
 
 
@@ -40,7 +40,7 @@ class Range3(val start : Var[Int], val length : Var[Int]) {
 	def end_=(e : Int) = length() = e - start()
 	
 	// invariant
-	length.toSignal.changed += {(x : Int) => 
+	length.changed += {(x : Int) => 
 	  if(x < 0) throw new IllegalArgumentException}
 	
 	// convenience functions

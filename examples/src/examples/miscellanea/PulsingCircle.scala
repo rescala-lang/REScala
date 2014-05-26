@@ -1,7 +1,7 @@
 package examples.miscellanea
 
-import react._
-import macro.SignalMacro.{SignalM => Signal}
+import rescala._
+import makro.SignalMacro.{SignalM => Signal}
 import swing.{Swing, Panel, MainFrame, SimpleSwingApplication}
 import java.awt.{Graphics2D, Dimension}
 import java.awt.Point
@@ -43,7 +43,7 @@ class PulsingCircle {
   
   class Oval(center: Signal[Point], radius: Signal[Int]) {
     toDraw += ((g: Graphics2D) => 
-      {g.fillOval(center.getVal.x,center.getVal.y, radius.getVal, radius.getVal)})
+      {g.fillOval(center.get.x,center.get.y, radius.get, radius.get)})
     
     override def toString = "Circle("+ center + "," + radius +")"
   }
@@ -62,22 +62,7 @@ class PulsingCircle {
   val point4 = Signal{ new Point(160+ time(), 160+time())}
   new Oval(point4, time)
   
-<<<<<<< HEAD
- 
 
-  
-  override def main(args: Array[String]){
-    super.main(args)
-    while (true) {       
-	  frame.repaint
-        Thread sleep 20
-        base()= base.getVal + 1
-      
-    }
-  }
-=======
->>>>>>> 4d56fff2ceac62836e6399278644f9743333ee24
-  
   
   // drawing code
   def top = frame  

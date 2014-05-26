@@ -1,8 +1,8 @@
 package examples.timeElapsing
 
-import react._
-import macro.SignalMacro.{SignalM => Signal}
-import react.events._
+import rescala._
+import makro.SignalMacro.{SignalM => Signal}
+import rescala.events._
 
 
 
@@ -21,7 +21,7 @@ object AdvancedTimeElapsing extends App {
 
   while(true){
     Thread.sleep(0)
-    println((seconds.getVal, minutes.getVal, hours.getVal, days.getVal))
+    println((seconds.get, minutes.get, hours.get, days.get))
     tick()
   }
   

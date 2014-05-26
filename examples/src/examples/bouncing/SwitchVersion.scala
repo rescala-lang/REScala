@@ -1,8 +1,8 @@
 package examples.bouncing
 
-import react.events._
-import react._
-import macro.SignalMacro.{SignalM => Signal}
+import rescala.events._
+import rescala._
+import makro.SignalMacro.{SignalM => Signal}
 import swing.{Panel, MainFrame, SimpleSwingApplication}
 import java.awt.{Color, Graphics2D, Dimension}
 import java.awt.Point
@@ -32,10 +32,10 @@ class SwitchVersion {
   
   
   // Using switch
-  import react.conversions.SignalConversions._
+  import rescala.conversions.SignalConversions._
   
-  val x: Signal[Int] = tick.fold(initPosition.x) {(pos, _) => pos + speedX.getVal}
-  val y: Signal[Int] = tick.fold(initPosition.y) {(pos, _) => pos + speedY.getVal}
+  val x: Signal[Int] = tick.fold(initPosition.x) {(pos, _) => pos + speedX.get}
+  val y: Signal[Int] = tick.fold(initPosition.y) {(pos, _) => pos + speedY.get}
   
   val xBounce = x.changed && (x => x < 0 || x + Size > Max_X)
   val yBounce = y.changed && (y => y < 0 || y + Size > Max_Y)
@@ -50,7 +50,7 @@ class SwitchVersion {
     contents = new Panel() {
       preferredSize = new Dimension(600, 600)
       override def paintComponent(g: Graphics2D) {
-	    g.fillOval(x.getVal, y.getVal, Size, Size)
+	    g.fillOval(x.get, y.get, Size, Size)
       }
     }    
   }

@@ -1,10 +1,10 @@
 package examples.bouncing
 
-import react.events.ImperativeEvent
-import react.SignalSynt
-import react.Var
-import react.Signal
-import macro.SignalMacro.{SignalM => Signal}
+import rescala.events.ImperativeEvent
+import rescala.SignalSynt
+import rescala.Var
+import rescala.Signal
+import makro.SignalMacro.{SignalM => Signal}
 import swing.{Panel, MainFrame, SimpleSwingApplication}
 import java.awt.{Color, Graphics2D, Dimension}
 import java.awt.Point
@@ -51,7 +51,7 @@ class FoldVersion {
     contents = new Panel() {
       preferredSize = new Dimension(600, 600)
       override def paintComponent(g: Graphics2D) {
-	    g.fillOval(xx.getVal, yy.getVal, Size, Size)
+	    g.fillOval(xx.get, yy.get, Size, Size)
       }
     }    
   }

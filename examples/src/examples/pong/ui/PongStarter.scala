@@ -1,11 +1,11 @@
 package examples.pong.ui
 
 import examples.pong._
-import react.events.ImperativeEvent
-import react.SignalSynt
-import react.Var
-import react.Signal
-import macro.SignalMacro.{ SignalM => Signal }
+import rescala.events.ImperativeEvent
+import rescala.SignalSynt
+import rescala.Var
+import rescala.Signal
+import makro.SignalMacro.{ SignalM => Signal }
 import swing.{ Panel, MainFrame, SimpleSwingApplication }
 import java.awt.{ Color, Graphics2D, Dimension }
 import java.awt.Point
@@ -57,23 +57,23 @@ class PongWindow {
       val scoreFont = new Font("Tahoma", java.awt.Font.PLAIN, 32)
       override def paintComponent(g: Graphics2D) {
         g.setColor(java.awt.Color.DARK_GRAY)
-        g.fillOval(ball.x.getVal, ball.y.getVal, Ball.Size, Ball.Size)
+        g.fillOval(ball.x.get, ball.y.get, Ball.Size, Ball.Size)
         
-        g.fillRect(ball.leftRacket.area.getVal.x, 
-        		   ball.leftRacket.area.getVal.y,
-        		   ball.leftRacket.area.getVal.width,
-        		   ball.leftRacket.area.getVal.height
+        g.fillRect(ball.leftRacket.area.get.x, 
+        		   ball.leftRacket.area.get.y,
+        		   ball.leftRacket.area.get.width,
+        		   ball.leftRacket.area.get.height
             )
-        g.fillRect(ball.rightRacket.area.getVal.x, 
-        		   ball.rightRacket.area.getVal.y,
-        		   ball.rightRacket.area.getVal.width,
-        		   ball.rightRacket.area.getVal.height
+        g.fillRect(ball.rightRacket.area.get.x, 
+        		   ball.rightRacket.area.get.y,
+        		   ball.rightRacket.area.get.width,
+        		   ball.rightRacket.area.get.height
             )        
             
         
         g.setColor(new Color(200, 100, 50))
         g.setFont(scoreFont)
-        g.drawString(ball.score.getVal, Pong.Max_X / 2 - 50, 40)
+        g.drawString(ball.score.get, Pong.Max_X / 2 - 50, 40)
       }
     }
   }

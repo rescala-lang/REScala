@@ -5,7 +5,7 @@ import scala.swing.Swing._
 import scala.swing.{MainFrame, Panel, SimpleSwingApplication}
 import scala.swing.event._
 import java.awt.{Color, Dimension, Graphics, Graphics2D, Point, geom}
-import react.events._
+import rescala.events._
 
 
 

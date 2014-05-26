@@ -4,9 +4,9 @@ package examples.tempconverter
 
 // Escala lib + behaviour extensions
 
-import react.events._
-import react._
-import macro.SignalMacro.{SignalM => Signal}
+import rescala.events._
+import rescala._
+import makro.SignalMacro.{SignalM => Signal}
 
 // Scala swing events
 import swing._

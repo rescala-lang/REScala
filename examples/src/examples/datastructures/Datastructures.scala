@@ -2,11 +2,9 @@ package examples.datastructures
 
 
 
-import react.events.ImperativeEvent
-import react.SignalSynt
-import react.Var
-import react.Signal
-import macro.SignalMacro.{SignalM => Signal}
+import rescala.events.ImperativeEvent
+import rescala._
+import makro.SignalMacro.{SignalM => Signal}
 import scala.collection.immutable.Queue
 import scala.collection.immutable.Stack
 

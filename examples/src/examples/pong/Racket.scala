@@ -1,9 +1,9 @@
 package examples.pong
 
-import react.Signal
-import react.Signal
-import react.SignalSynt
-import macro.SignalMacro.{SignalM => Signal}
+import rescala.Signal
+import rescala.Signal
+import rescala.SignalSynt
+import makro.SignalMacro.{SignalM => Signal}
 import java.awt.Rectangle
 
 object Racket {

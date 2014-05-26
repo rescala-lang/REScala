@@ -2,11 +2,11 @@ package examples.pong.ui
 
 import scala.swing.Reactor
 import scala.swing.Component
-import react.events.ImperativeEvent
-import react.SignalSynt
-import react.Var
-import react.Signal
-import macro.SignalMacro.{SignalM => Signal}
+import rescala.events.ImperativeEvent
+import rescala.SignalSynt
+import rescala.Var
+import rescala.Signal
+import makro.SignalMacro.{SignalM => Signal}
 import java.awt.Point
 import scala.swing.event._
 import scala.swing.Reactions

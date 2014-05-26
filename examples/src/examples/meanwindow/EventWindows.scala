@@ -1,9 +1,9 @@
 package examples.meanwindow
-import react.SignalSynt
-import react.events._
-import react.Var
-import react.Signal
-import macro.SignalMacro.{SignalM => Signal}
+import rescala.SignalSynt
+import rescala.events._
+import rescala.Var
+import rescala.Signal
+import makro.SignalMacro.{SignalM => Signal}
 
 object EventWindows extends Application {
 	

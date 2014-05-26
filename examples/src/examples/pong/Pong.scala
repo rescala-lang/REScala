@@ -1,10 +1,10 @@
 package examples.pong
 
-import react.events.ImperativeEvent
+import rescala.events.ImperativeEvent
 import java.awt.Point
-import react.Signal
-import react.SignalSynt
-import macro.SignalMacro.{SignalM => Signal}
+import rescala.Signal
+import rescala.SignalSynt
+import makro.SignalMacro.{SignalM => Signal}
 import java.awt.Rectangle
 import examples.pong.ui.Mouse
 
@@ -18,7 +18,7 @@ object Ball {
 }
 
 class Pong(val tick: ImperativeEvent[Unit], val mouse: Mouse) {
-  import react.conversions.SignalConversions._
+  import rescala.conversions.SignalConversions._
   
   val LeftRacketPos = 30
   val RightRacketPos = 770
@@ -26,8 +26,8 @@ class Pong(val tick: ImperativeEvent[Unit], val mouse: Mouse) {
   val initPosition = new Point(400, 200)
   val speed = new Point(10,8)
   
-  val x: Signal[Int] = tick.fold(initPosition.x) {(pos, _) => pos + speedX.getVal}
-  val y: Signal[Int] = tick.fold(initPosition.y) {(pos, _) => pos + speedY.getVal}
+  val x: Signal[Int] = tick.fold(initPosition.x) {(pos, _) => pos + speedX.get}
+  val y: Signal[Int] = tick.fold(initPosition.y) {(pos, _) => pos + speedY.get}
   
   val mouseY = Signal{ mouse.position().getY().toInt}
  

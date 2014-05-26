@@ -1,11 +1,11 @@
 package examples.followmouse
 
 import examples.followmouse._
-import react.events.ImperativeEvent
-import react.SignalSynt
-import react.Var
-import react.Signal
-import macro.SignalMacro.{ SignalM => Signal }
+import rescala.events.ImperativeEvent
+import rescala.SignalSynt
+import rescala.Var
+import rescala.Signal
+import makro.SignalMacro.{ SignalM => Signal }
 import swing.{ Panel, MainFrame, SimpleSwingApplication }
 import java.awt.{ Color, Graphics2D, Dimension }
 import java.awt.Point
@@ -74,7 +74,7 @@ class FollowMouse {
       val scoreFont = new Font("Tahoma", java.awt.Font.PLAIN, 32)
       override def paintComponent(g: Graphics2D) {
         g.setColor(java.awt.Color.DARK_GRAY)
-        g.fillOval(x.getValue, y.getValue, Size, Size)
+        g.fillOval(x.get, y.get, Size, Size)
       }
     }
   }

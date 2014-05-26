@@ -2,11 +2,11 @@ package examples.tempconverter
 
 
 // EScala lib + behaviour extensions
-import react.events.ImperativeEvent
-import react.SignalSynt
-import react.Var
-import react.Signal
-import macro.SignalMacro.{SignalM => Signal}
+import rescala.events.ImperativeEvent
+import rescala.SignalSynt
+import rescala.Var
+import rescala.Signal
+import makro.SignalMacro.{SignalM => Signal}
 
 // Scala swing events
 import swing._

@@ -1,10 +1,10 @@
 package examples.fisheye
 
-import react.events.ImperativeEvent
-import react.SignalSynt
-import react.Var
-import react.Signal
-import macro.SignalMacro.{ SignalM => Signal }
+import rescala.events.ImperativeEvent
+import rescala.SignalSynt
+import rescala.Var
+import rescala.Signal
+import makro.SignalMacro.{ SignalM => Signal }
 import swing.{ Panel, MainFrame, SimpleSwingApplication }
 import java.awt.{ Color, Graphics2D, Dimension }
 import java.awt.Point
@@ -85,8 +85,8 @@ class Fisheye {
       val scoreFont = new Font("Tahoma", java.awt.Font.PLAIN, 32)
       override def paintComponent(g: Graphics2D) {
         for (box <- boxes) {
-          g.setColor(box.effectiveColor.getVal)
-          g.fill(box.area.getVal)
+          g.setColor(box.effectiveColor.get)
+          g.fill(box.area.get)
         }
       }
     }

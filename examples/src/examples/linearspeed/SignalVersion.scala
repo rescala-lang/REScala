@@ -1,8 +1,8 @@
 package examples.linearspeed
 
-import react.events._
-import react._
-import macro.SignalMacro.{SignalM => Signal}
+import rescala.events._
+import rescala._
+import makro.SignalMacro.{SignalM => Signal}
 
 
 
@@ -21,7 +21,7 @@ object SignalVersion extends App {
   
   while (true) {
     Thread sleep 20
-    time() = time.getVal + 1
+    time() = time.get + 1
   }
   
 

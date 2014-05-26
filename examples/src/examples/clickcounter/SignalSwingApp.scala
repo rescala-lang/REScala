@@ -1,11 +1,9 @@
 package examples.clickcounter
 
 
-import react.events.ImperativeEvent
-import react.SignalSynt
-import react.Var
-import react.Signal
-import macro.SignalMacro.{SignalM => Signal}
+import rescala.events.ImperativeEvent
+import rescala._
+import makro.SignalMacro.{SignalM => Signal}
 import scala.swing._
 import scala.swing.event._
 
@@ -13,7 +11,7 @@ import scala.swing.event._
 trait ReactiveText {
   def text_=(s : String)
   def text_=(value: Signal[String]) {    
-    this.text_=(value.getValue)
+    this.text_=(value.get)
     value.changed += {(t : String) => this.text_=(t)}
   }
 }

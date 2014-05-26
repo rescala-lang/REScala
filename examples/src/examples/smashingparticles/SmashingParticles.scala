@@ -1,7 +1,7 @@
 package examples.smashingparticles
 
-import react._
-import macro.SignalMacro.{SignalM => Signal}
+import rescala._
+import makro.SignalMacro.{SignalM => Signal}
 import swing.{Swing, Panel, MainFrame, SimpleSwingApplication}
 import java.awt.{Graphics2D, Dimension}
 import java.awt.Point
@@ -30,7 +30,7 @@ class SmashingParticles {
   
   class Oval(center: Signal[Point], radius: Signal[Int]) {
     toDraw += ((g: Graphics2D) => 
-      {g.fillOval(center.getVal.x,center.getVal.y, radius.getVal, radius.getVal)})
+      {g.fillOval(center.get.x,center.get.y, radius.get, radius.get)})
     
     override def toString = "Circle("+ center + "," + radius +")"
   }
