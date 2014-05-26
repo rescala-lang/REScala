@@ -26,7 +26,7 @@ object Application extends SimpleSwingApplication {
   
   val charCountLabel = new ReLabel(Signal { "Ch " + textArea.charCount() })
   
-  val wordCountLabel = new ReLabel(Signal { "Ch " + textArea.wordCount() })
+  val wordCountLabel = new ReLabel(Signal { "Words " + textArea.wordCount() })
   
   val selectAllButton = new ReButton("Select All")
   selectAllButton.clicked += { _ => textArea.selectAll; textArea.requestFocus }
@@ -40,7 +40,7 @@ object Application extends SimpleSwingApplication {
   // layout
   def top = new MainFrame {
     title = "TextEditor (signals0)"
-    preferredSize = new Dimension(400, 400)
+    preferredSize = new Dimension(500, 500)
     contents = new BorderPanel {
       layout(new ScrollPane(textArea)) = Position.Center
       layout(new GridPanel(1, 0) {

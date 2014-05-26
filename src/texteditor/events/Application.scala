@@ -43,7 +43,7 @@ object Application extends SimpleSwingApplication {
   // layout
   def top = new MainFrame {
     title = "TextEditor (events)"
-    preferredSize = new Dimension(400, 400)
+    preferredSize = new Dimension(500, 500)
     contents = new BorderPanel {
       layout(new ScrollPane(textArea)) = Position.Center
       layout(new GridPanel(1, 0) {

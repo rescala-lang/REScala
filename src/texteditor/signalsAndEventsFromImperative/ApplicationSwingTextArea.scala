@@ -28,21 +28,34 @@ object ApplicationSwingTextArea extends SimpleSwingApplication {
   val selectionLabel = new ReLabel(
     Signal { "Sel " + (if (textArea.selected() != null) textArea.selected().length() else 0) })
   
-  val countLabel = new ReLabel(Signal { "Ch " + textArea.text().length() })
+  val charCountLabel = new ReLabel(Signal { "Ch " + textArea.text().length() })
   
-  val button = new ReButton("Select All")
-  button.clicked += { _ => textArea.selectAll; textArea.requestFocus }
+  val wordCountLabel = new ReLabel(Signal { "Words " + textArea.text().length() })
+  
+  val selectAllButton = new ReButton("Select All")
+  selectAllButton.clicked += { _ => textArea.selectAll; textArea.requestFocus }
+  
+  val copyButton = new ReButton("Copy")
+  copyButton.clicked += { _ => textArea.copy; textArea.requestFocus }
+  
+  val pasteButton = new ReButton("Paste")
+  pasteButton.clicked += { _ => textArea.paste; textArea.requestFocus }
   
   // layout
   def top = new MainFrame {
-    preferredSize = new Dimension(400, 400)
+    preferredSize = new Dimension(500, 500)
     contents = new BorderPanel {
       layout(new ScrollPane(textArea)) = Position.Center
-      layout(button) = Position.North
+      layout(new GridPanel(1, 0) {
+        contents += selectAllButton
+        contents += copyButton
+        contents += pasteButton
+      }) = Position.North
       layout(new GridPanel(1, 0) {
         contents += positionLabel
         contents += selectionLabel
-        contents += countLabel
+        contents += charCountLabel
+        contents += wordCountLabel
       }) = Position.South
     }
   }

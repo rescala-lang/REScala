@@ -25,7 +25,7 @@ object Application extends SimpleSwingApplication {
   
   val charCountLabel = new ReLabel(Signal { "Ch " + textArea.charCount() })  //#SIG //#IS( // )
   
-  val wordCountLabel = new ReLabel(Signal { "Ch " + textArea.wordCount() })  //#SIG //#IS( // )
+  val wordCountLabel = new ReLabel(Signal { "Words " + textArea.wordCount() })  //#SIG //#IS( // )
   // TODO: refactoring to signals ?
   val selectAllButton = new ReButton("Select All")  //#EVT
   selectAllButton.clicked += { _ => textArea.selectAll; textArea.requestFocus } //#HDL
@@ -39,7 +39,7 @@ object Application extends SimpleSwingApplication {
   // layout
   def top = new MainFrame {
     title = "TextEditor (signals1)"
-    preferredSize = new Dimension(400, 400)
+    preferredSize = new Dimension(500, 500)
     contents = new BorderPanel {
       layout(new ScrollPane(textArea)) = Position.Center
       layout(new GridPanel(1, 0) {
