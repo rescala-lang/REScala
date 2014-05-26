@@ -1,10 +1,9 @@
 package texteditor.signalsAndEventsFromEventsOnly
 
 import javax.swing
-import macro.SignalMacro.{SignalM => Signal}
-import react.SignalSynt
-import react.Var
-import react.events.ImperativeEvent
+import makro.SignalMacro.{SignalM => Signal}
+import rescala.Var
+import rescala.events.ImperativeEvent
 
 class Timer(delay0: Int) {
   val peer: swing.Timer = new swing.Timer(delay0, null) {

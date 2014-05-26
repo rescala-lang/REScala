@@ -14,9 +14,8 @@ import scala.math.min
 import scala.swing.Component
 import scala.swing.event.Key
 
-import macro.SignalMacro.{SignalM => Signal}
-import react.SignalSynt
-import react.Var
+import makro.SignalMacro.{SignalM => Signal}
+import rescala.Var
 import reswing.ReComponent
 import reswing.ReSwingValue
 import texteditor.JScrollableComponent
@@ -64,7 +63,7 @@ class TextArea extends ReComponent {
   }
   
   def selectAll {
-    caret.dot = charCount.getValue
+    caret.dot = charCount.get
     caret.mark = 0
   }
   
@@ -74,13 +73,13 @@ class TextArea extends ReComponent {
     if (c.isDataFlavorSupported(DataFlavor.stringFlavor)) {
       val str = c.getTransferData(DataFlavor.stringFlavor).asInstanceOf[String]
       buffer.insert(str)
-      caret.offset = caret.offset.getValue + str.length
+      caret.offset = caret.offset.get + str.length
     }
   }
   
   def copy {
-    if (selected.getValue.nonEmpty) {
-      val s = new StringSelection(selected.getValue.mkString)
+    if (selected.get.nonEmpty) {
+      val s = new StringSelection(selected.get.mkString)
       clipboard.setContents(s, s)
     }
   }
@@ -100,19 +99,19 @@ class TextArea extends ReComponent {
     // dot as position (row and column)
     private val dotPosSignal = Signal{ LineOffset.position(buffer.iterable(), dot()) }
     def dotPos = dotPosSignal
-    def dotPos_=(value: Position) = dot = LineOffset.offset(buffer.iterable.getValue, value)
+    def dotPos_=(value: Position) = dot = LineOffset.offset(buffer.iterable.get, value)
     
     private val markVar = Var(0)
     
     // mark as offset
     private val markSignal = Signal{ markVar() }
     def mark = markSignal
-    def mark_=(value: Int) = if (value >= 0 && value <= buffer.length.getValue) markVar() = value
+    def mark_=(value: Int) = if (value >= 0 && value <= buffer.length.get) markVar() = value
     
     // mark as position (row and column)
     private val markPosSignal = Signal{ LineOffset.position(buffer.iterable(), mark()) }
     def markPos = markPosSignal
-    def markPos_=(value: Position) = mark = LineOffset.offset(buffer.iterable.getValue, value)
+    def markPos_=(value: Position) = mark = LineOffset.offset(buffer.iterable.get, value)
     
     // caret location as offset
     def offset = dot
@@ -123,7 +122,7 @@ class TextArea extends ReComponent {
     
     // caret location as position (row and column)
     def position = dotPos
-    def position_=(value: Position) = offset = LineOffset.offset(buffer.iterable.getValue, value)
+    def position_=(value: Position) = offset = LineOffset.offset(buffer.iterable.get, value)
     
     protected[TextArea] val blink = new Timer(500) start
     protected[TextArea] val steady = new Timer(500, false)
@@ -131,18 +130,18 @@ class TextArea extends ReComponent {
         Signal{ hasFocus() && steady.running() })
   }
   
-  protected def posInLinebreak(p: Int) = p > 0 && p < buffer.length.getValue &&
+  protected def posInLinebreak(p: Int) = p > 0 && p < buffer.length.get &&
     buffer(p - 1) == '\r' && buffer(p) == '\n'
   
   protected def removeSelection {
-    val selStart = min(caret.dot.getValue, caret.mark.getValue)
-    val selEnd = max(caret.dot.getValue, caret.mark.getValue)
+    val selStart = min(caret.dot.get, caret.mark.get)
+    val selEnd = max(caret.dot.get, caret.mark.get)
     caret.offset = selStart
     buffer.remove(selEnd - selStart)
   }
   
   protected def pointFromPosition(position: Position) = {
-    val line = LineIterator(buffer.iterable.getValue).drop(position.row).next
+    val line = LineIterator(buffer.iterable.get).drop(position.row).next
     val y = position.row * lineHeight
     val x = stringWidth(line.substring(0, position.col))
     new Point(x + padding, y)
@@ -150,7 +149,7 @@ class TextArea extends ReComponent {
   
   protected def positionFromPoint(point: Point) = {
     val row = point.y / lineHeight
-    val it = LineIterator(buffer.iterable.getValue).drop(row)
+    val it = LineIterator(buffer.iterable.get).drop(row)
     val col =
       if (it.hasNext) {
         var prefix = ""
@@ -175,27 +174,27 @@ class TextArea extends ReComponent {
     else
       e.key match {
         case Key.Left =>
-          val offset = caret.offset.getValue - (if (posInLinebreak(caret.offset.getValue - 1)) 2 else 1)
+          val offset = caret.offset.get - (if (posInLinebreak(caret.offset.get - 1)) 2 else 1)
           if (shift) caret.dot = offset else caret.offset = offset
         case Key.Right =>
-          val offset = caret.offset.getValue + (if (posInLinebreak(caret.offset.getValue + 1)) 2 else 1)
+          val offset = caret.offset.get + (if (posInLinebreak(caret.offset.get + 1)) 2 else 1)
           if (shift) caret.dot = offset else caret.offset = offset
         case Key.Up =>
-          val position = Position(max(0, caret.position.getValue.row - 1), caret.position.getValue.col)
+          val position = Position(max(0, caret.position.get.row - 1), caret.position.get.col)
           if (shift) caret.dotPos = position else caret.position = position
         case Key.Down =>
-          val position = Position(min(lineCount.getValue - 1, caret.position.getValue.row + 1), caret.position.getValue.col)
+          val position = Position(min(lineCount.get - 1, caret.position.get.row + 1), caret.position.get.col)
           if (shift) caret.dotPos = position else caret.position = position
         case Key.Home =>
           var offset = 0
-          for ((ch, i) <- buffer.iterable.getValue.iterator.zipWithIndex)
-            if (i < caret.offset.getValue && (ch == '\r' || ch == '\n'))
+          for ((ch, i) <- buffer.iterable.get.iterator.zipWithIndex)
+            if (i < caret.offset.get && (ch == '\r' || ch == '\n'))
               offset = i + 1;
           if (shift) caret.dot = offset else caret.offset = offset
         case Key.End =>
           val offset = 
-            caret.offset.getValue +
-	          buffer.iterable.getValue.iterator.drop(caret.offset.getValue).takeWhile{
+            caret.offset.get +
+	          buffer.iterable.get.iterator.drop(caret.offset.get).takeWhile{
 	            ch => ch != '\r' && ch != '\n'
 	          }.size
 	      if (shift) caret.dot = offset else caret.offset = offset
@@ -207,22 +206,22 @@ class TextArea extends ReComponent {
     if (e.modifiers != Key.Modifier.Control)
       e.char match {
         case '\u007f' => // Del key
-          if (selected.getValue.isEmpty) {
-            val count = if (posInLinebreak(caret.dot.getValue + 1)) 2 else 1
+          if (selected.get.isEmpty) {
+            val count = if (posInLinebreak(caret.dot.get + 1)) 2 else 1
             buffer.remove(count);
           }
           else removeSelection
         case '\b' => // Backspace key
-          if (selected.getValue.isEmpty) {
-            val count = min(if (posInLinebreak(caret.dot.getValue - 1)) 2 else 1, caret.dot.getValue)
-            caret.offset = caret.offset.getValue - count
+          if (selected.get.isEmpty) {
+            val count = min(if (posInLinebreak(caret.dot.get - 1)) 2 else 1, caret.dot.get)
+            caret.offset = caret.offset.get - count
             buffer.remove(count);
           }
           else removeSelection
         case c => // character input
           removeSelection
           buffer.insert(c.toString)
-          caret.offset = caret.offset.getValue + 1
+          caret.offset = caret.offset.get + 1
       }
   }
   
@@ -237,7 +236,7 @@ class TextArea extends ReComponent {
   
   // handle scroll and paint updates
   caret.position.changed += {_ =>
-    val point = pointFromPosition(caret.position.getValue)
+    val point = pointFromPosition(caret.position.get)
     peer.peer.scrollRectToVisible(new Rectangle(point.x - 8, point.y, 16, 2 * lineHeight))
     caret.steady.restart
   }
@@ -249,14 +248,14 @@ class TextArea extends ReComponent {
     super.paintComponent(g)
     g.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON)
     g.setColor(SystemColor.text)
-    g.fillRect(0, 0, size.getValue.width, size.getValue.height + lineHeight)
+    g.fillRect(0, 0, size.get.width, size.get.height + lineHeight)
     
-    val selStart = min(caret.dot.getValue, caret.mark.getValue)
-    val selEnd = max(caret.dot.getValue, caret.mark.getValue)
+    val selStart = min(caret.dot.get, caret.mark.get)
+    val selEnd = max(caret.dot.get, caret.mark.get)
     
     var lineIndex = 0
     var charIndex = 0
-    for (line <- LineIterator(buffer.iterable.getValue)) {
+    for (line <- LineIterator(buffer.iterable.get)) {
       var start, middle, end = ""
       var middleX, endX = 0
       
@@ -272,7 +271,7 @@ class TextArea extends ReComponent {
         endX = padding + stringWidth(start + middle)
         
         g.setColor(SystemColor.textHighlight)
-        g.fillRect(middleX, lineIndex * lineHeight + lineHeight - font.getValue.getSize, endX - middleX, lineHeight)
+        g.fillRect(middleX, lineIndex * lineHeight + lineHeight - font.get.getSize, endX - middleX, lineHeight)
       }
       else
         start = line
@@ -288,10 +287,10 @@ class TextArea extends ReComponent {
       g.drawString(middle, middleX, lineIndex * lineHeight)
     }
     
-    if (caret.visible.getValue) {
-      def point = pointFromPosition(caret.position.getValue)
+    if (caret.visible.get) {
+      def point = pointFromPosition(caret.position.get)
       g.setColor(SystemColor.textText)
-      g.drawLine(point.x, point.y + lineHeight - font.getValue.getSize, point.x, point.y + lineHeight)
+      g.drawLine(point.x, point.y + lineHeight - font.get.getSize, point.x, point.y + lineHeight)
     }
   }
 }

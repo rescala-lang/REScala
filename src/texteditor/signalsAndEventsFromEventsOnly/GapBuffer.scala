@@ -1,10 +1,9 @@
 package texteditor.signalsAndEventsFromEventsOnly
 
-import macro.SignalMacro.{SignalM => Signal}
-import react.Signal
-import react.SignalSynt
-import react.Var
-import react.events.ImperativeEvent
+import makro.SignalMacro.{SignalM => Signal}
+import rescala.Signal
+import rescala.Var
+import rescala.events.ImperativeEvent
 
 /**
  * Iterates over `array` whose content has the size of `count`.
@@ -51,8 +50,8 @@ class GapBuffer {
   private var buf = new Array[Char](0)
   private val size = Var(0) //#VAR
   private val offsets: Signal[(Int, Int)] = (caretChanged && //#SIG //#EF
-      { offset => offset >= 0 && offset <= size.getValue }
-      map { offset: Int => (offsets.getValue._2, offset) }) latest (0, 0) //#EF //#IF
+      { offset => offset >= 0 && offset <= size.get }
+      map { offset: Int => (offsets.get._2, offset) }) latest (0, 0) //#EF //#IF
   
   offsets.changed += { //#IF //#HDL
     _ match {
@@ -71,37 +70,37 @@ class GapBuffer {
   
   val iterable = Signal{  //#SIG
     val (b, s) = (buf, size())
-    new Iterable[Char] { def iterator = new CharacterIterator(b, s, caret.getValue) } : Iterable[Char]
+    new Iterable[Char] { def iterator = new CharacterIterator(b, s, caret.get) } : Iterable[Char]
   }
   
   val length = Signal { size() }  //#SIG
   
-  def apply(i: Int) = buf(if (i >= caret.getValue) i + (buf.length - size.getValue) else i)
+  def apply(i: Int) = buf(if (i >= caret.get) i + (buf.length - size.get) else i)
   
   def insert(str: String) {
     // insert text into the gap between the two text segments
-    if (size.getValue + str.length > buf.length)
-      expand(size.getValue + str.length)
+    if (size.get + str.length > buf.length)
+      expand(size.get + str.length)
     
-    val post = buf.length - size.getValue + caret.getValue
+    val post = buf.length - size.get + caret.get
     str.copyToArray(buf, post - str.length, str.length);
     size() += str.length
   }
   
   def remove(count: Int) {
     // remove text by increasing the gap between the two text segments
-    size() -= math.min(count, size.getValue - caret.getValue)
+    size() -= math.min(count, size.get - caret.get)
   }
   
   private def expand(minsize: Int) {
     // the text does not fit into the buffer
     // which requires a larger buffer to be allocated
     // the two text segments have to be moved to a new buffer
-    val postlength = size.getValue - caret.getValue
+    val postlength = size.get - caret.get
     val newlength = 2 * minsize
     var newbuf = new Array[Char](newlength)
     
-    Array.copy(buf, 0, newbuf, 0, caret.getValue)
+    Array.copy(buf, 0, newbuf, 0, caret.get)
     Array.copy(buf, buf.length - postlength, newbuf, newbuf.length - postlength, postlength)
     
     buf = newbuf

@@ -9,8 +9,7 @@ import scala.swing.MainFrame
 import scala.swing.ScrollPane
 import scala.swing.SimpleSwingApplication
 
-import macro.SignalMacro.{SignalM => Signal}
-import react.SignalSynt
+import makro.SignalMacro.{SignalM => Signal}
 import reswing.ReButton
 import reswing.ReLabel
 import reswing.ReTextArea
