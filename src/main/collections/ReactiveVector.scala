@@ -1,7 +1,7 @@
 package main.collections
 
-import react._
-import macro.SignalMacro.{SignalM => Signal}
+import rescala._
+import makro.SignalMacro.{SignalM => Signal}
 import scala.collection.immutable.Vector
 import main.abstraction._
 
@@ -10,7 +10,7 @@ class ReactiveVector[A](Vector: Signal[Vector[A]]) extends ReactiveSeqLike[A, Re
 	
 	override protected val internalValue = Var(Vector)
 	
-	def this(set: Vector[A]) = this(Var(set).toSignal)
+	def this(set: Vector[A]) = this(Var(set))
 	def this(vals: A*) = this(Vector(vals: _*))
 	
 	implicit def wrapping[B] = new SignalWrappable[Vector[B], ReactiveVector[B]] {

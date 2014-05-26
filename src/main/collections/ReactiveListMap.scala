@@ -1,13 +1,13 @@
 package main.collections
 
-import react._
+import rescala._
 import scala.collection.immutable._
 import main.abstraction._
 
 class ReactiveListMap[A,B](map: Signal[Map[A,B]]) extends ReactiveMap[A,B, ReactiveListMap] {
 	override protected val internalValue = Var(map)
 	
-	def this(map: ListMap[A,B]) = this(Var(map).toSignal)
+	def this(map: ListMap[A,B]) = this(Var(map))
 	def this(pairs: (A,B)*) = this(ListMap(pairs:_*))
 	
 	

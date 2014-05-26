@@ -1,7 +1,7 @@
 package main.abstraction
 
-import react._
-import macro.SignalMacro.{SignalM => Signal}
+import rescala._
+import makro.SignalMacro.{SignalM => Signal}
 import scala.language.higherKinds
 
 abstract class SignalWrapper {

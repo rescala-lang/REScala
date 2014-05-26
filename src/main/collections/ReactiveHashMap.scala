@@ -1,13 +1,13 @@
 package main.collections
 
-import react._
+import rescala._
 import scala.collection.immutable._
 import main.abstraction._
 
 class ReactiveHashMap[A,B](map: Signal[Map[A,B]]) extends ReactiveMap[A,B, ReactiveHashMap] {
 	override protected val internalValue = Var(map)
 	
-	def this(map: HashMap[A,B]) = this(Var(map).toSignal)
+	def this(map: HashMap[A,B]) = this(Var(map))
 	def this(pairs: (A,B)*) = this(HashMap(pairs:_*))
 }
 

@@ -2,8 +2,8 @@ package test.collections
 
 import org.scalatest._
 import main.collections._
-import react._
-import react.conversions.SignalConversions.toVal
+import rescala._
+import rescala.conversions.SignalConversions._
 
 class ReactiveSetSpec extends FunSpec {
     
@@ -35,7 +35,7 @@ class ReactiveSetSpec extends FunSpec {
 	        val f = fixture
 	        import f._
 	        val a = Var(2)
-	        collection += a.toSignal
+	        collection += a
 	        assertResult(false)(contains3())
 	        a() = 3
 	        assertResult(true)(contains3())
@@ -48,7 +48,7 @@ class ReactiveSetSpec extends FunSpec {
 	        import f._
 	        val a = Var(2)
 	        
-	        collection += a.toSignal
+	        collection += a
 	        assertResult(false)(contains3())
 	        collection += 3
 	        assertResult(true)(contains3())
@@ -62,7 +62,7 @@ class ReactiveSetSpec extends FunSpec {
 	        val f = fixture
 	        import f._
 	        val a = Var(2)
-	        collection += a.toSignal
+	        collection += a
 	        assertResult(false)(contains3())
 	        a() = 3
 	        assertResult(true)(contains3())
@@ -75,7 +75,7 @@ class ReactiveSetSpec extends FunSpec {
 	        import f._
 	        collection += 3
 	        val remove = Var(2)
-	        collection -= remove.toSignal
+	        collection -= remove
 	        
 	        assertResult(true)(contains3())
 	        remove() = 3
@@ -92,8 +92,8 @@ class ReactiveSetSpec extends FunSpec {
 	            val remove = Var(2)
 	            
 	            collection += 2
-	            collection -= remove.toSignal
-	            collection += add.toSignal
+	            collection -= remove
+	            collection += add
 	            
 	            assertResult(true)(contains2())
 	            assertResult(false)(contains3())
@@ -114,8 +114,8 @@ class ReactiveSetSpec extends FunSpec {
 	            val add = Var(2)
 	            val remove = Var(2)
 	            
-	            collection += add.toSignal
-	            collection -= remove.toSignal
+	            collection += add
+	            collection -= remove
 	            
 	            assertResult(false)(contains2())
 	            assertResult(false)(contains3())
@@ -138,10 +138,10 @@ class ReactiveSetSpec extends FunSpec {
 	            val b = Var(2)
 	            val a = Var(3)
 	            collection += 1
-	            collection += b.toSignal
-	            collection += a.toSignal
+	            collection += b
+	            collection += a
 	            
-	            val filtered: ReactiveHashSet[Int] = collection.filter(Var((x: Int) => x % 2 == 0).toSignal)
+	            val filtered: ReactiveHashSet[Int] = collection.filter(Var((x: Int) => x % 2 == 0))
 	            assertResult(true)(filtered.contains(2)())
 	            assertResult(false)(filtered.contains(3)())
 	            assertResult(false)(filtered.contains(4)())
@@ -166,14 +166,14 @@ class ReactiveSetSpec extends FunSpec {
 	            val b = Var(2)
 	            val a = Var(3)
 	            
-	            val filteredCollection = collection.filter(Var((x: Int) => x % 2 == 0).toSignal)
+	            val filteredCollection = collection.filter(Var((x: Int) => x % 2 == 0))
 	            val filteredContains2 = filteredCollection.contains(2)
 	            
-	            collection += b.toSignal
+	            collection += b
 	            assertResult(true)(filteredContains2())
 	            
-	            filteredCollection -= b.toSignal
-	            filteredCollection += a.toSignal
+	            filteredCollection -= b
+	            filteredCollection += a
 	            assertResult(false)(filteredContains2())
 	            
 	            a() = 2
@@ -195,9 +195,9 @@ class ReactiveSetSpec extends FunSpec {
 	            
 	            val a = Var(3)
 	            collection += 1
-	            collection += a.toSignal
+	            collection += a
 	            
-	            val transformed = collection.map(Var((x: Int) => x * 2).toSignal)
+	            val transformed = collection.map(Var((x: Int) => x * 2))
 	            val transformedContains2 = transformed.contains(2)
 	            val transformedContains4 = transformed.contains(4)
 	            val transformedContains6 = transformed.contains(6)
@@ -230,10 +230,10 @@ class ReactiveSetSpec extends FunSpec {
             val a = Var(3)
             val b = Var(88)
             collection += 1
-            collection += a.toSignal
-            collection -= b.toSignal
+            collection += a
+            collection -= b
             
-            val sum = collection.foldLeft(0)(Var((x: Int, y: Int) => x + y).toSignal)
+            val sum = collection.foldLeft(0)(Var((x: Int, y: Int) => x + y))
             
             assertResult(4)(sum())
             
@@ -254,10 +254,10 @@ class ReactiveSetSpec extends FunSpec {
             val a = Var(3)
             val b = Var(9)
             collection += 1
-            collection += a.toSignal
-            collection -= b.toSignal
+            collection += a
+            collection -= b
             
-            val moments = collection.flatMap(Var((x: Int) => List(x,x*x)).toSignal)
+            val moments = collection.flatMap(Var((x: Int) => List(x,x*x)))
             val momentContains1 = moments.contains(1)
             val momentContains9 = moments.contains(9)
             val momentContains11 = moments.contains(11)

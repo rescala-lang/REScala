@@ -2,8 +2,8 @@ package test.collections
 
 import org.scalatest._
 import main.collections._
-import react._
-import react.conversions.SignalConversions.toVal
+import rescala._
+import rescala.conversions.SignalConversions.toVal
 import scala.collection.Map.canBuildFrom
 
 class ReactiveMapSpec extends FunSpec {
@@ -34,7 +34,7 @@ class ReactiveMapSpec extends FunSpec {
 	    it("should allow retrieval with reactive keys") {
 	    	val collection = new ReactiveHashMap[Int, Int]
 	    	val idx = Var(2)
-	        val res = collection.get(idx.toSignal)	        
+	        val res = collection.get(idx)	        
 	        assertResult(None)(res())
 	        collection += 3 -> 2
 	        assertResult(None)(res())
@@ -49,9 +49,9 @@ class ReactiveMapSpec extends FunSpec {
 	        val pair1 = Var(3->2)
 	        val value1 = Var(4)
 	        
-	        collection += pair1.toSignal
+	        collection += pair1
 	        assertResult(Some(2))(res1())
-	        collection.update(key1.toSignal, value1.toSignal)
+	        collection.update(key1, value1)
 	        assertResult(Some(2))(res1())
 	        key1() = 3
 	        assertResult(Some(4))(res1())
@@ -68,7 +68,7 @@ class ReactiveMapSpec extends FunSpec {
 	        val c = collection.get(2)
 	        val d = Var(4)
 	        assertResult(None)(a())
-	        collection += b.toSignal
+	        collection += b
 	        assertResult(Some(2))(a())
 	        b() = 3->1
 	        assertResult(Some(1))(a())
@@ -76,7 +76,7 @@ class ReactiveMapSpec extends FunSpec {
 	        b() = 2->1
 	        assertResult(None)(a())
 	        assertResult(Some(1))(c())
-	        collection -= d.toSignal
+	        collection -= d
 	        assertResult(Some(1))(c())
 	        d() = 2
 	        assertResult(None)(c())
@@ -98,7 +98,7 @@ class ReactiveMapSpec extends FunSpec {
 	        
 	        collection += 1->4
 	        collection += 2->3
-	        collection += c.toSignal
+	        collection += c
 	        collection += 4->1
 	        
 	        assertResult(Some(3))(filteredA())

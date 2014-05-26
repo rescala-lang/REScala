@@ -2,13 +2,13 @@ package test.collections
 
 import org.scalatest._
 import main.collections._
-import react._
-import react.conversions.SignalConversions.toVal
+import rescala._
+import rescala.conversions.SignalConversions.toVal
 
 class ReactiveListSpec extends FunSpec {
 	describe("ReactiveList") {
         it("should provide a reactive size attribute") {
-            val collection = new ReactiveList[Int](Var(List()).toSignal)
+            val collection = new ReactiveList[Int](Var(List()))
             collection += 3
             val length = collection.size()
             assertResult(1, "initially incorrect")(length())
@@ -30,8 +30,8 @@ class ReactiveListSpec extends FunSpec {
             
             val a = Var(4)
             val b = Var(5)
-            collection += a.toSignal
-            collection += b.toSignal
+            collection += a
+            collection += b
             
             val fourthElement = collection(3) //Note: needs to be after the append, could be solved differently with Option
             val fifthElement = collection(4)
@@ -49,11 +49,11 @@ class ReactiveListSpec extends FunSpec {
             val collection = new ReactiveList[Int](1,2,3,4,5)
             val idx = Var(0)
             val secondElement = collection(1)
-            val idxElement = collection(idx.toSignal)
+            val idxElement = collection(idx)
             assertResult(2)(secondElement())
             assertResult(1)(idxElement())
             
-            collection(idx.toSignal) = 4
+            collection(idx) = 4
             assertResult(2)(secondElement())
             assertResult(4)(idxElement())
             

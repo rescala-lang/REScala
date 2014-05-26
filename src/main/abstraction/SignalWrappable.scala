@@ -1,6 +1,6 @@
 package main.abstraction
 
-import react._
+import rescala._
 import scala.language.higherKinds
 
 trait SignalWrappable[WrappedType, WrapperType] {

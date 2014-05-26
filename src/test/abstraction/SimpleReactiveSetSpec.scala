@@ -1,8 +1,8 @@
 package test.abstraction
 
 import org.scalatest._
-import react._
-import react.conversions.SignalConversions.toVal
+import rescala._
+import rescala.conversions.SignalConversions._
 
 class SimpleReactiveSetSpec extends FunSpec {
 	describe("IntList") {
@@ -10,10 +10,10 @@ class SimpleReactiveSetSpec extends FunSpec {
             val sut = new SimpleReactiveSet(Set(1,2,3))
             val res = sut.size()
             assertResult(3)(res())
-            sut += Var(4).toSignal
+            sut += Var(4)
             assertResult(4)(res())
-            sut += Var(5).toSignal
-            sut += Var(6).toSignal
+            sut += Var(5)
+            sut += Var(6)
             assertResult(6)(res())
         } 
         
@@ -25,25 +25,25 @@ class SimpleReactiveSetSpec extends FunSpec {
         
         it("should allow reactive checks") {
             val sut = new SimpleReactiveSet(Set[Int]())
-            val res = sut.contains(Var(3).toSignal)
+            val res = sut.contains(Var(3))
             
             assertResult(false)(res())
-            sut += Var(3).toSignal
+            sut += Var(3)
             assertResult(true)(res())
         }
         
         it("should allow fully reactive inserts and removes") {
             val sut = new SimpleReactiveSet(Set(1,2,3))
-            val contains3 = sut.contains(Var(3).toSignal)
-            val contains4 = sut.contains(Var(4).toSignal)
+            val contains3 = sut.contains(Var(3))
+            val contains4 = sut.contains(Var(4))
             
             val a = Var(4)
             val b = Var(2)
             val c = Var(1)
             
-            sut -= a.toSignal
-            sut += b.toSignal
-            sut -= c.toSignal
+            sut -= a
+            sut += b
+            sut -= c
             
             assertResult(true)(contains3())
             assertResult(false)(contains4())
@@ -72,17 +72,17 @@ class SimpleReactiveSetSpec extends FunSpec {
         
         it("should allow fully reactive higher order functions") {
         	val sut = new SimpleReactiveSet(Set(1,2,3))
-        	val filterResult: SimpleReactiveSet[Int] = sut.filter(Var((_: Int) % 2 == 0).toSignal)
-        	val mapResult = sut.map(Var((_: Int) * 2).toSignal)
-        	val foldResult = sut.fold(Var(1).toSignal, Var((_: Int) + (_: Int)).toSignal)
-        	val flatMapResult = sut.flatMap(Var((x: Int) => List(x, 2*x, 3*x)).toSignal)
+        	val filterResult: SimpleReactiveSet[Int] = sut.filter(Var((_: Int) % 2 == 0))
+        	val mapResult = sut.map(Var((_: Int) * 2))
+        	val foldResult = sut.fold(Var(1), Var((_: Int) + (_: Int)))
+        	val flatMapResult = sut.flatMap(Var((x: Int) => List(x, 2*x, 3*x)))
         	
         	assertResult(Set(2))(filterResult().toValue)
         	assertResult(Set(2,4,6))(mapResult().toValue)
         	assertResult(7)(foldResult())
         	assertResult(Set(1,2,3,4,6,9))(flatMapResult())
         	
-        	sut += Var(4).toSignal
+        	sut += Var(4)
         	
         	assertResult(Set(2,4))(filterResult().toValue)
         	assertResult(Set(2,4,6,8))(mapResult().toValue)
@@ -93,12 +93,12 @@ class SimpleReactiveSetSpec extends FunSpec {
         
         it("should allow fully reactive higher order functions that modify self") {
             val sut = new SimpleReactiveSet(Set(1,2,3))
-            val res = sut.contains(Var(3).toSignal)
+            val res = sut.contains(Var(3))
             val f = Var((_: Int) % 2 == 0)
             
             assertResult(true)(res())
             
-            sut.filterSelf(f.toSignal)
+            sut.filterSelf(f)
             assertResult(false)(res())
             
             f() = (_: Int) % 2 != 0

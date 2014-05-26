@@ -1,6 +1,6 @@
 package test.abstraction
 
-import react._
+import rescala._
 import main.abstraction._
 import scala.collection.GenTraversableOnce
 

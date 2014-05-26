@@ -1,6 +1,6 @@
 package main.collections
 
-import react._
+import rescala._
 import scala.collection.immutable.ListSet
 import main.abstraction._
 
@@ -8,7 +8,7 @@ class ReactiveListSet[A](set: Signal[ListSet[A]]) extends ReactiveSetLike[A, Rea
 	override type InternalKind[B] = ListSet[B]
 	override protected val internalValue: Var[Signal[InternalType]]  = Var(set)
 	
-	def this(set: ListSet[A]) = this(Var(set).toSignal)
+	def this(set: ListSet[A]) = this(Var(set))
 	def this(vals: A*) = this(ListSet(vals: _*))
 	
 	implicit def wrapping[B] = new SignalWrappable[ListSet[B], ReactiveListSet[B]] {

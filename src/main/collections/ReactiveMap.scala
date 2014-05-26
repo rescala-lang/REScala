@@ -1,7 +1,7 @@
 package main.collections
 
-import react._
-import macro.SignalMacro.{SignalM => Signal}
+import rescala._
+import makro.SignalMacro.{SignalM => Signal}
 import scala.collection.immutable._
 import scala.collection.GenTraversableOnce
 import scala.collection.generic._
