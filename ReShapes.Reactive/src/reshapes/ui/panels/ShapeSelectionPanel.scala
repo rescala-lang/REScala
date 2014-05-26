@@ -3,7 +3,7 @@ package reshapes.ui.panels
 import scala.swing.BoxPanel
 import scala.swing.Orientation
 
-import react.Signal
+import rescala.Signal
 import reshapes.ReShapes
 import reshapes.figures.Freedraw
 import reshapes.figures.Line
@@ -17,7 +17,7 @@ import reswing.ReButton
  * Panel for selection of shapes to draw
  */
 class ShapeSelectionPanel extends BoxPanel(Orientation.Vertical) {
-  def state = ReShapes.drawingSpaceState.getValue
+  def state = ReShapes.drawingSpaceState.get
   
   val lineBtn = new ReButton("Line")  //#EVT
   val rectBtn = new ReButton("Rectangle") //#EVT

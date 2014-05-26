@@ -14,12 +14,11 @@ import scala.xml.Null
 import scala.xml.Text
 import scala.xml.XML
 
-import macro.SignalMacro.{SignalM => Signal}
-import react.Signal
-import react.SignalSynt
-import react.Var
-import react.events.Event
-import react.events.ImperativeEvent
+import makro.SignalMacro.{SignalM => Signal}
+import rescala.Signal
+import rescala.Var
+import rescala.events.Event
+import rescala.events.ImperativeEvent
 import reshapes.figures.Line
 import reshapes.figures.Shape
 
@@ -32,9 +31,9 @@ class DrawingSpaceState {
   // currently selected shape inside the drawing space
   final lazy val selectedShape: Signal[Shape] =  //#SIG
     ((shapes.changed && { shapes =>  //#IF  //#EF
-       !(shapes contains selectedShape.getValue) } map {_: Any => null}) ||
+       !(shapes contains selectedShape.get) } map {_: Any => null}) ||
      (select && { shape =>  //#EF
-       shape == null || (shapes.getValue contains shape) })) latest null  //#IF
+       shape == null || (shapes.get contains shape) })) latest null  //#IF
   // currently drawn shapes
   final lazy val shapes: Signal[List[Shape]] = Signal { commandsShapes() match { case (_, shapes) => shapes } }  //#SIG
   // all executed commands

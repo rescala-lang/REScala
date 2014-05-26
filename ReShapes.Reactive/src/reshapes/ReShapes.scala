@@ -21,12 +21,11 @@ import scala.swing.event.SelectionChanged
 
 import drawing.DrawingSpaceState
 import javax.swing.JOptionPane
-import macro.SignalMacro.{SignalM => Signal}
-import react.Signal
-import react.SignalSynt
-import react.Var
-import react.events.Event
-import react.events.ImperativeEvent
+import makro.SignalMacro.{SignalM => Signal}
+import rescala.Signal
+import rescala.Var
+import rescala.events.Event
+import rescala.events.ImperativeEvent
 import reshapes.actions.LoadAction
 import reshapes.actions.SaveAction
 import reshapes.drawing.Command
@@ -158,7 +157,7 @@ object ReShapes extends SimpleSwingApplication {
             state)
         
         lazy val state: DrawingSpaceState = new DrawingSpaceState {
-          def isCurrentState(x: Any) = drawingSpaceState.getValue == this
+          def isCurrentState(x: Any) = drawingSpaceState.get == this
           
           override lazy val nextShape: Signal[Shape] = Signal { ui.shapeSelectionPanel.nextShape().copy(this) } //#SIG
           override lazy val strokeWidth = Signal { ui.strokeInputPanel.strokeWidth() }  //#SIG
@@ -167,7 +166,7 @@ object ReShapes extends SimpleSwingApplication {
           override lazy val executed: Event[Command] =  //#EVT
             value(panel.drawn || ui.shapePanel.deleted || menu.merged) && isCurrentState _  //#EF //#EF //#EF
           override lazy val reverted: Event[Command] = (ui.commandPanel.revert || //#EVT //#EF
-              (menu.undo.clicked map {_: Any => commands.getValue.head })) && isCurrentState _ //#EF //#EF 
+              (menu.undo.clicked map {_: Any => commands.get.head })) && isCurrentState _ //#EF //#EF 
         }
         
         (state, panel)

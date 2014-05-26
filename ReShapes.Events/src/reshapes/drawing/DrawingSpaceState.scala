@@ -14,7 +14,7 @@ import scala.xml.Null
 import scala.xml.Text
 import scala.xml.XML
 
-import react.events.ImperativeEvent
+import rescala.events.ImperativeEvent
 import reshapes.figures.Line
 import reshapes.figures.Shape
 

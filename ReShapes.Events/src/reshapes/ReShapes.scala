@@ -20,7 +20,7 @@ import scala.swing.event.SelectionChanged
 
 import drawing.DrawingSpaceState
 import javax.swing.JOptionPane
-import react.events.ImperativeEvent
+import rescala.events.ImperativeEvent
 import reshapes.actions.LoadAction
 import reshapes.actions.MergeAction
 import reshapes.actions.QuitAction

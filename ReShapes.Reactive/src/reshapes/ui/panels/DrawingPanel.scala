@@ -11,7 +11,7 @@ import scala.swing.event.MouseDragged
 import scala.swing.event.MousePressed
 import scala.swing.event.MouseReleased
 
-import react.events.ImperativeEvent
+import rescala.events.ImperativeEvent
 import reshapes.drawing.Command
 import reshapes.drawing.CreateShape
 import reshapes.drawing.DrawingSpaceState
@@ -36,12 +36,12 @@ class DrawingPanel(val state: DrawingSpaceState) extends Panel {
     g.setColor(java.awt.Color.BLACK)
     if (currentShape != null) {
       currentShape.draw(g)
-      for (shape <- state.shapes.getValue)
+      for (shape <- state.shapes.get)
         if (!shape.selected)
           shape.draw(g)
     }
     else
-      for (shape <- state.shapes.getValue)
+      for (shape <- state.shapes.get)
         shape.draw(g)
   }
   
@@ -52,12 +52,12 @@ class DrawingPanel(val state: DrawingSpaceState) extends Panel {
   reactions += {
     case e: MousePressed =>
       point = e.point
-      state.selectedShape.getValue match {
+      state.selectedShape.get match {
         case null =>
-          currentShape = state.nextShape.getValue.copy(
+          currentShape = state.nextShape.get.copy(
               path = List(point),
-              strokeWidth = state.strokeWidth.getValue,
-              color = state.color.getValue,
+              strokeWidth = state.strokeWidth.get,
+              color = state.color.get,
               current = {Shape.current += 1; Shape.current})
         case selectedShape =>
           currentShape = selectedShape.copy()
@@ -65,7 +65,7 @@ class DrawingPanel(val state: DrawingSpaceState) extends Panel {
                          MathUtil.isInCircle(currentShape.end, 6, e.point)
       }
     case e: MouseDragged =>
-      state.selectedShape.getValue match {
+      state.selectedShape.get match {
         case null =>
           currentShape = currentShape.copy(path = e.point :: currentShape.path)
         case _ =>
@@ -77,7 +77,7 @@ class DrawingPanel(val state: DrawingSpaceState) extends Panel {
       point = e.point
       repaint
     case e: MouseReleased =>
-      state.selectedShape.getValue match {
+      state.selectedShape.get match {
         case null =>
           drawn(new CreateShape(currentShape))
         case selectedShape =>
@@ -111,8 +111,8 @@ trait ShowIntersection extends DrawingPanel {
   def getIntersectionPoints() = {
     val points = new ListBuffer[Point]
     
-    for (shape <- state.shapes.getValue)
-      for (otherShape <- state.shapes.getValue)
+    for (shape <- state.shapes.get)
+      for (otherShape <- state.shapes.get)
         if (shape != otherShape)
           for (line <- shape.toLines)
             for (otherLine <- otherShape.toLines) {
@@ -157,7 +157,7 @@ trait ShowNameLabels extends DrawingPanel {
     g.setColor(new Color(200, 200, 200))
     g.setStroke(new BasicStroke)
     
-    for (shape <- state.shapes.getValue)
+    for (shape <- state.shapes.get)
       g.drawString(shape.toString, shape.start.x, shape.start.y)
   }
 }

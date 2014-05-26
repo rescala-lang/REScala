@@ -5,9 +5,8 @@ import scala.swing.Component
 import scala.swing.Orientation
 import scala.swing.ScrollPane
 
-import macro.SignalMacro.{SignalM => Signal}
-import react.SignalSynt
-import react.events.Event
+import makro.SignalMacro.{SignalM => Signal}
+import rescala.events.Event
 import reshapes.ReShapes
 import reshapes.drawing.Command
 import reshapes.util.ReactiveUtil.UnionEvent

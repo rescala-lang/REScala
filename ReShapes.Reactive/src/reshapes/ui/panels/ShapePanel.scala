@@ -7,9 +7,8 @@ import scala.swing.Label
 import scala.swing.Orientation
 import scala.swing.ScrollPane
 
-import macro.SignalMacro.{SignalM => Signal}
-import react.SignalSynt
-import react.events.Event
+import makro.SignalMacro.{SignalM => Signal}
+import rescala.events.Event
 import reshapes.ReShapes
 import reshapes.drawing.DeleteShape
 import reshapes.drawing.DrawingSpaceState
@@ -54,7 +53,7 @@ class ShapeView(shape: Shape, state: DrawingSpaceState) extends ReBoxPanel(Orien
   peer.contents += deleteButton
   
   mouse.clicks.clicked += { _ =>  //#HDL
-    state.select(if (state.selectedShape.getValue != shape) shape else null) }
+    state.select(if (state.selectedShape.get != shape) shape else null) }
   
   state.selectedShape.changed += { selected =>   //#HDL
     peer.background = if (selected == shape) SELECTED_COLOR else NOT_SELECTED_COLOR

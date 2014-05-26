@@ -2,9 +2,9 @@ package reshapes.util
 
 import scala.collection.mutable.ListBuffer
 
-import react.Signal
-import react.events.Event
-import react.events.ImperativeEvent
+import rescala.Signal
+import rescala.events.Event
+import rescala.events.ImperativeEvent
 
 object ReactiveUtil {
   private class BilateralValue {
@@ -28,7 +28,7 @@ object ReactiveUtil {
       val ev = new ImperativeEvent[T] with Connectable {
         override def connect {
           s.changed += apply _
-          apply(s.getValue)
+          apply(s.get)
         }
       }
       events += ev
@@ -113,7 +113,7 @@ object ReactiveUtil {
       }
       
       signal.changed += update
-      update(signal.getValue)
+      update(signal.get)
       res
     }
   }

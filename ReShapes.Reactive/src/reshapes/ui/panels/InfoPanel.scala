@@ -2,8 +2,7 @@ package reshapes.ui.panels
 
 import scala.swing.FlowPanel
 
-import macro.SignalMacro.{SignalM => Signal}
-import react.SignalSynt
+import makro.SignalMacro.{SignalM => Signal}
 import reshapes.ReShapes
 import reswing.ReLabel
 
