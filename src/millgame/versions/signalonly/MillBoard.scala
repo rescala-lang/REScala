@@ -2,13 +2,16 @@ package millgame.versions.signalonly
 
 import millgame._
 import millgame.types._
-import react.Signal
-import react.Var
-import `macro`.SignalMacro.{ SignalM => Signal }
+
+import makro.SignalMacro.{SignalM => Signal}
+
+import rescala.Signal
+import rescala.Var
+import rescala.events.Event
 
 class MillBoard {
     /* wrap stones Var, to have the same interface as other versions */
-    def stones = stonesVar.getVal
+    def stones = stonesVar.get
   
 	/* spiral-indexed board slots, starting innermost lower left, going clockwise */
     val stonesVar: Var[Vector[Slot]] = Var(Vector.fill(24)(Empty)) //#VAR
@@ -34,9 +37,9 @@ class MillBoard {
 	def notifyStonesChanged(c: (Slot, Int)) = numStonesChangedListener.foreach(_(c))
 	
 	/* access slot state by index */
-	def apply(slot: SlotIndex) = stonesVar.getVal(slot.index)	
+	def apply(slot: SlotIndex) = stonesVar.get(slot.index)	
 	def update(slot: SlotIndex, color: Slot) = {
-	  stonesVar.setVal(stonesVar.getVal.updated(slot.index, color))
+	  stonesVar.set(stonesVar.get.updated(slot.index, color))
 	}
 	
 	val color: Signal[SlotIndex => Slot] = Signal { //#SIG
@@ -60,9 +63,9 @@ class MillBoard {
 	  (from, to) => jumpAllowed(from, to) && MillBoard.isConnected(from, to) }
 
 	def place(slot: SlotIndex, color: Slot) {
-	  val previousOwners = lineOwners.getValue
+	  val previousOwners = lineOwners.get
 	  this(slot) = color
-	  val mill = previousOwners zip lineOwners.getValue collectFirst {
+	  val mill = previousOwners zip lineOwners.get collectFirst {
 	    case (a, b) if a != b => b
 	  }
 	  
@@ -70,7 +73,7 @@ class MillBoard {
 	  mill foreach { notifyMillClosed(_) }
 	  
 	  // fire numStonesChanged event
-	  notifyStonesChanged((color, numStones.getValue(color)))
+	  notifyStonesChanged((color, numStones.get(color)))
 	}
 	
 	def remove(slot: SlotIndex) = {
@@ -78,7 +81,7 @@ class MillBoard {
 	  this(slot) = Empty
 
 	  // fire numStonesChanged event
-	  notifyStonesChanged((color, numStones.getValue(color)))
+	  notifyStonesChanged((color, numStones.get(color)))
 	}
 	
 	def move(from: SlotIndex, to: SlotIndex) = { 

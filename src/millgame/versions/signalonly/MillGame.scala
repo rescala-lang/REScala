@@ -1,13 +1,12 @@
 package millgame.versions.signalonly
 
 import millgame.types._
-import millgame.versions.signalonly._
-import react.events._
-import react.SignalSynt
-import react.Var
-import react.Signal
-import `macro`.SignalMacro.{SignalM => Signal}
-import millgame.types.Empty
+
+import makro.SignalMacro.{SignalM => Signal}
+
+import rescala.Signal
+import rescala.Var
+import rescala.events.Event
 
 abstract class Gamestate {
   def getPlayer: Slot
@@ -56,7 +55,7 @@ class MillGame {
   val stateVar: Var[Gamestate] = Var(PlaceStone(White))  //#VAR
   val remainCount: Var[Map[Slot, Int]] = Var(Map(Black -> 9, White -> 9)) //#VAR
   
-  def state = stateVar.getVal
+  def state = stateVar.get
   
   /* We keep those events, because the GUI interacts with them */
   val remainCountChanged = Signal{remainCount()}.changed //#EVT //#IF
@@ -74,7 +73,7 @@ class MillGame {
     }
   }
   
-  def possibleMoves = possibleNextMoves.getVal
+  def possibleMoves = possibleNextMoves.get
   
   /* Event based game logic: */
   board.addMillClosedListener({ color =>
@@ -83,7 +82,7 @@ class MillGame {
   
   board.addStonesChangedListenerlistener( {
     case (color, n) =>
-      if (remainCount.getValue(color) == 0 && n < 3) {
+      if (remainCount.get(color) == 0 && n < 3) {
         stateVar() = GameOver(color.other) 
       }
   })
@@ -92,18 +91,18 @@ class MillGame {
 
   private def nextState(player: Slot): Gamestate =
     if (remainCount()(player) > 0) PlaceStone(player)
-    else if (board.numStones.getVal(player) == 3) JumpStoneSelect(player)
+    else if (board.numStones.get(player) == 3) JumpStoneSelect(player)
     else MoveStoneSelect(player)
 
   private def decrementCount(player: Slot) {
-    val currentCount = remainCount.getValue
+    val currentCount = remainCount.get
     remainCount() = currentCount.updated(player, currentCount(player) - 1)
   }
 
   def playerInput(i: SlotIndex): Boolean = state match {
 
     case PlaceStone(player) =>
-      if (board.canPlace.getVal(i)) {
+      if (board.canPlace.get(i)) {
         stateVar() = (nextState(player.other))
         decrementCount(player)
         board.place(i, player)
@@ -124,7 +123,7 @@ class MillGame {
       } else false
 
     case MoveStoneDrop(player, stone) =>
-      if (board.canMove.getVal(stone, i)) {
+      if (board.canMove.get(stone, i)) {
         stateVar() = (nextState(player.other))
         board.move(stone, i)
         true
@@ -140,7 +139,7 @@ class MillGame {
       } else false
 
     case JumpStoneDrop(player, stone) =>
-      if (board.canJump.getVal(stone, i)) {
+      if (board.canJump.get(stone, i)) {
         stateVar() = (nextState(player.other))
         board.move(stone, i)
         true

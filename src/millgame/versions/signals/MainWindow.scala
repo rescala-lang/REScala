@@ -2,13 +2,15 @@ package millgame.versions.signals
 
 import millgame._
 import millgame.types._
-import `macro`.SignalMacro.{ SignalM => Signal }
+
+import makro.SignalMacro.{SignalM => Signal}
+
 import java.awt.BasicStroke
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.Font
 import java.awt.RenderingHints
-import scala.swing.event.MouseReleased
+import swing.event._
 import swing._
 import reswing._
 
@@ -136,7 +138,7 @@ class MillDrawer(val game: MillGame)
   }
   
   val indexClicked = (mouse.clicks.released map { e: MouseReleased =>
-    val index = coordinates.getVal.indexWhere {
+    val index = coordinates.get.indexWhere {
       p => (p distance (e.point.x, e.point.y)) < ClickArea
     }
     SlotIndex(index)
@@ -173,7 +175,7 @@ class MillDrawer(val game: MillGame)
     g.setRenderingHint(
         RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
     
-    for (p <- presentation.getVal)
+    for (p <- presentation.get)
       p match {
         case Presentation(shape, color, width) =>
           g.setColor(color)

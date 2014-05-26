@@ -2,7 +2,7 @@ package millgame.versions.events
 
 import millgame.types._
 import millgame.versions.events._
-import react.events.ImperativeEvent
+import rescala.events.ImperativeEvent
 
 abstract class Gamestate {
   def getPlayer: Slot

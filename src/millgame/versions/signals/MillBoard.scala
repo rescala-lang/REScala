@@ -2,14 +2,16 @@ package millgame.versions.signals
 
 import millgame._
 import millgame.types._
-import react.Signal
-import react.Var
-import react.events.Event
-import `macro`.SignalMacro.{ SignalM => Signal }
+
+import makro.SignalMacro.{SignalM => Signal}
+
+import rescala.Signal
+import rescala.Var
+import rescala.events.Event
 
 class MillBoard {
     /* wrap stones Var, to have the same interface as other versions */
-    def stones = stonesVar.getVal
+    def stones = stonesVar.get
   
 	/* spiral-indexed board slots, starting innermost lower left, going clockwise */
     val stonesVar: Var[Vector[Slot]] = Var(Vector.fill(24)(Empty)) //#VAR
@@ -33,12 +35,12 @@ class MillBoard {
 	*/
 		
 	/* access slot state by index */
-	def apply(slot: SlotIndex) = stonesVar.getVal(slot.index)
+	def apply(slot: SlotIndex) = stonesVar.get(slot.index)
 	def update(slot: SlotIndex, color: Slot) = {
-	  stonesVar.setVal(stonesVar.getVal.updated(slot.index, color))
+	  stonesVar.set(stonesVar.get.updated(slot.index, color))
 	}
 	def update(indexColor: Map[SlotIndex, Slot]) = {
-	  stonesVar.setVal(stonesVar.getVal.zipWithIndex.map({
+	  stonesVar.set(stonesVar.get.zipWithIndex.map({
 	    case (color, i) => indexColor.getOrElse(SlotIndex(i), color)
 	  }))
 	}

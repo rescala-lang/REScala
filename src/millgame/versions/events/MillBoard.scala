@@ -2,7 +2,7 @@ package millgame.versions.events
 
 import millgame._
 import millgame.types._
-import react.events.ImperativeEvent
+import rescala.events.ImperativeEvent
 
 class MillBoard {
   
