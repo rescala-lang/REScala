@@ -2,9 +2,9 @@ package reswing
 
 import scala.collection.mutable.ListBuffer
 import scala.language.implicitConversions
-import react.Signal
-import react.events.Event
-import react.events.ImperativeEvent
+import rescala.Signal
+import rescala.events.Event
+import rescala.events.ImperativeEvent
 
 /**
  * Combines reactive values from the application and from the `Swing` library
@@ -55,10 +55,10 @@ final case class ReSwingEventValue[T](private val value: Lazy[Event[T]]) extends
 }
 
 final case class ReSwingSignalValue[T](private val value: Lazy[Signal[T]]) extends ReSwingValue[T] {
-  protected val signal = Lazy { (value().changed || event()) latest value().getValue }
+  protected val signal = Lazy { (value().changed || event()) latest value().get }
   private[reswing] def fixed = true
-  private[reswing] def getValue = value().getValue
-  private[reswing] def use(setter: T => Unit) { value().changed += setter; setter(value().getValue) }
+  private[reswing] def getValue = value().get
+  private[reswing] def use(setter: T => Unit) { value().changed += setter; setter(value().get) }
 }
 
 object ReSwingValue {
