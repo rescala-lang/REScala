@@ -1,0 +1,107 @@
+@startuml
+class Reactive {
+  +var level: Int
+}
+
+class DepHolder extends Reactive {
+  +val dependents: ListBuffer[Dependent]
+  __
+  +addDependent(Dependent)
+  +removeDependent(Dependent)
+  +notifyDependents(Any)
+}
+
+class Dependent extends Reactive {
+  +val dependOn: ListBuffer[DepHolder]
+  __
+  +addDependOn(DepHolder)
+  +removeDependOn(DepHolder)
+  +dependsOnchanged(Any, DepHolder)
+  #triggerReevaluation()
+}
+
+class "Var[T]" as Var extends DepHolder {
+  +val timestamps: ListBuffer[Stamp]
+  __
+  +setValue(T): Unit
+  +update(T)
+  ..
+  +getValue(): T
+  +getVal(): T
+  +apply(): T
+  +apply(SignalSynt[_]): T
+}
+
+class "Signal[+T]" as Signal {
+  #val timestamps: ListBuffer[Stamp]
+  __
+  +getValue(): T
+  +getVal(): T
+  +apply(): T
+  +apply(SignalSynt[_]): T
+  ..
+  #reEvaluate(): T
+  .. events ..
+  +change[U >: T]: Event[(U, U)]
+  +changed[U >: T](): Event[U]
+  +changedTo[V](V): Event[Unit]
+  +snapshot(Event[_]): Signal[T]
+  +switchTo[U >: T](Event[U]): Signal[U]
+  +switchOnce[V >: T](Event[_])(Signal[V]): Signal[V]
+  +toggle[V >: T](Event[_])(Signal[V])
+  +delay(Int): Signal[T]
+}
+
+DepHolder <|-- Signal
+Dependent <|-- Signal
+
+class "Event[+A]" as Event extends DepHolder {
+  __
+  ++=(T => Unit)
+  +-=(T => Unit)
+  +||(Event)
+  +&&(Event)
+  +filter[U >: T](U => Boolean): Event[U]
+  +\\\[U >: T](Event[U]): Event[U]
+  +map[U, S >: T](S => U): Event[U]
+  ..
+  rest omitted ...
+}
+
+class "EventHandler[A]" as EventHandler {
+}
+Dependent <|-- EventHandler
+
+class "EventNode[A]" as EventNode {
+  +val handlers: Map[A=>Unit,EventHandler[A]]
+  +getHandler(A => Unit): EventHandler[A]
+}
+Event <|-- EventNode
+
+class "ImperativeEvent[A]" as ImperativeEvent {
+  +apply(A): Unit
+}
+EventNode <|-- ImperativeEvent
+
+class "ChangedEventNode[A]" as ChangedEventNode
+EventNode <|-- ChangedEventNode
+
+class "..." as MiscEvents
+EventNode <|-- MiscEvents
+
+class "EventNodeAnd[A]" as EventNodeAnd
+EventNode <|-- EventNodeAnd
+
+Signal <|-- SignalSynt
+Signal <|-- StaticSignal
+Var <|-- VarSynt
+Var <|-- StaticVar
+
+class Signal << (T,#4682b4) >>
+class Var << (T,#4682b4) >>
+class DepHolder << (T,#4682b4) >>
+class Dependent << (T,#4682b4) >>
+class Reactive << (T,#4682b4) >>
+class Event << (T,#4682b4) >>
+class EventNode << (T,#4682b4) >>
+@enduml

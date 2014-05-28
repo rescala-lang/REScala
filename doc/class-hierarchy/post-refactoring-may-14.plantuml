@@ -1,0 +1,124 @@
+@startuml
+class Reactive {
+  +var level: Int
+  +val timestamps: Buffer[Stamp]
+}
+
+class DepHolder {
+  +val dependents: Buffer[Dependent]
+  __
+  +addDependent(Dependent)
+  +removeDependent(Dependent)
+  +notifyDependents(Any)
+}
+Reactive <|-- DepHolder
+
+class Dependent {
+  +val dependOn: Buffer[DepHolder]
+  __
+  +addDependOn(DepHolder)
+  +removeDependOn(DepHolder)
+  +dependsOnchanged(Any, DepHolder)
+  #triggerReevaluation()
+}
+Reactive <|-- Dependent
+
+class "Event[+A]" as Event {
+  __
+  ++=(A => Unit)
+  +-=(A => Unit)
+  +||(Event)
+  +&&(Event)
+  +filter[U >: A](U => Boolean): Event[U]
+  +\\\[U >: A](Event[U]): Event[U]
+  +map[U, S >: A](S => U): Event[U]
+  ..
+  rest omitted ...
+}
+DepHolder <|-- Event
+
+class "EventHandler[A]" as EventHandler {
+}
+Dependent <|-- EventHandler
+
+class "EventNode[A]" as EventNode {
+  +val handlers: Map[A=>Unit,EventHandler[A]]
+  +getHandler(A => Unit): EventHandler[A]
+}
+Event <|-- EventNode
+
+class "ImperativeEvent[A]" as ImperativeEvent {
+  +apply(A): Unit
+}
+EventNode <|-- ImperativeEvent
+
+class "ChangedEventNode[A]" as ChangedEventNode
+EventNode <|-- ChangedEventNode
+
+class "EventNode..." as MiscEvents
+EventNode <|-- MiscEvents
+
+class "EventNodeAnd[A]" as EventNodeAnd
+EventNode <|-- EventNodeAnd
+
+class "Signal[+A]" as Signal {
+  +get(): A
+  +apply(): A
+  +apply(SignalSynt[_]): A
+  #reEvaluate(): A
+  +map[B](f: A => B): Signal[B]
+  +snapshot(Event[_]): Signal[A]
+  +switchTo[U >: A](Event[U]): Signal[U]
+  +switchOnce[V >: A](Event[_])(Signal[V]): Signal[V]
+  +toggle[V >: A](Event[_])(Signal[V])
+  +delay(Int): Signal[A]
+}
+DepHolder <|-- Signal
+FoldableReactive <|-- Signal
+
+class "Var[A]" as Var {
+  __
+  +set(A): Unit
+  +update(A): Unit
+}
+Signal <|-- Var
+
+class "DependentSignal[+A]" as DependentSignal
+Dependent <|-- DependentSignal
+Signal <|-- DependentSignal
+
+class "FoldableReactive[+A]" as FoldableReactive {
+  __
+  + {abstract} fold[B](B)((B, A) => B): Signal[B]
+  ..
+  +iterate[B](B)(f: B => B): Signal[B]
+  +count(): Signal[Int]
+  +latestOption(): Signal[Option[A]]
+  +list(): Signal[Seq[A]]
+  +last(Int): Signal[Seq[A]]
+}
+
+class "Changing[+A]" as Changing {
+  +lazy val change: Event[A,A]
+  +lazy val changed: Event[A]
+  __
+  +def changedTo[V](value: V): Event[Unit]
+}
+Changing <|-- Signal
+
+DependentSignal <|-- SignalSynt
+DependentSignal <|-- StaticSignal
+Var <|-- VarSynt
+Var <|-- StaticVar
+
+class Signal << (T,#4682b4) >>
+class Var << (T,#4682b4) >>
+class DepHolder << (T,#4682b4) >>
+class Dependent << (T,#4682b4) >>
+class Reactive << (T,#4682b4) >>
+class DependentSignal << (T,#4682b4) >>
+class Changing << (T,#4682b4) >>
+class FoldableReactive << (T,#4682b4) >>
+class Event << (T,#4682b4) >>
+class EventNode << (T,#4682b4) >>
+@enduml

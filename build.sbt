@@ -22,12 +22,13 @@ scalacOptions ++= List(
   "-language:postfixOps"
 )
 
-// resolvers ++= Seq()
-
 libraryDependencies ++= Seq(
   "org.mockito" % "mockito-all" % "1.9.5" % "test",
   "org.scalatest" %% "scalatest" % "1.9.1" % "test",
-  "junit" % "junit" % "4.11" % "test"
+  "junit" % "junit" % "4.11" % "test",
+  "com.novocode" % "junit-interface" % "0.10" % "test"
 )
 
 libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _)
+
+parallelExecution in Test := false
