@@ -7,7 +7,7 @@ import scala.swing.Dimension
 import scala.swing.Font
 import scala.swing.TextField
 import scala.swing.event.EditDone
-import react.events.Event
+import rescala.events.Event
 
 class ReTextField(
     text: ReSwingValue[String] = (),

@@ -7,7 +7,7 @@ import scala.swing.Font
 import scala.swing.TextComponent
 import scala.swing.event.CaretUpdate
 import scala.swing.event.ValueChanged
-import react.events.Event
+import rescala.events.Event
 
 class ReTextComponent(
     val text: ReSwingValue[String] = (),
