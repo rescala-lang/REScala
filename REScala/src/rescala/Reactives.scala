@@ -8,11 +8,15 @@ import scala.reflect.runtime.universe._
 import rescala.events._
 import rescala.log._
 import rescala.log.Logging
+import java.util.UUID
 
 /* A Reactive is a value type which has a dependency to other Reactives */
 trait Reactive extends Ordered[Reactive] {
   // testing
   val timestamps: Buffer[Stamp] = ListBuffer()
+  
+  // For debugging
+  var id: String = UUID.randomUUID().toString()
 
   var level: Int = 0
   override def compare(other: Reactive): Int =
