@@ -3,15 +3,15 @@ package animal.versions.signal
 import animal.types.Pos
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.Map
-import react.events.ImperativeEvent
-import react.SignalSynt
-import react.Var
-import react.Signal
+import rescala.events.ImperativeEvent
+import rescala.SignalSynt
+import rescala.Var
+import rescala.Signal
 import scala.util.Random
-import react.events.Event
+import rescala.events.Event
 import animal.types.Pos.fromTuple
 import scala.Option.option2Iterable
-import macro.SignalMacro.{SignalM => Signal}
+import makro.SignalMacro.{SignalM => Signal}
 
 
 object Board {
@@ -91,8 +91,8 @@ class Board(val width: Int, val height: Int) {
   def dump: String = {
     def repr(be: Option[BoardElement]) = be match {
       case None => '.'
-      case Some(m: Male) if m.isAdult.getVal => 'm'
-      case Some(f: Female) if f.isAdult.getVal => if (f.isPregnant.getVal) 'F' else 'f'
+      case Some(m: Male) if m.isAdult.get => 'm'
+      case Some(f: Female) if f.isAdult.get => if (f.isPregnant.get) 'F' else 'f'
       case Some(x: Animal) => 'x'
       case Some(p: Plant) => '#'
       case Some(_) => '?'
@@ -151,15 +151,15 @@ abstract class Animal(override implicit val world: World) extends BoardElement {
 	def reachedState(target: BoardElement): AnimalState
 	
 	
-	def savage = state.setVal(FallPrey)
+	def savage = state.set(FallPrey)
 	
 	protected def nextAction(pos: Pos): AnimalState =  {
 		val neighbors = world.board.neighbors(pos)
-		val food = neighbors.collectFirst(findFood.getVal)
+		val food = neighbors.collectFirst(findFood.get)
 		val nextAction: AnimalState = food match {
 		  case Some(target) => reachedState(target) // I'm near food, eat it!
 		  case None => // I have to look for food nearby
-		    world.board.nearby(pos, Animal.ViewRadius).collectFirst(findFood.getVal) match {
+		    world.board.nearby(pos, Animal.ViewRadius).collectFirst(findFood.get) match {
 		      case Some(target) => 
 		        val destination = world.board.getPosition(target)
 		        if(destination.isDefined) 
@@ -205,20 +205,20 @@ abstract class Animal(override implicit val world: World) extends BoardElement {
 	    case _ => 0
 	  }
 	}
-	val energy: Signal[Int] = world.time.tick.iterate(Animal.StartEnergy)(_ + energyGain.getVal - energyDrain.getVal) //#SIG //#IF
+	val energy: Signal[Int] = world.time.tick.iterate(Animal.StartEnergy)(_ + energyGain.get - energyDrain.get) //#SIG //#IF
 	
 	override val isDead = Signal { age() > Animal.MaxAge || energy() < 0} //#SIG
 
 	/** imperative 'AI' function */
 	override def doStep(pos: Pos) {
-	    state.getVal match {
+	    state.get match {
 	      case Moving(dir) => world.board.moveIfPossible(pos, dir)
-	      case Eating(plant) => plant.takeEnergy(energyGain.getVal)
+	      case Eating(plant) => plant.takeEnergy(energyGain.get)
 	      case Attacking(prey) => prey.savage
 	      case Procreating(female: Female) => female.procreate(this)
 	      case _ =>
 	    }
-	    state.setVal(nextAction(pos))
+	    state.set(nextAction(pos))
 	}
 }
 
@@ -241,7 +241,7 @@ class Carnivore(override implicit val world: World) extends Animal {
   
   
   override protected def nextAction(pos: Pos): AnimalState =  {
-	  if(sleepy.getVal) Sleeping
+	  if(sleepy.get) Sleeping
 	  else super.nextAction(pos)
   }
 }
@@ -267,7 +267,7 @@ trait Female extends Animal {
   
   // counts down to 0
   lazy val pregnancyTime: Signal[Int] = becomePregnant.reset(()){ _ => //#SIG  //#IF
-    world.time.hour.changed.iterate(Animal.PregnancyTime)(_ - (if(isPregnant.getValue) 1 else 0)) //#IF //#IF //#SIG
+    world.time.hour.changed.iterate(Animal.PregnancyTime)(_ - (if(isPregnant.get) 1 else 0)) //#IF //#IF //#SIG
   }
   
   
@@ -279,19 +279,19 @@ trait Female extends Animal {
   // not possible
   
   giveBirth += {_ => //#HDL
-    val father = mate.getVal.get
+    val father = mate.get.get
     val child = createOffspring(father)
     world.board.getPosition(this).foreach{ mypos =>
       world.board.nearestFree(mypos).foreach { target =>
         world.spawn(child, target)
       }
     }
-    mate.setVal(None)
+    mate.set(None)
   }
   
   def procreate(father: Animal) {
-    if(isPregnant.getVal) return;
-    mate.setVal(Some(father))
+    if(isPregnant.get) return;
+    mate.set(Some(father))
   }
   
   
@@ -312,9 +312,9 @@ trait Male extends Animal {
   val seeksMate = Signal { isFertile() && energy() > Animal.ProcreateThreshold } //#SIG
   
   override def nextAction(pos: Pos): AnimalState = {
-    if(seeksMate.getVal) {
+    if(seeksMate.get) {
         val findFemale: PartialFunction[BoardElement, Female] =  { 
-          case f: Female if f.isFertile.getVal => f 
+          case f: Female if f.isFertile.get => f 
         }
 		val neighbors = world.board.neighbors(pos)
 		val females = neighbors.collectFirst(findFemale)
@@ -372,7 +372,7 @@ class Plant(override implicit val world: World) extends BoardElement {
 
   
   /** takes amount away from the energy of this plant */
-  def takeEnergy(amount: Int) = energy.setVal(energy.getVal - amount)
+  def takeEnergy(amount: Int) = energy.set(energy.get - amount)
 }
 
 class Seed(override implicit val world: World) extends BoardElement {
@@ -424,8 +424,8 @@ class World {
   def tick = time.tick()
     
   def dump = board.dump
-  def timestring = time.timestring.getVal
-  def status = statusString.getValue
+  def timestring = time.timestring.get
+  def status = statusString.get
    
   def newAnimal(isHerbivore: Boolean, isMale: Boolean): Animal = {
 	  if(isHerbivore){
@@ -457,7 +457,7 @@ class World {
   time.hour.changed += {x  => //#HDL //#IF
     board.elements.foreach { _ match {
       	case (pos, be) =>
-      	  if(be.isDead.getVal)
+      	  if(be.isDead.get)
       	    board.remove(pos)
       	  else be.doStep(pos)
       }

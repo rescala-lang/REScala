@@ -22,7 +22,7 @@ object RunSwingWindow extends SimpleSwingApplication {
 
   override def main(args: Array[String]) {
     super.main(args)
-    react.ReactiveEngine.log.enableDefaultLogging
+    //rescala.ReactiveEngine.log.enableDefaultLogging
 
     val world = new World
     world batchSpawn (nAnimals, nPlants)

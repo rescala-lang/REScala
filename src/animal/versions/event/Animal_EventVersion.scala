@@ -3,9 +3,9 @@ package animal.versions.event
 import animal.types.Pos
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.Map
-import react.events.ImperativeEvent
+import rescala.events.ImperativeEvent
 import scala.util.Random
-import react.events.Event
+import rescala.events.Event
 import animal.types.Pos.fromTuple
 import scala.Option.option2Iterable
 

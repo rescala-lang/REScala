@@ -3,9 +3,9 @@ package animal.versions.observer
 import animal.types.Pos
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.Map
-import react.events.ImperativeEvent
-import react.Signal
-import react.Var
+import rescala.events.ImperativeEvent
+import rescala.Signal
+import rescala.Var
 import scala.util.Random
 import commons.Observable
 

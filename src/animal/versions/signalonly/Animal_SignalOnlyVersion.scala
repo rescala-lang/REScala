@@ -1,14 +1,14 @@
 package animal.versions.signalonly
 
 import animal.types.Pos
-import react.events.ImperativeEvent
-import react._
+import rescala.events.ImperativeEvent
+import rescala._
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.Map
 import scala.util.Random
 import animal.types.Pos.fromTuple
 import scala.Option.option2Iterable
-import macro.SignalMacro.{SignalM => Signal}
+import makro.SignalMacro.{SignalM => Signal}
 
 
 object Board {
@@ -76,8 +76,8 @@ class Board(val width: Int, val height: Int) {
   def dump: String = {
     def repr(be: Option[BoardElement]) = be match {
       case None => '.'
-      case Some(m: Male) if m.isAdult.getVal => 'm'
-      case Some(f: Female) if f.isAdult.getVal => if (f.isPregnant.getVal) 'F' else 'f'
+      case Some(m: Male) if m.isAdult.get => 'm'
+      case Some(f: Female) if f.isAdult.get => if (f.isPregnant.get) 'F' else 'f'
       case Some(x: Animal) => 'x'
       case Some(p: Plant) => '#'
       case Some(_) => '?'
@@ -142,15 +142,15 @@ abstract class Animal(override implicit val world: World) extends BoardElement {
 	// function for creating a state upon reaching target
 	def reachedState(target: BoardElement): AnimalState
 	
-	def savage = state.setVal(FallPrey)
+	def savage = state.set(FallPrey)
 	
 	protected def nextAction(pos: Pos): AnimalState =  {
 		val neighbors = world.board.neighbors(pos)
-		val food = neighbors.collectFirst(findFood.getVal)
+		val food = neighbors.collectFirst(findFood.get)
 		val nextAction: AnimalState = food match {
 		  case Some(target) => reachedState(target) // I'm near food, eat it!
 		  case None => // I have to look for food nearby
-		    world.board.nearby(pos, Animal.ViewRadius).collectFirst(findFood.getVal) match {
+		    world.board.nearby(pos, Animal.ViewRadius).collectFirst(findFood.get) match {
 		      case Some(target) => 
 		        val destination = world.board.getPosition(target)
 		        if(destination.isDefined) 
@@ -197,21 +197,21 @@ abstract class Animal(override implicit val world: World) extends BoardElement {
 
 	/** imperative 'AI' function */
 	override def doStep(pos: Pos) {
-	    state.getVal match {
+	    state.get match {
 	      case Moving(dir) => world.board.moveIfPossible(pos, dir)
-	      case Eating(plant) => plant.takeEnergy(energyGain.getVal)
+	      case Eating(plant) => plant.takeEnergy(energyGain.get)
 	      case Attacking(prey) => prey.savage
 	      case Procreating(female: Female) => female.procreate(this)
 	      case _ =>
 	    }
-	    state.setVal(nextAction(pos))
+	    state.set(nextAction(pos))
 	}
 	
 	
 	override def tick {
 	  super.tick
-	  ticks.setVal(ticks.getVal + 1)
-	  energy.setVal(energy.getVal + energyGain.getVal - energyDrain.getVal)
+	  ticks.set(ticks.get + 1)
+	  energy.set(energy.get + energyGain.get - energyDrain.get)
 	}
 	
 }
@@ -235,7 +235,7 @@ class Carnivore(override implicit val world: World) extends Animal {
   
   
   override protected def nextAction(pos: Pos): AnimalState =  {
-	  if(sleepy.getVal) Sleeping
+	  if(sleepy.get) Sleeping
 	  else super.nextAction(pos)
   }
 }
@@ -263,19 +263,19 @@ trait Female extends Animal {
   
   
   def giveBirth {
-    val father = mate.getVal.get
+    val father = mate.get.get
     val child = createOffspring(father)
     world.board.getPosition(this).foreach{ mypos =>
       world.board.nearestFree(mypos).foreach { target =>
         world.spawn(child, target)
       }
     }
-    mate.setVal(None)
+    mate.set(None)
   }
   
   def procreate(father: Animal) {
-    if(isPregnant.getVal) return;
-    mate.setVal(Some(father))
+    if(isPregnant.get) return;
+    mate.set(Some(father))
   }
   
   
@@ -292,10 +292,10 @@ trait Female extends Animal {
   
   override def tick {
       super.tick
-      if(isPregnant.getVal){
-        if(pregnancyTime.getVal > 0){
-          pregnancyTime.setVal(pregnancyTime.getVal - 1)
-          if(pregnancyTime.getVal == 0)
+      if(isPregnant.get){
+        if(pregnancyTime.get > 0){
+          pregnancyTime.set(pregnancyTime.get - 1)
+          if(pregnancyTime.get == 0)
             giveBirth
         }
       }
@@ -307,9 +307,9 @@ trait Male extends Animal {
   val seeksMate = Signal { isFertile() && energy() > Animal.ProcreateThreshold } //#SIG
   
   override def nextAction(pos: Pos): AnimalState = {
-    if(seeksMate.getVal) {
+    if(seeksMate.get) {
         val findFemale: PartialFunction[BoardElement, Female] =  { 
-          case f: Female if f.isFertile.getVal => f 
+          case f: Female if f.isFertile.get => f 
         }
 		val neighbors = world.board.neighbors(pos)
 		val females = neighbors.collectFirst(findFemale)
@@ -366,18 +366,18 @@ class Plant(override implicit val world: World) extends BoardElement {
   override def tick {
     super.tick
     // we have to store the old size now, otherwise we could not detect changes 
-    val oldSize = size.getVal
-    age.setVal(age.getVal + 1)
+    val oldSize = size.get
+    age.set(age.get + 1)
     
-    if(size.getVal != oldSize){
-       if(size.getVal == Plant.MaxSize)
+    if(size.get != oldSize){
+       if(size.get == Plant.MaxSize)
     	   germinate // spawn a new plant in proximity to this one
 	 }
   }
 
   
   /** takes amount away from the energy of this plant */
-  def takeEnergy(amount: Int) = energy.setVal(energy.getVal - amount)
+  def takeEnergy(amount: Int) = energy.set(energy.get - amount)
 }
 
 class Seed(override implicit val world: World) extends BoardElement {
@@ -408,7 +408,7 @@ class Time {
   val newWeek = week.changed //#EVT
   
   def tick {
-    hours.setVal(hours.getVal + 1)
+    hours.set(hours.get + 1)
   }
 }
 
@@ -430,8 +430,8 @@ class World {
   val randomness = new Random(1)
   
   def tick = {
-    val oldDay = time.day.getVal
-    val oldWeek = time.week.getVal
+    val oldDay = time.day.get
+    val oldWeek = time.week.get
     
     // tick time
     time.tick    
@@ -439,7 +439,7 @@ class World {
     // tick all board elements
     board.elements.foreach { _ match {
       	case (pos, be) =>
-      	  if(be.isDead.getVal)
+      	  if(be.isDead.get)
       	    board.remove(pos)
       	  else {
       	    be.tick
@@ -448,17 +448,17 @@ class World {
       }
     }
     
-    if(time.day.getVal != oldDay){
+    if(time.day.get != oldDay){
       dayChanged
     }
       
-    if(time.week.getVal != oldWeek){
+    if(time.week.get != oldWeek){
       weekChanged
     }
   }
     
   def dump = board.dump
-  def timestring = time.timestring.getVal
+  def timestring = time.timestring.get
   def status = "Status string not implemented yet."
    
   def newAnimal(isHerbivore: Boolean, isMale: Boolean): Animal = {
