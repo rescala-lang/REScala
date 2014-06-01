@@ -22,6 +22,7 @@ object Board {
  */
 class Board(val width: Int, val height: Int) {
   val elements: Map[(Int, Int), BoardElement] = new HashMap
+  val allPositions = (for(x <- 0 to width; y <- 0 to height) yield (x, y)).toSet
   
   /** adds a board element at given position */
   def add(be: BoardElement, pos: (Int, Int)) {
@@ -67,9 +68,8 @@ class Board(val width: Int, val height: Int) {
   
   /** @return a random free position on this board */
   def randomFreePosition(random: Random) = {
-    val freeSlots = width * height - elements.size
-    val rIndex = random nextInt freeSlots
-    (rIndex % width, rIndex / width)
+    val possiblePositions = allPositions.diff(elements.keySet).toVector
+    possiblePositions(random.nextInt(possiblePositions.length))
   }
   
   /** @return textual representation for drawing this board to console */
