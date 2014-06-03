@@ -7,12 +7,12 @@ package object reswing {
   object CompItem {
     def apply(elem: Component) = elem
   }
-  
+
   type CompList = Seq[CompItem]
   object CompList {
     def apply(elems: CompItem*) = Seq(elems: _*)
   }
-  
+
   def inSyncEDT(op: => Unit) =
     if (SwingUtilities.isEventDispatchThread)
       op

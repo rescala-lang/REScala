@@ -39,10 +39,10 @@ class ReTextField(
                     minimumSize, maximumSize, preferredSize) {
   override protected lazy val peer =
     new TextField(null, columns) with ComponentMixin
-  
+
   horizontalAlignment using (peer.horizontalAlignment _,
                              peer.horizontalAlignment= _, "horizontalAlignment")
-  
+
   val editDone = ReSwingEvent using classOf[EditDone]
 }
 
