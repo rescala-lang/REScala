@@ -97,6 +97,13 @@ class ReListView[A](
         { () => javaPeer.getSelectedValuesList.asScala.toSeq },
         (peer, classOf[ListSelectionChanged[_]]), classOf[ListChanged[_]])
 
+    val index = ReSwingValue using (
+        { () => javaPeer.getSelectedIndex },
+        (peer, classOf[ListSelectionChanged[_]]))
+    val item = ReSwingValue using (
+        { () => Option(javaPeer.getSelectedValue) },
+        (peer, classOf[ListSelectionChanged[_]]), classOf[ListChanged[_]])
+
     intervalMode using (peer.intervalMode _, peer.intervalMode_= _)
     listDataSync using (listDataSyncVar _, listDataSyncVar= _)
 
