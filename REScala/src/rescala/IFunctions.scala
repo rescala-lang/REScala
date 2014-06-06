@@ -109,7 +109,7 @@ object IFunctions {
   /** lifts a function A => B to work on reactives */
   def lift[A, B](f: A => B): (Signal[A] => Signal[B]) = (a => StaticSignal[B](a) { f(a.get) })
 
-  // TODO: work in progress
+  
   /** Generates a signal from an event occurrence */
   trait Factory[E, A] {
     def apply(eventValue: E): (Signal[A], Factory[E, A])
@@ -118,21 +118,7 @@ object IFunctions {
   /** Generates a signal from an initial signal and a factory for subsequent ones */
   def switch[T, A](e: Event[T])(init: Signal[A])(factory: Factory[T, A]): Signal[A] =
     new SwitchedSignal(e, init, factory)
-  /*{
 
-    val ref : Var[Signal[A]] = Var(init)
-    val fac : Var[Factory[T,A]] = Var(factory)
-
-    val handleSignal = {(eventValue : T) =>
-      val currentFactory = fac()
-      val (newSignal, newFactory) = currentFactory(eventValue)
-      fac() = newFactory
-      ref() = newSignal
-    }
-
-    e += handleSignal
-    return SignalSynt{s: SignalSynt[A]=> ref(s)(s) } // cannot express without high order
-  }*/
 }
 
 class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T, E) => T)
