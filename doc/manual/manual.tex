@@ -1207,12 +1207,21 @@ parameter, once, on the occurrence of the event \code{e}.
 
 
 
+\subsubsection{Unwrap}
 
+The \code{unwrap} function is used to ``unwrap'' an event inside a signal.
+\\
 
-% Not (yet) documented.
-% changedTo
+\code{def unwrap[T](wrappedEvent: Signal[Event[T]]): Event[T]}\\
 
+It can, for instance, be used to detect if any signal within a collection of signals
+fired a changed event:\\
 
+\begin{codenv}
+val collection: List[Signal[_]] = ...
+val innerChanges = Signal {collection().map(_.changed).reduce((a, b) => a || b)}
+val anyChanged = innerChanges.unwrap
+\end{codenv}
 
 
 \newpage
