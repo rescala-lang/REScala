@@ -126,6 +126,9 @@ trait Signal[+A] extends Changing[A] with FoldableReactive[A] with DepHolder {
 
   /** Delays this signal by n occurrences */
   def delay(n: Int): Signal[A] = IFunctions.delay(this, n)
+  
+  /** Unwraps a Signal[Event[E]] to an Event[E] */
+  def unwrap[E](implicit evidence: A <:< Event[E]): Event[E] = IFunctions.unwrap(this.map(evidence))
 
 }
 
