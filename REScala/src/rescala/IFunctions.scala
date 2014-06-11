@@ -166,7 +166,7 @@ class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T, E) => T)
     ReactiveEngine.log.nodeEvaluationEnded(this)
     val hashAfter = if (tmp == null) 0 else tmp.hashCode
     // support mutable values by using hashValue rather than ==
-    if (hashAfter != hashBefore) {
+    if (hashAfter != hashBefore || currentValue != tmp) {
       currentValue = tmp
       timestamps += TS.newTs // Testing
       notifyDependents(currentValue)
