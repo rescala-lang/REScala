@@ -1,8 +1,8 @@
 package examples.timer
-import react._
-import macro.SignalMacro.{SignalM => Signal}
-import react.conversions.SignalConversions._
-import react.commons.time._
+import rescala._
+import makro.SignalMacro.{SignalM => Signal}
+import rescala.conversions.SignalConversions._
+import rescala.commons.time._
 
 
 object TimeWindowTest extends App {

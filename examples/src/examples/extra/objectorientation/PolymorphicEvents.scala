@@ -1,10 +1,10 @@
 package examples.extra.objectorientation
-import react.events._
-import react.SignalSynt
-import react.events._
-import react.Var
-import react.Signal
-import macro.SignalMacro.{SignalM => Signal}
+import rescala.events._
+import rescala.SignalSynt
+import rescala.events._
+import rescala.Var
+import rescala.Signal
+import makro.SignalMacro.{SignalM => Signal}
 
 class Keyboard {
 	protected lazy val press : Event[String] = new ImperativeEvent[String]

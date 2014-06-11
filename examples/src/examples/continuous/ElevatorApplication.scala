@@ -4,12 +4,12 @@ import java.awt.Color
 import java.awt.event.ActionListener
 import java.awt.event.ActionEvent
 import scala.swing.event.ButtonClicked
-import react.events.ImperativeEvent
-import react.SignalSynt
-import react.Var
-import react.Signal
-import macro.SignalMacro.{SignalM => Signal}
-import react.time.Timer
+import rescala.events.ImperativeEvent
+import rescala.SignalSynt
+import rescala.Var
+import rescala.Signal
+import makro.SignalMacro.{SignalM => Signal}
+import rescala.time.Timer
 
 object ElevatorApplication extends Application {
   val elevator = new Elevator(4)

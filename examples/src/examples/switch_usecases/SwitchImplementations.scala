@@ -1,8 +1,8 @@
 package examples.switch_usecases
 
-import react._
-import react.events._
-import macro.SignalMacro.{ SignalM => Signal }
+import rescala._
+import rescala.events._
+import makro.SignalMacro.{ SignalM => Signal }
 
 object SwitchImplementations {
 

@@ -1,11 +1,11 @@
 package examples.continuous
 
-import react.events.ImperativeEvent
-import react.SignalSynt
-import react.Var
-import react.Signal
-import macro.SignalMacro.{SignalM => Signal}
-import react.time.Timer
+import rescala.events.ImperativeEvent
+import rescala.SignalSynt
+import rescala.Var
+import rescala.Signal
+import makro.SignalMacro.{SignalM => Signal}
+import rescala.time.Timer
 
 
 object ContinuousTest extends Application {

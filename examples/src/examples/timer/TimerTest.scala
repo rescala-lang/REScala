@@ -1,7 +1,7 @@
 package examples.timer
-import react.commons.time._
-import macro.SignalMacro.{SignalM => Signal}
-import react.conversions.SignalConversions._
+import rescala.commons.time._
+import makro.SignalMacro.{SignalM => Signal}
+import rescala.conversions.SignalConversions._
 
 object TimerTest extends App {
   

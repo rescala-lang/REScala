@@ -8,8 +8,8 @@ import reswing.ReLabel._
 import reswing.ReTextField._
 import reswing._
 import scala.swing.SimpleSwingApplication
-import react.Signal
-import macro.SignalMacro.{SignalM => Signal}
+import rescala.Signal
+import makro.SignalMacro.{SignalM => Signal}
 import scala.swing.FlowPanel
 
 object DropdownSample1 extends SimpleSwingApplication {

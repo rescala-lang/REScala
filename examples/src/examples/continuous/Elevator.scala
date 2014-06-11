@@ -1,11 +1,11 @@
 package examples.continuous
 
 import examples.elevator._
-import react.events._
-import react.SignalSynt
-import react.Var
-import react.Signal
-import macro.SignalMacro.{SignalM => Signal}
+import rescala.events._
+import rescala.SignalSynt
+import rescala.Var
+import rescala.Signal
+import makro.SignalMacro.{SignalM => Signal}
 import scala.swing._
 import examples.datastructures._
 
