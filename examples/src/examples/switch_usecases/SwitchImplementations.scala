@@ -7,10 +7,10 @@ import makro.SignalMacro.{ SignalM => Signal }
 object SwitchImplementations {
 
   def snapshot[T, E](s: Signal[T])(e: Event[E]): Signal[T] = {
-    val init = Signal(s.getValue)
+    val init = Signal(s.get)
     IFunctions.switch(e)(init)(new IFunctions.Factory[E, T] {
       override def apply(eVal: E): (Signal[T], IFunctions.Factory[E, T]) = {
-        val freeze = s.getVal
+        val freeze = s.get
         (Signal(freeze), this)
       }
     })
@@ -63,8 +63,8 @@ object TestSwitchImplementations extends App {
   e(1)
   e(2)
   e(3) 
-  assert(sumNormal.getVal == 6)
-  assert(sumFold1.getVal == 6)
-  assert(sumFold2.getVal == 6)
-  assert(sumFold3.getVal == 6)
+  assert(sumNormal.get == 6)
+  assert(sumFold1.get == 6)
+  assert(sumFold2.get == 6)
+  assert(sumFold3.get == 6)
 }

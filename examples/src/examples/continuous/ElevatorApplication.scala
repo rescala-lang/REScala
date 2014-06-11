@@ -9,7 +9,7 @@ import rescala.SignalSynt
 import rescala.Var
 import rescala.Signal
 import makro.SignalMacro.{SignalM => Signal}
-import rescala.time.Timer
+import rescala.commons.time._
 
 object ElevatorApplication extends Application {
   val elevator = new Elevator(4)
