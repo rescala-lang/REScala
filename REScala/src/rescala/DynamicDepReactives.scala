@@ -3,7 +3,7 @@ package rescala
 import scala.collection.mutable.ListBuffer
 import rescala.events.Event
 import rescala.events.ChangedEventNode
-import react.events.EventNode
+import rescala.events.EventNode
 
 //trait FixedDepHolder extends Reactive {
 //  val fixedDependents = new ListBuffer[Dependent]
@@ -137,7 +137,7 @@ object SignalSynt {
 class WrappedEvent[T](wrapper: Signal[Event[T]]) extends EventNode[T] with Dependent {
   
   var inQueue = false
-  var currentEvent = wrapper.getValue
+  var currentEvent = wrapper.get
   var currentValue: T = _
   
   // statically depend on wrapper
@@ -185,149 +185,5 @@ class WrappedEvent[T](wrapper: Signal[Event[T]]) extends EventNode[T] with Depen
 
   }
   
-  val timestamps = ListBuffer[Stamp]()
-}
-
-class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T, E) => T)
-  extends Dependent with DepHolder with Signal[T] {
-
-  // The value of this signal
-  private[this] var currentValue: T = init
-
-  // The cached value of the last occurence of e
-  private[this] var lastEvent: E = _
-
-  private[this] var inQueue = false
-
-  // Testing
-  val timestamps = ListBuffer[Stamp]()
-
-  def getValue = currentValue
-  def getVal = currentValue
-
-  def apply(): T = currentValue
-  def apply(s: SignalSynt[_]) = {
-    if (level >= s.level) s.level = level + 1
-    s.reactivesDependsOnCurrent += this
-    getVal
-  }
-
-  // The only dependant is e
-  addDependOn(e)
-  e.addDependent(this)
-  this.level = e.level + 1
-
-  def triggerReevaluation() = reEvaluate
-
-  def reEvaluate(): T = {
-    inQueue = false
-
-    val hashBefore = if (currentValue == null) 0 else currentValue.hashCode
-    ReactiveEngine.log.nodeEvaluationStarted(this)
-    val tmp = f(currentValue, lastEvent)
-    ReactiveEngine.log.nodeEvaluationEnded(this)
-    val hashAfter = if (tmp == null) 0 else tmp.hashCode
-    // support mutable values by using hashValue rather than ==
-    if (hashAfter != hashBefore) {
-      currentValue = tmp
-      timestamps += TS.newTs // Testing
-      notifyDependents(currentValue)
-    } else {
-      ReactiveEngine.log.nodePropagationStopped(this)
-      timestamps += TS.newTs // Testing
-    }
-    tmp
-  }
-  override def dependsOnchanged(change: Any, dep: DepHolder) = {
-    if (dep eq e) {
-      lastEvent = change.asInstanceOf[E]
-    } else {
-      // this would be an implementation error
-      throw new RuntimeException("Folded Signals can only depend on a single event node")
-    }
-
-    if (!inQueue) {
-      inQueue = true
-      ReactiveEngine.addToEvalQueue(this)
-    }
-  }
-
-  def change[U >: T]: Event[(U, U)] = new ChangedEventNode[(U, U)](this)
-}
-
-
-/** Special reactive node for the "switch" interface function */
-class SwitchedSignal[+T, +E](e: Event[E], init: Signal[T], factory: IFunctions.Factory[E, T])
-  extends Dependent with DepHolder with Signal[T] {
-
-  // The "inner" signal
-  private[this] var currentSignal: Signal[T] = init
-  // the current factory being called on the next occurence of e
-  private[this] var currentFactory: IFunctions.Factory[E, T] = factory
-
-  private[this] var inQueue = false
-
-  // Testing
-  val timestamps = ListBuffer[Stamp]()
-
-  def getValue = currentSignal.getValue
-  def getVal = currentSignal.getVal
-
-  def apply(): T = currentSignal.apply()
-  def apply(s: SignalSynt[_]) = {
-    if (level >= s.level) s.level = level + 1
-    s.reactivesDependsOnCurrent += this
-    getVal
-  }
-
-  private def removeInner(s: Signal[_]) {
-    dependOn -= s
-    s.removeDependent(this)
-  }
-
-  private def addInner(s: Signal[_]) {
-    dependOn += s
-    s.addDependent(this)
-    this.level = math.max(e.level, s.level) + 1
-  }
-
-  // Switched signal depends on event and the current signal
-  dependOn += e
-  e.addDependent(this)
-  addInner(currentSignal)
-
-  def triggerReevaluation() = reEvaluate
-
-  def reEvaluate(): T = {
-    inQueue = false
-
-    ReactiveEngine.log.nodeEvaluationStarted(this)
-    val inner = currentSignal.reEvaluate
-    ReactiveEngine.log.nodeEvaluationEnded(this)
-    inner
-  }
-
-  override def dependsOnchanged(change: Any, dep: DepHolder) = {
-    if (dep eq e) {
-      val event = change.asInstanceOf[E]
-      val (newSignal, newFactory) = currentFactory.apply(event)
-      if (newSignal ne currentSignal) {
-        removeInner(currentSignal)
-        currentSignal = newSignal
-        currentFactory = newFactory
-        addInner(currentSignal)
-      }
-      // hack?
-      val value = reEvaluate
-      notifyDependents(value)
-    } else {
-    }
-
-    if (!inQueue) {
-      inQueue = true
-      ReactiveEngine.addToEvalQueue(this)
-    }
-  }
-
-  def change[U >: T]: Event[(U, U)] = new ChangedEventNode[(U, U)](this)
+  override val timestamps = ListBuffer[Stamp]()
 }
