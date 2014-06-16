@@ -12,31 +12,27 @@ import rescala.Signal
 import makro.SignalMacro.{SignalM => Signal}
 import scala.swing.FlowPanel
 import rescala.IFunctions
+import scala.swing.Button
+import rescala.Var
 
-object DropdownSample2b extends SimpleSwingApplication {
+object DropdownSample3 extends SimpleSwingApplication {
   
-  /* This version "artificially" introduces a Signal[List[Signal[String]] to illustrate higher
-   * order signals, but this is not really necessary (See DropdownSample1)
-   */
-
+  
+  // initial values
   val col1 = new ReTextField(text = "Berlin", columns = 30)
-  val col2 = new ReTextField(text = "Paris", columns = 30)
-  val col3 = new ReTextField(text = "London", columns = 30)
-  val col4 = new ReTextField(text = "Rome", columns = 30)
-  
+  val col2 = new ReTextField(text = "Paris", columns = 30)  
   val val1 = Signal { col1.text() }
   val val2 = Signal { col2.text() }
-  val val3 = Signal { col3.text() }
-  val val4 = Signal { col4.text() }
   
-  val listOfSignals = Signal { List(val1, val2, val3, val4) }
+  val fields: Var[List[Signal[String]]] = Var(List(val1, val2))
+  val nFields = Signal { fields().size }
+  
+  val listOfSignals = Signal { fields() }
   val options = Signal { listOfSignals().map(_()) }
-  
   
   val innerChanged = Signal { listOfSignals().map(_.changed) }
   val anyChangedWrapped = Signal { innerChanged().reduce((a, b) => a || b)}
   val anyChanged = anyChangedWrapped.unwrap
-  
   
   anyChanged += {x => println("some value has changed: " + x)}
   
@@ -50,10 +46,24 @@ object DropdownSample2b extends SimpleSwingApplication {
   val outputString = Signal { currentSelectedItem().getOrElse("Nothing") }
   val outputField = new ReTextField(text = outputString)
   
-  
-  def top = new MainFrame {
+  lazy val frame = new MainFrame {
 	  title = "Dropdown example"
-	  contents = new BoxPanel(Orientation.Vertical) {
+	  val fields = new BoxPanel(Orientation.Vertical) {
+
+	    contents += new FlowPanel { 
+	    	contents += new Label("Dropdown selection: ")
+	    	contents += dropdown
+	    }
+	    
+	    contents += new FlowPanel { 
+	    	contents += new Label("Selected item: ")
+	    	contents += outputField
+	    }
+	    
+	    contents += new FlowPanel { 
+	    	contents += Button("Add value")(addField("empty"))
+	    }
+	    
 	    
 	    contents += new FlowPanel { 
 	      contents += new Label("Value 1:")
@@ -65,25 +75,22 @@ object DropdownSample2b extends SimpleSwingApplication {
 	      contents += col2
 	    }	   
 	    
-	    contents += new FlowPanel { 
-	      contents += new Label("Value 3:")
-	      contents += col3
-	    }
-	    
-	    contents += new FlowPanel { 
-	      contents += new Label("Value 4:")
-	      contents += col4
-	    }
-	    
-	    contents += new FlowPanel { 
-	    	contents += new Label("Dropdown selection: ")
-	    	contents += dropdown
-	    }
-	    
-	    contents += new FlowPanel { 
-	    	contents += new Label("Selected item: ")
-	    	contents += outputField
-	    }
 	  }
+	  contents = fields
   }
+  
+  def top = frame
+  
+  def addField(initText: String) {
+    val n = nFields.get + 1
+    val col = new ReTextField(text = initText, columns = 30)
+    frame.fields.contents += new FlowPanel { 
+      contents += new Label("Value " + n + ":")
+      contents += col
+    }
+    val content: Signal[String] = Signal { col.text() }
+    fields() = content :: fields()
+    frame.pack
+  }
+  
 }
