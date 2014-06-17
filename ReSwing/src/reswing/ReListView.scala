@@ -11,7 +11,6 @@ import scala.swing.event.ListSelectionChanged
 import scala.swing.event.ListElementsAdded
 import scala.swing.event.ListChanged
 import scala.swing.event.ListElementsRemoved
-import javax.swing.AbstractListModel
 
 class ReListView[A](
     val listData: ReSwingValue[Seq[A]] = ReSwingNoValue[Seq[A]],
@@ -36,21 +35,27 @@ class ReListView[A](
 
   protected val javaPeer = peer.peer.asInstanceOf[javax.swing.JList[A]]
 
-  protected def installReListModel = {
-    val model = new ReListView.ReListModel[A]
-    model.addListDataListener(new javax.swing.event.ListDataListener {
-      def contentsChanged(e: javax.swing.event.ListDataEvent)
-        { peer.publish(ListChanged(peer)) }
-      def intervalRemoved(e: javax.swing.event.ListDataEvent)
-        { peer.publish(ListElementsRemoved(peer, e.getIndex0 to e.getIndex1)) }
-      def intervalAdded(e: javax.swing.event.ListDataEvent)
-        { peer.publish(ListElementsAdded(peer, e.getIndex0 to e.getIndex1)) }
-    })
-    javaPeer.setModel(model)
-    model
+  private var model: javax.swing.ListModel[A] = _
+
+  private val modelListener = new javax.swing.event.ListDataListener {
+    def contentsChanged(e: javax.swing.event.ListDataEvent)
+      { peer publish ListChanged(peer) }
+    def intervalRemoved(e: javax.swing.event.ListDataEvent)
+      { peer publish ListElementsRemoved(peer, e.getIndex0 to e.getIndex1) }
+    def intervalAdded(e: javax.swing.event.ListDataEvent)
+      { peer publish ListElementsAdded(peer, e.getIndex0 to e.getIndex1) }
   }
 
-  installReListModel
+  def modelChanged = {
+    if (model != null)
+      model removeListDataListener modelListener
+    if (javaPeer.getModel != null)
+      javaPeer.getModel addListDataListener modelListener
+    model = javaPeer.getModel
+  }
+
+  javaPeer setModel new ReListView.ReListModel[A]
+  modelChanged
 
   listData using (
       peer.listData _,
@@ -61,7 +66,11 @@ class ReListView[A](
 
         (javaPeer.getModel match {
           case model: ReListView.ReListModel[A] => model
-          case _ => installReListModel
+          case _ =>
+            val model = new ReListView.ReListModel[A]
+            javaPeer setModel model
+            modelChanged
+            model
         })() = listData
 
         if (selected != null)
@@ -136,5 +145,6 @@ object ReListView {
     }
     def getElementAt(n: Int) = items(n)
     def getSize = items.size
+    def getItems = items
   }
 }
