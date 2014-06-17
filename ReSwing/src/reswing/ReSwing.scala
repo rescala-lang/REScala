@@ -17,5 +17,5 @@ package object reswing {
     if (SwingUtilities.isEventDispatchThread)
       op
     else
-      Swing onEDTWait op
+      Swing onEDT op
 }
