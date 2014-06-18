@@ -98,45 +98,42 @@ private[reswing] abstract trait ReSwingValueConnection {
       if (value != null)
         inSyncEDT {
           value() = getter()
-          if (setter.isDefined)
-            delayedValues += value
+          value initLazily { _ => inSyncEDT { initReSwingValueConnection } }
           
-          value initLazily { value =>
-            inSyncEDT {
-              if (setter.isDefined) {
-                val set = setter.get
-                value use { v => inSyncEDT { set(v) } }
-                
-                if (value.fixed)
-                  for (name <- names)
-                    name match {
-                      case Left(name) =>
-                        changingProperties getOrElseUpdate (name, ListBuffer()) += { _ =>
-                          if (getter() != value.getValue)
-                            Swing onEDT { if (getter() != value.getValue) set(value.getValue) } }
-                      
-                      case Right((publisher, reaction)) =>
-                        reactor listenTo publisher
-                        changingReactions getOrElseUpdate (reaction, ListBuffer()) += { _ =>
-                          if (getter() != value.getValue)
-                            Swing onEDT { if (getter() != value.getValue) set(value.getValue) } }
-                    }
-              }
+          delayedInitValues += { _ =>
+            if (setter.isDefined) {
+              val set = setter.get
+              value use { v => inSyncEDT { set(v) } }
               
-              if (!value.fixed) {
-                value() = getter()
+              if (value.fixed)
                 for (name <- names)
                   name match {
                     case Left(name) =>
                       changingProperties getOrElseUpdate (name, ListBuffer()) += { _ =>
-                        value() = getter() }
+                        if (getter() != value.get)
+                          Swing onEDT { if (getter() != value.get) set(value.get) } }
                     
                     case Right((publisher, reaction)) =>
                       reactor listenTo publisher
-                      changingReactions.getOrElseUpdate(reaction, ListBuffer()) += { _ =>
-                        value() = getter() }
+                      changingReactions getOrElseUpdate (reaction, ListBuffer()) += { _ =>
+                        if (getter() != value.get)
+                          Swing onEDT { if (getter() != value.get) set(value.get) } }
                   }
-              }
+            }
+            
+            if (!value.fixed) {
+              value() = getter()
+              for (name <- names)
+                name match {
+                  case Left(name) =>
+                    changingProperties getOrElseUpdate (name, ListBuffer()) += { _ =>
+                      value() = getter() }
+                  
+                  case Right((publisher, reaction)) =>
+                    reactor listenTo publisher
+                    changingReactions.getOrElseUpdate(reaction, ListBuffer()) += { _ =>
+                      value() = getter() }
+                }
             }
           }
         }
@@ -158,7 +155,7 @@ private[reswing] abstract trait ReSwingValueConnection {
     }
   }
   
-  private val delayedValues = ListBuffer.empty[ReSwingValue[_]]
+  private val delayedInitValues = ListBuffer.empty[Unit => Unit]
   private val changingReactions = Map.empty[Class[_], ListBuffer[Unit => Unit]]
   private val changingProperties = Map.empty[String, ListBuffer[Unit => Unit]]
   private val enforcedProperties = Map.empty[String, Unit => Unit]
@@ -191,8 +188,8 @@ private[reswing] abstract trait ReSwingValueConnection {
   })
   
   protected def initReSwingValueConnection {
-    for (value <- delayedValues)
-      value.initPerform
-    delayedValues.clear
+    for (init <- delayedInitValues)
+      init()
+    delayedInitValues.clear
   }
 }

@@ -6,7 +6,6 @@ import scala.swing.Dimension
 import scala.swing.Font
 import scala.swing.TextArea
 import scala.swing.event.ValueChanged
-import rescala.events.Event
 
 class ReTextArea(
     text: ReSwingValue[String] = (),
@@ -42,11 +41,11 @@ class ReTextArea(
                     minimumSize, maximumSize, preferredSize) {
   override protected lazy val peer =
     new TextArea(null, rows, columns) with ComponentMixin
-  
+
   tabSize using (peer.tabSize _, peer.tabSize_= _, "tabSize")
   lineWrap using (peer.lineWrap _, peer.lineWrap_= _, "lineWrap")
   charWrap using (peer.charWrap _, peer.charWrap_= _, "wrapStyleWord")
-  
+
   val lineCount = ReSwingValue using (peer.lineCount _, classOf[ValueChanged])
 }
 

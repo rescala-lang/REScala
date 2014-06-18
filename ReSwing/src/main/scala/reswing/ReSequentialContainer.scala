@@ -9,23 +9,22 @@ import scala.swing.event.ComponentRemoved
 trait ReSequentialContainer extends ReUIElement {
   protected def peer: SequentialContainer
   
+  private def peerContents = peer.contents: CompList
+  
+  private def peerContents_=(components: CompList) {
+    peer.contents.clear
+    peer.contents ++= components
+    peer.repaint
+    peer.peer.validate
+  }
+  
   def contents: ReSwingValue[CompList]
-
-  contents using (
-      peer.contents _,
-      { components =>
-        peer.contents.clear
-        peer.contents ++= components
-        peer.repaint
-        peer.peer.validate
-      },
-      classOf[ComponentAdded], classOf[ComponentRemoved])
   
-  protected implicit def addContent(contents: ReSwingValue[CompList]) =
-    new AddContent(contents)
+  contents using (peerContents _, peerContents_= _,
+                  classOf[ComponentAdded], classOf[ComponentRemoved])
   
-  protected class AddContent(contents: ReSwingValue[CompList]) {
-    def +=(comp: Component) { contents() = contents.getValue :+ comp }
+  protected implicit class AddContent(contents: ReSwingValue[CompList]) {
+    def +=(component: Component) = peerContents :+= component
   }
 }
 

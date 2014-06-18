@@ -7,7 +7,6 @@ import scala.swing.Dimension
 import scala.swing.Font
 import scala.swing.TextField
 import scala.swing.event.EditDone
-import rescala.events.Event
 
 class ReTextField(
     text: ReSwingValue[String] = (),
@@ -40,10 +39,10 @@ class ReTextField(
                     minimumSize, maximumSize, preferredSize) {
   override protected lazy val peer =
     new TextField(null, columns) with ComponentMixin
-  
+
   horizontalAlignment using (peer.horizontalAlignment _,
                              peer.horizontalAlignment= _, "horizontalAlignment")
-  
+
   val editDone = ReSwingEvent using classOf[EditDone]
 }
 
