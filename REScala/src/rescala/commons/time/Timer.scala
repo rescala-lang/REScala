@@ -10,11 +10,11 @@ import scala.collection.SortedSet
  * A Timer class for FRP purposes.
  * After creation, all timers need to be run with Timer.runAll
  */
-class Timer(val interval: Int) extends Ordered[Timer] {
+class Timer(val interval: Time) extends Ordered[Timer] {
   type Seconds = Double
 
   // Timer is a mutable type, but it is ordered by a static property
-  def compare(that: Timer) = this.interval - that.interval
+  def compare(that: Timer) = (this.interval - that.interval).s.toInt
 
   /** Tick event gets triggered every 'interval' milliseconds.
    *  Passes the real delta as parameter due to thread sleeping inaccuracy */
@@ -59,7 +59,7 @@ class Timer(val interval: Int) extends Ordered[Timer] {
   /** Snapshots a signal for a given time window */
   def timeWindow[A](window : Seconds)(s : Signal[A]) : Signal[Seq[A]] = {
     if(interval == 0) throw new RuntimeException("You must use an interval > 0")
-    val delta = interval / 1000.0
+    val delta = interval.s
     val n = (window / delta).asInstanceOf[Int]
     (tick snapshot s).changed.last(n)
   }
@@ -75,23 +75,22 @@ class Timer(val interval: Int) extends Ordered[Timer] {
 
 
 object Timer {
-  type Time = Double
 
   /** Factory method to create timers */
-  def apply(interval: Int): Timer = new Timer(interval)
+  def apply(interval: Time): Timer = new Timer(interval)
 
   // a global ticker which triggers as often as needed
   val globaltick = new ImperativeEvent[Time]
 
-  case class Scheduled(remaining : Int, timer : Timer)
+  case class Scheduled(remaining: Long, timer: Timer)
   extends Ordered[Scheduled] {
-	def compare(that: Scheduled) = this.remaining - that.remaining
+	def compare(that: Scheduled) = (this.remaining - that.remaining).toInt
 	def postpone(offset : Int) = Scheduled(remaining - offset, timer)
-	def reschedule = Scheduled(timer.interval, timer)
+	def reschedule = Scheduled(timer.interval.ms, timer)
   }
 
   protected var schedule: List[Scheduled] = List()
-  protected def register(t : Timer) = schedule :+= Scheduled(t.interval, t)
+  protected def register(t : Timer) = schedule :+= Scheduled(t.interval.ms, t)
   protected def unregister(t : Timer) = schedule = schedule.filterNot(_.timer == t)
 
 
