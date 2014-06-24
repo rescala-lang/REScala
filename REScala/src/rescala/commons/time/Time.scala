@@ -9,6 +9,7 @@ class Time(val ns: Long) extends AnyVal {
   def -(t: Time) = new Time(ns - t.ns)
   def *(i: Int) = new Time(ns * i)
   def *(d: Double) = new Time((ns * d).toLong)
+  def *(t: Time) = new Time(ns * t.ns)
   def /(i: Int) = new Time(ns / i)
   def /(d: Double) = new Time((ns / d).toLong)
   def /(t: Time) = ns.toDouble / t.ns
@@ -29,8 +30,14 @@ object Time {
   def ms(millis: Long) = mus(1000 * millis)
   def s(s: Double) = ms((1000 * s).toLong)
   
-  /** Default conversion converts from milliseconds */
+  /** Default conversion converts from int converts as milliseconds */
   implicit def fromMs(millis: Int): Time = ms(millis)
+  
+  /** Default conversion from double converts as seconds */
+  implicit def fromS(seconds: Double): Time = s(seconds)
+  
+  /** Default conversion to double converts to seconds */
+  implicit def fromTime(time: Time): Double = time.s
 }
   
   /*

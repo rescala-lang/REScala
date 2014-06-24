@@ -11,53 +11,52 @@ import scala.collection.SortedSet
  * After creation, all timers need to be run with Timer.runAll
  */
 class Timer(val interval: Time) extends Ordered[Timer] {
-  type Seconds = Double
 
-  // Timer is a mutable type, but it is ordered by a static property
+  // Timers are ordered by interval
   def compare(that: Timer) = (this.interval - that.interval).s.toInt
 
-  /** Tick event gets triggered every 'interval' milliseconds.
+  /** Tick event gets triggered every at 'interval'
    *  Passes the real delta as parameter due to thread sleeping inaccuracy */
-  val tick = new ForkedEvent[Seconds]
+  val tick = new ForkedEvent[Time]
 
   /** Tick event that drops the delta for convenience */
-  val tock : Event[Unit] = tick.dropParam
+  val tock: Event[Unit] = tick.dropParam
 
   /** Signal for the total time */
-  val time = tick.fold(0.0) {(total: Seconds, delta: Seconds) => total + delta}
+  val time = tick.fold(new Time(0)) {(total: Time, delta: Time) => total + delta}
 
   /** Returns the integral of the Signal s over time */
-  def integral(s: Signal[Seconds]) : Signal[Seconds] = {
+  def integral(s: Signal[Time]): Signal[Time] = {
     // simple Riemann integral, could do more
-    return tick.fold(0.0) {(total : Seconds, delta : Seconds) =>
+    return tick.fold(new Time(0)) {(total: Time, delta: Time) =>
       total + delta * s()
     }
   }
 
-  /** Integrates a Signal expression over time */
-  def integrate(expr : => Seconds) : Signal[Seconds] = {
-    return tick.fold(0.0) {(total : Seconds, delta : Seconds) =>
-      total + delta * expr
+  /** Integrates a real Signal expression over time */
+  def integrate(expr: => Double): Signal[Double] = {
+    return tick.fold(0.0) {(total: Double, delta: Time) =>
+      total + delta.s * expr
     }
   }
 
   /** Returns a new Signal that counts the local time from now */
-  def localTime : Signal[Seconds] = {
+  def localTime: Signal[Time] = {
     val now = time()
-    return SignalSynt {s: SignalSynt[Seconds] => time() - now}
+    return SignalSynt(time) {s: SignalSynt[Time] => time() - now}
   }
 
   /** Returns a Signal which is true if the specified delay has passed */
-  def passed(delay : Seconds) : Signal[Boolean] = {
+  def passed(delay: Time) : Signal[Boolean] = {
     val now = time()
     return SignalSynt {s: SignalSynt[Boolean] => time(s) > now + delay }
   }
 
   /** Returns a new event which fires exactly once after the specified delay */
-  def after(delay : Seconds) : Event[Unit] = passed(delay).changedTo(true)
+  def after(delay: Time) : Event[Unit] = passed(delay).changedTo(true)
 
   /** Snapshots a signal for a given time window */
-  def timeWindow[A](window : Seconds)(s : Signal[A]) : Signal[Seq[A]] = {
+  def timeWindow[A](window: Time)(s : Signal[A]) : Signal[Seq[A]] = {
     if(interval == 0) throw new RuntimeException("You must use an interval > 0")
     val delta = interval.s
     val n = (window / delta).asInstanceOf[Int]
@@ -121,7 +120,7 @@ object Timer {
 
     // tick timer subset
     val tickset = tickNow.map(_.timer.tick)
-    val ticker = new ImperativeForkEvent[Double](tickset: _*)
+    val ticker = new ImperativeForkEvent[Time](tickset: _*)
     ticker(realSecs)
 
     // update the schedule
