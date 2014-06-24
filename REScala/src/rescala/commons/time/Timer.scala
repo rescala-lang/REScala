@@ -5,6 +5,7 @@ import rescala.SignalSynt
 import rescala.Var
 import rescala.Signal
 import scala.collection.SortedSet
+import TimePostfixedValue._
 
 /**
  * A Timer class for FRP purposes.
@@ -23,19 +24,19 @@ class Timer(val interval: Time) extends Ordered[Timer] {
   val tock: Event[Unit] = tick.dropParam
 
   /** Signal for the total time */
-  val time = tick.fold(new Time(0)) {(total: Time, delta: Time) => total + delta}
+  val time = tick.fold(0.s) {(total: Time, delta: Time) => total + delta}
 
   /** Returns the integral of the Signal s over time */
   def integral(s: Signal[Time]): Signal[Time] = {
     // simple Riemann integral, could do more
-    return tick.fold(new Time(0)) {(total: Time, delta: Time) =>
+    return tick.fold(0.ns) {(total: Time, delta: Time) =>
       total + delta * s()
     }
   }
 
   /** Integrates a real Signal expression over time */
   def integrate(expr: => Double): Signal[Double] = {
-    return tick.fold(0.0) {(total: Double, delta: Time) =>
+    return tick.fold(0d) {(total: Double, delta: Time) =>
       total + delta.s * expr
     }
   }
@@ -67,6 +68,9 @@ class Timer(val interval: Time) extends Ordered[Timer] {
   def sample[T](expr: => T): Signal[T] = {
     this.tock.set(None)(_ => expr)
   }
+  
+  /** The current system time, sampled by this timer */
+  def currentTime: Signal[Time] = sample(Time.current)
 
   // globally register this timer
   Timer.register(this)
@@ -77,6 +81,9 @@ object Timer {
 
   /** Factory method to create timers */
   def apply(interval: Time): Timer = new Timer(interval)
+  
+  /** Convenience method for creating a signal holding the current time */
+  def currentTime(interval: Time): Signal[Time] = new Timer(interval).currentTime
 
   // a global ticker which triggers as often as needed
   val globaltick = new ImperativeEvent[Time]

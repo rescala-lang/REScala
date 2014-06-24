@@ -40,10 +40,17 @@ object Time {
   implicit def fromTime(time: Time): Double = time.s
 }
   
-  /*
-  implicit class TimePostfixedValue(val l: Double) extends AnyVal {
+
+class TimePostfixedValue(val l: Double) extends AnyVal {
     def s = new Time((1000000000 * l).toLong)
     def ms = new Time(1000000 * l.toLong)
     def mus = new Time(1000 * l.toLong)
     def ns = new Time(l.toLong)
-  }*/
+}
+
+
+object TimePostfixedValue {
+  implicit def fromDouble(d: Double): TimePostfixedValue = new TimePostfixedValue(d)
+  implicit def fromInt(i: Int): TimePostfixedValue = new TimePostfixedValue(i)
+  implicit def fromLong(l: Long): TimePostfixedValue = new TimePostfixedValue(l)
+}
