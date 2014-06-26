@@ -16,6 +16,7 @@ object SignalMacro {
   def SignalMacro[A: c.WeakTypeTag](c: Context)(expression: c.Expr[A]):
       c.Expr[DependentSignal[A]] = {
     import c.universe._
+    import compat._
 
 
 //    val out = new java.io.FileWriter(
@@ -40,7 +41,7 @@ object SignalMacro {
     val uncheckedExpressions = (expression.tree collect {
       case tree @ Typed(_, _)
           if (tree.tpe match {
-            case AnnotatedType(annotations, _, _) =>
+            case AnnotatedType(annotations, _) =>
               annotations exists { _.tpe <:< typeOf[unchecked] }
             case _ => false
           }) =>

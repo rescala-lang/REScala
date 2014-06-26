@@ -5,7 +5,7 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="lib" path="lib/mockito-all-1.9.5.jar"/>
-	<classpathentry kind="lib" path="lib/scalatest_2.10-1.9.1.jar"/>
+	<classpathentry kind="lib" path="lib/scalatest_2.11-2.2.0.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/REScala"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
