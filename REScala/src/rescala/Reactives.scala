@@ -15,8 +15,7 @@ trait Reactive extends Ordered[Reactive] {
   // testing
   val timestamps: Buffer[Stamp] = ListBuffer()
   
-  // For debugging
-  var id: String = UUID.randomUUID().toString()
+  var id = UUID.randomUUID()
 
   var level: Int = 0
   override def compare(other: Reactive): Int =
