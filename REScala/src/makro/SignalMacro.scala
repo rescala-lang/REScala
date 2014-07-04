@@ -1,8 +1,10 @@
 package makro
 
-import scala.collection.mutable.ListBuffer
 import scala.language.experimental.macros
-import scala.reflect.macros.Context
+
+import scala.collection.mutable.ListBuffer
+//import scala.reflect.macros.blackbox.Context
+import scala.reflect.macros.whitebox.Context
 
 import rescala.DependentSignal
 import rescala.Signal
@@ -16,7 +18,6 @@ object SignalMacro {
   def SignalMacro[A: c.WeakTypeTag](c: Context)(expression: c.Expr[A]):
       c.Expr[DependentSignal[A]] = {
     import c.universe._
-    import compat._
 
 
 //    val out = new java.io.FileWriter(
@@ -35,6 +36,14 @@ object SignalMacro {
     val definedSymbols = (expression.tree collect {
       case defTree: DefTree => defTree.symbol -> defTree
     }).toMap
+
+    // find inner macros that are not expanded
+    // (note: should inner macros not be expanded first by the compiler?)
+    // we need to take special care for nested signals
+    val nestedUnexpandedMacros = (expression.tree collect {
+      case tree if tree.symbol != null && tree.symbol.isMacro =>
+        tree :: (tree filter { _ => true })
+    }).flatten.toSet
 
     // collect expression annotated to be unchecked and do not issue warnings
     // for those (use the standard Scala unchecked annotation for that purpose)
@@ -64,7 +73,7 @@ object SignalMacro {
         fun exists {
           case Apply(fun, _) =>
             !(fun exists {
-              case Select(_, nme.CONSTRUCTOR) => true
+              case Select(_, termNames.CONSTRUCTOR) => true
               case tree: SymTree => definedSymbols contains tree.symbol
               case _ => false
             })
@@ -95,7 +104,7 @@ object SignalMacro {
     // every Signal { ... } macro instance gets expanded into a SignalSynt
     val signalSyntArgName = newTermName(c.fresh("s$"))
     val signalSyntArgIdent = Ident(signalSyntArgName)
-    signalSyntArgIdent setType weakTypeOf[SignalSynt[A]]
+    internal setType (signalSyntArgIdent, weakTypeOf[SignalSynt[A]])
 
     // the signal values that will be cut out of the Signal expression
     val signalValues = ListBuffer.empty[ValDef]
@@ -126,9 +135,10 @@ object SignalMacro {
           // to
           //   SignalSynt { s => a(s) + b(s) }
           case tree @ Apply(Select(reactive, apply), List())
-              if isReactive(reactive) && apply.decoded == "apply" =>
+              if isReactive(reactive) && apply.decoded == "apply" &&
+                 !(nestedUnexpandedMacros contains tree) =>
             val reactiveApply = Select(reactive, newTermName("apply"))
-            reactiveApply setType tree.tpe
+            internal setType (reactiveApply, tree.tpe)
             Apply(super.transform(reactiveApply), List(signalSyntArgIdent))
 
           // cut signal values out of the signal expression, that could
@@ -159,8 +169,10 @@ object SignalMacro {
               !reactive.symbol.asTerm.isVar &&
               !reactive.symbol.asTerm.isAccessor &&
               (reactive filter {
-                case Apply(Select(chainedReactive, apply), List())
-                    if isReactive(chainedReactive) && apply.decoded == "apply" =>
+                case tree @ Apply(Select(chainedReactive, apply), List())
+                    if isReactive(chainedReactive) && apply.decoded == "apply" &&
+                       !(nestedUnexpandedMacros contains tree) =>
+
                   if (!(uncheckedExpressions contains reactive)) {
                     def methodObjectType(method: Tree) = {
                       def methodObjectType(tree: Tree): Type =
@@ -186,6 +198,7 @@ object SignalMacro {
                   }
 
                   true
+
                 case tree: SymTree =>
                   definedSymbols get tree.symbol match {
                     case Some(defTree) if !(reactive exists { _ == defTree }) =>
@@ -205,7 +218,7 @@ object SignalMacro {
             signalValues += signalDef
 
             val ident = Ident(signalName)
-            ident setType reactive.tpe
+            internal setType (ident, reactive.tpe)
             ident
 
           case _ =>
@@ -232,11 +245,11 @@ object SignalMacro {
           Select(
             Select(
               Select(
-                Ident(nme.ROOTPKG),
+                Ident(termNames.ROOTPKG),
                 newTermName("rescala")),
               newTermName("SignalSynt")),
             newTermName("apply")),
-          List(TypeTree())),
+          List(TypeTree(weakTypeOf[A]))),
         List(function))
 
     // assemble the SignalSynt object and the signal values that are accessed
@@ -246,10 +259,10 @@ object SignalMacro {
       Typed(Block(signalValues.toList, body), TypeTree(weakTypeOf[DependentSignal[A]]))
 
 
-//    out.append((c resetLocalAttrs block) + "\n\n")
+//    out.append((c untypecheck block) + "\n\n")
 //    out.close
 
 
-    c.Expr[DependentSignal[A]](c resetLocalAttrs block)
+    c.Expr[DependentSignal[A]](c untypecheck block)
   }
 }

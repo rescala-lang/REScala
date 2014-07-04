@@ -240,8 +240,9 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
   }
 
 
-  // TODO fix this test with Scala 2.11
-  // error message: unexpected UnApply immutable.this.List.unapplySeq[Int](<unapply-selector>) <unapply> (_, (v @ _))
+// Assumingly, this test fails due to https://issues.scala-lang.org/browse/SI-5465
+// We should check if the test succeeds when the issue is fixed
+//
 //  @Test def patternMatchingAndWildcard() = {
 //    val v1 = Var(List(1, 2))
 //    val v2 = Var(100)
