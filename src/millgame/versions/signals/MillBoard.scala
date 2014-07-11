@@ -23,7 +23,7 @@ class MillBoard {
 	
 	/* lines mapped to owners */
 	val lineOwners: Signal[Vector[Slot]] = Signal { //#SIG
-	  (lines() map { line =>
+	  (lines() map { line => //#EF
 	    if(line forall { _ == line.head }) line.head else Empty
 	  }).toVector
 	}
@@ -36,14 +36,12 @@ class MillBoard {
 		
 	/* access slot state by index */
 	def apply(slot: SlotIndex) = stonesVar.get(slot.index)
-	def update(slot: SlotIndex, color: Slot) = {
+	def update(slot: SlotIndex, color: Slot) =
 	  stonesVar.set(stonesVar.get.updated(slot.index, color))
-	}
-	def update(indexColor: Map[SlotIndex, Slot]) = {
+	def update(indexColor: Map[SlotIndex, Slot]) =
 	  stonesVar.set(stonesVar.get.zipWithIndex.map({
 	    case (color, i) => indexColor.getOrElse(SlotIndex(i), color)
 	  }))
-	}
 	
 	val color: Signal[SlotIndex => Slot] = Signal { //#SIG
 	  val stones = stonesVar()
@@ -116,6 +114,6 @@ class MillBoard {
 	}
 	val blackStones = Signal { numStones()(Black) } //#SIG
 	val whiteStones = Signal { numStones()(White) } //#SIG
-	val numStonesChanged: Event[(Slot, Int)] =  //#EVT //#IF
-	  blackStones.changed.map( (Black, _: Int)) || whiteStones.changed.map((White, _: Int))
+	val numStonesChanged: Event[(Slot, Int)] =  //#EVT
+	  blackStones.changed.map( (Black, _: Int)) || whiteStones.changed.map((White, _: Int)) //#IF //#EF //#IF
 }

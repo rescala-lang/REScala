@@ -1,4 +1,4 @@
-package millgame.versions.signals
+package millgame.versions.signalonly
 
 import millgame._
 import millgame.types._
@@ -136,7 +136,7 @@ class MillDrawer(val game: MillGame)
       Line(coordinates()(from.index), coordinates()(to.index)) }
   }
   
-  val indexClicked = (mouse.clicks.released map { e: MouseReleased => //#EF
+  val indexClicked = (mouse.clicks.released map { e: MouseReleased => //#EVT //#EF
     val index = coordinates.get.indexWhere {
       p => (p distance (e.point.x, e.point.y)) < ClickArea
     }

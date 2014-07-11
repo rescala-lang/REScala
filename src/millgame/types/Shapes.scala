@@ -7,10 +7,10 @@ import java.awt.Color
 //
 // presentational attributes
 //
-case class Presentation[T: Numeric, ST, S <% Shape[ST]](
+case class Presentation[T: Numeric, +S <% Shape[T]](
     shape: S, color: Color = Color.BLACK, width: T = 1) {
-  def toDouble = Presentation(shape, color, width.toDouble)
-  def toInt = Presentation(shape, color, width.toInt)
+  def toDouble = Presentation(shape.toDouble, color, width.toDouble)
+  def toInt = Presentation(shape.toInt, color, width.toInt)
 }
 
 //

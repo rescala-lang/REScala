@@ -57,8 +57,8 @@ class MillGame {
   
   def state = stateVar.get
   
-  val remainCountChanged = Signal{remainCount()}.changed //#EVT //#IF
-  val stateChanged = Signal{ stateVar() }.changed //#EVT //#IF
+  val remainCountChanged = remainCount.changed //#EVT //#IF
+  val stateChanged = stateVar.changed //#EVT //#IF
   
   val possibleNextMoves: Signal[Seq[(SlotIndex, SlotIndex)]] = Signal { //#SIG
     stateVar() match {
@@ -84,8 +84,8 @@ class MillGame {
       }
   }
   
-  val gameEnd = stateChanged && ((_: Gamestate) match {case GameOver(_) => true; case _ => false}) //#EVT
-  val gameWon: Event[Slot] = gameEnd.map {(_: Gamestate) match {case GameOver(w) => w; case _ => null}} //#EVT
+  val gameEnd = stateChanged && ((_: Gamestate) match {case GameOver(_) => true; case _ => false}) //#EVT //#EF
+  val gameWon: Event[Slot] = gameEnd map {(_: Gamestate) match {case GameOver(w) => w; case _ => null}} //#EVT //#EF
   
   private def nextState(player: Slot): Gamestate =
     if (remainCount()(player) > 0) PlaceStone(player)
