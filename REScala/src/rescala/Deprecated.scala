@@ -64,6 +64,7 @@ class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: => T) extends 
   def triggerReevaluation() = reEvaluate
 
   def reEvaluate(): T = {
+    ReactiveEngine.log.nodeEvaluationStarted(this)
     inQueue = false
     val tmp = expr
     if (tmp != currentValue) {
@@ -74,6 +75,7 @@ class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: => T) extends 
       ReactiveEngine.log.nodePropagationStopped(this)
       timestamps += TS.newTs // Testing
     }
+    ReactiveEngine.log.nodeEvaluationEnded(this)
     tmp
   }
 

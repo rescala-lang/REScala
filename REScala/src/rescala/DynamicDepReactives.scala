@@ -24,13 +24,9 @@ class VarSynt[T](initval: T) extends Var[T] {
     // support mutable values by using hashValue rather than ==
     //val hashBefore = old.hashCode
     if (old != newval) {
-      ReactiveEngine.log.nodeEvaluationStarted(this)
-
       value = newval
       TS.nextRound // Testing
       timestamps += TS.newTs // testing
-
-      ReactiveEngine.log.nodeEvaluationEnded(this)
 
       notifyDependents(value)
       ReactiveEngine.startEvaluation
@@ -74,6 +70,7 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
   def triggerReevaluation() = reEvaluate
 
   def reEvaluate(): T = {
+    ReactiveEngine.log.nodeEvaluationStarted(this)
 
     /* Collect dependencies during the evaluation */
     reactivesDependsOnCurrent.map(_.removeDependent(this)) // remove me from the dependencies of the vars I depend on !
@@ -82,9 +79,7 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
 
     // support mutable values by using hashValue rather than ==
     //val hashBefore = currentValue.hashCode
-    ReactiveEngine.log.nodeEvaluationStarted(this)
     val tmp = expr(this) // Evaluation)
-    ReactiveEngine.log.nodeEvaluationEnded(this)
     //val hashAfter = tmp.hashCode
 
     setDependOn(reactivesDependsOnCurrent)
@@ -99,6 +94,7 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
       ReactiveEngine.log.nodePropagationStopped(this)
       timestamps += TS.newTs // Testing
     }
+    ReactiveEngine.log.nodeEvaluationEnded(this)
     tmp
   }
   override def dependsOnchanged(change: Any, dep: DepHolder) = {
