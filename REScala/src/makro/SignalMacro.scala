@@ -51,7 +51,7 @@ object SignalMacro {
       case tree @ Typed(_, _)
           if (tree.tpe match {
             case AnnotatedType(annotations, _) =>
-              annotations exists { _.tpe <:< typeOf[unchecked] }
+              annotations exists { _.tree.tpe <:< typeOf[unchecked] }
             case _ => false
           }) =>
         def uncheckedSubExpressions(tree: Tree): List[Tree] = tree match {
@@ -102,7 +102,7 @@ object SignalMacro {
     // the argument that is used by the SignalSynt class to assemble dynamic
     // dependencies
     // every Signal { ... } macro instance gets expanded into a SignalSynt
-    val signalSyntArgName = newTermName(c.fresh("s$"))
+    val signalSyntArgName = TermName(c.freshName("s$"))
     val signalSyntArgIdent = Ident(signalSyntArgName)
     internal setType (signalSyntArgIdent, weakTypeOf[SignalSynt[A]])
 
@@ -122,7 +122,7 @@ object SignalMacro {
             "signal is evaluated which can lead to unintentional behavior")
 
       private def isReactive(tree: Tree) =
-        if (tree.tpe == null) { treeTypeNullWarning; false }
+        if (tree.tpe == null) { treeTypeNullWarning(); false }
         else tree.tpe <:< typeOf[Signal[_]] || tree.tpe <:< typeOf[Var[_]]
 
       override def transform(tree: Tree) =
@@ -135,9 +135,9 @@ object SignalMacro {
           // to
           //   SignalSynt { s => a(s) + b(s) }
           case tree @ Apply(Select(reactive, apply), List())
-              if isReactive(reactive) && apply.decoded == "apply" &&
+              if isReactive(reactive) && apply.decodedName.toString == "apply" &&
                  !(nestedUnexpandedMacros contains tree) =>
-            val reactiveApply = Select(reactive, newTermName("apply"))
+            val reactiveApply = Select(reactive, TermName("apply"))
             internal setType (reactiveApply, tree.tpe)
             Apply(super.transform(reactiveApply), List(signalSyntArgIdent))
 
@@ -170,7 +170,7 @@ object SignalMacro {
               !reactive.symbol.asTerm.isAccessor &&
               (reactive filter {
                 case tree @ Apply(Select(chainedReactive, apply), List())
-                    if isReactive(chainedReactive) && apply.decoded == "apply" &&
+                    if isReactive(chainedReactive) && apply.decodedName.toString == "apply" &&
                        !(nestedUnexpandedMacros contains tree) =>
 
                   if (!(uncheckedExpressions contains reactive)) {
@@ -212,7 +212,7 @@ object SignalMacro {
 
             // create the signal definition to be cut out of the
             // macro expression and its substitution variable
-            val signalName = newTermName(c.fresh("s$"))
+            val signalName = TermName(c.freshName("s$"))
 
             val signalDef = ValDef(Modifiers(), signalName, TypeTree(), reactive)
             signalValues += signalDef
@@ -246,9 +246,9 @@ object SignalMacro {
             Select(
               Select(
                 Ident(termNames.ROOTPKG),
-                newTermName("rescala")),
-              newTermName("SignalSynt")),
-            newTermName("apply")),
+                TermName("rescala")),
+              TermName("SignalSynt")),
+            TermName("apply")),
           List(TypeTree(weakTypeOf[A]))),
         List(function))
 
