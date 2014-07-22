@@ -4,7 +4,7 @@ name := "rescala"
 
 version := "0.0.0"
 
-scalaVersion := "2.10.3"
+scalaVersion := "2.11.1"
 
 scalaSource in Compile <<= baseDirectory {(base) => new File(base, "REScala/src")}
 
@@ -24,8 +24,7 @@ scalacOptions ++= List(
 
 libraryDependencies ++= Seq(
   "org.mockito" % "mockito-all" % "1.9.5" % "test",
-  "org.scalatest" %% "scalatest" % "1.9.1" % "test",
-  "junit" % "junit" % "4.11" % "test",
+  "org.scalatest" %% "scalatest" % "2.2.0" % "test",
   "com.novocode" % "junit-interface" % "0.10" % "test"
 )
 
