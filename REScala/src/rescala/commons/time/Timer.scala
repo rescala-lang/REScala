@@ -58,7 +58,7 @@ class Timer(val interval: Time) extends Ordered[Timer] {
 
   /** Snapshots a signal for a given time window */
   def timeWindow[A](window: Time)(s : Signal[A]) : Signal[Seq[A]] = {
-    if(interval == 0) throw new RuntimeException("You must use an interval > 0")
+    if(interval.ns <= 0) throw new RuntimeException("You must use an interval > 0")
     val delta = interval.s
     val n = (window / delta).asInstanceOf[Int]
     (tick snapshot s).changed.last(n)
