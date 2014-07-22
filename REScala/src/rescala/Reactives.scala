@@ -199,8 +199,6 @@ object ReactiveEngine {
     }
   }
 
-  def removeFromEvalQueue(dep: Dependent) = evalQueue = evalQueue.filter(_ eq dep)
-
   /* Evaluates all the elements in the queue */
   def startEvaluation() = {
     evalQueue.synchronized {
