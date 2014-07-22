@@ -31,7 +31,7 @@ class StaticVar[T](initval: T) extends Var[T] {
 
   def update(v: T) = set(v)
 
-  def apply = get
+  def apply() = get
 
   def reEvaluate(): T = value
 
@@ -112,5 +112,5 @@ object Handler {
 
 class Handler[T](exp: => T) extends Dependent {
   override def dependsOnchanged(change: Any, dep: DepHolder) = exp
-  def triggerReevaluation = exp
+  def triggerReevaluation() = exp
 }

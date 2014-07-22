@@ -158,7 +158,7 @@ class WrappedEvent[T](wrapper: Signal[Event[T]]) extends EventNode[T] with Depen
     currentEvent = newEvent
   }
   
-  def triggerReevaluation {
+  def triggerReevaluation() {
     timestamps += TS.newTs
     notifyDependents(currentValue)
     inQueue = false
