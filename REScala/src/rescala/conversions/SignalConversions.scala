@@ -10,9 +10,9 @@ import rescala.events._
  */
 object SignalConversions {
   // this is dangerous: do we want expressions to be constant or changing??
-  implicit def toSignal[T](op: =>T): Signal[T] = SignalSynt((s: SignalSynt[T]) => (op))
+  implicit def toSignal[T](op: =>T): Signal[T] = SignalSynt((s: SignalSynt[T]) => op)
 
-  implicit def toVal[T](const: T): Signal[T] = SignalSynt((s: SignalSynt[T]) => (const))
+  implicit def toVal[T](const: T): Signal[T] = SignalSynt((s: SignalSynt[T]) => const)
 
 }
 

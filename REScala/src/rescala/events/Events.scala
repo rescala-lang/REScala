@@ -10,9 +10,9 @@ import rescala._
 
 trait Event[+T] extends DepHolder {
 
-  def +=(react: T => Unit)
+  def +=(react: T => Unit): Unit
 
-  def -=(react: T => Unit)
+  def -=(react: T => Unit): Unit
 
   /**
    * Events disjunction.

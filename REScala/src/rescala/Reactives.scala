@@ -63,15 +63,15 @@ trait Dependent extends Reactive {
     }
   }
   def setDependOn(deps: TraversableOnce[DepHolder]) = {
-    dependOn.clear
+    dependOn.clear()
     dependOn ++= deps
   }
   def removeDependOn(dep: DepHolder) = dependOn -= dep
 
-  protected[rescala] def triggerReevaluation()
+  protected[rescala] def triggerReevaluation(): Unit
 
   /* A node on which this one depends is changed */
-  def dependsOnchanged(change: Any, dep: DepHolder)
+  def dependsOnchanged(change: Any, dep: DepHolder): Unit
 }
 
 trait Changing[+T] {
@@ -134,7 +134,7 @@ trait Signal[+A] extends Changing[A] with FoldableReactive[A] with DepHolder {
 /* A root Reactive value without dependencies which can be set */
 trait Var[T] extends Signal[T] {
   def set(newval: T): Unit
-  def update(v: T)
+  def update(v: T): Unit
 }
 
 object Var {
@@ -209,15 +209,15 @@ object ReactiveEngine {
       val localStamp = TS.getCurrentTs
       // DEBUG: println("Start eval: " + Thread.currentThread() + "  " + localStamp + " (init. queue: " + evalQueue.length + ")")
       var counter = 0
-      while (!evalQueue.isEmpty) {
+      while (evalQueue.nonEmpty) {
         counter += 1
-        val head = evalQueue.dequeue
+        val head = evalQueue.dequeue()
         if (head == null) {
           System.err.println("priority deque yielded null")
           // not sure why this happens, null is never inserted
         } else {
           log.nodeEvaluationStarted(head)
-          head.triggerReevaluation
+          head.triggerReevaluation()
           log.nodeEvaluationEnded(head)
         }
       }
@@ -233,14 +233,14 @@ object TS {
   private var _roundNum = 0
   private var _sequenceNum = 0
 
-  def nextRound() {
+  def nextRound(): Unit = {
     _roundNum += 1
     _sequenceNum = 0
 
     ReactiveEngine.log.logRound(getCurrentTs)
   }
 
-  def newTs = {
+  def newTs: Stamp = {
     val ts = new Stamp(_roundNum, _sequenceNum)
     _sequenceNum += 1
     ReactiveEngine.log.logRound(ts)
@@ -249,7 +249,7 @@ object TS {
 
   def getCurrentTs = new Stamp(_roundNum, _sequenceNum)
 
-  def reset() {
+  def reset(): Unit = {
     _roundNum = 0
     _sequenceNum = 0
   }
