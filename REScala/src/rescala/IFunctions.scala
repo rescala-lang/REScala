@@ -47,7 +47,7 @@ object IFunctions {
   def last[T](e: Event[T], n: Int): Signal[LinearSeq[T]] =
     fold(e, new collection.mutable.Queue[T]) {
       (acc: collection.mutable.Queue[T], v: T) =>
-        if (acc.length >= n) acc.dequeue
+        if (acc.length >= n) acc.dequeue()
         //v +=: acc // (prepend)
         acc += v // (append)
         acc
@@ -138,7 +138,7 @@ class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T, E) => T)
   e.addDependent(this)
   this.level = e.level + 1
 
-  def triggerReevaluation() = reEvaluate
+  def triggerReevaluation() = reEvaluate()
 
   def reEvaluate(): T = {
     inQueue = false
@@ -208,13 +208,13 @@ class SwitchedSignal[+T, +E](e: Event[E], init: Signal[T], factory: IFunctions.F
   e.addDependent(this)
   addInner(currentSignal)
 
-  def triggerReevaluation() = reEvaluate
+  def triggerReevaluation() = reEvaluate()
 
   def reEvaluate(): T = {
     inQueue = false
 
     ReactiveEngine.log.nodeEvaluationStarted(this)
-    val inner = currentSignal.reEvaluate
+    val inner = currentSignal.reEvaluate()
     ReactiveEngine.log.nodeEvaluationEnded(this)
     inner
   }
@@ -230,7 +230,7 @@ class SwitchedSignal[+T, +E](e: Event[E], init: Signal[T], factory: IFunctions.F
         addInner(currentSignal)
       }
       // hack?
-      val value = reEvaluate
+      val value = reEvaluate()
       notifyDependents(value)
     } else {
     }

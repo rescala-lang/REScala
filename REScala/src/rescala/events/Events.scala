@@ -137,10 +137,10 @@ class ImperativeEvent[T] extends EventNode[T] {
 
   /* Trigger the event */
   def apply(v: T): Unit = {
-    TS.nextRound
+    TS.nextRound()
     timestamps += TS.newTs
     notifyDependents(v)
-    ReactiveEngine.startEvaluation
+    ReactiveEngine.startEvaluation()
   }
 
   override def toString = getClass.getName
