@@ -101,7 +101,7 @@ object IFunctions {
   def delay[T](signal: Signal[T], n: Int): Signal[T] = delay(signal.changed, signal.get, n)
 
   /** lifts a function A => B to work on reactives */
-  def lift[A, B](f: A => B): (Signal[A] => Signal[B]) = (a => StaticSignal[B](a) { f(a.get) })
+  def lift[A, B](f: A => B): (Signal[A] => Signal[B]) = a => StaticSignal[B](a) { f(a.get) }
 
   
   /** Generates a signal from an event occurrence */
