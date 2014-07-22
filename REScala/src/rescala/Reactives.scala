@@ -3,8 +3,6 @@ package rescala
 import scala.collection.mutable.Buffer
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.PriorityQueue
-import scala.collection.immutable.Queue
-import scala.reflect.runtime.universe._
 import rescala.events._
 import rescala.log._
 import rescala.log.Logging
@@ -185,7 +183,7 @@ object ReactiveEngine {
   /* If logging is needed, replace this with another instance of Logging */
   var log: Logging = NoLogging
 
-  private var evalQueue = new PriorityQueue[Dependent]
+  private var evalQueue = PriorityQueue[Dependent]()
 
   /* Adds a dependant to the eval queue, duplicates are allowed */
   def addToEvalQueue(dep: Dependent): Unit = {
