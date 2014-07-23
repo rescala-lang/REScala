@@ -16,10 +16,10 @@ class EventTest extends AssertionsForJUnit with MockitoSugar {
 
 
   @Before def initialize() {
-    TS.reset
+    TS.reset()
   }
   @After def cleanup() {
-    TS.reset
+    TS.reset()
   }
 
   @Test def handlersAreExecuted() = {

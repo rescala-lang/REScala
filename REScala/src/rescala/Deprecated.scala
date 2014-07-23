@@ -16,11 +16,11 @@ class StaticVar[T](initval: T) extends Var[T] {
     val old = value
     if (newval != old) {
       value = newval // .asInstanceOf[T] // to make it covariant ?
-      TS.nextRound // Testing
+      TS.nextRound() // Testing
       timestamps += TS.newTs // testing
 
       notifyDependents(value)
-      ReactiveEngine.startEvaluation
+      ReactiveEngine.startEvaluation()
     } else {
       ReactiveEngine.log.nodePropagationStopped(this)
       timestamps += TS.newTs // testing
@@ -31,7 +31,7 @@ class StaticVar[T](initval: T) extends Var[T] {
 
   def update(v: T) = set(v)
 
-  def apply = get
+  def apply() = get
 
   def reEvaluate(): T = value
 
@@ -61,7 +61,7 @@ class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: => T) extends 
   }) // check
   setDependOn(reactivesDependsOn)
 
-  def triggerReevaluation() = reEvaluate
+  def triggerReevaluation() = reEvaluate()
 
   def reEvaluate(): T = {
     ReactiveEngine.log.nodeEvaluationStarted(this)
@@ -114,5 +114,5 @@ object Handler {
 
 class Handler[T](exp: => T) extends Dependent {
   override def dependsOnchanged(change: Any, dep: DepHolder) = exp
-  def triggerReevaluation = exp
+  def triggerReevaluation() = exp
 }

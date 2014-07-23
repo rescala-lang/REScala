@@ -13,10 +13,10 @@ import rescala._
 class TimestampTest extends AssertionsForJUnit with MockitoSugar {
 
   @Before def initialize() {
-    TS.reset
+    TS.reset()
   }
   @After def cleanup() {
-    TS.reset
+    TS.reset()
   }
 
   @Test def timeStampsStartWithZeroRoundNumberAndZeroSequenceNumber() =  {
@@ -33,14 +33,14 @@ class TimestampTest extends AssertionsForJUnit with MockitoSugar {
   @Test def nextRoundRestarstRoundNumber() =  {
     TS.newTs
     TS.newTs
-    TS.nextRound
+    TS.nextRound()
     assert(TS.newTs match { case Stamp(_,0) => true; case _ => false })
   }
 
   @Test def nextRoundIncreasesSequenceNumber() =  {
     TS.newTs
     TS.newTs
-    TS.nextRound
+    TS.nextRound()
     assert(TS.newTs match { case Stamp(1,_) => true; case _ => false })
   }
 }

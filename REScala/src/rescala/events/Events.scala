@@ -10,9 +10,9 @@ import rescala._
 
 trait Event[+T] extends DepHolder {
 
-  def +=(react: T => Unit)
+  def +=(react: T => Unit): Unit
 
-  def -=(react: T => Unit)
+  def -=(react: T => Unit): Unit
 
   /**
    * Events disjunction.
@@ -102,7 +102,7 @@ class EventHandler[T] (fun: T=>Unit) extends Dependent {
       storedVal = change.asInstanceOf[T]  // ??
       ReactiveEngine.addToEvalQueue(this)
     }
-    def triggerReevaluation = fun(storedVal)
+    def triggerReevaluation() = fun(storedVal)
     override def equals(other: Any) = other match {
       case other: EventHandler[T] => fun.equals(other.f)
       case _ => false
@@ -137,10 +137,10 @@ class ImperativeEvent[T] extends EventNode[T] {
 
   /* Trigger the event */
   def apply(v: T): Unit = {
-    TS.nextRound
+    TS.nextRound()
     timestamps += TS.newTs
     notifyDependents(v)
-    ReactiveEngine.startEvaluation
+    ReactiveEngine.startEvaluation()
   }
 
   override def toString = getClass.getName

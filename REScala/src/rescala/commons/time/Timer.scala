@@ -29,14 +29,14 @@ class Timer(val interval: Time) extends Ordered[Timer] {
   /** Returns the integral of the Signal s over time */
   def integral(s: Signal[Time]): Signal[Time] = {
     // simple Riemann integral, could do more
-    return tick.fold(0.ns) {(total: Time, delta: Time) =>
+    tick.fold(0.ns) {(total: Time, delta: Time) =>
       total + delta * s()
     }
   }
 
   /** Integrates a real Signal expression over time */
   def integrate(expr: => Double): Signal[Double] = {
-    return tick.fold(0d) {(total: Double, delta: Time) =>
+    tick.fold(0d) {(total: Double, delta: Time) =>
       total + delta.s * expr
     }
   }
@@ -44,13 +44,13 @@ class Timer(val interval: Time) extends Ordered[Timer] {
   /** Returns a new Signal that counts the local time from now */
   def localTime: Signal[Time] = {
     val now = time()
-    return SignalSynt(time) {s: SignalSynt[Time] => time() - now}
+    SignalSynt(time) {s: SignalSynt[Time] => time() - now}
   }
 
   /** Returns a Signal which is true if the specified delay has passed */
   def passed(delay: Time) : Signal[Boolean] = {
     val now = time()
-    return SignalSynt {s: SignalSynt[Boolean] => time(s) > now + delay }
+    SignalSynt {s: SignalSynt[Boolean] => time(s) > now + delay }
   }
 
   /** Returns a new event which fires exactly once after the specified delay */
@@ -58,7 +58,7 @@ class Timer(val interval: Time) extends Ordered[Timer] {
 
   /** Snapshots a signal for a given time window */
   def timeWindow[A](window: Time)(s : Signal[A]) : Signal[Seq[A]] = {
-    if(interval == 0) throw new RuntimeException("You must use an interval > 0")
+    if(interval.ns <= 0) throw new RuntimeException("You must use an interval > 0")
     val delta = interval.s
     val n = (window / delta).asInstanceOf[Int]
     (tick snapshot s).changed.last(n)
@@ -106,8 +106,9 @@ object Timer {
    * Runs all created Timer objects in this thread (blocking).
    */
   def runAll() {
-    while(!schedule.isEmpty)
-      tickNext
+    while(schedule.nonEmpty) {
+      tickNext()
+    }
   }
 
   def tickNext() {

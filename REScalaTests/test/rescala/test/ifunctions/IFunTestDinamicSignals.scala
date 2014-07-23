@@ -156,14 +156,14 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
   /* list */
   @Test def list_theInitialValueIsSetCorrectly() {
     val e = new ImperativeEvent[Int]()
-    val s = e.list
+    val s = e.list()
 
     assert(s.get == List())
   }
 
   @Test def list_theFunctionisExecutedEveryTimeTheEventFires() {
     val e = new ImperativeEvent[Int]()
-    val s = e.list
+    val s = e.list()
 
     assert(s.get == List())
     e(1)

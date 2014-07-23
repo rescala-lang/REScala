@@ -7,26 +7,26 @@ import rescala.Stamp
  * Interface for logging.
  */
 trait Logging {
-  def nodeCreated(r: Reactive)
-  def nodeAttached(dependent: Reactive, r: Reactive)
-  def nodePulsed(r: Reactive)
-  def nodeScheduled(r: Reactive)
-  def nodeEvaluationStarted(r: Reactive)
-  def nodeEvaluationEnded(r: Reactive)
-  def nodePropagationStopped(r: Reactive)
-  def logRound(ts: Stamp)
-  def logMessage(s: String)
+  def nodeCreated(r: Reactive): Unit
+  def nodeAttached(dependent: Reactive, r: Reactive): Unit
+  def nodePulsed(r: Reactive): Unit
+  def nodeScheduled(r: Reactive): Unit
+  def nodeEvaluationStarted(r: Reactive): Unit
+  def nodeEvaluationEnded(r: Reactive): Unit
+  def nodePropagationStopped(r: Reactive): Unit
+  def logRound(ts: Stamp): Unit
+  def logMessage(s: String): Unit
 }
 
 /** A Logging stub, that performs no logging */
 object NoLogging extends Logging {
-  def nodeCreated(r: Reactive) {}
-  def nodeAttached(dependent: Reactive, r: Reactive) {}
-  def nodePulsed(r: Reactive) {}
-  def nodeScheduled(r: Reactive) {}
-  def nodeEvaluationStarted(r: Reactive) {}
-  def nodeEvaluationEnded(r: Reactive) {}
-  def nodePropagationStopped(r: Reactive) {}
-  def logRound(ts: Stamp) {}
-  def logMessage(s: String) {}
+  def nodeCreated(r: Reactive): Unit = {}
+  def nodeAttached(dependent: Reactive, r: Reactive): Unit = {}
+  def nodePulsed(r: Reactive): Unit = {}
+  def nodeScheduled(r: Reactive): Unit = {}
+  def nodeEvaluationStarted(r: Reactive): Unit = {}
+  def nodeEvaluationEnded(r: Reactive): Unit = {}
+  def nodePropagationStopped(r: Reactive): Unit = {}
+  def logRound(ts: Stamp): Unit = {}
+  def logMessage(s: String): Unit = {}
 }

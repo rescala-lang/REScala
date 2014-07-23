@@ -25,11 +25,11 @@ class VarSynt[T](initval: T) extends Var[T] {
     //val hashBefore = old.hashCode
     if (old != newval) {
       value = newval
-      TS.nextRound // Testing
+      TS.nextRound() // Testing
       timestamps += TS.newTs // testing
 
       notifyDependents(value)
-      ReactiveEngine.startEvaluation
+      ReactiveEngine.startEvaluation()
 
     } else {
       ReactiveEngine.log.nodePropagationStopped(this)
@@ -67,14 +67,14 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
 
   def get = currentValue
 
-  def triggerReevaluation() = reEvaluate
+  def triggerReevaluation() = reEvaluate()
 
   def reEvaluate(): T = {
     ReactiveEngine.log.nodeEvaluationStarted(this)
 
     /* Collect dependencies during the evaluation */
     reactivesDependsOnCurrent.map(_.removeDependent(this)) // remove me from the dependencies of the vars I depend on !
-    reactivesDependsOnCurrent.clear
+    reactivesDependsOnCurrent.clear()
     timestamps += TS.newTs // Testing
 
     // support mutable values by using hashValue rather than ==
@@ -154,7 +154,7 @@ class WrappedEvent[T](wrapper: Signal[Event[T]]) extends EventNode[T] with Depen
     currentEvent = newEvent
   }
   
-  def triggerReevaluation {
+  def triggerReevaluation() {
     timestamps += TS.newTs
     notifyDependents(currentValue)
     inQueue = false

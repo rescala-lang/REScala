@@ -16,10 +16,10 @@ class dropParam_EventTest extends AssertionsForJUnit with MockitoSugar {
 
 
   @Before def initialize() {
-    TS.reset
+    TS.reset()
   }
   @After def cleanup() {
-    TS.reset
+    TS.reset()
   }
 
   @Test def handlerOf_dropParam_IsExecuted() = {
