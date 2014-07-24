@@ -141,12 +141,11 @@ class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T, E) => T)
   def triggerReevaluation() = reEvaluate()
 
   def reEvaluate(): T = {
+    ReactiveEngine.log.nodeEvaluationStarted(this)
     inQueue = false
 
     val hashBefore = if (currentValue == null) 0 else currentValue.hashCode
-    ReactiveEngine.log.nodeEvaluationStarted(this)
     val tmp = f(currentValue, lastEvent)
-    ReactiveEngine.log.nodeEvaluationEnded(this)
     val hashAfter = if (tmp == null) 0 else tmp.hashCode
     // support mutable values by using hashValue rather than ==
     if (hashAfter != hashBefore || currentValue != tmp) {
@@ -157,6 +156,7 @@ class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T, E) => T)
       ReactiveEngine.log.nodePropagationStopped(this)
       timestamps += TS.newTs // Testing
     }
+    ReactiveEngine.log.nodeEvaluationEnded(this)
     tmp
   }
 
@@ -211,9 +211,9 @@ class SwitchedSignal[+T, +E](e: Event[E], init: Signal[T], factory: IFunctions.F
   def triggerReevaluation() = reEvaluate()
 
   def reEvaluate(): T = {
+    ReactiveEngine.log.nodeEvaluationStarted(this)
     inQueue = false
 
-    ReactiveEngine.log.nodeEvaluationStarted(this)
     val inner = currentSignal.reEvaluate()
     ReactiveEngine.log.nodeEvaluationEnded(this)
     inner

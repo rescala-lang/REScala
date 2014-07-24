@@ -214,9 +214,7 @@ object ReactiveEngine {
           System.err.println("priority deque yielded null")
           // not sure why this happens, null is never inserted
         } else {
-          log.nodeEvaluationStarted(head)
           head.triggerReevaluation()
-          log.nodeEvaluationEnded(head)
         }
       }
       // DEBUG: println("End eval: " + Thread.currentThread() + "  " + localStamp + " (" + counter + " rounds)")
