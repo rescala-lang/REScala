@@ -95,7 +95,7 @@ trait Signal[+A] extends Changing[A] with FoldableReactive[A] with DepHolder {
 
   def get: A
 
-  def apply(): A = get
+  final def apply(): A = get
 
   def apply(s: SignalSynt[_]): A = {
     if (level >= s.level) s.level = level + 1
@@ -130,7 +130,7 @@ trait Signal[+A] extends Changing[A] with FoldableReactive[A] with DepHolder {
 /** A root Reactive value without dependencies which can be set */
 trait Var[T] extends Signal[T] {
   def set(newValue: T): Unit
-  def update(newValue: T): Unit = set(newValue)
+  final def update(newValue: T): Unit = set(newValue)
 }
 
 object Var {

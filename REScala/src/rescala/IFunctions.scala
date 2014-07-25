@@ -188,8 +188,6 @@ class SwitchedSignal[+T, +E](e: Event[E], init: Signal[T], factory: IFunctions.F
 
   def get = currentSignal.get
 
-  def apply(): T = currentSignal.apply()
-
   private def removeInner(s: Signal[_]) {
     removeDependOn(s)
     s.removeDependent(this)
