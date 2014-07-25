@@ -10,13 +10,11 @@ import rescala.events._
  */
 
 /** An implementation of Var with static dependencies */
-class StaticVar[T](initval: T) extends Var[T] {
-  private[this] var value: T = initval
+class StaticVar[T](private[this] var value: T) extends Var[T] {
 
-  def set(newval: T): Unit = {
-    val old = value
-    if (newval != old) {
-      value = newval // .asInstanceOf[T] // to make it covariant ?
+  def set(newValue: T): Unit = {
+    if (newValue != value) {
+      value = newValue // .asInstanceOf[T] // to make it covariant ?
       TS.nextRound() // Testing
       timestamps += TS.newTs // testing
 
@@ -32,14 +30,15 @@ class StaticVar[T](initval: T) extends Var[T] {
 
   def reEvaluate(): T = value
 }
+
 /**
  * Create a StaticVar
  */
 object StaticVar {
-  def apply[T](initval: T) = new StaticVar(initval)
+  def apply[T](initialValue: T) = new StaticVar(initialValue)
 }
 
-/* A dependent reactive value which has static dependencies */
+/** A dependent reactive value which has static dependencies */
 class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: => T) extends DependentSignal[T] {
 
   var inQueue = false
@@ -54,14 +53,14 @@ class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: => T) extends 
   }) // check
   setDependOn(reactivesDependsOn)
 
-  def triggerReevaluation() = reEvaluate()
+  protected[rescala] def triggerReevaluation() = reEvaluate()
 
   def reEvaluate(): T = {
     ReactiveEngine.log.nodeEvaluationStarted(this)
     inQueue = false
-    val tmp = expr
-    if (tmp != currentValue) {
-      currentValue = tmp
+    val newValue = expr
+    if (newValue != currentValue) {
+      currentValue = newValue
       timestamps += TS.newTs // Testing
       notifyDependents(currentValue)
     } else {
@@ -69,7 +68,7 @@ class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: => T) extends 
       timestamps += TS.newTs // Testing
     }
     ReactiveEngine.log.nodeEvaluationEnded(this)
-    tmp
+    newValue
   }
 
   override def dependsOnchanged(change: Any, dep: DepHolder) = {
