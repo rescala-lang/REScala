@@ -39,15 +39,14 @@ object VarSynt {
   def apply[T](initialValue: T) = new VarSynt(initialValue)
 }
 
-/* A dependant reactive value with dynamic dependencies (depending signals can change during evaluation) */
+/** A dependant reactive value with dynamic dependencies (depending signals can change during evaluation) */
 class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: SignalSynt[T] => T)
   extends DependentSignal[T] {
 
-  def this(expr: SignalSynt[T] => T) = this(List())(expr)
-
-  reactivesDependsOnUpperBound.map(r => { // For glitch freedom
-    if (r.level >= level) level = r.level + 1
-  })
+  // For glitch freedom
+  level =
+    if (reactivesDependsOnUpperBound.isEmpty) 0
+    else reactivesDependsOnUpperBound.map{_.level}.max + 1
 
   /* Initial evaluation */
   val reactivesDependsOnCurrent = ListBuffer[DepHolder]()
@@ -65,17 +64,14 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
     reactivesDependsOnCurrent.clear()
     timestamps += TS.newTs // Testing
 
-    // support mutable values by using hashValue rather than ==
-    //val hashBefore = currentValue.hashCode
-    val tmp = expr(this) // Evaluation)
-    //val hashAfter = tmp.hashCode
+    val newValue = expr(this) // Evaluation
 
     setDependOn(reactivesDependsOnCurrent)
     reactivesDependsOnCurrent.map(_.addDependent(this))
 
     /* Notify dependents only of the value changed */
-    if (currentValue != tmp) {
-      currentValue = tmp
+    if (currentValue != newValue) {
+      currentValue = newValue
       timestamps += TS.newTs // Testing
       notifyDependents(currentValue)
     } else {
@@ -83,7 +79,7 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
       timestamps += TS.newTs // Testing
     }
     ReactiveEngine.log.nodeEvaluationEnded(this)
-    tmp
+    newValue
   }
   override def dependsOnchanged(change: Any, dep: DepHolder) = {
     ReactiveEngine.addToEvalQueue(this)
