@@ -64,19 +64,30 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
     reactivesDependsOnCurrent.clear()
     timestamps += TS.newTs // Testing
 
+    val oldLevel = level
+
     val newValue = expr(this) // Evaluation
 
     setDependOn(reactivesDependsOnCurrent)
     reactivesDependsOnCurrent.map(_.addDependent(this))
 
-    /* Notify dependents only of the value changed */
-    if (currentValue != newValue) {
-      currentValue = newValue
-      timestamps += TS.newTs // Testing
-      notifyDependents(currentValue)
-    } else {
-      ReactiveEngine.log.nodePropagationStopped(this)
-      timestamps += TS.newTs // Testing
+    /* so if the level increses by one, the dependencies might or might not have been evaluated this turn.
+     * if they have, we could just fire the observers, but if they have not we are not allowed to do so
+     */
+    if (level == oldLevel + 1) {
+      ReactiveEngine.addToEvalQueue(this)
+    }
+    else if (level <= oldLevel) {
+      /* Notify dependents only of the value changed */
+      if (currentValue != newValue) {
+        currentValue = newValue
+        timestamps += TS.newTs // Testing
+        notifyDependents(currentValue)
+      }
+      else {
+        ReactiveEngine.log.nodePropagationStopped(this)
+        timestamps += TS.newTs // Testing
+      }
     }
     ReactiveEngine.log.nodeEvaluationEnded(this)
     newValue
