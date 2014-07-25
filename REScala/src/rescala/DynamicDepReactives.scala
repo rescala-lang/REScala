@@ -40,8 +40,6 @@ class VarSynt[T](initval: T) extends Var[T] {
 
   def update(v: T) = set(v)
 
-  def apply() = get
-
   def reEvaluate(): T = value
 
   def map[B](f: T => B): Var[B] = VarSynt(f(get))
@@ -100,8 +98,6 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
   override def dependsOnchanged(change: Any, dep: DepHolder) = {
     ReactiveEngine.addToEvalQueue(this)
   }
-
-  def apply() = get
 
   def map[B](f: T => B): Signal[B] =
     SignalSynt(List(this)) { s: SignalSynt[B] => f(this(s)) }

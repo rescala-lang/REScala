@@ -3,12 +3,13 @@ package rescala
 import scala.collection.mutable.ListBuffer
 import rescala.events._
 
-/**
+/*
  * This file includes alternative implementations of Signal and Var which do not update
- *  their dependencies during evaluation.
+ * their dependencies during evaluation.
+ * despite its name, it is very much required for the rest of the implementation.
  */
 
-/* An implementation of Var with static dependencies */
+/** An implementation of Var with static dependencies */
 class StaticVar[T](initval: T) extends Var[T] {
   private[this] var value: T = initval
 
@@ -31,8 +32,6 @@ class StaticVar[T](initval: T) extends Var[T] {
 
   def update(v: T) = set(v)
 
-  def apply() = get
-
   def reEvaluate(): T = value
 
   def map[B](f: T => B): Var[B] = StaticVar(f(get))
@@ -52,8 +51,6 @@ class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: => T) extends 
   private[this] var currentValue = expr
 
   def get = currentValue
-
-  def apply(): T = currentValue
 
   reactivesDependsOn.foreach(r => {
     if (r.level >= level) level = r.level + 1 // For glitch freedom

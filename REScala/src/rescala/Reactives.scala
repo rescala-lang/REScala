@@ -50,9 +50,10 @@ trait DepHolder extends Reactive {
   }
 }
 
-/* A node that depends on other nodes */
+/** A node that depends on other nodes */
 trait Dependent extends Reactive {
-  val dependOn: Buffer[DepHolder] = ListBuffer()
+  private var dependOn: Set[DepHolder] = Set()
+
   // TODO: add level checking to have glitch freedom ?
   def addDependOn(dep: DepHolder) = {
     if (!dependOn.contains(dep)) {
@@ -60,15 +61,12 @@ trait Dependent extends Reactive {
       ReactiveEngine.log.nodeAttached(this, dep)
     }
   }
-  def setDependOn(deps: TraversableOnce[DepHolder]) = {
-    dependOn.clear()
-    dependOn ++= deps
-  }
+  def setDependOn(deps: TraversableOnce[DepHolder]) = dependOn = deps.toSet
   def removeDependOn(dep: DepHolder) = dependOn -= dep
 
   protected[rescala] def triggerReevaluation(): Unit
 
-  /* A node on which this one depends is changed */
+  /** callback when a dependency has changed */
   def dependsOnchanged(change: Any, dep: DepHolder): Unit
 }
 
@@ -97,7 +95,7 @@ trait Signal[+A] extends Changing[A] with FoldableReactive[A] with DepHolder {
 
   def get: A
 
-  def apply(): A
+  def apply(): A = get
 
   def apply(s: SignalSynt[_]): A = {
     if (level >= s.level) s.level = level + 1
@@ -129,7 +127,7 @@ trait Signal[+A] extends Changing[A] with FoldableReactive[A] with DepHolder {
 
 }
 
-/* A root Reactive value without dependencies which can be set */
+/** A root Reactive value without dependencies which can be set */
 trait Var[T] extends Signal[T] {
   def set(newval: T): Unit
   def update(v: T): Unit
@@ -183,7 +181,7 @@ object ReactiveEngine {
   /* If logging is needed, replace this with another instance of Logging */
   var log: Logging = NoLogging
 
-  private var evalQueue = PriorityQueue[Dependent]()
+  private val evalQueue = PriorityQueue[Dependent]()
 
   /* Adds a dependant to the eval queue, duplicates are allowed */
   def addToEvalQueue(dep: Dependent): Unit = {

@@ -131,8 +131,6 @@ class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T, E) => T)
 
   def get = currentValue
 
-  def apply(): T = currentValue
-
   // The only dependant is e
   addDependOn(e)
   e.addDependent(this)
