@@ -52,7 +52,7 @@ trait DepHolder extends Reactive {
 
 /** A node that depends on other nodes */
 trait Dependent extends Reactive {
-  private var dependOn: Set[DepHolder] = Set()
+  private [rescala] var dependOn: Set[DepHolder] = Set()
 
   // TODO: add level checking to have glitch freedom ?
   def addDependOn(dep: DepHolder) = {
@@ -103,7 +103,7 @@ trait Signal[+A] extends Changing[A] with FoldableReactive[A] with DepHolder {
     get
   }
 
-  def map[B](f: A => B): Signal[B]
+  def map[B](f: A => B): Signal[B] = SignalSynt(this) { s: SignalSynt[B] => f(apply(s)) }
 
   protected[rescala] def reEvaluate(): A
 

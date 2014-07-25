@@ -31,8 +31,6 @@ class StaticVar[T](initval: T) extends Var[T] {
   def get = value
 
   def reEvaluate(): T = value
-
-  def map[B](f: T => B): Var[B] = StaticVar(f(get))
 }
 /**
  * Create a StaticVar
@@ -80,8 +78,6 @@ class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: => T) extends 
       ReactiveEngine.addToEvalQueue(this)
     }
   }
-
-  def map[B](f: T => B): Signal[B] = StaticSignal(List(this))(f(this()))
 }
 
 /**

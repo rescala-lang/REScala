@@ -39,8 +39,6 @@ class VarSynt[T](initval: T) extends Var[T] {
   }
 
   def reEvaluate(): T = value
-
-  def map[B](f: T => B): Var[B] = VarSynt(f(get))
 }
 
 object VarSynt {
@@ -97,8 +95,6 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
     ReactiveEngine.addToEvalQueue(this)
   }
 
-  def map[B](f: T => B): Signal[B] =
-    SignalSynt(List(this)) { s: SignalSynt[B] => f(this(s)) }
 }
 
 /**
