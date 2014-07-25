@@ -13,18 +13,13 @@ import rescala.events.EventNode
 //}
 
 /* A node that has nodes that depend on it */
-class VarSynt[T](initval: T) extends Var[T] {
-  private[this] var value: T = initval
+class VarSynt[T](private[this] var value: T) extends Var[T] {
 
   def get = value
 
-  def set(newval: T): Unit = {
-
-    val old = value
-    // support mutable values by using hashValue rather than ==
-    //val hashBefore = old.hashCode
-    if (old != newval) {
-      value = newval
+  def set(newValue: T): Unit = {
+    if (value != newValue) {
+      value = newValue
       TS.nextRound() // Testing
       timestamps += TS.newTs // testing
 
@@ -33,7 +28,6 @@ class VarSynt[T](initval: T) extends Var[T] {
 
     } else {
       ReactiveEngine.log.nodePropagationStopped(this)
-      //DEBUG: System.err.println("DEBUG OUTPUT: no update: " + newval + " == " + value)
       timestamps += TS.newTs // testing
     }
   }
@@ -42,7 +36,7 @@ class VarSynt[T](initval: T) extends Var[T] {
 }
 
 object VarSynt {
-  def apply[T](initval: T) = new VarSynt(initval)
+  def apply[T](initialValue: T) = new VarSynt(initialValue)
 }
 
 /* A dependant reactive value with dynamic dependencies (depending signals can change during evaluation) */

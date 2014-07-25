@@ -1,41 +1,10 @@
 package rescala
 
-import scala.collection.mutable.ListBuffer
-import rescala.events._
-
-/*
- * This file includes alternative implementations of Signal and Var which do not update
- * their dependencies during evaluation.
- * despite its name, it is very much required for the rest of the implementation.
- */
-
-/** An implementation of Var with static dependencies */
-class StaticVar[T](private[this] var value: T) extends Var[T] {
-
-  def set(newValue: T): Unit = {
-    if (newValue != value) {
-      value = newValue // .asInstanceOf[T] // to make it covariant ?
-      TS.nextRound() // Testing
-      timestamps += TS.newTs // testing
-
-      notifyDependents(value)
-      ReactiveEngine.startEvaluation()
-    } else {
-      ReactiveEngine.log.nodePropagationStopped(this)
-      timestamps += TS.newTs // testing
-    }
-  }
-
-  def get = value
-
-  def reEvaluate(): T = value
-}
-
 /**
  * Create a StaticVar
  */
 object StaticVar {
-  def apply[T](initialValue: T) = new StaticVar(initialValue)
+  def apply[T](initialValue: T) = new VarSynt(initialValue)
 }
 
 /** A dependent reactive value which has static dependencies */
