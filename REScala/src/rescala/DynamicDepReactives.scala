@@ -38,8 +38,6 @@ class VarSynt[T](initval: T) extends Var[T] {
     }
   }
 
-  def update(v: T) = set(v)
-
   def reEvaluate(): T = value
 
   def map[B](f: T => B): Var[B] = VarSynt(f(get))

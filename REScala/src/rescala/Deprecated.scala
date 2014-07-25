@@ -30,8 +30,6 @@ class StaticVar[T](initval: T) extends Var[T] {
 
   def get = value
 
-  def update(v: T) = set(v)
-
   def reEvaluate(): T = value
 
   def map[B](f: T => B): Var[B] = StaticVar(f(get))
