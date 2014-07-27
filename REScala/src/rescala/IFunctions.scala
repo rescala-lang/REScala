@@ -169,6 +169,8 @@ class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T, E) => T)
       ReactiveEngine.addToEvalQueue(this)
     }
   }
+
+  override def onDynamicDependencyUse[T](dependency: Signal[T]): Unit = ???
 }
 
 class SwitchedSignal[+T, +E](e: Event[E], init: Signal[T], factory: IFunctions.Factory[E, T])
@@ -227,4 +229,6 @@ class SwitchedSignal[+T, +E](e: Event[E], init: Signal[T], factory: IFunctions.F
       ReactiveEngine.addToEvalQueue(this)
     }
   }
+
+  override def onDynamicDependencyUse[T](dependency: Signal[T]): Unit = ???
 }

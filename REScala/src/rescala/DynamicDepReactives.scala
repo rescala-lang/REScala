@@ -39,53 +39,62 @@ object VarSynt {
   def apply[T](initialValue: T) = new VarSynt(initialValue)
 }
 
-/** A dependant reactive value with dynamic dependencies (depending signals can change during evaluation) */
-class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: SignalSynt[T] => T)
-  extends DependentSignal[T] {
+trait DependentSignalImplementation[+T] extends DependentSignal[T] {
 
-  // For glitch freedom
-  level =
-    if (reactivesDependsOnUpperBound.isEmpty) 0
-    else reactivesDependsOnUpperBound.map{_.level}.max + 1
+  def initialValue(): T
+  def calculateNewValue(): T
 
-  /* Initial evaluation */
-  val reactivesDependsOnCurrent = ListBuffer[DepHolder]()
-  private[this] var currentValue = reEvaluate()
+  private var detectedDependencies = Set[DepHolder]()
+  
+  private[this] var currentValue = initialValue()
 
   def get = currentValue
 
+  override def onDynamicDependencyUse[A](dependency: Signal[A]): Unit = {
+    ensureLevel(dependency.level)
+    detectedDependencies += dependency
+  }
+
   def triggerReevaluation() = reEvaluate()
+  
+  def calculateAndUpdate(): T = {
+    val newValue = calculateNewValue()
+    setDependOn(detectedDependencies)
+    detectedDependencies = Set()
+    newValue
+  }
 
   def reEvaluate(): T = {
     ReactiveEngine.log.nodeEvaluationStarted(this)
 
-    /* Collect dependencies during the evaluation */
-    reactivesDependsOnCurrent.clear()
     timestamps += TS.newTs // Testing
 
     val oldLevel = level
 
-    val newValue = expr(this) // Evaluation
+     // Evaluation
+    val newValue = calculateAndUpdate()
 
-    setDependOn(reactivesDependsOnCurrent)
-
-    /* so if the level increses by one, the dependencies might or might not have been evaluated this turn.
+    /* if the level increses by one, the dependencies might or might not have been evaluated this turn.
      * if they have, we could just fire the observers, but if they have not we are not allowed to do so
+     *
+     * if the level increases by more than one, we depend on something that still has to be in the queue
      */
     if (level == oldLevel + 1) {
       ReactiveEngine.addToEvalQueue(this)
     }
-    else if (level <= oldLevel) {
-      /* Notify dependents only of the value changed */
-      if (currentValue != newValue) {
-        currentValue = newValue
-        timestamps += TS.newTs // Testing
-        notifyDependents(currentValue)
-      }
-      else {
-        ReactiveEngine.log.nodePropagationStopped(this)
-        timestamps += TS.newTs // Testing
-      }
+    else {
+      if (level <= oldLevel) {
+        /* Notify dependents only of the value changed */
+        if (currentValue != newValue) {
+          currentValue = newValue
+          timestamps += TS.newTs // Testing
+          notifyDependents(currentValue)
+        }
+        else {
+          ReactiveEngine.log.nodePropagationStopped(this)
+          timestamps += TS.newTs // Testing
+        }
+      } : Unit
     }
     ReactiveEngine.log.nodeEvaluationEnded(this)
     newValue
@@ -94,6 +103,18 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
     ReactiveEngine.addToEvalQueue(this)
   }
 
+}
+
+/** A dependant reactive value with dynamic dependencies (depending signals can change during evaluation) */
+class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: SignalSynt[T] => T)
+  extends DependentSignalImplementation[T] {
+
+  // For glitch freedom
+  if (reactivesDependsOnUpperBound.nonEmpty) ensureLevel(reactivesDependsOnUpperBound.map { _.level }.max)
+
+  override def initialValue(): T = calculateAndUpdate()
+
+  override def calculateNewValue(): T = expr(this)
 }
 
 /**

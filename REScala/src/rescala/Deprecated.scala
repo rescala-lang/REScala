@@ -44,6 +44,8 @@ class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: => T) extends 
       ReactiveEngine.addToEvalQueue(this)
     }
   }
+
+  override def onDynamicDependencyUse[T](dependency: Signal[T]): Unit = {}
 }
 
 /**

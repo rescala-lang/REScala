@@ -16,6 +16,11 @@ trait Reactive extends Ordered[Reactive] {
   var id = UUID.randomUUID()
 
   var level: Int = 0
+
+  def ensureLevel(min: Int) = {
+    if (level <= min) level = min + 1
+  }
+
   override def compare(other: Reactive): Int =
     other.level - this.level
 
@@ -58,7 +63,7 @@ trait Dependent extends Reactive {
 
   def addDependOn(dep: DepHolder) = {
     if (!dependOn.contains(dep)) {
-      if (dep.level >= level) level = dep.level + 1
+      ensureLevel(dep.level)
       dependOn += dep
       dep.addDependent(this)
       ReactiveEngine.log.nodeAttached(this, dep)
@@ -111,10 +116,11 @@ trait Signal[+A] extends Changing[A] with FoldableReactive[A] with DepHolder {
   def get: A
 
   final def apply(): A = get
+  
+  def onDynamicDependencyUse[T](dependency: Signal[T]): Unit
 
-  def apply(s: SignalSynt[_]): A = {
-    if (level >= s.level) s.level = level + 1
-    s.reactivesDependsOnCurrent += this
+  def apply[T](signal: SignalSynt[T]): A = {
+    signal.onDynamicDependencyUse(this)
     get
   }
 
@@ -146,6 +152,8 @@ trait Signal[+A] extends Changing[A] with FoldableReactive[A] with DepHolder {
 trait Var[T] extends Signal[T] {
   def set(newValue: T): Unit
   final def update(newValue: T): Unit = set(newValue)
+  final override def onDynamicDependencyUse[U](dependency: Signal[U]): Unit =
+    throw new IllegalStateException("Vars should not have dependencies")
 }
 
 object Var {
