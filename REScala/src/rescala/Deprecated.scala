@@ -18,10 +18,6 @@ class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: => T) extends 
 
   def get = currentValue
 
-  reactivesDependsOn.foreach(r => {
-    if (r.level >= level) level = r.level + 1 // For glitch freedom
-    r.addDependent(this) // To be notified in the future
-  }) // check
   setDependOn(reactivesDependsOn)
 
   protected[rescala] def triggerReevaluation() = reEvaluate()

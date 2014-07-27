@@ -60,7 +60,6 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
     ReactiveEngine.log.nodeEvaluationStarted(this)
 
     /* Collect dependencies during the evaluation */
-    reactivesDependsOnCurrent.map(_.removeDependent(this)) // remove me from the dependencies of the vars I depend on !
     reactivesDependsOnCurrent.clear()
     timestamps += TS.newTs // Testing
 
@@ -69,7 +68,6 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
     val newValue = expr(this) // Evaluation
 
     setDependOn(reactivesDependsOnCurrent)
-    reactivesDependsOnCurrent.map(_.addDependent(this))
 
     /* so if the level increses by one, the dependencies might or might not have been evaluated this turn.
      * if they have, we could just fire the observers, but if they have not we are not allowed to do so
@@ -122,18 +120,14 @@ class WrappedEvent[T](wrapper: Signal[Event[T]]) extends EventNode[T] with Depen
   var currentValue: T = _
   
   // statically depend on wrapper
-  wrapper.addDependent(this)
   addDependOn(wrapper)
   // dynamically depend on inner event
-  currentEvent.addDependent(this)
   addDependOn(currentEvent)
   
   protected def updateProxyEvent(newEvent: Event[T]){
     // untie from from current event stream
-    currentEvent.removeDependent(this)
     removeDependOn(currentEvent)
     // tie to new event stream
-    newEvent.addDependent(this)
     addDependOn(newEvent)
     // remember current event
     currentEvent = newEvent

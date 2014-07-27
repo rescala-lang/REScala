@@ -153,8 +153,6 @@ class ImperativeEvent[T] extends EventNode[T] {
  */
 class ChangedEventNode[T](d: DepHolder) extends EventNode[T] with DepHolder with Dependent {
 
-  level = d.level + 1 // Static, for glitch freedom
-  d.addDependent(this) // To be notified in the future
   addDependOn(d)
 
   var storedVal: (Any,Any) = (null, null)
@@ -178,9 +176,6 @@ class ChangedEventNode[T](d: DepHolder) extends EventNode[T] with DepHolder with
  * An event automatically triggered by the framework.
  */
 class InnerEventNode[T](d: DepHolder) extends EventNode[T] with Dependent {
-
-  level = d.level + 1 // For glitch freedom
-  d.addDependent(this) // To be notified in the future
   addDependOn(d)
 
   var storedVal: Any = _
@@ -213,10 +208,7 @@ class EventNodeOr[T](ev1: Event[_ <: T], ev2: Event[_ <: T])
    */
   var lastRoundAdded = 0
 
-  level = (ev1.level max ev2.level) + 1 // For glitch freedom
-  ev1.addDependent(this) // To be notified in the future
-  ev2.addDependent(this)
-  setDependOn(List(ev1,ev2))
+  setDependOn(Set(ev1,ev2))
 
   var storedVal: Any = _
 
@@ -247,10 +239,7 @@ class EventNodeAnd[T1, T2, T](ev1: Event[T1], ev2: Event[T2], merge: (T1, T2) =>
   // The round id of the last received event
   var lastRound = -1
 
-  level = (ev1.level max ev2.level) + 1 // For glitch freedom
-  ev1.addDependent(this) // To be notified in the future
-  ev2.addDependent(this)
-  setDependOn(List(ev1,ev2))
+  setDependOn(Set(ev1,ev2))
 
   var storedValEv1: T1 = _
   var storedValEv2: T2 = _
@@ -284,9 +273,6 @@ class EventNodeAnd[T1, T2, T](ev1: Event[T1], ev2: Event[T2], merge: (T1, T2) =>
  * Implements filtering event by a predicate
  */
 class EventNodeFilter[T](ev: Event[T], f: T => Boolean) extends EventNode[T] with Dependent {
-
-  level = ev.level + 1   // For glitch freedom
-  ev.addDependent(this) // To be notified in the future
   addDependOn(ev)
 
   var storedVal: T = _
@@ -311,8 +297,6 @@ class EventNodeFilter[T](ev: Event[T], f: T => Boolean) extends EventNode[T] wit
 class EventNodeMap[T, U](ev: Event[T], f: T => U)
   extends EventNode[U] with Dependent {
 
-  level = ev.level + 1   // For glitch freedom
-  ev.addDependent(this) // To be notified in the future
   addDependOn(ev)
 
   var storedVal: T = _
@@ -341,10 +325,7 @@ class EventNodeExcept[T](accepted: Event[T], except: Event[T])
   var lastTSAccepted = Stamp(-1,-1) // No round yet
   var lastTSExcept= Stamp(-1,-1)
 
-  level = (accepted.level max except.level) + 1 // For glitch freedom
-  accepted.addDependent(this) // To be notified in the future
-  except.addDependent(this)
-  setDependOn(List(accepted,except))
+  setDependOn(Set(accepted,except))
 
   var storedVal: Any = _
 

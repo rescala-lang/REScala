@@ -31,16 +31,15 @@ object Reactive {
 
 /** A node that has nodes that depend on it */
 trait DepHolder extends Reactive {
-  val dependents: Buffer[Dependent] = ListBuffer()
+  private var dependents: Set[Dependent] = Set()
+
+  /** used for testing*/
+  def dependentCount() = dependents.size
+
   def addDependent(dep: Dependent) = {
     if (!dependents.contains(dep)) {
       dependents += dep
       ReactiveEngine.log.nodeAttached(dep, this)
-    }
-  }
-  def addAllDependent(deps: TraversableOnce[Dependent]) = {
-    for (dep <- deps) {
-      addDependent(dep)
     }
   }
   def removeDependent(dep: Dependent) = dependents -= dep
@@ -52,17 +51,31 @@ trait DepHolder extends Reactive {
 
 /** A node that depends on other nodes */
 trait Dependent extends Reactive {
-  private [rescala] var dependOn: Set[DepHolder] = Set()
+  private var dependOn: Set[DepHolder] = Set()
 
-  // TODO: add level checking to have glitch freedom ?
+  /** for testing */
+  def dependOnCount() = dependOn.size
+
   def addDependOn(dep: DepHolder) = {
     if (!dependOn.contains(dep)) {
+      if (dep.level >= level) level = dep.level + 1
       dependOn += dep
+      dep.addDependent(this)
       ReactiveEngine.log.nodeAttached(this, dep)
     }
   }
-  def setDependOn(deps: TraversableOnce[DepHolder]) = dependOn = deps.toSet
-  def removeDependOn(dep: DepHolder) = dependOn -= dep
+  def setDependOn(deps: TraversableOnce[DepHolder]) = {
+    val newDependencies = deps.toSet
+    val removed = dependOn.diff(newDependencies)
+    val added = newDependencies.diff(dependOn)
+    removed.foreach(removeDependOn)
+    added.foreach(addDependOn)
+    dependOn = deps.toSet
+  }
+  def removeDependOn(dep: DepHolder) = {
+    dep.removeDependent(this)
+    dependOn -= dep
+  }
 
   /** called when it is this events turn to be evaluated
     * (head of the evaluation queue) */
