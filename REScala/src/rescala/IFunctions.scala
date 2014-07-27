@@ -100,11 +100,9 @@ object IFunctions {
   /** lifts a function A => B to work on reactives */
   def lift[A, B](f: A => B): (Signal[A] => Signal[B]) = a => a.map(f)
 
-  
+
   /** Generates a signal from an event occurrence */
-  trait Factory[E, A] {
-    def apply(eventValue: E): (Signal[A], Factory[E, A])
-  }
+  trait Factory[-E, +A] extends ( E => (Signal[A], Factory[E, A]) )
 
   /** Generates a signal from an initial signal and a factory for subsequent ones */
   def switch[T, A](e: Event[T])(init: Signal[A])(factory: Factory[T, A]): Signal[A] =
@@ -142,60 +140,17 @@ class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T, E) => T)
 
 }
 
-class SwitchedSignal[+T, +E](e: Event[E], init: Signal[T], factory: IFunctions.Factory[E, T])
-  extends DependentSignal[T] {
+class SwitchedSignal[+T, -E](trigger: Event[E], initialSignal: Signal[T], initialFactory: IFunctions.Factory[E, T])
+  extends DependentSignalImplementation[T] {
 
-  // The "inner" signal
-  private[this] var currentSignal: Signal[T] = init
-  // the current factory being called on the next occurence of e
-  private[this] var currentFactory: IFunctions.Factory[E, T] = factory
+  val fold = trigger.fold((initialSignal, initialFactory)) { case ((_, factory), pulse) =>  factory(pulse) }
 
-  private[this] var inQueue = false
+  setDependOn(Set(fold, initialSignal))
 
-  def get = currentSignal.get
+  override def initialValue(): T = initialSignal.get
 
-  private def removeInner(s: Signal[_]) {
-    removeDependOn(s)
-  }
-
-  private def addInner(s: Signal[_]) {
-    addDependOn(s)
-  }
-
-  // Switched signal depends on event and the current signal
-  addDependOn(e)
-  addInner(currentSignal)
-
-  def triggerReevaluation() = reEvaluate()
-
-  def reEvaluate(): T = {
-    ReactiveEngine.log.nodeEvaluationStarted(this)
-    inQueue = false
-
-    val inner = currentSignal.reEvaluate()
-    ReactiveEngine.log.nodeEvaluationEnded(this)
-    inner
-  }
-
-  override def dependsOnchanged(change: Any, dep: DepHolder) = {
-    if (dep eq e) {
-      val event = change.asInstanceOf[E]
-      val (newSignal, newFactory) = currentFactory.apply(event)
-      if (newSignal ne currentSignal) {
-        removeInner(currentSignal)
-        currentSignal = newSignal
-        currentFactory = newFactory
-        addInner(currentSignal)
-      }
-      // hack?
-      val value = reEvaluate()
-      notifyDependents(value)
-    } else {
-    }
-
-    if (!inQueue) {
-      inQueue = true
-      ReactiveEngine.addToEvalQueue(this)
-    }
+  override def calculateNewValue(): T = {
+    setDependOn(Set(fold, fold.get._1))
+    fold.get._1.get
   }
 }
