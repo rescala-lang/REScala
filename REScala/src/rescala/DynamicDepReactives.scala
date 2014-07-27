@@ -44,25 +44,11 @@ trait DependentSignalImplementation[+T] extends DependentSignal[T] {
   def initialValue(): T
   def calculateNewValue(): T
 
-  private var detectedDependencies = Set[DepHolder]()
-  
   private[this] var currentValue = initialValue()
 
   def get = currentValue
 
-  override def onDynamicDependencyUse[A](dependency: Signal[A]): Unit = {
-    ensureLevel(dependency.level)
-    detectedDependencies += dependency
-  }
-
   def triggerReevaluation() = reEvaluate()
-  
-  def calculateAndUpdate(): T = {
-    val newValue = calculateNewValue()
-    setDependOn(detectedDependencies)
-    detectedDependencies = Set()
-    newValue
-  }
 
   def reEvaluate(): T = {
     ReactiveEngine.log.nodeEvaluationStarted(this)
@@ -72,7 +58,7 @@ trait DependentSignalImplementation[+T] extends DependentSignal[T] {
     val oldLevel = level
 
      // Evaluation
-    val newValue = calculateAndUpdate()
+    val newValue = calculateNewValue()
 
     /* if the level increses by one, the dependencies might or might not have been evaluated this turn.
      * if they have, we could just fire the observers, but if they have not we are not allowed to do so
@@ -107,14 +93,25 @@ trait DependentSignalImplementation[+T] extends DependentSignal[T] {
 
 /** A dependant reactive value with dynamic dependencies (depending signals can change during evaluation) */
 class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: SignalSynt[T] => T)
-  extends DependentSignalImplementation[T] {
+  extends { private var detectedDependencies = Set[DepHolder]() } with DependentSignalImplementation[T] {
 
   // For glitch freedom
   if (reactivesDependsOnUpperBound.nonEmpty) ensureLevel(reactivesDependsOnUpperBound.map { _.level }.max)
 
-  override def initialValue(): T = calculateAndUpdate()
+  override def onDynamicDependencyUse[A](dependency: Signal[A]): Unit = {
+    super.onDynamicDependencyUse(dependency)
+    detectedDependencies += dependency
+  }
 
-  override def calculateNewValue(): T = expr(this)
+  override def initialValue(): T = calculateNewValue()
+
+  override def calculateNewValue(): T = {
+    val newValue = expr(this)
+    setDependOn(detectedDependencies)
+    detectedDependencies = Set()
+    newValue
+  }
+
 }
 
 /**

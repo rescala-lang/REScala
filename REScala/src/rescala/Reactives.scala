@@ -116,8 +116,10 @@ trait Signal[+A] extends Changing[A] with FoldableReactive[A] with DepHolder {
   def get: A
 
   final def apply(): A = get
-  
-  def onDynamicDependencyUse[T](dependency: Signal[T]): Unit
+
+  def onDynamicDependencyUse[T](dependency: Signal[T]): Unit = {
+    ensureLevel(dependency.level)
+  }
 
   def apply[T](signal: SignalSynt[T]): A = {
     signal.onDynamicDependencyUse(this)
@@ -152,8 +154,6 @@ trait Signal[+A] extends Changing[A] with FoldableReactive[A] with DepHolder {
 trait Var[T] extends Signal[T] {
   def set(newValue: T): Unit
   final def update(newValue: T): Unit = set(newValue)
-  final override def onDynamicDependencyUse[U](dependency: Signal[U]): Unit =
-    throw new IllegalStateException("Vars should not have dependencies")
 }
 
 object Var {

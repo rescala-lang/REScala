@@ -2,7 +2,7 @@ package rescala
 
 import rescala.events._
 import rescala.log._
-import scala.collection.mutable.ListBuffer
+import scala.collection.immutable.Queue
 import scala.collection.LinearSeq
 
 object IFunctions {
@@ -45,12 +45,9 @@ object IFunctions {
    *  list increases in size up to when n values are available
    */
   def last[T](e: Event[T], n: Int): Signal[LinearSeq[T]] =
-    fold(e, new collection.mutable.Queue[T]) {
-      (acc: collection.mutable.Queue[T], v: T) =>
-        if (acc.length >= n) acc.dequeue()
-        //v +=: acc // (prepend)
-        acc += v // (append)
-        acc
+    fold(e, Queue[T]()) {
+      (acc: Queue[T], v: T) =>
+        (if (acc.length >= n) acc.dequeue._2 else acc).enqueue(v)
     }
 
   /** Return a Signal that is updated only when e fires, and has the value of the signal s */
@@ -119,41 +116,17 @@ object IFunctions {
 }
 
 class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T, E) => T)
-  extends DependentSignal[T] {
+  extends DependentSignalImplementation[T] {
 
-  // The value of this signal
-  private[this] var currentValue: T = init
+  addDependOn(e)
 
   // The cached value of the last occurence of e
   private[this] var lastEvent: E = _
 
-  private[this] var inQueue = false
-
-  def get = currentValue
-
-  // The only dependant is e
-  addDependOn(e)
-
-  def triggerReevaluation() = reEvaluate()
-
-  def reEvaluate(): T = {
-    ReactiveEngine.log.nodeEvaluationStarted(this)
-    inQueue = false
-
-    val hashBefore = if (currentValue == null) 0 else currentValue.hashCode
-    val tmp = f(currentValue, lastEvent)
-    val hashAfter = if (tmp == null) 0 else tmp.hashCode
-    // support mutable values by using hashValue rather than ==
-    if (hashAfter != hashBefore || currentValue != tmp) {
-      currentValue = tmp
-      timestamps += TS.newTs // Testing
-      notifyDependents(currentValue)
-    } else {
-      ReactiveEngine.log.nodePropagationStopped(this)
-      timestamps += TS.newTs // Testing
-    }
-    ReactiveEngine.log.nodeEvaluationEnded(this)
-    tmp
+  override def initialValue(): T = init
+  override def calculateNewValue(): T = {
+    ensureLevel(e.level)
+    f(get, lastEvent)
   }
 
   override def dependsOnchanged(change: Any, dep: DepHolder) = {
@@ -164,13 +137,9 @@ class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T, E) => T)
       throw new RuntimeException("Folded Signals can only depend on a single event node")
     }
 
-    if (!inQueue) {
-      inQueue = true
-      ReactiveEngine.addToEvalQueue(this)
-    }
+    super.dependsOnchanged(change, dep)
   }
 
-  override def onDynamicDependencyUse[T](dependency: Signal[T]): Unit = ???
 }
 
 class SwitchedSignal[+T, +E](e: Event[E], init: Signal[T], factory: IFunctions.Factory[E, T])
@@ -229,6 +198,4 @@ class SwitchedSignal[+T, +E](e: Event[E], init: Signal[T], factory: IFunctions.F
       ReactiveEngine.addToEvalQueue(this)
     }
   }
-
-  override def onDynamicDependencyUse[T](dependency: Signal[T]): Unit = ???
 }
