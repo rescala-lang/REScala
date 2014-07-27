@@ -63,9 +63,9 @@ object IFunctions {
    */
   def switchTo[T](e: Event[T], original: Signal[T]): Signal[T] = {
     val latest = latestOption(e)
-    StaticSignal(latest, original) {
-      latest.get match {
-        case None => original.get
+    SignalSynt[T](latest, original) { s =>
+      latest(s) match {
+        case None => original(s)
         case Some(x) => x
       }
     }
@@ -74,10 +74,10 @@ object IFunctions {
   /** Switch to a new Signal once, on the occurrence of event e. */
   def switchOnce[T](e: Event[_], original: Signal[T], newSignal: Signal[T]): Signal[T] = {
     val latest = latestOption(e)
-    StaticSignal(latest, original, newSignal) {
-      latest.get match {
-        case None => original.get
-        case Some(_) => newSignal.get
+    SignalSynt[T](latest, original, newSignal) { s =>
+      latest(s) match {
+        case None => original(s)
+        case Some(_) => newSignal(s)
       }
     }
   }
@@ -85,14 +85,14 @@ object IFunctions {
   /** Switch back and forth between two signals on occurrence of event e */
   def toggle[T](e: Event[_], a: Signal[T], b: Signal[T]): Signal[T] = {
     val switched: Signal[Boolean] = iterate(e, false) { !_ }
-    StaticSignal(switched, a, b) { if (switched.get) b.get else a.get}
+    SignalSynt[T](switched, a, b) { s => if (switched(s)) b(s) else a(s) }
   }
 
   /** Like latest, but delays the value of the resulting signal by n occurrences */
   def delay[T](e: Event[T], init: T, n: Int): Signal[T] = {
     val history: Signal[LinearSeq[T]] = last(e, n + 1)
-    StaticSignal(history) {
-      val h = history.get
+    SignalSynt[T](history) { s =>
+      val h = history(s)
       if (h.size <= n) init else h.head
     }
   }
@@ -101,7 +101,7 @@ object IFunctions {
   def delay[T](signal: Signal[T], n: Int): Signal[T] = delay(signal.changed, signal.get, n)
 
   /** lifts a function A => B to work on reactives */
-  def lift[A, B](f: A => B): (Signal[A] => Signal[B]) = a => StaticSignal[B](a) { f(a.get) }
+  def lift[A, B](f: A => B): (Signal[A] => Signal[B]) = a => a.map(f)
 
   
   /** Generates a signal from an event occurrence */

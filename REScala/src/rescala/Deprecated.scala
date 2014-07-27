@@ -4,10 +4,12 @@ package rescala
  * Create a StaticVar
  */
 object StaticVar {
+  @deprecated("use VarSynt instead", since = "unknown")
   def apply[T](initialValue: T) = new VarSynt(initialValue)
 }
 
 /** A dependent reactive value which has static dependencies */
+@deprecated("StaticSignal can not handle dynamic level changes, use SignalSynt instead", since = "unknown")
 class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: => T) extends DependentSignal[T] {
 
   var inQueue = false
@@ -53,10 +55,14 @@ class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: => T) extends 
  */
 object StaticSignal {
 
+  @deprecated("StaticSignal can not handle dynamic level changes, use SignalSynt instead", since = "unknown")
   def apply[T](reactivesDependsOn: List[DepHolder])(expr: => T) =
     new StaticSignal(reactivesDependsOn)(expr)
 
+  @deprecated("StaticSignal can not handle dynamic level changes, use SignalSynt instead", since = "unknown")
   def apply[T]()(expr: => T): DependentSignal[T] = apply(List())(expr)
+
+  @deprecated("StaticSignal can not handle dynamic level changes, use SignalSynt instead", since = "unknown")
   def apply[T](dependencyHolders: DepHolder*)(expr: => T): DependentSignal[T] = apply(dependencyHolders.toList)(expr)
 }
 
