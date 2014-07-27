@@ -114,7 +114,7 @@ object SignalSynt {
 
 
 
-/** A wrappend event inside a signal, that gets "flattened" to a plain event node */
+/** A wrapped event inside a signal, that gets "flattened" to a plain event node */
 class WrappedEvent[T](wrapper: Signal[Event[T]]) extends EventNode[T] with Dependent {
   
   var inQueue = false
@@ -161,7 +161,7 @@ class WrappedEvent[T](wrapper: Signal[Event[T]]) extends EventNode[T] with Depen
     	  inQueue = true
     	  ReactiveEngine.addToEvalQueue(this)
       }
-    }    
+    }
     else throw new IllegalStateException("Illegal DepHolder " + dep)
 
   }

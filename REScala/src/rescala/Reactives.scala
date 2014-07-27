@@ -8,7 +8,7 @@ import rescala.log._
 import rescala.log.Logging
 import java.util.UUID
 
-/* A Reactive is a value type which has a dependency to other Reactives */
+/** A Reactive is a value type which has a dependency to other Reactives */
 trait Reactive extends Ordered[Reactive] {
   // testing
   val timestamps: Buffer[Stamp] = ListBuffer()
@@ -29,7 +29,7 @@ object Reactive {
   }
 }
 
-/* A node that has nodes that depend on it */
+/** A node that has nodes that depend on it */
 trait DepHolder extends Reactive {
   val dependents: Buffer[Dependent] = ListBuffer()
   def addDependent(dep: Dependent) = {
@@ -64,6 +64,8 @@ trait Dependent extends Reactive {
   def setDependOn(deps: TraversableOnce[DepHolder]) = dependOn = deps.toSet
   def removeDependOn(dep: DepHolder) = dependOn -= dep
 
+  /** called when it is this events turn to be evaluated
+    * (head of the evaluation queue) */
   protected[rescala] def triggerReevaluation(): Unit
 
   /** callback when a dependency has changed */
@@ -169,7 +171,7 @@ trait FoldableReactive[+A] {
     fold(Seq[A]()) { (acc,v) => acc.takeRight(n-1) :+ v }
 }
 
-/* An inner node which depends on other values */
+/** An inner node which depends on other values */
 trait DependentSignal[+T] extends Signal[T] with Dependent
 
 /**
@@ -178,12 +180,12 @@ trait DependentSignal[+T] extends Signal[T] with Dependent
  */
 object ReactiveEngine {
 
-  /* If logging is needed, replace this with another instance of Logging */
+  /** If logging is needed, replace this with another instance of Logging */
   var log: Logging = NoLogging
 
   private val evalQueue = PriorityQueue[Dependent]()
 
-  /* Adds a dependant to the eval queue, duplicates are allowed */
+  /** Adds a dependant to the eval queue, duplicates are allowed */
   def addToEvalQueue(dep: Dependent): Unit = {
     evalQueue.synchronized {
       //if (evalQueue.exists(_ eq dep)) return
@@ -197,7 +199,7 @@ object ReactiveEngine {
     }
   }
 
-  /* Evaluates all the elements in the queue */
+  /** Evaluates all the elements in the queue */
   def startEvaluation() = {
     evalQueue.synchronized {
       val localStamp = TS.getCurrentTs
