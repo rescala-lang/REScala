@@ -138,7 +138,7 @@ class ImperativeEvent[T] extends EventNode[T] {
   /* Trigger the event */
   def apply(v: T): Unit = {
     TS.nextRound()
-    timestamps += TS.newTs
+    logTestingTimestamp()
     notifyDependents(v)
     ReactiveEngine.startEvaluation()
   }
@@ -158,7 +158,7 @@ class ChangedEventNode[T](d: DepHolder) extends EventNode[T] with DepHolder with
   var storedVal: (Any,Any) = (null, null)
 
   def triggerReevaluation() {
-    timestamps += TS.newTs // Testing
+    logTestingTimestamp() // Testing
     notifyDependents(storedVal)
   }
 
@@ -181,7 +181,7 @@ class InnerEventNode[T](d: DepHolder) extends EventNode[T] with Dependent {
   var storedVal: Any = _
 
   def triggerReevaluation() {
-    timestamps += TS.newTs // Testing
+    logTestingTimestamp() // Testing
     notifyDependents(storedVal)
   }
 
@@ -213,7 +213,7 @@ class EventNodeOr[T](ev1: Event[_ <: T], ev2: Event[_ <: T])
   var storedVal: Any = _
 
   def triggerReevaluation() {
-    timestamps += TS.newTs // Testing
+    logTestingTimestamp() // Testing
     notifyDependents(storedVal)
   }
 
@@ -245,7 +245,7 @@ class EventNodeAnd[T1, T2, T](ev1: Event[T1], ev2: Event[T2], merge: (T1, T2) =>
   var storedValEv2: T2 = _
 
   def triggerReevaluation() {
-    timestamps += TS.newTs // Testing
+    logTestingTimestamp() // Testing
     notifyDependents(merge(storedValEv1,storedValEv2))
   }
 
@@ -278,7 +278,7 @@ class EventNodeFilter[T](ev: Event[T], f: T => Boolean) extends EventNode[T] wit
   var storedVal: T = _
 
   def triggerReevaluation() {
-    timestamps += TS.newTs // Testing
+    logTestingTimestamp() // Testing
     if(f(storedVal)) notifyDependents(storedVal)
   }
 
@@ -302,7 +302,7 @@ class EventNodeMap[T, U](ev: Event[T], f: T => U)
   var storedVal: T = _
 
   def triggerReevaluation() {
-    timestamps += TS.newTs // Testing
+    logTestingTimestamp() // Testing
     notifyDependents(f(storedVal))
   }
 
@@ -330,7 +330,7 @@ class EventNodeExcept[T](accepted: Event[T], except: Event[T])
   var storedVal: Any = _
 
   def triggerReevaluation() {
-    timestamps += TS.newTs // Testing
+    logTestingTimestamp() // Testing
     // Fire only if accepted is the one that fired and except did'fire
     if (lastTSAccepted.roundNum > lastTSExcept.roundNum ) notifyDependents(storedVal)
   }

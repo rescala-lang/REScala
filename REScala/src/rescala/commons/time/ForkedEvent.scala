@@ -15,7 +15,7 @@ class ForkedEvent[T] extends EventNode[T] with Dependent {
   }
   
   def triggerReevaluation() {
-    timestamps += TS.newTs // Testing
+    logTestingTimestamp() // Testing
     notifyDependents(storedVal)
   }
 
@@ -33,7 +33,7 @@ class ImperativeForkEvent[T](children: ForkedEvent[T]*) extends EventNode[T] wit
   /* Trigger the event */
   def apply(v: T): Unit = {
     TS.nextRound()
-    timestamps += TS.newTs
+    logTestingTimestamp()
     notifyDependents(v)
     ReactiveEngine.startEvaluation()
   }

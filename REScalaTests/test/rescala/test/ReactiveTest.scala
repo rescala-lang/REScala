@@ -24,8 +24,8 @@ class ReactiveTest extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test def reactivesAreOrderedBasedOnTheLevel() {
-    r1.level = 5
-    r2.level = 6
+    r1.ensureLevel(4)
+    r2.ensureLevel(5)
     assert(r1 > r2) // priority, NOT level
   }
 

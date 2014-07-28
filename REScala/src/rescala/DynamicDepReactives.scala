@@ -21,14 +21,14 @@ class VarSynt[T](private[this] var value: T) extends Var[T] {
     if (value != newValue) {
       value = newValue
       TS.nextRound() // Testing
-      timestamps += TS.newTs // testing
+      logTestingTimestamp()
 
       notifyDependents(value)
       ReactiveEngine.startEvaluation()
 
     } else {
       ReactiveEngine.log.nodePropagationStopped(this)
-      timestamps += TS.newTs // testing
+      logTestingTimestamp() // testing
     }
   }
 
@@ -46,6 +46,8 @@ trait DependentSignalImplementation[+T] extends DependentSignal[T] {
 
   private[this] var currentValue = initialValue()
 
+  private var inQueue = false
+
   def get = currentValue
 
   def triggerReevaluation() = reEvaluate()
@@ -53,14 +55,14 @@ trait DependentSignalImplementation[+T] extends DependentSignal[T] {
   def reEvaluate(): T = {
     ReactiveEngine.log.nodeEvaluationStarted(this)
 
-    timestamps += TS.newTs // Testing
+    logTestingTimestamp() // Testing
 
     val oldLevel = level
 
      // Evaluation
     val newValue = calculateNewValue()
 
-    /* if the level increses by one, the dependencies might or might not have been evaluated this turn.
+    /* if the level increases by one, the dependencies might or might not have been evaluated this turn.
      * if they have, we could just fire the observers, but if they have not we are not allowed to do so
      *
      * if the level increases by more than one, we depend on something that still has to be in the queue
@@ -69,16 +71,17 @@ trait DependentSignalImplementation[+T] extends DependentSignal[T] {
       ReactiveEngine.addToEvalQueue(this)
     }
     else {
+      inQueue = false
       if (level <= oldLevel) {
         /* Notify dependents only of the value changed */
         if (currentValue != newValue) {
           currentValue = newValue
-          timestamps += TS.newTs // Testing
+          logTestingTimestamp() // Testing
           notifyDependents(currentValue)
         }
         else {
           ReactiveEngine.log.nodePropagationStopped(this)
-          timestamps += TS.newTs // Testing
+          logTestingTimestamp() // Testing
         }
       } : Unit
     }
@@ -86,7 +89,10 @@ trait DependentSignalImplementation[+T] extends DependentSignal[T] {
     newValue
   }
   override def dependsOnchanged(change: Any, dep: DepHolder) = {
-    ReactiveEngine.addToEvalQueue(this)
+    if (!inQueue) {
+      inQueue = true
+      ReactiveEngine.addToEvalQueue(this)
+    }
   }
 
 }
@@ -152,7 +158,7 @@ class WrappedEvent[T](wrapper: Signal[Event[T]]) extends EventNode[T] with Depen
   }
   
   def triggerReevaluation() {
-    timestamps += TS.newTs
+    logTestingTimestamp()
     notifyDependents(currentValue)
     inQueue = false
   }
@@ -178,5 +184,4 @@ class WrappedEvent[T](wrapper: Signal[Event[T]]) extends EventNode[T] with Depen
 
   }
   
-  override val timestamps = ListBuffer[Stamp]()
 }

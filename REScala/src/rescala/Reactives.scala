@@ -1,8 +1,6 @@
 package rescala
 
-import scala.collection.mutable.Buffer
-import scala.collection.mutable.ListBuffer
-import scala.collection.mutable.PriorityQueue
+import scala.collection.mutable
 import rescala.events._
 import rescala.log._
 import rescala.log.Logging
@@ -11,14 +9,18 @@ import java.util.UUID
 /** A Reactive is a value type which has a dependency to other Reactives */
 trait Reactive extends Ordered[Reactive] {
   // testing
-  val timestamps: Buffer[Stamp] = ListBuffer()
+  private var _timestamps = List[Stamp]()
+  /** for compatibility reasons with existing tests */
+  def timestamps: List[Stamp] = _timestamps
+  def logTestingTimestamp() = _timestamps = TS.newTs :: _timestamps
   
   var id = UUID.randomUUID()
 
-  var level: Int = 0
+  private var _level: Int = 0
+  def level = _level
 
   def ensureLevel(min: Int) = {
-    if (level <= min) level = min + 1
+    if (level <= min) _level = min + 1
   }
 
   override def compare(other: Reactive): Int =
@@ -204,7 +206,7 @@ object ReactiveEngine {
   /** If logging is needed, replace this with another instance of Logging */
   var log: Logging = NoLogging
 
-  private val evalQueue = PriorityQueue[Dependent]()
+  private val evalQueue = mutable.PriorityQueue[Dependent]()
 
   /** Adds a dependant to the eval queue, duplicates are allowed */
   def addToEvalQueue(dep: Dependent): Unit = {
@@ -256,13 +258,13 @@ object TS {
   }
 
   def newTs: Stamp = {
-    val ts = new Stamp(_roundNum, _sequenceNum)
+    val ts = Stamp(_roundNum, _sequenceNum)
     _sequenceNum += 1
     ReactiveEngine.log.logRound(ts)
     ts
   }
 
-  def getCurrentTs = new Stamp(_roundNum, _sequenceNum)
+  def getCurrentTs = Stamp(_roundNum, _sequenceNum)
 
   def reset(): Unit = {
     _roundNum = 0
