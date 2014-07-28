@@ -119,6 +119,7 @@ trait Signal[+A] extends Changing[A] with FoldableReactive[A] with DepHolder {
 
   final def apply(): A = get
 
+  /** hook for subclasses to do something when they use their dependencies */
   def onDynamicDependencyUse[T](dependency: Signal[T]): Unit = {
     ensureLevel(dependency.level)
   }

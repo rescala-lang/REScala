@@ -32,7 +32,7 @@ object IFunctions {
   }
 
   /** returns a signal holding the latest value of the event. */
-  def latest[T](e: Event[T], init: T): Signal[T] = IFunctions.fold(e, init)((_, v) => v)
+  def latest[T](e: Event[T], init: T): Signal[T] = fold(e, init)((_, v) => v)
 
   /** Holds the latest value of an event as an Option, None before the first event occured */
   def latestOption[T](e: Event[T]): Signal[Option[T]] = latest(e.map((x: T) => Some(x)), None)

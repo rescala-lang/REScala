@@ -13,7 +13,10 @@ class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: => T) extends 
 
   setDependOn(reactivesDependsOn)
   override def initialValue(): T = expr
-  override def calculateNewValue(): T = expr
+  override def calculateNewValue(): T = {
+    if (reactivesDependsOn.nonEmpty) ensureLevel(reactivesDependsOn.map{_.level}.max)
+    expr
+  }
 }
 
 /**
