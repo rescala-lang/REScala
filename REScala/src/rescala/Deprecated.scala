@@ -9,41 +9,11 @@ object StaticVar {
 }
 
 /** A dependent reactive value which has static dependencies */
-@deprecated("StaticSignal can not handle dynamic level changes, use SignalSynt instead", since = "unknown")
-class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: => T) extends DependentSignal[T] {
-
-  var inQueue = false
-
-  private[this] var currentValue = expr
-
-  def get = currentValue
+class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: => T) extends DependentSignalImplementation[T] {
 
   setDependOn(reactivesDependsOn)
-
-  protected[rescala] def triggerReevaluation() = reEvaluate()
-
-  def reEvaluate(): T = {
-    ReactiveEngine.log.nodeEvaluationStarted(this)
-    inQueue = false
-    val newValue = expr
-    if (newValue != currentValue) {
-      currentValue = newValue
-      timestamps += TS.newTs // Testing
-      notifyDependents(currentValue)
-    } else {
-      ReactiveEngine.log.nodePropagationStopped(this)
-      timestamps += TS.newTs // Testing
-    }
-    ReactiveEngine.log.nodeEvaluationEnded(this)
-    newValue
-  }
-
-  override def dependsOnchanged(change: Any, dep: DepHolder) = {
-    if (!inQueue) {
-      inQueue = true
-      ReactiveEngine.addToEvalQueue(this)
-    }
-  }
+  override def initialValue(): T = expr
+  override def calculateNewValue(): T = expr
 }
 
 /**
@@ -51,14 +21,11 @@ class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: => T) extends 
  */
 object StaticSignal {
 
-  @deprecated("StaticSignal can not handle dynamic level changes, use SignalSynt instead", since = "unknown")
   def apply[T](reactivesDependsOn: List[DepHolder])(expr: => T) =
     new StaticSignal(reactivesDependsOn)(expr)
 
-  @deprecated("StaticSignal can not handle dynamic level changes, use SignalSynt instead", since = "unknown")
   def apply[T]()(expr: => T): DependentSignal[T] = apply(List())(expr)
 
-  @deprecated("StaticSignal can not handle dynamic level changes, use SignalSynt instead", since = "unknown")
   def apply[T](dependencyHolders: DepHolder*)(expr: => T): DependentSignal[T] = apply(dependencyHolders.toList)(expr)
 }
 
