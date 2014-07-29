@@ -13,9 +13,7 @@ import rescala.events.EventNode
 //}
 
 /* A node that has nodes that depend on it */
-class VarSynt[T](initval: T) extends Var[T] {
-  private[this] var value: T = initval
-
+class VarSynt[T](private[this] var value: T) extends Var[T] {
   def get = value
 
   def set(newval: T): Unit = {
