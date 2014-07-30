@@ -16,12 +16,7 @@ trait Reactive extends Ordered[Reactive] {
   
   var id = UUID.randomUUID()
 
-  private var _level: Int = 0
-  def level = _level
-
-  def ensureLevel(min: Int) = {
-    if (level <= min) _level = min + 1
-  }
+  def level: Int = 0
 
   override def compare(other: Reactive): Int =
     other.level - this.level
@@ -65,7 +60,6 @@ trait Dependent extends Reactive {
 
   def addDependOn(dep: DepHolder) = {
     if (!dependOn.contains(dep)) {
-      ensureLevel(dep.level)
       dependOn += dep
       dep.addDependent(this)
       ReactiveEngine.log.nodeAttached(this, dep)
@@ -83,6 +77,8 @@ trait Dependent extends Reactive {
     dep.removeDependent(this)
     dependOn -= dep
   }
+
+  override def level: Int = if (dependOnCount() <= 0) 0 else dependOn.map(_.level).max + 1
 
   /** called when it is this events turn to be evaluated
     * (head of the evaluation queue) */
@@ -120,9 +116,7 @@ trait Signal[+A] extends Changing[A] with FoldableReactive[A] with DepHolder {
   final def apply(): A = get
 
   /** hook for subclasses to do something when they use their dependencies */
-  def onDynamicDependencyUse[T](dependency: Signal[T]): Unit = {
-    ensureLevel(dependency.level)
-  }
+  def onDynamicDependencyUse[T](dependency: Signal[T]): Unit = { }
 
   def apply[T](signal: SignalSynt[T]): A = {
     signal.onDynamicDependencyUse(this)

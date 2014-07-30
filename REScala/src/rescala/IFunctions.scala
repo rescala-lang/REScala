@@ -122,10 +122,7 @@ class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T, E) => T)
   private[this] var lastEvent: E = _
 
   override def initialValue(): T = init
-  override def calculateNewValue(): T = {
-    ensureLevel(e.level)
-    f(get, lastEvent)
-  }
+  override def calculateNewValue(): T = f(get, lastEvent)
 
   override def dependsOnchanged(change: Any, dep: DepHolder) = {
     if (dep eq e) {

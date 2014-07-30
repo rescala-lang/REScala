@@ -91,9 +91,6 @@ trait DependentSignalImplementation[+T] extends DependentSignal[T] {
 class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: SignalSynt[T] => T)
   extends { private var detectedDependencies = Set[DepHolder]() } with DependentSignalImplementation[T] {
 
-  // For glitch freedom
-  if (reactivesDependsOnUpperBound.nonEmpty) ensureLevel(reactivesDependsOnUpperBound.map { _.level }.max)
-
   override def onDynamicDependencyUse[A](dependency: Signal[A]): Unit = {
     super.onDynamicDependencyUse(dependency)
     detectedDependencies += dependency
@@ -108,6 +105,9 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
     newValue
   }
 
+  private val upperBoundLevel = if(reactivesDependsOnUpperBound.isEmpty) 0 else reactivesDependsOnUpperBound.map{_.level}.max + 1
+
+  override def level: Int = super.level.max(upperBoundLevel)
 }
 
 /**
