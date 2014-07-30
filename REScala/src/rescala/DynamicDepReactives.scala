@@ -46,8 +46,6 @@ trait DependentSignalImplementation[+T] extends DependentSignal[T] {
 
   private[this] var currentValue = initialValue()
 
-  private var inQueue = false
-
   def get = currentValue
 
   def triggerReevaluation() = reEvaluate()
@@ -71,7 +69,6 @@ trait DependentSignalImplementation[+T] extends DependentSignal[T] {
       ReactiveEngine.addToEvalQueue(this)
     }
     else {
-      inQueue = false
       if (level <= oldLevel) {
         /* Notify dependents only of the value changed */
         if (currentValue != newValue) {
@@ -86,12 +83,7 @@ trait DependentSignalImplementation[+T] extends DependentSignal[T] {
     ReactiveEngine.log.nodeEvaluationEnded(this)
     newValue
   }
-  override def dependsOnchanged(change: Any, dep: DepHolder) = {
-    if (!inQueue) {
-      inQueue = true
-      ReactiveEngine.addToEvalQueue(this)
-    }
-  }
+  override def dependsOnchanged(change: Any, dep: DepHolder) = ReactiveEngine.addToEvalQueue(this)
 
 }
 

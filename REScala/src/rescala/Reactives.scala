@@ -211,35 +211,17 @@ object ReactiveEngine {
 
   /** Adds a dependant to the eval queue, duplicates are allowed */
   def addToEvalQueue(dep: Dependent): Unit = {
-    evalQueue.synchronized {
-      //if (evalQueue.exists(_ eq dep)) return
-
-      ReactiveEngine.log.nodeScheduled(dep)
-      evalQueue += dep
-
-      // DEBUG:
-      //if(evalQueue.toList.contains((_: Any) == null))
-      //  System.err.println("eval queue contains null element after insertion of " + dep)
-    }
+      if (!evalQueue.exists(_ eq dep)) {
+        ReactiveEngine.log.nodeScheduled(dep)
+        evalQueue += dep
+      }
   }
 
   /** Evaluates all the elements in the queue */
   def startEvaluation() = {
-    evalQueue.synchronized {
-      val localStamp = TS.getCurrentTs
-      // DEBUG: println("Start eval: " + Thread.currentThread() + "  " + localStamp + " (init. queue: " + evalQueue.length + ")")
-      var counter = 0
-      while (evalQueue.nonEmpty) {
-        counter += 1
-        val head = evalQueue.dequeue()
-        if (head == null) {
-          System.err.println("priority deque yielded null")
-          // not sure why this happens, null is never inserted
-        } else {
-          head.triggerReevaluation()
-        }
-      }
-      // DEBUG: println("End eval: " + Thread.currentThread() + "  " + localStamp + " (" + counter + " rounds)")
+    while (evalQueue.nonEmpty) {
+      val head = evalQueue.dequeue()
+      head.triggerReevaluation()
     }
   }
 }

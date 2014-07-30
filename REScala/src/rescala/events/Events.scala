@@ -164,7 +164,6 @@ abstract class BinaryStoreTriggerNode[StoreType, TriggeredType, T1, T2]
    resetState: => Option[StoreType] = None)
   extends EventNode[TriggeredType] with DepHolder with Dependent {
 
-  private var inQueue = false
   private var storedValue: Option[StoreType] = resetState
 
   addDependOn(dependencyA)
@@ -179,7 +178,6 @@ abstract class BinaryStoreTriggerNode[StoreType, TriggeredType, T1, T2]
 
   def triggerReevaluation(): Unit = {
     logTestingTimestamp() // Testing
-    inQueue = false
     trigger(storedValue).foreach(notifyDependents)
     storedValue = resetState
   }
@@ -194,10 +192,7 @@ abstract class BinaryStoreTriggerNode[StoreType, TriggeredType, T1, T2]
     else {
       throw new IllegalStateException(s"illegal dependency $dep")
     }
-    if (!inQueue) {
-      inQueue = true
-      ReactiveEngine.addToEvalQueue(this)
-    }
+    ReactiveEngine.addToEvalQueue(this)
   }
 
 }
