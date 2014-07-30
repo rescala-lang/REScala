@@ -201,21 +201,25 @@ object ReactiveEngine {
   /** If logging is needed, replace this with another instance of Logging */
   var log: Logging = NoLogging
 
-  private val evalQueue = mutable.PriorityQueue[Dependent]()
+  private val evalQueue = new mutable.PriorityQueue[(Int, Dependent)]()(new Ordering[(Int, Dependent)] {
+    override def compare(x: (Int, Dependent), y: (Int, Dependent)): Int = y._1.compareTo(x._1)
+  })
 
   /** Adds a dependant to the eval queue, duplicates are allowed */
   def addToEvalQueue(dep: Dependent): Unit = {
-      if (!evalQueue.exists(_ eq dep)) {
+      if (!evalQueue.exists { case (_, elem) => elem eq dep }) {
         ReactiveEngine.log.nodeScheduled(dep)
-        evalQueue += dep
+        evalQueue.+=((dep.level, dep))
       }
   }
 
   /** Evaluates all the elements in the queue */
   def startEvaluation() = {
     while (evalQueue.nonEmpty) {
-      val head = evalQueue.dequeue()
-      head.triggerReevaluation()
+      val (level, head) = evalQueue.dequeue()
+      // check the level if it changed queue again
+      if (level == head.level) head.triggerReevaluation()
+      else addToEvalQueue(head)
     }
   }
 }
