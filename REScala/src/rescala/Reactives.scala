@@ -7,28 +7,16 @@ import rescala.log.Logging
 import java.util.UUID
 
 /** A Reactive is a value type which has a dependency to other Reactives */
-trait Reactive extends Ordered[Reactive] {
+trait Reactive {
   // testing
   private var _timestamps = List[Stamp]()
   /** for compatibility reasons with existing tests */
   def timestamps: List[Stamp] = _timestamps
   def logTestingTimestamp() = _timestamps = TS.newTs :: _timestamps
   
-  var id = UUID.randomUUID()
-
   def level: Int = 0
 
-  override def compare(other: Reactive): Int =
-    other.level - this.level
-
   ReactiveEngine.log.nodeCreated(this)
-}
-
-object Reactive {
-  /* Reactive are comparable by their level */
-  implicit def ord[T <: Reactive]: Ordering[T] = new Ordering[T] {
-    def compare(x: T, y: T) = if (x == null) -1 else x compare y
-  }
 }
 
 /** A node that has nodes that depend on it */
