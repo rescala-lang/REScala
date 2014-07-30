@@ -1,9 +1,6 @@
 package rescala.events
 
-import scala.collection.mutable.Buffer
-import scala.collection.mutable.ListBuffer
 import scala.collection.LinearSeq
-import scala.reflect.runtime.universe._
 import rescala._
 
 
@@ -59,7 +56,7 @@ trait Event[+T] extends DepHolder {
 
 
 
-  /** The latest parameter value of this event occurrence */
+  ///** The latest parameter value of this event occurrence */
   //import annotation.unchecked.uncheckedVariance
   //lazy val latest : Signal[Option[T @uncheckedVariance]] = Signal.latestOption(this)
 
@@ -95,25 +92,25 @@ trait Event[+T] extends DepHolder {
 /**
  * Wrapper for an anonymous function
  */
-class EventHandler[T] (fun: T=>Unit) extends Dependent {
-    val f = fun
-    var storedVal: T = _
-    override def dependsOnchanged(change: Any, dep: DepHolder) {
-      storedVal = change.asInstanceOf[T]  // ??
-      ReactiveEngine.addToEvalQueue(this)
-    }
-    def triggerReevaluation() = fun(storedVal)
-    override def equals(other: Any) = other match {
-      case other: EventHandler[T] => fun.equals(other.f)
-      case _ => false
-    }
+class EventHandler[T] (val fun: T=>Unit) extends Dependent {
+  var storedVal: T = _
+  override def dependsOnchanged(change: Any, dep: DepHolder) {
+    storedVal = change.asInstanceOf[T]  // ??
+    ReactiveEngine.addToEvalQueue(this)
+  }
+  def triggerReevaluation() = fun(storedVal)
+  override def equals(other: Any) = other match {
+    case other: EventHandler[T] => fun.equals(other.fun)
+    case _ => false
+  }
+  override def hashCode(): Int = fun.hashCode()
 }
 
 object EventHandler {
   def apply[T] (fun: T=>Unit) = new EventHandler(fun)
 }
 
-/*
+/**
  *  Base trait for events.
  */
 trait EventNode[T] extends Event[T] {
@@ -130,12 +127,12 @@ trait EventNode[T] extends Event[T] {
 }
 
 
-/*
+/**
  * An implementation of an imperative event
  */
 class ImperativeEvent[T] extends EventNode[T] {
 
-  /* Trigger the event */
+  /** Trigger the event */
   def apply(v: T): Unit = {
     TS.nextRound()
     logTestingTimestamp()
@@ -148,7 +145,7 @@ class ImperativeEvent[T] extends EventNode[T] {
 
 
 
-/*
+/**
  * Used to model the change event of a signal. Keeps the last value
  */
 class ChangedEventNode[T](d: DepHolder) extends EventNode[T] with DepHolder with Dependent {
@@ -172,7 +169,7 @@ class ChangedEventNode[T](d: DepHolder) extends EventNode[T] with DepHolder with
 
 
 // TODO: never used
-/*
+/**
  * An event automatically triggered by the framework.
  */
 class InnerEventNode[T](d: DepHolder) extends EventNode[T] with Dependent {
@@ -195,7 +192,7 @@ class InnerEventNode[T](d: DepHolder) extends EventNode[T] with Dependent {
 
 
 
-/*
+/**
  * Implementation of event disjunction
  */
 class EventNodeOr[T](ev1: Event[_ <: T], ev2: Event[_ <: T])
@@ -230,7 +227,7 @@ class EventNodeOr[T](ev1: Event[_ <: T], ev2: Event[_ <: T])
 }
 
 
-/*
+/**
  * Implementation of event conjunction
  */
 class EventNodeAnd[T1, T2, T](ev1: Event[T1], ev2: Event[T2], merge: (T1, T2) => T)
@@ -269,7 +266,7 @@ class EventNodeAnd[T1, T2, T](ev1: Event[T1], ev2: Event[T2], merge: (T1, T2) =>
 
 
 
-/*
+/**
  * Implements filtering event by a predicate
  */
 class EventNodeFilter[T](ev: Event[T], f: T => Boolean) extends EventNode[T] with Dependent {
@@ -291,7 +288,7 @@ class EventNodeFilter[T](ev: Event[T], f: T => Boolean) extends EventNode[T] wit
 }
 
 
-/*
+/**
  * Implements transformation of event parameter
  */
 class EventNodeMap[T, U](ev: Event[T], f: T => U)
@@ -315,7 +312,7 @@ class EventNodeMap[T, U](ev: Event[T], f: T => U)
 }
 
 
-/*
+/**
  * Implementation of event except
  */
 class EventNodeExcept[T](accepted: Event[T], except: Event[T])
@@ -357,7 +354,7 @@ object emptyevent extends Event[Nothing] {
 
 
 
-/*
+/**
  * Implementation of an observable method
  */
 class Observable[T, U](body: T => U) extends (T => U) {
