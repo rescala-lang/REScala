@@ -129,46 +129,24 @@ object SignalSynt {
 /** A wrapped event inside a signal, that gets "flattened" to a plain event node */
 class WrappedEvent[T](wrapper: Signal[Event[T]]) extends EventNode[T] with Dependent {
   
-  var inQueue = false
-  var currentEvent = wrapper.get
   var currentValue: T = _
   
-  // statically depend on wrapper
-  addDependOn(wrapper)
-  // dynamically depend on inner event
-  addDependOn(currentEvent)
-  
-  protected def updateProxyEvent(newEvent: Event[T]){
-    // untie from from current event stream
-    removeDependOn(currentEvent)
-    // tie to new event stream
-    addDependOn(newEvent)
-    // remember current event
-    currentEvent = newEvent
-  }
-  
+  updateDependencies()
+
+  private def updateDependencies() = setDependOn(Set(wrapper, wrapper.get))
+
   def triggerReevaluation() {
     logTestingTimestamp()
     notifyDependents(currentValue)
-    inQueue = false
   }
   
   override def dependsOnchanged(change: Any, dep: DepHolder) = {
-    
-    if(dep eq wrapper) { // wrapper changed the proxy event
-	    val newEvent = change.asInstanceOf[Event[T]]
-	    if(newEvent ne currentEvent)
-	      updateProxyEvent(newEvent)
+    if(dep eq wrapper) {
+	    updateDependencies()
     }
-    else if(dep eq currentEvent) { // proxied event changed
-      // store the value to propagate
+    else if(dep eq wrapper.get) {
       currentValue = change.asInstanceOf[T]
-      
-      // and queue this node
-      if (!inQueue) {
-    	  inQueue = true
-    	  ReactiveEngine.addToEvalQueue(this)
-      }
+    	ReactiveEngine.addToEvalQueue(this)
     }
     else throw new IllegalStateException("Illegal DepHolder " + dep)
 
