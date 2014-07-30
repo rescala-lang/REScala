@@ -94,22 +94,9 @@ trait Event[+T] extends DepHolder {
 /**
  * Wrapper for an anonymous function
  */
-class EventHandler[T] (val fun: T=>Unit) extends Dependent {
-  var storedVal: T = _
-  override def dependsOnchanged(change: Any, dep: DepHolder) {
-    storedVal = change.asInstanceOf[T]  // ??
-    ReactiveEngine.addToEvalQueue(this)
-  }
-  def triggerReevaluation() = fun(storedVal)
-  override def equals(other: Any) = other match {
-    case other: EventHandler[T] => fun.equals(other.fun)
-    case _ => false
-  }
-  override def hashCode(): Int = fun.hashCode()
-}
-
-object EventHandler {
-  def apply[T] (fun: T=>Unit) = new EventHandler(fun)
+case class EventHandler[T](fun: T => Unit) extends Dependent {
+  override def dependsOnchanged(change: Any, dep: DepHolder): Unit = fun(change.asInstanceOf[T])
+  def triggerReevaluation() = {}
 }
 
 /**

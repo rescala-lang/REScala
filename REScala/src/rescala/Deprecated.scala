@@ -1,5 +1,7 @@
 package rescala
 
+import rescala.events.EventHandler
+
 /**
  * Create a StaticVar
  */
@@ -32,13 +34,6 @@ object StaticSignal {
   def apply[T](dependencyHolders: DepHolder*)(expr: => T): DependentSignal[T] = apply(dependencyHolders.toList)(expr)
 }
 
-/* TODO: Do we really need two types of handlers? Can we use EventHandler? */
 object Handler {
-  //def apply[T] (exp: => T) = new EventHandler((_: Unit) => exp)
-  def apply[T](exp: => T) = new Handler(exp)
-}
-
-class Handler[T](exp: => T) extends Dependent {
-  override def dependsOnchanged(change: Any, dep: DepHolder) = exp
-  def triggerReevaluation() = exp
+  def apply(exp: => Unit) = EventHandler[Any](_ => exp)
 }
