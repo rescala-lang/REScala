@@ -32,7 +32,7 @@ class VarAndSignalTimestampTest extends AssertionsForJUnit with MockitoSugar {
     val s = StaticSignal(v){ v.get + 1 }
     v.set(11)
     assert( v.timestamps === List(Stamp(1,0)) )
-    assert( s.timestamps === List(Stamp(1,2), Stamp(1,1)) )
+    assert( s.timestamps === List(Stamp(1,1)) )
   }
 
 }

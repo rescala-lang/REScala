@@ -76,12 +76,10 @@ trait DependentSignalImplementation[+T] extends DependentSignal[T] {
         /* Notify dependents only of the value changed */
         if (currentValue != newValue) {
           currentValue = newValue
-          logTestingTimestamp() // Testing
           notifyDependents(currentValue)
         }
         else {
           ReactiveEngine.log.nodePropagationStopped(this)
-          logTestingTimestamp() // Testing
         }
       } : Unit
     }
