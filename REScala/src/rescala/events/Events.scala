@@ -103,16 +103,8 @@ case class EventHandler[T](fun: T => Unit) extends Dependent {
  *  Base trait for events.
  */
 trait EventNode[T] extends Event[T] {
-
-  // memorize handler wrappers, so we can remove them
-  lazy val handlers : collection.mutable.Map[(T => Unit), EventHandler[T]] =
-    new collection.mutable.HashMap()
-
-  def getHandler(react: T => Unit) : EventHandler[T] =
-    handlers.getOrElseUpdate(react, EventHandler(react))
-
-  def +=(react: T => Unit) = this addDependent getHandler(react)
-  def -=(react: T => Unit) = this removeDependent getHandler(react)
+  def +=(react: T => Unit): Unit = addDependent(EventHandler(react))
+  def -=(react: T => Unit): Unit = removeDependent(EventHandler(react))
 }
 
 
