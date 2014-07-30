@@ -1,5 +1,7 @@
 package rescala.events
 
+import rescala.events.EventNodeExcept.State
+
 import scala.collection.LinearSeq
 import rescala._
 
@@ -144,27 +146,92 @@ class ImperativeEvent[T] extends EventNode[T] {
 }
 
 
+/**
+ * depends on a single reactive and basically “folds“ the incoming events with the store function into some state
+ * the trigger function then allows to map and filter that state to produce this events change
+ */
+abstract class UnaryStoreTriggerNode[StoreType, TriggeredType, DependencyType <: DepHolder]
+  (dependency: DependencyType,
+   private var storedValue: Option[StoreType] = None)
+  extends EventNode[TriggeredType] with DepHolder with Dependent {
+
+  addDependOn(dependency)
+
+  /** this method is called to produce a new change. if it returns None no change is propagated, alse the returned value is propagated. */
+  def trigger(stored: Option[StoreType]): Option[TriggeredType]
+  /** takes the current state and the incoming change and produces a new state */
+  def store(stored: Option[StoreType], change: Any): Option[StoreType] = Some(change.asInstanceOf[StoreType])
+
+  def triggerReevaluation(): Unit = {
+    logTestingTimestamp() // Testing
+    trigger(storedValue).foreach(notifyDependents)
+  }
+
+  override def dependsOnchanged(change: Any,dep: DepHolder) = {
+    storedValue = store(storedValue, change)
+    ReactiveEngine.addToEvalQueue(this)
+  }
+  
+}
+
+/**
+ * takes two events and combines their values with the storeA and storeB methods
+ * can filter and map the combined result with the trigger method
+ * the current state is reset after every turn
+ */
+abstract class BinaryStoreTriggerNode[StoreType, TriggeredType, T1, T2]
+  (dependencyA: Event[T1],
+   dependencyB: Event[T2],
+   resetState: => Option[StoreType] = None)
+  extends EventNode[TriggeredType] with DepHolder with Dependent {
+
+  private var inQueue = false
+  private var storedValue: Option[StoreType] = resetState
+
+  addDependOn(dependencyA)
+  addDependOn(dependencyB)
+
+  /** this method is called to produce a new change. if it returns None no change is propagated, alse the returned value is propagated. */
+  def trigger(stored: Option[StoreType]): Option[TriggeredType]
+  /** updates the stored state on changes of the first Event */
+  def storeA(stored: Option[StoreType], change: T1): Option[StoreType]
+  /** updates the stored state on changes of the second Event */
+  def storeB(stored: Option[StoreType], change: T2): Option[StoreType]
+
+  def triggerReevaluation(): Unit = {
+    logTestingTimestamp() // Testing
+    inQueue = false
+    trigger(storedValue).foreach(notifyDependents)
+    storedValue = resetState
+  }
+
+  override def dependsOnchanged(change: Any, dep: DepHolder) = {
+    if (dep eq dependencyA) {
+      storedValue = storeA(storedValue, change.asInstanceOf[T1])
+    }
+    else if (dep eq dependencyB) {
+      storedValue = storeB(storedValue, change.asInstanceOf[T2])
+    }
+    else {
+      throw new IllegalStateException(s"illegal dependency $dep")
+    }
+    if (!inQueue) {
+      inQueue = true
+      ReactiveEngine.addToEvalQueue(this)
+    }
+  }
+
+}
+
 
 /**
  * Used to model the change event of a signal. Keeps the last value
  */
-class ChangedEventNode[T](d: DepHolder) extends EventNode[T] with DepHolder with Dependent {
-
-  addDependOn(d)
-
-  var storedVal: (Any,Any) = (null, null)
-
-  def triggerReevaluation() {
-    logTestingTimestamp() // Testing
-    notifyDependents(storedVal)
-  }
-
-  override def dependsOnchanged(change: Any,dep: DepHolder) = {
-    storedVal = (storedVal._2,change)
-    ReactiveEngine.addToEvalQueue(this)
-  }
-
-  override def toString = "(" + " InnerNode" + d + ")"
+class ChangedEventNode[T](dependency: DepHolder)
+  extends UnaryStoreTriggerNode[(Any, Any), (T , T), DepHolder](dependency, storedValue = Some((null, null))) {
+  override def store(stored: Option[(Any, Any)], change: Any): Option[(Any, Any)] = stored.map{ case (_, old) => (old, change): (Any, Any) }
+  override def trigger(stored: Option[(Any, Any)]): Option[(T, T)] = stored.map(_.asInstanceOf[(T, T)])
+  override def toString = "(" + " InnerNode" + dependency + ")"
 }
 
 
@@ -172,22 +239,9 @@ class ChangedEventNode[T](d: DepHolder) extends EventNode[T] with DepHolder with
 /**
  * An event automatically triggered by the framework.
  */
-class InnerEventNode[T](d: DepHolder) extends EventNode[T] with Dependent {
-  addDependOn(d)
-
-  var storedVal: Any = _
-
-  def triggerReevaluation() {
-    logTestingTimestamp() // Testing
-    notifyDependents(storedVal)
-  }
-
-  override def dependsOnchanged(change: Any,dep: DepHolder) = {
-    storedVal = change
-    ReactiveEngine.addToEvalQueue(this)
-  }
-
-  override def toString = "(" + " InnerNode" + d + ")"
+class InnerEventNode[T](dependency: DepHolder) extends UnaryStoreTriggerNode[T, T, DepHolder](dependency) {
+  override def trigger(stored: Option[T]): Option[T] = stored
+  override def toString = "(" + " InnerNode" + dependency + ")"
 }
 
 
@@ -196,32 +250,11 @@ class InnerEventNode[T](d: DepHolder) extends EventNode[T] with Dependent {
  * Implementation of event disjunction
  */
 class EventNodeOr[T](ev1: Event[_ <: T], ev2: Event[_ <: T])
-    extends EventNode[T]
-    with Dependent {
+    extends BinaryStoreTriggerNode[T, T, T, T](ev1, ev2) {
 
-  /*
-   * The event is executed once and only once even if both sources fire in the
-   * same propagation cycle. This is made sure by adding the node only once per cycle
-   */
-  var lastRoundAdded = 0
-
-  setDependOn(Set(ev1,ev2))
-
-  var storedVal: Any = _
-
-  def triggerReevaluation() {
-    logTestingTimestamp() // Testing
-    notifyDependents(storedVal)
-  }
-
-  override def dependsOnchanged(change: Any, dep: DepHolder) = {
-    val currentRound = TS.getCurrentTs.roundNum
-    storedVal = change
-    if(currentRound > lastRoundAdded) {
-      lastRoundAdded = currentRound
-      ReactiveEngine.addToEvalQueue(this)
-    }
-  }
+  override def trigger(stored: Option[T]): Option[T] = stored
+  override def storeB(stored: Option[T], change: T): Option[T] = Some(change)
+  override def storeA(stored: Option[T], change: T): Option[T] = Some(change)
 
   override def toString = "(" + ev1 + " || " + ev2 + ")"
 }
@@ -231,33 +264,14 @@ class EventNodeOr[T](ev1: Event[_ <: T], ev2: Event[_ <: T])
  * Implementation of event conjunction
  */
 class EventNodeAnd[T1, T2, T](ev1: Event[T1], ev2: Event[T2], merge: (T1, T2) => T)
-                                                extends EventNode[T] with Dependent {
+  extends BinaryStoreTriggerNode[(Option[T1], Option[T2]), T, T1, T2](ev1, ev2, Some((None, None))) {
 
-  // The round id of the last received event
-  var lastRound = -1
+  override def trigger(stored: Option[(Option[T1], Option[T2])]): Option[T] =
+    for { (leftOption, rightOption) <- stored; left <- leftOption; right <- rightOption }
+    yield { merge(left, right) }
 
-  setDependOn(Set(ev1,ev2))
-
-  var storedValEv1: T1 = _
-  var storedValEv2: T2 = _
-
-  def triggerReevaluation() {
-    logTestingTimestamp() // Testing
-    notifyDependents(merge(storedValEv1,storedValEv2))
-  }
-
-  override def dependsOnchanged(change: Any, dep: DepHolder) = {
-
-    val round = TS.getCurrentTs match { case Stamp(round,_) => round }
-    if(lastRound == round) {
-      if (dep == ev1) storedValEv1 = change.asInstanceOf[T1]
-      if (dep == ev2) storedValEv2 = change.asInstanceOf[T2]
-      ReactiveEngine.addToEvalQueue(this)
-    }
-    if (dep == ev1) storedValEv1 = change.asInstanceOf[T1]
-    if (dep == ev2) storedValEv2 = change.asInstanceOf[T2]
-    lastRound = round
-  }
+  override def storeA(stored: Option[(Option[T1], Option[T2])], change: T1): Option[(Option[T1], Option[T2])] = stored.map { _.copy(_1 = Some(change)) }
+  override def storeB(stored: Option[(Option[T1], Option[T2])], change: T2): Option[(Option[T1], Option[T2])] = stored.map { _.copy(_2 = Some(change)) }
 
   override def toString = "(" + ev1 + " and " + ev2 + ")"
 }
@@ -269,21 +283,8 @@ class EventNodeAnd[T1, T2, T](ev1: Event[T1], ev2: Event[T2], merge: (T1, T2) =>
 /**
  * Implements filtering event by a predicate
  */
-class EventNodeFilter[T](ev: Event[T], f: T => Boolean) extends EventNode[T] with Dependent {
-  addDependOn(ev)
-
-  var storedVal: T = _
-
-  def triggerReevaluation() {
-    logTestingTimestamp() // Testing
-    if(f(storedVal)) notifyDependents(storedVal)
-  }
-
-  override def dependsOnchanged(change: Any,dep: DepHolder) = {
-    storedVal = change.asInstanceOf[T]
-    ReactiveEngine.addToEvalQueue(this)
-  }
-
+class EventNodeFilter[T](ev: Event[T], f: T => Boolean) extends UnaryStoreTriggerNode[T, T, Event[T]](ev) {
+  override def trigger(stored: Option[T]): Option[T] = stored.filter(f)
   override def toString = "(" + ev + " && <predicate>)"
 }
 
@@ -291,23 +292,8 @@ class EventNodeFilter[T](ev: Event[T], f: T => Boolean) extends EventNode[T] wit
 /**
  * Implements transformation of event parameter
  */
-class EventNodeMap[T, U](ev: Event[T], f: T => U)
-  extends EventNode[U] with Dependent {
-
-  addDependOn(ev)
-
-  var storedVal: T = _
-
-  def triggerReevaluation() {
-    logTestingTimestamp() // Testing
-    notifyDependents(f(storedVal))
-  }
-
-  override def dependsOnchanged(change: Any,dep: DepHolder) = {
-    storedVal = change.asInstanceOf[T]
-    ReactiveEngine.addToEvalQueue(this)
-  }
-
+class EventNodeMap[T, U](ev: Event[T], f: T => U) extends UnaryStoreTriggerNode[T, U, Event[T]](ev) {
+  override def trigger(stored: Option[T]): Option[U] = stored.map(f)
   override def toString = "(" + ev + " && <predicate>)"
 }
 
@@ -316,32 +302,31 @@ class EventNodeMap[T, U](ev: Event[T], f: T => U)
  * Implementation of event except
  */
 class EventNodeExcept[T](accepted: Event[T], except: Event[T])
-  extends EventNode[T] with Dependent {
+  extends BinaryStoreTriggerNode[EventNodeExcept.State[T], T, T, T](accepted, except, Some(
+    EventNodeExcept.State(
+      currentValue = None,
+      lastTSAccepted = Stamp(-1, -1),
+      lastTSExcept = Stamp(-1, -1)))) {
 
-  // The id of the last received event
-  var lastTSAccepted = Stamp(-1,-1) // No round yet
-  var lastTSExcept= Stamp(-1,-1)
-
-  setDependOn(Set(accepted,except))
-
-  var storedVal: Any = _
-
-  def triggerReevaluation() {
-    logTestingTimestamp() // Testing
-    // Fire only if accepted is the one that fired and except did'fire
-    if (lastTSAccepted.roundNum > lastTSExcept.roundNum ) notifyDependents(storedVal)
+  override def trigger(stored: Option[State[T]]): Option[T] = stored.flatMap { state =>
+    if (state.lastTSAccepted.roundNum > state.lastTSExcept.roundNum ) state.currentValue else None
   }
 
-  override def dependsOnchanged(change: Any, dep: DepHolder) = {
-    if (dep == accepted) {
-      lastTSAccepted = TS.getCurrentTs
-      storedVal = change
-      ReactiveEngine.addToEvalQueue(this)
-    }
-    if (dep == except) lastTSExcept = TS.getCurrentTs
+  override def storeA(stored: Option[State[T]], change: T): Option[State[T]] = stored.map { state =>
+    state.copy(
+      currentValue = Some(change),
+      lastTSAccepted = TS.getCurrentTs)
+  }
+
+  override def storeB(stored: Option[State[T]], change: T): Option[State[T]] = stored.map { state =>
+    state.copy(lastTSExcept = TS.getCurrentTs)
   }
 
   override def toString = "(" + accepted + " \\ " + except + ")"
+}
+
+object EventNodeExcept {
+  case class State[T](currentValue: Option[T], lastTSAccepted: Stamp, lastTSExcept: Stamp)
 }
 
 
@@ -362,7 +347,7 @@ class Observable[T, U](body: T => U) extends (T => U) {
   lazy val before = new ImperativeEvent[T]
   lazy val after = new ImperativeEvent[(T,U)]
 
-  /*
+  /**
   * Instrumented method implementation:
   * trigger events before and after the actual method execution
   */
