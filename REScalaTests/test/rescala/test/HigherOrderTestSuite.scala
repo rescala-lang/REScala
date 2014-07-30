@@ -206,4 +206,40 @@ class HigherOrderTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(lastEvent == 5)
   }
 
+  @Test def dynamicLevel() = {
+    val v1 = VarSynt(1)
+
+    val derived = Signal { v1() }
+
+    val level1 = Signal { v1() + 1 }
+    val level2 = Signal { level1() + 1 }
+    val level3 = Signal { level2() + 1 }
+
+
+    val combined = Signal { if (v1() == 10) level3() else derived() }
+
+    var log = List[Int]()
+
+    combined.changed += (log ::= _)
+
+    v1() = 10
+    assert(log == List(13))
+    v1() = 1
+    assert(log == List(1, 13))
+
+
+    val higherOrder = Signal { if (v1() == 10) level3 else derived }
+    val flattened = Signal { higherOrder()() }
+
+    var higherOrderLog = List[Int]()
+
+    flattened.changed += (higherOrderLog ::= _)
+
+    v1() = 10
+    assert(higherOrderLog == List(13))
+    v1() = 1
+    assert(higherOrderLog == List(1, 13))
+    assert(log == List(1, 13, 1, 13))
+  }
+
 }
