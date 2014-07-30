@@ -279,28 +279,20 @@ class EventNodeExcept[T](accepted: Event[T], except: Event[T])
   extends BinaryStoreTriggerNode[EventNodeExcept.State[T], T, T, T](accepted, except, Some(
     EventNodeExcept.State(
       currentValue = None,
-      lastTSAccepted = Stamp(-1, -1),
-      lastTSExcept = Stamp(-1, -1)))) {
+      gotExcept = false))) {
 
   override def trigger(stored: Option[State[T]]): Option[T] = stored.flatMap { state =>
-    if (state.lastTSAccepted.roundNum > state.lastTSExcept.roundNum ) state.currentValue else None
+    if (!state.gotExcept) state.currentValue else None
   }
 
-  override def storeA(stored: Option[State[T]], change: T): Option[State[T]] = stored.map { state =>
-    state.copy(
-      currentValue = Some(change),
-      lastTSAccepted = TS.getCurrentTs)
-  }
-
-  override def storeB(stored: Option[State[T]], change: T): Option[State[T]] = stored.map { state =>
-    state.copy(lastTSExcept = TS.getCurrentTs)
-  }
+  override def storeA(stored: Option[State[T]], change: T): Option[State[T]] = stored.map { _.copy(currentValue = Some(change)) }
+  override def storeB(stored: Option[State[T]], change: T): Option[State[T]] = stored.map { _.copy(gotExcept = true) }
 
   override def toString = "(" + accepted + " \\ " + except + ")"
 }
 
 object EventNodeExcept {
-  case class State[T](currentValue: Option[T], lastTSAccepted: Stamp, lastTSExcept: Stamp)
+  case class State[T](currentValue: Option[T], gotExcept: Boolean)
 }
 
 
