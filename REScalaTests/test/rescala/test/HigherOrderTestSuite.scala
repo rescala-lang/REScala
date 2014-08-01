@@ -242,4 +242,42 @@ class HigherOrderTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(log == List(1, 13, 1, 13))
   }
 
+  /*TODO: fails because level1 is evaluated before dynamicSignal is updated. */
+  @Test def wrappedEvent() = {
+    val e1 = new ImperativeEvent[Int]()
+    val condition = e1.latest(-1)
+    val level1Event = e1.map[String, Int](_ => "level 1")
+    val level2Event = level1Event.map[String, String](_ => "level 2")
+    val dynamicSignal = Signal { if(condition() == 1) level1Event else level2Event}
+
+    val unwrapped = dynamicSignal.unwrap
+
+    var log = List[String]()
+    unwrapped += (log ::= _)
+
+    e1.apply(0)
+    assert(log == List("level 2"))
+    e1.apply(1)
+    assert(log == List("level 1", "level 2"))
+  }
+
+  /*TODO: fails because A and B are evaluated before dynamicSignal is updated. */
+  @Test def wrappedEventSameLevel() = {
+    val e1 = new ImperativeEvent[Int]()
+    val level2Condition = e1.latest(-1).map(identity)
+    val level1EventA = e1.map[String, Int](_ => "A")
+    val level1EventB = e1.map[String, Int](_ => "B")
+    val dynamicSignal = Signal { if(level2Condition() == 1) level1EventA else level1EventB}
+
+    val unwrapped = dynamicSignal.unwrap
+
+    var log = List[String]()
+    unwrapped += (log ::= _)
+
+    e1.apply(0)
+    assert(log == List("B"))
+    e1.apply(1)
+    assert(log == List("A", "B"))
+  }
+
 }
