@@ -48,9 +48,7 @@ trait DependentSignalImplementation[+T] extends DependentSignal[T] {
 
   def get = currentValue
 
-  def triggerReevaluation() = reEvaluate()
-
-  def reEvaluate(): T = {
+  def triggerReevaluation(): Unit = {
     ReactiveEngine.log.nodeEvaluationStarted(this)
 
     logTestingTimestamp() // Testing
@@ -81,7 +79,6 @@ trait DependentSignalImplementation[+T] extends DependentSignal[T] {
       } : Unit
     }
     ReactiveEngine.log.nodeEvaluationEnded(this)
-    newValue
   }
   override def dependsOnchanged(change: Any, dep: DepHolder) = ReactiveEngine.addToEvalQueue(this)
 

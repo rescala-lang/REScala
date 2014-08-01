@@ -113,8 +113,6 @@ trait Signal[+A] extends Changing[A] with FoldableReactive[A] with DepHolder {
 
   def map[B](f: A => B): Signal[B] = SignalSynt(this) { s: SignalSynt[B] => f(apply(s)) }
 
-  protected[rescala] def reEvaluate(): A
-
   /** Return a Signal that gets updated only when e fires, and has the value of this Signal */
   def snapshot(e: Event[_]): Signal[A] = IFunctions.snapshot(e, this)
 
