@@ -123,7 +123,7 @@ trait Signal[+A] extends Changing[A] with FoldableReactive[A] with DepHolder {
   def switchOnce[V >: A](e: Event[_])(newSignal: Signal[V]): Signal[V] = IFunctions.switchOnce(e, this, newSignal)
 
   /** Switch back and forth between this and the other Signal on occurrence of event e */
-  def toggle[V >: A](e: Event[_])(other: Signal[V]) = IFunctions.toggle(e, this, other)
+  def toggle[V >: A](e: Event[_])(other: Signal[V]): Signal[V] = IFunctions.toggle(e, this, other)
 
   /** Delays this signal by n occurrences */
   def delay(n: Int): Signal[A] = IFunctions.delay(this, n)

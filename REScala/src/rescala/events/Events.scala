@@ -16,44 +16,44 @@ trait Event[+T] extends DepHolder {
   /**
    * Events disjunction.
    */
-  def ||[S >: T, U <: S](other: Event[U]) = new EventNodeOr[S](this, other)
+  def ||[S >: T, U <: S](other: Event[U]): Event[S] = new EventNodeOr[S](this, other)
 
   /**
    * Event filtered with a predicate
    */
-  def &&[U >: T](pred: U => Boolean) = new EventNodeFilter[U](this, pred)
+  def &&[U >: T](pred: U => Boolean): Event[T] = new EventNodeFilter[T](this, pred)
   def filter[U >: T](pred: U => Boolean) = &&[U](pred)
 
   /**
    * Event filtered with a boolean variable
    */
-  def &&[U >: T](pred: =>Boolean) = new EventNodeFilter[U](this, _ => pred)
-  def filter[U >: T](pred: =>Boolean) = &&[U](pred)
+  def &&(predicate: =>Boolean): Event[T] = new EventNodeFilter[T](this, _ => predicate)
+  def filter(predicate: =>Boolean): Event[T] = &&(predicate)
 
   /**
    * Event is triggered except if the other one is triggered
    */
-  def \[U >: T](other: Event[U]) = new EventNodeExcept[U](this, other)
+  def \[U](other: Event[U]): Event[T] = new EventNodeExcept[T, U](this, other)
 
   /**
    * Events conjunction
    */
-  def and[U, V, S >: T](other: Event[U], merge: (S, U) => V) = new EventNodeAnd[S, U, V](this, other, merge)
+  def and[U, V, S >: T](other: Event[U], merge: (S, U) => V): Event[V] = new EventNodeAnd[S, U, V](this, other, merge)
 
   /**
   * Event conjunction with a merge method creating a tuple of both event parameters
   */
-  def &&[U, S >: T](other: Event[U]) = new EventNodeAnd[S, U, (S, U)](this, other, (p1: S, p2: U) => (p1, p2))
+  def &&[U, S >: T](other: Event[U]): Event[(S, U)] = new EventNodeAnd[S, U, (S, U)](this, other, (p1: S, p2: U) => (p1, p2))
 
   /**
    * Transform the event parameter
    */
-  def map[U, S >: T](mapping: S => U) = new EventNodeMap[S, U](this, mapping)
+  def map[U, S >: T](mapping: S => U): Event[U] = new EventNodeMap[S, U](this, mapping)
 
   /**
    * Drop the event parameter; equivalent to map((_: Any) => ())
    */
-  def dropParam[S >: T] = new EventNodeMap[S, Unit](this, (_: Any) => ())
+  def dropParam[S >: T]: Event[Unit] = new EventNodeMap[S, Unit](this, (_: Any) => ())
 
 
 
@@ -275,8 +275,8 @@ class EventNodeMap[T, U](ev: Event[T], f: T => U) extends UnaryStoreTriggerNode[
 /**
  * Implementation of event except
  */
-class EventNodeExcept[T](accepted: Event[T], except: Event[T])
-  extends BinaryStoreTriggerNode[EventNodeExcept.State[T], T, T, T](accepted, except, Some(
+class EventNodeExcept[T, U](accepted: Event[T], except: Event[U])
+  extends BinaryStoreTriggerNode[EventNodeExcept.State[T], T, T, U](accepted, except, Some(
     EventNodeExcept.State(
       currentValue = None,
       gotExcept = false))) {
@@ -286,7 +286,7 @@ class EventNodeExcept[T](accepted: Event[T], except: Event[T])
   }
 
   override def storeA(stored: Option[State[T]], change: T): Option[State[T]] = stored.map { _.copy(currentValue = Some(change)) }
-  override def storeB(stored: Option[State[T]], change: T): Option[State[T]] = stored.map { _.copy(gotExcept = true) }
+  override def storeB(stored: Option[State[T]], change: U): Option[State[T]] = stored.map { _.copy(gotExcept = true) }
 
   override def toString = "(" + accepted + " \\ " + except + ")"
 }
