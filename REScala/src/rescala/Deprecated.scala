@@ -9,9 +9,7 @@ import rescala.events._
  */
 
 /* An implementation of Var with static dependencies */
-class StaticVar[T](initval: T) extends Var[T] {
-  private[this] var value: T = initval
-
+class StaticVar[T](private[this] var value: T) extends Var[T] {
   def set(newval: T): Unit = {
     val old = value
     if (newval != old) {
