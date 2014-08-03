@@ -13,6 +13,7 @@ trait Logging {
   def nodeScheduled(r: Reactive): Unit
   def nodeEvaluationStarted(r: Reactive): Unit
   def nodeEvaluationEnded(r: Reactive): Unit
+  def nodeValueSet(r: Reactive): Unit
   def nodePropagationStopped(r: Reactive): Unit
   def logRound(ts: Stamp): Unit
   def logMessage(s: String): Unit
@@ -26,6 +27,7 @@ object NoLogging extends Logging {
   def nodeScheduled(r: Reactive): Unit = {}
   def nodeEvaluationStarted(r: Reactive): Unit = {}
   def nodeEvaluationEnded(r: Reactive): Unit = {}
+  def nodeValueSet(r: Reactive): Unit = {}
   def nodePropagationStopped(r: Reactive): Unit = {}
   def logRound(ts: Stamp): Unit = {}
   def logMessage(s: String): Unit = {}

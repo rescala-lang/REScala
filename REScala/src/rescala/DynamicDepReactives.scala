@@ -23,6 +23,7 @@ class VarSynt[T](private[this] var value: T) extends Var[T] {
     //val hashBefore = old.hashCode
     if (old != newval) {
       value = newval
+      ReactiveEngine.log.nodeValueSet(this)
       TS.nextRound() // Testing
       timestamps += TS.newTs // testing
 
