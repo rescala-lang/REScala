@@ -45,9 +45,8 @@ object IFunctions {
    *  list increases in size up to when n values are available
    */
   def last[T](e: Event[T], n: Int): Signal[LinearSeq[T]] =
-    fold(e, Queue[T]()) {
-      (acc: Queue[T], v: T) =>
-        acc.enqueue(v).takeRight(n)
+    fold(e, Queue[T]()) { (acc: Queue[T], v: T) =>
+      if (acc.length >= n) acc.tail.enqueue(v) else acc.enqueue(v)
     }
 
   /** Return a Signal that is updated only when e fires, and has the value of the signal s */
