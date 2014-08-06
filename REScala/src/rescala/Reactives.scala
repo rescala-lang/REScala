@@ -13,8 +13,10 @@ trait Reactive {
   /** for compatibility reasons with existing tests */
   def timestamps: List[Stamp] = _timestamps
   def logTestingTimestamp() = _timestamps = TS.newTs :: _timestamps
-  
-  def level: Int = 0
+
+  var _level = 0
+  def ensureLevel(l: Int): Unit = if (l >= _level) _level = l + 1
+  def level: Int = _level
 
   ReactiveEngine.log.nodeCreated(this)
 }
@@ -37,6 +39,13 @@ trait DepHolder extends Reactive {
     ReactiveEngine.log.nodePulsed(this)
     dependents.foreach(_.dependsOnchanged(change, this))
   }
+
+  override def ensureLevel(l: Int): Unit = {
+    val oldLevel = level
+    super.ensureLevel(l)
+    val newLevel = level
+    if (oldLevel < newLevel) dependents.foreach(_.ensureLevel(newLevel))
+  }
 }
 
 /** A node that depends on other nodes */
@@ -48,6 +57,7 @@ trait Dependent extends Reactive {
 
   def addDependOn(dep: DepHolder) = {
     if (!dependOn.contains(dep)) {
+      ensureLevel(dep.level)
       dependOn += dep
       dep.addDependent(this)
       ReactiveEngine.log.nodeAttached(this, dep)
@@ -65,8 +75,6 @@ trait Dependent extends Reactive {
     dep.removeDependent(this)
     dependOn -= dep
   }
-
-  override def level: Int = if (dependOnCount() <= 0) 0 else dependOn.map(_.level).max + 1
 
   /** called when it is this events turn to be evaluated
     * (head of the evaluation queue) */

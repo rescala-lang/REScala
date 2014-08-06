@@ -102,9 +102,8 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
     newValue
   }
 
-  private val upperBoundLevel = if(reactivesDependsOnUpperBound.isEmpty) 0 else reactivesDependsOnUpperBound.map{_.level}.max + 1
+  if(reactivesDependsOnUpperBound.nonEmpty) ensureLevel(reactivesDependsOnUpperBound.map{_.level}.max)
 
-  override def level: Int = super.level.max(upperBoundLevel)
 }
 
 /**
