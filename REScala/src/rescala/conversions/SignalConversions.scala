@@ -2,6 +2,7 @@ package rescala.conversions
 
 import rescala._
 import rescala.events._
+import scala.language.implicitConversions
 
 
 /**

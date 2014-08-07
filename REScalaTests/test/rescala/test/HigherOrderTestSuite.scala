@@ -183,7 +183,7 @@ class HigherOrderTestSuite extends AssertionsForJUnit with MockitoSugar {
   
   
   
-  @Test def unwrap_Event = {
+  @Test def unwrap_Event() = {
     val e1 = new ImperativeEvent[Int] { override def toString = "e1"}
     val e2 = new ImperativeEvent[Int] { override def toString = "e2"}
     val eventSelector = Var(e1)

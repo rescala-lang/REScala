@@ -10,7 +10,7 @@ import scala.collection.immutable.Set
 import rescala.Signal
 import rescala.Var
 import rescala._
-
+import scala.language.implicitConversions
 
 
 class GlitchFreedomTestSuite extends AssertionsForJUnit with MockitoSugar {
