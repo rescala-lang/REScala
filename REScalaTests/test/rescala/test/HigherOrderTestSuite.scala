@@ -180,19 +180,19 @@ class HigherOrderTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(s.get == 4)
     //assert(changeCount == 2) // fails
   }
-  
-  
-  
+
+
+
   @Test def unwrap_Event() = {
     val e1 = new ImperativeEvent[Int] { override def toString = "e1"}
     val e2 = new ImperativeEvent[Int] { override def toString = "e2"}
     val eventSelector = Var(e1)
     val selected = Signal { eventSelector() }
     val unwrapped = IFunctions.unwrap(selected)
-    
+
     var lastEvent = -1
     unwrapped += { lastEvent = _}
-    
+
     e1(1)
     assert(lastEvent == 1)
     e2(2)

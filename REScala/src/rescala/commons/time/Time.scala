@@ -1,5 +1,7 @@
 package rescala.commons.time
 
+import scala.language.implicitConversions
+
 class Time(val ns: Long) extends AnyVal {
   def mus: Long = ns / 1000
   def ms: Long = mus / 1000
