@@ -78,9 +78,8 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
 
     // support mutable values by using hashValue rather than ==
     //val hashBefore = currentValue.hashCode
-    var tmp: T = null.asInstanceOf[T]
-    try {
-      tmp = expr(this) // Evaluation)
+    val tmp = try {
+      expr(this) // Evaluation)
     } catch {
       case e: Exception => {
         ReactiveEngine.log.nodeEvaluationEndedWithException(this, e)
