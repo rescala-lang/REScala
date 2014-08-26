@@ -17,8 +17,8 @@ class ReListView[A](
     val visibleRowCount: ReSwingValue[Int] = (),
     val selectionForeground: ReSwingValue[Color] = (),
     val selectionBackground: ReSwingValue[Color] = (),
-    val selectIndices: ReSwingEvent[Seq[Int]] = (),
-    val ensureIndexIsVisible: ReSwingEvent[Int] = (),
+    selectIndices: ReSwingEvent[Seq[Int]] = (),
+    ensureIndexIsVisible: ReSwingEvent[Int] = (),
     `selection.listDataSync`: ReSwingValue[Boolean] = (),
     `selection.intervalMode`: ReSwingValue[IntervalMode.Value] = (),
     background: ReSwingValue[Color] = (),
@@ -46,7 +46,7 @@ class ReListView[A](
       { peer publish ListElementsAdded(peer, e.getIndex0 to e.getIndex1) }
   }
 
-  def modelChanged = {
+  def modelChanged {
     if (model != null)
       model removeListDataListener modelListener
     if (javaPeer.getModel != null)
