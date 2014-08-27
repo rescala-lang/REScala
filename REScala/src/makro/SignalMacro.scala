@@ -3,8 +3,7 @@ package makro
 import scala.language.experimental.macros
 
 import scala.collection.mutable.ListBuffer
-//import scala.reflect.macros.blackbox.Context
-import scala.reflect.macros.whitebox.Context
+import scala.reflect.macros.blackbox.Context
 
 import rescala.DependentSignal
 import rescala.Signal
@@ -70,21 +69,37 @@ object SignalMacro {
     def isMethodWithPotentialNonLocalSideEffects(tree: Tree) = tree match {
       case fun @ (TypeApply(_, _) | Apply(_, _) | Select(_, _))
           if !(uncheckedExpressions contains fun) =>
-        fun exists {
-          case Apply(fun, _) =>
+        val args = tree match {
+          case TypeApply(_, args) => args
+          case Apply(_, args) => args
+          case _ => List.empty
+        }
+
+        val noFunctionInArgs = !(args exists {
+          case tree
+            if (tree.tpe match {
+              case TypeRef(_, _, args) => args.nonEmpty
+              case _ => false
+            }) => true
+          case _ => false
+        })
+
+        val noConstructorInFun = (fun exists {
+          case Apply(fun, args) =>
             !(fun exists {
               case Select(_, termNames.CONSTRUCTOR) => true
-              case tree: SymTree => definedSymbols contains tree.symbol
               case _ => false
             })
           case _ => false
-        }
+        })
+
+        noFunctionInArgs && noConstructorInFun
       case _ => false
     }
 
     def potentialSideEffectWarning(pos: Position) =
       c.warning(pos,
-          "Statement is either unnecessary or has side effects. " +
+          "Statement may either be unnecessary or have side effects. " +
           "Signal expressions should have no side effects.")
 
     expression.tree foreach {
@@ -110,7 +125,7 @@ object SignalMacro {
     val signalValues = ListBuffer.empty[ValDef]
 
     object transformer extends Transformer {
-      private def treeTypeNullWarning() =
+      private def treeTypeNullWarning =
         c.warning(c.enclosingPosition,
             "internal warning: tree type was null, " +
             "this should not happen but the signal may still work")
@@ -122,7 +137,7 @@ object SignalMacro {
             "signal is evaluated which can lead to unintentional behavior")
 
       private def isReactive(tree: Tree) =
-        if (tree.tpe == null) { treeTypeNullWarning(); false }
+        if (tree.tpe == null) { treeTypeNullWarning; false }
         else tree.tpe <:< typeOf[Signal[_]] || tree.tpe <:< typeOf[Var[_]]
 
       override def transform(tree: Tree) =
@@ -135,8 +150,9 @@ object SignalMacro {
           // to
           //   SignalSynt { s => a(s) + b(s) }
           case tree @ Apply(Select(reactive, apply), List())
-              if isReactive(reactive) && apply.decodedName.toString == "apply" &&
-                 !(nestedUnexpandedMacros contains tree) =>
+              if isReactive(reactive)
+                 && apply.decodedName.toString == "apply"
+                 && !(nestedUnexpandedMacros contains tree) =>
             val reactiveApply = Select(reactive, TermName("apply"))
             internal setType (reactiveApply, tree.tpe)
             Apply(super.transform(reactiveApply), List(signalSyntArgIdent))
@@ -170,8 +186,9 @@ object SignalMacro {
               !reactive.symbol.asTerm.isAccessor &&
               (reactive filter {
                 case tree @ Apply(Select(chainedReactive, apply), List())
-                    if isReactive(chainedReactive) && apply.decodedName.toString == "apply" &&
-                       !(nestedUnexpandedMacros contains tree) =>
+                    if isReactive(chainedReactive)
+                       && apply.decodedName.toString == "apply"
+                       && !(nestedUnexpandedMacros contains tree) =>
 
                   if (!(uncheckedExpressions contains reactive)) {
                     def methodObjectType(method: Tree) = {
