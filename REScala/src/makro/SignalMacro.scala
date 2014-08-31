@@ -180,7 +180,7 @@ object SignalMacro {
           // and creates a signal value
           //   val s = event.count
           case reactive @ (TypeApply(_, _) | Apply(_, _) | Select(_, _))
-          if isReactive(reactive) &&
+            if isReactive(reactive) &&
               // make sure that the expression e to be cut out
               // - refers to a term that is not a val or var
               //   or an accessor for a field
@@ -194,47 +194,52 @@ object SignalMacro {
               !reactive.symbol.asTerm.isVal &&
               !reactive.symbol.asTerm.isVar &&
               !reactive.symbol.asTerm.isAccessor &&
-              (reactive filter {
-                case tree @ Apply(Select(chainedReactive, apply), List())
-                    if isReactive(chainedReactive)
-                       && apply.decodedName.toString == "apply"
-                       && !(nestedUnexpandedMacros contains tree) =>
+              (reactive filter { tree =>
+                val citical = tree match {
+                  // check if reactive results from a function that is
+                  // itself called on a reactive value
+                  case tree @ Apply(Select(chainedReactive, apply), List()) =>
+                    isReactive(chainedReactive) &&
+                       apply.decodedName.toString == "apply" &&
+                       !(nestedUnexpandedMacros contains tree)
 
-                  if (!(uncheckedExpressions contains reactive)) {
-                    def methodObjectType(method: Tree) = {
-                      def methodObjectType(tree: Tree): Type =
-                        if (tree.symbol != method.symbol)
-                          tree.tpe
-                        else if (tree.children.nonEmpty)
-                          methodObjectType(tree.children.head)
-                        else
-                          NoType
-
-                      methodObjectType(method)
+                  // check reference definitions that are defined within the
+                  // macro expression but not within the reactive
+                  case tree: SymTree =>
+                    definedSymbols get tree.symbol match {
+                      case Some(defTree) => !(reactive exists { _ == defTree })
+                      case _ => false
                     }
 
-                    // issue no warning if the reactive is retrieved from a container
-                    // determined by the generic type parameter
-                    methodObjectType(reactive) match {
-                      case TypeRef(_, _, args) =>
-                        if (!(args contains reactive.tpe))
-                          potentialReactiveConstructionWarning(reactive.pos)
-                      case _ =>
-                        potentialReactiveConstructionWarning(reactive.pos)
-                    }
+                  // "uncitical" reactive that can be cut out
+                  case _ => false
+                }
+
+                if (citical && !(uncheckedExpressions contains reactive)) {
+                  def methodObjectType(method: Tree) = {
+                    def methodObjectType(tree: Tree): Type =
+                      if (tree.symbol != method.symbol)
+                        tree.tpe
+                      else if (tree.children.nonEmpty)
+                        methodObjectType(tree.children.head)
+                      else
+                        NoType
+
+                    methodObjectType(method)
                   }
 
-                  true
-
-                case tree: SymTree =>
-                  definedSymbols get tree.symbol match {
-                    case Some(defTree) if !(reactive exists { _ == defTree }) =>
-                      if (!(uncheckedExpressions contains reactive))
+                  // issue no warning if the reactive is retrieved from a container
+                  // determined by the generic type parameter
+                  methodObjectType(reactive) match {
+                    case TypeRef(_, _, args) =>
+                      if (!(args contains reactive.tpe))
                         potentialReactiveConstructionWarning(reactive.pos)
-                      true
-                    case _ => false
+                    case _ =>
+                      potentialReactiveConstructionWarning(reactive.pos)
                   }
-                case _ => false
+                }
+
+                citical
               }).isEmpty =>
 
             // create the signal definition to be cut out of the
