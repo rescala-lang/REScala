@@ -41,7 +41,17 @@ object SignalMacro {
     // we need to take special care for nested signals
     val nestedUnexpandedMacros = (expression.tree collect {
       case tree if tree.symbol != null && tree.symbol.isMacro =>
-        tree :: (tree filter { _ => true })
+        val makro = tree match {
+          case Apply(TypeApply(Select(makro, _), _), _) => makro
+          case TypeApply(Select(makro, _), _) => makro
+          case Select(makro, _) => makro
+          case _ => null
+        }
+
+        if (makro != null && makro.tpe =:= typeOf[this.type])
+          tree :: (tree filter { _ => true })
+        else
+          List.empty
     }).flatten.toSet
 
     // collect expression annotated to be unchecked and do not issue warnings
