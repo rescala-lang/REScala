@@ -101,9 +101,15 @@ private[reswing] abstract trait ReSwingValueConnection {
           value initLazily { _ => inSyncEDT { initReSwingValueConnection } }
 
           delayedInitValues += { () =>
+            var updatingSwingNotification = false
             if (setter.isDefined) {
               val set = setter.get
-              value use { v => inSyncEDT { set(v) } }
+              value use { v =>
+                if (updatingSwingNotification)
+                  Swing onEDT { set(v) }
+                else
+                  inSyncEDT { set(v) }
+              }
 
               if (value.fixed)
                 for (name <- names)
@@ -127,12 +133,16 @@ private[reswing] abstract trait ReSwingValueConnection {
                 name match {
                   case Left(name) =>
                     changingProperties getOrElseUpdate (name, ListBuffer()) += { () =>
-                      value() = getter() }
+                      updatingSwingNotification = true
+                      value() = getter()
+                      updatingSwingNotification = false }
 
                   case Right((publisher, reaction)) =>
                     reactor listenTo publisher
                     changingReactions.getOrElseUpdate(reaction, ListBuffer()) += { () =>
-                      value() = getter() }
+                      updatingSwingNotification = true
+                      value() = getter()
+                      updatingSwingNotification = false }
                 }
             }
           }
