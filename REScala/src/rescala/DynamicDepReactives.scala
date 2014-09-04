@@ -23,7 +23,6 @@ class VarSynt[T](private[this] var value: T) extends Var[T] {
     //val hashBefore = old.hashCode
     if (old != newval) {
       value = newval
-      ReactiveEngine.log.nodeValueSet(this)
       TS.nextRound() // Testing
       timestamps += TS.newTs // testing
 
@@ -35,6 +34,7 @@ class VarSynt[T](private[this] var value: T) extends Var[T] {
       //DEBUG: System.err.println("DEBUG OUTPUT: no update: " + newval + " == " + value)
       timestamps += TS.newTs // testing
     }
+    ReactiveEngine.log.nodeValueSet(this)
   }
 
   def update(v: T) = set(v)
