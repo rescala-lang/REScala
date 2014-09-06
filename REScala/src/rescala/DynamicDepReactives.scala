@@ -17,7 +17,7 @@ class VarSynt[T](private[this] var value: T) extends Var[T] {
 
   def get = value
 
-  def set(newValue: T): Unit = {
+  def set(newValue: T): Unit = ReactiveEngine.synchronized {
     if (value != newValue) {
       value = newValue
       TS.nextRound() // Testing

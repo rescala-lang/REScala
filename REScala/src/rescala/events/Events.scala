@@ -114,7 +114,7 @@ trait EventNode[T] extends Event[T] {
 class ImperativeEvent[T] extends EventNode[T] {
 
   /** Trigger the event */
-  def apply(v: T): Unit = {
+  def apply(v: T): Unit = ReactiveEngine.synchronized {
     TS.nextRound()
     logTestingTimestamp()
     notifyDependents(v)
