@@ -3,7 +3,6 @@ import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.events._
-import rescala._
 
 
 

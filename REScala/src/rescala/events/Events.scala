@@ -115,8 +115,6 @@ class ImperativeEvent[T] extends EventNode[T] {
 
   /** Trigger the event */
   def apply(v: T): Unit = ReactiveEngine.synchronized {
-    TS.nextRound()
-    logTestingTimestamp()
     notifyDependents(v)
     ReactiveEngine.startEvaluation()
   }
@@ -142,7 +140,6 @@ abstract class UnaryStoreTriggerNode[StoreType, TriggeredType, DependencyType <:
   def store(stored: Option[StoreType], change: Any): Option[StoreType] = Some(change.asInstanceOf[StoreType])
 
   def triggerReevaluation(): Unit = {
-    logTestingTimestamp() // Testing
     trigger(storedValue).foreach(notifyDependents)
   }
 
@@ -177,7 +174,6 @@ abstract class BinaryStoreTriggerNode[StoreType, TriggeredType, T1, T2]
   def storeB(stored: Option[StoreType], change: T2): Option[StoreType]
 
   def triggerReevaluation(): Unit = {
-    logTestingTimestamp() // Testing
     trigger(storedValue).foreach(notifyDependents)
     storedValue = resetState
   }

@@ -1,11 +1,10 @@
 package rescala.test
 
 
-import rescala.Handler
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala._
+import rescala.{Handler, _}
 
 
 class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {

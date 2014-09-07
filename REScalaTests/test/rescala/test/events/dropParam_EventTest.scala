@@ -1,26 +1,15 @@
 package rescala.test.events
 
 
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.events._
-import rescala._
 
 
 
 
 class dropParam_EventTest extends AssertionsForJUnit with MockitoSugar {
-
-
-  @Before def initialize() {
-    TS.reset()
-  }
-  @After def cleanup() {
-    TS.reset()
-  }
 
   @Test def handlerOf_dropParam_IsExecuted() = {
     var test = 0

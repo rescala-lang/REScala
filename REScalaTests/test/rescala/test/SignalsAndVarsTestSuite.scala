@@ -2,13 +2,10 @@ package rescala.test
 
 
 //These 3 are for JUnitRunner
-import org.junit.Before
-import org.junit.Test
+import org.junit.{Before, Test}
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala._
-import rescala.Var
-import rescala.Handler
+import rescala.{Handler, Var, _}
 
 class SignalsAndVarsTestSuite extends AssertionsForJUnit with MockitoSugar {
 

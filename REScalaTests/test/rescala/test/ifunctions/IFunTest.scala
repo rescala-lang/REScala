@@ -4,7 +4,7 @@ import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala._
 import rescala.events._
-import rescala.IFunctions.Factory
+
 import scala.collection.LinearSeq
 
 
@@ -528,7 +528,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
 /* switched */
   @Test def switched_canSimulateSnaphot() {
 
-    import IFunctions._
+    import rescala.IFunctions._
 
     def snapshot[T,A](s: Signal[A])(e: Event[T]): Signal[A] = {
         return IFunctions.switch(e)(s)(new Factory[T, A] {

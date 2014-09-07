@@ -1,12 +1,11 @@
 package rescala.test
 
+import makro.SignalMacro.{SignalM => Signal}
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala._
-import makro.SignalMacro.{ SignalM => Signal }
 import rescala.events._
-import scala.collection.LinearSeq
 
 class HigherOrderTestSuite extends AssertionsForJUnit with MockitoSugar {
 

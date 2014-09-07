@@ -1,26 +1,15 @@
 package rescala.test.events
 
 
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.events._
-import rescala._
 
 
 
 
 class except_EventTest extends AssertionsForJUnit with MockitoSugar {
-
-
-  @Before def initialize() {
-    TS.reset()
-  }
-  @After def cleanup() {
-    TS.reset()
-  }
 
   @Test def handlerOf_except_IsExecutedIfBasicEventFires() = {
     var test = 0
@@ -52,7 +41,7 @@ class except_EventTest extends AssertionsForJUnit with MockitoSugar {
 
     var cond = false
     val e1 = new ImperativeEvent[Int]()
-    val e2 = e1 map ((x: Int) => (x * 2))
+    val e2 = e1 map ((x: Int) => x * 2)
     val e3 = e1 && cond
     val e1_except_e2 = e2 \ e3
     e1_except_e2 += ( (x: Int) => { test += 1 })
@@ -79,7 +68,7 @@ class except_EventTest extends AssertionsForJUnit with MockitoSugar {
     var cond = false
     val e1 = new ImperativeEvent[Int]()
     val e2 = e1 map ((x: Int) => x)
-    val e3 = ( e1 map ((x: Int) => (x * 2)) ) && cond
+    val e3 = ( e1 map ((x: Int) => x * 2) ) && cond
     val e1_except_e2 = e2 \ e3
     e1_except_e2 += ( (x: Int) => { value = x })
 

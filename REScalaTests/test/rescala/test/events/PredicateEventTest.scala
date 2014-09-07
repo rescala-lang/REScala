@@ -1,26 +1,15 @@
 package rescala.test.events
 
 
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.events._
-import rescala._
 
 
 
 
 class PredicateEventTest extends AssertionsForJUnit with MockitoSugar {
-
-
-  @Before def initialize() {
-    TS.reset()
-  }
-  @After def cleanup() {
-    TS.reset()
-  }
 
   @Test def predicateEventIsExecutedOnlyIfThePredicateIsTrue() = {
     var test = 0

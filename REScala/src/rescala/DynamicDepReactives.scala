@@ -5,13 +5,6 @@ import rescala.events.Event
 import rescala.events.ChangedEventNode
 import rescala.events.EventNode
 
-//trait FixedDepHolder extends Reactive {
-//  val fixedDependents = new ListBuffer[Dependent]
-//  def addFixedDependent(dep: Dependent) = fixedDependents += dep
-//  def removeFixedDependent(dep: Dependent) = fixedDependents -= dep
-// def notifyDependents(change: Any): Unit = dependents.map(_.dependsOnchanged(change,this))
-//}
-
 /* A node that has nodes that depend on it */
 class VarSynt[T](private[this] var value: T) extends Var[T] {
 
@@ -20,15 +13,12 @@ class VarSynt[T](private[this] var value: T) extends Var[T] {
   def set(newValue: T): Unit = ReactiveEngine.synchronized {
     if (value != newValue) {
       value = newValue
-      TS.nextRound() // Testing
-      logTestingTimestamp()
 
       notifyDependents(value)
       ReactiveEngine.startEvaluation()
 
     } else {
       ReactiveEngine.log.nodePropagationStopped(this)
-      logTestingTimestamp() // testing
     }
   }
 
@@ -50,8 +40,6 @@ trait DependentSignalImplementation[+T] extends DependentSignal[T] {
 
   def triggerReevaluation(): Unit = {
     ReactiveEngine.log.nodeEvaluationStarted(this)
-
-    logTestingTimestamp() // Testing
 
     val oldLevel = level
 
@@ -132,7 +120,6 @@ class WrappedEvent[T](wrapper: Signal[Event[T]]) extends EventNode[T] with Depen
   private def updateDependencies() = setDependOn(Set(wrapper, wrapper.get))
 
   def triggerReevaluation() {
-    logTestingTimestamp()
     notifyDependents(currentValue)
   }
   

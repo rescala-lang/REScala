@@ -8,12 +8,6 @@ import java.util.UUID
 
 /** A Reactive is a value type which has a dependency to other Reactives */
 trait Reactive {
-  // testing
-  private var _timestamps = List[Stamp]()
-  /** for compatibility reasons with existing tests */
-  def timestamps: List[Stamp] = _timestamps
-  def logTestingTimestamp() = _timestamps = TS.newTs :: _timestamps
-
   var _level = 0
   def ensureLevel(l: Int): Unit = if (l >= _level) _level = l + 1
   def level: Int = _level
@@ -218,31 +212,3 @@ object ReactiveEngine {
   }
 }
 
-// TODO: check the use of these classes. Originally was only for testing
-sealed case class Stamp(roundNum: Int, sequenceNum: Int)
-
-object TS {
-  private var _roundNum = 0
-  private var _sequenceNum = 0
-
-  def nextRound(): Unit = {
-    _roundNum += 1
-    _sequenceNum = 0
-
-    ReactiveEngine.log.logRound(getCurrentTs)
-  }
-
-  def newTs: Stamp = {
-    val ts = Stamp(_roundNum, _sequenceNum)
-    _sequenceNum += 1
-    ReactiveEngine.log.logRound(ts)
-    ts
-  }
-
-  def getCurrentTs = Stamp(_roundNum, _sequenceNum)
-
-  def reset(): Unit = {
-    _roundNum = 0
-    _sequenceNum = 0
-  }
-}
