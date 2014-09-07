@@ -1,11 +1,11 @@
-lazy val root = Project("rescala-root", file(".")).aggregate(core, tests)
+lazy val root = Project("root", file(".")).aggregate(core, tests)
 
-lazy val core = Project("rescala-core", file("REScala"))
+lazy val core = Project("rescala", file("REScala"))
   .settings(
     scalaSource in Compile <<= baseDirectory {(base) => new File(base, "src")},
     libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _))
 
-lazy val tests = Project("rescala-tests", file("REScalaTests"))
+lazy val tests = Project("tests", file("REScalaTests"))
   .settings(
     scalaSource in Test <<= baseDirectory {(base) => new File(base, "test")},
     parallelExecution in Test := false,

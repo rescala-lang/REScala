@@ -1,6 +1,7 @@
 package rescala.signals
 
 import rescala._
+import rescala.propagation.Turn
 
 /**
  * Create a StaticVar
@@ -11,11 +12,12 @@ object StaticVar {
 }
 
 /** A dependent reactive value which has static dependencies */
-class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: => T) extends DependentSignalImplementation[T] {
+class StaticSignal[+T](dependencies: List[Dependency[Any]])(expr: => T)(creationTurn: Turn)
+  extends DependentSignalImplementation[T](creationTurn) {
 
-  setDependOn(reactivesDependsOn)
-  override def initialValue(): T = expr
-  override def calculateNewValue(): T = expr
+  setDependencies(dependencies)
+  override def initialValue()(implicit turn: Turn): T = expr
+  override def calculateNewValue()(implicit turn: Turn): T = expr
 }
 
 /**
@@ -23,10 +25,11 @@ class StaticSignal[+T](reactivesDependsOn: List[DepHolder])(expr: => T) extends 
  */
 object StaticSignal {
 
-  def apply[T](reactivesDependsOn: List[DepHolder])(expr: => T) =
-    new StaticSignal(reactivesDependsOn)(expr)
+  def apply[T](dependencies: List[Dependency[Any]])(expr: => T) = Turn.maybeTurn { turn =>
+    new StaticSignal(dependencies)(expr)(turn)
+  }
 
   def apply[T]()(expr: => T): DependentSignal[T] = apply(List())(expr)
 
-  def apply[T](dependencyHolders: DepHolder*)(expr: => T): DependentSignal[T] = apply(dependencyHolders.toList)(expr)
+  def apply[T](dependencies: Dependency[Any]*)(expr: => T): DependentSignal[T] = apply(dependencies.toList)(expr)
 }

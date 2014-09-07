@@ -1,41 +1,37 @@
 package rescala.signals
 
 import rescala._
+import rescala.propagation.{NoChangePulse, DiffPulse, ValuePulse, Turn}
 
 /* A node that has nodes that depend on it */
 class VarSynt[T](private[this] var value: T) extends Var[T] {
 
   def get = value
 
-  def set(newValue: T): Unit = ReactiveEngine.synchronized {
+  def set(newValue: T): Unit = Turn.newTurn { turn =>
     if (value != newValue) {
-      value = newValue
-
-      notifyDependents(value)
-      ReactiveEngine.startEvaluation()
-
+      turn.pulse(this, DiffPulse(newValue, value))
+      turn.startEvaluation()
     } else {
       log.nodePropagationStopped(this)
     }
   }
-
-  def reEvaluate(): T = value
 }
 
 object VarSynt {
   def apply[T](initialValue: T) = new VarSynt(initialValue)
 }
 
-trait DependentSignalImplementation[+T] extends DependentSignal[T] {
+abstract class DependentSignalImplementation[+T](creationTurn: Turn) extends DependentSignal[T] {
 
-  def initialValue(): T
-  def calculateNewValue(): T
+  def initialValue()(implicit turn: Turn): T
+  def calculateNewValue()(implicit turn: Turn): T
 
-  private[this] var currentValue = initialValue()
+  private[this] var currentValue = initialValue()(creationTurn)
 
   def get = currentValue
 
-  def triggerReevaluation(): Unit = {
+  override def triggerReevaluation()(implicit turn: Turn): Unit = {
     log.nodeEvaluationStarted(this)
 
     val oldLevel = level
@@ -49,45 +45,49 @@ trait DependentSignalImplementation[+T] extends DependentSignal[T] {
      * if the level increases by more than one, we depend on something that still has to be in the queue
      */
     if (level == oldLevel + 1) {
-      ReactiveEngine.addToEvalQueue(this)
+      turn.addToEvalQueue(this)
     }
     else {
       if (level <= oldLevel) {
         /* Notify dependents only of the value changed */
         if (currentValue != newValue) {
-          currentValue = newValue
-          notifyDependents(currentValue)
+          turn.pulse(this, DiffPulse(newValue, currentValue))
         }
         else {
+          turn.pulse(this, NoChangePulse)
           log.nodePropagationStopped(this)
         }
       } : Unit
     }
     log.nodeEvaluationEnded(this)
   }
-  override def dependsOnchanged(change: Any, dep: DepHolder) = ReactiveEngine.addToEvalQueue(this)
+  override def dependencyChanged[Q](dep: Dependency[Q])(implicit turn: Turn): Unit = turn.addToEvalQueue(this)
 
 }
 
 /** A dependant reactive value with dynamic dependencies (depending signals can change during evaluation) */
-class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: SignalSynt[T] => T)
-  extends { private var detectedDependencies = Set[DepHolder]() } with DependentSignalImplementation[T] {
+class SignalSynt[+T](
+    dependenciesUpperBound: List[Dependency[Any]],
+    private var detectedDependencies: Set[Dependency[Any]] = Set())
+    (expr: SignalSynt[T] => T)
+    (creationTurn: Turn)
+  extends DependentSignalImplementation[T](creationTurn) {
 
   override def onDynamicDependencyUse[A](dependency: Signal[A]): Unit = {
     super.onDynamicDependencyUse(dependency)
     detectedDependencies += dependency
   }
 
-  override def initialValue(): T = calculateNewValue()
+  override def initialValue()(implicit turn: Turn): T = calculateNewValue()
 
-  override def calculateNewValue(): T = {
+  override def calculateNewValue()(implicit turn: Turn): T = {
     val newValue = expr(this)
-    setDependOn(detectedDependencies)
+    setDependencies(detectedDependencies)
     detectedDependencies = Set()
     newValue
   }
 
-  if(reactivesDependsOnUpperBound.nonEmpty) ensureLevel(reactivesDependsOnUpperBound.map{_.level}.max)
+  if(dependenciesUpperBound.nonEmpty) ensureLevel(dependenciesUpperBound.map{_.level}.max)
 
 }
 
@@ -95,10 +95,11 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
  * A syntactic signal
  */
 object SignalSynt {
-  def apply[T](reactivesDependsOn: List[DepHolder])(expr: SignalSynt[T] => T) =
-    new SignalSynt(reactivesDependsOn)(expr)
+  def apply[T](dependencies: List[Dependency[Any]])(expr: SignalSynt[T] => T) = Turn.maybeTurn { turn =>
+    new SignalSynt(dependencies)(expr)(turn)
+  }
 
   def apply[T](expr: SignalSynt[T] => T): SignalSynt[T] = apply(List())(expr)
-  def apply[T](dependencyHolders: DepHolder*)(expr: SignalSynt[T] => T): SignalSynt[T] = apply(dependencyHolders.toList)(expr)
+  def apply[T](dependencyHolders: Dependency[Any]*)(expr: SignalSynt[T] => T): SignalSynt[T] = apply(dependencyHolders.toList)(expr)
 
 }

@@ -2,13 +2,12 @@ package rescala
 
 import rescala.events._
 import rescala.log.ReactiveLogging
+import rescala.propagation.{Pulse, Turn}
 import rescala.signals.Signal
-
-import scala.collection.mutable
 
 /** A Reactive is a value type which has a dependency to other Reactives */
 trait Reactive extends ReactiveLogging {
-  var _level = 0
+  private var _level = 0
   def ensureLevel(l: Int): Unit = if (l >= _level) _level = l + 1
   def level: Int = _level
 
@@ -16,70 +15,75 @@ trait Reactive extends ReactiveLogging {
 }
 
 /** A node that has nodes that depend on it */
-trait DepHolder extends Reactive {
-  private var dependents: Set[Dependent] = Set()
+trait Dependency[+P] extends Reactive {
+  private var dependants: Set[Dependant] = Set()
 
-  /** used for testing*/
-  def dependentCount() = dependents.size
+  /** used for testing */
+  def dependentCount(): Int = dependants.size
 
-  def addDependent(dep: Dependent) = {
-    if (!dependents.contains(dep)) {
-      dependents += dep
+  def addDependant(dep: Dependant): Unit = {
+    if (!dependants.contains(dep)) {
+      dependants += dep
       log.nodeAttached(dep, this)
     }
   }
-  def removeDependent(dep: Dependent) = dependents -= dep
-  def notifyDependents(change: Any): Unit = {
+
+  def removeDependant(dep: Dependant) = dependants -= dep
+
+  final def notifyDependants(implicit turn: Turn): Unit = {
     log.nodePulsed(this)
-    dependents.foreach(_.dependsOnchanged(change, this))
+    dependants.foreach(_.dependencyChanged(this)(turn))
   }
 
   override def ensureLevel(l: Int): Unit = {
     val oldLevel = level
     super.ensureLevel(l)
     val newLevel = level
-    if (oldLevel < newLevel) dependents.foreach(_.ensureLevel(newLevel))
+    if (oldLevel < newLevel) dependants.foreach(_.ensureLevel(newLevel))
   }
+
+  def pulse(implicit turn: Turn): Pulse[P] = turn.pulse(this)
+
 }
 
 /** A node that depends on other nodes */
-trait Dependent extends Reactive {
-  private var dependOn: Set[DepHolder] = Set()
+trait Dependant extends Reactive {
+  private var dependencies: Set[Dependency[Any]] = Set()
 
   /** for testing */
-  def dependOnCount() = dependOn.size
+  def dependencyCount(): Int = dependencies.size
 
-  def addDependOn(dep: DepHolder) = {
-    if (!dependOn.contains(dep)) {
+  def addDependency[Q](dep: Dependency[Q]): Unit = {
+    if (!dependencies.contains(dep)) {
       ensureLevel(dep.level)
-      dependOn += dep
-      dep.addDependent(this)
+      dependencies += dep
+      dep.addDependant(this)
       log.nodeAttached(this, dep)
     }
   }
-  def setDependOn(deps: TraversableOnce[DepHolder]) = {
+  def setDependencies(deps: TraversableOnce[Dependency[Any]]): Unit = {
     val newDependencies = deps.toSet
-    val removed = dependOn.diff(newDependencies)
-    val added = newDependencies.diff(dependOn)
-    removed.foreach(removeDependOn)
-    added.foreach(addDependOn)
-    dependOn = deps.toSet
+    val removed = dependencies.diff(newDependencies)
+    val added = newDependencies.diff(dependencies)
+    removed.foreach(removeDependency)
+    added.foreach(addDependency)
+    dependencies = deps.toSet
   }
-  def removeDependOn(dep: DepHolder) = {
-    dep.removeDependent(this)
-    dependOn -= dep
+  def removeDependency[Q](dep: Dependency[Q]): Unit = {
+    dep.removeDependant(this)
+    dependencies -= dep
   }
 
   /** called when it is this events turn to be evaluated
     * (head of the evaluation queue) */
-  protected[rescala] def triggerReevaluation(): Unit
+  protected[rescala] def triggerReevaluation()(implicit turn: Turn): Unit
 
   /** callback when a dependency has changed */
-  def dependsOnchanged(change: Any, dep: DepHolder): Unit
+  def dependencyChanged[Q](dep: Dependency[Q])(implicit turn: Turn): Unit = turn.addToEvalQueue(this)
 }
 
 trait Changing[+T] {
-  this: DepHolder =>
+  this: Dependency[T] =>
 
   /**
    * Create an event that fires every time the signal changes. It fires the tuple
@@ -132,6 +136,6 @@ trait FoldableReactive[+A] {
 
 
 /** An inner node which depends on other values */
-trait DependentSignal[+T] extends Signal[T] with Dependent
+trait DependentSignal[+T] extends Signal[T] with Dependant
 
 

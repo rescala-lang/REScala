@@ -1,11 +1,12 @@
 package rescala.signals
 
+import rescala.propagation.Turn
 import rescala.{IFunctions, _}
 import rescala.events.Event
 
-trait Signal[+A] extends Changing[A] with FoldableReactive[A] with DepHolder {
+trait Signal[+A] extends Changing[A] with FoldableReactive[A] with Dependency[A] {
   override def fold[B](init: B)(f: (B, A) => B): Signal[B] =
-    new FoldedSignal(changed, init, f)
+    Turn.maybeTurn { turn => new FoldedSignal(changed, init, f)(turn) }
 
   def get: A
 

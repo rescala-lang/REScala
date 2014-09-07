@@ -24,11 +24,11 @@ class DependenciesTestSuite extends AssertionsForJUnit with MockitoSugar {
     val s2 = Signal { "Hello World" }
     val s3 = Signal { false }
     assert(s1.dependentCount() == 0)
-    assert(s1.dependOnCount() == 0)
+    assert(s1.dependencyCount() == 0)
     assert(s2.dependentCount() == 0)
-    assert(s2.dependOnCount() == 0)
+    assert(s2.dependencyCount() == 0)
     assert(s3.dependentCount() == 0)
-    assert(s3.dependOnCount() == 0)
+    assert(s3.dependencyCount() == 0)
   }
 
   @Test def varsAndSignalsCanHaveDependencies(): Unit = {
@@ -40,7 +40,7 @@ class DependenciesTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(v2.dependentCount() == 0)
     assert(v3.dependentCount() == 1)
     assert(s.dependentCount() == 0)
-    assert(s.dependOnCount() == 2)
+    assert(s.dependencyCount() == 2)
   }
 
   @Test def explicitReevaluationDoesNotChangeDependencies(): Unit = {
@@ -52,14 +52,14 @@ class DependenciesTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(v2.dependentCount() == 0)
     assert(v3.dependentCount() == 1)
     assert(s.dependentCount() == 0)
-    assert(s.dependOnCount() == 2)
+    assert(s.dependencyCount() == 2)
 
     s.triggerReevaluation()
     assert(v1.dependentCount() == 1)
     assert(v2.dependentCount() == 0)
     assert(v3.dependentCount() == 1)
     assert(s.dependentCount() == 0)
-    assert(s.dependOnCount() == 2)
+    assert(s.dependencyCount() == 2)
   }
 
   @Test def implicitReevaluationChangesDependenciesCorrectly(): Unit = {
@@ -71,14 +71,14 @@ class DependenciesTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(v2.dependentCount() == 0)
     assert(v3.dependentCount() == 1)
     assert(s.dependentCount() == 0)
-    assert(s.dependOnCount() == 2)
+    assert(s.dependencyCount() == 2)
 
     v3.set(false)
     assert(v1.dependentCount() == 0)
     assert(v2.dependentCount() == 1)
     assert(v3.dependentCount() == 1)
     assert(s.dependentCount() == 0)
-    assert(s.dependOnCount() == 2)
+    assert(s.dependencyCount() == 2)
   }
 
   @Test def signalsCanHaveDependents(): Unit = {
@@ -87,9 +87,9 @@ class DependenciesTestSuite extends AssertionsForJUnit with MockitoSugar {
     val s3 = Signal { s1() + s2() }
     assert(s1.dependentCount() == 1)
     assert(s2.dependentCount() == 1)
-    assert(s2.dependOnCount() == 0)
+    assert(s2.dependencyCount() == 0)
     assert(s3.dependentCount() == 0)
-    assert(s3.dependOnCount() == 2)
+    assert(s3.dependencyCount() == 2)
   }
 
   @Test def fibonacciDependencies(): Unit = {
@@ -100,9 +100,9 @@ class DependenciesTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(f1.dependentCount() == 1)
     assert(f2.dependentCount() == 2)
     assert(f3.dependentCount() == 1)
-    assert(f3.dependOnCount() == 2)
+    assert(f3.dependencyCount() == 2)
     assert(f4.dependentCount() == 0)
-    assert(f4.dependOnCount() == 2)
+    assert(f4.dependencyCount() == 2)
   }
 
 }

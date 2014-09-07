@@ -1,30 +1,25 @@
 package rescala.events
 
+import rescala.propagation.{Turn}
 import rescala.signals.Signal
-import rescala.{DepHolder, Dependent, ReactiveEngine}
+import rescala.{Dependency, Dependant}
 
 /** A wrapped event inside a signal, that gets "flattened" to a plain event node */
-class WrappedEvent[T](wrapper: Signal[Event[T]]) extends EventNode[T] with Dependent {
-
-  var currentValue: T = _
+class WrappedEvent[T](wrapper: Signal[Event[T]]) extends EventNode[T] with Dependant {
 
   updateDependencies()
 
-  private def updateDependencies() = setDependOn(Set(wrapper, wrapper.get))
+  private def updateDependencies() = setDependencies(Set(wrapper, wrapper.get))
 
-  def triggerReevaluation(): Unit = {
-    notifyDependents(currentValue)
+  override def triggerReevaluation()(implicit turn: Turn): Unit = {
+    for { event <- wrapper.pulse.valueOption} {
+      turn.pulse(this, event.pulse)
+    }
   }
 
-  override def dependsOnchanged(change: Any, dep: DepHolder) = {
-    if(dep eq wrapper) {
-	    updateDependencies()
-    }
-    else if(dep eq wrapper.get) {
-      currentValue = change.asInstanceOf[T]
-    	ReactiveEngine.addToEvalQueue(this)
-    }
-    else throw new IllegalStateException("Illegal DepHolder " + dep)
+  override def dependencyChanged[Q](dep: Dependency[Q])(implicit turn: Turn): Unit = {
+    if(dep eq wrapper) updateDependencies()
+    turn.addToEvalQueue(this)
 
   }
 

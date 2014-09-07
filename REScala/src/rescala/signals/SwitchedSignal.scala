@@ -2,18 +2,21 @@ package rescala.signals
 
 import rescala.IFunctions
 import rescala.events.Event
+import rescala.propagation.Turn
 
-class SwitchedSignal[+T, -E](trigger: Event[E], initialSignal: Signal[T], initialFactory: IFunctions.Factory[E, T])
-  extends DependentSignalImplementation[T] {
+class SwitchedSignal[+T, -E]
+    (trigger: Event[E], initialSignal: Signal[T], initialFactory: IFunctions.Factory[E, T])
+    (creationTurn: Turn)
+  extends DependentSignalImplementation[T](creationTurn) {
 
   val fold = trigger.fold((initialSignal, initialFactory)) { case ((_, factory), pulse) =>  factory(pulse) }
 
-  setDependOn(Set(fold, initialSignal))
+  setDependencies(Set(fold, initialSignal))
 
-  override def initialValue(): T = initialSignal.get
+  override def initialValue()(implicit turn: Turn): T = initialSignal.get
 
-  override def calculateNewValue(): T = {
-    setDependOn(Set(fold, fold.get._1))
+  override def calculateNewValue()(implicit turn: Turn): T = {
+    setDependencies(Set(fold, fold.get._1))
     fold.get._1.get
   }
 }

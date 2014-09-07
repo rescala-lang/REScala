@@ -12,7 +12,7 @@ import rescala.signals._
 class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
 
 
-  var dh: DepHolder = _
+  var dh: Dependency = _
   var v:  Var[Int]  = _
   var s1: Signal[Int] = _
   var s2: Signal[Int] = _

@@ -1,28 +1,15 @@
 package rescala.signals
 
-import rescala.DepHolder
+import rescala.Dependency
 import rescala.events.Event
+import rescala.propagation.Turn
 
-class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T, E) => T)
-  extends DependentSignalImplementation[T] {
+class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T, E) => T)(creationTurn: Turn)
+  extends DependentSignalImplementation[T](creationTurn) {
 
-  addDependOn(e)
+  addDependency(e)
 
-  // The cached value of the last occurence of e
-  private[this] var lastEvent: E = _
-
-  override def initialValue(): T = init
-  override def calculateNewValue(): T = f(get, lastEvent)
-
-  override def dependsOnchanged(change: Any, dep: DepHolder) = {
-    if (dep eq e) {
-      lastEvent = change.asInstanceOf[E]
-    } else {
-      // this would be an implementation error
-      throw new RuntimeException("Folded Signals can only depend on a single event node")
-    }
-
-    super.dependsOnchanged(change, dep)
-  }
+  override def initialValue()(implicit turn: Turn): T = init
+  override def calculateNewValue()(implicit turn: Turn): T = e.pulse.valueOption.fold(get)(f(get, _))
 
 }

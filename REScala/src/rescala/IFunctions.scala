@@ -1,6 +1,7 @@
 package rescala
 
 import rescala.events._
+import rescala.propagation.Turn
 import rescala.signals.{FoldedSignal, Signal, SignalSynt, SwitchedSignal}
 
 import scala.collection.LinearSeq
@@ -9,7 +10,7 @@ import scala.collection.immutable.Queue
 object IFunctions {
 
   /** folds events with a given fold function to create a Signal */
-  def fold[T, A](e: Event[T], init: A)(f: (A, T) => A): Signal[A] = new FoldedSignal(e, init, f)
+  def fold[T, A](e: Event[T], init: A)(f: (A, T) => A): Signal[A] = Turn.maybeTurn { turn => new FoldedSignal(e, init, f)(turn) }
 
   /** Iterates a value on the occurrence of the event. */
   def iterate[A](e: Event[_], init: A)(f: A => A): Signal[A] = fold(e, init)((acc, _) => f(acc))
@@ -106,7 +107,7 @@ object IFunctions {
 
   /** Generates a signal from an initial signal and a factory for subsequent ones */
   def switch[T, A](e: Event[T])(init: Signal[A])(factory: Factory[T, A]): Signal[A] =
-    new SwitchedSignal(e, init, factory)
+    Turn.maybeTurn { turn => new SwitchedSignal(e, init, factory)(turn) }
   
   /** Unwraps an event wrapped in a signal */
   def unwrap[T](wrappedEvent: Signal[Event[T]]): Event[T] = 

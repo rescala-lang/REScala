@@ -9,7 +9,7 @@ import rescala.signals._
 
 class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
 
-  var dh: DepHolder = _
+  var dh: Dependency = _
   var v:  Var[Int]  = _
   var s1: DependentSignal[Int] = _
   var s2: DependentSignal[Int] = _
@@ -19,20 +19,20 @@ class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
 
   @Test def dependencyHolderNotifiesDependentsWhenNotifyDependentsIsCalled(): Unit = {
 
-    dh = new {} with DepHolder {}
+    dh = new {} with Dependency {}
     v  = Var(0)
     s1 = mock[DependentSignal[Int]]
     s2 = mock[DependentSignal[Int]]
     s3 = mock[DependentSignal[Int]]
 
-    dh.addDependent(s1)
-    dh.addDependent(s2)
-    dh.addDependent(s3)
-    dh.notifyDependents({})
+    dh.addDependant(s1)
+    dh.addDependant(s2)
+    dh.addDependant(s3)
+    dh.notifyDependants({})
 
-    verify(s1).dependsOnchanged({},dh)
-    verify(s2).dependsOnchanged({},dh)
-    verify(s3).dependsOnchanged({},dh)
+    verify(s1).dependencyChanged({},dh)
+    verify(s2).dependencyChanged({},dh)
+    verify(s3).dependencyChanged({},dh)
 
   }
 
