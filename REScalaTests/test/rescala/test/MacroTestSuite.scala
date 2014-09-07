@@ -1,16 +1,12 @@
 package rescala.test
 
-
-
-
-
 import org.junit.{Before, Test}
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala._
 import rescala.events._
 import rescala.makro.SignalMacro.{SignalM => Signal}
-
+import rescala.signals._
 
 
 class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {

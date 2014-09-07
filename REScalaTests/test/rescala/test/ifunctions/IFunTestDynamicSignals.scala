@@ -5,6 +5,7 @@ import org.scalatest.mock.MockitoSugar
 import rescala._
 import rescala.events._
 import rescala.makro.SignalMacro.{SignalM => Signal}
+import rescala.signals.{SignalSynt, _}
 
 import scala.collection.LinearSeq
 

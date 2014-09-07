@@ -4,7 +4,7 @@ package rescala.test
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala._
+import rescala.signals._
 
 
 class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {

@@ -1,21 +1,17 @@
 package rescala.makro
 
-import scala.language.experimental.macros
+import rescala.DependentSignal
+import rescala.signals._
 
 import scala.collection.mutable.ListBuffer
-//import scala.reflect.macros.blackbox.Context
-import scala.reflect.macros.whitebox.Context
-
-import rescala.DependentSignal
-import rescala.Signal
-import rescala.SignalSynt
-import rescala.Var
+import scala.language.experimental.macros
+import scala.reflect.macros.whitebox
 
 object SignalMacro {
 
   def SignalM[A](expression: A): DependentSignal[A] = macro SignalMacro[A]
 
-  def SignalMacro[A: c.WeakTypeTag](c: Context)(expression: c.Expr[A]):
+  def SignalMacro[A: c.WeakTypeTag](c: whitebox.Context)(expression: c.Expr[A]):
       c.Expr[DependentSignal[A]] = {
     import c.universe._
 
@@ -245,8 +241,10 @@ object SignalMacro {
           Select(
             Select(
               Select(
-                Ident(termNames.ROOTPKG),
-                TermName("rescala")),
+                Select(
+                  Ident(termNames.ROOTPKG),
+                  TermName("rescala")),
+                TermName("signals")),
               TermName("SignalSynt")),
             TermName("apply")),
           List(TypeTree(weakTypeOf[A]))),

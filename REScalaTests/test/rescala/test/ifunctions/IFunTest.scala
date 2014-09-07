@@ -4,6 +4,7 @@ import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala._
 import rescala.events._
+import rescala.signals._
 
 import scala.collection.LinearSeq
 

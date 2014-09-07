@@ -1,9 +1,6 @@
-package rescala
+package rescala.signals
 
-import scala.collection.mutable.ListBuffer
-import rescala.events.Event
-import rescala.events.ChangedEventNode
-import rescala.events.EventNode
+import rescala._
 
 /* A node that has nodes that depend on it */
 class VarSynt[T](private[this] var value: T) extends Var[T] {
@@ -105,9 +102,3 @@ object SignalSynt {
   def apply[T](dependencyHolders: DepHolder*)(expr: SignalSynt[T] => T): SignalSynt[T] = apply(dependencyHolders.toList)(expr)
 
 }
-
-
-
-
-
-

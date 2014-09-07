@@ -4,7 +4,8 @@ import org.junit.{Before, Test}
 import org.mockito.Mockito.verify
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.{DepHolder, Var, _}
+import rescala._
+import rescala.signals._
 
 class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
 

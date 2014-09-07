@@ -1,9 +1,10 @@
 package rescala.events
 
+import rescala._
 import rescala.events.EventNodeExcept.State
+import rescala.signals.Signal
 
 import scala.collection.LinearSeq
-import rescala._
 
 
 

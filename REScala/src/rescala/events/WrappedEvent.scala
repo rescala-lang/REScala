@@ -1,6 +1,7 @@
 package rescala.events
 
-import rescala.{DepHolder, Dependent, ReactiveEngine, Signal}
+import rescala.signals.Signal
+import rescala.{DepHolder, Dependent, ReactiveEngine}
 
 /** A wrapped event inside a signal, that gets "flattened" to a plain event node */
 class WrappedEvent[T](wrapper: Signal[Event[T]]) extends EventNode[T] with Dependent {

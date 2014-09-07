@@ -1,10 +1,10 @@
 package rescala
 
 import rescala.events._
-import rescala.log._
-import rescala.signals.{SwitchedSignal, FoldedSignal}
-import scala.collection.immutable.Queue
+import rescala.signals.{FoldedSignal, Signal, SignalSynt, SwitchedSignal}
+
 import scala.collection.LinearSeq
+import scala.collection.immutable.Queue
 
 object IFunctions {
 

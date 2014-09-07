@@ -1,6 +1,6 @@
-package rescala
+package rescala.signals
 
-import rescala.events.EventHandler
+import rescala._
 
 /**
  * Create a StaticVar

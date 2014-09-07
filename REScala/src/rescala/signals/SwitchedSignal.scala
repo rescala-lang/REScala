@@ -1,7 +1,7 @@
 package rescala.signals
 
+import rescala.IFunctions
 import rescala.events.Event
-import rescala.{DependentSignalImplementation, Signal, IFunctions}
 
 class SwitchedSignal[+T, -E](trigger: Event[E], initialSignal: Signal[T], initialFactory: IFunctions.Factory[E, T])
   extends DependentSignalImplementation[T] {

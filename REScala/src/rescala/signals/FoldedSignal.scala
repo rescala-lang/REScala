@@ -1,7 +1,7 @@
 package rescala.signals
 
+import rescala.DepHolder
 import rescala.events.Event
-import rescala.{DepHolder, DependentSignalImplementation}
 
 class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T, E) => T)
   extends DependentSignalImplementation[T] {
