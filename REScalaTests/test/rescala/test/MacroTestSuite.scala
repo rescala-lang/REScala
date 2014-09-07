@@ -4,7 +4,7 @@ package rescala.test
 
 
 
-import makro.SignalMacro.{SignalM => Signal}
+import rescala.makro.SignalMacro.{SignalM => Signal}
 import org.junit.{Before, Test}
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
@@ -24,11 +24,11 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
 
 
 
-  @Before def initialize() {}
+  @Before def initialize(): Unit = {}
 
 
 
-  @Test def signalReEvaluatesTheExpression() {
+  @Test def signalReEvaluatesTheExpression(): Unit = {
     v  = VarSynt(0)
     var i = 1
     var s: Signal[Int] = Signal[Int]{ v(): @unchecked; i }
@@ -37,7 +37,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(s.get == 2)
   }
 
-  @Test def theExpressionIsNotEvaluatedEveryTimeGetValIsCalled() {
+  @Test def theExpressionIsNotEvaluatedEveryTimeGetValIsCalled(): Unit = {
     var a = 10
     var s: Signal[Int] = Signal[Int]{ 1 + 1 + a }
     assert(s.get === 12)
@@ -46,12 +46,12 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
   }
 
 
-  @Test def simpleSignalReturnsCorrectExpressions() {
+  @Test def simpleSignalReturnsCorrectExpressions(): Unit = {
     var s: Signal[Int] = Signal( 1 + 1 + 1 )
     assert(s.get === 3)
   }
 
-  @Test def theExpressionIsEvaluatedOnlyOnce() {
+  @Test def theExpressionIsEvaluatedOnlyOnce(): Unit = {
 
     var a = 0
     val v = VarSynt(10)

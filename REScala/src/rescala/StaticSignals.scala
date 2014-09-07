@@ -30,7 +30,3 @@ object StaticSignal {
 
   def apply[T](dependencyHolders: DepHolder*)(expr: => T): DependentSignal[T] = apply(dependencyHolders.toList)(expr)
 }
-
-object Handler {
-  def apply(exp: => Unit) = EventHandler[Any](_ => exp)
-}

@@ -1,4 +1,4 @@
-package makro
+package rescala.makro
 
 import scala.language.experimental.macros
 

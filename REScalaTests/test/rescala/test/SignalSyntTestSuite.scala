@@ -9,7 +9,7 @@ import rescala.{Handler, _}
 
 class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
 
-  @Test def signalReEvaluatesTheExpressionWhenSomethingItDependsOnIsUpdated() {
+  @Test def signalReEvaluatesTheExpressionWhenSomethingItDependsOnIsUpdated(): Unit = {
     val v  = VarSynt(0)
     var i = 1
     var s: SignalSynt[Int] = SignalSynt[Int](v){s=> v(s) + i }
@@ -18,7 +18,7 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(s.get == 4)
   }
 
-  @Test def theExpressionIsNoteEvaluatedEveryTimeGetValIsCalled() {
+  @Test def theExpressionIsNoteEvaluatedEveryTimeGetValIsCalled(): Unit = {
     var a = 10
     val s: SignalSynt[Int] = SignalSynt[Int](List())(s=> 1 + 1 + a )
     assert(s.get === 12)
@@ -27,12 +27,12 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
   }
 
 
-  @Test def simpleSignalReturnsCorrectExpressions() {
+  @Test def simpleSignalReturnsCorrectExpressions(): Unit = {
     var s: SignalSynt[Int] = SignalSynt[Int](List())(s=> 1 + 1 + 1 )
     assert(s.get === 3)
   }
 
-  @Test def theExpressionIsEvaluatedOnlyOnce() {
+  @Test def theExpressionIsEvaluatedOnlyOnce(): Unit = {
 
     var a = 0
     val v = VarSynt(10)
@@ -88,7 +88,7 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
 /* Specific of SignalSynt */
 
 
-  @Test def signalDoesNotReEvaluateTheExpressionIfDependsOnIsUpdatedThatIsNotInCurrentDependencies() {
+  @Test def signalDoesNotReEvaluateTheExpressionIfDependsOnIsUpdatedThatIsNotInCurrentDependencies(): Unit = {
     val v1  = VarSynt(true)
     val v2  = VarSynt(0)
     val v3  = VarSynt(10)
@@ -120,7 +120,7 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
 
 
 
-  @Test def keep_fixedDependencies() {
+  @Test def keep_fixedDependencies(): Unit = {
 
     val v1 = VarSynt(true)
     val v2 = VarSynt(0)
@@ -135,7 +135,7 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
     }
 
     val e = s.change
-    e += ((x:(Int,Int))=>(test+=1))
+    e += ((x:(Int,Int))=> test += 1)
 
     assert(test == 0)
     v2.set(1)
@@ -157,7 +157,7 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
 
   }
 
-   @Test def dependantIsOnlyInvokedOnValueChanges() {
+   @Test def dependantIsOnlyInvokedOnValueChanges(): Unit = {
     var changes = 0
     val v = VarSynt(1)
     val s: SignalSynt[Int] = SignalSynt[Int]{ s: SignalSynt[Int]=>

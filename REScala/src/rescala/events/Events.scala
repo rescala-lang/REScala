@@ -293,8 +293,8 @@ object EventNodeExcept {
 
 
 object emptyevent extends Event[Nothing] {
-  def +=(react: Nothing => Unit) { /* do nothing */ }
-  def -=(react: Nothing => Unit) { /* do nothing */ }
+  def +=(react: Nothing => Unit): Unit = { /* do nothing */ }
+  def -=(react: Nothing => Unit): Unit = { /* do nothing */ }
 }
 
 

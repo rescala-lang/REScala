@@ -2,6 +2,7 @@ package rescala
 
 import rescala.events._
 import rescala.log._
+import rescala.signals.{SwitchedSignal, FoldedSignal}
 import scala.collection.immutable.Queue
 import scala.collection.LinearSeq
 
@@ -112,41 +113,6 @@ object IFunctions {
     new WrappedEvent(wrappedEvent)
 }
 
-class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T, E) => T)
-  extends DependentSignalImplementation[T] {
 
-  addDependOn(e)
 
-  // The cached value of the last occurence of e
-  private[this] var lastEvent: E = _
 
-  override def initialValue(): T = init
-  override def calculateNewValue(): T = f(get, lastEvent)
-
-  override def dependsOnchanged(change: Any, dep: DepHolder) = {
-    if (dep eq e) {
-      lastEvent = change.asInstanceOf[E]
-    } else {
-      // this would be an implementation error
-      throw new RuntimeException("Folded Signals can only depend on a single event node")
-    }
-
-    super.dependsOnchanged(change, dep)
-  }
-
-}
-
-class SwitchedSignal[+T, -E](trigger: Event[E], initialSignal: Signal[T], initialFactory: IFunctions.Factory[E, T])
-  extends DependentSignalImplementation[T] {
-
-  val fold = trigger.fold((initialSignal, initialFactory)) { case ((_, factory), pulse) =>  factory(pulse) }
-
-  setDependOn(Set(fold, initialSignal))
-
-  override def initialValue(): T = initialSignal.get
-
-  override def calculateNewValue(): T = {
-    setDependOn(Set(fold, fold.get._1))
-    fold.get._1.get
-  }
-}

@@ -1,6 +1,6 @@
 package rescala.test
 
-import makro.SignalMacro.{SignalM => Signal}
+import rescala.makro.SignalMacro.{SignalM => Signal}
 import org.junit.{Before, Test}
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
@@ -8,9 +8,9 @@ import rescala._
 
 class DependenciesTestSuite extends AssertionsForJUnit with MockitoSugar {
 
-  @Before def initialize() {}
+  @Before def initialize(): Unit = {}
 
-  @Test def varsDoNotHaveDependentsByDefault() {
+  @Test def varsDoNotHaveDependentsByDefault(): Unit = {
     val v1 = Var(0)
     val v2 = Var("Hello World")
     val v3 = Var(false)
@@ -19,7 +19,7 @@ class DependenciesTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(v3.dependentCount() == 0)
   }
 
-  @Test def signalsDoNotHaveDependenciesByDefault() {
+  @Test def signalsDoNotHaveDependenciesByDefault(): Unit = {
     val s1 = Signal { 0 }
     val s2 = Signal { "Hello World" }
     val s3 = Signal { false }
@@ -31,7 +31,7 @@ class DependenciesTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(s3.dependOnCount() == 0)
   }
 
-  @Test def varsAndSignalsCanHaveDependencies() {
+  @Test def varsAndSignalsCanHaveDependencies(): Unit = {
     val v1 = Var(0)
     val v2 = Var(2)
     val v3 = Var(true)
@@ -43,7 +43,7 @@ class DependenciesTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(s.dependOnCount() == 2)
   }
 
-  @Test def explicitReevaluationDoesNotChangeDependencies() {
+  @Test def explicitReevaluationDoesNotChangeDependencies(): Unit = {
     val v1 = Var(0)
     val v2 = Var(2)
     val v3 = Var(true)
@@ -62,7 +62,7 @@ class DependenciesTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(s.dependOnCount() == 2)
   }
 
-  @Test def implicitReevaluationChangesDependenciesCorrectly() {
+  @Test def implicitReevaluationChangesDependenciesCorrectly(): Unit = {
     val v1 = Var(0)
     val v2 = Var(2)
     val v3 = Var(true)
@@ -81,7 +81,7 @@ class DependenciesTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(s.dependOnCount() == 2)
   }
 
-  @Test def signalsCanHaveDependents() {
+  @Test def signalsCanHaveDependents(): Unit = {
     val s1 = Var { 5 }
     val s2 = Signal(10)
     val s3 = Signal { s1() + s2() }
@@ -92,7 +92,7 @@ class DependenciesTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(s3.dependOnCount() == 2)
   }
 
-  @Test def fibonacciDependencies() {
+  @Test def fibonacciDependencies(): Unit = {
     val f1 = Var(1)
     val f2 = Var(1)
     val f3 = Signal { f1() + f2() }

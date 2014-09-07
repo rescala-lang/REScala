@@ -1,6 +1,6 @@
 package rescala.test
 
-import makro.SignalMacro.{SignalM => Signal}
+import rescala.makro.SignalMacro.{SignalM => Signal}
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar

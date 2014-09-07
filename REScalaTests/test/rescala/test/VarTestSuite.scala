@@ -14,7 +14,7 @@ class VarTestSuite extends AssertionsForJUnit with MockitoSugar {
   var s2: Signal[Int] = _
   var s3: Signal[Int] = _
 
-  @Before def initialize() {
+  @Before def initialize(): Unit = {
 
     v1 = Var(1)
     v2 = Var(2)
@@ -23,19 +23,19 @@ class VarTestSuite extends AssertionsForJUnit with MockitoSugar {
     s3 = mock[Signal[Int]]
   }
 
-  @Test def getValAfterCreationReturnsInitializationValue() {
+  @Test def getValAfterCreationReturnsInitializationValue(): Unit = {
     val v = Var(1)
     assert(v.get == 1)
   }
 
-  @Test def getValReturnsCorrectValue() {
+  @Test def getValReturnsCorrectValue(): Unit = {
     val v = Var(1)
     v.set(10)
     assert(v.get == 10)
   }
 
 
-  @Test def varNotifiesSignalOfChanges() {
+  @Test def varNotifiesSignalOfChanges(): Unit = {
     val v = Var(1)
     val s = StaticSignal(List(v)){ v.get + 1 }
     assert(v.get == 1)
@@ -47,7 +47,7 @@ class VarTestSuite extends AssertionsForJUnit with MockitoSugar {
 
   }
 
-  @Test def changeEventOnlyTriggeredOnValueChange() {
+  @Test def changeEventOnlyTriggeredOnValueChange(): Unit = {
     var changes = 0
     val v = Var(1)
     val changed = StaticSignal(List(v)){ v.get }.change
@@ -61,7 +61,7 @@ class VarTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(changes == 2)
   }
 
-  @Test def dependantIsOnlyInvokedOnValueChange() {
+  @Test def dependantIsOnlyInvokedOnValueChange(): Unit = {
     var changes = 0
     val v = Var(1)
     val s = StaticSignal(List(v)){ changes += 1; v.get + 1 }

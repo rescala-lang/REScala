@@ -1,5 +1,7 @@
 package rescala
 
+import rescala.signals.FoldedSignal
+
 import scala.collection.mutable
 import rescala.events._
 import rescala.log._
@@ -212,3 +214,7 @@ object ReactiveEngine {
   }
 }
 
+
+object Handler {
+  def apply(exp: => Unit) = EventHandler[Any](_ => exp)
+}

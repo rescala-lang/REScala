@@ -14,9 +14,9 @@ class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
   var s2: DependentSignal[Int] = _
   var s3: DependentSignal[Int] = _
 
-  @Before def initialize() {}
+  @Before def initialize(): Unit = {}
 
-  @Test def dependencyHolderNotifiesDependentsWhenNotifyDependentsIsCalled() {
+  @Test def dependencyHolderNotifiesDependentsWhenNotifyDependentsIsCalled(): Unit = {
 
     dh = new {} with DepHolder {}
     v  = Var(0)
@@ -35,7 +35,7 @@ class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
 
   }
 
-  @Test def signalReEvaluatesTheExpression() {
+  @Test def signalReEvaluatesTheExpression(): Unit = {
     v  = Var(0)
     var i = 1
     var s: Signal[Int] = StaticSignal[Int](v) { i }
@@ -44,7 +44,7 @@ class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(s.get == 2)
   }
 
-  @Test def theExpressionIsNoteEvaluatedEveryTimeGetValIsCalled() {
+  @Test def theExpressionIsNoteEvaluatedEveryTimeGetValIsCalled(): Unit = {
     var a = 10
     var s: Signal[Int] = StaticSignal(List())( 1 + 1 + a )
     assert(s.get === 12)
@@ -53,12 +53,12 @@ class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
   }
 
 
-  @Test def simpleSignalReturnsCorrectExpressions() {
+  @Test def simpleSignalReturnsCorrectExpressions(): Unit = {
     var s: Signal[Int] = StaticSignal(List())( 1 + 1 + 1 )
     assert(s.get === 3)
   }
 
-  @Test def theExpressionIsEvaluatedOnlyOnce() {
+  @Test def theExpressionIsEvaluatedOnlyOnce(): Unit = {
 
     var a = 0
     val v = Var(10)

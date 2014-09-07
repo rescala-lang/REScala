@@ -19,7 +19,7 @@ class SignalsAndVarsTestSuite extends AssertionsForJUnit with MockitoSugar {
 
 
 
-  @Before def initialize() {
+  @Before def initialize(): Unit = {
 
   }
 

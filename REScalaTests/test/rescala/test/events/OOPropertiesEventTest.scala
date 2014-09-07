@@ -47,7 +47,7 @@ class OOPropertiesEventTest extends AssertionsForJUnit with MockitoSugar {
   }
 
 
-  @Test def issueWithOverridingEvents() {
+  @Test def issueWithOverridingEvents(): Unit = {
 
     try {
       var test = 0

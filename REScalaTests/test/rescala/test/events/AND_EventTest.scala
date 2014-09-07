@@ -43,8 +43,8 @@ class AND_EventTest extends AssertionsForJUnit with MockitoSugar {
 
     var test = 0
     val e1 = new ImperativeEvent[Int]()
-    val e2 = e1 map ((x: Int) => (x * 2))
-    val e3 = e1 map ((x: Int) => (x * 2))
+    val e2 = e1 map ((x: Int) => x * 2)
+    val e3 = e1 map ((x: Int) => x * 2)
     val e2_AND_e3 = e2 && e3
     e1 += ( (x: Int) => { test += 1 })
     e2 += ( (x: Int) => { test += 1 })
