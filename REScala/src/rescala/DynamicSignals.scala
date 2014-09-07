@@ -18,7 +18,7 @@ class VarSynt[T](private[this] var value: T) extends Var[T] {
       ReactiveEngine.startEvaluation()
 
     } else {
-      ReactiveEngine.log.nodePropagationStopped(this)
+      log.nodePropagationStopped(this)
     }
   }
 
@@ -39,7 +39,7 @@ trait DependentSignalImplementation[+T] extends DependentSignal[T] {
   def get = currentValue
 
   def triggerReevaluation(): Unit = {
-    ReactiveEngine.log.nodeEvaluationStarted(this)
+    log.nodeEvaluationStarted(this)
 
     val oldLevel = level
 
@@ -62,11 +62,11 @@ trait DependentSignalImplementation[+T] extends DependentSignal[T] {
           notifyDependents(currentValue)
         }
         else {
-          ReactiveEngine.log.nodePropagationStopped(this)
+          log.nodePropagationStopped(this)
         }
       } : Unit
     }
-    ReactiveEngine.log.nodeEvaluationEnded(this)
+    log.nodeEvaluationEnded(this)
   }
   override def dependsOnchanged(change: Any, dep: DepHolder) = ReactiveEngine.addToEvalQueue(this)
 

@@ -4,17 +4,16 @@ import rescala.signals.FoldedSignal
 
 import scala.collection.mutable
 import rescala.events._
-import rescala.log._
-import rescala.log.Logging
+import rescala.log.ReactiveLogging
 import java.util.UUID
 
 /** A Reactive is a value type which has a dependency to other Reactives */
-trait Reactive {
+trait Reactive extends ReactiveLogging {
   var _level = 0
   def ensureLevel(l: Int): Unit = if (l >= _level) _level = l + 1
   def level: Int = _level
 
-  ReactiveEngine.log.nodeCreated(this)
+  log.nodeCreated(this)
 }
 
 /** A node that has nodes that depend on it */
@@ -27,12 +26,12 @@ trait DepHolder extends Reactive {
   def addDependent(dep: Dependent) = {
     if (!dependents.contains(dep)) {
       dependents += dep
-      ReactiveEngine.log.nodeAttached(dep, this)
+      log.nodeAttached(dep, this)
     }
   }
   def removeDependent(dep: Dependent) = dependents -= dep
   def notifyDependents(change: Any): Unit = {
-    ReactiveEngine.log.nodePulsed(this)
+    log.nodePulsed(this)
     dependents.foreach(_.dependsOnchanged(change, this))
   }
 
@@ -56,7 +55,7 @@ trait Dependent extends Reactive {
       ensureLevel(dep.level)
       dependOn += dep
       dep.addDependent(this)
-      ReactiveEngine.log.nodeAttached(this, dep)
+      log.nodeAttached(this, dep)
     }
   }
   def setDependOn(deps: TraversableOnce[DepHolder]) = {
@@ -186,10 +185,7 @@ trait DependentSignal[+T] extends Signal[T] with Dependent
  * The engine that schedules the (glitch-free) evaluation
  * of the nodes in the dependency graph.
  */
-object ReactiveEngine {
-
-  /** If logging is needed, replace this with another instance of Logging */
-  var log: Logging = NoLogging
+object ReactiveEngine extends ReactiveLogging {
 
   private val evalQueue = new mutable.PriorityQueue[(Int, Dependent)]()(new Ordering[(Int, Dependent)] {
     override def compare(x: (Int, Dependent), y: (Int, Dependent)): Int = y._1.compareTo(x._1)
@@ -198,7 +194,7 @@ object ReactiveEngine {
   /** Adds a dependant to the eval queue, duplicates are allowed */
   def addToEvalQueue(dep: Dependent): Unit = {
       if (!evalQueue.exists { case (_, elem) => elem eq dep }) {
-        ReactiveEngine.log.nodeScheduled(dep)
+        log.nodeScheduled(dep)
         evalQueue.+=((dep.level, dep))
       }
   }
