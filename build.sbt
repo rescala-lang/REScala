@@ -1,6 +1,6 @@
-lazy val root = Project("root", file(".")).aggregate(rescala, tests)
+lazy val root = Project("rescala-root", file(".")).aggregate(core, tests)
 
-lazy val rescala = Project("rescala", file("REScala"))
+lazy val core = Project("rescala-core", file("REScala"))
   .settings(
     scalaSource in Compile <<= baseDirectory {(base) => new File(base, "src")},
     libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _))
@@ -15,7 +15,7 @@ lazy val tests = Project("rescala-tests", file("REScalaTests"))
       "com.novocode" % "junit-interface" % "0.10" % "test" ::
       Nil)
   )
-  .dependsOn(rescala)
+  .dependsOn(core)
 
 organization in ThisBuild := "de.tuda.stg"
 
