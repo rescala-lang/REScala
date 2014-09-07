@@ -5,7 +5,7 @@ package rescala.test
 import org.junit.{Before, Test}
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.{Handler, Var, _}
+import rescala._
 
 class SignalsAndVarsTestSuite extends AssertionsForJUnit with MockitoSugar {
 
@@ -30,7 +30,7 @@ class SignalsAndVarsTestSuite extends AssertionsForJUnit with MockitoSugar {
     v2 = Var(2)
 
     s1 = StaticSignal(List(v1,v2)){ v1.get + v2.get }
-    s1 addDependent Handler{ test += 1 }
+    s1.changed += { (_) => test += 1 }
 
     assert(s1.get == 3)
     assert(test == 0)

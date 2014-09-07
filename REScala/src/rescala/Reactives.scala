@@ -213,8 +213,3 @@ object ReactiveEngine {
     }
   }
 }
-
-
-object Handler {
-  def apply(exp: => Unit) = EventHandler[Any](_ => exp)
-}

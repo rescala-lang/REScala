@@ -4,12 +4,12 @@ package rescala.test
 
 
 
-import rescala.makro.SignalMacro.{SignalM => Signal}
 import org.junit.{Before, Test}
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala._
 import rescala.events._
+import rescala.makro.SignalMacro.{SignalM => Signal}
 
 
 
@@ -75,9 +75,9 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
     s2 = Signal{ 3 * v() }
     s3 = Signal{ s1() + s2() }
 
-    s1 addDependent Handler{ test += 1 }
-    s2 addDependent Handler{ test += 1 }
-    s3 addDependent Handler{ test += 1 }
+    s1.changed += { (_) => test += 1 }
+    s2.changed += { (_) => test += 1 }
+    s3.changed += { (_) => test += 1 }
 
     assert(test == 0)
 

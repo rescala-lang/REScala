@@ -4,7 +4,7 @@ package rescala.test
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.{Handler, _}
+import rescala._
 
 
 class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
@@ -56,9 +56,9 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
     val s2 = SignalSynt[Int](v){s=> 3 * v(s) }
     val s3 = SignalSynt[Int](s1,s2){s=> s1(s) + s2(s) }
 
-    s1 addDependent Handler{ test += 1 }
-    s2 addDependent Handler{ test += 1 }
-    s3 addDependent Handler{ test += 1 }
+    s1.changed += { (_) => test += 1 }
+    s2.changed += { (_) => test += 1 }
+    s3.changed += { (_) => test += 1 }
 
     assert(test == 0)
 

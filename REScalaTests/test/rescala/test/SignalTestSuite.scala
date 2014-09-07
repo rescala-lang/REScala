@@ -4,7 +4,7 @@ import org.junit.{Before, Test}
 import org.mockito.Mockito.verify
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.{DepHolder, Handler, Var, _}
+import rescala.{DepHolder, Var, _}
 
 class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
 
@@ -82,9 +82,9 @@ class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
     s2 = StaticSignal(v){ 3 * v.get }
     s3 = StaticSignal(s1,s2){ s1.get + s2.get }
 
-    s1 addDependent Handler{ test += 1 }
-    s2 addDependent Handler{ test += 1 }
-    s3 addDependent Handler{ test += 1 }
+    s1.changed += { (_) => test += 1 }
+    s2.changed += { (_) => test += 1 }
+    s3.changed += { (_) => test += 1 }
 
     assert(test == 0)
 

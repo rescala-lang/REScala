@@ -1,10 +1,10 @@
 package rescala.test.ifunctions
-import rescala.makro.SignalMacro.{SignalM => Signal}
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala._
 import rescala.events._
+import rescala.makro.SignalMacro.{SignalM => Signal}
 
 import scala.collection.LinearSeq
 
