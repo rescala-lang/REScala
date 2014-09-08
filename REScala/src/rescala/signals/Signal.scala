@@ -1,6 +1,6 @@
 package rescala.signals
 
-import rescala.propagation.Turn
+import rescala.propagation._
 import rescala.{IFunctions, _}
 import rescala.events.Event
 
@@ -8,7 +8,20 @@ trait Signal[+A] extends Changing[A] with FoldableReactive[A] with Dependency[A]
   override def fold[B](init: B)(f: (B, A) => B): Signal[B] =
     Turn.maybeTurn { turn => new FoldedSignal(changed, init, f)(turn) }
 
-  def get: A
+  protected[this] var currentValue: A = _
+
+  override protected[this] def pulse(pulse: Pulse[A])(implicit turn: Turn): Unit = {
+    pulse.valueOption.foreach(currentValue = _)
+    super.pulse(pulse)
+  }
+
+  override def pulse(implicit turn: Turn): Pulse[A] = super.pulse match {
+    case NoChangePulse => ValuePulse(currentValue)
+    case p @ ValuePulse(value) => p
+    case p @ DiffPulse(value, old) => p
+  }
+
+  def get: A = currentValue
 
   final def apply(): A = get
 

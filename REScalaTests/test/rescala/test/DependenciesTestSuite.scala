@@ -4,6 +4,7 @@ import org.junit.{Before, Test}
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.makro.SignalMacro.{SignalM => Signal}
+import rescala.propagation.Turn
 import rescala.signals._
 
 class DependenciesTestSuite extends AssertionsForJUnit with MockitoSugar {
@@ -54,7 +55,7 @@ class DependenciesTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(s.dependentCount() == 0)
     assert(s.dependencyCount() == 2)
 
-    s.triggerReevaluation()
+    Turn.newTurn(s.triggerReevaluation()(_))
     assert(v1.dependentCount() == 1)
     assert(v2.dependentCount() == 0)
     assert(v3.dependentCount() == 1)

@@ -454,9 +454,9 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     e += ((x:(Int,Int))=>{test = x})
 
     v1 set 2
-    assert(test == ((null,3)))
+    assert(test === ((2,3)))
     v1 set 3
-    assert(test == ((3,4)))
+    assert(test === ((3,4)))
   }
 
 

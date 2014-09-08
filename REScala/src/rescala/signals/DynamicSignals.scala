@@ -1,16 +1,16 @@
 package rescala.signals
 
 import rescala._
-import rescala.propagation.{NoChangePulse, DiffPulse, ValuePulse, Turn}
+import rescala.propagation.{NoChangePulse, DiffPulse, Turn}
 
 /* A node that has nodes that depend on it */
-class VarSynt[T](private[this] var value: T) extends Var[T] {
+class VarSynt[T](initialValue: T) extends Var[T] {
 
-  def get = value
+  currentValue = initialValue
 
   def set(newValue: T): Unit = Turn.newTurn { turn =>
-    if (value != newValue) {
-      turn.pulse(this, DiffPulse(newValue, value))
+    if (currentValue != newValue) {
+      pulse(DiffPulse(newValue, currentValue))(turn)
       turn.startEvaluation()
     } else {
       log.nodePropagationStopped(this)
@@ -27,9 +27,7 @@ abstract class DependentSignalImplementation[+T](creationTurn: Turn) extends Dep
   def initialValue()(implicit turn: Turn): T
   def calculateNewValue()(implicit turn: Turn): T
 
-  private[this] var currentValue = initialValue()(creationTurn)
-
-  def get = currentValue
+  currentValue = initialValue()(creationTurn)
 
   override def triggerReevaluation()(implicit turn: Turn): Unit = {
     log.nodeEvaluationStarted(this)
@@ -51,18 +49,16 @@ abstract class DependentSignalImplementation[+T](creationTurn: Turn) extends Dep
       if (level <= oldLevel) {
         /* Notify dependents only of the value changed */
         if (currentValue != newValue) {
-          turn.pulse(this, DiffPulse(newValue, currentValue))
+          pulse(DiffPulse(newValue, currentValue))
         }
         else {
-          turn.pulse(this, NoChangePulse)
+          pulse(NoChangePulse)
           log.nodePropagationStopped(this)
         }
       } : Unit
     }
     log.nodeEvaluationEnded(this)
   }
-  override def dependencyChanged[Q](dep: Dependency[Q])(implicit turn: Turn): Unit = turn.addToEvalQueue(this)
-
 }
 
 /** A dependant reactive value with dynamic dependencies (depending signals can change during evaluation) */

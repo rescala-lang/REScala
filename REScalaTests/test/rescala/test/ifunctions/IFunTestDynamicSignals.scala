@@ -462,13 +462,13 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
     var test = (0, 0)
     val v1 = Var(1)
     val s1 = Signal { v1() + 1 }
-    val e: Event[(Int, Int)] = s1.change
-    e += ((x: (Int, Int)) => { test = x })
+    val e = s1.change
+    e += { x => test = x }
 
     v1 set 2
-    assert(test == ((null, 3)))
+    assert(test === ((2, 3)))
     v1 set 3
-    assert(test == ((3, 4)))
+    assert(test === ((3, 4)))
   }
 
   /* changed */

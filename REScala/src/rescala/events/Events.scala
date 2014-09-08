@@ -84,7 +84,6 @@ trait Event[+T] extends Dependency[T] {
  * Wrapper for an anonymous function
  */
 case class EventHandler[T](fun: T => Unit, dependency: Dependency[T]) extends Dependant {
-  addDependency(dependency)
   override def dependencyChanged[Q](dep: Dependency[Q])(implicit turn: Turn): Unit = dependency.pulse.valueOption.foreach(fun)
   override def triggerReevaluation()(implicit turn: Turn): Unit = {}
 }
@@ -93,8 +92,8 @@ case class EventHandler[T](fun: T => Unit, dependency: Dependency[T]) extends De
  * Base trait for events.
  */
 trait EventNode[T] extends Event[T] {
-  def +=(react: T => Unit): Unit = EventHandler(react, this)
-  def -=(react: T => Unit): Unit = EventHandler(react, this)
+  def +=(react: T => Unit): Unit = EventHandler(react, this).addDependency(this)
+  def -=(react: T => Unit): Unit = this.removeDependant(EventHandler(react, this))
 }
 
 
@@ -105,7 +104,7 @@ class ImperativeEvent[T] extends EventNode[T] {
 
   /** Trigger the event */
   def apply(v: T): Unit = Turn.newTurn { turn =>
-    turn.pulse(this, ValuePulse(v))
+    pulse(ValuePulse(v))(turn)
     turn.startEvaluation()
   }
 
@@ -121,7 +120,7 @@ abstract class DependentEvent[T](dependencies: List[Dependency[Any]]) extends Ev
   def calculatePulse()(implicit turn: Turn): Pulse[T]
 
   override def triggerReevaluation()(implicit turn: Turn): Unit = {
-    turn.pulse(this, calculatePulse())
+    pulse(calculatePulse())
   }
 
 }

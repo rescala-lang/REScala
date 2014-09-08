@@ -11,11 +11,6 @@ import scala.collection.mutable
  * of the nodes in the dependency graph.
  */
 class Turn extends ReactiveLogging {
-  def pulse[P](dependency: Dependency[P], pulse: Pulse[P]): Unit = dependency.notifyDependants(this)
-
-  def pulse[P](dependency: Dependency[P]): Pulse[P] = ???
-
-
   private val evalQueue = new mutable.PriorityQueue[(Int, Dependant)]()(Turn.reactiveOrdering)
 
   /** Adds a dependant to the eval queue */

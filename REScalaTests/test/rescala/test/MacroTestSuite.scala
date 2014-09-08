@@ -12,22 +12,15 @@ import rescala.signals._
 class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
 
 
-  var dh: Dependency = _
-  var v:  Var[Int]  = _
-  var s1: Signal[Int] = _
-  var s2: Signal[Int] = _
-  var s3: Signal[Int] = _
-
-
 
   @Before def initialize(): Unit = {}
 
 
 
   @Test def signalReEvaluatesTheExpression(): Unit = {
-    v  = VarSynt(0)
+    val v  = VarSynt(0)
     var i = 1
-    var s: Signal[Int] = Signal[Int]{ v(): @unchecked; i }
+    val s: Signal[Int] = Signal { v(): @unchecked; i }
     i = 2
     v.set(2)
     assert(s.get == 2)
@@ -35,7 +28,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
 
   @Test def theExpressionIsNotEvaluatedEveryTimeGetValIsCalled(): Unit = {
     var a = 10
-    var s: Signal[Int] = Signal[Int]{ 1 + 1 + a }
+    val s: Signal[Int] = Signal { 1 + 1 + a }
     assert(s.get === 12)
     a = 11
     assert(s.get === 12)
@@ -43,7 +36,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
 
 
   @Test def simpleSignalReturnsCorrectExpressions(): Unit = {
-    var s: Signal[Int] = Signal( 1 + 1 + 1 )
+    val s: Signal[Int] = Signal(1 + 1 + 1)
     assert(s.get === 3)
   }
 
@@ -51,8 +44,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
 
     var a = 0
     val v = VarSynt(10)
-    var s1: Signal[Int] = Signal{ a +=1; v() % 10 }
-    var s2: Signal[Int] = Signal{ s1; a }
+    val s1: Signal[Int] = Signal { a += 1; v() % 10 }
 
 
     assert(a == 1)
@@ -65,11 +57,11 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
   @Test def handlersAreExecuted() =  {
 
     var test = 0
-    v = VarSynt(1)
+    val v = VarSynt(1)
 
-    s1 = Signal{ 2 * v() }
-    s2 = Signal{ 3 * v() }
-    s3 = Signal{ s1() + s2() }
+    val s1 = Signal{ 2 * v() }
+    val s2 = Signal{ 3 * v() }
+    val s3 = Signal{ s1() + s2() }
 
     s1.changed += { (_) => test += 1 }
     s2.changed += { (_) => test += 1 }
@@ -85,11 +77,11 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
   @Test def levelIsCorrectlyComputed() =  {
 
     var test = 0
-    v = VarSynt(1)
+    val v = VarSynt(1)
 
-    s1 = Signal{ 2 * v() }
-    s2 = Signal{ 3 * v() }
-    s3 = Signal{ s1() + s2() }
+    val s1 = Signal{ 2 * v() }
+    val s2 = Signal{ 3 * v() }
+    val s3 = Signal{ s1() + s2() }
 
     s3.get
 
@@ -271,16 +263,16 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
     val v = Var(0)
     object obj {
       def sig = Signal { v() }
-	}
+    }
 
     val evt = new ImperativeEvent[Int]
 
     val testsig = Signal {
       val localsig = obj.sig
-	  val latest = evt latest -1
+      val latest = evt latest -1
 
-	  localsig() + latest()
-	}
+      localsig() + latest()
+    }
 
     assert(testsig.get == -1)
     evt(100)

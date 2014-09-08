@@ -2,7 +2,7 @@ package rescala
 
 import rescala.events._
 import rescala.log.ReactiveLogging
-import rescala.propagation.{Pulse, Turn}
+import rescala.propagation.{NoChangePulse, Pulse, Turn}
 import rescala.signals.Signal
 
 /** A Reactive is a value type which has a dependency to other Reactives */
@@ -42,18 +42,24 @@ trait Dependency[+P] extends Reactive {
     if (oldLevel < newLevel) dependants.foreach(_.ensureLevel(newLevel))
   }
 
-  def pulse(implicit turn: Turn): Pulse[P] = turn.pulse(this)
+  private[this] var pulses: Map[Turn, Pulse[P]] = Map()
+
+  def pulse(implicit turn: Turn): Pulse[P] = pulses.getOrElse(turn, NoChangePulse)
+  protected[this] def pulse(pulse: Pulse[P])(implicit turn: Turn) = {
+    pulses += turn -> pulse
+    notifyDependants(turn)
+  }
 
 }
 
 /** A node that depends on other nodes */
 trait Dependant extends Reactive {
-  private var dependencies: Set[Dependency[Any]] = Set()
+  private var dependencies: Set[Dependency[_]] = Set()
 
   /** for testing */
   def dependencyCount(): Int = dependencies.size
 
-  def addDependency[Q](dep: Dependency[Q]): Unit = {
+  def addDependency(dep: Dependency[_]): Unit = {
     if (!dependencies.contains(dep)) {
       ensureLevel(dep.level)
       dependencies += dep
@@ -61,7 +67,7 @@ trait Dependant extends Reactive {
       log.nodeAttached(this, dep)
     }
   }
-  def setDependencies(deps: TraversableOnce[Dependency[Any]]): Unit = {
+  def setDependencies(deps: TraversableOnce[Dependency[_]]): Unit = {
     val newDependencies = deps.toSet
     val removed = dependencies.diff(newDependencies)
     val added = newDependencies.diff(dependencies)
@@ -69,7 +75,7 @@ trait Dependant extends Reactive {
     added.foreach(addDependency)
     dependencies = deps.toSet
   }
-  def removeDependency[Q](dep: Dependency[Q]): Unit = {
+  def removeDependency(dep: Dependency[_]): Unit = {
     dep.removeDependant(this)
     dependencies -= dep
   }
