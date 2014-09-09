@@ -1,46 +1,37 @@
 package rescala
 
-import scala.collection.mutable.Buffer
-import scala.collection.mutable.ListBuffer
-import scala.collection.mutable.PriorityQueue
+import scala.collection.mutable
 import rescala.events._
 import rescala.log._
 import rescala.log.Logging
 import java.util.UUID
 
-/* A Reactive is a value type which has a dependency to other Reactives */
-trait Reactive extends Ordered[Reactive] {
+/** A Reactive is a value type which has a dependency to other Reactives */
+trait Reactive {
   // testing
-  val timestamps: Buffer[Stamp] = ListBuffer()
-  
-  var id = UUID.randomUUID()
+  private var _timestamps = List[Stamp]()
+  /** for compatibility reasons with existing tests */
+  def timestamps: List[Stamp] = _timestamps
+  def logTestingTimestamp() = _timestamps = TS.newTs :: _timestamps
 
-  var level: Int = 0
-  override def compare(other: Reactive): Int =
-    other.level - this.level
+  var _level = 0
+  def ensureLevel(l: Int): Unit = if (l >= _level) _level = l + 1
+  def level: Int = _level
 
   ReactiveEngine.log.nodeCreated(this)
 }
 
-object Reactive {
-  /* Reactive are comparable by their level */
-  implicit def ord[T <: Reactive]: Ordering[T] = new Ordering[T] {
-    def compare(x: T, y: T) = if (x == null) -1 else x compare y
-  }
-}
-
-/* A node that has nodes that depend on it */
+/** A node that has nodes that depend on it */
 trait DepHolder extends Reactive {
-  val dependents: Buffer[Dependent] = ListBuffer()
+  private var dependents: Set[Dependent] = Set()
+
+  /** used for testing*/
+  def dependentCount() = dependents.size
+
   def addDependent(dep: Dependent) = {
     if (!dependents.contains(dep)) {
       dependents += dep
       ReactiveEngine.log.nodeAttached(dep, this)
-    }
-  }
-  def addAllDependent(deps: TraversableOnce[Dependent]) = {
-    for (dep <- deps) {
-      addDependent(dep)
     }
   }
   def removeDependent(dep: Dependent) = dependents -= dep
@@ -48,27 +39,48 @@ trait DepHolder extends Reactive {
     ReactiveEngine.log.nodePulsed(this)
     dependents.foreach(_.dependsOnchanged(change, this))
   }
+
+  override def ensureLevel(l: Int): Unit = {
+    val oldLevel = level
+    super.ensureLevel(l)
+    val newLevel = level
+    if (oldLevel < newLevel) dependents.foreach(_.ensureLevel(newLevel))
+  }
 }
 
-/* A node that depends on other nodes */
+/** A node that depends on other nodes */
 trait Dependent extends Reactive {
-  val dependOn: Buffer[DepHolder] = ListBuffer()
-  // TODO: add level checking to have glitch freedom ?
+  private var dependOn: Set[DepHolder] = Set()
+
+  /** for testing */
+  def dependOnCount() = dependOn.size
+
   def addDependOn(dep: DepHolder) = {
     if (!dependOn.contains(dep)) {
+      ensureLevel(dep.level)
       dependOn += dep
+      dep.addDependent(this)
       ReactiveEngine.log.nodeAttached(this, dep)
     }
   }
   def setDependOn(deps: TraversableOnce[DepHolder]) = {
-    dependOn.clear()
-    dependOn ++= deps
+    val newDependencies = deps.toSet
+    val removed = dependOn.diff(newDependencies)
+    val added = newDependencies.diff(dependOn)
+    removed.foreach(removeDependOn)
+    added.foreach(addDependOn)
+    dependOn = deps.toSet
   }
-  def removeDependOn(dep: DepHolder) = dependOn -= dep
+  def removeDependOn(dep: DepHolder) = {
+    dep.removeDependent(this)
+    dependOn -= dep
+  }
 
+  /** called when it is this events turn to be evaluated
+    * (head of the evaluation queue) */
   protected[rescala] def triggerReevaluation(): Unit
 
-  /* A node on which this one depends is changed */
+  /** callback when a dependency has changed */
   def dependsOnchanged(change: Any, dep: DepHolder): Unit
 }
 
@@ -97,17 +109,17 @@ trait Signal[+A] extends Changing[A] with FoldableReactive[A] with DepHolder {
 
   def get: A
 
-  def apply(): A
+  final def apply(): A = get
 
-  def apply(s: SignalSynt[_]): A = {
-    if (level >= s.level) s.level = level + 1
-    s.reactivesDependsOnCurrent += this
+  /** hook for subclasses to do something when they use their dependencies */
+  def onDynamicDependencyUse[T](dependency: Signal[T]): Unit = { }
+
+  def apply[T](signal: SignalSynt[T]): A = {
+    signal.onDynamicDependencyUse(this)
     get
   }
 
-  def map[B](f: A => B): Signal[B]
-
-  protected[rescala] def reEvaluate(): A
+  def map[B](f: A => B): Signal[B] = SignalSynt(this) { s: SignalSynt[B] => f(apply(s)) }
 
   /** Return a Signal that gets updated only when e fires, and has the value of this Signal */
   def snapshot(e: Event[_]): Signal[A] = IFunctions.snapshot(e, this)
@@ -119,7 +131,7 @@ trait Signal[+A] extends Changing[A] with FoldableReactive[A] with DepHolder {
   def switchOnce[V >: A](e: Event[_])(newSignal: Signal[V]): Signal[V] = IFunctions.switchOnce(e, this, newSignal)
 
   /** Switch back and forth between this and the other Signal on occurrence of event e */
-  def toggle[V >: A](e: Event[_])(other: Signal[V]) = IFunctions.toggle(e, this, other)
+  def toggle[V >: A](e: Event[_])(other: Signal[V]): Signal[V] = IFunctions.toggle(e, this, other)
 
   /** Delays this signal by n occurrences */
   def delay(n: Int): Signal[A] = IFunctions.delay(this, n)
@@ -129,10 +141,10 @@ trait Signal[+A] extends Changing[A] with FoldableReactive[A] with DepHolder {
 
 }
 
-/* A root Reactive value without dependencies which can be set */
+/** A root Reactive value without dependencies which can be set */
 trait Var[T] extends Signal[T] {
-  def set(newval: T): Unit
-  def update(v: T): Unit
+  def set(newValue: T): Unit
+  final def update(newValue: T): Unit = set(newValue)
 }
 
 object Var {
@@ -171,7 +183,7 @@ trait FoldableReactive[+A] {
     fold(Seq[A]()) { (acc,v) => acc.takeRight(n-1) :+ v }
 }
 
-/* An inner node which depends on other values */
+/** An inner node which depends on other values */
 trait DependentSignal[+T] extends Signal[T] with Dependent
 
 /**
@@ -180,44 +192,28 @@ trait DependentSignal[+T] extends Signal[T] with Dependent
  */
 object ReactiveEngine {
 
-  /* If logging is needed, replace this with another instance of Logging */
+  /** If logging is needed, replace this with another instance of Logging */
   var log: Logging = NoLogging
 
-  private var evalQueue = PriorityQueue[Dependent]()
+  private val evalQueue = new mutable.PriorityQueue[(Int, Dependent)]()(new Ordering[(Int, Dependent)] {
+    override def compare(x: (Int, Dependent), y: (Int, Dependent)): Int = y._1.compareTo(x._1)
+  })
 
-  /* Adds a dependant to the eval queue, duplicates are allowed */
+  /** Adds a dependant to the eval queue, duplicates are allowed */
   def addToEvalQueue(dep: Dependent): Unit = {
-    evalQueue.synchronized {
-      //if (evalQueue.exists(_ eq dep)) return
-
-      ReactiveEngine.log.nodeScheduled(dep)
-      evalQueue += dep
-
-      // DEBUG:
-      //if(evalQueue.toList.contains((_: Any) == null))
-      //  System.err.println("eval queue contains null element after insertion of " + dep)
-    }
+      if (!evalQueue.exists { case (_, elem) => elem eq dep }) {
+        ReactiveEngine.log.nodeScheduled(dep)
+        evalQueue.+=((dep.level, dep))
+      }
   }
 
-  def removeFromEvalQueue(dep: Dependent) = evalQueue = evalQueue.filter(_ eq dep)
-
-  /* Evaluates all the elements in the queue */
+  /** Evaluates all the elements in the queue */
   def startEvaluation() = {
-    evalQueue.synchronized {
-      val localStamp = TS.getCurrentTs
-      // DEBUG: println("Start eval: " + Thread.currentThread() + "  " + localStamp + " (init. queue: " + evalQueue.length + ")")
-      var counter = 0
-      while (evalQueue.nonEmpty) {
-        counter += 1
-        val head = evalQueue.dequeue()
-        if (head == null) {
-          System.err.println("priority deque yielded null")
-          // not sure why this happens, null is never inserted
-        } else {
-          head.triggerReevaluation()
-        }
-      }
-      // DEBUG: println("End eval: " + Thread.currentThread() + "  " + localStamp + " (" + counter + " rounds)")
+    while (evalQueue.nonEmpty) {
+      val (level, head) = evalQueue.dequeue()
+      // check the level if it changed queue again
+      if (level == head.level) head.triggerReevaluation()
+      else addToEvalQueue(head)
     }
   }
 }
@@ -237,13 +233,13 @@ object TS {
   }
 
   def newTs: Stamp = {
-    val ts = new Stamp(_roundNum, _sequenceNum)
+    val ts = Stamp(_roundNum, _sequenceNum)
     _sequenceNum += 1
     ReactiveEngine.log.logRound(ts)
     ts
   }
 
-  def getCurrentTs = new Stamp(_roundNum, _sequenceNum)
+  def getCurrentTs = Stamp(_roundNum, _sequenceNum)
 
   def reset(): Unit = {
     _roundNum = 0

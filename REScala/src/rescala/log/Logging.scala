@@ -13,6 +13,7 @@ trait Logging {
   def nodeScheduled(r: Reactive): Unit
   def nodeEvaluationStarted(r: Reactive): Unit
   def nodeEvaluationEnded(r: Reactive): Unit
+  /** called when propagation inside a signal is stopped because the new value equals the old value */
   def nodeEvaluationEndedWithException(r: Reactive, e: Exception): Unit
   def nodeValueSet(r: Reactive): Unit
   def nodePropagationStopped(r: Reactive): Unit

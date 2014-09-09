@@ -2,7 +2,7 @@ package rescala
 
 import rescala.events._
 import rescala.log._
-import scala.collection.mutable.ListBuffer
+import scala.collection.immutable.Queue
 import scala.collection.LinearSeq
 
 object IFunctions {
@@ -32,7 +32,7 @@ object IFunctions {
   }
 
   /** returns a signal holding the latest value of the event. */
-  def latest[T](e: Event[T], init: T): Signal[T] = IFunctions.fold(e, init)((_, v) => v)
+  def latest[T](e: Event[T], init: T): Signal[T] = fold(e, init)((_, v) => v)
 
   /** Holds the latest value of an event as an Option, None before the first event occured */
   def latestOption[T](e: Event[T]): Signal[Option[T]] = latest(e.map((x: T) => Some(x)), None)
@@ -45,12 +45,8 @@ object IFunctions {
    *  list increases in size up to when n values are available
    */
   def last[T](e: Event[T], n: Int): Signal[LinearSeq[T]] =
-    fold(e, new collection.mutable.Queue[T]) {
-      (acc: collection.mutable.Queue[T], v: T) =>
-        if (acc.length >= n) acc.dequeue()
-        //v +=: acc // (prepend)
-        acc += v // (append)
-        acc
+    fold(e, Queue[T]()) { (acc: Queue[T], v: T) =>
+      if (acc.length >= n) acc.tail.enqueue(v) else acc.enqueue(v)
     }
 
   /** Return a Signal that is updated only when e fires, and has the value of the signal s */
@@ -63,9 +59,9 @@ object IFunctions {
    */
   def switchTo[T](e: Event[T], original: Signal[T]): Signal[T] = {
     val latest = latestOption(e)
-    StaticSignal(latest, original) {
-      latest.get match {
-        case None => original.get
+    SignalSynt[T](latest, original) { s =>
+      latest(s) match {
+        case None => original(s)
         case Some(x) => x
       }
     }
@@ -74,10 +70,10 @@ object IFunctions {
   /** Switch to a new Signal once, on the occurrence of event e. */
   def switchOnce[T](e: Event[_], original: Signal[T], newSignal: Signal[T]): Signal[T] = {
     val latest = latestOption(e)
-    StaticSignal(latest, original, newSignal) {
-      latest.get match {
-        case None => original.get
-        case Some(_) => newSignal.get
+    SignalSynt[T](latest, original, newSignal) { s =>
+      latest(s) match {
+        case None => original(s)
+        case Some(_) => newSignal(s)
       }
     }
   }
@@ -85,14 +81,14 @@ object IFunctions {
   /** Switch back and forth between two signals on occurrence of event e */
   def toggle[T](e: Event[_], a: Signal[T], b: Signal[T]): Signal[T] = {
     val switched: Signal[Boolean] = iterate(e, false) { !_ }
-    StaticSignal(switched, a, b) { if (switched.get) b.get else a.get}
+    SignalSynt[T](switched, a, b) { s => if (switched(s)) b(s) else a(s) }
   }
 
   /** Like latest, but delays the value of the resulting signal by n occurrences */
   def delay[T](e: Event[T], init: T, n: Int): Signal[T] = {
     val history: Signal[LinearSeq[T]] = last(e, n + 1)
-    StaticSignal(history) {
-      val h = history.get
+    SignalSynt[T](history) { s =>
+      val h = history(s)
       if (h.size <= n) init else h.head
     }
   }
@@ -101,13 +97,11 @@ object IFunctions {
   def delay[T](signal: Signal[T], n: Int): Signal[T] = delay(signal.changed, signal.get, n)
 
   /** lifts a function A => B to work on reactives */
-  def lift[A, B](f: A => B): (Signal[A] => Signal[B]) = a => StaticSignal[B](a) { f(a.get) }
+  def lift[A, B](f: A => B): (Signal[A] => Signal[B]) = a => a.map(f)
 
-  
+
   /** Generates a signal from an event occurrence */
-  trait Factory[E, A] {
-    def apply(eventValue: E): (Signal[A], Factory[E, A])
-  }
+  trait Factory[-E, +A] extends ( E => (Signal[A], Factory[E, A]) )
 
   /** Generates a signal from an initial signal and a factory for subsequent ones */
   def switch[T, A](e: Event[T])(init: Signal[A])(factory: Factory[T, A]): Signal[A] =
@@ -119,46 +113,15 @@ object IFunctions {
 }
 
 class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T, E) => T)
-  extends DependentSignal[T] {
+  extends DependentSignalImplementation[T] {
 
-  // The value of this signal
-  private[this] var currentValue: T = init
+  addDependOn(e)
 
   // The cached value of the last occurence of e
   private[this] var lastEvent: E = _
 
-  private[this] var inQueue = false
-
-  def get = currentValue
-
-  def apply(): T = currentValue
-
-  // The only dependant is e
-  addDependOn(e)
-  e.addDependent(this)
-  this.level = e.level + 1
-
-  def triggerReevaluation() = reEvaluate()
-
-  def reEvaluate(): T = {
-    ReactiveEngine.log.nodeEvaluationStarted(this)
-    inQueue = false
-
-    val hashBefore = if (currentValue == null) 0 else currentValue.hashCode
-    val tmp = f(currentValue, lastEvent)
-    val hashAfter = if (tmp == null) 0 else tmp.hashCode
-    // support mutable values by using hashValue rather than ==
-    if (hashAfter != hashBefore || currentValue != tmp) {
-      currentValue = tmp
-      timestamps += TS.newTs // Testing
-      notifyDependents(currentValue)
-    } else {
-      ReactiveEngine.log.nodePropagationStopped(this)
-      timestamps += TS.newTs // Testing
-    }
-    ReactiveEngine.log.nodeEvaluationEnded(this)
-    tmp
-  }
+  override def initialValue(): T = init
+  override def calculateNewValue(): T = f(get, lastEvent)
 
   override def dependsOnchanged(change: Any, dep: DepHolder) = {
     if (dep eq e) {
@@ -168,79 +131,22 @@ class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T, E) => T)
       throw new RuntimeException("Folded Signals can only depend on a single event node")
     }
 
-    if (!inQueue) {
-      inQueue = true
-      ReactiveEngine.addToEvalQueue(this)
-    }
+    super.dependsOnchanged(change, dep)
   }
 
-  def map[B](f: T => B): Signal[B] =
-    SignalSynt(List(this)) { s: SignalSynt[B] => f(this(s)) }
 }
 
-class SwitchedSignal[+T, +E](e: Event[E], init: Signal[T], factory: IFunctions.Factory[E, T])
-  extends DependentSignal[T] {
+class SwitchedSignal[+T, -E](trigger: Event[E], initialSignal: Signal[T], initialFactory: IFunctions.Factory[E, T])
+  extends DependentSignalImplementation[T] {
 
-  // The "inner" signal
-  private[this] var currentSignal: Signal[T] = init
-  // the current factory being called on the next occurence of e
-  private[this] var currentFactory: IFunctions.Factory[E, T] = factory
+  val fold = trigger.fold((initialSignal, initialFactory)) { case ((_, factory), pulse) =>  factory(pulse) }
 
-  private[this] var inQueue = false
+  setDependOn(Set(fold, initialSignal))
 
-  def get = currentSignal.get
+  override def initialValue(): T = initialSignal.get
 
-  def apply(): T = currentSignal.apply()
-
-  private def removeInner(s: Signal[_]) {
-    removeDependOn(s)
-    s.removeDependent(this)
+  override def calculateNewValue(): T = {
+    setDependOn(Set(fold, fold.get._1))
+    fold.get._1.get
   }
-
-  private def addInner(s: Signal[_]) {
-    addDependOn(s)
-    s.addDependent(this)
-    this.level = math.max(e.level, s.level) + 1
-  }
-
-  // Switched signal depends on event and the current signal
-  addDependOn(e)
-  e.addDependent(this)
-  addInner(currentSignal)
-
-  def triggerReevaluation() = reEvaluate()
-
-  def reEvaluate(): T = {
-    ReactiveEngine.log.nodeEvaluationStarted(this)
-    inQueue = false
-
-    val inner = currentSignal.reEvaluate()
-    ReactiveEngine.log.nodeEvaluationEnded(this)
-    inner
-  }
-
-  override def dependsOnchanged(change: Any, dep: DepHolder) = {
-    if (dep eq e) {
-      val event = change.asInstanceOf[E]
-      val (newSignal, newFactory) = currentFactory.apply(event)
-      if (newSignal ne currentSignal) {
-        removeInner(currentSignal)
-        currentSignal = newSignal
-        currentFactory = newFactory
-        addInner(currentSignal)
-      }
-      // hack?
-      val value = reEvaluate()
-      notifyDependents(value)
-    } else {
-    }
-
-    if (!inQueue) {
-      inQueue = true
-      ReactiveEngine.addToEvalQueue(this)
-    }
-  }
-
-  def map[B](f: T => B): Signal[B] =
-    SignalSynt(List(this)) { s: SignalSynt[B] => f(this(s)) }
 }

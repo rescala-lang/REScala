@@ -141,11 +141,11 @@ class HigherOrderTestSuite extends AssertionsForJUnit with MockitoSugar {
     dereferenced.changed += { _ => dereferencedChanged = true }
 
     tick( () )
-    assert(dereferencedChanged == true)
+    assert(dereferencedChanged)
     dereferencedChanged = false
     assert(dereferenced.get == 1)
     tick(())
-    assert(dereferencedChanged == true)
+    assert(dereferencedChanged)
     dereferencedChanged = false
     assert(dereferenced.get == 4)
   }
@@ -180,19 +180,19 @@ class HigherOrderTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(s.get == 4)
     //assert(changeCount == 2) // fails
   }
-  
-  
-  
+
+
+
   @Test def unwrap_Event() = {
     val e1 = new ImperativeEvent[Int] { override def toString = "e1"}
     val e2 = new ImperativeEvent[Int] { override def toString = "e2"}
     val eventSelector = Var(e1)
     val selected = Signal { eventSelector() }
     val unwrapped = IFunctions.unwrap(selected)
-    
+
     var lastEvent = -1
     unwrapped += { lastEvent = _}
-    
+
     e1(1)
     assert(lastEvent == 1)
     e2(2)
@@ -204,6 +204,80 @@ class HigherOrderTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(lastEvent == 3)
     e2(5)
     assert(lastEvent == 5)
+  }
+
+  @Test def dynamicLevel() = {
+    val v1 = VarSynt(1)
+
+    val derived = Signal { v1() }
+
+    val level1 = Signal { v1() + 1 }
+    val level2 = Signal { level1() + 1 }
+    val level3 = Signal { level2() + 1 }
+
+
+    val combined = Signal { if (v1() == 10) level3() else derived() }
+
+    var log = List[Int]()
+
+    combined.changed += (log ::= _)
+
+    v1() = 10
+    assert(log == List(13))
+    v1() = 1
+    assert(log == List(1, 13))
+
+
+    val higherOrder = Signal { if (v1() == 10) level3 else derived }
+    val flattened = Signal { higherOrder()() }
+
+    var higherOrderLog = List[Int]()
+
+    flattened.changed += (higherOrderLog ::= _)
+
+    v1() = 10
+    assert(higherOrderLog == List(13))
+    v1() = 1
+    assert(higherOrderLog == List(1, 13))
+    assert(log == List(1, 13, 1, 13))
+  }
+
+  /*TODO: fails because level1 is evaluated before dynamicSignal is updated. */
+  @Test def wrappedEvent() = {
+    val e1 = new ImperativeEvent[Int]()
+    val condition = e1.latest(-1)
+    val level1Event = e1.map[String, Int](_ => "level 1")
+    val level2Event = level1Event.map[String, String](_ => "level 2")
+    val dynamicSignal = Signal { if(condition() == 1) level1Event else level2Event}
+
+    val unwrapped = dynamicSignal.unwrap
+
+    var log = List[String]()
+    unwrapped += (log ::= _)
+
+    e1.apply(0)
+    assert(log == List("level 2"))
+    e1.apply(1)
+    assert(log == List("level 1", "level 2"))
+  }
+
+  /*TODO: fails because A and B are evaluated before dynamicSignal is updated. */
+  @Test def wrappedEventSameLevel() = {
+    val e1 = new ImperativeEvent[Int]()
+    val level2Condition = e1.latest(-1).map(identity)
+    val level1EventA = e1.map[String, Int](_ => "A")
+    val level1EventB = e1.map[String, Int](_ => "B")
+    val dynamicSignal = Signal { if(level2Condition() == 1) level1EventA else level1EventB}
+
+    val unwrapped = dynamicSignal.unwrap
+
+    var log = List[String]()
+    unwrapped += (log ::= _)
+
+    e1.apply(0)
+    assert(log == List("B"))
+    e1.apply(1)
+    assert(log == List("A", "B"))
   }
 
 }
