@@ -14,6 +14,9 @@ trait Reactive {
   def timestamps: List[Stamp] = _timestamps
   def logTestingTimestamp() = _timestamps = TS.newTs :: _timestamps
 
+  private var _id = UUID.randomUUID()
+  def id: UUID = _id
+
   var _level = 0
   def ensureLevel(l: Int): Unit = if (l >= _level) _level = l + 1
   def level: Int = _level
