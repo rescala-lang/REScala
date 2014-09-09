@@ -30,6 +30,7 @@ class VarSynt[T](private[this] var value: T) extends Var[T] {
       ReactiveEngine.log.nodePropagationStopped(this)
       logTestingTimestamp() // testing
     }
+    ReactiveEngine.log.nodeValueSet(this)
   }
 
   def reEvaluate(): T = value
@@ -56,7 +57,14 @@ trait DependentSignalImplementation[+T] extends DependentSignal[T] {
     val oldLevel = level
 
      // Evaluation
-    val newValue = calculateNewValue()
+    val newValue = try {
+      calculateNewValue()
+    }
+    catch {
+      case e: Exception =>
+        ReactiveEngine.log.nodeEvaluationEndedWithException(this, e)
+        throw e
+    }
 
     /* if the level increases by one, the dependencies might or might not have been evaluated this turn.
      * if they have, we could just fire the observers, but if they have not we are not allowed to do so
@@ -96,6 +104,7 @@ class SignalSynt[+T](reactivesDependsOnUpperBound: List[DepHolder])(expr: Signal
   override def initialValue(): T = calculateNewValue()
 
   override def calculateNewValue(): T = {
+    detectedDependencies = Set()
     val newValue = expr(this)
     setDependOn(detectedDependencies)
     detectedDependencies = Set()
@@ -124,9 +133,9 @@ object SignalSynt {
 
 /** A wrapped event inside a signal, that gets "flattened" to a plain event node */
 class WrappedEvent[T](wrapper: Signal[Event[T]]) extends EventNode[T] with Dependent {
-  
+
   var currentValue: T = _
-  
+
   updateDependencies()
 
   private def updateDependencies() = setDependOn(Set(wrapper, wrapper.get))
@@ -135,7 +144,7 @@ class WrappedEvent[T](wrapper: Signal[Event[T]]) extends EventNode[T] with Depen
     logTestingTimestamp()
     notifyDependents(currentValue)
   }
-  
+
   override def dependsOnchanged(change: Any, dep: DepHolder) = {
     if(dep eq wrapper) {
 	    updateDependencies()
@@ -147,5 +156,5 @@ class WrappedEvent[T](wrapper: Signal[Event[T]]) extends EventNode[T] with Depen
     else throw new IllegalStateException("Illegal DepHolder " + dep)
 
   }
-  
+
 }
