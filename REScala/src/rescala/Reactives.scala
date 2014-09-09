@@ -26,28 +26,30 @@ trait Reactive {
 
 /** A node that has nodes that depend on it */
 trait DepHolder extends Reactive {
-  private var dependents: Set[Dependent] = Set()
+  private var _dependents: Set[Dependent] = Set()
+  
+  def dependents: Set[Dependent] = _dependents
 
   /** used for testing*/
-  def dependentCount() = dependents.size
+  def dependentCount() = _dependents.size
 
   def addDependent(dep: Dependent) = {
-    if (!dependents.contains(dep)) {
-      dependents += dep
+    if (!_dependents.contains(dep)) {
+      _dependents += dep
       ReactiveEngine.log.nodeAttached(dep, this)
     }
   }
-  def removeDependent(dep: Dependent) = dependents -= dep
+  def removeDependent(dep: Dependent) = _dependents -= dep
   def notifyDependents(change: Any): Unit = {
     ReactiveEngine.log.nodePulsed(this)
-    dependents.foreach(_.dependsOnchanged(change, this))
+    _dependents.foreach(_.dependsOnchanged(change, this))
   }
 
   override def ensureLevel(l: Int): Unit = {
     val oldLevel = level
     super.ensureLevel(l)
     val newLevel = level
-    if (oldLevel < newLevel) dependents.foreach(_.ensureLevel(newLevel))
+    if (oldLevel < newLevel) _dependents.foreach(_.ensureLevel(newLevel))
   }
 }
 
