@@ -24,7 +24,7 @@ class LoggingTest extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test def nodeCreatedIsLogged() {
-    val v = Var()
+    val v = Var(Unit)
     val s = Signal {}
     val e = new ImperativeEvent
     val eh = Handler {}

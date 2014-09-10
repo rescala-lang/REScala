@@ -64,7 +64,6 @@ trait Dependent extends Reactive {
       ensureLevel(dep.level)
       dependOn += dep
       dep.addDependent(this)
-      ReactiveEngine.log.nodeAttached(this, dep)
     }
   }
   def setDependOn(deps: TraversableOnce[DepHolder]) = {
