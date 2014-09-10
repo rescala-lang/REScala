@@ -22,7 +22,7 @@ trait Logging {
 }
 
 /** A Logging stub, that performs no logging */
-object NoLogging extends Logging {
+class NoLogging extends Logging {
   def nodeCreated(r: Reactive): Unit = {}
   def nodeAttached(dependent: Reactive, r: Reactive): Unit = {}
   def nodePulsed(r: Reactive): Unit = {}

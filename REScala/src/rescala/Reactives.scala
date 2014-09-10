@@ -198,7 +198,7 @@ trait DependentSignal[+T] extends Signal[T] with Dependent
 object ReactiveEngine {
 
   /** If logging is needed, replace this with another instance of Logging */
-  var log: Logging = NoLogging
+  var log: Logging = new NoLogging
 
   private val evalQueue = new mutable.PriorityQueue[(Int, Dependent)]()(new Ordering[(Int, Dependent)] {
     override def compare(x: (Int, Dependent), y: (Int, Dependent)): Int = y._1.compareTo(x._1)
