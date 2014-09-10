@@ -45,7 +45,12 @@ trait DependentSignalImplementation[+T] extends DependentSignal[T] {
   def initialValue(): T
   def calculateNewValue(): T
 
-  private[this] var currentValue = initialValue()
+  private[this] var currentValue = {
+    ReactiveEngine.log.nodeEvaluationStarted(this)
+    val res = initialValue()
+    ReactiveEngine.log.nodeEvaluationEnded(this)
+    res
+  }
 
   def get = currentValue
 
@@ -140,7 +145,7 @@ class WrappedEvent[T](wrapper: Signal[Event[T]]) extends EventNode[T] with Depen
 
   private def updateDependencies() = setDependOn(Set(wrapper, wrapper.get))
 
-  def triggerReevaluation() {
+  def triggerReevaluation(): Unit = {
     logTestingTimestamp()
     notifyDependents(currentValue)
   }
