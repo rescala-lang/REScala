@@ -45,11 +45,12 @@ trait DependentSignalImplementation[+T] extends DependentSignal[T] {
   def initialValue(): T
   def calculateNewValue(): T
 
-  private[this] var currentValue = {
+  private[this] var currentValue: T = _
+
+  {
     ReactiveEngine.log.nodeEvaluationStarted(this)
-    val res = initialValue()
+    currentValue = initialValue()
     ReactiveEngine.log.nodeEvaluationEnded(this)
-    res
   }
 
   def get = currentValue
