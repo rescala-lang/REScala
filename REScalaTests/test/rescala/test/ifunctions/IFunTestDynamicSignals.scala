@@ -5,7 +5,7 @@ import org.scalatest.mock.MockitoSugar
 import rescala._
 import rescala.events._
 import rescala.makro.SignalMacro.{SignalM => Signal}
-import rescala.signals.{SignalSynt, _}
+import rescala.signals.{DynamicSignal, _}
 
 import scala.collection.LinearSeq
 
@@ -315,7 +315,7 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
 
     val a = Var(3)
     val b = Var(Signal(a()))
-    val c = SignalSynt[Int](b) { (x: SignalSynt[Int]) => b(x)(x) }
+    val c = DynamicSignal[Int](b) { (x: DynamicSignal[Int]) => b(x)(x) }
     //println(c.get) //outputs 3
     a() = 4
     //println(c.get) //outputs 4

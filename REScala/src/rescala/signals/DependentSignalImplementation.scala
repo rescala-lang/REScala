@@ -3,7 +3,6 @@ package rescala.signals
 import rescala._
 import rescala.propagation.{NoChangePulse, DiffPulse, Turn}
 
-
 abstract class DependentSignalImplementation[+T](creationTurn: Turn) extends DependentSignal[T] {
 
   def initialValue()(implicit turn: Turn): T
@@ -52,43 +51,4 @@ abstract class DependentSignalImplementation[+T](creationTurn: Turn) extends Dep
     }
     log.nodeEvaluationEnded(this)
   }
-}
-
-/** A dependant reactive value with dynamic dependencies (depending signals can change during evaluation) */
-class SignalSynt[+T](
-    dependenciesUpperBound: List[Dependency[Any]],
-    private var detectedDependencies: Set[Dependency[Any]] = Set())
-    (expr: SignalSynt[T] => T)
-    (creationTurn: Turn)
-  extends DependentSignalImplementation[T](creationTurn) {
-
-  override def onDynamicDependencyUse[A](dependency: Signal[A]): Unit = {
-    super.onDynamicDependencyUse(dependency)
-    detectedDependencies += dependency
-  }
-
-  override def initialValue()(implicit turn: Turn): T = calculateNewValue()
-
-  override def calculateNewValue()(implicit turn: Turn): T = {
-    val newValue = expr(this)
-    setDependencies(detectedDependencies)
-    detectedDependencies = Set()
-    newValue
-  }
-
-  if(dependenciesUpperBound.nonEmpty) ensureLevel(dependenciesUpperBound.map{_.level}.max)
-
-}
-
-/**
- * A syntactic signal
- */
-object SignalSynt {
-  def apply[T](dependencies: List[Dependency[Any]])(expr: SignalSynt[T] => T) = Turn.maybeTurn { turn =>
-    new SignalSynt(dependencies)(expr)(turn)
-  }
-
-  def apply[T](expr: SignalSynt[T] => T): SignalSynt[T] = apply(List())(expr)
-  def apply[T](dependencyHolders: Dependency[Any]*)(expr: SignalSynt[T] => T): SignalSynt[T] = apply(dependencyHolders.toList)(expr)
-
 }

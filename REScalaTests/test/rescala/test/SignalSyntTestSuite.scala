@@ -12,7 +12,7 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
   @Test def signalReEvaluatesTheExpressionWhenSomethingItDependsOnIsUpdated(): Unit = {
     val v  = Var(0)
     var i = 1
-    var s: SignalSynt[Int] = SignalSynt[Int](v){s=> v(s) + i }
+    var s: DynamicSignal[Int] = DynamicSignal[Int](v){s=> v(s) + i }
     i = 2
     v.set(2)
     assert(s.get == 4)
@@ -20,7 +20,7 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
 
   @Test def theExpressionIsNoteEvaluatedEveryTimeGetValIsCalled(): Unit = {
     var a = 10
-    val s: SignalSynt[Int] = SignalSynt[Int](List())(s=> 1 + 1 + a )
+    val s: DynamicSignal[Int] = DynamicSignal[Int](List())(s=> 1 + 1 + a )
     assert(s.get === 12)
     a = 11
     assert(s.get === 12)
@@ -28,7 +28,7 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
 
 
   @Test def simpleSignalReturnsCorrectExpressions(): Unit = {
-    var s: SignalSynt[Int] = SignalSynt[Int](List())(s=> 1 + 1 + 1 )
+    var s: DynamicSignal[Int] = DynamicSignal[Int](List())(s=> 1 + 1 + 1 )
     assert(s.get === 3)
   }
 
@@ -36,8 +36,8 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
 
     var a = 0
     val v = Var(10)
-    var s1: SignalSynt[Int] = SignalSynt[Int](v){s=> a +=1; v(s) % 10 }
-    var s2: SignalSynt[Int] = SignalSynt[Int](s1){s=> a }
+    var s1: DynamicSignal[Int] = DynamicSignal[Int](v){s=> a +=1; v(s) % 10 }
+    var s2: DynamicSignal[Int] = DynamicSignal[Int](s1){s=> a }
 
 
     assert(a == 1)
@@ -52,9 +52,9 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
     var test = 0
     val v = Var(1)
 
-    val s1 = SignalSynt[Int](v){s=> 2 * v(s) }
-    val s2 = SignalSynt[Int](v){s=> 3 * v(s) }
-    val s3 = SignalSynt[Int](s1,s2){s=> s1(s) + s2(s) }
+    val s1 = DynamicSignal[Int](v){s=> 2 * v(s) }
+    val s2 = DynamicSignal[Int](v){s=> 3 * v(s) }
+    val s3 = DynamicSignal[Int](s1,s2){s=> s1(s) + s2(s) }
 
     s1.changed += { (_) => test += 1 }
     s2.changed += { (_) => test += 1 }
@@ -72,9 +72,9 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
     var test = 0
     val v = Var(1)
 
-    val s1 = SignalSynt[Int](v){s=> 2 * v.get }
-    val s2 = SignalSynt[Int](v){s=> 3 * v.get }
-    val s3 = SignalSynt[Int](s1,s2){s=> s1.get + s2.get }
+    val s1 = DynamicSignal[Int](v){s=> 2 * v.get }
+    val s2 = DynamicSignal[Int](v){s=> 3 * v.get }
+    val s3 = DynamicSignal[Int](s1,s2){s=> s1.get + s2.get }
 
     assert(v.level == 0)
     assert(s1.level == 1)
@@ -93,7 +93,7 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
     val v2  = Var(0)
     val v3  = Var(10)
     var i = 0
-    val s: SignalSynt[Int] = SignalSynt[Int](v1,v2,v3){s=>
+    val s: DynamicSignal[Int] = DynamicSignal[Int](v1,v2,v3){s=>
       i+=1
       if(v1(s)) v2(s) else v3(s)
     }
@@ -129,7 +129,7 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
     var test = 0
 
     // val s: SignalSynt[Int] = SignalSynt[Int](v1, v2, v3) { s =>
-    val s: SignalSynt[Int] = SignalSynt[Int]{ s: SignalSynt[Int]=>
+    val s: DynamicSignal[Int] = DynamicSignal[Int]{ s: DynamicSignal[Int]=>
       i += 1
       if (v1(s)) v2(s) else v3(s)
     }
@@ -160,7 +160,7 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
    @Test def dependantIsOnlyInvokedOnValueChanges(): Unit = {
     var changes = 0
     val v = Var(1)
-    val s: SignalSynt[Int] = SignalSynt[Int]{ s: SignalSynt[Int]=>
+    val s: DynamicSignal[Int] = DynamicSignal[Int]{ s: DynamicSignal[Int]=>
       changes += 1; v(s) + 1 }
     assert(changes == 1)
     assert(s.get == 2)

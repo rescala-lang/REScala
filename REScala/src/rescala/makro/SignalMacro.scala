@@ -127,7 +127,7 @@ object SignalMacro {
     // every Signal { ... } macro instance gets expanded into a SignalSynt
     val signalSyntArgName = TermName(c.freshName("s$"))
     val signalSyntArgIdent = Ident(signalSyntArgName)
-    internal setType (signalSyntArgIdent, weakTypeOf[SignalSynt[A]])
+    internal setType (signalSyntArgIdent, weakTypeOf[DynamicSignal[A]])
 
     // the signal values that will be cut out of the Signal expression
     val signalValues = ListBuffer.empty[ValDef]
@@ -264,7 +264,7 @@ object SignalMacro {
         List(
           ValDef(
             Modifiers(), signalSyntArgName,
-            TypeTree(weakTypeOf[SignalSynt[A]]), EmptyTree)),
+            TypeTree(weakTypeOf[DynamicSignal[A]]), EmptyTree)),
         tree)
 
     // create SignalSynt object

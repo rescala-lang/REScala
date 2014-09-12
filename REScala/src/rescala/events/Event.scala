@@ -2,7 +2,7 @@ package rescala.events
 
 import rescala._
 import rescala.propagation._
-import rescala.signals.{SignalSynt, FoldedSignal, Signal}
+import rescala.signals.{DynamicSignal, FoldedSignal, Signal}
 
 import scala.collection.LinearSeq
 import scala.collection.immutable.Queue
@@ -84,7 +84,7 @@ trait Event[+T] extends Dependency[T] {
   /** calls factory on each occurrence of event e, resetting the Signal to a newly generated one */
   def reset[S >: T, A](init: S)(factory: S => Signal[A]): Signal[A] =  {
     val ref: Signal[Signal[A]] = set(init)(factory)
-    SignalSynt { s: SignalSynt[A] => ref(s)(s) } // cannot express without high order signals
+    DynamicSignal { s: DynamicSignal[A] => ref(s)(s) } // cannot express without high order signals
   }
 
   /**
@@ -102,7 +102,7 @@ trait Event[+T] extends Dependency[T] {
   /** Switch back and forth between two signals on occurrence of event e */
   def toggle[A](a: Signal[A], b: Signal[A]): Signal[A] = {
     val switched: Signal[Boolean] = iterate(false) { !_ }
-    SignalSynt[A](switched, a, b) { s => if (switched(s)) b(s) else a(s) }
+    DynamicSignal[A](switched, a, b) { s => if (switched(s)) b(s) else a(s) }
   }
 
   /** Return a Signal that is updated only when e fires, and has the value of the signal s */
@@ -111,7 +111,7 @@ trait Event[+T] extends Dependency[T] {
   /** Switch to a new Signal once, on the occurrence of event e. */
   def switchOnce[A](original: Signal[A], newSignal: Signal[A]): Signal[A] = {
     val latest = latestOption
-    SignalSynt[A](latest, original, newSignal) { s =>
+    DynamicSignal[A](latest, original, newSignal) { s =>
       latest(s) match {
         case None => original(s)
         case Some(_) => newSignal(s)
@@ -126,7 +126,7 @@ trait Event[+T] extends Dependency[T] {
    */
   def switchTo[S >: T](original: Signal[S]): Signal[S] = {
     val latest = latestOption
-    SignalSynt[S](latest, original) { s =>
+    DynamicSignal[S](latest, original) { s =>
       latest(s) match {
         case None => original(s)
         case Some(x) => x
@@ -137,7 +137,7 @@ trait Event[+T] extends Dependency[T] {
   /** Like latest, but delays the value of the resulting signal by n occurrences */
   def delay[S >: T](init: S, n: Int): Signal[S] = {
     val history: Signal[LinearSeq[T]] = last(n + 1)
-    SignalSynt[S](history) { s =>
+    DynamicSignal[S](history) { s =>
       val h = history(s)
       if (h.size <= n) init else h.head
     }

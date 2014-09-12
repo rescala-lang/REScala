@@ -33,12 +33,12 @@ trait Signal[+A] extends Changing[A] with Dependency[A] {
   /** hook for subclasses to do something when they use their dependencies */
   def onDynamicDependencyUse[T](dependency: Signal[T]): Unit = { }
 
-  def apply[T](signal: SignalSynt[T]): A = Turn.maybeTurn { turn =>
+  def apply[T](signal: DynamicSignal[T]): A = Turn.maybeTurn { turn =>
     signal.onDynamicDependencyUse(this)
     get
   }
 
-  def map[B](f: A => B): Signal[B] = SignalSynt(this) { s: SignalSynt[B] => f(apply(s)) }
+  def map[B](f: A => B): Signal[B] = DynamicSignal(this) { s: DynamicSignal[B] => f(apply(s)) }
 
   /** Return a Signal that gets updated only when e fires, and has the value of this Signal */
   def snapshot(e: Event[_]): Signal[A] = e.snapshot(this)
