@@ -1,5 +1,6 @@
 package rescala.makro
 
+import rescala.propagation.Turn
 import rescala.signals._
 
 import scala.collection.mutable.ListBuffer
@@ -127,7 +128,7 @@ object SignalMacro {
     // every Signal { ... } macro instance gets expanded into a SignalSynt
     val signalSyntArgName = TermName(c.freshName("s$"))
     val signalSyntArgIdent = Ident(signalSyntArgName)
-    internal setType (signalSyntArgIdent, weakTypeOf[DynamicSignal[A]])
+    internal setType (signalSyntArgIdent, weakTypeOf[Turn])
 
     // the signal values that will be cut out of the Signal expression
     val signalValues = ListBuffer.empty[ValDef]
@@ -264,7 +265,7 @@ object SignalMacro {
         List(
           ValDef(
             Modifiers(), signalSyntArgName,
-            TypeTree(weakTypeOf[DynamicSignal[A]]), EmptyTree)),
+            TypeTree(weakTypeOf[Turn]), EmptyTree)),
         tree)
 
     // create SignalSynt object

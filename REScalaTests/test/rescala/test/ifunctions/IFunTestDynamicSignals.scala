@@ -1,13 +1,11 @@
 package rescala.test.ifunctions
+
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala._
 import rescala.events._
 import rescala.makro.SignalMacro.{SignalM => Signal}
 import rescala.signals.{DynamicSignal, _}
-
-import scala.collection.LinearSeq
 
 class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
 
@@ -129,8 +127,8 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
 
   @Test def switchTo_theEventSwitchesTheValueToTheValueOfTheEvent(): Unit = {
     val e = new ImperativeEvent[Int]()
-    val v1 =  Var(1)
-    val s1 = Signal{ v1() + 1 }
+    val v1 = Var(1)
+    val s1 = Signal { v1() + 1 }
     val s2 = e.switchTo(s1)
 
     e(1)
@@ -315,7 +313,7 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
 
     val a = Var(3)
     val b = Var(Signal(a()))
-    val c = DynamicSignal[Int](b) { (x: DynamicSignal[Int]) => b(x)(x) }
+    val c = DynamicSignal(b) { x => b(x)(x) }
     //println(c.get) //outputs 3
     a() = 4
     //println(c.get) //outputs 4

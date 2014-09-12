@@ -30,15 +30,12 @@ trait Signal[+A] extends Changing[A] with Dependency[A] {
   // only used inside macro and will be replaced there
   final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")
 
-  /** hook for subclasses to do something when they use their dependencies */
-  def onDynamicDependencyUse[T](dependency: Signal[T]): Unit = { }
-
-  def apply[T](signal: DynamicSignal[T]): A = Turn.maybeTurn { turn =>
-    signal.onDynamicDependencyUse(this)
-    get
+  def apply[T](turn: Turn): A = {
+    turn.dynamic.used(this)
+    pulse(turn).valueOption.get
   }
 
-  def map[B](f: A => B): Signal[B] = DynamicSignal(this) { s: DynamicSignal[B] => f(apply(s)) }
+  def map[B](f: A => B): Signal[B] = DynamicSignal(this) { s => f(apply(s)) }
 
   /** Return a Signal that gets updated only when e fires, and has the value of this Signal */
   def snapshot(e: Event[_]): Signal[A] = e.snapshot(this)

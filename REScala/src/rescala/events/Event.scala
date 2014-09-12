@@ -84,7 +84,7 @@ trait Event[+T] extends Dependency[T] {
   /** calls factory on each occurrence of event e, resetting the Signal to a newly generated one */
   def reset[S >: T, A](init: S)(factory: S => Signal[A]): Signal[A] =  {
     val ref: Signal[Signal[A]] = set(init)(factory)
-    DynamicSignal { s: DynamicSignal[A] => ref(s)(s) } // cannot express without high order signals
+    DynamicSignal { s => ref(s)(s) } // cannot express without high order signals
   }
 
   /**

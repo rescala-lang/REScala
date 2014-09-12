@@ -5,6 +5,7 @@ import rescala.{Dependency, Reactive, Dependant}
 import rescala.log.ReactiveLogging
 
 import scala.collection.mutable
+import scala.util.DynamicVariable
 
 /**
  * The engine that schedules the (glitch-free) evaluation
@@ -35,11 +36,17 @@ class Turn extends ReactiveLogging {
     }
     evaluated.foreach(_.applyPulse(this))
   }
+
+  object dynamic {
+    val bag = new DynamicVariable(Set[Dependency[_]]())
+    def used(dependency: Dependency[_]) = bag.value = bag.value + dependency
+  }
+
 }
 
 
 object Turn {
-  val currentTurn = new scala.util.DynamicVariable[Option[Turn]](None)
+  val currentTurn = new DynamicVariable[Option[Turn]](None)
 
   def maybeTurn[T](f: Turn => T)(implicit maybe: MaybeTurn) = maybe.turn match {
     case None => newTurn(f)
