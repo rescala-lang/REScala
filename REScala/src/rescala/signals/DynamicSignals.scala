@@ -3,26 +3,6 @@ package rescala.signals
 import rescala._
 import rescala.propagation.{NoChangePulse, DiffPulse, Turn}
 
-/* A node that has nodes that depend on it */
-class VarSynt[T](initialValue: T) extends Var[T] {
-
-  currentValue = initialValue
-
-  def set(newValue: T): Unit = Turn.newTurn { turn =>
-    log.nodeValueSet(this)
-    if (currentValue != newValue) {
-      pulse(DiffPulse(newValue, currentValue))(turn)
-      currentValue = newValue
-      turn.startEvaluation()
-    } else {
-      log.nodePropagationStopped(this)
-    }
-  }
-}
-
-object VarSynt {
-  def apply[T](initialValue: T) = new VarSynt(initialValue)
-}
 
 abstract class DependentSignalImplementation[+T](creationTurn: Turn) extends DependentSignal[T] {
 

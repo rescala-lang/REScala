@@ -18,7 +18,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
 
 
   @Test def signalReEvaluatesTheExpression(): Unit = {
-    val v  = VarSynt(0)
+    val v  = Var(0)
     var i = 1
     val s: Signal[Int] = Signal { v(): @unchecked; i }
     i = 2
@@ -43,7 +43,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
   @Test def theExpressionIsEvaluatedOnlyOnce(): Unit = {
 
     var a = 0
-    val v = VarSynt(10)
+    val v = Var(10)
     val s1: Signal[Int] = Signal { a += 1; v() % 10 }
 
 
@@ -57,7 +57,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
   @Test def handlersAreExecuted() =  {
 
     var test = 0
-    val v = VarSynt(1)
+    val v = Var(1)
 
     val s1 = Signal{ 2 * v() }
     val s2 = Signal{ 3 * v() }
@@ -77,7 +77,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
   @Test def levelIsCorrectlyComputed() =  {
 
     var test = 0
-    val v = VarSynt(1)
+    val v = Var(1)
 
     val s1 = Signal{ 2 * v() }
     val s2 = Signal{ 3 * v() }

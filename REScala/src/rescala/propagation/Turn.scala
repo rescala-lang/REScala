@@ -1,6 +1,6 @@
 package rescala.propagation
 
-import rescala.signals.VarSynt
+import rescala.signals.Var
 import rescala.{Dependency, Reactive, Dependant}
 import rescala.log.ReactiveLogging
 
@@ -41,7 +41,7 @@ class Turn extends ReactiveLogging {
 object Turn {
   val currentTurn = new scala.util.DynamicVariable[Option[Turn]](None)
 
-  def maybeTurn[T](f: Turn => T) = currentTurn.value match {
+  def maybeTurn[T](f: Turn => T)(implicit maybe: MaybeTurn) = maybe.turn match {
     case None => newTurn(f)
     case Some(turn) => f(turn)
   }

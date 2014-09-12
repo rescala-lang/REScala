@@ -176,7 +176,7 @@ class HigherOrderTestSuite extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test def dynamicLevel() = {
-    val v1 = VarSynt(1)
+    val v1 = Var(1)
 
     val derived = Signal { v1() }
 

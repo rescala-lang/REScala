@@ -1,7 +1,23 @@
 package rescala.signals
 
+import rescala.propagation.{DiffPulse, Turn}
+
 object Var {
-  def apply[T](initval: T) = new VarSynt(initval)
+  def apply[T](initval: T): Var[T] = new Var[T] {
+    currentValue = initval
+
+    def set(newValue: T): Unit = Turn.newTurn { turn =>
+      log.nodeValueSet(this)
+      if (currentValue != newValue) {
+        pulse(DiffPulse(newValue, currentValue))(turn)
+        currentValue = newValue
+        turn.startEvaluation()
+      } else {
+        log.nodePropagationStopped(this)
+      }
+    }
+  }
+
 }
 
 /** A root Reactive value without dependencies which can be set */

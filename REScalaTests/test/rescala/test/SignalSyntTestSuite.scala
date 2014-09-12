@@ -10,7 +10,7 @@ import rescala.signals._
 class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
 
   @Test def signalReEvaluatesTheExpressionWhenSomethingItDependsOnIsUpdated(): Unit = {
-    val v  = VarSynt(0)
+    val v  = Var(0)
     var i = 1
     var s: SignalSynt[Int] = SignalSynt[Int](v){s=> v(s) + i }
     i = 2
@@ -35,7 +35,7 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
   @Test def theExpressionIsEvaluatedOnlyOnce(): Unit = {
 
     var a = 0
-    val v = VarSynt(10)
+    val v = Var(10)
     var s1: SignalSynt[Int] = SignalSynt[Int](v){s=> a +=1; v(s) % 10 }
     var s2: SignalSynt[Int] = SignalSynt[Int](s1){s=> a }
 
@@ -50,7 +50,7 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
   @Test def handlersAreExecuted() =  {
 
     var test = 0
-    val v = VarSynt(1)
+    val v = Var(1)
 
     val s1 = SignalSynt[Int](v){s=> 2 * v(s) }
     val s2 = SignalSynt[Int](v){s=> 3 * v(s) }
@@ -70,7 +70,7 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
   @Test def levelIsCorrectlyComputed() =  {
 
     var test = 0
-    val v = VarSynt(1)
+    val v = Var(1)
 
     val s1 = SignalSynt[Int](v){s=> 2 * v.get }
     val s2 = SignalSynt[Int](v){s=> 3 * v.get }
@@ -89,9 +89,9 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
 
 
   @Test def signalDoesNotReEvaluateTheExpressionIfDependsOnIsUpdatedThatIsNotInCurrentDependencies(): Unit = {
-    val v1  = VarSynt(true)
-    val v2  = VarSynt(0)
-    val v3  = VarSynt(10)
+    val v1  = Var(true)
+    val v2  = Var(0)
+    val v3  = Var(10)
     var i = 0
     val s: SignalSynt[Int] = SignalSynt[Int](v1,v2,v3){s=>
       i+=1
@@ -122,9 +122,9 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
 
   @Test def keep_fixedDependencies(): Unit = {
 
-    val v1 = VarSynt(true)
-    val v2 = VarSynt(0)
-    val v3 = VarSynt(10)
+    val v1 = Var(true)
+    val v2 = Var(0)
+    val v3 = Var(10)
     var i = 0
     var test = 0
 
@@ -159,7 +159,7 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
 
    @Test def dependantIsOnlyInvokedOnValueChanges(): Unit = {
     var changes = 0
-    val v = VarSynt(1)
+    val v = Var(1)
     val s: SignalSynt[Int] = SignalSynt[Int]{ s: SignalSynt[Int]=>
       changes += 1; v(s) + 1 }
     assert(changes == 1)

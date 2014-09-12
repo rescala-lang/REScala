@@ -22,7 +22,7 @@ class VarTestSuite extends AssertionsForJUnit with MockitoSugar {
 
   @Test def varNotifiesSignalOfChanges(): Unit = {
     val v = Var(1)
-    val s = StaticSignal(List(v)){ v.get + 1 }
+    val s = StaticSignal(v){ v.get + 1 }
     assert(v.get == 1)
 
     assert(s.get == 2)
@@ -35,7 +35,7 @@ class VarTestSuite extends AssertionsForJUnit with MockitoSugar {
   @Test def changeEventOnlyTriggeredOnValueChange(): Unit = {
     var changes = 0
     val v = Var(1)
-    val changed = StaticSignal(List(v)){ v.get }.change
+    val changed = StaticSignal(v){ v.get }.change
     changed += {_ => changes += 1}
 
     v.set(2)
@@ -49,7 +49,7 @@ class VarTestSuite extends AssertionsForJUnit with MockitoSugar {
   @Test def dependantIsOnlyInvokedOnValueChange(): Unit = {
     var changes = 0
     val v = Var(1)
-    val s = StaticSignal(List(v)){ changes += 1; v.get + 1 }
+    val s = StaticSignal(v){ changes += 1; v.get + 1 }
     assert(s.get == 2)
     v.set(2)
     assert(changes == 2)

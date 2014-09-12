@@ -43,7 +43,7 @@ class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
 
   @Test def theExpressionIsNoteEvaluatedEveryTimeGetValIsCalled(): Unit = {
     var a = 10
-    val s: Signal[Int] = StaticSignal(List())( 1 + 1 + a )
+    val s: Signal[Int] = StaticSignal()( 1 + 1 + a )
     assert(s.get === 12)
     a = 11
     assert(s.get === 12)
@@ -51,7 +51,7 @@ class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
 
 
   @Test def simpleSignalReturnsCorrectExpressions(): Unit = {
-    var s: Signal[Int] = StaticSignal(List())( 1 + 1 + 1 )
+    val s: Signal[Int] = StaticSignal()( 1 + 1 + 1 )
     assert(s.get === 3)
   }
 
@@ -76,7 +76,7 @@ class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
 
     val s1 = StaticSignal(v){ 2 * v.get }
     val s2 = StaticSignal(v){ 3 * v.get }
-    val s3 = StaticSignal(s1,s2){ s1.get + s2.get }
+    val s3 = StaticSignal(s1, s2){ s1.get + s2.get }
 
     s1.changed += { (_) => test += 1 }
     s2.changed += { (_) => test += 1 }
