@@ -117,38 +117,6 @@ trait Changing[+T] {
 }
 
 
-trait FoldableReactive[+A] {
-  def fold[B](init: B)(f: (B, A) => B): Signal[B]
-
-  /* ---------- derived methods follow ---------- */
-
-  /** Iterates a value on the occurrence of the event. */
-  def iterate[B](init: B)(f: B => B): Signal[B] =
-    fold(init)((acc, _) => f(acc))
-
-  /**
-    * Counts the occurrences of the event. Starts from 0, when the event has never been
-    *  fired yet. The argument of the event is simply discarded.
-    */
-  def count: Signal[Int] = fold(0)((acc, _) => acc + 1)
-
-  /** Holds the latest value of an event as an Option, None before the
-    * first event occured */
-  def latestOption: Signal[Option[A]] =
-    fold(None: Option[A])((acc, v) => Some(v))
-
-  /** collects events resulting in a variable holding a list of all values. */
-  def list: Signal[List[A]] =
-    fold(List[A]())((acc, v) => v :: acc)
-
-  /**
-   * Returns a signal which holds the last n events in a list. At the beginning the
-   *  list increases in size up to when n values are available
-   */
-  def last(n: Int): Signal[Seq[A]] =
-    fold(Seq[A]()) { (acc,v) => acc.takeRight(n-1) :+ v }
-}
-
 /** An inner node which depends on other values */
 trait DependentSignal[+T] extends Signal[T] with Dependant
 

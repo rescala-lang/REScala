@@ -19,9 +19,9 @@ class GlitchFreedomTestSuite extends AssertionsForJUnit with MockitoSugar {
     val s2 = StaticSignal(v1) { 3 * v1.get }
     val s3 = StaticSignal(s1, s2) { s1.get + s2.get }
 
-    val s1List = s1.list
-    val s2List = s2.list
-    val s3List = s3.list
+    val s1List = s1.changed.list()
+    val s2List = s2.changed.list()
+    val s3List = s3.changed.list()
 
     v1.set(3)
 
