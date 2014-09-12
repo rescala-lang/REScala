@@ -1,5 +1,7 @@
 package rescala
 
+import java.util.UUID
+
 import rescala.events._
 import rescala.log.ReactiveLogging
 import rescala.propagation.{NoChangePulse, Pulse, Turn}
@@ -7,6 +9,9 @@ import rescala.signals.Signal
 
 /** A Reactive is a value type which has a dependency to other Reactives */
 trait Reactive extends ReactiveLogging {
+
+  val id: UUID = UUID.randomUUID()
+
   private var _level = 0
   def ensureLevel(l: Int): Unit = if (l >= _level) _level = l + 1
   def level: Int = _level
@@ -64,7 +69,6 @@ trait Dependant extends Reactive {
       ensureLevel(dep.level)
       dependencies += dep
       dep.addDependant(this)
-      log.nodeAttached(this, dep)
     }
   }
   def setDependencies(deps: TraversableOnce[Dependency[_]]): Unit = {
@@ -139,7 +143,6 @@ trait FoldableReactive[+A] {
   def last(n: Int): Signal[Seq[A]] =
     fold(Seq[A]()) { (acc,v) => acc.takeRight(n-1) :+ v }
 }
-
 
 /** An inner node which depends on other values */
 trait DependentSignal[+T] extends Signal[T] with Dependant

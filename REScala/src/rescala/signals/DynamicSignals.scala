@@ -9,6 +9,7 @@ class VarSynt[T](initialValue: T) extends Var[T] {
   currentValue = initialValue
 
   def set(newValue: T): Unit = Turn.newTurn { turn =>
+    log.nodeValueSet(this)
     if (currentValue != newValue) {
       pulse(DiffPulse(newValue, currentValue))(turn)
       turn.startEvaluation()
@@ -27,7 +28,11 @@ abstract class DependentSignalImplementation[+T](creationTurn: Turn) extends Dep
   def initialValue()(implicit turn: Turn): T
   def calculateNewValue()(implicit turn: Turn): T
 
-  currentValue = initialValue()(creationTurn)
+  {
+    log.nodeEvaluationStarted(this)
+    currentValue = initialValue()(creationTurn)
+    log.nodeEvaluationEnded(this)
+  }
 
   override def triggerReevaluation()(implicit turn: Turn): Unit = {
     log.nodeEvaluationStarted(this)
@@ -35,7 +40,14 @@ abstract class DependentSignalImplementation[+T](creationTurn: Turn) extends Dep
     val oldLevel = level
 
      // Evaluation
-    val newValue = calculateNewValue()
+    val newValue = try {
+      calculateNewValue()
+    }
+    catch {
+      case e: Exception =>
+        log.nodeEvaluationEndedWithException(this, e)
+        throw e
+    }
 
     /* if the level increases by one, the dependencies might or might not have been evaluated this turn.
      * if they have, we could just fire the observers, but if they have not we are not allowed to do so
@@ -99,3 +111,6 @@ object SignalSynt {
   def apply[T](dependencyHolders: Dependency[Any]*)(expr: SignalSynt[T] => T): SignalSynt[T] = apply(dependencyHolders.toList)(expr)
 
 }
+
+
+
