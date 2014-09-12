@@ -25,8 +25,6 @@ trait Signal[+A] extends Changing[A] with Dependency[A] {
     case None => currentValue
   }
 
-  //final def apply(implicit turn: MaybeTurn): A = get
-
   // only used inside macro and will be replaced there
   final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")
 
@@ -35,7 +33,7 @@ trait Signal[+A] extends Changing[A] with Dependency[A] {
     pulse(turn).valueOption.get
   }
 
-  def map[B](f: A => B): Signal[B] = DynamicSignal(this) { s => f(apply(s)) }
+  def map[B](f: A => B): Signal[B] = StaticSignal.turn(this) { turn => f(apply(turn)) }
 
   /** Return a Signal that gets updated only when e fires, and has the value of this Signal */
   def snapshot(e: Event[_]): Signal[A] = e.snapshot(this)
