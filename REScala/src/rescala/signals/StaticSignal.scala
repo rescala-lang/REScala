@@ -3,14 +3,6 @@ package rescala.signals
 import rescala._
 import rescala.propagation.Turn
 
-/**
- * Create a StaticVar
- */
-object StaticVar {
-  @deprecated("use VarSynt instead", since = "unknown")
-  def apply[T](initialValue: T) = new VarSynt(initialValue)
-}
-
 /** A dependent reactive value which has static dependencies */
 class StaticSignal[+T](dependencies: List[Dependency[Any]])(expr: => T)(creationTurn: Turn)
   extends DependentSignalImplementation[T](creationTurn) {

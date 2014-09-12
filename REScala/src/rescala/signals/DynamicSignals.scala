@@ -112,6 +112,3 @@ object SignalSynt {
   def apply[T](dependencyHolders: Dependency[Any]*)(expr: SignalSynt[T] => T): SignalSynt[T] = apply(dependencyHolders.toList)(expr)
 
 }
-
-
-
