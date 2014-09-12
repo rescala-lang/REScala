@@ -150,37 +150,6 @@ class HigherOrderTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(dereferenced.get == 4)
   }
 
-  @Test def switch_withHigherOrder() = {
-    val tick = new ImperativeEvent[Unit]
-    val count = tick.iterate(0)(_ + 1)
-    val doubled = Signal { count() * 2 }
-    val mod2 = Signal { count() % 2 }
-
-    val listOfSignals = Signal { List(doubled, count) }
-
-    val s = IFunctions.switch(mod2.changed)(count)(new IFunctions.Factory[Int, Int] {
-      override def apply(eVal: Int): (Signal[Int], IFunctions.Factory[Int, Int]) = {
-        val selected = Signal { listOfSignals()(eVal) }
-        val dereferenced = Signal { selected()() }
-        (dereferenced, this)
-      }
-    })
-
-    var changeCount = 0
-    var lastChangevalue = 0
-    s.changed += { x => changeCount += 1; lastChangevalue = x }
-
-    tick(())
-    assert(lastChangevalue == s.get)
-    assert(s.get == 1)
-    assert(changeCount == 1)
-
-    tick(())
-    assert(lastChangevalue == s.get)
-    assert(s.get == 4)
-    //assert(changeCount == 2) // fails
-  }
-
 
 
   @Test def unwrap_Event() = {
@@ -188,7 +157,7 @@ class HigherOrderTestSuite extends AssertionsForJUnit with MockitoSugar {
     val e2 = new ImperativeEvent[Int] { override def toString = "e2"}
     val eventSelector = Var(e1)
     val selected = Signal { eventSelector() }
-    val unwrapped = IFunctions.unwrap(selected)
+    val unwrapped = selected.unwrap
 
     var lastEvent = -1
     unwrapped += { lastEvent = _}

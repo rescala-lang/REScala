@@ -1,8 +1,8 @@
 package rescala.signals
 
 import rescala.propagation._
-import rescala.{IFunctions, _}
-import rescala.events.Event
+import rescala._
+import rescala.events.{WrappedEvent, Event}
 
 trait Signal[+A] extends Changing[A] with Dependency[A] {
 
@@ -39,21 +39,26 @@ trait Signal[+A] extends Changing[A] with Dependency[A] {
   def map[B](f: A => B): Signal[B] = SignalSynt(this) { s: SignalSynt[B] => f(apply(s)) }
 
   /** Return a Signal that gets updated only when e fires, and has the value of this Signal */
-  def snapshot(e: Event[_]): Signal[A] = IFunctions.snapshot(e, this)
+  def snapshot(e: Event[_]): Signal[A] = e.snapshot(this)
 
-  /** Switch to (and keep) event value on occurrence of e*/ // TODO: check types
-  def switchTo[U >: A](e: Event[U]): Signal[U] = IFunctions.switchTo(e, this)
+  /** Switch to (and keep) event value on occurrence of e*/
+  def switchTo[U >: A](e: Event[U]): Signal[U] = e.switchTo(this)
 
-  /** Switch to (and keep) event value on occurrence of e*/ // TODO: check types
-  def switchOnce[V >: A](e: Event[_])(newSignal: Signal[V]): Signal[V] = IFunctions.switchOnce(e, this, newSignal)
+  /** Switch to (and keep) event value on occurrence of e*/
+  def switchOnce[V >: A](e: Event[_])(newSignal: Signal[V]): Signal[V] = e.switchOnce(this, newSignal)
 
   /** Switch back and forth between this and the other Signal on occurrence of event e */
-  def toggle[V >: A](e: Event[_])(other: Signal[V]): Signal[V] = IFunctions.toggle(e, this, other)
+  def toggle[V >: A](e: Event[_])(other: Signal[V]): Signal[V] = e.toggle(this, other)
 
   /** Delays this signal by n occurrences */
-  def delay(n: Int): Signal[A] = IFunctions.delay(this, n)
+  def delay(n: Int): Signal[A] = changed.delay(get, n)
 
   /** Unwraps a Signal[Event[E]] to an Event[E] */
-  def unwrap[E](implicit evidence: A <:< Event[E]): Event[E] = IFunctions.unwrap(this.map(evidence))
+  def unwrap[E](implicit evidence: A <:< Event[E]): Event[E] =  new WrappedEvent(this.map(evidence))
 
+}
+
+object Signal {
+  /** lifts a function A => B to work on reactives */
+  def lift[A, B](f: A => B): (Signal[A] => Signal[B]) = a => a.map(f)
 }

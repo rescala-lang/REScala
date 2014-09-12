@@ -102,14 +102,14 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
   /* latestOption */
   @Test def latestOption_theInitialValueIsSetCorrectly(): Unit = {
     val e = new ImperativeEvent[Int]()
-    val s: Signal[Option[Int]] = IFunctions.latestOption(e)
+    val s: Signal[Option[Int]] = e.latestOption
 
     assert(s.get == None)
   }
 
   @Test def latestOption_theFunctionisExecutedEveryTimeTheEventFires(): Unit = {
     val e = new ImperativeEvent[Int]()
-    val s: Signal[Option[Int]] = IFunctions.latestOption(e)
+    val s: Signal[Option[Int]] = e.latestOption
 
     e(1)
     assert(s.get == Option(1))
@@ -202,7 +202,6 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
 
   }
 
-
   /* snapshot */
   @Test def snapshot_theInitialValueIsSetCorrectly(): Unit = {
     val e = new ImperativeEvent[Int]()
@@ -262,7 +261,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
   @Test def delay1_theInitialValueIsSetCorrectly(): Unit = {
     val v1 =  Var(1)
     val s1 = StaticSignal(v1){ v1.get + 1 }
-    val s = IFunctions.delay(s1,3)
+    val s = s1.delay(3)
 
     assert(s.get == 2)
   }
@@ -270,7 +269,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
   @Test def delay1_takesASnapshotWhenTheEventOccurs(): Unit = {
     val v1 =  Var(1)
     val s1 = StaticSignal(v1){ v1.get + 1 }
-    val s = IFunctions.delay(s1,3)
+    val s = s1.delay(3)
 
     // Initially remains the same for n times
     v1.set(2)
@@ -287,13 +286,12 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     assert(s.get == 4)
   }
 
-
   /* switchTo */
   @Test def switchTo_theInitialValueIsSetToTheSignal(): Unit = {
     val e = new ImperativeEvent[Int]()
     val v1 =  Var(1)
     val s1 = StaticSignal(v1){ v1.get + 1 }
-    val s2 = IFunctions.switchTo(e,s1)
+    val s2 = e.switchTo(s1)
 
     assert(s2.get == 2)
     v1.set(2)
@@ -304,7 +302,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     val e = new ImperativeEvent[Int]()
     val v1 =  Var(1)
     val s1 = StaticSignal(v1){ v1.get + 1 }
-    val s2 = IFunctions.switchTo(e,s1)
+    val s2 = e.switchTo(s1)
 
     e(1)
     assert(s2.get == 1)
@@ -314,7 +312,6 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     assert(s2.get == 100)
   }
 
-
     /* switchOnce */
   @Test def switchOnce_theInitialValueIsSetToTheSignal(): Unit = {
     val e = new ImperativeEvent[Int]()
@@ -322,7 +319,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     val v2 =  Var(10)
     val s1 = StaticSignal(v1){ v1.get + 1 }
     val s2 = StaticSignal(v2){ v2.get + 1 }
-    val s3 = IFunctions.switchOnce(e,s1,s2)
+    val s3 = e.switchOnce(s1,s2)
 
     assert(s3.get == 1)
     v1.set(1)
@@ -335,7 +332,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     val v2 =  Var(10)
     val s1 = StaticSignal(v1){ v1.get + 1 }
     val s2 = StaticSignal(v2){ v2.get + 1 }
-    val s3 = IFunctions.switchOnce(e,s1,s2)
+    val s3 = e.switchOnce(s1,s2)
 
     e(1)
     assert(s3.get == 11)
@@ -343,7 +340,6 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     v2.set(11)
     assert(s3.get == 12)
   }
-
 
     /* reset */
   @Test def reset_TheInitialValueOfTheSignalIsGivenByInitAndTheFactory(): Unit = {
@@ -357,7 +353,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
       case 0 => s1
       case 1 => s2
     }
-    val s3 = IFunctions.reset(e,100)(factory)
+    val s3 = e.reset(100)(factory)
 
     assert(s3.get == 1)
     v1.set(1)
@@ -377,7 +373,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
       case 1 => s2
     }
 
-    val s3 = IFunctions.reset(e,100)(factory)
+    val s3 = e.reset(100)(factory)
 
     //assert(s3.get == 1)
     v1.set(1)
@@ -388,24 +384,13 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     assert(s3.get == 12)
   }
 
-
-
-
-
-
-
-
-
-
-
-
 /* lift */
   @Test def lift_createsAFunctionThatWorksWithSignals(): Unit = {
     val v =  Var(1)
     val s1 = StaticSignal(v){ v.get + 1 }
     def f(x: Int): Int = x + 1
 
-    val lifted_f = IFunctions.lift(f)
+    val lifted_f = Signal.lift(f)
     val s2 = lifted_f(s1)
 
     assert(s2.get == 3)
@@ -413,22 +398,13 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     assert(s2.get == 4)
   }
 
-
-
-
-
-
-
-
-
-
     /* change */
   @Test def change_isNotTriggeredOnCreation(): Unit = {
     var test = 0
     val v1 =  Var(1)
     val s1 = StaticSignal(v1){ v1.get + 1 }
-    val e: Event[(Int,Int)] = s1.change
-    e += ((x:(Int,Int))=>{test+=1})
+      val e = s1.change
+      e += { x => test += 1 }
 
     assert(test == 0)
   }
@@ -437,8 +413,8 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     var test = 0
     val v1 =  Var(1)
     val s1 = StaticSignal(v1){ v1.get + 1 }
-    val e: Event[(Int,Int)] = s1.change
-    e += ((x:(Int,Int))=>{test+=1})
+    val e = s1.change
+    e += { x => test += 1 }
 
     v1 set 2
     assert(test == 1)
@@ -450,15 +426,14 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     var test = (0,0)
     val v1 =  Var(1)
     val s1 = StaticSignal(v1){ v1.get + 1 }
-    val e: Event[(Int,Int)] = s1.change
-    e += ((x:(Int,Int))=>{test = x})
+    val e = s1.change
+    e += { x => test = x }
 
     v1 set 2
     assert(test === ((2,3)))
     v1 set 3
     assert(test === ((3,4)))
   }
-
 
     /* changed */
   @Test def changed_isNotTriggeredOnCreation(): Unit = {
@@ -497,7 +472,6 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     assert(test == 4)
   }
 
-
     /* changedTo */
   @Test def changedTo_isNotTriggeredOnCreation(): Unit = {
     var test = 0
@@ -522,51 +496,5 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     assert(test == 1)
   }
 
-
-
-
-
-/* switched */
-  @Test def switched_canSimulateSnaphot(): Unit = {
-
-    import rescala.IFunctions._
-
-    def snapshot[T,A](s: Signal[A])(e: Event[T]): Signal[A] = {
-        return IFunctions.switch(e)(s)(new Factory[T, A] {
-          override def apply(eVal: T): (Signal[A],Factory[T, A]) = {
-            val freeze = s.get
-            return (StaticSignal(){freeze}, this)
-          }
-        })
-      }
-
-  def snapshot_theInitialValueIsSetCorrectly(): Unit = {
-    val e = new ImperativeEvent[Int]()
-    val v1 =  Var(1)
-    val s1 = StaticSignal(v1){ v1.get + 1 }
-    val s = snapshot(s1)(e)
-
-    assert(s.get == 2)
-  }
-
-  def snapshot_takesASnapshotWhenTheEventOccurs(): Unit = {
-    val e = new ImperativeEvent[Int]()
-    val v1 =  Var(1)
-    val s1 = StaticSignal(v1){ v1.get + 1 }
-    val s = snapshot(s1)(e)
-
-    e(1)
-    assert(s.get == 2)
-
-    v1.set(2)
-    assert(s.get == 2)
-    e(1)
-    assert(s.get == 3)
-  }
-
-  snapshot_theInitialValueIsSetCorrectly()
-  snapshot_takesASnapshotWhenTheEventOccurs()
-
-  }
 
 }
