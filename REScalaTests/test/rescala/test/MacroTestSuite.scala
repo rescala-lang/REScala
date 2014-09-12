@@ -302,7 +302,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(sig.get == List(5, 2))
     v2() = 7
     assert(sig.get == List(5, 7))
-    v() = v().reverse
+    v() = v.get.reverse
     assert(sig.get == List(7, 5))
   }
 

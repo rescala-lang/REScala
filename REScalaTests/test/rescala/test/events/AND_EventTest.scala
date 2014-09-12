@@ -1,11 +1,9 @@
 package rescala.test.events
+
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.events._
-
-
-
 
 class AND_EventTest extends AssertionsForJUnit with MockitoSugar {
 

@@ -4,14 +4,10 @@ import rescala.propagation._
 import rescala._
 import rescala.events.{WrappedEvent, Event}
 
+
 trait Signal[+A] extends Changing[A] with Dependency[A] {
 
   protected[this] var currentValue: A = _
-
-  override protected[this] def pulse(pulse: Pulse[A])(implicit turn: Turn): Unit = {
-    pulse.valueOption.foreach(currentValue = _)
-    super.pulse(pulse)
-  }
 
   override def pulse(implicit turn: Turn): Pulse[A] = super.pulse match {
     case NoChangePulse => ValuePulse(currentValue)
@@ -24,14 +20,20 @@ trait Signal[+A] extends Changing[A] with Dependency[A] {
     super.applyPulse
   }
 
-  def get: A = currentValue
+  def get(implicit turn: MaybeTurn): A = turn.turn match {
+    case Some(x) => pulse(x).valueOption.get
+    case None => currentValue
+  }
 
-  final def apply(): A = get
+  //final def apply(implicit turn: MaybeTurn): A = get
+
+  // only used inside macro and will be replaced there
+  final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")
 
   /** hook for subclasses to do something when they use their dependencies */
   def onDynamicDependencyUse[T](dependency: Signal[T]): Unit = { }
 
-  def apply[T](signal: SignalSynt[T]): A = {
+  def apply[T](signal: SignalSynt[T]): A = Turn.maybeTurn { turn =>
     signal.onDynamicDependencyUse(this)
     get
   }

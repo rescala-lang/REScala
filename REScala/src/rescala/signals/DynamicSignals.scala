@@ -12,6 +12,7 @@ class VarSynt[T](initialValue: T) extends Var[T] {
     log.nodeValueSet(this)
     if (currentValue != newValue) {
       pulse(DiffPulse(newValue, currentValue))(turn)
+      currentValue = newValue
       turn.startEvaluation()
     } else {
       log.nodePropagationStopped(this)
