@@ -92,14 +92,14 @@ object SignalMacro {
           case _ => false
         })
 
-        val noConstructorInFun = (fun exists {
+        val noConstructorInFun = fun exists {
           case Apply(fun, args) =>
             !(fun exists {
               case Select(_, termNames.CONSTRUCTOR) => true
               case _ => false
             })
           case _ => false
-        })
+        }
 
         noFunctionInArgs && noConstructorInFun
       case _ => false
@@ -133,7 +133,7 @@ object SignalMacro {
     val signalValues = ListBuffer.empty[ValDef]
 
     object transformer extends Transformer {
-      private def treeTypeNullWarning =
+      private def treeTypeNullWarning() =
         c.warning(c.enclosingPosition,
             "internal warning: tree type was null, " +
             "this should not happen but the signal may still work")
@@ -145,7 +145,7 @@ object SignalMacro {
             "signal is evaluated which can lead to unintentional behavior")
 
       private def isReactive(tree: Tree) =
-        if (tree.tpe == null) { treeTypeNullWarning; false }
+        if (tree.tpe == null) { treeTypeNullWarning(); false }
         else tree.tpe <:< typeOf[Signal[_]] || tree.tpe <:< typeOf[Var[_]]
 
       override def transform(tree: Tree) =
