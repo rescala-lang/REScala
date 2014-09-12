@@ -279,7 +279,7 @@ object SignalMacro {
                   Ident(termNames.ROOTPKG),
                   TermName("rescala")),
                 TermName("signals")),
-              TermName("SignalSynt")),
+              TermName("DynamicSignal")),
             TermName("apply")),
           List(TypeTree(weakTypeOf[A]))),
         List(function))
