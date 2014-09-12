@@ -384,20 +384,6 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
     assert(s3.get == 12)
   }
 
-/* lift */
-  @Test def lift_createsAFunctionThatWorksWithSignals(): Unit = {
-    val v =  Var(1)
-    val s1 = StaticSignal(v){ v.get + 1 }
-    def f(x: Int): Int = x + 1
-
-    val lifted_f = Signal.lift(f)
-    val s2 = lifted_f(s1)
-
-    assert(s2.get == 3)
-    v.set(2)
-    assert(s2.get == 4)
-  }
-
     /* change */
   @Test def change_isNotTriggeredOnCreation(): Unit = {
     var test = 0

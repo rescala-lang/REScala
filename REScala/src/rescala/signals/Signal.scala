@@ -57,8 +57,3 @@ trait Signal[+A] extends Changing[A] with Dependency[A] {
   def unwrap[E](implicit evidence: A <:< Event[E]): Event[E] =  new WrappedEvent(this.map(evidence))
 
 }
-
-object Signal {
-  /** lifts a function A => B to work on reactives */
-  def lift[A, B](f: A => B): (Signal[A] => Signal[B]) = a => a.map(f)
-}
