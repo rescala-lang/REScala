@@ -84,8 +84,8 @@ trait Event[+T] extends Dependency[T] {
  * Wrapper for an anonymous function
  */
 case class EventHandler[T](fun: T => Unit, dependency: Dependency[T]) extends Dependant {
-  override def dependencyChanged[Q](dep: Dependency[Q])(implicit turn: Turn): Unit = dependency.pulse.valueOption.foreach(fun)
   override def triggerReevaluation()(implicit turn: Turn): Unit = {}
+  override def applyPulse(implicit turn: Turn): Unit = dependency.pulse.valueOption.foreach(fun)
 }
 
 /**

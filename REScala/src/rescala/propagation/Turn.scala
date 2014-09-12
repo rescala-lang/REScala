@@ -12,6 +12,7 @@ import scala.collection.mutable
  */
 class Turn extends ReactiveLogging {
   private val evalQueue = new mutable.PriorityQueue[(Int, Dependant)]()(Turn.reactiveOrdering)
+  private var evaluated = List[Dependant]()
 
   /** Adds a dependant to the eval queue */
   def addToEvalQueue(dep: Dependant): Unit = {
@@ -26,9 +27,13 @@ class Turn extends ReactiveLogging {
     while (evalQueue.nonEmpty) {
       val (level, head) = evalQueue.dequeue()
       // check the level if it changed queue again
-      if (level == head.level) head.triggerReevaluation()(this)
+      if (level == head.level) {
+        head.triggerReevaluation()(this)
+        evaluated ::= head
+      }
       else addToEvalQueue(head)
     }
+    evaluated.foreach(_.applyPulse(this))
   }
 }
 

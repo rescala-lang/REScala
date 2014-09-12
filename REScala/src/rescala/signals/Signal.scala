@@ -21,6 +21,11 @@ trait Signal[+A] extends Changing[A] with FoldableReactive[A] with Dependency[A]
     case p @ DiffPulse(value, old) => p
   }
 
+  override def applyPulse(implicit turn: Turn): Unit = {
+    pulse.valueOption.foreach(currentValue = _)
+    super.applyPulse
+  }
+
   def get: A = currentValue
 
   final def apply(): A = get

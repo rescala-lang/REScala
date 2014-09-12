@@ -16,6 +16,8 @@ trait Reactive extends ReactiveLogging {
   def ensureLevel(l: Int): Unit = if (l >= _level) _level = l + 1
   def level: Int = _level
 
+  def applyPulse(implicit turn: Turn): Unit
+
   log.nodeCreated(this)
 }
 
@@ -54,6 +56,9 @@ trait Dependency[+P] extends Reactive {
     pulses += turn -> pulse
     notifyDependants(turn)
   }
+  def applyPulse(implicit turn: Turn): Unit = {
+    pulses -= turn
+  }
 
 }
 
@@ -89,7 +94,7 @@ trait Dependant extends Reactive {
   protected[rescala] def triggerReevaluation()(implicit turn: Turn): Unit
 
   /** callback when a dependency has changed */
-  def dependencyChanged[Q](dep: Dependency[Q])(implicit turn: Turn): Unit = turn.addToEvalQueue(this)
+  final def dependencyChanged[Q](dep: Dependency[Q])(implicit turn: Turn): Unit = turn.addToEvalQueue(this)
 }
 
 trait Changing[+T] {
