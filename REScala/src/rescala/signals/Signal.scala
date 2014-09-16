@@ -2,7 +2,7 @@ package rescala.signals
 
 import rescala.propagation._
 import rescala._
-import rescala.events.{WrappedEvent, Event}
+import rescala.events.{ChangedEventNode, WrappedEvent, Event}
 
 
 trait Signal[+A] extends Changing[A] with Dependency[A] {
@@ -52,5 +52,20 @@ trait Signal[+A] extends Changing[A] with Dependency[A] {
 
   /** Unwraps a Signal[Event[E]] to an Event[E] */
   def unwrap[E](implicit evidence: A <:< Event[E]): Event[E] =  new WrappedEvent(this.map(evidence))
+
+  /**
+   * Create an event that fires every time the signal changes. It fires the tuple
+   *  (oldVal, newVal) for the signal. The first tuple is (null, newVal)
+   */
+  lazy val change: Event[(A, A)] = new ChangedEventNode(this)
+
+  /**
+   * Create an event that fires every time the signal changes. The value associated
+   * to the event is the new value of the signal
+   */
+  lazy val changed: Event[A] = change.map[A, (A, A)](_._2)
+
+  /** Convenience function filtering to events which change this reactive to value */
+  def changedTo[V](value: V): Event[Unit] = (changed && { _ == value }).dropParam
 
 }

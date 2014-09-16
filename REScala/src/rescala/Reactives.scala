@@ -100,20 +100,7 @@ trait Dependant extends Reactive {
 trait Changing[+T] {
   this: Dependency[T] =>
 
-  /**
-   * Create an event that fires every time the signal changes. It fires the tuple
-   *  (oldVal, newVal) for the signal. The first tuple is (null, newVal)
-   */
-  lazy val change: Event[(T, T)] = new ChangedEventNode(this)
 
-  /**
-   * Create an event that fires every time the signal changes. The value associated
-   * to the event is the new value of the signal
-   */
-  lazy val changed: Event[T] = change map ((x: (T, T)) => { x._2 })
-
-    /** Convenience function filtering to events which change this reactive to value */
-  def changedTo[V](value: V): Event[Unit] = (changed && { _ == value }).dropParam
 }
 
 
