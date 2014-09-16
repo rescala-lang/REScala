@@ -32,9 +32,6 @@ trait Dependency[+P] extends Reactive {
   private var _dependants: Set[Dependant] = Set()
   final def dependants: Set[Dependant] = _dependants
 
-  /** used for testing */
-  def dependantCount(): Int = _dependants.size
-
   def addDependant(dep: Dependant): Unit = {
     if (!_dependants.contains(dep)) {
       _dependants += dep
@@ -69,9 +66,6 @@ trait Dependency[+P] extends Reactive {
 /** A node that depends on other nodes */
 trait Dependant extends Reactive {
   private var dependencies: Set[Dependency[_]] = Set()
-
-  /** for testing */
-  def dependencyCount(): Int = dependencies.size
 
   def addDependency(dep: Dependency[_]): Unit = {
     if (!dependencies.contains(dep)) {
