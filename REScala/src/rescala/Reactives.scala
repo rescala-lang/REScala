@@ -92,9 +92,6 @@ trait Dependant extends Reactive {
     dep.removeDependant(this)
     dependencies -= dep
   }
-
-  /** callback when a dependency has changed */
-  final def dependencyChanged[Q](dep: Dependency[Q])(implicit turn: Turn): Unit = turn.evaluate(this)
 }
 
 trait Changing[+T] {
