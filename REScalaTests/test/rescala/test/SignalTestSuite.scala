@@ -1,36 +1,11 @@
 package rescala.test
 
-import org.junit.{Before, Test}
-import org.mockito.Mockito.verify
+import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala._
-import rescala.propagation.Turn
 import rescala.signals._
 
 class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
-
-  @Before def initialize(): Unit = {}
-
-  @Test def dependencyHolderNotifiesDependentsWhenNotifyDependentsIsCalled(): Unit = {
-
-    val dh = new {} with Dependency[Unit] {}
-    val v  = Var(0)
-    val s1 = mock[DependentSignal[Int]]
-    val s2 = mock[DependentSignal[Int]]
-    val s3 = mock[DependentSignal[Int]]
-
-    dh.addDependant(s1)
-    dh.addDependant(s2)
-    dh.addDependant(s3)
-    Turn.newTurn { turn =>
-      dh.notifyDependants(turn)
-      verify(s1).dependencyChanged(dh)(turn)
-      verify(s2).dependencyChanged(dh)(turn)
-      verify(s3).dependencyChanged(dh)(turn)
-    }
-
-  }
 
   @Test def signalReEvaluatesTheExpression(): Unit = {
     val v  = Var(0)
@@ -91,7 +66,6 @@ class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
 
   @Test def levelIsCorrectlyComputed() =  {
 
-    var test = 0
     val v = Var(1)
 
     val s1 = StaticSignal(v){ 2 * v.get }

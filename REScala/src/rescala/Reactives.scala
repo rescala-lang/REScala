@@ -4,7 +4,7 @@ import java.util.UUID
 
 import rescala.events._
 import rescala.log.ReactiveLogging
-import rescala.propagation.{NoChangePulse, Pulse, Turn}
+import rescala.propagation._
 import rescala.signals.Signal
 
 /** A Reactive is a value type which has a dependency to other Reactives */
@@ -19,7 +19,7 @@ trait Reactive extends ReactiveLogging {
 
   /** called when it is this events turn to be evaluated
     * (head of the evaluation queue) */
-  protected[rescala] def triggerReevaluation()(implicit turn: Turn): Unit
+  protected[rescala] def triggerReevaluation()(implicit turn: Turn): EvaluationResult
 
   /** called to finalize the pulse value (turn commits) */
   protected[rescala] def applyPulse(implicit turn: Turn): Unit
@@ -29,39 +29,37 @@ trait Reactive extends ReactiveLogging {
 
 /** A node that has nodes that depend on it */
 trait Dependency[+P] extends Reactive {
-  private var dependants: Set[Dependant] = Set()
+  private var _dependants: Set[Dependant] = Set()
+  final def dependants: Set[Dependant] = _dependants
 
   /** used for testing */
-  def dependentCount(): Int = dependants.size
+  def dependantCount(): Int = _dependants.size
 
   def addDependant(dep: Dependant): Unit = {
-    if (!dependants.contains(dep)) {
-      dependants += dep
+    if (!_dependants.contains(dep)) {
+      _dependants += dep
       log.nodeAttached(dep, this)
     }
   }
 
-  def removeDependant(dep: Dependant) = dependants -= dep
-
-  final def notifyDependants(implicit turn: Turn): Unit = {
-    log.nodePulsed(this)
-    dependants.foreach(_.dependencyChanged(this)(turn))
-  }
+  def removeDependant(dep: Dependant) = _dependants -= dep
 
   override def ensureLevel(l: Int): Unit = {
     val oldLevel = level
     super.ensureLevel(l)
     val newLevel = level
-    if (oldLevel < newLevel) dependants.foreach(_.ensureLevel(newLevel))
+    if (oldLevel < newLevel) _dependants.foreach(_.ensureLevel(newLevel))
   }
 
   private[this] var pulses: Map[Turn, Pulse[P]] = Map()
 
   def pulse(implicit turn: Turn): Pulse[P] = pulses.getOrElse(turn, NoChangePulse)
-  protected[this] def pulse(pulse: Pulse[P])(implicit turn: Turn) = {
+
+  final protected[this] def pulse(pulse: Pulse[P])(implicit turn: Turn): Unit = {
     pulses += turn -> pulse
-    notifyDependants(turn)
+    log.nodePulsed(this)
   }
+
   def applyPulse(implicit turn: Turn): Unit = {
     pulses -= turn
   }
@@ -96,7 +94,7 @@ trait Dependant extends Reactive {
   }
 
   /** callback when a dependency has changed */
-  final def dependencyChanged[Q](dep: Dependency[Q])(implicit turn: Turn): Unit = turn.addToEvalQueue(this)
+  final def dependencyChanged[Q](dep: Dependency[Q])(implicit turn: Turn): Unit = turn.evaluate(this)
 }
 
 trait Changing[+T] {

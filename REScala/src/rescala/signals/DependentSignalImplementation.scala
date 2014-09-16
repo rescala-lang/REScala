@@ -1,7 +1,7 @@
 package rescala.signals
 
 import rescala._
-import rescala.propagation.{NoChangePulse, DiffPulse, Turn}
+import rescala.propagation.{EvaluationResult, NoChangePulse, DiffPulse, Turn}
 
 abstract class DependentSignalImplementation[+T](creationTurn: Turn) extends DependentSignal[T] {
 
@@ -14,7 +14,7 @@ abstract class DependentSignalImplementation[+T](creationTurn: Turn) extends Dep
     log.nodeEvaluationEnded(this)
   }
 
-  override def triggerReevaluation()(implicit turn: Turn): Unit = {
+  override def triggerReevaluation()(implicit turn: Turn): EvaluationResult = {
     log.nodeEvaluationStarted(this)
 
     val oldLevel = level
@@ -29,26 +29,27 @@ abstract class DependentSignalImplementation[+T](creationTurn: Turn) extends Dep
         throw e
     }
 
+
     /* if the level increases by one, the dependencies might or might not have been evaluated this turn.
      * if they have, we could just fire the observers, but if they have not we are not allowed to do so
      *
      * if the level increases by more than one, we depend on something that still has to be in the queue
      */
-    if (level == oldLevel + 1) {
-      turn.addToEvalQueue(this)
+    if (level > oldLevel) {
+      log.nodeEvaluationEnded(this)
+      EvaluationResult.Retry
     }
     else {
-      if (level <= oldLevel) {
-        /* Notify dependents only of the value changed */
-        if (currentValue != newValue) {
-          pulse(DiffPulse(newValue, currentValue))
-        }
-        else {
-          pulse(NoChangePulse)
-          log.nodePropagationStopped(this)
-        }
-      } : Unit
+      /* Notify dependents only if the value changed */
+      if (currentValue != newValue) {
+        pulse(DiffPulse(newValue, currentValue))
+        log.nodeEvaluationEnded(this)
+      }
+      else {
+        pulse(NoChangePulse)
+        log.nodePropagationStopped(this)
+      }
+      EvaluationResult.Dependants(dependants)
     }
-    log.nodeEvaluationEnded(this)
   }
 }

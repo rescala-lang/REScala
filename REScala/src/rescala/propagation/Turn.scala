@@ -1,5 +1,6 @@
 package rescala.propagation
 
+import rescala.propagation.EvaluationResult.{Retry, Dependants}
 import rescala.signals.Var
 import rescala.{Dependency, Reactive, Dependant}
 import rescala.log.ReactiveLogging
@@ -12,11 +13,11 @@ import scala.util.DynamicVariable
  * of the nodes in the dependency graph.
  */
 class Turn extends ReactiveLogging {
-  private val evalQueue = new mutable.PriorityQueue[(Int, Dependant)]()(Turn.reactiveOrdering)
-  private var evaluated = List[Dependant]()
+  private val evalQueue = new mutable.PriorityQueue[(Int, Reactive)]()(Turn.reactiveOrdering)
+  private var evaluated = List[Reactive]()
 
   /** Adds a dependant to the eval queue */
-  def addToEvalQueue(dep: Dependant): Unit = {
+  def evaluate(dep: Reactive): Unit = {
       if (!evalQueue.exists { case (_, elem) => elem eq dep }) {
         log.nodeScheduled(dep)
         evalQueue.+=((dep.level, dep))
@@ -28,11 +29,16 @@ class Turn extends ReactiveLogging {
     while (evalQueue.nonEmpty) {
       val (level, head) = evalQueue.dequeue()
       // check the level if it changed queue again
-      if (level == head.level) {
-        head.triggerReevaluation()(this)
-        evaluated ::= head
+      if (level != head.level) evaluate(head)
+      else {
+        head.triggerReevaluation()(this) match {
+          case Dependants(dependants) =>
+            dependants.foreach(evaluate)
+            evaluated ::= head
+          case Retry =>
+            evaluate(head)
+        }
       }
-      else addToEvalQueue(head)
     }
     evaluated.foreach(_.applyPulse(this))
   }
@@ -58,7 +64,7 @@ object Turn {
     currentTurn.withValue(Some(turn)){f(turn)}
   }
 
-  val reactiveOrdering = new Ordering[(Int, Dependant)] {
-    override def compare(x: (Int, Dependant), y: (Int, Dependant)): Int = y._1.compareTo(x._1)
+  val reactiveOrdering = new Ordering[(Int, Reactive)] {
+    override def compare(x: (Int, Reactive), y: (Int, Reactive)): Int = y._1.compareTo(x._1)
   }
 }

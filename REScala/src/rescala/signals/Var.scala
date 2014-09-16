@@ -1,27 +1,32 @@
 package rescala.signals
 
-import rescala.propagation.{DiffPulse, Turn}
+import rescala.propagation.{EvaluationResult, DiffPulse, Turn}
 
 object Var {
-  def apply[T](initval: T): Var[T] = new Var[T] {
-    currentValue = initval
-
-    def set(newValue: T): Unit = Turn.newTurn { turn =>
-      log.nodeValueSet(this)
-      if (currentValue != newValue) {
-        pulse(DiffPulse(newValue, currentValue))(turn)
-        currentValue = newValue
-        turn.startEvaluation()
-      } else {
-        log.nodePropagationStopped(this)
-      }
-    }
-  }
+  def apply[T](initval: T): Var[T] = new Var(initval)
 
 }
 
 /** A root Reactive value without dependencies which can be set */
-trait Var[T] extends Signal[T] {
-  def set(newValue: T): Unit
+class Var[T](initval: T) extends Signal[T] {
+  currentValue = initval
+
   final def update(newValue: T): Unit = set(newValue)
+  def set(newValue: T): Unit = Turn.newTurn { turn =>
+    log.nodeValueSet(this)
+    if (currentValue != newValue) {
+      planUpdate(newValue)(turn)
+      turn.startEvaluation()
+    } else {
+      log.nodePropagationStopped(this)
+    }
+  }
+
+  def planUpdate(newValue: T)(implicit turn: Turn): Unit = {
+    pulse(DiffPulse(newValue, currentValue))(turn)
+    turn.evaluate(this)
+  }
+
+  override protected[rescala] def triggerReevaluation()(implicit turn: Turn): EvaluationResult =
+    EvaluationResult.Dependants(dependants)
 }
