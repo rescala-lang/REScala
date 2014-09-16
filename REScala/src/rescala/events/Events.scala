@@ -120,33 +120,3 @@ class EventNodeAnd[T1, T2, T](ev1: Event[T1], ev2: Event[T2], merge: (T1, T2) =>
 
   override def toString = "(" + ev1 + " and " + ev2 + ")"
 }
-
-object emptyevent extends Event[Nothing] {
-  def +=(react: Nothing => Unit): Unit = { /* do nothing */ }
-  def -=(react: Nothing => Unit): Unit = { /* do nothing */ }
-}
-
-
-/**
- * Implementation of an observable method
- */
-class Observable[T, U](body: T => U) extends (T => U) {
-  // before and after, modeled as primitive events
-  lazy val before = new ImperativeEvent[T]
-  lazy val after = new ImperativeEvent[(T, U)]
-
-  /**
-   * Instrumented method implementation:
-   * trigger events before and after the actual method execution
-   */
-  def apply(t: T): U = {
-    before(t)
-    val res = body(t)
-    after((t, res))
-    res
-  }
-}
-
-object Observable {
-  def apply[T, U](f: T => U) = new Observable(f)
-}
