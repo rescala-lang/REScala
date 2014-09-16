@@ -9,7 +9,7 @@ class WrappedEvent[T](wrapper: Signal[Event[T]]) extends EventNode[T] with Depen
 
   setDependencies(Set(wrapper, wrapper.get))
 
-  override def triggerReevaluation()(implicit turn: Turn): EvaluationResult = {
+  override def reevaluate()(implicit turn: Turn): EvaluationResult = {
     for { event <- wrapper.pulse.valueOption} {
       setDependencies(Set(wrapper, event))
       pulse(event.pulse)

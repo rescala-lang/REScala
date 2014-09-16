@@ -31,7 +31,7 @@ class Turn extends ReactiveLogging {
       // check the level if it changed queue again
       if (level != head.level) evaluate(head)
       else {
-        head.triggerReevaluation()(this) match {
+        head.reevaluate()(this) match {
           case Dependants(dependants) =>
             dependants.foreach(evaluate)
             evaluated ::= head

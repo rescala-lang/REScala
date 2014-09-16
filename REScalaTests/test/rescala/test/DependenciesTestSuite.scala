@@ -55,7 +55,7 @@ class DependenciesTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(s.dependantCount() == 0)
     assert(s.dependencyCount() == 2)
 
-    Turn.newTurn(s.triggerReevaluation()(_))
+    Turn.newTurn(s.reevaluate()(_))
     assert(v1.dependantCount() == 1)
     assert(v2.dependantCount() == 0)
     assert(v3.dependantCount() == 1)

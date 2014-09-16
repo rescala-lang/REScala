@@ -19,7 +19,7 @@ trait Reactive extends ReactiveLogging {
 
   /** called when it is this events turn to be evaluated
     * (head of the evaluation queue) */
-  protected[rescala] def triggerReevaluation()(implicit turn: Turn): EvaluationResult
+  protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult
 
   /** called to finalize the pulse value (turn commits) */
   protected[rescala] def applyPulse(implicit turn: Turn): Unit

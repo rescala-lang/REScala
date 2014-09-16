@@ -27,6 +27,6 @@ class Var[T](initval: T) extends Signal[T] {
     turn.evaluate(this)
   }
 
-  override protected[rescala] def triggerReevaluation()(implicit turn: Turn): EvaluationResult =
+  override protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult =
     EvaluationResult.Dependants(dependants)
 }

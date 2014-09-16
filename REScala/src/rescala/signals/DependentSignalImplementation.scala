@@ -14,7 +14,7 @@ abstract class DependentSignalImplementation[+T](creationTurn: Turn) extends Dep
     log.nodeEvaluationEnded(this)
   }
 
-  override def triggerReevaluation()(implicit turn: Turn): EvaluationResult = {
+  override def reevaluate()(implicit turn: Turn): EvaluationResult = {
     log.nodeEvaluationStarted(this)
 
     val oldLevel = level
