@@ -5,7 +5,7 @@ import rescala._
 import rescala.events.{ChangedEventNode, WrappedEvent, Event}
 
 
-trait Signal[+A] extends Changing[A] with Dependency[A] {
+trait Signal[+A] extends Dependency[A] {
 
   protected[this] var currentValue: A = _
 

@@ -88,13 +88,6 @@ trait Dependant extends Reactive {
   }
 }
 
-trait Changing[+T] {
-  this: Dependency[T] =>
-
-
-}
-
-
 /** An inner node which depends on other values */
 trait DependentSignal[+T] extends Signal[T] with Dependant
 
