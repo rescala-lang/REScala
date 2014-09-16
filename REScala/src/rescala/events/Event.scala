@@ -9,9 +9,11 @@ import scala.collection.immutable.Queue
 
 trait Event[+T] extends Dependency[T] {
 
-  def +=(react: T => Unit): Unit
+  /** add an event handler */
+  def +=(react: T => Unit): Unit = EventHandler(react, this).addDependency(this)
 
-  def -=(react: T => Unit): Unit
+  /** remove an event handler */
+  def -=(react: T => Unit): Unit = this.removeDependant(EventHandler(react, this))
 
   /**
    * Events disjunction.

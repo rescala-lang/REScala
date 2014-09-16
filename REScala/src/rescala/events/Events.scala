@@ -12,19 +12,11 @@ case class EventHandler[T](fun: T => Unit, dependency: Dependency[T]) extends De
   override def commit(implicit turn: Turn): Unit = dependency.pulse.valueOption.foreach(fun)
 }
 
-/**
- * Base trait for events.
- */
-trait EventNode[T] extends Event[T] {
-  def +=(react: T => Unit): Unit = EventHandler(react, this).addDependency(this)
-  def -=(react: T => Unit): Unit = this.removeDependant(EventHandler(react, this))
-}
-
 
 /**
  * An implementation of an imperative event
  */
-class ImperativeEvent[T] extends EventNode[T] {
+class ImperativeEvent[T] extends Event[T] {
 
   /** Trigger the event */
   def apply(v: T): Unit = Turn.newTurn { turn =>
@@ -41,7 +33,7 @@ class ImperativeEvent[T] extends EventNode[T] {
 
 
 /** base class for dependent events */
-abstract class DependentEvent[T](dependencies: Set[Dependency[Any]]) extends EventNode[T] with Dependant {
+abstract class DependentEvent[T](dependencies: Set[Dependency[Any]]) extends Event[T] with Dependant {
   dependencies.foreach(addDependency)
 
   /** this method is called to produce a new pulse */

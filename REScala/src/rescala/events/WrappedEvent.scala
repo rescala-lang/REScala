@@ -5,7 +5,7 @@ import rescala.signals.Signal
 import rescala.{Dependency, Dependant}
 
 /** A wrapped event inside a signal, that gets "flattened" to a plain event node */
-class WrappedEvent[T](wrapper: Signal[Event[T]]) extends EventNode[T] with Dependant {
+class WrappedEvent[T](wrapper: Signal[Event[T]]) extends Event[T] with Dependant {
 
   setDependencies(Set(wrapper, wrapper.get))
 
