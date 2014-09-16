@@ -26,7 +26,7 @@ class MaybeTurnTest extends AssertionsForJUnit with MockitoSugar {
     assert(implicitly[MaybeTurn] === MaybeTurn(Some(implicitTurn)))
   }
 
-  @Test def inClosures() = {
+  @Test def implicitInClosures() = {
     val closureDefinition = new Turn
     val closure = {
       implicit def it: Turn = closureDefinition
@@ -37,5 +37,16 @@ class MaybeTurnTest extends AssertionsForJUnit with MockitoSugar {
     }
   }
 
+  @Test def dynamicInClosures() = {
+    val closureDefinition = new Turn
+    val closure = {
+      Turn.currentTurn.withValue(Some(closureDefinition)) {
+        (x: Unit) => implicitly[MaybeTurn]
+      }
+    }
+    Turn.newTurn { dynamic =>
+      assert(closure(Unit) === MaybeTurn(Some(dynamic)))
+    }
+  }
 
 }
