@@ -40,7 +40,7 @@ class Turn extends ReactiveLogging {
         }
       }
     }
-    evaluated.foreach(_.applyPulse(this))
+    evaluated.foreach(_.commit(this))
   }
 
   object dynamic {

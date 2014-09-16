@@ -15,9 +15,9 @@ trait Signal[+A] extends Changing[A] with Dependency[A] {
     case p @ DiffPulse(value, old) => p
   }
 
-  override def applyPulse(implicit turn: Turn): Unit = {
+  override def commit(implicit turn: Turn): Unit = {
     pulse.valueOption.foreach(currentValue = _)
-    super.applyPulse
+    super.commit
   }
 
   def get(implicit turn: MaybeTurn): A = turn.turn match {

@@ -22,7 +22,7 @@ trait Reactive extends ReactiveLogging {
   protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult
 
   /** called to finalize the pulse value (turn commits) */
-  protected[rescala] def applyPulse(implicit turn: Turn): Unit
+  protected[rescala] def commit(implicit turn: Turn): Unit
 
   log.nodeCreated(this)
 }
@@ -60,7 +60,7 @@ trait Dependency[+P] extends Reactive {
     log.nodePulsed(this)
   }
 
-  def applyPulse(implicit turn: Turn): Unit = {
+  def commit(implicit turn: Turn): Unit = {
     pulses -= turn
   }
 

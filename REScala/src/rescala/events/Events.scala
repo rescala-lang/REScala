@@ -9,7 +9,7 @@ import rescala.propagation._
  */
 case class EventHandler[T](fun: T => Unit, dependency: Dependency[T]) extends Dependant {
   override def reevaluate()(implicit turn: Turn): EvaluationResult = EvaluationResult.Dependants(Set())
-  override def applyPulse(implicit turn: Turn): Unit = dependency.pulse.valueOption.foreach(fun)
+  override def commit(implicit turn: Turn): Unit = dependency.pulse.valueOption.foreach(fun)
 }
 
 /**
