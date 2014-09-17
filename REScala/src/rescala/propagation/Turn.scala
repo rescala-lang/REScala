@@ -35,7 +35,7 @@ class Turn extends ReactiveLogging {
           case Done(dependants) =>
             dependants.foreach(evaluate)
             evaluated ::= head
-          case Retry =>
+          case Retry(dependencies) =>
             evaluate(head)
         }
       }

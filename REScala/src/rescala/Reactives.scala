@@ -12,8 +12,8 @@ trait Reactive extends ReactiveLogging {
 
   val id: UUID = UUID.randomUUID()
 
-  private var _level = 0
-  def ensureLevel(l: Int): Unit = if (l >= _level) _level = l + 1
+  var _level = 0
+  def ensureLevel(l: Int): Unit
   def level: Int = _level
 
 
@@ -43,7 +43,7 @@ trait Dependency[+P] extends Reactive {
 
   override def ensureLevel(l: Int): Unit = {
     val oldLevel = level
-    super.ensureLevel(l)
+    if (l >= _level) _level = l + 1
     val newLevel = level
     if (oldLevel < newLevel) _dependants.foreach(_.ensureLevel(newLevel))
   }

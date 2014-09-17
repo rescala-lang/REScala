@@ -37,7 +37,7 @@ abstract class DependentSignalImplementation[+T](creationTurn: Turn) extends Dep
      */
     if (level > oldLevel) {
       log.nodeEvaluationEnded(this)
-      EvaluationResult.Retry
+      EvaluationResult.Retry(Set()) //TODO: fill with actual new dependencies
     }
     else {
       /* Notify dependents only if the value changed */
