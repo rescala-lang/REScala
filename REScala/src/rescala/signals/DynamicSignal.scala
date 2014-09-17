@@ -9,7 +9,7 @@ class DynamicSignal[+T]
     (dependenciesUpperBound: List[Dependency[Any]])
     (expr: Turn => T)
     (creationTurn: Turn)
-  extends DependentSignalImplementation[T](creationTurn) with DynamicDependant {
+  extends DependentSignalImplementation[T](creationTurn) with Dependant {
 
   override def initialValue()(implicit turn: Turn): T = calculateValue()
 

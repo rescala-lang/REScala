@@ -71,7 +71,13 @@ trait Dependency[+P] extends Reactive {
 }
 
 /** A node that depends on other nodes */
-trait DynamicDependant extends Reactive {
+trait Dependant extends Reactive {
+  
+  protected[this] def staticDependencies(dependencies: Set[Dependency[_]])(implicit turn: Turn) = {
+    ensureLevel(dependencies.map(_.level).max + 1)
+    dependencies.foreach(_.addDependant(this))
+  }
+  
   private var dependencies: Map[Turn, Set[Dependency[_]]] = Map().withDefaultValue(Set())
 
   def addDependency(dep: Dependency[_])(implicit turn: Turn): Unit = {
@@ -98,14 +104,6 @@ trait DynamicDependant extends Reactive {
     dependencies = dependencies.withDefaultValue(dependencies(turn))
     dependencies -= turn
     super.commit
-  }
-}
-
-trait StaticDependant {
-  this: Reactive =>
-  protected[this] def staticDependencies(dependencies: Set[Dependency[_]])(implicit turn: Turn) = {
-    ensureLevel(dependencies.map(_.level).max + 1)
-    dependencies.foreach(_.addDependant(this))
   }
 }
 

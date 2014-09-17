@@ -3,7 +3,7 @@ package rescala.signals
 import rescala._
 import rescala.propagation.{EvaluationResult, NoChangePulse, DiffPulse, Turn}
 
-abstract class DependentSignalImplementation[+T](creationTurn: Turn) extends Signal[T] with DynamicDependant {
+abstract class DependentSignalImplementation[+T](creationTurn: Turn) extends Signal[T] with Dependant {
 
   def initialValue()(implicit turn: Turn): T
   def calculateValue()(implicit turn: Turn): T

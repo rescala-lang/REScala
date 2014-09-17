@@ -8,7 +8,7 @@ import rescala.signals.Signal
 /**
  * Wrapper for an anonymous function
  */
-case class EventHandler[T](fun: T => Unit, dependency: Dependency[T]) extends Event[T] with DynamicDependant {
+case class EventHandler[T](fun: T => Unit, dependency: Dependency[T]) extends Event[T] with Dependant {
   override def reevaluate()(implicit turn: Turn): EvaluationResult = {
     pulse(dependency.pulse)
     EvaluationResult.Done(dependants)
@@ -41,7 +41,7 @@ class ImperativeEvent[T] extends Event[T] {
 
 /** base class for dependent events */
 abstract class DependentEvent[T](dependencies: Set[Dependency[Any]])(creationTurn: Turn)
-  extends Event[T] with StaticDependant {
+  extends Event[T] with Dependant {
 
   staticDependencies(dependencies)(creationTurn)
 
@@ -128,7 +128,7 @@ object Events {
 
   /** A wrapped event inside a signal, that gets "flattened" to a plain event node */
   def wrapped[T](wrapper: Signal[Event[T]]): Event[T] = Turn.maybeTurn { creationTurn =>
-    new Event[T] with DynamicDependant {
+    new Event[T] with Dependant {
 
       setDependencies(Set(wrapper, wrapper.pulse(creationTurn).valueOption.get))(creationTurn)
 
