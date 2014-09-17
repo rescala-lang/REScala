@@ -49,7 +49,7 @@ abstract class DependentSignalImplementation[+T](creationTurn: Turn) extends Dep
         pulse(NoChangePulse)
         log.nodePropagationStopped(this)
       }
-      EvaluationResult.Dependants(dependants)
+      EvaluationResult.Done(dependants)
     }
   }
 }

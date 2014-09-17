@@ -14,7 +14,7 @@ class WrappedEvent[T](wrapper: Signal[Event[T]]) extends Event[T] with Dependant
       setDependencies(Set(wrapper, event))
       pulse(event.pulse)
     }
-    EvaluationResult.Dependants(dependants)
+    EvaluationResult.Done(dependants)
   }
 
 }

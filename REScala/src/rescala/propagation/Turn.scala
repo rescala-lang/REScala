@@ -1,6 +1,6 @@
 package rescala.propagation
 
-import rescala.propagation.EvaluationResult.{Retry, Dependants}
+import rescala.propagation.EvaluationResult.{Retry, Done}
 import rescala.signals.Var
 import rescala.{Dependency, Reactive, Dependant}
 import rescala.log.ReactiveLogging
@@ -32,7 +32,7 @@ class Turn extends ReactiveLogging {
       if (level != head.level) evaluate(head)
       else {
         head.reevaluate()(this) match {
-          case Dependants(dependants) =>
+          case Done(dependants) =>
             dependants.foreach(evaluate)
             evaluated ::= head
           case Retry =>

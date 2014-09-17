@@ -8,7 +8,7 @@ import rescala.propagation._
  * Wrapper for an anonymous function
  */
 case class EventHandler[T](fun: T => Unit, dependency: Dependency[T]) extends Dependant {
-  override def reevaluate()(implicit turn: Turn): EvaluationResult = EvaluationResult.Dependants(Set())
+  override def reevaluate()(implicit turn: Turn): EvaluationResult = EvaluationResult.Done(Set())
   override def commit(implicit turn: Turn): Unit = dependency.pulse.valueOption.foreach(fun)
 }
 
@@ -26,7 +26,7 @@ class ImperativeEvent[T] extends Event[T] {
   }
 
   override protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult =
-    EvaluationResult.Dependants(dependants)
+    EvaluationResult.Done(dependants)
 
   override def toString = getClass.getName
 }
@@ -41,7 +41,7 @@ abstract class DependentEvent[T](dependencies: Set[Dependency[Any]]) extends Eve
 
   override def reevaluate()(implicit turn: Turn): EvaluationResult = {
     pulse(calculatePulse())
-    EvaluationResult.Dependants(dependants)
+    EvaluationResult.Done(dependants)
   }
 
 }
