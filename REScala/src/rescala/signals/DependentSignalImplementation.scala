@@ -6,7 +6,7 @@ import rescala.propagation.{EvaluationResult, NoChangePulse, DiffPulse, Turn}
 abstract class DependentSignalImplementation[+T](creationTurn: Turn) extends Signal[T] with DynamicDependant {
 
   def initialValue()(implicit turn: Turn): T
-  def calculateNewValue()(implicit turn: Turn): T
+  def calculateValue()(implicit turn: Turn): T
 
   {
     log.nodeEvaluationStarted(this)
@@ -21,7 +21,7 @@ abstract class DependentSignalImplementation[+T](creationTurn: Turn) extends Sig
 
      // Evaluation
     val newValue = try {
-      calculateNewValue()
+      calculateValue()
     }
     catch {
       case e: Exception =>

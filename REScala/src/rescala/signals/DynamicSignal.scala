@@ -11,9 +11,9 @@ class DynamicSignal[+T]
     (creationTurn: Turn)
   extends DependentSignalImplementation[T](creationTurn) with DynamicDependant {
 
-  override def initialValue()(implicit turn: Turn): T = calculateNewValue()
+  override def initialValue()(implicit turn: Turn): T = calculateValue()
 
-  override def calculateNewValue()(implicit turn: Turn): T = {
+  override def calculateValue()(implicit turn: Turn): T = {
     turn.dynamic.bag.withValue(Set()) {
       val newValue = expr(turn)
       setDependencies(turn.dynamic.bag.value)

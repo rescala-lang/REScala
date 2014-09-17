@@ -130,17 +130,27 @@ object Events {
   def wrapped[T](wrapper: Signal[Event[T]]): Event[T] = Turn.maybeTurn { creationTurn =>
     new Event[T] with DynamicDependant {
 
-      setDependencies(Set(wrapper, wrapper.get))(creationTurn)
+      setDependencies(Set(wrapper, wrapper.pulse(creationTurn).valueOption.get))(creationTurn)
 
-      //TODO: this should probably retry when the dependencies change
-      override def reevaluate()(implicit turn: Turn): EvaluationResult = {
-        for {event <- wrapper.pulse.valueOption} {
-          setDependencies(Set(wrapper, event))
-          pulse(event.pulse)
+      override def reevaluate()(implicit turn: Turn): EvaluationResult =
+        wrapper.pulse match {
+          case NoChangePulse =>
+            throw new IllegalStateException("signals are assumed to always pulse")
+          case ValuePulse(value) =>
+            pulse(value.pulse)
+            EvaluationResult.Done(dependants)
+          case DiffPulse(value, old) if value != old =>
+            removeDependency(old)
+            addDependency(value)
+            if (value.level > level) EvaluationResult.Retry(Set(wrapper, value))
+            else {
+              pulse(value.pulse)
+              EvaluationResult.Done(dependants)
+            }
+          case DiffPulse(value, old) if value == old =>
+            pulse(value.pulse)
+            EvaluationResult.Done(dependants)
         }
-        EvaluationResult.Done(dependants)
-      }
-
     }
-  }
+   }
 }

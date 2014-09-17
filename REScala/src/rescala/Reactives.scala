@@ -36,15 +36,21 @@ trait Reactive extends ReactiveLogging {
 
 /** A node that has nodes that depend on it */
 trait Dependency[+P] extends Reactive {
-  private var _dependants: Set[Reactive] = Set()
-  final override def dependants(implicit turn: Turn): Set[Reactive] = _dependants
+
+  private var _dependants: Map[Turn, Set[Reactive]] = Map().withDefaultValue(Set())
+
+  final override def dependants(implicit turn: Turn): Set[Reactive] = _dependants(turn)
 
   def addDependant(dep: Reactive)(implicit turn: Turn): Unit = {
-    _dependants += dep
+    _dependants += turn -> (_dependants(turn) + dep)
+    turn.changed(this)
     log.nodeAttached(dep, this)
   }
 
-  def removeDependant(dep: Reactive)(implicit turn: Turn) = _dependants -= dep
+  def removeDependant(dep: Reactive)(implicit turn: Turn) = {
+    _dependants += turn -> (_dependants(turn) - dep)
+    turn.changed(this)
+  }
 
   private[this] var pulses: Map[Turn, Pulse[P]] = Map()
 
@@ -57,6 +63,8 @@ trait Dependency[+P] extends Reactive {
 
   override def commit(implicit turn: Turn): Unit = {
     pulses -= turn
+    _dependants = _dependants.withDefaultValue(_dependants(turn))
+    _dependants -= turn
     super.commit
   }
 
@@ -64,26 +72,32 @@ trait Dependency[+P] extends Reactive {
 
 /** A node that depends on other nodes */
 trait DynamicDependant extends Reactive {
-  private var dependencies: Set[Dependency[_]] = Set()
+  private var dependencies: Map[Turn, Set[Dependency[_]]] = Map().withDefaultValue(Set())
 
   def addDependency(dep: Dependency[_])(implicit turn: Turn): Unit = {
-    if (!dependencies.contains(dep)) {
-      ensureLevel(dep.level)
-      dependencies += dep
-      dep.addDependant(this)
-    }
+    ensureLevel(dep.level)
+    dependencies += turn -> (dependencies(turn) + dep)
+    dep.addDependant(this)
   }
-  def setDependencies(deps: TraversableOnce[Dependency[_]])(implicit turn: Turn): Unit = {
-    val newDependencies = deps.toSet
-    val removed = dependencies.diff(newDependencies)
-    val added = newDependencies.diff(dependencies)
+
+  def setDependencies(newDependencies: Set[Dependency[_]])(implicit turn: Turn): Unit = {
+    val oldDependencies = dependencies(turn)
+    val removed = oldDependencies.diff(newDependencies)
+    val added = newDependencies.diff(oldDependencies)
     removed.foreach(removeDependency)
     added.foreach(addDependency)
-    dependencies = deps.toSet
+    dependencies += turn -> newDependencies
   }
+
   def removeDependency(dep: Dependency[_])(implicit turn: Turn): Unit = {
     dep.removeDependant(this)
-    dependencies -= dep
+    dependencies += turn -> (dependencies(turn) - dep)
+  }
+
+  override def commit(implicit turn: Turn): Unit = {
+    dependencies = dependencies.withDefaultValue(dependencies(turn))
+    dependencies -= turn
+    super.commit
   }
 }
 

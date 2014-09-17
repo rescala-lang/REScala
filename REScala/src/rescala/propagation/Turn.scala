@@ -35,13 +35,15 @@ class Turn extends ReactiveLogging {
         head.reevaluate()(this) match {
           case Done(dependants) =>
             dependants.foreach(evaluate)
-            toCommit += head
+            changed(head)
           case Retry(dependencies) =>
             evaluate(head)
         }
       }
     }
   }
+
+  def changed(reactive: Reactive): Unit = toCommit += reactive
 
   def commit() = toCommit.foreach(_.commit(this))
 

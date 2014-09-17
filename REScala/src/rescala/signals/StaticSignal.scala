@@ -10,7 +10,7 @@ class StaticSignal[+T](dependencies: Set[Dependency[Any]])(expr: Turn => T)(crea
   if (dependencies.nonEmpty) staticDependencies(dependencies)(creationTurn)
 
   override def initialValue()(implicit turn: Turn): T = expr(creationTurn)
-  override def calculateNewValue()(implicit turn: Turn): T = expr(turn)
+  override def calculateValue()(implicit turn: Turn): T = expr(turn)
 }
 
 /**
