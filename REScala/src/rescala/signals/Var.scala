@@ -13,12 +13,9 @@ class Var[T](initval: T) extends Signal[T] {
 
   final def update(newValue: T): Unit = set(newValue)
   def set(newValue: T): Unit = Turn.newTurn { turn =>
-    log.nodeValueSet(this)
     if (currentValue != newValue) {
       planUpdate(newValue)(turn)
       turn.startEvaluation()
-    } else {
-      log.nodePropagationStopped(this)
     }
   }
 

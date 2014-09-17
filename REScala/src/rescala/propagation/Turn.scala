@@ -4,6 +4,7 @@ import rescala.propagation.EvaluationResult.{Retry, Done}
 import rescala.{Dependency, Reactive}
 import rescala.log.ReactiveLogging
 
+import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.util.DynamicVariable
 
@@ -11,7 +12,7 @@ import scala.util.DynamicVariable
  * The engine that schedules the (glitch-free) evaluation
  * of the nodes in the dependency graph.
  */
-class Turn extends ReactiveLogging {
+class Turn {
   private val evalQueue = new mutable.PriorityQueue[(Int, Reactive)]()(Turn.reactiveOrdering)
   private var toCommit = Set[Reactive]()
 
@@ -20,10 +21,20 @@ class Turn extends ReactiveLogging {
   /** Adds a dependant to the eval queue */
   def evaluate(dep: Reactive): Unit = {
       if (!evalQueue.exists { case (_, elem) => elem eq dep }) {
-        log.nodeScheduled(dep)
         evalQueue.+=((dep.level, dep))
       }
   }
+
+  @tailrec
+  private def floodLevel(reactives: Set[Reactive]): Unit =
+    if (reactives.nonEmpty) {
+      val reactive = reactives.head
+      changed(reactive)
+      val level = reactive.level + 1
+      val dependants = reactive.dependants
+      val changedDependants = dependants.filter(_.ensureLevel(level))
+      floodLevel(reactives.tail ++ changedDependants)
+    }
 
   /** Evaluates all the elements in the queue */
   def startEvaluation() = {
@@ -37,6 +48,7 @@ class Turn extends ReactiveLogging {
             dependants.foreach(evaluate)
             changed(head)
           case Retry(dependencies) =>
+            floodLevel(Set(head))
             evaluate(head)
         }
       }

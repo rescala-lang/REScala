@@ -1,7 +1,7 @@
 package rescala.signals
 
 import rescala._
-import rescala.propagation.Turn
+import rescala.propagation._
 
 
 /** A dependant reactive value with dynamic dependencies (depending signals can change during evaluation) */
@@ -9,19 +9,35 @@ class DynamicSignal[+T]
     (dependenciesUpperBound: List[Dependency[Any]])
     (expr: Turn => T)
     (creationTurn: Turn)
-  extends DependentSignalImplementation[T](creationTurn) with Dependant {
+  extends Signal[T] with Dependant {
 
-  override def initialValue()(implicit turn: Turn): T = calculateValue()
-
-  override def calculateValue()(implicit turn: Turn): T = {
-    turn.dynamic.bag.withValue(Set()) {
-      val newValue = expr(turn)
-      setDependencies(turn.dynamic.bag.value)
-      newValue
-    }
+  {
+    val (newValue, newDependencies) = calculateValueDependencies(creationTurn)
+    setDependencies(newDependencies)(creationTurn)
+    pulse(ValuePulse(newValue))(creationTurn)
+    creationTurn.changed(this)
   }
 
-  if(dependenciesUpperBound.nonEmpty) ensureLevel(dependenciesUpperBound.map{_.level(creationTurn)}.max)(creationTurn)
+  def calculateValueDependencies(implicit turn: Turn): (T, Set[Dependency[_]]) =
+    turn.dynamic.bag.withValue(Set()) { (expr(turn), turn.dynamic.bag.value) }
+
+  override protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult = {
+    val (newValue, newDependencies) = calculateValueDependencies
+
+    val oldLevel = level
+
+    setDependencies(newDependencies)
+
+    if (level > oldLevel) {
+      EvaluationResult.Retry(newDependencies)
+    }
+    else {
+      if (currentValue != newValue) pulse(DiffPulse(newValue, currentValue))
+      else pulse(NoChangePulse)
+
+      EvaluationResult.Done(dependants)
+    }
+  }
 
 }
 

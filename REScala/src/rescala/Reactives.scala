@@ -6,7 +6,7 @@ import rescala.log.ReactiveLogging
 import rescala.propagation._
 
 /** A Reactive is a value type which has a dependency to other Reactives */
-trait Reactive extends ReactiveLogging {
+trait Reactive {
 
   val id: UUID = UUID.randomUUID()
 
@@ -14,10 +14,12 @@ trait Reactive extends ReactiveLogging {
 
   protected[this] var levels: Map[Turn, Int] = Map().withDefaultValue(0)
 
-  def ensureLevel(newLevel: Int)(implicit turn: Turn): Unit =
+  def ensureLevel(newLevel: Int)(implicit turn: Turn): Boolean =
     if (levels(turn) < newLevel) {
       levels += turn -> newLevel
+      true
     }
+    else false
 
   def level(implicit turn: Turn): Int = levels(turn)
 
@@ -30,8 +32,6 @@ trait Reactive extends ReactiveLogging {
     levels = levels.withDefaultValue(math.max(levels(turn), levels.default(turn)))
     levels -= turn
   }
-
-  log.nodeCreated(this)
 }
 
 /** A node that has nodes that depend on it */
@@ -44,7 +44,6 @@ trait Dependency[+P] extends Reactive {
   def addDependant(dep: Reactive)(implicit turn: Turn): Unit = {
     _dependants += turn -> (_dependants(turn) + dep)
     turn.changed(this)
-    log.nodeAttached(dep, this)
   }
 
   def removeDependant(dep: Reactive)(implicit turn: Turn) = {
@@ -56,10 +55,7 @@ trait Dependency[+P] extends Reactive {
 
   def pulse(implicit turn: Turn): Pulse[P] = pulses.getOrElse(turn, NoChangePulse)
 
-  final protected[this] def pulse(pulse: Pulse[P])(implicit turn: Turn): Unit = {
-    pulses += turn -> pulse
-    log.nodePulsed(this)
-  }
+  final protected[this] def pulse(pulse: Pulse[P])(implicit turn: Turn): Unit = pulses += turn -> pulse
 
   override def commit(implicit turn: Turn): Unit = {
     pulses -= turn
@@ -76,12 +72,13 @@ trait Dependant extends Reactive {
   protected[this] def staticDependencies(dependencies: Set[Dependency[_]])(implicit turn: Turn) = {
     ensureLevel(dependencies.map(_.level).max + 1)
     dependencies.foreach(_.addDependant(this))
+    turn.changed(this)
   }
   
   private var dependencies: Map[Turn, Set[Dependency[_]]] = Map().withDefaultValue(Set())
 
   def addDependency(dep: Dependency[_])(implicit turn: Turn): Unit = {
-    ensureLevel(dep.level)
+    ensureLevel(dep.level + 1)
     dependencies += turn -> (dependencies(turn) + dep)
     dep.addDependant(this)
   }

@@ -53,9 +53,9 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
     var test = 0
     val v = Var(1)
 
-    val s1 = DynamicSignal[Int](v) { s => 2 * v(s) }
-    val s2 = DynamicSignal[Int](v) { s => 3 * v(s) }
-    val s3 = DynamicSignal[Int](s1, s2) { s => s1(s) + s2(s) }
+    val s1 = DynamicSignal[Int]() { s => 2 * v(s) }
+    val s2 = DynamicSignal[Int]() { s => 3 * v(s) }
+    val s3 = DynamicSignal[Int]() { s => s1(s) + s2(s) }
 
     s1.changed += { (_) => test += 1 }
     s2.changed += { (_) => test += 1 }
@@ -70,12 +70,11 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
 
   @Test def levelIsCorrectlyComputed() = {
 
-    var test = 0
     val v = Var(1)
 
-    val s1 = DynamicSignal[Int](v) { s => 2 * v.get }
-    val s2 = DynamicSignal[Int](v) { s => 3 * v.get }
-    val s3 = DynamicSignal[Int](s1, s2) { s => s1.get + s2.get }
+    val s1 = DynamicSignal[Int]() { s => 2 * v(s) }
+    val s2 = DynamicSignal[Int]() { s => 3 * v(s) }
+    val s3 = DynamicSignal[Int]() { s => s1(s) + s2(s) }
 
     Turn.newTurn { implicit turn =>
       assert(v.level == 0)

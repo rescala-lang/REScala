@@ -140,9 +140,10 @@ object Events {
             pulse(value.pulse)
             EvaluationResult.Done(dependants)
           case DiffPulse(value, old) if value != old =>
+            val oldLevel = level
             removeDependency(old)
             addDependency(value)
-            if (value.level > level) EvaluationResult.Retry(Set(wrapper, value))
+            if (value.level > oldLevel) EvaluationResult.Retry(Set(wrapper, value))
             else {
               pulse(value.pulse)
               EvaluationResult.Done(dependants)

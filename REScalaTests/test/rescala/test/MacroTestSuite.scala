@@ -77,7 +77,6 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
 
   @Test def levelIsCorrectlyComputed() =  {
 
-    var test = 0
     val v = Var(1)
 
     val s1 = Signal{ 2 * v() }

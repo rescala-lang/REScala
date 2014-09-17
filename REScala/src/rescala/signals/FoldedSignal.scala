@@ -4,7 +4,7 @@ import rescala.events.Event
 import rescala.propagation.Turn
 
 class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T, E) => T)(creationTurn: Turn)
-  extends DependentSignalImplementation[T](creationTurn) {
+  extends DependentSignal[T](creationTurn) {
 
   staticDependencies(Set(e))(creationTurn)
 
