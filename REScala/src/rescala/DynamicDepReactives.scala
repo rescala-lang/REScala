@@ -22,6 +22,7 @@ class VarSynt[T](private[this] var value: T) extends Var[T] {
       value = newValue
       TS.nextRound() // Testing
       logTestingTimestamp()
+      ReactiveEngine.log.nodeValueSet(this)
 
       notifyDependents(value)
       ReactiveEngine.startEvaluation()
@@ -29,8 +30,8 @@ class VarSynt[T](private[this] var value: T) extends Var[T] {
     } else {
       ReactiveEngine.log.nodePropagationStopped(this)
       logTestingTimestamp() // testing
+      ReactiveEngine.log.nodeValueSet(this)
     }
-    ReactiveEngine.log.nodeValueSet(this)
   }
 
   def reEvaluate(): T = value
