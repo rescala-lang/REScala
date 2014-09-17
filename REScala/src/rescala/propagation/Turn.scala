@@ -1,8 +1,7 @@
 package rescala.propagation
 
 import rescala.propagation.EvaluationResult.{Retry, Done}
-import rescala.signals.Var
-import rescala.{Dependency, Reactive, Dependant}
+import rescala.{Dependency, Reactive}
 import rescala.log.ReactiveLogging
 
 import scala.collection.mutable
@@ -14,7 +13,9 @@ import scala.util.DynamicVariable
  */
 class Turn extends ReactiveLogging {
   private val evalQueue = new mutable.PriorityQueue[(Int, Reactive)]()(Turn.reactiveOrdering)
-  private var evaluated = List[Reactive]()
+  private var toCommit = Set[Reactive]()
+
+  implicit def turn: Turn = this
 
   /** Adds a dependant to the eval queue */
   def evaluate(dep: Reactive): Unit = {
@@ -34,14 +35,15 @@ class Turn extends ReactiveLogging {
         head.reevaluate()(this) match {
           case Done(dependants) =>
             dependants.foreach(evaluate)
-            evaluated ::= head
+            toCommit += head
           case Retry(dependencies) =>
             evaluate(head)
         }
       }
     }
-    evaluated.foreach(_.commit(this))
   }
+
+  def commit() = toCommit.foreach(_.commit(this))
 
   object dynamic {
     val bag = new DynamicVariable(Set[Dependency[_]]())
@@ -61,7 +63,9 @@ object Turn {
 
   def newTurn[T](f: Turn => T) = synchronized {
     val turn = new Turn
-    currentTurn.withValue(Some(turn)){f(turn)}
+    val res = currentTurn.withValue(Some(turn)){f(turn)}
+    turn.commit()
+    res
   }
 
   val reactiveOrdering = new Ordering[(Int, Reactive)] {

@@ -4,6 +4,7 @@ package rescala.test
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
+import rescala.propagation.Turn
 import rescala.signals._
 
 
@@ -76,10 +77,12 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
     val s2 = DynamicSignal[Int](v) { s => 3 * v.get }
     val s3 = DynamicSignal[Int](s1, s2) { s => s1.get + s2.get }
 
-    assert(v.level == 0)
-    assert(s1.level == 1)
-    assert(s2.level == 1)
-    assert(s3.level == 2)
+    Turn.newTurn { implicit turn =>
+      assert(v.level == 0)
+      assert(s1.level == 1)
+      assert(s2.level == 1)
+      assert(s3.level == 2)
+    }
 
 
   }

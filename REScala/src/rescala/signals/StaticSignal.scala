@@ -5,9 +5,10 @@ import rescala.propagation.{MaybeTurn, Turn}
 
 /** A dependent reactive value which has static dependencies */
 class StaticSignal[+T](dependencies: Set[Dependency[Any]])(expr: Turn => T)(creationTurn: Turn)
-  extends DependentSignalImplementation[T](creationTurn) {
+  extends DependentSignalImplementation[T](creationTurn) with StaticDependant {
 
-  setDependencies(dependencies)
+  if (dependencies.nonEmpty) staticDependencies(dependencies)(creationTurn)
+
   override def initialValue()(implicit turn: Turn): T = expr(creationTurn)
   override def calculateNewValue()(implicit turn: Turn): T = expr(turn)
 }
@@ -17,13 +18,13 @@ class StaticSignal[+T](dependencies: Set[Dependency[Any]])(expr: Turn => T)(crea
  */
 object StaticSignal {
 
-  def turn[T](dependencies: Set[Dependency[Any]])(expr: Turn => T)(implicit maybe: MaybeTurn): DependentSignal[T] = Turn.maybeTurn { turn =>
+  def turn[T](dependencies: Set[Dependency[Any]])(expr: Turn => T)(implicit maybe: MaybeTurn): StaticSignal[T] = Turn.maybeTurn { turn =>
     new StaticSignal(dependencies)(expr)(turn)
   }
 
-  def turn[T](dependencies: Dependency[Any]*)(expr: Turn => T)(implicit maybe: MaybeTurn): DependentSignal[T] = turn(dependencies.toSet)(expr)
+  def turn[T](dependencies: Dependency[Any]*)(expr: Turn => T)(implicit maybe: MaybeTurn): StaticSignal[T] = turn(dependencies.toSet)(expr)
 
-  def apply[T](dependencies: Set[Dependency[Any]])(expr: => T): DependentSignal[T] = turn(dependencies)(_ => expr)
+  def apply[T](dependencies: Set[Dependency[Any]])(expr: => T): StaticSignal[T] = turn(dependencies)(_ => expr)
 
-  def apply[T](dependencies: Dependency[Any]*)(expr: => T): DependentSignal[T] = apply(dependencies.toSet)(expr)
+  def apply[T](dependencies: Dependency[Any]*)(expr: => T): StaticSignal[T] = apply(dependencies.toSet)(expr)
 }

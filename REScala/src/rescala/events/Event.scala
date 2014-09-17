@@ -10,52 +10,52 @@ import scala.collection.immutable.Queue
 trait Event[+T] extends Dependency[T] {
 
   /** add an event handler */
-  def +=(react: T => Unit): Unit = EventHandler(react, this).addDependency(this)
+  def +=(react: T => Unit)(implicit maybe: MaybeTurn): Unit = Turn.maybeTurn(EventHandler(react, this).addDependency(this)(_))
 
   /** remove an event handler */
-  def -=(react: T => Unit): Unit = this.removeDependant(EventHandler(react, this))
+  def -=(react: T => Unit)(implicit maybe: MaybeTurn): Unit = Turn.maybeTurn(this.removeDependant(EventHandler(react, this))(_))
 
   /**
    * Events disjunction.
    */
-  def ||[S >: T, U <: S](other: Event[U]): Event[S] = new EventNodeOr[S](this, other)
+  def ||[S >: T, U <: S](other: Event[U]): Event[S] = Events.or[S](this, other)
 
   /**
    * Event filtered with a predicate
    */
-  def &&[U >: T](pred: U => Boolean): Event[T] = new EventNodeFilter[T](this, pred)
+  def &&[U >: T](pred: U => Boolean): Event[T] = Events.filter(this, pred)
   def filter[U >: T](pred: U => Boolean) = &&[U](pred)
 
   /**
    * Event filtered with a boolean variable
    */
-  def &&(predicate: => Boolean): Event[T] = new EventNodeFilter[T](this, _ => predicate)
+  def &&(predicate: => Boolean): Event[T] = Events.filter[T](this, _ => predicate)
   def filter(predicate: => Boolean): Event[T] = &&(predicate)
 
   /**
    * Event is triggered except if the other one is triggered
    */
-  def \[U](other: Event[U]): Event[T] = new EventNodeExcept(this, other)
+  def \[U](other: Event[U]): Event[T] = Events.except(this, other)
 
   /**
    * Events conjunction
    */
-  def and[U, V, S >: T](other: Event[U], merge: (S, U) => V): Event[V] = new EventNodeAnd[S, U, V](this, other, merge)
+  def and[U, V, S >: T](other: Event[U], merge: (S, U) => V): Event[V] = Events.and(this, other, merge)
 
   /**
    * Event conjunction with a merge method creating a tuple of both event parameters
    */
-  def &&[U, S >: T](other: Event[U]): Event[(S, U)] = new EventNodeAnd[S, U, (S, U)](this, other, (p1: S, p2: U) => (p1, p2))
+  def &&[U, S >: T](other: Event[U]): Event[(S, U)] = Events.and(this, other, (p1: S, p2: U) => (p1, p2))
 
   /**
    * Transform the event parameter
    */
-  def map[U, S >: T](mapping: S => U): Event[U] = new EventNodeMap[S, U](this, mapping)
+  def map[U, S >: T](mapping: S => U): Event[U] = Events.map(this, mapping)
 
   /**
    * Drop the event parameter; equivalent to map((_: Any) => ())
    */
-  def dropParam[S >: T]: Event[Unit] = new EventNodeMap[S, Unit](this, (_: Any) => ())
+  def dropParam[S >: T]: Event[Unit] = Events.map(this, (_: Any) => ())
 
 
   /** folds events with a given fold function to create a Signal */

@@ -3,6 +3,7 @@ package rescala.test
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
+import rescala.propagation.Turn
 import rescala.signals._
 
 class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
@@ -72,10 +73,12 @@ class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
     val s2 = StaticSignal(v){ 3 * v.get }
     val s3 = StaticSignal(s1,s2){ s1.get + s2.get }
 
-    assert(v.level == 0)
-    assert(s1.level == 1)
-    assert(s2.level == 1)
-    assert(s3.level == 2)
+    Turn.newTurn { implicit turn =>
+      assert(v.level == 0)
+      assert(s1.level == 1)
+      assert(s2.level == 1)
+      assert(s3.level == 2)
+    }
   }
 
 }

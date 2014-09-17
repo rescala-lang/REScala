@@ -9,7 +9,7 @@ class DynamicSignal[+T]
     (dependenciesUpperBound: List[Dependency[Any]])
     (expr: Turn => T)
     (creationTurn: Turn)
-  extends DependentSignalImplementation[T](creationTurn) {
+  extends DependentSignalImplementation[T](creationTurn) with DynamicDependant {
 
   override def initialValue()(implicit turn: Turn): T = calculateNewValue()
 
@@ -21,7 +21,7 @@ class DynamicSignal[+T]
     }
   }
 
-  if(dependenciesUpperBound.nonEmpty) ensureLevel(dependenciesUpperBound.map{_.level}.max)
+  if(dependenciesUpperBound.nonEmpty) ensureLevel(dependenciesUpperBound.map{_.level(creationTurn)}.max)(creationTurn)
 
 }
 
@@ -29,7 +29,7 @@ class DynamicSignal[+T]
  * A syntactic signal
  */
 object DynamicSignal {
-  def apply[T](dependencies: List[Dependency[Any]])(expr: Turn => T) = Turn.maybeTurn { turn =>
+  def apply[T](dependencies: List[Dependency[Any]])(expr: Turn => T): DynamicSignal[T] = Turn.maybeTurn { turn =>
     new DynamicSignal(dependencies)(expr)(turn)
   }
 

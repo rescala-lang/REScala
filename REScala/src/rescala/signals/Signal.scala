@@ -2,7 +2,7 @@ package rescala.signals
 
 import rescala.propagation._
 import rescala._
-import rescala.events.{ChangedEventNode, WrappedEvent, Event}
+import rescala.events.{Event, Events}
 
 
 trait Signal[+A] extends Dependency[A] {
@@ -51,13 +51,13 @@ trait Signal[+A] extends Dependency[A] {
   def delay(n: Int): Signal[A] = changed.delay(get, n)
 
   /** Unwraps a Signal[Event[E]] to an Event[E] */
-  def unwrap[E](implicit evidence: A <:< Event[E]): Event[E] =  new WrappedEvent(this.map(evidence))
+  def unwrap[E](implicit evidence: A <:< Event[E]): Event[E] =  Events.wrapped(this.map(evidence))
 
   /**
    * Create an event that fires every time the signal changes. It fires the tuple
    *  (oldVal, newVal) for the signal. The first tuple is (null, newVal)
    */
-  lazy val change: Event[(A, A)] = new ChangedEventNode(this)
+  lazy val change: Event[(A, A)] = Events.changed(this)
 
   /**
    * Create an event that fires every time the signal changes. The value associated

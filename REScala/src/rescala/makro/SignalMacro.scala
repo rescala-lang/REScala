@@ -7,14 +7,11 @@ import scala.collection.mutable.ListBuffer
 import scala.language.experimental.macros
 import scala.reflect.macros.whitebox
 
-import rescala.DependentSignal
-
 object SignalMacro {
 
-  def SignalM[A](expression: A): DependentSignal[A] = macro SignalMacro[A]
+  def SignalM[A](expression: A): Signal[A] = macro SignalMacro[A]
 
-  def SignalMacro[A: c.WeakTypeTag](c: whitebox.Context)(expression: c.Expr[A]):
-      c.Expr[DependentSignal[A]] = {
+  def SignalMacro[A: c.WeakTypeTag](c: whitebox.Context)(expression: c.Expr[A]): c.Expr[Signal[A]] = {
     import c.universe._
 
 
@@ -289,13 +286,13 @@ object SignalMacro {
     // by the object, but were cut out of the signal expression during the code
     // transformation
     val block =
-      Typed(Block(signalValues.toList, body), TypeTree(weakTypeOf[DependentSignal[A]]))
+      Typed(Block(signalValues.toList, body), TypeTree(weakTypeOf[Signal[A]]))
 
 
 //    out.append((c untypecheck block) + "\n\n")
 //    out.close
 
 
-    c.Expr[DependentSignal[A]](c untypecheck block)
+    c.Expr[Signal[A]](c untypecheck block)
   }
 }

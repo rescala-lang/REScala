@@ -6,6 +6,7 @@ import org.scalatest.mock.MockitoSugar
 import rescala._
 import rescala.events._
 import rescala.makro.SignalMacro.{SignalM => Signal}
+import rescala.propagation.Turn
 import rescala.signals._
 
 
@@ -83,12 +84,12 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
     val s2 = Signal{ 3 * v() }
     val s3 = Signal{ s1() + s2() }
 
-    s3.get
-
-    assert(v.level == 0)
-    assert(s1.level == 1)
-    assert(s2.level == 1)
-    assert(s3.level == 2)
+    Turn.newTurn { implicit turn =>
+      assert(v.level == 0)
+      assert(s1.level == 1)
+      assert(s2.level == 1)
+      assert(s3.level == 2)
+    }
 
 
   }
