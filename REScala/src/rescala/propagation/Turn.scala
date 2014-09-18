@@ -1,5 +1,6 @@
 package rescala.propagation
 
+import rescala.events.Event
 import rescala.propagation.EvaluationResult.{Retry, Done}
 import rescala.{Dependency, Reactive}
 import rescala.log.ReactiveLogging
@@ -13,6 +14,8 @@ import scala.util.DynamicVariable
  * of the nodes in the dependency graph.
  */
 class Turn {
+  def register[T](dependant: Reactive, dependencies: Set[Dependency[_]]) = ???
+
   private val evalQueue = new mutable.PriorityQueue[(Int, Reactive)]()(Turn.reactiveOrdering)
   private var toCommit = Set[Reactive]()
 

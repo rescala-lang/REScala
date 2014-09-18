@@ -7,7 +7,7 @@ import rescala.propagation.{MaybeTurn, Turn}
 class StaticSignal[+T](dependencies: Set[Dependency[Any]])(expr: Turn => T)(creationTurn: Turn)
   extends DependentSignal[T](creationTurn) {
 
-  if (dependencies.nonEmpty) staticDependencies(dependencies)(creationTurn)
+  //if (dependencies.nonEmpty) staticDependencies(dependencies)(creationTurn)
 
   override def initialValue()(implicit turn: Turn): T = expr(creationTurn)
   override def calculateValue()(implicit turn: Turn): T = expr(turn)

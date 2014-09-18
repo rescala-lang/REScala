@@ -6,7 +6,7 @@ import rescala.propagation.Turn
 class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T, E) => T)(creationTurn: Turn)
   extends DependentSignal[T](creationTurn) {
 
-  staticDependencies(Set(e))(creationTurn)
+  //staticDependencies(Set(e))(creationTurn)
 
   override def initialValue()(implicit turn: Turn): T = init
   override def calculateValue()(implicit turn: Turn): T = e.pulse.valueOption.fold(get)(f(get, _))

@@ -3,7 +3,7 @@ package rescala.signals
 import rescala._
 import rescala.propagation._
 
-abstract class DependentSignal[+T](creationTurn: Turn) extends Signal[T] with Dependant {
+abstract class DependentSignal[+T](creationTurn: Turn) extends Signal[T] {
 
   def initialValue()(implicit turn: Turn): T
   def calculateValue()(implicit turn: Turn): T

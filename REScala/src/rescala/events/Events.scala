@@ -8,7 +8,7 @@ import rescala.signals.Signal
 /**
  * Wrapper for an anonymous function
  */
-case class EventHandler[T](fun: T => Unit, dependency: Dependency[T]) extends Event[T] with Dependant {
+case class EventHandler[T](fun: T => Unit, dependency: Dependency[T]) extends Event[T] {
   override def reevaluate()(implicit turn: Turn): EvaluationResult = {
     pulse(dependency.pulse)
     EvaluationResult.Done(dependants)
@@ -39,119 +39,78 @@ class ImperativeEvent[T] extends Event[T] {
 }
 
 
-/** base class for dependent events */
-abstract class DependentEvent[T](dependencies: Set[Dependency[Any]])(creationTurn: Turn)
-  extends Event[T] with Dependant {
-
-  staticDependencies(dependencies)(creationTurn)
-
-  /** this method is called to produce a new pulse */
-  def calculatePulse()(implicit turn: Turn): Pulse[T]
-
-  override def reevaluate()(implicit turn: Turn): EvaluationResult = {
-    pulse(calculatePulse())
-    EvaluationResult.Done(dependants)
-  }
-
-}
-
 object Events {
-  /** Used to model the change event of a signal. Keeps the last value */
-  def changed[T](dependency: Dependency[T]): Event[(T, T)] = Turn.maybeTurn { turn =>
-    new DependentEvent[(T, T)](Set(dependency))(turn) {
-      override def calculatePulse()(implicit turn: Turn): Pulse[(T, T)] = Pulse {
-        val pulse = dependency.pulse
-        for {old <- pulse.oldOption; value <- pulse.valueOption} yield (old, value)
+
+  def make[T](name: String, dependencies: Dependency[_]*)(calculatePulse: Turn => Pulse[T]): Event[T] = Turn.maybeTurn { turn =>
+    val event = new Event[T] {
+      override def reevaluate()(implicit turn: Turn): EvaluationResult = {
+        pulse(calculatePulse(turn))
+        EvaluationResult.Done(dependants)
       }
-      override def toString = "(" + " ChangedEventNode" + dependency + ")"
+      override def toString = name
     }
+    turn.register(event, dependencies.toSet)
+    event
   }
+
+  import scala.language.implicitConversions
+
+  implicit def optionToPulse[P](option: Option[P]): Pulse[P] = Pulse(option)
+
+
+  /** Used to model the change event of a signal. Keeps the last value */
+  def changed[T](dependency: Dependency[T]): Event[(T, T)] =
+    make(s"(changed $dependency)", dependency) { turn =>
+      val pulse = dependency.pulse(turn)
+      for {old <- pulse.oldOption; value <- pulse.valueOption} yield (old, value)
+    }
 
 
   /** Implements filtering event by a predicate */
-  def filter[T](ev: Event[T], f: T => Boolean): Event[T] = Turn.maybeTurn { turn =>
-    new DependentEvent[T](Set(ev))(turn) {
-      override def calculatePulse()(implicit turn: Turn): Pulse[T] = Pulse(ev.pulse.valueOption.filter(f))
-      override def toString = "(" + ev + " && <predicate>)"
-    }
-  }
+  def filter[T](ev: Event[T], f: T => Boolean): Event[T] =
+    make(s"(filter $ev)", ev) { turn => ev.pulse(turn).valueOption.filter(f) }
 
 
   /** Implements transformation of event parameter */
-  def map[T, U](ev: Event[T], f: T => U): Event[U] = Turn.maybeTurn { turn =>
-    new DependentEvent[U](Set(ev))(turn) {
-      override def calculatePulse()(implicit turn: Turn): Pulse[U] = Pulse(ev.pulse.valueOption.map(f))
-      override def toString = "(" + ev + " && <predicate>)"
-    }
-  }
+  def map[T, U](ev: Event[T], f: T => U): Event[U] =
+    make(s"(map $ev)", ev) { turn => ev.pulse(turn).valueOption.map(f) }
 
 
   /** Implementation of event except */
-  def except[T, U](accepted: Event[T], except: Event[U]): Event[T] = Turn.maybeTurn { turn =>
-    new DependentEvent[T](Set(accepted, except))(turn) {
-      override def calculatePulse()(implicit turn: Turn): Pulse[T] =
-        except.pulse match {
-          case NoChangePulse => accepted.pulse
-          case ValuePulse(value) => NoChangePulse
-          case DiffPulse(value, old) => NoChangePulse
-        }
-      override def toString = "(" + accepted + " \\ " + except + ")"
+  def except[T, U](accepted: Event[T], except: Event[U]): Event[T] =
+    make(s"(except $accepted  $except)", accepted, except) { turn =>
+      except.pulse(turn) match {
+        case NoChangePulse => accepted.pulse(turn)
+        case ValuePulse(value) => NoChangePulse
+        case DiffPulse(value, old) => NoChangePulse
+      }
     }
-  }
 
 
   /** Implementation of event disjunction */
-  def or[T](ev1: Event[_ <: T], ev2: Event[_ <: T]): Event[T] = Turn.maybeTurn { turn =>
-    new DependentEvent[T](Set(ev1, ev2))(turn) {
-      override def calculatePulse()(implicit turn: Turn): Pulse[T] =
-        ev1.pulse match {
-          case NoChangePulse => ev2.pulse
+  def or[T](ev1: Event[_ <: T], ev2: Event[_ <: T]): Event[T] =
+    make(s"(or $ev1 $ev2)", ev1, ev2) { turn =>
+        ev1.pulse(turn) match {
+          case NoChangePulse => ev2.pulse(turn)
           case p@ValuePulse(value) => p
           case p@DiffPulse(value, old) => p
         }
-      override def toString = "(" + ev1 + " || " + ev2 + ")"
     }
-  }
 
 
   /** Implementation of event conjunction */
-  def and[T1, T2, T](ev1: Event[T1], ev2: Event[T2], merge: (T1, T2) => T): Event[T] = Turn.maybeTurn { turn =>
-    new DependentEvent[T](Set(ev1, ev2))(turn) {
-      override def calculatePulse()(implicit turn: Turn): Pulse[T] = Pulse {
-        for {left <- ev1.pulse.valueOption; right <- ev2.pulse.valueOption}
-        yield { merge(left, right) }
-      }
-      override def toString = "(" + ev1 + " and " + ev2 + ")"
+  def and[T1, T2, T](ev1: Event[T1], ev2: Event[T2], merge: (T1, T2) => T): Event[T] =
+    make(s"(and $ev1 $ev2)", ev1, ev2) { turn => for {
+      left <- ev1.pulse(turn).valueOption
+      right <- ev2.pulse(turn).valueOption
+    } yield { merge(left, right) }
     }
-  }
 
 
   /** A wrapped event inside a signal, that gets "flattened" to a plain event node */
   def wrapped[T](wrapper: Signal[Event[T]]): Event[T] = Turn.maybeTurn { creationTurn =>
-    new Event[T] with Dependant {
-
-      setDependencies(Set(wrapper, wrapper.pulse(creationTurn).valueOption.get))(creationTurn)
-
-      override def reevaluate()(implicit turn: Turn): EvaluationResult =
-        wrapper.pulse match {
-          case NoChangePulse =>
-            throw new IllegalStateException("signals are assumed to always pulse")
-          case ValuePulse(value) =>
-            pulse(value.pulse)
-            EvaluationResult.Done(dependants)
-          case DiffPulse(value, old) if value != old =>
-            val oldLevel = level
-            removeDependency(old)
-            addDependency(value)
-            if (value.level > oldLevel) EvaluationResult.Retry(Set(wrapper, value))
-            else {
-              pulse(value.pulse)
-              EvaluationResult.Done(dependants)
-            }
-          case DiffPulse(value, old) if value == old =>
-            pulse(value.pulse)
-            EvaluationResult.Done(dependants)
-        }
+    new Event[T] {
+      override def reevaluate()(implicit turn: Turn): EvaluationResult = ???
     }
-   }
+  }
 }

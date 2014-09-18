@@ -9,11 +9,11 @@ class DynamicSignal[+T]
     (dependenciesUpperBound: List[Dependency[Any]])
     (expr: Turn => T)
     (creationTurn: Turn)
-  extends Signal[T] with Dependant {
+  extends Signal[T] {
 
   {
     val (newValue, newDependencies) = calculateValueDependencies(creationTurn)
-    setDependencies(newDependencies)(creationTurn)
+    //setDependencies(newDependencies)(creationTurn)
     pulse(ValuePulse(newValue))(creationTurn)
     creationTurn.changed(this)
   }
@@ -26,7 +26,7 @@ class DynamicSignal[+T]
 
     val oldLevel = level
 
-    setDependencies(newDependencies)
+    //setDependencies(newDependencies)
 
     if (level > oldLevel) {
       EvaluationResult.Retry(newDependencies)
