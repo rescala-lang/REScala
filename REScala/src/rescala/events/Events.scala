@@ -60,9 +60,9 @@ object Events {
 
 
   /** Used to model the change event of a signal. Keeps the last value */
-  def changed[T](dependency: Dependency[T]): Event[(T, T)] =
-    make(s"(changed $dependency)", dependency) { turn =>
-      dependency.pulse(turn) match {
+  def change[T](signal: Signal[T]): Event[(T, T)] =
+    make(s"(change $signal)", signal) { turn =>
+      signal.pulse(turn) match {
         case Diff(value, Some(old)) => Pulse.change((old, value))
         case NoChange(_) | Diff(_, None) => Pulse.none
       }

@@ -59,7 +59,7 @@ trait Signal[+A] extends Dependency[A] {
    * Create an event that fires every time the signal changes. It fires the tuple
    *  (oldVal, newVal) for the signal. The first tuple is (null, newVal)
    */
-  lazy val change: Event[(A, A)] = Events.changed(this)
+  lazy val change: Event[(A, A)] = Events.change(this)
 
   /**
    * Create an event that fires every time the signal changes. The value associated
