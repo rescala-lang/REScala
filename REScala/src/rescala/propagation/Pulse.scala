@@ -1,23 +1,25 @@
 package rescala.propagation
 
 sealed trait Pulse[+P] {
-  def valueOption: Option[P]
-  def oldOption: Option[P]
+  def toOption: Option[P]
 }
 
 object Pulse {
-  def apply[P](opt: Option[P]): Pulse[P] = opt.fold[Pulse[P]](NoChangePulse)(ValuePulse(_))
-}
+  def fromOption[P](opt: Option[P]): Pulse[P] = opt.fold[Pulse[P]](NoChange())(Diff(_))
 
-case object NoChangePulse extends Pulse[Nothing] {
-  override def valueOption: Option[Nothing] = None
-  override def oldOption: Option[Nothing] = None
-}
-case class ValuePulse[+P](value: P) extends Pulse[P] {
-  override def valueOption: Option[P] = Some(value)
-  override def oldOption: Option[P] = None
-}
-case class DiffPulse[+P](value: P, old: P) extends Pulse[P] {
-  override def valueOption: Option[P] = Some(value)
-  override def oldOption: Option[P] = Some(old)
+  def change[P](value: P) = Diff(value)
+  
+  def diff[P](newValue: P, oldValue: P) =
+    if (newValue == oldValue)  NoChange(Some(newValue))
+    else Diff(newValue, Some(oldValue))
+
+  val none = NoChange()
+
+  case class NoChange[+P](currentValue: Option[P] = None) extends Pulse[P] {
+    override def toOption: Option[P] = None
+  }
+
+  case class Diff[+P](value: P, oldOption: Option[P] = None) extends Pulse[P] {
+    override def toOption: Option[P] = Some(value)
+  }
 }

@@ -1,6 +1,6 @@
 package rescala.signals
 
-import rescala.propagation.{EvaluationResult, DiffPulse, Turn}
+import rescala.propagation.{Pulse, EvaluationResult, Turn}
 
 object Var {
   def apply[T](initval: T): Var[T] = new Var(initval)
@@ -13,14 +13,12 @@ class Var[T](initval: T) extends Signal[T] {
 
   final def update(newValue: T): Unit = set(newValue)
   def set(newValue: T): Unit = Turn.newTurn { turn =>
-    if (currentValue != newValue) {
-      planUpdate(newValue)(turn)
-      turn.startEvaluation()
-    }
+    planUpdate(newValue)(turn)
+    turn.startEvaluation()
   }
 
   def planUpdate(newValue: T)(implicit turn: Turn): Unit = {
-    pulse(DiffPulse(newValue, currentValue))(turn)
+    pulse(Pulse.diff(newValue, currentValue))(turn)
     turn.evaluate(this)
   }
 

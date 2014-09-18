@@ -12,10 +12,7 @@ abstract class DependentSignal[+T](creationTurn: Turn) extends Signal[T] {
 
   override def reevaluate()(implicit turn: Turn): EvaluationResult = {
     val newValue = calculateValue()
-
-    if (currentValue != newValue) pulse(DiffPulse(newValue, currentValue))
-    else pulse(NoChangePulse)
-
+    pulse(Pulse.diff(newValue, currentValue))
     EvaluationResult.Done(dependants)
   }
 }

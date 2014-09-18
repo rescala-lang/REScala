@@ -1,5 +1,6 @@
 package rescala.signals
 
+import rescala.propagation.Pulse.{Diff, NoChange}
 import rescala.propagation._
 import rescala._
 import rescala.events.{Event, Events}
@@ -10,13 +11,12 @@ trait Signal[+A] extends Dependency[A] {
   protected[this] var currentValue: A = _
 
   override def pulse(implicit turn: Turn): Pulse[A] = super.pulse match {
-    case NoChangePulse => ValuePulse(currentValue)
-    case p @ ValuePulse(value) => p
-    case p @ DiffPulse(value, old) => p
+    case Pulse.none => NoChange(Some(get(turn)))
+    case other => other
   }
 
   override def commit(implicit turn: Turn): Unit = {
-    pulse.valueOption.foreach(currentValue = _)
+    pulse.toOption.foreach(currentValue = _)
     super.commit
   }
 
@@ -25,14 +25,14 @@ trait Signal[+A] extends Dependency[A] {
     case None => currentValue
   }
 
-  def get(turn: Turn): A = pulse(turn).valueOption.get
+  def get(turn: Turn): A = pulse(turn).toOption.get
 
   // only used inside macro and will be replaced there
   final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")
 
   def apply[T](turn: Turn): A = {
     turn.dynamic.used(this)
-    pulse(turn).valueOption.get
+    pulse(turn).toOption.get
   }
 
   def map[B](f: A => B): Signal[B] = StaticSignal.turn(this) { turn => f(get(turn)) }

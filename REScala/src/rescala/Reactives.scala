@@ -51,9 +51,9 @@ trait Dependency[+P] extends Reactive {
     turn.changed(this)
   }
 
-  private[this] var pulses: Map[Turn, Pulse[P]] = Map()
+  private[this] var pulses: Map[Turn, Pulse[P]] = Map().withDefaultValue(Pulse.none)
 
-  def pulse(implicit turn: Turn): Pulse[P] = pulses.getOrElse(turn, NoChangePulse)
+  def pulse(implicit turn: Turn): Pulse[P] = pulses(turn)
 
   final protected[this] def pulse(pulse: Pulse[P])(implicit turn: Turn): Unit = pulses += turn -> pulse
 

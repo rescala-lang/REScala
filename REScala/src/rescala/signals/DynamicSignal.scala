@@ -14,7 +14,7 @@ class DynamicSignal[+T]
   {
     val (newValue, newDependencies) = calculateValueDependencies(creationTurn)
     //setDependencies(newDependencies)(creationTurn)
-    pulse(ValuePulse(newValue))(creationTurn)
+    pulse(Pulse.change(newValue))(creationTurn)
     creationTurn.changed(this)
   }
 
@@ -32,9 +32,7 @@ class DynamicSignal[+T]
       EvaluationResult.Retry(newDependencies)
     }
     else {
-      if (currentValue != newValue) pulse(DiffPulse(newValue, currentValue))
-      else pulse(NoChangePulse)
-
+      pulse(Pulse.diff(newValue, currentValue))
       EvaluationResult.Done(dependants)
     }
   }
