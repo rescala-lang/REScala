@@ -164,9 +164,15 @@ class ReTable[A <: AnyRef](
                              "selectionBackground")
 
   selectColumnInterval using { range =>
-    peer.peer.setColumnSelectionInterval(range._1, range._2) }
+    if (range._1 == -1 || range._2 == -1)
+      peer.peer.clearSelection
+    else
+      peer.peer.setColumnSelectionInterval(range._1, range._2) }
   selectRowInterval using { range =>
-    peer.peer.setRowSelectionInterval(range._1, range._2) }
+    if (range._1 == -1 || range._2 == -1)
+      peer.peer.clearSelection
+    else
+      peer.peer.setRowSelectionInterval(range._1, range._2) }
   selectAll using peer.peer.selectAll _
   clearSelection using peer.peer.clearSelection _
 
