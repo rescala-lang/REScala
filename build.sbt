@@ -28,10 +28,19 @@ scalacOptions in ThisBuild ++= (
   "-encoding" :: "UTF-8" ::
   "-unchecked" ::
   "-feature" ::
-  "-target:jvm-1.6" ::
-  //"-language:implicitConversions" ::
-  //"-language:reflectiveCalls" ::
+  "-target:jvm-1.7" ::
   "-Xlint" ::
-  //"-language:postfixOps" ::
+  "-Xfuture" ::
+  //"-Xlog-implicits" ::
+  //"-Yno-predef" ::
+  //"-Yno-imports" ::
+  "-Xfatal-warnings" ::
+  "-Yinline-warnings" ::
+  "-Yno-adapted-args" ::
+  "-Ywarn-dead-code" ::
+  "-Ywarn-nullary-override" ::
+  "-Ywarn-nullary-unit" ::
+  //"-Ywarn-numeric-widen" ::
+  //"-Ywarn-value-discard" ::
   Nil)
 
