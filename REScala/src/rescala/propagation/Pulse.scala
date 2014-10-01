@@ -13,7 +13,8 @@ object Pulse {
   def unchanged[P](value: P) = NoChange(Some(value))
   
   def diff[P](newValue: P, oldValue: P) =
-    if (newValue == oldValue)  NoChange(Some(newValue))
+    if (null == oldValue) change(newValue)
+    else if (newValue == oldValue)  unchanged(newValue)
     else Diff(newValue, Some(oldValue))
 
   val none = NoChange()

@@ -4,6 +4,7 @@ package rescala.test
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
+import rescala.makro.SignalMacro
 import rescala.propagation.Turn
 import rescala.signals._
 
@@ -171,4 +172,16 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(changes == 2) // is actually 3
   }
 
+  @Test def creatingSignalsInsideSignals(): Unit = {
+
+    val outside = Var(1)
+
+    val testsig = DynamicSignal { t =>
+      DynamicSignal { t => outside(t) }(t)
+    }
+
+    assert(testsig.get === 1)
+    outside() = 2
+    assert(testsig.get === 2)
+  }
 }

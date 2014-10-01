@@ -2,6 +2,7 @@ package rescala.propagation
 
 import rescala.events.{EventHandler, Event}
 import rescala.propagation.EvaluationResult.{Retry, Done}
+import rescala.signals.DynamicSignal
 import rescala.{Dependency, Reactive}
 import rescala.log.ReactiveLogging
 
@@ -29,12 +30,8 @@ class Turn {
 
   def unregister(dependant: Reactive, dependencies: Set[Dependency[_]]): Unit = dependencies.foreach(_.removeDependant(dependant))
 
-  /** Adds a dependant to the eval queue */
-  def evaluate(dep: Reactive): Unit = {
-      if (!evalQueue.exists { case (_, elem) => elem eq dep }) {
-        evalQueue.+=((dep.level, dep))
-      }
-  }
+  def isReady(reactive: Reactive, dependencies: Set[Dependency[_]]) =
+    dependencies.forall(_.level < reactive.level)
 
   @tailrec
   private def floodLevel(reactives: Set[Reactive]): Unit =
@@ -47,22 +44,35 @@ class Turn {
       floodLevel(reactives.tail ++ changedDependants)
     }
 
+  /** Adds a dependant to the eval queue */
+  def enqueue(dep: Reactive): Unit = {
+      if (!evalQueue.exists { case (_, elem) => elem eq dep }) {
+        evalQueue.+=((dep.level, dep))
+      }
+  }
+
+  /** evaluates a single reactive */
+  def evaluate(head: Reactive): Unit = {
+    val result = head.reevaluate()(this)
+    result match {
+      case Done(hasChanged, dependants, newDependencies) =>
+        if(hasChanged) dependants.foreach(enqueue)
+        register(head, newDependencies)
+        changed(head)
+      case Retry(dependencies) =>
+        register(head, dependencies)
+        floodLevel(Set(head))
+        enqueue(head)
+    }
+  }
+
   /** Evaluates all the elements in the queue */
-  def startEvaluation() = {
+  def evaluateQueue() = {
     while (evalQueue.nonEmpty) {
       val (level, head) = evalQueue.dequeue()
       // check the level if it changed queue again
-      if (level != head.level) evaluate(head)
-      else {
-        head.reevaluate()(this) match {
-          case Done(hasChanged, dependants) =>
-            if(hasChanged) dependants.foreach(evaluate)
-            changed(head)
-          case Retry(dependencies) =>
-            floodLevel(Set(head))
-            evaluate(head)
-        }
-      }
+      if (level != head.level) enqueue(head)
+      else evaluate(head)
     }
   }
 
@@ -89,6 +99,7 @@ object Turn {
   def newTurn[T](f: Turn => T) = synchronized {
     val turn = new Turn
     val res = currentTurn.withValue(Some(turn)){f(turn)}
+    turn.evaluateQueue()
     turn.commit()
     res
   }

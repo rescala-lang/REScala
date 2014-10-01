@@ -30,8 +30,8 @@ class ImperativeEvent[T] extends Event[T] {
   /** Trigger the event */
   def apply(v: T): Unit = Turn.newTurn { turn =>
     pulse(Pulse.change(v))(turn)
-    turn.evaluate(this)
-    turn.startEvaluation()
+    turn.enqueue(this)
+    turn.evaluateQueue()
   }
 
   override protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult =
