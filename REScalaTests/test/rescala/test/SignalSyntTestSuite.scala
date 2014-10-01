@@ -172,4 +172,20 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(changes == 2) // is actually 3
   }
 
+  @Test def creatingSignalsInsideSignals(): Unit = {
+
+    val outside = Var(1)
+
+    val testsig = DynamicSignal { t =>
+      //remark 01.10.2014: without the upper bound the inner signal will be enqueued (it is level 0 same as its dependency)
+      //this will cause testsig to reevaluate again, after the inner signal is fully updated.
+      // leading to an infinite loop
+      DynamicSignal(outside) { t => outside(t) }(t)
+    }
+
+    assert(testsig.get === 1)
+    outside() = 2
+    assert(testsig.get === 2)
+  }
+
 }
