@@ -1,6 +1,6 @@
 package rescala.test
 
-import org.junit.{Before, Test}
+import org.junit.{Ignore, Before, Test}
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala._
@@ -9,14 +9,7 @@ import rescala.makro.SignalMacro.{SignalM => Signal}
 import rescala.propagation.Turn
 import rescala.signals._
 
-
 class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
-
-
-
-  @Before def initialize(): Unit = {}
-
-
 
   @Test def signalReEvaluatesTheExpression(): Unit = {
     val v  = Var(0)
@@ -203,7 +196,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(testsig.get == 11)
   }
 
-
+  @Ignore
   @Test def useOfOutsideSignal() = {
     val outside = Var(1)
     val inside = Var(10)
@@ -306,7 +299,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(sig.get == List(7, 5))
   }
 
-
+  @Ignore
   @Test def chainedSignals2() = {
     import scala.language.reflectiveCalls
 

@@ -171,17 +171,5 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
     v.set(2)
     assert(changes == 2) // is actually 3
   }
-
-  @Test def creatingSignalsInsideSignals(): Unit = {
-
-    val outside = Var(1)
-
-    val testsig = DynamicSignal { t =>
-      DynamicSignal { t => outside(t) }(t)
-    }
-
-    assert(testsig.get === 1)
-    outside() = 2
-    assert(testsig.get === 2)
-  }
+  
 }
