@@ -1,9 +1,8 @@
 package rescala.signals
 
-import rescala.propagation.Pulse.{Diff, NoChange}
-import rescala.propagation._
-import rescala._
+import rescala.Dependency
 import rescala.events.{Event, Events}
+import rescala.propagation.{MaybeTurn, Pulse, Turn}
 
 
 trait Signal[+A] extends Dependency[A] {
@@ -11,7 +10,7 @@ trait Signal[+A] extends Dependency[A] {
   protected[this] var currentValue: A = _
 
   override def pulse(implicit turn: Turn): Pulse[A] = super.pulse match {
-    case Pulse.none => NoChange(Some(get(turn)))
+    case Pulse.none => Pulse.unchanged(currentValue)
     case other => other
   }
 
