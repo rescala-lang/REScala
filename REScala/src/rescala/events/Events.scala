@@ -56,7 +56,7 @@ object Events {
 
   import scala.language.implicitConversions
 
-  implicit def optionToPulse[P](option: Option[P]): Pulse[P] = Pulse.fromOption(option)
+  private implicit def optionToPulse[P](option: Option[P]): Pulse[P] = Pulse.fromOption(option)
 
 
   /** Used to model the change event of a signal. Keeps the last value */

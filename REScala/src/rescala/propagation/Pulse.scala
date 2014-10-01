@@ -8,6 +8,8 @@ object Pulse {
   def fromOption[P](opt: Option[P]): Pulse[P] = opt.fold[Pulse[P]](NoChange())(Diff(_))
 
   def change[P](value: P) = Diff(value)
+
+  def unchanged[P](value: P) = NoChange(Some(value))
   
   def diff[P](newValue: P, oldValue: P) =
     if (newValue == oldValue)  NoChange(Some(newValue))

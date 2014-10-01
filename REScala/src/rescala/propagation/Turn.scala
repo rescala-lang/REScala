@@ -14,7 +14,7 @@ import scala.util.DynamicVariable
  * of the nodes in the dependency graph.
  */
 class Turn {
-  def register[T](dependant: Reactive, dependencies: Set[Dependency[_]]) = ???
+  def register[T](dependant: Reactive, dependencies: Set[Dependency[_]]): Unit = ???
 
   private val evalQueue = new mutable.PriorityQueue[(Int, Reactive)]()(Turn.reactiveOrdering)
   private var toCommit = Set[Reactive]()
