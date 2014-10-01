@@ -17,12 +17,17 @@ class Turn {
   private val evalQueue = new mutable.PriorityQueue[(Int, Reactive)]()(Turn.reactiveOrdering)
   private var toCommit = Set[Reactive]()
 
-  def register(dependant: Reactive, dependencies: Set[Dependency[_]]): Unit = dependencies.foreach(_.addDependant(dependant)(this))
-
-  def unregister(dependant: Reactive, dependencies: Set[Dependency[_]]): Unit = dependencies.foreach(_.removeDependant(dependant)(this))
-
-
   implicit def turn: Turn = this
+
+  def register(dependant: Reactive, dependencies: Set[Dependency[_]]): Unit =  {
+    dependencies.foreach(_.addDependant(dependant))
+    if (dependencies.nonEmpty) {
+      dependant.ensureLevel(dependencies.map(_.level).max + 1)
+      changed(dependant)
+    }
+  }
+
+  def unregister(dependant: Reactive, dependencies: Set[Dependency[_]]): Unit = dependencies.foreach(_.removeDependant(dependant))
 
   /** Adds a dependant to the eval queue */
   def evaluate(dep: Reactive): Unit = {
