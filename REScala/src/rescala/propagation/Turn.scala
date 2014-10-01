@@ -1,6 +1,6 @@
 package rescala.propagation
 
-import rescala.events.Event
+import rescala.events.{EventHandler, Event}
 import rescala.propagation.EvaluationResult.{Retry, Done}
 import rescala.{Dependency, Reactive}
 import rescala.log.ReactiveLogging
@@ -14,10 +14,13 @@ import scala.util.DynamicVariable
  * of the nodes in the dependency graph.
  */
 class Turn {
-  def register[T](dependant: Reactive, dependencies: Set[Dependency[_]]): Unit = ???
-
   private val evalQueue = new mutable.PriorityQueue[(Int, Reactive)]()(Turn.reactiveOrdering)
   private var toCommit = Set[Reactive]()
+
+  def register(dependant: Reactive, dependencies: Set[Dependency[_]]): Unit = dependencies.foreach(_.addDependant(dependant)(this))
+
+  def unregister(dependant: Reactive, dependencies: Set[Dependency[_]]): Unit = dependencies.foreach(_.removeDependant(dependant)(this))
+
 
   implicit def turn: Turn = this
 
@@ -47,8 +50,8 @@ class Turn {
       if (level != head.level) evaluate(head)
       else {
         head.reevaluate()(this) match {
-          case Done(dependants) =>
-            dependants.foreach(evaluate)
+          case Done(hasChanged, dependants) =>
+            if(hasChanged) dependants.foreach(evaluate)
             changed(head)
           case Retry(dependencies) =>
             floodLevel(Set(head))

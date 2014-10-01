@@ -10,10 +10,14 @@ import scala.collection.immutable.Queue
 trait Event[+T] extends Dependency[T] {
 
   /** add an event handler */
-  def +=(react: T => Unit)(implicit maybe: MaybeTurn): Unit = ??? /*Turn.maybeTurn(EventHandler(react, this).addDependency(this)(_))*/
+  def +=(react: T => Unit)(implicit maybe: MaybeTurn): Unit = Turn.maybeTurn { turn =>
+    turn.register(EventHandler(react, this), Set(this))
+  }
 
   /** remove an event handler */
-  def -=(react: T => Unit)(implicit maybe: MaybeTurn): Unit = ??? /*Turn.maybeTurn(this.removeDependant(EventHandler(react, this))(_))*/
+  def -=(react: T => Unit)(implicit maybe: MaybeTurn): Unit = Turn.maybeTurn { turn =>
+    turn.unregister(EventHandler(react, this), Set(this))
+  }
 
   /**
    * Events disjunction.
@@ -59,7 +63,7 @@ trait Event[+T] extends Dependency[T] {
 
 
   /** folds events with a given fold function to create a Signal */
-  def fold[A](init: A)(fold: (A, T) => A): Signal[A] = Turn.maybeTurn { turn => new FoldedSignal(this, init, fold)(turn) }
+  def fold[A](init: A)(fold: (A, T) => A): Signal[A] = FoldedSignal.fold(this, init, fold)
 
   /** Iterates a value on the occurrence of the event. */
   def iterate[A](init: A)(f: A => A): Signal[A] = fold(init)((acc, _) => f(acc))

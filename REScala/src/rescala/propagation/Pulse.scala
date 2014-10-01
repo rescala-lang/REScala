@@ -2,6 +2,7 @@ package rescala.propagation
 
 sealed trait Pulse[+P] {
   def toOption: Option[P]
+  def isChange: Boolean
 }
 
 object Pulse {
@@ -19,9 +20,11 @@ object Pulse {
 
   case class NoChange[+P](currentValue: Option[P] = None) extends Pulse[P] {
     override def toOption: Option[P] = None
+    override def isChange: Boolean = false
   }
 
   case class Diff[+P](value: P, oldOption: Option[P] = None) extends Pulse[P] {
     override def toOption: Option[P] = Some(value)
+    override def isChange: Boolean = true
   }
 }

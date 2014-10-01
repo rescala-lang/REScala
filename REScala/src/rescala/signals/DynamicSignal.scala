@@ -6,7 +6,6 @@ import rescala.propagation._
 
 /** A dependant reactive value with dynamic dependencies (depending signals can change during evaluation) */
 class DynamicSignal[+T]
-    (dependenciesUpperBound: List[Dependency[Any]])
     (expr: Turn => T)
     (creationTurn: Turn)
   extends Signal[T] {
@@ -32,8 +31,9 @@ class DynamicSignal[+T]
       EvaluationResult.Retry(newDependencies)
     }
     else {
-      pulse(Pulse.diff(newValue, currentValue))
-      EvaluationResult.Done(dependants)
+      val p = Pulse.diff(newValue, currentValue)
+      pulse(p)
+      EvaluationResult.Done(p.isChange, dependants)
     }
   }
 
@@ -43,11 +43,9 @@ class DynamicSignal[+T]
  * A syntactic signal
  */
 object DynamicSignal {
-  def apply[T](dependencies: List[Dependency[Any]])(expr: Turn => T): DynamicSignal[T] = Turn.maybeTurn { turn =>
-    new DynamicSignal(dependencies)(expr)(turn)
-  }
+  def apply[T](expr: Turn => T): DynamicSignal[T] = Turn.maybeTurn { turn => new DynamicSignal(expr)(turn) }
 
-  def apply[T](expr: Turn => T): DynamicSignal[T] = apply(List())(expr)
-  def apply[T](dependencyHolders: Dependency[Any]*)(expr: Turn => T): DynamicSignal[T] = apply(dependencyHolders.toList)(expr)
+  def apply[T](dependencies: List[Dependency[Any]])(expr: Turn => T): DynamicSignal[T] = apply(expr)
+  def apply[T](dependencies: Dependency[Any]*)(expr: Turn => T): DynamicSignal[T] = apply(expr)
 
 }

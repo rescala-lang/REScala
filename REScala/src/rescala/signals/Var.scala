@@ -18,10 +18,13 @@ class Var[T](initval: T) extends Signal[T] {
   }
 
   def planUpdate(newValue: T)(implicit turn: Turn): Unit = {
-    pulse(Pulse.diff(newValue, currentValue))(turn)
-    turn.evaluate(this)
+    val p = Pulse.diff(newValue, currentValue)
+    if (p.isChange) {
+      pulse(p)(turn)
+      turn.evaluate(this)
+    }
   }
 
   override protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult =
-    EvaluationResult.Done(dependants)
+    EvaluationResult.Done(changed = true, dependants)
 }

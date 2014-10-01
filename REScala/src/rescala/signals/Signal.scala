@@ -2,6 +2,7 @@ package rescala.signals
 
 import rescala.Dependency
 import rescala.events.{Event, Events}
+import rescala.propagation.Pulse.{Diff, NoChange}
 import rescala.propagation.{MaybeTurn, Pulse, Turn}
 
 
@@ -10,7 +11,7 @@ trait Signal[+A] extends Dependency[A] {
   protected[this] var currentValue: A = _
 
   override def pulse(implicit turn: Turn): Pulse[A] = super.pulse match {
-    case Pulse.none => Pulse.unchanged(currentValue)
+    case NoChange(None) => Pulse.unchanged(currentValue)
     case other => other
   }
 
@@ -24,14 +25,18 @@ trait Signal[+A] extends Dependency[A] {
     case None => currentValue
   }
 
-  def get(turn: Turn): A = pulse(turn).toOption.get
+  def get(turn: Turn): A = pulse(turn) match {
+    case NoChange(Some(value)) => value
+    case Diff(value, oldOption) => value
+    case NoChange(None) => currentValue
+  }
 
   // only used inside macro and will be replaced there
   final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")
 
   def apply[T](turn: Turn): A = {
     turn.dynamic.used(this)
-    pulse(turn).toOption.get
+    get(turn)
   }
 
   def map[B](f: A => B): Signal[B] = StaticSignal.turn(this) { turn => f(get(turn)) }

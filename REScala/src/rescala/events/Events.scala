@@ -11,8 +11,9 @@ import rescala.signals.Signal
  */
 case class EventHandler[T](fun: T => Unit, dependency: Dependency[T]) extends Event[T] {
   override def reevaluate()(implicit turn: Turn): EvaluationResult = {
-    pulse(dependency.pulse)
-    EvaluationResult.Done(dependants)
+    val p = dependency.pulse
+    pulse(p)
+    EvaluationResult.Done(p.isChange, dependants)
   }
   override def commit(implicit turn: Turn): Unit = {
     pulse.toOption.foreach(fun)
@@ -34,7 +35,7 @@ class ImperativeEvent[T] extends Event[T] {
   }
 
   override protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult =
-    EvaluationResult.Done(dependants)
+    EvaluationResult.Done(changed = true, dependants)
 
   override def toString = getClass.getName
 }
@@ -45,8 +46,9 @@ object Events {
   def make[T](name: String, dependencies: Dependency[_]*)(calculatePulse: Turn => Pulse[T]): Event[T] = Turn.maybeTurn { turn =>
     val event = new Event[T] {
       override def reevaluate()(implicit turn: Turn): EvaluationResult = {
-        pulse(calculatePulse(turn))
-        EvaluationResult.Done(dependants)
+        val p = calculatePulse(turn)
+        pulse(p)
+        EvaluationResult.Done(p.isChange, dependants)
       }
       override def toString = name
     }

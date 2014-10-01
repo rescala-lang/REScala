@@ -3,7 +3,7 @@ package rescala.signals
 import rescala._
 import rescala.propagation._
 
-abstract class DependentSignal[+T](creationTurn: Turn) extends Signal[T] {
+abstract class StaticDependentSignal[+T](creationTurn: Turn) extends Signal[T] {
 
   def initialValue()(implicit turn: Turn): T
   def calculateValue()(implicit turn: Turn): T
@@ -12,7 +12,8 @@ abstract class DependentSignal[+T](creationTurn: Turn) extends Signal[T] {
 
   override def reevaluate()(implicit turn: Turn): EvaluationResult = {
     val newValue = calculateValue()
-    pulse(Pulse.diff(newValue, currentValue))
-    EvaluationResult.Done(dependants)
+    val p = Pulse.diff(newValue, currentValue)
+    pulse(p)
+    EvaluationResult.Done(p.isChange, dependants)
   }
 }
