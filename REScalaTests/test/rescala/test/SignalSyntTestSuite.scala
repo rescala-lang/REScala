@@ -161,7 +161,7 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
   @Test def dependantIsOnlyInvokedOnValueChanges(): Unit = {
     var changes = 0
     val v = Var(1)
-    val s = DynamicSignal { s =>
+    val s = DynamicSignal(v) { s =>
       changes += 1; v(s) + 1
     }
     assert(changes == 1)
@@ -171,5 +171,5 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
     v.set(2)
     assert(changes == 2) // is actually 3
   }
-  
+
 }

@@ -31,13 +31,16 @@ class DynamicSignal[+T]
  * A syntactic signal
  */
 object DynamicSignal {
-  def apply[T](expr: Turn => T): DynamicSignal[T] = Turn.maybeTurn { turn =>
+  def apply[T](dependencies: Set[Dependency[Any]], expr: Turn => T): DynamicSignal[T] = Turn.maybeTurn { turn =>
     val signal = new DynamicSignal(expr)
+    if (dependencies.nonEmpty) signal.ensureLevel(dependencies.map(_.level(turn)).max + 1)(turn)
     turn.evaluate(signal)
     signal
   }
 
-  def apply[T](dependencies: List[Dependency[Any]])(expr: Turn => T): DynamicSignal[T] = apply(expr)
-  def apply[T](dependencies: Dependency[Any]*)(expr: Turn => T): DynamicSignal[T] = apply(expr)
+  def apply[T](expr: Turn => T): DynamicSignal[T] = apply(Set(), expr)
+
+  def apply[T](dependencies: List[Dependency[Any]])(expr: Turn => T): DynamicSignal[T] = apply(dependencies.toSet, expr)
+  def apply[T](dependencies: Dependency[Any]*)(expr: Turn => T): DynamicSignal[T] = apply(dependencies.toSet, expr)
 
 }
