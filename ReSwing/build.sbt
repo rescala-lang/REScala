@@ -1,6 +1,12 @@
-name :="RESwing"
+name := "RESwing"
 
-scalaVersion := "2.10.2"
+organization := "de.tuda.stg"
 
-version := "1.0"
+version := "0.0.0"
 
+scalaVersion := "2.11.2"
+
+libraryDependencies ++= Seq(
+  "org.scala-lang" % "scala-swing" % "2.11+",
+  "de.tuda.stg" %% "rescala" % "0+"
+)
