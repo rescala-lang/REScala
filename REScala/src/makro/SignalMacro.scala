@@ -135,7 +135,7 @@ object SignalMacro {
     val signalValues = ListBuffer.empty[ValDef]
 
     object transformer extends Transformer {
-      private def treeTypeNullWarning =
+      private def treeTypeNullWarning() =
         c.warning(c.enclosingPosition,
             "internal warning: tree type was null, " +
             "this should not happen but the signal may still work")
