@@ -2,7 +2,6 @@ package rescala
 
 import java.util.UUID
 
-import rescala.log.ReactiveLogging
 import rescala.propagation._
 
 /** A Reactive is a value type which has a dependency to other Reactives */

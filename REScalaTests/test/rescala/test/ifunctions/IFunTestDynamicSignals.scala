@@ -4,7 +4,7 @@ import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.events._
-import rescala.makro.SignalMacro.{SignalM => Signal}
+import rescala.macros.SignalMacro.{SignalM => Signal}
 import rescala.signals.{DynamicSignal, _}
 
 class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {

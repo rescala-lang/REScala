@@ -1,4 +1,4 @@
-package rescala.makro
+package rescala.macros
 
 import rescala.propagation.Turn
 import rescala.signals._

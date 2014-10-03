@@ -4,7 +4,6 @@ import rescala.events.{EventHandler, Event}
 import rescala.propagation.EvaluationResult.{Retry, Done}
 import rescala.signals.DynamicSignal
 import rescala.{Dependency, Reactive}
-import rescala.log.ReactiveLogging
 
 import scala.annotation.tailrec
 import scala.collection.mutable
