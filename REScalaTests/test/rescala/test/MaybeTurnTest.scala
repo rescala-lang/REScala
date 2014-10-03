@@ -9,21 +9,21 @@ import rescala.propagation._
 class MaybeTurnTest extends AssertionsForJUnit with MockitoSugar {
 
   @Test def noneDynamicNoImplicit() = Turn.currentTurn.withValue(None) {
-    assert(implicitly[MaybeTurn] === MaybeTurn(None))
+    assert(implicitly[MaybeTurn].turn === None)
   }
 
   @Test def someDynamicNoImplicit() = Turn.newTurn { (dynamicTurn: Turn) =>
-    assert(implicitly[MaybeTurn] === MaybeTurn(Some(dynamicTurn)))
+    assert(implicitly[MaybeTurn].turn === Some(dynamicTurn))
   }
 
   @Test def noneDynamicSomeImplicit() = Turn.currentTurn.withValue(None) {
     implicit val implicitTurn: Turn = new Turn
-    assert(implicitly[MaybeTurn] === MaybeTurn(Some(implicitTurn)))
+    assert(implicitly[MaybeTurn].turn === Some(implicitTurn))
   }
 
   @Test def someDynamicSomeImplicit() = Turn.newTurn { (dynamicTurn: Turn) =>
     implicit val implicitTurn: Turn = new Turn
-    assert(implicitly[MaybeTurn] === MaybeTurn(Some(implicitTurn)))
+    assert(implicitly[MaybeTurn].turn === Some(implicitTurn))
   }
 
   @Test def implicitInClosures() = {
@@ -33,7 +33,7 @@ class MaybeTurnTest extends AssertionsForJUnit with MockitoSugar {
       (x: Unit) => implicitly[MaybeTurn]
     }
     Turn.newTurn { dynamic =>
-      assert(closure(Unit) === MaybeTurn(Some(closureDefinition)))
+      assert(closure(Unit).turn === Some(closureDefinition))
     }
   }
 
@@ -45,7 +45,7 @@ class MaybeTurnTest extends AssertionsForJUnit with MockitoSugar {
       }
     }
     Turn.newTurn { dynamic =>
-      assert(closure(Unit) === MaybeTurn(Some(dynamic)))
+      assert(closure(Unit).turn === Some(dynamic))
     }
   }
 

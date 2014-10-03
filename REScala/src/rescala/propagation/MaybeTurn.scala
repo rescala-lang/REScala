@@ -1,11 +1,11 @@
 package rescala.propagation
 
-case class MaybeTurn(turn: Option[Turn])
+final class MaybeTurn(val turn: Option[Turn]) extends AnyVal
 
 object MaybeTurn extends LowPrioMaybeTurn {
-  implicit def explicit(implicit turn: Turn): MaybeTurn = MaybeTurn(Some(turn))
+  implicit def explicit(implicit turn: Turn): MaybeTurn = new MaybeTurn(Some(turn))
 }
 
 trait LowPrioMaybeTurn {
-  implicit def dynamic: MaybeTurn = MaybeTurn(Turn.currentTurn.value)
+  implicit def dynamic: MaybeTurn = new MaybeTurn(Turn.currentTurn.value)
 }
