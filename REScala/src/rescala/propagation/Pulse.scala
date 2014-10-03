@@ -22,7 +22,7 @@ object Pulse {
 
   val none = NoChange()
 
-  case class NoChange[+P](current: Option[P] = None) extends Pulse[P] {
+  final case class NoChange[+P](current: Option[P] = None) extends Pulse[P] {
     override def toOption: Option[P] = None
     override def isChange: Boolean = false
     override def map[Q](f: (P) => Q): Pulse[Q] = none
@@ -30,7 +30,7 @@ object Pulse {
     override def filter(p: (P) => Boolean): Pulse[P] = none
   }
 
-  case class Diff[+P](update: P, current: Option[P] = None) extends Pulse[P] {
+  final case class Diff[+P](update: P, current: Option[P] = None) extends Pulse[P] {
     override def toOption: Option[P] = Some(update)
     override def isChange: Boolean = true
     override def map[Q](f: (P) => Q): Pulse[Q] = change(f(update))
