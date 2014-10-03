@@ -32,10 +32,10 @@ trait Reactive {
 
   /** called when it is this events turn to be evaluated
     * (head of the evaluation queue) */
-  protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult
+  protected[propagation] def reevaluate()(implicit turn: Turn): EvaluationResult
 
   /** called to finalize the pulse value (turn commits) */
-  protected[rescala] def commit(implicit turn: Turn): Unit = {
+  protected[propagation] def commit(implicit turn: Turn): Unit = {
     levels = levels.withDefaultValue(math.max(levels(turn), levels.default(turn)))
     levels -= turn
     _dependants = _dependants.withDefaultValue(_dependants(turn))
@@ -56,7 +56,7 @@ trait Pulsing[+P] extends Reactive {
     * normally called by reevaluate */
   def calculatePulse()(implicit turn: Turn): Pulse[P] = Pulse.none
 
-  override protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult = {
+  override protected[propagation] def reevaluate()(implicit turn: Turn): EvaluationResult = {
     val p = calculatePulse()
     setPulse(p)
     EvaluationResult.Done(p.isChange, dependants)
