@@ -1,6 +1,6 @@
 package rescala.signals
 
-import rescala.propagation.{Pulse, EvaluationResult, Turn}
+import rescala.propagation.{EvaluationResult, Pulse, Turn}
 
 object Var {
   def apply[T](initval: T): Var[T] = new Var(initval)

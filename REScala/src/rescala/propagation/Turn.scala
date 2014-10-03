@@ -1,6 +1,6 @@
 package rescala.propagation
 
-import rescala.propagation.EvaluationResult.{Retry, Done}
+import rescala.propagation.EvaluationResult.{Done, Retry}
 
 import scala.annotation.tailrec
 import scala.collection.mutable

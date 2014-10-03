@@ -1,6 +1,5 @@
 package rescala.events
 
-import rescala._
 import rescala.propagation.Pulse.{Diff, NoChange}
 import rescala.propagation._
 import rescala.signals.Signal

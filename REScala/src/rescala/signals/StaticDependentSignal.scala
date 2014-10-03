@@ -1,6 +1,5 @@
 package rescala.signals
 
-import rescala._
 import rescala.propagation._
 
 abstract class StaticDependentSignal[+T](creationTurn: Turn) extends Signal[T] {

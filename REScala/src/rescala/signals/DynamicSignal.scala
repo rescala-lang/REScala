@@ -1,6 +1,5 @@
 package rescala.signals
 
-import rescala._
 import rescala.propagation._
 
 
