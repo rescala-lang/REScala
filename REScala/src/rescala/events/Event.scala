@@ -27,13 +27,13 @@ trait Event[+T] extends Dependency[T] {
   /**
    * Event filtered with a predicate
    */
-  def &&[U >: T](pred: U => Boolean): Event[T] = Events.filter(this, pred)
+  def &&[U >: T](pred: U => Boolean): Event[T] = Events.filter(this)(pred)
   def filter[U >: T](pred: U => Boolean) = &&[U](pred)
 
   /**
    * Event filtered with a boolean variable
    */
-  def &&(predicate: => Boolean): Event[T] = Events.filter[T](this, _ => predicate)
+  def &&(predicate: => Boolean): Event[T] = Events.filter[T](this)(_ => predicate)
   def filter(predicate: => Boolean): Event[T] = &&(predicate)
 
   /**
@@ -54,12 +54,12 @@ trait Event[+T] extends Dependency[T] {
   /**
    * Transform the event parameter
    */
-  def map[U, S >: T](mapping: S => U): Event[U] = Events.map(this, mapping)
+  def map[U, S >: T](mapping: S => U): Event[U] = Events.map(this)(mapping)
 
   /**
    * Drop the event parameter; equivalent to map((_: Any) => ())
    */
-  def dropParam[S >: T]: Event[Unit] = Events.map(this, (_: Any) => ())
+  def dropParam[S >: T]: Event[Unit] = Events.map(this)(_ => ())
 
 
   /** folds events with a given fold function to create a Signal */

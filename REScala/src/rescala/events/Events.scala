@@ -67,12 +67,12 @@ object Events {
 
 
   /** Implements filtering event by a predicate */
-  def filter[T](ev: Dependency[T], f: T => Boolean): Event[T] =
+  def filter[T](ev: Dependency[T])(f: T => Boolean): Event[T] =
     make(s"(filter $ev)", ev) { turn => ev.pulse(turn).filter(f) }
 
 
   /** Implements transformation of event parameter */
-  def map[T, U](ev: Dependency[T], f: T => U): Event[U] =
+  def map[T, U](ev: Dependency[T])(f: T => U): Event[U] =
     make(s"(map $ev)", ev) { turn => ev.pulse(turn).map(f) }
 
 
