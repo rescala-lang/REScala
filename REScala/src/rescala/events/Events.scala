@@ -9,12 +9,8 @@ import rescala.signals.Signal
 /**
  * Wrapper for an anonymous function
  */
-case class EventHandler[T](fun: T => Unit, dependency: Dependency[T]) extends Event[T] {
-  override def reevaluate()(implicit turn: Turn): EvaluationResult = {
-    val p = dependency.pulse
-    pulse(p)
-    EvaluationResult.Done(p.isChange, dependants)
-  }
+case class EventHandler[T](fun: T => Unit, dependency: Pulsing[T]) extends Event[T] {
+  override def calculatePulse()(implicit turn: Turn): Pulse[T] = dependency.pulse
   override def commit(implicit turn: Turn): Unit = {
     pulse.toOption.foreach(fun)
     super.commit
@@ -29,7 +25,7 @@ class ImperativeEvent[T] extends Event[T] {
 
   /** Trigger the event */
   def apply(v: T): Unit = Turn.newTurn { turn =>
-    pulse(Pulse.change(v))(turn)
+    setPulse(Pulse.change(v))(turn)
     turn.enqueue(this)
     turn.evaluateQueue()
   }
@@ -43,13 +39,9 @@ class ImperativeEvent[T] extends Event[T] {
 
 object Events {
 
-  def make[T](name: String, dependencies: Dependency[_]*)(calculatePulse: Turn => Pulse[T]): Event[T] = Turn.maybeTurn { turn =>
+  def make[T](name: String, dependencies: Pulsing[_]*)(calculate: Turn => Pulse[T]): Event[T] = Turn.maybeTurn { turn =>
     val event = new Event[T] {
-      override def reevaluate()(implicit turn: Turn): EvaluationResult = {
-        val p = calculatePulse(turn)
-        pulse(p)
-        EvaluationResult.Done(p.isChange, dependants)
-      }
+      override def calculatePulse()(implicit turn: Turn): Pulse[T] = calculate(turn)
       override def toString = name
     }
     turn.register(event, dependencies.toSet)
@@ -67,17 +59,17 @@ object Events {
 
 
   /** Implements filtering event by a predicate */
-  def filter[T](ev: Dependency[T])(f: T => Boolean): Event[T] =
+  def filter[T](ev: Pulsing[T])(f: T => Boolean): Event[T] =
     make(s"(filter $ev)", ev) { turn => ev.pulse(turn).filter(f) }
 
 
   /** Implements transformation of event parameter */
-  def map[T, U](ev: Dependency[T])(f: T => U): Event[U] =
+  def map[T, U](ev: Pulsing[T])(f: T => U): Event[U] =
     make(s"(map $ev)", ev) { turn => ev.pulse(turn).map(f) }
 
 
   /** Implementation of event except */
-  def except[T, U](accepted: Dependency[T], except: Dependency[U]): Event[T] =
+  def except[T, U](accepted: Pulsing[T], except: Pulsing[U]): Event[T] =
     make(s"(except $accepted  $except)", accepted, except) { turn =>
       except.pulse(turn) match {
         case NoChange(_) => accepted.pulse(turn)
@@ -87,7 +79,7 @@ object Events {
 
 
   /** Implementation of event disjunction */
-  def or[T](ev1: Dependency[_ <: T], ev2: Dependency[_ <: T]): Event[T] =
+  def or[T](ev1: Pulsing[_ <: T], ev2: Pulsing[_ <: T]): Event[T] =
     make(s"(or $ev1 $ev2)", ev1, ev2) { turn =>
         ev1.pulse(turn) match {
           case NoChange(_) => ev2.pulse(turn)
@@ -97,7 +89,7 @@ object Events {
 
 
   /** Implementation of event conjunction */
-  def and[T1, T2, T](ev1: Dependency[T1], ev2: Dependency[T2], merge: (T1, T2) => T): Event[T] =
+  def and[T1, T2, T](ev1: Pulsing[T1], ev2: Pulsing[T2], merge: (T1, T2) => T): Event[T] =
     make(s"(and $ev1 $ev2)", ev1, ev2) { turn =>
       for {
         left <- ev1.pulse(turn)

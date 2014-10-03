@@ -1,35 +1,12 @@
 package rescala.signals
 
-import rescala.Dependency
+import rescala.{Stateful, Pulsing}
 import rescala.events.{Event, Events}
 import rescala.propagation.Pulse.{Diff, NoChange}
 import rescala.propagation.{MaybeTurn, Pulse, Turn}
 
 
-trait Signal[+A] extends Dependency[A] {
-
-  protected[this] var currentValue: A = _
-
-  override def pulse(implicit turn: Turn): Pulse[A] = super.pulse match {
-    case NoChange(None) => Pulse.unchanged(currentValue)
-    case other => other
-  }
-
-  override def commit(implicit turn: Turn): Unit = {
-    pulse.toOption.foreach(currentValue = _)
-    super.commit
-  }
-
-  def get(implicit turn: MaybeTurn): A = turn.turn match {
-    case Some(x) => get(x)
-    case None => currentValue
-  }
-
-  def get(turn: Turn): A = pulse(turn) match {
-    case NoChange(Some(value)) => value
-    case Diff(value, oldOption) => value
-    case NoChange(None) => currentValue
-  }
+trait Signal[+A] extends Stateful[A] {
 
   // only used inside macro and will be replaced there
   final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")

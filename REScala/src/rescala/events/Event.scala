@@ -7,7 +7,7 @@ import rescala.signals.{DynamicSignal, FoldedSignal, Signal}
 import scala.collection.LinearSeq
 import scala.collection.immutable.Queue
 
-trait Event[+T] extends Dependency[T] {
+trait Event[+T] extends Pulsing[T] {
 
   /** add an event handler */
   def +=(react: T => Unit)(implicit maybe: MaybeTurn): Unit = Turn.maybeTurn { turn =>

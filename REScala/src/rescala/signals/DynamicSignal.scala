@@ -9,7 +9,7 @@ class DynamicSignal[+T]
     (expr: Turn => T)
   extends Signal[T] {
 
-  def calculateValueDependencies(implicit turn: Turn): (T, Set[Dependency[_]]) =
+  def calculateValueDependencies(implicit turn: Turn): (T, Set[Pulsing[_]]) =
     turn.dynamic.bag.withValue(Set()) { (expr(turn), turn.dynamic.bag.value) }
 
   override protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult = {
@@ -20,7 +20,7 @@ class DynamicSignal[+T]
     }
     else {
       val p = Pulse.diff(newValue, currentValue)
-      pulse(p)
+      setPulse(p)
       EvaluationResult.Done(p.isChange, dependants, newDependencies)
     }
   }
@@ -31,7 +31,7 @@ class DynamicSignal[+T]
  * A syntactic signal
  */
 object DynamicSignal {
-  def apply[T](dependencies: Set[Dependency[Any]], expr: Turn => T): DynamicSignal[T] = Turn.maybeTurn { turn =>
+  def apply[T](dependencies: Set[Pulsing[Any]], expr: Turn => T): DynamicSignal[T] = Turn.maybeTurn { turn =>
     val signal = new DynamicSignal(expr)
     if (dependencies.nonEmpty) signal.ensureLevel(dependencies.map(_.level(turn)).max + 1)(turn)
     turn.evaluate(signal)
@@ -40,7 +40,7 @@ object DynamicSignal {
 
   def apply[T](expr: Turn => T): DynamicSignal[T] = apply(Set(), expr)
 
-  def apply[T](dependencies: List[Dependency[Any]])(expr: Turn => T): DynamicSignal[T] = apply(dependencies.toSet, expr)
-  def apply[T](dependencies: Dependency[Any]*)(expr: Turn => T): DynamicSignal[T] = apply(dependencies.toSet, expr)
+  def apply[T](dependencies: List[Pulsing[Any]])(expr: Turn => T): DynamicSignal[T] = apply(dependencies.toSet, expr)
+  def apply[T](dependencies: Pulsing[Any]*)(expr: Turn => T): DynamicSignal[T] = apply(dependencies.toSet, expr)
 
 }
