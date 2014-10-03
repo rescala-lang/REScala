@@ -5,7 +5,7 @@ import rescala.propagation._
 
 
 /** A dependant reactive value with dynamic dependencies (depending signals can change during evaluation) */
-class DynamicSignal[+T]
+final class DynamicSignal[+T]
     (expr: Turn => T)
   extends Signal[T] {
 

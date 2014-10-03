@@ -8,8 +8,6 @@ import rescala.propagation._
 /** A Reactive is a value type which has a dependency to other Reactives */
 trait Reactive {
 
-  val id: UUID = UUID.randomUUID()
-
   protected[this] var levels: Map[Turn, Int] = Map().withDefaultValue(0)
 
   def ensureLevel(newLevel: Int)(implicit turn: Turn): Boolean =

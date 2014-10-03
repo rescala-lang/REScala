@@ -4,7 +4,7 @@ import rescala._
 import rescala.propagation.{MaybeTurn, Turn}
 
 /** A dependent reactive value which has static dependencies */
-class StaticSignal[+T](expr: Turn => T)(creationTurn: Turn)
+final class StaticSignal[+T](expr: Turn => T)(creationTurn: Turn)
   extends StaticDependentSignal[T](creationTurn) {
 
   //if (dependencies.nonEmpty) staticDependencies(dependencies)(creationTurn)

@@ -3,7 +3,7 @@ package rescala.signals
 import rescala.events.Event
 import rescala.propagation.{MaybeTurn, Turn}
 
-class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T, E) => T)(creationTurn: Turn)
+final class FoldedSignal[+T, +E](e: Event[E], init: T, f: (T, E) => T)(creationTurn: Turn)
   extends StaticDependentSignal[T](creationTurn) {
 
   override def initialValue()(implicit turn: Turn): T = init
