@@ -19,7 +19,7 @@ class Turn {
 
   implicit def turn: Turn = this
 
-  def register(dependant: Reactive, dependencies: Set[Pulsing[_]]): Unit =  {
+  def register(dependant: Reactive, dependencies: Set[Reactive]): Unit =  {
     dependencies.foreach(_.addDependant(dependant))
     if (dependencies.nonEmpty) {
       dependant.ensureLevel(dependencies.map(_.level).max + 1)
@@ -27,9 +27,9 @@ class Turn {
     }
   }
 
-  def unregister(dependant: Reactive, dependencies: Set[Pulsing[_]]): Unit = dependencies.foreach(_.removeDependant(dependant))
+  def unregister(dependant: Reactive, dependencies: Set[Reactive]): Unit = dependencies.foreach(_.removeDependant(dependant))
 
-  def isReady(reactive: Reactive, dependencies: Set[Pulsing[_]]) =
+  def isReady(reactive: Reactive, dependencies: Set[Reactive]) =
     dependencies.forall(_.level < reactive.level)
 
   @tailrec
@@ -80,8 +80,8 @@ class Turn {
   def commit() = toCommit.foreach(_.commit(this))
 
   object dynamic {
-    val bag = new DynamicVariable(Set[Pulsing[_]]())
-    def used(dependency: Pulsing[_]) = bag.value = bag.value + dependency
+    val bag = new DynamicVariable(Set[Reactive]())
+    def used(dependency: Reactive) = bag.value = bag.value + dependency
   }
 
 }

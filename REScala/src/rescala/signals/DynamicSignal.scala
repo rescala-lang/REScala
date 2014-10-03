@@ -9,7 +9,7 @@ class DynamicSignal[+T]
     (expr: Turn => T)
   extends Signal[T] {
 
-  def calculateValueDependencies(implicit turn: Turn): (T, Set[Pulsing[_]]) =
+  def calculateValueDependencies(implicit turn: Turn): (T, Set[Reactive]) =
     turn.dynamic.bag.withValue(Set()) { (expr(turn), turn.dynamic.bag.value) }
 
   override protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult = {
