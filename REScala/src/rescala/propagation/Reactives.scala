@@ -1,9 +1,6 @@
-package rescala
-
-import java.util.UUID
+package rescala.propagation
 
 import rescala.propagation.Pulse.{Diff, NoChange}
-import rescala.propagation._
 
 /** A Reactive is a value type which has a dependency to other Reactives */
 trait Reactive {

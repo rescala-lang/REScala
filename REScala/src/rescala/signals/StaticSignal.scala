@@ -1,7 +1,7 @@
 package rescala.signals
 
 import rescala._
-import rescala.propagation.{MaybeTurn, Turn}
+import rescala.propagation.{Reactive, MaybeTurn, Turn}
 
 /** A dependent reactive value which has static dependencies */
 final class StaticSignal[+T](expr: Turn => T)(creationTurn: Turn)

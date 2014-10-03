@@ -1,6 +1,6 @@
 package rescala.log
 
-import rescala.Reactive
+import rescala.propagation.Reactive
 
 /**
  * Interface for logging.

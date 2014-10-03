@@ -1,7 +1,5 @@
 package rescala.propagation
 
-import rescala.{Reactive, Pulsing}
-
 sealed trait EvaluationResult
 
 object EvaluationResult {

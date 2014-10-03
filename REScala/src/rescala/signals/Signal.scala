@@ -1,9 +1,7 @@
 package rescala.signals
 
-import rescala.{Stateful, Pulsing}
 import rescala.events.{Event, Events}
-import rescala.propagation.Pulse.{Diff, NoChange}
-import rescala.propagation.{MaybeTurn, Pulse, Turn}
+import rescala.propagation.{Stateful, Turn}
 
 
 trait Signal[+A] extends Stateful[A] {

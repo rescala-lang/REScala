@@ -1,9 +1,6 @@
 package rescala.propagation
 
-import rescala.events.{EventHandler, Event}
 import rescala.propagation.EvaluationResult.{Retry, Done}
-import rescala.signals.DynamicSignal
-import rescala.{Pulsing, Reactive}
 
 import scala.annotation.tailrec
 import scala.collection.mutable
