@@ -67,17 +67,17 @@ object Events {
 
 
   /** Implements filtering event by a predicate */
-  def filter[T](ev: Event[T], f: T => Boolean): Event[T] =
+  def filter[T](ev: Dependency[T], f: T => Boolean): Event[T] =
     make(s"(filter $ev)", ev) { turn => ev.pulse(turn).filter(f) }
 
 
   /** Implements transformation of event parameter */
-  def map[T, U](ev: Event[T], f: T => U): Event[U] =
+  def map[T, U](ev: Dependency[T], f: T => U): Event[U] =
     make(s"(map $ev)", ev) { turn => ev.pulse(turn).map(f) }
 
 
   /** Implementation of event except */
-  def except[T, U](accepted: Event[T], except: Event[U]): Event[T] =
+  def except[T, U](accepted: Dependency[T], except: Dependency[U]): Event[T] =
     make(s"(except $accepted  $except)", accepted, except) { turn =>
       except.pulse(turn) match {
         case NoChange(_) => accepted.pulse(turn)
@@ -87,7 +87,7 @@ object Events {
 
 
   /** Implementation of event disjunction */
-  def or[T](ev1: Event[_ <: T], ev2: Event[_ <: T]): Event[T] =
+  def or[T](ev1: Dependency[_ <: T], ev2: Dependency[_ <: T]): Event[T] =
     make(s"(or $ev1 $ev2)", ev1, ev2) { turn =>
         ev1.pulse(turn) match {
           case NoChange(_) => ev2.pulse(turn)
@@ -97,7 +97,7 @@ object Events {
 
 
   /** Implementation of event conjunction */
-  def and[T1, T2, T](ev1: Event[T1], ev2: Event[T2], merge: (T1, T2) => T): Event[T] =
+  def and[T1, T2, T](ev1: Dependency[T1], ev2: Dependency[T2], merge: (T1, T2) => T): Event[T] =
     make(s"(and $ev1 $ev2)", ev1, ev2) { turn =>
       for {
         left <- ev1.pulse(turn)
