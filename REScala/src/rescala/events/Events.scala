@@ -56,11 +56,6 @@ object Events {
     event
   }
 
-  import scala.language.implicitConversions
-
-  private implicit def optionToPulse[P](option: Option[P]): Pulse[P] = Pulse.fromOption(option)
-
-
   /** Used to model the change event of a signal. Keeps the last value */
   def change[T](signal: Signal[T]): Event[(T, T)] =
     make(s"(change $signal)", signal) { turn =>
@@ -73,12 +68,12 @@ object Events {
 
   /** Implements filtering event by a predicate */
   def filter[T](ev: Event[T], f: T => Boolean): Event[T] =
-    make(s"(filter $ev)", ev) { turn => ev.pulse(turn).toOption.filter(f) }
+    make(s"(filter $ev)", ev) { turn => ev.pulse(turn).filter(f) }
 
 
   /** Implements transformation of event parameter */
   def map[T, U](ev: Event[T], f: T => U): Event[U] =
-    make(s"(map $ev)", ev) { turn => ev.pulse(turn).toOption.map(f) }
+    make(s"(map $ev)", ev) { turn => ev.pulse(turn).map(f) }
 
 
   /** Implementation of event except */
@@ -103,10 +98,11 @@ object Events {
 
   /** Implementation of event conjunction */
   def and[T1, T2, T](ev1: Event[T1], ev2: Event[T2], merge: (T1, T2) => T): Event[T] =
-    make(s"(and $ev1 $ev2)", ev1, ev2) { turn => for {
-      left <- ev1.pulse(turn).toOption
-      right <- ev2.pulse(turn).toOption
-    } yield { merge(left, right) }
+    make(s"(and $ev1 $ev2)", ev1, ev2) { turn =>
+      for {
+        left <- ev1.pulse(turn)
+        right <- ev2.pulse(turn)
+      } yield { merge(left, right) }
     }
 
 
