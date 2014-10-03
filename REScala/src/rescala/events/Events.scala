@@ -38,7 +38,7 @@ final class ImperativeEvent[T] extends Event[T] {
 
 object Events {
 
-  def static[T](name: String, dependencies: Pulsing[_]*)(calculate: Turn => Pulse[T]): Event[T] = Turn.maybeTurn { turn =>
+  def static[T](name: String, dependencies: Reactive*)(calculate: Turn => Pulse[T]): Event[T] = Turn.maybeTurn { turn =>
     val event = new Event[T] {
       override def calculatePulse()(implicit turn: Turn): Pulse[T] = calculate(turn)
       override def toString = name
