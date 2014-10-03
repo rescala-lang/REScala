@@ -38,15 +38,14 @@ final class ImperativeEvent[T] extends Event[T] {
 
 object Events {
 
-  def static[T](name: String, dependencies: Reactive*)(calculate: Turn => Pulse[T])(implicit maybe: MaybeTurn): Event[T] =
-    Turn.maybeTurn { initialTurn =>
-      val event = new Event[T] with StaticReevaluation[T] {
+  def static[T](name: String, dependencies: Reactive*)(calculate: Turn => Pulse[T])(implicit maybe: MaybeTurn): Event[T] = maybe {
+    _.create(dependencies.toSet) {
+      new Event[T] with StaticReevaluation[T] {
         override def calculatePulse()(implicit turn: Turn): Pulse[T] = calculate(turn)
         override def toString = name
       }
-      initialTurn.register(event, dependencies.toSet)
-      event
     }
+  }
 
   /** Used to model the change event of a signal. Keeps the last value */
   def change[T](signal: Signal[T]): Event[(T, T)] =
@@ -81,10 +80,10 @@ object Events {
   /** Implementation of event disjunction */
   def or[T](ev1: Pulsing[_ <: T], ev2: Pulsing[_ <: T]): Event[T] =
     static(s"(or $ev1 $ev2)", ev1, ev2) { turn =>
-        ev1.pulse(turn) match {
-          case NoChange(_) => ev2.pulse(turn)
-          case p@Diff(_, _)  => p
-        }
+      ev1.pulse(turn) match {
+        case NoChange(_) => ev2.pulse(turn)
+        case p@Diff(_, _) => p
+      }
     }
 
 
@@ -99,9 +98,14 @@ object Events {
 
 
   /** A wrapped event inside a signal, that gets "flattened" to a plain event node */
-  def wrapped[T](wrapper: Signal[Event[T]]): Event[T] = Turn.maybeTurn { creationTurn =>
-    new Event[T] {
-      override def reevaluate()(implicit turn: Turn): EvaluationResult = ???
-    }
+  def wrapped[T](wrapper: Signal[Event[T]])(implicit maybe: MaybeTurn): Event[T] = maybe {
+    _.create {
+      new Event[T] with DynamicReevaluation[T] {
+        override def calculatePulseDependencies(implicit turn: Turn): (Pulse[T], Set[Reactive]) = {
+          val inner = wrapper.getValue
+          (inner.pulse, Set(wrapper, inner))
+        }
+      }
+    } { (initialTurn, event) => initialTurn.register(event, Set(wrapper, wrapper.getValue(initialTurn))) }
   }
 }

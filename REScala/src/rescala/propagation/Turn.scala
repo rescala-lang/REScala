@@ -81,18 +81,27 @@ class Turn {
     def used(dependency: Reactive) = bag.value = bag.value + dependency
   }
 
+  def create[T <: Reactive](dependencies: Set[Reactive])(f: => T): T =
+    create(f)((turn, reactive) => turn.register(reactive, dependencies))
+
+  def create[T <: Reactive](f: => T)(init: (Turn, T) => Unit): T = {
+    val reactive = f
+    init(this, reactive)
+    reactive
+  }
+
 }
 
 
 object Turn {
   val currentTurn = new DynamicVariable[Option[Turn]](None)
 
-  def maybeTurn[T](f: Turn => T)(implicit maybe: MaybeTurn) = maybe.turn match {
+  def maybeTurn[T](f: Turn => T)(implicit maybe: MaybeTurn): T = maybe.turn match {
     case None => newTurn(f)
     case Some(turn) => f(turn)
   }
 
-  def newTurn[T](f: Turn => T) = synchronized {
+  def newTurn[T](f: Turn => T): T = synchronized {
     val turn = new Turn
     val res = currentTurn.withValue(Some(turn)){f(turn)}
     turn.evaluateQueue()

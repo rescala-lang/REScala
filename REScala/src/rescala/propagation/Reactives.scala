@@ -103,11 +103,11 @@ trait Stateful[+A] extends Pulsing[A] {
   }
 
   def get(implicit turn: MaybeTurn): A = turn.turn match {
-    case Some(x) => getIn(x)
+    case Some(x) => getValue(x)
     case None => currentValue
   }
 
-  def getIn(turn: Turn): A = pulse(turn) match {
+  def getValue(implicit turn: Turn): A = pulse(turn) match {
     case NoChange(Some(value)) => value
     case Diff(value, oldOption) => value
     case NoChange(None) => currentValue

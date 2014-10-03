@@ -11,10 +11,10 @@ trait Signal[+A] extends Stateful[A] {
 
   def apply[T](turn: Turn): A = {
     turn.dynamic.used(this)
-    getIn(turn)
+    getValue(turn)
   }
 
-  def map[B](f: A => B): Signal[B] = Signals.mapping(Set(this)) { turn => f(getIn(turn)) }
+  def map[B](f: A => B): Signal[B] = Signals.mapping(Set(this)) { turn => f(getValue(turn)) }
 
   /** Return a Signal that gets updated only when e fires, and has the value of this Signal */
   def snapshot(e: Event[_]): Signal[A] = e.snapshot(this)
