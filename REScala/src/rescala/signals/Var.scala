@@ -7,8 +7,7 @@ object Var {
 }
 
 /** A root Reactive value without dependencies which can be set */
-class Var[T](initval: T) extends Signal[T] {
-  currentValue = initval
+class Var[T](final override protected[this] var currentValue: T) extends Signal[T] {
 
   final def update(newValue: T): Unit = set(newValue)
   def set(newValue: T): Unit = Turn.newTurn { turn =>

@@ -6,23 +6,16 @@ import rescala.propagation._
 /** A dependant reactive value with dynamic dependencies (depending signals can change during evaluation) */
 final class DynamicSignal[+T]
     (expr: Turn => T)
-  extends Signal[T] {
+  extends Signal[T] with DynamicReevaluation[T] {
 
-  def calculateValueDependencies(implicit turn: Turn): (T, Set[Reactive]) =
-    turn.dynamic.bag.withValue(Set()) { (expr(turn), turn.dynamic.bag.value) }
+  override protected[this] var currentValue: T = _
 
-  override protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult = {
-    val (newValue, newDependencies) = calculateValueDependencies
-
-    if (!turn.isReady(this, newDependencies)) {
-      EvaluationResult.Retry(newDependencies)
+  def calculatePulseDependencies(implicit turn: Turn): (Pulse[T], Set[Reactive]) =
+    turn.dynamic.bag.withValue(Set()) {
+      val newValue = expr(turn)
+      val dependencies = turn.dynamic.bag.value
+      (Pulse.diff(newValue, currentValue), dependencies)
     }
-    else {
-      val p = Pulse.diff(newValue, currentValue)
-      setPulse(p)
-      EvaluationResult.Done(p.isChange, dependants, newDependencies)
-    }
-  }
 
 }
 

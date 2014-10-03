@@ -52,26 +52,45 @@ trait Pulsing[+P] extends Reactive {
 
   final protected[this] def setPulse(pulse: Pulse[P])(implicit turn: Turn): Unit = pulses += turn -> pulse
 
-  /** side effect free calculation of the new pulse for the current turn
-    * normally called by reevaluate */
-  def calculatePulse()(implicit turn: Turn): Pulse[P] = Pulse.none
-
-  override protected[propagation] def reevaluate()(implicit turn: Turn): EvaluationResult = {
-    val p = calculatePulse()
-    setPulse(p)
-    EvaluationResult.Done(p.isChange, dependants)
-  }
-
   override def commit(implicit turn: Turn): Unit = {
     pulses -= turn
     super.commit
   }
+}
 
+/** reevaluation strategy for static dependencies */
+trait StaticReevaluation[+P] extends Pulsing[P] {
+  /** side effect free calculation of the new pulse for the current turn */
+  protected[propagation] def calculatePulse()(implicit turn: Turn): Pulse[P]
+
+  final override protected[propagation] def reevaluate()(implicit turn: Turn): EvaluationResult = {
+    val p = calculatePulse()
+    setPulse(p)
+    EvaluationResult.Done(p.isChange, dependants)
+  }
+}
+
+/** reevaluation strategy for dynamic dependencies */
+trait DynamicReevaluation[+P] extends Pulsing[P] {
+  /** side effect free calculation of the new pulse and the new dependencies for the current turn */
+  def calculatePulseDependencies(implicit turn: Turn): (Pulse[P], Set[Reactive])
+  
+  final override protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult = {
+    val (newPulse, newDependencies) = calculatePulseDependencies
+
+    if (!turn.isReady(this, newDependencies)) {
+      EvaluationResult.Retry(newDependencies)
+    }
+    else {
+      setPulse(newPulse)
+      EvaluationResult.Done(newPulse.isChange, dependants, newDependencies)
+    }
+  }
 }
 
 /** a node that has a current state */
 trait Stateful[+A] extends Pulsing[A] {
-  protected[this] var currentValue: A = _
+  protected[this] var currentValue: A
 
   override def pulse(implicit turn: Turn): Pulse[A] = super.pulse match {
     case NoChange(None) => Pulse.unchanged(currentValue)

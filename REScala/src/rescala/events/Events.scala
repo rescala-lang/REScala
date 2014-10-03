@@ -8,7 +8,7 @@ import rescala.signals.Signal
 /**
  * Wrapper for an anonymous function
  */
-final case class EventHandler[T](fun: T => Unit, dependency: Pulsing[T]) extends Event[T] {
+final case class EventHandler[T](fun: T => Unit, dependency: Pulsing[T]) extends Event[T] with StaticReevaluation[T] {
   override def calculatePulse()(implicit turn: Turn): Pulse[T] = dependency.pulse
   override def commit(implicit turn: Turn): Unit = {
     pulse.toOption.foreach(fun)
@@ -39,7 +39,7 @@ final class ImperativeEvent[T] extends Event[T] {
 object Events {
 
   def static[T](name: String, dependencies: Reactive*)(calculate: Turn => Pulse[T]): Event[T] = Turn.maybeTurn { turn =>
-    val event = new Event[T] {
+    val event = new Event[T] with StaticReevaluation[T] {
       override def calculatePulse()(implicit turn: Turn): Pulse[T] = calculate(turn)
       override def toString = name
     }
