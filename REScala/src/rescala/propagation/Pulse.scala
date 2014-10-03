@@ -6,6 +6,7 @@ sealed trait Pulse[+P] {
   def map[Q](f: P => Q): Pulse[Q]
   def flatMap[Q](f: P => Pulse[Q]): Pulse[Q]
   def filter(p: P => Boolean): Pulse[P]
+  def fold[Q](ifNone: Q)(ifChange: P => Q): Q
 }
 
 object Pulse {
@@ -28,6 +29,7 @@ object Pulse {
     override def map[Q](f: (P) => Q): Pulse[Q] = none
     override def flatMap[Q](f: (P) => Pulse[Q]): Pulse[Q] = none
     override def filter(p: (P) => Boolean): Pulse[P] = none
+    override def fold[Q](ifNone: Q)(ifChange: (P) => Q): Q = ifNone
   }
 
   final case class Diff[+P](update: P, current: Option[P] = None) extends Pulse[P] {
@@ -36,5 +38,6 @@ object Pulse {
     override def map[Q](f: (P) => Q): Pulse[Q] = change(f(update))
     override def flatMap[Q](f: (P) => Pulse[Q]): Pulse[Q] = f(update)
     override def filter(p: (P) => Boolean): Pulse[P] = if (p(update)) change(update) else none
+    override def fold[Q](ifNone: Q)(ifChange: (P) => Q): Q = ifChange(update)
   }
 }

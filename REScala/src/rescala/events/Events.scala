@@ -38,14 +38,15 @@ final class ImperativeEvent[T] extends Event[T] {
 
 object Events {
 
-  def static[T](name: String, dependencies: Reactive*)(calculate: Turn => Pulse[T]): Event[T] = Turn.maybeTurn { turn =>
-    val event = new Event[T] with StaticReevaluation[T] {
-      override def calculatePulse()(implicit turn: Turn): Pulse[T] = calculate(turn)
-      override def toString = name
+  def static[T](name: String, dependencies: Reactive*)(calculate: Turn => Pulse[T])(implicit maybe: MaybeTurn): Event[T] =
+    Turn.maybeTurn { initialTurn =>
+      val event = new Event[T] with StaticReevaluation[T] {
+        override def calculatePulse()(implicit turn: Turn): Pulse[T] = calculate(turn)
+        override def toString = name
+      }
+      initialTurn.register(event, dependencies.toSet)
+      event
     }
-    turn.register(event, dependencies.toSet)
-    event
-  }
 
   /** Used to model the change event of a signal. Keeps the last value */
   def change[T](signal: Signal[T]): Event[(T, T)] =

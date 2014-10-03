@@ -4,7 +4,6 @@ package rescala.test
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.macros.SignalMacro
 import rescala.propagation.Turn
 import rescala.signals._
 
@@ -14,7 +13,7 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
   @Test def signalReEvaluatesTheExpressionWhenSomethingItDependsOnIsUpdated(): Unit = {
     val v = Var(0)
     var i = 1
-    val s: DynamicSignal[Int] = DynamicSignal[Int](v) { s => v(s) + i }
+    val s = DynamicSignal[Int](v) { s => v(s) + i }
     i = 2
     v.set(2)
     assert(s.get == 4)
@@ -22,7 +21,7 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
 
   @Test def theExpressionIsNoteEvaluatedEveryTimeGetValIsCalled(): Unit = {
     var a = 10
-    val s: DynamicSignal[Int] = DynamicSignal[Int](List())(s => 1 + 1 + a)
+    val s = DynamicSignal[Int](List())(s => 1 + 1 + a)
     assert(s.get === 12)
     a = 11
     assert(s.get === 12)
@@ -30,7 +29,7 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
 
 
   @Test def simpleSignalReturnsCorrectExpressions(): Unit = {
-    val s: DynamicSignal[Int] = DynamicSignal[Int](List())(s => 1 + 1 + 1)
+    val s = DynamicSignal[Int](List())(s => 1 + 1 + 1)
     assert(s.get === 3)
   }
 
@@ -96,7 +95,7 @@ class SignalSyntTestSuite extends AssertionsForJUnit with MockitoSugar {
     val v2 = Var(0)
     val v3 = Var(10)
     var i = 0
-    val s: DynamicSignal[Int] = DynamicSignal[Int](v1, v2, v3) { s =>
+    val s = DynamicSignal(v1, v2, v3) { s =>
       i += 1
       if (v1(s)) v2(s) else v3(s)
     }

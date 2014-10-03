@@ -1,7 +1,7 @@
 package rescala.events
 
 import rescala.propagation._
-import rescala.signals.{DynamicSignal, FoldedSignal, Signal}
+import rescala.signals.{Signals, DynamicSignal, Signal}
 
 import scala.collection.LinearSeq
 import scala.collection.immutable.Queue
@@ -62,7 +62,7 @@ trait Event[+T] extends Pulsing[T] {
 
 
   /** folds events with a given fold function to create a Signal */
-  def fold[A](init: A)(fold: (A, T) => A): Signal[A] = FoldedSignal.fold(this, init, fold)
+  def fold[A](init: A)(fold: (A, T) => A): Signal[A] = Signals.fold(this, init)(fold)
 
   /** Iterates a value on the occurrence of the event. */
   def iterate[A](init: A)(f: A => A): Signal[A] = fold(init)((acc, _) => f(acc))

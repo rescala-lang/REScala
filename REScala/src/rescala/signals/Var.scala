@@ -2,11 +2,11 @@ package rescala.signals
 
 import rescala.propagation.{EvaluationResult, Pulse, Turn}
 
+/** A root Reactive value without dependencies which can be set */
 object Var {
   def apply[T](initval: T): Var[T] = new Var(initval)
 }
 
-/** A root Reactive value without dependencies which can be set */
 class Var[T](final override protected[this] var currentValue: T) extends Signal[T] {
 
   final def update(newValue: T): Unit = set(newValue)
