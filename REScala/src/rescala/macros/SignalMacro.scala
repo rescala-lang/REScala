@@ -5,27 +5,14 @@ import rescala.signals._
 
 import scala.collection.mutable.ListBuffer
 import scala.language.experimental.macros
-import scala.reflect.macros.whitebox
+import scala.reflect.macros.blackbox
 
 object SignalMacro {
 
   def SignalM[A](expression: A): Signal[A] = macro SignalMacro[A]
 
-  def SignalMacro[A: c.WeakTypeTag](c: whitebox.Context)(expression: c.Expr[A]): c.Expr[Signal[A]] = {
+  def SignalMacro[A: c.WeakTypeTag](c: blackbox.Context)(expression: c.Expr[A]): c.Expr[Signal[A]] = {
     import c.universe._
-
-
-//    val out = new java.io.FileWriter(
-//        "/home/pascal/Desktop/debugfile.txt", true)
-
-//    out.append(showRaw(expression.tree) + "\n\n\n\n")
-//    out.append(showRaw(reify { { val a = 0; a } }) + "\n\n\n\n")
-
-//    extracting sub trees with type Reactive[_]
-//    val extractedReactives = expression.tree filter {
-//      t => t.tpe <:< typeOf[Reactive]
-//    }
-
 
     // all symbols that are defined within the macro expression
     val definedSymbols = (expression.tree collect {
@@ -34,17 +21,18 @@ object SignalMacro {
 
     // find inner macros that are not expanded
     // (note: should inner macros not be expanded first by the compiler?)
+    // (remark: they are, at least for scala 2.11.2 `SignalM { SignalM { 1 } }` does not trigger the code below)
     // we need to take special care for nested signals
     val nestedUnexpandedMacros = (expression.tree collect {
       case tree if tree.symbol != null && tree.symbol.isMacro =>
-        val makro = tree match {
+        val innerMacro = tree match {
           case Apply(TypeApply(Select(makro, _), _), _) => makro
           case TypeApply(Select(makro, _), _) => makro
           case Select(makro, _) => makro
           case _ => null
         }
 
-        if (makro != null && makro.tpe =:= typeOf[this.type])
+        if (innerMacro != null && innerMacro.tpe =:= typeOf[this.type])
           tree :: (tree filter { _ => true })
         else
           List.empty
@@ -72,16 +60,16 @@ object SignalMacro {
 
     // generate warning for some common cases where called functions are
     // either unnecessary (if free of side effects) or have side effects
-    def isMethodWithPotentialNonLocalSideEffects(tree: Tree) = tree match {
-      case fun @ (TypeApply(_, _) | Apply(_, _) | Select(_, _))
-          if !(uncheckedExpressions contains fun) =>
-        val args = tree match {
+    def isMethodWithPotentialNonLocalSideEffects(toCheck: Tree) = toCheck match {
+      case function @ (TypeApply(_, _) | Apply(_, _) | Select(_, _))
+          if !(uncheckedExpressions contains function) =>
+        val arguments = toCheck match {
           case TypeApply(_, args) => args
           case Apply(_, args) => args
           case _ => List.empty
         }
 
-        val noFunctionInArgs = !(args exists {
+        val noFunctionInArgs = !(arguments exists {
           case tree
             if (tree.tpe match {
               case TypeRef(_, _, args) => args.nonEmpty
@@ -90,7 +78,7 @@ object SignalMacro {
           case _ => false
         })
 
-        val noConstructorInFun = fun exists {
+        val noConstructorInFun = function exists {
           case Apply(fun, args) =>
             !(fun exists {
               case Select(_, termNames.CONSTRUCTOR) => true
@@ -128,7 +116,9 @@ object SignalMacro {
     internal setType (signalSyntArgIdent, weakTypeOf[Turn])
 
     // the signal values that will be cut out of the Signal expression
-    val signalValues = ListBuffer.empty[ValDef]
+    var cutOutSignals = List[ValDef]()
+    // list of detected inner signals
+    var detectedSignals = List[Tree]()
 
     object transformer extends Transformer {
       private def treeTypeNullWarning() =
@@ -142,9 +132,9 @@ object SignalMacro {
             "since it potentially creates a new reactive every time the " +
             "signal is evaluated which can lead to unintentional behavior")
 
-      private def isReactive(tree: Tree) =
+      private def isSignal(tree: Tree) =
         if (tree.tpe == null) { treeTypeNullWarning(); false }
-        else tree.tpe <:< typeOf[Signal[_]] || tree.tpe <:< typeOf[Var[_]]
+        else tree.tpe <:< typeOf[Signal[_]]
 
       override def transform(tree: Tree) =
         tree match {
@@ -156,9 +146,10 @@ object SignalMacro {
           // to
           //   SignalSynt { s => a(s) + b(s) }
           case tree @ Apply(Select(reactive, apply), List())
-              if isReactive(reactive)
+              if isSignal(reactive)
                  && apply.decodedName.toString == "apply"
                  && !(nestedUnexpandedMacros contains tree) =>
+            detectedSignals ::= reactive
             val reactiveApply = Select(reactive, TermName("apply"))
             internal setType (reactiveApply, tree.tpe)
             Apply(super.transform(reactiveApply), List(signalSyntArgIdent))
@@ -176,7 +167,7 @@ object SignalMacro {
           // and creates a signal value
           //   val s = event.count
           case reactive @ (TypeApply(_, _) | Apply(_, _) | Select(_, _))
-            if isReactive(reactive) &&
+            if isSignal(reactive) &&
               // make sure that the expression e to be cut out
               // - refers to a term that is not a val or var
               //   or an accessor for a field
@@ -195,7 +186,7 @@ object SignalMacro {
                   // check if reactive results from a function that is
                   // itself called on a reactive value
                   case tree @ Apply(Select(chainedReactive, apply), List()) =>
-                    isReactive(chainedReactive) &&
+                    isSignal(chainedReactive) &&
                        apply.decodedName.toString == "apply" &&
                        !(nestedUnexpandedMacros contains tree)
 
@@ -243,7 +234,7 @@ object SignalMacro {
             val signalName = TermName(c.freshName("s$"))
 
             val signalDef = ValDef(Modifiers(), signalName, TypeTree(), reactive)
-            signalValues += signalDef
+            cutOutSignals ::= signalDef
 
             val ident = Ident(signalName)
             internal setType (ident, reactive.tpe)
@@ -254,39 +245,50 @@ object SignalMacro {
         }
     }
 
-    val tree = transformer transform expression.tree
+    val innerTree = transformer transform expression.tree
 
     // SignalSynt argument function
-    val function =
+    val signalExpression =
       Function(
         List(
           ValDef(
             Modifiers(), signalSyntArgName,
             TypeTree(weakTypeOf[Turn]), EmptyTree)),
-        tree)
+        innerTree)
+
+    // upper bound parameters, only use static outside declarations
+    // note that this potentially misses many dependencies
+    // these will be detected dynamically, but that may cause multiple evaluations when creating a signal
+    val filteredDetections = detectedSignals.filter(tree =>
+      !definedSymbols.contains(tree.symbol) &&
+      tree.symbol.isTerm &&
+        (tree.symbol.asTerm.isVal ||
+          tree.symbol.asTerm.isVar))
+    val upperBoundParameters = q"scala.collection.immutable.Set(..$filteredDetections)"
 
     // create SignalSynt object
     // use fully-qualified name, so no extra import is needed
-    val body =
-      Apply(
-        TypeApply(
-          Select(
-            Select(
-              Select(
-                Select(
-                  Ident(termNames.ROOTPKG),
-                  TermName("rescala")),
-                TermName("signals")),
-              TermName("DynamicSignal")),
-            TermName("apply")),
-          List(TypeTree(weakTypeOf[A]))),
-        List(function))
+    val body = q"rescala.signals.Signals.dynamic[${weakTypeOf[A]}]($upperBoundParameters)($signalExpression)"
+    // old body without quasiquotes
+//      Apply(
+//        TypeApply(
+//          Select(
+//            Select(
+//              Select(
+//                Select(
+//                  Ident(termNames.ROOTPKG),
+//                  TermName("rescala")),
+//                TermName("signals")),
+//              TermName("DynamicSignal")),
+//            TermName("apply")),
+//          List(TypeTree(weakTypeOf[A]))),
+//        List(signalExpression))
 
     // assemble the SignalSynt object and the signal values that are accessed
     // by the object, but were cut out of the signal expression during the code
     // transformation
     val block =
-      Typed(Block(signalValues.toList, body), TypeTree(weakTypeOf[Signal[A]]))
+      Typed(Block(cutOutSignals.reverse, body), TypeTree(weakTypeOf[Signal[A]]))
 
 
 //    out.append((c untypecheck block) + "\n\n")
