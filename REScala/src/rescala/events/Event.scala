@@ -1,7 +1,7 @@
 package rescala.events
 
 import rescala.propagation._
-import rescala.signals.{Signals, DynamicSignal, Signal}
+import rescala.signals.{Signals, Signal}
 
 import scala.collection.LinearSeq
 import scala.collection.immutable.Queue
@@ -104,7 +104,7 @@ trait Event[+T] extends Pulsing[T] {
   /** Switch back and forth between two signals on occurrence of event e */
   def toggle[A](a: Signal[A], b: Signal[A]): Signal[A] = {
     val switched: Signal[Boolean] = iterate(false) { !_ }
-    Signals.dynamic(Set(switched, a, b)) { s => if (switched(s)) b(s) else a(s) }
+    Signals.dynamic(switched, a, b) { s => if (switched(s)) b(s) else a(s) }
   }
 
   /** Return a Signal that is updated only when e fires, and has the value of the signal s */
@@ -113,7 +113,7 @@ trait Event[+T] extends Pulsing[T] {
   /** Switch to a new Signal once, on the occurrence of event e. */
   def switchOnce[A](original: Signal[A], newSignal: Signal[A]): Signal[A] = {
     val latest = latestOption
-    Signals.dynamic(Set(latest, original, newSignal)) { s =>
+    Signals.dynamic(latest, original, newSignal) { s =>
       latest(s) match {
         case None => original(s)
         case Some(_) => newSignal(s)
@@ -128,7 +128,7 @@ trait Event[+T] extends Pulsing[T] {
    */
   def switchTo[S >: T](original: Signal[S]): Signal[S] = {
     val latest = latestOption
-    Signals.dynamic(Set(latest, original)) { s =>
+    Signals.dynamic(latest, original) { s =>
       latest(s) match {
         case None => original(s)
         case Some(x) => x
@@ -139,7 +139,7 @@ trait Event[+T] extends Pulsing[T] {
   /** Like latest, but delays the value of the resulting signal by n occurrences */
   def delay[S >: T](init: S, n: Int): Signal[S] = {
     val history: Signal[LinearSeq[T]] = last(n + 1)
-    Signals.dynamic(Set(history)) { s =>
+    Signals.dynamic(history) { s =>
       val h = history(s)
       if (h.size <= n) init else h.head
     }

@@ -264,11 +264,10 @@ object SignalMacro {
       tree.symbol.isTerm &&
         (tree.symbol.asTerm.isVal ||
           tree.symbol.asTerm.isVar))
-    val upperBoundParameters = q"scala.collection.immutable.Set(..$filteredDetections)"
 
     // create SignalSynt object
     // use fully-qualified name, so no extra import is needed
-    val body = q"rescala.signals.Signals.dynamic[${weakTypeOf[A]}]($upperBoundParameters)($signalExpression)"
+    val body = q"rescala.signals.Signals.dynamic[${weakTypeOf[A]}](..$filteredDetections)($signalExpression)"
     // old body without quasiquotes
 //      Apply(
 //        TypeApply(

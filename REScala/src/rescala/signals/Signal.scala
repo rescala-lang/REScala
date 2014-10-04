@@ -15,10 +15,10 @@ trait Signal[+A] extends Stateful[A] {
   }
 
   /** Return a Signal with f applied to the value */
-  def map[B](f: A => B): Signal[B] = Signals.mapping(Set(this)) { turn => f(getValue(turn)) }
+  def map[B](f: A => B): Signal[B] = Signals.mapping(this) { turn => f(getValue(turn)) }
 
   /** flatten the inner signal */
-  def flatten[B]()(implicit ev: A <:< Signal[B]) = Signals.dynamic(Set(this)) { s => this(s)(s) }
+  def flatten[B]()(implicit ev: A <:< Signal[B]) = Signals.dynamic(this) { s => this(s)(s) }
 
   /** Return a Signal that gets updated only when e fires, and has the value of this Signal */
   def snapshot(e: Event[_]): Signal[A] = e.snapshot(this)
