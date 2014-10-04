@@ -87,18 +87,15 @@ trait Event[+T] extends Pulsing[T] {
   def latestOption[S >: T]: Signal[Option[T]] = fold(None: Option[T]){ (_, v) => Some(v) }
 
   /** calls factory on each occurrence of event e, resetting the Signal to a newly generated one */
-  def reset[S >: T, A](init: S)(factory: S => Signal[A]): Signal[A] =  {
-    val ref: Signal[Signal[A]] = set(init)(factory)
-    DynamicSignal { s => ref(s)(s) } // cannot express without high order signals
-  }
+  def reset[S >: T, A](init: S)(factory: S => Signal[A]): Signal[A] = set(init)(factory).flatten()
 
   /**
    * Returns a signal which holds the last n events in a list. At the beginning the
    *  list increases in size up to when n values are available
    */
   def last[S >: T](n: Int): Signal[LinearSeq[S]] =
-    fold(Queue[T]()) { (acc: Queue[T], v: T) =>
-      if (acc.length >= n) acc.tail.enqueue(v) else acc.enqueue(v)
+    fold(Queue[T]()) { (queue: Queue[T], v: T) =>
+      if (queue.length >= n) queue.tail.enqueue(v) else queue.enqueue(v)
     }
 
   /** collects events resulting in a variable holding a list of all values. */
@@ -107,7 +104,7 @@ trait Event[+T] extends Pulsing[T] {
   /** Switch back and forth between two signals on occurrence of event e */
   def toggle[A](a: Signal[A], b: Signal[A]): Signal[A] = {
     val switched: Signal[Boolean] = iterate(false) { !_ }
-    DynamicSignal[A](switched, a, b) { s => if (switched(s)) b(s) else a(s) }
+    Signals.dynamic(Set(switched, a, b)) { s => if (switched(s)) b(s) else a(s) }
   }
 
   /** Return a Signal that is updated only when e fires, and has the value of the signal s */
@@ -116,7 +113,7 @@ trait Event[+T] extends Pulsing[T] {
   /** Switch to a new Signal once, on the occurrence of event e. */
   def switchOnce[A](original: Signal[A], newSignal: Signal[A]): Signal[A] = {
     val latest = latestOption
-    DynamicSignal[A](latest, original, newSignal) { s =>
+    Signals.dynamic(Set(latest, original, newSignal)) { s =>
       latest(s) match {
         case None => original(s)
         case Some(_) => newSignal(s)
@@ -131,7 +128,7 @@ trait Event[+T] extends Pulsing[T] {
    */
   def switchTo[S >: T](original: Signal[S]): Signal[S] = {
     val latest = latestOption
-    DynamicSignal[S](latest, original) { s =>
+    Signals.dynamic(Set(latest, original)) { s =>
       latest(s) match {
         case None => original(s)
         case Some(x) => x
@@ -142,7 +139,7 @@ trait Event[+T] extends Pulsing[T] {
   /** Like latest, but delays the value of the resulting signal by n occurrences */
   def delay[S >: T](init: S, n: Int): Signal[S] = {
     val history: Signal[LinearSeq[T]] = last(n + 1)
-    DynamicSignal[S](history) { s =>
+    Signals.dynamic(Set(history)) { s =>
       val h = history(s)
       if (h.size <= n) init else h.head
     }
