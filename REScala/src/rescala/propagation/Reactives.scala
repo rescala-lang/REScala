@@ -43,7 +43,12 @@ trait Reactive {
 
 /** A node that has nodes that depend on it */
 trait Pulsing[+P] extends Reactive {
+  def pulse(implicit turn: Turn): Pulse[P]
 
+  protected[this] def setPulse(pulse: Pulse[P])(implicit turn: Turn): Unit
+}
+
+trait Stateless[+P] extends Pulsing[P] {
   private[this] var pulses: TurnLocal[Pulse[P]] = TurnLocal(Pulse.none)
 
   def pulse(implicit turn: Turn): Pulse[P] = pulses.get
@@ -55,6 +60,29 @@ trait Pulsing[+P] extends Reactive {
     super.commit
   }
 }
+
+/** a node that has a current state */
+trait Stateful[+A] extends Pulsing[A] {
+  protected[this] var pulses: TurnLocal[Pulse[A]]
+
+  override def pulse(implicit turn: Turn): Pulse[A] = pulses.get
+
+  final protected[this] def setPulse(pulse: Pulse[A])(implicit turn: Turn): Unit = pulses <<= pulse
+
+  override def commit(implicit turn: Turn): Unit = {
+    pulses = pulses.combineCommit { (_, p) => p.keep}
+    super.commit
+  }
+
+  def get(implicit maybe: MaybeTurn): A = maybe { getValue(_) }
+
+  def getValue(implicit turn: Turn): A = pulse match {
+    case NoChange(Some(value)) => value
+    case Diff(value, oldOption) => value
+    case NoChange(None) => throw new IllegalStateException("stateful reactive has never pulsed")
+  }
+}
+
 
 /** reevaluation strategy for static dependencies */
 trait StaticReevaluation[+P] extends Pulsing[P] {
@@ -86,31 +114,6 @@ trait DynamicReevaluation[+P] extends Pulsing[P] {
   }
 }
 
-/** a node that has a current state */
-trait Stateful[+A] extends Pulsing[A] {
-  protected[this] var currentValue: A
-
-  override def pulse(implicit turn: Turn): Pulse[A] = super.pulse match {
-    case NoChange(None) => Pulse.unchanged(currentValue)
-    case other => other
-  }
-
-  override def commit(implicit turn: Turn): Unit = {
-    pulse.toOption.foreach(currentValue = _)
-    super.commit
-  }
-
-  def get(implicit turn: MaybeTurn): A = turn.turn match {
-    case Some(x) => getValue(x)
-    case None => currentValue
-  }
-
-  def getValue(implicit turn: Turn): A = pulse(turn) match {
-    case NoChange(Some(value)) => value
-    case Diff(value, oldOption) => value
-    case NoChange(None) => currentValue
-  }
-}
 
 /** A node that depends on other nodes */
 class Dependencies(reactive: Reactive) {

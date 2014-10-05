@@ -7,13 +7,16 @@ object Signals {
 
   def makeDynamic[T](dependencies: Set[Reactive])(expr: Turn => T)(implicit currentTurn: Turn): Signal[T] = currentTurn.create {
     new Signal[T] with DynamicReevaluation[T] {
-      override protected[this] var currentValue: T = _
+
+      override protected[this] var pulses: TurnLocal[Pulse[T]] = TurnLocal(Pulse.none)
+
       def calculatePulseDependencies(implicit turn: Turn): (Pulse[T], Set[Reactive]) =
         turn.dynamic.bag.withValue(Set()) {
           val newValue = expr(turn)
           val dependencies = turn.dynamic.bag.value
-          (Pulse.diff(newValue, currentValue), dependencies)
+          (Pulse.diffPulse(newValue, pulses.default), dependencies)
         }
+
     }
   } { (initialTurn, signal) =>
     if (dependencies.nonEmpty) signal.ensureLevel(dependencies.map(_.level(initialTurn)).max + 1)(initialTurn)
@@ -24,8 +27,14 @@ object Signals {
 
   def makeStatic[T](dependencies: Set[Reactive], init: T)(expr: (Turn, T) => T)(implicit initialTurn: Turn) = initialTurn.create(dependencies.toSet) {
       new Signal[T] with StaticReevaluation[T] {
-        final override protected[this] var currentValue = init
-        override def calculatePulse()(implicit turn: Turn): Pulse[T] = Pulse.diff(expr(turn, currentValue), currentValue)
+
+        override protected[this] var pulses: TurnLocal[Pulse[T]] = TurnLocal(Pulse.unchanged(init))
+
+        override def calculatePulse()(implicit turn: Turn): Pulse[T] = {
+          val currentValue = pulses.default.current.get
+          Pulse.diff(expr(turn, currentValue), currentValue)
+        }
+
       }
     }
 

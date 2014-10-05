@@ -6,7 +6,7 @@ import rescala.signals.{Signals, Signal}
 import scala.collection.LinearSeq
 import scala.collection.immutable.Queue
 
-trait Event[+T] extends Pulsing[T] {
+trait Event[+T] extends Stateless[T] {
 
   /** add an event handler */
   def +=(react: T => Unit)(implicit maybe: MaybeTurn): Unit = Turn.maybeTurn { turn =>
