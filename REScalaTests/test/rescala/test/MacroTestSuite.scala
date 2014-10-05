@@ -196,7 +196,6 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(testsig.get == 11)
   }
 
-  @Ignore
   @Test def useOfOutsideSignal() = {
     val outside = Var(1)
     val inside = Var(10)
@@ -299,7 +298,6 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(sig.get == List(7, 5))
   }
 
-  @Ignore
   @Test def chainedSignals2() = {
     import scala.language.reflectiveCalls
 
