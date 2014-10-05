@@ -41,6 +41,7 @@ object Signals {
 
   def lift[A1, A2, B](s1: Stateful[A1], s2: Stateful[A2])(fun: (A1, A2) => B)(implicit maybe: MaybeTurn): Signal[B] =
     mapping(s1, s2)(t => fun(s1.getValue(t), s2.getValue(t)))
+
   def lift[A1, A2, A3, B](s1: Stateful[A1], s2: Stateful[A2], s3: Stateful[A3])(fun: (A1, A2, A3) => B)(implicit maybe: MaybeTurn): Signal[B] =
     mapping(s1, s2)(t => fun(s1.getValue(t), s2.getValue(t), s3.getValue(t)))
 

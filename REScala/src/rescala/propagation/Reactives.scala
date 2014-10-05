@@ -5,28 +5,28 @@ import rescala.propagation.Pulse.{Diff, NoChange}
 /** A Reactive is a value type which has a dependency to other Reactives */
 trait Reactive {
 
-  protected[this] var levels: Map[Turn, Int] = Map().withDefaultValue(0)
+  private[this] var levels: TurnLocal[Int] = TurnLocal(0)
 
-  def ensureLevel(newLevel: Int)(implicit turn: Turn): Boolean =
-    if (levels(turn) < newLevel) {
-      levels += turn -> newLevel
+  private[this] var _dependants: TurnLocal[Set[Reactive]] = TurnLocal(Set())
+
+  final def ensureLevel(newLevel: Int)(implicit turn: Turn): Boolean =
+    if (levels.get < newLevel) {
+      levels <<= newLevel
       true
     }
     else false
 
-  final def level(implicit turn: Turn): Int = levels(turn)
+  final def level(implicit turn: Turn): Int = levels.get
 
-  private var _dependants: Map[Turn, Set[Reactive]] = Map().withDefaultValue(Set())
-
-  final def dependants(implicit turn: Turn): Set[Reactive] = _dependants(turn)
+  final def dependants(implicit turn: Turn): Set[Reactive] = _dependants.get
 
   final def addDependant(dep: Reactive)(implicit turn: Turn): Unit = {
-    _dependants += turn -> (_dependants(turn) + dep)
+    _dependants <<<= (_ + dep)
     turn.changed(this)
   }
 
   final def removeDependant(dep: Reactive)(implicit turn: Turn) = {
-    _dependants += turn -> (_dependants(turn) - dep)
+    _dependants <<<= (_ - dep)
     turn.changed(this)
   }
 
@@ -36,24 +36,22 @@ trait Reactive {
 
   /** called to finalize the pulse value (turn commits) */
   protected[propagation] def commit(implicit turn: Turn): Unit = {
-    levels = levels.withDefaultValue(math.max(levels(turn), levels.default(turn)))
-    levels -= turn
-    _dependants = _dependants.withDefaultValue(_dependants(turn))
-    _dependants -= turn
+    levels = levels.combineCommit(math.max)
+    _dependants = _dependants.commit
   }
 }
 
 /** A node that has nodes that depend on it */
 trait Pulsing[+P] extends Reactive {
 
-  private[this] var pulses: Map[Turn, Pulse[P]] = Map().withDefaultValue(Pulse.none)
+  private[this] var pulses: TurnLocal[Pulse[P]] = TurnLocal(Pulse.none)
 
-  def pulse(implicit turn: Turn): Pulse[P] = pulses(turn)
+  def pulse(implicit turn: Turn): Pulse[P] = pulses.get
 
-  final protected[this] def setPulse(pulse: Pulse[P])(implicit turn: Turn): Unit = pulses += turn -> pulse
+  final protected[this] def setPulse(pulse: Pulse[P])(implicit turn: Turn): Unit = pulses <<= pulse
 
   override def commit(implicit turn: Turn): Unit = {
-    pulses -= turn
+    pulses = pulses.release
     super.commit
   }
 }
