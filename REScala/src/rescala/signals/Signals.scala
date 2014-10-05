@@ -5,36 +5,27 @@ import rescala.propagation._
 
 object Signals {
 
-  def makeDynamic[T](dependencies: Set[Reactive])(expr: Turn => T)(implicit currentTurn: Turn): Signal[T] = currentTurn.create {
+  def makeDynamic[T](dependencies: Set[Reactive])(expr: Turn => T)(implicit currentTurn: Turn): Signal[T] = currentTurn.createDynamic(dependencies) {
     new Signal[T] with DynamicReevaluation[T] {
-
-      override protected[this] var pulses: TurnLocal[Pulse[T]] = TurnLocal(Pulse.none)
-
       def calculatePulseDependencies(implicit turn: Turn): (Pulse[T], Set[Reactive]) =
         turn.dynamic.bag.withValue(Set()) {
           val newValue = expr(turn)
           val dependencies = turn.dynamic.bag.value
           (Pulse.diffPulse(newValue, pulses.default), dependencies)
         }
-
     }
-  } { (initialTurn, signal) =>
-    if (dependencies.nonEmpty) signal.ensureLevel(dependencies.map(_.level(initialTurn)).max + 1)(initialTurn)
-    initialTurn.evaluate(signal)
   }
 
   def dynamic[T](dependencies: Reactive*)(expr: Turn => T)(implicit maybe: MaybeTurn): Signal[T] = maybe(makeDynamic(dependencies.toSet)(expr)(_))
 
   def makeStatic[T](dependencies: Set[Reactive], init: T)(expr: (Turn, T) => T)(implicit initialTurn: Turn) = initialTurn.create(dependencies.toSet) {
       new Signal[T] with StaticReevaluation[T] {
-
-        override protected[this] var pulses: TurnLocal[Pulse[T]] = TurnLocal(Pulse.unchanged(init))
+        pulses.default = Pulse.unchanged(init)
 
         override def calculatePulse()(implicit turn: Turn): Pulse[T] = {
           val currentValue = pulses.default.current.get
           Pulse.diff(expr(turn, currentValue), currentValue)
         }
-
       }
     }
 

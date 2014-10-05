@@ -8,7 +8,7 @@ object Var {
 }
 
 class Var[T](initval: T) extends Signal[T] {
-  override protected[this] var pulses: TurnLocal[Pulse[T]] = TurnLocal(Pulse.unchanged(initval))
+  pulses.default = Pulse.unchanged(initval)
 
   final def update(newValue: T): Unit = set(newValue)
   def set(newValue: T): Unit = Turn.newTurn { turn =>
@@ -19,11 +19,11 @@ class Var[T](initval: T) extends Signal[T] {
   def planUpdate(newValue: T)(implicit turn: Turn): Unit = {
     val p = Pulse.diff(newValue, getValue)
     if (p.isChange) {
-      setPulse(p)(turn)
+      pulses.set(p)
       turn.enqueue(this)
     }
   }
 
   override protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult =
-    EvaluationResult.Done(changed = true, dependants)
+    EvaluationResult.Done(changed = true)
 }

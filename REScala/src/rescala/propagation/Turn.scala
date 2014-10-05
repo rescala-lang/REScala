@@ -14,36 +14,50 @@ class Turn {
   private val evalQueue = new mutable.PriorityQueue[(Int, Reactive)]()(Turn.reactiveOrdering)
   private var toCommit = Set[Reactive]()
 
-  implicit def turn: Turn = this
+  implicit def implicitThis: Turn = this
 
   def register(dependant: Reactive, dependencies: Set[Reactive]): Unit =  {
-    dependencies.foreach(_.addDependant(dependant))
-    if (dependencies.nonEmpty) {
-      dependant.ensureLevel(dependencies.map(_.level).max + 1)
-      changed(dependant)
+    dependencies.foreach { dependency =>
+      dependency.dependants.transform(_ + dependant)
+      changed(dependency)
     }
+    ensureLevel(dependant, dependencies)
   }
 
-  def unregister(dependant: Reactive, dependencies: Set[Reactive]): Unit = dependencies.foreach(_.removeDependant(dependant))
+  def ensureLevel(dependant: Reactive, dependencies: Set[Reactive]): Unit =
+    if (dependencies.nonEmpty) {
+      ensureLevel(dependant, dependencies.map(_.level.get).max + 1)
+      changed(dependant)
+    }
+
+  def ensureLevel(reactive: Reactive, level: Int): Boolean = {
+    reactive.level.transform { case x if x < level => level}
+  }
+
+
+  def unregister(dependant: Reactive, dependencies: Set[Reactive]): Unit = dependencies.foreach { dependency =>
+    dependency.dependants.transform(_ - dependant)
+    changed(dependency)
+  }
 
   def isReady(reactive: Reactive, dependencies: Set[Reactive]) =
-    dependencies.forall(_.level < reactive.level)
+    dependencies.forall(_.level.get < reactive.level.get)
 
   @tailrec
   private def floodLevel(reactives: Set[Reactive]): Unit =
     if (reactives.nonEmpty) {
       val reactive = reactives.head
       changed(reactive)
-      val level = reactive.level + 1
+      val level = reactive.level.get + 1
       val dependants = reactive.dependants
-      val changedDependants = dependants.filter(_.ensureLevel(level))
+      val changedDependants = dependants.get.filter(ensureLevel(_, level))
       floodLevel(reactives.tail ++ changedDependants)
     }
 
   /** Adds a dependant to the eval queue */
   def enqueue(dep: Reactive): Unit = {
       if (!evalQueue.exists { case (_, elem) => elem eq dep }) {
-        evalQueue.+=((dep.level, dep))
+        evalQueue.+=((dep.level.get, dep))
       }
   }
 
@@ -51,8 +65,8 @@ class Turn {
   def evaluate(head: Reactive): Unit = {
     val result = head.reevaluate()(this)
     result match {
-      case Done(hasChanged, dependants, newDependencies) =>
-        if(hasChanged) dependants.foreach(enqueue)
+      case Done(hasChanged, newDependencies) =>
+        if(hasChanged) head.dependants.get.foreach(enqueue)
         register(head, newDependencies)
         changed(head)
       case Retry(dependencies) =>
@@ -67,7 +81,7 @@ class Turn {
     while (evalQueue.nonEmpty) {
       val (level, head) = evalQueue.dequeue()
       // check the level if it changed queue again
-      if (level != head.level) enqueue(head)
+      if (level != head.level.get) enqueue(head)
       else evaluate(head)
     }
   }
@@ -81,15 +95,18 @@ class Turn {
     def used(dependency: Reactive) = bag.value = bag.value + dependency
   }
 
-  def create[T <: Reactive](dependencies: Set[Reactive])(f: => T): T =
-    create(f)((turn, reactive) => turn.register(reactive, dependencies))
-
-  def create[T <: Reactive](f: => T)(init: (Turn, T) => Unit): T = {
+  def create[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
     val reactive = f
-    init(this, reactive)
+    register(reactive, dependencies)
     reactive
   }
 
+  def createDynamic[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
+    val reactive = f
+    ensureLevel(reactive, dependencies)
+    evaluate(reactive)
+    reactive
+  }
 }
 
 

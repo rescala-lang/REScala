@@ -24,13 +24,13 @@ final class ImperativeEvent[T] extends Event[T] {
 
   /** Trigger the event */
   def apply(v: T): Unit = Turn.newTurn { turn =>
-    setPulse(Pulse.change(v))(turn)
+    pulses.set(Pulse.change(v))(turn)
     turn.enqueue(this)
     turn.evaluateQueue()
   }
 
   override protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult =
-    EvaluationResult.Done(changed = true, dependants)
+    EvaluationResult.Done(changed = true)
 
   override def toString = getClass.getName
 }
@@ -98,14 +98,14 @@ object Events {
 
 
   /** A wrapped event inside a signal, that gets "flattened" to a plain event node */
-  def wrapped[T](wrapper: Signal[Event[T]])(implicit maybe: MaybeTurn): Event[T] = maybe {
-    _.create {
+  def wrapped[T](wrapper: Signal[Event[T]])(implicit maybe: MaybeTurn): Event[T] = maybe { creationTurn =>
+    creationTurn.create(Set[Reactive](wrapper, wrapper.getValue(creationTurn))) {
       new Event[T] with DynamicReevaluation[T] {
         override def calculatePulseDependencies(implicit turn: Turn): (Pulse[T], Set[Reactive]) = {
           val inner = wrapper.getValue
           (inner.pulse, Set(wrapper, inner))
         }
       }
-    } { (initialTurn, event) => initialTurn.register(event, Set(wrapper, wrapper.getValue(initialTurn))) }
+    }
   }
 }
