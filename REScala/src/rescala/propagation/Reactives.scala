@@ -62,18 +62,29 @@ trait StaticReevaluation[+P] extends Pulsing[P] {
 
 /** reevaluation strategy for dynamic dependencies */
 trait DynamicReevaluation[+P] extends Pulsing[P] {
+  private val dependencies: TurnLocal[Set[Reactive]] = TurnLocal(Set(), (_, x) => x)
+
   /** side effect free calculation of the new pulse and the new dependencies for the current turn */
   def calculatePulseDependencies(implicit turn: Turn): (Pulse[P], Set[Reactive])
   
   final override protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult = {
     val (newPulse, newDependencies) = calculatePulseDependencies
 
+    val oldDependencies = dependencies.get
+    dependencies.set(newDependencies)
+    val diff = EvaluationResult.DependencyDiff(newDependencies, oldDependencies)
+
     if (!turn.isReady(this, newDependencies)) {
-      EvaluationResult.Retry(newDependencies)
+      diff
     }
     else {
       pulses.set(newPulse)
-      EvaluationResult.Done(newPulse.isChange, newDependencies)
+      EvaluationResult.Done(newPulse.isChange, Some(diff))
     }
+  }
+
+  override def commit(implicit turn: Turn): Unit = {
+    dependencies.commit
+    super.commit
   }
 }

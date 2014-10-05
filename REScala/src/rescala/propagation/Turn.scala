@@ -1,6 +1,6 @@
 package rescala.propagation
 
-import rescala.propagation.EvaluationResult.{Done, Retry}
+import rescala.propagation.EvaluationResult.{Done, DependencyDiff}
 
 import scala.annotation.tailrec
 import scala.collection.mutable
@@ -34,10 +34,15 @@ class Turn {
     reactive.level.transform { case x if x < level => level}
   }
 
-
   def unregister(dependant: Reactive, dependencies: Set[Reactive]): Unit = dependencies.foreach { dependency =>
     dependency.dependants.transform(_ - dependant)
     changed(dependency)
+  }
+
+  def handleDiff(dependant: Reactive, diff: DependencyDiff): Unit = {
+    val DependencyDiff(newDependencies, oldDependencies) = diff
+    unregister(dependant, oldDependencies.diff(newDependencies))
+    register(dependant, newDependencies.diff(oldDependencies))
   }
 
   def isReady(reactive: Reactive, dependencies: Set[Reactive]) =
@@ -49,8 +54,8 @@ class Turn {
       val reactive = reactives.head
       changed(reactive)
       val level = reactive.level.get + 1
-      val dependants = reactive.dependants
-      val changedDependants = dependants.get.filter(ensureLevel(_, level))
+      val dependants = reactive.dependants.get
+      val changedDependants = dependants.filter(ensureLevel(_, level))
       floodLevel(reactives.tail ++ changedDependants)
     }
 
@@ -61,16 +66,17 @@ class Turn {
       }
   }
 
+
   /** evaluates a single reactive */
   def evaluate(head: Reactive): Unit = {
     val result = head.reevaluate()(this)
     result match {
-      case Done(hasChanged, newDependencies) =>
+      case Done(hasChanged, dependencyDiff) =>
         if(hasChanged) head.dependants.get.foreach(enqueue)
-        register(head, newDependencies)
+        dependencyDiff.foreach(handleDiff(head, _))
         changed(head)
-      case Retry(dependencies) =>
-        register(head, dependencies)
+      case diff @ DependencyDiff(_, _) =>
+        handleDiff(head, diff)
         floodLevel(Set(head))
         enqueue(head)
     }
@@ -120,10 +126,13 @@ object Turn {
 
   def newTurn[T](f: Turn => T): T = synchronized {
     val turn = new Turn
-    val res = currentTurn.withValue(Some(turn)){f(turn)}
-    turn.evaluateQueue()
-    turn.commit()
-    res
+    val result = currentTurn.withValue(Some(turn)){
+      val res = f(turn)
+      turn.evaluateQueue()
+      turn.commit()
+      res
+    }
+    result
   }
 
   val reactiveOrdering = new Ordering[(Int, Reactive)] {
