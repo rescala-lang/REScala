@@ -2,9 +2,13 @@ name := "rescala"
 
 organization := "de.tuda.stg"
 
-version := "0.2.0"
+val gitHeadCommitSha = settingKey[String]("current git commit SHA")
 
-scalaVersion := "2.10.4"
+gitHeadCommitSha := Process("git rev-parse HEAD").lines.head
+
+version := "0.2.0-" + gitHeadCommitSha.value
+
+scalaVersion := "2.11.2"
 
 crossScalaVersions := Seq("2.10.4", "2.11.2")
 
