@@ -1,0 +1,64 @@
+@startuml
+class Reactive {
+  +val level: TurnLocal[Int]
+  +val dependants: TurnLocal[Set[Reactive]]
+  __
+  +reevaluate(): EvaluationResult
+  +commit(): Unit
+}
+
+class "Pulsing[+T]" as Pulsing extends Reactive {
+  +val pulses: TurnLocal[T]
+  __
+  +addDependent(Dependent)
+  +removeDependent(Dependent)
+  +notifyDependents(Any)
+}
+
+class "Stateful[+T]" as Stateful extends Pulsing {
+  +get(): T
+}
+
+class "StaticReevaluation[+T]" as StaticReevaluation extends Pulsing {
+  +calculatePulse(): Pulse[T]
+}
+
+class "DynamicReevaluation[+T]" as DynamicReevaluation extends Pulsing {
+  +val dependencies: TurnLocal[Set[Reactive]]
+  __
+  +calculatePulseDependencies(): Pulse[T]
+}
+
+class "Signal[+T]" as Signal extends Stateful {
+  … signal syntax …
+}
+
+class "Event[+T]" as Event extends Pulsing {
+  … event syntax …
+}
+
+class "DynamicEvent[T]" as DynamicEvent
+class "StaticEvent[T]" as StaticEvent
+class "StaticSignal[T]" as StaticSignal
+class "DynamicSignal[T]" as DynamicSignal
+class "Var[T]" as Var
+class "ImperativeEvent[T]" as ImperativeEvent
+class "EventHandler[T]" as EventHandler
+
+Event <|-- DynamicEvent
+DynamicReevaluation <|-- DynamicEvent
+Event <|-- StaticEvent
+StaticReevaluation <|-- StaticEvent
+Signal <|-- Var
+Event <|-- EventHandler
+StaticReevaluation <|-- EventHandler
+Event <|-- ImperativeEvent
+Signal <|-- DynamicSignal
+DynamicReevaluation <|-- DynamicSignal
+Signal <|-- StaticSignal
+StaticReevaluation <|-- StaticSignal
+
+
+
+@enduml
+
