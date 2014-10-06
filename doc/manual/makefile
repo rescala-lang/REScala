@@ -21,7 +21,7 @@ lat:
 #	ps2pdf13 -dPDFSETTINGS=/prepress $(FILENAME).ps $(FILENAME).pdf
 
 clean:
-	rm -f *.dvi *.ps *.aux *.log *.bbl *.blg *~ *.out *.dia~ *.bak *.pdf
+	rm -f *.dvi *.ps *.aux *.log *.bbl *.blg *~ *.out *.dia~ *.bak *.pdf *.toc
 
 spellcheck:
 	aspell check --lang=en_US $(FILENAME).tex
