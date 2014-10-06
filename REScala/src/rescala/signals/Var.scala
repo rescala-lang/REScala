@@ -1,6 +1,6 @@
 package rescala.signals
 
-import rescala.propagation.{TurnLocal, EvaluationResult, Pulse, Turn}
+import rescala.propagation._
 
 /** A root Reactive value without dependencies which can be set */
 object Var {
@@ -13,7 +13,6 @@ class Var[T](initval: T) extends Signal[T] {
   final def update(newValue: T): Unit = set(newValue)
   def set(newValue: T): Unit = Turn.newTurn { turn =>
     planUpdate(newValue)(turn)
-    turn.evaluateQueue()
   }
 
   def planUpdate(newValue: T)(implicit turn: Turn): Unit = {

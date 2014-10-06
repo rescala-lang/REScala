@@ -3,7 +3,6 @@ package rescala.test.ifunctions
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala._
 import rescala.events._
 import rescala.signals._
 
@@ -103,14 +102,14 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
   /* latestOption */
   @Test def latestOption_theInitialValueIsSetCorrectly(): Unit = {
     val e = new ImperativeEvent[Int]()
-    val s: Signal[Option[Int]] = e.latestOption
+    val s: Signal[Option[Int]] = e.latestOption()
 
     assert(s.get == None)
   }
 
   @Test def latestOption_theFunctionisExecutedEveryTimeTheEventFires(): Unit = {
     val e = new ImperativeEvent[Int]()
-    val s: Signal[Option[Int]] = e.latestOption
+    val s: Signal[Option[Int]] = e.latestOption()
 
     e(1)
     assert(s.get == Option(1))
