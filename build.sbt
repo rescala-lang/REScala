@@ -1,29 +1,29 @@
-lazy val root = Project("root", file(".")).aggregate(core, tests)
+name := "rescala"
 
-lazy val core = Project("rescala", file("REScala"))
-  .settings(
-    scalaSource in Compile <<= baseDirectory {(base) => new File(base, "src")},
-    libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _))
+organization := "de.tuda.stg"
 
-lazy val tests = Project("tests", file("REScalaTests"))
-  .settings(
-    scalaSource in Test <<= baseDirectory {(base) => new File(base, "test")},
-    parallelExecution in Test := false,
-    libraryDependencies ++= (
-      "org.mockito" % "mockito-all" % "1.9.5" % "test" ::
-      "org.scalatest" %% "scalatest" % "2.2.2" % "test" ::
-      "com.novocode" % "junit-interface" % "0.11" % "test" ::
-      Nil)
-  )
-  .dependsOn(core)
+version := "0.2.0"
 
-organization in ThisBuild := "de.tuda.stg"
+scalaVersion := "2.10.4"
 
-version in ThisBuild := "0.0.0"
+crossScalaVersions := Seq("2.10.4", "2.11.2")
 
-scalaVersion in ThisBuild := "2.11.2"
+scalaSource in Compile <<= baseDirectory { (base) => new File(base, "REScala/src") }
 
-scalacOptions in ThisBuild ++= (
+libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _)
+
+scalaSource in Test <<= baseDirectory { (base) => new File(base, "REScala/test") }
+
+parallelExecution in Test := false
+
+libraryDependencies ++= (
+  "org.mockito" % "mockito-all" % "1.9.5" % "test" ::
+    "org.scalatest" %% "scalatest" % "2.2.2" % "test" ::
+    "com.novocode" % "junit-interface" % "0.11" % "test" ::
+    Nil)
+
+
+scalacOptions ++= (
   "-deprecation" ::
   "-encoding" :: "UTF-8" ::
   "-unchecked" ::
