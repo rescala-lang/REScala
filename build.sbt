@@ -11,8 +11,8 @@ lazy val tests = Project("tests", file("REScalaTests"))
     parallelExecution in Test := false,
     libraryDependencies ++= (
       "org.mockito" % "mockito-all" % "1.9.5" % "test" ::
-      "org.scalatest" %% "scalatest" % "2.2.1" % "test" ::
-      "com.novocode" % "junit-interface" % "0.10" % "test" ::
+      "org.scalatest" %% "scalatest" % "2.2.2" % "test" ::
+      "com.novocode" % "junit-interface" % "0.11" % "test" ::
       Nil)
   )
   .dependsOn(core)
