@@ -21,13 +21,13 @@ trait Event[+T] extends Pulsing[T] {
   /**
    * Events disjunction.
    */
-  def ||[S >: T, U <: S](other: Event[U])(implicit maybe: MaybeTurn): Event[S] = Events.or[S](this, other)
+  def ||[U >: T](other: Event[U])(implicit maybe: MaybeTurn): Event[U] = Events.or(this, other)
 
   /**
    * Event filtered with a predicate
    */
-  def &&[U >: T](pred: U => Boolean)(implicit maybe: MaybeTurn): Event[T] = Events.filter(this)(pred)
-  def filter[U >: T](pred: U => Boolean)(implicit maybe: MaybeTurn): Event[T] = &&[U](pred)
+  def &&(pred: T => Boolean)(implicit maybe: MaybeTurn): Event[T] = Events.filter(this)(pred)
+  def filter(pred: T => Boolean)(implicit maybe: MaybeTurn): Event[T] = &&(pred)
 
   /**
    * Event filtered with a boolean variable
@@ -43,12 +43,12 @@ trait Event[+T] extends Pulsing[T] {
   /**
    * Events conjunction
    */
-  def and[U, V, S >: T](other: Event[U], merge: (S, U) => V)(implicit maybe: MaybeTurn): Event[V] = Events.and(this, other, merge)
+  def and[U, R](other: Event[U], merge: (T, U) => R)(implicit maybe: MaybeTurn): Event[R] = Events.and(this, other, merge)
 
   /**
    * Event conjunction with a merge method creating a tuple of both event parameters
    */
-  def &&[U, S >: T](other: Event[U])(implicit maybe: MaybeTurn): Event[(S, U)] = Events.and(this, other, (p1: S, p2: U) => (p1, p2))
+  def &&[U](other: Event[U])(implicit maybe: MaybeTurn): Event[(T, U)] = Events.and(this, other, (p1: T, p2: U) => (p1, p2))
 
   /**
    * Transform the event parameter
@@ -58,7 +58,7 @@ trait Event[+T] extends Pulsing[T] {
   /**
    * Drop the event parameter; equivalent to map((_: Any) => ())
    */
-  def dropParam[S >: T](implicit maybe: MaybeTurn): Event[Unit] = Events.map(this)(_ => ())
+  def dropParam(implicit maybe: MaybeTurn): Event[Unit] = Events.map(this)(_ => ())
 
 
   /** folds events with a given fold function to create a Signal */
@@ -83,8 +83,8 @@ trait Event[+T] extends Pulsing[T] {
   def latest[S >: T](init: S)(implicit maybe: MaybeTurn): Signal[S] = fold(init)((_, v) => v)
 
   /** Holds the latest value of an event as an Option, None before the first event occured */
-  def hold[S >: T]()(implicit maybe: MaybeTurn): Signal[Option[T]] = latestOption()
-  def latestOption[S >: T]()(implicit maybe: MaybeTurn): Signal[Option[T]] = fold(None: Option[T]){ (_, v) => Some(v) }
+  def hold()(implicit maybe: MaybeTurn): Signal[Option[T]] = latestOption()
+  def latestOption()(implicit maybe: MaybeTurn): Signal[Option[T]] = fold(None: Option[T]){ (_, v) => Some(v) }
 
   /** calls factory on each occurrence of event e, resetting the Signal to a newly generated one */
   def reset[S >: T, A](init: S)(factory: S => Signal[A])(implicit maybe: MaybeTurn): Signal[A] = set(init)(factory).flatten()
@@ -93,13 +93,13 @@ trait Event[+T] extends Pulsing[T] {
    * Returns a signal which holds the last n events in a list. At the beginning the
    *  list increases in size up to when n values are available
    */
-  def last[S >: T](n: Int)(implicit maybe: MaybeTurn): Signal[LinearSeq[S]] =
+  def last(n: Int)(implicit maybe: MaybeTurn): Signal[LinearSeq[T]] =
     fold(Queue[T]()) { (queue: Queue[T], v: T) =>
       if (queue.length >= n) queue.tail.enqueue(v) else queue.enqueue(v)
     }
 
   /** collects events resulting in a variable holding a list of all values. */
-  def list[S >: T]()(implicit maybe: MaybeTurn): Signal[List[S]] = fold(List[T]())((acc, v) => v :: acc)
+  def list()(implicit maybe: MaybeTurn): Signal[List[T]] = fold(List[T]())((acc, v) => v :: acc)
 
   /** Switch back and forth between two signals on occurrence of event e */
   def toggle[A](a: Signal[A], b: Signal[A]): Signal[A] = {
