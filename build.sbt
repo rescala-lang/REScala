@@ -2,11 +2,7 @@ name := "rescala"
 
 organization := "de.tuda.stg"
 
-val gitHeadCommitSha = settingKey[String]("current git commit SHA")
-
-gitHeadCommitSha := Process("git rev-parse HEAD").lines.head
-
-version := "0.2.0-" + gitHeadCommitSha.value
+version := "0.3.0"
 
 scalaVersion := "2.11.2"
 

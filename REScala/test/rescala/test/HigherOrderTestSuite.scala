@@ -9,7 +9,7 @@ import rescala.signals._
 class HigherOrderTestSuite extends AssertionsForJUnit with MockitoSugar {
 
 
-  @Test def basicHigherOrderSignal_canBeAccessed() = {
+  @Test def basicHigherOrderSignal_canBeAccessed(): Unit = {
     val v = Var(42)
     val s1: Signal[Int] = v.map(identity)
     val s2: Signal[Signal[Int]] = Signals.dynamic() { t => s1 }
@@ -20,7 +20,7 @@ class HigherOrderTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(s2.get.get == 0)
   }
 
-  @Test def basicHigherOrderSignal_canBeDefereferenced() = {
+  @Test def basicHigherOrderSignal_canBeDefereferenced(): Unit = {
     val v = Var(42)
     val s1: Signal[Int] = v.map(identity)
     val s2: Signal[Signal[Int]] = Signals.dynamic() { t => s1 }
@@ -33,7 +33,7 @@ class HigherOrderTestSuite extends AssertionsForJUnit with MockitoSugar {
   }
 
 
-  @Test def basicHigherOrderSignal_derefFiresChange() = {
+  @Test def basicHigherOrderSignal_derefFiresChange(): Unit = {
     val v = Var(42)
     val sValue: Signal[Int] = v.map(identity)
     val sHigher: Signal[Signal[Int]] = Signals.dynamic() { t => sValue }
@@ -54,7 +54,7 @@ class HigherOrderTestSuite extends AssertionsForJUnit with MockitoSugar {
   }
 
 
-  @Test def basicHigherOrderSignal_higherOrderFiresChange() = {
+  @Test def basicHigherOrderSignal_higherOrderFiresChange(): Unit = {
     val v1 = Var(42)
     val v2 = Var(123)
     val s1: Signal[Int] = v1.map(identity)
@@ -92,7 +92,7 @@ class HigherOrderTestSuite extends AssertionsForJUnit with MockitoSugar {
   }
 
 
-  @Test def order3Signal() = {
+  @Test def order3Signal(): Unit = {
 
     val v = Var(42)
     val s0: Signal[Int] = v.map(identity)
@@ -125,7 +125,7 @@ class HigherOrderTestSuite extends AssertionsForJUnit with MockitoSugar {
   }
 
 
-  @Test def listOfSignalsSection() = {
+  @Test def listOfSignalsSection(): Unit = {
     val tick = new ImperativeEvent[Unit]
     val count = tick.iterate(0)(_ + 1)
     val doubled = count.map(_ * 2)
@@ -150,7 +150,7 @@ class HigherOrderTestSuite extends AssertionsForJUnit with MockitoSugar {
 
 
 
-  @Test def unwrap_Event() = {
+  @Test def unwrap_Event(): Unit = {
     val e1 = new ImperativeEvent[Int]
     val e2 = new ImperativeEvent[Int]
     val eventSelector = Var(e1)
@@ -173,7 +173,7 @@ class HigherOrderTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(lastEvent == 5)
   }
 
-  @Test def dynamicLevel() = {
+  @Test def dynamicLevel(): Unit = {
     val v1 = Var(1)
 
     val derived = v1.map(identity)
@@ -209,11 +209,11 @@ class HigherOrderTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(log == List(1, 13, 1, 13))
   }
 
-  @Test def wrappedEvent() = {
+  @Test def wrappedEvent(): Unit = {
     val e1 = new ImperativeEvent[Int]()
     val condition = e1.latest(-1)
-    val level1Event = e1.map[String, Int](_ => "level 1")
-    val level2Event = level1Event.map[String, String](_ => "level 2")
+    val level1Event = e1.map(_ => "level 1")
+    val level2Event = level1Event.map(_ => "level 2")
     val dynamicSignal = Signals.dynamic() {t => if(condition(t) == 1) level1Event else level2Event}
 
     val unwrapped = dynamicSignal.unwrap
@@ -227,11 +227,11 @@ class HigherOrderTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(log == List("level 1", "level 2"))
   }
 
-  @Test def wrappedEventSameLevel() = {
+  @Test def wrappedEventSameLevel(): Unit = {
     val e1 = new ImperativeEvent[Int]()
     val level2Condition = e1.latest(-1).map(identity)
-    val level1EventA = e1.map[String, Int](_ => "A")
-    val level1EventB = e1.map[String, Int](_ => "B")
+    val level1EventA = e1.map(_ => "A")
+    val level1EventB = e1.map(_ => "B")
     val dynamicSignal = Signals.dynamic() { t => if(level2Condition(t) == 1) level1EventA else level1EventB }
 
     val unwrapped = dynamicSignal.unwrap

@@ -53,7 +53,7 @@ trait Event[+T] extends Pulsing[T] {
   /**
    * Transform the event parameter
    */
-  def map[U, S >: T](mapping: S => U)(implicit maybe: MaybeTurn): Event[U] = Events.map(this)(mapping)
+  def map[U](mapping: T => U)(implicit maybe: MaybeTurn): Event[U] = Events.map(this)(mapping)
 
   /**
    * Drop the event parameter; equivalent to map((_: Any) => ())
