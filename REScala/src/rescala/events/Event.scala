@@ -30,12 +30,6 @@ trait Event[+T] extends Pulsing[T] {
   def filter(pred: T => Boolean)(implicit maybe: MaybeTurn): Event[T] = &&(pred)
 
   /**
-   * Event filtered with a boolean variable
-   */
-  def &&(predicate: => Boolean)(implicit maybe: MaybeTurn): Event[T] = Events.filter[T](this)(_ => predicate)
-  def filter(predicate: => Boolean)(implicit maybe: MaybeTurn): Event[T] = &&(predicate)
-
-  /**
    * Event is triggered except if the other one is triggered
    */
   def \[U](other: Event[U])(implicit maybe: MaybeTurn): Event[T] = Events.except(this, other)
