@@ -13,6 +13,7 @@ import scala.util.DynamicVariable
 class Turn {
   private val evalQueue = new mutable.PriorityQueue[(Int, Reactive)]()(Turn.reactiveOrdering)
   private var toCommit = Set[Reactive]()
+  private var afterCommitHandlers = List[() => Unit]()
 
   implicit def implicitThis: Turn = this
 
@@ -96,6 +97,10 @@ class Turn {
 
   def commit() = toCommit.foreach(_.commit(this))
 
+  def afterCommit(handler: => Unit) = afterCommitHandlers ::= handler _
+
+  def runAfterCommitHandlers() = afterCommitHandlers.foreach(_())
+
   object dynamic {
     val bag = new DynamicVariable(Set[Reactive]())
     def used(dependency: Reactive) = bag.value = bag.value + dependency
@@ -132,6 +137,7 @@ object Turn {
       turn.commit()
       res
     }
+    turn.runAfterCommitHandlers()
     result
   }
 

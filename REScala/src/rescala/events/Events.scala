@@ -11,7 +11,7 @@ import rescala.signals.Signal
 final case class EventHandler[T](fun: T => Unit, dependency: Pulsing[T]) extends Event[T] with StaticReevaluation[T] {
   override def calculatePulse()(implicit turn: Turn): Pulse[T] = dependency.pulse
   override def commit(implicit turn: Turn): Unit = {
-    pulse.toOption.foreach(fun)
+    pulse.toOption.foreach(v => turn.afterCommit(fun(v)))
     super.commit
   }
 }
