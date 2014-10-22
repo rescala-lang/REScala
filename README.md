@@ -1,6 +1,9 @@
-== Animal use case ==
+this fork adds compatibility for scala 2.11.2 as well as newer versions of REScala
 
-= Simplified Animal rules =
+# Animal use case
+
+# Simplified Animal rules
+
 	- Elements on a board, integer positions (x, y)
 	- Elements move, one field at a time (tick)
 	- Only one element per field allowed
@@ -24,7 +27,8 @@
 		- spawn a new plant every day
 		- spawn a new animal every week
 
-= Reimplementation Goals =
+# Reimplementation Goals
+
 	- simplified version (reduced rules)
 	- easier to read
 	- less imperative, more functional, more object-oriented
