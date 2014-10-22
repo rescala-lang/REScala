@@ -20,7 +20,7 @@ object RunSwingWindow extends SimpleSwingApplication {
   val nAnimals = 8
   val nPlants = 8
 
-  override def main(args: Array[String]) {
+  override def main(args: Array[String]): Unit = {
     super.main(args)
     //rescala.ReactiveEngine.log.enableDefaultLogging
 
@@ -67,7 +67,7 @@ object RunSwingWindow extends SimpleSwingApplication {
 
     val panel = new Panel() {
       preferredSize = new Dimension(1200, 600)
-      override def paintComponent(g: Graphics2D) {
+      override def paintComponent(g: Graphics2D): Unit = {
 
         boardString.lines.zipWithIndex.foreach {
           case (line, lineIndex) =>

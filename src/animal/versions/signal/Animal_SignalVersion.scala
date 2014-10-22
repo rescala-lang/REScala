@@ -1,22 +1,20 @@
 package animal.versions.signal
 
 import animal.types.Pos
+import scala.collection.immutable.IndexedSeq
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.Map
-import rescala.events.ImperativeEvent
-import rescala.SignalSynt
-import rescala.Var
-import rescala.Signal
+import rescala.events._
+import rescala.signals._
 import scala.util.Random
-import rescala.events.Event
 import animal.types.Pos.fromTuple
 import scala.Option.option2Iterable
-import makro.SignalMacro.{SignalM => Signal}
+import rescala.macros.SignalMacro.{SignalM => Signal}
 
 
 object Board {
-  def square(range: Int) = for(x <- -range to range; y <- -range to range) yield (x,y)  
-  def proximity(pos: Pos, range: Int) = square(range).map(pos + _).sortBy(pos.distance(_))
+  def square(range: Int): IndexedSeq[(Int, Int)] = for(x <- -range to range; y <- -range to range) yield (x,y)
+  def proximity(pos: Pos, range: Int): IndexedSeq[(Int, Int)] = square(range).map(pos + _).sortBy(pos.distance(_))
 }
 
 /**
@@ -34,18 +32,18 @@ class Board(val width: Int, val height: Int) {
   val animalRemoved = elementRemoved && (_.isInstanceOf[Animal]) //#EVT
   val animalsBorn = animalSpawned.iterate(0)(_ + 1) //#SIG #IF
   val animalsDied = animalRemoved.iterate(0)(_ + 1) //#SIG #IF
-  val animalsAlive: Signal[Int] = SignalSynt(animalsBorn, animalsDied) //#SIG
-  	{s: SignalSynt[Int] => animalsBorn(s) - animalsDied(s)}
+  val animalsAlive: Signal[Int] = Signals.lift(animalsBorn, animalsDied) //#SIG
+  	{_ - _}
   
   /** adds a board element at given position */
-  def add(be: BoardElement, pos: (Int, Int)) {
+  def add(be: BoardElement, pos: (Int, Int)): Unit = {
     elements.put(pos, be)
     elementSpawned(be)
   }
   
   /** removes the board element if present in the board */
-  def remove(be: BoardElement): Unit = getPosition(be).foreach(remove(_))
-  def remove(pos: (Int, Int)) = {
+  def remove(be: BoardElement): Unit = getPosition(be).foreach(remove)
+  def remove(pos: (Int, Int)): Unit = {
     val e = elements.remove(pos)
     if(e.isDefined) elementRemoved(e.get)
   }
@@ -66,7 +64,7 @@ class Board(val width: Int, val height: Int) {
   def nearestFree(pos: (Int, Int)) = Board.proximity(pos, 1).find(isFree)
   
   /** moves pos in direction dir if possible (when target is free) */
-  def moveIfPossible(pos: Pos, dir: Pos){
+  def moveIfPossible(pos: Pos, dir: Pos): Unit = {
     val newPos = pos + dir
     if(isFree(newPos) && !isFree(pos)){
       val e = clear(pos)
@@ -98,7 +96,7 @@ class Board(val width: Int, val height: Int) {
       case Some(_) => '?'
     }
     val lines = for(y <- 0 to height)
-      yield (0 to width).map(x => repr(elements.get(x,y))).mkString
+      yield (0 to width).map(x => repr(elements.get((x, y)))).mkString
      lines.mkString("\n")
   }
 }
@@ -111,7 +109,7 @@ abstract class BoardElement(implicit val world: World) {
   lazy val dies: Event[Unit] = isDead changedTo true //#EVT //#IF
   
   /** Some imperative code that is called each tick */
-  def doStep(pos: Pos) {}
+  def doStep(pos: Pos): Unit = {}
 }
 
 object Animal {
@@ -151,7 +149,7 @@ abstract class Animal(override implicit val world: World) extends BoardElement {
 	def reachedState(target: BoardElement): AnimalState
 	
 	
-	def savage = state.set(FallPrey)
+	def savage() = state.set(FallPrey)
 	
 	protected def nextAction(pos: Pos): AnimalState =  {
 		val neighbors = world.board.neighbors(pos)
@@ -210,7 +208,7 @@ abstract class Animal(override implicit val world: World) extends BoardElement {
 	override val isDead = Signal { age() > Animal.MaxAge || energy() < 0} //#SIG
 
 	/** imperative 'AI' function */
-	override def doStep(pos: Pos) {
+	override def doStep(pos: Pos): Unit = {
 	    state.get match {
 	      case Moving(dir) => world.board.moveIfPossible(pos, dir)
 	      case Eating(plant) => plant.takeEnergy(energyGain.get)
@@ -228,8 +226,8 @@ class Carnivore(override implicit val world: World) extends Animal {
   val canHunt = Signal { energy() > Animal.AttackThreshold } //#SIG
 	
   // only adult carnivores with min energy can hunt, others eat plants
-  val findFood: Signal[PartialFunction[BoardElement, BoardElement]] = SignalSynt { (s: SignalSynt[PartialFunction[BoardElement, BoardElement]]) =>  //#SIG
-     if(isAdult(s) && canHunt(s)) { case p: Herbivore => p} : PartialFunction[BoardElement, BoardElement]
+  val findFood: Signal[PartialFunction[BoardElement, BoardElement]] = Signals.dynamic(isAdult, canHunt) { t =>  //#SIG
+     if(isAdult(t) && canHunt(t)) { case p: Herbivore => p} : PartialFunction[BoardElement, BoardElement]
      else { case p: Plant => p }                            : PartialFunction[BoardElement, BoardElement] 
    }
     
@@ -249,7 +247,7 @@ class Carnivore(override implicit val world: World) extends Animal {
 class Herbivore(override implicit val world: World) extends Animal {
   
   val findFood: Signal[PartialFunction[BoardElement, BoardElement]] = //#SIG
-    SignalSynt { (s: SignalSynt[PartialFunction[BoardElement, BoardElement]]) =>  { case p: Plant => p } :PartialFunction[BoardElement, BoardElement] }
+    Var { { case p: Plant => p }: PartialFunction[BoardElement, BoardElement] }
   
   override def reachedState(plant: BoardElement): AnimalState = plant match {
     case p: Plant => Eating(p)
@@ -289,19 +287,19 @@ trait Female extends Animal {
     mate.set(None)
   }
   
-  def procreate(father: Animal) {
-    if(isPregnant.get) return;
+  def procreate(father: Animal): Unit = {
+    if(isPregnant.get) return
     mate.set(Some(father))
   }
   
   
   def createOffspring(father: Animal): Animal = {
-      val male = world.randomness.nextBoolean
+      val male = world.randomness.nextBoolean()
   	  val nHerbivores = List(this, father).map(_.isInstanceOf[Herbivore]).count(_ == true)
   	  val herbivore = 
   	    if (nHerbivores == 0) false // both parents are a carnivores, child is carnivore
   	    else if (nHerbivores == 2) true // both parents are herbivores, child is herbivore
-  	    else world.randomness.nextBoolean // mixed parents, random
+  	    else world.randomness.nextBoolean() // mixed parents, random
   	  
   	  world.newAnimal(herbivore, male)
   }
@@ -421,7 +419,7 @@ class World {
     "Animals alive:" + board.animalsAlive() + 
     "; Total born: " + board.animalsBorn() }
   
-  def tick = time.tick()
+  def tick() = time.tick(Unit)
     
   def dump = board.dump
   def timestring = time.timestring.get
@@ -437,10 +435,10 @@ class World {
   }
   
   /** returns an animal at random */
-  def newAnimal: Animal = newAnimal(randomness.nextBoolean, randomness.nextBoolean)
+  def newAnimal: Animal = newAnimal(randomness.nextBoolean(), randomness.nextBoolean())
   
   /** batch spawns n Animals and m Plants */
-  def batchSpawn(nAnimals: Int, mPlants: Int) {
+  def batchSpawn(nAnimals: Int, mPlants: Int): Unit = {
     for(_ <- 1 to nAnimals) spawn(newAnimal)
     for(_ <- 1 to mPlants) spawn(new Plant)
   }
@@ -449,7 +447,7 @@ class World {
   def spawn(element: BoardElement, pos: Pos) = board.add(element, pos)
   
   /** spawns the given Board element at a free random position in the world */
-  def spawn(element: BoardElement){ 
+  def spawn(element: BoardElement): Unit = {
     spawn(element,  board.randomFreePosition(randomness))
   }
   

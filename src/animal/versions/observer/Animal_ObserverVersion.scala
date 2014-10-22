@@ -1,13 +1,9 @@
 package animal.versions.observer
 
 import animal.types.Pos
-import scala.collection.mutable.HashMap
-import scala.collection.mutable.Map
-import rescala.events.ImperativeEvent
-import rescala.Signal
-import rescala.Var
+import scala.collection.mutable
 import scala.util.Random
-import commons.Observable
+//import commons.Observable
 
 object Board {
   def square(range: Int) = for(x <- -range to range; y <- -range to range) yield (x,y)  
@@ -19,16 +15,16 @@ object Board {
  * A Board is infinite, but width and height specify the area being displayed.
  */
 class Board(val width: Int, val height: Int) {
-  val elements: Map[(Int, Int), BoardElement] = new HashMap
+  val elements: mutable.Map[(Int, Int), BoardElement] = new mutable.HashMap
   val allPositions = (for(x <- 0 to width; y <- 0 to height) yield (x, y)).toSet
   
   /** adds a board element at given position */
-  def add(be: BoardElement, pos: (Int, Int)) {
+  def add(be: BoardElement, pos: (Int, Int)): Unit = {
     elements.put(pos, be)
   }
   
   /** removes the board element if present in the board */
-  def remove(be: BoardElement): Unit = getPosition(be).foreach(remove(_))
+  def remove(be: BoardElement): Unit = getPosition(be).foreach(remove)
   def remove(pos: (Int, Int)) = {
     val e = elements.remove(pos)
   }
@@ -49,7 +45,7 @@ class Board(val width: Int, val height: Int) {
   def nearestFree(pos: (Int, Int)) = Board.proximity(pos, 1).find(isFree)
   
   /** moves pos in direction dir if possible (when target is free) */
-  def moveIfPossible(pos: Pos, dir: Pos){
+  def moveIfPossible(pos: Pos, dir: Pos): Unit = {
     val newPos = pos + dir
     if(isFree(newPos) && !isFree(pos)){
       val e = clear(pos)
@@ -59,9 +55,9 @@ class Board(val width: Int, val height: Int) {
   
   /** @return the position of the given BoardElement. slow. */
   def getPosition(be: BoardElement) = {
-    elements.collectFirst { _ match {
+    elements.collectFirst {
       case (pos, b) if b == be => pos
-    }}
+    }
   }
   
   /** @return a random free position on this board */
@@ -81,7 +77,7 @@ class Board(val width: Int, val height: Int) {
       case Some(_) => '?'
     }
     val lines = for(y <- 0 to height)
-      yield (0 to width).map(x => repr(elements.get(x,y))).mkString
+      yield (0 to width).map(x => repr(elements.get((x, y)))).mkString
      lines.mkString("\n")
   }
 }
@@ -91,15 +87,16 @@ abstract class BoardElement(implicit val world: World) {
   def isDead: Boolean
   
   /** A board element broadcasts a died event when it dies*/
-  var dies = Observable[Unit](())
+  // no clue what observable might be, also seems unused?
+  //var dies = Observable[Unit](())
   
   var diesObservers: List[(Unit => Unit)] = Nil
   
-  def registerDiesObserver(obs: (Unit => Unit)){
+  def registerDiesObserver(obs: (Unit => Unit)): Unit = {
    diesObservers = obs :: diesObservers
   }
   
-  def unregisterDiesObserver(obs: (Unit => Unit)){
+  def unregisterDiesObserver(obs: (Unit => Unit)): Unit = {
    diesObservers = diesObservers.filterNot(_ == obs)
   }
   
@@ -108,7 +105,7 @@ abstract class BoardElement(implicit val world: World) {
   var dailyHandlers: List[(Unit => Unit)] = Nil
   
   /** Some imperative code that is called each tick */
-  def doStep(pos: Pos) {}
+  def doStep(pos: Pos): Unit = {}
 }
 
 object Animal {
@@ -158,7 +155,7 @@ abstract class Animal(override implicit val world: World) extends BoardElement {
 	def findFood: PartialFunction[BoardElement, BoardElement]
     def reachedState(target: BoardElement): AnimalState
     
-    def savage = state = FallPrey
+    def savage() = state = FallPrey
 	
 	// handle updates
 	tickHandlers ::= { _: Unit =>
@@ -181,7 +178,7 @@ abstract class Animal(override implicit val world: World) extends BoardElement {
     energy -= energyDrain
 		 
 	 if(!isDead && age > Animal.MaxAge || energy < 0) {
-	 	diesObservers.foreach(f => f())
+	 	diesObservers.foreach(f => f(Unit))
 	 	isDead = true
 	 }
 	}
@@ -191,7 +188,7 @@ abstract class Animal(override implicit val world: World) extends BoardElement {
 	  age += 1
 	  
 	  if(!isDead && age > Animal.MaxAge || energy < 0) {
-	 	diesObservers.foreach(f => f())
+	 	diesObservers.foreach(f => f(Unit))
 	 	isDead = true
 	 }
 	}
@@ -222,7 +219,7 @@ abstract class Animal(override implicit val world: World) extends BoardElement {
   }
 
 	/** imperative 'AI' function */
-	override def doStep(pos: Pos) {
+	override def doStep(pos: Pos): Unit = {
 	    state match {
 	      case Moving(dir) => world.board.moveIfPossible(pos, dir)
 	      case Eating(plant) => plant.takeEnergy(if(isEating) Animal.PlantEatRate else 0)
@@ -298,19 +295,19 @@ trait Female extends Animal {
   
   
   
-  def procreate(father: Animal) {
+  def procreate(father: Animal): Unit = {
     mate = Some(father)
     pregnancyTime = 0
   }
   
   
    def createOffspring(father: Animal): Animal = {
-      val male = world.randomness.nextBoolean
+      val male = world.randomness.nextBoolean()
   	  val nHerbivores = List(this, father).map(_.isInstanceOf[Herbivore]).count(_ == true)
   	  val herbivore = 
   	    if (nHerbivores == 0) false // both parents are a carnivores, child is carnivore
   	    else if (nHerbivores == 2) true // both parents are herbivores, child is herbivore
-  	    else world.randomness.nextBoolean // mixed parents, random
+  	    else world.randomness.nextBoolean() // mixed parents, random
   	  
   	  world.newAnimal(herbivore, male)
   }
@@ -387,10 +384,10 @@ class Plant(override implicit val world: World) extends BoardElement {
   val dailyHandler = {_: Unit => }
   
   /** takes amount away from the energy of this plant */
-  def takeEnergy(amount: Int) {
+  def takeEnergy(amount: Int): Unit = {
     energy -= amount
     if(energy <= 0){
-      diesObservers.foreach(f => f())
+      diesObservers.foreach(f => f(Unit))
 	  isDead = true
     }
   }
@@ -407,7 +404,7 @@ class Time {
   var week = 0
   var timestring = ""  
     
-  def tick {
+  def tick(): Unit = {
     
     hours += 1
     hour = hours % 24
@@ -417,13 +414,13 @@ class Time {
     timestring = "Week " + week + ", Day " + day + " hour:" + hour
     
     // trigger observers
-    tickObservers.foreach(f => f())
+    tickObservers.foreach(f => f(Unit))
     
     if(hour == 0)
-      dailyObservers.foreach(f => f())
+      dailyObservers.foreach(f => f(Unit))
       
     if(hour == 0 && day % 7 == 0)
-      weeklyObservers.foreach(f => f())
+      weeklyObservers.foreach(f => f(Unit))
   }
 
   
@@ -431,27 +428,27 @@ class Time {
   private var dailyObservers: List[(Unit => Unit)] = Nil
   private var weeklyObservers: List[(Unit => Unit)] = Nil
   
-  def registerTickObserver(obs: (Unit => Unit)){
+  def registerTickObserver(obs: (Unit => Unit)): Unit = {
    tickObservers = obs :: tickObservers
   }
   
-  def registerDayChangedObserver(obs: (Unit => Unit)){
+  def registerDayChangedObserver(obs: (Unit => Unit)): Unit = {
     dailyObservers = obs :: dailyObservers
   }
   
-  def registerWeekChangedObserver(obs: (Unit => Unit)){
+  def registerWeekChangedObserver(obs: (Unit => Unit)): Unit = {
     weeklyObservers = obs :: weeklyObservers
   }
   
-  def unregisterTickObserver(obs: (Unit => Unit)){
+  def unregisterTickObserver(obs: (Unit => Unit)): Unit = {
    tickObservers = tickObservers.filterNot(_ == obs)
   }
   
-  def unregisterDayChangedObserver(obs: (Unit => Unit)){
+  def unregisterDayChangedObserver(obs: (Unit => Unit)): Unit = {
     dailyObservers =  dailyObservers.filterNot(_ == obs)
   }
   
-  def unregisterWeekChangedObserver(obs: (Unit => Unit)){
+  def unregisterWeekChangedObserver(obs: (Unit => Unit)): Unit = {
     weeklyObservers =  weeklyObservers.filterNot(_ == obs)
   }
 }
@@ -473,7 +470,7 @@ class World {
   val time = new Time
   val randomness = new Random
   
-  def tick = time.tick
+  def tick() = time.tick
   def dump = board.dump
   def timestring = time.timestring
   def status = "Status string not implemented yet."
@@ -489,21 +486,21 @@ class World {
   }
   
   /** returns an animal at random */
-  def newAnimal: Animal = newAnimal(randomness.nextBoolean, randomness.nextBoolean)
+  def newAnimal: Animal = newAnimal(randomness.nextBoolean(), randomness.nextBoolean())
   
   /** batch spawns n Animals and m Plants */
-  def batchSpawn(nAnimals: Int, mPlants: Int) {
+  def batchSpawn(nAnimals: Int, mPlants: Int): Unit = {
     for(_ <- 1 to nAnimals) spawn(newAnimal)
     for(_ <- 1 to mPlants) spawn(new Plant)
   }
   
   /** spawns the given Board element at a free random position in the world */
-  def spawn(element: BoardElement) { 
+  def spawn(element: BoardElement): Unit = {
     spawn(element,  board.randomFreePosition(randomness))
   }
   
   /** spawns the given Board element at a given position in the world */
-  def spawn(element: BoardElement, pos: Pos) {
+  def spawn(element: BoardElement, pos: Pos): Unit = {
     board.add(element, pos)
     
     // register handlers
@@ -515,7 +512,7 @@ class World {
     )
     
     // register unspawning    
-    def diesHandler(a: Unit) {
+    def diesHandler(a: Unit): Unit = {
       unspawn(element)
       element.unregisterDiesObserver(diesHandler)
     }    
@@ -523,7 +520,7 @@ class World {
   }
   
   /** removed the given Board element from the world */
-  def unspawn(element: BoardElement) {
+  def unspawn(element: BoardElement): Unit = {
     // unregister handlers
     element.tickHandlers.foreach(handler => 
       time.unregisterTickObserver(handler)

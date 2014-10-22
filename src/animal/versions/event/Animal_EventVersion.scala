@@ -35,7 +35,7 @@ class Board(val width: Int, val height: Int) {
   animalRemoved += {_ => animalsDied += 1; animalsAlive -= 1 } //#HDL
   
   /** adds a board element at given position */
-  def add(be: BoardElement, pos: (Int, Int)) {
+  def add(be: BoardElement, pos: (Int, Int)): Unit = {
     elements.put(pos, be)
     elementSpawned(be)
   }
@@ -63,7 +63,7 @@ class Board(val width: Int, val height: Int) {
   def nearestFree(pos: (Int, Int)) = Board.proximity(pos, 1).find(isFree)
   
   /** moves pos in direction dir if possible (when target is free) */
-  def moveIfPossible(pos: Pos, dir: Pos){
+  def moveIfPossible(pos: Pos, dir: Pos): Unit = {
     val newPos = pos + dir
     if(isFree(newPos) && !isFree(pos)){
       val e = clear(pos)
@@ -95,7 +95,7 @@ class Board(val width: Int, val height: Int) {
       case Some(_) => '?'
     }
     val lines = for(y <- 0 to height)
-      yield (0 to width).map(x => repr(elements.get(x,y))).mkString
+      yield (0 to width).map(x => repr(elements.get((x, y)))).mkString
      lines.mkString("\n")
   }
 }
@@ -111,7 +111,7 @@ abstract class BoardElement(implicit val world: World) {
   val dailyHandler: (Unit => Unit)
 
   /** Some imperative code that is called each tick */
-  def doStep(pos: Pos) {}
+  def doStep(pos: Pos): Unit = {}
 }
 
 object Animal {
@@ -159,7 +159,7 @@ abstract class Animal(override implicit val world: World) extends BoardElement {
   def findFood: PartialFunction[BoardElement, BoardElement]
   def reachedState(target: BoardElement): AnimalState  
   
-  def savage = state = FallPrey
+  def savage() = state = FallPrey
 
   // dies event, gets triggered once at the moment this animal dies
   val dies = world.time.tick && (_ => !isDead && age > Animal.MaxAge || energy < 0) //#EVT //#EF
@@ -218,7 +218,7 @@ abstract class Animal(override implicit val world: World) extends BoardElement {
   }
 
 	/** imperative 'AI' function */
-	override def doStep(pos: Pos) {
+	override def doStep(pos: Pos): Unit = {
 	    state match {
 	      case Moving(dir) => world.board.moveIfPossible(pos, dir)
 	      case Eating(plant) => plant.takeEnergy(if(isEating) Animal.PlantEatRate else 0)
@@ -294,20 +294,20 @@ trait Female extends Animal {
   }
   
   
-  def procreate(father: Animal) {
+  def procreate(father: Animal): Unit = {
     mate = Some(father)
     pregnancyTime = 0
-    becomePregnant()
+    becomePregnant(Unit)
   }
   
   
    def createOffspring(father: Animal): Animal = {
-      val male = world.randomness.nextBoolean
+      val male = world.randomness.nextBoolean()
   	  val nHerbivores = List(this, father).map(_.isInstanceOf[Herbivore]).count(_ == true)
   	  val herbivore = 
   	    if (nHerbivores == 0) false // both parents are a carnivores, child is carnivore
   	    else if (nHerbivores == 2) true // both parents are herbivores, child is herbivore
-  	    else world.randomness.nextBoolean // mixed parents, random
+  	    else world.randomness.nextBoolean() // mixed parents, random
   	  
   	  world.newAnimal(herbivore, male)
   }
@@ -386,7 +386,7 @@ class Plant(override implicit val world: World) extends BoardElement {
        val oldSize = size
 	   size = math.min(Plant.MaxSize, size + 1)
 	   if(size != oldSize)
-		 grows()
+		 grows(Unit)
     }
   }
   
@@ -445,7 +445,7 @@ class World {
        "; Total born: " + board.animalsBorn
   }
 
-  def tick = time.tick()
+  def tick() = time.tick(Unit)
   def dump = board.dump
   def timestring = time.timestring
   def status = statusString
@@ -460,22 +460,22 @@ class World {
   }
   
   /** returns an animal at random */
-  def newAnimal: Animal = newAnimal(randomness.nextBoolean, randomness.nextBoolean)
+  def newAnimal: Animal = newAnimal(randomness.nextBoolean(), randomness.nextBoolean())
   
   /** batch spawns n Animals and m Plants */
-  def batchSpawn(nAnimals: Int, mPlants: Int) {
+  def batchSpawn(nAnimals: Int, mPlants: Int): Unit = {
     for(_ <- 1 to nAnimals) spawn(newAnimal)
     for(_ <- 1 to mPlants) spawn(new Plant)
   }
   
   
   /** spawns the given Board element at a free random position in the world */
-  def spawn(element: BoardElement){ 
+  def spawn(element: BoardElement): Unit = {
     spawn(element,  board.randomFreePosition(randomness))
   }
   
   /** spawns the given Board element at a given position in the world */
-  def spawn(element: BoardElement, pos: Pos) {
+  def spawn(element: BoardElement, pos: Pos): Unit = {
     board.add(element, pos)
 
     // register handlers
@@ -487,7 +487,7 @@ class World {
   }
 
   /** removed the given Board element from the world */
-  def unspawn(element: BoardElement) {
+  def unspawn(element: BoardElement): Unit = {
     // unregister handlers
     time.tick -= element.tickHandler
     time.dayChanged -= element.dailyHandler

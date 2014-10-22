@@ -1,14 +1,13 @@
 package animal.versions.signalonly
 
 import animal.types.Pos
-import rescala.events.ImperativeEvent
-import rescala._
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.Map
 import scala.util.Random
 import animal.types.Pos.fromTuple
 import scala.Option.option2Iterable
-import makro.SignalMacro.{SignalM => Signal}
+import rescala.macros.SignalMacro.{SignalM => Signal}
+import rescala.signals.{Var, Signal, Signals}
 
 
 object Board {
@@ -25,12 +24,12 @@ class Board(val width: Int, val height: Int) {
   val allPositions = (for(x <- 0 to width; y <- 0 to height) yield (x, y)).toSet
   
   /** adds a board element at given position */
-  def add(be: BoardElement, pos: (Int, Int)) {
+  def add(be: BoardElement, pos: (Int, Int)): Unit = {
     elements.put(pos, be)
   }
   
   /** removes the board element if present in the board */
-  def remove(be: BoardElement): Unit = getPosition(be).foreach(remove(_))
+  def remove(be: BoardElement): Unit = getPosition(be).foreach(remove)
   def remove(pos: (Int, Int)) = {
     val e = elements.remove(pos)
   }
@@ -51,7 +50,7 @@ class Board(val width: Int, val height: Int) {
   def nearestFree(pos: (Int, Int)) = Board.proximity(pos, 1).find(isFree)
   
   /** moves pos in direction dir if possible (when target is free) */
-  def moveIfPossible(pos: Pos, dir: Pos){
+  def moveIfPossible(pos: Pos, dir: Pos): Unit = {
     val newPos = pos + dir
     if(isFree(newPos) && !isFree(pos)){
       val e = clear(pos)
@@ -83,7 +82,7 @@ class Board(val width: Int, val height: Int) {
       case Some(_) => '?'
     }
     val lines = for(y <- 0 to height)
-      yield (0 to width).map(x => repr(elements.get(x,y))).mkString
+      yield (0 to width).map(x => repr(elements.get((x, y)))).mkString
       lines.mkString("\n")
   }
 }
@@ -95,10 +94,10 @@ abstract class BoardElement(implicit val world: World) {
   val isDead: Signal[Boolean] //#SIG
   
   /** Replacement for tick handler / event */
-  def tick {}
+  def tick(): Unit = {}
   
   /** Some imperative code that is called each tick */
-  def doStep(pos: Pos) {}
+  def doStep(pos: Pos): Unit = {}
 }
 
 object Animal {
@@ -142,7 +141,7 @@ abstract class Animal(override implicit val world: World) extends BoardElement {
 	// function for creating a state upon reaching target
 	def reachedState(target: BoardElement): AnimalState
 	
-	def savage = state.set(FallPrey)
+	def savage() = state.set(FallPrey)
 	
 	protected def nextAction(pos: Pos): AnimalState =  {
 		val neighbors = world.board.neighbors(pos)
@@ -196,7 +195,7 @@ abstract class Animal(override implicit val world: World) extends BoardElement {
 	
 
 	/** imperative 'AI' function */
-	override def doStep(pos: Pos) {
+	override def doStep(pos: Pos): Unit = {
 	    state.get match {
 	      case Moving(dir) => world.board.moveIfPossible(pos, dir)
 	      case Eating(plant) => plant.takeEnergy(energyGain.get)
@@ -208,7 +207,7 @@ abstract class Animal(override implicit val world: World) extends BoardElement {
 	}
 	
 	
-	override def tick {
+	override def tick: Unit = {
 	  super.tick
 	  ticks.set(ticks.get + 1)
 	  energy.set(energy.get + energyGain.get - energyDrain.get)
@@ -222,7 +221,7 @@ class Carnivore(override implicit val world: World) extends Animal {
   val canHunt = Signal { energy() > Animal.AttackThreshold } //#SIG
 	
   // only adult carnivores with min energy can hunt, others eat plants
-  val findFood: Signal[PartialFunction[BoardElement, BoardElement]] = SignalSynt { (s: SignalSynt[PartialFunction[BoardElement, BoardElement]]) => //#SIG  
+  val findFood: Signal[PartialFunction[BoardElement, BoardElement]] = Signals.dynamic(isAdult, canHunt) { s => //#SIG
      if(isAdult(s) && canHunt(s)) { case p: Herbivore => p} : PartialFunction[BoardElement, BoardElement]
      else { case p: Plant => p }                            : PartialFunction[BoardElement, BoardElement] 
    }
@@ -243,7 +242,7 @@ class Carnivore(override implicit val world: World) extends Animal {
 class Herbivore(override implicit val world: World) extends Animal {
   
   val findFood: Signal[PartialFunction[BoardElement, BoardElement]] = //#SIG
-    SignalSynt { (s: SignalSynt[PartialFunction[BoardElement, BoardElement]]) =>  { case p: Plant => p } :PartialFunction[BoardElement, BoardElement] }
+    Var { { case p: Plant => p } :PartialFunction[BoardElement, BoardElement] }
   
   override def reachedState(plant: BoardElement): AnimalState = plant match {
     case p: Plant => Eating(p)
@@ -262,7 +261,7 @@ trait Female extends Animal {
   override val isFertile = Signal { isAdult() && !isPregnant()}  //#SIG
   
   
-  def giveBirth {
+  def giveBirth(): Unit = {
     val father = mate.get.get
     val child = createOffspring(father)
     world.board.getPosition(this).foreach{ mypos =>
@@ -273,30 +272,30 @@ trait Female extends Animal {
     mate.set(None)
   }
   
-  def procreate(father: Animal) {
-    if(isPregnant.get) return;
+  def procreate(father: Animal): Unit = {
+    if(isPregnant.get) return
     mate.set(Some(father))
   }
   
   
   def createOffspring(father: Animal): Animal = {
-      val male = world.randomness.nextBoolean
+      val male = world.randomness.nextBoolean()
   	  val nHerbivores = List(this, father).map(_.isInstanceOf[Herbivore]).count(_ == true)
   	  val herbivore = 
   	    if (nHerbivores == 0) false // both parents are a carnivores, child is carnivore
   	    else if (nHerbivores == 2) true // both parents are herbivores, child is herbivore
-  	    else world.randomness.nextBoolean // mixed parents, random
+  	    else world.randomness.nextBoolean() // mixed parents, random
   	  
   	  world.newAnimal(herbivore, male)
   }
   
-  override def tick {
+  override def tick: Unit = {
       super.tick
       if(isPregnant.get){
         if(pregnancyTime.get > 0){
           pregnancyTime.set(pregnancyTime.get - 1)
           if(pregnancyTime.get == 0)
-            giveBirth
+            giveBirth()
         }
       }
   }
@@ -354,7 +353,7 @@ class Plant(override implicit val world: World) extends BoardElement {
   val size = Signal { math.min(Plant.MaxSize, age() / Plant.GrowTime) } //#SIG
   
   
-  def germinate{
+  def germinate(): Unit = {
     // germinate: spawn a new plant in proximity to this one
     world.board.getPosition(this).foreach{ mypos =>
       world.board.nearestFree(mypos).foreach { target =>
@@ -363,7 +362,7 @@ class Plant(override implicit val world: World) extends BoardElement {
     }
   }
   
-  override def tick {
+  override def tick: Unit = {
     super.tick
     // we have to store the old size now, otherwise we could not detect changes 
     val oldSize = size.get
@@ -386,7 +385,7 @@ class Seed(override implicit val world: World) extends BoardElement {
   val isDead = Signal { growTime() <= 0 }  //#SIG
   
   var alive = true
-  override def tick {
+  override def tick: Unit = {
     if(alive && isDead()){
       alive = false
       world.board.getPosition(this).foreach{ mypos =>
@@ -407,7 +406,7 @@ class Time {
   val timestring = Signal { "Week " + week() + ", Day " + day() + " hour:" + hour() } //#SIG
   val newWeek = week.changed //#EVT
   
-  def tick {
+  def tick(): Unit = {
     hours.set(hours.get + 1)
   }
 }
@@ -429,7 +428,7 @@ class World {
   val time = new Time
   val randomness = new Random(1)
   
-  def tick = {
+  def tick() = {
     val oldDay = time.day.get
     val oldWeek = time.week.get
     
@@ -471,10 +470,10 @@ class World {
   }
   
   /** returns an animal at random */
-  def newAnimal: Animal = newAnimal(randomness.nextBoolean, randomness.nextBoolean)
+  def newAnimal: Animal = newAnimal(randomness.nextBoolean(), randomness.nextBoolean())
   
   /** batch spawns n Animals and m Plants */
-  def batchSpawn(nAnimals: Int, mPlants: Int) {
+  def batchSpawn(nAnimals: Int, mPlants: Int): Unit = {
     for(_ <- 1 to nAnimals) spawn(newAnimal)
     for(_ <- 1 to mPlants) spawn(new Plant)
   }
@@ -483,7 +482,7 @@ class World {
   def spawn(element: BoardElement, pos: Pos) = board.add(element, pos)
   
   /** spawns the given Board element at a free random position in the world */
-  def spawn(element: BoardElement){ 
+  def spawn(element: BoardElement): Unit = {
     spawn(element,  board.randomFreePosition(randomness))
   }
   
@@ -491,12 +490,12 @@ class World {
   
   
   // each day, spawn a new plant
-  def dayChanged {
+  def dayChanged(): Unit = {
     this spawn new Plant
   }
   
   //each week, spawn a new animal
-  def weekChanged {
+  def weekChanged(): Unit = {
     this spawn newAnimal
   }
 }
