@@ -212,7 +212,7 @@ abstract class Animal(override implicit val world: World) extends BoardElement {
 	    state.get match {
 	      case Moving(dir) => world.board.moveIfPossible(pos, dir)
 	      case Eating(plant) => plant.takeEnergy(energyGain.get)
-	      case Attacking(prey) => prey.savage
+	      case Attacking(prey) => prey.savage()
 	      case Procreating(female: Female) => female.procreate(this)
 	      case _ =>
 	    }

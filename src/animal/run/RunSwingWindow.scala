@@ -28,7 +28,7 @@ object RunSwingWindow extends SimpleSwingApplication {
     world batchSpawn (nAnimals, nPlants)
     
     while (true) {
-      world.tick
+      world.tick()
       // gui
       statusBar.text = world.status
       frame.boardString = world.dump

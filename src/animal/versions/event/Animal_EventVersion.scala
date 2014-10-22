@@ -1,8 +1,7 @@
 package animal.versions.event
 
 import animal.types.Pos
-import scala.collection.mutable.HashMap
-import scala.collection.mutable.Map
+import scala.collection.mutable
 import rescala.events.ImperativeEvent
 import scala.util.Random
 import rescala.events.Event
@@ -19,7 +18,7 @@ object Board {
  * A Board is infinite, but width and height specify the area being displayed.
  */
 class Board(val width: Int, val height: Int) {
-  val elements: Map[(Int, Int), BoardElement] = new HashMap
+  val elements: mutable.Map[(Int, Int), BoardElement] = new mutable.HashMap
   val allPositions = (for(x <- 0 to width; y <- 0 to height) yield (x, y)).toSet
   
   val elementSpawned = new ImperativeEvent[BoardElement] //#EVT  == after(add)
@@ -222,7 +221,7 @@ abstract class Animal(override implicit val world: World) extends BoardElement {
 	    state match {
 	      case Moving(dir) => world.board.moveIfPossible(pos, dir)
 	      case Eating(plant) => plant.takeEnergy(if(isEating) Animal.PlantEatRate else 0)
-	      case Attacking(prey) => prey.savage
+	      case Attacking(prey) => prey.savage()
 	      case Procreating(female: Female) => female.procreate(this)
 	      case _ =>
 	    }
@@ -497,9 +496,7 @@ class World {
   // tick board elements
   time.tick += { _ =>  //#HDL
     board.elements.foreach {
-      _ match {
-        case (pos, be) => be.doStep(pos)
-      }
+      case (pos, be) => be.doStep(pos)
     }
   }
 

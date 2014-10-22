@@ -223,7 +223,7 @@ abstract class Animal(override implicit val world: World) extends BoardElement {
 	    state match {
 	      case Moving(dir) => world.board.moveIfPossible(pos, dir)
 	      case Eating(plant) => plant.takeEnergy(if(isEating) Animal.PlantEatRate else 0)
-	      case Attacking(prey) => prey.savage
+	      case Attacking(prey) => prey.savage()
 	      case Procreating(female: Female) => female.procreate(this)
 	      case _ =>
 	    }
@@ -470,7 +470,7 @@ class World {
   val time = new Time
   val randomness = new Random
   
-  def tick() = time.tick
+  def tick() = time.tick()
   def dump = board.dump
   def timestring = time.timestring
   def status = "Status string not implemented yet."

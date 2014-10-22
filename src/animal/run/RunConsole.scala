@@ -22,7 +22,7 @@ object RunConsole extends App {
     println(world.status)
     println(world.dump) // dumping the board is a bottleneck!
     
-    world.tick
+    world.tick()
     Thread sleep sleeptime
   }
 }

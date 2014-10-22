@@ -199,7 +199,7 @@ abstract class Animal(override implicit val world: World) extends BoardElement {
 	    state.get match {
 	      case Moving(dir) => world.board.moveIfPossible(pos, dir)
 	      case Eating(plant) => plant.takeEnergy(energyGain.get)
-	      case Attacking(prey) => prey.savage
+	      case Attacking(prey) => prey.savage()
 	      case Procreating(female: Female) => female.procreate(this)
 	      case _ =>
 	    }
@@ -208,7 +208,7 @@ abstract class Animal(override implicit val world: World) extends BoardElement {
 	
 	
 	override def tick: Unit = {
-	  super.tick
+	  super.tick()
 	  ticks.set(ticks.get + 1)
 	  energy.set(energy.get + energyGain.get - energyDrain.get)
 	}
@@ -363,14 +363,14 @@ class Plant(override implicit val world: World) extends BoardElement {
   }
   
   override def tick: Unit = {
-    super.tick
+    super.tick()
     // we have to store the old size now, otherwise we could not detect changes 
     val oldSize = size.get
     age.set(age.get + 1)
     
     if(size.get != oldSize){
        if(size.get == Plant.MaxSize)
-    	   germinate // spawn a new plant in proximity to this one
+    	   germinate() // spawn a new plant in proximity to this one
 	 }
   }
 
@@ -433,7 +433,7 @@ class World {
     val oldWeek = time.week.get
     
     // tick time
-    time.tick    
+    time.tick()
     
     // tick all board elements
     board.elements.foreach { _ match {
@@ -441,18 +441,18 @@ class World {
       	  if(be.isDead.get)
       	    board.remove(pos)
       	  else {
-      	    be.tick
+      	    be.tick()
       	    be.doStep(pos)
       	  }
       }
     }
     
     if(time.day.get != oldDay){
-      dayChanged
+      dayChanged()
     }
       
     if(time.week.get != oldWeek){
-      weekChanged
+      weekChanged()
     }
   }
     
