@@ -16,6 +16,11 @@ scalaSource in Test <<= baseDirectory { (base) => new File(base, "REScala/test")
 
 parallelExecution in Test := false
 
+excludeFilter <<= scalaVersion {
+  case "2.10.4" => HiddenFileFilter || "*Macro*"
+  case "2.11.2" => HiddenFileFilter
+}
+
 libraryDependencies ++= (
   "org.mockito" % "mockito-all" % "1.9.5" % "test" ::
     "org.scalatest" %% "scalatest" % "2.2.2" % "test" ::
