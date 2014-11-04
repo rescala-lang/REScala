@@ -1,8 +1,14 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="con" path="org.scala-ide.sdt.launching.SCALA_CONTAINER"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/REScala"/>
-	<classpathentry kind="output" path="bin"/>
+  <classpathentry output="target/scala-2.11/classes" kind="src" path="src/main/scala"/>
+  <classpathentry output="target/scala-2.11/classes" kind="src" path="src/main/java"/>
+  <classpathentry output="target/scala-2.11/test-classes" kind="src" path="src/test/scala"/>
+  <classpathentry output="target/scala-2.11/test-classes" kind="src" path="src/test/java"/>
+  <classpathentry kind="con" path="org.scala-ide.sdt.launching.SCALA_CONTAINER"/>
+  <classpathentry kind="lib" path="/home/guido/.ivy2/cache/org.scala-lang/scala-swing/jars/scala-swing-2.11.0-M7.jar"/>
+  <classpathentry kind="lib" path="/home/guido/.ivy2/local/de.tuda.stg/rescala_2.11/0.0.0/jars/rescala_2.11.jar"/>
+  <classpathentry kind="con" path="org.scala-ide.sdt.launching.SCALA_COMPILER_CONTAINER"/>
+  <classpathentry kind="lib" path="/home/guido/.ivy2/cache/org.scala-lang.modules/scala-xml_2.11/bundles/scala-xml_2.11-1.0.2.jar"/>
+  <classpathentry kind="lib" path="/home/guido/.ivy2/cache/org.scala-lang.modules/scala-parser-combinators_2.11/bundles/scala-parser-combinators_2.11-1.0.2.jar"/>
+  <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+  <classpathentry kind="output" path="bin"/>
 </classpath>
