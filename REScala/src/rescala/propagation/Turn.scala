@@ -10,138 +10,36 @@ import scala.util.DynamicVariable
  * The engine that schedules the (glitch-free) evaluation
  * of the nodes in the dependency graph.
  */
-class Turn {
-  private val evalQueue = new mutable.PriorityQueue[(Int, Reactive)]()(Turn.reactiveOrdering)
-  private var toCommit = Set[Reactive]()
-  private var afterCommitHandlers = List[() => Unit]()
+trait Turn {
 
-  implicit def implicitThis: Turn = this
+  /** called when a new reactive is created and registered into the network
+    * subclasses are expected to register the reactive with its dependencies
+    * and calculate the correct level*/
+  def create[T <: Reactive](dependencies: Set[Reactive])(f: => T): T
 
-  def register(dependant: Reactive, dependencies: Set[Reactive]): Unit =  {
-    dependencies.foreach { dependency =>
-      dependency.dependants.transform(_ + dependant)
-      changed(dependency)
-    }
-    ensureLevel(dependant, dependencies)
-  }
+  /** called when a new dynamic reactive is created and registered into the network
+    * subclasess are expected to immediately evaluate the reactive
+    * to enter a valid state
+    * the dependencies should be used to calculate a approximation for the level */
+  def createDynamic[T <: Reactive](dependencies: Set[Reactive])(f: => T): T
 
-  def ensureLevel(dependant: Reactive, dependencies: Set[Reactive]): Unit =
-    if (dependencies.nonEmpty) {
-      ensureLevel(dependant, dependencies.map(_.level.get).max + 1)
-      changed(dependant)
-    }
+  /** removes reactive from its dependencies */
+  def unregister(dependant: Reactive, dependencies: Set[Reactive]): Unit
 
-  def ensureLevel(reactive: Reactive, level: Int): Boolean = {
-    reactive.level.transform { case x if x < level => level}
-  }
+  /** given that reactive is the currently evaluated reactive,
+    * returns true if all of its dependencies are ready */
+  def isReady(reactive: Reactive, dependencies: Set[Reactive]): Boolean
 
-  def unregister(dependant: Reactive, dependencies: Set[Reactive]): Unit = dependencies.foreach { dependency =>
-    dependency.dependants.transform(_ - dependant)
-    changed(dependency)
-  }
+  /** mark the reactive as needing a reevaluation */
+  def enqueue(dep: Reactive): Unit
 
-  def handleDiff(dependant: Reactive, diff: DependencyDiff): Unit = {
-    val DependencyDiff(newDependencies, oldDependencies) = diff
-    unregister(dependant, oldDependencies.diff(newDependencies))
-    register(dependant, newDependencies.diff(oldDependencies))
-  }
+  /** register an after commit handler */
+  def afterCommit(handler: => Unit): Unit
 
-  def isReady(reactive: Reactive, dependencies: Set[Reactive]) =
-    dependencies.forall(_.level.get < reactive.level.get)
+  /** runs the given code while collecting dynamically used reactives */
+  def collectDependencies[T](f: => T): (T, Set[Reactive])
 
-  @tailrec
-  private def floodLevel(reactives: Set[Reactive]): Unit =
-    if (reactives.nonEmpty) {
-      val reactive = reactives.head
-      changed(reactive)
-      val level = reactive.level.get + 1
-      val dependants = reactive.dependants.get
-      val changedDependants = dependants.filter(ensureLevel(_, level))
-      floodLevel(reactives.tail ++ changedDependants)
-    }
+  /** mark a reactive as dynamically used */
+  def useDependency(dependency: Reactive): Unit
 
-  /** Adds a dependant to the eval queue */
-  def enqueue(dep: Reactive): Unit = {
-      if (!evalQueue.exists { case (_, elem) => elem eq dep }) {
-        evalQueue.+=((dep.level.get, dep))
-      }
-  }
-
-
-  /** evaluates a single reactive */
-  def evaluate(head: Reactive): Unit = {
-    val result = head.reevaluate()(this)
-    result match {
-      case Done(hasChanged, dependencyDiff) =>
-        if(hasChanged) head.dependants.get.foreach(enqueue)
-        dependencyDiff.foreach(handleDiff(head, _))
-        changed(head)
-      case diff @ DependencyDiff(_, _) =>
-        handleDiff(head, diff)
-        floodLevel(Set(head))
-        enqueue(head)
-    }
-  }
-
-  /** Evaluates all the elements in the queue */
-  def evaluateQueue() = {
-    while (evalQueue.nonEmpty) {
-      val (level, head) = evalQueue.dequeue()
-      // check the level if it changed queue again
-      if (level != head.level.get) enqueue(head)
-      else evaluate(head)
-    }
-  }
-
-  def changed(reactive: Reactive): Unit = toCommit += reactive
-
-  def commit() = toCommit.foreach(_.commit(this))
-
-  def afterCommit(handler: => Unit) = afterCommitHandlers ::= handler _
-
-  def runAfterCommitHandlers() = afterCommitHandlers.foreach(_())
-
-  object dynamic {
-    val bag = new DynamicVariable(Set[Reactive]())
-    def used(dependency: Reactive) = bag.value = bag.value + dependency
-  }
-
-  def create[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
-    val reactive = f
-    register(reactive, dependencies)
-    reactive
-  }
-
-  def createDynamic[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
-    val reactive = f
-    ensureLevel(reactive, dependencies)
-    evaluate(reactive)
-    reactive
-  }
-}
-
-
-object Turn {
-  val currentTurn = new DynamicVariable[Option[Turn]](None)
-
-  def maybeTurn[T](f: Turn => T)(implicit maybe: MaybeTurn): T = maybe.turn match {
-    case None => newTurn(f)
-    case Some(turn) => f(turn)
-  }
-
-  def newTurn[T](f: Turn => T): T = synchronized {
-    val turn = new Turn
-    val result = currentTurn.withValue(Some(turn)){
-      val res = f(turn)
-      turn.evaluateQueue()
-      turn.commit()
-      res
-    }
-    turn.runAfterCommitHandlers()
-    result
-  }
-
-  val reactiveOrdering = new Ordering[(Int, Reactive)] {
-    override def compare(x: (Int, Reactive), y: (Int, Reactive)): Int = y._1.compareTo(x._1)
-  }
 }

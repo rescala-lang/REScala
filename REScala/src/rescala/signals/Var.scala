@@ -10,8 +10,8 @@ object Var {
 class Var[T](initval: T) extends Signal[T] {
   pulses.default = Pulse.unchanged(initval)
 
-  final def update(newValue: T): Unit = set(newValue)
-  def set(newValue: T): Unit = Turn.newTurn { turn =>
+  final def update(newValue: T)(implicit fac: TurnFactory): Unit = set(newValue)
+  def set(newValue: T)(implicit fac: TurnFactory): Unit = fac.newTurn { turn =>
     planUpdate(newValue)(turn)
   }
 

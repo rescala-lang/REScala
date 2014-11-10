@@ -23,7 +23,7 @@ final case class EventHandler[T](fun: T => Unit, dependency: Pulsing[T]) extends
 final class ImperativeEvent[T] extends Event[T] {
 
   /** Trigger the event */
-  def apply(v: T): Unit = Turn.newTurn { turn =>
+  def apply(v: T)(implicit fac: TurnFactory): Unit = fac.newTurn { turn =>
     pulses.set(Pulse.change(v))(turn)
     turn.enqueue(this)
   }

@@ -10,7 +10,7 @@ trait Signal[+A] extends Stateful[A] {
   final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")
 
   def apply[T](turn: Turn): A = {
-    turn.dynamic.used(this)
+    turn.useDependency(this)
     getValue(turn)
   }
 
