@@ -2,11 +2,11 @@ name := "rescala"
 
 organization := "de.tuda.stg"
 
-version := "0.3.0"
+version := "0.4.0"
 
-scalaVersion := "2.11.2"
+scalaVersion := "2.11.4"
 
-crossScalaVersions := Seq("2.10.4", "2.11.2")
+crossScalaVersions := Seq("2.10.4", "2.11.4")
 
 scalaSource in Compile <<= baseDirectory { (base) => new File(base, "REScala/src") }
 
@@ -17,12 +17,12 @@ scalaSource in Test <<= baseDirectory { (base) => new File(base, "REScala/test")
 parallelExecution in Test := false
 
 excludeFilter <<= scalaVersion {
-  case "2.10.4" => HiddenFileFilter || "*Macro*"
-  case "2.11.2" => HiddenFileFilter
+  case s if s.startsWith("2.10.") => HiddenFileFilter || "*Macro*"
+  case s if s.startsWith("2.11.") => HiddenFileFilter
 }
 
 libraryDependencies ++= (
-  "org.mockito" % "mockito-all" % "1.9.5" % "test" ::
+  "org.mockito" % "mockito-all" % "1.10.8" % "test" ::
     "org.scalatest" %% "scalatest" % "2.2.2" % "test" ::
     "com.novocode" % "junit-interface" % "0.11" % "test" ::
     Nil)
