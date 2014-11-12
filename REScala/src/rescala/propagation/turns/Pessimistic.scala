@@ -80,16 +80,14 @@ class Pessimistic extends Turn {
   }
 
   override def unregister(dependant: Reactive, dependencies: Set[Reactive]): Unit = dependencies.foreach { dependency =>
-    dynamicLocks :::= dependencies.toList
-    if (!dependencies.forall(_.lock.tryLock())) throw new IllegalStateException(s"could not lock a removed dependency of $dependant")
+    dependencies.foreach(acquireDynamic)
     dependency.dependants.transform(_ - dependant)
     changed(dependency)
   }
 
   def handleDiff(dependant: Reactive, diff: DependencyDiff): Unit = {
     val DependencyDiff(newDependencies, oldDependencies) = diff
-    dynamicLocks ++= newDependencies
-    if (!newDependencies.forall(_.lock.tryLock())) throw new IllegalStateException(s"could not lock a dynamic dependency of $dependant")
+    newDependencies.foreach(acquireDynamic)
     unregister(dependant, oldDependencies.diff(newDependencies))
     register(dependant, newDependencies.diff(oldDependencies))
   }
@@ -160,8 +158,7 @@ class Pessimistic extends Turn {
   override def useDependency(dependency: Reactive): Unit = bag.value = bag.value + dependency
 
   override def create[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
-    if (!dependencies.forall(_.lock.tryLock())) throw new IllegalStateException(s"could not lock a creation dependency")
-    dynamicLocks :::= dependencies.toList
+    dependencies.foreach(acquireDynamic)
     val reactive = f
     reactive.lock.lock()
     dynamicLocks ::= reactive
@@ -170,8 +167,7 @@ class Pessimistic extends Turn {
   }
 
   override def createDynamic[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
-    if (!dependencies.forall(_.lock.tryLock())) throw new IllegalStateException(s"could not lock a dynamic dependency on creation")
-    dynamicLocks :::= dependencies.toList
+    dependencies.foreach(acquireDynamic)
     val reactive = f
     reactive.lock.lock()
     dynamicLocks ::= reactive
@@ -179,5 +175,15 @@ class Pessimistic extends Turn {
     evaluate(reactive)
     reactive
   }
+
+  def acquireDynamic(reactive: Reactive): Unit = {
+    if(!reactive.lock.tryLock()) {
+      reactive.lock.tradeStealRights()
+      reactive.lock.steal()
+      throw new IllegalStateException(s"$this could not lock $reactive already locked by ${reactive.lock.owner}")
+    }
+    dynamicLocks ::= reactive
+  }
+
 }
 

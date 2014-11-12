@@ -1,5 +1,7 @@
 package rescala.propagation
 
+import java.util.concurrent.locks.ReentrantLock
+
 /**
  * The engine that schedules the (glitch-free) evaluation
  * of the nodes in the dependency graph.
@@ -35,5 +37,10 @@ trait Turn {
 
   /** mark a reactive as dynamically used */
   def useDependency(dependency: Reactive): Unit
+
+  /* experimental stuff for pessimistic locking */
+  val stealLock = new ReentrantLock()
+  @volatile var stealRights = Set[Turn]()
+  val stealRightsAcquired = stealLock.newCondition()
 
 }
