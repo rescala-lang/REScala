@@ -16,24 +16,21 @@ object Pessimistic extends TurnFactory {
     case Some(turn) => f(turn)
   }
 
-  def reachable(reactives: Set[Reactive])(implicit turn: Turn) =
-    reactives ++ reactives.flatMap(_.dependants.get)
+  def reachable(reactives: Set[Reactive])(implicit turn: Turn): Set[Reactive] =
+    reactives ++ reactives.flatMap(r => reachable(r.dependants.get))
 
   def lock(reactives: List[Reactive]): Unit = reactives.sortBy(r => System.identityHashCode(r.lock)).foreach(_.lock.lock())
-
-  def acquireLocks(reactives: List[Reactive])(implicit turn: Turn): Set[Reactive] = {
-    lock(reactives)
-    val reached = reachable(reactives.toSet)(turn)
-    lock(reached.toList)
-    reached
-  }
 
   override def newTurn[T](f: Turn => T): T = {
     val turn = new Pessimistic()
     val result = currentTurn.withValue(Some(turn)) {
       val res = f(turn)
-      val locked = acquireLocks(turn.evalQueue.map(_._2).toList)(turn)
+      val sources = turn.evalQueue.map(_._2).toList
+      lock(sources)
+      val locked = reachable(sources.toSet)(turn) ++ turn.scheduledRegistrations.values.flatten ++ turn.scheduledRegistrations.keys
+      lock(locked.toList)
       try {
+        turn.scheduledRegistrations.foreach{ case (r, deps) => turn.register(r, deps) }
         turn.evaluateQueue()
         turn.commit()
       } finally {
@@ -55,6 +52,7 @@ class Pessimistic extends Turn {
   private val evalQueue = new mutable.PriorityQueue[(Int, Reactive)]()(Synchronized.reactiveOrdering)
   private var toCommit = Set[Reactive]()
   private var afterCommitHandlers = List[() => Unit]()
+  private var scheduledRegistrations = Map[Reactive, Set[Reactive]]()
 
   implicit def implicitThis: Turn = this
 
@@ -68,15 +66,16 @@ class Pessimistic extends Turn {
 
   def ensureLevel(dependant: Reactive, dependencies: Set[Reactive]): Unit =
     if (dependencies.nonEmpty) {
-      ensureLevel(dependant, dependencies.map(_.level.get).max + 1)
-      changed(dependant)
+      if (setLevelIfHigher(dependant, dependencies.map(_.level.get).max + 1)) {
+        changed(dependant)
+      }
     }
 
-  def ensureLevel(reactive: Reactive, level: Int): Boolean = {
+  def setLevelIfHigher(reactive: Reactive, level: Int): Boolean = {
     reactive.level.transform { case x if x < level => level }
   }
 
-  def unregister(dependant: Reactive, dependencies: Set[Reactive]): Unit = dependencies.foreach { dependency =>
+  override def unregister(dependant: Reactive, dependencies: Set[Reactive]): Unit = dependencies.foreach { dependency =>
     dependency.dependants.transform(_ - dependant)
     changed(dependency)
   }
@@ -87,7 +86,7 @@ class Pessimistic extends Turn {
     register(dependant, newDependencies.diff(oldDependencies))
   }
 
-  def isReady(reactive: Reactive, dependencies: Set[Reactive]) =
+  override def isReady(reactive: Reactive, dependencies: Set[Reactive]) =
     dependencies.forall(_.level.get < reactive.level.get)
 
   @tailrec
@@ -97,12 +96,12 @@ class Pessimistic extends Turn {
       changed(reactive)
       val level = reactive.level.get + 1
       val dependants = reactive.dependants.get
-      val changedDependants = dependants.filter(ensureLevel(_, level))
+      val changedDependants = dependants.filter(setLevelIfHigher(_, level))
       floodLevel(reactives.tail ++ changedDependants)
     }
 
   /** Adds a dependant to the eval queue */
-  def enqueue(dep: Reactive): Unit = {
+  override def enqueue(dep: Reactive): Unit = {
     if (!evalQueue.exists { case (_, elem) => elem eq dep }) {
       evalQueue.+=((dep.level.get, dep))
     }
@@ -134,11 +133,14 @@ class Pessimistic extends Turn {
     }
   }
 
-  def changed(reactive: Reactive): Unit = toCommit += reactive
+  def changed(reactive: Reactive): Unit = {
+    if (!reactive.lock.isHeldByCurrentThread) throw new IllegalStateException(s"tried to change reactive $reactive without holding lock")
+    toCommit += reactive
+  }
 
   def commit() = toCommit.foreach(_.commit(this))
 
-  def afterCommit(handler: => Unit) = afterCommitHandlers ::= handler _
+  override def afterCommit(handler: => Unit) = afterCommitHandlers ::= handler _
 
   def runAfterCommitHandlers() = afterCommitHandlers.foreach(_())
 
@@ -146,13 +148,13 @@ class Pessimistic extends Turn {
   override def collectDependencies[T](f: => T): (T, Set[Reactive]) = bag.withValue(Set()) { (f, bag.value) }
   override def useDependency(dependency: Reactive): Unit = bag.value = bag.value + dependency
 
-  def create[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
+  override def create[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
     val reactive = f
-    register(reactive, dependencies)
+    scheduledRegistrations += (reactive -> dependencies)
     reactive
   }
 
-  def createDynamic[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
+  override def createDynamic[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
     val reactive = f
     ensureLevel(reactive, dependencies)
     evaluate(reactive)

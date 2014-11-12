@@ -1,6 +1,6 @@
 package rescala.propagation
 
-import java.util.concurrent.locks.{ReentrantLock, Lock}
+import java.util.concurrent.locks.ReentrantLock
 
 import rescala.propagation.Pulse.{Diff, NoChange}
 
@@ -10,7 +10,7 @@ trait Reactive {
 
   final private[propagation] val dependants: TurnState[Set[Reactive]] = TurnState(Set(), (_, x) => x)
 
-  final private[propagation] val lock: Lock = new ReentrantLock()
+  final private[propagation] val lock: ReentrantLock = new ReentrantLock()
 
   /** for testing */
   def getLevel(implicit turn: Turn) = level.get
