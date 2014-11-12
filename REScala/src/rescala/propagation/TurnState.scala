@@ -2,7 +2,7 @@ package rescala.propagation
 
 import scala.collection.immutable.HashMap
 
-final class TurnState[A](var default: A, @volatile private var values: Map[Turn, A], var commitStrategy: (A, A) => A) {
+final class TurnState[A](@volatile var default: A, @volatile private var values: Map[Turn, A], @volatile var commitStrategy: (A, A) => A) {
   def transform(f: (A) => A)(implicit turn: Turn): Unit = set(f(get))
   def transform(f: PartialFunction[A, A])(implicit turn: Turn): Boolean = if (f.isDefinedAt(get)) { transform(f: A => A); true } else false
   def set(value: A)(implicit turn: Turn): Unit = values = values.updated(turn, value)
