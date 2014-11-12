@@ -1,12 +1,16 @@
 package rescala.propagation
 
+import java.util.concurrent.locks.{ReentrantLock, Lock}
+
 import rescala.propagation.Pulse.{Diff, NoChange}
 
 /** A Reactive is a value type which has a dependency to other Reactives */
 trait Reactive {
   final private[propagation] val level: TurnState[Int] = TurnState(0, math.max)
-  
+
   final private[propagation] val dependants: TurnState[Set[Reactive]] = TurnState(Set(), (_, x) => x)
+
+  final private[propagation] val lock: Lock = new ReentrantLock()
 
   /** for testing */
   def getLevel(implicit turn: Turn) = level.get
@@ -66,7 +70,7 @@ trait DynamicReevaluation[+P] extends Pulsing[P] {
 
   /** side effect free calculation of the new pulse and the new dependencies for the current turn */
   def calculatePulseDependencies(implicit turn: Turn): (Pulse[P], Set[Reactive])
-  
+
   final override protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult = {
     val (newPulse, newDependencies) = calculatePulseDependencies
 

@@ -14,7 +14,7 @@ libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _)
 
 scalaSource in Test <<= baseDirectory { (base) => new File(base, "REScala/test") }
 
-parallelExecution in Test := false
+parallelExecution in Test := true
 
 excludeFilter <<= scalaVersion {
   case s if s.startsWith("2.10.") => HiddenFileFilter || "*Macro*"

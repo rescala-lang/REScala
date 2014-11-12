@@ -9,5 +9,5 @@ trait TurnFactory {
 }
 
 object TurnFactory {
-  implicit val default: TurnFactory = turns.Synchronized
+  implicit val default: TurnFactory = turns.Pessimistic
 }
