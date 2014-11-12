@@ -27,13 +27,11 @@ object Pessimistic extends TurnFactory {
       val res = f(turn)
       val sources = turn.evalQueue.map(_._2).toList
       lock(sources)
-      val locked = reachable(sources.toSet)(turn) ++
-        turn.scheduledRegistrations.values.flatten ++ turn.scheduledRegistrations.keys
+      val locked = reachable(sources.toSet)(turn)
       lock(locked.toList)
       //TODO: need to check if the dependencies have changed in between
       //TODO: … it might actually be better to lock directly and always do deadlock detection
       try {
-        turn.scheduledRegistrations.foreach{ case (r, deps) => turn.register(r, deps) }
         turn.evaluateQueue()
         turn.commit()
       } finally {
@@ -55,7 +53,6 @@ class Pessimistic extends Turn {
   private val evalQueue = new mutable.PriorityQueue[(Int, Reactive)]()(Synchronized.reactiveOrdering)
   private var toCommit = Set[Reactive]()
   private var afterCommitHandlers = List[() => Unit]()
-  private var scheduledRegistrations = Map[Reactive, Set[Reactive]]()
   private var dynamicLocks = Set[Reactive]()
 
   implicit def implicitThis: Turn = this
@@ -155,17 +152,21 @@ class Pessimistic extends Turn {
   override def useDependency(dependency: Reactive): Unit = bag.value = bag.value + dependency
 
   override def create[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
+    if (!dependencies.forall(_.lock.tryLock())) throw new IllegalStateException(s"could not lock a creation dependency")
+    dynamicLocks ++= dependencies
     val reactive = f
-    scheduledRegistrations += (reactive -> dependencies)
+    reactive.lock.lock()
+    dynamicLocks += reactive
+    register(reactive, dependencies)
     reactive
   }
 
   override def createDynamic[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
-    val reactive = f
+    if (!dependencies.forall(_.lock.tryLock())) throw new IllegalStateException(s"could not lock a dynamic dependency on creation")
     dynamicLocks ++= dependencies
-    dynamicLocks += reactive
+    val reactive = f
     reactive.lock.lock()
-    if (!dependencies.forall(_.lock.tryLock())) throw new IllegalStateException(s"could not lock a dynamic dependency on creation of $reactive")
+    dynamicLocks += reactive
     ensureLevel(reactive, dependencies)
     evaluate(reactive)
     reactive
