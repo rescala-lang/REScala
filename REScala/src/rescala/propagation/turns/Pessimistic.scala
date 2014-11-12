@@ -27,14 +27,17 @@ object Pessimistic extends TurnFactory {
       val res = f(turn)
       val sources = turn.evalQueue.map(_._2).toList
       lock(sources)
-      val locked = reachable(sources.toSet)(turn) ++ turn.scheduledRegistrations.values.flatten ++ turn.scheduledRegistrations.keys
+      val locked = reachable(sources.toSet)(turn) ++
+        turn.scheduledRegistrations.values.flatten ++ turn.scheduledRegistrations.keys
       lock(locked.toList)
+      //TODO: need to check if the dependencies have changed in between
+      //TODO: … it might actually be better to lock directly and always do deadlock detection
       try {
         turn.scheduledRegistrations.foreach{ case (r, deps) => turn.register(r, deps) }
         turn.evaluateQueue()
         turn.commit()
       } finally {
-        locked.foreach(_.lock.unlock())
+        (locked ++ turn.dynamicLocks).foreach(_.lock.unlock())
       }
       res
     }
@@ -53,6 +56,7 @@ class Pessimistic extends Turn {
   private var toCommit = Set[Reactive]()
   private var afterCommitHandlers = List[() => Unit]()
   private var scheduledRegistrations = Map[Reactive, Set[Reactive]]()
+  private var dynamicLocks = Set[Reactive]()
 
   implicit def implicitThis: Turn = this
 
@@ -82,6 +86,8 @@ class Pessimistic extends Turn {
 
   def handleDiff(dependant: Reactive, diff: DependencyDiff): Unit = {
     val DependencyDiff(newDependencies, oldDependencies) = diff
+    dynamicLocks ++= newDependencies
+    if (!newDependencies.forall(_.lock.tryLock())) throw new IllegalStateException(s"could not lock a dynamic dependency of $dependant")
     unregister(dependant, oldDependencies.diff(newDependencies))
     register(dependant, newDependencies.diff(oldDependencies))
   }
@@ -156,6 +162,10 @@ class Pessimistic extends Turn {
 
   override def createDynamic[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
     val reactive = f
+    dynamicLocks ++= dependencies
+    dynamicLocks += reactive
+    reactive.lock.lock()
+    if (!dependencies.forall(_.lock.tryLock())) throw new IllegalStateException(s"could not lock a dynamic dependency on creation of $reactive")
     ensureLevel(reactive, dependencies)
     evaluate(reactive)
     reactive
