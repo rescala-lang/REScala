@@ -1,7 +1,5 @@
 package rescala.propagation
 
-import java.util.concurrent.locks.ReentrantLock
-
 import rescala.propagation.Pulse.{Diff, NoChange}
 
 /** A Reactive is a value type which has a dependency to other Reactives */
@@ -10,7 +8,7 @@ trait Reactive {
 
   final private[propagation] val dependants: TurnState[Set[Reactive]] = TurnState(Set(), (_, x) => x)
 
-  final private[propagation] val lock: ReentrantLock = new ReentrantLock()
+  final private[propagation] val lock: TurnLock = new TurnLock()
 
   /** for testing */
   def getLevel(implicit turn: Turn) = level.get

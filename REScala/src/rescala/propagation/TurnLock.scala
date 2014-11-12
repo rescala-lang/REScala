@@ -15,7 +15,7 @@ class TurnLock {
     res
   }
   def unlock(): Unit = {
-    owner = None
+    if(relock.getHoldCount == 1) owner = None
     relock.unlock()
   }
 }

@@ -19,23 +19,26 @@ object Pessimistic extends TurnFactory {
   def reachable(reactives: Set[Reactive])(implicit turn: Turn): Set[Reactive] =
     reactives ++ reactives.flatMap(r => reachable(r.dependants.get))
 
-  def lock(reactives: List[Reactive]): Unit = reactives.sortBy(r => System.identityHashCode(r.lock)).foreach(_.lock.lock())
+  def lock(reactives: Seq[Reactive])(implicit turn: Turn): Unit = reactives.sortBy(r => System.identityHashCode(r.lock)).foreach(_.lock.lock())
+  def unlock(reactives: Seq[Reactive]): Unit = reactives.foreach(_.lock.unlock())
 
   override def newTurn[T](f: Turn => T): T = {
     val turn = new Pessimistic()
     val result = currentTurn.withValue(Some(turn)) {
       val res = f(turn)
       val sources = turn.evalQueue.map(_._2).toList
-      lock(sources)
-      val locked = reachable(sources.toSet)(turn)
-      lock(locked.toList)
+      lock(sources)(turn)
+      val locked = reachable(sources.toSet)(turn).toSeq
+      lock(locked)(turn)
       //TODO: need to check if the dependencies have changed in between
       //TODO: … it might actually be better to lock directly and always do deadlock detection
       try {
         turn.evaluateQueue()
         turn.commit()
       } finally {
-        (locked ++ turn.dynamicLocks).foreach(_.lock.unlock())
+        unlock(sources)
+        unlock(locked)
+        unlock(turn.dynamicLocks)
       }
       res
     }
@@ -53,7 +56,7 @@ class Pessimistic extends Turn {
   private val evalQueue = new mutable.PriorityQueue[(Int, Reactive)]()(Synchronized.reactiveOrdering)
   private var toCommit = Set[Reactive]()
   private var afterCommitHandlers = List[() => Unit]()
-  private var dynamicLocks = Set[Reactive]()
+  private var dynamicLocks = List[Reactive]()
 
   implicit def implicitThis: Turn = this
 
@@ -77,6 +80,8 @@ class Pessimistic extends Turn {
   }
 
   override def unregister(dependant: Reactive, dependencies: Set[Reactive]): Unit = dependencies.foreach { dependency =>
+    dynamicLocks :::= dependencies.toList
+    if (!dependencies.forall(_.lock.tryLock())) throw new IllegalStateException(s"could not lock a removed dependency of $dependant")
     dependency.dependants.transform(_ - dependant)
     changed(dependency)
   }
@@ -137,7 +142,10 @@ class Pessimistic extends Turn {
   }
 
   def changed(reactive: Reactive): Unit = {
-    if (!reactive.lock.isHeldByCurrentThread) throw new IllegalStateException(s"tried to change reactive $reactive without holding lock")
+    if (!reactive.lock.relock.isHeldByCurrentThread)
+      throw new IllegalStateException(s"tried to change reactive $reactive but current thread has no lock")
+    if (reactive.lock.owner != Some(this))
+      throw new IllegalStateException(s"tried to change reactive $reactive but lock is owned by ${reactive.lock.owner}")
     toCommit += reactive
   }
 
@@ -153,20 +161,20 @@ class Pessimistic extends Turn {
 
   override def create[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
     if (!dependencies.forall(_.lock.tryLock())) throw new IllegalStateException(s"could not lock a creation dependency")
-    dynamicLocks ++= dependencies
+    dynamicLocks :::= dependencies.toList
     val reactive = f
     reactive.lock.lock()
-    dynamicLocks += reactive
+    dynamicLocks ::= reactive
     register(reactive, dependencies)
     reactive
   }
 
   override def createDynamic[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
     if (!dependencies.forall(_.lock.tryLock())) throw new IllegalStateException(s"could not lock a dynamic dependency on creation")
-    dynamicLocks ++= dependencies
+    dynamicLocks :::= dependencies.toList
     val reactive = f
     reactive.lock.lock()
-    dynamicLocks += reactive
+    dynamicLocks ::= reactive
     ensureLevel(reactive, dependencies)
     evaluate(reactive)
     reactive
