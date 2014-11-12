@@ -1,11 +1,5 @@
 package rescala.propagation
 
-import rescala.propagation.EvaluationResult.{Done, DependencyDiff}
-
-import scala.annotation.tailrec
-import scala.collection.mutable
-import scala.util.DynamicVariable
-
 /**
  * The engine that schedules the (glitch-free) evaluation
  * of the nodes in the dependency graph.
