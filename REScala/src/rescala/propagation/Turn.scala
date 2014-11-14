@@ -39,8 +39,9 @@ trait Turn {
   def useDependency(dependency: Reactive): Unit
 
   /* experimental stuff for pessimistic locking */
-  val stealLock = new ReentrantLock()
-  @volatile var stealRights = Set[Turn]()
-  val stealRightsAcquired = stealLock.newCondition()
+  val tradeLock = new ReentrantLock()
+  @volatile var awaitShare: Turn = null
+  @volatile var shareFrom: Turn = null
+  val tradeCondition = tradeLock.newCondition()
 
 }

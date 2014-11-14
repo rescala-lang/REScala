@@ -1,52 +1,60 @@
 package rescala.propagation
 
-import java.util.concurrent.locks.ReentrantLock
+import java.util.concurrent.locks.{AbstractQueuedSynchronizer, ReentrantLock}
 
 class TurnLock {
 
-  val relock: ReentrantLock = new ReentrantLock()
-  var owner: Option[Turn] = None
-  def lock()(implicit turn: Turn): Unit = {
-    relock.lock()
-    owner = Some(turn)
+  private val sync = new Sync()
+  @volatile var owner: Turn = null
+
+  def id(implicit turn: Turn): Int = System.identityHashCode(turn)
+
+  def lock()(implicit turn: Turn): Unit = synchronized {
+    sync.acquire(id)
+    owner = turn
   }
-  def tryLock()(implicit turn: Turn): Boolean = {
-    val res = relock.tryLock()
-    if (res) owner = Some(turn)
+
+  def tryLock()(implicit turn: Turn): Boolean = synchronized {
+    val res = sync.tryAcquire(id)
+    if (res) owner = turn
     res
   }
-  def unlock(): Unit = {
-    if(relock.getHoldCount == 1) owner = None
-    relock.unlock()
+
+  def unlock()(implicit turn: Turn): Unit = synchronized {
+    if (sync.isOwner(id)) owner = null
+    sync.release(id)
   }
 
-  def steal()(implicit turn: Turn): Unit = {
-    if (turn.stealRights.contains(owner.get)) {
-      //TODO: do something to move the lock or maybe make lock and try lock fall back to stealing
-    }
-  }
+  def shared(implicit turn: Turn): Boolean = (turn.shareFrom ne null) && sync.isOwner(id(turn.shareFrom))
 
-  def tradeStealRights()(implicit turn: Turn): Unit = {
-    val Some(own) = owner
-    if (!turn.stealRights.contains(own)) {
-      if (System.identityHashCode(own) < System.identityHashCode(turn)) {
-        own.stealLock.lock()
-        turn.stealLock.lock()
+  def tradeLocks()(implicit turn: Turn): Boolean = synchronized {
+    val own = owner
+    if (own eq null) false
+    else {
+      if (id(own) < id(turn)) {
+        own.tradeLock.lock()
+        turn.tradeLock.lock()
       }
       else {
-        turn.stealLock.lock()
-        own.stealLock.lock()
+        turn.tradeLock.lock()
+        own.tradeLock.lock()
       }
 
-      if (!turn.stealRights.contains(own)) {
-        own.stealRights += turn
-        own.stealRightsAcquired.notify()
-      }
+      own.shareFrom = turn
+      own.tradeCondition.notify()
 
-      own.stealLock.unlock()
-      while (!turn.stealRights.contains(own))
-        turn.stealRightsAcquired.await()
-      turn.stealLock.unlock()
+      own.tradeLock.unlock()
+      while (turn.shareFrom ne owner)
+        turn.tradeCondition.await()
+      turn.tradeLock.unlock()
+
+      true
     }
   }
+}
+
+private class Sync extends AbstractQueuedSynchronizer {
+  override def tryAcquire(id: Int): Boolean = isOwner(id) || compareAndSetState(0, id)
+  override def tryRelease(id: Int): Boolean = compareAndSetState(id, 0)
+  def isOwner(id: Int): Boolean = getState == id
 }

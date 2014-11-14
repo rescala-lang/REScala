@@ -20,7 +20,7 @@ object Pessimistic extends TurnFactory {
     reactives ++ reactives.flatMap(r => reachable(r.dependants.get))
 
   def lock(reactives: Seq[Reactive])(implicit turn: Turn): Unit = reactives.sortBy(r => System.identityHashCode(r.lock)).foreach(_.lock.lock())
-  def unlock(reactives: Seq[Reactive]): Unit = reactives.foreach(_.lock.unlock())
+  def unlock(reactives: Seq[Reactive])(implicit turn: Turn): Unit = reactives.foreach(_.lock.unlock())
 
   override def newTurn[T](f: Turn => T): T = {
     val turn = new Pessimistic()
@@ -36,9 +36,8 @@ object Pessimistic extends TurnFactory {
         turn.evaluateQueue()
         turn.commit()
       } finally {
-        unlock(sources)
-        unlock(locked)
-        unlock(turn.dynamicLocks)
+        val locks = (sources ++ locked ++ turn.dynamicLocks).distinct
+        unlock(locks)(turn)
       }
       res
     }
@@ -140,9 +139,9 @@ class Pessimistic extends Turn {
   }
 
   def changed(reactive: Reactive): Unit = {
-    if (!reactive.lock.relock.isHeldByCurrentThread)
-      throw new IllegalStateException(s"tried to change reactive $reactive but current thread has no lock")
-    if (reactive.lock.owner != Some(this))
+//    if (!reactive.lock.relock.isHeldByCurrentThread)
+//      throw new IllegalStateException(s"tried to change reactive $reactive but current thread has no lock")
+    if (reactive.lock.owner != this)
       throw new IllegalStateException(s"tried to change reactive $reactive but lock is owned by ${reactive.lock.owner}")
     toCommit += reactive
   }
@@ -178,8 +177,8 @@ class Pessimistic extends Turn {
 
   def acquireDynamic(reactive: Reactive): Unit = {
     if(!reactive.lock.tryLock()) {
-      reactive.lock.tradeStealRights()
-      reactive.lock.steal()
+      reactive.lock.tradeLocks()
+      reactive.lock.shared
       throw new IllegalStateException(s"$this could not lock $reactive already locked by ${reactive.lock.owner}")
     }
     dynamicLocks ::= reactive
