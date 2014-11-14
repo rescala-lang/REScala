@@ -28,22 +28,22 @@ class TurnLock {
   def shared(implicit turn: Turn): Boolean = (turn.shareFrom ne null) && sync.isOwner(id(turn.shareFrom))
 
   def tradeLocks()(implicit turn: Turn): Boolean = synchronized {
-    val own = owner
-    if (own eq null) false
+    val ownr = owner
+    if (ownr eq null) false
     else {
-      if (id(own) < id(turn)) {
-        own.tradeLock.lock()
+      if (id(ownr) < id(turn)) {
+        ownr.tradeLock.lock()
         turn.tradeLock.lock()
       }
       else {
         turn.tradeLock.lock()
-        own.tradeLock.lock()
+        ownr.tradeLock.lock()
       }
 
-      own.shareFrom = turn
-      own.tradeCondition.notify()
+      ownr.shareFrom = turn
+      ownr.tradeCondition.notify()
 
-      own.tradeLock.unlock()
+      ownr.tradeLock.unlock()
       while (turn.shareFrom ne owner)
         turn.tradeCondition.await()
       turn.tradeLock.unlock()

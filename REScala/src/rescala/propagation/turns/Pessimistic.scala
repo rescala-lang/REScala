@@ -20,7 +20,23 @@ object Pessimistic extends TurnFactory {
     reactives ++ reactives.flatMap(r => reachable(r.dependants.get))
 
   def lock(reactives: Seq[Reactive])(implicit turn: Turn): Unit = reactives.sortBy(r => System.identityHashCode(r.lock)).foreach(_.lock.lock())
-  def unlock(reactives: Seq[Reactive])(implicit turn: Turn): Unit = reactives.foreach(_.lock.unlock())
+  def unlock(reactives: Seq[Reactive])(implicit turn: Turn): Unit = {
+    turn.tradeLock.lock()
+    try {
+      if (turn.shareFrom ne null) {
+        turn.shareFrom.tradeLock.lock() // can not deadlock, the other is waiting for us
+        turn.shareFrom.shareFrom = turn //TODO: gah. cycles
+        turn.shareFrom.tradeCondition.notify()
+        turn.shareFrom.tradeLock.unlock()
+      }
+      else {
+        reactives.foreach(_.lock.unlock())
+      }
+    }
+    finally {
+      turn.tradeLock.unlock()
+    }
+  }
 
   override def newTurn[T](f: Turn => T): T = {
     val turn = new Pessimistic()
@@ -176,12 +192,11 @@ class Pessimistic extends Turn {
   }
 
   def acquireDynamic(reactive: Reactive): Unit = {
-    if(!reactive.lock.tryLock()) {
-      reactive.lock.tradeLocks()
-      reactive.lock.shared
-      throw new IllegalStateException(s"$this could not lock $reactive already locked by ${reactive.lock.owner}")
+    if(!reactive.lock.tryLock() && !reactive.lock.shared) {
+      if (!reactive.lock.tradeLocks()) {
+        throw new IllegalStateException(s"$this could not lock $reactive already locked by ${reactive.lock.owner} and trading failed")
+      }
     }
-    dynamicLocks ::= reactive
   }
 
 }
