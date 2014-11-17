@@ -3,7 +3,7 @@ package rescala.propagation.turns
 import java.util.concurrent.locks.ReentrantLock
 
 import rescala.propagation.EvaluationResult.{Done, DependencyDiff}
-import rescala.propagation.{TurnFactory, Turn, Reactive}
+import rescala.propagation.{LockOwner, TurnFactory, Turn, Reactive}
 
 import scala.annotation.tailrec
 import scala.collection.mutable
@@ -21,22 +21,18 @@ object Pessimistic extends TurnFactory {
   def reachable(reactives: Set[Reactive])(implicit turn: Pessimistic): Set[Reactive] =
     reactives ++ reactives.flatMap(r => reachable(r.dependants.get))
 
-  def lock(reactives: Seq[Reactive])(implicit turn: Pessimistic): Unit = reactives.sortBy(r => System.identityHashCode(r.lock)).foreach(_.lock.lock())
+  def lock(reactives: Seq[Reactive])(implicit turn: Pessimistic): Unit = reactives.sortBy(System.identityHashCode).foreach(_.lock.lock())
+
   def unlock(reactives: Seq[Reactive])(implicit turn: Pessimistic): Unit = {
-    turn.tradeLock.lock()
-    try {
-      if (turn.shareFrom ne null) {
-        turn.shareFrom.tradeLock.lock() // can not deadlock, the other is waiting for us
-        turn.shareFrom.shareFrom = turn //TODO: gah. cycles
-        turn.shareFrom.tradeCondition.notify()
-        turn.shareFrom.tradeLock.unlock()
-      }
-      else {
+    turn.lock.lock()
+    try turn.request match {
+      case Some(req) =>
+        reactives.foreach(_.lock.transfer(req))
+      case None =>
         reactives.foreach(_.lock.unlock())
-      }
     }
     finally {
-      turn.tradeLock.unlock()
+      turn.lock.unlock()
     }
   }
 
@@ -69,16 +65,12 @@ object Pessimistic extends TurnFactory {
 
 }
 
-class Pessimistic extends Turn {
+class Pessimistic extends Turn with LockOwner {
   private val evalQueue = new mutable.PriorityQueue[(Int, Reactive)]()(Synchronized.reactiveOrdering)
   private var toCommit = Set[Reactive]()
   private var afterCommitHandlers = List[() => Unit]()
   private var dynamicLocks = List[Reactive]()
 
-  /* experimental stuff for pessimistic locking */
-  val tradeLock = new ReentrantLock()
-  @volatile var shareFrom: Pessimistic = null
-  val tradeCondition = tradeLock.newCondition()
 
   implicit def implicitThis: Pessimistic = this
 
@@ -162,10 +154,8 @@ class Pessimistic extends Turn {
   }
 
   def changed(reactive: Reactive): Unit = {
-//    if (!reactive.lock.relock.isHeldByCurrentThread)
-//      throw new IllegalStateException(s"tried to change reactive $reactive but current thread has no lock")
-    if (reactive.lock.owner != this)
-      throw new IllegalStateException(s"tried to change reactive $reactive but lock is owned by ${reactive.lock.owner}")
+    if (!reactive.lock.owned)
+      throw new IllegalStateException(s"tried to change reactive $reactive but is locked by someone else")
     toCommit += reactive
   }
 
@@ -199,10 +189,9 @@ class Pessimistic extends Turn {
   }
 
   def acquireDynamic(reactive: Reactive): Unit = {
-    if(!reactive.lock.tryLock() && !reactive.lock.shared) {
-      if (!reactive.lock.tradeLocks()) {
-        throw new IllegalStateException(s"$this could not lock $reactive already locked by ${reactive.lock.owner} and trading failed")
-      }
+    if(!reactive.lock.sharedLock()) {
+      reactive.lock.request()
+      dynamicLocks ::= reactive
     }
   }
 

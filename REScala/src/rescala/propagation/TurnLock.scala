@@ -4,59 +4,75 @@ import java.util.concurrent.locks.{AbstractQueuedSynchronizer, ReentrantLock}
 
 import rescala.propagation.turns.Pessimistic
 
-class TurnLock {
+import scala.annotation.tailrec
 
-  private val sync = new Sync()
-  @volatile var owner: Pessimistic = null
+trait LockOwner {
+  @volatile var request: Option[LockOwner] = None
 
-  def id(implicit turn: Pessimistic): Int = System.identityHashCode(turn)
-
-  def lock()(implicit turn: Pessimistic): Unit = synchronized {
-    sync.acquire(id)
-    owner = turn
+  def grant(other: LockOwner): Unit = {
+    if (other.request.isDefined) throw new NotImplementedError(s"handling of owner chains missing")
+    other.request = Some(this)
   }
 
-  def tryLock()(implicit turn: Pessimistic): Boolean = synchronized {
-    val res = sync.tryAcquire(id)
-    if (res) owner = turn
-    res
+  val lock: ReentrantLock = new ReentrantLock()
+
+}
+
+final class TurnLock {
+
+  private var owner: LockOwner = null
+
+  def owned(implicit turn: LockOwner): Boolean = synchronized(owner eq turn)
+
+  def lock()(implicit turn: LockOwner): Unit = synchronized {
+    while (!tryLock()) wait()
   }
 
-  def unlock()(implicit turn: Pessimistic): Unit = synchronized {
-    if (sync.isOwner(id)) owner = null
-    sync.release(id)
-  }
-
-  def shared(implicit turn: Pessimistic): Boolean = (turn.shareFrom ne null) && sync.isOwner(id(turn.shareFrom))
-
-  def tradeLocks()(implicit turn: Pessimistic): Boolean = synchronized {
-    val ownr = owner
-    if (ownr eq null) false
-    else {
-      if (id(ownr) < id(turn)) {
-        ownr.tradeLock.lock()
-        turn.tradeLock.lock()
-      }
+  @tailrec
+  def request()(implicit turn: LockOwner): Unit = {
+    val done = synchronized {
+      if (tryLock()) true
       else {
-        turn.tradeLock.lock()
-        ownr.tradeLock.lock()
+        tryLockAll(turn, owner)(failureResult = false) {
+          turn.grant(owner)
+          true
+        }
       }
+    }
+    if (!done) request()
+    else lock()
+  }
 
-      ownr.shareFrom = turn
-      ownr.tradeCondition.notify()
+  def sharedLock()(implicit turn: LockOwner): Boolean = synchronized { turn.request == Some(owner) }
 
-      ownr.tradeLock.unlock()
-      while (turn.shareFrom ne owner)
-        turn.tradeCondition.await()
-      turn.tradeLock.unlock()
-
+  private def tryLock()(implicit turn: LockOwner): Boolean = synchronized {
+    if (owner eq null) {
+      owner = turn
       true
     }
+    else if (owned) true
+    else false
   }
+
+  def transfer(target: LockOwner)(implicit turn: LockOwner) = synchronized {
+    if (owned) {
+      owner = target
+      notifyAll()
+    }
+    else throw new IllegalMonitorStateException(s"$this is held by $owner but tried to transfer by $turn (to $target)")
+  }
+
+  def unlock()(implicit turn: LockOwner): Unit = transfer(null)
+
+  private def tryLockAll[R](lo: LockOwner*)(failureResult: R)(f: => R): R = {
+    val sorted = lo.sortBy(System.identityHashCode)
+    val locked = sorted.takeWhile(_.lock.tryLock())
+    try {
+      if (locked.size == sorted.size) failureResult
+      else f
+    }
+    finally locked.foreach(_.lock.unlock())
+  }
+
 }
 
-private class Sync extends AbstractQueuedSynchronizer {
-  override def tryAcquire(id: Int): Boolean = isOwner(id) || compareAndSetState(0, id)
-  override def tryRelease(id: Int): Boolean = compareAndSetState(id, 0)
-  def isOwner(id: Int): Boolean = getState == id
-}
