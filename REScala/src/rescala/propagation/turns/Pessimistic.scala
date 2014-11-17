@@ -189,7 +189,7 @@ class Pessimistic extends Turn with LockOwner {
   }
 
   def acquireDynamic(reactive: Reactive): Unit = {
-    if(!reactive.lock.sharedLock()) {
+    if(!reactive.lock.isShared()) {
       reactive.lock.request()
       dynamicLocks ::= reactive
     }

@@ -1,17 +1,23 @@
 package rescala.propagation
 
-import java.util.concurrent.locks.{AbstractQueuedSynchronizer, ReentrantLock}
+import java.util.concurrent.locks.ReentrantLock
 
-import rescala.propagation.turns.Pessimistic
-
+import scala.annotation.tailrec
 import scala.annotation.tailrec
 
 trait LockOwner {
   @volatile var request: Option[LockOwner] = None
 
-  def grant(other: LockOwner): Unit = {
-    if (other.request.isDefined) throw new NotImplementedError(s"handling of owner chains missing")
-    other.request = Some(this)
+  def grant(initial: LockOwner): Unit = {
+    def run(other: LockOwner): Unit =
+      other.request match {
+        case None => other.request = Some(this)
+        case Some(third) =>
+          // should not deadlock, because everything else is either spinlocking, or locking in this same order here
+          third.lock.lock()
+          try run(third) finally third.lock.unlock()
+      }
+    run(initial)
   }
 
   val lock: ReentrantLock = new ReentrantLock()
@@ -43,7 +49,16 @@ final class TurnLock {
     else lock()
   }
 
-  def sharedLock()(implicit turn: LockOwner): Boolean = synchronized { turn.request == Some(owner) }
+  def isShared()(implicit turn: LockOwner): Boolean = synchronized {
+    @tailrec
+    def run(curr: LockOwner): Boolean =
+      if (curr eq owner) true
+      else curr.request match {
+        case None => false
+        case Some(req) => run(req)
+      }
+    run(turn)
+  }
 
   private def tryLock()(implicit turn: LockOwner): Boolean = synchronized {
     if (owner eq null) {
