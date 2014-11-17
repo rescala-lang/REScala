@@ -38,10 +38,4 @@ trait Turn {
   /** mark a reactive as dynamically used */
   def useDependency(dependency: Reactive): Unit
 
-  /* experimental stuff for pessimistic locking */
-  val tradeLock = new ReentrantLock()
-  @volatile var awaitShare: Turn = null
-  @volatile var shareFrom: Turn = null
-  val tradeCondition = tradeLock.newCondition()
-
 }

@@ -1,5 +1,7 @@
 package rescala.propagation.turns
 
+import java.util.concurrent.locks.ReentrantLock
+
 import rescala.propagation.EvaluationResult.{Done, DependencyDiff}
 import rescala.propagation.{TurnFactory, Turn, Reactive}
 
@@ -9,18 +11,18 @@ import scala.util.DynamicVariable
 
 object Pessimistic extends TurnFactory {
 
-  val currentTurn: DynamicVariable[Option[Turn]] = new DynamicVariable[Option[Turn]](None)
+  val currentTurn: DynamicVariable[Option[Pessimistic]] = new DynamicVariable[Option[Pessimistic]](None)
 
   override def maybeDynamicTurn[T](f: (Turn) => T): T = currentTurn.value match {
     case None => newTurn(f)
     case Some(turn) => f(turn)
   }
 
-  def reachable(reactives: Set[Reactive])(implicit turn: Turn): Set[Reactive] =
+  def reachable(reactives: Set[Reactive])(implicit turn: Pessimistic): Set[Reactive] =
     reactives ++ reactives.flatMap(r => reachable(r.dependants.get))
 
-  def lock(reactives: Seq[Reactive])(implicit turn: Turn): Unit = reactives.sortBy(r => System.identityHashCode(r.lock)).foreach(_.lock.lock())
-  def unlock(reactives: Seq[Reactive])(implicit turn: Turn): Unit = {
+  def lock(reactives: Seq[Reactive])(implicit turn: Pessimistic): Unit = reactives.sortBy(r => System.identityHashCode(r.lock)).foreach(_.lock.lock())
+  def unlock(reactives: Seq[Reactive])(implicit turn: Pessimistic): Unit = {
     turn.tradeLock.lock()
     try {
       if (turn.shareFrom ne null) {
@@ -73,7 +75,12 @@ class Pessimistic extends Turn {
   private var afterCommitHandlers = List[() => Unit]()
   private var dynamicLocks = List[Reactive]()
 
-  implicit def implicitThis: Turn = this
+  /* experimental stuff for pessimistic locking */
+  val tradeLock = new ReentrantLock()
+  @volatile var shareFrom: Pessimistic = null
+  val tradeCondition = tradeLock.newCondition()
+
+  implicit def implicitThis: Pessimistic = this
 
   def register(dependant: Reactive, dependencies: Set[Reactive]): Unit = {
     dependencies.foreach { dependency =>

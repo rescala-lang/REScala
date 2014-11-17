@@ -2,32 +2,34 @@ package rescala.propagation
 
 import java.util.concurrent.locks.{AbstractQueuedSynchronizer, ReentrantLock}
 
+import rescala.propagation.turns.Pessimistic
+
 class TurnLock {
 
   private val sync = new Sync()
-  @volatile var owner: Turn = null
+  @volatile var owner: Pessimistic = null
 
-  def id(implicit turn: Turn): Int = System.identityHashCode(turn)
+  def id(implicit turn: Pessimistic): Int = System.identityHashCode(turn)
 
-  def lock()(implicit turn: Turn): Unit = synchronized {
+  def lock()(implicit turn: Pessimistic): Unit = synchronized {
     sync.acquire(id)
     owner = turn
   }
 
-  def tryLock()(implicit turn: Turn): Boolean = synchronized {
+  def tryLock()(implicit turn: Pessimistic): Boolean = synchronized {
     val res = sync.tryAcquire(id)
     if (res) owner = turn
     res
   }
 
-  def unlock()(implicit turn: Turn): Unit = synchronized {
+  def unlock()(implicit turn: Pessimistic): Unit = synchronized {
     if (sync.isOwner(id)) owner = null
     sync.release(id)
   }
 
-  def shared(implicit turn: Turn): Boolean = (turn.shareFrom ne null) && sync.isOwner(id(turn.shareFrom))
+  def shared(implicit turn: Pessimistic): Boolean = (turn.shareFrom ne null) && sync.isOwner(id(turn.shareFrom))
 
-  def tradeLocks()(implicit turn: Turn): Boolean = synchronized {
+  def tradeLocks()(implicit turn: Pessimistic): Boolean = synchronized {
     val ownr = owner
     if (ownr eq null) false
     else {
