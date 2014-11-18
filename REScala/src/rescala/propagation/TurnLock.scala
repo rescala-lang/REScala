@@ -40,7 +40,8 @@ final class TurnLock {
       if (tryLock()) true
       else {
         tryLockAll(turn, owner)(failureResult = false) {
-          turn.grant(owner)
+          // test makes sure, that owner is not waiting on us
+          if (!isShared()) turn.grant(owner)
           true
         }
       }
