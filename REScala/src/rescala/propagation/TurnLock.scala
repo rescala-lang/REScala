@@ -62,18 +62,23 @@ final class TurnLock {
 
   @tailrec
   def request()(implicit turn: LockOwner): Unit = {
-    val done = synchronized {
-      if (tryLock()) true
+    synchronized {
+      if (tryLock()) 'done
       else {
-        tryLockAllOwners(turn, owner)(failureResult = false) {
+        tryLockAllOwners(turn, owner)(failureResult = 'retry) {
           // test makes sure, that owner is not waiting on us
-          if (!isShared) turn.grant(owner)
-          true
+          if (isShared) 'done
+          else {
+            turn.grant(owner)
+            'await
+          }
         }
       }
+    } match {
+      case 'await => lock()
+      case 'retry => request()
+      case 'done =>
     }
-    if (!done) request()
-    else lock()
   }
 
   def isShared(implicit turn: LockOwner): Boolean = synchronized {
