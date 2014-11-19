@@ -22,6 +22,11 @@ trait LockOwner {
 
   val lock: ReentrantLock = new ReentrantLock()
 
+  @volatile var heldLocks: List[TurnLock] = Nil
+
+  def unlockAll() = heldLocks.distinct.foreach(_.unlock()(this))
+  def transferAll(target: LockOwner)  = heldLocks.distinct.foreach(_.transfer(target)(this))
+
 }
 
 final class TurnLock {
@@ -39,7 +44,7 @@ final class TurnLock {
     val done = synchronized {
       if (tryLock()) true
       else {
-        tryLockAll(turn, owner)(failureResult = false) {
+        tryLockAllOwners(turn, owner)(failureResult = false) {
           // test makes sure, that owner is not waiting on us
           if (!isShared()) turn.grant(owner)
           true
@@ -64,6 +69,7 @@ final class TurnLock {
   private def tryLock()(implicit turn: LockOwner): Boolean = synchronized {
     if (owner eq null) {
       owner = turn
+      turn.heldLocks ::= this
       true
     }
     else if (owned) true
@@ -80,7 +86,7 @@ final class TurnLock {
 
   def unlock()(implicit turn: LockOwner): Unit = transfer(null)
 
-  private def tryLockAll[R](lo: LockOwner*)(failureResult: R)(f: => R): R = {
+  private def tryLockAllOwners[R](lo: LockOwner*)(failureResult: R)(f: => R): R = {
     val sorted = lo.sortBy(System.identityHashCode)
     val locked = sorted.takeWhile(_.lock.tryLock())
     try {

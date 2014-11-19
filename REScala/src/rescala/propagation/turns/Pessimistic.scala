@@ -23,13 +23,13 @@ object Pessimistic extends TurnFactory {
 
   def lock(reactives: Seq[Reactive])(implicit turn: Pessimistic): Unit = reactives.sortBy(System.identityHashCode).foreach(_.lock.lock())
 
-  def unlock(reactives: Seq[Reactive])(implicit turn: Pessimistic): Unit = {
+  def unlock()(implicit turn: Pessimistic): Unit = {
     turn.lock.lock()
     try turn.request match {
       case Some(req) =>
-        reactives.foreach(_.lock.transfer(req))
+        turn.transferAll(req)
       case None =>
-        reactives.foreach(_.lock.unlock())
+        turn.unlockAll()
     }
     finally {
       turn.lock.unlock()
@@ -50,8 +50,7 @@ object Pessimistic extends TurnFactory {
         turn.evaluateQueue()
         turn.commit()
       } finally {
-        val locks = (sources ++ locked ++ turn.dynamicLocks).distinct
-        unlock(locks)(turn)
+        unlock()(turn)
       }
       res
     }
