@@ -5,6 +5,7 @@ import rescala.propagation._
 
 object Signals {
 
+  /** creates a dynamic signal */
   def makeDynamic[T](dependencies: Set[Reactive])(expr: Turn => T)(implicit currentTurn: Turn): Signal[T] = currentTurn.createDynamic(dependencies) {
     new Signal[T] with DynamicReevaluation[T] {
       def calculatePulseDependencies(implicit turn: Turn): (Pulse[T], Set[Reactive]) = {
@@ -14,8 +15,10 @@ object Signals {
     }
   }
 
+  /** creates a signal that has dynamic dependencies (which are detected at runtime with Signal.apply(turn)) */
   def dynamic[T](dependencies: Reactive*)(expr: Turn => T)(implicit maybe: MaybeTurn): Signal[T] = maybe(makeDynamic(dependencies.toSet)(expr)(_))
 
+  /** creates a signal that statically depends on the dependencies with a given initial value */
   def makeStatic[T](dependencies: Set[Reactive], init: T)(expr: (Turn, T) => T)(implicit initialTurn: Turn) = initialTurn.create(dependencies.toSet) {
     new Signal[T] with StaticReevaluation[T] {
       pulses.default = Pulse.unchanged(init)
@@ -27,19 +30,23 @@ object Signals {
     }
   }
 
+  /** creates a signal that folds the events in e*/
   def fold[E, T](e: Event[E], init: T)(f: (T, E) => T)(implicit maybe: MaybeTurn): Signal[T] = maybe {
     makeStatic(Set(e), init) { (turn, currentValue) =>
       e.pulse(turn).fold(currentValue)(f(currentValue, _))
     }(_)
   }
 
+  /** creates a new static signal depending on the dependencies, reevaluating the function */
   def mapping[T](dependencies: Reactive*)(fun: Turn => T)(implicit maybe: MaybeTurn): Signal[T] = maybe { initialTurn =>
     makeStatic(dependencies.toSet, fun(initialTurn))((turn, _) => fun(turn))(initialTurn)
   }
 
+  /** applies a binary function to two signals*/
   def lift[A1, A2, B](s1: Stateful[A1], s2: Stateful[A2])(fun: (A1, A2) => B)(implicit maybe: MaybeTurn): Signal[B] =
     mapping(s1, s2)(t => fun(s1.getValue(t), s2.getValue(t)))
 
+  /** applies a ternary function to two signals*/
   def lift[A1, A2, A3, B](s1: Stateful[A1], s2: Stateful[A2], s3: Stateful[A3])(fun: (A1, A2, A3) => B)(implicit maybe: MaybeTurn): Signal[B] =
     mapping(s1, s2)(t => fun(s1.getValue(t), s2.getValue(t), s3.getValue(t)))
 
