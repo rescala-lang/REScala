@@ -8,6 +8,7 @@ import scala.annotation.tailrec
 trait LockOwner {
   private implicit def currentLockOwner: LockOwner = this
 
+  /** if we have a request from some other owner, that owner has given us shared access to all his locks */
   @volatile final var request: Option[LockOwner] = None
 
   final def grant(initial: LockOwner): Unit = {
@@ -31,7 +32,7 @@ trait LockOwner {
   private def unlockAll() = heldLocks.distinct.foreach(_.unlock()(this))
   private def transferAll(target: LockOwner)  = heldLocks.distinct.foreach(_.transfer(target)(this))
 
-  final def lockOrdered(locks: Seq[TurnLock]): Unit = locks.sortBy(System.identityHashCode).foreach(_.lock())
+  final def lockOrdered(locks: Seq[TurnLock]): Unit = locks.sortBy(System.identityHashCode).foreach{ l => l.lock() }
 
   final def releaseAll(): Unit = {
     masterLock.lock()
