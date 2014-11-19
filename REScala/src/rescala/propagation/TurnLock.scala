@@ -166,8 +166,8 @@ final class TurnLock {
     val sorted = lo.sortBy(System.identityHashCode)
     val locked = sorted.takeWhile(_.masterLock.tryLock())
     try {
-      if (locked.size == sorted.size) failureResult
-      else f
+      if (locked.size == sorted.size) f
+      else failureResult
     }
     finally locked.foreach(_.masterLock.unlock())
   }
