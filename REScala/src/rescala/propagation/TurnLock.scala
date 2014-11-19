@@ -52,7 +52,9 @@ final class TurnLock {
 
   private var owner: LockOwner = null
 
-  def owned(implicit turn: LockOwner): Boolean = synchronized(owner eq turn)
+  def isOwned(implicit turn: LockOwner): Boolean = synchronized(owner eq turn)
+
+  def isAccessible(implicit turn: LockOwner): Boolean = synchronized(isOwned || isShared)
 
   def lock()(implicit turn: LockOwner): Unit = synchronized {
     while (!tryLock()) wait()
@@ -65,7 +67,7 @@ final class TurnLock {
       else {
         tryLockAllOwners(turn, owner)(failureResult = false) {
           // test makes sure, that owner is not waiting on us
-          if (!isShared()) turn.grant(owner)
+          if (!isShared) turn.grant(owner)
           true
         }
       }
@@ -74,7 +76,7 @@ final class TurnLock {
     else lock()
   }
 
-  def isShared()(implicit turn: LockOwner): Boolean = synchronized {
+  def isShared(implicit turn: LockOwner): Boolean = synchronized {
     @tailrec
     def run(curr: LockOwner): Boolean =
       if (curr eq owner) true
@@ -91,12 +93,12 @@ final class TurnLock {
       turn.addLock(this)
       true
     }
-    else if (owned) true
+    else if (isOwned) true
     else false
   }
 
   def transfer(target: LockOwner)(implicit turn: LockOwner) = synchronized {
-    if (owned) {
+    if (isOwned) {
       owner = target
       notifyAll()
     }

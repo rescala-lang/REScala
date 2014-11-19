@@ -26,8 +26,10 @@ class Pessimistic extends AbstractTurn with LockOwner {
 
   implicit def lockOwner: Pessimistic = this
 
+  /** changed is called whenever the turn does anything to a reactive that needs to be commited
+    * it is overridden here to detect changes to reactive which are not locked*/
   override def changed(reactive: Reactive): Unit = {
-    if (!reactive.lock.owned)
+    if (!reactive.lock.isAccessible)
       throw new IllegalStateException(s"tried to change reactive $reactive but is locked by someone else")
     super.changed(reactive)
   }
@@ -49,7 +51,7 @@ class Pessimistic extends AbstractTurn with LockOwner {
   }
 
   def acquireDynamic(reactive: Reactive): Unit = {
-    if (!reactive.lock.isShared()) {
+    if (!reactive.lock.isShared) {
       reactive.lock.request()
     }
   }
