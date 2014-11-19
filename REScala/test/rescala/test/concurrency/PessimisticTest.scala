@@ -1,7 +1,7 @@
 package rescala.test.concurrency
 
 
-import java.util.concurrent.{TimeUnit, CountDownLatch}
+import java.util.concurrent.{ConcurrentLinkedQueue, TimeUnit, CountDownLatch}
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
@@ -9,6 +9,7 @@ import rescala.propagation.Turn
 import rescala.propagation.turns.Pessimistic
 import rescala.propagation.{TurnFactory, Turn}
 import rescala.signals.{Signals, Var}
+import scala.collection.JavaConverters._
 
 
 class PessimisticTest extends AssertionsForJUnit {
@@ -44,8 +45,12 @@ class PessimisticTest extends AssertionsForJUnit {
     val mapped = sources.map(s => s.map(_ + 1))
     val sum = mapped.reduce(Signals.lift(_, _)(_ + _))
     val threads = sources.map(v => thread{latch.await(); v.set(1)})
+    val results = new ConcurrentLinkedQueue[Int]()
+    sum.changed.+=(results.add)
     latch.countDown()
     threads.foreach(_.join())
+
+    assert(results.asScala.toList.sorted.sameElements(Range(101, 201)))
 
     assert(sum.get === 200)
   }
