@@ -6,26 +6,45 @@ import scala.annotation.tailrec
 import scala.annotation.tailrec
 
 trait LockOwner {
-  @volatile var request: Option[LockOwner] = None
+  private implicit def currentLockOwner: LockOwner = this
 
-  def grant(initial: LockOwner): Unit = {
+  @volatile final var request: Option[LockOwner] = None
+
+  final def grant(initial: LockOwner): Unit = {
     def run(other: LockOwner): Unit =
       other.request match {
         case None => other.request = Some(this)
         case Some(third) =>
           // should not deadlock, because everything else is either spinlocking, or locking in this same order here
-          third.lock.lock()
-          try run(third) finally third.lock.unlock()
+          third.masterLock.lock()
+          try run(third) finally third.masterLock.unlock()
       }
     run(initial)
   }
 
-  val lock: ReentrantLock = new ReentrantLock()
+  final val masterLock: ReentrantLock = new ReentrantLock()
 
-  @volatile var heldLocks: List[TurnLock] = Nil
+  @volatile final var heldLocks: List[TurnLock] = Nil
 
-  def unlockAll() = heldLocks.distinct.foreach(_.unlock()(this))
-  def transferAll(target: LockOwner)  = heldLocks.distinct.foreach(_.transfer(target)(this))
+  final def addLock(lock: TurnLock) = heldLocks ::= lock
+
+  private def unlockAll() = heldLocks.distinct.foreach(_.unlock()(this))
+  private def transferAll(target: LockOwner)  = heldLocks.distinct.foreach(_.transfer(target)(this))
+
+  final def lockOrdered(locks: Seq[TurnLock]): Unit = locks.sortBy(System.identityHashCode).foreach(_.lock())
+
+  final def releaseAll(): Unit = {
+    masterLock.lock()
+    try request match {
+      case Some(req) =>
+        transferAll(req)
+      case None =>
+        unlockAll()
+    }
+    finally {
+      masterLock.unlock()
+    }
+  }
 
 }
 
@@ -69,7 +88,7 @@ final class TurnLock {
   private def tryLock()(implicit turn: LockOwner): Boolean = synchronized {
     if (owner eq null) {
       owner = turn
-      turn.heldLocks ::= this
+      turn.addLock(this)
       true
     }
     else if (owned) true
@@ -88,12 +107,12 @@ final class TurnLock {
 
   private def tryLockAllOwners[R](lo: LockOwner*)(failureResult: R)(f: => R): R = {
     val sorted = lo.sortBy(System.identityHashCode)
-    val locked = sorted.takeWhile(_.lock.tryLock())
+    val locked = sorted.takeWhile(_.masterLock.tryLock())
     try {
       if (locked.size == sorted.size) failureResult
       else f
     }
-    finally locked.foreach(_.lock.unlock())
+    finally locked.foreach(_.masterLock.unlock())
   }
 
 }

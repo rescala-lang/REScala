@@ -21,36 +21,23 @@ object Pessimistic extends TurnFactory {
   def reachable(reactives: Set[Reactive])(implicit turn: Pessimistic): Set[Reactive] =
     reactives ++ reactives.flatMap(r => reachable(r.dependants.get))
 
-  def lock(reactives: Seq[Reactive])(implicit turn: Pessimistic): Unit = reactives.sortBy(System.identityHashCode).foreach(_.lock.lock())
 
-  def unlock()(implicit turn: Pessimistic): Unit = {
-    turn.lock.lock()
-    try turn.request match {
-      case Some(req) =>
-        turn.transferAll(req)
-      case None =>
-        turn.unlockAll()
-    }
-    finally {
-      turn.lock.unlock()
-    }
-  }
 
   override def newTurn[T](f: Turn => T): T = {
     val turn = new Pessimistic()
     val result = currentTurn.withValue(Some(turn)) {
       val res = f(turn)
-      val sources = turn.evalQueue.map(_._2).toList
-      lock(sources)(turn)
+      val sources = turn.evalQueue.map(_._2).toSeq
+      turn.lockOrdered(sources.map(_.lock))
       val locked = reachable(sources.toSet)(turn).toSeq
-      lock(locked)(turn)
+      turn.lockOrdered(locked.map(_.lock))
       //TODO: need to check if the dependencies have changed in between
       //TODO: … it might actually be better to lock directly and always do deadlock detection
       try {
         turn.evaluateQueue()
         turn.commit()
       } finally {
-        unlock()(turn)
+        turn.releaseAll()
       }
       res
     }
