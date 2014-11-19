@@ -21,9 +21,9 @@ object Pessimistic extends AbstractTurnFactory[Pessimistic](() => new Pessimisti
     turn.masterLock.lock()
     try {
       val sources = turn.evalQueue.map(_._2).toSeq
-      turn.lockOrdered(sources.map(_.lock))
+      lockOrdered(sources)(turn)
       val locked = reachable(sources.toSet)(turn).toSeq
-      turn.lockOrdered(locked.map(_.lock))
+      lockOrdered(locked)(turn)
       //TODO: need to check if the dependencies have changed in between
       //TODO: … it might actually be better to lock directly and always do deadlock detection
     }
@@ -31,6 +31,10 @@ object Pessimistic extends AbstractTurnFactory[Pessimistic](() => new Pessimisti
       turn.masterLock.unlock()
     }
   }
+
+  /** helper to lock a sequence of reactives in a given order to prevent deadlocks */
+  final def lockOrdered(reactives: Seq[Reactive])(implicit turn: LockOwner): Unit = reactives.sortBy(System.identityHashCode).foreach { _.lock.lock() }
+
 
   /** this is called after the initial closure of the turn has been executed,
     * that is the eval queue is populated with the sources */
