@@ -12,14 +12,18 @@ class LightImplicitSyntaxTest extends AssertionsForJUnit {
     implicit def getSignalValueDynamic[T](s: Signal[T])(implicit turn: Turn): T = s.apply(turn)
     def Signal[T](f: Turn => T)(implicit maybe: MaybeTurn): Signal[T] = Signals.dynamic()(f)
 
-    val v1 = Var(1)
-    val s1 = Signal{ implicit t => v1 + v1}
+    val price = Var(3)
+    val tax = price.map { p => p / 3 }
+    val quantity = Var(1)
+    val total = Signal { implicit t =>
+      quantity * (price + tax)
+    }
 
-    assert( s1.get === 2)
-
-    v1.set(2)
-
-    assert(s1.get === 4)
+    assert(total.get === 4)
+    price.set(6)
+    assert(total.get === 8)
+    quantity.set(2)
+    assert(total.get === 16)
 
   }
 
