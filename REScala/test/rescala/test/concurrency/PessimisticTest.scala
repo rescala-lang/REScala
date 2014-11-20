@@ -3,7 +3,7 @@ package rescala.test.concurrency
 
 import java.util.concurrent.{ConcurrentLinkedQueue, TimeUnit, CountDownLatch}
 
-import org.junit.Test
+import org.junit.{Ignore, Test}
 import org.scalatest.junit.AssertionsForJUnit
 import rescala.propagation.Turn
 import rescala.propagation.turns.Pessimistic
@@ -47,7 +47,7 @@ class PessimisticTest extends AssertionsForJUnit {
     assert(sum.get === 200)
   }
   
-  @Test def crossedDynamicDependencies(): Unit = {
+  @Ignore def crossedDynamicDependencies(): Unit = {
     val v1 = Var(false)
     val v2 = Var(false)
     val latch = new CountDownLatch(2)
