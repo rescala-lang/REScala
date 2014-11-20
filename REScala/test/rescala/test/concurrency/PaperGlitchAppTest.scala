@@ -8,13 +8,7 @@ import rescala.propagation.TurnFactory
 import rescala.propagation.turns._
 
 object PaperGlitchAppTest extends App {
-  def thread(f: => Unit): Thread = {
-    val t = new Thread(new Runnable {
-      override def run(): Unit = f
-    })
-    t.start()
-    t
-  }
+
   val lnOf2 = scala.math.log(2) // natural log of 2
   def log2(x: Double): Double = scala.math.log(x) / lnOf2
   def isPowerOf2(x: Int) = (x & (x - 1)) == 0
@@ -26,8 +20,8 @@ object PaperGlitchAppTest extends App {
   val price = Var(3)
   val tax = price.map { p => p / 3 }
   val quantity = Var(1)
-  val total = Signals.mapping(quantity, price, tax) {
-    t: Turn => quantity.getValue(t) * (price.getValue(t) + tax.getValue(t))
+  val total = Signals.mapping(quantity, price, tax) { implicit t =>
+    quantity.get * (price.get + tax.get)
   }
 
   // ============================================================================================================
@@ -42,10 +36,10 @@ object PaperGlitchAppTest extends App {
 
   // ============================================================================================================
 
-  thread {
+  Spawn {
     for (i <- 0 to 100000) price.set(3 * 2 << Random.nextInt(8))
   }
-  thread {
+  Spawn {
     for (i <- 0 to 100000) quantity.set(2 << Random.nextInt(8))
   }
 }

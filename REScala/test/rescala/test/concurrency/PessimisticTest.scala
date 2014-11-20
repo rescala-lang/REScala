@@ -16,14 +16,6 @@ class PessimisticTest extends AssertionsForJUnit {
 
   implicit val turnFactory: TurnFactory = Pessimistic
 
-  def thread(f: => Unit): Thread = {
-    val t = new Thread(new Runnable {
-      override def run(): Unit = f
-    })
-    t.start()
-    t
-  }
-
   @Test def runOnIndependentParts(): Unit = {
     val v1 = Var(false)
     val v2 = Var(false)
@@ -31,7 +23,7 @@ class PessimisticTest extends AssertionsForJUnit {
     val s1 = v1.map{ v => if (v) {latch.countDown(); latch.await(1, TimeUnit.SECONDS)} else false}
     val s2 = v2.map{ v => if (v) {latch.countDown(); latch.await(1, TimeUnit.SECONDS)} else false}
 
-    val t = thread(v1.set(true))
+    val t = Spawn(v1.set(true))
     v2.set(true)
     t.join()
 
@@ -44,7 +36,7 @@ class PessimisticTest extends AssertionsForJUnit {
     val latch = new CountDownLatch(1)
     val mapped = sources.map(s => s.map(_ + 1))
     val sum = mapped.reduce(Signals.lift(_, _)(_ + _))
-    val threads = sources.map(v => thread{latch.await(); v.set(1)})
+    val threads = sources.map(v => Spawn{latch.await(); v.set(1)})
     val results = new ConcurrentLinkedQueue[Int]()
     sum.changed.+=(results.add)
     latch.countDown()
@@ -70,7 +62,7 @@ class PessimisticTest extends AssertionsForJUnit {
 
     assert(results === Nil)
 
-    val t = thread(v1.set(true))
+    val t = Spawn(v1.set(true))
     v2.set(true)
     t.join()
 
