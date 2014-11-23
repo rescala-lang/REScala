@@ -1,7 +1,7 @@
 package rescala.propagation.turns.instances
 
 import rescala.propagation.Reactive
-import rescala.propagation.turns.{TurnLock, LockOwner}
+import rescala.propagation.turns.{LockOwner, TurnLock}
 
 
 object Pessimistic extends AbstractTurnFactory[Pessimistic](() => new Pessimistic()) {
@@ -14,7 +14,7 @@ object Pessimistic extends AbstractTurnFactory[Pessimistic](() => new Pessimisti
     * tried to solve this by acquiring the master lock during initial locking,
     * so that nothing can be shared with us.
     * this still has problems, because evaluating the initial closure of the turn may create new reactives,
-    * which causes dynamic locking to happen and screw us here.*/
+    * which causes dynamic locking to happen and screw us here. */
   def lockReachable(turn: Pessimistic): Unit = {
     def reachable(reactives: Set[Reactive])(implicit turn: Pessimistic): Set[Reactive] =
       reactives ++ reactives.flatMap(r => reachable(r.dependants.get))
@@ -109,6 +109,7 @@ class Pessimistic extends AbstractTurn with LockOwner {
       //TODO: maybe make turn state for dependencies smarter?
     }
   }
+
 
 }
 
