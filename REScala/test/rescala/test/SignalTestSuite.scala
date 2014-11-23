@@ -10,7 +10,7 @@ import rescala.signals._
 class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
 
   @Test def signalReEvaluatesTheExpression(): Unit = {
-    val v  = Var(0)
+    val v = Var(0)
     var i = 1
     val s: Signal[Int] = v.map { _ => i }
     i = 2
@@ -20,7 +20,7 @@ class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
 
   @Test def theExpressionIsNoteEvaluatedEveryTimeGetValIsCalled(): Unit = {
     var a = 10
-    val s: Signal[Int] = Signals.mapping()(_ => 1 + 1 + a )
+    val s: Signal[Int] = Signals.mapping()(_ => 1 + 1 + a)
     assert(s.get === 12)
     a = 11
     assert(s.get === 12)
@@ -28,7 +28,7 @@ class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
 
 
   @Test def simpleSignalReturnsCorrectExpressions(): Unit = {
-    val s: Signal[Int] = Signals.mapping()(_ => 1 + 1 + 1 )
+    val s: Signal[Int] = Signals.mapping()(_ => 1 + 1 + 1)
     assert(s.get === 3)
   }
 
@@ -46,14 +46,14 @@ class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(a == 3)
   }
 
-  @Test def handlersAreExecuted() =  {
+  @Test def handlersAreExecuted() = {
 
     var test = 0
     val v = Var(1)
 
     val s1 = v.map { 2 * _ }
     val s2 = v.map { 3 * _ }
-    val s3 = Signals.lift(s1, s2){ _ + _ }
+    val s3 = Signals.lift(s1, s2) { _ + _ }
 
     s1.changed += { (_) => test += 1 }
     s2.changed += { (_) => test += 1 }
@@ -66,13 +66,13 @@ class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
 
   }
 
-  @Test def levelIsCorrectlyComputed() =  {
+  @Test def levelIsCorrectlyComputed() = {
 
     val v = Var(1)
 
     val s1 = v.map { 2 * _ }
     val s2 = v.map { 3 * _ }
-    val s3 = Signals.lift(s1,s2){ _ + _ }
+    val s3 = Signals.lift(s1, s2) { _ + _ }
 
     implicitly[TurnFactory].newTurn { implicit turn =>
       assert(v.getLevel == 0)

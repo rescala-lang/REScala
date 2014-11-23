@@ -2,6 +2,7 @@ package rescala.test
 
 
 //These 3 are for JUnitRunner
+
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
@@ -11,7 +12,7 @@ import rescala.signals._
 class SignalsAndVarsTestSuite extends AssertionsForJUnit with MockitoSugar {
 
 
-  @Test def handlerIsCalledWhenChangeOccurs() =  {
+  @Test def handlerIsCalledWhenChangeOccurs() = {
 
     var test = 0
     val v1 = Var(1)
@@ -32,8 +33,6 @@ class SignalsAndVarsTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(test == 1)
 
   }
-
-
 
 
 }

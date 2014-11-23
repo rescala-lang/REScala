@@ -1,6 +1,7 @@
 package rescala.test
 
 //These 3 are for JUnitRunner
+
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
@@ -37,7 +38,7 @@ class VarTestSuite extends AssertionsForJUnit with MockitoSugar {
     var changes = 0
     val v = Var(1)
     val changed = v.change
-    changed += {_ => changes += 1}
+    changed += { _ => changes += 1 }
 
     v.set(2)
     assert(changes == 1)

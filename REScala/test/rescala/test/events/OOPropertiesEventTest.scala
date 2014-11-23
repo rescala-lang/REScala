@@ -21,7 +21,7 @@ class OOPropertiesEventTest extends AssertionsForJUnit with MockitoSugar {
 
     class A {
       val e1 = new ImperativeEvent[Int]()
-      e1 += ( (x: Int) => { test+=1 })
+      e1 += ((x: Int) => { test += 1 })
     }
     class B extends A {
       e1(10)
@@ -31,7 +31,7 @@ class OOPropertiesEventTest extends AssertionsForJUnit with MockitoSugar {
   }
 
 
-   @Test def canTriggerEventsInSuperclass() = {
+  @Test def canTriggerEventsInSuperclass() = {
 
     var test = 0
 
@@ -39,7 +39,7 @@ class OOPropertiesEventTest extends AssertionsForJUnit with MockitoSugar {
       val e1 = new ImperativeEvent[Int]()
     }
     class B extends A {
-      e1 += ( (x: Int) => { test+=1 })
+      e1 += ((x: Int) => { test += 1 })
       e1(10)
     }
     new B()
@@ -66,12 +66,12 @@ class OOPropertiesEventTest extends AssertionsForJUnit with MockitoSugar {
       }
       new B()
 
-    } catch {
+    }
+    catch {
       case e: NullPointerException => return
     }
     assert(false)
   }
-
 
 
   class X {}
