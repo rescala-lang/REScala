@@ -1,6 +1,8 @@
-package rescala.propagation.turns
+package rescala.propagation.turns.instances
 
-import rescala.propagation.{Reactive, Turn, TurnFactory}
+import rescala.propagation.Reactive
+import rescala.propagation.turns.Turn
+import rescala.propagation.turns.creation.TurnFactory
 
 import scala.util.DynamicVariable
 

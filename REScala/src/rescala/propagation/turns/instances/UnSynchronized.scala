@@ -1,6 +1,6 @@
-package rescala.propagation.turns
+package rescala.propagation.turns.instances
 
-import rescala.propagation.Turn
+import rescala.propagation.turns.Turn
 
 object UnSynchronized extends AbstractTurnFactory[Synchronized](() => new Synchronized()) {
   override def newTurn[T](f: Turn => T): T = super.newTurn(f)

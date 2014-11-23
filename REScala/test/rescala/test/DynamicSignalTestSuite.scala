@@ -4,8 +4,8 @@ package rescala.test
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.propagation.TurnFactory
 import rescala.signals._
+import rescala.propagation.turns.creation.TurnFactory
 
 
 class DynamicSignalTestSuite extends AssertionsForJUnit with MockitoSugar {

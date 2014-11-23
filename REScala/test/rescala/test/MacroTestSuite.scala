@@ -5,8 +5,8 @@ import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.events._
 import rescala.macros.SignalMacro.{SignalM => Signal}
-import rescala.propagation.TurnFactory
 import rescala.signals._
+import rescala.propagation.turns.creation.TurnFactory
 
 class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
 

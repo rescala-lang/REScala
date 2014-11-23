@@ -1,4 +1,6 @@
-package rescala.propagation
+package rescala.propagation.turns.creation
+
+import rescala.propagation.turns.Turn
 
 import scala.language.implicitConversions
 

@@ -2,6 +2,8 @@ package rescala.signals
 
 import rescala.events.Event
 import rescala.propagation._
+import rescala.propagation.turns.Turn
+import rescala.propagation.turns.creation.MaybeTurn
 
 object Signals extends GeneratedLift {
 

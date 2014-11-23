@@ -1,7 +1,7 @@
 package rescala.macros
 
-import rescala.propagation.Turn
 import rescala.signals._
+import rescala.propagation.turns.Turn
 
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox

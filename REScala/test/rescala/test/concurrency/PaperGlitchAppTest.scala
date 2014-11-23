@@ -4,7 +4,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
-import rescala.propagation.turns._
+import rescala.propagation.turns.instances._
 import rescala.signals.{Signals, Var}
 
 import scala.util.Random

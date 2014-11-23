@@ -1,6 +1,8 @@
 package rescala.propagation
 
 import rescala.propagation.Pulse.{Diff, NoChange}
+import rescala.propagation.turns.creation.MaybeTurn
+import rescala.propagation.turns.{TurnState, TurnLock, Turn}
 
 /** A Reactive is a value type which has a dependency to other Reactives */
 trait Reactive {

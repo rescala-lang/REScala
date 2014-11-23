@@ -5,8 +5,8 @@ import java.util.concurrent.{ConcurrentLinkedQueue, CountDownLatch, TimeUnit}
 
 import org.junit.{Ignore, Test}
 import org.scalatest.junit.AssertionsForJUnit
-import rescala.propagation.TurnFactory
-import rescala.propagation.turns.Pessimistic
+import rescala.propagation.turns.creation.TurnFactory
+import rescala.propagation.turns.instances.Pessimistic
 import rescala.signals.{Signals, Var}
 
 import scala.collection.JavaConverters._

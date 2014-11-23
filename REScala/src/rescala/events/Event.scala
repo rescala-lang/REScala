@@ -2,6 +2,7 @@ package rescala.events
 
 import rescala.propagation._
 import rescala.signals.{Signal, Signals}
+import rescala.propagation.turns.creation.MaybeTurn
 
 import scala.collection.LinearSeq
 import scala.collection.immutable.Queue

@@ -1,4 +1,7 @@
-package rescala.propagation
+package rescala.propagation.turns.creation
+
+import rescala.propagation.turns.instances.Pessimistic
+import rescala.propagation.turns.Turn
 
 trait TurnFactory {
   /** creates runs and commits a new turn */
@@ -9,5 +12,5 @@ trait TurnFactory {
 }
 
 object TurnFactory {
-  implicit val default: TurnFactory = turns.Pessimistic
+  implicit val default: TurnFactory = Pessimistic
 }

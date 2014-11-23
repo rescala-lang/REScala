@@ -1,7 +1,8 @@
-package rescala.propagation.turns
+package rescala.propagation.turns.instances
 
 import rescala.propagation.EvaluationResult.{DependencyDiff, Done}
-import rescala.propagation.{Reactive, Turn}
+import rescala.propagation.Reactive
+import rescala.propagation.turns.Turn
 
 import scala.annotation.tailrec
 import scala.collection.mutable

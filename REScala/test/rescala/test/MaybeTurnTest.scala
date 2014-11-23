@@ -4,6 +4,8 @@ import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.propagation._
+import rescala.propagation.turns.creation.{TurnFactory, MaybeTurn}
+import rescala.propagation.turns.Turn
 
 class MaybeTurnTest extends AssertionsForJUnit with MockitoSugar {
 

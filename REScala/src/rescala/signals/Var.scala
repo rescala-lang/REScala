@@ -1,6 +1,8 @@
 package rescala.signals
 
 import rescala.propagation._
+import rescala.propagation.turns.Turn
+import rescala.propagation.turns.creation.TurnFactory
 
 /** A root Reactive value without dependencies which can be set */
 object Var {
