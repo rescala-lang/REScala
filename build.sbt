@@ -77,3 +77,10 @@ sourceGenerators in Compile <+= sourceManaged in Compile map { dir =>
    """.stripMargin)
   Seq(file)
 }
+
+initialCommands in console :=
+  s"""import rescala._
+     |import rescala.events._
+     |import rescala.signals._
+     |import rescala.Implicits.default
+   """.stripMargin
