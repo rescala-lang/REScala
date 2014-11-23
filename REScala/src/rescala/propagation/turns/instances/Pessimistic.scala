@@ -1,7 +1,7 @@
 package rescala.propagation.turns.instances
 
 import rescala.propagation.Reactive
-import rescala.propagation.turns.LockOwner
+import rescala.propagation.turns.{TurnLock, LockOwner}
 
 
 object Pessimistic extends AbstractTurnFactory[Pessimistic](() => new Pessimistic()) {
@@ -48,6 +48,11 @@ object Pessimistic extends AbstractTurnFactory[Pessimistic](() => new Pessimisti
 class Pessimistic extends AbstractTurn with LockOwner {
 
   implicit def lockOwner: Pessimistic = this
+
+
+  /** check if the current turn hold the lock */
+  override def checkLock(lock: TurnLock): Boolean = lock.isAccessible
+
 
   /** changed is called whenever the turn does anything to a reactive that needs to be commited
     * it is overridden here to detect changes to reactive which are not locked

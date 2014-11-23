@@ -9,6 +9,9 @@ import scala.collection.mutable
 import scala.util.DynamicVariable
 
 abstract class AbstractTurn extends Turn {
+
+  import rescala.propagation.turns.instances.DependencyChanges._
+
   protected val evalQueue = new mutable.PriorityQueue[(Int, Reactive)]()(Synchronized.reactiveOrdering)
   protected var toCommit = Set[Reactive]()
   protected var afterCommitHandlers = List[() => Unit]()
@@ -46,6 +49,7 @@ abstract class AbstractTurn extends Turn {
     unregister(dependant, oldDependencies.diff(newDependencies))
     register(dependant, newDependencies.diff(oldDependencies))
   }
+
 
   override def isReady(reactive: Reactive, dependencies: Set[Reactive]) =
     dependencies.forall(_.level.get < reactive.level.get)
@@ -113,5 +117,9 @@ abstract class AbstractTurn extends Turn {
   override def createDynamic[T <: Reactive](dependencies: Set[Reactive])(f: => T): T
 
   def acquireDynamic(reactive: Reactive): Unit
+
+}
+
+object DependencyChanges {
 
 }

@@ -38,4 +38,7 @@ trait Turn {
   /** mark a reactive as dynamically used */
   def useDependency(dependency: Reactive): Unit
 
+  /** check if the current turn hold the lock */
+  def checkLock(lock: TurnLock): Boolean = true
+
 }

@@ -6,11 +6,11 @@ import rescala.propagation.turns.{TurnState, TurnLock, Turn}
 
 /** A Reactive is a value type which has a dependency to other Reactives */
 trait Reactive {
-  final private[propagation] val level: TurnState[Int] = TurnState(0, math.max)
-
-  final private[propagation] val dependants: TurnState[Set[Reactive]] = TurnState(Set(), (_, x) => x)
-
   final private[propagation] val lock: TurnLock = new TurnLock()
+
+  final private[propagation] val level: TurnState[Int] = TurnState(0, math.max, lock)
+
+  final private[propagation] val dependants: TurnState[Set[Reactive]] = TurnState(Set(), (_, x) => x, lock)
 
   /** for testing */
   def getLevel(implicit turn: Turn) = level.get
@@ -28,7 +28,7 @@ trait Reactive {
 
 /** A node that has nodes that depend on it */
 trait Pulsing[+P] extends Reactive {
-  final protected[this] val pulses: TurnState[Pulse[P]] = TurnState(Pulse.none, (x, _) => x)
+  final protected[this] val pulses: TurnState[Pulse[P]] = TurnState(Pulse.none, (x, _) => x, lock)
 
   final def pulse(implicit turn: Turn): Pulse[P] = pulses.get
 
@@ -66,7 +66,7 @@ trait StaticReevaluation[+P] extends Pulsing[P] {
 
 /** reevaluation strategy for dynamic dependencies */
 trait DynamicReevaluation[+P] extends Pulsing[P] {
-  private val dependencies: TurnState[Set[Reactive]] = TurnState(Set(), (_, x) => x)
+  private val dependencies: TurnState[Set[Reactive]] = TurnState(Set(), (_, x) => x, lock)
 
   /** side effect free calculation of the new pulse and the new dependencies for the current turn */
   def calculatePulseDependencies(implicit turn: Turn): (Pulse[P], Set[Reactive])
