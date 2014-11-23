@@ -78,7 +78,6 @@ trait Event[+T] extends Pulsing[T] {
   def latest[S >: T](init: S)(implicit maybe: MaybeTurn): Signal[S] = fold(init)((_, v) => v)
 
   /** Holds the latest value of an event as an Option, None before the first event occured */
-  def hold()(implicit maybe: MaybeTurn): Signal[Option[T]] = latestOption()
   def latestOption()(implicit maybe: MaybeTurn): Signal[Option[T]] = fold(None: Option[T]){ (_, v) => Some(v) }
 
   /** calls factory on each occurrence of event e, resetting the Signal to a newly generated one */
@@ -97,21 +96,23 @@ trait Event[+T] extends Pulsing[T] {
   def list()(implicit maybe: MaybeTurn): Signal[List[T]] = fold(List[T]())((acc, v) => v :: acc)
 
   /** Switch back and forth between two signals on occurrence of event e */
-  def toggle[A](a: Signal[A], b: Signal[A])(implicit maybe: MaybeTurn): Signal[A] = {
+  def toggle[A](a: Signal[A], b: Signal[A])(implicit maybe: MaybeTurn): Signal[A] = maybe { implicit turn =>
     val switched: Signal[Boolean] = iterate(false) { !_ }
     Signals.dynamic(switched, a, b) { s => if (switched(s)) b(s) else a(s) }
   }
 
   /** Return a Signal that is updated only when e fires, and has the value of the signal s */
-  def snapshot[A](s: Signal[A])(implicit maybe: MaybeTurn): Signal[A] = fold(s.get)((_, _) => s.get)
+  def snapshot[A](s: Signal[A])(implicit maybe: MaybeTurn): Signal[A] = maybe { turn =>
+    Signals.makeStatic(Set(this, s), s.getValue(turn))((t, current) => this.pulse(t).fold(current)(_ => s.getValue(t)))(turn)
+  }
 
   /** Switch to a new Signal once, on the occurrence of event e. */
-  def switchOnce[A](original: Signal[A], newSignal: Signal[A])(implicit maybe: MaybeTurn): Signal[A] = {
+  def switchOnce[A](original: Signal[A], newSignal: Signal[A])(implicit maybe: MaybeTurn): Signal[A] = maybe { implicit turn =>
     val latest = latestOption
-    Signals.dynamic(latest, original, newSignal) { s =>
-      latest(s) match {
-        case None => original(s)
-        case Some(_) => newSignal(s)
+    Signals.dynamic(latest, original, newSignal) { t =>
+      latest(t) match {
+        case None => original(t)
+        case Some(_) => newSignal(t)
       }
     }
   }
