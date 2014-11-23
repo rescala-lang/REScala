@@ -7,7 +7,7 @@ final class TurnState[A](@volatile var default: A,
                          @volatile var commitStrategy: (A, A) => A,
                          val lock: TurnLock) {
 
-  def cl(implicit turn: Turn): Unit = assert(turn.checkLock(lock), "accessed state without holding lock")
+  def cl(implicit turn: Turn): Unit = () //assert(turn.checkLock(lock), "accessed state without holding lock")
 
   def transform(f: (A) => A)(implicit turn: Turn): Unit = { cl; set(f(get)) }
   def transform(f: PartialFunction[A, A])(implicit turn: Turn): Boolean = {
