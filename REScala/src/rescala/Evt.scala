@@ -20,8 +20,6 @@ final class Evt[T]() extends Event[T] {
 
   override protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult =
     EvaluationResult.Done(changed = true)
-
-  override def toString = getClass.getName
 }
 
 object Evt {
