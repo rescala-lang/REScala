@@ -21,7 +21,7 @@ object Signals extends GeneratedLift {
   def dynamic[T](dependencies: Reactive*)(expr: Turn => T)(implicit maybe: MaybeTurn): Signal[T] = maybe(makeDynamic(dependencies.toSet)(expr)(_))
 
   /** creates a signal that statically depends on the dependencies with a given initial value */
-  def makeStatic[T](dependencies: Set[Reactive], init: T)(expr: (Turn, T) => T)(implicit initialTurn: Turn) = initialTurn.create(dependencies.toSet) {
+  def makeStatic[T](dependencies: Set[Reactive], init: => T)(expr: (Turn, T) => T)(implicit initialTurn: Turn) = initialTurn.create(dependencies.toSet) {
     new Signal[T] with StaticReevaluation[T] {
       pulses.default = Pulse.unchanged(init)
 
