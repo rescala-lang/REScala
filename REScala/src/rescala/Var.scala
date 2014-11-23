@@ -6,7 +6,7 @@ import rescala.propagation.turns.creation.TurnFactory
 import rescala.signals.Signal
 
 /** A root Reactive value without dependencies which can be set */
-final case class Var[T](initval: T) extends Signal[T] {
+final class Var[T](initval: T) extends Signal[T] {
   pulses.default = Pulse.unchanged(initval)
 
   def update(newValue: T)(implicit fac: TurnFactory): Unit = set(newValue)
@@ -24,4 +24,8 @@ final case class Var[T](initval: T) extends Signal[T] {
 
   override protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult =
     EvaluationResult.Done(changed = true)
+}
+
+object Var {
+  def apply[T](initval: T) = new Var(initval)
 }
