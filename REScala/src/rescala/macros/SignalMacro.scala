@@ -144,9 +144,8 @@ object SignalMacro {
           //   Signal { a() + b() }
           // to
           //   SignalSynt { s => a(s) + b(s) }
-          case tree @ Apply(Select(reactive, apply), List())
+          case tree @ q"$reactive.apply()"
               if isSignal(reactive)
-                 && apply.decodedName.toString == "apply"
                  && !(nestedUnexpandedMacros contains tree) =>
             detectedSignals ::= reactive
             val reactiveApply = Select(reactive, TermName("apply"))
@@ -247,13 +246,7 @@ object SignalMacro {
     val innerTree = transformer transform expression.tree
 
     // SignalSynt argument function
-    val signalExpression =
-      Function(
-        List(
-          ValDef(
-            Modifiers(), signalSyntArgName,
-            TypeTree(weakTypeOf[Turn]), EmptyTree)),
-        innerTree)
+    val signalExpression = q"{$signalSyntArgName: ${weakTypeOf[Turn]} => $innerTree }"
 
     // upper bound parameters, only use static outside declarations
     // note that this potentially misses many dependencies
@@ -267,30 +260,12 @@ object SignalMacro {
     // create SignalSynt object
     // use fully-qualified name, so no extra import is needed
     val body = q"rescala.signals.Signals.dynamic[${weakTypeOf[A]}](..$filteredDetections)($signalExpression)"
-    // old body without quasiquotes
-//      Apply(
-//        TypeApply(
-//          Select(
-//            Select(
-//              Select(
-//                Select(
-//                  Ident(termNames.ROOTPKG),
-//                  TermName("rescala")),
-//                TermName("signals")),
-//              TermName("DynamicSignal")),
-//            TermName("apply")),
-//          List(TypeTree(weakTypeOf[A]))),
-//        List(signalExpression))
 
     // assemble the SignalSynt object and the signal values that are accessed
     // by the object, but were cut out of the signal expression during the code
     // transformation
     val block =
       Typed(Block(cutOutSignals.reverse, body), TypeTree(weakTypeOf[Signal[A]]))
-
-
-//    out.append((c untypecheck block) + "\n\n")
-//    out.close
 
 
     c.Expr[Signal[A]](c untypecheck block)
