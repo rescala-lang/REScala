@@ -2,9 +2,9 @@ package rescala.events
 
 import rescala.propagation.Pulse.{Diff, NoChange}
 import rescala.propagation._
-import rescala.signals.Signal
-import rescala.propagation.turns.creation.{TurnFactory, MaybeTurn}
 import rescala.propagation.turns.Turn
+import rescala.propagation.turns.creation.MaybeTurn
+import rescala.signals.Signal
 
 
 
