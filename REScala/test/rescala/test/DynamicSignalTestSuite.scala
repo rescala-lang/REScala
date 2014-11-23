@@ -4,7 +4,7 @@ package rescala.test
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.propagation.{TurnFactory, Turn}
+import rescala.propagation.TurnFactory
 import rescala.signals._
 
 

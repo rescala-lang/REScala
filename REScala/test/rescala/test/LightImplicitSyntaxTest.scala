@@ -2,8 +2,9 @@ package rescala.test
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
-import rescala.propagation.{TurnFactory, Turn, MaybeTurn}
-import rescala.signals.{Signals, Var, Signal}
+import rescala.propagation.{MaybeTurn, Turn}
+import rescala.signals.{Signal, Signals, Var}
+
 import scala.language.implicitConversions
 
 class LightImplicitSyntaxTest extends AssertionsForJUnit {

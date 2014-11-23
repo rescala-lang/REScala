@@ -3,7 +3,6 @@ package rescala.propagation
 import java.util.concurrent.locks.ReentrantLock
 
 import scala.annotation.tailrec
-import scala.annotation.tailrec
 
 trait LockOwner {
   private implicit def currentLockOwner: LockOwner = this

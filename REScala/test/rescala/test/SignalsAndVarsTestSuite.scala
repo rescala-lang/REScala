@@ -2,7 +2,7 @@ package rescala.test
 
 
 //These 3 are for JUnitRunner
-import org.junit.{Before, Test}
+import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.signals._

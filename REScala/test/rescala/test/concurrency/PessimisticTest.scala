@@ -1,14 +1,14 @@
 package rescala.test.concurrency
 
 
-import java.util.concurrent.{ConcurrentLinkedQueue, TimeUnit, CountDownLatch}
+import java.util.concurrent.{ConcurrentLinkedQueue, CountDownLatch, TimeUnit}
 
 import org.junit.{Ignore, Test}
 import org.scalatest.junit.AssertionsForJUnit
-import rescala.propagation.Turn
+import rescala.propagation.TurnFactory
 import rescala.propagation.turns.Pessimistic
-import rescala.propagation.{TurnFactory, Turn}
 import rescala.signals.{Signals, Var}
+
 import scala.collection.JavaConverters._
 
 

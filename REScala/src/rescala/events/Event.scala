@@ -1,7 +1,7 @@
 package rescala.events
 
 import rescala.propagation._
-import rescala.signals.{Signals, Signal}
+import rescala.signals.{Signal, Signals}
 
 import scala.collection.LinearSeq
 import scala.collection.immutable.Queue

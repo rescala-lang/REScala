@@ -1,7 +1,5 @@
 package rescala.propagation
 
-import java.util.concurrent.locks.ReentrantLock
-
 /**
  * The engine that schedules the (glitch-free) evaluation
  * of the nodes in the dependency graph.

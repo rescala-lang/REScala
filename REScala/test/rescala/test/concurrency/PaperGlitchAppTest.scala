@@ -1,17 +1,13 @@
 package rescala.test.concurrency
 
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.atomic.AtomicInteger
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
-import rescala.signals.Signals
-import rescala.signals.Var
-import rescala.propagation.Turn
-import scala.util.Random
-import rescala.propagation.TurnFactory
 import rescala.propagation.turns._
-import scala.collection.JavaConverters._
+import rescala.signals.{Signals, Var}
+
+import scala.util.Random
 
 class PaperGlitchAppTest extends AssertionsForJUnit {
 
