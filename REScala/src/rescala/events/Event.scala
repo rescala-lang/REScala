@@ -97,7 +97,7 @@ trait Event[+T] extends Pulsing[T] {
   def list()(implicit maybe: MaybeTurn): Signal[List[T]] = fold(List[T]())((acc, v) => v :: acc)
 
   /** Switch back and forth between two signals on occurrence of event e */
-  def toggle[A](a: Signal[A], b: Signal[A]): Signal[A] = {
+  def toggle[A](a: Signal[A], b: Signal[A])(implicit maybe: MaybeTurn): Signal[A] = {
     val switched: Signal[Boolean] = iterate(false) { !_ }
     Signals.dynamic(switched, a, b) { s => if (switched(s)) b(s) else a(s) }
   }
