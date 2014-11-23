@@ -1,6 +1,6 @@
 package rescala.propagation.turns.creation
 
-import rescala.propagation.turns.instances.Pessimistic
+import rescala.propagation.turns.instances.{UnSynchronized, Synchronized, Pessimistic}
 import rescala.propagation.turns.Turn
 
 trait TurnFactory {
@@ -11,6 +11,5 @@ trait TurnFactory {
   def maybeDynamicTurn[T](f: Turn => T): T
 }
 
-object TurnFactory {
-  implicit val default: TurnFactory = Pessimistic
-}
+
+

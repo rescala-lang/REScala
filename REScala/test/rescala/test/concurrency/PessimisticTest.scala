@@ -5,8 +5,6 @@ import java.util.concurrent.{ConcurrentLinkedQueue, CountDownLatch, TimeUnit}
 
 import org.junit.{Ignore, Test}
 import org.scalatest.junit.AssertionsForJUnit
-import rescala.propagation.turns.creation.TurnFactory
-import rescala.propagation.turns.instances.Pessimistic
 import rescala.signals.{Signals, Var}
 
 import scala.collection.JavaConverters._
@@ -14,7 +12,7 @@ import scala.collection.JavaConverters._
 
 class PessimisticTest extends AssertionsForJUnit {
 
-  implicit val turnFactory: TurnFactory = Pessimistic
+  import rescala.Implicits.pessimistic
 
   @Test def runOnIndependentParts(): Unit = {
     val v1 = Var(false)

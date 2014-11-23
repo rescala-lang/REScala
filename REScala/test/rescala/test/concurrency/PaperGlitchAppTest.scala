@@ -4,7 +4,6 @@ import java.util.concurrent.ConcurrentLinkedQueue
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
-import rescala.propagation.turns.instances._
 import rescala.signals.{Signals, Var}
 
 import scala.util.Random
@@ -18,7 +17,7 @@ class PaperGlitchAppTest extends AssertionsForJUnit {
 
     // ============================================================================================================
 
-    implicit val turnType = UnSynchronized // <-- change here for FUN
+    import rescala.Implicits.unmanaged // <-- change here for FUN
 
     val price = Var(3)
     val tax = price.map { p => p / 3 }

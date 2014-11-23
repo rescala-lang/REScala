@@ -2,9 +2,10 @@ package rescala.test
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
-import rescala.signals.{Signal, Signals, Var}
+import rescala.Implicits.default
 import rescala.propagation.turns.Turn
 import rescala.propagation.turns.creation.MaybeTurn
+import rescala.signals.{Signal, Signals, Var}
 
 import scala.language.implicitConversions
 

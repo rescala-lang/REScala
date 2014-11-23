@@ -3,6 +3,7 @@ package rescala.test.ifunctions
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
+import rescala.Implicits.default
 import rescala.events._
 import rescala.signals._
 
