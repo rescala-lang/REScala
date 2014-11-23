@@ -35,7 +35,7 @@ trait Signal[+A] extends Stateful[A] {
   def toggle[V >: A](e: Event[_])(other: Signal[V])(implicit maybe: MaybeTurn): Signal[V] = e.toggle(this, other)
 
   /** Delays this signal by n occurrences */
-  def delay(n: Int)(implicit maybe: MaybeTurn): Signal[A] = changed.delay(get, n)
+  def delay(n: Int)(implicit maybe: MaybeTurn): Signal[A] = maybe {implicit turn => changed.delay(getValue, n) }
 
   /** Unwraps a Signal[Event[E]] to an Event[E] */
   def unwrap[E](implicit evidence: A <:< Event[E], maybe: MaybeTurn): Event[E] =  Events.wrapped(this.map(evidence))

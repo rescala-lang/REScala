@@ -135,7 +135,7 @@ trait Event[+T] extends Pulsing[T] {
   /** Like latest, but delays the value of the resulting signal by n occurrences */
   def delay[S >: T](init: S, n: Int)(implicit maybe: MaybeTurn): Signal[S] = {
     val history: Signal[LinearSeq[T]] = last(n + 1)
-    Signals.dynamic(history) { s =>
+    Signals.mapping(history) { s =>
       val h = history(s)
       if (h.size <= n) init else h.head
     }
