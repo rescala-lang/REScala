@@ -61,34 +61,6 @@ class EventTest extends AssertionsForJUnit with MockitoSugar {
     assert(test == 2)
   }
 
-  /*
-   * Fails because the queue does not support repetitions
-   * so one of the two handlers is removed. Refactor to a queue that
-   * supports repetitions, but this requires to change the implementation
-   * of the or event that assumes no repetitions in the queue.
-   */
-  @Test def XXXfails() = {
-
-    var test = 0
-    val eventA = new ImperativeEvent[Unit]
-    val eventB = new ImperativeEvent[Int]
-
-    eventB += (_ => { test += 1 })
-
-    //the following prints only 2
-    eventA += (_ => eventB(1))
-    eventA += (_ => eventB(2))
-
-    //whereas this executes both:
-    //eventA += (_ => println(1))
-    //eventA += (_ => println(2))
-
-    eventA(())
-
-    assert(test == 2)
-
-  }
-
 
   @Test def eventsWithMethodHandlersWithParameter() = {
 
