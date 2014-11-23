@@ -11,12 +11,12 @@ trait Event[+T] extends Pulsing[T] {
 
   /** add an event handler */
   def +=(react: T => Unit)(implicit maybe: MaybeTurn): Unit = maybe { turn =>
-    turn.create(Set(this))(EventHandler(react, this))
+    turn.create(Set(this))(Events.Handler(react, this))
   }
 
   /** remove an event handler */
   def -=(react: T => Unit)(implicit maybe: MaybeTurn): Unit = maybe { turn =>
-    turn.unregister(EventHandler(react, this), Set(this))
+    turn.unregister(Events.Handler(react, this), Set(this))
   }
 
   /**
