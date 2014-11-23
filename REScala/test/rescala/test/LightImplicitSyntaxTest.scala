@@ -3,9 +3,10 @@ package rescala.test
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import rescala.Implicits.default
+import rescala.Var
 import rescala.propagation.turns.Turn
 import rescala.propagation.turns.creation.MaybeTurn
-import rescala.signals.{Signal, Signals, Var}
+import rescala.signals.{Signal, Signals}
 
 import scala.language.implicitConversions
 

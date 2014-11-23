@@ -5,7 +5,8 @@ import java.util.concurrent.{ConcurrentLinkedQueue, CountDownLatch, TimeUnit}
 
 import org.junit.{Ignore, Test}
 import org.scalatest.junit.AssertionsForJUnit
-import rescala.signals.{Signals, Var}
+import rescala.Var
+import rescala.signals.Signals
 
 import scala.collection.JavaConverters._
 

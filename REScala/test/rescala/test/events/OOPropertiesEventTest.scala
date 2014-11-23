@@ -4,6 +4,7 @@ package rescala.test.events
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
+import rescala.Evt
 import rescala.Implicits.default
 import rescala.events._
 
@@ -20,7 +21,7 @@ class OOPropertiesEventTest extends AssertionsForJUnit with MockitoSugar {
     var test = 0
 
     class A {
-      val e1 = new ImperativeEvent[Int]()
+      val e1 = new Evt[Int]()
       e1 += ((x: Int) => { test += 1 })
     }
     class B extends A {
@@ -36,7 +37,7 @@ class OOPropertiesEventTest extends AssertionsForJUnit with MockitoSugar {
     var test = 0
 
     class A {
-      val e1 = new ImperativeEvent[Int]()
+      val e1 = new Evt[Int]()
     }
     class B extends A {
       e1 += ((x: Int) => { test += 1 })
@@ -53,13 +54,13 @@ class OOPropertiesEventTest extends AssertionsForJUnit with MockitoSugar {
       var test = 0
 
       class A {
-        lazy val e1: Event[Int] = new ImperativeEvent[Int]()
+        lazy val e1: Event[Int] = new Evt[Int]()
         e1 += ((x: Int) => { test += 1 })
       }
 
       class B extends A {
-        val e2 = new ImperativeEvent[Int]()
-        val e3 = new ImperativeEvent[Int]()
+        val e2 = new Evt[Int]()
+        val e3 = new Evt[Int]()
         override lazy val e1: Event[Int] = e2 || e3
         e1 += ((x: Int) => { test += 1 })
         e2(10)
@@ -82,11 +83,11 @@ class OOPropertiesEventTest extends AssertionsForJUnit with MockitoSugar {
     var test = 0
 
     class A {
-      val e1: Event[X] = new ImperativeEvent[X]()
+      val e1: Event[X] = new Evt[X]()
     }
     class B extends A {
-      val e2 = new ImperativeEvent[Y]()
-      val e3 = new ImperativeEvent[Y]()
+      val e2 = new Evt[Y]()
+      val e3 = new Evt[Y]()
       override val e1: Event[X] = e2 || e3
       e1 += ((x: X) => { test += 1 })
       e2(new Y)

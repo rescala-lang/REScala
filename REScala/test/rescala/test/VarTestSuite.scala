@@ -6,6 +6,7 @@ import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.Implicits.default
+import rescala.Var
 import rescala.signals._
 
 class VarTestSuite extends AssertionsForJUnit with MockitoSugar {

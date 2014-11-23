@@ -1,18 +1,15 @@
-package rescala.signals
+package rescala
 
 import rescala.propagation._
 import rescala.propagation.turns.Turn
 import rescala.propagation.turns.creation.TurnFactory
+import rescala.signals.Signal
 
 /** A root Reactive value without dependencies which can be set */
-object Var {
-  def apply[T](initval: T): Var[T] = new Var(initval)
-}
-
-class Var[T](initval: T) extends Signal[T] {
+final case class Var[T](initval: T) extends Signal[T] {
   pulses.default = Pulse.unchanged(initval)
 
-  final def update(newValue: T)(implicit fac: TurnFactory): Unit = set(newValue)
+  def update(newValue: T)(implicit fac: TurnFactory): Unit = set(newValue)
   def set(newValue: T)(implicit fac: TurnFactory): Unit = fac.newTurn { turn =>
     planUpdate(newValue)(turn)
   }

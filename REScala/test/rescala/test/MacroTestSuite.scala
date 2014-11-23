@@ -3,6 +3,7 @@ package rescala.test
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
+import rescala.{Var, Evt}
 import rescala.Implicits.default
 import rescala.events._
 import rescala.macros.SignalMacro.{SignalM => Signal}
@@ -90,7 +91,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
   @Test def conversionFunctionWithArgumentInSignal(): Unit = {
 
     var test = 0
-    val e = new ImperativeEvent[Int]()
+    val e = new Evt[Int]()
     val s: Signal[Int] = Signal { 2 * e.latest(0)(implicitly)() }
 
     s.change += { _ => test += 1 }
@@ -106,7 +107,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
   @Test def conversionFunctionWithoutArgumentInSignal(): Unit = {
 
     var test = 0
-    val e = new ImperativeEvent[Int]()
+    val e = new Evt[Int]()
     val s: Signal[Option[Int]] = Signal { e.latestOption()(implicitly)() }
 
     s.change += { _ => test += 1 }
@@ -124,13 +125,13 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
     // following form, see:
     // https://github.com/guidosalva/examples/pull/4/files#r11724000
     var test = 0
-    var e = null: ImperativeEvent[Int]
+    var e = null: Evt[Int]
     var s = null: Signal[Int]
 
     abstract class A {def obj(): Unit }
     val a = new A {
       def obj() = new {
-        val evt = new ImperativeEvent[Int]()
+        val evt = new Evt[Int]()
         val sig: Signal[Int] = Signal { 2 * evt.latest(0)(implicitly)() }
 
         e = evt
@@ -257,7 +258,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
       def sig = Signal { v() }
     }
 
-    val evt = new ImperativeEvent[Int]
+    val evt = new Evt[Int]
 
     val testsig = Signal {
       val localsig = obj.sig
@@ -346,7 +347,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
 
     def getSignal(obj: {def evt: Event[Int]}) = obj.evt
 
-    val e = new ImperativeEvent[Int]
+    val e = new Evt[Int]
     val o = new {val evt = e }
 
     val sig = Signal { getSignal(o).latestOption()(implicitly)() }

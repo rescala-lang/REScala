@@ -4,6 +4,7 @@ package rescala.test.events
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
+import rescala.Evt
 import rescala.Implicits.default
 import rescala.events._
 
@@ -12,7 +13,7 @@ class EventTest extends AssertionsForJUnit with MockitoSugar {
 
   @Test def handlersAreExecuted() = {
     var test = 0
-    val e1 = new ImperativeEvent[Int]()
+    val e1 = new Evt[Int]()
     e1 += ((x: Int) => { test += 1 })
     e1(10)
     e1(10)
@@ -21,7 +22,7 @@ class EventTest extends AssertionsForJUnit with MockitoSugar {
 
   @Test def eventHandlersCanBeRemoved() = {
     var test = 0
-    val e1 = new ImperativeEvent[Int]()
+    val e1 = new Evt[Int]()
     val f = (x: Int) => { test += 1 }
     e1 += f
     e1(10)
@@ -33,7 +34,7 @@ class EventTest extends AssertionsForJUnit with MockitoSugar {
 
   @Test def correctValueIsReceived() = {
     var test = 0
-    val e1 = new ImperativeEvent[Int]()
+    val e1 = new Evt[Int]()
     e1 += ((x: Int) => { test += x })
     e1(10)
     assert(test == 10)
@@ -41,7 +42,7 @@ class EventTest extends AssertionsForJUnit with MockitoSugar {
 
   @Test def eventsWithoutParamsIsCalled() = {
     var test = 0
-    val e1 = new ImperativeEvent[Unit]()
+    val e1 = new Evt[Unit]()
     e1 += (_ => { test += 1 })
     e1(())
     assert(test == 1)
@@ -53,7 +54,7 @@ class EventTest extends AssertionsForJUnit with MockitoSugar {
 
     def f(x: Int): Unit = { test += 1 }
 
-    val e1 = new ImperativeEvent[Int]()
+    val e1 = new Evt[Int]()
     e1 += f
 
     e1(10)
@@ -65,7 +66,7 @@ class EventTest extends AssertionsForJUnit with MockitoSugar {
   @Test def eventsWithMethodHandlersWithParameter() = {
 
     var test = 0
-    val e = new ImperativeEvent[Int]
+    val e = new Evt[Int]
     def m1(x: Int) = { test += 1 }
 
     e += m1
