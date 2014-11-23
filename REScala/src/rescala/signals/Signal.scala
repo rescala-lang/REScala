@@ -44,13 +44,13 @@ trait Signal[+A] extends Stateful[A] {
    * Create an event that fires every time the signal changes. It fires the tuple
    *  (oldVal, newVal) for the signal. The first tuple is (null, newVal)
    */
-  lazy val change: Event[(A, A)] = Events.change(this)
+  def change(implicit maybe: MaybeTurn): Event[(A, A)] = Events.change(this)
 
   /**
    * Create an event that fires every time the signal changes. The value associated
    * to the event is the new value of the signal
    */
-  lazy val changed: Event[A] = change.map(_._2)
+  def changed(implicit maybe: MaybeTurn): Event[A] = change.map(_._2)
 
   /** Convenience function filtering to events which change this reactive to value */
   def changedTo[V](value: V)(implicit maybe: MaybeTurn): Event[Unit] = (changed && { _ == value }).dropParam
