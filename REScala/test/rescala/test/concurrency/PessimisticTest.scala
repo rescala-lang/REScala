@@ -25,7 +25,7 @@ class PessimisticTest extends AssertionsForJUnit {
     v2.set(true)
     t.join()
 
-    assert(s1.get === true && s2.get === true)
+    assert(s1.now === true && s2.now === true)
     assert(latch.getCount === 0)
   }
 
@@ -42,9 +42,9 @@ class PessimisticTest extends AssertionsForJUnit {
 
     assert(results.asScala.toList.sorted.sameElements(Range(101, 201)))
 
-    assert(sum.get === 200)
+    assert(sum.now === 200)
   }
-  
+
   @Ignore def crossedDynamicDependencies(): Unit = {
     val v1 = Var(false)
     val v2 = Var(false)

@@ -42,9 +42,9 @@ trait Pulsing[+P] extends Reactive {
 trait Stateful[+A] extends Pulsing[A] {
   pulses.commitStrategy = (_, p) => p.keep
 
-  final def get(implicit maybe: MaybeTurn): A = maybe { getValue(_) }
+  final def now(implicit maybe: MaybeTurn): A = maybe { get(_) }
 
-  final def getValue(implicit turn: Turn): A = pulse match {
+  final def get(implicit turn: Turn): A = pulse match {
     case NoChange(Some(value)) => value
     case Diff(value, oldOption) => value
     case NoChange(None) => throw new IllegalStateException("stateful reactive has never pulsed")

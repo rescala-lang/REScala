@@ -15,10 +15,10 @@ class HigherOrderTestSuite extends AssertionsForJUnit with MockitoSugar {
     val s1: Signal[Int] = v.map(identity)
     val s2: Signal[Signal[Int]] = Signals.dynamic() { t => s1 }
 
-    assert(s2.get.get == 42)
+    assert(s2.now.now == 42)
 
     v.set(0)
-    assert(s2.get.get == 0)
+    assert(s2.now.now == 0)
   }
 
   @Test def basicHigherOrderSignal_canBeDefereferenced(): Unit = {
@@ -27,10 +27,10 @@ class HigherOrderTestSuite extends AssertionsForJUnit with MockitoSugar {
     val s2: Signal[Signal[Int]] = Signals.dynamic() { t => s1 }
     val sDeref = s2.flatten()
 
-    assert(sDeref.get == 42)
+    assert(sDeref.now == 42)
 
     v.set(0)
-    assert(sDeref.get == 0)
+    assert(sDeref.now == 0)
   }
 
 
@@ -89,7 +89,7 @@ class HigherOrderTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(sDerefChanged)
     assert(sHigherChanged)
 
-    assert(sDeref.get == 1234)
+    assert(sDeref.now == 1234)
   }
 
 
@@ -122,7 +122,7 @@ class HigherOrderTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(sDeref2_bChanged)
 
 
-    assert(s2.get.get.get == 0)
+    assert(s2.now.now.now == 0)
   }
 
 
@@ -142,11 +142,11 @@ class HigherOrderTestSuite extends AssertionsForJUnit with MockitoSugar {
     tick(())
     assert(dereferencedChanged)
     dereferencedChanged = false
-    assert(dereferenced.get == 1)
+    assert(dereferenced.now == 1)
     tick(())
     assert(dereferencedChanged)
     dereferencedChanged = false
-    assert(dereferenced.get == 4)
+    assert(dereferenced.now == 4)
   }
 
 

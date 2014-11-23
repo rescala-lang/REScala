@@ -100,10 +100,10 @@ object Events {
 
   /** A wrapped event inside a signal, that gets "flattened" to a plain event node */
   def wrapped[T](wrapper: Signal[Event[T]])(implicit maybe: MaybeTurn): Event[T] = maybe { creationTurn =>
-    creationTurn.create(Set[Reactive](wrapper, wrapper.getValue(creationTurn))) {
+    creationTurn.create(Set[Reactive](wrapper, wrapper.get(creationTurn))) {
       new Event[T] with DynamicReevaluation[T] {
         override def calculatePulseDependencies(implicit turn: Turn): (Pulse[T], Set[Reactive]) = {
-          val inner = wrapper.getValue
+          val inner = wrapper.get
           (inner.pulse, Set(wrapper, inner))
         }
       }

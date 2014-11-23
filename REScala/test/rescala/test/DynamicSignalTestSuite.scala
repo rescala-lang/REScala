@@ -16,21 +16,21 @@ class DynamicSignalTestSuite extends AssertionsForJUnit with MockitoSugar {
     val s = Signals.dynamic(v) { s => v(s) + i }
     i = 2
     v.set(2)
-    assert(s.get == 4)
+    assert(s.now == 4)
   }
 
   @Test def theExpressionIsNoteEvaluatedEveryTimeGetValIsCalled(): Unit = {
     var a = 10
     val s = Signals.dynamic()(s => 1 + 1 + a)
-    assert(s.get === 12)
+    assert(s.now === 12)
     a = 11
-    assert(s.get === 12)
+    assert(s.now === 12)
   }
 
 
   @Test def simpleSignalReturnsCorrectExpressions(): Unit = {
     val s = Signals.dynamic()(s => 1 + 1 + 1)
-    assert(s.get === 3)
+    assert(s.now === 3)
   }
 
   @Test def theExpressionIsEvaluatedOnlyOnce(): Unit = {
@@ -101,23 +101,23 @@ class DynamicSignalTestSuite extends AssertionsForJUnit with MockitoSugar {
     }
 
     assert(i == 1)
-    assert(s.get == 0)
+    assert(s.now == 0)
     v2.set(1)
     assert(i == 2)
-    assert(s.get == 1)
+    assert(s.now == 1)
     v3.set(11) // No effect
     assert(i == 2)
-    assert(s.get == 1)
+    assert(s.now == 1)
 
     v1.set(false)
     assert(i == 3)
-    assert(s.get == 11)
+    assert(s.now == 11)
     v3.set(12)
     assert(i == 4)
-    assert(s.get == 12)
+    assert(s.now == 12)
     v2.set(2) // No effect
     assert(i == 4)
-    assert(s.get == 12)
+    assert(s.now == 12)
   }
 
 
@@ -164,7 +164,7 @@ class DynamicSignalTestSuite extends AssertionsForJUnit with MockitoSugar {
       changes += 1; v(s) + 1
     }
     assert(changes == 1)
-    assert(s.get == 2)
+    assert(s.now == 2)
     v.set(2)
     assert(changes == 2)
     v.set(2)
@@ -182,9 +182,9 @@ class DynamicSignalTestSuite extends AssertionsForJUnit with MockitoSugar {
       Signals.dynamic(outside) { t => outside(t) }.apply(t)
     }
 
-    assert(testsig.get === 1)
+    assert(testsig.now === 1)
     outside() = 2
-    assert(testsig.get === 2)
+    assert(testsig.now === 2)
   }
 
 }

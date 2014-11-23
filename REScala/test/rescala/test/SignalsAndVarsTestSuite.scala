@@ -21,15 +21,15 @@ class SignalsAndVarsTestSuite extends AssertionsForJUnit with MockitoSugar {
     val s1 = Signals.lift(v1, v2) { _ + _ }
     s1.changed += { (_) => test += 1 }
 
-    assert(s1.get == 3)
+    assert(s1.now == 3)
     assert(test == 0)
 
     v2.set(3)
-    assert(s1.get == 4)
+    assert(s1.now == 4)
     assert(test == 1)
 
     v2.set(3)
-    assert(s1.get == 4)
+    assert(s1.now == 4)
     assert(test == 1)
 
   }

@@ -17,7 +17,7 @@ class GlitchFreedomTestSuite extends AssertionsForJUnit with MockitoSugar {
     val v1 = Var(1)
     val s1 = v1.map { 2 * _ }
     val s2 = v1.map { 3 * _ }
-    val s3 = Signals.mapping(s1, s2) { t => s1.getValue(t) + s2.getValue(t) }
+    val s3 = Signals.mapping(s1, s2) { t => s1.get(t) + s2.get(t) }
 
     val s1List = s1.changed.list()
     val s2List = s2.changed.list()
@@ -25,9 +25,9 @@ class GlitchFreedomTestSuite extends AssertionsForJUnit with MockitoSugar {
 
     v1.set(3)
 
-    assert(s1List.get === List(6))
-    assert(s2List.get === List(9))
-    assert(s3List.get === List(15))
+    assert(s1List.now === List(6))
+    assert(s2List.now === List(9))
+    assert(s3List.now === List(15))
 
   }
 

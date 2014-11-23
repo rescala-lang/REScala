@@ -15,21 +15,21 @@ class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
     val s: Signal[Int] = v.map { _ => i }
     i = 2
     v.set(2)
-    assert(s.get == 2)
+    assert(s.now == 2)
   }
 
   @Test def theExpressionIsNoteEvaluatedEveryTimeGetValIsCalled(): Unit = {
     var a = 10
     val s: Signal[Int] = Signals.mapping()(_ => 1 + 1 + a)
-    assert(s.get === 12)
+    assert(s.now === 12)
     a = 11
-    assert(s.get === 12)
+    assert(s.now === 12)
   }
 
 
   @Test def simpleSignalReturnsCorrectExpressions(): Unit = {
     val s: Signal[Int] = Signals.mapping()(_ => 1 + 1 + 1)
-    assert(s.get === 3)
+    assert(s.now === 3)
   }
 
   @Test def theExpressionIsEvaluatedOnlyOnce(): Unit = {

@@ -17,21 +17,21 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
     val s: Signal[Int] = Signal { v(): @unchecked; i }
     i = 2
     v.set(2)
-    assert(s.get === 2)
+    assert(s.now === 2)
   }
 
   @Test def theExpressionIsNotEvaluatedEveryTimeGetValIsCalled(): Unit = {
     var a = 10
     val s: Signal[Int] = Signal { 1 + 1 + a }
-    assert(s.get === 12)
+    assert(s.now === 12)
     a = 11
-    assert(s.get === 12)
+    assert(s.now === 12)
   }
 
 
   @Test def simpleSignalReturnsCorrectExpressions(): Unit = {
     val s: Signal[Int] = Signal(1 + 1 + 1)
-    assert(s.get === 3)
+    assert(s.now === 3)
   }
 
   @Test def theExpressionIsEvaluatedOnlyOnce(): Unit = {
@@ -94,11 +94,11 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
     val s: Signal[Int] = Signal { 2 * e.latest(0)(implicitly)() }
 
     s.change += { _ => test += 1 }
-    assert(s.get === 0)
+    assert(s.now === 0)
     e(2)
-    assert(s.get === 4)
+    assert(s.now === 4)
     e(3)
-    assert(s.get === 6)
+    assert(s.now === 6)
     assert(test === 2)
   }
 
@@ -110,11 +110,11 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
     val s: Signal[Option[Int]] = Signal { e.latestOption()(implicitly)() }
 
     s.change += { _ => test += 1 }
-    assert(s.get === None)
+    assert(s.now === None)
     e(2)
-    assert(s.get === Some(2))
+    assert(s.now === Some(2))
     e(3)
-    assert(s.get === Some(3))
+    assert(s.now === Some(3))
     assert(test === 2)
   }
 
@@ -140,11 +140,11 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
 
     a.obj()
     s.change += { _ => test += 1 }
-    assert(s.get === 0)
+    assert(s.now === 0)
     e(2)
-    assert(s.get === 4)
+    assert(s.now === 4)
     e(3)
-    assert(s.get === 6)
+    assert(s.now === 6)
     assert(test === 2)
   }
 
@@ -155,11 +155,11 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
     val b = Var(Signal(a()))
     val c = Signal(b()())
 
-    assert(c.get === 3)
+    assert(c.now === 3)
     a() = 4
-    assert(c.get === 4)
+    assert(c.now === 4)
     b() = Signal(5)
-    assert(c.get === 5)
+    assert(c.now === 5)
 
   }
 
@@ -171,11 +171,11 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
       c()
     }
 
-    assert(b.get === 3)
+    assert(b.now === 3)
     a() = 4
-    assert(b.get === 4)
+    assert(b.now === 4)
     a() = 5
-    assert(b.get === 5)
+    assert(b.now === 5)
   }
 
 
@@ -190,10 +190,10 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
       sig()
     }
 
-    assert(testsig.get === 10)
+    assert(testsig.now === 10)
     outside() = 2
     inside() = 11
-    assert(testsig.get === 11)
+    assert(testsig.now === 11)
   }
 
   @Test def useOfOutsideSignal(): Unit = {
@@ -210,10 +210,10 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
       sig()
     }
 
-    assert(testsig.get === 1)
+    assert(testsig.now === 1)
     outside() = 2
     inside() = 11
-    assert(testsig.get === 2)
+    assert(testsig.now === 2)
   }
 
 
@@ -248,7 +248,7 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
     val s2 = Signal {
       s1() collect { case Some(n) => n }
     }
-    assert(s2.get === List(1, 2, 4))
+    assert(s2.now === List(1, 2, 4))
   }
 
   @Test def outerAndInnerValues(): Unit = {
@@ -266,17 +266,17 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
       localsig() + latest()
     }
 
-    assert(testsig.get === -1)
+    assert(testsig.now === -1)
     evt(100)
-    assert(testsig.get === 100)
+    assert(testsig.now === 100)
     v() = 10
-    assert(testsig.get === 110)
+    assert(testsig.now === 110)
     evt(10)
-    assert(testsig.get === 20)
+    assert(testsig.now === 20)
     evt(5)
-    assert(testsig.get === 15)
+    assert(testsig.now === 15)
     v() = 50
-    assert(testsig.get === 55)
+    assert(testsig.now === 55)
   }
 
 
@@ -289,13 +289,13 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
 
     val sig = Signal { v() map (_.s()) }
 
-    assert(sig.get === List(1, 2))
+    assert(sig.now === List(1, 2))
     v1() = 5
-    assert(sig.get === List(5, 2))
+    assert(sig.now === List(5, 2))
     v2() = 7
-    assert(sig.get === List(5, 7))
-    v() = v.get.reverse
-    assert(sig.get === List(7, 5))
+    assert(sig.now === List(5, 7))
+    v() = v.now.reverse
+    assert(sig.now === List(7, 5))
   }
 
   @Test def chainedSignals2(): Unit = {
@@ -309,19 +309,19 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
 
     val sig = Signal { s().signal().signal(): @unchecked }
 
-    assert(sig.get === 20)
+    assert(sig.now === 20)
     v1() = 30
-    assert(sig.get === 30)
+    assert(sig.now === 30)
     v2() = new {def signal = Signal { 7 + v1() } }
-    assert(sig.get === 37)
+    assert(sig.now === 37)
     v1() = 10
-    assert(sig.get === 17)
+    assert(sig.now === 17)
     v3() = new {val signal = Signal { new {def signal = Signal { v1() } } } }
-    assert(sig.get === 10)
+    assert(sig.now === 10)
     v2() = new {def signal = Signal { 10 + v1() } }
-    assert(sig.get === 10)
+    assert(sig.now === 10)
     v1() = 80
-    assert(sig.get === 80)
+    assert(sig.now === 80)
   }
 
 
@@ -335,9 +335,9 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
 
     val sig = Signal { getSignal(o)() }
 
-    assert(sig.get === 20)
+    assert(sig.now === 20)
     v() = 30
-    assert(sig.get === 30)
+    assert(sig.now === 30)
   }
 
 
@@ -351,8 +351,8 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
 
     val sig = Signal { getSignal(o).latestOption()(implicitly)() }
 
-    assert(sig.get === None)
+    assert(sig.now === None)
     e(30)
-    assert(sig.get === Some(30))
+    assert(sig.now === Some(30))
   }
 }

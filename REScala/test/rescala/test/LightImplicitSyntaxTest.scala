@@ -22,11 +22,11 @@ class LightImplicitSyntaxTest extends AssertionsForJUnit {
       quantity * (price + tax)
     }
 
-    assert(total.get === 4)
+    assert(total.now === 4)
     price.set(6)
-    assert(total.get === 8)
+    assert(total.now === 8)
     quantity.set(2)
-    assert(total.get === 16)
+    assert(total.now === 16)
 
   }
 

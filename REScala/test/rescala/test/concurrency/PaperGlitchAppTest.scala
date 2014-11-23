@@ -23,7 +23,7 @@ class PaperGlitchAppTest extends AssertionsForJUnit {
     val tax = price.map { p => p / 3 }
     val quantity = Var(1)
     val total = Signals.mapping(quantity, price, tax) { implicit t =>
-      quantity.get * (price.get + tax.get)
+      quantity.now * (price.now + tax.now)
     }
 
     // ============================================================================================================

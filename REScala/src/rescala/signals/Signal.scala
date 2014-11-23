@@ -13,11 +13,11 @@ trait Signal[+A] extends Stateful[A] {
 
   def apply[T](turn: Turn): A = {
     turn.useDependency(this)
-    getValue(turn)
+    get(turn)
   }
 
   /** Return a Signal with f applied to the value */
-  def map[B](f: A => B)(implicit maybe: MaybeTurn): Signal[B] = Signals.mapping(this) { turn => f(getValue(turn)) }
+  def map[B](f: A => B)(implicit maybe: MaybeTurn): Signal[B] = Signals.mapping(this) { turn => f(get(turn)) }
 
   /** flatten the inner signal */
   def flatten[B]()(implicit ev: A <:< Signal[B], maybe: MaybeTurn) = Signals.dynamic(this) { s => this(s)(s) }
@@ -35,7 +35,7 @@ trait Signal[+A] extends Stateful[A] {
   def toggle[V >: A](e: Event[_])(other: Signal[V])(implicit maybe: MaybeTurn): Signal[V] = e.toggle(this, other)
 
   /** Delays this signal by n occurrences */
-  def delay(n: Int)(implicit maybe: MaybeTurn): Signal[A] = maybe {implicit turn => changed.delay(getValue, n) }
+  def delay(n: Int)(implicit maybe: MaybeTurn): Signal[A] = maybe {implicit turn => changed.delay(get, n) }
 
   /** Unwraps a Signal[Event[E]] to an Event[E] */
   def unwrap[E](implicit evidence: A <:< Event[E], maybe: MaybeTurn): Event[E] =  Events.wrapped(this.map(evidence))

@@ -18,7 +18,7 @@ class Var[T](initval: T) extends Signal[T] {
   }
 
   def planUpdate(newValue: T)(implicit turn: Turn): Unit = {
-    val p = Pulse.diff(newValue, getValue)
+    val p = Pulse.diff(newValue, get)
     if (p.isChange) {
       pulses.set(p)
       turn.enqueue(this)
