@@ -109,7 +109,10 @@ class Pessimistic extends AbstractTurn with LockOwner {
       //TODO: maybe make turn state for dependencies smarter?
     }
   }
-
-
+  /** admits a new source change */
+  override def admit(source: Reactive)(setPulse: => Boolean): Unit = {
+    source.lock.lock()
+    super.admit(source)(setPulse)
+  }
 }
 

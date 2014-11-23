@@ -118,6 +118,8 @@ abstract class AbstractTurn extends Turn {
 
   def acquireDynamic(reactive: Reactive): Unit
 
+  /** admits a new source change */
+  override def admit(source: Reactive)(setPulse: => Boolean): Unit = if(setPulse) enqueue(source)
 }
 
 object DependencyChanges {

@@ -11,16 +11,18 @@ final class Var[T](initval: T) extends Signal[T] {
 
   def update(newValue: T)(implicit fac: TurnFactory): Unit = set(newValue)
   def set(newValue: T)(implicit fac: TurnFactory): Unit = fac.newTurn { turn =>
-    planUpdate(newValue)(turn)
+    admit(newValue)(turn)
   }
 
-  def planUpdate(newValue: T)(implicit turn: Turn): Unit = {
-    val p = Pulse.diff(newValue, get)
-    if (p.isChange) {
-      pulses.set(p)
-      turn.enqueue(this)
+  def admit(newValue: T)(implicit turn: Turn): Unit =
+    turn.admit(this) {
+      val p = Pulse.diff(newValue, get)
+      if (p.isChange) {
+        pulses.set(p)
+        true
+      }
+      else false
     }
-  }
 
   override protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult =
     EvaluationResult.Done(changed = true)
