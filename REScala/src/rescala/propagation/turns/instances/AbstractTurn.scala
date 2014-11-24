@@ -10,19 +10,18 @@ import scala.collection.mutable
 
 abstract class AbstractTurn extends Turn {
   outer =>
+  implicit def currentTurn: Turn = this
 
   protected var toCommit = Set[Reactive]()
   protected var afterCommitHandlers = List[() => Unit]()
 
   protected var initialSources: List[Reactive] = Nil
 
-  val levelQueue = new LevelQueue {
-    override implicit def currentTurn: Turn = outer
+  val levelQueue = new LevelQueue() {
     override def handleDiff(dependant: Reactive, newDependencies: Set[Reactive], oldDependencies: Set[Reactive]): Unit =
       outer.handleDiff(dependant,newDependencies, oldDependencies)
   }
 
-  implicit def implicitThis: Turn = this
 
   def register(dependant: Reactive)(dependency: Reactive): Unit = {
     dependency.dependants.transform(_ + dependant)

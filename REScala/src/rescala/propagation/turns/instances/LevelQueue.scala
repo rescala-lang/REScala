@@ -8,11 +8,12 @@ import rescala.propagation.turns.creation.TurnFactory
 import scala.annotation.tailrec
 import scala.collection.mutable
 
-trait LevelQueue {
+abstract class LevelQueue()(implicit val currenTurn: Turn) {
 
   protected val evalQueue = new mutable.PriorityQueue[(Int, Reactive)]()(TurnFactory.reactiveOrdering)
 
-  implicit def currentTurn: Turn
+  def handleDiff(dependant: Reactive,newDependencies: Set[Reactive] , oldDependencies: Set[Reactive]): Unit
+
 
   def ensureLevel(dependant: Reactive, dependencies: Set[Reactive]): Boolean =
     if (dependencies.nonEmpty) setLevelIfHigher(dependant, dependencies.map(_.level.get).max + 1)
@@ -21,8 +22,6 @@ trait LevelQueue {
   def setLevelIfHigher(reactive: Reactive, level: Int): Boolean = {
     reactive.level.transform { case x if x < level => level }
   }
-
-  def handleDiff(dependant: Reactive,newDependencies: Set[Reactive] , oldDependencies: Set[Reactive]): Unit
 
   def isReady(reactive: Reactive, dependencies: Set[Reactive]) =
     dependencies.forall(_.level.get < reactive.level.get)
