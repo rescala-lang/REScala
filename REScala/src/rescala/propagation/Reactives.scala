@@ -68,7 +68,7 @@ trait StaticReevaluation[+P] extends Pulsing[P] {
   final override protected[propagation] def reevaluate()(implicit turn: Turn): EvaluationResult = {
     val p = calculatePulse()
     pulses.set(p)
-    EvaluationResult.Done(p.isChange)
+    EvaluationResult.Static(p.isChange)
   }
 }
 
@@ -84,15 +84,9 @@ trait DynamicReevaluation[+P] extends Pulsing[P] {
 
     val oldDependencies = dependencies.get
     dependencies.set(newDependencies)
-    val diff = EvaluationResult.DependencyDiff(newDependencies, oldDependencies)
+    pulses.set(newPulse)
+    EvaluationResult.Dynamic(newPulse.isChange, newDependencies, oldDependencies)
 
-    if (!turn.isReady(this, newDependencies)) {
-      diff
-    }
-    else {
-      pulses.set(newPulse)
-      EvaluationResult.Done(newPulse.isChange, Some(diff))
-    }
   }
 
   override def commit(implicit turn: Turn): Unit = {

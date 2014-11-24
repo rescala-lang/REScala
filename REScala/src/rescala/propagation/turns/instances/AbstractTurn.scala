@@ -1,6 +1,6 @@
 package rescala.propagation.turns.instances
 
-import rescala.propagation.EvaluationResult.{DependencyDiff, Done}
+import rescala.propagation.EvaluationResult.{Dynamic, Static}
 import rescala.propagation.Reactive
 import rescala.propagation.turns.Turn
 
@@ -41,15 +41,14 @@ abstract class AbstractTurn extends Turn {
     changed(dependency)
   }
 
-  def handleDiff(dependant: Reactive, diff: DependencyDiff): Unit = {
-    val DependencyDiff(newDependencies, oldDependencies) = diff
+  def handleDiff(dependant: Reactive,newDependencies: Set[Reactive] , oldDependencies: Set[Reactive]): Unit = {
     newDependencies.foreach(acquireDynamic)
     unregister(dependant, oldDependencies.diff(newDependencies))
     register(dependant, newDependencies.diff(oldDependencies))
   }
 
 
-  override def isReady(reactive: Reactive, dependencies: Set[Reactive]) =
+  def isReady(reactive: Reactive, dependencies: Set[Reactive]) =
     dependencies.forall(_.level.get < reactive.level.get)
 
   @tailrec
@@ -74,16 +73,24 @@ abstract class AbstractTurn extends Turn {
   /** evaluates a single reactive */
   def evaluate(head: Reactive): Unit = {
     val result = head.reevaluate()(this)
-    result match {
-      case Done(hasChanged, dependencyDiff) =>
-        if (hasChanged) head.dependants.get.foreach(enqueue)
-        dependencyDiff.foreach(handleDiff(head, _))
-        changed(head)
-      case diff@DependencyDiff(_, _) =>
-        handleDiff(head, diff)
-        floodLevel(Set(head))
-        enqueue(head)
+    val headChanged = result match {
+      case Static(hasChanged) => hasChanged
+      case diff@Dynamic(hasChanged, newDependencies, oldDependencies) =>
+        handleDiff(head, newDependencies, oldDependencies)
+        if (isReady(head, newDependencies)) {
+          floodLevel(Set(head))
+          hasChanged
+        }
+        else {
+          enqueue(head)
+          false
+        }
     }
+    if (headChanged) {
+      changed(head)
+      head.dependants.get.foreach(enqueue)
+    }
+
   }
 
   /** Evaluates all the elements in the queue */

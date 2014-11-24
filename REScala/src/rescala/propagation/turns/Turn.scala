@@ -25,10 +25,6 @@ trait Turn {
   /** removes reactive from its dependencies */
   def unregister(dependant: Reactive, dependencies: Set[Reactive]): Unit
 
-  /** given that reactive is the currently evaluated reactive,
-    * returns true if all of its dependencies are ready */
-  def isReady(reactive: Reactive, dependencies: Set[Reactive]): Boolean
-
   /** mark the reactive as needing a reevaluation */
   def enqueue(dep: Reactive): Unit
 
