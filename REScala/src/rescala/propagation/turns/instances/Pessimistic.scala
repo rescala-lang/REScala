@@ -17,7 +17,7 @@ object Pessimistic extends AbstractTurnFactory[Pessimistic](() => new Pessimisti
     * which causes dynamic locking to happen and screw us here. */
   def lockReachable(turn: Pessimistic): Unit = {
     def reachable(reactives: Set[Reactive])(implicit turn: Pessimistic): Set[Reactive] =
-      reactives ++ reactives.flatMap(r => reachable(r.dependants.get))
+      reactives ++ reactives.flatMap(r => reachable(r.dependants.getU))
 
     turn.masterLock.lock()
     try {
@@ -51,7 +51,9 @@ class Pessimistic extends AbstractTurn with LockOwner {
 
 
   /** check if the current turn hold the lock */
-  override def checkLock(lock: TurnLock): Boolean = lock.isAccessible
+  override def checkLock(lock: TurnLock): Boolean = {
+    lock.isAccessible || lockOwner.heldLocks.isEmpty || lock.reactive.dependants.getU.exists(_.lock.isAccessible)
+  }
 
 
   /** changed is called whenever the turn does anything to a reactive that needs to be commited

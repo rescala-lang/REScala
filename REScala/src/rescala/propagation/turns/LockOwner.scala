@@ -41,7 +41,7 @@ trait LockOwner {
      * 1: when the current transaction locks something
      * 2: when the transaction we are waiting for transfers their locks
      * these two things are mutually exclusive. */
-   @volatile private var heldLocks: List[TurnLock] = Nil
+   @volatile final protected var heldLocks: List[TurnLock] = Nil
 
    final def addLock(lock: TurnLock): Unit = heldLocks ::= lock
 

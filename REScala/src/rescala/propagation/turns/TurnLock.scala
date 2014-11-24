@@ -2,11 +2,13 @@ package rescala.propagation.turns
 
 import java.util.concurrent.locks.ReentrantLock
 
+import rescala.propagation.Reactive
+
 import scala.annotation.tailrec
 
 
 
-final class TurnLock {
+final class TurnLock(val reactive: Reactive) {
 
   /** this is guarded by our intrinsic lock */
   private var owner: LockOwner = null

@@ -6,7 +6,7 @@ import rescala.propagation.turns.{TurnState, TurnLock, Turn}
 
 /** A Reactive is a value type which has a dependency to other Reactives */
 trait Reactive {
-  final private[propagation] val lock: TurnLock = new TurnLock()
+  final private[propagation] val lock: TurnLock = new TurnLock(this)
 
   final private[propagation] val level: TurnState[Int] = TurnState(0, math.max, lock)
 
