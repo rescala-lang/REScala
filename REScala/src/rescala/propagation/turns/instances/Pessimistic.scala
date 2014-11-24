@@ -94,7 +94,7 @@ class Pessimistic extends AbstractTurn with LockOwner {
 
     masterLock.lock()
     try {
-      val sources = evalQueue.map(_._2).toSeq
+      val sources = initialSources
       lockOrdered(sources)
       val locked = reachable(sources.toSet).toSeq
       lockOrdered(locked)

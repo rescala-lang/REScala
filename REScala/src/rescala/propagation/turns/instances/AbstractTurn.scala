@@ -9,10 +9,18 @@ import scala.annotation.tailrec
 import scala.collection.mutable
 
 abstract class AbstractTurn extends Turn {
+  outer =>
 
-  protected val evalQueue = new mutable.PriorityQueue[(Int, Reactive)]()(TurnFactory.reactiveOrdering)
   protected var toCommit = Set[Reactive]()
   protected var afterCommitHandlers = List[() => Unit]()
+
+  protected var initialSources: List[Reactive] = Nil
+
+  val levelQueue = new LevelQueue {
+    override implicit def currentTurn: Turn = outer
+    override def handleDiff(dependant: Reactive, newDependencies: Set[Reactive], oldDependencies: Set[Reactive]): Unit =
+      outer.handleDiff(dependant,newDependencies, oldDependencies)
+  }
 
   implicit def implicitThis: Turn = this
 
@@ -45,58 +53,11 @@ abstract class AbstractTurn extends Turn {
     ensureLevel(dependant, addedDependencies)
   }
 
+  def evaluate(reactive: Reactive): Unit = levelQueue.evaluate(reactive)
 
-  def isReady(reactive: Reactive, dependencies: Set[Reactive]) =
-    dependencies.forall(_.level.get < reactive.level.get)
-
-  @tailrec
-  protected final def floodLevel(reactives: Set[Reactive]): Unit =
-    if (reactives.nonEmpty) {
-      val reactive = reactives.head
-      val level = reactive.level.get + 1
-      val dependants = reactive.dependants.get
-      val changedDependants = dependants.filter(setLevelIfHigher(_, level))
-      floodLevel(reactives.tail ++ changedDependants)
-    }
-
-  /** mark the reactive as needing a reevaluation */
-  def enqueue(dep: Reactive): Unit = {
-    if (!evalQueue.exists { case (_, elem) => elem eq dep }) {
-      evalQueue.+=((dep.level.get, dep))
-    }
-  }
-
-
-  /** evaluates a single reactive */
-  def evaluate(head: Reactive): Unit = {
-    val result = head.reevaluate()(this)
-    val headChanged = result match {
-      case Static(hasChanged) => hasChanged
-      case diff@Dynamic(hasChanged, newDependencies, oldDependencies) =>
-        handleDiff(head, newDependencies, oldDependencies)
-        if (isReady(head, newDependencies)) {
-          floodLevel(Set(head))
-          hasChanged
-        }
-        else {
-          enqueue(head)
-          false
-        }
-    }
-    if (headChanged) {
-      head.dependants.get.foreach(enqueue)
-    }
-
-  }
-
-  /** Evaluates all the elements in the queue */
-  def propagationPhase() = {
-    while (evalQueue.nonEmpty) {
-      val (level, head) = evalQueue.dequeue()
-      // check the level if it changed queue again
-      if (level != head.level.get) enqueue(head)
-      else evaluate(head)
-    }
+  def propagationPhase(): Unit = {
+    initialSources.foreach(levelQueue.enqueue)
+    levelQueue.propagationPhase()
   }
 
   def markForCommit(reactive: Reactive): Unit = {
@@ -116,7 +77,7 @@ abstract class AbstractTurn extends Turn {
   def acquireDynamic(reactive: Reactive): Unit
 
   /** admits a new source change */
-  override def admit(source: Reactive)(setPulse: => Boolean): Unit = if(setPulse) enqueue(source)
+  override def admit(source: Reactive)(setPulse: => Boolean): Unit = if(setPulse) initialSources ::= source
 
   def lockingPhase(): Unit
   def realeasePhase(): Unit
