@@ -16,12 +16,9 @@ abstract class AbstractTurn extends Turn {
 
   implicit def implicitThis: Turn = this
 
-  def register(dependant: Reactive, dependencies: Set[Reactive]): Unit = {
-    dependencies.foreach { dependency =>
-      dependency.dependants.transform(_ + dependant)
-      markForCommit(dependency)
-    }
-    ensureLevel(dependant, dependencies)
+  def register(dependant: Reactive)(dependency: Reactive): Unit = {
+    dependency.dependants.transform(_ + dependant)
+    markForCommit(dependency)
   }
 
   def ensureLevel(dependant: Reactive, dependencies: Set[Reactive]): Unit =
@@ -43,8 +40,14 @@ abstract class AbstractTurn extends Turn {
 
   def handleDiff(dependant: Reactive,newDependencies: Set[Reactive] , oldDependencies: Set[Reactive]): Unit = {
     newDependencies.foreach(acquireDynamic)
-    oldDependencies.diff(newDependencies).foreach(unregister(dependant))
-    register(dependant, newDependencies.diff(oldDependencies))
+
+    val removedDependencies = oldDependencies.diff(newDependencies)
+    removedDependencies.foreach(unregister(dependant))
+
+    val addedDependencies = newDependencies.diff(oldDependencies)
+    addedDependencies.foreach(register(dependant))
+
+    ensureLevel(dependant, addedDependencies)
   }
 
 

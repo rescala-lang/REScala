@@ -13,7 +13,8 @@ class Synchronized extends AbstractTurn {
 
   def create[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
     val reactive = f
-    register(reactive, dependencies)
+    dependencies.foreach(register(reactive))
+    ensureLevel(reactive, dependencies)
     reactive
   }
 

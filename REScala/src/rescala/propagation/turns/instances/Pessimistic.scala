@@ -75,7 +75,8 @@ class Pessimistic extends AbstractTurn with LockOwner {
     dependencies.foreach(acquireDynamic)
     val reactive = f
     reactive.lock.lock()
-    register(reactive, dependencies)
+    dependencies.foreach(register(reactive))
+    ensureLevel(reactive, dependencies)
     reactive
   }
 
