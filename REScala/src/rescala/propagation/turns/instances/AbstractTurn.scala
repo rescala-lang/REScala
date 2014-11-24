@@ -3,60 +3,57 @@ package rescala.propagation.turns.instances
 import rescala.propagation.EvaluationResult.{Dynamic, Static}
 import rescala.propagation.Reactive
 import rescala.propagation.turns.Turn
-import rescala.propagation.turns.creation.TurnFactory
-
-import scala.annotation.tailrec
-import scala.collection.mutable
 
 abstract class AbstractTurn extends Turn {
   outer =>
-  implicit def currentTurn: Turn = this
+  implicit def currentTurn: AbstractTurn = this
 
   protected var toCommit = Set[Reactive]()
   protected var afterCommitHandlers = List[() => Unit]()
 
   protected var initialSources: List[Reactive] = Nil
 
+  val levelManipulation = new LevelManipulation()
+  val dependencyManagement = new DependencyManagement()
+
   val levelQueue = new LevelQueue() {
-    override def handleDiff(dependant: Reactive, newDependencies: Set[Reactive], oldDependencies: Set[Reactive]): Unit =
-      outer.handleDiff(dependant,newDependencies, oldDependencies)
+    /** evaluates a single reactive */
+    override def evaluate(head: Reactive): Unit = outer.evaluate(head)
   }
 
 
-  def register(dependant: Reactive)(dependency: Reactive): Unit = {
-    dependency.dependants.transform(_ + dependant)
+  def isReady(reactive: Reactive, dependencies: Set[Reactive]) =
+    dependencies.forall(_.level.get < reactive.level.get)
+
+  /** removes reactive from its dependencies */
+  override def unregister(dependant: Reactive)(dependency: Reactive): Unit = dependencyManagement.unregister(dependant)(dependency)
+
+  /** evaluates a single reactive */
+  def evaluate(head: Reactive): Unit = {
+    val result = head.reevaluate()
+    val headChanged = result match {
+      case Static(hasChanged) => hasChanged
+      case diff@Dynamic(hasChanged, newDependencies, oldDependencies) =>
+        dependencyManagement.handleDiff(head, newDependencies, oldDependencies)
+        if (isReady(head, newDependencies)) {
+          levelManipulation.floodLevel(Set(head))
+          hasChanged
+        }
+        else {
+          levelQueue.enqueue(head)
+          false
+        }
+    }
+    if (headChanged) {
+      head.dependants.get.foreach(levelQueue.enqueue)
+    }
+
   }
 
-  def ensureLevel(dependant: Reactive, dependencies: Set[Reactive]): Boolean =
-    if (dependencies.nonEmpty) setLevelIfHigher(dependant, dependencies.map(_.level.get).max + 1)
-    else false
-
-  def setLevelIfHigher(reactive: Reactive, level: Int): Boolean = {
-    reactive.level.transform { case x if x < level => level }
-  }
-
-  override def unregister(dependant: Reactive)(dependency: Reactive): Unit = {
-    acquireDynamic(dependency)
-    dependency.dependants.transform(_ - dependant)
-  }
-
-  def handleDiff(dependant: Reactive,newDependencies: Set[Reactive] , oldDependencies: Set[Reactive]): Unit = {
-    newDependencies.foreach(acquireDynamic)
-
-    val removedDependencies = oldDependencies.diff(newDependencies)
-    removedDependencies.foreach(unregister(dependant))
-
-    val addedDependencies = newDependencies.diff(oldDependencies)
-    addedDependencies.foreach(register(dependant))
-
-    ensureLevel(dependant, addedDependencies)
-  }
-
-  def evaluate(reactive: Reactive): Unit = levelQueue.evaluate(reactive)
 
   def propagationPhase(): Unit = {
     initialSources.foreach(levelQueue.enqueue)
-    levelQueue.propagationPhase()
+    levelQueue.evaluateQueue()
   }
 
   def markForCommit(reactive: Reactive): Unit = {
@@ -69,9 +66,19 @@ abstract class AbstractTurn extends Turn {
 
   def observerPhase() = afterCommitHandlers.foreach(_())
 
-  override def create[T <: Reactive](dependencies: Set[Reactive])(f: => T): T
+  def create[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
+    val reactive = f
+    dependencies.foreach(dependencyManagement.register(reactive))
+    levelManipulation.ensureLevel(reactive, dependencies)
+    reactive
+  }
 
-  override def createDynamic[T <: Reactive](dependencies: Set[Reactive])(f: => T): T
+  def createDynamic[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
+    val reactive = f
+    levelManipulation.ensureLevel(reactive, dependencies)
+    evaluate(reactive)
+    reactive
+  }
 
   def acquireDynamic(reactive: Reactive): Unit
 

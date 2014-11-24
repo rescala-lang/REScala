@@ -35,9 +35,7 @@ class Pessimistic extends AbstractTurn with LockOwner {
     dependencies.foreach(acquireDynamic)
     val reactive = f
     reactive.lock.lock()
-    dependencies.foreach(register(reactive))
-    ensureLevel(reactive, dependencies)
-    reactive
+    super.create(dependencies)(reactive)
   }
 
   /** similar to create, except for the ensure level and evaluate calls */
@@ -45,9 +43,7 @@ class Pessimistic extends AbstractTurn with LockOwner {
     dependencies.foreach(acquireDynamic)
     val reactive = f
     reactive.lock.lock()
-    ensureLevel(reactive, dependencies)
-    evaluate(reactive)
-    reactive
+    super.createDynamic(dependencies)(reactive)
   }
 
   /** a dynamically acquired reactive will never have its value or level changed, only its dependecies.
