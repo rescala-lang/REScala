@@ -14,8 +14,8 @@ abstract class AbstractTurnFactory[TTurn <: AbstractTurn](makeTurn: () => TTurn)
     case Some(turn) => f(turn)
   }
 
-  def acquirePreTurnLocks(turn: TTurn): Unit
-  def releaseAllLocks(turn: TTurn): Unit
+  def lockingPhase(turn: TTurn): Unit
+  def realeasePhase(turn: TTurn): Unit
 
   /** goes through the whole turn lifecycle
     * - create a new turn and put it on the stack
@@ -27,8 +27,8 @@ abstract class AbstractTurnFactory[TTurn <: AbstractTurn](makeTurn: () => TTurn)
     *   - calculate the actual new value of the reactive graph
     * - run the commit phase
     *   - do cleanups on the reactives, make values permanent and so on, the turn is still valid during this phase
-    * - run the after commit phase
-    *   - this typically runs side effecting observers. the turn is already commited an no longer valid, but the network is still locked so this still happens in order.
+    * - run the observer phase
+    *   - this may have side effects as the turn is guaranteed to be finished (no rollbacks). this should still keep locks to run things in order.
     * - run the release phase
     *   - this must is aways run, even in the case that something above fails. it should do cleanup and free any locks to avoid starvation.
     * - run the party! phase
@@ -40,14 +40,14 @@ abstract class AbstractTurnFactory[TTurn <: AbstractTurn](makeTurn: () => TTurn)
     try {
       currentTurn.withValue(Some(turn)) {
         admission(turn) ~< {
-          acquirePreTurnLocks(turn)
-          turn.evaluateQueue()
-          turn.commit()
+          lockingPhase(turn)
+          turn.propagationPhase()
+          turn.commitPhase()
         }
-      } ~< turn.runAfterCommitHandlers()
+      } ~< turn.observerPhase()
     }
     finally {
-      releaseAllLocks(turn)
+      realeasePhase(turn)
     }
   }
 

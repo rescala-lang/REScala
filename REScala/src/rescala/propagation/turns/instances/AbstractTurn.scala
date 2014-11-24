@@ -90,7 +90,7 @@ abstract class AbstractTurn extends Turn {
   }
 
   /** Evaluates all the elements in the queue */
-  def evaluateQueue() = {
+  def propagationPhase() = {
     while (evalQueue.nonEmpty) {
       val (level, head) = evalQueue.dequeue()
       // check the level if it changed queue again
@@ -103,11 +103,11 @@ abstract class AbstractTurn extends Turn {
     toCommit += reactive
   }
 
-  def commit() = toCommit.foreach(_.commit(this))
+  def commitPhase() = toCommit.foreach(_.commit(this))
 
   override def afterCommit(handler: => Unit) = afterCommitHandlers ::= handler _
 
-  def runAfterCommitHandlers() = afterCommitHandlers.foreach(_())
+  def observerPhase() = afterCommitHandlers.foreach(_())
 
   override def create[T <: Reactive](dependencies: Set[Reactive])(f: => T): T
 

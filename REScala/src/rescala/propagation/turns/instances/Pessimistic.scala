@@ -39,9 +39,9 @@ object Pessimistic extends AbstractTurnFactory[Pessimistic](() => new Pessimisti
 
   /** this is called after the initial closure of the turn has been executed,
     * that is the eval queue is populated with the sources */
-  override def acquirePreTurnLocks(turn: Pessimistic): Unit = lockReachable(turn)
+  override def lockingPhase(turn: Pessimistic): Unit = lockReachable(turn)
   /** this is called after the turn has finished propagating, but before handlers are executed */
-  override def releaseAllLocks(turn: Pessimistic): Unit = turn.releaseAll()
+  override def realeasePhase(turn: Pessimistic): Unit = turn.releaseAll()
 
 }
 
