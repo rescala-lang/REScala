@@ -9,14 +9,15 @@ object EvaluationResult {
 
 
 sealed trait Pulse[+P] {
-  def toOption: Option[P]
-  def isChange: Boolean
-  def map[Q](f: P => Q): Pulse[Q]
-  def flatMap[Q](f: P => Pulse[Q]): Pulse[Q]
-  def filter(p: P => Boolean): Pulse[P]
-  def fold[Q](ifNone: => Q)(ifChange: P => Q): Q
-  def keep: Pulse[P]
+  import rescala.propagation.Pulse._
+  def fold[Q](ifNone: => Q, ifChange: P => Q): Q
   def current: Option[P]
+  final def toOption: Option[P] = fold(None, Some.apply)
+  final def isChange: Boolean = fold(true, _ => false)
+  final def map[Q](f: P => Q): Pulse[Q] = fold(none, f.andThen(change))
+  final def flatMap[Q](f: P => Pulse[Q]): Pulse[Q] = fold(none, f)
+  final def filter(p: P => Boolean): Pulse[P] = fold(none, up => if (p(up)) change(up) else none)
+  final def keep: Pulse[P] = fold(this, unchanged)
 }
 
 object Pulse {
@@ -40,22 +41,9 @@ object Pulse {
   val none: Pulse[Nothing] = NoChange()
 
   final case class NoChange[+P](current: Option[P] = None) extends Pulse[P] {
-    override def toOption: Option[P] = None
-    override def isChange: Boolean = false
-    override def map[Q](f: (P) => Q): Pulse[Q] = none
-    override def flatMap[Q](f: (P) => Pulse[Q]): Pulse[Q] = none
-    override def filter(p: (P) => Boolean): Pulse[P] = none
-    override def fold[Q](ifNone: => Q)(ifChange: (P) => Q): Q = ifNone
-    override def keep: Pulse[P] = this
+    override def fold[Q](ifNone: => Q, ifChange: (P) => Q): Q = ifNone
   }
-
   final case class Diff[+P](update: P, current: Option[P] = None) extends Pulse[P] {
-    override def toOption: Option[P] = Some(update)
-    override def isChange: Boolean = true
-    override def map[Q](f: (P) => Q): Pulse[Q] = change(f(update))
-    override def flatMap[Q](f: (P) => Pulse[Q]): Pulse[Q] = f(update)
-    override def filter(p: (P) => Boolean): Pulse[P] = if (p(update)) change(update) else none
-    override def fold[Q](ifNone: => Q)(ifChange: (P) => Q): Q = ifChange(update)
-    override def keep: Pulse[P] = unchanged(update)
+    override def fold[Q](ifNone: => Q, ifChange: (P) => Q): Q = ifChange(update)
   }
 }

@@ -35,7 +35,7 @@ object Signals extends GeneratedLift {
   /** creates a signal that folds the events in e*/
   def fold[E, T](e: Event[E], init: T)(f: (T, E) => T)(implicit maybe: MaybeTurn): Signal[T] = maybe {
     makeStatic(Set(e), init) { (turn, currentValue) =>
-      e.pulse(turn).fold(currentValue)(f(currentValue, _))
+      e.pulse(turn).fold(currentValue, f(currentValue, _))
     }(_)
   }
 
