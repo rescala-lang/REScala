@@ -59,8 +59,8 @@ abstract class AbstractTurn extends Turn {
       floodLevel(reactives.tail ++ changedDependants)
     }
 
-  /** Adds a dependant to the eval queue */
-  override def enqueue(dep: Reactive): Unit = {
+  /** mark the reactive as needing a reevaluation */
+  def enqueue(dep: Reactive): Unit = {
     if (!evalQueue.exists { case (_, elem) => elem eq dep }) {
       evalQueue.+=((dep.level.get, dep))
     }
