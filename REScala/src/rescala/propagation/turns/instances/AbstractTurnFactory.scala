@@ -17,25 +17,21 @@ abstract class AbstractTurnFactory[TTurn <: AbstractTurn](makeTurn: () => TTurn)
   def acquirePreTurnLocks(turn: TTurn): Unit
   def releaseAllLocks(turn: TTurn): Unit
 
-
   override def newTurn[T](f: Turn => T): T = {
+    implicit class sequentialLeftResult(result: T) { def ~< (sideEffects_! : Unit): T = result }
     val turn = makeTurn()
-
-    val result = try {
-      val res = currentTurn.withValue(Some(turn)) {
-        val r = f(turn)
-        acquirePreTurnLocks(turn)
-        turn.evaluateQueue()
-        turn.commit()
-        r
-      }
-      turn.runAfterCommitHandlers()
-      res
+    try {
+      currentTurn.withValue(Some(turn)) {
+        f(turn) ~< {
+          acquirePreTurnLocks(turn)
+          turn.evaluateQueue()
+          turn.commit()
+        }
+      } ~< turn.runAfterCommitHandlers()
     }
     finally {
       releaseAllLocks(turn)
     }
-    result
   }
 
   final val reactiveOrdering = new Ordering[(Int, Reactive)] {
