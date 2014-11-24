@@ -4,46 +4,7 @@ import rescala.propagation.Reactive
 import rescala.propagation.turns.{LockOwner, TurnLock}
 
 
-object Pessimistic extends AbstractTurnFactory[Pessimistic](() => new Pessimistic()) {
-
-  /** TODO: this probably needs improvement … well it definitely does
-    * TODO: the problem is, that lockOrdered tries to lock the reactive,
-    * TODO: which does not consider shared locks.
-    * TODO: so we might actually run into problems if someone tries to share a lock with us
-    * TODO: while we do our initial locking …
-    * tried to solve this by acquiring the master lock during initial locking,
-    * so that nothing can be shared with us.
-    * this still has problems, because evaluating the initial closure of the turn may create new reactives,
-    * which causes dynamic locking to happen and screw us here. */
-  def lockReachable(turn: Pessimistic): Unit = {
-    def reachable(reactives: Set[Reactive])(implicit turn: Pessimistic): Set[Reactive] =
-      reactives ++ reactives.flatMap(r => reachable(r.dependants.getU))
-
-    turn.masterLock.lock()
-    try {
-      val sources = turn.evalQueue.map(_._2).toSeq
-      lockOrdered(sources)(turn)
-      val locked = reachable(sources.toSet)(turn).toSeq
-      lockOrdered(locked)(turn)
-      //TODO: need to check if the dependencies have changed in between
-      //TODO: … it might actually be better to lock directly and always do deadlock detection
-    }
-    finally {
-      turn.masterLock.unlock()
-    }
-  }
-
-  /** helper to lock a sequence of reactives in a given order to prevent deadlocks */
-  final def lockOrdered(reactives: Seq[Reactive])(implicit turn: LockOwner): Unit = reactives.sortBy(System.identityHashCode).foreach { _.lock.lock() }
-
-
-  /** this is called after the initial closure of the turn has been executed,
-    * that is the eval queue is populated with the sources */
-  override def lockingPhase(turn: Pessimistic): Unit = lockReachable(turn)
-  /** this is called after the turn has finished propagating, but before handlers are executed */
-  override def realeasePhase(turn: Pessimistic): Unit = turn.releaseAll()
-
-}
+object Pessimistic extends AbstractTurnFactory[Pessimistic](() => new Pessimistic())
 
 class Pessimistic extends AbstractTurn with LockOwner {
 
@@ -117,5 +78,43 @@ class Pessimistic extends AbstractTurn with LockOwner {
     source.lock.lock()
     super.admit(source)(setPulse)
   }
+
+
+  /** TODO: this probably needs improvement … well it definitely does
+    * TODO: the problem is, that lockOrdered tries to lock the reactive,
+    * TODO: which does not consider shared locks.
+    * TODO: so we might actually run into problems if someone tries to share a lock with us
+    * TODO: while we do our initial locking …
+    * tried to solve this by acquiring the master lock during initial locking,
+    * so that nothing can be shared with us.
+    * this still has problems, because evaluating the initial closure of the turn may create new reactives,
+    * which causes dynamic locking to happen and screw us here. */
+  def lockReachable(): Unit = {
+    def reachable(reactives: Set[Reactive]): Set[Reactive] =
+      reactives ++ reactives.flatMap(r => reachable(r.dependants.getU))
+
+    masterLock.lock()
+    try {
+      val sources = evalQueue.map(_._2).toSeq
+      lockOrdered(sources)
+      val locked = reachable(sources.toSet).toSeq
+      lockOrdered(locked)
+      //TODO: need to check if the dependencies have changed in between
+      //TODO: … it might actually be better to lock directly and always do deadlock detection
+    }
+    finally {
+      masterLock.unlock()
+    }
+  }
+
+  /** helper to lock a sequence of reactives in a given order to prevent deadlocks */
+  final def lockOrdered(reactives: Seq[Reactive])(implicit turn: LockOwner): Unit = reactives.sortBy(System.identityHashCode).foreach { _.lock.lock() }
+
+
+  /** this is called after the initial closure of the turn has been executed,
+    * that is the eval queue is populated with the sources */
+  override def lockingPhase(): Unit = lockReachable()
+  /** this is called after the turn has finished propagating, but before handlers are executed */
+  override def realeasePhase(): Unit = releaseAll()
 }
 

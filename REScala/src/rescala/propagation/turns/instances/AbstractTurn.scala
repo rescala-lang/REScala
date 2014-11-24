@@ -117,4 +117,7 @@ abstract class AbstractTurn extends Turn {
 
   /** admits a new source change */
   override def admit(source: Reactive)(setPulse: => Boolean): Unit = if(setPulse) enqueue(source)
+
+  def lockingPhase(): Unit
+  def realeasePhase(): Unit
 }

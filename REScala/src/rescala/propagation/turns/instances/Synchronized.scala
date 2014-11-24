@@ -5,8 +5,6 @@ import rescala.propagation.turns.Turn
 
 object Synchronized extends AbstractTurnFactory[Synchronized](() => new Synchronized()) {
   override def newTurn[T](f: Turn => T): T = synchronized(super.newTurn(f))
-  override def lockingPhase(turn: Synchronized): Unit = ()
-  override def realeasePhase(turn: Synchronized): Unit = ()
 }
 
 class Synchronized extends AbstractTurn {
@@ -27,5 +25,7 @@ class Synchronized extends AbstractTurn {
 
   /** nothing to do, everything is locked anyways */
   override def acquireDynamic(reactive: Reactive): Unit = ()
+  override def lockingPhase(): Unit = ()
+  override def realeasePhase(): Unit = ()
 }
 

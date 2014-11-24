@@ -6,16 +6,13 @@ import rescala.propagation.turns.creation.TurnFactory
 
 import scala.util.DynamicVariable
 
-abstract class AbstractTurnFactory[TTurn <: AbstractTurn](makeTurn: () => TTurn) extends TurnFactory {
+class AbstractTurnFactory[TTurn <: AbstractTurn](makeTurn: () => TTurn) extends TurnFactory {
   val currentTurn: DynamicVariable[Option[TTurn]] = new DynamicVariable[Option[TTurn]](None)
 
   override def maybeDynamicTurn[T](f: (Turn) => T): T = currentTurn.value match {
     case None => newTurn(f)
     case Some(turn) => f(turn)
   }
-
-  def lockingPhase(turn: TTurn): Unit
-  def realeasePhase(turn: TTurn): Unit
 
   /** goes through the whole turn lifecycle
     * - create a new turn and put it on the stack
@@ -34,20 +31,20 @@ abstract class AbstractTurnFactory[TTurn <: AbstractTurn](makeTurn: () => TTurn)
     * - run the party! phase
     *   - not yet implemented
     * */
-  override def newTurn[T](admission: Turn => T): T = {
+  override def newTurn[T](admissionPhase: Turn => T): T = {
     implicit class sequentialLeftResult(result: T) { def ~< (sideEffects_! : Unit): T = result }
     val turn = makeTurn()
     try {
       currentTurn.withValue(Some(turn)) {
-        admission(turn) ~< {
-          lockingPhase(turn)
+        admissionPhase(turn) ~< {
+          turn.lockingPhase()
           turn.propagationPhase()
           turn.commitPhase()
         }
       } ~< turn.observerPhase()
     }
     finally {
-      realeasePhase(turn)
+      turn.realeasePhase()
     }
   }
 
