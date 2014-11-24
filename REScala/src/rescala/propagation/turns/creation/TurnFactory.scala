@@ -67,8 +67,4 @@ object TurnFactory {
 
   }
 
-  final val reactiveOrdering = new Ordering[(Int, Reactive)] {
-    override def compare(x: (Int, Reactive), y: (Int, Reactive)): Int = y._1.compareTo(x._1)
-  }
-
 }

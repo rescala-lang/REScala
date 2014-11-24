@@ -21,8 +21,6 @@ class DependencyManagement()(implicit val turn: AbstractTurn) {
 
     val addedDependencies = newDependencies.diff(oldDependencies)
     addedDependencies.foreach(register(dependant))
-
-    turn.levelManipulation.ensureLevel(dependant, addedDependencies)
   }
   
 }
