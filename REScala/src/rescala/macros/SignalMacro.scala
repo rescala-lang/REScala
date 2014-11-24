@@ -1,5 +1,6 @@
 package rescala.macros
 
+import rescala.propagation.Stateful
 import rescala.signals._
 import rescala.propagation.turns.Turn
 
@@ -131,9 +132,9 @@ object SignalMacro {
             "since it potentially creates a new reactive every time the " +
             "signal is evaluated which can lead to unintentional behavior")
 
-      private def isSignal(tree: Tree) =
+      private def isStateful(tree: Tree) =
         if (tree.tpe == null) { treeTypeNullWarning(); false }
-        else tree.tpe <:< typeOf[Signal[_]]
+        else tree.tpe <:< typeOf[Stateful[_]]
 
       override def transform(tree: Tree) =
         tree match {
@@ -145,7 +146,7 @@ object SignalMacro {
           // to
           //   SignalSynt { s => a(s) + b(s) }
           case tree @ q"$reactive.apply()"
-              if isSignal(reactive)
+              if isStateful(reactive)
                  && !(nestedUnexpandedMacros contains tree) =>
             detectedSignals ::= reactive
             val reactiveApply = Select(reactive, TermName("apply"))
@@ -165,7 +166,7 @@ object SignalMacro {
           // and creates a signal value
           //   val s = event.count
           case reactive @ (TypeApply(_, _) | Apply(_, _) | Select(_, _))
-            if isSignal(reactive) &&
+            if isStateful(reactive) &&
               // make sure that the expression e to be cut out
               // - refers to a term that is not a val or var
               //   or an accessor for a field
@@ -184,7 +185,7 @@ object SignalMacro {
                   // check if reactive results from a function that is
                   // itself called on a reactive value
                   case tree @ Apply(Select(chainedReactive, apply), List()) =>
-                    isSignal(chainedReactive) &&
+                    isStateful(chainedReactive) &&
                        apply.decodedName.toString == "apply" &&
                        !(nestedUnexpandedMacros contains tree)
 
