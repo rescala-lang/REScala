@@ -17,12 +17,29 @@ abstract class AbstractTurnFactory[TTurn <: AbstractTurn](makeTurn: () => TTurn)
   def acquirePreTurnLocks(turn: TTurn): Unit
   def releaseAllLocks(turn: TTurn): Unit
 
-  override def newTurn[T](f: Turn => T): T = {
+  /** goes through the whole turn lifecycle
+    * - create a new turn and put it on the stack
+    * - run the admission phase
+    *   - this is user defined and sets source values, needs investigation of reactive creation, and read then act stuff
+    * - run the locking phase
+    *   - to give the turn a chance to do something before the propagation starts when it is known which reactives will change
+    * - run the propagation phase
+    *   - calculate the actual new value of the reactive graph
+    * - run the commit phase
+    *   - do cleanups on the reactives, make values permanent and so on, the turn is still valid during this phase
+    * - run the after commit phase
+    *   - this typically runs side effecting observers. the turn is already commited an no longer valid, but the network is still locked so this still happens in order.
+    * - run the release phase
+    *   - this must is aways run, even in the case that something above fails. it should do cleanup and free any locks to avoid starvation.
+    * - run the party! phase
+    *   - not yet implemented
+    * */
+  override def newTurn[T](admission: Turn => T): T = {
     implicit class sequentialLeftResult(result: T) { def ~< (sideEffects_! : Unit): T = result }
     val turn = makeTurn()
     try {
       currentTurn.withValue(Some(turn)) {
-        f(turn) ~< {
+        admission(turn) ~< {
           acquirePreTurnLocks(turn)
           turn.evaluateQueue()
           turn.commit()
