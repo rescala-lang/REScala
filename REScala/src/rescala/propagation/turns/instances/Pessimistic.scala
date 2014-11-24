@@ -59,10 +59,10 @@ class Pessimistic extends AbstractTurn with LockOwner {
   /** changed is called whenever the turn does anything to a reactive that needs to be commited
     * it is overridden here to detect changes to reactive which are not locked
     * this allows to detect errors early, but should never happen if the locking strategy is correct */
-  override def changed(reactive: Reactive): Unit = {
+  override def markForCommit(reactive: Reactive): Unit = {
     if (!reactive.lock.isAccessible)
       throw new IllegalStateException(s"tried to change reactive $reactive but is locked by someone else")
-    super.changed(reactive)
+    super.markForCommit(reactive)
   }
 
   /** creating a signal causes some unpredictable reactives to be used inside the turn.

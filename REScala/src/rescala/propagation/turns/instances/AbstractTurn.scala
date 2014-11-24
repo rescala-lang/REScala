@@ -19,7 +19,7 @@ abstract class AbstractTurn extends Turn {
   def register(dependant: Reactive, dependencies: Set[Reactive]): Unit = {
     dependencies.foreach { dependency =>
       dependency.dependants.transform(_ + dependant)
-      changed(dependency)
+      markForCommit(dependency)
     }
     ensureLevel(dependant, dependencies)
   }
@@ -27,7 +27,7 @@ abstract class AbstractTurn extends Turn {
   def ensureLevel(dependant: Reactive, dependencies: Set[Reactive]): Unit =
     if (dependencies.nonEmpty) {
       if (setLevelIfHigher(dependant, dependencies.map(_.level.get).max + 1)) {
-        changed(dependant)
+        markForCommit(dependant)
       }
     }
 
@@ -35,15 +35,15 @@ abstract class AbstractTurn extends Turn {
     reactive.level.transform { case x if x < level => level }
   }
 
-  override def unregister(dependant: Reactive, dependencies: Set[Reactive]): Unit = dependencies.foreach { dependency =>
-    dependencies.foreach(acquireDynamic)
+  override def unregister(dependant: Reactive)(dependency: Reactive): Unit = {
+    acquireDynamic(dependency)
     dependency.dependants.transform(_ - dependant)
-    changed(dependency)
+    markForCommit(dependency)
   }
 
   def handleDiff(dependant: Reactive,newDependencies: Set[Reactive] , oldDependencies: Set[Reactive]): Unit = {
     newDependencies.foreach(acquireDynamic)
-    unregister(dependant, oldDependencies.diff(newDependencies))
+    oldDependencies.diff(newDependencies).foreach(unregister(dependant))
     register(dependant, newDependencies.diff(oldDependencies))
   }
 
@@ -55,7 +55,7 @@ abstract class AbstractTurn extends Turn {
   protected final def floodLevel(reactives: Set[Reactive]): Unit =
     if (reactives.nonEmpty) {
       val reactive = reactives.head
-      changed(reactive)
+      markForCommit(reactive)
       val level = reactive.level.get + 1
       val dependants = reactive.dependants.get
       val changedDependants = dependants.filter(setLevelIfHigher(_, level))
@@ -87,7 +87,7 @@ abstract class AbstractTurn extends Turn {
         }
     }
     if (headChanged) {
-      changed(head)
+      markForCommit(head)
       head.dependants.get.foreach(enqueue)
     }
 
@@ -103,7 +103,7 @@ abstract class AbstractTurn extends Turn {
     }
   }
 
-  def changed(reactive: Reactive): Unit = {
+  def markForCommit(reactive: Reactive): Unit = {
     toCommit += reactive
   }
 

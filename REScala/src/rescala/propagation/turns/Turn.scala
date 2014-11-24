@@ -23,7 +23,7 @@ trait Turn {
   def createDynamic[T <: Reactive](dependencies: Set[Reactive])(f: => T): T
 
   /** removes reactive from its dependencies */
-  def unregister(dependant: Reactive, dependencies: Set[Reactive]): Unit
+  def unregister(dependant: Reactive)(dependency: Reactive): Unit
 
   /** mark the reactive as needing a reevaluation */
   def enqueue(dep: Reactive): Unit
