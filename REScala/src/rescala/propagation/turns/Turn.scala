@@ -28,6 +28,9 @@ trait Turn {
   /** mark the reactive as needing a reevaluation */
   def enqueue(dep: Reactive): Unit
 
+  /** mark the state of the reactive as changed, i.e. it needs a commit or rollback */
+  def markForCommit(reactive: Reactive): Unit
+
   /** register an after commit handler */
   def afterCommit(handler: => Unit): Unit
 

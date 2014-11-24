@@ -18,15 +18,11 @@ abstract class AbstractTurn extends Turn {
 
   def register(dependant: Reactive)(dependency: Reactive): Unit = {
     dependency.dependants.transform(_ + dependant)
-    markForCommit(dependency)
   }
 
-  def ensureLevel(dependant: Reactive, dependencies: Set[Reactive]): Unit =
-    if (dependencies.nonEmpty) {
-      if (setLevelIfHigher(dependant, dependencies.map(_.level.get).max + 1)) {
-        markForCommit(dependant)
-      }
-    }
+  def ensureLevel(dependant: Reactive, dependencies: Set[Reactive]): Boolean =
+    if (dependencies.nonEmpty) setLevelIfHigher(dependant, dependencies.map(_.level.get).max + 1)
+    else false
 
   def setLevelIfHigher(reactive: Reactive, level: Int): Boolean = {
     reactive.level.transform { case x if x < level => level }
@@ -35,7 +31,6 @@ abstract class AbstractTurn extends Turn {
   override def unregister(dependant: Reactive)(dependency: Reactive): Unit = {
     acquireDynamic(dependency)
     dependency.dependants.transform(_ - dependant)
-    markForCommit(dependency)
   }
 
   def handleDiff(dependant: Reactive,newDependencies: Set[Reactive] , oldDependencies: Set[Reactive]): Unit = {
@@ -58,7 +53,6 @@ abstract class AbstractTurn extends Turn {
   protected final def floodLevel(reactives: Set[Reactive]): Unit =
     if (reactives.nonEmpty) {
       val reactive = reactives.head
-      markForCommit(reactive)
       val level = reactive.level.get + 1
       val dependants = reactive.dependants.get
       val changedDependants = dependants.filter(setLevelIfHigher(_, level))
@@ -90,7 +84,6 @@ abstract class AbstractTurn extends Turn {
         }
     }
     if (headChanged) {
-      markForCommit(head)
       head.dependants.get.foreach(enqueue)
     }
 
