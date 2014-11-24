@@ -13,7 +13,7 @@ sealed trait Pulse[+P] {
   def fold[Q](ifNone: => Q, ifChange: P => Q): Q
   def current: Option[P]
   final def toOption: Option[P] = fold(None, Some.apply)
-  final def isChange: Boolean = fold(true, _ => false)
+  final def isChange: Boolean = fold(false, _ => true)
   final def map[Q](f: P => Q): Pulse[Q] = fold(none, f.andThen(change))
   final def flatMap[Q](f: P => Pulse[Q]): Pulse[Q] = fold(none, f)
   final def filter(p: P => Boolean): Pulse[P] = fold(none, up => if (p(up)) change(up) else none)
@@ -26,10 +26,10 @@ object Pulse {
   def change[P](value: P): Pulse[P] = Diff(value)
 
   def unchanged[P](value: P): Pulse[P] = NoChange(Some(value))
-  
+
   def diff[P](newValue: P, oldValue: P): Pulse[P] =
     if (null == oldValue) change(newValue)
-    else if (newValue == oldValue)  unchanged(newValue)
+    else if (newValue == oldValue) unchanged(newValue)
     else Diff(newValue, Some(oldValue))
 
   def diffPulse[P](newValue: P, oldPulse: Pulse[P]): Pulse[P] = oldPulse match {
