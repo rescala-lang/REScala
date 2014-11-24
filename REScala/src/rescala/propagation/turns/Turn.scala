@@ -8,6 +8,9 @@ import rescala.propagation.Reactive
  */
 trait Turn {
 
+  /** admits a new source change */
+  def admit(source: Reactive)(setPulse: => Boolean): Unit
+
   /** called when a new reactive is created and registered into the network
     * subclasses are expected to register the reactive with its dependencies
     * and calculate the correct level*/
@@ -37,9 +40,6 @@ trait Turn {
 
   /** mark a reactive as dynamically used */
   def useDependency(dependency: Reactive): Unit
-
-  /** admits a new source change */
-  def admit(source: Reactive)(setPulse: => Boolean): Unit
 
   /** check if the current turn hold the lock */
   def checkLock(lock: TurnLock): Boolean = true

@@ -10,8 +10,6 @@ import scala.util.DynamicVariable
 
 abstract class AbstractTurn extends Turn {
 
-  import rescala.propagation.turns.instances.DependencyChanges._
-
   protected val evalQueue = new mutable.PriorityQueue[(Int, Reactive)]()(Synchronized.reactiveOrdering)
   protected var toCommit = Set[Reactive]()
   protected var afterCommitHandlers = List[() => Unit]()
@@ -120,8 +118,4 @@ abstract class AbstractTurn extends Turn {
 
   /** admits a new source change */
   override def admit(source: Reactive)(setPulse: => Boolean): Unit = if(setPulse) enqueue(source)
-}
-
-object DependencyChanges {
-
 }
