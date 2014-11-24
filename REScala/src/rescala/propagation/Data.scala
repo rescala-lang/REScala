@@ -29,7 +29,7 @@ object Pulse {
 
   def diff[P](newValue: P, oldValue: P): Pulse[P] =
     if (null == oldValue) change(newValue)
-    else if (newValue == oldValue) unchanged(newValue)
+    else if (newValue == oldValue) unchanged(oldValue)
     else Diff(newValue, Some(oldValue))
 
   def diffPulse[P](newValue: P, oldPulse: Pulse[P]): Pulse[P] = oldPulse match {
