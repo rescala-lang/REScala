@@ -13,25 +13,28 @@ abstract class AbstractTurnFactory[TTurn <: AbstractTurn](makeTurn: () => TTurn)
     case None => newTurn(f)
     case Some(turn) => f(turn)
   }
-  
+
   def acquirePreTurnLocks(turn: TTurn): Unit
   def releaseAllLocks(turn: TTurn): Unit
-  
+
 
   override def newTurn[T](f: Turn => T): T = {
     val turn = makeTurn()
-    val result = currentTurn.withValue(Some(turn)) {
-      val res = f(turn)
-      acquirePreTurnLocks(turn)
-      try {
+
+    val result = try {
+      val res = currentTurn.withValue(Some(turn)) {
+        val r = f(turn)
+        acquirePreTurnLocks(turn)
         turn.evaluateQueue()
         turn.commit()
-      } finally {
-        releaseAllLocks(turn)
+        r
       }
+      turn.runAfterCommitHandlers()
       res
     }
-    turn.runAfterCommitHandlers()
+    finally {
+      releaseAllLocks(turn)
+    }
     result
   }
 

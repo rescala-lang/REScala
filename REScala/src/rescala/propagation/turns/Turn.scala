@@ -31,7 +31,8 @@ trait Turn {
   /** mark the state of the reactive as changed, i.e. it needs a commit or rollback */
   def markForCommit(reactive: Reactive): Unit
 
-  /** register an after commit handler */
+  /** register an after commit handler, these run after all reactives are commited, but before the turn finishes
+    * that is, a transaction should not roll back beacause of a handler, but it may block other waiting transactions */
   def afterCommit(handler: => Unit): Unit
 
   /** runs the given code while collecting dynamically used reactives */
