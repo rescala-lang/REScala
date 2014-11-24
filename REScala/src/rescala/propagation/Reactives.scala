@@ -42,6 +42,14 @@ trait Pulsing[+P] extends Reactive {
 trait Stateful[+A] extends Pulsing[A] {
   pulses.commitStrategy = (_, p) => p.keep
 
+  // only used inside macro and will be replaced there
+  final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")
+
+  final def apply[T](turn: Turn): A = {
+    turn.useDependency(this)
+    get(turn)
+  }
+
   final def now(implicit maybe: MaybeTurn): A = maybe { get(_) }
 
   final def get(implicit turn: Turn): A = pulse match {

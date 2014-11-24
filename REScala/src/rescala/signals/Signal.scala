@@ -2,19 +2,10 @@ package rescala.signals
 
 import rescala.events.{Event, Events}
 import rescala.propagation.Stateful
-import rescala.propagation.turns.Turn
 import rescala.propagation.turns.creation.MaybeTurn
 
 
 trait Signal[+A] extends Stateful[A] {
-
-  // only used inside macro and will be replaced there
-  final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")
-
-  def apply[T](turn: Turn): A = {
-    turn.useDependency(this)
-    get(turn)
-  }
 
   /** Return a Signal with f applied to the value */
   def map[B](f: A => B)(implicit maybe: MaybeTurn): Signal[B] = Signals.mapping(this) { turn => f(get(turn)) }
