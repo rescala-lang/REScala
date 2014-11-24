@@ -40,10 +40,10 @@ object Pulse {
 
   val none: Pulse[Nothing] = NoChange()
 
-  final case class NoChange[+P](current: Option[P] = None) extends Pulse[P] {
+  final case class NoChange[+P](override val current: Option[P] = None) extends Pulse[P] {
     override def fold[Q](ifNone: => Q, ifChange: (P) => Q): Q = ifNone
   }
-  final case class Diff[+P](update: P, current: Option[P] = None) extends Pulse[P] {
+  final case class Diff[+P](update: P, override val current: Option[P] = None) extends Pulse[P] {
     override def fold[Q](ifNone: => Q, ifChange: (P) => Q): Q = ifChange(update)
   }
 }
