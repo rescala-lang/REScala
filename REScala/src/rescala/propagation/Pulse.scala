@@ -14,22 +14,22 @@ sealed trait Pulse[+P] {
 object Pulse {
   def fromOption[P](opt: Option[P]): Pulse[P] = opt.fold[Pulse[P]](NoChange())(Diff(_))
 
-  def change[P](value: P): Diff[P] = Diff(value)
+  def change[P](value: P): Pulse[P] = Diff(value)
 
-  def unchanged[P](value: P): NoChange[P] = NoChange(Some(value))
+  def unchanged[P](value: P): Pulse[P] = NoChange(Some(value))
   
   def diff[P](newValue: P, oldValue: P): Pulse[P] =
     if (null == oldValue) change(newValue)
     else if (newValue == oldValue)  unchanged(newValue)
     else Diff(newValue, Some(oldValue))
 
-  def diffPulse[P](newValue: P, oldPulse: Pulse[P]) = oldPulse match {
+  def diffPulse[P](newValue: P, oldPulse: Pulse[P]): Pulse[P] = oldPulse match {
     case NoChange(None) => change(newValue)
     case NoChange(Some(value)) => diff(newValue, value)
     case Diff(update, current) => diff(newValue, update)
   }
 
-  val none = NoChange()
+  val none: Pulse[Nothing] = NoChange()
 
   final case class NoChange[+P](current: Option[P] = None) extends Pulse[P] {
     override def toOption: Option[P] = None
