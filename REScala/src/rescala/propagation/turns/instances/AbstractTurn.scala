@@ -109,10 +109,6 @@ abstract class AbstractTurn extends Turn {
 
   def runAfterCommitHandlers() = afterCommitHandlers.foreach(_())
 
-  val bag = new DynamicVariable(Set[Reactive]())
-  override def collectDependencies[T](f: => T): (T, Set[Reactive]) = bag.withValue(Set()) { (f, bag.value) }
-  override def useDependency(dependency: Reactive): Unit = bag.value = bag.value + dependency
-
   override def create[T <: Reactive](dependencies: Set[Reactive])(f: => T): T
 
   override def createDynamic[T <: Reactive](dependencies: Set[Reactive])(f: => T): T

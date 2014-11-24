@@ -1,6 +1,18 @@
 package rescala.propagation
 
+import scala.util.DynamicVariable
+
 sealed trait EvaluationResult
+
+/** support for dynamic dependency discovery */
+object DynamicsSupport {
+  val bag = new DynamicVariable(Set[Reactive]())
+  /** runs the given code while collecting dynamically used reactives */
+  def collectDependencies[T](f: => T): (T, Set[Reactive]) = bag.withValue(Set()) { (f, bag.value) }
+  /** mark a reactive as dynamically used */
+  def useDependency(dependency: Reactive): Unit = bag.value = bag.value + dependency
+}
+
 
 object EvaluationResult {
   case class Static(changed: Boolean) extends EvaluationResult

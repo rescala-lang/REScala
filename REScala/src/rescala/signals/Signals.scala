@@ -11,7 +11,7 @@ object Signals extends GeneratedLift {
   def makeDynamic[T](dependencies: Set[Reactive])(expr: Turn => T)(implicit currentTurn: Turn): Signal[T] = currentTurn.createDynamic(dependencies) {
     new Signal[T] with DynamicReevaluation[T] {
       def calculatePulseDependencies(implicit turn: Turn): (Pulse[T], Set[Reactive]) = {
-        val (newValue, dependencies) = turn.collectDependencies(expr(turn))
+        val (newValue, dependencies) = DynamicsSupport.collectDependencies(expr(turn))
         (Pulse.diffPulse(newValue, pulses.default), dependencies)
       }
     }

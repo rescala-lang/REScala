@@ -35,12 +35,6 @@ trait Turn {
     * that is, a transaction should not roll back beacause of a handler, but it may block other waiting transactions */
   def afterCommit(handler: => Unit): Unit
 
-  /** runs the given code while collecting dynamically used reactives */
-  def collectDependencies[T](f: => T): (T, Set[Reactive])
-
-  /** mark a reactive as dynamically used */
-  def useDependency(dependency: Reactive): Unit
-
   /** check if the current turn hold the lock */
   def checkLock(lock: TurnLock): Boolean = true
 
