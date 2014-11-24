@@ -2,7 +2,7 @@ package rescala.propagation.turns.instances
 
 import rescala.propagation.Reactive
 
-class Synchronized extends AbstractTurn {
+class Simple extends AbstractTurn {
 
   def create[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
     val reactive = f

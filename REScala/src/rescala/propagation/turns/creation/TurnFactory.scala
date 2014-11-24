@@ -2,7 +2,7 @@ package rescala.propagation.turns.creation
 
 import rescala.propagation.Reactive
 import rescala.propagation.turns.Turn
-import rescala.propagation.turns.instances.{AbstractTurn, Pessimistic, Synchronized}
+import rescala.propagation.turns.instances.{AbstractTurn, Pessimistic, Simple}
 
 import scala.util.DynamicVariable
 
@@ -17,10 +17,10 @@ trait TurnFactory {
 object TurnFactory {
 
   val pessimistic: TurnFactory = new Impl[Pessimistic](() => new Pessimistic())
-  val synchronized: TurnFactory = new Impl[Synchronized](() => new Synchronized()) {
+  val synchronized: TurnFactory = new Impl[Simple](() => new Simple()) {
     override def newTurn[T](f: Turn => T): T = synchronized(super.newTurn(f))
   }
-  val unSynchronized: TurnFactory = new Impl[Synchronized](() => new Synchronized())
+  val unSynchronized: TurnFactory = new Impl[Simple](() => new Simple())
 
 
   class Impl[TTurn <: AbstractTurn](makeTurn: () => TTurn) extends TurnFactory {
