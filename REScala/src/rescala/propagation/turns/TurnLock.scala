@@ -1,7 +1,5 @@
 package rescala.propagation.turns
 
-import java.util.concurrent.locks.ReentrantLock
-
 import rescala.propagation.Reactive
 
 import scala.annotation.tailrec

@@ -1,11 +1,6 @@
 package rescala.propagation.turns.instances
 
 import rescala.propagation.Reactive
-import rescala.propagation.turns.Turn
-
-object Synchronized extends AbstractTurnFactory[Synchronized](() => new Synchronized()) {
-  override def newTurn[T](f: Turn => T): T = synchronized(super.newTurn(f))
-}
 
 class Synchronized extends AbstractTurn {
 
