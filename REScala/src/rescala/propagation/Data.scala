@@ -1,5 +1,13 @@
 package rescala.propagation
 
+sealed trait EvaluationResult
+
+object EvaluationResult {
+  case class Done(changed: Boolean, changedDependencies: Option[DependencyDiff] = None) extends EvaluationResult
+  case class DependencyDiff(newDependencies: Set[Reactive], oldDependencies: Set[Reactive]) extends EvaluationResult
+}
+
+
 sealed trait Pulse[+P] {
   def toOption: Option[P]
   def isChange: Boolean
