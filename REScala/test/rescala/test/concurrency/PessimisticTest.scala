@@ -31,7 +31,8 @@ class PessimisticTest extends AssertionsForJUnit {
   }
 
   @Test def summedSignals(): Unit = {
-    val sources = List.fill(100)(Var(0))
+    val size = 100
+    val sources = List.fill(size)(Var(0))
     val latch = new CountDownLatch(1)
     val mapped = sources.map(s => s.map(_ + 1))
     val sum = mapped.reduce(Signals.lift(_, _)(_ + _))
@@ -41,9 +42,9 @@ class PessimisticTest extends AssertionsForJUnit {
     latch.countDown()
     threads.foreach(_.join())
 
-    assert(results.asScala.toList.sorted.sameElements(Range(101, 201)))
+    assert(results.asScala.sameElements(Range(size + 1, 2 * size + 1)))
 
-    assert(sum.now === 200)
+    assert(sum.now === 2 * size)
   }
 
   @Ignore def crossedDynamicDependencies(): Unit = {
