@@ -2,10 +2,11 @@ package rescala.propagation.turns.instances
 
 import rescala.propagation.Reactive
 import rescala.propagation.turns.Turn
+import rescala.propagation.turns.instances.Evaluator.Result
 
 import scala.collection.{SortedSet, SortedMap}
 
-class LevelQueue(evaluator: Reactive => Unit)(implicit val currenTurn: Turn) {
+class LevelQueue(evaluator: Reactive => Result)(implicit val currenTurn: Turn) {
 
   private var evalQueue = SortedSet[QueueElement]()
 
@@ -22,7 +23,7 @@ class LevelQueue(evaluator: Reactive => Unit)(implicit val currenTurn: Turn) {
       head.dependants.get.foreach(enqueue(headMinLevel + 1))
     }
     else {
-      evaluator(head)
+      evaluator(head).requeue(enqueue)
     }
   }
 

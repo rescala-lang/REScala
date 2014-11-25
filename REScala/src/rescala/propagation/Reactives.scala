@@ -1,6 +1,5 @@
 package rescala.propagation
 
-import rescala.Implicits
 import rescala.propagation.Pulse.{Diff, NoChange}
 import rescala.propagation.turns.creation.MaybeTurn
 import rescala.propagation.turns.{TurnState, TurnLock, Turn}
@@ -101,7 +100,7 @@ trait DynamicReevaluation[+P] extends Pulsing[P] {
     val oldDependencies = dependencies.get
     dependencies.set(newDependencies)
     pulses.set(newPulse)
-    EvaluationResult.Dynamic(newPulse.isChange, newDependencies, oldDependencies)
+    EvaluationResult.Dynamic(newPulse.isChange, DepDiff(newDependencies, oldDependencies))
 
   }
 

@@ -16,7 +16,12 @@ object DynamicsSupport {
 
 object EvaluationResult {
   case class Static(changed: Boolean) extends EvaluationResult
-  case class Dynamic(changed: Boolean, newDependencies: Set[Reactive], oldDependencies: Set[Reactive]) extends EvaluationResult
+  case class Dynamic(changed: Boolean, diff: DepDiff) extends EvaluationResult
+}
+
+case class DepDiff(novel: Set[Reactive], old: Set[Reactive]) {
+  lazy val added = novel.diff(old)
+  lazy val removed = old.diff(novel)
 }
 
 
