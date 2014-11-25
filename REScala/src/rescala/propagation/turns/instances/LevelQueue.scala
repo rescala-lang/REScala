@@ -3,23 +3,15 @@ package rescala.propagation.turns.instances
 import rescala.propagation.Reactive
 import rescala.propagation.turns.Turn
 
-import scala.collection.mutable
+import scala.collection.{SortedSet, SortedMap}
 
 class LevelQueue(evaluator: Reactive => Unit)(implicit val currenTurn: Turn) {
 
-  private val evalQueue = new mutable.PriorityQueue[QueueElement]()
+  private var evalQueue = SortedSet[QueueElement]()
 
   /** mark the reactive as needing a reevaluation */
   def enqueue(minLevel: Int)(dep: Reactive): Unit = {
-    if (!evalQueue.exists { case elem@QueueElement(_, reactive, oldMinLevel) =>
-      if (reactive eq dep) {
-        elem.newLevel = math.max(oldMinLevel, minLevel)
-        true
-      }
-      else false
-    }) {
-      evalQueue += QueueElement(dep.level.get, dep, minLevel)
-    }
+    evalQueue += QueueElement(dep.level.get, dep, minLevel)
   }
 
   final def evaluate(queueElement: QueueElement): Unit = {
@@ -37,13 +29,19 @@ class LevelQueue(evaluator: Reactive => Unit)(implicit val currenTurn: Turn) {
   /** Evaluates all the elements in the queue */
   def evaluateQueue() = {
     while (evalQueue.nonEmpty) {
-      evaluate(evalQueue.dequeue())
+      val head = evalQueue.head
+      evalQueue = evalQueue.tail
+      evaluate(head)
     }
   }
 
-  private case class QueueElement(level: Int, reactive: Reactive, var newLevel: Int)
+  private case class QueueElement(level: Int, reactive: Reactive, minLevel: Int)
   private implicit def ordering: Ordering[QueueElement] = new Ordering[QueueElement] {
-    override def compare(x: QueueElement, y: QueueElement): Int = y.level.compareTo(x.level)
+    override def compare(x: QueueElement, y: QueueElement): Int = {
+      val levelDiff = x.level.compareTo(y.level)
+      if (levelDiff != 0) levelDiff
+      else x.reactive.hashCode().compareTo(y.reactive.hashCode())
+    }
   }
 }
 

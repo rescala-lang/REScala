@@ -25,8 +25,7 @@ abstract class AbstractTurn extends Turn {
   val levelQueue = new LevelQueue(this.evaluate)
 
 
-  def isReady(reactive: Reactive, dependencies: Set[Reactive]) =
-    dependencies.forall(_.level.get < reactive.level.get)
+  def maximumLevel(dependencies: Set[Reactive]) = dependencies.foldLeft(-1)((acc, r) => math.max(acc, r.level.get))
 
   /** removes reactive from its dependencies */
   override def unregister(dependant: Reactive)(dependency: Reactive): Unit = dependencyManagement.unregister(dependant)(dependency)
@@ -39,8 +38,8 @@ abstract class AbstractTurn extends Turn {
       case Static(hasChanged) => (hasChanged, -42)
       case diff@Dynamic(hasChanged, newDependencies, oldDependencies) =>
         dependencyManagement.handleDiff(head, newDependencies, oldDependencies)
-        val newLevel = ensureLevel(head, newDependencies)
-        if (isReady(head, newDependencies)) {
+        val newLevel = maximumLevel(newDependencies) + 1
+        if (head.level.get >= newLevel) {
           (hasChanged, newLevel)
         }
         else {
