@@ -1,11 +1,8 @@
 package rescala.propagation.turns.instances
 
-import rescala.propagation.EvaluationResult.{Dynamic, Static}
 import rescala.propagation.Reactive
 import rescala.propagation.turns.Turn
-import rescala.propagation.turns.creation.TurnFactory
 
-import scala.annotation.tailrec
 import scala.collection.mutable
 
 abstract class LevelQueue()(implicit val currenTurn: Turn) {
