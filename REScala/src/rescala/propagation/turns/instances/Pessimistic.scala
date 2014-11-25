@@ -8,6 +8,39 @@ class Pessimistic extends AbstractTurn with LockOwner {
 
   implicit def lockOwner: Pessimistic = this
 
+  var lazyDependencyUpdates: Set[(Reactive, Reactive)] = Set()
+
+  /** registering a dependency on a node we do not personally own does require some additional care.
+    * we move responsibility to the commit phase */
+  override def register(downstream: Reactive)(upstream: Reactive): Unit = {
+    if (upstream.lock.isOwned) super.register(downstream)(upstream)
+    else {
+      if (!upstream.dependants.get.contains(downstream))
+        lazyDependencyUpdates += upstream -> downstream
+    }
+  }
+
+  /** this is for cases where we register and then unregister the same dependency in a single turn
+    * TODO: examples how this could happen? */
+  override def unregister(downstream: Reactive)(upstream: Reactive): Unit = {
+    super.unregister(downstream)(upstream)
+    lazyDependencyUpdates -= (upstream -> downstream)
+  }
+
+
+  /** after the normal commit, we register the lazy dependency updates and put the new downstream into the others queue
+    * (it is a new dependency, that has conceptually been there before the other turn, so it needs to be evaluated) */
+  override def commitPhase(): Unit = {
+    super.commitPhase()
+    lazyDependencyUpdates.foreach { case (up, down) =>
+      //TODO: this line is quite unfortunate. it kinda works based on the assumption that only one kind of turn may run in a network, but still …
+      //2014-11-25 i say this is only temporary, lets see how this ends
+      val other = up.lock.getOwner.asInstanceOf[Pessimistic]
+      other.register(down)(up)
+      other.levelQueue.enqueue(-42)(down)
+    }
+  }
+
 
   /** check if the current turn hold the lock */
   override def checkLock(lock: TurnLock): Boolean = {

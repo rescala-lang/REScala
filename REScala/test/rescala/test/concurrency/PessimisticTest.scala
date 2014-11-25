@@ -47,7 +47,7 @@ class PessimisticTest extends AssertionsForJUnit {
     assert(sum.now === 2 * size)
   }
 
-  @Ignore def crossedDynamicDependencies(): Unit = {
+  @Test def crossedDynamicDependencies(): Unit = {
     val v1 = Var(false)
     val v2 = Var(false)
     val latch = new CountDownLatch(2)

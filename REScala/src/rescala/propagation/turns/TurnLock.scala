@@ -11,6 +11,8 @@ final class TurnLock(val reactive: Reactive) {
   /** this is guarded by our intrinsic lock */
   private var owner: LockOwner = null
 
+  def getOwner: LockOwner = synchronized(owner)
+
   def isOwned(implicit turn: LockOwner): Boolean = synchronized(owner eq turn)
 
   /** accessible effectively means that we can do whatever with the locked object */
