@@ -16,15 +16,15 @@ trait TurnFactory {
 
 object TurnFactory {
 
-  val pessimistic: TurnFactory = new Impl(() => new Pessimistic())
-  val synchronized: TurnFactory = new Impl(() => new Simple()) {
+  val pessimistic: TurnFactory = new Impl(new Pessimistic())
+  val synchronized: TurnFactory = new Impl(new Simple()) {
     override def newTurn[T](f: Turn => T): T = synchronized(super.newTurn(f))
   }
-  val unSynchronized: TurnFactory = new Impl(() => new Simple())
+  val unSynchronized: TurnFactory = new Impl(new Simple())
 
   val currentTurn: DynamicVariable[Option[AbstractTurn]] = new DynamicVariable[Option[AbstractTurn]](None)
 
-  class Impl(makeTurn: () => AbstractTurn) extends TurnFactory {
+  class Impl(makeTurn: => AbstractTurn) extends TurnFactory {
 
     override def maybeDynamicTurn[T](f: (Turn) => T): T = currentTurn.value match {
       case None => newTurn(f)
@@ -50,7 +50,7 @@ object TurnFactory {
       * */
     override def newTurn[T](admissionPhase: Turn => T): T = {
       implicit class sequentialLeftResult(result: T) { def ~< (sideEffects_! : Unit): T = result }
-      val turn = makeTurn()
+      val turn = makeTurn
       try {
         currentTurn.withValue(Some(turn)) {
           admissionPhase(turn) ~< {
