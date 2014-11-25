@@ -96,10 +96,6 @@ class Pessimistic extends AbstractTurn with LockOwner {
     if (!reactive.lock.isAccessible) {
       reactive.lock.request()
     }
-    if (reactive.lock.isShared) {
-      //TODO: somehow tell the owner that we did something to one of its reactives
-      //TODO: maybe make turn state for dependencies smarter?
-    }
   }
   /** admits a new source change */
   override def admit(source: Reactive)(setPulse: => Boolean): Unit = {
