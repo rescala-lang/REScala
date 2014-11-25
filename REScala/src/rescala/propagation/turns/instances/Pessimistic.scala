@@ -79,6 +79,8 @@ class Pessimistic extends AbstractTurn with LockOwner {
 
   /** a dynamically acquired reactive will never have its value or level changed, only its dependecies.
     * as from a conceptual level it is only read.
+    *
+    * the todo block below should be fixed!
     * TODO: actually, we need to do something in the case where we access a shared lock and change its dependencies,
     * TODO: if that reactive had its value already changed by the owning transaction
     * TODO: basically, the dynamic acquisition is only used for adding dependecies
