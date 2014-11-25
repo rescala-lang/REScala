@@ -77,12 +77,10 @@ class DynamicSignalTestSuite extends AssertionsForJUnit with MockitoSugar {
     val s2 = Signals.dynamic() { s => 3 * v(s) }
     val s3 = Signals.dynamic() { s => s1(s) + s2(s) }
 
-    implicitly[TurnFactory].newTurn { implicit turn =>
-      assert(v.getLevel == 0)
-      assert(s1.getLevel == 1)
-      assert(s2.getLevel == 1)
-      assert(s3.getLevel == 2)
-    }
+    assert(v.getLevel == 0)
+    assert(s1.getLevel == 1)
+    assert(s2.getLevel == 1)
+    assert(s3.getLevel == 2)
 
 
   }

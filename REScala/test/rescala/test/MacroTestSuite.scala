@@ -77,12 +77,10 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
     val s2 = Signal { 3 * v() }
     val s3 = Signal { s1() + s2() }
 
-    implicitly[TurnFactory].newTurn { implicit turn =>
-      assert(v.getLevel === 0)
-      assert(s1.getLevel === 1)
-      assert(s2.getLevel === 1)
-      assert(s3.getLevel === 2)
-    }
+    assert(v.getLevel === 0)
+    assert(s1.getLevel === 1)
+    assert(s2.getLevel === 1)
+    assert(s3.getLevel === 2)
 
 
   }
