@@ -41,8 +41,6 @@ abstract class AbstractTurn extends Turn {
   }
 
 
-
-
   def propagationPhase(): Unit = {
     initialSources.foreach(levelQueue.enqueue(0))
     levelQueue.evaluateQueue()

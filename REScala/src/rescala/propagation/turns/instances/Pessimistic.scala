@@ -4,7 +4,6 @@ import rescala.propagation.Reactive
 import rescala.propagation.turns.{LockOwner, TurnLock}
 
 
-
 class Pessimistic extends AbstractTurn with LockOwner {
 
   implicit def lockOwner: Pessimistic = this

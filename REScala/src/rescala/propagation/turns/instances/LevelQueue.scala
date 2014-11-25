@@ -4,7 +4,7 @@ import rescala.propagation.Reactive
 import rescala.propagation.turns.Turn
 import rescala.propagation.turns.instances.Evaluator.Result
 
-import scala.collection.{SortedSet, SortedMap}
+import scala.collection.SortedSet
 
 class LevelQueue(evaluator: Reactive => Result)(implicit val currenTurn: Turn) {
 

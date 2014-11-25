@@ -1,8 +1,8 @@
 package rescala.propagation.turns.instances
 
 import rescala.propagation.EvaluationResult.{Dynamic, Static}
-import rescala.propagation.{DepDiff, Reactive}
 import rescala.propagation.turns.Turn
+import rescala.propagation.{DepDiff, Reactive}
 
 object Evaluator {
 
@@ -30,7 +30,7 @@ object Evaluator {
     def requeue(q: Int => Reactive => Unit)(implicit turn: Turn): Unit
   }
   case class Done(head: Reactive, changed: Boolean, level: Int, getDiff: Option[DepDiff] = None) extends Result {
-    override def requeue(q: Int => Reactive => Unit)(implicit turn: Turn): Unit = if(changed) head.dependants.get.foreach(q(level))
+    override def requeue(q: Int => Reactive => Unit)(implicit turn: Turn): Unit = if (changed) head.dependants.get.foreach(q(level))
   }
   case class Redo(head: Reactive, level: Int, getDiff: Option[DepDiff]) extends Result {
     override def requeue(q: Int => Reactive => Unit)(implicit turn: Turn): Unit = q(level)(head)

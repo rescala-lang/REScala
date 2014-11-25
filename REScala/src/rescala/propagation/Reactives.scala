@@ -2,7 +2,7 @@ package rescala.propagation
 
 import rescala.propagation.Pulse.{Diff, NoChange}
 import rescala.propagation.turns.creation.MaybeTurn
-import rescala.propagation.turns.{TurnState, TurnLock, Turn}
+import rescala.propagation.turns.{Turn, TurnLock, TurnState}
 
 /** A Reactive is a value type which has a dependency to other Reactives */
 trait Reactive {
@@ -13,7 +13,7 @@ trait Reactive {
   final private[propagation] val dependants: TurnState[Set[Reactive]] = TurnState(Set(), (_, x) => x, this)
 
   /** for testing */
-  def getLevel(implicit maybe: MaybeTurn) = maybe{level.get(_)}
+  def getLevel(implicit maybe: MaybeTurn) = maybe { level.get(_) }
 
   /** called when it is this events turn to be evaluated
     * (head of the evaluation queue) */
@@ -34,7 +34,7 @@ trait Reactive {
     while (trace(i).toString.startsWith("scala.") || trace(i).toString.startsWith("java.") ||
       (trace(i).toString.startsWith("rescala.") && !trace(i).toString.startsWith("rescala.test."))) i += 1
 
-    s"${trace(i).getFileName}(${trace(i).getLineNumber})"
+    s"${ trace(i).getFileName }(${ trace(i).getLineNumber })"
   }
   override def toString = name
 
