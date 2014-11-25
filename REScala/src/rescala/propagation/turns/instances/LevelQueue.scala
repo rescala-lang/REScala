@@ -7,16 +7,22 @@ import scala.collection.mutable
 
 class LevelQueue(evaluator: Reactive => Unit)(implicit val currenTurn: Turn) {
 
-  protected val evalQueue = new mutable.PriorityQueue[QueueElement]()
+  private val evalQueue = new mutable.PriorityQueue[QueueElement]()
 
   /** mark the reactive as needing a reevaluation */
   def enqueue(minLevel: Int)(dep: Reactive): Unit = {
-    if (!evalQueue.exists { case QueueElement(_, reactive, _) => reactive eq dep }) {
+    if (!evalQueue.exists { case elem@QueueElement(_, reactive, oldMinLevel) =>
+      if (reactive eq dep) {
+        elem.newLevel = math.max(oldMinLevel, minLevel)
+        true
+      }
+      else false
+    }) {
       evalQueue += QueueElement(dep.level.get, dep, minLevel)
     }
   }
 
-  def evaluate(queueElement: QueueElement): Unit = {
+  final def evaluate(queueElement: QueueElement): Unit = {
     val QueueElement(headLevel, head, headMinLevel) = queueElement
     if (headLevel < headMinLevel) {
       head.level.set(headMinLevel)
@@ -35,12 +41,9 @@ class LevelQueue(evaluator: Reactive => Unit)(implicit val currenTurn: Turn) {
     }
   }
 
-}
-
-case class QueueElement(level: Int, reactive: Reactive, newLevel: Int)
-object QueueElement {
-
-  implicit val ordering: Ordering[QueueElement] = new Ordering[QueueElement] {
+  private case class QueueElement(level: Int, reactive: Reactive, var newLevel: Int)
+  private implicit def ordering: Ordering[QueueElement] = new Ordering[QueueElement] {
     override def compare(x: QueueElement, y: QueueElement): Int = y.level.compareTo(x.level)
   }
 }
+
