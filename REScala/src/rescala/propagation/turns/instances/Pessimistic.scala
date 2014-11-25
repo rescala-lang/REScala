@@ -20,8 +20,7 @@ class Pessimistic extends AbstractTurn with LockOwner {
     }
   }
 
-  /** this is for cases where we register and then unregister the same dependency in a single turn
-    * TODO: examples how this could happen? */
+  /** this is for cases where we register and then unregister the same dependency in a single turn */
   override def unregister(downstream: Reactive)(upstream: Reactive): Unit = {
     super.unregister(downstream)(upstream)
     lazyDependencyUpdates -= (upstream -> downstream)
