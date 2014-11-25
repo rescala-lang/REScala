@@ -20,7 +20,6 @@ class PessimisticTestTurn extends Pessimistic {
     while(Pessigen.syncStack.get() match {
       case stack @ (set, latch) :: tail if set(r) =>
         latch.countDown()
-        println(s"$r is now waiting on $set")
         latch.await()
         Pessigen.syncStack.compareAndSet(stack, tail)
         true
