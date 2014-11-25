@@ -26,7 +26,9 @@ case class DepDiff(novel: Set[Reactive], old: Set[Reactive]) {
 
 
 sealed trait Pulse[+P] {
+
   import rescala.propagation.Pulse._
+
   def fold[Q](ifNone: => Q, ifChange: P => Q): Q
   def current: Option[P]
   final def toOption: Option[P] = fold(None, Some.apply)

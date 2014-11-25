@@ -7,7 +7,6 @@ import rescala.propagation.turns.creation.MaybeTurn
 import rescala.signals.Signal
 
 
-
 object Events {
 
   /** Wrapper for an anonymous function */

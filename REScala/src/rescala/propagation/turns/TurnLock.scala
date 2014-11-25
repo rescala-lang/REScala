@@ -5,7 +5,6 @@ import rescala.propagation.Reactive
 import scala.annotation.tailrec
 
 
-
 final class TurnLock(val reactive: Reactive) {
 
   /** this is guarded by our intrinsic lock */

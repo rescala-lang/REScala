@@ -105,16 +105,16 @@ class Pessimistic extends AbstractTurn with LockOwner {
 
 
   /** so i did improve whats noted in the todos below … at least i hope i did.
-   * TODO: this probably needs improvement … well it definitely does
-   * TODO: the problem is, that lockOrdered tries to lock the reactive,
-   * TODO: which does not consider shared locks.
-   * TODO: so we might actually run into problems if someone tries to share a lock with us
-   * TODO: while we do our initial locking …
-   *
-   * tried to solve this by acquiring the master lock during initial locking,
-   * so that nothing can be shared with us.
-   * this still has problems, because evaluating the initial closure of the turn may create new reactives,
-   * which causes dynamic locking to happen and screw us here. */
+    * TODO: this probably needs improvement … well it definitely does
+    * TODO: the problem is, that lockOrdered tries to lock the reactive,
+    * TODO: which does not consider shared locks.
+    * TODO: so we might actually run into problems if someone tries to share a lock with us
+    * TODO: while we do our initial locking …
+    *
+    * tried to solve this by acquiring the master lock during initial locking,
+    * so that nothing can be shared with us.
+    * this still has problems, because evaluating the initial closure of the turn may create new reactives,
+    * which causes dynamic locking to happen and screw us here. */
   def lockReachable(): Unit = {
     lazy val lq = new LevelQueue(evaluate)
 

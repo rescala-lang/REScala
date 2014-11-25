@@ -16,24 +16,24 @@ trait Signal[+A] extends Stateful[A] {
   /** Return a Signal that gets updated only when e fires, and has the value of this Signal */
   def snapshot(e: Event[_])(implicit maybe: MaybeTurn): Signal[A] = e.snapshot(this)
 
-  /** Switch to (and keep) event value on occurrence of e*/
+  /** Switch to (and keep) event value on occurrence of e */
   def switchTo[U >: A](e: Event[U])(implicit maybe: MaybeTurn): Signal[U] = e.switchTo(this)
 
-  /** Switch to (and keep) event value on occurrence of e*/
+  /** Switch to (and keep) event value on occurrence of e */
   def switchOnce[V >: A](e: Event[_])(newSignal: Signal[V])(implicit maybe: MaybeTurn): Signal[V] = e.switchOnce(this, newSignal)
 
   /** Switch back and forth between this and the other Signal on occurrence of event e */
   def toggle[V >: A](e: Event[_])(other: Signal[V])(implicit maybe: MaybeTurn): Signal[V] = e.toggle(this, other)
 
   /** Delays this signal by n occurrences */
-  def delay(n: Int)(implicit maybe: MaybeTurn): Signal[A] = maybe {implicit turn => changed.delay(get, n) }
+  def delay(n: Int)(implicit maybe: MaybeTurn): Signal[A] = maybe { implicit turn => changed.delay(get, n) }
 
   /** Unwraps a Signal[Event[E]] to an Event[E] */
-  def unwrap[E](implicit evidence: A <:< Event[E], maybe: MaybeTurn): Event[E] =  Events.wrapped(this.map(evidence))
+  def unwrap[E](implicit evidence: A <:< Event[E], maybe: MaybeTurn): Event[E] = Events.wrapped(this.map(evidence))
 
   /**
    * Create an event that fires every time the signal changes. It fires the tuple
-   *  (oldVal, newVal) for the signal. The first tuple is (null, newVal)
+   * (oldVal, newVal) for the signal. The first tuple is (null, newVal)
    */
   def change(implicit maybe: MaybeTurn): Event[(A, A)] = Events.change(this)
 

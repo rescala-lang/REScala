@@ -1,8 +1,8 @@
 package rescala.events
 
 import rescala.propagation._
-import rescala.signals.{Signal, Signals}
 import rescala.propagation.turns.creation.MaybeTurn
+import rescala.signals.{Signal, Signals}
 
 import scala.collection.LinearSeq
 import scala.collection.immutable.Queue
@@ -70,7 +70,7 @@ trait Event[+T] extends Pulsing[T] {
 
   /**
    * Calls f on each occurrence of event e, setting the Signal to the generated value.
-   *  The initial signal is obtained by f(init)
+   * The initial signal is obtained by f(init)
    */
   def set[B >: T, A](init: B)(f: (B => A))(implicit maybe: MaybeTurn): Signal[A] = fold(f(init))((_, v) => f(v))
 
@@ -78,14 +78,14 @@ trait Event[+T] extends Pulsing[T] {
   def latest[S >: T](init: S)(implicit maybe: MaybeTurn): Signal[S] = fold(init)((_, v) => v)
 
   /** Holds the latest value of an event as an Option, None before the first event occured */
-  def latestOption()(implicit maybe: MaybeTurn): Signal[Option[T]] = fold(None: Option[T]){ (_, v) => Some(v) }
+  def latestOption()(implicit maybe: MaybeTurn): Signal[Option[T]] = fold(None: Option[T]) { (_, v) => Some(v) }
 
   /** calls factory on each occurrence of event e, resetting the Signal to a newly generated one */
   def reset[S >: T, A](init: S)(factory: S => Signal[A])(implicit maybe: MaybeTurn): Signal[A] = set(init)(factory).flatten()
 
   /**
    * Returns a signal which holds the last n events in a list. At the beginning the
-   *  list increases in size up to when n values are available
+   * list increases in size up to when n values are available
    */
   def last(n: Int)(implicit maybe: MaybeTurn): Signal[LinearSeq[T]] =
     fold(Queue[T]()) { (queue: Queue[T], v: T) =>
@@ -119,8 +119,8 @@ trait Event[+T] extends Pulsing[T] {
 
   /**
    * Switch to a signal once, on the occurrence of event e. Initially the
-   *  return value is set to the original signal. When the event fires,
-   *  the result is a constant signal whose value is the value of the event.
+   * return value is set to the original signal. When the event fires,
+   * the result is a constant signal whose value is the value of the event.
    */
   def switchTo[S >: T](original: Signal[S])(implicit maybe: MaybeTurn): Signal[S] = {
     val latest = latestOption

@@ -2,7 +2,6 @@ package rescala.propagation.turns.instances
 
 import rescala.propagation.Reactive
 import rescala.propagation.turns.Turn
-import rescala.propagation.turns.instances.Evaluator.Result
 
 import scala.collection.SortedSet
 
