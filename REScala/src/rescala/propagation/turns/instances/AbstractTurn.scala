@@ -36,7 +36,7 @@ abstract class AbstractTurn extends Turn {
   def evaluate(head: Reactive): Unit = {
     val result = head.reevaluate()
     val (headChanged, newHeadLevel) = result match {
-      case Static(hasChanged) => (hasChanged, 0)
+      case Static(hasChanged) => (hasChanged, -42)
       case diff@Dynamic(hasChanged, newDependencies, oldDependencies) =>
         dependencyManagement.handleDiff(head, newDependencies, oldDependencies)
         val newLevel = ensureLevel(head, newDependencies)

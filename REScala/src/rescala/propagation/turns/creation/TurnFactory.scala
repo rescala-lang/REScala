@@ -16,15 +16,15 @@ trait TurnFactory {
 
 object TurnFactory {
 
-  val pessimistic: TurnFactory = new Impl[Pessimistic](() => new Pessimistic())
-  val synchronized: TurnFactory = new Impl[Simple](() => new Simple()) {
+  val pessimistic: TurnFactory = new Impl(() => new Pessimistic())
+  val synchronized: TurnFactory = new Impl(() => new Simple()) {
     override def newTurn[T](f: Turn => T): T = synchronized(super.newTurn(f))
   }
-  val unSynchronized: TurnFactory = new Impl[Simple](() => new Simple())
+  val unSynchronized: TurnFactory = new Impl(() => new Simple())
 
+  val currentTurn: DynamicVariable[Option[AbstractTurn]] = new DynamicVariable[Option[AbstractTurn]](None)
 
-  class Impl[TTurn <: AbstractTurn](makeTurn: () => TTurn) extends TurnFactory {
-    val currentTurn: DynamicVariable[Option[TTurn]] = new DynamicVariable[Option[TTurn]](None)
+  class Impl(makeTurn: () => AbstractTurn) extends TurnFactory {
 
     override def maybeDynamicTurn[T](f: (Turn) => T): T = currentTurn.value match {
       case None => newTurn(f)
