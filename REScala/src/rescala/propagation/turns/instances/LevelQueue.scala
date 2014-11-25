@@ -5,20 +5,28 @@ import rescala.propagation.turns.Turn
 
 import scala.collection.mutable
 
-abstract class LevelQueue()(implicit val currenTurn: Turn) {
+class LevelQueue(evaluator: Reactive => Unit)(implicit val currenTurn: Turn) {
 
   protected val evalQueue = new mutable.PriorityQueue[QueueElement]()
-
 
   /** mark the reactive as needing a reevaluation */
   def enqueue(minLevel: Int)(dep: Reactive): Unit = {
     if (!evalQueue.exists { case QueueElement(_, reactive, _) => reactive eq dep }) {
-      evalQueue.+=(QueueElement(dep.level.get, dep, minLevel))
+      evalQueue += QueueElement(dep.level.get, dep, minLevel)
     }
   }
 
-  /** evaluates a single reactive */
-  def evaluate(head: QueueElement): Unit
+  def evaluate(queueElement: QueueElement): Unit = {
+    val QueueElement(headLevel, head, headMinLevel) = queueElement
+    if (headLevel < headMinLevel) {
+      head.level.set(headMinLevel)
+      enqueue(headMinLevel)(head)
+      head.dependants.get.foreach(enqueue(headMinLevel + 1))
+    }
+    else {
+      evaluator(head)
+    }
+  }
 
   /** Evaluates all the elements in the queue */
   def evaluateQueue() = {

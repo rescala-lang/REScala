@@ -13,19 +13,16 @@ abstract class AbstractTurn extends Turn {
 
   protected var initialSources: List[Reactive] = Nil
 
-  def ensureLevel(dependant: Reactive, dependencies: Set[Reactive]): Boolean =
-    if (dependencies.nonEmpty) {
+  def ensureLevel(dependant: Reactive, dependencies: Set[Reactive]): Int =
+    if (dependencies.isEmpty) 0
+    else {
       val newLevel = dependencies.map(_.level.get).max + 1
-      dependant.level.transform { case x if x < newLevel => newLevel }
+      dependant.level.transform(math.max(newLevel, _))
     }
-    else false
 
   val dependencyManagement = new DependencyManagement()
 
-  val levelQueue = new LevelQueue() {
-    /** evaluates a single reactive */
-    override def evaluate(head: QueueElement): Unit = outer.evaluate(head)
-  }
+  val levelQueue = new LevelQueue(this.evaluate)
 
 
   def isReady(reactive: Reactive, dependencies: Set[Reactive]) =
@@ -34,32 +31,25 @@ abstract class AbstractTurn extends Turn {
   /** removes reactive from its dependencies */
   override def unregister(dependant: Reactive)(dependency: Reactive): Unit = dependencyManagement.unregister(dependant)(dependency)
 
+
   /** evaluates a single reactive */
-  def evaluate(queueElement: QueueElement): Unit = {
-    val QueueElement(headLevel, head, headMinLevel) = queueElement
-    if (headLevel < headMinLevel) {
-      head.level.set(headMinLevel)
-      levelQueue.enqueue(headMinLevel)(head)
-      head.dependants.get.foreach(levelQueue.enqueue(headMinLevel + 1))
+  def evaluate(head: Reactive): Unit = {
+    val result = head.reevaluate()
+    val (headChanged, newHeadLevel) = result match {
+      case Static(hasChanged) => (hasChanged, 0)
+      case diff@Dynamic(hasChanged, newDependencies, oldDependencies) =>
+        dependencyManagement.handleDiff(head, newDependencies, oldDependencies)
+        val newLevel = ensureLevel(head, newDependencies)
+        if (isReady(head, newDependencies)) {
+          (hasChanged, newLevel)
+        }
+        else {
+          levelQueue.enqueue(newLevel)(head)
+          (false, newLevel)
+        }
     }
-    else {
-      val result = head.reevaluate()
-      val (headChanged, newHeadLevel) = result match {
-        case Static(hasChanged) => (hasChanged, headLevel)
-        case diff@Dynamic(hasChanged, newDependencies, oldDependencies) =>
-          dependencyManagement.handleDiff(head, newDependencies, oldDependencies)
-          ensureLevel(head, newDependencies)
-          if (isReady(head, newDependencies)) {
-            (hasChanged, head.level.get)
-          }
-          else {
-            levelQueue.enqueue(headMinLevel)(head)
-            (false, headMinLevel)
-          }
-      }
-      if (headChanged) {
-        head.dependants.get.foreach(levelQueue.enqueue(newHeadLevel + 1))
-      }
+    if (headChanged) {
+      head.dependants.get.foreach(levelQueue.enqueue(newHeadLevel + 1))
     }
   }
 
@@ -89,7 +79,7 @@ abstract class AbstractTurn extends Turn {
   def createDynamic[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
     val reactive = f
     ensureLevel(reactive, dependencies)
-    evaluate(QueueElement(0, reactive, 0))
+    evaluate(reactive)
     reactive
   }
 

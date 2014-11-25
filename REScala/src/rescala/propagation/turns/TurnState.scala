@@ -11,11 +11,11 @@ final class TurnState[A](@volatile var default: A,
 
   def cl(implicit turn: Turn): Unit = assert(turn.checkLock(owner.lock), "accessed state without holding lock")
 
-  def transform(f: (A) => A)(implicit turn: Turn): Unit = { cl; set(f(get)) }
-  def transform(f: PartialFunction[A, A])(implicit turn: Turn): Boolean = {
+  def transform(f: (A) => A)(implicit turn: Turn): A = {
     cl
-    if (f.isDefinedAt(get)) { transform(f: A => A); true }
-    else false
+    val value = f(get)
+    set(value)
+    value
   }
   def set(value: A)(implicit turn: Turn): Unit = {
     cl
