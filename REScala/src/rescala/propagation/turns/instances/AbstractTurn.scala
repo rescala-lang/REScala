@@ -13,7 +13,7 @@ abstract class AbstractTurn extends Turn {
 
   protected var initialSources: List[Reactive] = Nil
 
-  val handleDiff: Result => Result = res => {
+  def handleDiff(res: Result): Result = {
     res.getDiff.foreach { diff =>
       diff.novel foreach acquireDynamic
       diff.removed foreach unregister(res.head)
@@ -22,9 +22,9 @@ abstract class AbstractTurn extends Turn {
     res
   }
 
-  val evaluate = handleDiff compose Evaluator.evaluate
-
   val levelQueue = new LevelQueue(evaluate)
+
+  def evaluate(r: Reactive): Unit = handleDiff(Evaluator.evaluate(r)).requeue(levelQueue.enqueue)
 
   def acquireDynamic(reactive: Reactive): Unit
 
@@ -66,7 +66,7 @@ abstract class AbstractTurn extends Turn {
   def createDynamic[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
     val reactive = f
     ensureLevel(reactive, dependencies)
-    evaluate(reactive).requeue(levelQueue.enqueue)
+    evaluate(reactive)
     reactive
   }
 
