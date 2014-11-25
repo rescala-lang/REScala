@@ -31,13 +31,13 @@ abstract class AbstractTurn extends Turn {
   def lockingPhase(): Unit
   def realeasePhase(): Unit
 
-  def register(dependant: Reactive)(dependency: Reactive): Unit = {
-    dependency.dependants.transform(_ + dependant)
+  def register(downstream: Reactive)(upstream: Reactive): Unit = {
+    upstream.dependants.transform(_ + downstream)
   }
 
-  def unregister(dependant: Reactive)(dependency: Reactive): Unit = {
-    acquireDynamic(dependency)
-    dependency.dependants.transform(_ - dependant)
+  def unregister(downstream: Reactive)(upstream: Reactive): Unit = {
+    acquireDynamic(upstream)
+    upstream.dependants.transform(_ - downstream)
   }
 
 
