@@ -2,21 +2,24 @@ package rescala.events
 
 import rescala.propagation.Pulse.{Diff, NoChange}
 import rescala.propagation._
-import rescala.propagation.turns.Turn
+import rescala.propagation.turns.{Commitable, Turn}
 import rescala.propagation.turns.creation.MaybeTurn
 import rescala.signals.Signal
 
 
 object Events {
 
-  /** Wrapper for an anonymous function */
-  final case class Handler[T](fun: T => Unit, dependency: Pulsing[T]) extends Event[T] with StaticReevaluation[T] {
-    override def calculatePulse()(implicit turn: Turn): Pulse[T] = dependency.pulse
-    override def commit(implicit turn: Turn): Unit = {
-      pulse.toOption.foreach(v => turn.afterCommit(fun(v)))
-      super.commit
+
+  /** Wrapper for an anonymous function to run in the afterCommit phase */
+  final case class Handler[T](fun: T => Unit, dependency: Pulsing[T]) extends StaticReevaluation[T] with Commitable {
+    override def calculatePulse()(implicit turn: Turn): Pulse[T] = {
+      turn.markForCommit(this)
+      dependency.pulse
     }
+    override def release(implicit turn: Turn): Unit = ()
+    override def commit(implicit turn: Turn): Unit = pulse.toOption.foreach(v => turn.afterCommit(fun(v)))
   }
+
 
   /** the basic method to create static events */
   def static[T](name: String, dependencies: Reactive*)(calculate: Turn => Pulse[T])(implicit maybe: MaybeTurn): Event[T] = maybe {

@@ -2,7 +2,7 @@ package rescala.propagation
 
 import rescala.propagation.Pulse.{Diff, NoChange}
 import rescala.propagation.turns.creation.MaybeTurn
-import rescala.propagation.turns.{Turn, TurnLock, TurnState}
+import rescala.propagation.turns.{Commitable, Turn, TurnLock, TurnState}
 
 /** A Reactive is a value type which has a dependency to other Reactives */
 trait Reactive {
@@ -18,12 +18,6 @@ trait Reactive {
   /** called when it is this events turn to be evaluated
     * (head of the evaluation queue) */
   protected[propagation] def reevaluate()(implicit turn: Turn): EvaluationResult
-
-  /** called to finalize the pulse value (turn commits) */
-  protected[propagation] def commit(implicit turn: Turn): Unit = {
-    level.commit
-    dependants.commit
-  }
 
   private val name = {
     val classname = getClass.getName
@@ -46,11 +40,6 @@ trait Pulsing[+P] extends Reactive {
   final protected[this] val pulses: TurnState[Pulse[P]] = TurnState(Pulse.none, (x, _) => x)
 
   final def pulse(implicit turn: Turn): Pulse[P] = pulses.get
-
-  override def commit(implicit turn: Turn): Unit = {
-    pulses.commit
-    super.commit
-  }
 }
 
 /** a node that has a current state */
@@ -102,10 +91,5 @@ trait DynamicReevaluation[+P] extends Pulsing[P] {
     pulses.set(newPulse)
     EvaluationResult.Dynamic(newPulse.isChange, DepDiff(newDependencies, oldDependencies))
 
-  }
-
-  override def commit(implicit turn: Turn): Unit = {
-    dependencies.commit
-    super.commit
   }
 }
