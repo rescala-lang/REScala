@@ -11,7 +11,7 @@ object Events {
 
 
   /** Wrapper for an anonymous function to run in the afterCommit phase */
-  final case class Handler[T](fun: T => Unit, dependency: Pulsing[T]) extends Reactive with Commitable {
+  final case class Observer[T](fun: T => Unit, dependency: Pulsing[T]) extends Reactive with Commitable {
     val cached = TurnState[Option[T]](None, (_, x) => x)
 
     override protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult = {
