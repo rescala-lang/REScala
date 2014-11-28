@@ -40,13 +40,6 @@ class Pessimistic extends AbstractTurn with LockOwner {
     }
   }
 
-
-  /** check if the current turn hold the lock */
-  override def checkLock(lock: TurnLock): Boolean = {
-    lock.isAccessible || lockOwner.heldLocks.isEmpty || lock.reactive.dependants.getU.exists(_.lock.isAccessible)
-  }
-
-
   /** changed is called whenever the turn does anything to a reactive that needs to be commited
     * it is overridden here to detect changes to reactive which are not locked
     * this allows to detect errors early, but should never happen if the locking strategy is correct */

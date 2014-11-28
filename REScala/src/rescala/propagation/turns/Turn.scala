@@ -31,9 +31,4 @@ trait Turn {
   /** register an after commit handler, these run after all reactives are commited, but before the turn finishes
     * that is, a transaction should not roll back beacause of a handler, but it may block other waiting transactions */
   def afterCommit(handler: => Unit): Unit
-
-  /** check if the current turn holds the lock, or otherwise thinks it is allowed to access the state guarded by it.
-    * this is only intended for asserting correct state and not for basing decisions on it */
-  def checkLock(lock: TurnLock): Boolean = true
-
 }
