@@ -1,14 +1,14 @@
 package rescala.propagation.turns.instances
 
 import rescala.propagation.Reactive
-import rescala.propagation.turns.Turn
+import rescala.propagation.turns.{Commitable, Turn}
 import rescala.propagation.turns.instances.Evaluator.Result
 
 abstract class AbstractTurn extends Turn {
   outer =>
   implicit def currentTurn: AbstractTurn = this
 
-  protected var toCommit = Set[Reactive]()
+  protected var toCommit = Set[Commitable]()
   protected var afterCommitHandlers = List[() => Unit]()
 
   protected var initialSources: List[Reactive] = Nil
@@ -46,8 +46,8 @@ abstract class AbstractTurn extends Turn {
     levelQueue.evaluateQueue()
   }
 
-  def markForCommit(reactive: Reactive): Unit = {
-    toCommit += reactive
+  def markForCommit(commitable: Commitable): Unit = {
+    toCommit += commitable
   }
 
   def commitPhase() = toCommit.foreach(_.commit(this))

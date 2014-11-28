@@ -1,7 +1,7 @@
 package rescala.propagation.turns.instances
 
 import rescala.propagation.Reactive
-import rescala.propagation.turns.{LockOwner, TurnLock}
+import rescala.propagation.turns.{Commitable, LockOwner, TurnLock}
 
 
 class Pessimistic extends AbstractTurn with LockOwner {
@@ -38,15 +38,6 @@ class Pessimistic extends AbstractTurn with LockOwner {
       other.register(down)(up)
       other.levelQueue.enqueue(-42)(down)
     }
-  }
-
-  /** changed is called whenever the turn does anything to a reactive that needs to be commited
-    * it is overridden here to detect changes to reactive which are not locked
-    * this allows to detect errors early, but should never happen if the locking strategy is correct */
-  override def markForCommit(reactive: Reactive): Unit = {
-    if (!reactive.lock.isAccessible)
-      throw new IllegalStateException(s"tried to change reactive $reactive but is locked by someone else")
-    super.markForCommit(reactive)
   }
 
   /** creating a signal causes some unpredictable reactives to be used inside the turn.

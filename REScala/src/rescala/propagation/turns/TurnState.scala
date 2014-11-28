@@ -6,8 +6,7 @@ import scala.collection.immutable.HashMap
 
 final class TurnState[A](@volatile var default: A,
                          @volatile private var values: Map[Turn, A],
-                         @volatile var commitStrategy: (A, A) => A,
-                         val owner: Reactive) {
+                         @volatile var commitStrategy: (A, A) => A) extends Commitable {
 
   def transform(f: (A) => A)(implicit turn: Turn): A = {
     val value = f(get)
@@ -16,7 +15,7 @@ final class TurnState[A](@volatile var default: A,
   }
   def set(value: A)(implicit turn: Turn): Unit = {
     values = values.updated(turn, value)
-    turn.markForCommit(owner)
+    turn.markForCommit(this)
   }
   def get(implicit turn: Turn): A = values.getOrElse(turn, default)
   def release(implicit turn: Turn): Unit = values -= turn
@@ -26,6 +25,11 @@ final class TurnState[A](@volatile var default: A,
   }
 }
 
+trait Commitable {
+  def commit(implicit turn: Turn): Unit
+  def release(implicit turn: Turn): Unit
+}
+
 object TurnState {
-  def apply[A](default: A, commitStrategy: (A, A) => A, lock: Reactive): TurnState[A] = new TurnState[A](default, HashMap[Turn, A](), commitStrategy, lock)
+  def apply[A](default: A, commitStrategy: (A, A) => A): TurnState[A] = new TurnState[A](default, HashMap[Turn, A](), commitStrategy)
 }
