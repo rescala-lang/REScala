@@ -15,7 +15,7 @@ final class TurnState[A](@volatile var default: A,
   }
   def set(value: A)(implicit turn: Turn): Unit = {
     values = values.updated(turn, value)
-    turn.markForCommit(this)
+    turn.plan(this)
   }
   def get(implicit turn: Turn): A = values.getOrElse(turn, default)
   def release(implicit turn: Turn): Unit = values -= turn

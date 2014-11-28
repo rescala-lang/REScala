@@ -46,7 +46,7 @@ abstract class AbstractTurn extends Turn {
     levelQueue.evaluateQueue()
   }
 
-  def markForCommit(commitable: Commitable): Unit = {
+  def plan(commitable: Commitable): Unit = {
     toCommit += commitable
   }
 

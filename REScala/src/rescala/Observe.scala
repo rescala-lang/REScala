@@ -17,7 +17,7 @@ object Observe {
 
       override protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult = {
         cached.set(dependency.pulse.toOption)
-        turn.markForCommit(this)
+        turn.plan(this)
         EvaluationResult.Static(changed = false)
       }
 
