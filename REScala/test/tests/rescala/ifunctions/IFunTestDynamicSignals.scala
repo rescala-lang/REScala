@@ -1,4 +1,4 @@
-package rescala.test.ifunctions
+package tests.rescala.ifunctions
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit

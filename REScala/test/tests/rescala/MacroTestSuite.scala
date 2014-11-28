@@ -1,4 +1,4 @@
-package rescala.test
+package tests.rescala
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit

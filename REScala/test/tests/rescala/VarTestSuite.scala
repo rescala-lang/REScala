@@ -1,4 +1,4 @@
-package rescala.test
+package tests.rescala
 
 //These 3 are for JUnitRunner
 

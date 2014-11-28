@@ -1,4 +1,4 @@
-package rescala.test.concurrency
+package tests.rescala.concurrency
 
 object Spawn {
   def apply(f: => Unit): Thread = {

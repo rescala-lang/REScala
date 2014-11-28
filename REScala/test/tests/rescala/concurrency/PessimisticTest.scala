@@ -1,4 +1,4 @@
-package rescala.test.concurrency
+package tests.rescala.concurrency
 
 
 import java.util.concurrent.atomic.AtomicReference
