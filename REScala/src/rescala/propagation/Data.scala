@@ -2,7 +2,6 @@ package rescala.propagation
 
 import scala.util.DynamicVariable
 
-sealed trait EvaluationResult
 
 /** support for dynamic dependency discovery */
 object DynamicsSupport {
@@ -13,6 +12,7 @@ object DynamicsSupport {
   def useDependency(dependency: Reactive): Unit = bag.value = bag.value + dependency
 }
 
+sealed trait EvaluationResult
 
 object EvaluationResult {
   case class Static(changed: Boolean) extends EvaluationResult
