@@ -1,5 +1,6 @@
 package rescala.events
 
+import rescala.Observer
 import rescala.propagation._
 import rescala.propagation.turns.creation.MaybeTurn
 import rescala.signals.{Signal, Signals}
@@ -11,12 +12,12 @@ trait Event[+T] extends Pulsing[T] {
 
   /** add an event handler */
   def +=(react: T => Unit)(implicit maybe: MaybeTurn): Unit = maybe { turn =>
-    turn.create(Set(this))(Events.Observer(react, this))
+    turn.create(Set(this))(Observer(react, this))
   }
 
   /** remove an event handler */
   def -=(react: T => Unit)(implicit maybe: MaybeTurn): Unit = maybe { turn =>
-    turn.unregister(Events.Observer(react, this))(this)
+    turn.unregister(Observer(react, this))(this)
   }
 
   /**

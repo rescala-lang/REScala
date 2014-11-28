@@ -9,21 +9,6 @@ import rescala.signals.Signal
 
 object Events {
 
-
-  /** Wrapper for an anonymous function to run in the afterCommit phase */
-  final case class Observer[T](fun: T => Unit, dependency: Pulsing[T]) extends Reactive with Commitable {
-    val cached = TurnState[Option[T]](None, (_, x) => x)
-
-    override protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult = {
-      cached.set(dependency.pulse.toOption)
-      turn.markForCommit(this)
-      EvaluationResult.Static(changed = false)
-    }
-    override def release(implicit turn: Turn): Unit = ()
-    override def commit(implicit turn: Turn): Unit = cached.get.foreach(v => turn.afterCommit(fun(v)))
-  }
-
-
   /** the basic method to create static events */
   def static[T](name: String, dependencies: Reactive*)(calculate: Turn => Pulse[T])(implicit maybe: MaybeTurn): Event[T] = maybe {
     _.create(dependencies.toSet) {
