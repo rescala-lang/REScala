@@ -1,6 +1,5 @@
-package rescala.signals
+package rescala
 
-import rescala.events.{Event, Events}
 import rescala.propagation.Stateful
 import rescala.propagation.turns.creation.MaybeTurn
 

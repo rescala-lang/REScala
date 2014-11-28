@@ -1,6 +1,5 @@
 package rescala
 
-import rescala.events.Event
 import rescala.propagation.turns.Turn
 import rescala.propagation.turns.creation.TurnFactory
 import rescala.propagation.{EvaluationResult, Pulse}

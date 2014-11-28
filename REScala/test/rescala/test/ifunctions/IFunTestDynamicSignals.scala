@@ -3,10 +3,9 @@ package rescala.test.ifunctions
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.{Var, Evt}
 import rescala.Implicits.default
-import rescala.events._
-import rescala.signals._
+import rescala.{Event, Evt, Signal, Var}
+
 
 class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
 

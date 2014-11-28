@@ -4,9 +4,9 @@ import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.Implicits.default
-import rescala.Var
+import rescala.{Signal, Signals, Var}
 import rescala.propagation.turns.creation.TurnFactory
-import rescala.signals._
+
 
 class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
 

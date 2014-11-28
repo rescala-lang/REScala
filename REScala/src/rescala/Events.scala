@@ -1,10 +1,9 @@
-package rescala.events
+package rescala
 
 import rescala.propagation.Pulse.{Diff, NoChange}
-import rescala.propagation._
+import rescala.propagation.turns.Turn
 import rescala.propagation.turns.creation.MaybeTurn
-import rescala.propagation.turns.{Commitable, Turn, TurnState}
-import rescala.signals.Signal
+import rescala.propagation.{DynamicReevaluation, Pulse, Pulsing, Reactive, StaticReevaluation}
 
 
 object Events {

@@ -1,9 +1,9 @@
-package rescala.signals
+package rescala
 
-import rescala.events.Event
-import rescala.propagation._
 import rescala.propagation.turns.Turn
 import rescala.propagation.turns.creation.MaybeTurn
+import rescala.propagation.{DynamicReevaluation, DynamicsSupport, Pulse, Reactive, StaticReevaluation}
+import rescala.signals.GeneratedLift
 
 object Signals extends GeneratedLift {
 

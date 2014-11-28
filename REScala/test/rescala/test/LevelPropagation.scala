@@ -2,8 +2,7 @@ package rescala.test
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
-import rescala.Var
-import rescala.signals.Signals
+import rescala.{Signals, Var}
 import rescala.Implicits.default
 
 class LevelPropagation extends AssertionsForJUnit {

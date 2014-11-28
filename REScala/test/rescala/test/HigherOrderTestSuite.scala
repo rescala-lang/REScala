@@ -3,10 +3,10 @@ package rescala.test
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.{Var, Evt}
+import rescala.{Signal, Signals, Var, Evt}
 import rescala.Implicits.default
-import rescala.events._
-import rescala.signals._
+
+
 
 class HigherOrderTestSuite extends AssertionsForJUnit with MockitoSugar {
 

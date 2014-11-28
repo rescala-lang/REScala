@@ -66,6 +66,7 @@ sourceGenerators in Compile <+= sourceManaged in Compile map { dir =>
   IO.write(file,
   s"""package rescala.signals
      |
+     |import rescala._
      |import rescala.propagation._
      |import rescala.propagation.turns._
      |import rescala.propagation.turns.creation._
@@ -80,7 +81,5 @@ sourceGenerators in Compile <+= sourceManaged in Compile map { dir =>
 
 initialCommands in console :=
   s"""import rescala._
-     |import rescala.events._
-     |import rescala.signals._
      |import rescala.Implicits.default
    """.stripMargin

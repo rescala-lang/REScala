@@ -1,9 +1,7 @@
-package rescala.events
+package rescala
 
-import rescala.Observe$
-import rescala.propagation._
+import rescala.propagation.Pulsing
 import rescala.propagation.turns.creation.MaybeTurn
-import rescala.signals.{Signal, Signals}
 
 import scala.collection.LinearSeq
 import scala.collection.immutable.Queue

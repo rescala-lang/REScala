@@ -4,9 +4,9 @@ package rescala.test.events
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.Evt
+import rescala.{Event, Evt}
 import rescala.Implicits.default
-import rescala.events._
+
 
 
 /**

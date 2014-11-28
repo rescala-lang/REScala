@@ -1,8 +1,8 @@
 package rescala.macros
 
+import rescala.Signal
 import rescala.propagation.Stateful
 import rescala.propagation.turns.Turn
-import rescala.signals._
 
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox
@@ -260,7 +260,7 @@ object SignalMacro {
 
     // create SignalSynt object
     // use fully-qualified name, so no extra import is needed
-    val body = q"rescala.signals.Signals.dynamic[${ weakTypeOf[A] }](..$filteredDetections)($signalExpression)"
+    val body = q"rescala.Signals.dynamic[${ weakTypeOf[A] }](..$filteredDetections)($signalExpression)"
 
     // assemble the SignalSynt object and the signal values that are accessed
     // by the object, but were cut out of the signal expression during the code
