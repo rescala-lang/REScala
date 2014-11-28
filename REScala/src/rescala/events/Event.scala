@@ -11,14 +11,8 @@ import scala.collection.immutable.Queue
 trait Event[+T] extends Pulsing[T] {
 
   /** add an event handler */
-  def +=(react: T => Unit)(implicit maybe: MaybeTurn): Unit = maybe { turn =>
-    turn.create(Set(this))(Observer(react, this))
-  }
+  def +=(react: T => Unit)(implicit maybe: MaybeTurn): Observer = Observer(this)(react)
 
-  /** remove an event handler */
-  def -=(react: T => Unit)(implicit maybe: MaybeTurn): Unit = maybe { turn =>
-    turn.unregister(Observer(react, this))(this)
-  }
 
   /**
    * Events disjunction.

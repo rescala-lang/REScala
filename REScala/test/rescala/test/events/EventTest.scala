@@ -6,7 +6,6 @@ import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.Evt
 import rescala.Implicits.default
-import rescala.events._
 
 
 class EventTest extends AssertionsForJUnit with MockitoSugar {
@@ -24,10 +23,10 @@ class EventTest extends AssertionsForJUnit with MockitoSugar {
     var test = 0
     val e1 = new Evt[Int]()
     val f = (x: Int) => { test += 1 }
-    e1 += f
+    val o = e1 += f
     e1(10)
     e1(10)
-    e1 -= f
+    o.remove()
     e1(10)
     assert(test == 2)
   }

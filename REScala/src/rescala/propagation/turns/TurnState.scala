@@ -26,8 +26,8 @@ final class TurnState[A](@volatile var default: A,
 }
 
 trait Commitable {
-  def commit(implicit turn: Turn): Unit
-  def release(implicit turn: Turn): Unit
+  protected[propagation] def commit(implicit turn: Turn): Unit
+  protected[propagation] def release(implicit turn: Turn): Unit
 }
 
 object TurnState {
