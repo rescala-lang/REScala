@@ -1,6 +1,6 @@
 package rescala.events
 
-import rescala.Observer
+import rescala.Observe$
 import rescala.propagation._
 import rescala.propagation.turns.creation.MaybeTurn
 import rescala.signals.{Signal, Signals}
@@ -11,7 +11,7 @@ import scala.collection.immutable.Queue
 trait Event[+T] extends Pulsing[T] {
 
   /** add an event handler */
-  def +=(react: T => Unit)(implicit maybe: MaybeTurn): Observer = Observer(this)(react)
+  def +=(react: T => Unit)(implicit maybe: MaybeTurn): Observe = Observe(this)(react)
 
 
   /**

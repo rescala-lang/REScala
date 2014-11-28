@@ -5,14 +5,14 @@ import rescala.propagation.turns.{Commitable, Turn, TurnState}
 import rescala.propagation.{EvaluationResult, Pulsing, Reactive}
 
 
-trait Observer {
+trait Observe {
   def remove()(implicit maybe: MaybeTurn): Unit
 }
 
-object Observer {
+object Observe {
 
-  def apply[T](dependency: Pulsing[T])(fun: T => Unit)(implicit maybe: MaybeTurn): Observer =
-    maybe(_.create(Set(dependency))(new Reactive with Commitable with Observer {
+  def apply[T](dependency: Pulsing[T])(fun: T => Unit)(implicit maybe: MaybeTurn): Observe =
+    maybe(_.create(Set(dependency))(new Reactive with Commitable with Observe {
       val cached = TurnState[Option[T]](None, (_, x) => x)
 
       override protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult = {
