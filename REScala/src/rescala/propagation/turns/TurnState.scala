@@ -18,8 +18,7 @@ final class TurnState[A](@volatile var default: A,
     values = values.updated(turn, value)
     turn.markForCommit(owner)
   }
-  def get(implicit turn: Turn): A = { /*cl;*/ values.getOrElse(turn, default) }
-  def getU(implicit turn: Turn): A = { values.getOrElse(turn, default) }
+  def get(implicit turn: Turn): A = values.getOrElse(turn, default)
   def release(implicit turn: Turn): Unit = values -= turn
   def commit(implicit turn: Turn): Unit = {
     default = commitStrategy(default, get)
