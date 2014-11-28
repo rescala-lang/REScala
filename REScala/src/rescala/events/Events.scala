@@ -2,8 +2,8 @@ package rescala.events
 
 import rescala.propagation.Pulse.{Diff, NoChange}
 import rescala.propagation._
-import rescala.propagation.turns.{Commitable, Turn}
 import rescala.propagation.turns.creation.MaybeTurn
+import rescala.propagation.turns.{Commitable, Turn, TurnState}
 import rescala.signals.Signal
 
 
@@ -11,13 +11,16 @@ object Events {
 
 
   /** Wrapper for an anonymous function to run in the afterCommit phase */
-  final case class Handler[T](fun: T => Unit, dependency: Pulsing[T]) extends StaticReevaluation[T] with Commitable {
-    override def calculatePulse()(implicit turn: Turn): Pulse[T] = {
+  final case class Handler[T](fun: T => Unit, dependency: Pulsing[T]) extends Reactive with Commitable {
+    val cached = TurnState[Option[T]](None, (_, x) => x)
+
+    override protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult = {
+      cached.set(dependency.pulse.toOption)
       turn.markForCommit(this)
-      dependency.pulse
+      EvaluationResult.Static(changed = false)
     }
     override def release(implicit turn: Turn): Unit = ()
-    override def commit(implicit turn: Turn): Unit = pulse.toOption.foreach(v => turn.afterCommit(fun(v)))
+    override def commit(implicit turn: Turn): Unit = cached.get.foreach(v => turn.afterCommit(fun(v)))
   }
 
 
