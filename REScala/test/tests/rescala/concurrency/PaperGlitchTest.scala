@@ -1,10 +1,9 @@
 package tests.rescala.concurrency
 
-import java.util.concurrent.{CountDownLatch, ConcurrentLinkedQueue}
+import java.util.concurrent.{ConcurrentLinkedQueue, CountDownLatch}
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
-import rescala.propagation.Engines
 import rescala.{Signals, Var}
 
 import scala.util.Random
@@ -18,7 +17,8 @@ class PaperGlitchTest extends AssertionsForJUnit {
 
     // ============================================================================================================
 
-    import Engines.unmanaged // <-- change here for FUN
+    import rescala.propagation.Engines.unmanaged
+    // <-- change here for FUN
 
     val price = Var(3)
     val tax = price.map { p => p / 3 }
@@ -42,12 +42,22 @@ class PaperGlitchTest extends AssertionsForJUnit {
     Spawn {
       latch.countDown()
       latch.await()
-      while (!cancelled) price.set(3 * 2 << Random.nextInt(8))
+      while (!cancelled) try {
+        price.set(3 * 2 << Random.nextInt(8))
+      }
+      catch {
+        case e: AssertionError => glitches.add(-42)
+      }
     }
     Spawn {
       latch.countDown()
       latch.await()
-      while (!cancelled) quantity.set(2 << Random.nextInt(8))
+      while (!cancelled) try {
+        quantity.set(2 << Random.nextInt(8))
+      }
+      catch {
+        case e: AssertionError => glitches.add(-42)
+      }
     }
     latch.await()
 
