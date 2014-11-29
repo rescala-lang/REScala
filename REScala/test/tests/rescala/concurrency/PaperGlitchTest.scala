@@ -1,6 +1,6 @@
 package tests.rescala.concurrency
 
-import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.{CountDownLatch, ConcurrentLinkedQueue}
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
@@ -9,7 +9,7 @@ import rescala.{Signals, Var}
 
 import scala.util.Random
 
-class PaperGlitchAppTest extends AssertionsForJUnit {
+class PaperGlitchTest extends AssertionsForJUnit {
 
   @Test def run(): Unit = {
     val lnOf2 = scala.math.log(2) // natural log of 2
@@ -37,12 +37,19 @@ class PaperGlitchAppTest extends AssertionsForJUnit {
 
     @volatile var cancelled = false
 
+    val latch = new CountDownLatch(2)
+
     Spawn {
+      latch.countDown()
+      latch.await()
       while (!cancelled) price.set(3 * 2 << Random.nextInt(8))
     }
     Spawn {
+      latch.countDown()
+      latch.await()
       while (!cancelled) quantity.set(2 << Random.nextInt(8))
     }
+    latch.await()
 
     Thread.sleep(1000)
     cancelled = true
