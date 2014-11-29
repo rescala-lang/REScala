@@ -1,8 +1,7 @@
 package rescala
 
-import rescala.propagation.turns.creation.Ticket
 import rescala.propagation.turns.{Commitable, Turn, TurnState}
-import rescala.propagation.{EvaluationResult, Pulsing, Reactive}
+import rescala.propagation.{Ticket, EvaluationResult, Pulsing, Reactive}
 
 
 trait Observe {

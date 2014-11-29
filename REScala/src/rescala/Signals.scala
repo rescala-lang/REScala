@@ -1,8 +1,7 @@
 package rescala
 
 import rescala.propagation.turns.Turn
-import rescala.propagation.turns.creation.Ticket
-import rescala.propagation.{DynamicReevaluation, DynamicsSupport, Pulse, Reactive, StaticReevaluation}
+import rescala.propagation.{Ticket, DynamicReevaluation, DynamicsSupport, Pulse, Reactive, StaticReevaluation}
 import rescala.signals.GeneratedLift
 
 object Signals extends GeneratedLift {

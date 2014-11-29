@@ -1,7 +1,6 @@
 package rescala.propagation
 
 import rescala.propagation.Pulse.{Diff, NoChange}
-import rescala.propagation.turns.creation.Ticket
 import rescala.propagation.turns.{Commitable, Turn, TurnLock, TurnState}
 
 /** A Reactive is a value type which has a dependency to other Reactives */

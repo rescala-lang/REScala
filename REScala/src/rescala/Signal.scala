@@ -1,7 +1,6 @@
 package rescala
 
-import rescala.propagation.Stateful
-import rescala.propagation.turns.creation.Ticket
+import rescala.propagation.{Ticket, Stateful}
 
 
 trait Signal[+A] extends Stateful[A] {
