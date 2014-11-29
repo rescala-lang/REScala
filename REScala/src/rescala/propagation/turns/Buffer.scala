@@ -14,7 +14,7 @@ final class Buffer[A](initialValue: A, initialStrategy: (A, A) => A) extends Com
   }
   def set(value: A)(implicit turn: Turn): Unit = {
     //TODO: this kills the paper glitch test
-    //assert(owner == null || owner == turn, s"buffer owned by $owner written by $turn")
+    assert(owner == null || owner == turn, s"buffer owned by $owner written by $turn")
     update = Some(value)
     owner = turn
     turn.plan(this)
