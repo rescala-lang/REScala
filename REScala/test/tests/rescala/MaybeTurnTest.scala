@@ -5,7 +5,7 @@ import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.Implicits.default
 import rescala.propagation.turns.Turn
-import rescala.propagation.turns.creation.{MaybeTurn, TurnFactory}
+import rescala.propagation.turns.creation.{MaybeTurn, Engine}
 
 class MaybeTurnTest extends AssertionsForJUnit with MockitoSugar {
 
@@ -13,28 +13,28 @@ class MaybeTurnTest extends AssertionsForJUnit with MockitoSugar {
    * you should not do this. */
 
   @Test def noneDynamicNoImplicit(): Unit = {
-    assert(implicitly[MaybeTurn].self === Right(implicitly[TurnFactory]))
+    assert(implicitly[MaybeTurn].self === Right(implicitly[Engine]))
   }
 
-  @Test def someDynamicNoImplicit(): Unit = implicitly[TurnFactory].newTurn { (dynamicTurn: Turn) =>
-    assert(implicitly[MaybeTurn].self === Right(implicitly[TurnFactory]))
+  @Test def someDynamicNoImplicit(): Unit = implicitly[Engine].newTurn { (dynamicTurn: Turn) =>
+    assert(implicitly[MaybeTurn].self === Right(implicitly[Engine]))
     assert(implicitly[MaybeTurn].apply(identity) === dynamicTurn)
   }
 
   @Test def noneDynamicSomeImplicit(): Unit = {
-    implicit val implicitTurn: Turn = implicitly[TurnFactory].newTurn(identity)
+    implicit val implicitTurn: Turn = implicitly[Engine].newTurn(identity)
     assert(implicitly[MaybeTurn].self === Left(implicitTurn))
     assert(implicitly[MaybeTurn].apply(identity) === implicitTurn)
   }
 
-  @Test def someDynamicSomeImplicit(): Unit = implicitly[TurnFactory].newTurn { (dynamicTurn: Turn) =>
-    implicit val implicitTurn: Turn = implicitly[TurnFactory].newTurn(identity)
+  @Test def someDynamicSomeImplicit(): Unit = implicitly[Engine].newTurn { (dynamicTurn: Turn) =>
+    implicit val implicitTurn: Turn = implicitly[Engine].newTurn(identity)
     assert(implicitly[MaybeTurn].self === Left(implicitTurn))
     assert(implicitly[MaybeTurn].apply(identity) === implicitTurn)
   }
 
   @Test def implicitInClosures(): Unit = {
-    val fac = implicitly[TurnFactory]
+    val fac = implicitly[Engine]
     val closureDefinition = fac.newTurn(identity)
     val closure = {
       implicit def it: Turn = closureDefinition
@@ -47,7 +47,7 @@ class MaybeTurnTest extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test def dynamicInClosures(): Unit = {
-    val fac = implicitly[TurnFactory]
+    val fac = implicitly[Engine]
     val closure = {
       fac.newTurn { t =>
         () => implicitly[MaybeTurn]

@@ -1,7 +1,7 @@
 package rescala
 
 import rescala.propagation.turns.Turn
-import rescala.propagation.turns.creation.TurnFactory
+import rescala.propagation.turns.creation.Engine
 import rescala.propagation.{EvaluationResult, Pulse}
 
 /**
@@ -10,7 +10,7 @@ import rescala.propagation.{EvaluationResult, Pulse}
 final class Evt[T]() extends Event[T] {
 
   /** Trigger the event */
-  def apply(v: T)(implicit fac: TurnFactory): Unit = fac.newTurn { turn =>
+  def apply(v: T)(implicit fac: Engine): Unit = fac.newTurn { turn =>
     turn.admit(this) {
       pulses.set(Pulse.change(v))(turn)
       true

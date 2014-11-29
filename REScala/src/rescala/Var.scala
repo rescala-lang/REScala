@@ -1,15 +1,15 @@
 package rescala
 
 import rescala.propagation.turns.Turn
-import rescala.propagation.turns.creation.TurnFactory
+import rescala.propagation.turns.creation.Engine
 import rescala.propagation.{EvaluationResult, Pulse}
 
 /** A root Reactive value without dependencies which can be set */
 final class Var[T](initval: T) extends Signal[T] {
   pulses.default = Pulse.unchanged(initval)
 
-  def update(newValue: T)(implicit fac: TurnFactory): Unit = set(newValue)
-  def set(newValue: T)(implicit fac: TurnFactory): Unit = fac.newTurn { turn =>
+  def update(newValue: T)(implicit fac: Engine): Unit = set(newValue)
+  def set(newValue: T)(implicit fac: Engine): Unit = fac.newTurn { turn =>
     admit(newValue)(turn)
   }
 

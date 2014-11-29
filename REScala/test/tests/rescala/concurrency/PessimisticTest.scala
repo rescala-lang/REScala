@@ -8,8 +8,8 @@ import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import rescala.{Signals, Var}
 import rescala.propagation.Reactive
-import rescala.propagation.turns.creation.TurnFactory
-import rescala.propagation.turns.creation.TurnFactory.Impl
+import rescala.propagation.turns.creation.Engine
+import rescala.propagation.turns.creation.Engine.Impl
 import rescala.propagation.turns.instances.Pessimistic
 
 import scala.collection.JavaConverters._
@@ -27,7 +27,7 @@ class PessimisticTestTurn extends Pessimistic {
     super.evaluate(r)
   }
 }
-object Pessigen extends TurnFactory.Impl(new PessimisticTestTurn) {
+object Pessigen extends Engine.Impl(new PessimisticTestTurn) {
   val syncStack: AtomicReference[List[(Set[Reactive], CountDownLatch)]] = new AtomicReference(Nil)
 
   def clear(): Int = syncStack.getAndSet(Nil).size
@@ -41,7 +41,7 @@ object Pessigen extends TurnFactory.Impl(new PessimisticTestTurn) {
 
 class PessimisticTest extends AssertionsForJUnit {
 
-  implicit def factory: TurnFactory = Pessigen
+  implicit def factory: Engine = Pessigen
 
   @Test def runOnIndependentParts(): Unit = synchronized {
     val v1 = Var(false)
@@ -107,7 +107,7 @@ class PessimisticTest extends AssertionsForJUnit {
 
 
   object MockFacFac {
-    def apply(i0: Reactive, reg: => Unit, unreg: => Unit): TurnFactory = new Impl(
+    def apply(i0: Reactive, reg: => Unit, unreg: => Unit): Engine = new Impl(
       new Pessimistic {
         override def register(downstream: Reactive)(upstream: Reactive): Unit = {
           if (upstream eq i0) reg

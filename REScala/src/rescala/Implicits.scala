@@ -1,10 +1,10 @@
 package rescala
 
-import rescala.propagation.turns.creation.TurnFactory
+import rescala.propagation.turns.creation.Engine
 
 object Implicits {
-  implicit def default: TurnFactory = pessimistic
-  implicit def pessimistic: TurnFactory = TurnFactory.pessimistic
-  implicit def synchronized: TurnFactory = TurnFactory.synchronized
-  implicit def unmanaged: TurnFactory = TurnFactory.unSynchronized
+  implicit def default: Engine = pessimistic
+  implicit def pessimistic: Engine = Engine.pessimistic
+  implicit def synchronized: Engine = Engine.synchronized
+  implicit def unmanaged: Engine = Engine.unSynchronized
 }

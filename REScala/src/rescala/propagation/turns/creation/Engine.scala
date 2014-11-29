@@ -5,7 +5,7 @@ import rescala.propagation.turns.instances.{AbstractTurn, Pessimistic, Simple}
 
 import scala.util.DynamicVariable
 
-trait TurnFactory {
+trait Engine {
   /** creates runs and commits a new turn */
   def newTurn[T](f: Turn => T): T
 
@@ -13,17 +13,17 @@ trait TurnFactory {
   def maybeDynamicTurn[T](f: Turn => T): T
 }
 
-object TurnFactory {
+object Engine {
 
-  val pessimistic: TurnFactory = new Impl(new Pessimistic())
-  val synchronized: TurnFactory = new Impl(new Simple()) {
+  val pessimistic: Engine = new Impl(new Pessimistic())
+  val synchronized: Engine = new Impl(new Simple()) {
     override def newTurn[T](f: Turn => T): T = synchronized(super.newTurn(f))
   }
-  val unSynchronized: TurnFactory = new Impl(new Simple())
+  val unSynchronized: Engine = new Impl(new Simple())
 
   val currentTurn: DynamicVariable[Option[AbstractTurn]] = new DynamicVariable[Option[AbstractTurn]](None)
 
-  class Impl(makeTurn: => AbstractTurn) extends TurnFactory {
+  class Impl(makeTurn: => AbstractTurn) extends Engine {
 
     override def maybeDynamicTurn[T](f: (Turn) => T): T = currentTurn.value match {
       case None => newTurn(f)

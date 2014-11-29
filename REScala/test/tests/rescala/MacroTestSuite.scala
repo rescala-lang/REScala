@@ -7,7 +7,7 @@ import rescala.{Event, Signal, Var, Evt}
 import rescala.Implicits.default
 
 import rescala.macros.SignalMacro.{SignalM => Signal}
-import rescala.propagation.turns.creation.TurnFactory
+import rescala.propagation.turns.creation.Engine
 
 
 class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
