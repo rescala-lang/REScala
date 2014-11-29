@@ -20,7 +20,7 @@ final class TurnLock(val reactive: Reactive) {
   /** this will block until the lock is owned by the turn.
     * this does not dest for shared access and thus will deadlock if the current owner has its locks shared with the turn */
   def lock()(implicit turn: LockOwner): Unit = synchronized {
-    while (!tryLock()) wait()
+    while (tryLock() ne turn) wait()
   }
 
   /** request basically means that the turn will share all its locks with the owner of the current lock
@@ -36,19 +36,26 @@ final class TurnLock(val reactive: Reactive) {
     * */
   @tailrec
   def request()(implicit turn: LockOwner): Unit = {
-    synchronized {
-      if (tryLock()) 'done
-      else {
-        tryLockAllOwners(turn, owner)(failureResult = 'retry) {
-          // test makes sure, that owner is not waiting on us
-          if (isShared) 'done
-          else {
-            turn.grant(owner)
-            'await
+    val oldOwner = tryLock()
+    val res = if (oldOwner eq turn) 'done
+    else {
+      lockMasterOrdered(turn, oldOwner) {
+        synchronized {
+          tryLock() match {
+            // make sure the other owner did not unlock before we got his master lock
+            case newOwner if newOwner eq turn => 'done
+            case newOwner if newOwner ne oldOwner =>'retry
+            // test makes sure, that owner is not waiting on us
+            case _ if isShared =>'done
+            // trade our rights
+            case _ =>
+              turn.grant(owner)
+              'await
           }
         }
       }
-    } match {
+    }
+    res match {
       case 'await => lock()
       case 'retry => request()
       case 'done =>
@@ -61,7 +68,7 @@ final class TurnLock(val reactive: Reactive) {
     @tailrec
     def run(curr: LockOwner): Boolean =
       if (curr eq owner) true
-      else curr.request match {
+      else curr.waitingForThis match {
         case None => false
         case Some(req) => run(req)
       }
@@ -70,14 +77,12 @@ final class TurnLock(val reactive: Reactive) {
 
   /** locks this if it is free, returns true if the turn owns this lock.
     * does not check for shared access. */
-  private def tryLock()(implicit turn: LockOwner): Boolean = synchronized {
+  private def tryLock()(implicit turn: LockOwner): LockOwner = synchronized {
     if (owner eq null) {
       owner = turn
       turn.addLock(this)
-      true
     }
-    else if (isOwned) true
-    else false
+    owner
   }
 
   /** transfers the lock from the turn to the target.
@@ -97,14 +102,11 @@ final class TurnLock(val reactive: Reactive) {
   /** this tries to get all master locks of the given owners in a fixed order.
     * it returns the failure value if it could not acquire all locks,
     * or execute the handler with all locks held if it could */
-  private def tryLockAllOwners[R](lo: LockOwner*)(failureResult: R)(f: => R): R = {
+  private def lockMasterOrdered[R](lo: LockOwner*)(f: => R): R = {
     val sorted = lo.sortBy(System.identityHashCode)
-    val locked = sorted.takeWhile(_.masterLock.tryLock())
-    try {
-      if (locked.size == sorted.size) f
-      else failureResult
-    }
-    finally locked.foreach(_.masterLock.unlock())
+    sorted.foreach(_.masterLock.lock())
+    try { f }
+    finally sorted.foreach(_.masterLock.unlock())
   }
 
 }

@@ -105,10 +105,6 @@ class Pessimistic extends AbstractTurn with LockOwner {
     lq.evaluateQueue()
   }
 
-  /** helper to lock a sequence of reactives in a given order to prevent deadlocks */
-  final def lockOrdered(reactives: Seq[Reactive])(implicit turn: LockOwner): Unit = reactives.sortBy(System.identityHashCode).foreach { _.lock.lock() }
-
-
   /** this is called after the initial closure of the turn has been executed,
     * that is the eval queue is populated with the sources*/
   override def lockingPhase(): Unit = {
