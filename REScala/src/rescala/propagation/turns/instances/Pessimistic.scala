@@ -1,7 +1,7 @@
 package rescala.propagation.turns.instances
 
 import rescala.propagation.Reactive
-import rescala.propagation.turns.{Commitable, LockOwner, TurnLock}
+import rescala.propagation.turns.LockOwner
 
 
 class Pessimistic extends AbstractTurn with LockOwner {
@@ -81,6 +81,7 @@ class Pessimistic extends AbstractTurn with LockOwner {
       reactive.lock.request()
     }
   }
+
   /** admits a new source change */
   override def admit(source: Reactive)(setPulse: => Boolean): Unit = {
     source.lock.lock()
