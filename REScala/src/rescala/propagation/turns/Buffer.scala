@@ -13,13 +13,18 @@ final class Buffer[A](initialValue: A, initialStrategy: (A, A) => A) extends Com
     value
   }
   def set(value: A)(implicit turn: Turn): Unit = {
+    //TODO: this kills the paper glitch test
+    //assert(owner == null || owner == turn, s"buffer owned by $owner written by $turn")
     update = Some(value)
     owner = turn
     turn.plan(this)
   }
   def base(implicit turn: Turn) = current
   def get(implicit turn: Turn): A = if(turn eq owner) update.getOrElse(current) else current
-  def release(implicit turn: Turn): Unit = update = None
+  def release(implicit turn: Turn): Unit = {
+    update = None
+    owner = null
+  }
   def commit(implicit turn: Turn): Unit = {
     current = commitStrategy(current, get)
     release
