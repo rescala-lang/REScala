@@ -8,7 +8,7 @@ trait LockOwner {
   /** if we have a request from some other owner, that owner has given us shared access to all his locks
     * and is waiting for one of our locks to be transferred to him.
     * writing of this field is guarded by the masterLock */
-  @volatile final var request: Option[LockOwner] = None
+  @volatile final var waitingForThis: Option[LockOwner] = None
 
   /** this grants shared access to our locks to the group to which initial belongs.
     * when grant is called both masterLocks of us and initial must be held.
@@ -17,10 +17,10 @@ trait LockOwner {
     * eventually when initial completes its turn, it will transfer all of its locks to us. */
   final def grant(initial: LockOwner): Unit = {
     def run(other: LockOwner): Unit =
-      other.request match {
-        case None => other.request = Some(this)
+      other.waitingForThis match {
+        case None => other.waitingForThis = Some(this)
         case Some(third) =>
-          // should not deadlock, because everything else is either spinlocking, or locking in this same order here
+          // should not deadlock, because everything else is locking in this same order here
           third.withMaster(run(third))
       }
     run(initial)
@@ -58,7 +58,7 @@ trait LockOwner {
   /** release all locks we hold or transfer them to a waiting transaction if there is one
     * holds the master lock for request */
   final def releaseAll(): Unit = withMaster {
-    request match {
+    waitingForThis match {
       case Some(req) =>
         transferAll(req)
       case None =>
