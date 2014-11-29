@@ -1,6 +1,6 @@
 package rescala
 
-import rescala.propagation.turns.{Commitable, Turn, TurnState}
+import rescala.propagation.turns.{Commitable, Turn, Buffer}
 import rescala.propagation.{Ticket, EvaluationResult, Pulsing, Reactive}
 
 
@@ -12,7 +12,7 @@ object Observe {
 
   def apply[T](dependency: Pulsing[T])(fun: T => Unit)(implicit maybe: Ticket): Observe =
     maybe(_.create(Set(dependency))(new Reactive with Commitable with Observe {
-      val cached = TurnState[Option[T]](None, (_, x) => x)
+      val cached = Buffer[Option[T]](None, (_, x) => x)
 
       override protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult = {
         cached.set(dependency.pulse.toOption)
