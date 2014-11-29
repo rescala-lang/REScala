@@ -82,12 +82,6 @@ class Pessimistic extends AbstractTurn with LockOwner {
     }
   }
 
-  /** admits a new source change */
-  override def admit(source: Reactive)(setPulse: => Boolean): Unit = {
-    source.lock.lock()
-    super.admit(source)(setPulse)
-  }
-
 
   /** so i did improve whats noted in the todos below … at least i hope i did.
     * TODO: this probably needs improvement … well it definitely does
@@ -116,8 +110,13 @@ class Pessimistic extends AbstractTurn with LockOwner {
 
 
   /** this is called after the initial closure of the turn has been executed,
-    * that is the eval queue is populated with the sources */
-  override def lockingPhase(): Unit = lockReachable()
+    * that is the eval queue is populated with the sources*/
+  override def lockingPhase(): Unit = {
+    initialSources.foreach(_.lock.request())
+    initialSources = (initialSources zip initialValues).filter(_._2()).unzip._1
+    lockReachable()
+  }
+
   /** this is called after the turn has finished propagating, but before handlers are executed */
   override def realeasePhase(): Unit = releaseAll()
 }

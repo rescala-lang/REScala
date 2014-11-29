@@ -5,7 +5,7 @@ import rescala.propagation.Reactive
 /** doing nothing can be useful on its own */
 class Simple extends AbstractTurn {
   override def acquireDynamic(reactive: Reactive): Unit = ()
-  override def lockingPhase(): Unit = ()
+  override def lockingPhase(): Unit = initialValues.foreach(_())
   override def realeasePhase(): Unit = ()
 }
 

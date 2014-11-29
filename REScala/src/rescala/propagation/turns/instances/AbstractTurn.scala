@@ -12,6 +12,7 @@ abstract class AbstractTurn extends Turn {
   protected var afterCommitHandlers = List[() => Unit]()
 
   protected var initialSources: List[Reactive] = Nil
+  protected var initialValues: List[() => Boolean] = Nil
 
   def handleDiff(res: Result): Result = {
     res.getDiff.foreach { diff =>
@@ -28,9 +29,6 @@ abstract class AbstractTurn extends Turn {
 
   def acquireDynamic(reactive: Reactive): Unit
 
-  def lockingPhase(): Unit
-  def realeasePhase(): Unit
-
   def register(downstream: Reactive)(upstream: Reactive): Unit = {
     upstream.dependants.transform(_ + downstream)
   }
@@ -40,21 +38,11 @@ abstract class AbstractTurn extends Turn {
     upstream.dependants.transform(_ - downstream)
   }
 
-
-  def propagationPhase(): Unit = {
-    initialSources.foreach(levelQueue.enqueue(0))
-    levelQueue.evaluateQueue()
-  }
-
   def plan(commitable: Commitable): Unit = {
     toCommit += commitable
   }
 
-  def commitPhase() = toCommit.foreach(_.commit(this))
-
   override def afterCommit(handler: => Unit) = afterCommitHandlers ::= handler _
-
-  def observerPhase() = afterCommitHandlers.foreach(_())
 
   def create[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
     val reactive = f
@@ -78,6 +66,22 @@ abstract class AbstractTurn extends Turn {
     }
 
   /** admits a new source change */
-  override def admit(source: Reactive)(setPulse: => Boolean): Unit = if (setPulse) initialSources ::= source
+  override def admit(source: Reactive)(setPulse: => Boolean): Unit = {
+    initialSources ::= source
+    initialValues ::= setPulse _
+  }
+
+  def lockingPhase(): Unit
+
+  def propagationPhase(): Unit = {
+    initialSources.foreach(levelQueue.enqueue(0))
+    levelQueue.evaluateQueue()
+  }
+
+  def commitPhase() = toCommit.foreach(_.commit(this))
+
+  def observerPhase() = afterCommitHandlers.foreach(_())
+
+  def realeasePhase(): Unit
 
 }
