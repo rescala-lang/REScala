@@ -59,7 +59,7 @@ sourceGenerators in Compile <+= sourceManaged in Compile map { dir =>
     val signals = params zip types map {case (p, t) => s"$p: Stateful[$t]"}
     def sep(l: Seq[String]) = l.mkString(", ")
     val getValues = params map (_ + ".get(t)")
-    s"""def lift[${sep(types)}, B](${sep(signals)})(fun: (${sep(types)}) => B)(implicit maybe: MaybeTurn): Signal[B] =
+    s"""def lift[${sep(types)}, B](${sep(signals)})(fun: (${sep(types)}) => B)(implicit maybe: Ticket): Signal[B] =
        |  mapping(${sep(params)})(t => fun(${sep(getValues)}))
      """.stripMargin
   }

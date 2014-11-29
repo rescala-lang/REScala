@@ -7,9 +7,7 @@ import java.util.concurrent.{ConcurrentLinkedQueue, CountDownLatch}
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import rescala.{Signals, Var}
-import rescala.propagation.Reactive
-import rescala.propagation.turns.creation.Engine
-import rescala.propagation.turns.creation.Engine.Impl
+import rescala.propagation.{Engine, Engines, Reactive}
 import rescala.propagation.turns.instances.Pessimistic
 
 import scala.collection.JavaConverters._
@@ -27,7 +25,7 @@ class PessimisticTestTurn extends Pessimistic {
     super.evaluate(r)
   }
 }
-object Pessigen extends Engine.Impl(new PessimisticTestTurn) {
+object Pessigen extends Engines.Impl(new PessimisticTestTurn) {
   val syncStack: AtomicReference[List[(Set[Reactive], CountDownLatch)]] = new AtomicReference(Nil)
 
   def clear(): Int = syncStack.getAndSet(Nil).size
@@ -107,7 +105,7 @@ class PessimisticTest extends AssertionsForJUnit {
 
 
   object MockFacFac {
-    def apply(i0: Reactive, reg: => Unit, unreg: => Unit): Engine = new Impl(
+    def apply(i0: Reactive, reg: => Unit, unreg: => Unit): Engine = new Engines.Impl(
       new Pessimistic {
         override def register(downstream: Reactive)(upstream: Reactive): Unit = {
           if (upstream eq i0) reg

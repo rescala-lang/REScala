@@ -1,25 +1,19 @@
-package rescala.propagation.turns.creation
+package rescala.propagation
 
 import rescala.propagation.turns.Turn
 import rescala.propagation.turns.instances.{AbstractTurn, Pessimistic, Simple}
 
 import scala.util.DynamicVariable
 
-trait Engine {
-  /** creates runs and commits a new turn */
-  def startNew[T](f: Turn => T): T
+object Engines {
 
-  /** uses the current turn if any or creates a new turn if none */
-  def startKeep[T](f: Turn => T): T
-}
+  implicit def default: Engine = pessimistic
 
-object Engine {
-
-  val pessimistic: Engine = new Impl(new Pessimistic())
-  val synchronized: Engine = new Impl(new Simple()) {
+  implicit val pessimistic: Engine = new Impl(new Pessimistic())
+  implicit val synchronized: Engine = new Impl(new Simple()) {
     override def startNew[T](f: Turn => T): T = synchronized(super.startNew(f))
   }
-  val unSynchronized: Engine = new Impl(new Simple())
+  implicit val unmanaged: Engine = new Impl(new Simple())
 
   val currentTurn: DynamicVariable[Option[AbstractTurn]] = new DynamicVariable[Option[AbstractTurn]](None)
 

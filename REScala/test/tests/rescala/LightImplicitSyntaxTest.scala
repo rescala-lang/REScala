@@ -2,10 +2,11 @@ package tests.rescala
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
-import rescala.Implicits.default
+import rescala.propagation.Engines
+import Engines.default
 import rescala.{Signal, Signals, Var}
 import rescala.propagation.turns.Turn
-import rescala.propagation.turns.creation.MaybeTurn
+import rescala.propagation.turns.creation.Ticket
 
 import scala.language.implicitConversions
 
@@ -13,7 +14,7 @@ class LightImplicitSyntaxTest extends AssertionsForJUnit {
 
   @Test def experimentWithImplicitSyntax(): Unit = {
     implicit def getSignalValueDynamic[T](s: Signal[T])(implicit turn: Turn): T = s.apply(turn)
-    def Signal[T](f: Turn => T)(implicit maybe: MaybeTurn): Signal[T] = Signals.dynamic()(f)
+    def Signal[T](f: Turn => T)(implicit maybe: Ticket): Signal[T] = Signals.dynamic()(f)
 
     val price = Var(3)
     val tax = price.map { p => p / 3 }

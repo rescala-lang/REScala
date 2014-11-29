@@ -5,7 +5,8 @@ import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.Evt
-import rescala.Implicits.default
+import rescala.propagation.Engines
+import Engines.default
 
 
 class EventTest extends AssertionsForJUnit with MockitoSugar {

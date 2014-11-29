@@ -1,7 +1,7 @@
 package rescala.propagation
 
 import rescala.propagation.Pulse.{Diff, NoChange}
-import rescala.propagation.turns.creation.MaybeTurn
+import rescala.propagation.turns.creation.Ticket
 import rescala.propagation.turns.{Commitable, Turn, TurnLock, TurnState}
 
 /** A Reactive is a value type which has a dependency to other Reactives */
@@ -13,7 +13,7 @@ trait Reactive {
   final private[propagation] val dependants: TurnState[Set[Reactive]] = TurnState(Set(), (_, x) => x)
 
   /** for testing */
-  def getLevel(implicit maybe: MaybeTurn) = maybe { level.get(_) }
+  def getLevel(implicit maybe: Ticket) = maybe { level.get(_) }
 
   /** called when it is this events turn to be evaluated
     * (head of the evaluation queue) */
@@ -54,7 +54,7 @@ trait Stateful[+A] extends Pulsing[A] {
     get(turn)
   }
 
-  final def now(implicit maybe: MaybeTurn): A = maybe { get(_) }
+  final def now(implicit maybe: Ticket): A = maybe { get(_) }
 
   final def get(implicit turn: Turn): A = pulse match {
     case NoChange(Some(value)) => value

@@ -1,7 +1,7 @@
 package rescala
 
 import rescala.propagation.turns.Turn
-import rescala.propagation.turns.creation.MaybeTurn
+import rescala.propagation.turns.creation.Ticket
 import rescala.propagation.{DynamicReevaluation, DynamicsSupport, Pulse, Reactive, StaticReevaluation}
 import rescala.signals.GeneratedLift
 
@@ -18,7 +18,7 @@ object Signals extends GeneratedLift {
   }
 
   /** creates a signal that has dynamic dependencies (which are detected at runtime with Signal.apply(turn)) */
-  def dynamic[T](dependencies: Reactive*)(expr: Turn => T)(implicit maybe: MaybeTurn): Signal[T] = maybe(makeDynamic(dependencies.toSet)(expr)(_))
+  def dynamic[T](dependencies: Reactive*)(expr: Turn => T)(implicit maybe: Ticket): Signal[T] = maybe(makeDynamic(dependencies.toSet)(expr)(_))
 
   /** creates a signal that statically depends on the dependencies with a given initial value */
   def makeStatic[T](dependencies: Set[Reactive], init: => T)(expr: (Turn, T) => T)(implicit initialTurn: Turn) = initialTurn.create(dependencies.toSet) {
@@ -33,14 +33,14 @@ object Signals extends GeneratedLift {
   }
 
   /** creates a signal that folds the events in e */
-  def fold[E, T](e: Event[E], init: T)(f: (T, E) => T)(implicit maybe: MaybeTurn): Signal[T] = maybe {
+  def fold[E, T](e: Event[E], init: T)(f: (T, E) => T)(implicit maybe: Ticket): Signal[T] = maybe {
     makeStatic(Set(e), init) { (turn, currentValue) =>
       e.pulse(turn).fold(currentValue, f(currentValue, _))
     }(_)
   }
 
   /** creates a new static signal depending on the dependencies, reevaluating the function */
-  def mapping[T](dependencies: Reactive*)(fun: Turn => T)(implicit maybe: MaybeTurn): Signal[T] = maybe { initialTurn =>
+  def mapping[T](dependencies: Reactive*)(fun: Turn => T)(implicit maybe: Ticket): Signal[T] = maybe { initialTurn =>
     makeStatic(dependencies.toSet, fun(initialTurn))((turn, _) => fun(turn))(initialTurn)
   }
 
