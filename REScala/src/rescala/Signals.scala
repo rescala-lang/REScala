@@ -7,11 +7,11 @@ import rescala.signals.GeneratedLift
 object Signals extends GeneratedLift {
 
   /** creates a dynamic signal */
-  def makeDynamic[T](dependencies: Set[Reactive])(expr: Turn => T)(implicit currentTurn: Turn): Signal[T] = currentTurn.createDynamic(dependencies) {
+  def makeDynamic[T](dependencies: Set[Reactive])(expr: Turn => T)(currentTurn: Turn): Signal[T] = currentTurn.createDynamic(dependencies) {
     new Signal[T] with DynamicReevaluation[T] {
       def calculatePulseDependencies(implicit turn: Turn): (Pulse[T], Set[Reactive]) = {
         val (newValue, dependencies) = DynamicsSupport.collectDependencies(expr(turn))
-        (Pulse.diffPulse(newValue, pulses.default), dependencies)
+        (Pulse.diffPulse(newValue, pulses.base), dependencies)
       }
     }
   }
@@ -20,12 +20,12 @@ object Signals extends GeneratedLift {
   def dynamic[T](dependencies: Reactive*)(expr: Turn => T)(implicit maybe: Ticket): Signal[T] = maybe(makeDynamic(dependencies.toSet)(expr)(_))
 
   /** creates a signal that statically depends on the dependencies with a given initial value */
-  def makeStatic[T](dependencies: Set[Reactive], init: => T)(expr: (Turn, T) => T)(implicit initialTurn: Turn) = initialTurn.create(dependencies.toSet) {
+  def makeStatic[T](dependencies: Set[Reactive], init: => T)(expr: (Turn, T) => T)(initialTurn: Turn) = initialTurn.create(dependencies.toSet) {
     new Signal[T] with StaticReevaluation[T] {
-      pulses.default = Pulse.unchanged(init)
+      pulses.current = Pulse.unchanged(init)
 
       override def calculatePulse()(implicit turn: Turn): Pulse[T] = {
-        val currentValue = pulses.default.current.get
+        val currentValue = pulses.base.current.get
         Pulse.diff(expr(turn, currentValue), currentValue)
       }
     }

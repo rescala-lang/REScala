@@ -5,7 +5,7 @@ import rescala.propagation.{Engine, EvaluationResult, Pulse}
 
 /** A root Reactive value without dependencies which can be set */
 final class Var[T](initval: T) extends Signal[T] {
-  pulses.default = Pulse.unchanged(initval)
+  pulses.current = Pulse.unchanged(initval)
 
   def update(newValue: T)(implicit fac: Engine): Unit = set(newValue)
   def set(newValue: T)(implicit fac: Engine): Unit = fac.startNew { turn =>
