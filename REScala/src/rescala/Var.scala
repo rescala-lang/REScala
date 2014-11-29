@@ -9,7 +9,7 @@ final class Var[T](initval: T) extends Signal[T] {
   pulses.default = Pulse.unchanged(initval)
 
   def update(newValue: T)(implicit fac: Engine): Unit = set(newValue)
-  def set(newValue: T)(implicit fac: Engine): Unit = fac.newTurn { turn =>
+  def set(newValue: T)(implicit fac: Engine): Unit = fac.startNew { turn =>
     admit(newValue)(turn)
   }
 

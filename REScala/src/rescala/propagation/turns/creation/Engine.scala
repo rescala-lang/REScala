@@ -7,17 +7,17 @@ import scala.util.DynamicVariable
 
 trait Engine {
   /** creates runs and commits a new turn */
-  def newTurn[T](f: Turn => T): T
+  def startNew[T](f: Turn => T): T
 
   /** uses the current turn if any or creates a new turn if none */
-  def maybeDynamicTurn[T](f: Turn => T): T
+  def startKeep[T](f: Turn => T): T
 }
 
 object Engine {
 
   val pessimistic: Engine = new Impl(new Pessimistic())
   val synchronized: Engine = new Impl(new Simple()) {
-    override def newTurn[T](f: Turn => T): T = synchronized(super.newTurn(f))
+    override def startNew[T](f: Turn => T): T = synchronized(super.startNew(f))
   }
   val unSynchronized: Engine = new Impl(new Simple())
 
@@ -25,8 +25,8 @@ object Engine {
 
   class Impl(makeTurn: => AbstractTurn) extends Engine {
 
-    override def maybeDynamicTurn[T](f: (Turn) => T): T = currentTurn.value match {
-      case None => newTurn(f)
+    override def startKeep[T](f: (Turn) => T): T = currentTurn.value match {
+      case None => startNew(f)
       case Some(turn) => f(turn)
     }
 
@@ -47,7 +47,7 @@ object Engine {
       * - run the party! phase
       *   - not yet implemented
       * */
-    override def newTurn[T](admissionPhase: Turn => T): T = {
+    override def startNew[T](admissionPhase: Turn => T): T = {
       implicit class sequentialLeftResult(result: T) {def ~<(sideEffects_! : Unit): T = result }
       val turn = makeTurn
       try {
