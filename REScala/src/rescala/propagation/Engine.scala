@@ -2,6 +2,9 @@ package rescala.propagation
 
 import rescala.propagation.turns.Turn
 
+import scala.annotation.implicitNotFound
+
+@implicitNotFound(msg = "could not finde a propagation engine, select one from Engines")
 trait Engine {
   /** creates runs and commits a new turn */
   def startNew[T](f: Turn => T): T
