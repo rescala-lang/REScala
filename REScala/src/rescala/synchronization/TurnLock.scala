@@ -10,10 +10,10 @@ final class TurnLock {
 
   def getOwner: Key = synchronized(owner)
 
-  def isOwned(turn: Key): Boolean = synchronized(owner eq turn)
+  def isLockedBy(key: Key): Boolean = synchronized(owner eq key)
 
   /** accessible effectively means that we can do whatever with the locked object */
-  def isAccessible(turn: Key): Boolean = synchronized(isOwned(turn) || isShared(turn))
+  def isAccessibleBy(key: Key): Boolean = synchronized(isLockedBy(key) || isShared(key))
 
   /** this will block until the lock is owned by the turn.
     * this does not dest for shared access and thus will deadlock if the current owner has its locks shared with the turn */
@@ -87,7 +87,7 @@ final class TurnLock {
     * this notifies all turns waiting on this lock because we need the turn the lock was transferred to to wake up
     * (it will currently be waiting in the lock call made at the end of request */
   def transfer(target: Key)(turn: Key) = synchronized {
-    if (isOwned(turn)) {
+    if (isLockedBy(turn)) {
       owner = target
       notifyAll()
     }

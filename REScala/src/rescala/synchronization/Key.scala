@@ -19,9 +19,10 @@ final class Key {
     finally keyLock.unlock()
   }
 
-  /** the done condition and state is used to wait for the end of the turn this key belongs to*/
+  /** the done condition and state is used to wait for the end of the turn this key belongs to */
   val doneCondition: Condition = keyLock.newCondition()
   var done: Boolean = false
+  def awaitDone(): Unit = withMaster { while (!done) doneCondition.await() }
 
   /** contains a list of all locks owned by us.
     * this does not need synchronisation because it is only written in 2 cases:

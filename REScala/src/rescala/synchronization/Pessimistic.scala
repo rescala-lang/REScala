@@ -12,7 +12,7 @@ class Pessimistic extends AbstractTurn {
   /** registering a dependency on a node we do not personally own does require some additional care.
     * we move responsibility to the commit phase */
   override def register(sink: Reactive)(source: Reactive): Unit = {
-    if (source.lock.isOwned(key)) super.register(sink)(source)
+    if (source.lock.isLockedBy(key)) super.register(sink)(source)
     else {
       if (!source.dependants.get.contains(sink))
         lazyDependencyUpdates += source -> sink
@@ -68,7 +68,7 @@ class Pessimistic extends AbstractTurn {
     * if the current owner of the lock decides to share it with us.
     * but that case seems very unlikely, so the test should provide a solid shortcut */
   def acquireDynamic(reactive: Reactive): Unit = {
-    if (!reactive.lock.isAccessible(key)) {
+    if (!reactive.lock.isAccessibleBy(key)) {
       reactive.lock.request(key)
     }
   }
@@ -90,6 +90,12 @@ class Pessimistic extends AbstractTurn {
 
     def evaluate(reactive: Reactive): Unit = {
       acquireDynamic(reactive)
+      if (!reactive.lock.isLockedBy(key))
+        key.withMaster {
+          key.subsequent = None
+          reactive.lock.getOwner.append(key)
+        }.awaitDone()
+
       reactive.dependants.get.foreach(lq.enqueue(-42))
     }
     initialSources.foreach(lq.enqueue(-42))
