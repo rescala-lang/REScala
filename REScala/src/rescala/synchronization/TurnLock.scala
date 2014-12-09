@@ -10,14 +10,14 @@ final class TurnLock {
 
   def getOwner: LockOwner = synchronized(owner)
 
-  def isOwned(implicit turn: LockOwner): Boolean = synchronized(owner eq turn)
+  def isOwned(turn: LockOwner): Boolean = synchronized(owner eq turn)
 
   /** accessible effectively means that we can do whatever with the locked object */
-  def isAccessible(implicit turn: LockOwner): Boolean = synchronized(isOwned(turn) || isShared(turn))
+  def isAccessible(turn: LockOwner): Boolean = synchronized(isOwned(turn) || isShared(turn))
 
   /** this will block until the lock is owned by the turn.
     * this does not dest for shared access and thus will deadlock if the current owner has its locks shared with the turn */
-  def lock()(implicit turn: LockOwner): Unit = synchronized {
+  def lock(turn: LockOwner): Unit = synchronized {
     while (tryLock(turn) ne turn) wait()
   }
 
@@ -33,7 +33,7 @@ final class TurnLock {
     * as we hold all the master locks, the owner can not be in the middle of unlocking stuff, so we do always get everything.
     * */
   @tailrec
-  def request()(implicit turn: LockOwner): Unit = {
+  def request(turn: LockOwner): Unit = {
     val oldOwner = tryLock(turn)
     val res = if (oldOwner eq turn) 'done
     else {
@@ -54,8 +54,8 @@ final class TurnLock {
       }
     }
     res match {
-      case 'await => lock()(turn)
-      case 'retry => request()(turn)
+      case 'await => lock(turn)
+      case 'retry => request(turn)
       case 'done =>
     }
   }

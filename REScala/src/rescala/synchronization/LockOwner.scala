@@ -2,18 +2,18 @@ package rescala.synchronization
 
 import java.util.concurrent.locks.ReentrantLock
 
-trait LockOwner {
+final class LockOwner {
   /** if we have a request from some other owner, that owner has given us shared access to all his locks
     * and is waiting for one of our locks to be transferred to him.
     * writing of this field is guarded by the masterLock */
-  @volatile final var waitingForThis: Option[LockOwner] = None
+  @volatile var waitingForThis: Option[LockOwner] = None
 
   /** this grants shared access to our locks to the group to which initial belongs.
     * when grant is called both masterLocks of us and initial must be held.
     * we then follow the request chain from initial until the end, locking everything along the way
     * (this should not deadlock, because the request chain gives a unique order to the locking process).
     * eventually when initial completes its turn, it will transfer all of its locks to us. */
-  final def grant(initial: LockOwner): Unit = {
+  def grant(initial: LockOwner): Unit = {
     def run(other: LockOwner): Unit =
       other.waitingForThis match {
         case None => other.waitingForThis = Some(this)
@@ -27,7 +27,7 @@ trait LockOwner {
   /** the master lock guards writes to the requester, as well as all unlocks
     * also this lock will be held when a turn request the locks of another
     * this prevents a cycle of turns to lock each other and create a ring of waiting turns */
-  final val masterLock: ReentrantLock = new ReentrantLock()
+  val masterLock: ReentrantLock = new ReentrantLock()
   def withMaster[R](f: => R): R = {
     masterLock.lock()
     try f
@@ -39,9 +39,9 @@ trait LockOwner {
     * 1: when the current transaction locks something
     * 2: when the transaction we are waiting for transfers their locks
     * these two things are mutually exclusive. */
-  @volatile final protected var heldLocks: List[TurnLock] = Nil
+  @volatile protected var heldLocks: List[TurnLock] = Nil
 
-  final def addLock(lock: TurnLock): Unit = heldLocks ::= lock
+  def addLock(lock: TurnLock): Unit = heldLocks ::= lock
 
   /** both unlock and transfer assume that the master lock is locked */
   private def unlockAll(): Unit = heldLocks.distinct.foreach(_.unlock(this))
@@ -55,7 +55,7 @@ trait LockOwner {
 
   /** release all locks we hold or transfer them to a waiting transaction if there is one
     * holds the master lock for request */
-  final def releaseAll(): Unit = withMaster {
+  def releaseAll(): Unit = withMaster {
     waitingForThis match {
       case Some(req) =>
         transferAll(req)
