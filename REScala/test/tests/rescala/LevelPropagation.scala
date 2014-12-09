@@ -102,4 +102,39 @@ class LevelPropagation extends AssertionsForJUnit {
 
   }
 
+  @Test def levelIncreaseAndChangeFromeSomewhereElseWorksTogether(): Unit = {
+    val l0 = Var(0)
+    val l1 = l0.map(_ + 1)
+    val l2 = l1.map(_ + 1)
+    val l3 = l2.map(_ + 1)
+    val l1t4 = Signals.dynamic(l0) { t =>
+      if (l0(t) == 10) l3(t) else 13
+    }
+    var reevals = 0
+    val l2t5 = Signals.lift(l1t4, l1){ (a, b) => reevals += 1; a + b}
+    var reevals2 = 0
+    val l3t6 = l2t5.map{v => reevals2 += 1; v + 1}
+
+    assert(l3.getLevel === 3)
+    assert(l1t4.getLevel === 1)
+    assert(l2t5.getLevel === 2)
+    assert(l1t4.now === 13)
+    assert(l2t5.now === 14)
+    assert(reevals === 1)
+    assert(reevals2 === 1)
+
+
+    l0.set(10)
+
+    assert(l3.getLevel === 3)
+    assert(l1t4.getLevel === 4)
+    assert(l2t5.getLevel === 5)
+    assert(l1t4.now === 13)
+    assert(l2t5.now === 24)
+    assert(reevals === 2)
+    assert(reevals2 === 2)
+
+
+  }
+
 }
