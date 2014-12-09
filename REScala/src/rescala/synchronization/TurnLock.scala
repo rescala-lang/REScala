@@ -6,18 +6,18 @@ import scala.annotation.tailrec
 final class TurnLock {
 
   /** this is guarded by our intrinsic lock */
-  private var owner: LockOwner = null
+  private var owner: Key = null
 
-  def getOwner: LockOwner = synchronized(owner)
+  def getOwner: Key = synchronized(owner)
 
-  def isOwned(turn: LockOwner): Boolean = synchronized(owner eq turn)
+  def isOwned(turn: Key): Boolean = synchronized(owner eq turn)
 
   /** accessible effectively means that we can do whatever with the locked object */
-  def isAccessible(turn: LockOwner): Boolean = synchronized(isOwned(turn) || isShared(turn))
+  def isAccessible(turn: Key): Boolean = synchronized(isOwned(turn) || isShared(turn))
 
   /** this will block until the lock is owned by the turn.
     * this does not dest for shared access and thus will deadlock if the current owner has its locks shared with the turn */
-  def lock(turn: LockOwner): Unit = synchronized {
+  def lock(turn: Key): Unit = synchronized {
     while (tryLock(turn) ne turn) wait()
   }
 
@@ -33,7 +33,7 @@ final class TurnLock {
     * as we hold all the master locks, the owner can not be in the middle of unlocking stuff, so we do always get everything.
     * */
   @tailrec
-  def request(turn: LockOwner): Unit = {
+  def request(turn: Key): Unit = {
     val oldOwner = tryLock(turn)
     val res = if (oldOwner eq turn) 'done
     else {
@@ -62,9 +62,9 @@ final class TurnLock {
 
 
   /** traverses the request queue starting from the turn and checks if any of the waiting turns owns this lock  */
-  def isShared(turn: LockOwner): Boolean = synchronized {
+  def isShared(turn: Key): Boolean = synchronized {
     @tailrec
-    def run(curr: LockOwner): Boolean =
+    def run(curr: Key): Boolean =
       if (curr eq owner) true
       else curr.waitingForThis match {
         case None => false
@@ -75,7 +75,7 @@ final class TurnLock {
 
   /** locks this if it is free, returns true if the turn owns this lock.
     * does not check for shared access. */
-  private def tryLock(turn: LockOwner): LockOwner = synchronized {
+  private def tryLock(turn: Key): Key = synchronized {
     if (owner eq null) {
       owner = turn
       turn.addLock(this)
@@ -86,7 +86,7 @@ final class TurnLock {
   /** transfers the lock from the turn to the target.
     * this notifies all turns waiting on this lock because we need the turn the lock was transferred to to wake up
     * (it will currently be waiting in the lock call made at the end of request */
-  def transfer(target: LockOwner)(turn: LockOwner) = synchronized {
+  def transfer(target: Key)(turn: Key) = synchronized {
     if (isOwned(turn)) {
       owner = target
       notifyAll()
@@ -95,12 +95,12 @@ final class TurnLock {
   }
 
   /** transferring to null frees the owner */
-  def unlock(turn: LockOwner): Unit = transfer(null)(turn)
+  def unlock(turn: Key): Unit = transfer(null)(turn)
 
   /** this tries to get all master locks of the given owners in a fixed order.
     * it returns the failure value if it could not acquire all locks,
     * or execute the handler with all locks held if it could */
-  private def lockMasterOrdered[R](lo: LockOwner*)(f: => R): R = {
+  private def lockMasterOrdered[R](lo: Key*)(f: => R): R = {
     val sorted = lo.sortBy(System.identityHashCode)
     sorted.foreach(_.masterLock.lock())
     try { f }

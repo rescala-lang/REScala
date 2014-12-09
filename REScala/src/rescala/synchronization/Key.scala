@@ -2,19 +2,19 @@ package rescala.synchronization
 
 import java.util.concurrent.locks.ReentrantLock
 
-final class LockOwner {
+final class Key {
   /** if we have a request from some other owner, that owner has given us shared access to all his locks
     * and is waiting for one of our locks to be transferred to him.
     * writing of this field is guarded by the masterLock */
-  @volatile var waitingForThis: Option[LockOwner] = None
+  @volatile var waitingForThis: Option[Key] = None
 
   /** this grants shared access to our locks to the group to which initial belongs.
     * when grant is called both masterLocks of us and initial must be held.
     * we then follow the request chain from initial until the end, locking everything along the way
     * (this should not deadlock, because the request chain gives a unique order to the locking process).
     * eventually when initial completes its turn, it will transfer all of its locks to us. */
-  def grant(initial: LockOwner): Unit = {
-    def run(other: LockOwner): Unit =
+  def grant(initial: Key): Unit = {
+    def run(other: Key): Unit =
       other.waitingForThis match {
         case None => other.waitingForThis = Some(this)
         case Some(third) =>
@@ -48,7 +48,7 @@ final class LockOwner {
   /** we acquire the master lock for the target, because the target waits on one of the locks we transfer,
     * and it will wake up as soon as that one is unlocked and we do not want the target to start unlocking
     * or wait on someone else before we have everything transferred */
-  private def transferAll(target: LockOwner): Unit = target.withMaster {
+  private def transferAll(target: Key): Unit = target.withMaster {
     target.heldLocks :::= heldLocks
     heldLocks.distinct.foreach(_.transfer(target)(this))
   }

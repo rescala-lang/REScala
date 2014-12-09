@@ -6,7 +6,7 @@ import rescala.propagation.{AbstractTurn, LevelQueue}
 
 class Pessimistic extends AbstractTurn {
 
-  private val sync = new LockOwner
+  private val sync = new Key
   var lazyDependencyUpdates: Set[(Reactive, Reactive)] = Set()
 
   /** registering a dependency on a node we do not personally own does require some additional care.
