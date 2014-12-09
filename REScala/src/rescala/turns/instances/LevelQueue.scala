@@ -1,9 +1,9 @@
-package rescala.propagation.turns.instances
+package rescala.turns.instances
 
 import java.lang.{Boolean => jlBool}
 
-import rescala.propagation.Reactive
-import rescala.propagation.turns.Turn
+import rescala.graph.Reactive
+import rescala.turns.Turn
 
 import scala.collection.SortedSet
 

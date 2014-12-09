@@ -1,6 +1,6 @@
 package rescala
 
-import rescala.propagation.{Ticket, Pulsing}
+import rescala.graph.{Ticket, Pulsing}
 
 import scala.collection.LinearSeq
 import scala.collection.immutable.Queue

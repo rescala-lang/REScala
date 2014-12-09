@@ -1,7 +1,7 @@
-package rescala.propagation
+package rescala.graph
 
-import rescala.propagation.turns.Turn
-import rescala.propagation.turns.instances.{AbstractTurn, Pessimistic, Simple}
+import rescala.turns.Turn
+import rescala.turns.instances.{AbstractTurn, Pessimistic, Simple}
 
 import scala.util.DynamicVariable
 

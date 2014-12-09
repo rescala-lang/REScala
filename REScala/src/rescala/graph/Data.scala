@@ -1,4 +1,4 @@
-package rescala.propagation
+package rescala.graph
 
 import scala.util.DynamicVariable
 
@@ -27,7 +27,7 @@ case class DepDiff(novel: Set[Reactive], old: Set[Reactive]) {
 
 sealed trait Pulse[+P] {
 
-  import rescala.propagation.Pulse._
+  import rescala.graph.Pulse._
 
   def fold[Q](ifNone: => Q, ifChange: P => Q): Q
   def current: Option[P]

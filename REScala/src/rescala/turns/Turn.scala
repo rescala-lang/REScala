@@ -1,6 +1,6 @@
-package rescala.propagation.turns
+package rescala.turns
 
-import rescala.propagation.Reactive
+import rescala.graph.Reactive
 
 /**
  * The engine that schedules the (glitch-free) evaluation

@@ -1,6 +1,6 @@
-package rescala.propagation.turns
+package rescala.turns
 
-import rescala.propagation.Reactive
+import rescala.graph.Reactive
 
 import scala.annotation.tailrec
 

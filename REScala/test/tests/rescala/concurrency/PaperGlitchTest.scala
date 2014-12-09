@@ -17,7 +17,7 @@ class PaperGlitchTest extends AssertionsForJUnit {
 
     // ============================================================================================================
 
-    import rescala.propagation.Engines.unmanaged
+    import rescala.graph.Engines.unmanaged
     // <-- change here for FUN
 
     val price = Var(3)

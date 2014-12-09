@@ -5,7 +5,7 @@ import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.Evt
-import rescala.propagation.Engines
+import rescala.graph.Engines
 import Engines.default
 
 

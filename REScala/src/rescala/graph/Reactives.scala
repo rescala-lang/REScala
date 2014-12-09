@@ -1,22 +1,22 @@
-package rescala.propagation
+package rescala.graph
 
-import rescala.propagation.Pulse.{Diff, NoChange}
-import rescala.propagation.turns.{Commitable, Turn, TurnLock, Buffer}
+import rescala.graph.Pulse.{Diff, NoChange}
+import rescala.turns.{Commitable, Turn, TurnLock, Buffer}
 
 /** A Reactive is a value type which has a dependency to other Reactives */
 trait Reactive {
-  final private[propagation] val lock: TurnLock = new TurnLock(this)
+  final private[rescala] val lock: TurnLock = new TurnLock(this)
 
-  final private[propagation] val level: Buffer[Int] = Buffer(0, math.max)
+  final private[rescala] val level: Buffer[Int] = Buffer(0, math.max)
 
-  final private[propagation] val dependants: Buffer[Set[Reactive]] = Buffer(Set(), (_, x) => x)
+  final private[rescala] val dependants: Buffer[Set[Reactive]] = Buffer(Set(), (_, x) => x)
 
   /** for testing */
   def getLevel(implicit maybe: Ticket) = maybe { level.get(_) }
 
   /** called when it is this events turn to be evaluated
     * (head of the evaluation queue) */
-  protected[propagation] def reevaluate()(implicit turn: Turn): EvaluationResult
+  protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult
 
   private val name = {
     val classname = getClass.getName
@@ -66,9 +66,9 @@ trait Stateful[+A] extends Pulsing[A] {
 /** reevaluation strategy for static dependencies */
 trait StaticReevaluation[+P] extends Pulsing[P] {
   /** side effect free calculation of the new pulse for the current turn */
-  protected[propagation] def calculatePulse()(implicit turn: Turn): Pulse[P]
+  protected[rescala] def calculatePulse()(implicit turn: Turn): Pulse[P]
 
-  final override protected[propagation] def reevaluate()(implicit turn: Turn): EvaluationResult = {
+  final override protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult = {
     val p = calculatePulse()
     pulses.set(p)
     EvaluationResult.Static(p.isChange)

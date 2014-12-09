@@ -1,8 +1,8 @@
 package rescala
 
-import rescala.propagation.Pulse.{Diff, NoChange}
-import rescala.propagation.turns.Turn
-import rescala.propagation.{Ticket, DynamicReevaluation, Pulse, Pulsing, Reactive, StaticReevaluation}
+import rescala.graph.Pulse.{Diff, NoChange}
+import rescala.turns.Turn
+import rescala.graph.{Ticket, DynamicReevaluation, Pulse, Pulsing, Reactive, StaticReevaluation}
 
 
 object Events {

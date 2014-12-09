@@ -1,6 +1,6 @@
-package rescala.propagation
+package rescala.graph
 
-import rescala.propagation.turns.Turn
+import rescala.turns.Turn
 
 import scala.annotation.implicitNotFound
 

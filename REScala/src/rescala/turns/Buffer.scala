@@ -1,4 +1,4 @@
-package rescala.propagation.turns
+package rescala.turns
 
 final class Buffer[A](initialValue: A, initialStrategy: (A, A) => A) extends Commitable {
 
@@ -32,8 +32,8 @@ final class Buffer[A](initialValue: A, initialStrategy: (A, A) => A) extends Com
 }
 
 trait Commitable {
-  protected[propagation] def commit(implicit turn: Turn): Unit
-  protected[propagation] def release(implicit turn: Turn): Unit
+  def commit(implicit turn: Turn): Unit
+  def release(implicit turn: Turn): Unit
 }
 
 object Buffer {

@@ -1,7 +1,7 @@
 package rescala
 
-import rescala.propagation.turns.{Commitable, Turn, Buffer}
-import rescala.propagation.{Ticket, EvaluationResult, Pulsing, Reactive}
+import rescala.turns.{Commitable, Turn, Buffer}
+import rescala.graph.{Ticket, EvaluationResult, Pulsing, Reactive}
 
 
 trait Observe {
@@ -20,8 +20,8 @@ object Observe {
         EvaluationResult.Static(changed = false)
       }
 
-      override protected[rescala] def release(implicit turn: Turn): Unit = ()
-      override protected[rescala] def commit(implicit turn: Turn): Unit = cached.get.foreach(v => turn.afterCommit(fun(v)))
+      override def release(implicit turn: Turn): Unit = ()
+      override def commit(implicit turn: Turn): Unit = cached.get.foreach(v => turn.afterCommit(fun(v)))
 
       override def remove()(implicit maybe: Ticket): Unit = maybe(_.unregister(this)(dependency))
     }))
