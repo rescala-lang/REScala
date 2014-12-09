@@ -1,5 +1,7 @@
 package rescala.propagation.turns.instances
 
+import java.lang.{Boolean => jlBool}
+
 import rescala.propagation.Reactive
 import rescala.propagation.turns.Turn
 
@@ -10,18 +12,25 @@ class LevelQueue(evaluator: Reactive => Unit)(implicit val currenTurn: Turn) {
   private var evalQueue = SortedSet[QueueElement]()
 
   /** mark the reactive as needing a reevaluation */
-  def enqueue(minLevel: Int)(dep: Reactive): Unit = {
-    evalQueue += QueueElement(dep.level.get, dep, minLevel)
+  def enqueue(minLevel: Int, changed: Boolean = true)(dep: Reactive): Unit = {
+    evalQueue += QueueElement(dep.level.get, dep, minLevel, changed)
   }
 
   final def evaluate(queueElement: QueueElement): Unit = {
-    val QueueElement(headLevel, head, headMinLevel) = queueElement
+    val QueueElement(headLevel, head, headMinLevel, doEvaluate) = queueElement
     if (headLevel < headMinLevel) {
       head.level.set(headMinLevel)
-      enqueue(headMinLevel)(head)
-      head.dependants.get.foreach(enqueue(headMinLevel + 1))
+      val reevaluate = if (doEvaluate) true
+      else if (evalQueue.isEmpty) false
+      else if (evalQueue.head.reactive ne head) false
+      else {
+        evalQueue = evalQueue.tail
+        true
+      }
+      enqueue(headMinLevel, reevaluate)(head)
+      head.dependants.get.foreach(enqueue(headMinLevel + 1, reevaluate))
     }
-    else {
+    else if (doEvaluate) {
       evaluator(head)
     }
   }
@@ -35,12 +44,16 @@ class LevelQueue(evaluator: Reactive => Unit)(implicit val currenTurn: Turn) {
     }
   }
 
-  private case class QueueElement(level: Int, reactive: Reactive, minLevel: Int)
+  private case class QueueElement(level: Int, reactive: Reactive, minLevel: Int, evaluate: Boolean)
   private implicit def ordering: Ordering[QueueElement] = new Ordering[QueueElement] {
     override def compare(x: QueueElement, y: QueueElement): Int = {
-      val levelDiff = x.level.compareTo(y.level)
+      val levelDiff = Integer.compare(x.level, y.level)
       if (levelDiff != 0) levelDiff
-      else x.reactive.hashCode().compareTo(y.reactive.hashCode())
+      else {
+        val hashDiff = Integer.compare(x.reactive.hashCode(), y.reactive.hashCode())
+        if (hashDiff != 0) hashDiff
+        else jlBool.compare(x.evaluate, y.evaluate)
+      }
     }
   }
 }

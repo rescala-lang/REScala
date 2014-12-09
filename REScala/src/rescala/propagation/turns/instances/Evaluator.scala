@@ -10,32 +10,25 @@ object Evaluator {
   def evaluate(head: Reactive)(implicit turn: Turn): Result = {
     val result = head.reevaluate()
     result match {
-      case Static(hasChanged) => Done(head, hasChanged, -42)
+      case Static(hasChanged) => Result(head, hasChanged, -42, None, redo = false)
       case Dynamic(hasChanged, diff) =>
         val newLevel = maximumLevel(diff.novel) + 1
         if (head.level.get >= newLevel) {
-          Done(head, hasChanged, newLevel, Some(diff))
+          Result(head, hasChanged, newLevel, Some(diff), redo = false)
         }
         else {
-          Redo(head, newLevel, Some(diff))
+          Result(head, hasChanged, newLevel, Some(diff), redo = true)
         }
     }
   }
 
   def maximumLevel(dependencies: Set[Reactive])(implicit turn: Turn): Int = dependencies.foldLeft(-1)((acc, r) => math.max(acc, r.level.get))
 
-  sealed trait Result {
-    def head: Reactive
-    def getDiff: Option[DepDiff]
-    def requeue(q: Int => Reactive => Unit)(implicit turn: Turn): Unit
+  case class Result(head: Reactive, changed: Boolean, level: Int, getDiff: Option[DepDiff], redo: Boolean) {
+    def requeue(q: (Int, Boolean) => Reactive => Unit)(implicit turn: Turn): Unit =
+      if (redo) q(level, changed)(head)
+      else if (changed) head.dependants.get.foreach(q(level, changed))
   }
-  case class Done(head: Reactive, changed: Boolean, level: Int, getDiff: Option[DepDiff] = None) extends Result {
-    override def requeue(q: Int => Reactive => Unit)(implicit turn: Turn): Unit = if (changed) head.dependants.get.foreach(q(level))
-  }
-  case class Redo(head: Reactive, level: Int, getDiff: Option[DepDiff]) extends Result {
-    override def requeue(q: Int => Reactive => Unit)(implicit turn: Turn): Unit = q(level)(head)
-  }
-
 
 }
 
