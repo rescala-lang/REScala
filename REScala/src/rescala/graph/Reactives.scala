@@ -12,13 +12,14 @@ trait Reactive {
 
   final private[rescala] val dependants: Buffer[Set[Reactive]] = Buffer(Set(), (_, x) => x)
 
-  /** for testing */
-  def getLevel(implicit maybe: Ticket) = maybe { level.get(_) }
-
   /** called when it is this events turn to be evaluated
     * (head of the evaluation queue) */
   protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult
 
+  /** for testing */
+  final def getLevel(implicit maybe: Ticket) = maybe { level.get(_) }
+
+  /** for debugging */
   private val name = {
     val classname = getClass.getName
     val unqualifiedClassname = classname.substring(classname.lastIndexOf('.') + 1)
@@ -31,8 +32,6 @@ trait Reactive {
     s"${ trace(i).getFileName }(${ trace(i).getLineNumber })"
   }
   override def toString = name
-
-
 }
 
 /** A node that has nodes that depend on it */
