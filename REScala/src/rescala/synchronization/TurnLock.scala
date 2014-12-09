@@ -1,7 +1,5 @@
 package rescala.synchronization
 
-import rescala.graph.Reactive
-
 import scala.annotation.tailrec
 
 
@@ -44,9 +42,9 @@ final class TurnLock {
           tryLock() match {
             // make sure the other owner did not unlock before we got his master lock
             case newOwner if newOwner eq turn => 'done
-            case newOwner if newOwner ne oldOwner =>'retry
+            case newOwner if newOwner ne oldOwner => 'retry
             // test makes sure, that owner is not waiting on us
-            case _ if isShared =>'done
+            case _ if isShared => 'done
             // trade our rights
             case _ =>
               turn.grant(owner)
