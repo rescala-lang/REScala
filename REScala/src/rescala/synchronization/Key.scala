@@ -27,11 +27,11 @@ final class Key {
   /** the master lock guards writes to the requester, as well as all unlocks
     * also this lock will be held when a turn request the locks of another
     * this prevents a cycle of turns to lock each other and create a ring of waiting turns */
-  val masterLock: ReentrantLock = new ReentrantLock()
+  val keyLock: ReentrantLock = new ReentrantLock()
   def withMaster[R](f: => R): R = {
-    masterLock.lock()
+    keyLock.lock()
     try f
-    finally masterLock.unlock()
+    finally keyLock.unlock()
   }
 
   /** contains a list of all locks owned by us.

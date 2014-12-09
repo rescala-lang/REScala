@@ -102,9 +102,9 @@ final class TurnLock {
     * or execute the handler with all locks held if it could */
   private def lockMasterOrdered[R](lo: Key*)(f: => R): R = {
     val sorted = lo.sortBy(System.identityHashCode)
-    sorted.foreach(_.masterLock.lock())
+    sorted.foreach(_.keyLock.lock())
     try { f }
-    finally sorted.foreach(_.masterLock.unlock())
+    finally sorted.foreach(_.keyLock.unlock())
   }
 
 }
