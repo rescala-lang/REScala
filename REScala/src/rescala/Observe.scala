@@ -1,7 +1,6 @@
 package rescala
 
-import rescala.interfaces.Ticket
-import rescala.turns.Turn
+import rescala.turns.{Turn, Ticket}
 import rescala.graph.{Buffer, Commitable, EvaluationResult, Pulsing, Reactive}
 
 

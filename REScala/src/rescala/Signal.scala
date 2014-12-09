@@ -1,6 +1,6 @@
 package rescala
 
-import rescala.interfaces.Ticket
+import rescala.turns.Ticket
 import rescala.graph.Stateful
 
 

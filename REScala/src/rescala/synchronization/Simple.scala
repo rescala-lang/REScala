@@ -1,4 +1,4 @@
-package rescala.turns.instances
+package rescala.synchronization
 
 import rescala.graph.Reactive
 import rescala.propagation.AbstractTurn

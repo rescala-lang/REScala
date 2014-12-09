@@ -5,10 +5,10 @@ package tests.rescala
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.interfaces.Engines
+import rescala.turns.Engines
 import Engines.default
 import rescala.Var
-import rescala.interfaces.Engines
+import rescala.turns.Engines
 
 
 class VarTestSuite extends AssertionsForJUnit with MockitoSugar {

@@ -1,6 +1,4 @@
-package rescala.interfaces
-
-import rescala.turns.Turn
+package rescala.turns
 
 import scala.language.implicitConversions
 

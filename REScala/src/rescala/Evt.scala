@@ -1,7 +1,6 @@
 package rescala
 
-import rescala.interfaces.Engine
-import rescala.turns.Turn
+import rescala.turns.{Turn, Engine}
 import rescala.graph.{EvaluationResult, Pulse}
 
 /**

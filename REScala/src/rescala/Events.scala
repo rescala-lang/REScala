@@ -1,8 +1,7 @@
 package rescala
 
-import rescala.interfaces.Ticket
+import rescala.turns.{Turn, Ticket}
 import rescala.graph.Pulse.{Diff, NoChange}
-import rescala.turns.Turn
 import rescala.graph.{DynamicReevaluation, Pulse, Pulsing, Reactive, StaticReevaluation}
 
 

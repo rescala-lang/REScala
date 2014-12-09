@@ -2,10 +2,9 @@ package tests.rescala
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
-import rescala.interfaces.{Engines, Ticket}
+import rescala.turns.{Turn, Engines, Ticket}
 import Engines.default
 import rescala.{Signal, Signals, Var}
-import rescala.turns.Turn
 
 import scala.language.implicitConversions
 

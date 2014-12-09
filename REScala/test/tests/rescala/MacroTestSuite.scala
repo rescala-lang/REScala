@@ -3,7 +3,7 @@ package tests.rescala
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.interfaces.Engines
+import rescala.turns.Engines
 import rescala.{Event, Signal, Var, Evt}
 import Engines.default
 
