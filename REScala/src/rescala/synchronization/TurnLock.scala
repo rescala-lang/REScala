@@ -5,7 +5,7 @@ import rescala.graph.Reactive
 import scala.annotation.tailrec
 
 
-final class TurnLock(val reactive: Reactive) {
+final class TurnLock {
 
   /** this is guarded by our intrinsic lock */
   private var owner: LockOwner = null
