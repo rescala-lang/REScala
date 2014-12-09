@@ -20,9 +20,9 @@ class Pessimistic extends AbstractTurn {
   }
 
   /** this is for cases where we register and then unregister the same dependency in a single turn */
-  override def unregister(downstream: Reactive)(upstream: Reactive): Unit = {
-    super.unregister(downstream)(upstream)
-    lazyDependencyUpdates -= (upstream -> downstream)
+  override def unregister(sink: Reactive)(source: Reactive): Unit = {
+    super.unregister(sink)(source)
+    lazyDependencyUpdates -= (source -> sink)
   }
 
 
@@ -30,12 +30,12 @@ class Pessimistic extends AbstractTurn {
     * (it is a new dependency, that has conceptually been there before the other turn, so it needs to be evaluated) */
   override def commitPhase(): Unit = {
     super.commitPhase()
-    lazyDependencyUpdates.foreach { case (up, down) =>
+    lazyDependencyUpdates.foreach { case (source, sink) =>
       //TODO: this line is quite unfortunate. it kinda works based on the assumption that only one kind of turn may run in a network, but still …
       //2014-11-25 i say this is only temporary, lets see how this ends
-      val other = up.lock.getOwner.asInstanceOf[Pessimistic]
-      other.register(down)(up)
-      other.levelQueue.enqueue(-42)(down)
+      val other = source.lock.getOwner.asInstanceOf[Pessimistic]
+      other.register(sink)(source)
+      other.levelQueue.enqueue(-42)(sink)
     }
   }
 
