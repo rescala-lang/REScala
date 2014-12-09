@@ -12,7 +12,6 @@ trait Event[+T] extends Pulsing[T] {
   final def +=(react: T => Unit)(implicit maybe: Ticket): Observe = observe(react)(maybe)
   final def observe(react: T => Unit)(implicit maybe: Ticket): Observe = Observe(this)(react)
 
-
   /**
    * Events disjunction.
    */
