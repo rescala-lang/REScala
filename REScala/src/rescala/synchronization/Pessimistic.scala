@@ -93,6 +93,7 @@ class Pessimistic extends AbstractTurn {
       acquireDynamic(reactive)
       if (!reactive.lock.isLockedBy(key))
         key.withMaster {
+          key.releaseAll()
           key.subsequent = None
           reactive.lock.getOwner.append(key)
         }.awaitDone()
