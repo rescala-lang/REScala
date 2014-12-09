@@ -47,7 +47,7 @@ class Pessimistic extends AbstractTurn {
     * it is important, that the locks for the dependencies are acquired BEFORE the constructor for the new reactive.
     * is executed, because the constructor typically accesses the dependencies to create its initial value. */
   override def create[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
-    dependencies.foreach(acquireDynamic)
+    dependencies.foreach(acquireWrite)
     val reactive = f
     reactive.lock.lock(key)
     super.create(dependencies)(reactive)
@@ -55,7 +55,7 @@ class Pessimistic extends AbstractTurn {
 
   /** similar to create, except for the ensure level and evaluate calls */
   override def createDynamic[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
-    dependencies.foreach(acquireDynamic)
+    dependencies.foreach(acquireWrite)
     val reactive = f
     reactive.lock.lock(key)
     super.createDynamic(dependencies)(reactive)
@@ -74,6 +74,16 @@ class Pessimistic extends AbstractTurn {
     }
   }
 
+  def acquireWrite(reactive: Reactive): Unit = {
+    acquireDynamic(reactive)
+    if (!reactive.lock.isLockedBy(key))
+      key.withMaster {
+        key.releaseAll()
+        key.subsequent = None
+        reactive.lock.getOwner.append(key)
+      }.awaitDone()
+  }
+
 
   /** so i did improve whats noted in the todos below … at least i hope i did.
     * TODO: this probably needs improvement … well it definitely does
@@ -90,14 +100,7 @@ class Pessimistic extends AbstractTurn {
     lazy val lq = new LevelQueue(evaluate)
 
     def evaluate(reactive: Reactive): Unit = {
-      acquireDynamic(reactive)
-      if (!reactive.lock.isLockedBy(key))
-        key.withMaster {
-          key.releaseAll()
-          key.subsequent = None
-          reactive.lock.getOwner.append(key)
-        }.awaitDone()
-
+      acquireWrite(reactive)
       reactive.dependants.get.foreach(lq.enqueue(-42))
     }
     initialSources.foreach(lq.enqueue(-42))
