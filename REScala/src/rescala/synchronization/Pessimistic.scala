@@ -6,13 +6,13 @@ import rescala.propagation.{AbstractTurn, LevelQueue}
 
 class Pessimistic extends AbstractTurn {
 
-  private val sync = new Key
+  private val key = new Key
   var lazyDependencyUpdates: Set[(Reactive, Reactive)] = Set()
 
   /** registering a dependency on a node we do not personally own does require some additional care.
     * we move responsibility to the commit phase */
   override def register(sink: Reactive)(source: Reactive): Unit = {
-    if (source.lock.isOwned(sync)) super.register(sink)(source)
+    if (source.lock.isOwned(key)) super.register(sink)(source)
     else {
       if (!source.dependants.get.contains(sink))
         lazyDependencyUpdates += source -> sink
@@ -48,7 +48,7 @@ class Pessimistic extends AbstractTurn {
   override def create[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
     dependencies.foreach(acquireDynamic)
     val reactive = f
-    reactive.lock.lock(sync)
+    reactive.lock.lock(key)
     super.create(dependencies)(reactive)
   }
 
@@ -56,7 +56,7 @@ class Pessimistic extends AbstractTurn {
   override def createDynamic[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
     dependencies.foreach(acquireDynamic)
     val reactive = f
-    reactive.lock.lock(sync)
+    reactive.lock.lock(key)
     super.createDynamic(dependencies)(reactive)
   }
 
@@ -68,8 +68,8 @@ class Pessimistic extends AbstractTurn {
     * if the current owner of the lock decides to share it with us.
     * but that case seems very unlikely, so the test should provide a solid shortcut */
   def acquireDynamic(reactive: Reactive): Unit = {
-    if (!reactive.lock.isAccessible(sync)) {
-      reactive.lock.request(sync)
+    if (!reactive.lock.isAccessible(key)) {
+      reactive.lock.request(key)
     }
   }
 
@@ -99,12 +99,12 @@ class Pessimistic extends AbstractTurn {
   /** this is called after the initial closure of the turn has been executed,
     * that is the eval queue is populated with the sources */
   override def lockingPhase(): Unit = {
-    initialSources.foreach(_.lock.request(sync))
+    initialSources.foreach(_.lock.request(key))
     initialSources = (initialSources zip initialValues).filter(_._2()).unzip._1
     lockReachable()
   }
 
   /** this is called after the turn has finished propagating, but before handlers are executed */
-  override def realeasePhase(): Unit = sync.releaseAll()
+  override def realeasePhase(): Unit = key.releaseAll()
 }
 
