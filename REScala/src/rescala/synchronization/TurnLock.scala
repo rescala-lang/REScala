@@ -33,29 +33,29 @@ final class TurnLock {
     * as we hold all the master locks, the owner can not be in the middle of unlocking stuff, so we do always get everything.
     * */
   @tailrec
-  def request(turn: Key): Unit = {
-    val oldOwner = tryLock(turn)
-    val res = if (oldOwner eq turn) 'done
+  def request(requester: Key): Unit = {
+    val oldOwner = tryLock(requester)
+    val res = if (oldOwner eq requester) 'done
     else {
-      lockMasterOrdered(turn, oldOwner) {
+      lockMasterOrdered(requester, oldOwner) {
         synchronized {
-          tryLock(turn) match {
+          tryLock(requester) match {
             // make sure the other owner did not unlock before we got his master lock
-            case newOwner if newOwner eq turn => 'done
+            case newOwner if newOwner eq requester => 'done
             case newOwner if newOwner ne oldOwner => 'retry
             // test makes sure, that owner is not waiting on us
-            case _ if isShared(turn) => 'done
+            case _ if isShared(requester) => 'done
             // trade our rights
             case _ =>
-              turn.grant(owner)
+              requester.append(owner)
               'await
           }
         }
       }
     }
     res match {
-      case 'await => lock(turn)
-      case 'retry => request(turn)
+      case 'await=> lock(requester)
+      case 'retry => request(requester)
       case 'done =>
     }
   }
@@ -66,7 +66,7 @@ final class TurnLock {
     @tailrec
     def run(curr: Key): Boolean =
       if (curr eq owner) true
-      else curr.waitingForThis match {
+      else curr.subsequent match {
         case None => false
         case Some(req) => run(req)
       }
