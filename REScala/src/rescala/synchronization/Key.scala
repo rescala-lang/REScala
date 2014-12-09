@@ -2,7 +2,10 @@ package rescala.synchronization
 
 import java.util.concurrent.locks.{Condition, ReentrantLock}
 
-final class Key {
+import rescala.graph.Reactive
+
+final class Key(val handleDependencyChange: (Reactive, Reactive) => Unit) {
+
   /** if we have a request from some other owner, that owner has given us shared access to all his locks
     * and is waiting for one of our locks to be transferred to him.
     * writing of this field is guarded by the masterLock */

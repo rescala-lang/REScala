@@ -6,7 +6,11 @@ import rescala.propagation.{AbstractTurn, LevelQueue}
 
 class Pessimistic extends AbstractTurn {
 
-  private val key = new Key
+  private val key = new Key((sink, source) => {
+    register(sink)(source)
+    levelQueue.enqueue(-42)(sink)
+  })
+
   var lazyDependencyUpdates: Set[(Reactive, Reactive)] = Set()
 
   /** registering a dependency on a node we do not personally own does require some additional care.
@@ -31,11 +35,8 @@ class Pessimistic extends AbstractTurn {
   override def commitPhase(): Unit = {
     super.commitPhase()
     lazyDependencyUpdates.foreach { case (source, sink) =>
-      //TODO: this line is quite unfortunate. it kinda works based on the assumption that only one kind of turn may run in a network, but still …
-      //2014-11-25 i say this is only temporary, lets see how this ends
-      val other = source.lock.getOwner.asInstanceOf[Pessimistic]
-      other.register(sink)(source)
-      other.levelQueue.enqueue(-42)(sink)
+      val other = source.lock.getOwner
+      other.handleDependencyChange(source, sink)
     }
   }
 
