@@ -23,7 +23,7 @@ trait Turn {
   def createDynamic[T <: Reactive](dependencies: Set[Reactive])(f: => T): T
 
   /** removes reactive from its dependencies */
-  def unregister(dependant: Reactive)(dependency: Reactive): Unit
+  def unregister(sink: Reactive)(source: Reactive): Unit
 
   /** mark the state of the reactive as changed, i.e. it needs a commit or rollback */
   def plan(commitable: Commitable): Unit

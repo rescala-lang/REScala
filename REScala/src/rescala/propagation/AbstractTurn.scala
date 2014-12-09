@@ -29,13 +29,13 @@ abstract class AbstractTurn extends Turn {
 
   def acquireDynamic(reactive: Reactive): Unit
 
-  def register(downstream: Reactive)(upstream: Reactive): Unit = {
-    upstream.dependants.transform(_ + downstream)
+  def register(sink: Reactive)(source: Reactive): Unit = {
+    source.dependants.transform(_ + sink)
   }
 
-  def unregister(downstream: Reactive)(upstream: Reactive): Unit = {
-    acquireDynamic(upstream)
-    upstream.dependants.transform(_ - downstream)
+  def unregister(sink: Reactive)(source: Reactive): Unit = {
+    acquireDynamic(source)
+    source.dependants.transform(_ - sink)
   }
 
   def plan(commitable: Commitable): Unit = {

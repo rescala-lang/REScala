@@ -12,11 +12,11 @@ class Pessimistic extends AbstractTurn with LockOwner {
 
   /** registering a dependency on a node we do not personally own does require some additional care.
     * we move responsibility to the commit phase */
-  override def register(downstream: Reactive)(upstream: Reactive): Unit = {
-    if (upstream.lock.isOwned) super.register(downstream)(upstream)
+  override def register(sink: Reactive)(source: Reactive): Unit = {
+    if (source.lock.isOwned) super.register(sink)(source)
     else {
-      if (!upstream.dependants.get.contains(downstream))
-        lazyDependencyUpdates += upstream -> downstream
+      if (!source.dependants.get.contains(sink))
+        lazyDependencyUpdates += source -> sink
     }
   }
 
