@@ -6,6 +6,9 @@ import rescala.graph.Stateful
 
 trait Signal[+A] extends Stateful[A] {
 
+  /** add an observer */
+  def observe(react: A => Unit)(implicit maybe: Ticket): Observe = Observe(this)(react)
+
   /** Return a Signal with f applied to the value */
   def map[B](f: A => B)(implicit maybe: Ticket): Signal[B] = Signals.mapping(this) { turn => f(get(turn)) }
 

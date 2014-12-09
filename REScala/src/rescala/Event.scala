@@ -8,8 +8,9 @@ import scala.collection.immutable.Queue
 
 trait Event[+T] extends Pulsing[T] {
 
-  /** add an event handler */
-  def +=(react: T => Unit)(implicit maybe: Ticket): Observe = Observe(this)(react)
+  /** add an observer */
+  def +=(react: T => Unit)(implicit maybe: Ticket): Observe = observe(react)(maybe)
+  def observe(react: T => Unit)(implicit maybe: Ticket): Observe = Observe(this)(react)
 
 
   /**
