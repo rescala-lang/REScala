@@ -2,7 +2,7 @@ package tests.rescala
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
-import rescala.graph.Engines
+import rescala.interfaces.Engines
 import rescala.{Signals, Var}
 import Engines.default
 

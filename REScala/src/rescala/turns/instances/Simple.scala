@@ -1,6 +1,7 @@
 package rescala.turns.instances
 
 import rescala.graph.Reactive
+import rescala.propagation.AbstractTurn
 
 /** doing nothing can be useful on its own */
 class Simple extends AbstractTurn {

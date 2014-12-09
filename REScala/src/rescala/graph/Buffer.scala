@@ -1,4 +1,6 @@
-package rescala.turns
+package rescala.graph
+
+import rescala.turns.Turn
 
 final class Buffer[A](initialValue: A, initialStrategy: (A, A) => A) extends Commitable {
 

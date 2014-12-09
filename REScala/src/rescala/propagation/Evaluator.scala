@@ -1,8 +1,8 @@
-package rescala.turns.instances
+package rescala.propagation
 
 import rescala.graph.EvaluationResult.{Dynamic, Static}
-import rescala.turns.Turn
 import rescala.graph.{DepDiff, Reactive}
+import rescala.turns.Turn
 
 object Evaluator {
 

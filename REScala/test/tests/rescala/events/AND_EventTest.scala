@@ -4,8 +4,9 @@ import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.Evt
-import rescala.graph.Engines
+import rescala.interfaces.Engines
 import Engines.default
+import rescala.interfaces.Engines
 
 
 class AND_EventTest extends AssertionsForJUnit with MockitoSugar {

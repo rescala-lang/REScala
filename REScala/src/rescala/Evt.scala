@@ -1,7 +1,8 @@
 package rescala
 
+import rescala.interfaces.Engine
 import rescala.turns.Turn
-import rescala.graph.{Engine, EvaluationResult, Pulse}
+import rescala.graph.{EvaluationResult, Pulse}
 
 /**
  * An implementation of an imperative event

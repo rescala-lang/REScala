@@ -1,4 +1,4 @@
-package rescala.graph
+package rescala.interfaces
 
 import rescala.turns.Turn
 

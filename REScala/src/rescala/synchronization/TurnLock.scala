@@ -1,4 +1,4 @@
-package rescala.turns
+package rescala.synchronization
 
 import rescala.graph.Reactive
 

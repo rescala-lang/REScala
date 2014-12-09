@@ -1,7 +1,9 @@
 package rescala.graph
 
+import rescala.interfaces.Ticket
 import rescala.graph.Pulse.{Diff, NoChange}
-import rescala.turns.{Commitable, Turn, TurnLock, Buffer}
+import rescala.synchronization.TurnLock
+import rescala.turns.Turn
 
 /** A Reactive is a value type which has a dependency to other Reactives */
 trait Reactive {

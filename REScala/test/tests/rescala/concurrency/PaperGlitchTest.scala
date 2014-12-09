@@ -4,6 +4,7 @@ import java.util.concurrent.{ConcurrentLinkedQueue, CountDownLatch}
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
+import rescala.interfaces.Engines
 import rescala.{Signals, Var}
 
 import scala.util.Random
@@ -17,7 +18,7 @@ class PaperGlitchTest extends AssertionsForJUnit {
 
     // ============================================================================================================
 
-    import rescala.graph.Engines.unmanaged
+    import Engines.unmanaged
     // <-- change here for FUN
 
     val price = Var(3)

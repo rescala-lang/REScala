@@ -1,7 +1,7 @@
-package rescala.turns.instances
+package rescala.synchronization
 
 import rescala.graph.Reactive
-import rescala.turns.LockOwner
+import rescala.propagation.{AbstractTurn, LevelQueue}
 
 
 class Pessimistic extends AbstractTurn with LockOwner {

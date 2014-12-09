@@ -1,7 +1,9 @@
-package rescala.graph
+package rescala.interfaces
 
+import rescala.propagation.AbstractTurn
+import rescala.synchronization.Pessimistic
 import rescala.turns.Turn
-import rescala.turns.instances.{AbstractTurn, Pessimistic, Simple}
+import rescala.turns.instances.Simple
 
 import scala.util.DynamicVariable
 

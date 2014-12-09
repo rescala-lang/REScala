@@ -1,7 +1,8 @@
 package rescala
 
+import rescala.interfaces.Engine
 import rescala.turns.Turn
-import rescala.graph.{Engine, EvaluationResult, Pulse}
+import rescala.graph.{EvaluationResult, Pulse}
 
 /** A root Reactive value without dependencies which can be set */
 final class Var[T](initval: T) extends Signal[T] {

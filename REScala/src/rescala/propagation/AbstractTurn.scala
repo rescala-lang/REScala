@@ -1,8 +1,8 @@
-package rescala.turns.instances
+package rescala.propagation
 
-import rescala.graph.Reactive
-import rescala.turns.{Commitable, Turn}
-import rescala.turns.instances.Evaluator.Result
+import rescala.graph.{Commitable, Reactive}
+import rescala.propagation.Evaluator.Result
+import rescala.turns.Turn
 
 abstract class AbstractTurn extends Turn {
   outer =>

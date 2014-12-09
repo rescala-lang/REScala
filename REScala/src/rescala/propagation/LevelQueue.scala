@@ -1,4 +1,4 @@
-package rescala.turns.instances
+package rescala.propagation
 
 import java.lang.{Boolean => jlBool}
 

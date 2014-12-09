@@ -69,6 +69,7 @@ sourceGenerators in Compile <+= sourceManaged in Compile map { dir =>
      |import rescala._
      |import rescala.graph._
      |import rescala.turns._
+     |import rescala.interfaces._
      |
      |trait GeneratedLift {
      |self: Signals.type =>

@@ -1,6 +1,7 @@
 package rescala
 
-import rescala.graph.{Ticket, Pulsing}
+import rescala.interfaces.Ticket
+import rescala.graph.Pulsing
 
 import scala.collection.LinearSeq
 import scala.collection.immutable.Queue
