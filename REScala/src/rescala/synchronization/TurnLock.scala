@@ -13,12 +13,12 @@ final class TurnLock {
   def isOwned(implicit turn: LockOwner): Boolean = synchronized(owner eq turn)
 
   /** accessible effectively means that we can do whatever with the locked object */
-  def isAccessible(implicit turn: LockOwner): Boolean = synchronized(isOwned || isShared)
+  def isAccessible(implicit turn: LockOwner): Boolean = synchronized(isOwned(turn) || isShared(turn))
 
   /** this will block until the lock is owned by the turn.
     * this does not dest for shared access and thus will deadlock if the current owner has its locks shared with the turn */
   def lock()(implicit turn: LockOwner): Unit = synchronized {
-    while (tryLock() ne turn) wait()
+    while (tryLock(turn) ne turn) wait()
   }
 
   /** request basically means that the turn will share all its locks with the owner of the current lock
@@ -34,17 +34,17 @@ final class TurnLock {
     * */
   @tailrec
   def request()(implicit turn: LockOwner): Unit = {
-    val oldOwner = tryLock()
+    val oldOwner = tryLock(turn)
     val res = if (oldOwner eq turn) 'done
     else {
       lockMasterOrdered(turn, oldOwner) {
         synchronized {
-          tryLock() match {
+          tryLock(turn) match {
             // make sure the other owner did not unlock before we got his master lock
             case newOwner if newOwner eq turn => 'done
             case newOwner if newOwner ne oldOwner => 'retry
             // test makes sure, that owner is not waiting on us
-            case _ if isShared => 'done
+            case _ if isShared(turn) => 'done
             // trade our rights
             case _ =>
               turn.grant(owner)
@@ -54,15 +54,15 @@ final class TurnLock {
       }
     }
     res match {
-      case 'await => lock()
-      case 'retry => request()
+      case 'await => lock()(turn)
+      case 'retry => request()(turn)
       case 'done =>
     }
   }
 
 
   /** traverses the request queue starting from the turn and checks if any of the waiting turns owns this lock  */
-  def isShared(implicit turn: LockOwner): Boolean = synchronized {
+  def isShared(turn: LockOwner): Boolean = synchronized {
     @tailrec
     def run(curr: LockOwner): Boolean =
       if (curr eq owner) true
@@ -75,7 +75,7 @@ final class TurnLock {
 
   /** locks this if it is free, returns true if the turn owns this lock.
     * does not check for shared access. */
-  private def tryLock()(implicit turn: LockOwner): LockOwner = synchronized {
+  private def tryLock(turn: LockOwner): LockOwner = synchronized {
     if (owner eq null) {
       owner = turn
       turn.addLock(this)
@@ -86,8 +86,8 @@ final class TurnLock {
   /** transfers the lock from the turn to the target.
     * this notifies all turns waiting on this lock because we need the turn the lock was transferred to to wake up
     * (it will currently be waiting in the lock call made at the end of request */
-  def transfer(target: LockOwner)(implicit turn: LockOwner) = synchronized {
-    if (isOwned) {
+  def transfer(target: LockOwner)(turn: LockOwner) = synchronized {
+    if (isOwned(turn)) {
       owner = target
       notifyAll()
     }
@@ -95,7 +95,7 @@ final class TurnLock {
   }
 
   /** transferring to null frees the owner */
-  def unlock()(implicit turn: LockOwner): Unit = transfer(null)
+  def unlock(turn: LockOwner): Unit = transfer(null)(turn)
 
   /** this tries to get all master locks of the given owners in a fixed order.
     * it returns the failure value if it could not acquire all locks,

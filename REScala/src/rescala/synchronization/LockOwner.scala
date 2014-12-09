@@ -3,8 +3,6 @@ package rescala.synchronization
 import java.util.concurrent.locks.ReentrantLock
 
 trait LockOwner {
-  private implicit def currentLockOwner: LockOwner = this
-
   /** if we have a request from some other owner, that owner has given us shared access to all his locks
     * and is waiting for one of our locks to be transferred to him.
     * writing of this field is guarded by the masterLock */
@@ -46,7 +44,7 @@ trait LockOwner {
   final def addLock(lock: TurnLock): Unit = heldLocks ::= lock
 
   /** both unlock and transfer assume that the master lock is locked */
-  private def unlockAll(): Unit = heldLocks.distinct.foreach(_.unlock()(this))
+  private def unlockAll(): Unit = heldLocks.distinct.foreach(_.unlock(this))
   /** we acquire the master lock for the target, because the target waits on one of the locks we transfer,
     * and it will wake up as soon as that one is unlocked and we do not want the target to start unlocking
     * or wait on someone else before we have everything transferred */
