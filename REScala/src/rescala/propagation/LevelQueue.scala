@@ -12,8 +12,8 @@ class LevelQueue(evaluator: Reactive => Unit)(implicit val currenTurn: Turn) {
   private var evalQueue = SortedSet[QueueElement]()
 
   /** mark the reactive as needing a reevaluation */
-  def enqueue(minLevel: Int, changed: Boolean = true)(dep: Reactive): Unit = {
-    evalQueue += QueueElement(dep.level.get, dep, minLevel, changed)
+  def enqueue(minLevel: Int, needsEvaluate: Boolean = true)(dep: Reactive): Unit = {
+    evalQueue += QueueElement(dep.level.get, dep, minLevel, needsEvaluate)
   }
 
   final def evaluate(queueElement: QueueElement): Unit = {
@@ -44,7 +44,7 @@ class LevelQueue(evaluator: Reactive => Unit)(implicit val currenTurn: Turn) {
     }
   }
 
-  private case class QueueElement(level: Int, reactive: Reactive, minLevel: Int, evaluate: Boolean)
+  private case class QueueElement(level: Int, reactive: Reactive, minLevel: Int, needsEvaluate: Boolean)
   private implicit def ordering: Ordering[QueueElement] = new Ordering[QueueElement] {
     override def compare(x: QueueElement, y: QueueElement): Int = {
       val levelDiff = Integer.compare(x.level, y.level)
@@ -52,7 +52,7 @@ class LevelQueue(evaluator: Reactive => Unit)(implicit val currenTurn: Turn) {
       else {
         val hashDiff = Integer.compare(x.reactive.hashCode(), y.reactive.hashCode())
         if (hashDiff != 0) hashDiff
-        else jlBool.compare(x.evaluate, y.evaluate)
+        else jlBool.compare(x.needsEvaluate, y.needsEvaluate)
       }
     }
   }
