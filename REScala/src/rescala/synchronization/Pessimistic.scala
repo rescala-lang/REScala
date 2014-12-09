@@ -47,7 +47,7 @@ class Pessimistic extends AbstractTurn {
     * it is important, that the locks for the dependencies are acquired BEFORE the constructor for the new reactive.
     * is executed, because the constructor typically accesses the dependencies to create its initial value. */
   override def create[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
-    dependencies.foreach(acquireWrite)
+    dependencies.foreach(acquireDynamic)
     val reactive = f
     reactive.lock.lock(key)
     super.create(dependencies)(reactive)
@@ -55,7 +55,7 @@ class Pessimistic extends AbstractTurn {
 
   /** similar to create, except for the ensure level and evaluate calls */
   override def createDynamic[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
-    dependencies.foreach(acquireWrite)
+    dependencies.foreach(acquireDynamic)
     val reactive = f
     reactive.lock.lock(key)
     super.createDynamic(dependencies)(reactive)
