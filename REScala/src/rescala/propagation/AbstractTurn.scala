@@ -5,7 +5,6 @@ import rescala.turns.Turn
 import rescala.propagation.Evaluator.Result
 
 abstract class AbstractTurn extends Turn {
-  outer =>
   implicit def currentTurn: AbstractTurn = this
 
   protected var toCommit = Set[Commitable]()
