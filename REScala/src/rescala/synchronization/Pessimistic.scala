@@ -6,7 +6,7 @@ import rescala.propagation.{AbstractTurn, LevelQueue}
 
 class Pessimistic extends AbstractTurn {
 
-  private val key = new Key((sink, source) => {
+  final val key = new Key((sink, source) => {
     register(sink)(source)
     levelQueue.enqueue(-42)(sink)
   })

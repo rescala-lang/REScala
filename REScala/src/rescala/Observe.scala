@@ -12,7 +12,7 @@ object Observe {
 
   def apply[T](dependency: Pulsing[T])(fun: T => Unit)(implicit maybe: Ticket): Observe =
     maybe(_.create(Set(dependency))(new Reactive with Commitable with Observe {
-      val cached = Buffer[Option[T]](None, (_, x) => x)
+      val cached = Buffer[Option[T]](None, (_, x) => x, this)
 
       override protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult = {
         cached.set(dependency.pulse.toOption)

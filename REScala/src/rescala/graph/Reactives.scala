@@ -8,9 +8,9 @@ import rescala.synchronization.TurnLock
 trait Reactive {
   final private[rescala] val lock: TurnLock = new TurnLock
 
-  final private[rescala] val level: Buffer[Int] = Buffer(0, math.max)
+  final private[rescala] val level: Buffer[Int] = Buffer(0, math.max, this)
 
-  final private[rescala] val dependants: Buffer[Set[Reactive]] = Buffer(Set(), (_, x) => x)
+  final private[rescala] val dependants: Buffer[Set[Reactive]] = Buffer(Set(), (_, x) => x, this)
 
   /** called when it is this events turn to be evaluated
     * (head of the evaluation queue) */
@@ -36,7 +36,7 @@ trait Reactive {
 
 /** A node that has nodes that depend on it */
 trait Pulsing[+P] extends Reactive {
-  final protected[this] val pulses: Buffer[Pulse[P]] = Buffer(Pulse.none, (x, _) => x)
+  final protected[this] val pulses: Buffer[Pulse[P]] = Buffer(Pulse.none, (x, _) => x, this)
 
   final def pulse(implicit turn: Turn): Pulse[P] = pulses.get
 }
@@ -77,7 +77,7 @@ trait StaticReevaluation[+P] extends Pulsing[P] {
 
 /** reevaluation strategy for dynamic dependencies */
 trait DynamicReevaluation[+P] extends Pulsing[P] {
-  private val dependencies: Buffer[Set[Reactive]] = Buffer(Set(), (_, x) => x)
+  private val dependencies: Buffer[Set[Reactive]] = Buffer(Set(), (_, x) => x, this)
 
   /** side effect free calculation of the new pulse and the new dependencies for the current turn */
   def calculatePulseDependencies(implicit turn: Turn): (Pulse[P], Set[Reactive])
