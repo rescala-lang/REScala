@@ -16,7 +16,6 @@ final class Buffer[A](initialValue: A, initialStrategy: (A, A) => A, writeLock: 
     value
   }
   def set(value: A)(implicit turn: Turn): Unit = {
-    //TODO: this kills the paper glitch test
     assert(owner == null || owner == turn, s"buffer owned by $owner written by $turn")
     turn match {
       case pessimistic: Pessimistic => assert(writeLock == null || writeLock.isLockedBy(pessimistic.key))
