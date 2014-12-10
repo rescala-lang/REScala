@@ -79,6 +79,8 @@ abstract class AbstractTurn extends Turn {
 
   def commitPhase() = toCommit.foreach(_.commit(this))
 
+  def rollbackPhase() = toCommit.foreach(_.release(this))
+
   def observerPhase() = afterCommitHandlers.foreach(_())
 
   def realeasePhase(): Unit
