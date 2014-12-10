@@ -3,11 +3,9 @@ package tests.rescala
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.turns.Engines
-import rescala.{Event, Signal, Var, Evt}
-import Engines.default
-
 import rescala.macros.SignalMacro.{SignalM => Signal}
+import rescala.turns.Engines.default
+import rescala.{Event, Evt, Signal, Var}
 
 
 class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {

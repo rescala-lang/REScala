@@ -6,10 +6,10 @@ import java.util.concurrent.{ConcurrentLinkedQueue, CountDownLatch}
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
-import rescala.turns.{Engine, Engines}
-import rescala.synchronization.Pessimistic
-import rescala.{Signals, Var}
 import rescala.graph.Reactive
+import rescala.synchronization.Pessimistic
+import rescala.turns.{Engine, Engines}
+import rescala.{Signals, Var}
 
 import scala.collection.JavaConverters._
 

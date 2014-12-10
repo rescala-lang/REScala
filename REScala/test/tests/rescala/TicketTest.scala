@@ -3,8 +3,8 @@ package tests.rescala
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.turns.{Turn, Engine, Engines, Ticket}
 import rescala.turns.Engines.default
+import rescala.turns.{Engine, Ticket, Turn}
 
 class TicketTest extends AssertionsForJUnit with MockitoSugar {
 
