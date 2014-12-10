@@ -10,15 +10,26 @@ final class TurnLock {
 
   def getOwner: Key = synchronized(owner)
 
-  def isLockedBy(key: Key): Boolean = synchronized(owner eq key)
+  /** returns true if key own the write lock */
+  def hasWriteAccess(key: Key): Boolean = synchronized(owner eq key)
 
-  /** accessible effectively means that we can do whatever with the locked object */
-  def isAccessibleBy(key: Key): Boolean = synchronized(isLockedBy(key) || isShared(key))
+  /** accessible effectively means that we are allowed to read the locked object and write its sinks */
+  def hasReadAccess(key: Key): Boolean = synchronized(hasWriteAccess(key) || isShared(key))
 
   /** this will block until the lock is owned by the turn.
     * this does not dest for shared access and thus will deadlock if the current owner has its locks shared with the turn */
   def lock(turn: Key): Unit = synchronized {
     while (tryLock(turn) ne turn) wait()
+  }
+
+  /** locks this if it is free, returns true if the turn owns this lock.
+    * does not check for shared access. */
+  private def tryLock(turn: Key): Key = synchronized {
+    if (owner eq null) {
+      owner = turn
+      turn.addLock(this)
+    }
+    owner
   }
 
   /** request basically means that the turn will share all its locks with the owner of the current lock
@@ -54,7 +65,7 @@ final class TurnLock {
       }
     }
     res match {
-      case 'await=> lock(requester)
+      case 'await => lock(requester)
       case 'retry => request(requester)
       case 'done =>
     }
@@ -73,21 +84,11 @@ final class TurnLock {
     run(turn)
   }
 
-  /** locks this if it is free, returns true if the turn owns this lock.
-    * does not check for shared access. */
-  private def tryLock(turn: Key): Key = synchronized {
-    if (owner eq null) {
-      owner = turn
-      turn.addLock(this)
-    }
-    owner
-  }
-
   /** transfers the lock from the turn to the target.
     * this notifies all turns waiting on this lock because we need the turn the lock was transferred to to wake up
     * (it will currently be waiting in the lock call made at the end of request */
   def transfer(target: Key)(turn: Key) = synchronized {
-    if (isLockedBy(turn)) {
+    if (hasWriteAccess(turn)) {
       owner = target
       notifyAll()
     }

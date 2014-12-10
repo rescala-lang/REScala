@@ -34,7 +34,7 @@ final class Key(val handleDependencyChange: (Reactive, Reactive) => Unit) {
     * these two things are mutually exclusive.
     * we might even get away without the volatile, because the wait/notify creates a happen before relationship
     * but we will still keep it, because concurrency is scary */
-  @volatile protected var heldLocks: List[TurnLock] = Nil
+  @volatile private var heldLocks: List[TurnLock] = Nil
 
   def addLock(lock: TurnLock): Unit = heldLocks ::= lock
 
@@ -61,8 +61,9 @@ final class Key(val handleDependencyChange: (Reactive, Reactive) => Unit) {
     * and it will wake up as soon as that one is unlocked and we do not want the target to start unlocking
     * or wait on someone else before we have everything transferred */
   private def transferAll(target: Key): Unit = target.withMaster {
-    target.heldLocks :::= heldLocks
-    heldLocks.distinct.foreach(_.transfer(target)(this))
+    val distinc = heldLocks.distinct
+    target.heldLocks :::= distinc
+    distinc.foreach(_.transfer(target)(this))
   }
 
   /** release all locks we hold or transfer them to a waiting transaction if there is one
