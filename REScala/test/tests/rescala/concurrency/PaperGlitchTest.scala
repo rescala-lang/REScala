@@ -18,8 +18,8 @@ class PaperGlitchTest extends AssertionsForJUnit {
 
     // ============================================================================================================
 
+    // change here for FUN
     import Engines.unmanaged
-    // <-- change here for FUN
 
     val price = Var(3)
     val tax = price.map { p => p / 3 }
