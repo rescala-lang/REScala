@@ -79,6 +79,7 @@ object REScalaPhilosophers extends App {
     named(s"observePhil(${seating.placeNumber})")(log(seating.philosopher))
     named(s"observeFork(${seating.placeNumber})")(log(seating.leftFork))
     // right fork is the next guy's left fork
+    named(s"observeCanEat(${ seating.placeNumber })")(log(seating.canEat))
   }
 
   // ============================================ Runtime Behavior  =========================================================
@@ -98,14 +99,11 @@ object REScalaPhilosophers extends App {
 
   def eatOnce(seating: Seating) = {
     repeatUntilTrue {
-      DependentUpdate(seating.canEat) {
-        (writes, canEat) =>
-          if (canEat) {
-            writes += seating.philosopher -> Eating
-            true // Don't try again
-          } else {
-            false // Try again
-          }
+      DependentUpdate(seating.canEat) { canEat => canEat } { turn =>
+        seating.philosopher.admit(Eating)(turn)
+        true // Don't try again
+      } {
+        false // Try again
       }
     }
   }
