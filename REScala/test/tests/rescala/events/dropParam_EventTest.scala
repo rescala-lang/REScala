@@ -13,7 +13,7 @@ class dropParam_EventTest extends AssertionsForJUnit with MockitoSugar {
 
   @Test def handlerOf_dropParam_IsExecuted() = {
     var test = 0
-    val e1 = new Evt[Int]()
+    val e1 = Evt[Int]()
     val e1_drop: Event[Unit] = e1.dropParam
     e1_drop += ((x) => { test += 1; })
 

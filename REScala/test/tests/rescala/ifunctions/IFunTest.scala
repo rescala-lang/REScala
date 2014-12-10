@@ -13,14 +13,14 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
 
   /* fold */
   @Test def fold_theInitialValueIsSetCorrectly(): Unit = {
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val f = (x: Int, y: Int) => x + y
     val s: Signal[Int] = e.fold(10)(f)
     assert(s.now == 10)
   }
 
   @Test def fold_theResultSignalIncreasesWhenEventsOccur(): Unit = {
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val f = (x: Int, y: Int) => x + y
     val s: Signal[Int] = e.fold(10)(f)
     e(1)
@@ -31,7 +31,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
 
   /* iterate */
   @Test def iterate_theInitialValueIsSetCorrectly(): Unit = {
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val f = (x: Int) => x
     val s: Signal[Int] = e.iterate(10)(f)
     assert(s.now == 10)
@@ -39,7 +39,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
 
   @Test def iterate_theFunctionisExecutedEveryTimeTheEventFires(): Unit = {
     var test: Int = 0
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val f = (x: Int) => { test += 1; x }
     val s: Signal[Int] = e.iterate(10)(f)
     e(1)
@@ -53,7 +53,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
   // TODO: does it make sense ?
   @Test def iterate_theParameterIsAlwaysTheInitValue(): Unit = {
     var test: Int = 0
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val f = (x: Int) => { test = x; x + 1 }
     val s: Signal[Int] = e.iterate(10)(f)
     e(1)
@@ -66,7 +66,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
 
   @Test def iterate_theResultSignalIsNeverChanged(): Unit = {
     var test: Int = 0
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val f = (x: Int) => { test += x; x }
     val s: Signal[Int] = e.iterate(10)(f)
     e(1)
@@ -79,14 +79,14 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
 
   /* latest */
   @Test def latest_theInitialValueIsSetCorrectly(): Unit = {
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val s: Signal[Int] = e.latest(10)
 
     assert(s.now == 10)
   }
 
   @Test def latest_theFunctionisExecutedEveryTimeTheEventFires(): Unit = {
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val s: Signal[Int] = e.latest(10)
 
     e(1)
@@ -100,14 +100,14 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
 
   /* latestOption */
   @Test def latestOption_theInitialValueIsSetCorrectly(): Unit = {
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val s: Signal[Option[Int]] = e.latestOption()
 
     assert(s.now == None)
   }
 
   @Test def latestOption_theFunctionisExecutedEveryTimeTheEventFires(): Unit = {
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val s: Signal[Option[Int]] = e.latestOption()
 
     e(1)
@@ -121,14 +121,14 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
 
   /* last */
   @Test def last_theInitialValueIsSetCorrectly(): Unit = {
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val s: Signal[LinearSeq[Int]] = e.last(5)
 
     assert(s.now == List())
   }
 
   @Test def last_collectsTheLastNEvents(): Unit = {
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val s: Signal[LinearSeq[Int]] = e.last(5)
 
 
@@ -148,14 +148,14 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
 
   /* list */
   @Test def list_theInitialValueIsSetCorrectly(): Unit = {
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val s = e.list()
 
     assert(s.now == List())
   }
 
   @Test def list_theFunctionisExecutedEveryTimeTheEventFires(): Unit = {
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val s = e.list()
 
     assert(s.now == List())
@@ -173,7 +173,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
 
   /* toggle */
   @Test def toggle_theInitialValueIsSetCorrectly(): Unit = {
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val v1 = Var(1)
     val s1 = v1.map { _ + 1 }
     val v2 = Var(11)
@@ -184,7 +184,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test def toggle_theEventSwitchesTheSignal(): Unit = {
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val v1 = Var(1)
     val s1 = v1.map { _ + 1 }
     val v2 = Var(11)
@@ -208,7 +208,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
 
   /* snapshot */
   @Test def snapshot_theInitialValueIsSetCorrectly(): Unit = {
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val v1 = Var(1)
     val s1 = v1.map { _ + 1 }
     val s = e.snapshot(s1)
@@ -217,7 +217,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test def snapshot_takesASnapshotWhenTheEventOccurs(): Unit = {
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val v1 = Var(1)
     val s1 = v1.map { _ + 1 }
     val s = e.snapshot(s1)
@@ -234,14 +234,14 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
 
   /* delay[T](e: Event[T], init: T, n: Int): Signal[T] */
   @Test def delay_theInitialValueIsSetCorrectly(): Unit = {
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val s = e.delay(0, 3)
 
     assert(s.now == 0)
   }
 
   @Test def delay_takesASnapshotWhenTheEventOccurs(): Unit = {
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val s = e.delay(0, 3)
 
     // Initially remains the same for n times
@@ -292,7 +292,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
 
   /* switchTo */
   @Test def switchTo_theInitialValueIsSetToTheSignal(): Unit = {
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val v1 = Var(1)
     val s1 = v1.map { _ + 1 }
     val s2 = e.switchTo(s1)
@@ -303,7 +303,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test def switchTo_theEventSwitchesTheValueToTheValueOfTheEvent(): Unit = {
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val v1 = Var(1)
     val s1 = v1.map { _ + 1 }
     val s2 = e.switchTo(s1)
@@ -318,7 +318,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
 
   /* switchOnce */
   @Test def switchOnce_theInitialValueIsSetToTheSignal(): Unit = {
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val v1 = Var(0)
     val v2 = Var(10)
     val s1 = v1.map { _ + 1 }
@@ -331,7 +331,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test def switchOnce_theEventSwitchesTheValueToTheValueOfTheOtherSignal(): Unit = {
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val v1 = Var(0)
     val v2 = Var(10)
     val s1 = v1.map { _ + 1 }
@@ -347,7 +347,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
 
   /* reset */
   @Test def reset_TheInitialValueOfTheSignalIsGivenByInitAndTheFactory(): Unit = {
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val v1 = Var(0)
     val v2 = Var(10)
     val s1 = v1.map { _ + 1 }
@@ -366,7 +366,7 @@ class IFunTest extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test def reset_TheValueOfTheSignalIsGivenByTheEventAndTheFactory(): Unit = {
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val v1 = Var(0)
     val v2 = Var(10)
     val s1 = v1.map { _ + 1 }

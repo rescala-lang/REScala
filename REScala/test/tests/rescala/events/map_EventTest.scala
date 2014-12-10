@@ -12,7 +12,7 @@ class map_EventTest extends AssertionsForJUnit with MockitoSugar {
 
   @Test def handlerOf_map_IsExecuted() = {
     var test = 0
-    val e1 = new Evt[Int]()
+    val e1 = Evt[Int]()
     val e1_map = e1 map ((x: Int) => x * 2)
     e1_map += ((x: Int) => { test += 1 })
 
@@ -23,7 +23,7 @@ class map_EventTest extends AssertionsForJUnit with MockitoSugar {
 
   @Test def theFunctionPassedTo_map_isApplied() = {
     var test = 0
-    val e1 = new Evt[Int]()
+    val e1 = Evt[Int]()
     val e1_map = e1 map ((x: Int) => x * 2)
     e1_map += ((x: Int) => { test = x })
 

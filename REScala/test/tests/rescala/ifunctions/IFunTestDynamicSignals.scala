@@ -11,13 +11,13 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
 
   /* count */
   @Test def count_theInitialValueIsSetCorrectly(): Unit = {
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val s: Signal[Int] = e.count
     assert(s.now == 0)
   }
 
   @Test def count_theResultSignalIncreasesWhenEventsOccur(): Unit = {
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val s: Signal[Int] = e.count
     e(1)
     e(1)
@@ -26,7 +26,7 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
 
   /* toggle */
   @Test def toggle_theInitialValueIsSetCorrectly(): Unit = {
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
     val v2 = Var(11)
@@ -37,7 +37,7 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test def toggle_theEventSwitchesTheSignal(): Unit = {
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
     val v2 = Var(11)
@@ -61,7 +61,7 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
 
   /* snapshot */
   @Test def snapshot_theInitialValueIsSetCorrectly(): Unit = {
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
     val s = e.snapshot(s1)
@@ -70,7 +70,7 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test def snapshot_takesASnapshotWhenTheEventOccurs(): Unit = {
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
     val s = e.snapshot(s1)
@@ -115,7 +115,7 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
 
   /* switchTo */
   @Test def switchTo_theInitialValueIsSetToTheSignal(): Unit = {
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
     val s2 = e.switchTo(s1)
@@ -126,7 +126,7 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test def switchTo_theEventSwitchesTheValueToTheValueOfTheEvent(): Unit = {
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
     val s2 = e.switchTo(s1)
@@ -141,7 +141,7 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
 
   /* switchOnce */
   @Test def switchOnce_theInitialValueIsSetToTheSignal(): Unit = {
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val v1 = Var(0)
     val v2 = Var(10)
     val s1 = v1.map(_ + 1)
@@ -154,7 +154,7 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test def switchOnce_theEventSwitchesTheValueToTheValueOfTheOtherSignal(): Unit = {
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val v1 = Var(0)
     val v2 = Var(10)
     val s1 = v1.map(_ + 1)
@@ -170,7 +170,7 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
 
   /* reset */
   @Test def reset_TheInitialValueOfTheSignalIsGivenByInitAndTheFactory(): Unit = {
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val v1 = Var(0)
     val v2 = Var(10)
     val s1 = v1.map(_ + 1)
@@ -189,7 +189,7 @@ class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test def reset_TheValueOfTheSignalIsGivenByTheEventAndTheFactory(): Unit = {
-    val e = new Evt[Int]()
+    val e = Evt[Int]()
     val v1 = Var(0)
     val v2 = Var(10)
     val s1 = v1.map(_ + 1)
