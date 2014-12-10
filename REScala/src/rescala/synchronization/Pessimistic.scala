@@ -96,21 +96,19 @@ class Pessimistic extends AbstractTurn {
     * so that nothing can be shared with us.
     * this still has problems, because evaluating the initial closure of the turn may create new reactives,
     * which causes dynamic locking to happen and screw us here. */
-  def lockReachable(): Unit = {
-    lazy val lq = new LevelQueue(evaluate)
-
-    def evaluate(reactive: Reactive): Unit = {
-      acquireWrite(reactive)
-      reactive.dependants.get.foreach(lq.enqueue(-42))
-    }
-    initialSources.foreach(lq.enqueue(-42))
-    lq.evaluateQueue()
+  def lockReachable(remaining: List[Reactive]): Unit = remaining match {
+    case Nil =>
+    case head :: rest =>
+      if (!head.lock.isLockedBy(key)) {
+        acquireWrite(head)
+        lockReachable(head.dependants.get.toList ::: remaining )
+      }
   }
 
   /** this is called after the initial closure of the turn has been executed,
     * that is the eval queue is populated with the sources */
   override def lockingPhase(): Unit = {
-    lockReachable()
+    lockReachable(initialSources)
     initialSources = (initialSources zip initialValues).filter(_._2()).unzip._1
   }
 
