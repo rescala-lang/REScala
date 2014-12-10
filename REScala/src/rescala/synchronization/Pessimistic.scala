@@ -100,21 +100,21 @@ class Pessimistic extends AbstractTurn {
     }
   }
 
-  @tailrec
-  private def lockReachable(remaining: List[Reactive]): Unit = remaining match {
-    case Nil =>
-    case head :: rest =>
-      if (!head.lock.hasWriteAccess(key)) {
-        acquireWrite(head)
-        lockReachable(head.dependants.get.toList ::: rest)
-      }
-      else lockReachable(rest)
+  def lockReachable(): Unit = {
+    lazy val lq = new LevelQueue(evaluate)
+
+    def evaluate(reactive: Reactive): Unit = {
+      acquireWrite(reactive)
+      reactive.dependants.get.foreach(lq.enqueue(-42))
+    }
+    initialSources.foreach(lq.enqueue(-42))
+    lq.evaluateQueue()
   }
 
   /** this is called after the initial closure of the turn has been executed,
     * that is the eval queue is populated with the sources */
   override def lockingPhase(): Unit = {
-    lockReachable(initialSources)
+    lockReachable()
     initialSources = (initialSources zip initialValues).filter(_._2()).unzip._1
   }
 
