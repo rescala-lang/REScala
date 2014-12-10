@@ -8,7 +8,7 @@ import scala.annotation.tailrec
 
 class Pessimistic extends AbstractTurn {
 
-  @volatile final var key: Key = new Key((sink, source) => {
+  final val key: Key = new Key((sink, source) => {
     register(sink)(source)
     levelQueue.enqueue(-42)(sink)
   })
