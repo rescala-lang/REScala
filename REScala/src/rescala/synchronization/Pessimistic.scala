@@ -3,6 +3,8 @@ package rescala.synchronization
 import rescala.graph.Reactive
 import rescala.propagation.{AbstractTurn, LevelQueue}
 
+import scala.annotation.tailrec
+
 
 class Pessimistic extends AbstractTurn {
 
@@ -96,13 +98,15 @@ class Pessimistic extends AbstractTurn {
     * so that nothing can be shared with us.
     * this still has problems, because evaluating the initial closure of the turn may create new reactives,
     * which causes dynamic locking to happen and screw us here. */
-  def lockReachable(remaining: List[Reactive]): Unit = remaining match {
+  @tailrec
+  private def lockReachable(remaining: List[Reactive]): Unit = remaining match {
     case Nil =>
     case head :: rest =>
       if (!head.lock.isLockedBy(key)) {
         acquireWrite(head)
-        lockReachable(head.dependants.get.toList ::: remaining )
+        lockReachable(head.dependants.get.toList ::: rest)
       }
+      else lockReachable(rest)
   }
 
   /** this is called after the initial closure of the turn has been executed,
