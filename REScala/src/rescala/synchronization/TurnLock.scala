@@ -1,9 +1,13 @@
 package rescala.synchronization
 
+import rescala.graph.Reactive
+
 import scala.annotation.tailrec
 
 
-final class TurnLock {
+final class TurnLock(val guards: Reactive) {
+
+  override def toString: String = s"Lock($guards)"
 
   /** this is guarded by our intrinsic lock */
   private var owner: Key = null
