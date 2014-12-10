@@ -178,8 +178,11 @@ class PessimisticTest extends AssertionsForJUnit {
     val c3 = i2b2.map(identity)
 
     var reeval = 0
+    // this starts on level 2. when b0 becomes true b1 becomes true on level 1
+    // at that point both b1 and b2 are true which causes i1 to be added as a dependency
+    // but then b2 becomes false at level 2, causing i1 to be removed again
+    // after that the level is increased and this nonesense no longer happens
     val b2b3i2 = Signals.dynamic(b1) { t => reeval += 1; if (b1(t) && b2(t)) i1(t) else 42 }
-
 
 
     assert(b2b3i2.now === 42)
