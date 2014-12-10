@@ -168,35 +168,35 @@ class PessimisticTest extends AssertionsForJUnit {
   @Test def addAndRemoveDependencyInOneTurnWhileOwnedByAnother(): Unit = synchronized {
 
 
-    val bm1 = Var(false)
-    val b0 = bm1.map(identity)
-    val b2 = b0.map(identity).map(!_)
-    val im1 = Var(11)
-    val i0 = im1.map(identity)
+    val b0 = Var(false)
+    val b1 = b0.map(identity)
+    val b2 = b1.map(identity).map(!_)
+    val i0 = Var(11)
+    val i1 = i0.map(identity)
 
-    val i1 = Signals.dynamic(i0)(t => if (i0(t) == 0) b0(t) else false)
-    val i2 = i1.map(identity)
+    val i2b2 = Signals.dynamic(i1)(t => if (i1(t) == 0) b1(t) else false)
+    val c3 = i2b2.map(identity)
 
     var reeval = 0
-    val ib1_3 = Signals.dynamic(b0) { t => reeval += 1; if (b0(t) && b2(t)) i0(t) else 42 }
+    val b2b3i2 = Signals.dynamic(b1) { t => reeval += 1; if (b1(t) && b2(t)) i1(t) else 42 }
 
 
 
-    assert(ib1_3.now === 42)
+    assert(b2b3i2.now === 42)
     assert(reeval === 1)
 
     // start both turns
-    Pessigen.sync(b0, i0)
+    Pessigen.sync(b1, i1)
     // run the i turn so far that it waits on b
-    // Pessigen.sync(b0, i2) TODO: this does not work because it waits before i2 is ever evaluated …
+    // Pessigen.sync(b1, c3) TODO: this does not work because it waits before c3 is ever evaluated …
     // that should be it … probably
 
     // now, this should create some only in turn dynamic changes
-    val t1 = Spawn { bm1.set(true) }
-    im1.set(0)
+    val t1 = Spawn { b0.set(true) }
+    i0.set(0)
     t1.join()
 
-    assert(ib1_3.now === 42)
+    assert(b2b3i2.now === 42)
     assert(reeval === 3)
 
     assert(Pessigen.clear() == 0)
