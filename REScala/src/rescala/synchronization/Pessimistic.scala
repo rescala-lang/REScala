@@ -38,7 +38,7 @@ class Pessimistic extends AbstractTurn {
     super.commitPhase()
     lazyDependencyUpdates.foreach { case (source, sink) =>
       val other = source.lock.getOwner
-      other.handleDependencyChange(source, sink)
+      other.handleDependencyChange(sink, source)
     }
   }
 
