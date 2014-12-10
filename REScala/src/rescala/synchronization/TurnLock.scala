@@ -48,7 +48,7 @@ final class TurnLock {
     val oldOwner = tryLock(requester)
     val res = if (oldOwner eq requester) 'done
     else {
-      lockMasterOrdered(requester, oldOwner) {
+      SyncUtil.lockOrdered(requester.keyLock, oldOwner.keyLock) {
         synchronized {
           tryLock(requester) match {
             // make sure the other owner did not unlock before we got his master lock
@@ -98,15 +98,6 @@ final class TurnLock {
   /** transferring to null frees the owner */
   def unlock(turn: Key): Unit = transfer(null)(turn)
 
-  /** this tries to get all master locks of the given owners in a fixed order.
-    * it returns the failure value if it could not acquire all locks,
-    * or execute the handler with all locks held if it could */
-  private def lockMasterOrdered[R](lo: Key*)(f: => R): R = {
-    val sorted = lo.sortBy(System.identityHashCode)
-    sorted.foreach(_.keyLock.lock())
-    try { f }
-    finally sorted.foreach(_.keyLock.unlock())
-  }
 
 }
 

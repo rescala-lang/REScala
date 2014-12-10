@@ -22,11 +22,6 @@ final class Key(val handleDependencyChange: (Reactive, Reactive) => Unit) {
     finally keyLock.unlock()
   }
 
-  /** the done condition and state is used to wait for the end of the turn this key belongs to */
-  val doneCondition: Condition = keyLock.newCondition()
-  var done: Boolean = false
-  def awaitDone(): Unit = withMaster { while (!done) doneCondition.await() }
-
   /** contains a list of all locks owned by us.
     * this does not need synchronisation because it is only written in 2 cases:
     * 1: when the current transaction locks something
@@ -75,8 +70,8 @@ final class Key(val handleDependencyChange: (Reactive, Reactive) => Unit) {
       case None =>
         unlockAll()
     }
-    done = true
-    doneCondition.signalAll()
+    heldLocks = Nil
+    subsequent = None
   }
 
 

@@ -8,7 +8,7 @@ import scala.annotation.tailrec
 
 class Pessimistic extends AbstractTurn {
 
-  final val key = new Key((sink, source) => {
+  @volatile final var key: Key = new Key((sink, source) => {
     register(sink)(source)
     levelQueue.enqueue(-42)(sink)
   })
@@ -78,12 +78,16 @@ class Pessimistic extends AbstractTurn {
 
   def acquireWrite(reactive: Reactive): Unit = {
     acquireDynamic(reactive)
-    if (!reactive.lock.hasWriteAccess(key))
+    if (!reactive.lock.hasWriteAccess(key)) {
       key.withMaster {
+        // traverse our own waiting queue and append us at the end
+        key.append(key)
+        // release locks so that whatever waits for us can continue
         key.releaseAll()
-        key.subsequent = None
-        reactive.lock.getOwner.append(key)
-      }.awaitDone()
+      }
+      // can now safely wait as we will get the lock eventually
+      reactive.lock.lock(key)
+    }
   }
 
 
