@@ -1,9 +1,9 @@
 package rescala.graph
 
-import rescala.synchronization.Pessimistic
+import rescala.synchronization.{TurnLock, Pessimistic}
 import rescala.turns.Turn
 
-final class Buffer[A](initialValue: A, initialStrategy: (A, A) => A, buffered: Reactive) extends Commitable {
+final class Buffer[A](initialValue: A, initialStrategy: (A, A) => A, writeLock: TurnLock) extends Commitable {
 
   @volatile var current: A = initialValue
   @volatile private var update: Option[A] = None
@@ -19,7 +19,7 @@ final class Buffer[A](initialValue: A, initialStrategy: (A, A) => A, buffered: R
     //TODO: this kills the paper glitch test
     assert(owner == null || owner == turn, s"buffer owned by $owner written by $turn")
     turn match {
-      case pessimistic: Pessimistic => assert(buffered.lock.isLockedBy(pessimistic.key))
+      case pessimistic: Pessimistic => assert(writeLock == null || writeLock.isLockedBy(pessimistic.key))
       case _ =>
     }
     update = Some(value)
@@ -44,5 +44,5 @@ trait Commitable {
 }
 
 object Buffer {
-  def apply[A](default: A, commitStrategy: (A, A) => A, buffered: Reactive): Buffer[A] = new Buffer[A](default, commitStrategy, buffered)
+  def apply[A](default: A, commitStrategy: (A, A) => A, writeLock: TurnLock): Buffer[A] = new Buffer[A](default, commitStrategy, writeLock)
 }
