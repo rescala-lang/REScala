@@ -18,7 +18,10 @@ final class Buffer[A](initialValue: A, initialStrategy: (A, A) => A, buffered: R
   def set(value: A)(implicit turn: Turn): Unit = {
     //TODO: this kills the paper glitch test
     assert(owner == null || owner == turn, s"buffer owned by $owner written by $turn")
-    if (turn.isInstanceOf[Pessimistic]) assert(buffered.lock.isLockedBy(turn.asInstanceOf[Pessimistic].key))
+    turn match {
+      case pessimistic: Pessimistic => assert(buffered.lock.isLockedBy(pessimistic.key))
+      case _ =>
+    }
     update = Some(value)
     owner = turn
     turn.plan(this)
