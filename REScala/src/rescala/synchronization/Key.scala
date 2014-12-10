@@ -29,7 +29,7 @@ final class Key(val handleDependencyChange: (Reactive, Reactive) => Unit) {
     * these two things are mutually exclusive.
     * we might even get away without the volatile, because the wait/notify creates a happen before relationship
     * but we will still keep it, because concurrency is scary */
-  @volatile private var heldLocks: List[TurnLock] = Nil
+  @volatile private[synchronization] var heldLocks: List[TurnLock] = Nil
 
   def addLock(lock: TurnLock): Unit = heldLocks ::= lock
 
