@@ -10,6 +10,9 @@ object DynamicsSupport {
   def collectDependencies[T](f: => T): (T, Set[Reactive]) = bag.withValue(Set()) { (f, bag.value) }
   /** mark a reactive as dynamically used */
   def useDependency(dependency: Reactive): Unit = bag.value = bag.value + dependency
+
+  val nameVar = new DynamicVariable("")
+  def named[S](n: String)(f: => S): S = nameVar.withValue(n)(f)
 }
 
 sealed trait EvaluationResult

@@ -20,17 +20,19 @@ trait Reactive {
   final def getLevel(implicit maybe: Ticket) = maybe { level.get(_) }
 
   /** for debugging */
-  private val name = {
-    val classname = getClass.getName
-    val unqualifiedClassname = classname.substring(classname.lastIndexOf('.') + 1)
+  private val name =
+    if (DynamicsSupport.nameVar.value.nonEmpty) DynamicsSupport.nameVar.value
+    else {
+      val classname = getClass.getName
+      val unqualifiedClassname = classname.substring(classname.lastIndexOf('.') + 1)
 
-    val trace = Thread.currentThread().getStackTrace
-    var i = 0
-    while (trace(i).toString.startsWith("scala.") || trace(i).toString.startsWith("java.") ||
-      (trace(i).toString.startsWith("rescala.") && !trace(i).toString.startsWith("rescala.test."))) i += 1
+      val trace = Thread.currentThread().getStackTrace
+      var i = 0
+      while (trace(i).toString.startsWith("scala.") || trace(i).toString.startsWith("java.") ||
+        (trace(i).toString.startsWith("rescala.") && !trace(i).toString.startsWith("rescala.test."))) i += 1
 
-    s"${ trace(i).getFileName }(${ trace(i).getLineNumber })"
-  }
+      s"${ trace(i).getFileName }(${ trace(i).getLineNumber })"
+    }
   override def toString = name
 }
 
