@@ -16,9 +16,9 @@ import scala.collection.JavaConverters._
 class PessimisticTestTurn extends Pessimistic {
   override def evaluate(r: Reactive): Unit = {
     while(Pessigen.syncStack.get() match {
-      case stack @ (set, latch) :: tail if set(r) =>
-        latch.countDown()
-        latch.await()
+      case stack @ (set, bar) :: tail if set(r) =>
+        bar.ready.countDown()
+        bar.go.await()
         Pessigen.syncStack.compareAndSet(stack, tail)
         true
       case _ => false
@@ -26,14 +26,31 @@ class PessimisticTestTurn extends Pessimistic {
     super.evaluate(r)
   }
 }
+
+case class Barrier(ready: CountDownLatch, go: CountDownLatch) {
+  def await() = {
+    ready.await()
+    go.countDown()
+  }
+}
+
 object Pessigen extends Engines.Impl(new PessimisticTestTurn) {
-  val syncStack: AtomicReference[List[(Set[Reactive], CountDownLatch)]] = new AtomicReference(Nil)
+  val syncStack: AtomicReference[List[(Set[Reactive], Barrier)]] = new AtomicReference(Nil)
 
   def clear(): Int = syncStack.getAndSet(Nil).size
+
   def sync(reactives: Reactive*): Unit = {
-    val latch = new CountDownLatch(reactives.size)
+    val bar = syncm(reactives: _*)
+    Spawn(bar.await())
+  }
+
+  def syncm(reactives: Reactive*): Barrier = {
+    val ready = new CountDownLatch(reactives.size)
+    val go = new CountDownLatch(1)
     val syncSet = reactives.toSet
-    syncStack.set(syncStack.get() :+ (syncSet -> latch))
+    val bar = Barrier(ready, go)
+    syncStack.set(syncStack.get() :+ ((syncSet, bar)))
+    bar
   }
 
 }
@@ -174,9 +191,6 @@ class PessimisticTest extends AssertionsForJUnit {
     val i0 = Var(11)
     val i1 = i0.map(identity)
 
-    val i2b2 = Signals.dynamic(i1)(t => if (i1(t) == 0) b1(t) else false)
-    val c3 = i2b2.map(identity)
-
     var reeval = 0
     // this starts on level 2. when b0 becomes true b1 becomes true on level 1
     // at that point both b1 and b2 are true which causes i1 to be added as a dependency
@@ -184,20 +198,39 @@ class PessimisticTest extends AssertionsForJUnit {
     // after that the level is increased and this nonesense no longer happens
     val b2b3i2 = Signals.dynamic(b1) { t => reeval += 1; if (b1(t) && b2(t)) i1(t) else 42 }
 
+    // this is here, so that we have another turn, that locks b1.
+    // we need this to be a dynamic lock to lock just this single reactive and not b2 etc.
+    val i2b2 = Signals.dynamic(i1)(t => if (i1(t) == 0) b1(t) else false)
+    val c3 = i2b2.map(identity)
+
+
 
     assert(b2b3i2.now === 42)
     assert(reeval === 1)
 
     // start both turns
     Pessigen.sync(b1, i1)
-    // run the i turn so far that it waits on b
-    // Pessigen.sync(b1, c3) TODO: this does not work because it waits before c3 is ever evaluated …
-    // that should be it … probably
+    // now i has i0, i1, i2b2 locked
+    // and b has b0, b1, b2, b2b3i1
 
-    // now, this should create some only in turn dynamic changes
+    // continue just turn i
+    val bBar = Pessigen.syncm(b1)
+    // i will now try to grab b1, which fails
+    // so i will start to wait on b
+
+    // we start the turns …
     val t1 = Spawn { b0.set(true) }
-    i0.set(0)
+    val t2 = Spawn { i0.set(0) }
+
+    // now everything will should start to happen as described above (i waiting on b)
+    // we then await and release the barrier
+    bBar.await()
+    // which causes b to continue and evaluate b2b3i2
+    // that will add and remove dependencies on i1, which we have readlocked.
+    // that should NOT cause b2b3i2 to be reevaluated when i finally finishes
+
     t1.join()
+    t2.join()
 
     assert(b2b3i2.now === 42)
     assert(reeval === 3)
