@@ -15,6 +15,14 @@ class Pessimistic extends AbstractTurn {
 
   var lazyDependencyUpdates: Set[(Reactive, Reactive)] = Set()
 
+  var evaluated: List[Reactive] = Nil
+
+  override def evaluate(r: Reactive): Unit = {
+    assert(r.lock.hasWriteAccess(key))
+    evaluated ::= r
+    super.evaluate(r)
+  }
+
   /** registering a dependency on a node we do not personally own does require some additional care.
     * we move responsibility to the commit phase */
   override def register(sink: Reactive)(source: Reactive): Unit = {
