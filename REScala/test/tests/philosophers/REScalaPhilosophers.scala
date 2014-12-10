@@ -1,4 +1,4 @@
-package philosophers
+package tests.philosophers
 
 import java.util.concurrent.{LinkedBlockingQueue, ThreadPoolExecutor, TimeUnit}
 
