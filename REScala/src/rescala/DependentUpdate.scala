@@ -12,7 +12,7 @@ object DependentUpdate {
     engine.startNew { turn =>
       object admissions extends Admissions { override def doAdmit[T0](source: Source[T0], value: T0): Unit = source.admit(value)(turn) }
       turn match {
-        case pessimistic: Pessimistic => //signal.lock.lock(pessimistic.key)
+        case pessimistic: Pessimistic => signal.lock.lock(pessimistic.key)
         case _ => throw new IllegalStateException("currently only supports pessimistic turns")
       }
       val result = op(admissions, signal.get(turn))
