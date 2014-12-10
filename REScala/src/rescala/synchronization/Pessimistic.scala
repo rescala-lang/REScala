@@ -89,7 +89,7 @@ class Pessimistic extends AbstractTurn {
       reactive.lock.lock(key)
     }
   }
-  
+
   @tailrec
   private def lockReachable(remaining: List[Reactive]): Unit = remaining match {
     case Nil =>
