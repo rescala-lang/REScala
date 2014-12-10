@@ -11,7 +11,9 @@ class Pessimistic extends AbstractTurn {
   final val key: Key = new Key((sink, source) => {
     register(sink)(source)
     levelQueue.enqueue(-42)(sink)
-  })
+  }) {
+    override val toString: String = s"Key(${SyncUtil.counter.getAndIncrement}})"
+  }
 
   var lazyDependencyUpdates: Set[(Reactive, Reactive)] = Set()
 

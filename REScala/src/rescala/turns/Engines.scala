@@ -1,5 +1,7 @@
 package rescala.turns
 
+import java.util.concurrent.atomic.AtomicInteger
+
 import rescala.propagation.AbstractTurn
 import rescala.synchronization.{Simple, Pessimistic}
 

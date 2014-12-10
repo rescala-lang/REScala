@@ -1,5 +1,6 @@
 package rescala.synchronization
 
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.Lock
 
 object SyncUtil {
@@ -10,5 +11,7 @@ object SyncUtil {
     try { f }
     finally sorted.foreach(_.unlock())
   }
+
+  val counter = new AtomicInteger(0)
 
 }
