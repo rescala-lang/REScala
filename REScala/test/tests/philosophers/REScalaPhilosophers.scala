@@ -25,7 +25,7 @@ object REScalaPhilosophers extends App {
   if (size >= names.size) throw new IllegalArgumentException("Not enough names!")
 
   implicit val pool: ExecutionContext = ExecutionContext.fromExecutor(new ThreadPoolExecutor(
-    0, 1, 1L, TimeUnit.SECONDS, new LinkedBlockingQueue[Runnable]))
+    0, size, 1L, TimeUnit.SECONDS, new LinkedBlockingQueue[Runnable]))
 
 
   // ============================================= Infrastructure ========================================================
