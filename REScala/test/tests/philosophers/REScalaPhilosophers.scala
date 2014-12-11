@@ -11,9 +11,14 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Random
 
 
-
 object REScalaPhilosophers extends App {
-  val names = Random.shuffle(List("Agripina", "Alberto", "Alverta", "Beverlee", "Bill", "Bobby", "Brandy", "Caleb", "Cami", "Candice", "Candra", "Carter", "Cassidy", "Corene", "Danae", "Darby", "Debi", "Derrick", "Douglas", "Dung", "Edith", "Eleonor", "Eleonore", "Elvera", "Ewa", "Felisa", "Fidel", "Filiberto", "Francesco", "Georgia", "Glayds", "Hal", "Jacque", "Jeff", "Joane", "Johnny", "Lai", "Leeanne", "Lenard", "Lita", "Marc", "Marcelina", "Margret", "Maryalice", "Michale", "Mike", "Noriko", "Pete", "Regenia", "Rico", "Roderick", "Roxie", "Salena", "Scottie", "Sherill", "Sid", "Steve", "Susie", "Tyrell", "Viola", "Wilhemina", "Zenobia"))
+  val names = Random.shuffle(
+    List("Agripina", "Alberto", "Alverta", "Beverlee", "Bill", "Bobby", "Brandy", "Caleb", "Cami", "Candice", "Candra",
+      "Carter", "Cassidy", "Corene", "Danae", "Darby", "Debi", "Derrick", "Douglas", "Dung", "Edith", "Eleonor",
+      "Eleonore", "Elvera", "Ewa", "Felisa", "Fidel", "Filiberto", "Francesco", "Georgia", "Glayds", "Hal", "Jacque",
+      "Jeff", "Joane", "Johnny", "Lai", "Leeanne", "Lenard", "Lita", "Marc", "Marcelina", "Margret", "Maryalice",
+      "Michale", "Mike", "Noriko", "Pete", "Regenia", "Rico", "Roderick", "Roxie", "Salena", "Scottie", "Sherill",
+      "Sid", "Steve", "Susie", "Tyrell", "Viola", "Wilhemina", "Zenobia"))
 
   val size = 3
 
@@ -38,14 +43,14 @@ object REScalaPhilosophers extends App {
   case object Eating extends Vision
   case class WaitingFor(name: String) extends Vision
 
-  def calcFork(leftName: String, leftState: Philosopher, rightName: String, rightState: Philosopher): Fork =
+  def calcFork(leftName: String, rightName: String)(leftState: Philosopher, rightState: Philosopher): Fork =
     (leftState, rightState) match {
       case (Thinking, Thinking) => Free
       case (Hungry, _) => Taken(leftName)
       case (_, Hungry) => Taken(rightName)
     }
 
-  def calcVision(ownName: String, leftFork: Fork, rightFork: Fork): Vision =
+  def calcVision(ownName: String)(leftFork: Fork, rightFork: Fork): Vision =
     (leftFork, rightFork) match {
       case (Free, Free) => Ready
       case (Taken(`ownName`), Taken(`ownName`)) => Eating
@@ -62,10 +67,11 @@ object REScalaPhilosophers extends App {
     }
     val forks = for (i <- 0 until tableSize) yield {
       val nextCircularIndex = (i + 1) % tableSize
-      named(s"Fork-${names(i)}-${names(nextCircularIndex)}")(lift(lift(names(i)), phils(i), lift(names(nextCircularIndex)), phils(nextCircularIndex))(calcFork _))
+      named(s"Fork-${names(i)}-${names(nextCircularIndex)}")(
+        lift(phils(i), phils(nextCircularIndex))(calcFork(names(i), names(nextCircularIndex))))
     }
     val visions = for (i <- 0 until tableSize) yield {
-      named(s"Vision-${names(i)}")(lift(lift(names(i)), forks(i), forks((i - 1 + tableSize) % tableSize))(calcVision _))
+      named(s"Vision-${names(i)}")(lift(forks(i), forks((i - 1 + tableSize) % tableSize))(calcVision(names(i))))
     }
     for (i <- 0 until tableSize) yield {
       Seating(i, phils(i), forks(i), forks((i - 1 + tableSize) % tableSize), visions(i))
@@ -148,7 +154,6 @@ object REScalaPhilosophers extends App {
 
   // ===================== SHUTDOWN =====================
   // wait for keyboard input
-  Thread.sleep(3000)
   System.in.read()
 
   // kill all philosophers
