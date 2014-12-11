@@ -4,6 +4,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{LinkedBlockingQueue, ThreadPoolExecutor, TimeUnit}
 import rescala.Signals.lift
 import rescala.graph.Pulsing
+import rescala.synchronization.SyncUtil
 import rescala.turns.Engines.pessimistic
 import rescala.{DependentUpdate, Observe, Signal, Var}
 import rescala.graph.Globals.named
@@ -21,7 +22,7 @@ object REScalaPhilosophers extends App {
       "Michale", "Mike", "Noriko", "Pete", "Regenia", "Rico", "Roderick", "Roxie", "Salena", "Scottie", "Sherill",
       "Sid", "Steve", "Susie", "Tyrell", "Viola", "Wilhemina", "Zenobia"))
 
-  val size = 4
+  val size = 10
 
   if (size >= names.size) throw new IllegalArgumentException("Not enough names!")
 
@@ -115,7 +116,7 @@ object REScalaPhilosophers extends App {
           val eats = eaten.incrementAndGet()
           if (eats % 1000 == 0) {
             val time = System.nanoTime()
-            log(s"eaten: $eats in ${(time - lastTime)/1000000}ms")
+            log(s"eaten: $eats in ${(time - lastTime)/1000000}ms (${SyncUtil.counter.get() / eats}tpe)")
             lastTime = time
           }
           philosopher set Thinking
