@@ -1,19 +1,22 @@
 package tests.philosophers
 
 import java.util.concurrent.{LinkedBlockingQueue, ThreadPoolExecutor, TimeUnit}
-
 import rescala.Signals.lift
 import rescala.graph.Pulsing
 import rescala.turns.Engines.pessimistic
 import rescala.{DependentUpdate, Observe, Signal, Var}
 import rescala.graph.DynamicsSupport.named
-
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Random
 
 
 
 object REScalaPhilosophers extends App {
+  val names = Random.shuffle(List("Agripina", "Alberto", "Alverta", "Beverlee", "Bill", "Bobby", "Brandy", "Caleb", "Cami", "Candice", "Candra", "Carter", "Cassidy", "Corene", "Danae", "Darby", "Debi", "Derrick", "Douglas", "Dung", "Edith", "Eleonor", "Eleonore", "Elvera", "Ewa", "Felisa", "Fidel", "Filiberto", "Francesco", "Georgia", "Glayds", "Hal", "Jacque", "Jeff", "Joane", "Johnny", "Lai", "Leeanne", "Lenard", "Lita", "Marc", "Marcelina", "Margret", "Maryalice", "Michale", "Mike", "Noriko", "Pete", "Regenia", "Rico", "Roderick", "Roxie", "Salena", "Scottie", "Sherill", "Sid", "Steve", "Susie", "Tyrell", "Viola", "Wilhemina", "Zenobia"))
+
   val size = 3
+
+  if (size >= names.size) throw new IllegalArgumentException("Not enough names!")
 
   implicit val pool: ExecutionContext = ExecutionContext.fromExecutor(new ThreadPoolExecutor(
     0, 1, 1L, TimeUnit.SECONDS, new LinkedBlockingQueue[Runnable]))
@@ -23,46 +26,52 @@ object REScalaPhilosophers extends App {
 
   sealed trait Philosopher
   case object Thinking extends Philosopher
-  case object Eating extends Philosopher
+  case object Hungry extends Philosopher
 
   sealed trait Fork
   case object Free extends Fork
-  case object Occupied extends Fork
-  case object DoubleUsageError extends Fork
+  case class Taken(name: String) extends Fork
 
-  val calcFork = { (leftState: Philosopher, rightState: Philosopher) =>
-    if (leftState == Eating && rightState == Eating) {
-      DoubleUsageError
-    } else if (leftState == Eating || rightState == Eating) {
-      Occupied
-    } else {
-      Free
+  sealed trait Vision
+  case object Ready extends Vision
+  case object Eating extends Vision
+  case class WaitingFor(name: String) extends Vision
+
+  def calcFork(leftName: String, leftState: Philosopher, rightName: String, rightState: Philosopher): Fork =
+    (leftState, rightState) match {
+      case (Thinking, Thinking) => Free
+      case (Hungry, _) => Taken(leftName)
+      case (_, Hungry) => Taken(rightName)
     }
-  }
-  val calcReady = { (leftState: Fork, rightState: Fork) =>
-    leftState == Free && rightState == Free
-  }
+
+  def calcVision(ownName: String, leftFork: Fork, rightFork: Fork): Vision =
+    (leftFork, rightFork) match {
+      case (Free, Free) => Ready
+      case (Taken(`ownName`), Taken(`ownName`)) => Eating
+      case (Taken(name), _) => WaitingFor(name)
+      case (_, Taken(name)) => WaitingFor(name)
+    }
 
   // ============================================ Entity Creation =========================================================
 
-  case class Seating(placeNumber: Integer, philosopher: Var[Philosopher], leftFork: Signal[Fork], rightFork: Signal[Fork], canEat: Signal[Boolean])
+  case class Seating(placeNumber: Integer, philosopher: Var[Philosopher], leftFork: Signal[Fork], rightFork: Signal[Fork], vision: Signal[Vision])
   def createTable(tableSize: Int): Seq[Seating] = {
     val phils = for (i <- 0 until tableSize) yield {
-      named(s"Phil$i")(Var[Philosopher](Thinking))
+      named(s"Phil-${names(i)}")(Var[Philosopher](Thinking))
     }
     val forks = for (i <- 0 until tableSize) yield {
-      named(s"Fork$i")(lift(phils(i), phils((i + 1) % tableSize))(calcFork))
+      val nextCircularIndex = (i + 1) % tableSize
+      named(s"Fork-${names(i)}-${names(nextCircularIndex)}")(lift(lift(names(i)), phils(i), lift(names(nextCircularIndex)), phils(nextCircularIndex))(calcFork _))
     }
-    val canEat = for (i <- 0 until tableSize) yield {
-      named(s"canEat$i")(lift(forks(i), forks((i - 1 + tableSize) % tableSize))(calcReady))
+    val visions = for (i <- 0 until tableSize) yield {
+      named(s"Vision-${names(i)}")(lift(lift(names(i)), forks(i), forks((i - 1 + tableSize) % tableSize))(calcVision _))
     }
     for (i <- 0 until tableSize) yield {
-      Seating(i, phils(i), forks(i), forks((i - 1 + tableSize) % tableSize), canEat(i))
+      Seating(i, phils(i), forks(i), forks((i - 1 + tableSize) % tableSize), visions(i))
     }
   }
 
   val seatings = createTable(size)
-  val phils = seatings.map { _.philosopher }
 
   // ============================================== Logging =======================================================
 
@@ -76,16 +85,16 @@ object REScalaPhilosophers extends App {
   }
 
   seatings.foreach { seating =>
-    named(s"observePhil(${seating.placeNumber})")(log(seating.philosopher))
-    named(s"observeFork(${seating.placeNumber})")(log(seating.leftFork))
+    named(s"observePhil(${names(seating.placeNumber)})")(log(seating.philosopher))
+    named(s"observeFork(${names(seating.placeNumber)})")(log(seating.leftFork))
     // right fork is the next guy's left fork
-    named(s"observeCanEat(${ seating.placeNumber })")(log(seating.canEat))
+    named(s"observeVision(${names(seating.placeNumber)})")(log(seating.vision))
   }
 
   // ============================================ Runtime Behavior  =========================================================
 
-  phils.zipWithIndex foreach { case (philosopher, i) =>
-    named(s"think$i")(philosopher.observe { state =>
+  seatings foreach { case Seating(i, philosopher, _, _, vision) =>
+    named(s"think-${names(i)}")(vision.observe { state =>
       if (state == Eating) {
         Future {
           philosopher set Thinking
@@ -99,8 +108,8 @@ object REScalaPhilosophers extends App {
 
   def eatOnce(seating: Seating) = {
     repeatUntilTrue {
-      DependentUpdate(seating.canEat) { canEat => canEat } { turn =>
-        seating.philosopher.admit(Eating)(turn)
+      DependentUpdate(seating.vision) { _ == Ready } { turn =>
+        seating.philosopher.admit(Hungry)(turn)
         true // Don't try again
       } {
         false // Try again
