@@ -5,7 +5,8 @@ import rescala.Signals.lift
 import rescala.graph.Pulsing
 import rescala.turns.Engines.pessimistic
 import rescala.{DependentUpdate, Observe, Signal, Var}
-import rescala.graph.DynamicsSupport.named
+import rescala.graph.Globals.named
+
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Random
 

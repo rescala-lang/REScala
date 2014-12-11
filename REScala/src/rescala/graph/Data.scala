@@ -4,7 +4,7 @@ import scala.util.DynamicVariable
 
 
 /** support for dynamic dependency discovery */
-object DynamicsSupport {
+object Globals {
   val bag = new DynamicVariable(Set[Reactive]())
   /** runs the given code while collecting dynamically used reactives */
   def collectDependencies[T](f: => T): (T, Set[Reactive]) = bag.withValue(Set()) { (f, bag.value) }

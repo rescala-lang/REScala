@@ -21,7 +21,7 @@ trait Reactive {
 
   /** for debugging */
   private val name =
-    if (DynamicsSupport.nameVar.value.nonEmpty) DynamicsSupport.nameVar.value
+    if (Globals.nameVar.value.nonEmpty) Globals.nameVar.value
     else {
       val classname = getClass.getName
       val unqualifiedClassname = classname.substring(classname.lastIndexOf('.') + 1)
@@ -51,7 +51,7 @@ trait Stateful[+A] extends Pulsing[A] {
   final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")
 
   final def apply[T](turn: Turn): A = {
-    DynamicsSupport.useDependency(this)
+    Globals.useDependency(this)
     get(turn)
   }
 

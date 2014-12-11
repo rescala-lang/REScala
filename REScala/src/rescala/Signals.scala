@@ -1,7 +1,7 @@
 package rescala
 
 import rescala.turns.{Turn, Ticket}
-import rescala.graph.{DynamicReevaluation, DynamicsSupport, Pulse, Reactive, StaticReevaluation}
+import rescala.graph.{DynamicReevaluation, Globals, Pulse, Reactive, StaticReevaluation}
 import rescala.signals.GeneratedLift
 
 object Signals extends GeneratedLift {
@@ -10,7 +10,7 @@ object Signals extends GeneratedLift {
   def makeDynamic[T](dependencies: Set[Reactive])(expr: Turn => T)(currentTurn: Turn): Signal[T] = currentTurn.createDynamic(dependencies) {
     new Signal[T] with DynamicReevaluation[T] {
       def calculatePulseDependencies(implicit turn: Turn): (Pulse[T], Set[Reactive]) = {
-        val (newValue, dependencies) = DynamicsSupport.collectDependencies(expr(turn))
+        val (newValue, dependencies) = Globals.collectDependencies(expr(turn))
         (Pulse.diffPulse(newValue, pulses.base), dependencies)
       }
     }
