@@ -1,16 +1,18 @@
 package rescala.synchronization
 
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.locks.Lock
 
 object SyncUtil {
+
   /** locks the given locks in a global deterministic order */
-  def lockOrdered[R](lo: Lock*)(f: => R): R = {
-    val sorted = lo.sortBy(System.identityHashCode)
-    sorted.foreach(_.lock())
+  def lockOrdered[R](lo: Key*)(f: => R): R = {
+    val sorted = lo.sortBy(_.id)
+    sorted.foreach(_.keyLock.lock())
     try { f }
-    finally sorted.foreach(_.unlock())
+    finally sorted.foreach(_.keyLock.unlock())
   }
+
 
   val counter = new AtomicInteger(0)
 
