@@ -43,4 +43,7 @@ object Signals extends GeneratedLift {
     makeStatic(dependencies.toSet, fun(initialTurn))((turn, _) => fun(turn))(initialTurn)
   }
 
+  /** creates a constant signal of the given value */
+  def lift[B](value: B): Signal[B] = Var(value)
+
 }

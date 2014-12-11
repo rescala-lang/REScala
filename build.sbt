@@ -72,7 +72,6 @@ sourceGenerators in Compile <+= sourceManaged in Compile map { dir =>
      |
      |trait GeneratedLift {
      |self: Signals.type =>
-	 |  def lift[B](value: B): Signal[B] = Var(value)
      |${definitions.mkString("\n")}
      |}
    """.stripMargin)
