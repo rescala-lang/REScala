@@ -22,12 +22,12 @@ object REScalaPhilosophers extends App {
       "Michale", "Mike", "Noriko", "Pete", "Regenia", "Rico", "Roderick", "Roxie", "Salena", "Scottie", "Sherill",
       "Sid", "Steve", "Susie", "Tyrell", "Viola", "Wilhemina", "Zenobia"))
 
-  val size = 10
+  val size = 20
 
   if (size >= names.size) throw new IllegalArgumentException("Not enough names!")
 
   implicit val pool: ExecutionContext = ExecutionContext.fromExecutor(new ThreadPoolExecutor(
-    0, size, 1L, TimeUnit.SECONDS, new LinkedBlockingQueue[Runnable]))
+    0, size * 2 + 5, 1L, TimeUnit.SECONDS, new java.util.concurrent.SynchronousQueue[Runnable]))
 
 
   // ============================================= Infrastructure ========================================================
