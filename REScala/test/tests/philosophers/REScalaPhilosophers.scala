@@ -136,7 +136,7 @@ object REScalaPhilosophers extends App {
   val threads = seatings.map { seating =>
     val phil = seating.philosopher
     phil ->
-      Spawn(seating.placeNumber.toString) {
+      Spawn("Worker-"+names(seating.placeNumber)) {
         log("Controlling hunger on " + seating)
         while (!killed) {
           eatOnce(seating)
