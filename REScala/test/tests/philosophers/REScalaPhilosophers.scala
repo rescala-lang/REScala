@@ -1,5 +1,6 @@
 package tests.philosophers
 
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{LinkedBlockingQueue, ThreadPoolExecutor, TimeUnit}
 import rescala.Signals.lift
 import rescala.graph.Pulsing
@@ -20,7 +21,7 @@ object REScalaPhilosophers extends App {
       "Michale", "Mike", "Noriko", "Pete", "Regenia", "Rico", "Roderick", "Roxie", "Salena", "Scottie", "Sherill",
       "Sid", "Steve", "Susie", "Tyrell", "Viola", "Wilhemina", "Zenobia"))
 
-  val size = 3
+  val size = 4
 
   if (size >= names.size) throw new IllegalArgumentException("Not enough names!")
 
@@ -95,19 +96,28 @@ object REScalaPhilosophers extends App {
     }
   }
 
-  seatings.foreach { seating =>
-    named(s"observePhil(${ names(seating.placeNumber) })")(log(seating.philosopher))
-    named(s"observeFork(${ names(seating.placeNumber) })")(log(seating.leftFork))
-    // right fork is the next guy's left fork
-    named(s"observeVision(${ names(seating.placeNumber) })")(log(seating.vision))
-  }
+//  seatings.foreach { seating =>
+//    named(s"observePhil(${ names(seating.placeNumber) })")(log(seating.philosopher))
+//    named(s"observeFork(${ names(seating.placeNumber) })")(log(seating.leftFork))
+//    // right fork is the next guy's left fork
+//    named(s"observeVision(${ names(seating.placeNumber) })")(log(seating.vision))
+//  }
 
   // ============================================ Runtime Behavior  =========================================================
+
+  val eaten = new AtomicInteger(0)
+  @volatile var lastTime = System.nanoTime()
 
   seatings foreach { case Seating(i, philosopher, _, _, vision) =>
     named(s"think-${ names(i) }")(vision.observe { state =>
       if (state == Eating) {
         Future {
+          val eats = eaten.incrementAndGet()
+          if (eats % 1000 == 0) {
+            val time = System.nanoTime()
+            log(s"eaten: $eats in ${(time - lastTime)/1000000}ms")
+            lastTime = time
+          }
           philosopher set Thinking
         }
       }
