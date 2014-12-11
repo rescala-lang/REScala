@@ -1,5 +1,7 @@
 package rescala.graph
 
+import java.util.concurrent.atomic.AtomicInteger
+
 import scala.util.DynamicVariable
 
 
@@ -13,6 +15,8 @@ object Globals {
 
   val nameVar = new DynamicVariable("")
   def named[S](n: String)(f: => S): S = nameVar.withValue(n)(f)
+
+  val counter = new AtomicInteger(0)
 }
 
 sealed trait EvaluationResult

@@ -50,7 +50,7 @@ class LevelQueue(evaluator: Reactive => Unit)(implicit val currenTurn: Turn) {
       val levelDiff = Integer.compare(x.level, y.level)
       if (levelDiff != 0) levelDiff
       else {
-        val hashDiff = Integer.compare(x.reactive.hashCode(), y.reactive.hashCode())
+        val hashDiff = Integer.compare(x.reactive.hashCode, y.reactive.hashCode)
         if (hashDiff != 0) hashDiff
         else jlBool.compare(x.needsEvaluate, y.needsEvaluate)
       }
