@@ -62,19 +62,23 @@ object REScalaPhilosophers extends App {
 
   case class Seating(placeNumber: Integer, philosopher: Var[Philosopher], leftFork: Signal[Fork], rightFork: Signal[Fork], vision: Signal[Vision])
   def createTable(tableSize: Int): Seq[Seating] = {
-    val phils = for (i <- 0 until tableSize) yield {
-      named(s"Phil-${names(i)}")(Var[Philosopher](Thinking))
-    }
+    def mod(n: Int): Int = (n + tableSize) % tableSize
+
+    val phils = for (i <- 0 until tableSize) yield
+      named(s"Phil-${ names(i) }")(Var[Philosopher](Thinking))
+
     val forks = for (i <- 0 until tableSize) yield {
-      val nextCircularIndex = (i + 1) % tableSize
-      named(s"Fork-${names(i)}-${names(nextCircularIndex)}")(
-        lift(phils(i), phils(nextCircularIndex))(calcFork(names(i), names(nextCircularIndex))))
+      val nextCircularIndex = mod(i + 1)
+      named(s"Fork-${ names(i) }-${ names(nextCircularIndex) }") {
+        lift(phils(i), phils(nextCircularIndex))(calcFork(names(i), names(nextCircularIndex)))
+      }
     }
-    val visions = for (i <- 0 until tableSize) yield {
-      named(s"Vision-${names(i)}")(lift(forks(i), forks((i - 1 + tableSize) % tableSize))(calcVision(names(i))))
-    }
+
     for (i <- 0 until tableSize) yield {
-      Seating(i, phils(i), forks(i), forks((i - 1 + tableSize) % tableSize), visions(i))
+      val vision = named(s"Vision-${ names(i) }") {
+        lift(forks(i), forks(mod(i - 1)))(calcVision(names(i)))
+      }
+      Seating(i, phils(i), forks(i), forks(mod(i - 1)), vision)
     }
   }
 
@@ -92,16 +96,16 @@ object REScalaPhilosophers extends App {
   }
 
   seatings.foreach { seating =>
-    named(s"observePhil(${names(seating.placeNumber)})")(log(seating.philosopher))
-    named(s"observeFork(${names(seating.placeNumber)})")(log(seating.leftFork))
+    named(s"observePhil(${ names(seating.placeNumber) })")(log(seating.philosopher))
+    named(s"observeFork(${ names(seating.placeNumber) })")(log(seating.leftFork))
     // right fork is the next guy's left fork
-    named(s"observeVision(${names(seating.placeNumber)})")(log(seating.vision))
+    named(s"observeVision(${ names(seating.placeNumber) })")(log(seating.vision))
   }
 
   // ============================================ Runtime Behavior  =========================================================
 
   seatings foreach { case Seating(i, philosopher, _, _, vision) =>
-    named(s"think-${names(i)}")(vision.observe { state =>
+    named(s"think-${ names(i) }")(vision.observe { state =>
       if (state == Eating) {
         Future {
           philosopher set Thinking
@@ -143,7 +147,7 @@ object REScalaPhilosophers extends App {
   val threads = seatings.map { seating =>
     val phil = seating.philosopher
     phil ->
-      Spawn("Worker-"+names(seating.placeNumber)) {
+      Spawn("Worker-" + names(seating.placeNumber)) {
         log("Controlling hunger on " + seating)
         while (!killed) {
           eatOnce(seating)
