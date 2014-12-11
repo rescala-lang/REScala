@@ -88,10 +88,13 @@ class Pessimistic extends AbstractTurn {
     acquireDynamic(reactive)
     if (!reactive.lock.hasWriteAccess(key)) {
       key.withMaster {
-        // traverse our own waiting queue and append us at the end
-        key.append(key)
-        // release locks so that whatever waits for us can continue
-        key.releaseAll()
+        val subs = key.subsequent.get
+        subs.withMaster {
+          // release locks so that whatever waits for us can continue
+          key.releaseAll()
+          // but in turn we wait on that
+          key.append(subs)
+        }
       }
       // can now safely wait as we will get the lock eventually
       reactive.lock.lock(key)

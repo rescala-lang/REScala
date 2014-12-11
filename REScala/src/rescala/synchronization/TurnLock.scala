@@ -52,7 +52,7 @@ final class TurnLock(val guards: Reactive) {
     val oldOwner = tryLock(requester)
     val res = if (oldOwner eq requester) 'done
     else {
-      SyncUtil.lockOrdered(requester, oldOwner) {
+      SyncUtil.lockLanes(requester, oldOwner) {
         synchronized {
           tryLock(requester) match {
             // make sure the other owner did not unlock before we got his master lock

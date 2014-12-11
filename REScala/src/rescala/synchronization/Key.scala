@@ -13,6 +13,7 @@ final class Key(val handleDependencyChange: (Reactive, Reactive) => Unit) {
     * and is waiting for one of our locks to be transferred to him.
     * writing of this field is guarded by the masterLock */
   @volatile var subsequent: Option[Key] = None
+  @volatile var prior: Option[Key] = None
 
 
   /** the master lock guards writes to the requester, as well as all unlocks
@@ -46,10 +47,11 @@ final class Key(val handleDependencyChange: (Reactive, Reactive) => Unit) {
     target.subsequent match {
       case None =>
         target.subsequent = Some(this)
+        this.prior = Some(target)
         target
       case Some(third) =>
         // should not deadlock, because everything else is locking in this same order here
-        third.withMaster(append(third))
+        append(third)
     }
 
   /** both unlock and transfer assume that the master lock is locked */
@@ -69,12 +71,13 @@ final class Key(val handleDependencyChange: (Reactive, Reactive) => Unit) {
   def releaseAll(): Unit = withMaster {
     subsequent match {
       case Some(req) =>
+        subsequent = None
+        req.prior = None
         transferAll(req)
       case None =>
         unlockAll()
     }
     heldLocks = Nil
-    subsequent = None
   }
 
 
