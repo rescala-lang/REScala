@@ -11,14 +11,17 @@ trait Observe {
 object Observe {
 
   def apply[T](dependency: Pulsing[T])(fun: T => Unit)(implicit maybe: Ticket): Observe =
-    maybe(initTurn => initTurn.create(Set(dependency))(new Reactive with Observe {
-      override protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult = {
-        turn.plan(once(this, dependency.pulse.toOption, fun))
-        EvaluationResult.Static(changed = false)
+    maybe(initTurn => initTurn.create(Set(dependency)) {
+      val obs = new Reactive with Observe {
+        override protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult = {
+          turn.plan(once(this, dependency.pulse.toOption, fun))
+          EvaluationResult.Static(changed = false)
+        }
+        override def remove()(implicit maybe: Ticket): Unit = maybe(_.unregister(this)(dependency))
       }
-
-      override def remove()(implicit maybe: Ticket): Unit = maybe(_.unregister(this)(dependency))
-    }))
+      initTurn.plan(once(obs, dependency.pulse(initTurn).keep.current, fun))
+      obs
+    })
 
 
   private def once[V](self: AnyRef, value: Option[V], f: V => Unit): Commitable = new Commitable {
