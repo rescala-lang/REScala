@@ -2,12 +2,12 @@ package tests.rescala
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
-import rescala.Var
 import rescala.turns.Engines.default
+import rescala.{Signal, Signals, Var}
 
 class ObserveTests extends AssertionsForJUnit {
 
-  @Test def canObserveSignals(): Unit = {
+  @Test def `can observe signals`(): Unit = {
     var result = List[Int]()
     val v1 = Var(0)
     v1.observe(result ::= _)
@@ -16,6 +16,32 @@ class ObserveTests extends AssertionsForJUnit {
 
     v1.set(10)
 
+    assert(result === List(10, 0))
+  }
+
+  @Test def `self removing observers are possible, although maybe not as straight forward as one would wish?`(): Unit = {
+    var result = List[Int]()
+    val v1 = Var(0)
+    lazy val link: Signal[Int] = Signals.mapping(v1) { t =>
+      val v = v1.get(t)
+      if (v > 10) {
+        t.unregister(link)(v1)
+        obs.remove()
+      }
+      v
+    }
+
+    lazy val obs = link.observe(result ::= _)
+
+    // we need this to force the observer into existence
+    obs
+
+    assert(result === List(0))
+    v1.set(10)
+    assert(result === List(10, 0))
+    v1.set(20)
+    assert(result === List(10, 0))
+    v1.set(5)
     assert(result === List(10, 0))
   }
 
