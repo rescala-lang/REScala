@@ -11,19 +11,22 @@ trait Observe {
 object Observe {
 
   def apply[T](dependency: Pulsing[T])(fun: T => Unit)(implicit maybe: Ticket): Observe =
-    maybe(_.create(Set(dependency))(new Reactive with Commitable with Observe {
-      val cached = Buffer[Option[T]](None, (_, x) => x, lock)
-
+    maybe(initTurn => initTurn.create(Set(dependency))(new Reactive with Observe {
       override protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult = {
-        cached.set(dependency.pulse.toOption)
-        turn.plan(this)
+        turn.plan(once(this, dependency.pulse.toOption, fun))
         EvaluationResult.Static(changed = false)
       }
 
-      override def release(implicit turn: Turn): Unit = ()
-      override def commit(implicit turn: Turn): Unit = cached.get.foreach(v => turn.afterCommit(fun(v)))
-
       override def remove()(implicit maybe: Ticket): Unit = maybe(_.unregister(this)(dependency))
     }))
+
+
+  private def once[V](self: AnyRef, value: Option[V], f: V => Unit): Commitable = new Commitable {
+    override def release(implicit turn: Turn): Unit = ()
+    override def commit(implicit turn: Turn): Unit = value.foreach(v => turn.afterCommit(f(v)))
+    override def equals(obj: scala.Any): Boolean = self.equals(obj)
+    override def hashCode(): Int = self.hashCode()
+  }
+
 
 }
