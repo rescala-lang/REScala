@@ -12,7 +12,7 @@ object Engines {
   implicit def default: Engine = pessimistic
 
   implicit val pessimistic: Engine = new Impl(new Pessimistic())
-  implicit val synchronized: Engine = new Impl(new Simple()) {
+  implicit val synchron: Engine = new Impl(new Simple()) {
     override def startNew[T](f: Turn => T): T = synchronized(super.startNew(f))
   }
   implicit val unmanaged: Engine = new Impl(new Simple())

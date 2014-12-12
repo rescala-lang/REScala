@@ -5,8 +5,8 @@ import java.util.concurrent.{LinkedBlockingQueue, ThreadPoolExecutor, TimeUnit}
 import rescala.Signals.lift
 import rescala.graph.Pulsing
 import rescala.synchronization.SyncUtil
-import rescala.turns.Engines.pessimistic
-import rescala.{DependentUpdate, Observe, Signal, Var}
+import rescala.turns.Engines.synchron
+import rescala.{DependentSynchronizedUpdate => DependentUpdate, Observe, Signal, Var}
 import rescala.graph.Globals.named
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -125,7 +125,10 @@ object REScalaPhilosophers extends App {
 
   seatings foreach { case Seating(i, philosopher, _, _, vision) =>
     named(s"think-${ names(i) }")(vision.observe { state =>
-      if (state == Eating) Future { philosopher set Thinking }
+      if (state == Eating) {
+        Thread.sleep(5)
+        Future { philosopher set Thinking }
+      }
     })
   }
 
@@ -163,7 +166,7 @@ object REScalaPhilosophers extends App {
     phil ->
       Spawn("Worker-" + names(seating.placeNumber)) {
         log("Controlling hunger on " + seating)
-        while (!killed) {
+        /*if(seating.placeNumber % 2 != 0)*/ while (!killed) {
           eatOnce(seating)
         }
         log(phil + " dies.")
