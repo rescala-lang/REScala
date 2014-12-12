@@ -1,17 +1,16 @@
 package tests.philosophers
 
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.{LinkedBlockingQueue, ThreadPoolExecutor, TimeUnit}
+import java.util.concurrent.{ LinkedBlockingQueue, ThreadPoolExecutor, TimeUnit }
 import rescala.Signals.lift
 import rescala.graph.Pulsing
 import rescala.synchronization.SyncUtil
-import rescala.turns.Engines.synchron
-import rescala.{DependentSynchronizedUpdate => DependentUpdate, Observe, Signal, Var}
+import rescala.turns.Engines.pessimistic
+import rescala.{ DependentUpdate => DependentUpdate, Observe, Signal, Var }
 import rescala.graph.Globals.named
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.Random
-
 
 object REScalaPhilosophers extends App {
   val names = Random.shuffle(
@@ -22,13 +21,14 @@ object REScalaPhilosophers extends App {
       "Michale", "Mike", "Noriko", "Pete", "Regenia", "Rico", "Roderick", "Roxie", "Salena", "Scottie", "Sherill",
       "Sid", "Steve", "Susie", "Tyrell", "Viola", "Wilhemina", "Zenobia"))
 
-  val size = 20
+  val threadCount = 16
+  val sizeFactor = 1
 
+  val size = threadCount * sizeFactor
   if (size >= names.size) throw new IllegalArgumentException("Not enough names!")
 
   implicit val pool: ExecutionContext = ExecutionContext.fromExecutor(new ThreadPoolExecutor(
     0, size * 2 + 5, 1L, TimeUnit.SECONDS, new java.util.concurrent.SynchronousQueue[Runnable]))
-
 
   // ============================================= Infrastructure ========================================================
 
@@ -62,22 +62,21 @@ object REScalaPhilosophers extends App {
 
   // ============================================ Entity Creation =========================================================
 
-  case class Seating(placeNumber: Integer, philosopher: Var[Philosopher], leftFork: Signal[Fork], rightFork: Signal[Fork], vision: Signal[Vision])
+  case class Seating(placeNumber: Int, philosopher: Var[Philosopher], leftFork: Signal[Fork], rightFork: Signal[Fork], vision: Signal[Vision])
   def createTable(tableSize: Int): Seq[Seating] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
 
-    val phils = for (i <- 0 until tableSize) yield
-      named(s"Phil-${ names(i) }")(Var[Philosopher](Thinking))
+    val phils = for (i <- 0 until tableSize) yield named(s"Phil-${names(i)}")(Var[Philosopher](Thinking))
 
     val forks = for (i <- 0 until tableSize) yield {
       val nextCircularIndex = mod(i + 1)
-      named(s"Fork-${ names(i) }-${ names(nextCircularIndex) }") {
+      named(s"Fork-${names(i)}-${names(nextCircularIndex)}") {
         lift(phils(i), phils(nextCircularIndex))(calcFork(names(i), names(nextCircularIndex)))
       }
     }
 
     for (i <- 0 until tableSize) yield {
-      val vision = named(s"Vision-${ names(i) }") {
+      val vision = named(s"Vision-${names(i)}") {
         lift(forks(i), forks(mod(i - 1)))(calcVision(names(i)))
       }
       Seating(i, phils(i), forks(i), forks(mod(i - 1)), vision)
@@ -85,6 +84,7 @@ object REScalaPhilosophers extends App {
   }
 
   val seatings = createTable(size)
+  val seatingBlocks = seatings.sliding(threadCount, threadCount).toList.transpose
 
   // ============================================== Logging =======================================================
 
@@ -97,13 +97,12 @@ object REScalaPhilosophers extends App {
     }
   }
 
-//  seatings.foreach { seating =>
-//    named(s"observePhil(${ names(seating.placeNumber) })")(log(seating.philosopher))
-//    named(s"observeFork(${ names(seating.placeNumber) })")(log(seating.leftFork))
-//    // right fork is the next guy's left fork
-//    named(s"observeVision(${ names(seating.placeNumber) })")(log(seating.vision))
-//  }
-
+  //  seatings.foreach { seating =>
+  //    named(s"observePhil(${names(seating.placeNumber)})")(log(seating.philosopher))
+  //    named(s"observeFork(${names(seating.placeNumber)})")(log(seating.leftFork))
+  //    // right fork is the next guy's left fork
+  //    named(s"observeVision(${names(seating.placeNumber)})")(log(seating.vision))
+  //  }
 
   val eaten = new AtomicInteger(0)
   @volatile var lastTime = System.nanoTime()
@@ -114,7 +113,7 @@ object REScalaPhilosophers extends App {
         val eats = eaten.incrementAndGet()
         if (eats % 1000 == 0) {
           val time = System.nanoTime()
-          log(s"eaten: $eats in ${ (time - lastTime) / 1000000 }ms (${ SyncUtil.counter.get() / eats }tpe)")
+          log(s"eaten: $eats in ${(time - lastTime) / 1000000}ms (${SyncUtil.counter.get() / eats}tpe)")
           lastTime = time
         }
       }
@@ -123,13 +122,15 @@ object REScalaPhilosophers extends App {
 
   // ============================================ Runtime Behavior  =========================================================
 
-  seatings foreach { case Seating(i, philosopher, _, _, vision) =>
-    named(s"think-${ names(i) }")(vision.observe { state =>
-      if (state == Eating) {
-        Thread.sleep(5)
-        Future { philosopher set Thinking }
-      }
-    })
+  seatings foreach {
+    case seating @ Seating(i, philosopher, _, _, vision) =>
+      named(s"think-${names(i)}")(vision.observe { state =>
+        if (state == Eating) {
+          Future {
+            philosopher set Thinking
+          }
+        }
+      })
   }
 
   @annotation.tailrec // unrolled into loop by compiler
@@ -143,7 +144,10 @@ object REScalaPhilosophers extends App {
       false // Try again
     }
 
-  def eatOnce(seating: Seating) = repeatUntilTrue(tryEat(seating))
+  def eatOnce(seating: Seating) = repeatUntilTrue({
+//    seating.vision.await(Ready)
+    tryEat(seating)
+  })
 
   // ============================================== Thread management =======================================================
 
@@ -161,16 +165,16 @@ object REScalaPhilosophers extends App {
   // start simulation
   @volatile private var killed = false
   log("Starting simulation. Press <Enter> to terminate!")
-  val threads = seatings.map { seating =>
-    val phil = seating.philosopher
-    phil ->
-      Spawn("Worker-" + names(seating.placeNumber)) {
-        log("Controlling hunger on " + seating)
-        /*if(seating.placeNumber % 2 != 0)*/ while (!killed) {
-          eatOnce(seating)
-        }
-        log(phil + " dies.")
+  val threads = for (threadNum <- 0 until threadCount) yield {
+    val myBlock = seatingBlocks(threadNum)
+    val random = new Random
+    Spawn("Worker-" + myBlock.map(seating => names(seating.placeNumber)).mkString("-")) {
+      log("Controlling hunger on " + myBlock)
+      /*if(seating.placeNumber % 2 != 0)*/ while (!killed) {
+        eatOnce(myBlock(random.nextInt(sizeFactor)))
       }
+      log("dies.")
+    }
   }
 
   // ===================== SHUTDOWN =====================
@@ -182,10 +186,11 @@ object REScalaPhilosophers extends App {
   killed = true
 
   // collect forked threads to check termination
-  threads.foreach { case (phil, thread) =>
-    import scala.language.postfixOps
-    thread.join(50)
-    if (!thread.isAlive) log(phil + " terminated.")
-    else log(phil + " failed to terminate!")
+  threads.foreach {
+    case thread =>
+      import scala.language.postfixOps
+      thread.join(50)
+      if (!thread.isAlive) log(thread.getName() + " terminated.")
+      else log(thread.getName() + " failed to terminate!")
   }
 }
