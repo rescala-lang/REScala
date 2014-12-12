@@ -104,40 +104,43 @@ object REScalaPhilosophers extends App {
 //    named(s"observeVision(${ names(seating.placeNumber) })")(log(seating.vision))
 //  }
 
-  // ============================================ Runtime Behavior  =========================================================
 
   val eaten = new AtomicInteger(0)
   @volatile var lastTime = System.nanoTime()
 
-  seatings foreach { case Seating(i, philosopher, _, _, vision) =>
-    named(s"think-${ names(i) }")(vision.observe { state =>
+  seatings.foreach { seating =>
+    seating.vision.observe { state =>
       if (state == Eating) {
-        Future {
-          val eats = eaten.incrementAndGet()
-          if (eats % 1000 == 0) {
-            val time = System.nanoTime()
-            log(s"eaten: $eats in ${(time - lastTime)/1000000}ms (${SyncUtil.counter.get() / eats}tpe)")
-            lastTime = time
-          }
-          philosopher set Thinking
+        val eats = eaten.incrementAndGet()
+        if (eats % 1000 == 0) {
+          val time = System.nanoTime()
+          log(s"eaten: $eats in ${ (time - lastTime) / 1000000 }ms (${ SyncUtil.counter.get() / eats }tpe)")
+          lastTime = time
         }
       }
+    }
+  }
+
+  // ============================================ Runtime Behavior  =========================================================
+
+  seatings foreach { case Seating(i, philosopher, _, _, vision) =>
+    named(s"think-${ names(i) }")(vision.observe { state =>
+      if (state == Eating) Future { philosopher set Thinking }
     })
   }
 
   @annotation.tailrec // unrolled into loop by compiler
   def repeatUntilTrue(op: => Boolean): Unit = if (!op) repeatUntilTrue(op)
 
-  def eatOnce(seating: Seating) = {
-    repeatUntilTrue {
-      DependentUpdate(seating.vision) { _ == Ready } { turn =>
-        seating.philosopher.admit(Hungry)(turn)
-        true // Don't try again
-      } {
-        false // Try again
-      }
+  def tryEat(seating: Seating) =
+    DependentUpdate(seating.vision) { _ == Ready } { turn =>
+      seating.philosopher.admit(Hungry)(turn)
+      true // Don't try again
+    } {
+      false // Try again
     }
-  }
+
+  def eatOnce(seating: Seating) = repeatUntilTrue(tryEat(seating))
 
   // ============================================== Thread management =======================================================
 
