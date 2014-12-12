@@ -24,7 +24,7 @@ object Observe {
     })
 
 
-  private def once[V](self: AnyRef, value: Option[V], f: V => Unit): Commitable = new Commitable {
+  def once[V](self: AnyRef, value: Option[V], f: V => Unit): Commitable = new Commitable {
     override def release(implicit turn: Turn): Unit = ()
     override def commit(implicit turn: Turn): Unit = value.foreach(v => turn.afterCommit(f(v)))
     override def equals(obj: scala.Any): Boolean = self.equals(obj)
