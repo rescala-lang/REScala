@@ -1,12 +1,12 @@
 package rescala.synchronization
 
 import rescala.graph.Reactive
-import rescala.propagation.{AbstractTurn, LevelQueue}
+import rescala.propagation.{TurnImpl, LevelQueue}
 
 import scala.annotation.tailrec
 
 
-class Pessimistic extends AbstractTurn {
+class Pessimistic extends TurnImpl {
 
   final val key: Key = new Key((sink, source) => {
     register(sink)(source)
@@ -81,16 +81,13 @@ class Pessimistic extends AbstractTurn {
       reactive.lock.acquireWrite(key)
       reactive.dependants.get.foreach(lq.enqueue(-42))
     }
-    initialSources.foreach(lq.enqueue(-42))
+    initialReactives.foreach(lq.enqueue(-42))
     lq.evaluateQueue()
   }
 
   /** this is called after the initial closure of the turn has been executed,
     * that is the eval queue is populated with the sources */
-  override def lockingPhase(): Unit = {
-    lockReachable()
-    initialSources = (initialSources zip initialValues).filter(_._2()).unzip._1
-  }
+  override def lockPhase(): Unit = lockReachable()
 
   /** this is called after the turn has finished propagating, but before handlers are executed */
   override def realeasePhase(): Unit = key.releaseAll()

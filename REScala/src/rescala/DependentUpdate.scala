@@ -1,7 +1,8 @@
 package rescala
 
-import rescala.synchronization.{Simple, Pessimistic}
-import rescala.turns.{Engines, Turn, Engine}
+import rescala.propagation.TurnImpl
+import rescala.synchronization.Pessimistic
+import rescala.turns.{Engines, Turn}
 
 object DependentUpdate {
   def apply[S, R](signal: Signal[S])(condition: S => Boolean)(admissions: Turn => R)(failure: => R): R = {
@@ -19,7 +20,7 @@ object DependentUpdate {
         else {
           val admissionResult = admissions(turn)
 
-          turn.lockingPhase()
+          turn.lockPhase()
           if (!condition(signal.get(turn))) {
             turn.rollbackPhase()
             failure
@@ -45,7 +46,7 @@ object DependentSynchronizedUpdate {
   def apply[S, R](signal: Signal[S])(condition: S => Boolean)(admissions: Turn => R)(failure: => R): R = Engines.synchron.synchronized {
 
     implicit class sequentialLeftResult(result: R) {def ~<(sideEffects_! : Unit): R = result }
-    val turn = new Simple
+    val turn = new TurnImpl
     try {
       Engines.currentTurn.withValue(Some(turn)) {
 
@@ -55,7 +56,7 @@ object DependentSynchronizedUpdate {
         else {
           val admissionResult = admissions(turn)
 
-          turn.lockingPhase()
+          turn.lockPhase()
           if (!condition(signal.get(turn))) {
             turn.rollbackPhase()
             failure

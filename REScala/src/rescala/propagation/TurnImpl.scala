@@ -4,14 +4,14 @@ import rescala.graph.{Commitable, Reactive}
 import rescala.turns.Turn
 import rescala.propagation.Evaluator.Result
 
-abstract class AbstractTurn extends Turn {
-  implicit def currentTurn: AbstractTurn = this
+class TurnImpl extends Turn {
+  implicit def currentTurn: TurnImpl = this
 
   protected var toCommit = Set[Commitable]()
   protected var afterCommitHandlers = List[() => Unit]()
 
-  protected var initialSources: List[Reactive] = Nil
-  protected var initialValues: List[() => Boolean] = Nil
+  protected var initialReactives: List[Reactive] = Nil
+  protected var initialClosures: List[() => Unit] = Nil
 
   def handleDiff(res: Result): Result = {
     res.getDiff.foreach { diff =>
@@ -61,15 +61,17 @@ abstract class AbstractTurn extends Turn {
     }
 
   /** admits a new source change */
-  override def admit(source: Reactive)(setPulse: => Boolean): Unit = {
-    initialSources ::= source
-    initialValues ::= setPulse _
+  override def admit(writes: Reactive*)(f: => Unit): Unit = {
+    initialReactives :::= writes.toList
+    initialClosures ::= f _
   }
 
-  def lockingPhase(): Unit
+  def lockPhase(): Unit = ()
+
+  def admissionPhase(): Unit = initialClosures.foreach(_())
 
   def propagationPhase(): Unit = {
-    initialSources.foreach(levelQueue.enqueue(0))
+    initialReactives.foreach(levelQueue.enqueue(0))
     levelQueue.evaluateQueue()
   }
 
@@ -79,6 +81,6 @@ abstract class AbstractTurn extends Turn {
 
   def observerPhase() = afterCommitHandlers.foreach(_())
 
-  def realeasePhase(): Unit
+  def realeasePhase(): Unit = ()
 
 }

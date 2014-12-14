@@ -18,11 +18,10 @@ final class Evt[T]() extends Event[T] with Source[T] {
   def admit(value: T)(implicit turn: Turn): Unit =
     turn.admit(this) {
       pulses.set(Pulse.change(value))(turn)
-      true
     }
 
   override protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult =
-    EvaluationResult.Static(changed = true)
+    EvaluationResult.Static(changed = pulse.isChange)
 }
 
 object Evt {
@@ -43,13 +42,11 @@ final class Var[T](initval: T) extends Signal[T] with Source[T] {
       val p = Pulse.diff(value, get)
       if (p.isChange) {
         pulses.set(p)
-        true
       }
-      else false
     }
 
   override protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult =
-    EvaluationResult.Static(changed = true)
+    EvaluationResult.Static(changed = pulse.isChange)
 }
 
 object Var {

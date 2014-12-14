@@ -2,8 +2,8 @@ package rescala.turns
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import rescala.propagation.AbstractTurn
-import rescala.synchronization.{Simple, Pessimistic}
+import rescala.propagation.TurnImpl
+import rescala.synchronization.{Pessimistic}
 
 import scala.util.DynamicVariable
 
@@ -12,14 +12,14 @@ object Engines {
   implicit def default: Engine = pessimistic
 
   implicit val pessimistic: Engine = new Impl(new Pessimistic())
-  implicit val synchron: Engine = new Impl(new Simple()) {
+  implicit val synchron: Engine = new Impl(new TurnImpl()) {
     override def plan[T](f: Turn => T): T = synchronized(super.plan(f))
   }
-  implicit val unmanaged: Engine = new Impl(new Simple())
+  implicit val unmanaged: Engine = new Impl(new TurnImpl())
 
-  val currentTurn: DynamicVariable[Option[AbstractTurn]] = new DynamicVariable[Option[AbstractTurn]](None)
+  val currentTurn: DynamicVariable[Option[TurnImpl]] = new DynamicVariable[Option[TurnImpl]](None)
 
-  class Impl(makeTurn: => AbstractTurn) extends Engine {
+  class Impl(makeTurn: => TurnImpl) extends Engine {
 
     override def subplan[T](f: (Turn) => T): T = currentTurn.value match {
       case None => plan(f)
@@ -28,10 +28,11 @@ object Engines {
 
     /** goes through the whole turn lifecycle
       * - create a new turn and put it on the stack
+      *   - run the user code inside that turn to know the initial reactives
+      * - run the lock phase
+      *   - the turn knows which reactives will be affected and can do something before anything is realy done
       * - run the admission phase
-      *   - this is user defined and sets source values, needs investigation of reactive creation, and read then act stuff
-      * - run the locking phase
-      *   - to give the turn a chance to do something before the propagation starts when it is known which reactives will change
+      *   - executes the user defined admission code
       * - run the propagation phase
       *   - calculate the actual new value of the reactive graph
       * - run the commit phase
@@ -43,13 +44,14 @@ object Engines {
       * - run the party! phase
       *   - not yet implemented
       * */
-    override def plan[T](admissionPhase: Turn => T): T = {
+    override def plan[T](generateAdmissions: Turn => T): T = {
       implicit class sequentialLeftResult(result: T) {def ~<(sideEffects_! : Unit): T = result }
       val turn = makeTurn
       try {
         currentTurn.withValue(Some(turn)) {
-          admissionPhase(turn) ~< {
-            turn.lockingPhase()
+          generateAdmissions(turn) ~< {
+            turn.lockPhase()
+            turn.admissionPhase()
             turn.propagationPhase()
             turn.commitPhase()
           }

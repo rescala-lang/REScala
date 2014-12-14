@@ -9,7 +9,7 @@ import rescala.graph.{Commitable, Reactive}
 trait Turn {
 
   /** admits a new source change */
-  def admit(source: Reactive)(setPulse: => Boolean): Unit
+  def admit(writes: Reactive*)(f: => Unit): Unit
 
   /** called when a new reactive is created and registered into the network
     * subclasses are expected to register the reactive with its dependencies
