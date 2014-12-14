@@ -4,6 +4,8 @@ import java.util.concurrent.locks.{Condition, ReentrantLock}
 
 import rescala.graph.Reactive
 
+import scala.annotation.tailrec
+
 final class Key(val handleDependencyChange: (Reactive, Reactive) => Unit) {
 
   val id = SyncUtil.counter.getAndIncrement
@@ -43,6 +45,7 @@ final class Key(val handleDependencyChange: (Reactive, Reactive) => Unit) {
     * (this should not deadlock, because the request chain gives a unique order to the locking process).
     * eventually when target and its wait chain complete their turns, they will transfer all of their locks to us.
     * returns the actual key we ended up waiting for */
+  @tailrec
   def append(target: Key): Key =
     target.subsequent match {
       case None =>
@@ -63,7 +66,7 @@ final class Key(val handleDependencyChange: (Reactive, Reactive) => Unit) {
   private def transferAll(target: Key): Unit = target.withMaster {
     val distinc = heldLocks.distinct
     target.heldLocks :::= distinc
-    distinc.foreach(_.transfer(target)(this))
+    distinc.foreach(_.transfer(target, this))
   }
 
   /** release all locks we hold or transfer them to a waiting transaction if there is one

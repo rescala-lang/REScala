@@ -26,6 +26,7 @@ class Pessimistic extends AbstractTurn {
   /** registering a dependency on a node we do not personally own does require some additional care.
     * we move responsibility to the commit phase */
   override def register(sink: Reactive)(source: Reactive): Unit = {
+    source.lock.acquireDynamic(key)
     if (source.lock.hasWriteAccess(key)) super.register(sink)(source)
     else {
       if (!source.dependants.get.contains(sink))
@@ -35,6 +36,7 @@ class Pessimistic extends AbstractTurn {
 
   /** this is for cases where we register and then unregister the same dependency in a single turn */
   override def unregister(sink: Reactive)(source: Reactive): Unit = {
+    source.lock.acquireDynamic(key)
     super.unregister(sink)(source)
     lazyDependencyUpdates -= (source -> sink)
   }
@@ -57,7 +59,7 @@ class Pessimistic extends AbstractTurn {
     * it is important, that the locks for the dependencies are acquired BEFORE the constructor for the new reactive.
     * is executed, because the constructor typically accesses the dependencies to create its initial value. */
   override def create[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
-    dependencies.foreach(acquireDynamic)
+    dependencies.foreach(_.lock.acquireDynamic(key))
     val reactive = f
     reactive.lock.lock(key)
     super.create(dependencies)(reactive)
@@ -65,47 +67,18 @@ class Pessimistic extends AbstractTurn {
 
   /** similar to create, except for the ensure level and evaluate calls */
   override def createDynamic[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
-    dependencies.foreach(acquireDynamic)
+    dependencies.foreach(_.lock.acquireDynamic(key))
     val reactive = f
     reactive.lock.lock(key)
     super.createDynamic(dependencies)(reactive)
   }
 
-  /** a dynamically acquired reactive will never have its value or level changed, only its dependecies.
-    * as from a conceptual level it is only read.
-    *
-    * the check for accessibilty is not strictly necessary as request will handle that as well,
-    * which is necessary, because accessibility state may change between the call to isAccessible and request
-    * if the current owner of the lock decides to share it with us.
-    * but that case seems very unlikely, so the test should provide a solid shortcut */
-  def acquireDynamic(reactive: Reactive): Unit = {
-    if (!reactive.lock.hasReadAccess(key)) {
-      reactive.lock.request(key)
-    }
-  }
-
-  def acquireWrite(reactive: Reactive): Unit = {
-    acquireDynamic(reactive)
-    if (!reactive.lock.hasWriteAccess(key)) {
-      key.withMaster {
-        val subs = key.subsequent.get
-        subs.withMaster {
-          // release locks so that whatever waits for us can continue
-          key.releaseAll()
-          // but in turn we wait on that
-          key.append(subs)
-        }
-      }
-      // can now safely wait as we will get the lock eventually
-      reactive.lock.lock(key)
-    }
-  }
-
+  /** lock all reactives reachable from the initial sources */
   def lockReachable(): Unit = {
     lazy val lq = new LevelQueue(evaluate)
 
     def evaluate(reactive: Reactive): Unit = {
-      acquireWrite(reactive)
+      reactive.lock.acquireWrite(key)
       reactive.dependants.get.foreach(lq.enqueue(-42))
     }
     initialSources.foreach(lq.enqueue(-42))

@@ -15,7 +15,6 @@ abstract class AbstractTurn extends Turn {
 
   def handleDiff(res: Result): Result = {
     res.getDiff.foreach { diff =>
-      diff.novel foreach acquireDynamic
       diff.removed foreach unregister(res.head)
       diff.added foreach register(res.head)
     }
@@ -26,14 +25,11 @@ abstract class AbstractTurn extends Turn {
 
   def evaluate(r: Reactive): Unit = handleDiff(Evaluator.evaluate(r)).requeue(levelQueue.enqueue)
 
-  def acquireDynamic(reactive: Reactive): Unit
-
   def register(sink: Reactive)(source: Reactive): Unit = {
     source.dependants.transform(_ + sink)
   }
 
   def unregister(sink: Reactive)(source: Reactive): Unit = {
-    acquireDynamic(source)
     source.dependants.transform(_ - sink)
   }
 
