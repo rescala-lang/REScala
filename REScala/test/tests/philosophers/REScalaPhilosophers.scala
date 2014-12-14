@@ -138,8 +138,8 @@ object REScalaPhilosophers extends App {
   def repeatUntilTrue(op: => Boolean): Unit = if (!op) repeatUntilTrue(op)
 
   def tryEat(seating: Seating) =
-    implicitly[Engine[Turn]].plan(seating.vision, seating.philosopher) { turn =>
-      if (seating.vision.get(turn) == Ready) {
+    implicitly[Engine[Turn]].plan(seating.philosopher) { turn =>
+      if (seating.vision(turn) == Ready) {
         seating.philosopher.admit(Hungry)(turn)
         true
       }
