@@ -13,7 +13,7 @@ sealed trait Source[T] {
 final class Evt[T]() extends Event[T] with Source[T] {
 
   /** Trigger the event */
-  def apply(value: T)(implicit fac: Engine): Unit = fac.startNew { admit(value)(_) }
+  def apply(value: T)(implicit fac: Engine): Unit = fac.plan { admit(value)(_) }
 
   def admit(value: T)(implicit turn: Turn): Unit =
     turn.admit(this) {
@@ -36,7 +36,7 @@ final class Var[T](initval: T) extends Signal[T] with Source[T] {
   pulses.current = Pulse.unchanged(initval)
 
   def update(value: T)(implicit fac: Engine): Unit = set(value)
-  def set(value: T)(implicit fac: Engine): Unit = fac.startNew { admit(value)(_) }
+  def set(value: T)(implicit fac: Engine): Unit = fac.plan { admit(value)(_) }
 
   def admit(value: T)(implicit turn: Turn): Unit =
     turn.admit(this) {

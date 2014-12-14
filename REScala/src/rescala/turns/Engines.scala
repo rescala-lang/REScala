@@ -13,7 +13,7 @@ object Engines {
 
   implicit val pessimistic: Engine = new Impl(new Pessimistic())
   implicit val synchron: Engine = new Impl(new Simple()) {
-    override def startNew[T](f: Turn => T): T = synchronized(super.startNew(f))
+    override def plan[T](f: Turn => T): T = synchronized(super.plan(f))
   }
   implicit val unmanaged: Engine = new Impl(new Simple())
 
@@ -21,8 +21,8 @@ object Engines {
 
   class Impl(makeTurn: => AbstractTurn) extends Engine {
 
-    override def startKeep[T](f: (Turn) => T): T = currentTurn.value match {
-      case None => startNew(f)
+    override def subplan[T](f: (Turn) => T): T = currentTurn.value match {
+      case None => plan(f)
       case Some(turn) => f(turn)
     }
 
@@ -43,7 +43,7 @@ object Engines {
       * - run the party! phase
       *   - not yet implemented
       * */
-    override def startNew[T](admissionPhase: Turn => T): T = {
+    override def plan[T](admissionPhase: Turn => T): T = {
       implicit class sequentialLeftResult(result: T) {def ~<(sideEffects_! : Unit): T = result }
       val turn = makeTurn
       try {
