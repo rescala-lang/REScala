@@ -1,16 +1,16 @@
 package tests.philosophers
 
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.{ LinkedBlockingQueue, ThreadPoolExecutor, TimeUnit }
+import java.util.concurrent.{LinkedBlockingQueue, ThreadPoolExecutor, TimeUnit}
 import rescala.Signals.lift
 import rescala.graph.Pulsing
 import rescala.synchronization.SyncUtil
 import rescala.turns.Engines.pessimistic
-import rescala.turns.Engine
-import rescala.{ DependentUpdate => DependentUpdate, Observe, Signal, Var }
+import rescala.turns.{Turn, Engine}
+import rescala.{Observe, Signal, Var}
 import rescala.graph.Globals.named
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Random
 
 object REScalaPhilosophers extends App {
@@ -67,17 +67,17 @@ object REScalaPhilosophers extends App {
   def createTable(tableSize: Int): Seq[Seating] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
 
-    val phils = for (i <- 0 until tableSize) yield named(s"Phil-${names(i)}")(Var[Philosopher](Thinking))
+    val phils = for (i <- 0 until tableSize) yield named(s"Phil-${ names(i) }")(Var[Philosopher](Thinking))
 
     val forks = for (i <- 0 until tableSize) yield {
       val nextCircularIndex = mod(i + 1)
-      named(s"Fork-${names(i)}-${names(nextCircularIndex)}") {
+      named(s"Fork-${ names(i) }-${ names(nextCircularIndex) }") {
         lift(phils(i), phils(nextCircularIndex))(calcFork(names(i), names(nextCircularIndex)))
       }
     }
 
     for (i <- 0 until tableSize) yield {
-      val vision = named(s"Vision-${names(i)}") {
+      val vision = named(s"Vision-${ names(i) }") {
         lift(forks(i), forks(mod(i - 1)))(calcVision(names(i)))
       }
       Seating(i, phils(i), forks(i), forks(mod(i - 1)), vision)
@@ -114,7 +114,7 @@ object REScalaPhilosophers extends App {
         val eats = eaten.incrementAndGet()
         if (eats % 1000 == 0) {
           val time = System.nanoTime()
-          log(s"eaten: $eats in ${(time - lastTime) / 1000000}ms (${SyncUtil.counter.get() / eats}tpe)")
+          log(s"eaten: $eats in ${ (time - lastTime) / 1000000 }ms (${ SyncUtil.counter.get() / eats }tpe)")
           lastTime = time
         }
       }
@@ -124,8 +124,8 @@ object REScalaPhilosophers extends App {
   // ============================================ Runtime Behavior  =========================================================
 
   seatings foreach {
-    case seating @ Seating(i, philosopher, _, _, vision) =>
-      named(s"think-${names(i)}")(vision.observe { state =>
+    case seating@Seating(i, philosopher, _, _, vision) =>
+      named(s"think-${ names(i) }")(vision.observe { state =>
         if (state == Eating) {
           Future {
             philosopher set Thinking
@@ -137,22 +137,17 @@ object REScalaPhilosophers extends App {
   @annotation.tailrec // unrolled into loop by compiler
   def repeatUntilTrue(op: => Boolean): Unit = if (!op) repeatUntilTrue(op)
 
-  def tryEat(seating: Seating) = {
-    var ate = false
-    implicitly[Engine].plan { turn =>
-      turn.admit(seating.vision)(Unit)
-      turn.admit(seating.philosopher, seating.vision) {
-        if (seating.vision.get(turn) == Ready) {
-          seating.philosopher.admit(Hungry)(turn)
-          ate = true
-        }
+  def tryEat(seating: Seating) =
+    implicitly[Engine[Turn]].plan(seating.vision, seating.philosopher) { turn =>
+      if (seating.vision.get(turn) == Ready) {
+        seating.philosopher.admit(Hungry)(turn)
+        true
       }
+      else false
     }
-    ate
-  }
 
   def eatOnce(seating: Seating) = repeatUntilTrue({
-//    seating.vision.await(Ready)
+    //    seating.vision.await(Ready)
     tryEat(seating)
   })
 
