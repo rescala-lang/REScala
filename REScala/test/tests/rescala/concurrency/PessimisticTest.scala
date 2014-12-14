@@ -101,23 +101,44 @@ class PessimisticTest extends AssertionsForJUnit {
     val v1 = Var(false)
     val v2 = Var(false)
     val s11 = v1.map { identity }
+    // so if s11 becomes true, this adds a dependency on v2
     val s12 = Signals.dynamic(s11) { t => if (s11(t)) v2(t) else false }
     val s21 = v2.map { identity }
+    // this does as above, causing one or the other to access something which will change later
     val s22 = Signals.dynamic(s21) { t => if (s21(t)) v1(t) else false }
     var results = List[Boolean]()
-    s12.changed.+= { v => results ::= v }
-    s22.changed.+= { v => results ::= v }
+    s12.changed observe { v => results ::= v }
+    val c23 = s22.changed
+    c23 observe { v => results ::= v }
 
 
     assert(results === Nil)
 
+    // start both turns so they have their locks
     Pessigen.sync(s11, s21)
 
-    val t = Spawn(v1.set(true))
-    v2.set(true)
-    t.join()
+    // this will allow only turn 2 to continue running, causing it to wait on turn 1
+    val l1 = Pessigen.syncm(s11)
 
-    assert(results === List(true))
+    // after turn 1 continues, it will use the reactives locked by turn 2 and finish before turn 2
+    val l2 = Pessigen.syncm(c23)
+
+    val t1 = Spawn(v1.set(true))
+    val t2 = Spawn(v2.set(true))
+
+    l1.await()
+    t1.join()
+    // still unchanged, turn 1 used the old value of v2
+    assert(results === Nil)
+    assert(s12.now === false)
+
+    l2.await()
+    t2.join()
+
+    assert(s12.now === true)
+    assert(s22.now === true)
+    assert(results === List(true, true))
+
     assert(Pessigen.clear() == 0)
   }
 
