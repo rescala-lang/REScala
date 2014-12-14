@@ -10,9 +10,6 @@ class TurnImpl extends Turn {
   protected var toCommit = Set[Commitable]()
   protected var afterCommitHandlers = List[() => Unit]()
 
-  protected var initialReactives: List[Reactive] = Nil
-  protected var initialClosures: List[() => Unit] = Nil
-
   def handleDiff(res: Result): Result = {
     res.getDiff.foreach { diff =>
       diff.removed foreach unregister(res.head)
@@ -33,20 +30,20 @@ class TurnImpl extends Turn {
     source.dependants.transform(_ - sink)
   }
 
-  def plan(commitable: Commitable): Unit = {
+  override def plan(commitable: Commitable): Unit = {
     toCommit += commitable
   }
 
   override def afterCommit(handler: => Unit) = afterCommitHandlers ::= handler _
 
-  def create[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
+  override def create[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
     val reactive = f
     dependencies.foreach(register(reactive))
     ensureLevel(reactive, dependencies)
     reactive
   }
 
-  def createDynamic[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
+  override def createDynamic[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
     val reactive = f
     ensureLevel(reactive, dependencies)
     evaluate(reactive)
@@ -60,20 +57,11 @@ class TurnImpl extends Turn {
       dependant.level.transform(math.max(newLevel, _))
     }
 
-  /** admits a new source change */
-  override def admit(writes: Reactive*)(f: => Unit): Unit = {
-    initialReactives :::= writes.toList
-    initialClosures ::= f _
-  }
+  override def admit(reactive: Reactive): Unit = levelQueue.enqueue(0)(reactive)
 
-  def lockPhase(): Unit = ()
+  def lockPhase(initialWrites: List[Reactive]): Unit = ()
 
-  def admissionPhase(): Unit = initialClosures.foreach(_())
-
-  def propagationPhase(): Unit = {
-    initialReactives.foreach(levelQueue.enqueue(0))
-    levelQueue.evaluateQueue()
-  }
+  def propagationPhase(): Unit = levelQueue.evaluateQueue()
 
   def commitPhase() = toCommit.foreach(_.commit(this))
 

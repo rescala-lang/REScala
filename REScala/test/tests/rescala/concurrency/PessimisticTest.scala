@@ -8,7 +8,7 @@ import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import rescala.graph.Reactive
 import rescala.synchronization.Pessimistic
-import rescala.turns.{Engine, Engines}
+import rescala.turns.{Turn, Engine, Engines}
 import rescala.{Signals, Var}
 
 import scala.collection.JavaConverters._
@@ -57,7 +57,7 @@ object Pessigen extends Engines.Impl(new PessimisticTestTurn) {
 
 class PessimisticTest extends AssertionsForJUnit {
 
-  implicit def factory: Engine = Pessigen
+  implicit def factory: Engine[Turn] = Pessigen
 
   @Test def runOnIndependentParts(): Unit = synchronized {
     val v1 = Var(false)
@@ -123,7 +123,7 @@ class PessimisticTest extends AssertionsForJUnit {
 
 
   object MockFacFac {
-    def apply(i0: Reactive, reg: => Unit, unreg: => Unit): Engine = new Engines.Impl(
+    def apply(i0: Reactive, reg: => Unit, unreg: => Unit): Engine[Turn] = new Engines.Impl(
       new Pessimistic {
         override def register(downstream: Reactive)(upstream: Reactive): Unit = {
           if (upstream eq i0) reg

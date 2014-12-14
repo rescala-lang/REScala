@@ -13,12 +13,12 @@ sealed trait Source[T] {
 final class Evt[T]() extends Event[T] with Source[T] {
 
   /** Trigger the event */
-  def apply(value: T)(implicit fac: Engine): Unit = fac.plan { admit(value)(_) }
+  def apply(value: T)(implicit fac: Engine[Turn]): Unit = fac.plan(this) { admit(value)(_) }
 
-  def admit(value: T)(implicit turn: Turn): Unit =
-    turn.admit(this) {
-      pulses.set(Pulse.change(value))(turn)
-    }
+  def admit(value: T)(implicit turn: Turn): Unit = {
+    pulses.set(Pulse.change(value))(turn)
+    turn.admit(this)
+  }
 
   override protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult =
     EvaluationResult.Static(changed = pulse.isChange)
@@ -29,21 +29,20 @@ object Evt {
 }
 
 
-
 /** A root Reactive value without dependencies which can be set */
 final class Var[T](initval: T) extends Signal[T] with Source[T] {
   pulses.current = Pulse.unchanged(initval)
 
-  def update(value: T)(implicit fac: Engine): Unit = set(value)
-  def set(value: T)(implicit fac: Engine): Unit = fac.plan { admit(value)(_) }
+  def update(value: T)(implicit fac: Engine[Turn]): Unit = set(value)
+  def set(value: T)(implicit fac: Engine[Turn]): Unit = fac.plan(this) { admit(value)(_) }
 
-  def admit(value: T)(implicit turn: Turn): Unit =
-    turn.admit(this) {
-      val p = Pulse.diff(value, get)
-      if (p.isChange) {
-        pulses.set(p)
-      }
+  def admit(value: T)(implicit turn: Turn): Unit = {
+    val p = Pulse.diff(value, get)
+    if (p.isChange) {
+      pulses.set(p)
+      turn.admit(this)
     }
+  }
 
   override protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult =
     EvaluationResult.Static(changed = pulse.isChange)

@@ -6,6 +6,7 @@ import rescala.Signals.lift
 import rescala.graph.Pulsing
 import rescala.synchronization.SyncUtil
 import rescala.turns.Engines.pessimistic
+import rescala.turns.Engine
 import rescala.{ DependentUpdate => DependentUpdate, Observe, Signal, Var }
 import rescala.graph.Globals.named
 
@@ -136,13 +137,19 @@ object REScalaPhilosophers extends App {
   @annotation.tailrec // unrolled into loop by compiler
   def repeatUntilTrue(op: => Boolean): Unit = if (!op) repeatUntilTrue(op)
 
-  def tryEat(seating: Seating) =
-    DependentUpdate(seating.vision) { _ == Ready } { turn =>
-      seating.philosopher.admit(Hungry)(turn)
-      true // Don't try again
-    } {
-      false // Try again
+  def tryEat(seating: Seating) = {
+    var ate = false
+    implicitly[Engine].plan { turn =>
+      turn.admit(seating.vision)(Unit)
+      turn.admit(seating.philosopher, seating.vision) {
+        if (seating.vision.get(turn) == Ready) {
+          seating.philosopher.admit(Hungry)(turn)
+          ate = true
+        }
+      }
     }
+    ate
+  }
 
   def eatOnce(seating: Seating) = repeatUntilTrue({
 //    seating.vision.await(Ready)

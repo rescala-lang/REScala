@@ -2,10 +2,10 @@ package rescala.turns
 
 import scala.language.implicitConversions
 
-final case class Ticket(self: Either[Turn, Engine]) extends AnyVal {
+final case class Ticket(self: Either[Turn, Engine[Turn]]) extends AnyVal {
   def apply[T](f: Turn => T): T = self match {
     case Left(turn) => f(turn)
-    case Right(factory) => factory.subplan(f)
+    case Right(factory) => factory.subplan()(f)
   }
 }
 
@@ -14,5 +14,5 @@ object Ticket extends LowPriorityTicket {
 }
 
 sealed trait LowPriorityTicket {
-  implicit def dynamic(implicit factory: Engine): Ticket = Ticket(Right(factory))
+  implicit def dynamic(implicit factory: Engine[Turn]): Ticket = Ticket(Right(factory))
 }

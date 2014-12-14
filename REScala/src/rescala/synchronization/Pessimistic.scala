@@ -74,20 +74,20 @@ class Pessimistic extends TurnImpl {
   }
 
   /** lock all reactives reachable from the initial sources */
-  def lockReachable(): Unit = {
+  def lockReachable(initialWrites: List[Reactive]): Unit = {
     lazy val lq = new LevelQueue(evaluate)
 
     def evaluate(reactive: Reactive): Unit = {
       reactive.lock.acquireWrite(key)
       reactive.dependants.get.foreach(lq.enqueue(-42))
     }
-    initialReactives.foreach(lq.enqueue(-42))
+    initialWrites.foreach(lq.enqueue(-42))
     lq.evaluateQueue()
   }
 
   /** this is called after the initial closure of the turn has been executed,
     * that is the eval queue is populated with the sources */
-  override def lockPhase(): Unit = lockReachable()
+  override def lockPhase(initialWrites: List[Reactive]): Unit = lockReachable(initialWrites)
 
   /** this is called after the turn has finished propagating, but before handlers are executed */
   override def realeasePhase(): Unit = key.releaseAll()
