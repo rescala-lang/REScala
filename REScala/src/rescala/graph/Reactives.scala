@@ -18,8 +18,6 @@ trait Reactive {
     * (head of the evaluation queue) */
   protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult
 
-  /** for testing */
-  final def getLevel(implicit maybe: Ticket) = maybe { level.get(_) }
 
   /** for debugging */
   private val name =

@@ -5,6 +5,7 @@ import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.turns.Engines.default
 import rescala.{Signal, Signals, Var}
+import rescala.Infiltrator.getLevel
 
 
 class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
@@ -74,10 +75,10 @@ class SignalTestSuite extends AssertionsForJUnit with MockitoSugar {
     val s2 = v.map { 3 * _ }
     val s3 = Signals.lift(s1, s2) { _ + _ }
 
-    assert(v.getLevel == 0)
-    assert(s1.getLevel == 1)
-    assert(s2.getLevel == 1)
-    assert(s3.getLevel == 2)
+    assert(getLevel(v) == 0)
+    assert(getLevel(s1) == 1)
+    assert(getLevel(s2) == 1)
+    assert(getLevel(s3) == 2)
   }
 
 }

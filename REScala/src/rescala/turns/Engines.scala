@@ -39,7 +39,7 @@ object Engines {
       * - run the observer phase
       *   - this may have side effects as the turn is guaranteed to be finished (no rollbacks). this should still keep locks to run things in order.
       * - run the release phase
-      *   - this must is aways run, even in the case that something above fails. it should do cleanup and free any locks to avoid starvation.
+      *   - this must aways run, even in the case that something above fails. it should do cleanup and free any locks to avoid starvation.
       * - run the party! phase
       *   - not yet implemented
       * */

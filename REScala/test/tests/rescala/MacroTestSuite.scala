@@ -6,6 +6,7 @@ import org.scalatest.mock.MockitoSugar
 import rescala.macros.SignalMacro.{SignalM => Signal}
 import rescala.turns.Engines.default
 import rescala.{Event, Evt, Signal, Var}
+import rescala.Infiltrator.getLevel
 
 
 class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
@@ -75,10 +76,10 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
     val s2 = Signal { 3 * v() }
     val s3 = Signal { s1() + s2() }
 
-    assert(v.getLevel === 0)
-    assert(s1.getLevel === 1)
-    assert(s2.getLevel === 1)
-    assert(s3.getLevel === 2)
+    assert(getLevel(v) === 0)
+    assert(getLevel(s1) === 1)
+    assert(getLevel(s2) === 1)
+    assert(getLevel(s3) === 2)
 
 
   }
