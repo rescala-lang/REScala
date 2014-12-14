@@ -1,9 +1,7 @@
 package rescala.synchronization
 
 import rescala.graph.Reactive
-import rescala.propagation.{TurnImpl, LevelQueue}
-
-import scala.annotation.tailrec
+import rescala.propagation.{LevelQueue, TurnImpl}
 
 
 class Pessimistic extends TurnImpl {
