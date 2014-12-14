@@ -15,8 +15,8 @@ import scala.collection.JavaConverters._
 
 class PessimisticTestTurn extends Pessimistic {
   override def evaluate(r: Reactive): Unit = {
-    while(Pessigen.syncStack.get() match {
-      case stack @ (set, bar) :: tail if set(r) =>
+    while (Pessigen.syncStack.get() match {
+      case stack@(set, bar) :: tail if set(r) =>
         bar.ready.countDown()
         bar.go.await()
         Pessigen.syncStack.compareAndSet(stack, tail)
@@ -126,6 +126,8 @@ class PessimisticTest extends AssertionsForJUnit {
     val t1 = Spawn(v1.set(true))
     val t2 = Spawn(v2.set(true))
 
+    //this is a rather poor way to test if turn 2 is already waiting, this is your chance to replace this with something smart!
+    while (t2.getState != Thread.State.WAITING) { Thread.sleep(1) }
     l1.await()
     t1.join()
     // still unchanged, turn 1 used the old value of v2
