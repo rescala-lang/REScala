@@ -144,6 +144,9 @@ object REScalaPhilosophers extends App {
         true
       }
       else false
+    }{ (turn, forksWereFree) =>
+      if (forksWereFree) assert(seating.vision(turn) == Eating)
+      forksWereFree
     }
 
   def eatOnce(seating: Seating) = repeatUntilTrue({

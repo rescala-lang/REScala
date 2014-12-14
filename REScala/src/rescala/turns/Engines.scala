@@ -12,14 +12,14 @@ object Engines {
 
   implicit val pessimistic: Engine[Turn] = new Impl(new Pessimistic()) {
     override def subplan[T](initialWrites: Reactive*)(f: (Pessimistic) => T): T = currentTurn.value match {
-      case None => plan(initialWrites: _*)(f)
+      case None => planned(initialWrites: _*)(f)
       case Some(turn) =>
         initialWrites.foreach(r => assert(r.lock.hasWriteAccess(turn.key), s"tried to start subplan in $turn without write access to $r"))
         f(turn)
     }
   }
   implicit val synchron: Engine[Turn] = new Impl(new TurnImpl()) {
-    override def plan[T](initialWrites: Reactive*)(f: TurnImpl => T): T = synchronized(super.plan(initialWrites: _*)(f))
+    override def plan[T1, T2](i: Reactive*)(f: TurnImpl => T1)(g: (TurnImpl, T1) => T2): T2 = synchronized(super.plan(i: _*)(f)(g))
   }
   implicit val unmanaged: Engine[Turn] = new Impl(new TurnImpl())
 
@@ -29,7 +29,7 @@ object Engines {
     val currentTurn: DynamicVariable[Option[TI]] = new DynamicVariable[Option[TI]](None)
 
     override def subplan[T](initialWrites: Reactive*)(f: TI => T): T = currentTurn.value match {
-      case None => plan(initialWrites: _*)(f)
+      case None => planned(initialWrites: _*)(f)
       case Some(turn) => f(turn)
     }
 
@@ -50,16 +50,16 @@ object Engines {
       * - run the party! phase
       *   - not yet implemented
       * */
-    override def plan[T](initialWrites: Reactive*)(admissionPhase: TI => T): T = {
-      implicit class sequentialLeftResult(result: T) {def ~<(sideEffects_! : Unit): T = result }
+    override def plan[T1, T2](initialWrites: Reactive*)(admissionPhase: TI => T1)(checkPhase: (TI, T1) => T2): T2 = {
+      implicit class sequentialLeftResult[R](result: R) {def ~<(sideEffects_! : Unit): R = result }
       val turn = makeTurn
       try {
         currentTurn.withValue(Some(turn)) {
           turn.lockPhase(initialWrites.toList)
-          admissionPhase(turn) ~< {
-            turn.propagationPhase()
-            turn.commitPhase()
-          }
+          val res = admissionPhase(turn)
+          turn.propagationPhase()
+          turn.commitPhase()
+          checkPhase(turn, res)
         } ~< turn.observerPhase()
       }
       finally {
