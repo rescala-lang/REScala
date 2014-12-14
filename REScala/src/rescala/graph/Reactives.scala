@@ -51,6 +51,7 @@ trait Stateful[+A] extends Pulsing[A] {
   final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")
 
   final def apply[T](turn: Turn): A = {
+    turn.accessDynamic(this)
     Globals.useDependency(this)
     get(turn)
   }

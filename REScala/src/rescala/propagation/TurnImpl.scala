@@ -4,6 +4,8 @@ import rescala.graph.{Commitable, Reactive}
 import rescala.turns.Turn
 import rescala.propagation.Evaluator.Result
 
+import scala.util.DynamicVariable
+
 class TurnImpl extends Turn {
   implicit def currentTurn: TurnImpl = this
 
@@ -58,6 +60,9 @@ class TurnImpl extends Turn {
     }
 
   override def admit(reactive: Reactive): Unit = levelQueue.enqueue(0)(reactive)
+
+  /** allow turn to handle dynamic access to reactives */
+  override def accessDynamic(dependency: Reactive): Unit = ()
 
   def lockPhase(initialWrites: List[Reactive]): Unit = ()
 

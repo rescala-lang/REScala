@@ -1,12 +1,15 @@
 package rescala.turns
 
-import rescala.graph.{Commitable, Reactive}
+import rescala.graph.{Stateful, Commitable, Reactive}
 
 /**
  * The engine that schedules the (glitch-free) evaluation
  * of the nodes in the dependency graph.
  */
 trait Turn {
+
+  /** allow turn to handle dynamic access to reactives */
+  def accessDynamic(dependency: Reactive): Unit
 
   /** admits a new source change */
   def admit(reactive: Reactive): Unit

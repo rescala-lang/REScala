@@ -91,5 +91,8 @@ class Pessimistic extends TurnImpl {
 
   /** this is called after the turn has finished propagating, but before handlers are executed */
   override def realeasePhase(): Unit = key.releaseAll()
+
+  /** allow turn to handle dynamic access to reactives */
+  override def accessDynamic(dependency: Reactive): Unit = dependency.lock.acquireDynamic(key)
 }
 
