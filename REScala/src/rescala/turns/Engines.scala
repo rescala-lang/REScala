@@ -1,7 +1,5 @@
 package rescala.turns
 
-import java.util.concurrent.locks.{ReentrantReadWriteLock, ReentrantLock}
-
 import rescala.graph.Reactive
 import rescala.propagation.TurnImpl
 import rescala.synchronization.Pessimistic
