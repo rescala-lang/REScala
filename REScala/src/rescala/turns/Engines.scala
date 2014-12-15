@@ -2,7 +2,7 @@ package rescala.turns
 
 import rescala.graph.Reactive
 import rescala.propagation.TurnImpl
-import rescala.synchronization.Pessimistic
+import rescala.synchronization.{SpinningInitPessimistic, Pessimistic}
 
 import scala.util.DynamicVariable
 
@@ -12,10 +12,13 @@ object Engines {
     case "pessimistic" => pessimistic
     case "synchron" => synchron
     case "unmanaged" => unmanaged
+    case "spinningInit" => spinningInit
     case _ => default
   }
 
   implicit def default: Engine[Turn] = pessimistic
+
+  implicit val spinningInit: Engine[SpinningInitPessimistic] = new Impl(new SpinningInitPessimistic())
 
   implicit val pessimistic: Engine[Pessimistic] = new Impl(new Pessimistic()) {
     override def subplan[T](initialWrites: Reactive*)(f: (Pessimistic) => T): T = currentTurn.value match {

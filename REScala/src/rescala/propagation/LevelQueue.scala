@@ -44,6 +44,8 @@ class LevelQueue(evaluator: Reactive => Unit)(implicit val currenTurn: Turn) {
     }
   }
 
+  def clear() = evalQueue = SortedSet[QueueElement]()
+
   private case class QueueElement(level: Int, reactive: Reactive, minLevel: Int, needsEvaluate: Boolean)
   private implicit def ordering: Ordering[QueueElement] = new Ordering[QueueElement] {
     override def compare(x: QueueElement, y: QueueElement): Int = {
