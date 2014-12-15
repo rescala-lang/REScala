@@ -14,7 +14,3 @@ trait Engine[+TI <: Turn] {
   /** uses the current turn if any or creates a new turn if none */
   def subplan[T](initialWrites: Reactive*)(admissionPhase: TI => T): T
 }
-
-trait LockableEngine[+TI <: Turn] extends Engine[TI] {
-  def exclusively[R](f: => R): R
-}

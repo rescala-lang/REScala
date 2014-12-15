@@ -19,19 +19,6 @@ object Engines {
 
   implicit def default: Engine[Turn] = pessimistic
 
-  implicit val withExclusive: LockableEngine[Pessimistic] = new Impl(new Pessimistic()) with LockableEngine[Pessimistic] {
-    val globalLock = new ReentrantReadWriteLock()
-
-    override def exclusively[R](f: => R): R = {
-      globalLock.writeLock().lock()
-      try f finally globalLock.writeLock().unlock()
-    }
-    override def plan[T1, T2](i: Reactive*)(f: Pessimistic => T1)(g: (Pessimistic, T1) => T2): T2 = {
-      globalLock.readLock().lock()
-      try pessimistic.plan(i: _*)(f)(g) finally globalLock.readLock().unlock()
-    }
-  }
-
   implicit val pessimistic: Engine[Pessimistic] = new Impl(new Pessimistic()) {
     override def subplan[T](initialWrites: Reactive*)(f: (Pessimistic) => T): T = currentTurn.value match {
       case None => planned(initialWrites: _*)(f)
