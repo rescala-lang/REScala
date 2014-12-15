@@ -8,6 +8,13 @@ import scala.util.DynamicVariable
 
 object Engines {
 
+  def byName(name: String): Engine[Turn] = name match {
+    case "pessimistic" => pessimistic
+    case "synchron" => synchron
+    case "unmanaged" => unmanaged
+    case _ => default
+  }
+
   implicit def default: Engine[Turn] = pessimistic
 
   implicit val pessimistic: Engine[Turn] = new Impl(new Pessimistic()) {
