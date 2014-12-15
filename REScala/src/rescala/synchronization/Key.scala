@@ -8,7 +8,7 @@ import scala.annotation.tailrec
 
 final class Key(val handleDependencyChange: (Reactive, Reactive) => Unit) {
 
-  val id = SyncUtil.counter.getAndIncrement
+  val id = SyncUtil.turnCounter.getAndIncrement
   override def toString: String = s"Key($id)"
 
   /** if we have a request from some other owner, that owner has given us shared access to all his locks

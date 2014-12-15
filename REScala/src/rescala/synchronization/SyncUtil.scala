@@ -49,6 +49,5 @@ object SyncUtil {
     }
 
 
-  val counter = new AtomicInteger(0)
-
+  val turnCounter = new AtomicInteger(0)
 }
