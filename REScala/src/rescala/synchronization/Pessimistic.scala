@@ -5,32 +5,9 @@ import rescala.propagation.{LevelQueue, TurnImpl}
 import rescala.turns.{Engines, Turn, Engine}
 
 
-class Pessimistic extends TurnImpl(Engines.pessimistic) {
+class Pessimistic extends TurnImpl(Engines.pessimistic) with InterturnDependencyChanges {
 
   final val key: Key = new Key(this)
-
-  /** registering a dependency on a node we do not personally own does require some additional care.
-    * we move responsibility to the commit phase */
-  override def register(sink: Reactive)(source: Reactive): Unit = {
-    source.lock.acquireDynamic(key)
-    val owner = source.lock.getOwner
-    if ((owner ne key) && !source.dependants.get.contains(sink)) {
-      owner.turn.register(sink)(source)
-      owner.turn.admit(sink)
-    }
-    else super.register(sink)(source)
-  }
-
-  /** this is for cases where we register and then unregister the same dependency in a single turn */
-  override def unregister(sink: Reactive)(source: Reactive): Unit = {
-    source.lock.acquireDynamic(key)
-    val owner = source.lock.getOwner
-    if (owner ne key) {
-      owner.turn.forget(sink)
-      owner.turn.unregister(sink)(source)
-    }
-    else super.unregister(sink)(source)
-  }
 
   /** creating a signal causes some unpredictable reactives to be used inside the turn.
     * these will have their locks be acquired dynamically see below for how that works.
@@ -53,21 +30,9 @@ class Pessimistic extends TurnImpl(Engines.pessimistic) {
     super.createDynamic(dependencies)(reactive)
   }
 
-  /** lock all reactives reachable from the initial sources */
-  def lockReachable(initialWrites: List[Reactive]): Unit = {
-    lazy val lq = new LevelQueue(evaluate)
-
-    def evaluate(reactive: Reactive): Unit = {
-      reactive.lock.acquireWrite(key)
-      reactive.dependants.get.foreach(lq.enqueue(-42))
-    }
-    initialWrites.foreach(lq.enqueue(-42))
-    lq.evaluateQueue()
-  }
-
   /** this is called after the initial closure of the turn has been executed,
     * that is the eval queue is populated with the sources */
-  override def lockPhase(initialWrites: List[Reactive]): Unit = lockReachable(initialWrites)
+  override def lockPhase(initialWrites: List[Reactive]): Unit = SyncUtil.lockReachable(initialWrites, r => {r.lock.acquireWrite(key); true} )
 
   /** this is called after the turn has finished propagating, but before handlers are executed */
   override def realeasePhase(): Unit = key.releaseAll()

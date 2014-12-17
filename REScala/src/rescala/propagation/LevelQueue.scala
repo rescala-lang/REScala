@@ -55,8 +55,6 @@ class LevelQueue()(implicit val currenTurn: Turn) {
 
 object LevelQueue {
 
-  def apply() = new LevelQueue()
-
   private case class QueueElement(level: Int, reactive: Reactive, minLevel: Int, needsEvaluate: Boolean)
   private implicit def ordering: Ordering[QueueElement] = new Ordering[QueueElement] {
     override def compare(x: QueueElement, y: QueueElement): Int = {

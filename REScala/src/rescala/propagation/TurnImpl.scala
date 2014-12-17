@@ -18,7 +18,7 @@ class TurnImpl(override val engine: Engine[Turn]) extends Turn {
     res
   }
 
-  val levelQueue = new LevelQueue(evaluate)
+  val levelQueue = new LevelQueue()
 
   def evaluate(r: Reactive): Unit = handleDiff(Evaluator.evaluate(r)).requeue(levelQueue.enqueue)
 
@@ -65,7 +65,7 @@ class TurnImpl(override val engine: Engine[Turn]) extends Turn {
 
   def lockPhase(initialWrites: List[Reactive]): Unit = ()
 
-  def propagationPhase(): Unit = levelQueue.evaluateQueue()
+  def propagationPhase(): Unit = levelQueue.evaluateQueue(evaluate)
 
   def commitPhase() = toCommit.foreach(_.commit(this))
 
