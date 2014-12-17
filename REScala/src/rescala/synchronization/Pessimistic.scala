@@ -15,19 +15,21 @@ class Pessimistic extends TurnImpl(Engines.pessimistic) {
     source.lock.acquireDynamic(key)
     val owner = source.lock.getOwner
     if ((owner ne key) && !source.dependants.get.contains(sink)) {
+      owner.turn.register(sink)(source)
       owner.turn.admit(sink)
     }
-    super.register(sink)(source)
+    else super.register(sink)(source)
   }
 
   /** this is for cases where we register and then unregister the same dependency in a single turn */
   override def unregister(sink: Reactive)(source: Reactive): Unit = {
     source.lock.acquireDynamic(key)
     val owner = source.lock.getOwner
-    super.unregister(sink)(source)
     if (owner ne key) {
       owner.turn.forget(sink)
+      owner.turn.unregister(sink)(source)
     }
+    else super.unregister(sink)(source)
   }
 
   /** creating a signal causes some unpredictable reactives to be used inside the turn.

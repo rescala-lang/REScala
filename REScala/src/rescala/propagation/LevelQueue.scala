@@ -17,7 +17,7 @@ class LevelQueue(evaluator: Reactive => Unit)(implicit val currenTurn: Turn) {
   }
 
   def remove(reactive: Reactive): Unit = {
-    evalQueue -= QueueElement(reactive.level.get, reactive, 0, needsEvaluate = false)
+    evalQueue = evalQueue.filter(qe => qe.reactive ne reactive)
   }
 
   final def evaluate(queueElement: QueueElement): Unit = {

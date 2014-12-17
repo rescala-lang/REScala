@@ -31,7 +31,10 @@ trait Turn {
     * the dependencies should be used to calculate a approximation for the level */
   def createDynamic[T <: Reactive](dependencies: Set[Reactive])(f: => T): T
 
-  /** removes reactive from its dependencies */
+  /** adds a dependency */
+  def register(sink: Reactive)(source: Reactive): Unit
+
+  /** removes a dependency */
   def unregister(sink: Reactive)(source: Reactive): Unit
 
   /** mark the state of the reactive as changed, i.e. it needs a commit or rollback */
