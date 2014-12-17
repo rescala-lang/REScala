@@ -1,6 +1,6 @@
 package rescala.graph
 
-import rescala.synchronization.{TurnLock, Pessimistic}
+import rescala.synchronization.{STMSync, TurnLock, Pessimistic}
 import rescala.turns.Turn
 
 import scala.concurrent.stm.{InTxn, Ref}
@@ -79,7 +79,7 @@ final class STMBuffer[A](initialValue: A, initialStrategy: (A, A) => A) extends 
   override def initStrategy(strategy: (A, A) => A): Unit = commitStrategy = strategy
 
   implicit def inTxn(implicit turn: Turn): InTxn = turn match {
-    case pessimistic: Pessimistic => pessimistic.asInstanceOf[InTxn]
+    case stmTurn: STMSync => stmTurn.inTxn
     case _ => throw new IllegalStateException(s"$turn has invalid type for $this")
   }
 
