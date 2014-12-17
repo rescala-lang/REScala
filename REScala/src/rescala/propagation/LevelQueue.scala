@@ -56,7 +56,7 @@ class LevelQueue()(implicit val currenTurn: Turn) {
 object LevelQueue {
 
   private case class QueueElement(level: Int, reactive: Reactive, minLevel: Int, needsEvaluate: Boolean)
-  private implicit def ordering: Ordering[QueueElement] = new Ordering[QueueElement] {
+  private implicit val ordering: Ordering[QueueElement] = new Ordering[QueueElement] {
     override def compare(x: QueueElement, y: QueueElement): Int = {
       val levelDiff = Integer.compare(x.level, y.level)
       if (levelDiff != 0) levelDiff
