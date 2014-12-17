@@ -25,6 +25,7 @@ libraryDependencies ++= (
   "org.mockito" % "mockito-all" % "1.10.8" % "test" ::
     "org.scalatest" %% "scalatest" % "2.2.2" % "test" ::
     "com.novocode" % "junit-interface" % "0.11" % "test" ::
+    "org.scala-stm" %% "scala-stm" % "0.7" ::
     Nil)
 
 
