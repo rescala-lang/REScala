@@ -37,13 +37,18 @@ class Pessimistic extends EngineReference[Pessimistic](Engines.pessimistic) with
   }
 }
 
-class STMSync extends EngineReference(Engines.STM) with TurnImpl {
+trait NothingSpecial extends TurnImpl {
+  override def lockPhase(initialWrites: List[Reactive]): Unit = ()
+  override def realeasePhase(): Unit = ()
+}
+
+class STMSync extends EngineReference[STMSync](Engines.STM) with NothingSpecial {
   // this is a horrible idea
   def inTxn: InTxn = atomic(identity)
 }
 
 
-class SpinningInitPessimistic extends EngineReference(Engines.spinningInit) with Prelock {
+class SpinningInitPessimistic extends EngineReference[SpinningInitPessimistic](Engines.spinningInit) with Prelock {
 
   override def lockPhase(initialWrites: List[Reactive]): Unit = SyncUtil.lockReachable(initialWrites, acquireWrite )
 

@@ -63,7 +63,7 @@ trait TurnImpl extends Turn {
   /** allow turn to handle dynamic access to reactives */
   override def accessDynamic(dependency: Reactive): Unit = ()
 
-  def lockPhase(initialWrites: List[Reactive]): Unit = ()
+  def lockPhase(initialWrites: List[Reactive]): Unit
 
   def propagationPhase(): Unit = levelQueue.evaluateQueue(evaluate)
 
@@ -73,6 +73,6 @@ trait TurnImpl extends Turn {
 
   def observerPhase() = afterCommitHandlers.foreach(_())
 
-  def realeasePhase(): Unit = ()
+  def realeasePhase(): Unit
 
 }

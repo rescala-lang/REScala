@@ -146,9 +146,8 @@ class PessimisticTest extends AssertionsForJUnit {
 
 
   object MockFacFac {
-    def apply(i0: Reactive, reg: => Unit, unreg: => Unit): Engine[Turn] = {
-      lazy val engine: Engine[Prelock] = new Engines.Impl[Prelock](
-        new EngineReference(engine) with Prelock {
+    def apply(i0: Reactive, reg: => Unit, unreg: => Unit): Engine[Turn] = new Engines.Impl[Pessimistic](
+      new Pessimistic {
         override def register(downstream: Reactive)(upstream: Reactive): Unit = {
           if (upstream eq i0) reg
           super.register(downstream)(upstream)
@@ -158,8 +157,6 @@ class PessimisticTest extends AssertionsForJUnit {
           super.unregister(downstream)(upstream)
         }
       })
-      engine
-    }
   }
 
   @Test def addAndRemoveDependencyInOneTurn(): Unit = synchronized {
