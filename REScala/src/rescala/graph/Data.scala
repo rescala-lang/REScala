@@ -7,6 +7,17 @@ import scala.util.DynamicVariable
 
 /** support for dynamic dependency discovery */
 object Globals {
+  def declarationLocationName() =
+    if (dynamicNameVar.value.nonEmpty) dynamicNameVar.value
+    else {
+      val trace = Thread.currentThread().getStackTrace
+      var i = 0
+      while (trace(i).toString.startsWith("scala.") || trace(i).toString.startsWith("java.") ||
+        (trace(i).toString.startsWith("rescala.") && !trace(i).toString.startsWith("rescala.test."))) i += 1
+
+      s"${ trace(i).getFileName }(${ trace(i).getLineNumber })"
+    }
+
   val dynamicDependencyBag = new DynamicVariable(Set[Reactive]())
   /** runs the given code while collecting dynamically used reactives */
   def collectDependencies[T](f: => T): (T, Set[Reactive]) = dynamicDependencyBag.withValue(Set()) { (f, dynamicDependencyBag.value) }

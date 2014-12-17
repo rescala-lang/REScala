@@ -20,19 +20,7 @@ trait Reactive {
 
 
   /** for debugging */
-  private val name =
-    if (Globals.dynamicNameVar.value.nonEmpty) Globals.dynamicNameVar.value
-    else {
-      val classname = getClass.getName
-      val unqualifiedClassname = classname.substring(classname.lastIndexOf('.') + 1)
-
-      val trace = Thread.currentThread().getStackTrace
-      var i = 0
-      while (trace(i).toString.startsWith("scala.") || trace(i).toString.startsWith("java.") ||
-        (trace(i).toString.startsWith("rescala.") && !trace(i).toString.startsWith("rescala.test."))) i += 1
-
-      s"${ trace(i).getFileName }(${ trace(i).getLineNumber })"
-    }
+  private val name = Globals.declarationLocationName()
   override def toString = name
 }
 
