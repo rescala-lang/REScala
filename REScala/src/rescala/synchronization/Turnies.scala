@@ -65,6 +65,7 @@ class Yielding extends EngineReference[Yielding](Engines.yielding) with Prelock 
             // yield!
             case newOwner =>
               key.transferAll(newOwner)
+              key.appendAfter(newOwner)
               'await
           }
         }
