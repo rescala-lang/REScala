@@ -12,7 +12,7 @@ abstract class EngineReference[T <: Turn](override val engine: Engine[T]) extend
 class Pessimistic extends EngineReference[Pessimistic](Engines.pessimistic) with Prelock {
   /** this is called after the initial closure of the turn has been executed,
     * that is the eval queue is populated with the sources */
-  override def lockPhase(initialWrites: List[Reactive]): Unit = SyncUtil.lockReachable(initialWrites, r => {r.lock.acquireWrite(key); true} )
+  override def lockPhase(initialWrites: List[Reactive]): Unit = SyncUtil.lockReachable(initialWrites, r => {acquireWrite(r); true} )
 
   /** acquires write acces to the lock.
     * this can cause a temporary loss off all locks held by key,
