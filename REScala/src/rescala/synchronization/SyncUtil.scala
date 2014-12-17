@@ -53,7 +53,10 @@ object SyncUtil {
   /** lock all reactives reachable from the initial sources
     * retry when acquire returns false */
   def lockReachable(initial: List[Reactive], acquire: Reactive => Boolean)(implicit turn: Turn): Unit = {
-    def evaluate(reactive: Reactive): Unit = {
+    val lq = new LevelQueue()
+    initial.foreach(lq.enqueue(-42))
+
+    lq.evaluateQueue { reactive =>
       if (acquire(reactive))
         reactive.dependants.get.foreach(lq.enqueue(-42))
       else {
@@ -61,9 +64,6 @@ object SyncUtil {
         initial.foreach(lq.enqueue(-42))
       }
     }
-    
-    lazy val lq = new LevelQueue()
-    initial.foreach(lq.enqueue(-42))
-    lq.evaluateQueue(evaluate)
   }
+
 }
