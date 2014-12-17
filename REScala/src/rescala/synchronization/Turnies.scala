@@ -13,7 +13,7 @@ abstract class EngineReference[T <: Turn](override val engine: Engine[T]) extend
 class Pessimistic extends EngineReference[Pessimistic](Engines.pessimistic) with Prelock {
   /** this is called after the initial closure of the turn has been executed,
     * that is the eval queue is populated with the sources */
-  override def lockPhase(initialWrites: List[Reactive]): Unit = SyncUtil.lockReachable(initialWrites, r => {acquireWrite(r); true} )
+  override def lockPhase(initialWrites: List[Reactive]): Unit = SyncUtil.lockReachable(initialWrites, r => { acquireWrite(r); true })
 
   /** acquires write acces to the lock.
     * this can cause a temporary loss off all locks held by key,
@@ -39,11 +39,10 @@ class Pessimistic extends EngineReference[Pessimistic](Engines.pessimistic) with
 }
 
 
-
 class Yielding extends EngineReference[Yielding](Engines.yielding) with Prelock {
   /** this is called after the initial closure of the turn has been executed,
     * that is the eval queue is populated with the sources */
-  override def lockPhase(initialWrites: List[Reactive]): Unit = SyncUtil.lockReachable(initialWrites, r => {acquireWrite(r); true} )
+  override def lockPhase(initialWrites: List[Reactive]): Unit = SyncUtil.lockReachable(initialWrites, r => { acquireWrite(r); true })
 
   /** acquires write acces to the lock.
     * this can cause a temporary loss off all locks held by key,
@@ -61,10 +60,13 @@ class Yielding extends EngineReference[Yielding](Engines.yielding) with Prelock 
             // make sure the other owner did not unlock before we got his master lock
             case newOwner if newOwner eq key => 'done
             case newOwner if newOwner ne oldOwner => 'retry
-
+            case newOwner if hasDynamicAccess(key) => key.subsequent.get.withMaster {
+              key.releaseAll()
+              key.appendAfter(newOwner)
+            }
             // yield!
             case newOwner =>
-              key.transferAll(newOwner)
+              key.transferAll(SyncUtil.laneHead(newOwner))
               key.appendAfter(newOwner)
               'await
           }
@@ -92,7 +94,7 @@ class STMSync extends EngineReference[STMSync](Engines.STM) with NothingSpecial 
 
 class SpinningInitPessimistic extends EngineReference[SpinningInitPessimistic](Engines.spinningInit) with Prelock {
 
-  override def lockPhase(initialWrites: List[Reactive]): Unit = SyncUtil.lockReachable(initialWrites, acquireWrite )
+  override def lockPhase(initialWrites: List[Reactive]): Unit = SyncUtil.lockReachable(initialWrites, acquireWrite)
 
   def acquireWrite(reactive: Reactive): Boolean =
     if (reactive.lock.tryLock(key) eq key) true
