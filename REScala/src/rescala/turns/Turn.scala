@@ -17,6 +17,9 @@ trait Turn {
   /** admits a new source change */
   def admit(reactive: Reactive): Unit
 
+  /** removes a reactive from evaluation*/
+  def forget(reactive: Reactive): Unit
+
   /** called when a new reactive is created and registered into the network
     * subclasses are expected to register the reactive with its dependencies
     * and calculate the correct level */

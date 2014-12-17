@@ -57,7 +57,8 @@ class TurnImpl(override val engine: Engine[Turn]) extends Turn {
       dependant.level.transform(math.max(newLevel, _))
     }
 
-  override def admit(reactive: Reactive): Unit = levelQueue.enqueue(0)(reactive)
+  override def admit(reactive: Reactive): Unit = levelQueue.enqueue(reactive.level.get)(reactive)
+  override def forget(reactive: Reactive): Unit = levelQueue.remove(reactive)
 
   /** allow turn to handle dynamic access to reactives */
   override def accessDynamic(dependency: Reactive): Unit = ()

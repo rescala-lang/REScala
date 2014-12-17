@@ -16,6 +16,10 @@ class LevelQueue(evaluator: Reactive => Unit)(implicit val currenTurn: Turn) {
     evalQueue += QueueElement(dep.level.get, dep, minLevel, needsEvaluate)
   }
 
+  def remove(reactive: Reactive): Unit = {
+    evalQueue -= QueueElement(reactive.level.get, reactive, 0, needsEvaluate = false)
+  }
+
   final def evaluate(queueElement: QueueElement): Unit = {
     val QueueElement(headLevel, head, headMinLevel, doEvaluate) = queueElement
     if (headLevel < headMinLevel) {

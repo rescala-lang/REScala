@@ -7,47 +7,26 @@ import rescala.turns.{Engines, Turn, Engine}
 
 class Pessimistic extends TurnImpl(Engines.pessimistic) {
 
-  final val key: Key = new Key((sink, source) => {
-    register(sink)(source)
-    levelQueue.enqueue(-42)(sink)
-  })
-
-  var lazyDependencyUpdates: Set[(Reactive, Reactive)] = Set()
-
-  var evaluated: List[Reactive] = Nil
-
-  override def evaluate(r: Reactive): Unit = {
-    assert(r.lock.hasWriteAccess(key))
-    evaluated ::= r
-    super.evaluate(r)
-  }
+  final val key: Key = new Key(this)
 
   /** registering a dependency on a node we do not personally own does require some additional care.
     * we move responsibility to the commit phase */
   override def register(sink: Reactive)(source: Reactive): Unit = {
     source.lock.acquireDynamic(key)
-    if (source.lock.hasWriteAccess(key)) super.register(sink)(source)
-    else {
-      if (!source.dependants.get.contains(sink))
-        lazyDependencyUpdates += source -> sink
+    val owner = source.lock.getOwner
+    if ((owner ne key) && !source.dependants.get.contains(sink)) {
+      owner.turn.admit(sink)
     }
+    super.register(sink)(source)
   }
 
   /** this is for cases where we register and then unregister the same dependency in a single turn */
   override def unregister(sink: Reactive)(source: Reactive): Unit = {
     source.lock.acquireDynamic(key)
+    val owner = source.lock.getOwner
     super.unregister(sink)(source)
-    lazyDependencyUpdates -= (source -> sink)
-  }
-
-
-  /** after the normal commit, we register the lazy dependency updates and put the new downstream into the others queue
-    * (it is a new dependency, that has conceptually been there before the other turn, so it needs to be evaluated) */
-  override def commitPhase(): Unit = {
-    super.commitPhase()
-    lazyDependencyUpdates.foreach { case (source, sink) =>
-      val other = source.lock.getOwner
-      other.handleDependencyChange(sink, source)
+    if (owner ne key) {
+      owner.turn.forget(sink)
     }
   }
 

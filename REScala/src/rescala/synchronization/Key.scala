@@ -3,10 +3,11 @@ package rescala.synchronization
 import java.util.concurrent.locks.ReentrantLock
 
 import rescala.graph.{Globals, Reactive}
+import rescala.turns.Turn
 
 import scala.annotation.tailrec
 
-final class Key(val handleDependencyChange: (Reactive, Reactive) => Unit) {
+final class Key(val turn: Turn) {
 
   val id = Globals.nextID()
   override def toString: String = s"Key($id)"
