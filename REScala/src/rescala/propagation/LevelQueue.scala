@@ -3,32 +3,33 @@ package rescala.propagation
 import java.lang.{Boolean => jlBool}
 
 import rescala.graph.Reactive
+import rescala.propagation.LevelQueue.QueueElement
 import rescala.turns.Turn
 
 import scala.collection.SortedSet
 
-class LevelQueue(evaluator: Reactive => Unit)(implicit val currenTurn: Turn) {
+class LevelQueue()(implicit val currenTurn: Turn) {
 
-  private var evalQueue = SortedSet[QueueElement]()
+  private var elements = SortedSet[QueueElement]()
 
   /** mark the reactive as needing a reevaluation */
   def enqueue(minLevel: Int, needsEvaluate: Boolean = true)(dep: Reactive): Unit = {
-    evalQueue += QueueElement(dep.level.get, dep, minLevel, needsEvaluate)
+    elements += QueueElement(dep.level.get, dep, minLevel, needsEvaluate)
   }
 
   def remove(reactive: Reactive): Unit = {
-    evalQueue = evalQueue.filter(qe => qe.reactive ne reactive)
+    elements = elements.filter(qe => qe.reactive ne reactive)
   }
 
-  final def evaluate(queueElement: QueueElement): Unit = {
+  final def handleHead(queueElement: QueueElement, evaluator: Reactive => Unit): Unit = {
     val QueueElement(headLevel, head, headMinLevel, doEvaluate) = queueElement
     if (headLevel < headMinLevel) {
       head.level.set(headMinLevel)
       val reevaluate = if (doEvaluate) true
-      else if (evalQueue.isEmpty) false
-      else if (evalQueue.head.reactive ne head) false
+      else if (elements.isEmpty) false
+      else if (elements.head.reactive ne head) false
       else {
-        evalQueue = evalQueue.tail
+        elements = elements.tail
         true
       }
       enqueue(headMinLevel, reevaluate)(head)
@@ -40,15 +41,21 @@ class LevelQueue(evaluator: Reactive => Unit)(implicit val currenTurn: Turn) {
   }
 
   /** Evaluates all the elements in the queue */
-  def evaluateQueue() = {
-    while (evalQueue.nonEmpty) {
-      val head = evalQueue.head
-      evalQueue = evalQueue.tail
-      evaluate(head)
+  def evaluateQueue(evaluator: Reactive => Unit) = {
+    while (elements.nonEmpty) {
+      val head = elements.head
+      elements = elements.tail
+      handleHead(head, evaluator)
     }
   }
 
-  def clear() = evalQueue = SortedSet[QueueElement]()
+  def clear() = elements = SortedSet[QueueElement]()
+
+}
+
+object LevelQueue {
+
+  def apply() = new LevelQueue()
 
   private case class QueueElement(level: Int, reactive: Reactive, minLevel: Int, needsEvaluate: Boolean)
   private implicit def ordering: Ordering[QueueElement] = new Ordering[QueueElement] {
