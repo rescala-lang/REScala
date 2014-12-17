@@ -35,27 +35,6 @@ final class TurnLock(val guarded: Reactive) {
     * this can block until all other turns waiting on the lock have finished */
   def acquireDynamic(key: Key): Unit = if (!hasDynamicAccess(key)) request(key)
 
-  /** acquires write acces to the lock.
-    * this can cause a temporary loss off all locks held by key,
-    * so key needs to be in a clean state before this is called.
-    * this can block until other turns waiting on the lock have finished */
-  def acquireWrite(key: Key): Unit = {
-    acquireDynamic(key)
-    if (!hasWriteAccess(key)) {
-      key.withMaster {
-        val subs = key.subsequent.get
-        subs.withMaster {
-          // release locks so that whatever waits for us can continue
-          key.releaseAll()
-          // but in turn we wait on that
-          key.appendAfter(subs)
-        }
-      }
-      // can now safely wait as we will get the lock eventually
-      lock(key)
-    }
-  }
-
   /** this will block until the lock is owned by the turn.
     * this does not test for shared access and thus will deadlock if the current owner has its locks shared with the turn.
     * use with caution as this can potentially deadlock */
