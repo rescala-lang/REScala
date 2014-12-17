@@ -7,7 +7,7 @@ import java.util.concurrent.{ConcurrentLinkedQueue, CountDownLatch}
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import rescala.graph.Reactive
-import rescala.synchronization.Pessimistic
+import rescala.synchronization.{Pessimistic, EngineReference, Prelock}
 import rescala.turns.{Turn, Engine, Engines}
 import rescala.{Signals, Var}
 
@@ -146,8 +146,9 @@ class PessimisticTest extends AssertionsForJUnit {
 
 
   object MockFacFac {
-    def apply(i0: Reactive, reg: => Unit, unreg: => Unit): Engine[Turn] = new Engines.Impl(
-      new Pessimistic {
+    def apply(i0: Reactive, reg: => Unit, unreg: => Unit): Engine[Turn] = {
+      lazy val engine: Engine[Prelock] = new Engines.Impl[Prelock](
+        new EngineReference(engine) with Prelock {
         override def register(downstream: Reactive)(upstream: Reactive): Unit = {
           if (upstream eq i0) reg
           super.register(downstream)(upstream)
@@ -157,6 +158,8 @@ class PessimisticTest extends AssertionsForJUnit {
           super.unregister(downstream)(upstream)
         }
       })
+      engine
+    }
   }
 
   @Test def addAndRemoveDependencyInOneTurn(): Unit = synchronized {

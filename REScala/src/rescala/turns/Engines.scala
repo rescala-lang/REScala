@@ -2,7 +2,7 @@ package rescala.turns
 
 import rescala.graph.{STMBuffer, Buffer, Reactive}
 import rescala.propagation.TurnImpl
-import rescala.synchronization.{TurnLock, STMSync, SpinningInitPessimistic, Pessimistic}
+import rescala.synchronization.{EngineReference, Pessimistic, TurnLock, STMSync, SpinningInitPessimistic, Prelock}
 
 import scala.util.DynamicVariable
 import scala.concurrent.stm.atomic
@@ -19,14 +19,14 @@ object Engines {
     case _ => default
   }
 
-  implicit def default: Engine[Turn] = STM
+  implicit def default: Engine[Turn] = pessimistic
 
   implicit val STM: Engine[Turn] = new Impl(new STMSync()) {
     override def plan[T1, T2](i: Reactive*)(f: STMSync => T1)(g: (STMSync, T1) => T2): T2 = atomic { tx => super.plan(i: _*)(f)(g) }
     override def buffer[A](default: A, commitStrategy: (A, A) => A, writeLock: TurnLock): Buffer[A] = new STMBuffer[A](default, commitStrategy)
   }
 
-  implicit val spinningInit: Engine[SpinningInitPessimistic] = new Impl(new SpinningInitPessimistic())
+  implicit val spinningInit: Engine[Prelock] = new Impl(new SpinningInitPessimistic())
 
   implicit val pessimistic: Engine[Pessimistic] = new Impl(new Pessimistic()) {
     override def subplan[T](initialWrites: Reactive*)(f: (Pessimistic) => T): T = currentTurn.value match {
@@ -36,10 +36,10 @@ object Engines {
         f(turn)
     }
   }
-  implicit val synchron: Engine[Turn] = new Impl(new TurnImpl(synchron)) {
+  implicit val synchron: Engine[Turn] = new Impl[TurnImpl](new EngineReference(synchron) with TurnImpl) {
     override def plan[T1, T2](i: Reactive*)(f: TurnImpl => T1)(g: (TurnImpl, T1) => T2): T2 = synchronized(super.plan(i: _*)(f)(g))
   }
-  implicit val unmanaged: Engine[Turn] = new Impl(new TurnImpl(unmanaged))
+  implicit val unmanaged: Engine[Turn] = new Impl[TurnImpl](new EngineReference(unmanaged) with TurnImpl)
 
 
   class Impl[TI <: TurnImpl](makeTurn: => TI) extends Engine[TI] {

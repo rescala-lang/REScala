@@ -4,7 +4,7 @@ import rescala.graph.Reactive
 import rescala.turns.Turn
 
 trait InterturnDependencyChanges extends Turn {
-  self: Pessimistic =>
+  self: Prelock =>
   /** registering a dependency on a node we do not personally own does require some additional care.
     * we move responsibility to the commit phase */
   abstract override def register(sink: Reactive)(source: Reactive): Unit = {

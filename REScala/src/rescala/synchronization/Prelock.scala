@@ -5,7 +5,7 @@ import rescala.propagation.{LevelQueue, TurnImpl}
 import rescala.turns.{Engines, Turn, Engine}
 
 
-class Pessimistic extends TurnImpl(Engines.pessimistic) with InterturnDependencyChanges {
+trait Prelock extends TurnImpl with InterturnDependencyChanges {
 
   final val key: Key = new Key(this)
 
@@ -29,10 +29,6 @@ class Pessimistic extends TurnImpl(Engines.pessimistic) with InterturnDependency
     reactive.lock.lock(key)
     super.createDynamic(dependencies)(reactive)
   }
-
-  /** this is called after the initial closure of the turn has been executed,
-    * that is the eval queue is populated with the sources */
-  override def lockPhase(initialWrites: List[Reactive]): Unit = SyncUtil.lockReachable(initialWrites, r => {r.lock.acquireWrite(key); true} )
 
   /** this is called after the turn has finished propagating, but before handlers are executed */
   override def realeasePhase(): Unit = key.releaseAll()

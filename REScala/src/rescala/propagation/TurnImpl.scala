@@ -4,7 +4,7 @@ import rescala.graph.{Commitable, Reactive}
 import rescala.propagation.Evaluator.Result
 import rescala.turns.{Engine, Turn}
 
-class TurnImpl(override val engine: Engine[Turn]) extends Turn {
+trait TurnImpl extends Turn {
   implicit def currentTurn: TurnImpl = this
 
   protected var toCommit = Set[Commitable]()
