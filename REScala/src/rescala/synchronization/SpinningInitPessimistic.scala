@@ -1,11 +1,15 @@
 package rescala.synchronization
 
 import rescala.graph.Reactive
-import rescala.propagation.LevelQueue
+import rescala.propagation.{TurnImpl, LevelQueue}
+import rescala.turns.{Engines, Turn, Engine}
 
 import scala.collection.SortedSet
 
 class SpinningInitPessimistic extends Pessimistic {
+  /** returns the engine of this turn */
+  override val engine: Engine[Turn] = Engines.spinningInit
+
   /** lock all reactives reachable from the initial sources */
   override def lockReachable(initialWrites: List[Reactive]): Unit = {
     lazy val lq = new LevelQueue(evaluate)

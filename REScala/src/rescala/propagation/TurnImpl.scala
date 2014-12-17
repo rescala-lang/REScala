@@ -1,12 +1,10 @@
 package rescala.propagation
 
 import rescala.graph.{Commitable, Reactive}
-import rescala.turns.Turn
 import rescala.propagation.Evaluator.Result
+import rescala.turns.{Engine, Turn}
 
-import scala.util.DynamicVariable
-
-class TurnImpl extends Turn {
+class TurnImpl(override val engine: Engine[Turn]) extends Turn {
   implicit def currentTurn: TurnImpl = this
 
   protected var toCommit = Set[Commitable]()

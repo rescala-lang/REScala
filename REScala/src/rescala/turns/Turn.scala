@@ -8,6 +8,9 @@ import rescala.graph.{Stateful, Commitable, Reactive}
  */
 trait Turn {
 
+  /** returns the engine of this turn */
+  def engine: Engine[Turn]
+
   /** allow turn to handle dynamic access to reactives */
   def accessDynamic(dependency: Reactive): Unit
 

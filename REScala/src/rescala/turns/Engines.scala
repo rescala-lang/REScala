@@ -28,10 +28,10 @@ object Engines {
         f(turn)
     }
   }
-  implicit val synchron: Engine[Turn] = new Impl(new TurnImpl()) {
+  implicit val synchron: Engine[Turn] = new Impl(new TurnImpl(synchron)) {
     override def plan[T1, T2](i: Reactive*)(f: TurnImpl => T1)(g: (TurnImpl, T1) => T2): T2 = synchronized(super.plan(i: _*)(f)(g))
   }
-  implicit val unmanaged: Engine[Turn] = new Impl(new TurnImpl())
+  implicit val unmanaged: Engine[Turn] = new Impl(new TurnImpl(unmanaged))
 
 
   class Impl[TI <: TurnImpl](makeTurn: => TI) extends Engine[TI] {

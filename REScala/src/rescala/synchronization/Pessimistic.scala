@@ -2,9 +2,10 @@ package rescala.synchronization
 
 import rescala.graph.Reactive
 import rescala.propagation.{LevelQueue, TurnImpl}
+import rescala.turns.{Engines, Turn, Engine}
 
 
-class Pessimistic extends TurnImpl {
+class Pessimistic extends TurnImpl(Engines.pessimistic) {
 
   final val key: Key = new Key((sink, source) => {
     register(sink)(source)
