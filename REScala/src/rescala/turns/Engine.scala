@@ -1,11 +1,14 @@
 package rescala.turns
 
-import rescala.graph.Reactive
+import rescala.graph.{SimpleBuffer, Buffer, Reactive}
+import rescala.synchronization.TurnLock
 
 import scala.annotation.implicitNotFound
 
 @implicitNotFound(msg = "could not finde a propagation engine, select one from Engines")
 trait Engine[+TI <: Turn] {
+  def buffer[A](default: A, commitStrategy: (A, A) => A, writeLock: TurnLock): Buffer[A] = new SimpleBuffer[A](default, commitStrategy, writeLock)
+
   /** creates runs and commits a new turn */
   def plan[T1, T2](initialWrites: Reactive*)(admissionPhase: TI => T1)(checkPhase: (TI, T1) => T2): T2
 
