@@ -14,6 +14,7 @@ object Engines {
     case "synchron" => synchron
     case "unmanaged" => unmanaged
     case "spinningInit" => spinningInit
+    case "yielding" => yielding
     case "stm" => STM
     case _ => default
   }
