@@ -15,10 +15,11 @@ object Engines {
     case "synchron" => synchron
     case "unmanaged" => unmanaged
     case "spinningInit" => spinningInit
+    case "stm" => STM
     case _ => default
   }
 
-  implicit def default: Engine[Turn] = pessimistic
+  implicit def default: Engine[Turn] = STM
 
   implicit val STM: Engine[Turn] = new Impl(new STMSync()) {
     override def plan[T1, T2](i: Reactive*)(f: STMSync => T1)(g: (STMSync, T1) => T2): T2 = atomic { tx => super.plan(i: _*)(f)(g) }
