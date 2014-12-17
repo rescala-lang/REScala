@@ -31,7 +31,7 @@ object Evt {
 
 /** A root Reactive value without dependencies which can be set */
 final class Var[T](initval: T) extends Signal[T] with Source[T] {
-  pulses.current = Pulse.unchanged(initval)
+  pulses.initCurrent(Pulse.unchanged(initval))
 
   def update(value: T)(implicit fac: Engine[Turn]): Unit = set(value)
   def set(value: T)(implicit fac: Engine[Turn]): Unit = fac.planned(this) { admit(value)(_) }

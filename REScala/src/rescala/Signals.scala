@@ -22,7 +22,7 @@ object Signals extends GeneratedLift {
   /** creates a signal that statically depends on the dependencies with a given initial value */
   def makeStatic[T](dependencies: Set[Reactive], init: => T)(expr: (Turn, T) => T)(initialTurn: Turn) = initialTurn.create(dependencies.toSet) {
     new Signal[T] with StaticReevaluation[T] {
-      pulses.current = Pulse.unchanged(init)
+      pulses.initCurrent(Pulse.unchanged(init))
 
       override def calculatePulse()(implicit turn: Turn): Pulse[T] = {
         val currentValue = pulses.base.current.get

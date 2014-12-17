@@ -18,7 +18,6 @@ trait Reactive {
     * (head of the evaluation queue) */
   protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult
 
-
   /** for debugging */
   private val name = Globals.declarationLocationName()
   override def toString = name
@@ -33,7 +32,7 @@ trait Pulsing[+P] extends Reactive {
 
 /** a node that has a current state */
 trait Stateful[+A] extends Pulsing[A] {
-  pulses.commitStrategy = (_, p) => p.keep
+  pulses.initStrategy((_, p) => p.keep)
 
   // only used inside macro and will be replaced there
   final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")
