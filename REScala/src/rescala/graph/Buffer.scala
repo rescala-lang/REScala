@@ -3,6 +3,9 @@ package rescala.graph
 import rescala.synchronization.{TurnLock, Pessimistic}
 import rescala.turns.Turn
 
+import scala.concurrent.stm.{InTxn, Ref}
+import scala.language.implicitConversions
+
 trait Commitable {
   def commit(implicit turn: Turn): Unit
   def release(implicit turn: Turn): Unit
@@ -65,17 +68,20 @@ final class SimpleBuffer[A](initialValue: A, initialStrategy: (A, A) => A, write
 
 
 
-final class STMBuffer[A](initialValue: A, initialStrategy: (A, A) => A, writeLock: TurnLock) extends Buffer[A] {
+final class STMBuffer[A](initialValue: A, initialStrategy: (A, A) => A) extends Buffer[A] {
 
-  @volatile private var current: A = initialValue
-  @volatile private var update: Option[A] = None
-  @volatile private var owner: Turn = null
+  private val current: Ref[A] = Ref(initialValue)
+  private val update: Ref[Option[A]] = Ref(None)
   private var commitStrategy: (A, A) => A = initialStrategy
 
   /** these methods are only used for initialisation and are unsafe to call when the reactive is in use */
-  override def initCurrent(value: A): Unit = current = value
+  override def initCurrent(value: A): Unit = current.single.set(value)
   override def initStrategy(strategy: (A, A) => A): Unit = commitStrategy = strategy
 
+  implicit def inTxn(implicit turn: Turn): InTxn = turn match {
+    case pessimistic: Pessimistic => pessimistic.asInstanceOf[InTxn]
+    case _ => throw new IllegalStateException(s"$turn has invalid type for $this")
+  }
 
   def transform(f: (A) => A)(implicit turn: Turn): A = {
     val value = f(get)
@@ -83,23 +89,16 @@ final class STMBuffer[A](initialValue: A, initialStrategy: (A, A) => A, writeLoc
     value
   }
   def set(value: A)(implicit turn: Turn): Unit = {
-    assert(owner == null || owner == turn, s"buffer owned by $owner written by $turn")
-    turn match {
-      case pessimistic: Pessimistic => assert(writeLock == null || writeLock.hasWriteAccess(pessimistic.key), s"buffer owned by $owner, controlled by $writeLock with owner ${writeLock.getOwner} was written by $turn who locks with ${pessimistic.key}")
-      case _ =>
-    }
-    update = Some(value)
-    owner = turn
+    update.set(Some(value))
     turn.plan(this)
   }
-  def base(implicit turn: Turn) = current
-  def get(implicit turn: Turn): A = if(turn eq owner) update.getOrElse(current) else current
+  def base(implicit turn: Turn) = current.get
+  def get(implicit turn: Turn): A = update.get.getOrElse(current.get)
   def release(implicit turn: Turn): Unit = {
-    update = None
-    owner = null
+    update.set(None)
   }
   def commit(implicit turn: Turn): Unit = {
-    current = commitStrategy(current, get)
+    current.set(commitStrategy(current.get, get))
     release
   }
 }
