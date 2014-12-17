@@ -1,7 +1,5 @@
 package rescala.synchronization
 
-import java.util.concurrent.atomic.AtomicInteger
-
 import scala.annotation.tailrec
 
 object SyncUtil {
@@ -47,7 +45,4 @@ object SyncUtil {
       case None => false
       case Some(next) => controls(next, target)
     }
-
-
-  val turnCounter = new AtomicInteger(0)
 }

@@ -1,14 +1,14 @@
 package rescala.synchronization
 
-import java.util.concurrent.locks.{Condition, ReentrantLock}
+import java.util.concurrent.locks.ReentrantLock
 
-import rescala.graph.Reactive
+import rescala.graph.{Globals, Reactive}
 
 import scala.annotation.tailrec
 
 final class Key(val handleDependencyChange: (Reactive, Reactive) => Unit) {
 
-  val id = SyncUtil.turnCounter.getAndIncrement
+  val id = Globals.nextID()
   override def toString: String = s"Key($id)"
 
   /** if we have a request from some other owner, that owner has given us shared access to all his locks
