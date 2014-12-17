@@ -2,13 +2,12 @@ package rescala.turns
 
 import rescala.graph.{STMBuffer, Buffer, Reactive}
 import rescala.propagation.TurnImpl
-import rescala.synchronization.{NothingSpecial, EngineReference, Pessimistic, TurnLock, STMSync, SpinningInitPessimistic, Prelock}
+import rescala.synchronization.{Yielding, NothingSpecial, EngineReference, Pessimistic, TurnLock, STMSync, SpinningInitPessimistic, Prelock}
 
 import scala.util.DynamicVariable
 import scala.concurrent.stm.atomic
 
 object Engines {
-
 
   def byName(name: String): Engine[Turn] = name match {
     case "pessimistic" => pessimistic
@@ -20,6 +19,8 @@ object Engines {
   }
 
   implicit def default: Engine[Turn] = pessimistic
+
+  implicit val yielding: Engine[Yielding] = new Impl(new Yielding)
 
   implicit val STM: Engine[STMSync] = new Impl(new STMSync()) {
     override def plan[T1, T2](i: Reactive*)(f: STMSync => T1)(g: (STMSync, T1) => T2): T2 = atomic { tx => super.plan(i: _*)(f)(g) }
