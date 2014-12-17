@@ -16,7 +16,8 @@ object Globals {
   val dynamicNameVar = new DynamicVariable("")
   def named[S](n: String)(f: => S): S = dynamicNameVar.withValue(n)(f)
 
-  val counter = new AtomicInteger(0)
+  private val counter = new AtomicInteger(0)
+  def nextID() = counter.incrementAndGet()
 }
 
 sealed trait EvaluationResult

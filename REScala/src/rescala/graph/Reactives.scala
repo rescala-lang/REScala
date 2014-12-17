@@ -6,7 +6,7 @@ import rescala.synchronization.TurnLock
 
 /** A Reactive is a value type which has a dependency to other Reactives */
 trait Reactive {
-  final override val hashCode: Int = Globals.counter.getAndIncrement
+  final override val hashCode: Int = Globals.nextID()
 
   final private[rescala] val lock: TurnLock = new TurnLock(this)
 
