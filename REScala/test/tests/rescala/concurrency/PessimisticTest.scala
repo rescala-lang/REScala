@@ -206,8 +206,7 @@ class PessimisticTest extends AssertionsForJUnit {
   }
 
 
-  @Test def addAndRemoveDependencyInOneTurnWhileOwnedByAnother(): Unit = synchronized {
-
+  @Test def addAndRemoveDependencyInOneTurnWhileOwnedByAnother(): Unit = for (_ <- Range(0, 100)) synchronized {
 
     val b0 = Var(false)
     val b1 = b0.map(identity)
