@@ -10,7 +10,7 @@ sealed trait Source[T] {
 /**
  * An implementation of an imperative event
  */
-final class Evt[T]() extends Event[T] with Source[T] {
+final class Evt[T]()(engine: Engine[Turn]) extends Event[T](engine) with Source[T] {
 
   /** Trigger the event */
   def apply(value: T)(implicit fac: Engine[Turn]): Unit = fac.planned(this) { admit(value)(_) }
@@ -25,12 +25,12 @@ final class Evt[T]() extends Event[T] with Source[T] {
 }
 
 object Evt {
-  def apply[T]() = new Evt[T]()
+  def apply[T]()(implicit engine: Engine[Turn]) = new Evt[T]()(engine)
 }
 
 
 /** A root Reactive value without dependencies which can be set */
-final class Var[T](initval: T) extends Signal[T] with Source[T] {
+final class Var[T](initval: T)(engine: Engine[Turn]) extends Signal[T](engine) with Source[T] {
   pulses.initCurrent(Pulse.unchanged(initval))
 
   def update(value: T)(implicit fac: Engine[Turn]): Unit = set(value)
@@ -49,6 +49,6 @@ final class Var[T](initval: T) extends Signal[T] with Source[T] {
 }
 
 object Var {
-  def apply[T](initval: T) = new Var(initval)
+  def apply[T](initval: T)(implicit engine: Engine[Turn]) = new Var(initval)(engine)
 }
 

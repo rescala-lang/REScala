@@ -1,10 +1,10 @@
 package rescala
 
-import rescala.turns.Ticket
+import rescala.turns.{Turn, Engine, Ticket}
 import rescala.graph.Stateful
 
 
-trait Signal[+A] extends Stateful[A] {
+abstract class Signal[+A](engine: Engine[Turn]) extends Stateful[A](engine) {
 
   /** add an observer */
   final def observe(react: A => Unit)(implicit maybe: Ticket): Observe = Observe(this)(react)

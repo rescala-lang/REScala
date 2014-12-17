@@ -1,6 +1,6 @@
 package rescala
 
-import rescala.turns.{Turn, Ticket}
+import rescala.turns.{Engine, Turn, Ticket}
 import rescala.graph.{DynamicReevaluation, Globals, Pulse, Reactive, StaticReevaluation}
 import rescala.signals.GeneratedLift
 
@@ -8,7 +8,7 @@ object Signals extends GeneratedLift {
 
   /** creates a dynamic signal */
   def makeDynamic[T](dependencies: Set[Reactive])(expr: Turn => T)(currentTurn: Turn): Signal[T] = currentTurn.createDynamic(dependencies) {
-    new Signal[T] with DynamicReevaluation[T] {
+    new Signal[T](currentTurn.engine) with DynamicReevaluation[T] {
       def calculatePulseDependencies(implicit turn: Turn): (Pulse[T], Set[Reactive]) = {
         val (newValue, dependencies) = Globals.collectDependencies(expr(turn))
         (Pulse.diffPulse(newValue, pulses.base), dependencies)
@@ -21,7 +21,7 @@ object Signals extends GeneratedLift {
 
   /** creates a signal that statically depends on the dependencies with a given initial value */
   def makeStatic[T](dependencies: Set[Reactive], init: => T)(expr: (Turn, T) => T)(initialTurn: Turn) = initialTurn.create(dependencies.toSet) {
-    new Signal[T] with StaticReevaluation[T] {
+    new Signal[T](initialTurn.engine) with StaticReevaluation[T] {
       pulses.initCurrent(Pulse.unchanged(init))
 
       override def calculatePulse()(implicit turn: Turn): Pulse[T] = {
@@ -44,6 +44,6 @@ object Signals extends GeneratedLift {
   }
 
   /** creates a constant signal of the given value */
-  def lift[B](value: B): Signal[B] = Var(value)
+  def lift[B](value: B)(implicit engine: Engine[Turn]): Signal[B] = Var(value)
 
 }

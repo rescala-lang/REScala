@@ -8,9 +8,9 @@ import rescala.graph.{DynamicReevaluation, Pulse, Pulsing, Reactive, StaticReeva
 object Events {
 
   /** the basic method to create static events */
-  def static[T](name: String, dependencies: Reactive*)(calculate: Turn => Pulse[T])(implicit maybe: Ticket): Event[T] = maybe {
-    _.create(dependencies.toSet) {
-      new Event[T] with StaticReevaluation[T] {
+  def static[T](name: String, dependencies: Reactive*)(calculate: Turn => Pulse[T])(implicit maybe: Ticket): Event[T] = maybe { initTurn =>
+    initTurn.create(dependencies.toSet) {
+      new Event[T](initTurn.engine) with StaticReevaluation[T] {
         override def calculatePulse()(implicit turn: Turn): Pulse[T] = calculate(turn)
         override def toString = name
       }
@@ -70,7 +70,7 @@ object Events {
   /** A wrapped event inside a signal, that gets "flattened" to a plain event node */
   def wrapped[T](wrapper: Signal[Event[T]])(implicit maybe: Ticket): Event[T] = maybe { creationTurn =>
     creationTurn.create(Set[Reactive](wrapper, wrapper.get(creationTurn))) {
-      new Event[T] with DynamicReevaluation[T] {
+      new Event[T](creationTurn.engine) with DynamicReevaluation[T] {
         override def calculatePulseDependencies(implicit turn: Turn): (Pulse[T], Set[Reactive]) = {
           val inner = wrapper.get
           (inner.pulse, Set(wrapper, inner))
