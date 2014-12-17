@@ -7,14 +7,14 @@ import scala.util.DynamicVariable
 
 /** support for dynamic dependency discovery */
 object Globals {
-  val bag = new DynamicVariable(Set[Reactive]())
+  val dynamicDependencyBag = new DynamicVariable(Set[Reactive]())
   /** runs the given code while collecting dynamically used reactives */
-  def collectDependencies[T](f: => T): (T, Set[Reactive]) = bag.withValue(Set()) { (f, bag.value) }
+  def collectDependencies[T](f: => T): (T, Set[Reactive]) = dynamicDependencyBag.withValue(Set()) { (f, dynamicDependencyBag.value) }
   /** mark a reactive as dynamically used */
-  def useDependency(dependency: Reactive): Unit = bag.value = bag.value + dependency
+  def useDependency(dependency: Reactive): Unit = dynamicDependencyBag.value = dynamicDependencyBag.value + dependency
 
-  val nameVar = new DynamicVariable("")
-  def named[S](n: String)(f: => S): S = nameVar.withValue(n)(f)
+  val dynamicNameVar = new DynamicVariable("")
+  def named[S](n: String)(f: => S): S = dynamicNameVar.withValue(n)(f)
 
   val counter = new AtomicInteger(0)
 }

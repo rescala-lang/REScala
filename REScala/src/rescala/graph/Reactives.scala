@@ -21,7 +21,7 @@ trait Reactive {
 
   /** for debugging */
   private val name =
-    if (Globals.nameVar.value.nonEmpty) Globals.nameVar.value
+    if (Globals.dynamicNameVar.value.nonEmpty) Globals.dynamicNameVar.value
     else {
       val classname = getClass.getName
       val unqualifiedClassname = classname.substring(classname.lastIndexOf('.') + 1)
