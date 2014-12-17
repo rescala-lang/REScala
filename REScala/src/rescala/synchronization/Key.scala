@@ -47,7 +47,7 @@ final class Key(val turn: Turn) {
     * eventually when target and its wait chain complete their turns, they will transfer all of their locks to us.
     * returns the actual key we ended up waiting for */
   @tailrec
-  def append(target: Key): Key =
+  def appendAfter(target: Key): Key =
     target.subsequent match {
       case None =>
         target.subsequent = Some(this)
@@ -55,7 +55,7 @@ final class Key(val turn: Turn) {
         target
       case Some(third) =>
         // should not deadlock, because everything else is locking in this same order here
-        append(third)
+        appendAfter(third)
     }
 
   /** both unlock and transfer assume that the master lock is locked */

@@ -48,7 +48,7 @@ final class TurnLock(val guarded: Reactive) {
           // release locks so that whatever waits for us can continue
           key.releaseAll()
           // but in turn we wait on that
-          key.append(subs)
+          key.appendAfter(subs)
         }
       }
       // can now safely wait as we will get the lock eventually
@@ -90,7 +90,7 @@ final class TurnLock(val guarded: Reactive) {
             case _ if hasDynamicAccess(requester) => 'done
             // trade our rights
             case _ =>
-              requester.append(owner)
+              requester.appendAfter(owner)
               'await
           }
         }
