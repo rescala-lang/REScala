@@ -2,10 +2,10 @@ package rescala.synchronization
 
 import rescala.graph.Reactive
 import rescala.propagation.TurnImpl
-import rescala.turns.{ Turn, Engine, Engines }
+import rescala.turns.{Engine, Engines, Turn}
 
 import scala.annotation.tailrec
-import scala.concurrent.stm.{ InTxn, atomic }
+import scala.concurrent.stm.{InTxn, atomic}
 
 abstract class EngineReference[T <: Turn](override val engine: Engine[T]) extends Turn
 
@@ -46,11 +46,8 @@ class Yielding extends EngineReference[Yielding](Engines.yielding) with Prelock 
    * this is called after the initial closure of the turn has been executed,
    * that is the eval queue is populated with the sources
    */
-  override def lockPhase(initialWrites: List[Reactive]): Unit = {
-//    println(key + ": Locking Phase")
+  override def lockPhase(initialWrites: List[Reactive]): Unit =
     SyncUtil.lockReachable(initialWrites, r => { acquireWrite(r); true })
-//    println(key + ": Locking Phase End")
-  }
 
   /**
    * acquires write acces to the lock.
@@ -72,14 +69,12 @@ class Yielding extends EngineReference[Yielding](Engines.yielding) with Prelock 
             case newOwner if newOwner ne oldOwner => 'retry
             case newOwner if SyncUtil.controls(key, newOwner) => key.subsequent.get.withMaster {
               // cycle
-//              println(key + " cycle for " + key.subsequent.get  + " at " + reactive.lock)
               key.releaseAll()
               key.appendAfter(newOwner)
               'await
             }
             case newOwner =>
               // yield
-//              println(key + " yield to " + newOwner + " at " + reactive.lock)
               key.transferAll(SyncUtil.laneHead(newOwner))
               key.appendAfter(newOwner)
               'await
@@ -88,9 +83,7 @@ class Yielding extends EngineReference[Yielding](Engines.yielding) with Prelock 
       }
     }
     res match {
-      case 'await =>
-        lock(key)
-//        println(key + " resume")
+      case 'await => lock(key)
       case 'retry => acquireWrite(reactive)
       case 'done =>
     }

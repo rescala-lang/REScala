@@ -1,8 +1,7 @@
 package rescala.synchronization
 
 import rescala.graph.Reactive
-import rescala.propagation.{ LevelQueue, TurnImpl }
-import rescala.turns.{ Engines, Turn, Engine }
+import rescala.propagation.TurnImpl
 
 trait Prelock extends TurnImpl with InterturnDependencyChanges {
 
@@ -32,16 +31,7 @@ trait Prelock extends TurnImpl with InterturnDependencyChanges {
   }
 
   /** this is called after the turn has finished propagating, but before handlers are executed */
-  override def realeasePhase(): Unit = {
-//    println(key + ": Release Phase")
-    key.releaseAll()
-//    println(key + ": Release Phase End")
-  }
-  override def propagationPhase(): Unit = {
-//    println(key + ": Propagation Phase")
-    super.propagationPhase()
-//    println(key + ": Propagation Phase End")
-  }
+  override def realeasePhase(): Unit = key.releaseAll()
 
   /** allow turn to handle dynamic access to reactives */
   override def accessDynamic(dependency: Reactive): Unit = dependency.lock.acquireDynamic(key)

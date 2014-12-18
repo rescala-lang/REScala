@@ -2,7 +2,7 @@ package rescala.synchronization
 
 import java.util.concurrent.locks.ReentrantLock
 
-import rescala.graph.{Globals, Reactive}
+import rescala.graph.Globals
 import rescala.turns.Turn
 
 import scala.annotation.tailrec
@@ -62,7 +62,6 @@ final class Key(val turn: Turn) {
     * or wait on someone else before we have everything transferred */
   def transferAll(target: Key): Unit = target.withMaster {
     synchronized {
-//      println(this + " transfer all to " + target)
       val distinc = heldLocks.distinct
       distinc.foreach(_.transfer(target, this))
       heldLocks = Nil

@@ -31,7 +31,7 @@ final class TurnLock(val guarded: Reactive) {
    * this can block until all other turns waiting on the lock have finished
    */
   def acquireDynamic(key: Key): Unit = {
-    if(synchronized {
+    if (synchronized {
       tryLock(key) != key && !hasDynamicAccess(key)
     }) request(key)
   }
@@ -52,7 +52,6 @@ final class TurnLock(val guarded: Reactive) {
   def tryLock(key: Key): Key = synchronized {
     if (owner eq null) {
       owner = key
-//      println(this + " acquired by " + owner)
       key.addLock(this)
     }
     owner
@@ -98,7 +97,6 @@ final class TurnLock(val guarded: Reactive) {
     if (!hasWriteAccess(key)) throw new IllegalMonitorStateException(s"$this is held by $owner but tried to transfer by $key (to $target)")
     owner = target
     if (target != null) target.addLock(this)
-//    println(this + " transferred to " + owner)
     notifyAll()
   }
 
