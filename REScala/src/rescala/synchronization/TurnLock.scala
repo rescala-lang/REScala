@@ -4,7 +4,6 @@ import rescala.graph.Reactive
 
 import scala.annotation.tailrec
 
-
 final class TurnLock(val guarded: Reactive) {
 
   override def toString: String = s"Lock($guarded)"
@@ -17,43 +16,52 @@ final class TurnLock(val guarded: Reactive) {
   /** returns true if key owns the write lock */
   def hasWriteAccess(key: Key): Boolean = synchronized(owner eq key)
 
-  /** if key has dynamic access, he is guaranteed that no one else will write guarded reactive
-    * and key is allowed to write the sinks of the reactive, but key must ensure that the owner is informed
-    * about added reactives by calling the owners handleDependencyChange */
+  /**
+   * if key has dynamic access, he is guaranteed that no one else will write guarded reactive
+   * and key is allowed to write the sinks of the reactive, but key must ensure that the owner is informed
+   * about added reactives by calling the owners handleDependencyChange
+   */
   def hasDynamicAccess(key: Key): Boolean = synchronized {
-    @tailrec
-    def run(curr: Key): Boolean =
-      if (curr eq owner) true
-      else curr.subsequent match {
-        case None => false
-        case Some(req) => run(req)
-      }
-    run(key)
+    if (owner == null) throw new IllegalStateException
+    SyncUtil.controls(key, getOwner)
   }
 
-  /** acquires dynamic acces to the lock.
-    * this can block until all other turns waiting on the lock have finished */
-  def acquireDynamic(key: Key): Unit = if (!hasDynamicAccess(key)) request(key)
+  /**
+   * acquires dynamic acces to the lock.
+   * this can block until all other turns waiting on the lock have finished
+   */
+  def acquireDynamic(key: Key): Unit = {
+    if(synchronized {
+      tryLock(key) != key && !hasDynamicAccess(key)
+    }) request(key)
+  }
 
-  /** this will block until the lock is owned by the turn.
-    * this does not test for shared access and thus will deadlock if the current owner has its locks shared with the turn.
-    * use with caution as this can potentially deadlock */
+  /**
+   * this will block until the lock is owned by the turn.
+   * this does not test for shared access and thus will deadlock if the current owner has its locks shared with the turn.
+   * use with caution as this can potentially deadlock
+   */
   def lock(key: Key): Unit = synchronized {
     while (tryLock(key) ne key) wait()
   }
 
-  /** locks this if it is free, returns the current owner (which is key, if locking succeeded)
-    * does not check for shared access. */
+  /**
+   * locks this if it is free, returns the current owner (which is key, if locking succeeded)
+   * does not check for shared access.
+   */
   def tryLock(key: Key): Key = synchronized {
     if (owner eq null) {
       owner = key
+//      println(this + " acquired by " + owner)
       key.addLock(this)
     }
     owner
   }
 
-  /** request basically means that the turn will share all its locks with the owner of the current lock
-    * and in exchange request that the owner will transfer all of its locks to the turn when he is finished. */
+  /**
+   * request basically means that the turn will share all its locks with the owner of the current lock
+   * and in exchange request that the owner will transfer all of its locks to the turn when he is finished.
+   */
   @tailrec
   private def request(requester: Key): Unit = {
     val oldOwner = tryLock(requester)
@@ -82,20 +90,20 @@ final class TurnLock(val guarded: Reactive) {
     }
   }
 
-
-  /** transfers the lock from the turn to the target.
-    * this notifies all turns waiting on this lock because we need the turn the lock was transferred to to wake up */
+  /**
+   * transfers the lock from the turn to the target.
+   * this notifies all turns waiting on this lock because we need the turn the lock was transferred to to wake up
+   */
   def transfer(target: Key, key: Key) = synchronized {
-    if (hasWriteAccess(key)) {
-      owner = target
-      notifyAll()
-    }
-    else throw new IllegalMonitorStateException(s"$this is held by $owner but tried to transfer by $key (to $target)")
+    if (!hasWriteAccess(key)) throw new IllegalMonitorStateException(s"$this is held by $owner but tried to transfer by $key (to $target)")
+    owner = target
+    if (target != null) target.addLock(this)
+//    println(this + " transferred to " + owner)
+    notifyAll()
   }
 
   /** transferring to null frees the owner */
   def unlock(turn: Key): Unit = transfer(null, turn)
-
 
 }
 

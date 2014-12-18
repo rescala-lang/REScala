@@ -8,7 +8,6 @@ import rescala.turns.Turn
 import scala.annotation.tailrec
 
 final class Key(val turn: Turn) {
-
   val id = Globals.nextID()
   override def toString: String = s"Key($id)"
 
@@ -36,9 +35,9 @@ final class Key(val turn: Turn) {
     * these two things are mutually exclusive.
     * we might even get away without the volatile, because the wait/notify creates a happen before relationship
     * but we will still keep it, because concurrency is scary */
-  @volatile private[synchronization] var heldLocks: List[TurnLock] = Nil
+  @volatile private[this] var heldLocks: List[TurnLock] = Nil
 
-  def addLock(lock: TurnLock): Unit = heldLocks ::= lock
+  def addLock(lock: TurnLock): Unit = synchronized { heldLocks ::= lock }
 
   /** this grants shared access to our locks to the group to which initial belongs.
     * when grant is called both masterLocks of us and target must be held.
@@ -58,32 +57,31 @@ final class Key(val turn: Turn) {
         appendAfter(third)
     }
 
-  /** both unlock and transfer assume that the master lock is locked */
-  def unlockAll(): Unit = {
-    heldLocks.distinct.foreach(_.unlock(this))
-    heldLocks = Nil
-  }
-
   /** we acquire the master lock for the target, because the target waits on one of the locks we transfer,
     * and it will wake up as soon as that one is unlocked and we do not want the target to start unlocking
     * or wait on someone else before we have everything transferred */
   def transferAll(target: Key): Unit = target.withMaster {
-    val distinc = heldLocks.distinct
-    target.heldLocks :::= distinc
-    distinc.foreach(_.transfer(target, this))
-    heldLocks = Nil
+    synchronized {
+//      println(this + " transfer all to " + target)
+      val distinc = heldLocks.distinct
+      distinc.foreach(_.transfer(target, this))
+      heldLocks = Nil
+    }
   }
 
   /** release all locks we hold or transfer them to a waiting transaction if there is one
     * holds the master lock for request */
   def releaseAll(): Unit = withMaster {
-    subsequent match {
-      case Some(req) =>
-        subsequent = None
-        req.prior = None
-        transferAll(req)
-      case None =>
-        unlockAll()
+    synchronized {
+      subsequent match {
+        case Some(req) =>
+          subsequent = None
+          req.prior = None
+          transferAll(req)
+        case None =>
+          heldLocks.distinct.foreach(_.unlock(this))
+          heldLocks = Nil
+      }
     }
   }
 

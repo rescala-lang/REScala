@@ -2,23 +2,26 @@ package rescala.synchronization
 
 import rescala.graph.Reactive
 import rescala.propagation.TurnImpl
-import rescala.turns.{Turn, Engine, Engines}
+import rescala.turns.{ Turn, Engine, Engines }
 
 import scala.annotation.tailrec
-import scala.concurrent.stm.{InTxn, atomic}
+import scala.concurrent.stm.{ InTxn, atomic }
 
 abstract class EngineReference[T <: Turn](override val engine: Engine[T]) extends Turn
 
-
 class Pessimistic extends EngineReference[Pessimistic](Engines.pessimistic) with Prelock {
-  /** this is called after the initial closure of the turn has been executed,
-    * that is the eval queue is populated with the sources */
+  /**
+   * this is called after the initial closure of the turn has been executed,
+   * that is the eval queue is populated with the sources
+   */
   override def lockPhase(initialWrites: List[Reactive]): Unit = SyncUtil.lockReachable(initialWrites, r => { acquireWrite(r); true })
 
-  /** acquires write acces to the lock.
-    * this can cause a temporary loss off all locks held by key,
-    * so key needs to be in a clean state before this is called.
-    * this can block until other turns waiting on the lock have finished */
+  /**
+   * acquires write acces to the lock.
+   * this can cause a temporary loss off all locks held by key,
+   * so key needs to be in a clean state before this is called.
+   * this can block until other turns waiting on the lock have finished
+   */
   def acquireWrite(reactive: Reactive): Unit = {
     import reactive.lock._
     acquireDynamic(key)
@@ -38,21 +41,28 @@ class Pessimistic extends EngineReference[Pessimistic](Engines.pessimistic) with
   }
 }
 
-
 class Yielding extends EngineReference[Yielding](Engines.yielding) with Prelock {
-  /** this is called after the initial closure of the turn has been executed,
-    * that is the eval queue is populated with the sources */
-  override def lockPhase(initialWrites: List[Reactive]): Unit = SyncUtil.lockReachable(initialWrites, r => { acquireWrite(r); true })
+  /**
+   * this is called after the initial closure of the turn has been executed,
+   * that is the eval queue is populated with the sources
+   */
+  override def lockPhase(initialWrites: List[Reactive]): Unit = {
+//    println(key + ": Locking Phase")
+    SyncUtil.lockReachable(initialWrites, r => { acquireWrite(r); true })
+//    println(key + ": Locking Phase End")
+  }
 
-  /** acquires write acces to the lock.
-    * this can cause a temporary loss off all locks held by key,
-    * so key needs to be in a clean state before this is called.
-    * this can block until other turns waiting on the lock have finished */
+  /**
+   * acquires write acces to the lock.
+   * this can cause a temporary loss off all locks held by key,
+   * so key needs to be in a clean state before this is called.
+   * this can block until other turns waiting on the lock have finished
+   */
   @tailrec
   private def acquireWrite(reactive: Reactive): Unit = {
     import reactive.lock._
     val oldOwner = tryLock(key)
-    val res = if (oldOwner eq key) 'done
+    val res: Symbol = if (oldOwner eq key) 'done
     else {
       SyncUtil.lockLanes(key, oldOwner) {
         reactive.lock.synchronized {
@@ -60,12 +70,16 @@ class Yielding extends EngineReference[Yielding](Engines.yielding) with Prelock 
             // make sure the other owner did not unlock before we got his master lock
             case newOwner if newOwner eq key => 'done
             case newOwner if newOwner ne oldOwner => 'retry
-            case newOwner if hasDynamicAccess(key) => key.subsequent.get.withMaster {
+            case newOwner if SyncUtil.controls(key, newOwner) => key.subsequent.get.withMaster {
+              // cycle
+//              println(key + " cycle for " + key.subsequent.get  + " at " + reactive.lock)
               key.releaseAll()
               key.appendAfter(newOwner)
+              'await
             }
-            // yield!
             case newOwner =>
+              // yield
+//              println(key + " yield to " + newOwner + " at " + reactive.lock)
               key.transferAll(SyncUtil.laneHead(newOwner))
               key.appendAfter(newOwner)
               'await
@@ -74,7 +88,9 @@ class Yielding extends EngineReference[Yielding](Engines.yielding) with Prelock 
       }
     }
     res match {
-      case 'await => lock(key)
+      case 'await =>
+        lock(key)
+//        println(key + " resume")
       case 'retry => acquireWrite(reactive)
       case 'done =>
     }
@@ -90,7 +106,6 @@ class STMSync extends EngineReference[STMSync](Engines.STM) with NothingSpecial 
   // this is a horrible idea
   def inTxn: InTxn = atomic(identity)
 }
-
 
 class SpinningInitPessimistic extends EngineReference[SpinningInitPessimistic](Engines.spinningInit) with Prelock {
 
