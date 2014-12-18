@@ -60,7 +60,7 @@ final class Key(val turn: Turn) {
   /** we acquire the master lock for the target, because the target waits on one of the locks we transfer,
     * and it will wake up as soon as that one is unlocked and we do not want the target to start unlocking
     * or wait on someone else before we have everything transferred */
-  def transferAll(target: Key): Unit = target.withMaster {
+  def transferAll(target: Key): Unit = {
     synchronized {
       val distinc = heldLocks.distinct
       distinc.foreach(_.transfer(target, this))
@@ -73,13 +73,13 @@ final class Key(val turn: Turn) {
   def releaseAll(): Unit = withMaster {
     synchronized {
       subsequent match {
-        case Some(req) =>
+        case Some(req) => req.withMaster {
           subsequent = None
           req.prior = None
           transferAll(req)
+        }
         case None =>
-          heldLocks.distinct.foreach(_.unlock(this))
-          heldLocks = Nil
+          transferAll(null)
       }
     }
   }

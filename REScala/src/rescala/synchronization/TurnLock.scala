@@ -99,9 +99,6 @@ final class TurnLock(val guarded: Reactive) {
     if (target != null) target.addLock(this)
     notifyAll()
   }
-
-  /** transferring to null frees the owner */
-  def unlock(turn: Key): Unit = transfer(null, turn)
-
+  
 }
 
