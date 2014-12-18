@@ -62,8 +62,7 @@ final class Key(val turn: Turn) {
     * or wait on someone else before we have everything transferred */
   def transferAll(target: Key): Unit = {
     synchronized {
-      val distinc = heldLocks.distinct
-      distinc.foreach(_.transfer(target, this))
+      heldLocks.foreach { l => if (!l.hasWriteAccess(target)) l.transfer(target, this) }
       heldLocks = Nil
     }
   }

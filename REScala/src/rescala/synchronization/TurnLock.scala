@@ -99,6 +99,6 @@ final class TurnLock(val guarded: Reactive) {
     if (target != null) target.addLock(this)
     notifyAll()
   }
-  
+
 }
 
