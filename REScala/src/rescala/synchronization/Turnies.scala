@@ -26,9 +26,9 @@ class Pessimistic extends EngineReference[Pessimistic](Engines.pessimistic) with
     import reactive.lock._
     acquireDynamic(key)
     if (!hasWriteAccess(key)) {
-      key.withMaster {
+      key.synchronized {
         val subs = key.subsequent.get
-        subs.withMaster {
+        subs.synchronized {
           // release locks so that whatever waits for us can continue
           key.releaseAll()
           // but in turn we wait on that
@@ -67,7 +67,7 @@ class Yielding extends EngineReference[Yielding](Engines.yielding) with Prelock 
             // make sure the other owner did not unlock before we got his master lock
             case newOwner if newOwner eq key => 'done
             case newOwner if newOwner ne oldOwner => 'retry
-            case newOwner if SyncUtil.controls(key, newOwner) => key.subsequent.get.withMaster {
+            case newOwner if SyncUtil.controls(key, newOwner) => key.subsequent.get.synchronized {
               // cycle
               key.releaseAll()
               key.appendAfter(newOwner)
@@ -84,7 +84,6 @@ class Yielding extends EngineReference[Yielding](Engines.yielding) with Prelock 
     }
     res match {
       case 'await => lock(key)
-        key.withMaster(Unit)
       case 'retry => acquireWrite(reactive)
       case 'done =>
     }
@@ -108,7 +107,7 @@ class SpinningInitPessimistic extends EngineReference[SpinningInitPessimistic](E
   def acquireWrite(reactive: Reactive): Boolean =
     if (reactive.lock.tryLock(key) eq key) true
     else {
-      key.withMaster { key.releaseAll() }
+      key.synchronized { key.releaseAll() }
       false
     }
 

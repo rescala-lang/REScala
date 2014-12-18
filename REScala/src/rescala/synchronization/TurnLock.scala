@@ -43,6 +43,7 @@ final class TurnLock(val guarded: Reactive) {
    */
   def lock(key: Key): Unit = synchronized {
     while (tryLock(key) ne key) wait()
+    key.synchronized(Unit)
   }
 
   /**

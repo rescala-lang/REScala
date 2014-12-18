@@ -1,6 +1,6 @@
 package rescala.synchronization
 
-import java.util.concurrent.locks.ReentrantLock
+import java.util.concurrent.ConcurrentLinkedQueue
 
 import rescala.graph.Globals
 import rescala.turns.Turn
@@ -13,31 +13,14 @@ final class Key(val turn: Turn) {
 
   /** if we have a request from some other owner, that owner has given us shared access to all his locks
     * and is waiting for one of our locks to be transferred to him.
-    * writing of this field is guarded by the masterLock */
+    * writing of this field is guarded by our intrinsic lock */
   @volatile var subsequent: Option[Key] = None
   @volatile var prior: Option[Key] = None
 
+  /** contains a list of all locks owned by us. */
+  private[this] val heldLocks = new ConcurrentLinkedQueue[TurnLock]()
 
-  /** the master lock guards writes to the requester, as well as all unlocks
-    * also this lock will be held when a turn request the locks of another
-    * this prevents a cycle of turns to lock each other and create a ring of waiting turns */
-  val keyLock: ReentrantLock = new ReentrantLock()
-  def withMaster[R](f: => R): R = {
-    keyLock.lock()
-    try f
-    finally keyLock.unlock()
-  }
-
-  /** contains a list of all locks owned by us.
-    * this does not need synchronisation because it is only written in 2 cases:
-    * 1: when the current transaction locks something
-    * 2: when the transaction we are waiting for transfers their locks
-    * these two things are mutually exclusive.
-    * we might even get away without the volatile, because the wait/notify creates a happen before relationship
-    * but we will still keep it, because concurrency is scary */
-  @volatile private[this] var heldLocks: List[TurnLock] = Nil
-
-  def addLock(lock: TurnLock): Unit = synchronized { heldLocks ::= lock }
+  def addLock(lock: TurnLock): Unit = heldLocks.add(lock)
 
   /** this grants shared access to our locks to the group to which initial belongs.
     * when grant is called both masterLocks of us and target must be held.
@@ -60,23 +43,20 @@ final class Key(val turn: Turn) {
   /** we acquire the master lock for the target, because the target waits on one of the locks we transfer,
     * and it will wake up as soon as that one is unlocked and we do not want the target to start unlocking
     * or wait on someone else before we have everything transferred */
-  def transferAll(target: Key): Unit = {
-    synchronized {
-      heldLocks.foreach { l =>
-        val owner = l.getOwner
-        if (owner eq this) l.transfer(target, this)
-        else assert(owner eq target, s"transfer of $l from $this to $target failed, becaus it was owned by $owner")
-      }
-      heldLocks = Nil
+  def transferAll(target: Key): Unit =
+    while (!heldLocks.isEmpty) {
+      val head = heldLocks.poll()
+      val owner = head.getOwner
+      if (owner eq this) head.transfer(target, this)
+      else assert(owner eq target, s"transfer of $head from $this to $target failed, becaus it was owned by $owner")
     }
-  }
 
   /** release all locks we hold or transfer them to a waiting transaction if there is one
     * holds the master lock for request */
-  def releaseAll(): Unit = withMaster {
+  def releaseAll(): Unit =
     synchronized {
       subsequent match {
-        case Some(req) => req.withMaster {
+        case Some(req) => req.synchronized {
           subsequent = None
           req.prior = None
           transferAll(req)
@@ -85,7 +65,6 @@ final class Key(val turn: Turn) {
           transferAll(null)
       }
     }
-  }
 
 
 }

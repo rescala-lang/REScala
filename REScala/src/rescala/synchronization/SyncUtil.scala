@@ -10,7 +10,7 @@ object SyncUtil {
 
   /** locks the given locks in a global deterministic order */
   @tailrec
-  def lockLanes[R](lo: Key*)(f: => R): R = {
+  def lockLanes[R](mine: Key, other: Key)(f: => R): R = {
 
     sealed trait LaneResult
     object Further extends LaneResult
@@ -18,20 +18,21 @@ object SyncUtil {
     case class Good(r: R) extends LaneResult
 
 
-    val heads = lo.map(laneHead)
+    val oldHead = laneHead(other)
 
-    heads.sortBy(_.id).foreach(_.keyLock.lock())
-    (try {
-      val afterHeads = heads.map(laneHead)
-      if (afterHeads == heads) {
-        if (heads zip lo forall (controls _).tupled) Good(f)
-        else Retry
+    val (first, second) = if (mine.id < other.id) (mine, other) else (other, mine)
+
+    first.synchronized {
+      second.synchronized {
+        if (laneHead(oldHead) == oldHead) {
+          if (controls(oldHead, other)) Good(f)
+          else Retry
+        }
+        else Further
       }
-      else Further
-    }
-    finally heads.foreach(_.keyLock.unlock())) match {
-      case Further => lockLanes(heads: _*)(f)
-      case Retry => lockLanes(lo: _*)(f)
+    } match {
+      case Further => lockLanes(mine, oldHead)(f)
+      case Retry => lockLanes(mine, other)(f)
       case Good(r) => r
     }
   }
