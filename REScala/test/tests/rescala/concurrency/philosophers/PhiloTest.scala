@@ -1,4 +1,4 @@
-package tests.rescala.philosophers
+package tests.rescala.concurrency.philosophers
 
 import benchmarks.PhilosopherTable
 import benchmarks.PhilosopherTable.{Seating, Thinking}
@@ -20,7 +20,7 @@ class PhiloTest extends AssertionsForJUnit {
 
 
   @Test def `eat!`(): Unit = {
-    val philosophers = 16
+    val philosophers = 4
     val engineName = "yielding"
     val threadCount = 3
     val table = new PhilosopherTable(philosophers, 0)(Engines.byName(engineName))
