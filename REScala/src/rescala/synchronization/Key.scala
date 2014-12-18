@@ -62,7 +62,11 @@ final class Key(val turn: Turn) {
     * or wait on someone else before we have everything transferred */
   def transferAll(target: Key): Unit = {
     synchronized {
-      heldLocks.foreach { l => if (!l.hasWriteAccess(target)) l.transfer(target, this) }
+      heldLocks.foreach { l =>
+        val owner = l.getOwner
+        if (owner eq this) l.transfer(target, this)
+        else assert(owner eq target, s"transfer of $l from $this to $target failed, becaus it was owned by $owner")
+      }
       heldLocks = Nil
     }
   }
