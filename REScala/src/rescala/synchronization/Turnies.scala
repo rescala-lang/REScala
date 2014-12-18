@@ -84,6 +84,7 @@ class Yielding extends EngineReference[Yielding](Engines.yielding) with Prelock 
     }
     res match {
       case 'await => lock(key)
+        key.withMaster(Unit)
       case 'retry => acquireWrite(reactive)
       case 'done =>
     }
