@@ -42,6 +42,9 @@ object SyncUtil {
     case Some(p) => laneHead(p)
   }
 
+  def wantReachable(key: Key, reactive: Reactive)(implicit turn: Turn): Unit = {
+    SyncUtil.lockReachable(reactive :: Nil, {r => r.lock.wantedBy(key); true})
+  }
 
   /** lock all reactives reachable from the initial sources
     * retry when acquire returns false */

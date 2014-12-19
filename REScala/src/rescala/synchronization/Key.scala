@@ -23,7 +23,7 @@ final class Key(val turn: Turn) {
 
   def addLock(lock: TurnLock): Unit = {
     heldLocks.add(lock)
-    lock.wantedBy.remove(lock, true)
+    lock.wantThis.remove(lock, true)
   }
 
   /** this grants shared access to our locks to the group to which initial belongs.
@@ -52,7 +52,7 @@ final class Key(val turn: Turn) {
       val head = heldLocks.poll()
       val owner = head.getOwner
       if (owner eq this) {
-        if (true) head.wantedBy.put(this, true)
+        if (wantBack) head.wantThis.put(this, true)
         head.transfer(target, this)
       }
       else assert(owner eq target, s"transfer of $head from $this to $target failed, becaus it was owned by $owner")

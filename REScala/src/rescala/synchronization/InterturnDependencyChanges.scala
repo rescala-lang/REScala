@@ -13,9 +13,12 @@ trait InterturnDependencyChanges extends Turn {
     if ((owner ne key) && !source.dependants.get.contains(sink)) {
       owner.turn.register(sink)(source)
       owner.turn.admit(sink)
-      SyncUtil.lockReachable(sink :: Nil, {r => r.lock.wantedBy.put(owner, true)})
+      SyncUtil.wantReachable(owner, sink)
     }
-    else super.register(sink)(source)
+    else {
+      sink.lock.wantThis.putAll(source.lock.wantThis)
+      super.register(sink)(source)
+    }
   }
 
   /** this is for cases where we register and then unregister the same dependency in a single turn */

@@ -22,12 +22,13 @@ class Pessimistic extends EngineReference[Pessimistic](Engines.pessimistic) with
    * this can block until other turns waiting on the lock have finished
    */
   def acquireWrite(reactive: Reactive): Unit = {
-    import reactive.lock._
-    acquireDynamic(key)
-    if (!hasWriteAccess(key)) {
+    val l = reactive.lock
+    l.acquireDynamic(key)
+    if (!l.hasWriteAccess(key)) {
       key.synchronized {
         val subs = key.subsequent.get
         subs.synchronized {
+          SyncUtil.wantReachable(key, reactive)
           // release locks so that whatever waits for us can continue
           key.releaseAll(wantBack = true)
           // but in turn we wait on that
@@ -35,7 +36,7 @@ class Pessimistic extends EngineReference[Pessimistic](Engines.pessimistic) with
         }
       }
       // can now safely wait as we will get the lock eventually
-      lock(key)
+      l.lock(key)
     }
   }
 }
@@ -57,6 +58,7 @@ class Yielding extends EngineReference[Yielding](Engines.yielding) with Prelock 
   private def acquireWrite(reactive: Reactive): Unit = reactive.lock.request(key) {
     val subs = key.subsequent.get
     subs.synchronized {
+      SyncUtil.wantReachable(key, reactive)
       // cycle
       key.releaseAll(wantBack = true)
       key.appendAfter(subs)
@@ -64,6 +66,7 @@ class Yielding extends EngineReference[Yielding](Engines.yielding) with Prelock 
     }
   } { ownerHead =>
     // yield
+    SyncUtil.wantReachable(key, reactive)
     key.transferAll(ownerHead, wantBack = true)
     key.appendAfter(ownerHead)
     SyncUtil.Await
@@ -88,7 +91,7 @@ class SpinningInitPessimistic extends EngineReference[SpinningInitPessimistic](E
   def acquireWrite(reactive: Reactive): Boolean =
     if (reactive.lock.tryLock(key) eq key) true
     else {
-      key.synchronized { key.releaseAll(wantBack = true) }
+      key.synchronized { key.releaseAll(wantBack = false) }
       false
     }
 

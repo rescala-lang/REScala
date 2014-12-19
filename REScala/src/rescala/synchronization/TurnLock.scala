@@ -14,7 +14,9 @@ final class TurnLock(val guarded: Reactive) {
   /** this is guarded by our intrinsic lock */
   private var owner: Key = null
 
-  val wantedBy = new ConcurrentHashMap[Key, Boolean]()
+  val wantThis = new ConcurrentHashMap[Key, Boolean]()
+  
+  def wantedBy(key: Key): Unit = wantThis.put(key, true)
 
   def getOwner: Key = synchronized(owner)
 
@@ -55,7 +57,7 @@ final class TurnLock(val guarded: Reactive) {
 
   /** request tries to */
   @tailrec
-  def request(requester: Key)(waiting: => SyncUtil.Result[Unit])(other: Key =>  SyncUtil.Result[Unit]): Unit = {
+  def request(requester: Key)(waiting: => SyncUtil.Result[Unit])(other: Key => SyncUtil.Result[Unit]): Unit = {
     val oldOwner = tryLock(requester)
     val res = if (oldOwner eq requester) SyncUtil.Done(Unit)
     else {
@@ -84,7 +86,7 @@ final class TurnLock(val guarded: Reactive) {
    */
   def transfer(target: Key, oldOwner: Key) = synchronized {
     if (!hasWriteAccess(oldOwner)) throw new IllegalMonitorStateException(s"$this is held by $owner but tried to transfer by $oldOwner (to $target)")
-    if (wantedBy.isEmpty) owner = null
+    if (wantThis.isEmpty) owner = null
     else {
       owner = target
       if (target != null) target.addLock(this)
