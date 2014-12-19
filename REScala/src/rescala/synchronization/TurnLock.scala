@@ -20,7 +20,7 @@ final class TurnLock(val guarded: Reactive) {
    * acquires dynamic acces to the lock.
    * this can block until all other turns waiting on the lock have finished
    */
-  def acquireDynamic(key: Key): Unit = request(key)(_ => SyncUtil.Done(Unit)) { _ =>
+  def acquireDynamic(key: Key): Unit = request(key)(SyncUtil.Done(Unit)) { _ =>
     key.appendAfter(owner)
     SyncUtil.Await
   }
@@ -50,7 +50,7 @@ final class TurnLock(val guarded: Reactive) {
 
   /** request tries to */
   @tailrec
-  def request(requester: Key)(waiting: Key => SyncUtil.Result[Unit])(other: Key =>  SyncUtil.Result[Unit]): Unit = {
+  def request(requester: Key)(waiting: => SyncUtil.Result[Unit])(other: Key =>  SyncUtil.Result[Unit]): Unit = {
     val oldOwner = tryLock(requester)
     val res = if (oldOwner eq requester) SyncUtil.Done(Unit)
     else {
@@ -60,7 +60,7 @@ final class TurnLock(val guarded: Reactive) {
             // make sure the other owner did not unlock before we got his master lock
             case _ if owner eq requester => SyncUtil.Done(Unit)
             case _ if owner ne oldOwner => SyncUtil.Retry
-            case _ if requester.controls(owner) => waiting(ownerHead)
+            case _ if requester.controls(owner) => waiting
             case _ => other(ownerHead)
           }
         }
