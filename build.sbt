@@ -81,5 +81,4 @@ sourceGenerators in Compile <+= sourceManaged in Compile map { dir =>
 
 initialCommands in console :=
   s"""import rescala._
-     |import rescala.Implicits.default
    """.stripMargin
