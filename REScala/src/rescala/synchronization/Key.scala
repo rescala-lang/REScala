@@ -67,4 +67,13 @@ final class Key(val turn: Turn) {
     }
 
 
+  @tailrec
+  def controls(target: Key): Boolean =
+    if (this eq target) true
+    else subsequent match {
+      case None => false
+      case Some(next) => next.controls(target)
+    }
+
+
 }

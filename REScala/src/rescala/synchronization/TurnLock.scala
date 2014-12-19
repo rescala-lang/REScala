@@ -17,16 +17,6 @@ final class TurnLock(val guarded: Reactive) {
   def hasWriteAccess(key: Key): Boolean = synchronized(owner eq key)
 
   /**
-   * if key has dynamic access, he is guaranteed that no one else will write guarded reactive
-   * and key is allowed to write the sinks of the reactive, but key must ensure that the owner is informed
-   * about added reactives by calling the owners handleDependencyChange
-   */
-  def hasDynamicAccess(key: Key): Boolean = synchronized {
-    if (owner == null) throw new IllegalStateException
-    SyncUtil.controls(key, owner)
-  }
-
-  /**
    * acquires dynamic acces to the lock.
    * this can block until all other turns waiting on the lock have finished
    */
@@ -70,11 +60,10 @@ final class TurnLock(val guarded: Reactive) {
         synchronized {
           tryLock(requester) match {
             // make sure the other owner did not unlock before we got his master lock
-            case newOwner if newOwner eq requester => 'done
-            case newOwner if newOwner ne oldOwner => 'retry
-            case newOwner if hasDynamicAccess(requester) => waiting(newOwner)
-            case newOwner => other(newOwner)
-
+            case _ if owner eq requester => 'done
+            case _ if owner ne oldOwner => 'retry
+            case _ if requester.controls(owner) => waiting(owner)
+            case _ => other(owner)
           }
         }
       }

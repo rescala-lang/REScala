@@ -24,7 +24,7 @@ object SyncUtil {
     first.synchronized {
       second.synchronized {
         if (laneHead(targetHead) == targetHead) {
-          if (controls(targetHead, originalTarget)) Good(f)
+          if (targetHead.controls(originalTarget)) Good(f)
           else Retry
         }
         else Further
@@ -42,13 +42,6 @@ object SyncUtil {
     case Some(p) => laneHead(p)
   }
 
-  @tailrec
-  def controls(pointer: Key, target: Key): Boolean =
-    if (pointer == target) true
-    else pointer.subsequent match {
-      case None => false
-      case Some(next) => controls(next, target)
-    }
 
   /** lock all reactives reachable from the initial sources
     * retry when acquire returns false */
