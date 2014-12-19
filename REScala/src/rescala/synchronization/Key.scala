@@ -4,6 +4,7 @@ import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue}
 
 import rescala.graph.Globals
 import rescala.turns.Turn
+import scala.collection.JavaConverters.mapAsScalaConcurrentMapConverter
 
 import scala.annotation.tailrec
 
@@ -17,13 +18,17 @@ final class Key(val turn: Turn) {
   @volatile var subsequent: Option[Key] = None
   @volatile var prior: Option[Key] = None
 
+  def waitingList(): List[Key] = this :: subsequent.fold(List[Key]())(s => s.waitingList())
+
   /** contains a list of all locks owned by us. */
   private[this] val heldLocks = new ConcurrentLinkedQueue[TurnLock]()
 
 
   def addLock(lock: TurnLock): Unit = {
     heldLocks.add(lock)
-    lock.wantThis.remove(lock, true)
+    val waitSet = waitingList().toSet
+    //assert(lock.wantThis.asScala.keySet.forall(waitSet.apply), s"got $lock wanted by ${lock.wantThis.asScala.keySet} but only $waitSet are waiting")
+    lock.wantThis.remove(this, None)
   }
 
   /** this grants shared access to our locks to the group to which initial belongs.
@@ -52,10 +57,11 @@ final class Key(val turn: Turn) {
       val head = heldLocks.poll()
       val owner = head.getOwner
       if (owner eq this) {
-        if (wantBack) head.wantThis.put(this, true)
+        if (wantBack) head.wantedBy(this)
+        else assert(!head.wantThis.containsKey(this), s"$this gave $head away without wanting it back, but wanted by ${head.wantThis.asScala.keySet}")
         head.transfer(target, this)
       }
-      else assert(owner eq target, s"transfer of $head from $this to $target failed, becaus it was owned by $owner")
+      else assert(owner eq target, s"transfer of $head from $this to $target failed, because it was owned by $owner")
     }
 
   /** release all locks we hold or transfer them to a waiting transaction if there is one

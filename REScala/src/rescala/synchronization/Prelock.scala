@@ -7,6 +7,8 @@ trait Prelock extends TurnImpl with InterturnDependencyChanges {
 
   final val key: Key = new Key(this)
 
+  final val thread = Thread.currentThread().getName
+
   /**
    * creating a signal causes some unpredictable reactives to be used inside the turn.
    * these will have their locks be acquired dynamically see below for how that works.
@@ -16,7 +18,7 @@ trait Prelock extends TurnImpl with InterturnDependencyChanges {
    * is executed, because the constructor typically accesses the dependencies to create its initial value.
    */
   override def create[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
-    dependencies.foreach(_.lock.acquireDynamic(key))
+    dependencies.foreach(accessDynamic)
     val reactive = f
     reactive.lock.lock(key)
     super.create(dependencies)(reactive)
@@ -24,7 +26,7 @@ trait Prelock extends TurnImpl with InterturnDependencyChanges {
 
   /** similar to create, except for the ensure level and evaluate calls */
   override def createDynamic[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
-    dependencies.foreach(_.lock.acquireDynamic(key))
+    dependencies.foreach(accessDynamic)
     val reactive = f
     reactive.lock.lock(key)
     super.createDynamic(dependencies)(reactive)

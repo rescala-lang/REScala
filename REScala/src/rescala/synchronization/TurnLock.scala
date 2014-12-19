@@ -1,7 +1,7 @@
 package rescala.synchronization
 
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicInteger
+import scala.collection.JavaConverters.mapAsScalaMapConverter
 
 import rescala.graph.Reactive
 
@@ -14,9 +14,11 @@ final class TurnLock(val guarded: Reactive) {
   /** this is guarded by our intrinsic lock */
   private var owner: Key = null
 
-  val wantThis = new ConcurrentHashMap[Key, Boolean]()
+  val wantThis = new ConcurrentHashMap[Key, None.type]()
   
-  def wantedBy(key: Key): Unit = wantThis.put(key, true)
+  def wantedBy(key: Key): Unit = {
+    assert(wantThis.put(key, None) == null, s"$key wanted $this twice")
+  }
 
   def getOwner: Key = synchronized(owner)
 
@@ -39,7 +41,10 @@ final class TurnLock(val guarded: Reactive) {
    * use with caution as this can potentially deadlock
    */
   def lock(key: Key): Unit = synchronized {
-    while (tryLock(key) ne key) wait()
+    while (tryLock(key) ne key) {
+      assert(wantThis.containsKey(key), s"$key waits without wanting $this")
+      wait()
+    }
     // wait for master lock to become free
     key.synchronized(Unit)
   }
@@ -90,7 +95,13 @@ final class TurnLock(val guarded: Reactive) {
     if (wantThis.isEmpty) owner = null
     else {
       owner = target
-      if (target != null) target.addLock(this)
+      if (target != null) {
+        assert(target.waitingList().::(oldOwner).exists(wantThis.containsKey),
+          s"$oldOwner tries to transfer $this to $target but only ${wantThis.asScala.keySet} want it, not: ${target.waitingList()}")
+        target.addLock(this)
+      }
+      else assert(false, s"unlocked lock wanted by ${wantThis.size()}")
+
     }
     notifyAll()
   }

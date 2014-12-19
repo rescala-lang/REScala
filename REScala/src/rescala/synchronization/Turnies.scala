@@ -28,7 +28,7 @@ class Pessimistic extends EngineReference[Pessimistic](Engines.pessimistic) with
       key.synchronized {
         val subs = key.subsequent.get
         subs.synchronized {
-          SyncUtil.wantReachable(key, reactive)
+          l.wantedBy(key)
           // release locks so that whatever waits for us can continue
           key.releaseAll(wantBack = true)
           // but in turn we wait on that
@@ -58,7 +58,7 @@ class Yielding extends EngineReference[Yielding](Engines.yielding) with Prelock 
   private def acquireWrite(reactive: Reactive): Unit = reactive.lock.request(key) {
     val subs = key.subsequent.get
     subs.synchronized {
-      SyncUtil.wantReachable(key, reactive)
+      reactive.lock.wantedBy(key)
       // cycle
       key.releaseAll(wantBack = true)
       key.appendAfter(subs)
@@ -66,7 +66,7 @@ class Yielding extends EngineReference[Yielding](Engines.yielding) with Prelock 
     }
   } { ownerHead =>
     // yield
-    SyncUtil.wantReachable(key, reactive)
+    reactive.lock.wantedBy(key)
     key.transferAll(ownerHead, wantBack = true)
     key.appendAfter(ownerHead)
     SyncUtil.Await

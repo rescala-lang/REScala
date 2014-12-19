@@ -82,13 +82,12 @@ class PessimisticTest extends AssertionsForJUnit {
   @Test def summedSignals(): Unit = synchronized {
     val size = 100
     val sources = List.fill(size)(Var(0))
-    val latch = new CountDownLatch(1)
+    val latch = new CountDownLatch(size)
     val mapped = sources.map(s => s.map(_ + 1))
     val sum = mapped.reduce(Signals.lift(_, _)(_ + _))
     val results = new ConcurrentLinkedQueue[Int]()
     sum.changed.+=(results.add)
-    val threads = sources.map(v => Spawn { latch.await(); v.set(1) })
-    latch.countDown()
+    val threads = sources.map(v => Spawn { latch.countDown(); latch.await(); v.set(1) })
     threads.foreach(_.join())
 
     assert(results.asScala.sameElements(Range(size + 1, 2 * size + 1)))
