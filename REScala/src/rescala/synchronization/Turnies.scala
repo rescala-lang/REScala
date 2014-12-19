@@ -55,39 +55,20 @@ class Yielding extends EngineReference[Yielding](Engines.yielding) with Prelock 
    * so key needs to be in a clean state before this is called.
    * this can block until other turns waiting on the lock have finished
    */
-  @tailrec
-  private def acquireWrite(reactive: Reactive): Unit = {
-    import reactive.lock._
-    val oldOwner = tryLock(key)
-    val res: Symbol = if (oldOwner eq key) 'done
-    else {
-      SyncUtil.lockLanes(key, oldOwner) {
-        reactive.lock.synchronized {
-          tryLock(key) match {
-            // make sure the other owner did not unlock before we got his master lock
-            case newOwner if newOwner eq key => 'done
-            case newOwner if newOwner ne oldOwner => 'retry
-            case newOwner if SyncUtil.controls(key, newOwner) => key.subsequent.get.synchronized {
-              // cycle
-              key.releaseAll()
-              key.appendAfter(newOwner)
-              'await
-            }
-            case newOwner =>
-              // yield
-              key.transferAll(SyncUtil.laneHead(newOwner))
-              key.appendAfter(newOwner)
-              'await
-          }
-        }
-      }
+  private def acquireWrite(reactive: Reactive): Unit = reactive.lock.request(key) { newOwner =>
+    key.subsequent.get.synchronized {
+      // cycle
+      key.releaseAll()
+      key.appendAfter(newOwner)
+      'await
     }
-    res match {
-      case 'await => lock(key)
-      case 'retry => acquireWrite(reactive)
-      case 'done =>
-    }
+  } { newOwner =>
+    // yield
+    key.transferAll(SyncUtil.laneHead(newOwner))
+    key.appendAfter(newOwner)
+    'await
   }
+
 }
 
 trait NothingSpecial extends TurnImpl {
