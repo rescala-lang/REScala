@@ -23,7 +23,7 @@ final class TurnLock(val guarded: Reactive) {
    */
   def hasDynamicAccess(key: Key): Boolean = synchronized {
     if (owner == null) throw new IllegalStateException
-    SyncUtil.controls(key, getOwner)
+    SyncUtil.controls(key, owner)
   }
 
   /**

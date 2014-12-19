@@ -8,7 +8,6 @@ import scala.annotation.tailrec
 
 object SyncUtil {
 
-  /** locks the given locks in a global deterministic order */
   @tailrec
   def lockLanes[R](mine: Key, originalTarget: Key)(f: => R): R = {
 
