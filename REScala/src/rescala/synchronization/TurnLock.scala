@@ -28,6 +28,7 @@ final class TurnLock(val guarded: Reactive) {
    * this can block until all other turns waiting on the lock have finished
    */
   def acquireDynamic(key: Key): Unit = request(key)(SyncUtil.Done(Unit)) { _ =>
+    wantedBy(key)
     key.appendAfter(owner)
     SyncUtil.Await
   }
