@@ -32,6 +32,7 @@ final class TurnLock(val guarded: Reactive) {
    */
   def lock(key: Key): Unit = synchronized {
     while (tryLock(key) ne key) wait()
+    // wait for master lock to become free
     key.synchronized(Unit)
   }
 
@@ -53,14 +54,14 @@ final class TurnLock(val guarded: Reactive) {
     val oldOwner = tryLock(requester)
     val res = if (oldOwner eq requester) SyncUtil.Done(Unit)
     else {
-      SyncUtil.lockLanes(requester, oldOwner) {
+      SyncUtil.lockLanes(requester, oldOwner) { ownerHead =>
         synchronized {
           tryLock(requester) match {
             // make sure the other owner did not unlock before we got his master lock
             case _ if owner eq requester => SyncUtil.Done(Unit)
             case _ if owner ne oldOwner => SyncUtil.Retry
-            case _ if requester.controls(owner) => waiting(owner)
-            case _ => other(owner)
+            case _ if requester.controls(owner) => waiting(ownerHead)
+            case _ => other(ownerHead)
           }
         }
       }

@@ -15,7 +15,7 @@ object SyncUtil {
   
 
   @tailrec
-  def lockLanes[R](mine: Key, originalTarget: Key)(f: => R): R = {
+  def lockLanes[R](mine: Key, originalTarget: Key)(f: Key => R): R = {
 
     val targetHead = laneHead(originalTarget)
 
@@ -24,7 +24,7 @@ object SyncUtil {
     first.synchronized {
       second.synchronized {
         if (laneHead(targetHead) == targetHead) {
-          if (targetHead.controls(originalTarget)) Done(f)
+          if (targetHead.controls(originalTarget)) Done(f(targetHead))
           else Retry
         }
         else Await
