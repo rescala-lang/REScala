@@ -7,15 +7,15 @@ import rescala.turns.Turn
 import scala.annotation.tailrec
 
 object SyncUtil {
+  
+  sealed trait Result[+R]
+  object Await extends Result[Nothing]
+  object Retry extends Result[Nothing]
+  case class Done[R](r: R) extends Result[R]
+  
 
   @tailrec
   def lockLanes[R](mine: Key, originalTarget: Key)(f: => R): R = {
-
-    sealed trait LaneResult
-    object Further extends LaneResult
-    object Retry extends LaneResult
-    case class Good(r: R) extends LaneResult
-
 
     val targetHead = laneHead(originalTarget)
 
@@ -24,15 +24,15 @@ object SyncUtil {
     first.synchronized {
       second.synchronized {
         if (laneHead(targetHead) == targetHead) {
-          if (targetHead.controls(originalTarget)) Good(f)
+          if (targetHead.controls(originalTarget)) Done(f)
           else Retry
         }
-        else Further
+        else Await
       }
     } match {
-      case Further => lockLanes(mine, targetHead)(f)
+      case Await => lockLanes(mine, targetHead)(f)
       case Retry => lockLanes(mine, originalTarget)(f)
-      case Good(r) => r
+      case Done(r) => r
     }
   }
 

@@ -59,13 +59,13 @@ class Yielding extends EngineReference[Yielding](Engines.yielding) with Prelock 
       // cycle
       key.releaseAll()
       key.appendAfter(newOwner)
-      'await
+      SyncUtil.Await
     }
   } { newOwner =>
     // yield
     key.transferAll(SyncUtil.laneHead(newOwner))
     key.appendAfter(newOwner)
-    'await
+    SyncUtil.Await
   }
 
 }
