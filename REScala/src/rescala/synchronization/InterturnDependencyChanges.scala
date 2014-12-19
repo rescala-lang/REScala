@@ -13,6 +13,7 @@ trait InterturnDependencyChanges extends Turn {
     if ((owner ne key) && !source.dependants.get.contains(sink)) {
       owner.turn.register(sink)(source)
       owner.turn.admit(sink)
+      SyncUtil.lockReachable(sink :: Nil, {r => r.lock.wantedBy.put(owner, true)})
     }
     else super.register(sink)(source)
   }

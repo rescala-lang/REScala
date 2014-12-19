@@ -29,7 +29,7 @@ class Pessimistic extends EngineReference[Pessimistic](Engines.pessimistic) with
         val subs = key.subsequent.get
         subs.synchronized {
           // release locks so that whatever waits for us can continue
-          key.releaseAll()
+          key.releaseAll(wantBack = true)
           // but in turn we wait on that
           key.appendAfter(subs)
         }
@@ -88,7 +88,7 @@ class SpinningInitPessimistic extends EngineReference[SpinningInitPessimistic](E
   def acquireWrite(reactive: Reactive): Boolean =
     if (reactive.lock.tryLock(key) eq key) true
     else {
-      key.synchronized { key.releaseAll() }
+      key.synchronized { key.releaseAll(wantBack = true) }
       false
     }
 

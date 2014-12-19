@@ -1,6 +1,6 @@
 package rescala.synchronization
 
-import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue}
 
 import rescala.graph.Globals
 import rescala.turns.Turn
@@ -20,7 +20,11 @@ final class Key(val turn: Turn) {
   /** contains a list of all locks owned by us. */
   private[this] val heldLocks = new ConcurrentLinkedQueue[TurnLock]()
 
-  def addLock(lock: TurnLock): Unit = heldLocks.add(lock)
+
+  def addLock(lock: TurnLock): Unit = {
+    heldLocks.add(lock)
+    lock.wantedBy.remove(lock, true)
+  }
 
   /** this grants shared access to our locks to the group to which initial belongs.
     * when grant is called both masterLocks of us and target must be held.
@@ -43,26 +47,29 @@ final class Key(val turn: Turn) {
   /** we acquire the master lock for the target, because the target waits on one of the locks we transfer,
     * and it will wake up as soon as that one is unlocked and we do not want the target to start unlocking
     * or wait on someone else before we have everything transferred */
-  def transferAll(target: Key): Unit =
+  def transferAll(target: Key, wantBack: Boolean): Unit =
     while (!heldLocks.isEmpty) {
       val head = heldLocks.poll()
       val owner = head.getOwner
-      if (owner eq this) head.transfer(target, this)
+      if (owner eq this) {
+        if (true) head.wantedBy.put(this, true)
+        head.transfer(target, this)
+      }
       else assert(owner eq target, s"transfer of $head from $this to $target failed, becaus it was owned by $owner")
     }
 
   /** release all locks we hold or transfer them to a waiting transaction if there is one
     * holds the master lock for request */
-  def releaseAll(): Unit =
+  def releaseAll(wantBack: Boolean): Unit =
     synchronized {
       subsequent match {
-        case Some(req) => req.synchronized {
+        case Some(subseq) => subseq.synchronized {
+          subseq.prior = None
           subsequent = None
-          req.prior = None
-          transferAll(req)
+          transferAll(subseq, wantBack)
         }
         case None =>
-          transferAll(null)
+          transferAll(null, wantBack)
       }
     }
 
