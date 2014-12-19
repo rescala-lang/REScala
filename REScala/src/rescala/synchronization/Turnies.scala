@@ -4,7 +4,6 @@ import rescala.graph.Reactive
 import rescala.propagation.TurnImpl
 import rescala.turns.{Engine, Engines, Turn}
 
-import scala.annotation.tailrec
 import scala.concurrent.stm.{InTxn, atomic}
 
 abstract class EngineReference[T <: Turn](override val engine: Engine[T]) extends Turn
