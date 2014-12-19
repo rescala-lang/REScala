@@ -36,9 +36,11 @@ class PhiloTest extends AssertionsForJUnit {
       }
     }
 
+    println(s"philo party sleeping on $engine")
     Thread.sleep(5000)
     cancel = true
     threads.foreach(_.join(1000))
+    println(s"philo party done sleeping on $engine")
   }
 
   @Test def eatingContestsYielding(): Unit = `eat!`(Engines.yielding)
