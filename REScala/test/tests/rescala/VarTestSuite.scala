@@ -3,13 +3,18 @@ package tests.rescala
 //These 3 are for JUnitRunner
 
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.Var
-import rescala.turns.Engines.default
+import rescala.turns.{Engine, Turn}
 
+object VarTestSuite extends JUnitParameters
 
-class VarTestSuite extends AssertionsForJUnit with MockitoSugar {
+@RunWith(value = classOf[Parameterized])
+class VarTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit with MockitoSugar {
+  implicit val implicitEngine: Engine[Turn] = engine
 
   @Test def getValAfterCreationReturnsInitializationValue(): Unit = {
     val v = Var(1)

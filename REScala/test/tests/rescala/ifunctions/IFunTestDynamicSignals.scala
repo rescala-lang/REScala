@@ -1,13 +1,20 @@
 package tests.rescala.ifunctions
 
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.turns.Engines.default
+import rescala.turns.{Turn, Engine}
 import rescala.{Event, Evt, Signal, Var}
+import tests.rescala.JUnitParameters
 
 
-class IFunTestDynamicSignals extends AssertionsForJUnit with MockitoSugar {
+object IFunTestDynamicSignals extends JUnitParameters
+
+@RunWith(value = classOf[Parameterized])
+class IFunTestDynamicSignals(engine: Engine[Turn]) extends AssertionsForJUnit with MockitoSugar {
+  implicit val implicitEngine: Engine[Turn] = engine
 
   /* count */
   @Test def count_theInitialValueIsSetCorrectly(): Unit = {

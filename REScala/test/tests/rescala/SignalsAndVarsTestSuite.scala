@@ -3,14 +3,24 @@ package tests.rescala
 
 //These 3 are for JUnitRunner
 
+import java.util
+
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
+import org.junit.runners.Parameterized.Parameters
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.turns.Engines.default
+import rescala.turns.{Engines, Turn, Engine}
+
 import rescala.{Signals, Var}
 
 
-class SignalsAndVarsTestSuite extends AssertionsForJUnit with MockitoSugar {
+object SignalsAndVarsTestSuite extends JUnitParameters
+
+@RunWith(value = classOf[Parameterized])
+class SignalsAndVarsTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit with MockitoSugar {
+  implicit val implicitEngine: Engine[Turn] = engine
 
 
   @Test def handlerIsCalledWhenChangeOccurs() = {

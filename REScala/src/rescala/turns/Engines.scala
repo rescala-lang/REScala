@@ -19,6 +19,8 @@ object Engines {
     case _ => default
   }
 
+  def all: List[Engine[Turn]] = List(pessimistic, yielding, STM, spinningInit, synchron, unmanaged)
+
   implicit def default: Engine[Turn] = pessimistic
 
   implicit val yielding: Engine[Yielding] = new Impl(new Yielding)

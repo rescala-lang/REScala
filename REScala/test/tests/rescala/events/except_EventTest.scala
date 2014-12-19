@@ -2,13 +2,19 @@ package tests.rescala.events
 
 
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.Evt
-import rescala.turns.Engines.default
+import rescala.turns.{Turn, Engine}
+import tests.rescala.JUnitParameters
 
+object except_EventTest extends JUnitParameters
 
-class except_EventTest extends AssertionsForJUnit with MockitoSugar {
+@RunWith(value = classOf[Parameterized])
+class except_EventTest(engine: Engine[Turn]) extends AssertionsForJUnit with MockitoSugar {
+  implicit val implicitEngine: Engine[Turn] = engine
 
   @Test def handlerOf_except_IsExecutedIfBasicEventFires(): Unit = {
     var test = 0

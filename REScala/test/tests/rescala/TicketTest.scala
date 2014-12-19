@@ -1,12 +1,18 @@
 package tests.rescala
 
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
+import org.junit.runners.Parameterized.Parameters
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.turns.Engines.default
-import rescala.turns.{Engine, Ticket, Turn}
 
-class TicketTest extends AssertionsForJUnit with MockitoSugar {
+import rescala.turns.{Engines, Engine, Ticket, Turn}
+object TicketTest extends JUnitParameters
+
+@RunWith(value = classOf[Parameterized])
+class TicketTest(engine: Engine[Turn]) extends AssertionsForJUnit with MockitoSugar {
+  implicit val implicitEngine: Engine[Turn] = engine
 
   /* this test uses some shady planned()(identity) to get the turn object out of the transaction
    * you should not do this. */

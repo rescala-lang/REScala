@@ -1,14 +1,22 @@
 package tests.rescala.ifunctions
 
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.turns.Engines.default
+import rescala.turns.{Turn, Engine}
 import rescala.{Event, Evt, Signal, Var}
+import tests.rescala.JUnitParameters
 
 import scala.collection.LinearSeq
 
-class IFunTest extends AssertionsForJUnit with MockitoSugar {
+
+object IFunTest extends JUnitParameters
+
+@RunWith(value = classOf[Parameterized])
+class IFunTest(engine: Engine[Turn]) extends AssertionsForJUnit with MockitoSugar {
+  implicit val implicitEngine: Engine[Turn] = engine
 
 
   /* fold */

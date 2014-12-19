@@ -1,14 +1,20 @@
 package tests.rescala
 
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.turns.Engines.default
+import rescala.turns.{Engine, Turn}
 import rescala.{Evt, Signal, Signals, Var}
 
 
 
-class HigherOrderTestSuite extends AssertionsForJUnit with MockitoSugar {
+object HigherOrderTestSuite extends JUnitParameters
+
+@RunWith(value = classOf[Parameterized])
+class HigherOrderTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit with MockitoSugar {
+  implicit val implicitEngine: Engine[Turn] = engine
 
 
   @Test def basicHigherOrderSignal_canBeAccessed(): Unit = {

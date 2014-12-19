@@ -1,15 +1,24 @@
 package tests.rescala
 
 
+import java.util
+
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
+import org.junit.runners.Parameterized.Parameters
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.turns.Engines.default
+import rescala.turns.{Engines, Turn, Engine}
+
 import rescala.{Signals, Var}
 import rescala.Infiltrator.getLevel
 
+object DynamicSignalTestSuite extends JUnitParameters
 
-class DynamicSignalTestSuite extends AssertionsForJUnit with MockitoSugar {
+@RunWith(value = classOf[Parameterized])
+class DynamicSignalTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit with MockitoSugar {
+  implicit val implicitEngine: Engine[Turn] = engine
 
   @Test def signalReEvaluatesTheExpressionWhenSomethingItDependsOnIsUpdated(): Unit = {
     val v = Var(0)

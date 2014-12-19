@@ -1,12 +1,23 @@
 package tests.rescala
 
+import java.util
+
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
+import org.junit.runners.Parameterized.Parameters
 import org.scalatest.junit.AssertionsForJUnit
-import rescala.turns.Engines.default
+import org.scalatest.mock.MockitoSugar
+import rescala.turns.{Engines, Turn, Engine}
+
 import rescala.{Signals, Var}
 import rescala.Infiltrator.getLevel
 
-class LevelPropagation extends AssertionsForJUnit {
+object LevelPropagation extends JUnitParameters
+
+@RunWith(value = classOf[Parameterized])
+class LevelPropagation(engine: Engine[Turn]) extends AssertionsForJUnit with MockitoSugar {
+  implicit val implicitEngine: Engine[Turn] = engine
 
   @Test def worksOnElementsInQueue(): Unit = {
     val level0 = Var(0)

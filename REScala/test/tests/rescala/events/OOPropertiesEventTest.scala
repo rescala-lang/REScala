@@ -2,19 +2,26 @@ package tests.rescala.events
 
 
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.turns.Engines.default
+import rescala.turns.{Turn, Engine}
 import rescala.{Event, Evt}
+import tests.rescala.JUnitParameters
 
 
+object OOPropertiesEventTest extends JUnitParameters
 
 /**
  * Demonstrates some of the features and of the limitations of the
  * current implementation w.r.t. OO design, like inheritance,
  * polymorphism, overriding, etc...
  */
-class OOPropertiesEventTest extends AssertionsForJUnit with MockitoSugar {
+@RunWith(value = classOf[Parameterized])
+class OOPropertiesEventTest(engine: Engine[Turn]) extends AssertionsForJUnit with MockitoSugar {
+  implicit val implicitEngine: Engine[Turn] = engine
+
 
   @Test def eventsAreInherited() = {
 

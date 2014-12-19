@@ -1,14 +1,21 @@
 package tests.rescala
 
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
+import org.junit.runners.Parameterized.Parameters
 import org.scalatest.junit.AssertionsForJUnit
-import rescala.turns.Engines.default
-import rescala.turns.{Ticket, Turn}
+import org.scalatest.mock.MockitoSugar
+
+import rescala.turns.{Engines, Engine, Ticket, Turn}
 import rescala.{Signal, Signals, Var}
 
 import scala.language.implicitConversions
+object LightImplicitSyntaxTest extends JUnitParameters
 
-class LightImplicitSyntaxTest extends AssertionsForJUnit {
+@RunWith(value = classOf[Parameterized])
+class LightImplicitSyntaxTest(engine: Engine[Turn]) extends AssertionsForJUnit with MockitoSugar {
+  implicit val implicitEngine: Engine[Turn] = engine
 
   @Test def experimentWithImplicitSyntax(): Unit = {
     implicit def getSignalValueDynamic[T](s: Signal[T])(implicit turn: Turn): T = s.apply(turn)
