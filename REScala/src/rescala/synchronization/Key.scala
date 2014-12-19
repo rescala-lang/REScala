@@ -26,8 +26,10 @@ final class Key(val turn: Turn) {
 
   def addLock(lock: TurnLock): Unit = {
     heldLocks.add(lock)
-    val waitSet = waitingList().toSet
-    //assert(lock.wantThis.asScala.keySet.forall(waitSet.apply), s"got $lock wanted by ${lock.wantThis.asScala.keySet} but only $waitSet are waiting")
+    assert({
+      val waitSet = waitingList().toSet
+      lock.wantThis.asScala.keySet.forall(waitSet.apply)
+    }, s"got $lock wanted by ${lock.wantThis.asScala.keySet} but only ${waitingList()} are waiting")
     lock.wantThis.remove(this, None)
   }
 
