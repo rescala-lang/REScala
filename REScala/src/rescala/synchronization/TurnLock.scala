@@ -40,16 +40,18 @@ final class TurnLock(val guarded: Reactive) {
    * this does not test for shared access and thus will deadlock if the current owner has its locks shared with the turn.
    * use with caution as this can potentially deadlock
    */
-  def lock(key: Key): Unit = synchronized {
-    while (tryLock(key) ne key) {
-      assert(wantThis.containsKey(key), s"$key waits without wanting $this")
-      wait()
+  def lock(key: Key): Unit = {
+    synchronized {
+      while (tryLock(key) ne key) {
+        assert(wantThis.containsKey(key), s"$key waits without wanting $this")
+        wait()
+      }
     }
     // wait for master lock to become free
     key.synchronized(Unit)
   }
 
-  /**
+    /**
    * locks this if it is free, returns the current owner (which is key, if locking succeeded)
    * does not check for shared access.
    */
