@@ -54,17 +54,18 @@ class Yielding extends EngineReference[Yielding](Engines.yielding) with Prelock 
    * so key needs to be in a clean state before this is called.
    * this can block until other turns waiting on the lock have finished
    */
-  private def acquireWrite(reactive: Reactive): Unit = reactive.lock.request(key) { newOwner =>
-    key.subsequent.get.synchronized {
+  private def acquireWrite(reactive: Reactive): Unit = reactive.lock.request(key) {
+    val subs = key.subsequent.get
+    subs.synchronized {
       // cycle
-      key.releaseAll()
-      key.appendAfter(newOwner)
+      key.releaseAll(wantBack = true)
+      key.appendAfter(subs)
       SyncUtil.Await
     }
-  } { newOwner =>
+  } { ownerHead =>
     // yield
-    key.transferAll(SyncUtil.laneHead(newOwner))
-    key.appendAfter(newOwner)
+    key.transferAll(ownerHead, wantBack = true)
+    key.appendAfter(ownerHead)
     SyncUtil.Await
   }
 
