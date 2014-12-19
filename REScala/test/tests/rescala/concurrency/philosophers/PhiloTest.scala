@@ -4,7 +4,7 @@ import benchmarks.PhilosopherTable
 import benchmarks.PhilosopherTable.{Seating, Thinking}
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
-import rescala.turns.Engines
+import rescala.turns.{Turn, Engine, Engines}
 import tests.rescala.concurrency.Spawn
 
 import scala.annotation.tailrec
@@ -19,11 +19,10 @@ class PhiloTest extends AssertionsForJUnit {
   }
 
 
-  @Test def `eat!`(): Unit = {
+  def `eat!`(engine: Engine[Turn]): Unit = {
     val philosophers = 4
-    val engineName = "yielding"
     val threadCount = 3
-    val table = new PhilosopherTable(philosophers, 0)(Engines.byName(engineName))
+    val table = new PhilosopherTable(philosophers, 0)(engine)
     val blocks: Array[Array[Seating]] = deal(table.seatings.toList, List.fill(threadCount)(Nil)).map(_.toArray).toArray
 
     @volatile var cancel = false
@@ -41,5 +40,9 @@ class PhiloTest extends AssertionsForJUnit {
     cancel = true
     threads.foreach(_.join(1000))
   }
+
+  @Test def eatingContestsYielding(): Unit = `eat!`(Engines.yielding)
+  @Test def eatingContestsPessimistic(): Unit = `eat!`(Engines.pessimistic)
+  @Test def eatingContestsSpinning(): Unit = `eat!`(Engines.spinningInit)
 
 }
