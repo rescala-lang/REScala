@@ -37,9 +37,10 @@ class PhiloTest extends AssertionsForJUnit {
     }
 
     println(s"philo party sleeping on $engine")
-    Thread.sleep(5000)
+    Thread.sleep(1000)
     cancel = true
     threads.foreach(_.join(1000))
+    assert(threads.forall(!_.isAlive), "threads did not finish")
     println(s"philo party done sleeping on $engine")
   }
 
