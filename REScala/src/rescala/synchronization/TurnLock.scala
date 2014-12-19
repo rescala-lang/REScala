@@ -17,7 +17,8 @@ final class TurnLock(val guarded: Reactive) {
   val wantThis = new ConcurrentHashMap[Key, None.type]()
   
   def wantedBy(key: Key): Unit = {
-    assert(wantThis.put(key, None) == null, s"$key wanted $this twice")
+    val res = wantThis.put(key, None)
+    assert(res == null, s"$key wanted $this twice")
   }
 
   def getOwner: Key = synchronized(owner)
