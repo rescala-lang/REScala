@@ -3,11 +3,9 @@ package tests.rescala
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import org.junit.runners.Parameterized.Parameters
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-
-import rescala.turns.{Engines, Engine, Ticket, Turn}
+import rescala.turns.{Engine, Ticket, Turn}
 object TicketTest extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])

@@ -1,18 +1,15 @@
 package tests.philosophers
 
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.{ LinkedBlockingQueue, ThreadPoolExecutor, TimeUnit }
-import rescala.Signals.lift
-import rescala.graph.Pulsing
-import rescala.synchronization.SyncUtil
-import rescala.turns.Engines.yielding
-import rescala.{ Observe, Signal, Var }
-import rescala.turns.{Engine, Turn}
-import rescala.{Signal, Var}
-import rescala.turns.Ticket
-import rescala.graph.Globals.named
+import java.util.concurrent.{ThreadPoolExecutor, TimeUnit}
 
-import scala.concurrent.{ ExecutionContext, Future }
+import rescala.Signals.lift
+import rescala.graph.Globals.named
+import rescala.graph.Pulsing
+import rescala.turns.Engines.yielding
+import rescala.{Observe, Signal, Var}
+
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Random
 
 object REScalaPhilosophers extends App {

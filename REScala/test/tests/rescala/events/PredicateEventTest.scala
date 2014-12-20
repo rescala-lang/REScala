@@ -7,7 +7,7 @@ import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.Evt
-import rescala.turns.{Turn, Engine}
+import rescala.turns.{Engine, Turn}
 import tests.rescala.JUnitParameters
 
 object PredicateEventTest extends JUnitParameters

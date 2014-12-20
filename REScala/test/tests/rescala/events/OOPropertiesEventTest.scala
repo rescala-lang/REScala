@@ -6,7 +6,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.turns.{Turn, Engine}
+import rescala.turns.{Engine, Turn}
 import rescala.{Event, Evt}
 import tests.rescala.JUnitParameters
 

@@ -3,16 +3,12 @@ package tests.rescala
 
 //These 3 are for JUnitRunner
 
-import java.util
-
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import org.junit.runners.Parameterized.Parameters
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.turns.{Engines, Turn, Engine}
-
+import rescala.turns.{Engine, Turn}
 import rescala.{Signals, Var}
 
 

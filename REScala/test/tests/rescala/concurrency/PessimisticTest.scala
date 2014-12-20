@@ -7,8 +7,8 @@ import java.util.concurrent.{ConcurrentLinkedQueue, CountDownLatch}
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import rescala.graph.Reactive
-import rescala.synchronization.{Pessimistic, EngineReference, Prelock}
-import rescala.turns.{Turn, Engine, Engines}
+import rescala.synchronization.Pessimistic
+import rescala.turns.{Engine, Engines, Turn}
 import rescala.{Signals, Var}
 
 import scala.collection.JavaConverters._

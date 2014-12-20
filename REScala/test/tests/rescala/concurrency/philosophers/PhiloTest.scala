@@ -4,7 +4,7 @@ import benchmarks.PhilosopherTable
 import benchmarks.PhilosopherTable.{Seating, Thinking}
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
-import rescala.turns.{Turn, Engine, Engines}
+import rescala.turns.{Engine, Engines, Turn}
 import tests.rescala.concurrency.Spawn
 
 import scala.annotation.tailrec
