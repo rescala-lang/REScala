@@ -1,7 +1,7 @@
 package rescala
 
-import rescala.turns.{Turn, Engine}
 import rescala.graph.{EvaluationResult, Pulse}
+import rescala.turns.{Engine, Turn}
 
 sealed trait Source[T] {
   def admit(value: T)(implicit turn: Turn): Unit

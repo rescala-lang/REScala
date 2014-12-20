@@ -1,7 +1,7 @@
 package rescala
 
-import rescala.turns.{Turn, Ticket}
-import rescala.graph.{Buffer, Commitable, EvaluationResult, Pulsing, Reactive}
+import rescala.graph.{Commitable, EvaluationResult, Pulsing, Reactive}
+import rescala.turns.{Ticket, Turn}
 
 
 trait Observe {

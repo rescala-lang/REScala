@@ -1,7 +1,7 @@
 package rescala
 
-import rescala.turns.{Turn, Engine, Ticket}
 import rescala.graph.Pulsing
+import rescala.turns.{Engine, Ticket, Turn}
 
 import scala.collection.LinearSeq
 import scala.collection.immutable.Queue

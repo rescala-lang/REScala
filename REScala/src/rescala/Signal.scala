@@ -1,7 +1,7 @@
 package rescala
 
-import rescala.turns.{Turn, Engine, Ticket}
 import rescala.graph.Stateful
+import rescala.turns.{Engine, Ticket, Turn}
 
 
 abstract class Signal[+A](engine: Engine[Turn]) extends Stateful[A](engine) {

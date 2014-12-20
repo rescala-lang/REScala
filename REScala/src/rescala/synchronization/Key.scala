@@ -1,10 +1,9 @@
 package rescala.synchronization
 
-import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue}
+import java.util.concurrent.ConcurrentLinkedQueue
 
 import rescala.graph.Globals
 import rescala.turns.Turn
-import scala.collection.JavaConverters.mapAsScalaConcurrentMapConverter
 
 import scala.annotation.tailrec
 

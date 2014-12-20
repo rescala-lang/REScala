@@ -1,8 +1,8 @@
 package rescala.graph
 
-import rescala.turns.{Engine, Turn, Ticket}
 import rescala.graph.Pulse.{Diff, NoChange}
 import rescala.synchronization.TurnLock
+import rescala.turns.{Engine, Ticket, Turn}
 
 /** A Reactive is a value type which has a dependency to other Reactives */
 abstract class Reactive(val engine: Engine[Turn]) {

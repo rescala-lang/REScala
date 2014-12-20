@@ -2,7 +2,7 @@ package rescala.propagation
 
 import rescala.graph.{Commitable, Reactive}
 import rescala.propagation.Evaluator.Result
-import rescala.turns.{Engine, Turn}
+import rescala.turns.Turn
 
 trait TurnImpl extends Turn {
   implicit def currentTurn: TurnImpl = this

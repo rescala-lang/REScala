@@ -1,6 +1,6 @@
 package rescala.turns
 
-import rescala.graph.{SimpleBuffer, Buffer, Reactive}
+import rescala.graph.{Buffer, Reactive, SimpleBuffer}
 import rescala.synchronization.TurnLock
 
 import scala.annotation.implicitNotFound

@@ -1,11 +1,11 @@
 package rescala.turns
 
-import rescala.graph.{STMBuffer, Buffer, Reactive}
+import rescala.graph.{Buffer, Reactive, STMBuffer}
 import rescala.propagation.TurnImpl
-import rescala.synchronization.{Yielding, NothingSpecial, EngineReference, Pessimistic, TurnLock, STMSync, SpinningInitPessimistic, Prelock}
+import rescala.synchronization.{EngineReference, NothingSpecial, Pessimistic, STMSync, SpinningInitPessimistic, TurnLock, Yielding}
 
-import scala.util.DynamicVariable
 import scala.concurrent.stm.atomic
+import scala.util.DynamicVariable
 
 object Engines {
 

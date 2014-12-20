@@ -1,8 +1,8 @@
 package rescala
 
-import rescala.turns.{Engine, Turn, Ticket}
 import rescala.graph.{DynamicReevaluation, Globals, Pulse, Reactive, StaticReevaluation}
 import rescala.signals.GeneratedLift
+import rescala.turns.{Engine, Ticket, Turn}
 
 object Signals extends GeneratedLift {
 

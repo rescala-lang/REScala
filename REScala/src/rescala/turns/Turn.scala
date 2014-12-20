@@ -1,6 +1,6 @@
 package rescala.turns
 
-import rescala.graph.{Stateful, Commitable, Reactive}
+import rescala.graph.{Commitable, Reactive}
 
 /**
  * The engine that schedules the (glitch-free) evaluation

@@ -1,6 +1,6 @@
 package rescala.graph
 
-import rescala.synchronization.{Key, Pessimistic, STMSync, TurnLock, Prelock}
+import rescala.synchronization.{Key, Prelock, STMSync, TurnLock}
 import rescala.turns.Turn
 
 import scala.concurrent.stm.{InTxn, Ref}
