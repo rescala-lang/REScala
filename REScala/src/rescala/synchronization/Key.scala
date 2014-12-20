@@ -18,19 +18,12 @@ final class Key(val turn: Turn) {
   @volatile var subsequent: Option[Key] = None
   @volatile var prior: Option[Key] = None
 
-  def waitingList(): List[Key] = this :: subsequent.fold(List[Key]())(s => s.waitingList())
-
   /** contains a list of all locks owned by us. */
   private[this] val heldLocks = new ConcurrentLinkedQueue[TurnLock]()
 
 
   def addLock(lock: TurnLock): Unit = {
     heldLocks.add(lock)
-    assert({
-      val waitSet = waitingList().toSet
-      lock.wantThis.asScala.keySet.forall(waitSet.apply)
-    }, s"got $lock wanted by ${lock.wantThis.asScala.keySet} but only ${waitingList()} are waiting")
-    lock.wantThis.remove(this, None)
   }
 
   /** this grants shared access to our locks to the group to which initial belongs.
@@ -59,9 +52,7 @@ final class Key(val turn: Turn) {
       val head = heldLocks.poll()
       val owner = head.getOwner
       if (owner eq this) {
-        if (wantBack) head.wantedBy(this)
-        else assert(!head.wantThis.containsKey(this), s"$this gave $head away without wanting it back, but wanted by ${head.wantThis.asScala.keySet}")
-        head.transfer(target, this)
+        head.transfer(target, this, wantBack)
       }
       else assert(owner eq target, s"transfer of $head from $this to $target failed, because it was owned by $owner")
     }

@@ -1,6 +1,6 @@
 package rescala.synchronization
 
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.{ConcurrentSkipListMap, ConcurrentHashMap}
 import scala.collection.JavaConverters.mapAsScalaMapConverter
 
 import rescala.graph.Reactive
@@ -16,10 +16,7 @@ final class TurnLock(val guarded: Reactive) {
 
   val wantThis = new ConcurrentHashMap[Key, None.type]()
   
-  def wantedBy(key: Key): Unit = {
-    val res = wantThis.put(key, None)
-    assert(res == null, s"$key wanted $this twice")
-  }
+  def wantedBy(key: Key): Unit = wantThis.put(key, None)
 
   def getOwner: Key = synchronized(owner)
 
@@ -31,7 +28,6 @@ final class TurnLock(val guarded: Reactive) {
    * this can block until all other turns waiting on the lock have finished
    */
   def acquireDynamic(key: Key): Unit = request(key)(SyncUtil.Done(Unit)) { _ =>
-    wantedBy(key)
     key.appendAfter(owner)
     SyncUtil.Await
   }
@@ -42,12 +38,7 @@ final class TurnLock(val guarded: Reactive) {
    * use with caution as this can potentially deadlock
    */
   def lock(key: Key): Unit = {
-    synchronized {
-      while (tryLock(key) ne key) {
-        assert(wantThis.containsKey(key), s"$key waits without wanting $this")
-        wait()
-      }
-    }
+    synchronized { while (tryLock(key) ne key) wait() }
     // wait for master lock to become free
     key.synchronized(Unit)
   }
@@ -56,10 +47,14 @@ final class TurnLock(val guarded: Reactive) {
    * locks this if it is free, returns the current owner (which is key, if locking succeeded)
    * does not check for shared access.
    */
-  def tryLock(key: Key): Key = synchronized {
+  def tryLock(key: Key, register: Boolean = true): Key = synchronized {
     if (owner eq null) {
       owner = key
+      wantThis.remove(key, None)
       key.addLock(this)
+    }
+    else if (register) {
+      wantedBy(key)
     }
     owner
   }
@@ -93,18 +88,26 @@ final class TurnLock(val guarded: Reactive) {
    * transfers the lock from the turn to the target.
    * this notifies all turns waiting on this lock because we need the turn the lock was transferred to to wake up
    */
-  def transfer(target: Key, oldOwner: Key) = synchronized {
+  def transfer(target: Key, oldOwner: Key, wantBack: Boolean) = synchronized {
     if (!hasWriteAccess(oldOwner)) throw new IllegalMonitorStateException(s"$this is held by $owner but tried to transfer by $oldOwner (to $target)")
-    if (wantThis.isEmpty) owner = null
-    else {
-      owner = target
-      if (target != null) {
-        assert(target.waitingList().::(oldOwner).exists(wantThis.containsKey),
-          s"$oldOwner tries to transfer $this to $target but only ${wantThis.asScala.keySet} want it, not: ${target.waitingList()}")
-        target.addLock(this)
-      }
-      else assert(false, s"unlocked lock wanted by ${wantThis.size()}")
 
+    if (wantBack) wantedBy(oldOwner)
+    else {
+      wantThis.remove(oldOwner, None)
+      //assert(!wantThis.containsKey(oldOwner), s"$oldOwner gave $this away without wanting it back, but wanted by ${wantThis.asScala.keySet}")
+    }
+
+    if (wantThis.isEmpty) owner = null
+    else if (target != null) {
+      owner = target
+      wantThis.remove(target, None)
+      target.addLock(this)
+    }
+    else {
+      val waiting = wantThis.keys().nextElement()
+      assert(wantThis.remove(waiting, None), s"got $waiting out of wantThis but was not there anymore!")
+      owner = waiting
+      waiting.addLock(this)
     }
     notifyAll()
   }
