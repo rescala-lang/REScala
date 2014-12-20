@@ -36,7 +36,7 @@ final class SimpleBuffer[A](initialValue: A, initialStrategy: (A, A) => A, write
   @volatile var commitStrategy: (A, A) => A = initialStrategy
 
   override def initCurrent(value: A): Unit = current = value
-  override def initStrategy(strategy: (A, A) => A): Unit =  commitStrategy = strategy
+  override def initStrategy(strategy: (A, A) => A): Unit = commitStrategy = strategy
 
 
   def transform(f: (A) => A)(implicit turn: Turn): A = {
@@ -49,7 +49,7 @@ final class SimpleBuffer[A](initialValue: A, initialStrategy: (A, A) => A, write
     turn match {
       case pessimistic: Prelock =>
         val wlo: Option[Key] = Option(writeLock).map(_.getOwner)
-        assert(wlo.fold(true)(_ eq pessimistic.key), s"buffer owned by $owner, controlled by $writeLock with owner ${wlo.get} was written by $turn who locks with ${pessimistic.key}, by now the owner ist ${writeLock.getOwner}")
+        assert(wlo.fold(true)(_ eq pessimistic.key), s"buffer owned by $owner, controlled by $writeLock with owner ${ wlo.get } was written by $turn who locks with ${ pessimistic.key }, by now the owner ist ${ writeLock.getOwner }")
       case _ =>
     }
     update = Some(value)
@@ -57,7 +57,7 @@ final class SimpleBuffer[A](initialValue: A, initialStrategy: (A, A) => A, write
     turn.plan(this)
   }
   def base(implicit turn: Turn): A = current
-  def get(implicit turn: Turn): A = if(turn eq owner) update.getOrElse(current) else current
+  def get(implicit turn: Turn): A = if (turn eq owner) update.getOrElse(current) else current
   def release(implicit turn: Turn): Unit = {
     update = None
     owner = null
@@ -67,7 +67,6 @@ final class SimpleBuffer[A](initialValue: A, initialStrategy: (A, A) => A, write
     release
   }
 }
-
 
 
 final class STMBuffer[A](initialValue: A, initialStrategy: (A, A) => A) extends Buffer[A] {

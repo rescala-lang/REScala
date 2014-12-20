@@ -7,12 +7,12 @@ import rescala.turns.Turn
 import scala.annotation.tailrec
 
 object SyncUtil {
-  
+
   sealed trait Result[+R]
   object Await extends Result[Nothing]
   object Retry extends Result[Nothing]
   case class Done[R](r: R) extends Result[R]
-  
+
 
   @tailrec
   def lockLanes[R](mine: Key, originalTarget: Key)(f: Key => R): R = {

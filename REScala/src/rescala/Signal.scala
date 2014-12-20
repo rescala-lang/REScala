@@ -48,5 +48,5 @@ abstract class Signal[+A](engine: Engine[Turn]) extends Stateful[A](engine) {
   /** Convenience function filtering to events which change this reactive to value */
   final def changedTo[V](value: V)(implicit maybe: Ticket): Event[Unit] = (changed && { _ == value }).dropParam
 
-//  def await[B >: A](value: B): Unit
+  //  def await[B >: A](value: B): Unit
 }

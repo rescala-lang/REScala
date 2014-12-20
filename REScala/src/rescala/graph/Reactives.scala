@@ -31,7 +31,7 @@ abstract class Pulsing[+P](engine: Engine[Turn]) extends Reactive(engine) {
 }
 
 /** a node that has a current state */
-abstract class  Stateful[+A](engine: Engine[Turn]) extends Pulsing[A](engine) {
+abstract class Stateful[+A](engine: Engine[Turn]) extends Pulsing[A](engine) {
   pulses.initStrategy((_, p) => p.keep)
 
   // only used inside macro and will be replaced there
