@@ -16,7 +16,7 @@ object Engines {
     case "spinningInit" => spinningInit
     case "yielding" => yielding
     case "stm" => STM
-    case _ => default
+    case other => throw new IllegalArgumentException(s"unknown engine $other")
   }
 
   def all: List[Engine[Turn]] = List(pessimistic, yielding, STM, spinningInit, synchron, unmanaged)
