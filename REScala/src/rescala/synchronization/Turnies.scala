@@ -29,7 +29,7 @@ class Pessimistic extends EngineReference[Pessimistic](Engines.pessimistic) with
         val subs = key.subsequent.get
         subs.synchronized {
           // release locks so that whatever waits for us can continue
-          key.releaseAll(wantBack = true)
+          key.releaseAll()
           // but in turn we wait on that
           key.appendAfter(subs)
         }
@@ -58,13 +58,13 @@ class Yielding extends EngineReference[Yielding](Engines.yielding) with Prelock 
     val subs = key.subsequent.get
     subs.synchronized {
       // cycle
-      key.releaseAll(wantBack = true)
+      key.releaseAll()
       key.appendAfter(subs)
       SyncUtil.Await
     }
   } { ownerHead =>
     // yield
-    key.transferAll(ownerHead, wantBack = true)
+    key.transferAll(ownerHead)
     key.appendAfter(ownerHead)
     SyncUtil.Await
   }
@@ -86,9 +86,9 @@ class SpinningInitPessimistic extends EngineReference[SpinningInitPessimistic](E
   override def lockPhase(initialWrites: List[Reactive]): Unit = SyncUtil.lockReachable(initialWrites, acquireWrite)
 
   def acquireWrite(reactive: Reactive): Boolean =
-    if (reactive.lock.tryLock(key, register = false) eq key) true
+    if (reactive.lock.tryLock(key) eq key) true
     else {
-      key.synchronized { key.releaseAll(wantBack = false) }
+      key.synchronized { key.releaseAll() }
       false
     }
 

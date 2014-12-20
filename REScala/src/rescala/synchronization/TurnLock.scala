@@ -1,8 +1,5 @@
 package rescala.synchronization
 
-import java.util.concurrent.{ConcurrentSkipListMap, ConcurrentHashMap}
-import scala.collection.JavaConverters.mapAsScalaMapConverter
-
 import rescala.graph.Reactive
 
 import scala.annotation.tailrec
@@ -13,10 +10,6 @@ final class TurnLock(val guarded: Reactive) {
 
   /** this is guarded by our intrinsic lock */
   private var owner: Key = null
-
-  val wantThis = new ConcurrentHashMap[Key, None.type]()
-  
-  def wantedBy(key: Key): Unit = wantThis.put(key, None)
 
   def getOwner: Key = synchronized(owner)
 
@@ -43,18 +36,14 @@ final class TurnLock(val guarded: Reactive) {
     key.synchronized(Unit)
   }
 
-    /**
+  /**
    * locks this if it is free, returns the current owner (which is key, if locking succeeded)
    * does not check for shared access.
    */
-  def tryLock(key: Key, register: Boolean = true): Key = synchronized {
+  def tryLock(key: Key): Key = synchronized {
     if (owner eq null) {
       owner = key
-      wantThis.remove(key, None)
       key.addLock(this)
-    }
-    else if (register) {
-      wantedBy(key)
     }
     owner
   }
@@ -88,27 +77,10 @@ final class TurnLock(val guarded: Reactive) {
    * transfers the lock from the turn to the target.
    * this notifies all turns waiting on this lock because we need the turn the lock was transferred to to wake up
    */
-  def transfer(target: Key, oldOwner: Key, wantBack: Boolean) = synchronized {
+  def transfer(target: Key, oldOwner: Key) = synchronized {
     if (!hasWriteAccess(oldOwner)) throw new IllegalMonitorStateException(s"$this is held by $owner but tried to transfer by $oldOwner (to $target)")
-
-    if (wantBack) wantedBy(oldOwner)
-    else {
-      wantThis.remove(oldOwner, None)
-      //assert(!wantThis.containsKey(oldOwner), s"$oldOwner gave $this away without wanting it back, but wanted by ${wantThis.asScala.keySet}")
-    }
-
-    if (wantThis.isEmpty) owner = null
-    else if (target != null) {
-      owner = target
-      wantThis.remove(target, None)
-      target.addLock(this)
-    }
-    else {
-      val waiting = wantThis.keys().nextElement()
-      assert(wantThis.remove(waiting, None), s"got $waiting out of wantThis but was not there anymore!")
-      owner = waiting
-      waiting.addLock(this)
-    }
+    owner = target
+    if (target ne null) target.addLock(this)
     notifyAll()
   }
 
