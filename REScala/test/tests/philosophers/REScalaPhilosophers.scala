@@ -66,17 +66,17 @@ object REScalaPhilosophers extends App {
   def createTable(tableSize: Int): Seq[Seating] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
 
-    val phils = for (i <- 0 until tableSize) yield named(s"Phil-${names(i)}")(Var[Philosopher](Thinking))
+    val phils = for (i <- 0 until tableSize) yield named(s"Phil-${ names(i) }")(Var[Philosopher](Thinking))
 
     val forks = for (i <- 0 until tableSize) yield {
       val nextCircularIndex = mod(i + 1)
-      named(s"Fork-${names(i)}-${names(nextCircularIndex)}") {
+      named(s"Fork-${ names(i) }-${ names(nextCircularIndex) }") {
         lift(phils(i), phils(nextCircularIndex))(calcFork(names(i), names(nextCircularIndex)))
       }
     }
 
     for (i <- 0 until tableSize) yield {
-      val vision = named(s"Vision-${names(i)}") {
+      val vision = named(s"Vision-${ names(i) }") {
         lift(forks(i), forks(mod(i - 1)))(calcVision(names(i)))
       }
       Seating(i, phils(i), forks(i), forks(mod(i - 1)), vision)
@@ -97,34 +97,34 @@ object REScalaPhilosophers extends App {
     }
   }
 
-    seatings.foreach { seating =>
-      named(s"observePhil(${names(seating.placeNumber)})")(log(seating.philosopher))
-      named(s"observeFork(${names(seating.placeNumber)})")(log(seating.leftFork))
-      // right fork is the next guy's left fork
-      named(s"observeVision(${names(seating.placeNumber)})")(log(seating.vision))
-    }
+  seatings.foreach { seating =>
+    named(s"observePhil(${ names(seating.placeNumber) })")(log(seating.philosopher))
+    named(s"observeFork(${ names(seating.placeNumber) })")(log(seating.leftFork))
+    // right fork is the next guy's left fork
+    named(s"observeVision(${ names(seating.placeNumber) })")(log(seating.vision))
+  }
 
   val eaten = new AtomicInteger(0)
   @volatile var lastTime = System.nanoTime()
 
-//  seatings.foreach { seating =>
-//    seating.vision.observe { state =>
-//      if (state == Eating) {
-//        val eats = eaten.incrementAndGet()
-//        if (eats % 1000 == 0) {
-//          val time = System.nanoTime()
-//          log(s"eaten: $eats in ${(time - lastTime) / 1000000}ms (${SyncUtil.counter.get() / eats}tpe)")
-//          lastTime = time
-//        }
-//      }
-//    }
-//  }
+  //  seatings.foreach { seating =>
+  //    seating.vision.observe { state =>
+  //      if (state == Eating) {
+  //        val eats = eaten.incrementAndGet()
+  //        if (eats % 1000 == 0) {
+  //          val time = System.nanoTime()
+  //          log(s"eaten: $eats in ${(time - lastTime) / 1000000}ms (${SyncUtil.counter.get() / eats}tpe)")
+  //          lastTime = time
+  //        }
+  //      }
+  //    }
+  //  }
 
   // ============================================ Runtime Behavior  =========================================================
 
   seatings foreach {
-    case seating @ Seating(i, philosopher, _, _, vision) =>
-      named(s"think-${names(i)}")(vision.observe { state =>
+    case seating@Seating(i, philosopher, _, _, vision) =>
+      named(s"think-${ names(i) }")(vision.observe { state =>
         if (state == Eating) {
           Future {
             philosopher set Thinking
@@ -149,7 +149,7 @@ object REScalaPhilosophers extends App {
     }
 
   def eatOnce(seating: Seating) = repeatUntilTrue({
-//    seating.vision.await(Ready)
+    //    seating.vision.await(Ready)
     tryEat(seating)
   })
 
@@ -175,7 +175,7 @@ object REScalaPhilosophers extends App {
     Spawn("Worker-" + myBlock.map(seating => names(seating.placeNumber)).mkString("-")) {
       log("Controlling hunger on " + myBlock)
       /*if(seating.placeNumber % 2 != 0)*/ while (!killed) {
-        eatOnce(myBlock(random.nextInt(sizeFactor )))
+        eatOnce(myBlock(random.nextInt(sizeFactor)))
       }
       log("dies.")
     }

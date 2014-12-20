@@ -9,7 +9,6 @@ import rescala.turns.{Engine, Turn}
 import rescala.{Evt, Signal, Signals, Var}
 
 
-
 object HigherOrderTestSuite extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])

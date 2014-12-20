@@ -10,6 +10,7 @@ import rescala.turns.{Engine, Turn}
 import rescala.{Signals, Var}
 
 import scala.language.implicitConversions
+
 object GlitchFreedomTestSuite extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])

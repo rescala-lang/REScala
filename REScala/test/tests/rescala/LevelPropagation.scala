@@ -24,7 +24,7 @@ class LevelPropagation(engine: Engine[Turn]) extends AssertionsForJUnit with Moc
       if (level0(t) == 10) level3(t) else 42
     }
     var evaluatesOnlyOncePerTurn = 0
-    val level_2_to_5 = Signals.lift(level0, level_1_to_4){(x, y) => evaluatesOnlyOncePerTurn += 1 ;  x + y}
+    val level_2_to_5 = Signals.lift(level0, level_1_to_4) { (x, y) => evaluatesOnlyOncePerTurn += 1; x + y }
 
     assert(getLevel(level3) === 3)
     assert(getLevel(level_1_to_4) === 1)
@@ -87,7 +87,7 @@ class LevelPropagation(engine: Engine[Turn]) extends AssertionsForJUnit with Moc
       if (l0(t) == 10) l3(t) else 13
     }
     var reevals = 0
-    val l2t5 = l1t4.map{v => reevals += 1; v + 1}
+    val l2t5 = l1t4.map { v => reevals += 1; v + 1 }
 
     assert(getLevel(l3) === 3)
     assert(getLevel(l1t4) === 1)
@@ -118,9 +118,9 @@ class LevelPropagation(engine: Engine[Turn]) extends AssertionsForJUnit with Moc
       if (l0(t) == 10) l3(t) else 13
     }
     var reevals = 0
-    val l2t5 = Signals.lift(l1t4, l1){ (a, b) => reevals += 1; a + b}
+    val l2t5 = Signals.lift(l1t4, l1) { (a, b) => reevals += 1; a + b }
     var reevals2 = 0
-    val l3t6 = l2t5.map{v => reevals2 += 1; v + 1}
+    val l3t6 = l2t5.map { v => reevals2 += 1; v + 1 }
 
     assert(getLevel(l3) === 3)
     assert(getLevel(l1t4) === 1)

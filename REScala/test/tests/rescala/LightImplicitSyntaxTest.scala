@@ -9,6 +9,7 @@ import rescala.turns.{Engine, Ticket, Turn}
 import rescala.{Signal, Signals, Var}
 
 import scala.language.implicitConversions
+
 object LightImplicitSyntaxTest extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])

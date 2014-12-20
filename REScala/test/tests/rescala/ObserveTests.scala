@@ -8,6 +8,7 @@ import org.scalatest.mock.MockitoSugar
 import rescala.Observe.once
 import rescala.turns.{Engine, Turn}
 import rescala.{Event, Events, Signal, Signals, Var}
+
 object ObserveTests extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])
@@ -59,7 +60,7 @@ class ObserveTests(engine: Engine[Turn]) extends AssertionsForJUnit with Mockito
     lazy val obs: Event[Int] = Events.static("obs", v1) { t =>
       val v = v1.get(t)
       if (v > 10) t.unregister(obs)(v1)
-      else t.plan(once[Int](obs, Some(v), result ::= _ ))
+      else t.plan(once[Int](obs, Some(v), result ::= _))
       v1.pulse(t)
     }
 
