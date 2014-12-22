@@ -6,7 +6,7 @@ import rescala.turns.{Engine, Ticket, Turn}
 import scala.collection.LinearSeq
 import scala.collection.immutable.Queue
 
-abstract class Event[+T](engine: Engine[Turn]) extends Pulsing[T](engine) {
+trait Event[+T] extends Pulsing[T] {
 
   /** add an observer */
   final def +=(react: T => Unit)(implicit maybe: Ticket): Observe = observe(react)(maybe)

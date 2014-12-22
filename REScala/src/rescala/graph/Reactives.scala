@@ -5,10 +5,12 @@ import rescala.synchronization.TurnLock
 import rescala.turns.{Engine, Ticket, Turn}
 
 /** A Reactive is a value type which has a dependency to other Reactives */
-abstract class Reactive(val engine: Engine[Turn]) {
+trait Reactive {
   final override val hashCode: Int = Globals.nextID()
 
-  final private[rescala] val lock: TurnLock = new TurnLock(this)
+  protected[rescala] def lock: TurnLock
+
+  protected[rescala] def engine: Engine[Turn]
 
   final private[rescala] val level: Buffer[Int] = engine.buffer(0, math.max, lock)
 
@@ -23,15 +25,22 @@ abstract class Reactive(val engine: Engine[Turn]) {
   override def toString = name
 }
 
+/** helper class to initialise engine and select lock */
+abstract class Enlock(final override protected[rescala] val engine: Engine[Turn], lockOverride: Set[Reactive] = Set()) extends Reactive {
+  final override protected[rescala] val lock: TurnLock =
+    if (lockOverride.size == 1) lockOverride.head.lock
+    else new TurnLock(this)
+}
+
 /** A node that has nodes that depend on it */
-abstract class Pulsing[+P](engine: Engine[Turn]) extends Reactive(engine) {
+trait Pulsing[+P] extends Reactive {
   final protected[this] val pulses: Buffer[Pulse[P]] = engine.buffer(Pulse.none, (x, _) => x, lock)
 
   final def pulse(implicit turn: Turn): Pulse[P] = pulses.get
 }
 
 /** a node that has a current state */
-abstract class Stateful[+A](engine: Engine[Turn]) extends Pulsing[A](engine) {
+trait Stateful[+A] extends Pulsing[A] {
   pulses.initStrategy((_, p) => p.keep)
 
   // only used inside macro and will be replaced there
