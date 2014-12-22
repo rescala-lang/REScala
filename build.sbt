@@ -2,7 +2,7 @@ name := "rescala"
 
 organization := "de.tuda.stg"
 
-version := "0.8.0"
+version := "0.9.0"
 
 scalaVersion := "2.11.4"
 
