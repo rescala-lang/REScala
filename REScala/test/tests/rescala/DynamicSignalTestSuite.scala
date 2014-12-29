@@ -180,7 +180,7 @@ class DynamicSignalTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit wi
     val outside = Var(1)
 
     val testsig = Signals.dynamic() { t =>
-      //remark 01.10.2014: without the upper bound the inner signal will be enqueued (it is level 0 same as its dependency)
+      //remark 01.10.2014: without the bound the inner signal will be enqueued (it is level 0 same as its dependency)
       //this will cause testsig to reevaluate again, after the inner signal is fully updated.
       // leading to an infinite loop
       Signals.dynamic(outside) { t => outside(t) }.apply(t)

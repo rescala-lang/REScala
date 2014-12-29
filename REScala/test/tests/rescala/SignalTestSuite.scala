@@ -53,7 +53,7 @@ class SignalTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit with Mock
     assert(a == 3)
   }
 
-  @Test def handlersAreExecuted() = {
+  @Test def handlersAreExecuted(): Unit = {
 
     var test = 0
     val v = Var(1)
@@ -73,7 +73,7 @@ class SignalTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit with Mock
 
   }
 
-  @Test def levelIsCorrectlyComputed() = {
+  @Test def levelIsCorrectlyComputed(): Unit = {
 
     val v = Var(1)
 
