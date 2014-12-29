@@ -13,12 +13,7 @@ object Evaluator {
       case Static(hasChanged) => Result(head, hasChanged, -42, None, redo = false)
       case Dynamic(hasChanged, diff) =>
         val newLevel = maximumLevel(diff.novel) + 1
-        if (head.level.get >= newLevel) {
-          Result(head, hasChanged, newLevel, Some(diff), redo = false)
-        }
-        else {
-          Result(head, hasChanged, newLevel, Some(diff), redo = true)
-        }
+        Result(head, hasChanged, newLevel, Some(diff), redo = head.level.get < newLevel)
     }
   }
 
