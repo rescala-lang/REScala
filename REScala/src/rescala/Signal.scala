@@ -10,7 +10,7 @@ trait Signal[+A] extends Stateful[A] {
   final def observe(react: A => Unit)(implicit maybe: Ticket): Observe = Observe(this)(react)
 
   /** Return a Signal with f applied to the value */
-  final def map[B](f: A => B)(implicit maybe: Ticket): Signal[B] = Signals.mapping(this) { turn => f(get(turn)) }
+  final def map[B](f: A => B)(implicit maybe: Ticket): Signal[B] = Signals.lift(this) { f }
 
   /** flatten the inner signal */
   final def flatten[B]()(implicit ev: A <:< Signal[B], maybe: Ticket) = Signals.dynamic(this) { s => this(s)(s) }
