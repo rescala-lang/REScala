@@ -35,16 +35,17 @@ final class SimpleBuffer[A](initialValue: A, initialStrategy: (A, A) => A, write
   @volatile private var owner: Turn = null
   @volatile var commitStrategy: (A, A) => A = initialStrategy
 
-  override def initCurrent(value: A): Unit = current = value
-  override def initStrategy(strategy: (A, A) => A): Unit = commitStrategy = strategy
+  override def initCurrent(value: A): Unit = synchronized(current = value)
+  override def initStrategy(strategy: (A, A) => A): Unit = synchronized(commitStrategy = strategy)
 
 
-  def transform(f: (A) => A)(implicit turn: Turn): A = {
+  def transform(f: (A) => A)(implicit turn: Turn): A = synchronized {
     val value = f(get)
     set(value)
     value
   }
-  def set(value: A)(implicit turn: Turn): Unit = {
+
+  def set(value: A)(implicit turn: Turn): Unit = synchronized {
     assert(owner == null || owner == turn, s"buffer owned by $owner written by $turn")
     turn match {
       case pessimistic: Prelock =>
@@ -56,13 +57,17 @@ final class SimpleBuffer[A](initialValue: A, initialStrategy: (A, A) => A, write
     owner = turn
     turn.plan(this)
   }
-  def base(implicit turn: Turn): A = current
-  def get(implicit turn: Turn): A = if (turn eq owner) update.getOrElse(current) else current
-  def release(implicit turn: Turn): Unit = {
+
+  def base(implicit turn: Turn): A = synchronized(current)
+
+  def get(implicit turn: Turn): A = synchronized { if (turn eq owner) update.getOrElse(current) else current }
+
+  def release(implicit turn: Turn): Unit = synchronized {
     update = None
     owner = null
   }
-  def commit(implicit turn: Turn): Unit = {
+
+  def commit(implicit turn: Turn): Unit = synchronized {
     current = commitStrategy(current, get)
     release
   }
