@@ -1,7 +1,7 @@
 package rescala.propagation
 
+import rescala.graph.ReevaluationResult.{Dynamic, Static}
 import rescala.graph.{Commitable, Reactive}
-import rescala.propagation.Evaluator.Result
 import rescala.turns.Turn
 
 trait TurnImpl extends Turn {
@@ -10,17 +10,26 @@ trait TurnImpl extends Turn {
   protected var toCommit = Set[Commitable]()
   protected var afterCommitHandlers = List[() => Unit]()
 
-  def handleDiff(res: Result): Result = {
-    res.getDiff.foreach { diff =>
-      diff.removed foreach unregister(res.head)
-      diff.added foreach register(res.head)
-    }
-    res
-  }
-
   val levelQueue = new LevelQueue()
 
-  def evaluate(r: Reactive): Unit = handleDiff(Evaluator.evaluate(r)).requeue(levelQueue.enqueue)
+  def evaluate(head: Reactive): Unit = {
+    def requeue(changed: Boolean, level: Int, redo: Boolean): Unit =
+      if (redo) levelQueue.enqueue(level, changed)(head)
+      else if (changed) head.dependants.get.foreach(levelQueue.enqueue(level, changed))
+
+    head.reevaluate() match {
+      case Static(hasChanged) =>
+        requeue(hasChanged, -42, redo = false)
+      case Dynamic(hasChanged, diff) =>
+        diff.removed foreach unregister(head)
+        diff.added foreach register(head)
+        val newLevel = maximumLevel(diff.novel) + 1
+        requeue(hasChanged, newLevel, redo = head.level.get < newLevel)
+    }
+
+  }
+
+  def maximumLevel(dependencies: Set[Reactive])(implicit turn: Turn): Int = dependencies.foldLeft(-1)((acc, r) => math.max(acc, r.level.get))
 
   def register(sink: Reactive)(source: Reactive): Unit = {
     source.dependants.transform(_ + sink)
