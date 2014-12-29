@@ -1,6 +1,6 @@
 package rescala
 
-import rescala.graph.{Enlock, Commitable, EvaluationResult, Pulsing, Reactive}
+import rescala.graph.{Enlock, Commitable, ReevaluationResult, Pulsing, Reactive}
 import rescala.turns.{Ticket, Turn}
 
 
@@ -13,9 +13,9 @@ object Observe {
   def apply[T](dependency: Pulsing[T])(fun: T => Unit)(implicit maybe: Ticket): Observe =
     maybe(initTurn => initTurn.create(Set(dependency)) {
       val obs = new Enlock(initTurn.engine, Set(dependency)) with Reactive with Observe {
-        override protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult = {
+        override protected[rescala] def reevaluate()(implicit turn: Turn): ReevaluationResult = {
           turn.plan(once(this, dependency.pulse.toOption, fun))
-          EvaluationResult.Static(changed = false)
+          ReevaluationResult.Static(changed = false)
         }
         override def remove()(implicit maybe: Ticket): Unit = maybe(_.unregister(this)(dependency))
       }

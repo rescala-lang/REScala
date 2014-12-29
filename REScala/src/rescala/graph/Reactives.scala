@@ -4,7 +4,7 @@ import rescala.graph.Pulse.{Diff, NoChange}
 import rescala.synchronization.TurnLock
 import rescala.turns.{Engine, Ticket, Turn}
 
-/** A Reactive is a value type which has a dependency to other Reactives */
+/** A Reactive is something that can be reevaluated */
 trait Reactive {
   final override val hashCode: Int = Globals.nextID()
 
@@ -18,7 +18,7 @@ trait Reactive {
 
   /** called when it is this events turn to be evaluated
     * (head of the evaluation queue) */
-  protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult
+  protected[rescala] def reevaluate()(implicit turn: Turn): ReevaluationResult
 
   /** for debugging */
   private val name = Globals.declarationLocationName()

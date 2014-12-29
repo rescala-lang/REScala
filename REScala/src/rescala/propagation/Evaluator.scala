@@ -1,6 +1,6 @@
 package rescala.propagation
 
-import rescala.graph.EvaluationResult.{Dynamic, Static}
+import rescala.graph.ReevaluationResult.{Dynamic, Static}
 import rescala.graph.{DepDiff, Reactive}
 import rescala.turns.Turn
 

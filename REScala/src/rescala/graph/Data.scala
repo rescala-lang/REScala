@@ -31,18 +31,6 @@ object Globals {
   def nextID() = counter.incrementAndGet()
 }
 
-sealed trait EvaluationResult
-
-object EvaluationResult {
-  case class Static(changed: Boolean) extends EvaluationResult
-  case class Dynamic(changed: Boolean, diff: DepDiff) extends EvaluationResult
-}
-
-case class DepDiff(novel: Set[Reactive], old: Set[Reactive]) {
-  lazy val added = novel.diff(old)
-  lazy val removed = old.diff(novel)
-}
-
 
 sealed trait Pulse[+P] {
 
