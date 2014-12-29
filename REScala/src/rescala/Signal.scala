@@ -1,7 +1,7 @@
 package rescala
 
 import rescala.graph.Stateful
-import rescala.turns.{Engine, Ticket, Turn}
+import rescala.turns.Ticket
 
 
 trait Signal[+A] extends Stateful[A] {
@@ -48,5 +48,4 @@ trait Signal[+A] extends Stateful[A] {
   /** Convenience function filtering to events which change this reactive to value */
   final def changedTo[V](value: V)(implicit maybe: Ticket): Event[Unit] = (changed && { _ == value }).dropParam
 
-  //  def await[B >: A](value: B): Unit
 }
