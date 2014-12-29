@@ -25,12 +25,15 @@ trait Reactive {
   override def toString = name
 }
 
+
 /** helper class to initialise engine and select lock */
-abstract class Enlock(final override protected[rescala] val engine: Engine[Turn], lockOverride: Set[Reactive] = Set()) extends Reactive {
+abstract class Enlock(final override protected[rescala] val engine: Engine[Turn],
+                      lockOverride: Set[Reactive] = Set()) extends Reactive {
   final override protected[rescala] val lock: TurnLock =
     if (lockOverride.size == 1) lockOverride.head.lock
     else new TurnLock(this)
 }
+
 
 /** A node that has nodes that depend on it */
 trait Pulsing[+P] extends Reactive {
@@ -38,6 +41,7 @@ trait Pulsing[+P] extends Reactive {
 
   final def pulse(implicit turn: Turn): Pulse[P] = pulses.get
 }
+
 
 /** a node that has a current state */
 trait Stateful[+A] extends Pulsing[A] {
@@ -61,36 +65,3 @@ trait Stateful[+A] extends Pulsing[A] {
   }
 }
 
-
-/** reevaluation strategy for static dependencies */
-trait StaticReevaluation[+P] {
-  this: Pulsing[P] =>
-  /** side effect free calculation of the new pulse for the current turn */
-  protected[rescala] def calculatePulse()(implicit turn: Turn): Pulse[P]
-
-  final override protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult = {
-    val p = calculatePulse()
-    pulses.set(p)
-    EvaluationResult.Static(p.isChange)
-  }
-}
-
-/** reevaluation strategy for dynamic dependencies */
-trait DynamicReevaluation[+P] {
-  this: Pulsing[P] =>
-
-  private val dependencies: Buffer[Set[Reactive]] = engine.buffer(Set(), (_, x) => x, lock)
-
-  /** side effect free calculation of the new pulse and the new dependencies for the current turn */
-  def calculatePulseDependencies(implicit turn: Turn): (Pulse[P], Set[Reactive])
-
-  final override protected[rescala] def reevaluate()(implicit turn: Turn): EvaluationResult = {
-    val (newPulse, newDependencies) = calculatePulseDependencies
-
-    val oldDependencies = dependencies.get
-    dependencies.set(newDependencies)
-    pulses.set(newPulse)
-    EvaluationResult.Dynamic(newPulse.isChange, DepDiff(newDependencies, oldDependencies))
-
-  }
-}
