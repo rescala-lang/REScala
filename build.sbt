@@ -62,7 +62,7 @@ sourceGenerators in Compile <+= sourceManaged in Compile map { dir =>
     def sep(l: Seq[String]) = l.mkString(", ")
     val getValues = params map (_ + ".get(t)")
     s"""  def lift[${sep(types)}, B](${sep(signals)})(fun: (${sep(types)}) => B)(implicit maybe: Ticket): Signal[B] =
-       |    mapping(${sep(params)})(t => fun(${sep(getValues)}))
+       |    static(${sep(params)})(t => fun(${sep(getValues)}))
      """.stripMargin
   }
   IO.write(file,

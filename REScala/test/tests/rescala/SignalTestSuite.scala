@@ -27,7 +27,7 @@ class SignalTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit with Mock
 
   @Test def theExpressionIsNoteEvaluatedEveryTimeGetValIsCalled(): Unit = {
     var a = 10
-    val s: Signal[Int] = Signals.mapping()(_ => 1 + 1 + a)
+    val s: Signal[Int] = Signals.static()(_ => 1 + 1 + a)
     assert(s.now === 12)
     a = 11
     assert(s.now === 12)
@@ -35,7 +35,7 @@ class SignalTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit with Mock
 
 
   @Test def simpleSignalReturnsCorrectExpressions(): Unit = {
-    val s: Signal[Int] = Signals.mapping()(_ => 1 + 1 + 1)
+    val s: Signal[Int] = Signals.static()(_ => 1 + 1 + 1)
     assert(s.now === 3)
   }
 

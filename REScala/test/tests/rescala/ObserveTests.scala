@@ -30,7 +30,7 @@ class ObserveTests(engine: Engine[Turn]) extends AssertionsForJUnit with Mockito
   @Test def `self removing observers are possible, although maybe not as straight forward as one would wish?`(): Unit = {
     var result = List[Int]()
     val v1 = Var(0)
-    lazy val link: Signal[Int] = Signals.mapping(v1) { t =>
+    lazy val link: Signal[Int] = Signals.static(v1) { t =>
       val v = v1.get(t)
       if (v > 10) {
         t.unregister(link)(v1)

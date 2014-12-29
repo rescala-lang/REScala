@@ -103,8 +103,8 @@ class HigherOrderTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit with
 
     val v = Var(42)
     val s0: Signal[Int] = v.map(identity)
-    val s1: Signal[Signal[Int]] = Signals.mapping() { t => s0 }
-    val s2: Signal[Signal[Signal[Int]]] = Signals.mapping() { t => s1 }
+    val s1: Signal[Signal[Int]] = Signals.static() { t => s0 }
+    val s2: Signal[Signal[Signal[Int]]] = Signals.static() { t => s1 }
 
     val sDeref1 = s1.flatten()
     val sDeref2 = s2.flatten().flatten()
@@ -138,7 +138,7 @@ class HigherOrderTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit with
     val doubled = count.map(_ * 2)
     val mod2 = count.map(_ % 2)
 
-    val listOfSignals: Signal[List[Signal[Int]]] = Signals.mapping() { t => List(doubled, count) }
+    val listOfSignals: Signal[List[Signal[Int]]] = Signals.static() { t => List(doubled, count) }
     val selected: Signal[Signal[Int]] = Signals.dynamic(listOfSignals, mod2) { t => listOfSignals(t)(mod2(t)) }
     val dereferenced = selected.flatten()
 

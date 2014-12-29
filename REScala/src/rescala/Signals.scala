@@ -39,7 +39,7 @@ object Signals extends GeneratedLift {
   }
 
   /** creates a new static signal depending on the dependencies, reevaluating the function */
-  def mapping[T](dependencies: Reactive*)(fun: Turn => T)(implicit maybe: Ticket): Signal[T] = maybe { initialTurn =>
+  def static[T](dependencies: Reactive*)(fun: Turn => T)(implicit maybe: Ticket): Signal[T] = maybe { initialTurn =>
     makeStatic(dependencies.toSet, fun(initialTurn))((turn, _) => fun(turn))(initialTurn)
   }
 

@@ -23,7 +23,7 @@ class GlitchFreedomTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit wi
     val v1 = Var(1)
     val s1 = v1.map { 2 * _ }
     val s2 = v1.map { 3 * _ }
-    val s3 = Signals.mapping(s1, s2) { t => s1.get(t) + s2.get(t) }
+    val s3 = Signals.static(s1, s2) { t => s1.get(t) + s2.get(t) }
 
     val s1List = s1.changed.list()
     val s2List = s2.changed.list()
