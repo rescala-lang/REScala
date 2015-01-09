@@ -26,7 +26,7 @@ object Engines {
   implicit val yielding: Engine[Yielding] = new Impl(new Yielding)
 
   implicit val STM: Engine[STMSync] = new Impl(new STMSync()) {
-    override def plan[T1, T2](i: Reactive*)(f: STMSync => T1)(g: (STMSync, T1) => T2): T2 = atomic { tx => super.plan(i: _*)(f)(g) }
+    override def plan[R](i: Reactive*)(f: STMSync => R): R = atomic { tx => super.plan(i: _*)(f) }
     override def buffer[A](default: A, commitStrategy: (A, A) => A, writeLock: TurnLock): Buffer[A] = new STMBuffer[A](default, commitStrategy)
   }
 
@@ -34,24 +34,24 @@ object Engines {
 
   implicit val pessimistic: Engine[Pessimistic] = new Impl(new Pessimistic()) {
     override def subplan[T](initialWrites: Reactive*)(f: (Pessimistic) => T): T = currentTurn.value match {
-      case None => planned(initialWrites: _*)(f)
+      case None => plan(initialWrites: _*)(f)
       case Some(turn) =>
         initialWrites.foreach(r => assert(r.lock.hasWriteAccess(turn.key), s"tried to start subplan in $turn without write access to $r"))
         f(turn)
     }
   }
   implicit val synchron: Engine[NothingSpecial] = new Impl[NothingSpecial](new EngineReference(synchron) with NothingSpecial) {
-    override def plan[T1, T2](i: Reactive*)(f: NothingSpecial => T1)(g: (NothingSpecial, T1) => T2): T2 = synchronized(super.plan(i: _*)(f)(g))
+    override def plan[R](i: Reactive*)(f: NothingSpecial => R): R = synchronized(super.plan(i: _*)(f))
   }
   implicit val unmanaged: Engine[NothingSpecial] = new Impl[NothingSpecial](new EngineReference(unmanaged) with NothingSpecial)
 
 
-  class Impl[TI <: TurnImpl](makeTurn: => TI) extends Engine[TI] {
+  class Impl[TImpl <: TurnImpl](makeTurn: => TImpl) extends Engine[TImpl] {
 
-    val currentTurn: DynamicVariable[Option[TI]] = new DynamicVariable[Option[TI]](None)
+    val currentTurn: DynamicVariable[Option[TImpl]] = new DynamicVariable[Option[TImpl]](None)
 
-    override def subplan[T](initialWrites: Reactive*)(f: TI => T): T = currentTurn.value match {
-      case None => planned(initialWrites: _*)(f)
+    override def subplan[T](initialWrites: Reactive*)(f: TImpl => T): T = currentTurn.value match {
+      case None => plan(initialWrites: _*)(f)
       case Some(turn) => f(turn)
     }
 
@@ -72,16 +72,16 @@ object Engines {
       * - run the party! phase
       *   - not yet implemented
       * */
-    override def plan[T1, T2](initialWrites: Reactive*)(admissionPhase: TI => T1)(checkPhase: (TI, T1) => T2): T2 = {
+    override def plan[Res](initialWrites: Reactive*)(admissionPhase: TImpl => Res): Res = {
       implicit class sequentialLeftResult[R](result: R) {def ~<(sideEffects_! : Unit): R = result }
       val turn = makeTurn
       try {
         currentTurn.withValue(Some(turn)) {
           turn.lockPhase(initialWrites.toList)
-          val res = admissionPhase(turn)
-          turn.propagationPhase()
-          turn.commitPhase()
-          checkPhase(turn, res)
+          admissionPhase(turn) ~< {
+            turn.propagationPhase()
+            turn.commitPhase()
+          }
         } ~< turn.observerPhase()
       }
       finally {

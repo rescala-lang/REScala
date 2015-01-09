@@ -138,13 +138,12 @@ object REScalaPhilosophers extends App {
 
   def tryEat(seating: Seating) =
     yielding.plan(seating.philosopher) { turn =>
-      if (seating.vision(turn) == Ready) {
+      val forksWereFree = if (seating.vision(turn) == Ready) {
         seating.philosopher.admit(Hungry)(turn)
         true
       }
       else false
-    } { (turn, forksWereFree) =>
-      if (forksWereFree) assert(seating.vision(turn) == Eating)
+      turn.afterCommit(if (forksWereFree) assert(seating.vision(turn) == Eating))
       forksWereFree
     }
 

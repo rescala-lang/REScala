@@ -60,14 +60,13 @@ class PhilosopherTable(philosopherCount: Int, work: Long)(implicit val engine: E
 
   def tryEat(seating: Seating): Boolean =
     engine.plan(seating.philosopher) { turn =>
-      if (seating.vision(turn) == Ready) {
+      val forksFree = if (seating.vision(turn) == Ready) {
         seating.philosopher.admit(Hungry)(turn)
         true
       }
       else false
-    } { (turn, forksWereFree) =>
-      if (forksWereFree) assert(seating.vision(turn) == Eating)
-      forksWereFree
+      turn.afterCommit(if (forksFree) assert(seating.vision(turn) == Eating))
+      forksFree
     }
 
   def eatOnce(seating: Seating) = repeatUntilTrue(tryEat(seating))
