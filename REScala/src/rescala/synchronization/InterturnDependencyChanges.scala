@@ -10,7 +10,7 @@ trait InterturnDependencyChanges extends Turn {
   abstract override def register(sink: Reactive)(source: Reactive): Unit = {
     source.lock.acquireDynamic(key)
     val owner = source.lock.getOwner
-    if ((owner ne key) && !source.dependants.get.contains(sink)) {
+    if ((owner ne key) && !source.outgoing.get.contains(sink)) {
       owner.turn.register(sink)(source)
       owner.turn.admit(sink)
     }

@@ -14,7 +14,7 @@ trait Reactive {
 
   final private[rescala] val level: Buffer[Int] = engine.buffer(0, math.max, lock)
 
-  final private[rescala] val dependants: Buffer[Set[Reactive]] = engine.buffer(Set(), (_, x) => x, lock)
+  final private[rescala] val outgoing: Buffer[Set[Reactive]] = engine.buffer(Set(), (_, x) => x, lock)
 
   /** called when it is this events turn to be evaluated
     * (head of the evaluation queue) */

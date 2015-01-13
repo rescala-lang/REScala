@@ -50,7 +50,7 @@ object SyncUtil {
 
     lq.evaluateQueue { reactive =>
       if (acquire(reactive))
-        reactive.dependants.get.foreach(lq.enqueue(-42))
+        reactive.outgoing.get.foreach(lq.enqueue(-42))
       else {
         lq.clear()
         initial.foreach(lq.enqueue(-42))

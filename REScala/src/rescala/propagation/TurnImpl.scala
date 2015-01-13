@@ -15,7 +15,7 @@ trait TurnImpl extends Turn {
   def evaluate(head: Reactive): Unit = {
     def requeue(changed: Boolean, level: Int, redo: Boolean): Unit =
       if (redo) levelQueue.enqueue(level, changed)(head)
-      else if (changed) head.dependants.get.foreach(levelQueue.enqueue(level, changed))
+      else if (changed) head.outgoing.get.foreach(levelQueue.enqueue(level, changed))
 
     head.reevaluate() match {
       case Static(hasChanged) =>
@@ -32,11 +32,11 @@ trait TurnImpl extends Turn {
   def maximumLevel(dependencies: Set[Reactive])(implicit turn: Turn): Int = dependencies.foldLeft(-1)((acc, r) => math.max(acc, r.level.get))
 
   def register(sink: Reactive)(source: Reactive): Unit = {
-    source.dependants.transform(_ + sink)
+    source.outgoing.transform(_ + sink)
   }
 
   def unregister(sink: Reactive)(source: Reactive): Unit = {
-    source.dependants.transform(_ - sink)
+    source.outgoing.transform(_ - sink)
   }
 
   override def plan(commitable: Commitable): Unit = {
