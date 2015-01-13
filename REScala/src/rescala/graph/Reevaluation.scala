@@ -33,7 +33,7 @@ trait StaticReevaluation[+P] {
 trait DynamicReevaluation[+P] {
   this: Pulsing[P] =>
 
-  private val dependencies: Buffer[Set[Reactive]] = engine.buffer(Set(), (_, x) => x, lock)
+  private val incoming: Buffer[Set[Reactive]] = engine.buffer(Set(), (_, x) => x, lock)
 
   /** side effect free calculation of the new pulse and the new dependencies for the current turn */
   def calculatePulseDependencies(implicit turn: Turn): (Pulse[P], Set[Reactive])
@@ -41,8 +41,8 @@ trait DynamicReevaluation[+P] {
   final override protected[rescala] def reevaluate()(implicit turn: Turn): ReevaluationResult = {
     val (newPulse, newDependencies) = calculatePulseDependencies
 
-    val oldDependencies = dependencies.get
-    dependencies.set(newDependencies)
+    val oldDependencies = incoming.get
+    incoming.set(newDependencies)
     pulses.set(newPulse)
     ReevaluationResult.Dynamic(newPulse.isChange, DepDiff(newDependencies, oldDependencies))
 
