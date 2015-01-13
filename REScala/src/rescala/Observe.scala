@@ -18,6 +18,7 @@ object Observe {
           ReevaluationResult.Static(changed = false)
         }
         override def remove()(implicit maybe: Ticket): Unit = maybe(_.unregister(this)(dependency))
+        override protected[rescala] def incoming(implicit turn: Turn): Set[Reactive] = staticIncoming
       }
       initTurn.plan(once(obs, dependency.pulse(initTurn).keep.current, fun))
       obs

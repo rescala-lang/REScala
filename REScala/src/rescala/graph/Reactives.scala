@@ -16,6 +16,8 @@ trait Reactive {
 
   final private[rescala] val outgoing: Buffer[Set[Reactive]] = engine.buffer(Set(), (_, x) => x, lock)
 
+  protected[rescala] def incoming(implicit turn: Turn): Set[Reactive]
+
   /** called when it is this events turn to be evaluated
     * (head of the evaluation queue) */
   protected[rescala] def reevaluate()(implicit turn: Turn): ReevaluationResult
@@ -28,10 +30,12 @@ trait Reactive {
 
 /** helper class to initialise engine and select lock */
 abstract class Enlock(final override protected[rescala] val engine: Engine[Turn],
-                      lockOverride: Set[Reactive] = Set()) extends Reactive {
+                      knownDependencies: Set[Reactive] = Set.empty) extends Reactive {
   final override protected[rescala] val lock: TurnLock =
-    if (lockOverride.size == 1) lockOverride.head.lock
+    if (knownDependencies.size == 1) knownDependencies.head.lock
     else new TurnLock(this)
+
+  def staticIncoming: Set[Reactive] = knownDependencies
 }
 
 

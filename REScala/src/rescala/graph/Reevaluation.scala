@@ -18,6 +18,10 @@ case class DepDiff(novel: Set[Reactive], old: Set[Reactive]) {
 /** reevaluation strategy for static dependencies */
 trait StaticReevaluation[+P] {
   this: Pulsing[P] =>
+
+  protected def staticIncoming: Set[Reactive]
+  override protected[rescala] def incoming(implicit turn: Turn): Set[Reactive] = staticIncoming
+
   /** side effect free calculation of the new pulse for the current turn */
   protected[rescala] def calculatePulse()(implicit turn: Turn): Pulse[P]
 
@@ -33,7 +37,8 @@ trait StaticReevaluation[+P] {
 trait DynamicReevaluation[+P] {
   this: Pulsing[P] =>
 
-  private val incoming: Buffer[Set[Reactive]] = engine.buffer(Set(), (_, x) => x, lock)
+  private val _incoming: Buffer[Set[Reactive]] = engine.buffer(Set(), (_, x) => x, lock)
+  override protected[rescala] def incoming(implicit turn: Turn): Set[Reactive] = _incoming.get
 
   /** side effect free calculation of the new pulse and the new dependencies for the current turn */
   def calculatePulseDependencies(implicit turn: Turn): (Pulse[P], Set[Reactive])
@@ -41,8 +46,8 @@ trait DynamicReevaluation[+P] {
   final override protected[rescala] def reevaluate()(implicit turn: Turn): ReevaluationResult = {
     val (newPulse, newDependencies) = calculatePulseDependencies
 
-    val oldDependencies = incoming.get
-    incoming.set(newDependencies)
+    val oldDependencies = _incoming.get
+    _incoming.set(newDependencies)
     pulses.set(newPulse)
     ReevaluationResult.Dynamic(newPulse.isChange, DepDiff(newDependencies, oldDependencies))
 

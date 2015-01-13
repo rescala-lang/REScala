@@ -1,6 +1,6 @@
 package rescala
 
-import rescala.graph.{Enlock, ReevaluationResult, Pulse}
+import rescala.graph.{Reactive, Enlock, ReevaluationResult, Pulse}
 import rescala.turns.{Engine, Turn}
 
 sealed trait Source[T] {
@@ -22,6 +22,8 @@ final class Evt[T]()(engine: Engine[Turn]) extends Enlock(engine) with Event[T] 
 
   override protected[rescala] def reevaluate()(implicit turn: Turn): ReevaluationResult =
     ReevaluationResult.Static(changed = pulse.isChange)
+
+  override protected[rescala] def incoming(implicit turn: Turn): Set[Reactive] = Set.empty
 }
 
 object Evt {
@@ -46,6 +48,8 @@ final class Var[T](initval: T)(engine: Engine[Turn]) extends Enlock(engine) with
 
   override protected[rescala] def reevaluate()(implicit turn: Turn): ReevaluationResult =
     ReevaluationResult.Static(changed = pulse.isChange)
+
+  override protected[rescala] def incoming(implicit turn: Turn): Set[Reactive] = Set.empty
 }
 
 object Var {
