@@ -4,9 +4,9 @@ organization := "de.tuda.stg"
 
 version := "0.10.0"
 
-scalaVersion := "2.11.4"
+scalaVersion := "2.11.5"
 
-crossScalaVersions := Seq("2.10.4", "2.11.4")
+crossScalaVersions := Seq("2.10.4", "2.11.5")
 
 scalaSource in Compile <<= baseDirectory { (base) => new File(base, "REScala/src") }
 
