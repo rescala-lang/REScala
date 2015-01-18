@@ -13,8 +13,8 @@ class Keychain(init: Key) {
   def append(other: Keychain): Unit = {
     assert(this ne other, s"tried to append $this to itself")
     Keychains.locked(this, other) {
-        other.keys.foreach(_.keychain = this)
-        keys = keys ::: other.keys
+      other.keys.foreach(_.keychain = this)
+      keys = keys ::: other.keys
     }
   }
 }

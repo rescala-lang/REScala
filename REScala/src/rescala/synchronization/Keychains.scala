@@ -4,8 +4,6 @@ import rescala.graph.Reactive
 import rescala.propagation.LevelQueue
 import rescala.turns.Turn
 
-import scala.annotation.tailrec
-
 object Keychains {
 
   sealed trait Result[+R]
@@ -32,7 +30,6 @@ object Keychains {
       case None => lockKeys(k1, k2)(f)
       case Some(res) => res
     }
-
   }
 
   /** lock all reactives reachable from the initial sources
