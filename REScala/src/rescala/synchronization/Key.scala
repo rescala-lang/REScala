@@ -54,7 +54,8 @@ final class Key(val turn: Turn) {
     * holds the master lock for request */
   def releaseAll(): Unit =
     lockChain {
-      keychain.drop(this)
+      assert(keychain.keys.head eq this, s"tried to drop $key from $this but is not head! ($keys)")
+      keychain.keys = keychain.keys.tail
       keychain.keys match {
         case Nil => transferAll(null)
         case x :: xs => transferAll(x)

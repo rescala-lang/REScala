@@ -17,9 +17,4 @@ class Keychain(init: Key) {
         keys = keys ::: other.keys
     }
   }
-
-  def drop(key: Key) = synchronized {
-    assert(keys.head eq key, s"tried to drop $key from $this but is not head! ($keys)")
-    keys = keys.tail
-  }
 }
