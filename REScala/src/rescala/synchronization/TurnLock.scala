@@ -20,9 +20,9 @@ final class TurnLock(val guarded: Reactive) {
    * acquires dynamic acces to the lock.
    * this can block until all other turns waiting on the lock have finished
    */
-  def acquireDynamic(key: Key): Unit = request(key)(SyncUtil.Done(Unit)) { _ =>
-    key.appendAfter(owner)
-    SyncUtil.Await
+  def acquireDynamic(key: Key): Unit = request(key)(Keychains.Done(Unit)) {
+    owner.keychain.append(key.keychain)
+    Keychains.Await
   }
 
   /**
@@ -33,7 +33,7 @@ final class TurnLock(val guarded: Reactive) {
   def lock(key: Key): Unit = {
     synchronized { while (tryLock(key) ne key) wait() }
     // wait for master lock to become free
-    key.synchronized(Unit)
+    key.keychain.synchronized(Unit)
   }
 
   /**
@@ -48,28 +48,28 @@ final class TurnLock(val guarded: Reactive) {
     owner
   }
 
-  /** request tries to */
   @tailrec
-  def request(requester: Key)(waiting: => SyncUtil.Result[Unit])(other: Key => SyncUtil.Result[Unit]): Unit = {
+  def request(requester: Key)(waiting: => Keychains.Result[Unit])(other: => Keychains.Result[Unit]): Unit = {
     val oldOwner = tryLock(requester)
-    val res = if (oldOwner eq requester) SyncUtil.Done(Unit)
-    else {
-      SyncUtil.lockLanes(requester, oldOwner) { ownerHead =>
-        synchronized {
-          tryLock(requester) match {
-            // make sure the other owner did not unlock before we got his master lock
-            case _ if owner eq requester => SyncUtil.Done(Unit)
-            case _ if owner ne oldOwner => SyncUtil.Retry
-            case _ if requester.controls(owner) => waiting
-            case _ => other(ownerHead)
+    val res =
+      if (oldOwner eq requester) Keychains.Done(Unit)
+      else {
+        Keychains.lockKeys(requester, oldOwner) {
+          synchronized {
+            tryLock(requester) match {
+              // make sure the other owner did not unlock before we got his master lock
+              case _ if owner eq requester => Keychains.Done(Unit)
+              case _ if owner ne oldOwner => Keychains.Retry
+              case _ if requester.keychain eq owner.keychain => waiting
+              case _ => other
+            }
           }
         }
       }
-    }
     res match {
-      case SyncUtil.Await => lock(requester)
-      case SyncUtil.Retry => request(requester)(waiting)(other)
-      case SyncUtil.Done(_) =>
+      case Keychains.Await => lock(requester)
+      case Keychains.Retry => request(requester)(waiting)(other)
+      case Keychains.Done(_) =>
     }
   }
 

@@ -6,40 +6,33 @@ import rescala.turns.Turn
 
 import scala.annotation.tailrec
 
-object SyncUtil {
+object Keychains {
 
   sealed trait Result[+R]
   object Await extends Result[Nothing]
   object Retry extends Result[Nothing]
   case class Done[R](r: R) extends Result[R]
 
-
-  @tailrec
-  def lockLanes[R](mine: Key, originalTarget: Key)(f: Key => R): R = {
-
-    val targetHead = laneHead(originalTarget)
-
-    val (first, second) = if (mine.id < targetHead.id) (mine, targetHead) else (targetHead, mine)
-
+  def locked[R](k1: Keychain, k2: Keychain)(f: => R): R = {
+    val (first, second) = if (k1.id < k2.id) (k1, k2) else (k2, k1)
     first.synchronized {
       second.synchronized {
-        if (laneHead(targetHead) == targetHead) {
-          if (targetHead.controls(originalTarget)) Done(f(targetHead))
-          else Retry
-        }
-        else Await
+        f
       }
-    } match {
-      case Await => lockLanes(mine, targetHead)(f)
-      case Retry => lockLanes(mine, originalTarget)(f)
-      case Done(r) => r
     }
   }
 
-  @tailrec
-  def laneHead(k: Key): Key = k.prior match {
-    case None => k
-    case Some(p) => laneHead(p)
+  def lockKeys[R](k1: Key, k2: Key)(f: => R): R = {
+    val kc1 = k1.keychain
+    val kc2 = k2.keychain
+    locked(kc1, kc2) {
+      if (k1.keychain == kc1 && k2.keychain == kc2) Some(f)
+      else None
+    } match {
+      case None => lockKeys(k1, k2)(f)
+      case Some(res) => res
+    }
+
   }
 
   /** lock all reactives reachable from the initial sources

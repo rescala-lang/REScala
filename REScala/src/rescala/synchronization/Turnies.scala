@@ -13,7 +13,7 @@ class Pessimistic extends EngineReference[Pessimistic](Engines.pessimistic) with
    * this is called after the initial closure of the turn has been executed,
    * that is the eval queue is populated with the sources
    */
-  override def lockPhase(initialWrites: List[Reactive]): Unit = SyncUtil.lockReachable(initialWrites, r => { acquireWrite(r); true })
+  override def lockPhase(initialWrites: List[Reactive]): Unit = Keychains.lockReachable(initialWrites, r => { acquireWrite(r); true })
 
   /**
    * acquires write acces to the lock.
@@ -25,15 +25,7 @@ class Pessimistic extends EngineReference[Pessimistic](Engines.pessimistic) with
     val l = reactive.lock
     l.acquireDynamic(key)
     if (!l.hasWriteAccess(key)) {
-      key.synchronized {
-        val subs = key.subsequent.get
-        subs.synchronized {
-          // release locks so that whatever waits for us can continue
-          key.releaseAll()
-          // but in turn we wait on that
-          key.appendAfter(subs)
-        }
-      }
+      key.cycle()
       // can now safely wait as we will get the lock eventually
       l.lock(key)
     }
@@ -46,7 +38,7 @@ class Yielding extends EngineReference[Yielding](Engines.yielding) with Prelock 
    * that is the eval queue is populated with the sources
    */
   override def lockPhase(initialWrites: List[Reactive]): Unit =
-    SyncUtil.lockReachable(initialWrites, r => { acquireWrite(r); true })
+    Keychains.lockReachable(initialWrites, r => { acquireWrite(r); true })
 
   /**
    * acquires write acces to the lock.
@@ -55,18 +47,14 @@ class Yielding extends EngineReference[Yielding](Engines.yielding) with Prelock 
    * this can block until other turns waiting on the lock have finished
    */
   private def acquireWrite(reactive: Reactive): Unit = reactive.lock.request(key) {
-    val subs = key.subsequent.get
-    subs.synchronized {
-      // cycle
-      key.releaseAll()
-      key.appendAfter(subs)
-      SyncUtil.Await
-    }
-  } { ownerHead =>
+    key.cycle()
+    Keychains.Await
+  } {
     // yield
-    key.transferAll(ownerHead)
-    key.appendAfter(ownerHead)
-    SyncUtil.Await
+    val owner = reactive.lock.getOwner
+    key.transferAll(owner)
+    owner.keychain.append(key.keychain)
+    Keychains.Await
   }
 
 }
@@ -83,12 +71,15 @@ class STMSync extends EngineReference[STMSync](Engines.STM) with NothingSpecial 
 
 class SpinningInitPessimistic extends EngineReference[SpinningInitPessimistic](Engines.spinningInit) with Prelock {
 
-  override def lockPhase(initialWrites: List[Reactive]): Unit = SyncUtil.lockReachable(initialWrites, acquireWrite)
+  override def lockPhase(initialWrites: List[Reactive]): Unit = Keychains.lockReachable(initialWrites, acquireWrite)
 
   def acquireWrite(reactive: Reactive): Boolean =
     if (reactive.lock.tryLock(key) eq key) true
     else {
-      key.synchronized { key.releaseAll() }
+      key.lockChain {
+        key.releaseAll()
+        key.keychain = new Keychain(key)
+      }
       false
     }
 
