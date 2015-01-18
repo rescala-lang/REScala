@@ -4,6 +4,8 @@ import rescala.graph.Reactive
 import rescala.propagation.LevelQueue
 import rescala.turns.Turn
 
+import scala.annotation.tailrec
+
 object Keychains {
 
   sealed trait Result[+R]
@@ -20,6 +22,7 @@ object Keychains {
     }
   }
 
+  @tailrec
   def lockKeys[R](k1: Key, k2: Key)(f: => R): R = {
     val kc1 = k1.keychain
     val kc2 = k2.keychain
