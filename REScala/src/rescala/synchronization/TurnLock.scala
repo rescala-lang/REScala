@@ -16,6 +16,8 @@ final class TurnLock(val guarded: Reactive) {
 
   def getOwner: Key = synchronized(owner)
 
+  def isShared: Boolean = synchronized(shared.nonEmpty)
+
   /** returns true if key owns the write lock */
   def isOwner(key: Key): Boolean = synchronized(owner eq key)
 
@@ -25,11 +27,7 @@ final class TurnLock(val guarded: Reactive) {
    * this does not test for shared access and thus will deadlock if the current owner has its locks shared with the turn.
    * use with caution as this can potentially deadlock
    */
-  def lock(key: Key): Unit = {
-    synchronized { while (tryLock(key) ne key) wait() }
-    // wait for master lock to become free
-    key.keychain.synchronized(Unit)
-  }
+  def lock(key: Key): Unit = synchronized { while (tryLock(key) ne key) wait() }
 
   /**
    * locks this if it is free, returns the current owner (which is key, if locking succeeded)
@@ -44,27 +42,27 @@ final class TurnLock(val guarded: Reactive) {
   }
 
 
+  @tailrec
   def acquireShared(requester: Key): Unit = {
     val oldOwner = tryLock(requester)
-    val res =
-      if (oldOwner eq requester) Keychains.Done(Unit)
-      else {
-        Keychains.lockKeychains(requester, oldOwner) {
-          synchronized {
-            tryLock(requester) match {
-              // make sure the other owner did not unlock before we got his master lock
-              case _ if owner eq requester => Keychains.Done(Unit)
-              case _ if owner ne oldOwner => Keychains.Retry
-              case _ if requester.keychain eq owner.keychain => Done(Unit)
-              case _ =>
-                shared = shared.enqueue(requester)
-                owner.keychain.append(requester.keychain)
-                Await
-            }
+
+    if (oldOwner eq requester) Keychains.Done(Unit)
+    else {
+      Keychains.lockKeychains(requester, oldOwner) {
+        synchronized {
+          tryLock(requester) match {
+            // make sure the other owner did not unlock before we got his master lock
+            case _ if owner eq requester => Keychains.Done(Unit)
+            case _ if owner ne oldOwner => Keychains.Retry
+            case _ if requester.keychain eq owner.keychain => Done(Unit)
+            case _ =>
+              shared = shared.enqueue(requester)
+              owner.keychain.append(requester.keychain)
+              Await
           }
         }
       }
-    res match {
+    } match {
       case Keychains.Await =>
         Keychains.await(requester)
         synchronized {

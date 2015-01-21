@@ -41,27 +41,26 @@ final class Key(val turn: Turn) {
     heldLocks.add(lock)
   }
 
-  /** we acquire the master lock for the target, because the target waits on one of the locks we transfer,
-    * and it will wake up as soon as that one is unlocked and we do not want the target to start unlocking
-    * or wait on someone else before we have everything transferred */
+
   def transferAll(target: Key): Unit =
     while (!heldLocks.isEmpty) {
       val head = heldLocks.poll()
-      val owner = head.getOwner
-      if (owner eq this) {
-        head.transfer(target, this)
+      head.synchronized {
+        val owner = head.getOwner
+        val realTarget = if (head.isShared) target else null
+        if (owner eq this) {
+          head.transfer(realTarget, this)
+        }
+        else assert(owner eq realTarget, s"transfer of $head from $this to $realTarget failed, because it was owned by $owner")
       }
-      else assert(owner eq target, s"transfer of $head from $this to $target failed, because it was owned by $owner")
     }
 
   /** release all locks we hold or transfer them to a waiting transaction if there is one
     * holds the master lock for request */
   def releaseAll(): Unit =
     lockKeychain {
-      assert(keychain.keys.head eq this, s"tried to drop $this from $keychain but is not head! (${keychain.keys})")
-      keychain.keys = keychain.keys.tail
-      if (keychain.keys.isEmpty) transferAll(null)
-      else transferAll(keychain.keys.head)
+      assert(keychain.isHead(this), s"tried to drop $this from $keychain but is not head! (${keychain.keys})")
+      keychain.releaseHead()
     }
 
 }
