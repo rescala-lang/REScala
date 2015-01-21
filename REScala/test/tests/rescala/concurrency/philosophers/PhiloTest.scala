@@ -44,8 +44,6 @@ class PhiloTest extends AssertionsForJUnit {
     println(s"philo party done sleeping on $engine")
   }
 
-  @Test def eatingContestsYielding(): Unit = `eat!`(Engines.yielding)
-  @Test def eatingContestsPessimistic(): Unit = `eat!`(Engines.pessimistic)
   @Test def eatingContestsSpinning(): Unit = `eat!`(Engines.spinningInit)
 
 }

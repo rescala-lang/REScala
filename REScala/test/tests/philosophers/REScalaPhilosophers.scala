@@ -6,7 +6,8 @@ import java.util.concurrent.{ThreadPoolExecutor, TimeUnit}
 import rescala.Signals.lift
 import rescala.graph.Globals.named
 import rescala.graph.Pulsing
-import rescala.turns.Engines.yielding
+import rescala.turns.{Turn, Engine}
+import rescala.turns.Engines.spinningInit
 import rescala.{Observe, Signal, Var}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -137,7 +138,7 @@ object REScalaPhilosophers extends App {
   def repeatUntilTrue(op: => Boolean): Unit = if (!op) repeatUntilTrue(op)
 
   def tryEat(seating: Seating) =
-    yielding.plan(seating.philosopher) { turn =>
+    implicitly[Engine[Turn]].plan(seating.philosopher) { turn =>
       val forksWereFree = if (seating.vision(turn) == Ready) {
         seating.philosopher.admit(Hungry)(turn)
         true

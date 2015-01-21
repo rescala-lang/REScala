@@ -8,57 +8,6 @@ import scala.concurrent.stm.{InTxn, atomic}
 
 abstract class EngineReference[T <: Turn](override val engine: Engine[T]) extends Turn
 
-class Pessimistic extends EngineReference[Pessimistic](Engines.pessimistic) with Prelock {
-  /**
-   * this is called after the initial closure of the turn has been executed,
-   * that is the eval queue is populated with the sources
-   */
-  override def lockPhase(initialWrites: List[Reactive]): Unit = Keychains.lockReachable(initialWrites, r => { acquireWrite(r); true })
-
-  /**
-   * acquires write acces to the lock.
-   * this can cause a temporary loss off all locks held by key,
-   * so key needs to be in a clean state before this is called.
-   * this can block until other turns waiting on the lock have finished
-   */
-  def acquireWrite(reactive: Reactive): Unit = {
-    val l = reactive.lock
-    l.acquireShared(key)
-    if (!l.isOwner(key)) {
-      key.cycle()
-      // can now safely wait as we will get the lock eventually
-      l.lock(key)
-    }
-  }
-}
-
-class Yielding extends EngineReference[Yielding](Engines.yielding) with Prelock {
-  /**
-   * this is called after the initial closure of the turn has been executed,
-   * that is the eval queue is populated with the sources
-   */
-  override def lockPhase(initialWrites: List[Reactive]): Unit =
-    Keychains.lockReachable(initialWrites, r => { acquireWrite(r); true })
-
-  /**
-   * acquires write acces to the lock.
-   * this can cause a temporary loss off all locks held by key,
-   * so key needs to be in a clean state before this is called.
-   * this can block until other turns waiting on the lock have finished
-   */
-  private def acquireWrite(reactive: Reactive): Unit = reactive.lock.request(key) {
-    key.cycle()
-    Keychains.Await
-  } {
-    // yield
-    val owner = reactive.lock.getOwner
-    key.transferAll(owner)
-    owner.keychain.append(key.keychain)
-    Keychains.Await
-  }
-
-}
-
 trait NothingSpecial extends TurnImpl {
   override def lockPhase(initialWrites: List[Reactive]): Unit = ()
   override def realeasePhase(): Unit = ()
@@ -80,6 +29,7 @@ class SpinningInitPessimistic extends EngineReference[SpinningInitPessimistic](E
         key.releaseAll()
         key.keychain = new Keychain(key)
       }
+      reactive.lock.acquireShared(key)
       false
     }
 

@@ -2,7 +2,7 @@ package rescala.turns
 
 import rescala.graph.{Buffer, Reactive, STMBuffer}
 import rescala.propagation.TurnImpl
-import rescala.synchronization.{EngineReference, NothingSpecial, Pessimistic, STMSync, SpinningInitPessimistic, TurnLock, Yielding}
+import rescala.synchronization.{EngineReference, NothingSpecial, STMSync, SpinningInitPessimistic, TurnLock}
 
 import scala.concurrent.stm.atomic
 import scala.util.DynamicVariable
@@ -10,20 +10,16 @@ import scala.util.DynamicVariable
 object Engines {
 
   def byName(name: String): Engine[Turn] = name match {
-    case "pessimistic" => pessimistic
     case "synchron" => synchron
     case "unmanaged" => unmanaged
     case "spinningInit" => spinningInit
-    case "yielding" => yielding
     case "stm" => STM
     case other => throw new IllegalArgumentException(s"unknown engine $other")
   }
 
-  def all: List[Engine[Turn]] = List(pessimistic, yielding, STM, spinningInit, synchron, unmanaged)
+  def all: List[Engine[Turn]] = List(STM, spinningInit, synchron, unmanaged)
 
-  implicit def default: Engine[Turn] = pessimistic
-
-  implicit val yielding: Engine[Yielding] = new Impl(new Yielding)
+  implicit def default: Engine[Turn] = spinningInit
 
   implicit val STM: Engine[STMSync] = new Impl(new STMSync()) {
     override def plan[R](i: Reactive*)(f: STMSync => R): R = atomic { tx => super.plan(i: _*)(f) }
@@ -32,14 +28,6 @@ object Engines {
 
   implicit val spinningInit: Engine[SpinningInitPessimistic] = new Impl(new SpinningInitPessimistic())
 
-  implicit val pessimistic: Engine[Pessimistic] = new Impl(new Pessimistic()) {
-    override def subplan[T](initialWrites: Reactive*)(f: (Pessimistic) => T): T = currentTurn.value match {
-      case None => plan(initialWrites: _*)(f)
-      case Some(turn) =>
-        initialWrites.foreach(r => assert(r.lock.isOwner(turn.key), s"tried to start subplan in $turn without write access to $r"))
-        f(turn)
-    }
-  }
   implicit val synchron: Engine[NothingSpecial] = new Impl[NothingSpecial](new EngineReference(synchron) with NothingSpecial) {
     override def plan[R](i: Reactive*)(f: NothingSpecial => R): R = synchronized(super.plan(i: _*)(f))
   }
@@ -83,6 +71,11 @@ object Engines {
             turn.commitPhase()
           }
         } ~< turn.observerPhase()
+      }
+      catch {
+        case e: Exception =>
+          turn.rollbackPhase()
+          throw e
       }
       finally {
         turn.realeasePhase()
