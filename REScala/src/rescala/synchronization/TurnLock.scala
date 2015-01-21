@@ -14,7 +14,7 @@ final class TurnLock(val guarded: Reactive) {
   def getOwner: Key = synchronized(owner)
 
   /** returns true if key owns the write lock */
-  def hasWriteAccess(key: Key): Boolean = synchronized(owner eq key)
+  def isOwner(key: Key): Boolean = synchronized(owner eq key)
 
   /**
    * acquires dynamic acces to the lock.
@@ -54,7 +54,7 @@ final class TurnLock(val guarded: Reactive) {
     val res =
       if (oldOwner eq requester) Keychains.Done(Unit)
       else {
-        Keychains.lockKeys(requester, oldOwner) {
+        Keychains.lockKeychains(requester, oldOwner) {
           synchronized {
             tryLock(requester) match {
               // make sure the other owner did not unlock before we got his master lock
@@ -78,7 +78,7 @@ final class TurnLock(val guarded: Reactive) {
    * this notifies all turns waiting on this lock because we need the turn the lock was transferred to to wake up
    */
   def transfer(target: Key, oldOwner: Key) = synchronized {
-    if (!hasWriteAccess(oldOwner)) throw new IllegalMonitorStateException(s"$this is held by $owner but tried to transfer by $oldOwner (to $target)")
+    if (!isOwner(oldOwner)) throw new IllegalMonitorStateException(s"$this is held by $owner but tried to transfer by $oldOwner (to $target)")
     owner = target
     if (target ne null) target.addLock(this)
     notifyAll()

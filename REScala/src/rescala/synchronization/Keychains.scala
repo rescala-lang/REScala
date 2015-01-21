@@ -19,14 +19,14 @@ object Keychains {
   }
 
   @tailrec
-  def lockKeys[R](k1: Key, k2: Key)(f: => R): R = {
+  def lockKeychains[R](k1: Key, k2: Key)(f: => R): R = {
     val kc1 = k1.keychain
     val kc2 = k2.keychain
     locked(kc1, kc2) {
       if (k1.keychain == kc1 && k2.keychain == kc2) Some(f)
       else None
     } match {
-      case None => lockKeys(k1, k2)(f)
+      case None => lockKeychains(k1, k2)(f)
       case Some(res) => res
     }
   }

@@ -36,7 +36,7 @@ object Engines {
     override def subplan[T](initialWrites: Reactive*)(f: (Pessimistic) => T): T = currentTurn.value match {
       case None => plan(initialWrites: _*)(f)
       case Some(turn) =>
-        initialWrites.foreach(r => assert(r.lock.hasWriteAccess(turn.key), s"tried to start subplan in $turn without write access to $r"))
+        initialWrites.foreach(r => assert(r.lock.isOwner(turn.key), s"tried to start subplan in $turn without write access to $r"))
         f(turn)
     }
   }
