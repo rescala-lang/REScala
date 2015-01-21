@@ -3,6 +3,7 @@ package rescala.synchronization
 import rescala.graph.Reactive
 
 import scala.annotation.tailrec
+import scala.collection.immutable.Queue
 
 final class TurnLock(val guarded: Reactive) {
 
@@ -10,20 +11,13 @@ final class TurnLock(val guarded: Reactive) {
 
   /** this is guarded by our intrinsic lock */
   private var owner: Key = null
+  private var shared: Queue[Key] = Queue()
 
   def getOwner: Key = synchronized(owner)
 
   /** returns true if key owns the write lock */
   def isOwner(key: Key): Boolean = synchronized(owner eq key)
-
-  /**
-   * acquires dynamic acces to the lock.
-   * this can block until all other turns waiting on the lock have finished
-   */
-  def acquireDynamic(key: Key): Unit = request(key)(Keychains.Done(Unit)) {
-    owner.keychain.append(key.keychain)
-    Keychains.Await
-  }
+  
 
   /**
    * this will block until the lock is owned by the turn.
@@ -46,6 +40,28 @@ final class TurnLock(val guarded: Reactive) {
       key.addLock(this)
     }
     owner
+  }
+
+  def acquireShared(requester: Key): Unit = {
+    val await = synchronized {
+      if (isOwner(requester)) false
+      else Keychains.lockKeychains(requester, owner) {
+        if (requester.keychain eq owner.keychain) true
+        else {
+          shared = shared.enqueue(requester)
+          owner.keychain.append(requester.keychain)
+          true
+        }
+      }
+    }
+    if (await) {
+      Keychains.await(requester)
+      synchronized {
+        val (k, r) = shared.dequeue
+        assert(k == requester, s"resolved await in wrong order got $k expected $requester remaining $r")
+        shared = r
+      }
+    }
   }
 
   @tailrec

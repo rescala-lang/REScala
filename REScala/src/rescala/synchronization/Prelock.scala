@@ -38,6 +38,6 @@ trait Prelock extends TurnImpl with InterturnDependencyChanges {
   override def realeasePhase(): Unit = key.releaseAll()
 
   /** allow turn to handle dynamic access to reactives */
-  override def accessDynamic(dependency: Reactive): Unit = dependency.lock.acquireDynamic(key)
+  override def accessDynamic(dependency: Reactive): Unit = dependency.lock.acquireShared(key)
 }
 

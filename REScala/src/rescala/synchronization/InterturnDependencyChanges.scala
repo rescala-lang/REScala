@@ -8,7 +8,7 @@ trait InterturnDependencyChanges extends Turn {
   /** registering a dependency on a node we do not personally own does require some additional care.
     * we move responsibility to the commit phase */
   abstract override def register(sink: Reactive)(source: Reactive): Unit = {
-    source.lock.acquireDynamic(key)
+    source.lock.acquireShared(key)
     val owner = source.lock.getOwner
     if ((owner ne key) && !source.outgoing.get.contains(sink)) {
       owner.turn.register(sink)(source)
@@ -21,7 +21,7 @@ trait InterturnDependencyChanges extends Turn {
 
   /** this is for cases where we register and then unregister the same dependency in a single turn */
   abstract override def unregister(sink: Reactive)(source: Reactive): Unit = {
-    source.lock.acquireDynamic(key)
+    source.lock.acquireShared(key)
     val owner = source.lock.getOwner
     if (owner ne key) {
       owner.turn.forget(sink)

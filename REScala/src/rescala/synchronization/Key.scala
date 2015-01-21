@@ -5,6 +5,9 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import rescala.graph.Globals
 import rescala.turns.Turn
 
+import scala.annotation.tailrec
+import scala.collection.immutable.Queue
+
 final class Key(val turn: Turn) {
   val id = Globals.nextID()
   override def toString: String = s"Key($id)"
@@ -15,10 +18,11 @@ final class Key(val turn: Turn) {
     lockKeychain {
       keychain.keys = keychain.keys.filter(ne)
       transferAll(keychain.keys.head)
-      keychain.keys = keychain.keys ::: this :: Nil
+      keychain.keys = keychain.keys.enqueue(this)
     }
   }
 
+  @tailrec
   def lockKeychain[R](f: => R): R = {
     val oldChain = keychain
     keychain.synchronized {
@@ -56,10 +60,8 @@ final class Key(val turn: Turn) {
     lockKeychain {
       assert(keychain.keys.head eq this, s"tried to drop $this from $keychain but is not head! (${keychain.keys})")
       keychain.keys = keychain.keys.tail
-      keychain.keys match {
-        case Nil => transferAll(null)
-        case x :: xs => transferAll(x)
-      }
+      if (keychain.keys.isEmpty) transferAll(null)
+      else transferAll(keychain.keys.head)
     }
 
 }

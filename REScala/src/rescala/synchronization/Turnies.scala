@@ -23,7 +23,7 @@ class Pessimistic extends EngineReference[Pessimistic](Engines.pessimistic) with
    */
   def acquireWrite(reactive: Reactive): Unit = {
     val l = reactive.lock
-    l.acquireDynamic(key)
+    l.acquireShared(key)
     if (!l.isOwner(key)) {
       key.cycle()
       // can now safely wait as we will get the lock eventually
