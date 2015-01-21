@@ -12,6 +12,7 @@ final class Key(val turn: Turn) {
   override def toString: String = s"Key($id)"
 
   @volatile var keychain: Keychain = new Keychain(this)
+  var isHead: Boolean = true
 
   def cycle() = {
     lockKeychain {

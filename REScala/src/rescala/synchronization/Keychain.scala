@@ -16,12 +16,17 @@ class Keychain(init: Key) {
   def append(other: Keychain): Unit = {
     assert(this ne other, s"tried to append $this to itself")
     Keychains.locked(this, other) {
-      other.keys.foreach(_.keychain = this)
+      other.keys.foreach { k =>
+        k.synchronized {
+          k.keychain = this
+          k.isHead = false
+        }
+      }
       keys = keys.enqueue(other.keys)
     }
   }
 
-  def isHead(key: Key): Boolean = keys.nonEmpty && (keys.head eq key)
+  def isHead(key: Key): Boolean = synchronized { keys.nonEmpty && (keys.head eq key) }
 
   def releaseHead() = {
     val (h, r) = keys.dequeue
@@ -31,6 +36,7 @@ class Keychain(init: Key) {
       val target = keys.head
       target.synchronized {
         h.transferAll(target)
+        target.isHead = true
         target.notify()
       }
     }
