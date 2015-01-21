@@ -21,14 +21,6 @@ final class TurnLock(val guarded: Reactive) {
   /** returns true if key owns the write lock */
   def isOwner(key: Key): Boolean = synchronized(owner eq key)
 
-
-  /**
-   * this will block until the lock is owned by the turn.
-   * this does not test for shared access and thus will deadlock if the current owner has its locks shared with the turn.
-   * use with caution as this can potentially deadlock
-   */
-  def lock(key: Key): Unit = synchronized { while (tryLock(key) ne key) wait() }
-
   /**
    * locks this if it is free, returns the current owner (which is key, if locking succeeded)
    * does not check for shared access.
@@ -40,7 +32,6 @@ final class TurnLock(val guarded: Reactive) {
     }
     owner
   }
-
 
   @tailrec
   def acquireShared(requester: Key): Unit = {
@@ -71,31 +62,6 @@ final class TurnLock(val guarded: Reactive) {
           shared = r
         }
       case Keychains.Retry => acquireShared(requester)
-      case Keychains.Done(_) =>
-    }
-  }
-
-  @tailrec
-  def request(requester: Key)(waiting: => Keychains.Result[Unit])(other: => Keychains.Result[Unit]): Unit = {
-    val oldOwner = tryLock(requester)
-    val res =
-      if (oldOwner eq requester) Keychains.Done(Unit)
-      else {
-        Keychains.lockKeychains(requester, oldOwner) {
-          synchronized {
-            tryLock(requester) match {
-              // make sure the other owner did not unlock before we got his master lock
-              case _ if owner eq requester => Keychains.Done(Unit)
-              case _ if owner ne oldOwner => Keychains.Retry
-              case _ if requester.keychain eq owner.keychain => waiting
-              case _ => other
-            }
-          }
-        }
-      }
-    res match {
-      case Keychains.Await => lock(requester)
-      case Keychains.Retry => request(requester)(waiting)(other)
       case Keychains.Done(_) =>
     }
   }

@@ -14,14 +14,6 @@ final class Key(val turn: Turn) {
   @volatile var keychain: Keychain = new Keychain(this)
   var isHead: Boolean = true
 
-  def cycle() = {
-    lockKeychain {
-      keychain.keys = keychain.keys.filter(ne)
-      transferAll(keychain.keys.head)
-      keychain.keys = keychain.keys.enqueue(this)
-    }
-  }
-
   @tailrec
   def lockKeychain[R](f: => R): R = {
     val oldChain = keychain
