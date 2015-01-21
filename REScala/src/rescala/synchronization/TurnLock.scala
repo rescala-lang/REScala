@@ -1,6 +1,7 @@
 package rescala.synchronization
 
 import rescala.graph.Reactive
+import rescala.synchronization.Keychains.{Await, Done}
 
 import scala.annotation.tailrec
 import scala.collection.immutable.Queue
@@ -17,7 +18,7 @@ final class TurnLock(val guarded: Reactive) {
 
   /** returns true if key owns the write lock */
   def isOwner(key: Key): Boolean = synchronized(owner eq key)
-  
+
 
   /**
    * this will block until the lock is owned by the turn.
@@ -42,25 +43,37 @@ final class TurnLock(val guarded: Reactive) {
     owner
   }
 
+
   def acquireShared(requester: Key): Unit = {
-    val await = synchronized {
-      if (isOwner(requester)) false
-      else Keychains.lockKeychains(requester, owner) {
-        if (requester.keychain eq owner.keychain) true
-        else {
-          shared = shared.enqueue(requester)
-          owner.keychain.append(requester.keychain)
-          true
+    val oldOwner = tryLock(requester)
+    val res =
+      if (oldOwner eq requester) Keychains.Done(Unit)
+      else {
+        Keychains.lockKeychains(requester, oldOwner) {
+          synchronized {
+            tryLock(requester) match {
+              // make sure the other owner did not unlock before we got his master lock
+              case _ if owner eq requester => Keychains.Done(Unit)
+              case _ if owner ne oldOwner => Keychains.Retry
+              case _ if requester.keychain eq owner.keychain => Done(Unit)
+              case _ =>
+                shared = shared.enqueue(requester)
+                owner.keychain.append(requester.keychain)
+                Await
+            }
+          }
         }
       }
-    }
-    if (await) {
-      Keychains.await(requester)
-      synchronized {
-        val (k, r) = shared.dequeue
-        assert(k == requester, s"resolved await in wrong order got $k expected $requester remaining $r")
-        shared = r
-      }
+    res match {
+      case Keychains.Await =>
+        Keychains.await(requester)
+        synchronized {
+          val (k, r) = shared.dequeue
+          assert(k == requester, s"resolved await in wrong order got $k expected $requester remaining $r")
+          shared = r
+        }
+      case Keychains.Retry => acquireShared(requester)
+      case Keychains.Done(_) =>
     }
   }
 
