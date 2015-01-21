@@ -11,6 +11,7 @@ trait InterturnDependencyChanges extends Turn {
     source.lock.acquireShared(key)
     val owner = source.lock.getOwner
     if ((owner ne key) && !source.outgoing.get.contains(sink)) {
+      println(s"TODO: interturn dependency between $source and $sink, this is currently not correcly implemented (locks are not transferred)")
       owner.turn.register(sink)(source)
       owner.turn.admit(sink)
     }

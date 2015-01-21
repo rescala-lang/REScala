@@ -6,7 +6,6 @@ import rescala.graph.Globals
 import rescala.turns.Turn
 
 import scala.annotation.tailrec
-import scala.collection.immutable.Queue
 
 final class Key(val turn: Turn) {
   val id = Globals.nextID()
