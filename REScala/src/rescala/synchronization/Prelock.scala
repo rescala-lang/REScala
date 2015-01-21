@@ -20,7 +20,8 @@ trait Prelock extends TurnImpl with InterturnDependencyChanges {
   override def create[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
     dependencies.foreach(accessDynamic)
     val reactive = f
-    reactive.lock.lock(key)
+    val owner = reactive.lock.tryLock(key)
+    assert(owner eq key, s"$this failed to acquire lock on newly created reactive $reactive")
     super.create(dependencies)(reactive)
   }
 
@@ -28,7 +29,8 @@ trait Prelock extends TurnImpl with InterturnDependencyChanges {
   override def createDynamic[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
     dependencies.foreach(accessDynamic)
     val reactive = f
-    reactive.lock.lock(key)
+    val owner = reactive.lock.tryLock(key)
+    assert(owner eq key, s"$this failed to acquire lock on newly created reactive $reactive")
     super.createDynamic(dependencies)(reactive)
   }
 

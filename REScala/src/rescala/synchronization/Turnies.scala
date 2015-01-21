@@ -76,7 +76,7 @@ class SpinningInitPessimistic extends EngineReference[SpinningInitPessimistic](E
   def acquireWrite(reactive: Reactive): Boolean =
     if (reactive.lock.tryLock(key) eq key) true
     else {
-      key.lockChain {
+      key.lockKeychain {
         key.releaseAll()
         key.keychain = new Keychain(key)
       }

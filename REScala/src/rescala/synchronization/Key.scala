@@ -12,20 +12,20 @@ final class Key(val turn: Turn) {
   @volatile var keychain: Keychain = new Keychain(this)
 
   def cycle() = {
-    lockChain {
+    lockKeychain {
       keychain.keys = keychain.keys.filter(ne)
       transferAll(keychain.keys.head)
       keychain.keys = keychain.keys ::: this :: Nil
     }
   }
 
-  def lockChain[R](f: => R): R = {
+  def lockKeychain[R](f: => R): R = {
     val oldChain = keychain
     keychain.synchronized {
       if (oldChain == keychain) Some(f)
       else None
     } match {
-      case None => lockChain(f)
+      case None => lockKeychain(f)
       case Some(r) => r
     }
   }
@@ -53,7 +53,7 @@ final class Key(val turn: Turn) {
   /** release all locks we hold or transfer them to a waiting transaction if there is one
     * holds the master lock for request */
   def releaseAll(): Unit =
-    lockChain {
+    lockKeychain {
       assert(keychain.keys.head eq this, s"tried to drop $this from $keychain but is not head! (${keychain.keys})")
       keychain.keys = keychain.keys.tail
       keychain.keys match {
