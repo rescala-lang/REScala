@@ -11,7 +11,7 @@ class Keychain(init: Key) {
   override def toString = s"Keychain($id)"
 
   /** synchronized on this */
-  var keys: Queue[Key] = Queue(init)
+  private var keys: Queue[Key] = Queue(init)
 
   def append(other: Keychain): Unit = {
     assert(this ne other, s"tried to append $this to itself")
