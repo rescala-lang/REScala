@@ -1,6 +1,5 @@
 package rescala.synchronization
 
-import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
 
 import rescala.graph.Globals
