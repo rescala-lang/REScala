@@ -15,15 +15,15 @@ class Keychain(init: Key) {
 
   def append(other: Keychain): Unit = {
     assert(this ne other, s"tried to append $this to itself")
-    Keychains.locked(this, other) {
-      other.keys.foreach { k =>
-        k.synchronized {
-          k.keychain = this
-          k.isHead = false
-        }
+    assert(Thread.holdsLock(this), s"tried to append $this and $other without holding lock on $this")
+    assert(Thread.holdsLock(other), s"tried to append $this and $other without holding lock on $other")
+    other.keys.foreach { k =>
+      k.synchronized {
+        k.keychain = this
+        k.isHead = false
       }
-      keys = keys.enqueue(other.keys)
     }
+    keys = keys.enqueue(other.keys)
   }
 
   def isHead(key: Key): Boolean = synchronized { keys.nonEmpty && (keys.head eq key) }
