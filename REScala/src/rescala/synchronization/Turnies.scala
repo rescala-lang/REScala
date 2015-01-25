@@ -29,7 +29,7 @@ class SpinningInitPessimistic extends EngineReference[SpinningInitPessimistic](E
         key.releaseAll()
         key.keychain = new Keychain(key)
       }
-      reactive.lock.acquireShared(key)
+      AcquireShared(reactive, key)
       false
     }
 

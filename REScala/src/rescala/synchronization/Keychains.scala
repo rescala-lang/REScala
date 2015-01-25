@@ -8,11 +8,6 @@ import scala.annotation.tailrec
 
 object Keychains {
 
-  sealed trait Result[+R]
-  object Await extends Result[Nothing]
-  object Retry extends Result[Nothing]
-  case class Done[R](r: R) extends Result[R]
-
   def locked[R](k1: Keychain, k2: Keychain)(f: => R): R = {
     val (first, second) = if (k1.id < k2.id) (k1, k2) else (k2, k1)
     first.synchronized { second.synchronized { f } }
