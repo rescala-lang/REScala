@@ -10,9 +10,9 @@ trait InterturnDependencyChanges extends Turn {
   abstract override def register(sink: Reactive)(source: Reactive): Unit = {
     val owner = AcquireShared(source, key)
     if ((owner ne key) && !source.outgoing.get.contains(sink)) {
-      println(s"TODO: interturn dependency between $source and $sink, this is currently not correcly implemented (locks are not transferred)")
       owner.turn.register(sink)(source)
       owner.turn.admit(sink)
+      key.lockKeychain(key.keychain.addFallthrough(owner))
     }
     else {
       super.register(sink)(source)
@@ -25,6 +25,7 @@ trait InterturnDependencyChanges extends Turn {
     if (owner ne key) {
       owner.turn.forget(sink)
       owner.turn.unregister(sink)(source)
+      key.lockKeychain(key.keychain.removeFallthrough(owner))
     }
     else super.unregister(sink)(source)
   }

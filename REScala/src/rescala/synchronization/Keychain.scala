@@ -11,6 +11,13 @@ class Keychain(init: Key) {
 
   /** synchronized on this */
   private var keys: Queue[Key] = Queue(init)
+  private var fallthrough: Map[Key, Int] = Map()
+  def addFallthrough(key: Key): Unit = synchronized { fallthrough = fallthrough.updated(key, fallthrough.getOrElse(key, 0) + 1) }
+  def removeFallthrough(key: Key): Unit = synchronized {
+    val old = fallthrough.getOrElse(key, 0)
+    if (old <= 1) fallthrough -= key
+    else fallthrough = fallthrough.updated(key, old - 1)
+  }
 
   def append(other: Keychain): Unit = {
     assert(this ne other, s"tried to append $this to itself")
@@ -31,7 +38,8 @@ class Keychain(init: Key) {
     if (keys.isEmpty) locks.foreach(_.transfer(null, key))
     else {
       val target = keys.head
-      locks.foreach(_.transfer(target, key))
+      locks.foreach(_.transfer(target, key, ignoreShared = fallthrough.nonEmpty))
+      fallthrough -= target
       target.continue()
     }
   }

@@ -37,9 +37,9 @@ final class TurnLock(val guarded: Reactive) {
   }
 
   /** transfers the lock from the turn to the target. */
-  def transfer(target: Key, oldOwner: Key) = synchronized {
+  def transfer(target: Key, oldOwner: Key, ignoreShared: Boolean = false) = synchronized {
     assert(owner eq oldOwner, s"$this is held by $owner but tried to transfer by $oldOwner (to $target)")
-    if (shared.isEmpty) owner = null
+    if (!ignoreShared && shared.isEmpty) owner = null
     else {
       owner = target
       if (target ne null) target.addLock(this)
