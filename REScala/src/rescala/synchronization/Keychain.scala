@@ -18,10 +18,7 @@ class Keychain(init: Key) {
     assert(Thread.holdsLock(this), s"tried to append $this and $other without holding lock on $this")
     assert(Thread.holdsLock(other), s"tried to append $this and $other without holding lock on $other")
     other.keys.foreach { k =>
-      k.synchronized {
-        k.keychain = this
-        k.isHead = false
-      }
+      k.keychain = this
     }
     keys = keys.enqueue(other.keys)
   }
@@ -36,10 +33,7 @@ class Keychain(init: Key) {
     else {
       val target = keys.head
       locks.foreach(_.transfer(target, key))
-      target.synchronized {
-        target.isHead = true
-        target.notify()
-      }
+      target.continue()
     }
   }
 

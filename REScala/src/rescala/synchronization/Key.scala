@@ -1,5 +1,6 @@
 package rescala.synchronization
 
+import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicReference
 
 import rescala.graph.Globals
@@ -8,11 +9,17 @@ import rescala.turns.Turn
 import scala.annotation.tailrec
 
 final class Key(val turn: Turn) {
+
   val id = Globals.nextID()
   override def toString: String = s"Key($id)"
 
   @volatile var keychain: Keychain = new Keychain(this)
-  var isHead: Boolean = true
+
+  private[this] val semaphore = new Semaphore(0)
+
+  def continue(): Unit = semaphore.release()
+  def await(): Unit = semaphore.acquire()
+
 
   @tailrec
   def lockKeychain[R](f: => R): R = {

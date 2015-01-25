@@ -26,7 +26,6 @@ object Keychains {
     }
   }
 
-  def await(key: Key): Unit = key.synchronized { while (!key.isHead) key.wait() }
 
   /** lock all reactives reachable from the initial sources
     * retry when acquire returns false */

@@ -32,7 +32,7 @@ object AcquireShared {
       }
     res match {
       case Await =>
-        Keychains.await(requester)
+        requester.await()
         lock.acquired(requester)
         requester
       case Retry => apply(lock, requester)
