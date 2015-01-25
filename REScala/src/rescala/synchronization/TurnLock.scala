@@ -74,7 +74,6 @@ final class TurnLock(val guarded: Reactive) {
     if (!isOwner(oldOwner)) throw new IllegalMonitorStateException(s"$this is held by $owner but tried to transfer by $oldOwner (to $target)")
     owner = target
     if (target ne null) target.addLock(this)
-    notifyAll()
   }
 
 }
