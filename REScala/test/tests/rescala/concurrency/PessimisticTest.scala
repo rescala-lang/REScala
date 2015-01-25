@@ -96,7 +96,7 @@ class PessimisticTest extends AssertionsForJUnit {
     assert(Pessigen.clear() == 0)
   }
 
-  @Ignore def crossedDynamicDependencies(): Unit = synchronized {
+  @Test def crossedDynamicDependencies(): Unit = synchronized {
     val v1 = Var(false)
     val v2 = Var(false)
     val s11 = v1.map { identity }
