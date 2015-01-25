@@ -69,14 +69,14 @@ final class TurnLock(val guarded: Reactive) {
     }
   }
 
-  /**
-   * transfers the lock from the turn to the target.
-   * this notifies all turns waiting on this lock because we need the turn the lock was transferred to to wake up
-   */
+  /** transfers the lock from the turn to the target. */
   def transfer(target: Key, oldOwner: Key) = synchronized {
-    if (!isOwner(oldOwner)) throw new IllegalMonitorStateException(s"$this is held by $owner but tried to transfer by $oldOwner (to $target)")
-    owner = target
-    if (target ne null) target.addLock(this)
+    assert(owner eq oldOwner, s"$this is held by $owner but tried to transfer by $oldOwner (to $target)")
+    if (!isShared) owner = null
+    else {
+      owner = target
+      if (target ne null) target.addLock(this)
+    }
   }
 
 }

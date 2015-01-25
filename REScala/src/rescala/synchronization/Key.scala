@@ -1,6 +1,7 @@
 package rescala.synchronization
 
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.atomic.AtomicReference
 
 import rescala.graph.Globals
 import rescala.turns.Turn
@@ -27,25 +28,15 @@ final class Key(val turn: Turn) {
   }
 
   /** contains a list of all locks owned by us. */
-  private[this] val heldLocks = new ConcurrentLinkedQueue[TurnLock]()
+  private[this] val heldLocks = new AtomicReference[List[TurnLock]](Nil)
 
+  @tailrec
   def addLock(lock: TurnLock): Unit = {
-    heldLocks.add(lock)
+    val old = heldLocks.get()
+    if (!heldLocks.compareAndSet(old, lock :: old)) addLock(lock)
   }
 
-
-  def transferAll(target: Key): Unit =
-    while (!heldLocks.isEmpty) {
-      val head = heldLocks.poll()
-      head.synchronized {
-        val owner = head.getOwner
-        val realTarget = if (head.isShared) target else null
-        if (owner eq this) {
-          head.transfer(realTarget, this)
-        }
-        else assert(owner eq realTarget, s"transfer of $head from $this to $realTarget failed, because it was owned by $owner")
-      }
-    }
+  def grabLocks(): List[TurnLock] = heldLocks.getAndSet(Nil)
 
   /** release all locks we hold or transfer them to a waiting transaction if there is one
     * holds the master lock for request */

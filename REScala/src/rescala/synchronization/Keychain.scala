@@ -26,21 +26,21 @@ class Keychain(init: Key) {
     keys = keys.enqueue(other.keys)
   }
 
-  def isHead(key: Key): Boolean = synchronized { keys.nonEmpty && (keys.head eq key) }
-
   def release(key: Key) = {
-    assert(isHead(key), s"tried to drop $key from $this but is not head! ($keys)")
-
+    assert(Thread.holdsLock(this), s"tried to release $key without holding $this")
     val (h, r) = keys.dequeue
+    assert(h eq key, s"tried to drop $key from $this but is not head! ($keys)")
     keys = r
-    if (keys.isEmpty) h.transferAll(null)
+    val locks = key.grabLocks()
+    if (keys.isEmpty) locks.foreach(_.transfer(null, key))
     else {
       val target = keys.head
+      locks.foreach(_.transfer(target, key))
       target.synchronized {
-        h.transferAll(target)
         target.isHead = true
         target.notify()
       }
     }
   }
+
 }
