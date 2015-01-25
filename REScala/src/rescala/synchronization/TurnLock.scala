@@ -16,8 +16,6 @@ final class TurnLock(val guarded: Reactive) {
 
   def getOwner: Key = synchronized(owner)
 
-  def isShared: Boolean = synchronized(shared.nonEmpty)
-
   /** returns true if key owns the write lock */
   def isOwner(key: Key): Boolean = synchronized(owner eq key)
 
@@ -72,7 +70,7 @@ final class TurnLock(val guarded: Reactive) {
   /** transfers the lock from the turn to the target. */
   def transfer(target: Key, oldOwner: Key) = synchronized {
     assert(owner eq oldOwner, s"$this is held by $owner but tried to transfer by $oldOwner (to $target)")
-    if (!isShared) owner = null
+    if (shared.isEmpty) owner = null
     else {
       owner = target
       if (target ne null) target.addLock(this)
