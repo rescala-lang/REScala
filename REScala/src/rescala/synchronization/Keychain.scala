@@ -6,7 +6,6 @@ import scala.collection.immutable.Queue
 
 class Keychain(init: Key) {
 
-
   val id = Globals.nextID()
   override def toString = s"Keychain($id)"
 
