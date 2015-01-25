@@ -28,7 +28,9 @@ class Keychain(init: Key) {
 
   def isHead(key: Key): Boolean = synchronized { keys.nonEmpty && (keys.head eq key) }
 
-  def releaseHead() = {
+  def release(key: Key) = {
+    assert(isHead(key), s"tried to drop $key from $this but is not head! ($keys)")
+
     val (h, r) = keys.dequeue
     keys = r
     if (keys.isEmpty) h.transferAll(null)

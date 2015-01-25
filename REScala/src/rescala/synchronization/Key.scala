@@ -49,10 +49,6 @@ final class Key(val turn: Turn) {
 
   /** release all locks we hold or transfer them to a waiting transaction if there is one
     * holds the master lock for request */
-  def releaseAll(): Unit =
-    lockKeychain {
-      assert(keychain.isHead(this), s"tried to drop $this from $keychain but is not head! (${keychain.keys})")
-      keychain.releaseHead()
-    }
+  def releaseAll(): Unit = lockKeychain { keychain.release(this) }
 
 }
