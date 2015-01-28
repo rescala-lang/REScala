@@ -34,7 +34,7 @@ class Keychain(init: Key) {
     val (h, r) = keys.dequeue
     assert(h eq key, s"tried to drop $key from $this but is not head! ($keys)")
     keys = r
-    val locks = key.grabLocks()
+    val locks = key.grabLocks().distinct
     if (keys.isEmpty) locks.foreach(_.transfer(null, key))
     else {
       val target = keys.head
