@@ -9,10 +9,12 @@ trait InterturnDependencyChanges extends Turn {
     * we move responsibility to the commit phase */
   abstract override def register(sink: Reactive)(source: Reactive): Unit = {
     val owner = AcquireShared(source, key)
-    if ((owner ne key) && !source.outgoing.get.contains(sink)) {
-      owner.turn.register(sink)(source)
-      owner.turn.admit(sink)
-      key.lockKeychain(key.keychain.addFallthrough(owner))
+    if (owner ne key) {
+      if (!source.outgoing.get.contains(sink)) {
+        owner.turn.register(sink)(source)
+        owner.turn.admit(sink)
+        key.lockKeychain(key.keychain.addFallthrough(owner))
+      }
     }
     else {
       super.register(sink)(source)
