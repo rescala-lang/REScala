@@ -74,6 +74,7 @@ object Events {
       new Enlock(creationTurn.engine) with Event[T] with DynamicReevaluation[T] {
         override def calculatePulseDependencies(implicit turn: Turn): (Pulse[T], Set[Reactive]) = {
           val inner = wrapper.get
+          turn.accessDynamic(inner)
           (inner.pulse, Set(wrapper, inner))
         }
       }
