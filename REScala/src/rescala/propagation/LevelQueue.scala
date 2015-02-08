@@ -33,7 +33,10 @@ class LevelQueue()(implicit val currenTurn: Turn) {
         true
       }
       enqueue(headMinLevel, reevaluate)(head)
-      head.outgoing.get.foreach(enqueue(headMinLevel + 1, needsEvaluate = false))
+      head.outgoing.get.foreach { r =>
+        if (r.level.get <= headMinLevel)
+          enqueue(headMinLevel + 1, needsEvaluate = false)(r)
+      }
     }
     else if (doEvaluate) {
       evaluator(head)
