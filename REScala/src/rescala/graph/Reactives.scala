@@ -14,7 +14,7 @@ trait Reactive {
 
   final private[rescala] val level: Buffer[Int] = engine.buffer(0, math.max, lock)
 
-  final private[rescala] val outgoing: Buffer[Set[Reactive]] = engine.buffer(Set(), (_, x) => x, lock)
+  final private[rescala] val outgoing: Buffer[Set[Reactive]] = engine.buffer(Set(), Buffer.commitAsIs, lock)
 
   protected[rescala] def incoming(implicit turn: Turn): Set[Reactive]
 
@@ -41,7 +41,7 @@ abstract class Enlock(final override protected[rescala] val engine: Engine[Turn]
 
 /** A node that has nodes that depend on it */
 trait Pulsing[+P] extends Reactive {
-  final protected[this] val pulses: Buffer[Pulse[P]] = engine.buffer(Pulse.none, (x, _) => x, lock)
+  final protected[this] val pulses: Buffer[Pulse[P]] = engine.buffer(Pulse.none, Buffer.transactionLocal, lock)
 
   final def pulse(implicit turn: Turn): Pulse[P] = pulses.get
 }
@@ -49,7 +49,7 @@ trait Pulsing[+P] extends Reactive {
 
 /** a node that has a current state */
 trait Stateful[+A] extends Pulsing[A] {
-  pulses.initStrategy((_, p) => p.keep)
+  pulses.initStrategy(Buffer.keepPulse)
 
   // only used inside macro and will be replaced there
   final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")

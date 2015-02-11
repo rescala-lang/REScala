@@ -13,6 +13,10 @@ trait Commitable {
 
 object Buffer {
   def apply[A](default: A, commitStrategy: (A, A) => A, writeLock: TurnLock): Buffer[A] = new SimpleBuffer[A](default, commitStrategy, writeLock)
+
+	def commitAsIs[A](base: A, cur: A): A = cur
+	def transactionLocal[A](base: A, cur: A) = base
+	def keepPulse[P](base: Pulse[P], cur: Pulse[P]) = cur.keep
 }
 
 trait Buffer[A] extends Commitable {
