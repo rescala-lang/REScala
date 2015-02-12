@@ -8,7 +8,6 @@ trait TurnImpl extends Turn {
   implicit def currentTurn: TurnImpl = this
 
   protected var toCommit = Set[Committable]()
-  protected var afterCommitHandlers = List[() => Unit]()
 
   val levelQueue = new LevelQueue()
 
@@ -43,7 +42,10 @@ trait TurnImpl extends Turn {
     toCommit += commitable
   }
 
-  override def afterCommit(handler: => Unit) = afterCommitHandlers ::= handler _
+  override def afterCommit(handler: => Unit) = plan(new Committable {
+    override def commit(implicit turn: Turn): Unit = handler
+    override def release(implicit turn: Turn): Unit = ()
+  })
 
   override def create[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
     val reactive = f
@@ -79,8 +81,6 @@ trait TurnImpl extends Turn {
   def commitPhase() = toCommit.foreach(_.commit(this))
 
   def rollbackPhase() = toCommit.foreach(_.release(this))
-
-  def observerPhase() = afterCommitHandlers.foreach(_())
 
   def realeasePhase(): Unit
 

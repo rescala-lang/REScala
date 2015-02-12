@@ -27,7 +27,7 @@ object Observe {
 
   def once[V](self: AnyRef, value: Option[V], f: V => Unit): Committable = new Committable {
     override def release(implicit turn: Turn): Unit = ()
-    override def commit(implicit turn: Turn): Unit = value.foreach(v => turn.afterCommit(f(v)))
+    override def commit(implicit turn: Turn): Unit = value.foreach(f)
     override def equals(obj: scala.Any): Boolean = self.equals(obj)
     override def hashCode(): Int = self.hashCode()
   }
