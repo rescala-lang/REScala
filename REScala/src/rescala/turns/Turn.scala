@@ -37,10 +37,6 @@ trait Turn {
   /** removes a dependency */
   def unregister(sink: Reactive)(source: Reactive): Unit
 
-  /** mark the state of the reactive as changed, i.e. it needs a commit or rollback */
-  def plan(commitable: Committable): Unit
-
-  /** register an after commit handler, these run after all reactives are commited, but before the turn finishes
-    * that is, a transaction should not roll back beacause of a handler, but it may block other waiting transactions */
-  def afterCommit(handler: => Unit): Unit
+  /** install a new commit handler */
+  def plan(committable: Committable): Unit
 }

@@ -42,11 +42,6 @@ trait TurnImpl extends Turn {
     toCommit += commitable
   }
 
-  override def afterCommit(handler: => Unit) = plan(new Committable {
-    override def commit(implicit turn: Turn): Unit = handler
-    override def release(implicit turn: Turn): Unit = ()
-  })
-
   override def create[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
     val reactive = f
     dependencies.foreach(register(reactive))

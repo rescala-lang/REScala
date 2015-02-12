@@ -1,14 +1,14 @@
 package tests.rescala.concurrency.philosophers
 
-import benchmarks.PhilosopherTable
-import benchmarks.PhilosopherTable.{Seating, Thinking}
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import rescala.turns.{Engine, Engines, Turn}
 import tests.rescala.concurrency.Spawn
+import tests.rescala.concurrency.philosophers.PhilosopherTable.{Thinking, Seating}
 
 import scala.annotation.tailrec
 import scala.util.Random
+
 
 class PhiloTest extends AssertionsForJUnit {
 

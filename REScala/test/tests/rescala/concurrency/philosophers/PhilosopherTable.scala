@@ -1,8 +1,9 @@
-package benchmarks
+package tests.rescala.concurrency.philosophers
 
 import java.util.concurrent.atomic.AtomicInteger
 
 import rescala.Signals.lift
+import rescala.graph.Committable
 import rescala.turns.{Engine, Turn}
 import rescala.{Signal, Var}
 
@@ -10,7 +11,7 @@ import scala.annotation.tailrec
 
 class PhilosopherTable(philosopherCount: Int, work: Long)(implicit val engine: Engine[Turn]) {
 
-  import benchmarks.PhilosopherTable._
+  import tests.rescala.concurrency.philosophers.PhilosopherTable._
 
   val seatings = createTable(philosopherCount)
 
@@ -65,7 +66,10 @@ class PhilosopherTable(philosopherCount: Int, work: Long)(implicit val engine: E
         true
       }
       else false
-      turn.afterCommit(if (forksFree) assert(seating.vision(turn) == Eating))
+      turn.plan(new Committable {
+        override def commit(implicit turn: Turn): Unit = if (forksFree) assert(seating.vision(turn) == Eating)
+        override def release(implicit turn: Turn): Unit = ()
+      })
       forksFree
     }
 

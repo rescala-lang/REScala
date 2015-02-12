@@ -5,7 +5,7 @@ import java.util.concurrent.{ThreadPoolExecutor, TimeUnit}
 
 import rescala.Signals.lift
 import rescala.graph.Globals.named
-import rescala.graph.Pulsing
+import rescala.graph.{Committable, Pulsing}
 import rescala.turns.{Turn, Engine}
 import rescala.turns.Engines.spinningInit
 import rescala.{Observe, Signal, Var}
@@ -144,7 +144,10 @@ object REScalaPhilosophers extends App {
         true
       }
       else false
-      turn.afterCommit(if (forksWereFree) assert(seating.vision(turn) == Eating))
+      turn.plan(new Committable {
+        override def commit(implicit turn: Turn): Unit = if (forksWereFree) assert(seating.vision(turn) == Eating)
+        override def release(implicit turn: Turn): Unit = ()
+      })
       forksWereFree
     }
 
