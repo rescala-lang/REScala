@@ -6,7 +6,7 @@ import rescala.turns.Turn
 import scala.concurrent.stm.{InTxn, Ref}
 import scala.language.implicitConversions
 
-trait Commitable {
+trait Committable {
   def commit(implicit turn: Turn): Unit
   def release(implicit turn: Turn): Unit
 }
@@ -19,7 +19,7 @@ object Buffer {
 	def keepPulse[P](base: Pulse[P], cur: Pulse[P]) = cur.keep
 }
 
-trait Buffer[A] extends Commitable {
+trait Buffer[A] extends Committable {
   /** these methods are only used for initialisation and are unsafe to call when the reactive is in use */
   def initCurrent(value: A): Unit
   def initStrategy(strategy: (A, A) => A): Unit

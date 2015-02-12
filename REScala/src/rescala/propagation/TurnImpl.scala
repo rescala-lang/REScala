@@ -1,13 +1,13 @@
 package rescala.propagation
 
 import rescala.graph.ReevaluationResult.{Dynamic, Static}
-import rescala.graph.{Commitable, Reactive}
+import rescala.graph.{Committable, Reactive}
 import rescala.turns.Turn
 
 trait TurnImpl extends Turn {
   implicit def currentTurn: TurnImpl = this
 
-  protected var toCommit = Set[Commitable]()
+  protected var toCommit = Set[Committable]()
   protected var afterCommitHandlers = List[() => Unit]()
 
   val levelQueue = new LevelQueue()
@@ -39,7 +39,7 @@ trait TurnImpl extends Turn {
     source.outgoing.transform(_ - sink)
   }
 
-  override def plan(commitable: Commitable): Unit = {
+  override def plan(commitable: Committable): Unit = {
     toCommit += commitable
   }
 
