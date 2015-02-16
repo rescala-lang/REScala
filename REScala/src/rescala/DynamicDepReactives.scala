@@ -76,9 +76,10 @@ trait DependentSignalImplementation[+T] extends DependentSignal[T] {
     /* if the level increases by one, the dependencies might or might not have been evaluated this turn.
      * if they have, we could just fire the observers, but if they have not we are not allowed to do so
      *
-     * if the level increases by more than one, we depend on something that still has to be in the queue
+     * if the level increases by more than one, we might depend on something still in the queue,
+     * or on something totally unrelated to to this update, so we have to enqueue it again.
      */
-    if (level == oldLevel + 1) {
+    if (level > oldLevel) {
       ReactiveEngine.addToEvalQueue(this)
     }
     else {
