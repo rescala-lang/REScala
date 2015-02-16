@@ -280,4 +280,20 @@ class HigherOrderTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(log == List("A", "B"))
   }
 
+  @Test def `dynamic dependency changes ontop of stuff that is not changing`() = {
+    val v0 = VarSynt("level 0")
+    val v3 = v0.map(_ => "level 1").map(_ => "level 2").map(_ => "level 3")
+
+    val condition = VarSynt(false)
+    val `dynamic signal changing from level 1 to level 4` = Signal {
+      if (condition()) v3() else v0()
+    }
+    assert(`dynamic signal changing from level 1 to level 4`.get == "level 0")
+    assert(`dynamic signal changing from level 1 to level 4`.level == 1)
+
+    condition.set(true)
+    assert(`dynamic signal changing from level 1 to level 4`.get == "level 3")
+    assert(`dynamic signal changing from level 1 to level 4`.level == 4)
+  }
+
 }
