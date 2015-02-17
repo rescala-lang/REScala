@@ -18,7 +18,7 @@ trait TurnImpl extends Turn {
 
     head.reevaluate() match {
       case Static(hasChanged) =>
-        requeue(hasChanged, -42, redo = false)
+        requeue(hasChanged, level = -42, redo = false)
       case Dynamic(hasChanged, diff) =>
         diff.removed foreach unregister(head)
         diff.added foreach register(head)
