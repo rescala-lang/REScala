@@ -21,16 +21,18 @@ final class Key(val turn: Turn) {
   def await(): Unit = semaphore.acquire()
 
 
-  @tailrec
   def lockKeychain[R](f: => R): R = {
-    val oldChain = keychain
-    keychain.synchronized {
-      if (oldChain == keychain) Some(f)
-      else None
-    } match {
-      case None => lockKeychain(f)
-      case Some(r) => r
-    }
+		@tailrec def loop(): R = {
+			val oldChain = keychain
+			keychain.synchronized {
+				if (oldChain eq keychain) Some(f)
+				else None
+			} match {
+				case None => loop()
+				case Some(r) => r
+			}
+		}
+		loop()
   }
 
   /** contains a list of all locks owned by us. */
