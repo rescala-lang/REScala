@@ -1,7 +1,7 @@
 package rescala
 
 import rescala.graph.Pulsing
-import rescala.turns.{Engine, Ticket, Turn}
+import rescala.turns.Ticket
 
 import scala.collection.LinearSeq
 import scala.collection.immutable.Queue
@@ -96,7 +96,7 @@ trait Event[+T] extends Pulsing[T] {
 
   /** Return a Signal that is updated only when e fires, and has the value of the signal s */
   final def snapshot[A](s: Signal[A])(implicit ticket: Ticket): Signal[A] = ticket { turn =>
-    Signals.makeStatic(Set(this, s), s.get(turn))((t, current) => this.pulse(t).fold(current, _ => s.get(t)))(turn)
+    Signals.Impl.makeStatic(Set(this, s), s.get(turn))((t, current) => this.pulse(t).fold(current, _ => s.get(t)))(turn)
   }
 
   /** Switch to a new Signal once, on the occurrence of event e. */
