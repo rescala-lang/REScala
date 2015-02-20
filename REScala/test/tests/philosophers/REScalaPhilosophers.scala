@@ -7,7 +7,7 @@ import rescala.Signals.lift
 import rescala.graph.Globals.named
 import rescala.graph.{Committable, Pulsing}
 import rescala.turns.{Turn, Engine}
-import rescala.turns.Engines.spinningInit
+import rescala.turns.Engines.spinning
 import rescala.{Observe, Signal, Var}
 
 import scala.concurrent.{ExecutionContext, Future}

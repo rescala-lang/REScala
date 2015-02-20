@@ -18,7 +18,7 @@ class STMSync extends EngineReference[STMSync](Engines.STM) with NothingSpecial 
   def inTxn: InTxn = atomic(identity)
 }
 
-class SpinningInitPessimistic extends EngineReference[SpinningInitPessimistic](Engines.spinningInit) with Prelock {
+class SpinningInitPessimistic(wait: Boolean) extends EngineReference[SpinningInitPessimistic](Engines.spinning) with Prelock {
 
   override def lockPhase(initialWrites: List[Reactive]): Unit = Keychains.lockReachable(initialWrites, acquireWrite)
 
@@ -29,7 +29,7 @@ class SpinningInitPessimistic extends EngineReference[SpinningInitPessimistic](E
         key.releaseAll()
         key.keychain = new Keychain(key)
       }
-      //AcquireShared(reactive, key)
+      if (wait) AcquireShared(reactive, key)
       false
     }
 

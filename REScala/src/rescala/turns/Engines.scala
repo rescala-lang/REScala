@@ -12,21 +12,23 @@ object Engines {
   def byName(name: String): Engine[Turn] = name match {
     case "synchron" => synchron
     case "unmanaged" => unmanaged
-    case "spinningInit" => spinningInit
+    case "spinning" => spinning
+    case "spinningWait" => spinningWait
     case "stm" => STM
     case other => throw new IllegalArgumentException(s"unknown engine $other")
   }
 
-  def all: List[Engine[Turn]] = List(STM, spinningInit, synchron, unmanaged)
+  def all: List[Engine[Turn]] = List(STM, spinning, spinningWait, synchron, unmanaged)
 
-  implicit def default: Engine[Turn] = spinningInit
+  implicit def default: Engine[Turn] = spinningWait
 
   implicit val STM: Engine[STMSync] = new Impl(new STMSync()) {
     override def plan[R](i: Reactive*)(f: STMSync => R): R = atomic { tx => super.plan(i: _*)(f) }
     override def buffer[A](default: A, commitStrategy: (A, A) => A, writeLock: TurnLock): Buffer[A] = new STMBuffer[A](default, commitStrategy)
   }
 
-  implicit val spinningInit: Engine[SpinningInitPessimistic] = new Impl(new SpinningInitPessimistic())
+  implicit val spinning: Engine[SpinningInitPessimistic] = new Impl(new SpinningInitPessimistic(wait = false))
+  implicit val spinningWait: Engine[SpinningInitPessimistic] = new Impl(new SpinningInitPessimistic(wait = true))
 
   implicit val synchron: Engine[NothingSpecial] = new Impl[NothingSpecial](new EngineReference(synchron) with NothingSpecial) {
     override def plan[R](i: Reactive*)(f: NothingSpecial => R): R = synchronized(super.plan(i: _*)(f))
