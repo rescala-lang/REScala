@@ -73,7 +73,7 @@ object Engines {
         }
       }
       catch {
-        case e: Exception =>
+        case e: Throwable =>
           turn.rollbackPhase()
           throw e
       }
