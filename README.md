@@ -1,4 +1,7 @@
-this fork adds compatibility for scala 2.11.2 as well as newer versions of REScala
+this fork adds compatibility for scala 2.11.5 as well as newer versions of REScala.
+note that this needs a checkout of rescala in `../REScala` to compile.
+this should be improved when the used version of rescala becomes public,
+but i will probably forget …
 
 # Animal use case
 
