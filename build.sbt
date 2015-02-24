@@ -4,7 +4,7 @@ organization := "de.tuda.stg"
 
 version := "0.3.0"
 
-scalaVersion := "2.11.2"
+scalaVersion := "2.11.5"
 
 
 lazy val root = Project(
