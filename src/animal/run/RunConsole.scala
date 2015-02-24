@@ -1,6 +1,6 @@
 package animal.run
 
-import animal.versions.signal._
+import animal.universe.World
 
 // test
 object RunConsole extends App {
