@@ -35,10 +35,13 @@ object Animal {
   val SleepRate = 2 // energy gained while sleeping
 }
 
-abstract class Animal(override implicit val world: World) extends BoardElement {
+abstract class Animal(implicit world: World) extends BoardElement {
+
+
+  override def isAnimal: Boolean = true
 
   /** An animal is in a state */
-  trait AnimalState
+  sealed trait AnimalState
   case object Idling extends AnimalState
   case class Eating(plant: Plant) extends AnimalState
   case class Attacking(other: Animal) extends AnimalState
@@ -87,19 +90,15 @@ abstract class Animal(override implicit val world: World) extends BoardElement {
   val age: Signal[Int] = world.time.day.changed.iterate(1)(_ + 1) //#SIG //#IF //#IF
 
   val isAdult = Signal { age() > Animal.FertileAge }
-  //#SIG
   val isFertile = Signal { isAdult() }
-  //#SIG
   val isEating = Signal {
     state() match {
-      //#SIG
       case Eating(_) => true
       case _ => false
     }
   }
 
   val energyDrain = Signal {
-    //#SIG
     1 + age() / 2 + (state() match {
       case Moving(_) => Animal.MoveCost
       case Procreating(_) => Animal.ProcreateCost
@@ -109,7 +108,6 @@ abstract class Animal(override implicit val world: World) extends BoardElement {
   }
 
   val energyGain = Signal {
-    //#SIG
     state() match {
       case Eating(_) => Animal.PlantEatRate
       case Sleeping => Animal.SleepRate
@@ -134,10 +132,9 @@ abstract class Animal(override implicit val world: World) extends BoardElement {
   }
 }
 
-class Carnivore(override implicit val world: World) extends Animal {
+class Carnivore(implicit world: World) extends Animal {
 
   val sleepy = Signal { energy() < Animal.SleepThreshold }
-  //#SIG
   val canHunt = Signal { energy() > Animal.AttackThreshold } //#SIG
 
   // only adult carnivores with min energy can hunt, others eat plants
@@ -159,7 +156,7 @@ class Carnivore(override implicit val world: World) extends Animal {
   }
 }
 
-class Herbivore(override implicit val world: World) extends Animal {
+class Herbivore(implicit world: World) extends Animal {
 
   val findFood: Signal[PartialFunction[BoardElement, BoardElement]] = //#SIG
     Var {
@@ -252,10 +249,10 @@ trait Male extends Animal {
 }
 
 
-class FemaleHerbivore(override implicit val world: World) extends Herbivore with Female
-class MaleHerbivore(override implicit val world: World) extends Herbivore with Male
-class FemaleCarnivore(override implicit val world: World) extends Carnivore with Female
-class MaleCarnivore(override implicit val world: World) extends Carnivore with Male
+class FemaleHerbivore(implicit world: World) extends Herbivore with Female
+class MaleHerbivore(implicit world: World) extends Herbivore with Male
+class FemaleCarnivore(implicit world: World) extends Carnivore with Female
+class MaleCarnivore(implicit world: World) extends Carnivore with Male
 
 
 object Plant {
@@ -265,19 +262,19 @@ object Plant {
   val MaxSize = 6 // max size a plant reaches. then expands
 }
 
-class Plant(override implicit val world: World) extends BoardElement {
+class Plant(implicit world: World) extends BoardElement {
 
-  val energy = Var(Plant.Energy) //#VAR
 
-  val isDead = Signal { energy() <= 0 } //#SIG
+  override def isAnimal: Boolean = false
+
+  val energy = Var(Plant.Energy)
+
+  val isDead = Signal { energy() <= 0 }
 
   val age: Signal[Int] = world.time.hour.changed.iterate(0)(_ + 1)
-  //#SIG //#IF //#IF
   val grows: Event[Int] = age.changed && { _ % Plant.GrowTime == 0 }
-  //#IF //#EVT //#EF
   val size: Signal[Int] = grows.iterate(0)(acc => math.min(Plant.MaxSize, acc + 1))
-  //#SIG //#IF
-  val expands: Event[Unit] = size.changedTo(Plant.MaxSize) //#IF //#EVT
+  val expands: Event[Unit] = size.changedTo(Plant.MaxSize)
 
 
   expands += { _ => //#HDL
@@ -294,7 +291,9 @@ class Plant(override implicit val world: World) extends BoardElement {
   def takeEnergy(amount: Int) = energy.set(energy.now - amount)
 }
 
-class Seed(override implicit val world: World) extends BoardElement {
+class Seed(implicit world: World) extends BoardElement {
+
+  override def isAnimal: Boolean = false
 
   val growTime: Signal[Int] = world.time.hour.changed.iterate(Plant.GrowTime)(_ - 1)
   //#SIG //#IF //#IF
@@ -313,15 +312,10 @@ class Time {
   val tick = Evt[Unit]()
 
   val hours: Signal[Int] = tick.iterate(0)(_ + 1)
-  //#SIG //#IF
   val day = Signal { hours() / 24 }
-  //#SIG
   val hour = Signal { hours() % 24 }
-  //#SIG
   val week = Signal { day() / 7 }
-  //#SIG
   val timestring = Signal { "Week " + week() + ", Day " + day() + " hour:" + hour() }
-  //#SIG
   val newWeek: Event[Int] = week.changed //#IF //#EVT
 }
 
@@ -383,12 +377,10 @@ class World {
   // tick / clear board elements
   time.hour.changed += { x => //#HDL //#IF
     board.elements.foreach {
-      _ match {
-        case (pos, be) =>
-          if (be.isDead.now)
-            board.remove(pos)
-          else be.doStep(pos)
-      }
+      case (pos, be) =>
+        if (be.isDead.now)
+          board.remove(pos)
+        else be.doStep(pos)
     }
   }
 

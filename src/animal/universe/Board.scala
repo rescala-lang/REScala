@@ -24,20 +24,12 @@ class Board(val width: Int, val height: Int) {
   val allPositions = (for (x <- 0 to width; y <- 0 to height) yield Pos(x, y)).toSet
 
   val elementSpawned = Evt[BoardElement]()
-  //#EVT  == after(add)
   val elementRemoved = Evt[BoardElement]()
-  //#EVT  == after(remove)
-  val elementsChanged = elementSpawned || elementRemoved
-  //#EVT
-  val animalSpawned = elementSpawned && (_.isInstanceOf[Animal])
-  //#EVT
-  val animalRemoved = elementRemoved && (_.isInstanceOf[Animal])
-  //#EVT
+  val animalSpawned = elementSpawned && (_.isAnimal)
+  val animalRemoved = elementRemoved && (_.isAnimal)
   val animalsBorn = animalSpawned.iterate(0)(_ + 1)
-  //#SIG #IF
   val animalsDied = animalRemoved.iterate(0)(_ + 1)
-  //#SIG #IF
-  val animalsAlive: Signal[Int] = Signals.lift(animalsBorn, animalsDied){ _ - _ }
+  val animalsAlive= Signals.lift(animalsBorn, animalsDied){ _ - _ }
 
   /** adds a board element at given position */
   def add(be: BoardElement, pos: Pos): Unit = {
@@ -108,10 +100,11 @@ class Board(val width: Int, val height: Int) {
 
 abstract class BoardElement(implicit val world: World) {
 
+  def isAnimal: Boolean
+
   /** A signal denoting if this element is dead ( = should be removed from the board) */
   val isDead: Signal[Boolean]
-  // Abstract (//#SIG)
-  lazy val dies: Event[Unit] = isDead changedTo true //#EVT //#IF
+  lazy val dies: Event[Unit] = isDead changedTo true
 
   /** Some imperative code that is called each tick */
   def doStep(pos: Pos): Unit = {}
