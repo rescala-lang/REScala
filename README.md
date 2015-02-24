@@ -1,9 +1,11 @@
+# fork notes
+
 this fork adds compatibility for scala 2.11.5 as well as newer versions of REScala.
 note that this needs a checkout of rescala in `../REScala` to compile.
 this should be improved when the used version of rescala becomes public,
 but i will probably forget …
 
-# Animal use case
+i also kinda ragedeleted most of the original code and only kept the console signal version
 
 # Simplified Animal rules
 
@@ -29,11 +31,3 @@ but i will probably forget …
 	- Default setup:
 		- spawn a new plant every day
 		- spawn a new animal every week
-
-# Reimplementation Goals
-
-	- simplified version (reduced rules)
-	- easier to read
-	- less imperative, more functional, more object-oriented
-	- lines-of-code stats should illustrate:
-		Signals >= Events > Observers
