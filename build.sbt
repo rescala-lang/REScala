@@ -18,8 +18,6 @@ lazy val rescala = ProjectRef(rescalaRoot.build, "rescala")
 
 scalaSource in Compile <<= baseDirectory { (base) => new File(base, "src") }
 
-libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _)
-
 libraryDependencies ++= (Nil)
 
 

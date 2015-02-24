@@ -2,8 +2,8 @@ package animal.universe
 
 import animal.types.Pos
 import rescala._
-import rescala.macros.SignalMacro.{SignalM => Signal}
 import rescala.turns.Engines.default
+import rescala.turns.Ticket
 
 import scala.util.Random
 
@@ -89,17 +89,15 @@ abstract class Animal(implicit world: World) extends BoardElement {
 
   val age: Signal[Int] = world.time.day.changed.iterate(1)(_ + 1) //#SIG //#IF //#IF
 
-  val isAdult = Signal { age() > Animal.FertileAge }
-  val isFertile = Signal { isAdult() }
-  val isEating = Signal {
-    state() match {
-      case Eating(_) => true
-      case _ => false
-    }
+  val isAdult = age.map(_ > Animal.FertileAge)
+  val isFertile = isAdult
+  val isEating = state map {
+    case Eating(_) => true
+    case _ => false
   }
 
-  val energyDrain = Signal {
-    1 + age() / 2 + (state() match {
+  val energyDrain = Signals.static(age, state) { implicit turn =>
+    1 + age.get / 2 + (state.get match {
       case Moving(_) => Animal.MoveCost
       case Procreating(_) => Animal.ProcreateCost
       case FallPrey => Animal.AttackAmount
@@ -107,17 +105,21 @@ abstract class Animal(implicit world: World) extends BoardElement {
     })
   }
 
-  val energyGain = Signal {
-    state() match {
+  val energyGain =
+    state map {
       case Eating(_) => Animal.PlantEatRate
       case Sleeping => Animal.SleepRate
       case Attacking(prey) => Animal.AttackAmount
       case _ => 0
     }
-  }
-  val energy: Signal[Int] = world.time.tick.iterate(Animal.StartEnergy)(_ + energyGain.now - energyDrain.now) //#SIG //#IF
 
-  override val isDead = Signal { age() > Animal.MaxAge || energy() < 0 } //#SIG
+  // we do not have a built in method for this kind of “fold some snapshot” but its not that hard to write one
+  val energy: Signal[Int] =
+    implicitly[Ticket].apply(Signals.Impl.makeStatic(Set(world.time.tick, energyDrain, energyGain), Animal.StartEnergy) {
+      (turn, current) => world.time.tick.pulse(turn).fold(current, _ => current + energyGain.get(turn) + energyDrain.get(turn))
+    })
+
+  override val isDead = Signals.lift(age, energy) { (a, e) => a > Animal.MaxAge || e < 0 }
 
   /** imperative 'AI' function */
   override def doStep(pos: Pos): Unit = {
@@ -134,12 +136,12 @@ abstract class Animal(implicit world: World) extends BoardElement {
 
 class Carnivore(implicit world: World) extends Animal {
 
-  val sleepy = Signal { energy() < Animal.SleepThreshold }
-  val canHunt = Signal { energy() > Animal.AttackThreshold } //#SIG
+  val sleepy = energy map { _ < Animal.SleepThreshold }
+  val canHunt = energy map { _ > Animal.AttackThreshold }
 
   // only adult carnivores with min energy can hunt, others eat plants
-  val findFood: Signal[PartialFunction[BoardElement, BoardElement]] = Signals.dynamic(isAdult, canHunt) { t => //#SIG
-    if (isAdult(t) && canHunt(t)) { case p: Herbivore => p }: PartialFunction[BoardElement, BoardElement]
+  val findFood: Signal[PartialFunction[BoardElement, BoardElement]] = Signals.static(isAdult, canHunt) { t =>
+    if (isAdult.get(t) && canHunt.get(t)) { case p: Herbivore => p }: PartialFunction[BoardElement, BoardElement]
     else { case p: Plant => p }: PartialFunction[BoardElement, BoardElement]
   }
 
@@ -173,7 +175,7 @@ trait Female extends Animal {
 
   val mate: Var[Option[Animal]] = Var(None) //#VAR
 
-  val isPregnant = Signal { mate().isDefined } //#SIG
+  val isPregnant = mate.map { _.isDefined } //#SIG
 
   val becomePregnant: Event[Unit] = isPregnant.changedTo(true) //#EVT //#IF
 
@@ -185,7 +187,7 @@ trait Female extends Animal {
 
   lazy val giveBirth: Event[Unit] = pregnancyTime.changedTo(0) //#EVT //#IF
 
-  override val isFertile = Signal { isAdult() && !isPregnant() } //#SIG
+  override val isFertile = Signals.lift(isAdult, isPregnant){_ && !_} //#SIG
 
   // override val energyDrain = Signal { super.energyDrain() * 2 }
   // not possible
@@ -221,7 +223,7 @@ trait Female extends Animal {
 
 
 trait Male extends Animal {
-  val seeksMate = Signal { isFertile() && energy() > Animal.ProcreateThreshold } //#SIG
+  val seeksMate = Signals.lift(isFertile, energy){_ && _ > Animal.ProcreateThreshold }
 
   override def nextAction(pos: Pos): AnimalState = {
     if (seeksMate.now) {
@@ -269,7 +271,7 @@ class Plant(implicit world: World) extends BoardElement {
 
   val energy = Var(Plant.Energy)
 
-  val isDead = Signal { energy() <= 0 }
+  val isDead = energy map (_ <= 0)
 
   val age: Signal[Int] = world.time.hour.changed.iterate(0)(_ + 1)
   val grows: Event[Int] = age.changed && { _ % Plant.GrowTime == 0 }
@@ -295,9 +297,8 @@ class Seed(implicit world: World) extends BoardElement {
 
   override def isAnimal: Boolean = false
 
-  val growTime: Signal[Int] = world.time.hour.changed.iterate(Plant.GrowTime)(_ - 1)
-  //#SIG //#IF //#IF
-  val isDead = Signal { growTime() <= 0 } //#SIG
+  val growTime = world.time.hour.changed.iterate(Plant.GrowTime)(_ - 1)
+  val isDead = growTime map { _ <= 0 } //#SIG
 
   dies += { _ => //#HDL
     world.board.getPosition(this).foreach { mypos =>
@@ -312,11 +313,11 @@ class Time {
   val tick = Evt[Unit]()
 
   val hours: Signal[Int] = tick.iterate(0)(_ + 1)
-  val day = Signal { hours() / 24 }
-  val hour = Signal { hours() % 24 }
-  val week = Signal { day() / 7 }
-  val timestring = Signal { "Week " + week() + ", Day " + day() + " hour:" + hour() }
-  val newWeek: Event[Int] = week.changed //#IF //#EVT
+  val day = hours map (_ / 24)
+  val hour = hours map (_ % 24)
+  val week = day map (_ / 7)
+  val timestring = Signals.lift(week, day, hour) { (w, d, h) => s"Week: $w Day: $d  hour: $h" }
+  val newWeek = week.changed
 }
 
 object World {
@@ -336,10 +337,8 @@ class World {
   val time = new Time
   val randomness = new Random(1)
 
-  val statusString: Signal[String] = Signal {
-    //#SIG
-    "Animals alive:" + board.animalsAlive() +
-      "; Total born: " + board.animalsBorn()
+  val statusString: Signal[String] = Signals.lift(board.animalsAlive, board.animalsBorn) { (a, b) =>
+    s"Animals alive: $a Total born: $b"
   }
 
   def tick() = time.tick(Unit)
