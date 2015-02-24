@@ -6,7 +6,7 @@ import rescala.turns.{Engine, Ticket, Turn}
 
 /** A Reactive is something that can be reevaluated */
 trait Reactive {
-  final override val hashCode: Int = Globals.nextID()
+  final override val hashCode: Int = Globals.nextID().hashCode()
 
   protected[rescala] def lock: TurnLock
 
