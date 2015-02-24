@@ -2,9 +2,9 @@ package animal.versions.event
 
 import animal.types.Pos
 import scala.collection.mutable
-import rescala.events.ImperativeEvent
 import scala.util.Random
-import rescala.events.Event
+import rescala._
+import rescala.turns.Engines.default
 import animal.types.Pos.fromTuple
 import scala.Option.option2Iterable
 
@@ -21,8 +21,8 @@ class Board(val width: Int, val height: Int) {
   val elements: mutable.Map[(Int, Int), BoardElement] = new mutable.HashMap
   val allPositions = (for(x <- 0 to width; y <- 0 to height) yield (x, y)).toSet
   
-  val elementSpawned = new ImperativeEvent[BoardElement] //#EVT  == after(add)
-  val elementRemoved = new ImperativeEvent[BoardElement] //#EVT  == after(remove)
+  val elementSpawned = Evt[BoardElement]() //#EVT  == after(add)
+  val elementRemoved = Evt[BoardElement]() //#EVT  == after(remove)
   val elementsChanged = elementSpawned || elementRemoved //#EVT
   val animalSpawned = elementSpawned && (_.isInstanceOf[Animal]) //#EVT
   val animalRemoved = elementRemoved && (_.isInstanceOf[Animal]) //#EVT
@@ -108,6 +108,8 @@ abstract class BoardElement(implicit val world: World) {
   /** handlers */
   val tickHandler: (Unit => Unit)
   val dailyHandler: (Unit => Unit)
+  var tickRef: Option[Observe] = None
+  var dailyRef: Option[Observe] = None
 
   /** Some imperative code that is called each tick */
   def doStep(pos: Pos): Unit = {}
@@ -273,7 +275,7 @@ trait Female extends Animal {
   def isPregnant =  mate.isDefined
   override def isFertile = isAdult && !isPregnant 
   
-  val becomePregnant = new ImperativeEvent[Unit]
+  val becomePregnant = Evt[Unit]()
   
   world.time.tick && (_ => isPregnant) += { _: Unit => //#EVT //#EF
     pregnancyTime += 1 
@@ -360,7 +362,7 @@ class Plant(override implicit val world: World) extends BoardElement {
   var age = 0
   var size = 0
   
-  val grows = new ImperativeEvent[Unit]  //#EVT
+  val grows = Evt[Unit]()  //#EVT
   val expands = grows && (_ => size == Plant.MaxSize) //#EVT  //#EF
 
   // dies event, gets triggered once
@@ -397,7 +399,7 @@ class Plant(override implicit val world: World) extends BoardElement {
 }
 
 class Time {
-  val tick = new ImperativeEvent[Unit]  
+  val tick = Evt[Unit]()
 
   var hours = 0
   var hour = 0
@@ -478,8 +480,10 @@ class World {
     board.add(element, pos)
 
     // register handlers
-    time.tick += element.tickHandler //#HDL
-    time.dayChanged += element.dailyHandler //#HDL
+    element.tickRef.foreach(_.remove())
+    element.dailyRef.foreach(_.remove())
+    element.tickRef = Some(time.tick += element.tickHandler) //#HDL
+    element.dailyRef = Some(time.dayChanged += element.dailyHandler) //#HDL
 
     // register unspawning
     element.dies += { _ => unspawn(element) } //#HDL
@@ -488,8 +492,10 @@ class World {
   /** removed the given Board element from the world */
   def unspawn(element: BoardElement): Unit = {
     // unregister handlers
-    time.tick -= element.tickHandler
-    time.dayChanged -= element.dailyHandler
+    element.tickRef.foreach(_.remove())
+    element.dailyRef.foreach(_.remove())
+    element.tickRef = None
+    element.dailyRef = None
     board.remove(element)
   }
 
