@@ -1,6 +1,5 @@
-package animal.universe
+package animal
 
-import animal.types.Pos
 import rescala._
 import rescala.turns.Engines.default
 import rescala.turns.Ticket
