@@ -311,11 +311,12 @@ class Seed(implicit world: World) extends BoardElement {
 class Time {
   val tick = Evt[Unit]()
 
-  val hours: Signal[Int] = tick.iterate(0)(_ + 1)
+  val hours = tick.iterate(0)(_ + 1)
   val day = hours map (_ / 24)
   val hour = hours map (_ % 24)
   val week = day map (_ / 7)
   val timestring = Signals.lift(week, day, hour) { (w, d, h) => s"Week: $w Day: $d  hour: $h" }
+  override def toString: String = timestring.now
   val newWeek = week.changed
 }
 
@@ -339,12 +340,9 @@ class World {
   val statusString: Signal[String] = Signals.lift(board.animalsAlive, board.animalsBorn) { (a, b) =>
     s"Animals alive: $a Total born: $b"
   }
+  def status = statusString.now
 
   def tick() = time.tick(Unit)
-
-  def dump = board.dump
-  def timestring = time.timestring.now
-  def status = statusString.now
 
   def newAnimal(isHerbivore: Boolean, isMale: Boolean): Animal = {
     if (isHerbivore) {
@@ -373,7 +371,7 @@ class World {
   }
 
   // tick / clear board elements
-  time.hour.changed += { x => //#HDL //#IF
+  time.tick += { x => //#HDL //#IF
     board.elements.foreach {
       case (pos, be) =>
         if (be.isDead.now)
