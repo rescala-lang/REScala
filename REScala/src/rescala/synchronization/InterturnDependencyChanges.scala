@@ -6,7 +6,9 @@ import rescala.turns.Turn
 trait InterturnDependencyChanges extends Turn {
   self: Prelock =>
   /** registering a dependency on a node we do not personally own does require some additional care.
-    * we move responsibility to the commit phase */
+    * we let the other turn update the dependency and admit the dependent into the propagation queue
+    * so that it gets updated when that turn continues
+    * the responsibility for correcly passing the locks is moved to the commit phase */
   abstract override def register(sink: Reactive)(source: Reactive): Unit = {
     val owner = AcquireShared(source, key)
     if (owner ne key) {
