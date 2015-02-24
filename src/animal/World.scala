@@ -6,20 +6,15 @@ import rescala.turns.Engines.default
 
 import scala.util.Random
 
-object World {
-  val Width = 30
-  val Height = 10
-}
-
 /**
  * A World object unites a space (Board object), time (Time object), and a random object
  * It also defines all repetitive actions, such as spawning new Animals and Plants
  */
-class World {
+class World(width: Int = 30, height: Int = 30) {
 
   implicit val world = this
 
-  val board = new Board(World.Width, World.Height)
+  val board = new Board(width, height)
   val time = new Time
   val randomness = new Random(1)
 
