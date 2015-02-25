@@ -2,7 +2,6 @@ package animal
 
 // test
 object RunConsole extends App {
-  val sleeptime = 100
   val nAnimals = 10
   val nPlants = 3
 
@@ -17,6 +16,6 @@ object RunConsole extends App {
     println(world.board.dump) // dumping the board is a bottleneck!
     
     world.tick()
-    Thread sleep sleeptime
+    world.runPlan()
   }
 }

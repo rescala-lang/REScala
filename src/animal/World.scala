@@ -23,7 +23,15 @@ class World(width: Int = 30, height: Int = 30) {
   }
   def status = statusString.now
 
-  def tick() = time.tick(Unit)
+  def tick() = {
+    time.tick(Unit)
+    board.elements.foreach {
+      case (pos, be) =>
+        if (be.isDead.now)
+          board.remove(pos)
+        else be.doStep(pos)
+    }
+  }
 
   def newAnimal(isHerbivore: Boolean, isMale: Boolean): Animal = {
     if (isHerbivore) {
@@ -51,23 +59,20 @@ class World(width: Int = 30, height: Int = 30) {
     spawn(element, board.randomFreePosition(randomness))
   }
 
-  // tick / clear board elements
-  time.tick += { x => //#HDL //#IF
-    board.elements.foreach {
-      case (pos, be) =>
-        if (be.isDead.now)
-          board.remove(pos)
-        else be.doStep(pos)
-    }
-  }
-
   // each day, spawn a new plant
   time.day.changed += { _ => //#HDL //#IF
-    this spawn new Plant
+    plan(this spawn new Plant)
   }
 
   //each week, spawn a new animal
   time.week.changed += { _ => //#HDL  //#IF
-    this spawn newAnimal
+    plan(this spawn newAnimal)
+  }
+
+  var updates: List[() => Unit] = Nil
+  def plan(f: => Unit) = updates ::= f _
+  def runPlan() = {
+    updates.foreach(_())
+    updates = Nil
   }
 }

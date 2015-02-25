@@ -190,14 +190,16 @@ trait Female extends Animal {
   // not possible
 
   giveBirth += { _ => //#HDL
-    val father = mate.now.get
-    val child = createOffspring(father)
-    world.board.getPosition(this).foreach { mypos =>
-      world.board.nearestFree(mypos).foreach { target =>
-        world.spawn(child, target)
+    world.plan {
+      val father = mate.now.get
+      val child = createOffspring(father)
+      world.board.getPosition(this).foreach { mypos =>
+        world.board.nearestFree(mypos).foreach { target =>
+          world.spawn(child, target)
+        }
       }
+      mate.set(None)
     }
-    mate.set(None)
   }
 
   def procreate(father: Animal): Unit = {
