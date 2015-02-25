@@ -7,7 +7,7 @@ import rescala.turns.Turn
 trait TurnImpl extends Turn {
   implicit def currentTurn: TurnImpl = this
 
-  protected var toCommit = Set[Committable]()
+  private var toCommit = Set[Committable]()
 
   val levelQueue = new LevelQueue()
 
