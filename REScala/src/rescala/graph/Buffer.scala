@@ -12,9 +12,9 @@ trait Committable {
 }
 
 object Buffer {
-	def commitAsIs[A](base: A, cur: A): A = cur
-	def transactionLocal[A](base: A, cur: A) = base
-	def keepPulse[P](base: Pulse[P], cur: Pulse[P]) = cur.keep
+  def commitAsIs[A](base: A, cur: A): A = cur
+  def transactionLocal[A](base: A, cur: A) = base
+  def keepPulse[P](base: Pulse[P], cur: Pulse[P]) = cur.keep
 }
 
 trait Buffer[A] extends Committable {
@@ -26,28 +26,28 @@ trait Buffer[A] extends Committable {
   def set(value: A)(implicit turn: Turn): Unit
   def base(implicit turn: Turn): A
   def get(implicit turn: Turn): A
-  def release(implicit turn: Turn): Unit
-  def commit(implicit turn: Turn): Unit
+  override def release(implicit turn: Turn): Unit
+  override def commit(implicit turn: Turn): Unit
 }
 
 final class SimpleBuffer[A](initialValue: A, initialStrategy: (A, A) => A, writeLock: TurnLock) extends Buffer[A] {
 
-  @volatile var current: A = initialValue
-  @volatile private var update: Option[A] = None
-  @volatile private var owner: Turn = null
-  @volatile var commitStrategy: (A, A) => A = initialStrategy
+  var current: A = initialValue
+  private var update: Option[A] = None
+  private var owner: Turn = null
+  var commitStrategy: (A, A) => A = initialStrategy
 
   override def initCurrent(value: A): Unit = synchronized(current = value)
   override def initStrategy(strategy: (A, A) => A): Unit = synchronized(commitStrategy = strategy)
 
 
-  def transform(f: (A) => A)(implicit turn: Turn): A = synchronized {
+  override def transform(f: (A) => A)(implicit turn: Turn): A = synchronized {
     val value = f(get)
     set(value)
     value
   }
 
-  def set(value: A)(implicit turn: Turn): Unit = synchronized {
+  override def set(value: A)(implicit turn: Turn): Unit = synchronized {
     assert(owner == null || owner == turn, s"buffer owned by $owner written by $turn")
     turn match {
       case pessimistic: Prelock =>
@@ -60,18 +60,18 @@ final class SimpleBuffer[A](initialValue: A, initialStrategy: (A, A) => A, write
     turn.plan(this)
   }
 
-  def base(implicit turn: Turn): A = synchronized(current)
+  override def base(implicit turn: Turn): A = synchronized(current)
 
-  def get(implicit turn: Turn): A = synchronized { if (turn eq owner) update.getOrElse(current) else current }
+  override def get(implicit turn: Turn): A = synchronized { if (turn eq owner) update.getOrElse(current) else current }
 
-  def release(implicit turn: Turn): Unit = synchronized {
+  override def release(implicit turn: Turn): Unit = synchronized {
     update = None
     owner = null
   }
 
-  def commit(implicit turn: Turn): Unit = synchronized {
+  override def commit(implicit turn: Turn): Unit = synchronized {
     current = commitStrategy(current, get)
-    release
+    release(turn)
   }
 }
 
@@ -91,21 +91,21 @@ final class STMBuffer[A](initialValue: A, initialStrategy: (A, A) => A) extends 
     case _ => throw new IllegalStateException(s"$turn has invalid type for $this")
   }
 
-  def transform(f: (A) => A)(implicit turn: Turn): A = {
+  override def transform(f: (A) => A)(implicit turn: Turn): A = {
     val value = f(get)
     set(value)
     value
   }
-  def set(value: A)(implicit turn: Turn): Unit = {
+  override def set(value: A)(implicit turn: Turn): Unit = {
     update.set(Some(value))
     turn.plan(this)
   }
-  def base(implicit turn: Turn) = current.get
-  def get(implicit turn: Turn): A = update.get.getOrElse(current.get)
-  def release(implicit turn: Turn): Unit = {
+  override def base(implicit turn: Turn) = current.get
+  override def get(implicit turn: Turn): A = update.get.getOrElse(current.get)
+  override def release(implicit turn: Turn): Unit = {
     update.set(None)
   }
-  def commit(implicit turn: Turn): Unit = {
+  override def commit(implicit turn: Turn): Unit = {
     current.set(commitStrategy(current.get, get))
     release
   }
