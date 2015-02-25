@@ -5,6 +5,8 @@ import rescala.propagation.TurnImpl
 
 trait Prelock extends TurnImpl with InterturnDependencyChanges {
 
+  override def toString: String = s"Prelock(${ key.id })"
+
   final val key: Key = new Key(this)
 
   final val thread = Thread.currentThread().getName
