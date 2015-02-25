@@ -7,29 +7,30 @@ import rescala.turns.Ticket
 
 object Animal {
   val StartEnergy = 200
-  val ViewRadius = 9
   // radius that animals can see the world around them
-  val MoveCost = 1
+  val ViewRadius = 9
   // energy required to move
-  val ProcreateCost = 10
+  val MoveCost = 1
   // energy required to procreate
-  val MaxAge = 100
+  val ProcreateCost = 10
   // maximum age in days when an animal dies, regardless of energy
-  val PlantEatRate = 3
+  val MaxAge = 25
   // energy rate gained when eating plants
-  val ProcreateThreshold = 60
+  val PlantEatRate = 3
   // minimum energy required for male animals to seek a mate
-  val FertileAge = 1
+  val ProcreateThreshold = 60
   // minimum age in days for animals to be fertile
-  val PregnancyTime = 30
+  val FertileAge = 1
   // time in hours for female sheep to be pregnant
-  val AttackThreshold = 100
+  val PregnancyTime = 30
   // minimum energy for carnivores to attack
-  val AttackAmount = 50
+  val AttackThreshold = 100
   // energy stolen when carnivores attack
-  val SleepThreshold = 30
+  val AttackAmount = 50
   // minimum energy for carnivores to start sleeping
-  val SleepRate = 2 // energy gained while sleeping
+  val SleepThreshold = 30
+  // energy gained while sleeping
+  val SleepRate = 2
 }
 
 abstract class Animal(implicit world: World) extends BoardElement {
@@ -93,13 +94,15 @@ abstract class Animal(implicit world: World) extends BoardElement {
     case _ => false
   }
 
-  val energyDrain = Signals.static(age, state) { implicit turn =>
-    1 + age.get / 2 + (state.get match {
-      case Moving(_) => Animal.MoveCost
-      case Procreating(_) => Animal.ProcreateCost
-      case FallPrey => Animal.AttackAmount
-      case _ => 0
-    })
+  val energyDrain = Signals.lift(age, state, world.board.animalsAlive) { (a, s, alive) =>
+    (alive / (world.board.width + world.board.height)) +
+      (a / 2) +
+      (s match {
+        case Moving(_) => Animal.MoveCost
+        case Procreating(_) => Animal.ProcreateCost
+        case FallPrey => Animal.AttackAmount
+        case _ => 0
+      })
   }
 
   val energyGain =
@@ -113,7 +116,7 @@ abstract class Animal(implicit world: World) extends BoardElement {
   // we do not have a built in method for this kind of “fold some snapshot” but its not that hard to write one
   val energy: Signal[Int] =
     implicitly[Ticket].apply(Signals.Impl.makeStatic(Set(world.time.tick, energyDrain, energyGain), Animal.StartEnergy) {
-      (turn, current) => world.time.tick.pulse(turn).fold(current, _ => current + energyGain.get(turn) + energyDrain.get(turn))
+      (turn, current) => world.time.tick.pulse(turn).fold(current, _ => current + energyGain.get(turn) - energyDrain.get(turn))
     })
 
   override val isDead = Signals.lift(age, energy) { (a, e) => a > Animal.MaxAge || e < 0 }
@@ -280,9 +283,11 @@ class Plant(implicit world: World) extends BoardElement {
 
   expands += { _ => //#HDL
     // germinate: spawn a new plant in proximity to this one
-    world.board.getPosition(this).foreach { mypos =>
-      world.board.nearestFree(mypos).foreach { target =>
-        world.spawn(new Plant)
+    world.plan {
+      world.board.getPosition(this).foreach { mypos =>
+        world.board.nearestFree(mypos).foreach { target =>
+          world.spawn(new Plant)
+        }
       }
     }
   }

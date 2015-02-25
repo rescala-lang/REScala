@@ -10,7 +10,7 @@ import scala.util.Random
  * A World object unites a space (Board object), time (Time object), and a random object
  * It also defines all repetitive actions, such as spawning new Animals and Plants
  */
-class World(width: Int = 30, height: Int = 30) {
+class World(val width: Int = 30, val height: Int = 30) {
 
   implicit val world = this
 
@@ -25,12 +25,8 @@ class World(width: Int = 30, height: Int = 30) {
 
   def tick() = {
     time.tick(Unit)
-    board.elements.foreach {
-      case (pos, be) =>
-        if (be.isDead.now)
-          board.remove(pos)
-        else be.doStep(pos)
-    }
+    board.removeDead()
+    board.elements.foreach { case (pos, be) => be.doStep(pos) }
   }
 
   def newAnimal(isHerbivore: Boolean, isMale: Boolean): Animal = {

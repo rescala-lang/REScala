@@ -19,7 +19,7 @@ object Board {
  * A Board is infinite, but width and height specify the area being displayed.
  */
 class Board(val width: Int, val height: Int) {
-  val elements: Map[Pos, BoardElement] = new mutable.HashMap
+  var elements: Map[Pos, BoardElement] = new mutable.HashMap
   val allPositions = (for (x <- 0 to width; y <- 0 to height) yield Pos(x, y)).toSet
 
   val elementSpawned = Evt[BoardElement]()
@@ -28,7 +28,7 @@ class Board(val width: Int, val height: Int) {
   val animalRemoved = elementRemoved && (_.isAnimal)
   val animalsBorn = animalSpawned.iterate(0)(_ + 1)
   val animalsDied = animalRemoved.iterate(0)(_ + 1)
-  val animalsAlive= Signals.lift(animalsBorn, animalsDied){ _ - _ }
+  val animalsAlive = Signals.lift(animalsBorn, animalsDied) { _ - _ }
 
   /** adds a board element at given position */
   def add(be: BoardElement, pos: Pos): Unit = {
@@ -37,10 +37,14 @@ class Board(val width: Int, val height: Int) {
   }
 
   /** removes the board element if present in the board */
-  def remove(be: BoardElement): Unit = getPosition(be).foreach(remove)
-  def remove(pos: Pos): Unit = {
-    val e = elements.remove(pos)
-    if (e.isDefined) elementRemoved(e.get)
+  def removeDead() = {
+    elements = elements.filter { case (p, be) =>
+      if (be.isDead.now) {
+        elementRemoved(be)
+        false
+      }
+      else true
+    }
   }
 
   /** @return the elements in this board nearby pos */
