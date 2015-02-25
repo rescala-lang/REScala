@@ -54,7 +54,9 @@ object Engines {
       * - run the propagation phase
       *   - calculate the actual new value of the reactive graph
       * - run the commit phase
-      *   - do cleanups on the reactives, make values permanent, run observers and so on, the turn is still valid during this phase
+      *   - do cleanups on the reactives, make values permanent and so on, the turn is still valid during this phase
+      * - run the observer phase
+      *   - run registered observers, the turn is no longer valid but the locks are still held.
       * - run the release phase
       *   - this must aways run, even in the case that something above fails. it should do cleanup and free any locks to avoid starvation.
       * - run the party! phase
