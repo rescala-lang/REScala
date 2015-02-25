@@ -39,17 +39,11 @@ trait TurnImpl extends Turn {
 
   override def observe(f: => Unit): Unit = observers ::= f _
 
-  override def create[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
-    val reactive = f
-    dependencies.foreach(register(reactive))
-    ensureLevel(reactive, dependencies)
-    reactive
-  }
-
-  override def createDynamic[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
+  override def create[T <: Reactive](dependencies: Set[Reactive], dynamic: Boolean)(f: => T): T = {
     val reactive = f
     ensureLevel(reactive, dependencies)
-    evaluate(reactive)
+    if (dynamic) evaluate(reactive)
+    else dependencies.foreach(register(reactive))
     reactive
   }
 

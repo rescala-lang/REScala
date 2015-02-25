@@ -23,13 +23,7 @@ trait Turn {
   /** called when a new reactive is created and registered into the network
     * subclasses are expected to register the reactive with its dependencies
     * and calculate the correct level */
-  def create[T <: Reactive](dependencies: Set[Reactive])(f: => T): T
-
-  /** called when a new dynamic reactive is created and registered into the network
-    * subclasess are expected to immediately evaluate the reactive
-    * to enter a valid state
-    * the dependencies should be used to calculate a approximation for the level */
-  def createDynamic[T <: Reactive](dependencies: Set[Reactive])(f: => T): T
+  def create[T <: Reactive](dependencies: Set[Reactive], dynamic: Boolean = false)(f: => T): T
 
   /** adds a dependency */
   def register(sink: Reactive)(source: Reactive): Unit

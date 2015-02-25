@@ -19,21 +19,12 @@ trait Prelock extends TurnImpl with InterturnDependencyChanges {
    * it is important, that the locks for the dependencies are acquired BEFORE the constructor for the new reactive.
    * is executed, because the constructor typically accesses the dependencies to create its initial value.
    */
-  override def create[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
+  override def create[T <: Reactive](dependencies: Set[Reactive], dynamic: Boolean)(f: => T): T = {
     dependencies.foreach(accessDynamic)
     val reactive = f
     val owner = reactive.lock.tryLock(key)
     assert(owner eq key, s"$this failed to acquire lock on newly created reactive $reactive")
-    super.create(dependencies)(reactive)
-  }
-
-  /** similar to create, except for the ensure level and evaluate calls */
-  override def createDynamic[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
-    dependencies.foreach(accessDynamic)
-    val reactive = f
-    val owner = reactive.lock.tryLock(key)
-    assert(owner eq key, s"$this failed to acquire lock on newly created reactive $reactive")
-    super.createDynamic(dependencies)(reactive)
+    super.create(dependencies, dynamic)(reactive)
   }
 
   /** this is called after the turn has finished propagating, but before handlers are executed */

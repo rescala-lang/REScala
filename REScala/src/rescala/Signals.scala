@@ -21,7 +21,7 @@ object Signals extends GeneratedLift {
     }
 
     /** creates a dynamic signal */
-    def makeDynamic[T](dependencies: Set[Reactive])(expr: Turn => T)(initialTurn: Turn): Signal[T] = initialTurn.createDynamic(dependencies) {
+    def makeDynamic[T](dependencies: Set[Reactive])(expr: Turn => T)(initialTurn: Turn): Signal[T] = initialTurn.create(dependencies, dynamic = true) {
       new Enlock(initialTurn.engine) with Signal[T] with DynamicReevaluation[T] {
         def calculatePulseDependencies(implicit turn: Turn): (Pulse[T], Set[Reactive]) = {
           val (newValue, dependencies) = Globals.collectDependencies(expr(turn))
