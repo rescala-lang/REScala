@@ -66,7 +66,7 @@ class PhilosopherTable(philosopherCount: Int, work: Long)(implicit val engine: E
         true
       }
       else false
-      turn.plan(new Committable {
+      turn.schedule(new Committable {
         override def commit(implicit turn: Turn): Unit = if (forksFree) assert(seating.vision(turn) == Eating)
         override def release(implicit turn: Turn): Unit = ()
       })

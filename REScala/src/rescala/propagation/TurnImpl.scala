@@ -8,6 +8,7 @@ trait TurnImpl extends Turn {
   implicit def currentTurn: TurnImpl = this
 
   private var toCommit = Set[Committable]()
+  private var observers = List.empty[() => Unit]
 
   val levelQueue = new LevelQueue()
 
@@ -30,17 +31,13 @@ trait TurnImpl extends Turn {
 
   def maximumLevel(dependencies: Set[Reactive])(implicit turn: Turn): Int = dependencies.foldLeft(-1)((acc, r) => math.max(acc, r.level.get))
 
-  def register(sink: Reactive)(source: Reactive): Unit = {
-    source.outgoing.transform(_ + sink)
-  }
+  def register(sink: Reactive)(source: Reactive): Unit = source.outgoing.transform(_ + sink)
 
-  def unregister(sink: Reactive)(source: Reactive): Unit = {
-    source.outgoing.transform(_ - sink)
-  }
+  def unregister(sink: Reactive)(source: Reactive): Unit = source.outgoing.transform(_ - sink)
 
-  override def plan(commitable: Committable): Unit = {
-    toCommit += commitable
-  }
+  override def schedule(commitable: Committable): Unit = toCommit += commitable
+
+  override def observe(f: => Unit): Unit = observers ::= f _
 
   override def create[T <: Reactive](dependencies: Set[Reactive])(f: => T): T = {
     val reactive = f
@@ -76,6 +73,8 @@ trait TurnImpl extends Turn {
   def commitPhase() = toCommit.foreach(_.commit(this))
 
   def rollbackPhase() = toCommit.foreach(_.release(this))
+
+  def observerPhase() = observers.foreach(_.apply())
 
   def realeasePhase(): Unit
 

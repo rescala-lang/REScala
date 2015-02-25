@@ -57,7 +57,7 @@ final class SimpleBuffer[A](initialValue: A, initialStrategy: (A, A) => A, write
     }
     update = Some(value)
     owner = turn
-    turn.plan(this)
+    turn.schedule(this)
   }
 
   override def base(implicit turn: Turn): A = synchronized(current)
@@ -98,7 +98,7 @@ final class STMBuffer[A](initialValue: A, initialStrategy: (A, A) => A) extends 
   }
   override def set(value: A)(implicit turn: Turn): Unit = {
     update.set(Some(value))
-    turn.plan(this)
+    turn.schedule(this)
   }
   override def base(implicit turn: Turn) = current.get
   override def get(implicit turn: Turn): A = update.get.getOrElse(current.get)

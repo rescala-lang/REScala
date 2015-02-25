@@ -144,7 +144,7 @@ object REScalaPhilosophers extends App {
         true
       }
       else false
-      turn.plan(new Committable {
+      turn.schedule(new Committable {
         override def commit(implicit turn: Turn): Unit = if (forksWereFree) assert(seating.vision(turn) == Eating)
         override def release(implicit turn: Turn): Unit = ()
       })

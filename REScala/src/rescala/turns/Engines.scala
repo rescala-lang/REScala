@@ -70,7 +70,7 @@ object Engines {
             turn.propagationPhase()
             turn.commitPhase()
           }
-        }
+        } ~< turn.observerPhase()
       }
       catch {
         case e: Throwable =>

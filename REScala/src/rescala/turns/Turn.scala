@@ -38,5 +38,8 @@ trait Turn {
   def unregister(sink: Reactive)(source: Reactive): Unit
 
   /** install a new commit handler */
-  def plan(committable: Committable): Unit
+  def schedule(committable: Committable): Unit
+
+  /** plan a new after commit handler. this still runs before releasing locks */
+  def observe(f: => Unit): Unit
 }
