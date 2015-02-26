@@ -27,9 +27,9 @@ trait InterturnDependencyChanges extends Turn {
   abstract override def unregister(sink: Reactive)(source: Reactive): Unit = {
     val owner = AcquireShared(source, key)
     if (owner ne key) {
-      owner.turn.forget(sink)
       owner.turn.unregister(sink)(source)
       key.lockKeychain(key.keychain.removeFallthrough(owner))
+      if (!sink.incoming(this).exists(_.lock.isOwner(owner))) owner.turn.forget(sink)
     }
     else super.unregister(sink)(source)
   }
