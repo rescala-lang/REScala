@@ -4,7 +4,7 @@ package tests.rescala.concurrency
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.{ConcurrentLinkedQueue, CountDownLatch}
 
-import org.junit.{Ignore, Test}
+import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import rescala.graph.Reactive
 import rescala.synchronization.{SpinningInitPessimistic => Pessimistic}
@@ -207,22 +207,33 @@ class PessimisticTest extends AssertionsForJUnit {
 
   @Test def addAndRemoveDependencyInOneTurnWhileOwnedByAnother(): Unit = for (_ <- Range(0, 100)) synchronized {
 
-    val b0 = Var(false)
-    val b1 = b0.map(identity)
-    val b2 = b1.map(identity).map(!_)
-    val i0 = Var(11)
-    val i1 = i0.map(identity)
+    val bl0 = Var(false)
+    val bl1 = bl0.map(identity)
+    val bl3 = bl1.map(identity).map(!_)
+    val il0 = Var(11)
+    val il1 = il0.map(identity)
 
     var reeval = 0
-    // this starts on level 2. when b0 becomes true b1 becomes true on level 1
-    // at that point both b1 and b2 are true which causes i1 to be added as a dependency
-    // but then b2 becomes false at level 2, causing i1 to be removed again
+    // this starts on level 2. when bl0 becomes true bl1 becomes true on level 1
+    // at that point both bl1 and bl3 are true which causes il1 to be added as a dependency
+    // but then bl3 becomes false at level 3, causing il1 to be removed again
     // after that the level is increased and this nonesense no longer happens
-    val b2b3i2 = Signals.dynamic(b1) { t => reeval += 1; if (b1(t) && b2(t)) i1(t) else 42 }
+    val b2b3i2 = Signals.dynamic(bl1) { t =>
+      reeval += 1
+      if (bl1(t)) {
+        if (bl3(t)) {
+          val res = il1(t)
+          assert(res === 11, "did not read old value")
+          res
+        }
+        else 37
+      }
+      else 42
+    }
 
-    // this is here, so that we have another turn, that locks b1.
-    // we need this to be a dynamic lock to lock just this single reactive and not b2 etc.
-    val i2b2 = Signals.dynamic(i1)(t => if (i1(t) == 0) b1(t) else false)
+    // this is here, so that we have i lock bl1.
+    // we need this to be a dynamic lock to lock just this single reactive and not bl3 etc.
+    val i2b2 = Signals.dynamic(il1)(t => if (il1(t) == 0) bl1(t) else false)
     val c3 = i2b2.map(identity)
 
 
@@ -231,31 +242,100 @@ class PessimisticTest extends AssertionsForJUnit {
     assert(reeval === 1)
 
     // start both turns
-    Pessigen.sync(b1, i1)
-    // now i has i0, i1, i2b2 locked
-    // and b has b0, b1, b2, b2b3i1
+    Pessigen.sync(bl1, il1)
+    // now i has il0, il1, i2b2 locked
+    // and b has bl0, bl1, bl3, b2b3i1
 
     // continue just turn i
-    val bBar = Pessigen.syncm(b1)
-    // i will now try to grab b1, which fails
+    val bBar = Pessigen.syncm(bl1)
+    // i will now try to grab bl1, which fails
     // so i will start to wait on b
 
     // we start the turns …
-    val t1 = Spawn { b0.set(true) }
-    val t2 = Spawn { i0.set(0) }
+    val t1 = Spawn { bl0.set(true) }
+    val t2 = Spawn { il0.set(0) }
 
     // now everything will should start to happen as described above (i waiting on b)
     // we then await and release the barrier
+    Thread.sleep(20)
     bBar.await()
     // which causes b to continue and evaluate b2b3i2
-    // that will add and remove dependencies on i1, which we have readlocked.
+    // that will add and remove dependencies on il1, which we have readlocked.
     // that should NOT cause b2b3i2 to be reevaluated when i finally finishes
 
     t1.join()
     t2.join()
 
-    assert(b2b3i2.now === 42)
+    assert(b2b3i2.now === 37)
     assert(reeval === 3)
+
+    assert(Pessigen.clear() == 0)
+  }
+
+  @Test def `add two dynamic dependencies and remove only one`(): Unit = synchronized {
+
+    val bl0 = Var(false)
+    val bl1 = bl0.map(identity)
+    val bl3 = bl1.map(identity).map(!_)
+    val il0 = Var(11)
+    val il1 = il0.map(identity)
+
+    var reeval = 0
+    // this starts on level 2. when bl0 becomes true bl1 becomes true on level 1
+    // at that point both bl1 and bl3 are true which causes il1 to be added as a dependency
+    // but then bl3 becomes false at level 3, causing il1 to be removed again
+    // after that the level is increased and this nonesense no longer happens
+    val b2b3i2 = Signals.dynamic(bl1) { t =>
+      reeval += 1
+      if (bl1(t)) {
+        if (bl3(t)) {
+          val res = il0(t) + il1(t)
+          assert(res === 22, "did not read old value")
+          res
+        }
+        else il0(t)
+      }
+      else 42
+    }
+
+    // this is here, so that we have i lock bl1.
+    // we need this to be a dynamic lock to lock just this single reactive and not bl3 etc.
+    val i2b2 = Signals.dynamic(il1)(t => if (il1(t) == 17) bl1(t) else false)
+    val c3 = i2b2.map(identity)
+
+
+
+    assert(b2b3i2.now === 42)
+    assert(reeval === 1)
+
+    // start both turns
+    Pessigen.sync(bl1, il1)
+    // now i has il0, il1, i2b2 locked
+    // and b has bl0, bl1, bl3, b2b3i1
+
+    // continue just turn i
+    val bBar = Pessigen.syncm(bl1)
+    // i will now try to grab bl1, which fails
+    // so i will start to wait on b
+
+    // we start the turns …
+    val t1 = Spawn { bl0.set(true) }
+    val t2 = Spawn { il0.set(17) }
+
+    // now everything will should start to happen as described above (i waiting on b)
+    // we then await and release the barrier
+    Thread.sleep(20)
+    bBar.await()
+    // which causes b to continue and evaluate b2b3i2
+    // that will add and remove dependencies on il1, which we have readlocked.
+    // that should NOT cause b2b3i2 to be reevaluated when i finally finishes
+
+    t1.join()
+    t2.join()
+
+    assert(b2b3i2.now === 17)
+    // 4 reevaluations: initialisation; bl1 becomes true; bl3 becomes false; il0 changes from 11 to 17
+    assert(reeval === 4)
 
     assert(Pessigen.clear() == 0)
   }
