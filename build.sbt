@@ -31,7 +31,8 @@ libraryDependencies ++= (
 
 scalacOptions ++= (
   "-deprecation" ::
-  //"-Xelide-below" :: "9999999" ::
+  "-Xdisable-assertions" ::
+  "-Xelide-below" :: "9999999" ::
   "-encoding" :: "UTF-8" ::
   "-unchecked" ::
   "-feature" ::
