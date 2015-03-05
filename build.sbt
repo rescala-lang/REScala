@@ -1,5 +1,7 @@
 organization in ThisBuild := "de.tuda.stg"
 
+name in ThisBuild := "rescala"
+
 version in ThisBuild := "0.0.0"
 
 scalaVersion in ThisBuild := "2.11.2"
