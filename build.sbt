@@ -1,13 +1,7 @@
-lazy val root = Project("root", file(".")).aggregate(rescala, tests)
 
-lazy val rescala = Project("rescala", file("REScala"))
+lazy val root = Project("rescala", file("."))
   .settings(
-    scalaSource in Compile <<= baseDirectory {(base) => new File(base, "src")},
-    libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _))
-
-lazy val tests = Project("rescala-tests", file("REScalaTests"))
-  .settings(
-    scalaSource in Test <<= baseDirectory {(base) => new File(base, "test")},
+    libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _),
     parallelExecution in Test := false,
     libraryDependencies ++= (
       "org.mockito" % "mockito-all" % "1.9.5" % "test" ::
@@ -15,7 +9,18 @@ lazy val tests = Project("rescala-tests", file("REScalaTests"))
       "com.novocode" % "junit-interface" % "0.10" % "test" ::
       Nil)
   )
-  .dependsOn(rescala)
+
+//lazy val tests = Project("rescala-tests", file("REScalaTests"))
+//  .settings(
+//    scalaSource in Test <<= baseDirectory {(base) => new File(base, "test")},
+//    parallelExecution in Test := false,
+//    libraryDependencies ++= (
+//      "org.mockito" % "mockito-all" % "1.9.5" % "test" ::
+//      "org.scalatest" %% "scalatest" % "2.2.1" % "test" ::
+//      "com.novocode" % "junit-interface" % "0.10" % "test" ::
+//      Nil)
+//  )
+//  .dependsOn(rescala)
 
 organization in ThisBuild := "de.tuda.stg"
 
