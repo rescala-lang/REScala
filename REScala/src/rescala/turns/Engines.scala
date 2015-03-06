@@ -18,9 +18,9 @@ object Engines {
     case other => throw new IllegalArgumentException(s"unknown engine $other")
   }
 
-  def all: List[Engine[Turn]] = List(STM, spinning, spinningWait, synchron, unmanaged)
+  def all: List[Engine[Turn]] = List(default, STM, spinning, spinningWait, synchron, unmanaged)
 
-  implicit def default: Engine[Turn] = spinningWait
+  implicit val default: Engine[Turn] = spinningWithBackoff(7)
 
   implicit val STM: Engine[STMSync] = new Impl(new STMSync()) {
     override def plan[R](i: Reactive*)(f: STMSync => R): R = atomic { tx => super.plan(i: _*)(f) }
