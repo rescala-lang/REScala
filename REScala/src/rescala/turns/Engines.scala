@@ -12,7 +12,7 @@ object Engines {
   def byName(name: String): Engine[Turn] = name match {
     case "synchron" => synchron
     case "unmanaged" => unmanaged
-    case "spinning" => spinning
+    case "spinningNoWait" => spinning
     case "spinningWait" => spinningWait
     case "stm" => STM
     case other => throw new IllegalArgumentException(s"unknown engine $other")
@@ -26,6 +26,8 @@ object Engines {
     override def plan[R](i: Reactive*)(f: STMSync => R): R = atomic { tx => super.plan(i: _*)(f) }
     override def buffer[A](default: A, commitStrategy: (A, A) => A, writeLock: TurnLock): Buffer[A] = new STMBuffer[A](default, commitStrategy)
   }
+
+  def spinningWithBackoff(backOff: Int) = new Impl(new SpinningInitPessimistic(backOff))
 
   implicit val spinning: Engine[SpinningInitPessimistic] = new Impl(new SpinningInitPessimistic(backOff = -1))
   implicit val spinningWait: Engine[SpinningInitPessimistic] = new Impl(new SpinningInitPessimistic(backOff = 0))
@@ -56,7 +58,7 @@ object Engines {
       * - run the commit phase
       *   - do cleanups on the reactives, make values permanent and so on, the turn is still valid during this phase
       * - run the observer phase
-      *   - run registered observers, the turn is no longer valid but the locks are still held.
+      * - run registered observers, the turn is no longer valid but the locks are still held.
       * - run the release phase
       *   - this must aways run, even in the case that something above fails. it should do cleanup and free any locks to avoid starvation.
       * - run the party! phase
