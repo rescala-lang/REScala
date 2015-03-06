@@ -27,8 +27,8 @@ object Engines {
     override def buffer[A](default: A, commitStrategy: (A, A) => A, writeLock: TurnLock): Buffer[A] = new STMBuffer[A](default, commitStrategy)
   }
 
-  implicit val spinning: Engine[SpinningInitPessimistic] = new Impl(new SpinningInitPessimistic(wait = false))
-  implicit val spinningWait: Engine[SpinningInitPessimistic] = new Impl(new SpinningInitPessimistic(wait = true))
+  implicit val spinning: Engine[SpinningInitPessimistic] = new Impl(new SpinningInitPessimistic(backOff = -1))
+  implicit val spinningWait: Engine[SpinningInitPessimistic] = new Impl(new SpinningInitPessimistic(backOff = 0))
 
   implicit val synchron: Engine[NothingSpecial] = new Impl[NothingSpecial](new EngineReference(synchron) with NothingSpecial) {
     override def plan[R](i: Reactive*)(f: NothingSpecial => R): R = synchronized(super.plan(i: _*)(f))

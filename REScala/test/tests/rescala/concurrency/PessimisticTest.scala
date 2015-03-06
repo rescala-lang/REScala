@@ -13,7 +13,7 @@ import rescala.{Signals, Var}
 
 import scala.collection.JavaConverters._
 
-class PessimisticTestTurn extends Pessimistic(true) {
+class PessimisticTestTurn extends Pessimistic(backOff = 0) {
   override def evaluate(r: Reactive): Unit = {
     while (Pessigen.syncStack.get() match {
       case stack@(set, bar) :: tail if set(r) =>
@@ -146,7 +146,7 @@ class PessimisticTest extends AssertionsForJUnit {
 
   object MockFacFac {
     def apply(i0: Reactive, reg: => Unit, unreg: => Unit): Engine[Turn] = new Engines.Impl[Pessimistic](
-      new Pessimistic(true) {
+      new Pessimistic(backOff = 0) {
         override def register(downstream: Reactive)(upstream: Reactive): Unit = {
           if (upstream eq i0) reg
           super.register(downstream)(upstream)
