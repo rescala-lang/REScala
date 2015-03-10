@@ -1,22 +1,22 @@
-organization in ThisBuild := "de.tuda.stg"
+organization := "de.tuda.stg"
 
-name in ThisBuild := "rescala"
+name := "rescala"
 
-version in ThisBuild := "0.0.0"
+version := "0.0.0"
 
-scalaVersion in ThisBuild := "2.11.2"
+scalaVersion := "2.11.2"
 
 libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _)
 
-libraryDependencies ++= (
-  "org.mockito" % "mockito-all" % "1.9.5" % "test" ::
-  "org.scalatest" %% "scalatest" % "2.2.1" % "test" ::
-  "com.novocode" % "junit-interface" % "0.10" % "test" ::
-  Nil)
+libraryDependencies ++= Seq(
+  "org.mockito" % "mockito-all" % "1.9.5" % "test",
+  "org.scalatest" %% "scalatest" % "2.2.1" % "test",
+  "com.novocode" % "junit-interface" % "0.10" % "test"
+)
 
 parallelExecution in Test := false
 
-scalacOptions in ThisBuild ++= (
+scalacOptions ++= (
   "-deprecation" ::
   "-encoding" :: "UTF-8" ::
   "-unchecked" ::
