@@ -49,9 +49,7 @@ abstract class Enlock(final override protected[rescala] val engine: Engine[Turn]
   def staticIncoming: Set[Reactive] = weakKnownDependencies.asScala.toSet
 }
 
-class Reader[+P](pulsing: Pulsing[P], pulses: Buffer[Pulse[P]]) {
-  private[this] val _underlying: WeakReference[Pulsing[P]] = new WeakReference(pulsing)
-  def underlying: Option[Pulsing[P]] = Option(_underlying.get())
+class Reader[+P](pulses: Buffer[Pulse[P]]) {
   def pulse(implicit turn: Turn): Pulse[P] = pulses.get
 
   final def get(implicit turn: Turn): P = pulse match {
@@ -68,7 +66,7 @@ trait Pulsing[+P] extends Reactive {
 
   final def pulse(implicit turn: Turn): Pulse[P] = pulses.get
 
-  final val reader: Reader[P] = new Reader[P](this, pulses)
+  final val reader: Reader[P] = new Reader[P](pulses)
 }
 
 
