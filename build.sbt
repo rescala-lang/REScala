@@ -2,7 +2,7 @@ name := "rescala"
 
 organization := "de.tuda.stg"
 
-version := "0.11.0"
+version := "0.12.0"
 
 scalaVersion := "2.11.6"
 
@@ -31,8 +31,8 @@ libraryDependencies ++= (
 
 scalacOptions ++= (
   "-deprecation" ::
-  "-Xdisable-assertions" ::
-  "-Xelide-below" :: "9999999" ::
+  //"-Xdisable-assertions" ::
+  //"-Xelide-below" :: "9999999" ::
   "-encoding" :: "UTF-8" ::
   "-unchecked" ::
   "-feature" ::
