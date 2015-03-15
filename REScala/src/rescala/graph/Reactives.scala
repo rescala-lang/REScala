@@ -1,8 +1,13 @@
 package rescala.graph
 
+import java.lang.ref.WeakReference
+import java.util
+
 import rescala.graph.Pulse.{Diff, NoChange}
 import rescala.synchronization.TurnLock
 import rescala.turns.{Engine, Ticket, Turn}
+
+import scala.collection.JavaConverters.asScalaSetConverter
 
 /** A Reactive is something that can be reevaluated */
 trait Reactive {
@@ -33,23 +38,43 @@ abstract class Enlock(final override protected[rescala] val engine: Engine[Turn]
                       knownDependencies: Set[Reactive] = Set.empty) extends Reactive {
   final override protected[rescala] val lock: TurnLock =
     if (knownDependencies.size == 1) knownDependencies.head.lock
-    else new TurnLock(this)
+    else new TurnLock()
 
-  def staticIncoming: Set[Reactive] = knownDependencies
+  val weakKnownDependencies = {
+    val whs = util.Collections.newSetFromMap(new util.WeakHashMap[Reactive, java.lang.Boolean](knownDependencies.size))
+    knownDependencies.foreach(whs.add)
+    whs
+  }
+
+  def staticIncoming: Set[Reactive] = weakKnownDependencies.asScala.toSet
 }
 
+class Reader[+P](pulsing: Pulsing[P], pulses: Buffer[Pulse[P]]) {
+  private[this] val _underlying: WeakReference[Pulsing[P]] = new WeakReference(pulsing)
+  def underlying: Option[Pulsing[P]] = Option(_underlying.get())
+  def pulse(implicit turn: Turn): Pulse[P] = pulses.get
+
+  final def get(implicit turn: Turn): P = pulse match {
+    case NoChange(Some(value)) => value
+    case Diff(value, oldOption) => value
+    case NoChange(None) => throw new IllegalStateException("stateful reactive has never pulsed")
+  }
+}
 
 /** A node that has nodes that depend on it */
 trait Pulsing[+P] extends Reactive {
-  final protected[this] val pulses: Buffer[Pulse[P]] = engine.buffer(Pulse.none, Buffer.transactionLocal, lock)
+  protected[this] def strategy: (Pulse[P], Pulse[P]) => Pulse[P] = Buffer.transactionLocal[Pulse[P]]
+  final protected[this] val pulses: Buffer[Pulse[P]] = engine.buffer(Pulse.none, strategy, lock)
 
   final def pulse(implicit turn: Turn): Pulse[P] = pulses.get
+
+  final val reader: Reader[P] = new Reader[P](this, pulses)
 }
 
 
 /** a node that has a current state */
 trait Stateful[+A] extends Pulsing[A] {
-  pulses.initStrategy(Buffer.keepPulse)
+  override protected[this] def strategy: (Pulse[A], Pulse[A]) => Pulse[A] = Buffer.keepPulse
 
   // only used inside macro and will be replaced there
   final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")

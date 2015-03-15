@@ -7,8 +7,7 @@ import rescala.graph.Reactive
 import scala.annotation.tailrec
 import scala.collection.immutable.Queue
 
-final class TurnLock(val guarded: Reactive) {
-  override def toString: String = s"Lock($guarded)"
+final class TurnLock() {
 
   /** this is guarded by our intrinsic lock */
   private var owner: AtomicReference[Key] = new AtomicReference[Key]()

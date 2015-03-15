@@ -223,7 +223,7 @@ class PessimisticTest extends AssertionsForJUnit {
       if (bl1(t)) {
         if (bl3(t)) {
           val res = il1(t)
-          assert(res === 11, "did not read old value")
+          assert(res === 11, "did not read old value, this may happen spouriosly, probably because of the timing issue in this test")
           res
         }
         else 37

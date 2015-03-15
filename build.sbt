@@ -59,12 +59,16 @@ sourceGenerators in Compile <+= sourceManaged in Compile map { dir =>
   val definitions = (1 to 22).map{ i =>
     val params = 1 to i map ("n" + _)
     val types = 1 to i map ("A" + _)
+    val readers = 1 to i map ("r" + _)
+    val readerDefs = readers zip params map { case (r, p) => s"val $r = $p.reader" } mkString "; "
     val signals = params zip types map {case (p, t) => s"$p: Stateful[$t]"}
     def sep(l: Seq[String]) = l.mkString(", ")
-    val getValues = params map (_ + ".get(t)")
-    s"""  def lift[${sep(types)}, B](${sep(signals)})(fun: (${sep(types)}) => B)(implicit maybe: Ticket): Signal[B] =
+    val getValues = readers map (_ + ".get(t)")
+    s"""  def lift[${sep(types)}, B](${sep(signals)})(fun: (${sep(types)}) => B)(implicit maybe: Ticket): Signal[B] = {
+       |    $readerDefs
        |    static(${sep(params)})(t => fun(${sep(getValues)}))
-     """.stripMargin
+       |  }
+       |""".stripMargin
   }
   IO.write(file,
   s"""package rescala.signals
@@ -77,7 +81,7 @@ sourceGenerators in Compile <+= sourceManaged in Compile map { dir =>
      |self: Signals.type =>
      |${definitions.mkString("\n")}
      |}
-   """.stripMargin)
+     |""".stripMargin)
   Seq(file)
 }
 

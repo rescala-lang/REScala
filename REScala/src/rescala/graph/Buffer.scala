@@ -1,6 +1,7 @@
 package rescala.graph
 
 import rescala.synchronization.{Key, ParRP, STMSync, TurnLock}
+import java.lang.ref.WeakReference
 import rescala.turns.Turn
 
 import scala.concurrent.stm.{InTxn, Ref}
@@ -20,7 +21,6 @@ object Buffer {
 trait Buffer[A] extends Committable {
   /** these methods are only used for initialisation and are unsafe to call when the reactive is in use */
   def initCurrent(value: A): Unit
-  def initStrategy(strategy: (A, A) => A): Unit
 
   def transform(f: (A) => A)(implicit turn: Turn): A
   def set(value: A)(implicit turn: Turn): Unit
@@ -35,10 +35,9 @@ final class SimpleBuffer[A](initialValue: A, initialStrategy: (A, A) => A, write
   var current: A = initialValue
   private var update: Option[A] = None
   private var owner: Turn = null
-  var commitStrategy: (A, A) => A = initialStrategy
+  private val commitStrategy: (A, A) => A = initialStrategy
 
   override def initCurrent(value: A): Unit = synchronized(current = value)
-  override def initStrategy(strategy: (A, A) => A): Unit = synchronized(commitStrategy = strategy)
 
 
   override def transform(f: (A) => A)(implicit turn: Turn): A = synchronized {
@@ -80,11 +79,10 @@ final class STMBuffer[A](initialValue: A, initialStrategy: (A, A) => A) extends 
 
   private val current: Ref[A] = Ref(initialValue)
   private val update: Ref[Option[A]] = Ref(None)
-  private var commitStrategy: (A, A) => A = initialStrategy
+  private val commitStrategy: (A, A) => A = initialStrategy
 
   /** these methods are only used for initialisation and are unsafe to call when the reactive is in use */
   override def initCurrent(value: A): Unit = current.single.set(value)
-  override def initStrategy(strategy: (A, A) => A): Unit = commitStrategy = strategy
 
   implicit def inTxn(implicit turn: Turn): InTxn = turn match {
     case stmTurn: STMSync => stmTurn.inTxn

@@ -3,21 +3,24 @@ package rescala
 import rescala.Signals.Impl.{makeDynamic, makeStatic}
 import rescala.graph.{DynamicReevaluation, Enlock, Globals, Pulse, Reactive, StaticReevaluation}
 import rescala.signals.GeneratedLift
-import rescala.turns.{Ticket, Turn}
+import rescala.turns.{Engine, Ticket, Turn}
 
 object Signals extends GeneratedLift {
 
   object Impl {
-    /** creates a signal that statically depends on the dependencies with a given initial value */
-    def makeStatic[T](dependencies: Set[Reactive], init: => T)(expr: (Turn, T) => T)(initialTurn: Turn) = initialTurn.create(dependencies.toSet) {
-      new Enlock(initialTurn.engine, dependencies) with Signal[T] with StaticReevaluation[T] {
-        pulses.initCurrent(Pulse.unchanged(init))
+    private class StaticSignal[T](engine: Engine[Turn], dependencies: Set[Reactive], init: => T, expr: (Turn, T) => T)
+      extends Enlock(engine, dependencies) with Signal[T] with StaticReevaluation[T] {
 
-        override def calculatePulse()(implicit turn: Turn): Pulse[T] = {
-          val currentValue = pulses.base.current.get
-          Pulse.diff(expr(turn, currentValue), currentValue)
-        }
+      pulses.initCurrent(Pulse.unchanged(init))
+
+      override def calculatePulse()(implicit turn: Turn): Pulse[T] = {
+        val currentValue = pulses.base.current.get
+        Pulse.diff(expr(turn, currentValue), currentValue)
       }
+    }
+    /** creates a signal that statically depends on the dependencies with a given initial value */
+    def makeStatic[T](dependencies: Set[Reactive], init: => T)(expr: (Turn, T) => T)(initialTurn: Turn): Signal[T] = initialTurn.create(dependencies) {
+      new StaticSignal(initialTurn.engine, dependencies, init, expr)
     }
 
     /** creates a dynamic signal */
@@ -29,11 +32,14 @@ object Signals extends GeneratedLift {
         }
       }
     }
+
   }
+
 
   /** creates a new static signal depending on the dependencies, reevaluating the function */
   def static[T](dependencies: Reactive*)(fun: Turn => T)(implicit ticket: Ticket): Signal[T] = ticket { initialTurn =>
-    makeStatic(dependencies.toSet, fun(initialTurn))((turn, _) => fun(turn))(initialTurn)
+    def ignore2[I, C, R](f: I => R): (I, C) => R = (t, _) => f(t)
+    makeStatic(dependencies.toSet, fun(initialTurn))(ignore2(fun))(initialTurn)
   }
 
   /** creates a signal that has dynamic dependencies (which are detected at runtime with Signal.apply(turn)) */
