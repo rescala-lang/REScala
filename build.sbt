@@ -1,29 +1,22 @@
-lazy val root = Project("root", file(".")).aggregate(rescala, tests)
+organization := "de.tuda.stg"
 
-lazy val rescala = Project("rescala", file("REScala"))
-  .settings(
-    scalaSource in Compile <<= baseDirectory {(base) => new File(base, "src")},
-    libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _))
+name := "rescala"
 
-lazy val tests = Project("rescala-tests", file("REScalaTests"))
-  .settings(
-    scalaSource in Test <<= baseDirectory {(base) => new File(base, "test")},
-    parallelExecution in Test := false,
-    libraryDependencies ++= (
-      "org.mockito" % "mockito-all" % "1.9.5" % "test" ::
-      "org.scalatest" %% "scalatest" % "2.2.1" % "test" ::
-      "com.novocode" % "junit-interface" % "0.10" % "test" ::
-      Nil)
-  )
-  .dependsOn(rescala)
+version := "0.0.0"
 
-organization in ThisBuild := "de.tuda.stg"
+scalaVersion := "2.11.2"
 
-version in ThisBuild := "0.0.0"
+libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _)
 
-scalaVersion in ThisBuild := "2.11.2"
+libraryDependencies ++= Seq(
+  "org.mockito" % "mockito-all" % "1.9.5" % "test",
+  "org.scalatest" %% "scalatest" % "2.2.1" % "test",
+  "com.novocode" % "junit-interface" % "0.10" % "test"
+)
 
-scalacOptions in ThisBuild ++= (
+parallelExecution in Test := false
+
+scalacOptions ++= (
   "-deprecation" ::
   "-encoding" :: "UTF-8" ::
   "-unchecked" ::
@@ -34,4 +27,3 @@ scalacOptions in ThisBuild ++= (
   "-Xlint" ::
   //"-language:postfixOps" ::
   Nil)
-
