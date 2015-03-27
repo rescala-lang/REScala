@@ -30,9 +30,6 @@ object Engines {
 
   def spinningWithBackoff(backOff: Int) = new Impl(new ParRP(backOff))
 
-  implicit val spinning: Engine[ParRP] = new Impl(new ParRP(backOff = -1))
-  implicit val spinningWait: Engine[ParRP] = new Impl(new ParRP(backOff = 0))
-
   implicit val synchron: Engine[NoLocking] = new Impl[NoLocking](new EngineReference(synchron) with NoLocking) {
     override def plan[R](i: Reactive*)(f: NoLocking => R): R = synchronized(super.plan(i: _*)(f))
   }
