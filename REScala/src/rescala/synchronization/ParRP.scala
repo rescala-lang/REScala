@@ -1,8 +1,8 @@
 package rescala.synchronization
 
 import rescala.graph.Reactive
-import rescala.propagation.PropagationImpl
-import rescala.turns.Engines
+import rescala.propagation.{LevelQueue, PropagationImpl}
+import rescala.turns.{Turn, Engines}
 import rescala.synchronization.ParRP.{Await, Retry, Done}
 
 import scala.annotation.tailrec
@@ -40,7 +40,7 @@ class ParRP(var backOff: Int) extends EngineReference[ParRP](Engines.spinningWit
 
   var currentBackOff = backOff
 
-  override def lockPhase(initialWrites: List[Reactive]): Unit = Keychains.lockReachable(initialWrites, acquireWrite)
+  override def lockPhase(initialWrites: List[Reactive]): Unit = lockReachable(initialWrites, acquireWrite)
 
   def acquireWrite(reactive: Reactive): Boolean =
     if (reactive.lock.tryLock(key) eq key) true
@@ -60,6 +60,21 @@ class ParRP(var backOff: Int) extends EngineReference[ParRP](Engines.spinningWit
       false
     }
 
+  /** lock all reactives reachable from the initial sources
+    * retry when acquire returns false */
+  def lockReachable(initial: List[Reactive], acquire: Reactive => Boolean)(implicit turn: Turn): Unit = {
+    val lq = new LevelQueue()
+    initial.foreach(lq.enqueue(-42))
+
+    lq.evaluateQueue { reactive =>
+      if (acquire(reactive))
+        reactive.outgoing.get.foreach(lq.enqueue(-42))
+      else {
+        lq.clear()
+        initial.foreach(lq.enqueue(-42))
+      }
+    }
+  }
 
   /** registering a dependency on a node we do not personally own does require some additional care.
     * we let the other turn update the dependency and admit the dependent into the propagation queue
@@ -133,5 +148,9 @@ private object ParRP {
   object Await extends Result[Nothing]
   object Retry extends Result[Nothing]
   case class Done[R](r: R) extends Result[R]
+
+
+
+
 
 }

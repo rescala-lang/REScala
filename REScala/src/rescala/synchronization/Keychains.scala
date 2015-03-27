@@ -1,9 +1,5 @@
 package rescala.synchronization
 
-import rescala.graph.Reactive
-import rescala.propagation.LevelQueue
-import rescala.turns.Turn
-
 import scala.annotation.tailrec
 
 object Keychains {
@@ -26,21 +22,5 @@ object Keychains {
     }
   }
 
-
-  /** lock all reactives reachable from the initial sources
-    * retry when acquire returns false */
-  def lockReachable(initial: List[Reactive], acquire: Reactive => Boolean)(implicit turn: Turn): Unit = {
-    val lq = new LevelQueue()
-    initial.foreach(lq.enqueue(-42))
-
-    lq.evaluateQueue { reactive =>
-      if (acquire(reactive))
-        reactive.outgoing.get.foreach(lq.enqueue(-42))
-      else {
-        lq.clear()
-        initial.foreach(lq.enqueue(-42))
-      }
-    }
-  }
 
 }
