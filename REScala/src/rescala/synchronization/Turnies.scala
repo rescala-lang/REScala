@@ -14,7 +14,7 @@ trait NothingSpecial extends TurnImpl {
 }
 
 class STMSync extends EngineReference[STMSync](Engines.STM) with NothingSpecial {
-  // this is a horrible idea
+  // this is unsafe when used improperly
   def inTxn: InTxn = atomic(identity)
 }
 
