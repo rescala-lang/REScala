@@ -9,7 +9,7 @@ import scala.annotation.tailrec
 
 class ParRP(var backOff: Int) extends EngineReference[ParRP](Engines.spinningWithBackoff(backOff)) with PropagationImpl {
 
-  override def toString: String = s"Prelock(${ key.id })"
+  override def toString: String = s"ParRP(${ key.id })"
 
   final val key: Key = new Key(this)
 
