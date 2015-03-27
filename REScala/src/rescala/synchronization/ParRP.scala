@@ -4,7 +4,7 @@ import rescala.graph.Reactive
 import rescala.propagation.PropagationImpl
 import rescala.turns.Engines
 
-class ParRP(var backOff: Int) extends EngineReference[ParRP](Engines.spinning) with PropagationImpl {
+class ParRP(var backOff: Int) extends EngineReference[ParRP](Engines.spinningWithBackoff(backOff)) with PropagationImpl {
 
   override def toString: String = s"Prelock(${ key.id })"
 
