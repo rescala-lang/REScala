@@ -8,12 +8,12 @@ import scala.concurrent.stm.{InTxn, atomic}
 
 abstract class EngineReference[T <: Turn](override val engine: Engine[T]) extends Turn
 
-trait NothingSpecial extends PropagationImpl {
+trait NoLocking extends PropagationImpl {
   override def lockPhase(initialWrites: List[Reactive]): Unit = ()
   override def realeasePhase(): Unit = ()
 }
 
-class STMSync extends EngineReference[STMSync](Engines.STM) with NothingSpecial {
+class STMSync extends EngineReference[STMSync](Engines.STM) with NoLocking {
   // this is unsafe when used improperly
   def inTxn: InTxn = atomic(identity)
 }
