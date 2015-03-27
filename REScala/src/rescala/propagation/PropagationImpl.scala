@@ -4,8 +4,8 @@ import rescala.graph.ReevaluationResult.{Dynamic, Static}
 import rescala.graph.{Committable, Reactive}
 import rescala.turns.Turn
 
-trait TurnImpl extends Turn {
-  implicit def currentTurn: TurnImpl = this
+trait PropagationImpl extends Turn {
+  implicit def currentTurn: PropagationImpl = this
 
   private var toCommit = Set[Committable]()
   private var observers = List.empty[() => Unit]

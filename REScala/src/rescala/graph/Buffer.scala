@@ -1,6 +1,6 @@
 package rescala.graph
 
-import rescala.synchronization.{Key, Prelock, STMSync, TurnLock}
+import rescala.synchronization.{Key, ParRP, STMSync, TurnLock}
 import rescala.turns.Turn
 
 import scala.concurrent.stm.{InTxn, Ref}
@@ -50,7 +50,7 @@ final class SimpleBuffer[A](initialValue: A, initialStrategy: (A, A) => A, write
   override def set(value: A)(implicit turn: Turn): Unit = synchronized {
     assert(owner == null || owner == turn, s"buffer owned by $owner written by $turn")
     turn match {
-      case pessimistic: Prelock =>
+      case pessimistic: ParRP =>
         val wlo: Option[Key] = Option(writeLock).map(_.getOwner)
         assert(wlo.fold(true)(_ eq pessimistic.key), s"buffer owned by $owner, controlled by $writeLock with owner ${ wlo.get } was written by $turn who locks with ${ pessimistic.key }, by now the owner ist ${ writeLock.getOwner }")
       case _ =>

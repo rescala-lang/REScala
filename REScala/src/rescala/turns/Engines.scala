@@ -1,8 +1,8 @@
 package rescala.turns
 
 import rescala.graph.{Buffer, Reactive, STMBuffer}
-import rescala.propagation.TurnImpl
-import rescala.synchronization.{EngineReference, NothingSpecial, STMSync, SpinningInitPessimistic, TurnLock}
+import rescala.propagation.PropagationImpl
+import rescala.synchronization.{EngineReference, NothingSpecial, STMSync, ParRP, TurnLock}
 
 import scala.concurrent.stm.atomic
 import scala.util.DynamicVariable
@@ -27,10 +27,10 @@ object Engines {
     override def buffer[A](default: A, commitStrategy: (A, A) => A, writeLock: TurnLock): Buffer[A] = new STMBuffer[A](default, commitStrategy)
   }
 
-  def spinningWithBackoff(backOff: Int) = new Impl(new SpinningInitPessimistic(backOff))
+  def spinningWithBackoff(backOff: Int) = new Impl(new ParRP(backOff))
 
-  implicit val spinning: Engine[SpinningInitPessimistic] = new Impl(new SpinningInitPessimistic(backOff = -1))
-  implicit val spinningWait: Engine[SpinningInitPessimistic] = new Impl(new SpinningInitPessimistic(backOff = 0))
+  implicit val spinning: Engine[ParRP] = new Impl(new ParRP(backOff = -1))
+  implicit val spinningWait: Engine[ParRP] = new Impl(new ParRP(backOff = 0))
 
   implicit val synchron: Engine[NothingSpecial] = new Impl[NothingSpecial](new EngineReference(synchron) with NothingSpecial) {
     override def plan[R](i: Reactive*)(f: NothingSpecial => R): R = synchronized(super.plan(i: _*)(f))
@@ -38,7 +38,7 @@ object Engines {
   implicit val unmanaged: Engine[NothingSpecial] = new Impl[NothingSpecial](new EngineReference(unmanaged) with NothingSpecial)
 
 
-  class Impl[TImpl <: TurnImpl](makeTurn: => TImpl) extends Engine[TImpl] {
+  class Impl[TImpl <: PropagationImpl](makeTurn: => TImpl) extends Engine[TImpl] {
 
     val currentTurn: DynamicVariable[Option[TImpl]] = new DynamicVariable[Option[TImpl]](None)
 
