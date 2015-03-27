@@ -64,7 +64,7 @@ class ParRP(var backOff: Int) extends EngineReference[ParRP](Engines.spinningWit
   /** registering a dependency on a node we do not personally own does require some additional care.
     * we let the other turn update the dependency and admit the dependent into the propagation queue
     * so that it gets updated when that turn continues
-    * the responsibility for correcly passing the locks is moved to the commit phase */
+    * the responsibility for correctly passing the locks is moved to the commit phase */
   override def register(sink: Reactive)(source: Reactive): Unit = {
     val owner = acquireShared(source)
     if (owner ne key) {
