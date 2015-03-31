@@ -58,23 +58,25 @@ object Engines {
       * - run the commit phase
       *   - do cleanups on the reactives, make values permanent and so on, the turn is still valid during this phase
       * - run the observer phase
-      * - run registered observers, the turn is no longer valid but the locks are still held.
+      *   - run registered observers, the turn is no longer valid but the locks are still held.
       * - run the release phase
-      *   - this must aways run, even in the case that something above fails. it should do cleanup and free any locks to avoid starvation.
+      *   - this must always run, even in the case that something above fails. it should do cleanup and free any locks to avoid starvation.
       * - run the party! phase
       *   - not yet implemented
       * */
     override def plan[Res](initialWrites: Reactive*)(admissionPhase: TImpl => Res): Res = {
-      implicit class sequentialLeftResult[R](result: R) {def ~<(sideEffects_! : Unit): R = result }
+ 
       val turn = makeTurn
       try {
-        currentTurn.withValue(Some(turn)) {
+        val turnResult = currentTurn.withValue(Some(turn)) {
           turn.lockPhase(initialWrites.toList)
-          admissionPhase(turn) ~< {
-            turn.propagationPhase()
-            turn.commitPhase()
-          }
-        } ~< turn.observerPhase()
+          val admissionResult = admissionPhase(turn)
+          turn.propagationPhase()
+          turn.commitPhase()
+          admissionResult
+        }
+        turn.observerPhase()
+        turnResult
       }
       catch {
         case e: Throwable =>
