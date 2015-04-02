@@ -10,11 +10,15 @@ final class TurnLock(val guarded: Reactive) {
   /** this is guarded by our intrinsic lock */
   private var owner: Key = null
   private var shared: Queue[Key] = Queue()
+  private var written = false
 
   def getOwner: Key = synchronized(owner)
 
   /** returns true if key owns the write lock */
   def isOwner(key: Key): Boolean = synchronized(owner eq key)
+  
+  def markWritten() = written = true
+  def isWritten() = written
 
   /**
    * locks this if it is free, returns the current owner (which is key, if locking succeeded)
