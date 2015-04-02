@@ -10,12 +10,12 @@ trait InterturnDependencyChanges extends Turn {
     * so that it gets updated when that turn continues
     * the responsibility for correcly passing the locks is moved to the commit phase */
   abstract override def register(sink: Reactive)(source: Reactive): Unit = {
-    val owner = AcquireShared(source, key)
-    if (owner ne key) {
+    val owner = AcquireShared(source, this)
+    if (owner ne this) {
       if (!source.outgoing.get.contains(sink)) {
-        owner.turn.register(sink)(source)
-        owner.turn.admit(sink)
-        key.lockKeychain(key.keychain.addFallthrough(owner))
+        owner.register(sink)(source)
+        owner.admit(sink)
+        lockKeychain(this.keychain.addFallthrough(owner))
       }
     }
     else {
@@ -25,11 +25,11 @@ trait InterturnDependencyChanges extends Turn {
 
   /** this is for cases where we register and then unregister the same dependency in a single turn */
   abstract override def unregister(sink: Reactive)(source: Reactive): Unit = {
-    val owner = AcquireShared(source, key)
-    if (owner ne key) {
-      owner.turn.unregister(sink)(source)
-      key.lockKeychain(key.keychain.removeFallthrough(owner))
-      if (!sink.incoming(this).exists(_.lock.isOwner(owner))) owner.turn.forget(sink)
+    val owner = AcquireShared(source, this)
+    if (owner ne this) {
+      owner.unregister(sink)(source)
+      lockKeychain(keychain.removeFallthrough(owner))
+      if (!sink.incoming(this).exists(_.lock.isOwner(owner))) owner.forget(sink)
     }
     else super.unregister(sink)(source)
   }

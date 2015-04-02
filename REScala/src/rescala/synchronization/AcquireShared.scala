@@ -1,15 +1,16 @@
 package rescala.synchronization
 
 import rescala.graph.Reactive
+import rescala.turns.Turn
 
 import scala.annotation.tailrec
 
 object AcquireShared {
 
-  def apply(reactive: Reactive, key: Key): Key = apply(reactive.lock, key)
+  def apply(reactive: Reactive, key: Turn): Turn = apply(reactive.lock, key)
 
   @tailrec
-  def apply(lock: TurnLock, requester: Key): Key = {
+  def apply(lock: TurnLock, requester: Turn): Turn = {
     val oldOwner = lock.tryLock(requester)
 
     val res =

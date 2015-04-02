@@ -5,9 +5,7 @@ import rescala.propagation.TurnImpl
 
 trait Prelock extends TurnImpl with InterturnDependencyChanges {
 
-  override def toString: String = s"Prelock(${ key.id })"
-
-  final val key: Key = new Key(this)
+  override def toString: String = s"Prelock(${ id })"
 
   final val thread = Thread.currentThread().getName
 
@@ -22,15 +20,15 @@ trait Prelock extends TurnImpl with InterturnDependencyChanges {
   override def create[T <: Reactive](dependencies: Set[Reactive], dynamic: Boolean)(f: => T): T = {
     dependencies.foreach(accessDynamic)
     val reactive = f
-    val owner = reactive.lock.tryLock(key)
-    assert(owner eq key, s"$this failed to acquire lock on newly created reactive $reactive")
+    val owner = reactive.lock.tryLock(this)
+    assert(owner eq this, s"$this failed to acquire lock on newly created reactive $reactive")
     super.create(dependencies, dynamic)(reactive)
   }
 
   /** this is called after the turn has finished propagating, but before handlers are executed */
-  override def realeasePhase(): Unit = key.releaseAll()
+  override def realeasePhase(): Unit = releaseAll()
 
   /** allow turn to handle dynamic access to reactives */
-  override def accessDynamic(dependency: Reactive): Unit = AcquireShared(dependency, key)
+  override def accessDynamic(dependency: Reactive): Unit = AcquireShared(dependency, this)
 }
 

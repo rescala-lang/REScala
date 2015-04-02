@@ -25,14 +25,14 @@ class SpinningInitPessimistic(var backOff: Int) extends EngineReference[Spinning
   override def lockPhase(initialWrites: List[Reactive]): Unit = Keychains.lockReachable(initialWrites, acquireWrite)
 
   def acquireWrite(reactive: Reactive): Boolean =
-    if (reactive.lock.tryLock(key) eq key) true
+    if (reactive.lock.tryLock(this) eq this) true
     else {
-      key.lockKeychain {
-        key.releaseAll()
-        key.keychain = new Keychain(key)
+      lockKeychain {
+        releaseAll()
+        keychain = new Keychain(this)
       }
       if (currentBackOff == 0) {
-        AcquireShared(reactive, key)
+        AcquireShared(reactive, this)
         backOff /= 2
         currentBackOff = backOff
       }
