@@ -2,6 +2,8 @@ package rescala
 
 import rescala.graph.{Reactive, Enlock, ReevaluationResult, Pulse}
 import rescala.turns.{Engine, Turn}
+import rescala.graph.StatefulImpl
+import rescala.graph.PulsingImpl
 
 sealed trait Source[T] {
   def admit(value: T)(implicit turn: Turn): Unit
@@ -10,7 +12,7 @@ sealed trait Source[T] {
 /**
  * An implementation of an imperative event
  */
-final class Evt[T]()(engine: Engine[Turn]) extends Enlock(engine) with Event[T] with Source[T] {
+final class Evt[T]()(engine: Engine[Turn]) extends PulsingImpl[T](engine) with Event[T] with Source[T] {
 
   /** Trigger the event */
   def apply(value: T)(implicit fac: Engine[Turn]): Unit = fac.plan(this) { admit(value)(_) }
@@ -32,8 +34,8 @@ object Evt {
 
 
 /** A root Reactive value without dependencies which can be set */
-final class Var[T](initval: T)(engine: Engine[Turn]) extends Enlock(engine) with Signal[T] with Source[T] {
-  pulses.initCurrent(Pulse.unchanged(initval))
+final class Var[T](initval: T)(engine: Engine[Turn]) extends StatefulImpl[T](engine) with Signal[T] with Source[T] {
+  stableFrame.pulses.initCurrent(Pulse.unchanged(initval))
 
   def update(value: T)(implicit fac: Engine[Turn]): Unit = set(value)
   def set(value: T)(implicit fac: Engine[Turn]): Unit = fac.plan(this) { admit(value)(_) }

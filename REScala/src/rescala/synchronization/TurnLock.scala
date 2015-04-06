@@ -15,7 +15,9 @@ final class TurnLock(val guarded: Reactive) {
   def getOwner: Turn = synchronized(owner)
 
   /** returns true if key owns the write lock */
+
   def isOwner(key: Turn): Boolean = synchronized(owner eq key)
+
 
   /**
    * locks this if it is free, returns the current owner (which is key, if locking succeeded)

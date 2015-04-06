@@ -19,7 +19,7 @@ case class DepDiff(novel: Set[Reactive], old: Set[Reactive]) {
 trait StaticReevaluation[+P] {
   this: Pulsing[P] =>
 
-  protected def staticIncoming: Set[Reactive]
+  protected val staticIncoming: Set[Reactive]
   override protected[rescala] def incoming(implicit turn: Turn): Set[Reactive] = staticIncoming
 
   /** side effect free calculation of the new pulse for the current turn */

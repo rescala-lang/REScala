@@ -41,5 +41,4 @@ class SpinningInitPessimistic(var backOff: Int) extends EngineReference[Spinning
       }
       false
     }
-
 }

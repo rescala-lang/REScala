@@ -1,22 +1,91 @@
 package rescala.graph
 
 import rescala.graph.Pulse.{Diff, NoChange}
-import rescala.synchronization.TurnLock
+import rescala.synchronization.{TurnLock}
 import rescala.turns.{Engine, Ticket, Turn}
+import scala.collection.immutable.Queue
+import scala.annotation.tailrec
 
 /** A Reactive is something that can be reevaluated */
 trait Reactive {
+  protected[this] type D <: ReactiveTurnData;
   final override val hashCode: Int = Globals.nextID().hashCode()
 
-  protected[rescala] def lock: TurnLock
-
   protected[rescala] def engine: Engine[Turn]
+  
+   protected[rescala] def lock: TurnLock 
+  
+  protected def initialStableFrame : D;
+  protected def newFrameFrom(turn: Turn, other : D) : D;
+  private [rescala] var stableFrame : D = initialStableFrame
+  private[rescala] var pipelineFrames : Queue[D] = Queue()
 
-  final private[rescala] val level: Buffer[Int] = engine.buffer(0, math.max, lock)
-
-  final private[rescala] val outgoing: Buffer[Set[Reactive]] = engine.buffer(Set(), Buffer.commitAsIs, lock)
-
-  protected[rescala] def incoming(implicit turn: Turn): Set[Reactive]
+  final private[rescala] def level (implicit turn: Turn) = frame(_.level)
+  final private[rescala] def outgoing (implicit turn: Turn) = frame(_.outgoing)
+  protected[rescala] def incoming(implicit turn: Turn) = frame(_.incoming)
+  
+  // Does pipelining in this way remove STM support? If yes, is that a problem if 
+  // we know now, that it is not that useful?
+  
+  // TODO add synchronization for thread safe access to queue
+  
+  // Locking phase as usual, but reactives can be locked if current frame is written
+  //   In the locking phase, after all locks could be gained, insert new frames for each
+  //   involved reactive => other turns cannot lock them until the frames were set to be written
+  //   
+  /*
+  protected [rescala] def moveFrame(currentTurn : Turn, before : Turn) : Unit = {
+    val currentFrame = frame()(currentTurn)
+    @tailrec def moveFrameImpl(queue: Queue[D]) : Queue[D] = queue match{
+      case head :+ rest =>
+        if (head == before)
+          currentFrame :+ (head :+ moveFrameImpl(rest))
+        else if (head == currentFrame)
+          moveFrameImpl(rest)
+        else
+          head :+ moveFrameImpl(rest)
+      case Queue() => Queue()
+    }
+  }*/
+  
+  protected def frame[T]( f : D => T = {x:D => x})( implicit turn : Turn) : T = {
+    pipelineFrames.find { x => x.turn.get eq turn} match {
+      case Some(d) => f(d)
+      case None => throw new AssertionError(s"No Data for turn $turn at node $this")
+    }
+  }
+  
+  private def createFrame(turn : Turn) : Unit = {
+    val latestFrame = if (pipelineFrames.isEmpty)
+      stableFrame
+    else
+      pipelineFrames.last
+    val newFrame = newFrameFrom(turn, latestFrame)
+    pipelineFrames = pipelineFrames :+ newFrame
+  }
+  
+  // If want to omit the buffers in the turn data (because the previous data is contained
+  // in the frame before), I can only remove the head turn in the queue and need to remove
+  // other turns only if they get head in the queue
+  // Then I need to store in the Turn whether it is completed
+  
+  private def finishTurn( turn : Turn) : Unit = {
+    def removeTurn (queue : Queue[D]) : Queue[D] = {
+      if (queue.isEmpty) {
+        queue
+      } else {
+        val head = queue.head
+        if (head.turn.get eq turn)
+          queue
+        else if (!head.isWritten()) 
+          throw new AssertionError("A turn could not be added if any preceeding has not written")
+        else
+          head +: removeTurn(queue)
+      }
+    }
+    pipelineFrames = removeTurn(pipelineFrames)
+  }
+  
 
   /** called when it is this events turn to be evaluated
     * (head of the evaluation queue) */
@@ -32,24 +101,62 @@ trait Reactive {
 abstract class Enlock(final override protected[rescala] val engine: Engine[Turn],
                       knownDependencies: Set[Reactive] = Set.empty) extends Reactive {
   final override protected[rescala] val lock: TurnLock =
-    if (knownDependencies.size == 1) knownDependencies.head.lock
-    else new TurnLock(this)
+    if (knownDependencies.size == 1)
+       knownDependencies.head.lock
+    else 
+       new TurnLock(this)
 
-  def staticIncoming: Set[Reactive] = knownDependencies
+  
+  val staticIncoming: Set[Reactive] = knownDependencies
+}
+
+abstract class ReactiveImpl(engine: Engine[Turn],
+                      knownDependencies: Set[Reactive] = Set.empty)
+   extends Enlock(engine, knownDependencies) {
+  
+  protected [this] override type D = ReactiveTurnData
+  
+  protected override def initialStableFrame : ReactiveTurnData = {
+    new ReactiveTurnData(None, this, knownDependencies);
+  }
+  
+  protected override def newFrameFrom(turn: Turn, other: ReactiveTurnData) : ReactiveTurnData = {
+    new ReactiveTurnData(Some(turn), this, 
+        engine.buffer(other.level.get(turn), math.max, lock),
+        engine.buffer(other.outgoing.get(turn), Buffer.commitAsIs, lock),
+        other.incoming)
+  }
+  
 }
 
 
 /** A node that has nodes that depend on it */
 trait Pulsing[+P] extends Reactive {
-  final protected[this] val pulses: Buffer[Pulse[P]] = engine.buffer(Pulse.none, Buffer.transactionLocal, lock)
-
-  final def pulse(implicit turn: Turn): Pulse[P] = pulses.get
+  protected [this] override type D <:PulsingTurnData[P]
+  final def pulse(implicit turn: Turn): Pulse[P] = frame(_.pulses).get
+  protected[this] def pulses(implicit turn:Turn): Buffer[Pulse[P]] = frame(_.pulses)
 }
+
+abstract class PulsingImpl[+T](engine: Engine[Turn], knownDependencies: Set[Reactive] = Set.empty) 
+    extends Enlock(engine, knownDependencies) with Pulsing[T] {
+    protected [this] override type D = PulsingTurnData[T]
+    protected [this] override def initialStableFrame : PulsingTurnData[T] = {
+      new PulsingTurnData(None, this, knownDependencies)
+    }
+    protected [this] override def newFrameFrom(turn : Turn, other : PulsingTurnData[T]) : PulsingTurnData[T] = {
+      val newPulseBuffer = engine.buffer(other.pulses.get(turn), Buffer.transactionLocal[Pulse[T]], lock)
+      new PulsingTurnData[T](Some(turn), this, 
+          engine.buffer(other.level.get(turn), math.max,lock),
+          engine.buffer(other.outgoing.get(turn), Buffer.commitAsIs,lock),
+          other.incoming,
+          newPulseBuffer)
+    }
+  }
 
 
 /** a node that has a current state */
 trait Stateful[+A] extends Pulsing[A] {
-  pulses.initStrategy(Buffer.keepPulse)
+  protected [this] override type D <:StatefulTurnData[A]
 
   // only used inside macro and will be replaced there
   final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")
@@ -68,4 +175,20 @@ trait Stateful[+A] extends Pulsing[A] {
     case NoChange(None) => throw new IllegalStateException("stateful reactive has never pulsed")
   }
 }
+
+abstract class StatefulImpl[+T](engine: Engine[Turn], knownDependencies: Set[Reactive] = Set.empty) 
+    extends Enlock(engine, knownDependencies) with Stateful[T] {
+    protected [this] override type D = StatefulTurnData[T]
+    protected [this] override def initialStableFrame : StatefulTurnData[T] = {
+      new StatefulTurnData(None, this, knownDependencies)
+    }
+    protected [this] override def newFrameFrom(turn : Turn, other : StatefulTurnData[T]) : StatefulTurnData[T] = {
+      val newPulseBuffer = engine.buffer(other.pulses.get(turn), Buffer.transactionLocal[Pulse[T]], lock)
+      new StatefulTurnData[T](Some(turn), this, 
+          engine.buffer(other.level.get(turn), math.max,lock),
+          engine.buffer(other.outgoing.get(turn), Buffer.commitAsIs,lock),
+          other.incoming,
+          newPulseBuffer)
+    }
+  }
 

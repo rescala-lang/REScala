@@ -1,17 +1,23 @@
 package rescala
 
 import rescala.graph.Pulse.{Diff, NoChange}
-import rescala.graph.{Enlock, DynamicReevaluation, Pulse, Pulsing, Reactive, StaticReevaluation}
+import rescala.graph.{Enlock, DynamicReevaluation, Pulse, Pulsing, PulsingImpl, Reactive, StaticReevaluation}
 import rescala.turns.{Ticket, Turn}
+import rescala.graph.StatefulTurnData
+import rescala.graph.Buffer
+import rescala.turns.Engine
+import rescala.graph.PulsingTurnData
 
 
 object Events {
 
+  
+  
   /** the basic method to create static events */
   def static[T](name: String, dependencies: Reactive*)(calculate: Turn => Pulse[T])(implicit ticket: Ticket): Event[T] = ticket { initTurn =>
     val dependencySet = dependencies.toSet
     initTurn.create(dependencySet) {
-      new Enlock(initTurn.engine, dependencySet) with Event[T] with StaticReevaluation[T] {
+      new PulsingImpl(initTurn.engine, dependencySet) with Event[T] with StaticReevaluation[T] {
         override def calculatePulse()(implicit turn: Turn): Pulse[T] = calculate(turn)
         override def toString = name
       }
@@ -71,7 +77,7 @@ object Events {
   /** A wrapped event inside a signal, that gets "flattened" to a plain event node */
   def wrapped[T](wrapper: Signal[Event[T]])(implicit ticket: Ticket): Event[T] = ticket { creationTurn =>
     creationTurn.create(Set[Reactive](wrapper, wrapper.get(creationTurn))) {
-      new Enlock(creationTurn.engine) with Event[T] with DynamicReevaluation[T] {
+      new PulsingImpl[T](creationTurn.engine) with Event[T] with DynamicReevaluation[T] {
         override def calculatePulseDependencies(implicit turn: Turn): (Pulse[T], Set[Reactive]) = {
           val inner = wrapper.get
           turn.accessDynamic(inner)
