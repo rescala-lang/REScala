@@ -5,8 +5,8 @@ import rescala.turns.Turn
 import rescala.propagation.TurnImpl
 import rescala.graph.Committable
 import rescala.propagation.LevelQueue
-import rescala.graph.ReactiveTurnData
-import rescala.graph.ReactiveTurnData
+import rescala.graph.ReactiveFrame
+import rescala.graph.ReactiveFrame
 
 class PipeliningTurn(override val engine: PipelineEngine) extends TurnImpl {
 
@@ -28,7 +28,7 @@ class PipeliningTurn(override val engine: PipelineEngine) extends TurnImpl {
   }
 
   private def createFrameForReactive(reactive: Reactive): Unit = {
-    reactive.createFrame { d: ReactiveTurnData =>
+    reactive.createFrame { d: ReactiveFrame =>
       {
         val otherTurn = d.turn.asInstanceOf[PipeliningTurn]
         if (engine.canWaitOn(this, otherTurn)) {
@@ -48,6 +48,6 @@ class PipeliningTurn(override val engine: PipelineEngine) extends TurnImpl {
     lq.evaluateQueue { createFrameForReactive(_) }
   }
   
-  override def realeasePhase() : Unit = {}
+  override def releasePhase(): Unit = {}
 
 }

@@ -6,7 +6,7 @@ import rescala.signals.GeneratedLift
 import rescala.turns.{Ticket, Turn}
 import rescala.turns.Engine
 import rescala.graph.{Stateful, StatefulImpl}
-import rescala.graph.StatefulTurnData
+import rescala.graph.StatefulFrame
 import rescala.graph.Buffer
 
 object Signals extends GeneratedLift {

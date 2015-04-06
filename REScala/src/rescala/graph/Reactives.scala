@@ -24,14 +24,14 @@ abstract class ReactiveImpl(engine: Engine[Turn],
                       knownDependencies: Set[Reactive] = Set.empty)
    extends Enlock(engine, knownDependencies) {
   
-  protected [this] override type D = ReactiveTurnData
+  protected [this] override type Frame = ReactiveFrame
   
-  protected override def initialStableFrame : ReactiveTurnData = {
-    new ReactiveTurnData(null, this, knownDependencies);
+  protected override def initialStableFrame : ReactiveFrame = {
+    new ReactiveFrame(null, this, knownDependencies);
   }
   
-  protected override def newFrameFrom(turn: Turn, other: ReactiveTurnData) : ReactiveTurnData = {
-    new ReactiveTurnData(turn, this, 
+  protected override def newFrameFrom(turn: Turn, other: ReactiveFrame) : ReactiveFrame = {
+    new ReactiveFrame(turn, this, 
         engine.buffer(other.level.get(turn), math.max, lock),
         engine.buffer(other.outgoing.get(turn), Buffer.commitAsIs, lock),
         other.incoming)
@@ -44,13 +44,13 @@ abstract class ReactiveImpl(engine: Engine[Turn],
  */
 abstract class PulsingImpl[+T](engine: Engine[Turn], knownDependencies: Set[Reactive] = Set.empty) 
     extends Enlock(engine, knownDependencies) with Pulsing[T] {
-    protected [this] override type D = PulsingTurnData[T]
-    protected [this] override def initialStableFrame : PulsingTurnData[T] = {
-      new PulsingTurnData(null, this, knownDependencies)
+    protected [this] override type Frame = PulsingFrame[T]
+    protected [this] override def initialStableFrame : PulsingFrame[T] = {
+      new PulsingFrame(null, this, knownDependencies)
     }
-    protected [this] override def newFrameFrom(turn : Turn, other : PulsingTurnData[T]) : PulsingTurnData[T] = {
+    protected [this] override def newFrameFrom(turn : Turn, other : PulsingFrame[T]) : PulsingFrame[T] = {
       val newPulseBuffer = engine.buffer(other.pulses.get(turn), Buffer.transactionLocal[Pulse[T]], lock)
-      new PulsingTurnData[T](turn, this, 
+      new PulsingFrame[T](turn, this, 
           engine.buffer(other.level.get(turn), math.max,lock),
           engine.buffer(other.outgoing.get(turn), Buffer.commitAsIs,lock),
           other.incoming,
@@ -64,13 +64,13 @@ abstract class PulsingImpl[+T](engine: Engine[Turn], knownDependencies: Set[Reac
  */
 abstract class StatefulImpl[+T](engine: Engine[Turn], knownDependencies: Set[Reactive] = Set.empty) 
     extends Enlock(engine, knownDependencies) with Stateful[T] {
-    protected [this] override type D = StatefulTurnData[T]
-    protected [this] override def initialStableFrame : StatefulTurnData[T] = {
-      new StatefulTurnData(null, this, knownDependencies)
+    protected [this] override type Frame = StatefulFrame[T]
+    protected [this] override def initialStableFrame : StatefulFrame[T] = {
+      new StatefulFrame(null, this, knownDependencies)
     }
-    protected [this] override def newFrameFrom(turn : Turn, other : StatefulTurnData[T]) : StatefulTurnData[T] = {
+    protected [this] override def newFrameFrom(turn : Turn, other : StatefulFrame[T]) : StatefulFrame[T] = {
       val newPulseBuffer = engine.buffer(other.pulses.get(turn), Buffer.transactionLocal[Pulse[T]], lock)
-      new StatefulTurnData[T](turn, this, 
+      new StatefulFrame[T](turn, this, 
           engine.buffer(other.level.get(turn), math.max,lock),
           engine.buffer(other.outgoing.get(turn), Buffer.commitAsIs,lock),
           other.incoming,

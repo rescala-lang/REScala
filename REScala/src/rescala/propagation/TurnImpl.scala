@@ -70,6 +70,6 @@ trait TurnImpl extends Turn {
 
   def observerPhase() = observers.foreach(_.apply())
 
-  def realeasePhase(): Unit
+  def releasePhase(): Unit
 
 }

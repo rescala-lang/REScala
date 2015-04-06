@@ -10,7 +10,7 @@ import scala.collection.immutable.Queue
 /** A Reactive is something that can be reevaluated */
 trait Reactive extends Framed {
   
-  protected[this] override type D <: ReactiveTurnData
+  protected[this] type Frame <: ReactiveFrame
   
   final override val hashCode: Int = Globals.nextID().hashCode()
 
@@ -36,7 +36,7 @@ trait Reactive extends Framed {
 
 /** A node that has nodes that depend on it */
 trait Pulsing[+P] extends Reactive {
-  protected [this] override type D <:PulsingTurnData[P]
+  protected [this] type Frame <:PulsingFrame[P]
   final def pulse(implicit turn: Turn): Pulse[P] = frame(_.pulses).get
   protected[this] def pulses(implicit turn:Turn): Buffer[Pulse[P]] = frame(_.pulses)
 }
@@ -44,7 +44,7 @@ trait Pulsing[+P] extends Reactive {
 
 /** a node that has a current state */
 trait Stateful[+A] extends Pulsing[A] {
-  protected [this] override type D <:StatefulTurnData[A]
+  protected [this] type Frame <:StatefulFrame[A]
 
   // only used inside macro and will be replaced there
   final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")

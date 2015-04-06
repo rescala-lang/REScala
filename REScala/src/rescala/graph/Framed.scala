@@ -4,12 +4,12 @@ import rescala.turns.Turn
 import scala.collection.immutable.Queue
 
 trait Framed {
-  protected[this]type D <: TurnData;
+  protected[this] type Frame <: TurnFrame;
 
-  protected[this] def initialStableFrame: D
-  protected[this] def newFrameFrom(turn: Turn, other: D): D
-  protected[this] var stableFrame: D = initialStableFrame
-  protected[this] var pipelineFrames: Queue[D] = Queue()
+  protected[this] def initialStableFrame: Frame
+  protected[this] def newFrameFrom(turn: Turn, other: Frame): Frame
+  protected[this] var stableFrame: Frame = initialStableFrame
+  protected[this] var pipelineFrames: Queue[Frame] = Queue()
 
   // Does pipelining in this way remove STM support? If yes, is that a problem if 
   // we know now, that it is not that useful?
@@ -35,19 +35,19 @@ trait Framed {
     }
   }*/
 
-  private def findFrame[T](find: Option[D] => T)(implicit turn: Turn): T = {
+  private def findFrame[T](find: Option[Frame] => T)(implicit turn: Turn): T = {
     val selectedFrame = pipelineFrames.find { x => x.turn eq turn }
     find(selectedFrame)
   }
 
-  private def findFrame[T](found: D => T, notFound: => T)(implicit turn: Turn): T = {
+  private def findFrame[T](found: Frame => T, notFound: => T)(implicit turn: Turn): T = {
     findFrame(_ match {
       case Some(d) => found(d)
       case None    => notFound
     })
   }
 
-  protected def frame[T](f: D => T = { x: D => x })(implicit turn: Turn): T = {
+  protected def frame[T](f: Frame => T = { x: Frame => x })(implicit turn: Turn): T = {
     // f(stableFrame) is short fix for tests
     // an assertion error should be there
     findFrame(f(_), f(stableFrame))
@@ -57,8 +57,8 @@ trait Framed {
     findFrame(_ => true, false)
   }
 
-  protected[rescala] def createFrame (allowedAfterFrame: D => Boolean = { x: D => true }) (implicit turn: Turn) : Unit = {
-    def insertFrame(queue: Queue[D], lastElem: D): Queue[D] = {
+  protected[rescala] def createFrame (allowedAfterFrame: Frame => Boolean = { x: Frame => true }) (implicit turn: Turn) : Unit = {
+    def insertFrame(queue: Queue[Frame], lastElem: Frame): Queue[Frame] = {
       if (queue.isEmpty) {
         Queue(newFrameFrom(turn, lastElem))
       } else {

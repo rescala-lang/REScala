@@ -10,7 +10,7 @@ abstract class EngineReference[T <: Turn](override val engine: Engine[T]) extend
 
 trait NothingSpecial extends TurnImpl {
   override def lockPhase(initialWrites: List[Reactive]): Unit = ()
-  override def realeasePhase(): Unit = ()
+  override def releasePhase(): Unit = ()
 }
 
 class STMSync extends EngineReference[STMSync](Engines.STM) with NothingSpecial {
