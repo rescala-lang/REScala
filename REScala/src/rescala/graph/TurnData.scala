@@ -10,10 +10,14 @@ class TurnData(_turn: Option[Turn], _written : Boolean) {
   }
   
   private var written = _written;
+  private var toRemove = false;
   
   protected[rescala] def turn: Option[Turn] = _turn;
   
   protected[rescala] def isWritten() : Boolean = written
+  protected[rescala] def markWritten() = written = true
+  protected[rescala] def shouldBeRemoved() = toRemove
+  protected[rescala] def markToBeRemoved() = toRemove = true
   
   
   
