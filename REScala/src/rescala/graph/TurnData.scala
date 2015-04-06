@@ -3,16 +3,12 @@ package rescala.graph
 import rescala.synchronization.{TurnLock}
 import rescala.turns.Turn
 
-class TurnData(_turn: Option[Turn], _written : Boolean) {
-
-  def this(_turn : Option[Turn]) {
-    this(_turn, false)
-  }
+class TurnData(_turn: Turn) {
   
-  private var written = _written;
+  private var written = false;
   private var toRemove = false;
   
-  protected[rescala] def turn: Option[Turn] = _turn;
+  protected[rescala] def turn: Turn = _turn;
   
   protected[rescala] def isWritten() : Boolean = written
   protected[rescala] def markWritten() = written = true
@@ -24,14 +20,14 @@ class TurnData(_turn: Option[Turn], _written : Boolean) {
 }
 
 class ReactiveTurnData(
-    _turn : Option[Turn], 
+    _turn : Turn, 
     r : Reactive, 
     _level : Buffer[Int] , 
     _outgoing: Buffer[Set[Reactive]],
     _incoming: Set[Reactive]) 
   extends TurnData(_turn) {
  
-  def this (_turn: Option[Turn], r:Reactive, _incoming:Set[Reactive]) {
+  def this (_turn: Turn, r:Reactive, _incoming:Set[Reactive]) {
     this(_turn, r, r.engine.buffer(0, math.max, r.lock), r.engine.buffer(Set(), Buffer.commitAsIs, r.lock), _incoming)
   }
 
@@ -45,7 +41,7 @@ class ReactiveTurnData(
 }
 
 class PulsingTurnData[P](
-    _turn : Option[Turn], 
+    _turn : Turn, 
     p : Pulsing[P], 
     _level : Buffer[Int] , 
     _outgoing: Buffer[Set[Reactive]],
@@ -53,7 +49,7 @@ class PulsingTurnData[P](
      _pulses: Buffer[Pulse[P]]) 
   extends ReactiveTurnData(_turn, p, _level, _outgoing, _incoming) {
   
-  def this (_turn: Option[Turn], p : Pulsing[P], _incoming:Set[Reactive]) {
+  def this (_turn: Turn, p : Pulsing[P], _incoming:Set[Reactive]) {
     this(_turn, p, p.engine.buffer(0, math.max, p.lock), p.engine.buffer(Set(), Buffer.commitAsIs, p.lock), _incoming,p.engine.buffer(Pulse.none, Buffer.transactionLocal, p.lock))
   }
   
@@ -61,7 +57,7 @@ class PulsingTurnData[P](
 }
 
 class StatefulTurnData[A](
-    _turn : Option[Turn], 
+    _turn : Turn, 
     p : Stateful[A], 
     _level : Buffer[Int] , 
     _outgoing: Buffer[Set[Reactive]],
@@ -69,7 +65,7 @@ class StatefulTurnData[A](
     _pulses: Buffer[Pulse[A]])
   extends PulsingTurnData[A](_turn, p, _level, _outgoing, _incoming, _pulses) {
  
-  def this (_turn: Option[Turn], p : Stateful[A], _incoming:Set[Reactive]) {
+  def this (_turn: Turn, p : Stateful[A], _incoming:Set[Reactive]) {
     this(_turn, p, p.engine.buffer(0, math.max, p.lock), p.engine.buffer(Set(), Buffer.commitAsIs, p.lock), _incoming,p.engine.buffer(Pulse.none, Buffer.transactionLocal, p.lock))
   }
   

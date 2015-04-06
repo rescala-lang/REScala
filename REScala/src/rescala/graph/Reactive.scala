@@ -10,6 +10,8 @@ import scala.collection.immutable.Queue
 /** A Reactive is something that can be reevaluated */
 trait Reactive extends Framed {
   
+  protected[this] override type D <: ReactiveTurnData
+  
   final override val hashCode: Int = Globals.nextID().hashCode()
 
   protected[rescala] def engine: Engine[Turn]

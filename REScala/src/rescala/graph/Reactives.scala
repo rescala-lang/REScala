@@ -27,11 +27,11 @@ abstract class ReactiveImpl(engine: Engine[Turn],
   protected [this] override type D = ReactiveTurnData
   
   protected override def initialStableFrame : ReactiveTurnData = {
-    new ReactiveTurnData(None, this, knownDependencies);
+    new ReactiveTurnData(null, this, knownDependencies);
   }
   
   protected override def newFrameFrom(turn: Turn, other: ReactiveTurnData) : ReactiveTurnData = {
-    new ReactiveTurnData(Some(turn), this, 
+    new ReactiveTurnData(turn, this, 
         engine.buffer(other.level.get(turn), math.max, lock),
         engine.buffer(other.outgoing.get(turn), Buffer.commitAsIs, lock),
         other.incoming)
@@ -46,11 +46,11 @@ abstract class PulsingImpl[+T](engine: Engine[Turn], knownDependencies: Set[Reac
     extends Enlock(engine, knownDependencies) with Pulsing[T] {
     protected [this] override type D = PulsingTurnData[T]
     protected [this] override def initialStableFrame : PulsingTurnData[T] = {
-      new PulsingTurnData(None, this, knownDependencies)
+      new PulsingTurnData(null, this, knownDependencies)
     }
     protected [this] override def newFrameFrom(turn : Turn, other : PulsingTurnData[T]) : PulsingTurnData[T] = {
       val newPulseBuffer = engine.buffer(other.pulses.get(turn), Buffer.transactionLocal[Pulse[T]], lock)
-      new PulsingTurnData[T](Some(turn), this, 
+      new PulsingTurnData[T](turn, this, 
           engine.buffer(other.level.get(turn), math.max,lock),
           engine.buffer(other.outgoing.get(turn), Buffer.commitAsIs,lock),
           other.incoming,
@@ -66,11 +66,11 @@ abstract class StatefulImpl[+T](engine: Engine[Turn], knownDependencies: Set[Rea
     extends Enlock(engine, knownDependencies) with Stateful[T] {
     protected [this] override type D = StatefulTurnData[T]
     protected [this] override def initialStableFrame : StatefulTurnData[T] = {
-      new StatefulTurnData(None, this, knownDependencies)
+      new StatefulTurnData(null, this, knownDependencies)
     }
     protected [this] override def newFrameFrom(turn : Turn, other : StatefulTurnData[T]) : StatefulTurnData[T] = {
       val newPulseBuffer = engine.buffer(other.pulses.get(turn), Buffer.transactionLocal[Pulse[T]], lock)
-      new StatefulTurnData[T](Some(turn), this, 
+      new StatefulTurnData[T](turn, this, 
           engine.buffer(other.level.get(turn), math.max,lock),
           engine.buffer(other.outgoing.get(turn), Buffer.commitAsIs,lock),
           other.incoming,

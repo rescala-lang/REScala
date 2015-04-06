@@ -1,10 +1,13 @@
 package rescala.synchronization.pipelining
 
+import rescala.turns.Engine
+import rescala.turns.Engines.EngineImpl
+
 
 /**
  * @author moritzlichter
  */
-class PipelineEngine {
+class PipelineEngine extends EngineImpl[PipeliningTurn](){
   
   type PTurn = PipeliningTurn
   type PTurns = Set[PipeliningTurn]
@@ -24,5 +27,7 @@ class PipelineEngine {
       waitingRelation = waitingRelation + ((turn, newWaits))
     }
   }
+  
+  override protected def makeTurn : PipeliningTurn = new PipeliningTurn(this)
   
 }

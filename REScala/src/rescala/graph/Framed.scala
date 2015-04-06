@@ -4,12 +4,12 @@ import rescala.turns.Turn
 import scala.collection.immutable.Queue
 
 trait Framed {
-  protected[this]type D <: ReactiveTurnData;
+  protected[this]type D <: TurnData;
 
-  protected def initialStableFrame: D;
-  protected def newFrameFrom(turn: Turn, other: D): D;
-  private[rescala] var stableFrame: D = initialStableFrame
-  private[rescala] var pipelineFrames: Queue[D] = Queue()
+  protected[this] def initialStableFrame: D
+  protected[this] def newFrameFrom(turn: Turn, other: D): D
+  protected[this] var stableFrame: D = initialStableFrame
+  protected[this] var pipelineFrames: Queue[D] = Queue()
 
   // Does pipelining in this way remove STM support? If yes, is that a problem if 
   // we know now, that it is not that useful?
@@ -36,7 +36,7 @@ trait Framed {
   }*/
 
   private def findFrame[T](find: Option[D] => T)(implicit turn: Turn): T = {
-    val selectedFrame = pipelineFrames.find { x => x.turn.get eq turn }
+    val selectedFrame = pipelineFrames.find { x => x.turn eq turn }
     find(selectedFrame)
   }
 
@@ -76,7 +76,7 @@ trait Framed {
 
   protected[rescala] def tryRemoveFrame(implicit turn: Turn): Unit = {
     // Can remote the frame if it is head of the queue
-    if (pipelineFrames.head.turn.get == turn) {
+    if (pipelineFrames.head.turn == turn) {
       var newStable = pipelineFrames.head
       pipelineFrames = pipelineFrames.tail;
       // Remove all next frames, which are marked to be removed
@@ -99,21 +99,5 @@ trait Framed {
   // other turns only if they get head in the queue
   // Then I need to store in the Turn whether it is completed
 
-  private def finishTurn(turn: Turn): Unit = {
-    def removeTurn(queue: Queue[D]): Queue[D] = {
-      if (queue.isEmpty) {
-        queue
-      } else {
-        val head = queue.head
-        if (head.turn.get eq turn)
-          queue
-        else if (!head.isWritten())
-          throw new AssertionError("A turn could not be added if any preceeding has not written")
-        else
-          head +: removeTurn(queue)
-      }
-    }
-    pipelineFrames = removeTurn(pipelineFrames)
-  }
 
 }

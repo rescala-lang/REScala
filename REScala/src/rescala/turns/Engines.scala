@@ -38,7 +38,9 @@ object Engines {
   implicit val unmanaged: Engine[NothingSpecial] = new Impl[NothingSpecial](new EngineReference(unmanaged) with NothingSpecial)
 
 
-  class Impl[TImpl <: TurnImpl](makeTurn: => TImpl) extends Engine[TImpl] {
+  abstract class EngineImpl[TImpl <: TurnImpl] extends Engine[TImpl] {
+    
+    protected def makeTurn : TImpl
 
     val currentTurn: DynamicVariable[Option[TImpl]] = new DynamicVariable[Option[TImpl]](None)
 
@@ -88,6 +90,10 @@ object Engines {
       }
     }
 
+  }
+  
+  class Impl[TImpl <: TurnImpl](_makeTurn : => TImpl) extends EngineImpl[TImpl] {
+    override def makeTurn = _makeTurn
   }
 
 }
