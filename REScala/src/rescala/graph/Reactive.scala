@@ -52,7 +52,7 @@ trait Reactive {
   protected def frame[T]( f : D => T = {x:D => x})( implicit turn : Turn) : T = {
     pipelineFrames.find { x => x.turn.get eq turn} match {
       case Some(d) => f(d)
-      case None => throw new AssertionError(s"No Data for turn $turn at node $this")
+      case None => f(stableFrame) //throw new AssertionError(s"No Data for turn $turn at node $this")
     }
   }
   
