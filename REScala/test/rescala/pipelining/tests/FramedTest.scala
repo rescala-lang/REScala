@@ -1,4 +1,4 @@
-package tests.rescala.pipelining
+package rescala.pipelining.tests
 
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
@@ -6,17 +6,13 @@ import rescala.graph.Framed
 import org.junit.Test
 import rescala.turns.Turn
 import rescala.graph.TurnFrame
-import rescala.synchronization.pipelining.PipeliningTurn
-import rescala.synchronization.pipelining.PipelineEngine
+import rescala.pipelining.PipeliningTurn
+import rescala.pipelining.PipelineEngine
 import scala.collection.immutable.Queue
 
 class FramedTest extends AssertionsForJUnit with MockitoSugar {
   
   class TestFrame( _turn : Turn, var num : Int) extends TurnFrame(_turn){
-    
-    // Make turn accessible in test
-    override def turn = super.turn
-    override def isWritten() = super.isWritten()
     
     override def toString() = "Frame(num = " + num +")(turn = " + turn + ")"
   }
@@ -30,7 +26,6 @@ class FramedTest extends AssertionsForJUnit with MockitoSugar {
     
     // Make fields accessible in the test
     def getStableFrame() = stableFrame
-    def getPipelineFrames() = pipelineFrames
     override def createFrame (allowedAfterFrame: Frame => Boolean = { x: Frame => true }) (implicit turn: Turn) : Unit = 
       super.createFrame(allowedAfterFrame)(turn)
     override def hasFrame(implicit turn: Turn) = super.hasFrame(turn)

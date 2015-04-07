@@ -1,4 +1,4 @@
-package rescala.synchronization.pipelining
+package rescala.pipelining
 
 import rescala.turns.Engine
 import rescala.turns.Engines.EngineImpl
@@ -11,16 +11,15 @@ import rescala.graph.Reactive
 class PipelineEngine extends EngineImpl[PipeliningTurn](){
   
   type PTurn = PipeliningTurn
-  type PTurns = Set[PipeliningTurn]
   
   /**
    * A Map which stores for a mapping (t1, t2) -> rs, that
    * turn t1 is before turn t2 at the reactives rs
    */
   // TODO need to cleanup the map if turns are done
-  var ordering: Map[(PTurn, PTurn), Set[Reactive]] = Map()
+  private var ordering: Map[(PTurn, PTurn), Set[Reactive]] = Map()
   
-  override protected def makeTurn : PipeliningTurn = new PipeliningTurn(this)
+  override protected[pipelining] def makeTurn : PipeliningTurn = new PipeliningTurn(this)
   
   /**
    * Creates a new frame for the given turn at the given reactive and
@@ -29,8 +28,12 @@ class PipelineEngine extends EngineImpl[PipeliningTurn](){
   protected[pipelining] def createFrame(turn : PTurn, at : Reactive) = {
     at.createFrame { frame => {
       val before = frame.turn.asInstanceOf[PipeliningTurn]
-      rememberOrder(before, turn, at)
-      resolveConflicts(before, turn)
+      // Only one node at a time can modify ordering
+      // TODO: can allow to create frames in parallel if possible?
+      ordering.synchronized {
+        rememberOrder(before, turn, at)
+        resolveConflicts(before, turn)
+      }
       true
     } } (turn)
   }
@@ -41,7 +44,6 @@ class PipelineEngine extends EngineImpl[PipeliningTurn](){
   }
   
   private def getConflicts(before : PTurn, after : PTurn) : Set[Reactive] = {
-    
     ordering.getOrElse((after, before), Set())
   }
   

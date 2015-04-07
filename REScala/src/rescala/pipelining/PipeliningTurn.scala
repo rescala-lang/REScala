@@ -1,4 +1,4 @@
-package rescala.synchronization.pipelining
+package rescala.pipelining
 
 import rescala.graph.Reactive
 import rescala.turns.Turn
@@ -16,7 +16,9 @@ class PipeliningTurn(override val engine: PipelineEngine) extends TurnImpl {
   private var framedReactives : Set[Reactive] = Set()
   
   override def evaluate(head: Reactive) = {
+    // TODO need to wait here, until the frame before is written
     super.evaluate(head)
+    // Mark the frame as written -> the turn will not touch this frame again
     head.markWritten
   }
 

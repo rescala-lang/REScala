@@ -10,6 +10,9 @@ trait Framed {
   protected[this] def newFrameFrom(turn: Turn, other: Frame): Frame
   protected[this] var stableFrame: Frame = initialStableFrame
   protected[this] var pipelineFrames: Queue[Frame] = Queue()
+  
+  // Access for testing
+  protected[rescala] final def getPipelineFrames() = pipelineFrames
 
   // Does pipelining in this way remove STM support? If yes, is that a problem if 
   // we know now, that it is not that useful?
@@ -20,20 +23,6 @@ trait Framed {
   //   In the locking phase, after all locks could be gained, insert new frames for each
   //   involved reactive => other turns cannot lock them until the frames were set to be written
   //   
-  /*
-  protected [rescala] def moveFrame(currentTurn : Turn, before : Turn) : Unit = {
-    val currentFrame = frame()(currentTurn)
-    @tailrec def moveFrameImpl(queue: Queue[D]) : Queue[D] = queue match{
-      case head :+ rest =>
-        if (head == before)
-          currentFrame :+ (head :+ moveFrameImpl(rest))
-        else if (head == currentFrame)
-          moveFrameImpl(rest)
-        else
-          head :+ moveFrameImpl(rest)
-      case Queue() => Queue()
-    }
-  }*/
 
   private def findFrame[T](find: Option[Frame] => T)(implicit turn: Turn): T = {
     val selectedFrame = pipelineFrames.find { x => x.turn eq turn }
