@@ -7,13 +7,15 @@ class TurnFrame(_turn: Turn) {
   
   private var written = false;
   private var toRemove = false;
+  private var currentTurn = _turn
   
-  protected[rescala] def turn: Turn = _turn;
+  protected[rescala] def turn: Turn = currentTurn;
   
   protected[rescala] def isWritten() : Boolean = written
   protected[rescala] def markWritten() = written = true
   protected[rescala] def shouldBeRemoved() = toRemove
   protected[rescala] def markToBeRemoved() = toRemove = true
+  protected[rescala] def removeTurn() = currentTurn = null
   
   
   

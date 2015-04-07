@@ -7,3 +7,4 @@ target
 .cache
 .classpath
 .settings/*
+bin/rescala/signals

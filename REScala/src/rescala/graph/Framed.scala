@@ -65,13 +65,13 @@ trait Framed {
         val head = queue.head
         val tail = queue.tail
         if (allowedAfterFrame(head)) {
-          insertFrame(tail, head) :+ head
+          head +: insertFrame(tail, head)
         } else {
-          queue :+ newFrameFrom(turn, lastElem)
+          newFrameFrom(turn, lastElem) +: queue
         }
       }
     }
-    insertFrame(pipelineFrames, stableFrame)
+    pipelineFrames = insertFrame(pipelineFrames, stableFrame)
   }
 
   protected[rescala] def tryRemoveFrame(implicit turn: Turn): Unit = {
@@ -80,10 +80,11 @@ trait Framed {
       var newStable = pipelineFrames.head
       pipelineFrames = pipelineFrames.tail;
       // Remove all next frames, which are marked to be removed
-      while (pipelineFrames.head.shouldBeRemoved()) {
+      while (pipelineFrames.nonEmpty && pipelineFrames.head.shouldBeRemoved()) {
         newStable = pipelineFrames.head
         pipelineFrames = pipelineFrames.tail
       }
+      newStable.removeTurn()
       stableFrame = newStable
     } else {
       frame().markToBeRemoved()
