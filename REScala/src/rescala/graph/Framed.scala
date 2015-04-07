@@ -4,7 +4,7 @@ import rescala.turns.Turn
 import scala.collection.immutable.Queue
 
 trait Framed {
-  protected[this] type Frame <: TurnFrame;
+  protected[this]type Frame <: TurnFrame;
 
   protected[this] def initialStableFrame: Frame
   protected[this] def newFrameFrom(turn: Turn, other: Frame): Frame
@@ -57,7 +57,7 @@ trait Framed {
     findFrame(_ => true, false)
   }
 
-  protected[rescala] def createFrame (allowedAfterFrame: Frame => Boolean = { x: Frame => true }) (implicit turn: Turn) : Unit = {
+  protected[rescala] def createFrame(allowedAfterFrame: Frame => Boolean = { x: Frame => true })(implicit turn: Turn): Unit = {
     def insertFrame(queue: Queue[Frame], lastElem: Frame): Queue[Frame] = {
       if (queue.isEmpty) {
         Queue(newFrameFrom(turn, lastElem))
@@ -72,6 +72,27 @@ trait Framed {
       }
     }
     pipelineFrames = insertFrame(pipelineFrames, stableFrame)
+  }
+
+  protected[rescala] def moveFrameBack(allowedAfterFrame: Frame => Boolean)(implicit turn: Turn): Unit = {
+    def moveFrame(queue: Queue[Frame], frame: Frame): Queue[Frame] = queue match {
+      case Queue() =>
+        if (frame == null)
+          throw new AssertionError("No frame found for turn " + turn)
+        else
+          Queue(frame)
+      case head +: tail =>
+        if (head.turn == turn) {
+          moveFrame(tail, head)
+        } else {
+          if (frame != null && allowedAfterFrame(head)) {
+            head +: frame +: tail
+          } else {
+            head +: moveFrame(tail, frame)
+          }
+        }
+    }
+    pipelineFrames = moveFrame(pipelineFrames, null.asInstanceOf[Frame])
   }
 
   protected[rescala] def tryRemoveFrame(implicit turn: Turn): Unit = {
@@ -99,6 +120,5 @@ trait Framed {
   // in the frame before), I can only remove the head turn in the queue and need to remove
   // other turns only if they get head in the queue
   // Then I need to store in the Turn whether it is completed
-
 
 }

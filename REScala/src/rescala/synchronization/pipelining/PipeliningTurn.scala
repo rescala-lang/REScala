@@ -10,44 +10,29 @@ import rescala.graph.ReactiveFrame
 
 class PipeliningTurn(override val engine: PipelineEngine) extends TurnImpl {
 
-  // Need to encode the order of the turns
-
-  class RemoveFrame(reactive: Reactive) extends Committable {
-
-    override def commit(implicit turn: Turn): Unit = {
-      reactive.tryRemoveFrame
-    }
-    override def release(implicit turn: Turn): Unit = {}
-
-  }
-
+  /**
+   * Remember all reactives for which a frame was created during this turn
+   */
+  private var framedReactives : Set[Reactive] = Set()
+  
   override def evaluate(head: Reactive) = {
     super.evaluate(head)
     head.markWritten
-    schedule(new RemoveFrame(head))
-  }
-
-  private def createFrameForReactive(reactive: Reactive): Unit = {
-    reactive.createFrame { d: ReactiveFrame =>
-      {
-        val otherTurn = d.turn.asInstanceOf[PipeliningTurn]
-        if (engine.canWaitOn(this, otherTurn)) {
-          engine.waitOn(this, otherTurn)
-          true
-        } else {
-          false
-        }
-      }
-    }
   }
 
   override def lockPhase(initialWrites: List[Reactive]): Unit = {
     val lq = new LevelQueue()
     initialWrites.foreach(lq.enqueue(-1))
 
-    lq.evaluateQueue { createFrameForReactive(_) }
+    // Create frames for all reachable reactives
+    lq.evaluateQueue { reactive =>
+      engine.createFrame(this, reactive)
+      framedReactives += reactive }
   }
   
-  override def releasePhase(): Unit = {}
+  override def releasePhase(): Unit = {
+    // Mark all frames for removal
+    framedReactives.foreach { _.tryRemoveFrame }
+  }
 
 }
