@@ -13,7 +13,7 @@ object Globals {
       val trace = Thread.currentThread().getStackTrace
       var i = 0
       while (trace(i).toString.startsWith("scala.") || trace(i).toString.startsWith("java.") ||
-        (trace(i).toString.startsWith("rescala.") && !trace(i).toString.startsWith("rescala.test."))) i += 1
+        (trace(i).toString.startsWith("rescala.") && !trace(i).toString.startsWith("rescala.pipelining.tests."))) i += 1
 
       s"${ trace(i).getFileName }(${ trace(i).getLineNumber })"
     }

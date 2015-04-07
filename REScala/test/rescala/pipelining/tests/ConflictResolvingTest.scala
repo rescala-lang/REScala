@@ -9,6 +9,7 @@ import rescala.Signals
 import rescala.graph.Framed
 import scala.collection.immutable.Queue
 import rescala.turns.Turn
+import rescala.pipelining.tests.PipelineTestUtils.frameTurns
 
 class ConflictResolvingTest extends AssertionsForJUnit with MockitoSugar {
   
@@ -35,10 +36,6 @@ class ConflictResolvingTest extends AssertionsForJUnit with MockitoSugar {
   // In the following the propagation is done by hand and not by the queue
   // This allows to fix a pseudo paralellismus of updates by invoking the
   // reevaluate methods in a fix order
-  
-  def frameTurns(f : Framed) : Queue[Turn] = {
-    f.getPipelineFrames().map { _.turn}
-  }
   
   @Test
   def testSingleUpdate() = {
@@ -90,6 +87,7 @@ class ConflictResolvingTest extends AssertionsForJUnit with MockitoSugar {
     assert(frameTurns(d1) == Queue(turn2, turn1))
     assert(frameTurns(d2) == Queue(turn2, turn1))
   }
+  
   
   
 
