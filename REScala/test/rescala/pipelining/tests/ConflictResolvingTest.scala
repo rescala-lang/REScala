@@ -30,7 +30,7 @@ class ConflictResolvingTest extends AssertionsForJUnit with MockitoSugar {
   
   val s1 = Var(0)
   val s2 = Var(0)
-  val d1 = Signals.static(s1, s2) {implicit t => s1.get - s2.get}
+  val d1 = Signals.lift(s1, s2) {_ - _}
   val d2 = Signals.static(s1, s2) {implicit t => s1.get - 2 * s2.get}
   
   // In the following the propagation is done by hand and not by the queue
@@ -88,7 +88,85 @@ class ConflictResolvingTest extends AssertionsForJUnit with MockitoSugar {
     assert(frameTurns(d2) == Queue(turn2, turn1))
   }
   
+    @Test
+  def testConflictingUpdates2() = {
+    val turn1 = engine.makeTurn
+    val turn2 = engine.makeTurn
+    
+    engine.createFrame(turn1, s1)
+    engine.createFrame(turn2, s2)
+    engine.createFrame(turn2, d1)
+    engine.createFrame(turn1, d1)
+    engine.createFrame(turn2, d2)
+    assert(frameTurns(d1) == Queue(turn2, turn1))
+    assert(frameTurns(d2) == Queue(turn2))
+    
+    // Now the interesting part: putting turn1 on d2 creates a cycle
+    // Which the engine should resolve by moving turn1 back in d1
+    engine.createFrame(turn1, d2) 
+    assert(frameTurns(d1) == Queue(turn2, turn1))
+    assert(frameTurns(d2) == Queue(turn2, turn1))
+  }
   
+  @Test
+  def testEvaluationSequential() = {
+    // Everything sequential => there cannot be any conflict
+    assert (d1.now == 0)
+    assert (d2.now == 0)
+    s1.set(10)
+    assert(d1.now == 10)
+    assert(d2.now == 10)
+    s2.set(5)
+    assert(d1.now == 5)
+    assert(d2.now == 0)
+  }
+  
+  def createThread(job : => Any) : Thread = {
+    new Thread(new Runnable() {
+      override def run() = {
+        job
+      }
+    }
+    )
+  }
+  
+  @Test
+  def testEvaluationParallel() = {
+    for (i <- 1 to 100) {
+      val update1 =createThread{ 
+        println("Thread " + Thread.currentThread().getId + " run")
+        s1.set(10)
+      }
+      val update2 = createThread{
+        println("Thread " + Thread.currentThread().getId + " run")
+        s2.set(5)
+      }
+      
+      if (i % 2 == 0) {
+        update1.start
+        update2.start
+      } else {
+        update2.start
+        update1.start
+      }
+      
+      update1.join
+      update2.join
+      
+      // Now either update1 was scheduled first or update2
+      // Independent of the if statement above
+      
+      println("D1 = " + d1.now)
+      println("D2 = " + d2.now)
+      assert(d1.now == 5)
+      assert(d2.now == 0)
+      
+      println("---")
+      s1.set(0)
+      s2.set(0)
+      println("-----------")
+    }
+  }
   
 
 }

@@ -2,6 +2,7 @@ package rescala.graph
 
 import rescala.turns.Turn
 import scala.collection.immutable.Queue
+import scala.annotation.tailrec
 
 trait Framed {
   protected[this]type Frame <: TurnFrame;
@@ -24,7 +25,7 @@ trait Framed {
   //   involved reactive => other turns cannot lock them until the frames were set to be written
   //   
 
-  private def findFrame[T](find: Option[Frame] => T)(implicit turn: Turn): T = {
+  private def findFrame[T](find: Option[Frame] => T)(implicit turn: Turn): T = pipelineFrames.synchronized {
     val selectedFrame = pipelineFrames.find { x => x.turn eq turn }
     find(selectedFrame)
   }
@@ -41,12 +42,30 @@ trait Framed {
     // an assertion error should be there
     findFrame(f(_), f(stableFrame))
   }
+  
+  protected [rescala] def isPreviousFrameFinished(implicit turn : Turn) : Boolean = pipelineFrames.synchronized {
+    @tailrec
+    def indexOf(queue : Queue[Frame], index : Int) : Option[Int] = queue match {
+      case Queue() => None
+      case head +: tail =>
+        if (head.turn == turn) 
+          Some(index)
+        else
+          indexOf(tail, index +1)
+    }
+    val frameIndexOption = indexOf(pipelineFrames, 0)
+    assert (frameIndexOption.isDefined, "No frame for turn " + turn + " found")
+    frameIndexOption.get match {
+      case 0 => true // Stable frame is always finished
+      case frameIndex => pipelineFrames(frameIndex -1).isWritten()
+    }
+  }
 
   protected[rescala] def hasFrame(implicit turn: Turn): Boolean = {
     findFrame(_ => true, false)
   }
 
-  protected[rescala] def createFrame(allowedAfterFrame: Frame => Boolean = { x: Frame => true })(implicit turn: Turn): Unit = {
+  protected[rescala] def createFrame(allowedAfterFrame: Frame => Boolean = { x: Frame => true })(implicit turn: Turn): Unit =pipelineFrames.synchronized {
     def insertFrame(queue: Queue[Frame], lastElem: Frame): Queue[Frame] = {
       if (queue.isEmpty) {
         Queue(newFrameFrom(turn, lastElem))
@@ -61,9 +80,30 @@ trait Framed {
       }
     }
     pipelineFrames = insertFrame(pipelineFrames, stableFrame)
+    assert(hasFrame)
+  }
+  
+  protected[rescala] def fillFrame(implicit turn : Turn) : Unit = pipelineFrames.synchronized {
+    def fill (queue:Queue[Frame] ) : Queue[Frame] = queue match{ 
+      case Queue() :+ last =>
+        if (last.turn == turn) {
+          //println(s"Frame for $turn from stable")
+         // Queue(newFrameFrom(turn, stableFrame))
+          Queue(last)
+        }else
+          throw new AssertionError(s"No frame found for turn $turn")
+      case tail :+ last =>
+        if (last.turn == turn) {
+         // println(s"Frame for $turn from ${tail.last.turn}")
+          tail :+ newFrameFrom(turn, tail.last)
+        }else
+           fill(tail) :+ last
+    }
+    assert(pipelineFrames.nonEmpty, "No frame there")
+    pipelineFrames = fill(pipelineFrames)
   }
 
-  protected[rescala] def moveFrameBack(allowedAfterFrame: Frame => Boolean)(implicit turn: Turn): Unit = {
+  protected[rescala] def moveFrameBack(allowedAfterFrame: Frame => Boolean)(implicit turn: Turn): Unit = pipelineFrames.synchronized{
     def moveFrame(queue: Queue[Frame], frame: Frame): Queue[Frame] = queue match {
       case Queue() =>
         if (frame == null)
@@ -84,7 +124,7 @@ trait Framed {
     pipelineFrames = moveFrame(pipelineFrames, null.asInstanceOf[Frame])
   }
 
-  protected[rescala] def tryRemoveFrame(implicit turn: Turn): Unit = {
+  protected[rescala] def tryRemoveFrame(implicit turn: Turn): Unit = pipelineFrames.synchronized{
     // Can remote the frame if it is head of the queue
     if (pipelineFrames.head.turn == turn) {
       var newStable = pipelineFrames.head

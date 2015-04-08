@@ -3,6 +3,10 @@ package rescala.pipelining
 import rescala.turns.Engine
 import rescala.turns.Engines.EngineImpl
 import rescala.graph.Reactive
+import rescala.synchronization.TurnLock
+import rescala.graph.SimpleBuffer
+import rescala.graph.Buffer
+import rescala.turns.Turn
 
 /**
  * @author moritzlichter
@@ -127,5 +131,26 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
         }
     })
   }
+  
+  class NoBuffer[A](initial :A) extends Buffer[A] {
+    private var value = initial
+    def initCurrent(value: A): Unit = synchronized{ this.value = value}
+    def initStrategy(strategy: (A, A) => A): Unit = {}
+
+    def transform(f: (A) => A)(implicit turn: Turn): A = synchronized{
+      value = f(value)
+      value
+    }
+    def set(value: A)(implicit turn: Turn): Unit = synchronized{
+      this.value = value
+    }
+    def base(implicit turn: Turn): A = synchronized{value}
+    def get(implicit turn: Turn): A = synchronized{value}
+    override def release(implicit turn: Turn): Unit = {}
+    override def commit(implicit turn: Turn): Unit = {}
+  }
+  
+  override def buffer[A](default: A, commitStrategy: (A, A) => A, writeLock: TurnLock): Buffer[A] = new NoBuffer(default)
+
 
 }

@@ -48,7 +48,7 @@ class TransitiveResolvingTest extends AssertionsForJUnit with MockitoSugar {
     assert(frameTurns(d2) == Queue(turn3))
     assert(frameTurns(d3) == Queue(turn2, turn3))
     
-    // No put turn1 on d2, this creates a cycle:
+    // Now put turn1 on d2, this creates a cycle:
     // At d1: turn1 -> turn2
     // At d2: turn2 -> turn3 and then
     // At d3: turn3 -> turn1

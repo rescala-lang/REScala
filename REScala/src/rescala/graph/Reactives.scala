@@ -32,8 +32,8 @@ abstract class ReactiveImpl(engine: Engine[Turn],
   
   protected override def newFrameFrom(turn: Turn, other: ReactiveFrame) : ReactiveFrame = {
     new ReactiveFrame(turn, this, 
-        engine.buffer(other.level.get(turn), math.max, lock),
-        engine.buffer(other.outgoing.get(turn), Buffer.commitAsIs, lock),
+        engine.buffer(other.level.get(other.turn), math.max, lock),
+        engine.buffer(other.outgoing.get(other.turn), Buffer.commitAsIs, lock),
         other.incoming)
   }
   
@@ -49,10 +49,10 @@ abstract class PulsingImpl[+T](engine: Engine[Turn], knownDependencies: Set[Reac
       new PulsingFrame(null, this, knownDependencies)
     }
     protected [this] override def newFrameFrom(turn : Turn, other : PulsingFrame[T]) : PulsingFrame[T] = {
-      val newPulseBuffer = engine.buffer(other.pulses.get(turn), Buffer.transactionLocal[Pulse[T]], lock)
+      val newPulseBuffer = engine.buffer(other.pulses.get(other.turn), Buffer.transactionLocal[Pulse[T]], lock)
       new PulsingFrame[T](turn, this, 
-          engine.buffer(other.level.get(turn), math.max,lock),
-          engine.buffer(other.outgoing.get(turn), Buffer.commitAsIs,lock),
+          engine.buffer(other.level.get(other.turn), math.max,lock),
+          engine.buffer(other.outgoing.get(other.turn), Buffer.commitAsIs,lock),
           other.incoming,
           newPulseBuffer)
     }
@@ -69,10 +69,11 @@ abstract class StatefulImpl[+T](engine: Engine[Turn], knownDependencies: Set[Rea
       new StatefulFrame(null, this, knownDependencies)
     }
     protected [this] override def newFrameFrom(turn : Turn, other : StatefulFrame[T]) : StatefulFrame[T] = {
-      val newPulseBuffer = engine.buffer(other.pulses.get(turn), Buffer.transactionLocal[Pulse[T]], lock)
+      val newPulseBuffer = engine.buffer(other.pulses.get(other.turn), Buffer.transactionLocal[Pulse[T]], lock)
+      //println (s"Create new frame for $turn at $this with pulses ${other.pulses.get(turn)}")
       new StatefulFrame[T](turn, this, 
-          engine.buffer(other.level.get(turn), math.max,lock),
-          engine.buffer(other.outgoing.get(turn), Buffer.commitAsIs,lock),
+          engine.buffer(other.level.get(other.turn), math.max,lock),
+          engine.buffer(other.outgoing.get(other.turn), Buffer.commitAsIs,lock),
           other.incoming,
           newPulseBuffer)
     }

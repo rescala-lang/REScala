@@ -43,6 +43,7 @@ final class Var[T](initval: T)(engine: Engine[Turn]) extends StatefulImpl[T](eng
   def admit(value: T)(implicit turn: Turn): Unit = {
     val p = Pulse.diff(value, get)
     if (p.isChange) {
+      println("Store init value in frame? " + hasFrame)
       pulses.set(p)
       turn.admit(this)
     }

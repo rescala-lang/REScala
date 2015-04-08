@@ -137,4 +137,28 @@ class FramedTest extends AssertionsForJUnit with MockitoSugar {
     
   }
   
+  @Test
+  def fillFrame() = {
+    val turn1 = engine.makeTurn
+    val turn2 = engine.makeTurn
+    framed.createFrame()(turn1)
+    framed.createFrame()(turn2)
+    
+    val Queue(frame1, frame2) = framed.getPipelineFrames()
+    assert(frame1.turn == turn1)
+    assert(frame2.turn == turn2)
+    assert(frame1.num == 0)
+    assert(frame2.num == 0)
+    
+    frame1.num = 1
+    assert(frame1.num == 1)
+    assert(frame2.num == 0)
+    framed.fillFrame(turn2)
+    
+    val Queue(frame1_, frame2_) = framed.getPipelineFrames()
+    assert(frame1 == frame1_)
+    assert(frame2_.turn == turn2)
+    assert(frame2_.num == 1)
+  }
+  
 }
