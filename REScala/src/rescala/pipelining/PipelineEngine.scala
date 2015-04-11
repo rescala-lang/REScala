@@ -111,25 +111,41 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
   }
 
   private def resolveConflicts(before: PTurn, after: PTurn) = {
-    def resolveConflict(before: PTurn, after: PTurn, at: Reactive) = {
+    
+    // Resolves all conflicts which occur by putting a waiting relation from after to before
+   
+    // Resolving terminates because only frames for after are put back at some reactives
+    // All conflicts are guaranteed solved, if after is moved to the back at all reactives
+    // But we dont do that, only there, were it is neceassary
+   
+    def resolveConflict(before: PTurn, after: PTurn, at: Reactive) : Set[PTurn] = {
+      var skipedFrames = Set[PTurn]()
       at.moveFrameBack { frame =>
         val before2 = frame.turn.asInstanceOf[PTurn]
         forgetOrder(after, before2, at)
         rememberOrder(before2, after, at)
+        if (waitsOn(before2, after))
+          skipedFrames += before2
         before2 == before
       }(after)
+      skipedFrames
+    }
+    def findAndResolveConflicts(before: PTurn, after : PTurn) : Unit= {
+      val conflicts = getConflicts(before, after)
+      val newConflictedTurns = conflicts.flatMap{ _ match {
+        case (turn, reactives) =>
+          val conflicts = reactives.flatMap { reactive =>
+              resolveConflict(turn, after, reactive)
+            }
+          assert(!ordering.contains((after, turn)), "Created a cycle") 
+          conflicts
+        }
+        
+      }
+      newConflictedTurns.foreach { findAndResolveConflicts(_, after) }
     }
 
-    val conflicts = getConflicts(before, after)
-    conflicts.foreach(conflict => conflict match {
-      case (turn, reactives) =>
-        reactives.foreach { reactive =>
-          resolveConflict(turn, after, reactive)
-        }
-        if (ordering.contains((after, turn))) {
-          throw new AssertionError("Created a cycle")
-        }
-    })
+    findAndResolveConflicts(before, after)
   }
   
   class NoBuffer[A](initial :A) extends Buffer[A] {
