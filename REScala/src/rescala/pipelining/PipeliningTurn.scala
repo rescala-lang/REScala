@@ -16,7 +16,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps : Boolea
    */
   private var framedReactives : Set[Reactive] = Set()
   
-  override def waitsOnFrame(other : Turn) = engine.waitsOn(this, other.asInstanceOf[PipeliningTurn])
+  override def waitsOnFrame(other : Turn) = other == this || engine.waitsOn(this, other.asInstanceOf[PipeliningTurn])
   
   override def evaluate(head: Reactive) = {
     assert (head.hasFrame(this), "No frame was created in turn " + this  + " for " + head)
