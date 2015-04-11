@@ -12,6 +12,12 @@ trait Framed {
   protected[this] var stableFrame: Frame = initialStableFrame
   protected[this] var pipelineFrames: Queue[Frame] = Queue()
   
+  private val pipelineLock = new Object
+  
+  private def lockPipeline[A](op:  => A) :A = pipelineLock.synchronized {
+    op
+  }
+  
   // Access for testing
   protected[rescala] final def getPipelineFrames() = pipelineFrames
 
@@ -25,7 +31,7 @@ trait Framed {
   //   involved reactive => other turns cannot lock them until the frames were set to be written
   //   
 
-  private def findFrame[T](find: Option[Frame] => T)(implicit turn: Turn): T = pipelineFrames.synchronized {
+  private def findFrame[T](find: Option[Frame] => T)(implicit turn: Turn): T = lockPipeline {
     val selectedFrame = pipelineFrames.find { x => x.turn eq turn }
     find(selectedFrame)
   }
@@ -37,21 +43,23 @@ trait Framed {
     })
   }
 
-  protected def frame[T](f: Frame => T = { x: Frame => x })(implicit turn: Turn): T = {
-    // f(stableFrame) is short fix for tests
-    // an assertion error should be there
-    findFrame(f(_), f(stableFrame))
+  protected def frame[T](f: Frame => T = { x: Frame => x })(implicit turn: Turn): T = lockPipeline {
+    @tailrec
+    def findTopMostFrame(queue : Queue[Frame]) : Frame = queue match{
+      case Queue() => stableFrame
+      case _ :+ last if turn.waitsOnFrame(last.turn) => last
+      case begin :+ _ => findTopMostFrame(begin)
+    }
+    val topMostWaitingFrame = findTopMostFrame(pipelineFrames)
+    f(topMostWaitingFrame)
   }
   
-  protected [rescala] def isPreviousFrameFinished(implicit turn : Turn) : Boolean = pipelineFrames.synchronized {
+  protected [rescala] def isPreviousFrameFinished(implicit turn : Turn) : Boolean = lockPipeline {
     @tailrec
     def indexOf(queue : Queue[Frame], index : Int) : Option[Int] = queue match {
       case Queue() => None
-      case head +: tail =>
-        if (head.turn == turn) 
-          Some(index)
-        else
-          indexOf(tail, index +1)
+      case head +: _ if head.turn == turn =>  Some(index)
+      case _ +: tail => indexOf(tail, index +1)
     }
     val frameIndexOption = indexOf(pipelineFrames, 0)
     assert (frameIndexOption.isDefined, "No frame for turn " + turn + " found")
@@ -65,78 +73,56 @@ trait Framed {
     findFrame(_ => true, false)
   }
 
-  protected[rescala] def createFrame(allowedAfterFrame: Frame => Boolean = { x: Frame => true })(implicit turn: Turn): Unit =pipelineFrames.synchronized {
-    def insertFrame(queue: Queue[Frame], lastElem: Frame): Queue[Frame] = {
-      if (queue.isEmpty) {
-        Queue(newFrameFrom(turn, lastElem))
-      } else {
-        val head = queue.head
-        val tail = queue.tail
-        if (allowedAfterFrame(head)) {
-          head +: insertFrame(tail, head)
-        } else {
-          newFrameFrom(turn, lastElem) +: queue
-        }
-      }
+  protected[rescala] def createFrame(allowedAfterFrame: Frame => Boolean = { x: Frame => true })(implicit turn: Turn): Unit = lockPipeline {
+    def createFrame(lastElem : Frame) : Frame =  {
+      val newFrame = newFrameFrom(turn, lastElem)
+      assert(newFrame.turn == turn)
+      newFrame
+    }
+    def insertFrame(queue: Queue[Frame], lastElem: Frame): Queue[Frame] = queue match {
+      case Queue() => Queue(createFrame(lastElem))
+      case head +: tail if allowedAfterFrame(head) => head +: insertFrame(tail, head)
+      case _ => createFrame(lastElem) +: queue
     }
     pipelineFrames = insertFrame(pipelineFrames, stableFrame)
     assert(hasFrame)
   }
   
-  protected[rescala] def fillFrame(implicit turn : Turn) : Unit = pipelineFrames.synchronized {
+  protected[rescala] def fillFrame(implicit turn : Turn) : Unit = lockPipeline {
     def fill (queue:Queue[Frame] ) : Queue[Frame] = queue match{ 
-      case Queue() :+ last =>
-        if (last.turn == turn) {
-          //println(s"Frame for $turn from stable")
-         // Queue(newFrameFrom(turn, stableFrame))
-          Queue(last)
-        }else
-          throw new AssertionError(s"No frame found for turn $turn")
-      case tail :+ last =>
-        if (last.turn == turn) {
-         // println(s"Frame for $turn from ${tail.last.turn}")
-          tail :+ newFrameFrom(turn, tail.last)
-        }else
-           fill(tail) :+ last
+      case Queue() :+ last if last.turn == turn => Queue(last)
+      case tail :+ last if last.turn == turn => tail :+ newFrameFrom(turn, tail.last)
+      case tail :+ last => fill(tail) :+ last
+      case Queue() :+ last if last.turn == null => throw new AssertionError(s"No frame found for turn $turn")
     }
     assert(pipelineFrames.nonEmpty, "No frame there")
     pipelineFrames = fill(pipelineFrames)
   }
 
-  protected[rescala] def moveFrameBack(allowedAfterFrame: Frame => Boolean)(implicit turn: Turn): Unit = pipelineFrames.synchronized{
+  protected[rescala] def moveFrameBack(allowedAfterFrame: Frame => Boolean)(implicit turn: Turn): Unit = lockPipeline {
     def moveFrame(queue: Queue[Frame], frame: Frame): Queue[Frame] = queue match {
-      case Queue() =>
-        if (frame == null)
-          throw new AssertionError("No frame found for turn " + turn)
-        else
-          Queue(frame)
-      case head +: tail =>
-        if (head.turn == turn) {
-          moveFrame(tail, head)
-        } else {
-          if (frame != null && allowedAfterFrame(head)) {
-            head +: frame +: tail
-          } else {
-            head +: moveFrame(tail, frame)
-          }
-        }
+      case Queue() if frame != null => Queue(frame)
+      case head +: tail if head.turn == turn => moveFrame(tail, head)
+      case head +: tail if frame != null && allowedAfterFrame(head) => head +: frame +: tail
+      case head +: tail => head +: moveFrame(tail, frame)
+      case Queue() if frame == null => throw new AssertionError(s"No frame found for turn $turn")
     }
     pipelineFrames = moveFrame(pipelineFrames, null.asInstanceOf[Frame])
   }
 
-  protected[rescala] def tryRemoveFrame(implicit turn: Turn): Unit = pipelineFrames.synchronized{
+  protected[rescala] def tryRemoveFrame(implicit turn: Turn): Unit = lockPipeline {
     // Can remote the frame if it is head of the queue
     if (pipelineFrames.head.turn == turn) {
-      var newStable = pipelineFrames.head
-      pipelineFrames = pipelineFrames.tail;
-      // Remove all next frames, which are marked to be removed
-      while (pipelineFrames.nonEmpty && pipelineFrames.head.shouldBeRemoved()) {
-        newStable = pipelineFrames.head
-        pipelineFrames = pipelineFrames.tail
+      def removeFrames(stable : Frame, queue : Queue[Frame]) : (Frame, Queue[Frame]) = queue match{
+        case head +: tail if head.shouldBeRemoved() => head.removeTurn(); removeFrames(head, tail)
+        case _ => (stable, queue)
       }
-      newStable.removeTurn()
-      stableFrame = newStable
+      pipelineFrames.head.removeTurn()
+      val (newStableFrame, newQueue) = removeFrames(pipelineFrames.head, pipelineFrames.tail)
+      stableFrame = newStableFrame
+      pipelineFrames = newQueue
     } else {
+    //  println(s"Mark remove $turn at $this")
       frame().markToBeRemoved()
     }
   }

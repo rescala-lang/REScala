@@ -16,20 +16,23 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps : Boolea
    */
   private var framedReactives : Set[Reactive] = Set()
   
+  override def waitsOnFrame(other : Turn) = engine.waitsOn(this, other.asInstanceOf[PipeliningTurn])
+  
   override def evaluate(head: Reactive) = {
     assert (head.hasFrame(this), "No frame was created in turn " + this  + " for " + head)
     while (! head.isPreviousFrameFinished) {
       // Prototype: Busy waiting 
     }
-    println("Evaluate for turn " + this + " at "+ head)
+    //println("Evaluate for turn " + this + " at "+ head)
    // println("Deps     " + head.outgoing.get )
    // println("val      " + {head.asInstanceOf[Signal[_]].get})
     head.fillFrame
-    Thread.sleep(500)
    // println("New Deps " + head.outgoing.get)
    // println("New val  " + {head.asInstanceOf[Signal[_]].get})
     super.evaluate(head)
-    println(s"   evaluated for $this to ${head.asInstanceOf[Signal[_]].get}at $head")
+    val sig = head.asInstanceOf[Signal[_]]
+    //println(s"   evaluated for $this to ${sig.get}at $head")
+    //println(s"   with frame for $this ${sig.getPipelineFrames().map { p => s"[${p.turn} = ${p.pulses.get}]" }.mkString(",")}")
     // Mark the frame as written -> the turn will not touch this frame again
     head.markWritten
   }
@@ -40,8 +43,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps : Boolea
 
     // Create frames for all reachable reactives
     lq.evaluateQueue { reactive =>
-      println ("Lock phase for turn " + this + " at  "+ reactive + " in thread" + Thread.currentThread().getId)
-      Thread.sleep(500)
+      //println ("Lock phase for turn " + this + " at  "+ reactive + " in thread" + Thread.currentThread().getId)
       engine.createFrame(this, reactive)
       assert(reactive.hasFrame(this))
       framedReactives += reactive

@@ -2,19 +2,20 @@ package rescala.graph
 
 import rescala.synchronization.{TurnLock}
 import rescala.turns.Turn
+import java.util.concurrent.atomic.AtomicBoolean
 
 class TurnFrame(_turn: Turn) {
   
-  private var written = false;
-  private var toRemove = false;
+  private var written = new AtomicBoolean(false);
+  private var toRemove = new AtomicBoolean(false);
   private var currentTurn = _turn
   
   protected[rescala] def turn: Turn = currentTurn;
   
-  protected[rescala] def isWritten() : Boolean = written
-  protected[rescala] def markWritten() = written = true
-  protected[rescala] def shouldBeRemoved() = toRemove
-  protected[rescala] def markToBeRemoved() = toRemove = true
+  protected[rescala] def isWritten() : Boolean = written.get
+  protected[rescala] def markWritten() = written.set(true)
+  protected[rescala] def shouldBeRemoved() : Boolean= toRemove.get
+  protected[rescala] def markToBeRemoved() = toRemove.set(true)
   protected[rescala] def removeTurn() = currentTurn = null
   
   
@@ -72,4 +73,6 @@ class StatefulFrame[A](
   }
   
   pulses.initStrategy(Buffer.keepPulse)
+  
+  override def toString = super.toString() + s"[turn=$turn, written=$isWritten, remove=$shouldBeRemoved]"
 }

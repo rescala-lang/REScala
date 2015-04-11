@@ -9,7 +9,7 @@ import rescala.Signals
 import rescala.graph.Framed
 import scala.collection.immutable.Queue
 import rescala.turns.Turn
-import rescala.pipelining.tests.PipelineTestUtils.frameTurns
+import rescala.pipelining.tests.PipelineTestUtils._
 
 class ConflictResolvingTest extends AssertionsForJUnit with MockitoSugar {
   
@@ -30,8 +30,8 @@ class ConflictResolvingTest extends AssertionsForJUnit with MockitoSugar {
   
   val s1 = Var(0)
   val s2 = Var(0)
-  val d1 = Signals.lift(s1, s2) {_ - _}
-  val d2 = Signals.static(s1, s2) {implicit t => s1.get - 2 * s2.get}
+  val d1 = Signals.lift(s1, s2) { (v1, v2) => randomWait{v1 - v2}}
+  val d2 = Signals.lift(s1, s2) { (v1, v2) => randomWait{v1 - 2 * v2}}
   
   // In the following the propagation is done by hand and not by the queue
   // This allows to fix a pseudo paralellismus of updates by invoking the
@@ -134,11 +134,9 @@ class ConflictResolvingTest extends AssertionsForJUnit with MockitoSugar {
   def testEvaluationParallel() = {
     for (i <- 1 to 100) {
       val update1 =createThread{ 
-        println("Thread " + Thread.currentThread().getId + " run")
         s1.set(10)
       }
       val update2 = createThread{
-        println("Thread " + Thread.currentThread().getId + " run")
         s2.set(5)
       }
       
@@ -153,18 +151,19 @@ class ConflictResolvingTest extends AssertionsForJUnit with MockitoSugar {
       update1.join
       update2.join
       
+      assert(s1.getPipelineFrames().isEmpty)
+      assert(s2.getPipelineFrames().isEmpty)
+      assert(d1.getPipelineFrames().isEmpty)
+      assert(d2.getPipelineFrames().isEmpty)
+      
       // Now either update1 was scheduled first or update2
       // Independent of the if statement above
       
-      println("D1 = " + d1.now)
-      println("D2 = " + d2.now)
       assert(d1.now == 5)
       assert(d2.now == 0)
       
-      println("---")
       s1.set(0)
       s2.set(0)
-      println("-----------")
     }
   }
   

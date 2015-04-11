@@ -82,7 +82,7 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
    * Implements a depth first search of the waiting graph to check
    * whether waits waits on on
    */
-  private def waitsOn(waits: PTurn, on: PTurn): Boolean = {
+  protected[pipelining] def waitsOn(waits: PTurn, on: PTurn): Boolean = {
     if (waits == on)
       true
     else {
