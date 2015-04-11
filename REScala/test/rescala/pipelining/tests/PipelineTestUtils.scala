@@ -22,4 +22,13 @@ object PipelineTestUtils {
     result
   }
   
+  def createThread(job : => Any) : Thread = {
+    new Thread(new Runnable() {
+      override def run() = {
+        job
+      }
+    }
+    )
+  }
+  
 }

@@ -74,5 +74,5 @@ class StatefulFrame[A](
   
   pulses.initStrategy(Buffer.keepPulse)
   
-  override def toString = super.toString() + s"[turn=$turn, written=$isWritten, remove=$shouldBeRemoved]"
+  override def toString = super.toString() + s"[turn=$turn, written=$isWritten, remove=$shouldBeRemoved, pulses=${pulses.get(null)}]"
 }

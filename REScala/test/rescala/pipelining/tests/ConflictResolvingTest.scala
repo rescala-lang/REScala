@@ -121,15 +121,6 @@ class ConflictResolvingTest extends AssertionsForJUnit with MockitoSugar {
     assert(d2.now == 0)
   }
   
-  def createThread(job : => Any) : Thread = {
-    new Thread(new Runnable() {
-      override def run() = {
-        job
-      }
-    }
-    )
-  }
-  
   @Test
   def testEvaluationParallel() = {
     for (i <- 1 to 100) {

@@ -8,6 +8,7 @@ import rescala.propagation.LevelQueue
 import rescala.graph.ReactiveFrame
 import rescala.graph.ReactiveFrame
 import rescala.Signal
+import rescala.graph.Pulsing
 
 class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps : Boolean = false) extends TurnImpl {
 
@@ -26,11 +27,14 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps : Boolea
     //println("Evaluate for turn " + this + " at "+ head)
    // println("Deps     " + head.outgoing.get )
    // println("val      " + {head.asInstanceOf[Signal[_]].get})
-    head.fillFrame
+    // Hack dont override changes to sources => need to do that better
+    if (head.incoming.nonEmpty)
+      head.fillFrame
+      
    // println("New Deps " + head.outgoing.get)
    // println("New val  " + {head.asInstanceOf[Signal[_]].get})
     super.evaluate(head)
-    val sig = head.asInstanceOf[Signal[_]]
+    //val sig = head.asInstanceOf[Signal[_]]
     //println(s"   evaluated for $this to ${sig.get}at $head")
     //println(s"   with frame for $this ${sig.getPipelineFrames().map { p => s"[${p.turn} = ${p.pulses.get}]" }.mkString(",")}")
     // Mark the frame as written -> the turn will not touch this frame again
