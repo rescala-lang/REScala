@@ -57,6 +57,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps : Boolea
   
   override def releasePhase(): Unit = {
     // Mark all frames for removal
+    // TODO Remove frames only if all previous turn have finished
     framedReactives.foreach { _.tryRemoveFrame }
   }
 

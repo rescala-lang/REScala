@@ -5,7 +5,7 @@ import scala.collection.immutable.Queue
 import scala.annotation.tailrec
 
 trait Framed {
-  protected[this]type Frame <: TurnFrame;
+  protected[this] type Frame <: TurnFrame;
 
   protected[this] def initialStableFrame: Frame
   protected[this] def newFrameFrom(turn: Turn, other: Frame): Frame

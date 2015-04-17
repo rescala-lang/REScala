@@ -20,7 +20,9 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
    * turn t1 is before turn t2 at the reactives rs
    */
   // TODO need to cleanup the map if turns are done
-  private var ordering: Map[(PTurn, PTurn), Set[Reactive]] = Map()
+  private var ordering: Map[(PTurn, PTurn), Set[Reactive]] = Map().withDefaultValue(Set())
+  private object graphLock
+  
   /**
    * A map which tracks which turn waits for which other. If t1 -> ts,
    * then for all t in ts an entry (t1, t) in ordering exists, which
@@ -38,17 +40,14 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
    * Creates a new frame for the given turn at the given reactive and
    * resolves conflicts which are introduced by creating the new frame
    */
-  protected[pipelining] def createFrame(turn: PTurn, at: Reactive) = {
+  protected[pipelining] def createFrame(turn: PTurn, at: Reactive) = graphLock.synchronized{
+    // TODO first check for conflicts
     at.createFrame { frame =>
       val before = frame.turn.asInstanceOf[PipeliningTurn]
-      // Only one node at a time can modify ordering
-      // TODO: can allow to create frames in parallel if possible?
-      ordering.synchronized {
-        // First resolve conflicts which would create a cycle
-        resolveConflicts(before, turn)
-        // Then remember the new turn
-        rememberOrder(before, turn, at)
-      }
+      // First resolve conflicts which would create a cycle
+      resolveConflicts(before, turn)
+      // Then remember the new turn
+      rememberOrder(before, turn, at)
       true
     }(turn)
   }
@@ -148,6 +147,7 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
     findAndResolveConflicts(before, after)
   }
   
+  // TODO remove synchronized
   class NoBuffer[A](initial :A) extends Buffer[A] {
     private var value = initial
     def initCurrent(value: A): Unit = synchronized{ this.value = value}
