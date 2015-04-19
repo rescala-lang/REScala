@@ -14,13 +14,17 @@ import rescala.turns.Turn
 class PipelineEngine extends EngineImpl[PipeliningTurn]() {
 
   private type PTurn = PipeliningTurn
+  
+  private var activeTurns : Set[PTurn] = Set()
+  private object activeTurnsLock
+  
 
   /**
    * A Map which stores for a mapping (t1, t2) -> rs, that
    * turn t1 is before turn t2 at the reactives rs
    */
   // TODO need to cleanup the map if turns are done
-  private var ordering: Map[(PTurn, PTurn), Set[Reactive]] = Map().withDefaultValue(Set())
+  private var ordering: Map[(PTurn, PTurn), Set[Reactive]] = Map()
   private object graphLock
   
   /**
@@ -29,12 +33,24 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
    * does not map to an empty set (or is not defined)
    */
   private var waitingEdges: Map[PTurn, Set[PTurn]] = Map()
+  
+  private var completedNotRemovedTurns : Set[PTurn] = Set()
+  private object completedNotRemovedTurnsLock
 
+  // For testing
   protected[pipelining] def getOrdering = ordering
   protected[pipelining] def getWaitingEdges = waitingEdges
-
+  protected[pipelining] def isActive(turn : PTurn) = activeTurnsLock.synchronized(activeTurns.contains(turn))
+  
+  protected def makeNewTurn =  new PipeliningTurn(this)
+  
   // For debugging
-  override protected[pipelining] def makeTurn: PipeliningTurn = new PipeliningTurn(this)
+  override final protected[pipelining] def makeTurn: PipeliningTurn = {
+    val newTurn =makeNewTurn
+    activeTurnsLock.synchronized(activeTurns += newTurn)
+    newTurn
+  }
+  
 
   /**
    * Creates a new frame for the given turn at the given reactive and
@@ -44,6 +60,7 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
     // TODO first check for conflicts
     at.createFrame { frame =>
       val before = frame.turn.asInstanceOf[PipeliningTurn]
+      assert(isActive(before), s"A frame from the already completed turn $before remained")
       // First resolve conflicts which would create a cycle
       resolveConflicts(before, turn)
       // Then remember the new turn
@@ -86,6 +103,43 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
       true
     else {
       waitingEdges.getOrElse(waits, Set()).exists { waitsOn(_, on) }
+    }
+  }
+
+  protected[pipelining] def turnCompleted(turn: PTurn): Unit = {
+    graphLock.synchronized {
+      val turnRemoved = {
+        val waitsOnAnyTurn = waitingEdges.contains(turn)
+        if (!waitsOnAnyTurn) {
+          // TODO Maybe we can do this a bit more efficient
+          val oldOrdering = ordering
+          for ( (before, after) <- oldOrdering.keys) {
+              assert(after != turn) // after is never allowed to be turn, because waitsOn is empty
+            if (before == turn) {
+              ordering = ordering - ((before, after))
+            }
+          }
+          waitingEdges = waitingEdges.mapValues { _ - turn }.filter({case (_, befores) => befores.nonEmpty})
+          // Remove all frames
+          turn.framedReactives.foreach { _.removeFrame(turn) }
+          activeTurnsLock.synchronized{
+              assert(activeTurns.contains(turn))
+              activeTurns -= turn}
+          true
+        } else {
+          false
+        }
+      }
+      completedNotRemovedTurnsLock.synchronized {
+        if (!turnRemoved) {
+          completedNotRemovedTurns += turn
+        } else {
+          // Try to remove all turns again, because there is a turn removed
+          val oldTurns = completedNotRemovedTurns;
+          completedNotRemovedTurns = Set()
+          oldTurns.foreach(turnCompleted(_))
+        }
+      }
     }
   }
 

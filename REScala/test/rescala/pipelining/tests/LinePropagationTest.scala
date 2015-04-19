@@ -12,6 +12,8 @@ import rescala.pipelining.tests.PipelineTestUtils._
 import rescala.turns.Turn
 import rescala.turns.Ticket
 import rescala.pipelining.PipeliningTurn
+import rescala.pipelining.PipeliningTurn
+import rescala.pipelining.PipeliningTurn
 
 class LinePropagationTest extends AssertionsForJUnit with MockitoSugar {
   
@@ -20,7 +22,7 @@ class LinePropagationTest extends AssertionsForJUnit with MockitoSugar {
   // gives a deterministic order of the turns with respect to their arrival
   implicit val engine : PipelineEngine= new PipelineEngine {
    private val lockPhaseLock = new Object
-   override def makeTurn = new PipeliningTurn(engine) {
+   override def makeNewTurn = new PipeliningTurn(engine) {
      override def lockPhase(initialWrites: List[Reactive]) = lockPhaseLock.synchronized{
        super.lockPhase(initialWrites)
      }
@@ -43,6 +45,13 @@ class LinePropagationTest extends AssertionsForJUnit with MockitoSugar {
   val numNodes = 20
   val deps = createNodes(numNodes, List(source))
   var pipelineOK = true;
+ 
+  var firstTurn = null.asInstanceOf[PipeliningTurn]
+  var secondTurn = null.asInstanceOf[PipeliningTurn]
+  val waitFirstTurn = 100
+  val waitSecondTurn = 10
+ 
+  assert(waitFirstTurn > waitSecondTurn)
   
   def checkPrevTurn(pred : Reactive)(implicit turn : Turn) = {
     def doWithPred(reactive: Reactive, job : Reactive => Unit) = {
@@ -60,6 +69,13 @@ class LinePropagationTest extends AssertionsForJUnit with MockitoSugar {
       val (num, wait) = other.get(t)
       if (wait != 0)
         checkPrevTurn(other)(t)
+      if (wait == waitFirstTurn) {
+        firstTurn = t.asInstanceOf[PipeliningTurn]
+      } else if (wait == waitSecondTurn) {
+        pipelineOK &= num != 1 ||  !engine.isActive(firstTurn)
+      }
+      
+        
       Thread.sleep(wait)
       (num + 1,wait)}
     num match {

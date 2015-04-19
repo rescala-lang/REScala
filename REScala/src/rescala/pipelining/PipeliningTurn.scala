@@ -15,7 +15,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps : Boolea
   /**
    * Remember all reactives for which a frame was created during this turn
    */
-  private var framedReactives : Set[Reactive] = Set()
+  protected [pipelining] var framedReactives : Set[Reactive] = Set()
   
   override def waitsOnFrame(other : Turn) = other == this || engine.waitsOn(this, other.asInstanceOf[PipeliningTurn])
   
@@ -56,9 +56,11 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps : Boolea
   }
   
   override def releasePhase(): Unit = {
-    // Mark all frames for removal
-    // TODO Remove frames only if all previous turn have finished
-    framedReactives.foreach { _.tryRemoveFrame }
+    engine.turnCompleted(this)
   }
 
+  override def toString =  {
+    s"PipeliningTurn(${super.toString})"
+  }
+  
 }

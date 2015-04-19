@@ -123,7 +123,11 @@ class ConflictResolvingTest extends AssertionsForJUnit with MockitoSugar {
   
   @Test
   def testEvaluationParallel() = {
+    assert(engine.getOrdering.isEmpty)
+    assert(engine.getWaitingEdges.isEmpty)
+    
     for (i <- 1 to 100) {
+      println("------")
       val update1 =createThread{ 
         s1.set(10)
       }
@@ -146,6 +150,9 @@ class ConflictResolvingTest extends AssertionsForJUnit with MockitoSugar {
       assert(s2.getPipelineFrames().isEmpty)
       assert(d1.getPipelineFrames().isEmpty)
       assert(d2.getPipelineFrames().isEmpty)
+      
+      assert(engine.getOrdering.isEmpty)
+      assert(engine.getWaitingEdges.isEmpty)
       
       // Now either update1 was scheduled first or update2
       // Independent of the if statement above

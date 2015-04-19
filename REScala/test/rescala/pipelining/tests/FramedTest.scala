@@ -29,7 +29,7 @@ class FramedTest extends AssertionsForJUnit with MockitoSugar {
     override def createFrame (allowedAfterFrame: Frame => Boolean = { x: Frame => true }) (implicit turn: Turn) : Unit = 
       super.createFrame(allowedAfterFrame)(turn)
     override def hasFrame(implicit turn: Turn) = super.hasFrame(turn)
-    override def tryRemoveFrame(implicit turn: Turn) = super.tryRemoveFrame(turn)
+    override def removeFrame(implicit turn: Turn) = super.removeFrame(turn)
     override def frame[T](f: Frame => T = { x: Frame => x })(implicit turn: Turn) = super.frame(f)(turn)
     override def markWritten(implicit turn: Turn) = super.markWritten(turn)
   }
@@ -65,7 +65,7 @@ class FramedTest extends AssertionsForJUnit with MockitoSugar {
     newFrame.num =1
     framed.markWritten(turn)
     assert(newFrame.isWritten())
-    framed.tryRemoveFrame
+    framed.removeFrame
     assert(framed.getPipelineFrames().isEmpty)
     val stableFrame = framed.getStableFrame()
     assert(stableFrame.turn == null)
@@ -100,13 +100,12 @@ class FramedTest extends AssertionsForJUnit with MockitoSugar {
     assert(frame3.num == 2)
     frame3.num = 3
     
-    // Try remove the second one => should not be removed
-    framed.tryRemoveFrame(turn2)
     assert(framed.getPipelineFrames() == Queue(frame1, frame2, frame3))
     assert(framed.getStableFrame().num == 0)
     
     // No remove the first one, this removed frame 1 and 2
-    framed.tryRemoveFrame(turn1)
+    framed.removeFrame(turn1)
+    framed.removeFrame(turn2)
     assert(framed.getPipelineFrames() == Queue(frame3))
     assert(framed.getStableFrame().num == 2)
     
@@ -114,7 +113,7 @@ class FramedTest extends AssertionsForJUnit with MockitoSugar {
     
     // Finally remove the last one
     assert(frame3.num == 3)
-    framed.tryRemoveFrame(turn3)
+    framed.removeFrame(turn3)
     assert(framed.getPipelineFrames().isEmpty)
     assert(framed.getStableFrame().num == 3)
   }

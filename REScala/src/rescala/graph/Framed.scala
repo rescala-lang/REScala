@@ -110,20 +110,15 @@ trait Framed {
     pipelineFrames = moveFrame(pipelineFrames, null.asInstanceOf[Frame])
   }
 
-  protected[rescala] def tryRemoveFrame(implicit turn: Turn): Unit = lockPipeline {
+  protected[rescala] def removeFrame(implicit turn: Turn): Unit = lockPipeline {
     // Can remote the frame if it is head of the queue
     if (pipelineFrames.head.turn == turn) {
-      def removeFrames(stable : Frame, queue : Queue[Frame]) : (Frame, Queue[Frame]) = queue match{
-        case head +: tail if head.shouldBeRemoved() => head.removeTurn(); removeFrames(head, tail)
-        case _ => (stable, queue)
-      }
       pipelineFrames.head.removeTurn()
-      val (newStableFrame, newQueue) = removeFrames(pipelineFrames.head, pipelineFrames.tail)
-      stableFrame = newStableFrame
-      pipelineFrames = newQueue
+      stableFrame = pipelineFrames.head
+      pipelineFrames = pipelineFrames.tail
     } else {
     //  println(s"Mark remove $turn at $this")
-      frame().markToBeRemoved()
+      assert(false, s"Frame for $turn cannot be removed at $this because it is not head of the queue")
     }
   }
 
