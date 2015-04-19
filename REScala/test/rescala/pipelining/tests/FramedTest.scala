@@ -125,6 +125,7 @@ class FramedTest extends AssertionsForJUnit with MockitoSugar {
       val turn = new PipeliningTurn(engine)
       framed.createFrame()(turn)
       framed.frame()(turn).num = i
+      framed.markWritten(turn)
     }
     val Queue(frame1, frame2, frame3, frame4, frame5) = framed.getPipelineFrames()
     

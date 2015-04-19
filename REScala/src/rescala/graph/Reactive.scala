@@ -37,7 +37,10 @@ trait Reactive extends Framed {
 /** A node that has nodes that depend on it */
 trait Pulsing[+P] extends Reactive {
   protected [this] type Frame <:PulsingFrame[P]
-  final def pulse(implicit turn: Turn): Pulse[P] = frame(_.pulses).get
+  final def pulse(implicit turn: Turn): Pulse[P] = {  
+    while(!isPreviousFrameFinished){}
+    frame(_.pulses).get
+  } 
   protected[this] def pulses(implicit turn:Turn): Buffer[Pulse[P]] = frame(_.pulses)
 }
 

@@ -21,6 +21,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps : Boolea
   
   override def evaluate(head: Reactive) = {
     assert (head.hasFrame(this), "No frame was created in turn " + this  + " for " + head)
+    
     while (! head.isPreviousFrameFinished) {
       // Prototype: Busy waiting 
     }
@@ -56,6 +57,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps : Boolea
   }
   
   override def releasePhase(): Unit = {
+    framedReactives.foreach(_.markWritten)
     engine.turnCompleted(this)
   }
 

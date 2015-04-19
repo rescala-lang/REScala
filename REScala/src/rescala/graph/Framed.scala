@@ -45,12 +45,14 @@ trait Framed {
 
   protected def frame[T](f: Frame => T = { x: Frame => x })(implicit turn: Turn): T = lockPipeline {
     @tailrec
-    def findTopMostFrame(queue : Queue[Frame]) : Frame = queue match{
-      case Queue() => stableFrame
-      case _ :+ last if turn.waitsOnFrame(last.turn) => last
+    def findTopMostFrame(queue : Queue[Frame]) : (Frame, Frame) = queue match{
+      case Queue() =>(null.asInstanceOf[Frame], stableFrame)
+      case Queue() :+ last if turn.waitsOnFrame(last.turn) => (null.asInstanceOf[Frame], last)
+      case _ :+ beforeLast :+ last if turn.waitsOnFrame(last.turn) => if (last.turn != turn) (last,last) else (beforeLast, last)
       case begin :+ _ => findTopMostFrame(begin)
     }
-    val topMostWaitingFrame = findTopMostFrame(pipelineFrames)
+    var (previousFrame, topMostWaitingFrame) = findTopMostFrame(pipelineFrames)
+    
     f(topMostWaitingFrame)
   }
   
@@ -58,14 +60,16 @@ trait Framed {
     @tailrec
     def indexOf(queue : Queue[Frame], index : Int) : Option[Int] = queue match {
       case Queue() => None
-      case head +: _ if head.turn == turn =>  Some(index)
-      case _ +: tail => indexOf(tail, index +1)
+      case _ :+ last if turn.waitsOnFrame( last.turn) =>  Some(index)
+      case begin :+ _ => indexOf(begin, index -1)
     }
-    val frameIndexOption = indexOf(pipelineFrames, 0)
-    assert (frameIndexOption.isDefined, "No frame for turn " + turn + " found")
-    frameIndexOption.get match {
-      case 0 => true // Stable frame is always finished
-      case frameIndex => pipelineFrames(frameIndex -1).isWritten()
+    val frameIndexOption = indexOf(pipelineFrames, pipelineFrames.size -1)
+    frameIndexOption match {
+      case None => true
+      case Some(frameIndex) => frameIndex match {
+        case 0 => true // Stable frame is always finished
+        case frameIndex => pipelineFrames(frameIndex -1).isWritten()
+      }
     }
   }
 
