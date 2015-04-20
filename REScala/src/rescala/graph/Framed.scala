@@ -56,6 +56,23 @@ trait Framed {
     f(topMostWaitingFrame)
   }
   
+   protected [rescala] def previousNonStableFrame(implicit turn : Turn) : Option[Frame] = lockPipeline {
+    @tailrec
+    def indexOf(queue : Queue[Frame], index : Int) : Option[Int] = queue match {
+      case Queue() => None
+      case _ :+ last if turn.waitsOnFrame( last.turn) =>  Some(index)
+      case begin :+ _ => indexOf(begin, index -1)
+    }
+    val frameIndexOption = indexOf(pipelineFrames, pipelineFrames.size -1)
+    frameIndexOption match {
+      case None => None
+      case Some(frameIndex) => frameIndex match {
+        case 0 => None // Stable frame is always finished
+        case frameIndex => Some(pipelineFrames(frameIndex -1))
+      }
+    }
+  }
+  
   protected [rescala] def isPreviousFrameFinished(implicit turn : Turn) : Boolean = lockPipeline {
     @tailrec
     def indexOf(queue : Queue[Frame], index : Int) : Option[Int] = queue match {
