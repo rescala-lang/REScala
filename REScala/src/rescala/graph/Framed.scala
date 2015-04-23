@@ -5,14 +5,16 @@ import scala.collection.immutable.Queue
 import scala.annotation.tailrec
 
 trait Framed {
-  protected[this] type Frame <: TurnFrame[Frame];
+  protected[this] type Content ;
 
-  protected[this] def initialStableFrame: Frame
-  protected[this] def newFrameFrom(turn: Turn, other: Frame): Frame
-  protected[this] var stableFrame: Frame = initialStableFrame
- // protected[this] var pipelineFrames: Queue[Frame] = Queue()
-  protected[this] var queueHead : Frame = null.asInstanceOf[Frame];
-  protected[this] var queueTail : Frame = null.asInstanceOf[Frame];
+  private type CFrame = Frame[Content]
+  
+  protected[this] def initialStableFrame: Content
+  protected[this] def duplicate(content : Content) : Content
+  protected[this] var stableFrame: Content = initialStableFrame
+ 
+  protected[this] var queueHead : CFrame = null.asInstanceOf[CFrame];
+  protected[this] var queueTail : CFrame = null.asInstanceOf[CFrame];
   
   private object pipelineLock
   
@@ -22,7 +24,7 @@ trait Framed {
   
   // Access for testing
   protected[rescala] final def getPipelineFrames() = lockPipeline {
-    def makeQueue(head : Frame, queue : Queue[Frame]) : Queue[Frame] = {
+    def makeQueue(head : CFrame, queue : Queue[CFrame]) : Queue[CFrame] = {
       if (head == null)
         queue
       else
@@ -30,20 +32,11 @@ trait Framed {
     }
     makeQueue(queueHead, Queue())
   }
+ 
 
-  // Does pipelining in this way remove STM support? If yes, is that a problem if 
-  // we know now, that it is not that useful?
-
-  // TODO add synchronization for thread safe access to queue
-
-  // Locking phase as usual, but reactives can be locked if current frame is written
-  //   In the locking phase, after all locks could be gained, insert new frames for each
-  //   involved reactive => other turns cannot lock them until the frames were set to be written
-  //   
-
-  private def findFrame[T](find: Option[Frame] => T)(implicit turn: Turn): T = lockPipeline {
+  protected[rescala] def findFrame[T](find: Option[CFrame] => T)(implicit turn: Turn): T = lockPipeline {
     @tailrec
-    def findFrame(head : Frame) : Option[Frame]= {
+    def findFrame(head : CFrame) : Option[CFrame]= {
       if (head == null)
         None
       else if (head.turn eq turn)
@@ -54,20 +47,20 @@ trait Framed {
     find(selectedFrame)
   }
 
-  private def findFrame[T](found: Frame => T, notFound: => T)(implicit turn: Turn): T = {
+  private def findFrame[T](found: CFrame => T, notFound: => T)(implicit turn: Turn): T = {
     findFrame(_ match {
       case Some(d) => found(d)
       case None    => notFound
     })
   }
-
-  protected def frame[T](f: Frame => T = { x: Frame => x })(implicit turn: Turn): T = lockPipeline {
+  
+   protected def frame[T](f: Content => T = { x: Content => x })(implicit turn: Turn): T = lockPipeline {
     @tailrec
-    def findTopMostFrame(tail : Frame) : Frame = {
+    def findTopMostFrame(tail : CFrame) : Content = {
       if (tail == null)
         stableFrame
       else if (turn.waitsOnFrame(tail.turn))
-        tail
+        tail.content
       else
         findTopMostFrame(tail.previous())
     }
@@ -77,23 +70,27 @@ trait Framed {
   }
   
   protected[rescala] def waitUntilCanWrite(implicit turn : Turn) : Unit = {
-    val turnFrame = frame()
-    turnFrame.awaitPredecessor(pipelineLock)
+    findFrame(x => x) match {
+      case Some(turnFrame) => turnFrame.awaitPredecessor(pipelineLock)
+      case None => throw new AssertionError(s"No frame for $turn at $this")
+    }
+    
   }
 
   protected[rescala] def hasFrame(implicit turn: Turn): Boolean = {
     findFrame(_ => true, false)
   }
 
-  protected[rescala] def createFrame(visitPreviousFrame: Frame => Unit = { x: Frame => })(implicit turn: Turn): Unit = lockPipeline {
-    def createFrame(lastElem : Frame) : Frame =  {
-      val newFrame = newFrameFrom(turn, lastElem)
+  protected[rescala] def createFrame(visitPreviousFrame: CFrame => Unit = { x: CFrame => })(implicit turn: Turn): Unit = lockPipeline {
+    def createFrame(prev : Content) : CFrame =  {
+      val newFrame = new WriteFrame[Content](turn)
+      newFrame.content = duplicate(prev)
       assert(newFrame.turn == turn)
       newFrame
     }
     
     @tailrec
-    def visitPipeline(head : Frame) : Unit = {
+    def visitPipeline(head : CFrame) : Unit = {
       if (head != null) {
         visitPreviousFrame(head)
         visitPipeline(head.next)
@@ -105,7 +102,7 @@ trait Framed {
       queueTail = queueHead
     } else {
       visitPipeline(queueHead)
-      val newFrame = createFrame(queueTail)
+      val newFrame = createFrame(queueTail.content)
       newFrame.insertAfter(queueTail)
       queueTail = newFrame
     }
@@ -115,24 +112,12 @@ trait Framed {
   protected[rescala] def fillFrame(implicit turn : Turn) : Unit = lockPipeline {
     
     @tailrec
-    def refreshFrame(head : Frame) : Unit = {
+    def refreshFrame(head : CFrame) : Unit = {
       if (head == null) {
         throw new AssertionError(s"No frame found for turn $turn")
       } else if (head.turn == turn) {
-        if (head.previous() != null) {
-          val newFrame = newFrameFrom(turn, head.previous())
-          if (head.next() == null) {
-            queueTail = newFrame
-          }         
-          head.replaceWith(newFrame)
-        } else {
-          val newFrame = newFrameFrom(turn, stableFrame)
-          queueHead = newFrame
-          if (head.next() == null) {
-            queueTail = newFrame
-          }
-          head.replaceWith(newFrame)
-        }
+        val newContent = duplicate (if (head.previous() == null) stableFrame else head.previous().content)
+        head.content = newContent
       } else {
         refreshFrame(head.next())
       }
@@ -140,16 +125,16 @@ trait Framed {
     refreshFrame(queueHead)
   }
 
-  protected[rescala] def moveFrameBack(allowedAfterFrame: Frame => Boolean)(implicit turn: Turn): Unit = lockPipeline {
+  protected[rescala] def moveFrameBack(allowedAfterFrame: CFrame => Boolean)(implicit turn: Turn): Unit = lockPipeline {
     
-    def moveFrame(head : Frame, frame : Frame) : (Frame, Frame) = {
+    def moveFrame(head : CFrame, frame : CFrame) : (CFrame, CFrame) = {
       if (head == null) {
         throw new AssertionError("Frame not allowed after any frame in the pipeline")
       } else if (head.turn eq turn) {
         moveFrame(head.next(), head)
       } else if (frame == null) {
         // Did not find the frame for the turn
-        moveFrame(head.next(), null.asInstanceOf[Frame])
+        moveFrame(head.next(), null.asInstanceOf[CFrame])
       } else if (allowedAfterFrame(head)) {
         val newHead = if (frame.previous() == null) frame.next else queueHead
         val newTail = if(head.next() == null) frame else queueTail
@@ -160,7 +145,7 @@ trait Framed {
       }
     }
     
-    val (newHead, newTail) = moveFrame(queueHead, null.asInstanceOf[Frame])
+    val (newHead, newTail) = moveFrame(queueHead, null.asInstanceOf[CFrame])
     queueHead = newHead
     queueTail = newTail
   }
@@ -169,10 +154,9 @@ trait Framed {
     // Can remote the frame if it is head of the queue
     if (queueHead.turn == turn) {
       val newHead = queueHead.next()
-      val newTail = if (queueTail == queueHead) null.asInstanceOf[Frame] else queueTail
+      val newTail = if (queueTail == queueHead) null.asInstanceOf[CFrame] else queueTail
       queueHead.removeFrame()
-      queueHead.removeTurn()
-      stableFrame = queueHead
+      stableFrame = queueHead.content
       queueHead = newHead
       queueTail = newTail
     } else {
@@ -182,7 +166,7 @@ trait Framed {
   }
 
   protected[rescala] def markWritten(implicit turn: Turn): Unit = {
-    frame().markWritten()
+    findFrame(_.asInstanceOf[WriteFrame[Content]].markWritten(), throw new AssertionError(s"No frame to write for turn $turn"))
   }
 
   // If want to omit the buffers in the turn data (because the previous data is contained

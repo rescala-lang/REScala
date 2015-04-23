@@ -1,12 +1,12 @@
 package rescala.pipelining.tests
 
-import org.mockito.internal.util.MockitoLogger
+import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.graph.TurnFrame
-import rescala.pipelining.PipeliningTurn
-import org.junit.Test
+
+import rescala.graph.WriteFrame
 import rescala.pipelining.PipelineEngine
+import rescala.pipelining.PipeliningTurn
 import rescala.turns.Turn
 
 class FrameTest extends AssertionsForJUnit with MockitoSugar  {
@@ -14,34 +14,24 @@ class FrameTest extends AssertionsForJUnit with MockitoSugar  {
   val engine = new PipelineEngine
   
  
-  
   @Test
-  def testRemoveTurn() = {
-    val turn = engine.makeTurn
-    val frame = new TurnFrameImpl(turn)
-    assert(frame.turn == turn)
-    frame.removeTurn()
-    assert(frame.turn == null)
-  }
-  
-  @Test
-  def testNewFrameIsNotWritten() = {
-    assert(new TurnFrameImpl(engine.makeTurn).isWritten() == false)
+  def testNewWriteFrameIsNotWritten() = {
+    assert(new WriteFrame(engine.makeTurn).isWritten == false)
   }
   
   @Test
   def testMarkWritten() = {
-    val frame = new TurnFrameImpl(engine.makeTurn)
-    assert(!frame.isWritten())
+    val frame = new WriteFrame(engine.makeTurn)
+    assert(!frame.isWritten)
     frame.markWritten()
-    assert(frame.isWritten())
+    assert(frame.isWritten)
   }
   
   @Test
   def testInsertFrame() = {
-    val frame1 = new TurnFrameImpl(engine.makeTurn)
-    val frame2 = new TurnFrameImpl(engine.makeTurn)
-    val frame3 = new TurnFrameImpl(engine.makeTurn)
+    val frame1 = new WriteFrame(engine.makeTurn)
+    val frame2 = new WriteFrame(engine.makeTurn)
+    val frame3 = new WriteFrame(engine.makeTurn)
     
     frame2.insertAfter(frame1)
     
@@ -62,9 +52,9 @@ class FrameTest extends AssertionsForJUnit with MockitoSugar  {
   
   @Test
   def testRemoveFrame() = {
-    val frame1 = new TurnFrameImpl(engine.makeTurn)
-    val frame2 = new TurnFrameImpl(engine.makeTurn)
-    val frame3 = new TurnFrameImpl(engine.makeTurn)
+    val frame1 = new WriteFrame(engine.makeTurn)
+    val frame2 = new WriteFrame(engine.makeTurn)
+    val frame3 = new WriteFrame(engine.makeTurn)
     
     frame2.insertAfter(frame1)
     frame3.insertAfter(frame2)
@@ -90,9 +80,9 @@ class FrameTest extends AssertionsForJUnit with MockitoSugar  {
   
   @Test
   def testMoveFrame() = {
-    val frame1 = new TurnFrameImpl(engine.makeTurn)
-    val frame2 = new TurnFrameImpl(engine.makeTurn)
-    val frame3 = new TurnFrameImpl(engine.makeTurn)
+    val frame1 = new WriteFrame(engine.makeTurn)
+    val frame2 = new WriteFrame(engine.makeTurn)
+    val frame3 = new WriteFrame(engine.makeTurn)
     
     frame2.insertAfter(frame1)
     frame3.insertAfter(frame2)

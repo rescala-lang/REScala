@@ -9,39 +9,30 @@ import java.util.concurrent.locks.LockSupport
 import java.util.concurrent.atomic.AtomicReference
 import rescala.util.JavaFunctionsImplicits._
 
-class TurnFrame[T <: TurnFrame[T]](_turn: Turn) {
-  self: T =>
-
+abstract class Frame[T](val turn : Turn) {
+  
   private val creatorThread = Thread.currentThread()
-  private val lockObject = new Object
+  protected val lockObject = new Object
   private var lockedOnThread: Set[Thread] = Set()
-
-  private var predecessor: T = null.asInstanceOf[T]
-  private var successor: T = null.asInstanceOf[T]
-  private val written = new AtomicBoolean(false);
-  private val toRemove = new AtomicBoolean(false);
-  private var currentTurn = _turn
-
-  protected[rescala] final def turn: Turn = currentTurn;
-
-  protected[rescala] final def isWritten(): Boolean = written.get
-  protected[rescala] final def removeTurn() = currentTurn = null
-  protected[rescala] final def markWritten() = {
-    lockObject.synchronized {
-      written.set(true)
-      retryBlockedThreads()
-    }
-  }
-
-  private def retryBlockedThreads() = lockObject.synchronized {
+  
+  protected[rescala] var content : T = null.asInstanceOf[T];
+  
+  private var predecessor: Frame[T] = null.asInstanceOf[Frame[T]]
+  private var successor: Frame[T] = null.asInstanceOf[Frame[T]]
+  protected[rescala] final def next() = successor
+  protected[rescala] final def previous() = predecessor
+  
+  protected[rescala] def isWritten : Boolean;
+  
+  override def toString() = s"Frame($turn)[$content]"
+  
+  protected def retryBlockedThreads() = lockObject.synchronized {
     val blockedThreads = lockedOnThread
     lockedOnThread = Set()
     blockedThreads.foreach { LockSupport.unpark(_) }
   }
-
-  protected[rescala] final def next() = successor
-  protected[rescala] final def previous() = predecessor
   
+   
   /**
    * Waits until the predecessor of this frame has written. The predecessor
    * of the frame may change but only on code which is synchronized on the given
@@ -58,7 +49,7 @@ class TurnFrame[T <: TurnFrame[T]](_turn: Turn) {
         if (predecessor != null) {
           predecessor.lockObject.synchronized {
             // Register the current thread as waiting if need to wait
-            waits = !predecessor.isWritten()
+            waits = !predecessor.isWritten
             if (waits)
               predecessor.lockedOnThread += Thread.currentThread()
           }
@@ -78,30 +69,6 @@ class TurnFrame[T <: TurnFrame[T]](_turn: Turn) {
     }
   }
 
-  protected[rescala] final def replaceWith(newFrame: T) = {
-    newFrame.successor = this.successor
-    newFrame.predecessor = this.predecessor
-    if (this.predecessor != null) {
-      this.predecessor.successor = newFrame
-    }
-    if (this.successor != null) {
-      this.successor.predecessor = newFrame
-    }
-    this.successor = null.asInstanceOf[T]
-    this.predecessor = null.asInstanceOf[T]
-
-    newFrame.lockObject.synchronized {
-      lockObject.synchronized {
-        newFrame.lockedOnThread = lockedOnThread
-      }
-    }
-
-    if (newFrame.successor != null) {
-      newFrame.successor.retryBlockedThreads()
-    }
-    newFrame.retryBlockedThreads()
-  }
-
   protected[rescala] final def removeFrame() = {
     if (successor != null) {
       successor.predecessor = this.predecessor
@@ -110,21 +77,21 @@ class TurnFrame[T <: TurnFrame[T]](_turn: Turn) {
       predecessor.successor = this.successor
     }
     val oldSuccessor = this.successor
-    this.successor = null.asInstanceOf[T]
-    this.predecessor = null.asInstanceOf[T]
+    this.successor = null.asInstanceOf[Frame[T]]
+    this.predecessor = null.asInstanceOf[Frame[T]]
 
     if (oldSuccessor != null) {
       oldSuccessor.retryBlockedThreads()
     }
   }
 
-  protected[rescala] final def moveAfter(newPredecessor: T) = {
+  protected[rescala] final def moveAfter(newPredecessor: Frame[T]) = {
     assert(newPredecessor != null)
     removeFrame()
     insertAfter(newPredecessor)
   }
 
-  protected[rescala] final def insertAfter(newPredecessor: T) = {
+  protected[rescala] final def insertAfter(newPredecessor: Frame[T]) = {
     assert(successor == null)
 
     val newSuccessor = newPredecessor.successor
@@ -141,4 +108,25 @@ class TurnFrame[T <: TurnFrame[T]](_turn: Turn) {
     }
   }
 
+  
 }
+
+class WriteFrame[T](turn : Turn) extends Frame[T](turn) {
+  private val written = new AtomicBoolean(false);
+  
+  protected[rescala] def isWritten = written.get
+  
+  protected[rescala] final def markWritten() = {
+    lockObject.synchronized {
+      written.set(true)
+      retryBlockedThreads()
+    }
+  }
+}
+class StaticReadFrame[T](turn : Turn) extends Frame[T](turn) {
+  protected[rescala] def isWritten = true
+}
+class DynamicReadFrame[T](turn : Turn) extends Frame[T](turn) {
+  protected[rescala] def isWritten = throw new NotImplementedError
+}
+
