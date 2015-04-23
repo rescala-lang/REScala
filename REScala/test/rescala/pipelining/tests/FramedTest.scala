@@ -12,7 +12,7 @@ import scala.collection.immutable.Queue
 
 class FramedTest extends AssertionsForJUnit with MockitoSugar {
   
-  class TestFrame( _turn : Turn, var num : Int) extends TurnFrame(_turn){
+  class TestFrame( _turn : Turn, var num : Int) extends TurnFrame[TestFrame](_turn){
     
     override def toString() = "Frame(num = " + num +")(turn = " + turn + ")"
   }
@@ -26,12 +26,13 @@ class FramedTest extends AssertionsForJUnit with MockitoSugar {
     
     // Make fields accessible in the test
     def getStableFrame() = stableFrame
-    override def createFrame (allowedAfterFrame: Frame => Boolean = { x: Frame => true }) (implicit turn: Turn) : Unit = 
+ /*   override def createFrame (visitFrame: Frame => Boolean = { x: Frame => true }) (implicit turn: Turn) : Unit = 
       super.createFrame(allowedAfterFrame)(turn)
     override def hasFrame(implicit turn: Turn) = super.hasFrame(turn)
     override def removeFrame(implicit turn: Turn) = super.removeFrame(turn)
+    
+    override def markWritten(implicit turn: Turn) = super.markWritten(turn) */
     override def frame[T](f: Frame => T = { x: Frame => x })(implicit turn: Turn) = super.frame(f)(turn)
-    override def markWritten(implicit turn: Turn) = super.markWritten(turn)
   }
   
   val framed = new TestFramed()
@@ -118,7 +119,8 @@ class FramedTest extends AssertionsForJUnit with MockitoSugar {
     assert(framed.getStableFrame().num == 3)
   }
   
-  @Test
+  // SUCH BEHVAIOR NOT SUPPORTED BY CURRENT API
+  /* @Test
   def createFrameAtSpecificPosition() = {
     // Create five frames
     for (i <- 1 to 5) {
@@ -135,6 +137,26 @@ class FramedTest extends AssertionsForJUnit with MockitoSugar {
     val newFrame = framed.frame()(turn)
     assert(framed.getPipelineFrames() == Queue(frame1, frame2, frame3, newFrame, frame4, frame5))
     
+  } */
+  
+  @Test
+  def allFramesVisited() = {
+    // Create five frames
+    for (i <- 1 to 5) {
+      val turn = new PipeliningTurn(engine)
+      framed.createFrame()(turn)
+      framed.frame()(turn).num = i
+      framed.markWritten(turn)
+    }
+    val Queue(frame1, frame2, frame3, frame4, frame5) = framed.getPipelineFrames()
+    
+    // Create a frame which is not allowed to be after a frame with number >= 4
+    val turn = new PipeliningTurn(engine)
+    var seenFrames : List[TestFrame] = List()
+    framed.createFrame(frame => seenFrames = seenFrames :+ frame)(turn)
+    val newFrame = framed.frame()(turn)
+    assert(framed.getPipelineFrames() == Queue(frame1, frame2, frame3, frame4, frame5, newFrame))
+    assert(seenFrames == List(frame1, frame2, frame3, frame4, frame5))
   }
   
   @Test

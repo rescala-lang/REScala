@@ -6,6 +6,9 @@ import rescala.turns.Turn
 import scala.util.Random
 import java.util.function.UnaryOperator
 import scala.language.implicitConversions
+import rescala.graph.TurnFrame
+
+class TurnFrameImpl (turn : Turn) extends TurnFrame[TurnFrameImpl] (turn) {}
 
 object PipelineTestUtils {
   

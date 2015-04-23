@@ -13,20 +13,21 @@ import rescala.util.JavaFunctionsImplicits._
 class FrameAwaitTest extends AssertionsForJUnit with MockitoSugar {
 
   val engine = new PipelineEngine
-  val handledFrames: AtomicReference[List[TurnFrame]] = new AtomicReference(List())
+  val handledFrames: AtomicReference[List[TurnFrameImpl]] = new AtomicReference(List())
+  private object modificationLock
 
-  def markFrameHandled(frame: TurnFrame) = {
-    handledFrames.getAndUpdate({ list: List[TurnFrame] => list :+ frame })
+  def markFrameHandled(frame: TurnFrameImpl) = {
+    handledFrames.getAndUpdate({ list: List[TurnFrameImpl] => list :+ frame })
   }
 
-  def assertHandledFrames(expectedframes: TurnFrame*) = {
+  def assertHandledFrames(expectedframes: TurnFrameImpl*) = {
     val frames = handledFrames.get
     assert(frames == expectedframes.toList)
   }
 
-  def createWriteThread(frame: TurnFrame, wait: Int = 0) = {
+  def createWriteThread(frame: TurnFrameImpl, wait: Int = 0) = {
     createThread {
-      frame.awaitPredecessor()
+      frame.awaitPredecessor(modificationLock)
       markFrameHandled(frame)
       frame.markWritten()
     }
@@ -34,8 +35,8 @@ class FrameAwaitTest extends AssertionsForJUnit with MockitoSugar {
 
   @Test(timeout=500)
   def testFrameWaitsOnOther() = {
-    val frame1 = new TurnFrame(engine.makeTurn)
-    val frame2 = new TurnFrame(engine.makeTurn)
+    val frame1 = new TurnFrameImpl(engine.makeTurn)
+    val frame2 = new TurnFrameImpl(engine.makeTurn)
     frame2.insertAfter(frame1)
 
     val frame1Thread = createWriteThread(frame1, 50)
@@ -52,7 +53,7 @@ class FrameAwaitTest extends AssertionsForJUnit with MockitoSugar {
 
   @Test(timeout=500)
   def testFrameWaitsWithReordering() = {
-    val frames = List.fill(4)(new TurnFrame(engine.makeTurn))
+    val frames = List.fill(4)(new TurnFrameImpl(engine.makeTurn))
    
     frames(1).insertAfter(frames(0))
     frames(2).insertAfter(frames(1))

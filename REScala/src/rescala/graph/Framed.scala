@@ -5,21 +5,31 @@ import scala.collection.immutable.Queue
 import scala.annotation.tailrec
 
 trait Framed {
-  protected[this] type Frame <: TurnFrame;
+  protected[this] type Frame <: TurnFrame[Frame];
 
   protected[this] def initialStableFrame: Frame
   protected[this] def newFrameFrom(turn: Turn, other: Frame): Frame
   protected[this] var stableFrame: Frame = initialStableFrame
-  protected[this] var pipelineFrames: Queue[Frame] = Queue()
+ // protected[this] var pipelineFrames: Queue[Frame] = Queue()
+  protected[this] var queueHead : Frame = null.asInstanceOf[Frame];
+  protected[this] var queueTail : Frame = null.asInstanceOf[Frame];
   
-  private val pipelineLock = new Object
+  private object pipelineLock
   
   private def lockPipeline[A](op:  => A) :A = pipelineLock.synchronized {
     op
   }
   
   // Access for testing
-  protected[rescala] final def getPipelineFrames() = pipelineFrames
+  protected[rescala] final def getPipelineFrames() = lockPipeline {
+    def makeQueue(head : Frame, queue : Queue[Frame]) : Queue[Frame] = {
+      if (head == null)
+        queue
+      else
+        makeQueue(head.next(), queue :+ head)
+    }
+    makeQueue(queueHead, Queue())
+  }
 
   // Does pipelining in this way remove STM support? If yes, is that a problem if 
   // we know now, that it is not that useful?
@@ -32,7 +42,15 @@ trait Framed {
   //   
 
   private def findFrame[T](find: Option[Frame] => T)(implicit turn: Turn): T = lockPipeline {
-    val selectedFrame = pipelineFrames.find { x => x.turn eq turn }
+    @tailrec
+    def findFrame(head : Frame) : Option[Frame]= {
+      if (head == null)
+        None
+      else if (head.turn eq turn)
+        Some(head)
+      else findFrame(head.next)
+    }
+    val selectedFrame = findFrame(queueHead)
     find(selectedFrame)
   }
 
@@ -45,98 +63,118 @@ trait Framed {
 
   protected def frame[T](f: Frame => T = { x: Frame => x })(implicit turn: Turn): T = lockPipeline {
     @tailrec
-    def findTopMostFrame(queue : Queue[Frame]) : (Frame, Frame) = queue match{
-      case Queue() =>(null.asInstanceOf[Frame], stableFrame)
-      case Queue() :+ last if turn.waitsOnFrame(last.turn) => (null.asInstanceOf[Frame], last)
-      case _ :+ beforeLast :+ last if turn.waitsOnFrame(last.turn) => if (last.turn != turn) (last,last) else (beforeLast, last)
-      case begin :+ _ => findTopMostFrame(begin)
+    def findTopMostFrame(tail : Frame) : Frame = {
+      if (tail == null)
+        stableFrame
+      else if (turn.waitsOnFrame(tail.turn))
+        tail
+      else
+        findTopMostFrame(tail.previous())
     }
-    var (previousFrame, topMostWaitingFrame) = findTopMostFrame(pipelineFrames)
+    val topMostWaitingFrame = findTopMostFrame(queueTail)
     
     f(topMostWaitingFrame)
   }
   
-   protected [rescala] def previousNonStableFrame(implicit turn : Turn) : Option[Frame] = lockPipeline {
-    @tailrec
-    def indexOf(queue : Queue[Frame], index : Int) : Option[Int] = queue match {
-      case Queue() => None
-      case _ :+ last if turn.waitsOnFrame( last.turn) =>  Some(index)
-      case begin :+ _ => indexOf(begin, index -1)
-    }
-    val frameIndexOption = indexOf(pipelineFrames, pipelineFrames.size -1)
-    frameIndexOption match {
-      case None => None
-      case Some(frameIndex) => frameIndex match {
-        case 0 => None // Stable frame is always finished
-        case frameIndex => Some(pipelineFrames(frameIndex -1))
-      }
-    }
-  }
-  
-  protected [rescala] def isPreviousFrameFinished(implicit turn : Turn) : Boolean = lockPipeline {
-    @tailrec
-    def indexOf(queue : Queue[Frame], index : Int) : Option[Int] = queue match {
-      case Queue() => None
-      case _ :+ last if turn.waitsOnFrame( last.turn) =>  Some(index)
-      case begin :+ _ => indexOf(begin, index -1)
-    }
-    val frameIndexOption = indexOf(pipelineFrames, pipelineFrames.size -1)
-    frameIndexOption match {
-      case None => true
-      case Some(frameIndex) => frameIndex match {
-        case 0 => true // Stable frame is always finished
-        case frameIndex => pipelineFrames(frameIndex -1).isWritten()
-      }
-    }
+  protected[rescala] def waitUntilCanWrite(implicit turn : Turn) : Unit = {
+    val turnFrame = frame()
+    turnFrame.awaitPredecessor(pipelineLock)
   }
 
   protected[rescala] def hasFrame(implicit turn: Turn): Boolean = {
     findFrame(_ => true, false)
   }
 
-  protected[rescala] def createFrame(allowedAfterFrame: Frame => Boolean = { x: Frame => true })(implicit turn: Turn): Unit = lockPipeline {
+  protected[rescala] def createFrame(visitPreviousFrame: Frame => Unit = { x: Frame => })(implicit turn: Turn): Unit = lockPipeline {
     def createFrame(lastElem : Frame) : Frame =  {
       val newFrame = newFrameFrom(turn, lastElem)
       assert(newFrame.turn == turn)
       newFrame
     }
-    def insertFrame(queue: Queue[Frame], lastElem: Frame): Queue[Frame] = queue match {
-      case Queue() => Queue(createFrame(lastElem))
-      case head +: tail if allowedAfterFrame(head) => head +: insertFrame(tail, head)
-      case _ => createFrame(lastElem) +: queue
+    
+    @tailrec
+    def visitPipeline(head : Frame) : Unit = {
+      if (head != null) {
+        visitPreviousFrame(head)
+        visitPipeline(head.next)
+      }
     }
-    pipelineFrames = insertFrame(pipelineFrames, stableFrame)
+    
+    if (queueHead == null) {
+      queueHead = createFrame(stableFrame)
+      queueTail = queueHead
+    } else {
+      visitPipeline(queueHead)
+      val newFrame = createFrame(queueTail)
+      newFrame.insertAfter(queueTail)
+      queueTail = newFrame
+    }
     assert(hasFrame)
   }
   
   protected[rescala] def fillFrame(implicit turn : Turn) : Unit = lockPipeline {
-    def fill (queue:Queue[Frame] ) : Queue[Frame] = queue match{ 
-      case Queue() :+ last if last.turn == turn => Queue(last)
-      case tail :+ last if last.turn == turn => tail :+ newFrameFrom(turn, tail.last)
-      case tail :+ last => fill(tail) :+ last
-      case Queue() :+ last if last.turn == null => throw new AssertionError(s"No frame found for turn $turn")
-    }
-    assert(pipelineFrames.nonEmpty, "No frame there")
-    pipelineFrames = fill(pipelineFrames)
+    
+    @tailrec
+    def refreshFrame(head : Frame) : Unit = {
+      if (head == null) {
+        throw new AssertionError(s"No frame found for turn $turn")
+      } else if (head.turn == turn) {
+        if (head.previous() != null) {
+          val newFrame = newFrameFrom(turn, head.previous())
+          if (head.next() == null) {
+            queueTail = newFrame
+          }         
+          head.replaceWith(newFrame)
+        } else {
+          val newFrame = newFrameFrom(turn, stableFrame)
+          queueHead = newFrame
+          if (head.next() == null) {
+            queueTail = newFrame
+          }
+          head.replaceWith(newFrame)
+        }
+      } else {
+        refreshFrame(head.next())
+      }
+    } 
+    refreshFrame(queueHead)
   }
 
   protected[rescala] def moveFrameBack(allowedAfterFrame: Frame => Boolean)(implicit turn: Turn): Unit = lockPipeline {
-    def moveFrame(queue: Queue[Frame], frame: Frame): Queue[Frame] = queue match {
-      case Queue() if frame != null => Queue(frame)
-      case head +: tail if head.turn == turn => moveFrame(tail, head)
-      case head +: tail if frame != null && allowedAfterFrame(head) => head +: frame +: tail
-      case head +: tail => head +: moveFrame(tail, frame)
-      case Queue() if frame == null => throw new AssertionError(s"No frame found for turn $turn")
+    
+    def moveFrame(head : Frame, frame : Frame) : (Frame, Frame) = {
+      if (head == null) {
+        throw new AssertionError("Frame not allowed after any frame in the pipeline")
+      } else if (head.turn eq turn) {
+        moveFrame(head.next(), head)
+      } else if (frame == null) {
+        // Did not find the frame for the turn
+        moveFrame(head.next(), null.asInstanceOf[Frame])
+      } else if (allowedAfterFrame(head)) {
+        val newHead = if (frame.previous() == null) frame.next else queueHead
+        val newTail = if(head.next() == null) frame else queueTail
+        frame.moveAfter(head)
+        (newHead, newTail)
+      } else {
+        moveFrame(head.next(), frame)
+      }
     }
-    pipelineFrames = moveFrame(pipelineFrames, null.asInstanceOf[Frame])
+    
+    val (newHead, newTail) = moveFrame(queueHead, null.asInstanceOf[Frame])
+    queueHead = newHead
+    queueTail = newTail
   }
 
   protected[rescala] def removeFrame(implicit turn: Turn): Unit = lockPipeline {
     // Can remote the frame if it is head of the queue
-    if (pipelineFrames.head.turn == turn) {
-      pipelineFrames.head.removeTurn()
-      stableFrame = pipelineFrames.head
-      pipelineFrames = pipelineFrames.tail
+    if (queueHead.turn == turn) {
+      val newHead = queueHead.next()
+      val newTail = if (queueTail == queueHead) null.asInstanceOf[Frame] else queueTail
+      queueHead.removeFrame()
+      queueHead.removeTurn()
+      stableFrame = queueHead
+      queueHead = newHead
+      queueTail = newTail
     } else {
     //  println(s"Mark remove $turn at $this")
       assert(false, s"Frame for $turn cannot be removed at $this because it is not head of the queue")

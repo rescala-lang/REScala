@@ -65,7 +65,6 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
       resolveConflicts(before, turn)
       // Then remember the new turn
       rememberOrder(before, turn, at)
-      true
     }(turn)
   }
 

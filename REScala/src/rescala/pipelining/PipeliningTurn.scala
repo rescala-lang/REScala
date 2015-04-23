@@ -22,9 +22,8 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps : Boolea
   override def evaluate(head: Reactive) = {
     assert (head.hasFrame(this), "No frame was created in turn " + this  + " for " + head)
     
-    while (! head.isPreviousFrameFinished) {
-      // Prototype: Busy waiting 
-    }
+    head.waitUntilCanWrite
+   
     //println("Evaluate for turn " + this + " at "+ head)
    // println("Deps     " + head.outgoing.get )
    // println("val      " + {head.asInstanceOf[Signal[_]].get})
