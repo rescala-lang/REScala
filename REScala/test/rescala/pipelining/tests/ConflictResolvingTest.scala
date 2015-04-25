@@ -10,6 +10,10 @@ import rescala.graph.Framed
 import scala.collection.immutable.Queue
 import rescala.turns.Turn
 import rescala.pipelining.tests.PipelineTestUtils._
+import rescala.graph.Reactive
+import java.util.Random
+import java.util.concurrent.CyclicBarrier
+import rescala.pipelining.PipeliningTurn
 
 class ConflictResolvingTest extends AssertionsForJUnit with MockitoSugar {
   
@@ -28,10 +32,18 @@ class ConflictResolvingTest extends AssertionsForJUnit with MockitoSugar {
    * D1    D2 
    */
   
+  var opsOnD1 : List[Turn] = List()
+  var opsOnD2 : List[Turn] = List()
+  
+  def clearOps() = {
+    opsOnD1 = List()
+    opsOnD2 = List()
+  } 
+  
   val s1 = Var(0)
   val s2 = Var(0)
-  val d1 = Signals.lift(s1, s2) { (v1, v2) => randomWait{v1 - v2}}
-  val d2 = Signals.lift(s1, s2) { (v1, v2) => randomWait{v1 - 2 * v2}}
+  val d1 = Signals.static(s1, s2) { implicit t => randomWait{opsOnD1 :+= t; s1.get - s2.get}}
+  val d2 = Signals.static(s1, s2) { implicit t => randomWait{opsOnD2 :+= t; s1.get - 2 * s2.get}}
   
   // In the following the propagation is done by hand and not by the queue
   // This allows to fix a pseudo paralellismus of updates by invoking the
@@ -107,6 +119,27 @@ class ConflictResolvingTest extends AssertionsForJUnit with MockitoSugar {
     assert(frameTurns(d1) == Queue(turn2, turn1))
     assert(frameTurns(d2) == Queue(turn2, turn1))
   }
+    
+  @Test
+  def testMultipleUpdates() = {
+    val turns = List.fill(6)(engine.makeTurn) 
+    val sources = List(s2, s1, s1, s2, s2, s1)
+    
+    def makeFramesForUpdate(turn : PipeliningTurn, source : Reactive) = {
+      engine.createFrame(turn, source)
+      engine.createFrame(turn, d1)
+      engine.createFrame(turn, d2)
+    }
+    
+    turns.zip(sources).foreach({case (turn, source) =>
+      turn.lockPhase(List(source))})
+    
+    assert(d1.getPipelineFrames().map(_.turn) == Queue() ++ turns)
+    assert(d2.getPipelineFrames().map(_.turn) == Queue() ++ turns)
+    
+    
+    val x = 1;
+  }
   
   @Test
   def testEvaluationSequential() = {
@@ -134,6 +167,7 @@ class ConflictResolvingTest extends AssertionsForJUnit with MockitoSugar {
       val update2 = createThread{
         s2.set(5)
       }
+      clearOps
       
       if (i % 2 == 0) {
         update1.start
@@ -154,15 +188,60 @@ class ConflictResolvingTest extends AssertionsForJUnit with MockitoSugar {
       assert(engine.getOrdering.isEmpty)
       assert(engine.getWaitingEdges.isEmpty)
       
+      // Order of both turns needs to be equal at both dependencies
+      assert(opsOnD1 == opsOnD2)
+      
       // Now either update1 was scheduled first or update2
       // Independent of the if statement above
       
       assert(d1.now == 5)
       assert(d2.now == 0)
       
+      clearOps
+      
       s1.set(0)
       s2.set(0)
+      
+      
     }
+  }
+  
+  @Test
+  def testManyThreads() = {
+    assert(engine.getOrdering.isEmpty)
+    assert(engine.getWaitingEdges.isEmpty)
+    
+      println("------")
+      
+      val rand = new Random
+      val numThreads = 100
+      val barrier = new CyclicBarrier(2*numThreads)
+      val updates = List.iterate(1, numThreads)(x => x).map { _ =>  (rand.nextInt(100), rand.nextInt(100))};
+      val updateThreads = updates.flatMap({case (v1, v2) => List(createThread{barrier.await();s1.set(v1)}, createThread{barrier.await();s2.set(v2)})})
+      
+      clearOps
+      
+      
+      updateThreads.foreach { _.start}
+      updateThreads.foreach { _.join}
+      
+      assert(s1.getPipelineFrames().isEmpty)
+      assert(s2.getPipelineFrames().isEmpty)
+      assert(d1.getPipelineFrames().isEmpty)
+      assert(d2.getPipelineFrames().isEmpty)
+      
+      assert(engine.getOrdering.isEmpty)
+      assert(engine.getWaitingEdges.isEmpty)
+      
+      // Order of both turns needs to be equal at both dependencies
+      assert(opsOnD1 == opsOnD2)
+      
+      
+      clearOps
+      
+      s1.set(0)
+      s2.set(0)
+      
   }
   
 

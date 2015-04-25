@@ -14,10 +14,9 @@ import rescala.turns.Turn
 class PipelineEngine extends EngineImpl[PipeliningTurn]() {
 
   private type PTurn = PipeliningTurn
-  
-  private var activeTurns : Set[PTurn] = Set()
+
+  private var activeTurns: Set[PTurn] = Set()
   private object activeTurnsLock
-  
 
   /**
    * A Map which stores for a mapping (t1, t2) -> rs, that
@@ -26,37 +25,40 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
   // TODO need to cleanup the map if turns are done
   private var ordering: Map[(PTurn, PTurn), Set[Reactive]] = Map()
   private object graphLock
-  
+
   /**
    * A map which tracks which turn waits for which other. If t1 -> ts,
    * then for all t in ts an entry (t1, t) in ordering exists, which
    * does not map to an empty set (or is not defined)
    */
   private var waitingEdges: Map[PTurn, Set[PTurn]] = Map()
-  
-  private var completedNotRemovedTurns : Set[PTurn] = Set()
+
+  private var completedNotRemovedTurns: Set[PTurn] = Set()
   private object completedNotRemovedTurnsLock
 
   // For testing
   protected[pipelining] def getOrdering = ordering
   protected[pipelining] def getWaitingEdges = waitingEdges
-  protected[pipelining] def isActive(turn : PTurn) = activeTurnsLock.synchronized(activeTurns.contains(turn))
-  
-  protected def makeNewTurn =  new PipeliningTurn(this)
-  
+  protected[pipelining] def isActive(turn: PTurn) = activeTurnsLock.synchronized(activeTurns.contains(turn))
+
+  protected def makeNewTurn = new PipeliningTurn(this)
+
   // For debugging
   override final protected[pipelining] def makeTurn: PipeliningTurn = {
-    val newTurn =makeNewTurn
+    val newTurn = makeNewTurn
     activeTurnsLock.synchronized(activeTurns += newTurn)
     newTurn
   }
-  
+
+  protected[pipelining] def graphLocked[T](op: => T): T = graphLock.synchronized {
+    op
+  }
 
   /**
    * Creates a new frame for the given turn at the given reactive and
    * resolves conflicts which are introduced by creating the new frame
    */
-  protected[pipelining] def createFrame(turn: PTurn, at: Reactive) = graphLock.synchronized{
+  protected[pipelining] def createFrame(turn: PTurn, at: Reactive) = graphLock.synchronized {
     // TODO first check for conflicts
     at.createFrame { frame =>
       val before = frame.turn.asInstanceOf[PipeliningTurn]
@@ -81,6 +83,15 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
       map + (key -> vals)
   }
 
+  private def assertCycleFree() = {
+   val cycle = 
+      waitingEdges.exists({
+        case (after, befores) =>
+          befores.exists { before => waitsOn(before, after) }
+      })
+   !cycle
+  }
+
   private def forgetOrder(before: PTurn, after: PTurn, at: Reactive) = {
     ordering = removeFromMap(ordering, (before, after), at)
     if (!ordering.contains((before, after))) {
@@ -91,6 +102,7 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
   private def rememberOrder(before: PTurn, after: PTurn, at: Reactive) = {
     ordering = putInMap(ordering, (before, after), at)
     waitingEdges = putInMap(waitingEdges, after, before)
+    assert(assertCycleFree())
   }
 
   /**
@@ -98,11 +110,16 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
    * whether waits waits on on
    */
   protected[pipelining] def waitsOn(waits: PTurn, on: PTurn): Boolean = {
-    if (waits == on)
-      true
-    else {
-      waitingEdges.getOrElse(waits, Set()).exists { waitsOn(_, on) }
+    
+    def depthFirstSearch(from: PTurn, to: PTurn): Boolean = {
+      if (from == to)
+        true
+      else {
+       waitingEdges.getOrElse(from, Set()).exists { depthFirstSearch(_, to) }
+      }
     }
+    val isWaiting = depthFirstSearch(waits, on)
+    isWaiting
   }
 
   protected[pipelining] def turnCompleted(turn: PTurn): Unit = {
@@ -112,18 +129,19 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
         if (!waitsOnAnyTurn) {
           // TODO Maybe we can do this a bit more efficient
           val oldOrdering = ordering
-          for ( (before, after) <- oldOrdering.keys) {
-              assert(after != turn) // after is never allowed to be turn, because waitsOn is empty
+          for ((before, after) <- oldOrdering.keys) {
+            assert(after != turn) // after is never allowed to be turn, because waitsOn is empty
             if (before == turn) {
               ordering = ordering - ((before, after))
             }
           }
-          waitingEdges = waitingEdges.mapValues { _ - turn }.filter({case (_, befores) => befores.nonEmpty})
+          waitingEdges = waitingEdges.mapValues { _ - turn }.filter({ case (_, befores) => befores.nonEmpty })
           // Remove all frames
           turn.framedReactives.foreach { _.removeFrame(turn) }
-          activeTurnsLock.synchronized{
-              assert(activeTurns.contains(turn))
-              activeTurns -= turn}
+          activeTurnsLock.synchronized {
+            assert(activeTurns.contains(turn))
+            activeTurns -= turn
+          }
           true
         } else {
           false
@@ -163,14 +181,14 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
   }
 
   private def resolveConflicts(before: PTurn, after: PTurn) = {
-    
+
     // Resolves all conflicts which occur by putting a waiting relation from after to before
-   
+
     // Resolving terminates because only frames for after are put back at some reactives
     // All conflicts are guaranteed solved, if after is moved to the back at all reactives
     // But we dont do that, only there, were it is neceassary
-   
-    def resolveConflict(before: PTurn, after: PTurn, at: Reactive) : Set[PTurn] = {
+
+    def resolveConflict(before: PTurn, after: PTurn, at: Reactive): Set[PTurn] = {
       var skipedFrames = Set[PTurn]()
       at.moveFrameBack { frame =>
         val before2 = frame.turn.asInstanceOf[PTurn]
@@ -182,44 +200,44 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
       }(after)
       skipedFrames
     }
-    def findAndResolveConflicts(before: PTurn, after : PTurn) : Unit= {
+    def findAndResolveConflicts(before: PTurn, after: PTurn): Unit = {
       val conflicts = getConflicts(before, after)
-      val newConflictedTurns = conflicts.flatMap{ _ match {
-        case (turn, reactives) =>
-          val conflicts = reactives.flatMap { reactive =>
+      val newConflictedTurns = conflicts.flatMap {
+        _ match {
+          case (turn, reactives) =>
+            val conflicts = reactives.flatMap { reactive =>
               resolveConflict(turn, after, reactive)
             }
-          assert(!ordering.contains((after, turn)), "Created a cycle") 
-          conflicts
+            assert(!ordering.contains((after, turn)), "Created a cycle")
+            conflicts
         }
-        
+
       }
       newConflictedTurns.foreach { findAndResolveConflicts(_, after) }
     }
 
     findAndResolveConflicts(before, after)
   }
-  
+
   // TODO remove synchronized
-  class NoBuffer[A](initial :A) extends Buffer[A] {
+  class NoBuffer[A](initial: A) extends Buffer[A] {
     private var value = initial
-    def initCurrent(value: A): Unit = synchronized{ this.value = value}
+    def initCurrent(value: A): Unit = synchronized { this.value = value }
     def initStrategy(strategy: (A, A) => A): Unit = {}
 
-    def transform(f: (A) => A)(implicit turn: Turn): A = synchronized{
+    def transform(f: (A) => A)(implicit turn: Turn): A = synchronized {
       value = f(value)
       value
     }
-    def set(value: A)(implicit turn: Turn): Unit = synchronized{
+    def set(value: A)(implicit turn: Turn): Unit = synchronized {
       this.value = value
     }
-    def base(implicit turn: Turn): A = synchronized{value}
-    def get(implicit turn: Turn): A = synchronized{value}
+    def base(implicit turn: Turn): A = synchronized { value }
+    def get(implicit turn: Turn): A = synchronized { value }
     override def release(implicit turn: Turn): Unit = {}
     override def commit(implicit turn: Turn): Unit = {}
   }
-  
-  override def buffer[A](default: A, commitStrategy: (A, A) => A, writeLock: TurnLock): Buffer[A] = new NoBuffer(default)
 
+  override def buffer[A](default: A, commitStrategy: (A, A) => A, writeLock: TurnLock): Buffer[A] = new NoBuffer(default)
 
 }

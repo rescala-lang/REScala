@@ -54,19 +54,33 @@ trait Framed {
     })
   }
   
-   protected def frame[T](f: Content => T = { x: Content => x })(implicit turn: Turn): T = lockPipeline {
+  private def needFrame[T](op : CFrame => T)(implicit turn : Turn) : T = {
+    findFrame(_ match {
+      case Some(d) => op(d)
+      case None => throw new AssertionError(s"No frame found for $turn at $this")
+    })
+  }
+  
+   protected def frame[T](f: Content => T = { x: Content => x })(implicit turn: Turn): T = {
     @tailrec
-    def findTopMostFrame(tail : CFrame) : Content = {
+    def findBottomMostFrame(tail : CFrame) : Content = {
       if (tail == null)
         stableFrame
       else if (turn.waitsOnFrame(tail.turn))
         tail.content
       else
-        findTopMostFrame(tail.previous())
+        findBottomMostFrame(tail.previous())
     }
-    val topMostWaitingFrame = findTopMostFrame(queueTail)
     
-    f(topMostWaitingFrame)
+    // Local: if the turn itself is found, it is the bottom most frame => no need to sync
+    val bottomMostWaitingFrame : Content = findFrame(x => x) match {
+      case Some(frame) => frame.content
+      case None => turn.waitsOnLock { lockPipeline{
+        findBottomMostFrame(queueTail)
+      }}
+    }
+    
+    f(bottomMostWaitingFrame)
   }
   
   protected[rescala] def waitUntilCanWrite(implicit turn : Turn) : Unit = {
@@ -83,7 +97,7 @@ trait Framed {
 
   protected[rescala] def createFrame(visitPreviousFrame: CFrame => Unit = { x: CFrame => })(implicit turn: Turn): Unit = lockPipeline {
     def createFrame(prev : Content) : CFrame =  {
-      val newFrame = new WriteFrame[Content](turn)
+      val newFrame = WriteFrame[Content](turn)
       newFrame.content = duplicate(prev)
       assert(newFrame.turn == turn)
       newFrame
@@ -166,7 +180,11 @@ trait Framed {
   }
 
   protected[rescala] def markWritten(implicit turn: Turn): Unit = {
-    findFrame(_.asInstanceOf[WriteFrame[Content]].markWritten(), throw new AssertionError(s"No frame to write for turn $turn"))
+    needFrame(_.asInstanceOf[WriteFrame[Content]].markWritten())
+  }
+  
+  protected[rescala] def markTouched(implicit turn : Turn) : Unit = {
+    needFrame(_.markTouched())
   }
 
   // If want to omit the buffers in the turn data (because the previous data is contained

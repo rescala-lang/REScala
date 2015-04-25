@@ -44,6 +44,7 @@ trait Turn {
   def observe(f: => Unit): Unit
   
   def waitsOnFrame(other: Turn ) = other == this
+  def waitsOnLock[T](op : => T) : T = op
   
    val id = Globals.nextID()
   override def toString: String = s"Key($id)"

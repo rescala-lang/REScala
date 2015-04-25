@@ -9,7 +9,12 @@ import java.util.concurrent.locks.LockSupport
 import java.util.concurrent.atomic.AtomicReference
 import rescala.util.JavaFunctionsImplicits._
 
-abstract class Frame[T](val turn : Turn) {
+sealed abstract class Frame[T](val turn : Turn) {
+  
+  private var predecessor: Frame[T] = null.asInstanceOf[Frame[T]]
+  private var successor: Frame[T] = null.asInstanceOf[Frame[T]]
+  protected[rescala] final def next() = successor
+  protected[rescala] final def previous() = predecessor
   
   private val creatorThread = Thread.currentThread()
   protected val lockObject = new Object
@@ -17,11 +22,10 @@ abstract class Frame[T](val turn : Turn) {
   
   protected[rescala] var content : T = null.asInstanceOf[T];
   
-  private var predecessor: Frame[T] = null.asInstanceOf[Frame[T]]
-  private var successor: Frame[T] = null.asInstanceOf[Frame[T]]
-  protected[rescala] final def next() = successor
-  protected[rescala] final def previous() = predecessor
+  private val touched = new AtomicBoolean(false);
   
+  protected[rescala] def isTouched : Boolean = touched.get
+  protected[rescala] def markTouched() : Unit = touched.set(true)
   protected[rescala] def isWritten : Boolean;
   
   override def toString() = s"Frame($turn)[$content]"
@@ -111,7 +115,7 @@ abstract class Frame[T](val turn : Turn) {
   
 }
 
-class WriteFrame[T](turn : Turn) extends Frame[T](turn) {
+case class WriteFrame[T](override val turn : Turn) extends Frame[T](turn) {
   private val written = new AtomicBoolean(false);
   
   protected[rescala] def isWritten = written.get
@@ -123,10 +127,10 @@ class WriteFrame[T](turn : Turn) extends Frame[T](turn) {
     }
   }
 }
-class StaticReadFrame[T](turn : Turn) extends Frame[T](turn) {
+case class StaticReadFrame[T](override val turn : Turn) extends Frame[T](turn) {
   protected[rescala] def isWritten = true
 }
-class DynamicReadFrame[T](turn : Turn) extends Frame[T](turn) {
+case class DynamicReadFrame[T](override val turn : Turn) extends Frame[T](turn) {
   protected[rescala] def isWritten = throw new NotImplementedError
 }
 
