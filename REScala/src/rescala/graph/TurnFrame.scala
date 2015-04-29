@@ -9,34 +9,33 @@ import java.util.concurrent.locks.LockSupport
 import java.util.concurrent.atomic.AtomicReference
 import rescala.util.JavaFunctionsImplicits._
 
-sealed abstract class Frame[T](val turn : Turn) {
-  
+sealed abstract class Frame[T](val turn: Turn) {
+
   private var predecessor: Frame[T] = null.asInstanceOf[Frame[T]]
   private var successor: Frame[T] = null.asInstanceOf[Frame[T]]
   protected[rescala] final def next() = successor
   protected[rescala] final def previous() = predecessor
-  
+
   private val creatorThread = Thread.currentThread()
   protected val lockObject = new Object
   private var lockedOnThread: Set[Thread] = Set()
-  
-  protected[rescala] var content : T = null.asInstanceOf[T];
-  
+
+  protected[rescala] var content: T = null.asInstanceOf[T];
+
   private val touched = new AtomicBoolean(false);
-  
-  protected[rescala] def isTouched : Boolean = touched.get
-  protected[rescala] def markTouched() : Unit = touched.set(true)
-  protected[rescala] def isWritten : Boolean;
-  
+
+  protected[rescala] def isTouched: Boolean = touched.get
+  protected[rescala] def markTouched(): Unit = touched.set(true)
+  protected[rescala] def isWritten: Boolean;
+
   override def toString() = s"Frame($turn)[$content]"
-  
+
   protected def retryBlockedThreads() = lockObject.synchronized {
     val blockedThreads = lockedOnThread
     lockedOnThread = Set()
     blockedThreads.foreach { LockSupport.unpark(_) }
   }
-  
-   
+
   /**
    * Waits until the predecessor of this frame has written. The predecessor
    * of the frame may change but only on code which is synchronized on the given
@@ -62,7 +61,7 @@ sealed abstract class Frame[T](val turn : Turn) {
           waits = false
           null.asInstanceOf[Thread]
         }
-        
+
       }
       // Park the current thread if needed
       // The current threads gets unparked if the predecessor changes or
@@ -112,25 +111,26 @@ sealed abstract class Frame[T](val turn : Turn) {
     }
   }
 
-  
 }
 
-case class WriteFrame[T](override val turn : Turn) extends Frame[T](turn) {
+case class WriteFrame[T](override val turn: Turn) extends Frame[T](turn) {
   private val written = new AtomicBoolean(false);
-  
+
   protected[rescala] def isWritten = written.get
-  
+
   protected[rescala] final def markWritten() = {
-    lockObject.synchronized {
-      written.set(true)
-      retryBlockedThreads()
-    }
+    if (!written.get)
+      lockObject.synchronized {
+        // Only retry threads if was not marked written already
+        written.set(true)
+        retryBlockedThreads()
+      }
   }
 }
-case class StaticReadFrame[T](override val turn : Turn) extends Frame[T](turn) {
+case class StaticReadFrame[T](override val turn: Turn) extends Frame[T](turn) {
   protected[rescala] def isWritten = true
 }
-case class DynamicReadFrame[T](override val turn : Turn) extends Frame[T](turn) {
+case class DynamicReadFrame[T](override val turn: Turn) extends Frame[T](turn) {
   protected[rescala] def isWritten = throw new NotImplementedError
 }
 

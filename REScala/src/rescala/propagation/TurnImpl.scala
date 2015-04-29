@@ -12,19 +12,19 @@ trait TurnImpl extends Turn {
 
   val levelQueue = new LevelQueue()
 
-  def evaluate(head: Reactive): Unit = {
-    def requeue(changed: Boolean, level: Int, redo: Boolean): Unit =
+  protected def requeue(head: Reactive,changed: Boolean, level: Int, redo: Boolean): Unit =
       if (redo) levelQueue.enqueue(level, changed)(head)
       else if (changed) head.outgoing.get.foreach(levelQueue.enqueue(level, changed))
-
+  
+  def evaluate(head: Reactive): Unit = {
     head.reevaluate() match {
       case Static(hasChanged) =>
-        requeue(hasChanged, level = -42, redo = false)
+        requeue(head, hasChanged, level = -42, redo = false)
       case Dynamic(hasChanged, diff) =>
         diff.removed foreach unregister(head)
         diff.added foreach register(head)
         val newLevel = maximumLevel(diff.novel) + 1
-        requeue(hasChanged, newLevel, redo = head.level.get < newLevel)
+        requeue(head, hasChanged, newLevel, redo = head.level.get < newLevel)
     }
 
   }

@@ -54,7 +54,7 @@ trait Framed {
     })
   }
   
-  private def needFrame[T](op : CFrame => T)(implicit turn : Turn) : T = {
+  protected[rescala] def needFrame[T](op : CFrame => T = {x:CFrame=>x})(implicit turn : Turn) : T = {
     findFrame(_ match {
       case Some(d) => op(d)
       case None => throw new AssertionError(s"No frame found for $turn at $this")

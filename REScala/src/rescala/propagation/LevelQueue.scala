@@ -42,6 +42,22 @@ class LevelQueue()(implicit val currenTurn: Turn) {
       evaluator(head)
     }
   }
+  
+  final def processHead[T](queueElement: QueueElement, processor: Reactive => T): Option[T] = {
+    val QueueElement(headLevel, head, headMinLevel, _) = queueElement
+    if (headLevel < headMinLevel) {
+      head.level.set(headMinLevel)
+      enqueue(headMinLevel, true)(head)
+      head.outgoing.get.foreach { r =>
+        if (r.level.get <= headMinLevel)
+          enqueue(headMinLevel + 1, needsEvaluate = true)(r)
+      }
+      None
+    }
+    else {
+      Some(processor(head))
+    }
+  }
 
   /** Evaluates all the elements in the queue */
   def evaluateQueue(evaluator: Reactive => Unit) = {
@@ -49,6 +65,15 @@ class LevelQueue()(implicit val currenTurn: Turn) {
       val head = elements.head
       elements = elements.tail
       handleHead(head, evaluator)
+    }
+  }
+  
+  def processQueueUntil(processor: Reactive => Boolean) = {
+    var break = false
+    while (elements.nonEmpty && !break) {
+      val head = elements.head
+      elements = elements.tail
+      break = processHead(head, processor).getOrElse(false)
     }
   }
 
