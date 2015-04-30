@@ -87,19 +87,18 @@ class TransitiveResolvingTest extends AssertionsForJUnit with MockitoSugar {
     assert(frameTurns(d2) == Queue(turn5))
     assert(frameTurns(d3) == Queue(turn2, turn3, turn4, turn5))
     
-    assert(engine.getOrdering == Map(
-        ((turn2, turn3) -> Set(d3)),
-        ((turn2, turn4) -> Set(d3)),
-        ((turn2, turn5) -> Set(d3)),
-        ((turn3, turn4) -> Set(d3)),
-        ((turn3, turn5) -> Set(d3)),
-        ((turn4, turn5) -> Set(d3))
-      ))
-    assert(engine.getWaitingEdges == Map(
-        (turn3 -> Set(turn2)),
-        (turn4 -> Set(turn2, turn3)),
-        (turn5 -> Set(turn2, turn3, turn4))
-      ))
+    assert(turn2.preceedingTurns == Set())
+    assert(turn2.causedReactives == Map())
+    
+    assert(turn3.preceedingTurns == Set(turn2))
+    assert(turn3.causedReactives == Map((turn2 -> Set(d3))))
+    
+    assert(turn4.preceedingTurns == Set(turn2, turn3))
+    assert(turn4.causedReactives == Map((turn2 -> Set(d3)), (turn3 -> Set(d3))))
+    
+    assert(turn5.preceedingTurns == Set(turn2, turn3, turn4))
+    assert(turn5.causedReactives == Map((turn2 -> Set(d3)), (turn3 -> Set(d3)), (turn4 -> Set(d3))))
+
     
     // First cycle: now  at d3: turn5 -> turn3
     // put turn 3 on d2, then: turn3 -> turn5
@@ -110,20 +109,18 @@ class TransitiveResolvingTest extends AssertionsForJUnit with MockitoSugar {
     assert(frameTurns(d2) == Queue(turn5, turn3))
     assert(frameTurns(d3) == Queue(turn2, turn4, turn5, turn3))
     
-    assert(engine.getOrdering == Map(
-        ((turn2, turn3) -> Set(d3)),
-        ((turn2, turn4) -> Set(d3)),
-        ((turn2, turn5) -> Set(d3)),
-        ((turn4, turn5) -> Set(d3)),
-        ((turn4, turn3) -> Set(d3)),
-        ((turn5, turn3) -> Set(d3, d2))
-      ))
-    assert(engine.getWaitingEdges == Map(
-        (turn3 -> Set(turn2, turn4, turn5)),
-        (turn4 -> Set(turn2)),
-        (turn5 -> Set(turn2, turn4))
-      ))
+    assert(turn2.preceedingTurns == Set())
+    assert(turn2.causedReactives == Map())
     
+    assert(turn3.preceedingTurns == Set(turn2, turn4, turn5))
+    assert(turn3.causedReactives == Map((turn2 -> Set(d3)), (turn4 -> Set(d3)), (turn5 -> Set(d2, d3))))
+    
+    assert(turn4.preceedingTurns == Set(turn2))
+    assert(turn4.causedReactives == Map((turn2 -> Set(d3))))
+    
+    assert(turn5.preceedingTurns == Set(turn2, turn4))
+    assert(turn5.causedReactives == Map((turn2 -> Set(d3)), (turn4 -> Set(d3))))
+
     
     engine.createFrame(turn1, d1)
     
@@ -157,25 +154,21 @@ class TransitiveResolvingTest extends AssertionsForJUnit with MockitoSugar {
     assert(frameTurns(d2) == Queue(turn5, turn3, turn1))
     assert(frameTurns(d3) == Queue(turn4, turn2, turn5, turn3))
     
-    assert(engine.getOrdering == Map(
-        ((turn2, turn1) -> Set(d1)),
-        ((turn2, turn3) -> Set(d3)),
-        ((turn2, turn5) -> Set(d3)),
-        ((turn3, turn1) -> Set(d2)),
-        ((turn4, turn5) -> Set(d3)),
-        ((turn4, turn3) -> Set(d3)),
-        ((turn4, turn2) -> Set(d1, d3)),
-        ((turn4, turn1) -> Set(d1)),
-        ((turn5, turn3) -> Set(d3, d2)),
-        ((turn5, turn1) -> Set(d2))
-      ))
-    assert(engine.getWaitingEdges == Map(
-        (turn3 -> Set(turn2, turn4, turn5)),
-        (turn5 -> Set(turn2, turn4)),
-        (turn2 -> Set(turn4)),
-        (turn1 -> Set(turn4, turn2, turn5, turn3))
-      ))
+    assert(turn1.preceedingTurns == Set(turn2, turn3, turn4, turn5))
+    assert(turn1.causedReactives == Map((turn2 -> Set(d1)), (turn3 -> Set(d2)), (turn4 -> Set(d1)), (turn5 -> Set(d2))))
     
+    assert(turn2.preceedingTurns == Set(turn4))
+    assert(turn2.causedReactives == Map((turn4 -> Set(d1, d3))))
+    
+    assert(turn3.preceedingTurns == Set(turn2, turn4, turn5))
+    assert(turn3.causedReactives == Map((turn2 -> Set(d3)), (turn4 -> Set(d3)), (turn5 -> Set(d2, d3))))
+    
+    assert(turn4.preceedingTurns == Set())
+    assert(turn4.causedReactives == Map())
+    
+    assert(turn5.preceedingTurns == Set(turn2, turn4))
+    assert(turn5.causedReactives == Map((turn2 -> Set(d3)), (turn4 -> Set(d3))))
+
     
  /*   assert(frameTurns(d1) == Queue(turn1, turn2))
     assert(frameTurns(d2) == Queue(turn3))

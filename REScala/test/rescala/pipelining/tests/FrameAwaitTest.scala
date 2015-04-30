@@ -1,19 +1,18 @@
 package rescala.pipelining.tests
 
 import java.util.concurrent.atomic.AtomicReference
-
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-
 import rescala.graph.Frame
 import rescala.graph.WriteFrame
 import rescala.pipelining.PipelineEngine
 import rescala.pipelining.tests.PipelineTestUtils._
 import rescala.util.JavaFunctionsImplicits._
+import java.util.concurrent.locks.ReentrantLock
+import rescala.graph.WriteFrame
 
 class FrameAwaitTest extends AssertionsForJUnit with MockitoSugar {
-  
 
   val engine = new PipelineEngine
   val handledFrames: AtomicReference[List[Frame[_]]] = new AtomicReference(List())
@@ -28,7 +27,7 @@ class FrameAwaitTest extends AssertionsForJUnit with MockitoSugar {
     assert(frames == expectedframes.toList)
   }
 
-  def createWriteThread(frame: WriteFrame[_], wait: Int = 0) = {
+  def createWriteThread(frame: WriteFrame[_]) = {
     createThread {
       frame.awaitPredecessor(modificationLock)
       markFrameHandled(frame)
@@ -36,13 +35,13 @@ class FrameAwaitTest extends AssertionsForJUnit with MockitoSugar {
     }
   }
 
-  @Test(timeout=500)
+  @Test(timeout = 500)
   def testFrameWaitsOnOther() = {
     val frame1 = new WriteFrame(engine.makeTurn)
     val frame2 = new WriteFrame(engine.makeTurn)
     frame2.insertAfter(frame1)
 
-    val frame1Thread = createWriteThread(frame1, 50)
+    val frame1Thread = createWriteThread(frame1)
     val frame2Thread = createWriteThread(frame2)
 
     frame2Thread.start()
@@ -54,34 +53,72 @@ class FrameAwaitTest extends AssertionsForJUnit with MockitoSugar {
     assertHandledFrames(frame1, frame2)
   }
 
-  @Test(timeout=500)
+  @Test(timeout = 1000)
+  def testManyFrameWaitsOnOther() = {
+
+    var waitsOk = true;
+    def createFrameThread(frame: WriteFrame[_]) = {
+      createThread {
+        frame.awaitPredecessor(modificationLock)
+        if (frame.previous() != null)
+          if (!frame.previous().isWritten)
+            waitsOk = false
+        frame.markWritten()
+      }
+    }
+
+    val numFrames = 100;
+
+    var firstFrame = null.asInstanceOf[WriteFrame[Nothing]]
+    var lastFrame = null.asInstanceOf[WriteFrame[Nothing]]
+    var threads = List[Thread]()
+    for (i <- 1 to 100) {
+      val newFrame = new WriteFrame(engine.makeTurn)
+      threads +:= createFrameThread(newFrame)
+      if (lastFrame != null) {
+        newFrame.insertAfter(lastFrame)
+        lastFrame = newFrame
+      } else {
+        firstFrame = newFrame
+      }
+    }
+
+    threads.foreach { _.start }
+    firstFrame.markWritten()
+    threads.foreach { _.join }
+    
+    assert(waitsOk)
+
+  }
+
+  @Test(timeout = 500)
   def testFrameWaitsWithReordering() = {
     val frames = List.fill(4)(new WriteFrame(engine.makeTurn))
-   
+
     frames(1).insertAfter(frames(0))
     frames(2).insertAfter(frames(1))
     frames(3).insertAfter(frames(2))
 
     val threads = frames.map(createWriteThread(_))
-    
-    List(0,2,3).map(threads(_)).foreach(_.start)
+
+    List(0, 2, 3).map(threads(_)).foreach(_.start)
     threads(0).join
     assert(frames(0).isWritten)
     assert(!frames(2).isWritten)
     assert(!frames(3).isWritten)
-    
+
     frames(1).moveAfter(frames(2))
     // After now, the order is frames(0), frames(2), frames(1), frames(3)
     threads(2).join()
     assert(frames(2).isWritten)
     assert(!frames(3).isWritten)
-    
+
     threads(1).start
     threads(1).join
     threads(3).join
     assert(frames(1).isWritten)
     assert(frames(3).isWritten)
-    
+
   }
 
 }

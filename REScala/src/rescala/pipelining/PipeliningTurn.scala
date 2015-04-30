@@ -11,12 +11,19 @@ import rescala.Signal
 import rescala.graph.Pulsing
 import rescala.graph.ReevaluationResult._
 
+object PipeliningTurn {
+  
+  private object lockPhaseLock
+}
+
 class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean = false) extends TurnImpl {
 
   /**
    * Remember all reactives for which a frame was created during this turn
    */
   protected[pipelining] var framedReactives: Set[Reactive] = Set()
+  protected[pipelining] var preceedingTurns: Set[PipeliningTurn] = Set()
+  protected[pipelining] var causedReactives: Map[PipeliningTurn, Set[Reactive]] = Map()
 
   override def waitsOnFrame(other: Turn) = other == this || engine.waitsOn(this, other.asInstanceOf[PipeliningTurn])
 
@@ -53,15 +60,23 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
 
     head.waitUntilCanWrite
     head.markTouched
-
+    
+    
+    assert(preceedingTurns.forall(turn => 
+      head.findFrame {_ match {
+        case None => true
+        case Some(frame) => frame.isWritten
+      }}(turn)))
+ 
     super.evaluate(head)
 
     head.markWritten
   }
+  
 
   // lock phases cannot run in parrallel currently,......
   override def lockPhase(initialWrites: List[Reactive]): Unit = {
-    engine.synchronized {
+    PipeliningTurn.lockPhaseLock.synchronized {
       def createFrame(reactive: Reactive): Unit = {
         engine.createFrame(this, reactive)
         assert(reactive.hasFrame(this))

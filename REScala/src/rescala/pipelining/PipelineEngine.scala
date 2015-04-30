@@ -7,6 +7,7 @@ import rescala.synchronization.TurnLock
 import rescala.graph.SimpleBuffer
 import rescala.graph.Buffer
 import rescala.turns.Turn
+import scala.collection.immutable.Queue
 
 /**
  * @author moritzlichter
@@ -23,22 +24,12 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
    * turn t1 is before turn t2 at the reactives rs
    */
   // TODO need to cleanup the map if turns are done
-  private var ordering: Map[(PTurn, PTurn), Set[Reactive]] = Map()
   private object graphLock
 
-  /**
-   * A map which tracks which turn waits for which other. If t1 -> ts,
-   * then for all t in ts an entry (t1, t) in ordering exists, which
-   * does not map to an empty set (or is not defined)
-   */
-  private var waitingEdges: Map[PTurn, Set[PTurn]] = Map()
 
   private var completedNotRemovedTurns: Set[PTurn] = Set()
   private object completedNotRemovedTurnsLock
 
-  // For testing
-  protected[pipelining] def getOrdering = ordering
-  protected[pipelining] def getWaitingEdges = waitingEdges
   protected[pipelining] def isActive(turn: PTurn) = activeTurnsLock.synchronized(activeTurns.contains(turn))
 
   protected def makeNewTurn = new PipeliningTurn(this)
@@ -60,14 +51,14 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
    */
   protected[pipelining] def createFrame(turn: PTurn, at: Reactive) = graphLock.synchronized {
     // TODO first check for conflicts
+    resolveConflicts(turn, at.getPipelineFrames().map { _.turn.asInstanceOf[PipeliningTurn]}.toSet)
     at.createFrame { frame =>
       val before = frame.turn.asInstanceOf[PipeliningTurn]
       assert(isActive(before), s"A frame from the already completed turn $before remained")
-      // First resolve conflicts which would create a cycle
-      resolveConflicts(before, turn)
       // Then remember the new turn
       rememberOrder(before, turn, at)
     }(turn)
+    assert(assertCycleFree, "Create frame created a cycle")
   }
 
   private def putInMap[K, V](map: Map[K, Set[V]], key: K, v: V): Map[K, Set[V]] = {
@@ -84,25 +75,46 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
   }
 
   private def assertCycleFree() = {
-   val cycle = 
-      waitingEdges.exists({
-        case (after, befores) =>
-          befores.exists { before => waitsOn(before, after) }
-      })
-   !cycle
+
+    def bfsCycleCheck(turn: PipeliningTurn) = {
+
+      var queue: Queue[PipeliningTurn] = Queue(turn)
+      var seen: Set[PipeliningTurn] = Set(turn)
+      var cycle = false
+
+      while (!cycle && !queue.isEmpty) {
+        val head = queue.head
+        queue = queue.tail
+
+        cycle = !head.preceedingTurns.forall {
+          t =>
+            assert(activeTurns.contains(t))
+            if (!seen.contains(t)) {
+              queue = queue :+ t;
+            }
+            t != turn
+        }
+      }
+      if (cycle) {
+        println(s"Cycle on $turn")
+        activeTurns.foreach { turn => println(s"$turn -> ${turn.preceedingTurns}") }
+      }
+      cycle
+    }
+
+    activeTurns.forall { !bfsCycleCheck(_) }
   }
 
   private def forgetOrder(before: PTurn, after: PTurn, at: Reactive) = {
-    ordering = removeFromMap(ordering, (before, after), at)
-    if (!ordering.contains((before, after))) {
-      waitingEdges = removeFromMap(waitingEdges, after, before)
+    after.causedReactives = removeFromMap(after.causedReactives, before, at)
+    if (!after.causedReactives.contains(before)) {
+      after.preceedingTurns -= before
     }
   }
 
   private def rememberOrder(before: PTurn, after: PTurn, at: Reactive) = {
-    ordering = putInMap(ordering, (before, after), at)
-    waitingEdges = putInMap(waitingEdges, after, before)
-    assert(assertCycleFree())
+    after.preceedingTurns += before
+    after.causedReactives = putInMap(after.causedReactives, before, at) 
   }
 
   /**
@@ -110,37 +122,44 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
    * whether waits waits on on
    */
   protected[pipelining] def waitsOn(waits: PTurn, on: PTurn): Boolean = {
+    assert(activeTurns.contains(waits))
+    assert(activeTurns.contains(on))
+    assert(assertCycleFree())
     
-    def depthFirstSearch(from: PTurn, to: PTurn): Boolean = {
-      if (from == to)
-        true
+    var queue: Queue[PTurn] = Queue(waits)
+    var seen : Set[PTurn] = Set(waits)
+    var found = true
+    while(!found && queue.isEmpty) {
+      val head = queue.head
+      queue = queue.tail
+      seen += head
+      if (head == on)
+        found = true
       else {
-       waitingEdges.getOrElse(from, Set()).exists { depthFirstSearch(_, to) }
+        val newNodes = head.preceedingTurns -- seen
+        queue ++= newNodes
       }
+     
     }
-    val isWaiting = depthFirstSearch(waits, on)
+    val isWaiting = found; //depthFirstSearch(waits, on)
     isWaiting
   }
 
-  protected[pipelining] def turnCompleted(turn: PTurn): Unit = {
+  protected[pipelining] def turnCompleted(completedTurn: PTurn): Unit = {
     graphLock.synchronized {
       val turnRemoved = {
-        val waitsOnAnyTurn = waitingEdges.contains(turn)
+        val waitsOnAnyTurn = completedTurn.preceedingTurns.nonEmpty
         if (!waitsOnAnyTurn) {
           // TODO Maybe we can do this a bit more efficient
-          val oldOrdering = ordering
-          for ((before, after) <- oldOrdering.keys) {
-            assert(after != turn) // after is never allowed to be turn, because waitsOn is empty
-            if (before == turn) {
-              ordering = ordering - ((before, after))
-            }
+          activeTurns.foreach { noLongerWaitingTurn =>
+            noLongerWaitingTurn.preceedingTurns -= completedTurn
+            noLongerWaitingTurn.causedReactives -= completedTurn
           }
-          waitingEdges = waitingEdges.mapValues { _ - turn }.filter({ case (_, befores) => befores.nonEmpty })
           // Remove all frames
-          turn.framedReactives.foreach { _.removeFrame(turn) }
+          completedTurn.framedReactives.foreach { _.removeFrame(completedTurn) }
           activeTurnsLock.synchronized {
-            assert(activeTurns.contains(turn))
-            activeTurns -= turn
+            assert(activeTurns.contains(completedTurn))
+            activeTurns -= completedTurn
           }
           true
         } else {
@@ -149,7 +168,7 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
       }
       completedNotRemovedTurnsLock.synchronized {
         if (!turnRemoved) {
-          completedNotRemovedTurns += turn
+          completedNotRemovedTurns += completedTurn
         } else {
           // Try to remove all turns again, because there is a turn removed
           val oldTurns = completedNotRemovedTurns;
@@ -160,63 +179,79 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
     }
   }
 
-  /**
-   * Calculates a list of conflicts which will occur if an waiting edge from after to before
-   * is created.
-   *
-   * @return a list of pairs of: a turn, which is in conflict with after, and a set of
-   *   reactives, at which the conflicts occur
-   */
-  private def getConflicts(before: PTurn, after: PTurn): List[(PTurn, Set[Reactive])] = {
-    // if waitsOn(before, after) inserting an edge from after to before
-    // would create a cycle
-
-    // But checking waitsOn(before, after) does not help, because we need to know the
-    // first node on the path (near to after)
-    // So get all connected nodes to after and check waitsOn on them
-    val predecessorsOfAfter = waitingEdges.keySet.filter { waitingEdges(_).contains(after) };
-    val predecessorsInCycle = predecessorsOfAfter.filter { waitsOn(before, _) }.toList
-    val conflictedReactives = predecessorsInCycle.map { before => ordering.getOrElse((after, before), Set()) }
-    predecessorsInCycle.zip(conflictedReactives)
+  private def allTurnsInAllPaths(from: PTurn, to: PTurn): Set[PTurn] = {
+    assert(assertCycleFree())
+    var markedSuccessful = Set[PTurn]()
+    var markedUnsuccessful = Set[PTurn]()
+    def findPaths(path: List[PTurn], currentNode:PTurn, indent : String): Set[PTurn] = {
+      if (currentNode == to) {
+        markedSuccessful ++= path
+        path.toSet
+      } else {
+        val outgoings = currentNode.preceedingTurns;
+        val alreadySuccessfulNodes = outgoings.intersect(markedSuccessful)
+        val alreadyUnsuccessfulNodes = outgoings.intersect(markedUnsuccessful)
+        val newNodes = outgoings -- alreadySuccessfulNodes -- alreadyUnsuccessfulNodes
+        
+        if (newNodes.isEmpty) {
+          if (alreadySuccessfulNodes.nonEmpty) {
+            markedSuccessful += currentNode
+            path.toSet
+          } else {
+            markedUnsuccessful += currentNode
+            Set()
+          }
+        } else {
+          val newPathsNewNodes = newNodes.flatMap { newNode => findPaths(path :+ currentNode, newNode, indent + " ") }
+          if (newPathsNewNodes.isEmpty) {
+            if (alreadySuccessfulNodes.isEmpty) {
+              markedUnsuccessful += currentNode
+            } else {
+              markedSuccessful +=currentNode
+            }
+          } else {
+            markedSuccessful += currentNode
+          }
+          newPathsNewNodes
+        }
+        
+          
+      }
+    }
+    val turns = findPaths(List(),from, "")
+    turns
   }
 
-  private def resolveConflicts(before: PTurn, after: PTurn) = {
+  private def reactivesForConflicts(active: PTurn, conflicts: Set[PTurn]) : Map[Reactive, Set[PTurn]] = {
+    val reactivesForConflicts: Map[PTurn, Set[Reactive]] = conflicts.map { conflict =>
+      val affectedReactives = conflict.causedReactives.getOrElse(active,Set())
+      (conflict, affectedReactives)
+    }.filter({ case (_, reactives) => reactives.nonEmpty }).toMap
+    val allReactives = reactivesForConflicts.values.flatMap(x => x)
+    val turnsForReactives: Map[Reactive, Set[PTurn]] = allReactives.map { reactive =>
+      val turnsAtReactive = reactivesForConflicts.filter({ case (_, reactives) => reactives.contains(reactive) }).keys
+      (reactive, turnsAtReactive.toSet)
+    }.toMap
+    turnsForReactives
+  }
+  
+  private def repairReactive(reactive: Reactive,  active : PTurn, conflicts :Set[PTurn]) : Unit = {
+    var seenTurns = Set[PTurn]()
+    reactive.moveFrameBack { frame =>
+      val turn = frame.turn.asInstanceOf[PipeliningTurn]
+      forgetOrder(active, turn, reactive)
+      rememberOrder(turn, active, reactive)
+      seenTurns += turn
+      conflicts.subsetOf(seenTurns)
+    }(active)
+  }
 
-    // Resolves all conflicts which occur by putting a waiting relation from after to before
-
-    // Resolving terminates because only frames for after are put back at some reactives
-    // All conflicts are guaranteed solved, if after is moved to the back at all reactives
-    // But we dont do that, only there, were it is neceassary
-
-    def resolveConflict(before: PTurn, after: PTurn, at: Reactive): Set[PTurn] = {
-      var skipedFrames = Set[PTurn]()
-      at.moveFrameBack { frame =>
-        val before2 = frame.turn.asInstanceOf[PTurn]
-        forgetOrder(after, before2, at)
-        rememberOrder(before2, after, at)
-        if (waitsOn(before2, after))
-          skipedFrames += before2
-        before2 == before
-      }(after)
-      skipedFrames
-    }
-    def findAndResolveConflicts(before: PTurn, after: PTurn): Unit = {
-      val conflicts = getConflicts(before, after)
-      val newConflictedTurns = conflicts.flatMap {
-        _ match {
-          case (turn, reactives) =>
-            val conflicts = reactives.flatMap { reactive =>
-              resolveConflict(turn, after, reactive)
-            }
-            assert(!ordering.contains((after, turn)), "Created a cycle")
-            conflicts
-        }
-
-      }
-      newConflictedTurns.foreach { findAndResolveConflicts(_, after) }
-    }
-
-    findAndResolveConflicts(before, after)
+  private def resolveConflicts(active: PTurn, turnsAtReactive: Set[PTurn]): Unit = {
+    val allConflictedTurns = turnsAtReactive.flatMap { allTurnsInAllPaths(_, active) }
+    val affectedReactives = reactivesForConflicts(active, allConflictedTurns)
+    affectedReactives.foreach{case (reactive, conflicts) => repairReactive(reactive, active, conflicts)}
+    assert(assertCycleFree)
+    
   }
 
   // TODO remove synchronized
