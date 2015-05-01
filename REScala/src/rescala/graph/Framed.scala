@@ -5,6 +5,8 @@ import scala.collection.immutable.Queue
 import scala.annotation.tailrec
 
 trait Framed {
+ // self : Reactive =>
+  
   protected[this] type Content ;
 
   private type CFrame = Frame[Content]
@@ -15,6 +17,9 @@ trait Framed {
  
   protected[this] var queueHead : CFrame = null.asInstanceOf[CFrame];
   protected[this] var queueTail : CFrame = null.asInstanceOf[CFrame];
+  
+  protected[this] var incompleteDynamicFrames : Map[Framed,List[Frame[_]]] = Map()
+  protected[rescala] def getIncompleteDynamicFrames = incompleteDynamicFrames
   
   private object pipelineLock
   
@@ -61,26 +66,25 @@ trait Framed {
     })
   }
   
-   protected def frame[T](f: Content => T = { x: Content => x })(implicit turn: Turn): T = {
+  private def frame(implicit turn : Turn) : Option[CFrame] = {
     @tailrec
-    def findBottomMostFrame(tail : CFrame) : Content = {
+    def findBottomMostFrame(tail : CFrame) : Option[CFrame] = {
       if (tail == null)
-        stableFrame
+        None
       else if (turn.waitsOnFrame(tail.turn))
-        tail.content
+        Some(tail)
       else
         findBottomMostFrame(tail.previous())
     }
     
     // Local: if the turn itself is found, it is the bottom most frame => no need to sync
-    val bottomMostWaitingFrame : Content = findFrame(x => x) match {
-      case Some(frame) => frame.content
-      case None => turn.waitsOnLock { lockPipeline{
-        findBottomMostFrame(queueTail)
-      }}
-    }
-    
-    f(bottomMostWaitingFrame)
+    val bottomMostWaitingFrame : Option[CFrame] = findFrame(x => x).orElse(findBottomMostFrame(queueTail))
+    bottomMostWaitingFrame
+  }
+  
+  protected def frame[T](f: Content => T = { x: Content => x })(implicit turn: Turn): T = {
+    val content = frame.map(_.content).getOrElse(stableFrame)
+    f(content)
   }
   
   protected[rescala] def waitUntilCanWrite(implicit turn : Turn) : Unit = {
@@ -88,16 +92,56 @@ trait Framed {
       case Some(turnFrame) => turnFrame.awaitPredecessor(pipelineLock)
       case None => throw new AssertionError(s"No frame for $turn at $this")
     }
-    
+  }
+  
+  protected[rescala] def waitUntilCanRead(implicit turn : Turn) : Unit =  {
+    // TODO IF keep frame reordering, need to do something more here. because the frame
+    // we need to read from may change
+    frame match {
+      case Some(frame) => frame.awaitUntilWritten()
+      case None =>
+    }
   }
 
   protected[rescala] def hasFrame(implicit turn: Turn): Boolean = {
     findFrame(_ => true, false)
   }
 
+  protected[rescala] def createFrameBefore(createFor : Turn, visitPreviousFrame: CFrame => Unit = { x: CFrame => })(implicit turn: Turn): Unit = lockPipeline {
+    def createFrame(prev : Content) : CFrame =  {
+      val newFrame = WriteFrame[Content](turn, this)
+      newFrame.content = duplicate(prev)
+      assert(newFrame.turn == turn)
+      newFrame
+    }
+    
+    
+    val frame = needFrame()
+    
+    @tailrec
+    def visitPipeline(head : CFrame) : Unit = {
+      if (head != null && head != frame) {
+        visitPreviousFrame(head)
+        visitPipeline(head.next)
+      }
+    }
+    
+   
+    if (frame == queueHead) {
+       val newFrame = createFrame(stableFrame)
+      queueHead.insertAfter(newFrame)
+      queueHead = newFrame
+    } else {
+      val newFrame = createFrame(frame.previous().content)
+      newFrame.insertAfter(frame.previous())
+    }
+    
+    assert(hasFrame(createFor))
+  }
+  
   protected[rescala] def createFrame(visitPreviousFrame: CFrame => Unit = { x: CFrame => })(implicit turn: Turn): Unit = lockPipeline {
     def createFrame(prev : Content) : CFrame =  {
-      val newFrame = WriteFrame[Content](turn)
+      val newFrame = WriteFrame[Content](turn, this)
       newFrame.content = duplicate(prev)
       assert(newFrame.turn == turn)
       newFrame
@@ -180,11 +224,69 @@ trait Framed {
   }
 
   protected[rescala] def markWritten(implicit turn: Turn): Unit = {
-    needFrame(_.asInstanceOf[WriteFrame[Content]].markWritten())
+    needFrame(frame => frame match {
+      case (writeFrame @ WriteFrame(_,_)) => writeFrame.markWritten
+      case _ =>
+    })
   }
   
   protected[rescala] def markTouched(implicit turn : Turn) : Unit = {
     needFrame(_.markTouched())
+  }
+  
+  protected[rescala] def createDynamicFrame[T<:CFrame](makeFrame : => T)(from :  Reactive)(implicit turn : Turn) : T = lockPipeline {
+    assert(!hasFrame)
+    val predeceedingFrameOpt : Option[CFrame] = frame
+    val readFrame = makeFrame
+    predeceedingFrameOpt match {
+      case Some(predecessor) => 
+        readFrame.content = duplicate(predecessor.content)
+        val insertAtEnd = predecessor == queueTail
+        readFrame.insertAfter(predecessor)
+        if (insertAtEnd)
+          queueTail = readFrame
+      case None => 
+        readFrame.content = duplicate(stableFrame)
+        if (queueHead == null)
+          queueHead = readFrame
+        else {
+          queueHead.insertAfter(readFrame)
+          queueHead = readFrame
+        }
+    }
+    readFrame
+  }
+  
+  protected[rescala] def createDynamicReadFrame(from :  Reactive)(implicit turn : Turn) : DynamicReadFrame[Content] = {
+    createDynamicFrame(DynamicReadFrame[Content](turn, this, from))(from)
+  }
+  
+  protected[rescala] def createDynamicDropFrame(from : Reactive)(implicit turn : Turn) : DynamicDropFrame[Content] = {
+    createDynamicFrame(DynamicDropFrame[Content](turn, this, from))(from)
+  }
+  
+  protected[rescala] def registerDynamicFrame(frame : DynamicReadFrame[_ <: ReactiveFrame]) = {
+    internalRegisterDynamicFrame(frame)
+  }
+  
+  protected[rescala] def registerDynamicFrame(frame : DynamicDropFrame[_ <: ReactiveFrame]) = {
+    internalRegisterDynamicFrame(frame)
+  }
+  
+  protected[rescala] def forgetDynamicFramesUntil(frame : Frame[_] ) = {
+    val reactive = frame.at
+    val frames = incompleteDynamicFrames(frame.at)
+    val newFrames = frames.dropWhile { _ != frame }.drop(1)
+    if (newFrames.isEmpty) 
+      incompleteDynamicFrames -= reactive
+    else
+      incompleteDynamicFrames += (reactive -> newFrames)
+  }
+  
+  private def internalRegisterDynamicFrame(frame : Frame[_]) = {
+    val reactive = frame.at
+    val newFramesForReactive = incompleteDynamicFrames.getOrElse(reactive, List()) :+ frame
+    incompleteDynamicFrames += (reactive -> newFramesForReactive)
   }
 
   // If want to omit the buffers in the turn data (because the previous data is contained

@@ -9,7 +9,7 @@ import java.util.concurrent.locks.LockSupport
 import java.util.concurrent.atomic.AtomicReference
 import rescala.util.JavaFunctionsImplicits._
 
-sealed abstract class Frame[T](val turn: Turn) {
+sealed abstract class Frame[T](val turn: Turn, val at : Framed) {
 
   private var predecessor: Frame[T] = null.asInstanceOf[Frame[T]]
   private var successor: Frame[T] = null.asInstanceOf[Frame[T]]
@@ -67,8 +67,17 @@ sealed abstract class Frame[T](val turn: Turn) {
       // The current threads gets unparked if the predecessor changes or
       // the predecessor is marked as written
       if (waits) {
-        LockSupport.park(creatorThread)
+        LockSupport.park(predecessor.creatorThread)
       }
+    }
+  }
+  
+  protected [rescala] final def awaitUntilWritten() = {
+    while(!isWritten) {
+      lockObject.synchronized {
+        lockedOnThread += Thread.currentThread()
+      }
+      LockSupport.park(creatorThread)
     }
   }
 
@@ -113,7 +122,7 @@ sealed abstract class Frame[T](val turn: Turn) {
 
 }
 
-case class WriteFrame[T](override val turn: Turn) extends Frame[T](turn) {
+case class WriteFrame[T](override val turn: Turn, override val at : Framed) extends Frame[T](turn, at) {
   private val written = new AtomicBoolean(false);
 
   protected[rescala] def isWritten = written.get
@@ -127,10 +136,12 @@ case class WriteFrame[T](override val turn: Turn) extends Frame[T](turn) {
       }
   }
 }
-case class StaticReadFrame[T](override val turn: Turn) extends Frame[T](turn) {
+
+case class DynamicReadFrame[T](override val turn: Turn, override val at : Framed, val newDependent : Reactive) extends Frame[T](turn, at) {
   protected[rescala] def isWritten = true
 }
-case class DynamicReadFrame[T](override val turn: Turn) extends Frame[T](turn) {
-  protected[rescala] def isWritten = throw new NotImplementedError
+
+case class DynamicDropFrame[T](override val turn: Turn, override val at : Framed, val lostDependent : Reactive) extends Frame[T](turn, at) {
+  protected[rescala] def isWritten = true
 }
 

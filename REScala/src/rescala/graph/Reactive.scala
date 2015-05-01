@@ -39,6 +39,12 @@ trait Pulsing[+P] extends Reactive {
   protected [this] type Content <:PulsingFrame[P]
   final def pulse(implicit turn: Turn): Pulse[P] = {  
     //while(!isPreviousFrameFinished){}
+    if (!hasFrame) {
+      // Access without a frame: need to wait until frame is finished
+      // for all static dependencies it is guaranteed that the frame is already
+      // finished
+       waitUntilCanRead
+    }
     frame(_.pulses).get
   } 
   protected[this] def pulses(implicit turn:Turn): Buffer[Pulse[P]] = frame(_.pulses)

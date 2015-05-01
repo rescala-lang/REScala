@@ -60,6 +60,18 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
     }(turn)
     assert(assertCycleFree, "Create frame created a cycle")
   }
+  
+  protected[pipelining] def createFrameBefore(turn: PTurn, createFor: PTurn, at: Reactive) = graphLock.synchronized {
+    // TODO first check for conflicts
+   // resolveConflicts(turn, at.getPipelineFrames().map { _.turn.asInstanceOf[PipeliningTurn]}.toSet)
+    at.createFrameBefore(createFor,  {frame =>
+      val before = frame.turn.asInstanceOf[PipeliningTurn]
+      assert(isActive(before), s"A frame from the already completed turn $before remained")
+      // Then remember the new turn
+      rememberOrder(before, turn, at)
+    })(turn)
+    assert(assertCycleFree, "Create frame created a cycle")
+  }
 
   private def putInMap[K, V](map: Map[K, Set[V]], key: K, v: V): Map[K, Set[V]] = {
     val vals = map.getOrElse(key, Set()) + v

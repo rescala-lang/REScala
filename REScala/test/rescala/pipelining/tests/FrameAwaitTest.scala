@@ -11,13 +11,16 @@ import rescala.pipelining.tests.PipelineTestUtils._
 import rescala.util.JavaFunctionsImplicits._
 import java.util.concurrent.locks.ReentrantLock
 import rescala.graph.WriteFrame
+import rescala.Var
 
 class FrameAwaitTest extends AssertionsForJUnit with MockitoSugar {
 
-  val engine = new PipelineEngine
+  implicit val engine = new PipelineEngine
   val handledFrames: AtomicReference[List[Frame[_]]] = new AtomicReference(List())
   private object modificationLock
 
+  val dummyReactive = Var(0)
+  
   def markFrameHandled(frame: Frame[_]) = {
     handledFrames.getAndUpdate({ list: List[Frame[_]] => list :+ frame })
   }
@@ -37,8 +40,8 @@ class FrameAwaitTest extends AssertionsForJUnit with MockitoSugar {
 
   @Test(timeout = 500)
   def testFrameWaitsOnOther() = {
-    val frame1 = new WriteFrame(engine.makeTurn)
-    val frame2 = new WriteFrame(engine.makeTurn)
+    val frame1 = WriteFrame(engine.makeTurn,dummyReactive)
+    val frame2 = WriteFrame(engine.makeTurn,dummyReactive)
     frame2.insertAfter(frame1)
 
     val frame1Thread = createWriteThread(frame1)
@@ -73,7 +76,7 @@ class FrameAwaitTest extends AssertionsForJUnit with MockitoSugar {
     var lastFrame = null.asInstanceOf[WriteFrame[Nothing]]
     var threads = List[Thread]()
     for (i <- 1 to 100) {
-      val newFrame = new WriteFrame(engine.makeTurn)
+      val newFrame = WriteFrame(engine.makeTurn, dummyReactive)
       threads +:= createFrameThread(newFrame)
       if (lastFrame != null) {
         newFrame.insertAfter(lastFrame)
@@ -93,7 +96,7 @@ class FrameAwaitTest extends AssertionsForJUnit with MockitoSugar {
 
   @Test(timeout = 500)
   def testFrameWaitsWithReordering() = {
-    val frames = List.fill(4)(new WriteFrame(engine.makeTurn))
+    val frames = List.fill(4)(WriteFrame(engine.makeTurn, dummyReactive))
 
     frames(1).insertAfter(frames(0))
     frames(2).insertAfter(frames(1))
