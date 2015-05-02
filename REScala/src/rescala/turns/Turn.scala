@@ -43,7 +43,8 @@ trait Turn {
   /** plan a new after commit handler. this still runs before releasing locks */
   def observe(f: => Unit): Unit
   
-  def waitsOnFrame(other: Turn ) = other == this
+  def >~(other: Turn ) = other == this
+  def >>~(other: Turn ) = this >~ other
   def waitsOnLock[T](op : => T) : T = op
   
    val id = Globals.nextID()

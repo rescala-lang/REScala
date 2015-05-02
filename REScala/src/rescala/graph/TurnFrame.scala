@@ -9,7 +9,7 @@ import java.util.concurrent.locks.LockSupport
 import java.util.concurrent.atomic.AtomicReference
 import rescala.util.JavaFunctionsImplicits._
 
-sealed abstract class Frame[T](val turn: Turn, val at : Framed) {
+sealed abstract class Frame[T](val turn: Turn, val at: Framed) {
 
   private var predecessor: Frame[T] = null.asInstanceOf[Frame[T]]
   private var successor: Frame[T] = null.asInstanceOf[Frame[T]]
@@ -23,12 +23,23 @@ sealed abstract class Frame[T](val turn: Turn, val at : Framed) {
   protected[rescala] var content: T = null.asInstanceOf[T];
 
   private val touched = new AtomicBoolean(false);
+  private val written = new AtomicBoolean(false);
 
   protected[rescala] def isTouched: Boolean = touched.get
   protected[rescala] def markTouched(): Unit = touched.set(true)
-  protected[rescala] def isWritten: Boolean;
 
-  override def toString() = s"Frame($turn)[$content]"
+  protected[rescala] def isWritten = written.get
+
+  protected[rescala] final def markWritten() = {
+    if (!written.get)
+      lockObject.synchronized {
+        // Only retry threads if was not marked written already
+        written.set(true)
+        retryBlockedThreads()
+      }
+  }
+
+  override def toString() = s"${getClass.getSimpleName}($turn, written=${isWritten})[$content]"
 
   protected def retryBlockedThreads() = lockObject.synchronized {
     val blockedThreads = lockedOnThread
@@ -71,10 +82,12 @@ sealed abstract class Frame[T](val turn: Turn, val at : Framed) {
       }
     }
   }
-  
-  protected [rescala] final def awaitUntilWritten() = {
-    while(!isWritten) {
+
+  protected[rescala] final def awaitUntilWritten() = {
+    var wait = true
+    while (wait) {
       lockObject.synchronized {
+        wait = !isWritten
         lockedOnThread += Thread.currentThread()
       }
       LockSupport.park(creatorThread)
@@ -88,6 +101,7 @@ sealed abstract class Frame[T](val turn: Turn, val at : Framed) {
     if (predecessor != null) {
       predecessor.successor = this.successor
     }
+    retryBlockedThreads()
     val oldSuccessor = this.successor
     this.successor = null.asInstanceOf[Frame[T]]
     this.predecessor = null.asInstanceOf[Frame[T]]
@@ -122,26 +136,15 @@ sealed abstract class Frame[T](val turn: Turn, val at : Framed) {
 
 }
 
-case class WriteFrame[T](override val turn: Turn, override val at : Framed) extends Frame[T](turn, at) {
-  private val written = new AtomicBoolean(false);
+case class WriteFrame[T](override val turn: Turn, override val at: Framed) extends Frame[T](turn, at) {
 
-  protected[rescala] def isWritten = written.get
-
-  protected[rescala] final def markWritten() = {
-    if (!written.get)
-      lockObject.synchronized {
-        // Only retry threads if was not marked written already
-        written.set(true)
-        retryBlockedThreads()
-      }
-  }
 }
 
-case class DynamicReadFrame[T](override val turn: Turn, override val at : Framed, val newDependent : Reactive) extends Frame[T](turn, at) {
-  protected[rescala] def isWritten = true
+case class DynamicReadFrame[T](override val turn: Turn, override val at: Framed, val newDependent: Reactive) extends Frame[T](turn, at) {
+
 }
 
-case class DynamicDropFrame[T](override val turn: Turn, override val at : Framed, val lostDependent : Reactive) extends Frame[T](turn, at) {
-  protected[rescala] def isWritten = true
+case class DynamicDropFrame[T](override val turn: Turn, override val at: Framed, val lostDependent: Reactive) extends Frame[T](turn, at) {
+
 }
 

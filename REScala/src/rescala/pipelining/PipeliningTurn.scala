@@ -15,6 +15,7 @@ import rescala.graph.DynamicReadFrame
 import rescala.graph.Frame
 import rescala.graph.ReactiveFrame
 import rescala.graph.Framed
+import rescala.graph.DynamicReevaluation
 
 object PipeliningTurn {
 
@@ -30,14 +31,11 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
   protected[pipelining] var preceedingTurns: Set[PipeliningTurn] = Set()
   protected[pipelining] var causedReactives: Map[PipeliningTurn, Set[Reactive]] = Map()
 
-  override def waitsOnFrame(other: Turn) = other == this || engine.waitsOn(this, other.asInstanceOf[PipeliningTurn])
-
   override def waitsOnLock[T](op: => T): T = engine.graphLocked(op)
 
   val allNodesQueue = new LevelQueue
-  
 
-  protected override def requeue(head: Reactive, changed: Boolean, level: Int, redo: Boolean): Unit ={
+  protected override def requeue(head: Reactive, changed: Boolean, level: Int, redo: Boolean): Unit = {
     if (redo)
       allNodesQueue.enqueue(level, changed)(head)
     else head.outgoing.get.foreach(allNodesQueue.enqueue(level, changed))
@@ -57,6 +55,17 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
     }
   }
 
+  override def create[T <: Reactive](dependencies: Set[Reactive], dynamic: Boolean)(f: => T): T = {
+    val reactive = f
+    ensureLevel(reactive, dependencies)
+    if (dynamic) {
+      engine.createFrame(this, reactive)
+      framedReactives += reactive
+      evaluate(reactive)
+    } else dependencies.foreach(register(reactive))
+    reactive
+  }
+
   override def evaluate(head: Reactive) = {
     assert(head.hasFrame(this), "No frame was created in turn " + this + " for " + head)
 
@@ -64,66 +73,8 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
     // in order not to block pipelining longer on these nodes
     markUnreachablePrunedNodesWritten(head)
 
-    var previousDynamicFrameNeeded = false
-    do {
-
-      head.waitUntilCanWrite
-
-      val dynamicFramesMap = head.getIncompleteDynamicFrames
-      val reactives = dynamicFramesMap.keySet
-
-      // for each reactive for which unhandled dynamic frames exists, they may be multiple
-      // write frames, get the most if available and put a frame for this on this reactive
-      val firstDynamicFramesRequringWrites = reactives.map { reactive =>
-        val dynamicFrames = dynamicFramesMap(reactive)
-        val fristDynamicFramesRequiringWriteFrame = dynamicFrames.find { dynamicFrame =>
-          dynamicFrame match {
-            case DynamicReadFrame(turn, at, newDependent) =>
-              assert(at == reactive)
-              assert(newDependent == head)
-              val needNewWriteFrame = dynamicFrame.next() match {
-                case WriteFrame(nextTurn, at) =>
-                  assert(at == reactive)
-                  if (this >~ nextTurn.asInstanceOf[PipeliningTurn]) {
-                    // The other turn needs to be evaluated first
-                    true
-                  } else
-                    false
-                case _ => false
-              }
-              needNewWriteFrame
-            case DynamicDropFrame(_, _, _) => false // TODO do that later
-            case WriteFrame(_, _)          => throw new AssertionError("no write frmae should be there")
-          }
-        }
-
-        (reactive, fristDynamicFramesRequiringWriteFrame)
-      }.filter(!_._2.isEmpty)
-      previousDynamicFrameNeeded = firstDynamicFramesRequringWrites.nonEmpty
-      if (previousDynamicFrameNeeded) {
-        val framesMap = firstDynamicFramesRequringWrites.map[(Framed, Frame[_]), Iterable[(Framed, Frame[_])]](pair => (pair._1, pair._2.get)).toMap
-        val turnsMaps = framesMap.mapValues { _.next().turn.asInstanceOf[PipeliningTurn] }
-
-        def earliestTurns(turns: Iterable[PipeliningTurn]): Iterable[PipeliningTurn] = {
-          turns.filter { turn => !turns.exists { otherTurn => turn >~ otherTurn } }
-        }
-
-        engine.graphLocked {
-          val firstTurns = earliestTurns(turnsMaps.values.toSet) // Convert to set to avoid duplicates
-          val pickedTurn = firstTurns.find(_ => true).get //There is always a turn because >~ is a partial order and turnMaps not empty
-          engine.createFrameBefore(this, pickedTurn, head)
-          // TODO sync for that
-          pickedTurn.framedReactives += head
-          // Dynamic frames for all reactive with this frame as first one are handled
-          val handledReactives = turnsMaps.filter(_._2 == pickedTurn).keys
-          handledReactives.foreach { reactive => reactive.forgetDynamicFramesUntil(framesMap(reactive)) }
-          // Put head in queue of the picked turn
-          pickedTurn.admit(head)
-        }
-
-      }
-    } while (previousDynamicFrameNeeded)
-
+    head.waitUntilCanWrite
+    // head.fillFrame
     head.markTouched
 
     assert(preceedingTurns.forall(turn =>
@@ -140,16 +91,56 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
   }
 
   override def register(sink: Reactive)(source: Reactive): Unit = {
-    println(s"Create dynamic frome at $source for $sink")
-    val readFrame = source.createDynamicReadFrame(from = sink)
-    sink.registerDynamicFrame(readFrame)
-    framedReactives += source
-    super.register(sink)(source)
+    if (!source.hasFrame && !sink.outgoing.get.contains(source)) {
+      println(s"Create dynamic frome at $source for $sink")
+      // Create a dynamic read frame
+      val readFrame = engine.createDynamicReadFrameFrame(this, from = sink, at = source)
+      // This writes in the dynamic read frame, but only in outgoings
+      source.fillFrame
+      source.outgoing.transform { _ + sink }
+      readFrame.markWritten()
+
+      // this defect in frames after this frames we need to repair
+      // Get all write frames after the read frame -> need to propagate the new dependency to them
+      val framesAfterDynamicRead: List[WriteFrame[_ <: ReactiveFrame]] = source.writeFramesAfter(readFrame)
+      // TODO need to sync probalbly on that?
+      framesAfterDynamicRead.foreach { frame =>
+        frame.content.outgoing.transform(_ + sink)(frame.turn)
+      }
+
+      // Need to create frames for the turns after the dynamic read at the new nodes
+      val turnsAfterDynamicRead = framesAfterDynamicRead.map(_.turn.asInstanceOf[PipeliningTurn])
+      println(s"Turns after dynamic read $turnsAfterDynamicRead")
+
+      if (turnsAfterDynamicRead.nonEmpty) {
+        // Queue based create frames at reachable reactives
+        val queue = new LevelQueue
+        queue.enqueue(-1)(source)
+        queue.evaluateQueue { reactive =>
+          var anyFrameCreated = false
+          for (turn <- turnsAfterDynamicRead) {
+            val frameCreated = engine.createFrameAfter(this, turn, reactive)
+            anyFrameCreated ||= frameCreated
+          }
+          // Only need to continue created frames, if one was created
+          if (anyFrameCreated)
+            reactive.outgoing.get.foreach { queue.enqueue(-1) }
+        }
+
+      }
+
+      // Add the new nodes in the queue of the turns
+      turnsAfterDynamicRead.foreach { turn =>
+        turn.admit(sink)
+      }
+
+      framedReactives += source
+    }
   }
 
   override def unregister(sink: Reactive)(source: Reactive): Unit = {
-  //  val dropFrame = source.createDynamicDropFrame(sink)
-  //  sink.registerDynamicFrame(dropFrame)
+    //  val dropFrame = source.createDynamicDropFrame(sink)
+    //  sink.registerDynamicFrame(dropFrame)
     super.unregister(sink)(source)
   }
 
@@ -184,8 +175,12 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
     s"PipeliningTurn(${super.toString})"
   }
 
-  def >~(other: PipeliningTurn) = {
-    engine.waitsOn(this, other)
+  override def >~(other: Turn) = {
+    preceedingTurns.contains(other.asInstanceOf[PipeliningTurn])
+  }
+
+  override def >>~(other: Turn) = {
+    other == this || engine.waitsOn(this, other.asInstanceOf[PipeliningTurn])
   }
 
 }
