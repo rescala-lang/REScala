@@ -158,8 +158,8 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
 
     var queue: Queue[PTurn] = Queue(waits)
     var seen: Set[PTurn] = Set(waits)
-    var found = true
-    while (!found && queue.isEmpty) {
+    var found = false
+    while (!found && !queue.isEmpty) {
       val head = queue.head
       queue = queue.tail
       seen += head
