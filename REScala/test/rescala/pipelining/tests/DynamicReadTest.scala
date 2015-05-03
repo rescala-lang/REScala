@@ -11,6 +11,7 @@ import rescala.graph.Reactive
 import rescala.pipelining.PipeliningTurn
 import rescala.pipelining.tests.PipelineTestUtils._
 import java.util.concurrent.CyclicBarrier
+import rescala.Signal
 
 /**
  * @author moritzlichter
@@ -155,6 +156,50 @@ class DynamicReadTest extends AssertionsForJUnit with MockitoSugar {
     println(depOfDynamicDepValues)
     assert(depOfDynamicDepValues == resultSource1BeforeSource2)
 
+  }
+  
+  class ValueTracker[T](s : Signal[T]) {
+    var values : List[T] = List()
+    
+    s.observe(newValue => values :+= newValue)
+    reset()
+    
+    def reset() = values = List()
+  }
+  
+  @Test
+  def exisitingTurnsAfterDynamicPropagateToNewNodes() = {
+    // Need to enforce an order between turns that update
+    // source1 and source2 when the dynamic dependency has
+    // not been established
+    // To do that, I connect the paths with a new node
+    val source1 = Var(0)
+    val source2 = Var(0)
+    val dep1 = Signals.static(source1)(implicit t => {Thread.sleep(minEvaluationTimeOfUpdate); source1.get})
+    val dynDep1 = Signals.dynamic()(implicit t => if (dep1(t) % 2 == 0) dep1(t) else dep1(t) + source2(t))
+    val dep2 = Signals.static(source2)(implicit t => source2.get)
+    val dep12 = Signals.static(dynDep1, dep2)(implicit t => dynDep1.get + dep2.get)
+    
+    val dep1Tracker = new ValueTracker(dep1)
+    val dynDep1Tracker = new ValueTracker(dynDep1)
+    val dep2Tracker = new ValueTracker(dep2)
+    val dep12Tracker = new ValueTracker(dep12)
+    
+    val thread1 = createThread {source1.set(1)}
+    val thread2 = createThread {Thread.sleep(letOtherUpdateCreateFramesTime); source2.set(100)}
+    
+    println("=======")
+    
+    thread1.start
+    thread2.start
+    thread1.join
+    thread2.join
+    
+    assert(dep1Tracker.values == List(1))
+    assert(dynDep1Tracker.values == List(1, 101))
+    assert(dep2Tracker.values == List(100))
+    assert(dep12Tracker.values == List(1, 201))
+   
   }
 
 }

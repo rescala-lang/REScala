@@ -98,7 +98,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
       // This writes in the dynamic read frame, but only in outgoings
       source.fillFrame
       source.outgoing.transform { _ + sink }
-      readFrame.markWritten()
+     
 
       // this defect in frames after this frames we need to repair
       // Get all write frames after the read frame -> need to propagate the new dependency to them
@@ -115,7 +115,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
       if (turnsAfterDynamicRead.nonEmpty) {
         // Queue based create frames at reachable reactives
         val queue = new LevelQueue
-        queue.enqueue(-1)(source)
+        queue.enqueue(-1)(sink)
         queue.evaluateQueue { reactive =>
           var anyFrameCreated = false
           for (turn <- turnsAfterDynamicRead) {
@@ -133,6 +133,8 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
       turnsAfterDynamicRead.foreach { turn =>
         turn.admit(sink)
       }
+      
+       readFrame.markWritten()
 
       framedReactives += source
     }

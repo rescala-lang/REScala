@@ -83,7 +83,7 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
         assert(isActive(before), s"A frame from the already completed turn $before remained")
         // Then remember the new turn
         println("Remember order")
-        rememberOrder(before, turn, at)
+        rememberOrder(before, createFor, at)
       })(turn)
       assert(assertCycleFree, "Create frame created a cycle")
       true
