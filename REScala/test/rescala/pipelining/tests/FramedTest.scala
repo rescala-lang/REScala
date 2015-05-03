@@ -56,7 +56,7 @@ class FramedTest extends AssertionsForJUnit with MockitoSugar {
   @Test
   def createFirstFrameHasSameValueAsStableExceptTurn() = {
     implicit val turn = new PipeliningTurn(engine)
-    framed.createFrame()
+    framed.createFrame
     assert(framed.getStableFrame().num == 0)
     assert(framed.getPipelineFrames().size == 1)
     val newFrame = framed.getPipelineFrames()(0)
@@ -67,7 +67,7 @@ class FramedTest extends AssertionsForJUnit with MockitoSugar {
   @Test
   def createWriteAndRemoveFrame() = {
     implicit val turn = new PipeliningTurn(engine)
-    framed.createFrame()
+    framed.createFrame
     assert(framed.hasFrame)
     val newFrame = framed.getPipelineFrames()(0)
     newFrame.content.num =1
@@ -83,7 +83,7 @@ class FramedTest extends AssertionsForJUnit with MockitoSugar {
   def createMultipleFramesAndRemoveThem() = {
     // Create three frames
     val turn1 = new PipeliningTurn(engine)
-    framed.createFrame()(turn1)
+    framed.createFrame(turn1)
     val frame1 = framed.getFrame(turn1)
     assert(!frame1.isWritten)
     assert(framed.getPipelineFrames() == Queue(frame1))
@@ -92,7 +92,7 @@ class FramedTest extends AssertionsForJUnit with MockitoSugar {
     assert(frame1.isWritten)
     
     val turn2 = new PipeliningTurn(engine)
-    framed.createFrame()(turn2)
+    framed.createFrame(turn2)
     val frame2 = framed.getFrame(turn2)
     assert(frame2.content.num == 1)
     assert(framed.getPipelineFrames() == Queue(frame1, frame2))
@@ -101,7 +101,7 @@ class FramedTest extends AssertionsForJUnit with MockitoSugar {
     framed.markWritten(turn2)
     
     val turn3 = new PipeliningTurn(engine)
-    framed.createFrame()(turn3)
+    framed.createFrame(turn3)
     val frame3 = framed.getFrame(turn3)
     assert(framed.getPipelineFrames() == Queue[Frame[_]](frame1, frame2, frame3))
     assert(frame3.content.num == 2)
@@ -150,7 +150,7 @@ class FramedTest extends AssertionsForJUnit with MockitoSugar {
     // Create five frames
     for (i <- 1 to 5) {
       val turn = new PipeliningTurn(engine)
-      framed.createFrame()(turn)
+      framed.createFrame(turn)
       framed.frame()(turn).num = i
       framed.markWritten(turn)
     }
@@ -158,12 +158,10 @@ class FramedTest extends AssertionsForJUnit with MockitoSugar {
 
     assert(framed.getPipelineFrames() == Queue(frame1, frame2, frame3, frame4, frame5))
     
-    
-    val turn = new PipeliningTurn(engine)
     var seenFrames : List[Frame[TestFrameContent]] = List()
-    framed.createFrame(frame => seenFrames = seenFrames :+ frame)(turn)
-    val newFrame = framed.getFrame(turn)
-    assert(framed.getPipelineFrames() == Queue(frame1, frame2, frame3, frame4, frame5, newFrame))
+    framed.foreachFrameTopDown(frame => seenFrames :+= frame)
+    
+    assert(framed.getPipelineFrames() == Queue(frame1, frame2, frame3, frame4, frame5))
     assert(seenFrames == List(frame1, frame2, frame3, frame4, frame5))
   }
   
@@ -171,8 +169,8 @@ class FramedTest extends AssertionsForJUnit with MockitoSugar {
   def fillFrame() = {
     val turn1 = engine.makeTurn
     val turn2 = engine.makeTurn
-    framed.createFrame()(turn1)
-    framed.createFrame()(turn2)
+    framed.createFrame(turn1)
+    framed.createFrame(turn2)
     
     val Queue(frame1, frame2) = framed.getPipelineFrames()
     assert(frame1.turn == turn1)

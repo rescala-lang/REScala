@@ -43,7 +43,23 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
   protected[pipelining] def graphLocked[T](op: => T): T = graphLock.synchronized {
     op
   }
-  
+
+  private def rememberTurnOrder(newFrameTurn: PTurn, at: Reactive) = {
+    var frameForNewTurnSeen = false
+    at.foreachFrameTopDown(frame => {
+      val currentTurn = frame.turn.asInstanceOf[PipeliningTurn]
+      if (currentTurn == newFrameTurn) {
+        assert(!frameForNewTurnSeen)
+        frameForNewTurnSeen = true
+      } else {
+        if (frameForNewTurnSeen)
+          rememberOrder(before = newFrameTurn, after = currentTurn, at)
+        else
+          rememberOrder(before = currentTurn, after = newFrameTurn, at)
+          
+      }
+    })
+  }
 
   /**
    * Creates a new frame for the given turn at the given reactive and
@@ -52,20 +68,18 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
   protected[pipelining] def createFrame(turn: PTurn, at: Reactive) = graphLock.synchronized {
     // TODO first check for conflicts
     resolveConflicts(turn, at.getPipelineFrames().map { _.turn.asInstanceOf[PipeliningTurn] }.toSet)
-    at.createFrame { frame =>
-      rememberOrder(frame.turn.asInstanceOf[PipeliningTurn], turn, at)
-    }(turn)
+    at.createFrame(turn)
+    rememberTurnOrder(turn, at)
     assert(assertCycleFree, "Create frame created a cycle")
   }
-  
+
   /**
    * Creates a new frame for the given turn at the given reactive and
    * resolves conflicts which are introduced by creating the new frame
    */
-  protected[pipelining] def createDynamicReadFrameFrame(turn: PTurn, from: Reactive,  at: Reactive) = graphLock.synchronized {
-    val frame = at.createDynamicReadFrame(from, { frame =>
-      rememberOrder(frame.turn.asInstanceOf[PipeliningTurn], turn, at)
-    })(turn)
+  protected[pipelining] def createDynamicReadFrameFrame(turn: PTurn, from: Reactive, at: Reactive) = graphLock.synchronized {
+    val frame = at.createDynamicReadFrame(from)(turn)
+    rememberTurnOrder(turn, at)
     assert(assertCycleFree, "Create dynamic read frame created a cycle")
     frame
   }
@@ -78,13 +92,8 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
       // TODO assert that createFor is after turn in the pipeline
       false
     else {
-      at.insertWriteFrameFor(createFor, { frame =>
-        val before = frame.turn.asInstanceOf[PipeliningTurn]
-        assert(isActive(before), s"A frame from the already completed turn $before remained")
-        // Then remember the new turn
-        println("Remember order")
-        rememberOrder(before, createFor, at)
-      })(turn)
+      at.insertWriteFrameFor(createFor)(turn)
+      rememberTurnOrder(createFor, at)
       assert(assertCycleFree, "Create frame created a cycle")
       true
     }

@@ -74,16 +74,19 @@ class DynamicReadTest extends AssertionsForJUnit with MockitoSugar {
    * source2Dep    depOfDynamic
    * 
    */
+  
+   class ValueTracker[T](s : Signal[T]) {
+    var values : List[T] = List()
+    
+    s.observe(newValue => values :+= newValue)
+    reset()
+    
+    def reset() = values = List()
+  }
 
   // Track the value
-  var depOfDynamicDepValues: List[Int] = List()
-  var source2DepValues: List[Int] = List()
-
-  depOfDynamic.observe { newValue => depOfDynamicDepValues :+= newValue }
-  source2Dep.observe { newValue => source2DepValues :+= newValue }
-
-  depOfDynamicDepValues = List()
-  source2DepValues = List()
+  val depOfDynamicTracker = new ValueTracker(depOfDynamic)
+  val source2DepTracker = new ValueTracker(source2Dep)
 
   @Test
   def addDynamicDependency1Before2() = {
@@ -93,8 +96,8 @@ class DynamicReadTest extends AssertionsForJUnit with MockitoSugar {
     source2.set(200)
     assert(depOfDynamic.now == 201)
 
-    assert(depOfDynamicDepValues == List(101, 201))
-    assert(source2DepValues == List(201))
+    assert(depOfDynamicTracker.values == List(101, 201))
+    assert(source2DepTracker.values == List(201))
   }
   
   @Test
@@ -105,32 +108,30 @@ class DynamicReadTest extends AssertionsForJUnit with MockitoSugar {
     source1.set(1)
     assert(depOfDynamic.now == 201)
 
-    assert(depOfDynamicDepValues == List(201))
-    assert(source2DepValues == List(201))
+    assert(depOfDynamicTracker.values == List(201))
+    assert(source2DepTracker.values == List(201))
   }
 
   @Test()
   def addDynamicDependencyParallel2Before1() = {
 
 
-    val thread1 = createThread {Thread.sleep(letOtherUpdateCreateFramesTime); source1.set(1) }
+    val thread1 = createThread {Thread.sleep(2*letOtherUpdateCreateFramesTime); source1.set(1) }
     val thread2 = createThread {source2.set(200) }
     
     println("=======")
 
-    thread1.start
     thread2.start
+    thread1.start
     thread1.join
     thread2.join
 
     // In any case
-    assert(source2DepValues == List(201))
+    assert(source2DepTracker.values == List(201))
 
-    // if the change at 1 is before 2, the update at 2 is visible at depOfDynamicDep,
-    // otherwise only the end result
-    val resultSource2BeforeSource1 = List(201)
-    println(depOfDynamicDepValues)
-    assert(depOfDynamicDepValues == resultSource2BeforeSource1)
+    // There is not order between the turns, the current implementation moves the turn making the
+    // dynamic read up
+    assert(depOfDynamicTracker.values == List(101, 201))
 
   }
 
@@ -148,24 +149,15 @@ class DynamicReadTest extends AssertionsForJUnit with MockitoSugar {
     thread2.join
 
     // In any case
-    assert(source2DepValues == List(201))
+    assert(source2DepTracker.values == List(201))
 
     // if the change at 1 is before 2, the update at 2 is visible at depOfDynamicDep,
     // otherwise only the end result
-    val resultSource1BeforeSource2 = List(101, 201)
-    println(depOfDynamicDepValues)
-    assert(depOfDynamicDepValues == resultSource1BeforeSource2)
+    assert(depOfDynamicTracker.values == List(101, 201))
 
   }
   
-  class ValueTracker[T](s : Signal[T]) {
-    var values : List[T] = List()
-    
-    s.observe(newValue => values :+= newValue)
-    reset()
-    
-    def reset() = values = List()
-  }
+
   
   @Test
   def exisitingTurnsAfterDynamicPropagateToNewNodes() = {

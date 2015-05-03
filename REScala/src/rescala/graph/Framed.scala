@@ -133,7 +133,7 @@ trait Framed {
     collectFrames()
   }
 
-  protected[rescala] def createFrame(visitPreviousFrame: CFrame => Unit = { x: CFrame => })(implicit turn: Turn): Unit = lockPipeline {
+  protected[rescala] def createFrame(implicit turn: Turn): Unit = lockPipeline {
     def createFrame(prev: Content): CFrame = {
       val newFrame = WriteFrame[Content](turn, this)
       newFrame.content = duplicate(prev)
@@ -141,19 +141,10 @@ trait Framed {
       newFrame
     }
 
-    @tailrec
-    def visitPipeline(head: CFrame): Unit = {
-      if (head != null) {
-        visitPreviousFrame(head)
-        visitPipeline(head.next)
-      }
-    }
-
     if (queueHead == null) {
       queueHead = createFrame(stableFrame)
       queueTail = queueHead
     } else {
-      visitPipeline(queueHead)
       val newFrame = createFrame(queueTail.content)
       newFrame.insertAfter(queueTail)
       queueTail = newFrame
@@ -161,20 +152,18 @@ trait Framed {
     assert(hasFrame)
   }
 
-  private def visitPreviousFrames(lastFrameToVisit: CFrame, previousFrameVisitor: CFrame => Unit): Unit = {
+  protected[rescala] def foreachFrameTopDown(action: CFrame => Unit): Unit = {
     @tailrec
     def impl(head: CFrame = queueHead): Unit = {
-      if (head != lastFrameToVisit) {
-        previousFrameVisitor(head)
+      if (head != null) {
+        action(head)
         impl(head.next())
-      } else {
-        previousFrameVisitor(head)
       }
     }
     impl()
   }
 
-  protected[rescala] def insertWriteFrameFor(otherTurn: Turn, previousFrameVisitor: CFrame => Unit)(implicit turn: Turn): Unit = turn.waitsOnLock {
+  protected[rescala] def insertWriteFrameFor(otherTurn: Turn)(implicit turn: Turn): Unit = turn.waitsOnLock {
     lockPipeline {
       assert(queueHead != null, s"At least the frame for $turn needs to be there")
 
@@ -193,7 +182,6 @@ trait Framed {
 
       val preceedingFrame = findFrameToInsertAfter()
 
-      visitPreviousFrames(preceedingFrame, previousFrameVisitor)
 
       val newFrame = WriteFrame[Content](otherTurn, this)
       newFrame.content = duplicate(preceedingFrame.content)
@@ -265,14 +253,13 @@ trait Framed {
     needFrame(_.markTouched())
   }
 
-  protected[rescala] def createDynamicFrame[T <: CFrame](makeFrame: => T, prevFramesVisitor: CFrame => Unit)(from: Reactive)(implicit turn: Turn): T = {
+  protected[rescala] def createDynamicFrame[T <: CFrame](makeFrame: => T)(from: Reactive)(implicit turn: Turn): T = {
     assert(!hasFrame)
     val predeceedingFrameOpt: Option[CFrame] = frame
     lockPipeline {
       val readFrame = makeFrame
       predeceedingFrameOpt match {
         case Some(predecessor) =>
-          visitPreviousFrames(predecessor, prevFramesVisitor)
           readFrame.content = duplicate(predecessor.content)
           val insertAtEnd = predecessor == queueTail
           readFrame.insertAfter(predecessor)
@@ -292,12 +279,12 @@ trait Framed {
     }
   }
 
-  protected[rescala] def createDynamicReadFrame(from: Reactive, prevFramesVisitor: CFrame => Unit)(implicit turn: Turn): DynamicReadFrame[Content] = {
-    createDynamicFrame(DynamicReadFrame[Content](turn, this, from), prevFramesVisitor)(from)
+  protected[rescala] def createDynamicReadFrame(from: Reactive)(implicit turn: Turn): DynamicReadFrame[Content] = {
+    createDynamicFrame(DynamicReadFrame[Content](turn, this, from))(from)
   }
 
-  protected[rescala] def createDynamicDropFrame(from: Reactive, prevFramesVisitor: CFrame => Unit)(implicit turn: Turn): DynamicDropFrame[Content] = {
-    createDynamicFrame(DynamicDropFrame[Content](turn, this, from),prevFramesVisitor)(from)
+  protected[rescala] def createDynamicDropFrame(from: Reactive)(implicit turn: Turn): DynamicDropFrame[Content] = {
+    createDynamicFrame(DynamicDropFrame[Content](turn, this, from))(from)
   }
 
   protected[rescala] def registerDynamicFrame(frame: DynamicReadFrame[_ <: ReactiveFrame]) = {
