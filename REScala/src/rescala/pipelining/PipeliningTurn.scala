@@ -17,6 +17,7 @@ import rescala.graph.ReactiveFrame
 import rescala.graph.Framed
 import rescala.graph.DynamicReevaluation
 import rescala.graph.WriteFrame
+import java.util.concurrent.atomic.AtomicReference
 
 object PipeliningTurn {
 
@@ -27,12 +28,13 @@ object PipeliningTurn {
   
 }
 
-class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean = false) extends TurnImpl {
+class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean = false) extends TurnImpl with SequentialFrameCreator  {
 
+  
   /**
    * Remember all reactives for which a frame was created during this turn
    */
-  protected[pipelining] var framedReactives: Set[Reactive] = Set()
+  protected[pipelining] var framedReactives: AtomicReference[Set[Reactive]] = new AtomicReference(Set())
   protected[pipelining] var preceedingTurns: Set[PipeliningTurn] = Set()
   protected[pipelining] var causedReactives: Map[PipeliningTurn, Set[Reactive]] = Map()
 
@@ -40,7 +42,10 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
 
   val allNodesQueue = new LevelQueue
   
-  
+  private def markReactiveFramed(reactive : Reactive) = {
+    import rescala.util.JavaFunctionsImplicits._
+    framedReactives.getAndUpdate{reactives : Set[Reactive] => reactives + reactive}
+  }
 
   protected override def requeue(head: Reactive, changed: Boolean, level: Int, redo: Boolean): Unit = {
     if (redo)
@@ -67,7 +72,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
     ensureLevel(reactive, dependencies)
     if (dynamic) {
       engine.createFrame(this, reactive)
-      framedReactives += reactive
+      markReactiveFramed(reactive)
       evaluate(reactive)
     } else dependencies.foreach(register(reactive))
     reactive
@@ -136,12 +141,13 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
   override def register(sink: Reactive)(source: Reactive): Unit = {
     val needToAddDep = !source.outgoing.get.contains(sink)
     val sourceHasFrame = source.hasFrame
-    if (sourceHasFrame && needToAddDep) {
+    if (needToAddDep && sourceHasFrame) {
       // TODO Can this case happen, it does not, or?
     } else if (!sourceHasFrame && needToAddDep) {
       println(s"Create dynamic frome at $source for $sink")
       // Create a dynamic read frame
       val readFrame = engine.createDynamicReadFrameFrame(this, from = sink, at = source)
+      markReactiveFramed(source)
       // This writes in the dynamic read frame, but only in outgoings
       source.outgoing.transform { _ + sink }
 
@@ -180,8 +186,6 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
       }
 
       readFrame.markWritten()
-
-      framedReactives += source
     }
   }
 
@@ -197,7 +201,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
     if (needToRemoveDep) {
       val dropFrame = if (!sourceHasFrame) {
         println("Need to create drop frame")
-        framedReactives += source
+        markReactiveFramed(source)
         source.createDynamicDropFrame(sink)
       } else {
         val writeFrame = source.findFrame { _.get } // Can use this frame if it is marked written? Should not make a difference
@@ -238,28 +242,15 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
 
   // lock phases cannot run in parrallel currently,......
   override def lockPhase(initialWrites: List[Reactive]): Unit = {
-    PipeliningTurn.lockPhaseLock.synchronized {
-      def createFrame(reactive: Reactive): Unit = {
-        engine.createFrame(this, reactive)
-        assert(reactive.hasFrame(this))
-        framedReactives += reactive
-      }
-
-      val lq = new LevelQueue()
-      initialWrites.foreach { createFrame(_) }
-      initialWrites.foreach(lq.enqueue(-1))
-
-      // Create frames for all reachable reactives
-      lq.evaluateQueue { reactive =>
-        val outgoings = reactive.outgoing.get
-        outgoings.foreach(createFrame(_))
-        outgoings.foreach { lq.enqueue(-1) }
-      }
-    }
+    import rescala.util.JavaFunctionsImplicits._
+    val newFramedReactives = createFrames(initialWrites)
+    // Now there may already be some additional frames, so cannot remove them
+    framedReactives.getAndUpdate{reactives : Set[Reactive] => reactives ++ newFramedReactives}
   }
 
   override def releasePhase(): Unit = {
-    framedReactives.foreach(_.markWritten)
+    // TODO should not be needed anymore because of pruning. But pruning does not handle dynamic dependencies by now
+    framedReactives.get.foreach(_.markWritten)
     engine.turnCompleted(this)
   }
 

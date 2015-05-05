@@ -21,7 +21,7 @@ class DynamicReadTest extends AssertionsForJUnit with MockitoSugar {
   implicit val engine = new PipelineEngine
   
   val minEvaluationTimeOfUpdate = 500
-  val letOtherUpdateCreateFramesTime = 100
+  val letOtherUpdateCreateFramesTime = 200
   
   assert(letOtherUpdateCreateFramesTime < minEvaluationTimeOfUpdate) // Such that the frames are still there
   println

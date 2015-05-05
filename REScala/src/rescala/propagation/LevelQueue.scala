@@ -18,7 +18,7 @@ class LevelQueue()(implicit val currenTurn: Turn) {
   }
 
   def remove(reactive: Reactive): Unit = {
-    elements = elements.filter(qe => qe.reactive ne reactive)
+    elements = elements.filter(qe => qe.reactive ne reactive) // THat is wrong
   }
 
   final def handleHead(queueElement: QueueElement, evaluator: Reactive => Unit): Unit = {

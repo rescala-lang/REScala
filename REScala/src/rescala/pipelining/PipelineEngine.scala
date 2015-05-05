@@ -195,7 +195,7 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
             noLongerWaitingTurn.causedReactives -= completedTurn
           }
           // Remove all frames
-          completedTurn.framedReactives.foreach { _.removeFrame(completedTurn) }
+          completedTurn.framedReactives.get.foreach { _.removeFrame(completedTurn) }
           activeTurnsLock.synchronized {
             assert(activeTurns.contains(completedTurn))
             activeTurns -= completedTurn
