@@ -24,7 +24,9 @@ trait TurnImpl extends Turn {
         diff.removed foreach unregister(head)
         diff.added foreach register(head)
         val newLevel = maximumLevel(diff.novel) + 1
-        requeue(head, hasChanged, newLevel, redo = head.level.get < newLevel)
+        val redo =head.level.get < newLevel
+        //assert(! (hasChanged && redo), "Introducing a glitch, head evaluated and requeued") // Isnt that a glitch?
+        requeue(head, hasChanged, newLevel, redo)
     }
 
   }

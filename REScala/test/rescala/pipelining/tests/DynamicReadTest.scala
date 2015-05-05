@@ -74,15 +74,6 @@ class DynamicReadTest extends AssertionsForJUnit with MockitoSugar {
    * source2Dep    depOfDynamic
    * 
    */
-  
-   class ValueTracker[T](s : Signal[T]) {
-    var values : List[T] = List()
-    
-    s.observe(newValue => values :+= newValue)
-    reset()
-    
-    def reset() = values = List()
-  }
 
   // Track the value
   val depOfDynamicTracker = new ValueTracker(depOfDynamic)

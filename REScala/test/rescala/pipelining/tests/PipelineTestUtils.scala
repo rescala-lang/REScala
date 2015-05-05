@@ -4,6 +4,8 @@ import rescala.graph.Framed
 import scala.collection.immutable.Queue
 import rescala.turns.Turn
 import scala.util.Random
+import rescala.Signal
+import rescala.pipelining.PipelineEngine
 
 object PipelineTestUtils {
   
@@ -32,3 +34,13 @@ object PipelineTestUtils {
   }
   
 }
+
+class ValueTracker[T](s : Signal[T])(implicit val engine: PipelineEngine) {
+    var values : List[T] = List()
+    private object valueLock
+    
+    s.observe(newValue => valueLock.synchronized{values :+= newValue})
+    reset()
+    
+    def reset() = valueLock.synchronized{values = List()}
+  }

@@ -16,10 +16,15 @@ import rescala.graph.Frame
 import rescala.graph.ReactiveFrame
 import rescala.graph.Framed
 import rescala.graph.DynamicReevaluation
+import rescala.graph.WriteFrame
 
 object PipeliningTurn {
 
   private object lockPhaseLock
+  
+  // For testing
+  protected[rescala] var numSuspiciousNotEvaluatedFrames = 0
+  
 }
 
 class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean = false) extends TurnImpl {
@@ -34,6 +39,8 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
   override def waitsOnLock[T](op: => T): T = engine.graphLocked(op)
 
   val allNodesQueue = new LevelQueue
+  
+  
 
   protected override def requeue(head: Reactive, changed: Boolean, level: Int, redo: Boolean): Unit = {
     if (redo)
@@ -74,8 +81,6 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
     markUnreachablePrunedNodesWritten(head)
 
     head.waitUntilCanWrite
-    // head.fillFrame
-    head.markTouched
 
     assert(preceedingTurns.forall(turn =>
       head.findFrame {
@@ -85,20 +90,60 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
         }
       }(turn)))
 
-    super.evaluate(head)
+    val writeFrame = head.findFrame {
+      _ match {
+        case Some(frame @ WriteFrame(_, _)) => frame
+        case _                              => throw new AssertionError("No correct write frame")
+      }
+    }
 
+    // Check whether this frame is suspicious for not the evaluate
+    val evaluateFrame = if (writeFrame.isSuspicious()) {
+      //Dont evaluate this frame if all frames for exactly this turn of all incoming dependencies are not touched
+      // Then there was no change but the frame was created for a dynamic dependency which has been removed again
+      val needEvaluate = writeFrame.content.incoming.exists {
+        incomingDep =>
+          incomingDep.findFrame {
+            _ match {
+              case Some(frame) => frame.isTouched
+              case None        => false
+            }
+          }
+      }
+      assert {PipeliningTurn.numSuspiciousNotEvaluatedFrames +=1 ; true}
+      needEvaluate
+    } else
+      true
+
+    if (evaluateFrame) {
+
+      if (!head.incoming.isEmpty && !writeFrame.isTouched)
+        // Only fill the frame with previous values, if it has not been visited  already -> bug with requeue? should not happen, or?
+        head.fillFrame
+
+      // head.fillFrame
+      head.markTouched
+
+      super.evaluate(head)
+    }
+
+    //Mark the frame finished in any case, such that the next turn can continue and does not to wait
+    // until the frame is detected for pruning
     head.markWritten
+
   }
 
   override def register(sink: Reactive)(source: Reactive): Unit = {
-    if (!source.hasFrame && !sink.outgoing.get.contains(source)) {
+    val needToAddDep = !source.outgoing.get.contains(sink)
+    val sourceHasFrame = source.hasFrame
+    if (sourceHasFrame && needToAddDep) {
+      // TODO Can this case happen, it does not, or?
+    } else if (!sourceHasFrame && needToAddDep) {
       println(s"Create dynamic frome at $source for $sink")
       // Create a dynamic read frame
       val readFrame = engine.createDynamicReadFrameFrame(this, from = sink, at = source)
       // This writes in the dynamic read frame, but only in outgoings
-      source.fillFrame
       source.outgoing.transform { _ + sink }
-     
 
       // this defect in frames after this frames we need to repair
       // Get all write frames after the read frame -> need to propagate the new dependency to them
@@ -133,8 +178,8 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
       turnsAfterDynamicRead.foreach { turn =>
         turn.admit(sink)
       }
-      
-       readFrame.markWritten()
+
+      readFrame.markWritten()
 
       framedReactives += source
     }
@@ -143,7 +188,52 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
   override def unregister(sink: Reactive)(source: Reactive): Unit = {
     //  val dropFrame = source.createDynamicDropFrame(sink)
     //  sink.registerDynamicFrame(dropFrame)
-    super.unregister(sink)(source)
+
+    println(s"Unregister $source as incoming of $sink")
+
+    val sourceHasFrame = source.hasFrame
+    val needToRemoveDep = source.outgoing.get.contains(sink)
+
+    if (needToRemoveDep) {
+      val dropFrame = if (!sourceHasFrame) {
+        println("Need to create drop frame")
+        framedReactives += source
+        source.createDynamicDropFrame(sink)
+      } else {
+        val writeFrame = source.findFrame { _.get } // Can use this frame if it is marked written? Should not make a difference
+        // But then it need to be written already because it must evaluated first
+        assert(writeFrame.isWritten, "Frame of an incoming dependency needs to be evaluated first")
+        writeFrame
+      }
+
+      dropFrame.markTouched()
+
+      println(s"Remove sink from $source")
+      source.outgoing.transform { _ - sink }
+      val writeFramesAfterDrop = source.writeFramesAfter(dropFrame)
+      writeFramesAfterDrop.foreach { frame => frame.content.outgoing.transform(_ - sink)(frame.turn) }
+
+      // Cannot simply remove sink from the queue of the turns because sink may be reachable
+      // though another valid path, nevertheless, the turns could wait for this frame already
+
+      val turnsAfterDynamicRead = writeFramesAfterDrop.map(_.turn.asInstanceOf[PipeliningTurn])
+      println(s"Turn after dynamic drop $turnsAfterDynamicRead")
+
+      turnsAfterDynamicRead.foreach { turn =>
+        sink.findFrame({
+          _ match {
+            case None        => // No frame for this turn at sink, lucky case, dont do anything
+            case Some(frame) => 
+              println(s"Frame for $turn at $sink marked suspicious")
+              frame.markSuspicious() // this frame may not need to be evaluated, but this can not be decided before the frame should be evaluated
+          }
+        })(turn)
+      }
+
+      dropFrame.markWritten()
+
+    }
+
   }
 
   // lock phases cannot run in parrallel currently,......
