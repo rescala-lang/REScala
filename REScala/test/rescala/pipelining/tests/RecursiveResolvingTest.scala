@@ -34,36 +34,7 @@ class RecursiveResolvingTest extends AssertionsForJUnit with MockitoSugar {
   
   @Test
   def resolveTransitiveConflict() = {
-    val turn1 = engine.makeTurn
-    val turn2 = engine.makeTurn
-    val turn3 = engine.makeTurn
     
-    engine.createFrame(turn3, d1)
-    engine.createFrame(turn2, d2)
-    engine.createFrame(turn1, d2)
-    engine.createFrame(turn1, d3)
-    engine.createFrame(turn2, d3)
-    engine.createFrame(turn3, d3)
-    
-    assert(frameTurns(d1) == Queue(turn3))
-    assert(frameTurns(d2) == Queue(turn1, turn2))
-    assert(frameTurns(d3) == Queue(turn1, turn2, turn3))
-    
-    // Now put turn1 on d1, this creates a cycle:
-    // At d1: turn1 -> turn3
-    // At d2: turn2 -> turn1 and then
-    // At d3: turn3 -> turn2, turn2 -> turn1
-    // Cycle is resolved by reordering at d3: turn1 -> turn3, turn1 -> turn2
-    // This creates another cycle at d2 which is resolved by
-    // reordering at d2 turn1 -> turn2
-    
-    println("--------")
-    
-    engine.createFrame(turn1, d1)
-    
-    assert(frameTurns(d1) == Queue(turn3, turn1))
-    assert(frameTurns(d2) == Queue(turn2, turn1))
-    assert(frameTurns(d3) == Queue(turn2, turn3, turn1))
   }
   
 

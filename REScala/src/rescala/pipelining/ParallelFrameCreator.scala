@@ -1,44 +1,44 @@
 package rescala.pipelining
 
 import rescala.graph.Reactive
+import java.util.concurrent.locks.Lock
+import java.util.concurrent.locks.ReentrantLock
+import java.util.concurrent.atomic.AtomicReference
+import rescala.util.TransferableLock
+import rescala.util.TransferableLock
+import java.awt.datatransfer.Transferable
+import rescala.util.TransferableLock
 
 object ParallelFrameCreator {
 
   private object turnOrderLock
-  private object waitingTurnLock
-  private var turnOrder = List[PipeliningTurn]()
-  private var waitingTurnsMap = Map[Reactive, Set[PipeliningTurn]]()
+  protected var turnOrder = List[PipeliningTurn]()
+  
+  private val completeLock = new TransferableLock
 
-  protected def addTurn(turn: PipeliningTurn) = turnOrderLock.synchronized { turnOrder :+= turn }
+  protected def addTurn(turn: PipeliningTurn) : List[PipeliningTurn]= turnOrderLock.synchronized { 
+    println(s"Parallel: add turn $turn")
+    val turnsBefore = turnOrder
+    if (turnsBefore.isEmpty)
+      completeLock.reserveLockFor(turn.thread)
+    turnOrder :+= turn
+    turnsBefore
+  }
+  
+  protected def removeTurn(turn: PipeliningTurn) : Unit = {
+    
+    completeLock.lock()
 
-  protected def requireReactive[T](reactive: Reactive, turn: PipeliningTurn): Unit = {
-    waitingTurnLock.synchronized {
-      val waitingTurns = waitingTurnsMap.getOrElse(reactive, Set());
-      waitingTurnsMap += (reactive -> (waitingTurns + turn))
+    turnOrderLock.synchronized { 
+      println(s"Parallel: remove turn $turn")
+      assert(turnOrder.head == turn)
+      turnOrder = turnOrder.tail
+      if (turnOrder.nonEmpty)
+        completeLock.reserveLockFor(turnOrder.head.thread)
+      else
+        completeLock.unlock()
     }
   }
-
-  protected def waitForAndReleaseLock[T](reactive: Reactive, turn: PipeliningTurn)(op: => T): T = {
-    val preceedingTurns = turnOrder.takeWhile { _ != turn }.toSet
-
-    // Again start with busy waiting
-    while (waitingTurnLock.synchronized { waitingTurnsMap(reactive).intersect(preceedingTurns).nonEmpty }) {}
-
-    val result = op
-
-    waitingTurnLock.synchronized {
-      val waitingTurns = (waitingTurnsMap(reactive) - turn)
-      if (waitingTurns.isEmpty) {
-        waitingTurnsMap -= reactive
-      } else {
-        waitingTurnsMap += (reactive -> waitingTurns)
-      }
-    }
-
-    result
-
-  }
-
 }
 
 trait ParallelFrameCreator extends QueueBasedFrameCreator {
@@ -46,28 +46,16 @@ trait ParallelFrameCreator extends QueueBasedFrameCreator {
   self: PipeliningTurn =>
 
   override protected[this] def createFrames(initialWrites: List[Reactive]) = {
-    ParallelFrameCreator.addTurn(this)
-
-    var requiredReactives = Set[Reactive]()
-    evaluateQueue(initialWrites) { reactive =>
-      ParallelFrameCreator.requireReactive(reactive, this)
-      requiredReactives += reactive
-    }
+    val turnsThatNeedToCompleteFramingBefore = ParallelFrameCreator.addTurn(this).toSet
 
     var framedReactives = Set[Reactive]()
 
     evaluateQueue(initialWrites) { reactive =>
-      // Need to check whether the reactive has been required
-      // If not dynamic dependencies added the reactive to the outgoings set,
-      // but they take care that a frame is created
-      if (requiredReactives.contains(reactive)) {
-        ParallelFrameCreator.waitForAndReleaseLock(reactive, this) {
-          println(s"Create frame for $this at $reactive")
-          createFrame(reactive)
-          framedReactives += reactive
-        }
-      }
+      engine.createFrameBefore(this, ParallelFrameCreator.turnOrder.toSet -- turnsThatNeedToCompleteFramingBefore, reactive)
+      framedReactives += reactive
     }
+    
+    ParallelFrameCreator.removeTurn(this)
 
     framedReactives
 

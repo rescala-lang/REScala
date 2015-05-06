@@ -108,10 +108,10 @@ trait Framed {
     // we need to read from may change
     frame match {
       case Some(frame) => frame match {
-        case WriteFrame(_,_) =>
-        case _ => frame.awaitUntilWritten()
+        case WriteFrame(_, _) =>
+        case _                => frame.awaitUntilWritten()
       }
-      case None        =>
+      case None =>
     }
   }
 
@@ -152,6 +152,43 @@ trait Framed {
     assert(hasFrame)
   }
 
+  protected[rescala] def createFrameBefore(stillBefore: Turn => Boolean)(implicit turn: Turn): Unit = lockPipeline {
+    def createFrame(prev: Content): CFrame = {
+      val newFrame = WriteFrame[Content](turn, this)
+      newFrame.content = duplicate(prev)
+      assert(newFrame.turn == turn)
+      newFrame
+    }
+
+    def findPreviousFrame(tail: CFrame = queueTail): CFrame = {
+      if (tail == null)
+        null
+      else if (stillBefore(tail.turn))
+        findPreviousFrame(tail.previous())
+      else
+        tail
+    }
+
+    if (queueTail == null) {
+      queueHead = createFrame(stableFrame)
+      queueTail = queueHead
+    } else {
+      val insertAfter = findPreviousFrame()
+      if (insertAfter == null) {
+        val newFrame = createFrame(stableFrame)
+        queueHead.insertAfter(newFrame)
+        queueHead = newFrame
+      } else {
+        val newFrame = createFrame(insertAfter.content)
+        newFrame.insertAfter(insertAfter)
+        if (queueTail == insertAfter) {
+          queueTail = newFrame
+        }
+      }
+    }
+    assert(hasFrame)
+  }
+
   protected[rescala] def foreachFrameTopDown(action: CFrame => Unit): Unit = {
     @tailrec
     def impl(head: CFrame = queueHead): Unit = {
@@ -181,7 +218,6 @@ trait Framed {
       }
 
       val preceedingFrame = findFrameToInsertAfter()
-
 
       val newFrame = WriteFrame[Content](otherTurn, this)
       newFrame.content = duplicate(preceedingFrame.content)

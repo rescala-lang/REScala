@@ -122,7 +122,7 @@ sealed abstract class Frame[T](val turn: Turn, val at: Framed) {
   }
 
   protected[rescala] final def insertAfter(newPredecessor: Frame[T]) = {
-    assert(successor == null)
+    assert(predecessor == null)
 
     val newSuccessor = newPredecessor.successor
     if (newSuccessor != null) {

@@ -28,7 +28,7 @@ object PipeliningTurn {
 
 }
 
-class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean = false) extends TurnImpl with ParallelFrameCreator {
+class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean = false) extends TurnImpl with SequentialFrameCreator {
 
   /**
    * Remember all reactives for which a frame was created during this turn
@@ -36,9 +36,14 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
   protected[pipelining] var framedReactives: AtomicReference[Set[Reactive]] = new AtomicReference(Set())
   protected[pipelining] var preceedingTurns: Set[PipeliningTurn] = Set()
   protected[pipelining] var causedReactives: Map[PipeliningTurn, Set[Reactive]] = Map()
+  
+  val thread = Thread.currentThread()
 
   override def waitsOnLock[T](op: => T): T = engine.graphLocked(op)
 
+  import scala.language.implicitConversions
+  implicit private def castTurns(turn : Turn) : PipeliningTurn = turn.asInstanceOf[PipeliningTurn]
+  
   val allNodesQueue = new LevelQueue
 
   private object createFramesLock
@@ -157,7 +162,9 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
       val framesAfterDynamicRead: List[WriteFrame[_ <: ReactiveFrame]] = source.writeFramesAfter(readFrame)
       // TODO need to sync probalbly on that?
       framesAfterDynamicRead.foreach { frame =>
-        frame.content.outgoing.transform(_ + sink)(frame.turn)
+        frame.turn.asInstanceOf[PipeliningTurn].createFramesLock.synchronized {
+          frame.content.outgoing.transform(_ + sink)(frame.turn)
+        }
       }
 
       // Need to create frames for the turns after the dynamic read at the new nodes
@@ -171,6 +178,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
         queue.evaluateQueue { reactive =>
           var anyFrameCreated = false
           for (turn <- turnsAfterDynamicRead) {
+            // TODO Actually not sure that we need to lock here
             turn.createFramesLock.synchronized {
               val frameCreated = engine.createFrameAfter(this, turn, reactive)
               anyFrameCreated ||= frameCreated
