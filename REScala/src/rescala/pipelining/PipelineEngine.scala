@@ -148,15 +148,8 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
       cycle
     }
 
-  //  activeTurns.forall { !bfsCycleCheck(_) }
+    activeTurns.forall { !bfsCycleCheck(_) }
     true
-  }
-
-  private def forgetOrder(before: PTurn, after: PTurn, at: Reactive) = {
-    after.causedReactives = removeFromMap(after.causedReactives, before, at)
-    if (!after.causedReactives.contains(before)) {
-      after.preceedingTurns -= before
-    }
   }
 
   private def rememberOrder(before: PTurn, after: PTurn, at: Reactive) = {

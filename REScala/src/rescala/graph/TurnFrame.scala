@@ -85,6 +85,7 @@ sealed abstract class Frame[T](val turn: Turn, val at: Framed) {
         LockSupport.park(predecessor.creatorThread)
       }
     }
+    assert(predecessor == null || predecessor.isWritten)
   }
 
   protected[rescala] final def awaitUntilWritten() = {

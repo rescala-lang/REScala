@@ -134,6 +134,7 @@ trait Framed {
   }
 
   protected[rescala] def createFrame(implicit turn: Turn): Unit = lockPipeline {
+    assert(!hasFrame)
     def createFrame(prev: Content): CFrame = {
       val newFrame = WriteFrame[Content](turn, this)
       newFrame.content = duplicate(prev)
@@ -153,6 +154,7 @@ trait Framed {
   }
 
   protected[rescala] def createFrameBefore(stillBefore: Turn => Boolean)(implicit turn: Turn): Unit = lockPipeline {
+    assert(!hasFrame)
     def createFrame(prev: Content): CFrame = {
       val newFrame = WriteFrame[Content](turn, this)
       newFrame.content = duplicate(prev)

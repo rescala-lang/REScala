@@ -28,7 +28,7 @@ object PipeliningTurn {
 
 }
 
-class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean = false) extends TurnImpl with SequentialFrameCreator {
+class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean = false) extends TurnImpl with ParallelFrameCreator {
 
   /**
    * Remember all reactives for which a frame was created during this turn
@@ -99,7 +99,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
           case None        => true
           case Some(frame) => frame.isWritten
         }
-      }(turn)))
+      }(turn)), s"Illegal wait state for $this at $head: queue=${head.getPipelineFrames()} preceedingTurns=$preceedingTurns")
 
     val writeFrame = head.findFrame {
       _ match {
