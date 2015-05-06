@@ -271,6 +271,7 @@ trait Framed {
   protected[rescala] def removeFrame(implicit turn: Turn): Unit = lockPipeline {
     // Can remote the frame if it is head of the queue
     if (queueHead.turn == turn) {
+      println(s"frame for $turn removed at $this")
       val newHead = queueHead.next()
       val newTail = if (newHead == null) null.asInstanceOf[CFrame] else queueTail
       queueHead.removeFrame()
@@ -323,30 +324,6 @@ trait Framed {
 
   protected[rescala] def createDynamicDropFrame(from: Reactive)(implicit turn: Turn): DynamicDropFrame[Content] = {
     createDynamicFrame(DynamicDropFrame[Content](turn, this, from))(from)
-  }
-
-  protected[rescala] def registerDynamicFrame(frame: DynamicReadFrame[_ <: ReactiveFrame]) = {
-    internalRegisterDynamicFrame(frame)
-  }
-
-  protected[rescala] def registerDynamicFrame(frame: DynamicDropFrame[_ <: ReactiveFrame]) = {
-    internalRegisterDynamicFrame(frame)
-  }
-
-  protected[rescala] def forgetDynamicFramesUntil(frame: Frame[_]) = {
-    val reactive = frame.at
-    val frames = incompleteDynamicFrames(frame.at)
-    val newFrames = frames.dropWhile { _ != frame }.drop(1)
-    if (newFrames.isEmpty)
-      incompleteDynamicFrames -= reactive
-    else
-      incompleteDynamicFrames += (reactive -> newFrames)
-  }
-
-  private def internalRegisterDynamicFrame(frame: Frame[_]) = {
-    val reactive = frame.at
-    val newFramesForReactive = incompleteDynamicFrames.getOrElse(reactive, List()) :+ frame
-    incompleteDynamicFrames += (reactive -> newFramesForReactive)
   }
 
   // If want to omit the buffers in the turn data (because the previous data is contained

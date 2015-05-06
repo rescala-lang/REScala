@@ -28,22 +28,21 @@ object PipeliningTurn {
 
 }
 
-class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean = false) extends TurnImpl with ParallelFrameCreator {
+class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean = false) extends TurnImpl with SequentialFrameCreator {
 
   /**
    * Remember all reactives for which a frame was created during this turn
    */
-  protected[pipelining] var framedReactives: AtomicReference[Set[Reactive]] = new AtomicReference(Set())
-  protected[pipelining] var preceedingTurns: Set[PipeliningTurn] = Set()
-  protected[pipelining] var causedReactives: Map[PipeliningTurn, Set[Reactive]] = Map()
-  
+  protected[pipelining] var framedReactives = new AtomicReference[Set[Reactive]](Set())
+  protected[pipelining] var preceedingTurns = new AtomicReference[Set[PipeliningTurn]](Set())
+
   val thread = Thread.currentThread()
 
   override def waitsOnLock[T](op: => T): T = engine.graphLocked(op)
 
   import scala.language.implicitConversions
-  implicit private def castTurns(turn : Turn) : PipeliningTurn = turn.asInstanceOf[PipeliningTurn]
-  
+  implicit private def castTurns(turn: Turn): PipeliningTurn = turn.asInstanceOf[PipeliningTurn]
+
   val allNodesQueue = new LevelQueue
 
   private object createFramesLock
@@ -93,7 +92,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
 
     head.waitUntilCanWrite
 
-    assert(preceedingTurns.forall(turn =>
+    assert(preceedingTurns.get.forall(turn =>
       head.findFrame {
         _ match {
           case None        => true
@@ -270,7 +269,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
   }
 
   override def >~(other: Turn) = {
-    preceedingTurns.contains(other.asInstanceOf[PipeliningTurn])
+    preceedingTurns.get.contains(other.asInstanceOf[PipeliningTurn])
   }
 
   override def >>~(other: Turn) = {

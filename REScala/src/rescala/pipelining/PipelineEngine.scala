@@ -17,19 +17,16 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
   private type PTurn = PipeliningTurn
 
   private var activeTurns: Set[PTurn] = Set()
+  private var turnOrder = List[PTurn]()
   private object activeTurnsLock
-
-  /**
-   * A Map which stores for a mapping (t1, t2) -> rs, that
-   * turn t1 is before turn t2 at the reactives rs
-   */
-  // TODO need to cleanup the map if turns are done
-  private object graphLock
+  private object turnOrderLock
 
   private var completedNotRemovedTurns: Set[PTurn] = Set()
   private object completedNotRemovedTurnsLock
 
   protected[pipelining] def isActive(turn: PTurn) = activeTurnsLock.synchronized(activeTurns.contains(turn))
+
+  protected[pipelining] def addTurn(turn: PTurn) = turnOrderLock.synchronized(turnOrder :+= turn)
 
   protected def makeNewTurn = new PipeliningTurn(this)
 
@@ -40,9 +37,8 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
     newTurn
   }
 
-  protected[pipelining] def graphLocked[T](op: => T): T = graphLock.synchronized {
+  protected[pipelining] def graphLocked[T](op: => T): T =
     op
-  }
 
   private def rememberTurnOrder(newFrameTurn: PTurn, at: Reactive) = {
     var frameForNewTurnSeen = false
@@ -56,7 +52,7 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
           rememberOrder(before = newFrameTurn, after = currentTurn, at)
         else
           rememberOrder(before = currentTurn, after = newFrameTurn, at)
-          
+
       }
     })
   }
@@ -65,17 +61,17 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
    * Creates a new frame for the given turn at the given reactive and
    * resolves conflicts which are introduced by creating the new frame
    */
-  protected[pipelining] def createFrame(turn: PTurn, at: Reactive) = graphLock.synchronized {
+  protected[pipelining] def createFrame(turn: PTurn, at: Reactive) = {
     at.createFrame(turn)
     rememberTurnOrder(turn, at)
     assert(assertCycleFree, "Create frame created a cycle")
   }
-  
+
   /**
    * Creates a new frame for the given turn at the given reactive and
    * resolves conflicts which are introduced by creating the new frame
    */
-  protected[pipelining] def createFrameBefore(turn: PTurn, before : Set[PTurn], at: Reactive) = graphLock.synchronized {
+  protected[pipelining] def createFrameBefore(turn: PTurn, before: Set[PTurn], at: Reactive) = {
     at.createFrameBefore(turn => before.contains(turn.asInstanceOf[PTurn]))(turn)
     rememberTurnOrder(turn, at)
     assert(assertCycleFree, "Create frame created a cycle")
@@ -85,14 +81,14 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
    * Creates a new frame for the given turn at the given reactive and
    * resolves conflicts which are introduced by creating the new frame
    */
-  protected[pipelining] def createDynamicReadFrameFrame(turn: PTurn, from: Reactive, at: Reactive) = graphLock.synchronized {
+  protected[pipelining] def createDynamicReadFrameFrame(turn: PTurn, from: Reactive, at: Reactive) = {
     val frame = at.createDynamicReadFrame(from)(turn)
     rememberTurnOrder(turn, at)
     assert(assertCycleFree, "Create dynamic read frame created a cycle")
     frame
   }
 
-  protected[pipelining] def createFrameAfter(turn: PTurn, createFor: PTurn, at: Reactive): Boolean = graphLock.synchronized {
+  protected[pipelining] def createFrameAfter(turn: PTurn, createFor: PTurn, at: Reactive): Boolean = {
     // TODO first check for conflicts
     // resolveConflicts(turn, at.getPipelineFrames().map { _.turn.asInstanceOf[PipeliningTurn]}.toSet)
     if (at.hasFrame(createFor))
@@ -107,19 +103,6 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
     }
   }
 
-  private def putInMap[K, V](map: Map[K, Set[V]], key: K, v: V): Map[K, Set[V]] = {
-    val vals = map.getOrElse(key, Set()) + v
-    map + (key -> vals)
-  }
-
-  private def removeFromMap[K, V](map: Map[K, Set[V]], key: K, v: V): Map[K, Set[V]] = {
-    val vals = map.getOrElse(key, Set()) - v
-    if (vals.isEmpty)
-      map - key
-    else
-      map + (key -> vals)
-  }
-
   private def assertCycleFree() = {
 
     def bfsCycleCheck(turn: PipeliningTurn) = {
@@ -132,9 +115,9 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
         val head = queue.head
         queue = queue.tail
 
-        cycle = !head.preceedingTurns.forall {
+        cycle = !head.preceedingTurns.get.forall {
           t =>
-            assert(activeTurns.contains(t))
+           // assert(activeTurns.contains(t))
             if (!seen.contains(t)) {
               queue = queue :+ t;
             }
@@ -149,13 +132,14 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
     }
 
     activeTurns.forall { !bfsCycleCheck(_) }
-    true
   }
 
   private def rememberOrder(before: PTurn, after: PTurn, at: Reactive) = {
-    assert(isActive(before), s"A frame from the already completed turn $before remained")
-    after.preceedingTurns += before
-    after.causedReactives = putInMap(after.causedReactives, before, at)
+    import rescala.util.JavaFunctionsImplicits._
+    if (isActive(before)) {
+      assert(isActive(before), s"A frame from the already completed turn $before remained when remembering order for $after, at=$at , queue=${at.getPipelineFrames()}")
+      after.preceedingTurns.updateAndGet { turns: Set[PTurn] => turns + before }
+    }
   }
 
   /**
@@ -165,61 +149,52 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
   protected[pipelining] def waitsOn(waits: PTurn, on: PTurn): Boolean = {
     assert(activeTurns.contains(waits))
     assert(activeTurns.contains(on))
-    assert(assertCycleFree())
 
-    var queue: Queue[PTurn] = Queue(waits)
-    var seen: Set[PTurn] = Set(waits)
-    var found = false
-    while (!found && !queue.isEmpty) {
-      val head = queue.head
-      queue = queue.tail
-      seen += head
-      if (head == on)
-        found = true
-      else {
-        val newNodes = head.preceedingTurns -- seen
-        queue ++= newNodes
-      }
-
+    turnOrderLock.synchronized {
+      assert(turnOrder.contains(waits))
+      assert(turnOrder.contains(on))
+      turnOrder.indexOf(waits) >= turnOrder.indexOf(on)
     }
-    val isWaiting = found; //depthFirstSearch(waits, on)
-    isWaiting
+
   }
 
   protected[pipelining] def turnCompleted(completedTurn: PTurn): Unit = {
-    graphLock.synchronized {
-      val turnRemoved = {
-        val waitsOnAnyTurn = completedTurn.preceedingTurns.nonEmpty
-        if (!waitsOnAnyTurn) {
-          // TODO Maybe we can do this a bit more efficient
-          activeTurns.foreach { noLongerWaitingTurn =>
-            noLongerWaitingTurn.preceedingTurns -= completedTurn
-            noLongerWaitingTurn.causedReactives -= completedTurn
-          }
-          // Remove all frames
-          completedTurn.framedReactives.get.foreach { _.removeFrame(completedTurn) }
-          activeTurnsLock.synchronized {
-            assert(activeTurns.contains(completedTurn))
-            activeTurns -= completedTurn
-          }
-          true
-        } else {
-          false
+    import rescala.util.JavaFunctionsImplicits._
+    val turnRemoved = {
+      val waitsOnAnyTurn = completedTurn.preceedingTurns.get.intersect(activeTurns).nonEmpty
+      if (!waitsOnAnyTurn) {
+        // Remove all frames
+        completedTurn.framedReactives.get.foreach { _.removeFrame(completedTurn) }
+        activeTurnsLock.synchronized {
+          assert(activeTurns.contains(completedTurn))
+          activeTurns -= completedTurn
         }
+        assert(completedTurn.framedReactives.get.forall { !_.hasFrame(completedTurn) })
+        println(s"framed ${completedTurn.framedReactives}")
+        println(s"turn $completedTurn completed")
+        true
+      } else {
+        false
       }
-      completedNotRemovedTurnsLock.synchronized {
-        if (!turnRemoved) {
-          completedNotRemovedTurns += completedTurn
-        } else {
-          // Try to remove all turns again, because there is a turn removed
-          val oldTurns = completedNotRemovedTurns;
-          completedNotRemovedTurns = Set()
-          oldTurns.foreach(turnCompleted(_))
+    }
+    completedNotRemovedTurnsLock.synchronized {
+      if (!turnRemoved) {
+        completedNotRemovedTurns += completedTurn
+      } else {
+        turnOrderLock.synchronized{
+          def delete(list : List[PTurn]) : List[PTurn] = list match{
+            case head :: rest => if (head == completedTurn) rest else head :: delete(rest)
+            case Nil => List()
+          }
+           turnOrder = delete(turnOrder)
         }
+        // Try to remove all turns again, because there is a turn removed
+        val oldTurns = completedNotRemovedTurns;
+        completedNotRemovedTurns = Set()
+        oldTurns.foreach(turnCompleted(_))
       }
     }
   }
-
 
   // TODO remove synchronized
   class NoBuffer[A](initial: A) extends Buffer[A] {

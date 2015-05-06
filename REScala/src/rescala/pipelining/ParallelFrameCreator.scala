@@ -13,23 +13,24 @@ object ParallelFrameCreator {
 
   private object turnOrderLock
   protected var turnOrder = List[PipeliningTurn]()
-  
+
   private val completeLock = new TransferableLock
 
-  protected def addTurn(turn: PipeliningTurn) : List[PipeliningTurn]= turnOrderLock.synchronized { 
+  protected def addTurn(turn: PipeliningTurn): List[PipeliningTurn] = turnOrderLock.synchronized {
     println(s"Parallel: add turn $turn")
+    turn.engine.addTurn(turn)
     val turnsBefore = turnOrder
     if (turnsBefore.isEmpty)
       completeLock.reserveLockFor(turn.thread)
     turnOrder :+= turn
     turnsBefore
   }
-  
-  protected def removeTurn(turn: PipeliningTurn) : Unit = {
-    
+
+  protected def removeTurn(turn: PipeliningTurn): Unit = {
+
     completeLock.lock()
 
-    turnOrderLock.synchronized { 
+    turnOrderLock.synchronized {
       println(s"Parallel: remove turn $turn")
       assert(turnOrder.head == turn)
       turnOrder = turnOrder.tail
@@ -54,7 +55,7 @@ trait ParallelFrameCreator extends QueueBasedFrameCreator {
       engine.createFrameBefore(this, ParallelFrameCreator.turnOrder.toSet -- turnsThatNeedToCompleteFramingBefore, reactive)
       framedReactives += reactive
     }
-    
+
     ParallelFrameCreator.removeTurn(this)
 
     framedReactives
