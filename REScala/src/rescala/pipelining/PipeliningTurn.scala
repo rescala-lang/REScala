@@ -22,15 +22,14 @@ import java.util.concurrent.atomic.AtomicReference
 object PipeliningTurn {
 
   private object lockPhaseLock
-  
+
   // For testing
   protected[rescala] var numSuspiciousNotEvaluatedFrames = 0
-  
+
 }
 
-class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean = false) extends TurnImpl with SequentialFrameCreator  {
+class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean = false) extends TurnImpl with ParallelFrameCreator {
 
-  
   /**
    * Remember all reactives for which a frame was created during this turn
    */
@@ -41,10 +40,12 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
   override def waitsOnLock[T](op: => T): T = engine.graphLocked(op)
 
   val allNodesQueue = new LevelQueue
-  
-  private def markReactiveFramed(reactive : Reactive) = {
+
+  private object createFramesLock
+
+  private def markReactiveFramed(reactive: Reactive) = {
     import rescala.util.JavaFunctionsImplicits._
-    framedReactives.getAndUpdate{reactives : Set[Reactive] => reactives + reactive}
+    framedReactives.getAndUpdate { reactives: Set[Reactive] => reactives + reactive }
   }
 
   protected override def requeue(head: Reactive, changed: Boolean, level: Int, redo: Boolean): Unit = {
@@ -115,7 +116,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
             }
           }
       }
-      assert {PipeliningTurn.numSuspiciousNotEvaluatedFrames +=1 ; true}
+      assert { PipeliningTurn.numSuspiciousNotEvaluatedFrames += 1; true }
       needEvaluate
     } else
       true
@@ -170,8 +171,10 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
         queue.evaluateQueue { reactive =>
           var anyFrameCreated = false
           for (turn <- turnsAfterDynamicRead) {
-            val frameCreated = engine.createFrameAfter(this, turn, reactive)
-            anyFrameCreated ||= frameCreated
+            turn.createFramesLock.synchronized {
+              val frameCreated = engine.createFrameAfter(this, turn, reactive)
+              anyFrameCreated ||= frameCreated
+            }
           }
           // Only need to continue created frames, if one was created
           if (anyFrameCreated)
@@ -226,8 +229,8 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
       turnsAfterDynamicRead.foreach { turn =>
         sink.findFrame({
           _ match {
-            case None        => // No frame for this turn at sink, lucky case, dont do anything
-            case Some(frame) => 
+            case None => // No frame for this turn at sink, lucky case, dont do anything
+            case Some(frame) =>
               println(s"Frame for $turn at $sink marked suspicious")
               frame.markSuspicious() // this frame may not need to be evaluated, but this can not be decided before the frame should be evaluated
           }
@@ -241,11 +244,11 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
   }
 
   // lock phases cannot run in parrallel currently,......
-  override def lockPhase(initialWrites: List[Reactive]): Unit = {
+  override def lockPhase(initialWrites: List[Reactive]): Unit = createFramesLock.synchronized {
     import rescala.util.JavaFunctionsImplicits._
     val newFramedReactives = createFrames(initialWrites)
     // Now there may already be some additional frames, so cannot remove them
-    framedReactives.getAndUpdate{reactives : Set[Reactive] => reactives ++ newFramedReactives}
+    framedReactives.getAndUpdate { reactives: Set[Reactive] => reactives ++ newFramedReactives }
   }
 
   override def releasePhase(): Unit = {
