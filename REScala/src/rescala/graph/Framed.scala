@@ -18,9 +18,6 @@ trait Framed {
   protected[this] var queueHead: CFrame = null.asInstanceOf[CFrame];
   protected[this] var queueTail: CFrame = null.asInstanceOf[CFrame];
 
-  protected[this] var incompleteDynamicFrames: Map[Framed, List[Frame[_]]] = Map()
-  protected[rescala] def getIncompleteDynamicFrames = incompleteDynamicFrames
-
   private object pipelineLock
 
   private def lockPipeline[A](op: => A): A = pipelineLock.synchronized {
@@ -65,7 +62,7 @@ trait Framed {
     })
   }
 
-  private def frame(implicit turn: Turn): Option[CFrame] = {
+  private def frame(implicit turn: Turn): Option[CFrame] = lockPipeline {
     @tailrec
     def findBottomMostFrame(tail: CFrame): Option[CFrame] = {
       if (tail == null)
@@ -78,16 +75,9 @@ trait Framed {
 
     // Are not allowed to hold the pipelineLock, because than we cannot
     // query for the graph lock, to prohibit deadlocks
-    assert(!Thread.holdsLock(pipelineLock))
 
     // Local: if the turn itself is found, it is the bottom most frame => no need to sync
-    val bottomMostWaitingFrame: Option[CFrame] = findFrame(x => x).orElse({
-      turn.waitsOnLock {
-        lockPipeline {
-          findBottomMostFrame(queueTail)
-        }
-      }
-    })
+    val bottomMostWaitingFrame: Option[CFrame] = findFrame(x => x).orElse(findBottomMostFrame(queueTail))
     bottomMostWaitingFrame
   }
 
@@ -161,14 +151,24 @@ trait Framed {
       assert(newFrame.turn == turn)
       newFrame
     }
+    
+    def assertNoOtherFrameBefore(tail : CFrame) : Boolean = {
+      if (tail == null)
+        true
+      else if (stillBefore(tail.turn))
+        false
+      else assertNoOtherFrameBefore(tail.previous())
+    }
 
     def findPreviousFrame(tail: CFrame = queueTail): CFrame = {
       if (tail == null)
         null
       else if (stillBefore(tail.turn))
         findPreviousFrame(tail.previous())
-      else
+      else {
+        assert(assertNoOtherFrameBefore(tail.previous()))
         tail
+      }
     }
 
     if (queueTail == null) {
@@ -202,7 +202,7 @@ trait Framed {
     impl()
   }
 
-  protected[rescala] def insertWriteFrameFor(otherTurn: Turn)(implicit turn: Turn): Unit = turn.waitsOnLock {
+  protected[rescala] def insertWriteFrameFor(otherTurn: Turn)(implicit turn: Turn): Unit = {
     lockPipeline {
       assert(queueHead != null, s"At least the frame for $turn needs to be there")
 
@@ -243,35 +243,9 @@ trait Framed {
     refreshFrame(queueHead)
   }
 
-  protected[rescala] def moveFrameBack(allowedAfterFrame: CFrame => Boolean)(implicit turn: Turn): Unit = lockPipeline {
-
-    def moveFrame(head: CFrame, frame: CFrame): (CFrame, CFrame) = {
-      if (head == null) {
-        throw new AssertionError("Frame not allowed after any frame in the pipeline")
-      } else if (head.turn eq turn) {
-        moveFrame(head.next(), head)
-      } else if (frame == null) {
-        // Did not find the frame for the turn
-        moveFrame(head.next(), null.asInstanceOf[CFrame])
-      } else if (allowedAfterFrame(head)) {
-        val newHead = if (frame.previous() == null) frame.next else queueHead
-        val newTail = if (head.next() == null) frame else queueTail
-        frame.moveAfter(head)
-        (newHead, newTail)
-      } else {
-        moveFrame(head.next(), frame)
-      }
-    }
-
-    val (newHead, newTail) = moveFrame(queueHead, null.asInstanceOf[CFrame])
-    queueHead = newHead
-    queueTail = newTail
-  }
-
   protected[rescala] def removeFrame(implicit turn: Turn): Unit = lockPipeline {
     // Can remote the frame if it is head of the queue
     if (queueHead.turn == turn) {
-      println(s"frame for $turn removed at $this")
       val newHead = queueHead.next()
       val newTail = if (newHead == null) null.asInstanceOf[CFrame] else queueTail
       queueHead.removeFrame()

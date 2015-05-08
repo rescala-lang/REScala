@@ -45,7 +45,6 @@ trait Turn {
   
   def >~(other: Turn ) = other == this
   def >>~(other: Turn ) = this >~ other
-  def waitsOnLock[T](op : => T) : T = op
   
    val id = Globals.nextID()
   override def toString: String = s"Key($id)"

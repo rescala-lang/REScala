@@ -30,15 +30,14 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
 
   protected def makeNewTurn = new PipeliningTurn(this)
 
-  // For debugging
+  //For debugging
+  protected[pipelining] def getActiveTurns() = activeTurns
+
   override final protected[pipelining] def makeTurn: PipeliningTurn = {
     val newTurn = makeNewTurn
     activeTurnsLock.synchronized(activeTurns += newTurn)
     newTurn
   }
-
-  protected[pipelining] def graphLocked[T](op: => T): T =
-    op
 
   private def rememberTurnOrder(newFrameTurn: PTurn, at: Reactive) = {
     var frameForNewTurnSeen = false
@@ -48,10 +47,13 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
         assert(!frameForNewTurnSeen)
         frameForNewTurnSeen = true
       } else {
-        if (frameForNewTurnSeen)
+        if (frameForNewTurnSeen) {
+          assert(!waitsOn(newFrameTurn, currentTurn))
           rememberOrder(before = newFrameTurn, after = currentTurn, at)
-        else
+        } else {
+          assert(!waitsOn(currentTurn, newFrameTurn), s"Frame was not created with respect to order new=$newFrameTurn, old=$currentTurn, queue=${at.getPipelineFrames()}")
           rememberOrder(before = currentTurn, after = newFrameTurn, at)
+        }
 
       }
     })
@@ -71,8 +73,8 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
    * Creates a new frame for the given turn at the given reactive and
    * resolves conflicts which are introduced by creating the new frame
    */
-  protected[pipelining] def createFrameBefore(turn: PTurn, before: Set[PTurn], at: Reactive) = {
-    at.createFrameBefore(turn => before.contains(turn.asInstanceOf[PTurn]))(turn)
+  protected[pipelining] def createFrameBefore(turn: PTurn, at: Reactive) = {
+    at.createFrameBefore(otherTurn => otherTurn >>~ turn )(turn)
     rememberTurnOrder(turn, at)
     assert(assertCycleFree, "Create frame created a cycle")
   }
@@ -117,7 +119,7 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
 
         cycle = !head.preceedingTurns.get.forall {
           t =>
-           // assert(activeTurns.contains(t))
+            // assert(activeTurns.contains(t))
             if (!seen.contains(t)) {
               queue = queue :+ t;
             }
@@ -137,7 +139,8 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
   private def rememberOrder(before: PTurn, after: PTurn, at: Reactive) = {
     import rescala.util.JavaFunctionsImplicits._
     if (isActive(before)) {
-      assert(isActive(before), s"A frame from the already completed turn $before remained when remembering order for $after, at=$at , queue=${at.getPipelineFrames()}")
+      // this may add before altough if it is not active, because it may finish before the next line
+      // but avoid synchronization and accept that, it does not matter later
       after.preceedingTurns.updateAndGet { turns: Set[PTurn] => turns + before }
     }
   }
@@ -161,32 +164,34 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
   protected[pipelining] def turnCompleted(completedTurn: PTurn): Unit = {
     import rescala.util.JavaFunctionsImplicits._
     val turnRemoved = {
-      val waitsOnAnyTurn = completedTurn.preceedingTurns.get.intersect(activeTurns).nonEmpty
-      if (!waitsOnAnyTurn) {
-        // Remove all frames
-        completedTurn.framedReactives.get.foreach { _.removeFrame(completedTurn) }
-        activeTurnsLock.synchronized {
-          assert(activeTurns.contains(completedTurn))
+      activeTurnsLock.synchronized {
+        assert(activeTurns.contains(completedTurn))
+        val waitsOnAnyTurn = completedTurn.preceedingTurns.get.intersect(activeTurns).nonEmpty
+        if (!waitsOnAnyTurn) {
+          // Remove all frames
+          completedTurn.framedReactives.get.foreach { _.removeFrame(completedTurn) }
+          assert(completedTurn.framedReactives.get.forall { !_.hasFrame(completedTurn) })
           activeTurns -= completedTurn
+          println(s"turn $completedTurn completed")
+          println(s"Active turns $activeTurns")
+          true
+        } else {
+          println(s"turn $completedTurn needs to wait")
+          println(s"Active turns $activeTurns")
+          false
         }
-        assert(completedTurn.framedReactives.get.forall { !_.hasFrame(completedTurn) })
-        println(s"framed ${completedTurn.framedReactives}")
-        println(s"turn $completedTurn completed")
-        true
-      } else {
-        false
       }
     }
     completedNotRemovedTurnsLock.synchronized {
       if (!turnRemoved) {
         completedNotRemovedTurns += completedTurn
       } else {
-        turnOrderLock.synchronized{
-          def delete(list : List[PTurn]) : List[PTurn] = list match{
+        turnOrderLock.synchronized {
+          def delete(list: List[PTurn]): List[PTurn] = list match {
             case head :: rest => if (head == completedTurn) rest else head :: delete(rest)
-            case Nil => List()
+            case Nil          => List()
           }
-           turnOrder = delete(turnOrder)
+          turnOrder = delete(turnOrder)
         }
         // Try to remove all turns again, because there is a turn removed
         val oldTurns = completedNotRemovedTurns;
