@@ -73,7 +73,7 @@ class LinePropagationTest extends AssertionsForJUnit with MockitoSugar {
       if (wait == waitFirstTurn) {
         firstTurn = t.asInstanceOf[PipeliningTurn]
       } else if (wait == waitSecondTurn) {
-        pipelineOK &= num != 1 ||  !engine.isActive(firstTurn)
+        pipelineOK &= num != 1 ||  !engine.getTurnOrder().contains(firstTurn)
       }
       
         

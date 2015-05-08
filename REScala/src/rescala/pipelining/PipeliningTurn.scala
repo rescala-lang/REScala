@@ -34,7 +34,6 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
    * Remember all reactives for which a frame was created during this turn
    */
   protected[pipelining] var framedReactives = new AtomicReference[Set[Reactive]](Set())
-  protected[pipelining] var preceedingTurns = new AtomicReference[Set[PipeliningTurn]](Set())
 
   val thread = Thread.currentThread()
 
@@ -87,13 +86,13 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
 
     head.waitUntilCanWrite
 
-    assert(preceedingTurns.get.forall(turn =>
+ /*   assert(preceedingTurns.get.forall(turn =>
       head.findFrame {
         _ match {
           case None        => true
           case Some(frame) => frame.isWritten
         }
-      }(turn)), s"Illegal wait state for $this at $head: queue=${head.getPipelineFrames()} preceedingTurns=$preceedingTurns")
+      }(turn)), s"Illegal wait state for $this at $head: queue=${head.getPipelineFrames()} preceedingTurns=$preceedingTurns")*/
 
     val writeFrame = head.findFrame {
       _ match {
@@ -263,11 +262,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
     s"PipeliningTurn(${super.toString})"
   }
 
-  override def >~(other: Turn) = {
-    preceedingTurns.get.contains(other.asInstanceOf[PipeliningTurn])
-  }
-
-  override def >>~(other: Turn) = {
+  override def >(other: Turn) = {
     other == this || engine.waitsOn(this, other.asInstanceOf[PipeliningTurn])
   }
 

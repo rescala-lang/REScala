@@ -67,7 +67,7 @@ trait Framed {
     def findBottomMostFrame(tail: CFrame): Option[CFrame] = {
       if (tail == null)
         None
-      else if (turn >>~ tail.turn)
+      else if (turn > tail.turn)
         Some(tail)
       else
         findBottomMostFrame(tail.previous())
@@ -212,7 +212,7 @@ trait Framed {
         val frameTurn = last.turn
         if (frameTurn == turn) {
           last
-        } else if (otherTurn >>~ frameTurn) {
+        } else if (otherTurn > frameTurn) {
           last
         } else {
           findFrameToInsertAfter(last.previous())
@@ -299,10 +299,5 @@ trait Framed {
   protected[rescala] def createDynamicDropFrame(from: Reactive)(implicit turn: Turn): DynamicDropFrame[Content] = {
     createDynamicFrame(DynamicDropFrame[Content](turn, this, from))(from)
   }
-
-  // If want to omit the buffers in the turn data (because the previous data is contained
-  // in the frame before), I can only remove the head turn in the queue and need to remove
-  // other turns only if they get head in the queue
-  // Then I need to store in the Turn whether it is completed
 
 }

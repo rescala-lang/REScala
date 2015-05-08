@@ -17,7 +17,6 @@ object ParallelFrameCreator {
   private val completeLock = new TransferableLock
 
   protected def addTurn(turn: PipeliningTurn) = turnOrderLock.synchronized {
-    println(s"Parallel: add turn $turn")
     turn.engine.addTurn(turn)
     if (turnOrder.isEmpty)
       completeLock.reserveLockFor(turn.thread)
@@ -29,7 +28,6 @@ object ParallelFrameCreator {
     completeLock.lock()
 
     turnOrderLock.synchronized {
-      println(s"Parallel: remove turn $turn")
       assert(turnOrder.head == turn)
       turnOrder = turnOrder.tail
       if (turnOrder.nonEmpty)

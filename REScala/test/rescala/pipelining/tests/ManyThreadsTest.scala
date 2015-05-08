@@ -172,7 +172,7 @@ class ManyThreadsTest extends AssertionsForJUnit with MockitoSugar {
     updateThreads.foreach { _.start }
     updateThreads.foreach { _.join }
 
-    assert(engine.getActiveTurns().isEmpty)
+    assert(engine.getTurnOrder().isEmpty)
     assert(s1.getPipelineFrames().isEmpty)
     assert(s2.getPipelineFrames().isEmpty)
     assert(d1.getPipelineFrames().isEmpty)

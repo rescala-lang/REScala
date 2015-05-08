@@ -43,8 +43,7 @@ trait Turn {
   /** plan a new after commit handler. this still runs before releasing locks */
   def observe(f: => Unit): Unit
   
-  def >~(other: Turn ) = other == this
-  def >>~(other: Turn ) = this >~ other
+  def >(other: Turn ) = other == this
   
    val id = Globals.nextID()
   override def toString: String = s"Key($id)"
