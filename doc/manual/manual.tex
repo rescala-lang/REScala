@@ -170,7 +170,7 @@
 \code{salvaneschi@informatik.tu-darmstadt.de}\\}
 
 
-\date{November 2013\\ \vspace*{10mm} Version 0.2}
+\date{May 2015\\ \vspace*{10mm} Version 0.3}
 
 
 
@@ -558,18 +558,18 @@ e += (x => {
   println(x._1)
   println(x._2)
 })
-e += (x: (Int,String) => {
+e += ((x: (Int,String)) => {
   println(x)
 })
 \end{codenv}
 
-Note that events without arguments still need a \code{Unit} argument
+Note that events without arguments still need an argument
 in the handler.
 
 \begin{codenv}
 val e = new ImperativeEvent[Int]()
 e += { x => println() }
-e += { (x: Unit) => println() }
+e += { (x: Int) => println() }
 \end{codenv}
 
 Scala allows one to refer to a method using the partially applied
@@ -711,11 +711,11 @@ val e1 = new ImperativeEvent[Int]()
 val e2 = new ImperativeEvent[Int]()
 val e1_OR_e2 = e1 || e2
 e1_OR_e2 += ((x: Int) => println(x))
-e1(10)
-e2(10)
+e1(1)
+e2(2)
 -- output ----
-10
-10
+1
+2
 \end{codenv}
 
 
@@ -759,42 +759,42 @@ Here: 15
 
 
 
-\subsubsection{dropParam}
-
-The $dropParam$ operator transforms an event into an event with
-\code{Unit} parameter. In the following example the $dropParam$
-operator transforms an \code{Event[Int]} into an \code{Event[Unit]}.
-
-\begin{codenv}
-val e = new ImperativeEvent[Int]()
-val e_drop: Event[Unit] = e.dropParam
-e_drop += (_ => println("*"))
-e(10)
-e(10)
--- output ----
-*
-*
-\end{codenv}
-
-The typical use case for the $dropParam$ operator is to make events
-with different types compatible. For example the following snippet is
-rejected by the compiler since it attempts to combine two events of
-different types with the $||$ operator.
-
-\begin{codenv}     /* WRONG - DON'T DO THIS */
-val e1 = new ImperativeEvent[Int]()
-val e2 = new ImperativeEvent[Unit]()
-val e1_OR_e2 = e1 || e2  // Compiler error
-\end{codenv}
-
-The following example is correct. The $dropParam$ operator allows
-one to make the events compatible with each other.
-
-\begin{codenv}
-val e1 = new ImperativeEvent[Int]()
-val e2 = new ImperativeEvent[Unit]()
-val e1_OR_e2: Event[Unit] = e1.dropParam || e2
-\end{codenv}
+%\subsubsection{dropParam}
+%
+%The $dropParam$ operator transforms an event into an event with
+%\code{Unit} parameter. In the following example the $dropParam$
+%operator transforms an \code{Event[Int]} into an \code{Event[Unit]}.
+%
+%\begin{codenv}
+%val e = new ImperativeEvent[Int]()
+%val e_drop: Event[Unit] = e.dropParam
+%e_drop += (_ => println("*"))
+%e(10)
+%e(10)
+%-- output ----
+%*
+%*
+%\end{codenv}
+%
+%The typical use case for the $dropParam$ operator is to make events
+%with different types compatible. For example the following snippet is
+%rejected by the compiler since it attempts to combine two events of
+%different types with the $||$ operator.
+%
+%\begin{codenv}     /* WRONG - DON'T DO THIS */
+%val e1 = new ImperativeEvent[Int]()
+%val e2 = new ImperativeEvent[Unit]()
+%val e1_OR_e2 = e1 || e2  // Compiler error
+%\end{codenv}
+%
+%The following example is correct. The $dropParam$ operator allows
+%one to make the events compatible with each other.
+%
+%\begin{codenv}
+%val e1 = new ImperativeEvent[Int]()
+%val e2 = new ImperativeEvent[Unit]()
+%val e1_OR_e2: Event[Unit] = e1.dropParam || e2
+%\end{codenv}
 
 
 
@@ -943,8 +943,8 @@ assert(s.get == 13)
 \subsubsection{Iterate}
 Returns a signal holding the value computed by \code{f} on the
 occurrence of an event. Differently from \code{fold}, there is no
-accumulator, i.e. the value of the signal does not depend on the
-previous values but only on the value carried by the event.
+carried value, i.e. the value of the signal does not depend on the
+current value but only on the accumulated value.
 \\
 
 \code{iterate[A](e: Event[\_], init: A)(f: A=>A): Signal[A]}
@@ -960,13 +960,13 @@ val f = (x:Int)=>{test=x; x+1}
 val s: Signal[Int] = e.iterate(10)(f)
 e(1)
 assert(test == 10)
-assert(s.get == 10)
+assert(s.get == 11)
 e(2)
 assert(test == 11)
-assert(s.get == 10)
+assert(s.get == 12)
 e(1)
 assert(test == 12)
-assert(s.get == 10)
+assert(s.get == 13)
 \end{codenv}
 
 
@@ -987,7 +987,7 @@ Example:
 
 \begin{codenv}
 val e = new ImperativeEvent[Int]()
-val s: Signal[Option[Int]] = e.latestOption(e)
+val s: Signal[Option[Int]] = e.latestOption
 assert(s.get == None)
 e(1)
 assert(s.get == Option(1))
@@ -1019,12 +1019,12 @@ assert(s.get == List())
 e(1)
 assert(s.get == List(1))
 e(2)
-assert(s.get == List(2,1))
+assert(s.get == List(1,2))
 
 e(3);e(4);e(5)
-assert(s.get == List(5,4,3,2,1))
+assert(s.get == List(1,2,3,4,5))
 e(6)
-assert(s.get == List(6,5,4,3,2))
+assert(s.get == List(2,3,4,5,6))
 \end{codenv}
 
 
@@ -1429,7 +1429,7 @@ normally sufficient for all the basic functionalities of \REScala:
 \begin{codenv}
 import rescala._
 import rescala.events._
-import macro.SignalMacro.{SignalM => Signal}
+import makro.SignalMacro.{SignalM => Signal}
 \end{codenv}
 
 Note that signal expressions are currently implemented as macros,
