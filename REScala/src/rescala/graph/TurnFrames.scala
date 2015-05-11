@@ -21,6 +21,8 @@ class ReactiveFrame(
   private[rescala] val outgoing: Buffer[Set[Reactive]] = _outgoing
 
   protected[rescala] var incoming: Set[Reactive] = _incoming
+  
+  override def toString() = s"${getClass.getSimpleName}{level=${level.get(null)}}"
 
 }
 

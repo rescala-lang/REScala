@@ -3,9 +3,9 @@ package rescala.turns
 import rescala.graph.{Buffer, Reactive, STMBuffer}
 import rescala.propagation.TurnImpl
 import rescala.synchronization.{EngineReference, NothingSpecial, STMSync, SpinningInitPessimistic, TurnLock}
-
 import scala.concurrent.stm.atomic
 import scala.util.DynamicVariable
+import rescala.pipelining.PipelineEngine
 
 object Engines {
 
@@ -15,10 +15,11 @@ object Engines {
     case "spinningNoWait" => spinning
     case "spinningWait" => spinningWait
     case "stm" => STM
+    case "pipelining" => pipelining
     case other => throw new IllegalArgumentException(s"unknown engine $other")
   }
 
-  def all: List[Engine[Turn]] = List(default, STM, spinning, spinningWait, synchron, unmanaged)
+  def all: List[Engine[Turn]] = List(default, STM, spinning, spinningWait, synchron, unmanaged, pipelining)
 
   implicit val default: Engine[Turn] = spinningWithBackoff(7)
 
@@ -31,6 +32,7 @@ object Engines {
 
   implicit val spinning: Engine[SpinningInitPessimistic] = new Impl(new SpinningInitPessimistic(backOff = -1))
   implicit val spinningWait: Engine[SpinningInitPessimistic] = new Impl(new SpinningInitPessimistic(backOff = 0))
+  implicit val pipelining = new PipelineEngine
 
   implicit val synchron: Engine[NothingSpecial] = new Impl[NothingSpecial](new EngineReference(synchron) with NothingSpecial) {
     override def plan[R](i: Reactive*)(f: NothingSpecial => R): R = synchronized(super.plan(i: _*)(f))

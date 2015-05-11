@@ -85,6 +85,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
     markUnreachablePrunedNodesWritten(head)
 
     head.waitUntilCanWrite
+    
 
  /*   assert(preceedingTurns.get.forall(turn =>
       head.findFrame {
@@ -121,9 +122,15 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
 
     if (evaluateFrame) {
 
-      if (!head.incoming.isEmpty && !writeFrame.isTouched)
-        // Only fill the frame with previous values, if it has not been visited  already -> bug with requeue? should not happen, or?
+      if (!head.incoming.isEmpty && !writeFrame.isTouched) {
+        // Very hacky, preserve some changes
+        val currentLevel = head.level.get
+        val outgoings = head.outgoing.get
+        // Only fill the frame with previous values, if it has not been visited  already
         head.fillFrame
+        head.level.set(currentLevel)
+        head.outgoing.set(outgoings)
+      }
 
       // head.fillFrame
       head.markTouched
@@ -141,7 +148,8 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
     val needToAddDep = !source.outgoing.get.contains(sink)
     val sourceHasFrame = source.hasFrame
     if (needToAddDep && sourceHasFrame) {
-      // TODO Can this case happen, it does not, or?
+      // Dont need to create frames, because a frame is already there
+      source.outgoing.transform { _ + sink }
     } else if (!sourceHasFrame && needToAddDep) {
       println(s"Create dynamic frome at $source for $sink")
       // Create a dynamic read frame
@@ -210,7 +218,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
       } else {
         val writeFrame = source.findFrame { _.get } // Can use this frame if it is marked written? Should not make a difference
         // But then it need to be written already because it must evaluated first
-        assert(writeFrame.isWritten, "Frame of an incoming dependency needs to be evaluated first")
+       // assert(writeFrame.isWritten, "Frame of an incoming dependency needs to be evaluated first")
         writeFrame
       }
 

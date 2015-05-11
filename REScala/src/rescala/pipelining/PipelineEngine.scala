@@ -139,6 +139,7 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
     override def commit(implicit turn: Turn): Unit = {}
   }
 
-  override def buffer[A](default: A, commitStrategy: (A, A) => A, writeLock: TurnLock): Buffer[A] = new NoBuffer(default)
+  // Currently a buffer with two values is needed for correct propagation -> turn frames into buffer
+  //override def buffer[A](default: A, commitStrategy: (A, A) => A, writeLock: TurnLock): Buffer[A] = new NoBuffer(default)
 
 }

@@ -120,9 +120,7 @@ class DynamicReadTest extends AssertionsForJUnit with MockitoSugar {
     // In any case
     assert(source2DepTracker.values == List(201))
 
-    // There is not order between the turns, the current implementation moves the turn making the
-    // dynamic read up
-    assert(depOfDynamicTracker.values == List(101, 201))
+    assert(depOfDynamicTracker.values == List(201))
 
   }
 

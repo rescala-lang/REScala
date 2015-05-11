@@ -8,7 +8,7 @@ import rescala.turns.Turn
 
 import scala.collection.SortedSet
 
-class LevelQueue()(implicit val currenTurn: Turn) {
+class LevelQueue()(implicit val currentTurn: Turn) {
 
   private var elements = SortedSet[QueueElement]()
 
