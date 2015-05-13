@@ -23,7 +23,7 @@ trait QueueBasedFrameCreator extends FrameCreator {
     // Create frames for all reachable reactives
     lq.evaluateQueue { reactive =>
       op(reactive)
-      val outgoings = reactive.outgoing(this).get(this)
+      val outgoings = reactive.outgoing.get(this)
       outgoings.foreach { lq.enqueue(-1) }
     }
   }

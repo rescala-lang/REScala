@@ -8,8 +8,9 @@ import java.util.concurrent.locks.ReentrantLock
 import java.util.concurrent.locks.LockSupport
 import java.util.concurrent.atomic.AtomicReference
 import rescala.util.JavaFunctionsImplicits._
+import rescala.pipelining.PipelineBuffer
 
-sealed abstract class Frame[T](val turn: Turn, val at: Framed) {
+sealed abstract class Frame[T](val turn: Turn, val at: PipelineBuffer) {
 
   private var predecessor: Frame[T] = null.asInstanceOf[Frame[T]]
   private var successor: Frame[T] = null.asInstanceOf[Frame[T]]
@@ -141,15 +142,15 @@ sealed abstract class Frame[T](val turn: Turn, val at: Framed) {
 
 }
 
-case class WriteFrame[T](override val turn: Turn, override val at: Framed) extends Frame[T](turn, at) {
+case class WriteFrame[T](override val turn: Turn, override val at: PipelineBuffer) extends Frame[T](turn, at) {
 
 }
 
-case class DynamicReadFrame[T](override val turn: Turn, override val at: Framed, val newDependent: Reactive) extends Frame[T](turn, at) {
+case class DynamicReadFrame[T](override val turn: Turn, override val at: PipelineBuffer, val newDependent: Reactive) extends Frame[T](turn, at) {
 
 }
 
-case class DynamicDropFrame[T](override val turn: Turn, override val at: Framed, val lostDependent: Reactive) extends Frame[T](turn, at) {
+case class DynamicDropFrame[T](override val turn: Turn, override val at: PipelineBuffer, val lostDependent: Reactive) extends Frame[T](turn, at) {
 
 }
 

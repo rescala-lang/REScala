@@ -1,19 +1,87 @@
-package rescala.graph
+package rescala.pipelining
 
 import rescala.turns.Turn
 import scala.collection.immutable.Queue
 import scala.annotation.tailrec
 
-trait Framed {
-  // self : Reactive =>
+import rescala.graph._
 
-  protected[this]type Content;
+class ValueHolder[T] (initial : T, val buffer : Buffer[T]){
+  
+  var value : T = initial
+  
+  def transform(f : T => T) = value = f(value)
+  
+  def duplicate = new ValueHolder(value, buffer)
+  
+}
+
+class BufferFrameContent {
+  
+  var values : List[ValueHolder[_]] = List()
+  
+  def valueForBuffer[T](buf : Buffer[T]) : ValueHolder[T] = values.find { _.buffer eq buf }.get.asInstanceOf[ValueHolder[T]] // Cast is safe
+  
+  def duplicate = {
+    val newContent = new BufferFrameContent
+    for (v <- values) {
+      newContent.values :+= v.duplicate
+    }
+    newContent
+  }
+  
+}
+
+class PipelineSingleBuffer[A](parent: PipelineBuffer,  initialStrategy: (A, A) => A) extends Buffer[A] {
+  
+  var commitStrategy: (A, A) => A = initialStrategy
+
+  override def initCurrent(value: A): Unit = parent.getStableFrame().valueForBuffer(this).value = value
+  override def initStrategy(strategy: (A, A) => A): Unit = synchronized(commitStrategy = strategy)
+
+
+  override def transform(f: (A) => A)(implicit turn: Turn): A = synchronized {
+    val value = f(get)
+    set(value)
+    value
+  }
+
+  override def set(value: A)(implicit turn: Turn): Unit =  {
+    parent.needFrame(_.content).valueForBuffer(this).value = value
+    turn.schedule(this)
+  }
+
+  override def base(implicit turn: Turn): A = parent.findFrame { _ match {
+    case Some(frame) => frame.previous().content.valueForBuffer(this).value
+    case None => parent.frame().valueForBuffer(this).value
+  }}
+
+  override def get(implicit turn: Turn): A = parent.frame().valueForBuffer(this).value
+
+  override def release(implicit turn: Turn): Unit = {
+  }
+
+  override def commit(implicit turn: Turn): Unit = {
+   // current = commitStrategy(current, get)
+   // release(turn)
+  }
+  
+}
+
+object PipelineBuffer {
+    protected[pipelining] def pipelineFor(at : Reactive) = at.pipeline
+}
+
+class PipelineBuffer {
+
+  protected[this] type Content = BufferFrameContent;
 
   private type CFrame = Frame[Content]
 
-  protected[this] def initialStableFrame: Content
-  protected[this] def duplicate(content: Content): Content
+  protected[this] def initialStableFrame: Content =  new BufferFrameContent
+  protected[this] def duplicate(content: Content): Content = content.duplicate
   protected[this] var stableFrame: Content = initialStableFrame
+  protected[pipelining] def getStableFrame() = stableFrame
 
   protected[this] var queueHead: CFrame = null.asInstanceOf[CFrame];
   protected[this] var queueTail: CFrame = null.asInstanceOf[CFrame];
@@ -22,6 +90,13 @@ trait Framed {
 
   private def lockPipeline[A](op: => A): A = pipelineLock.synchronized {
     op
+  }
+  
+  protected[pipelining] def createBuffer[T](initval : T, commitStrategy: (T,T)=>T) : Buffer[T] = {
+    assert(queueHead == null)
+    val newBuffer =  new PipelineSingleBuffer(this, commitStrategy)
+    stableFrame.values :+= new ValueHolder(initval, newBuffer)
+    newBuffer
   }
 
   // Access for testing
@@ -81,7 +156,7 @@ trait Framed {
     bottomMostWaitingFrame
   }
 
-  protected def frame[T](f: Content => T = { x: Content => x })(implicit turn: Turn): T = {
+  protected[pipelining] def frame[T](f: Content => T = { x: Content => x })(implicit turn: Turn): T = {
     val content = frame.map(_.content).getOrElse(stableFrame)
     f(content)
   }

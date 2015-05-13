@@ -6,7 +6,6 @@ import rescala.pipelining.PipelineEngine
 import rescala.Var
 import org.junit.Test
 import rescala.Signals
-import rescala.graph.Framed
 import scala.collection.immutable.Queue
 import rescala.turns.Turn
 import rescala.pipelining.tests.PipelineTestUtils._
@@ -15,6 +14,7 @@ import java.util.Random
 import java.util.concurrent.CyclicBarrier
 import rescala.pipelining.PipeliningTurn
 import scala.annotation.tailrec
+import rescala.pipelining.PipelineBuffer._
 
 class ManyThreadsTest extends AssertionsForJUnit with MockitoSugar {
 
@@ -122,10 +122,10 @@ class ManyThreadsTest extends AssertionsForJUnit with MockitoSugar {
       update1.join
       update2.join
 
-      assert(s1.getPipelineFrames().isEmpty)
-      assert(s2.getPipelineFrames().isEmpty)
-      assert(d1.getPipelineFrames().isEmpty)
-      assert(d2.getPipelineFrames().isEmpty)
+      assert(pipelineFor(s1).getPipelineFrames().isEmpty)
+      assert(pipelineFor(s2).getPipelineFrames().isEmpty)
+      assert(pipelineFor(d1).getPipelineFrames().isEmpty)
+      assert(pipelineFor(d2).getPipelineFrames().isEmpty)
 
       //assert(engine.getOrdering.isEmpty)
       // assert(engine.getWaitingEdges.isEmpty)
@@ -173,10 +173,10 @@ class ManyThreadsTest extends AssertionsForJUnit with MockitoSugar {
     updateThreads.foreach { _.join }
 
     assert(engine.getTurnOrder().isEmpty)
-    assert(s1.getPipelineFrames().isEmpty)
-    assert(s2.getPipelineFrames().isEmpty)
-    assert(d1.getPipelineFrames().isEmpty)
-    assert(d2.getPipelineFrames().isEmpty)
+    assert(pipelineFor(s1).getPipelineFrames().isEmpty)
+    assert(pipelineFor(s2).getPipelineFrames().isEmpty)
+    assert(pipelineFor(d1).getPipelineFrames().isEmpty)
+    assert(pipelineFor(d2).getPipelineFrames().isEmpty)
 
     //  assert(engine.getOrdering.isEmpty)
     //  assert(engine.getWaitingEdges.isEmpty)

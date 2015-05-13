@@ -6,7 +6,6 @@ import rescala.signals.GeneratedLift
 import rescala.turns.{Ticket, Turn}
 import rescala.turns.Engine
 import rescala.graph.{Stateful, StatefulImpl}
-import rescala.graph.StatefulFrame
 import rescala.graph.Buffer
 
 object Signals extends GeneratedLift {
@@ -15,7 +14,7 @@ object Signals extends GeneratedLift {
     /** creates a signal that statically depends on the dependencies with a given initial value */
     def makeStatic[T](dependencies: Set[Reactive], init: => T)(expr: (Turn, T) => T)(initialTurn: Turn) = initialTurn.create(dependencies.toSet) {
       new StatefulImpl[T](initialTurn.engine, dependencies) with Signal[T] with StaticReevaluation[T] {
-        stableFrame.pulses.initCurrent(Pulse.unchanged(init))
+        pulses.initCurrent(Pulse.unchanged(init))
 
         override def calculatePulse()(implicit turn: Turn): Pulse[T] = {
           val currentValue = pulses.base.current.get

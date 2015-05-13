@@ -6,22 +6,21 @@ import rescala.turns.Engine
 import rescala.turns.Ticket
 import rescala.graph.Pulse.{Diff, NoChange}
 import scala.collection.immutable.Queue
+import rescala.pipelining.PipelineBuffer
 
 /** A Reactive is something that can be reevaluated */
-trait Reactive extends Framed {
-  
-  protected [this] type Content <: ReactiveFrame
+trait Reactive  {
   
   final override val hashCode: Int = Globals.nextID().hashCode()
-
-  protected[rescala] def engine: Engine[Turn]
   
-   protected[rescala] def lock: TurnLock 
-
-  final private[rescala] def level (implicit turn: Turn) = frame(_.level)
-  final private[rescala] def outgoing (implicit turn: Turn) = frame(_.outgoing)
-  protected[rescala] def incoming(implicit turn: Turn) = frame(_.incoming)
-
+  protected[rescala] def engine: Engine[Turn]
+  protected[rescala] def lock: TurnLock 
+  
+  private[rescala] final val level : Buffer[Int] = engine.buffer(0, math.max, this)
+  private[rescala] final val outgoing : Buffer[Set[Reactive]] = engine.buffer(Set(), Buffer.commitAsIs, this)
+  private[rescala] val incoming : Buffer[Set[Reactive]] = engine.buffer(Set(), Buffer.commitAsIs, this)
+  
+  private[rescala] final val pipeline = new PipelineBuffer
   
 
   /** called when it is this events turn to be evaluated
@@ -36,25 +35,26 @@ trait Reactive extends Framed {
 
 /** A node that has nodes that depend on it */
 trait Pulsing[+P] extends Reactive {
-  protected [this] type Content <:PulsingFrame[P]
+ 
+  protected[this] final val pulses : Buffer[Pulse[P]] = engine.buffer(Pulse.none, Buffer.transactionLocal, this)
+  
   final def pulse(implicit turn: Turn): Pulse[P] = {  
     //while(!isPreviousFrameFinished){}
-    if (!hasFrame) {
+    if (!pipeline.hasFrame) {
       // Access without a frame: need to wait until frame is finished
       // for all static dependencies it is guaranteed that the frame is already
       // finished
-       waitUntilCanRead
+       pipeline.waitUntilCanRead
     }
-    frame(_.pulses).get
+    pulses.get
   } 
-  protected[this] def pulses(implicit turn:Turn): Buffer[Pulse[P]] = frame(_.pulses)
 }
 
 
 /** a node that has a current state */
 trait Stateful[+A] extends Pulsing[A] {
-  protected [this] type Content <:StatefulFrame[A]
 
+  pulses.initStrategy(Buffer.keepPulse)
   // only used inside macro and will be replaced there
   final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")
 

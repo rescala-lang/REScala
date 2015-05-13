@@ -15,6 +15,7 @@ import rescala.pipelining.PipeliningTurn
 import rescala.pipelining.PipeliningTurn
 import rescala.pipelining.PipeliningTurn
 import rescala.graph.WriteFrame
+import rescala.pipelining.PipelineBuffer._
 
 class LinePropagationTest extends AssertionsForJUnit with MockitoSugar {
   
@@ -56,13 +57,13 @@ class LinePropagationTest extends AssertionsForJUnit with MockitoSugar {
   
   def checkPrevTurn(pred : Reactive)(implicit turn : Turn) = {
     def doWithPred(reactive: Reactive, job : Reactive => Unit) = {
-      val incomings = reactive.incoming(turn)
+      val incomings = reactive.incoming.get(turn)
       if (incomings.nonEmpty)
         job(incomings.head)
     }
       // Next turn should work on node after this node -> the node before the node is finished
     doWithPred(pred, {predpred =>
-       pipelineOK &= predpred.getPipelineFrames().forall { _.asInstanceOf[WriteFrame[_]].isWritten }})
+       pipelineOK &= pipelineFor(predpred).getPipelineFrames().forall { _.asInstanceOf[WriteFrame[_]].isWritten }})
   }
 
   def createNodes(num: Int, previous: List[Signal[(Int,Int)]]): List[Signal[(Int,Int)]] = {

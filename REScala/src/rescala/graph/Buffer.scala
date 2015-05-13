@@ -30,6 +30,18 @@ trait Buffer[A] extends Committable {
   override def commit(implicit turn: Turn): Unit
 }
 
+final class StaticBuffer[A]( values : A) extends Buffer[A] {
+  def initCurrent(value: A): Unit = throw new AssertionError
+  def initStrategy(strategy: (A, A) => A): Unit = throw new AssertionError
+
+  def transform(f: (A) => A)(implicit turn: Turn): A = throw new AssertionError
+  def set(value: A)(implicit turn: Turn): Unit = throw new AssertionError
+  def base(implicit turn: Turn): A = values
+  def get(implicit turn: Turn): A = values
+  override def release(implicit turn: Turn): Unit = {}
+  override def commit(implicit turn: Turn): Unit = {}
+}
+
 final class SimpleBuffer[A](initialValue: A, initialStrategy: (A, A) => A, writeLock: TurnLock) extends Buffer[A] {
 
   var current: A = initialValue

@@ -1,18 +1,19 @@
 package rescala.pipelining.tests
 
-import rescala.graph.Framed
 import scala.collection.immutable.Queue
 import rescala.turns.Turn
 import scala.util.Random
 import rescala.Signal
 import rescala.pipelining.PipelineEngine
+import rescala.graph.Reactive
+import rescala.pipelining.PipelineBuffer
 
 object PipelineTestUtils {
   
   private val rand = new Random
 
-  def frameTurns(f : Framed) : Queue[Turn] = {
-    f.getPipelineFrames().map { _.turn}
+  def frameTurns(f : Reactive) : Queue[Turn] = {
+    PipelineBuffer.pipelineFor(f).getPipelineFrames().map { _.turn}
   }
   
   def randomWait[A](op: => A) : A = {

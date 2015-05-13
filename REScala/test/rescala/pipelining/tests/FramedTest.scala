@@ -1,16 +1,15 @@
 package rescala.pipelining.tests
 
 import scala.collection.immutable.Queue
-
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-
 import rescala.graph.Frame
-import rescala.graph.Framed
 import rescala.pipelining.PipelineEngine
 import rescala.pipelining.PipeliningTurn
 import rescala.turns.Turn
+import rescala.pipelining.PipelineBuffer
+import rescala.graph.Buffer
 
 class FramedTest extends AssertionsForJUnit with MockitoSugar {
   
@@ -19,15 +18,9 @@ class FramedTest extends AssertionsForJUnit with MockitoSugar {
     override def toString() = s"Content(num = $num)"
   }
   
-  class TestFramed extends Framed {
+  class TestFramed extends PipelineBuffer {
     
-    // Define TestFrame
-    protected[this] override type Content = TestFrameContent
-    protected[this] def initialStableFrame: Content = new TestFrameContent(0)
-    protected[this] def duplicate(other: Content): Content = new TestFrameContent(other.num)
     
-    // Make fields accessible in the test
-    def getStableFrame() = stableFrame
  /*   override def createFrame (visitFrame: Frame => Boolean = { x: Frame => true }) (implicit turn: Turn) : Unit = 
       super.createFrame(allowedAfterFrame)(turn)
     override def hasFrame(implicit turn: Turn) = super.hasFrame(turn)
@@ -45,22 +38,23 @@ class FramedTest extends AssertionsForJUnit with MockitoSugar {
   
   val framed = new TestFramed()
   val engine = new PipelineEngine
+  val buffer : Buffer[Int] = framed.createBuffer(0, Buffer.commitAsIs)
 
   @Test
   def testInitialOnlyStable() = {
     assert(framed.getStableFrame() != null)
-    assert(framed.getStableFrame().num == 0)
+    assert(buffer.get(engine.makeTurn) == 0)
     assert(framed.getPipelineFrames().isEmpty)
   }
   
   @Test
   def createFirstFrameHasSameValueAsStableExceptTurn() = {
-    implicit val turn = new PipeliningTurn(engine)
+    implicit val turn = engine.makeTurn
     framed.createFrame
-    assert(framed.getStableFrame().num == 0)
+    assert(buffer.get(engine.makeTurn) == 0)
     assert(framed.getPipelineFrames().size == 1)
     val newFrame = framed.getPipelineFrames()(0)
-    assert(newFrame.content.num == 0)
+    assert(buffer.get == 0)
     assert(newFrame.turn == turn)
   }
   
@@ -70,13 +64,13 @@ class FramedTest extends AssertionsForJUnit with MockitoSugar {
     framed.createFrame
     assert(framed.hasFrame)
     val newFrame = framed.getPipelineFrames()(0)
-    newFrame.content.num =1
+    buffer.set(1)
     framed.markWritten(turn)
     assert(newFrame.isWritten)
     framed.removeFrame
     assert(framed.getPipelineFrames().isEmpty)
     val stableFrame = framed.getStableFrame()
-    assert(stableFrame.num == 1)
+    assert(buffer.get(engine.makeTurn) == 1)
   }
   
   @Test
@@ -87,16 +81,16 @@ class FramedTest extends AssertionsForJUnit with MockitoSugar {
     val frame1 = framed.getFrame(turn1)
     assert(!frame1.isWritten)
     assert(framed.getPipelineFrames() == Queue(frame1))
-    frame1.content.num = 1
+    buffer.set(1)(turn1)
     framed.markWritten(turn1)
     assert(frame1.isWritten)
     
     val turn2 = new PipeliningTurn(engine)
     framed.createFrame(turn2)
     val frame2 = framed.getFrame(turn2)
-    assert(frame2.content.num == 1)
+    assert(buffer.get(turn2) == 1)
     assert(framed.getPipelineFrames() == Queue(frame1, frame2))
-    frame2.content.num = 2
+    buffer.set(2)(turn2)
     assert(frame2.turn == turn2)
     framed.markWritten(turn2)
     
@@ -104,25 +98,25 @@ class FramedTest extends AssertionsForJUnit with MockitoSugar {
     framed.createFrame(turn3)
     val frame3 = framed.getFrame(turn3)
     assert(framed.getPipelineFrames() == Queue[Frame[_]](frame1, frame2, frame3))
-    assert(frame3.content.num == 2)
-    frame3.content.num = 3
+    assert(buffer.get(turn3) == 2)
+    buffer.set(3)(turn3)
     
     assert(framed.getPipelineFrames() == Queue(frame1, frame2, frame3))
-    assert(framed.getStableFrame().num == 0)
+    assert(buffer.get(engine.makeTurn) == 0)
     
     // No remove the first one, this removed frame 1 and 2
     framed.removeFrame(turn1)
     framed.removeFrame(turn2)
     assert(framed.getPipelineFrames() == Queue(frame3))
-    assert(framed.getStableFrame().num == 2)
+    assert(buffer.get(engine.makeTurn) == 2)
     
     framed.markWritten(turn3)
     
     // Finally remove the last one
-    assert(frame3.content.num == 3)
+    assert(buffer.get(turn3) == 3)
     framed.removeFrame(turn3)
     assert(framed.getPipelineFrames().isEmpty)
-    assert(framed.getStableFrame().num == 3)
+    assert(buffer.get(engine.makeTurn) == 3)
   }
   
   // SUCH BEHVAIOR NOT SUPPORTED BY CURRENT API
@@ -151,14 +145,14 @@ class FramedTest extends AssertionsForJUnit with MockitoSugar {
     for (i <- 1 to 5) {
       val turn = new PipeliningTurn(engine)
       framed.createFrame(turn)
-      framed.frame()(turn).num = i
+      buffer.set(i)(turn)
       framed.markWritten(turn)
     }
     val Queue(frame1, frame2, frame3, frame4, frame5) = framed.getPipelineFrames()
 
     assert(framed.getPipelineFrames() == Queue(frame1, frame2, frame3, frame4, frame5))
     
-    var seenFrames : List[Frame[TestFrameContent]] = List()
+    var seenFrames : List[Frame[_]] = List()
     framed.foreachFrameTopDown(frame => seenFrames :+= frame)
     
     assert(framed.getPipelineFrames() == Queue(frame1, frame2, frame3, frame4, frame5))
@@ -175,18 +169,18 @@ class FramedTest extends AssertionsForJUnit with MockitoSugar {
     val Queue(frame1, frame2) = framed.getPipelineFrames()
     assert(frame1.turn == turn1)
     assert(frame2.turn == turn2)
-    assert(frame1.content.num == 0)
-    assert(frame2.content.num == 0)
+    assert(buffer.get(turn1) == 0)
+    assert(buffer.get(turn2) == 0)
     
-    frame1.content.num = 1
-    assert(frame1.content.num == 1)
-    assert(frame2.content.num == 0)
+    buffer.set(1)(turn1)
+    assert(buffer.get(turn1) == 1)
+    assert(buffer.get(turn2) == 0)
     framed.fillFrame(turn2)
     
     val Queue(frame1_, frame2_) = framed.getPipelineFrames()
     assert(frame1 == frame1_)
     assert(frame2_.turn == turn2)
-    assert(frame2_.content.num == 1)
+    assert(buffer.get(turn2) == 1)
   }
   
 }

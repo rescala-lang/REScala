@@ -25,7 +25,7 @@ object Engines {
 
   implicit val STM: Engine[STMSync] = new Impl(new STMSync()) {
     override def plan[R](i: Reactive*)(f: STMSync => R): R = atomic { tx => super.plan(i: _*)(f) }
-    override def buffer[A](default: A, commitStrategy: (A, A) => A, writeLock: TurnLock): Buffer[A] = new STMBuffer[A](default, commitStrategy)
+    override def buffer[A](default: A, commitStrategy: (A, A) => A, at: Reactive): Buffer[A] = new STMBuffer[A](default, commitStrategy)
   }
 
   def spinningWithBackoff(backOff: Int) = new Impl(new SpinningInitPessimistic(backOff))

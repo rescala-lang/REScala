@@ -3,6 +3,7 @@ package rescala
 import rescala.graph.{Enlock, Committable, ReevaluationResult, Pulsing, Reactive}
 import rescala.turns.{Ticket, Turn}
 import rescala.graph.ReactiveImpl
+import rescala.graph.StaticBuffer
 
 
 trait Observe {
@@ -19,7 +20,7 @@ object Observe {
           ReevaluationResult.Static(changed = false)
         }
         override def remove()(implicit maybe: Ticket): Unit = maybe(_.unregister(this)(dependency))
-        override protected[rescala] def incoming(implicit turn: Turn): Set[Reactive] = staticIncoming
+        override protected[rescala] val incoming = new StaticBuffer(staticIncoming)
       }
       initTurn.schedule(once(obs, dependency.pulse(initTurn).keep.current, fun))
       obs

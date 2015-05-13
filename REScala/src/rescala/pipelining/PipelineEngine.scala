@@ -12,9 +12,13 @@ import scala.collection.immutable.Queue
 /**
  * @author moritzlichter
  */
+
+
 class PipelineEngine extends EngineImpl[PipeliningTurn]() {
 
   private type PTurn = PipeliningTurn
+  
+  import PipelineBuffer._
 
   private var turnOrder = List[PTurn]()
   private object turnOrderLock
@@ -32,6 +36,7 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
     val newTurn = makeNewTurn
     newTurn
   }
+  
 
 
   /**
@@ -39,7 +44,7 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
    * resolves conflicts which are introduced by creating the new frame
    */
   protected[pipelining] def createFrame(turn: PTurn, at: Reactive) = {
-    at.createFrame(turn)
+    pipelineFor(at).createFrame(turn)
   }
 
   /**
@@ -47,7 +52,7 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
    * resolves conflicts which are introduced by creating the new frame
    */
   protected[pipelining] def createFrameBefore(turn: PTurn, at: Reactive) = {
-    at.createFrameBefore(otherTurn => otherTurn > turn )(turn)
+    pipelineFor(at).createFrameBefore(otherTurn => otherTurn > turn )(turn)
   }
 
   /**
@@ -55,19 +60,19 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
    * resolves conflicts which are introduced by creating the new frame
    */
   protected[pipelining] def createDynamicReadFrameFrame(turn: PTurn, from: Reactive, at: Reactive) = {
-    val frame = at.createDynamicReadFrame(from)(turn)
+    val frame = pipelineFor(at).createDynamicReadFrame(from)(turn)
     frame
   }
 
   protected[pipelining] def createFrameAfter(turn: PTurn, createFor: PTurn, at: Reactive): Boolean = {
     // TODO first check for conflicts
     // resolveConflicts(turn, at.getPipelineFrames().map { _.turn.asInstanceOf[PipeliningTurn]}.toSet)
-    if (at.hasFrame(createFor))
+    if (pipelineFor(at).hasFrame(createFor))
       // at has already a frame for createFor, dont create a new one
       // TODO assert that createFor is after turn in the pipeline
       false
     else {
-      at.insertWriteFrameFor(createFor)(turn)
+      pipelineFor(at).insertWriteFrameFor(createFor)(turn)
       true
     }
   }
@@ -97,8 +102,8 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
   }
 
   private def removeTurn(turn : PTurn) : Unit = {
-    turn.framedReactives.get.foreach { _.removeFrame(turn) }
-          assert(turn.framedReactives.get.forall { !_.hasFrame(turn) })
+    turn.framedReactives.get.foreach { pipelineFor(_).removeFrame(turn) }
+          assert(turn.framedReactives.get.forall { !pipelineFor(_).hasFrame(turn) })
   }
   
   protected[pipelining] def turnCompleted(completedTurn: PTurn): Unit = {
@@ -139,7 +144,8 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
     override def commit(implicit turn: Turn): Unit = {}
   }
 
-  // Currently a buffer with two values is needed for correct propagation -> turn frames into buffer
-  //override def buffer[A](default: A, commitStrategy: (A, A) => A, writeLock: TurnLock): Buffer[A] = new NoBuffer(default)
+  
+  override def buffer[A](default: A, commitStrategy: (A, A) => A, at : Reactive): Buffer[A] =
+    at.pipeline.createBuffer(default, commitStrategy)
 
 }

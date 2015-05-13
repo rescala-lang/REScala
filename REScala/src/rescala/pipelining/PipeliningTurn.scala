@@ -5,16 +5,12 @@ import rescala.turns.Turn
 import rescala.propagation.TurnImpl
 import rescala.graph.Committable
 import rescala.propagation.LevelQueue
-import rescala.graph.ReactiveFrame
-import rescala.graph.ReactiveFrame
 import rescala.Signal
 import rescala.graph.Pulsing
 import rescala.graph.ReevaluationResult._
 import rescala.graph.{ DynamicReadFrame, DynamicDropFrame, WriteFrame }
 import rescala.graph.DynamicReadFrame
 import rescala.graph.Frame
-import rescala.graph.ReactiveFrame
-import rescala.graph.Framed
 import rescala.graph.DynamicReevaluation
 import rescala.graph.WriteFrame
 import java.util.concurrent.atomic.AtomicReference
@@ -30,6 +26,8 @@ object PipeliningTurn {
 
 class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean = false) extends TurnImpl with ParallelFrameCreator {
 
+  import PipelineBuffer._
+  
   /**
    * Remember all reactives for which a frame was created during this turn
    */
@@ -56,9 +54,9 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
   private def markUnreachablePrunedNodesWritten(head: Reactive) = {
     // In all queue are all nodes, not just the changed ones, for 
     allNodesQueue.processQueueUntil { allHead =>
-      assert(allHead.hasFrame)
+      assert(pipelineFor(allHead).hasFrame)
       if (allHead.level.get < head.level.get) {
-        allHead.markWritten
+        pipelineFor(allHead).markWritten
         false
       } else {
         true
@@ -78,13 +76,13 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
   }
 
   override def evaluate(head: Reactive) = {
-    assert(head.hasFrame(this), "No frame was created in turn " + this + " for " + head)
+    assert(pipelineFor(head).hasFrame(this), "No frame was created in turn " + this + " for " + head)
 
     // Marks all nodes written, which cannot be reached anymore and which was pruned
     // in order not to block pipelining longer on these nodes
     markUnreachablePrunedNodesWritten(head)
 
-    head.waitUntilCanWrite
+    pipelineFor(head).waitUntilCanWrite
     
 
  /*   assert(preceedingTurns.get.forall(turn =>
@@ -95,7 +93,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
         }
       }(turn)), s"Illegal wait state for $this at $head: queue=${head.getPipelineFrames()} preceedingTurns=$preceedingTurns")*/
 
-    val writeFrame = head.findFrame {
+    val writeFrame = pipelineFor(head).findFrame {
       _ match {
         case Some(frame @ WriteFrame(_, _)) => frame
         case _                              => throw new AssertionError("No correct write frame")
@@ -106,9 +104,9 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
     val evaluateFrame = if (writeFrame.isSuspicious()) {
       //Dont evaluate this frame if all frames for exactly this turn of all incoming dependencies are not touched
       // Then there was no change but the frame was created for a dynamic dependency which has been removed again
-      val needEvaluate = writeFrame.content.incoming.exists {
+      val needEvaluate = head.incoming.get.exists {
         incomingDep =>
-          incomingDep.findFrame {
+          pipelineFor(incomingDep).findFrame {
             _ match {
               case Some(frame) => frame.isTouched
               case None        => false
@@ -121,32 +119,33 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
       true
 
     if (evaluateFrame) {
+      
+      // head.fillFrame
+      pipelineFor(head).markTouched
 
-      if (!head.incoming.isEmpty && !writeFrame.isTouched) {
+      if (!head.incoming.get.isEmpty && !writeFrame.isTouched) {
         // Very hacky, preserve some changes
         val currentLevel = head.level.get
         val outgoings = head.outgoing.get
         // Only fill the frame with previous values, if it has not been visited  already
-        head.fillFrame
+        pipelineFor(head).fillFrame
         head.level.set(currentLevel)
         head.outgoing.set(outgoings)
       }
 
-      // head.fillFrame
-      head.markTouched
 
       super.evaluate(head)
     }
 
     //Mark the frame finished in any case, such that the next turn can continue and does not to wait
     // until the frame is detected for pruning
-    head.markWritten
+    pipelineFor(head).markWritten
 
   }
 
   override def register(sink: Reactive)(source: Reactive): Unit = {
     val needToAddDep = !source.outgoing.get.contains(sink)
-    val sourceHasFrame = source.hasFrame
+    val sourceHasFrame = pipelineFor(source).hasFrame
     if (needToAddDep && sourceHasFrame) {
       // Dont need to create frames, because a frame is already there
       source.outgoing.transform { _ + sink }
@@ -160,11 +159,11 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
 
       // this defect in frames after this frames we need to repair
       // Get all write frames after the read frame -> need to propagate the new dependency to them
-      val framesAfterDynamicRead: List[WriteFrame[_ <: ReactiveFrame]] = source.writeFramesAfter(readFrame)
+      val framesAfterDynamicRead: List[WriteFrame[_]] = pipelineFor(source).writeFramesAfter(readFrame)
       // TODO need to sync probalbly on that?
       framesAfterDynamicRead.foreach { frame =>
         frame.turn.asInstanceOf[PipeliningTurn].createFramesLock.synchronized {
-          frame.content.outgoing.transform(_ + sink)(frame.turn)
+          source.outgoing.transform(_ + sink)(frame.turn)
         }
       }
 
@@ -207,16 +206,16 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
 
     println(s"Unregister $source as incoming of $sink")
 
-    val sourceHasFrame = source.hasFrame
+    val sourceHasFrame = pipelineFor(source).hasFrame
     val needToRemoveDep = source.outgoing.get.contains(sink)
 
     if (needToRemoveDep) {
       val dropFrame = if (!sourceHasFrame) {
         println("Need to create drop frame")
         markReactiveFramed(source)
-        source.createDynamicDropFrame(sink)
+        pipelineFor(source).createDynamicDropFrame(sink)
       } else {
-        val writeFrame = source.findFrame { _.get } // Can use this frame if it is marked written? Should not make a difference
+        val writeFrame = pipelineFor(source).findFrame { _.get } // Can use this frame if it is marked written? Should not make a difference
         // But then it need to be written already because it must evaluated first
        // assert(writeFrame.isWritten, "Frame of an incoming dependency needs to be evaluated first")
         writeFrame
@@ -226,8 +225,8 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
 
       println(s"Remove sink from $source")
       source.outgoing.transform { _ - sink }
-      val writeFramesAfterDrop = source.writeFramesAfter(dropFrame)
-      writeFramesAfterDrop.foreach { frame => frame.content.outgoing.transform(_ - sink)(frame.turn) }
+      val writeFramesAfterDrop = pipelineFor(source).writeFramesAfter(dropFrame)
+      writeFramesAfterDrop.foreach { frame => source.outgoing.transform(_ - sink)(frame.turn) }
 
       // Cannot simply remove sink from the queue of the turns because sink may be reachable
       // though another valid path, nevertheless, the turns could wait for this frame already
@@ -236,7 +235,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
       println(s"Turn after dynamic drop $turnsAfterDynamicRead")
 
       turnsAfterDynamicRead.foreach { turn =>
-        sink.findFrame({
+        pipelineFor(sink).findFrame({
           _ match {
             case None => // No frame for this turn at sink, lucky case, dont do anything
             case Some(frame) =>
@@ -262,7 +261,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
 
   override def releasePhase(): Unit = {
     // TODO should not be needed anymore because of pruning. But pruning does not handle dynamic dependencies by now
-    framedReactives.get.foreach(_.markWritten)
+    framedReactives.get.foreach(pipelineFor(_).markWritten)
     engine.turnCompleted(this)
   }
 

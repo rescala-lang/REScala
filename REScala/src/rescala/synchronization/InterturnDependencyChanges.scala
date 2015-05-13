@@ -29,7 +29,7 @@ trait InterturnDependencyChanges extends Turn {
     if (owner ne this) {
       owner.unregister(sink)(source)
       lockKeychain(keychain.removeFallthrough(owner))
-      if (!sink.incoming(this).exists(_.lock.isOwner(owner))) owner.forget(sink)
+      if (!sink.incoming.get(this).exists(_.lock.isOwner(owner))) owner.forget(sink)
     }
     else super.unregister(sink)(source)
   }

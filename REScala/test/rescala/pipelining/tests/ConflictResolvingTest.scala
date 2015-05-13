@@ -6,7 +6,6 @@ import rescala.pipelining.PipelineEngine
 import rescala.Var
 import org.junit.Test
 import rescala.Signals
-import rescala.graph.Framed
 import scala.collection.immutable.Queue
 import rescala.turns.Turn
 import rescala.pipelining.tests.PipelineTestUtils._
@@ -15,9 +14,12 @@ import java.util.Random
 import java.util.concurrent.CyclicBarrier
 import rescala.pipelining.PipeliningTurn
 import scala.annotation.tailrec
+ import rescala.pipelining.PipelineBuffer._
 
 class ConflictResolvingTest extends AssertionsForJUnit with MockitoSugar {
 
+ 
+  
   implicit val engine = new PipelineEngine
 
   /*
@@ -59,8 +61,8 @@ class ConflictResolvingTest extends AssertionsForJUnit with MockitoSugar {
         turn.lockPhase(List(source))
     })
 
-    assert(d1.getPipelineFrames().map(_.turn) == Queue() ++ turns)
-    assert(d2.getPipelineFrames().map(_.turn) == Queue() ++ turns)
+    assert(pipelineFor(d1).getPipelineFrames().map(_.turn) == Queue() ++ turns)
+    assert(pipelineFor(d2).getPipelineFrames().map(_.turn) == Queue() ++ turns)
 
     val x = 1;
   }
