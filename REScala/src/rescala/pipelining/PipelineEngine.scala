@@ -145,7 +145,11 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
   }
 
   
-  override def buffer[A](default: A, commitStrategy: (A, A) => A, at : Reactive): Buffer[A] =
+  override def buffer[A](default: A, commitStrategy: (A, A) => A, at : Reactive): Buffer[A] = {
+    assert(at != null)
+    println(at)
+    assert(at.pipeline != null)
     at.pipeline.createBuffer(default, commitStrategy)
+  }
 
 }

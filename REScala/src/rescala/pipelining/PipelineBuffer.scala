@@ -47,12 +47,17 @@ class PipelineSingleBuffer[A](parent: PipelineBuffer,  initialStrategy: (A, A) =
   }
 
   override def set(value: A)(implicit turn: Turn): Unit =  {
-    parent.needFrame(_.content).valueForBuffer(this).value = value
+    parent.frame().valueForBuffer(this).value = value
     turn.schedule(this)
   }
 
   override def base(implicit turn: Turn): A = parent.findFrame { _ match {
-    case Some(frame) => frame.previous().content.valueForBuffer(this).value
+    case Some(frame) =>
+      val content = if (frame.previous() == null)
+        parent.getStableFrame()
+      else
+        frame.previous().content
+      content.valueForBuffer(this).value
     case None => parent.frame().valueForBuffer(this).value
   }}
 

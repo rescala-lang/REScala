@@ -14,13 +14,14 @@ trait Reactive  {
   final override val hashCode: Int = Globals.nextID().hashCode()
   
   protected[rescala] def engine: Engine[Turn]
-  protected[rescala] def lock: TurnLock 
+  protected[rescala] def lock: TurnLock
+  private[rescala] final val pipeline = new PipelineBuffer
   
   private[rescala] final val level : Buffer[Int] = engine.buffer(0, math.max, this)
   private[rescala] final val outgoing : Buffer[Set[Reactive]] = engine.buffer(Set(), Buffer.commitAsIs, this)
   private[rescala] val incoming : Buffer[Set[Reactive]] = engine.buffer(Set(), Buffer.commitAsIs, this)
   
-  private[rescala] final val pipeline = new PipelineBuffer
+  
   
 
   /** called when it is this events turn to be evaluated
