@@ -146,10 +146,19 @@ class HigherOrderTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit with
     dereferenced.changed += { _ => dereferencedChanged = true }
 
     tick(())
+    assert(count.now == 1)
+    assert(doubled.now ==2)
+    assert(mod2.now == 1)
+    assert(selected.now == count)
     assert(dereferencedChanged)
     dereferencedChanged = false
     assert(dereferenced.now == 1)
+    
     tick(())
+    assert(count.now == 2)
+    assert(doubled.now ==4)
+    assert(mod2.now == 0)
+    assert(selected.now == doubled)
     assert(dereferencedChanged)
     dereferencedChanged = false
     assert(dereferenced.now == 4)

@@ -35,6 +35,7 @@ class BufferFrameContent {
 class PipelineSingleBuffer[A](parent: PipelineBuffer,  initialStrategy: (A, A) => A) extends Buffer[A] {
   
   var commitStrategy: (A, A) => A = initialStrategy
+  var isChanged = false;
 
   override def initCurrent(value: A): Unit = parent.getStableFrame().valueForBuffer(this).value = value
   override def initStrategy(strategy: (A, A) => A): Unit = synchronized(commitStrategy = strategy)
@@ -48,27 +49,36 @@ class PipelineSingleBuffer[A](parent: PipelineBuffer,  initialStrategy: (A, A) =
 
   override def set(value: A)(implicit turn: Turn): Unit =  {
     parent.frame().valueForBuffer(this).value = value
+    isChanged = true
     turn.schedule(this)
   }
 
   override def base(implicit turn: Turn): A = parent.findFrame { _ match {
     case Some(frame) =>
-      val content = if (frame.previous() == null)
-        parent.getStableFrame()
+      val content = if (isChanged)
+        if(frame.previous() == null)
+          parent.getStableFrame()
+        else
+          frame.previous().content
       else
-        frame.previous().content
+        frame.content
       content.valueForBuffer(this).value
-    case None => parent.frame().valueForBuffer(this).value
+    case None => 
+     parent.frame().valueForBuffer(this).value 
+    
   }}
 
   override def get(implicit turn: Turn): A = parent.frame().valueForBuffer(this).value
 
   override def release(implicit turn: Turn): Unit = {
+    isChanged = false
   }
 
   override def commit(implicit turn: Turn): Unit = {
    // current = commitStrategy(current, get)
    // release(turn)
+    set(commitStrategy(base, get))
+    release
   }
   
 }
