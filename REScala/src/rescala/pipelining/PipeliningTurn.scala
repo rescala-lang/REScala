@@ -99,11 +99,23 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
         case _                              => throw new AssertionError("No correct write frame")
       }
     }
+    
+    // head.fillFrame
+      if (!head.incoming.get.isEmpty && !writeFrame.isTouched) {
+        // Very hacky, preserve some changes
+        val currentLevel = head.level.get
+        val outgoings = head.outgoing.get
+        // Only fill the frame with previous values, if it has not been visited  already
+        pipelineFor(head).fillFrame
+        head.level.set(currentLevel)
+        head.outgoing.set(outgoings)
+      }
 
     // Check whether this frame is suspicious for not the evaluate
     val evaluateFrame = if (writeFrame.isSuspicious()) {
       //Dont evaluate this frame if all frames for exactly this turn of all incoming dependencies are not touched
       // Then there was no change but the frame was created for a dynamic dependency which has been removed again
+
       val needEvaluate = head.incoming.get.exists {
         incomingDep =>
           pipelineFor(incomingDep).findFrame {
@@ -120,16 +132,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
 
     if (evaluateFrame) {
       
-      // head.fillFrame
-      if (!head.incoming.get.isEmpty && !writeFrame.isTouched) {
-        // Very hacky, preserve some changes
-        val currentLevel = head.level.get
-        val outgoings = head.outgoing.get
-        // Only fill the frame with previous values, if it has not been visited  already
-        pipelineFor(head).fillFrame
-        head.level.set(currentLevel)
-        head.outgoing.set(outgoings)
-      }
+      
        pipelineFor(head).markTouched
 
 
@@ -223,7 +226,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
 
       dropFrame.markTouched()
 
-      println(s"Remove sink from $source")
+      println(s"Remove sink $sink from source $source")
       source.outgoing.transform { _ - sink }
       val writeFramesAfterDrop = pipelineFor(source).writeFramesAfter(dropFrame)
       writeFramesAfterDrop.foreach { frame => source.outgoing.transform(_ - sink)(frame.turn) }
