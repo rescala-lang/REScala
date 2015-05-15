@@ -63,8 +63,18 @@ class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
 
     // Hope that thread scheduling is not deterministic enough to cover both cases with not too many tries
     while (!removeBeforeAdd || !addBeforeRemove) {
+      
+      implicit val dummyTurn = engine.makeTurn
+      source1.set(0)
+      source2.set(2)
+      
+      assert(source1.outgoing.get == Set(dynDep))
+      assert(source2.outgoing.get == Set(dynDep))
+      assert(dynDep.incoming.get == Set(source1, source2))
+      
       numEvaluated = 0
       dynDepTracker.reset()
+      
 
       println()
       println()
@@ -83,7 +93,6 @@ class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
       threadRemoveDep.join()
       threadAddDep.join()
 
-      implicit val dummyTurn = engine.makeTurn
 
       if (dynDep.incoming.get == Set(source1)) {
         println("==> Add before remove")
@@ -105,8 +114,6 @@ class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
         fail("Invalid result value")
       }
 
-      source1.set(0)
-      source2.set(2)
     }
   }
 

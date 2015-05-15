@@ -41,6 +41,7 @@ trait DynamicReevaluation[+P] {
   def calculatePulseDependencies(implicit turn: Turn): (Pulse[P], Set[Reactive])
 
   final override protected[rescala] def reevaluate()(implicit turn: Turn): ReevaluationResult = {
+    println(s"Reevalaute $this ${pipeline.getPipelineFrames().map { _.turn }.map(turn => (turn, incoming.get(turn), outgoing.get(turn)))}")
     val (newPulse, newDependencies) = calculatePulseDependencies
 
     val oldDependencies = incoming.get

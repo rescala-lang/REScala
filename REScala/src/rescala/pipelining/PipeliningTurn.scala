@@ -121,8 +121,6 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
     if (evaluateFrame) {
       
       // head.fillFrame
-      pipelineFor(head).markTouched
-
       if (!head.incoming.get.isEmpty && !writeFrame.isTouched) {
         // Very hacky, preserve some changes
         val currentLevel = head.level.get
@@ -132,6 +130,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
         head.level.set(currentLevel)
         head.outgoing.set(outgoings)
       }
+       pipelineFor(head).markTouched
 
 
       super.evaluate(head)
@@ -140,10 +139,11 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
     //Mark the frame finished in any case, such that the next turn can continue and does not to wait
     // until the frame is detected for pruning
     pipelineFor(head).markWritten
+    
 
   }
 
-  override def register(sink: Reactive)(source: Reactive): Unit = {
+  override def register(sink: Reactive)(source: Reactive): Unit = createFramesLock.synchronized {
     val needToAddDep = !source.outgoing.get.contains(sink)
     val sourceHasFrame = pipelineFor(source).hasFrame
     if (needToAddDep && sourceHasFrame) {
@@ -200,7 +200,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
     }
   }
 
-  override def unregister(sink: Reactive)(source: Reactive): Unit = {
+  override def unregister(sink: Reactive)(source: Reactive): Unit = createFramesLock.synchronized {
     //  val dropFrame = source.createDynamicDropFrame(sink)
     //  sink.registerDynamicFrame(dropFrame)
 
