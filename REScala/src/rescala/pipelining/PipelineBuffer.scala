@@ -9,6 +9,7 @@ import rescala.graph._
 class ValueHolder[T] (initial : T, val buffer : Buffer[T]){
   
   var value : T = initial
+  var isChanged  = false
   
   def transform(f : T => T) = value = f(value)
   
@@ -35,7 +36,6 @@ class BufferFrameContent {
 class PipelineSingleBuffer[A](parent: PipelineBuffer,  initialStrategy: (A, A) => A) extends Buffer[A] {
   
   var commitStrategy: (A, A) => A = initialStrategy
-  var isChanged = false;
 
   override def initCurrent(value: A): Unit = parent.getStableFrame().valueForBuffer(this).value = value
   override def initStrategy(strategy: (A, A) => A): Unit = synchronized(commitStrategy = strategy)
@@ -48,14 +48,15 @@ class PipelineSingleBuffer[A](parent: PipelineBuffer,  initialStrategy: (A, A) =
   }
 
   override def set(value: A)(implicit turn: Turn): Unit =  {
-    parent.frame().valueForBuffer(this).value = value
-    isChanged = true
+    val valueHolder = parent.needFrame().content.valueForBuffer(this)
+    valueHolder.value = value
+    valueHolder.isChanged = true
     turn.schedule(this)
   }
 
   override def base(implicit turn: Turn): A = parent.findFrame { _ match {
     case Some(frame) =>
-      val content = if (isChanged)
+      val content = if (frame.content.valueForBuffer(this).isChanged)
         if(frame.previous() == null)
           parent.getStableFrame()
         else
@@ -71,7 +72,7 @@ class PipelineSingleBuffer[A](parent: PipelineBuffer,  initialStrategy: (A, A) =
   override def get(implicit turn: Turn): A = parent.frame().valueForBuffer(this).value
 
   override def release(implicit turn: Turn): Unit = {
-    isChanged = false
+    parent.needFrame ().content.valueForBuffer(this).isChanged = false
   }
 
   override def commit(implicit turn: Turn): Unit = {
@@ -188,8 +189,17 @@ class PipelineBuffer {
     // we need to read from may change
     frame match {
       case Some(frame) => frame match {
-        case WriteFrame(_, _) =>
-        case _                => frame.awaitUntilWritten()
+        case WriteFrame(_, _) => 
+          if (frame.turn eq turn) {
+            if (!frame.isWritten)
+              frame.awaitPredecessor(pipelineLock)
+          //  if (!frame.isTouched) {
+             
+            //  fillFrame
+           // }
+          } else
+            frame.awaitUntilWritten()
+        case _                => if (frame.turn eq turn) frame.awaitPredecessor(pipelineLock) else frame.awaitUntilWritten()
       }
       case None =>
     }

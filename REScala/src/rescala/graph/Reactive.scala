@@ -41,12 +41,12 @@ trait Pulsing[+P] extends Reactive {
   
   final def pulse(implicit turn: Turn): Pulse[P] = {  
     //while(!isPreviousFrameFinished){}
-    if (!pipeline.hasFrame) {
+   // if (!pipeline.hasFrame) {
       // Access without a frame: need to wait until frame is finished
       // for all static dependencies it is guaranteed that the frame is already
       // finished
        pipeline.waitUntilCanRead
-    }
+  //  }
     pulses.get
   } 
 }

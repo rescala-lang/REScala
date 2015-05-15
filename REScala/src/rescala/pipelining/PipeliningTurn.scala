@@ -66,10 +66,10 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
 
   override def create[T <: Reactive](dependencies: Set[Reactive], dynamic: Boolean)(f: => T): T = {
     val reactive = f
+    engine.createFrame(this, reactive)
+    markReactiveFramed(reactive)
     ensureLevel(reactive, dependencies)
     if (dynamic) {
-      engine.createFrame(this, reactive)
-      markReactiveFramed(reactive)
       evaluate(reactive)
     } else dependencies.foreach(register(reactive))
     reactive

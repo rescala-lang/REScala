@@ -76,7 +76,7 @@ class ManyThreadsTest extends AssertionsForJUnit with MockitoSugar {
   val s1 = Var(0)
   val s2 = Var(0)
   val d1 = Signals.static(s1, s2) { implicit t =>
-   // randomWait {
+    randomWait {
       assyncAssert(!calculatesOn1)
       calculatesOn1 = true
       opsOnD1 :+= t
@@ -84,10 +84,10 @@ class ManyThreadsTest extends AssertionsForJUnit with MockitoSugar {
       val newVal = s1.get - s2.get
       calculatesOn1 = false
       newVal
-    //}
+    }
   }
   val d2 = Signals.static(s1, s2) { implicit t =>
-   // randomWait {
+    randomWait {
       assert(!calculatesOn2)
       calculatesOn2 = true
       opsOnD2 :+= t
@@ -95,10 +95,10 @@ class ManyThreadsTest extends AssertionsForJUnit with MockitoSugar {
       val newVal = s1.get - 2 * s2.get
       calculatesOn2 = false
       newVal
-   // }
+    }
   }
 
-  @Test
+  @Test (timeout = 20000)
   def testEvaluationParallel() = {
 
     for (i <- 1 to 100) {
@@ -147,7 +147,7 @@ class ManyThreadsTest extends AssertionsForJUnit with MockitoSugar {
     }
   }
 
-  @Test
+  @Test (timeout = 10000)
   def testManyThreads() = {
 
     println("------")

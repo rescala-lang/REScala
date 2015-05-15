@@ -17,8 +17,8 @@ object PipelineTestUtils {
   }
   
   def randomWait[A](op: => A) : A = {
-    val waitBefore = rand.nextInt(50)
-    val waitAfter = rand.nextInt(50)
+    val waitBefore = rand.nextInt(10)
+    val waitAfter = rand.nextInt(10)
     Thread.sleep(waitBefore)
     val result = op
     Thread.sleep(waitAfter)

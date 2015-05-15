@@ -4,8 +4,8 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import rescala.Signals.lift
 import rescala.graph.Committable
-import rescala.turns.{Engine, Turn}
-import rescala.{Signal, Var}
+import rescala.turns.{ Engine, Turn }
+import rescala.{ Signal, Var }
 
 import scala.annotation.tailrec
 
@@ -25,22 +25,20 @@ class PhilosopherTable(philosopherCount: Int, work: Long)(implicit val engine: E
     }
   }
 
-
   def calcFork(leftName: String, rightName: String)(leftState: Philosopher, rightState: Philosopher): Fork =
     (leftState, rightState) match {
       case (Thinking, Thinking) => Free
-      case (Hungry, _) => Taken(leftName)
-      case (_, Hungry) => Taken(rightName)
+      case (Hungry, _)          => Taken(leftName)
+      case (_, Hungry)          => Taken(rightName)
     }
 
   def calcVision(ownName: String)(leftFork: Fork, rightFork: Fork): Vision =
     (leftFork, rightFork) match {
-      case (Free, Free) => Ready
+      case (Free, Free)                         => Ready
       case (Taken(`ownName`), Taken(`ownName`)) => Eating
-      case (Taken(name), _) => WaitingFor(name)
-      case (_, Taken(name)) => WaitingFor(name)
+      case (Taken(name), _)                     => WaitingFor(name)
+      case (_, Taken(name))                     => WaitingFor(name)
     }
-
 
   def createTable(tableSize: Int): Seq[Seating] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
@@ -58,14 +56,12 @@ class PhilosopherTable(philosopherCount: Int, work: Long)(implicit val engine: E
     }
   }
 
-
   def tryEat(seating: Seating): Boolean =
     engine.plan(seating.philosopher) { turn =>
       val forksFree = if (seating.vision(turn) == Ready) {
         seating.philosopher.admit(Hungry)(turn)
         true
-      }
-      else false
+      } else false
       turn.schedule(new Committable {
         override def commit(implicit turn: Turn): Unit = if (forksFree) assert(seating.vision(turn) == Eating)
         override def release(implicit turn: Turn): Unit = ()
@@ -78,7 +74,6 @@ class PhilosopherTable(philosopherCount: Int, work: Long)(implicit val engine: E
 }
 
 object PhilosopherTable {
-
 
   // ============================================= Infrastructure ========================================================
 
@@ -95,14 +90,11 @@ object PhilosopherTable {
   case object Eating extends Vision
   case class WaitingFor(name: String) extends Vision
 
-
   // ============================================ Entity Creation =========================================================
 
   case class Seating(placeNumber: Int, philosopher: Var[Philosopher], leftFork: Signal[Fork], rightFork: Signal[Fork], vision: Signal[Vision])
 
-
   @tailrec // unrolled into loop by compiler
   final def repeatUntilTrue(op: => Boolean): Unit = if (!op) repeatUntilTrue(op)
-
 
 }

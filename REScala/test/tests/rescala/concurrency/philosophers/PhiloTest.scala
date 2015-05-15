@@ -21,7 +21,7 @@ class PhiloTest extends AssertionsForJUnit {
 
   def `eat!`(engine: Engine[Turn]): Unit = {
     val philosophers = 4
-    val threadCount = 3
+    val threadCount = 2
     val table = new PhilosopherTable(philosophers, 0)(engine)
     val blocks: Array[Array[Seating]] = deal(table.seatings.toList, List.fill(threadCount)(Nil)).map(_.toArray).toArray
 
@@ -31,8 +31,12 @@ class PhiloTest extends AssertionsForJUnit {
       while (!cancel) {
         val myBlock = blocks(threadIndex % blocks.length)
         val seating = myBlock(Random.nextInt(myBlock.length))
+        val thread = Thread.currentThread().getId
+        println(s"${thread}: ${seating.placeNumber} wants to eat")
         table.eatOnce(seating)
+        println(s"${thread}: ${seating.placeNumber} ate once")
         seating.philosopher.set(Thinking)(table.engine)
+        println(s"${thread}: ${seating.placeNumber} is thinkning again")
       }
     }
 
@@ -45,5 +49,6 @@ class PhiloTest extends AssertionsForJUnit {
   }
 
   @Test def eatingContestsSpinning(): Unit = `eat!`(Engines.spinning)
+  @Test def eatingContestsPipelining(): Unit = `eat!`(Engines.pipelining)
 
 }
