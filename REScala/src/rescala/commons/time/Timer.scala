@@ -44,7 +44,7 @@ class Timer(val interval: Time) extends Ordered[Timer] {
   /** Returns a new Signal that counts the local time from now */
   def localTime: Signal[Time] = {
     val now = time()
-    SignalSynt(time) {s: SignalSynt[Time] => time() - now}
+    SignalSynt(time) {s: SignalSynt[Time] => time(s) - now}
   }
 
   /** Returns a Signal which is true if the specified delay has passed */
@@ -63,12 +63,12 @@ class Timer(val interval: Time) extends Ordered[Timer] {
     val n = (window / delta).asInstanceOf[Int]
     (tick snapshot s).changed.last(n)
   }
-  
+
   /** Samples this expression on each occurence of the timer */
   def sample[T](expr: => T): Signal[T] = {
     this.tock.set(None)(_ => expr)
   }
-  
+
   /** The current system time, sampled by this timer */
   def currentTime: Signal[Time] = sample(Time.current)
 
@@ -81,7 +81,7 @@ object Timer {
 
   /** Factory method to create timers */
   def apply(interval: Time): Timer = new Timer(interval)
-  
+
   /** Convenience method for creating a signal holding the current time */
   def currentTime(interval: Time): Signal[Time] = new Timer(interval).currentTime
 
