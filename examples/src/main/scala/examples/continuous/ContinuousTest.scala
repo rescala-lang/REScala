@@ -9,11 +9,11 @@ import rescala.commons.time._
 
 
 object ContinuousTest extends App {
-  val timer = Timer(0)
-  
-  timer.after(5.0) += { _ => println("5 seconds have passed") }
-  
-  timer.after(10) += { _ =>
+  val timer = Timer(Time.s(1.0))
+
+  timer.after(Time.s(4.0)) += { _ => println("5 seconds have passed") }
+
+  timer.after(Time.s(9.0)) += { _ =>
     val local = timer.localTime
     local.changed += {(t : Time) => println("The local time after 10 seconds is is " + t)}
   }
