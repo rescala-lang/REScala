@@ -98,7 +98,7 @@ class ManyThreadsTest extends AssertionsForJUnit with MockitoSugar {
     }
   }
 
-  @Test (timeout = 20000)
+  @Test (timeout = 30000)
   def testEvaluationParallel() = {
 
     for (i <- 1 to 100) {

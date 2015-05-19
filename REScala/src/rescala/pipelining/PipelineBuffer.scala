@@ -6,40 +6,45 @@ import scala.annotation.tailrec
 
 import rescala.graph._
 
-class ValueHolder[T] (initial : T, val buffer : Buffer[T]){
-  
-  var value : T = initial
-  var isChanged  = false
-  
-  def transform(f : T => T) = value = f(value)
-  
-  def duplicate = new ValueHolder(value, buffer)
-  
+class ValueHolder[T](initial: T, val buffer: PipelineSingleBuffer[T]) {
+
+  var value: T = initial
+  var isChanged = false
+
+  def transform(f: T => T) = value = f(value)
+
+  def duplicate(newTurn : Turn) = {
+     val duplicate = new ValueHolder(value, buffer)
+     if (buffer.takePrevious) {
+       newTurn.schedule(buffer)
+     }
+     duplicate
+  }
+
 }
 
 class BufferFrameContent {
-  
-  var values : List[ValueHolder[_]] = List()
-  
-  def valueForBuffer[T](buf : Buffer[T]) : ValueHolder[T] = values.find { _.buffer eq buf }.get.asInstanceOf[ValueHolder[T]] // Cast is safe
-  
-  def duplicate = {
+
+  var values: List[ValueHolder[_]] = List()
+
+  def valueForBuffer[T](buf: PipelineSingleBuffer[T]): ValueHolder[T] = values.find { _.buffer eq buf }.get.asInstanceOf[ValueHolder[T]] // Cast is safe
+
+  def duplicate(newTurn : Turn)= {
     val newContent = new BufferFrameContent
     for (v <- values) {
-      newContent.values :+= v.duplicate
+      newContent.values :+= v.duplicate(newTurn)
     }
     newContent
   }
-  
+
 }
 
-class PipelineSingleBuffer[A](parent: PipelineBuffer,  initialStrategy: (A, A) => A) extends Buffer[A] {
-  
+class PipelineSingleBuffer[A](parent: PipelineBuffer, initialStrategy: (A, A) => A, val takePrevious: Boolean) extends Buffer[A] {
+
   var commitStrategy: (A, A) => A = initialStrategy
 
   override def initCurrent(value: A): Unit = parent.getStableFrame().valueForBuffer(this).value = value
   override def initStrategy(strategy: (A, A) => A): Unit = synchronized(commitStrategy = strategy)
-
 
   override def transform(f: (A) => A)(implicit turn: Turn): A = synchronized {
     val value = f(get)
@@ -47,55 +52,98 @@ class PipelineSingleBuffer[A](parent: PipelineBuffer,  initialStrategy: (A, A) =
     value
   }
 
-  override def set(value: A)(implicit turn: Turn): Unit =  {
+  private def set(value: A, silent : Boolean)(implicit turn: Turn): Unit = {
     val valueHolder = parent.needFrame().content.valueForBuffer(this)
     valueHolder.value = value
     valueHolder.isChanged = true
+  //  if (!silent)
+   //   println(s"${parent.reactive}: SET to $value for $turn")
     turn.schedule(this)
   }
+  
+  override def set(value: A)(implicit turn: Turn): Unit = {
+    set(value, false)
+  }
 
-  override def base(implicit turn: Turn): A = parent.findFrame { _ match {
-    case Some(frame) =>
-      val content = if (frame.content.valueForBuffer(this).isChanged)
-        if(frame.previous() == null)
-          parent.getStableFrame()
+  override def base(implicit turn: Turn): A = parent.findFrame {
+    _ match {
+      case Some(frame) =>
+        val content = if (frame.content.valueForBuffer(this).isChanged)
+          if (frame.previous() == null)
+            parent.getStableFrame()
+          else
+            frame.previous().content
         else
-          frame.previous().content
-      else
-        frame.content
-      content.valueForBuffer(this).value
-    case None => 
-     parent.frame().valueForBuffer(this).value 
-    
-  }}
+          frame.content
+        content.valueForBuffer(this).value
+      case None =>
+        parent.frame().valueForBuffer(this).value
 
-  override def get(implicit turn: Turn): A = parent.frame().valueForBuffer(this).value
+    }
+  }
+
+  override def get(implicit turn: Turn): A = if (!takePrevious) parent.frame().valueForBuffer(this).value else {
+    parent.findFrame {
+      _ match {
+        case Some(frame) =>
+          val hasValue = frame.content.valueForBuffer(this).isChanged || frame.isWritten
+          val content = if (!hasValue) {
+          //  println(s"GET WITHOUT VALUE from ${parent.reactive} ")
+            if (frame.previous() == null)
+              parent.getStableFrame()
+            else
+              frame.previous().content
+          } else
+            frame.content
+          content.valueForBuffer(this).value
+        case None =>
+      //    println("GET WITHOUT FRAME")
+          parent.frame().valueForBuffer(this).value
+      }
+    }
+  }
 
   override def release(implicit turn: Turn): Unit = {
-    parent.needFrame ().content.valueForBuffer(this).isChanged = false
+    val frame = parent.needFrame()
+    assert(frame.isWritten, s"Release buffer for ${parent.reactive} but is not written")
+    frame.content.valueForBuffer(this).isChanged = false
   }
 
   override def commit(implicit turn: Turn): Unit = {
-   // current = commitStrategy(current, get)
-   // release(turn)
-    set(commitStrategy(base, get))
+    // current = commitStrategy(current, get)
+    // release(turn)
+     val requiredValue =  if (parent.needFrame().content.valueForBuffer(this).isChanged) {
+        val oldValue = base
+        val currentValue = get
+        val commitValue = commitStrategy(oldValue, currentValue)
+       // println(s"${parent.reactive}: COMMIT $oldValue -> $currentValue = $commitValue at $turn")
+        set(commitValue, true)
+        commitValue
+      } else {
+        parent.needFrame().content.valueForBuffer(this).isChanged= true
+        val oldValue = base
+       // println(s"${parent.reactive}: COMMIT for previous $oldValue at $turn")
+        set(oldValue, true)
+        oldValue
+      }
     release
+    assert(get == requiredValue)
   }
-  
+
 }
 
 object PipelineBuffer {
-    protected[pipelining] def pipelineFor(at : Reactive) = at.pipeline
+  protected[pipelining] def pipelineFor(at: Reactive) = at.pipeline
 }
 
-class PipelineBuffer {
+class PipelineBuffer(val reactive: Reactive) {
 
-  protected[this] type Content = BufferFrameContent;
+  protected[this]type Content = BufferFrameContent;
 
   private type CFrame = Frame[Content]
 
-  protected[this] def initialStableFrame: Content =  new BufferFrameContent
-  protected[this] def duplicate(content: Content): Content = content.duplicate
+  protected[this] def initialStableFrame: Content = new BufferFrameContent
+  protected[this] def duplicate(content: Content, newTurn: Turn): Content = content.duplicate(newTurn)
   protected[this] var stableFrame: Content = initialStableFrame
   protected[pipelining] def getStableFrame() = stableFrame
 
@@ -107,10 +155,10 @@ class PipelineBuffer {
   private def lockPipeline[A](op: => A): A = pipelineLock.synchronized {
     op
   }
-  
-  protected[pipelining] def createBuffer[T](initval : T, commitStrategy: (T,T)=>T) : Buffer[T] = {
+
+  protected[pipelining] def createBuffer[T](initval: T, commitStrategy: (T, T) => T, takePrevious: Boolean): PipelineSingleBuffer[T] = {
     assert(queueHead == null)
-    val newBuffer =  new PipelineSingleBuffer(this, commitStrategy)
+    val newBuffer = new PipelineSingleBuffer(this, commitStrategy, takePrevious)
     stableFrame.values :+= new ValueHolder(initval, newBuffer)
     newBuffer
   }
@@ -187,19 +235,21 @@ class PipelineBuffer {
   protected[rescala] def waitUntilCanRead(implicit turn: Turn): Unit = {
     // TODO IF keep frame reordering, need to do something more here. because the frame
     // we need to read from may change
+
     frame match {
       case Some(frame) => frame match {
-        case WriteFrame(_, _) => 
+        case WriteFrame(_, _) =>
           if (frame.turn eq turn) {
             if (!frame.isWritten)
               frame.awaitPredecessor(pipelineLock)
-          //  if (!frame.isTouched) {
-             
-            //  fillFrame
-           // }
+            if (!frame.isTouched) {
+           //   println(s"Fillframe for $reactive")
+              //turn.asInstanceOf[PipeliningTurn].fillFrameFor(reactive)
+             // fillFrame
+            }
           } else
             frame.awaitUntilWritten()
-        case _                => if (frame.turn eq turn) frame.awaitPredecessor(pipelineLock) else frame.awaitUntilWritten()
+        case _ => if (frame.turn eq turn) frame.awaitPredecessor(pipelineLock) else frame.awaitUntilWritten()
       }
       case None =>
     }
@@ -227,7 +277,7 @@ class PipelineBuffer {
     assert(!hasFrame)
     def createFrame(prev: Content): CFrame = {
       val newFrame = WriteFrame[Content](turn, this)
-      newFrame.content = duplicate(prev)
+      newFrame.content = duplicate(prev, turn)
       assert(newFrame.turn == turn)
       newFrame
     }
@@ -247,12 +297,12 @@ class PipelineBuffer {
     assert(!hasFrame)
     def createFrame(prev: Content): CFrame = {
       val newFrame = WriteFrame[Content](turn, this)
-      newFrame.content = duplicate(prev)
+      newFrame.content = duplicate(prev, turn)
       assert(newFrame.turn == turn)
       newFrame
     }
-    
-    def assertNoOtherFrameBefore(tail : CFrame) : Boolean = {
+
+    def assertNoOtherFrameBefore(tail: CFrame): Boolean = {
       if (tail == null)
         true
       else if (stillBefore(tail.turn))
@@ -322,7 +372,7 @@ class PipelineBuffer {
       val preceedingFrame = findFrameToInsertAfter()
 
       val newFrame = WriteFrame[Content](otherTurn, this)
-      newFrame.content = duplicate(preceedingFrame.content)
+      newFrame.content = duplicate(preceedingFrame.content, otherTurn)
       newFrame.insertAfter(preceedingFrame)
     }
   }
@@ -334,7 +384,7 @@ class PipelineBuffer {
       if (head == null) {
         throw new AssertionError(s"No frame found for turn $turn")
       } else if (head.turn == turn) {
-        val newContent = duplicate(if (head.previous() == null) stableFrame else head.previous().content)
+        val newContent = duplicate(if (head.previous() == null) stableFrame else head.previous().content, turn)
         head.content = newContent
       } else {
         refreshFrame(head.next())
@@ -373,13 +423,13 @@ class PipelineBuffer {
       val readFrame = makeFrame
       predeceedingFrameOpt match {
         case Some(predecessor) =>
-          readFrame.content = duplicate(predecessor.content)
+          readFrame.content = duplicate(predecessor.content, turn)
           val insertAtEnd = predecessor == queueTail
           readFrame.insertAfter(predecessor)
           if (insertAtEnd)
             queueTail = readFrame
         case None =>
-          readFrame.content = duplicate(stableFrame)
+          readFrame.content = duplicate(stableFrame, turn)
           if (queueHead == null) {
             queueHead = readFrame
             queueTail = queueHead

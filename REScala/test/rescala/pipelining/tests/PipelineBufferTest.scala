@@ -16,9 +16,9 @@ class PipelineBufferTest extends AssertionsForJUnit with MockitoSugar {
   
   
   
-  val pipelineBuffer= new PipelineBuffer
+  val pipelineBuffer= new PipelineBuffer(null)
   val engine = new PipelineEngine
-  val buffer : Buffer[Int] = pipelineBuffer.createBuffer(0, Buffer.commitAsIs)
+  val buffer  = pipelineBuffer.createBuffer[Int](0, Buffer.commitAsIs, false)
 
   
   def readStableFrame() = {

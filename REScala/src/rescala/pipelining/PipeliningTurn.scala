@@ -74,6 +74,19 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
     } else dependencies.foreach(register(reactive))
     reactive
   }
+  
+  def fillFrameFor(head: Reactive) = {
+    // head.fillFrame
+      if (!head.incoming.get.isEmpty && !pipelineFor(head).needFrame().isTouched) {
+        // Very hacky, preserve some changes
+        val currentLevel = head.level.get
+        val outgoings = head.outgoing.get
+        // Only fill the frame with previous values, if it has not been visited  already
+        pipelineFor(head).fillFrame
+        head.level.set(currentLevel)
+        head.outgoing.set(outgoings)
+      }
+  }
 
   override def evaluate(head: Reactive) = {
     assert(pipelineFor(head).hasFrame(this), "No frame was created in turn " + this + " for " + head)
@@ -100,16 +113,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
       }
     }
     
-    // head.fillFrame
-      if (!head.incoming.get.isEmpty && !writeFrame.isTouched) {
-        // Very hacky, preserve some changes
-        val currentLevel = head.level.get
-        val outgoings = head.outgoing.get
-        // Only fill the frame with previous values, if it has not been visited  already
-        pipelineFor(head).fillFrame
-        head.level.set(currentLevel)
-        head.outgoing.set(outgoings)
-      }
+   // fillFrameFor(head)
 
     // Check whether this frame is suspicious for not the evaluate
     val evaluateFrame = if (writeFrame.isSuspicious()) {
@@ -261,10 +265,14 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
     // Now there may already be some additional frames, so cannot remove them
     framedReactives.getAndUpdate { reactives: Set[Reactive] => reactives ++ newFramedReactives }
   }
+  
+  override def commitPhase() : Unit = {
+     // TODO should not be needed anymore because of pruning. But pruning does not handle dynamic dependencies by now
+    framedReactives.get.foreach(pipelineFor(_).markWritten)
+    super.commitPhase()
+  }
 
   override def releasePhase(): Unit = {
-    // TODO should not be needed anymore because of pruning. But pruning does not handle dynamic dependencies by now
-    framedReactives.get.foreach(pipelineFor(_).markWritten)
     engine.turnCompleted(this)
   }
 

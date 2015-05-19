@@ -15,11 +15,11 @@ trait Reactive  {
   
   protected[rescala] def engine: Engine[Turn]
   protected[rescala] def lock: TurnLock
-  private[rescala] final val pipeline = new PipelineBuffer
+  private[rescala] final val pipeline = new PipelineBuffer(this)
   
   private[rescala] final val level : Buffer[Int] = engine.buffer(0, math.max, this)
   private[rescala] final val outgoing : Buffer[Set[Reactive]] = engine.buffer(Set(), Buffer.commitAsIs, this)
-  private[rescala] val incoming : Buffer[Set[Reactive]] = engine.buffer(Set(), Buffer.commitAsIs, this)
+  private[rescala] val incoming : Buffer[Set[Reactive]] = engine.buffer(Set(), Buffer.commitAsIs, this, true)
   
   
   
@@ -37,7 +37,7 @@ trait Reactive  {
 /** A node that has nodes that depend on it */
 trait Pulsing[+P] extends Reactive {
  
-  protected[this] final val pulses : Buffer[Pulse[P]] = engine.buffer(Pulse.none, Buffer.transactionLocal, this)
+  protected[this] final val pulses : Buffer[Pulse[P]] = engine.buffer(Pulse.none, Buffer.transactionLocal, this, true)
   
   final def pulse(implicit turn: Turn): Pulse[P] = {  
     //while(!isPreviousFrameFinished){}

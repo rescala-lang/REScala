@@ -3,7 +3,6 @@ package rescala.pipelining.tests
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-
 import rescala.Signals
 import rescala.Var
 import rescala.graph.Buffer
@@ -12,6 +11,7 @@ import rescala.pipelining.PipeliningTurn
 import rescala.pipelining.tests.PipelineTestUtils._
 import rescala.turns.Ticket
 import rescala.turns.Turn
+import rescala.pipelining.PipelineBuffer
 
 class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
 
@@ -92,7 +92,7 @@ class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
 
       threadRemoveDep.join()
       threadAddDep.join()
-
+      
 
       if (dynDep.incoming.get == Set(source1)) {
         println("==> Add before remove")
@@ -148,6 +148,8 @@ class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
       updateDepThread.join()
 
       implicit val dummyTurn = engine.makeTurn
+      
+      assert(PipelineBuffer.pipelineFor(dynDep).getPipelineFrames().isEmpty)
 
       // in scheduling case, there should no dependency to source2
       assert(dynDep.incoming.get == Set(source1))
