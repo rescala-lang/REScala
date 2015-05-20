@@ -4,9 +4,9 @@ organization := "de.tuda.stg"
 
 version := "0.11.0"
 
-scalaVersion := "2.11.5"
+scalaVersion := "2.11.6"
 
-crossScalaVersions := Seq("2.10.4", "2.11.5")
+crossScalaVersions := Seq("2.10.5", "2.11.6")
 
 scalaSource in Compile <<= baseDirectory { (base) => new File(base, "REScala/src") }
 
@@ -23,7 +23,7 @@ excludeFilter <<= scalaVersion {
 
 libraryDependencies ++= (
   "org.mockito" % "mockito-all" % "1.10.19" % "test" ::
-    "org.scalatest" %% "scalatest" % "2.2.3" % "test" ::
+    "org.scalatest" %% "scalatest" % "2.2.5" % "test" ::
     "com.novocode" % "junit-interface" % "0.11" % "test" ::
     "org.scala-stm" %% "scala-stm" % "0.7" ::
     Nil)
