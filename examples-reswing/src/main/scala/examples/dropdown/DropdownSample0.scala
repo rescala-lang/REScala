@@ -26,9 +26,8 @@ object DropdownSample0 extends SimpleSwingApplication {
   
   
   val inputField = new ReTextField(text = "Berlin, Paris, London, Rome", columns = 50)
-  
   val inputText = Signal { inputField.text() }
-  val commaSeparated = Signal { inputText().split(",\\s*").toList }
+  val commaSeparated = Signal { if(inputText() == null) Nil else inputText().split(",\\s*").toList }
    
   
   val dropdown = new ReDynamicComboBox (options = commaSeparated, selection = -1)
