@@ -18,7 +18,6 @@ object Signals extends GeneratedLift {
 
         override def calculatePulse()(implicit turn: Turn): Pulse[T] = {
           val currentValue = pulses.base.current.get
-          println(s"${Thread.currentThread().getId} Old value is $currentValue")
           Pulse.diff(expr(turn, currentValue), currentValue)
         }
         

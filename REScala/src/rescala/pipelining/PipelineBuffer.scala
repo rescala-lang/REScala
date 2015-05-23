@@ -53,21 +53,19 @@ class PipelineSingleBuffer[A](parent: PipelineBuffer, initialStrategy: (A, A) =>
     value
   }
 
-  private def set(value: A, silent: Boolean)(implicit turn: Turn): Unit = {
+  private def setNotSchedule(value: A)(implicit turn: Turn): Unit = {
     implicit val pTurn = turn.asInstanceOf[PipeliningTurn]
     val frame =  parent.needFrame()
     assert(!frame.isWritten)
     val valueHolder =frame.content.valueForBuffer(this)
     valueHolder.value = value
     valueHolder.isChanged = true
-      if (!silent) 
-       println(s"${Thread.currentThread().getId}: SET to $value for $turn at ${parent.reactive}")
     
   }
 
   override def set(value: A)(implicit turn: Turn): Unit = {
     implicit val pTurn = turn.asInstanceOf[PipeliningTurn]
-    set(value, false)
+    setNotSchedule(value)
     turn.schedule(this)
   }
 
@@ -77,8 +75,7 @@ class PipelineSingleBuffer[A](parent: PipelineBuffer, initialStrategy: (A, A) =>
     parent.findFrame {
       _ match {
         case Some(frame) =>
-          println(s"${Thread.currentThread().getId} has already new value for $turn = ${frame.content.valueForBuffer(this).isChanged} at ${parent.reactive}")
-          val content = if (frame.content.valueForBuffer(this).isChanged)
+           val content = if (frame.content.valueForBuffer(this).isChanged)
             if (frame.previous() == null)
               parent.getStableFrame()
             else
@@ -118,18 +115,15 @@ class PipelineSingleBuffer[A](parent: PipelineBuffer, initialStrategy: (A, A) =>
           case Some(frame) =>
             val hasValue = frame.content.valueForBuffer(this).isChanged || frame.isWritten
             val content = if (!hasValue) {
-                println(s"${Thread.currentThread().getId}: GET WITHOUT VALUE from ${parent.reactive} from frame ${frame.turn} ")
               if (frame.previous() == null)
                 parent.getStableFrame()
               else
                 frame.previous().content
             } else {
-              println(s"${Thread.currentThread().getId}: GET WITH VALUE from ${parent.reactive} from frame ${frame.turn}")
               frame.content
             }
             content.valueForBuffer(this).value
           case None =>
-                println(s"${Thread.currentThread().getId}: GET WITHOUT FRAME")
             parent.frame().valueForBuffer(this).value
         }
       }
@@ -139,32 +133,26 @@ class PipelineSingleBuffer[A](parent: PipelineBuffer, initialStrategy: (A, A) =>
   override def release(implicit turn: Turn): Unit = {
     implicit val pTurn = turn.asInstanceOf[PipeliningTurn]
     val frame = parent.needFrame()
-  //  if (!frame.isWritten) {
-  //    assert(frame.isWritten, s"Release buffer for ${parent.reactive} but is not written")
-  //  }
     frame.content.valueForBuffer(this).isChanged = false
   }
 
   override def commit(implicit turn: Turn): Unit = {
     implicit val pTurn = turn.asInstanceOf[PipeliningTurn]
-    // current = commitStrategy(current, get)
-    // release(turn)
     val requiredValue = if (parent.needFrame().content.valueForBuffer(this).isChanged) {
       val oldValue = base
       val currentValue = get
       val commitValue = commitStrategy(oldValue, currentValue)
-      // println(s"${parent.reactive}: COMMIT $oldValue -> $currentValue = $commitValue at $turn")
-      set(commitValue, true)
+      setNotSchedule(commitValue)
       commitValue
     } else {
       parent.needFrame().content.valueForBuffer(this).isChanged = true
       parent.waitUntilCanWrite
       val oldValue = base
-    //   println(s"${Thread.currentThread().getId}: COMMIT for previous $oldValue at $turn at ${parent.reactive}")
       val commitValue = commitStrategy(oldValue, oldValue)
-      set(commitValue, true)
+      setNotSchedule(commitValue)
       commitValue
     }
+    
     release
    // assert(get == requiredValue)
   }

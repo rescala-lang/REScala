@@ -4,7 +4,17 @@ import rescala.graph.ReevaluationResult.{Dynamic, Static}
 import rescala.graph.{Committable, Reactive}
 import rescala.turns.Turn
 
+object QueueAction {
+  
+  sealed abstract class QueueAction
+  case object EnqueueDependencies extends QueueAction
+  case object RequeueReactive extends QueueAction
+  
+}
+
 trait TurnImpl extends Turn {
+  import QueueAction._
+  
   implicit def currentTurn: TurnImpl = this
 
   protected[this] var toCommit = Set[Committable]()
@@ -12,28 +22,29 @@ trait TurnImpl extends Turn {
 
   val levelQueue = new LevelQueue()
 
-  protected def requeue(head: Reactive,changed: Boolean, level: Int, redo: Boolean): Unit = {
-      if (redo) levelQueue.enqueue(level, changed)(head)
-      else if (changed) head.outgoing.get.foreach(levelQueue.enqueue(level, changed))
+  protected def requeue(head: Reactive,changed: Boolean, level: Int, action: QueueAction): Unit = action match {
+    case EnqueueDependencies => if (changed) head.outgoing.get.foreach(levelQueue.enqueue(level, changed))
+    case RequeueReactive => levelQueue.enqueue(level, changed)(head)
   }
   
-  def evaluate(head: Reactive): Boolean = {
+  /**
+   * Evaluates the the given Reactive and requeues it.
+   * @return whether the reactive itself is requeued or its dependencies
+   */
+  def evaluate(head: Reactive): QueueAction = {
     val result = head.reevaluate() 
-    println(s"${Thread.currentThread().getId} EVALUATE $head result $result")
-    result match {
+    val (hasChanged, newLevel, action) = result match {
       case Static(hasChanged) =>
-        requeue(head, hasChanged, level = -42, redo = false)
-        false
+        (hasChanged, -1, EnqueueDependencies)
       case Dynamic(hasChanged, diff) =>
         diff.removed foreach unregister(head)
         diff.added foreach register(head)
         val newLevel = maximumLevel(diff.novel) + 1
-        val redo =head.level.get < newLevel
-        //assert(! (hasChanged && redo), "Introducing a glitch, head evaluated and requeued") // Isnt that a glitch?
-        requeue(head, hasChanged, newLevel, redo)
-        redo
+        val action = if (head.level.get < newLevel) RequeueReactive else EnqueueDependencies
+        (hasChanged, newLevel,  action)
     }
-
+    requeue(head, hasChanged, newLevel, action)
+    action
   }
 
   def maximumLevel(dependencies: Set[Reactive])(implicit turn: Turn): Int = dependencies.foldLeft(-1)((acc, r) => math.max(acc, r.level.get))

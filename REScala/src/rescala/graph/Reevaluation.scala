@@ -1,6 +1,5 @@
 package rescala.graph
 
-import rescala.pipelining.PipelineSingleBuffer
 import rescala.turns.Turn
 
 
@@ -27,9 +26,6 @@ trait StaticReevaluation[+P] {
   protected[rescala] def calculatePulse()(implicit turn: Turn): Pulse[P]
 
   final override protected[rescala] def reevaluate()(implicit turn: Turn): ReevaluationResult = {
-  //  println(s"${Thread.currentThread().getId}: Begin reeval for $turn with ${ pipeline.getStableFrame().valueForBuffer(pulses.asInstanceOf[PipelineSingleBuffer[P]])}  -  ${ ( pipeline.getPipelineFrames() ).map { x =>
-  //    val holder = x.content.valueForBuffer(pulses.asInstanceOf[PipelineSingleBuffer[P]])
-  //    (x.turn, x.isWritten, holder.value, holder.isChanged)}}")
     val p = calculatePulse()
     pulses.set(p)
     ReevaluationResult.Static(p.isChange)

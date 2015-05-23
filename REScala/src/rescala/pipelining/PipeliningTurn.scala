@@ -12,6 +12,9 @@ import rescala.propagation.TurnImpl
 import rescala.turns.Turn
 import rescala.util.JavaFunctionsImplicits.buildUnaryOp
 import rescala.graph.WriteFrame
+import rescala.propagation.QueueAction.QueueAction
+import rescala.propagation.QueueAction.RequeueReactive
+import rescala.propagation.QueueAction.EnqueueDependencies
 
 object PipeliningTurn {
 
@@ -44,11 +47,12 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
 
   override implicit def currentTurn: PipeliningTurn = this
 
-  protected override def requeue(head: Reactive, changed: Boolean, level: Int, redo: Boolean): Unit = {
-    if (redo)
-      allNodesQueue.enqueue(level, changed)(head)
-    else head.outgoing.get.foreach(allNodesQueue.enqueue(level, changed))
-    super.requeue(head, changed, level, redo)
+  protected override def requeue(head: Reactive, changed: Boolean, level: Int, action : QueueAction): Unit = {
+    action match {
+      case RequeueReactive => allNodesQueue.enqueue(level, changed)(head)
+      case EnqueueDependencies => head.outgoing.get.foreach(allNodesQueue.enqueue(level, changed))
+    }
+    super.requeue(head, changed, level, action)
   }
 
   private def markUnreachablePrunedNodesWritten(head: Reactive) = {
@@ -56,6 +60,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
     allNodesQueue.processQueueUntil { allHead =>
       assert(pipelineFor(allHead).hasFrame)
       if (allHead.level.get < head.level.get) {
+        commitFor(allHead)
         pipelineFor(allHead).markWritten
         false
       } else {
@@ -80,11 +85,11 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
 
     // Marks all nodes written, which cannot be reached anymore and which was pruned
     // in order not to block pipelining longer on these nodes
-    //   markUnreachablePrunedNodesWritten(head)
+    markUnreachablePrunedNodesWritten(head)
 
     pipelineFor(head).waitUntilCanWrite(this)
 
-    println(s"${Thread.currentThread().getId} EVALUATE $head during $this")
+   // println(s"${Thread.currentThread().getId} EVALUATE $head during $this")
 
     var frameFound = false;
     head.pipeline.foreachFrameTopDown { frame =>
@@ -133,32 +138,27 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
     } else
       true
 
-    val needEvalAgain = if (evaluateFrame) {
-
+    if (evaluateFrame) {
       pipelineFor(head).markTouched
-
-      super.evaluate(head)
+      val queueAction = super.evaluate(head)
+      queueAction match {
+        case EnqueueDependencies =>
+          commitFor(head)
+          pipelineFor(head).markWritten
+        case RequeueReactive =>
+          // This reactive will be evaluated once more, so we cannot finish it
+      }
+      queueAction
     } else {
-      false
+      // Actually, does not make a difference what we return here
+      EnqueueDependencies
     }
-
-    if (!needEvalAgain) {
-      commitFor(head)
-
-      //Mark the frame finished in any case, such that the next turn can continue and does not to wait
-      // until the frame is detected for pruning
-      pipelineFor(head).markWritten
-    }
-
-    needEvalAgain
-
   }
 
   private def commitFor(head: Reactive): Unit = {
     val buffersToCommit = pipelineFor(head).createdBuffers.asInstanceOf[Set[Committable]]
 
     buffersToCommit.foreach { _.commit }
-    println(s"COMMIT $buffersToCommit")
     toCommit --= buffersToCommit
 
   }
@@ -288,7 +288,6 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
 
   override def commitPhase(): Unit = {
     // TODO should not be needed anymore because of pruning. But pruning does not handle dynamic dependencies by now
-    println(s"Left to commit $toCommit")
     super.commitPhase()
     framedReactives.get.foreach(r => {
       if (!pipelineFor(r).needFrame().isWritten)

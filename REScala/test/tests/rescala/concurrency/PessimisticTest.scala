@@ -14,7 +14,7 @@ import rescala.{Signals, Var}
 import scala.collection.JavaConverters._
 
 class PessimisticTestTurn extends Pessimistic(backOff = 0) {
-  override def evaluate(r: Reactive): Boolean = {
+  override def evaluate(r: Reactive) = {
     while (Pessigen.syncStack.get() match {
       case stack@(set, bar) :: tail if set(r) =>
         bar.ready.countDown()
