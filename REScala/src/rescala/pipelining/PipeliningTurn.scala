@@ -12,9 +12,11 @@ import rescala.propagation.TurnImpl
 import rescala.turns.Turn
 import rescala.util.JavaFunctionsImplicits.buildUnaryOp
 import rescala.graph.WriteFrame
-import rescala.propagation.QueueAction.QueueAction
-import rescala.propagation.QueueAction.RequeueReactive
-import rescala.propagation.QueueAction.EnqueueDependencies
+import rescala.propagation.QueueAction
+import rescala.propagation.RequeueReactive
+import rescala.propagation.EnqueueDependencies
+import rescala.propagation.PropagateNoChanges
+import rescala.propagation.DoNothing
 
 object PipeliningTurn {
 
@@ -25,7 +27,10 @@ object PipeliningTurn {
 
 }
 
-class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean = false) extends TurnImpl with SequentialFrameCreator {
+class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean = false) 
+  extends TurnImpl 
+  with PropagateNoChanges 
+  with SequentialFrameCreator {
 
   import PipelineBuffer._
 
@@ -56,17 +61,32 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
     reactive
   }
 
+  private def needsReevaluation(reactive: Reactive) = {
+    val incoming = reactive.incoming.get
+    if (incoming.isEmpty)
+      true
+    else reactive.incoming.get.exists {
+      incomingDep =>
+        pipelineFor(incomingDep).findFrame {
+          _ match {
+            case Some(frame) => frame.isTouched
+            case None        => false
+          }
+        }
+    }
+  }
+
   override def evaluate(head: Reactive) = {
     assert(pipelineFor(head).hasFrame(this), "No frame was created in turn " + this + " for " + head)
 
     // TODO Modify queue for nochanges
     // Marks all nodes written, which cannot be reached anymore and which was pruned
     // in order not to block pipelining longer on these nodes
-  //  markUnreachablePrunedNodesWritten(head)
+    //  markUnreachablePrunedNodesWritten(head)
 
     pipelineFor(head).waitUntilCanWrite(this)
 
-   // println(s"${Thread.currentThread().getId} EVALUATE $head during $this")
+    println(s"${Thread.currentThread().getId} EVALUATE $head during $this")
 
     var frameFound = false;
     head.pipeline.foreachFrameTopDown { frame =>
@@ -78,7 +98,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
         assert(frame.turn > this)
       }
     }
-    
+
     val writeFrame = pipelineFor(head).findFrame {
       _ match {
         case Some(frame @ WriteFrame(_, _)) => frame
@@ -87,23 +107,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
     }
 
     // Check whether this frame is suspicious for not the evaluate
-    val evaluateFrame = if (writeFrame.isSuspicious()) {
-      //Dont evaluate this frame if all frames for exactly this turn of all incoming dependencies are not touched
-      // Then there was no change but the frame was created for a dynamic dependency which has been removed again
-
-      val needEvaluate = head.incoming.get.exists {
-        incomingDep =>
-          pipelineFor(incomingDep).findFrame {
-            _ match {
-              case Some(frame) => frame.isTouched
-              case None        => false
-            }
-          }
-      }
-      assert { PipeliningTurn.numSuspiciousNotEvaluatedFrames += 1; true }
-      needEvaluate
-    } else
-      true
+    val evaluateFrame = needsReevaluation(head)
 
     if (evaluateFrame) {
       pipelineFor(head).markTouched
@@ -113,13 +117,23 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
           commitFor(head)
           pipelineFor(head).markWritten
         case RequeueReactive =>
-          // This reactive will be evaluated once more, so we cannot finish it
+        // This reactive will be evaluated once more, so we cannot finish it
+        case DoNothing       =>
       }
       queueAction
     } else {
-      // Actually, does not make a difference what we return here
       EnqueueDependencies
     }
+  }
+
+  override def evaluateNoChange(head: Reactive): QueueAction = {
+    println(s"NOT EVALUATE $head")
+    if (!pipelineFor(head).needFrame().isWritten) {
+    commitFor(head)
+    pipelineFor(head).markWritten
+    }
+    requeue(head, changed = false, level = -1, action = EnqueueDependencies)
+    EnqueueDependencies
   }
 
   private def commitFor(head: Reactive): Unit = {
@@ -129,12 +143,14 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
     toCommit --= buffersToCommit
 
   }
-  
-  private def hasWriteableFrame( buffer : PipelineBuffer) : Boolean = {
-    buffer.findFrame { _ match {
-      case None => false
-      case Some(frame) => !frame.isWritten
-    } }
+
+  private def hasWriteableFrame(buffer: PipelineBuffer): Boolean = {
+    buffer.findFrame {
+      _ match {
+        case None        => false
+        case Some(frame) => !frame.isWritten
+      }
+    }
   }
 
   override def register(sink: Reactive)(source: Reactive): Unit = createFramesLock.synchronized {
@@ -218,7 +234,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
         // assert(writeFrame.isWritten, "Frame of an incoming dependency needs to be evaluated first")
         writeFrame
       }
-      
+
       assert(!dropFrame.isWritten)
 
       dropFrame.markTouched()

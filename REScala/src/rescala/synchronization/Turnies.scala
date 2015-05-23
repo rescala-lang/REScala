@@ -3,12 +3,13 @@ package rescala.synchronization
 import rescala.graph.Reactive
 import rescala.propagation.TurnImpl
 import rescala.turns.{Engine, Engines, Turn}
-
 import scala.concurrent.stm.{InTxn, atomic}
+import rescala.propagation.PropagateChangesOnly
+import rescala.propagation.PropagateChangesOnly
 
 abstract class EngineReference[T <: Turn](override val engine: Engine[T]) extends Turn
 
-trait NothingSpecial extends TurnImpl {
+trait NothingSpecial extends TurnImpl with PropagateChangesOnly{
   override def lockPhase(initialWrites: List[Reactive]): Unit = ()
   override def releasePhase(): Unit = ()
 }
@@ -18,7 +19,7 @@ class STMSync extends EngineReference[STMSync](Engines.STM) with NothingSpecial 
   def inTxn: InTxn = atomic(identity)
 }
 
-class SpinningInitPessimistic(var backOff: Int) extends EngineReference[SpinningInitPessimistic](Engines.spinning) with Prelock {
+class SpinningInitPessimistic(var backOff: Int) extends EngineReference[SpinningInitPessimistic](Engines.spinning) with Prelock with PropagateChangesOnly {
 
   var currentBackOff = backOff
 

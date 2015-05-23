@@ -11,17 +11,22 @@ import scala.collection.SortedSet
 class LevelQueue()(implicit val currentTurn: Turn) {
 
   private var elements = SortedSet[QueueElement]()
+  private var numOccurences = Map[Reactive, Int]()
 
   /** mark the reactive as needing a reevaluation */
   def enqueue(minLevel: Int, needsEvaluate: Boolean = true)(dep: Reactive): Unit = {
+    println(s"Enqueue $dep $needsEvaluate")
     elements += QueueElement(dep.level.get, dep, minLevel, needsEvaluate)
+    numOccurences = numOccurences + (dep -> (numOccurences.getOrElse(dep, 0) + 1))
   }
 
   def remove(reactive: Reactive): Unit = {
     elements = elements.filter(qe => qe.reactive ne reactive) // THat is wrong
+    numOccurences = numOccurences - reactive
   }
 
-  final def handleHead(queueElement: QueueElement, evaluator: Reactive => Unit): Unit = {
+  final def handleHead(queueElement: QueueElement, evaluator: Reactive => Unit, notEvaluator : Reactive => Unit): Unit = {
+    println(s"Handle head $queueElement")
     val QueueElement(headLevel, head, headMinLevel, doEvaluate) = queueElement
     if (headLevel < headMinLevel) {
       head.level.set(headMinLevel)
@@ -40,15 +45,21 @@ class LevelQueue()(implicit val currentTurn: Turn) {
     }
     else if (doEvaluate) {
       evaluator(head)
+    } else if (numOccurences(head) == 1){
+      notEvaluator(head)
     }
   }
 
   /** Evaluates all the elements in the queue */
-  def evaluateQueue(evaluator: Reactive => Unit) = {
+  def evaluateQueue(evaluator: Reactive => Unit, notEvaluator: Reactive => Unit = r => {}) = {
     while (elements.nonEmpty) {
       val head = elements.head
       elements = elements.tail
-      handleHead(head, evaluator)
+      handleHead(head, evaluator, notEvaluator)
+      val numOccurence = numOccurences(head.reactive)
+      if (numOccurence == 1)
+        numOccurences -= head.reactive
+      else numOccurences += (head.reactive -> (numOccurence -1))
     }
   }
 

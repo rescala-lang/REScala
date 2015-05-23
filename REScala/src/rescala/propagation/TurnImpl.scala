@@ -3,17 +3,11 @@ package rescala.propagation
 import rescala.graph.ReevaluationResult.{Dynamic, Static}
 import rescala.graph.{Committable, Reactive}
 import rescala.turns.Turn
+import rescala.graph.ReevaluationResult
 
-object QueueAction {
-  
-  sealed abstract class QueueAction
-  case object EnqueueDependencies extends QueueAction
-  case object RequeueReactive extends QueueAction
-  
-}
 
 trait TurnImpl extends Turn {
-  import QueueAction._
+ 
   
   implicit def currentTurn: TurnImpl = this
 
@@ -22,10 +16,13 @@ trait TurnImpl extends Turn {
 
   val levelQueue = new LevelQueue()
 
-  protected def requeue(head: Reactive,changed: Boolean, level: Int, action: QueueAction): Unit = action match {
-    case EnqueueDependencies => if (changed) head.outgoing.get.foreach(levelQueue.enqueue(level, changed))
+  protected def requeue(head: Reactive,changed: Boolean, level: Int, action: QueueAction): Unit = { println(s"$action: $head");action match {
+    case EnqueueDependencies =>  head.outgoing.get.foreach(levelQueue.enqueue(level, changed))
     case RequeueReactive => levelQueue.enqueue(level, changed)(head)
-  }
+    case DoNothing =>
+  }}
+  
+  protected def calculateQueueAction(head : Reactive, result: ReevaluationResult) : (Boolean, Int, QueueAction)
   
   /**
    * Evaluates the the given Reactive and requeues it.
@@ -33,16 +30,7 @@ trait TurnImpl extends Turn {
    */
   def evaluate(head: Reactive): QueueAction = {
     val result = head.reevaluate() 
-    val (hasChanged, newLevel, action) = result match {
-      case Static(hasChanged) =>
-        (hasChanged, -1, EnqueueDependencies)
-      case Dynamic(hasChanged, diff) =>
-        diff.removed foreach unregister(head)
-        diff.added foreach register(head)
-        val newLevel = maximumLevel(diff.novel) + 1
-        val action = if (head.level.get < newLevel) RequeueReactive else EnqueueDependencies
-        (hasChanged, newLevel,  action)
-    }
+    val (hasChanged, newLevel, action) = calculateQueueAction(head, result)
     requeue(head, hasChanged, newLevel, action)
     action
   }
@@ -81,7 +69,7 @@ trait TurnImpl extends Turn {
 
   def lockPhase(initialWrites: List[Reactive]): Unit
 
-  def propagationPhase(): Unit = levelQueue.evaluateQueue(evaluate)
+  def propagationPhase(): Unit
 
   def commitPhase() = toCommit.foreach(_.commit(this))
 

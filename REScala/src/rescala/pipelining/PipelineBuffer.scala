@@ -135,7 +135,6 @@ class PipelineSingleBuffer[A](parent: PipelineBuffer, initialStrategy: (A, A) =>
               else
                 frame.previous().content.valueForBuffer(this).committedValue.get
             } else {
-              println("Buffer has value")
               frame.content.valueForBuffer(this).value
             }
           case None =>

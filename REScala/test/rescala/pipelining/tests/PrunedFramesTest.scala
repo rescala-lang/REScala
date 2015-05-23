@@ -20,7 +20,10 @@ class PrunedFramesTest extends AssertionsForJUnit with MockitoSugar {
   val dep1Level1 = Signals.static(source)(implicit t => source.get)
   val dep2Level1 = Signals.static(source)(implicit t => 0)
   val dep1Level2 = Signals.static(dep1Level1)(implicit t => dep1Level1.get)
-  val dep2Level2Pruned = Signals.static(dep2Level1)(implicit t => dep2Level1.get)
+  val dep2Level2Pruned = Signals.static(dep2Level1)(implicit t => {
+    assert(!checkMark, "Pruned node is evaluated")
+    dep2Level1.get
+  })
   val dep1Level3 = Signals.static(dep1Level2)(implicit t => {
     assert(!checkMark || PipelineBuffer.pipelineFor(dep2Level2Pruned).needFrame()(t.asInstanceOf[PipeliningTurn]).isWritten)
     dep1Level2.get
@@ -29,6 +32,7 @@ class PrunedFramesTest extends AssertionsForJUnit with MockitoSugar {
   @Test
   def testFramesOfPrunedNodesAreMarked() = {
     checkMark = true
+    println("======")
     source.set(1)
   }
 
