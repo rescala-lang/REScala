@@ -455,19 +455,29 @@ class PipelineBuffer(val reactive: Reactive) {
     refreshFrame(queueHead)
   }
 
-  protected[rescala] def removeFrame(implicit turn: PipeliningTurn): Unit = lockPipeline {
-    // Can remote the frame if it is head of the queue
-    if (queueHead.turn == turn) {
+  protected[rescala] def removeFrames(implicit turn: PipeliningTurn): Unit = lockPipeline {
+    // Assert for at least one frame
+    assert(queueHead.turn == turn, s"Frame for $turn cannot be removed at $this because it is not head of the queue: ${getPipelineFrames()}")
+    // Can remove the frame if it is head of the queue
+    
+    def isHeadOfThisTurn() = {
+      if (queueHead == null)
+        false
+      else {
+        queueHead.turn == turn
+      }
+    }
+    
+    while (isHeadOfThisTurn) {
       val newHead = queueHead.next()
       val newTail = if (newHead == null) null.asInstanceOf[CFrame] else queueTail
       queueHead.removeFrame()
       stableFrame = queueHead.content
       queueHead = newHead
       queueTail = newTail
-    } else {
-      //  println(s"Mark remove $turn at $this")
-      assert(false, s"Frame for $turn cannot be removed at $this because it is not head of the queue: ${getPipelineFrames()}")
     }
+    // if there were multiple frames, they all need to be at head, so
+    assert(!hasFrame)
   }
 
   protected[rescala] def markWritten(implicit turn: PipeliningTurn): Unit = {

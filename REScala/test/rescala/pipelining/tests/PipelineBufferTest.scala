@@ -52,7 +52,7 @@ class PipelineBufferTest extends AssertionsForJUnit with MockitoSugar {
     buffer.set(1)
     pipelineBuffer.markWritten(turn)
     assert(newFrame.isWritten)
-    pipelineBuffer.removeFrame
+    pipelineBuffer.removeFrames
     assert(pipelineBuffer.getPipelineFrames().isEmpty)
     val stableFrame = pipelineBuffer.getStableFrame()
     assert(readStableFrame == 1)
@@ -90,8 +90,8 @@ class PipelineBufferTest extends AssertionsForJUnit with MockitoSugar {
     assert(readStableFrame == 0)
     
     // No remove the first one, this removed frame 1 and 2
-    pipelineBuffer.removeFrame(turn1)
-    pipelineBuffer.removeFrame(turn2)
+    pipelineBuffer.removeFrames(turn1)
+    pipelineBuffer.removeFrames(turn2)
     assert(pipelineBuffer.getPipelineFrames() == Queue(frame3))
     assert(readStableFrame == 2)
     
@@ -99,7 +99,7 @@ class PipelineBufferTest extends AssertionsForJUnit with MockitoSugar {
     
     // Finally remove the last one
     assert(buffer.get(turn3) == 3)
-    pipelineBuffer.removeFrame(turn3)
+    pipelineBuffer.removeFrames(turn3)
     assert(pipelineBuffer.getPipelineFrames().isEmpty)
     assert(readStableFrame == 3)
   }
