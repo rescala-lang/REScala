@@ -6,20 +6,34 @@ import scala.annotation.tailrec
 
 import rescala.graph._
 
+object ValueHolder {
+  
+  def initStable[T](initial : T,  buffer: PipelineSingleBuffer[T]) : ValueHolder[T] = {
+    val holder = new ValueHolder(initial, buffer)
+    holder.committedValue = Some(initial)
+    holder
+  }
+  
+  def initStable[T](initial: T, existing: ValueHolder[T]) : Unit= {
+    existing.value = initial
+    existing.committedValue = Some(initial)
+  }
+  
+  def initDuplicate[T] (from : ValueHolder[T])(implicit newTurn : Turn) : ValueHolder[T] = {
+    val holder = new ValueHolder(from.value, from.buffer)
+    newTurn.schedule(holder.buffer)
+    holder
+  }
+  
+}
+
 class ValueHolder[T](initial: T, val buffer: PipelineSingleBuffer[T]) {
 
   var value: T = initial
+  var committedValue : Option[T] = None
   var isChanged = false
 
   def transform(f: T => T) = value = f(value)
-
-  def duplicate(newTurn: Turn) = {
-    val duplicate = new ValueHolder(value, buffer)
-    if (buffer.takePrevious) {
-      newTurn.schedule(buffer)
-    }
-    duplicate
-  }
 
 }
 
@@ -32,7 +46,7 @@ class BufferFrameContent {
   def duplicate(newTurn: Turn) = {
     val newContent = new BufferFrameContent
     for (v <- values) {
-      newContent.values :+= v.duplicate(newTurn)
+      newContent.values :+= ValueHolder.initDuplicate(v)(newTurn)
     }
     newContent
   }
@@ -43,7 +57,7 @@ class PipelineSingleBuffer[A](parent: PipelineBuffer, initialStrategy: (A, A) =>
 
   var commitStrategy: (A, A) => A = initialStrategy
 
-  override def initCurrent(value: A): Unit = parent.getStableFrame().valueForBuffer(this).value = value
+  override def initCurrent(value: A): Unit = ValueHolder.initStable(value,parent.getStableFrame().valueForBuffer(this))
   override def initStrategy(strategy: (A, A) => A): Unit = synchronized(commitStrategy = strategy)
 
   override def transform(f: (A) => A)(implicit turn: Turn): A = synchronized {
@@ -56,6 +70,7 @@ class PipelineSingleBuffer[A](parent: PipelineBuffer, initialStrategy: (A, A) =>
   private def setNotSchedule(value: A)(implicit turn: Turn): Unit = {
     implicit val pTurn = turn.asInstanceOf[PipeliningTurn]
     val frame =  parent.needFrame()
+    println(frame)
     assert(!frame.isWritten)
     val valueHolder =frame.content.valueForBuffer(this)
     valueHolder.value = value
@@ -98,9 +113,9 @@ class PipelineSingleBuffer[A](parent: PipelineBuffer, initialStrategy: (A, A) =>
               else
                 frame.previous().content
            
-            content.valueForBuffer(this).value
+            content.valueForBuffer(this).committedValue.get
           case None =>
-            parent.frame().valueForBuffer(this).value
+            parent.frame().valueForBuffer(this).committedValue.get
         }
       }
     }
@@ -114,17 +129,17 @@ class PipelineSingleBuffer[A](parent: PipelineBuffer, initialStrategy: (A, A) =>
         _ match {
           case Some(frame) =>
             val hasValue = frame.content.valueForBuffer(this).isChanged || frame.isWritten
-            val content = if (!hasValue) {
+            if (!hasValue) {
               if (frame.previous() == null)
-                parent.getStableFrame()
+                parent.getStableFrame().valueForBuffer(this).committedValue.get
               else
-                frame.previous().content
+                frame.previous().content.valueForBuffer(this).committedValue.get
             } else {
-              frame.content
+              println("Buffer has value")
+              frame.content.valueForBuffer(this).value
             }
-            content.valueForBuffer(this).value
           case None =>
-            parent.frame().valueForBuffer(this).value
+            parent.frame().valueForBuffer(this).committedValue.get
         }
       }
     }
@@ -138,20 +153,27 @@ class PipelineSingleBuffer[A](parent: PipelineBuffer, initialStrategy: (A, A) =>
 
   override def commit(implicit turn: Turn): Unit = {
     implicit val pTurn = turn.asInstanceOf[PipeliningTurn]
-    val requiredValue = if (parent.needFrame().content.valueForBuffer(this).isChanged) {
+    val frame =  parent.needFrame()
+    val commitValue = if (frame.content.valueForBuffer(this).isChanged) {
       val oldValue = base
       val currentValue = get
       val commitValue = commitStrategy(oldValue, currentValue)
-      setNotSchedule(commitValue)
+      //setNotSchedule(commitValue)
       commitValue
     } else {
-      parent.needFrame().content.valueForBuffer(this).isChanged = true
+      frame.content.valueForBuffer(this).isChanged = true
       parent.waitUntilCanWrite
       val oldValue = base
       val commitValue = commitStrategy(oldValue, oldValue)
-      setNotSchedule(commitValue)
+     // setNotSchedule(commitValue)
       commitValue
     }
+    
+    assert(!frame.isWritten)
+    val valueHolder =frame.content.valueForBuffer(this)
+ //   valueHolder.value = commitValue
+    valueHolder.committedValue = Some(commitValue)
+    valueHolder.isChanged = true
     
     release
    // assert(get == requiredValue)
@@ -190,7 +212,8 @@ class PipelineBuffer(val reactive: Reactive) {
   protected[pipelining] def createBuffer[T](initval: T, commitStrategy: (T, T) => T, takePrevious: Boolean): PipelineSingleBuffer[T] = {
     assert(queueHead == null)
     val newBuffer = new PipelineSingleBuffer(this, commitStrategy, takePrevious)
-    stableFrame.values :+= new ValueHolder(initval, newBuffer)
+    val holder = ValueHolder.initStable(initval, newBuffer)
+    stableFrame.values :+= holder
     createdBuffers += newBuffer
     newBuffer
   }
@@ -208,14 +231,14 @@ class PipelineBuffer(val reactive: Reactive) {
 
   protected[rescala] def findFrame[T](find: Option[CFrame] => T)(implicit turn: PipeliningTurn): T = lockPipeline {
     @tailrec
-    def findFrame(head: CFrame): Option[CFrame] = {
-      if (head == null)
+    def findFrame(tail: CFrame = queueTail): Option[CFrame] = {
+      if (tail == null)
         None
-      else if (head.turn eq turn)
-        Some(head)
-      else findFrame(head.next)
+      else if (tail.turn eq turn)
+        Some(tail)
+      else findFrame(tail.previous())
     }
-    val selectedFrame = findFrame(queueHead)
+    val selectedFrame = findFrame()
     find(selectedFrame)
   }
 
@@ -456,7 +479,10 @@ class PipelineBuffer(val reactive: Reactive) {
   }
 
   protected[rescala] def createDynamicFrame[T <: CFrame](makeFrame: => T)(from: Reactive)(implicit turn: PipeliningTurn): T = {
-    assert(!hasFrame)
+    assert(findFrame { _ match {
+      case None => true
+      case Some(frame) => frame.isWritten
+    } })
     val predeceedingFrameOpt: Option[CFrame] = frame
     lockPipeline {
       val readFrame = makeFrame

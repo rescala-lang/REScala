@@ -103,9 +103,15 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
       waitsIndex >= onIndex
   }
 
-  private def removeTurn(turn : PTurn) : Unit = {
-    turn.framedReactives.get.foreach { pipelineFor(_).removeFrame(turn) }
-          assert(turn.framedReactives.get.forall { !pipelineFor(_).hasFrame(turn) })
+  private def removeTurn(implicit turn : PTurn) : Unit = {
+    turn.framedReactives.get.foreach { reactive => {
+      // TODO: Need to remove multiple frames iff dynamic frames was created, do this is one traversal of frames
+      val pipeline = pipelineFor(reactive)
+      while (pipeline.hasFrame) {
+        pipeline.removeFrame
+      }
+    } }
+    assert(turn.framedReactives.get.forall { !pipelineFor(_).hasFrame(turn) })
   }
   
   protected[pipelining] def turnCompleted(completedTurn: PTurn): Unit = {

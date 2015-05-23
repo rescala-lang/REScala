@@ -36,8 +36,6 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
 
   val thread = Thread.currentThread()
 
-  val allNodesQueue = new LevelQueue
-
   private object createFramesLock
 
   private def markReactiveFramed(reactive: Reactive) = {
@@ -46,28 +44,6 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
   }
 
   override implicit def currentTurn: PipeliningTurn = this
-
-  protected override def requeue(head: Reactive, changed: Boolean, level: Int, action : QueueAction): Unit = {
-    action match {
-      case RequeueReactive => allNodesQueue.enqueue(level, changed)(head)
-      case EnqueueDependencies => head.outgoing.get.foreach(allNodesQueue.enqueue(level, changed))
-    }
-    super.requeue(head, changed, level, action)
-  }
-
-  private def markUnreachablePrunedNodesWritten(head: Reactive) = {
-    // In all queue are all nodes, not just the changed ones, for 
-    allNodesQueue.processQueueUntil { allHead =>
-      assert(pipelineFor(allHead).hasFrame)
-      if (allHead.level.get < head.level.get) {
-        commitFor(allHead)
-        pipelineFor(allHead).markWritten
-        false
-      } else {
-        true
-      }
-    }
-  }
 
   override def create[T <: Reactive](dependencies: Set[Reactive], dynamic: Boolean)(f: => T): T = {
     val reactive = f
@@ -83,9 +59,10 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
   override def evaluate(head: Reactive) = {
     assert(pipelineFor(head).hasFrame(this), "No frame was created in turn " + this + " for " + head)
 
+    // TODO Modify queue for nochanges
     // Marks all nodes written, which cannot be reached anymore and which was pruned
     // in order not to block pipelining longer on these nodes
-    markUnreachablePrunedNodesWritten(head)
+  //  markUnreachablePrunedNodesWritten(head)
 
     pipelineFor(head).waitUntilCanWrite(this)
 
@@ -101,23 +78,13 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
         assert(frame.turn > this)
       }
     }
-
-    /*   assert(preceedingTurns.get.forall(turn =>
-      head.findFrame {
-        _ match {
-          case None        => true
-          case Some(frame) => frame.isWritten
-        }
-      }(turn)), s"Illegal wait state for $this at $head: queue=${head.getPipelineFrames()} preceedingTurns=$preceedingTurns")*/
-
+    
     val writeFrame = pipelineFor(head).findFrame {
       _ match {
         case Some(frame @ WriteFrame(_, _)) => frame
         case _                              => throw new AssertionError("No correct write frame")
       }
     }
-
-    // fillFrameFor(head)
 
     // Check whether this frame is suspicious for not the evaluate
     val evaluateFrame = if (writeFrame.isSuspicious()) {
@@ -162,10 +129,18 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
     toCommit --= buffersToCommit
 
   }
+  
+  private def hasWriteableFrame( buffer : PipelineBuffer) : Boolean = {
+    buffer.findFrame { _ match {
+      case None => false
+      case Some(frame) => !frame.isWritten
+    } }
+  }
 
   override def register(sink: Reactive)(source: Reactive): Unit = createFramesLock.synchronized {
     val needToAddDep = !source.outgoing.get.contains(sink)
-    val sourceHasFrame = pipelineFor(source).hasFrame
+    val sourcePipeline = pipelineFor(source)
+    val sourceHasFrame = hasWriteableFrame(sourcePipeline)
     if (needToAddDep && sourceHasFrame) {
       // Dont need to create frames, because a frame is already there
       source.outgoing.transform { _ + sink }
@@ -228,7 +203,8 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
 
     println(s"Unregister $source as incoming of $sink")
 
-    val sourceHasFrame = pipelineFor(source).hasFrame
+    val sourcePipeline = pipelineFor(source)
+    val sourceHasFrame = hasWriteableFrame(sourcePipeline)
     val needToRemoveDep = source.outgoing.get.contains(sink)
 
     if (needToRemoveDep) {
@@ -242,10 +218,13 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
         // assert(writeFrame.isWritten, "Frame of an incoming dependency needs to be evaluated first")
         writeFrame
       }
+      
+      assert(!dropFrame.isWritten)
 
       dropFrame.markTouched()
 
       println(s"Remove sink $sink from source $source")
+      println(sourcePipeline.getPipelineFrames())
       source.outgoing.transform { _ - sink }
       val writeFramesAfterDrop = pipelineFor(source).writeFramesAfter(dropFrame)
       writeFramesAfterDrop.foreach { frame => source.outgoing.transform(_ - sink)(frame.turn) }
@@ -288,6 +267,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
 
   override def commitPhase(): Unit = {
     // TODO should not be needed anymore because of pruning. But pruning does not handle dynamic dependencies by now
+    println(s"Left to commit $toCommit")
     super.commitPhase()
     framedReactives.get.foreach(r => {
       if (!pipelineFor(r).needFrame().isWritten)
