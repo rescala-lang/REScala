@@ -13,6 +13,7 @@ import rescala.util.JavaFunctionsImplicits._
 import java.util.concurrent.locks.ReentrantLock
 import rescala.graph.WriteFrame
 import rescala.Var
+import rescala.pipelining.PipeliningTurn
 
 class FrameAwaitTest extends AssertionsForJUnit with MockitoSugar {
 
@@ -31,9 +32,9 @@ class FrameAwaitTest extends AssertionsForJUnit with MockitoSugar {
     assert(frames == expectedframes.toList)
   }
 
-  def createWriteThread(frame: WriteFrame[_]) = {
+  def createWriteThread(frame: WriteFrame[_], waitingTurn : PipeliningTurn) = {
     createThread {
-      frame.awaitPredecessor(modificationLock)
+      frame.awaitPredecessor(modificationLock, waitingTurn)
       markFrameHandled(frame)
       frame.markWritten()
     }
@@ -43,10 +44,14 @@ class FrameAwaitTest extends AssertionsForJUnit with MockitoSugar {
   def testFrameWaitsOnOther() = {
     val frame1 = WriteFrame(engine.makeTurn,pipelineFor(dummyReactive))
     val frame2 = WriteFrame(engine.makeTurn,pipelineFor(dummyReactive))
+    val turn3 = engine.makeTurn
+    
+    List(frame1.turn, frame2.turn, turn3).foreach { engine.addTurn(_) }
+    
     frame2.insertAfter(frame1)
 
-    val frame1Thread = createWriteThread(frame1)
-    val frame2Thread = createWriteThread(frame2)
+    val frame1Thread = createWriteThread(frame1, frame2.turn)
+    val frame2Thread = createWriteThread(frame2, turn3)
 
     frame2Thread.start()
     frame1Thread.start()
@@ -61,9 +66,9 @@ class FrameAwaitTest extends AssertionsForJUnit with MockitoSugar {
   def testManyFrameWaitsOnOther() = {
 
     var waitsOk = true;
-    def createFrameThread(frame: WriteFrame[_]) = {
+    def createFrameThread(frame: WriteFrame[_], waitingTurn : PipeliningTurn) = {
       createThread {
-        frame.awaitPredecessor(modificationLock)
+        frame.awaitPredecessor(modificationLock, waitingTurn)
         if (frame.previous() != null)
           if (!frame.previous().isWritten)
             waitsOk = false
@@ -77,14 +82,21 @@ class FrameAwaitTest extends AssertionsForJUnit with MockitoSugar {
     var lastFrame = null.asInstanceOf[WriteFrame[Nothing]]
     var threads = List[Thread]()
     for (i <- 1 to 100) {
-      val newFrame = WriteFrame(engine.makeTurn, pipelineFor(dummyReactive))
-      threads +:= createFrameThread(newFrame)
-      if (lastFrame != null) {
+      val turn = engine.makeTurn
+      val newFrame = WriteFrame(turn, pipelineFor(dummyReactive))
+      engine.addTurn(turn)
+      if (firstFrame != null) {
         newFrame.insertAfter(lastFrame)
         lastFrame = newFrame
       } else {
         firstFrame = newFrame
+        lastFrame = firstFrame
       }
+    }
+    var frame = firstFrame
+    while(frame.next() != null) {
+      threads +:= createFrameThread(frame, frame.next.turn)
+      frame = frame.next().asInstanceOf[WriteFrame[Nothing]]
     }
 
     threads.foreach { _.start }
@@ -103,7 +115,10 @@ class FrameAwaitTest extends AssertionsForJUnit with MockitoSugar {
     frames(2).insertAfter(frames(1))
     frames(3).insertAfter(frames(2))
 
-    val threads = frames.map(createWriteThread(_))
+    val turns = frames.map { _.turn } :+ engine.makeTurn
+    turns.foreach { engine.addTurn(_) }
+    
+    val threads = frames.zip(turns.drop(1)).map(t => createWriteThread(t._1, t._2))
 
     List(0, 2, 3).map(threads(_)).foreach(_.start)
     threads(0).join

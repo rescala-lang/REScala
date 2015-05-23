@@ -1,10 +1,10 @@
 package tests.rescala.concurrency
 
-import java.util.concurrent.{ConcurrentLinkedQueue, CountDownLatch}
+import java.util.concurrent.{ ConcurrentLinkedQueue, CountDownLatch }
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
-import rescala.{Signals, Var}
+import rescala.{ Signals, Var }
 
 import scala.util.Random
 
@@ -42,21 +42,23 @@ class PaperGlitchTest extends AssertionsForJUnit {
     Spawn {
       latch.countDown()
       latch.await()
-      while (!cancelled) try {
-        price.set(3 * 2 << Random.nextInt(8))
-      }
-      catch {
-        case e: AssertionError => glitches.add(-42)
+      while (!cancelled) {
+        try {
+          price.set(3 * 2 << Random.nextInt(8))
+        } catch {
+          case e: AssertionError => glitches.add(-42)
+        }
       }
     }
     Spawn {
       latch.countDown()
       latch.await()
-      while (!cancelled) try {
-        quantity.set(2 << Random.nextInt(8))
-      }
-      catch {
-        case e: AssertionError => glitches.add(-42)
+      while (!cancelled) {
+        try {
+          quantity.set(2 << Random.nextInt(8))
+        } catch {
+          case e: AssertionError => glitches.add(-42)
+        }
       }
     }
     latch.await()

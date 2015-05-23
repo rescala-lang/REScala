@@ -1,4 +1,4 @@
-package tests.rescala.concurrency.philosophers
+package rescala.pipelining.tests.philosophers
 
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -11,7 +11,7 @@ import scala.annotation.tailrec
 
 class PhilosopherTable(philosopherCount: Int, work: Long)(implicit val engine: Engine[Turn]) {
 
-  import tests.rescala.concurrency.philosophers.PhilosopherTable._
+  import rescala.pipelining.tests.philosophers.PhilosopherTable._
 
   val seatings = createTable(philosopherCount)
 

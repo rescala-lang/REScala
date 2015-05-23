@@ -7,7 +7,7 @@ import rescala.turns.Turn
 trait TurnImpl extends Turn {
   implicit def currentTurn: TurnImpl = this
 
-  private var toCommit = Set[Committable]()
+  protected[this] var toCommit = Set[Committable]()
   private var observers = List.empty[() => Unit]
 
   val levelQueue = new LevelQueue()
@@ -17,10 +17,13 @@ trait TurnImpl extends Turn {
       else if (changed) head.outgoing.get.foreach(levelQueue.enqueue(level, changed))
   }
   
-  def evaluate(head: Reactive): Unit = {
-    head.reevaluate() match {
+  def evaluate(head: Reactive): Boolean = {
+    val result = head.reevaluate() 
+    println(s"${Thread.currentThread().getId} EVALUATE $head result $result")
+    result match {
       case Static(hasChanged) =>
         requeue(head, hasChanged, level = -42, redo = false)
+        false
       case Dynamic(hasChanged, diff) =>
         diff.removed foreach unregister(head)
         diff.added foreach register(head)
@@ -28,6 +31,7 @@ trait TurnImpl extends Turn {
         val redo =head.level.get < newLevel
         //assert(! (hasChanged && redo), "Introducing a glitch, head evaluated and requeued") // Isnt that a glitch?
         requeue(head, hasChanged, newLevel, redo)
+        redo
     }
 
   }

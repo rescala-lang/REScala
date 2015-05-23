@@ -54,6 +54,9 @@ class AdmissionPhaseTest extends AssertionsForJUnit with MockitoSugar {
       engine.plan(counter)(implicit t => {
         val currentValue = counter(t)
         assert(numAdmissions == currentValue)
+        assert(dep1(t) == currentValue +1)
+        assert(dep2(t) == currentValue + 2)
+        assert(dep12(t) == 2* currentValue +3)
         numAdmissions += 1
         val newValue = currentValue + 1
         counter.admit(newValue)

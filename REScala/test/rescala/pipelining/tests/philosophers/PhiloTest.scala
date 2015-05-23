@@ -1,16 +1,16 @@
-package tests.rescala.concurrency.philosophers
+package rescala.pipelining.tests.philosophers
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import rescala.turns.{Engine, Engines, Turn}
 import tests.rescala.concurrency.Spawn
-import tests.rescala.concurrency.philosophers.PhilosopherTable.{Thinking, Seating, Taken}
+import rescala.pipelining.tests.philosophers.PhilosopherTable.{Thinking, Seating, Taken}
 import scala.annotation.tailrec
 import scala.util.Random
-import tests.philosophers.REScalaPhilosophers.Eating
 import rescala.graph.Committable
-import tests.rescala.concurrency.philosophers.PhilosopherTable.Free
-import tests.rescala.concurrency.philosophers.PhilosopherTable.Ready
+import rescala.pipelining.tests.philosophers.PhilosopherTable.Free
+import rescala.pipelining.tests.philosophers.PhilosopherTable.Ready
+import rescala.pipelining.PipeliningTurn
 
 
 class PhiloTest extends AssertionsForJUnit {
@@ -23,8 +23,8 @@ class PhiloTest extends AssertionsForJUnit {
 
 
   def `eat!`(implicit engine: Engine[Turn]): Unit = {
-    val philosophers = 2
-    val threadCount = 2
+    val philosophers = 4
+    val threadCount = 4
     val table = new PhilosopherTable(philosophers, 0)(engine)
     val blocks: Array[Array[Seating]] = deal(table.seatings.toList, List.fill(threadCount)(Nil)).map(_.toArray).toArray
 
@@ -45,10 +45,18 @@ class PhiloTest extends AssertionsForJUnit {
           t.schedule(new Committable {
             override def release(implicit t : Turn) = {}
             override def commit(implicit t : Turn) = {
+              println(s"${Thread.currentThread().getId}: THinking assertions for ${t}")
+              implicit val pt = t.asInstanceOf[PipeliningTurn]
+              assert(seating.philosopher.outgoing.get(t) == Set(seating.leftFork, seating.rightFork))
+              assert(seating.leftFork.outgoing.get(t).contains(seating.vision))
+              assert(seating.rightFork.outgoing.get(t).contains(seating.vision))
+              assert(seating.vision.incoming.get(t) == Set(seating.leftFork, seating.rightFork))
+              assert(seating.vision.pipeline.needFrame().isWritten)
               assert(seating.philosopher(t) == Thinking)
               assert(seating.leftFork(t) == Free)
               assert(seating.rightFork(t) == Free)
-              assert(seating.vision(t) == Ready)
+              println(s"${Thread.currentThread().getId}: GET VISION for ${t}")
+              assert(seating.vision(t) == Ready, s"${Thread.currentThread().getId} " + seating.vision.pipeline.getPipelineFrames().toString())
             }
           })
         })
@@ -71,7 +79,6 @@ class PhiloTest extends AssertionsForJUnit {
     println(s"philo party done sleeping on $engine")
   }
 
-  @Test def eatingContestsSpinning(): Unit = `eat!`(Engines.spinning)
   @Test(timeout=10000) def eatingContestsPipelining(): Unit = `eat!`(Engines.pipelining)
 
 }

@@ -7,6 +7,7 @@ import rescala.turns.Ticket
 import rescala.graph.Pulse.{Diff, NoChange}
 import scala.collection.immutable.Queue
 import rescala.pipelining.PipelineBuffer
+import rescala.pipelining.PipeliningTurn
 
 /** A Reactive is something that can be reevaluated */
 trait Reactive  {
@@ -45,7 +46,8 @@ trait Pulsing[+P] extends Reactive {
       // Access without a frame: need to wait until frame is finished
       // for all static dependencies it is guaranteed that the frame is already
       // finished
-       pipeline.waitUntilCanRead
+    if (turn.isInstanceOf[PipeliningTurn])
+       pipeline.waitUntilCanRead(turn.asInstanceOf[PipeliningTurn])
   //  }
     pulses.get
   } 

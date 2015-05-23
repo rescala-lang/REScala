@@ -9,8 +9,9 @@ import java.util.concurrent.locks.LockSupport
 import java.util.concurrent.atomic.AtomicReference
 import rescala.util.JavaFunctionsImplicits._
 import rescala.pipelining.PipelineBuffer
+import rescala.pipelining.PipeliningTurn
 
-sealed abstract class Frame[T](val turn: Turn, val at: PipelineBuffer) {
+sealed abstract class Frame[T](val turn: PipeliningTurn, val at: PipelineBuffer) {
 
   private var predecessor: Frame[T] = null.asInstanceOf[Frame[T]]
   private var successor: Frame[T] = null.asInstanceOf[Frame[T]]
@@ -29,19 +30,19 @@ sealed abstract class Frame[T](val turn: Turn, val at: PipelineBuffer) {
 
   protected[rescala] def isTouched: Boolean = touched.get
   protected[rescala] def markTouched(): Unit = touched.set(true)
-  
-  protected[rescala] def isSuspicious() : Boolean = suspicious.get
-  protected[rescala] def markSuspicious() : Unit = suspicious.set(true)
+
+  protected[rescala] def isSuspicious(): Boolean = suspicious.get
+  protected[rescala] def markSuspicious(): Unit = suspicious.set(true)
 
   protected[rescala] def isWritten = written.get
 
   protected[rescala] final def markWritten() = {
-    if (!written.get)
-      lockObject.synchronized {
-        // Only retry threads if was not marked written already
-        written.set(true)
-        retryBlockedThreads()
-      }
+    assert(!written.get)
+    lockObject.synchronized {
+      // Only retry threads if was not marked written already
+      written.set(true)
+      retryBlockedThreads()
+    }
   }
 
   override def toString() = s"${getClass.getSimpleName}($turn, written=${isWritten})[$content]"
@@ -57,14 +58,14 @@ sealed abstract class Frame[T](val turn: Turn, val at: PipelineBuffer) {
    * of the frame may change but only on code which is synchronized on the given
    * modificationLock object.
    */
-  protected[rescala] final def awaitPredecessor(modificationLock: AnyRef) = {
+  protected[rescala] final def awaitPredecessor(modificationLock: AnyRef, waitingTurn: PipeliningTurn) = {
     var waits = true
     while (waits) {
       // Get the predecessor and check whether we need to wait on it
       // This is synchronized on the modification lock because the predecessor
       // is not allowed to be changed by an other thread of this block
       // is executed
-      val creatorThread = modificationLock.synchronized {
+      val (creatorThread, predTurn) = modificationLock.synchronized {
         if (predecessor != null) {
           predecessor.lockObject.synchronized {
             // Register the current thread as waiting if need to wait
@@ -72,10 +73,10 @@ sealed abstract class Frame[T](val turn: Turn, val at: PipelineBuffer) {
             if (waits)
               predecessor.lockedOnThread += Thread.currentThread()
           }
-          predecessor.creatorThread
+          (predecessor.creatorThread, predecessor.turn)
         } else {
           waits = false
-          null.asInstanceOf[Thread]
+          (null.asInstanceOf[Thread], null.asInstanceOf[PipeliningTurn])
         }
 
       }
@@ -83,20 +84,24 @@ sealed abstract class Frame[T](val turn: Turn, val at: PipelineBuffer) {
       // The current threads gets unparked if the predecessor changes or
       // the predecessor is marked as written
       if (waits) {
-        LockSupport.park(predecessor.creatorThread)
+        assert(waitingTurn > predTurn)
+        LockSupport.park(creatorThread)
       }
     }
     assert(predecessor == null || predecessor.isWritten)
   }
 
-  protected[rescala] final def awaitUntilWritten() = {
+  protected[rescala] final def awaitUntilWritten(waitingTurn: PipeliningTurn) = {
     var wait = true
     while (wait) {
       lockObject.synchronized {
         wait = !isWritten
         lockedOnThread += Thread.currentThread()
       }
-      LockSupport.park(creatorThread)
+      if (wait) {
+        assert(waitingTurn > this.turn)
+        LockSupport.park(creatorThread)
+      }
     }
   }
 
@@ -142,15 +147,15 @@ sealed abstract class Frame[T](val turn: Turn, val at: PipelineBuffer) {
 
 }
 
-case class WriteFrame[T](override val turn: Turn, override val at: PipelineBuffer) extends Frame[T](turn, at) {
+case class WriteFrame[T](override val turn: PipeliningTurn, override val at: PipelineBuffer) extends Frame[T](turn, at) {
 
 }
 
-case class DynamicReadFrame[T](override val turn: Turn, override val at: PipelineBuffer, val newDependent: Reactive) extends Frame[T](turn, at) {
+case class DynamicReadFrame[T](override val turn: PipeliningTurn, override val at: PipelineBuffer, val newDependent: Reactive) extends Frame[T](turn, at) {
 
 }
 
-case class DynamicDropFrame[T](override val turn: Turn, override val at: PipelineBuffer, val lostDependent: Reactive) extends Frame[T](turn, at) {
+case class DynamicDropFrame[T](override val turn: PipeliningTurn, override val at: PipelineBuffer, val lostDependent: Reactive) extends Frame[T](turn, at) {
 
 }
 

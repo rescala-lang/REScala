@@ -90,13 +90,15 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
     // Not both indices can be null, at least one turn is active, otherwise no call was made
     val currentOrder = turnOrder
     assert(currentOrder.contains(waits))
-    assert(currentOrder.contains(on))
     val waitsIndex = currentOrder.indexOf(waits)
     val onIndex = currentOrder.indexOf(on)
-    if (onIndex == -1)
+    if (onIndex == -1) {
       true
-    else if (waitsIndex == -1)
+    }
+    else if (waitsIndex == -1) {
+      assert(false)
       false
+    }
     else
       waitsIndex >= onIndex
   }
@@ -124,26 +126,6 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
       }
     
   }
-
-  // TODO remove synchronized
-  class NoBuffer[A](initial: A) extends Buffer[A] {
-    private var value = initial
-    def initCurrent(value: A): Unit = synchronized { this.value = value }
-    def initStrategy(strategy: (A, A) => A): Unit = {}
-
-    def transform(f: (A) => A)(implicit turn: Turn): A = synchronized {
-      value = f(value)
-      value
-    }
-    def set(value: A)(implicit turn: Turn): Unit = synchronized {
-      this.value = value
-    }
-    def base(implicit turn: Turn): A = synchronized { value }
-    def get(implicit turn: Turn): A = synchronized { value }
-    override def release(implicit turn: Turn): Unit = {}
-    override def commit(implicit turn: Turn): Unit = {}
-  }
-
   
   override def buffer[A](default: A, commitStrategy: (A, A) => A, at : Reactive, takePrevious : Boolean): Buffer[A] = {
     assert(at != null)
