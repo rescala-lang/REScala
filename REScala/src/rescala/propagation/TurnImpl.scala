@@ -16,11 +16,11 @@ trait TurnImpl extends Turn {
 
   val levelQueue = new LevelQueue()
 
-  protected def requeue(head: Reactive,changed: Boolean, level: Int, action: QueueAction): Unit = { println(s"$action: $head");action match {
+  protected def requeue(head: Reactive,changed: Boolean, level: Int, action: QueueAction): Unit = action match {
     case EnqueueDependencies =>  head.outgoing.get.foreach(levelQueue.enqueue(level, changed))
     case RequeueReactive => levelQueue.enqueue(level, changed)(head)
     case DoNothing =>
-  }}
+  }
   
   protected def calculateQueueAction(head : Reactive, result: ReevaluationResult) : (Boolean, Int, QueueAction)
   

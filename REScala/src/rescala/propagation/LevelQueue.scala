@@ -1,6 +1,6 @@
 package rescala.propagation
 
-import java.lang.{Boolean => jlBool}
+import java.lang.{ Boolean => jlBool }
 
 import rescala.graph.Reactive
 import rescala.propagation.LevelQueue.QueueElement
@@ -15,9 +15,11 @@ class LevelQueue()(implicit val currentTurn: Turn) {
 
   /** mark the reactive as needing a reevaluation */
   def enqueue(minLevel: Int, needsEvaluate: Boolean = true)(dep: Reactive): Unit = {
-    println(s"Enqueue $dep $needsEvaluate")
-    elements += QueueElement(dep.level.get, dep, minLevel, needsEvaluate)
-    numOccurences = numOccurences + (dep -> (numOccurences.getOrElse(dep, 0) + 1))
+    val newElem = QueueElement(dep.level.get, dep, minLevel, needsEvaluate)
+    if (!elements.contains(newElem)) {
+      elements += newElem
+      numOccurences = numOccurences + (dep -> (numOccurences.getOrElse(dep, 0) + 1))
+    }
   }
 
   def remove(reactive: Reactive): Unit = {
@@ -25,8 +27,7 @@ class LevelQueue()(implicit val currentTurn: Turn) {
     numOccurences = numOccurences - reactive
   }
 
-  final def handleHead(queueElement: QueueElement, evaluator: Reactive => Unit, notEvaluator : Reactive => Unit): Unit = {
-    println(s"Handle head $queueElement")
+  final def handleHead(queueElement: QueueElement, evaluator: Reactive => Unit, notEvaluator: Reactive => Unit): Unit = {
     val QueueElement(headLevel, head, headMinLevel, doEvaluate) = queueElement
     if (headLevel < headMinLevel) {
       head.level.set(headMinLevel)
@@ -42,11 +43,10 @@ class LevelQueue()(implicit val currentTurn: Turn) {
         if (r.level.get <= headMinLevel)
           enqueue(headMinLevel + 1, needsEvaluate = false)(r)
       }
-    }
-    else if (doEvaluate) {
+    } else if (doEvaluate) {
       evaluator(head)
-    } else if (numOccurences(head) == 1){
-      notEvaluator(head)
+    } else if (numOccurences(head) == 1) {
+        notEvaluator(head)
     }
   }
 
@@ -59,7 +59,7 @@ class LevelQueue()(implicit val currentTurn: Turn) {
       val numOccurence = numOccurences(head.reactive)
       if (numOccurence == 1)
         numOccurences -= head.reactive
-      else numOccurences += (head.reactive -> (numOccurence -1))
+      else numOccurences += (head.reactive -> (numOccurence - 1))
     }
   }
 

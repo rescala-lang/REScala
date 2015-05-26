@@ -29,7 +29,7 @@ object PipeliningTurn {
 class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean = false) 
   extends TurnImpl 
   with PropagateNoChanges 
-  with SequentialFrameCreator {
+  with ParallelFrameCreator {
 
   import Pipeline._
 
@@ -56,7 +56,10 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
     ensureLevel(reactive, dependencies)
     if (dynamic) {
       evaluate(reactive)
-    } else dependencies.foreach(register(reactive))
+    } else  {
+      dependencies.foreach(register(reactive))
+      evaluateNoChange(reactive)
+    }
     reactive
   }
 
@@ -85,7 +88,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
 
     pipelineFor(head).waitUntilCanWrite(this)
 
-    println(s"${Thread.currentThread().getId} EVALUATE $head during $this")
+  // println(s"${Thread.currentThread().getId} EVALUATE $head during $this")
 
     var frameFound = false;
     head.pipeline.foreachFrameTopDown { frame =>
@@ -117,19 +120,21 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
           pipelineFor(head).markWritten
         case RequeueReactive =>
         // This reactive will be evaluated once more, so we cannot finish it
-        case DoNothing       =>
+        case DoNothing       => assert(false)
       }
       queueAction
     } else {
+      commitFor(head)
+      pipelineFor(head).markWritten
       EnqueueDependencies
     }
   }
 
   override def evaluateNoChange(head: Reactive): QueueAction = {
-    println(s"NOT EVALUATE $head")
+  //  println(s"NOT EVALUATE $head")
     if (!pipelineFor(head).needFrame().isWritten) {
-    commitFor(head)
-    pipelineFor(head).markWritten
+      commitFor(head)
+      pipelineFor(head).markWritten
     }
     requeue(head, changed = false, level = -1, action = EnqueueDependencies)
     EnqueueDependencies
@@ -137,10 +142,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
 
   private def commitFor(head: Reactive): Unit = {
     val buffersToCommit = pipelineFor(head).createdBuffers.asInstanceOf[Set[Committable]]
-
     buffersToCommit.foreach { _.commit }
-    toCommit --= buffersToCommit
-
   }
 
   private def hasWriteableFrame(pipeline: Pipeline): Boolean = {
@@ -281,14 +283,17 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
   }
 
   override def commitPhase(): Unit = {
-    // TODO should not be needed anymore because of pruning. But pruning does not handle dynamic dependencies by now
-    println(s"Left to commit $toCommit")
+    //Commit the rest (no buffers, but some tests inject something)
     super.commitPhase()
-    framedReactives.get.foreach(r => {
-      if (!pipelineFor(r).needFrame().isWritten)
-        pipelineFor(r).markWritten
-    })
-
+    
+    framedReactives.get.foreach {reactive =>
+      val frame = pipelineFor(reactive).needFrame();
+      if (!frame.isWritten) {
+      commitFor(reactive)
+      frame.markWritten
+      
+      }
+    }
   }
 
   override def releasePhase(): Unit = {

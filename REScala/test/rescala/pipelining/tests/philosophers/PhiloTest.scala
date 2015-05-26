@@ -65,7 +65,6 @@ class PhiloTest extends AssertionsForJUnit {
       } catch {
         case e : Exception => 
           noException = false
-          System.exit(0)
         
       }
     }

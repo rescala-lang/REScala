@@ -21,7 +21,6 @@ object ValueHolder {
 
   def initDuplicate[T](from: ValueHolder[T])(implicit newTurn: Turn): ValueHolder[T] = {
     val holder = new ValueHolder(from.value, from.buffer)
-    newTurn.schedule(holder.buffer)
     holder
   }
 
@@ -67,21 +66,12 @@ abstract class PipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A)
     value
   }
 
-  private def setNotSchedule(value: A)(implicit turn: Turn): Unit = {
+  override def set(value: A)(implicit turn: Turn): Unit = {
     implicit val pTurn = turn.asInstanceOf[PipeliningTurn]
     val frame = parent.needFrame()
-    println(frame)
-    assert(!frame.isWritten)
     val valueHolder = frame.content.valueForBuffer(this)
     valueHolder.value = value
     valueHolder.isChanged = true
-
-  }
-
-  override def set(value: A)(implicit turn: Turn): Unit = {
-    implicit val pTurn = turn.asInstanceOf[PipeliningTurn]
-    setNotSchedule(value)
-    turn.schedule(this)
   }
   override def release(implicit turn: Turn): Unit = {
     implicit val pTurn = turn.asInstanceOf[PipeliningTurn]
@@ -96,14 +86,12 @@ abstract class PipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A)
       val oldValue = base
       val currentValue = get
       val commitValue = commitStrategy(oldValue, currentValue)
-      //setNotSchedule(commitValue)
       commitValue
     } else {
       frame.content.valueForBuffer(this).isChanged = true
       parent.waitUntilCanWrite
       val oldValue = base
       val commitValue = commitStrategy(oldValue, oldValue)
-      // setNotSchedule(commitValue)
       commitValue
     }
 
@@ -156,6 +144,11 @@ class NonblockingPipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => 
 
 class BlockingPipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A) extends PipelineBuffer[A](parent, initialStrategy) {
 
+  override def set(value: A)(implicit turn: Turn): Unit = {
+      assert(!parent.needFrame()(turn.asInstanceOf[PipeliningTurn]).isWritten)
+      super.set(value)
+  }
+  
   override def base(implicit turn: Turn): A = {
     implicit val pTurn = turn.asInstanceOf[PipeliningTurn]
 
