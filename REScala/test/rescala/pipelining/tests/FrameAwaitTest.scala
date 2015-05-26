@@ -7,7 +7,7 @@ import org.scalatest.mock.MockitoSugar
 import rescala.graph.Frame
 import rescala.graph.WriteFrame
 import rescala.pipelining.PipelineEngine
-import rescala.pipelining.PipelineBuffer._
+import rescala.pipelining.Pipeline._
 import rescala.pipelining.tests.PipelineTestUtils._
 import rescala.util.JavaFunctionsImplicits._
 import java.util.concurrent.locks.ReentrantLock

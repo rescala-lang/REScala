@@ -3,7 +3,6 @@ package rescala.pipelining
 import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.elidable
 import scala.annotation.elidable.ASSERTION
-import PipelineBuffer.pipelineFor
 import rescala.graph.Committable
 import rescala.graph.Reactive
 import rescala.graph.WriteFrame
@@ -32,7 +31,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
   with PropagateNoChanges 
   with SequentialFrameCreator {
 
-  import PipelineBuffer._
+  import Pipeline._
 
   /**
    * Remember all reactives for which a frame was created during this turn
@@ -144,8 +143,8 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
 
   }
 
-  private def hasWriteableFrame(buffer: PipelineBuffer): Boolean = {
-    buffer.findFrame {
+  private def hasWriteableFrame(pipeline: Pipeline): Boolean = {
+    pipeline.findFrame {
       _ match {
         case None        => false
         case Some(frame) => !frame.isWritten

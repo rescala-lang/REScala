@@ -7,7 +7,7 @@ import rescala.Signals
 import rescala.pipelining.PipelineEngine
 import rescala.turns.Turn
 import org.junit.Test
-import rescala.pipelining.PipelineBuffer
+import rescala.pipelining.Pipeline
 import rescala.pipelining.PipeliningTurn
 
 class PrunedFramesTest extends AssertionsForJUnit with MockitoSugar {
@@ -25,7 +25,7 @@ class PrunedFramesTest extends AssertionsForJUnit with MockitoSugar {
     dep2Level1.get
   })
   val dep1Level3 = Signals.static(dep1Level2)(implicit t => {
-    assert(!checkMark || PipelineBuffer.pipelineFor(dep2Level2Pruned).needFrame()(t.asInstanceOf[PipeliningTurn]).isWritten)
+    assert(!checkMark || Pipeline.pipelineFor(dep2Level2Pruned).needFrame()(t.asInstanceOf[PipeliningTurn]).isWritten)
     dep1Level2.get
   })
   

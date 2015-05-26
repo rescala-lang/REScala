@@ -18,7 +18,7 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
 
   private type PTurn = PipeliningTurn
   
-  import PipelineBuffer._
+  import Pipeline._
 
   private var turnOrder = List[PTurn]()
   private object turnOrderLock

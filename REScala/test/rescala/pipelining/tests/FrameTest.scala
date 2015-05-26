@@ -8,12 +8,12 @@ import rescala.pipelining.PipelineEngine
 import rescala.pipelining.PipeliningTurn
 import rescala.turns.Turn
 import rescala.Var
-import rescala.pipelining.PipelineBuffer
+import rescala.pipelining.Pipeline
 
 class FrameTest extends AssertionsForJUnit with MockitoSugar {
 
   implicit val engine = new PipelineEngine
-  val dummyReactive = new PipelineBuffer(null)
+  val dummyReactive = new Pipeline(null)
 
   @Test
   def testNewWriteFrameIsNotWritten() = {

@@ -6,14 +6,14 @@ import scala.util.Random
 import rescala.Signal
 import rescala.pipelining.PipelineEngine
 import rescala.graph.Reactive
-import rescala.pipelining.PipelineBuffer
+import rescala.pipelining.Pipeline
 
 object PipelineTestUtils {
   
   private val rand = new Random
 
   def frameTurns(f : Reactive) : Queue[Turn] = {
-    PipelineBuffer.pipelineFor(f).getPipelineFrames().map { _.turn}
+    Pipeline.pipelineFor(f).getPipelineFrames().map { _.turn}
   }
   
   def randomWait[A](op: => A) : A = {

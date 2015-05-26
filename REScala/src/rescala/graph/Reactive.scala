@@ -6,7 +6,7 @@ import rescala.turns.Engine
 import rescala.turns.Ticket
 import rescala.graph.Pulse.{Diff, NoChange}
 import scala.collection.immutable.Queue
-import rescala.pipelining.PipelineBuffer
+import rescala.pipelining.Pipeline
 import rescala.pipelining.PipeliningTurn
 
 /** A Reactive is something that can be reevaluated */
@@ -16,7 +16,7 @@ trait Reactive  {
   
   protected[rescala] def engine: Engine[Turn]
   protected[rescala] def lock: TurnLock
-  private[rescala] final val pipeline = new PipelineBuffer(this)
+  private[rescala] final val pipeline = new Pipeline(this)
   
   private[rescala] final val level : Buffer[Int] = engine.buffer(0, math.max, this)
   private[rescala] final val outgoing : Buffer[Set[Reactive]] = engine.buffer(Set(), Buffer.commitAsIs, this)

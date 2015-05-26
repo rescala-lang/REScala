@@ -14,7 +14,7 @@ import java.util.Random
 import java.util.concurrent.CyclicBarrier
 import rescala.pipelining.PipeliningTurn
 import scala.annotation.tailrec
-import rescala.pipelining.PipelineBuffer._
+import rescala.pipelining.Pipeline._
 
 class ManyThreadsTest extends AssertionsForJUnit with MockitoSugar {
 

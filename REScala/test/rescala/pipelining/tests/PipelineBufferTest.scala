@@ -8,7 +8,7 @@ import rescala.graph.Frame
 import rescala.pipelining.PipelineEngine
 import rescala.pipelining.PipeliningTurn
 import rescala.turns.Turn
-import rescala.pipelining.PipelineBuffer
+import rescala.pipelining.Pipeline
 import rescala.graph.Buffer
 import rescala.graph.Reactive
 
@@ -16,7 +16,7 @@ class PipelineBufferTest extends AssertionsForJUnit with MockitoSugar {
   
   
   
-  val pipelineBuffer= new PipelineBuffer(null)
+  val pipelineBuffer= new Pipeline(null)
   val engine = new PipelineEngine
   val buffer  = pipelineBuffer.createBuffer[Int](0, Buffer.commitAsIs, false)
 

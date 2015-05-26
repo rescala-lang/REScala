@@ -11,7 +11,7 @@ import rescala.pipelining.PipeliningTurn
 import rescala.pipelining.tests.PipelineTestUtils._
 import rescala.turns.Ticket
 import rescala.turns.Turn
-import rescala.pipelining.PipelineBuffer
+import rescala.pipelining.Pipeline
 
 class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
 
@@ -149,7 +149,7 @@ class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
 
       implicit val dummyTurn = engine.makeTurn
       
-      assert(PipelineBuffer.pipelineFor(dynDep).getPipelineFrames().isEmpty)
+      assert(Pipeline.pipelineFor(dynDep).getPipelineFrames().isEmpty)
 
       // in scheduling case, there should no dependency to source2
       assert(dynDep.incoming.get == Set(source1))
