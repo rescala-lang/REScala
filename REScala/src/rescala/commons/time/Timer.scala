@@ -41,6 +41,14 @@ class Timer(val interval: Time) extends Ordered[Timer] {
     }
   }
 
+  /** Integrates a Signal expression over time but uses this.interval as
+   *  difference between the ticks */
+  def integrateWithInterval(expr: => Double): Signal[Double] = {
+    tick.fold(0d) { (total, _ ) =>
+      total + this.interval * expr
+    }
+  }
+
   /** Returns a new Signal that counts the local time from now */
   def localTime: Signal[Time] = {
     val now = time()
