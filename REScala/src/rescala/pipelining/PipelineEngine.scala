@@ -127,10 +127,21 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
     
   }
   
-  override def buffer[A](default: A, commitStrategy: (A, A) => A, at : Reactive, takePrevious : Boolean): Buffer[A] = {
+  override def bufferIncoming[A](default: A, commitStrategy: (A, A) => A, at : Reactive) = bufferBlocking[A](default, commitStrategy, at)
+  override def bufferPulses[A](default: A, commitStrategy: (A, A) => A, at : Reactive) = bufferBlocking[A](default, commitStrategy, at)
+  override def bufferOutgoing[A](default: A, commitStrategy: (A, A) => A, at : Reactive) = bufferNonblocking[A](default, commitStrategy, at)
+  override def bufferLevel[A](default: A, commitStrategy: (A, A) => A, at : Reactive) = bufferNonblocking[A](default, commitStrategy, at)
+  
+  private def bufferBlocking[A](default: A, commitStrategy: (A, A) => A, at : Reactive): BlockingPipelineBuffer[A] = {
     assert(at != null)
-    assert(at.pipeline != null)
-    at.pipeline.createBuffer(default, commitStrategy, takePrevious)
+    assert(pipelineFor(at) != null)
+    pipelineFor(at).createBlockingBuffer(default, commitStrategy)
+  }
+  
+  private def bufferNonblocking[A](default: A, commitStrategy: (A, A) => A, at : Reactive): NonblockingPipelineBuffer[A] = {
+    assert(at != null)
+    assert(pipelineFor(at) != null)
+    pipelineFor(at).createNonblockingBuffer(default, commitStrategy)
   }
 
 }

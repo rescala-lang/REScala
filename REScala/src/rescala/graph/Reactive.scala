@@ -7,8 +7,6 @@ import rescala.turns.Ticket
 import rescala.graph.Pulse.{Diff, NoChange}
 import scala.collection.immutable.Queue
 import rescala.pipelining.Pipeline
-import rescala.pipelining.PipeliningTurn
-
 /** A Reactive is something that can be reevaluated */
 trait Reactive  {
   
@@ -18,9 +16,9 @@ trait Reactive  {
   protected[rescala] def lock: TurnLock
   private[rescala] final val pipeline = new Pipeline(this)
   
-  private[rescala] final val level : Buffer[Int] = engine.buffer(0, math.max, this)
-  private[rescala] final val outgoing : Buffer[Set[Reactive]] = engine.buffer(Set(), Buffer.commitAsIs, this)
-  private[rescala] val incoming : Buffer[Set[Reactive]] = engine.buffer(Set(), Buffer.commitAsIs, this, true)
+  private[rescala] final val level : Buffer[Int] = engine.bufferLevel(0, math.max, this)
+  private[rescala] final val outgoing : Buffer[Set[Reactive]] = engine.bufferOutgoing(Set(), Buffer.commitAsIs, this)
+  private[rescala] val incoming : Buffer[Set[Reactive]] = engine.bufferIncoming(Set(), Buffer.commitAsIs, this)
   
   
   
@@ -38,19 +36,9 @@ trait Reactive  {
 /** A node that has nodes that depend on it */
 trait Pulsing[+P] extends Reactive {
  
-  protected[this] final val pulses : Buffer[Pulse[P]] = engine.buffer(Pulse.none, Buffer.transactionLocal, this, true)
+  protected[this] final val pulses : Buffer[Pulse[P]] = engine.bufferPulses(Pulse.none, Buffer.transactionLocal, this)
   
-  final def pulse(implicit turn: Turn): Pulse[P] = {  
-    //while(!isPreviousFrameFinished){}
-   // if (!pipeline.hasFrame) {
-      // Access without a frame: need to wait until frame is finished
-      // for all static dependencies it is guaranteed that the frame is already
-      // finished
-    if (turn.isInstanceOf[PipeliningTurn])
-       pipeline.waitUntilCanRead(turn.asInstanceOf[PipeliningTurn])
-  //  }
-    pulses.get
-  } 
+  final def pulse(implicit turn: Turn): Pulse[P] =  pulses.get
 }
 
 

@@ -33,9 +33,18 @@ class Pipeline(val reactive: Reactive) {
   
   protected[pipelining] var createdBuffers : Set[PipelineBuffer[_]] = Set()
 
-  protected[pipelining] def createBuffer[T](initval: T, commitStrategy: (T, T) => T, takePrevious: Boolean): PipelineBuffer[T] = {
+  protected[pipelining] def createBlockingBuffer[T](initval: T, commitStrategy: (T, T) => T): BlockingPipelineBuffer[T] = {
     assert(queueHead == null)
-    val newBuffer = if (takePrevious) new BlockingPipelineBuffer(this, commitStrategy) else new NonblockingPipelineBuffer(this, commitStrategy)
+    val newBuffer =  new BlockingPipelineBuffer(this, commitStrategy) 
+    val holder = ValueHolder.initStable(initval, newBuffer)
+    stableFrame.values :+= holder
+    createdBuffers += newBuffer
+    newBuffer
+  }
+  
+  protected[pipelining] def createNonblockingBuffer[T](initval: T, commitStrategy: (T, T) => T): NonblockingPipelineBuffer[T] = {
+    assert(queueHead == null)
+    val newBuffer = new NonblockingPipelineBuffer(this, commitStrategy)
     val holder = ValueHolder.initStable(initval, newBuffer)
     stableFrame.values :+= holder
     createdBuffers += newBuffer

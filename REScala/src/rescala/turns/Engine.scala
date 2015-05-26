@@ -7,7 +7,12 @@ import scala.annotation.implicitNotFound
 
 @implicitNotFound(msg = "could not finde a propagation engine, select one from Engines")
 trait Engine[+TTurn <: Turn] {
-  def buffer[A](default: A, commitStrategy: (A, A) => A, at: Reactive, takePrevious : Boolean = false): Buffer[A] = new SimpleBuffer[A](default, commitStrategy, at.lock)
+  
+  // Created specialized buffer methods, because pipeling needs different buffers per field
+  def bufferIncoming[A](default: A, commitStrategy: (A, A) => A, at: Reactive): Buffer[A] = new SimpleBuffer[A](default, commitStrategy, at.lock)
+  def bufferOutgoing[A](default: A, commitStrategy: (A, A) => A, at: Reactive): Buffer[A] = new SimpleBuffer[A](default, commitStrategy, at.lock)
+  def bufferPulses[A](default: A, commitStrategy: (A, A) => A, at: Reactive): Buffer[A] = new SimpleBuffer[A](default, commitStrategy, at.lock)
+  def bufferLevel[A](default: A, commitStrategy: (A, A) => A, at: Reactive): Buffer[A] = new SimpleBuffer[A](default, commitStrategy, at.lock)
 
   /** creates runs and commits a new turn */
   def plan[R](initialWrites: Reactive*)(admissionPhase: TTurn => R): R
