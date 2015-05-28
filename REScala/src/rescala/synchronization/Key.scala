@@ -22,17 +22,17 @@ final class Key(val turn: Turn) {
 
 
   def lockKeychain[R](f: => R): R = {
-		@tailrec def loop(): R = {
-			val oldChain = keychain
-			keychain.synchronized {
-				if (oldChain eq keychain) Some(f)
-				else None
-			} match {
-				case None => loop()
-				case Some(r) => r
-			}
-		}
-		loop()
+    @tailrec def loop(): R = {
+      val oldChain = keychain
+      keychain.synchronized {
+        if (oldChain eq keychain) Some(f)
+        else None
+      } match {
+        case None => loop()
+        case Some(r) => r
+      }
+    }
+    loop()
   }
 
   /** contains a list of all locks owned by us. */
@@ -48,6 +48,6 @@ final class Key(val turn: Turn) {
 
   /** release all locks we hold or transfer them to a waiting transaction if there is one
     * holds the master lock for request */
-  def releaseAll(): Unit = lockKeychain { keychain.release(this) }
+  def releaseAll(): Unit = lockKeychain {keychain.release(this)}
 
 }

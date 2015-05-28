@@ -1,49 +1,66 @@
 package rescala.synchronization
 
+import java.util.concurrent.atomic.AtomicReference
+import java.util.function.UnaryOperator
+
 import rescala.graph.Reactive
 
+import scala.annotation.tailrec
 import scala.collection.immutable.Queue
 
 final class TurnLock(val guarded: Reactive) {
   override def toString: String = s"Lock($guarded)"
 
   /** this is guarded by our intrinsic lock */
-  private var owner: Key = null
-  private var shared: Queue[Key] = Queue()
+  private var owner: AtomicReference[Key] = new AtomicReference[Key]()
+  private var shared: AtomicReference[Queue[Key]] = new AtomicReference[Queue[Key]](Queue())
 
-  def getOwner: Key = synchronized(owner)
+  def getOwner: Key = owner.get()
 
   /** returns true if key owns the write lock */
-  def isOwner(key: Key): Boolean = synchronized(owner eq key)
+  def isOwner(key: Key): Boolean = owner.get() eq key
 
   /**
    * locks this if it is free, returns the current owner (which is key, if locking succeeded)
    * does not check for shared access.
    */
-  def tryLock(key: Key): Key = synchronized {
-    if (owner eq null) {
-      owner = key
+  @tailrec
+  def tryLock(key: Key): Key = {
+    if (owner.compareAndSet(null, key)) {
       key.addLock(this)
     }
-    owner
+    val current = owner.get()
+    if (current eq null) tryLock(key)
+    else current
   }
 
-  def share(key: Key) = synchronized(shared = shared.enqueue(key))
-  def acquired(key: Key) = synchronized {
-    val (k, r) = shared.dequeue
-    assert(k == key, s"resolved await in wrong order got $k expected $key remaining $r")
-    shared = r
+  @tailrec
+  private def transform[T](v: AtomicReference[T])(f: T => T): Unit = {
+    val old = v.get()
+    val update = f(old)
+    if (!v.compareAndSet(old, update)) transform(v)(f)
+  }
+
+  def share(key: Key): Unit = transform(shared)(_.enqueue(key))
+  def acquired(key: Key) = {
+    transform(shared) { q =>
+      val (k, r) = q.dequeue
+      assert(k == key, s"resolved await in wrong order got $k expected $key remaining $r")
+      r
+    }
     key
   }
 
   /** transfers the lock from the turn to the target. */
-  def transfer(target: Key, oldOwner: Key, ignoreShared: Boolean = false) = synchronized {
-    assert(owner eq oldOwner, s"$this is held by $owner but tried to transfer by $oldOwner (to $target)")
-    if (!ignoreShared && shared.isEmpty) owner = null
-    else {
-      owner = target
-      if (target ne null) target.addLock(this)
-    }
+  def transfer(target: Key, oldOwner: Key, ignoreShared: Boolean = false) = {
+    val trueTarget =
+      if (!ignoreShared && shared.get.isEmpty) null
+      else target
+
+    if (!owner.compareAndSet(oldOwner, trueTarget))
+      assert(assertion = false, s"$this is held by $owner but tried to transfer by $oldOwner (to $target)")
+
+    if (trueTarget ne null) trueTarget.addLock(this)
   }
 
 }

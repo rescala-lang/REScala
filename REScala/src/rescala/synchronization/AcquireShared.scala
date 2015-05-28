@@ -16,20 +16,15 @@ object AcquireShared {
       if (oldOwner eq requester) Done(requester)
       else {
         Keychains.lockKeychains(requester, oldOwner) {
-          // i suspect that we do not need to synchronize on the lock; as we hold the keychain of the owner of the lock,
-          // he is not allowed to release the lock, so testing whether the owner did not change should be enough.
-          // but keeping this synchronized is correct in any case and probably does not influence performance much.
-          lock.synchronized {
-            lock.tryLock(requester) match {
-              // make sure the other owner did not unlock before we got his master lock
-              case owner if owner eq requester => Done(requester)
-              case owner if owner ne oldOwner => Retry
-              case owner if requester.keychain eq owner.keychain => Done(owner)
-              case owner =>
-                lock.share(requester)
-                owner.keychain.append(requester.keychain)
-                Await
-            }
+          lock.tryLock(requester) match {
+            // make sure the other owner did not unlock before we got his master lock
+            case owner if owner eq requester => Done(requester)
+            case owner if owner ne oldOwner => Retry
+            case owner if requester.keychain eq owner.keychain => Done(owner)
+            case owner =>
+              lock.share(requester)
+              owner.keychain.append(requester.keychain)
+              Await
           }
         }
       }
