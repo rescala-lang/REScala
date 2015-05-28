@@ -18,7 +18,7 @@ object AcquireShared {
         Keychains.lockKeychains(requester, oldOwner) {
           // be aware that the owner of the lock could change at any time.
           // but it can not change when the owner is the requester or old owner,
-          // because the keychain protects unlocking.ü
+          // because the keychain protects unlocking.
           lock.tryLock(requester) match {
             // make sure the other owner did not unlock before we got his master lock
             case owner if owner eq requester => Done(requester)
