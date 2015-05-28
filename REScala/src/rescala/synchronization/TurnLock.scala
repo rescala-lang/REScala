@@ -1,7 +1,6 @@
 package rescala.synchronization
 
 import java.util.concurrent.atomic.AtomicReference
-import java.util.function.UnaryOperator
 
 import rescala.graph.Reactive
 
