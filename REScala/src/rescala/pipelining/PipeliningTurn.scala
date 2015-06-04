@@ -18,10 +18,9 @@ import rescala.propagation.PropagateNoChanges
 import rescala.propagation.DoNothing
 import rescala.graph.WriteFrame
 
-
-class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean = false) 
-  extends TurnImpl 
-  with PropagateNoChanges 
+class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean = false)
+  extends TurnImpl
+  with PropagateNoChanges
   with ParallelFrameCreator {
 
   import Pipeline._
@@ -49,28 +48,23 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
     ensureLevel(reactive, dependencies)
     if (dynamic) {
       evaluate(reactive)
-    } else  {
+    } else {
       dependencies.foreach(register(reactive))
       evaluateNoChange(reactive)
     }
     reactive
   }
 
-  private def needsReevaluation(reactive: Reactive, frame : WriteFrame[_]) = {
+  private def needsReevaluation(reactive: Reactive, frame: WriteFrame[_]) = {
     !frame.isSuspicious()
   }
 
   override def evaluate(head: Reactive) = {
-    assert(pipelineFor(head).hasFrame(this), "No frame was created in turn " + this + " for " + head)
-
-    // TODO Modify queue for nochanges
-    // Marks all nodes written, which cannot be reached anymore and which was pruned
-    // in order not to block pipelining longer on these nodes
-    //  markUnreachablePrunedNodesWritten(head)
+    assert(pipelineFor(head).hasFrame(this), s"${Thread.currentThread().getId} No frame was created in turn $this for $head")
 
     pipelineFor(head).waitUntilCanWrite(this)
 
-  // println(s"${Thread.currentThread().getId} EVALUATE $head during $this")
+    println(s"${Thread.currentThread().getId} EVALUATE $head during $this")
 
     var frameFound = false;
     head.pipeline.foreachFrameTopDown { frame =>
@@ -90,30 +84,43 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
       }
     }
 
-    // Check whether this frame is suspicious for not the evaluate
-    val evaluateFrame = needsReevaluation(head, writeFrame)
-
-    if (evaluateFrame) {
-      pipelineFor(head).markTouched
-      val queueAction = super.evaluate(head)
-      queueAction match {
-        case EnqueueDependencies =>
-          commitFor(head)
-          pipelineFor(head).markWritten
-        case RequeueReactive =>
-        // This reactive will be evaluated once more, so we cannot finish it
-        case DoNothing       => assert(false)
+    if (head.incoming.get.exists { reactive =>
+      pipelineFor(reactive).findFrame {
+        _ match {
+          case Some(frame) => !frame.isWritten
+          case None        => false
+        }
       }
-      queueAction
+    }) {
+      RequeueReactive
     } else {
-      //commitFor(head)
-      //pipelineFor(head).markWritten
-      DoNothing
+
+      // Check whether this frame is suspicious for not the evaluate
+      val evaluateFrame = needsReevaluation(head, writeFrame)
+
+      if (evaluateFrame) {
+        pipelineFor(head).markTouched
+        val queueAction = super.evaluate(head)
+        queueAction match {
+          case EnqueueDependencies =>
+            commitFor(head)
+            pipelineFor(head).markWritten
+            EnqueueDependencies
+          case RequeueReactive =>
+          // This reactive will be evaluated once more, so we cannot finish it
+          case DoNothing       => assert(false)
+        }
+        queueAction
+      } else {
+        //commitFor(head)
+        //pipelineFor(head).markWritten
+        DoNothing
+      }
     }
   }
 
   override def evaluateNoChange(head: Reactive): QueueAction = {
-  //  println(s"NOT EVALUATE $head")
+    //  println(s"NOT EVALUATE $head")
     if (!pipelineFor(head).needFrame().isWritten) {
       commitFor(head)
       pipelineFor(head).markWritten
@@ -174,6 +181,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
           for (turn <- turnsAfterDynamicRead) {
             // TODO Actually not sure that we need to lock here
             turn.createFramesLock.synchronized {
+              println(s"Create frame for $turn at $reactive")
               val frameCreated = engine.createFrameAfter(this, turn, reactive)
               anyFrameCreated ||= frameCreated
             }
@@ -242,10 +250,10 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
           }
         })(turn)
       }
-      
-       if (turnsAfterDynamicDrop.nonEmpty) {
+
+      if (turnsAfterDynamicDrop.nonEmpty) {
         // Queue based create frames at reachable reactives
-        var deframedReactives = Set[Reactive] (source)
+        var deframedReactives = Set[Reactive](source)
         val queue = new LevelQueue
         queue.enqueue(-1)(sink)
         queue.evaluateQueue { reactive =>
@@ -254,11 +262,11 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
             val pipeline = pipelineFor(reactive)
             val frameToRemove = pipeline.needFrame()
             val incomings = reactive.incoming.base(this)
-            if (incomings.filter (pipelineFor(_).hasFrame(turn) ).diff(deframedReactives).isEmpty ) {
+            if (incomings.filter(pipelineFor(_).hasFrame(turn)).diff(deframedReactives).isEmpty) {
               println(s"Remove frame for $turn at $reactive")
               pipeline.removeFrames(turn)
               import rescala.util.JavaFunctionsImplicits._
-              turn.asInstanceOf[PipeliningTurn].framedReactives.updateAndGet{ set : Set[Reactive] => set - reactive};
+              turn.asInstanceOf[PipeliningTurn].framedReactives.updateAndGet { set: Set[Reactive] => set - reactive };
               deframedReactives += reactive
               frameRemoved = true
             }
@@ -292,13 +300,13 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
   override def commitPhase(): Unit = {
     //Commit the rest (no buffers, but some tests inject something)
     super.commitPhase()
-    
-    framedReactives.get.foreach {reactive =>
+
+    framedReactives.get.foreach { reactive =>
       val frame = pipelineFor(reactive).needFrame();
       if (!frame.isWritten) {
-      commitFor(reactive)
-      frame.markWritten
-      
+        commitFor(reactive)
+        frame.markWritten
+
       }
     }
   }
