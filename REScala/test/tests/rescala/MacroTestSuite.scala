@@ -11,7 +11,7 @@ import rescala.turns.{Engine, Turn}
 import rescala.{Event, Evt, Signal, Var}
 
 object MacroTestSuite extends JUnitParameters
-
+/*
 @RunWith(value = classOf[Parameterized])
 class MacroTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit with MockitoSugar {
   implicit val implicitEngine: Engine[Turn] = engine
@@ -358,4 +358,4 @@ class MacroTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit with Mocki
     e(30)
     assert(sig.now === Some(30))
   }
-}
+}*/

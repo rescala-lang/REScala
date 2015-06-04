@@ -26,13 +26,9 @@ sealed abstract class Frame[T](val turn: PipeliningTurn, val at: Pipeline) {
 
   private val touched = new AtomicBoolean(false); // I think do not need atomic here, because it is should only be accessed by one thread
   private val written = new AtomicBoolean(false);
-  private val suspicious = new AtomicBoolean(false); // Is accessed by multiple threads, but should be in a safe way, may remove atomis here, too
 
   protected[rescala] def isTouched: Boolean = touched.get
   protected[rescala] def markTouched(): Unit = touched.set(true)
-
-  protected[rescala] def isSuspicious(): Boolean = suspicious.get
-  protected[rescala] def markSuspicious(): Unit = suspicious.set(true)
 
   protected[rescala] def isWritten = written.get
 

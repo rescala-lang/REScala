@@ -10,13 +10,18 @@ import rescala.propagation.LevelQueue
 import rescala.propagation.TurnImpl
 import rescala.turns.Turn
 import rescala.util.JavaFunctionsImplicits.buildUnaryOp
-import rescala.graph.WriteFrame
 import rescala.propagation.QueueAction
-import rescala.propagation.RequeueReactive
-import rescala.propagation.EnqueueDependencies
+import rescala.propagation.{ RequeueReactive, EnqueueDependencies, DoNothing }
 import rescala.propagation.PropagateNoChanges
-import rescala.propagation.DoNothing
-import rescala.graph.WriteFrame
+
+object PipeliningTurn {
+
+  sealed abstract class PipelinedEvaluationRequest
+  case class EvaluateNow(writeFrame: WriteFrame[BufferFrameContent]) extends PipelinedEvaluationRequest
+  case object EvaluateLater extends PipelinedEvaluationRequest
+  case object DontEvaluate extends PipelinedEvaluationRequest
+
+}
 
 class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean = false)
   extends TurnImpl
@@ -24,6 +29,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
   with ParallelFrameCreator {
 
   import Pipeline._
+  import PipeliningTurn._
 
   /**
    * Remember all reactives for which a frame was created during this turn
@@ -55,17 +61,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
     reactive
   }
 
-  private def needsReevaluation(reactive: Reactive, frame: WriteFrame[_]) = {
-    !frame.isSuspicious()
-  }
-
-  override def evaluate(head: Reactive) = {
-    assert(pipelineFor(head).hasFrame(this), s"${Thread.currentThread().getId} No frame was created in turn $this for $head")
-
-    pipelineFor(head).waitUntilCanWrite(this)
-
-    println(s"${Thread.currentThread().getId} EVALUATE $head during $this")
-
+  private def assertFrameOrder(head: Reactive): Boolean = {
     var frameFound = false;
     head.pipeline.foreachFrameTopDown { frame =>
       if (frame.turn == this) {
@@ -76,29 +72,55 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
         assert(frame.turn > this)
       }
     }
+    true
+  }
 
-    val writeFrame = pipelineFor(head).findFrame {
-      _ match {
-        case Some(frame @ WriteFrame(_, _)) => frame
-        case _                              => throw new AssertionError("No correct write frame")
-      }
-    }
-
-    if (head.incoming.get.exists { reactive =>
+  /**
+   * Checks whether an incoming dependency exists, which has a non written frame for this reactive
+   */
+  private def needToWaitForIncoming(reactive: Reactive) = {
+    reactive.incoming.get.exists { reactive =>
       pipelineFor(reactive).findFrame {
         _ match {
           case Some(frame) => !frame.isWritten
           case None        => false
         }
       }
-    }) {
-      RequeueReactive
-    } else {
+    }
+  }
 
-      // Check whether this frame is suspicious for not the evaluate
-      val evaluateFrame = needsReevaluation(head, writeFrame)
+  /**
+   * Checks what to do with the current head: Evaluate it now, later or never
+   */
+  private def checkEvaluation(reactive: Reactive): PipelinedEvaluationRequest = {
+    pipelineFor(reactive).findFrame {
+      _ match {
+        case Some(frame @ WriteFrame(_, _)) =>
+          if (needToWaitForIncoming(reactive))
+            EvaluateLater // A concurrent dynamic dependency add is in topological order before reactive, so evaluate this reactive later
+          else
+            EvaluateNow(frame) // Otherwise evaluate it now
+        case Some(frame) => throw new AssertionError("Connot write into dynamic frame")
+        case None        => DontEvaluate // frame was removed due to an dynamic dependency drop while waiting, just dont evaluate it
+      }
+    }
+  }
 
-      if (evaluateFrame) {
+  override def evaluate(head: Reactive) = {
+    assert(pipelineFor(head).hasFrame(this), s"${Thread.currentThread().getId} No frame was created in turn $this for $head")
+
+    pipelineFor(head).waitUntilCanWrite(this)
+
+    //println(s"${Thread.currentThread().getId} EVALUATE $head during $this")
+
+    assert(assertFrameOrder(head))
+
+    checkEvaluation(head) match {
+      case DontEvaluate =>
+        DoNothing
+      case EvaluateLater =>
+        RequeueReactive
+      case EvaluateNow(writeFrame) =>
         pipelineFor(head).markTouched
         val queueAction = super.evaluate(head)
         queueAction match {
@@ -111,11 +133,6 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
           case DoNothing       => assert(false)
         }
         queueAction
-      } else {
-        //commitFor(head)
-        //pipelineFor(head).markWritten
-        DoNothing
-      }
     }
   }
 
@@ -240,16 +257,6 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
       val turnsAfterDynamicDrop = writeFramesAfterDrop.map(_.turn.asInstanceOf[PipeliningTurn])
       println(s"Turn after dynamic drop turnsAfterDynamicDrop")
 
-      turnsAfterDynamicDrop.foreach { turn =>
-        pipelineFor(sink).findFrame({
-          _ match {
-            case None => // No frame for this turn at sink, lucky case, dont do anything
-            case Some(frame) =>
-              println(s"Frame for $turn at $sink marked suspicious")
-              frame.markSuspicious() // this frame may not need to be evaluated, but this can not be decided before the frame should be evaluated
-          }
-        })(turn)
-      }
 
       if (turnsAfterDynamicDrop.nonEmpty) {
         // Queue based create frames at reachable reactives
@@ -264,7 +271,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
             val incomings = reactive.incoming.base(this)
             if (incomings.filter(pipelineFor(_).hasFrame(turn)).diff(deframedReactives).isEmpty) {
               println(s"Remove frame for $turn at $reactive")
-              pipeline.removeFrames(turn)
+              pipeline.deleteFrames(turn)
               import rescala.util.JavaFunctionsImplicits._
               turn.asInstanceOf[PipeliningTurn].framedReactives.updateAndGet { set: Set[Reactive] => set - reactive };
               deframedReactives += reactive

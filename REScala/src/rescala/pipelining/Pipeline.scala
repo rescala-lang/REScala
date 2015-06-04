@@ -100,9 +100,6 @@ class Pipeline(val reactive: Reactive) {
         findBottomMostFrame(tail.previous())
     }
 
-    // Are not allowed to hold the pipelineLock, because than we cannot
-    // query for the graph lock, to prohibit deadlocks
-
     // Local: if the turn itself is found, it is the bottom most frame => no need to sync
     val bottomMostWaitingFrame: Option[CFrame] = findFrame(x => x).orElse(findBottomMostFrame(queueTail))
     bottomMostWaitingFrame
@@ -264,11 +261,15 @@ class Pipeline(val reactive: Reactive) {
         }
       }
 
+      println (s"Insert write from for $otherTurn during $turn")
+      
       val preceedingFrame = findFrameToInsertAfter()
 
       val newFrame = WriteFrame[Content](otherTurn, this)
       newFrame.content = duplicate(preceedingFrame.content, otherTurn)
       newFrame.insertAfter(preceedingFrame)
+      if (preceedingFrame == queueTail)
+        queueTail = newFrame
     }
   }
 
@@ -287,6 +288,31 @@ class Pipeline(val reactive: Reactive) {
     }
     refreshFrame(queueHead)
   }
+  
+  protected[rescala] def deleteFrames(implicit turn: PipeliningTurn): Unit = lockPipeline {
+
+    // Remove any frame and throw them away
+    var currentFrame = queueTail
+    
+    while (currentFrame != null) {
+      if (currentFrame.turn == turn) {
+        val newFrame = currentFrame.previous()
+        if (currentFrame == queueTail) {
+          queueTail = newFrame
+        } else if (currentFrame == queueHead) {
+          queueHead = newFrame
+        }
+        currentFrame.removeFrame()
+        currentFrame = newFrame
+      } else {
+        currentFrame = currentFrame.previous()
+      }
+    }
+    
+    // if there were multiple frames, they all need to be at head, so
+    assert(!hasFrame, s" Frames for $turn left in ${getPipelineFrames()}")
+  }
+
 
   protected[rescala] def removeFrames(implicit turn: PipeliningTurn): Unit = lockPipeline {
     // Assert for at least one frame
