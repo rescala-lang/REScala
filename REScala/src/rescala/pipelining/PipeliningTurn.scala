@@ -16,15 +16,8 @@ import rescala.propagation.RequeueReactive
 import rescala.propagation.EnqueueDependencies
 import rescala.propagation.PropagateNoChanges
 import rescala.propagation.DoNothing
+import rescala.graph.WriteFrame
 
-object PipeliningTurn {
-
-  private object lockPhaseLock
-
-  // For testing
-  protected[rescala] var numSuspiciousNotEvaluatedFrames = 0
-
-}
 
 class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean = false) 
   extends TurnImpl 
@@ -63,19 +56,8 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
     reactive
   }
 
-  private def needsReevaluation(reactive: Reactive) = {
-    val incoming = reactive.incoming.get
-    if (incoming.isEmpty)
-      true
-    else reactive.incoming.get.exists {
-      incomingDep =>
-        pipelineFor(incomingDep).findFrame {
-          _ match {
-            case Some(frame) => frame.isTouched
-            case None        => false
-          }
-        }
-    }
+  private def needsReevaluation(reactive: Reactive, frame : WriteFrame[_]) = {
+    !frame.isSuspicious()
   }
 
   override def evaluate(head: Reactive) = {
@@ -109,7 +91,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
     }
 
     // Check whether this frame is suspicious for not the evaluate
-    val evaluateFrame = needsReevaluation(head)
+    val evaluateFrame = needsReevaluation(head, writeFrame)
 
     if (evaluateFrame) {
       pipelineFor(head).markTouched
@@ -124,9 +106,9 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
       }
       queueAction
     } else {
-      commitFor(head)
-      pipelineFor(head).markWritten
-      EnqueueDependencies
+      //commitFor(head)
+      //pipelineFor(head).markWritten
+      DoNothing
     }
   }
 
@@ -215,8 +197,6 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
   }
 
   override def unregister(sink: Reactive)(source: Reactive): Unit = createFramesLock.synchronized {
-    //  val dropFrame = source.createDynamicDropFrame(sink)
-    //  sink.registerDynamicFrame(dropFrame)
 
     println(s"Unregister $source as incoming of $sink")
 
@@ -249,10 +229,10 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
       // Cannot simply remove sink from the queue of the turns because sink may be reachable
       // though another valid path, nevertheless, the turns could wait for this frame already
 
-      val turnsAfterDynamicRead = writeFramesAfterDrop.map(_.turn.asInstanceOf[PipeliningTurn])
-      println(s"Turn after dynamic drop $turnsAfterDynamicRead")
+      val turnsAfterDynamicDrop = writeFramesAfterDrop.map(_.turn.asInstanceOf[PipeliningTurn])
+      println(s"Turn after dynamic drop turnsAfterDynamicDrop")
 
-      turnsAfterDynamicRead.foreach { turn =>
+      turnsAfterDynamicDrop.foreach { turn =>
         pipelineFor(sink).findFrame({
           _ match {
             case None => // No frame for this turn at sink, lucky case, dont do anything
@@ -261,6 +241,33 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
               frame.markSuspicious() // this frame may not need to be evaluated, but this can not be decided before the frame should be evaluated
           }
         })(turn)
+      }
+      
+       if (turnsAfterDynamicDrop.nonEmpty) {
+        // Queue based create frames at reachable reactives
+        var deframedReactives = Set[Reactive] (source)
+        val queue = new LevelQueue
+        queue.enqueue(-1)(sink)
+        queue.evaluateQueue { reactive =>
+          var frameRemoved = false
+          for (turn <- turnsAfterDynamicDrop) {
+            val pipeline = pipelineFor(reactive)
+            val frameToRemove = pipeline.needFrame()
+            val incomings = reactive.incoming.base(this)
+            if (incomings.filter (pipelineFor(_).hasFrame(turn) ).diff(deframedReactives).isEmpty ) {
+              println(s"Remove frame for $turn at $reactive")
+              pipeline.removeFrames(turn)
+              import rescala.util.JavaFunctionsImplicits._
+              turn.asInstanceOf[PipeliningTurn].framedReactives.updateAndGet{ set : Set[Reactive] => set - reactive};
+              deframedReactives += reactive
+              frameRemoved = true
+            }
+          }
+          // Only need to continue created frames, if one was created
+          if (frameRemoved)
+            reactive.outgoing.get.foreach { queue.enqueue(-1) }
+        }
+
       }
 
       dropFrame match {

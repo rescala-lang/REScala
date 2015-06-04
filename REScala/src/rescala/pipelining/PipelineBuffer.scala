@@ -171,8 +171,7 @@ class BlockingPipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A) 
   override def get(implicit turn: Turn): A = {
     implicit val pTurn = turn.asInstanceOf[PipeliningTurn]
 
-    if (turn.isInstanceOf[PipeliningTurn])
-      parent.waitUntilCanRead(pTurn)
+    parent.waitUntilCanRead(pTurn)
 
     parent.findFrame {
       _ match {

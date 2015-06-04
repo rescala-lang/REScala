@@ -310,7 +310,7 @@ class Pipeline(val reactive: Reactive) {
       queueTail = newTail
     }
     // if there were multiple frames, they all need to be at head, so
-    assert(!hasFrame)
+    assert(!hasFrame, s" Frames for $turn left in ${getPipelineFrames()}")
   }
 
   protected[rescala] def markWritten(implicit turn: PipeliningTurn): Unit = {

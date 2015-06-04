@@ -6,7 +6,6 @@ import rescala.Var
 import rescala.Signals
 import rescala.pipelining.PipelineEngine
 import org.junit.Test
-import rescala.pipelining.PipeliningTurn.lockPhaseLock
 import rescala.graph.Reactive
 import rescala.pipelining.PipeliningTurn
 import rescala.pipelining.tests.PipelineTestUtils._
