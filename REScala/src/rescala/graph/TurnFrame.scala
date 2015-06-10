@@ -11,7 +11,7 @@ import rescala.util.JavaFunctionsImplicits._
 import rescala.pipelining.Pipeline
 import rescala.pipelining.PipeliningTurn
 
-sealed abstract class Frame[T](val turn: PipeliningTurn, val at: Pipeline) {
+case class Frame[T](val turn: PipeliningTurn, val at: Pipeline) {
 
   private var predecessor: Frame[T] = null.asInstanceOf[Frame[T]]
   private var successor: Frame[T] = null.asInstanceOf[Frame[T]]
@@ -142,16 +142,3 @@ sealed abstract class Frame[T](val turn: PipeliningTurn, val at: Pipeline) {
   }
 
 }
-
-case class WriteFrame[T](override val turn: PipeliningTurn, override val at: Pipeline) extends Frame[T](turn, at) {
-
-}
-
-case class DynamicReadFrame[T](override val turn: PipeliningTurn, override val at: Pipeline, val newDependent: Reactive) extends Frame[T](turn, at) {
-
-}
-
-case class DynamicDropFrame[T](override val turn: PipeliningTurn, override val at: Pipeline, val lostDependent: Reactive) extends Frame[T](turn, at) {
-
-}
-

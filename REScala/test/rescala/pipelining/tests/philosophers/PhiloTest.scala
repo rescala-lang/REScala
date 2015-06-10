@@ -136,6 +136,7 @@ class PhiloTest extends AssertionsForJUnit {
   }
 
   @Test(timeout=10000) def eatingContestsPipelining(): Unit = `eat!`(Engines.pipelining)
-  @Test(timeout=10000) def eatingContestsPipeliningDynamic(): Unit = `eatDynamic!`(Engines.pipelining)
+  @Test(timeout=10000) 
+  def eatingContestsPipeliningDynamic(): Unit = `eatDynamic!`(Engines.pipelining)
 
 }

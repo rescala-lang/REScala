@@ -15,6 +15,8 @@ import scala.collection.immutable.Queue
 
 
 class PipelineEngine extends EngineImpl[PipeliningTurn]() {
+  
+  protected[pipelining] val stableTurn = makeTurn
 
   private type PTurn = PipeliningTurn
   
@@ -55,23 +57,16 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
     pipelineFor(at).createFrameBefore(turn)
   }
 
-  /**
-   * Creates a new frame for the given turn at the given reactive and
-   * resolves conflicts which are introduced by creating the new frame
-   */
-  protected[pipelining] def createDynamicReadFrameFrame(turn: PTurn, from: Reactive, at: Reactive) = {
-    val frame = pipelineFor(at).createDynamicReadFrame(from)(turn)
-    frame
-  }
 
   protected[pipelining] def createFrameAfter(turn: PTurn, createFor: PTurn, at: Reactive): Boolean = {
     // TODO first check for conflicts
     // resolveConflicts(turn, at.getPipelineFrames().map { _.turn.asInstanceOf[PipeliningTurn]}.toSet)
-    if (pipelineFor(at).hasFrame(createFor))
+    if (pipelineFor(at).hasFrame(createFor)) {
       // at has already a frame for createFor, dont create a new one
       // TODO assert that createFor is after turn in the pipeline
+      assert(createFor >= turn)
       false
-    else {
+    } else {
       pipelineFor(at).insertWriteFrameFor(createFor)(turn)
       true
     }

@@ -5,7 +5,6 @@ import scala.annotation.elidable
 import scala.annotation.elidable.ASSERTION
 import rescala.graph.Committable
 import rescala.graph.Reactive
-import rescala.graph.WriteFrame
 import rescala.propagation.LevelQueue
 import rescala.propagation.TurnImpl
 import rescala.turns.Turn
@@ -17,11 +16,12 @@ import rescala.util.JavaFunctionsImplicits._
 import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import rescala.graph.Reactive
+import rescala.graph.Frame
 
 object PipeliningTurn {
 
   sealed abstract class PipelinedEvaluationRequest
-  case class EvaluateNow(writeFrame: WriteFrame[BufferFrameContent]) extends PipelinedEvaluationRequest
+  case class EvaluateNow(writeFrame: Frame[BufferFrameContent]) extends PipelinedEvaluationRequest
   case object EvaluateLater extends PipelinedEvaluationRequest
   case object DontEvaluate extends PipelinedEvaluationRequest
 
@@ -30,7 +30,7 @@ object PipeliningTurn {
 class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean = false)
   extends TurnImpl
   with PropagateNoChanges
-  with ParallelFrameCreator {
+  with SequentialFrameCreator {
 
   import Pipeline._
   import PipeliningTurn._
@@ -106,7 +106,6 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
     }
     true
   }
-  
 
   /**
    * Checks whether an incoming dependency exists, which has a non written frame for this reactive
@@ -128,13 +127,12 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
   private def checkEvaluation(reactive: Reactive): PipelinedEvaluationRequest = {
     pipelineFor(reactive).findFrame {
       _ match {
-        case Some(frame @ WriteFrame(_, _)) =>
+        case Some(frame) =>
           if (needToWaitForIncoming(reactive))
             EvaluateLater // A concurrent dynamic dependency add is in topological order before reactive, so evaluate this reactive later
           else
             EvaluateNow(frame) // Otherwise evaluate it now
-        case Some(frame) => throw new AssertionError("Connot write into dynamic frame")
-        case None        => DontEvaluate // frame was removed due to an dynamic dependency drop while waiting, just dont evaluate it
+        case None => DontEvaluate // frame was removed due to an dynamic dependency drop while waiting, just dont evaluate it
       }
     }
   }
@@ -144,8 +142,6 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
     pipelineFor(head).waitUntilCanWrite(this)
 
     //println(s"${Thread.currentThread().getId} EVALUATE $head during $this")
-
-    
 
     checkEvaluation(head) match {
       case DontEvaluate =>
@@ -184,46 +180,61 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
   }
 
   private def commitFor(head: Reactive): Unit = {
+    assert(Option(pipelineFor(head).needFrame().previous()).map { _.isWritten }.getOrElse(true))
     val buffersToCommit = pipelineFor(head).createdBuffers.asInstanceOf[Set[Committable]]
     buffersToCommit.foreach { _.commit }
   }
 
-  private def hasWriteableFrame(pipeline: Pipeline): Boolean = {
-    pipeline.findFrame {
+  private def getWriteableFrame(pipeline: Pipeline): Frame[BufferFrameContent] = {
+    /* pipeline.findFrame {
       _ match {
-        case None        => false
-        case Some(frame) => !frame.isWritten
+        case None        => None
+        case Some(frame) => if (frame.isWritten) None else Some(frame)
       }
+    }*/
+    val frame = pipeline.frame(this)
+    if (frame.turn == this)
+      frame
+    else if (frame.previous() == null) {
+      if (frame == pipeline.getStableFrame())
+        frame
+      else {
+        markReactiveFramed(pipeline.reactive, _ => pipeline.createFrame(this))
+        pipeline.needFrame()
+      }
+    } else {
+      frame.previous()
     }
   }
 
-  override def register(sink: Reactive)(source: Reactive): Unit = createFramesLock.synchronized {
+  private def markNonWriteFrameWritten(frame: Frame[_]): Unit = {
+
+  }
+
+  override def register(sink: Reactive)(source: Reactive): Unit = {
     val needToAddDep = !source.outgoing.get.contains(sink)
     val sourcePipeline = pipelineFor(source)
-    val sourceHasFrame = hasWriteableFrame(sourcePipeline)
-    if (needToAddDep && sourceHasFrame) {
-      // Dont need to create frames, because a frame is already there
-      source.outgoing.transform { _ + sink }
-    } else if (!sourceHasFrame && needToAddDep) {
-      println(s"Create dynamic frome at $source for $sink")
-      // Create a dynamic read frame
-      val readFrame = markReactiveFramed(source, source => engine.createDynamicReadFrameFrame(this, from = sink, at = source))
+    if (needToAddDep) {
+      sourcePipeline.dynamicLock.lock()
+      println(s"Register for $this $source as source for $sink")
+
+      val dropFrame: Frame[BufferFrameContent] = getWriteableFrame(sourcePipeline)
+
       // This writes in the dynamic read frame, but only in outgoings
-      source.outgoing.transform { _ + sink }
+      source.outgoing.transform { _ + sink }(dropFrame.turn)
 
       // this defect in frames after this frames we need to repair
       // Get all write frames after the read frame -> need to propagate the new dependency to them
-      val framesAfterDynamicRead: List[WriteFrame[_]] = pipelineFor(source).writeFramesAfter(readFrame)
-      // TODO need to sync probalbly on that?
-      framesAfterDynamicRead.foreach { frame =>
-        frame.turn.asInstanceOf[PipeliningTurn].createFramesLock.synchronized {
-          source.outgoing.transform(_ + sink)(frame.turn)
-        }
+      val framesAfterDynamicRead: List[Frame[_]] = sourcePipeline.forWriteFramesAfter(dropFrame.next()) { frame =>
+        // frame.turn.asInstanceOf[PipeliningTurn].createFramesLock.synchronized {
+        source.outgoing.transform(_ + sink)(frame.turn)
+        //  }
       }
 
       // Need to create frames for the turns after the dynamic read at the new nodes
       val turnsAfterDynamicRead = framesAfterDynamicRead.map(_.turn.asInstanceOf[PipeliningTurn])
       println(s"Turns after dynamic read $turnsAfterDynamicRead")
+      assert(turnsAfterDynamicRead.forall { this < _ })
 
       if (turnsAfterDynamicRead.nonEmpty) {
         // Queue based create frames at reachable reactives
@@ -231,6 +242,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
         queue.enqueue(-1)(sink)
         queue.evaluateQueue { reactive =>
           var anyFrameCreated = false
+          assert(sourcePipeline.hasFrame(this) && !sourcePipeline.needFrame().isWritten)
           for (turn <- turnsAfterDynamicRead) {
             // TODO Actually not sure that we need to lock here
             turn.createFramesLock.synchronized {
@@ -251,41 +263,30 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
         turn.admit(sink)
       }
 
-      commitFor(source)
-
-      readFrame.markWritten()
+      markNonWriteFrameWritten(dropFrame)
+      sourcePipeline.dynamicLock.unlock()
     }
   }
 
-  override def unregister(sink: Reactive)(source: Reactive): Unit = createFramesLock.synchronized {
+  override def unregister(sink: Reactive)(source: Reactive): Unit = {
 
     println(s"Unregister $source as incoming of $sink for $this")
 
     val sourcePipeline = pipelineFor(source)
-    val sourceHasFrame = hasWriteableFrame(sourcePipeline)
     val needToRemoveDep = source.outgoing.get.contains(sink)
 
     if (needToRemoveDep) {
-      val dropFrame = if (!sourceHasFrame) {
-        println("Need to create drop frame")
-        markReactiveFramed(source, source => pipelineFor(source).createDynamicDropFrame(sink))
-      } else {
-        val writeFrame = pipelineFor(source).findFrame { _.get } // Can use this frame if it is marked written? Should not make a difference
-        // But then it need to be written already because it must evaluated first
-        // assert(writeFrame.isWritten, "Frame of an incoming dependency needs to be evaluated first")
-        writeFrame
-      }
+      sourcePipeline.dynamicLock.lock()
 
-      assert(!dropFrame.isWritten)
-      assert(pipelineFor(source).hasFrame, s"No drop frame for $this at $source ")
+      val dropFrame = getWriteableFrame(sourcePipeline)
+
 
       dropFrame.markTouched()
 
       println(s"Remove sink $sink from source $source for $this")
       println(sourcePipeline.getPipelineFrames())
-      source.outgoing.transform { _ - sink }
-      val writeFramesAfterDrop = pipelineFor(source).writeFramesAfter(dropFrame)
-      writeFramesAfterDrop.foreach { frame => source.outgoing.transform(_ - sink)(frame.turn) }
+      source.outgoing.transform { _ - sink }(dropFrame.turn)
+      val writeFramesAfterDrop = sourcePipeline.forWriteFramesAfter(dropFrame) { frame => source.outgoing.transform(_ - sink)(frame.turn) }
 
       // Cannot simply remove sink from the queue of the turns because sink may be reachable
       // though another valid path, nevertheless, the turns could wait for this frame already
@@ -302,14 +303,13 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
           var frameRemoved = false
           for (turn <- turnsAfterDynamicDrop) {
             val pipeline = pipelineFor(reactive)
-            val frameToRemove = pipeline.needFrame()
             assert(pipelineFor(reactive).hasFrame(this))
-            val incomings = 
-            if (reactive.incoming.isInstanceOf[BlockingPipelineBuffer[Set[Reactive]]]) {
-            reactive.incoming.asInstanceOf[BlockingPipelineBuffer[Set[Reactive]]].forceGet(turn)
-            } else {
-              reactive.incoming.get(turn)
-            }
+            val incomings =
+              if (reactive.incoming.isInstanceOf[BlockingPipelineBuffer[Set[Reactive]]]) {
+                reactive.incoming.asInstanceOf[BlockingPipelineBuffer[Set[Reactive]]].forceGet(turn)
+              } else {
+                reactive.incoming.get(turn)
+              }
             if (incomings.filter(pipelineFor(_).hasFrame(turn)).diff(deframedReactives).isEmpty) {
               println(s"Remove frame for $turn at $reactive")
               turn.asInstanceOf[PipeliningTurn].markReactiveUnframed(reactive, reactive => pipeline.deleteFrames(turn))
@@ -324,13 +324,8 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
 
       }
 
-      dropFrame match {
-        case WriteFrame(_, _) =>
-        case _ =>
-          commitFor(source)
-          dropFrame.markWritten()
-      }
-
+      markNonWriteFrameWritten(dropFrame)
+      sourcePipeline.dynamicLock.unlock()
     }
 
   }
@@ -384,6 +379,10 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
 
   def <(other: Turn) = {
     !engine.waitsOn(this, other.asInstanceOf[PipeliningTurn])
+  }
+
+  def <=(other: Turn) = {
+    other == this || this < other
   }
 
 }

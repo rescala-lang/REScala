@@ -56,7 +56,7 @@ abstract class PipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A)
 
   var commitStrategy: (A, A) => A = initialStrategy
 
-  override def initCurrent(value: A): Unit = ValueHolder.initStable(value, parent.getStableFrame().valueForBuffer(this))
+  override def initCurrent(value: A): Unit = ValueHolder.initStable(value, parent.getStableFrame().content.valueForBuffer(this))
   override def initStrategy(strategy: (A, A) => A): Unit = synchronized(commitStrategy = strategy)
 
   override def transform(f: (A) => A)(implicit turn: Turn): A = synchronized {
@@ -117,14 +117,14 @@ class NonblockingPipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => 
     parent.findFrame {
       _ match {
         case Some(frame) =>
-          val content = if (frame.content.valueForBuffer(this).isChanged)
+          val readFrane = if (frame.content.valueForBuffer(this).isChanged)
             if (frame.previous() == null)
               parent.getStableFrame()
             else
-              frame.previous().content
+              frame.previous()
           else
-            frame.content
-          content.valueForBuffer(this).value
+            frame
+          readFrane.content.valueForBuffer(this).value
         case None =>
           parent.frame().valueForBuffer(this).value
 
@@ -156,14 +156,14 @@ class BlockingPipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A) 
       _ match {
         case Some(frame) =>
 
-          val content = if (frame.previous() == null)
+          val readFrame = if (frame.previous() == null)
             parent.getStableFrame()
           else {
-            assert(frame.previous().isWritten)
-            frame.previous().content
+            assert(frame.previous().isWritten, s"base called for ${this.parent.reactive} during $turn without written predecessor frame")
+            frame.previous()
           }
 
-          content.valueForBuffer(this).committedValue.get
+          readFrame.content.valueForBuffer(this).committedValue.get
         case None =>
           parent.frame().valueForBuffer(this).committedValue.get
       }
@@ -179,7 +179,7 @@ class BlockingPipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A) 
           val hasValue = frame.content.valueForBuffer(this).isChanged || frame.isWritten
           if (!hasValue) {
             if (frame.previous() == null)
-              parent.getStableFrame().valueForBuffer(this).committedValue.get
+              parent.getStableFrame().content.valueForBuffer(this).committedValue.get
             else
               frame.previous().content.valueForBuffer(this).value
           } else {
@@ -203,7 +203,7 @@ class BlockingPipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A) 
           val hasValue = frame.content.valueForBuffer(this).isChanged || frame.isWritten
           if (!hasValue) {
             if (frame.previous() == null)
-              parent.getStableFrame().valueForBuffer(this).committedValue.get
+              parent.getStableFrame().content.valueForBuffer(this).committedValue.get
             else
               frame.previous().content.valueForBuffer(this).committedValue.get
           } else {

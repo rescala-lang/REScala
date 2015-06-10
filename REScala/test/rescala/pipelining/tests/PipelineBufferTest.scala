@@ -22,7 +22,7 @@ class PipelineBufferTest extends AssertionsForJUnit with MockitoSugar {
 
   
   def readStableFrame() = {
-    pipelineBuffer.getStableFrame().valueForBuffer(buffer).value.asInstanceOf[Int]
+    pipelineBuffer.getStableFrame().content.valueForBuffer(buffer).value.asInstanceOf[Int]
   }
   
   @Test

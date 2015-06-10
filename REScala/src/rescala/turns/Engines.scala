@@ -19,7 +19,7 @@ object Engines {
     case other => throw new IllegalArgumentException(s"unknown engine $other")
   }
 
-  def all: List[Engine[Turn]] = List(default, STM, spinning, spinningWait, synchron, unmanaged, pipelining)
+  def all: List[Engine[Turn]] = List(default, STM, spinning, spinningWait, synchron, unmanaged, new PipelineEngine)
 
   implicit val default: Engine[Turn] = spinningWithBackoff(7)
 

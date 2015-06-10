@@ -47,6 +47,7 @@ class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
     assert(numEvaluated == 1)
     numEvaluated = 0
     val dummyTurn = engine.makeTurn
+    engine.addTurn(dummyTurn)
     assert(source2.outgoing.get(dummyTurn) == Set())
     assert(source1.outgoing.get(dummyTurn) == Set(dynDep))
     assert(dynDep.incoming.get(dummyTurn) == Set(source1))
@@ -64,13 +65,15 @@ class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
     // Hope that thread scheduling is not deterministic enough to cover both cases with not too many tries
     while (!removeBeforeAdd || !addBeforeRemove) {
       
-      implicit val dummyTurn = engine.makeTurn
+      implicit var dummyTurn = engine.makeTurn
       source1.set(0)
       source2.set(2)
       
+      engine.addTurn(dummyTurn)
       assert(source1.outgoing.get == Set(dynDep))
       assert(source2.outgoing.get == Set(dynDep))
       assert(dynDep.incoming.get == Set(source1, source2))
+      engine.turnCompleted(dummyTurn)
       
       numEvaluated = 0
       dynDepTracker.reset()
@@ -93,6 +96,9 @@ class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
       threadRemoveDep.join()
       threadAddDep.join()
       
+      dummyTurn = engine.makeTurn
+      engine.addTurn(dummyTurn)
+      
 
       if (dynDep.incoming.get == Set(source1)) {
         println("==> Add before remove")
@@ -113,6 +119,8 @@ class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
       } else {
         fail("Invalid result value")
       }
+      
+      engine.turnCompleted(dummyTurn)
 
     }
   }
@@ -147,6 +155,7 @@ class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
       updateDepThread.join()
 
       implicit val dummyTurn = engine.makeTurn
+      engine.addTurn(dummyTurn)
       
       assert(Pipeline.pipelineFor(dynDep).getPipelineFrames().isEmpty)
 
@@ -154,6 +163,8 @@ class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
       assert(dynDep.incoming.get == Set(source1))
       assert(source2.outgoing.get == Set())
       assert(source1.outgoing.get == Set(dynDep))
+      
+      engine.turnCompleted(dummyTurn)
 
       // But scheduling defines seen values
       numEvaluated match {

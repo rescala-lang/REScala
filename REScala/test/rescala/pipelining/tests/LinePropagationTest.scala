@@ -14,7 +14,7 @@ import rescala.turns.Ticket
 import rescala.pipelining.PipeliningTurn
 import rescala.pipelining.PipeliningTurn
 import rescala.pipelining.PipeliningTurn
-import rescala.graph.WriteFrame
+import rescala.graph.Frame
 import rescala.pipelining.Pipeline._
 
 class LinePropagationTest extends AssertionsForJUnit with MockitoSugar {
@@ -63,7 +63,7 @@ class LinePropagationTest extends AssertionsForJUnit with MockitoSugar {
     }
       // Next turn should work on node after this node -> the node before the node is finished
     doWithPred(pred, {predpred =>
-       pipelineOK &= pipelineFor(predpred).getPipelineFrames().forall { _.asInstanceOf[WriteFrame[_]].isWritten }})
+       pipelineOK &= pipelineFor(predpred).getPipelineFrames().forall { _.isWritten }})
   }
 
   def createNodes(num: Int, previous: List[Signal[(Int,Int)]]): List[Signal[(Int,Int)]] = {

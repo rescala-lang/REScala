@@ -7,6 +7,7 @@ import rescala.Signal
 import rescala.pipelining.PipelineEngine
 import rescala.graph.Reactive
 import rescala.pipelining.Pipeline
+import rescala.pipelining.PipeliningTurn
 
 object PipelineTestUtils {
   
@@ -32,6 +33,13 @@ object PipelineTestUtils {
       }
     }
     )
+  }
+  
+  def readLatestValue(reader : PipeliningTurn => Unit)(implicit engine : PipelineEngine) = {
+    val dummyTurn = engine.makeTurn
+    engine.addTurn(dummyTurn)
+    reader(dummyTurn)
+    engine.turnCompleted(dummyTurn)
   }
   
 }

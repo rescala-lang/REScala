@@ -3,7 +3,7 @@ package rescala.pipelining.tests
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.graph.WriteFrame
+import rescala.graph.Frame
 import rescala.pipelining.PipelineEngine
 import rescala.pipelining.PipeliningTurn
 import rescala.turns.Turn
@@ -17,12 +17,12 @@ class FrameTest extends AssertionsForJUnit with MockitoSugar {
 
   @Test
   def testNewWriteFrameIsNotWritten() = {
-    assert(WriteFrame(engine.makeTurn, dummyReactive).isWritten == false)
+    assert(Frame(engine.makeTurn, dummyReactive).isWritten == false)
   }
 
   @Test
   def testMarkWritten() = {
-    val frame = WriteFrame(engine.makeTurn, dummyReactive)
+    val frame = Frame(engine.makeTurn, dummyReactive)
     assert(!frame.isWritten)
     frame.markWritten()
     assert(frame.isWritten)
@@ -30,9 +30,9 @@ class FrameTest extends AssertionsForJUnit with MockitoSugar {
 
   @Test
   def testInsertFrame() = {
-    val frame1 = WriteFrame(engine.makeTurn, dummyReactive)
-    val frame2 = WriteFrame(engine.makeTurn, dummyReactive)
-    val frame3 = WriteFrame(engine.makeTurn, dummyReactive)
+    val frame1 = Frame(engine.makeTurn, dummyReactive)
+    val frame2 = Frame(engine.makeTurn, dummyReactive)
+    val frame3 = Frame(engine.makeTurn, dummyReactive)
 
     frame2.insertAfter(frame1)
 
@@ -53,9 +53,9 @@ class FrameTest extends AssertionsForJUnit with MockitoSugar {
 
   @Test
   def testRemoveFrame() = {
-    val frame1 = WriteFrame(engine.makeTurn, dummyReactive)
-    val frame2 = WriteFrame(engine.makeTurn, dummyReactive)
-    val frame3 = WriteFrame(engine.makeTurn, dummyReactive)
+    val frame1 = Frame(engine.makeTurn, dummyReactive)
+    val frame2 = Frame(engine.makeTurn, dummyReactive)
+    val frame3 = Frame(engine.makeTurn, dummyReactive)
 
     frame2.insertAfter(frame1)
     frame3.insertAfter(frame2)
@@ -81,9 +81,9 @@ class FrameTest extends AssertionsForJUnit with MockitoSugar {
 
   @Test
   def testMoveFrame() = {
-    val frame1 = WriteFrame(engine.makeTurn, dummyReactive)
-    val frame2 = WriteFrame(engine.makeTurn, dummyReactive)
-    val frame3 = WriteFrame(engine.makeTurn, dummyReactive)
+    val frame1 = Frame(engine.makeTurn, dummyReactive)
+    val frame2 = Frame(engine.makeTurn, dummyReactive)
+    val frame3 = Frame(engine.makeTurn, dummyReactive)
 
     frame2.insertAfter(frame1)
     frame3.insertAfter(frame2)
