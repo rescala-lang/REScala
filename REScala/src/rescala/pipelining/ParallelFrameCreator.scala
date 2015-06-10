@@ -45,16 +45,15 @@ trait ParallelFrameCreator extends QueueBasedFrameCreator {
   override protected[this] def createFrames(initialWrites: List[Reactive]) = {
     ParallelFrameCreator.addTurn(this)
 
-    var framedReactives = Set[Reactive]()
-
+    val writeLock = framedReactivesLock.writeLock()
+    writeLock.lock()
     evaluateQueue(initialWrites) { reactive =>
-      engine.createFrameBefore(this, reactive)
-      framedReactives += reactive
+      markReactiveFramed(reactive, reactive => engine.createFrameBefore(this, reactive))
     }
+    writeLock.unlock()
 
     ParallelFrameCreator.removeTurn(this)
 
-    framedReactives
   }
 
 }

@@ -31,6 +31,16 @@ class Pipeline(val reactive: Reactive) {
     op
   }
   
+  private def insertAfter(insert : CFrame, after : CFrame) = {
+    val insertTop = insert == queueHead
+    val insertEnd = after == queueTail
+    insert.insertAfter(after)
+    if (insertEnd)
+      queueTail = insert
+    if (insertTop)
+      queueHead = after
+  }
+  
   protected[pipelining] var createdBuffers : Set[PipelineBuffer[_]] = Set()
 
   protected[pipelining] def createBlockingBuffer[T](initval: T, commitStrategy: (T, T) => T): BlockingPipelineBuffer[T] = {
@@ -85,7 +95,7 @@ class Pipeline(val reactive: Reactive) {
   protected[rescala] def needFrame[T](op: CFrame => T = { x: CFrame => x })(implicit turn: PipeliningTurn): T = {
     findFrame(_ match {
       case Some(d) => op(d)
-      case None    => throw new AssertionError(s"No frame found for $turn at $this")
+      case None    => throw new AssertionError(s"No frame found for $turn at ${this.reactive}: ${this.getPipelineFrames()}")
     })
   }
 
@@ -94,7 +104,7 @@ class Pipeline(val reactive: Reactive) {
     def findBottomMostFrame(tail: CFrame): Option[CFrame] = {
       if (tail == null)
         None
-      else if (turn > tail.turn)
+      else if (turn >= tail.turn)
         Some(tail)
       else
         findBottomMostFrame(tail.previous())
@@ -113,7 +123,7 @@ class Pipeline(val reactive: Reactive) {
   protected[rescala] def waitUntilCanWrite(implicit turn: PipeliningTurn): Unit = {
     findFrame(x => x) match {
       case Some(turnFrame) => turnFrame.awaitPredecessor(pipelineLock, turn)
-      case None            => throw new AssertionError(s"No frame for $turn at $this")
+      case None            => //throw new AssertionError(s"No frame for $turn at $this")
     }
   }
 
@@ -132,7 +142,7 @@ class Pipeline(val reactive: Reactive) {
             
           } else {
          //   println(s"${Thread.currentThread().getId} write frame for ${frame.turn}")
-            assert(turn > frame.turn)
+            assert(turn >= frame.turn)
             frame.awaitUntilWritten(turn)
           }
         case _ => if (frame.turn eq turn) {
@@ -179,13 +189,12 @@ class Pipeline(val reactive: Reactive) {
       queueTail = queueHead
     } else {
       val newFrame = createFrame(queueTail.content)
-      newFrame.insertAfter(queueTail)
-      queueTail = newFrame
+      insertAfter(newFrame, queueTail)
     }
     assert(hasFrame)
   }
 
-  protected[rescala] def createFrameBefore(stillBefore: PipeliningTurn => Boolean)(implicit turn: PipeliningTurn): Unit = lockPipeline {
+  protected[rescala] def createFrameBefore(implicit turn: PipeliningTurn): Unit = lockPipeline {
     assert(!hasFrame)
     def createFrame(prev: Content): CFrame = {
       val newFrame = WriteFrame[Content](turn, this)
@@ -197,7 +206,7 @@ class Pipeline(val reactive: Reactive) {
     def assertNoOtherFrameBefore(tail: CFrame): Boolean = {
       if (tail == null)
         true
-      else if (stillBefore(tail.turn))
+      else if (turn < tail.turn)
         false
       else assertNoOtherFrameBefore(tail.previous())
     }
@@ -205,7 +214,7 @@ class Pipeline(val reactive: Reactive) {
     def findPreviousFrame(tail: CFrame = queueTail): CFrame = {
       if (tail == null)
         null
-      else if (stillBefore(tail.turn))
+      else if ( turn < tail.turn)
         findPreviousFrame(tail.previous())
       else {
         assert(assertNoOtherFrameBefore(tail.previous()))
@@ -217,17 +226,13 @@ class Pipeline(val reactive: Reactive) {
       queueHead = createFrame(stableFrame)
       queueTail = queueHead
     } else {
-      val insertAfter = findPreviousFrame()
-      if (insertAfter == null) {
+      val predecessor = findPreviousFrame()
+      if (predecessor == null) {
         val newFrame = createFrame(stableFrame)
-        queueHead.insertAfter(newFrame)
-        queueHead = newFrame
+        insertAfter(queueHead, newFrame)
       } else {
-        val newFrame = createFrame(insertAfter.content)
-        newFrame.insertAfter(insertAfter)
-        if (queueTail == insertAfter) {
-          queueTail = newFrame
-        }
+        val newFrame = createFrame(predecessor.content)
+        insertAfter(newFrame, predecessor)
       }
     }
     assert(hasFrame)
@@ -254,7 +259,7 @@ class Pipeline(val reactive: Reactive) {
         val frameTurn = last.turn
         if (frameTurn == turn) {
           last
-        } else if (otherTurn > frameTurn) {
+        } else if (otherTurn >= frameTurn) {
           last
         } else {
           findFrameToInsertAfter(last.previous())
@@ -267,26 +272,8 @@ class Pipeline(val reactive: Reactive) {
 
       val newFrame = WriteFrame[Content](otherTurn, this)
       newFrame.content = duplicate(preceedingFrame.content, otherTurn)
-      newFrame.insertAfter(preceedingFrame)
-      if (preceedingFrame == queueTail)
-        queueTail = newFrame
+      insertAfter(newFrame, preceedingFrame)
     }
-  }
-
-  protected[rescala] def fillFrame(implicit turn: PipeliningTurn): Unit = lockPipeline {
-
-    @tailrec
-    def refreshFrame(head: CFrame): Unit = {
-      if (head == null) {
-        throw new AssertionError(s"No frame found for turn $turn")
-      } else if (head.turn == turn) {
-        val newContent = duplicate(if (head.previous() == null) stableFrame else head.previous().content, turn)
-        head.content = newContent
-      } else {
-        refreshFrame(head.next())
-      }
-    }
-    refreshFrame(queueHead)
   }
   
   protected[rescala] def deleteFrames(implicit turn: PipeliningTurn): Unit = lockPipeline {
@@ -358,18 +345,14 @@ class Pipeline(val reactive: Reactive) {
       predeceedingFrameOpt match {
         case Some(predecessor) =>
           readFrame.content = duplicate(predecessor.content, turn)
-          val insertAtEnd = predecessor == queueTail
-          readFrame.insertAfter(predecessor)
-          if (insertAtEnd)
-            queueTail = readFrame
+          insertAfter(readFrame, predecessor)
         case None =>
           readFrame.content = duplicate(stableFrame, turn)
           if (queueHead == null) {
             queueHead = readFrame
             queueTail = queueHead
           } else {
-            queueHead.insertAfter(readFrame)
-            queueHead = readFrame
+            insertAfter(queueHead, readFrame)
           }
       }
       readFrame

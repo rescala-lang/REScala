@@ -6,7 +6,7 @@ import rescala.turns.Turn
 
 trait FrameCreator {
 
-  protected[this] def createFrames(initialReactives: List[Reactive]): Set[Reactive]
+  protected[this] def createFrames(initialReactives: List[Reactive]): Unit
 
 }
 
@@ -20,11 +20,16 @@ trait QueueBasedFrameCreator extends FrameCreator {
     val lq = new LevelQueue()(this)
     initialWrites.foreach(lq.enqueue(-1))
 
+    
+    var seen = Set[Reactive]()
     // Create frames for all reachable reactives
     lq.evaluateQueue { reactive =>
+      if (!seen.contains(reactive)) {
+        seen += reactive
       op(reactive)
       val outgoings = reactive.outgoing.get(this)
       outgoings.foreach { lq.enqueue(-1) }
+      }
     }
   }
 
@@ -33,14 +38,11 @@ trait QueueBasedFrameCreator extends FrameCreator {
   }
 
   protected[this] override def createFrames(initialWrites: List[Reactive]) = {
-    var framedReactives = Set[Reactive]()
 
     evaluateQueue(initialWrites) { reactive =>
-      createFrame(reactive)
-      framedReactives += reactive
+      markReactiveFramed(reactive, reactive =>  createFrame(reactive))
     }
 
-    framedReactives
   }
 
 }

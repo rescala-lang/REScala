@@ -144,28 +144,4 @@ class PipelineBufferTest extends AssertionsForJUnit with MockitoSugar {
     assert(seenFrames == List(frame1, frame2, frame3, frame4, frame5))
   }
   
-  @Test
-  def fillFrame() = {
-    val turn1 = engine.makeTurn
-    val turn2 = engine.makeTurn
-    pipelineBuffer.createFrame(turn1)
-    pipelineBuffer.createFrame(turn2)
-    
-    val Queue(frame1, frame2) = pipelineBuffer.getPipelineFrames()
-    assert(frame1.turn == turn1)
-    assert(frame2.turn == turn2)
-    assert(buffer.get(turn1) == 0)
-    assert(buffer.get(turn2) == 0)
-    
-    buffer.set(1)(turn1)
-    assert(buffer.get(turn1) == 1)
-    assert(buffer.get(turn2) == 0)
-    pipelineBuffer.fillFrame(turn2)
-    
-    val Queue(frame1_, frame2_) = pipelineBuffer.getPipelineFrames()
-    assert(frame1 == frame1_)
-    assert(frame2_.turn == turn2)
-    assert(buffer.get(turn2) == 1)
-  }
-  
 }

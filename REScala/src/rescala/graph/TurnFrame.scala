@@ -80,7 +80,7 @@ sealed abstract class Frame[T](val turn: PipeliningTurn, val at: Pipeline) {
       // The current threads gets unparked if the predecessor changes or
       // the predecessor is marked as written
       if (waits) {
-        assert(waitingTurn > predTurn)
+        assert(waitingTurn >= predTurn)
         LockSupport.park(creatorThread)
       }
     }
@@ -95,7 +95,7 @@ sealed abstract class Frame[T](val turn: PipeliningTurn, val at: Pipeline) {
         lockedOnThread += Thread.currentThread()
       }
       if (wait) {
-        assert(waitingTurn > this.turn)
+        assert(waitingTurn >= this.turn)
         LockSupport.park(creatorThread)
       }
     }

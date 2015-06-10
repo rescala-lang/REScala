@@ -14,7 +14,7 @@ class LevelQueue()(implicit val currentTurn: Turn) {
   private var numOccurences = Map[Reactive, Int]()
 
   /** mark the reactive as needing a reevaluation */
-  def enqueue(minLevel: Int, needsEvaluate: Boolean = true)(dep: Reactive): Unit = {
+  def enqueue(minLevel: Int, needsEvaluate: Boolean = true)(dep: Reactive): Unit = this.synchronized{
     val newElem = QueueElement(dep.level.get, dep, minLevel, needsEvaluate)
     if (!elements.contains(newElem)) {
       elements += newElem
@@ -22,7 +22,7 @@ class LevelQueue()(implicit val currentTurn: Turn) {
     }
   }
 
-  def remove(reactive: Reactive): Unit = {
+  def remove(reactive: Reactive): Unit = this.synchronized{
     elements = elements.filter(qe => qe.reactive ne reactive) // THat is wrong
     numOccurences = numOccurences - reactive
   }

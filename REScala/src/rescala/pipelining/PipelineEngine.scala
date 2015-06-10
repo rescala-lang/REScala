@@ -52,7 +52,7 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
    * resolves conflicts which are introduced by creating the new frame
    */
   protected[pipelining] def createFrameBefore(turn: PTurn, at: Reactive) = {
-    pipelineFor(at).createFrameBefore(otherTurn => otherTurn > turn )(turn)
+    pipelineFor(at).createFrameBefore(turn)
   }
 
   /**
@@ -104,8 +104,8 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
   }
 
   private def removeTurn(implicit turn : PTurn) : Unit = {
-    turn.framedReactives.get.foreach {pipelineFor(_).removeFrames}
-    assert(turn.framedReactives.get.forall { !pipelineFor(_).hasFrame(turn) })
+    turn.markMissingReactives()
+    turn.removeFrames()
   }
   
   protected[pipelining] def turnCompleted(completedTurn: PTurn): Unit = {

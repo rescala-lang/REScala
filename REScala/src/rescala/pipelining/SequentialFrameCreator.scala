@@ -15,8 +15,7 @@ trait SequentialFrameCreator extends QueueBasedFrameCreator {
   override protected[this] def createFrames(initialWrites : List[Reactive]) = {
     SequentialFrameCreator.framingLock.synchronized{
       engine.addTurn(this)
-      val framedReactives = super.createFrames(initialWrites)
-      framedReactives 
+      super.createFrames(initialWrites)
     }
   }
 

@@ -158,8 +158,10 @@ class BlockingPipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A) 
 
           val content = if (frame.previous() == null)
             parent.getStableFrame()
-          else
+          else {
+            assert(frame.previous().isWritten)
             frame.previous().content
+          }
 
           content.valueForBuffer(this).committedValue.get
         case None =>
@@ -168,6 +170,28 @@ class BlockingPipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A) 
     }
 
   }
+  
+  protected[pipelining] def forceGet(implicit turn : Turn) : A ={
+    implicit val pTurn = turn.asInstanceOf[PipeliningTurn]
+  parent.findFrame {
+      _ match {
+        case Some(frame) =>
+          val hasValue = frame.content.valueForBuffer(this).isChanged || frame.isWritten
+          if (!hasValue) {
+            if (frame.previous() == null)
+              parent.getStableFrame().valueForBuffer(this).committedValue.get
+            else
+              frame.previous().content.valueForBuffer(this).value
+          } else {
+            frame.content.valueForBuffer(this).value
+          }
+        case None =>
+          parent.frame().valueForBuffer(this).value
+      }
+
+    }
+  }
+  
   override def get(implicit turn: Turn): A = {
     implicit val pTurn = turn.asInstanceOf[PipeliningTurn]
 
