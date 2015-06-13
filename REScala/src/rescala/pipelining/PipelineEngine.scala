@@ -32,6 +32,8 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
   protected[pipelining] def addTurn(turn: PTurn) = turnOrderLock.synchronized(turnOrder :+= turn)
   protected[pipelining] def getTurnOrder() = turnOrder
 
+  protected[pipelining] def isActive(turn : PTurn) =  turnOrder.contains(turn)
+  
   protected def makeNewTurn = new PipeliningTurn(this)
 
   override final protected[pipelining] def makeTurn: PipeliningTurn = {

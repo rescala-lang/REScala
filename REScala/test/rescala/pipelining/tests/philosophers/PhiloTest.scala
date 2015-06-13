@@ -80,7 +80,7 @@ class PhiloTest extends AssertionsForJUnit {
   
   def `eatDynamic!`(implicit engine: Engine[Turn]): Unit = {
     val philosophers = 4
-    val threadCount = 3
+    val threadCount = 4
     val table = new DynamicPhilosopherTable(philosophers, 0)(engine)
     val blocks: Array[Array[Seating]] = deal(table.seatings.toList, List.fill(threadCount)(Nil)).map(_.toArray).toArray
 
@@ -107,7 +107,7 @@ class PhiloTest extends AssertionsForJUnit {
                assert(seating.vision(t) == Ready, s"${Thread.currentThread().getId} " + seating.vision.pipeline.getPipelineFrames().toString())
           
               assert(seating.leftFork.outgoing.get(t).contains(seating.vision))
-              assert(seating.rightFork.outgoing.get(t).contains(seating.vision), s" right Fork of ${seating.placeNumber} does not have an outgoing edge to vision")
+              assert(seating.rightFork.outgoing.get(t).contains(seating.vision), s" right Fork of ${seating.placeNumber} does not have an outgoing edge to vision during $t")
               assert(seating.vision.incoming.get(t) == Set(seating.leftFork, seating.rightFork))
               assert(seating.vision.pipeline.needFrame().isWritten)
               assert(seating.philosopher(t) == Thinking)

@@ -26,9 +26,12 @@ trait QueueBasedFrameCreator extends FrameCreator {
     lq.evaluateQueue { reactive =>
       if (!seen.contains(reactive)) {
         seen += reactive
-      op(reactive)
+      
+        Pipeline.pipelineFor(reactive).dynamicLock.lock()
+          op(reactive)
       val outgoings = reactive.outgoing.get(this)
       outgoings.foreach { lq.enqueue(-1) }
+        Pipeline.pipelineFor(reactive).dynamicLock.unlock()
       }
     }
   }

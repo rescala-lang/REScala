@@ -56,10 +56,10 @@ abstract class PipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A)
 
   var commitStrategy: (A, A) => A = initialStrategy
 
-  override def initCurrent(value: A): Unit = ValueHolder.initStable(value, parent.getStableFrame().content.valueForBuffer(this))
-  override def initStrategy(strategy: (A, A) => A): Unit = synchronized(commitStrategy = strategy)
+  override def initCurrent(value: A): Unit = synchronized { ValueHolder.initStable(value, parent.getStableFrame().content.valueForBuffer(this)) }
+  override def initStrategy(strategy: (A, A) => A): Unit = synchronized { commitStrategy = strategy }
 
-  override def transform(f: (A) => A)(implicit turn: Turn): A = synchronized {
+  override def transform(f: (A) => A)(implicit turn: Turn): A = {
     implicit val pTurn = turn.asInstanceOf[PipeliningTurn]
     val value = f(get)
     set(value)
@@ -69,9 +69,11 @@ abstract class PipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A)
   override def set(value: A)(implicit turn: Turn): Unit = {
     implicit val pTurn = turn.asInstanceOf[PipeliningTurn]
     val frame = parent.needFrame()
+    frame.synchronized {
     val valueHolder = frame.content.valueForBuffer(this)
     valueHolder.value = value
     valueHolder.isChanged = true
+    }
   }
   override def release(implicit turn: Turn): Unit = {
     implicit val pTurn = turn.asInstanceOf[PipeliningTurn]
@@ -145,10 +147,10 @@ class NonblockingPipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => 
 class BlockingPipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A) extends PipelineBuffer[A](parent, initialStrategy) {
 
   override def set(value: A)(implicit turn: Turn): Unit = {
-      assert(!parent.needFrame()(turn.asInstanceOf[PipeliningTurn]).isWritten)
-      super.set(value)
+    assert(!parent.needFrame()(turn.asInstanceOf[PipeliningTurn]).isWritten)
+    super.set(value)
   }
-  
+
   override def base(implicit turn: Turn): A = {
     implicit val pTurn = turn.asInstanceOf[PipeliningTurn]
 
@@ -170,10 +172,10 @@ class BlockingPipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A) 
     }
 
   }
-  
-  protected[pipelining] def forceGet(implicit turn : Turn) : A ={
+
+  protected[pipelining] def forceGet(implicit turn: Turn): A = {
     implicit val pTurn = turn.asInstanceOf[PipeliningTurn]
-  parent.findFrame {
+    parent.findFrame {
       _ match {
         case Some(frame) =>
           val hasValue = frame.content.valueForBuffer(this).isChanged || frame.isWritten
@@ -191,7 +193,7 @@ class BlockingPipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A) 
 
     }
   }
-  
+
   override def get(implicit turn: Turn): A = {
     implicit val pTurn = turn.asInstanceOf[PipeliningTurn]
 
@@ -210,6 +212,7 @@ class BlockingPipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A) 
             frame.content.valueForBuffer(this).value
           }
         case None =>
+          assert(parent.frame.isWritten)
           parent.frame().valueForBuffer(this).committedValue.get
       }
 

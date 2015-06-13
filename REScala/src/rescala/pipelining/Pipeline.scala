@@ -91,6 +91,20 @@ class Pipeline(val reactive: Reactive) {
     createdBuffers += newBuffer
     newBuffer
   }
+  
+  private def assertTurnOrder() = {
+    var currentFrame = stableFrame
+    assert(currentFrame != null)
+    var nextFrame = stableFrame.next
+    while (nextFrame != null) {
+      assert(currentFrame != null)
+      assert(nextFrame != null)
+      assert(currentFrame.turn == null || currentFrame.turn < nextFrame.turn)
+      currentFrame = nextFrame
+      nextFrame = nextFrame.next
+    }
+    true
+  }
 
   // Access for testing
   protected[rescala] final def getPipelineFrames() = lockPipeline {
@@ -212,6 +226,7 @@ class Pipeline(val reactive: Reactive) {
       insertAfter(newFrame, queueTail)
     }
     assert(hasFrame)
+    assert(assertTurnOrder)
   }
 
   protected[rescala] def createFrameBefore(implicit turn: PipeliningTurn): Unit = lockPipeline {
@@ -255,6 +270,7 @@ class Pipeline(val reactive: Reactive) {
       }
     }
     assert(hasFrame)
+    assert(assertTurnOrder)
   }
 
   protected[rescala] def foreachFrameTopDown(action: CFrame => Unit): Unit = {
@@ -294,6 +310,7 @@ class Pipeline(val reactive: Reactive) {
       val newFrame = Frame[Content](otherTurn, this)
       newFrame.content = duplicate(preceedingFrame.content, otherTurn)
       insertAfter(newFrame, preceedingFrame)
+      assert(assertTurnOrder)
     }
   }
 
