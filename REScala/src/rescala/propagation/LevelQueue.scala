@@ -14,7 +14,7 @@ class LevelQueue()(implicit val currentTurn: Turn) {
   private var numOccurences = Map[Reactive, Int]()
 
   /** mark the reactive as needing a reevaluation */
-  def enqueue(minLevel: Int, needsEvaluate: Boolean = true)(dep: Reactive): Unit = this.synchronized{
+  def enqueue(minLevel: Int, needsEvaluate: Boolean = true)(dep: Reactive): Unit = this.synchronized {
     val newElem = QueueElement(dep.level.get, dep, minLevel, needsEvaluate)
     if (!elements.contains(newElem)) {
       elements += newElem
@@ -22,12 +22,12 @@ class LevelQueue()(implicit val currentTurn: Turn) {
     }
   }
 
-  def remove(reactive: Reactive): Unit = this.synchronized{
+  def remove(reactive: Reactive): Unit = this.synchronized {
     elements = elements.filter(qe => qe.reactive ne reactive) // THat is wrong
     numOccurences = numOccurences - reactive
   }
 
-  final def handleHead(queueElement: QueueElement, evaluator: Reactive => Unit, notEvaluator: Reactive => Unit): Unit = {
+  final def handleHead(queueElement: QueueElement, evaluator: Reactive => Unit, notEvaluator: Reactive => Unit): () => Unit = {
     val QueueElement(headLevel, head, headMinLevel, doEvaluate) = queueElement
     if (headLevel < headMinLevel) {
       head.level.set(headMinLevel)
@@ -43,23 +43,30 @@ class LevelQueue()(implicit val currentTurn: Turn) {
         if (r.level.get <= headMinLevel)
           enqueue(headMinLevel + 1, needsEvaluate = false)(r)
       }
+      () => {}
     } else if (doEvaluate) {
-      evaluator(head)
+      () => evaluator(head)
     } else if (numOccurences(head) == 1) {
-        notEvaluator(head)
+      () => notEvaluator(head)
+    } else {
+      () => {}
     }
   }
 
   /** Evaluates all the elements in the queue */
   def evaluateQueue(evaluator: Reactive => Unit, notEvaluator: Reactive => Unit = r => {}) = {
     while (elements.nonEmpty) {
-      val head = elements.head
-      elements = elements.tail
-      handleHead(head, evaluator, notEvaluator)
-      val numOccurence = numOccurences(head.reactive)
-      if (numOccurence == 1)
-        numOccurences -= head.reactive
-      else numOccurences += (head.reactive -> (numOccurence - 1))
+      this.synchronized {
+
+        val head = elements.head
+        elements = elements.tail
+        val queueAction = handleHead(head, evaluator, notEvaluator)
+        val numOccurence = numOccurences(head.reactive)
+        if (numOccurence == 1)
+          numOccurences -= head.reactive
+        else numOccurences += (head.reactive -> (numOccurence - 1))
+        queueAction
+      } ()
     }
   }
 

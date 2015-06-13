@@ -215,6 +215,12 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
     }
   }
 
+  private def getAffectedTurns(reactive : Reactive, dynamicFrame : Frame[BufferFrameContent]) = {
+    val firstFrame = if(dynamicFrame.turn== this ) dynamicFrame.next() else dynamicFrame
+    val affectedFrames = pipelineFor(reactive).forWriteFramesAfter(firstFrame) {_=>}
+    affectedFrames.map(_.turn.asInstanceOf[PipeliningTurn])
+  }
+  
   private def markNonWriteFrameWritten(frame: Frame[_]): Unit = {
 
   }
@@ -231,18 +237,8 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
       
       assert(this <= dropFrame.turn)
 
-      // This writes in the dynamic read frame, but only in outgoings
-    
-      // this defect in frames after this frames we need to repair
-      // Get all write frames after the read frame -> need to propagate the new dependency to them
-     
-      val framesAfterDynamicRead: List[Frame[_]] = sourcePipeline.forWriteFramesAfter(if(dropFrame.turn== this ) dropFrame.next() else dropFrame) { frame =>
-       
-      }
-      
-
       // Need to create frames for the turns after the dynamic read at the new nodes
-      val turnsAfterDynamicRead = framesAfterDynamicRead.map(_.turn.asInstanceOf[PipeliningTurn])
+      val turnsAfterDynamicRead = getAffectedTurns(source, dropFrame)
       println(s"Turns after dynamic read $turnsAfterDynamicRead")
       assert(turnsAfterDynamicRead.forall { this < _ })
 
@@ -250,7 +246,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
         // Queue based create frames at reachable reactives
         val queue = new LevelQueue
         queue.enqueue(-1)(sink)
-        queue.evaluateQueue { reactive => reactive.synchronized{
+        queue.evaluateQueue { reactive =>
           var anyFrameCreated = false
           assert(pipelineFor(reactive).hasFrame(this), s"Can only create frames due to an dependency add for frames which are already covered for $this which $reactive is not (for turns $turnsAfterDynamicRead)")
           assert(!pipelineFor(reactive).needFrame().isWritten)
@@ -263,10 +259,10 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
             }
           }
           // Only need to continue created frames, if one was created
-          //if (anyFrameCreated)
+          if (anyFrameCreated)
             reactive.outgoing.get(this).foreach { queue.enqueue(-1) }
           }
-        }
+        
 
       }
 
@@ -276,9 +272,9 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
       // this defect in frames after this frames we need to repair
       // Get all write frames after the read frame -> need to propagate the new dependency to them
      
-      framesAfterDynamicRead.foreach(frame => {
+      turnsAfterDynamicRead.foreach(turn => {
         // frame.turn.asInstanceOf[PipeliningTurn].createFramesLock.synchronized {
-        source.outgoing.transform(_ + sink)(frame.turn)
+        source.outgoing.transform(_ + sink)(turn)
         //  }
       })
       
@@ -287,6 +283,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
         turn.admit(sink)
       }
 
+      //TODO can mark the frame written if it was created
       markNonWriteFrameWritten(dropFrame)
       sourcePipeline.dynamicLock.unlock()
     }
@@ -304,18 +301,15 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
 
       val dropFrame = getWriteableFrame(sourcePipeline)
 
-
-      dropFrame.markTouched()
-
       println(s"Remove sink $sink from source $source for $this")
       println(sourcePipeline.getPipelineFrames())
       source.outgoing.transform { _ - sink }(dropFrame.turn)
-      val writeFramesAfterDrop = sourcePipeline.forWriteFramesAfter(dropFrame.next) { frame => source.outgoing.transform(_ - sink)(frame.turn) }
-
+     
       // Cannot simply remove sink from the queue of the turns because sink may be reachable
       // though another valid path, nevertheless, the turns could wait for this frame already
 
-      val turnsAfterDynamicDrop = writeFramesAfterDrop.map(_.turn.asInstanceOf[PipeliningTurn])
+      val turnsAfterDynamicDrop = getAffectedTurns(source, dropFrame)
+      turnsAfterDynamicDrop.foreach { source.outgoing.transform { _ - sink }(_) }
       println(s"Turn after dynamic drop turnsAfterDynamicDrop $turnsAfterDynamicDrop")
       
       assert(engine.isActive(this))
@@ -358,7 +352,6 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
 
   }
 
-  // lock phases cannot run in parrallel currently,......
   override def lockPhase(initialWrites: List[Reactive]): Unit = createFramesLock.synchronized {
     createFrames(initialWrites)
   }

@@ -2,9 +2,9 @@ package rescala.pipelining.tests.philosophers
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
-import rescala.turns.{Engine, Engines, Turn}
+import rescala.turns.{ Engine, Engines, Turn }
 import tests.rescala.concurrency.Spawn
-import rescala.pipelining.tests.philosophers.PhilosopherTable.{Thinking, Seating, Taken}
+import rescala.pipelining.tests.philosophers.PhilosopherTable.{ Thinking, Seating, Taken }
 import scala.annotation.tailrec
 import scala.util.Random
 import rescala.graph.Committable
@@ -12,15 +12,13 @@ import rescala.pipelining.tests.philosophers.PhilosopherTable.Free
 import rescala.pipelining.tests.philosophers.PhilosopherTable.Ready
 import rescala.pipelining.PipeliningTurn
 
-
 class PhiloTest extends AssertionsForJUnit {
 
   @tailrec
   final def deal[A](deck: List[A], hands: List[List[A]]): List[List[A]] = deck match {
-    case Nil => hands
+    case Nil          => hands
     case card :: rest => deal(rest, hands.tail :+ (card :: hands.head))
   }
-
 
   def `eat!`(implicit engine: Engine[Turn]): Unit = {
     val philosophers = 4
@@ -33,7 +31,7 @@ class PhiloTest extends AssertionsForJUnit {
 
     val threads = for (threadIndex <- Range(0, threadCount)) yield Spawn {
       while (!cancel) try {
-       
+
         val myBlock = blocks(threadIndex % blocks.length)
         val seating = myBlock(Random.nextInt(myBlock.length))
         val thread = Thread.currentThread().getId
@@ -43,8 +41,8 @@ class PhiloTest extends AssertionsForJUnit {
         table.engine.plan(seating.philosopher)(implicit t => {
           seating.philosopher.admit(Thinking)
           t.schedule(new Committable {
-            override def release(implicit t : Turn) = {}
-            override def commit(implicit t : Turn) = {
+            override def release(implicit t: Turn) = {}
+            override def commit(implicit t: Turn) = {
               println(s"${Thread.currentThread().getId}: THinking assertions for ${t}")
               implicit val pt = t.asInstanceOf[PipeliningTurn]
               assert(seating.philosopher.outgoing.get(t) == Set(seating.leftFork, seating.rightFork))
@@ -60,12 +58,12 @@ class PhiloTest extends AssertionsForJUnit {
             }
           })
         })
-        
+
         println(s"${thread}: ${seating.placeNumber} is thinkning again")
       } catch {
-        case e : Exception => 
+        case e: Exception =>
           noException = false
-        
+
       }
     }
 
@@ -77,7 +75,7 @@ class PhiloTest extends AssertionsForJUnit {
     assert(threads.forall(!_.isAlive), "threads did not finish")
     println(s"philo party done sleeping on $engine")
   }
-  
+
   def `eatDynamic!`(implicit engine: Engine[Turn]): Unit = {
     val philosophers = 4
     val threadCount = 4
@@ -85,12 +83,13 @@ class PhiloTest extends AssertionsForJUnit {
     val blocks: Array[Array[Seating]] = deal(table.seatings.toList, List.fill(threadCount)(Nil)).map(_.toArray).toArray
 
     @volatile var cancel = false
-    @volatile var noException = true
+    @volatile var exception: Option[Throwable] = None
 
     val threads = for (threadIndex <- Range(0, threadCount)) yield Spawn {
       while (!cancel) try {
-       
+
         val myBlock = blocks(threadIndex % blocks.length)
+     
         val seating = myBlock(Random.nextInt(myBlock.length))
         val thread = Thread.currentThread().getId
         println(s"${thread}: ${seating.placeNumber} wants to eat")
@@ -99,13 +98,13 @@ class PhiloTest extends AssertionsForJUnit {
         table.engine.plan(seating.philosopher)(implicit t => {
           seating.philosopher.admit(Thinking)
           t.schedule(new Committable {
-            override def release(implicit t : Turn) = {}
-            override def commit(implicit t : Turn) = {
+            override def release(implicit t: Turn) = {}
+            override def commit(implicit t: Turn) = {
               println(s"${Thread.currentThread().getId}: THinking assertions for ${t}")
               implicit val pt = t.asInstanceOf[PipeliningTurn]
               assert(seating.philosopher.outgoing.get(t) == Set(seating.leftFork, seating.rightFork))
-               assert(seating.vision(t) == Ready, s"${Thread.currentThread().getId} " + seating.vision.pipeline.getPipelineFrames().toString())
-          
+              assert(seating.vision(t) == Ready, s"${Thread.currentThread().getId} " + seating.vision.pipeline.getPipelineFrames().toString())
+
               assert(seating.leftFork.outgoing.get(t).contains(seating.vision))
               assert(seating.rightFork.outgoing.get(t).contains(seating.vision), s" right Fork of ${seating.placeNumber} does not have an outgoing edge to vision during $t")
               assert(seating.vision.incoming.get(t) == Set(seating.leftFork, seating.rightFork))
@@ -114,15 +113,15 @@ class PhiloTest extends AssertionsForJUnit {
               assert(seating.leftFork(t) == Free)
               assert(seating.rightFork(t) == Free)
               println(s"${Thread.currentThread().getId}: GET VISION for ${t}")
-               }
+            }
           })
         })
-        
+
         println(s"${thread}: ${seating.placeNumber} is thinkning again")
       } catch {
-        case e : Exception => 
-          noException = false
-        
+        case e: Exception =>
+          exception = Some(e)
+
       }
     }
 
@@ -130,13 +129,16 @@ class PhiloTest extends AssertionsForJUnit {
     Thread.sleep(1000)
     cancel = true
     threads.foreach(_.join())
-    assert(noException)
+
+    if (!exception.isEmpty)
+      exception.get.printStackTrace()
+    assert(exception.isEmpty)
     assert(threads.forall(!_.isAlive), "threads did not finish")
     println(s"philo party done sleeping on $engine")
   }
 
-  @Test(timeout=10000) def eatingContestsPipelining(): Unit = `eat!`(Engines.pipelining)
-  @Test(timeout=10000) 
+  @Test(timeout = 10000) def eatingContestsPipelining(): Unit = `eat!`(Engines.pipelining)
+  @Test(timeout = 10000)
   def eatingContestsPipeliningDynamic(): Unit = `eatDynamic!`(Engines.pipelining)
 
 }
