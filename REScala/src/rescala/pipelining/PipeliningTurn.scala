@@ -383,7 +383,12 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
   protected[pipelining] def removeFrames() = {
     doFramedWriteLocked { framedReactives =>
       {
-        framedReactives.foreach { pipelineFor(_).removeFrames }
+        framedReactives.foreach {reactive =>
+          val pipeline =pipelineFor(reactive)
+          pipeline.dynamicLock.lock()
+          pipeline.removeFrames
+          pipeline.dynamicLock.unlock();  
+        }
         assert(framedReactives.forall { !pipelineFor(_).hasFrame(this) })
         Set.empty
       }

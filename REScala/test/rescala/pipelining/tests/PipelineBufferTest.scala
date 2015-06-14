@@ -20,6 +20,11 @@ class PipelineBufferTest extends AssertionsForJUnit with MockitoSugar {
   val engine = new PipelineEngine
   val buffer  = pipelineBuffer.createNonblockingBuffer[Int](0, Buffer.commitAsIs)
 
+  private def createTurn() = {
+    val turn = engine.makeTurn
+    engine.addTurn(turn)
+    turn
+  }
   
   def readStableFrame() = {
     pipelineBuffer.getStableFrame().content.valueForBuffer(buffer).value.asInstanceOf[Int]
@@ -34,7 +39,7 @@ class PipelineBufferTest extends AssertionsForJUnit with MockitoSugar {
   
   @Test
   def createFirstFrameHasSameValueAsStableExceptTurn() = {
-    implicit val turn = engine.makeTurn
+    implicit val turn = createTurn()
     pipelineBuffer.createFrame
     assert(readStableFrame == 0)
     assert(pipelineBuffer.getPipelineFrames().size == 1)
@@ -45,7 +50,7 @@ class PipelineBufferTest extends AssertionsForJUnit with MockitoSugar {
   
   @Test
   def createWriteAndRemoveFrame() = {
-    implicit val turn = new PipeliningTurn(engine)
+    implicit val turn = createTurn()
     pipelineBuffer.createFrame
     assert(pipelineBuffer.hasFrame)
     val newFrame = pipelineBuffer.getPipelineFrames()(0)
@@ -61,7 +66,7 @@ class PipelineBufferTest extends AssertionsForJUnit with MockitoSugar {
   @Test
   def createMultipleFramesAndRemoveThem() = {
     // Create three frames
-    val turn1 = new PipeliningTurn(engine)
+    val turn1 = createTurn()
     pipelineBuffer.createFrame(turn1)
     val frame1 = pipelineBuffer.needFrame()(turn1)
     assert(!frame1.isWritten)
@@ -70,7 +75,7 @@ class PipelineBufferTest extends AssertionsForJUnit with MockitoSugar {
     pipelineBuffer.markWritten(turn1)
     assert(frame1.isWritten)
     
-    val turn2 = new PipeliningTurn(engine)
+    val turn2 = createTurn()
     pipelineBuffer.createFrame(turn2)
     val frame2 = pipelineBuffer.needFrame()(turn2)
     assert(buffer.get(turn2) == 1)
@@ -79,7 +84,7 @@ class PipelineBufferTest extends AssertionsForJUnit with MockitoSugar {
     assert(frame2.turn == turn2)
     pipelineBuffer.markWritten(turn2)
     
-    val turn3 = new PipeliningTurn(engine)
+    val turn3 = createTurn()
     pipelineBuffer.createFrame(turn3)
     val frame3 = pipelineBuffer.needFrame()(turn3)
     assert(pipelineBuffer.getPipelineFrames() == Queue[Frame[_]](frame1, frame2, frame3))
@@ -128,7 +133,7 @@ class PipelineBufferTest extends AssertionsForJUnit with MockitoSugar {
   def allFramesVisited() = {
     // Create five frames
     for (i <- 1 to 5) {
-      val turn = new PipeliningTurn(engine)
+      val turn = createTurn()
       pipelineBuffer.createFrame(turn)
       buffer.set(i)(turn)
       pipelineBuffer.markWritten(turn)
