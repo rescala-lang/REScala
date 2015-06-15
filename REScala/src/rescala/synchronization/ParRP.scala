@@ -9,7 +9,7 @@ import scala.annotation.tailrec
 
 class ParRP(var backOff: Int) extends EngineReference[ParRP](Engines.spinningWithBackoff(backOff)) with PropagationImpl {
 
-  override def toString: String = s"ParRP(${ key.id })"
+  override def toString: String = s"ParRP(${key.id})"
 
   final val key: Key = new Key(this)
 
@@ -148,9 +148,5 @@ private object ParRP {
   object Await extends Result[Nothing]
   object Retry extends Result[Nothing]
   case class Done[R](r: R) extends Result[R]
-
-
-
-
 
 }
