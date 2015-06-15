@@ -1,6 +1,6 @@
 package rescala.turns
 
-import rescala.graph.{Buffer, Reactive, STMBuffer}
+import rescala.graph._
 import rescala.propagation.PropagationImpl
 import rescala.synchronization.{EngineReference, NoLocking, STMSync, ParRP, TurnLock}
 
@@ -19,26 +19,29 @@ object Engines {
 
   def all: List[Engine[Turn]] = List(STM, parRP, synchron, unmanaged)
 
-  implicit val parRP: Impl[ParRP] = spinningWithBackoff(7)
+  implicit val parRP: Engine[ParRP] = spinningWithBackoff(7)
 
   implicit val default: Engine[Turn] = parRP
 
   implicit val STM: Engine[STMSync] = new Impl(new STMSync()) {
     override def plan[R](i: Reactive*)(f: STMSync => R): R = atomic { tx => super.plan(i: _*)(f) }
-    override def buffer[A](default: A, commitStrategy: (A, A) => A, writeLock: TurnLock): Buffer[A] = new STMBuffer[A](default, commitStrategy)
+    override private[rescala] def bufferFactory: BufferFactory = BufferFactory.stm
   }
 
   def spinningWithBackoff(backOff: Int) = new Impl(new ParRP(backOff))
 
-  implicit val synchron: Engine[NoLocking] = new Impl[NoLocking](new EngineReference(synchron) with NoLocking) {
+  implicit val synchron: Engine[NoLocking] = new Impl[NoLocking](new EngineReference(BufferFactory.simple) with NoLocking) {
     override def plan[R](i: Reactive*)(f: NoLocking => R): R = synchronized(super.plan(i: _*)(f))
   }
-  implicit val unmanaged: Engine[NoLocking] = new Impl[NoLocking](new EngineReference(unmanaged) with NoLocking)
+  implicit val unmanaged: Engine[NoLocking] = new Impl[NoLocking](new EngineReference(BufferFactory.simple) with NoLocking)
 
 
   class Impl[TImpl <: PropagationImpl](makeTurn: => TImpl) extends Engine[TImpl] {
 
     val currentTurn: DynamicVariable[Option[TImpl]] = new DynamicVariable[Option[TImpl]](None)
+
+    /** used for the creation of state inside reactives */
+    override private[rescala] def bufferFactory: BufferFactory = BufferFactory.simple
 
     override def subplan[T](initialWrites: Reactive*)(f: TImpl => T): T = currentTurn.value match {
       case None => plan(initialWrites: _*)(f)

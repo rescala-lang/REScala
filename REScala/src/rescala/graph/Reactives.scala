@@ -15,7 +15,7 @@ trait Reactive {
 
   protected[rescala] def lock: TurnLock
 
-  protected[rescala] def engine: Engine[Turn]
+  protected[rescala] def engine: BufferFactory
 
   final private[rescala] val level: Buffer[Int] = engine.buffer(0, math.max, lock)
 
@@ -34,8 +34,11 @@ trait Reactive {
 
 
 /** helper class to initialise engine and select lock */
-abstract class Enlock(final override protected[rescala] val engine: Engine[Turn],
-                      knownDependencies: Set[Reactive] = Set.empty) extends Reactive {
+abstract class Base(
+  final override protected[rescala] val engine: BufferFactory,
+  knownDependencies: Set[Reactive] = Set.empty
+  ) extends Reactive {
+
   final override protected[rescala] val lock: TurnLock =
     if (knownDependencies.size == 1) knownDependencies.head.lock
     else new TurnLock()
@@ -83,7 +86,7 @@ trait Stateful[+A] extends Pulsing[A] {
     get(turn)
   }
 
-  final def now(implicit maybe: Ticket): A = maybe { get(_) }
+  final def now(implicit maybe: Ticket): A = maybe {get(_)}
 
   final def get(implicit turn: Turn): A = pulse match {
     case NoChange(Some(value)) => value

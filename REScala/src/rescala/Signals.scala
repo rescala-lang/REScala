@@ -1,15 +1,15 @@
 package rescala
 
 import rescala.Signals.Impl.{makeDynamic, makeStatic}
-import rescala.graph.{DynamicReevaluation, Enlock, Globals, Pulse, Reactive, StaticReevaluation}
+import rescala.graph._
 import rescala.signals.GeneratedLift
 import rescala.turns.{Engine, Ticket, Turn}
 
 object Signals extends GeneratedLift {
 
   object Impl {
-    private class StaticSignal[T](engine: Engine[Turn], dependencies: Set[Reactive], init: => T, expr: (Turn, T) => T)
-      extends Enlock(engine, dependencies) with Signal[T] with StaticReevaluation[T] {
+    private class StaticSignal[T](engine: BufferFactory, dependencies: Set[Reactive], init: => T, expr: (Turn, T) => T)
+      extends Base(engine, dependencies) with Signal[T] with StaticReevaluation[T] {
 
       pulses.initCurrent(Pulse.unchanged(init))
 
@@ -20,12 +20,12 @@ object Signals extends GeneratedLift {
     }
     /** creates a signal that statically depends on the dependencies with a given initial value */
     def makeStatic[T](dependencies: Set[Reactive], init: => T)(expr: (Turn, T) => T)(initialTurn: Turn): Signal[T] = initialTurn.create(dependencies) {
-      new StaticSignal(initialTurn.engine, dependencies, init, expr)
+      new StaticSignal(initialTurn.bufferFactory, dependencies, init, expr)
     }
 
     /** creates a dynamic signal */
     def makeDynamic[T](dependencies: Set[Reactive])(expr: Turn => T)(initialTurn: Turn): Signal[T] = initialTurn.create(dependencies, dynamic = true) {
-      new Enlock(initialTurn.engine) with Signal[T] with DynamicReevaluation[T] {
+      new Base(initialTurn.bufferFactory) with Signal[T] with DynamicReevaluation[T] {
         def calculatePulseDependencies(implicit turn: Turn): (Pulse[T], Set[Reactive]) = {
           val (newValue, dependencies) = Globals.collectDependencies(expr(turn))
           (Pulse.diffPulse(newValue, pulses.base), dependencies)

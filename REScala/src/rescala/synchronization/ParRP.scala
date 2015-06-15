@@ -1,13 +1,13 @@
 package rescala.synchronization
 
-import rescala.graph.Reactive
+import rescala.graph.{BufferFactory, Reactive}
 import rescala.propagation.{LevelQueue, PropagationImpl}
-import rescala.turns.{Turn, Engines}
+import rescala.turns.{Engine, Turn, Engines}
 import rescala.synchronization.ParRP.{Await, Retry, Done}
 
 import scala.annotation.tailrec
 
-class ParRP(var backOff: Int) extends EngineReference[ParRP](Engines.spinningWithBackoff(backOff)) with PropagationImpl {
+class ParRP(var backOff: Int) extends EngineReference[ParRP](BufferFactory.simple) with PropagationImpl {
 
   override def toString: String = s"ParRP(${key.id})"
 

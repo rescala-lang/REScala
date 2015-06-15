@@ -1,7 +1,6 @@
 package rescala.graph
 
 import rescala.synchronization.{Key, ParRP, STMSync, TurnLock}
-import java.lang.ref.WeakReference
 import rescala.turns.Turn
 
 import scala.concurrent.stm.{InTxn, Ref}
@@ -16,6 +15,20 @@ object Buffer {
   def commitAsIs[A](base: A, cur: A): A = cur
   def transactionLocal[A](base: A, cur: A) = base
   def keepPulse[P](base: Pulse[P], cur: Pulse[P]) = cur.keep
+}
+
+trait BufferFactory {
+  def buffer[A](default: A, commitStrategy: (A, A) => A, writeLock: TurnLock): Buffer[A]
+}
+
+object BufferFactory {
+  val simple: BufferFactory = new BufferFactory {
+    override def buffer[A](default: A, commitStrategy: (A, A) => A, writeLock: TurnLock): Buffer[A] = new SimpleBuffer[A](default, commitStrategy, writeLock)
+  }
+
+  val stm: BufferFactory = new BufferFactory {
+    override def buffer[A](default: A, commitStrategy: (A, A) => A, writeLock: TurnLock): Buffer[A] = new STMBuffer[A](default, commitStrategy)
+  }
 }
 
 trait Buffer[A] extends Committable {
