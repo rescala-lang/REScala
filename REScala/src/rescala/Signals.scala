@@ -38,6 +38,7 @@ object Signals extends GeneratedLift {
 
   /** creates a new static signal depending on the dependencies, reevaluating the function */
   def static[T](dependencies: Reactive*)(fun: Turn => T)(implicit ticket: Ticket): Signal[T] = ticket { initialTurn =>
+    // using an anonymous function instead of ignore2 causes dependencies to be captured, which we want to avoid
     def ignore2[I, C, R](f: I => R): (I, C) => R = (t, _) => f(t)
     makeStatic(dependencies.toSet, fun(initialTurn))(ignore2(fun))(initialTurn)
   }
