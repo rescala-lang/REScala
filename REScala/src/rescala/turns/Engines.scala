@@ -85,7 +85,7 @@ object Engines {
           throw e
       }
       finally {
-        turn.realeasePhase()
+        turn.releasePhase()
       }
     }
 

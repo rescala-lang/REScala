@@ -32,7 +32,7 @@ class ParRP(var backOff: Int) extends EngineReference[ParRP](BufferFactory.simpl
   }
 
   /** this is called after the turn has finished propagating, but before handlers are executed */
-  override def realeasePhase(): Unit = key.releaseAll()
+  override def releasePhase(): Unit = key.releaseAll()
 
   /** allow turn to handle dynamic access to reactives */
   override def accessDynamic(dependency: Reactive): Unit = acquireShared(dependency)

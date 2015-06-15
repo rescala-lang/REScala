@@ -10,7 +10,7 @@ abstract class EngineReference[T <: Turn](override val bufferFactory: BufferFact
 
 trait NoLocking extends PropagationImpl {
   override def lockPhase(initialWrites: List[Reactive]): Unit = ()
-  override def realeasePhase(): Unit = ()
+  override def releasePhase(): Unit = ()
 }
 
 class STMSync extends EngineReference[STMSync](BufferFactory.stm) with NoLocking {
