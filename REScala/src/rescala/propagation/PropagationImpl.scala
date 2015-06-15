@@ -4,6 +4,8 @@ import rescala.graph.ReevaluationResult.{Dynamic, Static}
 import rescala.graph.{Committable, Reactive}
 import rescala.turns.Turn
 
+import scala.util.Try
+
 trait PropagationImpl extends Turn {
   implicit def currentTurn: PropagationImpl = this
 
@@ -68,7 +70,12 @@ trait PropagationImpl extends Turn {
 
   def rollbackPhase() = toCommit.foreach(_.release(this))
 
-  def observerPhase() = observers.foreach(_.apply())
+  def observerPhase() = {
+    val executed = observers.map(o => Try { o.apply() })
+    // find the first failure and rethrow the contained exception
+    // we should probably aggregate all of the exceptions, but this is not the place to invent exception aggregation
+    executed.find(_.isFailure).foreach(_.get)
+  }
 
   def releasePhase(): Unit
 
