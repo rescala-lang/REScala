@@ -8,7 +8,7 @@ import rescala.graph.{BufferFactory, Committable, Reactive}
  */
 trait Turn {
 
-  /** returns the engine of this turn */
+  /** used to create state containers of each reactive */
   def bufferFactory: BufferFactory
 
   /** allow turn to handle dynamic access to reactives */
