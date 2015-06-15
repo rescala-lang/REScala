@@ -73,7 +73,8 @@ trait PropagationImpl extends Turn {
   def observerPhase() = {
     val executed = observers.map(o => Try { o.apply() })
     // find the first failure and rethrow the contained exception
-    // we should probably aggregate all of the exceptions, but this is not the place to invent exception aggregation
+    // we should probably aggregate all of the exceptions,
+    // but this is not the place to invent exception aggregation
     executed.find(_.isFailure).foreach(_.get)
   }
 
