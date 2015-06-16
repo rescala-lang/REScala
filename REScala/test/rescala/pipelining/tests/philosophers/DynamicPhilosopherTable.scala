@@ -1,13 +1,12 @@
 package rescala.pipelining.tests.philosophers
 
 import java.util.concurrent.atomic.AtomicInteger
-
 import rescala.Signals._
 import rescala.graph.Committable
 import rescala.turns.{ Engine, Turn }
 import rescala.{ Signal, Var }
-
 import scala.annotation.tailrec
+import rescala.pipelining.Pipeline
 
 class DynamicPhilosopherTable(philosopherCount: Int, work: Long)(implicit val engine: Engine[Turn]) {
 
@@ -45,11 +44,12 @@ class DynamicPhilosopherTable(philosopherCount: Int, work: Long)(implicit val en
       }
       case Taken(`ownName`) => rightFork(turn) match {
         case Taken(`ownName`) => Eating
-        case Taken(name) => WaitingFor(name)
-        case Free => WaitingFor(`ownName`)
+        case _ => WaitingFor(ownName)
       }
       case Taken(name) => WaitingFor(name)
     }
+    
+    
     println(s"${Thread.currentThread().getId}: $ownName has vision $vision")
     vision
   }
@@ -62,7 +62,9 @@ class DynamicPhilosopherTable(philosopherCount: Int, work: Long)(implicit val en
     val forks = for (i <- 0 until tableSize) yield {
       val nextCircularIndex = mod(i + 1)
     //  lift(phils(i), phils(nextCircularIndex))(calcFork(i.toString, nextCircularIndex.toString))
-      dynamic()(turn => calcFork(i.toString, nextCircularIndex.toString)(phils(i), phils(nextCircularIndex))(turn))
+      val leftPhil = phils(i)
+      val rightPhil = phils(nextCircularIndex)
+      dynamic()(turn => calcFork(i.toString, nextCircularIndex.toString)(leftPhil, rightPhil)(turn))
       
     }
 
@@ -77,9 +79,15 @@ class DynamicPhilosopherTable(philosopherCount: Int, work: Long)(implicit val en
   def tryEat(seating: Seating): Boolean =
     engine.plan(seating.philosopher) { turn =>
       val forksFree = if (seating.vision(turn) == Ready) {
+        import Pipeline.pipelineFor
         println(s"${Thread.currentThread().getId}: ${seating.placeNumber} is hungry")
-        assert(seating.leftFork(turn) == Free)
-        assert(seating.rightFork(turn) == Free)
+        assert(seating.leftFork.outgoing.get(turn).contains(seating.vision))
+        assert(seating.rightFork.outgoing.get(turn).contains(seating.vision))
+        assert(seating.leftFork.get(turn) == Free)
+        assert(seating.rightFork.get(turn) == Free, s"${Thread.currentThread().getId}: Right fork is not free during $turn: leftfork=${seating.leftFork} rightfork=${seating.rightFork} vision=${seating.vision}\n"+
+          s"RightForkframes=${pipelineFor(seating.rightFork).getPipelineFramesWithStable()}\n" +
+          s"LeftForkframes=${pipelineFor(seating.leftFork).getPipelineFramesWithStable()}\n" +
+          s"Visionframes=${pipelineFor(seating.vision).getPipelineFramesWithStable()}")
         seating.philosopher.admit(Hungry)(turn)
         true
       } else {

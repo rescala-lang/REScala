@@ -56,10 +56,11 @@ class Pipeline(val reactive: Reactive) {
   }
   
   private def replaceStableFrame() = {
-    val frameToRemove = stableFrame.next()
+   /* val frameToRemove = stableFrame.next()
     val newStableFrameContent = frameToRemove.content
     assert(frameToRemove.isWritten)
     val newStableFrame = Frame[Content](null, this)
+    newStableFrame.oldTurn = frameToRemove.turn
     newStableFrame.content = newStableFrameContent
     newStableFrame.markWritten()
     stableFrame.removeFrame()
@@ -69,6 +70,11 @@ class Pipeline(val reactive: Reactive) {
       queueTail = newStableFrame
     else 
       pipelineRest.insertAfter(newStableFrame)
+    stableFrame = newStableFrame*/
+    val newStableFrame = stableFrame.next
+    newStableFrame.oldTurn = newStableFrame.turn
+    newStableFrame.turn = null
+    stableFrame.removeFrame()
     stableFrame = newStableFrame
   }
 
@@ -115,6 +121,16 @@ class Pipeline(val reactive: Reactive) {
         makeQueue(head.next(), queue :+ head)
     }
     makeQueue(queueHead, Queue())
+  }
+  // Access for testing
+  protected[rescala] final def getPipelineFramesWithStable() = lockPipeline {
+    def makeQueue(head: CFrame, queue: Queue[CFrame]): Queue[CFrame] = {
+      if (head == null)
+        queue
+      else
+        makeQueue(head.next(), queue :+ head)
+    }
+    makeQueue(stableFrame, Queue())
   }
 
   protected[rescala] def findFrame[T](find: Option[CFrame] => T)(implicit turn: PipeliningTurn): T = lockPipeline {
@@ -188,6 +204,7 @@ class Pipeline(val reactive: Reactive) {
           //   println(s"${Thread.currentThread().getId} write frame for ${frame.turn}")
           assert(turn >= frameTurn)
           frame.awaitUntilWritten(turn)
+          
         }
 
     }
@@ -195,6 +212,10 @@ class Pipeline(val reactive: Reactive) {
 
   protected[rescala] def hasFrame(implicit turn: PipeliningTurn): Boolean = {
     findFrame(_ => true, false)
+  }
+  
+  protected[rescala] def ifFrame[A](doForFrame : CFrame => A) (doNoFrame : => A)(implicit turn : PipeliningTurn)  : A= {
+    findFrame(doForFrame, doNoFrame)
   }
 
   protected[rescala] def forWriteFramesAfter(frame: CFrame)(op: CFrame => Unit): List[Frame[Content]] = lockPipeline {
@@ -227,6 +248,11 @@ class Pipeline(val reactive: Reactive) {
     }
     assert(hasFrame)
     assert(assertTurnOrder)
+  }
+  
+  protected[rescala] def createFrame(frameInit: CFrame => Unit)(implicit turn: PipeliningTurn): Unit = lockPipeline {
+     createFrame(turn)
+     needFrame(frameInit(_))
   }
 
   protected[rescala] def createFrameBefore(implicit turn: PipeliningTurn): Unit = lockPipeline {
@@ -360,40 +386,4 @@ class Pipeline(val reactive: Reactive) {
   protected[rescala] def markTouched(implicit turn: PipeliningTurn): Unit = {
     needFrame(_.markTouched())
   }
-/*
-  protected[rescala] def createDynamicFrame[T <: CFrame](makeFrame: => T)(from: Reactive)(implicit turn: PipeliningTurn): T = {
-    assert(findFrame {
-      _ match {
-        case None        => true
-        case Some(frame) => frame.isWritten
-      }
-    })
-    val predeceedingFrameOpt: Option[CFrame] = frame
-    lockPipeline {
-      val readFrame = makeFrame
-      predeceedingFrameOpt match {
-        case Some(predecessor) =>
-          readFrame.content = duplicate(predecessor.content, turn)
-          insertAfter(readFrame, predecessor)
-        case None =>
-          readFrame.content = duplicate(stableFrame.content, turn)
-          if (queueHead == null) {
-            queueHead = readFrame
-            queueTail = queueHead
-          } else {
-            insertAfter(queueHead, readFrame)
-          }
-      }
-      readFrame
-    }
-  }
-
-  protected[rescala] def createDynamicReadFrame(from: Reactive)(implicit turn: PipeliningTurn): DynamicReadFrame[Content] = {
-    createDynamicFrame(DynamicReadFrame[Content](turn, this, from))(from)
-  }
-
-  protected[rescala] def createDynamicDropFrame(from: Reactive)(implicit turn: PipeliningTurn): DynamicDropFrame[Content] = {
-    createDynamicFrame(DynamicDropFrame[Content](turn, this, from))(from)
-  }*/
-
 }

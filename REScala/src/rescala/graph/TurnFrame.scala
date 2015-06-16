@@ -11,7 +11,7 @@ import rescala.util.JavaFunctionsImplicits._
 import rescala.pipelining.Pipeline
 import rescala.pipelining.PipeliningTurn
 
-case class Frame[T](val turn: PipeliningTurn, val at: Pipeline) {
+case class Frame[T](var turn: PipeliningTurn, val at: Pipeline) {
 
   private var predecessor: Frame[T] = null.asInstanceOf[Frame[T]]
   private var successor: Frame[T] = null.asInstanceOf[Frame[T]]
@@ -21,6 +21,8 @@ case class Frame[T](val turn: PipeliningTurn, val at: Pipeline) {
   private val creatorThread = Thread.currentThread()
   protected val lockObject = new Object
   private var lockedOnThread: Set[Thread] = Set()
+  
+  var oldTurn:PipeliningTurn = null
 
   protected[rescala] var content: T = null.asInstanceOf[T];
 
@@ -41,7 +43,7 @@ case class Frame[T](val turn: PipeliningTurn, val at: Pipeline) {
     }
   }
 
-  override def toString() = s"${getClass.getSimpleName}($turn, written=${isWritten})[$content]"
+  override def toString() = s"${getClass.getSimpleName}(turn=$turn, "+ (if (oldTurn != null) s"oldTurn=$oldTurn, " else "") + s"written=${isWritten})[$content]"
 
   protected def retryBlockedThreads() = lockObject.synchronized {
     val blockedThreads = lockedOnThread
@@ -99,6 +101,7 @@ case class Frame[T](val turn: PipeliningTurn, val at: Pipeline) {
         LockSupport.park(creatorThread)
       }
     }
+    assert(isWritten)
   }
 
   protected[rescala] final def removeFrame() = {

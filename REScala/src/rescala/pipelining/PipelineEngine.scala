@@ -110,6 +110,7 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
 
       turnOrderLock.synchronized {
         assert(turnOrder.contains(completedTurn))
+        
         if (turnOrder.head == completedTurn) {
           removeTurn(completedTurn)
           turnOrder = turnOrder.tail

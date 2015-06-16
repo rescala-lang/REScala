@@ -20,7 +20,10 @@ object ValueHolder {
   }
 
   def initDuplicate[T](from: ValueHolder[T])(implicit newTurn: Turn): ValueHolder[T] = {
-    val holder = new ValueHolder(from.value, from.buffer)
+    val initValue = if (from.buffer.isInstanceOf[BlockingPipelineBuffer[_]])
+      from.committedValue.getOrElse(from.value)
+      else from.value
+    val holder = new ValueHolder(initValue, from.buffer)
     holder
   }
 
@@ -34,6 +37,18 @@ class ValueHolder[T](initial: T, val buffer: PipelineBuffer[T]) {
 
   def transform(f: T => T) = value = f(value)
 
+  private def printValue() = if (committedValue.isDefined) s"Comm(${committedValue.get})" else s"Val(${value})"
+  
+  protected[pipelining] def print() = {
+    if (value.isInstanceOf[Pulse[_]])
+      Some(s"Pulse($printValue)")
+    else if (value.isInstanceOf[Set[_]]) {
+      if (buffer.isInstanceOf[BlockingPipelineBuffer[_]])
+        Some(s"Incoming($printValue)")
+      else Some(s"Outgoing($printValue)")
+    } else None
+  }
+  
 }
 
 class BufferFrameContent {
@@ -49,6 +64,10 @@ class BufferFrameContent {
     }
     newContent
   }
+  
+  
+  
+  override def toString() = values.map(_.print).filter(_.isDefined).map(_.get).mkString(",")
 
 }
 
@@ -172,6 +191,13 @@ class BlockingPipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A) 
     }
 
   }
+  
+  protected[pipelining] def forceTransform(f: (A) => A)(implicit turn: Turn): A = {
+    implicit val pTurn = turn.asInstanceOf[PipeliningTurn]
+    val value = f(forceGet)
+    set(value)
+    value
+  }
 
   protected[pipelining] def forceGet(implicit turn: Turn): A = {
     implicit val pTurn = turn.asInstanceOf[PipeliningTurn]
@@ -212,8 +238,9 @@ class BlockingPipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A) 
             frame.content.valueForBuffer(this).value
           }
         case None =>
-          assert(parent.frame.isWritten)
-          parent.frame().valueForBuffer(this).committedValue.get
+          val frame = parent.frame
+          assert(frame.isWritten, s"${Thread.currentThread().getId}: Frame for get at ${parent.reactive} not written during $turn: $frame")
+          frame.content.valueForBuffer(this).committedValue.get
       }
 
     }

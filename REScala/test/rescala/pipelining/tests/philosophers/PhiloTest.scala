@@ -77,7 +77,7 @@ class PhiloTest extends AssertionsForJUnit {
   }
 
   def `eatDynamic!`(implicit engine: Engine[Turn]): Unit = {
-    val philosophers = 4
+    val philosophers = 5
     val threadCount = 4
     val table = new DynamicPhilosopherTable(philosophers, 0)(engine)
     val blocks: Array[Array[Seating]] = deal(table.seatings.toList, List.fill(threadCount)(Nil)).map(_.toArray).toArray
@@ -104,14 +104,13 @@ class PhiloTest extends AssertionsForJUnit {
               implicit val pt = t.asInstanceOf[PipeliningTurn]
               assert(seating.philosopher.outgoing.get(t) == Set(seating.leftFork, seating.rightFork))
               assert(seating.vision(t) == Ready, s"${Thread.currentThread().getId} " + seating.vision.pipeline.getPipelineFrames().toString())
-
+              assert(seating.philosopher(t) == Thinking)
+              assert(seating.leftFork(t) == Free)
+              assert(seating.rightFork(t) == Free)
               assert(seating.leftFork.outgoing.get(t).contains(seating.vision))
               assert(seating.rightFork.outgoing.get(t).contains(seating.vision), s" right Fork of ${seating.placeNumber} does not have an outgoing edge to vision during $t")
               assert(seating.vision.incoming.get(t) == Set(seating.leftFork, seating.rightFork))
               assert(seating.vision.pipeline.needFrame().isWritten)
-              assert(seating.philosopher(t) == Thinking)
-              assert(seating.leftFork(t) == Free)
-              assert(seating.rightFork(t) == Free)
               println(s"${Thread.currentThread().getId}: GET VISION for ${t}")
             }
           })
@@ -126,7 +125,7 @@ class PhiloTest extends AssertionsForJUnit {
     }
 
     println(s"philo party sleeping on $engine")
-    Thread.sleep(1000)
+    Thread.sleep(10000)
     cancel = true
     threads.foreach(_.join())
 
@@ -138,7 +137,7 @@ class PhiloTest extends AssertionsForJUnit {
   }
 
   @Test(timeout = 10000) def eatingContestsPipelining(): Unit = `eat!`(Engines.pipelining)
-  @Test(timeout = 10000)
+  @Test//(timeout = 10000)
   def eatingContestsPipeliningDynamic(): Unit = `eatDynamic!`(Engines.pipelining)
 
 }

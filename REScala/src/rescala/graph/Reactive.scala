@@ -30,7 +30,7 @@ trait Reactive  {
 
   /** for debugging */
   private val name = Globals.declarationLocationName()
-  override def toString = name
+  override def toString = s"$name[id=$hashCode]"
 }
 
 
