@@ -27,7 +27,7 @@ class LevelQueue()(implicit val currentTurn: Turn) {
     numOccurences = numOccurences - reactive
   }
   
-  def isEmpty() = elements.isEmpty
+  def isEmpty() = this.synchronized {elements.isEmpty}
 
   final def handleHead(queueElement: QueueElement, evaluator: Reactive => Unit, notEvaluator: Reactive => Unit): () => Unit = {
     val QueueElement(headLevel, head, headMinLevel, doEvaluate) = queueElement

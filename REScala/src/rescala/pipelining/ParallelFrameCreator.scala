@@ -1,18 +1,14 @@
 package rescala.pipelining
 
 import rescala.graph.Reactive
-import java.util.concurrent.locks.Lock
-import java.util.concurrent.locks.ReentrantLock
-import java.util.concurrent.atomic.AtomicReference
 import rescala.util.TransferableLock
 import rescala.util.TransferableLock
-import java.awt.datatransfer.Transferable
 import rescala.util.TransferableLock
 
 object ParallelFrameCreator {
 
   private object turnOrderLock
-  protected var turnOrder = List[PipeliningTurn]()
+  private var turnOrder = List[PipeliningTurn]()
 
   private val completeLock = new TransferableLock
 
@@ -28,7 +24,7 @@ object ParallelFrameCreator {
     completeLock.lock()
 
     turnOrderLock.synchronized {
-      assert(turnOrder.head == turn)
+      assert(turnOrder.head == turn)  
       turnOrder = turnOrder.tail
       if (turnOrder.nonEmpty)
         completeLock.reserveLockFor(turnOrder.head.thread)
@@ -42,16 +38,11 @@ trait ParallelFrameCreator extends QueueBasedFrameCreator {
 
   self: PipeliningTurn =>
 
+  override protected[this] def createFrame(pipeline: Pipeline) : Unit =  pipeline.createFrameBefore(this)
+    
   override protected[this] def createFrames(initialWrites: List[Reactive]) = {
     ParallelFrameCreator.addTurn(this)
-
-    val writeLock = framedReactivesLock.writeLock()
-    writeLock.lock()
-    evaluateQueue(initialWrites) { reactive =>
-      markReactiveFramed(reactive, reactive => engine.createFrameBefore(this, reactive))
-    }
-    writeLock.unlock()
-
+    super.createFrames(initialWrites)
     ParallelFrameCreator.removeTurn(this)
 
   }

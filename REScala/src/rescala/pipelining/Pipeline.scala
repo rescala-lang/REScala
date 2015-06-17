@@ -11,7 +11,6 @@ object Pipeline {
   protected[pipelining] def apply(at: Reactive) = at.pipeline
 }
 
-
 class Pipeline(val reactive: Reactive) {
 
   protected[this]type Content = BufferFrameContent;
@@ -34,7 +33,7 @@ class Pipeline(val reactive: Reactive) {
   private def lockPipeline[A](op: => A): A = pipelineLock.synchronized {
     op
   }
-  
+
   private def queueHead() = stableFrame.next()
 
   private def insertHead(insert: CFrame) = {
@@ -55,9 +54,9 @@ class Pipeline(val reactive: Reactive) {
     frame.removeFrame()
     queueTail = newTail
   }
-  
+
   private def replaceStableFrame() = {
-   /* val frameToRemove = stableFrame.next()
+    /* val frameToRemove = stableFrame.next()
     val newStableFrameContent = frameToRemove.content
     assert(frameToRemove.isWritten)
     val newStableFrame = Frame[Content](null, this)
@@ -98,7 +97,7 @@ class Pipeline(val reactive: Reactive) {
     createdBuffers += newBuffer
     newBuffer
   }
-  
+
   private def assertTurnOrder() = {
     var currentFrame = stableFrame
     assert(currentFrame != null)
@@ -205,7 +204,7 @@ class Pipeline(val reactive: Reactive) {
           //   println(s"${Thread.currentThread().getId} write frame for ${frame.turn}")
           assert(turn >= frameTurn)
           frame.awaitUntilWritten(turn)
-          
+
         }
 
     }
@@ -214,8 +213,8 @@ class Pipeline(val reactive: Reactive) {
   protected[rescala] def hasFrame(implicit turn: PipeliningTurn): Boolean = {
     findFrame(_ => true, false)
   }
-  
-  protected[rescala] def ifFrame[A](doForFrame : CFrame => A) (doNoFrame : => A)(implicit turn : PipeliningTurn)  : A= {
+
+  protected[rescala] def ifFrame[A](doForFrame: CFrame => A)(doNoFrame: => A)(implicit turn: PipeliningTurn): A = {
     findFrame(doForFrame, doNoFrame)
   }
 
@@ -250,10 +249,10 @@ class Pipeline(val reactive: Reactive) {
     assert(hasFrame)
     assert(assertTurnOrder)
   }
-  
+
   protected[rescala] def createFrame(frameInit: CFrame => Unit)(implicit turn: PipeliningTurn): Unit = lockPipeline {
-     createFrame(turn)
-     needFrame(frameInit(_))
+    createFrame(turn)
+    needFrame(frameInit(_))
   }
 
   protected[rescala] def createFrameBefore(implicit turn: PipeliningTurn): Unit = lockPipeline {
@@ -284,18 +283,10 @@ class Pipeline(val reactive: Reactive) {
       }
     }
 
-    if (queueTail == null) {
-      insertHead(createFrame(stableFrame.content))
-    } else {
-      val predecessor = findPreviousFrame()
-      if (predecessor == null) {
-        val newFrame = createFrame(stableFrame.content)
-        insertAfter(queueHead, newFrame)
-      } else {
-        val newFrame = createFrame(predecessor.content)
-        insertAfter(newFrame, predecessor)
-      }
-    }
+    val predecessor = findPreviousFrame()
+    val newFrame = createFrame(predecessor.content)
+    insertAfter(newFrame, predecessor)
+
     assert(hasFrame)
     assert(assertTurnOrder)
   }

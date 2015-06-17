@@ -3,6 +3,7 @@ package rescala.pipelining
 import rescala.graph.Reactive
 import rescala.propagation.LevelQueue
 import rescala.turns.Turn
+import java.util.concurrent.locks.ReentrantLock
 
 trait FrameCreator {
 
@@ -16,7 +17,15 @@ trait QueueBasedFrameCreator extends FrameCreator {
 
   val engine: PipelineEngine
 
-  protected[this] final def evaluateQueue(initialWrites: List[Reactive])(op: Reactive => Unit) = {
+  private val frameCompletedLock = new ReentrantLock
+  frameCompletedLock.lock()
+
+  def waitUntilFramingCompleted() = {
+    frameCompletedLock.lock()
+    frameCompletedLock.unlock()
+  }
+
+  protected[this] final def evaluateQueue(initialWrites: List[Reactive]) = {
     val lq = new LevelQueue()(this)
     initialWrites.foreach(lq.enqueue(-1))
 
@@ -25,27 +34,23 @@ trait QueueBasedFrameCreator extends FrameCreator {
     lq.evaluateQueue { reactive =>
       if (!seen.contains(reactive)) {
         seen += reactive
-        Pipeline(reactive).dynamicLock.lock()
-        op(reactive)
-        val outgoings = reactive.outgoing.get(this)
-        outgoings.foreach { lq.enqueue(-1) }
-        Pipeline(reactive).dynamicLock.unlock()
+        val pipeline = Pipeline(reactive)
+        pipeline.dynamicLock.lock()
+        if (!pipeline.hasFrame) {
+          markReactiveFramed(reactive, _ => createFrame(pipeline))
+          val outgoings = reactive.outgoing.get(this)
+          outgoings.foreach { lq.enqueue(-1) }
+        }
+        pipeline.dynamicLock.unlock()
       }
     }
   }
 
-  protected[this] final def createFrame(reactive: Reactive): Unit = {
-    // Need to check whether a frame is already there because a frame by a dynamic dependency
-    // discovery might have been created
-    val pipeline = Pipeline(reactive)
-    if (!pipeline.hasFrame)
-      pipeline.createFrame
-  }
+  protected[this] def createFrame(pipeline: Pipeline): Unit = pipeline.createFrame
 
   protected[this] override def createFrames(initialWrites: List[Reactive]) = {
-    evaluateQueue(initialWrites) { reactive =>
-      markReactiveFramed(reactive, reactive => createFrame(reactive))
-    }
+    evaluateQueue(initialWrites)
+    frameCompletedLock.unlock()
   }
 
 }

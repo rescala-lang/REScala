@@ -22,7 +22,7 @@ object ValueHolder {
   def initDuplicate[T](from: ValueHolder[T])(implicit newTurn: Turn): ValueHolder[T] = {
     val initValue = if (from.buffer.isInstanceOf[BlockingPipelineBuffer[_]])
       from.committedValue.getOrElse(from.value)
-      else from.value
+    else from.value
     val holder = new ValueHolder(initValue, from.buffer)
     holder
   }
@@ -38,7 +38,7 @@ class ValueHolder[T](initial: T, val buffer: PipelineBuffer[T]) {
   def transform(f: T => T) = value = f(value)
 
   private def printValue() = if (committedValue.isDefined) s"Comm(${committedValue.get})" else s"Val(${value})"
-  
+
   protected[pipelining] def print() = {
     if (value.isInstanceOf[Pulse[_]])
       Some(s"Pulse($printValue)")
@@ -48,7 +48,7 @@ class ValueHolder[T](initial: T, val buffer: PipelineBuffer[T]) {
       else Some(s"Outgoing($printValue)")
     } else None
   }
-  
+
 }
 
 class BufferFrameContent {
@@ -64,9 +64,7 @@ class BufferFrameContent {
     }
     newContent
   }
-  
-  
-  
+
   override def toString() = values.map(_.print).filter(_.isDefined).map(_.get).mkString(",")
 
 }
@@ -89,9 +87,9 @@ abstract class PipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A)
     implicit val pTurn = turn.asInstanceOf[PipeliningTurn]
     val frame = parent.needFrame()
     frame.synchronized {
-    val valueHolder = frame.content.valueForBuffer(this)
-    valueHolder.value = value
-    valueHolder.isChanged = true
+      val valueHolder = frame.content.valueForBuffer(this)
+      valueHolder.value = value
+      valueHolder.isChanged = true
     }
   }
   override def release(implicit turn: Turn): Unit = {
@@ -139,10 +137,7 @@ class NonblockingPipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => 
       _ match {
         case Some(frame) =>
           val readFrane = if (frame.content.valueForBuffer(this).isChanged)
-            if (frame.previous() == null)
-              parent.getStableFrame()
-            else
-              frame.previous()
+            frame.previous()
           else
             frame
           readFrane.content.valueForBuffer(this).value
@@ -176,14 +171,8 @@ class BlockingPipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A) 
     parent.findFrame {
       _ match {
         case Some(frame) =>
-
-          val readFrame = if (frame.previous() == null)
-            parent.getStableFrame()
-          else {
-            assert(frame.previous().isWritten, s"base called for ${this.parent.reactive} during $turn without written predecessor frame")
-            frame.previous()
-          }
-
+          val readFrame = frame.previous()
+          assert(readFrame.isWritten, s"base called for ${this.parent.reactive} during $turn without written predecessor frame")
           readFrame.content.valueForBuffer(this).committedValue.get
         case None =>
           parent.frame().valueForBuffer(this).committedValue.get
@@ -191,7 +180,7 @@ class BlockingPipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A) 
     }
 
   }
-  
+
   protected[pipelining] def forceTransform(f: (A) => A)(implicit turn: Turn): A = {
     implicit val pTurn = turn.asInstanceOf[PipeliningTurn]
     val value = f(forceGet)
@@ -206,9 +195,6 @@ class BlockingPipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A) 
         case Some(frame) =>
           val hasValue = frame.content.valueForBuffer(this).isChanged || frame.isWritten
           if (!hasValue) {
-            if (frame.previous() == null)
-              parent.getStableFrame().content.valueForBuffer(this).committedValue.get
-            else
               frame.previous().content.valueForBuffer(this).value
           } else {
             frame.content.valueForBuffer(this).value
@@ -230,10 +216,7 @@ class BlockingPipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A) 
         case Some(frame) =>
           val hasValue = frame.content.valueForBuffer(this).isChanged || frame.isWritten
           if (!hasValue) {
-            if (frame.previous() == null)
-              parent.getStableFrame().content.valueForBuffer(this).committedValue.get
-            else
-              frame.previous().content.valueForBuffer(this).committedValue.get
+            frame.previous().content.valueForBuffer(this).committedValue.get
           } else {
             frame.content.valueForBuffer(this).value
           }

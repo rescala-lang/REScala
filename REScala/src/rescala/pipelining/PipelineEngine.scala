@@ -49,14 +49,6 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
     newTurn
   }
 
-  /**
-   * Creates a new frame for the given turn at the given reactive and
-   * resolves conflicts which are introduced by creating the new frame
-   */
-  protected[pipelining] def createFrameBefore(turn: PTurn, at: Reactive) = {
-    pipelineFor(at).createFrameBefore(turn)
-  }
-
   protected[pipelining] def createFrameAfter(turn: PTurn, createFor: PTurn, at: Reactive): Boolean = {
     // TODO first check for conflicts
     // resolveConflicts(turn, at.getPipelineFrames().map { _.turn.asInstanceOf[PipeliningTurn]}.toSet)
@@ -97,7 +89,6 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
     import rescala.util.JavaFunctionsImplicits._
 
     turnOrderLock.synchronized {
-      assert(turnOrder.contains(completedTurn))
       assert(turnOrder.head == completedTurn)
       turnOrder = turnOrder.tail
       if (!turnOrder.isEmpty) {
