@@ -53,14 +53,6 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
    * Creates a new frame for the given turn at the given reactive and
    * resolves conflicts which are introduced by creating the new frame
    */
-  protected[pipelining] def createFrame(turn: PTurn, at: Reactive) = {
-    pipelineFor(at).createFrame(turn)
-  }
-
-  /**
-   * Creates a new frame for the given turn at the given reactive and
-   * resolves conflicts which are introduced by creating the new frame
-   */
   protected[pipelining] def createFrameBefore(turn: PTurn, at: Reactive) = {
     pipelineFor(at).createFrameBefore(turn)
   }

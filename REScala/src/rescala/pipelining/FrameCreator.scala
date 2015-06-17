@@ -20,32 +20,32 @@ trait QueueBasedFrameCreator extends FrameCreator {
     val lq = new LevelQueue()(this)
     initialWrites.foreach(lq.enqueue(-1))
 
-    
     var seen = Set[Reactive]()
     // Create frames for all reachable reactives
     lq.evaluateQueue { reactive =>
       if (!seen.contains(reactive)) {
         seen += reactive
-      
-        Pipeline.pipelineFor(reactive).dynamicLock.lock()
-          op(reactive)
-      val outgoings = reactive.outgoing.get(this)
-      outgoings.foreach { lq.enqueue(-1) }
-        Pipeline.pipelineFor(reactive).dynamicLock.unlock()
+        Pipeline(reactive).dynamicLock.lock()
+        op(reactive)
+        val outgoings = reactive.outgoing.get(this)
+        outgoings.foreach { lq.enqueue(-1) }
+        Pipeline(reactive).dynamicLock.unlock()
       }
     }
   }
 
   protected[this] final def createFrame(reactive: Reactive): Unit = {
-    engine.createFrame(this, reactive)
+    // Need to check whether a frame is already there because a frame by a dynamic dependency
+    // discovery might have been created
+    val pipeline = Pipeline(reactive)
+    if (!pipeline.hasFrame)
+      pipeline.createFrame
   }
 
   protected[this] override def createFrames(initialWrites: List[Reactive]) = {
-
     evaluateQueue(initialWrites) { reactive =>
-      markReactiveFramed(reactive, reactive =>  createFrame(reactive))
+      markReactiveFramed(reactive, reactive => createFrame(reactive))
     }
-
   }
 
 }

@@ -8,6 +8,7 @@ import java.util.concurrent.locks.ReentrantLock
 
 object Pipeline {
   protected[pipelining] def pipelineFor(at: Reactive) = at.pipeline
+  protected[pipelining] def apply(at: Reactive) = at.pipeline
 }
 
 

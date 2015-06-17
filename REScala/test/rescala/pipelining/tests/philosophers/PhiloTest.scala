@@ -77,8 +77,8 @@ class PhiloTest extends AssertionsForJUnit {
   }
 
   def `eatDynamic!`(implicit engine: Engine[Turn]): Unit = {
-    val philosophers = 5
-    val threadCount = 4
+    val philosophers = 10
+    val threadCount = 10
     val table = new DynamicPhilosopherTable(philosophers, 0)(engine)
     val blocks: Array[Array[Seating]] = deal(table.seatings.toList, List.fill(threadCount)(Nil)).map(_.toArray).toArray
 
@@ -125,7 +125,7 @@ class PhiloTest extends AssertionsForJUnit {
     }
 
     println(s"philo party sleeping on $engine")
-    Thread.sleep(10000)
+    Thread.sleep(100000)
     cancel = true
     threads.foreach(_.join())
 
@@ -137,7 +137,7 @@ class PhiloTest extends AssertionsForJUnit {
   }
 
   @Test(timeout = 10000) def eatingContestsPipelining(): Unit = `eat!`(Engines.pipelining)
-  @Test//(timeout = 10000)
+  @Test(timeout = 200000)
   def eatingContestsPipeliningDynamic(): Unit = `eatDynamic!`(Engines.pipelining)
 
 }

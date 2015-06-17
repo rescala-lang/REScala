@@ -14,7 +14,8 @@ import java.util.Random
 import java.util.concurrent.CyclicBarrier
 import rescala.pipelining.PipeliningTurn
 import scala.annotation.tailrec
- import rescala.pipelining.Pipeline._
+import rescala.pipelining.Pipeline._
+import rescala.pipelining.Pipeline
 
 class ConflictResolvingTest extends AssertionsForJUnit with MockitoSugar {
 
@@ -51,9 +52,9 @@ class ConflictResolvingTest extends AssertionsForJUnit with MockitoSugar {
     val sources = List(s2, s1, s1, s2, s2, s1)
 
     def makeFramesForUpdate(turn: PipeliningTurn, source: Reactive) = {
-      engine.createFrame(turn, source)
-      engine.createFrame(turn, d1)
-      engine.createFrame(turn, d2)
+      Pipeline(source).createFrame(turn)
+      Pipeline(d1).createFrame(turn)
+      Pipeline(d2).createFrame(turn)
     }
 
     turns.zip(sources).foreach({

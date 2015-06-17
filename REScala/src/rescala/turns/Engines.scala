@@ -91,7 +91,7 @@ object Engines {
         case e: Throwable =>
           e.printStackTrace()
           turn.rollbackPhase()
-          System.exit(0)
+         // System.exit(0)
           throw e
       }
       finally {
