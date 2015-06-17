@@ -64,7 +64,9 @@ final class SimpleBuffer[A](initialValue: A, initialStrategy: (A, A) => A, write
     turn match {
       case pessimistic: ParRP =>
         val wlo: Option[Key] = Option(writeLock).map(_.getOwner)
-        assert(wlo.fold(true)(_ eq pessimistic.key), s"buffer owned by $owner, controlled by $writeLock with owner ${ wlo.get } was written by $turn who locks with ${ pessimistic.key }, by now the owner ist ${ writeLock.getOwner }")
+        assert(wlo.fold(true)(_ eq pessimistic.key),
+          s"buffer owned by $owner, controlled by $writeLock with owner ${ wlo.get }" +
+          s" was written by $turn who locks with ${ pessimistic.key }, by now the owner is ${ writeLock.getOwner }")
       case _ =>
     }
     update = Some(value)
