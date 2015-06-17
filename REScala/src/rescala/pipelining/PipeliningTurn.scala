@@ -223,12 +223,14 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
     // But the engine lets waitUntilContinue return again
     while ({
       waitUntilContinue()
-      !levelQueue.isEmpty() || !engine.canTurnBeRemoved(this)}) {
+      !(levelQueue.isEmpty() && engine.canTurnBeRemoved(this))}) {
 
       levelQueue.evaluateQueue(evaluate, evaluateNoChange)
       // Lets waitUntilContinue return, if a new element is enqueued
       levelQueue.awakeOnNewElement()
     }
+    assert(levelQueue.isEmpty())
+    assert(engine.canTurnBeRemoved(this))
   }
 
   private def commitFor(head: Reactive): Unit = {
@@ -246,9 +248,18 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
     if (frame.turn == this)
       frame
     else if (frame.next() == null) {
+      // frame is not for this turn, so before in turn order
+      // but there is no appropiate frame to write into, so create one
+      
         markReactiveFramed(pipeline.reactive, _ => {
           println(s"${Thread.currentThread().getId}: Create frame for dynamic during $this")
-          pipeline.createFrame{frame => commitFor(pipeline);frame.markWritten()}(this)})
+          pipeline.createFrame{frame =>
+            // If the previous frame was written, this one needs to be too (outgoings are allowed to be changed in written frames)
+            if (frame.previous().isWritten) {
+              commitFor(pipeline)
+              frame.markWritten()
+            }
+          }(this)})
         pipeline.needFrame()
     } else {
       frame.next()
@@ -410,21 +421,21 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
 
   }
 
-  override def lockPhase(initialWrites: List[Reactive]): Unit = testLock.synchronized{
+  override def lockPhase(initialWrites: List[Reactive]): Unit = {
     println(s"${Thread.currentThread().getId}: $this starts framing phase")
     createFrames(initialWrites)
     framingPhaseComplete()
     println(s"${Thread.currentThread().getId}: $this completed framing phase")
   }
 
-  override def commitPhase(): Unit = testLock.synchronized{
+  override def commitPhase(): Unit = {
     assert(engine.canTurnBeRemoved(this))
     //Commit the rest (no buffers, but some tests inject something)
     super.commitPhase()
 
   }
 
-  override def releasePhase(): Unit = testLock.synchronized{
+  override def releasePhase(): Unit = {
     assert(engine.canTurnBeRemoved(this))
     markMissingReactives()
     removeFrames()
