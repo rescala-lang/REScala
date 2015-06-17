@@ -105,7 +105,7 @@ class Pipeline(val reactive: Reactive) {
     while (nextFrame != null) {
       assert(currentFrame != null)
       assert(nextFrame != null)
-      assert(currentFrame.turn == null || currentFrame.turn < nextFrame.turn)
+      assert(currentFrame.turn == null || currentFrame.turn < nextFrame.turn, s"Wrong turn order: ${currentFrame.turn} not < than ${nextFrame.turn}:  ${getPipelineFrames()}")
       currentFrame = nextFrame
       nextFrame = nextFrame.next
     }
