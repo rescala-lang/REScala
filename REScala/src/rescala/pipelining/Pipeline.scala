@@ -204,7 +204,6 @@ class Pipeline(val reactive: Reactive) {
           //   println(s"${Thread.currentThread().getId} write frame for ${frame.turn}")
           assert(turn >= frameTurn)
           frame.awaitUntilWritten(turn)
-
         }
 
     }

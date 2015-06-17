@@ -7,6 +7,8 @@ import rescala.util.TransferableLock
 
 object ParallelFrameCreator {
 
+  // Todo each engine should have its own copied of this values
+  
   private object turnOrderLock
   private var turnOrder = List[PipeliningTurn]()
 

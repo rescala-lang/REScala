@@ -276,7 +276,6 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
     val sourcePipeline = pipelineFor(source)
   //  assert(sourcePipeline.frame.isWritten)
     if ( needToAddDep) {
-      sourcePipeline.dynamicLock.lock()
       println(s"Register for $this $source as source for $sink")
 
       val dropFrame: Frame[BufferFrameContent] = getWriteableFrame(sourcePipeline)
@@ -341,7 +340,6 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
         turn.admit(sink)
       }
 
-      sourcePipeline.dynamicLock.unlock()
     }
   }
 
@@ -353,7 +351,6 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
     val needToRemoveDep = source.outgoing.get.contains(sink)
 
     if ( needToRemoveDep) {
-      sourcePipeline.dynamicLock.lock()
 
       val dropFrame = getWriteableFrame(sourcePipeline)
 
@@ -407,7 +404,6 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
 
       }
 
-      sourcePipeline.dynamicLock.unlock()
     }
 
   }

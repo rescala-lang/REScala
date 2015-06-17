@@ -216,7 +216,9 @@ class BlockingPipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A) 
         case Some(frame) =>
           val hasValue = frame.content.valueForBuffer(this).isChanged || frame.isWritten
           if (!hasValue) {
-            frame.previous().content.valueForBuffer(this).committedValue.get
+            val prevFrame = frame.previous
+            assert(prevFrame.isWritten, s"${Thread.currentThread().getId}: Frame for get at previous frame ${parent.reactive} not written during $turn: prevFrame")
+            prevFrame.content.valueForBuffer(this).committedValue.get
           } else {
             frame.content.valueForBuffer(this).value
           }
