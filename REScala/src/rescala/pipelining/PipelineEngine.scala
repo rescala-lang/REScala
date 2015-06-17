@@ -35,6 +35,8 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
 
   protected[pipelining] def isActive(turn : PTurn) =  turnOrder.contains(turn)
   
+  protected[pipelining] def canTurnBeRemoved(turn : PTurn) =  turnOrderLock.synchronized(turnOrder(0) == turn)
+  
   protected def makeNewTurn = new PipeliningTurn(this)
 
   override final protected[pipelining] def makeTurn: PipeliningTurn = {
@@ -101,27 +103,14 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
       waitsIndex >= onIndex
   }
 
-  private def removeTurn(implicit turn : PTurn) : Unit = {
-    turn.markMissingReactives()
-    turn.removeFrames()
-  }
   
   protected[pipelining] def turnCompleted(completedTurn: PTurn): Unit = {
     import rescala.util.JavaFunctionsImplicits._
 
       turnOrderLock.synchronized {
         assert(turnOrder.contains(completedTurn))
-        
-        if (turnOrder.head == completedTurn) {
-          removeTurn(completedTurn)
-          turnOrder = turnOrder.tail
-          while(turnOrder.nonEmpty && completedNotRemovedTurns.contains(turnOrder.head)) {
-            removeTurn(turnOrder.head)
-            turnOrder = turnOrder.tail
-          }
-        } else {
-          completedNotRemovedTurns += completedTurn
-        }
+        assert(turnOrder.head == completedTurn)
+       turnOrder = turnOrder.tail
       }
     
   }

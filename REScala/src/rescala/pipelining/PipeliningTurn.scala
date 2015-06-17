@@ -196,6 +196,14 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
     requeue(head, changed = false, level = -1, action = EnqueueDependencies)
     EnqueueDependencies
   }
+  
+  override def propagationPhase(): Unit = {
+     println(s"${Thread.currentThread().getId}: $this Starts to evaluate")
+    while (!levelQueue.isEmpty() || !engine.canTurnBeRemoved(this)) {
+     
+      levelQueue.evaluateQueue(evaluate, evaluateNoChange)
+    }
+  }
 
   private def commitFor(head: Reactive): Unit = {
     commitFor(pipelineFor(head))
@@ -384,12 +392,16 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
   }
 
   override def commitPhase(): Unit = testLock.synchronized{
+    assert(engine.canTurnBeRemoved(this))
     //Commit the rest (no buffers, but some tests inject something)
     super.commitPhase()
 
   }
 
   override def releasePhase(): Unit = testLock.synchronized{
+    assert(engine.canTurnBeRemoved(this))
+    markMissingReactives()
+    removeFrames()
     engine.turnCompleted(this)
   }
 

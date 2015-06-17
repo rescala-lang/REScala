@@ -31,12 +31,14 @@ class TicketTest(engine: Engine[Turn]) extends AssertionsForJUnit with MockitoSu
     assert(implicitly[Ticket].self === Left(implicitTurn))
     assert(implicitly[Ticket].apply(identity) === implicitTurn)
   }
-
+  
+  // Cannot run a turn inside a turn with pipelining
+/*
   @Test def someDynamicSomeImplicit(): Unit = implicitly[Engine[Turn]].plan() { (dynamicTurn: Turn) =>
     implicit val implicitTurn: Turn = getTurn
     assert(implicitly[Ticket].self === Left(implicitTurn))
     assert(implicitly[Ticket].apply(identity) === implicitTurn)
-  }
+  }*/
 
   @Test def implicitInClosures(): Unit = {
     val fac = implicitly[Engine[Turn]]

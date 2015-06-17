@@ -49,11 +49,11 @@ class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
     assert(dynDep.now == 0)
     assert(numEvaluated == 1)
     numEvaluated = 0
-    val dummyTurn = engine.makeTurn
-    engine.addTurn(dummyTurn)
-    assert(source2.outgoing.get(dummyTurn) == Set())
-    assert(source1.outgoing.get(dummyTurn) == Set(dynDep))
-    assert(dynDep.incoming.get(dummyTurn) == Set(source1))
+    PipelineTestUtils.readLatestValue {implicit turn => 
+      assert(source2.outgoing.get == Set())
+      assert(source1.outgoing.get == Set(dynDep))
+      assert(dynDep.incoming.get == Set(source1))
+    }
     source2.set(93)
     assert(dynDep.now == 0)
     assert(numEvaluated == 0)
