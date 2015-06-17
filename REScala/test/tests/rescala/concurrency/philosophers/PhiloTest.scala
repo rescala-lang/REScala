@@ -19,10 +19,12 @@ class PhiloTest extends AssertionsForJUnit {
   }
 
 
-  def `eat!`(engine: Engine[Turn]): Unit = {
-    val philosophers = 4
-    val threadCount = 3
-    val table = new PhilosopherTable(philosophers, 0)(engine)
+  def `eat!`(engine: Engine[Turn], dynamic: Boolean): Unit = {
+    val philosophers = 64
+    val threadCount = 4
+    val table =
+      if (!dynamic) new PhilosopherTable(philosophers, 0)(engine)
+      else new DynamicPhilosopherTable(philosophers, 0)(engine)
     val blocks: Array[Array[Seating]] = deal(table.seatings.toList, List.fill(threadCount)(Nil)).map(_.toArray).toArray
 
     @volatile var cancel = false
@@ -36,14 +38,16 @@ class PhiloTest extends AssertionsForJUnit {
       }
     }
 
-    println(s"philo party sleeping on $engine")
-    Thread.sleep(1000)
+    println(s"philo party sleeping on $engine (dynamic $dynamic)")
+    Thread.sleep(2000)
     cancel = true
     threads.foreach(_.join(1000))
     assert(threads.forall(!_.isAlive), "threads did not finish")
-    println(s"philo party done sleeping on $engine")
+    println(s"philo party done sleeping on $engine (dynamic $dynamic)")
   }
 
-  @Test def eatingContestsSpinning(): Unit = `eat!`(Engines.parRP)
+  @Test def eatingContestsSpinning(): Unit = `eat!`(Engines.parRP, dynamic = false)
+
+  @Test def eatingContestsSpinningDynamic(): Unit = `eat!`(Engines.parRP, dynamic = true)
 
 }
