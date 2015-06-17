@@ -18,6 +18,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import rescala.graph.Reactive
 import rescala.graph.Frame
 import scala.actors.threadpool.locks.ReentrantLock
+import java.util.concurrent.locks.LockSupport
+import java.util.concurrent.Semaphore
 
 object PipeliningTurn {
 
@@ -46,6 +48,18 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
   private[pipelining] val framedReactivesLock = new ReentrantReadWriteLock()
 
   val thread = Thread.currentThread()
+  
+  override val levelQueue = new AwakingLevelQueue(this)
+  
+  private val needPropagateCheck = new Semaphore(1)
+  
+  protected[pipelining] def needContinue() = {
+    needPropagateCheck.release()
+  }
+  
+  private def waitUntilContinue() = {
+    needPropagateCheck.acquire()
+  }
 
   private def doFramedWriteLocked(op: Set[Reactive] => Set[Reactive]): Unit = {
     val writeLock = framedReactivesLock.writeLock()
@@ -197,11 +211,23 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
     EnqueueDependencies
   }
   
+  /**
+   * Evaluates the queue as long as a new element is added. This may occur multiple times
+   * because of a dynamic dependency discovery by another turn which is admitted to this turn
+   * but the usual propagation of this turn has already completed.
+   * This method returns only if the current turn can be removed (if it is the head turn in the turn order in the engine)
+   */
   override def propagationPhase(): Unit = {
-     println(s"${Thread.currentThread().getId}: $this Starts to evaluate")
-    while (!levelQueue.isEmpty() || !engine.canTurnBeRemoved(this)) {
-     
+    // The first time, waitUntilContinue returns
+    // If the engine detects, that the turn can be removed, the level queue is empty
+    // But the engine lets waitUntilContinue return again
+    while ({
+      waitUntilContinue()
+      !levelQueue.isEmpty() || !engine.canTurnBeRemoved(this)}) {
+
       levelQueue.evaluateQueue(evaluate, evaluateNoChange)
+      // Lets waitUntilContinue return, if a new element is enqueued
+      levelQueue.awakeOnNewElement()
     }
   }
 

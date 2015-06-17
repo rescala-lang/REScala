@@ -8,18 +8,18 @@ import rescala.graph.SimpleBuffer
 import rescala.graph.Buffer
 import rescala.turns.Turn
 import scala.collection.immutable.Queue
+import java.util.concurrent.locks.LockSupport
 
 /**
  * @author moritzlichter
  */
 
-
 class PipelineEngine extends EngineImpl[PipeliningTurn]() {
-  
+
   protected[pipelining] val stableTurn = makeTurn
 
   private type PTurn = PipeliningTurn
-  
+
   import Pipeline._
 
   @volatile
@@ -29,22 +29,25 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
   private var completedNotRemovedTurns: Set[PTurn] = Set()
   private object completedNotRemovedTurnsLock
 
-
-  protected[pipelining] def addTurn(turn: PTurn) = turnOrderLock.synchronized(turnOrder :+= turn)
+  protected[pipelining] def addTurn(turn: PTurn) = turnOrderLock.synchronized {
+      val turnOrderWasEmpty = turnOrder.isEmpty
+      turnOrder :+= turn
+      if (turnOrderWasEmpty) {
+        turn.needContinue()
+      }
+  }
   protected[pipelining] def getTurnOrder() = turnOrder
 
-  protected[pipelining] def isActive(turn : PTurn) =  turnOrder.contains(turn)
-  
-  protected[pipelining] def canTurnBeRemoved(turn : PTurn) =  turnOrderLock.synchronized(turnOrder(0) == turn)
-  
+  protected[pipelining] def isActive(turn: PTurn) = turnOrder.contains(turn)
+
+  protected[pipelining] def canTurnBeRemoved(turn: PTurn) = turnOrderLock.synchronized(turnOrder(0) == turn)
+
   protected def makeNewTurn = new PipeliningTurn(this)
 
   override final protected[pipelining] def makeTurn: PipeliningTurn = {
     val newTurn = makeNewTurn
     newTurn
   }
-  
-
 
   /**
    * Creates a new frame for the given turn at the given reactive and
@@ -62,7 +65,6 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
     pipelineFor(at).createFrameBefore(turn)
   }
 
-
   protected[pipelining] def createFrameAfter(turn: PTurn, createFor: PTurn, at: Reactive): Boolean = {
     // TODO first check for conflicts
     // resolveConflicts(turn, at.getPipelineFrames().map { _.turn.asInstanceOf[PipeliningTurn]}.toSet)
@@ -76,8 +78,6 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
       true
     }
   }
-
-
 
   /**
    * Implements a depth first search of the waiting graph to check
@@ -94,39 +94,39 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
     val onIndex = currentOrder.indexOf(on)
     if (onIndex == -1) {
       true
-    }
-    else if (waitsIndex == -1) {
+    } else if (waitsIndex == -1) {
       assert(false)
       false
-    }
-    else
+    } else
       waitsIndex >= onIndex
   }
 
-  
   protected[pipelining] def turnCompleted(completedTurn: PTurn): Unit = {
     import rescala.util.JavaFunctionsImplicits._
 
-      turnOrderLock.synchronized {
-        assert(turnOrder.contains(completedTurn))
-        assert(turnOrder.head == completedTurn)
-       turnOrder = turnOrder.tail
+    turnOrderLock.synchronized {
+      assert(turnOrder.contains(completedTurn))
+      assert(turnOrder.head == completedTurn)
+      turnOrder = turnOrder.tail
+      if (!turnOrder.isEmpty) {
+        turnOrder.head.needContinue()
       }
-    
+    }
+
   }
-  
-  override def bufferIncoming[A](default: A, commitStrategy: (A, A) => A, at : Reactive) = bufferBlocking[A](default, commitStrategy, at)
-  override def bufferPulses[A](default: A, commitStrategy: (A, A) => A, at : Reactive) = bufferBlocking[A](default, commitStrategy, at)
-  override def bufferOutgoing[A](default: A, commitStrategy: (A, A) => A, at : Reactive) = bufferNonblocking[A](default, commitStrategy, at)
-  override def bufferLevel[A](default: A, commitStrategy: (A, A) => A, at : Reactive) = bufferNonblocking[A](default, commitStrategy, at)
-  
-  private def bufferBlocking[A](default: A, commitStrategy: (A, A) => A, at : Reactive): BlockingPipelineBuffer[A] = {
+
+  override def bufferIncoming[A](default: A, commitStrategy: (A, A) => A, at: Reactive) = bufferBlocking[A](default, commitStrategy, at)
+  override def bufferPulses[A](default: A, commitStrategy: (A, A) => A, at: Reactive) = bufferBlocking[A](default, commitStrategy, at)
+  override def bufferOutgoing[A](default: A, commitStrategy: (A, A) => A, at: Reactive) = bufferNonblocking[A](default, commitStrategy, at)
+  override def bufferLevel[A](default: A, commitStrategy: (A, A) => A, at: Reactive) = bufferNonblocking[A](default, commitStrategy, at)
+
+  private def bufferBlocking[A](default: A, commitStrategy: (A, A) => A, at: Reactive): BlockingPipelineBuffer[A] = {
     assert(at != null)
     assert(pipelineFor(at) != null)
     pipelineFor(at).createBlockingBuffer(default, commitStrategy)
   }
-  
-  private def bufferNonblocking[A](default: A, commitStrategy: (A, A) => A, at : Reactive): NonblockingPipelineBuffer[A] = {
+
+  private def bufferNonblocking[A](default: A, commitStrategy: (A, A) => A, at: Reactive): NonblockingPipelineBuffer[A] = {
     assert(at != null)
     assert(pipelineFor(at) != null)
     pipelineFor(at).createNonblockingBuffer(default, commitStrategy)
