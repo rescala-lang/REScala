@@ -1,8 +1,8 @@
 package tests.rescala.concurrency.philosophers
 
-import tests.rescala.concurrency.philosophers.PhilosopherTable._
 import rescala.turns.{Engine, Turn}
 import rescala.{Signals, Var}
+import tests.rescala.concurrency.philosophers.PhilosopherTable._
 
 class DynamicPhilosopherTable(philosopherCount: Int, work: Long)(implicit engine: Engine[Turn]) extends PhilosopherTable(philosopherCount, work)(engine) {
 
@@ -29,17 +29,19 @@ class DynamicPhilosopherTable(philosopherCount: Int, work: Long)(implicit engine
 
     for (i <- 0 until tableSize) yield {
       val ownName = i.toString
-      val vision = Signals.dynamic(forks(i), forks(mod(i - 1))) { turn =>
-        forks(i)(turn) match {
+      val fork1 = forks(i)
+      val fork2 = forks(mod(i - 1))
+      val vision = Signals.dynamic(fork1, fork2) { turn =>
+        fork1(turn) match {
           case Taken(name) if name != ownName => WaitingFor(name)
           case Taken(`ownName`) => Eating
-          case Free => forks(mod(i - 1))(turn) match {
+          case Free => fork2(turn) match {
             case Free => Ready
             case Taken(name) => WaitingFor(name)
           }
         }
       }
-      Seating(i, phils(i), forks(i), forks(mod(i - 1)), vision)
+      Seating(i, phils(i), fork1, forks(mod(i - 1)), vision)
     }
   }
 
