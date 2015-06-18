@@ -18,6 +18,14 @@ object Signals extends GeneratedLift {
         Pulse.diff(expr(turn, currentValue), currentValue)
       }
     }
+
+    private class DynamicSignal[T](expr: Turn => T,bufferFactory: BufferFactory) extends Base(bufferFactory) with Signal[T] with DynamicReevaluation[T] {
+      def calculatePulseDependencies(implicit turn: Turn): (Pulse[T], Set[Reactive]) = {
+        val (newValue, dependencies) = Globals.collectDependencies(expr(turn))
+        (Pulse.diffPulse(newValue, pulses.base), dependencies)
+      }
+    }
+
     /** creates a signal that statically depends on the dependencies with a given initial value */
     def makeStatic[T](dependencies: Set[Reactive], init: => T)(expr: (Turn, T) => T)(initialTurn: Turn): Signal[T] = initialTurn.create(dependencies) {
       new StaticSignal(initialTurn.bufferFactory, dependencies, init, expr)
@@ -25,14 +33,8 @@ object Signals extends GeneratedLift {
 
     /** creates a dynamic signal */
     def makeDynamic[T](dependencies: Set[Reactive])(expr: Turn => T)(initialTurn: Turn): Signal[T] = initialTurn.create(dependencies, dynamic = true) {
-      new Base(initialTurn.bufferFactory) with Signal[T] with DynamicReevaluation[T] {
-        def calculatePulseDependencies(implicit turn: Turn): (Pulse[T], Set[Reactive]) = {
-          val (newValue, dependencies) = Globals.collectDependencies(expr(turn))
-          (Pulse.diffPulse(newValue, pulses.base), dependencies)
-        }
-      }
+      new DynamicSignal[T](expr, initialTurn.bufferFactory)
     }
-
   }
 
 
