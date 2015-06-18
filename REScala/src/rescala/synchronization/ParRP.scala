@@ -2,8 +2,8 @@ package rescala.synchronization
 
 import rescala.graph.{BufferFactory, Reactive}
 import rescala.propagation.{LevelQueue, PropagationImpl}
-import rescala.turns.{Engine, Turn, Engines}
-import rescala.synchronization.ParRP.{Await, Retry, Done}
+import rescala.synchronization.ParRP.{Await, Done, Retry}
+import rescala.turns.Turn
 
 import scala.annotation.tailrec
 
@@ -86,7 +86,10 @@ class ParRP(var backOff: Int) extends EngineReference[ParRP](BufferFactory.simpl
       if (!source.outgoing.get.contains(sink)) {
         owner.turn.register(sink)(source)
         owner.turn.admit(sink)
-        key.lockKeychain(key.keychain.addFallthrough(owner))
+        key.lockKeychain {
+          assert(key.keychain == owner.keychain, "tried to transfer locks between keychains")
+          key.keychain.addFallthrough(owner)
+        }
       }
     }
     else {
