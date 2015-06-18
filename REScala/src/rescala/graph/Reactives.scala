@@ -13,7 +13,9 @@ import scala.collection.JavaConverters.asScalaSetConverter
 trait Reactive {
   final override val hashCode: Int = Globals.nextID().hashCode()
 
-  protected[rescala] def lock: TurnLock
+  protected[this] def makeLock(): TurnLock
+
+  final protected[rescala] val lock: TurnLock = makeLock()
 
   protected[rescala] def engine: BufferFactory
 
@@ -39,7 +41,7 @@ abstract class Base(
   knownDependencies: Set[Reactive] = Set.empty
   ) extends Reactive {
 
-  final override protected[rescala] val lock: TurnLock =
+  final override protected[this] def makeLock(): TurnLock =
     if (knownDependencies.size == 1) knownDependencies.head.lock
     else new TurnLock()
 
