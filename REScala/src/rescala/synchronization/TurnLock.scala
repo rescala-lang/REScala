@@ -2,16 +2,14 @@ package rescala.synchronization
 
 import java.util.concurrent.atomic.AtomicReference
 
-import rescala.graph.Reactive
-
 import scala.annotation.tailrec
 import scala.collection.immutable.Queue
 
 final class TurnLock() {
 
   /** this is guarded by our intrinsic lock */
-  private var owner: AtomicReference[Key] = new AtomicReference[Key]()
-  private var shared: AtomicReference[Queue[Key]] = new AtomicReference[Queue[Key]](Queue())
+  private val owner: AtomicReference[Key] = new AtomicReference[Key]()
+  private val shared: AtomicReference[Queue[Key]] = new AtomicReference[Queue[Key]](Queue())
 
   def getOwner: Key = owner.get()
 
