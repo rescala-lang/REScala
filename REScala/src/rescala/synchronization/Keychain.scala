@@ -12,7 +12,7 @@ class Keychain(init: Key) {
   /** synchronized on this */
   private var keys: Queue[Key] = Queue(init)
   private var fallthrough: Map[Key, Int] = Map()
-  def addFallthrough(key: Key): Unit = synchronized { fallthrough = fallthrough.updated(key, fallthrough.getOrElse(key, 0) + 1) }
+  def addFallthrough(key: Key, amount: Int = 1): Unit = synchronized { fallthrough = fallthrough.updated(key, fallthrough.getOrElse(key, 0) + amount) }
   def removeFallthrough(key: Key): Unit = synchronized {
     val old = fallthrough.getOrElse(key, 0)
     if (old <= 1) fallthrough -= key
@@ -26,6 +26,7 @@ class Keychain(init: Key) {
     other.keys.foreach { k =>
       k.keychain = this
     }
+    other.fallthrough.foreach { case (k, a) => addFallthrough(k, a) }
     keys = keys.enqueue(other.keys)
   }
 
