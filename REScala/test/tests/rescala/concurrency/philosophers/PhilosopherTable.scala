@@ -3,7 +3,8 @@ package tests.rescala.concurrency.philosophers
 import java.util.concurrent.atomic.AtomicInteger
 
 import rescala.Signals.lift
-import rescala.graph.Committable
+import rescala.graph.Globals.named
+import rescala.graph.{Globals, Committable}
 import rescala.turns.{Engine, Turn}
 import rescala.{Signal, Var}
 
@@ -18,9 +19,11 @@ class PhilosopherTable(philosopherCount: Int, work: Long)(implicit val engine: E
   val eaten = new AtomicInteger(0)
 
   seatings.foreach { seating =>
-    seating.vision.observe { state =>
-      if (state == Eating) {
-        eaten.incrementAndGet()
+    named(s"Observer ${seating.vision}") {
+      seating.vision.observe { state =>
+        if (state == Eating) {
+          eaten.incrementAndGet()
+        }
       }
     }
   }
@@ -45,15 +48,15 @@ class PhilosopherTable(philosopherCount: Int, work: Long)(implicit val engine: E
   def createTable(tableSize: Int): Seq[Seating] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
 
-    val phils = for (i <- 0 until tableSize) yield Var[Philosopher](Thinking)
+    val phils = for (i <- 0 until tableSize) yield named(s"PHil($i)")(Var[Philosopher](Thinking))
 
     val forks = for (i <- 0 until tableSize) yield {
       val nextCircularIndex = mod(i + 1)
-      lift(phils(i), phils(nextCircularIndex))(calcFork(i.toString, nextCircularIndex.toString))
+      named(s"Fork($i, $nextCircularIndex)")(lift(phils(i), phils(nextCircularIndex))(calcFork(i.toString, nextCircularIndex.toString)))
     }
 
     for (i <- 0 until tableSize) yield {
-      val vision = lift(forks(i), forks(mod(i - 1)))(calcVision(i.toString))
+      val vision = named(s"Vision($i, ${mod(i - 1)}")(lift(forks(i), forks(mod(i - 1)))(calcVision(i.toString)))
       Seating(i, phils(i), forks(i), forks(mod(i - 1)), vision)
     }
   }
