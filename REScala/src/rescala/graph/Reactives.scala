@@ -13,9 +13,7 @@ import scala.collection.JavaConverters.asScalaSetConverter
 trait Reactive {
   final override val hashCode: Int = Globals.nextID().hashCode()
 
-  protected[this] def makeLock(): TurnLock
-
-  final protected[rescala] val lock: TurnLock = makeLock()
+  protected[rescala] def lock: TurnLock
 
   protected[rescala] def engine: BufferFactory
 
@@ -38,12 +36,11 @@ trait Reactive {
 /** helper class to initialise engine and select lock */
 abstract class Base(
   final override protected[rescala] val engine: BufferFactory,
-  knownDependencies: Set[Reactive] = Set.empty
-  ) extends Reactive {
-
-  final override protected[this] def makeLock(): TurnLock =
+  knownDependencies: Set[Reactive] = Set.empty) extends {
+  final override val lock: TurnLock =
     if (knownDependencies.size == 1) knownDependencies.head.lock
     else new TurnLock()
+} with Reactive {
 
   val weakKnownDependencies = {
     val whs = util.Collections.newSetFromMap(new util.WeakHashMap[Reactive, java.lang.Boolean](knownDependencies.size))
