@@ -81,13 +81,14 @@ class DynamicPhilosopherTable(philosopherCount: Int, work: Long)(implicit val en
       val forksFree = if (seating.vision(turn) == Ready) {
         import Pipeline.pipelineFor
         println(s"${Thread.currentThread().getId}: ${seating.placeNumber} is hungry")
-        assert(seating.leftFork.outgoing.get(turn).contains(seating.vision))
-        assert(seating.rightFork.outgoing.get(turn).contains(seating.vision), s"${Thread.currentThread().getId}: Vision ${seating.vision} not in outgoing for right fork ${seating.rightFork} during $turn")
         assert(seating.leftFork.get(turn) == Free)
         assert(seating.rightFork.get(turn) == Free, s"${Thread.currentThread().getId}: Right fork is not free during $turn: leftfork=${seating.leftFork} rightfork=${seating.rightFork} vision=${seating.vision}\n"+
           s"RightForkframes=${pipelineFor(seating.rightFork).getPipelineFramesWithStable()}\n" +
           s"LeftForkframes=${pipelineFor(seating.leftFork).getPipelineFramesWithStable()}\n" +
           s"Visionframes=${pipelineFor(seating.vision).getPipelineFramesWithStable()}")
+        assert(seating.leftFork.outgoing.get(turn).contains(seating.vision))
+        assert(seating.rightFork.outgoing.get(turn).contains(seating.vision), s"${Thread.currentThread().getId}: Vision ${seating.vision} not in outgoing for right fork ${seating.rightFork} during $turn")
+        
         seating.philosopher.admit(Hungry)(turn)
         true
       } else {
