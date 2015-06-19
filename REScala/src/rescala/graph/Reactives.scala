@@ -1,11 +1,10 @@
 package rescala.graph
 
-import java.lang.ref.WeakReference
 import java.util
 
 import rescala.graph.Pulse.{Diff, NoChange}
 import rescala.synchronization.TurnLock
-import rescala.turns.{Engine, Ticket, Turn}
+import rescala.turns.{Ticket, Turn}
 
 import scala.collection.JavaConverters.asScalaSetConverter
 
@@ -15,11 +14,11 @@ trait Reactive {
 
   protected[rescala] def lock: TurnLock
 
-  protected[rescala] def engine: BufferFactory
+  protected[rescala] def bufferFactory: BufferFactory
 
-  final private[rescala] val level: Buffer[Int] = engine.buffer(0, math.max, lock)
+  final private[rescala] val level: Buffer[Int] = bufferFactory.buffer(0, math.max, lock)
 
-  final private[rescala] val outgoing: Buffer[Set[Reactive]] = engine.buffer(Set(), Buffer.commitAsIs, lock)
+  final private[rescala] val outgoing: Buffer[Set[Reactive]] = bufferFactory.buffer(Set(), Buffer.commitAsIs, lock)
 
   protected[rescala] def incoming(implicit turn: Turn): Set[Reactive]
 
@@ -35,7 +34,7 @@ trait Reactive {
 
 /** helper class to initialise engine and select lock */
 abstract class Base(
-  final override protected[rescala] val engine: BufferFactory,
+  final override protected[rescala] val bufferFactory: BufferFactory,
   knownDependencies: Set[Reactive] = Set.empty) extends {
   final override val lock: TurnLock =
     if (knownDependencies.size == 1) knownDependencies.head.lock
@@ -64,7 +63,7 @@ class Reader[+P](pulses: Buffer[Pulse[P]]) {
 /** A node that has nodes that depend on it */
 trait Pulsing[+P] extends Reactive {
   protected[this] def strategy: (Pulse[P], Pulse[P]) => Pulse[P] = Buffer.transactionLocal[Pulse[P]]
-  final protected[this] val pulses: Buffer[Pulse[P]] = engine.buffer(Pulse.none, strategy, lock)
+  final protected[this] val pulses: Buffer[Pulse[P]] = bufferFactory.buffer(Pulse.none, strategy, lock)
 
   final def pulse(implicit turn: Turn): Pulse[P] = pulses.get
 
