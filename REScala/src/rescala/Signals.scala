@@ -21,7 +21,7 @@ object Signals extends GeneratedLift {
 
     private class DynamicSignal[T](bufferFactory: BufferFactory, expr: Turn => T) extends Base(bufferFactory) with Signal[T] with DynamicReevaluation[T] {
       def calculatePulseDependencies(implicit turn: Turn): (Pulse[T], Set[Reactive]) = {
-        val (newValue, dependencies) = Globals.collectDependencies(expr(turn))
+        val (newValue, dependencies) = turn.collectDependencies(expr(turn))
         (Pulse.diffPulse(newValue, pulses.base), dependencies)
       }
     }

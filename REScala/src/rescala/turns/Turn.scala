@@ -36,4 +36,10 @@ trait Turn {
 
   /** plan a new after commit handler. this still runs before releasing locks */
   def observe(f: => Unit): Unit
+
+  /** collects and returns dynamic dependencies during the execution of f */
+  def collectDependencies[T](f: => T): (T, Set[Reactive])
+
+  /** marks a dependency as used dynamically so it is returned by the innermost call of `collectDependencies` */
+  def useDependency(dependency: Reactive): Unit
 }

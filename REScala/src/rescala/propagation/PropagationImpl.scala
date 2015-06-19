@@ -71,7 +71,7 @@ trait PropagationImpl extends Turn {
   def rollbackPhase() = toCommit.foreach(_.release(this))
 
   def observerPhase() = {
-    val executed = observers.map(o => Try { o.apply() })
+    val executed = observers.map(o => Try {o.apply()})
     // find the first failure and rethrow the contained exception
     // we should probably aggregate all of the exceptions,
     // but this is not the place to invent exception aggregation
@@ -79,5 +79,16 @@ trait PropagationImpl extends Turn {
   }
 
   def releasePhase(): Unit
+
+  var collectedDependencies: List[Reactive] = Nil
+
+  def collectDependencies[T](f: => T): (T, Set[Reactive]) = {
+    val old = collectedDependencies
+    collectedDependencies = Nil
+    val res = (f, collectedDependencies.toSet)
+    collectedDependencies = old
+    res
+  }
+  def useDependency(dependency: Reactive): Unit = collectedDependencies ::= dependency
 
 }

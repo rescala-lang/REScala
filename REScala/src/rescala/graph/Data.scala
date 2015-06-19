@@ -18,11 +18,6 @@ object Globals {
       s"${ trace(i).getFileName }(${ trace(i).getLineNumber })"
     }
 
-  val dynamicDependencyBag = new DynamicVariable(Set[Reactive]())
-  /** runs the given code while collecting dynamically used reactives */
-  def collectDependencies[T](f: => T): (T, Set[Reactive]) = dynamicDependencyBag.withValue(Set()) { (f, dynamicDependencyBag.value) }
-  /** mark a reactive as dynamically used */
-  def useDependency(dependency: Reactive): Unit = dynamicDependencyBag.value = dynamicDependencyBag.value + dependency
 
   val dynamicNameVar = new DynamicVariable("")
   def named[S](n: String)(f: => S): S = dynamicNameVar.withValue(n)(f)

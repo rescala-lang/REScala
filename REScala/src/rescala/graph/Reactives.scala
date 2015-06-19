@@ -84,7 +84,7 @@ trait Stateful[+A] extends Pulsing[A] {
 
   final def apply[T](turn: Turn): A = {
     turn.accessDynamic(this)
-    Globals.useDependency(this)
+    turn.useDependency(this)
     get(turn)
   }
 
