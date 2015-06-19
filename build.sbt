@@ -1,35 +1,41 @@
-name := "rescala"
+organization in ThisBuild := "de.tuda.stg"
+scalaVersion in ThisBuild := "2.11.6"
 
-organization := "de.tuda.stg"
+lazy val rescala = project.in(file("."))
+  .disablePlugins(JmhPlugin)
+  .settings(
+    name := "rescala",
 
-version := "0.13.0"
+    version := "0.13.0",
 
-scalaVersion := "2.11.6"
+    crossScalaVersions := Seq("2.10.5", "2.11.6"),
 
-crossScalaVersions := Seq("2.10.5", "2.11.6")
+    scalaSource in Compile <<= baseDirectory { (base) => new File(base, "REScala/src") },
+    scalaSource in Test <<= baseDirectory { (base) => new File(base, "REScala/test") },
 
-scalaSource in Compile <<= baseDirectory { (base) => new File(base, "REScala/src") }
+    libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _),
+    libraryDependencies += "org.mockito" % "mockito-all" % "1.10.19" % "test",
+    libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.5" % "test",
+    libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % "test",
+    libraryDependencies += "org.scala-stm" %% "scala-stm" % "0.7",
 
-libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _)
+    parallelExecution in Test := true,
 
-scalaSource in Test <<= baseDirectory { (base) => new File(base, "REScala/test") }
-
-parallelExecution in Test := true
-
-excludeFilter <<= scalaVersion {
-  case s if s.startsWith("2.10.") => HiddenFileFilter || "*Macro*"
-  case s if s.startsWith("2.11.") => HiddenFileFilter
-}
-
-libraryDependencies ++= (
-  "org.mockito" % "mockito-all" % "1.10.19" % "test" ::
-    "org.scalatest" %% "scalatest" % "2.2.5" % "test" ::
-    "com.novocode" % "junit-interface" % "0.11" % "test" ::
-    "org.scala-stm" %% "scala-stm" % "0.7" ::
-    Nil)
+    excludeFilter <<= scalaVersion {
+      case s if s.startsWith("2.10.") => HiddenFileFilter || "*Macro*"
+      case s if s.startsWith("2.11.") => HiddenFileFilter
+    }
+  )
 
 
-scalacOptions ++= (
+lazy val microbench = project.in(file("Microbench"))
+  .enablePlugins(JmhPlugin)
+  .settings(mainClass in Compile := Some("org.openjdk.jmh.Main"))
+  .dependsOn(rescala)
+
+
+
+scalacOptions in ThisBuild ++= (
   "-deprecation" ::
   //"-Xdisable-assertions" ::
   //"-Xelide-below" :: "9999999" ::
