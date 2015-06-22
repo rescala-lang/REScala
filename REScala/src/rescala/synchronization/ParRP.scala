@@ -7,7 +7,7 @@ import rescala.turns.Turn
 
 import scala.annotation.tailrec
 
-class ParRP(var backOff: Int) extends EngineReference[ParRP](BufferFactory.simple) with PropagationImpl {
+class ParRP(var backOff: Int) extends BufferFactoryReference[ParRP](BufferFactory.simple) with PropagationImpl {
 
   override def toString: String = s"ParRP(${key.id})"
 

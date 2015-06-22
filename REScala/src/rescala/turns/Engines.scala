@@ -2,7 +2,7 @@ package rescala.turns
 
 import rescala.graph._
 import rescala.propagation.PropagationImpl
-import rescala.synchronization.{EngineReference, NoLocking, STMSync, ParRP, TurnLock}
+import rescala.synchronization.{BufferFactoryReference, NoLocking, STMSync, ParRP, TurnLock}
 
 import scala.concurrent.stm.atomic
 import scala.util.DynamicVariable
@@ -30,10 +30,10 @@ object Engines {
 
   def spinningWithBackoff(backOff: Int) = new Impl(new ParRP(backOff))
 
-  implicit val synchron: Engine[NoLocking] = new Impl[NoLocking](new EngineReference(BufferFactory.simple) with NoLocking) {
+  implicit val synchron: Engine[NoLocking] = new Impl[NoLocking](new BufferFactoryReference(BufferFactory.simple) with NoLocking) {
     override def plan[R](i: Reactive*)(f: NoLocking => R): R = synchronized(super.plan(i: _*)(f))
   }
-  implicit val unmanaged: Engine[NoLocking] = new Impl[NoLocking](new EngineReference(BufferFactory.simple) with NoLocking)
+  implicit val unmanaged: Engine[NoLocking] = new Impl[NoLocking](new BufferFactoryReference(BufferFactory.simple) with NoLocking)
 
 
   class Impl[TImpl <: PropagationImpl](makeTurn: => TImpl) extends Engine[TImpl] {
