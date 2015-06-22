@@ -1,7 +1,15 @@
 organization in ThisBuild := "de.tuda.stg"
 scalaVersion in ThisBuild := "2.11.6"
 
-lazy val rescala = project.in(file("."))
+lazy val root = project.in(file("."))
+  .aggregate(rescalaJVM, rescalaJS)
+  .settings(
+    publish := {},
+    publishLocal := {}
+  )
+
+
+lazy val rescala = crossProject.in(file("."))
   .disablePlugins(JmhPlugin)
   .settings(
     name := "rescala",
@@ -9,9 +17,6 @@ lazy val rescala = project.in(file("."))
     version := "0.13.0",
 
     crossScalaVersions := Seq("2.10.5", "2.11.6"),
-
-    scalaSource in Compile <<= baseDirectory { (base) => new File(base, "REScala/src") },
-    scalaSource in Test <<= baseDirectory { (base) => new File(base, "REScala/test") },
 
     libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _),
     libraryDependencies += "org.mockito" % "mockito-all" % "1.10.19" % "test",
@@ -61,13 +66,16 @@ lazy val rescala = project.in(file("."))
       s"""import rescala._
        """.stripMargin
   )
+  .jvmSettings().jsSettings()
 
+lazy val rescalaJVM = rescala.jvm
 
+lazy val rescalaJS = rescala.js
 
 lazy val microbench = project.in(file("Microbench"))
   .enablePlugins(JmhPlugin)
   .settings(mainClass in Compile := Some("org.openjdk.jmh.Main"))
-  .dependsOn(rescala)
+  .dependsOn(rescalaJVM)
 
 
 
