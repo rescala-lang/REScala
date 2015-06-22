@@ -40,13 +40,7 @@ abstract class Base(
     else syncFactory.lock()
 } with Reactive {
 
-  val weakKnownDependencies = {
-    val whs = util.Collections.newSetFromMap(new util.WeakHashMap[Reactive, java.lang.Boolean](knownDependencies.size))
-    knownDependencies.foreach(whs.add)
-    whs
-  }
-
-  def staticIncoming: Set[Reactive] = weakKnownDependencies.asScala.toSet
+  def staticIncoming: Set[Reactive] = knownDependencies
 }
 
 class Reader[+P](pulses: Buffer[Pulse[P]]) {
