@@ -52,7 +52,7 @@ lazy val rescala = crossProject.in(file("."))
          |
          |import rescala._
          |import rescala.graph._
-         |import rescala.rescala.turns._
+         |import rescala.turns._
          |
          |trait GeneratedLift {
          |self: Signals.type =>
