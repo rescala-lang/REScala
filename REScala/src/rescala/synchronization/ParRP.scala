@@ -13,8 +13,6 @@ class ParRP(var backOff: Int) extends BufferFactoryReference[ParRP](BufferFactor
 
   final val key: Key = new Key(this)
 
-  final val thread = Thread.currentThread().getName
-
   /**
    * creating a signal causes some unpredictable reactives to be used inside the turn.
    * these will have their locks be acquired dynamically see below for how that works.
