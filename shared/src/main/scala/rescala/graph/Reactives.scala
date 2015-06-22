@@ -3,7 +3,6 @@ package rescala.graph
 import java.util
 
 import rescala.graph.Pulse.{Diff, NoChange}
-import rescala.synchronization.TurnLock
 import rescala.turns.{Ticket, Turn}
 
 import scala.collection.JavaConverters.asScalaSetConverter
@@ -12,13 +11,13 @@ import scala.collection.JavaConverters.asScalaSetConverter
 trait Reactive {
   final override val hashCode: Int = Globals.nextID().hashCode()
 
-  protected[rescala] def lock: TurnLock
+  protected[rescala] def lock: ITurnLock
 
-  protected[rescala] def bufferFactory: BufferFactory
+  protected[rescala] def syncFactory: SynchronizationFactory
 
-  final private[rescala] val level: Buffer[Int] = bufferFactory.buffer(0, math.max, lock)
+  final private[rescala] val level: Buffer[Int] = syncFactory.buffer(0, math.max, lock)
 
-  final private[rescala] val outgoing: Buffer[Set[Reactive]] = bufferFactory.buffer(Set(), Buffer.commitAsIs, lock)
+  final private[rescala] val outgoing: Buffer[Set[Reactive]] = syncFactory.buffer(Set(), Buffer.commitAsIs, lock)
 
   protected[rescala] def incoming(implicit turn: Turn): Set[Reactive]
 
@@ -34,11 +33,11 @@ trait Reactive {
 
 /** helper class to initialise engine and select lock */
 abstract class Base(
-  final override protected[rescala] val bufferFactory: BufferFactory,
+  final override protected[rescala] val syncFactory: SynchronizationFactory,
   knownDependencies: Set[Reactive] = Set.empty) extends {
-  final override val lock: TurnLock =
+  final override val lock: ITurnLock =
     if (knownDependencies.size == 1) knownDependencies.head.lock
-    else new TurnLock()
+    else syncFactory.lock()
 } with Reactive {
 
   val weakKnownDependencies = {
@@ -63,7 +62,7 @@ class Reader[+P](pulses: Buffer[Pulse[P]]) {
 /** A node that has nodes that depend on it */
 trait Pulsing[+P] extends Reactive {
   protected[this] def strategy: (Pulse[P], Pulse[P]) => Pulse[P] = Buffer.transactionLocal[Pulse[P]]
-  final protected[this] val pulses: Buffer[Pulse[P]] = bufferFactory.buffer(Pulse.none, strategy, lock)
+  final protected[this] val pulses: Buffer[Pulse[P]] = syncFactory.buffer(Pulse.none, strategy, lock)
 
   final def pulse(implicit turn: Turn): Pulse[P] = pulses.get
 

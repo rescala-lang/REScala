@@ -10,7 +10,7 @@ object Keychains {
   }
 
   @tailrec
-  def lockKeychains[R](k1: Key, k2: Key)(f: => R): R = {
+  def lockKeychains[R](k1: KeyImpl, k2: KeyImpl)(f: => R): R = {
     val kc1 = k1.keychain
     val kc2 = k2.keychain
     locked(kc1, kc2) {

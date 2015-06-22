@@ -1,7 +1,8 @@
 package benchmarks
 
 import org.openjdk.jmh.annotations.{Param, Scope, State}
-import rescala.turns.{Engine, Engines, Turn}
+import rescala.synchronization.Engines
+import rescala.turns.{Engine, Turn}
 
 @State(Scope.Benchmark)
 class EngineParam {

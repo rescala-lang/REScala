@@ -1,6 +1,6 @@
 package rescala.turns
 
-import rescala.graph.{BufferFactory, Committable, Reactive}
+import rescala.graph.{SynchronizationFactory, Committable, Reactive}
 
 /**
  * The engine that schedules the (glitch-free) evaluation
@@ -9,7 +9,7 @@ import rescala.graph.{BufferFactory, Committable, Reactive}
 trait Turn {
 
   /** used to create state containers of each reactive */
-  def bufferFactory: BufferFactory
+  def bufferFactory: SynchronizationFactory
 
   /** allow turn to handle dynamic access to reactives */
   def accessDynamic(dependency: Reactive): Unit

@@ -1,17 +1,17 @@
 package rescala.synchronization
 
-import rescala.graph.{BufferFactory, Reactive}
+import rescala.graph.{ITurnLock, JVMFactory, Reactive}
 import rescala.propagation.{LevelQueue, PropagationImpl}
 import rescala.synchronization.ParRP.{Await, Done, Retry}
 import rescala.turns.Turn
 
 import scala.annotation.tailrec
 
-class ParRP(var backOff: Int) extends BufferFactoryReference[ParRP](BufferFactory.simple) with PropagationImpl {
+class ParRP(var backOff: Int) extends FactoryReference[ParRP](JVMFactory.parrp) with PropagationImpl {
 
   override def toString: String = s"ParRP(${key.id})"
 
-  final val key: Key = new Key(this)
+  final val key: KeyImpl = new KeyImpl(this)
 
   /**
    * creating a signal causes some unpredictable reactives to be used inside the turn.
@@ -106,11 +106,11 @@ class ParRP(var backOff: Int) extends BufferFactoryReference[ParRP](BufferFactor
     else super.unregister(sink)(source)
   }
 
-  def acquireShared(reactive: Reactive): Key = acquireShared(reactive.lock, key)
+  def acquireShared(reactive: Reactive): KeyImpl = acquireShared(reactive.lock, key)
 
   @tailrec
-  private def acquireShared(lock: TurnLock, requester: Key): Key = {
-    val oldOwner = lock.tryLock(requester)
+  private def acquireShared(lock: ITurnLock, requester: KeyImpl): KeyImpl = {
+    val oldOwner = lock.tryLock(requester).asInstanceOf[KeyImpl]
 
     val res =
       if (oldOwner eq requester) Done(requester)
@@ -119,7 +119,7 @@ class ParRP(var backOff: Int) extends BufferFactoryReference[ParRP](BufferFactor
           // be aware that the owner of the lock could change at any time.
           // but it can not change when the owner is the requester or old owner,
           // because the keychain protects unlocking.
-          lock.tryLock(requester) match {
+          lock.tryLock(requester).asInstanceOf[KeyImpl] match {
             // make sure the other owner did not unlock before we got his master lock
             case owner if owner eq requester => Done(requester)
             case owner if owner ne oldOwner => Retry

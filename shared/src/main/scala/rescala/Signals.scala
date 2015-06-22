@@ -8,7 +8,7 @@ import rescala.turns.{Ticket, Turn}
 object Signals extends GeneratedLift {
 
   object Impl {
-    private class StaticSignal[T](engine: BufferFactory, dependencies: Set[Reactive], init: => T, expr: (Turn, T) => T)
+    private class StaticSignal[T](engine: SynchronizationFactory, dependencies: Set[Reactive], init: => T, expr: (Turn, T) => T)
       extends Base(engine, dependencies) with Signal[T] with StaticReevaluation[T] {
 
       pulses.initCurrent(Pulse.unchanged(init))
@@ -19,7 +19,7 @@ object Signals extends GeneratedLift {
       }
     }
 
-    private class DynamicSignal[T](bufferFactory: BufferFactory, expr: Turn => T) extends Base(bufferFactory) with Signal[T] with DynamicReevaluation[T] {
+    private class DynamicSignal[T](bufferFactory: SynchronizationFactory, expr: Turn => T) extends Base(bufferFactory) with Signal[T] with DynamicReevaluation[T] {
       def calculatePulseDependencies(implicit turn: Turn): (Pulse[T], Set[Reactive]) = {
         val (newValue, dependencies) = turn.collectDependencies(expr(turn))
         (Pulse.diffPulse(newValue, pulses.base), dependencies)

@@ -1,13 +1,13 @@
 package rescala.turns
 
-import rescala.graph.{BufferFactory, Reactive}
+import rescala.graph.{SynchronizationFactory, Reactive}
 
 import scala.annotation.implicitNotFound
 
 @implicitNotFound(msg = "could not finde a propagation engine, select one from Engines")
 trait Engine[+TTurn <: Turn] {
   /** used for the creation of state inside reactives */
-  private[rescala] def bufferFactory: BufferFactory
+  private[rescala] def bufferFactory: SynchronizationFactory
 
   /** creates runs and commits a new turn */
   def plan[R](initialWrites: Reactive*)(admissionPhase: TTurn => R): R

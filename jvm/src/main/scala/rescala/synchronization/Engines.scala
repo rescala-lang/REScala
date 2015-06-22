@@ -1,21 +1,40 @@
-package rescala.turns
+package rescala.synchronization
 
-import rescala.graph.{Reactive, SynchronizationFactory}
+import rescala.graph._
 import rescala.propagation.PropagationImpl
-import rescala.synchronization.{FactoryReference, NoLocking}
+import rescala.turns.{Engine, Turn}
 
+import scala.concurrent.stm.atomic
 import scala.util.DynamicVariable
 
 object Engines {
+
+  def byName(name: String): Engine[Turn] = name match {
+    case "synchron" => synchron
+    case "unmanaged" => unmanaged
+    case "parrp" => parRP
+    case "stm" => STM
+    case other => throw new IllegalArgumentException(s"unknown engine $other")
+  }
+
+  def all: List[Engine[Turn]] = List(STM, parRP, synchron, unmanaged)
+
+  implicit val parRP: Engine[ParRP] = spinningWithBackoff(7)
+
+  implicit val default: Engine[Turn] = parRP
+
+  implicit val STM: Engine[STMSync] = new Impl(new STMSync()) {
+    override def plan[R](i: Reactive*)(f: STMSync => R): R = atomic { tx => super.plan(i: _*)(f) }
+    override private[rescala] def bufferFactory: SynchronizationFactory = JVMFactory.stm
+  }
+
+  def spinningWithBackoff(backOff: Int) = new Impl(new ParRP(backOff))
 
   implicit val synchron: Engine[NoLocking] = new Impl[NoLocking](new FactoryReference(SynchronizationFactory.simple) with NoLocking) {
     override def plan[R](i: Reactive*)(f: NoLocking => R): R = synchronized(super.plan(i: _*)(f))
   }
   implicit val unmanaged: Engine[NoLocking] = new Impl[NoLocking](new FactoryReference(SynchronizationFactory.simple) with NoLocking)
 
-  def all: List[Engine[Turn]] = List(synchron, unmanaged)
-
-  implicit val default: Engine[Turn] = synchron
 
   class Impl[TImpl <: PropagationImpl](makeTurn: => TImpl) extends Engine[TImpl] {
 

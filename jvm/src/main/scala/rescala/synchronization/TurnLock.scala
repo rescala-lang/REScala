@@ -2,10 +2,12 @@ package rescala.synchronization
 
 import java.util.concurrent.atomic.AtomicReference
 
+import rescala.graph.ITurnLock
+
 import scala.annotation.tailrec
 import scala.collection.immutable.Queue
 
-final class TurnLock() {
+final class TurnLock() extends ITurnLock {
 
   /** this is guarded by our intrinsic lock */
   private val owner: AtomicReference[Key] = new AtomicReference[Key]()
@@ -38,7 +40,7 @@ final class TurnLock() {
   }
 
   def share(key: Key): Unit = transform(shared)(_.enqueue(key))
-  def acquired(key: Key) = {
+  def acquired(key: Key): Key = {
     transform(shared) { q =>
       val (k, r) = q.dequeue
       assert(k == key, s"resolved await in wrong order got $k expected $key remaining $r")

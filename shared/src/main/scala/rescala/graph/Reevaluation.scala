@@ -37,7 +37,7 @@ trait StaticReevaluation[+P] {
 trait DynamicReevaluation[+P] {
   this: Pulsing[P] =>
 
-  private val _incoming: Buffer[Set[Reactive]] = bufferFactory.buffer(Set(), (_, x) => x, lock)
+  private val _incoming: Buffer[Set[Reactive]] = syncFactory.buffer(Set(), (_, x) => x, lock)
   override protected[rescala] def incoming(implicit turn: Turn): Set[Reactive] = _incoming.get
 
   /** side effect free calculation of the new pulse and the new dependencies for the current turn */

@@ -113,7 +113,7 @@ class PessimisticTest extends AssertionsForJUnit {
 
     assert(results === Nil)
 
-    // start both turns so they have their locks
+    // start both rescala.turns so they have their locks
     Pessigen.sync(s11, s21)
 
     // this will allow only turn 2 to continue running, causing it to wait on turn 1
@@ -241,7 +241,7 @@ class PessimisticTest extends AssertionsForJUnit {
     assert(b2b3i2.now === 42)
     assert(reeval === 1)
 
-    // start both turns
+    // start both rescala.turns
     Pessigen.sync(bl1, il1)
     // now i has il0, il1, i2b2 locked
     // and b has bl0, bl1, bl3, b2b3i1
@@ -251,7 +251,7 @@ class PessimisticTest extends AssertionsForJUnit {
     // i will now try to grab bl1, which fails
     // so i will start to wait on b
 
-    // we start the turns …
+    // we start the rescala.turns …
     val t1 = Spawn { bl0.set(true) }
     val t2 = Spawn { il0.set(0) }
 
@@ -308,7 +308,7 @@ class PessimisticTest extends AssertionsForJUnit {
     assert(b2b3i2.now === 42)
     assert(reeval === 1)
 
-    // start both turns
+    // start both rescala.turns
     Pessigen.sync(bl1, il1)
     // now i has il0, il1, i2b2 locked
     // and b has bl0, bl1, bl3, b2b3i1
@@ -318,7 +318,7 @@ class PessimisticTest extends AssertionsForJUnit {
     // i will now try to grab bl1, which fails
     // so i will start to wait on b
 
-    // we start the turns …
+    // we start the rescala.turns …
     val t1 = Spawn { bl0.set(true) }
     val t2 = Spawn { il0.set(17) }
 
