@@ -1,6 +1,7 @@
 package rescala.turns
 
-import rescala.graph.{Reactive, SynchronizationFactory}
+import rescala.graph.State.SimpleState
+import rescala.graph.{Reactive, State}
 import rescala.propagation.PropagationImpl
 import rescala.synchronization.{FactoryReference, NoLocking}
 
@@ -8,23 +9,23 @@ import scala.util.DynamicVariable
 
 object Engines {
 
-  implicit val synchron: Engine[NoLocking] = new Impl[NoLocking](new FactoryReference(SynchronizationFactory.simple) with NoLocking) {
-    override def plan[R](i: Reactive*)(f: NoLocking => R): R = synchronized(super.plan(i: _*)(f))
+  implicit val synchron: Engine[SimpleState, NoLocking[SimpleState]] = new SImpl[NoLocking[SimpleState]](new FactoryReference(State.simple) with NoLocking[SimpleState]) {
+    override def plan[R](i: Reactive[SimpleState]*)(f: NoLocking[SimpleState] => R): R = synchronized(super.plan(i: _*)(f))
   }
-  implicit val unmanaged: Engine[NoLocking] = new Impl[NoLocking](new FactoryReference(SynchronizationFactory.simple) with NoLocking)
+  implicit val unmanaged: Engine[SimpleState, NoLocking[SimpleState]] = new SImpl[NoLocking[SimpleState]](new FactoryReference(State.simple) with NoLocking[SimpleState])
 
-  def all: List[Engine[Turn]] = List(synchron, unmanaged)
+  implicit val default: Engine[SimpleState, NoLocking[SimpleState]] = synchron
 
-  implicit val default: Engine[Turn] = synchron
+  class SImpl[TImpl <: PropagationImpl[SimpleState]](makeTurn: => TImpl) extends Impl[SimpleState, TImpl](makeTurn) {
+    /** used for the creation of state inside reactives */
+    override private[rescala] def bufferFactory: SimpleState = State.simple
+  }
 
-  class Impl[TImpl <: PropagationImpl](makeTurn: => TImpl) extends Engine[TImpl] {
+  abstract class Impl[S <: State, TImpl <: PropagationImpl[S]](makeTurn: => TImpl) extends Engine[S, TImpl] {
 
     val currentTurn: DynamicVariable[Option[TImpl]] = new DynamicVariable[Option[TImpl]](None)
 
-    /** used for the creation of state inside reactives */
-    override private[rescala] def bufferFactory: SynchronizationFactory = SynchronizationFactory.simple
-
-    override def subplan[T](initialWrites: Reactive*)(f: TImpl => T): T = currentTurn.value match {
+    override def subplan[T](initialWrites: Reactive[S]*)(f: TImpl => T): T = currentTurn.value match {
       case None => plan(initialWrites: _*)(f)
       case Some(turn) => f(turn)
     }
@@ -46,7 +47,7 @@ object Engines {
       * - run the party! phase
       *   - not yet implemented
       * */
-    override def plan[Res](initialWrites: Reactive*)(admissionPhase: TImpl => Res): Res = {
+    override def plan[Res](initialWrites: Reactive[S]*)(admissionPhase: TImpl => Res): Res = {
  
       val turn = makeTurn
       try {

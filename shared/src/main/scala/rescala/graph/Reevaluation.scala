@@ -3,29 +3,29 @@ package rescala.graph
 import rescala.turns.Turn
 
 
-sealed trait ReevaluationResult
+sealed trait ReevaluationResult[S <: State]
 
 object ReevaluationResult {
-  case class Static(changed: Boolean) extends ReevaluationResult
-  case class Dynamic(changed: Boolean, diff: DepDiff) extends ReevaluationResult
+  case class Static[S <: State](changed: Boolean) extends ReevaluationResult[S]
+  case class Dynamic[S <: State](changed: Boolean, diff: DepDiff[S]) extends ReevaluationResult[S]
 }
 
-case class DepDiff(novel: Set[Reactive], old: Set[Reactive]) {
+case class DepDiff[S <: State](novel: Set[Reactive[S]], old: Set[Reactive[S]]) {
   lazy val added = novel.diff(old)
   lazy val removed = old.diff(novel)
 }
 
 /** reevaluation strategy for static dependencies */
-trait StaticReevaluation[+P] {
-  this: Pulsing[P] =>
+trait StaticReevaluation[+P, S <: State] {
+  this: Pulsing[P, S] =>
 
-  protected def staticIncoming: Set[Reactive]
-  override protected[rescala] def incoming(implicit turn: Turn): Set[Reactive] = staticIncoming
+  protected def staticIncoming: Set[Reactive[S]]
+  override protected[rescala] def incoming(implicit turn: Turn[S]): Set[Reactive[S]] = staticIncoming
 
   /** side effect free calculation of the new pulse for the current turn */
-  protected[rescala] def calculatePulse()(implicit turn: Turn): Pulse[P]
+  protected[rescala] def calculatePulse()(implicit turn: Turn[S]): Pulse[P]
 
-  final override protected[rescala] def reevaluate()(implicit turn: Turn): ReevaluationResult = {
+  final override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[S] = {
     val p = calculatePulse()
     pulses.set(p)
     ReevaluationResult.Static(p.isChange)
@@ -34,16 +34,16 @@ trait StaticReevaluation[+P] {
 
 
 /** reevaluation strategy for dynamic dependencies */
-trait DynamicReevaluation[+P] {
-  this: Pulsing[P] =>
+trait DynamicReevaluation[+P, S <: State] {
+  this: Pulsing[P, S] =>
 
-  private val _incoming: Buffer[Set[Reactive]] = syncFactory.buffer(Set(), (_, x) => x, lock)
-  override protected[rescala] def incoming(implicit turn: Turn): Set[Reactive] = _incoming.get
+  private val _incoming: Buffer[Set[Reactive[S]]] = state.buffer(Set(), (_, x) => x, lock)
+  override protected[rescala] def incoming(implicit turn: Turn[S]): Set[Reactive[S]] = _incoming.get
 
   /** side effect free calculation of the new pulse and the new dependencies for the current turn */
-  def calculatePulseDependencies(implicit turn: Turn): (Pulse[P], Set[Reactive])
+  def calculatePulseDependencies(implicit turn: Turn[S]): (Pulse[P], Set[Reactive[S]])
 
-  final override protected[rescala] def reevaluate()(implicit turn: Turn): ReevaluationResult = {
+  final override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[S] = {
     val (newPulse, newDependencies) = calculatePulseDependencies
 
     val oldDependencies = _incoming.get

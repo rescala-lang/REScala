@@ -2,26 +2,26 @@ package rescala.propagation
 
 import java.lang.{Boolean => jlBool}
 
-import rescala.graph.Reactive
+import rescala.graph.{State, Reactive}
 import rescala.propagation.LevelQueue.QueueElement
 import rescala.turns.Turn
 
 import scala.collection.SortedSet
 
-class LevelQueue()(implicit val currenTurn: Turn) {
+class LevelQueue[S <: State]()(implicit val currenTurn: Turn[S]) {
 
-  private var elements = SortedSet[QueueElement]()
+  private var elements = SortedSet[QueueElement[S]]()
 
   /** mark the reactive as needing a reevaluation */
-  def enqueue(minLevel: Int, needsEvaluate: Boolean = true)(dep: Reactive): Unit = {
-    elements += QueueElement(dep.level.get, dep, minLevel, needsEvaluate)
+  def enqueue(minLevel: Int, needsEvaluate: Boolean = true)(dep: Reactive[S]): Unit = {
+    elements += QueueElement[S](dep.level.get, dep, minLevel, needsEvaluate)
   }
 
-  def remove(reactive: Reactive): Unit = {
+  def remove(reactive: Reactive[S]): Unit = {
     elements = elements.filter(qe => qe.reactive ne reactive)
   }
 
-  final def handleHead(queueElement: QueueElement, evaluator: Reactive => Unit): Unit = {
+  final def handleHead(queueElement: QueueElement[S], evaluator: Reactive[S] => Unit): Unit = {
     val QueueElement(headLevel, head, headMinLevel, doEvaluate) = queueElement
     if (headLevel < headMinLevel) {
       head.level.set(headMinLevel)
@@ -44,7 +44,7 @@ class LevelQueue()(implicit val currenTurn: Turn) {
   }
 
   /** Evaluates all the elements in the queue */
-  def evaluateQueue(evaluator: Reactive => Unit) = {
+  def evaluateQueue(evaluator: Reactive[S] => Unit) = {
     while (elements.nonEmpty) {
       val head = elements.head
       elements = elements.tail
@@ -52,15 +52,15 @@ class LevelQueue()(implicit val currenTurn: Turn) {
     }
   }
 
-  def clear() = elements = SortedSet[QueueElement]()
+  def clear() = elements = SortedSet[QueueElement[S]]()
 
 }
 
 object LevelQueue {
 
-  private case class QueueElement(level: Int, reactive: Reactive, minLevel: Int, needsEvaluate: Boolean)
-  private implicit val ordering: Ordering[QueueElement] = new Ordering[QueueElement] {
-    override def compare(x: QueueElement, y: QueueElement): Int = {
+  private case class QueueElement[S <: State](level: Int, reactive: Reactive[S], minLevel: Int, needsEvaluate: Boolean)
+  private implicit val ordering: Ordering[QueueElement[_]] = new Ordering[QueueElement[_]] {
+    override def compare(x: QueueElement[_], y: QueueElement[_]): Int = {
       val levelDiff = Integer.compare(x.level, y.level)
       if (levelDiff != 0) levelDiff
       else {
@@ -70,5 +70,6 @@ object LevelQueue {
       }
     }
   }
+  private implicit def lqo[S <: State]: Ordering[QueueElement[S]] = ordering.asInstanceOf[Ordering[QueueElement[S]]]
 }
 

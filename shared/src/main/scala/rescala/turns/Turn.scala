@@ -1,35 +1,35 @@
 package rescala.turns
 
-import rescala.graph.{SynchronizationFactory, Committable, Reactive}
+import rescala.graph.{State, Committable, Reactive}
 
 /**
  * The engine that schedules the (glitch-free) evaluation
  * of the nodes in the dependency graph.
  */
-trait Turn {
+trait Turn[S <: State] {
 
   /** used to create state containers of each reactive */
-  def bufferFactory: SynchronizationFactory
+  def bufferFactory: S
 
   /** allow turn to handle dynamic access to reactives */
-  def accessDynamic(dependency: Reactive): Unit
+  def accessDynamic(dependency: Reactive[S]): Unit
 
   /** admits a new source change */
-  def admit(reactive: Reactive): Unit
+  def admit(reactive: Reactive[S]): Unit
 
   /** removes a reactive from evaluation */
-  def forget(reactive: Reactive): Unit
+  def forget(reactive: Reactive[S]): Unit
 
   /** called when a new reactive is created and registered into the network
     * subclasses are expected to register the reactive with its dependencies
     * and calculate the correct level */
-  def create[T <: Reactive](dependencies: Set[Reactive], dynamic: Boolean = false)(f: => T): T
+  def create[T <: Reactive[S]](dependencies: Set[Reactive[S]], dynamic: Boolean = false)(f: => T): T
 
   /** adds a dependency */
-  def register(sink: Reactive)(source: Reactive): Unit
+  def register(sink: Reactive[S])(source: Reactive[S]): Unit
 
   /** removes a dependency */
-  def unregister(sink: Reactive)(source: Reactive): Unit
+  def unregister(sink: Reactive[S])(source: Reactive[S]): Unit
 
   /** install a new commit handler */
   def schedule(committable: Committable): Unit
@@ -38,8 +38,8 @@ trait Turn {
   def observe(f: => Unit): Unit
 
   /** collects and returns dynamic dependencies during the execution of f */
-  def collectDependencies[T](f: => T): (T, Set[Reactive])
+  def collectDependencies[T](f: => T): (T, Set[Reactive[S]])
 
   /** marks a dependency as used dynamically so it is returned by the innermost call of `collectDependencies` */
-  def useDependency(dependency: Reactive): Unit
+  def useDependency(dependency: Reactive[S]): Unit
 }

@@ -1,13 +1,13 @@
 package rescala.synchronization
 
-import rescala.graph.{Reactive, SynchronizationFactory}
+import rescala.graph.{Reactive, State}
 import rescala.propagation.PropagationImpl
 import rescala.turns.Turn
 
-abstract class FactoryReference[T <: Turn](override val bufferFactory: SynchronizationFactory) extends Turn
+abstract class FactoryReference[S <: State](override val bufferFactory: S) extends Turn[S]
 
-trait NoLocking extends PropagationImpl {
-  override def lockPhase(initialWrites: List[Reactive]): Unit = ()
+trait NoLocking[S <: State] extends PropagationImpl[S] {
+  override def lockPhase(initialWrites: List[Reactive[S]]): Unit = ()
   override def releasePhase(): Unit = ()
 }
 

@@ -1,6 +1,6 @@
 package rescala
 
-import rescala.graph.Pulsing
+import rescala.graph.{State, Pulsing}
 import rescala.turns.Ticket
 
 import scala.collection.LinearSeq

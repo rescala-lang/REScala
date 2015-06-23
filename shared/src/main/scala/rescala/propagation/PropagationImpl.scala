@@ -1,20 +1,20 @@
 package rescala.propagation
 
 import rescala.graph.ReevaluationResult.{Dynamic, Static}
-import rescala.graph.{Committable, Reactive}
+import rescala.graph.{State, Committable, Reactive}
 import rescala.turns.Turn
 
 import scala.util.Try
 
-trait PropagationImpl extends Turn {
-  implicit def currentTurn: PropagationImpl = this
+trait PropagationImpl[S <: State] extends Turn[S] {
+  implicit def currentTurn: PropagationImpl[S] = this
 
   private var toCommit = Set[Committable]()
   private var observers = List.empty[() => Unit]
 
   val levelQueue = new LevelQueue()
 
-  def evaluate(head: Reactive): Unit = {
+  def evaluate(head: Reactive[S]): Unit = {
     def requeue(changed: Boolean, level: Int, redo: Boolean): Unit =
       if (redo) levelQueue.enqueue(level, changed)(head)
       else if (changed) head.outgoing.get.foreach(levelQueue.enqueue(level, changed))
@@ -31,17 +31,17 @@ trait PropagationImpl extends Turn {
 
   }
 
-  def maximumLevel(dependencies: Set[Reactive])(implicit turn: Turn): Int = dependencies.foldLeft(-1)((acc, r) => math.max(acc, r.level.get))
+  def maximumLevel(dependencies: Set[Reactive[S]])(implicit turn: Turn[S]): Int = dependencies.foldLeft(-1)((acc, r) => math.max(acc, r.level.get))
 
-  def register(sink: Reactive)(source: Reactive): Unit = source.outgoing.transform(_ + sink)
+  def register(sink: Reactive[S])(source: Reactive[S]): Unit = source.outgoing.transform(_ + sink)
 
-  def unregister(sink: Reactive)(source: Reactive): Unit = source.outgoing.transform(_ - sink)
+  def unregister(sink: Reactive[S])(source: Reactive[S]): Unit = source.outgoing.transform(_ - sink)
 
   override def schedule(commitable: Committable): Unit = toCommit += commitable
 
   override def observe(f: => Unit): Unit = observers ::= f _
 
-  override def create[T <: Reactive](dependencies: Set[Reactive], dynamic: Boolean)(f: => T): T = {
+  override def create[T <: Reactive[S]](dependencies: Set[Reactive[S]], dynamic: Boolean)(f: => T): T = {
     val reactive = f
     ensureLevel(reactive, dependencies)
     if (dynamic) evaluate(reactive)
@@ -49,20 +49,20 @@ trait PropagationImpl extends Turn {
     reactive
   }
 
-  def ensureLevel(dependant: Reactive, dependencies: Set[Reactive]): Int =
+  def ensureLevel(dependant: Reactive[S], dependencies: Set[Reactive[S]]): Int =
     if (dependencies.isEmpty) 0
     else {
       val newLevel = dependencies.map(_.level.get).max + 1
       dependant.level.transform(math.max(newLevel, _))
     }
 
-  override def admit(reactive: Reactive): Unit = levelQueue.enqueue(reactive.level.get)(reactive)
-  override def forget(reactive: Reactive): Unit = levelQueue.remove(reactive)
+  override def admit(reactive: Reactive[S]): Unit = levelQueue.enqueue(reactive.level.get)(reactive)
+  override def forget(reactive: Reactive[S]): Unit = levelQueue.remove(reactive)
 
   /** allow turn to handle dynamic access to reactives */
-  override def accessDynamic(dependency: Reactive): Unit = ()
+  override def accessDynamic(dependency: Reactive[S]): Unit = ()
 
-  def lockPhase(initialWrites: List[Reactive]): Unit
+  def lockPhase(initialWrites: List[Reactive[S]]): Unit
 
   def propagationPhase(): Unit = levelQueue.evaluateQueue(evaluate)
 
@@ -80,15 +80,15 @@ trait PropagationImpl extends Turn {
 
   def releasePhase(): Unit
 
-  var collectedDependencies: List[Reactive] = Nil
+  var collectedDependencies: List[Reactive[S]] = Nil
 
-  def collectDependencies[T](f: => T): (T, Set[Reactive]) = {
+  def collectDependencies[T](f: => T): (T, Set[Reactive[S]]) = {
     val old = collectedDependencies
     collectedDependencies = Nil
     val res = (f, collectedDependencies.toSet)
     collectedDependencies = old
     res
   }
-  def useDependency(dependency: Reactive): Unit = collectedDependencies ::= dependency
+  def useDependency(dependency: Reactive[S]): Unit = collectedDependencies ::= dependency
 
 }
