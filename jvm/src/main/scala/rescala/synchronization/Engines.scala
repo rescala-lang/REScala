@@ -1,6 +1,6 @@
 package rescala.synchronization
 
-import rescala.graph._
+import rescala.graph.{Reactive, SynchronizationFactory, JVMFactories}
 import rescala.turns.Engines.{Impl, synchron, unmanaged}
 import rescala.turns.{Engine, Turn}
 
