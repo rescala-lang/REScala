@@ -1,17 +1,14 @@
 package rescala.graph
 
-import java.util
-
 import rescala.graph.Pulse.{Diff, NoChange}
 import rescala.turns.{Ticket, Turn}
-
-import scala.collection.JavaConverters.asScalaSetConverter
+import rescala.synchronization.TurnLock
 
 /** A Reactive is something that can be reevaluated */
 trait Reactive {
   final override val hashCode: Int = Globals.nextID().hashCode()
 
-  protected[rescala] def lock: ITurnLock
+  protected[rescala] def lock: TurnLock
 
   protected[rescala] def syncFactory: SynchronizationFactory
 
@@ -35,7 +32,7 @@ trait Reactive {
 abstract class Base(
   final override protected[rescala] val syncFactory: SynchronizationFactory,
   knownDependencies: Set[Reactive] = Set.empty) extends {
-  final override val lock: ITurnLock =
+  final override val lock: TurnLock =
     if (knownDependencies.size == 1) knownDependencies.head.lock
     else syncFactory.lock()
 } with Reactive {

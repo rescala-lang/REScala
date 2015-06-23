@@ -25,7 +25,7 @@ object Engines {
 
   implicit val STM: Engine[STMSync] = new Impl(new STMSync()) {
     override def plan[R](i: Reactive*)(f: STMSync => R): R = atomic { tx => super.plan(i: _*)(f) }
-    override private[rescala] def bufferFactory: SynchronizationFactory = JVMFactory.stm
+    override private[rescala] def bufferFactory: SynchronizationFactory = JVMFactories.stm
   }
 
   def spinningWithBackoff(backOff: Int) = new Impl(new ParRP(backOff))

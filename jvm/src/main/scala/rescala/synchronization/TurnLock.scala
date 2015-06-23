@@ -2,12 +2,10 @@ package rescala.synchronization
 
 import java.util.concurrent.atomic.AtomicReference
 
-import rescala.graph.ITurnLock
-
 import scala.annotation.tailrec
 import scala.collection.immutable.Queue
 
-final class TurnLock() extends ITurnLock {
+final class TurnLock() {
 
   /** this is guarded by our intrinsic lock */
   private val owner: AtomicReference[Key] = new AtomicReference[Key]()

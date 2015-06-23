@@ -3,12 +3,12 @@ package rescala.synchronization
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicReference
 
-import rescala.graph.{ITurnLock, Globals}
+import rescala.graph.Globals
 import rescala.turns.Turn
 
 import scala.annotation.tailrec
 
-final class KeyImpl(val turn: Turn) extends Key {
+final class Key(val turn: Turn) {
 
   val id = Globals.nextID()
   override def toString: String = s"Key($id)"
@@ -36,15 +36,15 @@ final class KeyImpl(val turn: Turn) extends Key {
   }
 
   /** contains a list of all locks owned by us. */
-  private[this] val heldLocks = new AtomicReference[List[ITurnLock]](Nil)
+  private[this] val heldLocks = new AtomicReference[List[TurnLock]](Nil)
 
   @tailrec
-  def addLock(lock: ITurnLock): Unit = {
+  def addLock(lock: TurnLock): Unit = {
     val old = heldLocks.get()
     if (!heldLocks.compareAndSet(old, lock :: old)) addLock(lock)
   }
 
-  def grabLocks(): List[ITurnLock] = heldLocks.getAndSet(Nil)
+  def grabLocks(): List[TurnLock] = heldLocks.getAndSet(Nil)
 
   /** release all locks we hold or transfer them to a waiting transaction if there is one
     * holds the master lock for request */

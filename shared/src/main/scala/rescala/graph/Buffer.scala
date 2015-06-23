@@ -1,6 +1,7 @@
 package rescala.graph
 
 import rescala.turns.Turn
+import rescala.synchronization.TurnLock
 
 import scala.language.implicitConversions
 
@@ -16,14 +17,14 @@ object Buffer {
 }
 
 trait SynchronizationFactory {
-  def buffer[A](default: A, commitStrategy: (A, A) => A, lock: ITurnLock): Buffer[A]
-  def lock(): ITurnLock
+  def buffer[A](default: A, commitStrategy: (A, A) => A, lock: TurnLock): Buffer[A]
+  def lock(): TurnLock
 }
 
 object SynchronizationFactory {
   val simple: SynchronizationFactory = new SynchronizationFactory {
-    override def buffer[A](default: A, commitStrategy: (A, A) => A, lock: ITurnLock): Buffer[A] = new SimpleBuffer[A](default, commitStrategy)
-    override def lock(): ITurnLock = NoLock
+    override def buffer[A](default: A, commitStrategy: (A, A) => A, lock: TurnLock): Buffer[A] = new SimpleBuffer[A](default, commitStrategy)
+    override def lock(): TurnLock = new TurnLock()
   }
 }
 

@@ -6,20 +6,20 @@ import rescala.turns.Turn
 import scala.concurrent.stm.{InTxn, Ref}
 import scala.language.implicitConversions
 
-object JVMFactory {
+object JVMFactories {
 
   val parrp: SynchronizationFactory = new SynchronizationFactory {
-    override def buffer[A](default: A, commitStrategy: (A, A) => A, lock: ITurnLock): Buffer[A] = new ParRPBuffer[A](default, commitStrategy, lock)
-    override def lock(): ITurnLock = new TurnLock()
+    override def buffer[A](default: A, commitStrategy: (A, A) => A, lock: TurnLock): Buffer[A] = new ParRPBuffer[A](default, commitStrategy, lock)
+    override def lock(): TurnLock = new TurnLock()
   }
 
   val stm: SynchronizationFactory = new SynchronizationFactory {
-    override def buffer[A](default: A, commitStrategy: (A, A) => A, lock: ITurnLock): Buffer[A] = new STMBuffer[A](default, commitStrategy)
-    override def lock(): ITurnLock = NoLock
+    override def buffer[A](default: A, commitStrategy: (A, A) => A, lock: TurnLock): Buffer[A] = new STMBuffer[A](default, commitStrategy)
+    override def lock(): TurnLock = new TurnLock()
   }
 }
 
-final class ParRPBuffer[A](initialValue: A, initialStrategy: (A, A) => A, writeLock: ITurnLock) extends Buffer[A] {
+final class ParRPBuffer[A](initialValue: A, initialStrategy: (A, A) => A, writeLock: TurnLock) extends Buffer[A] {
 
   var current: A = initialValue
   private var update: Option[A] = None
@@ -44,6 +44,7 @@ final class ParRPBuffer[A](initialValue: A, initialStrategy: (A, A) => A, writeL
           s"buffer owned by $owner, controlled by $writeLock with owner ${ wlo.get }" +
             s" was written by $turn who locks with ${ pessimistic.key }, by now the owner is ${ writeLock.getOwner }")
       case _ =>
+        throw new IllegalStateException(s"parrp buffer used with wrong turn")
     }
     update = Some(value)
     owner = turn
