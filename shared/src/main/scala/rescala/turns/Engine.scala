@@ -4,7 +4,7 @@ import rescala.graph.{SynchronizationFactory, Reactive}
 
 import scala.annotation.implicitNotFound
 
-@implicitNotFound(msg = "could not finde a propagation engine, select one from Engines")
+@implicitNotFound(msg = "could not find a propagation engine, select one from Engines")
 trait Engine[+TTurn <: Turn] {
   /** used for the creation of state inside reactives */
   private[rescala] def bufferFactory: SynchronizationFactory
