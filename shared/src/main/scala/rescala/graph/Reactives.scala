@@ -1,5 +1,6 @@
 package rescala.graph
 
+import rescala.graph
 import rescala.graph.Pulse.{Diff, NoChange}
 import rescala.turns.{Ticket, Turn}
 import rescala.synchronization.TurnLock
@@ -8,9 +9,9 @@ import rescala.synchronization.TurnLock
 trait Reactive[S <: State] {
   final override val hashCode: Int = Globals.nextID().hashCode()
 
-  protected[rescala] def lock: S#TLock
-
   protected[rescala] def state: S
+
+  protected[rescala] def lock: S#TLock
 
   final private[rescala] val level: S#TBuffer[Int] = state.buffer(0, math.max, lock)
 

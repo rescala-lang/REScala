@@ -1,13 +1,10 @@
 package rescala.synchronization
 
-import rescala.graph.JVMFactories.STMState
-import rescala.graph.{JVMFactories, State, Reactive}
-import rescala.propagation.PropagationImpl
-import rescala.turns.{Engine, Turn}
+import rescala.graph.STMState
 
 import scala.concurrent.stm.{InTxn, atomic}
 
-class STMSync extends FactoryReference[STMState](JVMFactories.stm) with NoLocking[STMState] {
+class STMSync extends FactoryReference[STMState.type ](STMState) with NoLocking[STMState.type] {
   // this is unsafe when used improperly
   def inTxn: InTxn = atomic(identity)
 }

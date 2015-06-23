@@ -6,30 +6,23 @@ import rescala.turns.Turn
 import scala.concurrent.stm.{InTxn, Ref}
 import scala.language.implicitConversions
 
-object JVMFactories {
 
-  class ParRPState extends State {
+object ParRPState extends State {
+  override type TBuffer[A] = ParRPBuffer[A]
+  override type TLock = TurnLock
 
-    override type TBuffer[A] = ParRPBuffer[A]
-
-    override def buffer[A, S <: State](default: A, commitStrategy: (A, A) => A, lock: S#TLock): ParRPBuffer[A] = new ParRPBuffer[A](default, commitStrategy, lock)
-    override type TLock = TurnLock
-    override def lock(): TurnLock = new TurnLock()
-  }
-  val parrp: ParRPState = new ParRPState
-
-  class STMState extends State {
-
-    override type TBuffer[A] = STMBuffer[A]
-    override def buffer[A, S <: State](default: A, commitStrategy: (A, A) => A, lock: S#TLock): STMBuffer[A] = new STMBuffer[A](default, commitStrategy)
-    override type TLock = TurnLock
-    override def lock(): TurnLock = new TurnLock()
-  }
-
-  val stm: STMState = new STMState
+  override def buffer[A, S <: State](default: A, commitStrategy: (A, A) => A, lock: S#TLock): ParRPBuffer[A] = new ParRPBuffer[A](default, commitStrategy, lock.asInstanceOf[TurnLock])
+  override def lock(): TurnLock = new TurnLock()
 }
 
-final class ParRPBuffer[A](initialValue: A, initialStrategy: (A, A) => A, writeLock: TurnLock) extends Buffer[A] {
+object STMState extends State {
+  override type TBuffer[A] = STMBuffer[A]
+  override type TLock = Unit
+  override def buffer[A, S <: State](default: A, commitStrategy: (A, A) => A, lock: S#TLock): STMBuffer[A] = new STMBuffer[A](default, commitStrategy)
+  override def lock(): Unit = ()
+}
+
+final class ParRPBuffer[A](initialValue: A, initialStrategy: (A, A) => A, writeLock: TurnLock) extends Buffer[A] with Committable {
 
   var current: A = initialValue
   private var update: Option[A] = None
@@ -76,7 +69,7 @@ final class ParRPBuffer[A](initialValue: A, initialStrategy: (A, A) => A, writeL
   }
 }
 
-final class STMBuffer[A](initialValue: A, initialStrategy: (A, A) => A) extends Buffer[A] {
+final class STMBuffer[A](initialValue: A, initialStrategy: (A, A) => A) extends Buffer[A] with Committable {
 
   private val current: Ref[A] = Ref(initialValue)
   private val update: Ref[Option[A]] = Ref(None)

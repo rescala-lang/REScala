@@ -18,24 +18,20 @@ object Buffer {
 
 trait State {
   type TBuffer[A] <: Buffer[A]
-  type TLock <: TurnLock
+  type TLock
   def buffer[A, S <: State](default: A, commitStrategy: (A, A) => A, lock: S#TLock): TBuffer[A]
   def lock(): TLock
 }
 
-object State {
-  class SimpleState extends State {
-    override type TBuffer[A] = SimpleBuffer[A]
-    override type TLock = TurnLock
+object SimpleState extends State {
+  override type TBuffer[A] = SimpleBuffer[A]
+  override type TLock = Unit
 
-    override def buffer[A, S <: State](default: A, commitStrategy: (A, A) => A, lock: S#TLock): SimpleBuffer[A] =  new SimpleBuffer[A](default, commitStrategy)
-    override def lock(): TurnLock = new TurnLock()
-  }
-  val simple: SimpleState = new SimpleState()
-
+  override def buffer[A, S <: State](default: A, commitStrategy: (A, A) => A, lock: S#TLock): SimpleBuffer[A] =  new SimpleBuffer[A](default, commitStrategy)
+  override def lock(): Unit = Unit
 }
 
-trait Buffer[A] extends Committable {
+trait Buffer[A] {
   /** these methods are only used for initialisation and are unsafe to call when the reactive is in use */
   def initCurrent(value: A): Unit
 
@@ -43,11 +39,9 @@ trait Buffer[A] extends Committable {
   def set(value: A)(implicit turn: Turn[_]): Unit
   def base(implicit turn: Turn[_]): A
   def get(implicit turn: Turn[_]): A
-  override def release(implicit turn: Turn[_]): Unit
-  override def commit(implicit turn: Turn[_]): Unit
 }
 
-final class SimpleBuffer[A](initialValue: A, initialStrategy: (A, A) => A) extends Buffer[A] {
+final class SimpleBuffer[A](initialValue: A, initialStrategy: (A, A) => A) extends Buffer[A] with Committable {
 
   var current: A = initialValue
   private var update: Option[A] = None

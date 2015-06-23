@@ -1,7 +1,7 @@
 package rescala.synchronization
 
-import rescala.graph.JVMFactories.{ParRPState, STMState}
-import rescala.graph.{JVMFactories, Reactive, State}
+import rescala.graph.{ParRPState, STMState}
+import rescala.graph.{Reactive, State}
 import rescala.turns.Engines.{Impl, synchron, unmanaged}
 import rescala.turns.{Engine, Turn}
 
@@ -19,18 +19,18 @@ object Engines {
 
   def all = List(STM, parRP, synchron, unmanaged)
 
-  implicit val parRP: Engine[ParRPState, ParRP] = spinningWithBackoff(7)
+  implicit val parRP: Engine[ParRPState.type, ParRP] = spinningWithBackoff(7)
 
-  implicit val default: Engine[ParRPState, ParRP] = parRP
+  implicit val default: Engine[ParRPState.type, ParRP] = parRP
 
-  implicit val STM: Engine[STMState, STMSync] = new Impl[STMState, STMSync](new STMSync()) {
-    override def plan[R](i: Reactive[STMState]*)(f: STMSync => R): R = atomic { tx => super.plan(i: _*)(f) }
-    override private[rescala] def bufferFactory: STMState = JVMFactories.stm
+  implicit val STM: Engine[STMState.type, STMSync] = new Impl[STMState.type, STMSync](new STMSync()) {
+    override def plan[R](i: Reactive[STMState.type]*)(f: STMSync => R): R = atomic { tx => super.plan(i: _*)(f) }
+    override private[rescala] def bufferFactory: STMState.type = STMState
   }
 
-  def spinningWithBackoff(backOff: Int): Impl[ParRPState, ParRP] = new Impl[ParRPState, ParRP](new ParRP(backOff)) {
+  def spinningWithBackoff(backOff: Int): Impl[ParRPState.type, ParRP] = new Impl[ParRPState.type, ParRP](new ParRP(backOff)) {
     /** used for the creation of state inside reactives */
-    override private[rescala] def bufferFactory: ParRPState = JVMFactories.parrp
+    override private[rescala] def bufferFactory: ParRPState.type = ParRPState
   }
 
 }

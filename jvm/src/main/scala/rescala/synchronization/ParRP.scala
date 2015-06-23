@@ -1,16 +1,16 @@
 package rescala.synchronization
 
-import rescala.graph.JVMFactories.ParRPState
-import rescala.graph.{JVMFactories, Reactive}
+import rescala.graph.ParRPState
+import rescala.graph.{Reactive}
 import rescala.propagation.{LevelQueue, PropagationImpl}
 import rescala.synchronization.ParRP.{Await, Done, Retry}
 import rescala.turns.Turn
 
 import scala.annotation.tailrec
 
-class ParRP(var backOff: Int) extends FactoryReference[ParRPState](JVMFactories.parrp) with PropagationImpl[ParRPState] {
+class ParRP(var backOff: Int) extends FactoryReference[ParRPState.type](ParRPState) with PropagationImpl[ParRPState.type] {
 
-  type S = ParRPState
+  type TState = ParRPState.type
 
   override def toString: String = s"ParRP(${key.id})"
 
@@ -24,7 +24,7 @@ class ParRP(var backOff: Int) extends FactoryReference[ParRPState](JVMFactories.
    * it is important, that the locks for the dependencies are acquired BEFORE the constructor for the new reactive.
    * is executed, because the constructor typically accesses the dependencies to create its initial value.
    */
-  override def create[T <: Reactive[S]](dependencies: Set[Reactive[S]], dynamic: Boolean)(f: => T): T = {
+  override def create[T <: Reactive[TState]](dependencies: Set[Reactive[TState]], dynamic: Boolean)(f: => T): T = {
     dependencies.foreach(accessDynamic)
     val reactive = f
     val owner = reactive.lock.tryLock(key)
@@ -36,14 +36,14 @@ class ParRP(var backOff: Int) extends FactoryReference[ParRPState](JVMFactories.
   override def releasePhase(): Unit = key.releaseAll()
 
   /** allow turn to handle dynamic access to reactives */
-  override def accessDynamic(dependency: Reactive[S]): Unit = acquireShared(dependency)
+  override def accessDynamic(dependency: Reactive[TState]): Unit = acquireShared(dependency)
 
 
   var currentBackOff = backOff
 
-  override def lockPhase(initialWrites: List[Reactive[S]]): Unit = lockReachable(initialWrites, acquireWrite)
+  override def lockPhase(initialWrites: List[Reactive[TState]]): Unit = lockReachable(initialWrites, acquireWrite)
 
-  def acquireWrite(reactive: Reactive[S]): Boolean =
+  def acquireWrite(reactive: Reactive[TState]): Boolean =
     if (reactive.lock.tryLock(key) eq key) true
     else {
       key.lockKeychain {
@@ -63,7 +63,7 @@ class ParRP(var backOff: Int) extends FactoryReference[ParRPState](JVMFactories.
 
   /** lock all reactives reachable from the initial sources
     * retry when acquire returns false */
-  def lockReachable(initial: List[Reactive[S]], acquire: Reactive[S] => Boolean)(implicit turn: Turn[S]): Unit = {
+  def lockReachable(initial: List[Reactive[TState]], acquire: Reactive[TState] => Boolean)(implicit turn: Turn[TState]): Unit = {
     val lq = new LevelQueue()
     initial.foreach(lq.enqueue(-42))
 
@@ -81,7 +81,7 @@ class ParRP(var backOff: Int) extends FactoryReference[ParRPState](JVMFactories.
     * we let the other turn update the dependency and admit the dependent into the propagation queue
     * so that it gets updated when that turn continues
     * the responsibility for correctly passing the locks is moved to the commit phase */
-  override def register(sink: Reactive[S])(source: Reactive[S]): Unit = {
+  override def register(sink: Reactive[TState])(source: Reactive[TState]): Unit = {
     val owner = acquireShared(source)
     if (owner ne key) {
       if (!source.outgoing.get.contains(sink)) {
@@ -99,7 +99,7 @@ class ParRP(var backOff: Int) extends FactoryReference[ParRPState](JVMFactories.
   }
 
   /** this is for cases where we register and then unregister the same dependency in a single turn */
-  override def unregister(sink: Reactive[S])(source: Reactive[S]): Unit = {
+  override def unregister(sink: Reactive[TState])(source: Reactive[TState]): Unit = {
     val owner = acquireShared(source)
     if (owner ne key) {
       owner.turn.unregister(sink)(source)
@@ -109,7 +109,7 @@ class ParRP(var backOff: Int) extends FactoryReference[ParRPState](JVMFactories.
     else super.unregister(sink)(source)
   }
 
-  def acquireShared(reactive: Reactive[S]): Key = acquireShared(reactive.lock, key)
+  def acquireShared(reactive: Reactive[TState]): Key = acquireShared(reactive.lock, key)
 
   @tailrec
   private def acquireShared(lock: TurnLock, requester: Key): Key = {
