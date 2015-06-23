@@ -8,6 +8,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
+import rescala.graph.State
 import rescala.turns.{Engine, Turn}
 import rescala.{Signals, Var}
 
@@ -15,8 +16,8 @@ import rescala.{Signals, Var}
 object SignalsAndVarsTestSuite extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])
-class SignalsAndVarsTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit with MockitoSugar {
-  implicit val implicitEngine: Engine[Turn] = engine
+class SignalsAndVarsTestSuite[S <: State](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
+  implicit val implicitEngine: Engine[S, Turn[S]] = engine
 
 
   @Test def handlerIsCalledWhenChangeOccurs() = {
