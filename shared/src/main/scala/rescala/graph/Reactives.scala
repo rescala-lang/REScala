@@ -15,7 +15,7 @@ trait Reactive[S <: State] {
 
   final private[rescala] val level: S#TBuffer[Int] = state.buffer(0, math.max, lock)
 
-  final private[rescala] val outgoing: S#TBuffer[Set[Reactive[S]]] = state.buffer[Set[Reactive[S]], S](Set(), Buffer.commitAsIs, lock)
+  final private[rescala] val outgoing: S#TBuffer[Set[Reactive[S]]] = state.buffer(Set(), Buffer.commitAsIs, lock)
 
   protected[rescala] def incoming(implicit turn: Turn[S]): Set[Reactive[S]]
 
