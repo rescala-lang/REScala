@@ -1,0 +1,58 @@
+package rescala
+
+import rescala.Signals.Impl.{makeDynamic, makeStatic}
+import rescala.graph._
+import rescala.signals.GeneratedLift
+import rescala.turns.{Ticket, Turn}
+
+object Signals extends GeneratedLift {
+
+  object Impl {
+    private class StaticSignal[T, S <: State](engine: S, dependencies: Set[Reactive[S]], init: => T, expr: (Turn[S], T) => T)
+      extends Base(engine, dependencies) with Signal[T, S] with StaticReevaluation[T, S] {
+
+      pulses.initCurrent(Pulse.unchanged(init))
+
+      override def calculatePulse()(implicit turn: Turn[S]): Pulse[T] = {
+        val currentValue = pulses.base.current.get
+        Pulse.diff(expr(turn, currentValue), currentValue)
+      }
+    }
+
+    private class DynamicSignal[T, S <: State](bufferFactory: S, expr: Turn[S] => T) extends Base[S](bufferFactory) with Signal[T, S] with DynamicReevaluation[T, S] {
+      def calculatePulseDependencies(implicit turn: Turn[S]): (Pulse[T], Set[Reactive[S]]) = {
+        val (newValue, dependencies) = turn.collectDependencies(expr(turn))
+        (Pulse.diffPulse(newValue, pulses.base), dependencies)
+      }
+    }
+
+    /** creates a signal that statically depends on the dependencies with a given initial value */
+    def makeStatic[T, S <: State](dependencies: Set[Reactive[S]], init: => T)(expr: (Turn[S], T) => T)(initialTurn: Turn[S]): Signal[T, S] = initialTurn.create(dependencies) {
+      new StaticSignal(initialTurn.bufferFactory, dependencies, init, expr)
+    }
+
+    /** creates a dynamic signal */
+    def makeDynamic[T, S <: State](dependencies: Set[Reactive[S]])(expr: Turn[S] => T)(initialTurn: Turn[S]): Signal[T, S] = initialTurn.create(dependencies, dynamic = true) {
+      new DynamicSignal[T, S](initialTurn.bufferFactory, expr)
+    }
+  }
+
+
+  /** creates a new static signal depending on the dependencies, reevaluating the function */
+  def static[T, S <: State](dependencies: Reactive[S]*)(fun: Turn[S] => T)(implicit ticket: Ticket[S]): Signal[T, S] = ticket { initialTurn =>
+    // using an anonymous function instead of ignore2 causes dependencies to be captured, which we want to avoid
+    def ignore2[I, C, R](f: I => R): (I, C) => R = (t, _) => f(t)
+    makeStatic(dependencies.toSet[Reactive[S]], fun(initialTurn))(ignore2(fun))(initialTurn)
+  }
+
+  /** creates a signal that has dynamic dependencies (which are detected at runtime with Signal.apply(turn)) */
+  def dynamic[T, S <: State](dependencies: Reactive[S]*)(expr: Turn[S] => T)(implicit ticket: Ticket[S]): Signal[T, S] = ticket(makeDynamic(dependencies.toSet)(expr)(_))
+
+  /** creates a signal that folds the events in e */
+  def fold[E, T, S <: State](e: Event[E, S], init: T)(f: (T, E) => T)(implicit ticket: Ticket[S]): Signal[T, S] = ticket {
+    makeStatic(Set[Reactive[S]](e), init) { (turn, currentValue) =>
+      e.pulse(turn).fold(currentValue, f(currentValue, _))
+    }(_)
+  }
+
+}

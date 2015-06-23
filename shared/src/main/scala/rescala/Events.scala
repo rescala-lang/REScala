@@ -1,17 +1,17 @@
 package rescala
 
 import rescala.graph.Pulse.{Diff, NoChange}
-import rescala.graph.{Base, DynamicReevaluation, Pulse, Pulsing, Reactive, StaticReevaluation}
+import rescala.graph._
 import rescala.turns.{Ticket, Turn}
 
 
 object Events {
 
   /** the basic method to create static events */
-  def static[T](name: String, dependencies: Reactive*)(calculate: Turn[S] => Pulse[T])(implicit ticket: Ticket): Event[T] = ticket { initTurn =>
-    val dependencySet = dependencies.toSet
+  def static[T, S <: State](name: String, dependencies: Reactive[S]*)(calculate: Turn[S] => Pulse[T])(implicit ticket: Ticket[S]): Event[T, S] = ticket { initTurn =>
+    val dependencySet: Set[Reactive[S]] = dependencies.toSet
     initTurn.create(dependencySet) {
-      new Base(initTurn.bufferFactory, dependencySet) with Event[T] with StaticReevaluation[T] {
+      new Base(initTurn.bufferFactory, dependencySet) with Event[T, S] with StaticReevaluation[T, S] {
         override def calculatePulse()(implicit turn: Turn[S]): Pulse[T] = calculate(turn)
         override def toString = name
       }
@@ -19,7 +19,7 @@ object Events {
   }
 
   /** Used to model the change event of a signal. Keeps the last value */
-  def change[T](signal: Signal[T])(implicit ticket: Ticket): Event[(T, T)] =
+  def change[T, S <: State](signal: Signal[T, S])(implicit ticket: Ticket[S]): Event[(T, T), S] =
     static(s"(change $signal)", signal) { turn =>
       signal.pulse(turn) match {
         case Diff(value, Some(old)) => Pulse.change((old, value))
@@ -29,17 +29,17 @@ object Events {
 
 
   /** Implements filtering event by a predicate */
-  def filter[T](ev: Pulsing[T])(f: T => Boolean)(implicit ticket: Ticket): Event[T] =
+  def filter[T, S <: State](ev: Pulsing[T, S])(f: T => Boolean)(implicit ticket: Ticket[S]): Event[T, S] =
     static(s"(filter $ev)", ev) { turn => ev.pulse(turn).filter(f) }
 
 
   /** Implements transformation of event parameter */
-  def map[T, U](ev: Pulsing[T])(f: T => U)(implicit ticket: Ticket): Event[U] =
+  def map[T, U, S <: State](ev: Pulsing[T, S])(f: T => U)(implicit ticket: Ticket[S]): Event[U, S] =
     static(s"(map $ev)", ev) { turn => ev.pulse(turn).map(f) }
 
 
   /** Implementation of event except */
-  def except[T, U](accepted: Pulsing[T], except: Pulsing[U])(implicit ticket: Ticket): Event[T] =
+  def except[T, U, S <: State](accepted: Pulsing[T, S], except: Pulsing[U, S])(implicit ticket: Ticket[S]): Event[T, S] =
     static(s"(except $accepted  $except)", accepted, except) { turn =>
       except.pulse(turn) match {
         case NoChange(_) => accepted.pulse(turn)
@@ -49,7 +49,7 @@ object Events {
 
 
   /** Implementation of event disjunction */
-  def or[T](ev1: Pulsing[_ <: T], ev2: Pulsing[_ <: T])(implicit ticket: Ticket): Event[T] =
+  def or[T, S <: State](ev1: Pulsing[_ <: T, S], ev2: Pulsing[_ <: T, S])(implicit ticket: Ticket[S]): Event[T, S] =
     static(s"(or $ev1 $ev2)", ev1, ev2) { turn =>
       ev1.pulse(turn) match {
         case NoChange(_) => ev2.pulse(turn)
@@ -59,7 +59,7 @@ object Events {
 
 
   /** Implementation of event conjunction */
-  def and[T1, T2, T](ev1: Pulsing[T1], ev2: Pulsing[T2], merge: (T1, T2) => T)(implicit ticket: Ticket): Event[T] =
+  def and[T1, T2, T, S <: State](ev1: Pulsing[T1, S], ev2: Pulsing[T2, S], merge: (T1, T2) => T)(implicit ticket: Ticket[S]): Event[T, S] =
     static(s"(and $ev1 $ev2)", ev1, ev2) { turn =>
       for {
         left <- ev1.pulse(turn)
@@ -69,10 +69,10 @@ object Events {
 
 
   /** A wrapped event inside a signal, that gets "flattened" to a plain event node */
-  def wrapped[T](wrapper: Signal[Event[T]])(implicit ticket: Ticket): Event[T] = ticket { creationTurn =>
-    creationTurn.create(Set[Reactive](wrapper, wrapper.get(creationTurn))) {
-      new Base(creationTurn.bufferFactory) with Event[T] with DynamicReevaluation[T] {
-        override def calculatePulseDependencies(implicit turn: Turn[S]): (Pulse[T], Set[Reactive]) = {
+  def wrapped[T, S <: State](wrapper: Signal[Event[T, S], S])(implicit ticket: Ticket[S]): Event[T, S] = ticket { creationTurn =>
+    creationTurn.create(Set[Reactive[S]](wrapper, wrapper.get(creationTurn))) {
+      new Base(creationTurn.bufferFactory) with Event[T, S] with DynamicReevaluation[T, S] {
+        override def calculatePulseDependencies(implicit turn: Turn[S]): (Pulse[T], Set[Reactive[S]]) = {
           val inner = wrapper.get
           turn.accessDynamic(inner)
           (inner.pulse, Set(wrapper, inner))
