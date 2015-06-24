@@ -46,7 +46,7 @@ object Signals extends GeneratedLift {
   }
 
   /** creates a signal that has dynamic dependencies (which are detected at runtime with Signal.apply(turn)) */
-  def dynamic[T, S <: State](dependencies: Reactive[S]*)(expr: Turn[S] => T)(implicit ticket: Ticket[S]): Signal[T, S] = ticket(makeDynamic(dependencies.toSet)(expr)(_))
+  def dynamic[T, S <: State](dependencies: Reactive[S]*)(expr: Turn[S] => T)(implicit ticket: Ticket[S]): Signal[T, S] = ticket(makeDynamic(dependencies.toSet[Reactive[S]])(expr)(_))
 
   /** creates a signal that folds the events in e */
   def fold[E, T, S <: State](e: Event[E, S], init: T)(f: (T, E) => T)(implicit ticket: Ticket[S]): Signal[T, S] = ticket {
