@@ -7,19 +7,21 @@ import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.Infiltrator.getLevel
+import rescala.Signals
+import rescala.graph.State
 import rescala.turns.{Engine, Turn}
-import rescala.{Signals, Var}
 
 object DynamicSignalTestSuite extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])
-class DynamicSignalTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit with MockitoSugar {
-  implicit val implicitEngine: Engine[Turn] = engine
+class DynamicSignalTestSuite[S <: State](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
+  implicit val implicitEngine: Engine[S, Turn[S]] = engine
+  import implicitEngine.{Evt, Var, Signal, dynamic}
 
   @Test def signalReEvaluatesTheExpressionWhenSomethingItDependsOnIsUpdated(): Unit = {
     val v = Var(0)
     var i = 1
-    val s = Signals.dynamic(v) { s => v(s) + i }
+    val s = dynamic(v) { s => v(s) + i }
     i = 2
     v.set(2)
     assert(s.now == 4)
@@ -27,7 +29,7 @@ class DynamicSignalTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit wi
 
   @Test def theExpressionIsNoteEvaluatedEveryTimeGetValIsCalled(): Unit = {
     var a = 10
-    val s = Signals.dynamic()(s => 1 + 1 + a)
+    val s = dynamic()(s => 1 + 1 + a)
     assert(s.now === 12)
     a = 11
     assert(s.now === 12)
@@ -35,7 +37,7 @@ class DynamicSignalTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit wi
 
 
   @Test def simpleSignalReturnsCorrectExpressions(): Unit = {
-    val s = Signals.dynamic()(s => 1 + 1 + 1)
+    val s = dynamic()(s => 1 + 1 + 1)
     assert(s.now === 3)
   }
 
@@ -43,8 +45,8 @@ class DynamicSignalTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit wi
 
     var a = 0
     val v = Var(10)
-    val s1 = Signals.dynamic(v) { s => a += 1; v(s) % 10 }
-    var s2 = Signals.dynamic(s1) { s => a }
+    val s1 = dynamic(v) { s => a += 1; v(s) % 10 }
+    var s2 = dynamic(s1) { s => a }
 
 
     assert(a == 1)
@@ -59,9 +61,9 @@ class DynamicSignalTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit wi
     var test = 0
     val v = Var(1)
 
-    val s1 = Signals.dynamic(v) { s => 2 * v(s) }
-    val s2 = Signals.dynamic(v) { s => 3 * v(s) }
-    val s3 = Signals.dynamic(s1, s2) { s => s1(s) + s2(s) }
+    val s1 = dynamic(v) { s => 2 * v(s) }
+    val s2 = dynamic(v) { s => 3 * v(s) }
+    val s3 = dynamic(s1, s2) { s => s1(s) + s2(s) }
 
     s1.changed += { (_) => test += 1 }
     s2.changed += { (_) => test += 1 }
@@ -78,9 +80,9 @@ class DynamicSignalTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit wi
 
     val v = Var(1)
 
-    val s1 = Signals.dynamic() { s => 2 * v(s) }
-    val s2 = Signals.dynamic() { s => 3 * v(s) }
-    val s3 = Signals.dynamic() { s => s1(s) + s2(s) }
+    val s1 = dynamic() { s => 2 * v(s) }
+    val s2 = dynamic() { s => 3 * v(s) }
+    val s3 = dynamic() { s => s1(s) + s2(s) }
 
     assert(getLevel(v) == 0)
     assert(getLevel(s1) == 1)
@@ -99,7 +101,7 @@ class DynamicSignalTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit wi
     val v2 = Var(0)
     val v3 = Var(10)
     var i = 0
-    val s = Signals.dynamic(v1, v2, v3) { s =>
+    val s = dynamic(v1, v2, v3) { s =>
       i += 1
       if (v1(s)) v2(s) else v3(s)
     }
@@ -133,7 +135,7 @@ class DynamicSignalTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit wi
     var i = 0
     var test = 0
 
-    val s = Signals.dynamic() { s =>
+    val s = dynamic() { s =>
       i += 1
       if (v1(s)) v2(s) else v3(s)
     }
@@ -164,7 +166,7 @@ class DynamicSignalTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit wi
   @Test def dependantIsOnlyInvokedOnValueChanges(): Unit = {
     var changes = 0
     val v = Var(1)
-    val s = Signals.dynamic(v) { s =>
+    val s = dynamic(v) { s =>
       changes += 1; v(s) + 1
     }
     assert(changes == 1)
@@ -179,11 +181,11 @@ class DynamicSignalTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit wi
 
     val outside = Var(1)
 
-    val testsig = Signals.dynamic() { t =>
+    val testsig = dynamic() { t =>
       //remark 01.10.2014: without the bound the inner signal will be enqueued (it is level 0 same as its dependency)
       //this will cause testsig to reevaluate again, after the inner signal is fully updated.
       // leading to an infinite loop
-      Signals.dynamic(outside) { t => outside(t) }.apply(t)
+      dynamic(outside) { t => outside(t) }.apply(t)
     }
 
     assert(testsig.now === 1)
@@ -196,7 +198,7 @@ class DynamicSignalTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit wi
     val v3 = v0.map(_ => "level 1").map(_ => "level 2").map(_ => "level 3")
 
     val condition = Var(false)
-    val `dynamic signal changing from level 1 to level 4` = Signals.dynamic() { turn =>
+    val `dynamic signal changing from level 1 to level 4` = dynamic() { turn =>
       if (condition(turn)) v3(turn) else v0(turn)
     }
     assert(`dynamic signal changing from level 1 to level 4`.now == "level 0")

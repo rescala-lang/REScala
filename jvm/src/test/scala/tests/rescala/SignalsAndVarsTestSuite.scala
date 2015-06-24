@@ -18,6 +18,7 @@ object SignalsAndVarsTestSuite extends JUnitParameters
 @RunWith(value = classOf[Parameterized])
 class SignalsAndVarsTestSuite[S <: State](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
   implicit val implicitEngine: Engine[S, Turn[S]] = engine
+  import implicitEngine.{Evt, Var, Signal, Event}
 
 
   @Test def handlerIsCalledWhenChangeOccurs() = {

@@ -3,16 +3,17 @@ package tests.rescala.concurrency.philosophers
 import java.util.concurrent.atomic.AtomicInteger
 
 import rescala.Signals.lift
-import rescala.graph.Globals.named
-import rescala.graph.{Globals, Committable}
-import rescala.turns.{Engine, Turn}
 import rescala.{Signal, Var}
+import rescala.graph.Globals.named
+import rescala.graph.{State, Globals, Committable}
+import rescala.turns.{Engine, Turn}
 
 import scala.annotation.tailrec
 
-class PhilosopherTable(philosopherCount: Int, work: Long)(implicit val engine: Engine[Turn]) {
+class PhilosopherTable[S <: State](philosopherCount: Int, work: Long)(implicit val engine: Engine[S, Turn[S]]) {
 
   import tests.rescala.concurrency.philosophers.PhilosopherTable._
+  import engine.{Var, Signal}
 
   val seatings = createTable(philosopherCount)
 
@@ -45,7 +46,7 @@ class PhilosopherTable(philosopherCount: Int, work: Long)(implicit val engine: E
     }
 
 
-  def createTable(tableSize: Int): Seq[Seating] = {
+  def createTable(tableSize: Int): Seq[Seating[S]] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
 
     val phils = for (i <- 0 until tableSize) yield named(s"PHil($i)")(Var[Philosopher](Thinking))
@@ -62,21 +63,21 @@ class PhilosopherTable(philosopherCount: Int, work: Long)(implicit val engine: E
   }
 
 
-  def tryEat(seating: Seating): Boolean =
-    engine.plan(seating.philosopher) { turn =>
-      val forksFree = if (seating.vision(turn) == Ready) {
-        seating.philosopher.admit(Hungry)(turn)
+  def tryEat(seating: Seating[S]): Boolean =
+    engine.plan(seating.philosopher) { t =>
+      val forksFree = if (seating.vision(t) == Ready) {
+        seating.philosopher.admit(Hungry)(t)
         true
       }
       else false
-      turn.schedule(new Committable {
-        override def commit(implicit turn: Turn): Unit = if (forksFree) assert(seating.vision(turn) == Eating)
-        override def release(implicit turn: Turn): Unit = ()
+      t.schedule(new Committable {
+        override def commit(implicit turn: Turn[_]): Unit = if (forksFree) assert(seating.vision(t) == Eating)
+        override def release(implicit turn: Turn[_]): Unit = ()
       })
       forksFree
     }
 
-  def eatOnce(seating: Seating) = repeatUntilTrue(tryEat(seating))
+  def eatOnce(seating: Seating[S]) = repeatUntilTrue(tryEat(seating))
 
 }
 
@@ -101,7 +102,7 @@ object PhilosopherTable {
 
   // ============================================ Entity Creation =========================================================
 
-  case class Seating(placeNumber: Int, philosopher: Var[Philosopher], leftFork: Signal[Fork], rightFork: Signal[Fork], vision: Signal[Vision])
+  case class Seating[S <: State](placeNumber: Int, philosopher: Var[Philosopher, S], leftFork: Signal[Fork, S], rightFork: Signal[Fork, S], vision: Signal[Vision, S])
 
 
   @tailrec // unrolled into loop by compiler

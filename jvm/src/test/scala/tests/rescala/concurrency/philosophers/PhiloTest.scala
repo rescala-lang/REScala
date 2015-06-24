@@ -2,7 +2,9 @@ package tests.rescala.concurrency.philosophers
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
-import rescala.turns.{Engine, Engines, Turn}
+import rescala.graph.State
+import rescala.synchronization.Engines
+import rescala.turns.{Engine, Turn}
 import tests.rescala.concurrency.Spawn
 import tests.rescala.concurrency.philosophers.PhilosopherTable.{Thinking, Seating}
 
@@ -19,13 +21,13 @@ class PhiloTest extends AssertionsForJUnit {
   }
 
 
-  def `eat!`(engine: Engine[Turn], dynamic: Boolean): Unit = {
+  def `eat!`[S <: State](engine: Engine[S, Turn[S]], dynamic: Boolean): Unit = {
     val philosophers = 64
     val threadCount = 4
     val table =
       if (!dynamic) new PhilosopherTable(philosophers, 0)(engine)
       else new DynamicPhilosopherTable(philosophers, 0)(engine)
-    val blocks: Array[Array[Seating]] = deal(table.seatings.toList, List.fill(threadCount)(Nil)).map(_.toArray).toArray
+    val blocks: Array[Array[Seating[S]]] = deal(table.seatings.toList, List.fill(threadCount)(Nil)).map(_.toArray).toArray
 
     @volatile var cancel = false
 

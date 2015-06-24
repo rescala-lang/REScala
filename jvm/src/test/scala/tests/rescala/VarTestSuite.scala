@@ -16,6 +16,7 @@ object VarTestSuite extends JUnitParameters
 @RunWith(value = classOf[Parameterized])
 class VarTestSuite[S <: State](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
   implicit val implicitEngine: Engine[S, Turn[S]] = engine
+  import implicitEngine.{Evt, Var, Signal, Event}
 
   @Test def getValAfterCreationReturnsInitializationValue(): Unit = {
     val v = Var(1)

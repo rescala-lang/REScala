@@ -5,21 +5,23 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
+import rescala.Signals
+import rescala.graph.State
 import rescala.turns.{Engine, Turn}
-import rescala.{Evt, Signal, Signals, Var}
 
 
 object HigherOrderTestSuite extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])
-class HigherOrderTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit with MockitoSugar {
-  implicit val implicitEngine: Engine[Turn] = engine
+class HigherOrderTestSuite[S <: State](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
+  implicit val implicitEngine: Engine[S, Turn[S]] = engine
+  import implicitEngine.{Evt, Var, Signal, Event, dynamic}
 
 
   @Test def basicHigherOrderSignal_canBeAccessed(): Unit = {
     val v = Var(42)
     val s1: Signal[Int] = v.map(identity)
-    val s2: Signal[Signal[Int]] = Signals.dynamic() { t => s1 }
+    val s2: Signal[Signal[Int]] = dynamic() { t => s1 }
 
     assert(s2.now.now == 42)
 
@@ -30,7 +32,7 @@ class HigherOrderTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit with
   @Test def basicHigherOrderSignal_canBeDefereferenced(): Unit = {
     val v = Var(42)
     val s1: Signal[Int] = v.map(identity)
-    val s2: Signal[Signal[Int]] = Signals.dynamic() { t => s1 }
+    val s2: Signal[Signal[Int]] = dynamic() { t => s1 }
     val sDeref = s2.flatten()
 
     assert(sDeref.now == 42)
@@ -43,7 +45,7 @@ class HigherOrderTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit with
   @Test def basicHigherOrderSignal_derefFiresChange(): Unit = {
     val v = Var(42)
     val sValue: Signal[Int] = v.map(identity)
-    val sHigher: Signal[Signal[Int]] = Signals.dynamic() { t => sValue }
+    val sHigher: Signal[Signal[Int]] = dynamic() { t => sValue }
     val sDeref = sHigher.flatten()
 
     var sDerefChanged = false
@@ -139,7 +141,7 @@ class HigherOrderTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit with
     val mod2 = count.map(_ % 2)
 
     val listOfSignals: Signal[List[Signal[Int]]] = Signals.static() { t => List(doubled, count) }
-    val selected: Signal[Signal[Int]] = Signals.dynamic(listOfSignals, mod2) { t => listOfSignals(t)(mod2(t)) }
+    val selected: Signal[Signal[Int]] = dynamic(listOfSignals, mod2) { t => listOfSignals(t)(mod2(t)) }
     val dereferenced = selected.flatten()
 
     var dereferencedChanged = false
@@ -189,7 +191,7 @@ class HigherOrderTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit with
     val level3 = level2.map(_ + 1)
 
 
-    val combined = Signals.dynamic() { t => if (v1(t) == 10) level3(t) else derived(t) }
+    val combined = dynamic() { t => if (v1(t) == 10) level3(t) else derived(t) }
 
     var log = List[Int]()
 
@@ -201,7 +203,7 @@ class HigherOrderTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit with
     assert(log == List(1, 13))
 
 
-    val higherOrder = Signals.dynamic() { t => if (v1(t) == 10) level3 else derived }
+    val higherOrder = dynamic() { t => if (v1(t) == 10) level3 else derived }
     val flattened = higherOrder.flatten()
 
     var higherOrderLog = List[Int]()
@@ -220,7 +222,7 @@ class HigherOrderTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit with
     val condition = e1.latest(-1)
     val level1Event = e1.map(_ => "level 1")
     val level2Event = level1Event.map(_ => "level 2")
-    val dynamicSignal = Signals.dynamic() { t => if (condition(t) == 1) level1Event else level2Event }
+    val dynamicSignal = dynamic() { t => if (condition(t) == 1) level1Event else level2Event }
 
     val unwrapped = dynamicSignal.unwrap
 
@@ -238,7 +240,7 @@ class HigherOrderTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit with
     val level2Condition = e1.latest(-1).map(identity)
     val level1EventA = e1.map(_ => "A")
     val level1EventB = e1.map(_ => "B")
-    val dynamicSignal = Signals.dynamic() { t => if (level2Condition(t) == 1) level1EventA else level1EventB }
+    val dynamicSignal = dynamic() { t => if (level2Condition(t) == 1) level1EventA else level1EventB }
 
     val unwrapped = dynamicSignal.unwrap
 

@@ -6,17 +6,17 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
+import rescala.graph.State
 import rescala.turns.{Engine, Turn}
-import rescala.{Event, Evt}
 import tests.rescala.JUnitParameters
 
 
 object dropParam_EventTest extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])
-class dropParam_EventTest(engine: Engine[Turn]) extends AssertionsForJUnit with MockitoSugar {
-  implicit val implicitEngine: Engine[Turn] = engine
-
+class dropParam_EventTest[S <: State](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
+  implicit val implicitEngine: Engine[S, Turn[S]] = engine
+  import implicitEngine._
 
   @Test def handlerOf_dropParam_IsExecuted() = {
     var test = 0

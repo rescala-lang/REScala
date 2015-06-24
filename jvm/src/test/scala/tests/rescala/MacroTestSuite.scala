@@ -14,7 +14,7 @@ object MacroTestSuite extends JUnitParameters
 @RunWith(value = classOf[Parameterized])
 class MacroTestSuite[S <: State](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
   implicit val implicitEngine: Engine[S, Turn[S]] = engine
-  import implicitEngine._
+  import implicitEngine.{Evt, Var, Signal, Event}
 
   @Test def signalReEvaluatesTheExpression(): Unit = {
     val v = Var(0)

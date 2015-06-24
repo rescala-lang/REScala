@@ -5,6 +5,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
+import rescala.graph.State
 import rescala.turns.{Engine, Ticket, Turn}
 import rescala.{Signal, Signals, Var}
 
@@ -13,12 +14,13 @@ import scala.language.implicitConversions
 object LightImplicitSyntaxTest extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])
-class LightImplicitSyntaxTest(engine: Engine[Turn]) extends AssertionsForJUnit with MockitoSugar {
-  implicit val implicitEngine: Engine[Turn] = engine
+class LightImplicitSyntaxTest[S <: State](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
+  implicit val implicitEngine: Engine[S, Turn[S]] = engine
+  import implicitEngine.{Evt, Var, Signal, Event, dynamic}
 
   @Test def experimentWithImplicitSyntax(): Unit = {
-    implicit def getSignalValueDynamic[T](s: Signal[T])(implicit turn: Turn): T = s.apply(turn)
-    def Signal[T](f: Turn => T)(implicit maybe: Ticket): Signal[T] = Signals.dynamic()(f)
+    implicit def getSignalValueDynamic[T](s: Signal[T])(implicit turn: Turn[S]): T = s.apply(turn)
+    def Signal[T](f: Turn[S] => T)(implicit maybe: Ticket[S]): Signal[T] = dynamic()(f)
 
     val price = Var(3)
     val tax = price.map { p => p / 3 }

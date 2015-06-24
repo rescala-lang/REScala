@@ -8,16 +8,18 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
+import rescala.graph.State
 import rescala.turns.{Engine, Turn}
-import rescala.{Signals, Var}
+
 
 import scala.language.implicitConversions
 
 object GarbageCollectionTest extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])
-class GarbageCollectionTest(engine: Engine[Turn]) extends AssertionsForJUnit with MockitoSugar {
-  implicit val implicitEngine: Engine[Turn] = engine
+class GarbageCollectionTest[S <: State](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
+  implicit val implicitEngine: Engine[S, Turn[S]] = engine
+  import implicitEngine.{Evt, Var, Signal, Event}
 
 
   @Test def `garbage collection for simple signal mappings`() = {
