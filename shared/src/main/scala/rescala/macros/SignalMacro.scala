@@ -1,7 +1,7 @@
 package rescala.macros
 
 import rescala.Signal
-import rescala.graph.Stateful
+import rescala.graph.{State, Stateful}
 import rescala.turns.Turn
 
 import scala.language.experimental.macros
@@ -9,9 +9,9 @@ import scala.reflect.macros.blackbox
 
 object SignalMacro {
 
-  def SignalM[A](expression: A): Signal[A] = macro SignalMacro[A]
+  def SignalM[A, S <: State](expression: A): Signal[A, S] = macro SignalMacro[A, S]
 
-  def SignalMacro[A: c.WeakTypeTag](c: blackbox.Context)(expression: c.Expr[A]): c.Expr[Signal[A]] = {
+  def SignalMacro[A: c.WeakTypeTag, S <: State](c: blackbox.Context)(expression: c.Expr[A]): c.Expr[Signal[A, S]] = {
     import c.universe._
 
     // all symbols that are defined within the macro expression
@@ -113,7 +113,7 @@ object SignalMacro {
     // every Signal { ... } macro instance gets expanded into a SignalSynt
     val signalSyntArgName = TermName(c.freshName("s$"))
     val signalSyntArgIdent = Ident(signalSyntArgName)
-    internal setType(signalSyntArgIdent, weakTypeOf[Turn])
+    internal setType(signalSyntArgIdent, weakTypeOf[Turn[S]])
 
     // the signal values that will be cut out of the Signal expression
     var cutOutSignals = List[ValDef]()
@@ -134,7 +134,7 @@ object SignalMacro {
 
       private def isStateful(tree: Tree) =
         if (tree.tpe == null) { treeTypeNullWarning(); false }
-        else tree.tpe <:< typeOf[Stateful[_]]
+        else tree.tpe <:< typeOf[Stateful[_, _]]
 
       override def transform(tree: Tree) =
         tree match {
@@ -247,7 +247,7 @@ object SignalMacro {
     val innerTree = transformer transform expression.tree
 
     // SignalSynt argument function
-    val signalExpression = q"{$signalSyntArgName: ${ weakTypeOf[Turn] } => $innerTree }"
+    val signalExpression = q"{$signalSyntArgName: ${ weakTypeOf[Turn[S]] } => $innerTree }"
 
     // upper bound parameters, only use static outside declarations
     // note that this potentially misses many dependencies
@@ -260,15 +260,15 @@ object SignalMacro {
 
     // create SignalSynt object
     // use fully-qualified name, so no extra import is needed
-    val body = q"rescala.Signals.dynamic[${ weakTypeOf[A] }](..$filteredDetections)($signalExpression)"
+    val body = q"rescala.Signals.dynamic[${ weakTypeOf[A] }, ${ weakTypeOf[S] }](..$filteredDetections)($signalExpression)"
 
     // assemble the SignalSynt object and the signal values that are accessed
     // by the object, but were cut out of the signal expression during the code
     // transformation
     val block =
-      Typed(Block(cutOutSignals.reverse, body), TypeTree(weakTypeOf[Signal[A]]))
+      Typed(Block(cutOutSignals.reverse, body), TypeTree(weakTypeOf[Signal[A, S]]))
 
 
-    c.Expr[Signal[A]](c untypecheck block)
+    c.Expr[Signal[A, S]](c untypecheck block)
   }
 }
