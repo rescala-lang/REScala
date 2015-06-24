@@ -82,7 +82,7 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
       assert(false)
       false
     } else
-      waitsIndex >= onIndex
+      waitsIndex > onIndex
   }
 
   protected[pipelining] def turnCompleted(completedTurn: PTurn): Unit = {

@@ -137,5 +137,6 @@ class FrameAwaitTest extends AssertionsForJUnit with MockitoSugar {
     assert(frames(3).isWritten)
 
   }
+  
 
 }

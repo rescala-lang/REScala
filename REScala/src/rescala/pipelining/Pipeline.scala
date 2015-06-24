@@ -28,7 +28,11 @@ class Pipeline(val reactive: Reactive) {
 
   private object pipelineLock
 
-  protected[pipelining] val dynamicLock = new ReentrantLock
+  private[pipelining] object dynamicLock 
+  
+  protected[pipelining] def lockDynamic[A](op : => A) : A = dynamicLock.synchronized {
+    op
+  }
 
   private def lockPipeline[A](op: => A): A = pipelineLock.synchronized {
     op
@@ -55,7 +59,7 @@ class Pipeline(val reactive: Reactive) {
     queueTail = newTail
   }
 
-  private def replaceStableFrame() = {
+  private def replaceStableFrame() = lockPipeline{
     /* val frameToRemove = stableFrame.next()
     val newStableFrameContent = frameToRemove.content
     assert(frameToRemove.isWritten)
@@ -187,21 +191,8 @@ class Pipeline(val reactive: Reactive) {
   }
 
   protected[rescala] def waitUntilCanRead(implicit turn: PipeliningTurn): Unit = {
-    
-    def wait() : Unit = {
-      val waitframe = frame(turn)
-      if (waitframe.turn == turn)
-        waitframe.awaitPredecessor(pipelineLock, turn)
-      else if (!waitframe.isWritten) {
-        assert(turn >= frame.turn)
-        waitframe.awaitUntilWritten(turn)
-        wait() // Wait again because a new frame may be added, if not, the recursive case terminates because the frame is written now
-      } else {
-        // Frame is written, does not wait
-      }
-    }
-    
-    wait()
+    Frame.awaitUntilWritten(pipelineLock, this,  turn)
+    assert(if(frame(turn).turn == turn) frame(turn).previous().isWritten else frame(turn).isWritten )
   }
 
   protected[rescala] def hasFrame(implicit turn: PipeliningTurn): Boolean = {
@@ -285,7 +276,7 @@ class Pipeline(val reactive: Reactive) {
     assert(assertTurnOrder)
   }
 
-  protected[rescala] def foreachFrameTopDown(action: CFrame => Unit): Unit = {
+  protected[rescala] def foreachFrameTopDown(action: CFrame => Unit): Unit = lockPipeline{
     @tailrec
     def impl(head: CFrame = queueHead): Unit = {
       if (head != null) {

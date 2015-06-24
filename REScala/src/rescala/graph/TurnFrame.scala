@@ -11,6 +11,35 @@ import rescala.util.JavaFunctionsImplicits._
 import rescala.pipelining.Pipeline
 import rescala.pipelining.PipeliningTurn
 
+object Frame {
+
+  protected[rescala] final def awaitUntilWritten(modificationLock: AnyRef, at: Pipeline, waitingTurn: PipeliningTurn): Unit = {
+
+    var wait = true
+    var needCleanCheck = true
+    while (wait || needCleanCheck) {
+      at.getStableFrame().waitForWritten(modificationLock, waitingTurn) match {
+        case Some(waitOnFrame) =>
+          assert(waitingTurn > waitOnFrame.turn)
+          LockSupport.park(waitOnFrame.creatorThread)
+          wait = true
+        case None =>
+          if (!wait)
+            needCleanCheck = false
+          wait = false
+      }
+    }
+    assert({
+      at.foreachFrameTopDown { frame =>
+        if (frame.turn != null && waitingTurn > frame.turn)
+          assert(frame.isWritten, s"Did not wait properly on other turns for turn $waitingTurn at frame $frame at ${at.getPipelineFramesWithStable()}  ")
+      }
+      true
+    })
+  }
+
+}
+
 case class Frame[T](var turn: PipeliningTurn, val at: Pipeline) {
 
   private var predecessor: Frame[T] = null.asInstanceOf[Frame[T]]
@@ -21,8 +50,8 @@ case class Frame[T](var turn: PipeliningTurn, val at: Pipeline) {
   private val creatorThread = Thread.currentThread()
   protected val lockObject = new Object
   private var lockedOnThread: Set[Thread] = Set()
-  
-  var oldTurn:PipeliningTurn = null
+
+  var oldTurn: PipeliningTurn = null
 
   protected[rescala] var content: T = null.asInstanceOf[T];
 
@@ -43,7 +72,7 @@ case class Frame[T](var turn: PipeliningTurn, val at: Pipeline) {
     }
   }
 
-  override def toString() = s"${getClass.getSimpleName}(turn=$turn, "+ (if (oldTurn != null) s"oldTurn=$oldTurn, " else "") + s"written=${isWritten})[$content]"
+  override def toString() = s"${getClass.getSimpleName}(turn=$turn, " + (if (oldTurn != null) s"oldTurn=$oldTurn, " else "") + s"written=${isWritten}, touches=${isTouched})[$content]"
 
   protected def retryBlockedThreads() = lockObject.synchronized {
     val blockedThreads = lockedOnThread
@@ -89,19 +118,23 @@ case class Frame[T](var turn: PipeliningTurn, val at: Pipeline) {
     assert(predecessor == null || predecessor.isWritten)
   }
 
-  protected[rescala] final def awaitUntilWritten(waitingTurn: PipeliningTurn) = {
-    var wait = true
-    while (wait) {
-      lockObject.synchronized {
-        wait = !isWritten
-        lockedOnThread += Thread.currentThread()
+  private def waitForWritten(modificationLock: AnyRef, waitingTurn: PipeliningTurn): Option[Frame[T]] = {
+    modificationLock.synchronized {
+      val foundFrame = if (successor != null && waitingTurn > successor.turn)
+        successor.waitForWritten(modificationLock, waitingTurn)
+      else None
+      if (foundFrame.isDefined)
+        foundFrame
+      else lockObject.synchronized {
+        if (waitingTurn == turn || isWritten)
+          None
+        else {
+          lockedOnThread += Thread.currentThread()
+          Some(this)
+        }
       }
-      if (wait) {
-        assert(waitingTurn >= this.turn)
-        LockSupport.park(creatorThread)
-      }
+
     }
-    assert(isWritten)
   }
 
   protected[rescala] final def removeFrame() = {

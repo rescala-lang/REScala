@@ -3,6 +3,7 @@ package rescala.pipelining
 import rescala.graph.Reactive
 import rescala.propagation.LevelQueue
 import rescala.turns.Turn
+import rescala.pipelining.LogUtils._
 
 trait FrameCreator {
 
@@ -26,14 +27,16 @@ trait QueueBasedFrameCreator extends FrameCreator {
       if (!seen.contains(reactive)) {
         seen += reactive
         val pipeline = Pipeline(reactive)
-        pipeline.dynamicLock.lock()
+        pipeline.lockDynamic {
         markReactiveFramed(reactive, reactive => {
-          if (!pipeline.hasFrame)
+          if (!pipeline.hasFrame) {
+            println(s"Create frame for $this at $reactive")
             createFrame(pipeline)
+          }
         })
         val outgoings = reactive.outgoing.get(this)
         outgoings.foreach { lq.enqueue(-1) }
-        pipeline.dynamicLock.unlock()
+        }
       }
     }
   }

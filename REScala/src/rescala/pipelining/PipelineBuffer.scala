@@ -161,7 +161,7 @@ class NonblockingPipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => 
 class BlockingPipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A) extends PipelineBuffer[A](parent, initialStrategy) {
 
   override def set(value: A)(implicit turn: Turn): Unit = {
-    assert(!parent.needFrame()(turn.asInstanceOf[PipeliningTurn]).isWritten)
+    assert(!parent.needFrame()(turn.asInstanceOf[PipeliningTurn]).isWritten, s"Frame at ${parent.reactive} already written when tried to set from $turn")
     super.set(value)
   }
 
