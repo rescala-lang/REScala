@@ -1,6 +1,5 @@
 package rescala.graph
 
-import rescala.synchronization.TurnLock
 import rescala.turns.Turn
 
 import scala.language.{higherKinds, implicitConversions}

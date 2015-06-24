@@ -1,9 +1,7 @@
 package rescala.graph
 
-import rescala.graph
 import rescala.graph.Pulse.{Diff, NoChange}
 import rescala.turns.{Ticket, Turn}
-import rescala.synchronization.TurnLock
 
 /** A Reactive is something that can be reevaluated */
 trait Reactive[S <: State] {
