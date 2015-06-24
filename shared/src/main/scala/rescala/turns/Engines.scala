@@ -8,21 +8,21 @@ import scala.util.DynamicVariable
 
 object Engines {
   type SS = SimpleState.type
-  type NoLockType = Engine[SS, NoLocking[SS]]
+  type NoLockEngine = Engine[SS, NoLocking[SS]]
 
-  implicit val synchron: Engine[SS, NoLocking[SS]] = new SImpl[NoLocking[SS]](new FactoryReference(SimpleState) with NoLocking[SS]) {
+  implicit val synchron: NoLockEngine = new SImpl[NoLocking[SS]](new FactoryReference(SimpleState) with NoLocking[SS]) {
     override def plan[R](i: Reactive[SS]*)(f: NoLocking[SS] => R): R = synchronized(super.plan(i: _*)(f))
   }
-  implicit val unmanaged: Engine[SS, NoLocking[SS]] = new SImpl[NoLocking[SS]](new FactoryReference(SimpleState) with NoLocking[SS])
+  implicit val unmanaged: NoLockEngine = new SImpl[NoLocking[SS]](new FactoryReference(SimpleState) with NoLocking[SS])
 
-  implicit val default: Engine[SS, NoLocking[SS]] = synchron
+  implicit val default: NoLockEngine = synchron
 
   class SImpl[TImpl <: PropagationImpl[SS]](makeTurn: => TImpl) extends Impl[SS, TImpl](makeTurn) {
     /** used for the creation of state inside reactives */
     override private[rescala] def bufferFactory: SS = SimpleState
   }
 
-  val all: List[Engine[SS, NoLocking[SS]]] = List(synchron, unmanaged)
+  val all: List[NoLockEngine] = List(synchron, unmanaged)
 
   abstract class Impl[S <: State, TImpl <: PropagationImpl[S]](makeTurn: => TImpl) extends Engine[S, TImpl] {
 

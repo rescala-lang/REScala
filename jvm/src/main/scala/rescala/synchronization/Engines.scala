@@ -1,23 +1,25 @@
 package rescala.synchronization
 
-import rescala.graph.{ParRPState, STMState}
-import rescala.graph.{Reactive, State}
+import rescala.graph.{ParRPState, Reactive, STMState, State}
 import rescala.turns.Engines.{Impl, synchron, unmanaged}
 import rescala.turns.{Engine, Turn}
 
 import scala.concurrent.stm.atomic
+import scala.language.existentials
 
 object Engines {
 
-  def byName(name: String): Engine[_ <: State, _ <: Turn[_ <: State]] = name match {
-    case "synchron" => synchron
-    case "unmanaged" => unmanaged
-    case "parrp" => parRP
-    case "stm" => STM
+  type TEngine = Engine[S, Turn[S]] forSome { type S <: State }
+
+  def byName[S <: State](name: String): Engine[S, Turn[S]] = name match {
+    case "synchron" => synchron.asInstanceOf[Engine[S, Turn[S]]]
+    case "unmanaged" => unmanaged.asInstanceOf[Engine[S, Turn[S]]]
+    case "parrp" => parRP.asInstanceOf[Engine[S, Turn[S]]]
+    case "stm" => STM.asInstanceOf[Engine[S, Turn[S]]]
     case other => throw new IllegalArgumentException(s"unknown engine $other")
   }
 
-  def all = List(STM, parRP, synchron, unmanaged)
+  def all: List[TEngine] = List[TEngine](STM, parRP, synchron, unmanaged)
 
   implicit val parRP: Engine[ParRPState.type, ParRP] = spinningWithBackoff(7)
 

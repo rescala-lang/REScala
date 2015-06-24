@@ -8,7 +8,7 @@ import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.Infiltrator.getLevel
 import rescala.turns.{Engine, Turn}
-import rescala.{Infiltrator, Signals, Var}
+import rescala.{Signals, Var}
 
 object DynamicSignalTestSuite extends JUnitParameters
 

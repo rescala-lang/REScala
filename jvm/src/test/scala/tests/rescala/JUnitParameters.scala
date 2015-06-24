@@ -3,9 +3,7 @@ package tests.rescala
 import java.{lang => jl, util => ju}
 
 import org.junit.runners.Parameterized.Parameters
-import rescala.graph.State
-import rescala.turns.{Engine, Engines, Turn}
-
+import rescala.synchronization.Engines.all
 // thanks to: http://stackoverflow.com/questions/4399881/parameterized-unit-tests-in-scala-with-junit4
 class JUnitParameters {
   @Parameters def parameters: ju.Collection[Array[Engines.NoLockType]] = {
