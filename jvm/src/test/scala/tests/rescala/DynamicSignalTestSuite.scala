@@ -191,19 +191,19 @@ class DynamicSignalTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit wi
     assert(testsig.now === 2)
   }
 
-	@Test def `dynamic dependency changes ontop of stuff that is not changing`() = {
-		val v0 = Var("level 0")
-		val v3 = v0.map(_ => "level 1").map(_ => "level 2").map(_ => "level 3")
+  @Test def `dynamic dependency changes ontop of stuff that is not changing`() = {
+    val v0 = Var("level 0")
+    val v3 = v0.map(_ => "level 1").map(_ => "level 2").map(_ => "level 3")
 
-		val condition = Var(false)
-		val `dynamic signal changing from level 1 to level 4` = Signals.dynamic() { turn =>
-			if (condition(turn)) v3(turn) else v0(turn)
-		}
-		assert(`dynamic signal changing from level 1 to level 4`.now == "level 0")
-		assert(getLevel(`dynamic signal changing from level 1 to level 4`) == 1)
+    val condition = Var(false)
+    val `dynamic signal changing from level 1 to level 4` = Signals.dynamic() { turn =>
+      if (condition(turn)) v3(turn) else v0(turn)
+    }
+    assert(`dynamic signal changing from level 1 to level 4`.now == "level 0")
+    assert(getLevel(`dynamic signal changing from level 1 to level 4`) == 1)
 
-		condition.set(true)
-		assert(`dynamic signal changing from level 1 to level 4`.now == "level 3")
-		assert(getLevel(`dynamic signal changing from level 1 to level 4`) == 4)
-	}
+    condition.set(true)
+    assert(`dynamic signal changing from level 1 to level 4`.now == "level 3")
+    assert(getLevel(`dynamic signal changing from level 1 to level 4`) == 4)
+  }
 }
