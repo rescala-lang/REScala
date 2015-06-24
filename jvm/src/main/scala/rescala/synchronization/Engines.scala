@@ -25,14 +25,10 @@ object Engines {
 
   implicit val default: Engine[ParRPState.type, ParRP] = parRP
 
-  implicit val STM: Engine[STMState.type, STMSync] = new Impl[STMState.type, STMSync](new STMSync()) {
+  implicit val STM: Engine[STMState.type, STMSync] = new Impl[STMState.type, STMSync](STMState, new STMSync()) {
     override def plan[R](i: Reactive[STMState.type]*)(f: STMSync => R): R = atomic { tx => super.plan(i: _*)(f) }
-    override private[rescala] def bufferFactory: STMState.type = STMState
   }
 
-  def spinningWithBackoff(backOff: Int): Impl[ParRPState.type, ParRP] = new Impl[ParRPState.type, ParRP](new ParRP(backOff)) {
-    /** used for the creation of state inside reactives */
-    override private[rescala] def bufferFactory: ParRPState.type = ParRPState
-  }
+  def spinningWithBackoff(backOff: Int): Impl[ParRPState.type, ParRP] = new Impl[ParRPState.type, ParRP](ParRPState, new ParRP(backOff))
 
 }

@@ -2,7 +2,7 @@ package rescala.turns
 
 import rescala.graph.{SimpleState, Reactive, State}
 import rescala.propagation.PropagationImpl
-import rescala.synchronization.{FactoryReference, NoLocking}
+import rescala.synchronization.{NoLocking, FactoryReference}
 
 import scala.util.DynamicVariable
 
@@ -10,21 +10,16 @@ object Engines {
   type SS = SimpleState.type
   type NoLockEngine = Engine[SS, NoLocking[SS]]
 
-  implicit val synchron: NoLockEngine = new SImpl[NoLocking[SS]](new FactoryReference(SimpleState) with NoLocking[SS]) {
+  implicit val synchron: NoLockEngine = new Impl[SS, NoLocking[SS]](SimpleState, new FactoryReference(SimpleState) with NoLocking[SS]) {
     override def plan[R](i: Reactive[SS]*)(f: NoLocking[SS] => R): R = synchronized(super.plan(i: _*)(f))
   }
-  implicit val unmanaged: NoLockEngine = new SImpl[NoLocking[SS]](new FactoryReference(SimpleState) with NoLocking[SS])
+  implicit val unmanaged: NoLockEngine = new Impl[SS, NoLocking[SS]](SimpleState, new FactoryReference(SimpleState) with NoLocking[SS])
 
   implicit val default: NoLockEngine = synchron
 
-  class SImpl[TImpl <: PropagationImpl[SS]](makeTurn: => TImpl) extends Impl[SS, TImpl](makeTurn) {
-    /** used for the creation of state inside reactives */
-    override private[rescala] def bufferFactory: SS = SimpleState
-  }
-
   val all: List[NoLockEngine] = List(synchron, unmanaged)
 
-  abstract class Impl[S <: State, TImpl <: PropagationImpl[S]](makeTurn: => TImpl) extends Engine[S, TImpl] {
+  class Impl[S <: State, TImpl <: PropagationImpl[S]](override private[rescala] val bufferFactory: S, makeTurn: => TImpl) extends Engine[S, TImpl] {
 
     val currentTurn: DynamicVariable[Option[TImpl]] = new DynamicVariable[Option[TImpl]](None)
 
