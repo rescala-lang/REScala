@@ -1,8 +1,8 @@
 package rescala
 
-import rescala.graph.Reactive
+import rescala.graph.{State, Reactive}
 import rescala.turns.Ticket
 
 object Infiltrator {
-  final def getLevel(reactive: Reactive)(implicit maybe: Ticket) = maybe { reactive.level.get(_) }
+  final def getLevel[S <: State](reactive: Reactive[S])(implicit maybe: Ticket[S]) = maybe { reactive.level.get(_) }
 }

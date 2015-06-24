@@ -6,15 +6,15 @@ import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.Infiltrator.getLevel
-import rescala.macros.SignalMacro.{SignalM => Signal}
+import rescala.graph.State
 import rescala.turns.{Engine, Turn}
-import rescala.{Event, Evt, Signal, Var}
 
 object MacroTestSuite extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])
-class MacroTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit with MockitoSugar {
-  implicit val implicitEngine: Engine[Turn] = engine
+class MacroTestSuite[S <: State](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
+  implicit val implicitEngine: Engine[S, Turn[S]] = engine
+  import implicitEngine._
 
   @Test def signalReEvaluatesTheExpression(): Unit = {
     val v = Var(0)
@@ -127,7 +127,7 @@ class MacroTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit with Mocki
     // following form, see:
     // https://github.com/guidosalva/examples/pull/4/files#r11724000
     var test = 0
-    var e = null: Evt[Int]
+    var e = null: rescala.Evt[Int, S]
     var s = null: Signal[Int]
 
     abstract class A {def obj(): Unit }

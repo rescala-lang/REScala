@@ -6,14 +6,17 @@ import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.Infiltrator.getLevel
+import rescala.graph.State
 import rescala.turns.{Engine, Turn}
-import rescala.{Signal, Signals, Var}
+import rescala.{Signals, Var}
 
 object SignalTestSuite extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])
-class SignalTestSuite(engine: Engine[Turn]) extends AssertionsForJUnit with MockitoSugar {
-  implicit val implicitEngine: Engine[Turn] = engine
+class SignalTestSuite[S <: State](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
+  implicit val implicitEngine: Engine[S, Turn[S]] = engine
+
+  import implicitEngine.Signal
 
 
   @Test def signalReEvaluatesTheExpression(): Unit = {

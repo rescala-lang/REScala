@@ -11,7 +11,7 @@ object SignalMacro {
 
   def SignalM[A, S <: State](expression: A): Signal[A, S] = macro SignalMacro[A, S]
 
-  def SignalMacro[A: c.WeakTypeTag, S <: State](c: blackbox.Context)(expression: c.Expr[A]): c.Expr[Signal[A, S]] = {
+  def SignalMacro[A: c.WeakTypeTag, S <: State : c.WeakTypeTag](c: blackbox.Context)(expression: c.Expr[A]): c.Expr[Signal[A, S]] = {
     import c.universe._
 
     // all symbols that are defined within the macro expression
@@ -265,8 +265,7 @@ object SignalMacro {
     // assemble the SignalSynt object and the signal values that are accessed
     // by the object, but were cut out of the signal expression during the code
     // transformation
-    val block =
-      Typed(Block(cutOutSignals.reverse, body), TypeTree(weakTypeOf[Signal[A, S]]))
+    val block = Typed(Block(cutOutSignals.reverse, body), TypeTree(weakTypeOf[Signal[A, S]]))
 
 
     c.Expr[Signal[A, S]](c untypecheck block)

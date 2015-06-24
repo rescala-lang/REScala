@@ -27,7 +27,7 @@ final class Evt[T, S <: State]()(engine: S) extends Base[S](engine) with Event[T
 }
 
 object Evt {
-  def apply[T, S <: State]()(implicit engine: Engine[S, Turn[S]]) = new Evt[T, S]()(engine.bufferFactory)
+  def apply[T, S <: State]()(implicit engine: Engine[S, Turn[S]]): Evt[T, S] = new Evt[T, S]()(engine.bufferFactory)
 }
 
 
@@ -53,6 +53,6 @@ final class Var[T, S <: State](initval: T)(engine: S) extends Base[S](engine) wi
 }
 
 object Var {
-  def apply[T, S <: State](initval: T)(implicit engine: Engine[S, Turn[S]]) = new Var(initval)(engine.bufferFactory)
+  def apply[T, S <: State](initval: T)(implicit engine: Engine[S, Turn[S]]): Var[T, S] = new Var(initval)(engine.bufferFactory)
 }
 
