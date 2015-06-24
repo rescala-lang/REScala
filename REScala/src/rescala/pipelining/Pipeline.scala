@@ -163,9 +163,7 @@ class Pipeline(val reactive: Reactive) {
   protected[pipelining] def frame(implicit turn: PipeliningTurn): CFrame = lockPipeline {
     @tailrec
     def findBottomMostFrame(tail: CFrame): CFrame = {
-      if (tail == null)
-        stableFrame
-      else if (turn >= tail.turn)
+      if (turn >= tail.turn)
         tail
       else
         findBottomMostFrame(tail.previous())
@@ -189,24 +187,21 @@ class Pipeline(val reactive: Reactive) {
   }
 
   protected[rescala] def waitUntilCanRead(implicit turn: PipeliningTurn): Unit = {
-    // TODO IF keep frame reordering, need to do something more here. because the frame
-    // we need to read from may change
-
-    // println(s"${Thread.currentThread().getId} with turn $turn waits until read for ${this.reactive}")
-    frame match {
-      case Frame(frameTurn, _) =>
-        if (frameTurn eq turn) {
-
-          //   println(s"${Thread.currentThread().getId} own write frame")
-          frame.awaitPredecessor(pipelineLock, turn)
-
-        } else {
-          //   println(s"${Thread.currentThread().getId} write frame for ${frame.turn}")
-          assert(turn >= frameTurn)
-          frame.awaitUntilWritten(turn)
-        }
-
+    
+    def wait() : Unit = {
+      val waitframe = frame(turn)
+      if (waitframe.turn == turn)
+        waitframe.awaitPredecessor(pipelineLock, turn)
+      else if (!waitframe.isWritten) {
+        assert(turn >= frame.turn)
+        waitframe.awaitUntilWritten(turn)
+        wait() // Wait again because a new frame may be added, if not, the recursive case terminates because the frame is written now
+      } else {
+        // Frame is written, does not wait
+      }
     }
+    
+    wait()
   }
 
   protected[rescala] def hasFrame(implicit turn: PipeliningTurn): Boolean = {
