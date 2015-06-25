@@ -4,6 +4,7 @@ import java.util.concurrent.TimeUnit
 
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
+import rescala.synchronization.Engines
 import rescala.turns.{Engine, Turn}
 import rescala.{Signals, Var}
 
@@ -14,16 +15,16 @@ import rescala.{Signals, Var}
 @Fork(1)
 @Threads(1)
 @State(Scope.Benchmark)
-class Dynamic {
+class Dynamic[S <: rescala.graph.State] {
 
-  implicit var engine: Engine[Turn] = _
+  implicit var engine: Engine[S, Turn[S]] = _
 
-  var source: Var[Boolean] = _
+  var source: Var[Boolean, S] = _
 
   var current: Boolean = false
 
   @Setup
-  def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam) = {
+  def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam[S]) = {
     engine = engineParam.engine
     source = Var(current)
     val d1 = Var("true")

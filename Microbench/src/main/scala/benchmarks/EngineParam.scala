@@ -5,15 +5,15 @@ import rescala.synchronization.Engines
 import rescala.turns.{Engine, Turn}
 
 @State(Scope.Benchmark)
-class EngineParam {
+class EngineParam[S <: rescala.graph.State] {
   @Param(Array("synchron", "parrp", "stm"))
   var engineName: String = _
 
   @Param(Array("7"))
   var spinningBackOff: Int = _
 
-  def engine: Engine[Turn] = {
-    if (engineName == "parrp") Engines.spinningWithBackoff(spinningBackOff)
-    else Engines.byName(engineName)
+  def engine: Engine[S, Turn[S]] = {
+    if (engineName == "parrp") Engines.spinningWithBackoff(spinningBackOff).asInstanceOf[Engine[S, Turn[S]]]
+    else Engines.byName[S](engineName)
   }
 }

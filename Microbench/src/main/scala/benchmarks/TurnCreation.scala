@@ -13,18 +13,18 @@ import rescala.turns.{Engine, Turn}
 @Fork(1)
 @Threads(1)
 @State(Scope.Benchmark)
-class TurnCreation {
+class TurnCreation[S <: rescala.graph.State] {
 
-  implicit var engine: Engine[Turn] = _
+  implicit var engine: Engine[S, Turn[S]] = _
 
 
   @Setup
-  def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam) = {
+  def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam[S]) = {
     engine = engineParam.engine
   }
 
   @Benchmark
-  def run(): Turn = {
+  def run(): Turn[S] = {
     engine.plan()(identity)
   }
 

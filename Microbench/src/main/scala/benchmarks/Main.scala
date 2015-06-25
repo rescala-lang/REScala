@@ -7,7 +7,7 @@ import org.openjdk.jmh.runner.options.{VerboseMode, OptionsBuilder}
 object Main {
   def main(args: Array[String]): Unit = {
     val opt = new OptionsBuilder()
-      .include(".*" + classOf[TurnCreation].getSimpleName() + ".*")
+      .include(".*")
       .param("engineName", "parrp")
       .jvmArgsAppend("-Djmh.stack.lines=1")
       .jvmArgsAppend("-Djmh.stack.period=1")

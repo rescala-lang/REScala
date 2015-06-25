@@ -6,7 +6,7 @@ import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
 import rescala._
 import rescala.graph.Reader
-import rescala.turns.{Engine, Turn}
+import rescala.turns.{Ticket, Engine, Turn}
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -15,21 +15,21 @@ import rescala.turns.{Engine, Turn}
 @Fork(1)
 @Threads(1)
 @State(Scope.Benchmark)
-class SingleVar {
+class SingleVar[S <: rescala.graph.State] {
 
-  implicit var engine: Engine[Turn] = _
+  implicit var engine: Engine[S, Turn[S]] = _
 
-  var source: Var[Boolean] = _
+  var source: Var[Boolean, S] = _
   var current: Boolean = _
-  var reader: Reader[Boolean] = _
-  var illegalTurn: Turn = _
+  var reader: Reader[Boolean, S] = _
+  var illegalTurn: Turn[S] = _
 
 
   @Setup
-  def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam) = {
+  def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam[S]) = {
     engine = engineParam.engine
     current = false
-    source = Var(current)
+    source = engine.Var(current)
     reader = source.reader
     illegalTurn = engine.plan()(identity)
   }
