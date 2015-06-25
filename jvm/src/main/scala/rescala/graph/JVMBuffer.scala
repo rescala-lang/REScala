@@ -11,7 +11,8 @@ object ParRPState extends State {
   override type TBuffer[A] = ParRPBuffer[A]
   override type TLock = TurnLock
 
-  override def buffer[A, S <: State](default: A, commitStrategy: (A, A) => A, lock: S#TLock): ParRPBuffer[A] = new ParRPBuffer[A](default, commitStrategy, lock.asInstanceOf[TurnLock])
+  override def buffer[A, S <: State](default: A, commitStrategy: (A, A) => A, lock: S#TLock): ParRPBuffer[A] =
+    new ParRPBuffer[A](default, commitStrategy, lock.asInstanceOf[TurnLock])
   override def lock(): TurnLock = new TurnLock()
 }
 
