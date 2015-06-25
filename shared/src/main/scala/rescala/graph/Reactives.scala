@@ -7,13 +7,13 @@ import rescala.turns.{Ticket, Turn}
 trait Reactive[S <: Spores] {
   final override val hashCode: Int = Globals.nextID().hashCode()
 
-  protected[rescala] def state: S
+  protected[rescala] def bud: S#Bud
 
-  protected[rescala] def lock: S#TLock
+  protected[rescala] def lock: S#TLock = bud.lock()
 
-  final private[rescala] val level: S#TBuffer[Int] = state.buffer(0, math.max, lock)
+  final private[rescala] val level: S#TBuffer[Int] = bud.buffer(0, math.max)
 
-  final private[rescala] val outgoing: S#TBuffer[Set[Reactive[S]]] = state.buffer(Set(), Buffer.commitAsIs, lock)
+  final private[rescala] val outgoing: S#TBuffer[Set[Reactive[S]]] = bud.buffer(Set(), Buffer.commitAsIs)
 
   protected[rescala] def incoming(implicit turn: Turn[S]): Set[Reactive[S]]
 
@@ -29,12 +29,8 @@ trait Reactive[S <: Spores] {
 
 /** helper class to initialise engine and select lock */
 abstract class Base[S <: Spores](
-  final override protected[rescala] val state: S,
-  knownDependencies: Set[Reactive[S]] = Set.empty[Reactive[S]]) extends {
-  final override val lock: S#TLock =
-    if (knownDependencies.size == 1) knownDependencies.head.lock
-    else state.lock()
-} with Reactive[S] {
+  final override val bud: S#Bud,
+  knownDependencies: Set[Reactive[S]] = Set.empty[Reactive[S]]) extends  Reactive[S] {
 
   def staticIncoming: Set[Reactive[S]] = knownDependencies
 }
@@ -52,7 +48,7 @@ class Reader[+P, S <: Spores](pulses: Buffer[Pulse[P]]) {
 /** A node that has nodes that depend on it */
 trait Pulsing[+P, S <: Spores] extends Reactive[S] {
   protected[this] def strategy: (Pulse[P], Pulse[P]) => Pulse[P] = Buffer.transactionLocal[Pulse[P]]
-  final protected[this] val pulses: S#TBuffer[Pulse[P]] = state.buffer(Pulse.none, strategy, lock)
+  final protected[this] val pulses: S#TBuffer[Pulse[P]] = bud.buffer(Pulse.none, strategy)
 
   final def pulse(implicit turn: Turn[S]): Pulse[P] = pulses.get
 

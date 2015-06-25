@@ -12,7 +12,7 @@ object Observe {
 
   def apply[T, S <: Spores](dependency: Pulsing[T, S])(fun: T => Unit)(implicit maybe: Ticket[S]): Observe[S] =
     maybe(initTurn => initTurn.create(Set(dependency)) {
-      val obs = new Base[S](initTurn.bufferFactory, Set(dependency)) with Reactive[S] with Observe[S] {
+      val obs = new Base[S](initTurn.bufferFactory.bud(), Set(dependency)) with Reactive[S] with Observe[S] {
         override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[S] = {
           turn.schedule(once(this, dependency.pulse.toOption, fun))
           ReevaluationResult.Static(changed = false)

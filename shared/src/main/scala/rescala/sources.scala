@@ -10,7 +10,7 @@ sealed trait Source[T, S <: Spores] {
 /**
  * An implementation of an imperative event
  */
-final class Evt[T, S <: Spores]()(engine: S) extends Base[S](engine) with Event[T, S] with Source[T, S] {
+final class Evt[T, S <: Spores]()(engine: S) extends Base[S](engine.bud()) with Event[T, S] with Source[T, S] {
 
   /** Trigger the event */
   def apply(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) { admit(value)(_) }
@@ -32,7 +32,7 @@ object Evt {
 
 
 /** A root Reactive value without dependencies which can be set */
-final class Var[T, S <: Spores](initval: T)(engine: S) extends Base[S](engine) with Signal[T, S] with Source[T, S] {
+final class Var[T, S <: Spores](initval: T)(engine: S) extends Base[S](engine.bud()) with Signal[T, S] with Source[T, S] {
   pulses.initCurrent(Pulse.unchanged(initval))
 
   def update(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = set(value)

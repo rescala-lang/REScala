@@ -9,7 +9,7 @@ object Signals extends GeneratedLift {
 
   object Impl {
     private class StaticSignal[T, S <: Spores](engine: S, dependencies: Set[Reactive[S]], init: => T, expr: (Turn[S], T) => T)
-      extends Base(engine, dependencies) with Signal[T, S] with StaticReevaluation[T, S] {
+      extends Base(engine.bud(), dependencies) with Signal[T, S] with StaticReevaluation[T, S] {
 
       pulses.initCurrent(Pulse.unchanged(init))
 
@@ -19,7 +19,7 @@ object Signals extends GeneratedLift {
       }
     }
 
-    private class DynamicSignal[T, S <: Spores](bufferFactory: S, expr: Turn[S] => T) extends Base[S](bufferFactory) with Signal[T, S] with DynamicReevaluation[T, S] {
+    private class DynamicSignal[T, S <: Spores](bufferFactory: S, expr: Turn[S] => T) extends Base[S](bufferFactory.bud()) with Signal[T, S] with DynamicReevaluation[T, S] {
       def calculatePulseDependencies(implicit turn: Turn[S]): (Pulse[T], Set[Reactive[S]]) = {
         val (newValue, dependencies) = turn.collectDependencies(expr(turn))
         (Pulse.diffPulse(newValue, pulses.base), dependencies)

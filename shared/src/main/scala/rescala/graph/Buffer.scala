@@ -18,16 +18,20 @@ object Buffer {
 trait Spores {
   type TBuffer[A] <: Buffer[A]
   type TLock
-  def buffer[A, S <: Spores](default: A, commitStrategy: (A, A) => A, lock: S#TLock): TBuffer[A]
-  def lock(): TLock
+  def bud(): Bud
+  trait Bud {
+    def buffer[A, S <: Spores](default: A, commitStrategy: (A, A) => A): TBuffer[A]
+    def lock(): TLock
+  }
 }
 
 object SimpleSpores extends Spores {
   override type TBuffer[A] = SimpleBuffer[A]
   override type TLock = Unit
-
-  override def buffer[A, S <: Spores](default: A, commitStrategy: (A, A) => A, lock: S#TLock): SimpleBuffer[A] =  new SimpleBuffer[A](default, commitStrategy)
-  override def lock(): Unit = Unit
+  override def bud() = new Bud {
+    override def buffer[A, S <: Spores](default: A, commitStrategy: (A, A) => A): SimpleBuffer[A] = new SimpleBuffer[A](default, commitStrategy)
+    override def lock(): Unit = Unit
+  }
 }
 
 trait Buffer[A] {

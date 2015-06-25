@@ -11,7 +11,7 @@ object Events {
   def static[T, S <: Spores](name: String, dependencies: Reactive[S]*)(calculate: Turn[S] => Pulse[T])(implicit ticket: Ticket[S]): Event[T, S] = ticket { initTurn =>
     val dependencySet: Set[Reactive[S]] = dependencies.toSet
     initTurn.create(dependencySet) {
-      new Base(initTurn.bufferFactory, dependencySet) with Event[T, S] with StaticReevaluation[T, S] {
+      new Base(initTurn.bufferFactory.bud(), dependencySet) with Event[T, S] with StaticReevaluation[T, S] {
         override def calculatePulse()(implicit turn: Turn[S]): Pulse[T] = calculate(turn)
         override def toString = name
       }
@@ -71,7 +71,7 @@ object Events {
   /** A wrapped event inside a signal, that gets "flattened" to a plain event node */
   def wrapped[T, S <: Spores](wrapper: Signal[Event[T, S], S])(implicit ticket: Ticket[S]): Event[T, S] = ticket { creationTurn =>
     creationTurn.create(Set[Reactive[S]](wrapper, wrapper.get(creationTurn))) {
-      new Base(creationTurn.bufferFactory) with Event[T, S] with DynamicReevaluation[T, S] {
+      new Base(creationTurn.bufferFactory.bud()) with Event[T, S] with DynamicReevaluation[T, S] {
         override def calculatePulseDependencies(implicit turn: Turn[S]): (Pulse[T], Set[Reactive[S]]) = {
           val inner = wrapper.get
           turn.accessDynamic(inner)

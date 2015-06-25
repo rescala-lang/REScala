@@ -10,17 +10,20 @@ import scala.language.implicitConversions
 object ParRPSpores extends Spores {
   override type TBuffer[A] = ParRPBuffer[A]
   override type TLock = TurnLock
-
-  override def buffer[A, S <: Spores](default: A, commitStrategy: (A, A) => A, lock: S#TLock): ParRPBuffer[A] =
-    new ParRPBuffer[A](default, commitStrategy, lock.asInstanceOf[TurnLock])
-  override def lock(): TurnLock = new TurnLock()
+  override def bud() = new Bud {
+    override lazy val lock: TurnLock = new TurnLock()
+    override def buffer[A, S <: Spores](default: A, commitStrategy: (A, A) => A): ParRPBuffer[A] =
+      new ParRPBuffer[A](default, commitStrategy, lock)
+  }
 }
 
 object STMSpores extends Spores {
   override type TBuffer[A] = STMBuffer[A]
   override type TLock = Unit
-  override def buffer[A, S <: Spores](default: A, commitStrategy: (A, A) => A, lock: S#TLock): STMBuffer[A] = new STMBuffer[A](default, commitStrategy)
-  override def lock(): Unit = ()
+  override def bud() = new Bud {
+    override def buffer[A, S <: Spores](default: A, commitStrategy: (A, A) => A): STMBuffer[A] = new STMBuffer[A](default, commitStrategy)
+    override def lock(): Unit = ()
+  }
 }
 
 final class ParRPBuffer[A](initialValue: A, initialStrategy: (A, A) => A, writeLock: TurnLock) extends Buffer[A] with Committable {
