@@ -5,12 +5,12 @@ import java.util.concurrent.atomic.AtomicInteger
 import rescala.Signals.lift
 import rescala.{Signal, Var}
 import rescala.graph.Globals.named
-import rescala.graph.{State, Globals, Committable}
+import rescala.graph.{Spores, Globals, Committable}
 import rescala.turns.{Engine, Turn}
 
 import scala.annotation.tailrec
 
-class PhilosopherTable[S <: State](philosopherCount: Int, work: Long)(implicit val engine: Engine[S, Turn[S]]) {
+class PhilosopherTable[S <: Spores](philosopherCount: Int, work: Long)(implicit val engine: Engine[S, Turn[S]]) {
 
   import tests.rescala.concurrency.philosophers.PhilosopherTable._
   import engine.{Var, Signal}
@@ -102,7 +102,7 @@ object PhilosopherTable {
 
   // ============================================ Entity Creation =========================================================
 
-  case class Seating[S <: State](placeNumber: Int, philosopher: Var[Philosopher, S], leftFork: Signal[Fork, S], rightFork: Signal[Fork, S], vision: Signal[Vision, S])
+  case class Seating[S <: Spores](placeNumber: Int, philosopher: Var[Philosopher, S], leftFork: Signal[Fork, S], rightFork: Signal[Fork, S], vision: Signal[Vision, S])
 
 
   @tailrec // unrolled into loop by compiler

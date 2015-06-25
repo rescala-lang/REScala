@@ -1,12 +1,12 @@
 package rescala.propagation
 
 import rescala.graph.ReevaluationResult.{Dynamic, Static}
-import rescala.graph.{State, Committable, Reactive}
+import rescala.graph.{Spores, Committable, Reactive}
 import rescala.turns.Turn
 
 import scala.util.Try
 
-trait PropagationImpl[S <: State] extends Turn[S] {
+trait PropagationImpl[S <: Spores] extends Turn[S] {
   implicit def currentTurn: PropagationImpl[S] = this
 
   private var toCommit = Set[Committable]()

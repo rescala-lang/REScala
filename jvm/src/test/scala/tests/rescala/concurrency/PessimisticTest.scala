@@ -6,7 +6,7 @@ import java.util.concurrent.{ConcurrentLinkedQueue, CountDownLatch}
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
-import rescala.graph.{ParRPState, Reactive}
+import rescala.graph.{ParRPSpores, Reactive}
 import rescala.synchronization.{ParRP}
 import rescala.turns.{Engine, Engines, Turn}
 import rescala.{Signals, Var}
@@ -14,7 +14,7 @@ import rescala.{Signals, Var}
 import scala.collection.JavaConverters._
 
 class PessimisticTestTurn extends ParRP(backOff = 0) {
-  override def evaluate(r: Reactive[ParRPState.type]): Unit = {
+  override def evaluate(r: Reactive[ParRPSpores.type]): Unit = {
     while (Pessigen.syncStack.get() match {
       case stack@(set, bar) :: tail if set(r) =>
         bar.ready.countDown()
@@ -34,17 +34,17 @@ case class Barrier(ready: CountDownLatch, go: CountDownLatch) {
   }
 }
 
-object Pessigen extends Engines.Impl(ParRPState, new PessimisticTestTurn) {
-  val syncStack: AtomicReference[List[(Set[Reactive[ParRPState.type]], Barrier)]] = new AtomicReference(Nil)
+object Pessigen extends Engines.Impl(ParRPSpores, new PessimisticTestTurn) {
+  val syncStack: AtomicReference[List[(Set[Reactive[ParRPSpores.type]], Barrier)]] = new AtomicReference(Nil)
 
   def clear(): Int = syncStack.getAndSet(Nil).size
 
-  def sync(reactives: Reactive[ParRPState.type]*): Unit = {
+  def sync(reactives: Reactive[ParRPSpores.type]*): Unit = {
     val bar = syncm(reactives: _*)
     Spawn(bar.await())
   }
 
-  def syncm(reactives: Reactive[ParRPState.type]*): Barrier = {
+  def syncm(reactives: Reactive[ParRPSpores.type]*): Barrier = {
     val ready = new CountDownLatch(reactives.size)
     val go = new CountDownLatch(1)
     val syncSet = reactives.toSet
@@ -57,7 +57,7 @@ object Pessigen extends Engines.Impl(ParRPState, new PessimisticTestTurn) {
 
 class PessimisticTest extends AssertionsForJUnit {
 
-  implicit def factory: Engine[ParRPState.type, Turn[ParRPState.type]] = Pessigen
+  implicit def factory: Engine[ParRPSpores.type, Turn[ParRPSpores.type]] = Pessigen
 
   @Test def runOnIndependentParts(): Unit = synchronized {
     val v1 = Var(false)
@@ -145,15 +145,15 @@ class PessimisticTest extends AssertionsForJUnit {
 
 
   object MockFacFac {
-    def apply(i0: Reactive[ParRPState.type], reg: => Unit, unreg: => Unit): Engine[ParRPState.type, Turn[ParRPState.type]] =
-      new Engines.Impl[ParRPState.type, ParRP](
-        ParRPState,
+    def apply(i0: Reactive[ParRPSpores.type], reg: => Unit, unreg: => Unit): Engine[ParRPSpores.type, Turn[ParRPSpores.type]] =
+      new Engines.Impl[ParRPSpores.type, ParRP](
+        ParRPSpores,
         new ParRP(backOff = 0) {
-          override def register(downstream: Reactive[ParRPState.type])(upstream: Reactive[ParRPState.type]): Unit = {
+          override def register(downstream: Reactive[ParRPSpores.type])(upstream: Reactive[ParRPSpores.type]): Unit = {
             if (upstream eq i0) reg
             super.register(downstream)(upstream)
           }
-          override def unregister(downstream: Reactive[ParRPState.type])(upstream: Reactive[ParRPState.type]): Unit = {
+          override def unregister(downstream: Reactive[ParRPSpores.type])(upstream: Reactive[ParRPSpores.type]): Unit = {
             if (upstream eq i0) unreg
             super.unregister(downstream)(upstream)
           }

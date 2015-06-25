@@ -1,6 +1,6 @@
 package rescala.synchronization
 
-import rescala.graph.ParRPState
+import rescala.graph.ParRPSpores
 import rescala.graph.{Reactive}
 import rescala.propagation.{LevelQueue, PropagationImpl}
 import rescala.synchronization.ParRP.{Await, Done, Retry}
@@ -8,9 +8,9 @@ import rescala.turns.Turn
 
 import scala.annotation.tailrec
 
-class ParRP(var backOff: Int) extends FactoryReference[ParRPState.type](ParRPState) with PropagationImpl[ParRPState.type] {
+class ParRP(var backOff: Int) extends FactoryReference[ParRPSpores.type](ParRPSpores) with PropagationImpl[ParRPSpores.type] {
 
-  type TState = ParRPState.type
+  type TState = ParRPSpores.type
 
   override def toString: String = s"ParRP(${key.id})"
 

@@ -4,12 +4,12 @@ import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicReference
 
 import rescala.graph.Globals
-import rescala.graph.ParRPState
+import rescala.graph.ParRPSpores
 import rescala.turns.Turn
 
 import scala.annotation.tailrec
 
-final class Key(val turn: Turn[ParRPState.type]) {
+final class Key(val turn: Turn[ParRPSpores.type]) {
 
   val id = Globals.nextID()
   override def toString: String = s"Key($id)"

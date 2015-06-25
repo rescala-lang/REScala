@@ -5,7 +5,7 @@ import rescala.synchronization.Engines
 import rescala.turns.{Engine, Turn}
 
 @State(Scope.Benchmark)
-class EngineParam[S <: rescala.graph.State] {
+class EngineParam[S <: rescala.graph.Spores] {
   @Param(Array("synchron", "parrp", "stm"))
   var engineName: String = _
 

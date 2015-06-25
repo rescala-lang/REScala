@@ -5,7 +5,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.graph.State
+import rescala.graph.Spores
 import rescala.turns.{Engine, Ticket, Turn}
 import rescala.{Signal, Signals, Var}
 
@@ -14,7 +14,7 @@ import scala.language.implicitConversions
 object LightImplicitSyntaxTest extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])
-class LightImplicitSyntaxTest[S <: State](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
+class LightImplicitSyntaxTest[S <: Spores](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
   implicit val implicitEngine: Engine[S, Turn[S]] = engine
   import implicitEngine.{Evt, Var, Signal, Event, dynamic}
 

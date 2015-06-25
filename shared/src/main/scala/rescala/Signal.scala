@@ -1,10 +1,10 @@
 package rescala
 
-import rescala.graph.{State, Stateful}
+import rescala.graph.{Spores, Stateful}
 import rescala.turns.Ticket
 
 
-trait Signal[+A, S <: State] extends Stateful[A, S] {
+trait Signal[+A, S <: Spores] extends Stateful[A, S] {
 
   /** add an observer */
   final def observe(react: A => Unit)(implicit ticket: Ticket[S]): Observe[S] = Observe(this)(react)

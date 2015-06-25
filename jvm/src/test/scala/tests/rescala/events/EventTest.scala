@@ -7,14 +7,14 @@ import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 
-import rescala.graph.State
+import rescala.graph.Spores
 import rescala.turns.{Engine, Turn}
 import tests.rescala.JUnitParameters
 
 object EventTest extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])
-class EventTest[S <: State](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
+class EventTest[S <: Spores](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
   implicit val implicitEngine: Engine[S, Turn[S]] = engine
   import implicitEngine._
 

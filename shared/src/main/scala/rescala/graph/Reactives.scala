@@ -4,7 +4,7 @@ import rescala.graph.Pulse.{Diff, NoChange}
 import rescala.turns.{Ticket, Turn}
 
 /** A Reactive is something that can be reevaluated */
-trait Reactive[S <: State] {
+trait Reactive[S <: Spores] {
   final override val hashCode: Int = Globals.nextID().hashCode()
 
   protected[rescala] def state: S
@@ -28,7 +28,7 @@ trait Reactive[S <: State] {
 
 
 /** helper class to initialise engine and select lock */
-abstract class Base[S <: State](
+abstract class Base[S <: Spores](
   final override protected[rescala] val state: S,
   knownDependencies: Set[Reactive[S]] = Set.empty[Reactive[S]]) extends {
   final override val lock: S#TLock =
@@ -39,7 +39,7 @@ abstract class Base[S <: State](
   def staticIncoming: Set[Reactive[S]] = knownDependencies
 }
 
-class Reader[+P, S <: State](pulses: Buffer[Pulse[P]]) {
+class Reader[+P, S <: Spores](pulses: Buffer[Pulse[P]]) {
   def pulse(implicit turn: Turn[S]): Pulse[P] = pulses.get
 
   final def get(implicit turn: Turn[S]): P = pulse match {
@@ -50,7 +50,7 @@ class Reader[+P, S <: State](pulses: Buffer[Pulse[P]]) {
 }
 
 /** A node that has nodes that depend on it */
-trait Pulsing[+P, S <: State] extends Reactive[S] {
+trait Pulsing[+P, S <: Spores] extends Reactive[S] {
   protected[this] def strategy: (Pulse[P], Pulse[P]) => Pulse[P] = Buffer.transactionLocal[Pulse[P]]
   final protected[this] val pulses: S#TBuffer[Pulse[P]] = state.buffer(Pulse.none, strategy, lock)
 
@@ -61,7 +61,7 @@ trait Pulsing[+P, S <: State] extends Reactive[S] {
 
 
 /** a node that has a current state */
-trait Stateful[+A, S <: State] extends Pulsing[A, S] {
+trait Stateful[+A, S <: Spores] extends Pulsing[A, S] {
   override protected[this] def strategy: (Pulse[A], Pulse[A]) => Pulse[A] = Buffer.keepPulse
 
   // only used inside macro and will be replaced there

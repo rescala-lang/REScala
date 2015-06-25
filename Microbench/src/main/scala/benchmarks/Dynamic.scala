@@ -15,7 +15,7 @@ import rescala.{Signals, Var}
 @Fork(1)
 @Threads(1)
 @State(Scope.Benchmark)
-class Dynamic[S <: rescala.graph.State] {
+class Dynamic[S <: rescala.graph.Spores] {
 
   implicit var engine: Engine[S, Turn[S]] = _
 

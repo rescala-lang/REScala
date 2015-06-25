@@ -1,7 +1,7 @@
 package rescala.turns
 
 import rescala.{Signals, Signal}
-import rescala.graph.{Reactive, State}
+import rescala.graph.{Reactive, Spores}
 import rescala.macros.SignalMacro
 
 import scala.annotation.implicitNotFound
@@ -9,7 +9,7 @@ import scala.language.experimental.macros
 
 
 @implicitNotFound(msg = "could not find a propagation engine, select one from Engines")
-trait Engine[S <: State, +TTurn <: Turn[S]] {
+trait Engine[S <: Spores, +TTurn <: Turn[S]] {
 
   type Signal[+A] = rescala.Signal[A, S]
   type Event[+A] = rescala.Event[A, S]

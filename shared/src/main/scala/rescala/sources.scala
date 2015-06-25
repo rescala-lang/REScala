@@ -3,14 +3,14 @@ package rescala
 import rescala.graph._
 import rescala.turns.{Engine, Turn}
 
-sealed trait Source[T, S <: State] {
+sealed trait Source[T, S <: Spores] {
   def admit(value: T)(implicit turn: Turn[S]): Unit
 }
 
 /**
  * An implementation of an imperative event
  */
-final class Evt[T, S <: State]()(engine: S) extends Base[S](engine) with Event[T, S] with Source[T, S] {
+final class Evt[T, S <: Spores]()(engine: S) extends Base[S](engine) with Event[T, S] with Source[T, S] {
 
   /** Trigger the event */
   def apply(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) { admit(value)(_) }
@@ -27,12 +27,12 @@ final class Evt[T, S <: State]()(engine: S) extends Base[S](engine) with Event[T
 }
 
 object Evt {
-  def apply[T, S <: State]()(implicit engine: Engine[S, Turn[S]]): Evt[T, S] = new Evt[T, S]()(engine.bufferFactory)
+  def apply[T, S <: Spores]()(implicit engine: Engine[S, Turn[S]]): Evt[T, S] = new Evt[T, S]()(engine.bufferFactory)
 }
 
 
 /** A root Reactive value without dependencies which can be set */
-final class Var[T, S <: State](initval: T)(engine: S) extends Base[S](engine) with Signal[T, S] with Source[T, S] {
+final class Var[T, S <: Spores](initval: T)(engine: S) extends Base[S](engine) with Signal[T, S] with Source[T, S] {
   pulses.initCurrent(Pulse.unchanged(initval))
 
   def update(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = set(value)
@@ -53,6 +53,6 @@ final class Var[T, S <: State](initval: T)(engine: S) extends Base[S](engine) wi
 }
 
 object Var {
-  def apply[T, S <: State](initval: T)(implicit engine: Engine[S, Turn[S]]): Var[T, S] = new Var(initval)(engine.bufferFactory)
+  def apply[T, S <: Spores](initval: T)(implicit engine: Engine[S, Turn[S]]): Var[T, S] = new Var(initval)(engine.bufferFactory)
 }
 

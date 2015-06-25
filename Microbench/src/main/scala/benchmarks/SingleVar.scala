@@ -15,7 +15,7 @@ import rescala.turns.{Ticket, Engine, Turn}
 @Fork(1)
 @Threads(1)
 @State(Scope.Benchmark)
-class SingleVar[S <: rescala.graph.State] {
+class SingleVar[S <: rescala.graph.Spores] {
 
   implicit var engine: Engine[S, Turn[S]] = _
 

@@ -2,7 +2,7 @@ package tests.rescala.concurrency.philosophers
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
-import rescala.graph.State
+import rescala.graph.Spores
 import rescala.synchronization.Engines
 import rescala.turns.{Engine, Turn}
 import tests.rescala.concurrency.Spawn
@@ -21,7 +21,7 @@ class PhiloTest extends AssertionsForJUnit {
   }
 
 
-  def `eat!`[S <: State](engine: Engine[S, Turn[S]], dynamic: Boolean): Unit = {
+  def `eat!`[S <: Spores](engine: Engine[S, Turn[S]], dynamic: Boolean): Unit = {
     val philosophers = 64
     val threadCount = 4
     val table =

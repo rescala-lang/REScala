@@ -15,18 +15,18 @@ object Buffer {
   def keepPulse[P](base: Pulse[P], cur: Pulse[P]) = cur.keep
 }
 
-trait State {
+trait Spores {
   type TBuffer[A] <: Buffer[A]
   type TLock
-  def buffer[A, S <: State](default: A, commitStrategy: (A, A) => A, lock: S#TLock): TBuffer[A]
+  def buffer[A, S <: Spores](default: A, commitStrategy: (A, A) => A, lock: S#TLock): TBuffer[A]
   def lock(): TLock
 }
 
-object SimpleState extends State {
+object SimpleSpores extends Spores {
   override type TBuffer[A] = SimpleBuffer[A]
   override type TLock = Unit
 
-  override def buffer[A, S <: State](default: A, commitStrategy: (A, A) => A, lock: S#TLock): SimpleBuffer[A] =  new SimpleBuffer[A](default, commitStrategy)
+  override def buffer[A, S <: Spores](default: A, commitStrategy: (A, A) => A, lock: S#TLock): SimpleBuffer[A] =  new SimpleBuffer[A](default, commitStrategy)
   override def lock(): Unit = Unit
 }
 

@@ -1,12 +1,12 @@
 package rescala.turns
 
-import rescala.graph.{State, Committable, Reactive}
+import rescala.graph.{Spores, Committable, Reactive}
 
 /**
  * The engine that schedules the (glitch-free) evaluation
  * of the nodes in the dependency graph.
  */
-trait Turn[S <: State] {
+trait Turn[S <: Spores] {
 
   /** used to create state containers of each reactive */
   def bufferFactory: S

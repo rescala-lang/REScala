@@ -1,7 +1,7 @@
 package rescala.macros
 
 import rescala.Signal
-import rescala.graph.{State, Stateful}
+import rescala.graph.{Spores, Stateful}
 import rescala.turns.Turn
 
 import scala.language.experimental.macros
@@ -9,9 +9,9 @@ import scala.reflect.macros.blackbox
 
 object SignalMacro {
 
-  def SignalM[A, S <: State](expression: A): Signal[A, S] = macro SignalMacro[A, S]
+  def SignalM[A, S <: Spores](expression: A): Signal[A, S] = macro SignalMacro[A, S]
 
-  def SignalMacro[A: c.WeakTypeTag, S <: State : c.WeakTypeTag](c: blackbox.Context)(expression: c.Expr[A]): c.Expr[Signal[A, S]] = {
+  def SignalMacro[A: c.WeakTypeTag, S <: Spores : c.WeakTypeTag](c: blackbox.Context)(expression: c.Expr[A]): c.Expr[Signal[A, S]] = {
     import c.universe._
 
     // all symbols that are defined within the macro expression

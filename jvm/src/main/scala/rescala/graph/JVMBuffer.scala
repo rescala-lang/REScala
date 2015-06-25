@@ -7,19 +7,19 @@ import scala.concurrent.stm.{InTxn, Ref}
 import scala.language.implicitConversions
 
 
-object ParRPState extends State {
+object ParRPSpores extends Spores {
   override type TBuffer[A] = ParRPBuffer[A]
   override type TLock = TurnLock
 
-  override def buffer[A, S <: State](default: A, commitStrategy: (A, A) => A, lock: S#TLock): ParRPBuffer[A] =
+  override def buffer[A, S <: Spores](default: A, commitStrategy: (A, A) => A, lock: S#TLock): ParRPBuffer[A] =
     new ParRPBuffer[A](default, commitStrategy, lock.asInstanceOf[TurnLock])
   override def lock(): TurnLock = new TurnLock()
 }
 
-object STMState extends State {
+object STMSpores extends Spores {
   override type TBuffer[A] = STMBuffer[A]
   override type TLock = Unit
-  override def buffer[A, S <: State](default: A, commitStrategy: (A, A) => A, lock: S#TLock): STMBuffer[A] = new STMBuffer[A](default, commitStrategy)
+  override def buffer[A, S <: Spores](default: A, commitStrategy: (A, A) => A, lock: S#TLock): STMBuffer[A] = new STMBuffer[A](default, commitStrategy)
   override def lock(): Unit = ()
 }
 

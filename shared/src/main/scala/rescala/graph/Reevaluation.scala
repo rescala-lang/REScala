@@ -3,20 +3,20 @@ package rescala.graph
 import rescala.turns.Turn
 
 
-sealed trait ReevaluationResult[S <: State]
+sealed trait ReevaluationResult[S <: Spores]
 
 object ReevaluationResult {
-  case class Static[S <: State](changed: Boolean) extends ReevaluationResult[S]
-  case class Dynamic[S <: State](changed: Boolean, diff: DepDiff[S]) extends ReevaluationResult[S]
+  case class Static[S <: Spores](changed: Boolean) extends ReevaluationResult[S]
+  case class Dynamic[S <: Spores](changed: Boolean, diff: DepDiff[S]) extends ReevaluationResult[S]
 }
 
-case class DepDiff[S <: State](novel: Set[Reactive[S]], old: Set[Reactive[S]]) {
+case class DepDiff[S <: Spores](novel: Set[Reactive[S]], old: Set[Reactive[S]]) {
   lazy val added = novel.diff(old)
   lazy val removed = old.diff(novel)
 }
 
 /** reevaluation strategy for static dependencies */
-trait StaticReevaluation[+P, S <: State] {
+trait StaticReevaluation[+P, S <: Spores] {
   this: Pulsing[P, S] =>
 
   protected def staticIncoming: Set[Reactive[S]]
@@ -34,7 +34,7 @@ trait StaticReevaluation[+P, S <: State] {
 
 
 /** reevaluation strategy for dynamic dependencies */
-trait DynamicReevaluation[+P, S <: State] {
+trait DynamicReevaluation[+P, S <: Spores] {
   this: Pulsing[P, S] =>
 
   private val _incoming: Buffer[Set[Reactive[S]]] = state.buffer(Set(), (_, x) => x, lock)

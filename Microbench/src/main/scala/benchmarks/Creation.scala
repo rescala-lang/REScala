@@ -14,7 +14,7 @@ import rescala.{Event, Evt, Signal, Var}
 @Fork(1)
 @Threads(1)
 @State(Scope.Benchmark)
-class Creation[S <: rescala.graph.State] {
+class Creation[S <: rescala.graph.Spores] {
 
   implicit var engine: Engine[S, Turn[S]] = _
 

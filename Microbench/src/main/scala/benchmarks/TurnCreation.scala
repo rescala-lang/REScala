@@ -13,7 +13,7 @@ import rescala.turns.{Engine, Turn}
 @Fork(1)
 @Threads(1)
 @State(Scope.Benchmark)
-class TurnCreation[S <: rescala.graph.State] {
+class TurnCreation[S <: rescala.graph.Spores] {
 
   implicit var engine: Engine[S, Turn[S]] = _
 

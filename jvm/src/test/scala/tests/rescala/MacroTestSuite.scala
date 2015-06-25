@@ -6,13 +6,13 @@ import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.Infiltrator.getLevel
-import rescala.graph.State
+import rescala.graph.Spores
 import rescala.turns.{Engine, Turn}
 
 object MacroTestSuite extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])
-class MacroTestSuite[S <: State](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
+class MacroTestSuite[S <: Spores](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
   implicit val implicitEngine: Engine[S, Turn[S]] = engine
   import implicitEngine.{Evt, Var, Signal, Event}
 
