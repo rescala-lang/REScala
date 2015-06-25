@@ -80,43 +80,6 @@ case class Frame[T](var turn: PipeliningTurn, val at: Pipeline) {
     blockedThreads.foreach { LockSupport.unpark(_) }
   }
 
-  /**
-   * Waits until the predecessor of this frame has written. The predecessor
-   * of the frame may change but only on code which is synchronized on the given
-   * modificationLock object.
-   */
-  protected[rescala] final def awaitPredecessor(modificationLock: AnyRef, waitingTurn: PipeliningTurn) = {
-    var waits = true
-    while (waits) {
-      // Get the predecessor and check whether we need to wait on it
-      // This is synchronized on the modification lock because the predecessor
-      // is not allowed to be changed by an other thread of this block
-      // is executed
-      val (creatorThread, predTurn) = modificationLock.synchronized {
-        if (predecessor != null) {
-          predecessor.lockObject.synchronized {
-            // Register the current thread as waiting if need to wait
-            waits = !predecessor.isWritten
-            if (waits)
-              predecessor.lockedOnThread += Thread.currentThread()
-          }
-          (predecessor.creatorThread, predecessor.turn)
-        } else {
-          waits = false
-          (null.asInstanceOf[Thread], null.asInstanceOf[PipeliningTurn])
-        }
-
-      }
-      // Park the current thread if needed
-      // The current threads gets unparked if the predecessor changes or
-      // the predecessor is marked as written
-      if (waits) {
-        assert(waitingTurn >= predTurn)
-        LockSupport.park(creatorThread)
-      }
-    }
-    assert(predecessor == null || predecessor.isWritten)
-  }
 
   private def waitForWritten(modificationLock: AnyRef, waitingTurn: PipeliningTurn): Option[Frame[T]] = {
     modificationLock.synchronized {

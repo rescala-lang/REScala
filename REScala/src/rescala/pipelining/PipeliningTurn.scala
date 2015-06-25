@@ -346,6 +346,8 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
           }
         }
       }
+      
+      println(s"Completed register during $this at $source: ${Pipeline(source).getPipelineFramesWithStable()}");
 
     }
   }

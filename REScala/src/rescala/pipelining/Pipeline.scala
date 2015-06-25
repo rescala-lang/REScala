@@ -184,10 +184,7 @@ class Pipeline(val reactive: Reactive) {
   }
 
   protected[rescala] def waitUntilCanWrite(implicit turn: PipeliningTurn): Unit = {
-    findFrame(x => x) match {
-      case Some(turnFrame) => turnFrame.awaitPredecessor(pipelineLock, turn)
-      case None            => //throw new AssertionError(s"No frame for $turn at $this")
-    }
+    waitUntilCanRead
   }
 
   protected[rescala] def waitUntilCanRead(implicit turn: PipeliningTurn): Unit = {
@@ -242,9 +239,19 @@ class Pipeline(val reactive: Reactive) {
 
   protected[rescala] def createFrameBefore(implicit turn: PipeliningTurn): Unit = lockPipeline {
     assert(!hasFrame)
-    def createFrame(prev: Content): CFrame = {
+    def createFrame(prev: CFrame): CFrame = {
       val newFrame = Frame[Content](turn, this)
-      newFrame.content = duplicate(prev, turn)
+      
+      // Usually one would copy the data from the previous one. 
+      // When creating frames sequentially, this is true ever.
+      // But for parallel framing we need to insert a frame above another one, while the other one
+      // has changes in its outgoing due to an dynamic dependency add. Nothing else could have changed
+      // before but it is necessary to take these changes into account. There will be never the case
+      // that these changes should not be copied in this frame because the one which applied them to
+      // all frames below it, is prev or an even earlier frame
+      val copyFrame = if (prev.next() == null) prev else prev.next()
+      
+      newFrame.content = duplicate(copyFrame.content, turn)
       assert(newFrame.turn == turn)
       newFrame
     }
@@ -269,7 +276,7 @@ class Pipeline(val reactive: Reactive) {
     }
 
     val predecessor = findPreviousFrame()
-    val newFrame = createFrame(predecessor.content)
+    val newFrame = createFrame(predecessor)
     insertAfter(newFrame, predecessor)
 
     assert(hasFrame)

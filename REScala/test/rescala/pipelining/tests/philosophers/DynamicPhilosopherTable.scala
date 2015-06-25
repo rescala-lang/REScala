@@ -24,11 +24,11 @@ class DynamicPhilosopherTable(philosopherCount: Int, work: Long)(implicit val en
     }
   }
 
-  def calcFork(leftName: String, rightName: String)(leftState: Signal[Philosopher], rightState: Signal[Philosopher])(turn : Turn): Fork = {
+  def calcFork(leftName: String, rightName: String)(leftState: Signal[Philosopher], rightState: Signal[Philosopher])(turn: Turn): Fork = {
     val state = leftState(turn) match {
       case Thinking => rightState(turn) match {
         case Thinking => Free
-        case Hungry => Taken(rightName)
+        case Hungry   => Taken(rightName)
       }
       case Hungry => Taken(leftName)
     }
@@ -36,20 +36,19 @@ class DynamicPhilosopherTable(philosopherCount: Int, work: Long)(implicit val en
     state
   }
 
-  def calcVision(ownName: String)(leftFork: Signal[Fork], rightFork: Signal[Fork])(implicit turn : Turn): Vision = {
+  def calcVision(ownName: String)(leftFork: Signal[Fork], rightFork: Signal[Fork])(implicit turn: Turn): Vision = {
     val vision = leftFork(turn) match {
       case Free => rightFork(turn) match {
-        case Free => Ready
+        case Free        => Ready
         case Taken(name) => WaitingFor(name)
       }
       case Taken(`ownName`) => rightFork(turn) match {
         case Taken(`ownName`) => Eating
-        case _ => WaitingFor(ownName)
+        case _                => WaitingFor(ownName)
       }
       case Taken(name) => WaitingFor(name)
     }
-    
-    
+
     println(s"${Thread.currentThread().getId}: $ownName has vision $vision")
     vision
   }
@@ -61,17 +60,17 @@ class DynamicPhilosopherTable(philosopherCount: Int, work: Long)(implicit val en
 
     val forks = for (i <- 0 until tableSize) yield {
       val nextCircularIndex = mod(i + 1)
-    //  lift(phils(i), phils(nextCircularIndex))(calcFork(i.toString, nextCircularIndex.toString))
+      //  lift(phils(i), phils(nextCircularIndex))(calcFork(i.toString, nextCircularIndex.toString))
       val leftPhil = phils(i)
       val rightPhil = phils(nextCircularIndex)
       dynamic()(turn => calcFork(i.toString, nextCircularIndex.toString)(leftPhil, rightPhil)(turn))
-      
+
     }
 
     for (i <- 0 until tableSize) yield {
       val leftFork = forks(i)
       val rightFork = forks(mod(i - 1))
-      val vision = dynamic() (turn => calcVision(i.toString)(leftFork, rightFork)(turn))
+      val vision = dynamic()(turn => calcVision(i.toString)(leftFork, rightFork)(turn))
       Seating(i, phils(i), leftFork, rightFork, vision)
     }
   }
@@ -82,13 +81,17 @@ class DynamicPhilosopherTable(philosopherCount: Int, work: Long)(implicit val en
         import Pipeline.pipelineFor
         println(s"${Thread.currentThread().getId}: ${seating.placeNumber} is hungry")
         assert(seating.leftFork.get(turn) == Free)
-        assert(seating.rightFork.get(turn) == Free, s"${Thread.currentThread().getId}: Right fork is not free during $turn: leftfork=${seating.leftFork} rightfork=${seating.rightFork} vision=${seating.vision}\n"+
+        assert(seating.rightFork.get(turn) == Free, s"${Thread.currentThread().getId}: Right fork is not free during $turn: leftfork=${seating.leftFork} rightfork=${seating.rightFork} vision=${seating.vision}\n" +
           s"RightForkframes=${pipelineFor(seating.rightFork).getPipelineFramesWithStable()}\n" +
           s"LeftForkframes=${pipelineFor(seating.leftFork).getPipelineFramesWithStable()}\n" +
           s"Visionframes=${pipelineFor(seating.vision).getPipelineFramesWithStable()}")
-        assert(seating.leftFork.outgoing.get(turn).contains(seating.vision))
-        assert(seating.rightFork.outgoing.get(turn).contains(seating.vision), s"${Thread.currentThread().getId}: Vision ${seating.vision} not in outgoing for right fork ${seating.rightFork} during $turn")
-        
+        Pipeline(seating.leftFork).lockDynamic {
+          assert(seating.leftFork.outgoing.get(turn).contains(seating.vision))
+        }
+        Pipeline(seating.rightFork).lockDynamic {
+          assert(seating.rightFork.outgoing.get(turn).contains(seating.vision), s"${Thread.currentThread().getId}: Vision ${seating.vision} not in outgoing for right fork ${seating.rightFork} during $turn")
+        }
+
         seating.philosopher.admit(Hungry)(turn)
         true
       } else {
