@@ -6,15 +6,15 @@ import java.util.concurrent.{ConcurrentLinkedQueue, CountDownLatch}
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
-import rescala.graph.Reactive
-import rescala.synchronization.{ParRP => Pessimistic}
+import rescala.graph.{ParRPState, Reactive}
+import rescala.synchronization.{ParRP}
 import rescala.turns.{Engine, Engines, Turn}
 import rescala.{Signals, Var}
 
 import scala.collection.JavaConverters._
 
-class PessimisticTestTurn extends Pessimistic(backOff = 0) {
-  override def evaluate(r: Reactive): Unit = {
+class PessimisticTestTurn extends ParRP(backOff = 0) {
+  override def evaluate(r: Reactive[ParRPState.type]): Unit = {
     while (Pessigen.syncStack.get() match {
       case stack@(set, bar) :: tail if set(r) =>
         bar.ready.countDown()
@@ -34,17 +34,17 @@ case class Barrier(ready: CountDownLatch, go: CountDownLatch) {
   }
 }
 
-object Pessigen extends Engines.Impl(new PessimisticTestTurn) {
-  val syncStack: AtomicReference[List[(Set[Reactive], Barrier)]] = new AtomicReference(Nil)
+object Pessigen extends Engines.Impl(ParRPState, new PessimisticTestTurn) {
+  val syncStack: AtomicReference[List[(Set[Reactive[ParRPState.type]], Barrier)]] = new AtomicReference(Nil)
 
   def clear(): Int = syncStack.getAndSet(Nil).size
 
-  def sync(reactives: Reactive*): Unit = {
+  def sync(reactives: Reactive[ParRPState.type]*): Unit = {
     val bar = syncm(reactives: _*)
     Spawn(bar.await())
   }
 
-  def syncm(reactives: Reactive*): Barrier = {
+  def syncm(reactives: Reactive[ParRPState.type]*): Barrier = {
     val ready = new CountDownLatch(reactives.size)
     val go = new CountDownLatch(1)
     val syncSet = reactives.toSet
@@ -57,13 +57,13 @@ object Pessigen extends Engines.Impl(new PessimisticTestTurn) {
 
 class PessimisticTest extends AssertionsForJUnit {
 
-  implicit def factory: Engine[Turn] = Pessigen
+  implicit def factory: Engine[ParRPState.type, Turn[ParRPState.type]] = Pessigen
 
   @Test def runOnIndependentParts(): Unit = synchronized {
     val v1 = Var(false)
     val v2 = Var(false)
-    val s1 = v1.map { identity }
-    val s2 = v2.map { identity }
+    val s1 = v1.map {identity}
+    val s2 = v2.map {identity}
 
     Pessigen.sync(s1, s2)
 
@@ -87,7 +87,7 @@ class PessimisticTest extends AssertionsForJUnit {
     val sum = mapped.reduce(Signals.lift(_, _)(_ + _))
     val results = new ConcurrentLinkedQueue[Int]()
     sum.changed.+=(results.add)
-    val threads = sources.map(v => Spawn { latch.countDown(); latch.await(); v.set(1) })
+    val threads = sources.map(v => Spawn {latch.countDown(); latch.await(); v.set(1)})
     threads.foreach(_.join())
 
     assert(results.asScala.sameElements(Range(size + 1, 2 * size + 1)))
@@ -99,10 +99,10 @@ class PessimisticTest extends AssertionsForJUnit {
   @Test def crossedDynamicDependencies(): Unit = synchronized {
     val v1 = Var(false)
     val v2 = Var(false)
-    val s11 = v1.map { identity }
+    val s11 = v1.map {identity}
     // so if s11 becomes true, this adds a dependency on v2
     val s12 = Signals.dynamic(s11) { t => if (s11(t)) v2(t) else false }
-    val s21 = v2.map { identity }
+    val s21 = v2.map {identity}
     // this does as above, causing one or the other to access something which will change later
     val s22 = Signals.dynamic(s21) { t => if (s21(t)) v1(t) else false }
     var results = List[Boolean]()
@@ -126,7 +126,7 @@ class PessimisticTest extends AssertionsForJUnit {
     val t2 = Spawn(v2.set(true))
 
     //this is a rather poor way to test if turn 2 is already waiting, this is your chance to replace this with something smart!
-    while (t2.getState != Thread.State.WAITING) { Thread.sleep(1) }
+    while (t2.getState != Thread.State.WAITING) {Thread.sleep(1)}
     l1.await()
     t1.join()
     // still unchanged, turn 1 used the old value of v2
@@ -145,17 +145,19 @@ class PessimisticTest extends AssertionsForJUnit {
 
 
   object MockFacFac {
-    def apply(i0: Reactive, reg: => Unit, unreg: => Unit): Engine[Turn] = new Engines.Impl[Pessimistic](
-      new Pessimistic(backOff = 0) {
-        override def register(downstream: Reactive)(upstream: Reactive): Unit = {
-          if (upstream eq i0) reg
-          super.register(downstream)(upstream)
-        }
-        override def unregister(downstream: Reactive)(upstream: Reactive): Unit = {
-          if (upstream eq i0) unreg
-          super.unregister(downstream)(upstream)
-        }
-      })
+    def apply(i0: Reactive[ParRPState.type], reg: => Unit, unreg: => Unit): Engine[ParRPState.type, Turn[ParRPState.type]] =
+      new Engines.Impl[ParRPState.type, ParRP](
+        ParRPState,
+        new ParRP(backOff = 0) {
+          override def register(downstream: Reactive[ParRPState.type])(upstream: Reactive[ParRPState.type]): Unit = {
+            if (upstream eq i0) reg
+            super.register(downstream)(upstream)
+          }
+          override def unregister(downstream: Reactive[ParRPState.type])(upstream: Reactive[ParRPState.type]): Unit = {
+            if (upstream eq i0) unreg
+            super.unregister(downstream)(upstream)
+          }
+        })
   }
 
   @Test def addAndRemoveDependencyInOneTurn(): Unit = synchronized {
@@ -252,8 +254,8 @@ class PessimisticTest extends AssertionsForJUnit {
     // so i will start to wait on b
 
     // we start the rescala.turns …
-    val t1 = Spawn { bl0.set(true) }
-    val t2 = Spawn { il0.set(0) }
+    val t1 = Spawn {bl0.set(true)}
+    val t2 = Spawn {il0.set(0)}
 
     // now everything will should start to happen as described above (i waiting on b)
     // we then await and release the barrier
@@ -319,8 +321,8 @@ class PessimisticTest extends AssertionsForJUnit {
     // so i will start to wait on b
 
     // we start the rescala.turns …
-    val t1 = Spawn { bl0.set(true) }
-    val t2 = Spawn { il0.set(17) }
+    val t1 = Spawn {bl0.set(true)}
+    val t2 = Spawn {il0.set(17)}
 
     // now everything will should start to happen as described above (i waiting on b)
     // we then await and release the barrier
