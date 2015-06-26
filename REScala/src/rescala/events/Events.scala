@@ -41,11 +41,6 @@ trait Event[+T] extends DepHolder {
   def and[U, V, S >: T](other: Event[U], merge: (S, U) => V): Event[V] = new EventNodeAnd[S, U, V](this, other, merge)
 
   /**
-  * Event conjunction with a merge method creating a tuple of both event parameters
-  */
-  def &&[U, S >: T](other: Event[U]): Event[(S, U)] = new EventNodeAnd[S, U, (S, U)](this, other, (p1: S, p2: U) => (p1, p2))
-
-  /**
    * Transform the event parameter
    */
   def map[U, S >: T](mapping: S => U): Event[U] = new EventNodeMap[S, U](this, mapping)
