@@ -6,6 +6,7 @@ import rescala.Signals.lift
 import rescala.graph.Committable
 import rescala.turns.{ Engine, Turn }
 import rescala.{ Signal, Var }
+import rescala.pipelining.LogUtils._
 
 import scala.annotation.tailrec
 
@@ -25,14 +26,23 @@ class PhilosopherTable(philosopherCount: Int, work: Long)(implicit val engine: E
     }
   }
 
+  
+  def fib(n : Int) : Int = n match {
+    case 0 => 0
+    case 1 => 1
+    case n => fib(n-1) + fib(n-2)
+  }
+  
   def calcFork(leftName: String, rightName: String)(leftState: Philosopher, rightState: Philosopher): Fork = {
     val state = (leftState, rightState) match {
       case (Thinking, Thinking) => Free
       case (Hungry, _)          => Taken(leftName)
       case (_, Hungry)          => Taken(rightName)
     }
-    println(s"${Thread.currentThread().getId}: Fork between $leftName and $rightName is $state")
-    state
+    var sum = fib(20)
+    println(s"Fork between $leftName and $rightName is $state")
+    val v = (sum, state)
+    v._2
   }
 
   def calcVision(ownName: String)(leftFork: Fork, rightFork: Fork): Vision = {
@@ -42,8 +52,10 @@ class PhilosopherTable(philosopherCount: Int, work: Long)(implicit val engine: E
       case (Taken(name), _)                     => WaitingFor(name)
       case (_, Taken(name))                     => WaitingFor(name)
     }
-    println(s"${Thread.currentThread().getId}: $ownName has vision $vision")
-    vision
+    var sum =fib(20)
+    println(s"$ownName has vision $vision")
+   val v = (sum, vision)
+   v._2
   }
 
   def createTable(tableSize: Int): Seq[Seating] = {

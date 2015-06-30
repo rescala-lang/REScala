@@ -38,9 +38,9 @@ class AdmissionPhaseTest extends AssertionsForJUnit with MockitoSugar {
     
   }
   
-  @Test
+  @Test(timeout=100000)
   def testAdmissionPhaseValueMatchesCommitPhaseValue() = {
-    val numThreads = 1000
+    val numThreads = 100
     
     val counter = Var(0)
     val dep1 = counter.map { _ + 1 }

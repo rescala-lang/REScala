@@ -7,6 +7,7 @@ import rescala.turns.{ Engine, Turn }
 import rescala.{ Signal, Var }
 import scala.annotation.tailrec
 import rescala.pipelining.Pipeline
+import rescala.pipelining.LogUtils._
 
 class DynamicPhilosopherTable(philosopherCount: Int, work: Long)(implicit val engine: Engine[Turn]) {
 
@@ -32,7 +33,7 @@ class DynamicPhilosopherTable(philosopherCount: Int, work: Long)(implicit val en
       }
       case Hungry => Taken(leftName)
     }
-    println(s"${Thread.currentThread().getId}: Fork between $leftName and $rightName is $state")
+    println(s"Fork between $leftName and $rightName is $state")
     state
   }
 
@@ -49,7 +50,7 @@ class DynamicPhilosopherTable(philosopherCount: Int, work: Long)(implicit val en
       case Taken(name) => WaitingFor(name)
     }
 
-    println(s"${Thread.currentThread().getId}: $ownName has vision $vision")
+    println(s"$ownName has vision $vision")
     vision
   }
 
@@ -79,7 +80,7 @@ class DynamicPhilosopherTable(philosopherCount: Int, work: Long)(implicit val en
     engine.plan(seating.philosopher) { turn =>
       val forksFree = if (seating.vision(turn) == Ready) {
         import Pipeline.pipelineFor
-        println(s"${Thread.currentThread().getId}: ${seating.placeNumber} is hungry")
+        println(s"${seating.placeNumber} is hungry")
         assert(seating.leftFork.get(turn) == Free)
         assert(seating.rightFork.get(turn) == Free, s"${Thread.currentThread().getId}: Right fork is not free during $turn: leftfork=${seating.leftFork} rightfork=${seating.rightFork} vision=${seating.vision}\n" +
           s"RightForkframes=${pipelineFor(seating.rightFork).getPipelineFramesWithStable()}\n" +

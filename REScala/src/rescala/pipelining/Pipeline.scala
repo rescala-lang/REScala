@@ -313,7 +313,6 @@ class Pipeline(val reactive: Reactive) {
         }
       }
 
-      println(s"Insert write from for $otherTurn during $turn")
 
       val preceedingFrame = findFrameToInsertAfter()
 
