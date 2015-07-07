@@ -7,7 +7,7 @@ object LogUtils {
   
   @elidable(ASSERTION)
   def println(text : Any) = {
-    //Console.println(s"${Thread.currentThread().getId}: $text")
+    Console.println(s"${Thread.currentThread().getId}: $text")
   }
 
 }

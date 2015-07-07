@@ -322,6 +322,21 @@ class Pipeline(val reactive: Reactive) {
       assert(assertTurnOrder)
     }
   }
+  
+  
+  protected[pipelining] def createFrameAfter(turn: PipeliningTurn, createFor: PipeliningTurn): Boolean = lockPipeline {
+    // TODO first check for conflicts
+    // resolveConflicts(turn, at.getPipelineFrames().map { _.turn.asInstanceOf[PipeliningTurn]}.toSet)
+    if (hasFrame(createFor)) {
+      // at has already a frame for createFor, dont create a new one
+      // TODO assert that createFor is after turn in the pipeline
+      assert(createFor >= turn)
+      false
+    } else {
+      insertWriteFrameFor(createFor)(turn)
+      true
+    }
+  }
 
   protected[rescala] def deleteFrames(implicit turn: PipeliningTurn): Unit = lockPipeline {
 

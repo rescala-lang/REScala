@@ -26,13 +26,11 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
   private var turnOrder = List[PTurn]()
   private object turnOrderLock
 
-  private var completedNotRemovedTurns: Set[PTurn] = Set()
-  private object completedNotRemovedTurnsLock
-
   protected[pipelining] def addTurn(turn: PTurn) = turnOrderLock.synchronized {
       val turnOrderWasEmpty = turnOrder.isEmpty
       turnOrder :+= turn
       if (turnOrderWasEmpty) {
+        // If the first turn is added, it may start its deframing phase immediately after propagation
         turn.needContinue()
       }
   }
@@ -47,20 +45,6 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
   override final protected[pipelining] def makeTurn: PipeliningTurn = {
     val newTurn = makeNewTurn
     newTurn
-  }
-
-  protected[pipelining] def createFrameAfter(turn: PTurn, createFor: PTurn, at: Reactive): Boolean = {
-    // TODO first check for conflicts
-    // resolveConflicts(turn, at.getPipelineFrames().map { _.turn.asInstanceOf[PipeliningTurn]}.toSet)
-    if (pipelineFor(at).hasFrame(createFor)) {
-      // at has already a frame for createFor, dont create a new one
-      // TODO assert that createFor is after turn in the pipeline
-      assert(createFor >= turn)
-      false
-    } else {
-      pipelineFor(at).insertWriteFrameFor(createFor)(turn)
-      true
-    }
   }
 
   /**
@@ -85,13 +69,18 @@ class PipelineEngine extends EngineImpl[PipeliningTurn]() {
       waitsIndex > onIndex
   }
 
+  /**
+   * Calles by the PipeliningTurn if it completed its deframing phase
+   */
   protected[pipelining] def turnCompleted(completedTurn: PTurn): Unit = {
     import rescala.util.JavaFunctionsImplicits._
 
     turnOrderLock.synchronized {
       assert(turnOrder.head == completedTurn)
+      // Remove it from the order
       turnOrder = turnOrder.tail
       if (!turnOrder.isEmpty) {
+        // And tell the new head that it is allowed to start its deframing phase
         turnOrder.head.needContinue()
       }
     }

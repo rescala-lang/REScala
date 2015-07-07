@@ -323,7 +323,7 @@ class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean
                   assert(!pipelineFor(reactive).needFrame().isWritten)
 
                   println(s"Create frame for $turn at $reactive during $this")
-                  val frameCreated = engine.createFrameAfter(this, turn, reactive)
+                  val frameCreated = pipeline.createFrameAfter(this, turn)
                   anyFrameCreated ||= frameCreated
                   reactives + reactive
                 }
