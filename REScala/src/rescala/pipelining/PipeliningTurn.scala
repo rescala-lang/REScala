@@ -17,7 +17,7 @@ import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import rescala.graph.Reactive
 import rescala.graph.Frame
-import scala.actors.threadpool.locks.ReentrantLock
+
 import java.util.concurrent.locks.LockSupport
 import java.util.concurrent.Semaphore
 
