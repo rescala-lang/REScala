@@ -1,15 +1,8 @@
-package rescala.graph
+package rescala.pipelining
 
-import rescala.synchronization.{ TurnLock }
-import rescala.turns.Turn
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.locks.Condition
-import java.util.concurrent.locks.ReentrantLock
 import java.util.concurrent.locks.LockSupport
-import java.util.concurrent.atomic.AtomicReference
 import rescala.util.JavaFunctionsImplicits._
-import rescala.pipelining.Pipeline
-import rescala.pipelining.PipeliningTurn
 
 object Frame {
 
@@ -44,8 +37,8 @@ case class Frame[T](var turn: PipeliningTurn, val at: Pipeline) {
 
   private var predecessor: Frame[T] = null.asInstanceOf[Frame[T]]
   private var successor: Frame[T] = null.asInstanceOf[Frame[T]]
-  protected[rescala] final def next() = successor
-  protected[rescala] final def previous() = predecessor
+  protected[pipelining] final def next() = successor
+  protected[pipelining] final def previous() = predecessor
 
   private val creatorThread = Thread.currentThread()
   protected val lockObject = new Object
@@ -53,17 +46,17 @@ case class Frame[T](var turn: PipeliningTurn, val at: Pipeline) {
 
   var oldTurn: PipeliningTurn = null
 
-  protected[rescala] var content: T = null.asInstanceOf[T];
+  protected[pipelining] var content: T = null.asInstanceOf[T];
 
   private val touched = new AtomicBoolean(false); // I think do not need atomic here, because it is should only be accessed by one thread
   private val written = new AtomicBoolean(false);
 
-  protected[rescala] def isTouched: Boolean = touched.get
-  protected[rescala] def markTouched(): Unit = touched.set(true)
+  protected[pipelining] def isTouched: Boolean = touched.get
+  protected[pipelining] def markTouched(): Unit = touched.set(true)
 
-  protected[rescala] def isWritten = written.get
+  protected[pipelining] def isWritten = written.get
 
-  protected[rescala] final def markWritten() = {
+  protected[pipelining] final def markWritten() = {
     assert(!written.get)
     lockObject.synchronized {
       // Only retry threads if was not marked written already
@@ -72,7 +65,7 @@ case class Frame[T](var turn: PipeliningTurn, val at: Pipeline) {
     }
   }
 
-  override def toString() = s"${getClass.getSimpleName}(turn=$turn, " + (if (oldTurn != null) s"oldTurn=$oldTurn, " else "") + s"written=${isWritten}, touches=${isTouched})[$content]"
+//  override def toString() = s"${getClass.getSimpleName}(turn=$turn, " + (if (oldTurn != null) s"oldTurn=$oldTurn, " else "") + s"written=${isWritten}, touches=${isTouched})[$content]"
 
   protected def retryBlockedThreads() = lockObject.synchronized {
     val blockedThreads = lockedOnThread
@@ -100,7 +93,7 @@ case class Frame[T](var turn: PipeliningTurn, val at: Pipeline) {
     }
   }
 
-  protected[rescala] final def removeFrame() = {
+  protected[pipelining] final def removeFrame() = {
     if (successor != null) {
       successor.predecessor = this.predecessor
     }
@@ -117,13 +110,13 @@ case class Frame[T](var turn: PipeliningTurn, val at: Pipeline) {
     }
   }
 
-  protected[rescala] final def moveAfter(newPredecessor: Frame[T]) = {
+  protected[pipelining] final def moveAfter(newPredecessor: Frame[T]) = {
     assert(newPredecessor != null)
     removeFrame()
     insertAfter(newPredecessor)
   }
 
-  protected[rescala] final def insertAfter(newPredecessor: Frame[T]) = {
+  protected[pipelining] final def insertAfter(newPredecessor: Frame[T]) = {
     assert(predecessor == null)
 
     val newSuccessor = newPredecessor.successor

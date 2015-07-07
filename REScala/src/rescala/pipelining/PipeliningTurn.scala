@@ -16,7 +16,6 @@ import rescala.util.JavaFunctionsImplicits._
 import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import rescala.graph.Reactive
-import rescala.graph.Frame
 
 import java.util.concurrent.locks.LockSupport
 import java.util.concurrent.Semaphore

@@ -4,7 +4,7 @@ import scala.collection.immutable.Queue
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.graph.Frame
+import rescala.pipelining.Frame
 import rescala.pipelining.PipelineEngine
 import rescala.pipelining.PipeliningTurn
 import rescala.turns.Turn

@@ -14,7 +14,7 @@ import rescala.turns.Ticket
 import rescala.pipelining.PipeliningTurn
 import rescala.pipelining.PipeliningTurn
 import rescala.pipelining.PipeliningTurn
-import rescala.graph.Frame
+import rescala.pipelining.Frame
 import rescala.pipelining.Pipeline._
 
 class LinePropagationTest extends AssertionsForJUnit with MockitoSugar {
