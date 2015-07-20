@@ -6,6 +6,7 @@ import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.Infiltrator.getLevel
+import rescala.Signals
 import rescala.graph.Spores
 import rescala.turns.{Engine, Turn}
 
@@ -370,4 +371,20 @@ class MacroTestSuite[S <: Spores](engine: Engine[S, Turn[S]]) extends Assertions
     e(30)
     assert(sig.now === Some(30))
   }
+
+  @Test def extractingSignalSideEffects(): Unit = {
+    val e1 = Evt[Int]()
+    def newSignal(): Signal[Int] = e1.count()
+    val macroRes = Signal { newSignal().apply() }
+    val normalRes = Signals.dynamic() { t: Turn[S] => newSignal().apply(t) }
+    assert(macroRes.now === 0)
+    assert(normalRes.now === 0)
+    e1(1)
+    assert(macroRes.now === 1)
+    assert(normalRes.now === 0)
+    e1(1)
+    assert(macroRes.now === 2)
+    assert(normalRes.now === 0)
+  }
+
 }
