@@ -14,84 +14,16 @@ object SignalMacro {
   def SignalMacro[A: c.WeakTypeTag, S <: Spores : c.WeakTypeTag](c: blackbox.Context)(expression: c.Expr[A]): c.Expr[Signal[A, S]] = {
     import c.universe._
 
+    val uncheckedExpressions: Set[Tree] = calcUncheckedExpressions(c)(expression)
+    checkForPotentialSideEffects(c)(expression, uncheckedExpressions)
+
     // all symbols that are defined within the macro expression
-    val definedSymbols = (expression.tree collect {
+    val definedSymbols: Map[Symbol, DefTree] = (expression.tree collect {
       case defTree: DefTree => defTree.symbol -> defTree
     }).toMap
 
-    // collect expression annotated to be unchecked and do not issue warnings
-    // for those (use the standard Scala unchecked annotation for that purpose)
-    val uncheckedExpressions = (expression.tree collect {
-      case tree@Typed(_, _)
-        if (tree.tpe match {
-          case AnnotatedType(annotations, _) =>
-            annotations exists { _.tree.tpe <:< typeOf[unchecked] }
-          case _ => false
-        }) =>
-        def uncheckedSubExpressions(tree: Tree): List[Tree] = tree match {
-          case Select(expr, _) => expr :: uncheckedSubExpressions(expr)
-          case Apply(expr, _) => expr :: uncheckedSubExpressions(expr)
-          case TypeApply(expr, _) => expr :: uncheckedSubExpressions(expr)
-          case Typed(expr, _) => expr :: uncheckedSubExpressions(expr)
-          case Block(_, expr) => expr :: Nil
-          case _ => Nil
-        }
-        uncheckedSubExpressions(tree)
-    }).flatten.toSet
-
-    // generate warning for some common cases where called functions are
-    // either unnecessary (if free of side effects) or have side effects
-    def isMethodWithPotentialNonLocalSideEffects(toCheck: Tree) = toCheck match {
-      case function@(TypeApply(_, _) | Apply(_, _) | Select(_, _))
-        if !(uncheckedExpressions contains function) =>
-        val arguments = toCheck match {
-          case TypeApply(_, args) => args
-          case Apply(_, args) => args
-          case _ => List.empty
-        }
-
-        val noFunctionInArgs = !(arguments exists {
-          case tree
-            if (tree.tpe match {
-              case TypeRef(_, _, args) => args.nonEmpty
-              case _ => false
-            }) => true
-          case _ => false
-        })
-
-        val noConstructorInFun = function exists {
-          case Apply(fun, args) =>
-            !(fun exists {
-              case Select(_, termNames.CONSTRUCTOR) => true
-              case _ => false
-            })
-          case _ => false
-        }
-
-        noFunctionInArgs && noConstructorInFun
-      case _ => false
-    }
-
-    def potentialSideEffectWarning(pos: Position) =
-      c.warning(pos,
-        "Statement may either be unnecessary or have side effects. " +
-          "Signal expressions should have no side effects.")
-
-    expression.tree foreach {
-      case Block(stats, _) =>
-        stats foreach { stat =>
-          if (isMethodWithPotentialNonLocalSideEffects(stat))
-            potentialSideEffectWarning(stat.pos)
-        }
-      case tree =>
-        if (isMethodWithPotentialNonLocalSideEffects(tree) &&
-          tree.tpe =:= typeOf[Unit])
-          potentialSideEffectWarning(tree.pos)
-    }
-
-    // the argument that is used by the SignalSynt class to assemble dynamic
-    // dependencies
-    // every Signal { ... } macro instance gets expanded into a SignalSynt
+    // the name of the generated turn argument passed to the signal closure
+    // every Signal { ... } macro instance gets expanded into a dynamic signal
     val signalSyntArgName = TermName(c.freshName("s$"))
     val signalSyntArgIdent = Ident(signalSyntArgName)
     internal setType(signalSyntArgIdent, weakTypeOf[Turn[S]])
@@ -249,4 +181,85 @@ object SignalMacro {
 
     c.Expr[Signal[A, S]](c untypecheck block)
   }
+
+  def calcUncheckedExpressions[A: c.WeakTypeTag](c: blackbox.Context)(expression: c.Expr[A]): Set[c.universe.Tree] = {
+    import c.universe._
+    (expression.tree collect {
+      case tree@Typed(_, _)
+        if (tree.tpe match {
+          case AnnotatedType(annotations, _) =>
+            annotations exists { _.tree.tpe <:< typeOf[unchecked] }
+          case _ => false
+        }) =>
+        def uncheckedSubExpressions(tree: Tree): List[Tree] = tree match {
+          case Select(expr, _) => expr :: uncheckedSubExpressions(expr)
+          case Apply(expr, _) => expr :: uncheckedSubExpressions(expr)
+          case TypeApply(expr, _) => expr :: uncheckedSubExpressions(expr)
+          case Typed(expr, _) => expr :: uncheckedSubExpressions(expr)
+          case Block(_, expr) => expr :: Nil
+          case _ => Nil
+        }
+        uncheckedSubExpressions(tree)
+    }).flatten.toSet
+  }
+
+  def checkForPotentialSideEffects[A: c.WeakTypeTag, S <: Spores : c.WeakTypeTag]
+    (c: blackbox.Context)
+    (expression: c.Expr[A], uncheckedExpressions: Set[c.universe.Tree]): Unit = {
+
+    import c.universe._
+    // collect expression annotated to be unchecked and do not issue warnings
+    // for those (use the standard Scala unchecked annotation for that purpose)
+
+    // generate warning for some common cases where called functions are
+    // either unnecessary (if free of side effects) or have side effects
+    def isMethodWithPotentialNonLocalSideEffects(toCheck: Tree) = toCheck match {
+      case function@(TypeApply(_, _) | Apply(_, _) | Select(_, _))
+        if !(uncheckedExpressions contains function) =>
+        val arguments = toCheck match {
+          case TypeApply(_, args) => args
+          case Apply(_, args) => args
+          case _ => List.empty
+        }
+
+        val noFunctionInArgs = !(arguments exists {
+          case tree
+            if (tree.tpe match {
+              case TypeRef(_, _, args) => args.nonEmpty
+              case _ => false
+            }) => true
+          case _ => false
+        })
+
+        val noConstructorInFun = function exists {
+          case Apply(fun, args) =>
+            !(fun exists {
+              case Select(_, termNames.CONSTRUCTOR) => true
+              case _ => false
+            })
+          case _ => false
+        }
+
+        noFunctionInArgs && noConstructorInFun
+      case _ => false
+    }
+
+    def potentialSideEffectWarning(pos: Position) =
+      c.warning(pos,
+        "Statement may either be unnecessary or have side effects. " +
+          "Signal expressions should have no side effects.")
+
+    expression.tree foreach {
+      case Block(stats, _) =>
+        stats foreach { stat =>
+          if (isMethodWithPotentialNonLocalSideEffects(stat))
+            potentialSideEffectWarning(stat.pos)
+        }
+      case tree =>
+        if (isMethodWithPotentialNonLocalSideEffects(tree) &&
+          tree.tpe =:= typeOf[Unit])
+          potentialSideEffectWarning(tree.pos)
+    }
+  }
+
 }
