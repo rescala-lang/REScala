@@ -254,6 +254,18 @@ class MacroTestSuite[S <: Spores](engine: Engine[S, Turn[S]]) extends Assertions
     assert(s2.now === List(1, 2, 4))
   }
 
+  @Test def patternMatchingAnonymousFunctionNestedSignals(): Unit = {
+    val v1 = Var(1)
+    val v2 = Var(2)
+    val s1 = Signal { List(Some(v1), None, Some(v2), None) }
+    val s2 = Signal {
+      s1() collect { case Some(n) => n() }
+    }
+    assert(s2.now === List(1, 2))
+    v1.set(10)
+    assert(s2.now === List(10, 2))
+  }
+
   @Test def outerAndInnerValues(): Unit = {
     val v = Var(0)
     object obj {
