@@ -260,7 +260,7 @@ class MacroTestSuite[S <: Spores](engine: Engine[S, Turn[S]]) extends Assertions
       def sig = Signal { v() }
     }
 
-    val evt = Evt[Int]
+    val evt = Evt[Int]()
 
     val testsig = Signal {
       val localsig = obj.sig
@@ -349,7 +349,7 @@ class MacroTestSuite[S <: Spores](engine: Engine[S, Turn[S]]) extends Assertions
 
     def getSignal(obj: {def evt: Event[Int]}) = obj.evt
 
-    val e = Evt[Int]
+    val e = Evt[Int]()
     val o = new {val evt = e }
 
     val sig = Signal { getSignal(o).latestOption()(implicitly)() }
