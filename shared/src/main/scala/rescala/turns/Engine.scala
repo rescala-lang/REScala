@@ -2,7 +2,7 @@ package rescala.turns
 
 import rescala.{Events, Signals, Signal}
 import rescala.graph.{Reactive, Spores}
-import rescala.macros.SignalMacro
+import rescala.macros.ReactiveMacros
 
 import scala.annotation.implicitNotFound
 import scala.language.experimental.macros
@@ -20,7 +20,9 @@ trait Engine[S <: Spores, +TTurn <: Turn[S]] {
   def dynamic[T](dependencies: Reactive[S]*)(expr: Turn[S] => T)(implicit ticket: Ticket[S]): rescala.Signal[T, S] = Signals.dynamic(dependencies: _*)(expr)
   def dynamicE[T](dependencies: Reactive[S]*)(expr: Turn[S] => Option[T])(implicit ticket: Ticket[S]): rescala.Event[T, S] = Events.dynamic(dependencies: _*)(expr)
 
-  def Signal[A](expression: A): Signal[A] = macro SignalMacro.SignalMacro[A, S]
+  def Signal[A](expression: A): Signal[A] = macro ReactiveMacros.SignalMacro[A, S]
+  def Event[A](expression: Option[A]): Event[A] = macro ReactiveMacros.EventMacro[A, S]
+
 
   /** used for the creation of state inside reactives */
   private[rescala] def bufferFactory: S

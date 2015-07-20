@@ -36,4 +36,23 @@ class MacroEventTestSuite[S <: Spores](engine: Engine[S, Turn[S]]) extends Asser
 
   }
 
+  @Test def useEventExpression(): Unit = {
+    val e1 = Evt[Int]()
+    val e2 = Evt[Int]()
+    val event = Event { Some(List(e1(), e2()).flatten) }
+    val res = event.latest(Nil)
+
+    assert(res.now === Nil)
+    e1(9)
+    assert(res.now === List(9))
+    e2(10)
+    assert(res.now === List(10))
+    implicitEngine.plan(e1, e2) { t =>
+      e1.admit(11)(t)
+      e2.admit(12)(t)
+    }
+    assert(res.now === List(11, 12))
+
+  }
+
 }
