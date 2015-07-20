@@ -19,25 +19,6 @@ object SignalMacro {
       case defTree: DefTree => defTree.symbol -> defTree
     }).toMap
 
-    // find inner macros that are not expanded
-    // (note: should inner macros not be expanded first by the compiler?)
-    // (remark: they are, at least for scala 2.11.2 `SignalM { SignalM { 1 } }` does not trigger the code below)
-    // we need to take special care for nested signals
-    val nestedUnexpandedMacros = (expression.tree collect {
-      case tree if tree.symbol != null && tree.symbol.isMacro =>
-        val innerMacro = tree match {
-          case Apply(TypeApply(Select(makro, _), _), _) => makro
-          case TypeApply(Select(makro, _), _) => makro
-          case Select(makro, _) => makro
-          case _ => null
-        }
-
-        if (innerMacro != null && innerMacro.tpe =:= typeOf[this.type])
-          tree :: (tree filter { _ => true })
-        else
-          List.empty
-    }).flatten.toSet
-
     // collect expression annotated to be unchecked and do not issue warnings
     // for those (use the standard Scala unchecked annotation for that purpose)
     val uncheckedExpressions = (expression.tree collect {
@@ -146,8 +127,7 @@ object SignalMacro {
           // to
           //   SignalSynt { s => a(s) + b(s) }
           case tree@q"$reactive.apply()"
-            if isStateful(reactive)
-              && !(nestedUnexpandedMacros contains tree) =>
+            if isStateful(reactive) =>
             detectedSignals ::= reactive
             val reactiveApply = Select(reactive, TermName("apply"))
             internal setType(reactiveApply, tree.tpe)
@@ -186,8 +166,7 @@ object SignalMacro {
                   // itself called on a reactive value
                   case tree@Apply(Select(chainedReactive, apply), List()) =>
                     isStateful(chainedReactive) &&
-                      apply.decodedName.toString == "apply" &&
-                      !(nestedUnexpandedMacros contains tree)
+                      apply.decodedName.toString == "apply"
 
                   // check reference definitions that are defined within the
                   // macro expression but not within the reactive
