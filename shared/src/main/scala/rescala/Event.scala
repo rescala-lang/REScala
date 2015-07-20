@@ -1,12 +1,12 @@
 package rescala
 
-import rescala.graph.{Reactive, Pulsing, Spores}
+import rescala.graph.{PulseOption, Reactive, Pulsing, Spores}
 import rescala.turns.Ticket
 
 import scala.collection.LinearSeq
 import scala.collection.immutable.Queue
 
-trait Event[+T, S <: Spores] extends Pulsing[T, S]{
+trait Event[+T, S <: Spores] extends PulseOption[T, S]{
 
   /** add an observer */
   final def +=(react: T => Unit)(implicit ticket: Ticket[S]): Observe[S] = observe(react)(ticket)

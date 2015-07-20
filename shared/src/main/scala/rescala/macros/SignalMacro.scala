@@ -1,7 +1,7 @@
 package rescala.macros
 
 import rescala.Signal
-import rescala.graph.{Spores, Stateful}
+import rescala.graph.{PulseOption, Spores, Stateful}
 import rescala.turns.Turn
 
 import scala.language.experimental.macros
@@ -31,7 +31,7 @@ object SignalMacro {
     // the signal values that will be cut out of the Signal expression
     var cutOutSignals = List[ValDef]()
     // list of detected inner signals
-    var detectedSignals = List[Tree]()
+    var detectedReactives = List[Tree]()
 
     object transformer extends Transformer {
       private def treeTypeNullWarning() =
@@ -45,9 +45,9 @@ object SignalMacro {
             "since it potentially creates a new reactive every time the " +
             "signal is evaluated which can lead to unintentional behavior")
 
-      private def isStateful(tree: Tree) =
+      private def isReactive(tree: Tree) =
         if (tree.tpe == null) { treeTypeNullWarning(); false }
-        else tree.tpe <:< typeOf[Stateful[_, _]]
+        else tree.tpe <:< typeOf[Stateful[_, _]] || tree.tpe <:< typeOf[PulseOption[_, _]]
 
       override def transform(tree: Tree) =
         tree match {
@@ -59,8 +59,8 @@ object SignalMacro {
           // to
           //   SignalSynt { s => a(s) + b(s) }
           case tree@q"$reactive.apply()"
-            if isStateful(reactive) =>
-            detectedSignals ::= reactive
+            if isReactive(reactive) =>
+            detectedReactives ::= reactive
             val reactiveApply = Select(reactive, TermName("apply"))
             internal setType(reactiveApply, tree.tpe)
             Apply(super.transform(reactiveApply), List(signalSyntArgIdent))
@@ -78,7 +78,7 @@ object SignalMacro {
           // and creates a signal value
           //   val s = event.count
           case reactive@(TypeApply(_, _) | Apply(_, _) | Select(_, _))
-            if isStateful(reactive) &&
+            if isReactive(reactive) &&
               // make sure that the expression e to be cut out
               // - refers to a term that is not a val or var
               //   or an accessor for a field
@@ -97,7 +97,7 @@ object SignalMacro {
                   // check if reactive results from a function that is
                   // itself called on a reactive value
                   case tree@Apply(Select(chainedReactive, apply), List()) =>
-                    isStateful(chainedReactive) &&
+                    isReactive(chainedReactive) &&
                       apply.decodedName.toString == "apply"
 
                   // check reference definitions that are defined within the
@@ -163,7 +163,7 @@ object SignalMacro {
     // upper bound parameters, only use static outside declarations
     // note that this potentially misses many dependencies
     // these will be detected dynamically, but that may cause multiple evaluations when creating a signal
-    val filteredDetections = detectedSignals.filter(tree =>
+    val filteredDetections = detectedReactives.filter(tree =>
       !definedSymbols.contains(tree.symbol) &&
         tree.symbol.isTerm &&
         (tree.symbol.asTerm.isVal ||

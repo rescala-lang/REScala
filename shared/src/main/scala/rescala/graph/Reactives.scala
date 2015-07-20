@@ -55,6 +55,16 @@ trait Pulsing[+P, S <: Spores] extends Reactive[S] {
   final val reader: Reader[P, S] = new Reader[P, S](pulses)
 }
 
+/** dynamic access to pulsing values */
+trait PulseOption[+P, S <: Spores] extends Pulsing[P, S] {
+  def apply(): Option[P] = throw new IllegalAccessException(s"$this.apply called outside of macro")
+  final def apply[T](turn: Turn[S]): Option[P] = {
+    turn.accessDynamic(this)
+    turn.useDependency(this)
+    pulse(turn).toOption
+  }
+}
+
 
 /** a node that has a current state */
 trait Stateful[+A, S <: Spores] extends Pulsing[A, S] {
