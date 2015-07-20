@@ -1,6 +1,6 @@
 package rescala.turns
 
-import rescala.{Signals, Signal}
+import rescala.{Events, Signals, Signal}
 import rescala.graph.{Reactive, Spores}
 import rescala.macros.SignalMacro
 
@@ -18,6 +18,7 @@ trait Engine[S <: Spores, +TTurn <: Turn[S]] {
   def Evt[A](): rescala.Evt[A, S] = rescala.Evt[A, S]()(this)
   def Var[A](v: A): rescala.Var[A, S] = rescala.Var[A, S](v)(this)
   def dynamic[T](dependencies: Reactive[S]*)(expr: Turn[S] => T)(implicit ticket: Ticket[S]): rescala.Signal[T, S] = Signals.dynamic(dependencies: _*)(expr)
+  def dynamicE[T](dependencies: Reactive[S]*)(expr: Turn[S] => Option[T])(implicit ticket: Ticket[S]): rescala.Event[T, S] = Events.dynamic(dependencies: _*)(expr)
 
   def Signal[A](expression: A): Signal[A] = macro SignalMacro.SignalMacro[A, S]
 

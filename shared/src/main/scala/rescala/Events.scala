@@ -7,16 +7,34 @@ import rescala.turns.{Ticket, Turn}
 
 object Events {
 
+  private class StaticEvent[T, S <: Spores](engine: S, dependencies: Set[Reactive[S]], expr: Turn[S] => Pulse[T], override val toString: String)
+    extends Base(engine.bud(), dependencies) with Event[T, S] with StaticReevaluation[T, S] {
+    override def calculatePulse()(implicit turn: Turn[S]): Pulse[T] = expr(turn)
+  }
+
+  private class DynamicEvent[T, S <: Spores](bufferFactory: S, expr: Turn[S] => Pulse[T]) extends Base[S](bufferFactory.bud()) with Event[T, S] with DynamicReevaluation[T, S] {
+    def calculatePulseDependencies(implicit turn: Turn[S]): (Pulse[T], Set[Reactive[S]]) = {
+      val (newValue, dependencies) = turn.collectDependencies(expr(turn))
+      (newValue, dependencies)
+    }
+  }
+
   /** the basic method to create static events */
   def static[T, S <: Spores](name: String, dependencies: Reactive[S]*)(calculate: Turn[S] => Pulse[T])(implicit ticket: Ticket[S]): Event[T, S] = ticket { initTurn =>
     val dependencySet: Set[Reactive[S]] = dependencies.toSet
     initTurn.create(dependencySet) {
-      new Base(initTurn.bufferFactory.bud(), dependencySet) with Event[T, S] with StaticReevaluation[T, S] {
-        override def calculatePulse()(implicit turn: Turn[S]): Pulse[T] = calculate(turn)
-        override def toString = name
-      }
+      new StaticEvent[T, S](initTurn.bufferFactory, dependencySet, calculate, name)
     }
   }
+
+  /** create dynamic events */
+  def dynamic[T, S <: Spores](dependencies: Reactive[S]*)(expr: Turn[S] => Option[T])(implicit ticket: Ticket[S]): Event[T, S] = {
+    ticket { initialTurn =>
+      initialTurn.create(dependencies.toSet, dynamic = true)(
+        new DynamicEvent[T, S](initialTurn.bufferFactory, expr.andThen(Pulse.fromOption)))
+    }
+  }
+
 
   /** Used to model the change event of a signal. Keeps the last value */
   def change[T, S <: Spores](signal: Signal[T, S])(implicit ticket: Ticket[S]): Event[(T, T), S] =
@@ -64,7 +82,7 @@ object Events {
       for {
         left <- ev1.pulse(turn)
         right <- ev2.pulse(turn)
-      } yield { merge(left, right) }
+      } yield {merge(left, right)}
     }
 
 
