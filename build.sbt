@@ -14,7 +14,7 @@ lazy val rescala = crossProject.in(file("."))
   .settings(
     name := "rescala",
 
-    version := "0.13.0",
+    version := "0.14.0",
 
     crossScalaVersions := Seq("2.10.5", "2.11.6"),
 
