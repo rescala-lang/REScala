@@ -37,6 +37,7 @@ final class Var[T, S <: Spores](initval: T)(engine: S) extends Base[S](engine.bu
 
   def update(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = set(value)
   def set(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) { admit(value)(_) }
+  def transform(f: T => T)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) { t => admit(f(get(t)))(t) }
 
   def admit(value: T)(implicit turn: Turn[S]): Unit = {
     val p = Pulse.diff(value, get)

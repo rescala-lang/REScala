@@ -67,5 +67,21 @@ class VarTestSuite[S <: Spores](engine: Engine[S, Turn[S]]) extends AssertionsFo
     assert(changes == 2)
   }
 
+  @Test def transformVar(): Unit = {
+    val v1 = Var(0)
+    def inc() = v1.transform(1.+)
+
+    assert(v1.now === 0)
+    inc()
+    assert(v1.now === 1)
+
+    val s1 = v1.map(identity)
+
+    assert(s1.now === 1)
+    inc()
+    assert(v1.now === 2)
+    assert(s1.now === 2)
+
+  }
 
 }
