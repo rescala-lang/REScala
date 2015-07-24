@@ -253,4 +253,30 @@ class HigherOrderTestSuite[S <: Spores](engine: Engine[S, Turn[S]]) extends Asse
     assert(log == List("A", "B"))
   }
 
+
+  @Test def flattenEvents(): Unit = {
+    val e1 = Evt[Event[Int]]()
+    val f1 = e1.flatten()
+    val res = f1.log()
+    val e2 = Evt[Int]()
+    val e3 = Evt[Int]()
+    e2(10)
+    e3(10)
+
+    assert(res.now === Nil)
+    e1(e2)
+    assert(res.now === Nil)
+    e3(10)
+    assert(res.now === Nil)
+    e2(10)
+    assert(res.now === List(10))
+    e1(e3)
+    assert(res.now === List(10))
+    e2(20)
+    assert(res.now === List(10))
+    e3(30)
+    assert(res.now === List(30, 10))
+
+  }
+
 }

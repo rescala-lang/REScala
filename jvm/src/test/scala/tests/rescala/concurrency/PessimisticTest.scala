@@ -9,7 +9,7 @@ import org.scalatest.junit.AssertionsForJUnit
 import rescala.graph.{ParRPSpores, Reactive}
 import rescala.synchronization.{ParRP}
 import rescala.turns.{Engine, Engines, Turn}
-import rescala.{Signals, Var}
+import rescala.{Signal, Signals, Var}
 
 import scala.collection.JavaConverters._
 
@@ -58,6 +58,9 @@ object Pessigen extends Engines.Impl(ParRPSpores, new PessimisticTestTurn) {
 class PessimisticTest extends AssertionsForJUnit {
 
   implicit def factory: Engine[ParRPSpores.type, Turn[ParRPSpores.type]] = Pessigen
+  def unsafeNow[T](s: Signal[T, ParRPSpores.type]): T = {
+    factory.plan()(s.get(_))
+  }
 
   @Test def runOnIndependentParts(): Unit = synchronized {
     val v1 = Var(false)
@@ -70,12 +73,12 @@ class PessimisticTest extends AssertionsForJUnit {
     val t1 = Spawn(v1.set(true))
 
     Thread.sleep(200)
-    assert(v1.now === false) // turn did not finish yet
+    assert(unsafeNow(v1) === false) // turn did not finish yet
 
     v2.set(true)
     t1.join()
 
-    assert(s1.now === true && s2.now === true)
+    assert(unsafeNow(s1) === true && unsafeNow(s2) === true)
     assert(Pessigen.clear() == 0)
   }
 
@@ -92,7 +95,7 @@ class PessimisticTest extends AssertionsForJUnit {
 
     assert(results.asScala.sameElements(Range(size + 1, 2 * size + 1)))
 
-    assert(sum.now === 2 * size)
+    assert(unsafeNow(sum) === 2 * size)
     assert(Pessigen.clear() == 0)
   }
 
@@ -131,13 +134,13 @@ class PessimisticTest extends AssertionsForJUnit {
     t1.join()
     // still unchanged, turn 1 used the old value of v2
     assert(results === Nil)
-    assert(s12.now === false)
+    assert(unsafeNow(s12) === false)
 
     l2.await()
     t2.join()
 
-    assert(s12.now === true)
-    assert(s22.now === true)
+    assert(unsafeNow(s12) === true)
+    assert(unsafeNow(s22) === true)
     assert(results === List(true, true))
 
     assert(Pessigen.clear() == 0)
@@ -175,7 +178,7 @@ class PessimisticTest extends AssertionsForJUnit {
     val mockFac = MockFacFac(i0, regs += 1, unregs += 1)
 
 
-    assert(i1_3.now === 42)
+    assert(unsafeNow(i1_3) === 42)
     assert(reeval === 1)
     assert(regs === 0)
     assert(unregs === 0)
@@ -183,7 +186,7 @@ class PessimisticTest extends AssertionsForJUnit {
     // now, this should create some only in turn dynamic changes
     b0.set(true)(mockFac)
 
-    assert(i1_3.now === 42)
+    assert(unsafeNow(i1_3) === 42)
     assert(reeval === 3)
     assert(regs === 1)
     assert(unregs === 1)
@@ -191,7 +194,7 @@ class PessimisticTest extends AssertionsForJUnit {
     // this does not
     b0.set(false)(mockFac)
 
-    assert(i1_3.now === 42)
+    assert(unsafeNow(i1_3) === 42)
     assert(reeval === 4)
     assert(regs === 1)
     assert(unregs === 1)
@@ -199,7 +202,7 @@ class PessimisticTest extends AssertionsForJUnit {
     // this also does not, because the level of the dynamic signals stays on 3
     b0.set(true)(mockFac)
 
-    assert(i1_3.now === 42)
+    assert(unsafeNow(i1_3) === 42)
     assert(reeval === 5)
     assert(regs === 1)
     assert(unregs === 1)
@@ -240,7 +243,7 @@ class PessimisticTest extends AssertionsForJUnit {
 
 
 
-    assert(b2b3i2.now === 42)
+    assert(unsafeNow(b2b3i2) === 42)
     assert(reeval === 1)
 
     // start both rescala.turns
@@ -250,7 +253,7 @@ class PessimisticTest extends AssertionsForJUnit {
 
     // continue just turn i
     val bBar = Pessigen.syncm(bl1)
-    // i will now try to grab bl1, which fails
+    // i unsafeNow(will) try to grab bl1, which fails
     // so i will start to wait on b
 
     // we start the rescala.turns …
@@ -268,7 +271,7 @@ class PessimisticTest extends AssertionsForJUnit {
     t1.join()
     t2.join()
 
-    assert(b2b3i2.now === 37)
+    assert(unsafeNow(b2b3i2) === 37)
     assert(reeval === 3)
 
     assert(Pessigen.clear() == 0)
@@ -307,7 +310,7 @@ class PessimisticTest extends AssertionsForJUnit {
 
 
 
-    assert(b2b3i2.now === 42)
+    assert(unsafeNow(b2b3i2) === 42)
     assert(reeval === 1)
 
     // start both rescala.turns
@@ -317,7 +320,7 @@ class PessimisticTest extends AssertionsForJUnit {
 
     // continue just turn i
     val bBar = Pessigen.syncm(bl1)
-    // i will now try to grab bl1, which fails
+    // i unsafeNow(will) try to grab bl1, which fails
     // so i will start to wait on b
 
     // we start the rescala.turns …
@@ -335,7 +338,7 @@ class PessimisticTest extends AssertionsForJUnit {
     t1.join()
     t2.join()
 
-    assert(b2b3i2.now === 17)
+    assert(unsafeNow(b2b3i2) === 17)
     // 4 reevaluations: initialisation; bl1 becomes true; bl3 becomes false; il0 changes from 11 to 17
     assert(reeval === 4)
 

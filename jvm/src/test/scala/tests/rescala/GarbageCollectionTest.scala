@@ -3,7 +3,7 @@ package tests.rescala
 
 import java.lang.ref.{ReferenceQueue, PhantomReference}
 
-import org.junit.Test
+import org.junit.{Ignore, Test}
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
@@ -22,7 +22,7 @@ class GarbageCollectionTest[S <: Spores](engine: Engine[S, Turn[S]]) extends Ass
   import implicitEngine.{Evt, Var, Signal, Event}
 
 
-  @Test def `garbage collection for simple signal mappings`() = {
+  @Ignore def `garbage collection for simple signal mappings`() = {
 
     val q = new ReferenceQueue[Var[Int]]()
 
