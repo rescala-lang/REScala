@@ -136,4 +136,7 @@ trait Event[+T, S <: Spores] extends PulseOption[T, S]{
 
   /** promotes the latest inner event to an outer event */
   final def flatten[B]()(implicit ticket: Ticket[S], ev: T <:< Event[B, S]): Event[B, S] = flatMap(ev.apply)
+
+  /** logs the events to a signal */
+  final def log()(implicit ticket: Ticket[S]): Signal[List[T], S] = fold[List[T]](Nil)((a, v) => v :: a)
 }
