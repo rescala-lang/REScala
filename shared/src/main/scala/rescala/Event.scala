@@ -31,12 +31,12 @@ trait Event[+T, S <: Spores] extends PulseOption[T, S]{
   /**
    * Events conjunction
    */
-  final def merge[U, R](other: Event[U, S])(merger: (T, U) => R)(implicit ticket: Ticket[S]): Event[R, S] = Events.merge(this, other)(merger)
+  final def and[U, R](other: Event[U, S])(merger: (T, U) => R)(implicit ticket: Ticket[S]): Event[R, S] = Events.and(this, other)(merger)
 
   /**
    * Event conjunction with a merge method creating a tuple of both event parameters
    */
-  final def zip[U](other: Event[U, S])(implicit ticket: Ticket[S]): Event[(T, U), S] = Events.merge(this, other)((_, _))
+  final def zip[U](other: Event[U, S])(implicit ticket: Ticket[S]): Event[(T, U), S] = Events.and(this, other)((_, _))
 
   /**
    * Transform the event parameter
