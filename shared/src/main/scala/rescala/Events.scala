@@ -77,7 +77,7 @@ object Events {
 
 
   /** Implementation of event conjunction */
-  def and[T1, T2, T, S <: Spores](ev1: Pulsing[T1, S], ev2: Pulsing[T2, S], merge: (T1, T2) => T)(implicit ticket: Ticket[S]): Event[T, S] =
+  def merge[T1, T2, T, S <: Spores](ev1: Pulsing[T1, S], ev2: Pulsing[T2, S])(merge: (T1, T2) => T)(implicit ticket: Ticket[S]): Event[T, S] =
     static(s"(and $ev1 $ev2)", ev1, ev2) { turn =>
       for {
         left <- ev1.pulse(turn)
