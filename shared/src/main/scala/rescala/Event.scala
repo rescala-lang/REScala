@@ -132,7 +132,9 @@ trait Event[+T, S <: Spores] extends PulseOption[T, S]{
   }
 
   /** returns the values produced by the last event produced by mapping this value */
-  final def flatMap[B](f: T => Event[B, S])(implicit ticket: Ticket[S]): Event[B, S] = Events.wrapped(map(f).latest(Evt[B, S]()))
+  final def flatMap[B](f: T => Event[B, S])(implicit ticket: Ticket[S]): Event[B, S] = ticket { implicit t =>
+    Events.wrapped(map(f).latest(new Evt[B, S]()(t.bufferFactory)))
+  }
 
   /** promotes the latest inner event to an outer event */
   final def flatten[B]()(implicit ticket: Ticket[S], ev: T <:< Event[B, S]): Event[B, S] = flatMap(ev.apply)
