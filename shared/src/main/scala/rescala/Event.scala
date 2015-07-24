@@ -31,7 +31,7 @@ trait Event[+T, S <: Spores] extends PulseOption[T, S]{
   /**
    * Events conjunction
    */
-  final def and[U, R](other: Event[U, S], merge: (T, U) => R)(implicit ticket: Ticket[S]): Event[R, S] = Events.and(this, other, merge)
+  final def merge[U, R](other: Event[U, S], merger: (T, U) => R)(implicit ticket: Ticket[S]): Event[R, S] = Events.and(this, other, merger)
 
   /**
    * Event conjunction with a merge method creating a tuple of both event parameters
