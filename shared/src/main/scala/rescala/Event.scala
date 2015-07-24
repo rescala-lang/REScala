@@ -130,4 +130,10 @@ trait Event[+T, S <: Spores] extends PulseOption[T, S]{
     val history: Signal[LinearSeq[T], S] = last(n + 1)
     history.map { h => if (h.size <= n) init else h.head }
   }
+
+  /** returns the values produced by the last event produced by mapping this value */
+  final def flatMap[B](f: T => Event[B, S])(implicit ticket: Ticket[S]): Event[B, S] = Events.wrapped(map(f).latest(Evt[B, S]()))
+
+  /** promotes the latest inner event to an outer event */
+  final def flatten[B]()(implicit ticket: Ticket[S], ev: T <:< Event[B, S]): Event[B, S] = flatMap(ev.apply)
 }
