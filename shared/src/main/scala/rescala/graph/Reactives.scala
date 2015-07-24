@@ -79,7 +79,10 @@ trait Stateful[+A, S <: Spores] extends Pulsing[A, S] {
     get(turn)
   }
 
-  final def now(implicit maybe: Ticket[S]): A = maybe {get(_)}
+  final def now(implicit maybe: Ticket[S]): A = maybe { t =>
+    t.accessDynamic(this)
+    get(t)
+  }
 
   final def get(implicit turn: Turn[S]): A = pulse match {
     case NoChange(Some(value)) => value
