@@ -12,6 +12,8 @@ class LevelQueue[S <: Spores]()(implicit val currenTurn: Turn[S]) {
 
   private var elements = SortedSet[QueueElement[S]]()
 
+  def currentLevel(): Int = elements.headOption.fold(Int.MaxValue)(_.level)
+
   /** mark the reactive as needing a reevaluation */
   def enqueue(minLevel: Int, needsEvaluate: Boolean = true)(dep: Reactive[S]): Unit = {
     elements += QueueElement[S](dep.level.get, dep, minLevel, needsEvaluate)

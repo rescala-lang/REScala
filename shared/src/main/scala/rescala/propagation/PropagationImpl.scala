@@ -11,6 +11,7 @@ trait PropagationImpl[S <: Spores] extends Turn[S] {
 
   private var toCommit = Set[Committable]()
   private var observers = List.empty[() => Unit]
+  private var _evaluated = List.empty[Reactive[S]]
 
   val levelQueue = new LevelQueue()
 
@@ -28,6 +29,7 @@ trait PropagationImpl[S <: Spores] extends Turn[S] {
         val newLevel = maximumLevel(diff.novel) + 1
         requeue(hasChanged, newLevel, redo = head.level.get < newLevel)
     }
+    _evaluated ::= head
 
   }
 
@@ -43,9 +45,14 @@ trait PropagationImpl[S <: Spores] extends Turn[S] {
 
   override def create[T <: Reactive[S]](dependencies: Set[Reactive[S]], dynamic: Boolean)(f: => T): T = {
     val reactive = f
-    ensureLevel(reactive, dependencies)
+    val level = ensureLevel(reactive, dependencies)
     if (dynamic) evaluate(reactive)
-    else dependencies.foreach(register(reactive))
+    else {
+      dependencies.foreach(register(reactive))
+      if (level <= levelQueue.currentLevel() && dependencies.exists(_evaluated.contains)) {
+        evaluate(reactive)
+      }
+    }
     reactive
   }
 
