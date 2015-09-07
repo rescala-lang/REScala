@@ -15,7 +15,7 @@ trait Engine[S <: Spores, +TTurn <: Turn[S]] {
   type Event[+A] = rescala.Event[A, S]
   type Var[A] = rescala.Var[A, S]
   type Evt[A] = rescala.Evt[A, S]
-  type Spore = S
+  type Spores = S
   type Turn = rescala.turns.Turn[S]
   type Ticket = rescala.turns.Ticket[S]
   type Reactive = rescala.graph.Reactive[S]
