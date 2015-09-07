@@ -17,10 +17,12 @@ trait Engine[S <: Spores, +TTurn <: Turn[S]] {
   type Evt[A] = rescala.Evt[A, S]
   type Spore = S
   type Turn = rescala.turns.Turn[S]
+  type Ticket = rescala.turns.Ticket[S]
+  type Reactive = rescala.graph.Reactive[S]
   def Evt[A](): Evt[A] = rescala.Evt[A, S]()(this)
   def Var[A](v: A): Var[A] = rescala.Var[A, S](v)(this)
-  def dynamic[T](dependencies: Reactive[S]*)(expr: Turn => T)(implicit ticket: Ticket[S]): Signal[T] = Signals.dynamic(dependencies: _*)(expr)
-  def dynamicE[T](dependencies: Reactive[S]*)(expr: Turn => Option[T])(implicit ticket: Ticket[S]): Event[T] = Events.dynamic(dependencies: _*)(expr)
+  def dynamic[T](dependencies: Reactive*)(expr: Turn => T)(implicit ticket: Ticket): Signal[T] = Signals.dynamic(dependencies: _*)(expr)
+  def dynamicE[T](dependencies: Reactive*)(expr: Turn => Option[T])(implicit ticket: Ticket): Event[T] = Events.dynamic(dependencies: _*)(expr)
 
   def Signal[A](expression: A): Signal[A] = macro ReactiveMacros.SignalMacro[A, S]
   def Event[A](expression: Option[A]): Event[A] = macro ReactiveMacros.EventMacro[A, S]
@@ -30,8 +32,8 @@ trait Engine[S <: Spores, +TTurn <: Turn[S]] {
   private[rescala] def bufferFactory: S
 
   /** creates runs and commits a new turn */
-  def plan[R](initialWrites: Reactive[S]*)(admissionPhase: TTurn => R): R
+  def plan[R](initialWrites: Reactive*)(admissionPhase: TTurn => R): R
 
   /** uses the current turn if any or creates a new turn if none */
-  def subplan[T](initialWrites: Reactive[S]*)(admissionPhase: TTurn => T): T
+  def subplan[T](initialWrites: Reactive*)(admissionPhase: TTurn => T): T
 }
