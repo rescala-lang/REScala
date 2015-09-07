@@ -377,14 +377,14 @@ class MacroTestSuite[S <: Spores](engine: Engine[S, Turn[S]]) extends Assertions
     def newSignal(): Signal[Int] = e1.count()
     val macroRes = Signal { newSignal().apply() }
     val normalRes = Signals.dynamic() { t: Turn[S] => newSignal().apply(t) }
-    assert(macroRes.now === 0)
-    assert(normalRes.now === 0)
+    assert(macroRes.now === 0, "before, macro")
+    assert(normalRes.now === 0, "before, normal")
     e1(1)
-    assert(macroRes.now === 1)
-    assert(normalRes.now === 0)
+    assert(macroRes.now === 1, "after, macro")
+    assert(normalRes.now === 1, "after, normal")
     e1(1)
-    assert(macroRes.now === 2)
-    assert(normalRes.now === 0)
+    assert(macroRes.now === 2, "end, macro")
+    assert(normalRes.now === 1, "end, normal")
   }
 
 }
