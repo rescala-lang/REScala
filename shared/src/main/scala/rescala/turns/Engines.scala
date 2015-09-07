@@ -11,7 +11,7 @@ object Engines {
   type NoLockEngine = Engine[SS, NoLocking[SS]]
 
   implicit val synchron: NoLockEngine = new Impl[SS, NoLocking[SS]](SimpleSpores, new FactoryReference(SimpleSpores) with NoLocking[SS]) {
-    override def plan[R](i: Reactive[SS]*)(f: NoLocking[SS] => R): R = synchronized(super.plan(i: _*)(f))
+    override def plan[R](i: Reactive*)(f: NoLocking[SS] => R): R = synchronized(super.plan(i: _*)(f))
   }
   implicit val unmanaged: NoLockEngine = new Impl[SS, NoLocking[SS]](SimpleSpores, new FactoryReference(SimpleSpores) with NoLocking[SS])
 
@@ -23,7 +23,7 @@ object Engines {
 
     val currentTurn: DynamicVariable[Option[TImpl]] = new DynamicVariable[Option[TImpl]](None)
 
-    override def subplan[T](initialWrites: Reactive[S]*)(f: TImpl => T): T = currentTurn.value match {
+    override def subplan[T](initialWrites: Reactive*)(f: TImpl => T): T = currentTurn.value match {
       case None => plan(initialWrites: _*)(f)
       case Some(turn) => f(turn)
     }
@@ -45,7 +45,7 @@ object Engines {
       * - run the party! phase
       *   - not yet implemented
       * */
-    override def plan[Res](initialWrites: Reactive[S]*)(admissionPhase: TImpl => Res): Res = {
+    override def plan[Res](initialWrites: Reactive*)(admissionPhase: TImpl => Res): Res = {
  
       val turn = makeTurn
       try {

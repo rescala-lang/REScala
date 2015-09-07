@@ -26,7 +26,7 @@ object Engines {
   implicit val default: Engine[ParRPSpores.type, ParRP] = parRP
 
   implicit val STM: Engine[STMSpores.type, STMSync] = new Impl[STMSpores.type, STMSync](STMSpores, new STMSync()) {
-    override def plan[R](i: Reactive[STMSpores.type]*)(f: STMSync => R): R = atomic { tx => super.plan(i: _*)(f) }
+    override def plan[R](i: Reactive*)(f: STMSync => R): R = atomic { tx => super.plan(i: _*)(f) }
   }
 
   def spinningWithBackoff(backOff: Int): Impl[ParRPSpores.type, ParRP] = new Impl[ParRPSpores.type, ParRP](ParRPSpores, new ParRP(backOff))
