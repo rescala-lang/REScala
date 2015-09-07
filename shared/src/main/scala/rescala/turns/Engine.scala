@@ -15,10 +15,12 @@ trait Engine[S <: Spores, +TTurn <: Turn[S]] {
   type Event[+A] = rescala.Event[A, S]
   type Var[A] = rescala.Var[A, S]
   type Evt[A] = rescala.Evt[A, S]
-  def Evt[A](): rescala.Evt[A, S] = rescala.Evt[A, S]()(this)
-  def Var[A](v: A): rescala.Var[A, S] = rescala.Var[A, S](v)(this)
-  def dynamic[T](dependencies: Reactive[S]*)(expr: Turn[S] => T)(implicit ticket: Ticket[S]): rescala.Signal[T, S] = Signals.dynamic(dependencies: _*)(expr)
-  def dynamicE[T](dependencies: Reactive[S]*)(expr: Turn[S] => Option[T])(implicit ticket: Ticket[S]): rescala.Event[T, S] = Events.dynamic(dependencies: _*)(expr)
+  type Spore = S
+  type Turn = rescala.turns.Turn[S]
+  def Evt[A](): Evt[A] = rescala.Evt[A, S]()(this)
+  def Var[A](v: A): Var[A] = rescala.Var[A, S](v)(this)
+  def dynamic[T](dependencies: Reactive[S]*)(expr: Turn => T)(implicit ticket: Ticket[S]): Signal[T] = Signals.dynamic(dependencies: _*)(expr)
+  def dynamicE[T](dependencies: Reactive[S]*)(expr: Turn => Option[T])(implicit ticket: Ticket[S]): Event[T] = Events.dynamic(dependencies: _*)(expr)
 
   def Signal[A](expression: A): Signal[A] = macro ReactiveMacros.SignalMacro[A, S]
   def Event[A](expression: Option[A]): Event[A] = macro ReactiveMacros.EventMacro[A, S]
