@@ -35,16 +35,16 @@ case class Barrier(ready: CountDownLatch, go: CountDownLatch) {
 }
 
 object Pessigen extends Engines.Impl(ParRPSpores, new PessimisticTestTurn) {
-  val syncStack: AtomicReference[List[(Set[Reactive[ParRPSpores.type]], Barrier)]] = new AtomicReference(Nil)
+  val syncStack: AtomicReference[List[(Set[Reactive], Barrier)]] = new AtomicReference(Nil)
 
   def clear(): Int = syncStack.getAndSet(Nil).size
 
-  def sync(reactives: Reactive[ParRPSpores.type]*): Unit = {
+  def sync(reactives: Reactive*): Unit = {
     val bar = syncm(reactives: _*)
     Spawn(bar.await())
   }
 
-  def syncm(reactives: Reactive[ParRPSpores.type]*): Barrier = {
+  def syncm(reactives: Reactive*): Barrier = {
     val ready = new CountDownLatch(reactives.size)
     val go = new CountDownLatch(1)
     val syncSet = reactives.toSet
