@@ -1,5 +1,5 @@
 organization in ThisBuild := "de.tuda.stg"
-scalaVersion in ThisBuild := "2.11.6"
+scalaVersion in ThisBuild := "2.11.7"
 
 lazy val root = project.in(file("."))
   .aggregate(rescalaJVM, rescalaJS)
