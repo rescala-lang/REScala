@@ -16,8 +16,6 @@ lazy val rescala = crossProject.in(file("."))
 
     version := "0.14.0",
 
-    crossScalaVersions := Seq("2.10.5", "2.11.6"),
-
     libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _),
     libraryDependencies += "org.mockito" % "mockito-all" % "1.10.19" % "test",
     libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.5" % "test",
@@ -25,11 +23,6 @@ lazy val rescala = crossProject.in(file("."))
     libraryDependencies += "org.scala-stm" %% "scala-stm" % "0.7",
 
     parallelExecution in Test := true,
-
-    excludeFilter <<= scalaVersion {
-      case s if s.startsWith("2.10.") => HiddenFileFilter || "*Macro*"
-      case s if s.startsWith("2.11.") => HiddenFileFilter
-    },
 
     sourceGenerators in Compile <+= sourceManaged in Compile map { dir =>
       val file = dir / "rescala" / "signals" / "GeneratedLift.scala"
