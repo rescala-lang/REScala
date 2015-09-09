@@ -33,7 +33,7 @@ trait PropagationImpl[S <: Spores] extends Turn[S] {
 
   }
 
-  def maximumLevel(dependencies: Set[Reactive[S]])(implicit turn: Turn[S]): Int = dependencies.foldLeft(-1)((acc, r) => math.max(acc, r.level.get))
+  def maximumLevel(dependencies: Set[Reactive[S]]): Int = dependencies.foldLeft(-1)((acc, r) => math.max(acc, r.level.get))
 
   def register(sink: Reactive[S])(source: Reactive[S]): Unit = source.outgoing.transform(_ + sink)
 
