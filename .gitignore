@@ -7,3 +7,5 @@ target
 .cache
 .classpath
 .settings/*
+*.sublime-project
+*.sublime-workspace
