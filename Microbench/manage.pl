@@ -180,7 +180,7 @@ sub selection {
       my @runs;
 
       for my $size (@THREADS) {
-        for my $layout (qw<alternating random third block>) {
+        for my $layout (qw<alternating>) {
           my $name = "threads-$size-layout-$layout";
           my $program = makeRunString("philosophers", $name, 
             fromBaseConfig(
@@ -299,7 +299,7 @@ sub selection {
                 step =>  $steps
               },
             ),
-            "Dynamic"
+            "dynamic.SingleSwitch"
           );
           push @runs, {name => $name, program => $program};
       }

@@ -1,7 +1,8 @@
-package benchmarks
+package benchmarks.dynamic
 
 import java.util.concurrent.TimeUnit
 
+import benchmarks.{EngineParam, Step}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
 import rescala.turns.{Engine, Turn}
@@ -14,7 +15,7 @@ import rescala.{Signals, Var}
 @Fork(1)
 @Threads(1)
 @State(Scope.Benchmark)
-class Dynamic[S <: rescala.graph.Spores] {
+class SingleSwitch[S <: rescala.graph.Spores] {
 
   implicit var engine: Engine[S, Turn[S]] = _
 
