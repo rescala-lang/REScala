@@ -10,6 +10,7 @@ no if $] >= 5.018, warnings => "experimental::smartmatch";
 use Cwd 'abs_path';
 use File::Basename;
 use Data::Dumper;
+use File::Path qw(make_path remove_tree);
 
 my $MAINDIR = dirname(__FILE__);
 chdir $MAINDIR;
@@ -45,7 +46,9 @@ given($command) {
 };
 
 sub init {
+  remove_tree($RESULTDIR);
   mkdir $RESULTDIR;
+  remove_tree($OUTDIR);
   mkdir $OUTDIR;
   mkdir "$RESULTDIR/$_" for @RUN;
   chdir "..";
