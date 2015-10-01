@@ -20,5 +20,5 @@ class Workload {
 @Threads(1)
 class WorkReference {
   @Benchmark
-  def reference(work: Workload): Unit = Blackhole.consumeCPU(work.work)
+  def reference(work: Workload): Unit = work.consume()
 }
