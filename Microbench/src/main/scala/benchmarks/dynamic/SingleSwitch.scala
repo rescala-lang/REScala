@@ -19,25 +19,19 @@ class SingleSwitch[S <: rescala.graph.Spores] {
 
   implicit var engine: Engine[S, Turn[S]] = _
 
-  var source: Var[Boolean, S] = _
-
-  var current: Boolean = false
+  var source: Var[Long, S] = _
 
   @Setup
   def setup(params: BenchmarkParams, step: Step, engineParam: EngineParam[S]) = {
     engine = engineParam.engine
-    source = Var(current)
+    source = Var(step.get())
     val d1 = Var("true")
     val d2 = Var("false")
     val dynamic = Signals.dynamic(source) { t =>
-      source(t)
-      if (step.isStep()) d1(t) else d2(t)
+      if (step.test(source(t))) d1(t) else d2(t)
     }
   }
 
   @Benchmark
-  def run(): Unit = {
-    current = !current
-    source.set(current)
-  }
+  def run(step: Step): Unit = source.set(step.run())
 }

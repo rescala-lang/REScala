@@ -9,8 +9,11 @@ class Step {
 
   var count: Long = 0
 
-  def isStep(): Boolean = {
+  def run(): Long = {
     count += 1
-    count % step == 0
+    count
   }
+  def get(): Long = count
+  def at(): Long = step
+  def test(v: Long): Boolean = v % step == 0
 }
