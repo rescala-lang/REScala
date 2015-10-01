@@ -4,7 +4,6 @@ import java.util.concurrent.TimeUnit
 
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
-import rescala.synchronization.Engines
 import rescala.turns.{Engine, Turn}
 import rescala.{Signals, Var}
 
@@ -24,13 +23,14 @@ class Dynamic[S <: rescala.graph.Spores] {
   var current: Boolean = false
 
   @Setup
-  def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam[S]) = {
+  def setup(params: BenchmarkParams, step: Step, engineParam: EngineParam[S]) = {
     engine = engineParam.engine
     source = Var(current)
     val d1 = Var("true")
     val d2 = Var("false")
     val dynamic = Signals.dynamic(source) { t =>
-      if (source(t)) d1(t) else d2(t)
+      source(t)
+      if (step.isStep()) d1(t) else d2(t)
     }
   }
 

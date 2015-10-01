@@ -12,8 +12,7 @@ object Main {
       .jvmArgsAppend("-Djmh.stack.lines=1")
       .jvmArgsAppend("-Djmh.stack.period=1")
       //.jvmArgsAppend("-Djmh.stack.detailLine=true")
-
-      .addProfiler(classOf[StackProfiler])
+      //.addProfiler(classOf[StackProfiler])
       .build()
     new Runner(opt).run()
   }

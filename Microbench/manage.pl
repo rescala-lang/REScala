@@ -24,6 +24,7 @@ my $RESULTDIR = 'results';
 my @FRAMEWORKS = ("ParRP", "REScalaSTM", "REScalaSync");
 my @ENGINES = qw< synchron parrp stm >;
 my @THREADS = (1..16,24,32,64);
+my @STEPS = (1..16,24,32,64);
 my @PHILOSOPHERS = (32, 64, 256);
 my %BASECONFIG = (
   si => "false", # synchronize iterations
@@ -33,7 +34,7 @@ my %BASECONFIG = (
   i => 10, # iterations
   r => "1000ms", # time per iteration
   to => "10s", #timeout
-)
+);
 
 # stop java from formating numbers with `,` instead of `.`
 $ENV{'LANG'} = 'en_US.UTF-8';
@@ -44,8 +45,9 @@ $ENV{'LANG'} = 'en_US.UTF-8';
 # $ENV{'JAVA_OPTS'} = $JMH_CLASSPATH;
 
 my $command = shift @ARGV;
-my @RUN = @ARGV ? @ARGV : keys %{&selection()};
+my @RUN = @ARGV ? @ARGV : qw< philosophers dynamicStacks expensiveConflict >;
 
+say "available: " . (join " ", keys %{&selection()});
 say "selected: @RUN";
 
 given($command) {
@@ -279,6 +281,25 @@ sub selection {
               t => $size, #threads
             ),
             "WorkReference"
+          );
+          push @runs, {name => $name, program => $program};
+      }
+
+      @runs;
+    },
+
+    singleDynamic => sub {
+      my @runs;
+
+      for my $steps (@STEPS) {
+          my $name = "steps-$steps";
+          my $program = makeRunString("singleDynamic", $name,
+            fromBaseConfig(
+              p => { # parameters
+                step =>  $steps
+              },
+            ),
+            "Dynamic"
           );
           push @runs, {name => $name, program => $program};
       }

@@ -3,7 +3,7 @@ package benchmarks.conflict
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
-import benchmarks.{EngineParam, Workload}
+import benchmarks.{Step, EngineParam, Workload}
 import org.openjdk.jmh.annotations._
 import rescala._
 import rescala.graph.Spores
