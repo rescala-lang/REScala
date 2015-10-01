@@ -25,7 +25,7 @@ my @FRAMEWORKS = ("ParRP", "REScalaSTM", "REScalaSync");
 my @ENGINES = qw< synchron parrp stm >;
 my @THREADS = (1..16,24,32,64);
 my @STEPS = (1..16,24,32,64);
-my @PHILOSOPHERS = (32, 64, 256);
+my @PHILOSOPHERS = (32, 64, 96, 128, 192, 256);
 my %BASECONFIG = (
   si => "false", # synchronize iterations
   wi => 20, # warmup iterations
@@ -45,7 +45,7 @@ $ENV{'LANG'} = 'en_US.UTF-8';
 # $ENV{'JAVA_OPTS'} = $JMH_CLASSPATH;
 
 my $command = shift @ARGV;
-my @RUN = @ARGV ? @ARGV : qw< philosophers dynamicStacks expensiveConflict >;
+my @RUN = @ARGV ? @ARGV : qw< philosophers dynamicPhilosophers singleDynamic singleConflictingSignal dynamicStacks expensiveConflict >;
 
 say "available: " . (join " ", keys %{&selection()});
 say "selected: @RUN";
@@ -229,21 +229,25 @@ sub selection {
     dynamicStacks => sub {
       my @runs;
 
-      for my $size (@THREADS) {
-        my $name = "threads-$size";
-        my $program = makeRunString("dynamicStacks", $name,
-          fromBaseConfig(
-            p => { # parameters
-              engineName => (join ',', @ENGINES),
-              work => 0,
-            },
-            t => $size, #threads
-          ),
-          "dynamic.Stacks"
-        );
-        push @runs, {name => $name, program => $program};
-      }
+      for my $threads (@THREADS) {
+        for my $steps (@STEPS) {
 
+          my $name = "threads-$threads-steps-$steps";
+          my $program = makeRunString("dynamicStacks", $name,
+            fromBaseConfig(
+              p => { # parameters
+                engineName => (join ',', @ENGINES),
+                work => 0,
+                size => 10,
+                steps => $steps,
+              },
+              t => $threads, #threads
+            ),
+            "dynamic.Stacks"
+          );
+          push @runs, {name => $name, program => $program};
+        }
+      }
       @runs;
     },
 
