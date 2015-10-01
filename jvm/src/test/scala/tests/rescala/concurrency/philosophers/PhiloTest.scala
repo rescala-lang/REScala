@@ -48,8 +48,8 @@ class PhiloTest extends AssertionsForJUnit {
     println(s"philo party done sleeping on $engine (dynamic $dynamic)")
   }
 
-  @Test def eatingContestsSpinning(): Unit = `eat!`(Engines.parRP, dynamic = false)
+  @Test def eatingContestsSpinning(): Unit = `eat!`(Engines.parrp, dynamic = false)
 
-  @Test def eatingContestsSpinningDynamic(): Unit = `eat!`(Engines.parRP, dynamic = true)
+  @Test def eatingContestsSpinningDynamic(): Unit = `eat!`(Engines.parrp, dynamic = true)
 
 }

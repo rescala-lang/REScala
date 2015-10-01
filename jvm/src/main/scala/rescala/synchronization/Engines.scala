@@ -14,18 +14,18 @@ object Engines {
   def byName[S <: Spores](name: String): Engine[S, Turn[S]] = name match {
     case "synchron" => synchron.asInstanceOf[Engine[S, Turn[S]]]
     case "unmanaged" => unmanaged.asInstanceOf[Engine[S, Turn[S]]]
-    case "parrp" => parRP.asInstanceOf[Engine[S, Turn[S]]]
-    case "stm" => STM.asInstanceOf[Engine[S, Turn[S]]]
+    case "parrp" => parrp.asInstanceOf[Engine[S, Turn[S]]]
+    case "stm" => stm.asInstanceOf[Engine[S, Turn[S]]]
     case other => throw new IllegalArgumentException(s"unknown engine $other")
   }
 
-  def all: List[TEngine] = List[TEngine](STM, parRP, synchron, unmanaged)
+  def all: List[TEngine] = List[TEngine](stm, parrp, synchron, unmanaged)
 
-  implicit val parRP: Engine[ParRPSpores.type, ParRP] = spinningWithBackoff(7)
+  implicit val parrp: Engine[ParRPSpores.type, ParRP] = spinningWithBackoff(7)
 
-  implicit val default: Engine[ParRPSpores.type, ParRP] = parRP
+  implicit val default: Engine[ParRPSpores.type, ParRP] = parrp
 
-  implicit val STM: Engine[STMSpores.type, STMSync] = new Impl[STMSpores.type, STMSync](STMSpores, new STMSync()) {
+  implicit val stm: Engine[STMSpores.type, STMSync] = new Impl[STMSpores.type, STMSync](STMSpores, new STMSync()) {
     override def plan[R](i: Reactive*)(f: STMSync => R): R = atomic { tx => super.plan(i: _*)(f) }
   }
 
