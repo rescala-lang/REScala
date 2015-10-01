@@ -307,6 +307,26 @@ sub selection {
       @runs;
     },
 
+    singleConflictingSignal => sub {
+      my @runs;
+
+      for my $threads (@THREADS) {
+          my $name = "threads-$threads";
+          my $program = makeRunString("singleConflictingSignal", $name,
+            fromBaseConfig(
+              p => { # parameters
+                engineName => (join ',', @ENGINES),
+              },
+              t => $threads,
+            ),
+            "SingleVar.switchSignal"
+          );
+          push @runs, {name => $name, program => $program};
+      }
+
+      @runs;
+    },
+
     # stmbank => sub {
     #   my @runs;
 
