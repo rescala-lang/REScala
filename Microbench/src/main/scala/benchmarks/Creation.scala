@@ -36,7 +36,7 @@ class Creation[S <: rescala.graph.Spores] {
   @Benchmark
   def `var and derived signal`(): Signal[String, S] = {
     val v1 = engine.Var("")
-    v1.map(identity)(Ticket.dynamic(engine))
+    v1.map(identity)
   }
 
   @Benchmark
