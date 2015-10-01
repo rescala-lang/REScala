@@ -1,9 +1,8 @@
 package benchmarks.dynamic
 
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicInteger
 
-import benchmarks.{Size, EngineParam, Workload}
+import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
 import rescala._
@@ -26,7 +25,7 @@ class StackState[S <: Spores] {
   var engine: Engine[S, Turn[S]] = _
 
   @Setup(Level.Iteration)
-  def setup(params: BenchmarkParams, engine: EngineParam[S], work: Workload, size: Size) = {
+  def setup(params: BenchmarkParams, engine: EngineParam[S], work: Workload, size: Size, step: Step) = {
     this.engine = engine.engine
     val threads = params.getThreads
     implicit val e = this.engine
@@ -34,13 +33,13 @@ class StackState[S <: Spores] {
     results = sources.map { source =>
       var cur: Signal[Int, S] = source
       for (x <- Range(0, size.size)) {cur = cur.map(1.+)}
-      cur.map { x => work.consume(); x }
+      cur.map { x => {work.consume(); x} }
     }
     dynamics = results.zipWithIndex.map { case (r, i) =>
       Signals.dynamic(r) { t =>
         val v = r(t)
-        val idx = i + (if (v % 17 == 0) v else 1)
-        sources((i + threads) % threads)(t)
+        val idx = i + (if (step.test(v)) 2 else 1)
+        results(i + threads)(t)
       }
     }
 
@@ -56,9 +55,9 @@ class StackState[S <: Spores] {
 class Stacks[S <: Spores] {
 
   @Benchmark
-  def run(state: StackState[S], params: ThreadParams) = {
+  def run(state: StackState[S], step: Step, params: ThreadParams) = {
     val index = params.getThreadIndex % params.getThreadCount
-    state.sources(index).set(state.input.incrementAndGet())(state.engine)
+    state.sources(index).set(step.run())(state.engine)
     state.dynamics(index).now(Ticket.dynamic(state.engine))
   }
 
