@@ -24,6 +24,16 @@ my $RESULTDIR = 'results';
 my @FRAMEWORKS = ("ParRP", "REScalaSTM", "REScalaSync");
 my @ENGINES = qw< synchron parrp stm >;
 my @THREADS = (1..16,24,32,64);
+my @PHILOSOPHERS = (32, 64, 256);
+my %BASECONFIG = (
+  si => "false", # synchronize iterations
+  wi => 20, # warmup iterations
+  w => "1000ms", # warmup time
+  f => 5, # forks
+  i => 10, # iterations
+  r => "1000ms", # time per iteration
+  to => "10s", #timeout
+)
 
 # stop java from formating numbers with `,` instead of `.`
 $ENV{'LANG'} = 'en_US.UTF-8';
@@ -115,6 +125,10 @@ sub selectRun {
 
 }
 
+sub fromBaseConfig {
+  my %extend = (%BASECONFIG, @_);
+  return \%extend;
+}
 
 sub selection {
   return {
@@ -124,19 +138,12 @@ sub selection {
       for my $size (@THREADS) {
         my $name = "threads-$size";
         my $program = makeRunString("simple", $name,
-          {
+          fromBaseConfig(
             p => { # parameters
               riname => (join ',', @FRAMEWORKS),
             },
-            si => "false", # synchronize iterations
-            wi => 20, # warmup iterations
-            w => "1000ms", # warmup time
-            f => 5, # forks
-            i => 10, # iterations
-            r => "1000ms", # time per iteration
             t => $size, #threads
-            to => "10s", #timeout
-          },
+          ),
           "simple.Mapping"
         );
         push @runs, {name => $name, program => $program};
@@ -151,21 +158,14 @@ sub selection {
       for my $size (@THREADS) {
         my $name = "size-$size";
         my $program = makeRunString("prim", $name,
-          {
+          fromBaseConfig(
             p => { # parameters
               depth => 64,
               sources => 64,
               riname => (join ',', @FRAMEWORKS),
             },
-            si => "false", # synchronize iterations
-            wi => 20, # warmup iterations
-            w => "1000ms", # warmup time
-            f => 5, # forks
-            i => 10, # iterations
-            r => "1000ms", # time per iteration
             t => $size, #threads
-            to => "10s", #timeout
-          },
+          ),
           ".*prim"
         );
         push @runs, {name => $name, program => $program};
@@ -180,24 +180,42 @@ sub selection {
       for my $size (@THREADS) {
         for my $layout (qw<alternating random third block>) {
           my $name = "threads-$size-layout-$layout";
-          my $program = makeRunString("philosophers", $name,
-            {
+          my $program = makeRunString("philosophers", $name, 
+            fromBaseConfig(
               p => { # parameters
                 tableType => 'static',
                 engineName => (join ',', @ENGINES),
-                philosophers => "32,64,256",
+                philosophers => (join ',', @PHILOSOPHERS),
                 layout => $layout,
               },
-              si => "false", # synchronize iterations
-              wi => 20, # warmup iterations
-              w => "1000ms", # warmup time
-              f => 5, # forks
-              i => 10, # iterations
-              r => "1000ms", # time per iteration
               t => $size, #threads
-              to => "10s", #timeout
-            },
+            ),
             "philosophers"
+          );
+          push @runs, {name => $name, program => $program};
+        }
+      }
+
+      @runs;
+    },
+
+    dynamicPhilosophers => sub {
+      my @runs;
+
+      for my $size (@THREADS) {
+        for my $layout (qw<alternating random third block>) {
+          my $name = "threads-$size-layout-$layout";
+          my $program = makeRunString("dynamicPhilosophers", $name,
+            fromBaseConfig(
+              p => { # parameters
+                tableType => 'dynamic',
+                engineName => (join ',', @ENGINES),
+                philosophers => (join ',', @PHILOSOPHERS),
+                layout => $layout,
+              },
+              t => $size, #threads
+            ),
+            "dynamicPhilosophers"
           );
           push @runs, {name => $name, program => $program};
         }
@@ -212,20 +230,13 @@ sub selection {
       for my $size (@THREADS) {
         my $name = "threads-$size";
         my $program = makeRunString("dynamicStacks", $name,
-          {
+          fromBaseConfig(
             p => { # parameters
               engineName => (join ',', @ENGINES),
               work => 0,
             },
-            si => "false", # synchronize iterations
-            wi => 20, # warmup iterations
-            w => "1000ms", # warmup time
-            f => 5, # forks
-            i => 10, # iterations
-            r => "1000ms", # time per iteration
             t => $size, #threads
-            to => "10s", #timeout
-          },
+          ),
           "dynamic.Stacks"
         );
         push @runs, {name => $name, program => $program};
@@ -240,20 +251,13 @@ sub selection {
       for my $work (0,100,500,1000,3000,5000,7500,10000) {
         my $name = "work-$work";
         my $program = makeRunString("expensiveConflict", $name,
-          {
+          fromBaseConfig(
             p => { # parameters
               engineName => (join ',', @ENGINES),
               work => $work,
             },
-            si => "false", # synchronize iterations
-            wi => 20, # warmup iterations
-            w => "1000ms", # warmup time
-            f => 5, # forks
-            i => 10, # iterations
-            r => "1000ms", # time per iteration
             t => 2, #threads
-            to => "10s", #timeout
-          },
+          ),
           "ExpensiveConflict"
         );
         push @runs, {name => $name, program => $program};
@@ -268,19 +272,12 @@ sub selection {
       for my $size (@THREADS) {
           my $name = "threads-$size";
           my $program = makeRunString("reference", $name,
-            {
+            fromBaseConfig(
               p => { # parameters
                 work => 2000,
               },
-              si => "false", # synchronize iterations
-              wi => 5, # warmup iterations
-              w => "1000ms", # warmup time
-              f => 5, # forks
-              i => 5, # iterations
-              r => "1000ms", # time per iteration
               t => $size, #threads
-              to => "10s", #timeout
-            },
+            ),
             "WorkReference"
           );
           push @runs, {name => $name, program => $program};
@@ -296,21 +293,14 @@ sub selection {
         for my $chance ("0.01", "0.001", "0") {
           my $name = "threads-$size-$chance";
           my $program = makeRunString("stmbank", $name,
-            {
+            fromBaseConfig(
               p => { # parameters
                 riname => (join ',', @FRAMEWORKS),
                 numberOfAccounts => 256,
                 globalReadChance => $chance,
               },
-              si => "false", # synchronize iterations
-              wi => 20, # warmup iterations
-              w => "1000ms", # warmup time
-              f => 5, # forks
-              i => 10, # iterations
-              r => "1000ms", # time per iteration
               t => $size, #threads
-              to => "10s", #timeout
-            },
+            ),
             "STMBank.BankAccounts"
           );
           push @runs, {name => $name, program => $program};
