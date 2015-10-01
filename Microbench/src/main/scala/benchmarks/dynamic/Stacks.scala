@@ -3,12 +3,14 @@ package benchmarks.dynamic
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
-import benchmarks.{EngineParam, Workload}
+import benchmarks.{Size, EngineParam, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
 import rescala._
 import rescala.graph.Spores
 import rescala.turns.{Engine, Ticket, Turn}
+
+import scala.collection.immutable.Range
 
 
 /**
@@ -18,20 +20,22 @@ import rescala.turns.{Engine, Ticket, Turn}
 @State(Scope.Benchmark)
 class StackState[S <: Spores] {
 
-  var input: AtomicInteger = new AtomicInteger(0)
-
   var sources: Array[Var[Int, S]] = _
   var results: Array[Signal[Int, S]] = _
   var dynamics: Array[Signal[Int, S]] = _
   var engine: Engine[S, Turn[S]] = _
 
   @Setup(Level.Iteration)
-  def setup(params: BenchmarkParams, engine: EngineParam[S], work: Workload) = {
+  def setup(params: BenchmarkParams, engine: EngineParam[S], work: Workload, size: Size) = {
     this.engine = engine.engine
     val threads = params.getThreads
     implicit val e = this.engine
-    sources = Range(0, threads).map(_ => Var(input.incrementAndGet())).toArray
-    results = sources.map(_.map(1.+).map(1.+).map { x => work.consume(); x + 1 })
+    sources = Range(0, threads).map(_ => Var(0)).toArray
+    results = sources.map { source =>
+      var cur: Signal[Int, S] = source
+      for (x <- Range(0, size.size)) {cur = cur.map(1.+)}
+      cur.map { x => work.consume(); x }
+    }
     dynamics = results.zipWithIndex.map { case (r, i) =>
       Signals.dynamic(r) { t =>
         val v = r(t)
