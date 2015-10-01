@@ -69,6 +69,8 @@ lazy val rescalaJS = rescala.js
 lazy val microbench = project.in(file("Microbench"))
   .enablePlugins(JmhPlugin)
   .settings(mainClass in Compile := Some("org.openjdk.jmh.Main"))
+  .settings(com.typesafe.sbt.SbtStartScript.startScriptForClassesSettings)
+  .settings(TaskKey[Unit]("compileJmh") <<= Seq(compile in pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh).dependOn)
   .dependsOn(rescalaJVM)
 
 
