@@ -132,47 +132,47 @@ sub fromBaseConfig {
 
 sub selection {
   return {
-    simple => sub {
-      my @runs;
+    # simple => sub {
+    #   my @runs;
 
-      for my $size (@THREADS) {
-        my $name = "threads-$size";
-        my $program = makeRunString("simple", $name,
-          fromBaseConfig(
-            p => { # parameters
-              riname => (join ',', @FRAMEWORKS),
-            },
-            t => $size, #threads
-          ),
-          "simple.Mapping"
-        );
-        push @runs, {name => $name, program => $program};
-      }
+    #   for my $size (@THREADS) {
+    #     my $name = "threads-$size";
+    #     my $program = makeRunString("simple", $name,
+    #       fromBaseConfig(
+    #         p => { # parameters
+    #           riname => (join ',', @FRAMEWORKS),
+    #         },
+    #         t => $size, #threads
+    #       ),
+    #       "simple.Mapping"
+    #     );
+    #     push @runs, {name => $name, program => $program};
+    #   }
 
-      @runs;
-    },
+    #   @runs;
+    # },
 
-    prim => sub {
-      my @runs;
+    # prim => sub {
+    #   my @runs;
 
-      for my $size (@THREADS) {
-        my $name = "size-$size";
-        my $program = makeRunString("prim", $name,
-          fromBaseConfig(
-            p => { # parameters
-              depth => 64,
-              sources => 64,
-              riname => (join ',', @FRAMEWORKS),
-            },
-            t => $size, #threads
-          ),
-          ".*prim"
-        );
-        push @runs, {name => $name, program => $program};
-      }
+    #   for my $size (@THREADS) {
+    #     my $name = "size-$size";
+    #     my $program = makeRunString("prim", $name,
+    #       fromBaseConfig(
+    #         p => { # parameters
+    #           depth => 64,
+    #           sources => 64,
+    #           riname => (join ',', @FRAMEWORKS),
+    #         },
+    #         t => $size, #threads
+    #       ),
+    #       ".*prim"
+    #     );
+    #     push @runs, {name => $name, program => $program};
+    #   }
 
-      @runs;
-    },
+    #   @runs;
+    # },
 
     philosophers => sub {
       my @runs;
@@ -286,29 +286,29 @@ sub selection {
       @runs;
     },
 
-    stmbank => sub {
-      my @runs;
+    # stmbank => sub {
+    #   my @runs;
 
-      for my $size (@THREADS) {
-        for my $chance ("0.01", "0.001", "0") {
-          my $name = "threads-$size-$chance";
-          my $program = makeRunString("stmbank", $name,
-            fromBaseConfig(
-              p => { # parameters
-                riname => (join ',', @FRAMEWORKS),
-                numberOfAccounts => 256,
-                globalReadChance => $chance,
-              },
-              t => $size, #threads
-            ),
-            "STMBank.BankAccounts"
-          );
-          push @runs, {name => $name, program => $program};
-        }
-      }
+    #   for my $size (@THREADS) {
+    #     for my $chance ("0.01", "0.001", "0") {
+    #       my $name = "threads-$size-$chance";
+    #       my $program = makeRunString("stmbank", $name,
+    #         fromBaseConfig(
+    #           p => { # parameters
+    #             riname => (join ',', @FRAMEWORKS),
+    #             numberOfAccounts => 256,
+    #             globalReadChance => $chance,
+    #           },
+    #           t => $size, #threads
+    #         ),
+    #         "STMBank.BankAccounts"
+    #       );
+    #       push @runs, {name => $name, program => $program};
+    #     }
+    #   }
 
-      @runs;
-    },
+    #   @runs;
+    # },
 
   };
 }
