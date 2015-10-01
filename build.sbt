@@ -14,7 +14,7 @@ lazy val rescala = crossProject.in(file("."))
   .settings(
     name := "rescala",
 
-    version := "0.14.0-SNAPSHOT",
+    version := "0.14.0",
 
     libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _),
     libraryDependencies += "org.mockito" % "mockito-all" % "1.10.19" % "test",
@@ -54,7 +54,8 @@ lazy val rescala = crossProject.in(file("."))
          |""".stripMargin)
       Seq(file)
     },
-
+    licenses += ("GPL-3.0", url("http://www.gnu.org/licenses/gpl-3.0.html")),
+    publishMavenStyle := false,
     initialCommands in console :=
       s"""import rescala._
        """.stripMargin
