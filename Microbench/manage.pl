@@ -179,18 +179,18 @@ sub selection {
     philosophers => sub {
       my @runs;
 
-      for my $size (@THREADS) {
+      for my $threads (@THREADS) {
         for my $layout (qw<alternating>) {
-          my $name = "threads-$size-layout-$layout";
+          my $name = "threads-$threads-layout-$layout";
           my $program = makeRunString("philosophers", $name, 
             fromBaseConfig(
               p => { # parameters
                 tableType => 'static',
                 engineName => (join ',', @ENGINES),
-                philosophers => (join ',', @PHILOSOPHERS),
+                philosophers => (join ',', grep {$_ >= ($threads * (($layout eq "third") ? 3 : 1))} @PHILOSOPHERS),
                 layout => $layout,
               },
-              t => $size, #threads
+              t => $threads, #threads
             ),
             "philosophers"
           );
@@ -204,18 +204,18 @@ sub selection {
     dynamicPhilosophers => sub {
       my @runs;
 
-      for my $size (@THREADS) {
+      for my $threads (@THREADS) {
         for my $layout (qw<alternating random third block>) {
-          my $name = "threads-$size-layout-$layout";
+          my $name = "threads-$threads-layout-$layout";
           my $program = makeRunString("dynamicPhilosophers", $name,
             fromBaseConfig(
               p => { # parameters
                 tableType => 'dynamic',
                 engineName => (join ',', @ENGINES),
-                philosophers => (join ',', @PHILOSOPHERS),
+                philosophers => (join ',', grep {$_ >= ($threads * (($layout eq "third") ? 3 : 1))} @PHILOSOPHERS),
                 layout => $layout,
               },
-              t => $size, #threads
+              t => $threads, #threads
             ),
             "dynamicPhilosophers"
           );
