@@ -42,12 +42,16 @@ use File::Find;
         map { {Title => $_, "Param: engineName" => $_ , Benchmark => "benchmarks.philosophers.PhilosopherCompetition.eat",
         "Param: philosophers" => $philosophers, "Param: layout" => $layout} } @engines);
     }
-    for my $engine (@engines) {
-      plotBenchmarksFor($dbh, $table, "philosophers$philosophers", "philosopher comparison $engine",
-        map { {Title => $_, "Param: engineName" => $engine , Benchmark => "benchmarks.philosophers.PhilosopherCompetition.eat",
-        "Param: philosophers" => $philosophers, "Param: layout" => $_} } qw<alternating random third block>);
-    }
   }
+
+  sub byPhilosophers($engine) {
+    map { {Title => $engine . " " . $_, "Param: engineName" => $engine , Benchmark => "benchmarks.philosophers.PhilosopherCompetition.eat",
+      "Param: philosophers" => $_, "Param: layout" => "alternating"} } (32, 64, 256)
+  }
+  plotBenchmarksFor($dbh, $table, "philosophers", "philosopher comparison engine scaling",
+    map { byPhilosophers($_) } @engines);
+
+
   plotBenchmarksFor($dbh, $table, "philosophers", "Philosopher Table",
     map { {Title => $_, "Param: engineName" => $_ , Benchmark =>  "benchmarks.philosophers.PhilosopherCompetition.eat"} } @engines);
 
@@ -81,12 +85,10 @@ use File::Find;
 }
 
 sub prettyName($name) {
-  given ($name) {
-    when (/spinning|REScalaSpin|ParRP/) { "ParRP" }
-    when (/stm|REScalaSTM/) { "STM" }
-    when (/synchron|REScalaSync/) { "Synchron" }
-    default { $_ }
-  }
+  $name =~  s/spinning|REScalaSpin|ParRP/ParRP/;
+  $name =~  s/stm|REScalaSTM/STM/;
+  $name =~  s/synchron|REScalaSync/Synchron/;
+  return $name;
 }
 
 sub query($tableName, $varying, @keys) {
@@ -115,13 +117,22 @@ sub queryDataset($dbh, $query) {
   }
 }
 
+sub coloring($name) {
+  given (prettyName($name)) {
+    when (/ParRP/) {  'linecolor "green"' }
+    when (/STM/) {  'linecolor "blue"' }
+    when (/Synchron/) {  'linecolor "red"' }
+    default { '' }
+  }
+}
+
 sub makeDataset($title, $data) {
   $data = [sort {$a->[0] <=> $b->[0]} @$data];
   Chart::Gnuplot::DataSet->new(
     xdata => [map {$_->[0]} @$data],
     ydata => [map {$_->[1]} @$data],
     title => $title,
-    style => "linespoints",
+    style => 'linespoints ' . coloring($title),
   );
 }
 
