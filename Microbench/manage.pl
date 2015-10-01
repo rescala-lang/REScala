@@ -5,19 +5,23 @@ use strict;
 use warnings;
 use utf8;
 use English;
-use Cwd 'abs_path';
 no if $] >= 5.018, warnings => "experimental::smartmatch";
 
+use Cwd 'abs_path';
+use File::Basename;
 use Data::Dumper;
 
-my $EXECUTABLE = './Benchmarks/target/start';
+my $MAINDIR = dirname(__FILE__);
+chdir $MAINDIR;
+
+my $EXECUTABLE = './target/start';
 if ($OSNAME eq "MSWin32") {
   $EXECUTABLE =~ s#/#\\#g;
 }
 my $OUTDIR = 'out';
 my $RESULTDIR = 'results';
 my @FRAMEWORKS = ("ParRP", "REScalaSTM", "REScalaSync");
-my @ENGINES = qw< synchron spinning stm >;
+my @ENGINES = qw< synchron parrp stm >;
 my @THREADS = (1..16,24,32,64);
 
 # stop java from formating numbers with `,` instead of `.`
@@ -29,26 +33,25 @@ $ENV{'LANG'} = 'en_US.UTF-8';
 # $ENV{'JAVA_OPTS'} = $JMH_CLASSPATH;
 
 my $command = shift @ARGV;
-my @RUN = @ARGV ? @ARGV : qw< prim simple philosophers dynamicStacks expensiveConflict >;
+my @RUN = @ARGV ? @ARGV : keys %{&selection()};
 
-say "selected @RUN";
+say "selected: @RUN";
 
 given($command) {
   when ("show") { say Dumper([ makeRuns() ]) }
   when ("init") { init() }
   when ("run") { run() }
   when ("submit") { submitAll() }
-  when ("available") { say join " ", keys %{&selection()} }
 };
 
 sub init {
   mkdir $RESULTDIR;
   mkdir $OUTDIR;
   mkdir "$RESULTDIR/$_" for @RUN;
-  chdir "Benchmarks";
-  system('sbt','clean', 'stage', 'compileJmh');
-  #system('sbt','clean', 'jmh:compile', 'jmh:stage');
   chdir "..";
+  system('sbt','project microbench', 'clean', 'stage', 'compileJmh');
+  #system('sbt','clean', 'jmh:compile', 'jmh:stage');
+  chdir $MAINDIR;
 }
 
 sub run {
