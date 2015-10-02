@@ -203,7 +203,7 @@ sub selection {
 
       for my $threads (@THREADS) {
         for my $layout (qw<alternating random third block>) {
-          my $name = "threads-$threads-layout-$layout";
+          my $name = "threads-$threads-layout-$layout-dynamic";
           my $program = makeRunString("dynamicPhilosophers", $name,
             fromBaseConfig(
               p => { # parameters

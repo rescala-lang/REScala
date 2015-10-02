@@ -25,7 +25,7 @@ use File::Find;
   my $dbh = DBI->connect("dbi:SQLite:dbname=". $dbPath,"","",{AutoCommit => 0,PrintError => 1});
 
   my @frameworks = qw( REScalaSync ParRP REScalaSTM ); #  scala.rx scala.react SIDUP;
-  my @engines = ("synchron", "spinning", "stm");
+  my @engines = ("synchron", "parrp", "stm");
 
   importCSV($csvDir, $dbh, $table);
 
@@ -46,7 +46,7 @@ use File::Find;
 
   sub byPhilosophers($engine) {
     map { {Title => $engine . " " . $_, "Param: engineName" => $engine , Benchmark => "benchmarks.philosophers.PhilosopherCompetition.eat",
-      "Param: philosophers" => $_, "Param: layout" => "alternating"} } (32, 64, 256)
+      "Param: philosophers" => $_, "Param: layout" => "alternating"} } (32, 64, 96, 128, 192, 256)
   }
   plotBenchmarksFor($dbh, $table, "philosophers", "philosopher comparison engine scaling",
     map { byPhilosophers($_) } @engines);
@@ -66,8 +66,8 @@ use File::Find;
 
   my $query = queryDataset($dbh, query($table, "Param: work", "Benchmark", "Param: engineName"));
   plotDatasets("conflicts", "Asymmetric Workloads", {xlabel => "Work"},
-    $query->("pessimistic cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "spinning"),
-    $query->("pessimistic expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "spinning"),
+    $query->("pessimistic cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "parrp"),
+    $query->("pessimistic expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "parrp"),
     $query->("stm cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "stm"),
     $query->("stm expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "stm"));
 
@@ -85,7 +85,7 @@ use File::Find;
 }
 
 sub prettyName($name) {
-  $name =~  s/spinning|REScalaSpin|ParRP/ParRP/;
+  $name =~  s/spinning|REScalaSpin|parrp/ParRP/;
   $name =~  s/stm|REScalaSTM/STM/;
   $name =~  s/synchron|REScalaSync/Synchron/;
   return $name;
