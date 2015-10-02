@@ -39,7 +39,7 @@ class StackState[S <: Spores] {
       Signals.dynamic(r) { t =>
         val v = r(t)
         val idx = i + (if (step.test(v)) 2 else 1)
-        results(i + threads)(t)
+        results(idx % threads)(t)
       }
     }
 
@@ -56,9 +56,10 @@ class Stacks[S <: Spores] {
 
   @Benchmark
   def run(state: StackState[S], step: Step, params: ThreadParams) = {
+    implicit val engine = state.engine
     val index = params.getThreadIndex % params.getThreadCount
-    state.sources(index).set(step.run())(state.engine)
-    state.dynamics(index).now(Ticket.dynamic(state.engine))
+    state.sources(index).set(step.run())
+    state.dynamics(index).now
   }
 
 

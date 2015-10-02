@@ -19,7 +19,7 @@ class SingleSwitch[S <: rescala.graph.Spores] {
 
   implicit var engine: Engine[S, Turn[S]] = _
 
-  var source: Var[Long, S] = _
+  var source: Var[Int, S] = _
 
   @Setup
   def setup(params: BenchmarkParams, step: Step, engineParam: EngineParam[S]) = {

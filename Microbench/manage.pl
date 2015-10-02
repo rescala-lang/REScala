@@ -214,7 +214,7 @@ sub selection {
               },
               t => $threads, #threads
             ),
-            "dynamicPhilosophers"
+            "philosophers"
           );
           push @runs, {name => $name, program => $program};
         }
