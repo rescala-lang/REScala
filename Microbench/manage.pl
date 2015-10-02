@@ -371,7 +371,7 @@ sub hhlrjob {
 # #BSUB -e $OUTDIR/$name-%J.err
 #
 # Request the time you need for execution in [hour:]minute
-#BSUB -W 1:30
+#BSUB -W 2:30
 #
 # Request vitual memory you need for your job in MB
 #BSUB -M 2048
