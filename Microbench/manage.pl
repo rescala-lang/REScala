@@ -20,6 +20,10 @@ if ($OSNAME eq "MSWin32") {
 }
 my $OUTDIR = 'out';
 my $RESULTDIR = 'results';
+my $BSUB_TIME = "2:30";
+my $BSUB_QUEUE = "deflt";
+my $BSUB_CORES = "16";
+
 my @FRAMEWORKS = ("ParRP", "REScalaSTM", "REScalaSync");
 my @ENGINES = qw< synchron parrp stm >;
 my @THREADS = (1..16,24,32,64);
@@ -371,14 +375,14 @@ sub hhlrjob {
 # #BSUB -e $OUTDIR/$name-%J.err
 #
 # Request the time you need for execution in [hour:]minute
-#BSUB -W 2:30
+#BSUB -W $BSUB_TIME
 #
 # Request vitual memory you need for your job in MB
 #BSUB -M 2048
 #
 # Request the number of compute slots you want to use
-#BSUB -n 16
-#BSUB -q deflt
+#BSUB -n $BSUB_CORES
+#BSUB -q $BSUB_QUEUE
 # request exclusive access
 #BSUB -x
 
@@ -394,6 +398,7 @@ echo "------------------------------"
 
 rm -r /tmp/\$(whoami)
 mkdir /tmp/\$(whoami)
+export LANG=en_US.UTF-8
 export JAVA_OPTS="-Xmx1024m -Xms1024m -Djava.io.tmpdir=/tmp/\$(whoami)"
 $programstring
 rm -r /tmp/\$(whoami)
