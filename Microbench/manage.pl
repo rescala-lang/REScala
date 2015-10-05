@@ -25,7 +25,7 @@ my @ENGINES = qw< synchron parrp stm >;
 my @THREADS = (1..16,24,32,64);
 my @STEPS = (1..16,24,32,64);
 my @PHILOSOPHERS = (32, 64, 96, 128, 192, 256);
-my @LAYOUTS = qw<alternating random third block>
+my @LAYOUTS = qw<alternating random>; #qw<block third>
 my %BASECONFIG = (
   si => "false", # synchronize iterations
   wi => 20, # warmup iterations
@@ -355,7 +355,6 @@ sub selection {
 
   };
 }
-
 
 
 sub hhlrjob {
