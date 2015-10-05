@@ -22,23 +22,23 @@ class PhiloTest extends AssertionsForJUnit {
 
 
   def `eat!`[S <: Spores](engine: Engine[S, Turn[S]], dynamic: Boolean): Unit = {
-    val philosophers = 64
-    val threadCount = 4
+    val philosophers = 5
+    val threadCount = 3
     val table =
       if (!dynamic) new PhilosopherTable(philosophers, 0)(engine)
       else new DynamicPhilosopherTable(philosophers, 0)(engine)
-    val blocks: Array[Array[Seating[S]]] = deal(table.seatings.toList, List.fill(threadCount)(Nil)).map(_.toArray).toArray
+    val blocks: Array[Array[Seating[S]]] = Array(table.seatings.toArray)
 
     @volatile var cancel = false
 
-    val threads = for (threadIndex <- Range(0, threadCount)) yield Spawn {
+    val threads = for (threadIndex <- Range(0, threadCount)) yield Spawn(name = s"Worker $threadIndex",  f = {
       while (!cancel) {
         val myBlock = blocks(threadIndex % blocks.length)
         val seating = myBlock(Random.nextInt(myBlock.length))
         table.eatOnce(seating)
         seating.philosopher.set(Thinking)(table.engine)
       }
-    }
+    })
 
     println(s"philo party sleeping on $engine (dynamic $dynamic)")
     Thread.sleep(2000)
