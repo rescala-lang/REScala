@@ -20,21 +20,20 @@ if ($OSNAME eq "MSWin32") {
 }
 my $OUTDIR = 'out';
 my $RESULTDIR = 'results';
-my $BSUB_TIME = "2:30";
-my $BSUB_QUEUE = "deflt";
-my $BSUB_CORES = "16";
+my $BSUB_TIME = "23:30";
+my $BSUB_QUEUE = "mem";
+my $BSUB_CORES = "64";
 
-my @FRAMEWORKS = ("ParRP", "REScalaSTM", "REScalaSync");
-my @ENGINES = qw< synchron parrp stm >;
-my @THREADS = (1..16,24,32,64);
+my @ENGINES = qw< parrp stm >; # qw< synchron >
+my @THREADS = (1..64);
 my @STEPS = (1..16,24,32,64);
-my @PHILOSOPHERS = (32, 64, 96, 128, 192, 256);
-my @LAYOUTS = qw<alternating random>; #qw<block third>
+my @PHILOSOPHERS = (128);
+my @LAYOUTS = qw<alternating>; #qw<block third>
 my %BASECONFIG = (
   si => "false", # synchronize iterations
-  wi => 20, # warmup iterations
+  wi => 10, # warmup iterations
   w => "1000ms", # warmup time
-  f => 5, # forks
+  f => 2, # forks
   i => 10, # iterations
   r => "1000ms", # time per iteration
   to => "10s", #timeout
@@ -59,6 +58,7 @@ given($command) {
   when ("init") { init() }
   when ("run") { run() }
   when ("submit") { submitAll() }
+  when ("submitsingle") { submitAllAsOne() }
 };
 
 sub init {
@@ -87,9 +87,14 @@ sub submitAll {
   }
 }
 
+sub submitAllAsOne {
+  my $allRuns = join "\n", (map { $_->{program} } makeRuns());
+  submit(hhlrjob("combined run", $allRuns));
+}
+
 sub submit {
   my ($job) = @_;
-  open (my $BSUB, "|-", "bsub");
+  open (my $BSUB, "|-", "bsub -q $BSUB_QUEUE -x -n $BSUB_CORES -W $BSUB_TIME");
   print $BSUB $job;
   close $BSUB;
 }
