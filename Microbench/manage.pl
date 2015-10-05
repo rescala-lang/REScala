@@ -25,6 +25,7 @@ my @ENGINES = qw< synchron parrp stm >;
 my @THREADS = (1..16,24,32,64);
 my @STEPS = (1..16,24,32,64);
 my @PHILOSOPHERS = (32, 64, 96, 128, 192, 256);
+my @LAYOUTS = qw<alternating random third block>
 my %BASECONFIG = (
   si => "false", # synchronize iterations
   wi => 20, # warmup iterations
@@ -177,9 +178,9 @@ sub selection {
       my @runs;
 
       for my $threads (@THREADS) {
-        for my $layout (qw<alternating>) {
+        for my $layout (@LAYOUTS) {
           my $name = "threads-$threads-layout-$layout";
-          my $program = makeRunString("philosophers", $name, 
+          my $program = makeRunString("philosophers", $name,
             fromBaseConfig(
               p => { # parameters
                 tableType => 'static',
@@ -202,7 +203,7 @@ sub selection {
       my @runs;
 
       for my $threads (@THREADS) {
-        for my $layout (qw<alternating random third block>) {
+        for my $layout (@LAYOUTS) {
           my $name = "threads-$threads-layout-$layout-dynamic";
           my $program = makeRunString("dynamicPhilosophers", $name,
             fromBaseConfig(
