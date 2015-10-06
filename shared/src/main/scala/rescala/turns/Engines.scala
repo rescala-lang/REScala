@@ -21,7 +21,7 @@ object Engines {
     override def plan[R](i: Reactive*)(f: NoLocking[SS] => R): R = {
       lock.lock()
       try {
-        super.plan(i: _*)(f))
+        super.plan(i: _*)(f)
       }
       finally {lock.unlock()}
     }
