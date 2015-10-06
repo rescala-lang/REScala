@@ -12,6 +12,7 @@ use Text::CSV_XS qw( csv );
 use Data::Dumper;
 use Chart::Gnuplot;
 use File::Find;
+use File::Path qw(make_path remove_tree);
 
 # combining standard deviations is not trivial, but would be possible:
 # http://www.burtonsys.com/climate/composite_standard_deviations.html
@@ -29,6 +30,7 @@ use File::Find;
 
   importCSV($csvDir, $dbh, $table);
 
+  remove_tree($outDir);
   mkdir $outDir;
   chdir $outDir;
 
