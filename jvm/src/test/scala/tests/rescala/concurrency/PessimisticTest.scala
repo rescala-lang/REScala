@@ -13,7 +13,7 @@ import rescala.{Signal, Signals, Var}
 
 import scala.collection.JavaConverters._
 
-class PessimisticTestTurn extends ParRP(backOff = 0) {
+class PessimisticTestTurn extends ParRP(initialRetryCount = 0) {
   override def evaluate(r: Reactive[ParRPSpores.type]): Unit = {
     while (Pessigen.syncStack.get() match {
       case stack@(set, bar) :: tail if set(r) =>
@@ -151,7 +151,7 @@ class PessimisticTest extends AssertionsForJUnit {
     def apply(i0: Reactive[ParRPSpores.type], reg: => Unit, unreg: => Unit): Engine[ParRPSpores.type, Turn[ParRPSpores.type]] =
       new Engines.Impl[ParRPSpores.type, ParRP](
         ParRPSpores,
-        new ParRP(backOff = 0) {
+        new ParRP(initialRetryCount = 0) {
           override def register(downstream: Reactive[ParRPSpores.type])(upstream: Reactive[ParRPSpores.type]): Unit = {
             if (upstream eq i0) reg
             super.register(downstream)(upstream)

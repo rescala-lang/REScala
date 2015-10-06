@@ -47,7 +47,7 @@ trait DynamicReevaluation[+P, S <: Spores] {
     val (newPulse, newDependencies) = calculatePulseDependencies
 
     val oldDependencies = _incoming.get
-    _incoming.set(newDependencies)
+    if (newDependencies != oldDependencies) _incoming.set(newDependencies)
     pulses.set(newPulse)
     ReevaluationResult.Dynamic(newPulse.isChange, DepDiff(newDependencies, oldDependencies))
 

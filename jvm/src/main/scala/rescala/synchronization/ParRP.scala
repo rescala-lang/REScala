@@ -1,14 +1,12 @@
 package rescala.synchronization
 
-import rescala.graph.ParRPSpores
-import rescala.graph.{Reactive}
+import rescala.graph.{ParRPSpores, Pulsing, Reactive}
 import rescala.propagation.{LevelQueue, PropagationImpl}
 import rescala.synchronization.ParRP.{Await, Done, Retry}
-import rescala.turns.Turn
 
 import scala.annotation.tailrec
 
-class ParRP(var backOff: Int) extends FactoryReference[ParRPSpores.type](ParRPSpores) with PropagationImpl[ParRPSpores.type] {
+class ParRP(var initialRetryCount: Int) extends FactoryReference[ParRPSpores.type](ParRPSpores) with PropagationImpl[ParRPSpores.type] {
 
   type TState = ParRPSpores.type
 
@@ -39,43 +37,35 @@ class ParRP(var backOff: Int) extends FactoryReference[ParRPSpores.type](ParRPSp
   override def accessDynamic(dependency: Reactive[TState]): Unit = acquireShared(dependency)
 
 
-  var currentBackOff = backOff
-
-  override def lockPhase(initialWrites: List[Reactive[TState]]): Unit = lockReachable(initialWrites, acquireWrite)
-
-  def acquireWrite(reactive: Reactive[TState]): Boolean =
-    if (reactive.lock.tryLock(key) eq key) true
-    else {
-      key.lockKeychain {
-        key.releaseAll()
-        key.keychain = new Keychain(key)
-      }
-      if (currentBackOff == 0) {
-        acquireShared(reactive)
-        backOff /= 2
-        currentBackOff = backOff
-      }
-      else if (currentBackOff > 0) {
-        currentBackOff -= 1
-      }
-      false
-    }
-
   /** lock all reactives reachable from the initial sources
     * retry when acquire returns false */
-  def lockReachable(initial: List[Reactive[TState]], acquire: Reactive[TState] => Boolean)(implicit turn: Turn[TState]): Unit = {
+  override def lockPhase(initialWrites: List[Reactive[TState]]): Unit = {
     val lq = new LevelQueue()
-    initial.foreach(lq.enqueue(-42))
+    initialWrites.foreach(lq.enqueue(-42))
+
+    var remainingRetries = initialRetryCount
 
     lq.evaluateQueue { reactive =>
-      if (acquire(reactive))
-        reactive.outgoing.get.foreach(lq.enqueue(-42))
+      if (reactive.lock.tryLock(key) eq key) reactive.outgoing.get.foreach(lq.enqueue(-42))
       else {
+        key.lockKeychain {
+          key.releaseAll()
+          key.keychain = new Keychain(key)
+        }
+        if (remainingRetries == 0) {
+          acquireShared(reactive)
+          initialRetryCount /= 2
+          remainingRetries = initialRetryCount
+        }
+        else if (remainingRetries > 0) {
+          remainingRetries -= 1
+        }
         lq.clear()
-        initial.foreach(lq.enqueue(-42))
+        initialWrites.foreach(lq.enqueue(-42))
       }
     }
   }
+
 
   /** registering a dependency on a node we do not personally own does require some additional care.
     * we let the other turn update the dependency and admit the dependent into the propagation queue
@@ -143,7 +133,6 @@ class ParRP(var backOff: Int) extends FactoryReference[ParRPSpores.type](ParRPSp
       case Done(o) => o
     }
   }
-
 }
 
 private object ParRP {

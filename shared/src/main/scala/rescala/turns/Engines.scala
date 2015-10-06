@@ -1,5 +1,7 @@
 package rescala.turns
 
+import java.util.concurrent.locks.ReentrantLock
+
 import rescala.graph.{SimpleSpores, Reactive, Spores}
 import rescala.propagation.PropagationImpl
 import rescala.synchronization.{NoLocking, FactoryReference}
@@ -13,6 +15,18 @@ object Engines {
   implicit val synchron: NoLockEngine = new Impl[SS, NoLocking[SS]](SimpleSpores, new FactoryReference(SimpleSpores) with NoLocking[SS]) {
     override def plan[R](i: Reactive*)(f: NoLocking[SS] => R): R = synchronized(super.plan(i: _*)(f))
   }
+
+  implicit val synchronFair: NoLockEngine = new Impl[SS, NoLocking[SS]](SimpleSpores, new FactoryReference(SimpleSpores) with NoLocking[SS]) {
+    val lock = new ReentrantLock(true)
+    override def plan[R](i: Reactive*)(f: NoLocking[SS] => R): R = {
+      lock.lock()
+      try {
+        super.plan(i: _*)(f))
+      }
+      finally {lock.unlock()}
+    }
+  }
+
   implicit val unmanaged: NoLockEngine = new Impl[SS, NoLocking[SS]](SimpleSpores, new FactoryReference(SimpleSpores) with NoLocking[SS])
 
   implicit val default: NoLockEngine = synchron
@@ -39,14 +53,14 @@ object Engines {
       * - run the commit phase
       *   - do cleanups on the reactives, make values permanent and so on, the turn is still valid during this phase
       * - run the observer phase
-      *   - run registered observers, the turn is no longer valid but the locks are still held.
+      *   - run registered observers, the turn is no longer valid but the locks are still held.
       * - run the release phase
       *   - this must always run, even in the case that something above fails. it should do cleanup and free any locks to avoid starvation.
       * - run the party! phase
       *   - not yet implemented
       * */
     override def plan[Res](initialWrites: Reactive*)(admissionPhase: TImpl => Res): Res = {
- 
+
       val turn = makeTurn
       try {
         val turnResult = currentTurn.withValue(Some(turn)) {

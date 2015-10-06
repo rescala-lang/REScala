@@ -1,7 +1,7 @@
 package rescala.synchronization
 
 import rescala.graph.{ParRPSpores, Reactive, STMSpores, Spores}
-import rescala.turns.Engines.{Impl, synchron, unmanaged}
+import rescala.turns.Engines.{Impl, synchron, unmanaged, synchronFair}
 import rescala.turns.{Engine, Turn}
 
 import scala.concurrent.stm.atomic
@@ -16,10 +16,12 @@ object Engines {
     case "unmanaged" => unmanaged.asInstanceOf[Engine[S, Turn[S]]]
     case "parrp" => parrp.asInstanceOf[Engine[S, Turn[S]]]
     case "stm" => stm.asInstanceOf[Engine[S, Turn[S]]]
+    case "fair" => synchronFair.asInstanceOf[Engine[S, Turn[S]]]
+
     case other => throw new IllegalArgumentException(s"unknown engine $other")
   }
 
-  def all: List[TEngine] = List[TEngine](stm, parrp, synchron, unmanaged)
+  def all: List[TEngine] = List[TEngine](stm, parrp, synchron, unmanaged, synchronFair)
 
   implicit val parrp: Engine[ParRPSpores.type, ParRP] = spinningWithBackoff(7)
 

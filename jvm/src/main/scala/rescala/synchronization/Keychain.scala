@@ -32,14 +32,14 @@ class Keychain(init: Key) {
 
   def release(key: Key) = {
     assert(Thread.holdsLock(this), s"tried to release $key without holding $this")
-    val (h, r) = keys.dequeue
-    assert(h eq key, s"tried to drop $key from $this but is not head! ($keys)")
-    keys = r
+    val (head, rest) = keys.dequeue
+    assert(head eq key, s"tried to drop $key from $this but is not head! ($keys)")
+    keys = rest
     val locks = key.grabLocks().distinct
     if (keys.isEmpty) locks.foreach(_.transfer(null, key))
     else {
       val target = keys.head
-      locks.foreach(_.transfer(target, key, ignoreShared = fallthrough.nonEmpty))
+      locks.foreach(_.transfer(target, key, forceTransfer = fallthrough.nonEmpty))
       fallthrough -= target
       target.continue()
     }

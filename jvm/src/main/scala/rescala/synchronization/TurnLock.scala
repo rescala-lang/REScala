@@ -48,9 +48,12 @@ final class TurnLock() {
   }
 
   /** transfers the lock from the turn to the target. */
-  def transfer(target: Key, oldOwner: Key, ignoreShared: Boolean = false) = {
+  def transfer(target: Key, oldOwner: Key, forceTransfer: Boolean = false) = {
+    // select the true target:
+    // if there is no shared node, set target to null – free the lock
+    // if a fallthrough exists always transfer the lock
     val trueTarget =
-      if (!ignoreShared && shared.get.isEmpty) null
+      if (!forceTransfer && shared.get.isEmpty) null
       else target
 
     if (!owner.compareAndSet(oldOwner, trueTarget))

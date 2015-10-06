@@ -17,7 +17,7 @@ class DynamicPhilosopherTable[S <: Spores](philosopherCount: Int, work: Long)(ov
     val forks = for (i <- 0 until tableSize) yield {
       val nextCircularIndex = mod(i + 1)
       named(s"Fork($i, $nextCircularIndex)")(dynamic(phils(i), phils(nextCircularIndex)) { turn =>
-        phils(i)(turn) match {
+        phils(i).apply(turn) match {
           case Hungry => Taken(i.toString)
           case Thinking =>
             phils(nextCircularIndex)(turn) match {

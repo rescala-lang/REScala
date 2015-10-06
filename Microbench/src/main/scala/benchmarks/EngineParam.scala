@@ -6,7 +6,7 @@ import rescala.turns.{Engine, Turn}
 
 @State(Scope.Benchmark)
 class EngineParam[S <: rescala.graph.Spores] {
-  @Param(Array("synchron", "parrp", "stm"))
+  @Param(Array("synchron", "parrp", "stm", "fair"))
   var engineName: String = _
 
   @Param(Array("7"))
