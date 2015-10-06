@@ -21,19 +21,19 @@ if ($OSNAME eq "MSWin32") {
 my $OUTDIR = 'out';
 my $RESULTDIR = 'results';
 my $BSUB_TIME = "23:30";
-my $BSUB_QUEUE = "mem";
-my $BSUB_CORES = "64";
+my $BSUB_QUEUE = "deflt";
+my $BSUB_CORES = "16";
 
-my @ENGINES = qw< parrp stm >; # qw< synchron >
-my @THREADS = (1..64);
+my @ENGINES = qw< parrp stm fair synchron>; # qw< synchron >
+my @THREADS = (1..16,24,32,64);
 my @STEPS = (1..16,24,32,64);
-my @PHILOSOPHERS = (128);
-my @LAYOUTS = qw<alternating>; #qw<block third>
+my @PHILOSOPHERS = (32, 64, 128, 256);
+my @LAYOUTS = qw<alternating random>; #qw<block third>
 my %BASECONFIG = (
   si => "false", # synchronize iterations
-  wi => 10, # warmup iterations
+  wi => 20, # warmup iterations
   w => "1000ms", # warmup time
-  f => 2, # forks
+  f => 5, # forks
   i => 10, # iterations
   r => "1000ms", # time per iteration
   to => "10s", #timeout
