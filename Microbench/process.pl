@@ -26,7 +26,7 @@ use File::Path qw(make_path remove_tree);
   my $dbh = DBI->connect("dbi:SQLite:dbname=". $dbPath,"","",{AutoCommit => 0,PrintError => 1});
 
   my @frameworks = qw( REScalaSync ParRP REScalaSTM ); #  scala.rx scala.react SIDUP;
-  my @engines = ("synchron", "parrp", "stm");
+  my @engines = ("synchron", "parrp", "stm", "fair");
 
   importCSV($csvDir, $dbh, $table);
 
@@ -38,24 +38,27 @@ use File::Path qw(make_path remove_tree);
     map { {Title => "$_", "Param: riname" => $_, Benchmark => "benchmarks.simple.Mapping.local"} } @frameworks);
   plotBenchmarksFor($dbh, $table, "simple", "Simple Shared State",
     map { {Title => "$_", "Param: riname" => $_, Benchmark => "benchmarks.simple.Mapping.shared"} } @frameworks);
-  for my $philosophers (32, 64, 256) {
-    for my $layout (qw<alternating random third block>) {
-      plotBenchmarksFor($dbh, $table, "philosophers$philosophers", $layout,
-        map { {Title => $_, "Param: engineName" => $_ , Benchmark => "benchmarks.philosophers.PhilosopherCompetition.eat",
-        "Param: philosophers" => $philosophers, "Param: layout" => $layout} } @engines);
+
+  for my $dynamic (qw<dynamic static>) {
+    for my $philosophers (32, 64, 256) {
+      for my $layout (qw<alternating random third block>) {
+        plotBenchmarksFor($dbh, $table, "${dynamic}philosophers$philosophers", $layout,
+          map { {Title => $_, "Param: engineName" => $_ , Benchmark => "benchmarks.philosophers.PhilosopherCompetition.eat",
+          "Param: philosophers" => $philosophers, "Param: layout" => $layout, "Param: tableType" => $dynamic } } @engines);
+      }
     }
+
+    sub byPhilosophers($engine) {
+      map { {Title => $engine . " " . $_, "Param: engineName" => $engine , Benchmark => "benchmarks.philosophers.PhilosopherCompetition.eat",
+        "Param: philosophers" => $_, "Param: layout" => "alternating", "Param: tableType" => $dynamic } } (32, 64, 96, 128, 192, 256)
+    }
+    plotBenchmarksFor($dbh, $table, "${dynamic}philosophers", "philosopher comparison engine scaling",
+      map { byPhilosophers($_) } @engines);
+
+
+    plotBenchmarksFor($dbh, $table, "${dynamic}philosophers", "Philosopher Table",
+      map { {Title => $_, "Param: engineName" => $_ , Benchmark =>  "benchmarks.philosophers.PhilosopherCompetition.eat", "Param: tableType" => $dynamic } } @engines);
   }
-
-  sub byPhilosophers($engine) {
-    map { {Title => $engine . " " . $_, "Param: engineName" => $engine , Benchmark => "benchmarks.philosophers.PhilosopherCompetition.eat",
-      "Param: philosophers" => $_, "Param: layout" => "alternating"} } (32, 64, 96, 128, 192, 256)
-  }
-  plotBenchmarksFor($dbh, $table, "philosophers", "philosopher comparison engine scaling",
-    map { byPhilosophers($_) } @engines);
-
-
-  plotBenchmarksFor($dbh, $table, "philosophers", "Philosopher Table",
-    map { {Title => $_, "Param: engineName" => $_ , Benchmark =>  "benchmarks.philosophers.PhilosopherCompetition.eat"} } @engines);
 
   plotBenchmarksFor($dbh, $table, "grid", "Prime Grid",
     map { {Title => $_, "Param: riname" => $_, Benchmark => "benchmarks.grid.Bench.primGrid" } } @frameworks);
