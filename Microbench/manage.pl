@@ -24,7 +24,7 @@ my $BSUB_TIME = "23:30";
 my $BSUB_QUEUE = "deflt";
 my $BSUB_CORES = "16";
 
-my @ENGINES = qw< parrp stm fair synchron>; # qw< synchron >
+my @ENGINES = qw< parrp stm synchron>; # qw< synchron >
 my @THREADS = (1..16,24,32,64);
 my @STEPS = (1..16,24,32,64);
 my @PHILOSOPHERS = (16, 32, 64, 128, 256);
@@ -48,7 +48,7 @@ $ENV{'LANG'} = 'en_US.UTF-8';
 # $ENV{'JAVA_OPTS'} = $JMH_CLASSPATH;
 
 my $command = shift @ARGV;
-my @RUN = @ARGV ? @ARGV : qw< philosophers dynamicPhilosophers singleDynamic singleConflictingSignal dynamicStacks expensiveConflict >;
+my @RUN = @ARGV ? @ARGV : qw< philosophers singleDynamic singleConflictingSignal dynamicStacks expensiveConflict creation turnCreation singleVar >;
 
 say "available: " . (join " ", keys %{&selection()});
 say "selected: @RUN";
@@ -318,19 +318,59 @@ sub selection {
       @runs;
     },
 
-    singleConflictingSignal => sub {
+    singleVar => sub {
       my @runs;
 
       for my $threads (@THREADS) {
           my $name = "threads-$threads";
-          my $program = makeRunString("singleConflictingSignal", $name,
+          my $program = makeRunString("singleVar", $name,
             fromBaseConfig(
               p => { # parameters
                 engineName => (join ',', @ENGINES),
               },
               t => $threads,
             ),
-            "SingleVar.switchSignal"
+            "SingleVar"
+          );
+          push @runs, {name => $name, program => $program};
+      }
+
+      @runs;
+    },
+
+    turnCreation => sub {
+      my @runs;
+
+      for my $threads (@THREADS) {
+          my $name = "threads-$threads";
+          my $program = makeRunString("turnCreation", $name,
+            fromBaseConfig(
+              p => { # parameters
+                engineName => (join ',', @ENGINES),
+              },
+              t => $threads,
+            ),
+            "TurnCreation"
+          );
+          push @runs, {name => $name, program => $program};
+      }
+
+      @runs;
+    },
+
+    creation => sub {
+      my @runs;
+
+      for my $threads (@THREADS) {
+          my $name = "threads-$threads";
+          my $program = makeRunString("creation", $name,
+            fromBaseConfig(
+              p => { # parameters
+                engineName => (join ',', @ENGINES),
+              },
+              t => $threads,
+            ),
+            "Creation"
           );
           push @runs, {name => $name, program => $program};
       }
