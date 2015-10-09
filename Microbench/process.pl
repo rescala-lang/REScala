@@ -33,14 +33,14 @@ use File::Path qw(make_path remove_tree);
   mkdir $outDir;
   chdir $outDir;
 
-  for my $dynamic (qw<static>) {
-    # for my $philosophers (queryChoices($dbh, $table, "Param: philosophers", "Param: tableType" => $dynamic)) {
-    #   for my $layout (queryChoices($dbh, $table, "Param: layout", "Param: tableType" => $dynamic, "Param: philosophers" => $philosophers)) {
-    #     plotBenchmarksFor($dbh, $table, "${dynamic}philosophers$philosophers", $layout,
-    #       map { {Title => $_, "Param: engineName" => $_ , Benchmark => "benchmarks.philosophers.PhilosopherCompetition.eat",
-    #       "Param: philosophers" => $philosophers, "Param: layout" => $layout, "Param: tableType" => $dynamic } } queryChoices($dbh, $table, "Param: engineName", "Param: tableType" => $dynamic, "Param: philosophers" => $philosophers, "Param: layout" => $layout));
-    #   }
-    # }
+  for my $dynamic (qw<static dynamic>) {
+    for my $philosophers (queryChoices($dbh, $table, "Param: philosophers", "Param: tableType" => $dynamic)) {
+      for my $layout (queryChoices($dbh, $table, "Param: layout", "Param: tableType" => $dynamic, "Param: philosophers" => $philosophers)) {
+        plotBenchmarksFor($dbh, $table, "${dynamic}philosophers$philosophers", $layout,
+          map { {Title => $_, "Param: engineName" => $_ , Benchmark => "benchmarks.philosophers.PhilosopherCompetition.eat",
+          "Param: philosophers" => $philosophers, "Param: layout" => $layout, "Param: tableType" => $dynamic } } queryChoices($dbh, $table, "Param: engineName", "Param: tableType" => $dynamic, "Param: philosophers" => $philosophers, "Param: layout" => $layout));
+      }
+    }
 
     my $byPhilosopher = sub($engine) {
       my @choices =  queryChoices($dbh, $table, "Param: philosophers", "Param: engineName" => $engine, "Param: layout" => "alternating", "Param: tableType" => $dynamic );
@@ -52,25 +52,26 @@ use File::Path qw(make_path remove_tree);
     plotBenchmarksFor($dbh, $table, "${dynamic}philosophers", "philosopher comparison engine scaling", @list);
 
 
-    # plotBenchmarksFor($dbh, $table, "${dynamic}philosophers", "Philosopher Table",
-    #   map { {Title => $_, "Param: engineName" => $_ , Benchmark =>  "benchmarks.philosophers.PhilosopherCompetition.eat", "Param: tableType" => $dynamic } }  queryChoices($dbh, $table, "Param: engineName", "Param: tableType" => $dynamic));
+    plotBenchmarksFor($dbh, $table, "${dynamic}philosophers", "Philosopher Table",
+      map { {Title => $_, "Param: engineName" => $_ , Benchmark =>  "benchmarks.philosophers.PhilosopherCompetition.eat", "Param: tableType" => $dynamic } }  queryChoices($dbh, $table, "Param: engineName", "Param: tableType" => $dynamic));
   }
 
 
-  # plotBenchmarksFor($dbh, $table, "stacks", "Dynamic",
-  #   map {{Title => $_, "Param: work" => 0, "Param: engineName" => $_ , Benchmark => "benchmarks.dynamic.Stacks.run" }}  queryChoices($dbh, $table, "Param: engineName"));
+  plotBenchmarksFor($dbh, $table, "stacks", "Dynamic",
+    map {{Title => $_, "Param: work" => 0, "Param: engineName" => $_ , Benchmark => "benchmarks.dynamic.Stacks.run" }}
+      queryChoices($dbh, $table, "Param: engineName", Benchmark => "benchmarks.dynamic.Stacks.run"));
 
-  # my $query = queryDataset($dbh, query($table, "Param: work", "Benchmark", "Param: engineName"));
-  # plotDatasets("conflicts", "Asymmetric Workloads", {xlabel => "Work"},
-  #   $query->("pessimistic cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "parrp"),
-  #   $query->("pessimistic expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "parrp"),
-  #   $query->("stm cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "stm"),
-  #   $query->("stm expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "stm"));
+  my $query = queryDataset($dbh, query($table, "Param: work", "Benchmark", "Param: engineName"));
+  plotDatasets("conflicts", "Asymmetric Workloads", {xlabel => "Work"},
+    $query->("pessimistic cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "parrp"),
+    $query->("pessimistic expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "parrp"),
+    $query->("stm cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "stm"),
+    $query->("stm expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "stm"));
 
-  # plotDatasets("conflicts", "STM aborts", {xlabel => "Work"},
-  #   $query->("stm cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "stm"),
-  #   $query->("stm expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "stm"),
-  #   $query->("stm expensive tried", "benchmarks.conflict.ExpensiveConflict.g:tried", "stm"));
+  plotDatasets("conflicts", "STM aborts", {xlabel => "Work"},
+    $query->("stm cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "stm"),
+    $query->("stm expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "stm"),
+    $query->("stm expensive tried", "benchmarks.conflict.ExpensiveConflict.g:tried", "stm"));
 
   $dbh->commit();
 }
