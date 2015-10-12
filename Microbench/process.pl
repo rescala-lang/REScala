@@ -62,6 +62,7 @@ use File::Path qw(make_path remove_tree);
     map {{Title => $_, "Param: work" => 0, "Param: engineName" => $_ , Benchmark => "benchmarks.dynamic.Stacks.run" }}
       queryChoices($dbh, $table, "Param: engineName", Benchmark => "benchmarks.dynamic.Stacks.run"));
 
+  # expensive conflict stuff
   my $query = queryDataset($dbh, query($table, "Param: work", "Benchmark", "Param: engineName"));
   plotDatasets("conflicts", "Asymmetric Workloads", {xlabel => "Work"},
     $query->("pessimistic cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "parrp"),
@@ -79,6 +80,15 @@ use File::Path qw(make_path remove_tree);
       map {{Title => $_, "Param: engineName" => $_ , Benchmark => $benchmark }}
         queryChoices($dbh, $table, "Param: engineName", Benchmark => $benchmark));
   }
+
+
+  # varying conflict potential
+  my $query = queryDataset($dbh, query($table, "Param: philosophers", "Benchmark", "Param: engineName"));
+  plotDatasets("philosophers", "Concurrency Scaling", {xlabel => "Philosophers"},
+    $query->("ParRP", "benchmarks.philosophers.PhilosopherCompetition.eat", "parrp"),
+    $query->("STM", "benchmarks.philosophers.PhilosopherCompetition.eat", "stm"),
+    $query->("Synchron", "benchmarks.philosophers.PhilosopherCompetition.eat", "synchron"),
+    $query->("fair", "benchmarks.philosophers.PhilosopherCompetition.eat", "fair"));
 
   $dbh->commit();
 }
