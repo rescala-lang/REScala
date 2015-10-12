@@ -370,7 +370,7 @@ sub selection {
               },
               t => $threads,
             ),
-            "Creation"
+            "benchmarks.Creation"
           );
           push @runs, {name => $name, program => $program};
       }

@@ -33,12 +33,13 @@ use File::Path qw(make_path remove_tree);
   mkdir $outDir;
   chdir $outDir;
 
-  for my $dynamic (qw<static dynamic>) {
+  for my $dynamic (queryChoices($dbh, $table, "Param: tableType")) {
     for my $philosophers (queryChoices($dbh, $table, "Param: philosophers", "Param: tableType" => $dynamic)) {
       for my $layout (queryChoices($dbh, $table, "Param: layout", "Param: tableType" => $dynamic, "Param: philosophers" => $philosophers)) {
         plotBenchmarksFor($dbh, $table, "${dynamic}philosophers$philosophers", $layout,
           map { {Title => $_, "Param: engineName" => $_ , Benchmark => "benchmarks.philosophers.PhilosopherCompetition.eat",
-          "Param: philosophers" => $philosophers, "Param: layout" => $layout, "Param: tableType" => $dynamic } } queryChoices($dbh, $table, "Param: engineName", "Param: tableType" => $dynamic, "Param: philosophers" => $philosophers, "Param: layout" => $layout));
+          "Param: philosophers" => $philosophers, "Param: layout" => $layout, "Param: tableType" => $dynamic } }
+            queryChoices($dbh, $table, "Param: engineName", "Param: tableType" => $dynamic, "Param: philosophers" => $philosophers, "Param: layout" => $layout));
       }
     }
 
@@ -48,8 +49,8 @@ use File::Path qw(make_path remove_tree);
         "Param: philosophers" => $_, "Param: layout" => "alternating", "Param: tableType" => $dynamic } } (
          @choices);
     };
-    my @list = map { $byPhilosopher->($_) } (queryChoices($dbh, $table, "Param: engineName", "Param: tableType" => $dynamic));
-    plotBenchmarksFor($dbh, $table, "${dynamic}philosophers", "philosopher comparison engine scaling", @list);
+    plotBenchmarksFor($dbh, $table, "${dynamic}philosophers", "philosopher comparison engine scaling",
+      map { $byPhilosopher->($_) } (queryChoices($dbh, $table, "Param: engineName", "Param: tableType" => $dynamic)));
 
 
     plotBenchmarksFor($dbh, $table, "${dynamic}philosophers", "Philosopher Table",
@@ -73,6 +74,12 @@ use File::Path qw(make_path remove_tree);
     $query->("stm expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "stm"),
     $query->("stm expensive tried", "benchmarks.conflict.ExpensiveConflict.g:tried", "stm"));
 
+  for my $benchmark (grep {/Creation|SingleVar/} queryChoices($dbh, $table, "Benchmark")) {
+    plotBenchmarksFor($dbh, $table, "other", $benchmark,
+      map {{Title => $_, "Param: engineName" => $_ , Benchmark => $benchmark }}
+        queryChoices($dbh, $table, "Param: engineName", Benchmark => $benchmark));
+  }
+
   $dbh->commit();
 }
 
@@ -89,8 +96,7 @@ sub query($tableName, $varying, @keys) {
 }
 
 sub queryChoices($dbh, $table, $key, %constraints) {
-  $constraints{1} = "1";
-  my $where = join " AND ", map {qq["$_" = ?]} keys %constraints;
+  my $where = join " AND ", (map {qq["$_" = ?]} keys %constraints), qq["$key" IS NOT NULL];
   return @{$dbh->selectcol_arrayref(qq[SELECT DISTINCT "$key" FROM "$table" WHERE $where], undef, values %constraints)};
 }
 
