@@ -25,8 +25,6 @@ use File::Path qw(make_path remove_tree);
 
   my $dbh = DBI->connect("dbi:SQLite:dbname=". $dbPath,"","",{AutoCommit => 0,PrintError => 1});
 
-  my @engines = ("synchron", "parrp", "stm", "fair");
-
   importCSV($csvDir, $dbh, $table);
   $dbh->do("DELETE FROM $table WHERE Threads > 16");
 
@@ -147,7 +145,7 @@ sub coloring($name) {
 
 sub styling($name) {
   given($name) {
-    when (/(\d+)/) { "pt $1"}
+    when (/(\d+)/) { "pt $1" }
     default { '' }
   }
 }
@@ -168,15 +166,16 @@ sub plotDatasets($group, $name, $additionalParams, @datasets) {
     say "dataset for $group/$name is empty";
     return;
   }
+  $name =~ s/\$u(\d{4})/chr(hex($1))/eg;
   my $nospace = $name =~ s/\s//gr; # / highlighter
   my $chart = Chart::Gnuplot->new(
     output => "$group/$nospace.pdf",
-    terminal => "pdf size 8,5 enhanced font 'Linux Libertine O,14'",
-    key => "right top", #outside
-    title  => $name,
-    xlabel => "Threads",
+    terminal => "pdf size 5,3 enhanced font 'Linux Libertine O,14'",
+    key => "left top", #outside
+    #title  => $name,
+    xlabel => "acting threads",
     #logscale => "x 2; set logscale y 10",
-    ylabel => "Operations Per Millisecond",
+    ylabel => "operations per millisecond",
     %$additionalParams
   );
   $chart->plot2d(@datasets);
