@@ -167,9 +167,9 @@ sub plotDatasets($group, $name, $additionalParams, @datasets) {
     return;
   }
   $name =~ s/\$u(\d{4})/chr(hex($1))/eg; # decode scala name mangling
-  my $nospace = $name =~ s/\s//gr; # / highlighter
+  my $nospecial = $name =~ s/\W/_/gr; # / highlighter
   my $chart = Chart::Gnuplot->new(
-    output => "$group/$nospace.pdf",
+    output => "$group/$nospecial.pdf",
     terminal => "pdf size 5,3 enhanced font 'Linux Libertine O,14'",
     key => "left top", #outside
     #title  => $name,
