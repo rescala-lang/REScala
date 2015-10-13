@@ -28,6 +28,7 @@ use File::Path qw(make_path remove_tree);
   my @engines = ("synchron", "parrp", "stm", "fair");
 
   importCSV($csvDir, $dbh, $table);
+  $dbh->do("DELETE FROM $table WHERE Threads > 16");
 
   remove_tree($outDir);
   mkdir $outDir;
@@ -62,18 +63,20 @@ use File::Path qw(make_path remove_tree);
     map {{Title => $_, "Param: work" => 0, "Param: engineName" => $_ , Benchmark => "benchmarks.dynamic.Stacks.run" }}
       queryChoices($dbh, $table, "Param: engineName", Benchmark => "benchmarks.dynamic.Stacks.run"));
 
-  # expensive conflict stuff
-  my $query = queryDataset($dbh, query($table, "Param: work", "Benchmark", "Param: engineName"));
-  plotDatasets("conflicts", "Asymmetric Workloads", {xlabel => "Work"},
-    $query->("pessimistic cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "parrp"),
-    $query->("pessimistic expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "parrp"),
-    $query->("stm cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "stm"),
-    $query->("stm expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "stm"));
 
-  plotDatasets("conflicts", "STM aborts", {xlabel => "Work"},
-    $query->("stm cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "stm"),
-    $query->("stm expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "stm"),
-    $query->("stm expensive tried", "benchmarks.conflict.ExpensiveConflict.g:tried", "stm"));
+  { # expensive conflict stuff
+    my $query = queryDataset($dbh, query($table, "Param: work", "Benchmark", "Param: engineName"));
+    plotDatasets("conflicts", "Asymmetric Workloads", {xlabel => "Work"},
+      $query->("pessimistic cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "parrp"),
+      $query->("pessimistic expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "parrp"),
+      $query->("stm cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "stm"),
+      $query->("stm expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "stm"));
+
+    plotDatasets("conflicts", "STM aborts", {xlabel => "Work"},
+      $query->("stm cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "stm"),
+      $query->("stm expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "stm"),
+      $query->("stm expensive tried", "benchmarks.conflict.ExpensiveConflict.g:tried", "stm"));
+  }
 
   for my $benchmark (grep {/Creation|SingleVar/} queryChoices($dbh, $table, "Benchmark")) {
     plotBenchmarksFor($dbh, $table, "other", $benchmark,
@@ -82,13 +85,14 @@ use File::Path qw(make_path remove_tree);
   }
 
 
-  # varying conflict potential
-  my $query = queryDataset($dbh, query($table, "Param: philosophers", "Benchmark", "Param: engineName"));
-  plotDatasets("philosophers", "Concurrency Scaling", {xlabel => "Philosophers"},
-    $query->("ParRP", "benchmarks.philosophers.PhilosopherCompetition.eat", "parrp"),
-    $query->("STM", "benchmarks.philosophers.PhilosopherCompetition.eat", "stm"),
-    $query->("Synchron", "benchmarks.philosophers.PhilosopherCompetition.eat", "synchron"),
-    $query->("fair", "benchmarks.philosophers.PhilosopherCompetition.eat", "fair"));
+  { # varying conflict potential
+    my $query = queryDataset($dbh, query($table, "Param: philosophers", "Benchmark", "Param: engineName"));
+    plotDatasets("philosophers", "Concurrency Scaling", {xlabel => "Philosophers"},
+      $query->("ParRP", "benchmarks.philosophers.PhilosopherCompetition.eat", "parrp"),
+      $query->("STM", "benchmarks.philosophers.PhilosopherCompetition.eat", "stm"),
+      $query->("Synchron", "benchmarks.philosophers.PhilosopherCompetition.eat", "synchron"),
+      $query->("fair", "benchmarks.philosophers.PhilosopherCompetition.eat", "fair"));
+  }
 
   $dbh->commit();
 }
