@@ -9,3 +9,7 @@ target
 .settings/*
 *.sublime-project
 *.sublime-workspace
+Microbench/resultArchive/
+Microbench/resultStore/
+Microbench/fig*
+Microbench/link.pl
