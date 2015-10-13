@@ -133,19 +133,13 @@ sub queryDataset($dbh, $query) {
   }
 }
 
-sub coloring($name) {
-  given (prettyName($name)) {
-    when (/ParRP/) {  'linecolor "green"' }
-    when (/STM/) {  'linecolor "blue"' }
-    when (/Synchron/) {  'linecolor "red"' }
-    when (/fair/) { 'linecolor "yellow"'}
-    default { '' }
-  }
-}
-
 sub styling($name) {
   given($name) {
     when (/(\d+)/) { "pt $1" }
+    when (/ParRP/)    { 'linecolor "green" lt 2 lw 2 pt 7 ps 1' }
+    when (/STM/)      { 'linecolor "blue" lt 2 lw 2 pt 4 ps 1' }
+    when (/Synchron/) { 'linecolor "red" lt 2 lw 2 pt 5 ps 1' }
+    when (/fair/)     { 'linecolor "yellow" lt 2 lw 2 pt 6 ps 1' }
     default { '' }
   }
 }
@@ -156,7 +150,7 @@ sub makeDataset($title, $data) {
     xdata => [map {$_->[0]} @$data],
     ydata => [map {$_->[1]} @$data],
     title => $title,
-    style => 'linespoints ' . coloring($title) . " " . styling($title),
+    style => 'linespoints ' . styling($title),
   );
 }
 
