@@ -433,13 +433,11 @@ sub hhlrjob {
 
 module unload openmpi
 module load java
-echo "--------- processors ---------"
-nproc
-echo "------------------------------"
-who
-echo "------------------------------"
-ls -al /work/local
-echo "------------------------------"
+echo "--------- processors ------------------------"
+cat /proc/cpuinfo
+echo "--------- java version ----------------------"
+java -version
+echo "---------------------------------------------"
 
 rm -r /tmp/\$(whoami)
 mkdir /tmp/\$(whoami)
