@@ -166,7 +166,7 @@ sub plotDatasets($group, $name, $additionalParams, @datasets) {
     say "dataset for $group/$name is empty";
     return;
   }
-  $name =~ s/\$u(\d{4})/chr(hex($1))/eg;
+  $name =~ s/\$u(\d{4})/chr(hex($1))/eg; # decode scala name mangling
   my $nospace = $name =~ s/\s//gr; # / highlighter
   my $chart = Chart::Gnuplot->new(
     output => "$group/$nospace.pdf",
