@@ -24,7 +24,7 @@ my $BSUB_TIME = "23:30";
 my $BSUB_QUEUE = "deflt";
 my $BSUB_CORES = "16";
 
-my @ENGINES = qw< parrp stm synchron>; # qw< synchron >
+my @ENGINES = qw< parrp stm synchron>; # qw< fair >
 my @THREADS = (1..16,24,32,64);
 my @STEPS = (1..16,24,32,64);
 my @SIZES = (1,10,100,1000);
