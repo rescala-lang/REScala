@@ -1,10 +1,12 @@
-package benchmarks
+package benchmarks.simple
 
 import java.util.concurrent.TimeUnit
 
+import benchmarks.{Size, EngineParam, Step}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
 import rescala.turns.{Engine, Turn}
+import rescala.{Signal, Signals, Var}
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -13,20 +15,23 @@ import rescala.turns.{Engine, Turn}
 @Fork(1)
 @Threads(1)
 @State(Scope.Benchmark)
-class TurnCreation[S <: rescala.graph.Spores] {
+class ChainSignal[S <: rescala.graph.Spores] {
 
   implicit var engine: Engine[S, Turn[S]] = _
 
+  var source: Var[Int, S] = _
+  var result: Signal[Int, S] = _
 
   @Setup
-  def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam[S]) = {
+  def setup(params: BenchmarkParams, size: Size, step: Step, engineParam: EngineParam[S]) = {
     engine = engineParam.engine
+    source = Var(step.run())
+    result = source
+    for (_ <- Range(0, size.size)) {
+      result = result.map(_ + 1)
+    }
   }
 
   @Benchmark
-  def run(): Turn[S] = {
-    engine.plan()(identity)
-  }
-
-
+  def run(step: Step): Unit = source.set(step.run())
 }

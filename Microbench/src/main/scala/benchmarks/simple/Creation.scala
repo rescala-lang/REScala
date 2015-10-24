@@ -1,10 +1,11 @@
-package benchmarks
+package benchmarks.simple
 
 import java.util.concurrent.TimeUnit
 
+import benchmarks.{EngineParam, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
-import rescala.turns.{Engine, Ticket, Turn}
+import rescala.turns.{Engine, Turn}
 import rescala.{Event, Evt, Signal, Var}
 
 @BenchmarkMode(Array(Mode.Throughput))
