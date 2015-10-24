@@ -21,7 +21,8 @@ if ($OSNAME eq "MSWin32") {
 my $OUTDIR = 'out';
 my $RESULTDIR = 'results';
 my $BSUB_TIME = "23:30";
-my $BSUB_QUEUE = "deflt";
+my $BSUB_QUEUE = "deflt_auto";
+my $BSUB_REQUIRE = "select[ mpi && avx ]"
 my $BSUB_CORES = "16";
 
 my @ENGINES = qw< parrp stm synchron>; # qw< fair >
@@ -95,7 +96,7 @@ sub submitAllAsOne {
 
 sub submit {
   my ($job) = @_;
-  open (my $BSUB, "|-", "bsub -q $BSUB_QUEUE -x -n $BSUB_CORES -W $BSUB_TIME");
+  open (my $BSUB, "|-", qq[bsub -q $BSUB_QUEUE -x -n $BSUB_CORES -W $BSUB_TIME -R "$BSUB_REQUIRE" ]);
   print $BSUB $job;
   close $BSUB;
 }
@@ -447,6 +448,9 @@ sub hhlrjob {
 #
 # Request the time you need for execution in [hour:]minute
 #BSUB -W $BSUB_TIME
+#
+# Required resources
+#BSUB -R "$BSUB_REQUIRE"
 #
 # Request vitual memory you need for your job in MB
 #BSUB -M 2048
