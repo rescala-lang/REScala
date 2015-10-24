@@ -27,6 +27,7 @@ my $BSUB_CORES = "16";
 my @ENGINES = qw< parrp stm synchron>; # qw< synchron >
 my @THREADS = (1..16,24,32,64);
 my @STEPS = (1..16,24,32,64);
+my @SIZES = (1,10,100,1000);
 my @PHILOSOPHERS = (16, 32, 64, 128, 256);
 my @LAYOUTS = qw<alternating random block>; #qw<third>
 my %BASECONFIG = (
@@ -307,6 +308,7 @@ sub selection {
           my $program = makeRunString("singleDynamic", $name,
             fromBaseConfig(
               p => { # parameters
+                engineName => (join ',', @ENGINES),
                 step =>  $steps
               },
             ),
@@ -330,7 +332,7 @@ sub selection {
               },
               t => $threads,
             ),
-            "SingleVar"
+            "simple.SingleVar"
           );
           push @runs, {name => $name, program => $program};
       }
@@ -350,7 +352,7 @@ sub selection {
               },
               t => $threads,
             ),
-            "TurnCreation"
+            "simple.TurnCreation"
           );
           push @runs, {name => $name, program => $program};
       }
@@ -358,25 +360,49 @@ sub selection {
       @runs;
     },
 
-    creation => sub {
+    simpleChain => sub {
       my @runs;
 
-      for my $threads (@THREADS) {
-          my $name = "threads-$threads";
-          my $program = makeRunString("creation", $name,
+      for my $size (@SIZES) {
+          my $name = "size-$size";
+          my $program = makeRunString("simpleChain", $name,
             fromBaseConfig(
               p => { # parameters
                 engineName => (join ',', @ENGINES),
+                size => $size,
               },
-              t => $threads,
+              t => 1,
             ),
-            "benchmarks.Creation"
+            "benchmarks.simple.Chain"
           );
           push @runs, {name => $name, program => $program};
       }
 
       @runs;
     },
+
+    simpleFan => sub {
+      my @runs;
+
+      for my $size (@SIZES) {
+          my $name = "size-$size";
+          my $program = makeRunString("simpleFan", $name,
+            fromBaseConfig(
+              p => { # parameters
+                engineName => (join ',', @ENGINES),
+                size => $size,
+              },
+              t => 1,
+            ),
+            "benchmarks.simple.Fan"
+          );
+          push @runs, {name => $name, program => $program};
+      }
+
+      @runs;
+    },
+
+
 
     # stmbank => sub {
     #   my @runs;
