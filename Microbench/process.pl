@@ -27,6 +27,7 @@ use File::Path qw(make_path remove_tree);
 
   importCSV($csvDir, $dbh, $table);
   $dbh->do("DELETE FROM $table WHERE Threads > 16");
+  $dbh->do(qq[DELETE FROM $table WHERE "Param: engineName" = "fair"]);
 
   remove_tree($_) for glob("$outDir/*");
   mkdir $outDir;
@@ -172,7 +173,7 @@ sub plotDatasets($group, $name, $additionalParams, @datasets) {
   my $nospecial = $name =~ s/\W/_/gr; # / highlighter
   my $chart = Chart::Gnuplot->new(
     output => "$group/$nospecial.pdf",
-    terminal => "pdf size 5,3 enhanced font 'Linux Libertine O,14'",
+    terminal => "pdf size 8,5 enhanced font 'Linux Libertine O,24'",
     key => "left top", #outside
     #title  => $name,
     xlabel => "Active threads",
