@@ -22,7 +22,7 @@ my $OUTDIR = 'out';
 my $RESULTDIR = 'results';
 my $BSUB_TIME = "23:30";
 my $BSUB_QUEUE = "deflt_auto";
-my $BSUB_REQUIRE = "select[ mpi && avx ]"
+my $BSUB_REQUIRE = "select[ mpi && avx ]";
 my $BSUB_CORES = "16";
 
 my @ENGINES = qw< parrp stm synchron>; # qw< fair >
