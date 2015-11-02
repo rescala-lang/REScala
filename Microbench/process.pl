@@ -56,13 +56,13 @@ use File::Path qw(make_path remove_tree);
     plotBenchmarksFor($dbh, $table, "${dynamic}philosophers", "Philosopher Table",
       map { {Title => $_, "Param: engineName" => $_ , Benchmark =>  "benchmarks.philosophers.PhilosopherCompetition.eat", "Param: tableType" => $dynamic } }  queryChoices($dbh, $table, "Param: engineName", "Param: tableType" => $dynamic));
 
-  { # varying conflict potential
-    my $query = queryDataset($dbh, query($table, "Param: philosophers", "Benchmark", "Param: engineName", "Param: tableType"));
-    plotDatasets("${dynamic}philosophers", "Concurrency Scaling", {xlabel => "Philosophers"},
-      $query->("ParRP", "benchmarks.philosophers.PhilosopherCompetition.eat", "parrp", $dynamic),
-      $query->("STM", "benchmarks.philosophers.PhilosopherCompetition.eat", "stm", $dynamic),
-      $query->("Synchron", "benchmarks.philosophers.PhilosopherCompetition.eat", "synchron", $dynamic));
-  }
+    { # varying conflict potential
+      my $query = queryDataset($dbh, query($table, "Param: philosophers", "Benchmark", "Param: engineName", "Param: tableType"));
+      plotDatasets("${dynamic}philosophers", "Concurrency Scaling", {xlabel => "Philosophers"},
+        $query->("ParRP", "benchmarks.philosophers.PhilosopherCompetition.eat", "parrp", $dynamic),
+        $query->("STM", "benchmarks.philosophers.PhilosopherCompetition.eat", "stm", $dynamic),
+        $query->("Synchron", "benchmarks.philosophers.PhilosopherCompetition.eat", "synchron", $dynamic));
+    }
 
   }
 
