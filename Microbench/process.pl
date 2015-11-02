@@ -93,6 +93,14 @@ use File::Path qw(make_path remove_tree);
       $query->("fair", "benchmarks.philosophers.PhilosopherCompetition.eat", "fair"));
   }
 
+  { # chain, fan
+    for my $benchmark (grep {/simple\.(Chain|Fan)/} queryChoices($dbh, $table, "Benchmark")) {
+      my $query = queryDataset($dbh, query($table, "Param: size", "Benchmark", "Param: engineName"));
+      plotDatasets("simple", $benchmark, {xlabel => "Size", logscale => "x 10",},
+        map { $query->(prettyName($_), $benchmark, $_) } queryChoices($dbh, $table, "Param: engineName", "Benchmark" => $benchmark));
+    }
+  }
+
   $dbh->commit();
 }
 
