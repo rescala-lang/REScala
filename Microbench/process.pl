@@ -44,7 +44,7 @@ use File::Path qw(make_path remove_tree);
     }
 
     my $byPhilosopher = sub($engine) {
-      my @choices =  queryChoices($dbh, $table, "Param: philosophers", "Param: engineName" => $engine, "Param: layout" => "alternating", "Param: tableType" => $dynamic );
+      my @choices = sort {$a <=> $b } queryChoices($dbh, $table, "Param: philosophers", "Param: engineName" => $engine, "Param: layout" => "alternating", "Param: tableType" => $dynamic );
       map { {Title => $engine . " " . $_, "Param: engineName" => $engine , Benchmark => "benchmarks.philosophers.PhilosopherCompetition.eat",
         "Param: philosophers" => $_, "Param: layout" => "alternating", "Param: tableType" => $dynamic } } (
          @choices);
