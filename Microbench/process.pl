@@ -17,47 +17,47 @@ use File::Path qw(make_path remove_tree);
 # combining standard deviations is not trivial, but would be possible:
 # http://www.burtonsys.com/climate/composite_standard_deviations.html
 
+my $DBPATH = ':memory:';
+my $TABLE = 'results';
+my $CSVDIR = 'resultStore';
+my $OUTDIR = 'fig';
+
+my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,PrintError => 1});
 {
-  my $dbPath = ':memory:';
-  my $table = 'results';
-  my $csvDir = 'resultStore';
-  my $outDir = 'fig';
 
-  my $dbh = DBI->connect("dbi:SQLite:dbname=". $dbPath,"","",{AutoCommit => 0,PrintError => 1});
+  importCSV();
+  $DBH->do("DELETE FROM $TABLE WHERE Threads > 16");
+  $DBH->do(qq[DELETE FROM $TABLE WHERE "Param: engineName" = "fair"]);
 
-  importCSV($csvDir, $dbh, $table);
-  $dbh->do("DELETE FROM $table WHERE Threads > 16");
-  $dbh->do(qq[DELETE FROM $table WHERE "Param: engineName" = "fair"]);
+  remove_tree($_) for glob("$OUTDIR/*");
+  mkdir $OUTDIR;
+  chdir $OUTDIR;
 
-  remove_tree($_) for glob("$outDir/*");
-  mkdir $outDir;
-  chdir $outDir;
-
-  for my $dynamic (queryChoices($dbh, $table, "Param: tableType")) {
-    for my $philosophers (queryChoices($dbh, $table, "Param: philosophers", "Param: tableType" => $dynamic)) {
-      for my $layout (queryChoices($dbh, $table, "Param: layout", "Param: tableType" => $dynamic, "Param: philosophers" => $philosophers)) {
-        plotBenchmarksFor($dbh, $table, "${dynamic}philosophers$philosophers", $layout,
+  for my $dynamic (queryChoices("Param: tableType")) {
+    for my $philosophers (queryChoices("Param: philosophers", "Param: tableType" => $dynamic)) {
+      for my $layout (queryChoices("Param: layout", "Param: tableType" => $dynamic, "Param: philosophers" => $philosophers)) {
+        plotBenchmarksFor("${dynamic}philosophers$philosophers", $layout,
           map { {Title => $_, "Param: engineName" => $_ , Benchmark => "benchmarks.philosophers.PhilosopherCompetition.eat",
           "Param: philosophers" => $philosophers, "Param: layout" => $layout, "Param: tableType" => $dynamic } }
-            queryChoices($dbh, $table, "Param: engineName", "Param: tableType" => $dynamic, "Param: philosophers" => $philosophers, "Param: layout" => $layout));
+            queryChoices("Param: engineName", "Param: tableType" => $dynamic, "Param: philosophers" => $philosophers, "Param: layout" => $layout));
       }
     }
 
     my $byPhilosopher = sub($engine) {
-      my @choices = sort {$a <=> $b } queryChoices($dbh, $table, "Param: philosophers", "Param: engineName" => $engine, "Param: layout" => "alternating", "Param: tableType" => $dynamic );
+      my @choices = sort {$a <=> $b } queryChoices("Param: philosophers", "Param: engineName" => $engine, "Param: layout" => "alternating", "Param: tableType" => $dynamic );
       map { {Title => $engine . " " . $_, "Param: engineName" => $engine , Benchmark => "benchmarks.philosophers.PhilosopherCompetition.eat",
         "Param: philosophers" => $_, "Param: layout" => "alternating", "Param: tableType" => $dynamic } } (
          @choices);
     };
-    plotBenchmarksFor($dbh, $table, "${dynamic}philosophers", "philosopher comparison engine scaling",
-      map { $byPhilosopher->($_) } (queryChoices($dbh, $table, "Param: engineName", "Param: tableType" => $dynamic)));
+    plotBenchmarksFor("${dynamic}philosophers", "philosopher comparison engine scaling",
+      map { $byPhilosopher->($_) } (queryChoices("Param: engineName", "Param: tableType" => $dynamic)));
 
 
-    plotBenchmarksFor($dbh, $table, "${dynamic}philosophers", "Philosopher Table",
-      map { {Title => $_, "Param: engineName" => $_ , Benchmark =>  "benchmarks.philosophers.PhilosopherCompetition.eat", "Param: tableType" => $dynamic } }  queryChoices($dbh, $table, "Param: engineName", "Param: tableType" => $dynamic));
+    plotBenchmarksFor("${dynamic}philosophers", "Philosopher Table",
+      map { {Title => $_, "Param: engineName" => $_ , Benchmark =>  "benchmarks.philosophers.PhilosopherCompetition.eat", "Param: tableType" => $dynamic } }  queryChoices("Param: engineName", "Param: tableType" => $dynamic));
 
     { # varying conflict potential
-      my $query = queryDataset($dbh, query($table, "Param: philosophers", "Benchmark", "Param: engineName", "Param: tableType"));
+      my $query = queryDataset(query("Param: philosophers", "Benchmark", "Param: engineName", "Param: tableType"));
       plotDatasets("${dynamic}philosophers", "Concurrency Scaling", {xlabel => "Philosophers"},
         $query->("ParRP", "benchmarks.philosophers.PhilosopherCompetition.eat", "parrp", $dynamic),
         $query->("STM", "benchmarks.philosophers.PhilosopherCompetition.eat", "stm", $dynamic),
@@ -67,13 +67,13 @@ use File::Path qw(make_path remove_tree);
   }
 
 
-  plotBenchmarksFor($dbh, $table, "stacks", "Dynamic",
+  plotBenchmarksFor("stacks", "Dynamic",
     map {{Title => $_, "Param: work" => 0, "Param: engineName" => $_ , Benchmark => "benchmarks.dynamic.Stacks.run" }}
-      queryChoices($dbh, $table, "Param: engineName", Benchmark => "benchmarks.dynamic.Stacks.run"));
+      queryChoices("Param: engineName", Benchmark => "benchmarks.dynamic.Stacks.run"));
 
 
   { # expensive conflict stuff
-    my $query = queryDataset($dbh, query($table, "Param: work", "Benchmark", "Param: engineName"));
+    my $query = queryDataset(query("Param: work", "Benchmark", "Param: engineName"));
     plotDatasets("conflicts", "Asymmetric Workloads", {xlabel => "Work"},
       $query->("pessimistic cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "parrp"),
       $query->("pessimistic expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "parrp"),
@@ -86,22 +86,22 @@ use File::Path qw(make_path remove_tree);
       $query->("stm expensive tried", "benchmarks.conflict.ExpensiveConflict.g:tried", "stm"));
   }
 
-  for my $benchmark (grep {/Creation|SingleVar/} queryChoices($dbh, $table, "Benchmark")) {
-    plotBenchmarksFor($dbh, $table, "other", $benchmark,
+  for my $benchmark (grep {/Creation|SingleVar/} queryChoices("Benchmark")) {
+    plotBenchmarksFor("other", $benchmark,
       map {{Title => $_, "Param: engineName" => $_ , Benchmark => $benchmark }}
-        queryChoices($dbh, $table, "Param: engineName", Benchmark => $benchmark));
+        queryChoices("Param: engineName", Benchmark => $benchmark));
   }
 
 
   { # chain, fan
-    for my $benchmark (grep {/simple\.(Chain|Fan)/} queryChoices($dbh, $table, "Benchmark")) {
-      my $query = queryDataset($dbh, query($table, "Param: size", "Benchmark", "Param: engineName"));
+    for my $benchmark (grep {/simple\.(Chain|Fan)/} queryChoices("Benchmark")) {
+      my $query = queryDataset(query("Param: size", "Benchmark", "Param: engineName"));
       plotDatasets("simple", $benchmark, {xlabel => "Size", logscale => "x 10",},
-        map { $query->(prettyName($_), $benchmark, $_) } queryChoices($dbh, $table, "Param: engineName", "Benchmark" => $benchmark));
+        map { $query->(prettyName($_), $benchmark, $_) } queryChoices("Param: engineName", "Benchmark" => $benchmark));
     }
   }
 
-  $dbh->commit();
+  $DBH->commit();
 }
 
 sub prettyName($name) {
@@ -111,28 +111,28 @@ sub prettyName($name) {
   return $name;
 }
 
-sub query($tableName, $varying, @keys) {
+sub query($varying, @keys) {
   my $where = join " AND ", map {qq["$_" = ?]} @keys;
-  return qq[SELECT "$varying", sum(Score * Samples) / sum(Samples) FROM "$tableName" WHERE $where GROUP BY "$varying" ORDER BY "$varying"];
+  return qq[SELECT "$varying", sum(Score * Samples) / sum(Samples) FROM "$TABLE" WHERE $where GROUP BY "$varying" ORDER BY "$varying"];
 }
 
-sub queryChoices($dbh, $table, $key, %constraints) {
+sub queryChoices($key, %constraints) {
   my $where = join " AND ", (map {qq["$_" = ?]} keys %constraints), qq["$key" IS NOT NULL];
-  return @{$dbh->selectcol_arrayref(qq[SELECT DISTINCT "$key" FROM "$table" WHERE $where], undef, values %constraints)};
+  return @{$DBH->selectcol_arrayref(qq[SELECT DISTINCT "$key" FROM "$TABLE" WHERE $where], undef, values %constraints)};
 }
 
-sub plotBenchmarksFor($dbh, $tableName, $group, $name, @graphs) {
+sub plotBenchmarksFor($group, $name, @graphs) {
   my @datasets;
   for my $graph (@graphs) {
     my $title = delete $graph->{"Title"};
     my @keys = keys %{$graph};
-    push @datasets, queryDataset($dbh, query($tableName, "Threads", @keys))->(prettyName($title) // "unnamed", values %{$graph});
+    push @datasets, queryDataset(query("Threads", @keys))->(prettyName($title) // "unnamed", values %{$graph});
   }
   plotDatasets($group, $name, {}, @datasets);
 }
 
-sub queryDataset($dbh, $query) {
-  my $sth = $dbh->prepare($query);
+sub queryDataset($query) {
+  my $sth = $DBH->prepare($query);
   return sub($title, @params) {
     $sth->execute(@params);
     my $data = $sth->fetchall_arrayref();
@@ -185,7 +185,7 @@ sub plotDatasets($group, $name, $additionalParams, @datasets) {
     key => "left top", #outside
     #title  => $name,
     xlabel => "Active threads",
-    yrange => "[0:500]",
+    #yrange => "[0:500]",
     #logscale => "x 2; set logscale y 10",
     ylabel => "Operations per millisecond",
     # xrange => "reverse",
@@ -198,29 +198,29 @@ sub plotDatasets($group, $name, $additionalParams, @datasets) {
 
 ##### IMPORTING
 
-sub importCSV($folder, $dbh, $tableName) {
+sub importCSV() {
   my @files;
   find(sub {
       push @files, $File::Find::name if $_ =~ /\.csv$/;
-    }, $folder);
+    }, $CSVDIR);
   for my $file (@files) {
     my @data = @{ csv(in => $file) };
     say "$file is empty" and next if !@data;
     my @headers = @{ shift @data };
-    updateTable($dbh, $tableName, @headers);
+    updateTable($DBH, $TABLE, @headers);
 
     for my $row (@data) {
       s/(?<=\d),(?=\d)/./g for @$row;  # replace , with . in numbers
     }
-    my $sth = $dbh->prepare("INSERT INTO $tableName (" . (join ",", map {qq["$_"]} @headers) . ") VALUES (" . (join ',', map {'?'} @headers) . ")");
+    my $sth = $DBH->prepare("INSERT INTO $TABLE (" . (join ",", map {qq["$_"]} @headers) . ") VALUES (" . (join ',', map {'?'} @headers) . ")");
     $sth->execute(@$_) for @data;
   }
-  $dbh->do("UPDATE $tableName SET Score = Score / 1000, Unit = 'ops/ms' WHERE Unit = 'ops/s'");
-  $dbh->commit();
-  return $dbh;
+  $DBH->do("UPDATE $TABLE SET Score = Score / 1000, Unit = 'ops/ms' WHERE Unit = 'ops/s'");
+  $DBH->commit();
+  return $DBH;
 }
 
-sub updateTable($dbh, $tableName, @columns) {
+sub updateTable($DBH, $TABLE, @columns) {
 
   sub typeColumn($columnName) {
     given($columnName) {
@@ -229,14 +229,14 @@ sub updateTable($dbh, $tableName, @columns) {
     }
   }
 
-  if($dbh->selectrow_array("SELECT name FROM sqlite_master WHERE type='table' AND name='$tableName'")) {
-    my %knownColumns = map {$_ => 1} @{ $dbh->selectcol_arrayref("PRAGMA table_info($tableName)", { Columns => [2]}) };
+  if($DBH->selectrow_array("SELECT name FROM sqlite_master WHERE type='table' AND name='$TABLE'")) {
+    my %knownColumns = map {$_ => 1} @{ $DBH->selectcol_arrayref("PRAGMA table_info($TABLE)", { Columns => [2]}) };
     @columns = grep {! defined $knownColumns{$_} } @columns;
-    $dbh->do("ALTER TABLE $tableName ADD COLUMN ". typeColumn($_) . " DEFAULT NULL") for @columns;
-    return $dbh;
+    $DBH->do("ALTER TABLE $TABLE ADD COLUMN ". typeColumn($_) . " DEFAULT NULL") for @columns;
+    return $DBH;
   }
 
-  $dbh->do("CREATE TABLE $tableName (" . (join ',', map { typeColumn($_) . " DEFAULT NULL" } @columns) . ')')
+  $DBH->do("CREATE TABLE $TABLE (" . (join ',', map { typeColumn($_) . " DEFAULT NULL" } @columns) . ')')
     or die "could not create table";
-  return $dbh;
+  return $DBH;
 }
