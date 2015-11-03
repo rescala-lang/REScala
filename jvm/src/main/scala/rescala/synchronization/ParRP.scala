@@ -52,14 +52,14 @@ class ParRP(var initialRetryCount: Int) extends FactoryReference[ParRPSpores.typ
           key.releaseAll()
           key.keychain = new Keychain(key)
         }
-        if (remainingRetries == 0) {
-          acquireShared(reactive)
-          initialRetryCount /= 2
-          remainingRetries = initialRetryCount
-        }
-        else if (remainingRetries > 0) {
-          remainingRetries -= 1
-        }
+//        if (remainingRetries == 0) {
+//          acquireShared(reactive)
+//          initialRetryCount /= 2
+//          remainingRetries = initialRetryCount
+//        }
+//        else if (remainingRetries > 0) {
+//          remainingRetries -= 1
+//        }
         lq.clear()
         initialWrites.foreach(lq.enqueue(-42))
       }
@@ -74,7 +74,10 @@ class ParRP(var initialRetryCount: Int) extends FactoryReference[ParRPSpores.typ
   override def register(sink: Reactive[TState])(source: Reactive[TState]): Unit = {
     val owner = acquireShared(source)
     if (owner ne key) {
-      if (!source.outgoing.get.contains(sink)) {
+      if (!source.lock.isWriteLock) {
+        owner.turn.register(sink)(source)
+      }
+      else if (!source.outgoing.get.contains(sink)) {
         owner.turn.register(sink)(source)
         owner.turn.admit(sink)
         key.lockKeychain {
@@ -93,8 +96,10 @@ class ParRP(var initialRetryCount: Int) extends FactoryReference[ParRPSpores.typ
     val owner = acquireShared(source)
     if (owner ne key) {
       owner.turn.unregister(sink)(source)
-      key.lockKeychain(key.keychain.removeFallthrough(owner))
-      if (!sink.incoming(this).exists(_.lock.isOwner(owner))) owner.turn.forget(sink)
+      if (!source.lock.isWriteLock) {
+        key.lockKeychain(key.keychain.removeFallthrough(owner))
+        if (!sink.incoming(this).exists(_.lock.isOwner(owner))) owner.turn.forget(sink)
+      }
     }
     else super.unregister(sink)(source)
   }
@@ -103,7 +108,7 @@ class ParRP(var initialRetryCount: Int) extends FactoryReference[ParRPSpores.typ
 
   @tailrec
   private def acquireShared(lock: TurnLock, requester: Key): Key = {
-    val oldOwner = lock.tryLock(requester)
+    val oldOwner = lock.tryLock(requester, write = false)
 
     val res =
       if (oldOwner eq requester) Done(requester)
@@ -112,7 +117,7 @@ class ParRP(var initialRetryCount: Int) extends FactoryReference[ParRPSpores.typ
           // be aware that the owner of the lock could change at any time.
           // but it can not change when the owner is the requester or old owner,
           // because the keychain protects unlocking.
-          lock.tryLock(requester) match {
+          lock.tryLock(requester, write = false) match {
             // make sure the other owner did not unlock before we got his master lock
             case owner if owner eq requester => Done(requester)
             case owner if owner ne oldOwner => Retry

@@ -7,11 +7,12 @@ import scala.collection.immutable.Queue
 
 final class TurnLock() {
 
-  /** this is guarded by our intrinsic lock */
   private val owner: AtomicReference[Key] = new AtomicReference[Key]()
   private val shared: AtomicReference[Queue[Key]] = new AtomicReference[Queue[Key]](Queue())
+  private var writeLock: Boolean = true
 
   def getOwner: Key = owner.get()
+  def isWriteLock: Boolean = writeLock
 
   /** returns true if key owns the write lock */
   def isOwner(key: Key): Boolean = owner.get() eq key
@@ -21,9 +22,10 @@ final class TurnLock() {
    * does not check for shared access.
    */
   @tailrec
-  def tryLock(key: Key): Key = {
+  def tryLock(key: Key, write: Boolean = true): Key = {
     if (owner.compareAndSet(null, key)) {
       key.addLock(this)
+      writeLock = write
     }
     val current = owner.get()
     if (current eq null) tryLock(key)
@@ -48,12 +50,14 @@ final class TurnLock() {
   }
 
   /** transfers the lock from the turn to the target. */
-  def transfer(target: Key, oldOwner: Key, forceTransfer: Boolean = false) = {
+  def transfer(target: Key, oldOwner: Key, transferWriteSet: Boolean = false) = {
+    // update locks back to read locks when transferring
+    writeLock = transferWriteSet && writeLock
     // select the true target:
     // if there is no shared node, set target to null – free the lock
     // if a fallthrough exists always transfer the lock
     val trueTarget =
-      if (!forceTransfer && shared.get.isEmpty) null
+      if (!transferWriteSet && shared.get.isEmpty) null
       else target
 
     if (!owner.compareAndSet(oldOwner, trueTarget))

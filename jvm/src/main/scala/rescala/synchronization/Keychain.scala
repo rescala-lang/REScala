@@ -39,7 +39,7 @@ class Keychain(init: Key) {
     if (keys.isEmpty) locks.foreach(_.transfer(null, key))
     else {
       val target = keys.head
-      locks.foreach(_.transfer(target, key, forceTransfer = fallthrough.nonEmpty))
+      locks.foreach(_.transfer(target, key, transferWriteSet = fallthrough.nonEmpty))
       fallthrough -= target
       target.continue()
     }
