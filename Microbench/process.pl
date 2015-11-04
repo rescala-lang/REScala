@@ -83,10 +83,12 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
 yformat=%1.1f
 xlabel=Benchmark
 ylabel=Speedup compared to no locking
-=table";
+colors=green,blue
+=table,";
       for my $row (@$res) {
-        $row->[0] =~ s/benchmarks.simple.(\w+).\w+/$1/;
-        say $OUT join " ", @$row;
+        $row->[0] = unmangleName($row->[0]);
+        $row->[0] =~ s/benchmarks.simple.(?:Creation.)?([^\.]+)/$1/;
+        say $OUT join ", ", @$row;
       }
       close $OUT;
       qx[perl $BARGRAPH -pdf $TMPFILE > simpleBenchmarks.pdf ];
@@ -200,13 +202,17 @@ sub makeDataset($title, $data) {
   );
 }
 
+sub unmangleName($name) {
+  return $name =~ s/\$u(\d{4})/chr(hex($1))/egr; # / highlighter
+}
+
 sub plotDatasets($group, $name, $additionalParams, @datasets) {
   mkdir $group;
   unless (@datasets) {
     say "dataset for $group/$name is empty";
     return;
   }
-  $name =~ s/\$u(\d{4})/chr(hex($1))/eg; # decode scala name mangling
+  $name = unmangleName($name);
   my $nospecial = $name =~ s/\W/_/gr; # / highlighter
   my $chart = Chart::Gnuplot->new(
     output => "$group/$nospecial.pdf",
