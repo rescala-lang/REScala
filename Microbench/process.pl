@@ -13,6 +13,7 @@ use Data::Dumper;
 use Chart::Gnuplot;
 use File::Find;
 use File::Path qw(make_path remove_tree);
+use Cwd 'abs_path';
 
 # combining standard deviations is not trivial, but would be possible:
 # http://www.burtonsys.com/climate/composite_standard_deviations.html
@@ -21,6 +22,7 @@ my $DBPATH = ':memory:';
 my $TABLE = 'results';
 my $CSVDIR = 'resultStore';
 my $OUTDIR = 'fig';
+my $BARGRAPH = abs_path("bargraph.pl");
 
 my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,PrintError => 1});
 {
@@ -62,6 +64,33 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
         $query->("ParRP", "benchmarks.philosophers.PhilosopherCompetition.eat", "parrp", $dynamic),
         $query->("STM", "benchmarks.philosophers.PhilosopherCompetition.eat", "stm", $dynamic),
         $query->("Synchron", "benchmarks.philosophers.PhilosopherCompetition.eat", "synchron", $dynamic));
+    }
+
+    {
+      my $res = $DBH->selectall_arrayref(qq[SELECT parrp.Benchmark, parrp.Score/ sync.Score, stm.Score / sync.Score from
+        (SELECT * from results where results.Benchmark like "benchmarks.simple%" and Threads = 1 and `Param: engineName` = "parrp") AS parrp,
+        (SELECT * from results where results.Benchmark like "benchmarks.simple%" and Threads = 1 and `Param: engineName` = "synchron") AS sync,
+        (SELECT * from results where results.Benchmark like "benchmarks.simple%" and Threads = 1 and `Param: engineName` = "stm") AS stm
+        WHERE sync.Benchmark = parrp.Benchmark AND sync.Benchmark = stm.Benchmark
+        AND sync.Threads = parrp.Threads AND stm.Threads = sync.Threads
+        AND (sync.`Param: size` IS NULL OR (parrp.`Param: size` = sync.`Param: size` AND sync.`Param: size` = stm.`Param: size`))
+        AND (sync.`Param: step` IS NULL OR (parrp.`Param: step` = sync.`Param: step` AND sync.`Param: step` = stm.`Param: step`))
+        AND (sync.`Param: work` IS NULL OR (parrp.`Param: work` = sync.`Param: work` AND sync.`Param: work` = stm.`Param: work`))]);
+      my $TMPFILE = "out.perf";
+      open my $OUT, ">", $TMPFILE;
+      say $OUT "=cluster parrp stm
+=sortbmarks
+yformat=%1.1f
+xlabel=Benchmark
+ylabel=Speedup compared to no locking
+=table";
+      for my $row (@$res) {
+        $row->[0] =~ s/benchmarks.simple.(\w+).\w+/$1/;
+        say $OUT join " ", @$row;
+      }
+      close $OUT;
+      qx[perl $BARGRAPH -pdf $TMPFILE > simpleBenchmarks.pdf ];
+      unlink $TMPFILE;
     }
 
   }
