@@ -14,7 +14,7 @@ import rescala.{Signal, Var}
 @Measurement(iterations = 5, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
 @Fork(1)
 @Threads(1)
-@State(Scope.Benchmark)
+@State(Scope.Thread)
 class Fan[S <: rescala.graph.Spores] {
 
   implicit var engine: Engine[S, Turn[S]] = _

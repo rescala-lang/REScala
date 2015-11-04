@@ -14,7 +14,7 @@ import rescala.{Event, Evt}
 @Measurement(iterations = 5, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
 @Fork(1)
 @Threads(1)
-@State(Scope.Benchmark)
+@State(Scope.Thread)
 class ChainEvent[S <: rescala.graph.Spores] {
 
   implicit var engine: Engine[S, Turn[S]] = _
@@ -23,7 +23,7 @@ class ChainEvent[S <: rescala.graph.Spores] {
   var result: Event[Int, S] = _
 
   @Setup
-  def setup(params: BenchmarkParams, size: Size, step: Step, engineParam: EngineParam[S]) = {
+  def setup(params: BenchmarkParams, size: Size, engineParam: EngineParam[S]) = {
     engine = engineParam.engine
     source = engine.Evt[Int]()
     result = source
