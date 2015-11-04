@@ -50,9 +50,9 @@ $ENV{'LANG'} = 'en_US.UTF-8';
 # $ENV{'JAVA_OPTS'} = $JMH_CLASSPATH;
 
 my $command = shift @ARGV;
-my @RUN = @ARGV ? @ARGV : qw< philosophers dynamicPhilosophers singleDynamic singleConflictingSignal dynamicStacks expensiveConflict creation turnCreation singleVar simpleChain simpleFan >;
+my @RUN = @ARGV ? @ARGV : qw< dynamicPhilosophers dynamicStacks expensiveConflict philosophers simpleChain simpleFan singleDynamic singleVar turnCreation >;
 
-say "selected: . " sort @RUN;
+say "selected: " . (join " ", sort @RUN);
 say "available: " . (join " ", sort keys %{&selection()});
 
 given($command) {
