@@ -2,7 +2,7 @@ package benchmarks.simple
 
 import java.util.concurrent.TimeUnit
 
-import benchmarks.{EngineParam, Workload}
+import benchmarks.{Size, EngineParam, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
 import rescala.turns.{Engine, Turn}
@@ -47,9 +47,9 @@ class Creation[S <: rescala.graph.Spores] {
   }
 
   @Benchmark
-  def `signal fanout`(): Seq[Signal[String, S]] = {
+  def `signal fanout`(size: Size): Seq[Signal[String, S]] = {
     val v1 = Var("")
-    Range(0,100).map(_ => v1.map(identity))
+    Range(0,size.size).map(_ => v1.map(identity))
   }
 
 }
