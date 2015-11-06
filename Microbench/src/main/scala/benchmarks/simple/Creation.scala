@@ -19,9 +19,16 @@ class Creation[S <: rescala.graph.Spores] {
 
   implicit var engine: Engine[S, Turn[S]] = _
 
+  var sourceSignal: Signal[String, S] = _
+  var sourceEvent: Event[String, S] = _
+
   @Setup
-  def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam[S]) = {
+  def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam[S], threadState: CreationStateThread[S]) = {
     engine = engineParam.engine
+    sourceSignal = Var[String, S]("")
+    sourceEvent = Evt[String, S]()
+    threadState.signal = sourceSignal.map(_ => "")
+    threadState.event = sourceEvent.map(_ => "")
   }
 
   @Benchmark
@@ -35,21 +42,24 @@ class Creation[S <: rescala.graph.Spores] {
   }
 
   @Benchmark
-  def `var and derived signal`(): Signal[String, S] = {
-    val v1 = engine.Var("")
-    v1.map(identity)
+  def `derived signal`(threadState: CreationStateThread[S]): Signal[String, S] = {
+    threadState.signal.map(identity)
   }
 
   @Benchmark
-  def `evt and derived event`(): Event[String, S] = {
-    val e1 = engine.Evt[String]()
-    e1.map(identity)
+  def `derived event`(threadState: CreationStateThread[S]): Event[String, S] = {
+    threadState.event.map(identity)
   }
 
   @Benchmark
-  def `signal fanout`(size: Size): Seq[Signal[String, S]] = {
-    val v1 = Var("")
-    Range(0,size.size).map(_ => v1.map(identity))
+  def `signal fanout`(size: Size, threadState: CreationStateThread[S]): Seq[Signal[String, S]] = {
+    Range(0,size.size).map(_ => threadState.signal.map(identity))
   }
 
+}
+
+@State(Scope.Thread)
+class CreationStateThread[S <: rescala.graph.Spores] {
+  var signal: Signal[String, S] = _
+  var event: Event[String, S] = _
 }
