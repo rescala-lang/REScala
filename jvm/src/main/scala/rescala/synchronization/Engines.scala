@@ -23,7 +23,7 @@ object Engines {
 
   def all: List[TEngine] = List[TEngine](stm, parrp, synchron, unmanaged, synchronFair)
 
-  implicit val parrp: Engine[ParRPSpores.type, ParRP] = spinningWithBackoff(7)
+  implicit val parrp: Engine[ParRPSpores.type, ParRP] = spinningWithBackoff(() => new Backoff)
 
   implicit val default: Engine[ParRPSpores.type, ParRP] = parrp
 
@@ -31,6 +31,6 @@ object Engines {
     override def plan[R](i: Reactive*)(f: STMSync => R): R = atomic { tx => super.plan(i: _*)(f) }
   }
 
-  def spinningWithBackoff(backOff: Int): Impl[ParRPSpores.type, ParRP] = new Impl[ParRPSpores.type, ParRP](ParRPSpores, new ParRP(backOff))
+  def spinningWithBackoff(backOff: () => Backoff): Impl[ParRPSpores.type, ParRP] = new Impl[ParRPSpores.type, ParRP](ParRPSpores, new ParRP(backOff()))
 
 }

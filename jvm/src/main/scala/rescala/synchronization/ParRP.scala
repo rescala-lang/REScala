@@ -6,7 +6,7 @@ import rescala.synchronization.ParRP.{Await, Done, Retry}
 
 import scala.annotation.tailrec
 
-class ParRP(var initialRetryCount: Int) extends FactoryReference[ParRPSpores.type](ParRPSpores) with PropagationImpl[ParRPSpores.type] {
+class ParRP(backoff: Backoff) extends FactoryReference[ParRPSpores.type](ParRPSpores) with PropagationImpl[ParRPSpores.type] {
 
   type TState = ParRPSpores.type
 
@@ -43,8 +43,6 @@ class ParRP(var initialRetryCount: Int) extends FactoryReference[ParRPSpores.typ
     val lq = new LevelQueue()
     initialWrites.foreach(lq.enqueue(-42))
 
-    var remainingRetries = initialRetryCount
-
     lq.evaluateQueue { reactive =>
       if (reactive.lock.tryLock(key) eq key) reactive.outgoing.get.foreach(lq.enqueue(-42))
       else {
@@ -52,14 +50,7 @@ class ParRP(var initialRetryCount: Int) extends FactoryReference[ParRPSpores.typ
           key.releaseAll()
           key.keychain = new Keychain(key)
         }
-//        if (remainingRetries == 0) {
-//          acquireShared(reactive)
-//          initialRetryCount /= 2
-//          remainingRetries = initialRetryCount
-//        }
-//        else if (remainingRetries > 0) {
-//          remainingRetries -= 1
-//        }
+        backoff.backoff()
         lq.clear()
         initialWrites.foreach(lq.enqueue(-42))
       }
