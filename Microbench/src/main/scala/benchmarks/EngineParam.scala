@@ -9,7 +9,7 @@ class EngineParam[S <: rescala.graph.Spores] {
   @Param(Array("synchron", "parrp", "stm", "fair"))
   var engineName: String = _
 
-  @Param(Array("500000"))
+  @Param(Array("100000"))
   var minBackoff: Long = _
   @Param(Array("10000000"))
   var maxBackoff: Long = _
