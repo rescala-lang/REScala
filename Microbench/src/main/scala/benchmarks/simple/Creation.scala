@@ -14,21 +14,19 @@ import rescala.{Event, Evt, Signal, Var}
 @Measurement(iterations = 5, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
 @Fork(1)
 @Threads(1)
-@State(Scope.Benchmark)
+@State(Scope.Thread)
 class Creation[S <: rescala.graph.Spores] {
 
   implicit var engine: Engine[S, Turn[S]] = _
 
-  var sourceSignal: Signal[String, S] = _
-  var sourceEvent: Event[String, S] = _
+  var signal: Signal[String, S] = _
+  var event: Event[String, S] = _
 
   @Setup
-  def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam[S], threadState: CreationStateThread[S]) = {
+  def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam[S], benchState: CreationStateBench[S]) = {
     engine = engineParam.engine
-    sourceSignal = Var[String, S]("")
-    sourceEvent = Evt[String, S]()
-    threadState.signal = sourceSignal.map(_ => "")
-    threadState.event = sourceEvent.map(_ => "")
+    signal = benchState.sourceSignal.map(_ => "")
+    event = benchState.sourceEvent.map(_ => "")
   }
 
   @Benchmark
@@ -42,24 +40,31 @@ class Creation[S <: rescala.graph.Spores] {
   }
 
   @Benchmark
-  def `derived signal`(threadState: CreationStateThread[S]): Signal[String, S] = {
-    threadState.signal.map(identity)
+  def `derived signal`(): Signal[String, S] = {
+    signal.map(identity)
   }
 
   @Benchmark
-  def `derived event`(threadState: CreationStateThread[S]): Event[String, S] = {
-    threadState.event.map(identity)
+  def `derived event`(): Event[String, S] = {
+    event.map(identity)
   }
 
   @Benchmark
-  def `signal fanout`(size: Size, threadState: CreationStateThread[S]): Seq[Signal[String, S]] = {
-    Range(0,size.size).map(_ => threadState.signal.map(identity))
+  def `signal fanout`(size: Size): Seq[Signal[String, S]] = {
+    Range(0,size.size).map(_ => signal.map(identity))
   }
 
 }
 
-@State(Scope.Thread)
-class CreationStateThread[S <: rescala.graph.Spores] {
-  var signal: Signal[String, S] = _
-  var event: Event[String, S] = _
+@State(Scope.Benchmark)
+class CreationStateBench[S <: rescala.graph.Spores] {
+  var sourceSignal: Signal[String, S] = _
+  var sourceEvent: Event[String, S] = _
+  @Setup
+  def setup(engineParam: EngineParam[S]) = {
+    implicit val engine: Engine[S, Turn[S]] = engineParam.engine
+    sourceSignal = Var[String, S]("")
+    sourceEvent = Evt[String, S]()
+  }
+
 }

@@ -42,6 +42,12 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
           map { {Title => $_, "Param: engineName" => $_ , Benchmark => "benchmarks.philosophers.PhilosopherCompetition.eat",
           "Param: philosophers" => $philosophers, "Param: layout" => $layout, "Param: tableType" => $dynamic } }
             queryChoices("Param: engineName", "Param: tableType" => $dynamic, "Param: philosophers" => $philosophers, "Param: layout" => $layout));
+        # for my $backoff (queryChoices("Param: factorBackoff", "Param: layout" => $layout, "Param: tableType" => $dynamic, "Param: philosophers" => $philosophers)) {
+        #   plotBenchmarksFor("${dynamic}philosophers$philosophers$backoff", $layout,
+        #     map { {Title => $_, "Param: engineName" => $_ , Benchmark => "benchmarks.philosophers.PhilosopherCompetition.eat",
+        #     "Param: philosophers" => $philosophers, "Param: layout" => $layout, "Param: tableType" => $dynamic, "Param: factorBackoff" => $backoff } }
+        #       queryChoices("Param: engineName", "Param: factorBackoff" => $backoff, "Param: tableType" => $dynamic, "Param: philosophers" => $philosophers, "Param: layout" => $layout));
+        # }
       }
     }
 
@@ -58,13 +64,13 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
     plotBenchmarksFor("${dynamic}philosophers", "Philosopher Table",
       map { {Title => $_, "Param: engineName" => $_ , Benchmark =>  "benchmarks.philosophers.PhilosopherCompetition.eat", "Param: tableType" => $dynamic } }  queryChoices("Param: engineName", "Param: tableType" => $dynamic));
 
-    { # varying conflict potential
-      my $query = queryDataset(query("Param: philosophers", "Benchmark", "Param: engineName", "Param: tableType"));
-      plotDatasets("${dynamic}philosophers", "Concurrency Scaling", {xlabel => "Philosophers"},
-        $query->("ParRP", "benchmarks.philosophers.PhilosopherCompetition.eat", "parrp", $dynamic),
-        $query->("STM", "benchmarks.philosophers.PhilosopherCompetition.eat", "stm", $dynamic),
-        $query->("Synchron", "benchmarks.philosophers.PhilosopherCompetition.eat", "synchron", $dynamic));
-    }
+    # { # varying conflict potential
+    #   my $query = queryDataset(query("Param: philosophers", "Benchmark", "Param: engineName", "Param: tableType"));
+    #   plotDatasets("${dynamic}philosophers", "Concurrency Scaling", {xlabel => "Philosophers"},
+    #     $query->("ParRP", "benchmarks.philosophers.PhilosopherCompetition.eat", "parrp", $dynamic),
+    #     $query->("STM", "benchmarks.philosophers.PhilosopherCompetition.eat", "stm", $dynamic),
+    #     $query->("Synchron", "benchmarks.philosophers.PhilosopherCompetition.eat", "synchron", $dynamic));
+    # }
 
     {
       my $res = $DBH->selectall_arrayref(qq[SELECT parrp.Benchmark, parrp.Score/ sync.Score, stm.Score / sync.Score from
