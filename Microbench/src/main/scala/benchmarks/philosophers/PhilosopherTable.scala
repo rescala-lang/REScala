@@ -24,23 +24,6 @@ class PhilosopherTable[S <: Spores](philosopherCount: Int, work: Long)(implicit 
     }
   }
 
-
-  def calcFork(leftName: String, rightName: String)(leftState: Philosopher, rightState: Philosopher): Fork =
-    (leftState, rightState) match {
-      case (Thinking, Thinking) => Free
-      case (Hungry, _) => Taken(leftName)
-      case (_, Hungry) => Taken(rightName)
-    }
-
-  def calcVision(ownName: String)(leftFork: Fork, rightFork: Fork): Vision =
-    (leftFork, rightFork) match {
-      case (Free, Free) => Ready
-      case (Taken(`ownName`), Taken(`ownName`)) => Eating
-      case (Taken(name), _) => WaitingFor(name)
-      case (_, Taken(name)) => WaitingFor(name)
-    }
-
-
   def createTable(tableSize: Int): Seq[Seating[S]] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
 
@@ -57,7 +40,6 @@ class PhilosopherTable[S <: Spores](philosopherCount: Int, work: Long)(implicit 
     }
   }
 
-
   def tryEat(seating: Seating[S]): Boolean =
     implicitly[Engine[S, Turn[S]]].plan(seating.philosopher) { turn =>
       val forksWereFree = if (seating.vision(turn) == Ready) {
@@ -69,9 +51,25 @@ class PhilosopherTable[S <: Spores](philosopherCount: Int, work: Long)(implicit 
       forksWereFree
     }
 
+
 }
 
 object PhilosopherTable {
+
+  def calcFork(leftName: String, rightName: String)(leftState: Philosopher, rightState: Philosopher): Fork =
+    (leftState, rightState) match {
+      case (Thinking, Thinking) => Free
+      case (Hungry, _) => Taken(leftName)
+      case (_, Hungry) => Taken(rightName)
+    }
+
+  def calcVision(ownName: String)(leftFork: Fork, rightFork: Fork): Vision =
+    (leftFork, rightFork) match {
+      case (Free, Free) => Ready
+      case (Taken(`ownName`), Taken(`ownName`)) => Eating
+      case (Taken(name), _) => WaitingFor(name)
+      case (_, Taken(name)) => WaitingFor(name)
+    }
 
 
   // ============================================= Infrastructure ========================================================

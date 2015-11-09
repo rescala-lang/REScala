@@ -34,7 +34,7 @@ class PhilosopherCompetition[S <: Spores] {
 @State(Scope.Benchmark)
 class Competition[S <: Spores] {
 
-  @Param(Array("16", "32", "64", "128", "256", "512", "1024", "2048"))
+  @Param(Array("16", "48"))
   var philosophers: Int = _
 
   @Param(Array("block", "alternating", "random", "third"))

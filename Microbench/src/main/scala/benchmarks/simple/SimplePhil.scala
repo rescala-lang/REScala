@@ -16,15 +16,17 @@ import rescala.{Signal, Signals, Var}
 @State(Scope.Thread)
 class SimplePhil[S <: rescala.graph.Spores] {
 
+  import benchmarks.philosophers.PhilosopherTable._
+
   implicit var engine: Engine[S, Turn[S]] = _
 
-  var phil: Var[Int, S] = _
-  var vision: Signal[Boolean, S] = _
+  var phil: Var[Philosopher, S] = _
+  var vision: Signal[Vision, S] = _
 
-  def buildPhil(): (Var[Int, S], Signal[Boolean, S]) = {
-    val p: Var[Int, S] = engine.Var(0)
-    val f1, f2 = p.map(identity)
-    val v = Signals.lift(f1, f2) {(a, b) => a == b}
+  def buildPhil(): (Var[Philosopher, S], Signal[Vision, S]) = {
+    val p: Var[Philosopher, S] = engine.Var(Thinking)
+    val f1, f2 = p.map(s => if (s == Thinking) Free else Taken("me"))
+    val v = Signals.lift(f1, f2) {calcVision("me")}
     (p, v)
   }
 
@@ -37,14 +39,18 @@ class SimplePhil[S <: rescala.graph.Spores] {
   }
 
   @Benchmark
-  def propagate(step: Step): Unit = phil.set(step.run())
+  def propagate(): Unit = {
+    phil.set(Hungry)
+    phil.set(Thinking)
+  }
 
   @Benchmark
-  def build(): (Var[Int, S], Signal[Boolean, S]) = buildPhil()
+  def build(): (Var[Philosopher, S], Signal[Vision, S]) = buildPhil()
 
   @Benchmark
   def buildAndPropagate(step: Step): Unit = {
     val (p, v) = buildPhil()
-    p.set(10)
+    p.set(Hungry)
+    p.set(Thinking)
   }
 }

@@ -44,10 +44,4 @@ class Creation[S <: rescala.graph.Spores] {
     engine.Evt[String]().map(identity)
   }
 
-  @Benchmark
-  def `signal fanout`(size: Size): Seq[Signal[String, S]] = {
-    val s = engine.Var("")
-    Range(0,size.size).map(_ => s.map(identity))
-  }
-
 }
