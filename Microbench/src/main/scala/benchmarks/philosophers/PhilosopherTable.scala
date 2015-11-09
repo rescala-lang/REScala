@@ -9,8 +9,6 @@ import rescala.graph.Spores
 import rescala.turns.{Engine, Turn}
 import rescala.{Signal, Var}
 
-import scala.annotation.tailrec
-
 class PhilosopherTable[S <: Spores](philosopherCount: Int, work: Long)(implicit val engine: Engine[S, Turn[S]]) {
 
 
@@ -71,8 +69,6 @@ class PhilosopherTable[S <: Spores](philosopherCount: Int, work: Long)(implicit 
       forksWereFree
     }
 
-  def eatOnce(seating: Seating[S]) = repeatUntilTrue(tryEat(seating))
-
 }
 
 object PhilosopherTable {
@@ -97,11 +93,5 @@ object PhilosopherTable {
   // ============================================ Entity Creation =========================================================
 
   case class Seating[S <: Spores](placeNumber: Int, philosopher: Var[Philosopher, S], leftFork: Signal[Fork, S], rightFork: Signal[Fork, S], vision: Signal[Vision, S])
-
-
-
-  @tailrec // unrolled into loop by compiler
-  final def repeatUntilTrue(op: => Boolean): Unit = if (!op) repeatUntilTrue(op)
-
 
 }

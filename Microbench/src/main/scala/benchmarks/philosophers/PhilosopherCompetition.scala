@@ -1,6 +1,6 @@
 package benchmarks.philosophers
 
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.{ThreadLocalRandom, TimeUnit}
 
 import benchmarks.philosophers.PhilosopherTable.{Seating, Thinking}
 import benchmarks.{EngineParam, Workload}
@@ -9,7 +9,6 @@ import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
 import rescala.graph.Spores
 
 import scala.annotation.tailrec
-import scala.util.Random
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -22,7 +21,7 @@ class PhilosopherCompetition[S <: Spores] {
   def eat(comp: Competition[S], params: ThreadParams, work: Workload): Unit = {
     val myBlock = comp.blocks(params.getThreadIndex % comp.blocks.length)
     while ( {
-      val seating = myBlock(Random.nextInt(myBlock.length))
+      val seating = myBlock(ThreadLocalRandom.current().nextInt(myBlock.length))
       val res = comp.table.tryEat(seating)
       if (res) seating.philosopher.set(Thinking)(comp.table.engine)
       !res
