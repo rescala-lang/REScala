@@ -35,8 +35,8 @@ my %BASECONFIG = (
   si => "false", # synchronize iterations
   wi => 10, # warmup iterations
   w => "1000ms", # warmup time
-  f => 3, # forks
-  i => 5, # iterations
+  f => 1, # forks
+  i => 10, # iterations
   r => "1000ms", # time per iteration
   to => "10s", #timeout
 );
@@ -389,7 +389,7 @@ sub selection {
           my $program = makeRunString("simplePhil", $name,
             fromBaseConfig(
               p => { # parameters
-                engineName => (join ',', @ENGINES),
+                engineName => (join ',', @ENGINES, "unmanaged"),
               },
               t => $threads,
             ),
