@@ -50,7 +50,7 @@ $ENV{'LANG'} = 'en_US.UTF-8';
 # $ENV{'JAVA_OPTS'} = $JMH_CLASSPATH;
 
 my $command = shift @ARGV;
-my @RUN = @ARGV ? @ARGV : qw< dynamicPhilosophers philosophers turnCreation creation simplePhil>;
+my @RUN = @ARGV ? @ARGV : qw< dynamicPhilosophers philosophers turnCreation creation simplePhil unmanagedPhilosophers >;
 
 say "selected: " . (join " ", sort @RUN);
 say "available: " . (join " ", sort keys %{&selection()});
@@ -156,6 +156,33 @@ sub selection {
                 p => { # parameters
                   tableType => 'static',
                   engineName => (join ',', @ENGINES),
+                  philosophers => $phils,
+                  layout => $layout,
+                },
+                t => $threads, #threads
+              ),
+              "philosophers"
+            );
+            push @runs, {name => $name, program => $program};
+          }
+        }
+      }
+
+      @runs;
+    },
+
+    unmanagedPhilosophers => sub {
+      my @runs;
+
+      for my $threads (@THREADS) {
+        for my $layout ("third") {
+          for my $phils (grep {$_ >= ($threads * (($layout eq "third") ? 3 : 1))} @PHILOSOPHERS) {
+            my $name = "threads-$threads-layout-$layout-philosophers-$phils";
+            my $program = makeRunString("unmanagedphilosophers", $name,
+              fromBaseConfig(
+                p => { # parameters
+                  tableType => 'static',
+                  engineName => "unmanaged",
                   philosophers => $phils,
                   layout => $layout,
                 },
