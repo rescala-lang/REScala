@@ -72,35 +72,34 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
     #     $query->("Synchron", "benchmarks.philosophers.PhilosopherCompetition.eat", "synchron", $dynamic));
     # }
 
-    {
-      my $res = $DBH->selectall_arrayref(qq[SELECT parrp.Benchmark, parrp.Score/ sync.Score, stm.Score / sync.Score from
-        (SELECT * from results where results.Benchmark like "benchmarks.simple%" and Threads = 1 and `Param: engineName` = "parrp") AS parrp,
-        (SELECT * from results where results.Benchmark like "benchmarks.simple%" and Threads = 1 and `Param: engineName` = "synchron") AS sync,
-        (SELECT * from results where results.Benchmark like "benchmarks.simple%" and Threads = 1 and `Param: engineName` = "stm") AS stm
-        WHERE sync.Benchmark = parrp.Benchmark AND sync.Benchmark = stm.Benchmark
-        AND sync.Threads = parrp.Threads AND stm.Threads = sync.Threads
-        AND (sync.`Param: size` IS NULL OR (parrp.`Param: size` = sync.`Param: size` AND sync.`Param: size` = stm.`Param: size`))
-        AND (sync.`Param: step` IS NULL OR (parrp.`Param: step` = sync.`Param: step` AND sync.`Param: step` = stm.`Param: step`))
-        AND (sync.`Param: work` IS NULL OR (parrp.`Param: work` = sync.`Param: work` AND sync.`Param: work` = stm.`Param: work`))]);
-      my $TMPFILE = "out.perf";
-      open my $OUT, ">", $TMPFILE;
-      say $OUT "=cluster parrp stm
+  }
+
+  {
+    my $res = $DBH->selectall_arrayref(qq[SELECT parrp.Benchmark, parrp.Score/ sync.Score, stm.Score / sync.Score from
+      (SELECT * from results where results.Benchmark like "benchmarks.simple%" and Threads = 1 and `Param: engineName` = "parrp") AS parrp,
+      (SELECT * from results where results.Benchmark like "benchmarks.simple%" and Threads = 1 and `Param: engineName` = "synchron") AS sync,
+      (SELECT * from results where results.Benchmark like "benchmarks.simple%" and Threads = 1 and `Param: engineName` = "stm") AS stm
+      WHERE sync.Benchmark = parrp.Benchmark AND sync.Benchmark = stm.Benchmark
+      AND sync.Threads = parrp.Threads AND stm.Threads = sync.Threads
+      AND (sync.`Param: step` IS NULL OR (parrp.`Param: step` = sync.`Param: step` AND sync.`Param: step` = stm.`Param: step`))
+      AND (sync.`Param: work` IS NULL OR (parrp.`Param: work` = sync.`Param: work` AND sync.`Param: work` = stm.`Param: work`))]);
+    my $TMPFILE = "out.perf";
+    open my $OUT, ">", $TMPFILE;
+    say $OUT "=cluster parrp stm
 =sortbmarks
 yformat=%1.1f
 xlabel=Benchmark
 ylabel=Speedup compared to no locking
 colors=green,blue
 =table,";
-      for my $row (@$res) {
-        $row->[0] = unmangleName($row->[0]);
-        $row->[0] =~ s/benchmarks.simple.(?:Creation.)?([^\.]+)/$1/;
-        say $OUT join ", ", @$row;
-      }
-      close $OUT;
-      qx[perl $BARGRAPH -pdf $TMPFILE > simpleBenchmarks.pdf ];
-      unlink $TMPFILE;
+    for my $row (@$res) {
+      $row->[0] = unmangleName($row->[0]);
+      $row->[0] =~ s/benchmarks.simple.(?:Creation.)?([^\.]+)/$1/;
+      say $OUT join ", ", @$row;
     }
-
+    close $OUT;
+    qx[perl $BARGRAPH -pdf $TMPFILE > simpleBenchmarks.pdf ];
+    unlink $TMPFILE;
   }
 
 
@@ -108,20 +107,28 @@ colors=green,blue
     map {{Title => $_, "Param: work" => 0, "Param: engineName" => $_ , Benchmark => "benchmarks.dynamic.Stacks.run" }}
       queryChoices("Param: engineName", Benchmark => "benchmarks.dynamic.Stacks.run"));
 
-
-  { # expensive conflict stuff
-    my $query = queryDataset(query("Param: work", "Benchmark", "Param: engineName"));
-    plotDatasets("conflicts", "Asymmetric Workloads", {xlabel => "Work"},
-      $query->("pessimistic cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "parrp"),
-      $query->("pessimistic expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "parrp"),
-      $query->("stm cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "stm"),
-      $query->("stm expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "stm"));
-
-    plotDatasets("conflicts", "STM aborts", {xlabel => "Work"},
-      $query->("stm cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "stm"),
-      $query->("stm expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "stm"),
-      $query->("stm expensive tried", "benchmarks.conflict.ExpensiveConflict.g:tried", "stm"));
+  { # simplePhil
+    for my $bench (qw< propagate build buildAndPropagate >) {
+      plotBenchmarksFor("simplePhil", "SimplePhil$bench",
+        map {{Title => $_, "Param: engineName" => $_ , Benchmark => "benchmarks.simple.SimplePhil.$bench" }}
+          queryChoices("Param: engineName", Benchmark => "benchmarks.simple.SimplePhil.$bench"));
+    }
   }
+
+
+  # { # expensive conflict stuff
+  #   my $query = queryDataset(query("Param: work", "Benchmark", "Param: engineName"));
+  #   plotDatasets("conflicts", "Asymmetric Workloads", {xlabel => "Work"},
+  #     $query->("pessimistic cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "parrp"),
+  #     $query->("pessimistic expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "parrp"),
+  #     $query->("stm cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "stm"),
+  #     $query->("stm expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "stm"));
+
+  #   plotDatasets("conflicts", "STM aborts", {xlabel => "Work"},
+  #     $query->("stm cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "stm"),
+  #     $query->("stm expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "stm"),
+  #     $query->("stm expensive tried", "benchmarks.conflict.ExpensiveConflict.g:tried", "stm"));
+  # }
 
   for my $benchmark (grep {/Creation|SingleVar/} queryChoices("Benchmark")) {
     plotBenchmarksFor("other", $benchmark,
@@ -145,6 +152,7 @@ sub prettyName($name) {
   $name =~  s/spinning|REScalaSpin|parrp/ParRP/;
   $name =~  s/stm|REScalaSTM/STM/;
   $name =~  s/synchron|REScalaSync/Synchron/;
+  $name =~  s/unmanaged/Manual/;
   return $name;
 }
 
@@ -186,6 +194,7 @@ sub styleByName($name) {
     when (/STM/)      { 'linecolor "blue" lt 2 lw 2 pt 5 ps 1' }
     when (/Synchron/) { 'linecolor "red" lt 2 lw 2 pt 9 ps 1' }
     when (/fair/)     { 'linecolor "grey" lt 2 lw 2 pt 8 ps 1' }
+    when (/Manual/)   { 'linecolor "light-blue" lt 2 lw 2 pt 11 ps 1' }
     default { '' }
   }
 }
