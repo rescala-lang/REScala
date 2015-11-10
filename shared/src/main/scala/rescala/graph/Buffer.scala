@@ -1,5 +1,6 @@
 package rescala.graph
 
+import rescala.graph.Buffer.CommitStrategy
 import rescala.turns.Turn
 
 import scala.language.{higherKinds, implicitConversions}
@@ -10,7 +11,7 @@ trait Committable {
 }
 
 object Buffer {
-  type CommitStrategy[A] = (Pulse[A], Pulse[A]) => Pulse[A]
+  type CommitStrategy[A] = (A, A) => A
   def commitAsIs[A](base: A, cur: A): A = cur
   def transactionLocal[A](base: A, cur: A) = base
   def keepPulse[P](base: Pulse[P], cur: Pulse[P]) = cur.keep
@@ -21,7 +22,7 @@ trait Spores {
   type TLock
   def bud(): Bud
   trait Bud {
-    def buffer[A, S <: Spores](default: A, commitStrategy: Buffer.CommitStrategy[A]): TBuffer[A]
+    def buffer[A, S <: Spores](default: A, commitStrategy: CommitStrategy[A]): TBuffer[A]
     def lock(): TLock
   }
 }
@@ -30,7 +31,7 @@ object SimpleSpores extends Spores {
   override type TBuffer[A] = SimpleBuffer[A]
   override type TLock = Unit
   override def bud() = new Bud {
-    override def buffer[A, S <: Spores](default: A, commitStrategy: (A, A) => A): SimpleBuffer[A] = new SimpleBuffer[A](default, commitStrategy)
+    override def buffer[A, S <: Spores](default: A, commitStrategy: CommitStrategy[A]): SimpleBuffer[A] = new SimpleBuffer[A](default, commitStrategy)
     override def lock(): Unit = Unit
   }
 }
