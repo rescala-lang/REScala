@@ -66,7 +66,6 @@ given($command) {
 sub init {
   mkdir $RESULTDIR;
   mkdir $OUTDIR;
-  mkdir "$RESULTDIR/$_" for @RUN;
   chdir "..";
   system('sbt','project microbench', 'clean', 'stage', 'compileJmh');
   #system('sbt','clean', 'jmh:compile', 'jmh:stage');
@@ -111,7 +110,7 @@ sub makeRunString {
       (map {"-p $_=" . $params{$_}} keys %params),
       (join " ", @benchmarks)
     );
-  "$EXECUTABLE -rf csv -rff \"results/$prefix/$name.csv\" $paramstring"
+  "$EXECUTABLE -rf csv -rff \"results/${prefix}_$name.csv\" $paramstring"
 }
 
 sub makeRuns {
@@ -175,23 +174,21 @@ sub selection {
       my @runs;
 
       for my $threads (@THREADS) {
-        for my $layout ("third") {
-          for my $phils (grep {$_ >= ($threads * (($layout eq "third") ? 3 : 1))} @PHILOSOPHERS) {
-            my $name = "threads-$threads-layout-$layout-philosophers-$phils";
-            my $program = makeRunString("unmanagedphilosophers", $name,
-              fromBaseConfig(
-                p => { # parameters
-                  tableType => 'static',
-                  engineName => "unmanaged",
-                  philosophers => $phils,
-                  layout => $layout,
-                },
-                t => $threads, #threads
-              ),
-              "philosophers"
-            );
-            push @runs, {name => $name, program => $program};
-          }
+        for my $phils (grep {$_ >= ($threads * 3)} @PHILOSOPHERS) {
+          my $name = "threads-$threads-philosophers-$phils";
+          my $program = makeRunString("unmanagedPhilosophers", $name,
+            fromBaseConfig(
+              p => { # parameters
+                tableType => 'static',
+                engineName => "unmanaged",
+                philosophers => $phils,
+                layout => "third",
+              },
+              t => $threads, #threads
+            ),
+            "philosophers"
+          );
+          push @runs, {name => $name, program => $program};
         }
       }
 

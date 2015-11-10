@@ -89,12 +89,13 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
 =sortbmarks
 yformat=%1.1f
 xlabel=Benchmark
-ylabel=Speedup compared to no locking
+ylabel=Speedup compared to no global locking
 colors=green,blue
 =table,";
     for my $row (@$res) {
       $row->[0] = unmangleName($row->[0]);
-      $row->[0] =~ s/benchmarks.simple.(?:Creation.)?([^\.]+)/$1/;
+      $row->[0] =~ s/benchmarks.simple.(?:Creation.|SimplePhil.)?([^\.]+)/$1/;
+      $row->[0] =~ s/buildAndPropagate/build + propagate/;
       say $OUT join ", ", @$row;
     }
     close $OUT;
