@@ -52,6 +52,7 @@ class Competition[S <: Spores] {
     table = tableType match {
       case "static" => new PhilosopherTable(philosophers, work.work)(engineParam.engine)
       case "dynamic" => new DynamicPhilosopherTable(philosophers, work.work)(engineParam.engine)
+      case "half" => new HalfDynamicPhilosopherTable(philosophers, work.work)(engineParam.engine)
     }
     blocks = (layout match {
       case "block" =>
