@@ -148,22 +148,21 @@ sub selection {
 
       for my $threads (@THREADS) {
         for my $layout (@LAYOUTS) {
-          for my $phils (grep {$_ >= ($threads * (($layout eq "third") ? 3 : 1))} @PHILOSOPHERS) {
-            my $name = "threads-$threads-layout-$layout-philosophers-$phils";
-            my $program = makeRunString("philosophers", $name,
-              fromBaseConfig(
-                p => { # parameters
-                  tableType => 'static',
-                  engineName => (join ',', @ENGINES),
-                  philosophers => $phils,
-                  layout => $layout,
-                },
-                t => $threads, #threads
-              ),
-              "philosophers"
-            );
-            push @runs, {name => $name, program => $program};
-          }
+          my $phils = $PHILOSOPHERS[-1];
+          my $name = "threads-$threads-layout-$layout-philosophers-$phils";
+          my $program = makeRunString("philosophers", $name,
+            fromBaseConfig(
+              p => { # parameters
+                tableType => 'static',
+                engineName => (join ',', @ENGINES),
+                philosophers => $phils,
+                layout => $layout,
+              },
+              t => $threads, #threads
+            ),
+            "philosophers"
+          );
+          push @runs, {name => $name, program => $program};
         }
       }
 
@@ -174,7 +173,7 @@ sub selection {
       my @runs;
 
       for my $threads (@THREADS) {
-        for my $phils (grep {$_ >= ($threads * 3)} @PHILOSOPHERS) {
+        for my $phils (grep {$_ >= ($threads * 4)} @PHILOSOPHERS) {
           my $name = "threads-$threads-philosophers-$phils";
           my $program = makeRunString("unmanagedPhilosophers", $name,
             fromBaseConfig(

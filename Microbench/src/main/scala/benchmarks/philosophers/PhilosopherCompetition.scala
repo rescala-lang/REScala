@@ -58,7 +58,7 @@ class Competition[S <: Spores] {
         val perThread = table.seatings.size / params.getThreads
         table.seatings.sliding(perThread, perThread)
       case "alternating" => deal(table.seatings.toList,math.min(params.getThreads, philosophers))
-      case "third" => deal(table.seatings.sliding(3, 3).map(_.head).toList, params.getThreads)
+      case "third" => deal(table.seatings.sliding(4, 4).map(_.head).toList, params.getThreads)
       case "random" => List(table.seatings)
     }).map(_.toArray).toArray
   }
