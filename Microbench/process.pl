@@ -75,17 +75,21 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
   }
 
   {
+    my $BMCOND = qq[(results.Benchmark like "benchmarks.simple.SimplePhil%"
+                  OR results.Benchmark = "benchmarks.simple.TurnCreation.run"
+                  OR (results.Benchmark = "benchmarks.philosophers.PhilosopherCompetition.eat"
+                   AND `Param: tableType` = "static" AND `Param: layout` = "alternating"))];
     my $res = $DBH->selectall_arrayref(qq[SELECT parrp.Benchmark, parrp.Score/ sync.Score, stm.Score / sync.Score from
-      (SELECT * from results where results.Benchmark like "benchmarks.simple%" and Threads = 1 and `Param: engineName` = "parrp") AS parrp,
-      (SELECT * from results where results.Benchmark like "benchmarks.simple%" and Threads = 1 and `Param: engineName` = "synchron") AS sync,
-      (SELECT * from results where results.Benchmark like "benchmarks.simple%" and Threads = 1 and `Param: engineName` = "stm") AS stm
+      (SELECT * from results where $BMCOND and Threads = 1 and `Param: engineName` = "parrp") AS parrp,
+      (SELECT * from results where $BMCOND and Threads = 1 and `Param: engineName` = "synchron") AS sync,
+      (SELECT * from results where $BMCOND and Threads = 1 and `Param: engineName` = "stm") AS stm
       WHERE sync.Benchmark = parrp.Benchmark AND sync.Benchmark = stm.Benchmark
       AND sync.Threads = parrp.Threads AND stm.Threads = sync.Threads
       AND (sync.`Param: step` IS NULL OR (parrp.`Param: step` = sync.`Param: step` AND sync.`Param: step` = stm.`Param: step`))
       AND (sync.`Param: work` IS NULL OR (parrp.`Param: work` = sync.`Param: work` AND sync.`Param: work` = stm.`Param: work`))]);
     my $TMPFILE = "out.perf";
     open my $OUT, ">", $TMPFILE;
-    say $OUT "=cluster parrp stm
+    say $OUT "=cluster ParRP STM
 =sortbmarks
 yformat=%1.1f
 xlabel=Benchmark
@@ -96,6 +100,8 @@ colors=green,blue
       $row->[0] = unmangleName($row->[0]);
       $row->[0] =~ s/benchmarks.simple.(?:Creation.|SimplePhil.)?([^\.]+)/$1/;
       $row->[0] =~ s/buildAndPropagate/build + propagate/;
+      $row->[0] =~ s/benchmarks.philosophers.PhilosopherCompetition.eat/philosophers/;
+      $row->[0] =~ s/TurnCreation.run/structures/;
       say $OUT join ", ", @$row;
     }
     close $OUT;
@@ -117,19 +123,19 @@ colors=green,blue
   }
 
 
-  # { # expensive conflict stuff
-  #   my $query = queryDataset(query("Param: work", "Benchmark", "Param: engineName"));
-  #   plotDatasets("conflicts", "Asymmetric Workloads", {xlabel => "Work"},
-  #     $query->("pessimistic cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "parrp"),
-  #     $query->("pessimistic expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "parrp"),
-  #     $query->("stm cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "stm"),
-  #     $query->("stm expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "stm"));
+  { # expensive conflict stuff
+    my $query = queryDataset(query("Param: work", "Benchmark", "Param: engineName"));
+    plotDatasets("conflicts", "Asymmetric Workloads", {xlabel => "Work"},
+      $query->("pessimistic cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "parrp"),
+      $query->("pessimistic expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "parrp"),
+      $query->("stm cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "stm"),
+      $query->("stm expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "stm"));
 
-  #   plotDatasets("conflicts", "STM aborts", {xlabel => "Work"},
-  #     $query->("stm cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "stm"),
-  #     $query->("stm expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "stm"),
-  #     $query->("stm expensive tried", "benchmarks.conflict.ExpensiveConflict.g:tried", "stm"));
-  # }
+    plotDatasets("conflicts", "STM aborts", {xlabel => "Work"},
+      $query->("stm cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "stm"),
+      $query->("stm expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "stm"),
+      $query->("stm expensive tried", "benchmarks.conflict.ExpensiveConflict.g:tried", "stm"));
+  }
 
   for my $benchmark (grep {/Creation|SingleVar/} queryChoices("Benchmark")) {
     plotBenchmarksFor("other", $benchmark,
