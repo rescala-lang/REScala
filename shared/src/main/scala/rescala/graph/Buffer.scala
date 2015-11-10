@@ -10,6 +10,7 @@ trait Committable {
 }
 
 object Buffer {
+  type CommitStrategy[A] = (Pulse[A], Pulse[A]) => Pulse[A]
   def commitAsIs[A](base: A, cur: A): A = cur
   def transactionLocal[A](base: A, cur: A) = base
   def keepPulse[P](base: Pulse[P], cur: Pulse[P]) = cur.keep
@@ -20,7 +21,7 @@ trait Spores {
   type TLock
   def bud(): Bud
   trait Bud {
-    def buffer[A, S <: Spores](default: A, commitStrategy: (A, A) => A): TBuffer[A]
+    def buffer[A, S <: Spores](default: A, commitStrategy: Buffer.CommitStrategy[A]): TBuffer[A]
     def lock(): TLock
   }
 }

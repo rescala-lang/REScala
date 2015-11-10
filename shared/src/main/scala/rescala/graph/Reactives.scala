@@ -47,7 +47,7 @@ class Reader[+P, S <: Spores](pulses: Buffer[Pulse[P]]) {
 
 /** A node that has nodes that depend on it */
 trait Pulsing[+P, S <: Spores] extends Reactive[S] {
-  protected[this] def strategy: (Pulse[P], Pulse[P]) => Pulse[P] = Buffer.transactionLocal[Pulse[P]]
+  protected[this] def strategy: Buffer.CommitStrategy[P] = Buffer.transactionLocal[Pulse[P]]
   final protected[this] val pulses: S#TBuffer[Pulse[P]] = bud.buffer(Pulse.none, strategy)
 
   final def pulse(implicit turn: Turn[S]): Pulse[P] = pulses.get
