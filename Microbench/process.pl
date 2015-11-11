@@ -42,11 +42,14 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
           map { {Title => $_, "Param: engineName" => $_ , Benchmark => "benchmarks.philosophers.PhilosopherCompetition.eat",
           "Param: philosophers" => $philosophers, "Param: layout" => $layout, "Param: tableType" => $dynamic } }
             queryChoices("Param: engineName", "Param: tableType" => $dynamic, "Param: philosophers" => $philosophers, "Param: layout" => $layout));
-        # for my $backoff (queryChoices("Param: factorBackoff", "Param: layout" => $layout, "Param: tableType" => $dynamic, "Param: philosophers" => $philosophers)) {
-        #   plotBenchmarksFor("${dynamic}philosophers$philosophers$backoff", $layout,
-        #     map { {Title => $_, "Param: engineName" => $_ , Benchmark => "benchmarks.philosophers.PhilosopherCompetition.eat",
-        #     "Param: philosophers" => $philosophers, "Param: layout" => $layout, "Param: tableType" => $dynamic, "Param: factorBackoff" => $backoff } }
-        #       queryChoices("Param: engineName", "Param: factorBackoff" => $backoff, "Param: tableType" => $dynamic, "Param: philosophers" => $philosophers, "Param: layout" => $layout));
+        # for my $boFactor (queryChoices("Param: factorBackoff", "Param: layout" => $layout, "Param: tableType" => $dynamic, "Param: philosophers" => $philosophers)) {
+        #   for my $boMax (queryChoices("Param: maxBackoff", "Param: factorBackoff" => $boFactor, "Param: layout" => $layout, "Param: tableType" => $dynamic, "Param: philosophers" => $philosophers)) {
+
+        #     plotBenchmarksFor("${dynamic}philosophers$philosophers", "$layout-$boFactor-$boMax",
+        #       map { {Title => $_, "Param: engineName" => $_ , Benchmark => "benchmarks.philosophers.PhilosopherCompetition.eat",
+        #       "Param: philosophers" => $philosophers, "Param: layout" => $layout, "Param: tableType" => $dynamic, "Param: factorBackoff" => $boFactor } }
+        #         queryChoices("Param: engineName", "Param: maxBackoff" => $boMax, "Param: factorBackoff" => $boFactor, "Param: tableType" => $dynamic, "Param: philosophers" => $philosophers, "Param: layout" => $layout));
+        #   }
         # }
       }
     }
@@ -73,6 +76,11 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
     # }
 
   }
+
+  plotChoices("backoff", "dynamic5", "Param: factorBackoff", "Param: maxBackoff" => 5000000,  "Param: engineName" => "parrp" , Benchmark => "benchmarks.philosophers.PhilosopherCompetition.eat",
+          "Param: philosophers" => 48, "Param: layout" => "alternating", "Param: tableType" => "dynamic" );
+  plotChoices("backoff", "dynamic10", "Param: factorBackoff", "Param: maxBackoff" => 10000000,  "Param: engineName" => "parrp" , Benchmark => "benchmarks.philosophers.PhilosopherCompetition.eat",
+          "Param: philosophers" => 48, "Param: layout" => "alternating", "Param: tableType" => "dynamic" );
 
   {
     my $BMCOND = qq[(results.Benchmark like "benchmarks.simple.SimplePhil%"
@@ -156,7 +164,7 @@ colors=green,blue
 }
 
 sub prettyName($name) {
-  $name =~  s/spinning|REScalaSpin|parrp/ParRP/;
+  $name =~  s/pessimistic|spinning|REScalaSpin|parrp/ParRP/;
   $name =~  s/stm|REScalaSTM/STM/;
   $name =~  s/synchron|REScalaSync/Synchron/;
   $name =~  s/unmanaged/Manual/;
@@ -165,12 +173,18 @@ sub prettyName($name) {
 
 sub query($varying, @keys) {
   my $where = join " AND ", map {qq["$_" = ?]} @keys;
-  return qq[SELECT "$varying", sum(Score * Samples) / sum(Samples) FROM "$TABLE" WHERE $where GROUP BY "$varying" ORDER BY "$varying"];
+  return qq[SELECT "$varying", sum(Score * Samples) / sum(Samples), min(Score), max(Score) FROM "$TABLE" WHERE $where GROUP BY "$varying" ORDER BY "$varying"];
 }
 
 sub queryChoices($key, %constraints) {
   my $where = join " AND ", (map {qq["$_" = ?]} keys %constraints), qq["$key" IS NOT NULL];
   return @{$DBH->selectcol_arrayref(qq[SELECT DISTINCT "$key" FROM "$TABLE" WHERE $where], undef, values %constraints)};
+}
+
+sub plotChoices($group, $name, $vary, @constraints) {
+    plotBenchmarksFor($group, $name,
+          map { {Title => "$vary: $_", $vary => $_, @constraints } }
+            queryChoices($vary, @constraints));
 }
 
 sub plotBenchmarksFor($group, $name, @graphs) {
@@ -216,6 +230,19 @@ sub styling($name) {
 
 sub makeDataset($title, $data) {
   $data = [sort {$a->[0] <=> $b->[0]} @$data];
+
+  Chart::Gnuplot::DataSet->new(
+    xdata => [map {$_->[0]} @$data],
+    ydata => [map {$_->[2]} @$data],
+    title => $title . "min",
+    style => 'linespoints ' . styling($title),
+  ),
+  Chart::Gnuplot::DataSet->new(
+    xdata => [map {$_->[0]} @$data],
+    ydata => [map {$_->[3]} @$data],
+    title => $title . "max",
+    style => 'linespoints ' . styling($title),
+  );
   Chart::Gnuplot::DataSet->new(
     xdata => [map {$_->[0]} @$data],
     ydata => [map {$_->[1]} @$data],

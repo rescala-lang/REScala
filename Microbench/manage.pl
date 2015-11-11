@@ -199,31 +199,46 @@ sub selection {
 
       for my $threads (@THREADS) {
         for my $layout ("alternating") {
-          for my $backoff (
-            [minBackoff => 0, maxBackoff => 0, factorBackoff => 0],
-            [minBackoff => 100000, maxBackoff => 10000000, factorBackoff => 1.0],
-            [minBackoff => 100000, maxBackoff => 10000000, factorBackoff => 1.1],
-            [minBackoff => 100000, maxBackoff => 10000000, factorBackoff => 1.15],
-            [minBackoff => 100000, maxBackoff => 10000000, factorBackoff => 1.2],
-            [minBackoff => 100000, maxBackoff => 10000000, factorBackoff => 1.3],) {
-            my $name = "backoff-threads-$threads-layout-$layout-backoff". join "-", @$backoff;
-            my $program = makeRunString( $name,
-              fromBaseConfig(
-                p => { # parameters
-                  tableType => 'dynamic',
-                  engineName => "parrp",
-                  philosophers => 16,
-                  layout => $layout,
-                  @$backoff
-                },
-                t => $threads, #threads
-                wi => 5, # warmup iterations
-                f => 1, # forks
-                i => 5, # iterations
-              ),
-              "philosophers"
-            );
-            push @runs, {name => $name, program => $program};
+          for my $tableType (qw<static dynamic>) {
+            for my $backoff (
+              [minBackoff => 0, maxBackoff => 0, factorBackoff => 0],
+              [minBackoff => 10000, maxBackoff => 1000000, factorBackoff => 1.0],
+              [minBackoff => 10000, maxBackoff => 1000000, factorBackoff => 1.05],
+              [minBackoff => 10000, maxBackoff => 1000000, factorBackoff => 1.1],
+              [minBackoff => 10000, maxBackoff => 1000000, factorBackoff => 1.15],
+              [minBackoff => 10000, maxBackoff => 1000000, factorBackoff => 1.2],
+              [minBackoff => 10000, maxBackoff => 1000000, factorBackoff => 1.3],
+              [minBackoff => 10000, maxBackoff => 1000000, factorBackoff => 1.0],
+              [minBackoff => 100000, maxBackoff => 1000000, factorBackoff => 1.05],
+              [minBackoff => 100000, maxBackoff => 1000000, factorBackoff => 1.1],
+              [minBackoff => 100000, maxBackoff => 1000000, factorBackoff => 1.15],
+              [minBackoff => 100000, maxBackoff => 1000000, factorBackoff => 1.2],
+              [minBackoff => 100000, maxBackoff => 1000000, factorBackoff => 1.3],
+              [minBackoff => 1000000, maxBackoff => 1000000, factorBackoff => 1.0],
+              [minBackoff => 1000000, maxBackoff => 1000000, factorBackoff => 1.05],
+              [minBackoff => 1000000, maxBackoff => 1000000, factorBackoff => 1.1],
+              [minBackoff => 1000000, maxBackoff => 1000000, factorBackoff => 1.15],
+              [minBackoff => 1000000, maxBackoff => 1000000, factorBackoff => 1.2],
+              [minBackoff => 1000000, maxBackoff => 1000000, factorBackoff => 1.3],) {
+              my $name = "backoff-threads-$threads-layout-$layout-type-$tableType-backoff-". join "-", @$backoff;
+              my $program = makeRunString($name,
+                fromBaseConfig(
+                  p => { # parameters
+                    tableType => $tableType,
+                    engineName => "parrp",
+                    philosophers => 48,
+                    layout => $layout,
+                    @$backoff
+                  },
+                  t => $threads, #threads
+                  wi => 5, # warmup iterations
+                  f => 1, # forks
+                  i => 5, # iterations
+                ),
+                "philosophers"
+              );
+              push @runs, {name => $name, program => $program};
+            }
           }
         }
       }
