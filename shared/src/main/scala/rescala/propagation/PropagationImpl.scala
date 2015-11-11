@@ -3,14 +3,15 @@ package rescala.propagation
 import rescala.graph.ReevaluationResult.{Dynamic, Static}
 import rescala.graph.{Spores, Committable, Reactive}
 import rescala.turns.Turn
+import scala.collection.JavaConverters._
 
 import scala.util.Try
 
 trait PropagationImpl[S <: Spores] extends Turn[S] {
   implicit def currentTurn: PropagationImpl[S] = this
 
-  private var toCommit = Set[Committable]()
-  private var observers = List.empty[() => Unit]
+  private val toCommit = new java.util.ArrayList[Committable](20)
+  private val observers = new java.util.ArrayList[() => Unit](20)
   private var _evaluated = List.empty[Reactive[S]]
 
   val levelQueue = new LevelQueue()
@@ -39,9 +40,9 @@ trait PropagationImpl[S <: Spores] extends Turn[S] {
 
   def unregister(sink: Reactive[S])(source: Reactive[S]): Unit = source.outgoing.transform(_ - sink)
 
-  override def schedule(commitable: Committable): Unit = toCommit += commitable
+  override def schedule(commitable: Committable): Unit = toCommit.add(commitable)
 
-  override def observe(f: => Unit): Unit = observers ::= f _
+  override def observe(f: => Unit): Unit = observers.add(f _)
 
   override def create[T <: Reactive[S]](dependencies: Set[Reactive[S]], dynamic: Boolean)(f: => T): T = {
     val reactive = f
@@ -73,12 +74,12 @@ trait PropagationImpl[S <: Spores] extends Turn[S] {
 
   def propagationPhase(): Unit = levelQueue.evaluateQueue(evaluate)
 
-  def commitPhase() = toCommit.foreach(_.commit(this))
+  def commitPhase() = toCommit.asScala.distinct.foreach(_.commit(this))
 
-  def rollbackPhase() = toCommit.foreach(_.release(this))
+  def rollbackPhase() = toCommit.asScala.distinct.foreach(_.commit(this))
 
   def observerPhase() = {
-    val executed = observers.map(o => Try {o.apply()})
+    val executed = observers.asScala.map(o => Try {o.apply()})
     // find the first failure and rethrow the contained exception
     // we should probably aggregate all of the exceptions,
     // but this is not the place to invent exception aggregation
