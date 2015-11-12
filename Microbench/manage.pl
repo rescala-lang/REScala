@@ -246,7 +246,7 @@ sub selection {
                   engineName => (join ',', @ENGINES),
                   philosophers => $phils,
                   layout => $layout,
-                  minBackoff => 0, maxBackoff => 1000000, factorBackoff => 1.0,
+                  minBackoff => 0, maxBackoff => 0, factorBackoff => 1.0,
                 },
                 t => $threads, #threads
               ),
@@ -322,6 +322,7 @@ sub selection {
             p => { # parameters
               engineName => (join ',', @ENGINES),
               work => $work,
+              minBackoff => 0, maxBackoff => 0, factorBackoff => 1.0,
             },
             t => 2, #threads
           ),
