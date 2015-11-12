@@ -77,10 +77,12 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
 
   }
 
-  plotChoices("backoff", "dynamic5", "Param: factorBackoff", "Param: maxBackoff" => 5000000,  "Param: engineName" => "parrp" , Benchmark => "benchmarks.philosophers.PhilosopherCompetition.eat",
-          "Param: philosophers" => 48, "Param: layout" => "alternating", "Param: tableType" => "dynamic" );
-  plotChoices("backoff", "dynamic10", "Param: factorBackoff", "Param: maxBackoff" => 10000000,  "Param: engineName" => "parrp" , Benchmark => "benchmarks.philosophers.PhilosopherCompetition.eat",
-          "Param: philosophers" => 48, "Param: layout" => "alternating", "Param: tableType" => "dynamic" );
+  # plotChoices("backoff", "dynamic10", "Param: factorBackoff", "Param: minBackoff" => 10000,"Param: maxBackoff" => 1000000,  "Param: engineName" => "parrp" , Benchmark => "benchmarks.philosophers.PhilosopherCompetition.eat",
+  #         "Param: philosophers" => 48, "Param: layout" => "alternating", "Param: tableType" => "dynamic" );
+  # plotChoices("backoff", "dynamic100", "Param: factorBackoff", "Param: minBackoff" => 100000,"Param: maxBackoff" => 1000000,  "Param: engineName" => "parrp" , Benchmark => "benchmarks.philosophers.PhilosopherCompetition.eat",
+  #         "Param: philosophers" => 48, "Param: layout" => "alternating", "Param: tableType" => "dynamic" );
+  # plotChoices("backoff", "dynamic1000", "Param: factorBackoff", "Param: minBackoff" => 1000000,"Param: maxBackoff" => 1000000,  "Param: engineName" => "parrp" , Benchmark => "benchmarks.philosophers.PhilosopherCompetition.eat",
+  #         "Param: philosophers" => 48, "Param: layout" => "alternating", "Param: tableType" => "dynamic" );
 
   {
     my $BMCOND = qq[(results.Benchmark like "benchmarks.simple.SimplePhil%"

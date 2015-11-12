@@ -197,29 +197,15 @@ sub selection {
     backoff => sub {
       my @runs;
 
-      for my $threads (@THREADS) {
+      for my $threads (1,2,4,8,12,16) {
         for my $layout ("alternating") {
           for my $tableType (qw<static dynamic>) {
             for my $backoff (
-              [minBackoff => 0, maxBackoff => 0, factorBackoff => 0],
-              [minBackoff => 10000, maxBackoff => 1000000, factorBackoff => 1.0],
-              [minBackoff => 10000, maxBackoff => 1000000, factorBackoff => 1.05],
-              [minBackoff => 10000, maxBackoff => 1000000, factorBackoff => 1.1],
-              [minBackoff => 10000, maxBackoff => 1000000, factorBackoff => 1.15],
-              [minBackoff => 10000, maxBackoff => 1000000, factorBackoff => 1.2],
-              [minBackoff => 10000, maxBackoff => 1000000, factorBackoff => 1.3],
-              [minBackoff => 10000, maxBackoff => 1000000, factorBackoff => 1.0],
-              [minBackoff => 100000, maxBackoff => 1000000, factorBackoff => 1.05],
-              [minBackoff => 100000, maxBackoff => 1000000, factorBackoff => 1.1],
-              [minBackoff => 100000, maxBackoff => 1000000, factorBackoff => 1.15],
-              [minBackoff => 100000, maxBackoff => 1000000, factorBackoff => 1.2],
-              [minBackoff => 100000, maxBackoff => 1000000, factorBackoff => 1.3],
-              [minBackoff => 1000000, maxBackoff => 1000000, factorBackoff => 1.0],
-              [minBackoff => 1000000, maxBackoff => 1000000, factorBackoff => 1.05],
-              [minBackoff => 1000000, maxBackoff => 1000000, factorBackoff => 1.1],
-              [minBackoff => 1000000, maxBackoff => 1000000, factorBackoff => 1.15],
-              [minBackoff => 1000000, maxBackoff => 1000000, factorBackoff => 1.2],
-              [minBackoff => 1000000, maxBackoff => 1000000, factorBackoff => 1.3],) {
+              [minBackoff => 0, maxBackoff => 0, factorBackoff => 1],
+              [minBackoff => 10000, maxBackoff => 10000000, factorBackoff => 1.1],
+              [minBackoff => 10, maxBackoff => 10000000, factorBackoff => 1.3],
+              [minBackoff => 100000, maxBackoff => 100000, factorBackoff => 1.0],
+              [minBackoff => 10000, maxBackoff => 1000000, factorBackoff => 1.1],) {
               my $name = "backoff-threads-$threads-layout-$layout-type-$tableType-backoff-". join "-", @$backoff;
               my $program = makeRunString($name,
                 fromBaseConfig(
@@ -260,6 +246,7 @@ sub selection {
                   engineName => (join ',', @ENGINES),
                   philosophers => $phils,
                   layout => $layout,
+                  minBackoff => 0, maxBackoff => 1000000, factorBackoff => 1.0,
                 },
                 t => $threads, #threads
               ),
