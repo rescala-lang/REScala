@@ -1,5 +1,7 @@
 package rescala.synchronization
 
+import java.util
+
 import rescala.graph.{ParRPSpores, Pulsing, Reactive}
 import rescala.propagation.{LevelQueue, PropagationImpl}
 import rescala.synchronization.ParRP.{Await, Done, Retry}
@@ -15,13 +17,13 @@ class ParRP(backoff: Backoff) extends FactoryReference[ParRPSpores.type](ParRPSp
   final val key: Key = new Key(this)
 
   /**
-   * creating a signal causes some unpredictable reactives to be used inside the turn.
-   * these will have their locks be acquired dynamically see below for how that works.
-   * the newly created reactive on the other hand can not be locked by anything, so we just grab the lock
-   * (we do need to grab it, so it can be transferred to some other waiting transaction).
-   * it is important, that the locks for the dependencies are acquired BEFORE the constructor for the new reactive.
-   * is executed, because the constructor typically accesses the dependencies to create its initial value.
-   */
+    * creating a signal causes some unpredictable reactives to be used inside the turn.
+    * these will have their locks be acquired dynamically see below for how that works.
+    * the newly created reactive on the other hand can not be locked by anything, so we just grab the lock
+    * (we do need to grab it, so it can be transferred to some other waiting transaction).
+    * it is important, that the locks for the dependencies are acquired BEFORE the constructor for the new reactive.
+    * is executed, because the constructor typically accesses the dependencies to create its initial value.
+    */
   override def create[T <: Reactive[TState]](dependencies: Set[Reactive[TState]], dynamic: Boolean)(f: => T): T = {
     dependencies.foreach(accessDynamic)
     val reactive = f
@@ -40,19 +42,23 @@ class ParRP(backoff: Backoff) extends FactoryReference[ParRPSpores.type](ParRPSp
   /** lock all reactives reachable from the initial sources
     * retry when acquire returns false */
   override def lockPhase(initialWrites: List[Reactive[TState]]): Unit = {
-    val lq = new LevelQueue()
-    initialWrites.foreach(lq.enqueue(-42))
+    val toVisit = new java.util.ArrayDeque[Reactive[TState]](10)
+    initialWrites.foreach(toVisit.offer)
 
-    lq.evaluateQueue { reactive =>
-      if (reactive.lock.tryLock(key) eq key) reactive.outgoing.get.foreach(lq.enqueue(-42))
-      else {
-        key.lockKeychain {
-          key.releaseAll()
-          key.keychain = new Keychain(key)
+    while (!toVisit.isEmpty) {
+      val reactive = toVisit.pop()
+      if (!reactive.lock.isOwner(key)) {
+        if (reactive.lock.tryLock(key) eq key)
+          reactive.outgoing.get.foreach {toVisit.offer}
+        else {
+          key.lockKeychain {
+            key.releaseAll()
+            key.keychain = new Keychain(key)
+          }
+          backoff.backoff()
+          toVisit.clear()
+          initialWrites.foreach(toVisit.offer)
         }
-        backoff.backoff()
-        lq.clear()
-        initialWrites.foreach(lq.enqueue(-42))
       }
     }
   }
