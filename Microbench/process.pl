@@ -168,7 +168,7 @@ colors=green,blue
 sub prettyName($name) {
   $name =~  s/pessimistic|spinning|REScalaSpin|parrp/ParRP/;
   $name =~  s/stm|REScalaSTM/STM/;
-  $name =~  s/synchron|REScalaSync/Synchron/;
+  $name =~  s/synchron|REScalaSync/G-Lock/;
   $name =~  s/unmanaged/Manual/;
   return $name;
 }
@@ -215,7 +215,7 @@ sub styleByName($name) {
   given($name) {
     when (/ParRP/)    { 'linecolor "dark-green" lt 2 lw 2 pt 7 ps 1' }
     when (/STM/)      { 'linecolor "blue" lt 2 lw 2 pt 5 ps 1' }
-    when (/Synchron/) { 'linecolor "red" lt 2 lw 2 pt 9 ps 1' }
+    when (/G-Lock/) { 'linecolor "red" lt 2 lw 2 pt 9 ps 1' }
     when (/fair/)     { 'linecolor "light-blue" lt 2 lw 2 pt 8 ps 1' }
     when (/Manual/)   { 'linecolor "black" lt 2 lw 2 pt 11 ps 1' }
     default { '' }
