@@ -30,7 +30,7 @@ my @ENGINES_PHIL = @ENGINES, "unmanaged";
 my @THREADS = (1..16);
 my @STEPS = (1..16,24,32,64);
 my @SIZES = (1,10,25,100,250,1000);
-my @PHILOSOPHERS = (16, 32, 48, 64, 96, 128);
+my @PHILOSOPHERS = (32, 48, 64, 96, 128);
 my @LAYOUTS = qw<alternating>;
 my %BASECONFIG = (
   si => "false", # synchronize iterations
@@ -51,7 +51,7 @@ $ENV{'LANG'} = 'en_US.UTF-8';
 # $ENV{'JAVA_OPTS'} = $JMH_CLASSPATH;
 
 my $command = shift @ARGV;
-my @RUN = @ARGV ? @ARGV : qw< dynamicPhilosophers philosophers turnCreation creation simplePhil unmanagedPhilosophers halfDynamicPhilosophers expensiveConflict >;
+my @RUN = @ARGV ? @ARGV : qw< dynamicPhilosophers philosophers simplePhil unmanagedPhilosophers >;
 
 say "selected: " . (join " ", sort @RUN);
 say "available: " . (join " ", sort keys %{&selection()});
