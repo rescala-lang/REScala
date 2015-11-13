@@ -79,7 +79,7 @@ class Competition[S <: Spores] {
 
   @Setup
   def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam[S]) = {
-    manualLocking = engineParam.engineName == "unmanaged"
+    manualLocking = engineParam.engineName == "unmanaged" && layout != "third"
     if (manualLocking) {
       locks = Array.fill(philosophers)(new ReentrantLock())
     }
