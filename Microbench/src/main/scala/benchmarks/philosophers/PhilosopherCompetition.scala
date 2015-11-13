@@ -1,5 +1,7 @@
 package benchmarks.philosophers
 
+import java.util
+import java.util.concurrent.locks.{ReentrantLock, Lock}
 import java.util.concurrent.{ThreadLocalRandom, TimeUnit}
 
 import benchmarks.philosophers.PhilosopherTable.{Seating, Thinking}
@@ -21,11 +23,36 @@ class PhilosopherCompetition[S <: Spores] {
   def eat(comp: Competition[S], params: ThreadParams, work: Workload): Unit = {
     val myBlock = comp.blocks(params.getThreadIndex % comp.blocks.length)
     while ( {
-      val seating = myBlock(ThreadLocalRandom.current().nextInt(myBlock.length))
-      val res = comp.table.tryEat(seating)
-      if (res) seating.philosopher.set(Thinking)(comp.table.engine)
-      !res
-    }) {}
+      val seating: Seating[S] = myBlock(ThreadLocalRandom.current().nextInt(myBlock.length))
+      if (comp.manualLocking) {
+        val pos = Array(seating.placeNumber, (seating.placeNumber + 1) % comp.philosophers, (seating.placeNumber + 2) % comp.philosophers)
+        util.Arrays.sort(pos)
+        val firstLock = comp.locks(pos(0))
+        val secondLock = comp.locks(pos(1))
+        val thirdLock = comp.locks(pos(2))
+        firstLock.lock()
+        try {
+          secondLock.lock()
+          try {
+            thirdLock.lock()
+            try {
+              val res = comp.table.tryEat(seating)
+              if (res) seating.philosopher.set(Thinking)(comp.table.engine)
+              !res
+            }
+            finally {thirdLock.unlock()}
+          }
+          finally {secondLock.unlock()}
+        }
+        finally {firstLock.unlock()}
+      }
+      else {
+        val res = comp.table.tryEat(seating)
+        if (res) seating.philosopher.set(Thinking)(comp.table.engine)
+        !res
+      }
+    }
+    ) {}
 
   }
 }
@@ -47,8 +74,15 @@ class Competition[S <: Spores] {
 
   var blocks: Array[Array[Seating[S]]] = _
 
+  var manualLocking: Boolean = _
+  var locks: Array[Lock] = _
+
   @Setup
   def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam[S]) = {
+    manualLocking = engineParam.engineName == "unmanaged"
+    if (manualLocking) {
+      locks = Array.fill(philosophers)(new ReentrantLock())
+    }
     table = tableType match {
       case "static" => new PhilosopherTable(philosophers, work.work)(engineParam.engine)
       case "dynamic" => new DynamicPhilosopherTable(philosophers, work.work)(engineParam.engine)
@@ -58,7 +92,7 @@ class Competition[S <: Spores] {
       case "block" =>
         val perThread = table.seatings.size / params.getThreads
         table.seatings.sliding(perThread, perThread)
-      case "alternating" => deal(table.seatings.toList,math.min(params.getThreads, philosophers))
+      case "alternating" => deal(table.seatings.toList, math.min(params.getThreads, philosophers))
       case "third" => deal(table.seatings.sliding(4, 4).map(_.head).toList, params.getThreads)
       case "random" => List(table.seatings)
     }).map(_.toArray).toArray
