@@ -180,7 +180,7 @@ sub query($varying, @keys) {
 
 sub queryChoices($key, %constraints) {
   my $where = join " AND ", (map {qq["$_" = ?]} keys %constraints), qq["$key" IS NOT NULL];
-  return @{$DBH->selectcol_arrayref(qq[SELECT DISTINCT "$key" FROM "$TABLE" WHERE $where], undef, values %constraints)};
+  return @{$DBH->selectcol_arrayref(qq[SELECT DISTINCT "$key" FROM "$TABLE" WHERE $where ORDER BY "$key"], undef, values %constraints)};
 }
 
 sub plotChoices($group, $name, $vary, @constraints) {
@@ -213,11 +213,11 @@ sub queryDataset($query) {
 
 sub styleByName($name) {
   given($name) {
-    when (/ParRP/)    { 'linecolor "green" lt 2 lw 2 pt 7 ps 1' }
+    when (/ParRP/)    { 'linecolor "dark-green" lt 2 lw 2 pt 7 ps 1' }
     when (/STM/)      { 'linecolor "blue" lt 2 lw 2 pt 5 ps 1' }
     when (/Synchron/) { 'linecolor "red" lt 2 lw 2 pt 9 ps 1' }
-    when (/fair/)     { 'linecolor "grey" lt 2 lw 2 pt 8 ps 1' }
-    when (/Manual/)   { 'linecolor "light-blue" lt 2 lw 2 pt 11 ps 1' }
+    when (/fair/)     { 'linecolor "light-blue" lt 2 lw 2 pt 8 ps 1' }
+    when (/Manual/)   { 'linecolor "black" lt 2 lw 2 pt 11 ps 1' }
     default { '' }
   }
 }
@@ -267,14 +267,18 @@ sub plotDatasets($group, $name, $additionalParams, @datasets) {
   my $nospecial = $name =~ s/\W/_/gr; # / highlighter
   my $chart = Chart::Gnuplot->new(
     output => "$group/$nospecial.pdf",
-    terminal => "pdf size 8,5 enhanced font 'Linux Libertine O,24'",
+    terminal => "pdf size 5,3 enhanced font 'Linux Libertine O,30'",
     key => "left top", #outside
     #title  => $name,
-    xlabel => "Active threads",
+    #xlabel => "Active threads",
     #yrange => "[0:500]",
     #logscale => "x 2; set logscale y 10",
-    ylabel => "Operations per millisecond",
+    #ylabel => "Operations per millisecond",
     # xrange => "reverse",
+    lmargin => 4.5,
+    rmargin => 1.5,
+    tmargin => 0.3,
+    bmargin => 1.5,
     %$additionalParams
   );
   $chart->plot2d(@datasets);

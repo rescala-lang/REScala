@@ -26,6 +26,7 @@ my $BSUB_REQUIRE = "select[ mpi && avx ]";
 my $BSUB_CORES = "16";
 
 my @ENGINES = qw<parrp stm synchron>;
+my @ENGINES_PHIL = @ENGINES, "unmanaged";
 my @THREADS = (1..16);
 my @STEPS = (1..16,24,32,64);
 my @SIZES = (1,10,25,100,250,1000);
@@ -67,7 +68,7 @@ sub init {
   mkdir $RESULTDIR;
   mkdir $OUTDIR;
   chdir "..";
-  system('sbt','project microbench', 'clean', 'stage', 'compileJmh');
+  system('sbt', 'set scalacOptions in ThisBuild ++= List("-Xdisable-assertions", "-Xelide-below", "9999999")', 'project microbench', 'clean', 'stage', 'compileJmh');
   #system('sbt','clean', 'jmh:compile', 'jmh:stage');
   chdir $MAINDIR;
 }
@@ -154,7 +155,7 @@ sub selection {
               fromBaseConfig(
                 p => { # parameters
                   tableType => 'static',
-                  engineName => (join ',', @ENGINES),
+                  engineName => (join ',', @ENGINES_PHIL),
                   philosophers => $phils,
                   layout => $layout,
                 },
@@ -194,44 +195,6 @@ sub selection {
       @runs;
     },
 
-    backoff => sub {
-      my @runs;
-
-      for my $threads (1,2,4,8,12,16) {
-        for my $layout ("alternating") {
-          for my $tableType (qw<static dynamic>) {
-            for my $backoff (
-              [minBackoff => 0, maxBackoff => 0, factorBackoff => 1],
-              [minBackoff => 10000, maxBackoff => 10000000, factorBackoff => 1.1],
-              [minBackoff => 10, maxBackoff => 10000000, factorBackoff => 1.3],
-              [minBackoff => 100000, maxBackoff => 100000, factorBackoff => 1.0],
-              [minBackoff => 10000, maxBackoff => 1000000, factorBackoff => 1.1],) {
-              my $name = "backoff-threads-$threads-layout-$layout-type-$tableType-backoff-". join "-", @$backoff;
-              my $program = makeRunString($name,
-                fromBaseConfig(
-                  p => { # parameters
-                    tableType => $tableType,
-                    engineName => "parrp",
-                    philosophers => 48,
-                    layout => $layout,
-                    @$backoff
-                  },
-                  t => $threads, #threads
-                  wi => 5, # warmup iterations
-                  f => 1, # forks
-                  i => 5, # iterations
-                ),
-                "philosophers"
-              );
-              push @runs, {name => $name, program => $program};
-            }
-          }
-        }
-      }
-
-      @runs;
-    },
-
     dynamicPhilosophers => sub {
       my @runs;
 
@@ -243,7 +206,7 @@ sub selection {
               fromBaseConfig(
                 p => { # parameters
                   tableType => 'dynamic',
-                  engineName => (join ',', @ENGINES),
+                  engineName => (join ',', @ENGINES_PHIL),
                   philosophers => $phils,
                   layout => $layout,
                   minBackoff => 0, maxBackoff => 0, factorBackoff => 1.0,
@@ -280,6 +243,44 @@ sub selection {
               "philosophers"
             );
             push @runs, {name => $name, program => $program};
+          }
+        }
+      }
+
+      @runs;
+    },
+
+    backoff => sub {
+      my @runs;
+
+      for my $threads (1,2,4,8,12,16) {
+        for my $layout ("alternating") {
+          for my $tableType (qw<static dynamic>) {
+            for my $backoff (
+              [minBackoff => 0, maxBackoff => 0, factorBackoff => 1],
+              [minBackoff => 10000, maxBackoff => 10000000, factorBackoff => 1.1],
+              [minBackoff => 10, maxBackoff => 10000000, factorBackoff => 1.3],
+              [minBackoff => 100000, maxBackoff => 100000, factorBackoff => 1.0],
+              [minBackoff => 10000, maxBackoff => 1000000, factorBackoff => 1.1],) {
+              my $name = "backoff-threads-$threads-layout-$layout-type-$tableType-backoff-". join "-", @$backoff;
+              my $program = makeRunString($name,
+                fromBaseConfig(
+                  p => { # parameters
+                    tableType => $tableType,
+                    engineName => "parrp",
+                    philosophers => 48,
+                    layout => $layout,
+                    @$backoff
+                  },
+                  t => $threads, #threads
+                  wi => 5, # warmup iterations
+                  f => 1, # forks
+                  i => 5, # iterations
+                ),
+                "philosophers"
+              );
+              push @runs, {name => $name, program => $program};
+            }
           }
         }
       }
