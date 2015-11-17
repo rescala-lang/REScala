@@ -47,13 +47,13 @@ trait Female extends Animal {
 
   // counts down to 0
   private val mate: Var[Option[Animal]] = Var(None) //#VAR
-  val isPregnant = mate.map {_.isDefined} //#SIG
+  final val isPregnant = mate.map {_.isDefined} //#SIG
   private val becomePregnant: Event[Unit] = isPregnant.changedTo(true) //#EVT //#IF
   private val pregnancyTime: Signal[Int] = becomePregnant.reset(()) { _ => //#SIG  //#IF
       world.time.hour.changed.iterate(Animal.PregnancyTime)(_ - (if (isPregnant.now) 1 else 0)) //#IF //#IF //#SIG
     }
   private val giveBirth: Event[Unit] = pregnancyTime.changedTo(0) //#EVT //#IF
-  override val isFertile = Signals.lift(isAdult, isPregnant) {_ && !_} //#SIG
+  final override val isFertile = Signals.lift(isAdult, isPregnant) {_ && !_} //#SIG
 
   // override val energyDrain = Signal { super.energyDrain() * 2 }
   // not possible
@@ -70,13 +70,13 @@ trait Female extends Animal {
       mate.set(None)
     }
   }
-  def procreate(father: Animal): Unit = {
+  final def procreate(father: Animal): Unit = {
     if (isPregnant.now) return
     mate.set(Some(father))
   }
 
 
-  def createOffspring(father: Animal): Animal = {
+  final def createOffspring(father: Animal): Animal = {
     val male = world.randomness.nextBoolean()
     val nHerbivores = List(this, father).map(_.isInstanceOf[Herbivore]).count(_ == true)
     val herbivore =
@@ -90,9 +90,9 @@ trait Female extends Animal {
 
 
 trait Male extends Animal {
-  val seeksMate = Signals.lift(isFertile, energy) {_ && _ > Animal.ProcreateThreshold}
+  private val seeksMate = Signals.lift(isFertile, energy) {_ && _ > Animal.ProcreateThreshold}
 
-  override def nextAction(pos: Pos): AnimalState = {
+  final override def nextAction(pos: Pos): AnimalState = {
     if (seeksMate.now) {
       val findFemale: PartialFunction[BoardElement, Female] = {
         case f: Female if f.isFertile.now => f

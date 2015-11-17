@@ -13,13 +13,15 @@ object RunConsole extends App {
 
   val start = System.nanoTime()
   while (world.time.week.now < 2) {
-    println(world.time)
-    println(world.status)
-    //println(world.board.dump) // dumping the board is a bottleneck!
+//    println(world.time)
+//    println(world.status)
+//    println(world.board.dump) // dumping the board is a bottleneck!
 
     world.tick()
     world.runPlan()
   }
+  println(world.time)
+  println(world.status)
   println(world.board.dump)
-  println(f"duration = ${(System.nanoTime() - start) / 1000000000.0D}%2.3fs")
+  println(s"duration = ${(System.nanoTime() - start) / 1000000000.0D}s")
 }

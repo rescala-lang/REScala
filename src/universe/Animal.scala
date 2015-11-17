@@ -4,7 +4,7 @@ import rescala.Signals
 import rescala.turns.Ticket
 import universe.AEngine.engine
 import universe.AEngine.engine._
-import Animal._
+import universe.Animal._
 
 object Animal {
   val StartEnergy = 200
@@ -48,30 +48,44 @@ object Animal {
 abstract class Animal(implicit world: World) extends BoardElement {
 
 
-  override def isAnimal: Boolean = true
+  final override def isAnimal: Boolean = true
 
-  private val state: Var[AnimalState] = Var(Idling) //#VAR
 
-  /** imperative 'AI' function */
-  override def doStep(pos: Pos): Unit = {
-    state.now match {
-      case Moving(dir) => world.board.moveIfPossible(pos, dir)
-      case Eating(plant) => plant.takeEnergy(energyGain.now)
-      case Attacking(prey) => prey.savage()
-      case Procreating(female: Female) => female.procreate(this)
-      case _ =>
+  final val step: Evt[(Pos, Boolean)] = Evt[(Pos, Boolean)]()
+
+  private val statePos: Signal[(AnimalState, Pos)] = step.fold((Idling: AnimalState, Pos(0,0))) { (p1, p2) =>
+    (p1, p2) match {
+      case ((oldState, oldPos), (newPos, prey)) =>
+        if (prey) (FallPrey, oldPos)
+        else (nextAction(newPos), newPos)
     }
-    state.set(nextAction(pos))
   }
+
+  private val state: Signal[AnimalState] = statePos.map(_._1)
+
+  statePos.observe { case (cstate, pos) =>
+    world.plan {
+      cstate match {
+        case Moving(dir) => world.board.moveIfPossible(pos, dir)
+        case Eating(plant) => plant.takeEnergy(energyGain.now)
+        case Attacking(prey) => prey.savage()
+        case Procreating(female: Female) => female.procreate(this)
+        case _ =>
+      }
+    }
+  }
+
+  /** Some imperative code that is called each tick */
+  final override def doStep(pos: Pos): Unit = step((pos, false))
+
+  private def savage() = step((Pos(0, 0), true))
+
 
   // partial function for collecting food, dependant on state of the object
   val findFood: Signal[PartialFunction[BoardElement, BoardElement]] // Abstract (//#SIG)
 
   // function for creating a state upon reaching target
   def reachedState(target: BoardElement): AnimalState
-
-
-  private def savage() = state.set(FallPrey)
 
   protected def nextAction(pos: Pos): AnimalState = {
     val neighbors = world.board.neighbors(pos)
@@ -101,7 +115,7 @@ abstract class Animal(implicit world: World) extends BoardElement {
 
   private val age: Signal[Int] = world.time.day.changed.iterate(1)(_ + 1) //#SIG //#IF //#IF
 
-  val isAdult = age.map(_ > Animal.FertileAge)
+  final val isAdult = age.map(_ > Animal.FertileAge)
 
   val isFertile = isAdult
 
@@ -126,12 +140,12 @@ abstract class Animal(implicit world: World) extends BoardElement {
     }
 
   // we do not have a built in method for this kind of “fold some snapshot” but its not that hard to write one
-  val energy: Signal[Int] =
+  final protected val energy: Signal[Int] =
     implicitly[Ticket[Spores]].apply(Signals.Impl.makeStatic[Int, Spores](Set(world.time.tick, energyDrain, energyGain), Animal.StartEnergy) {
       (turn, current) => world.time.tick.pulse(turn).fold(current, _ => current + energyGain.get(turn) - energyDrain.get(turn))
     })
 
-  override val isDead = Signals.lift(age, energy) { (a, e) => a > Animal.MaxAge || e < 0 }
+  final override val isDead = Signals.lift(age, energy) { (a, e) => a > Animal.MaxAge || e < 0 }
 
 
 }
