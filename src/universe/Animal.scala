@@ -4,6 +4,7 @@ import rescala.Signals
 import rescala.turns.Ticket
 import universe.AEngine.engine
 import universe.AEngine.engine._
+import Animal._
 
 object Animal {
   val StartEnergy = 200
@@ -31,13 +32,6 @@ object Animal {
   val SleepThreshold = 30
   // energy gained while sleeping
   val SleepRate = 2
-}
-
-
-abstract class Animal(implicit world: World) extends BoardElement {
-
-
-  override def isAnimal: Boolean = true
 
   /** An animal is in a state */
   sealed trait AnimalState
@@ -48,8 +42,27 @@ abstract class Animal(implicit world: World) extends BoardElement {
   case class Procreating(female: Animal) extends AnimalState
   case object FallPrey extends AnimalState
   case object Sleeping extends AnimalState
+}
 
-  val state: Var[AnimalState] = Var(Idling) //#VAR
+
+abstract class Animal(implicit world: World) extends BoardElement {
+
+
+  override def isAnimal: Boolean = true
+
+  private val state: Var[AnimalState] = Var(Idling) //#VAR
+
+  /** imperative 'AI' function */
+  override def doStep(pos: Pos): Unit = {
+    state.now match {
+      case Moving(dir) => world.board.moveIfPossible(pos, dir)
+      case Eating(plant) => plant.takeEnergy(energyGain.now)
+      case Attacking(prey) => prey.savage()
+      case Procreating(female: Female) => female.procreate(this)
+      case _ =>
+    }
+    state.set(nextAction(pos))
+  }
 
   // partial function for collecting food, dependant on state of the object
   val findFood: Signal[PartialFunction[BoardElement, BoardElement]] // Abstract (//#SIG)
@@ -58,7 +71,7 @@ abstract class Animal(implicit world: World) extends BoardElement {
   def reachedState(target: BoardElement): AnimalState
 
 
-  def savage() = state.set(FallPrey)
+  private def savage() = state.set(FallPrey)
 
   protected def nextAction(pos: Pos): AnimalState = {
     val neighbors = world.board.neighbors(pos)
@@ -79,34 +92,32 @@ abstract class Animal(implicit world: World) extends BoardElement {
     nextAction
   }
 
-  protected def randomMove: AnimalState = {
+  private def randomMove: AnimalState = {
     val randx = 1 - world.randomness.nextInt(3)
     val randy = 1 - world.randomness.nextInt(3)
     Moving(Pos(randx, randy))
   }
 
 
-  val age: Signal[Int] = world.time.day.changed.iterate(1)(_ + 1) //#SIG //#IF //#IF
+  private val age: Signal[Int] = world.time.day.changed.iterate(1)(_ + 1) //#SIG //#IF //#IF
 
   val isAdult = age.map(_ > Animal.FertileAge)
+
   val isFertile = isAdult
-  val isEating = state map {
-    case Eating(_) => true
-    case _ => false
-  }
 
-  val energyDrain = Signals.lift(age, state, world.board.animalsAlive) { (a, s, alive) =>
-    (alive / (world.board.width + world.board.height)) +
-      (a / 2) +
-      (s match {
-        case Moving(_) => Animal.MoveCost
-        case Procreating(_) => Animal.ProcreateCost
-        case FallPrey => Animal.AttackAmount
-        case _ => 0
-      })
-  }
+  private val energyDrain: Signal[Int] =
+    Signals.lift(age, state, world.board.animalsAlive) { (a, s, alive) =>
+      (alive / (world.board.width + world.board.height)) +
+        (a / 2) +
+        (s match {
+          case Moving(_) => Animal.MoveCost
+          case Procreating(_) => Animal.ProcreateCost
+          case FallPrey => Animal.AttackAmount
+          case _ => 0
+        })
+    }
 
-  val energyGain =
+  private val energyGain: Signal[Int] =
     state map {
       case Eating(_) => Animal.PlantEatRate
       case Sleeping => Animal.SleepRate
@@ -122,15 +133,5 @@ abstract class Animal(implicit world: World) extends BoardElement {
 
   override val isDead = Signals.lift(age, energy) { (a, e) => a > Animal.MaxAge || e < 0 }
 
-  /** imperative 'AI' function */
-  override def doStep(pos: Pos): Unit = {
-    state.now match {
-      case Moving(dir) => world.board.moveIfPossible(pos, dir)
-      case Eating(plant) => plant.takeEnergy(energyGain.now)
-      case Attacking(prey) => prey.savage()
-      case Procreating(female: Female) => female.procreate(this)
-      case _ =>
-    }
-    state.set(nextAction(pos))
-  }
+
 }
