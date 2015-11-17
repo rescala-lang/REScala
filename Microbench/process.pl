@@ -24,6 +24,11 @@ my $CSVDIR = 'resultStore';
 my $OUTDIR = 'fig';
 my $BARGRAPH = abs_path("bargraph.pl");
 
+our $NAME_FINE = "Manual";
+our $NAME_COARSE = "G-Lock";
+
+our $LEGEND_POS = "off";
+
 my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,PrintError => 1});
 {
 
@@ -37,7 +42,10 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
 
   for my $dynamic (queryChoices("Param: tableType")) {
     for my $philosophers (queryChoices("Param: philosophers", "Param: tableType" => $dynamic)) {
+      local $LEGEND_POS = "left top" if $philosophers == 48;
       for my $layout (queryChoices("Param: layout", "Param: tableType" => $dynamic, "Param: philosophers" => $philosophers)) {
+      local $LEGEND_POS = "left top" if $layout eq "third";
+        local $NAME_FINE = "No Sync" if $layout eq "third";
         plotBenchmarksFor("${dynamic}philosophers$philosophers", $layout,
           map { {Title => $_, "Param: engineName" => $_ , Benchmark => "benchmarks.philosophers.PhilosopherCompetition.eat",
           "Param: philosophers" => $philosophers, "Param: layout" => $layout, "Param: tableType" => $dynamic } }
@@ -125,7 +133,9 @@ colors=green,blue
       queryChoices("Param: engineName", Benchmark => "benchmarks.dynamic.Stacks.run"));
 
   { # simplePhil
+    local $NAME_FINE = "No Sync";
     for my $bench (qw< propagate build buildAndPropagate >) {
+      local $LEGEND_POS = "left top" if $bench eq "build";
       plotBenchmarksFor("simplePhil", "SimplePhil$bench",
         map {{Title => $_, "Param: engineName" => $_ , Benchmark => "benchmarks.simple.SimplePhil.$bench" }}
           queryChoices("Param: engineName", Benchmark => "benchmarks.simple.SimplePhil.$bench"));
@@ -168,8 +178,8 @@ colors=green,blue
 sub prettyName($name) {
   $name =~  s/pessimistic|spinning|REScalaSpin|parrp/ParRP/;
   $name =~  s/stm|REScalaSTM/STM/;
-  $name =~  s/synchron|REScalaSync/G-Lock/;
-  $name =~  s/unmanaged/Manual/;
+  $name =~  s/synchron|REScalaSync/$NAME_COARSE/;
+  $name =~  s/unmanaged/$NAME_FINE/;
   return $name;
 }
 
@@ -215,9 +225,9 @@ sub styleByName($name) {
   given($name) {
     when (/ParRP/)    { 'linecolor "dark-green" lt 2 lw 2 pt 7 ps 1' }
     when (/STM/)      { 'linecolor "blue" lt 2 lw 2 pt 5 ps 1' }
-    when (/G-Lock/) { 'linecolor "red" lt 2 lw 2 pt 9 ps 1' }
+    when (/$NAME_COARSE/) { 'linecolor "red" lt 2 lw 2 pt 9 ps 1' }
     when (/fair/)     { 'linecolor "light-blue" lt 2 lw 2 pt 8 ps 1' }
-    when (/Manual/)   { 'linecolor "black" lt 2 lw 2 pt 11 ps 1' }
+    when (/$NAME_FINE/)   { 'linecolor "black" lt 2 lw 2 pt 11 ps 1' }
     default { '' }
   }
 }
@@ -268,7 +278,7 @@ sub plotDatasets($group, $name, $additionalParams, @datasets) {
   my $chart = Chart::Gnuplot->new(
     output => "$group/$nospecial.pdf",
     terminal => "pdf size 5,3 enhanced font 'Linux Libertine O,30'",
-    key => "left top", #outside
+    key => $LEGEND_POS,
     #title  => $name,
     #xlabel => "Active threads",
     #yrange => "[0:500]",

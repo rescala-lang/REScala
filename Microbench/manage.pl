@@ -26,7 +26,7 @@ my $BSUB_REQUIRE = "select[ mpi && avx ]";
 my $BSUB_CORES = "16";
 
 my @ENGINES = qw<parrp stm synchron>;
-my @ENGINES_PHIL = @ENGINES, "unmanaged";
+my @ENGINES_PHIL = (@ENGINES, "unmanaged");
 my @THREADS = (1..16);
 my @STEPS = (1..16,24,32,64);
 my @SIZES = (1,10,25,100,250,1000);
