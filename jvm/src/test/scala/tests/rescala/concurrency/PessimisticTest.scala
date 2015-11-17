@@ -7,13 +7,13 @@ import java.util.concurrent.{ConcurrentLinkedQueue, CountDownLatch}
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import rescala.graph.{ParRPSpores, Reactive}
-import rescala.synchronization.{ParRP}
+import rescala.synchronization.{Backoff, ParRP}
 import rescala.turns.{Engine, Engines, Turn}
 import rescala.{Signal, Signals, Var}
 
 import scala.collection.JavaConverters._
 
-class PessimisticTestTurn extends ParRP(initialRetryCount = 0) {
+class PessimisticTestTurn extends ParRP(backoff = new Backoff()) {
   override def evaluate(r: Reactive[ParRPSpores.type]): Unit = {
     while (Pessigen.syncStack.get() match {
       case stack@(set, bar) :: tail if set(r) =>
@@ -151,7 +151,7 @@ class PessimisticTest extends AssertionsForJUnit {
     def apply(i0: Reactive[ParRPSpores.type], reg: => Unit, unreg: => Unit): Engine[ParRPSpores.type, Turn[ParRPSpores.type]] =
       new Engines.Impl[ParRPSpores.type, ParRP](
         ParRPSpores,
-        new ParRP(initialRetryCount = 0) {
+        new ParRP(new Backoff()) {
           override def register(downstream: Reactive[ParRPSpores.type])(upstream: Reactive[ParRPSpores.type]): Unit = {
             if (upstream eq i0) reg
             super.register(downstream)(upstream)
@@ -272,7 +272,7 @@ class PessimisticTest extends AssertionsForJUnit {
     t2.join()
 
     assert(unsafeNow(b2b3i2) === 37)
-    assert(reeval === 3)
+    assert(reeval === 4, "did not reevaluate 4 times: init, aborted reeval, final reeval t1, final reeval t2")
 
     assert(Pessigen.clear() == 0)
   }
