@@ -1,7 +1,7 @@
 package universe
 
 
-import universe.AEngine.engine
+import universe.Globals.engine
 
 class Seed(implicit world: World) extends BoardElement {
 

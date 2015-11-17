@@ -1,8 +1,8 @@
 package universe
 
 import rescala.Signals
-import universe.AEngine.engine
-import universe.AEngine.engine._
+import universe.Globals.engine
+import universe.Globals.engine._
 
 import scala.collection.immutable.IndexedSeq
 import scala.collection.mutable.Map

@@ -1,27 +1,38 @@
 package universe
 
-import universe.AEngine.engine
+import java.nio.file.{StandardOpenOption, Paths, Files}
+
+import universe.Globals.engine
 
 // test
-object RunConsole extends App {
-  val nAnimals = 100
-  val nPlants = 300
+object RunConsole {
+  def main(args: Array[String]): Unit = {
+    val nAnimals = 100
+    val nPlants = 300
 
-  val world = new World
+    for (repetition <- 0 to 5; threads <- 1 to 16) {
 
-  world batchSpawn(nAnimals, nPlants)
+      Globals.setParallelism(threads)
 
-  val start = System.nanoTime()
-  while (world.time.week.now < 2) {
-//    println(world.time)
-//    println(world.status)
-//    println(world.board.dump) // dumping the board is a bottleneck!
+      val world = new World
 
-    world.tick()
-    world.runPlan()
+      world batchSpawn(nAnimals, nPlants)
+
+      val start = System.nanoTime()
+      while (world.time.week.now < 2) {
+        //    println(world.time)
+        //    println(world.status)
+        //    println(world.board.dump) // dumping the board is a bottleneck!
+
+        world.tick()
+        world.runPlan()
+      }
+      //    println(world.time)
+      //    println(world.status)
+      //    println(world.board.dump)
+      val duration = (System.nanoTime() - start) / 1000000000.0D
+      //    println(s"duration = ${duration}s")
+      if (repetition > 0) Files.write(Paths.get(args(0) + s"-threads$threads.txt"), s"$duration".getBytes(), StandardOpenOption.APPEND)
+    }
   }
-  println(world.time)
-  println(world.status)
-  println(world.board.dump)
-  println(s"duration = ${(System.nanoTime() - start) / 1000000000.0D}s")
 }

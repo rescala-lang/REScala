@@ -2,8 +2,8 @@ package universe
 
 import rescala.Signals
 import rescala.turns.Ticket
-import universe.AEngine.engine
-import universe.AEngine.engine._
+import universe.Globals.engine
+import universe.Globals.engine._
 import universe.Animal._
 
 object Animal {
