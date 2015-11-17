@@ -4,8 +4,8 @@ import universe.AEngine.engine
 
 // test
 object RunConsole extends App {
-  val nAnimals = 10
-  val nPlants = 3
+  val nAnimals = 100
+  val nPlants = 300
 
   val world = new World
 
