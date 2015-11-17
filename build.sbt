@@ -4,7 +4,7 @@ organization := "de.tuda.stg"
 
 version := "0.3.0"
 
-scalaVersion := "2.11.5"
+scalaVersion := "2.11.7"
 
 
 lazy val root = Project(
@@ -14,7 +14,7 @@ lazy val root = Project(
 
 lazy val rescalaRoot = RootProject(file("../REScala"))
 
-lazy val rescala = ProjectRef(rescalaRoot.build, "rescala")
+lazy val rescala = ProjectRef(rescalaRoot.build, "rescalaJVM")
 
 scalaSource in Compile <<= baseDirectory { (base) => new File(base, "src") }
 

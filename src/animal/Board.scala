@@ -1,7 +1,8 @@
 package animal
 
-import rescala._
+import rescala.Signals
 import rescala.turns.Engines.default
+import rescala.turns.Engines.default._
 
 import scala.collection.immutable.IndexedSeq
 import scala.collection.mutable

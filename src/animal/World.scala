@@ -1,8 +1,9 @@
 package animal
 
 
-import rescala._
+import rescala.Signals
 import rescala.turns.Engines.default
+import rescala.turns.Engines.default._
 
 import scala.util.Random
 
@@ -24,7 +25,7 @@ class World(val width: Int = 30, val height: Int = 30) {
   def status = statusString.now
 
   def tick() = {
-    time.tick(Unit)
+    time.tick(())
     board.removeDead()
     board.elements.foreach { case (pos, be) => be.doStep(pos) }
   }

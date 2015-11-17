@@ -1,7 +1,8 @@
 package animal
 
-import rescala._
+import rescala.Signals
 import rescala.turns.Engines.default
+import rescala.turns.Engines.default._
 import rescala.turns.Ticket
 
 
@@ -115,7 +116,7 @@ abstract class Animal(implicit world: World) extends BoardElement {
 
   // we do not have a built in method for this kind of “fold some snapshot” but its not that hard to write one
   val energy: Signal[Int] =
-    implicitly[Ticket].apply(Signals.Impl.makeStatic(Set(world.time.tick, energyDrain, energyGain), Animal.StartEnergy) {
+    implicitly[Ticket[Spores]].apply(Signals.Impl.makeStatic[Int, Spores](Set(world.time.tick, energyDrain, energyGain), Animal.StartEnergy) {
       (turn, current) => world.time.tick.pulse(turn).fold(current, _ => current + energyGain.get(turn) - energyDrain.get(turn))
     })
 
