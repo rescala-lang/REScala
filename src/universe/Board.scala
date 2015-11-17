@@ -1,9 +1,8 @@
-package animal
+package universe
 
 import rescala.Signals
-import rescala.turns.Engines.default
-import rescala.turns.Engines.default._
-
+import AEngine.engine
+import AEngine.engine._
 import scala.collection.immutable.IndexedSeq
 import scala.collection.mutable
 import scala.collection.mutable.Map
@@ -20,7 +19,7 @@ object Board {
  * A Board is infinite, but width and height specify the area being displayed.
  */
 class Board(val width: Int, val height: Int) {
-  var elements: Map[Pos, BoardElement] = new mutable.HashMap
+  var elements: Map[Pos, BoardElement] = scala.collection.concurrent.TrieMap()
   val allPositions = (for (x <- 0 to width; y <- 0 to height) yield Pos(x, y)).toSet
 
   val elementSpawned = Evt[BoardElement]()
@@ -49,7 +48,7 @@ class Board(val width: Int, val height: Int) {
   }
 
   /** @return the elements in this board nearby pos */
-  def nearby(pos: Pos, range: Int) = Board.proximity(pos, range).map(elements.get).flatten
+  def nearby(pos: Pos, range: Int) = Board.proximity(pos, range).flatMap(elements.get)
 
   /** @return the immediate neighbors of the given position */
   def neighbors(pos: Pos) = nearby(pos, 1)
@@ -102,14 +101,4 @@ class Board(val width: Int, val height: Int) {
 }
 
 
-abstract class BoardElement(implicit val world: World) {
 
-  def isAnimal: Boolean
-
-  /** A signal denoting if this element is dead ( = should be removed from the board) */
-  val isDead: Signal[Boolean]
-  lazy val dies: Event[Unit] = isDead changedTo true
-
-  /** Some imperative code that is called each tick */
-  def doStep(pos: Pos): Unit = {}
-}

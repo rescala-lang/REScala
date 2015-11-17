@@ -1,9 +1,9 @@
-package animal
+package universe
 
 
 import rescala.Signals
-import rescala.turns.Engines.default
-import rescala.turns.Engines.default._
+import AEngine.engine
+import AEngine.engine._
 
 import scala.util.Random
 
@@ -27,7 +27,7 @@ class World(val width: Int = 30, val height: Int = 30) {
   def tick() = {
     time.tick(())
     board.removeDead()
-    board.elements.foreach { case (pos, be) => be.doStep(pos) }
+    board.elements.par.foreach { case (pos, be) => be.doStep(pos) }
   }
 
   def newAnimal(isHerbivore: Boolean, isMale: Boolean): Animal = {

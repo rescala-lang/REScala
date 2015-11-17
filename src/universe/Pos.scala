@@ -1,4 +1,4 @@
-package animal
+package universe
 
 /** Helper class to do simple arithmetic on (Int, Int) tuples */
 case class Pos(x: Int, y: Int) {
