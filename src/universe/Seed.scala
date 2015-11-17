@@ -1,16 +1,13 @@
 package universe
 
 
-import rescala.Signals
-import AEngine.engine
-import AEngine.engine._
+import universe.AEngine.engine
 
 class Seed(implicit world: World) extends BoardElement {
 
-  override def isAnimal: Boolean = false
-
   val growTime = world.time.hour.changed.iterate(Plant.GrowTime)(_ - 1)
-  val isDead = growTime map { _ <= 0 } //#SIG
+  val isDead = growTime map {_ <= 0} //#SIG
+  override def isAnimal: Boolean = false
 
   dies += { _ => //#HDL
     world.board.getPosition(this).foreach { mypos =>

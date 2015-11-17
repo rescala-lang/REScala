@@ -1,35 +1,33 @@
 package universe
 
 import rescala.Signals
-import AEngine.engine
-import AEngine.engine._
+import universe.AEngine.engine
+import universe.AEngine.engine._
+
 import scala.collection.immutable.IndexedSeq
-import scala.collection.mutable
 import scala.collection.mutable.Map
 import scala.util.Random
 
 
 object Board {
-  def square(range: Int): IndexedSeq[Pos] = for (x <- -range to range; y <- -range to range) yield Pos(x, y)
   def proximity(pos: Pos, range: Int): IndexedSeq[Pos] = square(range).map(pos + _).sortBy(pos.distance)
+  def square(range: Int): IndexedSeq[Pos] = for (x <- -range to range; y <- -range to range) yield Pos(x, y)
 }
 
 /**
- * Mutable data structure which stores board elements in 2-dimensional coordinates.
- * A Board is infinite, but width and height specify the area being displayed.
- */
+  * Mutable data structure which stores board elements in 2-dimensional coordinates.
+  * A Board is infinite, but width and height specify the area being displayed.
+  */
 class Board(val width: Int, val height: Int) {
-  var elements: Map[Pos, BoardElement] = scala.collection.concurrent.TrieMap()
   val allPositions = (for (x <- 0 to width; y <- 0 to height) yield Pos(x, y)).toSet
-
   val elementSpawned = Evt[BoardElement]()
   val elementRemoved = Evt[BoardElement]()
   val animalSpawned = elementSpawned && (_.isAnimal)
   val animalRemoved = elementRemoved && (_.isAnimal)
   val animalsBorn = animalSpawned.iterate(0)(_ + 1)
   val animalsDied = animalRemoved.iterate(0)(_ + 1)
-  val animalsAlive = Signals.lift(animalsBorn, animalsDied) { _ - _ }
-
+  val animalsAlive = Signals.lift(animalsBorn, animalsDied) {_ - _}
+  var elements: Map[Pos, BoardElement] = scala.collection.concurrent.TrieMap()
   /** adds a board element at given position */
   def add(be: BoardElement, pos: Pos): Unit = {
     elements.put(pos, be)
@@ -46,22 +44,14 @@ class Board(val width: Int, val height: Int) {
       else true
     }
   }
-
-  /** @return the elements in this board nearby pos */
-  def nearby(pos: Pos, range: Int) = Board.proximity(pos, range).flatMap(elements.get)
-
   /** @return the immediate neighbors of the given position */
   def neighbors(pos: Pos) = nearby(pos, 1)
-
-  /** @return true if pos is free */
-  def isFree(pos: Pos) = !elements.contains(pos)
-
-  /** clears the current element from pos */
-  private def clear(pos: Pos): Option[BoardElement] = elements.remove(pos)
-
+  /** @return the elements in this board nearby pos */
+  def nearby(pos: Pos, range: Int) = Board.proximity(pos, range).flatMap(elements.get)
   /** @return the nearest free position to pos */
   def nearestFree(pos: Pos) = Board.proximity(pos, 1).find(isFree)
-
+  /** @return true if pos is free */
+  def isFree(pos: Pos) = !elements.contains(pos)
   /** moves pos in direction dir if possible (when target is free) */
   def moveIfPossible(pos: Pos, dir: Pos): Unit = {
     val newPos = pos + dir
@@ -70,7 +60,8 @@ class Board(val width: Int, val height: Int) {
       elements.put(newPos, e.get)
     }
   }
-
+  /** clears the current element from pos */
+  private def clear(pos: Pos): Option[BoardElement] = elements.remove(pos)
   /** @return the position of the given BoardElement. slow. */
   def getPosition(be: BoardElement) = {
     elements.collectFirst {
@@ -95,7 +86,7 @@ class Board(val width: Int, val height: Int) {
       case Some(_) => '?'
     }
     val lines = for (y <- 0 to height)
-    yield (0 to width).map(x => repr(elements.get(Pos(x, y)))).mkString
+      yield (0 to width).map(x => repr(elements.get(Pos(x, y)))).mkString
     lines.mkString("\n")
   }
 }

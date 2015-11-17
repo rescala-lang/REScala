@@ -1,7 +1,6 @@
 package universe
 
-import AEngine.engine
-import AEngine.engine._
+import universe.AEngine.engine
 
 // test
 object RunConsole extends App {
@@ -17,10 +16,10 @@ object RunConsole extends App {
     println(world.time)
     println(world.status)
     //println(world.board.dump) // dumping the board is a bottleneck!
-    
+
     world.tick()
     world.runPlan()
   }
   println(world.board.dump)
-  println(f"duration = ${(System.nanoTime() - start) / 1000000000.0D }%2.3fs")
+  println(f"duration = ${(System.nanoTime() - start) / 1000000000.0D}%2.3fs")
 }

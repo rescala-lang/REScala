@@ -1,23 +1,19 @@
 package universe
 
 
-import rescala.Signals
-import AEngine.engine
-import AEngine.engine._
+import universe.AEngine.engine
+import universe.AEngine.engine._
 
 class Plant(implicit world: World) extends BoardElement {
 
 
-  override def isAnimal: Boolean = false
-
   val energy = Var(Plant.Energy)
-
   val isDead = energy map (_ <= 0)
-
   val age: Signal[Int] = world.time.hour.changed.iterate(0)(_ + 1)
-  val grows: Event[Int] = age.changed && { _ % Plant.GrowTime == 0 }
+  val grows: Event[Int] = age.changed && {_ % Plant.GrowTime == 0}
   val size: Signal[Int] = grows.iterate(0)(acc => math.min(Plant.MaxSize, acc + 1))
   val expands: Event[Unit] = size.changedTo(Plant.MaxSize)
+  override def isAnimal: Boolean = false
 
 
   expands += { _ => //#HDL
@@ -30,8 +26,6 @@ class Plant(implicit world: World) extends BoardElement {
       }
     }
   }
-
-
   /** takes amount away from the energy of this plant */
   def takeEnergy(amount: Int) = energy.set(energy.now - amount)
 }

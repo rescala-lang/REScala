@@ -1,10 +1,8 @@
 package universe
 
 import rescala.Signals
-
-import rescala.Signals
-import AEngine.engine
-import AEngine.engine._
+import universe.AEngine.engine
+import universe.AEngine.engine._
 
 
 class Time {
@@ -15,6 +13,6 @@ class Time {
   val hour = hours map (_ % 24)
   val week = day map (_ / 7)
   val timestring = Signals.lift(week, day, hour) { (w, d, h) => s"Week: $w Day: $d  hour: $h" }
-  override def toString: String = timestring.now
   val newWeek = week.changed
+  override def toString: String = timestring.now
 }

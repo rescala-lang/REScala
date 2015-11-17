@@ -1,10 +1,9 @@
 package universe
 
 import rescala.Signals
-
-import AEngine.engine
-import AEngine.engine._
 import rescala.turns.Ticket
+import universe.AEngine.engine
+import universe.AEngine.engine._
 
 object Animal {
   val StartEnergy = 200

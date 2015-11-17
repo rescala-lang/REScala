@@ -1,19 +1,19 @@
 package universe
 
 import rescala.Signals
-import AEngine.engine
-import AEngine.engine._
+import universe.AEngine.engine
+import universe.AEngine.engine._
 
 
 class Carnivore(implicit world: World) extends Animal {
 
-  val sleepy = energy map { _ < Animal.SleepThreshold }
-  val canHunt = energy map { _ > Animal.AttackThreshold }
+  val sleepy = energy map {_ < Animal.SleepThreshold}
+  val canHunt = energy map {_ > Animal.AttackThreshold}
 
   // only adult carnivores with min energy can hunt, others eat plants
   val findFood: Signal[PartialFunction[BoardElement, BoardElement]] = Signals.static(isAdult, canHunt) { t =>
-    if (isAdult.get(t) && canHunt.get(t)) { case p: Herbivore => p }: PartialFunction[BoardElement, BoardElement]
-    else { case p: Plant => p }: PartialFunction[BoardElement, BoardElement]
+    if (isAdult.get(t) && canHunt.get(t)) {case p: Herbivore => p}: PartialFunction[BoardElement, BoardElement]
+    else {case p: Plant => p}: PartialFunction[BoardElement, BoardElement]
   }
 
 
@@ -33,7 +33,7 @@ class Herbivore(implicit world: World) extends Animal {
 
   val findFood: Signal[PartialFunction[BoardElement, BoardElement]] = //#SIG
     Var {
-      { case p: Plant => p }: PartialFunction[BoardElement, BoardElement]
+      {case p: Plant => p}: PartialFunction[BoardElement, BoardElement]
     }
 
   override def reachedState(plant: BoardElement): AnimalState = plant match {
@@ -44,21 +44,15 @@ class Herbivore(implicit world: World) extends Animal {
 
 trait Female extends Animal {
 
-  val mate: Var[Option[Animal]] = Var(None) //#VAR
-
-  val isPregnant = mate.map { _.isDefined } //#SIG
-
-  val becomePregnant: Event[Unit] = isPregnant.changedTo(true) //#EVT //#IF
-
   // counts down to 0
   lazy val pregnancyTime: Signal[Int] = becomePregnant.reset(()) { _ => //#SIG  //#IF
     world.time.hour.changed.iterate(Animal.PregnancyTime)(_ - (if (isPregnant.now) 1 else 0)) //#IF //#IF //#SIG
   }
-
-
   lazy val giveBirth: Event[Unit] = pregnancyTime.changedTo(0) //#EVT //#IF
-
-  override val isFertile = Signals.lift(isAdult, isPregnant) { _ && !_ } //#SIG
+  override val isFertile = Signals.lift(isAdult, isPregnant) {_ && !_} //#SIG
+  val mate: Var[Option[Animal]] = Var(None) //#VAR
+  val isPregnant = mate.map {_.isDefined} //#SIG
+  val becomePregnant: Event[Unit] = isPregnant.changedTo(true) //#EVT //#IF
 
   // override val energyDrain = Signal { super.energyDrain() * 2 }
   // not possible
@@ -75,7 +69,6 @@ trait Female extends Animal {
       mate.set(None)
     }
   }
-
   def procreate(father: Animal): Unit = {
     if (isPregnant.now) return
     mate.set(Some(father))
@@ -96,7 +89,7 @@ trait Female extends Animal {
 
 
 trait Male extends Animal {
-  val seeksMate = Signals.lift(isFertile, energy) { _ && _ > Animal.ProcreateThreshold }
+  val seeksMate = Signals.lift(isFertile, energy) {_ && _ > Animal.ProcreateThreshold}
 
   override def nextAction(pos: Pos): AnimalState = {
     if (seeksMate.now) {
