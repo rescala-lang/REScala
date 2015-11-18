@@ -30,13 +30,13 @@ my @ENGINES_PHIL = (@ENGINES, "unmanaged");
 my @THREADS = (1..16);
 my @STEPS = (1..16,24,32,64);
 my @SIZES = (1,10,25,100,250,1000);
-my @PHILOSOPHERS = (32, 48, 64, 96, 128);
-my @LAYOUTS = qw<alternating>;
+my @PHILOSOPHERS = (16, 32, 48, 64, 96, 128);
+my @LAYOUTS = qw<alternating third>;
 my %BASECONFIG = (
   si => "false", # synchronize iterations
   wi => 10, # warmup iterations
   w => "1000ms", # warmup time
-  f => 3, # forks
+  f => 5, # forks
   i => 10, # iterations
   r => "1000ms", # time per iteration
   to => "10s", #timeout
@@ -51,7 +51,7 @@ $ENV{'LANG'} = 'en_US.UTF-8';
 # $ENV{'JAVA_OPTS'} = $JMH_CLASSPATH;
 
 my $command = shift @ARGV;
-my @RUN = @ARGV ? @ARGV : qw< dynamicPhilosophers philosophers simplePhil unmanagedPhilosophers >;
+my @RUN = @ARGV ? @ARGV : qw< dynamicPhilosophers philosophers simplePhil >;
 
 say "selected: " . (join " ", sort @RUN);
 say "available: " . (join " ", sort keys %{&selection()});
@@ -149,7 +149,7 @@ sub selection {
 
       for my $threads (@THREADS) {
         for my $layout (@LAYOUTS) {
-          for my $phils (grep {$_ >= ($threads * (($layout eq "third") ? 4 : 1))} @PHILOSOPHERS) {
+          for my $phils (($layout eq "third") ? $PHILOSOPHERS[-1] : @PHILOSOPHERS) {
             my $name = "philosophers-threads-$threads-layout-$layout-philosophers-$phils";
             my $program = makeRunString( $name,
               fromBaseConfig(
@@ -171,36 +171,12 @@ sub selection {
       @runs;
     },
 
-    unmanagedPhilosophers => sub {
-      my @runs;
-
-      for my $threads (@THREADS) {
-        my $phils = $PHILOSOPHERS[-1];
-        my $name = "unmanagedPhilosophers-threads-$threads-philosophers-$phils";
-        my $program = makeRunString( $name,
-          fromBaseConfig(
-            p => { # parameters
-              tableType => 'static',
-              engineName => "unmanaged",
-              philosophers => $phils,
-              layout => "third",
-            },
-            t => $threads, #threads
-          ),
-          "philosophers"
-        );
-        push @runs, {name => $name, program => $program};
-      }
-
-      @runs;
-    },
-
     dynamicPhilosophers => sub {
       my @runs;
 
       for my $threads (@THREADS) {
         for my $layout (@LAYOUTS) {
-          for my $phils (grep {$_ >= ($threads * (($layout eq "third") ? 4 : 1))} @PHILOSOPHERS) {
+          for my $phils (($layout eq "third") ? $PHILOSOPHERS[-1] : @PHILOSOPHERS) {
             my $name = "dynamicPhilosophers-threads-$threads-layout-$layout-philosophers-$phils";
             my $program = makeRunString( $name,
               fromBaseConfig(
@@ -209,7 +185,7 @@ sub selection {
                   engineName => (join ',', @ENGINES_PHIL),
                   philosophers => $phils,
                   layout => $layout,
-                  minBackoff => 0, maxBackoff => 0, factorBackoff => 1.0,
+                  minBackoff => 100, maxBackoff => 1000000, factorBackoff => 1.1,
                 },
                 t => $threads, #threads
               ),
