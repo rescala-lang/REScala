@@ -13,7 +13,7 @@ class Keychain(init: Key) {
   private val keys: util.ArrayDeque[Key] = new util.ArrayDeque[Key](2)
   keys.add(init)
 
-  private var fallthrough: Map[Key, Int] = Map()
+  private var fallthrough: Map[Key, Int] = Map.empty
   def addFallthrough(key: Key, amount: Int = 1): Unit = synchronized { fallthrough = fallthrough.updated(key, fallthrough.getOrElse(key, 0) + amount) }
   def removeFallthrough(key: Key): Unit = synchronized {
     val old = fallthrough.getOrElse(key, 0)
@@ -37,14 +37,18 @@ class Keychain(init: Key) {
     assert(Thread.holdsLock(this), s"tried to release $key without holding $this")
     val head = keys.poll()
     assert(head eq key, s"tried to drop $key from $this but is not head! ($keys)")
-    val locks = key.grabLocks().distinct
-    if (keys.isEmpty) locks.foreach(_.transfer(null, key))
+    val locks = key.grabLocks()
+    val lockIt = locks.keySet().iterator()
+    if (keys.isEmpty) {
+      while (lockIt.hasNext) lockIt.next().transfer(null, key)
+    }
     else {
       val target = keys.peek()
-      locks.foreach(_.transfer(target, key, transferWriteSet = fallthrough.nonEmpty))
+      while (lockIt.hasNext) lockIt.next().transfer(target, key, transferWriteSet = fallthrough.nonEmpty)
       fallthrough -= target
       target.continue()
     }
+    locks.clear()
   }
 
 }

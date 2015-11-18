@@ -6,11 +6,11 @@ import rescala.graph.{Spores, Reactive}
 import rescala.propagation.LevelQueue.QueueElement
 import rescala.turns.Turn
 
-import scala.collection.SortedSet
+import scala.collection.immutable.SortedSet
 
 class LevelQueue[S <: Spores]()(implicit val currenTurn: Turn[S]) {
 
-  private var elements = SortedSet[QueueElement[S]]()
+  private var elements = SortedSet.empty[QueueElement[S]]
 
   def currentLevel(): Int = elements.headOption.fold(Int.MaxValue)(_.level)
 

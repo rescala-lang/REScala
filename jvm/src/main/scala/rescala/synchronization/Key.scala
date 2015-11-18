@@ -1,6 +1,6 @@
 package rescala.synchronization
 
-import java.util.concurrent.Semaphore
+import java.util.concurrent.{ConcurrentHashMap, Semaphore}
 import java.util.concurrent.atomic.AtomicReference
 
 import rescala.graph.Globals
@@ -37,15 +37,11 @@ final class Key(val turn: Turn[ParRPSpores.type]) {
   }
 
   /** contains a list of all locks owned by us. */
-  private[this] val heldLocks = new AtomicReference[List[TurnLock]](Nil)
+  @volatile private[this] var heldLocks: ConcurrentHashMap[TurnLock, Boolean] = new ConcurrentHashMap[TurnLock, Boolean]()
 
-  @tailrec
-  def addLock(lock: TurnLock): Unit = {
-    val old = heldLocks.get()
-    if (!heldLocks.compareAndSet(old, lock :: old)) addLock(lock)
-  }
+  def addLock(lock: TurnLock): Unit = heldLocks.put(lock, true)
 
-  def grabLocks(): List[TurnLock] = heldLocks.getAndSet(Nil)
+  def grabLocks() = heldLocks
 
   /** release all locks we hold or transfer them to a waiting transaction if there is one
     * holds the master lock for request */

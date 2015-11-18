@@ -1,16 +1,17 @@
 package rescala.propagation
 
-import rescala.graph.ReevaluationResult.{Dynamic, Static}
-import rescala.graph.{Spores, Committable, Reactive}
-import rescala.turns.Turn
-import scala.collection.JavaConverters._
+import java.util
 
-import scala.util.Try
+import rescala.graph.ReevaluationResult.{Dynamic, Static}
+import rescala.graph.{Committable, Reactive, Spores}
+import rescala.turns.Turn
+
+import scala.util.control.NonFatal
 
 trait PropagationImpl[S <: Spores] extends Turn[S] {
   implicit def currentTurn: PropagationImpl[S] = this
 
-  private val toCommit = new java.util.ArrayList[Committable](20)
+  private val toCommit = new util.HashSet[Committable]()
   private val observers = new java.util.ArrayList[() => Unit](20)
   private var _evaluated = List.empty[Reactive[S]]
 
@@ -74,16 +75,30 @@ trait PropagationImpl[S <: Spores] extends Turn[S] {
 
   def propagationPhase(): Unit = levelQueue.evaluateQueue(evaluate)
 
-  def commitPhase() = toCommit.asScala.distinct.foreach(_.commit(this))
+  def commitPhase() = {
+    val it = toCommit.iterator()
+    while (it.hasNext) it.next().commit(this)
+  }
 
-  def rollbackPhase() = toCommit.asScala.distinct.foreach(_.commit(this))
+  def rollbackPhase() = {
+    val it = toCommit.iterator()
+    while (it.hasNext) it.next().release(this)
+  }
 
   def observerPhase() = {
-    val executed = observers.asScala.map(o => Try {o.apply()})
+    val it = observers.iterator()
+    var failure: Throwable = null
+    while (it.hasNext) {
+      try {
+        it.next().apply()
+      } catch {
+        case NonFatal(e) => failure = e
+      }
+    }
     // find the first failure and rethrow the contained exception
     // we should probably aggregate all of the exceptions,
     // but this is not the place to invent exception aggregation
-    executed.find(_.isFailure).foreach(_.get)
+    if (failure != null) throw failure
   }
 
   def releasePhase(): Unit
