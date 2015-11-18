@@ -14,5 +14,5 @@ object Globals {
   //implicit val engine: Engine[STMSpores.type, STMSync] = rescala.synchronization.Engines.stm
 
   var taskSupport: ForkJoinTaskSupport = _
-  def setParallelism(n: Int) = new ForkJoinTaskSupport(new scala.concurrent.forkjoin.ForkJoinPool(n))
+  def setParallelism(n: Int) = taskSupport = new ForkJoinTaskSupport(new scala.concurrent.forkjoin.ForkJoinPool(n))
 }
