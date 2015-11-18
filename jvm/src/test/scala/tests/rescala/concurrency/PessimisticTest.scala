@@ -2,7 +2,7 @@ package tests.rescala.concurrency
 
 
 import java.util.concurrent.atomic.AtomicReference
-import java.util.concurrent.{ConcurrentLinkedQueue, CountDownLatch}
+import java.util.concurrent.{TimeUnit, ConcurrentLinkedQueue, CountDownLatch}
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
@@ -29,7 +29,7 @@ class PessimisticTestTurn extends ParRP(backoff = new Backoff()) {
 
 case class Barrier(ready: CountDownLatch, go: CountDownLatch) {
   def await() = {
-    ready.await()
+    ready.await(1, TimeUnit.SECONDS)
     go.countDown()
   }
 }
@@ -131,13 +131,13 @@ class PessimisticTest extends AssertionsForJUnit {
     //this is a rather poor way to test if turn 2 is already waiting, this is your chance to replace this with something smart!
     while (t2.getState != Thread.State.WAITING) {Thread.sleep(1)}
     l1.await()
-    t1.join()
+    t1.join(1000)
     // still unchanged, turn 1 used the old value of v2
     assert(results === Nil)
     assert(unsafeNow(s12) === false)
 
     l2.await()
-    t2.join()
+    t2.join(1000)
 
     assert(unsafeNow(s12) === true)
     assert(unsafeNow(s22) === true)
