@@ -1,3 +1,5 @@
+import com.typesafe.sbt.SbtStartScript
+
 name := "rescala-universe"
 
 organization := "de.tuda.stg"
@@ -20,6 +22,7 @@ scalaSource in Compile <<= baseDirectory { (base) => new File(base, "src") }
 
 libraryDependencies ++= (Nil)
 
+seq(SbtStartScript.startScriptForClassesSettings: _*)
 
 scalacOptions ++= (
   "-deprecation" ::

@@ -11,6 +11,7 @@ object RunConsole {
     val nPlants = 300
 
     for (repetition <- 0 to 5; threads <- 1 to 16) {
+      println(s"rep: $repetition, threads: $threads")
 
       Globals.setParallelism(threads)
 
@@ -32,7 +33,7 @@ object RunConsole {
       //    println(world.board.dump)
       val duration = (System.nanoTime() - start) / 1000000000.0D
       //    println(s"duration = ${duration}s")
-      if (repetition > 0) Files.write(Paths.get(args(0) + s"-threads$threads.txt"), s"$duration".getBytes(), StandardOpenOption.APPEND)
+      if (repetition > 0) Files.write(Paths.get(args(0) + s"-threads$threads.txt"), s"$duration\n".getBytes(), StandardOpenOption.APPEND, StandardOpenOption.CREATE)
     }
   }
 }
