@@ -32,11 +32,11 @@ class DynamicPhilosopherTable[S <: Spores](philosopherCount: Int, work: Long)(ov
       val ownName = i.toString
       val vision = Signals.dynamic(forks(i), forks(mod(i - 1))) { turn =>
         forks(i)(turn) match {
-          case Taken(name) if name != ownName => WaitingFor(name)
+          case Taken(name) if name != ownName => BlockedBy(name)
           case Taken(`ownName`) => Done
           case Free => forks(mod(i - 1))(turn) match {
             case Free => Ready
-            case Taken(name) => WaitingFor(name)
+            case Taken(name) => BlockedBy(name)
           }
         }
       }
@@ -62,11 +62,11 @@ class HalfDynamicPhilosopherTable[S <: Spores](philosopherCount: Int, work: Long
       val ownName = i.toString
       val vision = Signals.dynamic(forks(i), forks(mod(i - 1))) { turn =>
         forks(i)(turn) match {
-          case Taken(name) if name != ownName => WaitingFor(name)
+          case Taken(name) if name != ownName => BlockedBy(name)
           case Taken(`ownName`) => Done
           case Free => forks(mod(i - 1))(turn) match {
             case Free => Ready
-            case Taken(name) => WaitingFor(name)
+            case Taken(name) => BlockedBy(name)
           }
         }
       }

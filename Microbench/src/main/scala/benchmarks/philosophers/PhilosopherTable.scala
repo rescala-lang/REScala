@@ -67,8 +67,8 @@ object PhilosopherTable {
     (leftFork, rightFork) match {
       case (Free, Free) => Ready
       case (Taken(`ownName`), Taken(`ownName`)) => Done
-      case (Taken(name), _) => WaitingFor(name)
-      case (_, Taken(name)) => WaitingFor(name)
+      case (Taken(name), _) => BlockedBy(name)
+      case (_, Taken(name)) => BlockedBy(name)
     }
 
 
@@ -85,7 +85,7 @@ object PhilosopherTable {
   sealed trait Vision
   case object Ready extends Vision
   case object Done extends Vision
-  case class WaitingFor(name: String) extends Vision
+  case class BlockedBy(name: String) extends Vision
 
 
   // ============================================ Entity Creation =========================================================
