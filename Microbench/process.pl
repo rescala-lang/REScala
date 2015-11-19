@@ -43,11 +43,13 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
 
   for my $dynamic (queryChoices("Param: tableType")) {
     for my $philosophers (queryChoices("Param: philosophers", "Param: tableType" => $dynamic)) {
-      local $LEGEND_POS = "left top" if $philosophers == 48;
+      local $LEGEND_POS = "left top" if $philosophers == 48  || $philosophers == 16;
       for my $layout (queryChoices("Param: layout", "Param: tableType" => $dynamic, "Param: philosophers" => $philosophers)) {
         local $YRANGE = "[0:500]" if $philosophers <= 64 && $dynamic eq "static";
+        local $YRANGE = "[0:300]" if $philosophers <= 32 && $dynamic eq "static";
         local $YRANGE = "[0:800]" if $philosophers > 64 && $dynamic eq "static";
-        local $YRANGE = "[0:140]" if $dynamic eq "dynamic";
+        local $YRANGE = "[0:300]" if $dynamic ne "static";
+        local $YRANGE = "[0:160]" if $dynamic ne "static" && $philosophers <= 32;
         local $YRANGE = "[0:]" if $layout eq "third";
         local $LEGEND_POS = "left top" if $layout eq "third";
         local $NAME_FINE = "No Sync" if $layout eq "third";
