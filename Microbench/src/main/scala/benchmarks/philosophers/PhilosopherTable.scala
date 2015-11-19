@@ -41,12 +41,9 @@ class PhilosopherTable[S <: Spores](philosopherCount: Int, work: Long)(implicit 
   }
 
   def tryEat(seating: Seating[S]): Boolean =
-    implicitly[Engine[S, Turn[S]]].plan(seating.philosopher) { turn =>
-      val forksWereFree = if (seating.vision(turn) == Ready) {
-        seating.philosopher.admit(Eating)(turn)
-        true
-      }
-      else false
+    engine.plan(seating.philosopher) { turn =>
+      val forksWereFree = seating.vision(turn) == Ready
+      if (forksWereFree) seating.philosopher.admit(Eating)(turn)
       turn.observe { if (forksWereFree) assert(seating.vision(turn) == Done) }
       forksWereFree
     }
