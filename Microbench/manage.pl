@@ -210,7 +210,7 @@ sub selection {
               fromBaseConfig(
                 p => { # parameters
                   tableType => 'half,other',
-                  engineName => (join ',', @ENGINES),
+                  engineName => (join ',', @ENGINES_PHIL),
                   philosophers => $phils,
                   layout => $layout,
                 },
