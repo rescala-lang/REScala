@@ -16,10 +16,10 @@ class DynamicPhilosopherTable[S <: Spores](philosopherCount: Int, work: Long)(ov
       val nextCircularIndex = mod(i + 1)
       Signals.dynamic(phils(i), phils(nextCircularIndex)) { turn =>
         phils(i)(turn) match {
-          case Hungry => Taken(i.toString)
+          case Eating => Taken(i.toString)
           case Thinking =>
             phils(nextCircularIndex)(turn) match {
-              case Hungry => Taken(nextCircularIndex.toString)
+              case Eating => Taken(nextCircularIndex.toString)
               case Thinking => Free
             }
         }
@@ -32,7 +32,7 @@ class DynamicPhilosopherTable[S <: Spores](philosopherCount: Int, work: Long)(ov
       val vision = Signals.dynamic(forks(i), forks(mod(i - 1))) { turn =>
         forks(i)(turn) match {
           case Taken(name) if name != ownName => WaitingFor(name)
-          case Taken(`ownName`) => Eating
+          case Taken(`ownName`) => Done
           case Free => forks(mod(i - 1))(turn) match {
             case Free => Ready
             case Taken(name) => WaitingFor(name)
@@ -62,7 +62,7 @@ class HalfDynamicPhilosopherTable[S <: Spores](philosopherCount: Int, work: Long
       val vision = Signals.dynamic(forks(i), forks(mod(i - 1))) { turn =>
         forks(i)(turn) match {
           case Taken(name) if name != ownName => WaitingFor(name)
-          case Taken(`ownName`) => Eating
+          case Taken(`ownName`) => Done
           case Free => forks(mod(i - 1))(turn) match {
             case Free => Ready
             case Taken(name) => WaitingFor(name)
@@ -71,6 +71,37 @@ class HalfDynamicPhilosopherTable[S <: Spores](philosopherCount: Int, work: Long
       }
       Seating(i, phils(i), forks(i), forks(mod(i - 1)), vision)
     }
+  }
+
+}
+
+class OtherHalfDynamicPhilosopherTable[S <: Spores](philosopherCount: Int, work: Long)(override implicit val engine: Engine[S, Turn[S]]) extends PhilosopherTable(philosopherCount, work)(engine) {
+
+  override def createTable(tableSize: Int): Seq[Seating[S]] = {
+    def mod(n: Int): Int = (n + tableSize) % tableSize
+
+    val phils = for (i <- 0 until tableSize) yield Var[Philosopher, S](Thinking)
+
+    val forks = for (i <- 0 until tableSize) yield {
+      val nextCircularIndex = mod(i + 1)
+      Signals.dynamic(phils(i), phils(nextCircularIndex)) { turn =>
+        phils(i)(turn) match {
+          case Eating => Taken(i.toString)
+          case Thinking =>
+            phils(nextCircularIndex)(turn) match {
+              case Eating => Taken(nextCircularIndex.toString)
+              case Thinking => Free
+            }
+        }
+      }
+
+    }
+
+    for (i <- 0 until tableSize) yield {
+      val vision = lift(forks(i), forks(mod(i - 1)))(calcVision(i.toString))
+      Seating(i, phils(i), forks(i), forks(mod(i - 1)), vision)
+    }
+
   }
 
 }

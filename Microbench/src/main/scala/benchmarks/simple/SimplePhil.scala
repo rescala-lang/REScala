@@ -40,7 +40,7 @@ class SimplePhil[S <: rescala.graph.Spores] {
 
   @Benchmark
   def propagate(): Unit = {
-    phil.set(Hungry)
+    phil.set(Eating)
     phil.set(Thinking)
   }
 
@@ -50,7 +50,7 @@ class SimplePhil[S <: rescala.graph.Spores] {
   @Benchmark
   def buildAndPropagate(step: Step): Unit = {
     val (p, v) = buildPhil()
-    p.set(Hungry)
+    p.set(Eating)
     p.set(Thinking)
   }
 }

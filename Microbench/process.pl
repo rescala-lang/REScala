@@ -28,6 +28,7 @@ our $NAME_FINE = "Manual";
 our $NAME_COARSE = "G-Lock";
 
 our $LEGEND_POS = "off";
+our $YRANGE = "[0:]";
 
 my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,PrintError => 1});
 {
@@ -44,7 +45,11 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
     for my $philosophers (queryChoices("Param: philosophers", "Param: tableType" => $dynamic)) {
       local $LEGEND_POS = "left top" if $philosophers == 48;
       for my $layout (queryChoices("Param: layout", "Param: tableType" => $dynamic, "Param: philosophers" => $philosophers)) {
-      local $LEGEND_POS = "left top" if $layout eq "third";
+        local $YRANGE = "[0:500]" if $philosophers <= 64 && $dynamic eq "static";
+        local $YRANGE = "[0:800]" if $philosophers > 64 && $dynamic eq "static";
+        local $YRANGE = "[0:140]" if $dynamic eq "dynamic";
+        local $YRANGE = "[0:]" if $layout eq "third";
+        local $LEGEND_POS = "left top" if $layout eq "third";
         local $NAME_FINE = "No Sync" if $layout eq "third";
         plotBenchmarksFor("${dynamic}philosophers$philosophers", $layout,
           map { {Title => $_, "Param: engineName" => $_ , Benchmark => "benchmarks.philosophers.PhilosopherCompetition.eat",
@@ -281,11 +286,11 @@ sub plotDatasets($group, $name, $additionalParams, @datasets) {
     key => $LEGEND_POS,
     #title  => $name,
     #xlabel => "Active threads",
-    #yrange => "[0:500]",
+    yrange => $YRANGE,
     #logscale => "x 2; set logscale y 10",
     #ylabel => "Operations per millisecond",
     # xrange => "reverse",
-    lmargin => 4.5,
+    lmargin => 4.8,
     rmargin => 1.5,
     tmargin => 0.3,
     bmargin => 1.5,

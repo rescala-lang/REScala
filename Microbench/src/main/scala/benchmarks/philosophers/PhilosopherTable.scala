@@ -18,7 +18,7 @@ class PhilosopherTable[S <: Spores](philosopherCount: Int, work: Long)(implicit 
 
   seatings.foreach { seating =>
     seating.vision.observe { state =>
-      if (state == Eating) {
+      if (state == Done) {
         Blackhole.consumeCPU(work)
       }
     }
@@ -43,11 +43,11 @@ class PhilosopherTable[S <: Spores](philosopherCount: Int, work: Long)(implicit 
   def tryEat(seating: Seating[S]): Boolean =
     implicitly[Engine[S, Turn[S]]].plan(seating.philosopher) { turn =>
       val forksWereFree = if (seating.vision(turn) == Ready) {
-        seating.philosopher.admit(Hungry)(turn)
+        seating.philosopher.admit(Eating)(turn)
         true
       }
       else false
-      turn.observe { if (forksWereFree) assert(seating.vision(turn) == Eating) }
+      turn.observe { if (forksWereFree) assert(seating.vision(turn) == Done) }
       forksWereFree
     }
 
@@ -59,14 +59,14 @@ object PhilosopherTable {
   def calcFork(leftName: String, rightName: String)(leftState: Philosopher, rightState: Philosopher): Fork =
     (leftState, rightState) match {
       case (Thinking, Thinking) => Free
-      case (Hungry, _) => Taken(leftName)
-      case (_, Hungry) => Taken(rightName)
+      case (Eating, _) => Taken(leftName)
+      case (_, Eating) => Taken(rightName)
     }
 
   def calcVision(ownName: String)(leftFork: Fork, rightFork: Fork): Vision =
     (leftFork, rightFork) match {
       case (Free, Free) => Ready
-      case (Taken(`ownName`), Taken(`ownName`)) => Eating
+      case (Taken(`ownName`), Taken(`ownName`)) => Done
       case (Taken(name), _) => WaitingFor(name)
       case (_, Taken(name)) => WaitingFor(name)
     }
@@ -76,7 +76,7 @@ object PhilosopherTable {
 
   sealed trait Philosopher
   case object Thinking extends Philosopher
-  case object Hungry extends Philosopher
+  case object Eating extends Philosopher
 
   sealed trait Fork
   case object Free extends Fork
@@ -84,7 +84,7 @@ object PhilosopherTable {
 
   sealed trait Vision
   case object Ready extends Vision
-  case object Eating extends Vision
+  case object Done extends Vision
   case class WaitingFor(name: String) extends Vision
 
 

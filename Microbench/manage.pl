@@ -204,12 +204,12 @@ sub selection {
 
       for my $threads (@THREADS) {
         for my $layout (@LAYOUTS) {
-          for my $phils (grep {$_ >= ($threads * (($layout eq "third") ? 3 : 1))} @PHILOSOPHERS) {
+          for my $phils (($layout eq "third") ? $PHILOSOPHERS[-1] : @PHILOSOPHERS) {
             my $name = "halfDynamicPhilosophers-threads-$threads-layout-$layout-philosophers-$phils";
             my $program = makeRunString( $name,
               fromBaseConfig(
                 p => { # parameters
-                  tableType => 'half',
+                  tableType => 'half,other',
                   engineName => (join ',', @ENGINES),
                   philosophers => $phils,
                   layout => $layout,
