@@ -2,6 +2,7 @@ package benchmarks.philosophers
 
 import benchmarks.philosophers.PhilosopherTable._
 import rescala.graph.Spores
+import rescala.Signals.lift
 import rescala.turns.{Engine, Turn}
 import rescala.{Signals, Var}
 
