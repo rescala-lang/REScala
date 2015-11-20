@@ -26,8 +26,8 @@ trait PropagationImpl[S <: Spores] extends Turn[S] {
       case Static(hasChanged) =>
         requeue(hasChanged, level = -42, redo = false)
       case Dynamic(hasChanged, diff) =>
-        diff.removed foreach unregister(head)
-        diff.added foreach register(head)
+        diff.removed foreach drop(head)
+        diff.added foreach discover(head)
         val newLevel = maximumLevel(diff.novel) + 1
         requeue(hasChanged, newLevel, redo = head.level.get < newLevel)
     }
@@ -37,9 +37,9 @@ trait PropagationImpl[S <: Spores] extends Turn[S] {
 
   def maximumLevel(dependencies: Set[Reactive[S]]): Int = dependencies.foldLeft(-1)((acc, r) => math.max(acc, r.level.get))
 
-  def register(sink: Reactive[S])(source: Reactive[S]): Unit = source.outgoing.transform(_ + sink)
+  def discover(sink: Reactive[S])(source: Reactive[S]): Unit = source.outgoing.transform(_ + sink)
 
-  def unregister(sink: Reactive[S])(source: Reactive[S]): Unit = source.outgoing.transform(_ - sink)
+  def drop(sink: Reactive[S])(source: Reactive[S]): Unit = source.outgoing.transform(_ - sink)
 
   override def schedule(commitable: Committable): Unit = toCommit.add(commitable)
 
@@ -50,7 +50,7 @@ trait PropagationImpl[S <: Spores] extends Turn[S] {
     val level = ensureLevel(reactive, dependencies)
     if (dynamic) evaluate(reactive)
     else {
-      dependencies.foreach(register(reactive))
+      dependencies.foreach(discover(reactive))
       if (level <= levelQueue.currentLevel() && dependencies.exists(_evaluated.contains)) {
         evaluate(reactive)
       }

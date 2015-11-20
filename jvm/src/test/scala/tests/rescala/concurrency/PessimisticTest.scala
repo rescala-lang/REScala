@@ -152,13 +152,13 @@ class PessimisticTest extends AssertionsForJUnit {
       new Engines.Impl[ParRPSpores.type, ParRP](
         ParRPSpores,
         new ParRP(new Backoff()) {
-          override def register(downstream: Reactive[ParRPSpores.type])(upstream: Reactive[ParRPSpores.type]): Unit = {
+          override def discover(downstream: Reactive[ParRPSpores.type])(upstream: Reactive[ParRPSpores.type]): Unit = {
             if (upstream eq i0) reg
-            super.register(downstream)(upstream)
+            super.discover(downstream)(upstream)
           }
-          override def unregister(downstream: Reactive[ParRPSpores.type])(upstream: Reactive[ParRPSpores.type]): Unit = {
+          override def drop(downstream: Reactive[ParRPSpores.type])(upstream: Reactive[ParRPSpores.type]): Unit = {
             if (upstream eq i0) unreg
-            super.unregister(downstream)(upstream)
+            super.drop(downstream)(upstream)
           }
         })
   }

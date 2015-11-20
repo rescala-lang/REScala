@@ -35,7 +35,7 @@ class ObserveTests[S <: Spores](engine: Engine[S, Turn[S]]) extends AssertionsFo
     lazy val link: Signal[Int] = Signals.static(v1) { t =>
       val v = v1.get(t)
       if (v > 10) {
-        t.unregister(link)(v1)
+        t.drop(link)(v1)
         obs.remove()
       }
       v
@@ -61,7 +61,7 @@ class ObserveTests[S <: Spores](engine: Engine[S, Turn[S]]) extends AssertionsFo
 
     lazy val obs: Event[Int] = Events.static("obs", v1) { t =>
       val v = v1.get(t)
-      if (v > 10) t.unregister(obs)(v1)
+      if (v > 10) t.drop(obs)(v1)
       else t.schedule(once[Int](obs, Some(v), result ::= _))
       v1.pulse(t)
     }

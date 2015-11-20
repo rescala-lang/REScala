@@ -68,14 +68,14 @@ class ParRP(backoff: Backoff) extends FactoryReference[ParRPSpores.type](ParRPSp
     * we let the other turn update the dependency and admit the dependent into the propagation queue
     * so that it gets updated when that turn continues
     * the responsibility for correctly passing the locks is moved to the commit phase */
-  override def register(sink: Reactive[TState])(source: Reactive[TState]): Unit = {
+  override def discover(sink: Reactive[TState])(source: Reactive[TState]): Unit = {
     val owner = acquireShared(source)
     if (owner ne key) {
       if (!source.lock.isWriteLock) {
-        owner.turn.register(sink)(source)
+        owner.turn.discover(sink)(source)
       }
       else if (!source.outgoing.get.contains(sink)) {
-        owner.turn.register(sink)(source)
+        owner.turn.discover(sink)(source)
         owner.turn.admit(sink)
         key.lockKeychain {
           assert(key.keychain == owner.keychain, "tried to transfer locks between keychains")
@@ -84,21 +84,21 @@ class ParRP(backoff: Backoff) extends FactoryReference[ParRPSpores.type](ParRPSp
       }
     }
     else {
-      super.register(sink)(source)
+      super.discover(sink)(source)
     }
   }
 
   /** this is for cases where we register and then unregister the same dependency in a single turn */
-  override def unregister(sink: Reactive[TState])(source: Reactive[TState]): Unit = {
+  override def drop(sink: Reactive[TState])(source: Reactive[TState]): Unit = {
     val owner = acquireShared(source)
     if (owner ne key) {
-      owner.turn.unregister(sink)(source)
+      owner.turn.drop(sink)(source)
       if (!source.lock.isWriteLock) {
         key.lockKeychain(key.keychain.removeFallthrough(owner))
         if (!sink.incoming(this).exists(_.lock.isOwner(owner))) owner.turn.forget(sink)
       }
     }
-    else super.unregister(sink)(source)
+    else super.drop(sink)(source)
   }
 
   def acquireShared(reactive: Reactive[TState]): Key = acquireShared(reactive.lock, key)

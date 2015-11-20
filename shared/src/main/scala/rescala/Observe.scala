@@ -15,7 +15,7 @@ object Observe {
       turn.schedule(once(this, dependency.pulse.toOption, fun))
       ReevaluationResult.Static(changed = false)
     }
-    override def remove()(implicit maybe: Ticket[S]): Unit = maybe(_.unregister(this)(dependency))
+    override def remove()(implicit maybe: Ticket[S]): Unit = maybe(_.drop(this)(dependency))
     override protected[rescala] def incoming(implicit turn: Turn[S]): Set[Reactive[S]] = staticIncoming
   }
 

@@ -12,7 +12,7 @@ trait Turn[S <: Spores] {
   def bufferFactory: S
 
   /** allow turn to handle dynamic access to reactives */
-  def accessDynamic(dependency: Reactive[S]): Unit
+  def accessDynamic(reactive: Reactive[S]): Unit
 
   /** admits a new source change */
   def admit(reactive: Reactive[S]): Unit
@@ -26,10 +26,10 @@ trait Turn[S <: Spores] {
   def create[T <: Reactive[S]](dependencies: Set[Reactive[S]], dynamic: Boolean = false)(f: => T): T
 
   /** adds a dependency */
-  def register(sink: Reactive[S])(source: Reactive[S]): Unit
+  def discover(sink: Reactive[S])(source: Reactive[S]): Unit
 
   /** removes a dependency */
-  def unregister(sink: Reactive[S])(source: Reactive[S]): Unit
+  def drop(sink: Reactive[S])(source: Reactive[S]): Unit
 
   /** install a new commit handler */
   def schedule(committable: Committable): Unit
