@@ -92,7 +92,7 @@ object Events {
       new Base(creationTurn.bufferFactory.bud()) with Event[T, S] with DynamicReevaluation[T, S] {
         override def calculatePulseDependencies(implicit turn: Turn[S]): (Pulse[T], Set[Reactive[S]]) = {
           val inner = wrapper.get
-          turn.accessDynamic(inner)
+          turn.dependencyInteraction(inner)
           (inner.pulse, Set(wrapper, inner))
         }
       }

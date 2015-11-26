@@ -25,7 +25,7 @@ class ParRP(backoff: Backoff) extends FactoryReference[ParRPSpores.type](ParRPSp
     * is executed, because the constructor typically accesses the dependencies to create its initial value.
     */
   override def create[T <: Reactive[TState]](dependencies: Set[Reactive[TState]], dynamic: Boolean)(f: => T): T = {
-    dependencies.foreach(accessDynamic)
+    dependencies.foreach(dependencyInteraction)
     val reactive = f
     val owner = reactive.lock.tryLock(key)
     assert(owner eq key, s"$this failed to acquire lock on newly created reactive $reactive")
@@ -36,7 +36,7 @@ class ParRP(backoff: Backoff) extends FactoryReference[ParRPSpores.type](ParRPSp
   override def releasePhase(): Unit = key.releaseAll()
 
   /** allow turn to handle dynamic access to reactives */
-  override def accessDynamic(dependency: Reactive[TState]): Unit = acquireShared(dependency)
+  override def dependencyInteraction(dependency: Reactive[TState]): Unit = acquireShared(dependency)
 
 
   /** lock all reactives reachable from the initial sources

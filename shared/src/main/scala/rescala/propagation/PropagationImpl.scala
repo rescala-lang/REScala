@@ -69,7 +69,7 @@ trait PropagationImpl[S <: Spores] extends Turn[S] {
   override def forget(reactive: Reactive[S]): Unit = levelQueue.remove(reactive)
 
   /** allow turn to handle dynamic access to reactives */
-  override def accessDynamic(dependency: Reactive[S]): Unit = ()
+  override def dependencyInteraction(dependency: Reactive[S]): Unit = ()
 
   def lockPhase(initialWrites: List[Reactive[S]]): Unit
 

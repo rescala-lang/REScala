@@ -60,7 +60,7 @@ trait Pulsing[+P, S <: Spores] extends Reactive[S] {
 trait PulseOption[+P, S <: Spores] extends Pulsing[P, S] {
   def apply(): Option[P] = throw new IllegalAccessException(s"$this.apply called outside of macro")
   final def apply[T](turn: Turn[S]): Option[P] = {
-    turn.accessDynamic(this)
+    turn.dependencyInteraction(this)
     turn.useDependency(this)
     pulse(turn).toOption
   }
@@ -75,13 +75,13 @@ trait Stateful[+A, S <: Spores] extends Pulsing[A, S] {
   final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")
 
   final def apply[T](turn: Turn[S]): A = {
-    turn.accessDynamic(this)
+    turn.dependencyInteraction(this)
     turn.useDependency(this)
     get(turn)
   }
 
   final def now(implicit maybe: Ticket[S]): A = maybe { t =>
-    t.accessDynamic(this)
+    t.dependencyInteraction(this)
     get(t)
   }
 

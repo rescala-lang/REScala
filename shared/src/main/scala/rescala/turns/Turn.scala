@@ -12,7 +12,7 @@ trait Turn[S <: Spores] {
   def bufferFactory: S
 
   /** allow turn to handle dynamic access to reactives */
-  def accessDynamic(reactive: Reactive[S]): Unit
+  def dependencyInteraction(reactive: Reactive[S]): Unit
 
   /** admits a new source change */
   def admit(reactive: Reactive[S]): Unit
