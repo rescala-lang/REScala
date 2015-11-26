@@ -89,6 +89,7 @@ val lastClick: Signal[(Int,Int)] = position snapshot clicked
 ## Universe
 
 ![Universe](http://www.guidosalvaneschi.com/rescala/main/images/universe.png)
+
 Universe is a program that simulates a 2D environment. The environment is populated by animals and plants; the simulation involves growing of animals and plants, movements of animals, and planning for food search.
 The simulation evolves in rounds and the state of each element at a given step is a function of the other elements and of the state of the simulation in the previous step. This structure allows one to express several aspects of the computation functionally. However, the elements of the simulation are mutable objects that encapsulate state, so the OO and the functional style must be properly combined.
 
@@ -97,6 +98,7 @@ The simulation evolves in rounds and the state of each element at a given step i
 ## React Edit
 
 ![React Edit](http://www.guidosalvaneschi.com/rescala/main/images/editor.png)
+
 ReactEdit is a minimal text editor implementing functionalities like text selection, line counting, and cutting-and-pasting of text.
 ReactEdit is a minimal version of the Editor widget in the SWT library, which is malleable to investigating various design alternatives based on reactive abstractions.
 
@@ -105,6 +107,7 @@ ReactEdit is a minimal version of the Editor widget in the SWT library, which is
 ## ReactRSS
 
 ![React RSS](http://www.guidosalvaneschi.com/rescala/main/images/rssreader.png)
+
 ReactRSS is a RSS feed reader displaying a list of channels, which are periodically checked for updates.
 Fetched items are immediately displayed to the user in a side bar. When the user selects one of them, the HTML content is rendered in the main view.
 
@@ -113,6 +116,7 @@ Fetched items are immediately displayed to the user in a side bar. When the user
 ## React Shapes
 
 ![React Shapes](http://www.guidosalvaneschi.com/rescala/main/images/shapes.png)
+
 ReactShapes is a small drawing program. The user can drag and drop different shapes on a canvas, connect them with lines and change the stroke width and the color of each shape.
 The application supports an history and an undo function. Finally, the drawing canvas can be shared with other clients that participate in the same task from remote.
 
