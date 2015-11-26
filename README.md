@@ -6,6 +6,11 @@ Traditionally, object-oriented software adopts the Observer pattern to implement
 
 REScala ia a reactive language which integrates concepts from event-based and functional-reactive programming into the object-oriented world. REScala supports the development of reactive applications by fostering a functional declarative style which complements the advantages of object-oriented design.
 
+* Homepage: <http://www.guidosalvaneschi.com/rescala/main/index.html>
+* PDF Manual: <http://www.guidosalvaneschi.com/rescala/main/manual.pdf>
+* Examples: <https://github.com/guidosalva/examples>
+
+
 # A Reactive Language for the Object-oriented World
 
 Software applications must react to external changes such as the input from the user and network messages. Traditionally, object-oriented software adopts the Observer pattern to implement reactivity and decouple the observers from the observables. Whereas researchers have highlighted the drawbacks of this style for a long time, alternatives struggle to be widely accepted. In particular, functional reactive programming and dataflow programming – which aim to represent time-changing values as first class abstractions – are promising, but hardly escape the functional setting. On the other hand, event-based languages directly support events but do not achieve the declarative style of more functional approaches.
@@ -121,9 +126,3 @@ ReactShapes is a small drawing program. The user can drag and drop different sha
 The application supports an history and an undo function. Finally, the drawing canvas can be shared with other clients that participate in the same task from remote.
 
 <https://github.com/guidosalva/shapes>
-
-# Related Things
-
-* Homepage: <http://www.guidosalvaneschi.com/rescala/main/index.html>
-* PDF Manual: <http://www.guidosalvaneschi.com/rescala/main/manual.pdf>
-* Examples: <https://github.com/guidosalva/examples>
