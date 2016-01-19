@@ -26,7 +26,7 @@ my $BSUB_REQUIRE = "select[ mpi && avx ]";
 my $BSUB_CORES = "16";
 
 my @ENGINES = qw<parrp stm synchron>;
-my @ENGINES_PHIL = (@ENGINES, "unmanaged");
+my @ENGINES_UNMANAGED = (@ENGINES, "unmanaged");
 my @THREADS = (1..16);
 my @STEPS = (1..16,24,32,64);
 my @SIZES = (1,10,25,100,250,1000);
@@ -34,10 +34,10 @@ my @PHILOSOPHERS = (16, 32, 48, 64, 96, 128);
 my @LAYOUTS = qw<alternating third>;
 my %BASECONFIG = (
   si => "false", # synchronize iterations
-  wi => 10, # warmup iterations
+  wi => 5, # warmup iterations
   w => "1000ms", # warmup time
-  f => 5, # forks
-  i => 10, # iterations
+  f => 2, # forks
+  i => 5, # iterations
   r => "1000ms", # time per iteration
   to => "10s", #timeout
 );
@@ -155,7 +155,7 @@ sub selection {
               fromBaseConfig(
                 p => { # parameters
                   tableType => 'static',
-                  engineName => (join ',', @ENGINES_PHIL),
+                  engineName => (join ',', @ENGINES_UNMANAGED),
                   philosophers => $phils,
                   layout => $layout,
                 },
@@ -182,7 +182,7 @@ sub selection {
               fromBaseConfig(
                 p => { # parameters
                   tableType => 'dynamic',
-                  engineName => (join ',', @ENGINES_PHIL),
+                  engineName => (join ',', @ENGINES_UNMANAGED),
                   philosophers => $phils,
                   layout => $layout,
                   minBackoff => 100, maxBackoff => 1000000, factorBackoff => 1.1,
@@ -210,7 +210,7 @@ sub selection {
               fromBaseConfig(
                 p => { # parameters
                   tableType => 'half,other',
-                  engineName => (join ',', @ENGINES_PHIL),
+                  engineName => (join ',', @ENGINES_UNMANAGED),
                   philosophers => $phils,
                   layout => $layout,
                 },
@@ -475,29 +475,29 @@ sub selection {
 
 
 
-    # stmbank => sub {
-    #   my @runs;
+    stmbank => sub {
+      my @runs;
 
-    #   for my $size (@THREADS) {
-    #     for my $chance ("0.01", "0.001", "0") {
-    #       my $name = "threads-$size-$chance";
-    #       my $program = makeRunString("stmbank", $name,
-    #         fromBaseConfig(
-    #           p => { # parameters
-    #             riname => (join ',', @FRAMEWORKS),
-    #             numberOfAccounts => 256,
-    #             globalReadChance => $chance,
-    #           },
-    #           t => $size, #threads
-    #         ),
-    #         "STMBank.BankAccounts"
-    #       );
-    #       push @runs, {name => $name, program => $program};
-    #     }
-    #   }
+      for my $size (@THREADS) {
+        for my $chance ("0.1", "0.01", "0.001", "0") {
+          my $name = "stmbank-threads-$size-chance-$chance";
+          my $program = makeRunString($name,
+            fromBaseConfig(
+              p => { # parameters
+                riname => (join ',', @ENGINES_UNMANAGED),
+                numberOfAccounts => 256,
+                globalReadChance => $chance,
+              },
+              t => $size, #threads
+            ),
+            "STMBank.BankAccounts"
+          );
+          push @runs, {name => $name, program => $program};
+        }
+      }
 
-    #   @runs;
-    # },
+      @runs;
+    },
 
   };
 }
