@@ -27,8 +27,9 @@ my $BARGRAPH = abs_path("bargraph.pl");
 our $NAME_FINE = "Manual";
 our $NAME_COARSE = "G-Lock";
 
-our $LEGEND_POS = "off";
+our $LEGEND_POS = "left top";
 our $YRANGE = "[0:]";
+our $GNUPLOT_TERMINAL = "pdf size 15,9";
 
 my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,PrintError => 1});
 {
@@ -284,7 +285,7 @@ sub plotDatasets($group, $name, $additionalParams, @datasets) {
   my $nospecial = $name =~ s/\W/_/gr; # / highlighter
   my $chart = Chart::Gnuplot->new(
     output => "$group/$nospecial.pdf",
-    terminal => "pdf size 5,3 enhanced font 'Linux Libertine O,30'",
+    terminal => "$GNUPLOT_TERMINAL enhanced font 'Linux Libertine O,30'",
     key => $LEGEND_POS,
     #title  => $name,
     #xlabel => "Active threads",
