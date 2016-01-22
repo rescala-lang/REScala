@@ -479,7 +479,7 @@ sub selection {
       my @runs;
 
       for my $size (@THREADS) {
-        for my $chance ("0.1", "0.01", "0.001", "0") {
+        for my $chance ("0.5", "0.1", "0.01", "0") {
           my $name = "stmbank-threads-$size-chance-$chance";
           my $program = makeRunString($name,
             fromBaseConfig(

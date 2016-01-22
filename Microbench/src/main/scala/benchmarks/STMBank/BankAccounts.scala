@@ -23,6 +23,7 @@ class ReactiveState[S <: Spores] {
 
   @Param(Array("0.1"))
   var globalReadChance: Double = _
+  var modifiedReadChance: Double = _
 
   var engine: Engine[S, Turn[S]] = _
   var accounts: Array[Var[Int, S]] = _
@@ -34,6 +35,8 @@ class ReactiveState[S <: Spores] {
     this.engine = engine.engine
     val threads = params.getThreads
     implicit val e = this.engine
+
+    modifiedReadChance = globalReadChance / threads
 
     accounts = Array.fill(numberOfAccounts)(Var(0))
     if (engine.engineName == "unmanaged") locks = Array.fill(numberOfAccounts)(new ReentrantLock())
@@ -50,13 +53,15 @@ class STMState {
 
   @Param(Array("0.1"))
   var globalReadChance: Double = _
+  var modifiedReadChance: Double = _
 
   var accounts: Array[Ref[Int]] = _
 
   @Setup(Level.Iteration)
   def setup(params: BenchmarkParams) = {
     val threads = params.getThreads
-    accounts = Range(0, numberOfAccounts).map(_ => Ref(0)).toArray
+    modifiedReadChance = globalReadChance / threads
+    accounts = Array.fill(numberOfAccounts)(Ref(0))
   }
 }
 
@@ -74,7 +79,7 @@ class BankAccounts[S <: Spores] {
   def reactive(rs: ReactiveState[S], bh: Blackhole) = {
     if (rs.locks == null) {
       val tlr = ThreadLocalRandom.current()
-      if (tlr.nextDouble() < rs.globalReadChance) {
+      if (tlr.nextDouble() < rs.modifiedReadChance) {
         rs.engine.plan(rs.accounts: _*) { t =>
           val sum = rs.accounts.foldLeft(0)((acc, v) => acc + v.get(t))
           bh.consume(sum)
@@ -94,7 +99,7 @@ class BankAccounts[S <: Spores] {
     }
     else {
       val tlr = ThreadLocalRandom.current()
-      if (tlr.nextDouble() < rs.globalReadChance) {
+      if (tlr.nextDouble() < rs.modifiedReadChance) {
         rs.locks.foreach(_.lock())
         try {
           rs.engine.plan(rs.accounts: _*) { t =>
@@ -131,7 +136,7 @@ class BankAccounts[S <: Spores] {
   @Benchmark
   def stm(rs: STMState, bh: Blackhole) = {
     val tlr = ThreadLocalRandom.current()
-    if (tlr.nextDouble() < rs.globalReadChance) {
+    if (tlr.nextDouble() < rs.modifiedReadChance) {
       atomic { t =>
         val sum = rs.accounts.foldLeft(0)((acc, v) => acc + v.get(t))
         bh.consume(sum)
