@@ -83,13 +83,13 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
     plotBenchmarksFor("${dynamic}philosophers", "Philosopher Table",
       map { {Title => $_, "Param: engineName" => $_ , Benchmark =>  "benchmarks.philosophers.PhilosopherCompetition.eat", "Param: tableType" => $dynamic } }  queryChoices("Param: engineName", "Param: tableType" => $dynamic));
 
-    # { # varying conflict potential
-    #   my $query = queryDataset(query("Param: philosophers", "Benchmark", "Param: engineName", "Param: tableType"));
-    #   plotDatasets("${dynamic}philosophers", "Concurrency Scaling", {xlabel => "Philosophers"},
-    #     $query->("ParRP", "benchmarks.philosophers.PhilosopherCompetition.eat", "parrp", $dynamic),
-    #     $query->("STM", "benchmarks.philosophers.PhilosopherCompetition.eat", "stm", $dynamic),
-    #     $query->("Synchron", "benchmarks.philosophers.PhilosopherCompetition.eat", "synchron", $dynamic));
-    # }
+    { # varying conflict potential
+      my $query = queryDataset(query("Param: philosophers", "Benchmark", "Param: engineName", "Param: tableType", "Threads"));
+      plotDatasets("${dynamic}philosophers", "Concurrency Scaling", {xlabel => "Philosophers"},
+        $query->("ParRP", "benchmarks.philosophers.PhilosopherCompetition.eat", "parrp", $dynamic, 16),
+        $query->("STM", "benchmarks.philosophers.PhilosopherCompetition.eat", "stm", $dynamic, 16),
+        $query->("Synchron", "benchmarks.philosophers.PhilosopherCompetition.eat", "synchron", $dynamic, 16));
+    }
 
   }
 
@@ -180,6 +180,16 @@ colors=green,blue
     }
   }
 
+  { # stmbank
+    for my $globalReadChance (queryChoices("Param: globalReadChance")) {
+      my $benchmark = "benchmarks.STMBank.BankAccounts.reactive";
+      plotBenchmarksFor("BankAccounts", $globalReadChance,
+        (map {{Title => $_, "Param: globalReadChance" => $globalReadChance, "Param: engineName" => $_ , Benchmark => $benchmark }}
+          queryChoices("Param: engineName", Benchmark => $benchmark)),
+        {Title => "Pure STM", "Param: globalReadChance" => $globalReadChance, Benchmark => "benchmarks.STMBank.BankAccounts.stm"});
+    }
+  }
+
   $DBH->commit();
 }
 
@@ -223,7 +233,7 @@ sub queryDataset($query) {
     $sth->execute(@params);
     my $data = $sth->fetchall_arrayref();
     return makeDataset($title, $data) if (@$data);
-    say "query for $title had no results: [$query] @params";
+    say "query for ". Dumper($title) . " had no results: [$query] ". Dumper(@params);
     return;
   }
 }
