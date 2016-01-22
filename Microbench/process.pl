@@ -190,6 +190,12 @@ colors=green,blue
     }
   }
 
+  {#universe
+    plotBenchmarksFor("Universe", "Universe",
+      (map {{Title => $_, "Param: engineName" => $_ , Benchmark => "UniverseCaseStudy" }}
+          queryChoices("Param: engineName", Benchmark => "UniverseCaseStudy")));
+  }
+
   $DBH->commit();
 }
 
@@ -334,6 +340,7 @@ sub importCSV() {
     $sth->execute(@$_) for @data;
   }
   $DBH->do("UPDATE $TABLE SET Score = Score / 1000, Unit = 'ops/ms' WHERE Unit = 'ops/s'");
+  $DBH->do("UPDATE $TABLE SET Samples = 1 WHERE Samples is NULL");
   $DBH->commit();
   return $DBH;
 }
