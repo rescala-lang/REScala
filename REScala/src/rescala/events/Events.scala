@@ -21,8 +21,8 @@ trait Event[+T] extends DepHolder {
   /**
    * Event filtered with a predicate
    */
-  def &&[U >: T](pred: U => Boolean): Event[T] = new EventNodeFilter[T](this, pred)
-  def filter[U >: T](pred: U => Boolean) = &&[U](pred)
+  def &&(pred: T => Boolean): Event[T] = new EventNodeFilter[T](this, pred)
+  def filter(pred: T => Boolean) = &&(pred)
 
   /**
    * Event filtered with a boolean variable
@@ -38,17 +38,23 @@ trait Event[+T] extends DepHolder {
   /**
    * Events conjunction
    */
-  def and[U, V, S >: T](other: Event[U], merge: (S, U) => V): Event[V] = new EventNodeAnd[S, U, V](this, other, merge)
+  def and[U, V](other: Event[U], merge: (T, U) => V): Event[V] = new EventNodeAnd[T, U, V](this, other, merge)
 
   /**
    * Transform the event parameter
    */
-  def map[U, S >: T](mapping: S => U): Event[U] = new EventNodeMap[S, U](this, mapping)
+  def map[U](mapping: T => U): Event[U] = new EventNodeMap[T, U](this, mapping)
+
+  /**
+   * Collect (filter and transform) events
+   */
+  def collect[U](mapping: PartialFunction[T, U]): Event[U] =
+    filter(mapping.isDefinedAt _).map(mapping)
 
   /**
    * Drop the event parameter; equivalent to map((_: Any) => ())
    */
-  def dropParam[S >: T]: Event[Unit] = new EventNodeMap[S, Unit](this, (_: Any) => ())
+  def dropParam: Event[Unit] = new EventNodeMap[T, Unit](this, (_: Any) => ())
 
 
 
@@ -66,13 +72,13 @@ trait Event[+T] extends DepHolder {
   def set[B >: T,A](init: B)(f: (B=>A)): Signal[A] = IFunctions.set(this,init)(f)
 
   def latest[S >: T](init: S): Signal[S] = IFunctions.latest(this, init)
-  def hold[S >: T]:  Signal[Option[T]] = IFunctions.latestOption[T](this)
-  def latestOption[S >: T]:  Signal[Option[T]] = IFunctions.latestOption[T](this)
+  def hold:  Signal[Option[T]] = IFunctions.latestOption[T](this)
+  def latestOption:  Signal[Option[T]] = IFunctions.latestOption[T](this)
 
   def reset[S >: T, A](init : S)(f : (S) => Signal[A]) : Signal[A] = IFunctions.reset(this, init)(f)
 
-  def last[S >: T](n: Int): Signal[LinearSeq[S]] = IFunctions.last[S](this, n)
-  def list[S >: T](): Signal[List[S]] = IFunctions.list[S](this)
+  def last(n: Int): Signal[LinearSeq[T]] = IFunctions.last[T](this, n)
+  def list(): Signal[List[T]] = IFunctions.list[T](this)
 
   def toggle[A](a: Signal[A], b: Signal[A]): Signal[A] = IFunctions.toggle(this, a, b)
   def snapshot[A](s: Signal[A]): Signal[A] = IFunctions.snapshot(this, s)
