@@ -31,7 +31,7 @@ class ImperativeForkEvent[T](children: ForkedEvent[T]*) extends EventNode[T] wit
   
   
   /* Trigger the event */
-  def apply(v: T): Unit = {
+  def apply(v: T): Unit = ReactiveEngine sync {
     TS.nextRound()
     logTestingTimestamp()
     notifyDependents(v)

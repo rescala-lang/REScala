@@ -202,8 +202,10 @@ object ReactiveEngine {
     override def compare(x: (Int, Dependent), y: (Int, Dependent)): Int = y._1.compareTo(x._1)
   })
 
+  private[rescala] def sync[T](body: => T): T = evalQueue synchronized body
+
   /** Adds a dependant to the eval queue, duplicates are allowed */
-  def addToEvalQueue(dep: Dependent): Unit = {
+  def addToEvalQueue(dep: Dependent): Unit = sync {
       if (!evalQueue.exists { case (_, elem) => elem eq dep }) {
         ReactiveEngine.log.nodeScheduled(dep)
         evalQueue.+=((dep.level, dep))
@@ -211,7 +213,7 @@ object ReactiveEngine {
   }
 
   /** Evaluates all the elements in the queue */
-  def startEvaluation() = {
+  def startEvaluation() = sync {
     while (evalQueue.nonEmpty) {
       val (level, head) = evalQueue.dequeue()
       // check the level if it changed queue again
