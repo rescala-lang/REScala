@@ -195,7 +195,7 @@ object SignalMacro {
               !reactive.symbol.asTerm.isVar &&
               !reactive.symbol.asTerm.isAccessor &&
               (reactive filter { tree =>
-                val citical = tree match {
+                val critical = tree match {
                   // check if reactive results from a function that is
                   // itself called on a reactive value
                   case tree @ Apply(Select(chainedReactive, apply), List()) =>
@@ -211,11 +211,11 @@ object SignalMacro {
                       case _ => false
                     }
 
-                  // "uncitical" reactive that can be cut out
+                  // "uncritical" reactive that can be cut out
                   case _ => false
                 }
 
-                if (citical && !(uncheckedExpressions contains reactive)) {
+                if (critical && !(uncheckedExpressions contains reactive)) {
                   def methodObjectType(method: Tree) = {
                     def methodObjectType(tree: Tree): Type =
                       if (tree.symbol != method.symbol)
@@ -225,7 +225,21 @@ object SignalMacro {
                       else
                         NoType
 
-                    methodObjectType(method)
+                    methodObjectType(method) match {
+                      // if we can access the type arguments of the type directly,
+                      // return it
+                      case tpe @ TypeRef(_, _, _) => tpe
+                      // otherwise, find the type in the term symbol's type signature
+                      // whose type arguments can be accessed
+                      case tpe =>
+                        tpe.termSymbol.typeSignature find {
+                          case TypeRef(_, _, _) => true
+                          case _ => false
+                        } match {
+                          case Some(tpe) => tpe
+                          case _ => tpe
+                        }
+                    }
                   }
 
                   // issue no warning if the reactive is retrieved from a container
@@ -239,7 +253,7 @@ object SignalMacro {
                   }
                 }
 
-                citical
+                critical
               }).isEmpty =>
 
             // create the signal definition to be cut out of the
@@ -295,6 +309,6 @@ object SignalMacro {
 //    out.close
 
 
-    c.Expr[DependentSignal[A]](c untypecheck block)
+    c.Expr[DependentSignal[A]](Typer(c) untypecheck block)
   }
 }

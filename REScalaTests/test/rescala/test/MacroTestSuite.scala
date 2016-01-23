@@ -240,30 +240,30 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
   }
 
 
-// Assumingly, this test fails due to https://issues.scala-lang.org/browse/SI-5465
-// We should check if the test succeeds when the issue is fixed
-//
-//  @Test def patternMatchingAndWildcard() = {
-//    val v1 = Var(List(1, 2))
-//    val v2 = Var(100)
-//
-//    val sig = Signal {
-//      v1() match {
-//	      case List(_, v) => v
-//	      case _ => v2()
-//	    }
-//    }
-//
-//    assert(sig.get == 2)
-//    v2() = 50
-//    assert(sig.get == 2)
-//    v1() = List(7, 8, 9)
-//    assert(sig.get == 50)
-//    v2() = 4
-//    assert(sig.get == 4)
-//    v1() = List(10, 11)
-//    assert(sig.get == 11)
-//  }
+  @Test def patternMatchingAndWildcard() = {
+    // would fail due to https://issues.scala-lang.org/browse/SI-5465
+    // if we didn't work around un-type-checking issues
+
+    val v1 = Var(List(1, 2))
+    val v2 = Var(100)
+
+    val sig = Signal {
+      v1() match {
+        case List(_, v) => v
+        case _ => v2()
+      }
+    }
+
+    assert(sig.get == 2)
+    v2() = 50
+    assert(sig.get == 2)
+    v1() = List(7, 8, 9)
+    assert(sig.get == 50)
+    v2() = 4
+    assert(sig.get == 4)
+    v1() = List(10, 11)
+    assert(sig.get == 11)
+  }
 
 
   @Test def patternMatchingAnonymousFunction() = {
