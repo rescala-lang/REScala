@@ -29,7 +29,7 @@ class NaturalGraph[S <: rescala.graph.Spores] {
     import localEngine._
 
     def inc(source: Signal[Int]): Signal[Int] = source.map { v => {work.consume(); v + 1} }
-    def sum(sources: Signal[Int]*): Signal[Int] = Signals.static(sources: _*) { implicit t => {work.consume(); sources.foldLeft(0)((a, v) => a + v.get(t))} }
+    def sum(s1: Signal[Int], s2: Signal[Int]): Signal[Int] = Signals.static(s1, s2) { implicit t => {work.consume(); s1.get + s2.get} }
     def noc(sources: Signal[Int]*): Signal[Int] = Signals.static(sources: _*) { implicit t => {work.consume(); 0} }
 
     source = Var(step.get())
