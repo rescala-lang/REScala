@@ -29,7 +29,7 @@ class MultiReverseFan[S <: rescala.graph.Spores] {
     sources = Array.fill(threads)(Var(step.get()))
     val intermediate = sources.map(_.map{ v => {work.consume(); v + 1}}).grouped(threads / size.size)
     results = intermediate.map { sigs =>
-      rescala.Signals.static(sigs.toSeq: _*) { t => val r = sigs.foldLeft(0)((a, v) => v.get(t) + a); work.consume(); r }
+      rescala.Signals.static(sigs.toSeq: _*) { t => val r = sigs.foldLeft(0)((a, v) => v.get(t) + a); work.consumeSecondary(); r }
     }.toArray
   }
 

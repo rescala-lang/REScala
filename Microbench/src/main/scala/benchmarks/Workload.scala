@@ -9,7 +9,10 @@ import org.openjdk.jmh.infra.Blackhole
 class Workload {
   @Param(Array("0" /*, "10000", "100000", "1000000"*/))
   var work: Long = _
+  @Param(Array("0"))
+  var workSecondary: Long = _
   def consume() = Blackhole.consumeCPU(work)
+  def consumeSecondary() = Blackhole.consumeCPU(workSecondary)
 }
 
 @BenchmarkMode(Array(Mode.Throughput))
