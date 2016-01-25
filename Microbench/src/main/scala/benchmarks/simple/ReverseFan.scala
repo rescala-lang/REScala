@@ -28,7 +28,7 @@ class ReverseFan[S <: rescala.graph.Spores] {
     val threads = params.getThreads
     sources = Array.fill(threads)(Var(0))
     val intermediate = sources.map(_.map{ v => {work.consume(); v + 1}})
-    result = rescala.Signals.static(intermediate.toSeq : _*) { t => intermediate.foldLeft(0)((a, v) => v.get(t) + a) }
+    result = rescala.Signals.static(intermediate.toSeq : _*) { t => val r = intermediate.foldLeft(0)((a, v) => v.get(t) + a);  work.consume(); r }
   }
 
   @Benchmark
