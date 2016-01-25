@@ -2,7 +2,7 @@ package benchmarks.simple
 
 import java.util.concurrent.TimeUnit
 
-import benchmarks.{Size, EngineParam, Step}
+import benchmarks.{Workload, Size, EngineParam, Step}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
 import rescala.turns.{Engine, Turn}
@@ -23,12 +23,12 @@ class ChainSignal[S <: rescala.graph.Spores] {
   var result: Signal[Int, S] = _
 
   @Setup
-  def setup(params: BenchmarkParams, size: Size, step: Step, engineParam: EngineParam[S]) = {
+  def setup(params: BenchmarkParams, size: Size, step: Step, engineParam: EngineParam[S], work: Workload) = {
     engine = engineParam.engine
     source = Var(step.run())
     result = source
     for (_ <- Range(0, size.size)) {
-      result = result.map(_ + 1)
+      result = result.map{v => val r = v + 1; work.consume(); r}
     }
   }
 
