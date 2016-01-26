@@ -186,9 +186,23 @@ colors=red,green,blue
       my $benchmark = "benchmarks.STMBank.BankAccounts.reactive";
       plotBenchmarksFor("BankAccounts", $globalReadChance,
         (map {{Title => $_, "Param: globalReadChance" => $globalReadChance, "Param: engineName" => $_ , Benchmark => $benchmark }}
-          queryChoices("Param: engineName", Benchmark => $benchmark)),
+          queryChoices("Param: engineName", Benchmark => $benchmark, "Param: globalReadChance" => $globalReadChance)),
         {Title => "Pure STM", "Param: globalReadChance" => $globalReadChance, Benchmark => "benchmarks.STMBank.BankAccounts.stm"});
     }
+  }
+
+  { # reverse fan
+      my $benchmark = "benchmarks.simple.ReverseFan.run";
+      plotBenchmarksFor("simple", "ReverseFan",
+        (map {{Title => $_, "Param: engineName" => $_ , Benchmark => $benchmark }}
+          queryChoices("Param: engineName", Benchmark => $benchmark)),);
+  }
+
+  { # multi reverse fan
+      my $benchmark = "benchmarks.simple.MultiReverseFan.run";
+      plotBenchmarksFor("simple", "MultiReverseFan",
+        (map {{Title => $_, "Param: engineName" => $_ , Benchmark => $benchmark }}
+          queryChoices("Param: engineName", Benchmark => $benchmark)),);
   }
 
 
