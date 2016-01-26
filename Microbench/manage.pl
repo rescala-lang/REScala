@@ -482,7 +482,7 @@ sub selection {
           my $program = makeRunString( $name,
             fromBaseConfig(
               p => { # parameters
-                engineName => (join ',', @ENGINES_UNMANAGED),
+                engineName => (join ',', @ENGINES),
               },
               t => $threads,
             ),
@@ -522,7 +522,7 @@ sub selection {
           my $program = makeRunString( $name,
             fromBaseConfig(
               p => { # parameters
-                engineName => (join ',', @ENGINES),
+                engineName => (join ',', @ENGINES_UNMANAGED),
                 size => 4,
               },
               t => $threads,
