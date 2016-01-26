@@ -518,7 +518,7 @@ sub selection {
       my @runs;
 
       for my $threads (@THREADS) {
-          my $name = "simpleReverseFan-threads-$threads";
+          my $name = "multiReverseFan-threads-$threads";
           my $program = makeRunString( $name,
             fromBaseConfig(
               p => { # parameters
