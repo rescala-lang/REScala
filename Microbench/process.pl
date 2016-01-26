@@ -103,9 +103,10 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
   {
     my $BMCOND = qq[(results.Benchmark like "benchmarks.simple.SimplePhil%"
                   OR results.Benchmark = "benchmarks.simple.TurnCreation.run"
+                  OR results.Benchmark = "benchmarks.simple.NaturalGraph.run"
                   OR (results.Benchmark = "benchmarks.philosophers.PhilosopherCompetition.eat"
                    AND `Param: tableType` = "static" AND `Param: layout` = "alternating"))];
-    my $res = $DBH->selectall_arrayref(qq[SELECT parrp.Benchmark, parrp.Score/ sync.Score, stm.Score / sync.Score from
+    my $res = $DBH->selectall_arrayref(qq[SELECT parrp.Benchmark, sync.Score/sync.Score , parrp.Score/ sync.Score, stm.Score / sync.Score from
       (SELECT * from results where $BMCOND and Threads = 1 and `Param: engineName` = "parrp") AS parrp,
       (SELECT * from results where $BMCOND and Threads = 1 and `Param: engineName` = "synchron") AS sync,
       (SELECT * from results where $BMCOND and Threads = 1 and `Param: engineName` = "stm") AS stm
@@ -115,12 +116,12 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
       AND (sync.`Param: work` IS NULL OR (parrp.`Param: work` = sync.`Param: work` AND sync.`Param: work` = stm.`Param: work`))]);
     my $TMPFILE = "out.perf";
     open my $OUT, ">", $TMPFILE;
-    say $OUT "=cluster ParRP STM
+    say $OUT "=cluster $NAME_COARSE ParRP STM
 =sortbmarks
 yformat=%1.1f
 xlabel=Benchmark
-ylabel=Speedup compared to no global locking
-colors=green,blue
+ylabel=Speedup compared to $NAME_COARSE
+colors=red,green,blue
 =table,";
     for my $row (@$res) {
       $row->[0] = unmangleName($row->[0]);
@@ -131,7 +132,7 @@ colors=green,blue
       say $OUT join ", ", @$row;
     }
     close $OUT;
-    qx[perl $BARGRAPH -pdf $TMPFILE > simpleBenchmarks.pdf ];
+    qx[perl $BARGRAPH -pdf $TMPFILE > serialBenchmarks.pdf ];
     unlink $TMPFILE;
   }
 
@@ -189,6 +190,7 @@ colors=green,blue
         {Title => "Pure STM", "Param: globalReadChance" => $globalReadChance, Benchmark => "benchmarks.STMBank.BankAccounts.stm"});
     }
   }
+
 
   {#universe
     plotBenchmarksFor("Universe", "Universe",
