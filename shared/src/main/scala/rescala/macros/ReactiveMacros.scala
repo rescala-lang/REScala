@@ -27,7 +27,7 @@ object ReactiveMacros {
     val block = Typed(Block(cutOutSignals.reverse, body), TypeTree(weakTypeOf[Signal[A, S]]))
 
 
-    c.Expr[Signal[A, S]](c untypecheck block)
+    c.Expr[Signal[A, S]](Typer(c) untypecheck block)
   }
 
 
@@ -47,7 +47,7 @@ object ReactiveMacros {
     val block = Typed(Block(cutOutSignals.reverse, body), TypeTree(weakTypeOf[Event[A, S]]))
 
 
-    c.Expr[Event[A, S]](c untypecheck block)
+    c.Expr[Event[A, S]](Typer(c) untypecheck block)
   }
 
   def ReactiveMacro[A: c.WeakTypeTag, S <: Spores : c.WeakTypeTag](c: blackbox.Context)(expression: c.Expr[A]): (List[c.universe.ValDef], c.universe.Tree, List[c.universe.Tree]) = {
@@ -132,7 +132,7 @@ object ReactiveMacros {
               !reactive.symbol.asTerm.isVar &&
               !reactive.symbol.asTerm.isAccessor &&
               (reactive filter { tree =>
-                val citical = tree match {
+                val critical = tree match {
                   // check if reactive results from a function that is
                   // itself called on a reactive value
                   case tree@Apply(Select(chainedReactive, apply), List()) =>
@@ -147,11 +147,11 @@ object ReactiveMacros {
                       case _ => false
                     }
 
-                  // "uncitical" reactive that can be cut out
+                  // "uncritical" reactive that can be cut out
                   case _ => false
                 }
 
-                if (citical && !(uncheckedExpressions contains reactive)) {
+                if (critical && !(uncheckedExpressions contains reactive)) {
                   def methodObjectType(method: Tree) = {
                     def methodObjectType(tree: Tree): Type =
                       if (tree.symbol != method.symbol)
@@ -161,7 +161,21 @@ object ReactiveMacros {
                       else
                         NoType
 
-                    methodObjectType(method)
+                    methodObjectType(method) match {
+                      // if we can access the type arguments of the type directly,
+                      // return it
+                      case tpe @ TypeRef(_, _, _) => tpe
+                      // otherwise, find the type in the term symbol's type signature
+                      // whose type arguments can be accessed
+                      case tpe =>
+                        tpe.termSymbol.typeSignature find {
+                          case TypeRef(_, _, _) => true
+                          case _ => false
+                        } match {
+                          case Some(tpe) => tpe
+                          case _ => tpe
+                        }
+                    }
                   }
 
                   // issue no warning if the reactive is retrieved from a container
@@ -175,7 +189,7 @@ object ReactiveMacros {
                   }
                 }
 
-                citical
+                critical
               }).isEmpty =>
 
             // create the signal definition to be cut out of the
