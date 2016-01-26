@@ -69,6 +69,7 @@ sub init {
   mkdir $OUTDIR;
   chdir "..";
   system('sbt', 'set scalacOptions in ThisBuild ++= List("-Xdisable-assertions", "-Xelide-below", "9999999")', 'project microbench', 'clean', 'stage', 'compileJmh');
+  qx[perl -p -i -e 's#exec java \$JAVA_OPTS -cp "#exec java \$JAVA_OPTS -cp "\$PROJECT_DIR/Microbench/target/scala-2.11/jmh-classes:#g' ./Microbench/target/start];
   #system('sbt','clean', 'jmh:compile', 'jmh:stage');
   chdir $MAINDIR;
 }
@@ -473,7 +474,66 @@ sub selection {
       @runs;
     },
 
+    simpleReverseFan => sub {
+      my @runs;
 
+      for my $threads (@THREADS) {
+          my $name = "simpleReverseFan-threads-$threads";
+          my $program = makeRunString( $name,
+            fromBaseConfig(
+              p => { # parameters
+                engineName => (join ',', @ENGINES, "unmanaged"),
+              },
+              t => $threads,
+            ),
+            "benchmarks.simple.ReverseFan"
+          );
+          push @runs, {name => $name, program => $program};
+      }
+
+      @runs;
+    },
+
+    simpleNaturalGraph => sub {
+      my @runs;
+
+      {
+          my $name = "simpleNaturalGraph";
+          my $program = makeRunString( $name,
+            fromBaseConfig(
+              p => { # parameters
+                engineName => (join ',', @ENGINES),
+              },
+              t => 1,
+            ),
+            "benchmarks.simple.NaturalGraph"
+          );
+          push @runs, {name => $name, program => $program};
+      }
+
+      @runs;
+    },
+
+    multiReverseFan => sub {
+      my @runs;
+
+      for my $threads (@THREADS) {
+          my $name = "simpleReverseFan-threads-$threads";
+          my $program = makeRunString( $name,
+            fromBaseConfig(
+              p => { # parameters
+                engineName => (join ',', @ENGINES, "unmanaged"),
+                size => 4,
+              },
+              t => $threads,
+            ),
+            "benchmarks.simple.MultiReverseFan"
+          );
+          push @runs, {name => $name, program => $program};
+      }
+
+      @runs;
+    },
 
     stmbank => sub {
       my @runs;
