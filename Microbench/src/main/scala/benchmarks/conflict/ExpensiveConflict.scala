@@ -48,7 +48,7 @@ class ExpensiveConflict[S <: Spores] {
     cheapSource = Var(input.incrementAndGet())
     expensiveSource = Var(input.incrementAndGet())
     val expensive = expensiveSource.map{ v => tried += 1; val r =  v + 1; work.consume(); r }
-    result = Signals.lift(expensive, cheapSource)(_ + _).map{v => val r = v + x; work.consumeSecondary(); r}
+    result = Signals.lift(expensive, cheapSource)(_ + _).map{v => val r = v + 1; work.consumeSecondary(); r}
   }
 
   @Benchmark
