@@ -205,6 +205,15 @@ colors=red,green,blue
           queryChoices("Param: engineName", Benchmark => $benchmark)),);
   }
 
+  { # chatServer
+    my $benchmark = "benchmarks.chatserver.ChatBench.chat";
+    for my $rooms (queryChoices("Param: size", Benchmark => $benchmark)) {
+      plotBenchmarksFor("ChatServer", "$rooms",
+        (map {{Title => $_, "Param: engineName" => $_ , Benchmark => $benchmark, "Param: size" => $rooms }}
+          queryChoices("Param: engineName", Benchmark => $benchmark, "Param: size" => $rooms)),);
+    }
+  }
+
 
   {#universe
     plotBenchmarksFor("Universe", "Universe",

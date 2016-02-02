@@ -559,6 +559,29 @@ sub selection {
       @runs;
     },
 
+
+    chatServer => sub {
+      my @runs;
+
+      for my $threads (@THREADS) {
+          my $name = "chatServer-threads-$threads";
+          my $program = makeRunString( $name,
+            fromBaseConfig(
+              p => { # parameters
+                engineName => (join ',', @ENGINES),
+                size => 1,2,4,6,8,
+                work => 0,
+              },
+              t => $threads,
+            ),
+            "benchmarks.chatserver.ChatBench"
+          );
+          push @runs, {name => $name, program => $program};
+      }
+
+      @runs;
+    },
+
   };
 }
 
