@@ -49,10 +49,10 @@ object Signals extends GeneratedLift {
   def dynamic[T, S <: Spores](dependencies: Reactive[S]*)(expr: Turn[S] => T)(implicit ticket: Ticket[S]): Signal[T, S] = ticket(makeDynamic(dependencies.toSet[Reactive[S]])(expr)(_))
 
   /** creates a signal that folds the events in e */
-  def fold[E, T, S <: Spores](e: Event[E, S], init: T)(f: (T, E) => T)(implicit ticket: Ticket[S]): Signal[T, S] = ticket {
+  def fold[E, T, S <: Spores](e: Event[E, S], init: T)(f: (T, E) => T)(implicit ticket: Ticket[S]): Signal[T, S] = ticket { initialTurn =>
     makeStatic(Set[Reactive[S]](e), init) { (turn, currentValue) =>
       e.pulse(turn).fold(currentValue, f(currentValue, _))
-    }(_)
+    }(initialTurn)
   }
 
 }
