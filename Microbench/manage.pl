@@ -33,7 +33,7 @@ my @SIZES = (1,10,25,100,250,1000);
 my @PHILOSOPHERS = (16, 32, 48, 64, 96, 128);
 my @LAYOUTS = qw<alternating third>;
 my %BASECONFIG = (
-  si => "false", # synchronize iterations
+  #si => "false", # synchronize iterations
   wi => 5, # warmup iterations
   w => "1000ms", # warmup time
   f => 2, # forks
@@ -569,7 +569,7 @@ sub selection {
             fromBaseConfig(
               p => { # parameters
                 engineName => (join ',', @ENGINES),
-                size => 1,2,4,6,8,
+                size => "1,2,4,6,8",
                 work => 0,
               },
               t => $threads,
