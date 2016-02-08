@@ -33,7 +33,8 @@ my @SIZES = (1,10,25,100,250,1000);
 my @PHILOSOPHERS = (16, 32, 48, 64, 96, 128);
 my @LAYOUTS = qw<alternating third>;
 my %BASECONFIG = (
-  #si => "false", # synchronize iterations
+  # global locking does not deal well with sync iterations
+  si => "false", # synchronize iterations
   wi => 5, # warmup iterations
   w => "1000ms", # warmup time
   f => 2, # forks
