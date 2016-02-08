@@ -1,5 +1,6 @@
 package rescala.graph
 
+import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.atomic.AtomicLong
 
 import scala.util.DynamicVariable
@@ -22,8 +23,7 @@ object Globals {
   val dynamicNameVar = new DynamicVariable("")
   def named[S](n: String)(f: => S): S = dynamicNameVar.withValue(n)(f)
 
-  private val counter = new AtomicLong(0)
-  def nextID() = counter.incrementAndGet()
+  def nextID() = ThreadLocalRandom.current().nextLong()
 }
 
 
