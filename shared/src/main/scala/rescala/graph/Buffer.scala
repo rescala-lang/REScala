@@ -20,26 +20,29 @@ object Buffer {
 trait Spores {
   type TBuffer[A] <: Buffer[A]
   type TLock
-  def bud(): Bud
-  trait Bud {
+  type Bud[P] <: TraitBud[P]
+  def bud[P](initialValue: Pulse[P] = Pulse.none, transient: Boolean = true): Bud[P]
+  trait TraitBud[P] {
     def buffer[A, S <: Spores](default: A, commitStrategy: CommitStrategy[A]): TBuffer[A]
     def lock(): TLock
+    val pulses: TBuffer[Pulse[P]]
   }
 }
 
 object SimpleSpores extends Spores {
   override type TBuffer[A] = SimpleBuffer[A]
   override type TLock = Unit
-  override def bud() = new Bud {
+  override type Bud[P] = SimpleBud[P]
+
+  def bud[P](initialValue: Pulse[P] = Pulse.none, transient: Boolean = true): Bud[P] = new SimpleBud[P](new SimpleBuffer[Pulse[P]](initialValue, if (transient) Buffer.transactionLocal else Buffer.keepPulse))
+
+  class SimpleBud[P](override val pulses: SimpleBuffer[Pulse[P]]) extends TraitBud[P] {
     override def buffer[A, S <: Spores](default: A, commitStrategy: CommitStrategy[A]): SimpleBuffer[A] = new SimpleBuffer[A](default, commitStrategy)
     override def lock(): Unit = Unit
   }
 }
 
 trait Buffer[A] {
-  /** these methods are only used for initialisation and are unsafe to call when the reactive is in use */
-  def initCurrent(value: A): Unit
-
   def transform(f: (A) => A)(implicit turn: Turn[_]): A
   def set(value: A)(implicit turn: Turn[_]): Unit
   def base(implicit turn: Turn[_]): A
@@ -52,9 +55,6 @@ final class SimpleBuffer[A](initialValue: A, initialStrategy: (A, A) => A) exten
   private var update: Option[A] = None
   private var owner: Turn[_] = null
   private val commitStrategy: (A, A) => A = initialStrategy
-
-  override def initCurrent(value: A): Unit = synchronized(current = value)
-
 
   override def transform(f: (A) => A)(implicit turn: Turn[_]): A = synchronized {
     val value = f(get)

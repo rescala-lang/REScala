@@ -32,9 +32,7 @@ object Evt {
 
 
 /** A root Reactive value without dependencies which can be set */
-final class Var[T, S <: Spores](initval: T)(engine: S) extends Base[S](engine.bud()) with Signal[T, S] with Source[T, S] {
-  pulses.initCurrent(Pulse.unchanged(initval))
-
+final class Var[T, S <: Spores](initval: T)(engine: S) extends Base[S](engine.bud(Pulse.unchanged(initval), transient = false)) with Signal[T, S] with Source[T, S] {
   def update(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = set(value)
   def set(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) { admit(value)(_) }
   def transform(f: T => T)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) { t => admit(f(get(t)))(t) }

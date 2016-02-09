@@ -10,8 +10,14 @@ import scala.language.implicitConversions
 object ParRPSpores extends Spores {
   override type TBuffer[A] = ParRPBuffer[A]
   override type TLock = TurnLock
-  override def bud() = new Bud {
-    override lazy val lock: TurnLock = new TurnLock()
+  override type Bud[P] = ParRPBud[P]
+
+  override def bud[P](initialValue: Pulse[P] = Pulse.none, transient: Boolean = true): Bud[P] = {
+    val lock = new TurnLock
+    new ParRPBud[P](lock, new ParRPBuffer[Pulse[P]](initialValue, if (transient) Buffer.transactionLocal else Buffer.keepPulse, lock))
+  }
+
+  class ParRPBud[P](override val lock: TurnLock, override val pulses: ParRPBuffer[Pulse[P]]) extends TraitBud[P] {
     override def buffer[A, S <: Spores](default: A, commitStrategy: (A, A) => A): ParRPBuffer[A] =
       new ParRPBuffer[A](default, commitStrategy, lock)
   }
@@ -20,10 +26,18 @@ object ParRPSpores extends Spores {
 object STMSpores extends Spores {
   override type TBuffer[A] = STMBuffer[A]
   override type TLock = Unit
-  override def bud() = new Bud {
+  override type Bud[P] = STMBud[P]
+
+  override def bud[P](initialValue: Pulse[P] = Pulse.none, transient: Boolean = true): Bud[P] = {
+    new STMBud[P](new STMBuffer[Pulse[P]](initialValue, if (transient) Buffer.transactionLocal else Buffer.keepPulse))
+  }
+
+  class STMBud[P](override val pulses: STMBuffer[Pulse[P]]) extends TraitBud[P] {
     override def buffer[A, S <: Spores](default: A, commitStrategy: (A, A) => A): STMBuffer[A] = new STMBuffer[A](default, commitStrategy)
     override def lock(): Unit = ()
+
   }
+
 }
 
 final class ParRPBuffer[A](initialValue: A, initialStrategy: (A, A) => A, writeLock: TurnLock) extends Buffer[A] with Committable {
@@ -33,16 +47,13 @@ final class ParRPBuffer[A](initialValue: A, initialStrategy: (A, A) => A, writeL
   private var owner: Turn[_] = null
   private val commitStrategy: (A, A) => A = initialStrategy
 
-  override def initCurrent(value: A): Unit = synchronized(current = value)
-
-
-  override def transform(f: (A) => A)(implicit turn: Turn[_]): A = synchronized {
+  override def transform(f: (A) => A)(implicit turn: Turn[_]): A =  {
     val value = f(get)
     set(value)
     value
   }
 
-  override def set(value: A)(implicit turn: Turn[_]): Unit = synchronized {
+  override def set(value: A)(implicit turn: Turn[_]): Unit =  {
     assert(owner == null || owner == turn, s"buffer owned by $owner written by $turn")
     turn match {
       case pessimistic: ParRP =>
@@ -58,16 +69,16 @@ final class ParRPBuffer[A](initialValue: A, initialStrategy: (A, A) => A, writeL
     turn.schedule(this)
   }
 
-  override def base(implicit turn: Turn[_]): A = synchronized(current)
+  override def base(implicit turn: Turn[_]): A = current
 
-  override def get(implicit turn: Turn[_]): A = synchronized {if (turn eq owner) update.getOrElse(current) else current}
+  override def get(implicit turn: Turn[_]): A =  {if (turn eq owner) update.getOrElse(current) else current}
 
-  override def release(implicit turn: Turn[_]): Unit = synchronized {
+  override def release(implicit turn: Turn[_]): Unit =  {
     update = None
     owner = null
   }
 
-  override def commit(implicit turn: Turn[_]): Unit = synchronized {
+  override def commit(implicit turn: Turn[_]): Unit =  {
     current = commitStrategy(current, get)
     release(turn)
   }
@@ -78,9 +89,6 @@ final class STMBuffer[A](initialValue: A, initialStrategy: (A, A) => A) extends 
   private val current: Ref[A] = Ref(initialValue)
   private val update: Ref[Option[A]] = Ref(None)
   private val commitStrategy: (A, A) => A = initialStrategy
-
-  /** these methods are only used for initialisation and are unsafe to call when the reactive is in use */
-  override def initCurrent(value: A): Unit = current.single.set(value)
 
   implicit def inTxn(implicit turn: Turn[_]): InTxn = turn match {
     case stmTurn: STMSync => stmTurn.inTxn

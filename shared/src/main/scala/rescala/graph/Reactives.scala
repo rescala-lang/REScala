@@ -8,13 +8,13 @@ import rescala.turns.{Ticket, Turn}
 trait Reactive[S <: Spores] {
   final override val hashCode: Int = Globals.nextID().hashCode()
 
-  protected[rescala] def bud: S#Bud
+  protected[rescala] def bud[P]: S#Bud[P]
 
   protected[rescala] def lock: S#TLock = bud.lock()
 
-  final private[rescala] val level: S#TBuffer[Int] = bud.buffer(0, math.max)
+  final private[rescala] val level: Buffer[Int] = bud.buffer(0, math.max)
 
-  final private[rescala] val outgoing: S#TBuffer[Set[Reactive[S]]] = bud.buffer(Set(), Buffer.commitAsIs)
+  final private[rescala] val outgoing: Buffer[Set[Reactive[S]]] = bud.buffer(Set(), Buffer.commitAsIs)
 
   protected[rescala] def incoming(implicit turn: Turn[S]): Set[Reactive[S]]
 
@@ -30,8 +30,10 @@ trait Reactive[S <: Spores] {
 
 /** helper class to initialise engine and select lock */
 abstract class Base[S <: Spores](
-  final override val bud: S#Bud,
-  knownDependencies: Set[Reactive[S]] = Set.empty[Reactive[S]]) extends  Reactive[S] {
+  final val _bud: S#Bud[_],
+  knownDependencies: Set[Reactive[S]] = Set.empty[Reactive[S]]) extends Reactive[S] {
+
+  final override protected[rescala] def bud[Q]: S#Bud[Q] = _bud.asInstanceOf[S#Bud[Q]]
 
   def staticIncoming: Set[Reactive[S]] = knownDependencies
 }
@@ -48,12 +50,10 @@ class Reader[+P, S <: Spores](pulses: Buffer[Pulse[P]]) {
 
 /** A node that has nodes that depend on it */
 trait Pulsing[+P, S <: Spores] extends Reactive[S] {
-  protected[this] def strategy: CommitStrategy[Pulse[P]] = Buffer.transactionLocal[Pulse[P]]
-  final protected[this] val pulses: S#TBuffer[Pulse[P]] = bud.buffer(Pulse.none, strategy)
+  final protected[this] def pulses: S#TBuffer[Pulse[P]] = bud.pulses
+  final def pulse(implicit turn: Turn[S]): Pulse[P] = bud.pulses.get
 
-  final def pulse(implicit turn: Turn[S]): Pulse[P] = pulses.get
-
-  final val reader: Reader[P, S] = new Reader[P, S](pulses)
+  final val reader: Reader[P, S] = new Reader[P, S](bud.pulses)
 }
 
 /** dynamic access to pulsing values */
@@ -69,8 +69,6 @@ trait PulseOption[+P, S <: Spores] extends Pulsing[P, S] {
 
 /** a node that has a current state */
 trait Stateful[+A, S <: Spores] extends Pulsing[A, S] {
-  override protected[this] def strategy: (Pulse[A], Pulse[A]) => Pulse[A] = Buffer.keepPulse
-
   // only used inside macro and will be replaced there
   final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")
 
