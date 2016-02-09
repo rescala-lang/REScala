@@ -50,7 +50,7 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
         local $YRANGE = "[0:300]" if $philosophers <= 32 && $dynamic eq "static";
         local $YRANGE = "[0:800]" if $philosophers > 64 && $dynamic eq "static";
         local $YRANGE = "[0:300]" if $dynamic ne "static";
-        local $YRANGE = "[0:160]" if $dynamic ne "static" && $philosophers <= 32;
+        local $YRANGE = "[0:200]" if $dynamic ne "static" && $philosophers <= 32;
         local $YRANGE = "[0:]" if $layout eq "third";
         local $LEGEND_POS = "left top" if $layout eq "third";
         local $NAME_FINE = "No Sync" if $layout eq "third";
@@ -175,9 +175,11 @@ colors=red,green,blue
 
   { # chain, fan
     for my $benchmark (grep {/simple\.(Chain|Fan)/} queryChoices("Benchmark")) {
-      my $query = queryDataset(query("Param: size", "Benchmark", "Param: engineName"));
-      plotDatasets("simple", $benchmark, {xlabel => "Size", logscale => "x 10",},
-        map { $query->(prettyName($_), $benchmark, $_) } queryChoices("Param: engineName", "Benchmark" => $benchmark));
+      for my $threads (queryChoices("Threads", Benchmark => $benchmark)) {
+        my $query = queryDataset(query("Param: size", "Benchmark", "Param: engineName", "Threads"));
+        plotDatasets("simple", $threads ."-". $benchmark, {xlabel => "Size", logscale => "x 10",},
+          map { $query->(prettyName($_), $benchmark, $_, $threads) } queryChoices("Param: engineName", "Benchmark" => $benchmark, Threads => $threads));
+      }
     }
   }
 

@@ -28,6 +28,7 @@ my $BSUB_CORES = "16";
 my @ENGINES = qw<parrp stm synchron>;
 my @ENGINES_UNMANAGED = (@ENGINES, "unmanaged");
 my @THREADS = (1..16);
+my $UNI_THREAD = 8;
 my @STEPS = (1..16,24,32,64);
 my @SIZES = (1,10,25,100,250,1000);
 my @PHILOSOPHERS = (16, 32, 48, 64, 96, 128);
@@ -444,7 +445,7 @@ sub selection {
                 engineName => (join ',', @ENGINES),
                 size => $size,
               },
-              t => 1,
+              t => $UNI_THREAD,
             ),
             "benchmarks.simple.Chain"
           );
@@ -465,7 +466,7 @@ sub selection {
                 engineName => (join ',', @ENGINES),
                 size => $size,
               },
-              t => 1,
+              t => $UNI_THREAD,
             ),
             "benchmarks.simple.Fan"
           );
@@ -505,7 +506,7 @@ sub selection {
               p => { # parameters
                 engineName => (join ',', @ENGINES),
               },
-              t => 1,
+              t => $UNI_THREAD,
             ),
             "benchmarks.simple.NaturalGraph"
           );
