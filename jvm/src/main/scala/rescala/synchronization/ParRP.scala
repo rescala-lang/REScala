@@ -27,7 +27,7 @@ class ParRP(backoff: Backoff) extends FactoryReference[ParRPSpores.type](ParRPSp
   override def create[T <: Reactive[TState]](dependencies: Set[Reactive[TState]], dynamic: Boolean)(f: => T): T = {
     dependencies.foreach(dependencyInteraction)
     val reactive = f
-    val owner = reactive.lock.tryLock(key)
+    val owner = reactive.bud.lock.tryLock(key)
     assert(owner eq key, s"$this failed to acquire lock on newly created reactive $reactive")
     super.create(dependencies, dynamic)(reactive)
   }
@@ -47,8 +47,8 @@ class ParRP(backoff: Backoff) extends FactoryReference[ParRPSpores.type](ParRPSp
 
     while (!toVisit.isEmpty) {
       val reactive = toVisit.pop()
-      if (!reactive.lock.isOwner(key)) {
-        if (reactive.lock.tryLock(key) eq key)
+      if (!reactive.bud.lock.isOwner(key)) {
+        if (reactive.bud.lock.tryLock(key) eq key)
           reactive.outgoing.get.foreach {toVisit.offer}
         else {
           key.lockKeychain {
@@ -71,7 +71,7 @@ class ParRP(backoff: Backoff) extends FactoryReference[ParRPSpores.type](ParRPSp
   override def discover(sink: Reactive[TState])(source: Reactive[TState]): Unit = {
     val owner = acquireShared(source)
     if (owner ne key) {
-      if (!source.lock.isWriteLock) {
+      if (!source.bud.lock.isWriteLock) {
         owner.turn.discover(sink)(source)
       }
       else if (!source.outgoing.get.contains(sink)) {
@@ -93,15 +93,15 @@ class ParRP(backoff: Backoff) extends FactoryReference[ParRPSpores.type](ParRPSp
     val owner = acquireShared(source)
     if (owner ne key) {
       owner.turn.drop(sink)(source)
-      if (!source.lock.isWriteLock) {
+      if (!source.bud.lock.isWriteLock) {
         key.lockKeychain(key.keychain.removeFallthrough(owner))
-        if (!sink.incoming(this).exists(_.lock.isOwner(owner))) owner.turn.forget(sink)
+        if (!sink.incoming(this).exists(_.bud.lock.isOwner(owner))) owner.turn.forget(sink)
       }
     }
     else super.drop(sink)(source)
   }
 
-  def acquireShared(reactive: Reactive[TState]): Key = acquireShared(reactive.lock, key)
+  def acquireShared(reactive: Reactive[TState]): Key = acquireShared(reactive.bud.lock, key)
 
   @tailrec
   private def acquireShared(lock: TurnLock, requester: Key): Key = {

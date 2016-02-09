@@ -10,11 +10,7 @@ trait Reactive[S <: Spores] {
 
   protected[rescala] def bud[P]: S#Bud[P]
 
-  protected[rescala] def lock: S#TLock = bud.lock()
-
-  final private[rescala] val level: Buffer[Int] = bud.buffer(0, math.max)
-
-  final private[rescala] val outgoing: Buffer[Set[Reactive[S]]] = bud.buffer(Set(), Buffer.commitAsIs)
+  protected[rescala] val outgoing: Buffer[Set[Reactive[S]]] = bud.buffer(Set(), Buffer.commitAsIs)
 
   protected[rescala] def incoming(implicit turn: Turn[S]): Set[Reactive[S]]
 

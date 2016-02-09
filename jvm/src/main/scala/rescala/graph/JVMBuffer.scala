@@ -17,8 +17,8 @@ object ParRPSpores extends Spores {
     new ParRPBud[P](lock, new ParRPBuffer[Pulse[P]](initialValue, if (transient) Buffer.transactionLocal else Buffer.keepPulse, lock))
   }
 
-  class ParRPBud[P](override val lock: TurnLock, override val pulses: ParRPBuffer[Pulse[P]]) extends TraitBud[P] {
-    override def buffer[A, S <: Spores](default: A, commitStrategy: (A, A) => A): ParRPBuffer[A] =
+  class ParRPBud[P](val lock: TurnLock, override val pulses: ParRPBuffer[Pulse[P]]) extends TraitBud[P] {
+    override def buffer[A](default: A, commitStrategy: (A, A) => A): ParRPBuffer[A] =
       new ParRPBuffer[A](default, commitStrategy, lock)
   }
 }
@@ -33,9 +33,7 @@ object STMSpores extends Spores {
   }
 
   class STMBud[P](override val pulses: STMBuffer[Pulse[P]]) extends TraitBud[P] {
-    override def buffer[A, S <: Spores](default: A, commitStrategy: (A, A) => A): STMBuffer[A] = new STMBuffer[A](default, commitStrategy)
-    override def lock(): Unit = ()
-
+    override def buffer[A](default: A, commitStrategy: (A, A) => A): STMBuffer[A] = new STMBuffer[A](default, commitStrategy)
   }
 
 }

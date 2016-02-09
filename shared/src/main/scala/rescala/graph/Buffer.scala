@@ -21,11 +21,14 @@ trait Spores {
   type TBuffer[A] <: Buffer[A]
   type TLock
   type Bud[P] <: TraitBud[P]
+
   def bud[P](initialValue: Pulse[P] = Pulse.none, transient: Boolean = true): Bud[P]
   trait TraitBud[P] {
-    def buffer[A, S <: Spores](default: A, commitStrategy: CommitStrategy[A]): TBuffer[A]
-    def lock(): TLock
+    def buffer[A](default: A, commitStrategy: CommitStrategy[A]): TBuffer[A]
     val pulses: TBuffer[Pulse[P]]
+
+    val level: Buffer[Int] = buffer(0, math.max)
+
   }
 }
 
@@ -37,8 +40,7 @@ object SimpleSpores extends Spores {
   def bud[P](initialValue: Pulse[P] = Pulse.none, transient: Boolean = true): Bud[P] = new SimpleBud[P](new SimpleBuffer[Pulse[P]](initialValue, if (transient) Buffer.transactionLocal else Buffer.keepPulse))
 
   class SimpleBud[P](override val pulses: SimpleBuffer[Pulse[P]]) extends TraitBud[P] {
-    override def buffer[A, S <: Spores](default: A, commitStrategy: CommitStrategy[A]): SimpleBuffer[A] = new SimpleBuffer[A](default, commitStrategy)
-    override def lock(): Unit = Unit
+    override def buffer[A](default: A, commitStrategy: CommitStrategy[A]): SimpleBuffer[A] = new SimpleBuffer[A](default, commitStrategy)
   }
 }
 
