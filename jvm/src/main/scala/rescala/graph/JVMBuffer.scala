@@ -16,8 +16,11 @@ object ParRPSpores extends Spores {
   }
 
   class ParRPBud[P](val lock: TurnLock, override val pulses: ParRPBuffer[Pulse[P]]) extends TraitBud[P] {
-    override def buffer[A](default: A, commitStrategy: (A, A) => A): ParRPBuffer[A] =
-      new ParRPBuffer[A](default, commitStrategy, lock)
+
+    private val _incoming: Buffer[Set[Reactive[_]]] = new ParRPBuffer[Set[Reactive[_]]](Set.empty, Buffer.commitAsIs, lock)
+    override def incoming(implicit turn: Turn[_]): Set[Reactive[_]] = _incoming.get
+    override def updateIncoming[S <: Spores](reactives: Set[Reactive[S]])(implicit turn: Turn[S]): Unit = _incoming.set(reactives.toSet)
+
 
     private var lvl: Int = 0
 
@@ -34,14 +37,14 @@ object ParRPSpores extends Spores {
   }
 }
 
-object STMSpores extends Spores {
+object STMSpores extends BufferedSpores {
   override type Bud[P] = STMBud[P]
 
   override def bud[P](initialValue: Pulse[P] = Pulse.none, transient: Boolean = true): Bud[P] = {
     new STMBud[P](new STMBuffer[Pulse[P]](initialValue, if (transient) Buffer.transactionLocal else Buffer.keepPulse))
   }
 
-  class STMBud[P](override val pulses: STMBuffer[Pulse[P]]) extends TraitBud[P] {
+  class STMBud[P](override val pulses: STMBuffer[Pulse[P]]) extends BufferedBud[P] {
     override def buffer[A](default: A, commitStrategy: (A, A) => A): STMBuffer[A] = new STMBuffer[A](default, commitStrategy)
   }
 

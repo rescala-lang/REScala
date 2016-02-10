@@ -22,32 +22,50 @@ trait Spores {
 
   def bud[P](initialValue: Pulse[P] = Pulse.none, transient: Boolean = true): Bud[P]
   trait TraitBud[P] {
-    def buffer[A](default: A, commitStrategy: CommitStrategy[A]): Buffer[A]
+
     val pulses: Buffer[Pulse[P]]
 
-    private val _level: Buffer[Int] = buffer(0, math.max)
-    def level(implicit turn: Turn[_]): Int = _level.get(turn)
-    def updateLevel(i: Int)(implicit turn: Turn[_]): Int = _level.transform(math.max(i, _))
+    def level(implicit turn: Turn[_]): Int
+    def updateLevel(i: Int)(implicit turn: Turn[_]): Int
 
-    private val _incoming: Buffer[Set[Reactive[_]]] = buffer(Set(), Buffer.commitAsIs)
-    def incoming(implicit turn: Turn[_]): Set[Reactive[_]] = _incoming.get
-    def updateIncoming[S <: Spores](reactives: Set[Reactive[S]])(implicit turn: Turn[S]): Unit = _incoming.set(reactives.toSet)
+    def incoming(implicit turn: Turn[_]): Set[Reactive[_]]
+    def updateIncoming[S <: Spores](reactives: Set[Reactive[S]])(implicit turn: Turn[S]): Unit
 
 
-    private val _outgoing: Buffer[Set[Reactive[_]]] = buffer(Set(), Buffer.commitAsIs)
-    def outgoing(implicit turn: Turn[_]): Set[Reactive[_]] = _outgoing.get
-    def discover[S <: Spores](reactive: Reactive[S])(implicit turn: Turn[S]): Unit = _outgoing.transform(_ + reactive)
-    def drop[S <: Spores](reactive: Reactive[S])(implicit turn: Turn[S]): Unit = _outgoing.transform(_ - reactive)
+    def outgoing(implicit turn: Turn[_]): Set[Reactive[_]]
+    def discover[S <: Spores](reactive: Reactive[S])(implicit turn: Turn[S]): Unit
+    def drop[S <: Spores](reactive: Reactive[S])(implicit turn: Turn[S]): Unit
 
   }
 }
 
-object SimpleSpores extends Spores {
+trait BufferedSpores extends Spores {
+  trait BufferedBud[P] extends TraitBud[P] {
+    def buffer[A](default: A, commitStrategy: CommitStrategy[A]): Buffer[A]
+    private val _level: Buffer[Int] = buffer(0, math.max)
+    private val _incoming: Buffer[Set[Reactive[_]]] = buffer(Set.empty, Buffer.commitAsIs)
+    private val _outgoing: Buffer[Set[Reactive[_]]] = buffer(Set.empty, Buffer.commitAsIs)
+
+    override def level(implicit turn: Turn[_]): Int = _level.get(turn)
+    override def updateLevel(i: Int)(implicit turn: Turn[_]): Int = _level.transform(math.max(i, _))
+
+    override def incoming(implicit turn: Turn[_]): Set[Reactive[_]] = _incoming.get
+    override def updateIncoming[S <: Spores](reactives: Set[Reactive[S]])(implicit turn: Turn[S]): Unit = _incoming.set(reactives.toSet)
+
+
+    override def outgoing(implicit turn: Turn[_]): Set[Reactive[_]] = _outgoing.get
+    override def discover[S <: Spores](reactive: Reactive[S])(implicit turn: Turn[S]): Unit = _outgoing.transform(_ + reactive)
+    override def drop[S <: Spores](reactive: Reactive[S])(implicit turn: Turn[S]): Unit = _outgoing.transform(_ - reactive)
+
+  }
+}
+
+object SimpleSpores extends BufferedSpores {
   override type Bud[P] = SimpleBud[P]
 
   def bud[P](initialValue: Pulse[P] = Pulse.none, transient: Boolean = true): Bud[P] = new SimpleBud[P](new SimpleBuffer[Pulse[P]](initialValue, if (transient) Buffer.transactionLocal else Buffer.keepPulse))
 
-  class SimpleBud[P](override val pulses: SimpleBuffer[Pulse[P]]) extends TraitBud[P] {
+  class SimpleBud[P](override val pulses: SimpleBuffer[Pulse[P]]) extends BufferedBud[P] {
     override def buffer[A](default: A, commitStrategy: CommitStrategy[A]): SimpleBuffer[A] = new SimpleBuffer[A](default, commitStrategy)
   }
 }
