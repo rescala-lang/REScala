@@ -12,14 +12,14 @@ object ParRPSpores extends Spores {
 
   override def bud[P](initialValue: Pulse[P] = Pulse.none, transient: Boolean = true): Bud[P] = {
     val lock = new TurnLock
-    new ParRPBud[P](lock, new ParRPBuffer[Pulse[P]](initialValue, if (transient) Buffer.transactionLocal else Buffer.keepPulse, lock))
+    new ParRPBud[P](initialValue, transient, lock)
   }
 
-  class ParRPBud[P](val lock: TurnLock, override val pulses: ParRPBuffer[Pulse[P]]) extends TraitBud[P] {
+  class ParRPBud[P](var current: Pulse[P], transient: Boolean, val lock: TurnLock) extends TraitBud[P] with Buffer[Pulse[P]] with Committable {
 
-    private val _incoming: Buffer[Set[Reactive[_]]] = new ParRPBuffer[Set[Reactive[_]]](Set.empty, Buffer.commitAsIs, lock)
-    override def incoming(implicit turn: Turn[_]): Set[Reactive[_]] = _incoming.get
-    override def updateIncoming[S <: Spores](reactives: Set[Reactive[S]])(implicit turn: Turn[S]): Unit = _incoming.set(reactives.toSet)
+    private var _incoming: Set[Reactive[_]] = Set.empty
+    override def incoming(implicit turn: Turn[_]): Set[Reactive[_]] = _incoming
+    override def updateIncoming[S <: Spores](reactives: Set[Reactive[S]])(implicit turn: Turn[S]): Unit = _incoming = reactives.toSet
 
 
     private var lvl: Int = 0
@@ -34,6 +34,54 @@ object ParRPSpores extends Spores {
     override def outgoing(implicit turn: Turn[_]): Set[Reactive[_]] = _outgoing
     override def discover[S <: Spores](reactive: Reactive[S])(implicit turn: Turn[S]): Unit = _outgoing += reactive
     override def drop[S <: Spores](reactive: Reactive[S])(implicit turn: Turn[S]): Unit = _outgoing -= reactive
+
+
+
+    override val pulses: Buffer[Pulse[P]] = this
+
+    private var update: Pulse[P] = Pulse.none
+    private var hasUpdate: Boolean = false
+    private var owner: Turn[_] = null
+
+    override def transform(f: (Pulse[P]) => Pulse[P])(implicit turn: Turn[_]): Pulse[P] =  {
+      val value = f(get)
+      set(value)
+      value
+    }
+
+    override def set(value: Pulse[P])(implicit turn: Turn[_]): Unit =  {
+      assert(owner == null || owner == turn, s"buffer owned by $owner written by $turn")
+      turn match {
+        case pessimistic: ParRP =>
+          val wlo: Option[Key] = Option(lock).map(_.getOwner)
+          assert(wlo.fold(true)(_ eq pessimistic.key),
+            s"buffer owned by $owner, controlled by $lock with owner ${wlo.get}" +
+              s" was written by $turn who locks with ${pessimistic.key}, by now the owner is ${lock.getOwner}")
+        case _ =>
+          throw new IllegalStateException(s"parrp buffer used with wrong turn")
+      }
+      update = value
+      if (!hasUpdate) turn.schedule(this)
+      hasUpdate = true
+      owner = turn
+    }
+
+    override def base(implicit turn: Turn[_]): Pulse[P] = current
+
+    override def get(implicit turn: Turn[_]): Pulse[P] =  {if ((turn eq owner) && hasUpdate) update else current}
+
+    override def release(implicit turn: Turn[_]): Unit =  {
+      update = Pulse.none
+      hasUpdate = false
+      owner = null
+    }
+
+    override def commit(implicit turn: Turn[_]): Unit =  {
+      if (!transient) current = update.keep
+      release(turn)
+    }
+
+
   }
 }
 
@@ -48,50 +96,6 @@ object STMSpores extends BufferedSpores {
     override def buffer[A](default: A, commitStrategy: (A, A) => A): STMBuffer[A] = new STMBuffer[A](default, commitStrategy)
   }
 
-}
-
-final class ParRPBuffer[A](initialValue: A, initialStrategy: (A, A) => A, writeLock: TurnLock) extends Buffer[A] with Committable {
-
-  var current: A = initialValue
-  private var update: Option[A] = None
-  private var owner: Turn[_] = null
-  private val commitStrategy: (A, A) => A = initialStrategy
-
-  override def transform(f: (A) => A)(implicit turn: Turn[_]): A =  {
-    val value = f(get)
-    set(value)
-    value
-  }
-
-  override def set(value: A)(implicit turn: Turn[_]): Unit =  {
-    assert(owner == null || owner == turn, s"buffer owned by $owner written by $turn")
-    turn match {
-      case pessimistic: ParRP =>
-        val wlo: Option[Key] = Option(writeLock).map(_.getOwner)
-        assert(wlo.fold(true)(_ eq pessimistic.key),
-          s"buffer owned by $owner, controlled by $writeLock with owner ${wlo.get}" +
-            s" was written by $turn who locks with ${pessimistic.key}, by now the owner is ${writeLock.getOwner}")
-      case _ =>
-        throw new IllegalStateException(s"parrp buffer used with wrong turn")
-    }
-    update = Some(value)
-    owner = turn
-    turn.schedule(this)
-  }
-
-  override def base(implicit turn: Turn[_]): A = current
-
-  override def get(implicit turn: Turn[_]): A =  {if (turn eq owner) update.getOrElse(current) else current}
-
-  override def release(implicit turn: Turn[_]): Unit =  {
-    update = None
-    owner = null
-  }
-
-  override def commit(implicit turn: Turn[_]): Unit =  {
-    current = commitStrategy(current, get)
-    release(turn)
-  }
 }
 
 final class STMBuffer[A](initialValue: A, initialStrategy: (A, A) => A) extends Buffer[A] with Committable {
