@@ -37,8 +37,7 @@ trait StaticReevaluation[+P, S <: Spores] {
 trait DynamicReevaluation[+P, S <: Spores] {
   this: Pulsing[P, S] =>
 
-  private val _incoming: Buffer[Set[Reactive[S]]] = bud.buffer(Set(), (_, x) => x)
-  override protected[rescala] def incoming(implicit turn: Turn[S]): Set[Reactive[S]] = _incoming.get
+  override protected[rescala] def incoming(implicit turn: Turn[S]): Set[Reactive[S]] = bud.incoming.asInstanceOf[Set[Reactive[S]]]
 
   /** side effect free calculation of the new pulse and the new dependencies for the current turn */
   def calculatePulseDependencies(implicit turn: Turn[S]): (Pulse[P], Set[Reactive[S]])
@@ -46,8 +45,8 @@ trait DynamicReevaluation[+P, S <: Spores] {
   final override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[S] = {
     val (newPulse, newDependencies) = calculatePulseDependencies
 
-    val oldDependencies = _incoming.get
-    if (newDependencies != oldDependencies) _incoming.set(newDependencies)
+    val oldDependencies = incoming
+    if (newDependencies != oldDependencies) bud.updateIncoming(newDependencies)
     pulses.set(newPulse)
     ReevaluationResult.Dynamic(newPulse.isChange, DepDiff(newDependencies, oldDependencies))
 

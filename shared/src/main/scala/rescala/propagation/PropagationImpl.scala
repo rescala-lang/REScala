@@ -21,7 +21,7 @@ trait PropagationImpl[S <: Spores] extends Turn[S] {
 
     def requeue(changed: Boolean, level: Int, redo: Boolean): Unit =
       if (redo) levelQueue.enqueue(level, changed)(head)
-      else if (changed) head.outgoing.get.foreach(levelQueue.enqueue(level, changed))
+      else if (changed) head.outgoing.foreach(levelQueue.enqueue(level, changed))
 
     head.reevaluate() match {
       case Static(hasChanged) =>
@@ -30,17 +30,17 @@ trait PropagationImpl[S <: Spores] extends Turn[S] {
         diff.removed foreach drop(head)
         diff.added foreach discover(head)
         val newLevel = maximumLevel(diff.novel) + 1
-        requeue(hasChanged, newLevel, redo = head.bud.level.get < newLevel)
+        requeue(hasChanged, newLevel, redo = head.bud.level < newLevel)
     }
     _evaluated ::= head
 
   }
 
-  def maximumLevel(dependencies: Set[Reactive[S]]): Int = dependencies.foldLeft(-1)((acc, r) => math.max(acc, r.bud.level.get))
+  def maximumLevel(dependencies: Set[Reactive[S]]): Int = dependencies.foldLeft(-1)((acc, r) => math.max(acc, r.bud.level))
 
-  def discover(sink: Reactive[S])(source: Reactive[S]): Unit = source.outgoing.transform(_ + sink)
+  def discover(sink: Reactive[S])(source: Reactive[S]): Unit = source.bud.discover(sink)
 
-  def drop(sink: Reactive[S])(source: Reactive[S]): Unit = source.outgoing.transform(_ - sink)
+  def drop(sink: Reactive[S])(source: Reactive[S]): Unit = source.bud.drop(sink)
 
   override def schedule(commitable: Committable): Unit = toCommit.add(commitable)
 
@@ -62,11 +62,11 @@ trait PropagationImpl[S <: Spores] extends Turn[S] {
   def ensureLevel(dependant: Reactive[S], dependencies: Set[Reactive[S]]): Int =
     if (dependencies.isEmpty) 0
     else {
-      val newLevel = dependencies.map(_.bud.level.get).max + 1
-      dependant.bud.level.transform(math.max(newLevel, _))
+      val newLevel = dependencies.map(_.bud.level).max + 1
+      dependant.bud.updateLevel(newLevel)
     }
 
-  override def admit(reactive: Reactive[S]): Unit = levelQueue.enqueue(reactive.bud.level.get)(reactive)
+  override def admit(reactive: Reactive[S]): Unit = levelQueue.enqueue(reactive.bud.level)(reactive)
   override def forget(reactive: Reactive[S]): Unit = levelQueue.remove(reactive)
 
   /** allow turn to handle dynamic access to reactives */

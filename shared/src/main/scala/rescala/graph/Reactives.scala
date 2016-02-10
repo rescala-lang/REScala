@@ -1,6 +1,5 @@
 package rescala.graph
 
-import rescala.graph.Buffer.CommitStrategy
 import rescala.graph.Pulse.{Diff, NoChange}
 import rescala.turns.{Ticket, Turn}
 
@@ -10,7 +9,7 @@ trait Reactive[S <: Spores] {
 
   protected[rescala] def bud[P]: S#Bud[P]
 
-  protected[rescala] val outgoing: Buffer[Set[Reactive[S]]] = bud.buffer(Set(), Buffer.commitAsIs)
+  protected[rescala] def outgoing(implicit turn: Turn[S]): Set[Reactive[S]] = bud.outgoing.asInstanceOf[Set[Reactive[S]]]
 
   protected[rescala] def incoming(implicit turn: Turn[S]): Set[Reactive[S]]
 
@@ -46,7 +45,7 @@ class Reader[+P, S <: Spores](pulses: Buffer[Pulse[P]]) {
 
 /** A node that has nodes that depend on it */
 trait Pulsing[+P, S <: Spores] extends Reactive[S] {
-  final protected[this] def pulses: S#TBuffer[Pulse[P]] = bud.pulses
+  final protected[this] def pulses: Buffer[Pulse[P]] = bud.pulses
   final def pulse(implicit turn: Turn[S]): Pulse[P] = bud.pulses.get
 
   final val reader: Reader[P, S] = new Reader[P, S](bud.pulses)

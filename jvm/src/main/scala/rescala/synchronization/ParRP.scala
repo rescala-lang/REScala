@@ -49,7 +49,7 @@ class ParRP(backoff: Backoff) extends FactoryReference[ParRPSpores.type](ParRPSp
       val reactive = toVisit.pop()
       if (!reactive.bud.lock.isOwner(key)) {
         if (reactive.bud.lock.tryLock(key) eq key)
-          reactive.outgoing.get.foreach {toVisit.offer}
+          reactive.outgoing.foreach {toVisit.offer}
         else {
           key.lockKeychain {
             key.releaseAll()
@@ -74,7 +74,7 @@ class ParRP(backoff: Backoff) extends FactoryReference[ParRPSpores.type](ParRPSp
       if (!source.bud.lock.isWriteLock) {
         owner.turn.discover(sink)(source)
       }
-      else if (!source.outgoing.get.contains(sink)) {
+      else if (!source.outgoing.contains(sink)) {
         owner.turn.discover(sink)(source)
         owner.turn.admit(sink)
         key.lockKeychain {

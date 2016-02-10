@@ -16,7 +16,7 @@ class LevelQueue[S <: Spores]()(implicit val currenTurn: Turn[S]) {
 
   /** mark the reactive as needing a reevaluation */
   def enqueue(minLevel: Int, needsEvaluate: Boolean = true)(dep: Reactive[S]): Unit = {
-    elements += QueueElement[S](dep.bud.level.get, dep, minLevel, needsEvaluate)
+    elements += QueueElement[S](dep.bud.level, dep, minLevel, needsEvaluate)
   }
 
   def remove(reactive: Reactive[S]): Unit = {
@@ -26,7 +26,7 @@ class LevelQueue[S <: Spores]()(implicit val currenTurn: Turn[S]) {
   final def handleHead(queueElement: QueueElement[S], evaluator: Reactive[S] => Unit): Unit = {
     val QueueElement(headLevel, head, headMinLevel, doEvaluate) = queueElement
     if (headLevel < headMinLevel) {
-      head.bud.level.set(headMinLevel)
+      head.bud.updateLevel(headMinLevel)
       val reevaluate = if (doEvaluate) true
       else if (elements.isEmpty) false
       else if (elements.head.reactive ne head) false
@@ -35,8 +35,8 @@ class LevelQueue[S <: Spores]()(implicit val currenTurn: Turn[S]) {
         true
       }
       enqueue(headMinLevel, reevaluate)(head)
-      head.outgoing.get.foreach { r =>
-        if (r.bud.level.get <= headMinLevel)
+      head.outgoing.foreach { r =>
+        if (r.bud.level <= headMinLevel)
           enqueue(headMinLevel + 1, needsEvaluate = false)(r)
       }
     }

@@ -8,8 +8,6 @@ import scala.language.implicitConversions
 
 
 object ParRPSpores extends Spores {
-  override type TBuffer[A] = ParRPBuffer[A]
-  override type TLock = TurnLock
   override type Bud[P] = ParRPBud[P]
 
   override def bud[P](initialValue: Pulse[P] = Pulse.none, transient: Boolean = true): Bud[P] = {
@@ -20,12 +18,23 @@ object ParRPSpores extends Spores {
   class ParRPBud[P](val lock: TurnLock, override val pulses: ParRPBuffer[Pulse[P]]) extends TraitBud[P] {
     override def buffer[A](default: A, commitStrategy: (A, A) => A): ParRPBuffer[A] =
       new ParRPBuffer[A](default, commitStrategy, lock)
+
+    private var lvl: Int = 0
+
+    override def level(implicit turn: Turn[_]): Int = lvl
+    override def updateLevel(i: Int)(implicit turn: Turn[_]): Int = {
+      lvl = math.max(level, i)
+      lvl
+    }
+
+    private var _outgoing: Set[Reactive[_]] = Set[Reactive[_]]()
+    override def outgoing(implicit turn: Turn[_]): Set[Reactive[_]] = _outgoing
+    override def discover[S <: Spores](reactive: Reactive[S])(implicit turn: Turn[S]): Unit = _outgoing += reactive
+    override def drop[S <: Spores](reactive: Reactive[S])(implicit turn: Turn[S]): Unit = _outgoing -= reactive
   }
 }
 
 object STMSpores extends Spores {
-  override type TBuffer[A] = STMBuffer[A]
-  override type TLock = Unit
   override type Bud[P] = STMBud[P]
 
   override def bud[P](initialValue: Pulse[P] = Pulse.none, transient: Boolean = true): Bud[P] = {
