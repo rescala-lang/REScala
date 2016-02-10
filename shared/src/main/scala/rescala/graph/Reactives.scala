@@ -33,22 +33,10 @@ abstract class Base[S <: Spores](
   def staticIncoming: Set[Reactive[S]] = knownDependencies
 }
 
-class Reader[+P, S <: Spores](pulses: Buffer[Pulse[P]]) {
-  def pulse(implicit turn: Turn[S]): Pulse[P] = pulses.get
-
-  final def get(implicit turn: Turn[S]): P = pulse match {
-    case NoChange(Some(value)) => value
-    case Diff(value, oldOption) => value
-    case NoChange(None) => throw new IllegalStateException("stateful reactive has never pulsed")
-  }
-}
-
 /** A node that has nodes that depend on it */
 trait Pulsing[+P, S <: Spores] extends Reactive[S] {
   final protected[this] def pulses: Buffer[Pulse[P]] = bud.pulses
   final def pulse(implicit turn: Turn[S]): Pulse[P] = bud.pulses.get
-
-  final val reader: Reader[P, S] = new Reader[P, S](bud.pulses)
 }
 
 /** dynamic access to pulsing values */

@@ -29,13 +29,10 @@ lazy val rescala = crossProject.in(file("."))
       val definitions = (1 to 22).map{ i =>
         val params = 1 to i map ("n" + _)
         val types = 1 to i map ("A" + _)
-        val readers = 1 to i map ("r" + _)
-        val readerDefs = readers zip params map { case (r, p) => s"val $r = $p.reader" } mkString "; "
         val signals = params zip types map {case (p, t) => s"$p: Stateful[$t, S]"}
         def sep(l: Seq[String]) = l.mkString(", ")
-        val getValues = readers map (_ + ".get(t)")
+        val getValues = params map (_ + ".get(t)")
         s"""  def lift[${sep(types)}, B, S <: Spores](${sep(signals)})(fun: (${sep(types)}) => B)(implicit maybe: Ticket[S]): Signal[B, S] = {
-           |    $readerDefs
            |    static(${sep(params)})(t => fun(${sep(getValues)}))
            |  }
            |""".stripMargin
