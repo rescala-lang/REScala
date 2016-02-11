@@ -37,7 +37,7 @@ trait StaticReevaluation[+P, S <: Spores] {
 trait DynamicReevaluation[+P, S <: Spores] {
   this: Pulsing[P, S] =>
 
-  override protected[rescala] def incoming(implicit turn: Turn[S]): Set[Reactive[S]] = bud.incoming.asInstanceOf[Set[Reactive[S]]]
+  override protected[rescala] def incoming(implicit turn: Turn[S]): Set[Reactive[S]] = bud.incoming
 
   /** side effect free calculation of the new pulse and the new dependencies for the current turn */
   def calculatePulseDependencies(implicit turn: Turn[S]): (Pulse[P], Set[Reactive[S]])

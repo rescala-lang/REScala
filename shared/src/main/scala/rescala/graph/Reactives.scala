@@ -9,7 +9,7 @@ trait Reactive[S <: Spores] {
 
   protected[rescala] def bud[P]: S#Bud[P]
 
-  protected[rescala] def outgoing(implicit turn: Turn[S]): Set[Reactive[S]] = bud.outgoing.asInstanceOf[Set[Reactive[S]]]
+  protected[rescala] def outgoing(implicit turn: Turn[S]): Set[Reactive[S]] = bud.outgoing
 
   protected[rescala] def incoming(implicit turn: Turn[S]): Set[Reactive[S]]
 

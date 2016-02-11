@@ -28,11 +28,11 @@ trait Spores {
     def level(implicit turn: Turn[_]): Int
     def updateLevel(i: Int)(implicit turn: Turn[_]): Int
 
-    def incoming(implicit turn: Turn[_]): Set[Reactive[_]]
+    def incoming[S <: Spores](implicit turn: Turn[S]): Set[Reactive[S]]
     def updateIncoming[S <: Spores](reactives: Set[Reactive[S]])(implicit turn: Turn[S]): Unit
 
 
-    def outgoing(implicit turn: Turn[_]): Set[Reactive[_]]
+    def outgoing[S <: Spores](implicit turn: Turn[S]): Set[Reactive[S]]
     def discover[S <: Spores](reactive: Reactive[S])(implicit turn: Turn[S]): Unit
     def drop[S <: Spores](reactive: Reactive[S])(implicit turn: Turn[S]): Unit
 
@@ -49,11 +49,11 @@ trait BufferedSpores extends Spores {
     override def level(implicit turn: Turn[_]): Int = _level.get(turn)
     override def updateLevel(i: Int)(implicit turn: Turn[_]): Int = _level.transform(math.max(i, _))
 
-    override def incoming(implicit turn: Turn[_]): Set[Reactive[_]] = _incoming.get
+    override def incoming[S <: Spores](implicit turn: Turn[S]): Set[Reactive[S]] = _incoming.get.asInstanceOf[Set[Reactive[S]]]
     override def updateIncoming[S <: Spores](reactives: Set[Reactive[S]])(implicit turn: Turn[S]): Unit = _incoming.set(reactives.toSet)
 
 
-    override def outgoing(implicit turn: Turn[_]): Set[Reactive[_]] = _outgoing.get
+    override def outgoing[S <: Spores](implicit turn: Turn[S]): Set[Reactive[S]] = _outgoing.get.asInstanceOf[Set[Reactive[S]]]
     override def discover[S <: Spores](reactive: Reactive[S])(implicit turn: Turn[S]): Unit = _outgoing.transform(_ + reactive)
     override def drop[S <: Spores](reactive: Reactive[S])(implicit turn: Turn[S]): Unit = _outgoing.transform(_ - reactive)
 

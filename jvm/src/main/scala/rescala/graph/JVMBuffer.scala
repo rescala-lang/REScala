@@ -18,7 +18,7 @@ object ParRPSpores extends Spores {
   class ParRPBud[P](var current: Pulse[P], transient: Boolean, val lock: TurnLock) extends TraitBud[P] with Buffer[Pulse[P]] with Committable {
 
     private var _incoming: Set[Reactive[_]] = Set.empty
-    override def incoming(implicit turn: Turn[_]): Set[Reactive[_]] = _incoming
+    override def incoming[S <: Spores](implicit turn: Turn[S]): Set[Reactive[S]] = _incoming.asInstanceOf[Set[Reactive[S]]]
     override def updateIncoming[S <: Spores](reactives: Set[Reactive[S]])(implicit turn: Turn[S]): Unit = _incoming = reactives.toSet
 
 
@@ -31,7 +31,7 @@ object ParRPSpores extends Spores {
     }
 
     private var _outgoing: Set[Reactive[_]] = Set[Reactive[_]]()
-    override def outgoing(implicit turn: Turn[_]): Set[Reactive[_]] = _outgoing
+    override def outgoing[S <: Spores](implicit turn: Turn[S]): Set[Reactive[S]] = _outgoing.asInstanceOf[Set[Reactive[S]]]
     override def discover[S <: Spores](reactive: Reactive[S])(implicit turn: Turn[S]): Unit = _outgoing += reactive
     override def drop[S <: Spores](reactive: Reactive[S])(implicit turn: Turn[S]): Unit = _outgoing -= reactive
 
@@ -40,7 +40,6 @@ object ParRPSpores extends Spores {
     override val pulses: Buffer[Pulse[P]] = this
 
     private var update: Pulse[P] = Pulse.none
-    private var hasUpdate: Boolean = false
     private var owner: Turn[_] = null
 
     override def transform(f: (Pulse[P]) => Pulse[P])(implicit turn: Turn[_]): Pulse[P] =  {
@@ -61,18 +60,16 @@ object ParRPSpores extends Spores {
           throw new IllegalStateException(s"parrp buffer used with wrong turn")
       }
       update = value
-      if (!hasUpdate) turn.schedule(this)
-      hasUpdate = true
+      if (owner == null) turn.schedule(this)
       owner = turn
     }
 
     override def base(implicit turn: Turn[_]): Pulse[P] = current
 
-    override def get(implicit turn: Turn[_]): Pulse[P] =  {if ((turn eq owner) && hasUpdate) update else current}
+    override def get(implicit turn: Turn[_]): Pulse[P] =  {if (turn eq owner) update else current}
 
     override def release(implicit turn: Turn[_]): Unit =  {
       update = Pulse.none
-      hasUpdate = false
       owner = null
     }
 
