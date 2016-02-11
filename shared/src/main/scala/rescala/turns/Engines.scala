@@ -3,7 +3,7 @@ package rescala.turns
 import java.util.concurrent.locks.ReentrantLock
 
 import rescala.graph.{SimpleSpores, Reactive, Spores}
-import rescala.propagation.PropagationImpl
+import rescala.propagation.{AbstractPropagation, PropagationImpl}
 import rescala.synchronization.{NoLocking, FactoryReference}
 
 import scala.util.DynamicVariable
@@ -33,7 +33,7 @@ object Engines {
 
   val all: List[NoLockEngine] = List(synchron, unmanaged)
 
-  class Impl[S <: Spores, TImpl <: PropagationImpl[S]](override private[rescala] val bufferFactory: S, makeTurn: => TImpl) extends Engine[S, TImpl] {
+  class Impl[S <: Spores, TImpl <: AbstractPropagation[S]](override private[rescala] val bufferFactory: S, makeTurn: => TImpl) extends Engine[S, TImpl] {
 
     val currentTurn: DynamicVariable[Option[TImpl]] = new DynamicVariable[Option[TImpl]](None)
 

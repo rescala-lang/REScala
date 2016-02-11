@@ -6,9 +6,9 @@ import rescala.turns.Engines
  * @author moritzlichter
  */
 
-class PipelineEngine extends Engines.Impl[PipelineSpores.type, PipeliningTurn](PipelineSpores, new PipeliningTurn()) {
+class PipelineEngine(makeTurn: => PipeliningTurn) extends Engines.Impl[PipelineSpores.type, PipeliningTurn](PipelineSpores, makeTurn) {
 
-  protected[pipelining] val stableTurn = makeTurn
+  protected[pipelining] val stableTurn = makeNewTurn
 
   private type PTurn = PipeliningTurn
 
@@ -32,12 +32,7 @@ class PipelineEngine extends Engines.Impl[PipelineSpores.type, PipeliningTurn](P
 
   protected[pipelining] def canTurnBeRemoved(turn: PTurn) = turnOrderLock.synchronized(turnOrder(0) == turn)
 
-  protected def makeNewTurn = new PipeliningTurn()
-
-  override final protected[pipelining] def makeTurn: PipeliningTurn = {
-    val newTurn = makeNewTurn
-    newTurn
-  }
+  protected def makeNewTurn = makeTurn
 
   /**
    * Implements a depth first search of the waiting graph to check
@@ -77,11 +72,6 @@ class PipelineEngine extends Engines.Impl[PipelineSpores.type, PipeliningTurn](P
     }
 
   }
-
-  override def bufferIncoming[A](default: A, commitStrategy: (A, A) => A, at: Reactive) = bufferBlocking[A](default, commitStrategy, at)
-  override def bufferPulses[A](default: A, commitStrategy: (A, A) => A, at: Reactive) = bufferBlocking[A](default, commitStrategy, at)
-  override def bufferOutgoing[A](default: A, commitStrategy: (A, A) => A, at: Reactive) = bufferNonblocking[A](default, commitStrategy, at)
-  override def bufferLevel[A](default: A, commitStrategy: (A, A) => A, at: Reactive) = bufferNonblocking[A](default, commitStrategy, at)
 
   private def bufferBlocking[A](default: A, commitStrategy: (A, A) => A, at: Reactive): BlockingPipelineBuffer[A] = {
     assert(at != null)

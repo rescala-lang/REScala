@@ -8,7 +8,34 @@ import rescala.turns.Turn
 
 import scala.util.control.NonFatal
 
-trait PropagationImpl[S <: Spores] extends Turn[S] {
+trait AbstractPropagation[S <: Spores] extends Turn[S] {
+
+  def lockPhase(initialWrites: List[Reactive[S]]): Unit
+
+  def propagationPhase(): Unit
+
+  def commitPhase(): Unit
+
+  def rollbackPhase(): Unit
+
+  def observerPhase(): Unit
+
+  def releasePhase(): Unit
+
+
+  var collectedDependencies: List[Reactive[S]] = Nil
+
+  def collectDependencies[T](f: => T): (T, Set[Reactive[S]]) = {
+    val old = collectedDependencies
+    collectedDependencies = Nil
+    val res = (f, collectedDependencies.toSet)
+    collectedDependencies = old
+    res
+  }
+  def useDependency(dependency: Reactive[S]): Unit = collectedDependencies ::= dependency
+}
+
+trait PropagationImpl[S <: Spores] extends AbstractPropagation[S] {
   implicit def currentTurn: PropagationImpl[S] = this
 
   private val toCommit = new util.HashSet[Committable]()
@@ -103,16 +130,5 @@ trait PropagationImpl[S <: Spores] extends Turn[S] {
   }
 
   def releasePhase(): Unit
-
-  var collectedDependencies: List[Reactive[S]] = Nil
-
-  def collectDependencies[T](f: => T): (T, Set[Reactive[S]]) = {
-    val old = collectedDependencies
-    collectedDependencies = Nil
-    val res = (f, collectedDependencies.toSet)
-    collectedDependencies = old
-    res
-  }
-  def useDependency(dependency: Reactive[S]): Unit = collectedDependencies ::= dependency
 
 }

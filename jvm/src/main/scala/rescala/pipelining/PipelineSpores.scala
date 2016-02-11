@@ -12,7 +12,7 @@ object PipelineSpores extends Spores {
 
   class PipelineStructP[P](initialValue: Pulse[P], transient: Boolean) extends TraitStructP[P] {
 
-    val pipeline: Pipeline = new Pipeline(???)
+    val pipeline: Pipeline = new Pipeline(null)
 
     private val _incoming: BlockingPipelineBuffer[Set[Reactive[_]]] = pipeline.createBlockingBuffer(Set.empty, Buffer.commitAsIs)
     override def incoming[S <: Spores](implicit turn: Turn[S]): Set[Reactive[S]] = _incoming.get.asInstanceOf[Set[Reactive[S]]]

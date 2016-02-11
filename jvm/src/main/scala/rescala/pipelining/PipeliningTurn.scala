@@ -1,17 +1,18 @@
 package rescala.pipelining
 
 import java.util.concurrent.atomic.AtomicReference
+import rescala.pipelining.propagation._
+import rescala.synchronization.FactoryReference
+
 import scala.annotation.elidable
 import scala.annotation.elidable.ASSERTION
-import rescala.graph.Committable
-import rescala.graph.Reactive
+import rescala.graph.{ParRPSpores, Committable, Reactive}
 import rescala.propagation._
 import rescala.turns.Turn
 import rescala.util.JavaFunctionsImplicits.buildUnaryOp
 import rescala.util.JavaFunctionsImplicits._
 import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
-import rescala.graph.Reactive
 
 import java.util.concurrent.locks.LockSupport
 import java.util.concurrent.Semaphore
@@ -25,12 +26,15 @@ object PipeliningTurn {
 
 }
 
-class PipeliningTurn(randomizeDeps: Boolean = false)
-  extends PropagationImpl[PipelineSpores.type]
+class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean = false)
+  extends FactoryReference[PipelineSpores.type](PipelineSpores)
+  with PipelinePropagationImpl
   with PropagateNoChanges
   with ParallelFrameCreator {
 
-  type S = PipelineSpores.type
+
+  /** used to create state containers of each reactive */
+  override type S = PipelineSpores.type
 
   import Pipeline._
   import PipeliningTurn._
@@ -89,7 +93,7 @@ class PipeliningTurn(randomizeDeps: Boolean = false)
     if (dynamic) {
       evaluate(reactive)
     } else {
-      dependencies.foreach(register(reactive))
+      dependencies.foreach(discover(reactive))
       evaluateNoChange(reactive)
     }
     reactive
@@ -140,7 +144,7 @@ class PipeliningTurn(randomizeDeps: Boolean = false)
     }
   }
 
-  protected def requeue(head: Reactive[S], changed: Boolean, level: Int, action: QueueAction): Unit = action match {
+  override protected def requeue(head: Reactive[S], changed: Boolean, level: Int, action: QueueAction): Unit = action match {
     case EnqueueDependencies =>  head.bud.outgoing.foreach(levelQueue.enqueue(level, changed))
     case RequeueReactive => levelQueue.enqueue(level, changed)(head)
     case DoNothing =>
@@ -265,7 +269,7 @@ class PipeliningTurn(randomizeDeps: Boolean = false)
     affectedFrames.map(_.turn.asInstanceOf[PipeliningTurn])
   }
 
-  override def register(sink: Reactive[S])(source: Reactive[S]): Unit = {
+  override def discover(sink: Reactive[S])(source: Reactive[S]): Unit = {
     val needToAddDep = !source.outgoing.contains(sink)
     val sourcePipeline = pipelineFor(source)
     //  assert(sourcePipeline.frame.isWritten)
@@ -355,7 +359,7 @@ class PipeliningTurn(randomizeDeps: Boolean = false)
     }
   }
 
-  override def unregister(sink: Reactive[S])(source: Reactive[S]): Unit = {
+  override def drop(sink: Reactive[S])(source: Reactive[S]): Unit = {
 
     println(s"Unregister $source as incoming of $sink for $this")
 

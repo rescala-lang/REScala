@@ -69,12 +69,9 @@ class BufferFrameContent {
 
 }
 
-abstract class PipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A) extends Buffer[A] {
+abstract class PipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A) extends Buffer[A] with Committable {
 
   var commitStrategy: (A, A) => A = initialStrategy
-
-  override def initCurrent(value: A): Unit = synchronized { ValueHolder.initStable(value, parent.getStableFrame().content.valueForBuffer(this)) }
-  override def initStrategy(strategy: (A, A) => A): Unit = synchronized { commitStrategy = strategy }
 
   override def transform(f: (A) => A)(implicit turn: Turn[_]): A = {
     implicit val pTurn = turn.asInstanceOf[PipeliningTurn]

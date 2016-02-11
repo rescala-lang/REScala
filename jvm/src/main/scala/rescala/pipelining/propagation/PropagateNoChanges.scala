@@ -1,13 +1,13 @@
-package rescala.propagation
+package rescala.pipelining.propagation
 
-import rescala.graph.Reactive
-import rescala.graph.ReevaluationResult
-import rescala.graph.ReevaluationResult.{Static, Dynamic}
+import rescala.graph.{Reactive, ReevaluationResult}
+import rescala.graph.ReevaluationResult.{Dynamic, Static}
 import rescala.pipelining.PipelineSpores
+import rescala.propagation.PropagationImpl
 
 trait PropagateNoChanges {
 
-  self : PropagationImpl[PipelineSpores.type] =>
+  self : PipelinePropagationImpl =>
 
   type S = PipelineSpores.type
 
