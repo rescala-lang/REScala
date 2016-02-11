@@ -1,48 +1,48 @@
-package tests.rescala.concurrency.philosophers
+package tests.rescala.pipelining.philosophers
 
 import java.util.concurrent.atomic.AtomicInteger
 
 import rescala.Signals.lift
-<<<<<<< HEAD:jvm/src/test/scala/tests/rescala/concurrency/philosophers/PhilosopherTable.scala
-import rescala.{Signal, Var}
-import rescala.graph.Globals.named
-import rescala.graph.{Spores, Globals, Committable}
-import rescala.turns.{Engine, Turn}
-=======
 import rescala.graph.Committable
 import rescala.turns.{ Engine, Turn }
 import rescala.{ Signal, Var }
->>>>>>> pipelining:REScala/test/tests/rescala/concurrency/philosophers/PhilosopherTable.scala
+import rescala.pipelining.LogUtils._
 
 import scala.annotation.tailrec
 
-class PhilosopherTable[S <: Spores](philosopherCount: Int, work: Long)(implicit val engine: Engine[S, Turn[S]]) {
+class PhilosopherTable(philosopherCount: Int, work: Long)(implicit val engine: Engine[Turn]) {
 
-  import tests.rescala.concurrency.philosophers.PhilosopherTable._
-  import engine.{Var, Signal}
+  import tests.rescala.pipelining.philosophers.PhilosopherTable._
 
   val seatings = createTable(philosopherCount)
 
   val eaten = new AtomicInteger(0)
 
   seatings.foreach { seating =>
-    named(s"Observer ${seating.vision}") {
-      seating.vision.observe { state =>
-        if (state == Eating) {
-          eaten.incrementAndGet()
-        }
+    seating.vision.observe { state =>
+      if (state == Eating) {
+        eaten.incrementAndGet()
       }
     }
   }
 
+  
+  def fib(n : Int) : Int = n match {
+    case 0 => 0
+    case 1 => 1
+    case n => fib(n-1) + fib(n-2)
+  }
+  
   def calcFork(leftName: String, rightName: String)(leftState: Philosopher, rightState: Philosopher): Fork = {
     val state = (leftState, rightState) match {
       case (Thinking, Thinking) => Free
       case (Hungry, _)          => Taken(leftName)
       case (_, Hungry)          => Taken(rightName)
     }
-    println(s"${Thread.currentThread().getId}: Fork between $leftName and $rightName is $state")
-    state
+    var sum = fib(20)
+    println(s"Fork between $leftName and $rightName is $state")
+    val v = (sum, state)
+    v._2
   }
 
   def calcVision(ownName: String)(leftFork: Fork, rightFork: Fork): Vision = {
@@ -52,33 +52,28 @@ class PhilosopherTable[S <: Spores](philosopherCount: Int, work: Long)(implicit 
       case (Taken(name), _)                     => WaitingFor(name)
       case (_, Taken(name))                     => WaitingFor(name)
     }
-    println(s"${Thread.currentThread().getId}: $ownName has vision $vision")
-    vision
+    var sum =fib(20)
+    println(s"$ownName has vision $vision")
+   val v = (sum, vision)
+   v._2
   }
 
-  def createTable(tableSize: Int): Seq[Seating[S]] = {
+  def createTable(tableSize: Int): Seq[Seating] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
 
-    val phils = for (i <- 0 until tableSize) yield named(s"PHil($i)")(Var[Philosopher](Thinking))
+    val phils = for (i <- 0 until tableSize) yield Var[Philosopher](Thinking)
 
     val forks = for (i <- 0 until tableSize) yield {
       val nextCircularIndex = mod(i + 1)
-      named(s"Fork($i, $nextCircularIndex)")(lift(phils(i), phils(nextCircularIndex))(calcFork(i.toString, nextCircularIndex.toString)))
+      lift(phils(i), phils(nextCircularIndex))(calcFork(i.toString, nextCircularIndex.toString))
     }
 
     for (i <- 0 until tableSize) yield {
-      val vision = named(s"Vision($i, ${mod(i - 1)}")(lift(forks(i), forks(mod(i - 1)))(calcVision(i.toString)))
+      val vision = lift(forks(i), forks(mod(i - 1)))(calcVision(i.toString))
       Seating(i, phils(i), forks(i), forks(mod(i - 1)), vision)
     }
   }
 
-<<<<<<< HEAD:jvm/src/test/scala/tests/rescala/concurrency/philosophers/PhilosopherTable.scala
-
-  def tryEat(seating: Seating[S]): Boolean =
-    engine.plan(seating.philosopher) { t =>
-      val forksFree = if (seating.vision(t) == Ready) {
-        seating.philosopher.admit(Hungry)(t)
-=======
   def tryEat(seating: Seating): Boolean =
     engine.plan(seating.philosopher) { turn =>
       val forksFree = if (seating.vision(turn) == Ready) {
@@ -86,18 +81,11 @@ class PhilosopherTable[S <: Spores](philosopherCount: Int, work: Long)(implicit 
         assert(seating.leftFork(turn) == Free)
         assert(seating.rightFork(turn) == Free)
         seating.philosopher.admit(Hungry)(turn)
->>>>>>> pipelining:REScala/test/tests/rescala/concurrency/philosophers/PhilosopherTable.scala
         true
       } else {
         //  println(s"${Thread.currentThread().getId}: ${seating.placeNumber} is thinking")
         false
       }
-<<<<<<< HEAD:jvm/src/test/scala/tests/rescala/concurrency/philosophers/PhilosopherTable.scala
-      else false
-      t.schedule(new Committable {
-        override def commit(implicit turn: Turn[_]): Unit = if (forksFree) assert(seating.vision(t) == Eating)
-        override def release(implicit turn: Turn[_]): Unit = ()
-=======
       turn.schedule(new Committable {
         override def commit(implicit turn: Turn): Unit = if (forksFree) {
           assert(seating.vision(turn) == Eating, s"Wrong result for ${Thread.currentThread().getId}")
@@ -106,12 +94,11 @@ class PhilosopherTable[S <: Spores](philosopherCount: Int, work: Long)(implicit 
           assert(seating.philosopher(turn) == Hungry)
         }
         override def release(implicit turn: Turn): Unit = ()
->>>>>>> pipelining:REScala/test/tests/rescala/concurrency/philosophers/PhilosopherTable.scala
       })
       forksFree
     }
 
-  def eatOnce(seating: Seating[S]) = repeatUntilTrue(tryEat(seating))
+  def eatOnce(seating: Seating) = repeatUntilTrue(tryEat(seating))
 
 }
 
@@ -134,7 +121,7 @@ object PhilosopherTable {
 
   // ============================================ Entity Creation =========================================================
 
-  case class Seating[S <: Spores](placeNumber: Int, philosopher: Var[Philosopher, S], leftFork: Signal[Fork, S], rightFork: Signal[Fork, S], vision: Signal[Vision, S])
+  case class Seating(placeNumber: Int, philosopher: Var[Philosopher], leftFork: Signal[Fork], rightFork: Signal[Fork], vision: Signal[Vision])
 
   @tailrec // unrolled into loop by compiler
   final def repeatUntilTrue(op: => Boolean): Unit = if (!op) repeatUntilTrue(op)

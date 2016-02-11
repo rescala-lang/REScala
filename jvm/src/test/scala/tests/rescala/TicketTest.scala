@@ -33,6 +33,7 @@ class TicketTest[S <: Spores](engine: Engine[S, Turn[S]]) extends AssertionsForJ
     assert(implicitly[Ticket[S]].apply(identity) === implicitTurn)
   }
 
+  // Cannot run a turn inside a turn with pipelining
   @Test def someDynamicSomeImplicit(): Unit = implicitly[Engine[S, Turn[S]]].plan() { (dynamicTurn: Turn[S]) =>
     implicit val implicitTurn: Turn[S] = getTurn
     assert(implicitly[Ticket[S]].self === Left(implicitTurn))

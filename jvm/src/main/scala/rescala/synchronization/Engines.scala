@@ -1,6 +1,7 @@
 package rescala.synchronization
 
 import rescala.graph.{ParRPSpores, Reactive, STMSpores, Spores}
+import rescala.pipelining.PipelineEngine
 import rescala.turns.Engines.{Impl, synchron, unmanaged, synchronFair}
 import rescala.turns.{Engine, Turn}
 
