@@ -1,5 +1,6 @@
 package rescala.graph
 
+import rescala.graph.Spores.TraitStructP
 import rescala.synchronization.{TurnLock, Key, ParRP, STMSync}
 import rescala.turns.Turn
 
@@ -8,14 +9,14 @@ import scala.language.implicitConversions
 
 
 object ParRPSpores extends Spores {
-  override type Bud[P] = ParRPBud[P]
+  override type Struct = ParRPStructP[_]
 
-  override def bud[P](initialValue: Pulse[P] = Pulse.none, transient: Boolean = true): Bud[P] = {
+  override def bud[P](initialValue: Pulse[P] = Pulse.none, transient: Boolean = true): StructP[P] = {
     val lock = new TurnLock
-    new ParRPBud[P](initialValue, transient, lock)
+    new ParRPStructP[P](initialValue, transient, lock)
   }
 
-  class ParRPBud[P](var current: Pulse[P], transient: Boolean, val lock: TurnLock) extends TraitBud[P] with Buffer[Pulse[P]] with Committable {
+  class ParRPStructP[P](var current: Pulse[P], transient: Boolean, val lock: TurnLock) extends TraitStructP[P] with Buffer[Pulse[P]] with Committable {
 
     private var _incoming: Set[Reactive[_]] = Set.empty
     override def incoming[S <: Spores](implicit turn: Turn[S]): Set[Reactive[S]] = _incoming.asInstanceOf[Set[Reactive[S]]]
@@ -83,13 +84,13 @@ object ParRPSpores extends Spores {
 }
 
 object STMSpores extends BufferedSpores {
-  override type Bud[P] = STMBud[P]
+  override type Struct = STMStructP[_]
 
-  override def bud[P](initialValue: Pulse[P] = Pulse.none, transient: Boolean = true): Bud[P] = {
-    new STMBud[P](new STMBuffer[Pulse[P]](initialValue, if (transient) Buffer.transactionLocal else Buffer.keepPulse))
+  override def bud[P](initialValue: Pulse[P] = Pulse.none, transient: Boolean = true): StructP[P] = {
+    new STMStructP[P](new STMBuffer[Pulse[P]](initialValue, if (transient) Buffer.transactionLocal else Buffer.keepPulse))
   }
 
-  class STMBud[P](override val pulses: STMBuffer[Pulse[P]]) extends BufferedBud[P] {
+  class STMStructP[P](override val pulses: STMBuffer[Pulse[P]]) extends BufferedStructP[P] {
     override def buffer[A](default: A, commitStrategy: (A, A) => A): STMBuffer[A] = new STMBuffer[A](default, commitStrategy)
   }
 

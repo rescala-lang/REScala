@@ -10,7 +10,7 @@ trait Observe[S <: Spores] {
 
 object Observe {
 
-  private class Obs[T, S <: Spores](bud: S#Bud[T], dependency: Pulsing[T, S], fun: T => Unit) extends Base[S](bud, Set(dependency)) with Reactive[S] with Observe[S] {
+  private class Obs[T, S <: Spores](bud: S#StructP[T], dependency: Pulsing[T, S], fun: T => Unit) extends Base[T, S](bud, Set(dependency)) with Reactive[S] with Observe[S] {
     override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[S] = {
       turn.schedule(once(this, dependency.pulse.toOption, fun))
       ReevaluationResult.Static(changed = false)

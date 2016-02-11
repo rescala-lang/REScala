@@ -8,11 +8,11 @@ import rescala.turns.{Ticket, Turn}
 object Events {
 
   private class StaticEvent[T, S <: Spores](engine: S, dependencies: Set[Reactive[S]], expr: Turn[S] => Pulse[T], override val toString: String)
-    extends Base(engine.bud(), dependencies) with Event[T, S] with StaticReevaluation[T, S] {
+    extends Base[T, S](engine.bud(), dependencies) with Event[T, S] with StaticReevaluation[T, S] {
     override def calculatePulse()(implicit turn: Turn[S]): Pulse[T] = expr(turn)
   }
 
-  private class DynamicEvent[T, S <: Spores](bufferFactory: S, expr: Turn[S] => Pulse[T]) extends Base[S](bufferFactory.bud()) with Event[T, S] with DynamicReevaluation[T, S] {
+  private class DynamicEvent[T, S <: Spores](bufferFactory: S, expr: Turn[S] => Pulse[T]) extends Base[T, S](bufferFactory.bud()) with Event[T, S] with DynamicReevaluation[T, S] {
     def calculatePulseDependencies(implicit turn: Turn[S]): (Pulse[T], Set[Reactive[S]]) = {
       val (newValue, dependencies) = turn.collectDependencies(expr(turn))
       (newValue, dependencies)
@@ -89,7 +89,7 @@ object Events {
   /** A wrapped event inside a signal, that gets "flattened" to a plain event node */
   def wrapped[T, S <: Spores](wrapper: Signal[Event[T, S], S])(implicit ticket: Ticket[S]): Event[T, S] = ticket { creationTurn =>
     creationTurn.create(Set[Reactive[S]](wrapper, wrapper.get(creationTurn))) {
-      new Base(creationTurn.bufferFactory.bud()) with Event[T, S] with DynamicReevaluation[T, S] {
+      new Base[T, S](creationTurn.bufferFactory.bud()) with Event[T, S] with DynamicReevaluation[T, S] {
         override def calculatePulseDependencies(implicit turn: Turn[S]): (Pulse[T], Set[Reactive[S]]) = {
           val inner = wrapper.get
           turn.dependencyInteraction(inner)

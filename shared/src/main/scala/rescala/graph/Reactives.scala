@@ -7,7 +7,7 @@ import rescala.turns.{Ticket, Turn}
 trait Reactive[S <: Spores] {
   final override val hashCode: Int = Globals.nextID().hashCode()
 
-  protected[rescala] def bud[P]: S#Bud[P]
+  protected[rescala] def bud: S#Struct
 
   protected[rescala] def outgoing(implicit turn: Turn[S]): Set[Reactive[S]] = bud.outgoing
 
@@ -24,19 +24,20 @@ trait Reactive[S <: Spores] {
 
 
 /** helper class to initialise engine and select lock */
-abstract class Base[S <: Spores](
-  final val _bud: S#Bud[_],
-  knownDependencies: Set[Reactive[S]] = Set.empty[Reactive[S]]) extends Reactive[S] {
+abstract class Base[P, S <: Spores](
+  final override protected[this] val budP: S#StructP[P],
+  knownDependencies: Set[Reactive[S]] = Set.empty[Reactive[S]]) extends Pulsing[P, S]  {
 
-  final override protected[rescala] def bud[Q]: S#Bud[Q] = _bud.asInstanceOf[S#Bud[Q]]
+  final override protected[rescala] def bud: S#Struct = budP
 
   def staticIncoming: Set[Reactive[S]] = knownDependencies
 }
 
 /** A node that has nodes that depend on it */
 trait Pulsing[+P, S <: Spores] extends Reactive[S] {
-  final protected[this] def pulses: Buffer[Pulse[P]] = bud.pulses
-  final def pulse(implicit turn: Turn[S]): Pulse[P] = bud.pulses.get
+  protected[this] def budP: S#StructP[P]
+  final protected[this] def pulses: Buffer[Pulse[P]] = budP.pulses
+  final def pulse(implicit turn: Turn[S]): Pulse[P] = pulses.get
 }
 
 /** dynamic access to pulsing values */
