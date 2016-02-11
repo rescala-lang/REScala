@@ -29,7 +29,7 @@ trait QueueBasedFrameCreator extends FrameCreator {
         seen += reactive
         val pipeline = Pipeline(reactive)
         pipeline.lockDynamic {
-        markReactiveFramed(reactive, reactive => {
+        markReactiveFramed(pipeline, _ => {
           if (!pipeline.hasFrame) {
             println(s"Create frame for $this at $reactive")
             createFrame(pipeline)

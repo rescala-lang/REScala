@@ -11,7 +11,7 @@ object Pipeline {
   protected[pipelining] def apply(at: Reactive[PipelineSpores.type]) = at.bud.pipeline
 }
 
-class Pipeline(val reactive: Reactive[PipelineSpores.type]) {
+class Pipeline() {
 
   type S = PipelineSpores.type
 
@@ -162,7 +162,7 @@ class Pipeline(val reactive: Reactive[PipelineSpores.type]) {
   protected[rescala] def needFrame[T](op: CFrame => T = { x: CFrame => x })(implicit turn: PipeliningTurn): T = {
     findFrame(_ match {
       case Some(d) => op(d)
-      case None    => throw new AssertionError(s"No frame found for $turn at ${this.reactive}: ${this.getPipelineFrames()}")
+      case None    => throw new AssertionError(s"No frame found for $turn at ${this}: ${this.getPipelineFrames()}")
     })
   }
 

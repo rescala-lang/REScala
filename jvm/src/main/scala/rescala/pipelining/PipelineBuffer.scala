@@ -121,7 +121,7 @@ abstract class PipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A)
     // assert(get == requiredValue)
   }
 
-  override def toString() = s"PipelineBuffer(${parent.reactive})"
+  override def toString() = s"PipelineBuffer(${parent})"
 
 }
 
@@ -151,14 +151,14 @@ class NonblockingPipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => 
     parent.frame().valueForBuffer(this).value
   }
 
-  override def toString() = s"NonblockingPipelineBuffer(${parent.reactive})"
+  override def toString() = s"NonblockingPipelineBuffer(${parent})"
 
 }
 
 class BlockingPipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A) extends PipelineBuffer[A](parent, initialStrategy) {
 
   override def set(value: A)(implicit turn: Turn[_]): Unit = {
-    assert(!parent.needFrame()(turn.asInstanceOf[PipeliningTurn]).isWritten, s"Frame at ${parent.reactive} already written when tried to set from $turn")
+    assert(!parent.needFrame()(turn.asInstanceOf[PipeliningTurn]).isWritten, s"Frame at ${parent} already written when tried to set from $turn")
     super.set(value)
   }
 
@@ -169,7 +169,7 @@ class BlockingPipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A) 
       _ match {
         case Some(frame) =>
           val readFrame = frame.previous()
-          assert(readFrame.isWritten, s"base called for ${this.parent.reactive} during $turn without written predecessor frame")
+          assert(readFrame.isWritten, s"base called for ${this.parent} during $turn without written predecessor frame")
           readFrame.content.valueForBuffer(this).committedValue.get
         case None =>
           parent.frame().valueForBuffer(this).committedValue.get
@@ -214,20 +214,20 @@ class BlockingPipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A) 
           val hasValue = frame.content.valueForBuffer(this).isChanged || frame.isWritten
           if (!hasValue) {
             val prevFrame = frame.previous
-            assert(prevFrame.isWritten, s"${Thread.currentThread().getId}: Frame for get at previous frame ${parent.reactive} not written during $turn: prevFrame")
+            assert(prevFrame.isWritten, s"${Thread.currentThread().getId}: Frame for get at previous frame ${parent} not written during $turn: prevFrame")
             prevFrame.content.valueForBuffer(this).committedValue.get
           } else {
             frame.content.valueForBuffer(this).value
           }
         case None =>
           val frame = parent.frame
-          assert(frame.isWritten, s"${Thread.currentThread().getId}: Frame for get at ${parent.reactive} not written during $turn: $frame")
+          assert(frame.isWritten, s"${Thread.currentThread().getId}: Frame for get at ${parent} not written during $turn: $frame")
           frame.content.valueForBuffer(this).committedValue.get
       }
 
     }
   }
 
-  override def toString() = s"BlockingPipelineBuffer(${parent.reactive})"
+  override def toString() = s"BlockingPipelineBuffer(${parent})"
 
 }
