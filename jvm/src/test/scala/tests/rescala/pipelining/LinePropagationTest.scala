@@ -24,7 +24,7 @@ class LinePropagationTest extends AssertionsForJUnit with MockitoSugar {
   // gives a deterministic order of the turns with respect to their arrival
   implicit val engine : PipelineEngine= new PipelineEngine {
    private val lockPhaseLock = new Object
-   override def makeNewTurn = new PipeliningTurn(engine) {
+   override def makeNewTurn = new PipeliningTurn() {
      override def lockPhase(initialWrites: List[Reactive]) = lockPhaseLock.synchronized{
        super.lockPhase(initialWrites)
      }

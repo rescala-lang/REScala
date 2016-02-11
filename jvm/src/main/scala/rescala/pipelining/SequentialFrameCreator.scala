@@ -12,7 +12,7 @@ trait SequentialFrameCreator extends QueueBasedFrameCreator {
   
   self : PipeliningTurn =>
     
-  override protected[this] def createFrames(initialWrites : List[Reactive]) = {
+  override protected[this] def createFrames(initialWrites : List[Reactive[PipelineSpores.type]]) = {
     SequentialFrameCreator.framingLock.synchronized{
       engine.addTurn(this)
       super.createFrames(initialWrites)

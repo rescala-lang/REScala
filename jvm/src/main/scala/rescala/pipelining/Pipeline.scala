@@ -7,18 +7,20 @@ import rescala.graph._
 import java.util.concurrent.locks.ReentrantLock
 
 object Pipeline {
-  protected[pipelining] def pipelineFor(at: Reactive) = at.pipeline
-  protected[pipelining] def apply(at: Reactive) = at.pipeline
+  protected[pipelining] def pipelineFor(at: Reactive[PipelineSpores.type]) = at.bud.pipeline
+  protected[pipelining] def apply(at: Reactive[PipelineSpores.type]) = at.bud.pipeline
 }
 
-class Pipeline(val reactive: Reactive) {
+class Pipeline(val reactive: Reactive[PipelineSpores.type]) {
 
-  protected[this]type Content = BufferFrameContent;
+  type S = PipelineSpores.type
+
+  protected[this]type Content = BufferFrameContent
 
   private type CFrame = Frame[Content]
 
   protected[this] def initialStableFrame: Content = new BufferFrameContent
-  protected[this] def duplicate(content: Content, newTurn: Turn): Content = content.duplicate(newTurn)
+  protected[this] def duplicate(content: Content, newTurn: Turn[S]): Content = content.duplicate(newTurn)
   protected[this] var stableFrame: Frame[BufferFrameContent] = Frame[BufferFrameContent](null, this)
   stableFrame.content = initialStableFrame
   stableFrame.markWritten()

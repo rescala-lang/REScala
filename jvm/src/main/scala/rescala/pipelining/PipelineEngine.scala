@@ -1,17 +1,12 @@
 package rescala.pipelining
 
 import rescala.turns.Engines
-import rescala.graph.{Spores, Reactive, SimpleBuffer, Buffer}
-import rescala.synchronization.TurnLock
-import rescala.turns.Turn
-import scala.collection.immutable.Queue
-import java.util.concurrent.locks.LockSupport
 
 /**
  * @author moritzlichter
  */
 
-class PipelineEngine extends Engines.Impl[Spores, PipeliningTurn](, new PipeliningTurn()) {
+class PipelineEngine extends Engines.Impl[PipelineSpores.type, PipeliningTurn](PipelineSpores, new PipeliningTurn()) {
 
   protected[pipelining] val stableTurn = makeTurn
 
@@ -37,7 +32,7 @@ class PipelineEngine extends Engines.Impl[Spores, PipeliningTurn](, new Pipelini
 
   protected[pipelining] def canTurnBeRemoved(turn: PTurn) = turnOrderLock.synchronized(turnOrder(0) == turn)
 
-  protected def makeNewTurn = new PipeliningTurn(this)
+  protected def makeNewTurn = new PipeliningTurn()
 
   override final protected[pipelining] def makeTurn: PipeliningTurn = {
     val newTurn = makeNewTurn
@@ -70,7 +65,6 @@ class PipelineEngine extends Engines.Impl[Spores, PipeliningTurn](, new Pipelini
    * Calles by the PipeliningTurn if it completed its deframing phase
    */
   protected[pipelining] def turnCompleted(completedTurn: PTurn): Unit = {
-    import rescala.util.JavaFunctionsImplicits._
 
     turnOrderLock.synchronized {
       assert(turnOrder.head == completedTurn)
