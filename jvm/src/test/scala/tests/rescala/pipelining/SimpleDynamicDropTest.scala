@@ -15,7 +15,7 @@ import rescala.pipelining.Pipeline
 
 class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
 
-  implicit val engine = new PipelineEngine
+  implicit val engine = PipelineEngine
   val timeToAllowOtherTurnToCreateFrames = 100
 
   val source1 = Var(0)

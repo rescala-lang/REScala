@@ -3,16 +3,10 @@ package tests.rescala.concurrency.philosophers
 import java.util.concurrent.atomic.AtomicInteger
 
 import rescala.Signals.lift
-<<<<<<< HEAD:jvm/src/test/scala/tests/rescala/concurrency/philosophers/PhilosopherTable.scala
 import rescala.{Signal, Var}
 import rescala.graph.Globals.named
 import rescala.graph.{Spores, Globals, Committable}
 import rescala.turns.{Engine, Turn}
-=======
-import rescala.graph.Committable
-import rescala.turns.{ Engine, Turn }
-import rescala.{ Signal, Var }
->>>>>>> pipelining:REScala/test/tests/rescala/concurrency/philosophers/PhilosopherTable.scala
 
 import scala.annotation.tailrec
 
@@ -35,26 +29,22 @@ class PhilosopherTable[S <: Spores](philosopherCount: Int, work: Long)(implicit 
     }
   }
 
-  def calcFork(leftName: String, rightName: String)(leftState: Philosopher, rightState: Philosopher): Fork = {
-    val state = (leftState, rightState) match {
-      case (Thinking, Thinking) => Free
-      case (Hungry, _)          => Taken(leftName)
-      case (_, Hungry)          => Taken(rightName)
-    }
-    println(s"${Thread.currentThread().getId}: Fork between $leftName and $rightName is $state")
-    state
-  }
 
-  def calcVision(ownName: String)(leftFork: Fork, rightFork: Fork): Vision = {
-    val vision = (leftFork, rightFork) match {
-      case (Free, Free)                         => Ready
-      case (Taken(`ownName`), Taken(`ownName`)) => Eating
-      case (Taken(name), _)                     => WaitingFor(name)
-      case (_, Taken(name))                     => WaitingFor(name)
+  def calcFork(leftName: String, rightName: String)(leftState: Philosopher, rightState: Philosopher): Fork =
+    (leftState, rightState) match {
+      case (Thinking, Thinking) => Free
+      case (Hungry, _) => Taken(leftName)
+      case (_, Hungry) => Taken(rightName)
     }
-    println(s"${Thread.currentThread().getId}: $ownName has vision $vision")
-    vision
-  }
+
+  def calcVision(ownName: String)(leftFork: Fork, rightFork: Fork): Vision =
+    (leftFork, rightFork) match {
+      case (Free, Free) => Ready
+      case (Taken(`ownName`), Taken(`ownName`)) => Eating
+      case (Taken(name), _) => WaitingFor(name)
+      case (_, Taken(name)) => WaitingFor(name)
+    }
+
 
   def createTable(tableSize: Int): Seq[Seating[S]] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
@@ -72,41 +62,17 @@ class PhilosopherTable[S <: Spores](philosopherCount: Int, work: Long)(implicit 
     }
   }
 
-<<<<<<< HEAD:jvm/src/test/scala/tests/rescala/concurrency/philosophers/PhilosopherTable.scala
 
   def tryEat(seating: Seating[S]): Boolean =
     engine.plan(seating.philosopher) { t =>
       val forksFree = if (seating.vision(t) == Ready) {
         seating.philosopher.admit(Hungry)(t)
-=======
-  def tryEat(seating: Seating): Boolean =
-    engine.plan(seating.philosopher) { turn =>
-      val forksFree = if (seating.vision(turn) == Ready) {
-        println(s"${Thread.currentThread().getId}: ${seating.placeNumber} is hungry")
-        assert(seating.leftFork(turn) == Free)
-        assert(seating.rightFork(turn) == Free)
-        seating.philosopher.admit(Hungry)(turn)
->>>>>>> pipelining:REScala/test/tests/rescala/concurrency/philosophers/PhilosopherTable.scala
         true
-      } else {
-        //  println(s"${Thread.currentThread().getId}: ${seating.placeNumber} is thinking")
-        false
       }
-<<<<<<< HEAD:jvm/src/test/scala/tests/rescala/concurrency/philosophers/PhilosopherTable.scala
       else false
       t.schedule(new Committable {
         override def commit(implicit turn: Turn[_]): Unit = if (forksFree) assert(seating.vision(t) == Eating)
         override def release(implicit turn: Turn[_]): Unit = ()
-=======
-      turn.schedule(new Committable {
-        override def commit(implicit turn: Turn): Unit = if (forksFree) {
-          assert(seating.vision(turn) == Eating, s"Wrong result for ${Thread.currentThread().getId}")
-          assert(seating.leftFork(turn) == Taken(seating.placeNumber.toString()))
-          assert(seating.leftFork(turn) == Taken(seating.placeNumber.toString()))
-          assert(seating.philosopher(turn) == Hungry)
-        }
-        override def release(implicit turn: Turn): Unit = ()
->>>>>>> pipelining:REScala/test/tests/rescala/concurrency/philosophers/PhilosopherTable.scala
       })
       forksFree
     }
@@ -116,6 +82,7 @@ class PhilosopherTable[S <: Spores](philosopherCount: Int, work: Long)(implicit 
 }
 
 object PhilosopherTable {
+
 
   // ============================================= Infrastructure ========================================================
 
@@ -132,11 +99,14 @@ object PhilosopherTable {
   case object Eating extends Vision
   case class WaitingFor(name: String) extends Vision
 
+
   // ============================================ Entity Creation =========================================================
 
   case class Seating[S <: Spores](placeNumber: Int, philosopher: Var[Philosopher, S], leftFork: Signal[Fork, S], rightFork: Signal[Fork, S], vision: Signal[Vision, S])
 
+
   @tailrec // unrolled into loop by compiler
   final def repeatUntilTrue(op: => Boolean): Unit = if (!op) repeatUntilTrue(op)
+
 
 }

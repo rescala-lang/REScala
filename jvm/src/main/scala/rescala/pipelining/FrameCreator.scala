@@ -16,7 +16,6 @@ trait QueueBasedFrameCreator extends FrameCreator {
 
   type S = PipelineSpores.type
 
-  val engine: PipelineEngine
 
   protected[this] final def evaluateQueue(initialWrites: List[Reactive[S]]) = {
     val lq = new LevelQueue()(this)

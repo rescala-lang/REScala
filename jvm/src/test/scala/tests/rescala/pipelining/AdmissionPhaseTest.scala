@@ -13,7 +13,7 @@ import rescala.turns.Turn
 
 class AdmissionPhaseTest extends AssertionsForJUnit with MockitoSugar {
 
-  implicit val engine = new PipelineEngine
+  implicit val engine = PipelineEngine
 
   @Test
   def testAdmissionPhaseReadsCorrectValues() = {

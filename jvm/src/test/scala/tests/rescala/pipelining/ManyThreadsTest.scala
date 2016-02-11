@@ -18,7 +18,7 @@ import rescala.pipelining.Pipeline._
 
 class ManyThreadsTest extends AssertionsForJUnit with MockitoSugar {
 
-  implicit val engine = new PipelineEngine
+  implicit val engine = PipelineEngine
 
   /*
    * This test suite runs on the following topology: S1 and S2 are sources

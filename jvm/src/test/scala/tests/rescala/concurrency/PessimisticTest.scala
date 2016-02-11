@@ -13,13 +13,8 @@ import rescala.{Signal, Signals, Var}
 
 import scala.collection.JavaConverters._
 
-<<<<<<< HEAD:jvm/src/test/scala/tests/rescala/concurrency/PessimisticTest.scala
 class PessimisticTestTurn extends ParRP(backoff = new Backoff()) {
   override def evaluate(r: Reactive[ParRPSpores.type]): Unit = {
-=======
-class PessimisticTestTurn extends Pessimistic(backOff = 0) {
-  override def evaluate(r: Reactive) = {
->>>>>>> pipelining:REScala/test/tests/rescala/concurrency/PessimisticTest.scala
     while (Pessigen.syncStack.get() match {
       case stack@(set, bar) :: tail if set(r) =>
         bar.ready.countDown()

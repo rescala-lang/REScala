@@ -11,7 +11,7 @@ import java.util.concurrent.CyclicBarrier
 
 class FrameWaitWrittenTest extends AssertionsForJUnit with MockitoSugar {
   
-  implicit val engine = new PipelineEngine
+  implicit val engine = PipelineEngine
   
   
   val readFrom = new Pipeline(Var(0))

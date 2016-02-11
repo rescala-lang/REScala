@@ -26,12 +26,13 @@ object PipeliningTurn {
 
 }
 
-class PipeliningTurn(override val engine: PipelineEngine, randomizeDeps: Boolean = false)
+class PipeliningTurn(randomizeDeps: Boolean = false)
   extends FactoryReference[PipelineSpores.type](PipelineSpores)
   with PipelinePropagationImpl
   with PropagateNoChanges
   with ParallelFrameCreator {
 
+  val engine = PipelineEngine
 
   /** used to create state containers of each reactive */
   override type S = PipelineSpores.type

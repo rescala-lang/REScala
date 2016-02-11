@@ -12,7 +12,7 @@ import rescala.pipelining.PipeliningTurn
 
 class PrunedFramesTest extends AssertionsForJUnit with MockitoSugar {
   
-  implicit val engine = new PipelineEngine
+  implicit val engine = PipelineEngine
   
   var checkMark = false
   

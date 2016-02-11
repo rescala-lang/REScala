@@ -2,8 +2,6 @@ package rescala.pipelining
 
 import rescala.graph.Reactive
 import rescala.util.TransferableLock
-import rescala.util.TransferableLock
-import rescala.util.TransferableLock
 
 object ParallelFrameCreator {
 

@@ -6,7 +6,7 @@ import rescala.turns.Engines
  * @author moritzlichter
  */
 
-class PipelineEngine(makeTurn: => PipeliningTurn) extends Engines.Impl[PipelineSpores.type, PipeliningTurn](PipelineSpores, makeTurn) {
+object PipelineEngine extends Engines.Impl[PipelineSpores.type, PipeliningTurn](PipelineSpores, new PipeliningTurn()) {
 
   protected[pipelining] val stableTurn = makeNewTurn
 
@@ -32,7 +32,7 @@ class PipelineEngine(makeTurn: => PipeliningTurn) extends Engines.Impl[PipelineS
 
   protected[pipelining] def canTurnBeRemoved(turn: PTurn) = turnOrderLock.synchronized(turnOrder(0) == turn)
 
-  protected def makeNewTurn = makeTurn
+  protected def makeNewTurn = new PipeliningTurn()
 
   /**
    * Implements a depth first search of the waiting graph to check
