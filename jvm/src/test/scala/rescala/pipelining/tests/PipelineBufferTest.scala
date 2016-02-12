@@ -1,4 +1,4 @@
-package tests.rescala.pipelining
+package rescala.pipelining.tests
 
 import scala.collection.immutable.Queue
 import org.junit.Test
@@ -16,7 +16,7 @@ class PipelineBufferTest extends AssertionsForJUnit with MockitoSugar {
   
   
   
-  val pipelineBuffer= new Pipeline(null)
+  val pipelineBuffer= new Pipeline()
   val engine = PipelineEngine
   val buffer  = pipelineBuffer.createNonblockingBuffer[Int](0, Buffer.commitAsIs)
 
@@ -27,7 +27,7 @@ class PipelineBufferTest extends AssertionsForJUnit with MockitoSugar {
   }
   
   def readStableFrame() = {
-    pipelineBuffer.getStableFrame().content.valueForBuffer(buffer).value.asInstanceOf[Int]
+    pipelineBuffer.getStableFrame().content.valueForBuffer(buffer).value
   }
   
   @Test

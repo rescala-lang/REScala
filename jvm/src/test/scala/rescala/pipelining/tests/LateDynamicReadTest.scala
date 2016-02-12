@@ -1,4 +1,4 @@
-package tests.rescala.pipelining
+package rescala.pipelining.tests
 
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
@@ -6,7 +6,7 @@ import rescala.Var
 import rescala.Signals
 import rescala.pipelining.PipelineEngine
 import org.junit.Test
-import tests.rescala.pipelining.PipelineTestUtils._
+import PipelineTestUtils._
 import java.util.concurrent.CyclicBarrier
 import java.util.concurrent.Semaphore
 

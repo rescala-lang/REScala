@@ -1,4 +1,4 @@
-package tests.rescala.pipelining
+package rescala.pipelining.tests
 
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
@@ -7,7 +7,7 @@ import rescala.pipelining.PipelineEngine
 import rescala.Signals
 import scala.collection.immutable.Queue
 import org.junit.Test
-import tests.rescala.pipelining.PipelineTestUtils._
+import PipelineTestUtils._
 
 class RecursiveResolvingTest extends AssertionsForJUnit with MockitoSugar {
   

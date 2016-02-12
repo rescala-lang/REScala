@@ -1,4 +1,4 @@
-package tests.rescala.pipelining
+package rescala.pipelining.tests
 
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar

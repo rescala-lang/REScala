@@ -1,10 +1,10 @@
-package tests.rescala.pipelining
+package rescala.pipelining.tests
 
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import org.junit.Test
 import rescala.Var
-import tests.rescala.pipelining.PipelineTestUtils._
+import PipelineTestUtils._
 import rescala.pipelining.PipelineBuffer
 import rescala.pipelining.PipelineEngine
 import rescala.Signals
@@ -61,8 +61,8 @@ class AdmissionPhaseTest extends AssertionsForJUnit with MockitoSugar {
         val newValue = currentValue + 1
         counter.admit(newValue)
         t.schedule(new Committable{
-          override def release(implicit turn : Turn) = {}
-          override def commit(implicit turn : Turn) = {
+          override def release(implicit turn : Turn[_]) = {}
+          override def commit(implicit turn : Turn[_]) = {
             val counterVal = counter.get
             val dep1Val = dep1.get
             val dep2Val = dep2.get

@@ -1,4 +1,4 @@
-package tests.rescala.pipelining
+package rescala.pipelining.tests
 
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
@@ -6,7 +6,7 @@ import rescala.pipelining.Pipeline
 import rescala.Var
 import rescala.pipelining.PipelineEngine
 import org.junit.Test
-import tests.rescala.pipelining.PipelineTestUtils._
+import PipelineTestUtils._
 import java.util.concurrent.CyclicBarrier
 
 class FrameWaitWrittenTest extends AssertionsForJUnit with MockitoSugar {
@@ -14,7 +14,7 @@ class FrameWaitWrittenTest extends AssertionsForJUnit with MockitoSugar {
   implicit val engine = PipelineEngine
   
   
-  val readFrom = new Pipeline(Var(0))
+  val readFrom = new Pipeline()
   
   def createNewTurn() = {
     val turn = engine.makeTurn

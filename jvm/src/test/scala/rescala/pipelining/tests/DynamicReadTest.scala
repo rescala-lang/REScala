@@ -1,4 +1,4 @@
-package tests.rescala.pipelining
+package rescala.pipelining.tests
 
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
@@ -8,7 +8,7 @@ import rescala.pipelining.PipelineEngine
 import org.junit.Test
 import rescala.graph.Reactive
 import rescala.pipelining.PipeliningTurn
-import tests.rescala.pipelining.PipelineTestUtils._
+import PipelineTestUtils._
 import java.util.concurrent.CyclicBarrier
 import rescala.Signal
 
@@ -29,7 +29,7 @@ class DynamicReadTest extends AssertionsForJUnit with MockitoSugar {
   val source1 = Var(0)
   val source2 = Var(100)
 
-  val dynamicDep = Signals.dynamic()(implicit t => {
+  val dynamicDep = engine.dynamic()(implicit t => {
     println(s"$t: Evaluate base ${source1(t)}")
     if (source1(t) % 2 != 0)
       source2(t)
@@ -156,7 +156,7 @@ class DynamicReadTest extends AssertionsForJUnit with MockitoSugar {
     val source1 = Var(0)
     val source2 = Var(0)
     val dep1 = Signals.static(source1)(implicit t => {Thread.sleep(minEvaluationTimeOfUpdate); source1.get})
-    val dynDep1 = Signals.dynamic()(implicit t => if (dep1(t) % 2 == 0) dep1(t) else dep1(t) + source2(t))
+    val dynDep1 = engine.dynamic()(implicit t => if (dep1(t) % 2 == 0) dep1(t) else dep1(t) + source2(t))
     val dep2 = Signals.static(source2)(implicit t => source2.get)
     val dep12 = Signals.static(dynDep1, dep2)(implicit t => dynDep1.get + dep2.get)
     

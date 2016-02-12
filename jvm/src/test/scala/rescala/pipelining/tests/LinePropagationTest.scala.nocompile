@@ -1,4 +1,6 @@
-package tests.rescala.pipelining
+package rescala.pipelining.tests
+
+
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
@@ -8,7 +10,7 @@ import rescala.Signals
 import rescala.Var
 import rescala.graph.Reactive
 import rescala.pipelining.PipelineEngine
-import tests.rescala.pipelining.PipelineTestUtils._
+import PipelineTestUtils._
 import rescala.turns.Turn
 import rescala.turns.Ticket
 import rescala.pipelining.PipeliningTurn
@@ -17,24 +19,25 @@ import rescala.pipelining.PipeliningTurn
 import rescala.pipelining.Frame
 import rescala.pipelining.Pipeline._
 
+
+
 class LinePropagationTest extends AssertionsForJUnit with MockitoSugar {
 
   //TODO: pipelineEngine is now an object, can no longer be overridden
-  /*
 
   // Modify the pipelined engine to force lock phases to execute sequential:
   // I dont want to test resolving conflicts but the propagation and this
   // gives a deterministic order of the turns with respect to their arrival
-  implicit val engine : PipelineEngine = PipelineEngine {
+  implicit val engine : PipelineEngine.type = PipelineEngine {
    private val lockPhaseLock = new Object
    override def makeNewTurn = new PipeliningTurn() {
-     override def lockPhase(initialWrites: List[Reactive]) = lockPhaseLock.synchronized{
+     override def lockPhase(initialWrites: List[Reactive]) = lockPhaseLock.synchronized {
        super.lockPhase(initialWrites)
      }
    }
   }
 
-  */
+
 
   /*
    * S

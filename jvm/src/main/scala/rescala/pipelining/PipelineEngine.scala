@@ -32,7 +32,8 @@ object PipelineEngine extends Engines.Impl[PipelineSpores.type, PipeliningTurn](
 
   protected[pipelining] def canTurnBeRemoved(turn: PTurn) = turnOrderLock.synchronized(turnOrder(0) == turn)
 
-  protected def makeNewTurn = new PipeliningTurn()
+  protected def makeNewTurn: PTurn = new PipeliningTurn()
+  final def makeTurn: PTurn = makeNewTurn
 
   /**
    * Implements a depth first search of the waiting graph to check

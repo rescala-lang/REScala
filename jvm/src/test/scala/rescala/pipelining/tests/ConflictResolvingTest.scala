@@ -1,26 +1,19 @@
-package tests.rescala.pipelining
+package rescala.pipelining.tests
 
+import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.pipelining.PipelineEngine
-import rescala.Var
-import org.junit.Test
-import rescala.Signals
-import scala.collection.immutable.Queue
-import rescala.turns.Turn
-import tests.rescala.pipelining.PipelineTestUtils._
+import rescala.{Signals, Var}
 import rescala.graph.Reactive
-import java.util.Random
-import java.util.concurrent.CyclicBarrier
-import rescala.pipelining.PipeliningTurn
-import scala.annotation.tailrec
 import rescala.pipelining.Pipeline._
-import rescala.pipelining.Pipeline
+import rescala.pipelining.{Pipeline, PipelineEngine, PipelineSpores, PipeliningTurn}
+
+import scala.collection.immutable.Queue
 
 class ConflictResolvingTest extends AssertionsForJUnit with MockitoSugar {
 
- 
-  
+
+
   implicit val engine = PipelineEngine
 
   /*
@@ -51,7 +44,7 @@ class ConflictResolvingTest extends AssertionsForJUnit with MockitoSugar {
     val turns = List.fill(6)(engine.makeTurn)
     val sources = List(s2, s1, s1, s2, s2, s1)
 
-    def makeFramesForUpdate(turn: PipeliningTurn, source: Reactive) = {
+    def makeFramesForUpdate(turn: PipeliningTurn, source: Reactive[PipelineSpores.type]) = {
       Pipeline(source).createFrame(turn)
       Pipeline(d1).createFrame(turn)
       Pipeline(d2).createFrame(turn)

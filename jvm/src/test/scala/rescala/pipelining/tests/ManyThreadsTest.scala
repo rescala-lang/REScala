@@ -1,24 +1,24 @@
-package tests.rescala.pipelining
+package rescala.pipelining.tests
 
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.pipelining.PipelineEngine
+import rescala.pipelining.{PipelineSpores, PipelineEngine, PipeliningTurn}
 import rescala.Var
 import org.junit.Test
 import rescala.Signals
 import scala.collection.immutable.Queue
 import rescala.turns.Turn
-import tests.rescala.pipelining.PipelineTestUtils._
+import PipelineTestUtils._
 import rescala.graph.Reactive
 import java.util.Random
 import java.util.concurrent.CyclicBarrier
-import rescala.pipelining.PipeliningTurn
 import scala.annotation.tailrec
 import rescala.pipelining.Pipeline._
 
 class ManyThreadsTest extends AssertionsForJUnit with MockitoSugar {
 
   implicit val engine = PipelineEngine
+  type S = PipelineSpores.type
 
   /*
    * This test suite runs on the following topology: S1 and S2 are sources
@@ -33,8 +33,8 @@ class ManyThreadsTest extends AssertionsForJUnit with MockitoSugar {
    * D1    D2 
    */
 
-  var opsOnD1: List[Turn] = List()
-  var opsOnD2: List[Turn] = List()
+  var opsOnD1: List[Turn[S]] = List()
+  var opsOnD2: List[Turn[S]] = List()
 
   def clearOps() = {
     opsOnD1 = List()
@@ -47,7 +47,7 @@ class ManyThreadsTest extends AssertionsForJUnit with MockitoSugar {
   var enableCheck = false;
   def checkCalculationOrder() = {
     @tailrec
-    def check(ops1: List[Turn], ops2: List[Turn]): Boolean = {
+    def check(ops1: List[Turn[S]], ops2: List[Turn[S]]): Boolean = {
       if (ops1.isEmpty || ops2.isEmpty)
         true
       else if (ops1.head != ops2.head)

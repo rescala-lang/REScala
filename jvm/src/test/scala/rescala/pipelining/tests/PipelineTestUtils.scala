@@ -1,19 +1,19 @@
-package tests.rescala.pipelining
+package rescala.pipelining.tests
 
 import scala.collection.immutable.Queue
 import rescala.turns.Turn
 import scala.util.Random
 import rescala.Signal
-import rescala.pipelining.PipelineEngine
+import rescala.pipelining.{PipelineSpores, PipelineEngine, Pipeline, PipeliningTurn}
 import rescala.graph.Reactive
-import rescala.pipelining.Pipeline
-import rescala.pipelining.PipeliningTurn
 
 object PipelineTestUtils {
   
   private val rand = new Random
 
-  def frameTurns(f : Reactive) : Queue[Turn] = {
+  type S = PipelineSpores.type
+
+  def frameTurns(f : Reactive[S]) : Queue[Turn[S]] = {
     Pipeline.pipelineFor(f).getPipelineFrames().map { _.turn}
   }
   
@@ -35,7 +35,7 @@ object PipelineTestUtils {
     )
   }
   
-  def readLatestValue(reader : PipeliningTurn => Unit)(implicit engine : PipelineEngine) = {
+  def readLatestValue(reader : PipeliningTurn => Unit)(implicit engine : PipelineEngine.type) = {
     val dummyTurn = engine.makeTurn
     engine.addTurn(dummyTurn)
     reader(dummyTurn)
@@ -44,7 +44,7 @@ object PipelineTestUtils {
   
 }
 
-class ValueTracker[T](s : Signal[T])(implicit val engine: PipelineEngine) {
+class ValueTracker[T](s : Signal[T, PipelineSpores.type])(implicit val engine: PipelineEngine.type) {
     var values : List[T] = List()
     private object valueLock
     

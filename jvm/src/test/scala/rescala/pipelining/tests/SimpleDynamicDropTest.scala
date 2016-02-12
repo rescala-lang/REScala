@@ -1,14 +1,13 @@
-package tests.rescala.pipelining
+package rescala.pipelining.tests
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.Signals
-import rescala.Var
 import rescala.graph.Buffer
 import rescala.pipelining.PipelineEngine
 import rescala.pipelining.PipeliningTurn
-import tests.rescala.pipelining.PipelineTestUtils._
+import PipelineTestUtils._
 import rescala.turns.Ticket
 import rescala.turns.Turn
 import rescala.pipelining.Pipeline
@@ -16,12 +15,14 @@ import rescala.pipelining.Pipeline
 class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
 
   implicit val engine = PipelineEngine
+  import engine.Var
+
   val timeToAllowOtherTurnToCreateFrames = 100
 
   val source1 = Var(0)
   val source2 = Var(2)
   var numEvaluated = 0;
-  val dynDep = Signals.dynamic()(implicit t => {
+  val dynDep = engine.dynamic()(implicit t => {
     println(s"BEGIN evaluate $t")
     numEvaluated += 1;
     Thread.sleep(timeToAllowOtherTurnToCreateFrames)
@@ -50,9 +51,9 @@ class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
     assert(numEvaluated == 1)
     numEvaluated = 0
     PipelineTestUtils.readLatestValue {implicit turn => 
-      assert(source2.outgoing.get == Set())
-      assert(source1.outgoing.get == Set(dynDep))
-      assert(dynDep.incoming.get == Set(source1))
+      assert(source2.outgoing == Set())
+      assert(source1.outgoing == Set(dynDep))
+      assert(dynDep.incoming == Set(source1))
     }
     source2.set(93)
     assert(dynDep.now == 0)
@@ -72,9 +73,9 @@ class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
       source2.set(2)
 
       PipelineTestUtils.readLatestValue { implicit turn =>
-        assert(source1.outgoing.get == Set(dynDep))
-        assert(source2.outgoing.get == Set(dynDep))
-        assert(dynDep.incoming.get == Set(source1, source2))
+        assert(source1.outgoing == Set(dynDep))
+        assert(source2.outgoing == Set(dynDep))
+        assert(dynDep.incoming == Set(source1, source2))
       }
 
       numEvaluated = 0
@@ -101,19 +102,19 @@ class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
         dynDep.now match {
           case 0 =>
             println("==> Add before remove")
-            assert(dynDep.incoming.get == Set(source1))
+            assert(dynDep.incoming == Set(source1))
             assert(dynDep.now == 0)
-            assert(source1.outgoing.get == Set(dynDep))
-            assert(source2.outgoing.get == Set())
+            assert(source1.outgoing == Set(dynDep))
+            assert(source2.outgoing == Set())
             assert(numEvaluated == 2)
             assert(dynDepTracker.values == List(0)) // Only one change because the change 2 -> 2 is not observed
             addBeforeRemove = true
           case 2 =>
             println("==> Remove before add")
             assert(dynDep.now == 2)
-            assert(dynDep.incoming.get == Set(source1, source2))
-            assert(source1.outgoing.get == Set(dynDep))
-            assert(source2.outgoing.get == Set(dynDep))
+            assert(dynDep.incoming == Set(source1, source2))
+            assert(source1.outgoing == Set(dynDep))
+            assert(source2.outgoing == Set(dynDep))
             removeBeforeAdd = true
             assert(numEvaluated == 2)
             assert(dynDepTracker.values == List(0, 2))
@@ -159,9 +160,9 @@ class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
       assert(Pipeline.pipelineFor(dynDep).getPipelineFrames().isEmpty)
 
       // in scheduling case, there should no dependency to source2
-      assert(dynDep.incoming.get == Set(source1))
-      assert(source2.outgoing.get == Set())
-      assert(source1.outgoing.get == Set(dynDep))
+      assert(dynDep.incoming == Set(source1))
+      assert(source2.outgoing == Set())
+      assert(source1.outgoing == Set(dynDep))
 
       engine.turnCompleted(dummyTurn)
 
