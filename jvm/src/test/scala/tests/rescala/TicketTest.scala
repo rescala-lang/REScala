@@ -6,6 +6,7 @@ import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.graph.Spores
+import rescala.pipelining.PipelineEngine
 import rescala.turns.{Engine, Ticket, Turn}
 
 object TicketTest extends JUnitParameters
@@ -34,11 +35,17 @@ class TicketTest[S <: Spores](engine: Engine[S, Turn[S]]) extends AssertionsForJ
   }
 
   // Cannot run a turn inside a turn with pipelining
-  @Test def someDynamicSomeImplicit(): Unit = implicitly[Engine[S, Turn[S]]].plan() { (dynamicTurn: Turn[S]) =>
-    implicit val implicitTurn: Turn[S] = getTurn
-    assert(implicitly[Ticket[S]].self === Left(implicitTurn))
-    assert(implicitly[Ticket[S]].apply(identity) === implicitTurn)
-  }
+  @Test def someDynamicSomeImplicit(): Unit =
+    if (engine == PipelineEngine) {
+      throw new IllegalStateException("pipeline engine cannot run a turn inside a turn")
+    }
+    else {
+      implicitly[Engine[S, Turn[S]]].plan() { (dynamicTurn: Turn[S]) =>
+        implicit val implicitTurn: Turn[S] = getTurn
+        assert(implicitly[Ticket[S]].self === Left(implicitTurn))
+        assert(implicitly[Ticket[S]].apply(identity) === implicitTurn)
+      }
+    }
 
   @Test def implicitInClosures(): Unit = {
     val fac = implicitly[Engine[S, Turn[S]]]
