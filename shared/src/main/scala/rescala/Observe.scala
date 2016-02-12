@@ -10,7 +10,7 @@ trait Observe[S <: Spores] {
 
 object Observe {
 
-  private class Obs[T, S <: Spores](bud: S#StructP[T], dependency: Pulsing[T, S], fun: T => Unit) extends Base[T, S](bud, Set(dependency)) with Reactive[S] with Observe[S] {
+  private class Obs[T, S <: Spores](bud: S#StructP[T, Reactive[S]], dependency: Pulsing[T, S], fun: T => Unit) extends Base[T, S](bud, Set(dependency)) with Reactive[S] with Observe[S] {
     override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[S] = {
       turn.schedule(once(this, dependency.pulse.toOption, fun))
       ReevaluationResult.Static(changed = false)
@@ -21,7 +21,7 @@ object Observe {
 
   def apply[T, S <: Spores](dependency: Pulsing[T, S])(fun: T => Unit)(implicit maybe: Ticket[S]): Observe[S] =
     maybe(initTurn => initTurn.create(Set(dependency)) {
-      val obs = new Obs(initTurn.bufferFactory.bud[T](), dependency, fun)
+      val obs = new Obs(initTurn.bufferFactory.bud[T, Reactive[S]](), dependency, fun)
       initTurn.schedule(once(obs, dependency.pulse(initTurn).keep.current, fun))
       obs
     })

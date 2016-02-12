@@ -8,7 +8,7 @@ import rescala.turns.{Ticket, Turn}
 object Signals extends GeneratedLift {
 
   object Impl {
-    private class StaticSignal[T, S <: Spores](_bud: S#StructP[T], dependencies: Set[Reactive[S]], expr: (Turn[S], T) => T)
+    private class StaticSignal[T, S <: Spores](_bud: S#StructP[T, Reactive[S]], dependencies: Set[Reactive[S]], expr: (Turn[S], T) => T)
       extends Base[T, S](_bud, dependencies) with Signal[T, S] with StaticReevaluation[T, S] {
 
       override def calculatePulse()(implicit turn: Turn[S]): Pulse[T] = {
@@ -26,7 +26,7 @@ object Signals extends GeneratedLift {
 
     /** creates a signal that statically depends on the dependencies with a given initial value */
     def makeStatic[T, S <: Spores](dependencies: Set[Reactive[S]], init: => T)(expr: (Turn[S], T) => T)(initialTurn: Turn[S]): Signal[T, S] = initialTurn.create(dependencies) {
-      val bud: S#StructP[T] = initialTurn.bufferFactory.bud(Pulse.unchanged(init), transient = false)
+      val bud: S#StructP[T, Reactive[S]] = initialTurn.bufferFactory.bud(Pulse.unchanged(init), transient = false)
       new StaticSignal(bud, dependencies, expr)
     }
 

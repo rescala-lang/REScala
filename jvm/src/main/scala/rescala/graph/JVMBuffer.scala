@@ -9,18 +9,18 @@ import scala.language.implicitConversions
 
 
 object ParRPSpores extends Spores {
-  override type Struct = ParRPStructP[_]
+  override type Struct[R] = ParRPStructP[_, R]
 
-  override def bud[P](initialValue: Pulse[P] = Pulse.none, transient: Boolean = true): StructP[P] = {
+  override def bud[P, R](initialValue: Pulse[P] = Pulse.none, transient: Boolean = true): StructP[P, R] = {
     val lock = new TurnLock
-    new ParRPStructP[P](initialValue, transient, lock)
+    new ParRPStructP[P, R](initialValue, transient, lock)
   }
 
-  class ParRPStructP[P](var current: Pulse[P], transient: Boolean, val lock: TurnLock) extends TraitStructP[P] with Buffer[Pulse[P]] with Committable {
+  class ParRPStructP[P, R](var current: Pulse[P], transient: Boolean, val lock: TurnLock) extends TraitStructP[P, R] with Buffer[Pulse[P]] with Committable {
 
-    private var _incoming: Set[Reactive[_]] = Set.empty
-    override def incoming[S <: Spores](implicit turn: Turn[S]): Set[Reactive[S]] = _incoming.asInstanceOf[Set[Reactive[S]]]
-    override def updateIncoming[S <: Spores](reactives: Set[Reactive[S]])(implicit turn: Turn[S]): Unit = _incoming = reactives.toSet
+    private var _incoming: Set[R] = Set.empty
+    override def incoming(implicit turn: Turn[_]): Set[R] = _incoming
+    override def updateIncoming(reactives: Set[R])(implicit turn: Turn[_]): Unit = _incoming = reactives.toSet
 
 
     private var lvl: Int = 0
@@ -31,10 +31,10 @@ object ParRPSpores extends Spores {
       lvl
     }
 
-    private var _outgoing: Set[Reactive[_]] = Set[Reactive[_]]()
-    override def outgoing[S <: Spores](implicit turn: Turn[S]): Set[Reactive[S]] = _outgoing.asInstanceOf[Set[Reactive[S]]]
-    override def discover[S <: Spores](reactive: Reactive[S])(implicit turn: Turn[S]): Unit = _outgoing += reactive
-    override def drop[S <: Spores](reactive: Reactive[S])(implicit turn: Turn[S]): Unit = _outgoing -= reactive
+    private var _outgoing: Set[R] = Set[R]()
+    override def outgoing(implicit turn: Turn[_]): Set[R] = _outgoing
+    override def discover(reactive: R)(implicit turn: Turn[_]): Unit = _outgoing += reactive
+    override def drop(reactive: R)(implicit turn: Turn[_]): Unit = _outgoing -= reactive
 
 
 
@@ -84,13 +84,13 @@ object ParRPSpores extends Spores {
 }
 
 object STMSpores extends BufferedSpores {
-  override type Struct = STMStructP[_]
+  override type Struct[R] = STMStructP[_, R]
 
-  override def bud[P](initialValue: Pulse[P] = Pulse.none, transient: Boolean = true): StructP[P] = {
-    new STMStructP[P](new STMBuffer[Pulse[P]](initialValue, if (transient) Buffer.transactionLocal else Buffer.keepPulse))
+  override def bud[P, R](initialValue: Pulse[P] = Pulse.none, transient: Boolean = true): StructP[P, R] = {
+    new STMStructP[P, R](new STMBuffer[Pulse[P]](initialValue, if (transient) Buffer.transactionLocal else Buffer.keepPulse))
   }
 
-  class STMStructP[P](override val pulses: STMBuffer[Pulse[P]]) extends BufferedStructP[P] {
+  class STMStructP[P, R](override val pulses: STMBuffer[Pulse[P]]) extends BufferedStructP[P, R] {
     override def buffer[A](default: A, commitStrategy: (A, A) => A): STMBuffer[A] = new STMBuffer[A](default, commitStrategy)
   }
 
