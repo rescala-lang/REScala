@@ -1,6 +1,6 @@
 package rescala.propagation
 
-import java.lang.{ Boolean => jlBool }
+import java.lang.{Boolean => jlBool}
 
 import rescala.graph.{Spores, Reactive}
 import rescala.propagation.LevelQueue.QueueElement
@@ -11,29 +11,19 @@ import scala.collection.immutable.SortedSet
 class LevelQueue[S <: Spores]()(implicit val currenTurn: Turn[S]) {
 
   private var elements = SortedSet.empty[QueueElement[S]]
-  private var numOccurences = Map[Reactive[S], Int]()
 
   def currentLevel(): Int = elements.headOption.fold(Int.MaxValue)(_.level)
 
   /** mark the reactive as needing a reevaluation */
   def enqueue(minLevel: Int, needsEvaluate: Boolean = true)(dep: Reactive[S]): Unit = {
-    val newElem = QueueElement[S](dep.bud.level, dep, minLevel, needsEvaluate)
-    if (!elements.contains(newElem)) {
-
-      elements += newElem
-      numOccurences = numOccurences + (dep -> (numOccurences.getOrElse(dep, 0) + 1))
-    }
+    elements += QueueElement[S](dep.bud.level, dep, minLevel, needsEvaluate)
   }
 
   def remove(reactive: Reactive[S]): Unit = {
     elements = elements.filter(qe => qe.reactive ne reactive)
-    numOccurences = numOccurences - reactive
   }
 
-
-  def isEmpty() = this.synchronized {elements.isEmpty}
-
-  final def handleHead(queueElement: QueueElement[S], evaluator: Reactive[S] => Unit, notEvaluator: Reactive[S] => Unit): () => Unit = {
+  final def handleHead(queueElement: QueueElement[S], evaluator: Reactive[S] => Unit): Unit = {
     val QueueElement(headLevel, head, headMinLevel, doEvaluate) = queueElement
     if (headLevel < headMinLevel) {
       head.bud.updateLevel(headMinLevel)
@@ -49,30 +39,18 @@ class LevelQueue[S <: Spores]()(implicit val currenTurn: Turn[S]) {
         if (r.bud.level <= headMinLevel)
           enqueue(headMinLevel + 1, needsEvaluate = false)(r)
       }
-      () => {}
-    } else if (doEvaluate) {
-      () => evaluator(head)
-    } else if (numOccurences(head) == 1) {
-      () => notEvaluator(head)
-    } else {
-      () => {}
+    }
+    else if (doEvaluate) {
+      evaluator(head)
     }
   }
 
   /** Evaluates all the elements in the queue */
-  def evaluateQueue(evaluator: Reactive[S] => Unit, notEvaluator: Reactive[S] => Unit = r => {}) = {
+  def evaluateQueue(evaluator: Reactive[S] => Unit) = {
     while (elements.nonEmpty) {
-      this.synchronized {
-
-        val head = elements.head
-        elements = elements.tail
-        val queueAction = handleHead(head, evaluator, notEvaluator)
-        val numOccurence = numOccurences(head.reactive)
-        if (numOccurence == 1)
-          numOccurences -= head.reactive
-        else numOccurences += (head.reactive -> (numOccurence - 1))
-        queueAction
-      } ()
+      val head = elements.head
+      elements = elements.tail
+      handleHead(head, evaluator)
     }
   }
 
