@@ -22,8 +22,6 @@ final class Evt[T, S <: Spores]()(engine: S) extends Base[T, S](engine.bud()) wi
 
   override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[S] =
     ReevaluationResult.Static(changed = pulse.isChange)
-
-  override protected[rescala] def incoming(implicit turn: Turn[S]): Set[Reactive[S]] = Set.empty
 }
 
 object Evt {
@@ -47,8 +45,6 @@ final class Var[T, S <: Spores](initval: T)(engine: S) extends Base[T, S](engine
 
   override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[S] =
     ReevaluationResult.Static(changed = pulse.isChange)
-
-  override protected[rescala] def incoming(implicit turn: Turn[S]): Set[Reactive[S]] = Set.empty
 }
 
 object Var {

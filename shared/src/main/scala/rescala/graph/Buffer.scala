@@ -22,7 +22,7 @@ trait Spores {
   type Struct[R] <: TraitStruct[R]
   type StructP[P, R] = Struct[R] with TraitStructP[P, R]
 
-  def bud[P, R](initialValue: Pulse[P] = Pulse.none, transient: Boolean = true): StructP[P, R]
+  def bud[P, R](initialValue: Pulse[P] = Pulse.none, transient: Boolean = true, initialIncoming: Set[R] = Set.empty[R]): StructP[P, R]
 
 }
 
@@ -52,10 +52,10 @@ object Spores {
 }
 
 trait BufferedSpores extends Spores {
-  trait BufferedStructP[P, R] extends TraitStructP[P, R] {
+  abstract class BufferedStructP[P, R](initialIncoming: Set[R]) extends TraitStructP[P, R] {
     def buffer[A](default: A, commitStrategy: CommitStrategy[A]): Buffer[A]
     private val _level: Buffer[Int] = buffer(0, math.max)
-    private val _incoming: Buffer[Set[R]] = buffer(Set.empty, Buffer.commitAsIs)
+    private val _incoming: Buffer[Set[R]] = buffer(initialIncoming, Buffer.commitAsIs)
     private val _outgoing: Buffer[Set[R]] = buffer(Set.empty, Buffer.commitAsIs)
 
     override def level(implicit turn: Turn[_]): Int = _level.get(turn)
@@ -75,9 +75,10 @@ trait BufferedSpores extends Spores {
 object SimpleSpores extends BufferedSpores {
   override type Struct[R] = SimpleStructP[_, R]
 
-  def bud[P, R](initialValue: Pulse[P] = Pulse.none, transient: Boolean = true): StructP[P, R] = new SimpleStructP[P, R](new SimpleBuffer[Pulse[P]](initialValue, if (transient) Buffer.transactionLocal else Buffer.keepPulse))
+  def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): StructP[P, R] =
+    new SimpleStructP[P, R](new SimpleBuffer[Pulse[P]](initialValue, if (transient) Buffer.transactionLocal else Buffer.keepPulse), initialIncoming)
 
-  class SimpleStructP[P, R](override val pulses: SimpleBuffer[Pulse[P]]) extends BufferedStructP[P, R] {
+  class SimpleStructP[P, R](override val pulses: SimpleBuffer[Pulse[P]], initialIncoming: Set[R]) extends BufferedStructP[P, R](initialIncoming) {
     override def buffer[A](default: A, commitStrategy: CommitStrategy[A]): SimpleBuffer[A] = new SimpleBuffer[A](default, commitStrategy)
   }
 }

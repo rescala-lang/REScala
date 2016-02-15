@@ -9,7 +9,7 @@ trait Reactive[S <: Spores] {
 
   protected[rescala] def bud: S#Struct[Reactive[S]]
 
-  protected[rescala] def incoming(implicit turn: Turn[S]): Set[Reactive[S]]
+  final protected[rescala] def incoming(implicit turn: Turn[S]): Set[Reactive[S]] = bud.incoming
 
   /** called when it is this events turn to be evaluated
     * (head of the evaluation queue) */
@@ -23,12 +23,9 @@ trait Reactive[S <: Spores] {
 
 /** helper class to initialise engine and select lock */
 abstract class Base[P, S <: Spores](
-  final override protected[this] val budP: S#StructP[P, Reactive[S]],
-  knownDependencies: Set[Reactive[S]] = Set.empty[Reactive[S]]) extends Pulsing[P, S]  {
+  final override protected[this] val budP: S#StructP[P, Reactive[S]]) extends Pulsing[P, S]  {
 
   final override protected[rescala] def bud: S#Struct[Reactive[S]] = budP
-
-  def staticIncoming: Set[Reactive[S]] = knownDependencies
 }
 
 /** A node that has nodes that depend on it */

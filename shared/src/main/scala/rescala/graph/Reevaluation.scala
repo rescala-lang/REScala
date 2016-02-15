@@ -19,9 +19,6 @@ case class DepDiff[S <: Spores](novel: Set[Reactive[S]], old: Set[Reactive[S]]) 
 trait StaticReevaluation[+P, S <: Spores] {
   this: Pulsing[P, S] =>
 
-  protected def staticIncoming: Set[Reactive[S]]
-  override protected[rescala] def incoming(implicit turn: Turn[S]): Set[Reactive[S]] = staticIncoming
-
   /** side effect free calculation of the new pulse for the current turn */
   protected[rescala] def calculatePulse()(implicit turn: Turn[S]): Pulse[P]
 
@@ -36,8 +33,6 @@ trait StaticReevaluation[+P, S <: Spores] {
 /** reevaluation strategy for dynamic dependencies */
 trait DynamicReevaluation[+P, S <: Spores] {
   this: Pulsing[P, S] =>
-
-  override protected[rescala] def incoming(implicit turn: Turn[S]): Set[Reactive[S]] = bud.incoming
 
   /** side effect free calculation of the new pulse and the new dependencies for the current turn */
   def calculatePulseDependencies(implicit turn: Turn[S]): (Pulse[P], Set[Reactive[S]])

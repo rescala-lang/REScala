@@ -8,7 +8,7 @@ import rescala.turns.{Ticket, Turn}
 object Events {
 
   private class StaticEvent[T, S <: Spores](engine: S, dependencies: Set[Reactive[S]], expr: Turn[S] => Pulse[T], override val toString: String)
-    extends Base[T, S](engine.bud(), dependencies) with Event[T, S] with StaticReevaluation[T, S] {
+    extends Base[T, S](engine.bud(initialIncoming = dependencies)) with Event[T, S] with StaticReevaluation[T, S] {
     override def calculatePulse()(implicit turn: Turn[S]): Pulse[T] = expr(turn)
   }
 
