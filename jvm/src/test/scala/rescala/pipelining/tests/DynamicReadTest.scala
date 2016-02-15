@@ -3,6 +3,7 @@ package rescala.pipelining.tests
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
+import rescala.pipelining.util.LogUtils
 import rescala.{Signals, Var}
 import rescala.pipelining.PipelineEngine
 import rescala.pipelining.tests.PipelineTestUtils._
@@ -18,27 +19,27 @@ class DynamicReadTest extends AssertionsForJUnit with MockitoSugar {
   val letOtherUpdateCreateFramesTime = 200
   
   assert(letOtherUpdateCreateFramesTime < minEvaluationTimeOfUpdate) // Such that the frames are still there
-  println
-  println
+  LogUtils.log("")
+  LogUtils.log("")
   
   val source1 = Var(0)
   val source2 = Var(100)
 
   val dynamicDep = engine.dynamic()(implicit t => {
-    println(s"$t: Evaluate base ${source1(t)}")
+    LogUtils.log(s"$t: Evaluate base ${source1(t)}")
     if (source1(t) % 2 != 0)
       source2(t)
     else 0
   })
   val depOfDynamic = Signals.static(dynamicDep)(implicit t => {
     Thread.sleep(minEvaluationTimeOfUpdate)
-    println(s"$t: Eval of dyn dep completed")
+    LogUtils.log(s"$t: Eval of dyn dep completed")
     dynamicDep.get + 1
   })
 
   val source2Dep = Signals.static(source2)(implicit t => {
     Thread.sleep(minEvaluationTimeOfUpdate)
-    println(s"$t: Eval of source2 dep completed")
+    LogUtils.log(s"$t: Eval of source2 dep completed")
     source2.get + 1
   })
 
@@ -75,7 +76,7 @@ class DynamicReadTest extends AssertionsForJUnit with MockitoSugar {
 
   @Test
   def addDynamicDependency1Before2() = {
-    println("======")
+    LogUtils.log("======")
     source1.set(1)
     assert(depOfDynamic.now == 101)
     source2.set(200)
@@ -87,7 +88,7 @@ class DynamicReadTest extends AssertionsForJUnit with MockitoSugar {
   
   @Test
   def addDynamicDependency2Before1() = {
-    println("======")
+    LogUtils.log("======")
     source2.set(200)
     assert(depOfDynamic.now == 1)
     source1.set(1)
@@ -104,7 +105,7 @@ class DynamicReadTest extends AssertionsForJUnit with MockitoSugar {
     val thread1 = createThread {Thread.sleep(2*letOtherUpdateCreateFramesTime); source1.set(1) }
     val thread2 = createThread {source2.set(200) }
     
-    println("=======")
+    LogUtils.log("=======")
 
     thread2.start
     thread1.start
@@ -125,7 +126,7 @@ class DynamicReadTest extends AssertionsForJUnit with MockitoSugar {
     val thread1 = createThread { source1.set(1) }
     val thread2 = createThread { Thread.sleep(letOtherUpdateCreateFramesTime); source2.set(200) }
 
-    println("====")
+    LogUtils.log("====")
     thread2.start
     thread1.start
     thread1.join
@@ -163,7 +164,7 @@ class DynamicReadTest extends AssertionsForJUnit with MockitoSugar {
     val thread1 = createThread {source1.set(1)}
     val thread2 = createThread {Thread.sleep(letOtherUpdateCreateFramesTime); source2.set(100)}
     
-    println("=======")
+    LogUtils.log("=======")
     
     thread1.start
     thread2.start

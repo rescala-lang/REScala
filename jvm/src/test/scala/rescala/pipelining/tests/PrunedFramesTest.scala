@@ -3,6 +3,7 @@ package rescala.pipelining.tests
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
+import rescala.pipelining.util.LogUtils
 import rescala.{Signals, Var}
 import rescala.pipelining.{Pipeline, PipelineEngine, PipeliningTurn}
 
@@ -28,7 +29,7 @@ class PrunedFramesTest extends AssertionsForJUnit with MockitoSugar {
   @Test
   def testFramesOfPrunedNodesAreMarked() = {
     checkMark = true
-    println("======")
+    LogUtils.log("======")
     source.set(1)
   }
 

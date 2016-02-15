@@ -1,7 +1,8 @@
 package rescala.pipelining
 
 import rescala.graph.Reactive
-import rescala.pipelining.LogUtils._
+import rescala.pipelining.util.LogUtils
+import LogUtils._
 import rescala.propagation.LevelQueue
 
 trait FrameCreator {
@@ -30,7 +31,7 @@ trait QueueBasedFrameCreator extends FrameCreator {
         pipeline.lockDynamic {
         markReactiveFramed(pipeline, _ => {
           if (!pipeline.hasFrame) {
-            println(s"Create frame for $this at $reactive")
+            log(s"Create frame for $this at $reactive")
             createFrame(pipeline)
           }
         })

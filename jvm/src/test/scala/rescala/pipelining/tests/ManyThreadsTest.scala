@@ -6,6 +6,7 @@ import java.util.concurrent.CyclicBarrier
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
+import rescala.pipelining.util.LogUtils
 import rescala.{Signals, Var}
 import rescala.pipelining.Pipeline._
 import rescala.pipelining.tests.PipelineTestUtils._
@@ -101,7 +102,7 @@ class ManyThreadsTest extends AssertionsForJUnit with MockitoSugar {
   def testEvaluationParallel() = {
 
     for (i <- 1 to 100) {
-      println("------")
+      LogUtils.log("------")
       val update1 = createThread {
         s1.set(10)
       }
@@ -149,7 +150,7 @@ class ManyThreadsTest extends AssertionsForJUnit with MockitoSugar {
   @Test (timeout = 10000)
   def testManyThreads() = {
 
-    println("------")
+    LogUtils.log("------")
 
     val rand = new Random
     val numThreads = 20

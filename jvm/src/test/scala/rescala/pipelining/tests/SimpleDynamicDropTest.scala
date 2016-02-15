@@ -4,31 +4,34 @@ import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.engines.Ticket
+import rescala.pipelining.util.LogUtils
 import rescala.pipelining.{Pipeline, PipelineEngine}
 import rescala.pipelining.tests.PipelineTestUtils._
 
 class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
 
   implicit val engine = new PipelineEngine()
+
   import engine.Var
 
   val timeToAllowOtherTurnToCreateFrames = 100
 
   val source1 = Var(0)
   val source2 = Var(2)
-  var numEvaluated = 0;
+  var numEvaluated = 0
   val dynDep = engine.dynamic()(implicit t => {
-    println(s"BEGIN evaluate $t")
-    numEvaluated += 1;
+    LogUtils.log(s"BEGIN evaluate $t")
+    numEvaluated += 1
     Thread.sleep(timeToAllowOtherTurnToCreateFrames)
     val source1Val = source1(t)
-    println(s"Read val $source1Val")
+    LogUtils.log(s"Read val $source1Val")
     val newValue = if (source1Val % 2 == 0) {
       source2(t)
-    } else {
+    }
+    else {
       0
     }
-    println(s"END evaluate $t with $newValue")
+    LogUtils.log(s"END evaluate $t with $newValue")
     newValue
   })(Ticket(Right(engine)))
 
@@ -39,13 +42,13 @@ class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
 
   @Test
   def serialDropTest() = {
-    println("=====")
+    LogUtils.log("=====")
     assert(dynDep.now == 2)
     source1.set(1)
     assert(dynDep.now == 0)
     assert(numEvaluated == 1)
     numEvaluated = 0
-    PipelineTestUtils.readLatestValue {implicit turn => 
+    PipelineTestUtils.readLatestValue { implicit turn =>
       assert(source2.bud.outgoing == Set())
       assert(source1.bud.outgoing == Set(dynDep))
       assert(dynDep.incoming == Set(source1))
@@ -76,8 +79,8 @@ class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
       numEvaluated = 0
       dynDepTracker.reset()
 
-      println()
-      println()
+      LogUtils.log("")
+      LogUtils.log("")
 
       val threadRemoveDep = createThread(source1.set(1))
       val threadAddDep = createThread(source1.set(2))
@@ -85,7 +88,8 @@ class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
       if (addBeforeRemove) {
         threadRemoveDep.start()
         threadAddDep.start()
-      } else {
+      }
+      else {
         threadAddDep.start()
         threadRemoveDep.start()
       }
@@ -96,7 +100,7 @@ class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
       PipelineTestUtils.readLatestValue { implicit turn =>
         dynDep.now match {
           case 0 =>
-            println("==> Add before remove")
+            LogUtils.log("==> Add before remove")
             assert(dynDep.incoming == Set(source1))
             assert(dynDep.now == 0)
             assert(source1.bud.outgoing == Set(dynDep))
@@ -105,7 +109,7 @@ class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
             assert(dynDepTracker.values == List(0)) // Only one change because the change 2 -> 2 is not observed
             addBeforeRemove = true
           case 2 =>
-            println("==> Remove before add")
+            LogUtils.log("==> Remove before add")
             assert(dynDep.now == 2)
             assert(dynDep.incoming == Set(source1, source2))
             assert(source1.bud.outgoing == Set(dynDep))
@@ -128,8 +132,8 @@ class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
     // Again trust the nondeterminicness of execution
     while (!removeBeforeUpdateSuspicious || !updateBeforeRemove) {
 
-      println
-      println
+      LogUtils.log("")
+      LogUtils.log("")
 
       val removeDepThread = createThread(source1.set(1))
       val updateDepThread = createThread(source2.set(100))
@@ -141,7 +145,8 @@ class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
       if (updateBeforeRemove) {
         removeDepThread.start()
         updateDepThread.start()
-      } else {
+      }
+      else {
         updateDepThread.start()
         removeDepThread.start()
       }
@@ -166,18 +171,18 @@ class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
         case 1 =>
 
           //    case 0 =>
-          //     println("==> Remove before Update no suspicious frame")
+          //     LogUtils.log("==> Remove before Update no suspicious frame")
           // I dont force to get this result because it is equal to sequential execution
           // and hard to get scheduled in parallel
           //   case 1 =>
-          println("==> Remove before Update suspicious frame")
+          LogUtils.log("==> Remove before Update suspicious frame")
           removeBeforeUpdateSuspicious = true
           //   case x =>
           //    fail(s"Illegal number of suspicious and not evaluated frames $x")
           // }
           assert(dynDepTracker.values == List(0))
         case 2 =>
-          println("==> Update before remove")
+          LogUtils.log("==> Update before remove")
           updateBeforeRemove = true
           assert(dynDepTracker.values == List(100, 0))
         case _ =>
