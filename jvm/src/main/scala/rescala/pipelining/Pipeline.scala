@@ -1,11 +1,10 @@
 package rescala.pipelining
 
+import rescala.graph._
 import rescala.propagation.Turn
 
-import scala.collection.immutable.Queue
 import scala.annotation.tailrec
-import rescala.graph._
-import java.util.concurrent.locks.ReentrantLock
+import scala.collection.immutable.Queue
 
 object Pipeline {
   protected[pipelining] def pipelineFor(at: Reactive[PipelineSpores.type]) = at.bud.pipeline

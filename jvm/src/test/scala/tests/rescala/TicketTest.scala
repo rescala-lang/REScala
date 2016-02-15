@@ -5,10 +5,10 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
+import rescala.engines.{Engine, Ticket}
 import rescala.graph.Spores
 import rescala.pipelining.PipelineEngine
 import rescala.propagation.Turn
-import rescala.engines.{Engine, Ticket}
 
 object TicketTest extends JUnitParameters
 

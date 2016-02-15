@@ -2,7 +2,7 @@ package rescala.propagation
 
 import java.lang.{Boolean => jlBool}
 
-import rescala.graph.{Spores, Reactive}
+import rescala.graph.{Reactive, Spores}
 import rescala.propagation.LevelQueue.QueueElement
 
 import scala.collection.immutable.SortedSet

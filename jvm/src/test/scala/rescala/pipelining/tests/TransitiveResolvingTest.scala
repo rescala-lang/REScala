@@ -1,13 +1,10 @@
 package rescala.pipelining.tests
 
+import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.Var
+import rescala.{Signals, Var}
 import rescala.pipelining.PipelineEngine
-import rescala.Signals
-import org.junit.Test
-import PipelineTestUtils._
-import scala.collection.immutable.Queue
 
 class TransitiveResolvingTest extends AssertionsForJUnit with MockitoSugar {
   

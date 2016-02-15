@@ -1,10 +1,8 @@
 package rescala.parrp
 
-import java.util
-
-import rescala.graph.{Pulsing, Reactive}
-import rescala.propagation.{FactoryReference, LevelQueue, PropagationImpl}
+import rescala.graph.Reactive
 import rescala.parrp.ParRP.{Await, Done, Retry}
+import rescala.propagation.{FactoryReference, PropagationImpl}
 
 import scala.annotation.tailrec
 

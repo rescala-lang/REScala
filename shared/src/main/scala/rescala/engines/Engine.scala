@@ -3,8 +3,7 @@ package rescala.engines
 import rescala.graph.Spores
 import rescala.macros.ReactiveMacros
 import rescala.propagation.Turn
-import rescala.{propagation, Events, Signals, Signal}
-import rescala.graph.{Reactive, Spores}
+import rescala.{Events, Signals, propagation}
 
 import scala.annotation.implicitNotFound
 import scala.language.experimental.macros

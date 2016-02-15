@@ -1,7 +1,7 @@
 package rescala.pipelining
 
-import rescala.pipelining.propagation.PipelineQueue
 import rescala.graph.Reactive
+import rescala.pipelining.propagation.PipelineQueue
 
 class AwakingLevelQueue(currentTurn: PipeliningTurn) extends PipelineQueue()(currentTurn) {
 

@@ -1,7 +1,7 @@
 package rescala.graph
 
-import Spores.{TraitStructP, TraitStruct}
 import rescala.graph.Buffer.CommitStrategy
+import rescala.graph.Spores.{TraitStruct, TraitStructP}
 import rescala.propagation.Turn
 
 import scala.language.{existentials, higherKinds, implicitConversions}

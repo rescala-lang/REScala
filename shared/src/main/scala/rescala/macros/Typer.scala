@@ -1,8 +1,7 @@
 package rescala.macros
 
-import scala.collection.mutable.Stack
-import scala.reflect.macros.blackbox.Context
 import scala.reflect.macros.TypecheckException
+import scala.reflect.macros.blackbox.Context
 
 object Typer {
   def apply[C <: Context](c: C): Typer[c.type] =

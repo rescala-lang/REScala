@@ -1,9 +1,8 @@
 package rescala.pipelining.propagation
 
-import rescala.graph.{Reactive, ReevaluationResult}
 import rescala.graph.ReevaluationResult.{Dynamic, Static}
+import rescala.graph.{Reactive, ReevaluationResult}
 import rescala.pipelining.PipelineSpores
-import rescala.propagation.PropagationImpl
 
 trait PropagateNoChanges {
 

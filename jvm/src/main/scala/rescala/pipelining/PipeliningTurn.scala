@@ -1,19 +1,11 @@
 package rescala.pipelining
 
-import java.util.concurrent.atomic.AtomicReference
-import rescala.pipelining.propagation._
-
-import scala.annotation.elidable
-import scala.annotation.elidable.ASSERTION
-import rescala.graph.{Committable, Reactive}
-import rescala.propagation._
-import rescala.pipelining.util.JavaFunctionsImplicits.buildUnaryOp
-import rescala.pipelining.util.JavaFunctionsImplicits._
-import java.util.concurrent.locks.ReadWriteLock
+import java.util.concurrent.Semaphore
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
-import java.util.concurrent.locks.LockSupport
-import java.util.concurrent.Semaphore
+import rescala.graph.{Committable, Reactive}
+import rescala.pipelining.propagation._
+import rescala.propagation._
 
 object PipeliningTurn {
 
@@ -33,9 +25,9 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
   /** used to create state containers of each reactive */
   override type S = PipelineSpores.type
 
+  import LogUtils._
   import Pipeline._
   import PipeliningTurn._
-  import LogUtils._
 
   /**
    * Remember all reactives for which a frame was created during this turn

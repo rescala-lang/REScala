@@ -6,9 +6,9 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
+import rescala.engines.Engine
 import rescala.graph.Spores
 import rescala.propagation.Turn
-import rescala.engines.Engine
 import tests.rescala.JUnitParameters
 
 
@@ -22,7 +22,7 @@ object OOPropertiesEventTest extends JUnitParameters
 @RunWith(value = classOf[Parameterized])
 class OOPropertiesEventTest[S <: Spores](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
   implicit val implicitEngine: Engine[S, Turn[S]] = engine
-  import implicitEngine.{Evt, Event, Signal, Var}
+  import implicitEngine.{Event, Evt}
 
 
   @Test def eventsAreInherited() = {

@@ -1,7 +1,6 @@
 package rescala.parrp
 
 import java.util.concurrent.{ConcurrentHashMap, Semaphore}
-import java.util.concurrent.atomic.AtomicReference
 
 import rescala.graph.Globals
 import rescala.propagation.Turn

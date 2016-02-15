@@ -6,17 +6,17 @@ import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.Observe.once
+import rescala.engines.Engine
 import rescala.graph.Spores
 import rescala.propagation.Turn
-import rescala.engines.Engine
-import rescala.{Event, Events, Signal, Signals, Var}
+import rescala.{Events, Signals}
 
 object ObserveTests extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])
 class ObserveTests[S <: Spores](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
   implicit val implicitEngine: Engine[S, Turn[S]] = engine
-  import implicitEngine.{Evt, Var, Signal, Event}
+  import implicitEngine.{Event, Signal, Var}
 
   @Test def `can observe signals`(): Unit = {
     var result = List[Int]()

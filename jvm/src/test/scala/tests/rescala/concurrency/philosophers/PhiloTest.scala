@@ -2,11 +2,11 @@ package tests.rescala.concurrency.philosophers
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
+import rescala.engines.{Engine, JVMEngines}
 import rescala.graph.Spores
 import rescala.propagation.Turn
-import rescala.engines.{JVMEngines, Engine}
 import tests.rescala.concurrency.Spawn
-import tests.rescala.concurrency.philosophers.PhilosopherTable.{Thinking, Seating}
+import tests.rescala.concurrency.philosophers.PhilosopherTable.{Seating, Thinking}
 
 import scala.annotation.tailrec
 import scala.util.Random

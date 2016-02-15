@@ -1,6 +1,6 @@
 package rescala.pipelining.propagation
 
-import java.lang.{ Boolean => jlBool }
+import java.lang.{Boolean => jlBool}
 
 import rescala.graph.Reactive
 import rescala.pipelining.PipelineSpores

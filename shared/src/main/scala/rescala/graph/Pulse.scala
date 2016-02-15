@@ -1,9 +1,5 @@
 package rescala.graph
 
-import java.util.concurrent.ThreadLocalRandom
-
-import scala.util.DynamicVariable
-
 
 
 

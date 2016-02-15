@@ -6,9 +6,9 @@ import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.Signals
+import rescala.engines.Engine
 import rescala.graph.Spores
 import rescala.propagation.Turn
-import rescala.engines.Engine
 
 
 object HigherOrderTestSuite extends JUnitParameters
@@ -16,7 +16,7 @@ object HigherOrderTestSuite extends JUnitParameters
 @RunWith(value = classOf[Parameterized])
 class HigherOrderTestSuite[S <: Spores](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
   implicit val implicitEngine: Engine[S, Turn[S]] = engine
-  import implicitEngine.{Evt, Var, Signal, Event, dynamic}
+  import implicitEngine.{Event, Evt, Signal, Var, dynamic}
 
 
   @Test def basicHigherOrderSignal_canBeAccessed(): Unit = {

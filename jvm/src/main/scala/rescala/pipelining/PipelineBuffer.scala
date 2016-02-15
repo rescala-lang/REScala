@@ -1,11 +1,7 @@
 package rescala.pipelining
 
-import rescala.propagation.Turn
-
-import scala.collection.immutable.Queue
-import scala.annotation.tailrec
-
 import rescala.graph._
+import rescala.propagation.Turn
 
 object ValueHolder {
 

@@ -1,14 +1,10 @@
 package rescala.pipelining.tests
 
+import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.Var
-import rescala.Signals
-import rescala.pipelining.PipelineEngine
-import org.junit.Test
-import rescala.pipelining.Pipeline
-import rescala.pipelining.PipeliningTurn
-import rescala.propagation.Turn
+import rescala.{Signals, Var}
+import rescala.pipelining.{Pipeline, PipelineEngine, PipeliningTurn}
 
 class PrunedFramesTest extends AssertionsForJUnit with MockitoSugar {
   

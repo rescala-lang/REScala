@@ -1,8 +1,8 @@
 package rescala.macros
 
+import rescala.graph.{PulseOption, Spores, Stateful}
 import rescala.propagation.Turn
 import rescala.{Event, Signal}
-import rescala.graph.{PulseOption, Spores, Stateful}
 
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox

@@ -1,17 +1,12 @@
 package rescala.pipelining.tests
 
-import rescala.propagation.Turn
-
-import scala.collection.immutable.Queue
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.pipelining.Frame
-import rescala.pipelining.PipelineEngine
-import rescala.pipelining.PipeliningTurn
-import rescala.pipelining.Pipeline
 import rescala.graph.Buffer
-import rescala.graph.Reactive
+import rescala.pipelining.{Frame, Pipeline, PipelineEngine}
+
+import scala.collection.immutable.Queue
 
 class PipelineBufferTest extends AssertionsForJUnit with MockitoSugar {
   

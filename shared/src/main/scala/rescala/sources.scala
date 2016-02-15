@@ -1,8 +1,8 @@
 package rescala
 
+import rescala.engines.Engine
 import rescala.graph._
 import rescala.propagation.Turn
-import rescala.engines.Engine
 
 sealed trait Source[T, S <: Spores] {
   def admit(value: T)(implicit turn: Turn[S]): Unit

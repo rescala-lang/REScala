@@ -1,8 +1,8 @@
 package rescala
 
+import rescala.engines.Ticket
 import rescala.graph._
 import rescala.propagation.Turn
-import rescala.engines.Ticket
 
 
 trait Observe[S <: Spores] {

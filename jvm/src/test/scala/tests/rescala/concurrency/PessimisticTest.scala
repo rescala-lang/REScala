@@ -2,14 +2,14 @@ package tests.rescala.concurrency
 
 
 import java.util.concurrent.atomic.AtomicReference
-import java.util.concurrent.{TimeUnit, ConcurrentLinkedQueue, CountDownLatch}
+import java.util.concurrent.{ConcurrentLinkedQueue, CountDownLatch, TimeUnit}
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
+import rescala.engines.{Engine, EngineImpl}
 import rescala.graph.Reactive
+import rescala.parrp.{Backoff, ParRP, ParRPSpores}
 import rescala.propagation.Turn
-import rescala.parrp.{ParRPSpores, Backoff, ParRP}
-import rescala.engines.{EngineImpl, Engines, Engine}
 import rescala.{Signal, Signals, Var}
 
 import scala.collection.JavaConverters._

@@ -1,9 +1,8 @@
 package rescala.pipelining.propagation
 
-import rescala.graph.{Committable, Reactive}
+import rescala.graph.{Committable, Reactive, ReevaluationResult}
 import rescala.pipelining.PipelineSpores
-import rescala.propagation.{Turn, AbstractPropagation}
-import rescala.graph.ReevaluationResult
+import rescala.propagation.{AbstractPropagation, Turn}
 
 
 trait PipelinePropagationImpl extends AbstractPropagation[PipelineSpores.type] {

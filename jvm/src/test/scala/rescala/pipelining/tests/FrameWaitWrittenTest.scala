@@ -1,13 +1,12 @@
 package rescala.pipelining.tests
 
+import java.util.concurrent.CyclicBarrier
+
+import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.pipelining.Pipeline
-import rescala.Var
-import rescala.pipelining.PipelineEngine
-import org.junit.Test
-import PipelineTestUtils._
-import java.util.concurrent.CyclicBarrier
+import rescala.pipelining.{Pipeline, PipelineEngine}
+import rescala.pipelining.tests.PipelineTestUtils._
 
 class FrameWaitWrittenTest extends AssertionsForJUnit with MockitoSugar {
   

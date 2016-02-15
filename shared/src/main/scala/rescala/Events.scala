@@ -1,9 +1,9 @@
 package rescala
 
+import rescala.engines.Ticket
 import rescala.graph.Pulse.{Diff, NoChange}
 import rescala.graph._
 import rescala.propagation.Turn
-import rescala.engines.Ticket
 
 
 object Events {

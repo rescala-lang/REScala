@@ -2,7 +2,6 @@ package rescala.pipelining
 
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.LockSupport
-import rescala.pipelining.util.JavaFunctionsImplicits._
 
 object Frame {
 

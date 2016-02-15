@@ -2,19 +2,19 @@ package tests.rescala.concurrency.philosophers
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import rescala.Signals.lift
+import rescala.engines.Engine
+import rescala.graph.Globals.named
+import rescala.graph.{Committable, Spores}
 import rescala.propagation.Turn
 import rescala.{Signal, Var}
-import rescala.graph.Globals.named
-import rescala.graph.{Spores, Globals, Committable}
-import rescala.engines.Engine
+import rescala.Signals.lift
 
 import scala.annotation.tailrec
 
 class PhilosopherTable[S <: Spores](philosopherCount: Int, work: Long)(implicit val engine: Engine[S, Turn[S]]) {
 
+  import engine.Var
   import tests.rescala.concurrency.philosophers.PhilosopherTable._
-  import engine.{Var, Signal}
 
   val seatings = createTable(philosopherCount)
 

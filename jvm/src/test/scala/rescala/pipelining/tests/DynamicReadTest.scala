@@ -1,16 +1,11 @@
 package rescala.pipelining.tests
 
+import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.Var
-import rescala.Signals
+import rescala.{Signals, Var}
 import rescala.pipelining.PipelineEngine
-import org.junit.Test
-import rescala.graph.Reactive
-import rescala.pipelining.PipeliningTurn
-import PipelineTestUtils._
-import java.util.concurrent.CyclicBarrier
-import rescala.Signal
+import rescala.pipelining.tests.PipelineTestUtils._
 
 /**
  * @author moritzlichter

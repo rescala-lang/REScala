@@ -4,10 +4,6 @@ import rescala.graph.Spores.TraitStructP
 import rescala.graph.{Buffer, Committable, Pulse, Spores}
 import rescala.propagation.Turn
 
-import rescala.graph.Spores.TraitStructP
-import rescala.propagation.Turn
-
-import scala.concurrent.stm.{InTxn, Ref}
 import scala.language.implicitConversions
 
 object ParRPSpores extends Spores {

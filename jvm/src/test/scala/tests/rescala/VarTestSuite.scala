@@ -7,17 +7,16 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.Var
+import rescala.engines.Engine
 import rescala.graph.Spores
 import rescala.propagation.Turn
-import rescala.engines.Engine
 
 object VarTestSuite extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])
 class VarTestSuite[S <: Spores](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
   implicit val implicitEngine: Engine[S, Turn[S]] = engine
-  import implicitEngine.{Evt, Var, Signal, Event}
+  import implicitEngine.Var
 
   @Test def getValAfterCreationReturnsInitializationValue(): Unit = {
     val v = Var(1)

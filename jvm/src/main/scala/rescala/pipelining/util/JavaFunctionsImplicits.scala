@@ -1,7 +1,8 @@
 package rescala.pipelining.util
 
-import scala.language.implicitConversions
 import java.util.function.UnaryOperator
+
+import scala.language.implicitConversions
 
 object JavaFunctionsImplicits {
 

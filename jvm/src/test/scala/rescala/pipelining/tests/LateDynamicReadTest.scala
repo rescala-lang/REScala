@@ -1,14 +1,13 @@
 package rescala.pipelining.tests
 
+import java.util.concurrent.Semaphore
+
+import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.Var
-import rescala.Signals
+import rescala.{Signals, Var}
 import rescala.pipelining.PipelineEngine
-import org.junit.Test
-import PipelineTestUtils._
-import java.util.concurrent.CyclicBarrier
-import java.util.concurrent.Semaphore
+import rescala.pipelining.tests.PipelineTestUtils._
 
 class LateDynamicReadTest extends AssertionsForJUnit with MockitoSugar {
   

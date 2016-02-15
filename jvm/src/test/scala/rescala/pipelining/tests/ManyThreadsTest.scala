@@ -1,19 +1,18 @@
 package rescala.pipelining.tests
 
-import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mock.MockitoSugar
-import rescala.pipelining.{PipelineSpores, PipelineEngine, PipeliningTurn}
-import rescala.Var
-import org.junit.Test
-import rescala.Signals
-import rescala.propagation.Turn
-import scala.collection.immutable.Queue
-import PipelineTestUtils._
-import rescala.graph.Reactive
 import java.util.Random
 import java.util.concurrent.CyclicBarrier
-import scala.annotation.tailrec
+
+import org.junit.Test
+import org.scalatest.junit.AssertionsForJUnit
+import org.scalatest.mock.MockitoSugar
+import rescala.{Signals, Var}
 import rescala.pipelining.Pipeline._
+import rescala.pipelining.tests.PipelineTestUtils._
+import rescala.pipelining.{PipelineEngine, PipelineSpores}
+import rescala.propagation.Turn
+
+import scala.annotation.tailrec
 
 class ManyThreadsTest extends AssertionsForJUnit with MockitoSugar {
 

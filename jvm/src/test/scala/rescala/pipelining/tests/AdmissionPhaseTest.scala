@@ -1,14 +1,12 @@
 package rescala.pipelining.tests
 
+import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import org.junit.Test
-import rescala.Var
-import PipelineTestUtils._
-import rescala.pipelining.PipelineBuffer
-import rescala.pipelining.PipelineEngine
-import rescala.Signals
+import rescala.{Signals, Var}
 import rescala.graph.Committable
+import rescala.pipelining.PipelineEngine
+import rescala.pipelining.tests.PipelineTestUtils._
 import rescala.propagation.Turn
 
 class AdmissionPhaseTest extends AssertionsForJUnit with MockitoSugar {

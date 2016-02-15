@@ -3,10 +3,10 @@ package rescala.pipelining.tests
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.{Signals, Var}
 import rescala.graph.Reactive
 import rescala.pipelining.Pipeline._
 import rescala.pipelining.{Pipeline, PipelineEngine, PipelineSpores, PipeliningTurn}
+import rescala.{Signals, Var}
 
 import scala.collection.immutable.Queue
 
