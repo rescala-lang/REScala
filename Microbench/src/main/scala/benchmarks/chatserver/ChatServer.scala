@@ -1,6 +1,6 @@
 package benchmarks.chatserver
 
-import rescala.Events
+import rescala.reactives.Events
 import rescala.graph.Spores
 import rescala.propagation.Turn
 import rescala.engines.Engine

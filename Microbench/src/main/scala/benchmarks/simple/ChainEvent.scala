@@ -7,7 +7,7 @@ import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
 import rescala.propagation.Turn
 import rescala.engines.Engine
-import rescala.{Event, Evt}
+import rescala.reactives.{Event, Evt}
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)

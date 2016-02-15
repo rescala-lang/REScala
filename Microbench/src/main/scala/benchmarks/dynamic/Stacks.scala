@@ -5,11 +5,10 @@ import java.util.concurrent.TimeUnit
 import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
-import rescala._
+import rescala.engines.Engine
 import rescala.graph.Spores
 import rescala.propagation.Turn
-import rescala.engines.{Engine, Ticket}
-import rescala.reactives.{Signals, Signal}
+import rescala.reactives.{Signal, Signals, Var}
 
 import scala.collection.immutable.Range
 

@@ -6,7 +6,7 @@ import java.util.concurrent.locks.ReentrantLock
 import benchmarks.{Size, EngineParam, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{Blackhole, ThreadParams, BenchmarkParams}
-import rescala.{Evt, Event}
+import rescala.reactives.{Evt, Event}
 import rescala.graph.Spores
 
 

@@ -6,7 +6,7 @@ import rescala.reactives.Signals
 import Signals.lift
 import rescala.propagation.Turn
 import rescala.engines.Engine
-import rescala.Var
+import rescala.reactives.Var
 
 class DynamicPhilosopherTable[S <: Spores](philosopherCount: Int, work: Long)(override implicit val engine: Engine[S, Turn[S]]) extends PhilosopherTable(philosopherCount, work)(engine) {
 

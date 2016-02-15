@@ -5,11 +5,10 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import benchmarks.{EngineParam, Workload}
 import org.openjdk.jmh.annotations._
-import rescala._
+import rescala.engines.Engine
 import rescala.graph.Spores
 import rescala.propagation.Turn
-import rescala.engines.Engine
-import rescala.reactives.{Signals, Signal}
+import rescala.reactives._
 
 @AuxCounters
 @State(Scope.Thread)

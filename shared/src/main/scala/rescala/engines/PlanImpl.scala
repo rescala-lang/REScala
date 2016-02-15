@@ -9,7 +9,7 @@ trait PlanImpl[S <: Spores, TImpl <: AbstractPropagation[S]] extends Engine[S, T
 
   protected def makeTurn(): TImpl
 
-  val currentTurn: DynamicVariable[Option[TImpl]] = new DynamicVariable[Option[TImpl]](None)
+  private val currentTurn: DynamicVariable[Option[TImpl]] = new DynamicVariable[Option[TImpl]](None)
 
   override def subplan[T](initialWrites: Reactive*)(f: TImpl => T): T = currentTurn.value match {
     case None => plan(initialWrites: _*)(f)

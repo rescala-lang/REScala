@@ -21,7 +21,7 @@ class MultiReverseFan[S <: rescala.graph.Spores] {
 
   implicit var engine: Engine[S, Turn[S]] = _
 
-  var sources: Array[rescala.Var[Int, S]] = _
+  var sources: Array[rescala.reactives.Var[Int, S]] = _
   var results: Array[Signal[Int, S]] = _
   var locks: Array[Lock] = null
   var groupSize: Int = _

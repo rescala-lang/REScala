@@ -13,6 +13,8 @@ import scala.language.experimental.macros
 @implicitNotFound(msg = "could not find a propagation engine, select one from Engines")
 trait Engine[S <: Spores, +TTurn <: Turn[S]] {
 
+  implicit def _engine: this.type = this
+
   final type Signal[+A] = reactives.Signal[A, S]
   final type Event[+A] = reactives.Event[A, S]
   final type Var[A] = reactives.Var[A, S]

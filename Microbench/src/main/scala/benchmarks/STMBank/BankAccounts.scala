@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import benchmarks.{EngineParam, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{Blackhole, BenchmarkParams, ThreadParams}
-import rescala._
+import rescala.reactives._
 import rescala.graph.Spores
 import rescala.propagation.Turn
 import rescala.engines.{Engine, Ticket}
