@@ -5,10 +5,10 @@ import rescala.pipelining.propagation._
 
 import scala.annotation.elidable
 import scala.annotation.elidable.ASSERTION
-import rescala.graph.{ParRPSpores, Committable, Reactive}
+import rescala.graph.{Committable, Reactive}
 import rescala.propagation._
-import rescala.util.JavaFunctionsImplicits.buildUnaryOp
-import rescala.util.JavaFunctionsImplicits._
+import rescala.pipelining.util.JavaFunctionsImplicits.buildUnaryOp
+import rescala.pipelining.util.JavaFunctionsImplicits._
 import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 

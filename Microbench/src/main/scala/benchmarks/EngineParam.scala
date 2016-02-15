@@ -2,7 +2,7 @@ package benchmarks
 
 import org.openjdk.jmh.annotations.{Param, Scope, State}
 import rescala.propagation.Turn
-import rescala.synchronization.Backoff
+import rescala.parrp.Backoff
 import rescala.engines.{Engines, Engine}
 
 @State(Scope.Benchmark)

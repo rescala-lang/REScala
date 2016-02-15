@@ -1,12 +1,14 @@
-package rescala.graph
+package rescala.parrp
+
+import rescala.graph.Spores.TraitStructP
+import rescala.graph.{Buffer, Committable, Pulse, Spores}
+import rescala.propagation.Turn
 
 import rescala.graph.Spores.TraitStructP
 import rescala.propagation.Turn
-import rescala.synchronization.{TurnLock, Key, ParRP, STMSync}
 
 import scala.concurrent.stm.{InTxn, Ref}
 import scala.language.implicitConversions
-
 
 object ParRPSpores extends Spores {
   override type Struct[R] = ParRPStructP[_, R]
@@ -80,49 +82,5 @@ object ParRPSpores extends Spores {
     }
 
 
-  }
-}
-
-object STMSpores extends BufferedSpores {
-  override type Struct[R] = STMStructP[_, R]
-
-  override def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): StructP[P, R] = {
-    new STMStructP[P, R](new STMBuffer[Pulse[P]](initialValue, if (transient) Buffer.transactionLocal else Buffer.keepPulse), initialIncoming)
-  }
-
-  class STMStructP[P, R](override val pulses: STMBuffer[Pulse[P]], initialIncoming: Set[R]) extends BufferedStructP[P, R](initialIncoming) {
-    override def buffer[A](default: A, commitStrategy: (A, A) => A): STMBuffer[A] = new STMBuffer[A](default, commitStrategy)
-  }
-
-}
-
-final class STMBuffer[A](initialValue: A, initialStrategy: (A, A) => A) extends Buffer[A] with Committable {
-
-  private val current: Ref[A] = Ref(initialValue)
-  private val update: Ref[Option[A]] = Ref(None)
-  private val commitStrategy: (A, A) => A = initialStrategy
-
-  implicit def inTxn(implicit turn: Turn[_]): InTxn = turn match {
-    case stmTurn: STMSync => stmTurn.inTxn
-    case _ => throw new IllegalStateException(s"$turn has invalid type for $this")
-  }
-
-  override def transform(f: (A) => A)(implicit turn: Turn[_]): A = {
-    val value = f(get)
-    set(value)
-    value
-  }
-  override def set(value: A)(implicit turn: Turn[_]): Unit = {
-    update.set(Some(value))
-    turn.schedule(this)
-  }
-  override def base(implicit turn: Turn[_]) = current.get
-  override def get(implicit turn: Turn[_]): A = update.get.getOrElse(current.get)
-  override def release(implicit turn: Turn[_]): Unit = {
-    update.set(None)
-  }
-  override def commit(implicit turn: Turn[_]): Unit = {
-    current.set(commitStrategy(current.get, get))
-    release
   }
 }

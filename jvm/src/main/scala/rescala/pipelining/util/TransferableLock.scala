@@ -1,4 +1,4 @@
-package rescala.util
+package rescala.pipelining.util
 
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.LockSupport

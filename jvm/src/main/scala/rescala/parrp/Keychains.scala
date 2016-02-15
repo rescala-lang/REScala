@@ -1,4 +1,4 @@
-package rescala.synchronization
+package rescala.parrp
 
 import scala.annotation.tailrec
 

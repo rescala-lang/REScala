@@ -4,8 +4,7 @@ import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import rescala.graph.Spores
 import rescala.propagation.Turn
-import rescala.synchronization.Engines
-import rescala.engines.Engine
+import rescala.engines.{JVMEngines, Engine}
 import tests.rescala.concurrency.Spawn
 import tests.rescala.concurrency.philosophers.PhilosopherTable.{Thinking, Seating}
 
@@ -49,8 +48,8 @@ class PhiloTest extends AssertionsForJUnit {
     println(s"philo party done sleeping on $engine (dynamic $dynamic)")
   }
 
-  @Test def eatingContestsSpinning(): Unit = `eat!`(Engines.parrp, dynamic = false)
+  @Test def eatingContestsSpinning(): Unit = `eat!`(JVMEngines.parrp, dynamic = false)
 
-  @Test def eatingContestsSpinningDynamic(): Unit = `eat!`(Engines.parrp, dynamic = true)
+  @Test def eatingContestsSpinningDynamic(): Unit = `eat!`(JVMEngines.parrp, dynamic = true)
 
 }

@@ -1,4 +1,4 @@
-package rescala.synchronization
+package rescala.parrp
 
 import java.util.concurrent.atomic.AtomicReference
 

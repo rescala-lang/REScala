@@ -6,9 +6,9 @@ import java.util.concurrent.{TimeUnit, ConcurrentLinkedQueue, CountDownLatch}
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
-import rescala.graph.{ParRPSpores, Reactive}
+import rescala.graph.Reactive
 import rescala.propagation.Turn
-import rescala.synchronization.{Backoff, ParRP}
+import rescala.parrp.{ParRPSpores, Backoff, ParRP}
 import rescala.engines.{EngineImpl, Engines, Engine}
 import rescala.{Signal, Signals, Var}
 

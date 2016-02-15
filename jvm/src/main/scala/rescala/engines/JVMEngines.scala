@@ -1,15 +1,16 @@
-package rescala.synchronization
+package rescala.engines
 
-import rescala.graph.{ParRPSpores, STMSpores, Spores}
+import rescala.engines.Engines.{synchron, synchronFair, unmanaged}
+import rescala.graph.Spores
+import rescala.parrp.{Backoff, ParRP, ParRPSpores}
 import rescala.pipelining.{PipelineEngine, PipelineSpores, PipeliningTurn}
 import rescala.propagation.Turn
-import rescala.engines.Engines.{synchron, synchronFair, unmanaged}
-import rescala.engines.{Engine, EngineImpl}
+import rescala.stm.{STMEngine, STMSpores}
 
 import scala.concurrent.stm.atomic
 import scala.language.existentials
 
-object Engines {
+object JVMEngines {
 
   type TEngine = Engine[S, Turn[S]] forSome { type S <: Spores }
 
@@ -32,8 +33,8 @@ object Engines {
 
   implicit val pipeline: Engine[PipelineSpores.type, PipeliningTurn] = new PipelineEngine()
 
-  implicit val stm: Engine[STMSpores.type, STMSync] = new EngineImpl[STMSpores.type, STMSync](STMSpores, new STMSync()) {
-    override def plan[R](i: Reactive*)(f: STMSync => R): R = atomic { tx => super.plan(i: _*)(f) }
+  implicit val stm: Engine[STMSpores.type, STMEngine] = new EngineImpl[STMSpores.type, STMEngine](STMSpores, new STMEngine()) {
+    override def plan[R](i: Reactive*)(f: STMEngine => R): R = atomic { tx => super.plan(i: _*)(f) }
   }
 
   def spinningWithBackoff(backOff: () => Backoff): Engine[ParRPSpores.type, ParRP] = new EngineImpl[ParRPSpores.type, ParRP](ParRPSpores, new ParRP(backOff()))

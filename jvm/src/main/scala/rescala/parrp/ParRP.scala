@@ -1,10 +1,10 @@
-package rescala.synchronization
+package rescala.parrp
 
 import java.util
 
-import rescala.graph.{ParRPSpores, Pulsing, Reactive}
+import rescala.graph.{Pulsing, Reactive}
 import rescala.propagation.{FactoryReference, LevelQueue, PropagationImpl}
-import rescala.synchronization.ParRP.{Await, Done, Retry}
+import rescala.parrp.ParRP.{Await, Done, Retry}
 
 import scala.annotation.tailrec
 
