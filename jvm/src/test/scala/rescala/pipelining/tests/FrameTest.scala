@@ -12,7 +12,7 @@ import rescala.pipelining.Pipeline
 
 class FrameTest extends AssertionsForJUnit with MockitoSugar {
 
-  implicit val engine = PipelineEngine
+  implicit val engine = new PipelineEngine()
   val dummyReactive = new Pipeline()
 
   @Test

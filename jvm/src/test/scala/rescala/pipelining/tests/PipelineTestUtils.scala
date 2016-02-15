@@ -35,7 +35,7 @@ object PipelineTestUtils {
     )
   }
   
-  def readLatestValue(reader : PipeliningTurn => Unit)(implicit engine : PipelineEngine.type) = {
+  def readLatestValue(reader : PipeliningTurn => Unit)(implicit engine : PipelineEngine) = {
     val dummyTurn = engine.makeTurn
     engine.addTurn(dummyTurn)
     reader(dummyTurn)
@@ -44,7 +44,7 @@ object PipelineTestUtils {
   
 }
 
-class ValueTracker[T](s : Signal[T, PipelineSpores.type])(implicit val engine: PipelineEngine.type) {
+class ValueTracker[T](s : Signal[T, PipelineSpores.type])(implicit val engine: PipelineEngine) {
     var values : List[T] = List()
     private object valueLock
     

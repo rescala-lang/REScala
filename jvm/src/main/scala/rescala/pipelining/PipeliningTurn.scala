@@ -2,13 +2,12 @@ package rescala.pipelining
 
 import java.util.concurrent.atomic.AtomicReference
 import rescala.pipelining.propagation._
-import rescala.synchronization.FactoryReference
 
 import scala.annotation.elidable
 import scala.annotation.elidable.ASSERTION
 import rescala.graph.{ParRPSpores, Committable, Reactive}
 import rescala.propagation._
-import rescala.turns.Turn
+import rescala.turns.{FactoryReference, Turn}
 import rescala.util.JavaFunctionsImplicits.buildUnaryOp
 import rescala.util.JavaFunctionsImplicits._
 import java.util.concurrent.locks.ReadWriteLock
@@ -26,13 +25,11 @@ object PipeliningTurn {
 
 }
 
-class PipeliningTurn(randomizeDeps: Boolean = false)
+class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
   extends FactoryReference[PipelineSpores.type](PipelineSpores)
   with PipelinePropagationImpl
   with PropagateNoChanges
   with ParallelFrameCreator {
-
-  val engine = PipelineEngine
 
   /** used to create state containers of each reactive */
   override type S = PipelineSpores.type

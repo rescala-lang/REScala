@@ -11,7 +11,7 @@ import PipelineTestUtils._
 
 class RecursiveResolvingTest extends AssertionsForJUnit with MockitoSugar {
   
-  implicit var engine = PipelineEngine
+  implicit var engine = new PipelineEngine()
   
   /*
    *   S1    S2     S3

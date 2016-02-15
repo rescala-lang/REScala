@@ -5,6 +5,7 @@ import java.util
 import rescala.graph.{ParRPSpores, Pulsing, Reactive}
 import rescala.propagation.{LevelQueue, PropagationImpl}
 import rescala.synchronization.ParRP.{Await, Done, Retry}
+import rescala.turns.FactoryReference
 
 import scala.annotation.tailrec
 

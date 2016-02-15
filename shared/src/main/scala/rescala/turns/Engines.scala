@@ -2,11 +2,7 @@ package rescala.turns
 
 import java.util.concurrent.locks.ReentrantLock
 
-import rescala.graph.{SimpleSpores, Spores}
-import rescala.propagation.AbstractPropagation
-import rescala.synchronization.{FactoryReference, NoLocking}
-
-import scala.util.DynamicVariable
+import rescala.graph.SimpleSpores
 
 object Engines {
   type SS = SimpleSpores.type
@@ -32,7 +28,6 @@ object Engines {
   implicit val default: NoLockEngine = synchron
 
   val all: List[NoLockEngine] = List(synchron, unmanaged)
-
 
 
 }

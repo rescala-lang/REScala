@@ -1,6 +1,7 @@
 package rescala.synchronization
 
 import rescala.graph.STMSpores
+import rescala.turns.{NoLocking, FactoryReference}
 
 import scala.concurrent.stm.{InTxn, atomic}
 

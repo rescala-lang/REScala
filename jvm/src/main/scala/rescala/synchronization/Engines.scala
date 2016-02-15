@@ -1,9 +1,9 @@
 package rescala.synchronization
 
-import rescala.graph.{ParRPSpores, Reactive, STMSpores, Spores}
-import rescala.pipelining.{PipeliningTurn, PipelineSpores, PipelineEngine}
-import rescala.turns.Engines.{Impl, synchron, unmanaged, synchronFair}
-import rescala.turns.{Engine, Turn}
+import rescala.graph.{ParRPSpores, STMSpores, Spores}
+import rescala.pipelining.{PipelineEngine, PipelineSpores, PipeliningTurn}
+import rescala.turns.Engines.{synchron, synchronFair, unmanaged}
+import rescala.turns.{Engine, EngineImpl, Turn}
 
 import scala.concurrent.stm.atomic
 import scala.language.existentials
@@ -23,18 +23,18 @@ object Engines {
     case other => throw new IllegalArgumentException(s"unknown engine $other")
   }
 
-  def all: List[TEngine] = List[TEngine](stm, parrp, synchron, unmanaged, synchronFair, pipeline)
+  def all: List[TEngine] = List[TEngine](stm, parrp, synchron, unmanaged, synchronFair)
 
   implicit val parrp: Engine[ParRPSpores.type, ParRP] = spinningWithBackoff(() => new Backoff)
 
   implicit val default: Engine[ParRPSpores.type, ParRP] = parrp
 
-  implicit val pipeline: Engine[PipelineSpores.type, PipeliningTurn] = PipelineEngine
+  implicit val pipeline: Engine[PipelineSpores.type, PipeliningTurn] = new PipelineEngine()
 
-  implicit val stm: Engine[STMSpores.type, STMSync] = new Impl[STMSpores.type, STMSync](STMSpores, new STMSync()) {
+  implicit val stm: Engine[STMSpores.type, STMSync] = new EngineImpl[STMSpores.type, STMSync](STMSpores, new STMSync()) {
     override def plan[R](i: Reactive*)(f: STMSync => R): R = atomic { tx => super.plan(i: _*)(f) }
   }
 
-  def spinningWithBackoff(backOff: () => Backoff): Impl[ParRPSpores.type, ParRP] = new Impl[ParRPSpores.type, ParRP](ParRPSpores, new ParRP(backOff()))
+  def spinningWithBackoff(backOff: () => Backoff): Engine[ParRPSpores.type, ParRP] = new EngineImpl[ParRPSpores.type, ParRP](ParRPSpores, new ParRP(backOff()))
 
 }

@@ -14,7 +14,7 @@ class ConflictResolvingTest extends AssertionsForJUnit with MockitoSugar {
 
 
 
-  implicit val engine = PipelineEngine
+  implicit val engine = new PipelineEngine()
 
   /*
    * This test suite runs on the following topology: S1 and S2 are sources
@@ -62,6 +62,7 @@ class ConflictResolvingTest extends AssertionsForJUnit with MockitoSugar {
     assert(pipelineFor(d2).getPipelineFrames().map(_.turn) == Queue() ++ turns)
 
     val x = 1;
+
   }
 
   @Test
@@ -85,6 +86,9 @@ class ConflictResolvingTest extends AssertionsForJUnit with MockitoSugar {
     s2.set(5)
     assert(d1.now == 5)
     assert(d2.now == 0)
+
+    assert(engine.getTurnOrder().isEmpty)
+
   }
 
 }

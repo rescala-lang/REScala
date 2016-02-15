@@ -8,7 +8,7 @@ import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import rescala.graph.{ParRPSpores, Reactive}
 import rescala.synchronization.{Backoff, ParRP}
-import rescala.turns.{Engine, Engines, Turn}
+import rescala.turns.{EngineImpl, Engines, Engine, Turn}
 import rescala.{Signal, Signals, Var}
 
 import scala.collection.JavaConverters._
@@ -34,7 +34,7 @@ case class Barrier(ready: CountDownLatch, go: CountDownLatch) {
   }
 }
 
-object Pessigen extends Engines.Impl(ParRPSpores, new PessimisticTestTurn) {
+object Pessigen extends EngineImpl(ParRPSpores, new PessimisticTestTurn) {
   val syncStack: AtomicReference[List[(Set[Reactive], Barrier)]] = new AtomicReference(Nil)
 
   def clear(): Int = syncStack.getAndSet(Nil).size
@@ -149,7 +149,7 @@ class PessimisticTest extends AssertionsForJUnit {
 
   object MockFacFac {
     def apply(i0: Reactive[ParRPSpores.type], reg: => Unit, unreg: => Unit): Engine[ParRPSpores.type, Turn[ParRPSpores.type]] =
-      new Engines.Impl[ParRPSpores.type, ParRP](
+      new EngineImpl[ParRPSpores.type, ParRP](
         ParRPSpores,
         new ParRP(new Backoff()) {
           override def discover(downstream: Reactive[ParRPSpores.type])(upstream: Reactive[ParRPSpores.type]): Unit = {

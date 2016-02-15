@@ -17,7 +17,7 @@ import rescala.Signal
  */
 class DynamicReadTest extends AssertionsForJUnit with MockitoSugar {
 
-  implicit val engine = PipelineEngine
+  implicit val engine = new PipelineEngine()
   
   val minEvaluationTimeOfUpdate = 500
   val letOtherUpdateCreateFramesTime = 200

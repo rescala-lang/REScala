@@ -1,22 +1,28 @@
 package rescala.pipelining
 
-import rescala.turns.Engines
+import rescala.turns.{EngineImplTrait, EngineImpl, Engines}
 
 /**
  * @author moritzlichter
  */
 
-object PipelineEngine extends Engines.Impl[PipelineSpores.type, PipeliningTurn](PipelineSpores, new PipeliningTurn()) {
+class PipelineEngine extends EngineImplTrait[PipelineSpores.type, PipeliningTurn] {
 
-  protected[pipelining] val stableTurn = makeNewTurn
+  /** used for the creation of state inside reactives */
+  override private[rescala] def bufferFactory: PipelineSpores.type = PipelineSpores
+  override final protected[rescala] def makeTurn(): PTurn = new PipeliningTurn(this)
+
+
+  protected[pipelining] val stableTurn = makeTurn()
 
   private type PTurn = PipeliningTurn
 
   import Pipeline._
 
   @volatile
-  private var turnOrder = List[PTurn]()
+  private var turnOrder = List.empty[PTurn]
   private object turnOrderLock
+  private[pipelining] def reset(): Unit = turnOrderLock.synchronized(turnOrder = Nil)
 
   protected[pipelining] def addTurn(turn: PTurn) = turnOrderLock.synchronized {
       val turnOrderWasEmpty = turnOrder.isEmpty
@@ -32,8 +38,6 @@ object PipelineEngine extends Engines.Impl[PipelineSpores.type, PipeliningTurn](
 
   protected[pipelining] def canTurnBeRemoved(turn: PTurn) = turnOrderLock.synchronized(turnOrder(0) == turn)
 
-  protected def makeNewTurn: PTurn = new PipeliningTurn()
-  final def makeTurn: PTurn = makeNewTurn
 
   /**
    * Implements a depth first search of the waiting graph to check

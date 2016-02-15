@@ -36,7 +36,7 @@ class TicketTest[S <: Spores](engine: Engine[S, Turn[S]]) extends AssertionsForJ
 
   // Cannot run a turn inside a turn with pipelining
   @Test def someDynamicSomeImplicit(): Unit =
-    if (engine == PipelineEngine) {
+    if (engine.isInstanceOf[PipelineEngine]) {
       throw new IllegalStateException("pipeline engine cannot run a turn inside a turn")
     }
     else {

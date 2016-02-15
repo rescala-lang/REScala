@@ -11,7 +11,7 @@ import scala.collection.immutable.Queue
 
 class TransitiveResolvingTest extends AssertionsForJUnit with MockitoSugar {
   
-  implicit val engine = PipelineEngine
+  implicit val engine = new PipelineEngine()
   
   /*
    * This tests uses the following topology which allows three

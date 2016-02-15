@@ -12,7 +12,7 @@ import java.util.concurrent.Semaphore
 
 class LateDynamicReadTest extends AssertionsForJUnit with MockitoSugar {
   
-  implicit val engine = PipelineEngine
+  implicit val engine = new PipelineEngine()
   
   val source1 = Var(0)
   val depWait = Signals.lift(source1) ( _ + 1)

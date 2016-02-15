@@ -8,13 +8,13 @@ import rescala.turns.Turn
 object PipelineSpores extends Spores {
   override type Struct[R] = PipelineStructP[_, R]
 
-  override def bud[P, R](initialValue: Pulse[P] = Pulse.none, transient: Boolean = true): StructP[P, R] = new PipelineStructP[P, R](initialValue, transient)
+  override def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): StructP[P, R] = new PipelineStructP[P, R](initialValue, transient, initialIncoming)
 
-  class PipelineStructP[P, R](initialValue: Pulse[P], transient: Boolean) extends TraitStructP[P, R] {
+  class PipelineStructP[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends TraitStructP[P, R] {
 
     val pipeline: Pipeline = new Pipeline()
 
-    private val _incoming: BlockingPipelineBuffer[Set[R]] = pipeline.createBlockingBuffer(Set.empty, Buffer.commitAsIs)
+    private val _incoming: BlockingPipelineBuffer[Set[R]] = pipeline.createBlockingBuffer(initialIncoming, Buffer.commitAsIs)
     override def incoming(implicit turn: Turn[_]): Set[R] = _incoming.get
     def incomingForceGet(implicit turn: Turn[_]): Set[R] = _incoming.forceGet
     override def updateIncoming(reactives: Set[R])(implicit turn: Turn[_]): Unit = _incoming.set(reactives.toSet)
