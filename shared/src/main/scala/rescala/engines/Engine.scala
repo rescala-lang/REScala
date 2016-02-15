@@ -3,7 +3,8 @@ package rescala.engines
 import rescala.graph.Spores
 import rescala.macros.ReactiveMacros
 import rescala.propagation.Turn
-import rescala.{Events, Signals, propagation}
+import rescala.reactives.{Events, Signals}
+import rescala.{reactives, propagation}
 
 import scala.annotation.implicitNotFound
 import scala.language.experimental.macros
@@ -12,16 +13,17 @@ import scala.language.experimental.macros
 @implicitNotFound(msg = "could not find a propagation engine, select one from Engines")
 trait Engine[S <: Spores, +TTurn <: Turn[S]] {
 
-  final type Signal[+A] = rescala.Signal[A, S]
-  final type Event[+A] = rescala.Event[A, S]
-  final type Var[A] = rescala.Var[A, S]
-  final type Evt[A] = rescala.Evt[A, S]
+  final type Signal[+A] = reactives.Signal[A, S]
+  final type Event[+A] = reactives.Event[A, S]
+  final type Var[A] = reactives.Var[A, S]
+  final type Evt[A] = reactives.Evt[A, S]
   final type Spores = S
   final type Turn = propagation.Turn[S]
   final type Ticket = rescala.engines.Ticket[S]
   final type Reactive = rescala.graph.Reactive[S]
-  final def Evt[A](): Evt[A] = rescala.Evt[A, S]()(this)
-  final def Var[A](v: A): Var[A] = rescala.Var[A, S](v)(this)
+  final def Evt[A](): Evt[A] = reactives.Evt[A, S]()(this)
+  final def Var[A](v: A): Var[A] = reactives.Var[A, S](v)(this)
+  final def static[T](dependencies: Reactive*)(expr: Turn => T)(implicit ticket: Ticket): Signal[T] = Signals.static(dependencies: _*)(expr)
   final def dynamic[T](dependencies: Reactive*)(expr: Turn => T)(implicit ticket: Ticket): Signal[T] = Signals.dynamic(dependencies: _*)(expr)
   final def dynamicE[T](dependencies: Reactive*)(expr: Turn => Option[T])(implicit ticket: Ticket): Event[T] = Events.dynamic(dependencies: _*)(expr)
 

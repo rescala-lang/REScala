@@ -6,10 +6,10 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.Signals
 import rescala.engines.Engine
 import rescala.graph.Spores
 import rescala.propagation.Turn
+import rescala.reactives.Signals
 
 import scala.language.implicitConversions
 

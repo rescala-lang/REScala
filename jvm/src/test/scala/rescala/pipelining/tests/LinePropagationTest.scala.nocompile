@@ -5,7 +5,7 @@ package rescala.pipelining.tests
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.Signal
+import rescala.reactives.Signal
 import rescala.Signals
 import rescala.Var
 import rescala.graph.Reactive

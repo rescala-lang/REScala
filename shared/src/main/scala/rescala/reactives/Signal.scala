@@ -1,8 +1,7 @@
-package rescala
+package rescala.reactives
 
 import rescala.engines.Ticket
 import rescala.graph.{Spores, Stateful}
-
 
 trait Signal[+A, S <: Spores] extends Stateful[A, S] {
 
@@ -10,10 +9,10 @@ trait Signal[+A, S <: Spores] extends Stateful[A, S] {
   final def observe(react: A => Unit)(implicit ticket: Ticket[S]): Observe[S] = Observe(this)(react)
 
   /** Return a Signal with f applied to the value */
-  final def map[B](f: A => B)(implicit ticket: Ticket[S]): Signal[B, S] = Signals.lift(this) { f }
+  final def map[B](f: A => B)(implicit ticket: Ticket[S]): Signal[B, S] = Signals.lift(this) {f}
 
   /** flatten the inner signal */
-  final def flatten[B]()(implicit ev: A <:< Signal[B, S], ticket: Ticket[S]) = Signals.dynamic(this) { s => this(s)(s) }
+  final def flatten[B]()(implicit ev: A <:< Signal[B, S], ticket: Ticket[S]) = Signals.dynamic(this) { s => this (s)(s) }
 
   /** Return a Signal that gets updated only when e fires, and has the value of this Signal */
   final def snapshot(e: Event[_, S])(implicit ticket: Ticket[S]): Signal[A, S] = e.snapshot(this)
@@ -34,18 +33,18 @@ trait Signal[+A, S <: Spores] extends Stateful[A, S] {
   final def unwrap[E](implicit evidence: A <:< Event[E, S], ticket: Ticket[S]): Event[E, S] = Events.wrapped(map(evidence))
 
   /**
-   * Create an event that fires every time the signal changes. It fires the tuple
-   * (oldVal, newVal) for the signal. The first tuple is (null, newVal)
-   */
+    * Create an event that fires every time the signal changes. It fires the tuple
+    * (oldVal, newVal) for the signal. The first tuple is (null, newVal)
+    */
   final def change(implicit ticket: Ticket[S]): Event[(A, A), S] = Events.change(this)
 
   /**
-   * Create an event that fires every time the signal changes. The value associated
-   * to the event is the new value of the signal
-   */
+    * Create an event that fires every time the signal changes. The value associated
+    * to the event is the new value of the signal
+    */
   final def changed(implicit ticket: Ticket[S]): Event[A, S] = change.map(_._2)
 
   /** Convenience function filtering to events which change this reactive to value */
-  final def changedTo[V](value: V)(implicit ticket: Ticket[S]): Event[Unit, S] = (changed && { _ == value }).dropParam
+  final def changedTo[V](value: V)(implicit ticket: Ticket[S]): Event[Unit, S] = (changed && {_ == value}).dropParam
 
 }

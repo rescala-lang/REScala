@@ -3,15 +3,16 @@ package rescala.pipelining.tests
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.{Signals, Var}
 import rescala.graph.Committable
 import rescala.pipelining.PipelineEngine
 import rescala.pipelining.tests.PipelineTestUtils._
 import rescala.propagation.Turn
+import rescala.reactives.Signals
 
 class AdmissionPhaseTest extends AssertionsForJUnit with MockitoSugar {
 
   implicit val engine = new PipelineEngine()
+  import engine.Var
 
   @Test
   def testAdmissionPhaseReadsCorrectValues() = {

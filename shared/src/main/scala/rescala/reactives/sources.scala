@@ -1,4 +1,4 @@
-package rescala
+package rescala.reactives
 
 import rescala.engines.Engine
 import rescala.graph._

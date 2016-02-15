@@ -6,7 +6,7 @@ import org.scalatest.mock.MockitoSugar
 import rescala.graph.Reactive
 import rescala.pipelining.Pipeline._
 import rescala.pipelining.{Pipeline, PipelineEngine, PipelineSpores, PipeliningTurn}
-import rescala.{Signals, Var}
+import rescala.reactives.Signals
 
 import scala.collection.immutable.Queue
 
@@ -15,6 +15,7 @@ class ConflictResolvingTest extends AssertionsForJUnit with MockitoSugar {
 
 
   implicit val engine = new PipelineEngine()
+  import engine.Var
 
   /*
    * This test suite runs on the following topology: S1 and S2 are sources

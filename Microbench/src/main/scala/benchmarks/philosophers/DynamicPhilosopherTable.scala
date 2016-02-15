@@ -2,10 +2,11 @@ package benchmarks.philosophers
 
 import benchmarks.philosophers.PhilosopherTable._
 import rescala.graph.Spores
-import rescala.Signals.lift
+import rescala.reactives.Signals
+import Signals.lift
 import rescala.propagation.Turn
 import rescala.engines.Engine
-import rescala.{Signals, Var}
+import rescala.Var
 
 class DynamicPhilosopherTable[S <: Spores](philosopherCount: Int, work: Long)(override implicit val engine: Engine[S, Turn[S]]) extends PhilosopherTable(philosopherCount, work)(engine) {
 

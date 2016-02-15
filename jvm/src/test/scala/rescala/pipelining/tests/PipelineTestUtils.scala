@@ -1,9 +1,9 @@
 package rescala.pipelining.tests
 
-import rescala.Signal
 import rescala.graph.Reactive
 import rescala.pipelining.{Pipeline, PipelineEngine, PipelineSpores, PipeliningTurn}
 import rescala.propagation.Turn
+import rescala.reactives.Signal
 
 import scala.collection.immutable.Queue
 import scala.util.Random

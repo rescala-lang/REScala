@@ -1,12 +1,10 @@
-package rescala
+package rescala.reactives
 
-import rescala.Signals.Impl.{makeDynamic, makeStatic}
 import rescala.engines.Ticket
 import rescala.graph._
 import rescala.propagation.Turn
-import rescala.signals.GeneratedLift
 
-object Signals extends GeneratedLift {
+object Signals extends GeneratedSignalLift {
 
   object Impl {
     private class StaticSignal[T, S <: Spores](_bud: S#StructP[T, Reactive[S]], expr: (Turn[S], T) => T)
@@ -42,15 +40,16 @@ object Signals extends GeneratedLift {
   def static[T, S <: Spores](dependencies: Reactive[S]*)(fun: Turn[S] => T)(implicit ticket: Ticket[S]): Signal[T, S] = ticket { initialTurn =>
     // using an anonymous function instead of ignore2 causes dependencies to be captured, which we want to avoid
     def ignore2[I, C, R](f: I => R): (I, C) => R = (t, _) => f(t)
-    makeStatic(dependencies.toSet[Reactive[S]], fun(initialTurn))(ignore2(fun))(initialTurn)
+    Impl.makeStatic(dependencies.toSet[Reactive[S]], fun(initialTurn))(ignore2(fun))(initialTurn)
   }
 
   /** creates a signal that has dynamic dependencies (which are detected at runtime with Signal.apply(turn)) */
-  def dynamic[T, S <: Spores](dependencies: Reactive[S]*)(expr: Turn[S] => T)(implicit ticket: Ticket[S]): Signal[T, S] = ticket(makeDynamic(dependencies.toSet[Reactive[S]])(expr)(_))
+  def dynamic[T, S <: Spores](dependencies: Reactive[S]*)(expr: Turn[S] => T)(implicit ticket: Ticket[S]): Signal[T, S] =
+    ticket(Impl.makeDynamic(dependencies.toSet[Reactive[S]])(expr)(_))
 
   /** creates a signal that folds the events in e */
   def fold[E, T, S <: Spores](e: Event[E, S], init: T)(f: (T, E) => T)(implicit ticket: Ticket[S]): Signal[T, S] = ticket { initialTurn =>
-    makeStatic(Set[Reactive[S]](e), init) { (turn, currentValue) =>
+    Impl.makeStatic(Set[Reactive[S]](e), init) { (turn, currentValue) =>
       e.pulse(turn).fold(currentValue, f(currentValue, _))
     }(initialTurn)
   }

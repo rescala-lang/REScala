@@ -9,7 +9,8 @@ import rescala.Infiltrator.getLevel
 import rescala.engines.Engine
 import rescala.graph.Spores
 import rescala.propagation.Turn
-import rescala.{Signals, Var}
+import rescala.reactives.Var
+import rescala.reactives.Signals
 
 object SignalTestSuite extends JUnitParameters
 

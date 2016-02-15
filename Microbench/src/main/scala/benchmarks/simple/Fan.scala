@@ -7,7 +7,8 @@ import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
 import rescala.propagation.Turn
 import rescala.engines.Engine
-import rescala.{Signal, Var}
+import rescala.reactives.{Signals, Signal}
+import rescala.Var
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -30,7 +31,7 @@ class Fan[S <: rescala.graph.Spores] {
     val res = for (_ <- Range(0, size.size)) yield {
       source.map(_ + 1)
     }
-    result = rescala.Signals.static(res: _*) { t => res.foldLeft(0)((c, v) => v.get(t) + c) }
+    result = Signals.static(res: _*) { t => res.foldLeft(0)((c, v) => v.get(t) + c) }
   }
 
   @Benchmark

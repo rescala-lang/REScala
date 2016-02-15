@@ -7,11 +7,12 @@ import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.pipelining.util.LogUtils
-import rescala.{Signals, Var}
+import rescala.reactives.Var
 import rescala.pipelining.Pipeline._
 import rescala.pipelining.tests.PipelineTestUtils._
 import rescala.pipelining.{PipelineEngine, PipelineSpores}
 import rescala.propagation.Turn
+import rescala.reactives.Signals
 
 import scala.annotation.tailrec
 

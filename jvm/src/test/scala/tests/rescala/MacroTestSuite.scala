@@ -6,10 +6,10 @@ import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.Infiltrator.getLevel
-import rescala.Signals
 import rescala.engines.Engine
 import rescala.graph.Spores
 import rescala.propagation.Turn
+import rescala.reactives.Signals
 
 object MacroTestSuite extends JUnitParameters
 
@@ -129,7 +129,7 @@ class MacroTestSuite[S <: Spores](engine: Engine[S, Turn[S]]) extends Assertions
     // following form, see:
     // https://github.com/guidosalva/examples/pull/4/files#r11724000
     var test = 0
-    var e = null: rescala.Evt[Int, S]
+    var e = null: Evt[Int]
     var s = null: Signal[Int]
 
     abstract class A {def obj(): Unit }

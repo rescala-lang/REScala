@@ -1,13 +1,13 @@
-package rescala
+package rescala.reactives
 
 import rescala.engines.Ticket
 import rescala.graph._
 import rescala.propagation.Turn
 
-
 trait Observe[S <: Spores] {
   def remove()(implicit maybe: Ticket[S]): Unit
 }
+
 
 object Observe {
 

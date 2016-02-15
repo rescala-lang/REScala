@@ -25,7 +25,7 @@ lazy val rescala = crossProject.in(file("."))
     parallelExecution in Test := true,
 
     sourceGenerators in Compile <+= sourceManaged in Compile map { dir =>
-      val file = dir / "rescala" / "signals" / "GeneratedLift.scala"
+      val file = dir / "rescala" / "reactives" / "GeneratedSignalLift.scala"
       val definitions = (1 to 22).map{ i =>
         val params = 1 to i map ("n" + _)
         val types = 1 to i map ("A" + _)
@@ -38,13 +38,13 @@ lazy val rescala = crossProject.in(file("."))
            |""".stripMargin
       }
       IO.write(file,
-      s"""package rescala.signals
+      s"""package rescala.reactives
          |
-         |import rescala._
+         |import rescala.reactives._
          |import rescala.graph._
          |import rescala.engines._
          |
-         |trait GeneratedLift {
+         |trait GeneratedSignalLift {
          |self: Signals.type =>
          |${definitions.mkString("\n")}
          |}

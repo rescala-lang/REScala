@@ -9,6 +9,7 @@ import rescala._
 import rescala.graph.Spores
 import rescala.propagation.Turn
 import rescala.engines.Engine
+import rescala.reactives.{Signals, Signal}
 
 @AuxCounters
 @State(Scope.Thread)

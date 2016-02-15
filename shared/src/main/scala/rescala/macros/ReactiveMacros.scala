@@ -2,7 +2,8 @@ package rescala.macros
 
 import rescala.graph.{PulseOption, Spores, Stateful}
 import rescala.propagation.Turn
-import rescala.{Event, Signal}
+import rescala.reactives.Signal
+import rescala.reactives.Event
 
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox
@@ -19,7 +20,7 @@ object ReactiveMacros {
 
     // create SignalSynt object
     // use fully-qualified name, so no extra import is needed
-    val body = q"rescala.Signals.dynamic[${weakTypeOf[A]}, ${weakTypeOf[S]}](..$filteredDetections)($signalExpression)"
+    val body = q"rescala.reactives.Signals.dynamic[${weakTypeOf[A]}, ${weakTypeOf[S]}](..$filteredDetections)($signalExpression)"
 
     // assemble the SignalSynt object and the signal values that are accessed
     // by the object, but were cut out of the signal expression during the code
@@ -39,7 +40,7 @@ object ReactiveMacros {
 
     // create SignalSynt object
     // use fully-qualified name, so no extra import is needed
-    val body = q"rescala.Events.dynamic[${weakTypeOf[A]}, ${weakTypeOf[S]}](..$filteredDetections)($signalExpression)"
+    val body = q"rescala.reactives.Events.dynamic[${weakTypeOf[A]}, ${weakTypeOf[S]}](..$filteredDetections)($signalExpression)"
 
     // assemble the SignalSynt object and the signal values that are accessed
     // by the object, but were cut out of the signal expression during the code

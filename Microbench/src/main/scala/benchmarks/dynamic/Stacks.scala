@@ -9,6 +9,7 @@ import rescala._
 import rescala.graph.Spores
 import rescala.propagation.Turn
 import rescala.engines.{Engine, Ticket}
+import rescala.reactives.{Signals, Signal}
 
 import scala.collection.immutable.Range
 

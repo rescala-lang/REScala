@@ -6,8 +6,8 @@ import rescala.engines.Engine
 import rescala.graph.Globals.named
 import rescala.graph.{Committable, Spores}
 import rescala.propagation.Turn
-import rescala.{Signal, Var}
-import rescala.Signals.lift
+import rescala.reactives.{Signal, Var}
+import rescala.reactives.Signals.lift
 
 import scala.annotation.tailrec
 

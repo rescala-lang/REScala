@@ -3,10 +3,10 @@ package rescala.pipelining.tests
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.pipelining.util.LogUtils
-import rescala.{Signals, Var}
 import rescala.pipelining.PipelineEngine
 import rescala.pipelining.tests.PipelineTestUtils._
+import rescala.pipelining.util.LogUtils
+import rescala.reactives.{Signals, Var}
 
 /**
  * @author moritzlichter
@@ -14,7 +14,7 @@ import rescala.pipelining.tests.PipelineTestUtils._
 class DynamicReadTest extends AssertionsForJUnit with MockitoSugar {
 
   implicit val engine = new PipelineEngine()
-  
+
   val minEvaluationTimeOfUpdate = 500
   val letOtherUpdateCreateFramesTime = 200
   

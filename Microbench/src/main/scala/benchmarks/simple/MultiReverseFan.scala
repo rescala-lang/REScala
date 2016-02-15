@@ -8,6 +8,7 @@ import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{ThreadParams, BenchmarkParams}
 import rescala.propagation.Turn
 import rescala.engines.Engine
+import rescala.reactives.{Signals, Signal}
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -21,7 +22,7 @@ class MultiReverseFan[S <: rescala.graph.Spores] {
   implicit var engine: Engine[S, Turn[S]] = _
 
   var sources: Array[rescala.Var[Int, S]] = _
-  var results: Array[rescala.Signal[Int, S]] = _
+  var results: Array[Signal[Int, S]] = _
   var locks: Array[Lock] = null
   var groupSize: Int = _
 
@@ -39,7 +40,7 @@ class MultiReverseFan[S <: rescala.graph.Spores] {
 
     val intermediate = sources.map(_.map { v => {work.consume(); v + 1} }).grouped(groupSize)
     results = intermediate.map { sigs =>
-      rescala.Signals.static(sigs.toSeq: _*) { t => val r = sigs.foldLeft(0)((a, v) => v.get(t) + a); work.consumeSecondary(); r }
+      Signals.static(sigs.toSeq: _*) { t => val r = sigs.foldLeft(0)((a, v) => v.get(t) + a); work.consumeSecondary(); r }
     }.toArray
   }
 

@@ -4,8 +4,8 @@ import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.pipelining.util.LogUtils
-import rescala.{Signals, Var}
 import rescala.pipelining.{Pipeline, PipelineEngine, PipeliningTurn}
+import rescala.reactives.{Signals, Var}
 
 class PrunedFramesTest extends AssertionsForJUnit with MockitoSugar {
   

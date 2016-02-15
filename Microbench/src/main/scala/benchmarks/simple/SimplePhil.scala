@@ -6,7 +6,8 @@ import benchmarks.{EngineParam, Step}
 import org.openjdk.jmh.annotations._
 import rescala.propagation.Turn
 import rescala.engines.Engine
-import rescala.{Signal, Signals, Var}
+import rescala.reactives.{Signals, Signal}
+import rescala.Var
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)

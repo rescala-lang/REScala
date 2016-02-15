@@ -1,10 +1,9 @@
-package rescala
+package rescala.reactives
 
 import rescala.engines.Ticket
-import rescala.graph.{PulseOption, Reactive, Spores}
+import rescala.graph._
 
-import scala.collection.LinearSeq
-import scala.collection.immutable.Queue
+import scala.collection.immutable.{Queue, LinearSeq}
 
 trait Event[+T, S <: Spores] extends PulseOption[T, S]{
 
