@@ -1,6 +1,7 @@
 package rescala.pipelining
 
-import rescala.turns.Turn
+import rescala.propagation.Turn
+
 import scala.collection.immutable.Queue
 import scala.annotation.tailrec
 import rescala.graph._

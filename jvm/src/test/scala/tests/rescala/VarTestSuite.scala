@@ -9,7 +9,8 @@ import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.Var
 import rescala.graph.Spores
-import rescala.turns.{Engine, Turn}
+import rescala.propagation.Turn
+import rescala.engines.Engine
 
 object VarTestSuite extends JUnitParameters
 

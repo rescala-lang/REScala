@@ -6,7 +6,8 @@ import benchmarks.philosophers.PhilosopherTable._
 import org.openjdk.jmh.infra.Blackhole
 import rescala.Signals.lift
 import rescala.graph.Spores
-import rescala.turns.{Engine, Turn}
+import rescala.propagation.Turn
+import rescala.engines.Engine
 import rescala.{Signal, Var}
 
 class PhilosopherTable[S <: Spores](philosopherCount: Int, work: Long)(implicit val engine: Engine[S, Turn[S]]) {

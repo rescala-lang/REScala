@@ -2,8 +2,9 @@ package rescala.synchronization
 
 import rescala.graph.{ParRPSpores, STMSpores, Spores}
 import rescala.pipelining.{PipelineEngine, PipelineSpores, PipeliningTurn}
-import rescala.turns.Engines.{synchron, synchronFair, unmanaged}
-import rescala.turns.{Engine, EngineImpl, Turn}
+import rescala.propagation.Turn
+import rescala.engines.Engines.{synchron, synchronFair, unmanaged}
+import rescala.engines.{Engine, EngineImpl}
 
 import scala.concurrent.stm.atomic
 import scala.language.existentials

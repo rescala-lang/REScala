@@ -2,8 +2,8 @@ package rescala.pipelining
 
 import rescala.graph.Spores.TraitStructP
 import rescala.graph.{Spores, Pulse, Reactive, Buffer}
+import rescala.propagation.Turn
 import rescala.synchronization.TurnLock
-import rescala.turns.Turn
 
 object PipelineSpores extends Spores {
   override type Struct[R] = PipelineStructP[_, R]

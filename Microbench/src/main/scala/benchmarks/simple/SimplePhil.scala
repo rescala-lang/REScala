@@ -4,7 +4,8 @@ import java.util.concurrent.TimeUnit
 
 import benchmarks.{EngineParam, Step}
 import org.openjdk.jmh.annotations._
-import rescala.turns.{Engine, Turn}
+import rescala.propagation.Turn
+import rescala.engines.Engine
 import rescala.{Signal, Signals, Var}
 
 @BenchmarkMode(Array(Mode.Throughput))

@@ -5,10 +5,10 @@ import org.scalatest.mock.MockitoSugar
 import rescala.Var
 import rescala.Signals
 import rescala.pipelining.PipelineEngine
-import rescala.turns.Turn
 import org.junit.Test
 import rescala.pipelining.Pipeline
 import rescala.pipelining.PipeliningTurn
+import rescala.propagation.Turn
 
 class PrunedFramesTest extends AssertionsForJUnit with MockitoSugar {
   

@@ -1,6 +1,6 @@
 package rescala.graph
 
-import rescala.turns.Turn
+import rescala.propagation.Turn
 
 
 sealed trait ReevaluationResult[S <: Spores]

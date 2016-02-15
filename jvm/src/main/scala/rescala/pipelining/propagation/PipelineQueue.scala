@@ -5,7 +5,7 @@ import java.lang.{ Boolean => jlBool }
 import rescala.graph.Reactive
 import rescala.pipelining.PipelineSpores
 import rescala.pipelining.propagation.PipelineQueue.QueueElement
-import rescala.turns.Turn
+import rescala.propagation.Turn
 
 import scala.collection.SortedSet
 

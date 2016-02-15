@@ -1,6 +1,7 @@
-package rescala.turns
+package rescala.engines
 
 import rescala.graph.Spores
+import rescala.propagation.Turn
 
 import scala.annotation.implicitNotFound
 import scala.language.implicitConversions

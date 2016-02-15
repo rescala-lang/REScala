@@ -7,7 +7,8 @@ import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.Infiltrator.getLevel
 import rescala.graph.Spores
-import rescala.turns.{Engine, Turn}
+import rescala.propagation.Turn
+import rescala.engines.Engine
 import rescala.{Signals, Var}
 
 object LevelPropagation extends JUnitParameters

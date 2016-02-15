@@ -7,7 +7,8 @@ import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.graph.Spores
 import rescala.pipelining.PipelineEngine
-import rescala.turns.{Engine, Ticket, Turn}
+import rescala.propagation.Turn
+import rescala.engines.{Engine, Ticket}
 
 object TicketTest extends JUnitParameters
 

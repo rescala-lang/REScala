@@ -1,7 +1,7 @@
 package rescala
 
 import rescala.graph.{Spores, Stateful}
-import rescala.turns.Ticket
+import rescala.engines.Ticket
 
 
 trait Signal[+A, S <: Spores] extends Stateful[A, S] {

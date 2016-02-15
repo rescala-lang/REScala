@@ -6,8 +6,8 @@ import rescala.pipelining.{PipelineSpores, PipelineEngine, PipeliningTurn}
 import rescala.Var
 import org.junit.Test
 import rescala.Signals
+import rescala.propagation.Turn
 import scala.collection.immutable.Queue
-import rescala.turns.Turn
 import PipelineTestUtils._
 import rescala.graph.Reactive
 import java.util.Random

@@ -8,7 +8,8 @@ import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 
 import rescala.graph.Spores
-import rescala.turns.{Engine, Turn}
+import rescala.propagation.Turn
+import rescala.engines.Engine
 import tests.rescala.JUnitParameters
 
 object EventTest extends JUnitParameters

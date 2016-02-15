@@ -4,7 +4,6 @@ import java.lang.{Boolean => jlBool}
 
 import rescala.graph.{Spores, Reactive}
 import rescala.propagation.LevelQueue.QueueElement
-import rescala.turns.Turn
 
 import scala.collection.immutable.SortedSet
 

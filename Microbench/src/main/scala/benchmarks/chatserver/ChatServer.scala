@@ -2,7 +2,8 @@ package benchmarks.chatserver
 
 import rescala.Events
 import rescala.graph.Spores
-import rescala.turns.{Engine, Turn}
+import rescala.propagation.Turn
+import rescala.engines.Engine
 
 import scala.collection.LinearSeq
 import scala.collection.immutable.Queue

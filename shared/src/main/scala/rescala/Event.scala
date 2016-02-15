@@ -1,7 +1,7 @@
 package rescala
 
 import rescala.graph.{PulseOption, Reactive, Pulsing, Spores}
-import rescala.turns.Ticket
+import rescala.engines.Ticket
 
 import scala.collection.LinearSeq
 import scala.collection.immutable.Queue

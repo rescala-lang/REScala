@@ -7,7 +7,8 @@ import benchmarks.{EngineParam, Workload}
 import org.openjdk.jmh.annotations._
 import rescala._
 import rescala.graph.Spores
-import rescala.turns.{Engine, Turn}
+import rescala.propagation.Turn
+import rescala.engines.Engine
 
 @AuxCounters
 @State(Scope.Thread)

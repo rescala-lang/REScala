@@ -1,8 +1,9 @@
-package rescala.turns
+package rescala.engines
 
 import rescala.graph.Spores
 import rescala.macros.ReactiveMacros
-import rescala.{Events, Signals, Signal}
+import rescala.propagation.Turn
+import rescala.{propagation, Events, Signals, Signal}
 import rescala.graph.{Reactive, Spores}
 
 import scala.annotation.implicitNotFound
@@ -17,8 +18,8 @@ trait Engine[S <: Spores, +TTurn <: Turn[S]] {
   final type Var[A] = rescala.Var[A, S]
   final type Evt[A] = rescala.Evt[A, S]
   final type Spores = S
-  final type Turn = rescala.turns.Turn[S]
-  final type Ticket = rescala.turns.Ticket[S]
+  final type Turn = propagation.Turn[S]
+  final type Ticket = rescala.engines.Ticket[S]
   final type Reactive = rescala.graph.Reactive[S]
   final def Evt[A](): Evt[A] = rescala.Evt[A, S]()(this)
   final def Var[A](v: A): Var[A] = rescala.Var[A, S](v)(this)

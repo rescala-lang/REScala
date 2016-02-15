@@ -3,8 +3,9 @@ package tests.rescala.concurrency.philosophers
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import rescala.graph.Spores
+import rescala.propagation.Turn
 import rescala.synchronization.Engines
-import rescala.turns.{Engine, Turn}
+import rescala.engines.Engine
 import tests.rescala.concurrency.Spawn
 import tests.rescala.concurrency.philosophers.PhilosopherTable.{Thinking, Seating}
 

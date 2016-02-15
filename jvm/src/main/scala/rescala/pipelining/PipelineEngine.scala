@@ -1,12 +1,12 @@
 package rescala.pipelining
 
-import rescala.turns.{EngineImplTrait, EngineImpl, Engines}
+import rescala.engines.{PlanImpl, EngineImpl, Engines}
 
 /**
  * @author moritzlichter
  */
 
-class PipelineEngine extends EngineImplTrait[PipelineSpores.type, PipeliningTurn] {
+class PipelineEngine extends PlanImpl[PipelineSpores.type, PipeliningTurn] {
 
   /** used for the creation of state inside reactives */
   override private[rescala] def bufferFactory: PipelineSpores.type = PipelineSpores

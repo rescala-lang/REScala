@@ -2,7 +2,8 @@ package tests.rescala.concurrency.philosophers
 
 import rescala.graph.Globals.named
 import rescala.graph.Spores
-import rescala.turns.{Engine, Turn}
+import rescala.propagation.Turn
+import rescala.engines.Engine
 import tests.rescala.concurrency.philosophers.PhilosopherTable._
 
 class DynamicPhilosopherTable[S <: Spores](philosopherCount: Int, work: Long)(override implicit val engine: Engine[S, Turn[S]]) extends PhilosopherTable(philosopherCount, work)(engine) {

@@ -11,7 +11,7 @@ import rescala.Var
 import rescala.graph.Reactive
 import rescala.pipelining.PipelineEngine
 import PipelineTestUtils._
-import rescala.turns.Turn
+import rescala.propagation.Turn
 import rescala.turns.Ticket
 import rescala.pipelining.PipeliningTurn
 import rescala.pipelining.PipeliningTurn

@@ -7,7 +7,8 @@ import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
 import rescala._
 import rescala.graph.Spores
-import rescala.turns.{Engine, Ticket, Turn}
+import rescala.propagation.Turn
+import rescala.engines.{Engine, Ticket}
 
 import scala.collection.immutable.Range
 

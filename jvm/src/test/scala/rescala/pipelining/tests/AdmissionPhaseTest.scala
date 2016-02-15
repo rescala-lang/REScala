@@ -9,7 +9,7 @@ import rescala.pipelining.PipelineBuffer
 import rescala.pipelining.PipelineEngine
 import rescala.Signals
 import rescala.graph.Committable
-import rescala.turns.Turn
+import rescala.propagation.Turn
 
 class AdmissionPhaseTest extends AssertionsForJUnit with MockitoSugar {
 

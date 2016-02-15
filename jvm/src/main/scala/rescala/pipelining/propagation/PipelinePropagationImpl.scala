@@ -2,8 +2,7 @@ package rescala.pipelining.propagation
 
 import rescala.graph.{Committable, Reactive}
 import rescala.pipelining.PipelineSpores
-import rescala.propagation.AbstractPropagation
-import rescala.turns.Turn
+import rescala.propagation.{Turn, AbstractPropagation}
 import rescala.graph.ReevaluationResult
 
 

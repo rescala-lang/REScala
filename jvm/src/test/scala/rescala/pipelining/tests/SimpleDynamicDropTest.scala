@@ -8,8 +8,8 @@ import rescala.graph.Buffer
 import rescala.pipelining.PipelineEngine
 import rescala.pipelining.PipeliningTurn
 import PipelineTestUtils._
-import rescala.turns.Ticket
-import rescala.turns.Turn
+import rescala.propagation.Turn
+import rescala.engines.Ticket
 import rescala.pipelining.Pipeline
 
 class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {

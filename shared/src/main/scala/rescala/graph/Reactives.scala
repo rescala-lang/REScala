@@ -1,7 +1,8 @@
 package rescala.graph
 
 import rescala.graph.Pulse.{Diff, NoChange}
-import rescala.turns.{Ticket, Turn}
+import rescala.propagation.Turn
+import rescala.engines.Ticket
 
 /** A Reactive is something that can be reevaluated */
 trait Reactive[S <: Spores] {

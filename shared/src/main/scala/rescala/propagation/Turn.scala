@@ -1,6 +1,6 @@
-package rescala.turns
+package rescala.propagation
 
-import rescala.graph.{Spores, Committable, Reactive}
+import rescala.graph.{Committable, Reactive, Spores}
 
 /**
  * The engine that schedules the (glitch-free) evaluation

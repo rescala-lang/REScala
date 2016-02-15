@@ -8,7 +8,8 @@ import org.scalatest.mock.MockitoSugar
 import rescala.Infiltrator.getLevel
 import rescala.Signals
 import rescala.graph.Spores
-import rescala.turns.{Engine, Turn}
+import rescala.propagation.Turn
+import rescala.engines.Engine
 
 
 object MacroEventTestSuite extends JUnitParameters

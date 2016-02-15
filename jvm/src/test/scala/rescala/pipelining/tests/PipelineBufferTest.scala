@@ -1,5 +1,7 @@
 package rescala.pipelining.tests
 
+import rescala.propagation.Turn
+
 import scala.collection.immutable.Queue
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
@@ -7,7 +9,6 @@ import org.scalatest.mock.MockitoSugar
 import rescala.pipelining.Frame
 import rescala.pipelining.PipelineEngine
 import rescala.pipelining.PipeliningTurn
-import rescala.turns.Turn
 import rescala.pipelining.Pipeline
 import rescala.graph.Buffer
 import rescala.graph.Reactive

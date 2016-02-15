@@ -4,7 +4,7 @@ import java.util.concurrent.{ConcurrentLinkedQueue, CountDownLatch}
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
-import rescala.turns.Engines
+import rescala.engines.Engines
 import rescala.{Signals, Var}
 
 import scala.util.Random

@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 import rescala.graph.Globals
 import rescala.graph.ParRPSpores
-import rescala.turns.Turn
+import rescala.propagation.Turn
 
 import scala.annotation.tailrec
 

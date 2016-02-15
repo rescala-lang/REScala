@@ -2,8 +2,9 @@ package rescala
 
 import rescala.Signals.Impl.{makeDynamic, makeStatic}
 import rescala.graph._
+import rescala.propagation.Turn
 import rescala.signals.GeneratedLift
-import rescala.turns.{Ticket, Turn}
+import rescala.engines.Ticket
 
 object Signals extends GeneratedLift {
 

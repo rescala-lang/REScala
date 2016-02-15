@@ -1,7 +1,8 @@
 package rescala.pipelining.tests
 
+import rescala.propagation.Turn
+
 import scala.collection.immutable.Queue
-import rescala.turns.Turn
 import scala.util.Random
 import rescala.Signal
 import rescala.pipelining.{PipelineSpores, PipelineEngine, Pipeline, PipeliningTurn}

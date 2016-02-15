@@ -1,8 +1,8 @@
 package rescala.graph
 
 import rescala.graph.Spores.TraitStructP
+import rescala.propagation.Turn
 import rescala.synchronization.{TurnLock, Key, ParRP, STMSync}
-import rescala.turns.Turn
 
 import scala.concurrent.stm.{InTxn, Ref}
 import scala.language.implicitConversions
