@@ -33,7 +33,7 @@ class SingleVar[S <: rescala.graph.Spores] {
   }
 
   @Benchmark
-  def switchSignal(): Unit = {
+  def write(): Unit = {
     current = !current
     source.set(current)
   }

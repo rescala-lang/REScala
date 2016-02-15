@@ -17,11 +17,16 @@ class Workload {
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
-@Warmup(iterations = 1, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
+@Warmup(iterations = 2, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
 @Measurement(iterations = 2, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
 @Fork(1)
 @Threads(1)
 class WorkReference {
   @Benchmark
   def reference(work: Workload): Unit = work.consume()
+
+  @Benchmark
+  def allocationStress(): Object = {
+    new Object()
+  }
 }

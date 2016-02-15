@@ -31,6 +31,7 @@ my @THREADS = (1..16);
 my $UNI_THREAD = 8;
 my @STEPS = (1..16,24,32,64);
 my @SIZES = (1,10,25,100,250,1000);
+my @CHATSERVERSIZES = (1,2,4,8,16,32);
 my @PHILOSOPHERS = (16, 32, 48, 64, 96, 128);
 my @LAYOUTS = qw<alternating third>;
 my %BASECONFIG = (
@@ -237,10 +238,11 @@ sub selection {
           for my $tableType (qw<static dynamic>) {
             for my $backoff (
               [minBackoff => 0, maxBackoff => 0, factorBackoff => 1],
-              [minBackoff => 10000, maxBackoff => 10000000, factorBackoff => 1.1],
               [minBackoff => 10, maxBackoff => 10000000, factorBackoff => 1.3],
+              [minBackoff => 10000, maxBackoff => 1000000, factorBackoff => 1.1],
+              [minBackoff => 10000, maxBackoff => 10000000, factorBackoff => 1.1],
               [minBackoff => 100000, maxBackoff => 100000, factorBackoff => 1.0],
-              [minBackoff => 10000, maxBackoff => 1000000, factorBackoff => 1.1],) {
+              ) {
               my $name = "backoff-threads-$threads-layout-$layout-type-$tableType-backoff-". join "-", @$backoff;
               my $program = makeRunString($name,
                 fromBaseConfig(
@@ -571,7 +573,7 @@ sub selection {
             fromBaseConfig(
               p => { # parameters
                 engineName => (join ',', @ENGINES),
-                size => "1,2,4,6,8",
+                size => (join ",", @CHATSERVERSIZES),
                 work => 0,
               },
               t => $threads,
