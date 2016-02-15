@@ -28,6 +28,7 @@ trait AbstractPropagation[S <: Spores] extends Turn[S] {
   def collectDependencies[T](f: => T): (T, Set[Reactive[S]]) = {
     val old = collectedDependencies
     collectedDependencies = Nil
+    // useDependency is called as a side effect of `f` adding new dependencies to collectedDependencies
     val res = (f, collectedDependencies.toSet)
     collectedDependencies = old
     res
@@ -48,7 +49,7 @@ trait PropagationImpl[S <: Spores] extends AbstractPropagation[S] {
 
     def requeue(changed: Boolean, level: Int, redo: Boolean): Unit =
       if (redo) levelQueue.enqueue(level, changed)(head)
-      else if (changed) head.outgoing.foreach(levelQueue.enqueue(level, changed))
+      else if (changed) head.bud.outgoing.foreach(levelQueue.enqueue(level, changed))
 
     head.reevaluate() match {
       case Static(hasChanged) =>

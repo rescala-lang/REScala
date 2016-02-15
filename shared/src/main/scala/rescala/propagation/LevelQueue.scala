@@ -35,7 +35,7 @@ class LevelQueue[S <: Spores]()(implicit val currenTurn: Turn[S]) {
         true
       }
       enqueue(headMinLevel, reevaluate)(head)
-      head.outgoing.foreach { r =>
+      head.bud.outgoing.foreach { r =>
         if (r.bud.level <= headMinLevel)
           enqueue(headMinLevel + 1, needsEvaluate = false)(r)
       }

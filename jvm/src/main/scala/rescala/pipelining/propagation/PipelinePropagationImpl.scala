@@ -19,7 +19,7 @@ trait PipelinePropagationImpl extends AbstractPropagation[PipelineSpores.type] {
   val levelQueue = new PipelineQueue()
 
   protected def requeue(head: Reactive[S], changed: Boolean, level: Int, action: QueueAction): Unit = action match {
-    case EnqueueDependencies =>  head.outgoing.foreach(levelQueue.enqueue(level, changed))
+    case EnqueueDependencies =>  head.bud.outgoing.foreach(levelQueue.enqueue(level, changed))
     case RequeueReactive => levelQueue.enqueue(level, changed)(head)
     case DoNothing =>
   }

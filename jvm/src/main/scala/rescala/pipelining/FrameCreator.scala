@@ -34,7 +34,7 @@ trait QueueBasedFrameCreator extends FrameCreator {
             createFrame(pipeline)
           }
         })
-        val outgoings = reactive.outgoing(this)
+        val outgoings = reactive.bud.outgoing(this)
         outgoings.foreach { lq.enqueue(-1) }
         }
       }

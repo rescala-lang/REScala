@@ -185,7 +185,7 @@ class PipeliningTurn(randomizeDeps: Boolean = false)
             case DoNothing       => assert(false)
           }
           /*assert({
-          head.outgoing.get.foreach { r =>
+          head.bud.outgoing.get.foreach { r =>
             assert(pipelineFor(r).hasFrame, s"No frame at ougoing $r of $head during $this")
           }
           true
@@ -271,7 +271,7 @@ class PipeliningTurn(randomizeDeps: Boolean = false)
   }
 
   override def discover(sink: Reactive[S])(source: Reactive[S]): Unit = {
-    val needToAddDep = !source.outgoing.contains(sink)
+    val needToAddDep = !source.bud.outgoing.contains(sink)
     val sourcePipeline = pipelineFor(source)
     //  assert(sourcePipeline.frame.isWritten)
     if (needToAddDep) {
@@ -337,7 +337,7 @@ class PipeliningTurn(randomizeDeps: Boolean = false)
                 }
                 // Only need to continue created frames, if one was created
                 if (anyFrameCreated)
-                  reactive.outgoing(this).foreach { queue.enqueue(-1) }
+                  reactive.bud.outgoing(this).foreach { queue.enqueue(-1) }
               }
             }
           }
@@ -365,7 +365,7 @@ class PipeliningTurn(randomizeDeps: Boolean = false)
     println(s"Unregister $source as incoming of $sink for $this")
 
     val sourcePipeline = pipelineFor(source)
-    val needToRemoveDep = source.outgoing.contains(sink)
+    val needToRemoveDep = source.bud.outgoing.contains(sink)
 
     if (needToRemoveDep) {
 
@@ -421,7 +421,7 @@ class PipeliningTurn(randomizeDeps: Boolean = false)
           }
           // Only need to continue created frames, if one was created
           if (frameRemoved)
-            reactive.outgoing.foreach { queue.enqueue(-1) }
+            reactive.bud.outgoing.foreach { queue.enqueue(-1) }
         }
 
       }

@@ -44,7 +44,7 @@ class PipelineQueue()(implicit val currentTurn: Turn[PipelineSpores.type]) {
         true
       }
       enqueue(headMinLevel, reevaluate)(head)
-      head.outgoing.foreach { r =>
+      head.bud.outgoing.foreach { r =>
         if (r.bud.level <= headMinLevel)
           enqueue(headMinLevel + 1, needsEvaluate = false)(r)
       }

@@ -9,8 +9,6 @@ trait Reactive[S <: Spores] {
 
   protected[rescala] def bud: S#Struct[Reactive[S]]
 
-  protected[rescala] def outgoing(implicit turn: Turn[S]): Set[Reactive[S]] = bud.outgoing
-
   protected[rescala] def incoming(implicit turn: Turn[S]): Set[Reactive[S]]
 
   /** called when it is this events turn to be evaluated
