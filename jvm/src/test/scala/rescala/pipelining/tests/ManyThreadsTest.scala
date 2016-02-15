@@ -62,16 +62,8 @@ class ManyThreadsTest extends AssertionsForJUnit with MockitoSugar {
     }
   }
 
-  def assyncAssert(op: => Boolean, message : =>String = ""): Unit = {
-    val ok = op
-    if (!ok) {
-      val trace = Thread.currentThread().getStackTrace
-      val messageV = message
-      System.err.println(messageV)
-      System.err.println(trace.mkString("\n"))
-      System.exit(0)
-    }
-  }
+  def assyncAssert(ok: => Boolean, message : =>String = ""): Unit = if (!ok) throw new AssertionError(s"$message\n")
+
 
   val s1 = Var(0)
   val s2 = Var(0)
