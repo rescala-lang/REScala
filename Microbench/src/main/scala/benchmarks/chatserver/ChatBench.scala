@@ -7,7 +7,7 @@ import benchmarks.{Size, EngineParam, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{Blackhole, ThreadParams, BenchmarkParams}
 import rescala.reactives.{Evt, Event}
-import rescala.graph.Spores
+import rescala.graph.Struct
 
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -15,7 +15,7 @@ import rescala.graph.Spores
 @Warmup(iterations = 5, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
 @Measurement(iterations = 5, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
 @Fork(1)
-class ChatBench[S <: Spores] {
+class ChatBench[S <: Struct] {
 
   @Benchmark
   def chat(benchState: BenchState[S], threadParams: ThreadParams, engineParam: EngineParam[S]) = {
@@ -26,7 +26,7 @@ class ChatBench[S <: Spores] {
 
 
 @State(Scope.Benchmark)
-class BenchState[S <: Spores] {
+class BenchState[S <: Struct] {
 
 
   var cs: ChatServer[S] = _

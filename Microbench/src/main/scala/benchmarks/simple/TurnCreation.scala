@@ -15,7 +15,7 @@ import rescala.engines.Engine
 @Fork(1)
 @Threads(1)
 @State(Scope.Benchmark)
-class TurnCreation[S <: rescala.graph.Spores] {
+class TurnCreation[S <: rescala.graph.Struct] {
 
   implicit var engine: Engine[S, Turn[S]] = _
 

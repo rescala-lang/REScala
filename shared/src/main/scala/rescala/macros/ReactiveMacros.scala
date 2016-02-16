@@ -1,6 +1,6 @@
 package rescala.macros
 
-import rescala.graph.{PulseOption, Spores, Stateful}
+import rescala.graph.{PulseOption, Struct, Stateful}
 import rescala.propagation.Turn
 import rescala.reactives.Signal
 import rescala.reactives.Event
@@ -10,10 +10,10 @@ import scala.reflect.macros.blackbox
 
 object ReactiveMacros {
 
-  def Signal[A, S <: Spores](expression: A): Signal[A, S] = macro SignalMacro[A, S]
-  def Event[A, S <: Spores](expression: A): Event[A, S] = macro EventMacro[A, S]
+  def Signal[A, S <: Struct](expression: A): Signal[A, S] = macro SignalMacro[A, S]
+  def Event[A, S <: Struct](expression: A): Event[A, S] = macro EventMacro[A, S]
 
-  def SignalMacro[A: c.WeakTypeTag, S <: Spores : c.WeakTypeTag](c: blackbox.Context)(expression: c.Expr[A]): c.Expr[Signal[A, S]] = {
+  def SignalMacro[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag](c: blackbox.Context)(expression: c.Expr[A]): c.Expr[Signal[A, S]] = {
     import c.universe._
 
     val (cutOutSignals, signalExpression, filteredDetections ) =  ReactiveMacro(c)(expression)
@@ -33,7 +33,7 @@ object ReactiveMacros {
 
 
 
-  def EventMacro[A: c.WeakTypeTag, S <: Spores : c.WeakTypeTag](c: blackbox.Context)(expression: c.Expr[A]): c.Expr[Event[A, S]] = {
+  def EventMacro[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag](c: blackbox.Context)(expression: c.Expr[A]): c.Expr[Event[A, S]] = {
     import c.universe._
 
     val (cutOutSignals, signalExpression, filteredDetections ) =  ReactiveMacro(c)(expression)
@@ -51,7 +51,7 @@ object ReactiveMacros {
     c.Expr[Event[A, S]](Typer(c) untypecheck block)
   }
 
-  def ReactiveMacro[A: c.WeakTypeTag, S <: Spores : c.WeakTypeTag](c: blackbox.Context)(expression: c.Expr[A]): (List[c.universe.ValDef], c.universe.Tree, List[c.universe.Tree]) = {
+  def ReactiveMacro[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag](c: blackbox.Context)(expression: c.Expr[A]): (List[c.universe.ValDef], c.universe.Tree, List[c.universe.Tree]) = {
     import c.universe._
 
     val uncheckedExpressions: Set[Tree] = calcUncheckedExpressions(c)(expression)
@@ -250,7 +250,7 @@ object ReactiveMacros {
     }).flatten.toSet
   }
 
-  def checkForPotentialSideEffects[A: c.WeakTypeTag, S <: Spores : c.WeakTypeTag]
+  def checkForPotentialSideEffects[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag]
     (c: blackbox.Context)
     (expression: c.Expr[A], uncheckedExpressions: Set[c.universe.Tree]): Unit = {
 

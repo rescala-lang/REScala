@@ -1,13 +1,13 @@
 package rescala.pipelining.propagation
 
 import rescala.graph.{Committable, Reactive, ReevaluationResult}
-import rescala.pipelining.PipelineSpores
+import rescala.pipelining.PipelineStruct
 import rescala.propagation.{AbstractPropagation, Turn}
 
 
-trait PipelinePropagationImpl extends AbstractPropagation[PipelineSpores.type] {
+trait PipelinePropagationImpl extends AbstractPropagation[PipelineStruct.type] {
 
-  type S = PipelineSpores.type
+  type S = PipelineStruct.type
 
   implicit def currentTurn: PipelinePropagationImpl = this
 

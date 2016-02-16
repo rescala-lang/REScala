@@ -6,13 +6,13 @@ import benchmarks.philosophers.PhilosopherTable._
 import org.openjdk.jmh.infra.Blackhole
 import rescala.reactives.{Signals}
 import Signals.lift
-import rescala.graph.Spores
+import rescala.graph.Struct
 import rescala.propagation.Turn
 import rescala.engines.Engine
 import rescala.reactives.Signal
 import rescala.reactives.Var
 
-class PhilosopherTable[S <: Spores](philosopherCount: Int, work: Long)(implicit val engine: Engine[S, Turn[S]]) {
+class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit val engine: Engine[S, Turn[S]]) {
 
 
   val seatings = createTable(philosopherCount)
@@ -90,6 +90,6 @@ object PhilosopherTable {
 
   // ============================================ Entity Creation =========================================================
 
-  case class Seating[S <: Spores](placeNumber: Int, philosopher: Var[Philosopher, S], leftFork: Signal[Fork, S], rightFork: Signal[Fork, S], vision: Signal[Vision, S])
+  case class Seating[S <: Struct](placeNumber: Int, philosopher: Var[Philosopher, S], leftFork: Signal[Fork, S], rightFork: Signal[Fork, S], vision: Signal[Vision, S])
 
 }

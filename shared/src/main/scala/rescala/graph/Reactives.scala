@@ -5,10 +5,10 @@ import rescala.graph.Pulse.{Diff, NoChange}
 import rescala.propagation.Turn
 
 /** A Reactive is something that can be reevaluated */
-trait Reactive[S <: Spores] {
+trait Reactive[S <: Struct] {
   final override val hashCode: Int = Globals.nextID().hashCode()
 
-  protected[rescala] def bud: S#Struct[Reactive[S]]
+  protected[rescala] def bud: S#Spore[Reactive[S]]
 
   final protected[rescala] def incoming(implicit turn: Turn[S]): Set[Reactive[S]] = bud.incoming
 
@@ -23,21 +23,21 @@ trait Reactive[S <: Spores] {
 
 
 /** helper class to initialise engine and select lock */
-abstract class Base[P, S <: Spores](
-  final override protected[this] val budP: S#StructP[P, Reactive[S]]) extends Pulsing[P, S]  {
+abstract class Base[P, S <: Struct](
+  final override protected[this] val budP: S#SporeP[P, Reactive[S]]) extends Pulsing[P, S]  {
 
-  final override protected[rescala] def bud: S#Struct[Reactive[S]] = budP
+  final override protected[rescala] def bud: S#Spore[Reactive[S]] = budP
 }
 
 /** A node that has nodes that depend on it */
-trait Pulsing[+P, S <: Spores] extends Reactive[S] {
-  protected[this] def budP: S#StructP[P, Reactive[S]]
+trait Pulsing[+P, S <: Struct] extends Reactive[S] {
+  protected[this] def budP: S#SporeP[P, Reactive[S]]
   final protected[this] def pulses: Buffer[Pulse[P]] = budP.pulses
   final def pulse(implicit turn: Turn[S]): Pulse[P] = pulses.get
 }
 
 /** dynamic access to pulsing values */
-trait PulseOption[+P, S <: Spores] extends Pulsing[P, S] {
+trait PulseOption[+P, S <: Struct] extends Pulsing[P, S] {
   def apply(): Option[P] = throw new IllegalAccessException(s"$this.apply called outside of macro")
   final def apply[T](turn: Turn[S]): Option[P] = {
     turn.dependencyInteraction(this)
@@ -48,7 +48,7 @@ trait PulseOption[+P, S <: Spores] extends Pulsing[P, S] {
 
 
 /** a node that has a current state */
-trait Stateful[+A, S <: Spores] extends Pulsing[A, S] {
+trait Stateful[+A, S <: Struct] extends Pulsing[A, S] {
   // only used inside macro and will be replaced there
   final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")
 

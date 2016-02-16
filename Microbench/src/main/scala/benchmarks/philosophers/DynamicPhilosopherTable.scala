@@ -1,14 +1,14 @@
 package benchmarks.philosophers
 
 import benchmarks.philosophers.PhilosopherTable._
-import rescala.graph.Spores
+import rescala.graph.Struct
 import rescala.reactives.Signals
 import Signals.lift
 import rescala.propagation.Turn
 import rescala.engines.Engine
 import rescala.reactives.Var
 
-class DynamicPhilosopherTable[S <: Spores](philosopherCount: Int, work: Long)(override implicit val engine: Engine[S, Turn[S]]) extends PhilosopherTable(philosopherCount, work)(engine) {
+class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(override implicit val engine: Engine[S, Turn[S]]) extends PhilosopherTable(philosopherCount, work)(engine) {
 
   override def createTable(tableSize: Int): Seq[Seating[S]] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
@@ -48,7 +48,7 @@ class DynamicPhilosopherTable[S <: Spores](philosopherCount: Int, work: Long)(ov
 
 }
 
-class HalfDynamicPhilosopherTable[S <: Spores](philosopherCount: Int, work: Long)(override implicit val engine: Engine[S, Turn[S]]) extends PhilosopherTable(philosopherCount, work)(engine) {
+class HalfDynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(override implicit val engine: Engine[S, Turn[S]]) extends PhilosopherTable(philosopherCount, work)(engine) {
 
   override def createTable(tableSize: Int): Seq[Seating[S]] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
@@ -78,7 +78,7 @@ class HalfDynamicPhilosopherTable[S <: Spores](philosopherCount: Int, work: Long
 
 }
 
-class OtherHalfDynamicPhilosopherTable[S <: Spores](philosopherCount: Int, work: Long)(override implicit val engine: Engine[S, Turn[S]]) extends PhilosopherTable(philosopherCount, work)(engine) {
+class OtherHalfDynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(override implicit val engine: Engine[S, Turn[S]]) extends PhilosopherTable(philosopherCount, work)(engine) {
 
   override def createTable(tableSize: Int): Seq[Seating[S]] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize

@@ -16,7 +16,7 @@ import rescala.reactives.{Signals}
 @Fork(1)
 @Threads(1)
 @State(Scope.Thread)
-class NaturalGraph[S <: rescala.graph.Spores] {
+class NaturalGraph[S <: rescala.graph.Struct] {
 
   implicit var engine: Engine[S, Turn[S]] = _
 

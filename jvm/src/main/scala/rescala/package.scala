@@ -1,4 +1,4 @@
 import rescala.engines.EngineImpl
-import rescala.parrp.{Backoff, ParRPSpores, ParRP}
+import rescala.parrp.{Backoff, ParRPStruct, ParRP}
 
-package object rescala extends EngineImpl[ParRPSpores.type, ParRP](ParRPSpores, new ParRP(new Backoff))
+package object rescala extends EngineImpl[ParRPStruct.type, ParRP](ParRPStruct, new ParRP(new Backoff))

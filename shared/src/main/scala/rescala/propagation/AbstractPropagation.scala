@@ -1,8 +1,8 @@
 package rescala.propagation
 
-import rescala.graph.{Reactive, Spores}
+import rescala.graph.{Reactive, Struct}
 
-trait AbstractPropagation[S <: Spores] extends Turn[S] {
+trait AbstractPropagation[S <: Struct] extends Turn[S] {
 
   def lockPhase(initialWrites: List[Reactive[S]]): Unit
 

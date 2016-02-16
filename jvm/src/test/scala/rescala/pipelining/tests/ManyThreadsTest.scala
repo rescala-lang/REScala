@@ -10,7 +10,7 @@ import rescala.pipelining.util.LogUtils
 import rescala.reactives.Var
 import rescala.pipelining.Pipeline._
 import rescala.pipelining.tests.PipelineTestUtils._
-import rescala.pipelining.{PipelineEngine, PipelineSpores}
+import rescala.pipelining.{PipelineEngine, PipelineStruct}
 import rescala.propagation.Turn
 import rescala.reactives.Signals
 
@@ -19,7 +19,7 @@ import scala.annotation.tailrec
 class ManyThreadsTest extends AssertionsForJUnit with MockitoSugar {
 
   implicit val engine = new PipelineEngine()
-  type S = PipelineSpores.type
+  type S = PipelineStruct.type
 
   /*
    * This test suite runs on the following topology: S1 and S2 are sources

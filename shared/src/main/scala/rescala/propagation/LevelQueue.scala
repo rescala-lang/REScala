@@ -2,12 +2,12 @@ package rescala.propagation
 
 import java.lang.{Boolean => jlBool}
 
-import rescala.graph.{Reactive, Spores}
+import rescala.graph.{Reactive, Struct}
 import rescala.propagation.LevelQueue.QueueElement
 
 import scala.collection.immutable.SortedSet
 
-class LevelQueue[S <: Spores]()(implicit val currenTurn: Turn[S]) {
+class LevelQueue[S <: Struct]()(implicit val currenTurn: Turn[S]) {
 
   private var elements = SortedSet.empty[QueueElement[S]]
 
@@ -59,7 +59,7 @@ class LevelQueue[S <: Spores]()(implicit val currenTurn: Turn[S]) {
 
 object LevelQueue {
 
-  private case class QueueElement[S <: Spores](level: Int, reactive: Reactive[S], minLevel: Int, needsEvaluate: Boolean)
+  private case class QueueElement[S <: Struct](level: Int, reactive: Reactive[S], minLevel: Int, needsEvaluate: Boolean)
   private implicit val ordering: Ordering[QueueElement[_]] = new Ordering[QueueElement[_]] {
     override def compare(x: QueueElement[_], y: QueueElement[_]): Int = {
       val levelDiff = Integer.compare(x.level, y.level)
@@ -71,6 +71,6 @@ object LevelQueue {
       }
     }
   }
-  private implicit def lqo[S <: Spores]: Ordering[QueueElement[S]] = ordering.asInstanceOf[Ordering[QueueElement[S]]]
+  private implicit def lqo[S <: Struct]: Ordering[QueueElement[S]] = ordering.asInstanceOf[Ordering[QueueElement[S]]]
 }
 

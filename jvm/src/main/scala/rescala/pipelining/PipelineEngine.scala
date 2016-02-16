@@ -6,10 +6,10 @@ import rescala.engines.PlanImpl
  * @author moritzlichter
  */
 
-class PipelineEngine extends PlanImpl[PipelineSpores.type, PipeliningTurn] {
+class PipelineEngine extends PlanImpl[PipelineStruct.type, PipeliningTurn] {
 
   /** used for the creation of state inside reactives */
-  override private[rescala] def bufferFactory: PipelineSpores.type = PipelineSpores
+  override private[rescala] def bufferFactory: PipelineStruct.type = PipelineStruct
   override final protected[rescala] def makeTurn(): PTurn = new PipeliningTurn(this)
 
 

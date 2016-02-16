@@ -1,23 +1,23 @@
 package rescala.graph
 
 import rescala.graph.Buffer.CommitStrategy
-import rescala.graph.Spores.{TraitStruct, TraitStructP}
+import rescala.graph.Struct.{TraitSpore, TraitSporeP}
 import rescala.propagation.Turn
 
 import scala.language.{existentials, higherKinds, implicitConversions}
 
 
-trait Spores {
-  type Struct[R] <: TraitStruct[R]
-  type StructP[P, R] = Struct[R] with TraitStructP[P, R]
+trait Struct {
+  type Spore[R] <: TraitSpore[R]
+  type SporeP[P, R] = Spore[R] with TraitSporeP[P, R]
 
-  def bud[P, R](initialValue: Pulse[P] = Pulse.none, transient: Boolean = true, initialIncoming: Set[R] = Set.empty[R]): StructP[P, R]
+  def bud[P, R](initialValue: Pulse[P] = Pulse.none, transient: Boolean = true, initialIncoming: Set[R] = Set.empty[R]): SporeP[P, R]
 
 }
 
-object Spores {
+object Struct {
 
-  trait TraitStruct[R] {
+  trait TraitSpore[R] {
 
     def level(implicit turn: Turn[_]): Int
     def updateLevel(i: Int)(implicit turn: Turn[_]): Int
@@ -31,7 +31,7 @@ object Spores {
     def drop(reactive: R)(implicit turn: Turn[_]): Unit
 
   }
-  trait TraitStructP[P, R] extends TraitStruct[R] {
+  trait TraitSporeP[P, R] extends TraitSpore[R] {
 
     val pulses: Buffer[Pulse[P]]
 
@@ -40,8 +40,8 @@ object Spores {
 
 }
 
-trait BufferedSpores extends Spores {
-  abstract class BufferedStructP[P, R](initialIncoming: Set[R]) extends TraitStructP[P, R] {
+trait BufferedStruct extends Struct {
+  abstract class BufferedSporeP[P, R](initialIncoming: Set[R]) extends TraitSporeP[P, R] {
     def buffer[A](default: A, commitStrategy: CommitStrategy[A]): Buffer[A]
     private val _level: Buffer[Int] = buffer(0, math.max)
     private val _incoming: Buffer[Set[R]] = buffer(initialIncoming, Buffer.commitAsIs)
@@ -61,13 +61,13 @@ trait BufferedSpores extends Spores {
   }
 }
 
-object SimpleSpores extends BufferedSpores {
-  override type Struct[R] = SimpleStructP[_, R]
+object SimpleStruct extends BufferedStruct {
+  override type Spore[R] = SimpleSporeP[_, R]
 
-  def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): StructP[P, R] =
-    new SimpleStructP[P, R](new SimpleBuffer[Pulse[P]](initialValue, if (transient) Buffer.transactionLocal else Buffer.keepPulse), initialIncoming)
+  def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): SporeP[P, R] =
+    new SimpleSporeP[P, R](new SimpleBuffer[Pulse[P]](initialValue, if (transient) Buffer.transactionLocal else Buffer.keepPulse), initialIncoming)
 
-  class SimpleStructP[P, R](override val pulses: SimpleBuffer[Pulse[P]], initialIncoming: Set[R]) extends BufferedStructP[P, R](initialIncoming) {
+  class SimpleSporeP[P, R](override val pulses: SimpleBuffer[Pulse[P]], initialIncoming: Set[R]) extends BufferedSporeP[P, R](initialIncoming) {
     override def buffer[A](default: A, commitStrategy: CommitStrategy[A]): SimpleBuffer[A] = new SimpleBuffer[A](default, commitStrategy)
   }
 }

@@ -3,20 +3,20 @@ package rescala.graph
 import rescala.propagation.Turn
 
 
-sealed trait ReevaluationResult[S <: Spores]
+sealed trait ReevaluationResult[S <: Struct]
 
 object ReevaluationResult {
-  case class Static[S <: Spores](changed: Boolean) extends ReevaluationResult[S]
-  case class Dynamic[S <: Spores](changed: Boolean, diff: DepDiff[S]) extends ReevaluationResult[S]
+  case class Static[S <: Struct](changed: Boolean) extends ReevaluationResult[S]
+  case class Dynamic[S <: Struct](changed: Boolean, diff: DepDiff[S]) extends ReevaluationResult[S]
 }
 
-case class DepDiff[S <: Spores](novel: Set[Reactive[S]], old: Set[Reactive[S]]) {
+case class DepDiff[S <: Struct](novel: Set[Reactive[S]], old: Set[Reactive[S]]) {
   lazy val added = novel.diff(old)
   lazy val removed = old.diff(novel)
 }
 
 /** reevaluation strategy for static dependencies */
-trait StaticReevaluation[+P, S <: Spores] {
+trait StaticReevaluation[+P, S <: Struct] {
   this: Pulsing[P, S] =>
 
   /** side effect free calculation of the new pulse for the current turn */
@@ -31,7 +31,7 @@ trait StaticReevaluation[+P, S <: Spores] {
 
 
 /** reevaluation strategy for dynamic dependencies */
-trait DynamicReevaluation[+P, S <: Spores] {
+trait DynamicReevaluation[+P, S <: Struct] {
   this: Pulsing[P, S] =>
 
   /** side effect free calculation of the new pulse and the new dependencies for the current turn */

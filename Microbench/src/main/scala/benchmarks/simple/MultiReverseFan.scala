@@ -17,7 +17,7 @@ import rescala.reactives.{Signals, Signal}
 @Fork(1)
 @Threads(4)
 @State(Scope.Benchmark)
-class MultiReverseFan[S <: rescala.graph.Spores] {
+class MultiReverseFan[S <: rescala.graph.Struct] {
 
   implicit var engine: Engine[S, Turn[S]] = _
 

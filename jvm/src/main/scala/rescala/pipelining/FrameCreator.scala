@@ -7,7 +7,7 @@ import rescala.propagation.LevelQueue
 
 trait FrameCreator {
 
-  protected[this] def createFrames(initialReactives: List[Reactive[PipelineSpores.type]]): Unit
+  protected[this] def createFrames(initialReactives: List[Reactive[PipelineStruct.type]]): Unit
 
 }
 
@@ -15,7 +15,7 @@ trait QueueBasedFrameCreator extends FrameCreator {
 
   self: PipeliningTurn =>
 
-  type S = PipelineSpores.type
+  type S = PipelineStruct.type
 
 
   protected[this] final def evaluateQueue(initialWrites: List[Reactive[S]]) = {

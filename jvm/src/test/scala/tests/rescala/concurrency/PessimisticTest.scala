@@ -8,7 +8,7 @@ import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import rescala.engines.{Engine, EngineImpl}
 import rescala.graph.Reactive
-import rescala.parrp.{Backoff, ParRP, ParRPSpores}
+import rescala.parrp.{Backoff, ParRP, ParRPStruct}
 import rescala.propagation.Turn
 import rescala.reactives.{Signals, Signal}
 import rescala.reactives.Var
@@ -16,7 +16,7 @@ import rescala.reactives.Var
 import scala.collection.JavaConverters._
 
 class PessimisticTestTurn extends ParRP(backoff = new Backoff()) {
-  override def evaluate(r: Reactive[ParRPSpores.type]): Unit = {
+  override def evaluate(r: Reactive[ParRPStruct.type]): Unit = {
     while (Pessigen.syncStack.get() match {
       case stack@(set, bar) :: tail if set(r) =>
         bar.ready.countDown()
@@ -36,7 +36,7 @@ case class Barrier(ready: CountDownLatch, go: CountDownLatch) {
   }
 }
 
-object Pessigen extends EngineImpl(ParRPSpores, new PessimisticTestTurn) {
+object Pessigen extends EngineImpl(ParRPStruct, new PessimisticTestTurn) {
   val syncStack: AtomicReference[List[(Set[Reactive], Barrier)]] = new AtomicReference(Nil)
 
   def clear(): Int = syncStack.getAndSet(Nil).size
@@ -59,8 +59,8 @@ object Pessigen extends EngineImpl(ParRPSpores, new PessimisticTestTurn) {
 
 class PessimisticTest extends AssertionsForJUnit {
 
-  implicit def factory: Engine[ParRPSpores.type, Turn[ParRPSpores.type]] = Pessigen
-  def unsafeNow[T](s: Signal[T, ParRPSpores.type]): T = {
+  implicit def factory: Engine[ParRPStruct.type, Turn[ParRPStruct.type]] = Pessigen
+  def unsafeNow[T](s: Signal[T, ParRPStruct.type]): T = {
     factory.plan()(s.get(_))
   }
 
@@ -150,15 +150,15 @@ class PessimisticTest extends AssertionsForJUnit {
 
 
   object MockFacFac {
-    def apply(i0: Reactive[ParRPSpores.type], reg: => Unit, unreg: => Unit): Engine[ParRPSpores.type, Turn[ParRPSpores.type]] =
-      new EngineImpl[ParRPSpores.type, ParRP](
-        ParRPSpores,
+    def apply(i0: Reactive[ParRPStruct.type], reg: => Unit, unreg: => Unit): Engine[ParRPStruct.type, Turn[ParRPStruct.type]] =
+      new EngineImpl[ParRPStruct.type, ParRP](
+        ParRPStruct,
         new ParRP(new Backoff()) {
-          override def discover(downstream: Reactive[ParRPSpores.type])(upstream: Reactive[ParRPSpores.type]): Unit = {
+          override def discover(downstream: Reactive[ParRPStruct.type])(upstream: Reactive[ParRPStruct.type]): Unit = {
             if (upstream eq i0) reg
             super.discover(downstream)(upstream)
           }
-          override def drop(downstream: Reactive[ParRPSpores.type])(upstream: Reactive[ParRPSpores.type]): Unit = {
+          override def drop(downstream: Reactive[ParRPStruct.type])(upstream: Reactive[ParRPStruct.type]): Unit = {
             if (upstream eq i0) unreg
             super.drop(downstream)(upstream)
           }

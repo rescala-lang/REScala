@@ -1,6 +1,6 @@
 package rescala.engines
 
-import rescala.graph.Spores
+import rescala.graph.Struct
 import rescala.macros.ReactiveMacros
 import rescala.propagation.Turn
 import rescala.reactives.{Events, Signals}
@@ -11,7 +11,7 @@ import scala.language.experimental.macros
 
 
 @implicitNotFound(msg = "could not find a propagation engine, select one from Engines")
-trait Engine[S <: Spores, +TTurn <: Turn[S]] {
+trait Engine[S <: Struct, +TTurn <: Turn[S]] {
 
   implicit def Engine: this.type = this
 

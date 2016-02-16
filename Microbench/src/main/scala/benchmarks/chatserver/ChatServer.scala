@@ -1,14 +1,14 @@
 package benchmarks.chatserver
 
 import rescala.reactives.Events
-import rescala.graph.Spores
+import rescala.graph.Struct
 import rescala.propagation.Turn
 import rescala.engines.Engine
 
 import scala.collection.LinearSeq
 import scala.collection.immutable.Queue
 
-class ChatServer[S <: Spores]()(implicit val engine: Engine[S, Turn[S]]) {
+class ChatServer[S <: Struct]()(implicit val engine: Engine[S, Turn[S]]) {
 
   import engine._
 

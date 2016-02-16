@@ -3,15 +3,15 @@ package rescala.pipelining.propagation
 import java.lang.{Boolean => jlBool}
 
 import rescala.graph.Reactive
-import rescala.pipelining.PipelineSpores
+import rescala.pipelining.PipelineStruct
 import rescala.pipelining.propagation.PipelineQueue.QueueElement
 import rescala.propagation.Turn
 
 import scala.collection.SortedSet
 
-class PipelineQueue()(implicit val currentTurn: Turn[PipelineSpores.type]) {
+class PipelineQueue()(implicit val currentTurn: Turn[PipelineStruct.type]) {
 
-  type S = PipelineSpores.type
+  type S = PipelineStruct.type
 
   private var elements = SortedSet[QueueElement]()
   private var numOccurences = Map[Reactive[S], Int]()
@@ -81,7 +81,7 @@ class PipelineQueue()(implicit val currentTurn: Turn[PipelineSpores.type]) {
 
 object PipelineQueue {
 
-  private case class QueueElement(level: Int, reactive: Reactive[PipelineSpores.type], minLevel: Int, needsEvaluate: Boolean)
+  private case class QueueElement(level: Int, reactive: Reactive[PipelineStruct.type], minLevel: Int, needsEvaluate: Boolean)
   private implicit val ordering: Ordering[QueueElement] = new Ordering[QueueElement] {
     override def compare(x: QueueElement, y: QueueElement): Int = {
       val levelDiff = Integer.compare(x.level, y.level)

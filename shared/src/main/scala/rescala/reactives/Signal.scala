@@ -1,9 +1,9 @@
 package rescala.reactives
 
 import rescala.engines.Ticket
-import rescala.graph.{Spores, Stateful}
+import rescala.graph.{Struct, Stateful}
 
-trait Signal[+A, S <: Spores] extends Stateful[A, S] {
+trait Signal[+A, S <: Struct] extends Stateful[A, S] {
 
   /** add an observer */
   final def observe(react: A => Unit)(implicit ticket: Ticket[S]): Observe[S] = Observe(this)(react)

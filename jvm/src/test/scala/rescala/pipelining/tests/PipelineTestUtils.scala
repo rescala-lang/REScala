@@ -1,7 +1,7 @@
 package rescala.pipelining.tests
 
 import rescala.graph.Reactive
-import rescala.pipelining.{Pipeline, PipelineEngine, PipelineSpores, PipeliningTurn}
+import rescala.pipelining.{Pipeline, PipelineEngine, PipelineStruct, PipeliningTurn}
 import rescala.propagation.Turn
 import rescala.reactives.Signal
 
@@ -12,7 +12,7 @@ object PipelineTestUtils {
   
   private val rand = new Random
 
-  type S = PipelineSpores.type
+  type S = PipelineStruct.type
 
   def frameTurns(f : Reactive[S]) : Queue[Turn[S]] = {
     Pipeline.pipelineFor(f).getPipelineFrames().map { _.turn}
@@ -45,7 +45,7 @@ object PipelineTestUtils {
   
 }
 
-class ValueTracker[T](s : Signal[T, PipelineSpores.type])(implicit val engine: PipelineEngine) {
+class ValueTracker[T](s : Signal[T, PipelineStruct.type])(implicit val engine: PipelineEngine) {
     var values : List[T] = List()
     private object valueLock
     

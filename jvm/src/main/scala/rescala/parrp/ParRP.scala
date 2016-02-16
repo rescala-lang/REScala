@@ -6,9 +6,9 @@ import rescala.propagation.{FactoryReference, PropagationImpl}
 
 import scala.annotation.tailrec
 
-class ParRP(backoff: Backoff) extends FactoryReference[ParRPSpores.type](ParRPSpores) with PropagationImpl[ParRPSpores.type] {
+class ParRP(backoff: Backoff) extends FactoryReference[ParRPStruct.type](ParRPStruct) with PropagationImpl[ParRPStruct.type] {
 
-  type TState = ParRPSpores.type
+  type TState = ParRPStruct.type
 
   override def toString: String = s"ParRP(${key.id})"
 

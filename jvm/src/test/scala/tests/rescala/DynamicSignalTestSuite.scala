@@ -8,13 +8,13 @@ import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.Infiltrator.getLevel
 import rescala.engines.Engine
-import rescala.graph.Spores
+import rescala.graph.Struct
 import rescala.propagation.Turn
 
 object DynamicSignalTestSuite extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])
-class DynamicSignalTestSuite[S <: Spores](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
+class DynamicSignalTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
   implicit val implicitEngine: Engine[S, Turn[S]] = engine
   import implicitEngine.{Var, dynamic}
 

@@ -8,13 +8,13 @@ import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.engines.Engine
-import rescala.graph.Spores
+import rescala.graph.Struct
 import rescala.propagation.Turn
 
 object VarTestSuite extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])
-class VarTestSuite[S <: Spores](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
+class VarTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
   implicit val implicitEngine: Engine[S, Turn[S]] = engine
   import implicitEngine.Var
 

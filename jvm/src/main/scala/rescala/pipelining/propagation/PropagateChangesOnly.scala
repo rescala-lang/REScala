@@ -2,13 +2,13 @@ package rescala.pipelining.propagation
 
 import rescala.graph.ReevaluationResult.{Dynamic, Static}
 import rescala.graph.{Reactive, ReevaluationResult}
-import rescala.pipelining.PipelineSpores
+import rescala.pipelining.PipelineStruct
 
 trait PropagateChangesOnly {
   
   self : PipelinePropagationImpl =>
 
-  type S = PipelineSpores.type
+  type S = PipelineStruct.type
 
    override protected def calculateQueueAction(head : Reactive[S], result : ReevaluationResult[S]) : (Boolean, Int, QueueAction) =
      result match {

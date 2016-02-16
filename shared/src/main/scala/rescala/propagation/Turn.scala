@@ -1,12 +1,12 @@
 package rescala.propagation
 
-import rescala.graph.{Committable, Reactive, Spores}
+import rescala.graph.{Committable, Reactive, Struct}
 
 /**
  * The engine that schedules the (glitch-free) evaluation
  * of the nodes in the dependency graph.
  */
-trait Turn[S <: Spores] {
+trait Turn[S <: Struct] {
 
   /** used to create state containers of each reactive */
   def bufferFactory: S

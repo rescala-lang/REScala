@@ -2,13 +2,13 @@ package rescala.pipelining.propagation
 
 import rescala.graph.ReevaluationResult.{Dynamic, Static}
 import rescala.graph.{Reactive, ReevaluationResult}
-import rescala.pipelining.PipelineSpores
+import rescala.pipelining.PipelineStruct
 
 trait PropagateNoChanges {
 
   self : PipelinePropagationImpl =>
 
-  type S = PipelineSpores.type
+  type S = PipelineStruct.type
 
    protected def evaluateNoChange(head : Reactive[S]) : QueueAction
 

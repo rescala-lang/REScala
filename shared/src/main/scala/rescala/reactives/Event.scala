@@ -5,7 +5,7 @@ import rescala.graph._
 
 import scala.collection.immutable.{Queue, LinearSeq}
 
-trait Event[+T, S <: Spores] extends PulseOption[T, S]{
+trait Event[+T, S <: Struct] extends PulseOption[T, S]{
 
   /** add an observer */
   final def +=(react: T => Unit)(implicit ticket: Ticket[S]): Observe[S] = observe(react)(ticket)

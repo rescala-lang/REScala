@@ -17,7 +17,7 @@ import rescala.reactives.Signals
 @Fork(1)
 @Threads(1)
 @State(Scope.Benchmark)
-class SingleSwitch[S <: rescala.graph.Spores] {
+class SingleSwitch[S <: rescala.graph.Struct] {
 
   implicit var engine: Engine[S, Turn[S]] = _
 

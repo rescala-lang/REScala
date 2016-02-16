@@ -6,7 +6,7 @@ import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
 import rescala.engines.Engine
-import rescala.graph.Spores
+import rescala.graph.Struct
 import rescala.propagation.Turn
 import rescala.reactives.{Signal, Signals, Var}
 
@@ -18,7 +18,7 @@ import scala.collection.immutable.Range
  * sources -> chain … chain -> result <- dynamically chain of other source
  */
 @State(Scope.Benchmark)
-class StackState[S <: Spores] {
+class StackState[S <: Struct] {
 
   var sources: Array[Var[Int, S]] = _
   var results: Array[Signal[Int, S]] = _
@@ -53,7 +53,7 @@ class StackState[S <: Spores] {
 @Measurement(iterations = 5, time = 100, timeUnit = TimeUnit.MILLISECONDS)
 @Fork(1)
 @Threads(8)
-class Stacks[S <: Spores] {
+class Stacks[S <: Struct] {
 
   @Benchmark
   def run(state: StackState[S], step: Step, params: ThreadParams) = {

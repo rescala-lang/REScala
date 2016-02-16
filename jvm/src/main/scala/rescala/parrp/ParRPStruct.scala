@@ -1,20 +1,20 @@
 package rescala.parrp
 
-import rescala.graph.Spores.TraitStructP
-import rescala.graph.{Buffer, Committable, Pulse, Spores}
+import rescala.graph.Struct.TraitSporeP
+import rescala.graph.{Buffer, Committable, Pulse, Struct}
 import rescala.propagation.Turn
 
 import scala.language.implicitConversions
 
-object ParRPSpores extends Spores {
-  override type Struct[R] = ParRPStructP[_, R]
+object ParRPStruct extends Struct {
+  override type Spore[R] = ParRPSporeP[_, R]
 
-  override def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): StructP[P, R] = {
+  override def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): SporeP[P, R] = {
     val lock = new TurnLock
-    new ParRPStructP[P, R](initialValue, transient, lock, initialIncoming)
+    new ParRPSporeP[P, R](initialValue, transient, lock, initialIncoming)
   }
 
-  class ParRPStructP[P, R](var current: Pulse[P], transient: Boolean, val lock: TurnLock, initialIncoming: Set[R]) extends TraitStructP[P, R] with Buffer[Pulse[P]] with Committable {
+  class ParRPSporeP[P, R](var current: Pulse[P], transient: Boolean, val lock: TurnLock, initialIncoming: Set[R]) extends TraitSporeP[P, R] with Buffer[Pulse[P]] with Committable {
 
     private var _incoming: Set[R] = initialIncoming
     override def incoming(implicit turn: Turn[_]): Set[R] = _incoming

@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import benchmarks.{EngineParam, Workload}
 import org.openjdk.jmh.annotations._
 import rescala.engines.Engine
-import rescala.graph.Spores
+import rescala.graph.Struct
 import rescala.propagation.Turn
 import rescala.reactives._
 
@@ -31,7 +31,7 @@ class EvaluationCounter {
 @Measurement(iterations = 5, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
 @Fork(1)
 @Threads(2)
-class ExpensiveConflict[S <: Spores] {
+class ExpensiveConflict[S <: Struct] {
 
   var input: AtomicInteger = new AtomicInteger(0)
 

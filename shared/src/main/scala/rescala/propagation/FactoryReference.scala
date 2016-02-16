@@ -1,8 +1,8 @@
 package rescala.propagation
 
-import rescala.graph.Spores
+import rescala.graph.Struct
 
-abstract class FactoryReference[S <: Spores](override val bufferFactory: S) extends Turn[S]
+abstract class FactoryReference[S <: Struct](override val bufferFactory: S) extends Turn[S]
 
 
 

@@ -6,7 +6,7 @@ import rescala.parrp.Backoff
 import rescala.engines.{JVMEngines, Engine}
 
 @State(Scope.Benchmark)
-class EngineParam[S <: rescala.graph.Spores] {
+class EngineParam[S <: rescala.graph.Struct] {
   @Param(Array("synchron", "parrp", "stm"))
   var engineName: String = _
 

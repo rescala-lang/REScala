@@ -1,11 +1,11 @@
 package rescala.engines
 
-import rescala.graph.Spores
+import rescala.graph.Struct
 import rescala.propagation.AbstractPropagation
 
 import scala.util.DynamicVariable
 
-trait PlanImpl[S <: Spores, TImpl <: AbstractPropagation[S]] extends Engine[S, TImpl] {
+trait PlanImpl[S <: Struct, TImpl <: AbstractPropagation[S]] extends Engine[S, TImpl] {
 
   protected def makeTurn(): TImpl
 

@@ -40,7 +40,7 @@ trait ParallelFrameCreator extends QueueBasedFrameCreator {
 
   override protected[this] def createFrame(pipeline: Pipeline) : Unit =  pipeline.createFrameBefore(this)
     
-  override protected[this] def createFrames(initialWrites: List[Reactive[PipelineSpores.type]]) = {
+  override protected[this] def createFrames(initialWrites: List[Reactive[PipelineStruct.type]]) = {
     ParallelFrameCreator.addTurn(this)
     super.createFrames(initialWrites)
     ParallelFrameCreator.removeTurn(this)

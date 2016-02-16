@@ -16,7 +16,7 @@ import rescala.reactives.Var
 @Fork(1)
 @Threads(1)
 @State(Scope.Thread)
-class SimplePhil[S <: rescala.graph.Spores] {
+class SimplePhil[S <: rescala.graph.Struct] {
 
   import benchmarks.philosophers.PhilosopherTable._
 

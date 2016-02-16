@@ -1,15 +1,15 @@
 package rescala.pipelining
 
-import rescala.graph.Spores.TraitStructP
-import rescala.graph.{Buffer, Pulse, Spores}
+import rescala.graph.Struct.TraitSporeP
+import rescala.graph.{Buffer, Pulse, Struct}
 import rescala.propagation.Turn
 
-object PipelineSpores extends Spores {
-  override type Struct[R] = PipelineStructP[_, R]
+object PipelineStruct extends Struct {
+  override type Spore[R] = PipelineSporeP[_, R]
 
-  override def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): StructP[P, R] = new PipelineStructP[P, R](initialValue, transient, initialIncoming)
+  override def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): SporeP[P, R] = new PipelineSporeP[P, R](initialValue, transient, initialIncoming)
 
-  class PipelineStructP[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends TraitStructP[P, R] {
+  class PipelineSporeP[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends TraitSporeP[P, R] {
 
     val pipeline: Pipeline = new Pipeline()
 

@@ -16,7 +16,7 @@ class AwakingLevelQueue(currentTurn: PipeliningTurn) extends PipelineQueue()(cur
     }
   }
 
-  override def enqueue(minLevel: Int, needsEvaluate: Boolean = true)(dep: Reactive[PipelineSpores.type]): Unit = this.synchronized {
+  override def enqueue(minLevel: Int, needsEvaluate: Boolean = true)(dep: Reactive[PipelineStruct.type]): Unit = this.synchronized {
     super.enqueue(minLevel, needsEvaluate)(dep)
     if (needsAwake) {
       currentTurn.needContinue()

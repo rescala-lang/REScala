@@ -7,7 +7,7 @@ import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.engines.Engine
-import rescala.graph.Spores
+import rescala.graph.Struct
 import rescala.propagation.Turn
 import rescala.reactives.Signals
 
@@ -16,7 +16,7 @@ import scala.language.implicitConversions
 object GlitchFreedomTestSuite extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])
-class GlitchFreedomTestSuite[S <: Spores](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
+class GlitchFreedomTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
   implicit val implicitEngine: Engine[S, Turn[S]] = engine
   import implicitEngine.Var
 

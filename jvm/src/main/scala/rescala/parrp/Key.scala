@@ -7,7 +7,7 @@ import rescala.propagation.Turn
 
 import scala.annotation.tailrec
 
-final class Key(val turn: Turn[ParRPSpores.type]) {
+final class Key(val turn: Turn[ParRPStruct.type]) {
 
   val id = Globals.nextID()
   override def toString: String = s"Key($id)"

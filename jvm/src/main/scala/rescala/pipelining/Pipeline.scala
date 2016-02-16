@@ -7,13 +7,13 @@ import scala.annotation.tailrec
 import scala.collection.immutable.Queue
 
 object Pipeline {
-  protected[pipelining] def pipelineFor(at: Reactive[PipelineSpores.type]) = at.bud.pipeline
-  protected[pipelining] def apply(at: Reactive[PipelineSpores.type]) = at.bud.pipeline
+  protected[pipelining] def pipelineFor(at: Reactive[PipelineStruct.type]) = at.bud.pipeline
+  protected[pipelining] def apply(at: Reactive[PipelineStruct.type]) = at.bud.pipeline
 }
 
 class Pipeline() {
 
-  type S = PipelineSpores.type
+  type S = PipelineStruct.type
 
   protected[this]type Content = BufferFrameContent
 

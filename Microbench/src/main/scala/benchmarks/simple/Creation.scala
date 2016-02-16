@@ -17,7 +17,7 @@ import rescala.reactives.{Event, Evt, Var}
 @Fork(1)
 @Threads(1)
 @State(Scope.Thread)
-class Creation[S <: rescala.graph.Spores] {
+class Creation[S <: rescala.graph.Struct] {
 
   implicit var engine: Engine[S, Turn[S]] = _
 

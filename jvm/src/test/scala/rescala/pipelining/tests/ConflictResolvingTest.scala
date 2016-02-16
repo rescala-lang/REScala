@@ -5,7 +5,7 @@ import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.graph.Reactive
 import rescala.pipelining.Pipeline._
-import rescala.pipelining.{Pipeline, PipelineEngine, PipelineSpores, PipeliningTurn}
+import rescala.pipelining.{Pipeline, PipelineEngine, PipelineStruct, PipeliningTurn}
 import rescala.reactives.Signals
 
 import scala.collection.immutable.Queue
@@ -48,7 +48,7 @@ class ConflictResolvingTest extends AssertionsForJUnit with MockitoSugar {
     val turns = List.fill(6)(engine.makeTurn)
     val sources = List(s2, s1, s1, s2, s2, s1)
 
-    def makeFramesForUpdate(turn: PipeliningTurn, source: Reactive[PipelineSpores.type]) = {
+    def makeFramesForUpdate(turn: PipeliningTurn, source: Reactive[PipelineStruct.type]) = {
       Pipeline(source).createFrame(turn)
       Pipeline(d1).createFrame(turn)
       Pipeline(d2).createFrame(turn)

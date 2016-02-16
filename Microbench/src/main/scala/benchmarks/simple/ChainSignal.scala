@@ -17,7 +17,7 @@ import rescala.reactives.Var
 @Fork(1)
 @Threads(1)
 @State(Scope.Thread)
-class ChainSignal[S <: rescala.graph.Spores] {
+class ChainSignal[S <: rescala.graph.Struct] {
 
   implicit var engine: Engine[S, Turn[S]] = _
 

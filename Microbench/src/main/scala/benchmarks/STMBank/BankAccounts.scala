@@ -8,7 +8,7 @@ import benchmarks.{EngineParam, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{Blackhole, BenchmarkParams, ThreadParams}
 import rescala.reactives._
-import rescala.graph.Spores
+import rescala.graph.Struct
 import rescala.propagation.Turn
 import rescala.engines.{Engine, Ticket}
 
@@ -16,7 +16,7 @@ import scala.concurrent.stm.{atomic, Ref}
 
 
 @State(Scope.Benchmark)
-class ReactiveState[S <: Spores] {
+class ReactiveState[S <: Struct] {
 
 
   @Param(Array("64"))
@@ -74,7 +74,7 @@ class STMState {
 @Measurement(iterations = 5, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
 @Fork(1)
 @Threads(2)
-class BankAccounts[S <: Spores] {
+class BankAccounts[S <: Struct] {
 
   @Benchmark
   def reactive(rs: ReactiveState[S], bh: Blackhole) = {

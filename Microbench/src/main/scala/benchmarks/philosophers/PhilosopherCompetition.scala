@@ -8,7 +8,7 @@ import benchmarks.philosophers.PhilosopherTable.{Seating, Thinking}
 import benchmarks.{EngineParam, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
-import rescala.graph.Spores
+import rescala.graph.Struct
 
 import scala.annotation.tailrec
 
@@ -17,7 +17,7 @@ import scala.annotation.tailrec
 @Warmup(iterations = 5, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
 @Measurement(iterations = 5, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
 @Fork(1)
-class PhilosopherCompetition[S <: Spores] {
+class PhilosopherCompetition[S <: Struct] {
 
   @Benchmark
   def eat(comp: Competition[S], params: ThreadParams, work: Workload): Unit = {
@@ -63,7 +63,7 @@ class PhilosopherCompetition[S <: Spores] {
 
 
 @State(Scope.Benchmark)
-class Competition[S <: Spores] {
+class Competition[S <: Struct] {
 
   @Param(Array("16", "32", "64", "128"))
   var philosophers: Int = _
