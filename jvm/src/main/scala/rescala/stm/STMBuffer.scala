@@ -12,7 +12,7 @@ final class STMBuffer[A](initialValue: A, initialStrategy: (A, A) => A) extends 
   private val commitStrategy: (A, A) => A = initialStrategy
 
   implicit def inTxn(implicit turn: Turn[_]): InTxn = turn match {
-    case stmTurn: STMEngine => stmTurn.inTxn
+    case stmTurn: STMTurn => stmTurn.inTxn
     case _ => throw new IllegalStateException(s"$turn has invalid type for $this")
   }
 
