@@ -109,7 +109,7 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
    */
   private def needToWaitForIncoming(head: Reactive[S]) = {
     Pipeline(head).needFrame().isWritten || // TODO this is wait because an admit might readd a dependency to the queue while the head was removed
-      head.incoming.exists { reactive =>
+      head.bud.incoming.exists { reactive =>
         head.bud.level <= reactive.bud.level || // TODO Check whether level is enough
           pipelineFor(reactive).findFrame {
             _ match {
@@ -256,7 +256,7 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
   private def getAffectedTurns(reactive: Reactive[S], dynamicFrame: Frame[BufferFrameContent]) = {
     val firstFrame = if (dynamicFrame.turn == this) dynamicFrame.next() else dynamicFrame
     val affectedFrames = pipelineFor(reactive).forWriteFramesAfter(firstFrame) { _ => }
-    affectedFrames.map(_.turn.asInstanceOf[PipeliningTurn])
+    affectedFrames.map(_.turn)
   }
 
   override def discover(sink: Reactive[S])(source: Reactive[S]): Unit = {
@@ -336,10 +336,10 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
       val sinkPipeline = Pipeline(sink)
       sinkPipeline.lockDynamic {
 
-        if (sink.incoming.isInstanceOf[PipelineBuffer[_]]) {
+        if (sink.bud.incoming.isInstanceOf[PipelineBuffer[_]]) {
           val sinkFrames = sinkPipeline.forWriteFramesAfter(sinkPipeline.needFrame()) { _ => }
           sinkFrames.foreach { frame =>
-            sink.incoming.asInstanceOf[BlockingPipelineBuffer[Set[Reactive[S]]]].forceTransform { _ + source }(frame.turn)
+            sink.bud.incoming.asInstanceOf[BlockingPipelineBuffer[Set[Reactive[S]]]].forceTransform { _ + source }(frame.turn)
           }
         }
       }
@@ -375,11 +375,11 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
         turnsAfterDynamicDrop
       }
 
-      if (sink.incoming.isInstanceOf[PipelineBuffer[_]]) {
+      if (sink.bud.incoming.isInstanceOf[PipelineBuffer[_]]) {
         val sinkPipeline = pipelineFor(sink)
         val sinkFrames = sinkPipeline.forWriteFramesAfter(sinkPipeline.needFrame()) { _ => }
         sinkFrames.foreach { frame =>
-          sink.incoming.asInstanceOf[BlockingPipelineBuffer[Set[Reactive[S]]]].forceTransform { _ - source }(frame.turn)
+          sink.bud.incoming.asInstanceOf[BlockingPipelineBuffer[Set[Reactive[S]]]].forceTransform { _ - source }(frame.turn)
         }
       }
 

@@ -10,8 +10,6 @@ trait Reactive[S <: Struct] {
 
   protected[rescala] def bud: S#Spore[Reactive[S]]
 
-  final protected[rescala] def incoming(implicit turn: Turn[S]): Set[Reactive[S]] = bud.incoming
-
   /** called when it is this events turn to be evaluated
     * (head of the evaluation queue) */
   protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[S]

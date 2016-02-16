@@ -93,7 +93,7 @@ class ParRP(backoff: Backoff) extends FactoryReference[ParRPStruct.type](ParRPSt
       owner.turn.drop(sink)(source)
       if (!source.bud.lock.isWriteLock) {
         key.lockKeychain(key.keychain.removeFallthrough(owner))
-        if (!sink.incoming(this).exists(_.bud.lock.isOwner(owner))) owner.turn.forget(sink)
+        if (!sink.bud.incoming(this).exists(_.bud.lock.isOwner(owner))) owner.turn.forget(sink)
       }
     }
     else super.drop(sink)(source)
