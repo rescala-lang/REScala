@@ -21,17 +21,17 @@ trait Reactive[S <: Struct] {
 
 
 /** helper class to initialise engine and select lock */
-abstract class Base[P, S <: Struct](
-  final override protected[this] val budP: S#SporeP[P, Reactive[S]]) extends Pulsing[P, S]  {
-
+abstract class Base[P, S <: Struct](budP: S#SporeP[P, Reactive[S]]) extends Pulsing[P, S] {
   final override protected[rescala] def bud: S#Spore[Reactive[S]] = budP
+  final override protected[this] def pulses: Buffer[Pulse[P]] = budP.pulses
+
+  final override def pulse(implicit turn: Turn[S]): Pulse[P] = pulses.get
 }
 
 /** A node that has nodes that depend on it */
 trait Pulsing[+P, S <: Struct] extends Reactive[S] {
-  protected[this] def budP: S#SporeP[P, Reactive[S]]
-  final protected[this] def pulses: Buffer[Pulse[P]] = budP.pulses
-  final def pulse(implicit turn: Turn[S]): Pulse[P] = pulses.get
+  protected[this] def pulses: Buffer[Pulse[P]]
+  def pulse(implicit turn: Turn[S]): Pulse[P]
 }
 
 /** dynamic access to pulsing values */

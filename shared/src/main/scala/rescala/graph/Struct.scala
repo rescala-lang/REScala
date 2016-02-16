@@ -61,13 +61,59 @@ trait BufferedStruct extends Struct {
   }
 }
 
-object SimpleStruct extends BufferedStruct {
+object SimpleStruct extends Struct {
   override type Spore[R] = SimpleSporeP[_, R]
 
   def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): SporeP[P, R] =
-    new SimpleSporeP[P, R](new SimpleBuffer[Pulse[P]](initialValue, if (transient) Buffer.transactionLocal else Buffer.keepPulse), initialIncoming)
+    new SimpleSporeP[P, R](initialValue, transient, initialIncoming)
+}
 
-  class SimpleSporeP[P, R](override val pulses: SimpleBuffer[Pulse[P]], initialIncoming: Set[R]) extends BufferedSporeP[P, R](initialIncoming) {
-    override def buffer[A](default: A, commitStrategy: CommitStrategy[A]): SimpleBuffer[A] = new SimpleBuffer[A](default, commitStrategy)
+class SimpleSporeP[P, R](var current: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends TraitSporeP[P, R] with Buffer[Pulse[P]] with Committable {
+  var _level: Int = 0
+  var _incoming: Set[R] = initialIncoming
+  var _outgoing: Set[R] = Set.empty
+  override def level(implicit turn: Turn[_]): Int = _level
+  override def incoming(implicit turn: Turn[_]): Set[R] = _incoming
+  override def updateLevel(i: Int)(implicit turn: Turn[_]): Int = {
+    val max = math.max(i, _level)
+    _level = max
+    max
   }
+  override def drop(reactive: R)(implicit turn: Turn[_]): Unit = _outgoing -= reactive
+  override def outgoing(implicit turn: Turn[_]): Set[R] = _outgoing
+  override def updateIncoming(reactives: Set[R])(implicit turn: Turn[_]): Unit = _incoming = reactives
+  override def discover(reactive: R)(implicit turn: Turn[_]): Unit = _outgoing += reactive
+
+  override val pulses: Buffer[Pulse[P]] = this
+
+  private var update: Pulse[P] = Pulse.none
+  protected var owner: Turn[_] = null
+
+  override def transform(f: (Pulse[P]) => Pulse[P])(implicit turn: Turn[_]): Pulse[P] = {
+    val value = f(get)
+    set(value)
+    value
+  }
+
+  override def set(value: Pulse[P])(implicit turn: Turn[_]): Unit = {
+    assert(owner == null || owner == turn, s"buffer owned by $owner written by $turn")
+    update = value
+    if (owner == null) turn.schedule(this)
+    owner = turn
+  }
+
+  override def base(implicit turn: Turn[_]): Pulse[P] = current
+
+  override def get(implicit turn: Turn[_]): Pulse[P] = { if (turn eq owner) update else current }
+
+  override def release(implicit turn: Turn[_]): Unit = {
+    update = Pulse.none
+    owner = null
+  }
+
+  override def commit(implicit turn: Turn[_]): Unit = {
+    if (!transient) current = update.keep
+    release(turn)
+  }
+
 }
