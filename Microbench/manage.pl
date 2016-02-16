@@ -32,8 +32,8 @@ my $UNI_THREAD = 8;
 my @STEPS = (1..16,24,32,64);
 my @SIZES = (1,10,25,100,250,1000);
 my @CHATSERVERSIZES = (1,2,4,8,16,32);
-my @PHILOSOPHERS = (16, 32, 48, 64, 96, 128);
-my @LAYOUTS = qw<alternating third>;
+my @PHILOSOPHERS = (16, 32, 64, 128);
+my @LAYOUTS = qw<alternating random>;
 my %BASECONFIG = (
   # global locking does not deal well with sync iterations
   si => "false", # synchronize iterations
@@ -54,7 +54,7 @@ $ENV{'LANG'} = 'en_US.UTF-8';
 # $ENV{'JAVA_OPTS'} = $JMH_CLASSPATH;
 
 my $command = shift @ARGV;
-my @RUN = @ARGV ? @ARGV : qw< dynamicPhilosophers philosophers simplePhil >;
+my @RUN = @ARGV ? @ARGV : qw< halfDynamicPhilosophers simplePhil expensiveConflict singleDynamic singleVar turnCreation simpleFan simpleReverseFan simpleNaturalGraph multiReverseFan stmbank chatServer>;
 
 say "selected: " . (join " ", sort @RUN);
 say "available: " . (join " ", sort keys %{&selection()});
@@ -213,7 +213,7 @@ sub selection {
             my $program = makeRunString( $name,
               fromBaseConfig(
                 p => { # parameters
-                  tableType => 'half,other',
+                  tableType => 'other',
                   engineName => (join ',', @ENGINES_UNMANAGED),
                   philosophers => $phils,
                   layout => $layout,
@@ -347,6 +347,7 @@ sub selection {
                 engineName => (join ',', @ENGINES),
                 step =>  $steps
               },
+              t => $UNI_THREAD
             ),
             "dynamic.SingleSwitch"
           );

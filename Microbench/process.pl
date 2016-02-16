@@ -46,13 +46,13 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
     for my $philosophers (queryChoices("Param: philosophers", "Param: tableType" => $dynamic)) {
       local $LEGEND_POS = "left top" if $philosophers == 48  || $philosophers == 16;
       for my $layout (queryChoices("Param: layout", "Param: tableType" => $dynamic, "Param: philosophers" => $philosophers)) {
-        local $YRANGE = "[0:500]" if $philosophers <= 64 && $dynamic eq "static";
-        local $YRANGE = "[0:300]" if $philosophers <= 32 && $dynamic eq "static";
-        local $YRANGE = "[0:800]" if $philosophers > 64 && $dynamic eq "static";
-        local $YRANGE = "[0:300]" if $dynamic ne "static";
-        local $YRANGE = "[0:200]" if $dynamic ne "static" && $philosophers <= 32;
-        local $YRANGE = "[0:]" if $layout eq "third";
-        local $LEGEND_POS = "left top" if $layout eq "third";
+        # local $YRANGE = "[0:500]" if $philosophers <= 64 && $dynamic eq "static";
+        # local $YRANGE = "[0:300]" if $philosophers <= 32 && $dynamic eq "static";
+        # local $YRANGE = "[0:800]" if $philosophers > 64 && $dynamic eq "static";
+        # local $YRANGE = "[0:300]" if $dynamic ne "static";
+        # local $YRANGE = "[0:200]" if $dynamic ne "static" && $philosophers <= 32;
+        # local $YRANGE = "[0:]" if $layout eq "third";
+        # local $LEGEND_POS = "left top" if $layout eq "third";
         local $NAME_FINE = "No Sync" if $layout eq "third";
         plotBenchmarksFor("${dynamic}philosophers$philosophers", $layout,
           map { {Title => $_, "Param: engineName" => $_ , Benchmark => "benchmarks.philosophers.PhilosopherCompetition.eat",
@@ -100,6 +100,7 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
     my $BMCOND = qq[(results.Benchmark like "benchmarks.simple.SimplePhil%"
                   OR results.Benchmark = "benchmarks.simple.TurnCreation.run"
                   OR results.Benchmark = "benchmarks.simple.NaturalGraph.run"
+                  OR results.Benchmark = "benchmarks.dynamic.SingleSwitch.run"
                   OR (results.Benchmark = "benchmarks.philosophers.PhilosopherCompetition.eat"
                    AND `Param: tableType` = "static" AND `Param: layout` = "alternating"))];
     my $res = $DBH->selectall_arrayref(qq[SELECT parrp.Benchmark, sync.Score/sync.Score , parrp.Score/ sync.Score, stm.Score / sync.Score from
@@ -174,6 +175,17 @@ colors=red,green,blue
       for my $threads (queryChoices("Threads", Benchmark => $benchmark)) {
         my $query = queryDataset(query("Param: size", "Benchmark", "Param: engineName", "Threads"));
         plotDatasets("simple", $threads ."-". $benchmark, {xlabel => "Size", logscale => "x 10",},
+          map { $query->(prettyName($_), $benchmark, $_, $threads) } queryChoices("Param: engineName", "Benchmark" => $benchmark, Threads => $threads));
+      }
+    }
+  }
+
+
+  { # switch
+    for my $benchmark (grep {/dynamic\.SingleSwitch/} queryChoices("Benchmark")) {
+      for my $threads (queryChoices("Threads", Benchmark => $benchmark)) {
+        my $query = queryDataset(query("Param: step", "Benchmark", "Param: engineName", "Threads"));
+        plotDatasets("simple", $threads ."-". $benchmark, {xlabel => "Step"},
           map { $query->(prettyName($_), $benchmark, $_, $threads) } queryChoices("Param: engineName", "Benchmark" => $benchmark, Threads => $threads));
       }
     }
