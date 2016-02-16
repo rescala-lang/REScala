@@ -48,7 +48,10 @@ class PaperGlitchTest extends AssertionsForJUnit {
         try {
           price.set(3 * 2 << Random.nextInt(8))
         } catch {
+          // occurs because of invalid buffer
           case e: AssertionError => glitches.add(-42)
+          // can occur because of missing sync barriers
+          case e: NoSuchElementException => glitches.add(-43)
         }
       }
     }
@@ -59,7 +62,10 @@ class PaperGlitchTest extends AssertionsForJUnit {
         try {
           quantity.set(2 << Random.nextInt(8))
         } catch {
+          // occurs because of invalid buffer
           case e: AssertionError => glitches.add(-42)
+          // can occur because of missing sync barriers
+          case e: NoSuchElementException => glitches.add(-43)
         }
       }
     }
