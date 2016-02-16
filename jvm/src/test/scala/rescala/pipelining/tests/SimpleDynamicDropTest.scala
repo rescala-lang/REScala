@@ -51,7 +51,7 @@ class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
     PipelineTestUtils.readLatestValue { implicit turn =>
       assert(source2.bud.outgoing == Set())
       assert(source1.bud.outgoing == Set(dynDep))
-      assert(dynDep.incoming == Set(source1))
+      assert(dynDep.bud.incoming == Set(source1))
     }
     source2.set(93)
     assert(dynDep.now == 0)
@@ -73,7 +73,7 @@ class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
       PipelineTestUtils.readLatestValue { implicit turn =>
         assert(source1.bud.outgoing == Set(dynDep))
         assert(source2.bud.outgoing == Set(dynDep))
-        assert(dynDep.incoming == Set(source1, source2))
+        assert(dynDep.bud.incoming == Set(source1, source2))
       }
 
       numEvaluated = 0
@@ -101,7 +101,7 @@ class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
         dynDep.now match {
           case 0 =>
             LogUtils.log("==> Add before remove")
-            assert(dynDep.incoming == Set(source1))
+            assert(dynDep.bud.incoming == Set(source1))
             assert(dynDep.now == 0)
             assert(source1.bud.outgoing == Set(dynDep))
             assert(source2.bud.outgoing == Set())
@@ -111,7 +111,7 @@ class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
           case 2 =>
             LogUtils.log("==> Remove before add")
             assert(dynDep.now == 2)
-            assert(dynDep.incoming == Set(source1, source2))
+            assert(dynDep.bud.incoming == Set(source1, source2))
             assert(source1.bud.outgoing == Set(dynDep))
             assert(source2.bud.outgoing == Set(dynDep))
             removeBeforeAdd = true
@@ -160,7 +160,7 @@ class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
       assert(Pipeline.pipelineFor(dynDep).getPipelineFrames().isEmpty)
 
       // in scheduling case, there should no dependency to source2
-      assert(dynDep.incoming == Set(source1))
+      assert(dynDep.bud.incoming == Set(source1))
       assert(source2.bud.outgoing == Set())
       assert(source1.bud.outgoing == Set(dynDep))
 
