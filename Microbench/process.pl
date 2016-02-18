@@ -54,7 +54,7 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
         # local $YRANGE = "[0:]" if $layout eq "third";
         # local $LEGEND_POS = "left top" if $layout eq "third";
         local $NAME_FINE = "No Sync" if $layout eq "third";
-        plotBenchmarksFor("${dynamic}philosophers$philosophers", $layout,
+        plotBenchmarksFor("${dynamic}-philosophers-$philosophers", $layout,
           map { {Title => $_, "Param: engineName" => $_ , Benchmark => "benchmarks.philosophers.PhilosopherCompetition.eat",
           "Param: philosophers" => $philosophers, "Param: layout" => $layout, "Param: tableType" => $dynamic } }
             queryChoices("Param: engineName", "Param: tableType" => $dynamic, "Param: philosophers" => $philosophers, "Param: layout" => $layout));
@@ -76,19 +76,23 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
         "Param: philosophers" => $_, "Param: layout" => "alternating", "Param: tableType" => $dynamic } } (
          @choices);
     };
-    plotBenchmarksFor("${dynamic}philosophers", "philosopher comparison engine scaling",
+    plotBenchmarksFor("${dynamic}-philosophers", "philosopher comparison engine scaling",
       map { $byPhilosopher->($_) } (queryChoices("Param: engineName", "Param: tableType" => $dynamic)));
 
 
-    plotBenchmarksFor("${dynamic}philosophers", "Philosopher Table",
+    plotBenchmarksFor("${dynamic}-philosophers", "Philosopher Table",
       map { {Title => $_, "Param: engineName" => $_ , Benchmark =>  "benchmarks.philosophers.PhilosopherCompetition.eat", "Param: tableType" => $dynamic } }  queryChoices("Param: engineName", "Param: tableType" => $dynamic));
 
+
     { # varying conflict potential
-      my $query = queryDataset(query("Param: philosophers", "Benchmark", "Param: engineName", "Param: tableType", "Threads"));
-      plotDatasets("${dynamic}philosophers", "Concurrency Scaling", {xlabel => "Philosophers"},
-        $query->("ParRP", "benchmarks.philosophers.PhilosopherCompetition.eat", "parrp", $dynamic, 16),
-        $query->("STM", "benchmarks.philosophers.PhilosopherCompetition.eat", "stm", $dynamic, 16),
-        $query->("Synchron", "benchmarks.philosophers.PhilosopherCompetition.eat", "synchron", $dynamic, 16));
+      my $threads = 8;
+      for my $layout (queryChoices("Param: layout", "Param: tableType" => $dynamic)) {
+        my $query = queryDataset(query("Param: philosophers", "Benchmark", "Param: engineName", "Param: tableType", "Threads", "Param: layout"));
+        plotDatasets("${dynamic}-philosophers", "${layout}-concurrency-scaling", {xlabel => "Philosophers"},
+          $query->("ParRP", "benchmarks.philosophers.PhilosopherCompetition.eat", "parrp", $dynamic, $threads, $layout),
+          $query->("STM", "benchmarks.philosophers.PhilosopherCompetition.eat", "stm", $dynamic, $threads, $layout),
+          $query->("Synchron", "benchmarks.philosophers.PhilosopherCompetition.eat", "synchron", $dynamic, $threads, $layout));
+      }
     }
 
   }
@@ -134,9 +138,11 @@ colors=red,green,blue
   }
 
 
-  plotBenchmarksFor("stacks", "Dynamic",
-    map {{Title => $_, "Param: work" => 0, "Param: engineName" => $_ , Benchmark => "benchmarks.dynamic.Stacks.run" }}
-      queryChoices("Param: engineName", Benchmark => "benchmarks.dynamic.Stacks.run"));
+  { # dynamic stacks
+    plotBenchmarksFor("stacks", "Dynamic",
+      map {{Title => $_, "Param: work" => 0, "Param: engineName" => $_ , Benchmark => "benchmarks.dynamic.Stacks.run" }}
+        queryChoices("Param: engineName", Benchmark => "benchmarks.dynamic.Stacks.run"));
+    }
 
   { # simplePhil
     local $NAME_FINE = "No Sync";
@@ -149,7 +155,7 @@ colors=red,green,blue
   }
 
 
-  { # expensive conflict stuff
+  { # expensive conflict
     my $query = queryDataset(query("Param: work", "Benchmark", "Param: engineName"));
     plotDatasets("conflicts", "Asymmetric Workloads", {xlabel => "Work"},
       $query->("pessimistic cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "parrp"),
@@ -163,10 +169,12 @@ colors=red,green,blue
       $query->("stm expensive tried", "benchmarks.conflict.ExpensiveConflict.g:tried", "stm"));
   }
 
-  for my $benchmark (grep {/Creation|SingleVar/} queryChoices("Benchmark")) {
-    plotBenchmarksFor("other", $benchmark,
-      map {{Title => $_, "Param: engineName" => $_ , Benchmark => $benchmark }}
-        queryChoices("Param: engineName", Benchmark => $benchmark));
+  { # other
+    for my $benchmark (grep {/Creation|SingleVar/} queryChoices("Benchmark")) {
+      plotBenchmarksFor("other", $benchmark,
+        map {{Title => $_, "Param: engineName" => $_ , Benchmark => $benchmark }}
+          queryChoices("Param: engineName", Benchmark => $benchmark));
+    }
   }
 
 
