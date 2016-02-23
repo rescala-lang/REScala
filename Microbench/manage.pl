@@ -20,8 +20,8 @@ if ($OSNAME eq "MSWin32") {
 }
 my $OUTDIR = 'out';
 my $RESULTDIR = 'results';
-my $BSUB_TIME = "23:30";
-my $BSUB_QUEUE = "deflt_auto";
+my $BSUB_TIME = "0:25";
+my $BSUB_QUEUE = "deflt_centos";
 my $BSUB_REQUIRE = "select[ mpi && avx ]";
 my $BSUB_CORES = "16";
 
@@ -61,6 +61,8 @@ say "available: " . (join " ", sort keys %{&selection()});
 
 given($command) {
   when ("show") { say Dumper([ makeRuns() ]) }
+  when ("count") { say "will execute ", scalar(makeRuns()), " jobs"}
+  when ("clean") { clean() }
   when ("init") { init() }
   when ("run") { run() }
   when ("submit") { submitAll() }
@@ -71,7 +73,7 @@ sub init {
   mkdir $RESULTDIR;
   mkdir $OUTDIR;
   chdir "..";
-  system('sbt', 'set scalacOptions in ThisBuild ++= List("-Xdisable-assertions", "-Xelide-below", "9999999")', 'project microbench', 'clean', 'stage', 'compileJmh');
+  system('sbt', 'set scalacOptions in ThisBuild ++= List("-Xdisable-assertions", "-Xelide-below", "9999999")', 'project microbench', 'stage', 'compileJmh');
   qx[perl -p -i -e 's#exec java \\\$JAVA_OPTS -cp "#exec java \\\$JAVA_OPTS -cp "\\\$PROJECT_DIR/Microbench/target/scala-2.11/jmh-classes:#g' ./Microbench/target/start];
   #system('sbt','clean', 'jmh:compile', 'jmh:stage');
   chdir $MAINDIR;
