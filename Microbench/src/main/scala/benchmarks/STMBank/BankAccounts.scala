@@ -1,18 +1,17 @@
 package benchmarks.STMBank
 
-import java.util.concurrent.locks.{ReentrantLock, Lock}
+import java.util.concurrent.locks.{Lock, ReentrantLock}
 import java.util.concurrent.{ThreadLocalRandom, TimeUnit}
-import java.util.concurrent.atomic.AtomicInteger
 
-import benchmarks.{EngineParam, Workload}
+import benchmarks.EngineParam
 import org.openjdk.jmh.annotations._
-import org.openjdk.jmh.infra.{Blackhole, BenchmarkParams, ThreadParams}
-import rescala.reactives._
+import org.openjdk.jmh.infra.{BenchmarkParams, Blackhole}
+import rescala.engines.Engine
 import rescala.graph.Struct
 import rescala.propagation.Turn
-import rescala.engines.{Engine, Ticket}
+import rescala.reactives._
 
-import scala.concurrent.stm.{atomic, Ref}
+import scala.concurrent.stm.{Ref, atomic}
 
 
 @State(Scope.Benchmark)
@@ -22,14 +21,20 @@ class ReactiveState[S <: Struct] {
   @Param(Array("64"))
   var numberOfAccounts: Int = _
 
+  @Param(Array("4"))
+  var readWindowCount: Int = _
+
   @Param(Array("0.1"))
   var globalReadChance: Double = _
   var modifiedReadChance: Double = _
 
   var engine: Engine[S, Turn[S]] = _
   var accounts: Array[Var[Int, S]] = _
+  var windows: Array[Array[Var[Int, S]]] =_
+
 
   var locks: Array[Lock] = null
+  var lockWindows: Array[Array[Lock]] = null
 
   @Setup(Level.Iteration)
   def setup(params: BenchmarkParams, engine: EngineParam[S]) = {
@@ -40,7 +45,12 @@ class ReactiveState[S <: Struct] {
     modifiedReadChance = globalReadChance / threads
 
     accounts = Array.fill(numberOfAccounts)(Var(0))
-    if (engine.engineName == "unmanaged") locks = Array.fill(numberOfAccounts)(new ReentrantLock())
+    windows = accounts.sliding(numberOfAccounts / readWindowCount).toArray
+    if (engine.engineName == "unmanaged") {
+      locks = Array.fill(numberOfAccounts)(new ReentrantLock())
+      lockWindows = locks.sliding(numberOfAccounts / readWindowCount).toArray
+
+    }
   }
 }
 
@@ -52,17 +62,22 @@ class STMState {
   @Param(Array("64"))
   var numberOfAccounts: Int = _
 
+  @Param(Array("4"))
+  var readWindowCount: Int = _
+
   @Param(Array("0.1"))
   var globalReadChance: Double = _
   var modifiedReadChance: Double = _
 
   var accounts: Array[Ref[Int]] = _
+  var windows: Array[Array[Ref[Int]]] =_
 
   @Setup(Level.Iteration)
   def setup(params: BenchmarkParams) = {
     val threads = params.getThreads
     modifiedReadChance = globalReadChance / threads
     accounts = Array.fill(numberOfAccounts)(Ref(0))
+    windows = accounts.sliding(numberOfAccounts / readWindowCount).toArray
   }
 }
 
@@ -81,8 +96,9 @@ class BankAccounts[S <: Struct] {
     if (rs.locks == null) {
       val tlr = ThreadLocalRandom.current()
       if (tlr.nextDouble() < rs.modifiedReadChance) {
-        rs.engine.plan(rs.accounts: _*) { t =>
-          val sum = rs.accounts.foldLeft(0)((acc, v) => acc + v.get(t))
+        val window = rs.windows(tlr.nextInt(rs.windows.length))
+        rs.engine.plan(window: _*) { t =>
+          val sum = window.foldLeft(0)((acc, v) => acc + v.get(t))
           bh.consume(sum)
           assert(sum == 0)
         }
@@ -101,15 +117,19 @@ class BankAccounts[S <: Struct] {
     else {
       val tlr = ThreadLocalRandom.current()
       if (tlr.nextDouble() < rs.modifiedReadChance) {
-        rs.locks.foreach(_.lock())
+        val selectedWindow = tlr.nextInt(rs.windows.length)
+        val window = rs.windows(selectedWindow)
+        val lockWindow = rs.lockWindows(selectedWindow)
+
+        lockWindow.foreach(_.lock())
         try {
-          rs.engine.plan(rs.accounts: _*) { t =>
-            val sum = rs.accounts.foldLeft(0)((acc, v) => acc + v.get(t))
+          rs.engine.plan(window: _*) { t =>
+            val sum = window.foldLeft(0)((acc, v) => acc + v.get(t))
             bh.consume(sum)
             assert(sum == 0)
           }
         }
-        finally { rs.locks.foreach(_.unlock()) }
+        finally { lockWindow.foreach(_.unlock()) }
       }
       else {
         val a1 = tlr.nextInt(rs.numberOfAccounts)
@@ -138,8 +158,9 @@ class BankAccounts[S <: Struct] {
   def stm(rs: STMState, bh: Blackhole) = {
     val tlr = ThreadLocalRandom.current()
     if (tlr.nextDouble() < rs.modifiedReadChance) {
+      val window = rs.windows(tlr.nextInt(rs.windows.length))
       atomic { t =>
-        val sum = rs.accounts.foldLeft(0)((acc, v) => acc + v.get(t))
+        val sum = window.foldLeft(0)((acc, v) => acc + v.get(t))
         bh.consume(sum)
         assert(sum == 0)
       }

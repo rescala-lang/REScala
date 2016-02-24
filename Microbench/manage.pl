@@ -545,14 +545,16 @@ sub selection {
     stmbank => sub {
       my @runs;
 
-      for my $size (@THREADS) {
-        for my $chance ("0.5", "0.1", "0.01", "0") {
+      for my $size (16) {
+        for my $run (0..10,15,20,25,30,35,40,50,60,70,80,90,100) {
+          my $chance = 0.16 * $run;
           my $name = "stmbank-threads-$size-chance-$chance";
           my $program = makeRunString($name,
             fromBaseConfig(
               p => { # parameters
-                riname => (join ',', @ENGINES_UNMANAGED),
+                engineName => (join ',', @ENGINES_UNMANAGED),
                 numberOfAccounts => 256,
+                readWindowCount => "1,2,4,8",
                 globalReadChance => $chance,
               },
               t => $size, #threads

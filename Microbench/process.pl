@@ -29,7 +29,10 @@ our $NAME_COARSE = "G-Lock";
 
 our $LEGEND_POS = "left top";
 our $YRANGE = "[0:]";
+our $XRANGE = "[:]";
 our $GNUPLOT_TERMINAL = "pdf size 15,9";
+
+our $X_VARYING = "Threads";
 
 my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,PrintError => 1});
 {
@@ -199,13 +202,32 @@ colors=red,green,blue
     }
   }
 
-  { # stmbank
-    for my $globalReadChance (queryChoices("Param: globalReadChance")) {
-      my $benchmark = "benchmarks.STMBank.BankAccounts.reactive";
-      plotBenchmarksFor("BankAccounts", $globalReadChance,
-        (map {{Title => $_, "Param: globalReadChance" => $globalReadChance, "Param: engineName" => $_ , Benchmark => $benchmark }}
-          queryChoices("Param: engineName", Benchmark => $benchmark, "Param: globalReadChance" => $globalReadChance)),
-        {Title => "Pure STM", "Param: globalReadChance" => $globalReadChance, Benchmark => "benchmarks.STMBank.BankAccounts.stm"});
+  # { # stmbank
+  #   for my $globalReadChance (queryChoices("Param: globalReadChance")) {
+  #     my $benchmark = "benchmarks.STMBank.BankAccounts.reactive";
+  #     plotBenchmarksFor("BankAccounts", $globalReadChance,
+  #       (map {{Title => $_, "Param: globalReadChance" => $globalReadChance, "Param: engineName" => $_ , Benchmark => $benchmark }}
+  #         queryChoices("Param: engineName", Benchmark => $benchmark, "Param: globalReadChance" => $globalReadChance)),
+  #       {Title => "Pure STM", "Param: globalReadChance" => $globalReadChance, Benchmark => "benchmarks.STMBank.BankAccounts.stm"});
+  #   }
+  # }
+
+  { # stmbank 2
+    my $benchmark = "benchmarks.STMBank.BankAccounts.reactive";
+    $DBH->do(qq[UPDATE $TABLE SET "Param: globalReadChance" = "Param: globalReadChance" / Threads WHERE Benchmark = ?],undef, $benchmark);
+    for my $windows (queryChoices("Param: readWindowCount", Benchmark => $benchmark)) {
+      local $X_VARYING = "Param: globalReadChance";
+      #local $YRANGE = "[0:800]";
+      plotChoices("BankAccounts", "readProbability$windows", "Param: engineName",
+        "Param: readWindowCount" => $windows,
+        Threads => 16,
+        Benchmark => $benchmark);
+      local $YRANGE = "[600:]";
+      local $XRANGE = "[0:0.01]";
+      plotChoices("BankAccounts", "readProbability${windows}Upper", "Param: engineName",
+        "Param: readWindowCount" => $windows,
+        Threads => 16,
+        Benchmark => $benchmark);
     }
   }
 
@@ -271,7 +293,7 @@ sub plotBenchmarksFor($group, $name, @graphs) {
   for my $graph (@graphs) {
     my $title = delete $graph->{"Title"};
     my @keys = keys %{$graph};
-    push @datasets, queryDataset(query("Threads", @keys))->(prettyName($title) // "unnamed", values %{$graph});
+    push @datasets, queryDataset(query($X_VARYING, @keys))->(prettyName($title) // "unnamed", values %{$graph});
   }
   plotDatasets($group, $name, {}, @datasets);
 }
@@ -348,11 +370,12 @@ sub plotDatasets($group, $name, $additionalParams, @datasets) {
     key => $LEGEND_POS,
     #title  => $name,
     #xlabel => "Active threads",
+    xrange => $XRANGE,
     yrange => $YRANGE,
     #logscale => "x 2; set logscale y 10",
     #ylabel => "Operations per millisecond",
     # xrange => "reverse",
-    lmargin => 4.8,
+    lmargin => 5.8,
     rmargin => 1.5,
     tmargin => 0.3,
     bmargin => 1.5,
