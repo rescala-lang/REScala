@@ -3,11 +3,10 @@ package rescala.parrp
 import java.util.concurrent.{ConcurrentHashMap, Semaphore}
 
 import rescala.graph.Globals
-import rescala.propagation.Turn
 
 import scala.annotation.tailrec
 
-final class Key(val turn: Turn[ParRPStruct.type]) {
+final class Key(val turn: ParRP) {
 
   val id = Globals.nextID()
   override def toString: String = s"Key($id)"

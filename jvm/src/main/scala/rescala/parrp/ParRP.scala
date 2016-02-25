@@ -2,7 +2,7 @@ package rescala.parrp
 
 import rescala.graph.Reactive
 import rescala.parrp.ParRP.{Await, Done, Retry}
-import rescala.propagation.{LevelBasedPropagation}
+import rescala.propagation.LevelBasedPropagation
 
 import scala.annotation.tailrec
 
