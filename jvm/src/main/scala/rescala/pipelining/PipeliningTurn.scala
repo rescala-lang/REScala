@@ -305,7 +305,7 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
 
       if (turnsAfterDynamicRead.nonEmpty) {
         // Queue based create frames at reachable reactives
-        val queue = new LevelQueue
+        val queue = new PipelineQueue()
         queue.enqueue(-1)(sink)
         queue.evaluateQueue { reactive =>
           val pipeline = Pipeline(reactive)
@@ -389,7 +389,7 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
 
       if (turnsAfterDynamicDrop.nonEmpty) {
         // Queue based remove frames at reachable reactives
-        val queue = new LevelQueue
+        val queue = new PipelineQueue()
         queue.enqueue(-1)(sink)
         queue.evaluateQueue { reactive =>
 

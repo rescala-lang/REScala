@@ -7,7 +7,7 @@ import rescala.propagation.LevelQueue.QueueElement
 
 import scala.collection.immutable.SortedSet
 
-class LevelQueue[S <: Struct]()(implicit val currenTurn: Turn[S]) {
+private[propagation] class LevelQueue[S <: Struct]()(implicit val currenTurn: Turn[S]) {
 
   private var elements = SortedSet.empty[QueueElement[S]]
 
@@ -57,7 +57,7 @@ class LevelQueue[S <: Struct]()(implicit val currenTurn: Turn[S]) {
 
 }
 
-object LevelQueue {
+private object LevelQueue {
 
   private case class QueueElement[S <: Struct](level: Int, reactive: Reactive[S], minLevel: Int, needsEvaluate: Boolean)
   private implicit val ordering: Ordering[QueueElement[_]] = new Ordering[QueueElement[_]] {
