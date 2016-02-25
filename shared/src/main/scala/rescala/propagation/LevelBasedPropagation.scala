@@ -3,12 +3,12 @@ package rescala.propagation
 import java.util
 
 import rescala.graph.ReevaluationResult.{Dynamic, Static}
-import rescala.graph.{Committable, Reactive, Struct}
+import rescala.graph.{LevelStruct, Committable, Reactive, Struct}
 
 import scala.util.control.NonFatal
 
 
-trait LevelBasedPropagation[S <: Struct] extends AbstractPropagation[S] {
+trait LevelBasedPropagation[S <: LevelStruct] extends AbstractPropagation[S] {
   implicit def currentTurn: LevelBasedPropagation[S] = this
 
   private val toCommit = new util.HashSet[Committable]()

@@ -1,19 +1,19 @@
 package rescala.stm
 
-import rescala.graph.Struct.TraitSporeP
-import rescala.graph.{Committable, Buffer, BufferedStruct, Pulse}
+import rescala.graph.Struct.{LevelSpore, ReactiveSporeP}
+import rescala.graph._
 import rescala.propagation.Turn
 
 import scala.concurrent.stm.{InTxn, Ref}
 
-object STMStruct extends BufferedStruct {
+object STMStruct extends LevelStruct {
   override type Spore[R] = STMSporeP[_, R]
 
   override def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): SporeP[P, R] = {
     new STMSporeP[P, R](initialValue, transient, initialIncoming)
   }
 
-  class STMSporeP[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends TraitSporeP[P, R] with Buffer[Pulse[P]] with Committable {
+  class STMSporeP[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends LevelSpore[R] with ReactiveSporeP[P, R] with Buffer[Pulse[P]] with Committable {
 
     implicit def inTxn(implicit turn: Turn[_]): InTxn = turn match {
       case stmTurn: STMTurn => stmTurn.inTxn

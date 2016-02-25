@@ -1,7 +1,7 @@
 package rescala.propagation
 
-import rescala.graph.{Reactive, Struct}
+import rescala.graph.{LevelStruct, Reactive, Struct}
 
-trait NoLocking[S <: Struct] extends LevelBasedPropagation[S] {
+trait NoLocking[S <: LevelStruct] extends LevelBasedPropagation[S] {
   override def releasePhase(): Unit = ()
 }

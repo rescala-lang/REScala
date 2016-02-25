@@ -2,12 +2,12 @@ package rescala.propagation
 
 import java.lang.{Boolean => jlBool}
 
-import rescala.graph.{Reactive, Struct}
+import rescala.graph.{LevelStruct, Reactive, Struct}
 import rescala.propagation.LevelQueue.QueueElement
 
 import scala.collection.immutable.SortedSet
 
-private[propagation] class LevelQueue[S <: Struct]()(implicit val currenTurn: Turn[S]) {
+private[propagation] class LevelQueue[S <: LevelStruct]()(implicit val currenTurn: Turn[S]) {
 
   private var elements = SortedSet.empty[QueueElement[S]]
 

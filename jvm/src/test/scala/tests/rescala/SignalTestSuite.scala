@@ -7,7 +7,7 @@ import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.Infiltrator.getLevel
 import rescala.engines.Engine
-import rescala.graph.Struct
+import rescala.graph.{LevelStruct, Struct}
 import rescala.propagation.Turn
 import rescala.reactives.Var
 import rescala.reactives.Signals
@@ -15,7 +15,7 @@ import rescala.reactives.Signals
 object SignalTestSuite extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])
-class SignalTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
+class SignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
   implicit val implicitEngine: Engine[S, Turn[S]] = engine
 
   import implicitEngine.Signal

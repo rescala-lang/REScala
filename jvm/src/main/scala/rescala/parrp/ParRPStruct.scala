@@ -5,7 +5,7 @@ import rescala.propagation.Turn
 
 import scala.language.implicitConversions
 
-object ParRPStruct extends Struct {
+object ParRPStruct extends LevelStruct {
   override type Spore[R] = ParRPSporeP[_, R]
 
   override def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): SporeP[P, R] = {
