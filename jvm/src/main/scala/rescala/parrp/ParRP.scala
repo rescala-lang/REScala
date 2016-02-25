@@ -2,15 +2,18 @@ package rescala.parrp
 
 import rescala.graph.Reactive
 import rescala.parrp.ParRP.{Await, Done, Retry}
-import rescala.propagation.{FactoryReference, LevelBasedPropagation}
+import rescala.propagation.{LevelBasedPropagation}
 
 import scala.annotation.tailrec
 
-class ParRP(backoff: Backoff) extends FactoryReference[ParRPStruct.type](ParRPStruct) with LevelBasedPropagation[ParRPStruct.type] {
+class ParRP(backoff: Backoff) extends LevelBasedPropagation[ParRPStruct.type] {
 
-  type TState = ParRPStruct.type
+  private type TState = ParRPStruct.type
 
   override def toString: String = s"ParRP(${key.id})"
+
+  /** used to create state containers of each reactive */
+  override def bufferFactory: TState = ParRPStruct
 
   final val key: Key = new Key(this)
 

@@ -18,21 +18,24 @@ private[pipelining] object PipeliningTurn {
 }
 
 class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
-  extends FactoryReference[PipelineStruct.type](PipelineStruct)
-  with PipelinePropagationImpl
-  with PropagateNoChanges
-  with ParallelFrameCreator {
+  extends PipelinePropagationImpl
+    with PropagateNoChanges
+    with ParallelFrameCreator {
 
   /** used to create state containers of each reactive */
   override type S = PipelineStruct.type
+
 
   import LogUtils._
   import Pipeline._
   import PipeliningTurn._
 
+  /** used to create state containers of each reactive */
+  override def bufferFactory: S = PipelineStruct
+
   /**
-   * Remember all reactives for which a frame was created during this turn
-   */
+    * Remember all reactives for which a frame was created during this turn
+    */
   @volatile
   private var framedPipelines = Set[Pipeline]()
   private[pipelining] val framedReactivesLock = new ReentrantReadWriteLock()
@@ -82,7 +85,8 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
     ensureLevel(reactive, dependencies)
     if (dynamic) {
       evaluate(reactive)
-    } else {
+    }
+    else {
       dependencies.foreach(discover(reactive))
       evaluateNoChange(reactive)
     }
@@ -94,10 +98,12 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
     head.bud.pipeline.foreachFrameTopDown { frame =>
       if (frame.turn == this) {
         frameFound = true
-      } else if (!frameFound) {
+      }
+      else if (!frameFound) {
         assert(this >= frame.turn)
         assert(frame.isWritten)
-      } else {
+      }
+      else {
         assert(frame.turn >= this)
       }
     }
@@ -105,8 +111,8 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
   }
 
   /**
-   * Checks whether an incoming dependency exists, which has a non written frame for this reactive
-   */
+    * Checks whether an incoming dependency exists, which has a non written frame for this reactive
+    */
   private def needToWaitForIncoming(head: Reactive[S]) = {
     Pipeline(head).needFrame().isWritten || // TODO this is wait because an admit might readd a dependency to the queue while the head was removed
       head.bud.incoming.exists { reactive =>
@@ -114,15 +120,15 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
           pipelineFor(reactive).findFrame {
             _ match {
               case Some(frame) => !frame.isWritten
-              case None        => false
+              case None => false
             }
           }
       }
   }
 
   /**
-   * Checks what to do with the current head: Evaluate it now, later or never
-   */
+    * Checks what to do with the current head: Evaluate it now, later or never
+    */
   private def checkEvaluation(reactive: Reactive[S]): PipelinedEvaluationRequest = {
     pipelineFor(reactive).findFrame { x => x } match {
       case Some(frame) =>
@@ -135,7 +141,7 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
   }
 
   override protected def requeue(head: Reactive[S], changed: Boolean, level: Int, action: QueueAction): Unit = action match {
-    case EnqueueDependencies =>  head.bud.outgoing.foreach(levelQueue.enqueue(level, changed))
+    case EnqueueDependencies => head.bud.outgoing.foreach(levelQueue.enqueue(level, changed))
     case RequeueReactive => levelQueue.enqueue(level, changed)(head)
     case DoNothing =>
   }
@@ -156,7 +162,7 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
       case EvaluateNow(writeFrame) =>
         assert(pipelineFor(head).hasFrame(this), s"${Thread.currentThread().getId} No frame was created in turn $this for $head")
         assert(assertFrameOrder(head))
-        assert(Option(pipelineFor(head).needFrame().previous()).map { _.isWritten }.getOrElse(true))
+        assert(Option(pipelineFor(head).needFrame().previous()).map {_.isWritten}.getOrElse(true))
         pipelineFor(head).markTouched
         // val queueAction = super.evaluate(head)
         val result = head.reevaluate()
@@ -171,7 +177,7 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
               EnqueueDependencies
             case RequeueReactive =>
             // This reactive will be evaluated once more, so we cannot finish it
-            case DoNothing       => assert(false)
+            case DoNothing => assert(false)
           }
           /*assert({
           head.bud.outgoing.get.foreach { r =>
@@ -197,16 +203,16 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
   }
 
   /**
-   * Evaluates the queue as long as a new element is added. This may occur multiple times
-   * because of a dynamic dependency discovery by another turn which is admitted to this turn
-   * but the usual propagation of this turn has already completed.
-   * This method returns only if the current turn can be removed (if it is the head turn in the turn order in the engine)
-   */
+    * Evaluates the queue as long as a new element is added. This may occur multiple times
+    * because of a dynamic dependency discovery by another turn which is admitted to this turn
+    * but the usual propagation of this turn has already completed.
+    * This method returns only if the current turn can be removed (if it is the head turn in the turn order in the engine)
+    */
   override def propagationPhase(): Unit = {
     // The first time, waitUntilContinue returns
     // If the engine detects, that the turn can be removed, the level queue is empty
     // But the engine lets waitUntilContinue return again
-    while ({
+    while ( {
       waitUntilContinue()
       !(levelQueue.isEmpty() && engine.canTurnBeRemoved(this))
     }) {
@@ -224,9 +230,9 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
   }
 
   private def commitFor(head: Pipeline): Unit = {
-    assert(Option(head.needFrame().previous()).map { _.isWritten }.getOrElse(true))
+    assert(Option(head.needFrame().previous()).map {_.isWritten}.getOrElse(true))
     val buffersToCommit = head.createdBuffers.asInstanceOf[Set[Committable]]
-    buffersToCommit.foreach { _.commit }
+    buffersToCommit.foreach {_.commit}
   }
 
   private def getWriteableFrame(pipeline: Pipeline): Frame[BufferFrameContent] = {
@@ -248,7 +254,8 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
         }(this)
       })
       pipeline.needFrame()
-    } else {
+    }
+    else {
       frame.next()
     }
   }
@@ -277,7 +284,7 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
         // Need to create frames for the turns after the dynamic read at the new nodes
         val turnsAfterDynamicRead = getAffectedTurns(source, dropFrame)
         log(s"Turns after dynamic read $turnsAfterDynamicRead")
-        assert(turnsAfterDynamicRead.forall { this < _ })
+        assert(turnsAfterDynamicRead.forall {this < _})
 
         // This writes in the dynamic read frame, but only in outgoings
         source.bud.discover(sink)(dropFrame.turn)
@@ -326,7 +333,7 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
                 }
                 // Only need to continue created frames, if one was created
                 if (anyFrameCreated)
-                  reactive.bud.outgoing(this).foreach { queue.enqueue(-1) }
+                  reactive.bud.outgoing(this).foreach {queue.enqueue(-1)}
               }
             }
           }
@@ -339,7 +346,7 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
         if (sink.bud.incoming.isInstanceOf[PipelineBuffer[_]]) {
           val sinkFrames = sinkPipeline.forWriteFramesAfter(sinkPipeline.needFrame()) { _ => }
           sinkFrames.foreach { frame =>
-            sink.bud.incoming.asInstanceOf[BlockingPipelineBuffer[Set[Reactive[S]]]].forceTransform { _ + source }(frame.turn)
+            sink.bud.incoming.asInstanceOf[BlockingPipelineBuffer[Set[Reactive[S]]]].forceTransform {_ + source}(frame.turn)
           }
         }
       }
@@ -370,7 +377,7 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
         // though another valid path, nevertheless, the turns could wait for this frame already
 
         val turnsAfterDynamicDrop = getAffectedTurns(source, dropFrame)
-        turnsAfterDynamicDrop.foreach { source.bud.drop(sink)(_) }
+        turnsAfterDynamicDrop.foreach {source.bud.drop(sink)(_)}
         log(s"Turn after dynamic drop $turnsAfterDynamicDrop")
         turnsAfterDynamicDrop
       }
@@ -379,13 +386,13 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
         val sinkPipeline = pipelineFor(sink)
         val sinkFrames = sinkPipeline.forWriteFramesAfter(sinkPipeline.needFrame()) { _ => }
         sinkFrames.foreach { frame =>
-          sink.bud.incoming.asInstanceOf[BlockingPipelineBuffer[Set[Reactive[S]]]].forceTransform { _ - source }(frame.turn)
+          sink.bud.incoming.asInstanceOf[BlockingPipelineBuffer[Set[Reactive[S]]]].forceTransform {_ - source}(frame.turn)
         }
       }
 
       assert(engine.isActive(this))
       //  assert(engine.isActive(dropFrame.turn))
-      assert(turnsAfterDynamicDrop.forall { engine.isActive(_) })
+      assert(turnsAfterDynamicDrop.forall {engine.isActive(_)})
 
       if (turnsAfterDynamicDrop.nonEmpty) {
         // Queue based remove frames at reachable reactives
@@ -410,7 +417,7 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
           }
           // Only need to continue created frames, if one was created
           if (frameRemoved)
-            reactive.bud.outgoing.foreach { queue.enqueue(-1) }
+            reactive.bud.outgoing.foreach {queue.enqueue(-1)}
         }
 
       }
@@ -459,7 +466,7 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
         pipeline.removeFrames
       }
     }
-    assert(framedPipelines.forall { !_.hasFrame(this) })
+    assert(framedPipelines.forall {!_.hasFrame(this)})
     this.framedPipelines = Set.empty
   }
 
@@ -476,11 +483,11 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
   }
 
   def <(other: Turn[S]) = {
-    ! (this >= other)
+    !(this >= other)
   }
 
   def <=(other: Turn[S]) = {
-    ! (this > other)
+    !(this > other)
   }
 
 }
