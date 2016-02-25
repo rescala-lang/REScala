@@ -8,7 +8,6 @@ import rescala.graph.{Committable, Reactive, Struct}
 import scala.util.control.NonFatal
 
 
-
 trait LevelBasedPropagation[S <: Struct] extends AbstractPropagation[S] {
   implicit def currentTurn: LevelBasedPropagation[S] = this
 
@@ -93,7 +92,8 @@ trait LevelBasedPropagation[S <: Struct] extends AbstractPropagation[S] {
     while (it.hasNext) {
       try {
         it.next().apply()
-      } catch {
+      }
+      catch {
         case NonFatal(e) => failure = e
       }
     }
