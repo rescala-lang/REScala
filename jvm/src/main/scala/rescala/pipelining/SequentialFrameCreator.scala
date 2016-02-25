@@ -2,13 +2,13 @@ package rescala.pipelining
 
 import rescala.graph.Reactive
 
-object SequentialFrameCreator {
+private[pipelining] object SequentialFrameCreator {
   
   private object framingLock
   
 }
 
-trait SequentialFrameCreator extends QueueBasedFrameCreator {
+private[pipelining] trait SequentialFrameCreator extends QueueBasedFrameCreator {
   
   self : PipeliningTurn =>
     

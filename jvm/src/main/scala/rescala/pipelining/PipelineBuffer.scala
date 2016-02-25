@@ -3,7 +3,7 @@ package rescala.pipelining
 import rescala.graph._
 import rescala.propagation.Turn
 
-object ValueHolder {
+private[pipelining] object ValueHolder {
 
   def initStable[T](initial: T, buffer: PipelineBuffer[T]): ValueHolder[T] = {
     val holder = new ValueHolder(initial, buffer)
@@ -26,7 +26,7 @@ object ValueHolder {
 
 }
 
-class ValueHolder[T](initial: T, val buffer: PipelineBuffer[T]) {
+private[pipelining] class ValueHolder[T](initial: T, val buffer: PipelineBuffer[T]) {
 
   var value: T = initial
   var committedValue: Option[T] = None
@@ -48,7 +48,7 @@ class ValueHolder[T](initial: T, val buffer: PipelineBuffer[T]) {
 
 }
 
-class BufferFrameContent {
+private[pipelining] class BufferFrameContent {
 
   var values: List[ValueHolder[_]] = List()
 
@@ -66,7 +66,7 @@ class BufferFrameContent {
 
 }
 
-abstract class PipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A) extends Buffer[A] with Committable {
+private[pipelining] abstract class PipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A) extends Buffer[A] with Committable {
 
   var commitStrategy: (A, A) => A = initialStrategy
 
@@ -122,7 +122,7 @@ abstract class PipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A)
 
 }
 
-class NonblockingPipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A) extends PipelineBuffer[A](parent, initialStrategy) {
+private[pipelining] class NonblockingPipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A) extends PipelineBuffer[A](parent, initialStrategy) {
 
   override def base(implicit turn: Turn[_]): A = {
     implicit val pTurn = turn.asInstanceOf[PipeliningTurn]
@@ -152,7 +152,7 @@ class NonblockingPipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => 
 
 }
 
-class BlockingPipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A) extends PipelineBuffer[A](parent, initialStrategy) {
+private[pipelining] class BlockingPipelineBuffer[A](parent: Pipeline, initialStrategy: (A, A) => A) extends PipelineBuffer[A](parent, initialStrategy) {
 
   override def set(value: A)(implicit turn: Turn[_]): Unit = {
     assert(!parent.needFrame()(turn.asInstanceOf[PipeliningTurn]).isWritten, s"Frame at ${parent} already written when tried to set from $turn")

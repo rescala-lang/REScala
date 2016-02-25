@@ -2,11 +2,11 @@ package rescala.parrp
 
 import rescala.graph.Reactive
 import rescala.parrp.ParRP.{Await, Done, Retry}
-import rescala.propagation.{FactoryReference, PropagationImpl}
+import rescala.propagation.{FactoryReference, LevelBasedPropagation}
 
 import scala.annotation.tailrec
 
-class ParRP(backoff: Backoff) extends FactoryReference[ParRPStruct.type](ParRPStruct) with PropagationImpl[ParRPStruct.type] {
+class ParRP(backoff: Backoff) extends FactoryReference[ParRPStruct.type](ParRPStruct) with LevelBasedPropagation[ParRPStruct.type] {
 
   type TState = ParRPStruct.type
 

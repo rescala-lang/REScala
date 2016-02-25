@@ -3,7 +3,7 @@ package rescala.pipelining
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.LockSupport
 
-object Frame {
+private[pipelining] object Frame {
 
   protected[rescala] final def awaitUntilWritten(modificationLock: AnyRef, at: Pipeline, waitingTurn: PipeliningTurn): Unit = {
 
@@ -32,7 +32,7 @@ object Frame {
 
 }
 
-case class Frame[T](var turn: PipeliningTurn, val at: Pipeline) {
+private[pipelining] case class Frame[T](var turn: PipeliningTurn, val at: Pipeline) {
 
   private var predecessor: Frame[T] = null.asInstanceOf[Frame[T]]
   private var successor: Frame[T] = null.asInstanceOf[Frame[T]]

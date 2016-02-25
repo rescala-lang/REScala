@@ -9,7 +9,7 @@ import rescala.propagation.Turn
 
 import scala.collection.SortedSet
 
-class PipelineQueue()(implicit val currentTurn: Turn[PipelineStruct.type]) {
+private[pipelining] class PipelineQueue()(implicit val currentTurn: Turn[PipelineStruct.type]) {
 
   type S = PipelineStruct.type
 
@@ -79,7 +79,7 @@ class PipelineQueue()(implicit val currentTurn: Turn[PipelineStruct.type]) {
 
 }
 
-object PipelineQueue {
+private[pipelining] object PipelineQueue {
 
   private case class QueueElement(level: Int, reactive: Reactive[PipelineStruct.type], minLevel: Int, needsEvaluate: Boolean)
   private implicit val ordering: Ordering[QueueElement] = new Ordering[QueueElement] {

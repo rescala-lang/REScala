@@ -5,7 +5,7 @@ import rescala.pipelining.PipelineStruct
 import rescala.propagation.{AbstractPropagation, Turn}
 
 
-trait PipelinePropagationImpl extends AbstractPropagation[PipelineStruct.type] {
+private[pipelining] trait PipelinePropagationImpl extends AbstractPropagation[PipelineStruct.type] {
 
   type S = PipelineStruct.type
 

@@ -3,7 +3,7 @@ package rescala.pipelining.util
 import scala.annotation.elidable
 import scala.annotation.elidable._
 
-object LogUtils {
+private[pipelining] object LogUtils {
   
   @elidable(ASSERTION)
   def log(text : Any) = {

@@ -2,7 +2,7 @@ package rescala.pipelining.util
 
 import java.util.concurrent.locks.LockSupport
 
-class TransferableLock {
+private[pipelining] class TransferableLock {
 
   private object heldLock
   private var heldBy = null.asInstanceOf[Thread]

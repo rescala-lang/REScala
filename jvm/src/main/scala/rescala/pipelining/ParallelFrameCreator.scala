@@ -3,7 +3,7 @@ package rescala.pipelining
 import rescala.graph.Reactive
 import rescala.pipelining.util.TransferableLock
 
-object ParallelFrameCreator {
+private[pipelining] object ParallelFrameCreator {
 
   // Todo each engine should have its own copied of this values
   
@@ -34,7 +34,7 @@ object ParallelFrameCreator {
   }
 }
 
-trait ParallelFrameCreator extends QueueBasedFrameCreator {
+private[pipelining] trait ParallelFrameCreator extends QueueBasedFrameCreator {
 
   self: PipeliningTurn =>
 

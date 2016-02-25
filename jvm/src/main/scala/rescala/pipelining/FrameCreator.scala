@@ -3,15 +3,15 @@ package rescala.pipelining
 import rescala.graph.Reactive
 import rescala.pipelining.util.LogUtils
 import LogUtils._
-import rescala.propagation.LevelQueue
+import rescala.pipelining.propagation.PipelineQueue
 
-trait FrameCreator {
+private[pipelining] trait FrameCreator {
 
   protected[this] def createFrames(initialReactives: List[Reactive[PipelineStruct.type]]): Unit
 
 }
 
-trait QueueBasedFrameCreator extends FrameCreator {
+private[pipelining] trait QueueBasedFrameCreator extends FrameCreator {
 
   self: PipeliningTurn =>
 
@@ -19,7 +19,7 @@ trait QueueBasedFrameCreator extends FrameCreator {
 
 
   protected[this] final def evaluateQueue(initialWrites: List[Reactive[S]]) = {
-    val lq = new LevelQueue()(this)
+    val lq = new PipelineQueue()(this)
     initialWrites.foreach(lq.enqueue(-1))
 
     var seen = Set[Reactive[S]]()

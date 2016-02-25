@@ -4,7 +4,7 @@ import rescala.graph.ReevaluationResult.{Dynamic, Static}
 import rescala.graph.{Reactive, ReevaluationResult}
 import rescala.pipelining.PipelineStruct
 
-trait PropagateChangesOnly {
+private[pipelining] trait PropagateChangesOnly {
   
   self : PipelinePropagationImpl =>
 

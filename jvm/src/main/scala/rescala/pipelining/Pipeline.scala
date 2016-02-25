@@ -6,12 +6,12 @@ import rescala.propagation.Turn
 import scala.annotation.tailrec
 import scala.collection.immutable.Queue
 
-object Pipeline {
+private[pipelining] object Pipeline {
   protected[pipelining] def pipelineFor(at: Reactive[PipelineStruct.type]) = at.bud.pipeline
   protected[pipelining] def apply(at: Reactive[PipelineStruct.type]) = at.bud.pipeline
 }
 
-class Pipeline() {
+private[pipelining] class Pipeline() {
 
   type S = PipelineStruct.type
 

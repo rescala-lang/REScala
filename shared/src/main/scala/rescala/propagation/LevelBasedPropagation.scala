@@ -9,8 +9,8 @@ import scala.util.control.NonFatal
 
 
 
-trait PropagationImpl[S <: Struct] extends AbstractPropagation[S] {
-  implicit def currentTurn: PropagationImpl[S] = this
+trait LevelBasedPropagation[S <: Struct] extends AbstractPropagation[S] {
+  implicit def currentTurn: LevelBasedPropagation[S] = this
 
   private val toCommit = new util.HashSet[Committable]()
   private val observers = new java.util.ArrayList[() => Unit](20)

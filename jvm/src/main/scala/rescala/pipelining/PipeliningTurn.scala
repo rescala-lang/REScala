@@ -8,7 +8,7 @@ import rescala.pipelining.propagation._
 import rescala.pipelining.util.LogUtils
 import rescala.propagation._
 
-object PipeliningTurn {
+private[pipelining] object PipeliningTurn {
 
   sealed abstract class PipelinedEvaluationRequest
   case class EvaluateNow(writeFrame: Frame[BufferFrameContent]) extends PipelinedEvaluationRequest
