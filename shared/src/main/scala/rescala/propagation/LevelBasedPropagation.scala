@@ -66,13 +66,12 @@ trait LevelBasedPropagation[S <: Struct] extends AbstractPropagation[S] {
       dependant.bud.updateLevel(newLevel)
     }
 
-  override def admit(reactive: Reactive[S]): Unit = levelQueue.enqueue(reactive.bud.level)(reactive)
-  override def forget(reactive: Reactive[S]): Unit = levelQueue.remove(reactive)
-
   /** allow turn to handle dynamic access to reactives */
   override def dependencyInteraction(dependency: Reactive[S]): Unit = ()
 
-  def lockPhase(initialWrites: List[Reactive[S]]): Unit
+  override def preparationPhase(initialWrites: List[Reactive[S]]): Unit = initialWrites.foreach { reactive =>
+    levelQueue.enqueue(reactive.bud.level)(reactive)
+  }
 
   def propagationPhase(): Unit = levelQueue.evaluateQueue(evaluate)
 
@@ -102,7 +101,5 @@ trait LevelBasedPropagation[S <: Struct] extends AbstractPropagation[S] {
     // but this is not the place to invent exception aggregation
     if (failure != null) throw failure
   }
-
-  def releasePhase(): Unit
 
 }

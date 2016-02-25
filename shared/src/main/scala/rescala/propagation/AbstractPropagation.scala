@@ -4,7 +4,7 @@ import rescala.graph.{Reactive, Struct}
 
 trait AbstractPropagation[S <: Struct] extends Turn[S] {
 
-  def lockPhase(initialWrites: List[Reactive[S]]): Unit
+  def preparationPhase(initialWrites: List[Reactive[S]]): Unit
 
   def propagationPhase(): Unit
 

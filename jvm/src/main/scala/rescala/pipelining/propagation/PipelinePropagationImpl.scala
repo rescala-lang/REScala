@@ -62,13 +62,13 @@ private[pipelining] trait PipelinePropagationImpl extends AbstractPropagation[Pi
     }
 
   // TODO Need to synchronize the queue? I thinkg it is necessary
-  override def admit(reactive: Reactive[S]): Unit = levelQueue.enqueue(reactive.bud.level)(reactive)
-  override def forget(reactive: Reactive[S]): Unit = levelQueue.remove(reactive)
+  def admit(reactive: Reactive[S]): Unit = levelQueue.enqueue(reactive.bud.level)(reactive)
+  def forget(reactive: Reactive[S]): Unit = levelQueue.remove(reactive)
 
   /** allow turn to handle dynamic access to reactives */
   override def dependencyInteraction(dependency: Reactive[S]): Unit = ()
 
-  def lockPhase(initialWrites: List[Reactive[S]]): Unit
+  def preparationPhase(initialWrites: List[Reactive[S]]): Unit = initialWrites.foreach(admit)
 
   def propagationPhase(): Unit
 

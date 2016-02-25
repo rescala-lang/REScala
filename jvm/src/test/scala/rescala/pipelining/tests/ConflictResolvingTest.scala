@@ -56,7 +56,7 @@ class ConflictResolvingTest extends AssertionsForJUnit with MockitoSugar {
 
     turns.zip(sources).foreach({
       case (turn, source) =>
-        turn.lockPhase(List(source))
+        turn.preparationPhase(List(source))
     })
 
     assert(pipelineFor(d1).getPipelineFrames().map(_.turn) == Queue() ++ turns)
