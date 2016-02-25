@@ -2,7 +2,7 @@ package rescala.engines
 
 import rescala.engines.Engines.{synchron, synchronFair, unmanaged}
 import rescala.graph.Struct
-import rescala.parrp.{Backoff, ParRP, ParRPStruct}
+import rescala.parrp.{LockSweep, Backoff, ParRP, ParRPStruct}
 import rescala.pipelining.{PipelineEngine, PipelineStruct, PipeliningTurn}
 import rescala.propagation.Turn
 import rescala.stm.{STMTurn, STMStruct}
@@ -21,6 +21,7 @@ object JVMEngines {
     case "stm" => stm.asInstanceOf[Engine[S, Turn[S]]]
     case "fair" => synchronFair.asInstanceOf[Engine[S, Turn[S]]]
     case "pipeline" => pipeline.asInstanceOf[Engine[S, Turn[S]]]
+    case "locksweep" => locksweep.asInstanceOf[Engine[S, Turn[S]]]
 
     case other => throw new IllegalArgumentException(s"unknown engine $other")
   }
@@ -28,6 +29,8 @@ object JVMEngines {
   def all: List[TEngine] = List[TEngine](stm, parrp, synchron, unmanaged, synchronFair)
 
   implicit val parrp: Engine[ParRPStruct.type, ParRP] = spinningWithBackoff(() => new Backoff)
+
+  implicit val locksweep: Engine[ParRPStruct.type, LockSweep] = new EngineImpl[ParRPStruct.type, LockSweep](ParRPStruct, new LockSweep(new Backoff()))
 
   implicit val default: Engine[ParRPStruct.type, ParRP] = parrp
 
