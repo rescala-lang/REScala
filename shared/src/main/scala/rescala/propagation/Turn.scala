@@ -19,12 +19,6 @@ trait Turn[S <: Struct] {
     * and calculate the correct level */
   def create[T <: Reactive[S]](dependencies: Set[Reactive[S]], dynamic: Boolean = false)(f: => T): T
 
-  /** adds a dependency */
-  def discover(sink: Reactive[S])(source: Reactive[S]): Unit
-
-  /** removes a dependency */
-  def drop(sink: Reactive[S])(source: Reactive[S]): Unit
-
   /** install a new commit handler */
   def schedule(committable: Committable): Unit
 

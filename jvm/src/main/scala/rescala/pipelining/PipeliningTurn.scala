@@ -263,7 +263,7 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
     affectedFrames.map(_.turn)
   }
 
-  override def discover(sink: Reactive[S])(source: Reactive[S]): Unit = {
+  def discover(sink: Reactive[S])(source: Reactive[S]): Unit = {
     val needToAddDep = !source.bud.outgoing.contains(sink)
     val sourcePipeline = pipelineFor(source)
     //  assert(sourcePipeline.frame.isWritten)
@@ -353,7 +353,7 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
     }
   }
 
-  override def drop(sink: Reactive[S])(source: Reactive[S]): Unit = {
+  def drop(sink: Reactive[S])(source: Reactive[S]): Unit = {
 
     log(s"Unregister $source as incoming of $sink for $this")
 
