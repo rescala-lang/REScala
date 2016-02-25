@@ -4,9 +4,12 @@ import java.util.concurrent.Semaphore
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
 import rescala.graph.{Committable, Reactive}
+import rescala.pipelining.Pipeline._
+import rescala.pipelining.PipeliningTurn._
 import rescala.pipelining.propagation._
-import rescala.pipelining.util.LogUtils
+import rescala.pipelining.util.LogUtils._
 import rescala.propagation._
+
 
 private[pipelining] object PipeliningTurn {
 
@@ -25,10 +28,6 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
   /** used to create state containers of each reactive */
   override type S = PipelineStruct.type
 
-
-  import LogUtils._
-  import Pipeline._
-  import PipeliningTurn._
 
   /** used to create state containers of each reactive */
   override def bufferFactory: S = PipelineStruct
@@ -94,7 +93,7 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
   }
 
   private def assertFrameOrder(head: Reactive[S]): Boolean = {
-    var frameFound = false;
+    var frameFound = false
     head.bud.pipeline.foreachFrameTopDown { frame =>
       if (frame.turn == this) {
         frameFound = true
@@ -118,10 +117,8 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
       head.bud.incoming.exists { reactive =>
         head.bud.level <= reactive.bud.level || // TODO Check whether level is enough
           pipelineFor(reactive).findFrame {
-            _ match {
-              case Some(frame) => !frame.isWritten
-              case None => false
-            }
+            case Some(frame) => !frame.isWritten
+            case None => false
           }
       }
   }
@@ -162,7 +159,7 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
       case EvaluateNow(writeFrame) =>
         assert(pipelineFor(head).hasFrame(this), s"${Thread.currentThread().getId} No frame was created in turn $this for $head")
         assert(assertFrameOrder(head))
-        assert(Option(pipelineFor(head).needFrame().previous()).map {_.isWritten}.getOrElse(true))
+        assert(Option(pipelineFor(head).needFrame().previous()).fold(true)(_.isWritten))
         pipelineFor(head).markTouched
         // val queueAction = super.evaluate(head)
         val result = head.reevaluate()
@@ -230,7 +227,7 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
   }
 
   private def commitFor(head: Pipeline): Unit = {
-    assert(Option(head.needFrame().previous()).map {_.isWritten}.getOrElse(true))
+    assert(Option(head.needFrame().previous()).fold(true)(_.isWritten))
     val buffersToCommit = head.createdBuffers.asInstanceOf[Set[Committable]]
     buffersToCommit.foreach {_.commit}
   }
@@ -392,7 +389,7 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
 
       assert(engine.isActive(this))
       //  assert(engine.isActive(dropFrame.turn))
-      assert(turnsAfterDynamicDrop.forall {engine.isActive(_)})
+      assert(turnsAfterDynamicDrop.forall {engine.isActive})
 
       if (turnsAfterDynamicDrop.nonEmpty) {
         // Queue based remove frames at reachable reactives
@@ -407,7 +404,7 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
               if (pipeline.hasFrame) {
                 assert(pipelineFor(reactive).hasFrame(this))
                 val incomings = reactive.bud.incomingForceGet(turn)
-                if (incomings.filter(pipelineFor(_).hasFrame(turn)).isEmpty) {
+                if (!incomings.exists(pipelineFor(_).hasFrame(turn))) {
                   log(s"Remove frame for $turn at $reactive")
                   turn.asInstanceOf[PipeliningTurn].markReactiveUnframed(pipeline, _.deleteFrames(turn))
                   frameRemoved = true
@@ -454,7 +451,7 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
       if (!frame.isWritten) {
         pipelines.waitUntilCanWrite
         commitFor(pipelines)
-        frame.markWritten
+        frame.markWritten()
       }
     }
   }
