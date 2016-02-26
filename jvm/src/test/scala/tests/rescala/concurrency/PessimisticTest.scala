@@ -36,7 +36,7 @@ case class Barrier(ready: CountDownLatch, go: CountDownLatch) {
   }
 }
 
-object Pessigen extends EngineImpl(ParRPStruct, new PessimisticTestTurn) {
+object Pessigen extends EngineImpl[ParRPStruct.type, PessimisticTestTurn](new PessimisticTestTurn) {
   val syncStack: AtomicReference[List[(Set[Reactive], Barrier)]] = new AtomicReference(Nil)
 
   def clear(): Int = syncStack.getAndSet(Nil).size
@@ -152,7 +152,6 @@ class PessimisticTest extends AssertionsForJUnit {
   object MockFacFac {
     def apply(i0: Reactive[ParRPStruct.type], reg: => Unit, unreg: => Unit): Engine[ParRPStruct.type, Turn[ParRPStruct.type]] =
       new EngineImpl[ParRPStruct.type, ParRP](
-        ParRPStruct,
         new ParRP(new Backoff()) {
           override def discover(downstream: Reactive[ParRPStruct.type])(upstream: Reactive[ParRPStruct.type]): Unit = {
             if (upstream eq i0) reg

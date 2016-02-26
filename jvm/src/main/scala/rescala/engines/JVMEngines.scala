@@ -30,16 +30,16 @@ object JVMEngines {
 
   implicit val parrp: Engine[ParRPStruct.type, ParRP] = spinningWithBackoff(() => new Backoff)
 
-  implicit val locksweep: Engine[ParRPStruct.type, LockSweep] = new EngineImpl[ParRPStruct.type, LockSweep](ParRPStruct, new LockSweep(new Backoff()))
+  implicit val locksweep: Engine[ParRPStruct.type, LockSweep] = new EngineImpl[ParRPStruct.type, LockSweep](new LockSweep(new Backoff()))
 
   implicit val default: Engine[ParRPStruct.type, ParRP] = parrp
 
   implicit val pipeline: Engine[PipelineStruct.type, PipeliningTurn] = new PipelineEngine()
 
-  implicit val stm: Engine[STMStruct.type, STMTurn] = new EngineImpl[STMStruct.type, STMTurn](STMStruct, new STMTurn()) {
+  implicit val stm: Engine[STMStruct.type, STMTurn] = new EngineImpl[STMStruct.type, STMTurn](new STMTurn()) {
     override def plan[R](i: Reactive*)(f: STMTurn => R): R = atomic { tx => super.plan(i: _*)(f) }
   }
 
-  def spinningWithBackoff(backOff: () => Backoff): Engine[ParRPStruct.type, ParRP] = new EngineImpl[ParRPStruct.type, ParRP](ParRPStruct, new ParRP(backOff()))
+  def spinningWithBackoff(backOff: () => Backoff): Engine[ParRPStruct.type, ParRP] = new EngineImpl[ParRPStruct.type, ParRP](new ParRP(backOff()))
 
 }

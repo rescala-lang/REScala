@@ -132,7 +132,7 @@ trait Event[+T, S <: Struct] extends PulseOption[T, S]{
 
   /** returns the values produced by the last event produced by mapping this value */
   final def flatMap[B](f: T => Event[B, S])(implicit ticket: Ticket[S]): Event[B, S] = ticket { implicit t =>
-    Events.wrapped(map(f).latest(new Evt[B, S]()(t.bufferFactory)))
+    Events.wrapped(map(f).latest(Evt()))
   }
 
   /** promotes the latest inner event to an outer event */

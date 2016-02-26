@@ -1,6 +1,6 @@
 package rescala.reactives
 
-import rescala.engines.Engine
+import rescala.engines.{Ticket, Engine}
 import rescala.graph._
 import rescala.propagation.Turn
 
@@ -9,12 +9,12 @@ sealed trait Source[T, S <: Struct] {
 }
 
 /**
- * An implementation of an imperative event
- */
-final class Evt[T, S <: Struct]()(engine: S) extends Base[T, S](engine.bud()) with Event[T, S] with Source[T, S] {
+  * An implementation of an imperative event
+  */
+final class Evt[T, S <: Struct]()(_bud: S#SporeP[T, Reactive[S]]) extends Base[T, S](_bud) with Event[T, S] with Source[T, S] {
 
   /** Trigger the event */
-  def apply(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) { admit(value)(_) }
+  def apply(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) {admit(value)(_)}
 
   def admit(value: T)(implicit turn: Turn[S]): Unit = {
     pulses.set(Pulse.change(value))(turn)
@@ -25,14 +25,14 @@ final class Evt[T, S <: Struct]()(engine: S) extends Base[T, S](engine.bud()) wi
 }
 
 object Evt {
-  def apply[T, S <: Struct]()(implicit engine: Engine[S, Turn[S]]): Evt[T, S] = new Evt[T, S]()(engine.bufferFactory)
+  def apply[T, S <: Struct]()(implicit ticket: Ticket[S]): Evt[T, S] = ticket { t => t.create(Set.empty)(new Evt[T, S]()(t.bufferFactory.bud(transient = true))) }
 }
 
 
 /** A root Reactive value without dependencies which can be set */
-final class Var[T, S <: Struct](initval: T)(engine: S) extends Base[T, S](engine.bud(Pulse.unchanged(initval), transient = false)) with Signal[T, S] with Source[T, S] {
+final class Var[T, S <: Struct](initval: T)(_bud: S#SporeP[T, Reactive[S]]) extends Base[T, S](_bud) with Signal[T, S] with Source[T, S] {
   def update(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = set(value)
-  def set(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) { admit(value)(_) }
+  def set(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) {admit(value)(_)}
   def transform(f: T => T)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) { t => admit(f(get(t)))(t) }
 
   def admit(value: T)(implicit turn: Turn[S]): Unit = {
@@ -47,6 +47,6 @@ final class Var[T, S <: Struct](initval: T)(engine: S) extends Base[T, S](engine
 }
 
 object Var {
-  def apply[T, S <: Struct](initval: T)(implicit engine: Engine[S, Turn[S]]): Var[T, S] = new Var(initval)(engine.bufferFactory)
+  def apply[T, S <: Struct](initval: T)(implicit ticket: Ticket[S]): Var[T, S] = ticket { t => t.create(Set.empty)(new Var(initval)(t.bufferFactory.bud(Pulse.unchanged(initval), transient = false))) }
 }
 

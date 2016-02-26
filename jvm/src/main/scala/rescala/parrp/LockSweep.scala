@@ -25,7 +25,10 @@ class LockSweep(backoff: Backoff) extends ParRP(backoff) {
         if (reactive.bud.lock.tryLock(key) eq key) {
           // we add the reactive again, so we can enter it into the `sorted` when the childern are processed
           stack.push(reactive)
-          reactive.bud.outgoing.filterNot(_.bud.lock.isOwner(key)).foreach {stack.push}
+          reactive.bud.outgoing.foreach { r =>
+            if (!r.bud.lock.isOwner(key)) stack.push(r)
+          }
+
         }
         else {
           key.lockKeychain {

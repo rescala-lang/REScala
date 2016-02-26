@@ -14,11 +14,11 @@ object Engines {
   }
 
 
-  implicit val synchron: NoLockEngine = new EngineImpl[SS, NoLocking[SS]](SimpleStruct, new SimpleNoLock()) {
+  implicit val synchron: NoLockEngine = new EngineImpl[SS, NoLocking[SS]](new SimpleNoLock()) {
     override def plan[R](i: Reactive*)(f: NoLocking[SS] => R): R = synchronized(super.plan(i: _*)(f))
   }
 
-  implicit val synchronFair: NoLockEngine = new EngineImpl[SS, NoLocking[SS]](SimpleStruct, new SimpleNoLock()) {
+  implicit val synchronFair: NoLockEngine = new EngineImpl[SS, NoLocking[SS]](new SimpleNoLock()) {
     val lock = new ReentrantLock(true)
     override def plan[R](i: Reactive*)(f: NoLocking[SS] => R): R = {
       lock.lock()
@@ -29,7 +29,7 @@ object Engines {
     }
   }
 
-  implicit val unmanaged: NoLockEngine = new EngineImpl[SS, NoLocking[SS]](SimpleStruct, new SimpleNoLock())
+  implicit val unmanaged: NoLockEngine = new EngineImpl[SS, NoLocking[SS]](new SimpleNoLock())
 
   implicit val default: NoLockEngine = synchron
 

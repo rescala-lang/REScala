@@ -16,7 +16,7 @@ object Signals extends GeneratedSignalLift {
       }
     }
 
-    private class DynamicSignal[T, S <: Struct](bufferFactory: S, expr: Turn[S] => T) extends Base[T, S](bufferFactory.bud(transient = false)) with Signal[T, S] with DynamicReevaluation[T, S] {
+    private class DynamicSignal[T, S <: Struct](_bud: S#SporeP[T, Reactive[S]], expr: Turn[S] => T) extends Base[T, S](_bud) with Signal[T, S] with DynamicReevaluation[T, S] {
       def calculatePulseDependencies(implicit turn: Turn[S]): (Pulse[T], Set[Reactive[S]]) = {
         val (newValue, dependencies) = turn.collectDependencies(expr(turn))
         (Pulse.diffPulse(newValue, pulses.base), dependencies)
@@ -31,7 +31,8 @@ object Signals extends GeneratedSignalLift {
 
     /** creates a dynamic signal */
     def makeDynamic[T, S <: Struct](dependencies: Set[Reactive[S]])(expr: Turn[S] => T)(initialTurn: Turn[S]): Signal[T, S] = initialTurn.create(dependencies, dynamic = true) {
-      new DynamicSignal[T, S](initialTurn.bufferFactory, expr)
+      val bud: S#SporeP[T, Reactive[S]] = initialTurn.bufferFactory.bud(transient = false)
+      new DynamicSignal[T, S](bud, expr)
     }
   }
 
