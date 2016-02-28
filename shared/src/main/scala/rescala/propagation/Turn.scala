@@ -1,6 +1,6 @@
 package rescala.propagation
 
-import rescala.graph.{Committable, Reactive, Struct}
+import rescala.graph.{Reactive, Struct}
 
 /**
  * The engine that schedules the (glitch-free) evaluation

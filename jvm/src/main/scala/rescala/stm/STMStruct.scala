@@ -2,7 +2,7 @@ package rescala.stm
 
 import rescala.graph.{LevelSpore, PulseSpore}
 import rescala.graph._
-import rescala.propagation.Turn
+import rescala.propagation.{Committable, Turn}
 
 import scala.concurrent.stm.{InTxn, Ref}
 

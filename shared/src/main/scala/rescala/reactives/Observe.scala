@@ -2,7 +2,7 @@ package rescala.reactives
 
 import rescala.engines.{Engine, Ticket}
 import rescala.graph._
-import rescala.propagation.Turn
+import rescala.propagation.{Committable, Turn}
 
 trait Observe[S <: Struct] {
   def remove()(implicit fac: Engine[S, Turn[S]]): Unit

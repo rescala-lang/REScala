@@ -4,8 +4,8 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import rescala.engines.Engine
 import rescala.graph.Globals.named
-import rescala.graph.{Committable, Struct}
-import rescala.propagation.Turn
+import rescala.graph.Struct
+import rescala.propagation.{Committable, Turn}
 import rescala.reactives.{Signal, Var}
 import rescala.reactives.Signals.lift
 

@@ -3,7 +3,7 @@ package rescala.pipelining
 import java.util.concurrent.Semaphore
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
-import rescala.graph.{Committable, Reactive}
+import rescala.graph.Reactive
 import rescala.pipelining.Pipeline._
 import rescala.pipelining.PipeliningTurn._
 import rescala.pipelining.propagation._
