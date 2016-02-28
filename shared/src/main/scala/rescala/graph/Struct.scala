@@ -1,6 +1,5 @@
 package rescala.graph
 
-import rescala.graph.Buffer.CommitStrategy
 import rescala.propagation.{Committable, Turn}
 
 import scala.language.{existentials, higherKinds, implicitConversions}
@@ -62,24 +61,6 @@ trait LevelStruct extends Struct {
   override type Spore[R] <: LevelSpore[R]
 }
 
-abstract class BufferedSporeP[P, R](initialIncoming: Set[R]) extends LevelSpore[R] with SporePulse[P] {
-  def buffer[A](default: A, commitStrategy: CommitStrategy[A]): Buffer[A]
-  private val _level: Buffer[Int] = buffer(0, math.max)
-  private val _incoming: Buffer[Set[R]] = buffer(initialIncoming, Buffer.commitAsIs)
-  private val _outgoing: Buffer[Set[R]] = buffer(Set.empty, Buffer.commitAsIs)
-
-  override def level(implicit turn: Turn[_]): Int = _level.get(turn)
-  override def updateLevel(i: Int)(implicit turn: Turn[_]): Int = _level.transform(math.max(i, _))
-
-  override def incoming(implicit turn: Turn[_]): Set[R] = _incoming.get
-  override def updateIncoming(reactives: Set[R])(implicit turn: Turn[_]): Unit = _incoming.set(reactives.toSet)
-
-
-  override def outgoing(implicit turn: Turn[_]): Set[R] = _outgoing.get
-  override def discover(reactive: R)(implicit turn: Turn[_]): Unit = _outgoing.transform(_ + reactive)
-  override def drop(reactive: R)(implicit turn: Turn[_]): Unit = _outgoing.transform(_ - reactive)
-
-}
 
 object SimpleStruct extends LevelStruct {
   override type Spore[R] = SimpleSporeP[_, R]
