@@ -13,7 +13,7 @@ object ParRPStruct extends LevelStruct {
     new ParRPSporeP[P, R](initialValue, transient, lock, initialIncoming)
   }
 
-  class ParRPSporeP[P, R](current: Pulse[P], transient: Boolean, val lock: TurnLock, initialIncoming: Set[R]) extends SimpleSporeP[P, R](current, transient, initialIncoming) {
+  class ParRPSporeP[P, R](current: Pulse[P], transient: Boolean, val lock: TurnLock, initialIncoming: Set[R]) extends LevelSporeImpl[P, R](current, transient, initialIncoming) {
     override def set(value: Pulse[P])(implicit turn: Turn[_]): Unit = {
       assert(turn match {
         case pessimistic: ParRP =>
