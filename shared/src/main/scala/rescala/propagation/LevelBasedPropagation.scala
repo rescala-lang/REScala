@@ -1,18 +1,13 @@
 package rescala.propagation
 
-import java.util
-
 import rescala.graph.ReevaluationResult.{Dynamic, Static}
 import rescala.graph.{LevelStruct, Reactive}
 
-import scala.util.control.NonFatal
 
-
-trait LevelBasedPropagation[S <: LevelStruct] extends AbstractPropagation[S] {
+trait LevelBasedPropagation[S <: LevelStruct] extends CommonPropagationImpl[S] {
   implicit def currentTurn: LevelBasedPropagation[S] = this
 
-  private val toCommit = new util.HashSet[Committable]()
-  private val observers = new java.util.ArrayList[() => Unit](20)
+
   private var _evaluated = List.empty[Reactive[S]]
 
   val levelQueue = new LevelQueue()
@@ -42,9 +37,6 @@ trait LevelBasedPropagation[S <: LevelStruct] extends AbstractPropagation[S] {
 
   def drop(sink: Reactive[S])(source: Reactive[S]): Unit = source.bud.drop(sink)
 
-  override def schedule(commitable: Committable): Unit = toCommit.add(commitable)
-
-  override def observe(f: => Unit): Unit = observers.add(f _)
 
   override def create[T <: Reactive[S]](dependencies: Set[Reactive[S]], dynamic: Boolean)(f: => T): T = {
     val reactive = f
@@ -75,31 +67,5 @@ trait LevelBasedPropagation[S <: LevelStruct] extends AbstractPropagation[S] {
 
   def propagationPhase(): Unit = levelQueue.evaluateQueue(evaluate)
 
-  def commitPhase() = {
-    val it = toCommit.iterator()
-    while (it.hasNext) it.next().commit(this)
-  }
-
-  def rollbackPhase() = {
-    val it = toCommit.iterator()
-    while (it.hasNext) it.next().release(this)
-  }
-
-  def observerPhase() = {
-    val it = observers.iterator()
-    var failure: Throwable = null
-    while (it.hasNext) {
-      try {
-        it.next().apply()
-      }
-      catch {
-        case NonFatal(e) => failure = e
-      }
-    }
-    // find the first failure and rethrow the contained exception
-    // we should probably aggregate all of the exceptions,
-    // but this is not the place to invent exception aggregation
-    if (failure != null) throw failure
-  }
 
 }
