@@ -4,25 +4,26 @@ import java.util.concurrent.atomic.AtomicReference
 
 import scala.annotation.tailrec
 import scala.collection.immutable.Queue
+import scala.language.existentials
 
-final class TurnLock() {
+final class TurnLock[InterTurn]() {
 
-  private val owner: AtomicReference[Key] = new AtomicReference[Key]()
-  private val shared: AtomicReference[Queue[Key]] = new AtomicReference[Queue[Key]](Queue())
+  private val owner: AtomicReference[Key[InterTurn]] = new AtomicReference[Key[InterTurn]]()
+  private val shared: AtomicReference[Queue[Key[InterTurn]]] = new AtomicReference[Queue[Key[InterTurn]]](Queue())
   private var writeLock: Boolean = true
 
-  def getOwner: Key = owner.get()
+  def getOwner: Key[InterTurn] = owner.get()
   def isWriteLock: Boolean = writeLock
 
   /** returns true if key owns the write lock */
-  def isOwner(key: Key): Boolean = owner.get() eq key
+  def isOwner(key: Key[InterTurn]): Boolean = owner.get() eq key
 
   /**
    * locks this if it is free, returns the current owner (which is key, if locking succeeded)
    * does not check for shared access.
    */
   @tailrec
-  def tryLock(key: Key, write: Boolean = true): Key = {
+  def tryLock(key: Key[InterTurn], write: Boolean = true): Key[InterTurn] = {
     if (owner.compareAndSet(null, key)) {
       key.addLock(this)
       writeLock = write
@@ -39,8 +40,8 @@ final class TurnLock() {
     if (!v.compareAndSet(old, update)) transform(v)(f)
   }
 
-  def share(key: Key): Unit = transform(shared)(_.enqueue(key))
-  def acquired(key: Key): Key = {
+  def share(key: Key[InterTurn]): Unit = transform(shared)(_.enqueue(key))
+  def acquired(key: Key[InterTurn]): Key[InterTurn] = {
     transform(shared) { q =>
       val (k, r) = q.dequeue
       assert(k == key, s"resolved await in wrong order got $k expected $key remaining $r")
@@ -50,7 +51,7 @@ final class TurnLock() {
   }
 
   /** transfers the lock from the turn to the target. */
-  def transfer(target: Key, oldOwner: Key, transferWriteSet: Boolean = false) = {
+  def transfer(target: Key[InterTurn], oldOwner: Key[InterTurn], transferWriteSet: Boolean = false) = {
     // update locks back to read locks when transferring
     writeLock = transferWriteSet && writeLock
     // select the true target:

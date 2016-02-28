@@ -3,7 +3,7 @@ package rescala.propagation
 import java.util
 
 import rescala.graph.ReevaluationResult.{Dynamic, Static}
-import rescala.graph.{LevelStruct, Reactive, Struct}
+import rescala.graph.{LevelStruct, Reactive}
 
 import scala.util.control.NonFatal
 

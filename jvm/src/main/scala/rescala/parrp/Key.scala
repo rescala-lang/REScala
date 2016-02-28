@@ -6,12 +6,12 @@ import rescala.graph.Globals
 
 import scala.annotation.tailrec
 
-final class Key(val turn: ParRP) {
+final class Key[InterTurn](val turn: InterTurn) {
 
   val id = Globals.nextID()
   override def toString: String = s"Key($id)"
 
-  @volatile var keychain: Keychain = new Keychain(this)
+  @volatile var keychain: Keychain[InterTurn] = new Keychain(this)
 
   private[this] val semaphore = new Semaphore(0)
 
@@ -34,9 +34,9 @@ final class Key(val turn: ParRP) {
   }
 
   /** contains a list of all locks owned by us. */
-  @volatile private[this] var heldLocks: ConcurrentHashMap[TurnLock, Boolean] = new ConcurrentHashMap[TurnLock, Boolean]()
+  private[this] val heldLocks: ConcurrentHashMap[TurnLock[InterTurn], Boolean] = new ConcurrentHashMap[TurnLock[InterTurn], Boolean]()
 
-  def addLock(lock: TurnLock): Unit = heldLocks.put(lock, true)
+  def addLock(lock: TurnLock[InterTurn]): Unit = heldLocks.put(lock, true)
 
   def grabLocks() = heldLocks
 

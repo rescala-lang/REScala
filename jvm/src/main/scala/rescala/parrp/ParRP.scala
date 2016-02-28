@@ -1,12 +1,23 @@
 package rescala.parrp
 
 import rescala.graph.Reactive
-import rescala.parrp.ParRP.{Await, Done, Retry}
+import rescala.parrp.ParRP.{Await, Done, Result, Retry}
 import rescala.propagation.LevelBasedPropagation
 
 import scala.annotation.tailrec
 
-class ParRP(backoff: Backoff) extends LevelBasedPropagation[ParRPStruct.type] {
+trait ParRPInterTurn {
+  private type TState = ParRPStruct.type
+
+  def discover(sink: Reactive[TState])(source: Reactive[TState]): Unit
+  def drop(sink: Reactive[TState])(source: Reactive[TState]): Unit
+
+  def forget(reactive: Reactive[TState]): Unit
+  def admit(reactive: Reactive[TState]): Unit
+
+}
+
+class ParRP(backoff: Backoff) extends LevelBasedPropagation[ParRPStruct.type] with ParRPInterTurn {
 
   private type TState = ParRPStruct.type
 
@@ -15,7 +26,7 @@ class ParRP(backoff: Backoff) extends LevelBasedPropagation[ParRPStruct.type] {
   /** used to create state containers of each reactive */
   override def bufferFactory: TState = ParRPStruct
 
-  final val key: Key = new Key(this)
+  final val key: Key[ParRPInterTurn] = new Key(this)
 
   /**
     * creating a signal causes some unpredictable reactives to be used inside the turn.
@@ -65,12 +76,15 @@ class ParRP(backoff: Backoff) extends LevelBasedPropagation[ParRPStruct.type] {
     super.preparationPhase(initialWrites)
   }
 
+
+  override def forget(reactive: Reactive[TState]): Unit = levelQueue.remove(reactive)
+  override def admit(reactive: Reactive[TState]): Unit = levelQueue.enqueue(reactive.bud.level)(reactive)
+
   /** registering a dependency on a node we do not personally own does require some additional care.
     * we let the other turn update the dependency and admit the dependent into the propagation queue
     * so that it gets updated when that turn continues
     * the responsibility for correctly passing the locks is moved to the commit phase */
   override def discover(sink: Reactive[TState])(source: Reactive[TState]): Unit = {
-    def admit(owner: ParRP, reactive: Reactive[TState]): Unit = owner.levelQueue.enqueue(reactive.bud.level)(reactive)
 
     val owner = acquireShared(source)
     if (owner ne key) {
@@ -79,7 +93,7 @@ class ParRP(backoff: Backoff) extends LevelBasedPropagation[ParRPStruct.type] {
       }
       else if (!source.bud.outgoing.contains(sink)) {
         owner.turn.discover(sink)(source)
-        admit(owner.turn, sink)
+        owner.turn.admit(sink)
         key.lockKeychain {
           assert(key.keychain == owner.keychain, "tried to transfer locks between keychains")
           key.keychain.addFallthrough(owner)
@@ -93,26 +107,26 @@ class ParRP(backoff: Backoff) extends LevelBasedPropagation[ParRPStruct.type] {
 
   /** this is for cases where we register and then unregister the same dependency in a single turn */
   override def drop(sink: Reactive[TState])(source: Reactive[TState]): Unit = {
-    def forget(owner: ParRP, reactive: Reactive[TState]): Unit = owner.levelQueue.remove(reactive)
+
 
     val owner = acquireShared(source)
     if (owner ne key) {
       owner.turn.drop(sink)(source)
       if (!source.bud.lock.isWriteLock) {
         key.lockKeychain(key.keychain.removeFallthrough(owner))
-        if (!sink.bud.incoming(this).exists(_.bud.lock.isOwner(owner))) forget(owner.turn, sink)
+        if (!sink.bud.incoming(this).exists(_.bud.lock.isOwner(owner))) owner.turn.forget(sink)
       }
     }
     else super.drop(sink)(source)
   }
 
-  def acquireShared(reactive: Reactive[TState]): Key = acquireShared(reactive.bud.lock, key)
+  def acquireShared(reactive: Reactive[TState]): Key[ParRPInterTurn] = acquireShared(reactive.bud.lock, key)
 
   @tailrec
-  private def acquireShared(lock: TurnLock, requester: Key): Key = {
+  private def acquireShared(lock: TurnLock[ParRPInterTurn], requester: Key[ParRPInterTurn]): Key[ParRPInterTurn] = {
     val oldOwner = lock.tryLock(requester, write = false)
 
-    val res =
+    val res: Result[Key[ParRPInterTurn]] =
       if (oldOwner eq requester) Done(requester)
       else {
         Keychains.lockKeychains(requester, oldOwner) {
