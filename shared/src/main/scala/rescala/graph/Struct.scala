@@ -69,7 +69,7 @@ object SimpleStruct extends LevelStruct {
     new LevelSporeImpl[P, R](initialValue, transient, initialIncoming)
 }
 
-abstract class GraphSporeImpl[P, R](var current: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends LevelSpore[R] with SporePulse[P] with Buffer[Pulse[P]] with Committable {
+abstract class PropagationSporeImpl[P, R](var current: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends PropagationSpore[R] with SporePulse[P] with Buffer[Pulse[P]] with Committable {
 
   override val pulses: Buffer[Pulse[P]] = this
   var _incoming: Set[R] = initialIncoming
@@ -108,7 +108,7 @@ abstract class GraphSporeImpl[P, R](var current: Pulse[P], transient: Boolean, i
   }
 }
 
-class LevelSporeImpl[P, R](current: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends GraphSporeImpl[P, R](current, transient, initialIncoming) with LevelSpore[R]  {
+class LevelSporeImpl[P, R](current: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends PropagationSporeImpl[P, R](current, transient, initialIncoming) with LevelSpore[R]  {
   var _level: Int = 0
 
   override def level(implicit turn: Turn[_]): Int = _level
