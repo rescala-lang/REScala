@@ -61,10 +61,7 @@ class ParRP(backoff: Backoff) extends LevelBasedPropagation[ParRPStruct.type] wi
         if (reactive.bud.lock.tryLock(key) eq key)
           reactive.bud.outgoing.foreach {toVisit.offer}
         else {
-          key.lockKeychain {
-            key.releaseAll()
-            key.keychain = new Keychain(key)
-          }
+          key.reset()
           backoff.backoff()
           toVisit.clear()
           initialWrites.foreach(toVisit.offer)
@@ -92,10 +89,7 @@ class ParRP(backoff: Backoff) extends LevelBasedPropagation[ParRPStruct.type] wi
       else if (!source.bud.outgoing.contains(sink)) {
         owner.turn.discover(sink)(source)
         owner.turn.admit(sink)
-        key.lockKeychain {
-          assert(key.keychain == owner.keychain, "tried to transfer locks between keychains")
-          key.keychain.addFallthrough(owner)
-        }
+        key.lockKeychain { _.addFallthrough(owner) }
       }
     }
     else {
@@ -111,7 +105,7 @@ class ParRP(backoff: Backoff) extends LevelBasedPropagation[ParRPStruct.type] wi
     if (owner ne key) {
       owner.turn.drop(sink)(source)
       if (!source.bud.lock.isWriteLock) {
-        key.lockKeychain(key.keychain.removeFallthrough(owner))
+        key.lockKeychain(_.removeFallthrough(owner))
         if (!sink.bud.incoming(this).exists(_.bud.lock.isOwner(owner))) owner.turn.forget(sink)
       }
     }

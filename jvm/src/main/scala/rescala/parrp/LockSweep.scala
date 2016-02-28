@@ -69,10 +69,7 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
 
         }
         else {
-          key.lockKeychain {
-            key.releaseAll()
-            key.keychain = new Keychain(key)
-          }
+          key.reset()
           backoff.backoff()
           stack.clear()
           sorted.clear()
