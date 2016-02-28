@@ -1,6 +1,6 @@
 package rescala.stm
 
-import rescala.graph.{LevelSpore, PulseSpore}
+import rescala.graph.{LevelSpore, SporePulse}
 import rescala.graph._
 import rescala.propagation.{Committable, Turn}
 
@@ -13,7 +13,7 @@ object STMStruct extends LevelStruct {
     new STMSporeP[P, R](initialValue, transient, initialIncoming)
   }
 
-  class STMSporeP[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends LevelSpore[R] with PulseSpore[P] with Buffer[Pulse[P]] with Committable {
+  class STMSporeP[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends LevelSpore[R] with SporePulse[P] with Buffer[Pulse[P]] with Committable {
 
     implicit def inTxn(implicit turn: Turn[_]): InTxn = turn match {
       case stmTurn: STMTurn => stmTurn.inTxn

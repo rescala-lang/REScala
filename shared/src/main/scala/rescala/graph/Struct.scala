@@ -22,7 +22,7 @@ trait Buffer[A] {
 
 trait Struct {
   type Spore[R] <: ReactiveSpore[R]
-  type SporeP[P, R] = Spore[R] with PulseSpore[P]
+  type SporeP[P, R] = Spore[R] with SporePulse[P]
 
   def bud[P, R](initialValue: Pulse[P] = Pulse.none, transient: Boolean = true, initialIncoming: Set[R] = Set.empty[R]): SporeP[P, R]
 
@@ -34,28 +34,35 @@ trait ReactiveSpore[R] {
   def updateIncoming(reactives: Set[R])(implicit turn: Turn[_]): Unit
 
 }
-trait PulseSpore[P] {
+trait SporePulse[P] {
 
   val pulses: Buffer[Pulse[P]]
 
 }
 
-trait LevelSpore[R] extends ReactiveSpore[R] {
-
-  def level(implicit turn: Turn[_]): Int
-  def updateLevel(i: Int)(implicit turn: Turn[_]): Int
+trait PropagationSpore[R] extends ReactiveSpore[R] {
 
   def outgoing(implicit turn: Turn[_]): Set[R]
   def discover(reactive: R)(implicit turn: Turn[_]): Unit
   def drop(reactive: R)(implicit turn: Turn[_]): Unit
 }
 
-
-trait LevelStruct extends Struct {
-  type Spore[R] <: LevelSpore[R]
+trait PropagationStruct extends Struct {
+  override type Spore[R] <: PropagationSpore[R]
 }
 
-abstract class BufferedSporeP[P, R](initialIncoming: Set[R]) extends LevelSpore[R] with PulseSpore[P] {
+trait LevelSpore[R] extends PropagationSpore[R] {
+
+  def level(implicit turn: Turn[_]): Int
+  def updateLevel(i: Int)(implicit turn: Turn[_]): Int
+
+}
+
+trait LevelStruct extends Struct {
+  override type Spore[R] <: LevelSpore[R]
+}
+
+abstract class BufferedSporeP[P, R](initialIncoming: Set[R]) extends LevelSpore[R] with SporePulse[P] {
   def buffer[A](default: A, commitStrategy: CommitStrategy[A]): Buffer[A]
   private val _level: Buffer[Int] = buffer(0, math.max)
   private val _incoming: Buffer[Set[R]] = buffer(initialIncoming, Buffer.commitAsIs)
@@ -81,7 +88,7 @@ object SimpleStruct extends LevelStruct {
     new SimpleSporeP[P, R](initialValue, transient, initialIncoming)
 }
 
-class SimpleSporeP[P, R](var current: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends LevelSpore[R] with PulseSpore[P] with Buffer[Pulse[P]] with Committable {
+class SimpleSporeP[P, R](var current: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends LevelSpore[R] with SporePulse[P] with Buffer[Pulse[P]] with Committable {
   var _level: Int = 0
   var _incoming: Set[R] = initialIncoming
   var _outgoing: Set[R] = Set.empty
