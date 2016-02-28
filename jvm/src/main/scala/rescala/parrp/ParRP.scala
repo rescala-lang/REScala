@@ -1,6 +1,7 @@
 package rescala.parrp
 
 import rescala.graph.Reactive
+import rescala.locking.{TurnLock, Keychains, Keychain, Key}
 import rescala.parrp.ParRP.{Await, Done, Result, Retry}
 import rescala.propagation.LevelBasedPropagation
 

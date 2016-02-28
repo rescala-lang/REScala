@@ -1,4 +1,4 @@
-package rescala.parrp
+package rescala.locking
 
 import scala.annotation.tailrec
 

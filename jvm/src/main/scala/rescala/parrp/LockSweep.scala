@@ -3,6 +3,7 @@ package rescala.parrp
 import java.util
 
 import rescala.graph.Reactive
+import rescala.locking.Keychain
 
 class LockSweep(backoff: Backoff) extends ParRP(backoff) {
 

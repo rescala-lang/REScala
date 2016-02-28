@@ -1,6 +1,7 @@
 package rescala.parrp
 
 import rescala.graph._
+import rescala.locking.{TurnLock, Key}
 import rescala.propagation.Turn
 
 import scala.language.implicitConversions
