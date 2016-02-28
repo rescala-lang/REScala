@@ -1,6 +1,6 @@
 package rescala.pipelining
 
-import rescala.graph.Struct.{LevelSpore, ReactiveSporeP}
+import rescala.graph.Struct.{LevelSpore, PulseSpore}
 import rescala.graph.{LevelStruct, Buffer, Pulse, Struct}
 import rescala.propagation.Turn
 
@@ -9,7 +9,7 @@ object PipelineStruct extends LevelStruct {
 
   override def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): SporeP[P, R] = new PipelineSporeP[P, R](initialValue, transient, initialIncoming)
 
-  class PipelineSporeP[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends LevelSpore[R] with ReactiveSporeP[P, R] {
+  class PipelineSporeP[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends LevelSpore[R] with PulseSpore[P] {
 
     val pipeline: Pipeline = new Pipeline()
 

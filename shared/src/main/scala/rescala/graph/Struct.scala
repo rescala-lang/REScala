@@ -1,7 +1,7 @@
 package rescala.graph
 
 import rescala.graph.Buffer.CommitStrategy
-import rescala.graph.Struct.{LevelSpore, ReactiveSpore, ReactiveSporeP}
+import rescala.graph.Struct.{LevelSpore, ReactiveSpore, PulseSpore}
 import rescala.propagation.Turn
 
 import scala.language.{existentials, higherKinds, implicitConversions}
@@ -9,7 +9,7 @@ import scala.language.{existentials, higherKinds, implicitConversions}
 
 trait Struct {
   type Spore[R] <: ReactiveSpore[R]
-  type SporeP[P, R] = Spore[R] with ReactiveSporeP[P, R]
+  type SporeP[P, R] = Spore[R] with PulseSpore[P]
 
   def bud[P, R](initialValue: Pulse[P] = Pulse.none, transient: Boolean = true, initialIncoming: Set[R] = Set.empty[R]): SporeP[P, R]
 
@@ -23,7 +23,7 @@ object Struct {
     def updateIncoming(reactives: Set[R])(implicit turn: Turn[_]): Unit
 
   }
-  trait ReactiveSporeP[P, R] extends ReactiveSpore[R] {
+  trait PulseSpore[P] {
 
     val pulses: Buffer[Pulse[P]]
 
@@ -45,7 +45,7 @@ trait LevelStruct extends Struct {
   type Spore[R] <: LevelSpore[R]
 }
 
-abstract class BufferedSporeP[P, R](initialIncoming: Set[R]) extends LevelSpore[R] with ReactiveSporeP[P, R] {
+abstract class BufferedSporeP[P, R](initialIncoming: Set[R]) extends LevelSpore[R] with PulseSpore[P] {
   def buffer[A](default: A, commitStrategy: CommitStrategy[A]): Buffer[A]
   private val _level: Buffer[Int] = buffer(0, math.max)
   private val _incoming: Buffer[Set[R]] = buffer(initialIncoming, Buffer.commitAsIs)
@@ -71,7 +71,7 @@ object SimpleStruct extends LevelStruct {
     new SimpleSporeP[P, R](initialValue, transient, initialIncoming)
 }
 
-class SimpleSporeP[P, R](var current: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends LevelSpore[R] with ReactiveSporeP[P, R] with Buffer[Pulse[P]] with Committable {
+class SimpleSporeP[P, R](var current: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends LevelSpore[R] with PulseSpore[P] with Buffer[Pulse[P]] with Committable {
   var _level: Int = 0
   var _incoming: Set[R] = initialIncoming
   var _outgoing: Set[R] = Set.empty
