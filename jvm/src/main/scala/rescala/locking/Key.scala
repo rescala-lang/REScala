@@ -15,7 +15,7 @@ final class Key[InterTurn](val turn: InterTurn) {
 
   private[this] val semaphore = new Semaphore(0)
 
-  def continue(): Unit = semaphore.release()
+  private[locking] def continue(): Unit = semaphore.release()
   def await(): Unit = semaphore.acquire()
 
 
@@ -36,9 +36,9 @@ final class Key[InterTurn](val turn: InterTurn) {
   /** contains a list of all locks owned by us. */
   private[this] val heldLocks: ConcurrentHashMap[TurnLock[InterTurn], Boolean] = new ConcurrentHashMap[TurnLock[InterTurn], Boolean]()
 
-  def addLock(lock: TurnLock[InterTurn]): Unit = heldLocks.put(lock, true)
+  private[locking] def addLock(lock: TurnLock[InterTurn]): Unit = heldLocks.put(lock, true)
 
-  def grabLocks() = heldLocks
+  private[locking] def grabLocks() = heldLocks
 
   /** release all locks we hold or transfer them to a waiting transaction if there is one
     * holds the master lock for request */
