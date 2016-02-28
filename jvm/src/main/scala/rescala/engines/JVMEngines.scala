@@ -2,7 +2,7 @@ package rescala.engines
 
 import rescala.engines.Engines.{synchron, synchronFair, unmanaged}
 import rescala.graph.Struct
-import rescala.parrp.{LockSweep, Backoff, ParRP, ParRPStruct}
+import rescala.parrp._
 import rescala.pipelining.{PipelineEngine, PipelineStruct, PipeliningTurn}
 import rescala.propagation.Turn
 import rescala.stm.{STMTurn, STMStruct}
@@ -30,7 +30,7 @@ object JVMEngines {
 
   implicit val parrp: Engine[ParRPStruct.type, ParRP] = spinningWithBackoff(() => new Backoff)
 
-  implicit val locksweep: Engine[ParRPStruct.type, LockSweep] = new EngineImpl[ParRPStruct.type, LockSweep](new LockSweep(new Backoff()))
+  implicit val locksweep: Engine[LSStruct.type, LockSweep] = new EngineImpl[LSStruct.type, LockSweep](new LockSweep(new Backoff()))
 
   implicit val default: Engine[ParRPStruct.type, ParRP] = parrp
 
