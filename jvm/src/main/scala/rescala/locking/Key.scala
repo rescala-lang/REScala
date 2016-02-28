@@ -4,8 +4,6 @@ import java.util.concurrent.{ConcurrentHashMap, Semaphore}
 
 import rescala.graph.Globals
 
-import scala.annotation.tailrec
-
 final class Key[InterTurn](val turn: InterTurn) {
 
   val id = Globals.nextID()
@@ -20,17 +18,13 @@ final class Key[InterTurn](val turn: InterTurn) {
 
 
   def lockKeychain[R](f: => R): R = {
-    @tailrec def loop(): R = {
+    while (true) {
       val oldChain = keychain
       keychain.synchronized {
-        if (oldChain eq keychain) Some(f)
-        else None
-      } match {
-        case None => loop()
-        case Some(r) => r
+        if (oldChain eq keychain) return f
       }
     }
-    loop()
+    throw new AssertionError("broke out of infinite loop")
   }
 
   /** contains a list of all locks owned by us. */
