@@ -1,6 +1,6 @@
 package rescala.pipelining
 
-import rescala.graph.Struct.{LevelSpore, PulseSpore}
+import rescala.graph.{LevelSpore, PulseSpore}
 import rescala.graph.{LevelStruct, Buffer, Pulse, Struct}
 import rescala.propagation.Turn
 

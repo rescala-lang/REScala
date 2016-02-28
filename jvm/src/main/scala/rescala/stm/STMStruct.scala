@@ -1,6 +1,6 @@
 package rescala.stm
 
-import rescala.graph.Struct.{LevelSpore, PulseSpore}
+import rescala.graph.{LevelSpore, PulseSpore}
 import rescala.graph._
 import rescala.propagation.Turn
 

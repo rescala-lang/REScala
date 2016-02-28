@@ -1,7 +1,6 @@
 package rescala.graph
 
 import rescala.graph.Buffer.CommitStrategy
-import rescala.graph.Struct.{LevelSpore, ReactiveSpore, PulseSpore}
 import rescala.propagation.Turn
 
 import scala.language.{existentials, higherKinds, implicitConversions}
@@ -15,31 +14,28 @@ trait Struct {
 
 }
 
-object Struct {
+trait ReactiveSpore[R] {
 
-  trait ReactiveSpore[R] {
-
-    def incoming(implicit turn: Turn[_]): Set[R]
-    def updateIncoming(reactives: Set[R])(implicit turn: Turn[_]): Unit
-
-  }
-  trait PulseSpore[P] {
-
-    val pulses: Buffer[Pulse[P]]
-
-  }
-
-  trait LevelSpore[R] extends ReactiveSpore[R] {
-
-    def level(implicit turn: Turn[_]): Int
-    def updateLevel(i: Int)(implicit turn: Turn[_]): Int
-
-    def outgoing(implicit turn: Turn[_]): Set[R]
-    def discover(reactive: R)(implicit turn: Turn[_]): Unit
-    def drop(reactive: R)(implicit turn: Turn[_]): Unit
-  }
+  def incoming(implicit turn: Turn[_]): Set[R]
+  def updateIncoming(reactives: Set[R])(implicit turn: Turn[_]): Unit
 
 }
+trait PulseSpore[P] {
+
+  val pulses: Buffer[Pulse[P]]
+
+}
+
+trait LevelSpore[R] extends ReactiveSpore[R] {
+
+  def level(implicit turn: Turn[_]): Int
+  def updateLevel(i: Int)(implicit turn: Turn[_]): Int
+
+  def outgoing(implicit turn: Turn[_]): Set[R]
+  def discover(reactive: R)(implicit turn: Turn[_]): Unit
+  def drop(reactive: R)(implicit turn: Turn[_]): Unit
+}
+
 
 trait LevelStruct extends Struct {
   type Spore[R] <: LevelSpore[R]
