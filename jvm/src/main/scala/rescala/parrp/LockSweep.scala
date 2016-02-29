@@ -43,7 +43,7 @@ class LSSporeP[P, R](current: Pulse[P], transient: Boolean, val lock: TurnLock[L
 }
 
 trait LSInterTurn {
-
+  def append(reactives: util.ArrayList[Reactive[LSStruct.type]]): Unit
 }
 
 class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] with LSInterTurn {
@@ -55,6 +55,8 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
   final val key: Key[LSInterTurn] = new Key(this)
 
   var currentIndex = 0
+
+  var discovered: List[(Key[LSInterTurn], Reactive[TState], Reactive[TState])] = Nil
 
   /** lock all reactives reachable from the initial sources
     * retry when acquire returns false */
@@ -179,13 +181,64 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
     reactive
   }
 
-  def discover(sink: Reactive[TState])(source: Reactive[TState]): Unit = source.bud.discover(sink)(this)
 
-  def drop(sink: Reactive[TState])(source: Reactive[TState]): Unit = source.bud.drop(sink)(this)
+
+
+  /** registering a dependency on a node we do not personally own does require some additional care.
+    * we let the other turn update the dependency and admit the dependent into the propagation queue
+    * so that it gets updated when that turn continues
+    * the responsibility for correctly passing the locks is moved to the commit phase */
+  def discover(sink: Reactive[TState])(source: Reactive[TState]): Unit = {
+
+    val owner = acquireShared(source)
+    if (owner ne key) {
+      println("happened")
+      if (source.bud.writeSet == null) {
+        source.bud.discover(sink)(this)
+      }
+      else if (!source.bud.outgoing(this).contains(sink)) {
+        source.bud.discover(sink)(this)
+        discovered ::= ((owner, sink, source))
+        key.lockKeychain { _.addFallthrough(owner) }
+      }
+    }
+    else {
+      source.bud.discover(sink)(this)
+    }
+  }
+
+  /** this is for cases where we register and then unregister the same dependency in a single turn */
+  def drop(sink: Reactive[TState])(source: Reactive[TState]): Unit = {
+
+
+    val owner = acquireShared(source)
+    if (owner ne key) {
+      source.bud.drop(sink)(this)
+      if (source.bud.writeSet == null) {
+        key.lockKeychain(_.removeFallthrough(owner))
+        if (!sink.bud.incoming(this).exists(_.bud.lock.isOwner(owner))) {
+          discovered = discovered.filter(_ != ((owner, sink, source)))
+        }
+      }
+    }
+    else source.bud.drop(sink)(this)
+  }
 
 
   /** this is called after the turn has finished propagating, but before handlers are executed */
-  override def releasePhase(): Unit = key.releaseAll()
+  override def releasePhase(): Unit = {
+    discovered.reverse.foreach { case (other, sink, source) =>
+      other.turn.append(find(sink))
+    }
+    key.releaseAll()
+  }
+
+
+  override def append(reactives: util.ArrayList[Reactive[TState]]): Unit = {
+    sorted.addAll(reactives)
+  }
+
+
 
   /** allow turn to handle dynamic access to reactives */
   override def dependencyInteraction(dependency: Reactive[TState]): Unit = acquireShared(dependency)
