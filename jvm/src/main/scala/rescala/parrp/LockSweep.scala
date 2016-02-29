@@ -121,6 +121,8 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
       }
     }
     Collections.reverse(result)
+    val it = result.iterator()
+    while (it.hasNext) it.next().bud.color = null
     result
   }
 
