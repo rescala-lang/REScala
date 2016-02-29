@@ -86,6 +86,11 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
         sorted.clear()
         key.reset()
         backoff.backoff()
+        val sit = stack.iterator()
+        while(sit.hasNext) {
+          val curr = sit.next()
+          if (curr.bud.writeSet == this) curr.bud.writeSet = null
+        }
         stack.clear()
         initialWrites.foreach(stack.push)
       }
@@ -194,7 +199,6 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
 
     val owner = acquireShared(source)
     if (owner ne key) {
-      println("happened")
       if (source.bud.writeSet == null) {
         source.bud.discover(sink)(this)
       }
