@@ -5,9 +5,9 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.Infiltrator.getLevel
+import rescala.Infiltrator.assertLevel
 import rescala.engines.Engine
-import rescala.graph.{LevelStruct, Struct}
+import rescala.graph.LevelStruct
 import rescala.propagation.Turn
 import rescala.reactives.Signals
 
@@ -29,25 +29,25 @@ class LevelPropagation[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Ass
     var evaluatesOnlyOncePerTurn = 0
     val level_2_to_5 = Signals.lift(level0, level_1_to_4) { (x, y) => evaluatesOnlyOncePerTurn += 1; x + y }
 
-    assert(getLevel(level3) === 3)
-    assert(getLevel(level_1_to_4) === 1)
-    assert(getLevel(level_2_to_5) === 2)
+    assertLevel(level3, 3)
+    assertLevel(level_1_to_4, 1)
+    assertLevel(level_2_to_5, 2)
     assert(level_2_to_5.now === 42)
     assert(evaluatesOnlyOncePerTurn === 1)
 
     level0.set(5)
 
-    assert(getLevel(level3) === 3)
-    assert(getLevel(level_1_to_4) === 1)
-    assert(getLevel(level_2_to_5) === 2)
+    assertLevel(level3, 3)
+    assertLevel(level_1_to_4, 1)
+    assertLevel(level_2_to_5, 2)
     assert(level_2_to_5.now === 47)
     assert(evaluatesOnlyOncePerTurn === 2)
 
     level0.set(10)
 
-    assert(getLevel(level3) === 3)
-    assert(getLevel(level_1_to_4) === 4)
-    assert(getLevel(level_2_to_5) === 5)
+    assertLevel(level3, 3)
+    assertLevel(level_1_to_4, 4)
+    assertLevel(level_2_to_5, 5)
     assert(level_2_to_5.now === 23)
     assert(evaluatesOnlyOncePerTurn === 3)
 
@@ -64,18 +64,18 @@ class LevelPropagation[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Ass
     }
     val l2t5 = l1t4.map(_ + 1)
 
-    assert(getLevel(l3) === 3)
-    assert(getLevel(l1t4) === 1)
-    assert(getLevel(l2t5) === 2)
+    assertLevel(l3, 3)
+    assertLevel(l1t4, 1)
+    assertLevel(l2t5, 2)
     assert(l1t4.now === 3)
     assert(l2t5.now === 4)
 
 
     l0.set(10)
 
-    assert(getLevel(l3) === 3)
-    assert(getLevel(l1t4) === 4)
-    assert(getLevel(l2t5) === 5)
+    assertLevel(l3, 3)
+    assertLevel(l1t4, 4)
+    assertLevel(l2t5, 5)
     assert(l1t4.now === 13)
     assert(l2t5.now === 14)
 
@@ -92,9 +92,9 @@ class LevelPropagation[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Ass
     var reevals = 0
     val l2t5 = l1t4.map { v => reevals += 1; v + 1 }
 
-    assert(getLevel(l3) === 3)
-    assert(getLevel(l1t4) === 1)
-    assert(getLevel(l2t5) === 2)
+    assertLevel(l3, 3)
+    assertLevel(l1t4, 1)
+    assertLevel(l2t5, 2)
     assert(l1t4.now === 13)
     assert(l2t5.now === 14)
     assert(reevals === 1)
@@ -102,9 +102,9 @@ class LevelPropagation[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Ass
 
     l0.set(10)
 
-    assert(getLevel(l3) === 3)
-    assert(getLevel(l1t4) === 4)
-    assert(getLevel(l2t5) === 5)
+    assertLevel(l3, 3)
+    assertLevel(l1t4, 4)
+    assertLevel(l2t5, 5)
     assert(l1t4.now === 13)
     assert(l2t5.now === 14)
     assert(reevals === 1)
@@ -125,9 +125,9 @@ class LevelPropagation[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Ass
     var reevals2 = 0
     val l3t6 = l2t5.map { v => reevals2 += 1; v + 1 }
 
-    assert(getLevel(l3) === 3)
-    assert(getLevel(l1t4) === 1)
-    assert(getLevel(l2t5) === 2)
+    assertLevel(l3, 3)
+    assertLevel(l1t4, 1)
+    assertLevel(l2t5, 2)
     assert(l1t4.now === 13)
     assert(l2t5.now === 14)
     assert(reevals === 1)
@@ -136,9 +136,9 @@ class LevelPropagation[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Ass
 
     l0.set(10)
 
-    assert(getLevel(l3) === 3)
-    assert(getLevel(l1t4) === 4)
-    assert(getLevel(l2t5) === 5)
+    assertLevel(l3, 3)
+    assertLevel(l1t4, 4)
+    assertLevel(l2t5, 5)
     assert(l1t4.now === 13)
     assert(l2t5.now === 24)
     assert(reevals === 2)

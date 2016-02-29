@@ -5,7 +5,8 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.Infiltrator.getLevel
+import rescala.Infiltrator
+import rescala.Infiltrator.{assertLevel, getLevel}
 import rescala.engines.Engine
 import rescala.graph.{LevelStruct, Struct}
 import rescala.propagation.Turn
@@ -86,10 +87,10 @@ class SignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asse
     val s2 = v.map { 3 * _ }
     val s3 = Signals.lift(s1, s2) { _ + _ }
 
-    assert(getLevel(v) == 0)
-    assert(getLevel(s1) == 1)
-    assert(getLevel(s2) == 1)
-    assert(getLevel(s3) == 2)
+    assertLevel(v, 0)
+    assertLevel(s1, 1)
+    assertLevel(s2, 1)
+    assertLevel(s3, 2)
   }
 
 }

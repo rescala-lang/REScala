@@ -6,7 +6,8 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.Infiltrator.getLevel
+import rescala.Infiltrator
+import rescala.Infiltrator.{assertLevel, getLevel}
 import rescala.engines.Engine
 import rescala.graph.{LevelStruct, Struct}
 import rescala.propagation.Turn
@@ -84,10 +85,10 @@ class DynamicSignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) exten
     val s2 = dynamic() { s => 3 * v(s) }
     val s3 = dynamic() { s => s1(s) + s2(s) }
 
-    assert(getLevel(v) == 0)
-    assert(getLevel(s1) == 1)
-    assert(getLevel(s2) == 1)
-    assert(getLevel(s3) == 2)
+    assertLevel(v, 0)
+    assertLevel(s1, 1)
+    assertLevel(s2, 1)
+    assertLevel(s3, 2)
 
 
   }
@@ -179,6 +180,9 @@ class DynamicSignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) exten
 
   @Test def creatingSignalsInsideSignals(): Unit = {
 
+    // ignore for locksweep, as it does not support predeclared levels
+    org.junit.Assume.assumeTrue(engine != rescala.engines.JVMEngines.locksweep)
+
     val outside = Var(1)
 
     val testsig = dynamic() { t =>
@@ -202,10 +206,10 @@ class DynamicSignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) exten
       if (condition(turn)) v3(turn) else v0(turn)
     }
     assert(`dynamic signal changing from level 1 to level 4`.now == "level 0")
-    assert(getLevel(`dynamic signal changing from level 1 to level 4`) == 1)
+    assertLevel(`dynamic signal changing from level 1 to level 4`, 1)
 
     condition.set(true)
     assert(`dynamic signal changing from level 1 to level 4`.now == "level 3")
-    assert(getLevel(`dynamic signal changing from level 1 to level 4`) == 4)
+    assertLevel(`dynamic signal changing from level 1 to level 4`, 4)
   }
 }

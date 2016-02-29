@@ -5,7 +5,8 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.Infiltrator.getLevel
+import rescala.Infiltrator
+import rescala.Infiltrator.{assertLevel, getLevel}
 import rescala.engines.Engine
 import rescala.graph.{LevelStruct, Struct}
 import rescala.propagation.Turn
@@ -83,10 +84,10 @@ class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asser
     val s2 = Signal { 3 * v() }
     val s3 = Signal { s1() + s2() }
 
-    assert(getLevel(v) === 0)
-    assert(getLevel(s1) === 1)
-    assert(getLevel(s2) === 1)
-    assert(getLevel(s3) === 2)
+    assertLevel(v, 0)
+    assertLevel(s1, 1)
+    assertLevel(s2, 1)
+    assertLevel(s3, 2)
 
 
   }
@@ -376,8 +377,12 @@ class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asser
   @Test def extractingSignalSideEffects(): Unit = {
     val e1 = Evt[Int]()
     def newSignal(): Signal[Int] = e1.count()
-    val macroRes = Signal { newSignal().apply() }
-    val normalRes = Signals.dynamic() { t: Turn[S] => newSignal().apply(t) }
+    val macroRes = Signal {
+      newSignal().apply()
+    }
+    val normalRes = Signals.dynamic() { t: Turn[S] =>
+      newSignal().apply(t)
+    }
     assert(macroRes.now === 0, "before, macro")
     assert(normalRes.now === 0, "before, normal")
     e1(1)
