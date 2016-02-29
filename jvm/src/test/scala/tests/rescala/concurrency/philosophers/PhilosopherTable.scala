@@ -72,7 +72,7 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit 
       }
       else false
       t.schedule(new Committable {
-        override def commit(implicit turn: Turn[_]): Unit = if (forksFree) assert(seating.vision(t) == Eating)
+        override def commit(implicit turn: Turn[_]): Unit = if (forksFree) assert(seating.vision(t) == Eating, "philosopher should now be eating")
         override def release(implicit turn: Turn[_]): Unit = ()
       })
       forksFree

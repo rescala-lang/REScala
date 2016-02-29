@@ -47,7 +47,7 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit 
     engine.plan(seating.philosopher) { turn =>
       val forksWereFree = seating.vision(turn) == Ready
       if (forksWereFree) seating.philosopher.admit(Eating)(turn)
-      turn.observe { if (forksWereFree) assert(seating.vision(turn) == Done) }
+      turn.observe { if (forksWereFree) assert(seating.vision(turn) == Done, "philosopher should be done after turn") }
       forksWereFree
     }
 
