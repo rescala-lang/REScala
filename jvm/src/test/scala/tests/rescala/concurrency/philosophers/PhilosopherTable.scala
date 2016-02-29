@@ -50,7 +50,7 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit 
   def createTable(tableSize: Int): Seq[Seating[S]] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
 
-    val phils = for (i <- 0 until tableSize) yield named(s"PHil($i)")(Var[Philosopher](Thinking))
+    val phils = for (i <- 0 until tableSize) yield named(s"Phil($i)")(Var[Philosopher](Thinking))
 
     val forks = for (i <- 0 until tableSize) yield {
       val nextCircularIndex = mod(i + 1)
@@ -58,7 +58,7 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit 
     }
 
     for (i <- 0 until tableSize) yield {
-      val vision = named(s"Vision($i, ${mod(i - 1)}")(lift(forks(i), forks(mod(i - 1)))(calcVision(i.toString)))
+      val vision = named(s"Vision($i, ${mod(i - 1)})")(lift(forks(i), forks(mod(i - 1)))(calcVision(i.toString)))
       Seating(i, phils(i), forks(i), forks(mod(i - 1)), vision)
     }
   }
@@ -66,16 +66,13 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit 
 
   def tryEat(seating: Seating[S]): Boolean =
     engine.plan(seating.philosopher) { t =>
-      val forksFree = if (seating.vision(t) == Ready) {
-        seating.philosopher.admit(Hungry)(t)
-        true
-      }
-      else false
-      t.schedule(new Committable {
-        override def commit(implicit turn: Turn[_]): Unit = if (forksFree) assert(seating.vision(t) == Eating, "philosopher should now be eating")
-        override def release(implicit turn: Turn[_]): Unit = ()
-      })
-      forksFree
+      val forksWereFree = seating.vision(t) == Ready
+      if (forksWereFree) seating.philosopher.admit(Hungry)(t)
+      t.observe { if (forksWereFree) {
+        assert(seating.vision.get(t) == Eating, s"philosopher should be done after turn")
+      } }
+
+      forksWereFree
     }
 
   def eatOnce(seating: Seating[S]) = repeatUntilTrue(tryEat(seating))
