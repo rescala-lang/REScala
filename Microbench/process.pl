@@ -394,16 +394,21 @@ sub importCSV() {
       push @files, $File::Find::name if $_ =~ /\.csv$/;
     }, $CSVDIR);
   for my $file (@files) {
+
     my @data = @{ csv(in => $file) };
     say "$file is empty" and next if !@data;
     my @headers = @{ shift @data };
+    push @headers, "gitrev";
     updateTable($DBH, $TABLE, @headers);
+
+    my $hash = $1 if ($file =~ m#/(\w{40})/#);
+    say $hash;
 
     for my $row (@data) {
       s/(?<=\d),(?=\d)/./g for @$row;  # replace , with . in numbers
     }
     my $sth = $DBH->prepare("INSERT INTO $TABLE (" . (join ",", map {qq["$_"]} @headers) . ") VALUES (" . (join ',', map {'?'} @headers) . ")");
-    $sth->execute(@$_) for @data;
+    $sth->execute(@$_, $hash) for @data;
   }
   $DBH->do("UPDATE $TABLE SET Score = Score / 1000, Unit = 'ops/ms' WHERE Unit = 'ops/s'");
   $DBH->do("UPDATE $TABLE SET Samples = 1 WHERE Samples is NULL");

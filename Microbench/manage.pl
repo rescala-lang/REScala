@@ -25,7 +25,7 @@ my $BSUB_QUEUE = "deflt_centos";
 my $BSUB_REQUIRE = "select[ mpi && avx ]";
 my $BSUB_CORES = "16";
 
-my @ENGINES = qw<parrp stm synchron>;
+my @ENGINES = qw<parrp stm synchron locksweep>;
 my @ENGINES_UNMANAGED = (@ENGINES, "unmanaged");
 my @THREADS = (1..16);
 my $UNI_THREAD = 8;
@@ -53,8 +53,10 @@ $ENV{'LANG'} = 'en_US.UTF-8';
 # say $JMH_CLASSPATH;
 # $ENV{'JAVA_OPTS'} = $JMH_CLASSPATH;
 
+my $GITREF = qx[git show -s --format=%H HEAD];
+
 my $command = shift @ARGV;
-my @RUN = @ARGV ? @ARGV : qw< halfDynamicPhilosophers simplePhil expensiveConflict singleDynamic singleVar turnCreation simpleFan simpleReverseFan simpleNaturalGraph multiReverseFan stmbank chatServer>;
+my @RUN = @ARGV ? @ARGV : qw< halfDynamicPhilosophers simplePhil expensiveConflict singleDynamic singleVar turnCreation simpleFan simpleReverseFan simpleNaturalGraph multiReverseFan stmbank chatServer >;
 
 say "selected: " . (join " ", sort @RUN);
 say "available: " . (join " ", sort keys %{&selection()});
@@ -71,6 +73,7 @@ given($command) {
 
 sub init {
   mkdir $RESULTDIR;
+  mkdir "$RESULTDIR/$GITREF";
   mkdir $OUTDIR;
   chdir "..";
   system('sbt', 'set scalacOptions in ThisBuild ++= List("-Xdisable-assertions", "-Xelide-below", "9999999")', 'project microbench', 'stage', 'compileJmh');
@@ -117,7 +120,7 @@ sub makeRunString {
       (map {"-p $_=" . $params{$_}} keys %params),
       (join " ", @benchmarks)
     );
-  "$EXECUTABLE -rf csv -rff \"results/$name.csv\" $paramstring"
+  qq[$EXECUTABLE -rf csv -rff "$RESULTDIR/$GITREF/$name.csv" $paramstring];
 }
 
 sub makeRuns {
@@ -554,7 +557,7 @@ sub selection {
               p => { # parameters
                 engineName => (join ',', @ENGINES_UNMANAGED),
                 numberOfAccounts => 256,
-                readWindowCount => "1,2,4,8",
+                readWindowCount => "4,8,16,32,64",
                 globalReadChance => $chance,
               },
               t => $size, #threads
