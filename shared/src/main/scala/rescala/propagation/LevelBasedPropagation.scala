@@ -5,12 +5,14 @@ import rescala.graph.{LevelStruct, Reactive}
 
 
 trait LevelBasedPropagation[S <: LevelStruct] extends CommonPropagationImpl[S] {
+
+
   implicit def currentTurn: LevelBasedPropagation[S] = this
 
 
   private var _evaluated = List.empty[Reactive[S]]
 
-  val levelQueue = new LevelQueue()
+  val levelQueue = new LevelQueue[S]()
 
   def evaluate(head: Reactive[S]): Unit = {
 

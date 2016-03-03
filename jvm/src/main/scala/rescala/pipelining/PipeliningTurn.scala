@@ -4,7 +4,6 @@ import java.util.concurrent.Semaphore
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
 import rescala.graph.{Pulse, Buffer, Reactive}
-import rescala.parrp.ParRPSporeP
 import rescala.pipelining.Pipeline._
 import rescala.pipelining.PipeliningTurn._
 import rescala.pipelining.propagation._

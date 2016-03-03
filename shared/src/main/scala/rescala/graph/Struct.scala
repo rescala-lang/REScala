@@ -25,40 +25,30 @@ trait Struct {
 
 }
 
-trait ReactiveStruct extends Struct {
-  override type SporeP[P, R] <: ReactiveSpore[P, R]
+trait PulsingGraphStruct extends Struct {
+  override type SporeP[P, R] <: GraphSpore[R] with PulsingSpore[P]
 }
 
-trait PropagationStruct extends Struct {
-  override type SporeP[P, R] <: PropagationSpore[R] with ReactiveSpore[P, R]
+trait LevelStruct extends PulsingGraphStruct {
+  override type SporeP[P, R] <: LevelSpore[R] with GraphSpore[R] with PulsingSpore[P]
 }
 
-trait LevelStruct extends PropagationStruct {
-  override type SporeP[P, R] <: LevelSpore[R] with PropagationSpore[R] with ReactiveSpore[P, R]
-}
-
-object SimpleStruct extends LevelStruct {
-  override type SporeP[P, R] = LevelSporeImpl[P, R]
-
-  def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): SporeP[P, R] =
-    new LevelSporeImpl[P, R](initialValue, transient, initialIncoming)
-}
+trait SimpleStruct[S] extends LevelStruct { override type SporeP[P, R] = LevelSporeImpl[P, R] }
 
 
-trait ReactiveSpore[P, R] {
+trait PulsingSpore[P] {
   def pulses: Buffer[Pulse[P]]
+}
+
+trait GraphSpore[R] {
   def incoming(implicit turn: Turn[_]): Set[R]
   def updateIncoming(reactives: Set[R])(implicit turn: Turn[_]): Unit
-}
-
-trait PropagationSpore[R] {
-
   def outgoing(implicit turn: Turn[_]): Set[R]
   def discover(reactive: R)(implicit turn: Turn[_]): Unit
   def drop(reactive: R)(implicit turn: Turn[_]): Unit
 }
 
-trait LevelSpore[R] extends PropagationSpore[R] {
+trait LevelSpore[R] extends GraphSpore[R] {
 
   def level(implicit turn: Turn[_]): Int
   def updateLevel(i: Int)(implicit turn: Turn[_]): Int
@@ -66,7 +56,7 @@ trait LevelSpore[R] extends PropagationSpore[R] {
 }
 
 
-abstract class PropagationSporeImpl[P, R](var current: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends PropagationSpore[R] with ReactiveSpore[P, R] with Buffer[Pulse[P]] with Committable {
+abstract class PropagationSporeImpl[P, R](var current: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends GraphSpore[R] with PulsingSpore[P] with Buffer[Pulse[P]] with Committable {
 
   val pulses: Buffer[Pulse[P]] = this
   var _incoming: Set[R] = initialIncoming

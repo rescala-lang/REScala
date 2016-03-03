@@ -6,10 +6,9 @@ import rescala.propagation.Turn
 object PipelineStruct extends LevelStruct {
   override type SporeP[P, R] = PipelineSporeP[P, R]
 
-
-
 }
-class PipelineSporeP[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends LevelSpore[R] with ReactiveSpore[P, R]  {
+
+class PipelineSporeP[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends LevelSpore[R] with PulsingSpore[P] {
 
   val pipeline: Pipeline = new Pipeline()
 

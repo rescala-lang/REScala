@@ -5,7 +5,7 @@ import rescala.graph.Struct
 import rescala.parrp._
 import rescala.pipelining.{PipelineEngine, PipelineStruct, PipeliningTurn}
 import rescala.propagation.Turn
-import rescala.stm.{STMTurn}
+import rescala.stm.STMTurn
 
 import scala.concurrent.stm.atomic
 import scala.language.existentials
@@ -28,11 +28,11 @@ object JVMEngines {
 
   def all: List[TEngine] = List[TEngine](stm, parrp, synchron, unmanaged, synchronFair, locksweep)
 
-  implicit val parrp: Engine[ParRPStruct.type, ParRP] = spinningWithBackoff(() => new Backoff)
+  implicit val parrp: Engine[ParRP, ParRP] = spinningWithBackoff(() => new Backoff)
 
   implicit val locksweep: Engine[LSStruct.type, LockSweep] = new EngineImpl[LSStruct.type, LockSweep](new LockSweep(new Backoff()))
 
-  implicit val default: Engine[ParRPStruct.type, ParRP] = parrp
+  implicit val default: Engine[ParRP, ParRP] = parrp
 
   implicit val pipeline: Engine[PipelineStruct.type, PipeliningTurn] = new PipelineEngine()
 
@@ -40,6 +40,6 @@ object JVMEngines {
     override def plan[R](i: Reactive*)(f: STMTurn => R): R = atomic { tx => super.plan(i: _*)(f) }
   }
 
-  def spinningWithBackoff(backOff: () => Backoff): Engine[ParRPStruct.type, ParRP] = new EngineImpl[ParRPStruct.type, ParRP](new ParRP(backOff()))
+  def spinningWithBackoff(backOff: () => Backoff): Engine[ParRP, ParRP] = new EngineImpl[ParRP, ParRP](new ParRP(backOff()))
 
 }

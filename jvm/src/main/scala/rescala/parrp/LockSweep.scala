@@ -8,7 +8,7 @@ import rescala.graph._
 import rescala.locking._
 import rescala.propagation.{CommonPropagationImpl, Turn}
 
-object LSStruct extends PropagationStruct {
+object LSStruct extends PulsingGraphStruct {
   override type SporeP[P, R] = LSSporeP[P, R]
 }
 

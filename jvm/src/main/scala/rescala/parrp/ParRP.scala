@@ -1,11 +1,11 @@
 package rescala.parrp
 
-import rescala.graph.{Pulse, Buffer, Reactive}
+import rescala.graph.{LevelStruct, Pulse, Buffer, Reactive}
 import rescala.locking._
 import rescala.propagation.LevelBasedPropagation
 
 trait ParRPInterTurn {
-  private type TState = ParRPStruct.type
+  private type TState = ParRP
 
   def discover(sink: Reactive[TState])(source: Reactive[TState]): Unit
   def drop(sink: Reactive[TState])(source: Reactive[TState]): Unit
@@ -15,13 +15,14 @@ trait ParRPInterTurn {
 
 }
 
-class ParRP(backoff: Backoff) extends LevelBasedPropagation[ParRPStruct.type] with ParRPInterTurn {
+class ParRP(backoff: Backoff) extends LevelBasedPropagation[ParRP] with ParRPInterTurn with LevelStruct {
+  override type SporeP[P, R] = ParRPSpore[P, R]
 
-  private type TState = ParRPStruct.type
+  private type TState = ParRP
 
   override def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): TState#SporeP[P, R] = {
     val lock = new TurnLock[ParRPInterTurn]
-    new ParRPSporeP[P, R](initialValue, transient, lock, initialIncoming)
+    new ParRPSpore[P, R](initialValue, transient, lock, initialIncoming)
   }
 
 

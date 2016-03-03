@@ -2,11 +2,11 @@ package rescala.propagation
 
 import java.util
 
-import rescala.graph.{Buffer, PropagationStruct, Pulse}
+import rescala.graph.{Buffer, PulsingGraphStruct, Pulse}
 
 import scala.util.control.NonFatal
 
-trait CommonPropagationImpl[S <: PropagationStruct] extends AbstractPropagation[S] {
+trait CommonPropagationImpl[S <: PulsingGraphStruct] extends AbstractPropagation[S] {
   private val toCommit = new util.HashSet[Committable]()
   private val observers = new java.util.ArrayList[() => Unit]()
   override def schedule(commitable: Committable): Unit = toCommit.add(commitable)
