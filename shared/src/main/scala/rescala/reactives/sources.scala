@@ -25,7 +25,7 @@ final class Evt[T, S <: Struct]()(_bud: S#SporeP[T, Reactive[S]]) extends Base[T
 }
 
 object Evt {
-  def apply[T, S <: Struct]()(implicit ticket: Ticket[S]): Evt[T, S] = ticket { t => t.create(Set.empty)(new Evt[T, S]()(t.bufferFactory.bud(transient = true))) }
+  def apply[T, S <: Struct]()(implicit ticket: Ticket[S]): Evt[T, S] = ticket { t => t.create(Set.empty)(new Evt[T, S]()(t.bud(transient = true))) }
 }
 
 
@@ -47,6 +47,6 @@ final class Var[T, S <: Struct](initval: T)(_bud: S#SporeP[T, Reactive[S]]) exte
 }
 
 object Var {
-  def apply[T, S <: Struct](initval: T)(implicit ticket: Ticket[S]): Var[T, S] = ticket { t => t.create(Set.empty)(new Var(initval)(t.bufferFactory.bud(Pulse.unchanged(initval), transient = false))) }
+  def apply[T, S <: Struct](initval: T)(implicit ticket: Ticket[S]): Var[T, S] = ticket { t => t.create(Set.empty)(new Var(initval)(t.bud(Pulse.unchanged(initval), transient = false))) }
 }
 

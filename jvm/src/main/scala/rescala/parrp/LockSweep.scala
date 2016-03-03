@@ -10,13 +10,6 @@ import rescala.propagation.{CommonPropagationImpl, Turn}
 
 object LSStruct extends PropagationStruct {
   override type SporeP[P, R] = LSSporeP[P, R]
-
-  override def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): SporeP[P, R] = {
-    val lock = new TurnLock[LSInterTurn]
-    new LSSporeP[P, R](initialValue, transient, lock, initialIncoming)
-  }
-
-
 }
 
 
@@ -49,6 +42,11 @@ trait LSInterTurn {
 class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] with LSInterTurn {
 
   private type TState = LSStruct.type
+
+  override def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): LSStruct.SporeP[P, R] = {
+    val lock = new TurnLock[LSInterTurn]
+    new LSSporeP[P, R](initialValue, transient, lock, initialIncoming)
+  }
 
   val sorted = new util.ArrayList[Reactive[TState]]
 
@@ -250,10 +248,4 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
   override def dependencyInteraction(dependency: Reactive[TState]): Unit = acquireShared(dependency)
 
   def acquireShared(reactive: Reactive[TState]): Key[LSInterTurn] = Keychains.acquireShared(reactive.bud.lock, key)
-
-
-  override def bufferFactory: TState = LSStruct
-  override def pulses[P](budP: TState#SporeP[P, Reactive[TState]]): Buffer[Pulse[P]] = budP.pulses.asInstanceOf[Buffer[Pulse[P]]]
-  override def incoming[R](bud: LSSporeP[_, R]): Set[R] = bud.incoming(this)
-  override def updateIncoming[R](bud: LSSporeP[_, R], newDependencies: Set[R]): Unit = bud.updateIncoming(newDependencies)(this)
 }

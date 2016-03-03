@@ -25,7 +25,7 @@ object Observe {
   def apply[T, S <: Struct](dependency: Pulsing[T, S])(fun: T => Unit)(implicit maybe: Ticket[S]): Observe[S] = {
     val incoming = Set[Reactive[S]](dependency)
     maybe(initTurn => initTurn.create(incoming) {
-      val obs = new Obs(initTurn.bufferFactory.bud[T, Reactive[S]](initialIncoming = incoming), dependency, fun)
+      val obs = new Obs(initTurn.bud[T, Reactive[S]](initialIncoming = incoming, transient = false), dependency, fun)
       initTurn.schedule(once(obs, dependency.pulse(initTurn).keep.current, fun))
       obs
     })

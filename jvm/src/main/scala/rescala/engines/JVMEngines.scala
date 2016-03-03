@@ -5,7 +5,7 @@ import rescala.graph.Struct
 import rescala.parrp._
 import rescala.pipelining.{PipelineEngine, PipelineStruct, PipeliningTurn}
 import rescala.propagation.Turn
-import rescala.stm.{STMTurn, STMStruct}
+import rescala.stm.{STMTurn}
 
 import scala.concurrent.stm.atomic
 import scala.language.existentials
@@ -36,7 +36,7 @@ object JVMEngines {
 
   implicit val pipeline: Engine[PipelineStruct.type, PipeliningTurn] = new PipelineEngine()
 
-  implicit val stm: Engine[STMStruct.type, STMTurn] = new EngineImpl[STMStruct.type, STMTurn](new STMTurn()) {
+  implicit val stm: Engine[STMTurn, STMTurn] = new EngineImpl[STMTurn, STMTurn](new STMTurn()) {
     override def plan[R](i: Reactive*)(f: STMTurn => R): R = atomic { tx => super.plan(i: _*)(f) }
   }
 

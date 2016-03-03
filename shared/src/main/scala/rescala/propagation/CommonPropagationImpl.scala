@@ -2,11 +2,11 @@ package rescala.propagation
 
 import java.util
 
-import rescala.graph.Struct
+import rescala.graph.{Buffer, PropagationStruct, Pulse}
 
 import scala.util.control.NonFatal
 
-trait CommonPropagationImpl[S <: Struct] extends AbstractPropagation[S] {
+trait CommonPropagationImpl[S <: PropagationStruct] extends AbstractPropagation[S] {
   private val toCommit = new util.HashSet[Committable]()
   private val observers = new java.util.ArrayList[() => Unit]()
   override def schedule(commitable: Committable): Unit = toCommit.add(commitable)
@@ -40,5 +40,9 @@ trait CommonPropagationImpl[S <: Struct] extends AbstractPropagation[S] {
     // but this is not the place to invent exception aggregation
     if (failure != null) throw failure
   }
+
+  override def pulses[P](budP: S#SporeP[P, _]): Buffer[Pulse[P]] = budP.pulses
+  override def incoming[R](bud: S#Spore[R]): Set[R] = bud.incoming(this)
+  override def updateIncoming[R](bud: S#Spore[R], newDependencies: Set[R]): Unit = bud.updateIncoming(newDependencies)(this)
 
 }

@@ -9,17 +9,11 @@ import scala.language.implicitConversions
 object ParRPStruct extends LevelStruct {
   override type SporeP[P, R] = ParRPSporeP[P, R]
 
-  override def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): SporeP[P, R] = {
-    val lock = new TurnLock[ParRPInterTurn]
-    new ParRPSporeP[P, R](initialValue, transient, lock, initialIncoming)
-  }
-
-
 }
 
 
 class ParRPSporeP[P, R](current: Pulse[P], transient: Boolean, val lock: TurnLock[ParRPInterTurn], initialIncoming: Set[R])
-  extends LevelSporeImpl[P, R](current, transient, initialIncoming) {
+  extends LevelSporeImpl[P, R](current, transient, initialIncoming) with ReactiveSpore[P, R]  {
 
   override def set(value: Pulse[P])(implicit turn: Turn[_]): Unit = {
     assert(turn match {

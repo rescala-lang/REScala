@@ -31,7 +31,8 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
 
 
   /** used to create state containers of each reactive */
-  override def bufferFactory: S = PipelineStruct
+  override def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): S#SporeP[P, R] = new PipelineSporeP[P, R](initialValue, transient, initialIncoming)
+
 
   /**
     * Remember all reactives for which a frame was created during this turn
@@ -489,7 +490,7 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
     !(this > other)
   }
 
-  override def pulses[P](budP: S#SporeP[P, Reactive[S]]): Buffer[Pulse[P]] = budP.pulses.asInstanceOf[Buffer[Pulse[P]]]
+  override def pulses[P](budP: S#SporeP[P, _]): Buffer[Pulse[P]] = budP.pulses
   override def incoming[R](bud: S#Spore[R]): Set[R] = bud.incoming(this)
   override def updateIncoming[R](bud: S#Spore[R], newDependencies: Set[R]): Unit = bud.updateIncoming(newDependencies)(this)
 

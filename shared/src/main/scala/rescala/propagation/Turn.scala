@@ -7,7 +7,7 @@ import rescala.graph.{Pulse, Buffer, Reactive, Struct}
  * of the nodes in the dependency graph.
  */
 trait Turn[S <: Struct] {
-  def pulses[P](budP: S#SporeP[P, Reactive[S]]): Buffer[Pulse[P]]
+  def pulses[P](budP: S#SporeP[P, _]): Buffer[Pulse[P]]
 
   def updateIncoming[R](bud: S#Spore[R], newDependencies: Set[R]): Unit
 
@@ -15,7 +15,7 @@ trait Turn[S <: Struct] {
 
 
   /** used to create state containers of each reactive */
-  def bufferFactory: S
+  def bud[P, R](initialValue: Pulse[P] = Pulse.none, transient: Boolean = true, initialIncoming: Set[R] = Set.empty[R]): S#SporeP[P, R]
 
   /** allow turn to handle dynamic access to reactives */
   def dependencyInteraction(reactive: Reactive[S]): Unit

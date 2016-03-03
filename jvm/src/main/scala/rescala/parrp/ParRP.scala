@@ -19,10 +19,13 @@ class ParRP(backoff: Backoff) extends LevelBasedPropagation[ParRPStruct.type] wi
 
   private type TState = ParRPStruct.type
 
-  override def toString: String = s"ParRP(${key.id})"
+  override def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): TState#SporeP[P, R] = {
+    val lock = new TurnLock[ParRPInterTurn]
+    new ParRPSporeP[P, R](initialValue, transient, lock, initialIncoming)
+  }
 
-  /** used to create state containers of each reactive */
-  override def bufferFactory: TState = ParRPStruct
+
+  override def toString: String = s"ParRP(${key.id})"
 
   final val key: Key[ParRPInterTurn] = new Key(this)
 
@@ -113,8 +116,5 @@ class ParRP(backoff: Backoff) extends LevelBasedPropagation[ParRPStruct.type] wi
   }
 
   def acquireShared(reactive: Reactive[TState]): Key[ParRPInterTurn] = Keychains.acquireShared(reactive.bud.lock, key)
-  override def pulses[P](budP: TState#SporeP[P, Reactive[TState]]): Buffer[Pulse[P]] = budP.pulses.asInstanceOf[Buffer[Pulse[P]]]
-  override def incoming[R](bud: ParRPSporeP[_, R]): Set[R] = bud.incoming(this)
-  override def updateIncoming[R](bud: ParRPSporeP[_, R], newDependencies: Set[R]): Unit = bud.updateIncoming(newDependencies)(this)
 }
 

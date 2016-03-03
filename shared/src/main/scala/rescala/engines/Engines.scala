@@ -10,11 +10,9 @@ object Engines {
   type SimpleEngine = Engine[SS, LevelBasedPropagation[SS]]
 
   private class SimpleNoLock extends LevelBasedPropagation[SS] {
-    override val bufferFactory = SimpleStruct
+    def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): SS#SporeP[P, R] =
+      new LevelSporeImpl[P, R](initialValue, transient, initialIncoming)
     override def releasePhase(): Unit = ()
-    override def pulses[P](budP: SS#SporeP[P, Reactive[SS]]): Buffer[Pulse[P]] = budP.pulses.asInstanceOf[Buffer[Pulse[P]]]
-    override def incoming[R](bud: LevelSporeImpl[_, R]): Set[R] = bud.incoming(this)
-    override def updateIncoming[R](bud: LevelSporeImpl[_, R], newDependencies: Set[R]): Unit = bud.updateIncoming(newDependencies)(this)
   }
 
 
