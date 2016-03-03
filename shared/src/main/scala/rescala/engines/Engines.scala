@@ -3,24 +3,25 @@ package rescala.engines
 import java.util.concurrent.locks.ReentrantLock
 
 import rescala.graph.{Struct, SimpleStruct}
-import rescala.propagation.{Turn, NoLocking}
+import rescala.propagation.{LevelBasedPropagation, Turn, NoLocking}
 
 object Engines {
   type SS = SimpleStruct.type
-  type NoLockEngine = Engine[SS, NoLocking[SS]]
+  type SimpleEngine = Engine[SS, LevelBasedPropagation[SS]]
 
-  private class SimpleNoLock[S <: Struct] extends NoLocking[SS] {
+  private class SimpleNoLock extends LevelBasedPropagation[SS] {
     override val bufferFactory = SimpleStruct
+    override def releasePhase(): Unit = ()
   }
 
 
-  implicit val synchron: NoLockEngine = new EngineImpl[SS, NoLocking[SS]](new SimpleNoLock()) {
-    override def plan[R](i: Reactive*)(f: NoLocking[SS] => R): R = synchronized(super.plan(i: _*)(f))
+  implicit val synchron: SimpleEngine = new EngineImpl[SS, SimpleNoLock](new SimpleNoLock()) {
+    override def plan[R](i: Reactive*)(f: SimpleNoLock => R): R = synchronized(super.plan(i: _*)(f))
   }
 
-  implicit val synchronFair: NoLockEngine = new EngineImpl[SS, NoLocking[SS]](new SimpleNoLock()) {
+  implicit val synchronFair: SimpleEngine = new EngineImpl[SS, SimpleNoLock](new SimpleNoLock()) {
     val lock = new ReentrantLock(true)
-    override def plan[R](i: Reactive*)(f: NoLocking[SS] => R): R = {
+    override def plan[R](i: Reactive*)(f: SimpleNoLock => R): R = {
       lock.lock()
       try {
         super.plan(i: _*)(f)
@@ -29,11 +30,11 @@ object Engines {
     }
   }
 
-  implicit val unmanaged: NoLockEngine = new EngineImpl[SS, NoLocking[SS]](new SimpleNoLock())
+  implicit val unmanaged: SimpleEngine = new EngineImpl[SS, SimpleNoLock](new SimpleNoLock())
 
-  implicit val default: NoLockEngine = synchron
+  implicit val default: SimpleEngine = synchron
 
-  val all: List[NoLockEngine] = List(synchron, unmanaged)
+  val all: List[SimpleEngine] = List(synchron, unmanaged)
 
 
 }
