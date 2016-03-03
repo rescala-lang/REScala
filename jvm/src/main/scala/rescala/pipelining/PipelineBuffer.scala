@@ -70,7 +70,7 @@ private[pipelining] abstract class PipelineBuffer[A](parent: Pipeline, initialSt
 
   var commitStrategy: (A, A) => A = initialStrategy
 
-  override def transform(f: (A) => A)(implicit turn: Turn[_]): A = {
+  def transform(f: (A) => A)(implicit turn: Turn[_]): A = {
     implicit val pTurn = turn.asInstanceOf[PipeliningTurn]
     val value = f(get)
     set(value)
