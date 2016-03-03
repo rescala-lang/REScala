@@ -33,7 +33,7 @@ trait LevelStruct extends PulsingGraphStruct {
   override type SporeP[P, R] <: LevelSpore[R] with GraphSpore[R] with PulsingSpore[P]
 }
 
-trait SimpleStruct[S] extends LevelStruct { override type SporeP[P, R] = LevelSporeImpl[P, R] }
+trait SimpleStruct extends LevelStruct { override type SporeP[P, R] = LevelSporeImpl[P, R] }
 
 
 trait PulsingSpore[P] {
