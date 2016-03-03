@@ -1,19 +1,18 @@
 package rescala.stm
 
-import rescala.graph.{LevelSpore, SporePulse}
-import rescala.graph._
+import rescala.graph.{LevelSpore, _}
 import rescala.propagation.{Committable, Turn}
 
 import scala.concurrent.stm.{InTxn, Ref}
 
 object STMStruct extends LevelStruct {
-  override type Spore[R] = STMSporeP[_, R]
+  override type SporeP[P, R] = STMSporeP[P, R]
 
   override def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): SporeP[P, R] = {
     new STMSporeP[P, R](initialValue, transient, initialIncoming)
   }
 
-  class STMSporeP[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends LevelSpore[R] with SporePulse[P] with Buffer[Pulse[P]] with Committable {
+  class STMSporeP[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends LevelSpore[R] with Buffer[Pulse[P]] with Committable {
 
     implicit def inTxn(implicit turn: Turn[_]): InTxn = turn match {
       case stmTurn: STMTurn => stmTurn.inTxn
@@ -24,13 +23,13 @@ object STMStruct extends LevelStruct {
     val _outgoing: Ref[Set[R]] = Ref(Set.empty)
     val _incoming: Ref[Set[R]] = Ref(initialIncoming)
 
-    override val pulses: Buffer[Pulse[P]] = this
-    override def incoming(implicit turn: Turn[_]): Set[R] = _incoming.get
+    val pulses: Buffer[Pulse[P]] = this
+    def incoming(implicit turn: Turn[_]): Set[R] = _incoming.get
     override def level(implicit turn: Turn[_]): Int = _level.get
     override def drop(reactive: R)(implicit turn: Turn[_]): Unit = _outgoing.transformAndGet(_ - reactive)
     override def updateLevel(i: Int)(implicit turn: Turn[_]): Int = _level.transformAndGet(math.max(_, i))
     override def outgoing(implicit turn: Turn[_]): Set[R] = _outgoing.get
-    override def updateIncoming(reactives: Set[R])(implicit turn: Turn[_]): Unit = _incoming.set(reactives)
+    def updateIncoming(reactives: Set[R])(implicit turn: Turn[_]): Unit = _incoming.set(reactives)
     override def discover(reactive: R)(implicit turn: Turn[_]): Unit = _outgoing.transformAndGet(_ + reactive)
 
 

@@ -2,8 +2,8 @@ package rescala.engines
 
 import java.util.concurrent.locks.ReentrantLock
 
-import rescala.graph.{Struct, SimpleStruct}
-import rescala.propagation.{LevelBasedPropagation, Turn, NoLocking}
+import rescala.graph._
+import rescala.propagation.LevelBasedPropagation
 
 object Engines {
   type SS = SimpleStruct.type
@@ -12,6 +12,9 @@ object Engines {
   private class SimpleNoLock extends LevelBasedPropagation[SS] {
     override val bufferFactory = SimpleStruct
     override def releasePhase(): Unit = ()
+    override def pulses[P](budP: SS#SporeP[P, Reactive[SS]]): Buffer[Pulse[P]] = budP.pulses.asInstanceOf[Buffer[Pulse[P]]]
+    override def incoming[R](bud: LevelSporeImpl[_, R]): Set[R] = bud.incoming(this)
+    override def updateIncoming[R](bud: LevelSporeImpl[_, R], newDependencies: Set[R]): Unit = bud.updateIncoming(newDependencies)(this)
   }
 
 

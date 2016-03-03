@@ -9,7 +9,7 @@ import rescala.locking._
 import rescala.propagation.{CommonPropagationImpl, Turn}
 
 object LSStruct extends PropagationStruct {
-  override type Spore[R] = LSSporeP[_, R]
+  override type SporeP[P, R] = LSSporeP[P, R]
 
   override def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): SporeP[P, R] = {
     val lock = new TurnLock[LSInterTurn]
@@ -253,4 +253,7 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
 
 
   override def bufferFactory: TState = LSStruct
+  override def pulses[P](budP: TState#SporeP[P, Reactive[TState]]): Buffer[Pulse[P]] = budP.pulses.asInstanceOf[Buffer[Pulse[P]]]
+  override def incoming[R](bud: LSSporeP[_, R]): Set[R] = bud.incoming(this)
+  override def updateIncoming[R](bud: LSSporeP[_, R], newDependencies: Set[R]): Unit = bud.updateIncoming(newDependencies)(this)
 }

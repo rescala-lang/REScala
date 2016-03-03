@@ -14,11 +14,11 @@ object Observe {
   private class Obs[T, S <: Struct](bud: S#SporeP[T, Reactive[S]], dependency: Pulsing[T, S], fun: T => Unit) extends Base[T, S](bud) with Reactive[S] with Observe[S] {
     override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[S] = {
       turn.schedule(once(this, dependency.pulse.toOption, fun))
-      if (bud.incoming.isEmpty) ReevaluationResult.Dynamic(changed = false, DepDiff(Set.empty, Set(dependency)))
+      if (turn.incoming(bud).isEmpty) ReevaluationResult.Dynamic(changed = false, DepDiff(Set.empty, Set(dependency)))
       else ReevaluationResult.Static(changed = false)
     }
     override def remove()(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) { turn =>
-      this.bud.updateIncoming(Set.empty)(turn)
+      turn.updateIncoming(this.bud, Set.empty)
     }
   }
 

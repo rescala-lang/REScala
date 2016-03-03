@@ -7,7 +7,7 @@ import rescala.propagation.Turn
 import scala.language.implicitConversions
 
 object ParRPStruct extends LevelStruct {
-  override type Spore[R] = ParRPSporeP[_, R]
+  override type SporeP[P, R] = ParRPSporeP[P, R]
 
   override def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): SporeP[P, R] = {
     val lock = new TurnLock[ParRPInterTurn]

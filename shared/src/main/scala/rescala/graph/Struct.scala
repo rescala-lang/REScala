@@ -20,26 +20,14 @@ trait Buffer[A] {
 
 
 trait Struct {
-  type Spore[R] <: ReactiveSpore[R]
-  type SporeP[P, R] = Spore[R] with SporePulse[P]
+  final type Spore[R] = SporeP[_, R]
+  type SporeP[P, R]
 
   def bud[P, R](initialValue: Pulse[P] = Pulse.none, transient: Boolean = true, initialIncoming: Set[R] = Set.empty[R]): SporeP[P, R]
 
 }
 
-trait ReactiveSpore[R] {
-
-  def incoming(implicit turn: Turn[_]): Set[R]
-  def updateIncoming(reactives: Set[R])(implicit turn: Turn[_]): Unit
-
-}
-trait SporePulse[P] {
-
-  val pulses: Buffer[Pulse[P]]
-
-}
-
-trait PropagationSpore[R] extends ReactiveSpore[R] {
+trait PropagationSpore[R] {
 
   def outgoing(implicit turn: Turn[_]): Set[R]
   def discover(reactive: R)(implicit turn: Turn[_]): Unit
@@ -47,7 +35,7 @@ trait PropagationSpore[R] extends ReactiveSpore[R] {
 }
 
 trait PropagationStruct extends Struct {
-  override type Spore[R] <: PropagationSpore[R]
+  override type SporeP[P, R] <: PropagationSpore[R]
 }
 
 trait LevelSpore[R] extends PropagationSpore[R] {
@@ -58,27 +46,27 @@ trait LevelSpore[R] extends PropagationSpore[R] {
 }
 
 trait LevelStruct extends Struct {
-  override type Spore[R] <: LevelSpore[R]
+  override type SporeP[P, R] <: LevelSpore[R]
 }
 
 
 object SimpleStruct extends LevelStruct {
-  override type Spore[R] = LevelSporeImpl[_, R]
+  override type SporeP[P, R] = LevelSporeImpl[P, R]
 
   def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): SporeP[P, R] =
     new LevelSporeImpl[P, R](initialValue, transient, initialIncoming)
 }
 
-abstract class PropagationSporeImpl[P, R](var current: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends PropagationSpore[R] with SporePulse[P] with Buffer[Pulse[P]] with Committable {
+abstract class PropagationSporeImpl[P, R](var current: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends PropagationSpore[R] with Buffer[Pulse[P]] with Committable {
 
-  override val pulses: Buffer[Pulse[P]] = this
+  val pulses: Buffer[Pulse[P]] = this
   var _incoming: Set[R] = initialIncoming
   var _outgoing: Set[R] = Set.empty
   protected var owner: Turn[_] = null
   private var update: Pulse[P] = Pulse.none
 
-  override def incoming(implicit turn: Turn[_]): Set[R] = _incoming
-  override def updateIncoming(reactives: Set[R])(implicit turn: Turn[_]): Unit = _incoming = reactives
+  def incoming(implicit turn: Turn[_]): Set[R] = _incoming
+  def updateIncoming(reactives: Set[R])(implicit turn: Turn[_]): Unit = _incoming = reactives
   override def outgoing(implicit turn: Turn[_]): Set[R] = _outgoing
   override def discover(reactive: R)(implicit turn: Turn[_]): Unit = _outgoing += reactive
   override def drop(reactive: R)(implicit turn: Turn[_]): Unit = _outgoing -= reactive

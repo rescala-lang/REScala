@@ -1,22 +1,21 @@
 package rescala.pipelining
 
-import rescala.graph.{LevelSpore, SporePulse}
-import rescala.graph.{LevelStruct, Buffer, Pulse, Struct}
+import rescala.graph.{Buffer, LevelSpore, LevelStruct, Pulse}
 import rescala.propagation.Turn
 
 object PipelineStruct extends LevelStruct {
-  override type Spore[R] = PipelineSporeP[_, R]
+  override type SporeP[P, R] = PipelineSporeP[P, R]
 
   override def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): SporeP[P, R] = new PipelineSporeP[P, R](initialValue, transient, initialIncoming)
 
-  class PipelineSporeP[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends LevelSpore[R] with SporePulse[P] {
+  class PipelineSporeP[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends LevelSpore[R] {
 
     val pipeline: Pipeline = new Pipeline()
 
     private val _incoming: BlockingPipelineBuffer[Set[R]] = pipeline.createBlockingBuffer(initialIncoming, Buffer.commitAsIs)
-    override def incoming(implicit turn: Turn[_]): Set[R] = _incoming.get
+    def incoming(implicit turn: Turn[_]): Set[R] = _incoming.get
     def incomingForceGet(implicit turn: Turn[_]): Set[R] = _incoming.forceGet
-    override def updateIncoming(reactives: Set[R])(implicit turn: Turn[_]): Unit = _incoming.set(reactives.toSet)
+    def updateIncoming(reactives: Set[R])(implicit turn: Turn[_]): Unit = _incoming.set(reactives.toSet)
 
 
     private val lvl: NonblockingPipelineBuffer[Int] = pipeline.createNonblockingBuffer(0, math.max)
@@ -30,6 +29,6 @@ object PipelineStruct extends LevelStruct {
     override def drop(reactive: R)(implicit turn: Turn[_]): Unit = _outgoing.transform(_ - reactive)
 
 
-    override val pulses: Buffer[Pulse[P]] = pipeline.createBlockingBuffer(initialValue, if (transient) Buffer.transactionLocal else Buffer.keepPulse)
+    val pulses: Buffer[Pulse[P]] = pipeline.createBlockingBuffer(initialValue, if (transient) Buffer.transactionLocal else Buffer.keepPulse)
   }
 }

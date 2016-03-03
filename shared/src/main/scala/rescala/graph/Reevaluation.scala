@@ -40,8 +40,8 @@ trait DynamicReevaluation[+P, S <: Struct] {
   final override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[S] = {
     val (newPulse, newDependencies) = calculatePulseDependencies
 
-    val oldDependencies = bud.incoming
-    if (newDependencies != oldDependencies) bud.updateIncoming(newDependencies)
+    val oldDependencies = turn.incoming(bud)
+    if (newDependencies != oldDependencies) turn.updateIncoming(bud, newDependencies)
     pulses.set(newPulse)
     ReevaluationResult.Dynamic(newPulse.isChange, DepDiff(newDependencies, oldDependencies))
 

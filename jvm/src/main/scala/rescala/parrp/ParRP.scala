@@ -1,6 +1,6 @@
 package rescala.parrp
 
-import rescala.graph.Reactive
+import rescala.graph.{Pulse, Buffer, Reactive}
 import rescala.locking._
 import rescala.propagation.LevelBasedPropagation
 
@@ -113,7 +113,8 @@ class ParRP(backoff: Backoff) extends LevelBasedPropagation[ParRPStruct.type] wi
   }
 
   def acquireShared(reactive: Reactive[TState]): Key[ParRPInterTurn] = Keychains.acquireShared(reactive.bud.lock, key)
-
-
+  override def pulses[P](budP: TState#SporeP[P, Reactive[TState]]): Buffer[Pulse[P]] = budP.pulses.asInstanceOf[Buffer[Pulse[P]]]
+  override def incoming[R](bud: ParRPSporeP[_, R]): Set[R] = bud.incoming(this)
+  override def updateIncoming[R](bud: ParRPSporeP[_, R], newDependencies: Set[R]): Unit = bud.updateIncoming(newDependencies)(this)
 }
 

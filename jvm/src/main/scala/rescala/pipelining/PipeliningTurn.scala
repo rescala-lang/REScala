@@ -3,7 +3,8 @@ package rescala.pipelining
 import java.util.concurrent.Semaphore
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
-import rescala.graph.Reactive
+import rescala.graph.{Pulse, Buffer, Reactive}
+import rescala.parrp.ParRPSporeP
 import rescala.pipelining.Pipeline._
 import rescala.pipelining.PipeliningTurn._
 import rescala.pipelining.propagation._
@@ -487,5 +488,9 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
   def <=(other: Turn[S]) = {
     !(this > other)
   }
+
+  override def pulses[P](budP: S#SporeP[P, Reactive[S]]): Buffer[Pulse[P]] = budP.pulses.asInstanceOf[Buffer[Pulse[P]]]
+  override def incoming[R](bud: S#Spore[R]): Set[R] = bud.incoming(this)
+  override def updateIncoming[R](bud: S#Spore[R], newDependencies: Set[R]): Unit = bud.updateIncoming(newDependencies)(this)
 
 }

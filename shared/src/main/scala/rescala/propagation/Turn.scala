@@ -1,12 +1,18 @@
 package rescala.propagation
 
-import rescala.graph.{Reactive, Struct}
+import rescala.graph.{Pulse, Buffer, Reactive, Struct}
 
 /**
  * The engine that schedules the (glitch-free) evaluation
  * of the nodes in the dependency graph.
  */
 trait Turn[S <: Struct] {
+  def pulses[P](budP: S#SporeP[P, Reactive[S]]): Buffer[Pulse[P]]
+
+  def updateIncoming[R](bud: S#Spore[R], newDependencies: Set[R]): Unit
+
+  def incoming[R](bud: S#Spore[R]): Set[R]
+
 
   /** used to create state containers of each reactive */
   def bufferFactory: S
