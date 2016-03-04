@@ -7,6 +7,8 @@ import rescala.graph._
 import rescala.locking._
 import rescala.propagation.{CommonPropagationImpl, Turn}
 
+import scala.collection.mutable
+
 object LSStruct extends PulsingGraphStruct {
   override type SporeP[P, R] = LSSporeP[P, R]
 }
@@ -29,17 +31,13 @@ class LSSporeP[P, R](current: Pulse[P], transient: Boolean, val lock: TurnLock[L
     super.set(value)
   }
 
-  var writeSet: LockSweep = null
-  var color: LockSweep = null
+  var willWrite: LockSweep = null
+  var hasWritten: LockSweep = null
   var counter: Int = 0
-  override def release(implicit turn: Turn[_]): Unit = {
-    super.release
-  }
-  override def toString(): String = s"Bud($counter)"
 }
 
 trait LSInterTurn {
-  def append(reactives: Reactive[LSStruct.type]): Unit
+  def append(reactives: mutable.Set[Reactive[LSStruct.type]]): Unit
 }
 
 class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] with LSInterTurn {
@@ -58,7 +56,7 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
 
   var currentIndex = 0
 
-  var discovered: List[(Key[LSInterTurn], Reactive[TState], Reactive[TState])] = Nil
+  var discovered: mutable.Map[Key[LSInterTurn], mutable.Set[Reactive[TState]]] = mutable.HashMap.empty
 
   /** lock all reactives reachable from the initial sources
     * retry when acquire returns false */
@@ -72,13 +70,13 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
       val reactive = stack.pop()
 
       if (reactive.bud.lock.tryLock(key) eq key) {
-        if (reactive.bud.writeSet == this) {
+        if (reactive.bud.willWrite == this) {
           reactive.bud.counter += 1
         }
         else {
           sorted.add(reactive)
           reactive.bud.counter = 1
-          reactive.bud.writeSet = this
+          reactive.bud.willWrite = this
           reactive.bud.outgoing(this).foreach { r =>
             stack.push(r)
           }
@@ -88,14 +86,7 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
         val it = sorted.iterator()
         while (it.hasNext) {
           val curr = it.next()
-          curr.bud.writeSet = null
-        }
-        val sit = stack.iterator()
-        while (sit.hasNext) {
-          val curr = sit.next()
-          if (curr.bud.writeSet == this) {
-            curr.bud.writeSet = null
-          }
+          curr.bud.willWrite = null
         }
         sorted.clear()
         key.reset()
@@ -115,7 +106,7 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
   }
 
   def done(head: Reactive[TState]): Unit = {
-    head.bud.color = this
+    head.bud.hasWritten = this
     head.bud.outgoing(this).foreach { r =>
       r.bud.counter -= 1
       if (r.bud.counter <= 0) enqueue(r)
@@ -123,18 +114,10 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
   }
 
   def enqueue(head: Reactive[TState]): Unit = {
-    assert(head.bud.counter == 0, s"should only evaluate counted to 0 but is ${head.bud.counter}: $head")
-    assert(head.bud.writeSet == this, s"should only evaluate reactives in the write set: $head")
-    assert(head.bud.color != this, s"should not evaluate things twice: $head")
     queue.push(head)
   }
 
   def evaluate(head: Reactive[TState]): Unit = {
-    assert(head.bud.counter == 0, s"should only evaluate counted to 0 but is ${head.bud.counter}: $head")
-    assert(head.bud.writeSet == this, s"should only evaluate reactives in the write set: $head")
-    assert(head.bud.color != this, s"should not evaluate things twice: $head")
-    head.bud.writeSet == this && head.bud.color != this
-
     head.reevaluate()(this) match {
       case Static(hasChanged) => done(head)
 
@@ -149,7 +132,7 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
   }
 
   def recount(reactives: Set[Reactive[TState]]): Int = {
-    reactives.count(r => r.bud.color != this  && r.bud.writeSet == this)
+    reactives.count(r => r.bud.hasWritten != this && r.bud.willWrite == this)
   }
 
   /**
@@ -164,7 +147,7 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
     dependencies.map(acquireShared)
     val reactive = f
     val owner = reactive.bud.lock.tryLock(key)
-    reactive.bud.writeSet = this
+    reactive.bud.willWrite = this
     assert(owner eq key, s"$this failed to acquire lock on newly created reactive $reactive")
 
     if (dynamic) {
@@ -187,12 +170,12 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
 
     val owner = acquireShared(source)
     if (owner ne key) {
-      if (source.bud.writeSet != owner.turn) {
+      if (source.bud.willWrite != owner.turn) {
         source.bud.discover(sink)(this)
       }
       else if (!source.bud.outgoing(this).contains(sink)) {
         source.bud.discover(sink)(this)
-        discovered ::= ((owner, sink, source))
+        discovered.getOrElseUpdate(owner, mutable.Set.empty).add(sink)
         key.lockKeychain {_.addFallthrough(owner)}
       }
     }
@@ -204,14 +187,13 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
   /** this is for cases where we register and then unregister the same dependency in a single turn */
   def drop(sink: Reactive[TState])(source: Reactive[TState]): Unit = {
 
-
     val owner = acquireShared(source)
     if (owner ne key) {
       source.bud.drop(sink)(this)
-      if (source.bud.writeSet != owner.turn) {
+      if (source.bud.willWrite != owner.turn) {
         key.lockKeychain(_.removeFallthrough(owner))
         if (!sink.bud.incoming(this).exists(_.bud.lock.isOwner(owner))) {
-          discovered = discovered.filter(_ != ((owner, sink, source)))
+          discovered.getOrElseUpdate(owner, mutable.Set.empty).remove(sink)
         }
       }
     }
@@ -221,35 +203,37 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
 
   /** this is called after the turn has finished propagating, but before handlers are executed */
   override def releasePhase(): Unit = {
-    discovered.reverse.foreach { case (other, sink, source) =>
-      other.turn.append(sink)
+    discovered.foreach{ case (owner, reactive) =>
+      owner.turn.append(reactive)
     }
     key.releaseAll()
   }
 
 
-  override def append(reactives: Reactive[TState]): Unit = {
+  override def append(appendees: mutable.Set[Reactive[TState]]): Unit = {
     val stack = new java.util.ArrayDeque[Reactive[TState]](10)
 
-    stack.push(reactives)
+    appendees.foreach{stack.push}
 
     while (!stack.isEmpty) {
       val reactive = stack.pop()
 
-        if (reactive.bud.writeSet == this) {
-          reactive.bud.counter += 1
+      if (reactive.bud.willWrite == this) {
+        reactive.bud.counter += 1
+      }
+      else {
+        reactive.bud.counter = 1
+        reactive.bud.willWrite = this
+        reactive.bud.outgoing(this).foreach { r =>
+          stack.push(r)
         }
-        else {
-          reactive.bud.counter = 1
-          reactive.bud.writeSet = this
-          reactive.bud.outgoing(this).foreach { r =>
-            stack.push(r)
-          }
-        }
+      }
     }
 
-    reactives.bud.counter = recount(reactives.bud.outgoing(this))
-    if (reactives.bud.counter == 0) enqueue(reactives)
+    appendees.foreach { appendee =>
+      appendee.bud.counter = recount(appendee.bud.outgoing(this))
+      if (appendee.bud.counter == 0) enqueue(appendee)
+    }
 
   }
 
