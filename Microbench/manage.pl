@@ -54,6 +54,7 @@ $ENV{'LANG'} = 'en_US.UTF-8';
 # $ENV{'JAVA_OPTS'} = $JMH_CLASSPATH;
 
 my $GITREF = qx[git show -s --format=%H HEAD];
+chomp $GITREF;
 
 my $command = shift @ARGV;
 my @RUN = @ARGV ? @ARGV : qw< halfDynamicPhilosophers simplePhil expensiveConflict singleDynamic singleVar turnCreation simpleFan simpleReverseFan simpleNaturalGraph multiReverseFan stmbank chatServer >;
