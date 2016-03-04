@@ -56,7 +56,7 @@ trait LevelSpore[R] extends GraphSpore[R] {
 }
 
 
-abstract class PropagationSporeImpl[P, R](var current: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends GraphSpore[R] with PulsingSpore[P] with Buffer[Pulse[P]] with Committable {
+abstract class PropagationSporeImpl[P, R](private var current: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends GraphSpore[R] with PulsingSpore[P] with Buffer[Pulse[P]] with Committable {
 
   val pulses: Buffer[Pulse[P]] = this
   var _incoming: Set[R] = initialIncoming
