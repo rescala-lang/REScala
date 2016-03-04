@@ -69,7 +69,7 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit 
       val forksWereFree = seating.vision(t) == Ready
       if (forksWereFree) seating.philosopher.admit(Hungry)(t)
       t.observe { if (forksWereFree) {
-        assert(seating.vision.get(t) == Eating, s"philosopher should be done after turn")
+        assert(seating.vision.get(t) == Eating, s"philosopher should be done after turn but is ${seating.inspect(t)}")
       } }
 
       forksWereFree
@@ -100,7 +100,9 @@ object PhilosopherTable {
 
   // ============================================ Entity Creation =========================================================
 
-  case class Seating[S <: Struct](placeNumber: Int, philosopher: Var[Philosopher, S], leftFork: Signal[Fork, S], rightFork: Signal[Fork, S], vision: Signal[Vision, S])
+  case class Seating[S <: Struct](placeNumber: Int, philosopher: Var[Philosopher, S], leftFork: Signal[Fork, S], rightFork: Signal[Fork, S], vision: Signal[Vision, S]) {
+    def inspect(t: Turn[S]): String = s"Seating(${philosopher.get(t)}, ${leftFork.get(t)}, ${rightFork.get(t)}, ${vision.get(t)})"
+  }
 
 
   @tailrec // unrolled into loop by compiler
