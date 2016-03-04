@@ -1,7 +1,8 @@
 package universe
 
-import rescala.Signals
-import rescala.turns.Ticket
+import rescala.graph.Struct
+import rescala.reactives.Signals
+import rescala.engines.Ticket
 import universe.Globals.engine
 import universe.Globals.engine._
 import universe.Animal._
@@ -141,7 +142,7 @@ abstract class Animal(implicit world: World) extends BoardElement {
 
   // we do not have a built in method for this kind of “fold some snapshot” but its not that hard to write one
   final protected val energy: Signal[Int] =
-    implicitly[Ticket[Spores]].apply(Signals.Impl.makeStatic[Int, Spores](Set(world.time.tick, energyDrain, energyGain), Animal.StartEnergy) {
+    implicitly[Ticket[Struct]].apply(Signals.Impl.makeStatic[Int, Struct](Set(world.time.tick, energyDrain, energyGain), Animal.StartEnergy) {
       (turn, current) => world.time.tick.pulse(turn).fold(current, _ => current + energyGain.get(turn) - energyDrain.get(turn))
     })
 

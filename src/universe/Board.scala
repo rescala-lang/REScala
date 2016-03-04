@@ -1,6 +1,6 @@
 package universe
 
-import rescala.Signals
+import rescala.reactives.Signals
 import universe.Globals.engine
 import universe.Globals.engine._
 

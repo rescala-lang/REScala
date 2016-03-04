@@ -10,8 +10,8 @@ object RunConsole {
     val nPlants = 300
     val width = 100
     val height = 100
-    val repetitions = 5
-    val threadCounts = Range.inclusive(1,16)
+    val repetitions = 100
+    val threadCounts = Range.inclusive(2,2)
 
     val outfile = s"universe-${Globals.engineName}.csv"
 

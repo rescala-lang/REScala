@@ -1,17 +1,18 @@
 package universe
 
-import rescala.graph.Spores
-import rescala.turns.{Engine, Turn}
+import rescala.engines.Engine
+import rescala.graph.Struct
+import rescala.propagation.Turn
 
 import scala.collection.parallel.ForkJoinTaskSupport
 
 object Globals {
-  implicit val engine: Engine[Spores, Turn[Spores]] = rescala.synchronization.Engines.byName[Spores](System.getProperty("engineName", "parrp"))
+  implicit val engine: Engine[Struct, Turn[Struct]] = rescala.engines.JVMEngines.byName[Struct](System.getProperty("engineName", "parrp"))
 
   val engineName =
-    if (engine == rescala.synchronization.Engines.parrp) "parrp"
-    else if (engine == rescala.synchronization.Engines.stm) "stm"
-    else if (engine == rescala.turns.Engines.synchron) "synchron" else "unknown"
+    if (engine == rescala.engines.JVMEngines.parrp) "parrp"
+    else if (engine == rescala.engines.JVMEngines.stm) "stm"
+    else if (engine == rescala.engines.Engines.synchron) "synchron" else "unknown"
 
   var taskSupport: ForkJoinTaskSupport = _
   def setParallelism(n: Int) = {
