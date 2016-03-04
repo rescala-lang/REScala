@@ -402,7 +402,6 @@ sub importCSV() {
     updateTable($DBH, $TABLE, @headers);
 
     my $hash = $1 if ($file =~ m#/(\w{40})/#);
-    say $hash;
 
     for my $row (@data) {
       s/(?<=\d),(?=\d)/./g for @$row;  # replace , with . in numbers
