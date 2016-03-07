@@ -7,12 +7,9 @@ import rescala.propagation.Turn
 import scala.collection.parallel.ForkJoinTaskSupport
 
 object Globals {
-  implicit val engine: Engine[Struct, Turn[Struct]] = rescala.engines.JVMEngines.byName[Struct](System.getProperty("engineName", "parrp"))
+  val engineName = System.getProperty("engineName", "parrp")
 
-  val engineName =
-    if (engine == rescala.engines.JVMEngines.parrp) "parrp"
-    else if (engine == rescala.engines.JVMEngines.stm) "stm"
-    else if (engine == rescala.engines.Engines.synchron) "synchron" else "unknown"
+  implicit val engine: Engine[Struct, Turn[Struct]] = rescala.engines.JVMEngines.byName[Struct](engineName)
 
   var taskSupport: ForkJoinTaskSupport = _
   def setParallelism(n: Int) = {
