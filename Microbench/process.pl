@@ -26,11 +26,13 @@ my $BARGRAPH = abs_path("bargraph.pl");
 
 our $NAME_FINE = "Manual";
 our $NAME_COARSE = "G-Lock";
+our $NAME_LOCKSWEEP = "LockSweep";
 
 our $LEGEND_POS = "left top";
 our $YRANGE = "[0:]";
 our $XRANGE = "[:]";
 our $GNUPLOT_TERMINAL = "pdf size 15,9";
+our $VERTICAL_LINE = undef;
 
 our $X_VARYING = "Threads";
 
@@ -57,6 +59,7 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
         # local $YRANGE = "[0:]" if $layout eq "third";
         # local $LEGEND_POS = "left top" if $layout eq "third";
         local $NAME_FINE = "No Sync" if $layout eq "third";
+        local $VERTICAL_LINE = $philosophers / 3 if $layout ne "third";
         plotBenchmarksFor("${dynamic}-philosophers-$philosophers", $layout,
           map { {Title => $_, "Param: engineName" => $_ , Benchmark => "benchmarks.philosophers.PhilosopherCompetition.eat",
           "Param: philosophers" => $philosophers, "Param: layout" => $layout, "Param: tableType" => $dynamic } }
@@ -248,6 +251,7 @@ colors=red,green,blue
   { # chatServer
     my $benchmark = "benchmarks.chatserver.ChatBench.chat";
     for my $rooms (queryChoices("Param: size", Benchmark => $benchmark)) {
+      local $VERTICAL_LINE = $rooms / 2;
       plotBenchmarksFor("ChatServer", "$rooms",
         (map {{Title => $_, "Param: engineName" => $_ , Benchmark => $benchmark, "Param: size" => $rooms }}
           queryChoices("Param: engineName", Benchmark => $benchmark, "Param: size" => $rooms)),);
@@ -265,10 +269,12 @@ colors=red,green,blue
 }
 
 sub prettyName($name) {
-  $name =~  s/pessimistic|spinning|REScalaSpin|parrp/ParRP/;
-  $name =~  s/stm|REScalaSTM/STM/;
-  $name =~  s/synchron|REScalaSync/$NAME_COARSE/;
-  $name =~  s/unmanaged/$NAME_FINE/;
+  $name =~ s/Param: engineName:\s*//;
+  $name =~ s/pessimistic|spinning|REScalaSpin|parrp/ParRP/;
+  $name =~ s/locksweep/$NAME_LOCKSWEEP/;
+  $name =~ s/stm|REScalaSTM/STM/;
+  $name =~ s/synchron|REScalaSync/$NAME_COARSE/;
+  $name =~ s/unmanaged/$NAME_FINE/;
   return $name;
 }
 
@@ -316,6 +322,7 @@ sub styleByName($name) {
     when (/STM/)      { 'linecolor "blue" lt 2 lw 2 pt 5 ps 1' }
     when (/$NAME_COARSE/) { 'linecolor "red" lt 2 lw 2 pt 9 ps 1' }
     when (/fair/)     { 'linecolor "light-blue" lt 2 lw 2 pt 8 ps 1' }
+    when (/$NAME_LOCKSWEEP/)     { 'linecolor "dark-green" lt 2 lw 2 pt 6 ps 1' }
     when (/$NAME_FINE/)   { 'linecolor "black" lt 2 lw 2 pt 11 ps 1' }
     default { '' }
   }
@@ -381,6 +388,13 @@ sub plotDatasets($group, $name, $additionalParams, @datasets) {
     bmargin => 1.5,
     %$additionalParams
   );
+  if (defined $VERTICAL_LINE) {
+    $chart->line(
+      from => "$VERTICAL_LINE,graph(0,0)",
+      to => "$VERTICAL_LINE,graph(1,1)",
+      color => "black",
+    );
+  }
   $chart->plot2d(@datasets);
 }
 
