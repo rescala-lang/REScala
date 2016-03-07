@@ -29,7 +29,7 @@ final class TurnLock[InterTurn]() {
       writeLock = write
     }
     val current = owner.get()
-    if (current eq null) tryLock(key)
+    if (current eq null) tryLock(key, write)
     else current
   }
 
