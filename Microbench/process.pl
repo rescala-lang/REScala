@@ -148,7 +148,7 @@ legendx=right
       }
       close $OUT;
       qx[perl $BARGRAPH -pdf $TMPFILE > serialBenchmarks$threads.pdf ];
-      #unlink $TMPFILE;
+      unlink $TMPFILE;
     }
   }
 
@@ -269,6 +269,8 @@ legendx=right
 
 
   {#universe
+    #local $YRANGE = "[5:24] reverse";
+    $DBH->do(qq[UPDATE $TABLE SET Score = 60 / Score WHERE Benchmark = "UniverseCaseStudy"]);
     plotBenchmarksFor("Universe", "Universe",
       (map {{Title => $_, "Param: engineName" => $_ , Benchmark => "UniverseCaseStudy" }}
           queryChoices("Param: engineName", Benchmark => "UniverseCaseStudy")));
