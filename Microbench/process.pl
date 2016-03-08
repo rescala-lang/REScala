@@ -58,7 +58,7 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
         # local $YRANGE = "[0:200]" if $dynamic ne "static" && $philosophers <= 32;
         # local $YRANGE = "[0:]" if $layout eq "third";
         # local $LEGEND_POS = "left top" if $layout eq "third";
-        local $NAME_FINE = "No Sync" if $layout eq "third";
+        local $NAME_FINE = "No Synchron" if $layout eq "third";
         local $VERTICAL_LINE = $philosophers / 3 if $layout ne "third";
         plotBenchmarksFor("${dynamic}-philosophers-$philosophers", $layout,
           map { {Title => $_, "Param: engineName" => $_ , Benchmark => "benchmarks.philosophers.PhilosopherCompetition.eat",
@@ -107,40 +107,51 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
           "Param: philosophers" => 48, "Param: layout" => "alternating", "Param: tableType" => "dynamic" );
 
   {
-    my $BMCOND = qq[(results.Benchmark like "benchmarks.simple.SimplePhil%"
-                  OR results.Benchmark = "benchmarks.simple.TurnCreation.run"
-                  OR results.Benchmark = "benchmarks.simple.NaturalGraph.run"
-                  OR results.Benchmark = "benchmarks.dynamic.SingleSwitch.run"
-                  OR (results.Benchmark = "benchmarks.philosophers.PhilosopherCompetition.eat"
-                   AND `Param: tableType` = "static" AND `Param: layout` = "alternating"))];
-    my $res = $DBH->selectall_arrayref(qq[SELECT parrp.Benchmark, sync.Score/sync.Score , parrp.Score/ sync.Score, stm.Score / sync.Score from
-      (SELECT * from results where $BMCOND and Threads = 1 and `Param: engineName` = "parrp") AS parrp,
-      (SELECT * from results where $BMCOND and Threads = 1 and `Param: engineName` = "synchron") AS sync,
-      (SELECT * from results where $BMCOND and Threads = 1 and `Param: engineName` = "stm") AS stm
-      WHERE sync.Benchmark = parrp.Benchmark AND sync.Benchmark = stm.Benchmark
-      AND sync.Threads = parrp.Threads AND stm.Threads = sync.Threads
-      AND (sync.`Param: step` IS NULL OR (parrp.`Param: step` = sync.`Param: step` AND sync.`Param: step` = stm.`Param: step`))
-      AND (sync.`Param: work` IS NULL OR (parrp.`Param: work` = sync.`Param: work` AND sync.`Param: work` = stm.`Param: work`))]);
-    my $TMPFILE = "out.perf";
-    open my $OUT, ">", $TMPFILE;
-    say $OUT "=cluster $NAME_COARSE ParRP STM
+    for my $threads  (1..16) {
+      my $BMCOND = qq[(results.Benchmark like "benchmarks.simple.SimplePhil%"
+                    OR results.Benchmark = "benchmarks.simple.TurnCreation.run"
+                    OR results.Benchmark = "benchmarks.simple.NaturalGraph.run"
+                    OR results.Benchmark = "benchmarks.dynamic.SingleSwitch.run"
+                    OR (results.Benchmark = "benchmarks.philosophers.PhilosopherCompetition.eat"
+                     AND `Param: tableType` = "static" AND `Param: layout` = "alternating"))];
+      my $res = $DBH->selectall_arrayref(qq[SELECT synchron.Benchmark, ] .
+        (join ", ", map { qq[sum($_.Score * $_.Samples) / sum($_.Samples) / (sum(synchron.Score * synchron.Samples) / sum(synchron.Samples))] } qw<synchron parrp locksweep stm>) .
+        qq[ from ] .
+        (join ", ", map { qq[(SELECT * from results where $BMCOND and Threads = $threads and `Param: engineName` = "$_") AS $_]} qw<synchron parrp locksweep stm>) . qq[
+        WHERE synchron.Benchmark = parrp.Benchmark AND synchron.Benchmark = stm.Benchmark AND synchron.Benchmark = locksweep.Benchmark
+        AND synchron.Threads = parrp.Threads AND stm.Threads = synchron.Threads AND locksweep.Threads = synchron.Threads
+        AND (synchron.`Param: step` IS NULL OR (parrp.`Param: step` = synchron.`Param: step` AND synchron.`Param: step` = stm.`Param: step` AND synchron.`Param: step` = locksweep.`Param: step`))
+        AND (synchron.`Param: work` IS NULL OR (parrp.`Param: work` = synchron.`Param: work` AND synchron.`Param: work` = stm.`Param: work` AND synchron.`Param: work` = locksweep.`Param: work`))
+        GROUP BY synchron.Benchmark]);
+      my $TMPFILE = "out.perf";
+      open my $OUT, ">", $TMPFILE;
+      say $OUT "=cluster $NAME_COARSE ParRP $NAME_LOCKSWEEP STM
 =sortbmarks
 yformat=%1.1f
-xlabel=Benchmark
+xlabel=
 ylabel=Speedup compared to $NAME_COARSE
-colors=red,green,blue
+ylabelshift=2,0
+yscale=0.67
+colors=red,green,magenta,blue
+=norotate
+legendy=center
+legendx=right
+=nolegoutline
 =table,";
-    for my $row (@$res) {
-      $row->[0] = unmangleName($row->[0]);
-      $row->[0] =~ s/benchmarks.simple.(?:Creation.|SimplePhil.)?([^\.]+)/$1/;
-      $row->[0] =~ s/buildAndPropagate/build + propagate/;
-      $row->[0] =~ s/benchmarks.philosophers.PhilosopherCompetition.eat/philosophers/;
-      $row->[0] =~ s/TurnCreation.run/structures/;
-      say $OUT join ", ", @$row;
+      for my $row (@$res) {
+        $row->[0] = unmangleName($row->[0]);
+        $row->[0] =~ s/benchmarks.simple.(?:Creation.|SimplePhil.)?([^\.]+)/$1/;
+        $row->[0] =~ s/buildAndPropagate/build+prop./;
+        $row->[0] =~ s/benchmarks.philosophers.PhilosopherCompetition.eat/philosophers/;
+        $row->[0] =~ s/TurnCreation.run/structures/;
+        $row->[0] =~ s/NaturalGraph.run/NG/;
+        $row->[0] =~ s/benchmarks.dynamic.SingleSwitch.run/SW/;
+        say $OUT join ", ", @$row;
+      }
+      close $OUT;
+      qx[perl $BARGRAPH -pdf $TMPFILE > serialBenchmarks$threads.pdf ];
+      #unlink $TMPFILE;
     }
-    close $OUT;
-    qx[perl $BARGRAPH -pdf $TMPFILE > serialBenchmarks.pdf ];
-    unlink $TMPFILE;
   }
 
 
@@ -151,7 +162,7 @@ colors=red,green,blue
     }
 
   { # simplePhil
-    local $NAME_FINE = "No Sync";
+    local $NAME_FINE = "No Synchron";
     for my $bench (qw< propagate build buildAndPropagate >) {
       local $LEGEND_POS = "left top" if $bench eq "build";
       plotBenchmarksFor("simplePhil", "SimplePhil$bench",
@@ -273,7 +284,7 @@ sub prettyName($name) {
   $name =~ s/pessimistic|spinning|REScalaSpin|parrp/ParRP/;
   $name =~ s/locksweep/$NAME_LOCKSWEEP/;
   $name =~ s/stm|REScalaSTM/STM/;
-  $name =~ s/synchron|REScalaSync/$NAME_COARSE/;
+  $name =~ s/synchron|REScalaSynchron/$NAME_COARSE/;
   $name =~ s/unmanaged/$NAME_FINE/;
   return $name;
 }

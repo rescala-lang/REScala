@@ -28,7 +28,7 @@ my $BSUB_CORES = "16";
 my @ENGINES = qw<parrp stm synchron locksweep>;
 my @ENGINES_UNMANAGED = (@ENGINES, "unmanaged");
 my @THREADS = (1..16);
-my $UNI_THREAD = 8;
+my @UNI_THREAD = (1,4,8);
 my @STEPS = (1..16,24,32,64);
 my @SIZES = (1,10,25,100,250,1000);
 my @CHATSERVERSIZES = (1,2,4,8,16,32);
@@ -353,7 +353,7 @@ sub selection {
                 engineName => (join ',', @ENGINES),
                 step =>  $steps
               },
-              t => $UNI_THREAD
+              t => (join ',', @UNI_THREAD),
             ),
             "dynamic.SingleSwitch"
           );
@@ -454,7 +454,7 @@ sub selection {
                 engineName => (join ',', @ENGINES),
                 size => $size,
               },
-              t => $UNI_THREAD,
+              t => (join ',', $UNI_THREAD),
             ),
             "benchmarks.simple.Chain"
           );
@@ -475,7 +475,7 @@ sub selection {
                 engineName => (join ',', @ENGINES),
                 size => $size,
               },
-              t => $UNI_THREAD,
+              t => (join ',', $UNI_THREAD),
             ),
             "benchmarks.simple.Fan"
           );
@@ -515,7 +515,7 @@ sub selection {
               p => { # parameters
                 engineName => (join ',', @ENGINES),
               },
-              t => $UNI_THREAD,
+              t => (join ',', $UNI_THREAD),
             ),
             "benchmarks.simple.NaturalGraph"
           );
