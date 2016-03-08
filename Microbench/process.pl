@@ -28,10 +28,10 @@ our $NAME_FINE = "Manual";
 our $NAME_COARSE = "G-Lock";
 our $NAME_LOCKSWEEP = "LockSweep";
 
-our $LEGEND_POS = "left top";
+our $LEGEND_POS = "off";
 our $YRANGE = "[0:]";
 our $XRANGE = "[:]";
-our $GNUPLOT_TERMINAL = "pdf size 15,9";
+our $GNUPLOT_TERMINAL = "pdf size 5,3";
 our $VERTICAL_LINE = undef;
 
 our $X_VARYING = "Threads";
@@ -49,7 +49,7 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
 
   for my $dynamic (queryChoices("Param: tableType")) {
     for my $philosophers (queryChoices("Param: philosophers", "Param: tableType" => $dynamic)) {
-      local $LEGEND_POS = "left top" if $philosophers == 48  || $philosophers == 16;
+      #local $LEGEND_POS = "left top" if $philosophers == 48  || $philosophers == 16;
       for my $layout (queryChoices("Param: layout", "Param: tableType" => $dynamic, "Param: philosophers" => $philosophers)) {
         # local $YRANGE = "[0:500]" if $philosophers <= 64 && $dynamic eq "static";
         # local $YRANGE = "[0:300]" if $philosophers <= 32 && $dynamic eq "static";
@@ -95,9 +95,7 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
       for my $layout (queryChoices("Param: layout", "Param: tableType" => $dynamic)) {
         my $query = queryDataset(query("Param: philosophers", "Benchmark", "Param: engineName", "Param: tableType", "Threads", "Param: layout"));
         plotDatasets("${dynamic}-philosophers", "${layout}-concurrency-scaling", {xlabel => "Philosophers"},
-          $query->("ParRP", "benchmarks.philosophers.PhilosopherCompetition.eat", "parrp", $dynamic, $threads, $layout),
-          $query->("STM", "benchmarks.philosophers.PhilosopherCompetition.eat", "stm", $dynamic, $threads, $layout),
-          $query->("Synchron", "benchmarks.philosophers.PhilosopherCompetition.eat", "synchron", $dynamic, $threads, $layout));
+          map { $query->(prettyName($_), "benchmarks.philosophers.PhilosopherCompetition.eat", $_, $dynamic, $threads, $layout) } queryChoices("Param: engineName", "Param: tableType" => $dynamic, "Threads" => $threads, "Param: layout" => $layout));
       }
     }
 
