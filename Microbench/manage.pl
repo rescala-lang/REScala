@@ -33,7 +33,7 @@ my @STEPS = (1..16,24,32,64);
 my @SIZES = (1,10,25,100,250,1000);
 my @CHATSERVERSIZES = (1,2,4,8,16,32);
 my @PHILOSOPHERS = (16, 32, 64, 128);
-my @LAYOUTS = qw<alternating random>;
+my @LAYOUTS = qw<third>;
 my %BASECONFIG = (
   # global locking does not deal well with sync iterations
   si => "false", # synchronize iterations
@@ -454,7 +454,7 @@ sub selection {
                 engineName => (join ',', @ENGINES),
                 size => $size,
               },
-              t => (join ',', $UNI_THREAD),
+              t => (join ',', @UNI_THREAD),
             ),
             "benchmarks.simple.Chain"
           );
@@ -475,7 +475,7 @@ sub selection {
                 engineName => (join ',', @ENGINES),
                 size => $size,
               },
-              t => (join ',', $UNI_THREAD),
+              t => (join ',', @UNI_THREAD),
             ),
             "benchmarks.simple.Fan"
           );
@@ -515,7 +515,7 @@ sub selection {
               p => { # parameters
                 engineName => (join ',', @ENGINES),
               },
-              t => (join ',', $UNI_THREAD),
+              t => (join ',', @UNI_THREAD),
             ),
             "benchmarks.simple.NaturalGraph"
           );
