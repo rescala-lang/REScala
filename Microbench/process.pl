@@ -115,7 +115,7 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
 
   {
     for my $threads (1,8) {
-      compareBargraph(8, "bargraph", "parallelizable",
+      compareBargraph($threads, "bargraph", "parallelizable",
         Structures => q[results.Benchmark = "benchmarks.simple.TurnCreation.run"],
         SingleRead => q[results.Benchmark = "benchmarks.simple.SingleVar.read"],
         MultiReverseFan => q[results.Benchmark = "benchmarks.simple.MultiReverseFan.run"],
@@ -123,15 +123,16 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
         Philosophers => q[(results.Benchmark = "benchmarks.philosophers.PhilosopherCompetition.eat"
                    AND `Param: tableType` = "static" AND `Param: layout` = "alternating")],
       );
-      compareBargraph(8, "bargraph", "non-parallelizable",
-        NaturalGraph => q[results.Benchmark = "benchmarks.simple.NaturalGraph.run"],
+      compareBargraph($threads, "bargraph", "non-parallelizable",
         SingleSwitch => q[results.Benchmark = "benchmarks.dynamic.SingleSwitch.run"],
         SingleWrite => q[results.Benchmark = "benchmarks.simple.SingleVar.write"],
-        Fan => q[results.Benchmark = "benchmarks.simple.SimpleFan.run"],
         ReverseFan => q[results.Benchmark = "benchmarks.simple.ReverseFan.run"],
+      );
+      compareBargraph($threads, "bargraph", "multiplied",
+        NaturalGraph => q[results.Benchmark = "benchmarks.simple.NaturalGraph.run"],
         ChainSignal => q[results.Benchmark = "benchmarks.simple.ChainSignal.run"],
         ChainEvent => q[results.Benchmark = "benchmarks.simple.ChainEvent.run"],
-        Build => q[results.Benchmark like "benchmarks.simple.SimplePhil.build"],
+        Fan => q[results.Benchmark = "benchmarks.simple.Fan.run"],
       );
     }
   }
@@ -428,7 +429,7 @@ sub compareBargraph($threads, $group, $name, %conditions) {
 
   mkdir $group;
   chdir $group;
-  my $TMPFILE = "$name.perf";
+  my $TMPFILE = "$threads$name.perf";
   open my $OUT, ">", $TMPFILE;
   say $OUT "=cluster $NAME_COARSE ParRP $NAME_LOCKSWEEP STM
 =sortbmarks
@@ -456,14 +457,14 @@ legendx=right
       AND (synchron.`Param: work` IS NULL OR (parrp.`Param: work` = synchron.`Param: work` AND synchron.`Param: work` = stm.`Param: work` AND synchron.`Param: work` = locksweep.`Param: work`))
       GROUP BY synchron.Benchmark]);
     if (not $row) {
-      say "bargraph for $name did not return results";
+      say "bargraph for $name ($threads threads) did not return results";
     }
     else {
       say $OUT join ", ", $name, @$row;
     }
   }
   close $OUT;
-  qx[perl $BARGRAPH -pdf $TMPFILE > $name.pdf ];
+  qx[perl $BARGRAPH -pdf $TMPFILE > $threads$name.pdf ];
   unlink $TMPFILE;
   chdir "..";
 }
