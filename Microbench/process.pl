@@ -114,50 +114,17 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
           "Param: philosophers" => 48, "Param: layout" => "alternating", "Param: tableType" => "dynamic" );
 
   {
-    for my $threads  (1..16) {
-      my $BMCOND = qq[(results.Benchmark like "benchmarks.simple.SimplePhil%"
-                    OR results.Benchmark = "benchmarks.simple.TurnCreation.run"
-                    OR results.Benchmark = "benchmarks.simple.NaturalGraph.run"
-                    OR results.Benchmark = "benchmarks.dynamic.SingleSwitch.run"
-                    OR (results.Benchmark = "benchmarks.philosophers.PhilosopherCompetition.eat"
-                     AND `Param: tableType` = "static" AND `Param: layout` = "alternating"))];
-      my $res = $DBH->selectall_arrayref(qq[SELECT synchron.Benchmark, ] .
-        (join ", ", map { qq[sum($_.Score * $_.Samples) / sum($_.Samples) / (sum(synchron.Score * synchron.Samples) / sum(synchron.Samples))] } qw<synchron parrp locksweep stm>) .
-        qq[ from ] .
-        (join ", ", map { qq[(SELECT * from results where $BMCOND and Threads = $threads and `Param: engineName` = "$_") AS $_]} qw<synchron parrp locksweep stm>) . qq[
-        WHERE synchron.Benchmark = parrp.Benchmark AND synchron.Benchmark = stm.Benchmark AND synchron.Benchmark = locksweep.Benchmark
-        AND synchron.Threads = parrp.Threads AND stm.Threads = synchron.Threads AND locksweep.Threads = synchron.Threads
-        AND (synchron.`Param: step` IS NULL OR (parrp.`Param: step` = synchron.`Param: step` AND synchron.`Param: step` = stm.`Param: step` AND synchron.`Param: step` = locksweep.`Param: step`))
-        AND (synchron.`Param: work` IS NULL OR (parrp.`Param: work` = synchron.`Param: work` AND synchron.`Param: work` = stm.`Param: work` AND synchron.`Param: work` = locksweep.`Param: work`))
-        GROUP BY synchron.Benchmark]);
-      my $TMPFILE = "out.perf";
-      open my $OUT, ">", $TMPFILE;
-      say $OUT "=cluster $NAME_COARSE ParRP $NAME_LOCKSWEEP STM
-=sortbmarks
-yformat=%1.1f
-xlabel=
-ylabel=Speedup compared to $NAME_COARSE
-ylabelshift=2,0
-yscale=0.67
-colors=red,green,magenta,blue
-=norotate
-legendy=center
-legendx=right
-=nolegoutline
-=table,";
-      for my $row (@$res) {
-        $row->[0] = unmangleName($row->[0]);
-        $row->[0] =~ s/benchmarks.simple.(?:Creation.|SimplePhil.)?([^\.]+)/$1/;
-        $row->[0] =~ s/buildAndPropagate/build+prop./;
-        $row->[0] =~ s/benchmarks.philosophers.PhilosopherCompetition.eat/philosophers/;
-        $row->[0] =~ s/TurnCreation.run/structures/;
-        $row->[0] =~ s/NaturalGraph.run/NG/;
-        $row->[0] =~ s/benchmarks.dynamic.SingleSwitch.run/SW/;
-        say $OUT join ", ", @$row;
-      }
-      close $OUT;
-      qx[perl $BARGRAPH -pdf $TMPFILE > serialBenchmarks$threads.pdf ];
-      unlink $TMPFILE;
+    for my $threads (1,8) {
+      compareBargraph(8, "bargraph", "stuff",
+        Structures => q[results.Benchmark = "benchmarks.simple.TurnCreation.run"],
+        NaturalGraph => q[results.Benchmark = "benchmarks.simple.NaturalGraph.run"],
+        SingleSwitch => q[results.Benchmark = "benchmarks.dynamic.SingleSwitch.run"],
+        SingleWrite => q[results.Benchmark = "benchmarks.simple.SingleVar.write"],
+        Fan => q[results.Benchmark = "benchmarks.simple.SimpleFan.run"],
+        Build => q[results.Benchmark like "benchmarks.simple.SimplePhil.build"],
+        Philosophers => q[(results.Benchmark = "benchmarks.philosophers.PhilosopherCompetition.eat"
+                   AND `Param: tableType` = "static" AND `Param: layout` = "alternating")],
+      );
     }
   }
 
@@ -447,6 +414,52 @@ sub plotDatasets($group, $name, $additionalParams, @datasets) {
   }
   $chart->plot2d(@datasets);
 }
+
+
+sub compareBargraph($threads, $group, $name, %conditions) {
+
+  mkdir $group;
+  chdir $group;
+  my $TMPFILE = "$name.perf";
+  open my $OUT, ">", $TMPFILE;
+  say $OUT "=cluster $NAME_COARSE ParRP $NAME_LOCKSWEEP STM
+=sortbmarks
+yformat=%1.1f
+xlabel=
+ylabel=Speedup compared to $NAME_COARSE
+ylabelshift=2,0
+yscale=0.67
+colors=red,green,magenta,blue
+=norotate
+legendy=center
+legendx=right
+=nolegoutline
+=table,";
+
+  for my $name (keys %conditions) {
+    my $bmcond = $conditions{$name};
+    my $row = $DBH->selectrow_arrayref(qq[SELECT ] .
+      (join ", ", map { qq[sum($_.Score * $_.Samples) / sum($_.Samples) / (sum(synchron.Score * synchron.Samples) / sum(synchron.Samples))] } qw<synchron parrp locksweep stm>) .
+      qq[ from ] .
+      (join ", ", map { qq[(SELECT * FROM results WHERE ($bmcond) AND Threads = $threads AND `Param: engineName` = "$_") AS $_]} qw<synchron parrp locksweep stm>) . qq[
+      WHERE synchron.Benchmark = parrp.Benchmark AND synchron.Benchmark = stm.Benchmark AND synchron.Benchmark = locksweep.Benchmark
+      AND synchron.Threads = parrp.Threads AND stm.Threads = synchron.Threads AND locksweep.Threads = synchron.Threads
+      AND (synchron.`Param: step` IS NULL OR (parrp.`Param: step` = synchron.`Param: step` AND synchron.`Param: step` = stm.`Param: step` AND synchron.`Param: step` = locksweep.`Param: step`))
+      AND (synchron.`Param: work` IS NULL OR (parrp.`Param: work` = synchron.`Param: work` AND synchron.`Param: work` = stm.`Param: work` AND synchron.`Param: work` = locksweep.`Param: work`))
+      GROUP BY synchron.Benchmark]);
+    if (not $row) {
+      say "bargraph for $name did not return resutls";
+    }
+    else {
+      say $OUT join ", ", $name, @$row;
+    }
+  }
+  close $OUT;
+  qx[perl $BARGRAPH -pdf $TMPFILE > $name.pdf ];
+  unlink $TMPFILE;
+  chdir "..";
+}
+
 
 
 
