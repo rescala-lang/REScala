@@ -609,7 +609,7 @@ sub hhlrjob {
   return  <<ENDPROGRAM;
 #!/bin/sh
 # Job name
-#BSUB -J REScalaBenchmark
+#BSUB -J $name
 #
 # File / path where STDOUT will be written, the %J is the job id
 #BSUB -o $OUTDIR/$name-%J.out
