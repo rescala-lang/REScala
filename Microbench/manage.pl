@@ -33,7 +33,7 @@ my @STEPS = (1..16,24,32,64);
 my @SIZES = (1,10,25,100,250,1000);
 my @CHATSERVERSIZES = (1,2,4,8,16,32);
 my @PHILOSOPHERS = (16, 32, 64, 128);
-my @LAYOUTS = qw<third>;
+my @LAYOUTS = qw<noconflict>;
 my %BASECONFIG = (
   # global locking does not deal well with sync iterations
   si => "false", # synchronize iterations
@@ -159,7 +159,7 @@ sub selection {
 
       for my $threads (@THREADS) {
         for my $layout (@LAYOUTS) {
-          for my $phils (($layout eq "third") ? $PHILOSOPHERS[-1] : @PHILOSOPHERS) {
+          for my $phils (($layout eq "noconflict") ? $PHILOSOPHERS[-1] : @PHILOSOPHERS) {
             my $name = "philosophers-threads-$threads-layout-$layout-philosophers-$phils";
             my $program = makeRunString( $name,
               fromBaseConfig(
@@ -186,7 +186,7 @@ sub selection {
 
       for my $threads (@THREADS) {
         for my $layout (@LAYOUTS) {
-          for my $phils (($layout eq "third") ? $PHILOSOPHERS[-1] : @PHILOSOPHERS) {
+          for my $phils (($layout eq "noconflict") ? $PHILOSOPHERS[-1] : @PHILOSOPHERS) {
             my $name = "dynamicPhilosophers-threads-$threads-layout-$layout-philosophers-$phils";
             my $program = makeRunString( $name,
               fromBaseConfig(
@@ -214,7 +214,7 @@ sub selection {
 
       for my $threads (@THREADS) {
         for my $layout (@LAYOUTS) {
-          for my $phils (($layout eq "third") ? $PHILOSOPHERS[-1] : @PHILOSOPHERS) {
+          for my $phils (($layout eq "noconflict") ? $PHILOSOPHERS[-1] : @PHILOSOPHERS) {
             my $name = "halfDynamicPhilosophers-threads-$threads-layout-$layout-philosophers-$phils";
             my $program = makeRunString( $name,
               fromBaseConfig(
