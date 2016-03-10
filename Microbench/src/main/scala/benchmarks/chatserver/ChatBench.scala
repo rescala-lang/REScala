@@ -1,13 +1,14 @@
 package benchmarks.chatserver
 
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.locks.ReentrantLock
+import java.util.concurrent.locks.{Lock, ReentrantLock}
 
-import benchmarks.{Size, EngineParam, Workload}
+import benchmarks.{EngineParam, Size, Workload}
 import org.openjdk.jmh.annotations._
-import org.openjdk.jmh.infra.{Blackhole, ThreadParams, BenchmarkParams}
-import rescala.reactives.{Evt, Event}
+import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
+import rescala.engines.{Engines, JVMEngines}
 import rescala.graph.Struct
+import rescala.reactives.Evt
 
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -19,7 +20,24 @@ class ChatBench[S <: Struct] {
 
   @Benchmark
   def chat(benchState: BenchState[S], threadParams: ThreadParams, engineParam: EngineParam[S]) = {
-    benchState.clients(threadParams.getThreadIndex)("hello")(engineParam.engine)
+    if (engineParam.engine != Engines.unmanaged) {
+      benchState.clients(threadParams.getThreadIndex)("hello")(engineParam.engine)
+    }
+    else {
+      val ti = threadParams.getThreadIndex
+      val locks = benchState.locks
+      val room1 = math.min(ti % locks.length, (ti + locks.length / 2) % locks.length)
+      val room2 = math.max(ti % locks.length, (ti + locks.length / 2) % locks.length)
+      locks(room1).lock()
+      locks(room2).lock()
+      try {
+        benchState.clients(threadParams.getThreadIndex)("hello")(engineParam.engine)
+      }
+      finally {
+        locks(room2).unlock()
+        locks(room1).unlock()
+      }
+    }
   }
 
 }
@@ -31,11 +49,11 @@ class BenchState[S <: Struct] {
 
   var cs: ChatServer[S] = _
   var clients: Array[Evt[String, S]] = _
+  var locks: Array[Lock] = null
 
   @Setup
   def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam[S], size: Size) = {
     implicit val engine = engineParam.engine
-    import engine._
 
     val threads = params.getThreads
 
@@ -50,6 +68,10 @@ class BenchState[S <: Struct] {
       cs.join(client, room2)
       cs.histories.get(room1).observe(v => work.consume())
       cs.histories.get(room2).observe(v => work.consume())
+    }
+
+    if (engineParam.engine == Engines.unmanaged) {
+      locks = Array.fill(size.size)(new ReentrantLock())
     }
 
   }
