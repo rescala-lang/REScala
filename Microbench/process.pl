@@ -127,6 +127,7 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
         SingleSwitch => q[results.Benchmark = "benchmarks.dynamic.SingleSwitch.run"],
         SingleWrite => q[results.Benchmark = "benchmarks.simple.SingleVar.write"],
         ReverseFan => q[results.Benchmark = "benchmarks.simple.ReverseFan.run"],
+        DynamicStacks => q[results.Benchmark = "benchmarks.dynamic.Stacks.run"],
       );
       compareBargraph($threads, "bargraph", "multiplied",
         NaturalGraph => q[results.Benchmark = "benchmarks.simple.NaturalGraph.run"],
@@ -157,6 +158,7 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
 
   { # expensive conflict
     local $LEGEND_POS = "center right";
+    $DBH->do(qq[UPDATE $TABLE SET "Param: work" = "Param: work" / 1000 WHERE Benchmark like ?],undef, "benchmarks.conflict.ExpensiveConflict%");
     my $query = queryDataset(query("Param: work", "Benchmark", "Param: engineName"));
     plotDatasets("conflicts", "Asymmetric Workloads", {xlabel => "Work"},
       $query->("ParRP cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "parrp"),
@@ -333,7 +335,10 @@ sub styling($name) {
     }
     when (/cheap/) { $res =~ s/pt \d+/pt 9/; continue;}
     when (/expensive/) { $res =~ s/pt \d+/pt 7/; continue;}
-    when (/tried/) { $res =~ s/pt \d+/pt 5/;}
+    when (/tried/) {
+      $res =~ s/pt \d+/pt 5/;
+      $res =~ s/color "\w+"/color "red"/;
+    }
   }
   $res;
 }
@@ -438,7 +443,7 @@ xlabel=
 ylabel=Speedup compared to $NAME_COARSE
 ylabelshift=2,0
 yscale=0.67
-colors=red,green,magenta,blue
+colors=red,light_green,dark_green,blue
 =norotate
 legendy=center
 legendx=right
