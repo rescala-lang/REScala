@@ -347,7 +347,7 @@ sub selection {
 
       for my $threads (@UNI_THREAD) {
         for my $steps (@STEPS) {
-            my $name = "singleDynamic-steps-$steps";
+            my $name = "singleDynamic-steps-$steps-threads-$threads";
             my $program = makeRunString( $name,
               fromBaseConfig(
                 p => { # parameters
@@ -450,7 +450,7 @@ sub selection {
 
       for my $threads (@UNI_THREAD) {
         for my $size (@SIZES) {
-            my $name = "simpleChain-size-$size";
+            my $name = "simpleChain-size-$size-threads-$threads";
             my $program = makeRunString( $name,
               fromBaseConfig(
                 p => { # parameters
@@ -473,7 +473,7 @@ sub selection {
 
       for my $threads (@UNI_THREAD) {
         for my $size (@SIZES) {
-            my $name = "simpleFan-size-$size";
+            my $name = "simpleFan-size-$size-threads-$threads";
             my $program = makeRunString( $name,
               fromBaseConfig(
                 p => { # parameters
@@ -513,18 +513,18 @@ sub selection {
     simpleNaturalGraph => sub {
       my @runs;
 
-            for my $threads (@UNI_THREAD) {
-          my $name = "simpleNaturalGraph";
-          my $program = makeRunString( $name,
-            fromBaseConfig(
-              p => { # parameters
-                engineName => (join ',', @ENGINES),
-              },
-              t => (join ',', @UNI_THREAD),
-            ),
-            "benchmarks.simple.NaturalGraph"
-          );
-          push @runs, {name => $name, program => $program};
+      for my $threads (@UNI_THREAD) {
+        my $name = "simpleNaturalGraph-threads-$threads";
+        my $program = makeRunString( $name,
+          fromBaseConfig(
+            p => { # parameters
+              engineName => (join ',', @ENGINES),
+            },
+            t => $threads
+          ),
+          "benchmarks.simple.NaturalGraph"
+        );
+        push @runs, {name => $name, program => $program};
       }
 
       @runs;
