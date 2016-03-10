@@ -115,15 +115,23 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
 
   {
     for my $threads (1,8) {
-      compareBargraph(8, "bargraph", "stuff",
+      compareBargraph(8, "bargraph", "parallelizable",
         Structures => q[results.Benchmark = "benchmarks.simple.TurnCreation.run"],
+        SingleRead => q[results.Benchmark = "benchmarks.simple.SingleVar.read"],
+        MultiReverseFan => q[results.Benchmark = "benchmarks.simple.MultiReverseFan.run"],
+        Build => q[results.Benchmark like "benchmarks.simple.SimplePhil.build"],
+        Philosophers => q[(results.Benchmark = "benchmarks.philosophers.PhilosopherCompetition.eat"
+                   AND `Param: tableType` = "static" AND `Param: layout` = "alternating")],
+      );
+      compareBargraph(8, "bargraph", "non-parallelizable",
         NaturalGraph => q[results.Benchmark = "benchmarks.simple.NaturalGraph.run"],
         SingleSwitch => q[results.Benchmark = "benchmarks.dynamic.SingleSwitch.run"],
         SingleWrite => q[results.Benchmark = "benchmarks.simple.SingleVar.write"],
         Fan => q[results.Benchmark = "benchmarks.simple.SimpleFan.run"],
+        ReverseFan => q[results.Benchmark = "benchmarks.simple.ReverseFan.run"],
+        ChainSignal => q[results.Benchmark = "benchmarks.simple.ChainSignal.run"],
+        ChainEvent => q[results.Benchmark = "benchmarks.simple.ChainEvent.run"],
         Build => q[results.Benchmark like "benchmarks.simple.SimplePhil.build"],
-        Philosophers => q[(results.Benchmark = "benchmarks.philosophers.PhilosopherCompetition.eat"
-                   AND `Param: tableType` = "static" AND `Param: layout` = "alternating")],
       );
     }
   }
@@ -448,7 +456,7 @@ legendx=right
       AND (synchron.`Param: work` IS NULL OR (parrp.`Param: work` = synchron.`Param: work` AND synchron.`Param: work` = stm.`Param: work` AND synchron.`Param: work` = locksweep.`Param: work`))
       GROUP BY synchron.Benchmark]);
     if (not $row) {
-      say "bargraph for $name did not return resutls";
+      say "bargraph for $name did not return results";
     }
     else {
       say $OUT join ", ", $name, @$row;
