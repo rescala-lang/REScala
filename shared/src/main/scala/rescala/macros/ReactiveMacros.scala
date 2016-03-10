@@ -20,7 +20,7 @@ object ReactiveMacros {
 
     // create SignalSynt object
     // use fully-qualified name, so no extra import is needed
-    val body = q"rescala.reactives.Signals.dynamic[${weakTypeOf[A]}, ${weakTypeOf[S]}](..$filteredDetections)($signalExpression)"
+    val body = q"${termNames.ROOTPKG}.rescala.reactives.Signals.dynamic[${weakTypeOf[A]}, ${weakTypeOf[S]}](..$filteredDetections)($signalExpression)"
 
     // assemble the SignalSynt object and the signal values that are accessed
     // by the object, but were cut out of the signal expression during the code
@@ -40,7 +40,7 @@ object ReactiveMacros {
 
     // create SignalSynt object
     // use fully-qualified name, so no extra import is needed
-    val body = q"rescala.reactives.Events.dynamic[${weakTypeOf[A]}, ${weakTypeOf[S]}](..$filteredDetections)($signalExpression)"
+    val body = q"${termNames.ROOTPKG}.rescala.reactives.Events.dynamic[${weakTypeOf[A]}, ${weakTypeOf[S]}](..$filteredDetections)($signalExpression)"
 
     // assemble the SignalSynt object and the signal values that are accessed
     // by the object, but were cut out of the signal expression during the code
@@ -89,6 +89,10 @@ object ReactiveMacros {
         if (tree.tpe == null) { treeTypeNullWarning(); false }
         else tree.tpe <:< typeOf[Stateful[_, _]] || tree.tpe <:< typeOf[PulseOption[_, _]]
 
+      private def isStatefulReactive(tree: Tree) =
+        if (tree.tpe == null) { treeTypeNullWarning(); false }
+        else tree.tpe <:< typeOf[Stateful[_, _]]
+
       override def transform(tree: Tree) =
         tree match {
           // pass the SignalSynt argument to every reactive
@@ -101,9 +105,9 @@ object ReactiveMacros {
           case tree@q"$reactive.apply()"
             if isReactive(reactive) =>
             detectedReactives ::= reactive
-            val reactiveApply = Select(reactive, TermName("apply"))
+            val reactiveApply = q"$reactive.apply"
             internal setType(reactiveApply, tree.tpe)
-            Apply(super.transform(reactiveApply), List(signalSyntArgIdent))
+            q"${super.transform(reactiveApply)}($signalSyntArgIdent)"
 
           // cut signal values out of the signal expression, that could
           // potentially create a new signal object for every access
@@ -118,7 +122,7 @@ object ReactiveMacros {
           // and creates a signal value
           //   val s = event.count
           case reactive@(TypeApply(_, _) | Apply(_, _) | Select(_, _))
-            if isReactive(reactive) &&
+            if isStatefulReactive(reactive) &&
               // make sure that the expression e to be cut out
               // - refers to a term that is not a val or var
               //   or an accessor for a field
@@ -136,9 +140,8 @@ object ReactiveMacros {
                 val critical = tree match {
                   // check if reactive results from a function that is
                   // itself called on a reactive value
-                  case tree@Apply(Select(chainedReactive, apply), List()) =>
-                    isReactive(chainedReactive) &&
-                      apply.decodedName.toString == "apply"
+                  case q"$chainedReactive.apply()" =>
+                    isStatefulReactive(chainedReactive)
 
                   // check reference definitions that are defined within the
                   // macro expression but not within the reactive

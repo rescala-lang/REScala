@@ -223,6 +223,55 @@ class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asser
   }
 
 
+  @Test def caseClassesAndObjects() = {
+    // would fail due to https://issues.scala-lang.org/browse/SI-5467
+    // if we didn't work around un-type-checking issues
+
+    class A(val i: Int)
+    case class B(j: Int) extends A(0)
+
+    val v1 = Var(new A(1))
+    val v2 = Var(new A(2))
+
+    val sig = Signal {
+      case class TraitCase(a: Trait)
+
+      trait Trait
+      case class IntCase(i: Int) extends Trait
+      case class StringCase(s: String, t: TraitCase) extends Trait
+      case object CaseObject extends Trait
+
+      val instance: Trait = StringCase("", TraitCase(IntCase(2)))
+      val i = instance match {
+        case IntCase(i) => v1().i + i
+        case StringCase(_, TraitCase(IntCase(i))) => v1().i + i
+        case CaseObject => v2().i
+      }
+
+      case class C(s: String)(j: Int) extends A(j) { def a = 9 }
+      case object D { def x = "value" }
+
+      val j = v2() match {
+        case C(_) => 0
+        case B(j) => j
+        case _ => 2
+      }
+
+      D.x + (i * j + C("")(0).a)
+    }
+
+    assert(sig.now == "value15")
+    v2() = new A(3)
+    assert(sig.now == "value15")
+    v1() = new A(3)
+    assert(sig.now == "value19")
+    v2() = B(4)
+    assert(sig.now == "value29")
+    v1() = new A(5)
+    assert(sig.now == "value37")
+  }
+
+
   @Test def patternMatchingAndWildcard() = {
     // would fail due to https://issues.scala-lang.org/browse/SI-5465
     // if we didn't work around un-type-checking issues
