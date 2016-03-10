@@ -32,7 +32,14 @@ our $LEGEND_POS = "off";
 our $YRANGE = "[0:]";
 our $XRANGE = "[:]";
 our $GNUPLOT_TERMINAL = "pdf size 5,3";
+our %MARGINS = (
+    lmargin => 5.8,
+    rmargin => 1.5,
+    tmargin => 0.3,
+    bmargin => 1.5,
+  );
 our $VERTICAL_LINE = undef;
+
 
 our $X_VARYING = "Threads";
 
@@ -46,6 +53,8 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
   remove_tree($_) for glob("$OUTDIR/*");
   mkdir $OUTDIR;
   chdir $OUTDIR;
+
+  makeLegend();
 
   for my $dynamic (queryChoices("Param: tableType")) {
     for my $philosophers (queryChoices("Param: philosophers", "Param: tableType" => $dynamic)) {
@@ -162,7 +171,7 @@ legendx=right
   { # simplePhil
     local $NAME_FINE = "No Synchron";
     for my $bench (qw< propagate build buildAndPropagate >) {
-      local $LEGEND_POS = "left top" if $bench eq "build";
+      #local $LEGEND_POS = "left top" if $bench eq "build";
       plotBenchmarksFor("simplePhil", "SimplePhil$bench",
         map {{Title => $_, "Param: engineName" => $_ , Benchmark => "benchmarks.simple.SimplePhil.$bench" }}
           queryChoices("Param: engineName", Benchmark => "benchmarks.simple.SimplePhil.$bench"));
@@ -171,17 +180,18 @@ legendx=right
 
 
   { # expensive conflict
+    local $LEGEND_POS = "center right";
     my $query = queryDataset(query("Param: work", "Benchmark", "Param: engineName"));
     plotDatasets("conflicts", "Asymmetric Workloads", {xlabel => "Work"},
-      $query->("pessimistic cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "parrp"),
-      $query->("pessimistic expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "parrp"),
-      $query->("stm cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "stm"),
-      $query->("stm expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "stm"));
+      $query->("ParRP cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "parrp"),
+      $query->("ParRP expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "parrp"),
+      $query->("STM cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "stm"),
+      $query->("STM expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "stm"));
 
     plotDatasets("conflicts", "STM aborts", {xlabel => "Work"},
-      $query->("stm cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "stm"),
-      $query->("stm expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "stm"),
-      $query->("stm expensive tried", "benchmarks.conflict.ExpensiveConflict.g:tried", "stm"));
+      $query->("STM cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "stm"),
+      $query->("STM expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "stm"),
+      $query->("STM expensive tried", "benchmarks.conflict.ExpensiveConflict.g:tried", "stm"));
   }
 
   { # other
@@ -329,20 +339,25 @@ sub queryDataset($query) {
 
 sub styleByName($name) {
   given($name) {
-    when (/ParRP/)    { 'linecolor "dark-green" lt 2 lw 2 pt 7 ps 1' }
-    when (/STM/)      { 'linecolor "blue" lt 2 lw 2 pt 5 ps 1' }
-    when (/$NAME_COARSE/) { 'linecolor "red" lt 2 lw 2 pt 9 ps 1' }
-    when (/fair/)     { 'linecolor "light-blue" lt 2 lw 2 pt 8 ps 1' }
-    when (/$NAME_LOCKSWEEP/)     { 'linecolor "dark-green" lt 2 lw 2 pt 6 ps 1' }
-    when (/$NAME_FINE/)   { 'linecolor "black" lt 2 lw 2 pt 11 ps 1' }
+    when (/ParRP/)           { 'linecolor "dark-green" lt 2 lw 2 pt 7  ps 1' }
+    when (/STM/)             { 'linecolor "blue"       lt 2 lw 2 pt 5  ps 1' }
+    when (/$NAME_COARSE/)    { 'linecolor "red"        lt 2 lw 2 pt 9  ps 1' }
+    when (/fair/)            { 'linecolor "light-blue" lt 2 lw 2 pt 8  ps 1' }
+    when (/$NAME_LOCKSWEEP/) { 'linecolor "dark-green" lt 2 lw 2 pt 6  ps 1' }
+    when (/$NAME_FINE/)      { 'linecolor "black"      lt 2 lw 2 pt 11 ps 1' }
     default { '' }
   }
 }
 sub styling($name) {
   my $res = styleByName($name);
-  if ($name =~ /(\d+)/) {
-    my $pt = $1;
-    $res =~ s/pt \d+/pt $pt/;
+  given($name) {
+    when (/(\d+)/) {
+      my $pt = $1;
+      $res =~ s/pt \d+/pt $pt/;
+    }
+    when (/cheap/) { $res =~ s/pt \d+/pt 9/; continue;}
+    when (/expensive/) { $res =~ s/pt \d+/pt 7/; continue;}
+    when (/tried/) { $res =~ s/pt \d+/pt 5/;}
   }
   $res;
 }
@@ -374,6 +389,33 @@ sub unmangleName($name) {
   return $name =~ s/\$u(\d{4})/chr(hex($1))/egr; # / highlighter
 }
 
+sub makeLegend() {
+  my @datasets = map {
+    my $name = prettyName(unmangleName($_));
+    Chart::Gnuplot::DataSet->new(
+      xdata => [10,20],
+      ydata => [10,20],
+      title => $name,
+      style => 'linespoints ' . styling($name),
+    )
+    } queryChoices("Param: engineName");
+  my $chart = Chart::Gnuplot->new(
+    output => "legend.pdf",
+    terminal => "$GNUPLOT_TERMINAL enhanced font 'Linux Libertine O,30'",
+    key => "top left",
+    %MARGINS,
+    xrange => "[0:1]",
+    yrange => "[0:1]",
+    noborder => "",
+    noxtics => "",
+    noytics => "",
+    notitle => "",
+    noxlabel => "",
+    noylabel => "",
+  );
+  $chart->plot2d(@datasets);
+}
+
 sub plotDatasets($group, $name, $additionalParams, @datasets) {
   mkdir $group;
   unless (@datasets) {
@@ -393,10 +435,7 @@ sub plotDatasets($group, $name, $additionalParams, @datasets) {
     #logscale => "x 2; set logscale y 10",
     #ylabel => "Operations per millisecond",
     # xrange => "reverse",
-    lmargin => 5.8,
-    rmargin => 1.5,
-    tmargin => 0.3,
-    bmargin => 1.5,
+    %MARGINS,
     %$additionalParams
   );
   if (defined $VERTICAL_LINE) {
