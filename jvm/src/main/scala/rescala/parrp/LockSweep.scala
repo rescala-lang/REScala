@@ -62,9 +62,9 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
     * retry when acquire returns false */
   override def preparationPhase(initialWrites: List[Reactive[TState]]): Unit = {
     val stack = new java.util.ArrayDeque[Reactive[TState]](10)
-    initialWrites.foreach(stack.push)
+    initialWrites.foreach(stack.offer)
 
-    val sorted = new util.ArrayList[Reactive[TState]]
+    val locked = new util.ArrayList[Reactive[TState]]
 
     while (!stack.isEmpty) {
       val reactive = stack.pop()
@@ -74,24 +74,22 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
           reactive.bud.counter += 1
         }
         else {
-          sorted.add(reactive)
+          locked.add(reactive)
           reactive.bud.counter = 1
           reactive.bud.willWrite = this
-          reactive.bud.outgoing(this).foreach { r =>
-            stack.push(r)
-          }
+          reactive.bud.outgoing(this).foreach { stack.offer }
         }
       }
       else {
-        val it = sorted.iterator()
+        val it = locked.iterator()
         while (it.hasNext) {
           val curr = it.next()
           curr.bud.willWrite = null
         }
-        sorted.clear()
+        locked.clear()
         key.reset()
         stack.clear()
-        initialWrites.foreach(stack.push)
+        initialWrites.foreach(stack.offer)
         backoff.backoff()
       }
     }
