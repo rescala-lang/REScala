@@ -20,8 +20,8 @@ if ($OSNAME eq "MSWin32") {
 }
 my $OUTDIR = 'out';
 my $RESULTDIR = 'results';
-my $BSUB_TIME = "0:25";
-my $BSUB_QUEUE = "deflt_centos";
+my $BSUB_TIME = "0:55";
+my $BSUB_QUEUE = "deflt_auto";
 my $BSUB_REQUIRE = "select[ mpi && avx ]";
 my $BSUB_CORES = "16";
 
@@ -39,7 +39,7 @@ my %BASECONFIG = (
   si => "false", # synchronize iterations
   wi => 5, # warmup iterations
   w => "1000ms", # warmup time
-  f => 2, # forks
+  f => 5, # forks
   i => 5, # iterations
   r => "1000ms", # time per iteration
   to => "10s", #timeout
