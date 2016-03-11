@@ -33,7 +33,7 @@ my @STEPS = (1..16,24,32,64);
 my @SIZES = (10,100,1000);
 my @CHATSERVERSIZES = (1,2,4,8,16,32);
 my @PHILOSOPHERS = (16, 32, 64, 128);
-my @LAYOUTS = qw<noconflict alternating>;
+my @LAYOUTS = qw<alternating>;
 my %BASECONFIG = (
   # global locking does not deal well with sync iterations
   si => "false", # synchronize iterations
@@ -180,6 +180,34 @@ sub selection {
 
       @runs;
     },
+
+    noconflictPhilosophers => sub {
+      my @runs;
+
+      for my $threads (@THREADS) {
+        for my $layout ("noconflict") {
+          for my $phils ($PHILOSOPHERS[-1]) {
+            my $name = "philosophers-threads-$threads-layout-$layout-philosophers-$phils";
+            my $program = makeRunString( $name,
+              fromBaseConfig(
+                p => { # parameters
+                  tableType => 'static,other',
+                  engineName => (join ',', @ENGINES_UNMANAGED),
+                  philosophers => $phils,
+                  layout => $layout,
+                },
+                t => $threads, #threads
+              ),
+              "philosophers"
+            );
+            push @runs, {name => $name, program => $program};
+          }
+        }
+      }
+
+      @runs;
+    },
+
 
     dynamicPhilosophers => sub {
       my @runs;
@@ -555,7 +583,7 @@ sub selection {
       my @runs;
 
       for my $size (16) {
-        for my $run (0..10,15,20,25,30,35,40,50,60,70,80,90,100) {
+        for my $run (0,1,2,5,7,10,15,20,25,30,35,40,50,60,70,80,90,100) {
           my $chance = 0.16 * $run;
           my $name = "stmbank-threads-$size-chance-$chance";
           my $program = makeRunString($name,
