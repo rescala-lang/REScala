@@ -68,7 +68,7 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
         # local $YRANGE = "[0:]" if $layout eq "third";
         # local $LEGEND_POS = "left top" if $layout eq "third";
         local $NAME_FINE = "No Synchron" if $layout eq "third";
-        local $VERTICAL_LINE = $philosophers / 3 if $layout ne "third";
+        #local $VERTICAL_LINE = $philosophers / 3 if $layout ne "third";
         plotBenchmarksFor("${dynamic}-philosophers-$philosophers", $layout,
           map { {Title => $_, "Param: engineName" => $_ , Benchmark => "benchmarks.philosophers.PhilosopherCompetition.eat",
           "Param: philosophers" => $philosophers, "Param: layout" => $layout, "Param: tableType" => $dynamic } }
