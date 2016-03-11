@@ -1,6 +1,6 @@
 package rescala.parrp
 
-import rescala.graph.{LevelStruct, Pulse, Buffer, Reactive}
+import rescala.graph.{LevelStruct, Pulse, Reactive}
 import rescala.locking._
 import rescala.propagation.LevelBasedPropagation
 

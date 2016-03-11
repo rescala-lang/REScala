@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import rescala.engines.Engine
 import rescala.graph.Globals.named
 import rescala.graph.Struct
+import rescala.parrp.Backoff
 import rescala.propagation.{Committable, Turn}
 import rescala.reactives.{Signal, Var}
 import rescala.reactives.Signals.lift
@@ -75,7 +76,10 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit 
       forksWereFree
     }
 
-  def eatOnce(seating: Seating[S]) = repeatUntilTrue(tryEat(seating))
+  def eatOnce(seating: Seating[S]) = {
+    val bo = new Backoff()
+    while(!tryEat(seating)) {bo.backoff()}
+  }
 
 }
 
@@ -103,10 +107,5 @@ object PhilosopherTable {
   case class Seating[S <: Struct](placeNumber: Int, philosopher: Var[Philosopher, S], leftFork: Signal[Fork, S], rightFork: Signal[Fork, S], vision: Signal[Vision, S]) {
     def inspect(t: Turn[S]): String = s"Seating(${philosopher.get(t)}, ${leftFork.get(t)}, ${rightFork.get(t)}, ${vision.get(t)})"
   }
-
-
-  @tailrec // unrolled into loop by compiler
-  final def repeatUntilTrue(op: => Boolean): Unit = if (!op) repeatUntilTrue(op)
-
 
 }

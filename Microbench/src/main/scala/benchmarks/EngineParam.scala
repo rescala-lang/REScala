@@ -18,7 +18,8 @@ class EngineParam[S <: rescala.graph.Struct] {
   var factorBackoff: Double = _
 
   def engine: Engine[S, Turn[S]] = {
-    if (engineName == "parrp") JVMEngines.spinningWithBackoff(() => new Backoff(minBackoff, maxBackoff, factorBackoff)).asInstanceOf[Engine[S, Turn[S]]]
+    if (engineName == "parrp") JVMEngines.parrpWithBackoff(() => new Backoff(minBackoff, maxBackoff, factorBackoff)).asInstanceOf[Engine[S, Turn[S]]]
+    if (engineName == "locksweep") JVMEngines.locksweepWithBackoff(() => new Backoff(minBackoff, maxBackoff, factorBackoff)).asInstanceOf[Engine[S, Turn[S]]]
     else JVMEngines.byName[S](engineName)
   }
 }

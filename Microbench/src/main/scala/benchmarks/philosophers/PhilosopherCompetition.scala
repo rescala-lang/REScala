@@ -9,6 +9,7 @@ import benchmarks.{EngineParam, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
 import rescala.graph.Struct
+import rescala.parrp.Backoff
 
 import scala.annotation.tailrec
 
@@ -22,13 +23,14 @@ class PhilosopherCompetition[S <: Struct] {
   @Benchmark
   def eat(comp: Competition[S], params: ThreadParams, work: Workload): Unit = {
     val myBlock = comp.blocks(params.getThreadIndex % comp.blocks.length)
+    val bo = new Backoff()
     while ( {
       val seating: Seating[S] = myBlock(ThreadLocalRandom.current().nextInt(myBlock.length))
       if (comp.manualLocking)
         manualLocking(comp, seating)
       else
         tryUpdateCycle(comp, seating)
-    }) {}
+    }) {bo.backoff()}
 
   }
 

@@ -2,15 +2,12 @@ package rescala.locking
 
 import java.util.concurrent.{ConcurrentHashMap, Semaphore}
 
-import rescala.graph.Globals
-
 final class Key[InterTurn](val turn: InterTurn) {
 
-
-  val id = Globals.nextID()
-  override def toString: String = s"Key($id)"
-
   @volatile private[locking] var keychain: Keychain[InterTurn] = new Keychain(this)
+
+  val id = keychain.id
+  override def toString: String = s"Key($id)"
 
   private[this] val semaphore = new Semaphore(0)
 

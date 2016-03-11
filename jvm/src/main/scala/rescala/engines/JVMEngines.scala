@@ -28,9 +28,9 @@ object JVMEngines {
 
   def all: List[TEngine] = List[TEngine](stm, parrp, synchron, unmanaged, synchronFair, locksweep)
 
-  implicit val parrp: Engine[ParRP, ParRP] = spinningWithBackoff(() => new Backoff)
+  implicit val parrp: Engine[ParRP, ParRP] = parrpWithBackoff(() => new Backoff)
 
-  implicit val locksweep: Engine[LSStruct.type, LockSweep] = new EngineImpl[LSStruct.type, LockSweep](new LockSweep(new Backoff()))
+  implicit val locksweep: Engine[LSStruct.type, LockSweep] = locksweepWithBackoff(() => new Backoff())
 
   implicit val default: Engine[ParRP, ParRP] = parrp
 
@@ -40,6 +40,7 @@ object JVMEngines {
     override def plan[R](i: Reactive*)(f: STMTurn => R): R = atomic { tx => super.plan(i: _*)(f) }
   }
 
-  def spinningWithBackoff(backOff: () => Backoff): Engine[ParRP, ParRP] = new EngineImpl[ParRP, ParRP](new ParRP(backOff()))
+  def locksweepWithBackoff(backOff: () => Backoff):Engine[LSStruct.type, LockSweep]  = new EngineImpl[LSStruct.type, LockSweep](new LockSweep(backOff()))
+  def parrpWithBackoff(backOff: () => Backoff): Engine[ParRP, ParRP] = new EngineImpl[ParRP, ParRP](new ParRP(backOff()))
 
 }
