@@ -33,7 +33,7 @@ my @STEPS = (1..16,24,32,64);
 my @SIZES = (10,100,1000);
 my @CHATSERVERSIZES = (1,2,4,8,16,32);
 my @PHILOSOPHERS = (16, 32, 64, 128);
-my @LAYOUTS = qw<noconflict>;
+my @LAYOUTS = qw<noconflict alternating>;
 my %BASECONFIG = (
   # global locking does not deal well with sync iterations
   si => "false", # synchronize iterations
@@ -57,7 +57,7 @@ my $GITREF = qx[git show -s --format=%H HEAD];
 chomp $GITREF;
 
 my $command = shift @ARGV;
-my @RUN = @ARGV ? @ARGV : qw<philosophers halfDynamicPhilosophers simplePhil expensiveConflict singleDynamic singleVar turnCreation simpleFan simpleReverseFan simpleNaturalGraph multiReverseFan stmbank chatServer >;
+my @RUN = @ARGV ? @ARGV : qw<philosophers halfDynamicPhilosophers simplePhil expensiveConflict singleDynamic singleVar turnCreation simpleFan simpleReverseFan simpleNaturalGraph multiReverseFan stmbank chatServer simpleChain dynamicStacks>;
 
 say "selected: " . (join " ", sort @RUN);
 say "available: " . (join " ", sort keys %{&selection()});

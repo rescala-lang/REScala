@@ -134,6 +134,7 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
         ChainSignal => q[results.Benchmark = "benchmarks.simple.ChainSignal.run"],
         ChainEvent => q[results.Benchmark = "benchmarks.simple.ChainEvent.run"],
         Fan => q[results.Benchmark = "benchmarks.simple.Fan.run"],
+        Philosophers => q[results.Benchmark = "benchmarks.philosophers.PhilosopherCompetition.eat" AND "Param: layout" = "noconflict"]
       );
     }
   }
