@@ -24,9 +24,11 @@ my $CSVDIR = 'resultStore';
 my $OUTDIR = 'fig';
 my $BARGRAPH = abs_path("bargraph.pl");
 
-our $NAME_FINE = "Manual";
+our $NAME_FINE = "Handcrafted";
 our $NAME_COARSE = "G-Lock";
-our $NAME_LOCKSWEEP = "LockSweep";
+our $NAME_LOCKSWEEP = "MV-RP";
+our $NAME_PARRP = "ParRP";
+our $NAME_STM = "STM";
 
 our $LEGEND_POS = "off";
 our $YRANGE = "[0:]";
@@ -49,6 +51,7 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
   importCSV();
   $DBH->do("DELETE FROM $TABLE WHERE Threads > 16");
   $DBH->do(qq[DELETE FROM $TABLE WHERE "Param: engineName" = "fair"]);
+  #$DBH->do(qq[DELETE FROM $TABLE WHERE "Param: engineName" = "parrp"]);
 
   remove_tree($_) for glob("$OUTDIR/*");
   mkdir $OUTDIR;
@@ -270,9 +273,9 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
 
 sub prettyName($name) {
   $name =~ s/Param: engineName:\s*//;
-  $name =~ s/pessimistic|spinning|REScalaSpin|parrp/ParRP/;
+  $name =~ s/pessimistic|spinning|REScalaSpin|parrp/$NAME_PARRP/;
   $name =~ s/locksweep/$NAME_LOCKSWEEP/;
-  $name =~ s/stm|REScalaSTM/STM/;
+  $name =~ s/stm|REScalaSTM/$NAME_STM/;
   $name =~ s/synchron|REScalaSynchron/$NAME_COARSE/;
   $name =~ s/unmanaged/$NAME_FINE/;
   return $name;
@@ -318,8 +321,8 @@ sub queryDataset($query) {
 
 sub styleByName($name) {
   given($name) {
-    when (/ParRP/)           { 'linecolor "dark-green" lt 2 lw 2 pt 7  ps 1' }
-    when (/STM/)             { 'linecolor "blue"       lt 2 lw 2 pt 5  ps 1' }
+    when (/$NAME_PARRP/)     { 'linecolor "dark-green" lt 2 lw 2 pt 7  ps 1' }
+    when (/$NAME_STM/)       { 'linecolor "blue"       lt 2 lw 2 pt 5  ps 1' }
     when (/$NAME_COARSE/)    { 'linecolor "red"        lt 2 lw 2 pt 9  ps 1' }
     when (/fair/)            { 'linecolor "light-blue" lt 2 lw 2 pt 8  ps 1' }
     when (/$NAME_LOCKSWEEP/) { 'linecolor "dark-green" lt 2 lw 2 pt 6  ps 1' }
@@ -433,37 +436,45 @@ sub plotDatasets($group, $name, $additionalParams, @datasets) {
 
 sub compareBargraph($threads, $group, $name, %conditions) {
 
+  my @engines = qw<synchron locksweep stm>;
+  my ($head, @tail) = @engines;
+  my @pretty = map {prettyName($_)} @engines;
   mkdir $group;
   chdir $group;
   my $TMPFILE = "$threads$name.perf";
   open my $OUT, ">", $TMPFILE;
-  say $OUT "=cluster $NAME_COARSE ParRP $NAME_LOCKSWEEP STM
+  say $OUT "=cluster " . (join ", ", @pretty) . "
 =sortbmarks
 yformat=%1.1f
 xlabel=
-ylabel=Speedup compared to $NAME_COARSE
+ylabel=Speedup compared to $pretty[0]
 ylabelshift=2,0
 yscale=0.67
-colors=red,light_green,dark_green,blue
+colors=red,green,blue
 =norotate
 legendy=center
 legendx=right
 =nolegoutline
 =table,";
 
+
   for my $name (keys %conditions) {
     my $bmcond = $conditions{$name};
-    my $row = $DBH->selectrow_arrayref(qq[SELECT ] .
-      (join ", ", map { qq[sum($_.Score * $_.Samples) / sum($_.Samples) / (sum(synchron.Score * synchron.Samples) / sum(synchron.Samples))] } qw<synchron parrp locksweep stm>) .
-      qq[ from ] .
-      (join ", ", map { qq[(SELECT * FROM results WHERE ($bmcond) AND Threads = $threads AND `Param: engineName` = "$_") AS $_]} qw<synchron parrp locksweep stm>) . qq[
-      WHERE synchron.Benchmark = parrp.Benchmark AND synchron.Benchmark = stm.Benchmark AND synchron.Benchmark = locksweep.Benchmark
-      AND synchron.Threads = parrp.Threads AND stm.Threads = synchron.Threads AND locksweep.Threads = synchron.Threads
-      AND (synchron.`Param: step` IS NULL OR (parrp.`Param: step` = synchron.`Param: step` AND synchron.`Param: step` = stm.`Param: step` AND synchron.`Param: step` = locksweep.`Param: step`))
-      AND (synchron.`Param: work` IS NULL OR (parrp.`Param: work` = synchron.`Param: work` AND synchron.`Param: work` = stm.`Param: work` AND synchron.`Param: work` = locksweep.`Param: work`))
-      GROUP BY synchron.Benchmark]);
+    my $joinMapTail = sub ($f, $j = " AND ") { join $j, map { $f->() } @tail };
+    my $paramEqualIfDefined = sub ($param) { qq[(`$head`.`$param` IS NULL OR (] . $joinMapTail->(sub { qq[$_.`$param` = `$head`.`$param` ] }) . qq[)) ] };
+    sub sum($engine) { qq[ (sum($engine.Score * $engine.Samples) / sum($engine.Samples)) ] };
+    my $queryString = qq[SELECT ] .
+      (join ", ", map { sum($_) . " / " . sum($head) } @engines) .
+      qq[ FROM ] .
+      (join ", ", map { qq[(SELECT * FROM results WHERE ($bmcond) AND Threads = $threads AND `Param: engineName` = "$_") AS `$_` ]} @engines) . " WHERE " .
+      (join " AND ", map {$paramEqualIfDefined->("Param: size") } ("Param: step", "Param: work", "Param: size", "Threads", "Benchmark") ) .
+      qq[ GROUP BY `$head`.Benchmark];
+    #say $queryString;
+    my $row = $DBH->selectrow_arrayref($queryString);
+
     if (not $row) {
       say "bargraph for $name ($threads threads) did not return results";
+      #say $queryString;
     }
     else {
       say $OUT join ", ", $name, @$row;
