@@ -28,7 +28,7 @@ our $NAME_FINE = "Handcrafted";
 our $NAME_COARSE = "G-Lock";
 our $NAME_LOCKSWEEP = "MV-RP";
 our $NAME_PARRP = "ParRP";
-our $NAME_STM = "STM";
+our $NAME_STM = "STM-RP";
 
 our $LEGEND_POS = "off";
 our $YRANGE = "[0:]";
@@ -42,8 +42,31 @@ our %MARGINS = (
   );
 our $VERTICAL_LINE = undef;
 
-
 our $X_VARYING = "Threads";
+
+
+
+sub prettyName($name) {
+  $name =~ s/Param: engineName:\s*//;
+  $name =~ s/pessimistic|spinning|REScalaSpin|parrp/$NAME_PARRP/;
+  $name =~ s/locksweep/$NAME_LOCKSWEEP/;
+  $name =~ s/stm|REScalaSTM|STM/$NAME_STM/;
+  $name =~ s/synchron|REScalaSynchron/$NAME_COARSE/;
+  $name =~ s/unmanaged/$NAME_FINE/;
+  return $name;
+}
+
+sub styleByName($name) {
+  given($name) {
+    when (/$NAME_PARRP/)     { 'linecolor "dark-green" lt 2 lw 2 pt 6  ps 1' }
+    when (/$NAME_STM/)       { 'linecolor "blue"       lt 2 lw 2 pt 5  ps 1' }
+    when (/$NAME_COARSE/)    { 'linecolor "red"        lt 2 lw 2 pt 9  ps 1' }
+    when (/fair/)            { 'linecolor "light-blue" lt 2 lw 2 pt 8  ps 1' }
+    when (/$NAME_LOCKSWEEP/) { 'linecolor "dark-green" lt 2 lw 2 pt 7  ps 1' }
+    when (/$NAME_FINE/)      { 'linecolor "black"      lt 2 lw 2 pt 11 ps 1' }
+    default { '' }
+  }
+}
 
 my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,PrintError => 1});
 {
@@ -51,7 +74,7 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
   importCSV();
   $DBH->do("DELETE FROM $TABLE WHERE Threads > 16");
   $DBH->do(qq[DELETE FROM $TABLE WHERE "Param: engineName" = "fair"]);
-  #$DBH->do(qq[DELETE FROM $TABLE WHERE "Param: engineName" = "parrp"]);
+  $DBH->do(qq[DELETE FROM $TABLE WHERE "Param: engineName" = "parrp"]);
 
   remove_tree($_) for glob("$OUTDIR/*");
   mkdir $OUTDIR;
@@ -162,18 +185,19 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
 
   { # expensive conflict
     local $LEGEND_POS = "center right";
+    my $compareTo = "locksweep";
     $DBH->do(qq[UPDATE $TABLE SET "Param: work" = "Param: work" / 1000 WHERE Benchmark like ?],undef, "benchmarks.conflict.ExpensiveConflict%");
     my $query = queryDataset(query("Param: work", "Benchmark", "Param: engineName"));
     plotDatasets("conflicts", "Asymmetric Workloads", {xlabel => "Work"},
-      $query->("ParRP cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "parrp"),
-      $query->("ParRP expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "parrp"),
-      $query->("STM cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "stm"),
-      $query->("STM expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "stm"));
+      $query->("cheap " . prettyName($compareTo), "benchmarks.conflict.ExpensiveConflict.g:cheap", "$compareTo"),
+      $query->("expensive  " . prettyName($compareTo), "benchmarks.conflict.ExpensiveConflict.g:expensive", "$compareTo"),
+      $query->("cheap " . prettyName("stm"), "benchmarks.conflict.ExpensiveConflict.g:cheap", "stm"),
+      $query->("expensive " . prettyName("stm"), "benchmarks.conflict.ExpensiveConflict.g:expensive", "stm"));
 
     plotDatasets("conflicts", "STM aborts", {xlabel => "Work"},
-      $query->("STM cheap", "benchmarks.conflict.ExpensiveConflict.g:cheap", "stm"),
-      $query->("STM expensive", "benchmarks.conflict.ExpensiveConflict.g:expensive", "stm"),
-      $query->("STM expensive tried", "benchmarks.conflict.ExpensiveConflict.g:tried", "stm"));
+      $query->("cheap ". prettyName("stm"), "benchmarks.conflict.ExpensiveConflict.g:cheap", "stm"),
+      $query->("expensive ". prettyName("stm"), "benchmarks.conflict.ExpensiveConflict.g:expensive", "stm"),
+      $query->("expensive tried ". prettyName("stm"), "benchmarks.conflict.ExpensiveConflict.g:tried", "stm"));
   }
 
   { # other
@@ -271,16 +295,6 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
   $DBH->commit();
 }
 
-sub prettyName($name) {
-  $name =~ s/Param: engineName:\s*//;
-  $name =~ s/pessimistic|spinning|REScalaSpin|parrp/$NAME_PARRP/;
-  $name =~ s/locksweep/$NAME_LOCKSWEEP/;
-  $name =~ s/stm|REScalaSTM/$NAME_STM/;
-  $name =~ s/synchron|REScalaSynchron/$NAME_COARSE/;
-  $name =~ s/unmanaged/$NAME_FINE/;
-  return $name;
-}
-
 sub query($varying, @keys) {
   my $where = join " AND ", map {qq["$_" = ?]} @keys;
   return qq[SELECT "$varying", sum(Score * Samples) / sum(Samples), min(Score), max(Score) FROM "$TABLE" WHERE $where GROUP BY "$varying" ORDER BY "$varying"];
@@ -318,18 +332,6 @@ sub queryDataset($query) {
   }
 }
 
-
-sub styleByName($name) {
-  given($name) {
-    when (/$NAME_PARRP/)     { 'linecolor "dark-green" lt 2 lw 2 pt 7  ps 1' }
-    when (/$NAME_STM/)       { 'linecolor "blue"       lt 2 lw 2 pt 5  ps 1' }
-    when (/$NAME_COARSE/)    { 'linecolor "red"        lt 2 lw 2 pt 9  ps 1' }
-    when (/fair/)            { 'linecolor "light-blue" lt 2 lw 2 pt 8  ps 1' }
-    when (/$NAME_LOCKSWEEP/) { 'linecolor "dark-green" lt 2 lw 2 pt 6  ps 1' }
-    when (/$NAME_FINE/)      { 'linecolor "black"      lt 2 lw 2 pt 11 ps 1' }
-    default { '' }
-  }
-}
 sub styling($name) {
   my $res = styleByName($name);
   given($name) {
