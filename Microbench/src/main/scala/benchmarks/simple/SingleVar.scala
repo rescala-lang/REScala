@@ -62,7 +62,7 @@ class SingleVar[S <: rescala.graph.Struct] {
       try {
         source.now
       }
-      finally lock.writeLock().unlock()
+      finally lock.readLock().unlock()
     }
   }
 
