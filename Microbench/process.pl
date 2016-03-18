@@ -142,6 +142,7 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
   {
     for my $threads (8) {
       compareBargraph($threads, "bargraph", "parallelizable",
+        [qw<synchron locksweep stm unmanaged>],
         Structures => q[results.Benchmark = "benchmarks.simple.TurnCreation.run"],
         SingleRead => q[results.Benchmark = "benchmarks.simple.SingleVar.read"],
         MultiReverseFan => q[results.Benchmark = "benchmarks.simple.MultiReverseFan.run"],
@@ -150,12 +151,14 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
                    AND `Param: tableType` = "static" AND `Param: layout` = "alternating")],
       );
       compareBargraph($threads, "bargraph", "non-parallelizable",
+        [qw<synchron locksweep stm>],
         SingleSwitch => q[results.Benchmark = "benchmarks.dynamic.SingleSwitch.run"],
         SingleWrite => q[results.Benchmark = "benchmarks.simple.SingleVar.write"],
         ReverseFan => q[results.Benchmark = "benchmarks.simple.ReverseFan.run"],
         DynamicStacks => q[results.Benchmark = "benchmarks.dynamic.Stacks.run"],
       );
       compareBargraph($threads, "bargraph", "multiplied",
+        [qw<synchron locksweep stm unmanaged>],
         NaturalGraph => q[results.Benchmark = "benchmarks.simple.NaturalGraph.run"],
         ChainSignal => q[results.Benchmark = "benchmarks.simple.ChainSignal.run"],
         ChainEvent => q[results.Benchmark = "benchmarks.simple.ChainEvent.run"],
@@ -439,9 +442,9 @@ sub plotDatasets($group, $name, $additionalParams, @datasets) {
 }
 
 
-sub compareBargraph($threads, $group, $name, %conditions) {
+sub compareBargraph($threads, $group, $name, $engines, %conditions) {
 
-  my @engines = qw<synchron locksweep stm unmanaged>;
+  my @engines = @$engines;
   my ($head, @tail) = @engines;
   my @pretty = map {prettyName($_)} @engines;
   mkdir $group;
