@@ -36,12 +36,13 @@ class MultiReverseFan[S <: rescala.graph.Struct] {
     sources = Array.fill(threads)(Var(step.get()))
     groupSize = if (threads > size.size) threads / size.size else 1
 
-    if (engineParam.engineName == "unmanaged") locks = Array.fill(threads % groupSize)(new ReentrantLock())
-
     val intermediate = sources.map(_.map { v => {work.consume(); v + 1} }).grouped(groupSize)
     results = intermediate.map { sigs =>
       Signals.static(sigs.toSeq: _*) { t => val r = sigs.foldLeft(0)((a, v) => v.get(t) + a); work.consumeSecondary(); r }
     }.toArray
+
+    if (engineParam.engineName == "unmanaged") locks = Array.fill(threads / groupSize)(new ReentrantLock())
+
   }
 
   @Benchmark

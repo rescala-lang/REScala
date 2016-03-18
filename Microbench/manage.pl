@@ -401,7 +401,7 @@ sub selection {
           my $program = makeRunString( $name,
             fromBaseConfig(
               p => { # parameters
-                engineName => (join ',', @ENGINES),
+                engineName => (join ',', @ENGINES_UNMANAGED),
               },
               t => $threads,
             ),
