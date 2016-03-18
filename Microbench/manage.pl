@@ -28,7 +28,7 @@ my $BSUB_CORES = "16";
 my @ENGINES = qw<parrp stm synchron locksweep>;
 my @ENGINES_UNMANAGED = (@ENGINES, "unmanaged");
 my @THREADS = (1..16);
-my @UNI_THREAD = (1,4,8);
+my @REDUCED_THREADS = (8);
 my @STEPS = (1..16,24,32,64);
 my @SIZES = (10,100,1000);
 my @CHATSERVERSIZES = (1,2,4,8,16,32);
@@ -373,7 +373,7 @@ sub selection {
     singleDynamic => sub {
       my @runs;
 
-      for my $threads (@UNI_THREAD) {
+      for my $threads (@REDUCED_THREADS) {
         for my $steps (@STEPS) {
             my $name = "singleDynamic-steps-$steps-threads-$threads";
             my $program = makeRunString( $name,
@@ -396,7 +396,7 @@ sub selection {
     singleVar => sub {
       my @runs;
 
-      for my $threads (@THREADS) {
+      for my $threads (@REDUCED_THREADS) {
           my $name = "singleVar-threads-$threads";
           my $program = makeRunString( $name,
             fromBaseConfig(
@@ -416,7 +416,7 @@ sub selection {
     turnCreation => sub {
       my @runs;
 
-      for my $threads (@UNI_THREAD) {
+      for my $threads (@REDUCED_THREADS) {
           my $name = "turnCreation-threads-$threads";
           my $program = makeRunString( $name,
             fromBaseConfig(
@@ -476,7 +476,7 @@ sub selection {
     simpleChain => sub {
       my @runs;
 
-      for my $threads (@UNI_THREAD) {
+      for my $threads (@REDUCED_THREADS) {
         for my $size (@SIZES) {
             my $name = "simpleChain-size-$size-threads-$threads";
             my $program = makeRunString( $name,
@@ -499,7 +499,7 @@ sub selection {
     simpleFan => sub {
       my @runs;
 
-      for my $threads (@UNI_THREAD) {
+      for my $threads (@REDUCED_THREADS) {
         for my $size (@SIZES) {
             my $name = "simpleFan-size-$size-threads-$threads";
             my $program = makeRunString( $name,
@@ -541,7 +541,7 @@ sub selection {
     simpleNaturalGraph => sub {
       my @runs;
 
-      for my $threads (@UNI_THREAD) {
+      for my $threads (@REDUCED_THREADS) {
         my $name = "simpleNaturalGraph-threads-$threads";
         my $program = makeRunString( $name,
           fromBaseConfig(
@@ -561,7 +561,7 @@ sub selection {
     multiReverseFan => sub {
       my @runs;
 
-      for my $threads (@THREADS) {
+      for my $threads (@REDUCED_THREADS) {
           my $name = "multiReverseFan-threads-$threads";
           my $program = makeRunString( $name,
             fromBaseConfig(
