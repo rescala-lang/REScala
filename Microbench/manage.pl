@@ -416,12 +416,12 @@ sub selection {
     turnCreation => sub {
       my @runs;
 
-      for my $threads (@THREADS) {
+      for my $threads (@UNI_THREAD) {
           my $name = "turnCreation-threads-$threads";
           my $program = makeRunString( $name,
             fromBaseConfig(
               p => { # parameters
-                engineName => (join ',', @ENGINES),
+                engineName => (join ',', @ENGINES_UNMANAGED),
               },
               t => $threads,
             ),
@@ -441,7 +441,7 @@ sub selection {
           my $program = makeRunString( $name,
             fromBaseConfig(
               p => { # parameters
-                engineName => (join ',', @ENGINES),
+                engineName => (join ',', @ENGINES_UNMANAGED),
               },
               t => $threads,
             ),
@@ -482,7 +482,7 @@ sub selection {
             my $program = makeRunString( $name,
               fromBaseConfig(
                 p => { # parameters
-                  engineName => (join ',', @ENGINES),
+                  engineName => (join ',', @ENGINES_UNMANAGED),
                   size => $size,
                 },
                 t => $threads,
@@ -505,7 +505,7 @@ sub selection {
             my $program = makeRunString( $name,
               fromBaseConfig(
                 p => { # parameters
-                  engineName => (join ',', @ENGINES),
+                  engineName => (join ',', @ENGINES_UNMANAGED),
                   size => $size,
                 },
                 t => $threads,
@@ -546,7 +546,7 @@ sub selection {
         my $program = makeRunString( $name,
           fromBaseConfig(
             p => { # parameters
-              engineName => (join ',', @ENGINES),
+              engineName => (join ',', @ENGINES_UNMANAGED),
             },
             t => $threads
           ),

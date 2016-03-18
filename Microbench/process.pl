@@ -84,7 +84,7 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
 
   for my $dynamic (queryChoices("Param: tableType")) {
     for my $philosophers (queryChoices("Param: philosophers", "Param: tableType" => $dynamic)) {
-      #local $LEGEND_POS = "left top" if $philosophers == 48  || $philosophers == 16;
+      local $LEGEND_POS = "left top" if $philosophers == 48  || $philosophers == 16;
       for my $layout (queryChoices("Param: layout", "Param: tableType" => $dynamic, "Param: philosophers" => $philosophers)) {
         # local $YRANGE = "[0:500]" if $philosophers <= 64 && $dynamic eq "static";
         # local $YRANGE = "[0:300]" if $philosophers <= 32 && $dynamic eq "static";
@@ -140,7 +140,7 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
           "Param: philosophers" => 48, "Param: layout" => "alternating", "Param: tableType" => "dynamic" );
 
   {
-    for my $threads (1,8) {
+    for my $threads (8) {
       compareBargraph($threads, "bargraph", "parallelizable",
         Structures => q[results.Benchmark = "benchmarks.simple.TurnCreation.run"],
         SingleRead => q[results.Benchmark = "benchmarks.simple.SingleVar.read"],
@@ -244,6 +244,7 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
     my $benchmark = "benchmarks.STMBank.BankAccounts.reactive";
     $DBH->do(qq[UPDATE $TABLE SET "Param: globalReadChance" = "Param: globalReadChance" / Threads WHERE Benchmark = ?],undef, $benchmark);
     for my $windows (queryChoices("Param: readWindowCount", Benchmark => $benchmark)) {
+      local $LEGEND_POS = "top right" if $windows == 8;
       local $X_VARYING = "Param: globalReadChance";
       #local $YRANGE = "[0:800]";
       plotChoices("BankAccounts", "readProbability$windows", "Param: engineName",
@@ -261,6 +262,7 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
 
   { # reverse fan
       my $benchmark = "benchmarks.simple.ReverseFan.run";
+      local $LEGEND_POS = "top right";
       plotBenchmarksFor("simple", "ReverseFan",
         (map {{Title => $_, "Param: engineName" => $_ , Benchmark => $benchmark }}
           queryChoices("Param: engineName", Benchmark => $benchmark)),);
@@ -276,6 +278,7 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
   { # chatServer
     my $benchmark = "benchmarks.chatserver.ChatBench.chat";
     for my $rooms (queryChoices("Param: size", Benchmark => $benchmark)) {
+      local $LEGEND_POS = "right top" if $rooms == 4;
       local $VERTICAL_LINE = $rooms / 2;
       plotBenchmarksFor("ChatServer", "$rooms",
         (map {{Title => $_, "Param: engineName" => $_ , Benchmark => $benchmark, "Param: size" => $rooms }}
@@ -438,7 +441,7 @@ sub plotDatasets($group, $name, $additionalParams, @datasets) {
 
 sub compareBargraph($threads, $group, $name, %conditions) {
 
-  my @engines = qw<synchron locksweep stm>;
+  my @engines = qw<synchron locksweep stm unmanaged>;
   my ($head, @tail) = @engines;
   my @pretty = map {prettyName($_)} @engines;
   mkdir $group;
@@ -452,7 +455,7 @@ xlabel=
 ylabel=Speedup compared to $pretty[0]
 ylabelshift=2,0
 yscale=0.67
-colors=red,green,blue
+colors=red,green,blue,black
 =norotate
 legendy=center
 legendx=right
