@@ -1,13 +1,14 @@
 package benchmarks.simple
 
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.{ReadWriteLock, ReentrantReadWriteLock}
 
 import benchmarks.{EngineParam, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
 import rescala.reactives.Var
 import rescala.propagation.Turn
-import rescala.engines.Engine
+import rescala.engines.{Engine, Engines}
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -23,6 +24,7 @@ class SingleVar[S <: rescala.graph.Struct] {
   var source: Var[Boolean, S] = _
   var current: Boolean = _
   var illegalTurn: Turn[S] = _
+  var lock: ReadWriteLock = _
 
 
   @Setup
@@ -31,17 +33,37 @@ class SingleVar[S <: rescala.graph.Struct] {
     current = false
     source = engine.Var(current)
     illegalTurn = engine.plan()(identity)
+    if (engineParam.engine == Engines.unmanaged) lock = new ReentrantReadWriteLock()
   }
 
   @Benchmark
   def write(): Unit = {
-    current = !current
-    source.set(current)
+    if (lock == null) {
+      current = !current
+      source.set(current)
+    }
+    else {
+      lock.writeLock().lock()
+      try {
+        current = !current
+        source.set(current)
+      }
+      finally lock.writeLock().unlock()
+    }
   }
 
   @Benchmark
   def read(): Boolean = {
-    source.now
+    if (lock == null) {
+      source.now
+    }
+    else {
+      lock.readLock().lock()
+      try {
+        source.now
+      }
+      finally lock.writeLock().unlock()
+    }
   }
 
   @Benchmark
