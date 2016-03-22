@@ -24,6 +24,8 @@ my $CSVDIR = 'resultStore';
 my $OUTDIR = 'fig';
 my $BARGRAPH = abs_path("bargraph.pl");
 
+our $FONT = "Times";
+
 our $NAME_FINE = "Handcrafted";
 our $NAME_COARSE = "G-Lock";
 our $NAME_LOCKSWEEP = "MV-RP";
@@ -41,10 +43,9 @@ our %MARGINS = (
     bmargin => 1.5,
   );
 our $VERTICAL_LINE = undef;
-
 our $X_VARYING = "Threads";
-
-
+our $BARGRAPH_LEGEND =
+"legendx=inside";
 
 sub prettyName($name) {
   $name =~ s/Param: engineName:\s*//;
@@ -144,26 +145,27 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
       compareBargraph($threads, "bargraph", "parallelizable",
         [qw<synchron locksweep stm unmanaged>],
         Structures => q[results.Benchmark = "benchmarks.simple.TurnCreation.run"],
-        SingleRead => q[results.Benchmark = "benchmarks.simple.SingleVar.read"],
-        MultiReverseFan => q[results.Benchmark = "benchmarks.simple.MultiReverseFan.run"],
+        Read => q[results.Benchmark = "benchmarks.simple.SingleVar.read"],
+        MultiFan => q[results.Benchmark = "benchmarks.simple.MultiReverseFan.run"],
         Build => q[results.Benchmark like "benchmarks.simple.SimplePhil.build"],
-        Philosophers => q[(results.Benchmark = "benchmarks.philosophers.PhilosopherCompetition.eat"
+        Philosopher => q[(results.Benchmark = "benchmarks.philosophers.PhilosopherCompetition.eat"
                    AND `Param: tableType` = "static" AND `Param: layout` = "alternating")],
       );
+      local $BARGRAPH_LEGEND = "=nolegend";
       compareBargraph($threads, "bargraph", "non-parallelizable",
         [qw<synchron locksweep stm>],
         SingleSwitch => q[results.Benchmark = "benchmarks.dynamic.SingleSwitch.run"],
         SingleWrite => q[results.Benchmark = "benchmarks.simple.SingleVar.write"],
         ReverseFan => q[results.Benchmark = "benchmarks.simple.ReverseFan.run"],
-        DynamicStacks => q[results.Benchmark = "benchmarks.dynamic.Stacks.run"],
+        DynamicStack => q[results.Benchmark = "benchmarks.dynamic.Stacks.run"],
       );
       compareBargraph($threads, "bargraph", "multiplied",
         [qw<synchron locksweep stm unmanaged>],
-        NaturalGraph => q[results.Benchmark = "benchmarks.simple.NaturalGraph.run"],
-        ChainSignal => q[results.Benchmark = "benchmarks.simple.ChainSignal.run"],
-        ChainEvent => q[results.Benchmark = "benchmarks.simple.ChainEvent.run"],
+        Natural => q[results.Benchmark = "benchmarks.simple.NaturalGraph.run"],
+        SignalSeq => q[results.Benchmark = "benchmarks.simple.ChainSignal.run"],
+        EventSeq => q[results.Benchmark = "benchmarks.simple.ChainEvent.run"],
         Fan => q[results.Benchmark = "benchmarks.simple.Fan.run"],
-        Philosophers => q[results.Benchmark = "benchmarks.philosophers.PhilosopherCompetition.eat" AND "Param: layout" = "noconflict"]
+        Philosopher => q[results.Benchmark = "benchmarks.philosophers.PhilosopherCompetition.eat" AND "Param: layout" = "noconflict"]
       );
     }
   }
@@ -394,7 +396,7 @@ sub makeLegend() {
     } queryChoices("Param: engineName");
   my $chart = Chart::Gnuplot->new(
     output => "legend.pdf",
-    terminal => "$GNUPLOT_TERMINAL enhanced font 'Linux Libertine O,30'",
+    terminal => "$GNUPLOT_TERMINAL enhanced font '$FONT,30'",
     key => "top left",
     %MARGINS,
     xrange => "[0:1]",
@@ -419,7 +421,7 @@ sub plotDatasets($group, $name, $additionalParams, @datasets) {
   my $nospecial = $name =~ s/\W/_/gr; # / highlighter
   my $chart = Chart::Gnuplot->new(
     output => "$group/$nospecial.pdf",
-    terminal => "$GNUPLOT_TERMINAL enhanced font 'Linux Libertine O,30'",
+    terminal => "$GNUPLOT_TERMINAL enhanced font '$FONT,30'",
     key => $LEGEND_POS,
     #title  => $name,
     #xlabel => "Active threads",
@@ -457,12 +459,12 @@ yformat=%1.1f
 xlabel=
 ylabel=Speedup compared to $pretty[0]
 ylabelshift=2,0
+font=$FONT
 yscale=0.67
+fontsz=13
 colors=red,green,blue,black
 =norotate
-legendy=center
-legendx=right
-=nolegoutline
+$BARGRAPH_LEGEND
 =table,";
 
 
