@@ -461,7 +461,7 @@ ylabel=Speedup compared to $pretty[0]
 ylabelshift=2,0
 font=$FONT
 yscale=0.67
-fontsz=13
+fontsz=14
 colors=red,green,blue,black
 =norotate
 $BARGRAPH_LEGEND
