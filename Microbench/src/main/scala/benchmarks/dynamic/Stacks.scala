@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
-import rescala.engines.Engine
+import rescala.engines.{Engine, Engines}
 import rescala.graph.Struct
 import rescala.propagation.Turn
 import rescala.reactives.{Signal, Signals, Var}
@@ -24,12 +24,14 @@ class StackState[S <: Struct] {
   var results: Array[Signal[Int, S]] = _
   var dynamics: Array[Signal[Int, S]] = _
   var engine: Engine[S, Turn[S]] = _
+  var isManual: Boolean = false
 
   @Setup(Level.Iteration)
   def setup(params: BenchmarkParams, engine: EngineParam[S], work: Workload, size: Size, step: Step) = {
     this.engine = engine.engine
     val threads = params.getThreads
     implicit val e = this.engine
+    if (e == Engines.unmanaged) isManual = true
     sources = Range(0, threads).map(_ => Var(0)).toArray
     results = sources.map { source =>
       var cur: Signal[Int, S] = source
@@ -57,10 +59,18 @@ class Stacks[S <: Struct] {
 
   @Benchmark
   def run(state: StackState[S], step: Step, params: ThreadParams) = {
-    implicit val engine = state.engine
-    val index = params.getThreadIndex % params.getThreadCount
-    state.sources(index).set(step.run())
-    state.dynamics(index).now
+    if (state.isManual) synchronized {
+      implicit val engine = state.engine
+      val index = params.getThreadIndex % params.getThreadCount
+      state.sources(index).set(step.run())
+      state.dynamics(index).now
+    }
+    else {
+      implicit val engine = state.engine
+      val index = params.getThreadIndex % params.getThreadCount
+      state.sources(index).set(step.run())
+      state.dynamics(index).now
+    }
   }
 
 

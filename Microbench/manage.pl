@@ -313,7 +313,7 @@ sub selection {
           my $program = makeRunString( $name,
             fromBaseConfig(
               p => { # parameters
-                engineName => (join ',', @ENGINES),
+                engineName => (join ',', @ENGINES_UNMANAGED),
                 work => 0,
                 size => 10,
                 steps => $steps,
@@ -379,7 +379,7 @@ sub selection {
             my $program = makeRunString( $name,
               fromBaseConfig(
                 p => { # parameters
-                  engineName => (join ',', @ENGINES),
+                  engineName => (join ',', @ENGINES_UNMANAGED),
                   step =>  $steps
                 },
                 t => $threads,
@@ -526,7 +526,7 @@ sub selection {
           my $program = makeRunString( $name,
             fromBaseConfig(
               p => { # parameters
-                engineName => (join ',', @ENGINES),
+                engineName => (join ',', @ENGINES_UNMANAGED),
               },
               t => $threads,
             ),
@@ -541,7 +541,7 @@ sub selection {
     simpleNaturalGraph => sub {
       my @runs;
 
-      for my $threads (@REDUCED_THREADS) {
+      for my $threads (@THREADS) {
         my $name = "simpleNaturalGraph-threads-$threads";
         my $program = makeRunString( $name,
           fromBaseConfig(
