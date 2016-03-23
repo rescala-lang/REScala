@@ -25,6 +25,7 @@ my $OUTDIR = 'fig';
 my $BARGRAPH = abs_path("bargraph.pl");
 
 our $FONT = "Times";
+our $FONTSIZE = "30";
 
 our $NAME_FINE = "Handcrafted";
 our $NAME_COARSE = "G-Lock";
@@ -32,10 +33,13 @@ our $NAME_LOCKSWEEP = "MV-RP";
 our $NAME_PARRP = "ParRP";
 our $NAME_STM = "STM-RP";
 
+our $YTIC_COUNT = 4;
+our $YRANGE_ROUND = 100;
+our $BARGRAPH_YTICS = 2.0;
 our $LEGEND_POS = "off";
 our $YRANGE = "[0:]";
 our $XRANGE = "[:]";
-our $GNUPLOT_TERMINAL = "pdf size 5,3";
+our $GNUPLOT_TERMINAL = "pdf size 5,2";
 our %MARGINS = (
     lmargin => 5.8,
     rmargin => 1.5,
@@ -85,7 +89,7 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
 
   for my $dynamic (queryChoices("Param: tableType")) {
     for my $philosophers (queryChoices("Param: philosophers", "Param: tableType" => $dynamic)) {
-      local $LEGEND_POS = "left top" if $philosophers == 48  || $philosophers == 16;
+      #local $LEGEND_POS = "left top" if $philosophers == 48  || $philosophers == 16;
       for my $layout (queryChoices("Param: layout", "Param: tableType" => $dynamic, "Param: philosophers" => $philosophers)) {
         # local $YRANGE = "[0:500]" if $philosophers <= 64 && $dynamic eq "static";
         # local $YRANGE = "[0:300]" if $philosophers <= 32 && $dynamic eq "static";
@@ -94,7 +98,8 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
         # local $YRANGE = "[0:200]" if $dynamic ne "static" && $philosophers <= 32;
         # local $YRANGE = "[0:]" if $layout eq "third";
         # local $LEGEND_POS = "left top" if $layout eq "third";
-        local $NAME_FINE = "No Synchron" if $layout eq "third";
+        local $VERTICAL_LINE = 8 if $layout eq "noconflict";
+        local $NAME_FINE = "No Synchron" if $layout eq "noconflict";
         #local $VERTICAL_LINE = $philosophers / 3 if $layout ne "third";
         plotBenchmarksFor("${dynamic}-philosophers-$philosophers", $layout,
           map { {Title => $_, "Param: engineName" => $_ , Benchmark => "benchmarks.philosophers.PhilosopherCompetition.eat",
@@ -142,6 +147,7 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
 
   {
     for my $threads (8) {
+      local $BARGRAPH_LEGEND = "=nolegend";
       compareBargraph($threads, "bargraph", "parallelizable",
         [qw<synchron locksweep stm unmanaged>],
         Structures => q[results.Benchmark = "benchmarks.simple.TurnCreation.run"],
@@ -151,14 +157,15 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
         Philosopher => q[(results.Benchmark = "benchmarks.philosophers.PhilosopherCompetition.eat"
                    AND `Param: tableType` = "static" AND `Param: layout` = "alternating")],
       );
-      local $BARGRAPH_LEGEND = "=nolegend";
-      compareBargraph($threads, "bargraph", "non-parallelizable",
-        [qw<synchron locksweep stm>],
-        SingleSwitch => q[results.Benchmark = "benchmarks.dynamic.SingleSwitch.run"],
-        SingleWrite => q[results.Benchmark = "benchmarks.simple.SingleVar.write"],
-        ReverseFan => q[results.Benchmark = "benchmarks.simple.ReverseFan.run"],
-        DynamicStack => q[results.Benchmark = "benchmarks.dynamic.Stacks.run"],
-      );
+      { local $BARGRAPH_YTICS = 0.4;
+        compareBargraph($threads, "bargraph", "non-parallelizable",
+          [qw<synchron locksweep stm>],
+          SingleSwitch => q[results.Benchmark = "benchmarks.dynamic.SingleSwitch.run"],
+          SingleWrite => q[results.Benchmark = "benchmarks.simple.SingleVar.write"],
+          ReverseFan => q[results.Benchmark = "benchmarks.simple.ReverseFan.run"],
+          DynamicStack => q[results.Benchmark = "benchmarks.dynamic.Stacks.run"],
+        );
+      }
       compareBargraph($threads, "bargraph", "multiplied",
         [qw<synchron locksweep stm unmanaged>],
         Natural => q[results.Benchmark = "benchmarks.simple.NaturalGraph.run"],
@@ -189,7 +196,7 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
 
 
   { # expensive conflict
-    local $LEGEND_POS = "center right";
+    #local $LEGEND_POS = "center right";
     my $compareTo = "locksweep";
     $DBH->do(qq[UPDATE $TABLE SET "Param: work" = "Param: work" / 1000 WHERE Benchmark like ?],undef, "benchmarks.conflict.ExpensiveConflict%");
     my $query = queryDataset(query("Param: work", "Benchmark", "Param: engineName"));
@@ -247,9 +254,11 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
 
   { # stmbank 2
     my $benchmark = "benchmarks.STMBank.BankAccounts.reactive";
+    local $YTIC_COUNT = 5;
+    local $YRANGE_ROUND = 500;
     $DBH->do(qq[UPDATE $TABLE SET "Param: globalReadChance" = "Param: globalReadChance" / Threads WHERE Benchmark = ?],undef, $benchmark);
     for my $windows (queryChoices("Param: readWindowCount", Benchmark => $benchmark)) {
-      local $LEGEND_POS = "top right" if $windows == 8;
+      #local $LEGEND_POS = "top right" if $windows == 8;
       local $X_VARYING = "Param: globalReadChance";
       #local $YRANGE = "[0:800]";
       plotChoices("BankAccounts", "readProbability$windows", "Param: engineName",
@@ -267,7 +276,7 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
 
   { # reverse fan
       my $benchmark = "benchmarks.simple.ReverseFan.run";
-      local $LEGEND_POS = "top right";
+      #local $LEGEND_POS = "top right";
       plotBenchmarksFor("simple", "ReverseFan",
         (map {{Title => $_, "Param: engineName" => $_ , Benchmark => $benchmark }}
           queryChoices("Param: engineName", Benchmark => $benchmark)),);
@@ -283,7 +292,7 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
   { # chatServer
     my $benchmark = "benchmarks.chatserver.ChatBench.chat";
     for my $rooms (queryChoices("Param: size", Benchmark => $benchmark)) {
-      local $LEGEND_POS = "right top" if $rooms == 4;
+      #local $LEGEND_POS = "right top" if $rooms == 4;
       local $VERTICAL_LINE = $rooms / 2;
       plotBenchmarksFor("ChatServer", "$rooms",
         (map {{Title => $_, "Param: engineName" => $_ , Benchmark => $benchmark, "Param: size" => $rooms }}
@@ -294,6 +303,7 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
 
   {#universe
     #local $YRANGE = "[5:24] reverse";
+    local $YRANGE_ROUND = 10;
     $DBH->do(qq[UPDATE $TABLE SET Score = 60 / Score WHERE Benchmark = "UniverseCaseStudy"]);
     plotBenchmarksFor("Universe", "Universe",
       (map {{Title => $_, "Param: engineName" => $_ , Benchmark => "UniverseCaseStudy" }}
@@ -396,7 +406,7 @@ sub makeLegend() {
     } queryChoices("Param: engineName");
   my $chart = Chart::Gnuplot->new(
     output => "legend.pdf",
-    terminal => "$GNUPLOT_TERMINAL enhanced font '$FONT,30'",
+    terminal => "$GNUPLOT_TERMINAL enhanced font '$FONT,$FONTSIZE'",
     key => "top left",
     %MARGINS,
     xrange => "[0:1]",
@@ -411,22 +421,30 @@ sub makeLegend() {
   $chart->plot2d(@datasets);
 }
 
+sub roundTo($target, $value) {
+  int($value / $target +1)* $target;
+}
+
 sub plotDatasets($group, $name, $additionalParams, @datasets) {
   mkdir $group;
   unless (@datasets) {
     say "dataset for $group/$name is empty";
     return;
   }
+  #say Dumper(@datasets);
+  my ($ymax,) = sort {$b <=> $a} map {@{$_->{ydata}}} @datasets;
+  $ymax = roundTo($YRANGE_ROUND, $ymax);
   $name = unmangleName($name);
   my $nospecial = $name =~ s/\W/_/gr; # / highlighter
   my $chart = Chart::Gnuplot->new(
     output => "$group/$nospecial.pdf",
-    terminal => "$GNUPLOT_TERMINAL enhanced font '$FONT,30'",
+    terminal => "$GNUPLOT_TERMINAL enhanced font '$FONT,$FONTSIZE'",
     key => $LEGEND_POS,
     #title  => $name,
     #xlabel => "Active threads",
     xrange => $XRANGE,
     yrange => $YRANGE,
+    ytics => $ymax/$YTIC_COUNT,
     #logscale => "x 2; set logscale y 10",
     #ylabel => "Operations per millisecond",
     # xrange => "reverse",
@@ -457,13 +475,15 @@ sub compareBargraph($threads, $group, $name, $engines, %conditions) {
 =sortbmarks
 yformat=%1.1f
 xlabel=
-ylabel=Speedup compared to $pretty[0]
+# ylabel=Speedup vs. $pretty[0]
 ylabelshift=2,0
 font=$FONT
-yscale=0.67
-fontsz=14
+yscale=0.6666667
+xscale=1.4
+fontsz=19
 colors=red,green,blue,black
 =norotate
+extraops=set ytics $BARGRAPH_YTICS
 $BARGRAPH_LEGEND
 =table,";
 
