@@ -29,7 +29,7 @@ my @ENGINES = qw<parrp stm synchron locksweep>;
 my @ENGINES_UNMANAGED = (@ENGINES, "unmanaged");
 my @THREADS = (1..16);
 my @REDUCED_THREADS = (8);
-my @STEPS = (1..16,24,32,64);
+my @STEPS = (1,8,16,24,32,64);
 my @SIZES = (10,100,1000);
 my @CHATSERVERSIZES = (1,2,4,8,16,32);
 my @PHILOSOPHERS = (16, 32, 64, 128);
@@ -306,7 +306,7 @@ sub selection {
     dynamicStacks => sub {
       my @runs;
 
-      for my $threads (@THREADS) {
+      for my $threads (@REDUCED_THREADS) {
         for my $steps (@STEPS) {
 
           my $name = "dynamicStacks-threads-$threads-steps-$steps";

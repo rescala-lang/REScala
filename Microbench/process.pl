@@ -36,10 +36,11 @@ our $NAME_STM = "STM-RP";
 our $YTIC_COUNT = 4;
 our $YRANGE_ROUND = 100;
 our $BARGRAPH_YTICS = 2.0;
+our $BARGRAPH_YFORMAT = "%1.1f";
 our $LEGEND_POS = "off";
 our $YRANGE = "[0:]";
 our $XRANGE = "[:]";
-our $GNUPLOT_TERMINAL = "pdf size 5,2";
+our $GNUPLOT_TERMINAL = "pdf size 5,2.5";
 our %MARGINS = (
     lmargin => 5.8,
     rmargin => 1.5,
@@ -50,6 +51,8 @@ our $VERTICAL_LINE = undef;
 our $X_VARYING = "Threads";
 our $BARGRAPH_LEGEND =
 "legendx=inside";
+
+our $MANUAL_BARGRAPH_HACK = 0;
 
 sub prettyName($name) {
   $name =~ s/Param: engineName:\s*//;
@@ -94,7 +97,7 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
         # local $YRANGE = "[0:500]" if $philosophers <= 64 && $dynamic eq "static";
         # local $YRANGE = "[0:300]" if $philosophers <= 32 && $dynamic eq "static";
         # local $YRANGE = "[0:800]" if $philosophers > 64 && $dynamic eq "static";
-        # local $YRANGE = "[0:300]" if $dynamic ne "static";
+        local $YRANGE = "[0:300]" if $dynamic ne "static" && $philosophers <= 64;
         # local $YRANGE = "[0:200]" if $dynamic ne "static" && $philosophers <= 32;
         # local $YRANGE = "[0:]" if $layout eq "third";
         # local $LEGEND_POS = "left top" if $layout eq "third";
@@ -157,9 +160,12 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
         Philosopher => q[(results.Benchmark = "benchmarks.philosophers.PhilosopherCompetition.eat"
                    AND `Param: tableType` = "static" AND `Param: layout` = "alternating")],
       );
-      { local $BARGRAPH_YTICS = 0.4;
+      {
+        local $BARGRAPH_YTICS = 0.2;
+        #local $BARGRAPH_YFORMAT = "%1.2f";
+        #local $MANUAL_BARGRAPH_HACK = 1;
         compareBargraph($threads, "bargraph", "non-parallelizable",
-          [qw<synchron locksweep stm>],
+          [qw<synchron locksweep stm unmanaged>],
           SingleSwitch => q[results.Benchmark = "benchmarks.dynamic.SingleSwitch.run"],
           SingleWrite => q[results.Benchmark = "benchmarks.simple.SingleVar.write"],
           ReverseFan => q[results.Benchmark = "benchmarks.simple.ReverseFan.run"],
@@ -277,6 +283,7 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
   { # reverse fan
       my $benchmark = "benchmarks.simple.ReverseFan.run";
       #local $LEGEND_POS = "top right";
+      local $VERTICAL_LINE = 8;
       plotBenchmarksFor("simple", "ReverseFan",
         (map {{Title => $_, "Param: engineName" => $_ , Benchmark => $benchmark }}
           queryChoices("Param: engineName", Benchmark => $benchmark)),);
@@ -473,7 +480,7 @@ sub compareBargraph($threads, $group, $name, $engines, %conditions) {
   open my $OUT, ">", $TMPFILE;
   say $OUT "=cluster " . (join ", ", @pretty) . "
 =sortbmarks
-yformat=%1.1f
+yformat=$BARGRAPH_YFORMAT
 xlabel=
 # ylabel=Speedup vs. $pretty[0]
 ylabelshift=2,0
@@ -487,6 +494,10 @@ extraops=set ytics $BARGRAPH_YTICS
 $BARGRAPH_LEGEND
 =table,";
 
+  if ($MANUAL_BARGRAPH_HACK) {
+    pop @tail;
+    pop @engines;
+  }
 
   for my $name (keys %conditions) {
     my $bmcond = $conditions{$name};
@@ -507,6 +518,9 @@ $BARGRAPH_LEGEND
       #say $queryString;
     }
     else {
+      if ($MANUAL_BARGRAPH_HACK) {
+        $row = [@$row, 1];
+      }
       say $OUT join ", ", $name, @$row;
     }
   }
