@@ -31,7 +31,7 @@ class StackState[S <: Struct] {
     this.engine = engine.engine
     val threads = params.getThreads
     implicit val e = this.engine
-    if (e == Engines.unmanaged) isManual = true
+    if (e == Engines.unmanaged) { isManual = true }
     sources = Range(0, threads).map(_ => Var(0)).toArray
     results = sources.map { source =>
       var cur: Signal[Int, S] = source
@@ -59,7 +59,7 @@ class Stacks[S <: Struct] {
 
   @Benchmark
   def run(state: StackState[S], step: Step, params: ThreadParams) = {
-    if (state.isManual) synchronized {
+    if (state.isManual) state.synchronized {
       implicit val engine = state.engine
       val index = params.getThreadIndex % params.getThreadCount
       state.sources(index).set(step.run())
