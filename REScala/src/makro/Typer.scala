@@ -355,18 +355,20 @@ class Typer[C <: Context](val c: C) {
         val typeArgsInferable =
           if (tree.symbol != null && tree.symbol.isMethod) {
             val method = tree.symbol.asMethod
-            val implicitParamListCount =
-              if (method.paramLists.lastOption exists {
-                    _.headOption exists { _.isImplicit }
-                 }) 1 else 0
-
-            val typeParams = method.typeParams
-            val argTypes = (method.paramLists dropRight implicitParamListCount)
-              .flatten map { _.typeSignature }
-
-            typeParams forall { typeParam =>
-              argTypes exists { _ contains typeParam }
+            val hasImplicitParamList = method.paramLists.lastOption exists {
+              _.headOption exists { _.isImplicit }
             }
+
+            if (!hasImplicitParamList) {
+              val typeParams = method.typeParams
+              val argTypes = method.paramLists.flatten map { _.typeSignature }
+
+              typeParams forall { typeParam =>
+                argTypes exists { _ contains typeParam }
+              }
+            }
+            else
+              false
           }
           else
             false
