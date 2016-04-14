@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-<meta http-equiv="refresh" content="0; url=./rescala/main/index.html" />
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -20,12 +19,12 @@
 
 </script>
 
-<script src="./jquery.js"></script>
-    <script>
+<script src="./jquery.js"></script> 
+    <script> 
     $(function(){
-      $("#includedContent").load("./b.shtml");
+      $("#includedContent").load("./b.shtml"); 
     });
-    </script>
+    </script> 
 
 
     <title>REScala</title>
@@ -92,29 +91,47 @@
 
 
     <div class="container" role="main">
-
-
+      
+      
       <div class="col-sm-8 blog-main">
 	<div class="page-header">
-          <h1>Documentation</h1>
+          <h1>RPeclipse Plugin</h1>
 	</div>
 
 
 	<div class="blog-post">
-
-	  <p> An introductory manual is available. The manual provides
-	  a step-by-step introduction to REScala features.
-	  </p>
+	  <p> 
+Reactive programming relives developers from manually
+updating outputs when the inputs of a computation change, it overcomes
+a number of well-known issues of the Observer design pattern, and it
+makes pro grams more comprehensible. 
+<img class="screenshot" src="./images/rpeclipse.png" width="500" />
+Unfortunately, complementing the
+new paradigm with proper tools that support coding activities is a
+vastly unexplored area. Hence, as of now, developers can embrace
+reactive programming only at the cost of a more challenging
+development process.
+	  </p>	  	  
+	  <p> In this project, we investigate a primary issue in the
+field: debugging programs in the reactive style. We analyze the
+problem of debugging reactive programs, show that the reactive style
+requires a paradigm shift in the concepts needed for debugging, and
+propose RP Debugging, a methodology for effectively debugging reactive
+programs. These ideas are implemented in RPeclipse, a debugger for
+reactive programs integrated with the Eclipse Scala development
+environment.
+	  </p>	  	  
 	</div>
 
-
 	<div class="blog-post">
-	  <p> ReactEdit on GitHub:
+	  <p>  
+	    The RPeclipse plugin is available on GitHub:
 	  </p>
-	  <p>
-	   <a href="https://github.com/guidosalva/rssreader"> https://github.com/guidosalva/rssreader </a>
+	  <p>  
+	    <a href="https://github.com/guidosalva/eclipse-plugin">
+	    https://github.com/guidosalva/eclipse-plugin </a>
 	  </p>
-
+	  
 	</div>
       </div>
 
@@ -129,7 +146,7 @@
         <h3> REScala </h3>
         <div class="list-group">
           <a href="./overview.html" class="list-group-item">Overview</a>
-          <a href="./documentation.html" class="list-group-item">Documentation</a>
+      <a href="./documentation.html" class="list-group-item">Documentation</a>
           <a href="./download.html" class="list-group-item">Download</a>
 
           <a href="./examples.html" class="list-group-item">REScala Examples</a>
@@ -154,15 +171,6 @@
           <a href="reactshapes.html" class="list-group-item">React Shapes</a>
         </div>
       </div>
-
-
-      <div class="col-sm-4 blog-sidebar">
-        <h3> Tools </h3>
-        <div class="list-group">
-          <a href="REClipse.html" class="list-group-item">REScala Eclipse plugin</a>
-        </div>
-      </div>
-
 
     </div> <!-- /container -->
 

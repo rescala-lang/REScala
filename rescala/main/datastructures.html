@@ -1,7 +1,6 @@
-<!DOCTYPE html>
+s<!DOCTYPE html>
 <html lang="en">
   <head>
-<meta http-equiv="refresh" content="0; url=./rescala/main/index.html" />
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -20,12 +19,12 @@
 
 </script>
 
-<script src="./jquery.js"></script>
-    <script>
+<script src="./jquery.js"></script> 
+    <script> 
     $(function(){
-      $("#includedContent").load("./b.shtml");
+      $("#includedContent").load("./b.shtml"); 
     });
-    </script>
+    </script> 
 
 
     <title>REScala</title>
@@ -92,33 +91,64 @@
 
 
     <div class="container" role="main">
-
-
+      
       <div class="col-sm-8 blog-main">
 	<div class="page-header">
-          <h1>Documentation</h1>
+          <h1>Reactive Datastructures</h1>
 	</div>
-
-
 	<div class="blog-post">
-
-	  <p> An introductory manual is available. The manual provides
-	  a step-by-step introduction to REScala features.
+	  <p>
+	    Reactive Datastructures is a library of datastructures
+	    based on REScala reactive abstractions.  The library
+	    is <a href="http://docs.scala-lang.org/overviews/core/architecture-of-scala-collections.html" target="_top">
+	    compatible with the Scala collection
+	    framework </a>. Attributes are exposed as reactive values
+	    and operations on the structure are updated reactively.
 	  </p>
+
+<pre class="brush:scala">
+val b = Var(2)
+val a = Var(3)
+collection += 1
+collection += b.toSignal
+collection += a.toSignal
+
+val filtered: ReactiveHashSet[Int] = 
+  collection.filter(Var((x: Int) => x % 2 == 0).toSignal)
+assertResult(true)(filtered.contains(2)())
+assertResult(false)(filtered.contains(3)())
+assertResult(false)(filtered.contains(4)())
+
+// filtered.contains is a Signal!
+collection += 4
+assertResult(true)(filtered.contains(4)())
+b() = 3
+assertResult(false)(filtered.contains(2)())
+a() = 2
+assertResult(true)(filtered.contains(2)())
+</pre>
+
 	</div>
 
-
 	<div class="blog-post">
-	  <p> ReactEdit on GitHub:
+	  <p> The Reactive Datastructures on GitHub:
 	  </p>
 	  <p>
-	   <a href="https://github.com/guidosalva/rssreader"> https://github.com/guidosalva/rssreader </a>
+	    <a href="https://github.com/guidosalva/reactive-datastructures" target="_top">
+	    https://github.com/guidosalva/reactive-datastructures </a>
 	  </p>
-
+	  
 	</div>
+
+	<div class="blog-post">
+	  <p> The Reactive Datastructures library has been provided by 
+Yannick Schrockers.
+
+	  </p>
       </div>
 
 
+      </div>
 
 
 
@@ -154,15 +184,6 @@
           <a href="reactshapes.html" class="list-group-item">React Shapes</a>
         </div>
       </div>
-
-
-      <div class="col-sm-4 blog-sidebar">
-        <h3> Tools </h3>
-        <div class="list-group">
-          <a href="REClipse.html" class="list-group-item">REScala Eclipse plugin</a>
-        </div>
-      </div>
-
 
     </div> <!-- /container -->
 

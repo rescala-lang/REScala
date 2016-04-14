@@ -1,0 +1,55 @@
+body {
+  padding-top: 70px;
+  padding-bottom: 200px;
+  font-weight: normal;
+}
+
+.theme-dropdown .dropdown-menu {
+  position: static;
+  display: block;
+  margin-bottom: 20px;
+}
+
+.theme-showcase > p > .btn {
+  margin: 5px 0;
+}
+
+
+.blog-post {
+  padding-bottom: 70px;
+  font-size: 26px;
+}
+
+.list-group-item {
+  font-size: 20px;
+}
+
+
+
+
+.screenshot {
+    float: right;
+    padding: 30px;
+}
+
+
+
+
+/*
+ * Override Bootstrap's default container.
+ */
+
+@media (min-width: 1200px) {
+  .container {
+    width: 1400px;
+  }
+}
+
+
+body .syntaxhighlighter code, body .syntaxhighlighter .gutter { 
+	overflow-y: hidden !important; 
+	overflow-x: auto !important; 
+  font-size: 20px !important; 
+}
+
+
