@@ -1,0 +1,18 @@
+# Welcome to Jekyll!
+#
+# This config file is meant for settings that affect your whole blog, values
+# which you are expected to set up once and rarely need to edit after that.
+# For technical reasons, this file is *NOT* reloaded automatically when you use
+# 'jekyll serve'. If you change this file, please restart the server process.
+
+# Site settings
+title: REScala
+email: salvaneschi@st.informatik.tu-darmstadt.de
+description: > # this means to ignore newlines until "baseurl:"
+  REScala is a reactive language which integrates concepts from event-based and functional-reactive programming into the object-oriented world.
+baseurl: "" # the subpath of your site, e.g. /blog
+url: "http://guidosalva.github.io" # the base hostname & protocol for your site
+
+markdown: kramdown
+
+highlighter: rouge

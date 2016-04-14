@@ -1,0 +1,136 @@
+---
+layout: default
+title: Overview
+---
+<div class="col-sm-8 blog-main">
+
+  <div class="page-header">
+    <h1>Overview of REScala</h1>
+  </div>
+
+  <div class="page-header">
+    <h2>Signals</h2>
+  </div>
+
+  <div class="blog-post">
+    <p>
+      In REScala, the general form of a signal s is
+    Signal{expr}, where expr is a standard Scala
+    expression. When expr is evaluated, all Signal and Var
+    values it refers to are registered as dependents of s; any
+    subsequent change of them triggers a reevaluation of s.
+    </p>
+    <pre class="brush:scala">
+    val a = Var(2)
+    val b = Var(3)
+    val s = Signal{ a() + b() }
+    println(a.getVal,b.getVal,s.getVal) // (2,3,5)
+          a()= 4
+          println(a.getVal,b.getVal,s.getVal) // (4,3,7)
+        </pre>
+    <p>
+      REScala signals integrate seamlessly with OO design. They are
+    class attributes like fields and methods. They too can have
+    different visibilities. Public signals are part of the class
+    interface: Clients can refer to them to build composite
+    reactive values. Conversely, private signals are only for
+    object-internal use.  REScala signals cannot be re-assigned
+    new expressions once they are initialized.
+    </p>
+
+    <pre class="brush:scala">
+  trait Animal {
+    val age: Signal[Int]
+    val name: Signal[String]
+    private[myPackage] val speed: Signal[Double]
+  }
+      </pre>
+  </div>
+
+  <div class="page-header">
+    <h2>Events</h2>
+  </div>
+  <div class="blog-post">
+    <p>
+      REScala supports a rich event system. Imperative events
+    are fired directly by the programmer.
+    </p>
+    <pre class="brush:scala">
+    val e = new ImperativeEvent[Int]()
+    e += { x => println(x) }
+    e(10)
+    e(10)
+    // − output −
+    10
+    10
+  </pre>
+    <p>
+      Declarative events, are defined as a combination of other
+    events. For this purpose it offers operators like e1 ||e2
+    (occurrence of one among e1 or e2 ), e1 &&p (e1 occurs and
+    the predicate p is satisfied), e1 .map(f ) (the event
+    obtained by applying f to e1 ). Event composition allows
+    one to express the application logic in a clear and
+    declarative way
+    </p>
+    <pre class="brush:scala">
+    val e1 = new ImperativeEvent[Int]()
+    val e2 = new ImperativeEvent[Int]()
+    val e1 OR e2 = e1 | | e2
+    e1 OR e2 += ((x: Int) => println(x))
+    e1(10)
+    e2(10)
+    // − output −
+    10
+    10
+  </pre>
+  </div>
+
+  <div class="page-header">
+    <h2>Conversions</h2>
+  </div>
+  <div class="blog-post">
+    <p>
+      Since REScala promotes a mixed OO and functional style,
+    it is important to manage state at the boundary between
+    imperative and functional fragments of applications. For
+    this purpose, REScala provides a set of functions for
+    converting events into signals and vice versa.
+    </p>
+
+    <p>
+      The following code abstract over state to count the number
+  of mouse clicks using the fold function.
+    </p>
+    <pre class="brush:scala">
+val click: Event[(Int, Int)] = mouse.click
+val nClick: Signal[Int] = click.fold(0)( (x, ) => x+1 )
+</pre>
+
+    <p>
+      The following code provides the position of the last click
+  combining the click event and the position signal with the
+  snapshot function.
+    </p>
+    <pre class="brush:scala">
+val clicked: Event[Unit] = mouse.clicked
+val position: Signal[(Int,Int)] = mouse.position
+val lastClick: Signal[(Int,Int)] = position snapshot clicked
+</pre>
+
+  </div>
+
+  <div class="page-header">
+    <h1>Where to Go Next</h1>
+  </div>
+  <div class="blog-post">
+    <p>
+      <a href="./download.html">REScala download.</a>
+    </p>
+    <p>
+      <a href="./documentation.html">REScala user manual.</a>
+    </p>
+
+  </div>
+
+</div>
