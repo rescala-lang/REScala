@@ -16,7 +16,7 @@
   <link href="{{ site.github.url }}/dist/css/bootstrap-theme.min.css" rel="stylesheet">
 
   <!-- Custom styles for this template -->
-  <link href="{{ site.github.url }}/theme.css" rel="stylesheet"></head>
+  <link href="{{ site.github.url }}/css/theme.css" rel="stylesheet"></head>
 
 <body>
 
@@ -24,37 +24,10 @@
 
   <div class="container" role="main">
     {{ content }}
-    <div id="includedContent"></div>
 
-    <div class="col-sm-4 blog-sidebar">
-      <h3>REScala</h3>
-      <div class="list-group">
-        <a href="{{ site.github.url }}/overview" class="list-group-item">Overview</a>
-        <a href="{{ site.github.url }}/documentation" class="list-group-item">Documentation</a>
-        <a href="{{ site.github.url }}/download" class="list-group-item">Download</a>
-        <a href="{{ site.github.url }}/examples" class="list-group-item">REScala Examples</a>
-      </div>
-
-      <h3>Libraries</h3>
-      <div class="list-group">
-        <a href="{{ site.github.url }}/reswing" class="list-group-item">RESwing</a>
-        <a href="{{ site.github.url }}/datastructures" class="list-group-item">Reactive Datastructures</a>
-
-      </div>
-
-      <h3>Case studies</h3>
-      <div class="list-group">
-        <a href="{{ site.github.url }}/universe" class="list-group-item">Universe Simulation</a>
-        <a href="{{ site.github.url }}/reactedit" class="list-group-item">React Edit</a>
-        <a href="{{ site.github.url }}/reactrss" class="list-group-item">React RSS</a>
-        <a href="{{ site.github.url }}/reactshapes" class="list-group-item">React Shapes</a>
-      </div>
-
-      <h3>Tools</h3>
-      <div class="list-group">
-        <a href="{{ site.github.url }}/REClipse" class="list-group-item">REScala Eclipse plugin</a>
-      </div>
-    </div>
+    {% if page.sidebar %}
+      {% include sidebar_{{ page.sidebar }}.html %}
+    {% endif %}
 
   </div>
   <!-- /container -->
