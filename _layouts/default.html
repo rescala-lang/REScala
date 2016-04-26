@@ -7,16 +7,6 @@
   <meta name="description" content="">
   <meta name="author" content="">
 
-  <script>
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-  ga('create', 'UA-50877814-1', 'rescala-lang.com');
-  ga('send', 'pageview');
-  </script>
-
 
   <title>{{ page.title }} - REScala</title>
 
@@ -30,22 +20,7 @@
 
 <body>
 
-  <!-- Fixed navbar -->
-  <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
-    <div class="container">
-      <div class="navbar-header">
-        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-          <span class="sr-only">Toggle navigation</span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-        </button>
-        <a class="navbar-brand" href="{{ site.github.url }}/index">Home</a>
-        <a class="navbar-brand" href="{{ site.github.url }}/contact">Contact</a>
-      </div>
-
-    </div>
-  </div>
+  {% include navbar.html %}
 
   <div class="container" role="main">
     {{ content }}
@@ -83,6 +58,16 @@
 
   </div>
   <!-- /container -->
+
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-50877814-1', 'rescala-lang.com');
+  ga('send', 'pageview');
+  </script>
 
   <!-- Bootstrap core JavaScript
     ================================================== -->
