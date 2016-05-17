@@ -169,6 +169,15 @@ class Typer[C <: Context](val c: C) {
           if (hi =:= definitions.AnyTpe) EmptyTree else expandType(hi))
 
       case ExistentialType(quantified, underlying) =>
+        object singletonTypeNameFixer extends Transformer {
+          override def transform(tree: Tree) = tree match {
+            case Ident(TypeName(name)) if name endsWith ".type" =>
+              Ident(TermName(name substring (0, name.size - 5)))
+            case _ =>
+              super.transform(tree)
+          }
+        }
+
         val whereClauses = quantified map { quantified =>
           quantified.typeSignature match {
             case TypeBounds(lo, hi) =>
@@ -199,7 +208,9 @@ class Typer[C <: Context](val c: C) {
         if (whereClauses exists { _.isEmpty })
           TypeTree(tpe)
         else
-          ExistentialTypeTree(expandType(underlying), whereClauses.flatten)
+          ExistentialTypeTree(
+            singletonTypeNameFixer transform expandType(underlying),
+            whereClauses.flatten)
 
       case RefinedType(parents, scope) =>
         def refiningType(sym: TypeSymbol): TypeDef =
@@ -338,12 +349,7 @@ class Typer[C <: Context](val c: C) {
         }
 
         if (hasImplicitParamList && hasNonRepresentableType)
-          fun match {
-            case TypeApply(fun, _) =>
-              transform(fun)
-            case _ =>
-              transform(fun)
-          }
+          transform(fun)
         else
           transform(tree)
 
@@ -356,29 +362,46 @@ class Typer[C <: Context](val c: C) {
         val typeArgsInferable =
           if (tree.symbol != null && tree.symbol.isMethod) {
             val method = tree.symbol.asMethod
-            val implicitParamListCount =
-              if (method.paramLists.lastOption exists {
-                    _.headOption exists { _.isImplicit }
-                 }) 1 else 0
-
-            val typeParams = method.typeParams
-            val argTypes = (method.paramLists dropRight implicitParamListCount)
-              .flatten map { _.typeSignature }
-
-            typeParams forall { typeParam =>
-              argTypes exists { _ contains typeParam }
+            val hasImplicitParamList = method.paramLists.lastOption exists {
+              _.headOption exists { _.isImplicit }
             }
+
+            if (!hasImplicitParamList) {
+              val typeParams = method.typeParams
+              val argTypes = method.paramLists.flatten map { _.typeSignature }
+
+              typeParams forall { typeParam =>
+                argTypes exists { _ contains typeParam }
+              }
+            }
+            else
+              false
           }
           else
             false
 
         if (typeArgsSynthetic && typeArgsInferable) {
-          val apply = Apply(transform(fun), transformTrees(args))
+          val apply = Apply(fun, args)
           internal setSymbol (apply, tree.symbol)
           internal setType (apply, tree.tpe)
           internal setPos (apply, tree.pos)
           transform(apply)
         }
+        else
+          super.transform(tree)
+
+      case TypeApply(fun, targs) =>
+        val hasNonRepresentableType = targs exists { arg =>
+          arg.tpe != null && (arg.tpe exists {
+            case TypeRef(NoPrefix, name, List()) =>
+              name.toString endsWith ".type"
+            case _ =>
+              false
+          })
+        }
+
+        if (hasNonRepresentableType)
+          transform(fun)
         else
           super.transform(tree)
 
@@ -578,6 +601,15 @@ class Typer[C <: Context](val c: C) {
           internal setPos (newValDef, valDef.pos)
 
         // fix lazy vals
+        case ValDef(mods, _, TypeTree(), EmptyTree)
+            if (mods hasFlag PRIVATE | LOCAL | LAZY) &&
+              !(mods hasFlag PARAMACCESSOR) =>
+          EmptyTree
+        case Ident(name) =>
+          if (tree.symbol.isTerm && tree.symbol.asTerm.isLazy)
+            internal setSymbol (tree, NoSymbol)
+          else
+            tree
         case defDef @ DefDef(mods, name, _, _, tpt, rhs)
             if tree.symbol.isTerm && {
               val term = tree.symbol.asTerm

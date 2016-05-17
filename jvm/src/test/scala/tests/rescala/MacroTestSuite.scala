@@ -271,6 +271,30 @@ class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asser
     assert(sig.now == "value37")
   }
 
+  @Test def lazyValues() = {
+    // would fail due to https://issues.scala-lang.org/browse/SI-5466
+    // if we didn't work around un-type-checking issues
+
+    val v1 = Var(4)
+    val v2 = Var(false)
+
+    val sig = Signal {
+      lazy val v = v1()
+      if (v2()) v else 0
+    }
+
+    assert(sig.now == 0)
+    v1() = 5
+    assert(sig.now == 0)
+    v2() = true
+    assert(sig.now == 5)
+    v1() = 2
+    assert(sig.now == 2)
+    v2() = false
+    assert(sig.now == 0)
+    v1() = 8
+    assert(sig.now == 0)
+  }
 
   @Test def patternMatchingAndWildcard() = {
     // would fail due to https://issues.scala-lang.org/browse/SI-5465

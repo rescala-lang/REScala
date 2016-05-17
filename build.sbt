@@ -14,7 +14,7 @@ lazy val rescala = crossProject.in(file("."))
   .settings(
     name := "rescala",
 
-    version := "0.16.0",
+    version := "0.17.0-SNAPSHOT",
 
     libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _),
     libraryDependencies += "org.mockito" % "mockito-all" % "1.10.19" % "test",
