@@ -77,7 +77,8 @@ sub init {
   mkdir "$RESULTDIR/$GITREF";
   mkdir $OUTDIR;
   chdir "..";
-  system('sbt', 'set scalacOptions in ThisBuild ++= List("-Xdisable-assertions", "-Xelide-below", "9999999")', 'project microbench', 'stage', 'compileJmh');
+
+  system('./sbt', 'set scalacOptions in ThisBuild ++= List("-Xdisable-assertions", "-Xelide-below", "9999999")', 'project microbench', 'stage', 'compileJmh');
   qx[perl -p -i -e 's#exec java \\\$JAVA_OPTS -cp "#exec java \\\$JAVA_OPTS -cp "\\\$PROJECT_DIR/Microbench/target/scala-2.11/jmh-classes:#g' ./Microbench/target/start];
   #system('sbt','clean', 'jmh:compile', 'jmh:stage');
   chdir $MAINDIR;
