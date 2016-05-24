@@ -36,7 +36,7 @@ trait PlanImpl[S <: Struct, TImpl <: AbstractPropagation[S]] extends Engine[S, T
   override def plan[Res](initialWrites: Reactive*)(admissionPhase: TImpl => Res): Res = {
 
     val turn = makeTurn
-    try {
+    val result = try {
       val turnResult = currentTurn.withValue(Some(turn)) {
         turn.preparationPhase(initialWrites.toList)
         val admissionResult = admissionPhase(turn)
@@ -44,7 +44,6 @@ trait PlanImpl[S <: Struct, TImpl <: AbstractPropagation[S]] extends Engine[S, T
         turn.commitPhase()
         admissionResult
       }
-      turn.observerPhase()
       turnResult
     }
     catch {
@@ -55,6 +54,8 @@ trait PlanImpl[S <: Struct, TImpl <: AbstractPropagation[S]] extends Engine[S, T
     finally {
       turn.releasePhase()
     }
+    turn.observerPhase()
+    result
   }
 
 }
