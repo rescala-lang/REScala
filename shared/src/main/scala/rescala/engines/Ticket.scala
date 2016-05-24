@@ -18,9 +18,11 @@ final case class Ticket[S <: Struct](self: Either[Turn[S], Engine[S, Turn[S]]]) 
 }
 
 object Ticket extends LowPriorityTicket {
-  implicit def explicit[S <: Struct](implicit turn: Turn[S]): Ticket[S] = Ticket(Left(turn))
+  implicit def fromTurnImplicit[S <: Struct](implicit turn: Turn[S]): Ticket[S] = Ticket(Left(turn))
+  implicit def fromTurn[S <: Struct](turn: Turn[S]): Ticket[S] = Ticket(Left(turn))
 }
 
 sealed trait LowPriorityTicket {
-  implicit def dynamic[S <: Struct](implicit factory: Engine[S, Turn[S]]): Ticket[S] = Ticket(Right(factory))
+  implicit def fromEngineImplicit[S <: Struct](implicit factory: Engine[S, Turn[S]]): Ticket[S] = Ticket(Right(factory))
+  implicit def fromEngine[S <: Struct](factory: Engine[S, Turn[S]]): Ticket[S] = Ticket(Right(factory))
 }

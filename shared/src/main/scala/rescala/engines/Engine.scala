@@ -22,8 +22,8 @@ trait Engine[S <: Struct, +TTurn <: Turn[S]] {
   final type Turn = propagation.Turn[S]
   final type Ticket = rescala.engines.Ticket[S]
   final type Reactive = rescala.graph.Reactive[S]
-  final def Evt[A](): Evt[A] = reactives.Evt[A, S]()(Ticket.dynamic(this))
-  final def Var[A](v: A): Var[A] = reactives.Var[A, S](v)(Ticket.dynamic(this))
+  final def Evt[A](): Evt[A] = reactives.Evt[A, S]()(Ticket.fromEngineImplicit(this))
+  final def Var[A](v: A): Var[A] = reactives.Var[A, S](v)(Ticket.fromEngineImplicit(this))
   final def static[T](dependencies: Reactive*)(expr: Turn => T)(implicit ticket: Ticket): Signal[T] = Signals.static(dependencies: _*)(expr)
   final def dynamic[T](dependencies: Reactive*)(expr: Turn => T)(implicit ticket: Ticket): Signal[T] = Signals.dynamic(dependencies: _*)(expr)
   final def dynamicE[T](dependencies: Reactive*)(expr: Turn => Option[T])(implicit ticket: Ticket): Event[T] = Events.dynamic(dependencies: _*)(expr)
