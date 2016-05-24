@@ -20,7 +20,7 @@ class ReButton(
     verticalTextPosition: ReSwingValue[Alignment.Value] = (),
     icon: ReSwingValue[Icon] = (),
     pressedIcon: ReSwingValue[Icon] = (),
-    selectedIcon: ReSwingValue[Icon] = (),
+    selectedIcon: ReSwingValue[Icon] = ReSwingValue.apply(()),
     disabledIcon: ReSwingValue[Icon] = (),
     disabledSelectedIcon: ReSwingValue[Icon] = (),
     rolloverIcon: ReSwingValue[Icon] = (),
@@ -40,7 +40,7 @@ class ReButton(
                      background, foreground, font, enabled,
                      minimumSize, maximumSize, preferredSize) {
   override protected lazy val peer = new Button with ComponentMixin
-  
+
   if (action != null)
     peer.action = action
 }

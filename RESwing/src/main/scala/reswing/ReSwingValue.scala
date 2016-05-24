@@ -60,27 +60,26 @@ object ReSwingValue {
   /**
    * Does not cause the `Swing` library to use a specific value.
    */
-  implicit def apply[T](value: Unit) = ReSwingNoValue[T]
-
+  implicit def apply[T](value: Unit): ReSwingNoValue[T] = ReSwingNoValue[T]()
   /**
    * Sets the given value once.
    * After this, does not cause the `Swing` library to use a specific value.
    */
-  implicit def apply[T](value: T) = ReSwingValueValue(value)
+  implicit def apply[T](value: T): ReSwingValueValue[T] = ReSwingValueValue(value)
 
   /**
    * Sets the value whenever the given [[react.events.Event]] changes.
    */
-  implicit def apply[T](value: => Event[T]) = ReSwingEventValue(Lazy { value })
+  implicit def apply[T](value: => Event[T]): ReSwingEventValue[T] = ReSwingEventValue(Lazy { value })
 
   /**
    * Sets the value to the value of the given [[react.Signal]] and causes
    * the `Swing` library to always use the current `Signal` value.
    */
-  implicit def apply[T](value: => Signal[T]) = ReSwingSignalValue(Lazy { value })
+  implicit def apply[T](value: => Signal[T]): ReSwingSignalValue[T] = ReSwingSignalValue(Lazy { value })
 
   /**
    * Returns the [[react.Signal]] representing the value.
    */
-  implicit def toSignal[T](value: ReSwingValue[T]) = value.toSignal
+  implicit def toSignal[T](value: ReSwingValue[T]): Signal[T] = value.toSignal
 }

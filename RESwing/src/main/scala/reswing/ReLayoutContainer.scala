@@ -18,7 +18,7 @@ trait ReLayoutContainer[Constraints] extends ReUIElement {
     peerLayout.clear
     peerLayout ++= components
     peer.repaint
-    peer.peer.validate
+    peer.peer.validate()
   }
 
   def contents: ReSwingValue[Map[Component, Constraints]]
