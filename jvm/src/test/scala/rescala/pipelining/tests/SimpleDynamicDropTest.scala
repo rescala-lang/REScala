@@ -14,7 +14,7 @@ class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
 
   import engine.Var
 
-  val timeToAllowOtherTurnToCreateFrames = 100
+  val timeToAllowOtherTurnToCreateFrames = 100l
 
   val source1 = Var(0)
   val source2 = Var(2)
