@@ -9,7 +9,6 @@ import reswing.ReTextField._
 import reswing._
 import scala.swing.SimpleSwingApplication
 import rescala.Signal
-import makro.SignalMacro.{SignalM => Signal}
 import scala.swing.FlowPanel
 
 

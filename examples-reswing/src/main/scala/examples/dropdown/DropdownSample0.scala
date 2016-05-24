@@ -9,7 +9,7 @@ import reswing.ReTextField._
 import reswing._
 import scala.swing.SimpleSwingApplication
 import rescala.Signal
-import makro.SignalMacro.{SignalM => Signal}
+import rescala.Engine
 import scala.swing.FlowPanel
 
 
@@ -46,7 +46,7 @@ object DropdownSample0 extends SimpleSwingApplication {
   //outputString.changed += { a => println(a)}
   
   def top = new MainFrame {
-	  title = "Dropdown example"
+	  title = "Dropdown example 0"
 	  contents = new BoxPanel(Orientation.Vertical) {
 	    
 	    contents += new FlowPanel { 
