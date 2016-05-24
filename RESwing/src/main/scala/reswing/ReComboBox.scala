@@ -31,15 +31,12 @@ class ReComboBox[A](
   private var model: javax.swing.ListModel[A] = _
 
   private val modelListener = new javax.swing.event.ListDataListener {
-    def contentsChanged(e: javax.swing.event.ListDataEvent)
-      { peer publish ListChanged(null) }
-    def intervalRemoved(e: javax.swing.event.ListDataEvent)
-      { peer publish ListElementsRemoved(null, e.getIndex0 to e.getIndex1) }
-    def intervalAdded(e: javax.swing.event.ListDataEvent)
-      { peer publish ListElementsAdded(null, e.getIndex0 to e.getIndex1) }
+    def contentsChanged(e: javax.swing.event.ListDataEvent): Unit = { peer publish ListChanged(null) }
+    def intervalRemoved(e: javax.swing.event.ListDataEvent): Unit = { peer publish ListElementsRemoved(null, e.getIndex0 to e.getIndex1) }
+    def intervalAdded(e: javax.swing.event.ListDataEvent): Unit = { peer publish ListElementsAdded(null, e.getIndex0 to e.getIndex1) }
   }
 
-  def modelChanged = {
+  def modelChanged() = {
     if (model != null)
       model removeListDataListener modelListener
     if (javaPeer.getModel != null)
@@ -48,7 +45,7 @@ class ReComboBox[A](
   }
 
   javaPeer setModel new ReComboBox.ReComboBoxModel[A]
-  modelChanged
+  modelChanged()
 
   items using (
       { () =>
@@ -58,15 +55,15 @@ class ReComboBox[A](
         }
       },
       { items =>
-        val selected =
-        (javaPeer.getModel match {
+        val model = javaPeer.getModel match {
           case model: ReComboBox.ReComboBoxModel[A] => model
           case _ =>
             val model = new ReComboBox.ReComboBoxModel[A]
             javaPeer setModel model
-            modelChanged
+            modelChanged()
             model
-        })() = items
+        }
+        model.update(items)
       },
       classOf[ListChanged[_]])
 
@@ -96,28 +93,30 @@ object ReComboBox {
 
   class ReComboBoxModel[A]
       extends javax.swing.AbstractListModel[A] with javax.swing.ComboBoxModel[A] {
-    private var items = Seq.empty[A]
-    def update(listData: Seq[A]) {
-      val itemsSize = items.size
-      val additional = listData.size - itemsSize
+    private var items: Seq[A] = Seq.empty[A]
+
+    def update(listData: Seq[A]): Unit = {
+      val itemsSize: Int = items.size
+      val additional: Int = listData.size - itemsSize
       items = listData
 
-      if (!(items contains selected))
-        selected = null
+      if (!items.contains[Any](selected)) selected = null
 
       if (additional > 0)
         fireIntervalAdded(this, itemsSize, listData.size - 1)
       if (additional < 0)
         fireIntervalRemoved(this, listData.size, itemsSize - 1)
+
       fireContentsChanged(this, 0, listData.size)
     }
+
     def getElementAt(n: Int) = items(n)
     def getSize = items.size
     def getItems = items
 
     private var selected: AnyRef = _
-    def getSelectedItem = selected.asInstanceOf[AnyRef]
-    def setSelectedItem(item: AnyRef) {
+    def getSelectedItem: AnyRef = selected
+    def setSelectedItem(item: AnyRef): Unit = {
       if ((item == null || (items contains item)) &&
            ((selected != null && selected != item) ||
             (selected == null && item != null))) {

@@ -68,7 +68,7 @@ class ReTable[A <: AnyRef](
     )
   }
 
-  def modelChanged {
+  def modelChanged(): Unit = {
     if (model != null)
       model removeTableModelListener modelListener
     if (peer.peer.getModel != null)
@@ -230,7 +230,7 @@ object ReTable {
     private var columnNames = Seq.empty[String]
     private var editable: Editable = _
 
-    def update(values: Either[Seq[Seq[A]], Seq[String]]) {
+    def update(values: Either[Seq[Seq[A]], Seq[String]]): Unit = {
       values match {
         case Left(data) =>
           rowData = data
@@ -241,7 +241,7 @@ object ReTable {
       }
     }
 
-    def setCellEditable(cellEditable: Editable) {
+    def setCellEditable(cellEditable: Editable): Unit = {
       editable = cellEditable
     }
 

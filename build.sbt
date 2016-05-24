@@ -71,6 +71,12 @@ lazy val microbench = project.in(file("Microbench"))
   .dependsOn(rescalaJVM)
 
 
+lazy val reswing = project.in(file("RESwing"))
+  .dependsOn(rescalaJVM)
+  .settings(
+    libraryDependencies += "org.scala-lang" % "scala-swing" % "2.11+")
+
+
 
 scalacOptions in ThisBuild ++= (
   "-deprecation" ::
@@ -91,6 +97,6 @@ scalacOptions in ThisBuild ++= (
   "-Ywarn-dead-code" ::
   "-Ywarn-nullary-override" ::
   "-Ywarn-nullary-unit" ::
-  //"-Ywarn-numeric-widen" ::
+  "-Ywarn-numeric-widen" ::
   //"-Ywarn-value-discard" ::
   Nil)

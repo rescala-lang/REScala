@@ -38,15 +38,12 @@ class ReListView[A](
   private var model: javax.swing.ListModel[A] = _
 
   private val modelListener = new javax.swing.event.ListDataListener {
-    def contentsChanged(e: javax.swing.event.ListDataEvent)
-      { peer publish ListChanged(peer) }
-    def intervalRemoved(e: javax.swing.event.ListDataEvent)
-      { peer publish ListElementsRemoved(peer, e.getIndex0 to e.getIndex1) }
-    def intervalAdded(e: javax.swing.event.ListDataEvent)
-      { peer publish ListElementsAdded(peer, e.getIndex0 to e.getIndex1) }
+    def contentsChanged(e: javax.swing.event.ListDataEvent): Unit = { peer publish ListChanged(peer) }
+    def intervalRemoved(e: javax.swing.event.ListDataEvent): Unit = { peer publish ListElementsRemoved(peer, e.getIndex0 to e.getIndex1) }
+    def intervalAdded(e: javax.swing.event.ListDataEvent): Unit = { peer publish ListElementsAdded(peer, e.getIndex0 to e.getIndex1) }
   }
 
-  def modelChanged {
+  def modelChanged(): Unit = {
     if (model != null)
       model removeListDataListener modelListener
     if (javaPeer.getModel != null)
@@ -132,7 +129,7 @@ object ReListView {
 
   class ReListModel[A] extends javax.swing.AbstractListModel[A] {
     private var items = Seq.empty[A]
-    def update(listData: Seq[A]) {
+    def update(listData: Seq[A]): Unit = {
       val itemsSize = items.size
       val additional = listData.size - itemsSize
       items = listData
