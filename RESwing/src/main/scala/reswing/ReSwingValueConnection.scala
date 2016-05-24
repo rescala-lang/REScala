@@ -46,7 +46,7 @@ import scala.swing.event.Event
  * }
  * }}}
  */
-private[reswing] abstract trait ReSwingValueConnection {
+private[reswing] trait ReSwingValueConnection {
   protected def peer: UIElement
 
   protected implicit def toReSwingValueConnector[T](signal: ReSwingValue[T]) =
@@ -66,9 +66,9 @@ private[reswing] abstract trait ReSwingValueConnection {
   /**
    * Represents a `Swing` property that is used to react on value changes
    * to update the reactive value accordingly.
-   * This can be either a [[scala.Predef.String]] representing a bound property
-   * ([[java.awt.Component.addPropertyChangeListener]]) or
-   * a [[scala.swing.Publisher]] and a [[scala.Predef.Class]] representing the
+   * This can be either a String representing a bound property
+   * (java.awt.Component#addPropertyChangeListener) or
+   * a scala.swing.Publisher and a scala.Predef.Class representing the
    * event-publishing component and the event type.
    */
   protected type ChangingProperty = Either[String, (Publisher, Class[_])]

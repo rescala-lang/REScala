@@ -1,8 +1,11 @@
 organization in ThisBuild := "de.tuda.stg"
 scalaVersion in ThisBuild := "2.11.7"
 
+version in ThisBuild := "0.17.0-SNAPSHOT"
+
+
 lazy val root = project.in(file("."))
-  .aggregate(rescalaJVM, rescalaJS)
+  .aggregate(rescalaJVM, rescalaJS, reswing)
   .settings(
     publish := {},
     publishLocal := {}
@@ -13,9 +16,6 @@ lazy val rescala = crossProject.in(file("."))
   .disablePlugins(JmhPlugin)
   .settings(
     name := "rescala",
-
-    version := "0.17.0-SNAPSHOT",
-
     libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _),
     libraryDependencies += "org.mockito" % "mockito-all" % "1.10.19" % "test",
     libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.6" % "test",
@@ -74,6 +74,7 @@ lazy val microbench = project.in(file("Microbench"))
 lazy val reswing = project.in(file("RESwing"))
   .dependsOn(rescalaJVM)
   .settings(
+    name := "reswing",
     libraryDependencies += "org.scala-lang" % "scala-swing" % "2.11+")
 
 

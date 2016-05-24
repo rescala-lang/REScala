@@ -36,12 +36,12 @@ object ReSwingEvent {
   implicit def apply[T](value: Unit): ReSwingEventNone[T] = new ReSwingEventNone[T]
 
   /**
-   * Wraps a [[react.events.Event]] to be used with the library.
+   * Wraps a Event to be used with the library.
    */
   implicit def apply[T](value: => Event[T]): ReSwingEventIn[T] = new ReSwingEventIn(Lazy { value })
 
   /**
-   * Returns the [[react.events.Event]] representing the event.
+   * Returns the Event representing the event.
    */
   implicit def toEvent[T](value: ReSwingEvent[T]): Event[T] = value.toEvent
 }
