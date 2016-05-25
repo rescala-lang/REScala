@@ -10,7 +10,7 @@ object FoldVersion extends SimpleSwingApplication {
   lazy val application = new FoldVersion
   def top = application.frame
 
-  override def main(args: Array[String]) {
+  override def main(args: Array[String]): Unit = {
     super.main(args)
     while (true) {
       Swing onEDTWait {application.tick(())}
@@ -44,7 +44,7 @@ class FoldVersion {
   val frame = new MainFrame {
     contents = new Panel() {
       preferredSize = new Dimension(600, 600)
-      override def paintComponent(g: Graphics2D) {
+      override def paintComponent(g: Graphics2D): Unit = {
         g.fillOval(xx.now, yy.now, Size, Size)
       }
     }

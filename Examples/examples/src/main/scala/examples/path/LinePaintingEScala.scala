@@ -45,8 +45,8 @@ object LinePaintingEScala extends SimpleSwingApplication {
     /* records the dragging */
     var path = new geom.GeneralPath
 
-    def lineTo(p: Point): Unit = {path.lineTo(p.x, p.y); repaint()}
-    def moveTo(p: Point): Unit = {path.moveTo(p.x, p.y); repaint()}
+    def lineTo(p: Point): Unit = {path.lineTo(p.x.toFloat, p.y.toFloat); repaint()}
+    def moveTo(p: Point): Unit = {path.moveTo(p.x.toFloat, p.y.toFloat); repaint()}
 
     override def paintComponent(g: Graphics2D) = {
       super.paintComponent(g)

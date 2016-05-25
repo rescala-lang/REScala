@@ -12,7 +12,7 @@ object CatchUp extends SimpleSwingApplication {
   lazy val application = new CatchUp
   def top = application.frame
 
-  override def main(args: Array[String]) {
+  override def main(args: Array[String]): Unit = {
     super.main(args)
     while (true) {
       Swing onEDTWait {application.tick(())}
@@ -61,7 +61,7 @@ class CatchUp {
   val scoreString = Signal {"You caught up " + numberOfHits() + " times."}
 
   // GUI redrawing code
-  val stateChanged = mouse.position.changed || tick
+  val stateChanged = mouse.position.changed ||[Any] tick
   stateChanged += { _ => frame.repaint() }
 
 
@@ -72,7 +72,7 @@ class CatchUp {
     contents = new Panel() {
       listenTo(mouse.moves, mouse.clicks)
 
-      /** forward mouse events to EScala wrapper class. 
+      /** forward mouse events to EScala wrapper class.
         * Should be replaced once reactive GUI lib is complete
         */
       reactions += {
@@ -84,7 +84,7 @@ class CatchUp {
 
       preferredSize = new Dimension(Max_X, Max_Y)
       val myFont = new Font("Tahoma", java.awt.Font.PLAIN, SizeY)
-      override def paintComponent(g: Graphics2D) {
+      override def paintComponent(g: Graphics2D): Unit = {
         val fontMetrics = g.getFontMetrics(myFont)
         g.setColor(java.awt.Color.DARK_GRAY)
         g.fill(catchBox.now)

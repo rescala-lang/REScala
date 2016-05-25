@@ -11,7 +11,7 @@ object PulsingCircle extends SimpleSwingApplication {
   lazy val application = new PulsingCircle
   def top = application.frame
 
-  override def main(args: Array[String]) {
+  override def main(args: Array[String]): Unit = {
     super.main(args)
     while (true) {
       Swing onEDTWait {
@@ -29,13 +29,13 @@ class PulsingCircle {
     def move(delta: Delta) = new Point(x + delta.x, y + delta.y)
     override def toString = "Point("+ x + "," + y +")"
   }
-  
+
   class Line(m: Double, q: Double) {
     def translate(delta: Float) = new Line(m, q + delta)
     def rotate(delta: Float) = new Line(m + delta, q)
     override def toString = "Line("+ m + "," + q +")"
   }
- 
+
   */
 
   val toDraw = ListBuffer[Function1[Graphics2D, Unit]]()
@@ -67,7 +67,7 @@ class PulsingCircle {
   val frame = new MainFrame {
     contents = new Panel() {
       preferredSize = new Dimension(600, 600)
-      override def paintComponent(g: Graphics2D) {
+      override def paintComponent(g: Graphics2D): Unit = {
         toDraw.map(x => x(g))
       }
     }

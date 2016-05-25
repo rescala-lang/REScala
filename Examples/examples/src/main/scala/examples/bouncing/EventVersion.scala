@@ -29,7 +29,7 @@ class EventVersion {
   class Coord(private var _n: Int) {
     val changed = Evt[Int]
     def n: Int = _n
-    def n_=(newVal: Int) {
+    def n_=(newVal: Int): Unit = {
       _n = newVal
       changed(n)
     }
@@ -52,7 +52,7 @@ class EventVersion {
   xBounce += { _ => speed.x = -speed.x }
   yBounce += { _ => speed.y = -speed.y }
 
-  // handle repaint  
+  // handle repaint
   hasTicked += { _ => frame.repaint }
 
 
@@ -60,7 +60,7 @@ class EventVersion {
   val frame = new MainFrame {
     contents = new Panel() {
       preferredSize = new Dimension(600, 600)
-      override def paintComponent(g: Graphics2D) {
+      override def paintComponent(g: Graphics2D): Unit = {
         g.fillOval(x.n, y.n, Size, Size)
       }
     }

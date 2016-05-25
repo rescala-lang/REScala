@@ -5,7 +5,7 @@ version in ThisBuild := "0.17.0-SNAPSHOT"
 
 
 lazy val root = project.in(file("."))
-  .aggregate(rescalaJVM, rescalaJS, reswing)
+  .aggregate(rescalaJVM, rescalaJS, reswing, examples, examplesReswing)
   .settings(
     publish := {},
     publishLocal := {}
@@ -77,6 +77,20 @@ lazy val reswing = project.in(file("RESwing"))
     name := "reswing",
     libraryDependencies += "org.scala-lang" % "scala-swing" % "2.11+")
 
+lazy val examples = project.in(file("Examples/examples"))
+  .dependsOn(rescalaJVM)
+  .settings(
+    name := "rescala examples",
+    libraryDependencies += "org.scala-lang" % "scala-swing" % "2.11+",
+    publish := {},
+    publishLocal := {})
+
+lazy val examplesReswing = project.in(file("Examples/examples-reswing"))
+  .dependsOn(reswing)
+  .settings(
+    name := "reswing examples",
+    publish := {},
+    publishLocal := {})
 
 
 scalacOptions in ThisBuild ++= (

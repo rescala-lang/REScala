@@ -20,7 +20,7 @@ object PongStarter extends SimpleSwingApplication {
   lazy val application = new PongWindow
   def top = application.frame
 
-  override def main(args: Array[String]) {
+  override def main(args: Array[String]): Unit = {
     super.main(args)
     while (true) {
       Swing onEDTWait {application.tick(())}
@@ -49,7 +49,7 @@ class PongWindow {
 
       preferredSize = new Dimension(Pong.Max_X, Pong.Max_Y)
       val scoreFont = new Font("Tahoma", java.awt.Font.PLAIN, 32)
-      override def paintComponent(g: Graphics2D) {
+      override def paintComponent(g: Graphics2D): Unit = {
         g.setColor(java.awt.Color.DARK_GRAY)
         g.fillOval(ball.x.now, ball.y.now, Ball.Size, Ball.Size)
 

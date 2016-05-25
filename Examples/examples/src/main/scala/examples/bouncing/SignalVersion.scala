@@ -11,7 +11,7 @@ object SignalVersion extends SimpleSwingApplication {
   lazy val application = new SignalVersion
   def top = application.frame
 
-  override def main(args: Array[String]) {
+  override def main(args: Array[String]): Unit = {
     super.main(args)
     while (true) {
       Swing onEDTWait {application.tick.transform(_ + 1)}
@@ -44,11 +44,11 @@ class SignalVersion {
 
   tick.changed += ((_: Int) => frame.repaint)
 
-  // drawing code 
+  // drawing code
   val frame = new MainFrame {
     contents = new Panel() {
       preferredSize = new Dimension(600, 600)
-      override def paintComponent(g: Graphics2D) {
+      override def paintComponent(g: Graphics2D): Unit = {
         g.fillOval(x.now, y.now, Size, Size)
       }
     }

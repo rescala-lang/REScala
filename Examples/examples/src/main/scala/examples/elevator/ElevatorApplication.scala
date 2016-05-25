@@ -17,7 +17,7 @@ object ElevatorApplication extends SimpleSwingApplication {
   lazy val application = new ElevatorApplication(elevator)
   def top = application.frame
 
-  override def main(args: Array[String]) {
+  override def main(args: Array[String]): Unit = {
     super.main(args)
     while (true) {
       Swing onEDTWait {elevator.tick(())}
@@ -55,15 +55,15 @@ class ElevatorPainter(e: Elevator) extends Panel {
 
   preferredSize = new Dimension(sizeX, sizeY)
 
-  override def paintComponent(g: Graphics2D) {
+  override def paintComponent(g: Graphics2D): Unit = {
     draw(g, new Rectangle(0, 0, 0, 0))
   }
 
-  def draw(g: Graphics2D, area: Rectangle) {
+  def draw(g: Graphics2D, area: Rectangle): Unit = {
     val FloorX = area.x
     val FloorY = area.y + e.FloorStart
 
-    def drawCart(x: Int, y: Int, w: Int, h: Int) {
+    def drawCart(x: Int, y: Int, w: Int, h: Int): Unit = {
       g.setColor(Color.DARK_GRAY)
       g.fill3DRect(x, y, w, h, true)
 
@@ -72,17 +72,17 @@ class ElevatorPainter(e: Elevator) extends Panel {
       g.fill3DRect(x + w / 2 + 2, y + 2, w / 2 - 4, h - 4, true)
     }
 
-    def drawDuct {
+    def drawDuct(): Unit = {
       g.setColor(Color.BLACK)
       g.fillRect(FloorX + 5, FloorY + 5, FloorWidth - 10, FloorY + e.nFloors * FloorHeight + 10)
     }
 
-    def drawRoom(y: Int) {
+    def drawRoom(y: Int): Unit = {
       g.setColor(new Color(30, 30, 100))
       g.fillRect(FloorX + 8, FloorY + 8 + y, FloorWidth - 16, FloorHeight - 4)
     }
 
-    drawDuct
+    drawDuct()
     e.FloorPos.foreach(drawRoom(_))
     val pos = e.position.now
     drawCart(FloorX + 8, FloorY + 8 + pos, FloorWidth - 16, FloorHeight - 4)

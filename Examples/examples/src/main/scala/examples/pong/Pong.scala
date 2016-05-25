@@ -38,7 +38,7 @@ class Pong(val tick: Evt[Unit], val mouse: Mouse) {
   val leftWall = x.changed && (x => x < 0)
   val rightWall = x.changed && (x => x + Ball.Size > Pong.Max_X)
 
-  val xBounce = leftWall || rightWall || collisionRacket
+  val xBounce = leftWall || rightWall ||[AnyVal] collisionRacket
   val yBounce = y.changed && (y => y < 0 || y + Ball.Size > Pong.Max_Y)
 
   val speedX = xBounce.toggle(Var(speed.x), Var(-speed.x))
