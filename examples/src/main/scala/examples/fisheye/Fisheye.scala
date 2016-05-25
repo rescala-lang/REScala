@@ -1,18 +1,10 @@
 package examples.fisheye
 
-import rescala.events.ImperativeEvent
-import rescala.SignalSynt
-import rescala.Var
-import rescala.Signal
-import makro.SignalMacro.{ SignalM => Signal }
-import swing.{ Panel, MainFrame, SimpleSwingApplication }
-import java.awt.{ Color, Graphics2D, Dimension }
-import java.awt.Point
-import scala.swing.Swing
-import scala.swing.event._
-import java.awt.Font
-import java.awt.Rectangle
-import java.awt.Point
+import java.awt.{Color, Dimension, Font, Graphics2D, Rectangle}
+
+import rescala.{Engine, Signal}
+
+import scala.swing.{MainFrame, Panel, SimpleSwingApplication}
 
 object Fisheye extends SimpleSwingApplication {
   lazy val application = new Fisheye
@@ -31,20 +23,20 @@ class Box(val color: java.awt.Color, val xOffset: Signal[Int])(implicit val mous
 
   private def interpolation(d: Double) = math.max(0, math.min(1, 5 - math.log(d)))
 
-  val lowerLeft = Signal { new java.awt.Point(xOffset() + Box.Margin, Box.YPos) }
-  val mouseDistance = Signal { mouse.position().distance(lowerLeft()) }
-  val interpolationValue = Signal { interpolation(mouseDistance()) }
-  val effectiveSize = Signal { (Box.NormalSize + interpolationValue() * Box.DeltaSize).toInt }
-  val rightmostPoint = Signal { lowerLeft().getX.toInt + effectiveSize() }
+  val lowerLeft = Signal {new java.awt.Point(xOffset() + Box.Margin, Box.YPos)}
+  val mouseDistance = Signal {mouse.position().distance(lowerLeft())}
+  val interpolationValue = Signal {interpolation(mouseDistance())}
+  val effectiveSize = Signal {(Box.NormalSize + interpolationValue() * Box.DeltaSize).toInt}
+  val rightmostPoint = Signal {lowerLeft().getX.toInt + effectiveSize()}
 
   // add some saturation
   val components = color.getRGBColorComponents(null).map(_.toInt * 255)
   val hsv = Color.RGBtoHSB(components(0), components(1), components(2), null)
-  val effectiveColor = Signal { Color.getHSBColor(hsv(0), 0.6f + 0.4f * interpolationValue().toFloat, hsv(2)) }
+  val effectiveColor = Signal {Color.getHSBColor(hsv(0), 0.6f + 0.4f * interpolationValue().toFloat, hsv(2))}
 
   // define the box
-  val area = Signal { 
-    new Rectangle(xOffset(), Box.YPos, effectiveSize(), effectiveSize()) 
+  val area = Signal {
+    new Rectangle(xOffset(), Box.YPos, effectiveSize(), effectiveSize())
   }
 }
 
@@ -52,7 +44,7 @@ class Fisheye {
 
   val Max_X = 500
   val Max_Y = 200
-  val initPoint = Signal { 30 }
+  val initPoint = Signal {30}
 
   implicit val mouse = new Mouse
 
@@ -85,8 +77,8 @@ class Fisheye {
       val scoreFont = new Font("Tahoma", java.awt.Font.PLAIN, 32)
       override def paintComponent(g: Graphics2D) {
         for (box <- boxes) {
-          g.setColor(box.effectiveColor.get)
-          g.fill(box.area.get)
+          g.setColor(box.effectiveColor.now)
+          g.fill(box.area.now)
         }
       }
     }

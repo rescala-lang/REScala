@@ -1,7 +1,7 @@
 package examples.smashingparticles
 
 import rescala._
-import makro.SignalMacro.{SignalM => Signal}
+import rescala.Signal
 import swing.{Swing, Panel, MainFrame, SimpleSwingApplication}
 import java.awt.{Graphics2D, Dimension}
 import java.awt.Point
@@ -15,7 +15,7 @@ object SmashingParticles extends SimpleSwingApplication {
     super.main(args)
     while (true) {
 	  Swing onEDTWait {
-	    application.base() += 1
+	    application.base.transform( _ + 1)
         application.frame.repaint
       }
       Thread sleep 20
@@ -30,7 +30,7 @@ class SmashingParticles {
   
   class Oval(center: Signal[Point], radius: Signal[Int]) {
     toDraw += ((g: Graphics2D) => 
-      {g.fillOval(center.get.x,center.get.y, radius.get, radius.get)})
+      {g.fillOval(center.now.x,center.now.y, radius.now, radius.now)})
     
     override def toString = "Circle("+ center + "," + radius +")"
   }

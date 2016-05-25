@@ -6,8 +6,8 @@ import event._
 object TempConverterObserver extends SimpleSwingApplication {
   def top = new MainFrame {
     title = "Celsius/Fahrenheit Converter"
-    object celsius extends TextField { columns = 5 }
-    object fahrenheit extends TextField { columns = 5 }
+    object celsius extends TextField(10) { columns = 5 }
+    object fahrenheit extends TextField(20) { columns = 5 }
 
     listenTo(celsius, fahrenheit)
     reactions += {

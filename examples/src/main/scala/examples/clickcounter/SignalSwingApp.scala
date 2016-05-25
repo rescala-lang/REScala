@@ -1,9 +1,9 @@
 package examples.clickcounter
 
 
-import rescala.events.ImperativeEvent
+import rescala.{Evt, Engine}
 import rescala._
-import makro.SignalMacro.{SignalM => Signal}
+import rescala.Signal
 import scala.swing._
 import scala.swing.event._
 
@@ -11,13 +11,13 @@ import scala.swing.event._
 trait ReactiveText {
   def text_=(s : String)
   def text_=(value: Signal[String]) {    
-    this.text_=(value.get)
+    this.text_=(value.now)
     value.changed += {(t : String) => this.text_=(t)}
   }
 }
 class ReactiveLabel extends Label with ReactiveText
 class ReactiveButton extends Button with ReactiveText {
-	val clicked = new ImperativeEvent[ButtonClicked] // wrap the event to escala
+	val clicked = Evt[ButtonClicked] // wrap the event to escala
 	reactions += { case c @ ButtonClicked(_) => clicked(c) }
 }
 

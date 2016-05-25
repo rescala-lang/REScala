@@ -1,15 +1,11 @@
 package examples.extra.objectorientation
-import rescala.events._
-import rescala.SignalSynt
-import rescala.events._
-import rescala.Var
-import rescala.Signal
-import makro.SignalMacro.{SignalM => Signal}
+
+import rescala._
 
 class Keyboard {
-	protected lazy val press : Event[String] = new ImperativeEvent[String]
-	def keyPressed = press
-	protected lazy val something = Signal { 0 }
+  protected lazy val press: Event[String] = Evt[String]
+  def keyPressed = press
+  protected lazy val something = Signal {0}
 }
 
 class Numpad extends Keyboard {

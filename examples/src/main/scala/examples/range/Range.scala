@@ -1,7 +1,7 @@
 package examples.range
 
 import rescala._
-import makro.SignalMacro.{SignalM => Signal}
+import rescala.Signal
 
 
 

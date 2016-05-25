@@ -1,8 +1,8 @@
 package examples.circularmotion
 
-import rescala.events._
+
 import rescala._
-import makro.SignalMacro.{SignalM => Signal}
+import rescala.Signal
 
 
 
@@ -33,7 +33,7 @@ object SignalVersion extends App {
   
   while (true) {
     Thread sleep 200
-    time()= time.get + 1
+    time()= time.now + 1
   }
   
 

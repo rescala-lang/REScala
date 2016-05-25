@@ -3,11 +3,11 @@ package examples.tempconverter
 
 
 // Escala lib + behaviour extensions
-import rescala.events.ImperativeEvent
-import rescala.SignalSynt
+import rescala.{Evt, Engine}
+import rescala.Signal
 import rescala.Var
 import rescala.Signal
-import makro.SignalMacro.{SignalM => Signal}
+import rescala.Signal
 
 // Scala swing events
 import swing._

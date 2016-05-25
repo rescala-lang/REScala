@@ -2,9 +2,9 @@ package examples.catchup
 
 import scala.swing.Reactor
 import scala.swing.Component
-import rescala.events._
+
 import rescala._
-import makro.SignalMacro.{SignalM => Signal}
+import rescala.Signal
 import java.awt.Point
 import scala.swing.event._
 import scala.swing.Reactions
@@ -12,10 +12,10 @@ import scala.swing.Reactions
 class Mouse {
   
 	 /* EScala events */
-	val mouseMovedE = new ImperativeEvent[Point]()
-	val mousePressedE = new ImperativeEvent[Point]()
-	val mouseDraggedE = new ImperativeEvent[Point]()
-	val mouseReleasedE = new ImperativeEvent[Point]()
+	val mouseMovedE = Evt[Point]()
+	val mousePressedE = Evt[Point]()
+	val mouseDraggedE = Evt[Point]()
+	val mouseReleasedE = Evt[Point]()
 	
 	
 	/* Compose reactive values */

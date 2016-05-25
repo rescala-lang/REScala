@@ -1,7 +1,7 @@
 package examples.timeElapsing
 
 import rescala._
-import makro.SignalMacro.{SignalM => Signal}
+import rescala.Signal
 
 
 
@@ -21,8 +21,8 @@ object TimeElapsing extends App {
 
   while(true){
     Thread.sleep(0)
-    println((second.get, minute.get, hour.get, day.get))
-    tick.set(tick.get + 1)
+    println((second.now, minute.now, hour.now, day.now))
+    tick.set(tick.now + 1)
   }
 
 }

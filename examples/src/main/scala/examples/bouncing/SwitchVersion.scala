@@ -1,8 +1,8 @@
 package examples.bouncing
 
-import rescala.events._
+
 import rescala._
-import makro.SignalMacro.{SignalM => Signal}
+import rescala.Signal
 import swing.{Panel, MainFrame, SimpleSwingApplication}
 import java.awt.{Color, Graphics2D, Dimension}
 import java.awt.Point
@@ -15,7 +15,7 @@ object SwitchVersion extends SimpleSwingApplication {
   override def main(args: Array[String]) {
     super.main(args)
     while (true) {
-	  Swing onEDTWait { application.tick() }
+	  Swing onEDTWait { application.tick(()) }
       Thread sleep 20
     }
   }
@@ -28,20 +28,19 @@ class SwitchVersion {
   val initPosition = new Point(20, 10)
   val speed = new Point(10,8)
   
-  val tick = new ImperativeEvent[Unit]
+  val tick = Evt[Unit]
   
   
   // Using switch
-  import rescala.conversions.SignalConversions._
-  
-  val x: Signal[Int] = tick.fold(initPosition.x) {(pos, _) => pos + speedX.get}
-  val y: Signal[Int] = tick.fold(initPosition.y) {(pos, _) => pos + speedY.get}
+
+  val x: Signal[Int] = tick.fold(initPosition.x) {(pos, _) => pos + speedX.now}
+  val y: Signal[Int] = tick.fold(initPosition.y) {(pos, _) => pos + speedY.now}
   
   val xBounce = x.changed && (x => x < 0 || x + Size > Max_X)
   val yBounce = y.changed && (y => y < 0 || y + Size > Max_Y)
   
-  val speedX = Signal {speed.x}.toggle(xBounce) {- speed.x }  
-  val speedY = yBounce.toggle(speed.y, - speed.y)
+  val speedX = Signal {speed.x}.toggle(xBounce) {Var(- speed.x) }
+  val speedY = yBounce.toggle(Var(speed.y), Var(- speed.y))
   
   tick += {_: Unit => frame.repaint()}
   
@@ -50,7 +49,7 @@ class SwitchVersion {
     contents = new Panel() {
       preferredSize = new Dimension(600, 600)
       override def paintComponent(g: Graphics2D) {
-	    g.fillOval(x.get, y.get, Size, Size)
+	    g.fillOval(x.now, y.now, Size, Size)
       }
     }    
   }

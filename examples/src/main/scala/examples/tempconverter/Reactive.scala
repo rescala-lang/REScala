@@ -4,29 +4,28 @@ package examples.tempconverter
 
 // Escala lib + behaviour extensions
 
-import rescala.events._
-import rescala._
-import makro.SignalMacro.{SignalM => Signal}
+
+import rescala.{Signal, _}
 
 // Scala swing events
-import swing._
-import event._
+import scala.swing._
+import scala.swing.event._
 
 
 // could we actually use Reactive[Any] and use toString?
 trait ReactiveText extends Reactor {
   protected lazy val userSet = Var(text)
-  
-  def text : String
-  def text_=(s : String)
+
+  def text: String
+  def text_=(s: String): Unit
   // in signal
-  def text_=(value : Signal[String]) {
-    this.text_=(value())
-    value.changed += {(t : String) => this.text_=(t)}
-  }  
+  def text_=(value: Signal[String]): Unit = {
+    this.text_=(value.now)
+    value.changed += { (t: String) => this.text_=(t) }
+  }
   // out signal
   lazy val text_out = Signal {userSet()}
-  reactions += { case EditDone(_) => userSet() = text}
+  reactions += { case EditDone(_) => userSet() = text }
 }
 
 class ReactiveTextfield extends TextField with ReactiveText {
@@ -34,8 +33,8 @@ class ReactiveTextfield extends TextField with ReactiveText {
 }
 class ReactiveLabel extends Label with ReactiveText
 class ReactiveButton extends Button with ReactiveText {
-	// wrap the event to escala
-	val clicked = new ImperativeEvent[ButtonClicked]
-	reactions += { case c @ ButtonClicked(_) => clicked(c) }
+  // wrap the event to escala
+  val clicked = Evt[ButtonClicked]
+  reactions += { case c@ButtonClicked(_) => clicked(c) }
 }
 
