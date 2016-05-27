@@ -1,5 +1,5 @@
 organization in ThisBuild := "de.tuda.stg"
-scalaVersion in ThisBuild := "2.11.8"
+scalaVersion in ThisBuild := "2.11.7"
 
 version in ThisBuild := "0.17.0-SNAPSHOT"
 
