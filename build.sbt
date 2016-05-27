@@ -5,7 +5,7 @@ version in ThisBuild := "0.17.0-SNAPSHOT"
 
 
 lazy val root = project.in(file("."))
-  .aggregate(rescalaJVM, rescalaJS, reswing, examples, examplesReswing)
+  .aggregate(rescalaJVM, rescalaJS, reswing, examples, examplesReswing, caseStudyEditor)
   .settings(
     publish := {},
     publishLocal := {}
@@ -89,6 +89,13 @@ lazy val examplesReswing = project.in(file("Examples/examples-reswing"))
   .dependsOn(reswing)
   .settings(
     name := "reswing examples",
+    publish := {},
+    publishLocal := {})
+
+lazy val caseStudyEditor = project.in(file("CaseStudies/Editor"))
+  .dependsOn(reswing)
+  .settings(
+    name := "Editor CaseStudy",
     publish := {},
     publishLocal := {})
 
