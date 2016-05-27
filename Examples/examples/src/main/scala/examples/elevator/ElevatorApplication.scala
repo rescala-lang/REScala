@@ -1,12 +1,10 @@
 package examples.elevator
 
-import scala.swing._
 import java.awt.Color
-import javax.swing.Timer
-import java.awt.event.ActionListener
-import java.awt.event.ActionEvent
-import scala.swing.event.ButtonClicked
+
 import rescala.Engine
+
+import scala.swing._
 
 object ElevatorApplication extends SimpleSwingApplication {
 
@@ -32,7 +30,7 @@ class ElevatorApplication(val elevator: Elevator) {
     contents = new GridPanel(0, 2) {
       contents += new ElevatorPainter(elevator)
       contents += new GridPanel(elevator.nFloors, 1) {
-        for (i <- 0 to elevator.nFloors - 1) {
+        for (i <- 0 until elevator.nFloors) {
           vGap = 8
           contents += new Button {
             this.bounds
@@ -49,7 +47,7 @@ class ElevatorApplication(val elevator: Elevator) {
 
 class ElevatorPainter(e: Elevator) extends Panel {
   val FloorHeight = e.FloorHeight
-  val FloorWidth = (0.9 * e.FloorHeight).asInstanceOf[Int]
+  val FloorWidth = (0.9 * e.FloorHeight).toInt
   val sizeX = FloorWidth + 50
   val sizeY = FloorHeight * e.nFloors + 50
 
