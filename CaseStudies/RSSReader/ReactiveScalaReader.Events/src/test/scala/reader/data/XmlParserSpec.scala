@@ -1,13 +1,13 @@
 package reader.data
 
 import java.net.URL
+import java.util.Calendar
 
 import org.junit.runner.RunWith
 import org.scalatest.BeforeAndAfter
 import org.scalatest.FlatSpec
 import org.scalatest.junit.JUnitRunner
-import org.scalatest.matchers.ShouldMatchers
-
+import org.scalatest.Matchers
 import reader.EventShouldFireWrapper.convertToEventShouldFireWrapper
 import reader.XMLFixtures.completeRSS2Items
 import reader.XMLFixtures.corruptDateItem
@@ -16,9 +16,10 @@ import reader.XMLFixtures.missingLinkItem
 import reader.XMLFixtures.simpleChannel
 import reader.XMLFixtures.simpleItem
 import reader.common.implicits.stringToUrl
+import rescala.Engine
 
 @RunWith(classOf[JUnitRunner])
-class XmlParserSpec extends FlatSpec with ShouldMatchers with BeforeAndAfter {
+class XmlParserSpec extends FlatSpec with Matchers with BeforeAndAfter {
   var parser: XmlParser = _
 
   before {
@@ -56,8 +57,11 @@ class XmlParserSpec extends FlatSpec with ShouldMatchers with BeforeAndAfter {
 
     val item = parser.parseItem(simpleItem).get
 
-    item.pubDate.get.getDay should equal(SATURDAY)
-    item.pubDate.get.getMonth() should equal(DECEMBER)
+    val date = item.pubDate.get
+    val cal = Calendar.getInstance()
+    cal.setTime(date)
+    cal.get(Calendar.DAY_OF_WEEK) should equal(SATURDAY)
+    cal.get(Calendar.MONTH) should equal(DECEMBER)
   }
 
   it should "set the date to None if the format can not be parsed" in {

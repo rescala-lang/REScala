@@ -4,6 +4,7 @@ import reader.data.FeedStore
 import reader.data.RSSChannel
 import reader.data.RSSItem
 import scala.swing.ListView
+import rescala.Engine
 
 trait ContentMediator {
   def mediate(channelList: ReListViewEx[RSSChannel],
@@ -23,23 +24,23 @@ object SyncAll extends ContentMediator {
   def mediate(channelList: ReListViewEx[RSSChannel],
               itemList: ReListViewEx[RSSItem],
               renderArea: RssItemRenderPane,
-              store: FeedStore) {
-    store.itemAdded += { item => 
+              store: FeedStore): Unit = {
+    store.itemAdded += { item =>
       for {
         selected <- channelList.selectedItem
         src <- item.srcChannel
         if (src == selected)
       } displayChannelsItems(src)
     }
-    
-    channelList.selectedItemChanged += { maybeChannel: Option[RSSChannel] =>  
+
+    channelList.selectedItemChanged += { maybeChannel: Option[RSSChannel] =>
       for (channel <- maybeChannel) displayChannelsItems(channel)
     }
-    
-    itemList.selectedItemChanged += { maybeItem =>  
+
+    itemList.selectedItemChanged += { maybeItem =>
       for (item <- maybeItem) renderArea.renderItem(item)
     }
-    
+
     def displayChannelsItems(channel: RSSChannel) = {
       store itemsFor channel foreach { items =>
         val listView = itemList: ListView[RSSItem]

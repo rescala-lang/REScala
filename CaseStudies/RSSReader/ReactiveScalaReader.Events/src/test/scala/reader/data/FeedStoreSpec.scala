@@ -4,13 +4,13 @@ import org.junit.runner.RunWith
 import org.scalatest.BeforeAndAfter
 import org.scalatest.FlatSpec
 import org.scalatest.junit.JUnitRunner
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 
 import reader.EventShouldFireWrapper.convertToEventShouldFireWrapper
 import reader.common.implicits.stringToUrl
 
 @RunWith(classOf[JUnitRunner])
-class FeedStoreSpec extends FlatSpec with ShouldMatchers with BeforeAndAfter {
+class FeedStoreSpec extends FlatSpec with Matchers with BeforeAndAfter {
   var store: FeedStore = _
   val channel = new RSSChannel("Title",Some("http://test.de"),"Desc",None,None)
   val item = new RSSItem("Item title",None,"item desc",None,Some(channel))

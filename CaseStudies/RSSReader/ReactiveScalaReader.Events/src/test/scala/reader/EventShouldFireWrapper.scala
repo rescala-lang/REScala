@@ -1,23 +1,25 @@
 package reader
 
-import rescala.events._
+import rescala._
+
+import scala.language.implicitConversions
 
 class EventShouldFireWrapper[T](evt: Event[T]) {
   def shouldFireIn(action: => Unit) = {
     var fired = false
     evt += { _ => fired = true }
-    
+
     action
-    
+
     assert(fired, "Event should have fired, but did not")
   }
-  
+
   def shouldNotFireIn(action: => Unit) = {
     var fired = false
     evt += { _ => fired = true }
-    
+
     action
-    
+
     assert(!fired, "Event should not have fired, but it did")
   }
 }

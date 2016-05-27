@@ -28,12 +28,12 @@ class GUI(store: FeedStore,
             extends SimpleSwingApplication {
   val refreshButton = new ReButton("Refresh")
   val refresh: Event[Unit] = refreshButton.clicked.dropParam: Event[Unit] //#EVT //#EF
-  
-  val requestURLAddition = new ImperativeEvent[String] //#EVT
-  
+
+  val requestURLAddition = Evt[String] //#EVT
+
   val refreshCheckbox = new ReCheckBox("auto refresh", selected = true)
   def refreshAllowed = refreshCheckbox.selected
-  
+
   def top = new MainFrame {
     val quitAction = swing.Action("Quit") { quit }
     val urlDialogAction = swing.Action("Add url") {
@@ -46,7 +46,7 @@ class GUI(store: FeedStore,
                                    "")
       input.foreach { requestURLAddition(_) }
     }
-    
+
     menuBar = new MenuBar {
       contents += new Menu("File") {
         contents += new MenuItem(quitAction)
@@ -55,15 +55,15 @@ class GUI(store: FeedStore,
         contents += new MenuItem(urlDialogAction)
       }
     }
-    
+
     val (framewidth, frameheight) = (840, 480)
     configure
-    
+
     val channelList = new ReListViewEx[RSSChannel](Signal { store.channels().keys.toSeq }, //#SIG
         visibleRowCount = 3) {
       peer.renderer = ListView.Renderer(_.title)
     }
-    
+
     val selectedChannelItems = Signal { //#SIG
       channelList.selectedItem() match {
         case Some(channel) => store.channels().get(channel) match {
@@ -73,25 +73,25 @@ class GUI(store: FeedStore,
         case _ => Seq.empty
       }
     }
-    
+
     val itemList = new ReListViewEx[RSSItem](selectedChannelItems) {
       peer.renderer = ListView.Renderer(_.title)
     }
-    
+
     val renderArea = new RssItemRenderPane(itemList.selectedItem)
-    
+
     val statusBar = new ReLabel(notifications,
         preferredSize = ReSwingValue(new Dimension(framewidth / 3, 15)),
         horizontalAlignment = Alignment.Left)
-    
+
     val itemCountStatus = new ReLabel(itemStatus,
         preferredSize = ReSwingValue(new Dimension(framewidth / 3, 15)),
         horizontalAlignment = Alignment.Left)
-    
+
     val fetcherStatus = new ReLabel(fetcherState,
         preferredSize = ReSwingValue(new Dimension(framewidth / 3, 15)),
         horizontalAlignment = Alignment.Left)
-    
+
     contents = new BorderPanel {
       val topPane = new GridPanel(1, 1) {
         contents += new BorderPanel {
@@ -103,15 +103,15 @@ class GUI(store: FeedStore,
           }, BorderPanel.Position.East)
         }
       }
-      
+
       val splitPane = new SplitPane(Orientation.Vertical,
                                     new ScrollPane(itemList),
                                     new ScrollPane(renderArea))
-      
+
       val mainPane = new SplitPane(Orientation.Horizontal,
                                    topPane,
                                    splitPane)
-      
+
       add(mainPane, BorderPanel.Position.Center)
       add(new GridPanel(1, 3) {
         contents += statusBar
@@ -119,13 +119,13 @@ class GUI(store: FeedStore,
         contents += fetcherStatus
       }, BorderPanel.Position.South)
     }
-    
+
     private def configure() {
       title = "RSS Reader"
       iconImage = new ImageIcon("res/icon.png").getImage
-      
+
       minimumSize = new Dimension(framewidth, frameheight)
-      
+
       val screenSize = Toolkit.getDefaultToolkit.getScreenSize
       location = new Point((screenSize.width - framewidth) / 2,
                            (screenSize.height - frameheight) / 2)

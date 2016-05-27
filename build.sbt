@@ -5,7 +5,7 @@ version in ThisBuild := "0.17.0-SNAPSHOT"
 
 
 lazy val root = project.in(file("."))
-  .aggregate(rescalaJVM, rescalaJS, reswing, examples, examplesReswing, caseStudyEditor)
+  .aggregate(rescalaJVM, rescalaJS, reswing, examples, examplesReswing, caseStudyEditor, caseStudyRSS)
   .settings(
     publish := {},
     publishLocal := {}
@@ -80,7 +80,7 @@ lazy val reswing = project.in(file("RESwing"))
 lazy val examples = project.in(file("Examples/examples"))
   .dependsOn(rescalaJVM)
   .settings(
-    name := "rescala examples",
+    name := "rescala-examples",
     libraryDependencies += "org.scala-lang" % "scala-swing" % "2.11+",
     publish := {},
     publishLocal := {})
@@ -88,16 +88,33 @@ lazy val examples = project.in(file("Examples/examples"))
 lazy val examplesReswing = project.in(file("Examples/examples-reswing"))
   .dependsOn(reswing)
   .settings(
-    name := "reswing examples",
+    name := "reswing-examples",
     publish := {},
     publishLocal := {})
 
 lazy val caseStudyEditor = project.in(file("CaseStudies/Editor"))
   .dependsOn(reswing)
   .settings(
-    name := "Editor CaseStudy",
+    name := "editor-case-study",
     publish := {},
     publishLocal := {})
+
+
+
+lazy val caseStudyRSS = project.in(file("CaseStudies/RSSReader/ReactiveScalaReader.Events"))
+  .dependsOn(reswing)
+  .settings(
+    name := "rssreader-case-study",
+    publish := {},
+    publishLocal := {},
+    libraryDependencies ++= Seq(
+    "joda-time" % "joda-time" % "2.9.4" withSources(),
+    "org.joda" % "joda-convert" % "1.8.1",
+    "org.codehaus.jsr166-mirror" % "jsr166y" % "1.7.0",
+    "org.scalatest" %% "scalatest" % "2.2.6" % "test",
+    "junit" % "junit" % "4.12" % "test->default",
+    "com.novocode" % "junit-interface" % "0.11" % "test->default",
+    "org.scala-lang" % "scala-swing" % "2.11+"))
 
 
 scalacOptions in ThisBuild ++= (

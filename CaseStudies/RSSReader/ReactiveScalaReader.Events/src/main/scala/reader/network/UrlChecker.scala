@@ -5,13 +5,14 @@ import java.net.MalformedURLException
 import java.net.URL
 import java.net.UnknownHostException
 
-import rescala.events._
+import reader.Observable
+import rescala._
 
 class UrlChecker {
   type CheckArg = String
   type CheckResult = Either[String, URL]
   type AfterCheck = (CheckArg, CheckResult)
-  
+
   /**
    * Try to increase confidence that the String is a valid feed url
    * by performing some simple checks.
@@ -34,13 +35,13 @@ class UrlChecker {
         case e: FileNotFoundException => Left(errorMessage(url, e))
       }
   }
-  
+
   private lazy val checkSuccessful: Event[CheckResult] = //#EVT
     check.after && { t: AfterCheck => t._2.isRight } map { t: AfterCheck => t._2 } //#EF //#EF
-  
+
   private lazy val checkFailed: Event[CheckResult] = //#EVT
     check.after && { t: AfterCheck => t._2.isLeft } map { t: AfterCheck => t._2 } //#EF //#EF
-  
+
   private lazy val checkedOption: Event[Option[URL]] = //#EVT
     (checkSuccessful || checkFailed) map { (_: CheckResult) match { //#EF //#EF
       case Right(u) => Some(u)
@@ -50,13 +51,13 @@ class UrlChecker {
   /** Fired for every valid url checked */
   lazy val checkedURL: Event[URL] = checkedOption && //#EVT //#EF
     { t: Option[URL] => t.isDefined } map { t: Option[URL] => t.get } //#EF
-  
+
   /** Only fires if the checked url is valid */
   lazy val urlIsValid: Event[Unit] = checkSuccessful.dropParam  //#EVT //#EF
-  
+
   /** Only fires if the checked url is invalid */
   lazy val urlIsInvalid: Event[Unit] = checkFailed.dropParam  //#EVT //#EF
-  
+
   private def errorMessage(url: String, e: Exception): String =
     "Error while checking '" + url + "' - " + e.getMessage
 }

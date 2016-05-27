@@ -1,6 +1,6 @@
 package reader
 
-import rescala.events._
+import rescala._
 import scala.io.Source
 import scala.swing.Dialog
 import scala.swing.Dialog.Message
@@ -18,7 +18,7 @@ import reader.network.Fetcher
 import reader.network.UrlChecker
 
 object Main extends App {
-  val tick = new ImperativeEvent[Unit] //#EVT
+  val tick = Evt[Unit] //#EVT
   val checker = new UrlChecker
   val fetcher = new Fetcher
   val parser = new XmlParser
@@ -32,49 +32,49 @@ object Main extends App {
         "Channels: " + store.channels.size + " Items: " + itemCount
       },
       fetcher.startedFetching || fetcher.finishedFetching) //#EF
-  
+
   setupGuiEvents
-  
+
   List(SimpleReporter, CentralizedEvents) foreach { m =>
     m.mediate(fetcher, parser, store, checker)
   }
-  
+
   checker.urlIsInvalid += { _ => showInvalidUrlDialog } //#HDL
-  
-  val sleepTime = 20000
-  
+
+  val sleepTime = 20000l
+
   // ---------------------------------------------------------------------------
-  
+
   println("Program started")
-  
+
   app.main(Array())
-  
+
   val readUrls: Option[Seq[String]] = for {
     file <- args.headOption
     urls <- loadURLs(file)
   } yield urls
-  
+
   (readUrls getOrElse defaultURLs) foreach (checker.check(_))
-  
-  while (true) { Swing.onEDTWait { tick() }; Thread.sleep(sleepTime) }
-  
+
+  while (true) { Swing.onEDTWait { tick.fire() }; Thread.sleep(sleepTime) }
+
   // ---------------------------------------------------------------------------
-  
-  def defaultURLs: Seq[String] = 
+
+  def defaultURLs: Seq[String] =
     Seq("http://www.faz.net/aktuell/politik/?rssview=1",
         "http://feeds.gawker.com/lifehacker/full")
-  
-  def showInvalidUrlDialog =
+
+  def showInvalidUrlDialog() =
     Dialog.showMessage(null, "This url is not valid", "Invalid url", Message.Error, EmptyIcon)
-  
-  private def setupGuiEvents {
+
+  private def setupGuiEvents(): Unit = {
     app.requestURLAddition += { url => checker.check(url) } //#HDL
-    
+
     val guardedTick = tick && { _ => app.refreshAllowed } //#EF  //#EVT
-    
+
     (app.refresh || guardedTick) += { _ => fetcher.fetchAll } //#HDL //#EVT
   }
-  
+
   private def loadURLs(path: String): Option[Seq[String]] = {
     println("trying to load from " + path)
     val res = try Some(Source.fromFile(path).getLines.toList) catch { case _: Throwable => None }

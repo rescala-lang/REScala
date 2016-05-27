@@ -21,24 +21,24 @@ import reader.common.sequence
 *
 */
 class XmlParser {
-  val explicitItemParsed = new ImperativeEvent[RSSItem] //#EVT
-  
+  val explicitItemParsed = Evt[RSSItem] //#EVT
+
   // only for clarity in event expressions below
   private def discardArgument[A](tuple: (Any,A)): A = tuple._2
   private def parseSuccessfull[A](res: Option[A]): Boolean = res.isDefined
-  
+
   lazy val itemParsed: Event[RSSItem] = //#EVT
     ((parseItem.after map discardArgument[Option[RSSItem]]) && //#EF //#EF
         { parseSuccessfull(_) } map { o: Option[RSSItem] => o.get }) || explicitItemParsed //#EF
-  
+
   lazy val channelParsed: Event[RSSChannel] = //#EVT
     (parseChannel.after map discardArgument[Option[RSSChannel]]) && //#EF //#EF
         { parseSuccessfull(_) } map { o: Option[RSSChannel] => o.get }  //#EF
-  
+
   lazy val entityParsed  = channelParsed.dropParam || itemParsed.dropParam //#EVT //#EF //#EF
-  
+
   val dateFormat = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z", Locale.ENGLISH)
-  
+
   /**
    * Parses a RSSChannel from the given xml NodeSeq, does NOT set the source url
    *
@@ -53,7 +53,7 @@ class XmlParser {
     // always guaranteed that we know the URL
     parseChannel(xmlNode, None)
   }
-  
+
   /**
    * Parses a RSSChannel from the given xml NodeSeq and sets the source url
    *
@@ -67,23 +67,23 @@ class XmlParser {
   def parseChannelWithURL(xmlNode: NodeSeq, url: URL): Option[RSSChannel] = {
     parseChannel(xmlNode, Some(url))
   }
-  
+
   private val parseChannel = Observable { //#EVT //#EVT
     (args: (NodeSeq, Option[URL])) =>
       val (xmlNode, url) = args
-      
+
       if (xmlNode.size == 1) {
         val meta = extractInformation(xmlNode)
         val date = extractDate(xmlNode)
         val link = tryToCreateURL(meta('link))
-        
+
         val result = RSSChannel(meta('title), link, meta('description), date, url)
         Some(result)
       }
       else
         None
   }
-  
+
   /**
    * Parses a RSSItem from the given NodeSeq
    *
@@ -98,20 +98,20 @@ class XmlParser {
   val parseItem = Observable { //#EVT //#EVT
     (xmlNode: Node) => parseItemSilent(xmlNode)
   }
-  
+
   // does not fire events after parsing
   private def parseItemSilent(xmlNode: Node): Option[RSSItem] = {
     if (xmlNode.size != 1)
       return None
-    
+
     val meta = extractInformation(xmlNode)
     val date = extractDate(xmlNode)
     val link = tryToCreateURL(meta('link))
-    
+
     val result = RSSItem(meta('title), link, meta('description), date, None)
     Some(result)
   }
-  
+
   /**
   * Parses the given xml into the RSS Channel and RSS Item classes
   *
@@ -131,7 +131,7 @@ class XmlParser {
     // NOTE: we are not using parseItem
     //       because of the call to RSSItem.changeSource below
     val itemsOpt = sequence((itemXML map { parseItemSilent(_) }).toList)
-    
+
     for {
       channel <- parseChannel(channelXML, Some(url))
       items <- itemsOpt.map { items =>
@@ -142,7 +142,7 @@ class XmlParser {
       (channel, items)
     }
   }
-  
+
   private def tryToCreateURL(s: String): Option[URL] = {
     try
       Some(new URL(s))
@@ -150,10 +150,10 @@ class XmlParser {
       case _: MalformedURLException => None
     }
   }
-  
+
   private def extractDate(xml: NodeSeq): Option[Date] = {
     val res = xml \ "pubDate"
-    
+
     if (res.isEmpty)
       None
     else
@@ -163,7 +163,7 @@ class XmlParser {
         case _: ParseException => None
       }
   }
-  
+
   private def extractInformation(xml: NodeSeq): Map[Symbol,String] =
     Map('title -> xml \ "title",
         'link -> xml \ "link",
