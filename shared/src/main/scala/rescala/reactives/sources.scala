@@ -14,7 +14,9 @@ sealed trait Source[T, S <: Struct] {
 final class Evt[T, S <: Struct]()(_bud: S#SporeP[T, Reactive[S]]) extends Base[T, S](_bud) with Event[T, S] with Source[T, S] {
 
   /** Trigger the event */
-  def apply(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) {admit(value)(_)}
+  def apply(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = fire(value)
+  def fire(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) {admit(value)(_)}
+
 
   def admit(value: T)(implicit turn: Turn[S]): Unit = {
     pulses.set(Pulse.change(value))(turn)
