@@ -1,7 +1,7 @@
 package reader.data
 
-import rescala.Signal
-import rescala.events.Event
+import rescala._
+import rescala._
 
 /**
  * The FeedStore stores RSSChannels and RSSItems.
@@ -11,17 +11,17 @@ import rescala.events.Event
 class FeedStore (
     val addChannel: Event[RSSChannel],
     val addItem: Event[RSSItem]) {
-  
+
   val channels = addChannel.fold(Map.empty[RSSChannel, Signal[Set[RSSItem]]]) { (map, channel) => //#SIG //#IF
 	  map + (channel ->
 	    (addItem && (_.srcChannel.isDefined) && (_.srcChannel.get == channel)). //#EF //#EF
 	      fold(Set.empty[RSSItem])(_ + _)) //#IF
     }
-  
+
   val itemAdded: Event[RSSItem] = addItem && { item => //#EVT //#EF
     (for { channel <- item.srcChannel
-           items   <- channels.get get channel
-           if (!(items.get contains item))
+           items   <- channels.now get channel
+           if (!(items.now contains item))
          } yield ()).isDefined
   }
 }

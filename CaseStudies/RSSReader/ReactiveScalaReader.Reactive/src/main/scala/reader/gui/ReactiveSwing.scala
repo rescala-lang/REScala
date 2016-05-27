@@ -1,6 +1,6 @@
 package reader.gui
 
-import makro.SignalMacro.{SignalM => Signal}
+import rescala._
 import reswing.ReListView
 import reswing.ReSwingValue
 
@@ -9,11 +9,11 @@ class ReListViewEx[A](
     visibleRowCount: ReSwingValue[Int] = ())
   extends
     ReListView[A](listData, visibleRowCount) {
-  
-  val selectedIndex = selection.leadIndex snapshot selection.changed //#SIG //#IF
+
+  val selectedIndex = selection.changed.snapshot(selection.leadIndex) //#SIG //#IF
   val selectedItem = Signal { //#SIG
-    if (selectedIndex() >= 0 && selectedIndex() < listData().size)
-      Some(listData()(selectedIndex()))
+    if (selectedIndex() >= 0 && selectedIndex() < listData.apply().size)
+      Some(listData.apply().apply(selectedIndex()))
     else
       None
   }

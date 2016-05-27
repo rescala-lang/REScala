@@ -7,12 +7,13 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+import reader.Observable
+
 import scala.xml.Node
 import scala.xml.NodeSeq
-
-import rescala.events.Event
-import rescala.events.ImperativeEvent
-import rescala.events.Observable
+import rescala._
+import rescala._
+import rescala._
 import reader.common.sequence
 
 /**
@@ -51,7 +52,7 @@ class XmlParser {
   def parseChannelWithoutURL(xmlNode: NodeSeq): Option[RSSChannel] = {
     // version of parseChannel without URL because it is not
     // always guaranteed that we know the URL
-    parseChannel(xmlNode, None)
+    parseChannel((xmlNode, None))
   }
 
   /**
@@ -65,7 +66,7 @@ class XmlParser {
    * 	Some(RssChannel) otherwise
    */
   def parseChannelWithURL(xmlNode: NodeSeq, url: URL): Option[RSSChannel] = {
-    parseChannel(xmlNode, Some(url))
+    parseChannel((xmlNode, Some(url)))
   }
 
   private val parseChannel = Observable { //#EVT //#EVT
@@ -133,7 +134,7 @@ class XmlParser {
     val itemsOpt = sequence((itemXML map { parseItemSilent(_) }).toList)
 
     for {
-      channel <- parseChannel(channelXML, Some(url))
+      channel <- parseChannel((channelXML, Some(url)))
       items <- itemsOpt.map { items =>
         items.map { i => RSSItem.changeSource(i, Some(channel)) } }
     }

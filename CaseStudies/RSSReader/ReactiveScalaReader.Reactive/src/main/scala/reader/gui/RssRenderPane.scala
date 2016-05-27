@@ -7,7 +7,7 @@ import scala.swing.EditorPane
 
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
-import rescala.Signal
+import rescala._
 import reader.data.RSSItem
 
 /**
@@ -16,7 +16,7 @@ import reader.data.RSSItem
 class RssItemRenderPane(item: Signal[Option[RSSItem]]) extends EditorPane {
   super.editable = false
   super.contentType = "text/html"
-    
+
   peer.addHyperlinkListener(new HyperlinkListener() {
     def hyperlinkUpdate(e: HyperlinkEvent) =
       if (e.getEventType == HyperlinkEvent.EventType.ENTERED)
@@ -30,7 +30,7 @@ class RssItemRenderPane(item: Signal[Option[RSSItem]]) extends EditorPane {
           case e: IOException => e.printStackTrace
         }
   })
-  
+
   item.changed += { //#IF //#HDL
     _ match {
       case Some(item) =>

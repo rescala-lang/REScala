@@ -8,10 +8,10 @@ import scala.swing._
 import reswing._
 
 import javax.swing.ImageIcon
-import makro.SignalMacro.{SignalM => Signal}
-import rescala.Signal
-import rescala.events.Event
-import rescala.events.ImperativeEvent
+import rescala._
+import rescala._
+import rescala._
+import rescala._
 import reader.data.FeedStore
 import reader.data.RSSChannel
 import reader.data.RSSItem
@@ -120,7 +120,7 @@ class GUI(store: FeedStore,
       }, BorderPanel.Position.South)
     }
 
-    private def configure() {
+    private def configure(): Unit = {
       title = "RSS Reader"
       iconImage = new ImageIcon("res/icon.png").getImage
 

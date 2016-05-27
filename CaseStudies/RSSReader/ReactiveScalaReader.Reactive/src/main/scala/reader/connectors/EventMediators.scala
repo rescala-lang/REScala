@@ -5,6 +5,8 @@ import reader.data.XmlParser
 import reader.network.Fetcher
 import reader.network.UrlChecker
 
+import rescala.Engine
+
 trait EventMediator {
   def mediate(fetcher: Fetcher,
               parser: XmlParser,
@@ -22,20 +24,20 @@ trait EventMediator {
  *   4. if the checker has a valid (checked) url then it is added to the fetcher
  */
 object CentralizedEvents extends EventMediator {
-  def mediate(fetcher: Fetcher, parser: XmlParser, store: FeedStore, checker: UrlChecker) {
+  def mediate(fetcher: Fetcher, parser: XmlParser, store: FeedStore, checker: UrlChecker): Unit = {
     fetcher.rssFetched += { case (xml, url) => parser.parseRSS(xml, url) } //#HDL
   }
 }
 
 object SimpleReporter extends EventMediator {
-  def mediate(fetcher: Fetcher, parser: XmlParser, store: FeedStore, checker: UrlChecker) {
+  def mediate(fetcher: Fetcher, parser: XmlParser, store: FeedStore, checker: UrlChecker): Unit = {
     store.channels.changed += { x => println("Channels in store changed. Size: " + x.size) } //#HDL //#IF
-    
+
     fetcher.rssFetched += { _ => println("New content fetched") } //#HDL
-    
+
     parser.channelParsed += { _ => println("A channel was parsed") } //#HDL
     parser.itemParsed    += { _ => println("An item was parsed")   } //#HDL
-    
+
     fetcher.state.changed += println _ //#IF //#HDL
   }
 }
