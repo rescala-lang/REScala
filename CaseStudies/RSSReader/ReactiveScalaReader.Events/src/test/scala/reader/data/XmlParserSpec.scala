@@ -52,16 +52,14 @@ class XmlParserSpec extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   it should "parse the date from an item" in {
-    val SATURDAY = 6
-    val DECEMBER = 11
-
     val item = parser.parseItem(simpleItem).get
 
     val date = item.pubDate.get
     val cal = Calendar.getInstance()
     cal.setTime(date)
-    cal.get(Calendar.DAY_OF_WEEK) should equal(SATURDAY)
-    cal.get(Calendar.MONTH) should equal(DECEMBER)
+    cal.setFirstDayOfWeek(Calendar.TUESDAY)
+    cal.get(Calendar.DAY_OF_WEEK) should equal(Calendar.SATURDAY)
+    cal.get(Calendar.MONTH) should equal(Calendar.DECEMBER)
   }
 
   it should "set the date to None if the format can not be parsed" in {
