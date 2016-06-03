@@ -170,12 +170,13 @@ class DynamicSignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) exten
     val s = dynamic(v) { s =>
       changes += 1; v(s) + 1
     }
-    assert(changes == 1)
-    assert(s.now == 2)
+    assert(changes === 1)
+    assert(s.now === 2)
     v.set(2)
-    assert(changes == 2)
+    assert(s.now === 3)
+    assert(changes === 2)
     v.set(2)
-    assert(changes == 2) // is actually 3
+    assert(changes === 2) // is actually 3
   }
 
   @Test def creatingSignalsInsideSignals(): Unit = {
