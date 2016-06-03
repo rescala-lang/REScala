@@ -49,7 +49,10 @@ class SignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asse
 
     var a = 0
     val v = Var(10)
-    val s1: Signal[Int] = v.map { i => a += 1; i % 10 }
+    val s1: Signal[Int] = v.map { i =>
+      a += 1
+      i % 10
+    }
 
 
     assert(a == 1)

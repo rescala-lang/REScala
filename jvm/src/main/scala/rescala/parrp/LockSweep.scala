@@ -34,7 +34,8 @@ class LSSporeP[P, R](current: Pulse[P], transient: Boolean, val lock: TurnLock[L
   var willWrite: LockSweep = null
   var hasWritten: LockSweep = null
   var counter: Int = 0
-  var anyInputChanged: Boolean = false
+  var anyInputChanged: LockSweep = null
+  var hasChanged: LockSweep = null
 }
 
 trait LSInterTurn {
@@ -76,7 +77,6 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
           locked.add(reactive)
           reactive.bud.counter = 1
           reactive.bud.willWrite = this
-          reactive.bud.anyInputChanged = false
           reactive.bud.outgoing(this).foreach {stack.offer}
         }
       }
@@ -95,7 +95,8 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
     }
     initialWrites.foreach{ source =>
       source.bud.counter = 0
-      source.bud.anyInputChanged = true
+      source.bud.anyInputChanged = this
+      source.bud.hasChanged = this
       enqueue(source)
     }
 
@@ -109,9 +110,10 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
 
   def done(head: Reactive[TState], hasChanged: Boolean): Unit = {
     head.bud.hasWritten = this
+    if (hasChanged) head.bud.hasChanged = this
     head.bud.outgoing(this).foreach { r =>
       r.bud.counter -= 1
-      if (hasChanged) r.bud.anyInputChanged = true
+      if (hasChanged) r.bud.anyInputChanged = this
       if (r.bud.counter <= 0) enqueue(r)
     }
   }
@@ -121,7 +123,7 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
   }
 
   def evaluate(head: Reactive[TState]): Unit = {
-    if (!head.bud.anyInputChanged) done(head, hasChanged = false)
+    if (head.bud.anyInputChanged != this) done(head, hasChanged = false)
     else {
       head.reevaluate()(this) match {
         case Static(hasChanged) => done(head, hasChanged)
@@ -156,14 +158,18 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
     assert(owner eq key, s"$this failed to acquire lock on newly created reactive $reactive")
     reactive.bud.willWrite = this
 
+    reactive.bud.anyInputChanged = this
     if (dynamic) {
-      reactive.bud.anyInputChanged = true
       evaluate(reactive)
     }
     else {
       dependencies.foreach(discover(reactive))
       reactive.bud.counter = recount(dependencies)
-      if (reactive.bud.counter == 0) evaluate(reactive)
+      val inputsChanged = dependencies.exists(_.bud.hasChanged == this)
+      if (reactive.bud.counter == 0) {
+        if (inputsChanged) evaluate(reactive)
+        else done(reactive, hasChanged = true)
+      }
     }
     reactive
   }
