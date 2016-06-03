@@ -3,16 +3,17 @@ package rescala.propagation
 import rescala.graph.{Pulse, Buffer, Reactive, Struct}
 
 /**
- * The engine that schedules the (glitch-free) evaluation
- * of the nodes in the dependency graph.
- */
+  * The Turn interface glues the reactive interface and the propagation implementation together.
+  */
 trait Turn[S <: Struct] {
+  /** reads the pulses of a given spore */
   def pulses[P](budP: S#SporeP[P, _]): Buffer[Pulse[P]]
 
+  /** updates the incoming dependencies for a given spore. used for dynamic reactives */
   def updateIncoming[R](bud: S#Spore[R], newDependencies: Set[R]): Unit
 
+  /** reads the set of incoming dependencies from a spore */
   def incoming[R](bud: S#Spore[R]): Set[R]
-
 
   /** used to create state containers of each reactive */
   def bud[P, R](initialValue: Pulse[P] = Pulse.none, transient: Boolean = true, initialIncoming: Set[R] = Set.empty[R]): S#SporeP[P, R]
