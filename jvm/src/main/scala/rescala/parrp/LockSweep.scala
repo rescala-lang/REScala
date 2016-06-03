@@ -158,7 +158,7 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
 
     if (dynamic) {
       reactive.bud.anyInputChanged = true
-      enqueue(reactive)
+      evaluate(reactive)
     }
     else {
       dependencies.foreach(discover(reactive))
