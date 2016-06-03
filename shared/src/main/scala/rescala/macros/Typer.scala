@@ -55,10 +55,11 @@ class Typer[C <: Context](val c: C) {
    * type-checked again, or abort the macro expansion if this is not possible.
    */
   def untypecheck(tree: Tree): Tree =
-    c untypecheck
-      (typeApplicationCleaner transform
-        fixCaseClasses(
-          fixTypecheck(tree)))
+    fixUntypecheck(
+      c untypecheck
+        (typeApplicationCleaner transform
+          fixCaseClasses(
+            fixTypecheck(tree))))
 
   /**
    * Cleans the flag set of the given modifiers.
@@ -77,7 +78,6 @@ class Typer[C <: Context](val c: C) {
       CONTRAVARIANT, COVARIANT, DEFAULTINIT, DEFAULTPARAM, DEFERRED, FINAL,
       IMPLICIT, LAZY, LOCAL, MACRO, MUTABLE, OVERRIDE, PARAM, PARAMACCESSOR,
       PRESUPER, PRIVATE, PROTECTED, SEALED, SYNTHETIC)
-
 
     val flags = possibleFlags.fold(NoFlags) { (flags, flag) =>
       if (mods hasFlag flag) flags | flag else flags
@@ -605,11 +605,6 @@ class Typer[C <: Context](val c: C) {
             if (mods hasFlag PRIVATE | LOCAL | LAZY) &&
               !(mods hasFlag PARAMACCESSOR) =>
           EmptyTree
-        case Ident(name) =>
-          if (tree.symbol.isTerm && tree.symbol.asTerm.isLazy)
-            internal setSymbol (tree, NoSymbol)
-          else
-            tree
         case defDef @ DefDef(mods, name, _, _, tpt, rhs)
             if tree.symbol.isTerm && {
               val term = tree.symbol.asTerm
@@ -689,5 +684,49 @@ class Typer[C <: Context](val c: C) {
     }
 
     typecheckFixer transform tree
+  }
+
+  private def fixUntypecheck(tree: Tree): Tree = {
+    object untypecheckFixer extends Transformer {
+      override def transform(tree: Tree) = tree match {
+        case Apply(fun, args) if fun.symbol != null && fun.symbol.isModule =>
+          internal setSymbol (fun, NoSymbol)
+          super.transform(tree)
+
+        case Typed(expr, tpt) =>
+          tpt match {
+            case Function(List(), EmptyTree) =>
+              super.transform(tree)
+
+            case Annotated(annot, arg)
+                if expr != null && arg != null && (expr equalsStructure arg) =>
+              super.transform(tpt)
+
+            case tpt: TypeTree
+                if (tpt.original match {
+                  case Annotated(_, _) => true
+                  case _ => false
+                }) =>
+              super.transform(tpt.original)
+
+            case tpt if !tpt.isType =>
+              super.transform(expr)
+
+            case tpt =>
+              super.transform(tree)
+          }
+
+        case Ident(name) =>
+          if (tree.symbol.isTerm && tree.symbol.asTerm.isLazy)
+            internal setSymbol (tree, NoSymbol)
+          else
+            tree
+
+        case _ =>
+          super.transform(tree)
+      }
+    }
+
+    untypecheckFixer transform tree
   }
 }
