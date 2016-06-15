@@ -181,8 +181,8 @@ class DynamicSignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) exten
 
   @Test def creatingSignalsInsideSignals(): Unit = {
 
-    // ignore for locksweep, as it does not support predeclared levels
-    org.junit.Assume.assumeTrue(engine != rescala.engines.JVMEngines.locksweep)
+    // ignore for locksweep, as it does not support predeclared levels, so would run into an endless loop below
+    org.junit.Assume.assumeTrue("locksweep does not support predeclared levels", engine != rescala.engines.JVMEngines.locksweep)
 
     val outside = Var(1)
 
