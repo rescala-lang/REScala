@@ -51,7 +51,7 @@ lazy val rescala = crossProject.in(file("."))
          |""".stripMargin)
       Seq(file)
     },
-    licenses += ("GPL-3.0", url("http://www.gnu.org/licenses/gpl-3.0.html")),
+    licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")),
     publishMavenStyle := false,
     initialCommands in console :=
       s"""import rescala._
