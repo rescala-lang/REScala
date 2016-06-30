@@ -6,10 +6,9 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import rescala.Infiltrator
-import rescala.Infiltrator.{assertLevel, getLevel}
+import rescala.Infiltrator.assertLevel
 import rescala.engines.Engine
-import rescala.graph.{LevelStruct, Struct}
+import rescala.graph.LevelStruct
 import rescala.propagation.Turn
 
 object DynamicSignalTestSuite extends JUnitParameters
@@ -198,6 +197,20 @@ class DynamicSignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) exten
     assert(testsig.now === 2)
   }
 
+  @Test def creatingSignalsInsideSignalsWorkaround(): Unit = {
+
+
+    val outside = Var(1)
+
+    val testsig = dynamic() { t =>
+      dynamic() { t => outside(t) }
+    }.flatten()
+
+    assert(testsig.now === 1)
+    outside() = 2
+    assert(testsig.now === 2)
+  }
+
   @Test def `dynamic dependency changes ontop of stuff that is not changing`() = {
     val v0 = Var("level 0")
     val v3 = v0.map(_ => "level 1").map(_ => "level 2").map(_ => "level 3")
@@ -212,5 +225,40 @@ class DynamicSignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) exten
     condition.set(true)
     assert(`dynamic signal changing from level 1 to level 4`.now == "level 3")
     assertLevel(`dynamic signal changing from level 1 to level 4`, 4)
+  }
+
+  @Test def `creating signals in signals based on changing signals`() = {
+    val v0 = Var("level 0")
+    val v3 = v0.map(_ + "level 1").map(_  + "level 2").map(_ + "level 3")
+
+    val `dynamic signal changing from level 1 to level 4` = dynamic() { turn =>
+      if (v0(turn) == "level 0") v0(turn) else {
+        v3.map(_ + "level 4 inner").apply(turn)
+      }
+    }
+    assert(`dynamic signal changing from level 1 to level 4`.now == "level 0")
+    assertLevel(`dynamic signal changing from level 1 to level 4`, 1)
+
+    v0.set("level0+")
+    assert(`dynamic signal changing from level 1 to level 4`.now == "level0+level 1level 2level 3level 4 inner")
+    assertLevel(`dynamic signal changing from level 1 to level 4`, 5)
+  }
+
+  @Test def `creating signals in signals based on changing signals dynamic`() = {
+    val v0 = Var("level 0")
+    val v3 = v0.map(_ + "level 1").map(_  + "level 2").map(_ + "level 3")
+
+    val `dynamic signal changing from level 1 to level 4` = dynamic() { turn =>
+      if (v0(turn) == "level 0") v0(turn) else {
+        // the static bound is necessary here, otherwise we get infinite loops
+        dynamic(v3) { t =>  v3(t) + "level 4 inner" } .apply(turn)
+      }
+    }
+    assert(`dynamic signal changing from level 1 to level 4`.now == "level 0")
+    assertLevel(`dynamic signal changing from level 1 to level 4`, 1)
+
+    v0.set("level0+")
+    assert(`dynamic signal changing from level 1 to level 4`.now == "level0+level 1level 2level 3level 4 inner")
+    assertLevel(`dynamic signal changing from level 1 to level 4`, 5)
   }
 }
