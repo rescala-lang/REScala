@@ -1,7 +1,7 @@
 organization in ThisBuild := "de.tuda.stg"
 scalaVersion in ThisBuild := "2.11.8"
 
-version in ThisBuild := "0.17.0-SNAPSHOT"
+version in ThisBuild := "0.17.0"
 
 
 lazy val root = project.in(file("."))
