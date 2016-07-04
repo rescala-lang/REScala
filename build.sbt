@@ -52,7 +52,6 @@ lazy val rescala = crossProject.in(file("."))
       Seq(file)
     },
     licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")),
-    publishMavenStyle := false,
     initialCommands in console :=
       s"""import rescala._
        """.stripMargin
@@ -69,13 +68,19 @@ lazy val microbench = project.in(file("Microbench"))
   .settings(com.typesafe.sbt.SbtStartScript.startScriptForClassesSettings)
   .settings(TaskKey[Unit]("compileJmh") <<= Seq(compile in pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh).dependOn)
   .dependsOn(rescalaJVM)
+  .settings(
+    publish := {},
+    publishLocal := {}
+  )
 
 
 lazy val reswing = project.in(file("RESwing"))
   .dependsOn(rescalaJVM)
   .settings(
     name := "reswing",
-    libraryDependencies += "org.scala-lang" % "scala-swing" % "2.11+")
+    libraryDependencies += "org.scala-lang" % "scala-swing" % "2.11+",
+    licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")))
+
 
 lazy val examples = project.in(file("Examples/examples"))
   .dependsOn(rescalaJVM)
