@@ -56,4 +56,8 @@ class PhiloTest extends AssertionsForJUnit {
 
   @Test def eatingContestsSpinningDynamicLocksweep(): Unit = `eat!`(JVMEngines.locksweep, dynamic = true)
 
+  @Test def eatingContestsSpinningParallelLocksweep(): Unit = `eat!`(JVMEngines.parallellocksweep, dynamic = false)
+
+  @Test def eatingContestsSpinningDynamicParallelLocksweep(): Unit = `eat!`(JVMEngines.parallellocksweep, dynamic = true)
+
 }

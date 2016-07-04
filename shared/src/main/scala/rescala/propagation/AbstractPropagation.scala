@@ -17,15 +17,16 @@ trait AbstractPropagation[S <: Struct] extends Turn[S] {
   def releasePhase(): Unit
 
 
-  var collectedDependencies: List[Reactive[S]] = Nil
+  private var collectedDependencies: List[Reactive[S]] = Nil
 
   def collectDependencies[T](f: => T): (T, Set[Reactive[S]]) = {
     val old = collectedDependencies
     collectedDependencies = Nil
     // useDependency is called as a side effect of `f` adding new dependencies to collectedDependencies
-    val res = (f, collectedDependencies.toSet)
+    val sideEffectingEvaluationResult = f
+    val newDependencies = collectedDependencies.toSet
     collectedDependencies = old
-    res
+    (sideEffectingEvaluationResult, newDependencies)
   }
   def useDependency(dependency: Reactive[S]): Unit = collectedDependencies ::= dependency
 }

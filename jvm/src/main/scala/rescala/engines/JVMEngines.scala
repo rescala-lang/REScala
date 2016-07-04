@@ -1,5 +1,7 @@
 package rescala.engines
 
+import java.util.concurrent.{Executor, Executors}
+
 import rescala.engines.Engines.{synchron, synchronFair, unmanaged}
 import rescala.graph.Struct
 import rescala.parrp._
@@ -26,11 +28,16 @@ object JVMEngines {
     case other => throw new IllegalArgumentException(s"unknown engine $other")
   }
 
-  def all: List[TEngine] = List[TEngine](stm, parrp, synchron, unmanaged, synchronFair, locksweep)
+  def all: List[TEngine] = List[TEngine](stm, parrp, synchron, unmanaged, synchronFair, locksweep, parallellocksweep)
 
   implicit val parrp: Engine[ParRP, ParRP] = parrpWithBackoff(() => new Backoff)
 
   implicit val locksweep: Engine[LSStruct.type, LockSweep] = locksweepWithBackoff(() => new Backoff())
+
+  implicit val parallellocksweep: EngineImpl[LSStruct.type, LockSweep] = {
+    val ex: Executor = Executors.newWorkStealingPool()
+    new EngineImpl[LSStruct.type, LockSweep](new ParallelLockSweep(new Backoff(), ex))
+  }
 
   implicit val default: Engine[ParRP, ParRP] = parrp
 

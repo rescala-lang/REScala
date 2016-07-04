@@ -11,6 +11,8 @@ trait PlanImpl[S <: Struct, TImpl <: AbstractPropagation[S]] extends Engine[S, T
 
   private val currentTurn: DynamicVariable[Option[TImpl]] = new DynamicVariable[Option[TImpl]](None)
 
+  private[rescala] def setCurrentTurn(turn: Option[TImpl]): Unit = currentTurn.value = turn
+
   override def subplan[T](initialWrites: Reactive*)(f: TImpl => T): T = currentTurn.value match {
     case None => plan(initialWrites: _*)(f)
     case Some(turn) => f(turn)

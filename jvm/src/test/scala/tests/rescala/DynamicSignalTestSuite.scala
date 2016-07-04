@@ -7,7 +7,7 @@ import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.Infiltrator.assertLevel
-import rescala.engines.Engine
+import rescala.engines.{Engine, Ticket}
 import rescala.graph.LevelStruct
 import rescala.propagation.Turn
 
@@ -182,6 +182,7 @@ class DynamicSignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) exten
 
     // ignore for locksweep, as it does not support predeclared levels, so would run into an endless loop below
     org.junit.Assume.assumeTrue("locksweep does not support predeclared levels", engine != rescala.engines.JVMEngines.locksweep)
+    org.junit.Assume.assumeTrue("locksweep does not support predeclared levels", engine != rescala.engines.JVMEngines.parallellocksweep)
 
     val outside = Var(1)
 
@@ -233,7 +234,7 @@ class DynamicSignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) exten
 
     val `dynamic signal changing from level 1 to level 4` = dynamic() { turn =>
       if (v0(turn) == "level 0") v0(turn) else {
-        v3.map(_ + "level 4 inner").apply(turn)
+        v3.map(_ + "level 4 inner")(turn).apply(turn)
       }
     }
     assert(`dynamic signal changing from level 1 to level 4`.now == "level 0")
@@ -251,7 +252,7 @@ class DynamicSignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) exten
     val `dynamic signal changing from level 1 to level 4` = dynamic() { turn =>
       if (v0(turn) == "level 0") v0(turn) else {
         // the static bound is necessary here, otherwise we get infinite loops
-        dynamic(v3) { t =>  v3(t) + "level 4 inner" } .apply(turn)
+        dynamic(v3) { t =>  v3(t) + "level 4 inner" }(Ticket.fromTurn(turn)).apply(turn)
       }
     }
     assert(`dynamic signal changing from level 1 to level 4`.now == "level 0")
