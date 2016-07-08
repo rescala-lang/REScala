@@ -2,9 +2,12 @@ package rescala.engines
 
 import java.util.concurrent.locks.ReentrantLock
 
-import rescala.graph._
+import rescala.graph.{LevelSporeImpl, Pulse, SimpleStruct}
 import rescala.propagation.LevelBasedPropagation
 
+/**
+  * Basic implementations of propagation engines
+  */
 object Engines {
   private class SimpleNoLock extends LevelBasedPropagation[SimpleStruct] {
     def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): SimpleStruct#SporeP[P, R] =

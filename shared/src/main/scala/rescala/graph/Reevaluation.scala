@@ -2,20 +2,53 @@ package rescala.graph
 
 import rescala.propagation.Turn
 
-
+/**
+  * Indicator for the result of a re-evaluation of a reactive value.
+  */
 sealed trait ReevaluationResult[S <: Struct]
 
 object ReevaluationResult {
+
+  /**
+    * Result of the static re-evaluation of a reactive value.
+    *
+    * @param changed Indicates if the value of the reactive value has been changed and further re-evaluation of dependent
+    *                values is necessary.
+    * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
+    */
   case class Static[S <: Struct](changed: Boolean) extends ReevaluationResult[S]
+
+  /**
+    * Result of the dynamic re-evaluation of a reactive value.
+    * When using a dynamic dependency model, the dependencies of a value may change at runtime if it is re-evaluated
+    *
+    * @param changed Indicates if the value of the reactive value has been changed and further re-evaluation of dependent
+    *                values is necessary.
+    * @param diff List of reactive values this value depends on that have been removed or added through the re-evaluation
+    * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
+    */
   case class Dynamic[S <: Struct](changed: Boolean, diff: DepDiff[S]) extends ReevaluationResult[S]
 }
 
+/**
+  * Calculates and stores added or removed dependencies of a reactive value.
+  *
+  * @param novel Set of dependencies after re-evaluation
+  * @param old Set of dependencies before re-evaluation
+  * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
+  */
 case class DepDiff[S <: Struct](novel: Set[Reactive[S]], old: Set[Reactive[S]]) {
   lazy val added = novel.diff(old)
   lazy val removed = old.diff(novel)
 }
 
-/** reevaluation strategy for static dependencies */
+/**
+  * Implementation of static re-evaluation of a reactive value.
+  * Only calculates the stored value of the pulse and compares it with the old value.
+  *
+  * @tparam P Value type stored by the reactive value and its pulse
+  * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
+  */
 trait StaticReevaluation[+P, S <: Struct] {
   this: Pulsing[P, S] =>
 
@@ -30,7 +63,13 @@ trait StaticReevaluation[+P, S <: Struct] {
 }
 
 
-/** reevaluation strategy for dynamic dependencies */
+/**
+  * Implementation of dynamic re-evaluation of a reactive value.
+  * Calculates the pulse and new dependencies, compares them with the old value and dependencies and returns the result.
+  *
+  * @tparam P Value type stored by the reactive value and its pulse
+  * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
+  */
 trait DynamicReevaluation[+P, S <: Struct] {
   this: Pulsing[P, S] =>
 

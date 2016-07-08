@@ -5,8 +5,19 @@ import rescala.propagation.AbstractPropagation
 
 import scala.util.DynamicVariable
 
+/**
+  * Implementation of the turn handling defined in the Engine trait
+  *
+  * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
+  * @tparam TImpl Turn type used by the engine
+  */
 trait PlanImpl[S <: Struct, TImpl <: AbstractPropagation[S]] extends Engine[S, TImpl] {
 
+  /**
+    * Returns a new turn to be used by the engine
+    *
+    * @return New turn
+    */
   protected def makeTurn(): TImpl
 
   private val currentTurn: DynamicVariable[Option[TImpl]] = new DynamicVariable[Option[TImpl]](None)

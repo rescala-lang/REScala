@@ -3,7 +3,11 @@ package rescala.propagation
 import rescala.graph.ReevaluationResult.{Dynamic, Static}
 import rescala.graph.{LevelStruct, Reactive}
 
-
+/**
+  * Further implementation of level-based propagation based on the common propagation implementation.
+  *
+  * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
+  */
 trait LevelBasedPropagation[S <: LevelStruct] extends CommonPropagationImpl[S] {
 
 
@@ -14,7 +18,7 @@ trait LevelBasedPropagation[S <: LevelStruct] extends CommonPropagationImpl[S] {
 
   val levelQueue = new LevelQueue[S]()
 
-  def evaluate(head: Reactive[S]): Unit = {
+  protected def evaluate(head: Reactive[S]): Unit = {
 
     def requeue(changed: Boolean, level: Int, redo: Boolean): Unit =
       if (redo) levelQueue.enqueue(level, changed)(head)
@@ -33,11 +37,11 @@ trait LevelBasedPropagation[S <: LevelStruct] extends CommonPropagationImpl[S] {
 
   }
 
-  def maximumLevel(dependencies: Set[Reactive[S]]): Int = dependencies.foldLeft(-1)((acc, r) => math.max(acc, r.bud.level))
+  private def maximumLevel(dependencies: Set[Reactive[S]]): Int = dependencies.foldLeft(-1)((acc, r) => math.max(acc, r.bud.level))
 
-  def discover(sink: Reactive[S])(source: Reactive[S]): Unit = source.bud.discover(sink)
+  protected def discover(sink: Reactive[S])(source: Reactive[S]): Unit = source.bud.discover(sink)
 
-  def drop(sink: Reactive[S])(source: Reactive[S]): Unit = source.bud.drop(sink)
+  protected def drop(sink: Reactive[S])(source: Reactive[S]): Unit = source.bud.drop(sink)
 
 
   override def create[T <: Reactive[S]](dependencies: Set[Reactive[S]], dynamic: Boolean)(f: => T): T = {

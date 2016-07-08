@@ -4,14 +4,27 @@ import rescala.engines.Ticket
 import rescala.graph.Pulse.{Diff, NoChange}
 import rescala.propagation.Turn
 
-/** A Reactive is something that can be reevaluated */
+/**
+  * A reactive value is something that can be reevaluated
+  *
+  * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
+  */
 trait Reactive[S <: Struct] {
   final override val hashCode: Int = Globals.nextID().hashCode()
 
+  /**
+    * Spore that is used to internally manage the reactive evaluation of this value
+    *
+    * @return Spore for this value
+    */
   protected[rescala] def bud: S#Spore[Reactive[S]]
 
-  /** called when it is this events turn to be evaluated
-    * (head of the evaluation queue) */
+  /**
+    * Reevaluates this value when it is internally scheduled for reevaluation
+    *
+    * @param turn Turn that handles the reevaluation
+    * @return Result of the reevaluation
+    */
   protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[S]
 
   /** for debugging */
@@ -28,13 +41,23 @@ abstract class Base[P, S <: Struct](budP: S#SporeP[P, Reactive[S]]) extends Puls
   final override def pulse(implicit turn: Turn[S]): Pulse[P] = pulses.get
 }
 
-/** A node that has nodes that depend on it */
+/**
+  * A pulsing value is a reactive value that stores a pulse with it's old and new value
+  *
+  * @tparam P Value type stored by the pulse of the reactive value
+  * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
+  */
 trait Pulsing[+P, S <: Struct] extends Reactive[S] {
   protected[this] def pulses(implicit turn: Turn[S]): Buffer[Pulse[P]]
   def pulse(implicit turn: Turn[S]): Pulse[P]
 }
 
-/** dynamic access to pulsing values */
+/**
+  * A reactive value that may have a current state that can be read.
+  *
+  * @tparam P Value type stored by the reactive value
+  * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
+  */
 trait PulseOption[+P, S <: Struct] extends Pulsing[P, S] {
   def apply(): Option[P] = throw new IllegalAccessException(s"$this.apply called outside of macro")
   final def apply[T](turn: Turn[S]): Option[P] = {
@@ -45,7 +68,12 @@ trait PulseOption[+P, S <: Struct] extends Pulsing[P, S] {
 }
 
 
-/** a node that has a current state */
+/**
+  * A reactive value that has a current state that can be read
+  *
+  * @tparam A Value type stored by the reactive value
+  * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
+  */
 trait Stateful[+A, S <: Struct] extends Pulsing[A, S] {
   // only used inside macro and will be replaced there
   final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")
