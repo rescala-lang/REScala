@@ -88,9 +88,9 @@ trait Event[+T, S <: Struct] extends PulseOption[T, S]{
   final def list()(implicit ticket: Ticket[S]): Signal[List[T], S] = fold(List[T]())((acc, v) => v :: acc)
 
   /** Switch back and forth between two signals on occurrence of event e */
-  final def toggle[A](a: Signal[A, S], b: Signal[A, S])(implicit ticket: Ticket[S]): Signal[A, S] = ticket { implicit turn =>
-    val switched: Signal[Boolean, S] = iterate(false) { !_ }
-    Signals.dynamic(switched, a, b) { s => if (switched(s)) b(s) else a(s) }
+  final def toggle[A](a: Signal[A, S], b: Signal[A, S])(implicit ticket: Ticket[S]): Signal[A, S] = ticket { turn =>
+    val switched: Signal[Boolean, S] = iterate(false) { !_ }(turn)
+    Signals.dynamic(switched, a, b) { s => if (switched(s)) b(s) else a(s) }(turn)
   }
 
   /** Return a Signal that is updated only when e fires, and has the value of the signal s */
@@ -99,14 +99,14 @@ trait Event[+T, S <: Struct] extends PulseOption[T, S]{
   }
 
   /** Switch to a new Signal once, on the occurrence of event e. */
-  final def switchOnce[A](original: Signal[A, S], newSignal: Signal[A, S])(implicit ticket: Ticket[S]): Signal[A, S] = ticket { implicit turn =>
-    val latest = latestOption
+  final def switchOnce[A](original: Signal[A, S], newSignal: Signal[A, S])(implicit ticket: Ticket[S]): Signal[A, S] = ticket { turn =>
+    val latest = latestOption()(turn)
     Signals.dynamic(latest, original, newSignal) { t =>
       latest(t) match {
         case None => original(t)
         case Some(_) => newSignal(t)
       }
-    }
+    }(turn)
   }
 
   /**
@@ -114,25 +114,25 @@ trait Event[+T, S <: Struct] extends PulseOption[T, S]{
    * return value is set to the original signal. When the event fires,
    * the result is a constant signal whose value is the value of the event.
    */
-  final def switchTo[T1 >: T](original: Signal[T1, S])(implicit ticket: Ticket[S]): Signal[T1, S] = {
-    val latest = latestOption
+  final def switchTo[T1 >: T](original: Signal[T1, S])(implicit ticket: Ticket[S]): Signal[T1, S] = ticket { turn =>
+    val latest = latestOption()(turn)
     Signals.dynamic(latest, original) { s =>
       latest(s) match {
         case None => original(s)
         case Some(x) => x
       }
-    }
+    }(turn)
   }
 
   /** Like latest, but delays the value of the resulting signal by n occurrences */
-  final def delay[T1 >: T](init: T1, n: Int)(implicit ticket: Ticket[S]): Signal[T1, S] = {
-    val history: Signal[LinearSeq[T], S] = last(n + 1)
-    history.map { h => if (h.size <= n) init else h.head }
+  final def delay[T1 >: T](init: T1, n: Int)(implicit ticket: Ticket[S]): Signal[T1, S] = ticket { turn =>
+    val history: Signal[LinearSeq[T], S] = last(n + 1)(turn)
+    history.map { h => if (h.size <= n) init else h.head }(turn)
   }
 
   /** returns the values produced by the last event produced by mapping this value */
-  final def flatMap[B](f: T => Event[B, S])(implicit ticket: Ticket[S]): Event[B, S] = ticket { implicit t =>
-    Events.wrapped(map(f).latest(Evt()))
+  final def flatMap[B](f: T => Event[B, S])(implicit ticket: Ticket[S]): Event[B, S] = ticket { turn =>
+    Events.wrapped(map(f)(turn).latest(Evt()(turn))(turn))(turn)
   }
 
   /** promotes the latest inner event to an outer event */
