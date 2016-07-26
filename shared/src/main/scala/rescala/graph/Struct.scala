@@ -64,7 +64,9 @@ trait LevelStruct extends PulsingGraphStruct {
 /**
   * Wrapper for the instance of LevelSpore
   */
-trait SimpleStruct extends LevelStruct { override type SporeP[P, R] = LevelSporeImpl[P, R] }
+trait SimpleStruct extends LevelStruct {
+  override type SporeP[P, R] = LevelSporeImpl[P, R]
+}
 
 /**
   * Spore that has a buffered pulse indicating a potential update and storing the updated and the old value.
@@ -174,6 +176,4 @@ class LevelSporeImpl[P, R](current: Pulse[P], transient: Boolean, initialIncomin
     _level = max
     max
   }
-
-
 }
