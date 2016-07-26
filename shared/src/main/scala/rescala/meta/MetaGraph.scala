@@ -5,8 +5,8 @@ import rescala.graph.{Pulse, Reactive, Struct}
 
 /*trait ReactiveGraph[S <: Struct] {
   def newRootElement() : ReactiveElement[S]
-  protected[meta] def registerElement(reactiveElement: ReactiveElement[S]) : Unit
-  protected[meta] def createBudForElement(reactiveElement: ReactiveElement[S]) : S#Spore[Reactive[S]]
+  protected[tests.rescala.meta] def registerElement(reactiveElement: ReactiveElement[S]) : Unit
+  protected[tests.rescala.meta] def createBudForElement(reactiveElement: ReactiveElement[S]) : S#Spore[Reactive[S]]
   def ticket : Ticket[S]
 }
 
@@ -14,7 +14,7 @@ trait ReactiveElement[S <: Struct] {
   def newDependentElement() : ReactiveElement[S]
   def dependencies : Set[ReactiveElement[S]]
   def instance : Reactive[S]
-  protected[meta] def bud : S#Spore[Reactive[S]]
+  protected[tests.rescala.meta] def bud : S#Spore[Reactive[S]]
   def hasInstances : Boolean
 }
 
@@ -26,11 +26,11 @@ class ReactiveGraphImpl[S <: Struct](implicit val ticket: Ticket[S]) extends Rea
     newRoot
   }
 
-  override protected[meta] def registerElement(reactiveElement: ReactiveElement[S]): Unit = {
+  override protected[tests.rescala.meta] def registerElement(reactiveElement: ReactiveElement[S]): Unit = {
     nodes += reactiveElement
   }
 
-  override protected[meta] def createBudForElement(reactiveElement: ReactiveElement[S]): S#Spore[Reactive[S]] = {
+  override protected[tests.rescala.meta] def createBudForElement(reactiveElement: ReactiveElement[S]): S#Spore[Reactive[S]] = {
     val incomingDependecies = reactiveElement.dependencies.map(_.instance)
     ticket { t => t.bud(Pulse.none, transient = false, incomingDependecies) }
   }
@@ -59,5 +59,5 @@ class ReactiveElementImpl[S <: Struct](private val graph: ReactiveGraph[S]) exte
 
   override def instance: Reactive[S] = _instance.getOrElse(instantiate())
 
-  override protected[meta] def bud = _bud.getOrElse(graph.createBudForElement(this))
+  override protected[tests.rescala.meta] def bud = _bud.getOrElse(graph.createBudForElement(this))
 }*/

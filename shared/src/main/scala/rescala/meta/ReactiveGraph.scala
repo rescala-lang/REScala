@@ -7,17 +7,19 @@ import rescala.propagation.Turn
 import scala.collection.mutable
 
 class ReactiveGraph[S <: PulsingGraphStruct] {
-  private var elements : mutable.Set[Reactive[S]] = mutable.Set()
+  private var _elements : mutable.Set[Reactive[S]] = mutable.Set()
+
+  def elements = _elements.toSet
 
   def refresh()(implicit ticket: Ticket[S]) : Unit = {
-    val elementsSave = elements
-    elements = mutable.Set()
+    val elementsSave = _elements
+    _elements = mutable.Set()
     elementsSave.foreach(addReactive)
   }
 
   private def addReactive(reactive: Reactive[S])(implicit ticket: Ticket[S]) : Unit = {
-    if (!elements.contains(reactive)) {
-      elements += reactive
+    if (!_elements.contains(reactive)) {
+      _elements += reactive
 
       for (incoming <- ticket {
         reactive.bud.incoming(_)
@@ -34,7 +36,7 @@ class ReactiveGraph[S <: PulsingGraphStruct] {
 
   def toDot(name : String = "ReactiveGraph")(implicit ticket: Ticket[S]) : String = {
     val builder = StringBuilder.newBuilder
-    val elementsNumbered = elements.zip(1 to elements.size)
+    val elementsNumbered = _elements.zip(1 to _elements.size)
     builder ++= "digraph " + name + "{\n"
     for ((elem, num) <- elementsNumbered) {
       builder ++= "r" + num + "[label=\"" + elem.toString + "\"];\n"
@@ -48,12 +50,14 @@ class ReactiveGraph[S <: PulsingGraphStruct] {
 
   private def findDominators(reactive: Reactive[S])(implicit ticket: Ticket[S]) : Set[Reactive[S]] = {
     val incoming = ticket { reactive.bud.incoming(_) }
-    incoming.foldLeft(elements.toSet)((doms, pred) => doms.intersect(findDominators(pred))) + reactive
+    if (incoming.isEmpty) Set(reactive)
+    else incoming.foldLeft(_elements.toSet)((doms, pred) => doms.intersect(findDominators(pred))) + reactive
   }
 
   private def findPostdominators(reactive: Reactive[S])(implicit ticket: Ticket[S]) : Set[Reactive[S]] = {
     val outgoing = ticket { reactive.bud.outgoing(_) }
-    outgoing.foldLeft(elements.toSet)((doms, pred) => doms.intersect(findPostdominators(pred))) + reactive
+    if (outgoing.isEmpty) Set(reactive)
+    else outgoing.foldLeft(_elements.toSet)((doms, pred) => doms.intersect(findPostdominators(pred))) + reactive
   }
 
   private def isSingleEntryExitArea(entry: Reactive[S], exit: Reactive[S])(implicit ticket: Ticket[S]) : Boolean = {
@@ -97,18 +101,19 @@ class ReactiveGraph[S <: PulsingGraphStruct] {
       newReactive
     }
 
-    elements --= reactives
-    elements += newReactive
+    _elements --= reactives
+    _elements += newReactive
     newReactive
   }
 
   private def enclosedNodes(current: Reactive[S], exit: Reactive[S])(implicit ticket: Ticket[S]) : List[Reactive[S]] = {
     if (current == exit) List(exit)
-    else ticket { t => current.bud.outgoing(t) }.foldLeft(List[Reactive[S]]())(_ ++ enclosedNodes(_, exit)) :+ current
+    else ticket { t => current.bud.outgoing(t) }.foldLeft(List[Reactive[S]]())((list, out) =>
+      list ++ (if (list.contains(out)) List() else enclosedNodes(out, exit))) :+ current
   }
 
   def optimize(excluded: Set[Reactive[S]])(implicit ticket: Ticket[S]): Unit = {
-    for (entry <- elements; exit <- elements) {
+    for (entry <- _elements; exit <- _elements) {
       if (isSingleEntryExitArea(entry, exit)) {
         val enclosed = enclosedNodes(entry, exit).reverse
         if (enclosed.size > 1 && (excluded -- enclosed).size == excluded.size) {
@@ -127,8 +132,6 @@ object ReactiveGraph {
     graph.addReactive(reactive)
     graph
   }
-
-
 }
 
 
