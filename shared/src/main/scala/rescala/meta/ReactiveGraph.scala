@@ -4,12 +4,14 @@ import rescala.engines.Ticket
 import rescala.graph.{PulsingGraphStruct, Reactive, ReevaluationResult}
 import rescala.propagation.Turn
 
+import scala.collection.mutable
+
 class ReactiveGraph[S <: PulsingGraphStruct] {
-  private var elements : collection.mutable.Set[Reactive[S]] = collection.mutable.Set()
+  private var elements : mutable.Set[Reactive[S]] = mutable.Set()
 
   def refresh()(implicit ticket: Ticket[S]) : Unit = {
     val elementsSave = elements
-    elements = collection.mutable.Set()
+    elements = mutable.Set()
     elementsSave.foreach(addReactive)
   }
 
@@ -46,18 +48,23 @@ class ReactiveGraph[S <: PulsingGraphStruct] {
 
   private def findDominators(reactive: Reactive[S])(implicit ticket: Ticket[S]) : Set[Reactive[S]] = {
     val incoming = ticket { reactive.bud.incoming(_) }
-    incoming.foldLeft(Set(reactive))((doms, pred) => doms.intersect(findDominators(pred)))
+    incoming.foldLeft(elements.toSet)((doms, pred) => doms.intersect(findDominators(pred))) + reactive
   }
 
   private def findPostdominators(reactive: Reactive[S])(implicit ticket: Ticket[S]) : Set[Reactive[S]] = {
     val outgoing = ticket { reactive.bud.outgoing(_) }
-    outgoing.foldLeft(Set(reactive))((doms, pred) => doms.intersect(findDominators(pred)))
+    outgoing.foldLeft(elements.toSet)((doms, pred) => doms.intersect(findPostdominators(pred))) + reactive
   }
 
-  def isSingleEntryExitArea(entry: Reactive[S], exit: Reactive[S])(implicit ticket: Ticket[S]) : Boolean =
-    findDominators(exit).contains(entry) && findPostdominators(entry).contains(exit)
+  private def isSingleEntryExitArea(entry: Reactive[S], exit: Reactive[S])(implicit ticket: Ticket[S]) : Boolean = {
+    val dom = findDominators(exit)
+    val postdom = findPostdominators(entry)
+    dom.contains(entry) && postdom.contains(exit)
+  }
+
 
   def mergeReactives(reactives: List[Reactive[S]])(implicit ticket: Ticket[S]) : Reactive[S] = {
+    if (reactives.size < 2) reactives.head
     val headBud = reactives.head.bud
     val lastBud = reactives.last.bud
     val newBud = ticket { t => t.bud(lastBud.pulses.get(t), transient = false, headBud.incoming(t)) }
@@ -95,6 +102,23 @@ class ReactiveGraph[S <: PulsingGraphStruct] {
     newReactive
   }
 
+  private def enclosedNodes(current: Reactive[S], exit: Reactive[S])(implicit ticket: Ticket[S]) : List[Reactive[S]] = {
+    if (current == exit) List(exit)
+    else ticket { t => current.bud.outgoing(t) }.foldLeft(List[Reactive[S]]())(_ ++ enclosedNodes(_, exit)) :+ current
+  }
+
+  def optimize(excluded: Set[Reactive[S]])(implicit ticket: Ticket[S]): Unit = {
+    for (entry <- elements; exit <- elements) {
+      if (isSingleEntryExitArea(entry, exit)) {
+        val enclosed = enclosedNodes(entry, exit).reverse
+        if (enclosed.size > 1 && (excluded -- enclosed).size == excluded.size) {
+          mergeReactives(enclosed)
+          optimize(excluded)
+          return
+        }
+      }
+    }
+  }
 }
 
 object ReactiveGraph {

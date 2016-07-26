@@ -49,4 +49,20 @@ class MetaTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Assert
     assert(s4.now == 7)
   }
 
+  @Test def autoMerging(): Unit = {
+    val v = Var(0)
+    val s = v.map(_ + 1)
+    val s2a = s.map(_ + 1)
+    val s2b = s.map(_ + 1)
+    val s3 = Signals.lift(s2a, s2b) { _ + _ }
+    val s4 = s3.map(_ + 1)
+    val g = ReactiveGraph.fromReactive(v)
+    val z = g.optimize(Set(v, s4))
+    g.refresh()
+    println(g.toDot())
+    assert(s4.now == 5)
+    v.set(1)
+    assert(s4.now == 7)
+  }
+
 }
