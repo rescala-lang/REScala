@@ -11,7 +11,7 @@ sealed trait Source[T, S <: Struct] {
 /**
   * An implementation of an imperative event
   */
-final class Evt[T, S <: Struct]()(_bud: S#SporeP[T, Reactive[S]]) extends Base[T, S](_bud) with Event[T, S] with Source[T, S] {
+final class Evt[T, S <: Struct]()(_bud: S#SporeP[T, Reactive[S]]) extends Base[T, S](_bud) with EventImpl[T, S] with Source[T, S] {
 
   /** Trigger the event */
   def apply(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = fire(value)
@@ -34,7 +34,7 @@ object Evt {
 
 
 /** A root Reactive value without dependencies which can be set */
-final class Var[T, S <: Struct](initval: T)(_bud: S#SporeP[T, Reactive[S]]) extends Base[T, S](_bud) with Signal[T, S] with Source[T, S] {
+final class Var[T, S <: Struct](initval: T)(_bud: S#SporeP[T, Reactive[S]]) extends Base[T, S](_bud) with SignalImpl[T, S] with Source[T, S] {
   def update(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = set(value)
   def set(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) {admit(value)(_)}
   def transform(f: T => T)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) { t => admit(f(get(t)))(t) }

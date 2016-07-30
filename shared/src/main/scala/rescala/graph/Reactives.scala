@@ -74,25 +74,32 @@ trait PulseOption[+P, S <: Struct] extends Pulsing[P, S] {
   * @tparam A Value type stored by the reactive value
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
-trait Stateful[+A, S <: Struct] extends Pulsing[A, S] {
+trait Stateful[+A, S <: Struct] {
   // only used inside macro and will be replaced there
   final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")
 
-  final def apply[T](turn: Turn[S]): A = {
+  def apply[T](turn: Turn[S]): A
+
+  def now(implicit maybe: Ticket[S]): A
+
+  def get(implicit turn: Turn[S]): A
+}
+
+trait StatefulImpl[+A, S <: Struct] extends Stateful[A, S] with Pulsing[A, S] {
+  final override def apply[T](turn: Turn[S]): A = {
     turn.dependencyInteraction(this)
     turn.useDependency(this)
     get(turn)
   }
 
-  final def now(implicit maybe: Ticket[S]): A = maybe { t =>
+  final override def now(implicit maybe: Ticket[S]): A = maybe { t =>
     t.dependencyInteraction(this)
     get(t)
   }
 
-  final def get(implicit turn: Turn[S]): A = pulse match {
+  final override def get(implicit turn: Turn[S]): A = pulse match {
     case NoChange(Some(value)) => value
     case Diff(value, oldOption) => value
     case NoChange(None) => throw new IllegalStateException("stateful reactive has never pulsed")
   }
 }
-

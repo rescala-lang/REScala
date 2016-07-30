@@ -5,47 +5,47 @@ import rescala.graph._
 
 import scala.collection.immutable.{Queue, LinearSeq}
 
-trait Event[+T, S <: Struct] extends PulseOption[T, S]{
+trait Event[+T, S <: Struct] {
 
   /** add an observer */
   final def +=(react: T => Unit)(implicit ticket: Ticket[S]): Observe[S] = observe(react)(ticket)
-  final def observe(react: T => Unit)(implicit ticket: Ticket[S]): Observe[S] = Observe(this)(react)
+  def observe(react: T => Unit)(implicit ticket: Ticket[S]): Observe[S]
 
   /**
    * Events disjunction.
    */
-  final def ||[U >: T](other: Event[U, S])(implicit ticket: Ticket[S]): Event[U, S] = Events.or(this, other)
+  def ||[U >: T](other: Event[U, S])(implicit ticket: Ticket[S]): Event[U, S]
 
   /**
    * Event filtered with a predicate
    */
-  final def &&(pred: T => Boolean)(implicit ticket: Ticket[S]): Event[T, S] = Events.filter(this)(pred)
+  def &&(pred: T => Boolean)(implicit ticket: Ticket[S]): Event[T, S]
   final def filter(pred: T => Boolean)(implicit ticket: Ticket[S]): Event[T, S] = &&(pred)
 
   /**
    * Event is triggered except if the other one is triggered
    */
-  final def \[U](other: Event[U, S])(implicit ticket: Ticket[S]): Event[T, S] = Events.except(this, other)
+  def \[U](other: Event[U, S])(implicit ticket: Ticket[S]): Event[T, S]
 
   /**
    * Events conjunction
    */
-  final def and[U, R](other: Event[U, S])(merger: (T, U) => R)(implicit ticket: Ticket[S]): Event[R, S] = Events.and(this, other)(merger)
+  def and[U, R](other: Event[U, S])(merger: (T, U) => R)(implicit ticket: Ticket[S]): Event[R, S]
 
   /**
    * Event conjunction with a merge method creating a tuple of both event parameters
    */
-  final def zip[U](other: Event[U, S])(implicit ticket: Ticket[S]): Event[(T, U), S] = Events.and(this, other)((_, _))
+  final def zip[U](other: Event[U, S])(implicit ticket: Ticket[S]): Event[(T, U), S] = and(other)((_, _))
 
   /**
    * Transform the event parameter
    */
-  final def map[U](mapping: T => U)(implicit ticket: Ticket[S]): Event[U, S] = Events.map(this)(mapping)
+  def map[U](mapping: T => U)(implicit ticket: Ticket[S]): Event[U, S]
 
   /**
    * Drop the event parameter; equivalent to map((_: Any) => ())
    */
-  final def dropParam(implicit ticket: Ticket[S]): Event[Unit, S] = Events.map(this)(_ => ())
+  final def dropParam(implicit ticket: Ticket[S]): Event[Unit, S] = map(_ => ())
 
 
   /** folds events with a given fold function to create a Signal */
@@ -88,9 +88,76 @@ trait Event[+T, S <: Struct] extends PulseOption[T, S]{
   final def list()(implicit ticket: Ticket[S]): Signal[List[T], S] = fold(List[T]())((acc, v) => v :: acc)
 
   /** Switch back and forth between two signals on occurrence of event e */
-  final def toggle[A](a: Signal[A, S], b: Signal[A, S])(implicit ticket: Ticket[S]): Signal[A, S] = ticket { implicit turn =>
-    val switched: Signal[Boolean, S] = iterate(false) { !_ }
-    Signals.dynamic(switched, a, b) { s => if (switched(s)) b(s) else a(s) }
+  def toggle[A](a: Signal[A, S], b: Signal[A, S])(implicit ticket: Ticket[S]): Signal[A, S]
+
+  /** Return a Signal that is updated only when e fires, and has the value of the signal s */
+  def snapshot[A](s: Signal[A, S])(implicit ticket: Ticket[S]): Signal[A, S]
+
+  /** Switch to a new Signal once, on the occurrence of event e. */
+  def switchOnce[A](original: Signal[A, S], newSignal: Signal[A, S])(implicit ticket: Ticket[S]): Signal[A, S]
+
+  /**
+   * Switch to a signal once, on the occurrence of event e. Initially the
+   * return value is set to the original signal. When the event fires,
+   * the result is a constant signal whose value is the value of the event.
+   */
+  def switchTo[T1 >: T](original: Signal[T1, S])(implicit ticket: Ticket[S]): Signal[T1, S]
+
+  /** Like latest, but delays the value of the resulting signal by n occurrences */
+  final def delay[T1 >: T](init: T1, n: Int)(implicit ticket: Ticket[S]): Signal[T1, S] = {
+    val history: Signal[LinearSeq[T], S] = last(n + 1)
+    history.map { h => if (h.size <= n) init else h.head }
+  }
+
+  /** returns the values produced by the last event produced by mapping this value */
+  def flatMap[B](f: T => Event[B, S])(implicit ticket: Ticket[S]): Event[B, S]
+
+  /** promotes the latest inner event to an outer event */
+  final def flatten[B]()(implicit ticket: Ticket[S], ev: T <:< Event[B, S]): Event[B, S] = flatMap(ev.apply)
+
+  /** logs the events to a signal */
+  final def log()(implicit ticket: Ticket[S]): Signal[List[T], S] = fold[List[T]](Nil)((a, v) => v :: a)
+}
+
+trait EventImpl[+T, S <: Struct] extends Event[T, S] with PulseOption[T, S]{
+
+  /** add an observer */
+  final def observe(react: T => Unit)(implicit ticket: Ticket[S]): Observe[S] = Observe(this)(react)
+
+  /**
+    * Events disjunction.
+    */
+  final def ||[U >: T](other: Event[U, S])(implicit ticket: Ticket[S]): Event[U, S] = Events.or(this, other)
+
+  /**
+    * Event filtered with a predicate
+    */
+  final def &&(pred: T => Boolean)(implicit ticket: Ticket[S]): Event[T, S] = Events.filter(this)(pred)
+
+  /**
+    * Event is triggered except if the other one is triggered
+    */
+  final def \[U](other: Event[U, S])(implicit ticket: Ticket[S]): Event[T, S] = Events.except(this, other)
+
+  /**
+    * Events conjunction
+    */
+  final def and[U, R](other: Event[U, S])(merger: (T, U) => R)(implicit ticket: Ticket[S]): Event[R, S] = Events.and(this, other)(merger)
+
+  /**
+    * Event conjunction with a merge method creating a tuple of both event parameters
+    */
+  final def zip[U](other: Event[U, S])(implicit ticket: Ticket[S]): Event[(T, U), S] = Events.and(this, other)((_, _))
+
+  /**
+    * Transform the event parameter
+    */
+  final def map[U](mapping: T => U)(implicit ticket: Ticket[S]): Event[U, S] = Events.map(this)(mapping)
+
+  /** Switch back and forth between two signals on occurrence of event e */
+  final def toggle[A](a: Signal[A, S], b: Signal[A, S])(implicit ticket: Ticket[S]): Signal[A, S] = ticket { turn =>
+    val switched: Signal[Boolean, S] = iterate(false) { !_ }(turn)
+    Signals.dynamic(switched, a, b) { s => if (switched(s)) b(s) else a(s) }(turn)
   }
 
   /** Return a Signal that is updated only when e fires, and has the value of the signal s */
@@ -110,10 +177,10 @@ trait Event[+T, S <: Struct] extends PulseOption[T, S]{
   }
 
   /**
-   * Switch to a signal once, on the occurrence of event e. Initially the
-   * return value is set to the original signal. When the event fires,
-   * the result is a constant signal whose value is the value of the event.
-   */
+    * Switch to a signal once, on the occurrence of event e. Initially the
+    * return value is set to the original signal. When the event fires,
+    * the result is a constant signal whose value is the value of the event.
+    */
   final def switchTo[T1 >: T](original: Signal[T1, S])(implicit ticket: Ticket[S]): Signal[T1, S] = {
     val latest = latestOption
     Signals.dynamic(latest, original) { s =>
@@ -124,20 +191,8 @@ trait Event[+T, S <: Struct] extends PulseOption[T, S]{
     }
   }
 
-  /** Like latest, but delays the value of the resulting signal by n occurrences */
-  final def delay[T1 >: T](init: T1, n: Int)(implicit ticket: Ticket[S]): Signal[T1, S] = {
-    val history: Signal[LinearSeq[T], S] = last(n + 1)
-    history.map { h => if (h.size <= n) init else h.head }
-  }
-
   /** returns the values produced by the last event produced by mapping this value */
   final def flatMap[B](f: T => Event[B, S])(implicit ticket: Ticket[S]): Event[B, S] = ticket { implicit t =>
     Events.wrapped(map(f).latest(Evt()))
   }
-
-  /** promotes the latest inner event to an outer event */
-  final def flatten[B]()(implicit ticket: Ticket[S], ev: T <:< Event[B, S]): Event[B, S] = flatMap(ev.apply)
-
-  /** logs the events to a signal */
-  final def log()(implicit ticket: Ticket[S]): Signal[List[T], S] = fold[List[T]](Nil)((a, v) => v :: a)
 }

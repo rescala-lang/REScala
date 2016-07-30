@@ -8,7 +8,7 @@ object Signals extends GeneratedSignalLift {
 
   object Impl {
     private class StaticSignal[T, S <: Struct](_bud: S#SporeP[T, Reactive[S]], expr: (Turn[S], T) => T)
-      extends Base[T, S](_bud) with Signal[T, S] with StaticReevaluation[T, S] {
+      extends Base[T, S](_bud) with SignalImpl[T, S] with StaticReevaluation[T, S] {
 
       override def calculatePulse()(implicit turn: Turn[S]): Pulse[T] = {
         val currentValue = pulses.base.current.get
@@ -16,7 +16,7 @@ object Signals extends GeneratedSignalLift {
       }
     }
 
-    private class DynamicSignal[T, S <: Struct](_bud: S#SporeP[T, Reactive[S]], expr: Turn[S] => T) extends Base[T, S](_bud) with Signal[T, S] with DynamicReevaluation[T, S] {
+    private class DynamicSignal[T, S <: Struct](_bud: S#SporeP[T, Reactive[S]], expr: Turn[S] => T) extends Base[T, S](_bud) with SignalImpl[T, S] with DynamicReevaluation[T, S] {
       def calculatePulseDependencies(implicit turn: Turn[S]): (Pulse[T], Set[Reactive[S]]) = {
         val (newValue, dependencies) = turn.collectDependencies(expr(turn))
         (Pulse.diffPulse(newValue, pulses.base), dependencies)
