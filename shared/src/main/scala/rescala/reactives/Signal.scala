@@ -5,6 +5,17 @@ import rescala.graph.{Stateful, Struct}
 
 import scala.language.higherKinds
 
+/**
+  * Base signal interface for all signal implementations.
+  * Please note that any signal implementation should have the SL type parameter set to itself and be paired with
+  * exactly one event implementation it is compatible with by setting the EV type parameter.
+  * This relationship needs to be symmetrical.
+  *
+  * @tparam A Type stored by the signal
+  * @tparam S Struct type used for the propagation of the signal
+  * @tparam SL Signal type supported as parameter and used as return type for signal methods
+  * @tparam EV Event type supported as parameter and used as return type for signal methods
+  */
 trait Signal[+A, S <: Struct, SL[+X, Z <: Struct] <: Signal[X, Z, SL, EV], EV[+X, Z <: Struct] <: Event[X, Z, SL, EV]] extends Stateful[A, S] {
 
   /** add an observer */

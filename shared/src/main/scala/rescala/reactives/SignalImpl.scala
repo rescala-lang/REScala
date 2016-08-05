@@ -3,6 +3,12 @@ package rescala.reactives
 import rescala.engines.Ticket
 import rescala.graph.{StatefulImpl, Struct}
 
+/**
+  * Standard implementation of the signal interface using Spore-based propagation.
+  *
+  * @tparam A Type stored by the signal
+  * @tparam S Struct type used for the propagation of the signal
+  */
 trait SignalImpl[+A, S <: Struct] extends Signal[A, S, SignalImpl, EventImpl] with StatefulImpl[A, S] {
 
   /** add an observer */

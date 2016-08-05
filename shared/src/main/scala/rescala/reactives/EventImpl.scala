@@ -3,6 +3,13 @@ package rescala.reactives
 import rescala.engines.Ticket
 import rescala.graph.{PulseOption, Reactive, Struct}
 
+/**
+  *
+  * Standard implementation of the event interface using Spore-based propagation.
+  *
+  * @tparam T Type returned when the event fires
+  * @tparam S Struct type used for the propagation of the event
+  */
 trait EventImpl[+T, S <: Struct] extends Event[T, S, SignalImpl, EventImpl] with PulseOption[T, S]{
 
   /** add an observer */

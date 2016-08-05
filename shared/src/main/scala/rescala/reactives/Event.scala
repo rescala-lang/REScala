@@ -6,6 +6,17 @@ import rescala.graph._
 import scala.collection.immutable.{Queue, LinearSeq}
 import scala.language.higherKinds
 
+/**
+  * Base signal interface for all signal implementations.
+  * Please note that any event implementation should have the EV type parameter set to itself and be paired with
+  * exactly one signal implementation it is compatible with by setting the SL type parameter.
+  * This relationship needs to be symmetrical.
+  *
+  * @tparam T Type returned when the event fires
+  * @tparam S Struct type used for the propagation of the event
+  * @tparam SL Signal type supported as parameter and used as return type for event methods
+  * @tparam EV Event type supported as parameter and used as return type for event methods
+  */
 trait Event[+T, S <: Struct, SL[+X, Z <: Struct] <: Signal[X, Z, SL, EV], EV[+X, Z <: Struct] <: Event[X, Z, SL, EV]] {
 
   /** add an observer */
