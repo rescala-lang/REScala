@@ -24,13 +24,13 @@ object Signals extends GeneratedSignalLift {
     }
 
     /** creates a signal that statically depends on the dependencies with a given initial value */
-    def makeStatic[T, S <: Struct](dependencies: Set[Reactive[S]], init: => T)(expr: (Turn[S], T) => T)(initialTurn: Turn[S]): Signal[T, S] = initialTurn.create(dependencies) {
+    def makeStatic[T, S <: Struct](dependencies: Set[Reactive[S]], init: => T)(expr: (Turn[S], T) => T)(initialTurn: Turn[S]): SignalImpl[T, S] = initialTurn.create(dependencies) {
       val bud: S#SporeP[T, Reactive[S]] = initialTurn.bud(Pulse.unchanged(init), transient = false, initialIncoming = dependencies)
       new StaticSignal(bud, expr)
     }
 
     /** creates a dynamic signal */
-    def makeDynamic[T, S <: Struct](dependencies: Set[Reactive[S]])(expr: Turn[S] => T)(initialTurn: Turn[S]): Signal[T, S] = initialTurn.create(dependencies, dynamic = true) {
+    def makeDynamic[T, S <: Struct](dependencies: Set[Reactive[S]])(expr: Turn[S] => T)(initialTurn: Turn[S]): SignalImpl[T, S] = initialTurn.create(dependencies, dynamic = true) {
       val bud: S#SporeP[T, Reactive[S]] = initialTurn.bud(transient = false)
       new DynamicSignal[T, S](bud, expr)
     }
@@ -38,18 +38,18 @@ object Signals extends GeneratedSignalLift {
 
 
   /** creates a new static signal depending on the dependencies, reevaluating the function */
-  def static[T, S <: Struct](dependencies: Reactive[S]*)(fun: Turn[S] => T)(implicit ticket: Ticket[S]): Signal[T, S] = ticket { initialTurn =>
+  def static[T, S <: Struct](dependencies: Reactive[S]*)(fun: Turn[S] => T)(implicit ticket: Ticket[S]): SignalImpl[T, S] = ticket { initialTurn =>
     // using an anonymous function instead of ignore2 causes dependencies to be captured, which we want to avoid
     def ignore2[I, C, R](f: I => R): (I, C) => R = (t, _) => f(t)
     Impl.makeStatic(dependencies.toSet[Reactive[S]], fun(initialTurn))(ignore2(fun))(initialTurn)
   }
 
   /** creates a signal that has dynamic dependencies (which are detected at runtime with Signal.apply(turn)) */
-  def dynamic[T, S <: Struct](dependencies: Reactive[S]*)(expr: Turn[S] => T)(implicit ticket: Ticket[S]): Signal[T, S] =
+  def dynamic[T, S <: Struct](dependencies: Reactive[S]*)(expr: Turn[S] => T)(implicit ticket: Ticket[S]): SignalImpl[T, S] =
     ticket(Impl.makeDynamic(dependencies.toSet[Reactive[S]])(expr)(_))
 
   /** creates a signal that folds the events in e */
-  def fold[E, T, S <: Struct](e: Event[E, S], init: T)(f: (T, E) => T)(implicit ticket: Ticket[S]): Signal[T, S] = ticket { initialTurn =>
+  def fold[E, T, S <: Struct](e: EventImpl[E, S], init: T)(f: (T, E) => T)(implicit ticket: Ticket[S]): SignalImpl[T, S] = ticket { initialTurn =>
     Impl.makeStatic(Set[Reactive[S]](e), init) { (turn, currentValue) =>
       e.pulse(turn).fold(currentValue, f(currentValue, _))
     }(initialTurn)

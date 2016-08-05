@@ -1,19 +1,18 @@
 package rescala.macros
 
-import rescala.graph.{PulseOption, Struct, Stateful}
+import rescala.graph.{PulseOption, Stateful, Struct}
 import rescala.propagation.Turn
-import rescala.reactives.Signal
-import rescala.reactives.Event
+import rescala.reactives.{Event, EventImpl, Signal, SignalImpl}
 
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox
 
 object ReactiveMacros {
 
-  def Signal[A, S <: Struct](expression: A): Signal[A, S] = macro SignalMacro[A, S]
-  def Event[A, S <: Struct](expression: A): Event[A, S] = macro EventMacro[A, S]
+  def Signal[A, S <: Struct](expression: A): SignalImpl[A, S] = macro SignalMacro[A, S]
+  def Event[A, S <: Struct](expression: A): EventImpl[A, S] = macro EventMacro[A, S]
 
-  def SignalMacro[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag](c: blackbox.Context)(expression: c.Expr[A]): c.Expr[Signal[A, S]] = {
+  def SignalMacro[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag](c: blackbox.Context)(expression: c.Expr[A]): c.Expr[SignalImpl[A, S]] = {
     import c.universe._
 
     val (cutOutSignals, signalExpression, filteredDetections ) =  ReactiveMacro(c)(expression)
@@ -25,15 +24,15 @@ object ReactiveMacros {
     // assemble the SignalSynt object and the signal values that are accessed
     // by the object, but were cut out of the signal expression during the code
     // transformation
-    val block = Typed(Block(cutOutSignals.reverse, body), TypeTree(weakTypeOf[Signal[A, S]]))
+    val block = Typed(Block(cutOutSignals.reverse, body), TypeTree(weakTypeOf[SignalImpl[A, S]]))
 
 
-    c.Expr[Signal[A, S]](Typer(c) untypecheck block)
+    c.Expr[SignalImpl[A, S]](Typer(c) untypecheck block)
   }
 
 
 
-  def EventMacro[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag](c: blackbox.Context)(expression: c.Expr[A]): c.Expr[Event[A, S]] = {
+  def EventMacro[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag](c: blackbox.Context)(expression: c.Expr[A]): c.Expr[EventImpl[A, S]] = {
     import c.universe._
 
     val (cutOutSignals, signalExpression, filteredDetections ) =  ReactiveMacro(c)(expression)
@@ -45,10 +44,10 @@ object ReactiveMacros {
     // assemble the SignalSynt object and the signal values that are accessed
     // by the object, but were cut out of the signal expression during the code
     // transformation
-    val block = Typed(Block(cutOutSignals.reverse, body), TypeTree(weakTypeOf[Event[A, S]]))
+    val block = Typed(Block(cutOutSignals.reverse, body), TypeTree(weakTypeOf[EventImpl[A, S]]))
 
 
-    c.Expr[Event[A, S]](Typer(c) untypecheck block)
+    c.Expr[EventImpl[A, S]](Typer(c) untypecheck block)
   }
 
   def ReactiveMacro[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag](c: blackbox.Context)(expression: c.Expr[A]): (List[c.universe.ValDef], c.universe.Tree, List[c.universe.Tree]) = {

@@ -21,7 +21,7 @@ class NaturalGraph[S <: rescala.graph.Struct] {
   implicit var engine: Engine[S, Turn[S]] = _
 
   var source: rescala.reactives.Var[Int, S] = _
-  var result: rescala.reactives.Signal[Int, S] = _
+  var result: rescala.reactives.SignalImpl[Int, S] = _
 
   @Setup
   def setup(params: BenchmarkParams, size: Size, step: Step, engineParam: EngineParam[S], work: Workload): Unit = {

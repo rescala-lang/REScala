@@ -10,8 +10,7 @@ import rescala.engines.{Engine, EngineImpl}
 import rescala.graph.Reactive
 import rescala.parrp.{Backoff, ParRP}
 import rescala.propagation.Turn
-import rescala.reactives.{Signals, Signal}
-import rescala.reactives.Var
+import rescala.reactives.{Signal, SignalImpl, Signals, Var}
 
 import scala.collection.JavaConverters._
 
@@ -60,7 +59,7 @@ object Pessigen extends EngineImpl[ParRP, PessimisticTestTurn](new PessimisticTe
 class PessimisticTest extends AssertionsForJUnit {
 
   implicit def factory: Engine[ParRP, Turn[ParRP]] = Pessigen
-  def unsafeNow[T](s: Signal[T, ParRP]): T = {
+  def unsafeNow[T](s: SignalImpl[T, ParRP]): T = {
     factory.plan()(s.get(_))
   }
 

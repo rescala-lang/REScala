@@ -6,8 +6,7 @@ import benchmarks.{EngineParam, Step}
 import org.openjdk.jmh.annotations._
 import rescala.propagation.Turn
 import rescala.engines.Engine
-import rescala.reactives.{Signals, Signal}
-import rescala.reactives.Var
+import rescala.reactives.{Signal, SignalImpl, Signals, Var}
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -23,9 +22,9 @@ class SimplePhil[S <: rescala.graph.Struct] {
   implicit var engine: Engine[S, Turn[S]] = _
 
   var phil: Var[Philosopher, S] = _
-  var vision: Signal[Vision, S] = _
+  var vision: SignalImpl[Vision, S] = _
 
-  def buildPhil(): (Var[Philosopher, S], Signal[Vision, S]) = {
+  def buildPhil(): (Var[Philosopher, S], SignalImpl[Vision, S]) = {
     val p: Var[Philosopher, S] = engine.Var(Thinking)
     val f1, f2 = p.map(s => if (s == Thinking) Free else Taken("me"))
     val v = Signals.lift(f1, f2) {calcVision("me")}
@@ -47,7 +46,7 @@ class SimplePhil[S <: rescala.graph.Struct] {
   }
 
   @Benchmark
-  def build(): (Var[Philosopher, S], Signal[Vision, S]) = buildPhil()
+  def build(): (Var[Philosopher, S], SignalImpl[Vision, S]) = buildPhil()
 
   @Benchmark
   def buildAndPropagate(step: Step): Unit = {

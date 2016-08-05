@@ -2,12 +2,12 @@ package benchmarks.simple
 
 import java.util.concurrent.TimeUnit
 
-import benchmarks.{Workload, EngineParam, Size, Step}
+import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
-import rescala.propagation.Turn
 import rescala.engines.Engine
-import rescala.reactives.{Event, Evt}
+import rescala.propagation.Turn
+import rescala.reactives.{EventImpl, Evt}
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -21,7 +21,7 @@ class ChainEvent[S <: rescala.graph.Struct] {
   implicit var engine: Engine[S, Turn[S]] = _
 
   var source: Evt[Int, S] = _
-  var result: Event[Int, S] = _
+  var result: EventImpl[Int, S] = _
 
   @Setup
   def setup(params: BenchmarkParams, size: Size, engineParam: EngineParam[S], work: Workload) = {

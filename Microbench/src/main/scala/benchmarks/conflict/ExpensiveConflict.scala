@@ -37,7 +37,7 @@ class ExpensiveConflict[S <: Struct] {
 
   var cheapSource: Var[Int, S] = _
   var expensiveSource: Var[Int, S] = _
-  var result: Signal[Int, S] = _
+  var result: SignalImpl[Int, S] = _
   var engine: Engine[S, Turn[S]] = _
   var tried: Int = _
 

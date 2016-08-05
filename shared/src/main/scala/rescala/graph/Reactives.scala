@@ -34,7 +34,7 @@ trait Reactive[S <: Struct] {
 
 
 /** helper class to initialise engine and select lock */
-abstract class Base[P, S <: Struct](budP: S#SporeP[P, Reactive[S]]) extends Pulsing[P, S] {
+abstract class Base[+P, S <: Struct](budP: S#SporeP[P, Reactive[S]]) extends Pulsing[P, S] {
   final override protected[rescala] def bud: S#Spore[Reactive[S]] = budP
   final override protected[this] def pulses(implicit turn: Turn[S]): Buffer[Pulse[P]] = turn.pulses(budP)
 

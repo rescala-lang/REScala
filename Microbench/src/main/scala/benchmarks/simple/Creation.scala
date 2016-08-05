@@ -2,13 +2,12 @@ package benchmarks.simple
 
 import java.util.concurrent.TimeUnit
 
-import benchmarks.{Size, EngineParam, Workload}
+import benchmarks.{EngineParam, Size, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
 import rescala.propagation.Turn
 import rescala.engines.Engine
-import rescala.reactives.Signal
-import rescala.reactives.{Event, Evt, Var}
+import rescala.reactives._
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -37,12 +36,12 @@ class Creation[S <: rescala.graph.Struct] {
   }
 
   @Benchmark
-  def `derived signal`(): Signal[String, S] = {
+  def `derived signal`(): SignalImpl[String, S] = {
     engine.Var("").map(identity)
   }
 
   @Benchmark
-  def `derived event`(): Event[String, S] = {
+  def `derived event`(): EventImpl[String, S] = {
     engine.Evt[String]().map(identity)
   }
 

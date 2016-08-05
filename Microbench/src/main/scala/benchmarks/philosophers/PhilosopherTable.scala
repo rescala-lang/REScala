@@ -4,13 +4,11 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import benchmarks.philosophers.PhilosopherTable._
 import org.openjdk.jmh.infra.Blackhole
-import rescala.reactives.{Signals}
+import rescala.reactives.{Signal, SignalImpl, Signals, Var}
 import Signals.lift
 import rescala.graph.Struct
 import rescala.propagation.Turn
 import rescala.engines.Engine
-import rescala.reactives.Signal
-import rescala.reactives.Var
 
 class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit val engine: Engine[S, Turn[S]]) {
 
@@ -90,6 +88,6 @@ object PhilosopherTable {
 
   // ============================================ Entity Creation =========================================================
 
-  case class Seating[S <: Struct](placeNumber: Int, philosopher: Var[Philosopher, S], leftFork: Signal[Fork, S], rightFork: Signal[Fork, S], vision: Signal[Vision, S])
+  case class Seating[S <: Struct](placeNumber: Int, philosopher: Var[Philosopher, S], leftFork: SignalImpl[Fork, S], rightFork: SignalImpl[Fork, S], vision: SignalImpl[Vision, S])
 
 }

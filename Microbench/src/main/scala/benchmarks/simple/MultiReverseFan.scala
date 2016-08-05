@@ -1,14 +1,14 @@
 package benchmarks.simple
 
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.locks.{ReentrantLock, Lock}
+import java.util.concurrent.locks.{Lock, ReentrantLock}
 
-import benchmarks.{Workload, EngineParam, Size, Step}
+import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations._
-import org.openjdk.jmh.infra.{ThreadParams, BenchmarkParams}
+import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
 import rescala.propagation.Turn
 import rescala.engines.Engine
-import rescala.reactives.{Signals, Signal}
+import rescala.reactives.{Signal, SignalImpl, Signals}
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -22,7 +22,7 @@ class MultiReverseFan[S <: rescala.graph.Struct] {
   implicit var engine: Engine[S, Turn[S]] = _
 
   var sources: Array[rescala.reactives.Var[Int, S]] = _
-  var results: Array[Signal[Int, S]] = _
+  var results: Array[SignalImpl[Int, S]] = _
   var locks: Array[Lock] = null
   var groupSize: Int = _
 
