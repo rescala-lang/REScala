@@ -7,7 +7,7 @@ import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
 import rescala.engines.Engine
 import rescala.propagation.Turn
-import rescala.reactives.{EventImpl, Evt}
+import rescala.reactives.{EventImpl, EvtImpl}
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -20,7 +20,7 @@ class ChainEvent[S <: rescala.graph.Struct] {
 
   implicit var engine: Engine[S, Turn[S]] = _
 
-  var source: Evt[Int, S] = _
+  var source: EvtImpl[Int, S] = _
   var result: EventImpl[Int, S] = _
 
   @Setup

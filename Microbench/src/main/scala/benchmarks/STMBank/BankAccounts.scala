@@ -29,8 +29,8 @@ class ReactiveState[S <: Struct] {
   var modifiedReadChance: Double = _
 
   var engine: Engine[S, Turn[S]] = _
-  var accounts: Array[Var[Int, S]] = _
-  var windows: Array[Array[Var[Int, S]]] =_
+  var accounts: Array[VarImpl[Int, S]] = _
+  var windows: Array[Array[VarImpl[Int, S]]] =_
 
 
   var locks: Array[Lock] = null

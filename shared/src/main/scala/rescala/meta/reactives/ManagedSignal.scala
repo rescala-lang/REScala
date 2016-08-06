@@ -1,9 +1,10 @@
 package rescala.meta.reactives
 
-import rescala.engines.Ticket
+import rescala.engines.{Engine, Ticket}
 import rescala.graph.Struct
+import rescala.meta.{ManagedReactive, ReactiveNode}
 import rescala.propagation.Turn
-import rescala.reactives.{Observe, Signal}
+import rescala.reactives.{Observe, Signal, Var}
 
 /**
   * Intermediate trait mainly used to satisfy the type requirements of the Signal/Event interfaces.
@@ -11,15 +12,14 @@ import rescala.reactives.{Observe, Signal}
   * @tparam A Type stored by the signal
   * @tparam S Struct type used for the propagation of the signal
   */
-trait ManagedSignal[+A, S <: Struct] extends Signal[A, S, ManagedSignal, ManagedEvent] {
-}
+trait ManagedSignal[+A, S <: Struct] extends Signal[A, S, ManagedSignal, ManagedEvent] with ManagedReactive
 
 /**
   * Actual implementation of a managed signal that has its propagation handled by a connected meta-graph representation.
   *
   * @tparam A Type stored by the signal
   */
-class ManagedSignalImpl[+A] extends ManagedSignal[A, DummyStruct] {
+class ManagedSignalImpl[+A](override val node : ReactiveNode) extends ManagedSignal[A, DummyStruct] {
   /** add an observer */
   override def observe(react: (A) => Unit)(implicit ticket: Ticket[DummyStruct]): Observe[DummyStruct] = ???
 
@@ -43,4 +43,14 @@ class ManagedSignalImpl[+A] extends ManagedSignal[A, DummyStruct] {
   override def now(implicit maybe: Ticket[DummyStruct]): A = ???
 
   override def get(implicit turn: Turn[DummyStruct]): A = ???
+}
+
+trait ManagedVar[A, S <: Struct] extends ManagedSignal[A, S] with Var[A, S, ManagedSignal, ManagedEvent]
+
+class ManagedVarImpl[A](override val node: ReactiveNode) extends ManagedSignalImpl[A](node) with ManagedVar[A, DummyStruct] {
+  override def set(value: A)(implicit fac: Engine[DummyStruct, Turn[DummyStruct]]): Unit = ???
+
+  override def transform(f: (A) => A)(implicit fac: Engine[DummyStruct, Turn[DummyStruct]]): Unit = ???
+
+  override def admit(value: A)(implicit turn: Turn[DummyStruct]): Unit = ???
 }

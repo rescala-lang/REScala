@@ -1,8 +1,10 @@
 package rescala.meta.reactives
 
-import rescala.engines.Ticket
+import rescala.engines.{Engine, Ticket}
 import rescala.graph.Struct
-import rescala.reactives.{Event, Observe}
+import rescala.meta.{ManagedReactive, ReactiveNode}
+import rescala.propagation.Turn
+import rescala.reactives.{Event, Evt, Observe}
 
 /**
   * Intermediate trait mainly used to satisfy the type requirements of the Signal/Event interfaces.
@@ -10,15 +12,14 @@ import rescala.reactives.{Event, Observe}
   * @tparam T Type returned when the event fires
   * @tparam S Struct type used for the propagation of the event
   */
-trait ManagedEvent[+T, S <: Struct] extends Event[T, S, ManagedSignal, ManagedEvent] {
-}
+trait ManagedEvent[+T, S <: Struct] extends Event[T, S, ManagedSignal, ManagedEvent] with ManagedReactive
 
 /**
   * Actual implementation of a managed event that has its propagation handled by a connected meta-graph representation.
   *
   * @tparam T Type returned when the event fires
   */
-trait ManagedEventImpl[+T] extends ManagedEvent[T, DummyStruct] {
+class ManagedEventImpl[+T](override val node: ReactiveNode) extends ManagedEvent[T, DummyStruct] {
   override def observe(react: (T) => Unit)(implicit ticket: Ticket[DummyStruct]): Observe[DummyStruct] = ???
 
   /**
@@ -72,4 +73,12 @@ trait ManagedEventImpl[+T] extends ManagedEvent[T, DummyStruct] {
 
   /** returns the values produced by the last event produced by mapping this value */
   override def flatMap[B](f: (T) => ManagedEvent[B, DummyStruct])(implicit ticket: Ticket[DummyStruct]): ManagedEventImpl[B] = ???
+}
+
+trait ManagedEvt[T, S <: Struct] extends ManagedEvent[T, S] with Evt[T, S, ManagedSignal, ManagedEvent]
+
+class ManagedEvtImpl[T](override val node: ReactiveNode) extends ManagedEventImpl[T](node) with ManagedEvt[T, DummyStruct] {
+  override def fire(value: T)(implicit fac: Engine[DummyStruct, Turn[DummyStruct]]): Unit = ???
+
+  override def admit(value: T)(implicit turn: Turn[DummyStruct]): Unit = ???
 }

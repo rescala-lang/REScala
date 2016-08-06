@@ -8,7 +8,7 @@ import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
 import rescala.engines.{Engine, Engines}
 import rescala.graph.Struct
 import rescala.propagation.Turn
-import rescala.reactives.{Signal, SignalImpl, Signals, Var}
+import rescala.reactives._
 
 import scala.collection.immutable.Range
 
@@ -20,7 +20,7 @@ import scala.collection.immutable.Range
 @State(Scope.Benchmark)
 class StackState[S <: Struct] {
 
-  var sources: Array[Var[Int, S]] = _
+  var sources: Array[VarImpl[Int, S]] = _
   var results: Array[SignalImpl[Int, S]] = _
   var dynamics: Array[SignalImpl[Int, S]] = _
   var engine: Engine[S, Turn[S]] = _
