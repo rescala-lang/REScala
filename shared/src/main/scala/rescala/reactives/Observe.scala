@@ -4,13 +4,17 @@ import rescala.engines.{Engine, Ticket}
 import rescala.graph._
 import rescala.propagation.{Committable, Turn}
 
+/**
+  * Generic interface for observers that represent a function registered to trigger for every reevaluation of a reactive value.
+  * Currently this interface is only used to allow a removal of registered observer functions.
+  *
+  * @tparam S Struct type used for the propagation of the signal
+  */
 trait Observe[S <: Struct] {
   def remove()(implicit fac: Engine[S, Turn[S]]): Unit
 }
 
-
 object Observe {
-
   private class Obs[T, S <: Struct](bud: S#SporeP[T, Reactive[S]], dependency: Pulsing[T, S], fun: T => Unit) extends Base[T, S](bud) with Reactive[S] with Observe[S] {
     override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[S] = {
       turn.schedule(once(this, dependency.pulse.toOption, fun))
@@ -31,13 +35,10 @@ object Observe {
     })
   }
 
-
   def once[V](self: AnyRef, value: Option[V], f: V => Unit): Committable = new Committable {
     override def release(implicit turn: Turn[_]): Unit = ()
     override def commit(implicit turn: Turn[_]): Unit = value.foreach(v => turn.observe(f(v)))
     override def equals(obj: scala.Any): Boolean = self.equals(obj)
     override def hashCode(): Int = self.hashCode()
   }
-
-
 }

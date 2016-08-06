@@ -6,12 +6,23 @@ import rescala.propagation.Turn
 
 import scala.language.higherKinds
 
+/**
+  * Interface for source reactives with no dependencies that can be manually written by the user.
+  *
+  * @tparam T Type of the source reactive
+  * @tparam S Struct type used for the propagation of the reactive
+  */
 sealed trait Source[T, S <: Struct] {
   def admit(value: T)(implicit turn: Turn[S]): Unit
 }
 
 /**
-  * An implementation of an imperative event
+  * Inferface for source events with no dependencies that can be manually fired by the user.
+  *
+  * @tparam T Type returned when the event fires
+  * @tparam S Struct type used for the propagation of the event
+  * @tparam SL Signal type supported as parameter and used as return type for event methods
+  * @tparam EV Event type supported as parameter and used as return type for event methods
   */
 trait Evt[T, S <: Struct, SL[+X, Z <: Struct] <: Signal[X, Z, SL, EV], EV[+X, Z <: Struct] <: Event[X, Z, SL, EV]] extends Event[T, S, SL, EV] with Source[T, S] {
   /** Trigger the event */
@@ -20,6 +31,13 @@ trait Evt[T, S <: Struct, SL[+X, Z <: Struct] <: Signal[X, Z, SL, EV], EV[+X, Z 
   def fire(value: T)(implicit fac: Engine[S, Turn[S]]): Unit
 }
 
+/**
+  * Standard implementation of the source event interface using Spore-based propagation.
+  *
+  * @param _bud Spore used by the event
+  * @tparam T Type returned when the event fires
+  * @tparam S Struct type used for the propagation of the event
+  */
 final class EvtImpl[T, S <: Struct]()(_bud: S#SporeP[T, Reactive[S]]) extends Base[T, S](_bud) with EventImpl[T, S] with Evt[T, S, SignalImpl, EventImpl] {
   override def fire(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) {admit(value)(_)}
 
@@ -31,24 +49,42 @@ final class EvtImpl[T, S <: Struct]()(_bud: S#SporeP[T, Reactive[S]]) extends Ba
     ReevaluationResult.Static(changed = pulse.isChange)
 }
 
+/**
+  * Companion object that allows external users to create new source events.
+  */
 object Evt {
   def apply[T, S <: Struct]()(implicit ticket: Ticket[S]): EvtImpl[T, S] = ticket { t => t.create(Set.empty)(new EvtImpl[T, S]()(t.bud(transient = true))) }
 }
 
-trait Var[T, S <: Struct, SL[+X, Z <: Struct] <: Signal[X, Z, SL, EV], EV[+X, Z <: Struct] <: Event[X, Z, SL, EV]] extends Signal[T, S, SL, EV] with Source[T, S] {
-  final def update(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = set(value)
-  def set(value: T)(implicit fac: Engine[S, Turn[S]]): Unit
-  def transform(f: T => T)(implicit fac: Engine[S, Turn[S]]): Unit
+/**
+  * Interface for source signals with no dependencies that can be manually set by the user.
+  *
+  * @tparam A Type stored by the signal
+  * @tparam S Struct type used for the propagation of the signal
+  * @tparam SL Signal type supported as parameter and used as return type for signal methods
+  * @tparam EV Event type supported as parameter and used as return type for signal methods
+  */
+trait Var[A, S <: Struct, SL[+X, Z <: Struct] <: Signal[X, Z, SL, EV], EV[+X, Z <: Struct] <: Event[X, Z, SL, EV]] extends Signal[A, S, SL, EV] with Source[A, S] {
+  final def update(value: A)(implicit fac: Engine[S, Turn[S]]): Unit = set(value)
+  def set(value: A)(implicit fac: Engine[S, Turn[S]]): Unit
+  def transform(f: A => A)(implicit fac: Engine[S, Turn[S]]): Unit
 
-  def admit(value: T)(implicit turn: Turn[S]): Unit
+  def admit(value: A)(implicit turn: Turn[S]): Unit
 }
 
-/** A root Reactive value without dependencies which can be set */
-final class VarImpl[T, S <: Struct](initval: T)(_bud: S#SporeP[T, Reactive[S]]) extends Base[T, S](_bud) with SignalImpl[T, S] with Var[T, S, SignalImpl, EventImpl] {
-  override def set(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) {admit(value)(_)}
-  override def transform(f: T => T)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) { t => admit(f(get(t)))(t) }
+/**
+  * Standard implementation of the source signal interface using Spore-based propagation.
+  *
+  * @param initval Initial value of the source signal
+  * @param _bud Spore used by the signal
+  * @tparam A Type stored by the signal
+  * @tparam S Struct type used for the propagation of the signal
+  */
+final class VarImpl[A, S <: Struct](initval: A)(_bud: S#SporeP[A, Reactive[S]]) extends Base[A, S](_bud) with SignalImpl[A, S] with Var[A, S, SignalImpl, EventImpl] {
+  override def set(value: A)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) {admit(value)(_)}
+  override def transform(f: A => A)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) { t => admit(f(get(t)))(t) }
 
-  override def admit(value: T)(implicit turn: Turn[S]): Unit = {
+  override def admit(value: A)(implicit turn: Turn[S]): Unit = {
     val p = Pulse.diff(value, get)
     if (p.isChange) {
       pulses.set(p)
@@ -59,7 +95,10 @@ final class VarImpl[T, S <: Struct](initval: T)(_bud: S#SporeP[T, Reactive[S]]) 
     ReevaluationResult.Static(changed = pulse.isChange)
 }
 
+/**
+  * Companion object that allows external users to create new source signals.
+  */
 object Var {
-  def apply[T, S <: Struct](initval: T)(implicit ticket: Ticket[S]): VarImpl[T, S] = ticket { t => t.create(Set.empty)(new VarImpl(initval)(t.bud(Pulse.unchanged(initval), transient = false))) }
+  def apply[A, S <: Struct](initval: A)(implicit ticket: Ticket[S]): VarImpl[A, S] = ticket { t => t.create(Set.empty)(new VarImpl(initval)(t.bud(Pulse.unchanged(initval), transient = false))) }
 }
 
