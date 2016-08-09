@@ -9,7 +9,7 @@ import rescala.propagation.LevelBasedPropagation
   * Basic implementations of propagation engines
   */
 object Engines {
-  private class SimpleNoLock extends LevelBasedPropagation[SimpleStruct] {
+  private[rescala] class SimpleNoLock extends LevelBasedPropagation[SimpleStruct] {
     def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): SimpleStruct#SporeP[P, R] =
       new LevelSporeImpl[P, R](initialValue, transient, initialIncoming)
     override def releasePhase(): Unit = ()

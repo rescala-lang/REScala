@@ -104,6 +104,13 @@ lazy val caseStudyEditor = project.in(file("CaseStudies/Editor"))
     publish := {},
     publishLocal := {})
 
+lazy val rescalatags = project.in(file("Rescalatags"))
+  .enablePlugins(ScalaJSPlugin)
+  .dependsOn(rescalaJS)
+  .settings(
+    libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.6.0"
+  )
+
 
 val rssDependencies = libraryDependencies ++= Seq(
     "joda-time" % "joda-time" % "2.9.4" withSources(),
