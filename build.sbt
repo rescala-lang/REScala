@@ -5,7 +5,7 @@ version in ThisBuild := "0.18.0-SNAPSHOT"
 
 
 lazy val root = project.in(file("."))
-  .aggregate(rescalaJVM, rescalaJS, reswing, examples, examplesReswing, caseStudyEditor, caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple)
+  .aggregate(rescalaJVM, rescalaJS, reswing, examples, examplesReswing, caseStudyEditor, caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags)
   .settings(
     publish := {},
     publishLocal := {}
