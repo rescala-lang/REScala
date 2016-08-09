@@ -20,13 +20,13 @@ package object rescalatags {
     * ID. Monkey-patches the handler onto the element itself so we have a
     * reference to kill it when the element leaves the DOM (e.g. gets deleted).
     */
-  implicit def htmlTag(signal: Signal[HtmlTag]): Frag = {
+  implicit def htmlTag(signal: Signal[Tag]): Frag = {
     new Frag {
       val rendered = signal.map(_.render)
 
       rendered.change.observe { case (lastTag, newTag) =>
-        if (lastTag.parentElement != null && !scalajs.js.isUndefined(lastTag.parentElement)) {
-          lastTag.parentElement.replaceChild(newTag, lastTag)
+        if (lastTag.parentNode != null && !scalajs.js.isUndefined(lastTag.parentNode)) {
+          lastTag.parentNode.replaceChild(newTag, lastTag)
         }
       }
 
