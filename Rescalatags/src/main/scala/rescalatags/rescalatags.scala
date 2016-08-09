@@ -1,11 +1,8 @@
 import org.scalajs.dom
-import org.scalajs.dom.{Element, html}
 import rescala._
 
-import scalatags.JsDom.all._
 import scala.language.implicitConversions
-import scalatags.generic
-import scalatags.generic.Modifier
+import scalatags.JsDom.all._
 
 package object rescalatags {
 
@@ -14,7 +11,7 @@ package object rescalatags {
     * when the Signal changes.
     */
   implicit def fragment[T](signal: Signal[T])(implicit f: T => Frag): Frag = {
-    htmlTag(Signal {span(signal())})
+    htmlTag(signal.map(span(_)))
   }
 
   /**
@@ -23,16 +20,9 @@ package object rescalatags {
     * ID. Monkey-patches the handler onto the element itself so we have a
     * reference to kill it when the element leaves the DOM (e.g. gets deleted).
     */
-  implicit def htmlTag(signal: Signal[HtmlTag]): HtmlTag = {
-    new generic.TypedTag[dom.Element, html.Element, dom.Node] {
-
+  implicit def htmlTag(signal: Signal[HtmlTag]): Frag = {
+    new Frag {
       val rendered = signal.map(_.render)
-
-      override type Self = HtmlTag
-      override def tag: String = signal.now.tag
-      override def modifiers: List[Seq[Modifier[Element]]] = signal.now.modifiers
-      override def apply(xs: Modifier[Element]*): Self = htmlTag(signal.map(_.apply(xs: _*)))
-
 
       rendered.change.observe { case (lastTag, newTag) =>
         if (lastTag.parentElement != null && !scalajs.js.isUndefined(lastTag.parentElement)) {
