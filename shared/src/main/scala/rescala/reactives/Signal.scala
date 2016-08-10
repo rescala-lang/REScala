@@ -1,12 +1,24 @@
 package rescala.reactives
 
+import java.util.concurrent.CompletionException
+
 import rescala.engines.Ticket
-import rescala.graph.{Struct, Stateful}
+import rescala.graph.Pulse.{Diff, Exceptional, NoChange}
+import rescala.graph.{Stateful, Struct}
+
+import scala.util.{Failure, Success, Try}
 
 trait Signal[+A, S <: Struct] extends Stateful[A, S] {
 
   /** add an observer */
-  final def observe(react: A => Unit)(implicit ticket: Ticket[S]): Observe[S] = Observe(this)(react)
+  final def observe(react: A => Unit)(implicit ticket: Ticket[S]): Observe[S] = Observe(this){
+    case Success(v) => react(v)
+    case Failure(t) => throw new CompletionException("Unhandled exception on observe", t)
+  }
+
+  final def toTry()(implicit ticket: Ticket[S]): Signal[Try[A], S] = Signals.static(this){ turn =>
+    this.pulse(turn).toOptionTry().getOrElse(throw new IllegalStateException("reevaluation without changes"))
+  }
 
   /** Return a Signal with f applied to the value */
   final def map[B](f: A => B)(implicit ticket: Ticket[S]): Signal[B, S] = Signals.lift(this) {f}

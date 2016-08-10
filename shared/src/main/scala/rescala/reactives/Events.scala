@@ -1,21 +1,26 @@
 package rescala.reactives
 
 import rescala.engines.Ticket
-import rescala.graph.Pulse.{NoChange, Diff}
+import rescala.graph.Pulse.{Diff, Exceptional, NoChange}
 import rescala.graph._
 import rescala.propagation.Turn
+
+import scala.util.{Failure, Success, Try}
 
 object Events {
 
   private class StaticEvent[T, S <: Struct](_bud: S#SporeP[T, Reactive[S]], expr: Turn[S] => Pulse[T], override val toString: String)
     extends Base[T, S](_bud) with Event[T, S] with StaticReevaluation[T, S] {
-    override def calculatePulse()(implicit turn: Turn[S]): Pulse[T] = expr(turn)
+    override def calculatePulse()(implicit turn: Turn[S]): Pulse[T] = Pulse.tryCatch(expr(turn))
   }
 
   private class DynamicEvent[T, S <: Struct](_bud: S#SporeP[T, Reactive[S]], expr: Turn[S] => Pulse[T]) extends Base[T, S](_bud) with Event[T, S] with DynamicReevaluation[T, S] {
     def calculatePulseDependencies(implicit turn: Turn[S]): (Pulse[T], Set[Reactive[S]]) = {
-      val (newValue, dependencies) = turn.collectDependencies(expr(turn))
-      (newValue, dependencies)
+      val (newValueTry, dependencies) = turn.collectDependencies {Try {expr(turn)}}
+      newValueTry match {
+        case Success(p) => (p, dependencies)
+        case Failure(t) => (Pulse.Exceptional(t), dependencies)
+      }
     }
   }
 
@@ -42,6 +47,7 @@ object Events {
       signal.pulse(turn) match {
         case Diff(value, Some(old)) => Pulse.change((old, value))
         case NoChange(_) | Diff(_, None) => Pulse.none
+        case ex @ Exceptional(t) => ex
       }
     }
 
@@ -62,6 +68,7 @@ object Events {
       except.pulse(turn) match {
         case NoChange(_) => accepted.pulse(turn)
         case Diff(_, _) => Pulse.none
+        case ex @ Exceptional(_) => ex
       }
     }
 
@@ -72,6 +79,7 @@ object Events {
       ev1.pulse(turn) match {
         case NoChange(_) => ev2.pulse(turn)
         case p@Diff(_, _) => p
+        case ex @ Exceptional(_) => ex
       }
     }
 

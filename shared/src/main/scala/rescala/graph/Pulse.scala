@@ -1,5 +1,10 @@
 package rescala.graph
 
+import rescala.graph.Pulse.{Diff, Exceptional, NoChange}
+
+import scala.util.{Failure, Success, Try}
+import scala.util.control.NonFatal
+
 /**
   * Pulse that stores a current value and can also indicate a potentially change to an updated value.
   * A pulse may indicate that no current value has been set yet but updates must always contain a value.
@@ -8,12 +13,10 @@ package rescala.graph
   */
 sealed trait Pulse[+P] {
 
-  import rescala.graph.Pulse._
-
   /**
     * Applies a function to the updated value of the pulse if it indicates a change, or another default function if not.
     *
-    * @param ifNone Default function applied if the pulse indicates no change
+    * @param ifNone   Default function applied if the pulse indicates no change
     * @param ifChange Function to be applied on the pulse's update if it indicates a change
     * @tparam Q Result type of both functions
     * @return Result of the applied function
@@ -28,61 +31,63 @@ sealed trait Pulse[+P] {
   def current: Option[P]
 
   /**
-    * Extracts the updated value of the pulse if it indicates a change or no value if not.
-    *
-    * @return Option of the updated pulse value
-    */
-  final def toOption: Option[P] = fold(None, Some.apply)
-
-  /**
     * Checks if the pulse indicates a change
     *
     * @return True if the pulse indicates a change, false if not
     */
-  final def isChange: Boolean = fold(false, _ => true)
+  final def isChange: Boolean = this match {
+    case NoChange(_) => false
+    case _ => true
+  }
 
   /**
     * If the pulse indicates a change: Applies a function to the updated value of the pulse and returns a new pulse
-    *   indicating a change to this updated value.
+    * indicating a change to this updated value.
     * If the pulse doesn't indicate a change: Returns an empty pulse indicating no change.
     *
     * @param f Function to be applied on the updated pulse value
     * @tparam Q Result type of the applied function
     * @return Pulse indicating the update performed by the applied function or an empty pulse if there is no updated value
     */
-  // TODO: Is the loss of the current value actually intended behavior?
-  final def map[Q](f: P => Q): Pulse[Q] = fold(none, f.andThen(change))
+  def map[Q](f: P => Q): Pulse[Q]
 
   /**
     * If the pulse indicates a change: Applies a function to the updated value. The function has to return a new pulse
-    *   that is returned by this function.
+    * that is returned by this function.
     * If the pulse doesn't indicate a change: Returns an empty pulse indicating no change.
     *
     * @param f Function to be applied on the updated pulse value
     * @tparam Q Value type of the pulse returned by the applied function
     * @return Pulse returned by the applied function or an empty pulse if there is no updated value
     */
-  final def flatMap[Q](f: P => Pulse[Q]): Pulse[Q] = fold(none, f)
+  def flatMap[Q](f: P => Pulse[Q]): Pulse[Q]
 
   /**
     * If the pulse indicates a change: Applies a filter function to the updated value of the pulse.
-    *   Based on the filter function, the updated value is retained or an empty pulse is returned.
+    * Based on the filter function, the updated value is retained or an empty pulse is returned.
     * If the pulse doesn't indicate a change: Returns an empty pulse indicating no change.
     *
     * @param p Filter function to be applied to the updated pulse value
     * @return A pulse with the updated pulse value if the filter function returns true, an empty pulse otherwise
     */
-  // TODO: Is the loss of the current value actually intended behavior?
-  final def filter(p: P => Boolean): Pulse[P] = fold(none, up => if (p(up)) change(up) else none)
+  def filter(p: P => Boolean): Pulse[P]
 
   /**
     * If the pulse indicates a change: A new pulse with the updated value set as current value and indicating no
-    *   change is created.
+    * change is created.
     * If the pulse doesn't indicate a change: The current pulse is returned without modification.
     *
     * @return New pulse with a potential update set as current value
     */
-  final def keep: Pulse[P] = fold(this, unchanged)
+  def keep: Pulse[P]
+
+  /** converts the pulse to an option of try */
+  def toOptionTry(takeInitialValue: Boolean = false): Option[Try[P]] = this match {
+    case Diff(up, _) => Some(Success(up))
+    case NoChange(Some(current)) if takeInitialValue => Some(Success(current))
+    case NoChange(_) => None
+    case Exceptional(t) => Some(Failure(t))
+  }
 }
 
 /**
@@ -128,9 +133,9 @@ object Pulse {
     * @return Pulse storing the given values as updated and current value.
     */
   def diff[P](newValue: P, oldValue: P): Pulse[P] =
-    if (null == oldValue) change(newValue)
-    else if (newValue == oldValue) unchanged(oldValue)
-    else Diff(newValue, Some(oldValue))
+  if (null == oldValue) change(newValue)
+  else if (newValue == oldValue) unchanged(oldValue)
+  else Diff(newValue, Some(oldValue))
 
   /**
     * Transforms the given pulse and an updated value into a pulse indicating a change from the pulse's value to
@@ -145,11 +150,12 @@ object Pulse {
     case NoChange(None) => change(newValue)
     case NoChange(Some(value)) => diff(newValue, value)
     case Diff(update, current) => diff(newValue, update)
+    case Exceptional(t) => change(newValue)
   }
 
-  /**
-    * Empty pulse indicating no change and storing no current value
-    */
+  def tryCatch[P](f: => Pulse[P]): Pulse[P] = try f catch {case NonFatal(t) => Exceptional(t)}
+
+  /** Empty pulse indicating no change and storing no current value */
   val none: Pulse[Nothing] = NoChange()
 
   /**
@@ -160,15 +166,33 @@ object Pulse {
     */
   final case class NoChange[+P](override val current: Option[P] = None) extends Pulse[P] {
     override def fold[Q](ifNone: => Q, ifChange: (P) => Q): Q = ifNone
+    override def map[Q](f: (P) => Q): Pulse[Q] = NoChange(current.map(f))
+    override def filter(p: (P) => Boolean): Pulse[P] = this
+    override def keep: Pulse[P] = this
+    override def flatMap[Q](f: (P) => Pulse[Q]): Pulse[Q] = none
   }
 
   /**
     * Pulse indicating a change from the stored current value to a new updated value
-    * @param update Updated value stored by the pulse
+    *
+    * @param update  Updated value stored by the pulse
     * @param current Current value stored by the pulse
     * @tparam P Stored value type of the Pulse
     */
   final case class Diff[+P](update: P, override val current: Option[P] = None) extends Pulse[P] {
     override def fold[Q](ifNone: => Q, ifChange: (P) => Q): Q = ifChange(update)
+    override def map[Q](f: (P) => Q): Pulse[Q] = Diff(f(update), current.map(f))
+    override def filter(p: (P) => Boolean): Pulse[P] = if (p(update)) this else NoChange(current)
+    override def keep: Pulse[P] = unchanged(update)
+    override def flatMap[Q](f: (P) => Pulse[Q]): Pulse[Q] = f(update)
+  }
+
+  final case class Exceptional(throwable: Throwable) extends Pulse[Nothing] {
+    override def fold[Q](ifNone: => Q, ifChange: (Nothing) => Q): Q = throw new UnsupportedOperationException("Tried to fold Exceptional Pulse", throwable)
+    override def current: Option[Nothing] = throw new UnsupportedOperationException("Tried access value of Exceptional Pulse", throwable)
+    override def map[Q](f: (Nothing) => Q): Pulse[Q] = this
+    override def filter(p: (Nothing) => Boolean): Pulse[Nothing] = this
+    override def keep: Pulse[Nothing] = this
+    override def flatMap[Q](f: (Nothing) => Pulse[Q]): Pulse[Q] = this
   }
 }

@@ -1,15 +1,25 @@
 package rescala.reactives
 
+import java.util.concurrent.CompletionException
+
 import rescala.engines.Ticket
 import rescala.graph._
 
-import scala.collection.immutable.{Queue, LinearSeq}
+import scala.collection.immutable.{LinearSeq, Queue}
+import scala.util.{Failure, Success, Try}
 
 trait Event[+T, S <: Struct] extends PulseOption[T, S]{
 
   /** add an observer */
   final def +=(react: T => Unit)(implicit ticket: Ticket[S]): Observe[S] = observe(react)(ticket)
-  final def observe(react: T => Unit)(implicit ticket: Ticket[S]): Observe[S] = Observe(this)(react)
+  final def observe(react: T => Unit)(implicit ticket: Ticket[S]): Observe[S] = Observe(this){
+    case Success(v) => react(v)
+    case Failure(t) => throw new CompletionException("Unhandled exception on observe", t)
+  }
+
+  final def toTry()(implicit ticket: Ticket[S]): Event[Try[T], S] = Events.static(s"(try $this)",this){ turn =>
+    Pulse.change(this.pulse(turn).toOptionTry().getOrElse(throw new IllegalStateException("reevaluation without changes")))
+  }
 
   /**
    * Events disjunction.
@@ -25,7 +35,7 @@ trait Event[+T, S <: Struct] extends PulseOption[T, S]{
   /**
    * Event is triggered except if the other one is triggered
    */
-  final def \[U](other: Event[U, S])(implicit ticket: Ticket[S]): Event[T, S] = Events.except(this, other)
+  final def \(other: Event[_, S])(implicit ticket: Ticket[S]): Event[T, S] = Events.except(this, other)
 
   /**
    * Events conjunction
@@ -95,7 +105,7 @@ trait Event[+T, S <: Struct] extends PulseOption[T, S]{
 
   /** Return a Signal that is updated only when e fires, and has the value of the signal s */
   final def snapshot[A](s: Signal[A, S])(implicit ticket: Ticket[S]): Signal[A, S] = ticket { turn =>
-    Signals.Impl.makeStatic(Set[Reactive[S]](this, s), s.get(turn))((t, current) => this.pulse(t).fold(current, _ => s.get(t)))(turn)
+    Signals.Impl.makeStatic(Set[Reactive[S]](this, s), s.get(turn))((t, current) => this.pulse(t).fold(current.current.get, _ => s.get(t)))(turn)
   }
 
   /** Switch to a new Signal once, on the occurrence of event e. */
