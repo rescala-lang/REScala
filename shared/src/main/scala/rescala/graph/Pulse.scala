@@ -1,6 +1,6 @@
 package rescala.graph
 
-import rescala.graph.Pulse.{Diff, Exceptional, NoChange, Stable}
+import rescala.graph.Pulse.{Change, Exceptional, NoChange, Stable}
 
 import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
@@ -66,7 +66,7 @@ sealed trait Pulse[+P] {
 
   /** converts the pulse to an option of try */
   def toOptionTry(takeInitialValue: Boolean = false): Option[Try[P]] = this match {
-    case Diff(up) => Some(Success(up))
+    case Change(up) => Some(Success(up))
     case Stable(current) if takeInitialValue => Some(Success(current))
     case NoChange => None
     case Exceptional(t) => Some(Failure(t))
@@ -94,7 +94,7 @@ object Pulse {
     * @tparam P Type of the value
     * @return Pulse containing the given value as updated value
     */
-  def change[P](value: P): Pulse[P] = Diff(value)
+  def change[P](value: P): Pulse[P] = Change(value)
 
   /**
     * Transforms the given value into a pulse indicating no change and containing it as current value.
@@ -118,7 +118,7 @@ object Pulse {
   def diff[P](newValue: P, oldValue: P): Pulse[P] =
   if (null == oldValue) change(newValue)
   else if (newValue == oldValue) unchanged(oldValue)
-  else Diff(newValue)
+  else Change(newValue)
 
   /**
     * Transforms the given pulse and an updated value into a pulse indicating a change from the pulse's value to
@@ -132,7 +132,7 @@ object Pulse {
   def diffPulse[P](newValue: P, oldPulse: Pulse[P]): Pulse[P] = oldPulse match {
     case NoChange => change(newValue)
     case Stable(value) => diff(newValue, value)
-    case Diff(update) => diff(newValue, update)
+    case Change(update) => diff(newValue, update)
     case Exceptional(t) => change(newValue)
   }
 
@@ -167,8 +167,8 @@ object Pulse {
     * @param update  Updated value stored by the pulse
     * @tparam P Stored value type of the Pulse
     */
-  final case class Diff[+P](update: P) extends Pulse[P] {
-    override def map[Q](f: (P) => Q): Pulse[Q] = Diff(f(update))
+  final case class Change[+P](update: P) extends Pulse[P] {
+    override def map[Q](f: (P) => Q): Pulse[Q] = Change(f(update))
     override def filter(p: (P) => Boolean): Pulse[P] = if (p(update)) this else Pulse.none
     override def keep: Pulse[P] = unchanged(update)
     override def flatMap[Q](f: (P) => Pulse[Q]): Pulse[Q] = f(update)

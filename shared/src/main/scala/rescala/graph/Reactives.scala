@@ -1,7 +1,7 @@
 package rescala.graph
 
 import rescala.engines.Ticket
-import rescala.graph.Pulse.{Diff, Exceptional, NoChange, Stable}
+import rescala.graph.Pulse.{Change, Exceptional, NoChange, Stable}
 import rescala.propagation.Turn
 
 /**
@@ -69,7 +69,7 @@ trait PulseOption[+P, S <: Struct] extends Pulsing[P, S] {
   }
 
   final def get(implicit turn: Turn[S]) = pulse(turn) match {
-    case Diff(update) => Some(update)
+    case Change(update) => Some(update)
     case Exceptional(t) => throw t
     case _ => None
   }
@@ -99,7 +99,7 @@ trait Stateful[+A, S <: Struct] extends Pulsing[A, S] {
 
   final def get(implicit turn: Turn[S]): A = pulse match {
     case Stable(value) => value
-    case Diff(value) => value
+    case Change(value) => value
     case Exceptional(t) => throw t
     case NoChange => throw new IllegalStateException("stateful reactive has never pulsed")
   }

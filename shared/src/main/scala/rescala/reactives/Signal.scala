@@ -3,7 +3,7 @@ package rescala.reactives
 import java.util.concurrent.CompletionException
 
 import rescala.engines.Ticket
-import rescala.graph.Pulse.{Diff, Exceptional, NoChange}
+import rescala.graph.Pulse.{Change, Exceptional, NoChange}
 import rescala.graph.{Stateful, Struct}
 
 import scala.util.{Failure, Success, Try}
