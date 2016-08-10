@@ -1,5 +1,4 @@
 ---
-layout: default
 title: ESCala
 ---
 # EScala
@@ -24,11 +23,11 @@ This section gives an overview of the language features and how to use them.
 # Event Declaration
 An event can be declared as member of a class using the evt keyword. An event can either be declared as imperative, i.e. occurrences are imperatively triggered in code (as in C#), or defined declaratively with an expression.
 
-{% highlight scala %}
+```scala
 class Figure {
  imperative evt changed[Unit]
 }
-{% endhighlight %}
+```
 In this example, the class Figure defines an imperative event named changed, which provides no data with its occurrences (Unit type). Occurrences of an imperative event can then be imperatively created in the code by calling the event as a method.
 
 changed() // create an occurrence of the changed event

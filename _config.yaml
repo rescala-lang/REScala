@@ -15,8 +15,9 @@ url: "http://guidosalva.github.io" # the base hostname & protocol for your site
 
 markdown: kramdown
 
-highlighter: rouge
-
-kramdown:
-  input: GFM
-  syntax_highlighter: rouge
+defaults:
+  -
+    scope:
+      path: ""
+    values:
+      layout: "default"
