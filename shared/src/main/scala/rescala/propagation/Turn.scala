@@ -45,7 +45,7 @@ trait Turn[S <: Struct] {
     * @tparam R Reactive value type of the incoming dependencies of the spore
     * @return
     */
-  def bud[P, R](initialValue: Pulse[P] = Pulse.none, transient: Boolean = true, initialIncoming: Set[R] = Set.empty[R]): S#SporeP[P, R]
+  def bud[P, R](initialValue: Pulse[P] = Pulse.NoChange, transient: Boolean = true, initialIncoming: Set[R] = Set.empty[R]): S#SporeP[P, R]
 
   /**
     * Called to allow turn to handle dynamic access to reactive elements

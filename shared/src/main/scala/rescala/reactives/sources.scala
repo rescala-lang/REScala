@@ -21,7 +21,7 @@ final class Evt[T, S <: Struct]()(_bud: S#SporeP[T, Reactive[S]]) extends Base[T
 
 
   def admit(value: T)(implicit turn: Turn[S]): Unit = {
-    pulses.set(Pulse.change(value))(turn)
+    pulses.set(Pulse.Change(value))(turn)
   }
 
   override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[S] =
@@ -51,6 +51,6 @@ final class Var[T, S <: Struct](initval: T)(_bud: S#SporeP[T, Reactive[S]]) exte
 }
 
 object Var {
-  def apply[T, S <: Struct](initval: T)(implicit ticket: Ticket[S]): Var[T, S] = ticket { t => t.create(Set.empty)(new Var(initval)(t.bud(Pulse.unchanged(initval), transient = false))) }
+  def apply[T, S <: Struct](initval: T)(implicit ticket: Ticket[S]): Var[T, S] = ticket { t => t.create(Set.empty)(new Var(initval)(t.bud(Pulse.Stable(initval), transient = false))) }
 }
 

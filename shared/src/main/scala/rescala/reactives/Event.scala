@@ -18,7 +18,7 @@ trait Event[+T, S <: Struct] extends PulseOption[T, S]{
   }
 
   final def toTry()(implicit ticket: Ticket[S]): Event[Try[T], S] = Events.static(s"(try $this)",this){ turn =>
-    Pulse.change(this.pulse(turn).toOptionTry().getOrElse(throw new IllegalStateException("reevaluation without changes")))
+    Pulse.Change(this.pulse(turn).toOptionTry().getOrElse(throw new IllegalStateException("reevaluation without changes")))
   }
 
   /**

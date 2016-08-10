@@ -86,7 +86,7 @@ trait BufferedSpore[P] extends PulsingSpore[P] with Buffer[Pulse[P]] with Commit
   protected val transient: Boolean
   val pulses: Buffer[Pulse[P]] = this
   protected var owner: Turn[_] = null
-  private var update: Pulse[P] = Pulse.none
+  private var update: Pulse[P] = Pulse.NoChange
 
   override def transform(f: (Pulse[P]) => Pulse[P])(implicit turn: Turn[_]): Pulse[P] = {
     val value = f(get)
@@ -107,7 +107,7 @@ trait BufferedSpore[P] extends PulsingSpore[P] with Buffer[Pulse[P]] with Commit
     release(turn)
   }
   override def release(implicit turn: Turn[_]): Unit = {
-    update = Pulse.none
+    update = Pulse.NoChange
     owner = null
   }
 }

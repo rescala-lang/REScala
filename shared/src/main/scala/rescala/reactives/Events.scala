@@ -46,11 +46,11 @@ object Events {
     static(s"(change $signal)", signal) { turn =>
       signal.pulse(turn) match {
         case Change(value) => signal.stable(turn) match {
-          case Stable(oldValue) => Pulse.change((oldValue, value))
+          case Stable(oldValue) => Pulse.Change((oldValue, value))
           case ex @ Exceptional(_) => ex
           case _ => throw new IllegalStateException("signal has no value")
         }
-        case NoChange | Stable(_) | Change(_) => Pulse.none
+        case NoChange | Stable(_) => Pulse.NoChange
         case ex @ Exceptional(t) => ex
       }
     }
@@ -71,7 +71,7 @@ object Events {
     static(s"(except $accepted  $except)", accepted, except) { turn =>
       except.pulse(turn) match {
         case NoChange | Stable(_) => accepted.pulse(turn)
-        case Change(_) => Pulse.none
+        case Change(_) => Pulse.NoChange
         case ex @ Exceptional(_) => ex
       }
     }
