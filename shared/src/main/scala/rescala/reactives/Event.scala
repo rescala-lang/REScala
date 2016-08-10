@@ -105,7 +105,7 @@ trait Event[+T, S <: Struct] extends PulseOption[T, S]{
 
   /** Return a Signal that is updated only when e fires, and has the value of the signal s */
   final def snapshot[A](s: Signal[A, S])(implicit ticket: Ticket[S]): Signal[A, S] = ticket { turn =>
-    Signals.Impl.makeStatic(Set[Reactive[S]](this, s), s.get(turn))((t, current) => this.pulse(t).fold(current.current.get, _ => s.get(t)))(turn)
+    Signals.Impl.makeStatic(Set[Reactive[S]](this, s), s.get(turn))((t, current) => this.pulse(t).fold(current, _ => s.get(t)))(turn)
   }
 
   /** Switch to a new Signal once, on the occurrence of event e. */

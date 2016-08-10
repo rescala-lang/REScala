@@ -38,6 +38,7 @@ abstract class Base[P, S <: Struct](budP: S#SporeP[P, Reactive[S]]) extends Puls
   final override protected[rescala] def bud: S#Spore[Reactive[S]] = budP
   final override protected[this] def pulses(implicit turn: Turn[S]): Buffer[Pulse[P]] = turn.pulses(budP)
 
+  final override def stable(implicit turn: Turn[S]): Pulse[P] = pulses.base
   final override def pulse(implicit turn: Turn[S]): Pulse[P] = pulses.get
 }
 
@@ -49,6 +50,7 @@ abstract class Base[P, S <: Struct](budP: S#SporeP[P, Reactive[S]]) extends Puls
   */
 trait Pulsing[+P, S <: Struct] extends Reactive[S] {
   protected[this] def pulses(implicit turn: Turn[S]): Buffer[Pulse[P]]
+  def stable(implicit turn: Turn[S]): Pulse[P]
   def pulse(implicit turn: Turn[S]): Pulse[P]
 }
 
@@ -64,7 +66,7 @@ trait PulseOption[+P, S <: Struct] extends Pulsing[P, S] {
     turn.dependencyInteraction(this)
     turn.useDependency(this)
     pulse(turn) match {
-      case Diff(update, _) => Some(update)
+      case Diff(update) => Some(update)
       case Exceptional(t) => throw t
       case _ => None
     }
@@ -95,7 +97,7 @@ trait Stateful[+A, S <: Struct] extends Pulsing[A, S] {
 
   final def get(implicit turn: Turn[S]): A = pulse match {
     case NoChange(Some(value)) => value
-    case Diff(value, _) => value
+    case Diff(value) => value
     case NoChange(None) => throw new IllegalStateException("stateful reactive has never pulsed")
     case Exceptional(t) => throw t
   }

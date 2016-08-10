@@ -45,8 +45,12 @@ object Events {
   def change[T, S <: Struct](signal: Signal[T, S])(implicit ticket: Ticket[S]): Event[(T, T), S] =
     static(s"(change $signal)", signal) { turn =>
       signal.pulse(turn) match {
-        case Diff(value, Some(old)) => Pulse.change((old, value))
-        case NoChange(_) | Diff(_, None) => Pulse.none
+        case Diff(value) => signal.stable(turn) match {
+          case NoChange(Some(oldValue)) => Pulse.change((oldValue, value))
+          case ex @ Exceptional(_) => ex
+          case _ => throw new IllegalStateException("signal has no value")
+        }
+        case NoChange(_) | Diff(_) => Pulse.none
         case ex @ Exceptional(t) => ex
       }
     }
@@ -67,7 +71,7 @@ object Events {
     static(s"(except $accepted  $except)", accepted, except) { turn =>
       except.pulse(turn) match {
         case NoChange(_) => accepted.pulse(turn)
-        case Diff(_, _) => Pulse.none
+        case Diff(_) => Pulse.none
         case ex @ Exceptional(_) => ex
       }
     }
@@ -78,7 +82,7 @@ object Events {
     static(s"(or $ev1 $ev2)", ev1, ev2) { turn =>
       ev1.pulse(turn) match {
         case NoChange(_) => ev2.pulse(turn)
-        case p@Diff(_, _) => p
+        case p@Diff(_) => p
         case ex @ Exceptional(_) => ex
       }
     }

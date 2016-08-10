@@ -1,6 +1,7 @@
 package rescala.reactives
 
 import rescala.engines.Ticket
+import rescala.graph.Pulse.NoChange
 import rescala.graph._
 import rescala.propagation.Turn
 
@@ -9,13 +10,13 @@ import scala.util.{Failure, Success, Try}
 object Signals extends GeneratedSignalLift {
 
   object Impl {
-    private class StaticSignal[T, S <: Struct](_bud: S#SporeP[T, Reactive[S]], expr: (Turn[S], Pulse[T]) => T)
+    private class StaticSignal[T, S <: Struct](_bud: S#SporeP[T, Reactive[S]], expr: (Turn[S], => T) => T)
       extends Base[T, S](_bud) with Signal[T, S] with StaticReevaluation[T, S] {
 
       override def calculatePulse()(implicit turn: Turn[S]): Pulse[T] = {
         Pulse.tryCatch {
           val currentValue: Pulse[T] = pulses.base
-          Pulse.diffPulse(expr(turn, currentValue), currentValue)
+          Pulse.diffPulse(expr(turn, currentValue.asInstanceOf[NoChange[T]].current.get), currentValue)
         }
       }
     }
@@ -31,7 +32,7 @@ object Signals extends GeneratedSignalLift {
     }
 
     /** creates a signal that statically depends on the dependencies with a given initial value */
-    def makeStatic[T, S <: Struct](dependencies: Set[Reactive[S]], init: => T)(expr: (Turn[S], Pulse[T]) => T)(initialTurn: Turn[S]): Signal[T, S] = initialTurn.create(dependencies) {
+    def makeStatic[T, S <: Struct](dependencies: Set[Reactive[S]], init: => T)(expr: (Turn[S], => T) => T)(initialTurn: Turn[S]): Signal[T, S] = initialTurn.create(dependencies) {
       val bud: S#SporeP[T, Reactive[S]] = initialTurn.bud(Pulse.unchanged(init), transient = false, initialIncoming = dependencies)
       new StaticSignal(bud, expr)
     }
@@ -58,7 +59,7 @@ object Signals extends GeneratedSignalLift {
   /** creates a signal that folds the events in e */
   def fold[E, T, S <: Struct](e: Event[E, S], init: T)(f: (T, E) => T)(implicit ticket: Ticket[S]): Signal[T, S] = ticket { initialTurn =>
     Impl.makeStatic(Set[Reactive[S]](e), init) { (turn, currentValue) =>
-      e.pulse(turn).fold(currentValue.current.get, value => f(currentValue.current.get, value))
+      e.pulse(turn).fold(currentValue, value => f(currentValue, value))
     }(initialTurn)
   }
 

@@ -24,13 +24,6 @@ sealed trait Pulse[+P] {
   def fold[Q](ifNone: => Q, ifChange: P => Q): Q
 
   /**
-    * Extracts the current value of the pulse if it contains one.
-    *
-    * @return Option of the current pulse value
-    */
-  def current: Option[P]
-
-  /**
     * Checks if the pulse indicates a change
     *
     * @return True if the pulse indicates a change, false if not
@@ -83,7 +76,7 @@ sealed trait Pulse[+P] {
 
   /** converts the pulse to an option of try */
   def toOptionTry(takeInitialValue: Boolean = false): Option[Try[P]] = this match {
-    case Diff(up, _) => Some(Success(up))
+    case Diff(up) => Some(Success(up))
     case NoChange(Some(current)) if takeInitialValue => Some(Success(current))
     case NoChange(_) => None
     case Exceptional(t) => Some(Failure(t))
@@ -135,7 +128,7 @@ object Pulse {
   def diff[P](newValue: P, oldValue: P): Pulse[P] =
   if (null == oldValue) change(newValue)
   else if (newValue == oldValue) unchanged(oldValue)
-  else Diff(newValue, Some(oldValue))
+  else Diff(newValue)
 
   /**
     * Transforms the given pulse and an updated value into a pulse indicating a change from the pulse's value to
@@ -149,7 +142,7 @@ object Pulse {
   def diffPulse[P](newValue: P, oldPulse: Pulse[P]): Pulse[P] = oldPulse match {
     case NoChange(None) => change(newValue)
     case NoChange(Some(value)) => diff(newValue, value)
-    case Diff(update, current) => diff(newValue, update)
+    case Diff(update) => diff(newValue, update)
     case Exceptional(t) => change(newValue)
   }
 
@@ -164,7 +157,7 @@ object Pulse {
     * @param current Current value stored by the pulse
     * @tparam P Stored value type of the Pulse
     */
-  final case class NoChange[+P](override val current: Option[P] = None) extends Pulse[P] {
+  final case class NoChange[+P](current: Option[P] = None) extends Pulse[P] {
     override def fold[Q](ifNone: => Q, ifChange: (P) => Q): Q = ifNone
     override def map[Q](f: (P) => Q): Pulse[Q] = NoChange(current.map(f))
     override def filter(p: (P) => Boolean): Pulse[P] = this
@@ -176,20 +169,18 @@ object Pulse {
     * Pulse indicating a change from the stored current value to a new updated value
     *
     * @param update  Updated value stored by the pulse
-    * @param current Current value stored by the pulse
     * @tparam P Stored value type of the Pulse
     */
-  final case class Diff[+P](update: P, override val current: Option[P] = None) extends Pulse[P] {
+  final case class Diff[+P](update: P) extends Pulse[P] {
     override def fold[Q](ifNone: => Q, ifChange: (P) => Q): Q = ifChange(update)
-    override def map[Q](f: (P) => Q): Pulse[Q] = Diff(f(update), current.map(f))
-    override def filter(p: (P) => Boolean): Pulse[P] = if (p(update)) this else NoChange(current)
+    override def map[Q](f: (P) => Q): Pulse[Q] = Diff(f(update))
+    override def filter(p: (P) => Boolean): Pulse[P] = if (p(update)) this else Pulse.none
     override def keep: Pulse[P] = unchanged(update)
     override def flatMap[Q](f: (P) => Pulse[Q]): Pulse[Q] = f(update)
   }
 
   final case class Exceptional(throwable: Throwable) extends Pulse[Nothing] {
     override def fold[Q](ifNone: => Q, ifChange: (Nothing) => Q): Q = throw new UnsupportedOperationException("Tried to fold Exceptional Pulse", throwable)
-    override def current: Option[Nothing] = throw new UnsupportedOperationException("Tried access value of Exceptional Pulse", throwable)
     override def map[Q](f: (Nothing) => Q): Pulse[Q] = this
     override def filter(p: (Nothing) => Boolean): Pulse[Nothing] = this
     override def keep: Pulse[Nothing] = this
