@@ -78,7 +78,7 @@ sealed trait Pulse[+P] {
     *
     * @return New pulse with a potential update set as current value
     */
-  def keep: Pulse[P] = this
+  def stabilize: Pulse[P] = this
 
   /** converts the pulse to an option of try */
   def toOptionTry(takeInitialValue: Boolean = false): Option[Try[P]] = this match {
@@ -157,7 +157,7 @@ object Pulse {
     * @tparam P Stored value type of the Pulse
     */
   final case class Change[+P](update: P) extends Pulse[P] {
-    override def keep: Pulse[P] = Stable(update)
+    override def stabilize: Pulse[P] = Stable(update)
   }
 
   final case class Exceptional(throwable: Throwable) extends Pulse[Nothing]

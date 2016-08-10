@@ -1,11 +1,11 @@
 package rescala.stm
 
 import rescala.graph.{LevelSpore, _}
-import rescala.propagation.{Committable, Turn}
+import rescala.propagation.Turn
 
 import scala.concurrent.stm.{InTxn, Ref}
 
-class STMSpore[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends LevelSpore[R] with PulsingSpore[P] with Buffer[Pulse[P]] with Committable {
+class STMSpore[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends LevelSpore[R] with PulsingSpore[P] with Buffer[Pulse[P]] {
 
   implicit def inTxn(implicit turn: Turn[_]): InTxn = turn match {
     case stmTurn: STMTurn => stmTurn.inTxn
@@ -46,7 +46,7 @@ class STMSpore[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming
 
   override def commit(implicit turn: Turn[_]): Unit = {
     val updateValue: Option[Pulse[P]] = update.get
-    if (!transient && updateValue.isDefined) current.set(updateValue.get.keep)
+    if (!transient && updateValue.isDefined) current.set(updateValue.get.stabilize)
     release(turn)
   }
 }

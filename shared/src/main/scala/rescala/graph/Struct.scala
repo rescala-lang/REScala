@@ -11,7 +11,7 @@ object Buffer {
   type CommitStrategy[A] = (A, A) => A
   def commitAsIs[A](base: A, cur: A): A = cur
   def transactionLocal[A](base: A, cur: A) = base
-  def keepPulse[P](base: Pulse[P], cur: Pulse[P]) = cur.keep
+  def keepPulse[P](base: Pulse[P], cur: Pulse[P]) = cur.stabilize
 }
 
 /**
@@ -19,8 +19,7 @@ object Buffer {
   *
   * @tparam A Buffer stored content type
   */
-// TODO: Does a non-committable buffer make sense? Maybe make it extend Committable directly
-trait Buffer[A] {
+trait Buffer[A] extends Committable {
   def transform(f: (A) => A)(implicit turn: Turn[_]): A
   def set(value: A)(implicit turn: Turn[_]): Unit
   def base(implicit turn: Turn[_]): A
@@ -81,7 +80,7 @@ trait PulsingSpore[P] {
   *
   * @tparam P Pulse stored value type
   */
-trait BufferedSpore[P] extends PulsingSpore[P] with Buffer[Pulse[P]] with Committable {
+trait BufferedSpore[P] extends PulsingSpore[P] with Buffer[Pulse[P]] {
   protected var current: Pulse[P]
   protected val transient: Boolean
   val pulses: Buffer[Pulse[P]] = this
@@ -103,7 +102,7 @@ trait BufferedSpore[P] extends PulsingSpore[P] with Buffer[Pulse[P]] with Commit
   override def base(implicit turn: Turn[_]): Pulse[P] = current
 
   override def commit(implicit turn: Turn[_]): Unit = {
-    if (!transient) current = update.keep
+    if (!transient) current = update.stabilize
     release(turn)
   }
   override def release(implicit turn: Turn[_]): Unit = {
