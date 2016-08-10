@@ -1,7 +1,7 @@
 package rescala.reactives
 
 import rescala.engines.Ticket
-import rescala.graph.Pulse.Stable
+import rescala.graph.Pulse.{Change, Exceptional, NoChange, Stable}
 import rescala.graph._
 import rescala.propagation.Turn
 
@@ -16,7 +16,13 @@ object Signals extends GeneratedSignalLift {
       override def calculatePulse()(implicit turn: Turn[S]): Pulse[T] = {
         Pulse.tryCatch {
           val currentValue: Pulse[T] = pulses.base
-          Pulse.diffPulse(expr(turn, currentValue.asInstanceOf[Stable[T]].value), currentValue)
+          def theValue: T = currentValue match {
+            case Stable(value) => value
+            case Exceptional(t) => throw t
+            case Change(value) => value
+            case NoChange  => throw new EmptySignalControlThrowable
+          }
+          Pulse.diffPulse(expr(turn, theValue), currentValue)
         }
       }
     }

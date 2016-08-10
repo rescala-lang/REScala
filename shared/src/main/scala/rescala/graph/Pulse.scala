@@ -137,7 +137,11 @@ object Pulse {
     case Exceptional(t) => Change(newValue)
   }
 
-  def tryCatch[P](f: => Pulse[P]): Pulse[P] = try f catch {case NonFatal(t) => Exceptional(t)}
+  def tryCatch[P](f: => Pulse[P]): Pulse[P] =
+    try f catch {
+      case e : EmptySignalControlThrowable => NoChange
+      case NonFatal(t) => Exceptional(t)
+    }
 
   final case class Stable[+P](value: P) extends Pulse[P]
 

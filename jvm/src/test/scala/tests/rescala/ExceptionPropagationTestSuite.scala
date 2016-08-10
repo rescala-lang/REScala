@@ -83,9 +83,14 @@ class ExceptionPropagationTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) ext
     intercept[ArithmeticException](folded.now)
     intercept[ArithmeticException](res.get)
 
-//    input.fire(" aet ")
-//    intercept[ArithmeticException](folded.now)
-//    intercept[ArithmeticException](res.get)
+    input.fire(" aet ")
+    intercept[NumberFormatException](folded.now)
+    intercept[NumberFormatException](res.get)
+
+
+    input.fire(" 2 ")
+    intercept[NumberFormatException](folded.now)
+    intercept[NumberFormatException](res.get)
 
   }
 
