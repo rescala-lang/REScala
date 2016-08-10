@@ -34,13 +34,13 @@ object Evt {
 
 
 /** A root Reactive value without dependencies which can be set */
-final class Var[T, S <: Struct](initval: T)(_bud: S#SporeP[T, Reactive[S]]) extends Base[T, S](_bud) with Signal[T, S] with Source[T, S] {
+final class Var[T, S <: Struct](_bud: S#SporeP[T, Reactive[S]]) extends Base[T, S](_bud) with Signal[T, S] with Source[T, S] {
   def update(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = set(value)
   def set(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) {admit(value)(_)}
   def transform(f: T => T)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) { t => admit(f(get(t)))(t) }
 
   def admit(value: T)(implicit turn: Turn[S]): Unit = {
-    val p = Pulse.diff(value, get)
+    val p = Pulse.diffPulse(value, stable)
     if (p.isChange) {
       pulses.set(p)
     }
@@ -51,6 +51,8 @@ final class Var[T, S <: Struct](initval: T)(_bud: S#SporeP[T, Reactive[S]]) exte
 }
 
 object Var {
-  def apply[T, S <: Struct](initval: T)(implicit ticket: Ticket[S]): Var[T, S] = ticket { t => t.create(Set.empty)(new Var(initval)(t.bud(Pulse.Stable(initval), transient = false))) }
+  def apply[T, S <: Struct](initval: T)(implicit ticket: Ticket[S]): Var[T, S] = ticket { t => t.create(Set.empty)(new Var(t.bud(Pulse.Stable(initval), transient = false))) }
+  def apply[T, S <: Struct]()(implicit ticket: Ticket[S]): Var[T, S] = ticket { t => t.create(Set.empty)(new Var(t.bud(Pulse.NoChange, transient = false))) }
+
 }
 

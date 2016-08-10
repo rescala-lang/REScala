@@ -96,4 +96,30 @@ class SignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asse
     assertLevel(s3, 2)
   }
 
+
+  @Test def noChangePropagations(): Unit = {
+    val v = Var(1)
+    val s = v.map(_ => 1)
+    val s2 = Signal{ s() }
+
+    assert(s2.now === 1)
+    assert(s.now === 1)
+
+    v.set(2)
+    assert(s2.now === 1)
+    assert(s.now === 1)
+
+
+    v.set(2)
+    assert(s2.now === 1)
+    assert(s.now === 1)
+
+
+    v.set(3)
+    assert(s2.now === 1)
+    assert(s.now === 1)
+
+
+  }
+
 }

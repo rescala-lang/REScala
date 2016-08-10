@@ -5,7 +5,7 @@ import rescala.graph.Pulse.{Change, Exceptional, NoChange, Stable}
 import rescala.graph._
 import rescala.propagation.Turn
 
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 
 object Signals extends GeneratedSignalLift {
 
@@ -20,7 +20,7 @@ object Signals extends GeneratedSignalLift {
             case Stable(value) => value
             case Exceptional(t) => throw t
             case Change(value) => value
-            case NoChange  => throw new EmptySignalControlThrowable
+            case NoChange => throw new EmptySignalControlThrowable
           }
           Pulse.diffPulse(expr(turn, theValue), currentValue)
         }
@@ -29,9 +29,10 @@ object Signals extends GeneratedSignalLift {
 
     private class DynamicSignal[T, S <: Struct](_bud: S#SporeP[T, Reactive[S]], expr: Turn[S] => T) extends Base[T, S](_bud) with Signal[T, S] with DynamicReevaluation[T, S] {
       def calculatePulseDependencies(implicit turn: Turn[S]): (Pulse[T], Set[Reactive[S]]) = {
-        val (newValueTry, dependencies) = turn.collectDependencies {Try {expr(turn)}}
+        val (newValueTry, dependencies) = turn.collectDependencies {Globals.reTry(expr(turn))}
         newValueTry match {
           case Success(p) => (Pulse.diffPulse(p, pulses.base), dependencies)
+          case Failure(t: EmptySignalControlThrowable) => (Pulse.NoChange, dependencies)
           case Failure(t) => (Pulse.Exceptional(t), dependencies)
         }
       }
@@ -39,7 +40,7 @@ object Signals extends GeneratedSignalLift {
 
     /** creates a signal that statically depends on the dependencies with a given initial value */
     def makeStatic[T, S <: Struct](dependencies: Set[Reactive[S]], init: => T)(expr: (Turn[S], => T) => T)(initialTurn: Turn[S]): Signal[T, S] = initialTurn.create(dependencies) {
-      val bud: S#SporeP[T, Reactive[S]] = initialTurn.bud(Pulse.Stable(init), transient = false, initialIncoming = dependencies)
+      val bud: S#SporeP[T, Reactive[S]] = initialTurn.bud(Pulse.tryCatch(Pulse.Stable(init)), transient = false, initialIncoming = dependencies)
       new StaticSignal(bud, expr)
     }
 

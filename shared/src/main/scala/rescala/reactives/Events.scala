@@ -5,7 +5,7 @@ import rescala.graph.Pulse.{Change, Exceptional, NoChange, Stable}
 import rescala.graph._
 import rescala.propagation.Turn
 
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 
 object Events {
 
@@ -16,9 +16,10 @@ object Events {
 
   private class DynamicEvent[T, S <: Struct](_bud: S#SporeP[T, Reactive[S]], expr: Turn[S] => Pulse[T]) extends Base[T, S](_bud) with Event[T, S] with DynamicReevaluation[T, S] {
     def calculatePulseDependencies(implicit turn: Turn[S]): (Pulse[T], Set[Reactive[S]]) = {
-      val (newValueTry, dependencies) = turn.collectDependencies {Try {expr(turn)}}
+      val (newValueTry, dependencies) = turn.collectDependencies { Globals.reTry(expr(turn)) }
       newValueTry match {
         case Success(p) => (p, dependencies)
+        case Failure(t : EmptySignalControlThrowable) => (Pulse.NoChange, dependencies)
         case Failure(t) => (Pulse.Exceptional(t), dependencies)
       }
     }
