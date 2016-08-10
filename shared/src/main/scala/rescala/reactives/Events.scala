@@ -1,7 +1,7 @@
 package rescala.reactives
 
 import rescala.engines.Ticket
-import rescala.graph.Pulse.{Diff, Exceptional, NoChange}
+import rescala.graph.Pulse.{Diff, Exceptional, NoChange, Stable}
 import rescala.graph._
 import rescala.propagation.Turn
 
@@ -46,11 +46,11 @@ object Events {
     static(s"(change $signal)", signal) { turn =>
       signal.pulse(turn) match {
         case Diff(value) => signal.stable(turn) match {
-          case NoChange(Some(oldValue)) => Pulse.change((oldValue, value))
+          case Stable(oldValue) => Pulse.change((oldValue, value))
           case ex @ Exceptional(_) => ex
           case _ => throw new IllegalStateException("signal has no value")
         }
-        case NoChange(_) | Diff(_) => Pulse.none
+        case NoChange | Stable(_) | Diff(_) => Pulse.none
         case ex @ Exceptional(t) => ex
       }
     }
@@ -70,7 +70,7 @@ object Events {
   def except[T, U, S <: Struct](accepted: Pulsing[T, S], except: Pulsing[U, S])(implicit ticket: Ticket[S]): Event[T, S] =
     static(s"(except $accepted  $except)", accepted, except) { turn =>
       except.pulse(turn) match {
-        case NoChange(_) => accepted.pulse(turn)
+        case NoChange | Stable(_) => accepted.pulse(turn)
         case Diff(_) => Pulse.none
         case ex @ Exceptional(_) => ex
       }
@@ -81,7 +81,7 @@ object Events {
   def or[T, S <: Struct](ev1: Pulsing[_ <: T, S], ev2: Pulsing[_ <: T, S])(implicit ticket: Ticket[S]): Event[T, S] =
     static(s"(or $ev1 $ev2)", ev1, ev2) { turn =>
       ev1.pulse(turn) match {
-        case NoChange(_) => ev2.pulse(turn)
+        case NoChange | Stable(_) => ev2.pulse(turn)
         case p@Diff(_) => p
         case ex @ Exceptional(_) => ex
       }

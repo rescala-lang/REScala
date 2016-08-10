@@ -1,7 +1,7 @@
 package rescala.reactives
 
 import rescala.engines.Ticket
-import rescala.graph.Pulse.NoChange
+import rescala.graph.Pulse.{NoChange, Stable}
 import rescala.graph._
 import rescala.propagation.Turn
 
@@ -16,7 +16,7 @@ object Signals extends GeneratedSignalLift {
       override def calculatePulse()(implicit turn: Turn[S]): Pulse[T] = {
         Pulse.tryCatch {
           val currentValue: Pulse[T] = pulses.base
-          Pulse.diffPulse(expr(turn, currentValue.asInstanceOf[NoChange[T]].current.get), currentValue)
+          Pulse.diffPulse(expr(turn, currentValue.asInstanceOf[Stable[T]].value), currentValue)
         }
       }
     }
@@ -59,7 +59,7 @@ object Signals extends GeneratedSignalLift {
   /** creates a signal that folds the events in e */
   def fold[E, T, S <: Struct](e: Event[E, S], init: T)(f: (T, E) => T)(implicit ticket: Ticket[S]): Signal[T, S] = ticket { initialTurn =>
     Impl.makeStatic(Set[Reactive[S]](e), init) { (turn, currentValue) =>
-      e.pulse(turn).fold(currentValue, value => f(currentValue, value))
+      e.get(turn).fold(currentValue)(value => f(currentValue, value))
     }(initialTurn)
   }
 
