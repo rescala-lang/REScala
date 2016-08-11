@@ -42,8 +42,8 @@ abstract class Base[+P, S <: Struct](budP: S#SporeP[P, Reactive[S]]) extends Pul
   final override protected[rescala] def bud: S#Spore[Reactive[S]] = budP
   final override protected[this] def pulses(implicit turn: Turn[S]): Buffer[Pulse[P]] = turn.pulses(budP)
 
-  final override def stable(implicit turn: Turn[S]): Pulse[P] = pulses.base
-  final override def pulse(implicit turn: Turn[S]): Pulse[P] = pulses.get
+  final protected[rescala] override def stable(implicit turn: Turn[S]): Pulse[P] = pulses.base
+  final protected[rescala] override def pulse(implicit turn: Turn[S]): Pulse[P] = pulses.get
 }
 
 /**
@@ -54,8 +54,8 @@ abstract class Base[+P, S <: Struct](budP: S#SporeP[P, Reactive[S]]) extends Pul
   */
 trait Pulsing[+P, S <: Struct] extends Reactive[S] {
   protected[this] def pulses(implicit turn: Turn[S]): Buffer[Pulse[P]]
-  def stable(implicit turn: Turn[S]): Pulse[P]
-  def pulse(implicit turn: Turn[S]): Pulse[P]
+  protected[rescala] def stable(implicit turn: Turn[S]): Pulse[P]
+  protected[rescala] def pulse(implicit turn: Turn[S]): Pulse[P]
 }
 
 /**
