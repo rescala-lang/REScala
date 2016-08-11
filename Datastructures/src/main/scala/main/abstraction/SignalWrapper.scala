@@ -4,50 +4,56 @@ import rescala._
 import scala.language.higherKinds
 
 abstract class SignalWrapper {
-	type InternalType
+  type InternalType
 
-	protected val internalValue: Var[Signal[InternalType]]
+  protected val internalValue: Var[Signal[InternalType]]
 
-	def toValue: InternalType = internalValue.now.now
+  def toValue: InternalType = internalValue.now.now
 
-	protected def wrap[WrappedType, WrapperType](implicit wrapping: SignalWrappable[WrappedType, WrapperType]):
-		Signal[WrappedType] => WrapperType = (unwrapped: Signal[WrappedType]) => wrapping.wrap(unwrapped)
+  protected def wrap[WrappedType, WrapperType](implicit wrapping: SignalWrappable[WrappedType, WrapperType]):
+  Signal[WrappedType] => WrapperType = (unwrapped: Signal[WrappedType]) => wrapping.wrap(unwrapped)
 
 
-	protected def liftPure0[ResultT](f: InternalType => ResultT)(): Signal[ResultT] =
-    Signal { f(internalValue()()) }
+  protected def liftPure0[ResultT](f: InternalType => ResultT)(): Signal[ResultT] =
+    Signal {f(internalValue()())}
 
-	protected def liftMutating0(f: InternalType => InternalType)(): Unit = {
+  protected def liftMutating0(f: InternalType => InternalType)(): Unit = {
     internalValue.transform(_.map(f))
-	}
+  }
 
-	protected def liftPure1[Param1T, ResultT](f: (InternalType, Param1T) => ResultT)(p1: Signal[Param1T]): Signal[ResultT] =
-	    Signal(f(internalValue()(), p1()))
+  protected def liftPure1[Param1T, ResultT](f: (InternalType, Param1T) => ResultT)(p1: Signal[Param1T]): Signal[ResultT] =
+    Signal(f(internalValue()(), p1()))
 
-	protected def liftMutating1[Param1T](f: (InternalType, Param1T) => InternalType)(p1: Signal[Param1T]): Unit = {
-	    internalValue.set {
-        Signals.dynamic() { t => f(internalValue(t)(t), p1(t)) }
-      }
-	}
+  protected def liftMutating1[Param1T](f: (InternalType, Param1T) => InternalType)(p1: Signal[Param1T]): Unit = {
+    internalValue.transform { iv =>
+      Signals.dynamic() { t => f(iv(t), p1(t)) }
+    }
+  }
 
-	protected def liftPure2[Param1T, Param2T, ResultT](f: (InternalType, Param1T, Param2T) => ResultT)(p1: Signal[Param1T], p2: Signal[Param2T]): Signal[ResultT] =
-	    Signal(f(internalValue()(), p1(), p2()))
+  protected def liftPure2[Param1T, Param2T, ResultT](f: (InternalType, Param1T, Param2T) => ResultT)(p1: Signal[Param1T], p2: Signal[Param2T]): Signal[ResultT] =
+    Signal(f(internalValue()(), p1(), p2()))
 
-	protected def liftMutating2[Param1T, Param2T](f: (InternalType, Param1T, Param2T) => InternalType)(p1: Signal[Param1T], p2: Signal[Param2T]): Unit = {
-	    internalValue() = Signals.dynamic() { t => f(internalValue(t)(t), p1(t), p2(t))}
-	}
+  protected def liftMutating2[Param1T, Param2T](f: (InternalType, Param1T, Param2T) => InternalType)(p1: Signal[Param1T], p2: Signal[Param2T]): Unit = {
+    internalValue.transform { iv =>
+      Signals.dynamic() { t => f(iv(t), p1(t), p2(t)) }
+    }
+  }
 
-	protected def liftPure3[Param1T, Param2T, Param3T, ResultT](f: (InternalType, Param1T, Param2T, Param3T) => ResultT)(p1: Signal[Param1T], p2: Signal[Param2T], p3: Signal[Param3T]): Signal[ResultT] =
-	    Signal(f(internalValue()(), p1(), p2(), p3()))
+  protected def liftPure3[Param1T, Param2T, Param3T, ResultT](f: (InternalType, Param1T, Param2T, Param3T) => ResultT)(p1: Signal[Param1T], p2: Signal[Param2T], p3: Signal[Param3T]): Signal[ResultT] =
+    Signal(f(internalValue()(), p1(), p2(), p3()))
 
-	protected def liftMutating3[Param1T, Param2T, Param3T](f: (InternalType, Param1T, Param2T, Param3T) => InternalType)(p1: Signal[Param1T], p2: Signal[Param2T], p3: Signal[Param3T]): Unit = {
-	    internalValue() = Signals.dynamic() { t => f(internalValue(t)(t), p1(t), p2(t), p3(t)) }
-	}
+  protected def liftMutating3[Param1T, Param2T, Param3T](f: (InternalType, Param1T, Param2T, Param3T) => InternalType)(p1: Signal[Param1T], p2: Signal[Param2T], p3: Signal[Param3T]): Unit = {
+    internalValue.transform { iv =>
+      Signals.dynamic() { t => f(iv(t), p1(t), p2(t), p3(t)) }
+    }
+  }
 
-	protected def liftPure4[Param1T, Param2T, Param3T, Param4T, ResultT](f: (InternalType, Param1T, Param2T, Param3T, Param4T) => ResultT)(p1: Signal[Param1T], p2: Signal[Param2T], p3: Signal[Param3T], p4: Signal[Param4T]): Signal[ResultT] =
-	    Signal(f(internalValue()(), p1(), p2(), p3(), p4()))
+  protected def liftPure4[Param1T, Param2T, Param3T, Param4T, ResultT](f: (InternalType, Param1T, Param2T, Param3T, Param4T) => ResultT)(p1: Signal[Param1T], p2: Signal[Param2T], p3: Signal[Param3T], p4: Signal[Param4T]): Signal[ResultT] =
+    Signal(f(internalValue()(), p1(), p2(), p3(), p4()))
 
-	protected def liftMutating4[Param1T, Param2T, Param3T, Param4T](f: (InternalType, Param1T, Param2T, Param3T, Param4T) => InternalType)(p1: Signal[Param1T], p2: Signal[Param2T], p3: Signal[Param3T], p4: Signal[Param4T]): Unit = {
-	    internalValue() = Signals.dynamic() { t => f(internalValue(t)(t), p1(t), p2(t), p3(t), p4(t))}
-	}
+  protected def liftMutating4[Param1T, Param2T, Param3T, Param4T](f: (InternalType, Param1T, Param2T, Param3T, Param4T) => InternalType)(p1: Signal[Param1T], p2: Signal[Param2T], p3: Signal[Param3T], p4: Signal[Param4T]): Unit = {
+    internalValue.transform { iv =>
+      Signals.dynamic() { t => f(iv(t), p1(t), p2(t), p3(t), p4(t)) }
+    }
+  }
 }
