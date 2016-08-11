@@ -1,9 +1,9 @@
 package examples.datastructures
 
 
-import rescala.{Engine, Signal, _}
+import rescala._
 
-import scala.collection.immutable.{Queue}
+import scala.collection.immutable.Queue
 
 /**
   * A mutable Queue working with Signals
@@ -50,18 +50,18 @@ class SStack[T] {
   lazy val isEmpty = Signal {_stack().isEmpty}
 
   // methods mutating the state of the SQueue
-  def push(elem: T) = _stack() = _stack().::(elem)
+  def push(elem: T) = _stack.transform(elem :: _)
   def pop(): T = {
-    val out :: rest = _stack()
-    _stack() = rest
-    return out
+    val out :: rest = _stack.now
+    _stack.set(rest)
+    out
   }
 }
 
 object SStack {
   def apply[T](xs: T*): SStack[T] = {
     val ss = new SStack[T]
-    ss._stack() = ss._stack().:::(xs.toList)
-    return ss
+    ss._stack.transform(xs.toList ::: _)
+    ss
   }
 }

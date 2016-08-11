@@ -1,7 +1,6 @@
 package examples.range
 
 import rescala._
-import rescala.Signal
 
 
 
@@ -37,16 +36,16 @@ class Range3(val start : Var[Int], val length : Var[Int]) {
 	// end is a signal, leading to transparent caching
 	lazy val end = Signal{ start() + length()}
 	lazy val last = Signal{ end() - 1 }
-	def end_=(e : Int) = length() = e - start()
+	def end_=(e : Int) = length.set(e - start.now)
 
 	// invariant
 	length.changed += {(x : Int) =>
 	  if(x < 0) throw new IllegalArgumentException}
 
 	// convenience functions
-	def contains(number : Int) = number > start() && number < end()
-	def contains(other : Range3) = start() < other.start() && end() > other.end()
-	def intersects(other : Range3) = contains(other.start()) || contains(other.end())
+	def contains(number : Int) = number > start.now && number < end.now
+	def contains(other : Range3) = start.now < other.start.now && end.now > other.end.now
+	def intersects(other : Range3) = contains(other.start.now) || contains(other.end.now)
 }
 
 
