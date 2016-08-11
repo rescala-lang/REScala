@@ -12,10 +12,14 @@ trait Event[+T, S <: Struct] extends PulseOption[T, S]{
 
   /** add an observer */
   final def +=(react: T => Unit)(implicit ticket: Ticket[S]): Observe[S] = observe(react)(ticket)
-  final def observe(react: T => Unit)(implicit ticket: Ticket[S]): Observe[S] = Observe(this){
-    case Success(v) => react(v)
-    case Failure(t) => throw new CompletionException("Unhandled exception on observe", t)
+  final def observe(
+    onSuccess: T => Unit,
+    onFailure: Throwable => Unit = t => throw new CompletionException("Unhandled exception on observe", t)
+  )(implicit ticket: Ticket[S]): Observe[S] = Observe(this){
+    case Success(v) => onSuccess(v)
+    case Failure(t) => onFailure(t)
   }
+
 
   final def toTry()(implicit ticket: Ticket[S]): Event[Try[T], S] = Events.static(s"(try $this)",this){ turn =>
     Pulse.Change(this.pulse(turn).toOptionTry().getOrElse(throw new IllegalStateException("reevaluation without changes")))

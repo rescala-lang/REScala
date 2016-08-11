@@ -10,9 +10,12 @@ import scala.util.{Failure, Success, Try}
 trait Signal[+A, S <: Struct] extends Stateful[A, S] {
 
   /** add an observer */
-  final def observe(react: A => Unit)(implicit ticket: Ticket[S]): Observe[S] = Observe(this){
-    case Success(v) => react(v)
-    case Failure(t) => throw new CompletionException("Unhandled exception on observe", t)
+  final def observe(
+    onSuccess: A => Unit,
+    onFailure: Throwable => Unit = t => throw new CompletionException("Unhandled exception on observe", t)
+  )(implicit ticket: Ticket[S]): Observe[S] = Observe(this){
+    case Success(v) => onSuccess(v)
+    case Failure(t) => onFailure(t)
   }
 
   final def toTry()(implicit ticket: Ticket[S]): Signal[Try[A], S] = Signals.static(this){ turn =>
