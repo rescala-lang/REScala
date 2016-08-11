@@ -5,7 +5,7 @@ version in ThisBuild := "0.18.0-SNAPSHOT"
 
 
 lazy val root = project.in(file("."))
-  .aggregate(rescalaJVM, rescalaJS, reswing, examples, examplesReswing, caseStudyEditor, caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags)
+  .aggregate(rescalaJVM, rescalaJS, reswing, examples, examplesReswing, caseStudyEditor, caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags, datastructures)
   .settings(
     publish := {},
     publishLocal := {}
@@ -111,6 +111,12 @@ lazy val rescalatags = project.in(file("Rescalatags"))
     libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.6.0"
   )
 
+lazy val datastructures = project.in(file("Datastructures"))
+  .dependsOn(rescalaJVM)
+  .settings(
+    name := "datastructures",
+    publish := {},
+    publishLocal := {})
 
 val rssDependencies = libraryDependencies ++= Seq(
     "joda-time" % "joda-time" % "2.9.4" withSources(),
