@@ -1,13 +1,12 @@
 package main.collections
 
 import rescala._
-import makro.SignalMacro.{SignalM => Signal}
+
 import scala.collection._
-import scala.collection.generic._
 import scala.language.higherKinds
 
 trait ReactiveSeqLike[A, ConcreteType[_]] extends ReactiveGenTraversableLike1[A, ConcreteType] {
-	type InternalKind[A] <: SeqLike[A, InternalKind[A]]
+	type InternalKind[B] <: SeqLike[B, InternalKind[B]]
 
 	//Basic mutating functions
 	val add = liftMutating1((xs: InternalType, x: A) => (xs :+ x).asInstanceOf[InternalType]) _

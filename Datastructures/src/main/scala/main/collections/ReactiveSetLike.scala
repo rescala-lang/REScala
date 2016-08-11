@@ -1,7 +1,7 @@
 package main.collections
 
 import rescala._
-import makro.SignalMacro.{SignalM => Signal}
+
 import scala.collection._
 import scala.collection.generic._
 import scala.language.higherKinds

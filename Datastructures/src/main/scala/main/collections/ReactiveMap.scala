@@ -1,7 +1,7 @@
 package main.collections
 
 import rescala._
-import makro.SignalMacro.{SignalM => Signal}
+
 import scala.collection.immutable._
 import scala.collection.GenTraversableOnce
 import scala.collection.generic._
@@ -27,9 +27,9 @@ trait ReactiveMap[A,B, ConcreteType[_,_]] extends SignalWrapper {
 	    remove(key)
 	}
 
-	private type SelfWrappable[A,B] = SignalWrappable[InternalKind[A,B], ConcreteType[A,B]]
+	private type SelfWrappable = SignalWrappable[InternalKind[A,B], ConcreteType[A,B]]
 
-	def filter(f: Signal[((A,B)) => Boolean])(implicit ev: SelfWrappable[A,B]): ConcreteType[A,B] =
+	def filter(f: Signal[((A,B)) => Boolean])(implicit ev: SelfWrappable): ConcreteType[A,B] =
 	    (liftPure1(_.filter(_: ((A,B)) => Boolean)) _ andThen wrap)(f)
 
 	def map[C, That, WrappedThat](f: Signal[((A, B)) => C])(implicit cbf: CanBuildFrom[Map[_,_], C, That], wrapping: SignalWrappable[That, WrappedThat]): WrappedThat =

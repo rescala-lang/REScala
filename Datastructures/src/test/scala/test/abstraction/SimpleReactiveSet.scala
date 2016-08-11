@@ -8,8 +8,8 @@ class SimpleReactiveSet[T](set: Signal[Set[T]]) extends SignalWrapper {
 	type InternalType = Set[T]
 	override protected val internalValue: Var[Signal[InternalType]]  = Var(set)
 
-	private implicit def Wrapping[T] = new SignalWrappable[Set[T], SimpleReactiveSet[T]] {
-	    def wrap(unwrapped: Signal[Set[T]]): SimpleReactiveSet[T] = new SimpleReactiveSet(unwrapped)
+	private implicit def Wrapping[T2] = new SignalWrappable[Set[T2], SimpleReactiveSet[T2]] {
+	    def wrap(unwrapped: Signal[Set[T2]]): SimpleReactiveSet[T2] = new SimpleReactiveSet(unwrapped)
 	}
 
 	//wrapped functions
@@ -24,7 +24,7 @@ class SimpleReactiveSet[T](set: Signal[Set[T]]) extends SignalWrapper {
 
 	def remove = liftMutating1(_ - (_: T)) _
 
-	val filter = (liftPure1(_.filter(_: T => Boolean)) _ andThen wrap)
+	val filter = liftPure1(_.filter(_: T => Boolean)) _ andThen wrap
 
 	val filterSelf = liftMutating1(_.filter(_: T => Boolean)) _
 
