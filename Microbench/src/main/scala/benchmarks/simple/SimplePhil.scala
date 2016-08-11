@@ -22,9 +22,9 @@ class SimplePhil[S <: rescala.graph.Struct] {
   implicit var engine: Engine[S, Turn[S]] = _
 
   var phil: VarImpl[Philosopher, S] = _
-  var vision: SignalImpl[Vision, S] = _
+  var vision: Signal[Vision, S] = _
 
-  def buildPhil(): (VarImpl[Philosopher, S], SignalImpl[Vision, S]) = {
+  def buildPhil(): (VarImpl[Philosopher, S], Signal[Vision, S]) = {
     val p: VarImpl[Philosopher, S] = engine.Var(Thinking)
     val f1, f2 = p.map(s => if (s == Thinking) Free else Taken("me"))
     val v = Signals.lift(f1, f2) {calcVision("me")}
@@ -46,7 +46,7 @@ class SimplePhil[S <: rescala.graph.Struct] {
   }
 
   @Benchmark
-  def build(): (VarImpl[Philosopher, S], SignalImpl[Vision, S]) = buildPhil()
+  def build(): (VarImpl[Philosopher, S], Signal[Vision, S]) = buildPhil()
 
   @Benchmark
   def buildAndPropagate(step: Step): Unit = {

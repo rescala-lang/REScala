@@ -4,6 +4,7 @@ import rescala.engines.Ticket
 import rescala.graph.Pulse.{Change, Exceptional, NoChange, Stable}
 import rescala.propagation.Turn
 
+import scala.annotation.compileTimeOnly
 import scala.util.control.ControlThrowable
 
 /**
@@ -86,30 +87,22 @@ class EmptySignalControlThrowable extends ControlThrowable
   * @tparam A Value type stored by the reactive value
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
-trait Stateful[+A, S <: Struct] {
+trait Stateful[+A, S <: Struct] extends Pulsing[A, S] {
   // only used inside macro and will be replaced there
   final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")
 
-  def apply[T](turn: Turn[S]): A
-
-  def now(implicit maybe: Ticket[S]): A
-
-  def get(implicit turn: Turn[S]): A
-}
-
-trait StatefulImpl[+A, S <: Struct] extends Stateful[A, S] with Pulsing[A, S] {
-  final override def apply[T](turn: Turn[S]): A = {
+  final def apply[T](turn: Turn[S]): A = {
     turn.dependencyInteraction(this)
     turn.useDependency(this)
     get(turn)
   }
 
-  final override def now(implicit maybe: Ticket[S]): A = maybe { t =>
+  final def now(implicit maybe: Ticket[S]): A = maybe { t =>
     t.dependencyInteraction(this)
     try { get(t) } catch {case e : EmptySignalControlThrowable => throw new NoSuchElementException(s"Signal $this is empty") }
   }
 
-  final override def get(implicit turn: Turn[S]): A = pulse match {
+  final def get(implicit turn: Turn[S]): A = pulse match {
     case Stable(value) => value
     case Change(value) => value
     case Exceptional(t) => throw t

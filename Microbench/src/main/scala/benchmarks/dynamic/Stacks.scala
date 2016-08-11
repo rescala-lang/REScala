@@ -21,8 +21,8 @@ import scala.collection.immutable.Range
 class StackState[S <: Struct] {
 
   var sources: Array[VarImpl[Int, S]] = _
-  var results: Array[SignalImpl[Int, S]] = _
-  var dynamics: Array[SignalImpl[Int, S]] = _
+  var results: Array[Signal[Int, S]] = _
+  var dynamics: Array[Signal[Int, S]] = _
   var engine: Engine[S, Turn[S]] = _
   var isManual: Boolean = false
 
@@ -34,7 +34,7 @@ class StackState[S <: Struct] {
     if (e == Engines.unmanaged) { isManual = true }
     sources = Range(0, threads).map(_ => Var(0)).toArray
     results = sources.map { source =>
-      var cur: SignalImpl[Int, S] = source
+      var cur: Signal[Int, S] = source
       for (x <- Range(0, size.size)) {cur = cur.map(1.+)}
       cur.map { x => {work.consume(); x} }
     }

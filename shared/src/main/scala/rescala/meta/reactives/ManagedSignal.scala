@@ -4,7 +4,7 @@ import rescala.engines.{Engine, Ticket}
 import rescala.graph.Struct
 import rescala.meta.{ManagedReactive, ReactiveNode}
 import rescala.propagation.Turn
-import rescala.reactives.{Observe, Signal, Var}
+import rescala.reactives.{Observe, SignalLike, Var}
 
 import scala.util.Try
 
@@ -14,7 +14,7 @@ import scala.util.Try
   * @tparam A Type stored by the signal
   * @tparam S Struct type used for the propagation of the signal
   */
-trait ManagedSignal[+A, S <: Struct] extends Signal[A, S, ManagedSignal, ManagedEvent] with ManagedReactive
+trait ManagedSignal[+A, S <: Struct] extends SignalLike[A, S, ManagedSignal, ManagedEvent] with ManagedReactive
 
 /**
   * Actual implementation of a managed signal that has its propagation handled by a connected meta-graph representation.
@@ -24,6 +24,8 @@ trait ManagedSignal[+A, S <: Struct] extends Signal[A, S, ManagedSignal, Managed
 class ManagedSignalImpl[+A](override val node : ReactiveNode) extends ManagedSignal[A, DummyStruct] {
 
 
+  /** Delays this signal by n occurrences */
+  override def delay(n: Int)(implicit ticket: Ticket[DummyStruct]): ManagedSignal[A, DummyStruct] = ???
   /** add an observer */
   override def observe(onSuccess: (A) => Unit, onFailure: (Throwable) => Unit)(implicit ticket: Ticket[DummyStruct]): Observe[DummyStruct] = ???
   override def toTry()(implicit ticket: Ticket[DummyStruct]): ManagedSignal[Try[A], DummyStruct] = ???
@@ -41,12 +43,6 @@ class ManagedSignalImpl[+A](override val node : ReactiveNode) extends ManagedSig
     * (oldVal, newVal) for the signal. The first tuple is (null, newVal)
     */
   override def change(implicit ticket: Ticket[DummyStruct]): ManagedEventImpl[(A, A)] = ???
-
-  override def apply[T](turn: Turn[DummyStruct]): A = ???
-
-  override def now(implicit maybe: Ticket[DummyStruct]): A = ???
-
-  override def get(implicit turn: Turn[DummyStruct]): A = ???
 }
 
 trait ManagedVar[A, S <: Struct] extends ManagedSignal[A, S] with Var[A, S, ManagedSignal, ManagedEvent]

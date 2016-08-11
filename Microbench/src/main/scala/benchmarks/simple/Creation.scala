@@ -36,12 +36,12 @@ class Creation[S <: rescala.graph.Struct] {
   }
 
   @Benchmark
-  def `derived signal`(): SignalImpl[String, S] = {
+  def `derived signal`(): Signal[String, S] = {
     engine.Var("").map(identity)
   }
 
   @Benchmark
-  def `derived event`(): EventImpl[String, S] = {
+  def `derived event`(): Event[String, S] = {
     engine.Evt[String]().map(identity)
   }
 

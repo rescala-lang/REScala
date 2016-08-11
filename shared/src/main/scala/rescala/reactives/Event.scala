@@ -3,139 +3,109 @@ package rescala.reactives
 import java.util.concurrent.CompletionException
 
 import rescala.engines.Ticket
-import rescala.graph._
+import rescala.graph.{Pulse, PulseOption, Reactive, Struct}
 
-import scala.collection.immutable.{LinearSeq, Queue}
-import scala.language.higherKinds
-import scala.util.{Success, Try}
+import scala.util.{Failure, Success, Try}
 
 /**
-  * Base signal interface for all signal implementations.
-  * Please note that any event implementation should have the EV type parameter set to itself and be paired with
-  * exactly one signal implementation it is compatible with by setting the SL type parameter.
-  * This relationship needs to be symmetrical.
+  *
+  * Standard implementation of the event interface using Spore-based propagation.
   *
   * @tparam T Type returned when the event fires
   * @tparam S Struct type used for the propagation of the event
-  * @tparam SL Signal type supported as parameter and used as return type for event methods
-  * @tparam EV Event type supported as parameter and used as return type for event methods
   */
-trait Event[+T, S <: Struct, SL[+X, Z <: Struct] <: Signal[X, Z, SL, EV], EV[+X, Z <: Struct] <: Event[X, Z, SL, EV]] {
-  this : EV[T, S] =>
+trait Event[+T, S <: Struct] extends EventLike[T, S, Signal, Event] with PulseOption[T, S]{
 
   /** add an observer */
-  final def +=(react: T => Unit)(implicit ticket: Ticket[S]): Observe[S] = observe(react)(ticket)
-  def observe(
+  final def observe(
     onSuccess: T => Unit,
     onFailure: Throwable => Unit = t => throw new CompletionException("Unhandled exception on observe", t)
-  )(implicit ticket: Ticket[S]): Observe[S]
+  )(implicit ticket: Ticket[S]): Observe[S] = Observe(this){
+    case Success(v) => onSuccess(v)
+    case Failure(t) => onFailure(t)
+  }
 
+  def toTry()(implicit ticket: Ticket[S]): Event[Try[T], S] = Events.static(s"(try $this)",this){ turn =>
+    Pulse.Change(this.pulse(turn).toOptionTry().getOrElse(throw new IllegalStateException("reevaluation without changes")))
+  }
 
-  def toTry()(implicit ticket: Ticket[S]): EV[Try[T], S]
-  /**
-   * Events disjunction.
-   */
-  def ||[U >: T](other: EV[U, S])(implicit ticket: Ticket[S]) : EV[U, S]
-
-  /**
-   * EV filtered with a predicate
-   */
-  def &&(pred: T => Boolean)(implicit ticket: Ticket[S]): EV[T, S]
-  final def filter(pred: T => Boolean)(implicit ticket: Ticket[S]): EV[T, S] = &&(pred)
 
   /**
-   * EV is triggered except if the other one is triggered
-   */
-  def \[U](other: EV[U, S])(implicit ticket: Ticket[S]): EV[T, S]
+    * Events disjunction.
+    */
+  final override def ||[U >: T](other: Event[U, S])(implicit ticket: Ticket[S]) : Event[U, S] = Events.or(this, other)
 
   /**
-   * Events conjunction
-   */
-  def and[U, R](other: EV[U, S])(merger: (T, U) => R)(implicit ticket: Ticket[S]): EV[R, S]
+    * Event filtered with a predicate
+    */
+  final override def &&(pred: T => Boolean)(implicit ticket: Ticket[S]): Event[T, S] = Events.filter(this)(pred)
 
   /**
-   * EV conjunction with a merge method creating a tuple of both event parameters
-   */
-  def zip[U](other: EV[U, S])(implicit ticket: Ticket[S]): EV[(T, U), S]
+    * Event is triggered except if the other one is triggered
+    */
+  final override def \[U](other: Event[U, S])(implicit ticket: Ticket[S]): Event[T, S] = Events.except(this, other)
 
   /**
-   * Transform the event parameter
-   */
-  def map[U](mapping: T => U)(implicit ticket: Ticket[S]): EV[U, S]
+    * Events conjunction
+    */
+  final override def and[U, R](other: Event[U, S])(merger: (T, U) => R)(implicit ticket: Ticket[S]): Event[R, S] = Events.and(this, other)(merger)
 
   /**
-   * Drop the event parameter; equivalent to map((_: Any) => ())
-   */
-  final def dropParam(implicit ticket: Ticket[S]): EV[Unit, S] = map(_ => ())
-
-
-  /** folds events with a given fold function to create a SL */
-  def fold[A](init: A)(fold: (A, T) => A)(implicit ticket: Ticket[S]): SL[A, S]
-
-  /** Iterates a value on the occurrence of the event. */
-  final def iterate[A](init: A)(f: A => A)(implicit ticket: Ticket[S]): SL[A, S] = fold(init)((acc, _) => f(acc))
+    * Event conjunction with a merge method creating a tuple of both event parameters
+    */
+  final override def zip[U](other: Event[U, S])(implicit ticket: Ticket[S]): Event[(T, U), S] = Events.and(this, other)((_, _))
 
   /**
-   * Counts the occurrences of the event. Starts from 0, when the event has never been
-   * fired yet. The argument of the event is simply discarded.
-   */
-  final def count()(implicit ticket: Ticket[S]): SL[Int, S] = fold(0)((acc, _) => acc + 1)
+    * Transform the event parameter
+    */
+  final override def map[U](mapping: T => U)(implicit ticket: Ticket[S]): Event[U, S] = Events.map(this)(mapping)
 
-  /**
-   * Calls f on each occurrence of event e, setting the SL to the generated value.
-   * The initial signal is obtained by f(init)
-   */
-  final def set[B >: T, A](init: B)(f: (B => A))(implicit ticket: Ticket[S]): SL[A, S] = fold(f(init))((_, v) => f(v))
 
-  /** returns a signal holding the latest value of the event. */
-  final def latest[T1 >: T](init: T1)(implicit ticket: Ticket[S]): SL[T1, S] = fold(init)((_, v) => v)
-
-  /** Holds the latest value of an event as an Option, None before the first event occured */
-  final def latestOption()(implicit ticket: Ticket[S]): SL[Option[T], S] = fold(None: Option[T]) { (_, v) => Some(v) }
-
-  /** calls factory on each occurrence of event e, resetting the SL to a newly generated one */
-  final def reset[T1 >: T, A](init: T1)(factory: T1 => SL[A, S])(implicit ticket: Ticket[S]): SL[A, S] = set(init)(factory).flatten()
-
-  /**
-   * Returns a signal which holds the last n events in a list. At the beginning the
-   * list increases in size up to when n values are available
-   */
-  final def last(n: Int)(implicit ticket: Ticket[S]): SL[LinearSeq[T], S] =
-    fold(Queue[T]()) { (queue: Queue[T], v: T) =>
-      if (queue.length >= n) queue.tail.enqueue(v) else queue.enqueue(v)
-    }
-
-  /** collects events resulting in a variable holding a list of all values. */
-  final def list()(implicit ticket: Ticket[S]): SL[List[T], S] = fold(List[T]())((acc, v) => v :: acc)
+  /** folds events with a given fold function to create a Signal */
+  final override def fold[A](init: A)(fold: (A, T) => A)(implicit ticket: Ticket[S]) = Signals.fold(this, init)(fold)
 
   /** Switch back and forth between two signals on occurrence of event e */
-  def toggle[A](a: SL[A, S], b: SL[A, S])(implicit ticket: Ticket[S]): SL[A, S]
+  final override def toggle[A](a: Signal[A, S], b: Signal[A, S])(implicit ticket: Ticket[S]): Signal[A, S]  = ticket { turn =>
+    val switched: Signal[Boolean, S] = iterate(false) { !_ }(turn)
+    Signals.dynamic(switched, a, b) { s => if (switched(s)) b(s) else a(s) }(turn)
+  }
 
-  /** Return a SL that is updated only when e fires, and has the value of the signal s */
-  def snapshot[A](s: SL[A, S])(implicit ticket: Ticket[S]): SL[A, S]
+  /** Return a Signal that is updated only when e fires, and has the value of the signal s */
+  final override def snapshot[A](s: Signal[A, S])(implicit ticket: Ticket[S]): Signal[A, S] = ticket { turn =>
+    Signals.Impl.makeStatic(Set[Reactive[S]](this, s), s.get(turn)) { (t, current) =>
+      this.get(t).fold(current)(_ => s.get(t))
+    }(turn)
+  }
 
-  /** Switch to a new SL once, on the occurrence of event e. */
-  def switchOnce[A](original: SL[A, S], newSignal: SL[A, S])(implicit ticket: Ticket[S]): SL[A, S]
+  /** Switch to a new Signal once, on the occurrence of event e. */
+  final override def switchOnce[A](original: Signal[A, S], newSignal: Signal[A, S])(implicit ticket: Ticket[S]): Signal[A, S]  = ticket { turn =>
+    val latest = latestOption()(turn)
+    Signals.dynamic(latest, original, newSignal) { t =>
+      latest(t) match {
+        case None => original(t)
+        case Some(_) => newSignal(t)
+      }
+    }(turn)
+  }
 
   /**
-   * Switch to a signal once, on the occurrence of event e. Initially the
-   * return value is set to the original signal. When the event fires,
-   * the result is a constant signal whose value is the value of the event.
-   */
-  def switchTo[T1 >: T](original: SL[T1, S])(implicit ticket: Ticket[S]): SL[T1, S]
-
-  /** Like latest, but delays the value of the resulting signal by n occurrences */
-  final def delay[T1 >: T](init: T1, n: Int)(implicit ticket: Ticket[S]): SL[T1, S] = ticket { turn =>
-    val history: SL[LinearSeq[T], S] = last(n + 1)(turn)
-    history.map { h => if (h.size <= n) init else h.head }(turn)
+    * Switch to a signal once, on the occurrence of event e. Initially the
+    * return value is set to the original signal. When the event fires,
+    * the result is a constant signal whose value is the value of the event.
+    */
+  final override def switchTo[T1 >: T](original: Signal[T1, S])(implicit ticket: Ticket[S]): Signal[T1, S] = ticket { turn =>
+    val latest = latestOption()(turn)
+    Signals.dynamic(latest, original) { s =>
+      latest(s) match {
+        case None => original(s)
+        case Some(x) => x
+      }
+    }(turn)
   }
 
   /** returns the values produced by the last event produced by mapping this value */
-  def flatMap[B](f: T => EV[B, S])(implicit ticket: Ticket[S]): EV[B, S]
-
-  /** promotes the latest inner event to an outer event */
-  final def flatten[B]()(implicit ticket: Ticket[S], ev: T <:< EV[B, S]): EV[B, S] = flatMap(ev.apply)
-
-  /** logs the events to a signal */
-  final def log()(implicit ticket: Ticket[S]): SL[List[T], S] = fold[List[T]](Nil)((a, v) => v :: a)
+  final override def flatMap[B](f: T => Event[B, S])(implicit ticket: Ticket[S]): Event[B, S]= ticket { turn =>
+    Events.wrapped(map(f)(turn).latest(Evt()(turn))(turn))(turn)
+  }
 }
+

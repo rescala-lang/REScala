@@ -24,7 +24,7 @@ sealed trait Source[T, S <: Struct] {
   * @tparam SL Signal type supported as parameter and used as return type for event methods
   * @tparam EV Event type supported as parameter and used as return type for event methods
   */
-trait Evt[T, S <: Struct, SL[+X, Z <: Struct] <: Signal[X, Z, SL, EV], EV[+X, Z <: Struct] <: Event[X, Z, SL, EV]] extends Event[T, S, SL, EV] with Source[T, S] {
+trait Evt[T, S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], EV[+X, Z <: Struct] <: EventLike[X, Z, SL, EV]] extends EventLike[T, S, SL, EV] with Source[T, S] {
   this : EV[T, S] =>
   /** Trigger the event */
   final def apply(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = fire(value)
@@ -39,7 +39,7 @@ trait Evt[T, S <: Struct, SL[+X, Z <: Struct] <: Signal[X, Z, SL, EV], EV[+X, Z 
   * @tparam T Type returned when the event fires
   * @tparam S Struct type used for the propagation of the event
   */
-final class EvtImpl[T, S <: Struct]()(_bud: S#SporeP[T, Reactive[S]]) extends Base[T, S](_bud) with EventImpl[T, S] with Evt[T, S, SignalImpl, EventImpl] {
+final class EvtImpl[T, S <: Struct]()(_bud: S#SporeP[T, Reactive[S]]) extends Base[T, S](_bud) with Event[T, S] with Evt[T, S, Signal, Event] {
   override def fire(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) {admit(value)(_)}
 
 
@@ -66,7 +66,7 @@ object Evt {
   * @tparam SL Signal type supported as parameter and used as return type for signal methods
   * @tparam EV Event type supported as parameter and used as return type for signal methods
   */
-trait Var[A, S <: Struct, SL[+X, Z <: Struct] <: Signal[X, Z, SL, EV], EV[+X, Z <: Struct] <: Event[X, Z, SL, EV]] extends Signal[A, S, SL, EV] with Source[A, S] {
+trait Var[A, S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], EV[+X, Z <: Struct] <: EventLike[X, Z, SL, EV]] extends SignalLike[A, S, SL, EV] with Source[A, S] {
   this : SL[A, S] =>
 
   def update(value: A)(implicit fac: Engine[S, Turn[S]]): Unit = set(value)
@@ -84,7 +84,7 @@ trait Var[A, S <: Struct, SL[+X, Z <: Struct] <: Signal[X, Z, SL, EV], EV[+X, Z 
   * @tparam A Type stored by the signal
   * @tparam S Struct type used for the propagation of the signal
   */
-final class VarImpl[A, S <: Struct](_bud: S#SporeP[A, Reactive[S]]) extends Base[A, S](_bud) with SignalImpl[A, S] with Var[A, S, SignalImpl, EventImpl] {
+final class VarImpl[A, S <: Struct](_bud: S#SporeP[A, Reactive[S]]) extends Base[A, S](_bud) with Signal[A, S] with Var[A, S, Signal, Event] {
   override def set(value: A)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) {admit(value)(_)}
   override def transform(f: A => A)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) { t => admit(f(get(t)))(t) }
 

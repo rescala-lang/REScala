@@ -3,7 +3,7 @@ package rescala.pipelining.tests
 import rescala.graph.Reactive
 import rescala.pipelining.{Pipeline, PipelineEngine, PipelineStruct, PipeliningTurn}
 import rescala.propagation.Turn
-import rescala.reactives.SignalImpl
+import rescala.reactives.Signal
 
 import scala.collection.immutable.Queue
 import scala.util.Random
@@ -45,7 +45,7 @@ object PipelineTestUtils {
 
 }
 
-class ValueTracker[T](s : SignalImpl[T, PipelineStruct.type])(implicit val engine: PipelineEngine) {
+class ValueTracker[T](s : Signal[T, PipelineStruct.type])(implicit val engine: PipelineEngine) {
     var values : List[T] = List()
     private object valueLock
 

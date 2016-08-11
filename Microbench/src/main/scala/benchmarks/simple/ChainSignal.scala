@@ -7,7 +7,7 @@ import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
 import rescala.propagation.Turn
 import rescala.engines.Engine
-import rescala.reactives.{Signal, SignalImpl, Var, VarImpl}
+import rescala.reactives.{SignalLike, Signal, Var, VarImpl}
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -21,7 +21,7 @@ class ChainSignal[S <: rescala.graph.Struct] {
   implicit var engine: Engine[S, Turn[S]] = _
 
   var source: VarImpl[Int, S] = _
-  var result: SignalImpl[Int, S] = _
+  var result: Signal[Int, S] = _
 
   @Setup
   def setup(params: BenchmarkParams, size: Size, step: Step, engineParam: EngineParam[S], work: Workload) = {
