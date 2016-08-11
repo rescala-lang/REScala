@@ -89,6 +89,7 @@ class EmptySignalControlThrowable extends ControlThrowable
   */
 trait Stateful[+A, S <: Struct] extends Pulsing[A, S] {
   // only used inside macro and will be replaced there
+  @compileTimeOnly("Signal.apply can only be used inside of Signal expressions")
   final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")
 
   final def apply[T](turn: Turn[S]): A = {
