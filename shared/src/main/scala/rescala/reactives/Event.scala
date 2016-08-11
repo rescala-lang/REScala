@@ -18,6 +18,7 @@ import scala.language.higherKinds
   * @tparam EV Event type supported as parameter and used as return type for event methods
   */
 trait Event[+T, S <: Struct, SL[+X, Z <: Struct] <: Signal[X, Z, SL, EV], EV[+X, Z <: Struct] <: Event[X, Z, SL, EV]] {
+  this : EV[T, S] =>
 
   /** add an observer */
   final def +=(react: T => Unit)(implicit ticket: Ticket[S]): Observe[S] = observe(react)(ticket)

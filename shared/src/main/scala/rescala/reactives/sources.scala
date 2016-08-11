@@ -25,6 +25,7 @@ sealed trait Source[T, S <: Struct] {
   * @tparam EV Event type supported as parameter and used as return type for event methods
   */
 trait Evt[T, S <: Struct, SL[+X, Z <: Struct] <: Signal[X, Z, SL, EV], EV[+X, Z <: Struct] <: Event[X, Z, SL, EV]] extends Event[T, S, SL, EV] with Source[T, S] {
+  this : EV[T, S] =>
   /** Trigger the event */
   final def apply(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = fire(value)
   final def fire()(implicit fac: Engine[S, Turn[S]], ev: Unit =:= T): Unit = fire(ev(Unit))(fac)
@@ -65,6 +66,8 @@ object Evt {
   * @tparam EV Event type supported as parameter and used as return type for signal methods
   */
 trait Var[A, S <: Struct, SL[+X, Z <: Struct] <: Signal[X, Z, SL, EV], EV[+X, Z <: Struct] <: Event[X, Z, SL, EV]] extends Signal[A, S, SL, EV] with Source[A, S] {
+  this : SL[A, S] =>
+
   final def update(value: A)(implicit fac: Engine[S, Turn[S]]): Unit = set(value)
   def set(value: A)(implicit fac: Engine[S, Turn[S]]): Unit
   def transform(f: A => A)(implicit fac: Engine[S, Turn[S]]): Unit
