@@ -5,7 +5,7 @@ version in ThisBuild := "0.18.0-SNAPSHOT"
 
 
 lazy val root = project.in(file("."))
-  .aggregate(rescalaJVM, rescalaJS, reswing, examples, examplesReswing, caseStudyEditor, caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags, datastructures)
+  .aggregate(rescalaJVM, rescalaJS, microbench, reswing, examples, examplesReswing, caseStudyEditor, caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags, datastructures)
   .settings(
     publish := {},
     publishLocal := {}
@@ -21,6 +21,8 @@ lazy val rescala = crossProject.in(file("."))
     libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.6" % "test",
     libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % "test",
     libraryDependencies += "org.scala-stm" %% "scala-stm" % "0.7",
+
+    incOptions := incOptions.value.withLogRecompileOnMacro(false),
 
     parallelExecution in Test := true,
 
@@ -69,6 +71,7 @@ lazy val microbench = project.in(file("Microbench"))
   .settings(TaskKey[Unit]("compileJmh") <<= Seq(compile in pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh).dependOn)
   .dependsOn(rescalaJVM)
   .settings(
+    incOptions := incOptions.value.withLogRecompileOnMacro(false),
     publish := {},
     publishLocal := {}
   )
@@ -79,7 +82,8 @@ lazy val reswing = project.in(file("RESwing"))
   .settings(
     name := "reswing",
     libraryDependencies += "org.scala-lang" % "scala-swing" % "2.11+",
-    licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")))
+    licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")),
+    incOptions := incOptions.value.withLogRecompileOnMacro(false))
 
 
 lazy val examples = project.in(file("Examples/examples"))
@@ -87,6 +91,7 @@ lazy val examples = project.in(file("Examples/examples"))
   .settings(
     name := "rescala-examples",
     libraryDependencies += "org.scala-lang" % "scala-swing" % "2.11+",
+    incOptions := incOptions.value.withLogRecompileOnMacro(false),
     publish := {},
     publishLocal := {})
 
@@ -94,6 +99,7 @@ lazy val examplesReswing = project.in(file("Examples/examples-reswing"))
   .dependsOn(reswing)
   .settings(
     name := "reswing-examples",
+    incOptions := incOptions.value.withLogRecompileOnMacro(false),
     publish := {},
     publishLocal := {})
 
@@ -101,6 +107,7 @@ lazy val caseStudyEditor = project.in(file("CaseStudies/Editor"))
   .dependsOn(reswing)
   .settings(
     name := "editor-case-study",
+    incOptions := incOptions.value.withLogRecompileOnMacro(false),
     publish := {},
     publishLocal := {})
 
@@ -108,6 +115,7 @@ lazy val rescalatags = project.in(file("Rescalatags"))
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(rescalaJS)
   .settings(
+    incOptions := incOptions.value.withLogRecompileOnMacro(false),
     libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.6.0"
   )
 
@@ -115,6 +123,7 @@ lazy val datastructures = project.in(file("Datastructures"))
   .dependsOn(rescalaJVM)
   .settings(
     name := "datastructures",
+    incOptions := incOptions.value.withLogRecompileOnMacro(false),
     publish := {},
     publishLocal := {},
     libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.6" % "test"
@@ -134,6 +143,7 @@ lazy val caseStudyRSSEvents = project.in(file("CaseStudies/RSSReader/ReactiveSca
   .dependsOn(reswing)
   .settings(
     name := "rssreader-case-study",
+    incOptions := incOptions.value.withLogRecompileOnMacro(false),
     publish := {},
     publishLocal := {},
     rssDependencies)
@@ -142,6 +152,7 @@ lazy val caseStudyRSSReactive = project.in(file("CaseStudies/RSSReader/ReactiveS
   .dependsOn(reswing)
   .settings(
     name := "rssreader-case-study",
+    incOptions := incOptions.value.withLogRecompileOnMacro(false),
     publish := {},
     publishLocal := {},
     rssDependencies)
@@ -150,6 +161,7 @@ lazy val caseStudyRSSSimple = project.in(file("CaseStudies/RSSReader/SimpleRssRe
   .dependsOn(reswing)
   .settings(
     name := "rssreader-case-study",
+    incOptions := incOptions.value.withLogRecompileOnMacro(false),
     publish := {},
     publishLocal := {},
     rssDependencies)
