@@ -116,7 +116,9 @@ lazy val datastructures = project.in(file("Datastructures"))
   .settings(
     name := "datastructures",
     publish := {},
-    publishLocal := {})
+    publishLocal := {},
+    libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.6" % "test"
+  )
 
 val rssDependencies = libraryDependencies ++= Seq(
     "joda-time" % "joda-time" % "2.9.4" withSources(),
