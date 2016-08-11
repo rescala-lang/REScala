@@ -4,6 +4,8 @@ import rescala.engines.{Engine, Ticket}
 import rescala.graph._
 import rescala.propagation.{Committable, Turn}
 
+import scala.util.Try
+
 /**
   * Generic interface for observers that represent a function registered to trigger for every reevaluation of a reactive value.
   * Currently this interface is only used to allow a removal of registered observer functions.
@@ -15,9 +17,10 @@ trait Observe[S <: Struct] {
 }
 
 object Observe {
-  private class Obs[T, S <: Struct](bud: S#SporeP[T, Reactive[S]], dependency: Pulsing[T, S], fun: T => Unit) extends Base[T, S](bud) with Reactive[S] with Observe[S] {
+
+  private class Obs[T, S <: Struct](bud: S#SporeP[T, Reactive[S]], dependency: Pulsing[T, S], fun: Try[T] => Unit) extends Base[T, S](bud) with Reactive[S] with Observe[S] {
     override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[S] = {
-      turn.schedule(once(this, dependency.pulse.toOption, fun))
+      dependency.pulse(turn).toOptionTry(takeInitialValue = false).foreach(t => turn.schedule(once(this, t, fun)))
       if (turn.incoming(bud).isEmpty) ReevaluationResult.Dynamic(changed = false, DepDiff(Set.empty, Set(dependency)))
       else ReevaluationResult.Static(changed = false)
     }
@@ -26,18 +29,20 @@ object Observe {
     }
   }
 
-  def apply[T, S <: Struct](dependency: Pulsing[T, S])(fun: T => Unit)(implicit maybe: Ticket[S]): Observe[S] = {
+  def apply[T, S <: Struct](dependency: Pulsing[T, S])(fun: Try[T] => Unit)(implicit maybe: Ticket[S]): Observe[S] = {
     val incoming = Set[Reactive[S]](dependency)
     maybe(initTurn => initTurn.create(incoming) {
       val obs = new Obs(initTurn.bud[T, Reactive[S]](initialIncoming = incoming, transient = false), dependency, fun)
-      initTurn.schedule(once(obs, dependency.pulse(initTurn).keep.current, fun))
+      dependency.pulse(initTurn).toOptionTry(takeInitialValue = true).foreach(t => initTurn.schedule(once(this, t, fun)))
       obs
     })
   }
 
-  def once[V](self: AnyRef, value: Option[V], f: V => Unit): Committable = new Committable {
+
+
+  def once[V](self: AnyRef, value: Try[V], f: Try[V] => Unit): Committable = new Committable {
     override def release(implicit turn: Turn[_]): Unit = ()
-    override def commit(implicit turn: Turn[_]): Unit = value.foreach(v => turn.observe(f(v)))
+    override def commit(implicit turn: Turn[_]): Unit = turn.observe(f(value))
     override def equals(obj: scala.Any): Boolean = self.equals(obj)
     override def hashCode(): Int = self.hashCode()
   }

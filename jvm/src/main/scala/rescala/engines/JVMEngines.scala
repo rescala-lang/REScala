@@ -28,7 +28,7 @@ object JVMEngines {
     case other => throw new IllegalArgumentException(s"unknown engine $other")
   }
 
-  def all: List[TEngine] = List[TEngine](stm, parrp, synchron, unmanaged, synchronFair, locksweep, parallellocksweep)
+  def all: List[TEngine] = List[TEngine](stm, parrp, synchron, unmanaged, synchronFair, locksweep)
 
   implicit val parrp: Engine[ParRP, ParRP] = parrpWithBackoff(() => new Backoff)
 

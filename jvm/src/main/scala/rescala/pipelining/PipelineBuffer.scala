@@ -162,6 +162,8 @@ private[pipelining] class BlockingPipelineBuffer[A](parent: Pipeline, initialStr
   override def base(implicit turn: Turn[_]): A = {
     implicit val pTurn = turn.asInstanceOf[PipeliningTurn]
 
+    parent.waitUntilCanRead(pTurn)
+
     parent.findFrame {
       _ match {
         case Some(frame) =>

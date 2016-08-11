@@ -6,6 +6,8 @@ import rescala.meta.{ManagedReactive, ReactiveNode}
 import rescala.propagation.Turn
 import rescala.reactives.{Observe, Signal, Var}
 
+import scala.util.Try
+
 /**
   * Intermediate trait mainly used to satisfy the type requirements of the Signal/Event interfaces.
   *
@@ -20,9 +22,11 @@ trait ManagedSignal[+A, S <: Struct] extends Signal[A, S, ManagedSignal, Managed
   * @tparam A Type stored by the signal
   */
 class ManagedSignalImpl[+A](override val node : ReactiveNode) extends ManagedSignal[A, DummyStruct] {
-  /** add an observer */
-  override def observe(react: (A) => Unit)(implicit ticket: Ticket[DummyStruct]): Observe[DummyStruct] = ???
 
+
+  /** add an observer */
+  override def observe(onSuccess: (A) => Unit, onFailure: (Throwable) => Unit)(implicit ticket: Ticket[DummyStruct]): Observe[DummyStruct] = ???
+  override def toTry()(implicit ticket: Ticket[DummyStruct]): ManagedSignal[Try[A], DummyStruct] = ???
   /** Return a Signal with f applied to the value */
   override def map[B](f: (A) => B)(implicit ticket: Ticket[DummyStruct]): ManagedSignalImpl[B] = ???
 

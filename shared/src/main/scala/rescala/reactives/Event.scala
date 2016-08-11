@@ -1,10 +1,13 @@
 package rescala.reactives
 
+import java.util.concurrent.CompletionException
+
 import rescala.engines.Ticket
 import rescala.graph._
 
-import scala.collection.immutable.{Queue, LinearSeq}
+import scala.collection.immutable.{LinearSeq, Queue}
 import scala.language.higherKinds
+import scala.util.{Success, Try}
 
 /**
   * Base signal interface for all signal implementations.
@@ -22,21 +25,26 @@ trait Event[+T, S <: Struct, SL[+X, Z <: Struct] <: Signal[X, Z, SL, EV], EV[+X,
 
   /** add an observer */
   final def +=(react: T => Unit)(implicit ticket: Ticket[S]): Observe[S] = observe(react)(ticket)
-  def observe(react: T => Unit)(implicit ticket: Ticket[S]): Observe[S]
+  def observe(
+    onSuccess: T => Unit,
+    onFailure: Throwable => Unit = t => throw new CompletionException("Unhandled exception on observe", t)
+  )(implicit ticket: Ticket[S]): Observe[S]
 
+
+  def toTry()(implicit ticket: Ticket[S]): EV[Try[T], S]
   /**
    * Events disjunction.
    */
   def ||[U >: T](other: EV[U, S])(implicit ticket: Ticket[S]) : EV[U, S]
 
   /**
-   * Event filtered with a predicate
+   * EV filtered with a predicate
    */
   def &&(pred: T => Boolean)(implicit ticket: Ticket[S]): EV[T, S]
   final def filter(pred: T => Boolean)(implicit ticket: Ticket[S]): EV[T, S] = &&(pred)
 
   /**
-   * Event is triggered except if the other one is triggered
+   * EV is triggered except if the other one is triggered
    */
   def \[U](other: EV[U, S])(implicit ticket: Ticket[S]): EV[T, S]
 
@@ -46,7 +54,7 @@ trait Event[+T, S <: Struct, SL[+X, Z <: Struct] <: Signal[X, Z, SL, EV], EV[+X,
   def and[U, R](other: EV[U, S])(merger: (T, U) => R)(implicit ticket: Ticket[S]): EV[R, S]
 
   /**
-   * Event conjunction with a merge method creating a tuple of both event parameters
+   * EV conjunction with a merge method creating a tuple of both event parameters
    */
   def zip[U](other: EV[U, S])(implicit ticket: Ticket[S]): EV[(T, U), S]
 
@@ -61,7 +69,7 @@ trait Event[+T, S <: Struct, SL[+X, Z <: Struct] <: Signal[X, Z, SL, EV], EV[+X,
   final def dropParam(implicit ticket: Ticket[S]): EV[Unit, S] = map(_ => ())
 
 
-  /** folds events with a given fold function to create a Signal */
+  /** folds events with a given fold function to create a SL */
   def fold[A](init: A)(fold: (A, T) => A)(implicit ticket: Ticket[S]): SL[A, S]
 
   /** Iterates a value on the occurrence of the event. */
@@ -74,7 +82,7 @@ trait Event[+T, S <: Struct, SL[+X, Z <: Struct] <: Signal[X, Z, SL, EV], EV[+X,
   final def count()(implicit ticket: Ticket[S]): SL[Int, S] = fold(0)((acc, _) => acc + 1)
 
   /**
-   * Calls f on each occurrence of event e, setting the Signal to the generated value.
+   * Calls f on each occurrence of event e, setting the SL to the generated value.
    * The initial signal is obtained by f(init)
    */
   final def set[B >: T, A](init: B)(f: (B => A))(implicit ticket: Ticket[S]): SL[A, S] = fold(f(init))((_, v) => f(v))
@@ -85,7 +93,7 @@ trait Event[+T, S <: Struct, SL[+X, Z <: Struct] <: Signal[X, Z, SL, EV], EV[+X,
   /** Holds the latest value of an event as an Option, None before the first event occured */
   final def latestOption()(implicit ticket: Ticket[S]): SL[Option[T], S] = fold(None: Option[T]) { (_, v) => Some(v) }
 
-  /** calls factory on each occurrence of event e, resetting the Signal to a newly generated one */
+  /** calls factory on each occurrence of event e, resetting the SL to a newly generated one */
   final def reset[T1 >: T, A](init: T1)(factory: T1 => SL[A, S])(implicit ticket: Ticket[S]): SL[A, S] = set(init)(factory).flatten()
 
   /**
@@ -103,10 +111,10 @@ trait Event[+T, S <: Struct, SL[+X, Z <: Struct] <: Signal[X, Z, SL, EV], EV[+X,
   /** Switch back and forth between two signals on occurrence of event e */
   def toggle[A](a: SL[A, S], b: SL[A, S])(implicit ticket: Ticket[S]): SL[A, S]
 
-  /** Return a Signal that is updated only when e fires, and has the value of the signal s */
+  /** Return a SL that is updated only when e fires, and has the value of the signal s */
   def snapshot[A](s: SL[A, S])(implicit ticket: Ticket[S]): SL[A, S]
 
-  /** Switch to a new Signal once, on the occurrence of event e. */
+  /** Switch to a new SL once, on the occurrence of event e. */
   def switchOnce[A](original: SL[A, S], newSignal: SL[A, S])(implicit ticket: Ticket[S]): SL[A, S]
 
   /**
@@ -117,9 +125,9 @@ trait Event[+T, S <: Struct, SL[+X, Z <: Struct] <: Signal[X, Z, SL, EV], EV[+X,
   def switchTo[T1 >: T](original: SL[T1, S])(implicit ticket: Ticket[S]): SL[T1, S]
 
   /** Like latest, but delays the value of the resulting signal by n occurrences */
-  final def delay[T1 >: T](init: T1, n: Int)(implicit ticket: Ticket[S]): SL[T1, S] = {
-    val history: SL[LinearSeq[T], S] = last(n + 1)
-    history.map { h => if (h.size <= n) init else h.head }
+  final def delay[T1 >: T](init: T1, n: Int)(implicit ticket: Ticket[S]): SL[T1, S] = ticket { turn =>
+    val history: SL[LinearSeq[T], S] = last(n + 1)(turn)
+    history.map { h => if (h.size <= n) init else h.head }(turn)
   }
 
   /** returns the values produced by the last event produced by mapping this value */

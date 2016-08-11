@@ -1,7 +1,11 @@
 package rescala.reactives
 
+import java.util.concurrent.CompletionException
+
 import rescala.engines.Ticket
-import rescala.graph.{PulseOption, Reactive, Struct}
+import rescala.graph.{Pulse, PulseOption, Reactive, Struct}
+
+import scala.util.{Failure, Success, Try}
 
 /**
   *
@@ -13,7 +17,18 @@ import rescala.graph.{PulseOption, Reactive, Struct}
 trait EventImpl[+T, S <: Struct] extends Event[T, S, SignalImpl, EventImpl] with PulseOption[T, S]{
 
   /** add an observer */
-  final override def observe(react: T => Unit)(implicit ticket: Ticket[S]): Observe[S] = Observe(this)(react)
+  final def observe(
+    onSuccess: T => Unit,
+    onFailure: Throwable => Unit = t => throw new CompletionException("Unhandled exception on observe", t)
+  )(implicit ticket: Ticket[S]): Observe[S] = Observe(this){
+    case Success(v) => onSuccess(v)
+    case Failure(t) => onFailure(t)
+  }
+
+  def toTry()(implicit ticket: Ticket[S]): EventImpl[Try[T], S] = Events.static(s"(try $this)",this){ turn =>
+    Pulse.Change(this.pulse(turn).toOptionTry().getOrElse(throw new IllegalStateException("reevaluation without changes")))
+  }
+
 
   /**
     * Events disjunction.
@@ -50,25 +65,27 @@ trait EventImpl[+T, S <: Struct] extends Event[T, S, SignalImpl, EventImpl] with
   final override def fold[A](init: A)(fold: (A, T) => A)(implicit ticket: Ticket[S]) = Signals.fold(this, init)(fold)
 
   /** Switch back and forth between two signals on occurrence of event e */
-  final override def toggle[A](a: SignalImpl[A, S], b: SignalImpl[A, S])(implicit ticket: Ticket[S]): SignalImpl[A, S] = ticket { turn =>
+  final override def toggle[A](a: SignalImpl[A, S], b: SignalImpl[A, S])(implicit ticket: Ticket[S]): SignalImpl[A, S]  = ticket { turn =>
     val switched: SignalImpl[Boolean, S] = iterate(false) { !_ }(turn)
     Signals.dynamic(switched, a, b) { s => if (switched(s)) b(s) else a(s) }(turn)
   }
 
   /** Return a Signal that is updated only when e fires, and has the value of the signal s */
   final override def snapshot[A](s: SignalImpl[A, S])(implicit ticket: Ticket[S]): SignalImpl[A, S] = ticket { turn =>
-    Signals.Impl.makeStatic(Set[Reactive[S]](this, s), s.get(turn))((t, current) => this.pulse(t).fold(current, _ => s.get(t)))(turn)
+    Signals.Impl.makeStatic(Set[Reactive[S]](this, s), s.get(turn)) { (t, current) =>
+      this.get(t).fold(current)(_ => s.get(t))
+    }(turn)
   }
 
   /** Switch to a new Signal once, on the occurrence of event e. */
-  final override def switchOnce[A](original: SignalImpl[A, S], newSignal: SignalImpl[A, S])(implicit ticket: Ticket[S]): SignalImpl[A, S] = ticket { implicit turn =>
-    val latest = latestOption
+  final override def switchOnce[A](original: SignalImpl[A, S], newSignal: SignalImpl[A, S])(implicit ticket: Ticket[S]): SignalImpl[A, S]  = ticket { turn =>
+    val latest = latestOption()(turn)
     Signals.dynamic(latest, original, newSignal) { t =>
       latest(t) match {
         case None => original(t)
         case Some(_) => newSignal(t)
       }
-    }
+    }(turn)
   }
 
   /**
@@ -76,19 +93,19 @@ trait EventImpl[+T, S <: Struct] extends Event[T, S, SignalImpl, EventImpl] with
     * return value is set to the original signal. When the event fires,
     * the result is a constant signal whose value is the value of the event.
     */
-  final override def switchTo[T1 >: T](original: SignalImpl[T1, S])(implicit ticket: Ticket[S]): SignalImpl[T1, S] = {
-    val latest = latestOption
+  final override def switchTo[T1 >: T](original: SignalImpl[T1, S])(implicit ticket: Ticket[S]): SignalImpl[T1, S] = ticket { turn =>
+    val latest = latestOption()(turn)
     Signals.dynamic(latest, original) { s =>
       latest(s) match {
         case None => original(s)
         case Some(x) => x
       }
-    }
+    }(turn)
   }
 
   /** returns the values produced by the last event produced by mapping this value */
-  final override def flatMap[B](f: T => EventImpl[B, S])(implicit ticket: Ticket[S]): EventImpl[B, S] = ticket { implicit t =>
-    Events.wrapped(map(f).latest(Evt()))
+  final override def flatMap[B](f: T => EventImpl[B, S])(implicit ticket: Ticket[S]): EventImpl[B, S]= ticket { turn =>
+    Events.wrapped(map(f)(turn).latest(Evt()(turn))(turn))(turn)
   }
 }
 

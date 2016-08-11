@@ -5,7 +5,7 @@ version in ThisBuild := "0.18.0-SNAPSHOT"
 
 
 lazy val root = project.in(file("."))
-  .aggregate(rescalaJVM, rescalaJS, reswing, examples, examplesReswing, caseStudyEditor, caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple)
+  .aggregate(rescalaJVM, rescalaJS, reswing, examples, examplesReswing, caseStudyEditor, caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags)
   .settings(
     publish := {},
     publishLocal := {}
@@ -103,6 +103,13 @@ lazy val caseStudyEditor = project.in(file("CaseStudies/Editor"))
     name := "editor-case-study",
     publish := {},
     publishLocal := {})
+
+lazy val rescalatags = project.in(file("Rescalatags"))
+  .enablePlugins(ScalaJSPlugin)
+  .dependsOn(rescalaJS)
+  .settings(
+    libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.6.0"
+  )
 
 
 val rssDependencies = libraryDependencies ++= Seq(

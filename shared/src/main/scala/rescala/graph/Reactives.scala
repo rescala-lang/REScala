@@ -1,8 +1,10 @@
 package rescala.graph
 
 import rescala.engines.Ticket
-import rescala.graph.Pulse.{Diff, NoChange}
+import rescala.graph.Pulse.{Change, Exceptional, NoChange, Stable}
 import rescala.propagation.Turn
+
+import scala.util.control.ControlThrowable
 
 /**
   * A reactive value is something that can be reevaluated
@@ -38,6 +40,7 @@ abstract class Base[+P, S <: Struct](budP: S#SporeP[P, Reactive[S]]) extends Pul
   final override protected[rescala] def bud: S#Spore[Reactive[S]] = budP
   final override protected[this] def pulses(implicit turn: Turn[S]): Buffer[Pulse[P]] = turn.pulses(budP)
 
+  final override def stable(implicit turn: Turn[S]): Pulse[P] = pulses.base
   final override def pulse(implicit turn: Turn[S]): Pulse[P] = pulses.get
 }
 
@@ -49,6 +52,7 @@ abstract class Base[+P, S <: Struct](budP: S#SporeP[P, Reactive[S]]) extends Pul
   */
 trait Pulsing[+P, S <: Struct] extends Reactive[S] {
   protected[this] def pulses(implicit turn: Turn[S]): Buffer[Pulse[P]]
+  def stable(implicit turn: Turn[S]): Pulse[P]
   def pulse(implicit turn: Turn[S]): Pulse[P]
 }
 
@@ -63,10 +67,18 @@ trait PulseOption[+P, S <: Struct] extends Pulsing[P, S] {
   final def apply[T](turn: Turn[S]): Option[P] = {
     turn.dependencyInteraction(this)
     turn.useDependency(this)
-    pulse(turn).toOption
+    get(turn)
+  }
+
+  final def get(implicit turn: Turn[S]) = pulse(turn) match {
+    case Change(update) => Some(update)
+    case Exceptional(t) => throw t
+    case _ => None
   }
 }
 
+
+class EmptySignalControlThrowable extends ControlThrowable
 
 /**
   * A reactive value that has a current state that can be read
@@ -94,12 +106,13 @@ trait StatefulImpl[+A, S <: Struct] extends Stateful[A, S] with Pulsing[A, S] {
 
   final override def now(implicit maybe: Ticket[S]): A = maybe { t =>
     t.dependencyInteraction(this)
-    get(t)
+    try { get(t) } catch {case e : EmptySignalControlThrowable => throw new NoSuchElementException(s"Signal $this is empty") }
   }
 
   final override def get(implicit turn: Turn[S]): A = pulse match {
-    case NoChange(Some(value)) => value
-    case Diff(value, oldOption) => value
-    case NoChange(None) => throw new IllegalStateException("stateful reactive has never pulsed")
+    case Stable(value) => value
+    case Change(value) => value
+    case Exceptional(t) => throw t
+    case NoChange => throw new EmptySignalControlThrowable
   }
 }

@@ -1,10 +1,14 @@
 package rescala.meta.reactives
 
+import java.util.concurrent.CompletionException
+
 import rescala.engines.{Engine, Ticket}
 import rescala.graph.Struct
 import rescala.meta.{ManagedReactive, ReactiveNode}
 import rescala.propagation.Turn
 import rescala.reactives.{Event, Evt, Observe}
+
+import scala.util.Try
 
 /**
   * Intermediate trait mainly used to satisfy the type requirements of the Signal/Event interfaces.
@@ -20,8 +24,10 @@ trait ManagedEvent[+T, S <: Struct] extends Event[T, S, ManagedSignal, ManagedEv
   * @tparam T Type returned when the event fires
   */
 class ManagedEventImpl[+T](override val node: ReactiveNode) extends ManagedEvent[T, DummyStruct] {
-  override def observe(react: (T) => Unit)(implicit ticket: Ticket[DummyStruct]): Observe[DummyStruct] = ???
 
+
+  override def observe(onSuccess: (T) => Unit, onFailure: (Throwable) => Unit)(implicit ticket: Ticket[DummyStruct]): Observe[DummyStruct] = ???
+  override def toTry()(implicit ticket: Ticket[DummyStruct]): ManagedEvent[Try[T], DummyStruct] = ???
   /**
     * Events disjunction.
     */

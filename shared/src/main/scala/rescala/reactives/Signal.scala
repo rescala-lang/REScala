@@ -1,9 +1,12 @@
 package rescala.reactives
 
+import java.util.concurrent.CompletionException
+
 import rescala.engines.Ticket
 import rescala.graph.{Stateful, Struct}
 
 import scala.language.higherKinds
+import scala.util.Try
 
 /**
   * Base signal interface for all signal implementations.
@@ -20,7 +23,12 @@ trait Signal[+A, S <: Struct, SL[+X, Z <: Struct] <: Signal[X, Z, SL, EV], EV[+X
   this : SL[A, S] =>
 
   /** add an observer */
-  def observe(react: A => Unit)(implicit ticket: Ticket[S]): Observe[S]
+  def observe(
+    onSuccess: A => Unit,
+    onFailure: Throwable => Unit = t => throw new CompletionException("Unhandled exception on observe", t)
+  )(implicit ticket: Ticket[S]): Observe[S]
+
+  def toTry()(implicit ticket: Ticket[S]): SL[Try[A], S]
 
   /** Return a Signal with f applied to the value */
   def map[B](f: A => B)(implicit ticket: Ticket[S]): SL[B, S]

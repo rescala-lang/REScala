@@ -1,7 +1,11 @@
 package rescala.reactives
 
+import java.util.concurrent.CompletionException
+
 import rescala.engines.Ticket
 import rescala.graph.{StatefulImpl, Struct}
+
+import scala.util.{Failure, Success, Try}
 
 /**
   * Standard implementation of the signal interface using Spore-based propagation.
@@ -12,7 +16,18 @@ import rescala.graph.{StatefulImpl, Struct}
 trait SignalImpl[+A, S <: Struct] extends Signal[A, S, SignalImpl, EventImpl] with StatefulImpl[A, S] {
 
   /** add an observer */
-  final override def observe(react: A => Unit)(implicit ticket: Ticket[S]) = Observe(this)(react)
+  final override def observe(
+    onSuccess: A => Unit,
+    onFailure: Throwable => Unit = t => throw new CompletionException("Unhandled exception on observe", t)
+  )(implicit ticket: Ticket[S]): Observe[S] = Observe(this){
+    case Success(v) => onSuccess(v)
+    case Failure(t) => onFailure(t)
+  }
+
+  final def toTry()(implicit ticket: Ticket[S]): SignalImpl[Try[A], S] = Signals.static(this){ turn =>
+    this.pulse(turn).toOptionTry().getOrElse(throw new IllegalStateException("reevaluation without changes"))
+  }
+
 
   /** Return a Signal with f applied to the value */
   final override def map[B](f: A => B)(implicit ticket: Ticket[S]) = Signals.lift(this) {f}

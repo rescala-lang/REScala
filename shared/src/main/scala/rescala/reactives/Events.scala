@@ -1,26 +1,32 @@
 package rescala.reactives
 
 import rescala.engines.Ticket
-import rescala.graph.Pulse.{NoChange, Diff}
+import rescala.graph.Pulse.{Change, Exceptional, NoChange, Stable}
 import rescala.graph._
 import rescala.propagation.Turn
 
+import scala.util.{Failure, Success}
+
 object Events {
 
-  class StaticEvent[+T, S <: Struct](_bud: S#SporeP[T, Reactive[S]], expr: Turn[S] => Pulse[T], override val toString: String)
+  private class StaticEvent[T, S <: Struct](_bud: S#SporeP[T, Reactive[S]], expr: Turn[S] => Pulse[T], override val toString: String)
     extends Base[T, S](_bud) with EventImpl[T, S] with StaticReevaluation[T, S] {
-    override def calculatePulse()(implicit turn: Turn[S]): Pulse[T] = expr(turn)
+    override def calculatePulse()(implicit turn: Turn[S]): Pulse[T] = Pulse.tryCatch(expr(turn))
   }
 
-  class DynamicEvent[+T, S <: Struct](_bud: S#SporeP[T, Reactive[S]], expr: Turn[S] => Pulse[T]) extends Base[T, S](_bud) with EventImpl[T, S] with DynamicReevaluation[T, S] {
+  private class DynamicEvent[T, S <: Struct](_bud: S#SporeP[T, Reactive[S]], expr: Turn[S] => Pulse[T]) extends Base[T, S](_bud) with EventImpl[T, S] with DynamicReevaluation[T, S] {
     def calculatePulseDependencies(implicit turn: Turn[S]): (Pulse[T], Set[Reactive[S]]) = {
-      val (newValue, dependencies) = turn.collectDependencies(expr(turn))
-      (newValue, dependencies)
+      val (newValueTry, dependencies) = turn.collectDependencies { Globals.reTry(expr(turn)) }
+      newValueTry match {
+        case Success(p) => (p, dependencies)
+        case Failure(t : EmptySignalControlThrowable) => (Pulse.NoChange, dependencies)
+        case Failure(t) => (Pulse.Exceptional(t), dependencies)
+      }
     }
   }
 
   /** the basic method to create static events */
-  def static[T, S <: Struct](name: String, dependencies: Reactive[S]*)(calculate: Turn[S] => Pulse[T])(implicit ticket: Ticket[S]) = ticket { initTurn =>
+  def static[T, S <: Struct](name: String, dependencies: Reactive[S]*)(calculate: Turn[S] => Pulse[T])(implicit ticket: Ticket[S]): EventImpl[T, S] = ticket { initTurn =>
     val dependencySet: Set[Reactive[S]] = dependencies.toSet
     initTurn.create(dependencySet) {
       new StaticEvent[T, S](initTurn.bud(initialIncoming = dependencySet, transient = true), calculate, name)
@@ -28,7 +34,7 @@ object Events {
   }
 
   /** create dynamic events */
-  def dynamic[T, S <: Struct](dependencies: Reactive[S]*)(expr: Turn[S] => Option[T])(implicit ticket: Ticket[S]) = {
+  def dynamic[T, S <: Struct](dependencies: Reactive[S]*)(expr: Turn[S] => Option[T])(implicit ticket: Ticket[S]): EventImpl[T, S] = {
     ticket { initialTurn =>
       initialTurn.create(dependencies.toSet, dynamic = true)(
         new DynamicEvent[T, S](initialTurn.bud(transient = true), expr.andThen(Pulse.fromOption)))
@@ -40,8 +46,13 @@ object Events {
   def change[T, S <: Struct](signal: SignalImpl[T, S])(implicit ticket: Ticket[S]) =
     static(s"(change $signal)", signal) { turn =>
       signal.pulse(turn) match {
-        case Diff(value, Some(old)) => Pulse.change((old, value))
-        case NoChange(_) | Diff(_, None) => Pulse.none
+        case Change(value) => signal.stable(turn) match {
+          case Stable(oldValue) => Pulse.Change((oldValue, value))
+          case ex @ Exceptional(_) => ex
+          case _ => throw new IllegalStateException("signal has no value")
+        }
+        case NoChange | Stable(_) => Pulse.NoChange
+        case ex @ Exceptional(t) => ex
       }
     }
 
@@ -60,8 +71,9 @@ object Events {
   def except[T, U, S <: Struct](accepted: Pulsing[T, S], except: Pulsing[U, S])(implicit ticket: Ticket[S]) =
     static(s"(except $accepted  $except)", accepted, except) { turn =>
       except.pulse(turn) match {
-        case NoChange(_) => accepted.pulse(turn)
-        case Diff(_, _) => Pulse.none
+        case NoChange | Stable(_) => accepted.pulse(turn)
+        case Change(_) => Pulse.NoChange
+        case ex @ Exceptional(_) => ex
       }
     }
 
@@ -70,8 +82,9 @@ object Events {
   def or[T, S <: Struct](ev1: Pulsing[_ <: T, S], ev2: Pulsing[_ <: T, S])(implicit ticket: Ticket[S]) =
     static(s"(or $ev1 $ev2)", ev1, ev2) { turn =>
       ev1.pulse(turn) match {
-        case NoChange(_) => ev2.pulse(turn)
-        case p@Diff(_, _) => p
+        case NoChange | Stable(_) => ev2.pulse(turn)
+        case p@Change(_) => p
+        case ex @ Exceptional(_) => ex
       }
     }
 
