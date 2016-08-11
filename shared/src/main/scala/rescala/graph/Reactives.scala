@@ -5,6 +5,7 @@ import rescala.graph.Pulse.{Change, Exceptional, NoChange, Stable}
 import rescala.propagation.Turn
 
 import scala.annotation.compileTimeOnly
+import scala.util.Try
 import scala.util.control.ControlThrowable
 
 /**
@@ -100,8 +101,19 @@ trait Stateful[+A, S <: Struct] extends Pulsing[A, S] {
 
   final def now(implicit maybe: Ticket[S]): A = maybe { t =>
     t.dependencyInteraction(this)
-    try { get(t) } catch {case e : EmptySignalControlThrowable => throw new NoSuchElementException(s"Signal $this is empty") }
+    pulse(t) match {
+      case Stable(value) => value
+      case Change(value) => value
+      case Exceptional(t) => throw t
+      case NoChange => throw new NoSuchElementException(s"Signal $this is empty")
+    }
   }
+
+  final def tryNow(implicit maybe: Ticket[S]): Option[Try[A]] = maybe { t =>
+    t.dependencyInteraction(this)
+    pulse(t).toOptionTry(takeInitialValue = true)
+  }
+
 
   final def get(implicit turn: Turn[S]): A = pulse match {
     case Stable(value) => value
