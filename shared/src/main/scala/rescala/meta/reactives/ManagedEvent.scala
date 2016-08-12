@@ -6,7 +6,7 @@ import rescala.engines.{Engine, Ticket}
 import rescala.graph.Struct
 import rescala.meta.{ManagedReactive, ReactiveNode}
 import rescala.propagation.Turn
-import rescala.reactives.{EventLike, Evt, Observe}
+import rescala.reactives.{EventLike, Evt, EvtLike, Observe}
 
 import scala.util.Try
 
@@ -81,7 +81,7 @@ class ManagedEventImpl[+T](override val node: ReactiveNode) extends ManagedEvent
   override def flatMap[B](f: (T) => ManagedEvent[B, DummyStruct])(implicit ticket: Ticket[DummyStruct]): ManagedEventImpl[B] = ???
 }
 
-trait ManagedEvt[T, S <: Struct] extends ManagedEvent[T, S] with Evt[T, S, ManagedSignal, ManagedEvent]
+trait ManagedEvt[T, S <: Struct] extends ManagedEvent[T, S] with EvtLike[T, S, ManagedSignal, ManagedEvent]
 
 class ManagedEvtImpl[T](override val node: ReactiveNode) extends ManagedEventImpl[T](node) with ManagedEvt[T, DummyStruct] {
   override def fire(value: T)(implicit fac: Engine[DummyStruct, Turn[DummyStruct]]): Unit = ???

@@ -8,7 +8,7 @@ import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
 import rescala.engines.{Engine, Engines}
 import rescala.propagation.Turn
-import rescala.reactives.VarImpl
+import rescala.reactives.Var
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -21,7 +21,7 @@ class SingleVar[S <: rescala.graph.Struct] {
 
   implicit var engine: Engine[S, Turn[S]] = _
 
-  var source: VarImpl[Boolean, S] = _
+  var source: Var[Boolean, S] = _
   var current: Boolean = _
   var illegalTurn: Turn[S] = _
   var lock: ReadWriteLock = _

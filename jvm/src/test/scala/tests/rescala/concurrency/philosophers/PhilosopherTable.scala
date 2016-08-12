@@ -7,7 +7,7 @@ import rescala.graph.Globals.named
 import rescala.graph.Struct
 import rescala.parrp.Backoff
 import rescala.propagation.{Committable, Turn}
-import rescala.reactives.{SignalLike, Signal, Var, VarImpl}
+import rescala.reactives.{SignalLike, Signal, Var, Var}
 import rescala.reactives.Signals.lift
 
 import scala.annotation.tailrec
@@ -104,7 +104,7 @@ object PhilosopherTable {
 
   // ============================================ Entity Creation =========================================================
 
-  case class Seating[S <: Struct](placeNumber: Int, philosopher: VarImpl[Philosopher, S], leftFork: Signal[Fork, S], rightFork: Signal[Fork, S], vision: Signal[Vision, S]) {
+  case class Seating[S <: Struct](placeNumber: Int, philosopher: Var[Philosopher, S], leftFork: Signal[Fork, S], rightFork: Signal[Fork, S], vision: Signal[Vision, S]) {
     def inspect(t: Turn[S]): String = s"Seating(${philosopher.get(t)}, ${leftFork.get(t)}, ${rightFork.get(t)}, ${vision.get(t)})"
   }
 

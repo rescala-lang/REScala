@@ -22,8 +22,8 @@ trait Engine[S <: Struct, +TTurn <: Turn[S]] {
 
   final type Signal[+A] = reactives.Signal[A, S]
   final type Event[+A] = reactives.Event[A, S]
-  final type Var[A] = reactives.VarImpl[A, S]
-  final type Evt[A] = reactives.EvtImpl[A, S]
+  final type Var[A] = reactives.Var[A, S]
+  final type Evt[A] = reactives.Evt[A, S]
   final type Turn = propagation.Turn[S]
   final type Ticket = rescala.engines.Ticket[S]
   final type Reactive = rescala.graph.Reactive[S]

@@ -20,7 +20,7 @@ class Fan[S <: rescala.graph.Struct] {
 
   implicit var engine: Engine[S, Turn[S]] = _
 
-  var source: VarImpl[Int, S] = _
+  var source: Var[Int, S] = _
   var result: Signal[Int, S] = _
 
   @Setup

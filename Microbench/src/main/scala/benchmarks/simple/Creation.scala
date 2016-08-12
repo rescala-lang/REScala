@@ -26,12 +26,12 @@ class Creation[S <: rescala.graph.Struct] {
   }
 
   @Benchmark
-  def `var`(): VarImpl[String, S] = {
+  def `var`(): Var[String, S] = {
     engine.Var("")
   }
 
   @Benchmark
-  def `evt`(): EvtImpl[String, S] = {
+  def `evt`(): Evt[String, S] = {
     engine.Evt[String]()
   }
 

@@ -1,10 +1,11 @@
 package rescala.reactives
 
-import rescala.engines.Ticket
+import rescala.engines.{Engine, Ticket}
 import rescala.graph.Pulse.{Change, Exceptional, NoChange, Stable}
 import rescala.graph._
 import rescala.propagation.Turn
 
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 object Signals extends GeneratedSignalLift {

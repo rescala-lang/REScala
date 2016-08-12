@@ -4,7 +4,7 @@ import rescala.engines.{Engine, Ticket}
 import rescala.graph.Struct
 import rescala.meta.{ManagedReactive, ReactiveNode}
 import rescala.propagation.Turn
-import rescala.reactives.{Observe, SignalLike, Var}
+import rescala.reactives.{Observe, SignalLike, VarLike}
 
 import scala.util.Try
 
@@ -45,7 +45,7 @@ class ManagedSignalImpl[+A](override val node : ReactiveNode) extends ManagedSig
   override def change(implicit ticket: Ticket[DummyStruct]): ManagedEventImpl[(A, A)] = ???
 }
 
-trait ManagedVar[A, S <: Struct] extends ManagedSignal[A, S] with Var[A, S, ManagedSignal, ManagedEvent]
+trait ManagedVar[A, S <: Struct] extends ManagedSignal[A, S] with VarLike[A, S, ManagedSignal, ManagedEvent]
 
 class ManagedVarImpl[A](override val node: ReactiveNode) extends ManagedSignalImpl[A](node) with ManagedVar[A, DummyStruct] {
   override def set(value: A)(implicit fac: Engine[DummyStruct, Turn[DummyStruct]]): Unit = ???

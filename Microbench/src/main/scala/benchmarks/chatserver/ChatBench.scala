@@ -8,7 +8,7 @@ import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
 import rescala.engines.Engines
 import rescala.graph.Struct
-import rescala.reactives.EvtImpl
+import rescala.reactives.Evt
 
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -48,7 +48,7 @@ class BenchState[S <: Struct] {
 
 
   var cs: ChatServer[S] = _
-  var clients: Array[EvtImpl[String, S]] = _
+  var clients: Array[Evt[String, S]] = _
   var locks: Array[Lock] = null
 
   @Setup

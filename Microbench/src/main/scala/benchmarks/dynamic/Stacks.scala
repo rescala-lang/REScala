@@ -20,7 +20,7 @@ import scala.collection.immutable.Range
 @State(Scope.Benchmark)
 class StackState[S <: Struct] {
 
-  var sources: Array[VarImpl[Int, S]] = _
+  var sources: Array[Var[Int, S]] = _
   var results: Array[Signal[Int, S]] = _
   var dynamics: Array[Signal[Int, S]] = _
   var engine: Engine[S, Turn[S]] = _
