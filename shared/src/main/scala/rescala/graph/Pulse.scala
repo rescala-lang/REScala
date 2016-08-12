@@ -90,9 +90,7 @@ sealed trait Pulse[+P] {
 }
 
 
-/**
-  * Object containing utility functions for using pulses
-  */
+/** Object containing utility functions for using pulses */
 object Pulse {
   /**
     * Transforms an optional value into a pulse. If the option doesn't contain a value, an empty pulse indicating no
@@ -137,30 +135,24 @@ object Pulse {
     case Exceptional(t) => Change(newValue)
   }
 
+  /** wrap a pulse generating function to store everntual exceptions into an exceptional pulse */
   def tryCatch[P](f: => Pulse[P]): Pulse[P] = try f catch {
     case e: EmptySignalControlThrowable => NoChange
     case NonFatal(t) => Exceptional(t)
   }
 
+  /** Pulse indicating a current stable value */
   final case class Stable[+P](value: P) extends Pulse[P]
 
-  /**
-    * Pulse indicating no change and only storing a single current value.
-    *
-    * @param current Current value stored by the pulse
-    * @tparam P Stored value type of the Pulse
-    */
+  /** Pulse indicating no change */
   case object NoChange extends Pulse[Nothing]
 
-  /**
-    * Pulse indicating a change from the stored current value to a new updated value
-    *
-    * @param update Updated value stored by the pulse
-    * @tparam P Stored value type of the Pulse
-    */
+  /** Pulse indicating a change
+    * @param update Updated value stored by the pulse */
   final case class Change[+P](update: P) extends Pulse[P] {
     override def stabilize: Pulse[P] = Stable(update)
   }
 
+  /** Pulse indicating an exception */
   final case class Exceptional(throwable: Throwable) extends Pulse[Nothing]
 }
