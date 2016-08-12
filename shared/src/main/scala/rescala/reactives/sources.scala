@@ -1,6 +1,6 @@
 package rescala.reactives
 
-import rescala.engines.{Ticket, Engine}
+import rescala.engines.{Engine, Ticket}
 import rescala.graph._
 import rescala.propagation.Turn
 
@@ -94,6 +94,8 @@ final class Var[A, S <: Struct](_bud: S#SporeP[A, Reactive[S]]) extends Base[A, 
       pulses.set(p)
     }
   }
+
+  private[rescala] def admitPulse(pulse: Pulse[A])(implicit turn: Turn[S]): Unit = pulses.set(pulse)
 
   override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[S] =
     ReevaluationResult.Static(changed = pulse.isChange)

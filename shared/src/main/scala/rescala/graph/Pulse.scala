@@ -2,8 +2,8 @@ package rescala.graph
 
 import rescala.graph.Pulse.{Change, Exceptional, NoChange, Stable}
 
-import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
+import scala.util.{Failure, Success, Try}
 
 /**
   * Pulse that stores a current value and can also indicate a potentially change to an updated value.
@@ -101,7 +101,6 @@ object Pulse {
     * @return Pulse with the option's value set as updated value, or an empty pulse if the option doesn't have a value.
     */
   def fromOption[P](opt: Option[P]): Pulse[P] = opt.fold[Pulse[P]](NoChange)(Change.apply)
-
 
   /**
     * Transforms the given values into a pulse indicating change and containing they as current and updated values.
