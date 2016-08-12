@@ -5,6 +5,7 @@ import rescala.graph._
 import rescala.propagation.Turn
 
 import scala.language.higherKinds
+import scala.util.{Failure, Success, Try}
 
 /**
   * Interface for source reactives with no dependencies that can be manually written by the user.
@@ -87,6 +88,10 @@ trait VarLike[A, S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], E
 final class Var[A, S <: Struct](_bud: S#SporeP[A, Reactive[S]]) extends Base[A, S](_bud) with Signal[A, S] with VarLike[A, S, Signal, Event] {
   override def set(value: A)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) {admit(value)(_)}
   override def transform(f: A => A)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) { t => admit(f(get(t)))(t) }
+  def setFromTry(value: Try[A])(implicit fac: Engine[S, Turn[S]]): Unit = value match {
+    case Success(suc) => set(suc)
+    case Failure(f) => fac.plan(this)(t => pulses(t).set(Pulse.Exceptional(f))(t))
+  }
 
   override def admit(value: A)(implicit turn: Turn[S]): Unit = {
     val p = Pulse.diffPulse(value, stable)
@@ -94,8 +99,6 @@ final class Var[A, S <: Struct](_bud: S#SporeP[A, Reactive[S]]) extends Base[A, 
       pulses.set(p)
     }
   }
-
-  private[rescala] def admitPulse(pulse: Pulse[A])(implicit turn: Turn[S]): Unit = pulses.set(pulse)
 
   override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[S] =
     ReevaluationResult.Static(changed = pulse.isChange)
