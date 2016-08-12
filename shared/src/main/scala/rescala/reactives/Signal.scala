@@ -1,6 +1,7 @@
 package rescala.reactives
 
 import rescala.engines.Ticket
+import rescala.graph.Pulse.{Change, Exceptional, NoChange, Stable}
 import rescala.graph.{Pulse, Stateful, Struct}
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 
@@ -50,14 +51,25 @@ trait Signal[+A, S <: Struct] extends SignalLike[A, S, Signal, Event] with State
     * Create an event that fires every time the signal changes. The value associated
     * to the event is the new value of the signal
     */
-  override def changed(implicit ticket: Ticket[S]): Event[A, S] = Events.changed(this)
+  override def changed(implicit ticket: Ticket[S]): Event[A, S] = Events.static(s"(changed $this)", this) { turn => pulse(turn) }
 
   /**
     * Create an event that fires every time the signal changes. It fires the tuple
     * (oldVal, newVal) for the signal. The first tuple is (null, newVal)
     */
-  final override def change(implicit ticket: Ticket[S]) = Events.change(this)
-
+  final override def change(implicit ticket: Ticket[S]) = {
+    Events.static(s"(change $this)", this) { turn =>
+      pulse(turn) match {
+        case Change(value) => stable(turn) match {
+          case Stable(oldValue) => Pulse.Change((oldValue, value))
+          case ex@Exceptional(_) => ex
+          case _ => throw new IllegalStateException("Can not compute change from empty signal")
+        }
+        case NoChange | Stable(_) => Pulse.NoChange
+        case ex@Exceptional(t) => ex
+      }
+    }
+  }
 
 
   final def delay(n: Int)(implicit ticket: Ticket[S]): Signal[A, S] = ticket { implicit turn => changed.delay(this.get, n) }

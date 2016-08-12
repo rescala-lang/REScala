@@ -65,13 +65,6 @@ object Signals extends GeneratedSignalLift {
   def dynamic[T, S <: Struct](dependencies: Reactive[S]*)(expr: Turn[S] => T)(implicit ticket: Ticket[S]): Signal[T, S] =
   ticket(Impl.makeDynamic(dependencies.toSet[Reactive[S]])(expr)(_))
 
-  /** creates a signal that folds the events in e */
-  def fold[E, T, S <: Struct](e: Event[E, S], init: => T)(f: (=> T, E) => T)(implicit ticket: Ticket[S]): Signal[T, S] = ticket { initialTurn =>
-    Impl.makeStatic(Set[Reactive[S]](e), init) { (turn, currentValue) =>
-      e.get(turn).fold(currentValue)(value => f(currentValue, value))
-    }(initialTurn)
-  }
-
   /** converts a future to a signal */
   def fromFuture[A, S <: Struct](fut: Future[A])(implicit fac: Engine[S, Turn[S]], ec: ExecutionContext): Signal[A, S] = {
     val v: Var[A, S] = rescala.reactives.Var.empty[A, S]

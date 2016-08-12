@@ -70,7 +70,7 @@ trait EventLike[+T, S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV]
 
 
   /** folds events with a given fold function to create a SL */
-  def fold[A](init: A)(fold: (=> A, T) => A)(implicit ticket: Ticket[S]): SL[A, S]
+  def fold[A](init: => A)(fold: (=> A, T) => A)(implicit ticket: Ticket[S]): SL[A, S]
 
   /** Iterates a value on the occurrence of the event. */
   final def iterate[A](init: A)(f: A => A)(implicit ticket: Ticket[S]): SL[A, S] = fold(init)((acc, _) => f(acc))
