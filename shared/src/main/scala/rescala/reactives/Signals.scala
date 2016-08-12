@@ -4,6 +4,7 @@ import rescala.engines.{Engine, Ticket}
 import rescala.graph.Pulse.{Change, Exceptional, NoChange, Stable}
 import rescala.graph._
 import rescala.propagation.Turn
+import rescala.reactives.RExceptions.EmptySignalControlThrowable
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
@@ -30,7 +31,7 @@ object Signals extends GeneratedSignalLift {
 
     private class DynamicSignal[T, S <: Struct](_bud: S#SporeP[T, Reactive[S]], expr: Turn[S] => T) extends Base[T, S](_bud) with Signal[T, S] with DynamicReevaluation[T, S] {
       def calculatePulseDependencies(implicit turn: Turn[S]): (Pulse[T], Set[Reactive[S]]) = {
-        val (newValueTry, dependencies) = turn.collectDependencies {Globals.reTry(expr(turn))}
+        val (newValueTry, dependencies) = turn.collectDependencies {RExceptions.reTry(expr(turn))}
         newValueTry match {
           case Success(p) => (Pulse.diffPulse(p, pulses.base), dependencies)
           case Failure(t: EmptySignalControlThrowable) => (Pulse.NoChange, dependencies)

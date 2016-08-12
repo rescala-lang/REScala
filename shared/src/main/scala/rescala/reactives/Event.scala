@@ -4,6 +4,7 @@ import java.util.concurrent.CompletionException
 
 import rescala.engines.Ticket
 import rescala.graph.{Pulse, PulseOption, Reactive, Struct}
+import rescala.reactives.RExceptions.UnhandledFailureException
 
 import scala.util.{Failure, Success, Try}
 
@@ -19,7 +20,7 @@ trait Event[+T, S <: Struct] extends EventLike[T, S, Signal, Event] with PulseOp
   /** add an observer */
   final def observe(
     onSuccess: T => Unit,
-    onFailure: Throwable => Unit = t => throw new CompletionException("Unhandled exception on observe", t)
+    onFailure: Throwable => Unit = t => throw new UnhandledFailureException(t)
   )(implicit ticket: Ticket[S]): Observe[S] = Observe(this){
     case Success(v) => onSuccess(v)
     case Failure(t) => onFailure(t)

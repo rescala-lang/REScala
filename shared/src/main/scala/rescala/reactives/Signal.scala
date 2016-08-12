@@ -4,6 +4,7 @@ import java.util.concurrent.CompletionException
 
 import rescala.engines.Ticket
 import rescala.graph.{Stateful, Struct}
+import rescala.reactives.RExceptions.UnhandledFailureException
 
 import scala.util.{Failure, Success, Try}
 
@@ -18,7 +19,7 @@ trait Signal[+A, S <: Struct] extends SignalLike[A, S, Signal, Event] with State
   /** add an observer */
   final override def observe(
     onSuccess: A => Unit,
-    onFailure: Throwable => Unit = t => throw new CompletionException("Unhandled exception on observe", t)
+    onFailure: Throwable => Unit = t => throw new UnhandledFailureException(t)
   )(implicit ticket: Ticket[S]): Observe[S] = Observe(this){
     case Success(v) => onSuccess(v)
     case Failure(t) => onFailure(t)

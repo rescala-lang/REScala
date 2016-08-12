@@ -3,10 +3,10 @@ package rescala.graph
 import rescala.engines.Ticket
 import rescala.graph.Pulse.{Change, Exceptional, NoChange, Stable}
 import rescala.propagation.Turn
+import rescala.reactives.RExceptions.EmptySignalControlThrowable
 
 import scala.annotation.compileTimeOnly
 import scala.util.Try
-import scala.util.control.ControlThrowable
 
 /**
   * A reactive value is something that can be reevaluated
@@ -79,8 +79,6 @@ trait PulseOption[+P, S <: Struct] extends Pulsing[P, S] {
   }
 }
 
-
-class EmptySignalControlThrowable extends ControlThrowable
 
 /**
   * A reactive value that has a current state that can be read
