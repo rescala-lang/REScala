@@ -51,7 +51,9 @@ trait Event[+T, S <: Struct] extends EventLike[T, S, Signal, Event] with PulseOp
     */
   final override def &&(pred: T => Boolean)(implicit ticket: Ticket[S]): Event[T, S] = Events.static(s"(filter $this)", this) { turn => pulse(turn).filter(pred) }
 
-  
+  /** collect results from a partial function */
+  final def collect[U](pf: PartialFunction[T, U])(implicit ticket: Ticket[S]): Event[U, S] = Events.static(s"(collect $this)", this) { turn => Pulse.fromOption(get(turn).flatMap(pf.lift))  }
+
   /**
     * Event is triggered except if the other one is triggered
     */
