@@ -34,6 +34,7 @@ class EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJU
     val o = e1 += f
     e1(10)
     e1(10)
+    assert(test == 2)
     o.remove()
     e1(10)
     assert(test == 2)
