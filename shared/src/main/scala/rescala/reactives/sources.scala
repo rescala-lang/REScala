@@ -43,6 +43,10 @@ trait EvtLike[T, S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], E
 final class Evt[T, S <: Struct]()(_bud: S#SporeP[T, Reactive[S]]) extends Base[T, S](_bud) with Event[T, S] with EvtLike[T, S, Signal, Event] {
   override def fire(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) {admit(value)(_)}
 
+  def fireFromTry(value: Try[T])(implicit fac: Engine[S, Turn[S]]): Unit = value match {
+    case Success(suc) => fire(suc)
+    case Failure(f) => fac.plan(this)(t => pulses(t).set(Pulse.Exceptional(f))(t))
+  }
 
  override def admit(value: T)(implicit turn: Turn[S]): Unit = {
     pulses.set(Pulse.Change(value))(turn)
