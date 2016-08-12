@@ -2,7 +2,6 @@ import org.scalajs.dom
 import rescala._
 
 import scala.language.implicitConversions
-import scala.util.{Failure, Success}
 import scalatags.JsDom.all._
 
 package object rescalatags {
@@ -15,7 +14,7 @@ package object rescalatags {
       new Frag {
         val rendered: Signal[dom.Node] = signal
           .map(_.render)
-          .recoverFailure(t => span(t.getMessage).render)
+          .recoverFailure(t => span(t.toString).render)
           .recoverEmpty(() => "".render)
 
         rendered.change.observe { case (lastTag, newTag) =>

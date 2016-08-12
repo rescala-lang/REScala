@@ -4,7 +4,7 @@ import java.util.concurrent.CompletionException
 
 import rescala.engines.Ticket
 import rescala.graph.{Pulse, PulseOption, Reactive, Struct}
-import rescala.reactives.RExceptions.UnhandledFailureException
+import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 
 import scala.util.{Failure, Success, Try}
 
@@ -63,7 +63,10 @@ trait Event[+T, S <: Struct] extends EventLike[T, S, Signal, Event] with PulseOp
 
 
   /** folds events with a given fold function to create a Signal */
-  final override def fold[A](init: A)(fold: (A, T) => A)(implicit ticket: Ticket[S]) = Signals.fold(this, init)(fold)
+  final override def fold[A](init: A)(fold: (=> A, T) => A)(implicit ticket: Ticket[S]) = Signals.fold(this, init)(fold)
+
+  /** reduces events with a given reduce function to create a Signal */
+  final def reduce[A](reducer: (=> A, T) => A)(implicit ticket: Ticket[S]) = Signals.fold(this, throw new EmptySignalControlThrowable)(reducer)
 
   /** Switch back and forth between two signals on occurrence of event e */
   final override def toggle[A](a: Signal[A, S], b: Signal[A, S])(implicit ticket: Ticket[S]): Signal[A, S]  = ticket { turn =>

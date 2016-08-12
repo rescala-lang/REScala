@@ -61,7 +61,7 @@ trait SignalLike[+A, S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV
     * Create an event that fires every time the signal changes. The value associated
     * to the event is the new value of the signal
     */
-  final def changed(implicit ticket: Ticket[S]): EV[A, S] = change.map(_._2)
+  def changed(implicit ticket: Ticket[S]): EV[A, S]
 
   /** Convenience function filtering to events which change this reactive to value */
   final def changedTo[V](value: V)(implicit ticket: Ticket[S]): EV[Unit, S] = (changed && {_ == value}).dropParam

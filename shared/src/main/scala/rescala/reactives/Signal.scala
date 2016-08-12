@@ -47,10 +47,18 @@ trait Signal[+A, S <: Struct] extends SignalLike[A, S, Signal, Event] with State
   final override def unwrap[E](implicit evidence: A <:< Event[E, S], ticket: Ticket[S]) = Events.wrapped(map(evidence))
 
   /**
+    * Create an event that fires every time the signal changes. The value associated
+    * to the event is the new value of the signal
+    */
+  override def changed(implicit ticket: Ticket[S]): Event[A, S] = Events.changed(this)
+
+  /**
     * Create an event that fires every time the signal changes. It fires the tuple
     * (oldVal, newVal) for the signal. The first tuple is (null, newVal)
     */
   final override def change(implicit ticket: Ticket[S]) = Events.change(this)
+
+
 
   final def delay(n: Int)(implicit ticket: Ticket[S]): Signal[A, S] = ticket { implicit turn => changed.delay(this.get, n) }
 }

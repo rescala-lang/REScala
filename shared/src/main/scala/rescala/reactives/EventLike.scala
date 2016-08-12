@@ -70,7 +70,7 @@ trait EventLike[+T, S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV]
 
 
   /** folds events with a given fold function to create a SL */
-  def fold[A](init: A)(fold: (A, T) => A)(implicit ticket: Ticket[S]): SL[A, S]
+  def fold[A](init: A)(fold: (=> A, T) => A)(implicit ticket: Ticket[S]): SL[A, S]
 
   /** Iterates a value on the occurrence of the event. */
   final def iterate[A](init: A)(f: A => A)(implicit ticket: Ticket[S]): SL[A, S] = fold(init)((acc, _) => f(acc))
@@ -100,10 +100,10 @@ trait EventLike[+T, S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV]
    * Returns a signal which holds the last n events in a list. At the beginning the
    * list increases in size up to when n values are available
    */
-  final def last(n: Int)(implicit ticket: Ticket[S]): SL[LinearSeq[T], S] =
-    fold(Queue[T]()) { (queue: Queue[T], v: T) =>
-      if (queue.length >= n) queue.tail.enqueue(v) else queue.enqueue(v)
-    }
+  final def last(n: Int)(implicit ticket: Ticket[S]): SL[LinearSeq[T], S] = {
+    def folder(queue: => Queue[T], v: T)  = if (queue.length >= n) queue.tail.enqueue(v) else queue.enqueue(v)
+    fold(Queue[T]()) { folder }
+  }
 
   /** collects events resulting in a variable holding a list of all values. */
   final def list()(implicit ticket: Ticket[S]): SL[List[T], S] = fold(List[T]())((acc, v) => v :: acc)

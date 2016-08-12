@@ -22,6 +22,11 @@ trait ManagedSignal[+A, S <: Struct] extends SignalLike[A, S, ManagedSignal, Man
 class ManagedSignalImpl[+A](override val node : ReactiveNode) extends ManagedSignal[A, DummyStruct] {
 
 
+  /**
+    * Create an event that fires every time the signal changes. The value associated
+    * to the event is the new value of the signal
+    */
+  override def changed(implicit ticket: Ticket[DummyStruct]): ManagedEvent[A, DummyStruct] = ???
   /** Delays this signal by n occurrences */
   override def delay(n: Int)(implicit ticket: Ticket[DummyStruct]): ManagedSignal[A, DummyStruct] = ???
   /** add an observer */

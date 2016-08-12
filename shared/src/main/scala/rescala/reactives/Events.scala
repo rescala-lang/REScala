@@ -10,6 +10,7 @@ import scala.util.{Failure, Success}
 
 object Events {
 
+
   private class StaticEvent[T, S <: Struct](_bud: S#SporeP[T, Reactive[S]], expr: Turn[S] => Pulse[T], override val toString: String)
     extends Base[T, S](_bud) with Event[T, S] with StaticReevaluation[T, S] {
     override def calculatePulse()(implicit turn: Turn[S]): Pulse[T] = Pulse.tryCatch(expr(turn))
@@ -44,18 +45,22 @@ object Events {
 
 
   /** Used to model the change event of a signal. Keeps the last value */
-  def change[T, S <: Struct](signal: Signal[T, S])(implicit ticket: Ticket[S]) =
+  def change[T, S <: Struct](signal: Signal[T, S])(implicit ticket: Ticket[S]): Event[(T, T), S] =
     static(s"(change $signal)", signal) { turn =>
       signal.pulse(turn) match {
         case Change(value) => signal.stable(turn) match {
           case Stable(oldValue) => Pulse.Change((oldValue, value))
           case ex @ Exceptional(_) => ex
-          case _ => throw new IllegalStateException("signal has no value")
+          case _ => throw new IllegalStateException("Can not compute change from empty signal")
         }
         case NoChange | Stable(_) => Pulse.NoChange
         case ex @ Exceptional(t) => ex
       }
     }
+
+  def changed[T, S <: Struct](signal: Signal[T, S])(implicit ticket: Ticket[S]): Event[T, S] = static(s"(changed $signal)", signal) { turn => signal.pulse(turn) }
+
+
 
 
   /** Implements filtering event by a predicate */
