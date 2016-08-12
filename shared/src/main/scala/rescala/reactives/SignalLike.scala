@@ -64,7 +64,7 @@ trait SignalLike[+A, S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV
   def changed(implicit ticket: Ticket[S]): EV[A, S]
 
   /** Convenience function filtering to events which change this reactive to value */
-  final def changedTo[V](value: V)(implicit ticket: Ticket[S]): EV[Unit, S] = (changed && {_ == value}).dropParam
+  final def changedTo[V](value: V)(implicit ticket: Ticket[S]): EV[Unit, S] = (changed filter {_ == value}).dropParam
 
 }
 

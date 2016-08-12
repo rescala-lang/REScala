@@ -22,7 +22,7 @@ class PredicateEventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends Assert
     var test = 0
     var cond = false
     val e1 = Evt[Int]
-    val e2 = e1 && ((x: Int) => cond)
+    val e2 = e1 filter ((x: Int) => cond)
     e2 += ((x: Int) => { test += 1 })
 
     e1(10)

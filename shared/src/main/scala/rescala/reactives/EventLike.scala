@@ -15,13 +15,13 @@ import scala.util.{Success, Try}
   * exactly one signal implementation it is compatible with by setting the SL type parameter.
   * This relationship needs to be symmetrical.
   *
-  * @tparam T Type returned when the event fires
-  * @tparam S Struct type used for the propagation of the event
+  * @tparam T  Type returned when the event fires
+  * @tparam S  Struct type used for the propagation of the event
   * @tparam SL Signal type supported as parameter and used as return type for event methods
   * @tparam EV Event type supported as parameter and used as return type for event methods
   */
 trait EventLike[+T, S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], EV[+X, Z <: Struct] <: EventLike[X, Z, SL, EV]] {
-  this : EV[T, S] =>
+  this: EV[T, S] =>
 
   /** add an observer */
   final def +=(react: T => Unit)(implicit ticket: Ticket[S]): Observe[S] = observe(react)(ticket)
@@ -33,58 +33,58 @@ trait EventLike[+T, S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV]
 
   def toTry()(implicit ticket: Ticket[S]): EV[Try[T], S]
   /**
-   * Events disjunction.
-   */
-  def ||[U >: T](other: EV[U, S])(implicit ticket: Ticket[S]) : EV[U, S]
+    * Events disjunction.
+    */
+  def ||[U >: T](other: EV[U, S])(implicit ticket: Ticket[S]): EV[U, S]
 
   /**
-   * EV filtered with a predicate
-   */
-  def &&(pred: T => Boolean)(implicit ticket: Ticket[S]): EV[T, S]
-  final def filter(pred: T => Boolean)(implicit ticket: Ticket[S]): EV[T, S] = &&(pred)
+    * EV filtered with a predicate
+    */
+  def filter(pred: T => Boolean)(implicit ticket: Ticket[S]): EV[T, S]
+  final def &&(pred: T => Boolean)(implicit ticket: Ticket[S]): EV[T, S] = filter(pred)
 
   /**
-   * EV is triggered except if the other one is triggered
-   */
+    * EV is triggered except if the other one is triggered
+    */
   def \[U](other: EV[U, S])(implicit ticket: Ticket[S]): EV[T, S]
 
   /**
-   * Events conjunction
-   */
+    * Events conjunction
+    */
   def and[U, R](other: EV[U, S])(merger: (T, U) => R)(implicit ticket: Ticket[S]): EV[R, S]
 
   /**
-   * EV conjunction with a merge method creating a tuple of both event parameters
-   */
+    * EV conjunction with a merge method creating a tuple of both event parameters
+    */
   def zip[U](other: EV[U, S])(implicit ticket: Ticket[S]): EV[(T, U), S]
 
   /**
-   * Transform the event parameter
-   */
+    * Transform the event parameter
+    */
   def map[U](mapping: T => U)(implicit ticket: Ticket[S]): EV[U, S]
 
   /**
-   * Drop the event parameter; equivalent to map((_: Any) => ())
-   */
+    * Drop the event parameter; equivalent to map((_: Any) => ())
+    */
   final def dropParam(implicit ticket: Ticket[S]): EV[Unit, S] = map(_ => ())
 
 
   /** folds events with a given fold function to create a SL */
-  def fold[A](init: => A)(fold: (=> A, T) => A)(implicit ticket: Ticket[S]): SL[A, S]
+  def fold[A](init: A)(fold: (A, T) => A)(implicit ticket: Ticket[S]): SL[A, S]
 
   /** Iterates a value on the occurrence of the event. */
   final def iterate[A](init: A)(f: A => A)(implicit ticket: Ticket[S]): SL[A, S] = fold(init)((acc, _) => f(acc))
 
   /**
-   * Counts the occurrences of the event. Starts from 0, when the event has never been
-   * fired yet. The argument of the event is simply discarded.
-   */
+    * Counts the occurrences of the event. Starts from 0, when the event has never been
+    * fired yet. The argument of the event is simply discarded.
+    */
   final def count()(implicit ticket: Ticket[S]): SL[Int, S] = fold(0)((acc, _) => acc + 1)
 
   /**
-   * Calls f on each occurrence of event e, setting the SL to the generated value.
-   * The initial signal is obtained by f(init)
-   */
+    * Calls f on each occurrence of event e, setting the SL to the generated value.
+    * The initial signal is obtained by f(init)
+    */
   final def set[B >: T, A](init: B)(f: (B => A))(implicit ticket: Ticket[S]): SL[A, S] = fold(f(init))((_, v) => f(v))
 
   /** returns a signal holding the latest value of the event. */
@@ -97,12 +97,13 @@ trait EventLike[+T, S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV]
   final def reset[T1 >: T, A](init: T1)(factory: T1 => SL[A, S])(implicit ticket: Ticket[S]): SL[A, S] = set(init)(factory).flatten()
 
   /**
-   * Returns a signal which holds the last n events in a list. At the beginning the
-   * list increases in size up to when n values are available
-   */
+    * Returns a signal which holds the last n events in a list. At the beginning the
+    * list increases in size up to when n values are available
+    */
   final def last(n: Int)(implicit ticket: Ticket[S]): SL[LinearSeq[T], S] = {
-    def folder(queue: => Queue[T], v: T)  = if (queue.length >= n) queue.tail.enqueue(v) else queue.enqueue(v)
-    fold(Queue[T]()) { folder }
+    fold(Queue[T]()) { (queue: Queue[T], v: T) =>
+      if (queue.length >= n) queue.tail.enqueue(v) else queue.enqueue(v)
+    }
   }
 
   /** collects events resulting in a variable holding a list of all values. */
@@ -118,10 +119,10 @@ trait EventLike[+T, S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV]
   def switchOnce[A](original: SL[A, S], newSignal: SL[A, S])(implicit ticket: Ticket[S]): SL[A, S]
 
   /**
-   * Switch to a signal once, on the occurrence of event e. Initially the
-   * return value is set to the original signal. When the event fires,
-   * the result is a constant signal whose value is the value of the event.
-   */
+    * Switch to a signal once, on the occurrence of event e. Initially the
+    * return value is set to the original signal. When the event fires,
+    * the result is a constant signal whose value is the value of the event.
+    */
   def switchTo[T1 >: T](original: SL[T1, S])(implicit ticket: Ticket[S]): SL[T1, S]
 
   /** Like latest, but delays the value of the resulting signal by n occurrences */

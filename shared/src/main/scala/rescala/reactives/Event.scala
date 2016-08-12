@@ -49,10 +49,10 @@ trait Event[+T, S <: Struct] extends EventLike[T, S, Signal, Event] with PulseOp
   /**
     * Event filtered with a predicate
     */
-  final override def &&(pred: T => Boolean)(implicit ticket: Ticket[S]): Event[T, S] = Events.static(s"(filter $this)", this) { turn => pulse(turn).filter(pred) }
+  final override def filter(pred: T => Boolean)(implicit ticket: Ticket[S]): Event[T, S] = Events.static(s"(filter $this)", this) { turn => pulse(turn).filter(pred) }
 
   /** collect results from a partial function */
-  final def collect[U](pf: PartialFunction[T, U])(implicit ticket: Ticket[S]): Event[U, S] = Events.static(s"(collect $this)", this) { turn => Pulse.fromOption(get(turn).flatMap(pf.lift))  }
+  final def collect[U](pf: PartialFunction[T, U])(implicit ticket: Ticket[S]): Event[U, S] = Events.static(s"(collect $this)", this) { turn => Pulse.fromOption(get(turn).flatMap(pf.lift)) }
 
   /**
     * Event is triggered except if the other one is triggered
@@ -92,14 +92,18 @@ trait Event[+T, S <: Struct] extends EventLike[T, S, Signal, Event] with PulseOp
 
 
   /** folds events with a given fold function to create a Signal */
-  final override def fold[A](init: => A)(f: (=> A, T) => A)(implicit ticket: Ticket[S]) = ticket { initialTurn =>
+  final override def fold[A](init: A)(folder: (A, T) => A)(implicit ticket: Ticket[S]): Signal[A, S] = {
+    def f(a: => A, t: T) = folder(a, t)
+    lazyFold(init)(f)
+  }
+  final def lazyFold[A](init: => A)(folder: (=> A, T) => A)(implicit ticket: Ticket[S]): Signal[A, S] = ticket { initialTurn =>
     Signals.Impl.makeStatic(Set[Reactive[S]](this), init) { (turn, currentValue) =>
-      get(turn).fold(currentValue)(value => f(currentValue, value))
+      get(turn).fold(currentValue)(value => folder(currentValue, value))
     }(initialTurn)
   }
 
   /** reduces events with a given reduce function to create a Signal */
-  final def reduce[A](reducer: (=> A, T) => A)(implicit ticket: Ticket[S]) = fold(throw new EmptySignalControlThrowable)(reducer)
+  final def reduce[A](reducer: (=> A, T) => A)(implicit ticket: Ticket[S]) = lazyFold(throw new EmptySignalControlThrowable)(reducer)
 
   /** Switch back and forth between two signals on occurrence of event e */
   final override def toggle[A](a: Signal[A, S], b: Signal[A, S])(implicit ticket: Ticket[S]): Signal[A, S] = ticket { turn =>

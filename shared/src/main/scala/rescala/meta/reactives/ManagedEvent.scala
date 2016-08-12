@@ -36,7 +36,7 @@ class ManagedEventImpl[+T](override val node: ReactiveNode) extends ManagedEvent
   /**
     * Event filtered with a predicate
     */
-  override def &&(pred: (T) => Boolean)(implicit ticket: Ticket[DummyStruct]): ManagedEventImpl[T] = ???
+  override def filter(pred: (T) => Boolean)(implicit ticket: Ticket[DummyStruct]): ManagedEventImpl[T] = ???
 
   /**
     * Event is triggered except if the other one is triggered
@@ -59,7 +59,7 @@ class ManagedEventImpl[+T](override val node: ReactiveNode) extends ManagedEvent
   override def map[U](mapping: (T) => U)(implicit ticket: Ticket[DummyStruct]): ManagedEventImpl[U] = ???
 
   /** folds events with a given fold function to create a Signal */
-  override def fold[A](init: => A)(fold: (=> A, T) => A)(implicit ticket: Ticket[DummyStruct]): ManagedSignalImpl[A] = ???
+  override def fold[A](init: A)(fold: (A, T) => A)(implicit ticket: Ticket[DummyStruct]): ManagedSignalImpl[A] = ???
 
   /** Switch back and forth between two signals on occurrence of event e */
   override def toggle[A](a: ManagedSignal[A, DummyStruct], b: ManagedSignal[A, DummyStruct])(implicit ticket: Ticket[DummyStruct]): ManagedSignalImpl[A] = ???

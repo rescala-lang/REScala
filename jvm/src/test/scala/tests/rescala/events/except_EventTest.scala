@@ -49,7 +49,7 @@ class except_EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends Assertio
     var cond = false
     val e1 = Evt[Int]
     val e2 = e1 map ((x: Int) => x * 2)
-    val e3 = e1 && (_ => cond)
+    val e3 = e1 filter (_ => cond)
     val e1_except_e2 = e2 \ e3
     e1_except_e2 += ((x: Int) => { test += 1 })
 
@@ -75,7 +75,7 @@ class except_EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends Assertio
     var cond = false
     val e1 = Evt[Int]
     val e2 = e1 map ((x: Int) => x)
-    val e3 = (e1 map ((x: Int) => x * 2)) && (_ => cond)
+    val e3 = (e1 map ((x: Int) => x * 2)) filter (_ => cond)
     val e1_except_e2 = e2 \ e3
     e1_except_e2 += ((x: Int) => { value = x })
 
