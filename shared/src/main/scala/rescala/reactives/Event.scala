@@ -1,13 +1,11 @@
 package rescala.reactives
 
-import java.util.concurrent.CompletionException
-
 import rescala.engines.Ticket
 import rescala.graph.Pulse.{Change, Exceptional, NoChange, Stable}
 import rescala.graph.{Pulse, PulseOption, Reactive, Struct}
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 
 /**
   *
@@ -27,10 +25,12 @@ trait Event[+T, S <: Struct] extends EventLike[T, S, Signal, Event] with PulseOp
     case Failure(t) => onFailure(t)
   }
 
-  def toTry()(implicit ticket: Ticket[S]): Event[Try[T], S] = Events.static(s"(try $this)", this) { turn =>
-    Pulse.Change(this.pulse(turn).toOptionTry().getOrElse(throw new IllegalStateException("reevaluation without changes")))
+  final def recover[R >: T](onFailure: Throwable => R)(implicit ticket: Ticket[S]): Event[R, S] = Events.static(s"(recover $this)", this) { turn =>
+    pulse(turn) match {
+      case Exceptional(t) => Pulse.Change(onFailure(t))
+      case other => other
+    }
   }
-
 
   /**
     * Events disjunction.
