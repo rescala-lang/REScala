@@ -1,12 +1,11 @@
 package rescala.reactives
 
-import java.util.concurrent.CompletionException
-
 import rescala.engines.Ticket
-import rescala.graph.{Stateful, Struct}
-import rescala.reactives.RExceptions.UnhandledFailureException
+import rescala.graph.{Pulse, Stateful, Struct}
+import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 
-import scala.util.{Failure, Success, Try}
+import scala.util.control.NonFatal
+import scala.util.{Failure, Success}
 
 /**
   * Standard implementation of the signal interface using Spore-based propagation.
@@ -20,13 +19,21 @@ trait Signal[+A, S <: Struct] extends SignalLike[A, S, Signal, Event] with State
   final override def observe(
     onSuccess: A => Unit,
     onFailure: Throwable => Unit = t => throw new UnhandledFailureException(t)
-  )(implicit ticket: Ticket[S]): Observe[S] = Observe(this){
+  )(implicit ticket: Ticket[S]): Observe[S] = Observe(this) {
     case Success(v) => onSuccess(v)
     case Failure(t) => onFailure(t)
   }
 
-  final def toTry()(implicit ticket: Ticket[S]): Signal[Try[A], S] = Signals.static(this){ turn =>
-    this.pulse(turn).toOptionTry().getOrElse(throw new IllegalStateException("reevaluation without changes"))
+  final def recoverFailure[R >: A](onFailure: Throwable => R)(implicit ticket: Ticket[S]): Signal[R, S] = Signals.static(this) { turn =>
+    try this.get(turn) catch {
+      case NonFatal(e) => onFailure(e)
+    }
+  }
+
+  final def recoverEmpty[R >: A](onEmpty: () => R)(implicit ticket: Ticket[S]): Signal[R, S] = Signals.static(this) { (turn) =>
+    try this.get(turn) catch {
+      case e: EmptySignalControlThrowable => onEmpty()
+    }
   }
 
 
@@ -34,7 +41,7 @@ trait Signal[+A, S <: Struct] extends SignalLike[A, S, Signal, Event] with State
   final override def map[B](f: A => B)(implicit ticket: Ticket[S]) = Signals.lift(this) {f}
 
   /** flatten the inner signal */
-  final override def flatten[B]()(implicit ev: A <:< Signal[B, S], ticket: Ticket[S]) : Signal[B, S] = Signals.dynamic(this) { s => this (s)(s) }
+  final override def flatten[B]()(implicit ev: A <:< Signal[B, S], ticket: Ticket[S]): Signal[B, S] = Signals.dynamic(this) { s => this (s)(s) }
 
   /** Unwraps a Signal[Event[EV, S], S] to an Event[EV, S] */
   final override def unwrap[E](implicit evidence: A <:< Event[E, S], ticket: Ticket[S]) = Events.wrapped(map(evidence))

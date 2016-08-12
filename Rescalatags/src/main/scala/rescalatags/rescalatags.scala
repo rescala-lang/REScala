@@ -2,6 +2,7 @@ import org.scalajs.dom
 import rescala._
 
 import scala.language.implicitConversions
+import scala.util.{Failure, Success}
 import scalatags.JsDom.all._
 
 package object rescalatags {
@@ -10,9 +11,12 @@ package object rescalatags {
     /**
       * converts a Signal of a scalatags Tag to a scalatags Frag which automatically reflects changes to the signal in the dom
       */
-    implicit def asFragment: Frag = {
+    def asFragment: Frag = {
       new Frag {
-        val rendered = signal.map(_.render)
+        val rendered: Signal[dom.Node] = signal
+          .map(_.render)
+          .recoverFailure(t => span(t.getMessage).render)
+          .recoverEmpty(() => "".render)
 
         rendered.change.observe { case (lastTag, newTag) =>
           if (lastTag.parentNode != null && !scalajs.js.isUndefined(lastTag.parentNode)) {
@@ -21,11 +25,10 @@ package object rescalatags {
         }
 
         def applyTo(t: dom.Element) = t.appendChild(rendered.now)
-        def render = rendered.now
+        def render: dom.Node = rendered.now
       }
     }
   }
-
 
 
   implicit def attrValue[T: AttrValue]: AttrValue[Signal[T]] = new AttrValue[Signal[T]] {
