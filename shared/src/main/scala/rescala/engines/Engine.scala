@@ -4,7 +4,7 @@ import rescala.graph.Struct
 import rescala.macros.ReactiveMacros
 import rescala.propagation.Turn
 import rescala.reactives.{Events, Signals}
-import rescala.{reactives, propagation}
+import rescala.{propagation, reactives}
 
 import scala.annotation.implicitNotFound
 import scala.language.experimental.macros
@@ -29,6 +29,7 @@ trait Engine[S <: Struct, +TTurn <: Turn[S]] {
   final type Reactive = rescala.graph.Reactive[S]
   final def Evt[A](): Evt[A] = reactives.Evt[A, S]()(Ticket.fromEngineImplicit(this))
   final def Var[A](v: A): Var[A] = reactives.Var[A, S](v)(Ticket.fromEngineImplicit(this))
+  final def Var[A](): Var[A] = reactives.Var[A, S]()(Ticket.fromEngineImplicit(this))
   final def static[T](dependencies: Reactive*)(expr: Turn => T)(implicit ticket: Ticket): Signal[T] = Signals.static(dependencies: _*)(expr)
   final def dynamic[T](dependencies: Reactive*)(expr: Turn => T)(implicit ticket: Ticket): Signal[T] = Signals.dynamic(dependencies: _*)(expr)
   final def dynamicE[T](dependencies: Reactive*)(expr: Turn => Option[T])(implicit ticket: Ticket): Event[T] = Events.dynamic(dependencies: _*)(expr)
