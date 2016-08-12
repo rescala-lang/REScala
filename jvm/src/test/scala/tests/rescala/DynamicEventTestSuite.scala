@@ -19,7 +19,7 @@ class DynamicEventTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends Ass
   import implicitEngine.{Evt, Var, dynamicE}
 
   @Test def simple(): Unit = {
-    val ev1 = Evt[Int]()
+    val ev1 = Evt[Int]
     val v1 = Var(8)
     val snapshotEvent = dynamicE() { t =>
       ev1(t).map(i => i + v1(t))

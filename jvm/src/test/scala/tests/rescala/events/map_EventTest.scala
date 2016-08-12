@@ -20,7 +20,7 @@ class map_EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsF
 
   @Test def handlerOf_map_IsExecuted() = {
     var test = 0
-    val e1 = Evt[Int]()
+    val e1 = Evt[Int]
     val e1_map = e1 map ((x: Int) => x * 2)
     e1_map += ((x: Int) => { test += 1 })
 
@@ -31,7 +31,7 @@ class map_EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsF
 
   @Test def theFunctionPassedTo_map_isApplied() = {
     var test = 0
-    val e1 = Evt[Int]()
+    val e1 = Evt[Int]
     val e1_map = e1 map ((x: Int) => x * 2)
     e1_map += ((x: Int) => { test = x })
 

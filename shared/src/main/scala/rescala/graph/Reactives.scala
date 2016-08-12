@@ -65,6 +65,7 @@ trait Pulsing[+P, S <: Struct] extends Reactive[S] {
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
 trait PulseOption[+P, S <: Struct] extends Pulsing[P, S] {
+  @compileTimeOnly("Event.apply can only be used inside of Signal expressions")
   def apply(): Option[P] = throw new IllegalAccessException(s"$this.apply called outside of macro")
   final def apply[T](turn: Turn[S]): Option[P] = {
     turn.dependencyInteraction(this)

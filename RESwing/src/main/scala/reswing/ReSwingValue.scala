@@ -9,7 +9,7 @@ import scala.language.implicitConversions
  */
 sealed abstract class ReSwingValue[T] {
   protected def signal: Lazy[Signal[T]]
-  protected val event = Lazy { Evt[T]() }
+  protected val event = Lazy { Evt[T] }
   protected var latestValue = null.asInstanceOf[T]
 
   private var init = null: ReSwingValue[T] => Unit

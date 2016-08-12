@@ -7,7 +7,7 @@ import rescala.graph.Globals.named
 import rescala.graph.Struct
 import rescala.parrp.Backoff
 import rescala.propagation.{Committable, Turn}
-import rescala.reactives.{SignalLike, Signal, Var, Var}
+import rescala.reactives.{SignalLike, Signal, Var}
 import rescala.reactives.Signals.lift
 
 import scala.annotation.tailrec

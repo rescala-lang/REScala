@@ -27,27 +27,27 @@ class AdmissionPhaseTest extends AssertionsForJUnit with MockitoSugar {
         numAdmissions += 1
       })
     }
-    
+
     threads.foreach { _.start }
     threads.foreach { _.join }
-    
+
     assert(numAdmissions == numThreads)
     assert(counter.now == numThreads)
-    
+
   }
-  
+
   @Test(timeout=100000)
   def testAdmissionPhaseValueMatchesCommitPhaseValue() = {
     val numThreads = 100
-    
+
     val counter = Var(0)
     val dep1 = counter.map { _ + 1 }
     val dep2 = counter.map { _ + 2 }
     val dep12 = Signals.lift(dep1, dep2)(_ + _)
-    
+
     @volatile var threadsOk = true
     @volatile var numAdmissions = 0
-    
+
     val threads = for( _ <- 1 to numThreads) yield createThread {
       engine.plan(counter)(implicit t => {
         val currentValue = counter(t)
@@ -76,12 +76,12 @@ class AdmissionPhaseTest extends AssertionsForJUnit with MockitoSugar {
           }
         })
       })
-      
+
     }
-    
+
     threads.foreach{_.start}
     threads.foreach{_.join}
-    
+
     assert(counter.now == numThreads)
     assert(threadsOk)
   }

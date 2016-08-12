@@ -20,7 +20,7 @@ class EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJU
 
   @Test def handlersAreExecuted() = {
     var test = 0
-    val e1 = Evt[Int]()
+    val e1 = Evt[Int]
     e1 += ((x: Int) => { test += 1 })
     e1(10)
     e1(10)
@@ -29,7 +29,7 @@ class EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJU
 
   @Test def eventHandlersCanBeRemoved() = {
     var test = 0
-    val e1 = Evt[Int]()
+    val e1 = Evt[Int]
     val f = (x: Int) => { test += 1 }
     val o = e1 += f
     e1(10)
@@ -42,7 +42,7 @@ class EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJU
 
   @Test def correctValueIsReceived() = {
     var test = 0
-    val e1 = Evt[Int]()
+    val e1 = Evt[Int]
     e1 += ((x: Int) => { test += x })
     e1(10)
     assert(test == 10)
@@ -50,7 +50,7 @@ class EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJU
 
   @Test def eventsWithoutParamsIsCalled() = {
     var test = 0
-    val e1 = Evt[Unit]()
+    val e1 = Evt[Unit]
     e1 += (_ => { test += 1 })
     e1(())
     assert(test == 1)
@@ -62,7 +62,7 @@ class EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJU
 
     def f(x: Int): Unit = { test += 1 }
 
-    val e1 = Evt[Int]()
+    val e1 = Evt[Int]
     e1 += f
 
     e1(10)

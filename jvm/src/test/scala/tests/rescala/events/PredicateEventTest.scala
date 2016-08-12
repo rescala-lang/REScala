@@ -21,7 +21,7 @@ class PredicateEventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends Assert
   @Test def predicateEventIsExecutedOnlyIfThePredicateIsTrue() = {
     var test = 0
     var cond = false
-    val e1 = Evt[Int]()
+    val e1 = Evt[Int]
     val e2 = e1 && ((x: Int) => cond)
     e2 += ((x: Int) => { test += 1 })
 

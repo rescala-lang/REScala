@@ -21,7 +21,7 @@ class dropParam_EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends Asser
 
   @Test def handlerOf_dropParam_IsExecuted() = {
     var test = 0
-    val e1 = Evt[Int]()
+    val e1 = Evt[Int]
     val e1_drop: Event[Unit] = e1.dropParam
     e1_drop += ((x) => { test += 1; })
 

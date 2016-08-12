@@ -20,14 +20,14 @@ class ConflictResolvingTest extends AssertionsForJUnit with MockitoSugar {
   /*
    * This test suite runs on the following topology: S1 and S2 are sources
    * and D1 and D2 are dependencies
-   * 
+   *
    * S1    S2
    * | \  / |
    * |  \/  |
    * |  /\  |
    * | /  \ |
    * vv    vv
-   * D1    D2 
+   * D1    D2
    */
 
 

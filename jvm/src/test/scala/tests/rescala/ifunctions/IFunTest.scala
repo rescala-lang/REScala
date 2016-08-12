@@ -23,25 +23,25 @@ class IFunTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUn
 
   /* fold */
   @Test def fold_theInitialValueIsSetCorrectly(): Unit = {
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val f = (x: Int, y: Int) => x + y
     val s: Signal[Int] = e.fold(10)(f)
     assert(s.now == 10)
   }
 
   @Test def fold_theResultSignalIncreasesWhenEventsOccur(): Unit = {
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val f = (x: Int, y: Int) => x + y
     val s: Signal[Int] = e.fold(10)(f)
-    e(1)
-    e(1)
+    e.fire(1)
+    e.fire(1)
     assert(s.now == 12)
   }
 
 
   /* iterate */
   @Test def iterate_theInitialValueIsSetCorrectly(): Unit = {
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val f = (x: Int) => x
     val s: Signal[Int] = e.iterate(10)(f)
     assert(s.now == 10)
@@ -49,141 +49,141 @@ class IFunTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUn
 
   @Test def iterate_theFunctionisExecutedEveryTimeTheEventFires(): Unit = {
     var test: Int = 0
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val f = (x: Int) => { test += 1; x }
     val s: Signal[Int] = e.iterate(10)(f)
-    e(1)
+    e.fire(1)
     assert(test == 1)
-    e(2)
+    e.fire(2)
     assert(test == 2)
-    e(1)
+    e.fire(1)
     assert(test == 3)
   }
 
   // TODO: does it make sense ?
   @Test def iterate_theParameterIsAlwaysTheInitValue(): Unit = {
     var test: Int = 0
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val f = (x: Int) => { test = x; x + 1 }
     val s: Signal[Int] = e.iterate(10)(f)
-    e(1)
+    e.fire(1)
     assert(test == 10)
-    e(2)
+    e.fire(2)
     assert(test == 11)
-    e(1)
+    e.fire(1)
     assert(test == 12)
   }
 
   @Test def iterate_theResultSignalIsNeverChanged(): Unit = {
     var test: Int = 0
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val f = (x: Int) => { test += x; x }
     val s: Signal[Int] = e.iterate(10)(f)
-    e(1)
+    e.fire(1)
     assert(s.now == 10)
-    e(2)
+    e.fire(2)
     assert(s.now == 10)
-    e(1)
+    e.fire(1)
     assert(s.now == 10)
   }
 
   /* latest */
   @Test def latest_theInitialValueIsSetCorrectly(): Unit = {
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val s: Signal[Int] = e.latest(10)
 
     assert(s.now == 10)
   }
 
   @Test def latest_theFunctionisExecutedEveryTimeTheEventFires(): Unit = {
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val s: Signal[Int] = e.latest(10)
 
-    e(1)
+    e.fire(1)
     assert(s.now == 1)
-    e(2)
+    e.fire(2)
     assert(s.now == 2)
-    e(1)
+    e.fire(1)
     assert(s.now == 1)
   }
 
 
   /* latestOption */
   @Test def latestOption_theInitialValueIsSetCorrectly(): Unit = {
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val s: Signal[Option[Int]] = e.latestOption()
 
     assert(s.now == None)
   }
 
   @Test def latestOption_theFunctionisExecutedEveryTimeTheEventFires(): Unit = {
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val s: Signal[Option[Int]] = e.latestOption()
 
-    e(1)
+    e.fire(1)
     assert(s.now == Option(1))
-    e(2)
+    e.fire(2)
     assert(s.now == Option(2))
-    e(1)
+    e.fire(1)
     assert(s.now == Option(1))
   }
 
 
   /* last */
   @Test def last_theInitialValueIsSetCorrectly(): Unit = {
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val s: Signal[LinearSeq[Int]] = e.last(5)
 
     assert(s.now == List())
   }
 
   @Test def last_collectsTheLastNEvents(): Unit = {
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val s: Signal[LinearSeq[Int]] = e.last(5)
 
 
     assert(s.now == LinearSeq())
-    e(1)
+    e.fire(1)
     assert(s.now == LinearSeq(1))
-    e(2)
+    e.fire(2)
     assert(s.now == LinearSeq(1, 2))
 
-    e(3)
-    e(4)
-    e(5)
+    e.fire(3)
+    e.fire(4)
+    e.fire(5)
     assert(s.now == LinearSeq(1, 2, 3, 4, 5))
-    e(6)
+    e.fire(6)
     assert(s.now == LinearSeq(2, 3, 4, 5, 6))
   }
 
   /* list */
   @Test def list_theInitialValueIsSetCorrectly(): Unit = {
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val s = e.list()
 
     assert(s.now == List())
   }
 
   @Test def list_theFunctionisExecutedEveryTimeTheEventFires(): Unit = {
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val s = e.list()
 
     assert(s.now == List())
-    e(1)
+    e.fire(1)
     assert(s.now == List(1))
-    e(2)
+    e.fire(2)
     assert(s.now == List(2, 1))
 
-    e(3)
-    e(4)
-    e(5)
-    e(6)
+    e.fire(3)
+    e.fire(4)
+    e.fire(5)
+    e.fire(6)
     assert(s.now == List(6, 5, 4, 3, 2, 1))
   }
 
   /* toggle */
   @Test def toggle_theInitialValueIsSetCorrectly(): Unit = {
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val v1 = Var(1)
     val s1 = v1.map { _ + 1 }
     val v2 = Var(11)
@@ -194,7 +194,7 @@ class IFunTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUn
   }
 
   @Test def toggle_theEventSwitchesTheSignal(): Unit = {
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val v1 = Var(1)
     val s1 = v1.map { _ + 1 }
     val v2 = Var(11)
@@ -202,13 +202,13 @@ class IFunTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUn
     val s = e.toggle(s1, s2)
 
     assert(s.now == 2)
-    e(1)
+    e.fire(1)
     assert(s.now == 12)
     v2.set(12)
     assert(s.now == 13)
     v1.set(2)
     assert(s.now == 13)
-    e(1)
+    e.fire(1)
     v1.set(3)
     assert(s.now == 4)
     v2.set(13)
@@ -218,7 +218,7 @@ class IFunTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUn
 
   /* snapshot */
   @Test def snapshot_theInitialValueIsSetCorrectly(): Unit = {
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val v1 = Var(1)
     val s1 = v1.map { _ + 1 }
     val s = e.snapshot(s1)
@@ -227,47 +227,47 @@ class IFunTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUn
   }
 
   @Test def snapshot_takesASnapshotWhenTheEventOccurs(): Unit = {
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val v1 = Var(1)
     val s1 = v1.map { _ + 1 }
     val s = e.snapshot(s1)
 
-    e(1)
+    e.fire(1)
     assert(s.now == 2)
 
     v1.set(2)
     assert(s.now == 2)
-    e(1)
+    e.fire(1)
     assert(s.now == 3)
   }
 
 
   /* delay[T](e: Event[T], init: T, n: Int): Signal[T] */
   @Test def delay_theInitialValueIsSetCorrectly(): Unit = {
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val s = e.delay(0, 3)
 
     assert(s.now == 0)
   }
 
   @Test def delay_takesASnapshotWhenTheEventOccurs(): Unit = {
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val s = e.delay(0, 3)
 
     // Initially remains the same for n times
-    e(1)
+    e.fire(1)
     assert(s.now == 0)
-    e(2)
+    e.fire(2)
     assert(s.now == 0)
-    e(3)
+    e.fire(3)
     assert(s.now == 0)
 
     // Now starts changing
-    e(4)
+    e.fire(4)
     assert(s.now == 1)
-    e(5)
+    e.fire(5)
     assert(s.now == 2)
-    e(6)
+    e.fire(6)
     assert(s.now == 3)
   }
 
@@ -302,7 +302,7 @@ class IFunTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUn
 
   /* switchTo */
   @Test def switchTo_theInitialValueIsSetToTheSignal(): Unit = {
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val v1 = Var(1)
     val s1 = v1.map { _ + 1 }
     val s2 = e.switchTo(s1)
@@ -313,14 +313,14 @@ class IFunTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUn
   }
 
   @Test def switchTo_theEventSwitchesTheValueToTheValueOfTheEvent(): Unit = {
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val v1 = Var(1)
     val s1 = v1.map { _ + 1 }
     val s2 = e.switchTo(s1)
 
-    e(1)
+    e.fire(1)
     assert(s2.now == 1)
-    e(100)
+    e.fire(100)
     assert(s2.now == 100)
     v1.set(2)
     assert(s2.now == 100)
@@ -328,7 +328,7 @@ class IFunTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUn
 
   /* switchOnce */
   @Test def switchOnce_theInitialValueIsSetToTheSignal(): Unit = {
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val v1 = Var(0)
     val v2 = Var(10)
     val s1 = v1.map { _ + 1 }
@@ -341,23 +341,23 @@ class IFunTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUn
   }
 
   @Test def switchOnce_theEventSwitchesTheValueToTheValueOfTheOtherSignal(): Unit = {
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val v1 = Var(0)
     val v2 = Var(10)
     val s1 = v1.map { _ + 1 }
     val s2 = v2.map { _ + 1 }
     val s3 = e.switchOnce(s1, s2)
 
-    e(1)
+    e.fire(1)
     assert(s3.now == 11)
-    e(2)
+    e.fire(2)
     v2.set(11)
     assert(s3.now == 12)
   }
 
   /* reset */
   @Test def reset_TheInitialValueOfTheSignalIsGivenByInitAndTheFactory(): Unit = {
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val v1 = Var(0)
     val v2 = Var(10)
     val s1 = v1.map { _ + 1 }
@@ -376,7 +376,7 @@ class IFunTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUn
   }
 
   @Test def reset_TheValueOfTheSignalIsGivenByTheEventAndTheFactory(): Unit = {
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val v1 = Var(0)
     val v2 = Var(10)
     val s1 = v1.map { _ + 1 }
@@ -392,7 +392,7 @@ class IFunTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUn
     //assert(s3.get == 1)
     v1.set(1)
     assert(s3.now == 2)
-    e(101)
+    e.fire(101)
     assert(s3.now == 11)
     v2.set(11)
     assert(s3.now == 12)

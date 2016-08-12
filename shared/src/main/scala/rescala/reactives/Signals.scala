@@ -74,7 +74,7 @@ object Signals extends GeneratedSignalLift {
 
   /** converts a future to a signal */
   def fromFuture[A, S <: Struct](fut: Future[A])(implicit fac: Engine[S, Turn[S]], ec: ExecutionContext): Signal[A, S] = {
-    val v: Var[A, S] = rescala.reactives.Var[A, S]()
+    val v: Var[A, S] = rescala.reactives.Var.empty[A, S]
     fut.onComplete{v.setFromTry}
     v
   }

@@ -17,16 +17,16 @@ import scala.swing.event._
 
 
 object ReactiveTempConverter extends SimpleSwingApplication {
-  
+
   def top = new MainFrame {
     title = "Celsius/Fahrenheit Converter"
     object celsius extends ReactiveTextfield { columns = 5}
     object fahrenheit extends ReactiveTextfield { columns = 5}
-  
+
     fahrenheit.text = Signal {"" + (("0" + celsius.text_out()).toInt * 9 / 5 + 32) }
     celsius.text = Signal {"" + (("0" + fahrenheit.text_out()).toInt - 32) * 5 / 9 }
 
-    
+
       contents = new FlowPanel {
       contents += celsius
       contents += new Label(" Celsius  =  ")

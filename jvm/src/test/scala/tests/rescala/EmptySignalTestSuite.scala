@@ -14,11 +14,12 @@ object EmptySignalTestSuite extends JUnitParameters
 @RunWith(value = classOf[Parameterized])
 class EmptySignalTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
   implicit val implicitEngine: Engine[S, Turn[S]] = engine
+  import engine._
 
 
   @Test def basicEmptySignalTest(): Unit = {
 
-    val v = rescala.reactives.Var[Int, S]()
+    val v = Var.empty[Int]
 
     intercept[NoSuchElementException](v.now)
 

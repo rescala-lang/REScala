@@ -156,7 +156,7 @@ class HigherOrderTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends Asse
     assert(dereferencedChanged)
     dereferencedChanged = false
     assert(dereferenced.now == 1)
-    
+
     tick(())
     assert(count.now == 2)
     assert(doubled.now ==4)
@@ -228,7 +228,7 @@ class HigherOrderTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends Asse
   }
 
   @Test def wrappedEvent(): Unit = {
-    val e1 = Evt[Int]()
+    val e1 = Evt[Int]
     val condition = e1.latest(-1)
     val level1Event = e1.map(_ => "level 1")
     val level2Event = level1Event.map(_ => "level 2")
@@ -246,7 +246,7 @@ class HigherOrderTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends Asse
   }
 
   @Test def wrappedEventSameLevel(): Unit = {
-    val e1 = Evt[Int]()
+    val e1 = Evt[Int]
     val level2Condition = e1.latest(-1).map(identity)
     val level1EventA = e1.map(_ => "A")
     val level1EventB = e1.map(_ => "B")
@@ -265,11 +265,11 @@ class HigherOrderTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends Asse
 
 
   @Test def flattenEvents(): Unit = {
-    val e1 = Evt[Event[Int]]()
+    val e1 = Evt[Event[Int]]
     val f1 = e1.flatten()
     val res = f1.log()
-    val e2 = Evt[Int]()
-    val e3 = Evt[Int]()
+    val e2 = Evt[Int]
+    val e3 = Evt[Int]
     e2(10)
     e3(10)
 

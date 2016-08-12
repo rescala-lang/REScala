@@ -59,7 +59,7 @@ object Main extends App {
 
   (readUrls getOrElse defaultURLs) foreach (checker.check(_))
 
-  while (true) { Swing.onEDTWait { tick() }; Thread.sleep(sleepTime) }
+  while (true) { Swing.onEDTWait { tick.fire() }; Thread.sleep(sleepTime) }
 
   // ---------------------------------------------------------------------------
 

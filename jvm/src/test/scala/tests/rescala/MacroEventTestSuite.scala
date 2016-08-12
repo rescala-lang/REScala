@@ -18,8 +18,8 @@ class MacroEventTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends Asser
   import implicitEngine.{Event, Evt, Signal}
 
   @Test def useEventsInSignalExpression(): Unit = {
-    val e1 = Evt[Int]()
-    val e2 = Evt[Int]()
+    val e1 = Evt[Int]
+    val e2 = Evt[Int]
     val res = Signal { List(e1(), e2()).flatten.sum }
 
     assert(res.now === 0)
@@ -36,8 +36,8 @@ class MacroEventTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends Asser
   }
 
   @Test def useEventExpression(): Unit = {
-    val e1 = Evt[Int]()
-    val e2 = Evt[Int]()
+    val e1 = Evt[Int]
+    val e2 = Evt[Int]
     val event = Event { Some(List(e1(), e2()).flatten) }
     val res = event.latest(Nil)
 

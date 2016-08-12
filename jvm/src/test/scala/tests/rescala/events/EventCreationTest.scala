@@ -22,7 +22,7 @@ class EventCreationTest[S <: Struct](engine: Engine[S, Turn[S]]) extends Asserti
 
   @Test def addEventAfter() = {
     var res = 0
-    val e0 = Evt[Int]()
+    val e0 = Evt[Int]
     val e1 = e0.map(identity)
     e1.map(_ => e0.map {_ + 1}.observe {res = _})
     e0(10)

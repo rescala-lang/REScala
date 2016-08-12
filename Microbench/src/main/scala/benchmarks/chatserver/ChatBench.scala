@@ -60,7 +60,7 @@ class BenchState[S <: Struct] {
     cs = new ChatServer[S]()
     Range(0, size.size).foreach(cs.create)
 
-    clients = Array.fill(threads)(engine.Evt[String]())
+    clients = Array.fill(threads)(engine.Evt[String])
     for ((client, i) <- clients.zipWithIndex) {
       val room1 = i % size.size
       val room2 = (i + size.size / 2) % size.size

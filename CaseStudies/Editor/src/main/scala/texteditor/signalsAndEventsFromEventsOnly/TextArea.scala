@@ -69,9 +69,9 @@ class TextArea extends ReComponent {
     new Iterable[Char] { def iterator = it.iterator.slice(start, end) } : Iterable[Char]
   }
 
-  protected val selectedAll = Evt[Unit]()  //#EVT
-  protected val pasted = Evt[Unit]()  //#EVT
-  protected val copied = Evt[Unit]()   //#EVT
+  protected val selectedAll = Evt[Unit]  //#EVT
+  protected val pasted = Evt[Unit]  //#EVT
+  protected val copied = Evt[Unit]   //#EVT
 
   def selectAll() = selectedAll.fire()
   def paste() = pasted.fire()

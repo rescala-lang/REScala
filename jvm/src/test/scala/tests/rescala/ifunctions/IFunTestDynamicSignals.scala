@@ -20,22 +20,22 @@ class IFunTestDynamicSignals[S <: Struct](engine: Engine[S, Turn[S]]) extends As
 
   /* count */
   @Test def count_theInitialValueIsSetCorrectly(): Unit = {
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val s: Signal[Int] = e.count
     assert(s.now == 0)
   }
 
   @Test def count_theResultSignalIncreasesWhenEventsOccur(): Unit = {
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val s: Signal[Int] = e.count
-    e(1)
-    e(1)
+    e.fire(1)
+    e.fire(1)
     assert(s.now == 2)
   }
 
   /* toggle */
   @Test def toggle_theInitialValueIsSetCorrectly(): Unit = {
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
     val v2 = Var(11)
@@ -46,7 +46,7 @@ class IFunTestDynamicSignals[S <: Struct](engine: Engine[S, Turn[S]]) extends As
   }
 
   @Test def toggle_theEventSwitchesTheSignal(): Unit = {
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
     val v2 = Var(11)
@@ -54,13 +54,13 @@ class IFunTestDynamicSignals[S <: Struct](engine: Engine[S, Turn[S]]) extends As
     val s = e.toggle(s1, s2)
 
     assert(s.now == 2)
-    e(1)
+    e.fire(1)
     assert(s.now == 12)
     v2.set(12)
     assert(s.now == 13)
     v1.set(2)
     assert(s.now == 13)
-    e(1)
+    e.fire(1)
     v1.set(3)
     assert(s.now == 4)
     v2.set(13)
@@ -70,7 +70,7 @@ class IFunTestDynamicSignals[S <: Struct](engine: Engine[S, Turn[S]]) extends As
 
   /* snapshot */
   @Test def snapshot_theInitialValueIsSetCorrectly(): Unit = {
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
     val s = e.snapshot(s1)
@@ -79,17 +79,17 @@ class IFunTestDynamicSignals[S <: Struct](engine: Engine[S, Turn[S]]) extends As
   }
 
   @Test def snapshot_takesASnapshotWhenTheEventOccurs(): Unit = {
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
     val s = e.snapshot(s1)
 
-    e(1)
+    e.fire(1)
     assert(s.now == 2)
 
     v1.set(2)
     assert(s.now == 2)
-    e(1)
+    e.fire(1)
     assert(s.now == 3)
   }
 
@@ -124,7 +124,7 @@ class IFunTestDynamicSignals[S <: Struct](engine: Engine[S, Turn[S]]) extends As
 
   /* switchTo */
   @Test def switchTo_theInitialValueIsSetToTheSignal(): Unit = {
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
     val s2 = e.switchTo(s1)
@@ -135,14 +135,14 @@ class IFunTestDynamicSignals[S <: Struct](engine: Engine[S, Turn[S]]) extends As
   }
 
   @Test def switchTo_theEventSwitchesTheValueToTheValueOfTheEvent(): Unit = {
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
     val s2 = e.switchTo(s1)
 
-    e(1)
+    e.fire(1)
     assert(s2.now == 1)
-    e(100)
+    e.fire(100)
     assert(s2.now == 100)
     v1.set(2)
     assert(s2.now == 100)
@@ -150,7 +150,7 @@ class IFunTestDynamicSignals[S <: Struct](engine: Engine[S, Turn[S]]) extends As
 
   /* switchOnce */
   @Test def switchOnce_theInitialValueIsSetToTheSignal(): Unit = {
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val v1 = Var(0)
     val v2 = Var(10)
     val s1 = v1.map(_ + 1)
@@ -163,23 +163,23 @@ class IFunTestDynamicSignals[S <: Struct](engine: Engine[S, Turn[S]]) extends As
   }
 
   @Test def switchOnce_theEventSwitchesTheValueToTheValueOfTheOtherSignal(): Unit = {
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val v1 = Var(0)
     val v2 = Var(10)
     val s1 = v1.map(_ + 1)
     val s2 = v2.map(_ + 1)
     val s3 = e.switchOnce(s1, s2)
 
-    e(1)
+    e.fire(1)
     assert(s3.now == 11)
-    e(2)
+    e.fire(2)
     v2.set(11)
     assert(s3.now == 12)
   }
 
   /* reset */
   @Test def reset_TheInitialValueOfTheSignalIsGivenByInitAndTheFactory(): Unit = {
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val v1 = Var(0)
     val v2 = Var(10)
     val s1 = v1.map(_ + 1)
@@ -198,7 +198,7 @@ class IFunTestDynamicSignals[S <: Struct](engine: Engine[S, Turn[S]]) extends As
   }
 
   @Test def reset_TheValueOfTheSignalIsGivenByTheEventAndTheFactory(): Unit = {
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val v1 = Var(0)
     val v2 = Var(10)
     val s1 = v1.map(_ + 1)
@@ -214,7 +214,7 @@ class IFunTestDynamicSignals[S <: Struct](engine: Engine[S, Turn[S]]) extends As
     //assert(s3.get == 1)
     v1.set(1)
     assert(s3.now == 2)
-    e(101)
+    e.fire(101)
     assert(s3.now == 11)
     v2.set(11)
     assert(s3.now == 12)

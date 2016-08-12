@@ -86,9 +86,9 @@ class TextArea(text: String) extends ReComponent {
     new Iterable[Char] { def iterator = it.iterator.slice(start, end) } : Iterable[Char]
   }
 
-  protected lazy val selectedAll = Evt[Unit]()
-  protected lazy val pasted = Evt[Unit]()
-  protected lazy val copied = Evt[Unit]()
+  protected lazy val selectedAll = Evt[Unit]
+  protected lazy val pasted = Evt[Unit]
+  protected lazy val copied = Evt[Unit]
 
   def selectAll() = selectedAll.fire()
   def paste() = pasted.fire()
@@ -101,7 +101,7 @@ class TextArea(text: String) extends ReComponent {
   // If there is no selection the dot and mark will be equal.
   // [same semantics as for: javax.swing.text.Caret]
   object caret {
-    protected[TextArea] lazy val changed = Evt[(Int, Int)]()
+    protected[TextArea] lazy val changed = Evt[(Int, Int)]
     protected[TextArea] lazy val caret = caretChanged.fold((0, 0)){(oldpos, newpos) =>
       val (olddot, oldmark) = oldpos
       val (newdot, newmark) = newpos

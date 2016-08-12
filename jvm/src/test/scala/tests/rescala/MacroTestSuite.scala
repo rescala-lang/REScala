@@ -96,7 +96,7 @@ class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asser
   @Test def conversionFunctionWithArgumentInSignal(): Unit = {
 
     var test = 0
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val s: Signal[Int] = Signal { 2 * e.latest(0)(implicitly)() }
 
     s.change += { _ => test += 1 }
@@ -112,7 +112,7 @@ class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asser
   @Test def conversionFunctionWithoutArgumentInSignal(): Unit = {
 
     var test = 0
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val s: Signal[Option[Int]] = Signal { e.latestOption()(implicitly)() }
 
     s.change += { _ => test += 1 }
@@ -136,7 +136,7 @@ class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asser
     abstract class A {def obj(): Unit }
     val a = new A {
       def obj() = new {
-        val evt = Evt[Int]()
+        val evt = Evt[Int]
         val sig: Signal[Int] = Signal { 2 * evt.latest(0)(implicitly)() }
 
         e = evt
@@ -348,7 +348,7 @@ class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asser
       def sig = Signal { v() }
     }
 
-    val evt = Evt[Int]()
+    val evt = Evt[Int]
 
     val testsig = Signal {
       val localsig = obj.sig
@@ -437,7 +437,7 @@ class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asser
 
     def getSignal(obj: {def evt: Event[Int]}) = obj.evt
 
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val o = new {val evt = e }
 
     val sig = Signal { getSignal(o).latestOption()(implicitly)() }
@@ -448,7 +448,7 @@ class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asser
   }
 
   @Test def extractingSignalSideEffects(): Unit = {
-    val e1 = Evt[Int]()
+    val e1 = Evt[Int]
     def newSignal(): Signal[Int] = e1.count()
     val macroRes = Signal {
       newSignal().apply()

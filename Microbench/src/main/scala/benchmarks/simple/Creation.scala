@@ -32,7 +32,7 @@ class Creation[S <: rescala.graph.Struct] {
 
   @Benchmark
   def `evt`(): Evt[String, S] = {
-    engine.Evt[String]()
+    engine.Evt[String]
   }
 
   @Benchmark
@@ -42,7 +42,7 @@ class Creation[S <: rescala.graph.Struct] {
 
   @Benchmark
   def `derived event`(): Event[String, S] = {
-    engine.Evt[String]().map(identity)
+    engine.Evt[String].map(identity)
   }
 
 }

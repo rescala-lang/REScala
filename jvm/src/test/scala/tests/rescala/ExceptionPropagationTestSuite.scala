@@ -35,7 +35,7 @@ class ExceptionPropagationTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) ext
   }
 
   @Test def basicEventExcepitons(): Unit = {
-    val e = Evt[Int]()
+    val e = Evt[Int]
     val de = Event { e().map(100./) }
     val se = e.map(v => 100 / v)
 
@@ -59,7 +59,7 @@ class ExceptionPropagationTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) ext
 
 
   @Test def moreExceptions(): Unit = {
-    val input = Evt[String]()
+    val input = Evt[String]
     val trimmed = input.map(_.trim)
     val toInted = trimmed.map(_.toInt)
     val folded = toInted.fold(100)((acc, v) => acc / v)

@@ -68,9 +68,9 @@ class TextArea extends ReComponent {
     new Iterable[Char] { def iterator = buffer.iterator.slice(start, end) } : Iterable[Char]
   }
 
-  protected lazy val selectedAll = Evt[Unit]() //#EVT
-  protected lazy val pasted = Evt[Unit]() //#EVT
-  protected lazy val copied = Evt[Unit]() //#EVT
+  protected lazy val selectedAll = Evt[Unit] //#EVT
+  protected lazy val pasted = Evt[Unit] //#EVT
+  protected lazy val copied = Evt[Unit] //#EVT
 
   def selectAll() = selectedAll.fire()
   def paste() = pasted.fire()
@@ -83,7 +83,7 @@ class TextArea extends ReComponent {
   // If there is no selection the dot and mark will be equal.
   // [same semantics as for: javax.swing.text.Caret]
   object caret extends Publisher {
-    private lazy val change = Evt[(Int, Int)]()  //#EVT
+    private lazy val change = Evt[(Int, Int)]  //#EVT
     val changed: Event[(Int, Int)] = //#EVT
       // Caret updated by pressed mouse button, pressed arrow keys, Ctrl+A or select all event
       ((keys.pressed && {e => e.modifiers != Key.Modifier.Control && //#EF
