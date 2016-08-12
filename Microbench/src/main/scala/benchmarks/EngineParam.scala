@@ -1,9 +1,9 @@
 package benchmarks
 
 import org.openjdk.jmh.annotations.{Param, Scope, State}
-import rescala.propagation.Turn
+import rescala.engines.{Engine, JVMEngines}
 import rescala.parrp.Backoff
-import rescala.engines.{JVMEngines, Engine}
+import rescala.propagation.Turn
 
 @State(Scope.Benchmark)
 class EngineParam[S <: rescala.graph.Struct] {

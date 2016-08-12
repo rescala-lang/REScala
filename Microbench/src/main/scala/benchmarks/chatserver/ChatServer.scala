@@ -1,9 +1,9 @@
 package benchmarks.chatserver
 
-import rescala.reactives.Events
+import rescala.engines.Engine
 import rescala.graph.Struct
 import rescala.propagation.Turn
-import rescala.engines.Engine
+import rescala.reactives.Events
 
 import scala.collection.LinearSeq
 import scala.collection.immutable.Queue

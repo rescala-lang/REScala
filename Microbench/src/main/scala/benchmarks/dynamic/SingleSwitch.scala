@@ -5,8 +5,8 @@ import java.util.concurrent.TimeUnit
 import benchmarks.{EngineParam, Step}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
-import rescala.propagation.Turn
 import rescala.engines.{Engine, Engines}
+import rescala.propagation.Turn
 import rescala.reactives.{Signals, Var}
 
 @BenchmarkMode(Array(Mode.Throughput))

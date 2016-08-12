@@ -1,8 +1,7 @@
 package benchmarks
 
-import org.openjdk.jmh.profile.{HotspotRuntimeProfiler, GCProfiler, StackProfiler}
 import org.openjdk.jmh.runner.Runner
-import org.openjdk.jmh.runner.options.{VerboseMode, OptionsBuilder}
+import org.openjdk.jmh.runner.options.OptionsBuilder
 
 object Main {
   def main(args: Array[String]): Unit = {

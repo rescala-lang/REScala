@@ -1,12 +1,10 @@
 package benchmarks.philosophers
 
 import benchmarks.philosophers.PhilosopherTable._
-import rescala.graph.Struct
-import rescala.reactives.Signals
-import Signals.lift
-import rescala.propagation.Turn
 import rescala.engines.Engine
-import rescala.reactives.Var
+import rescala.graph.Struct
+import rescala.propagation.Turn
+import rescala.reactives.{Signals, Var}
 
 class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(override implicit val engine: Engine[S, Turn[S]]) extends PhilosopherTable(philosopherCount, work)(engine) {
 
@@ -101,7 +99,7 @@ class OtherHalfDynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work:
     }
 
     for (i <- 0 until tableSize) yield {
-      val vision = lift(forks(i), forks(mod(i - 1)))(calcVision(i.toString))
+      val vision = Signals.lift(forks(i), forks(mod(i - 1)))(calcVision(i.toString))
       Seating(i, phils(i), forks(i), forks(mod(i - 1)), vision)
     }
 
