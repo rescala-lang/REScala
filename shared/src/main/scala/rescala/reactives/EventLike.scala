@@ -31,7 +31,6 @@ trait EventLike[+T, S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV]
   )(implicit ticket: Ticket[S]): Observe[S]
 
 
-  def toTry()(implicit ticket: Ticket[S]): EV[Try[T], S]
   /**
     * Events disjunction.
     */

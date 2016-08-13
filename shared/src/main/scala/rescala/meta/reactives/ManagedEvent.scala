@@ -27,7 +27,6 @@ class ManagedEventImpl[+T](override val node: ReactiveNode) extends ManagedEvent
 
 
   override def observe(onSuccess: (T) => Unit, onFailure: (Throwable) => Unit)(implicit ticket: Ticket[DummyStruct]): Observe[DummyStruct] = ???
-  override def toTry()(implicit ticket: Ticket[DummyStruct]): ManagedEvent[Try[T], DummyStruct] = ???
   /**
     * Events disjunction.
     */
