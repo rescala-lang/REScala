@@ -3,7 +3,7 @@ package rescala.meta
 import scala.util.Try
 
 trait MetaPointer[T] {
-  val node : ReactiveNode
+  var node : ReactiveNode
 
   protected def createDependentNode() = {
     node.graph.createReactiveNode(Set(node))
@@ -11,6 +11,11 @@ trait MetaPointer[T] {
 
   protected def createDependentNode(others : ReactiveNode*) = {
     node.graph.createReactiveNode(Set(node) ++ others)
+  }
+
+  protected def merge(others : MetaPointer[T]*): Unit = {
+    val mergedNode = node.graph.mergeNodes((others.map(_.node) :+ node).toSet)
+    others.foreach(_.node = mergedNode)
   }
 }
 

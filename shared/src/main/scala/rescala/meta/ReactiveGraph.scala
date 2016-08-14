@@ -27,6 +27,23 @@ class ReactiveGraph {
       registerReactiveNode(incoming)
     }
   }
+
+  protected[meta] def mergeNodes(mergeNodes : Set[ReactiveNode]): ReactiveNode = {
+    if (mergeNodes.diff(nodes).nonEmpty) throw new IllegalArgumentException("Can only merge nodes within the same graph!")
+
+    val mergedDependencies = mergeNodes.foldLeft(Set[ReactiveNode]())((acc, next) => acc.union(next.dependencies)) -- mergeNodes
+    val mergedNode = new ReactiveNode(this, mergedDependencies)
+
+    for (node <- nodes -- mergeNodes if node.dependencies.intersect(mergeNodes).nonEmpty) {
+      node.setDependencies(node.dependencies -- mergeNodes)
+      node.addDependency(mergedNode)
+    }
+
+    nodes --= mergeNodes
+    nodes += mergedNode
+
+    mergedNode
+  }
 }
 
 class ReactiveNode(protected[meta] val graph : ReactiveGraph, initDependencies : Set[ReactiveNode] = Set()) {
@@ -34,11 +51,11 @@ class ReactiveNode(protected[meta] val graph : ReactiveGraph, initDependencies :
 
   def dependencies = Set() ++ _dependencies
 
-  def addDependency(reactiveNode: ReactiveNode) : Unit = _dependencies += reactiveNode
+  protected[meta] def addDependency(reactiveNode: ReactiveNode) : Unit = _dependencies += reactiveNode
 
-  def dropDependency(reactiveNode: ReactiveNode) : Unit = _dependencies -= reactiveNode
+  protected[meta] def dropDependency(reactiveNode: ReactiveNode) : Unit = _dependencies -= reactiveNode
 
-  def setDependencies(dependencies: Set[ReactiveNode]) : Unit = {
+  protected[meta] def setDependencies(dependencies: Set[ReactiveNode]) : Unit = {
     _dependencies.clear()
     _dependencies ++= dependencies
   }
