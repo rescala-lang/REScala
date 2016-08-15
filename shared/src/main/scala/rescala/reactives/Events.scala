@@ -17,7 +17,7 @@ object Events {
 
   private class DynamicEvent[T, S <: Struct](_bud: S#SporeP[T, Reactive[S]], expr: Turn[S] => Pulse[T]) extends Base[T, S](_bud) with Event[T, S] with DynamicReevaluation[T, S] {
     def calculatePulseDependencies(implicit turn: Turn[S]): (Pulse[T], Set[Reactive[S]]) = {
-      val (newValueTry, dependencies) = turn.collectDependencies { RExceptions.reTry(expr(turn)) }
+      val (newValueTry, dependencies) = turn.collectMarkedDependencies { RExceptions.reTry(expr(turn)) }
       newValueTry match {
         case Success(p) => (p, dependencies)
         case Failure(t : EmptySignalControlThrowable) => (Pulse.NoChange, dependencies)
@@ -45,7 +45,7 @@ object Events {
 
   /** A wrapped event inside a signal, that gets "flattened" to a plain event node */
   def wrapped[T, S <: Struct](wrapper: Signal[Event[T, S], S])(implicit ticket: Ticket[S]): Event[T, S] = ticket { creationTurn =>
-    creationTurn.create(Set[Reactive[S]](wrapper, wrapper.get(creationTurn))) {
+    creationTurn.create(Set[Reactive[S]](wrapper), dynamic = true) {
       new Base[T, S](creationTurn.bud(transient = true)) with Event[T, S] with DynamicReevaluation[T, S] {
         override def calculatePulseDependencies(implicit turn: Turn[S]): (Pulse[T], Set[Reactive[S]]) = {
           val inner = wrapper.get
