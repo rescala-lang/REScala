@@ -9,7 +9,7 @@ import rescalatags._
 
 import scalatags.JsDom.all._
 
-class SimpleTest extends org.scalatest.FunSuite {
+class RescalatagsTest extends org.scalatest.FunSuite {
 
   rescala.engines.Engines.all.foreach(runWithEngine(_))
 

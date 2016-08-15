@@ -18,11 +18,11 @@ object Engines {
   type SimpleEngine = Engine[SimpleStruct, LevelBasedPropagation[SimpleStruct]]
 
 
-  implicit val synchron: SimpleEngine = new EngineImpl[SimpleStruct, SimpleNoLock](new SimpleNoLock()) {
+  implicit val synchron: SimpleEngine = new EngineImpl[SimpleStruct, SimpleNoLock]("Synchron", new SimpleNoLock()) {
     override def plan[R](i: Reactive*)(f: SimpleNoLock => R): R = synchronized(super.plan(i: _*)(f))
   }
 
-  implicit val synchronFair: SimpleEngine = new EngineImpl[SimpleStruct, SimpleNoLock](new SimpleNoLock()) {
+  implicit val synchronFair: SimpleEngine = new EngineImpl[SimpleStruct, SimpleNoLock]("SynchronFair", new SimpleNoLock()) {
     val lock = new ReentrantLock(true)
     override def plan[R](i: Reactive*)(f: SimpleNoLock => R): R = {
       lock.lock()
@@ -33,7 +33,7 @@ object Engines {
     }
   }
 
-  implicit val unmanaged: SimpleEngine = new EngineImpl[SimpleStruct, SimpleNoLock](new SimpleNoLock())
+  implicit val unmanaged: SimpleEngine = new EngineImpl[SimpleStruct, SimpleNoLock]("Unmanaged", new SimpleNoLock())
 
   implicit val default: SimpleEngine = synchron
 

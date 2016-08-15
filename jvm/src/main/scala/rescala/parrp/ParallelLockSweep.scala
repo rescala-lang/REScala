@@ -3,14 +3,14 @@ package rescala.parrp
 import java.util.concurrent.Executor
 import java.util.concurrent.atomic.AtomicInteger
 
-import rescala.engines.JVMEngines
+import rescala.engines.EngineImpl
 import rescala.graph.ReevaluationResult.{Dynamic, Static}
 import rescala.graph._
 import rescala.locking._
 
 import scala.util.DynamicVariable
 
-class ParallelLockSweep(backoff: Backoff, ex: Executor) extends LockSweep(backoff) {
+class ParallelLockSweep(backoff: Backoff, ex: Executor, engine: EngineImpl[LSStruct.type, ParallelLockSweep]) extends LockSweep(backoff) {
 
   private type TState = LSStruct.type
 
@@ -38,9 +38,9 @@ class ParallelLockSweep(backoff: Backoff, ex: Executor) extends LockSweep(backof
       ex.execute {
         new Runnable {
           override def run(): Unit = {
-            JVMEngines.parallellocksweep.setCurrentTurn(Some(turn))
+            engine.setCurrentTurn(Some(turn))
             evaluate(head)
-            JVMEngines.parallellocksweep.setCurrentTurn(None)
+            engine.setCurrentTurn(None)
             jobsRunning.decrementAndGet()
           }
         }

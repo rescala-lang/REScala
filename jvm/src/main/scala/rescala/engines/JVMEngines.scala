@@ -34,20 +34,20 @@ object JVMEngines {
 
   implicit val locksweep: Engine[LSStruct.type, LockSweep] = locksweepWithBackoff(() => new Backoff())
 
-  implicit val parallellocksweep: EngineImpl[LSStruct.type, LockSweep] = {
+  implicit val parallellocksweep: EngineImpl[LSStruct.type, ParallelLockSweep] = {
     val ex: Executor = Executors.newWorkStealingPool()
-    new EngineImpl[LSStruct.type, LockSweep](new ParallelLockSweep(new Backoff(), ex))
+    new EngineImpl[LSStruct.type, ParallelLockSweep]("ParallelLockSweep", engine => new ParallelLockSweep(new Backoff(), ex, engine))
   }
 
   implicit val default: Engine[ParRP, ParRP] = parrp
 
   implicit val pipeline: Engine[PipelineStruct.type, PipeliningTurn] = new PipelineEngine()
 
-  implicit val stm: Engine[STMTurn, STMTurn] = new EngineImpl[STMTurn, STMTurn](new STMTurn()) {
+  implicit val stm: Engine[STMTurn, STMTurn] = new EngineImpl[STMTurn, STMTurn]("STM", new STMTurn()) {
     override def plan[R](i: Reactive*)(f: STMTurn => R): R = atomic { tx => super.plan(i: _*)(f) }
   }
 
-  def locksweepWithBackoff(backOff: () => Backoff):Engine[LSStruct.type, LockSweep]  = new EngineImpl[LSStruct.type, LockSweep](new LockSweep(backOff()))
-  def parrpWithBackoff(backOff: () => Backoff): Engine[ParRP, ParRP] = new EngineImpl[ParRP, ParRP](new ParRP(backOff()))
+  def locksweepWithBackoff(backOff: () => Backoff):Engine[LSStruct.type, LockSweep]  = new EngineImpl[LSStruct.type, LockSweep]("LockSweep", new LockSweep(backOff()))
+  def parrpWithBackoff(backOff: () => Backoff): Engine[ParRP, ParRP] = new EngineImpl[ParRP, ParRP]("ParRP", new ParRP(backOff()))
 
 }
