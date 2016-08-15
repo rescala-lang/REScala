@@ -8,7 +8,7 @@ import rescala.pipelining.util.LogUtils
 import rescala.pipelining.{Pipeline, PipelineEngine}
 import rescala.pipelining.tests.PipelineTestUtils._
 
-class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
+class SimpleDynamicDropTest extends AssertionsForJUnit  {
 
   implicit val engine = new PipelineEngine()
 
@@ -41,7 +41,7 @@ class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
   numEvaluated = 0
 
   @Test
-  def serialDropTest() = {
+  def serialDropTest(): Unit = {
     LogUtils.log("=====")
     assert(dynDep.now == 2)
     source1.set(1)
@@ -60,7 +60,7 @@ class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test
-  def parallelAddAndRemove() = {
+  def parallelAddAndRemove(): Unit = {
     var removeBeforeAdd = false
     var addBeforeRemove = false
 
@@ -125,7 +125,7 @@ class SimpleDynamicDropTest extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test //(timeout = 10000)
-  def parallelRemoveAndUpdateFromRemovedDep() = {
+  def parallelRemoveAndUpdateFromRemovedDep(): Unit = {
     var removeBeforeUpdateSuspicious = false
     var updateBeforeRemove = false
 

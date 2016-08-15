@@ -14,7 +14,7 @@ import rescala.reactives.Signals
 object LevelPropagation extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])
-class LevelPropagation[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
+class LevelPropagation[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
   implicit val implicitEngine: Engine[S, Turn[S]] = engine
   import implicitEngine.Var
 

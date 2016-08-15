@@ -15,7 +15,7 @@ import rescala.reactives.Signals
 object MacroTestSuite extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])
-class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
+class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
   implicit val implicitEngine: Engine[S, Turn[S]] = engine
   import implicitEngine.{Event, Evt, Signal, Var}
 
@@ -223,7 +223,7 @@ class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asser
   }
 
 
-  @Test def caseClassesAndObjects() = {
+  @Test def caseClassesAndObjects(): Unit = {
     // would fail due to https://issues.scala-lang.org/browse/SI-5467
     // if we didn't work around un-type-checking issues
 
@@ -271,7 +271,7 @@ class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asser
     assert(sig.now == "value37")
   }
 
-  @Test def lazyValues() = {
+  @Test def lazyValues(): Unit = {
     // would fail due to https://issues.scala-lang.org/browse/SI-5466
     // if we didn't work around un-type-checking issues
 
@@ -296,7 +296,7 @@ class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asser
     assert(sig.now == 0)
   }
 
-  @Test def patternMatchingAndWildcard() = {
+  @Test def patternMatchingAndWildcard(): Unit = {
     // would fail due to https://issues.scala-lang.org/browse/SI-5465
     // if we didn't work around un-type-checking issues
 

@@ -14,7 +14,7 @@ import rescala.reactives.Signals
 object ReactiveCreationInTurnsTest extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])
-class ReactiveCreationInTurnsTest[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
+class ReactiveCreationInTurnsTest[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
   implicit val implicitEngine: Engine[S, Turn[S]] = engine
 
   import implicitEngine.Var

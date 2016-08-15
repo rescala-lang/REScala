@@ -11,7 +11,7 @@ import rescala.reactives.{Signals, Var}
 /**
  * @author moritzlichter
  */
-class DynamicReadTest extends AssertionsForJUnit with MockitoSugar {
+class DynamicReadTest extends AssertionsForJUnit  {
 
   implicit val engine = new PipelineEngine()
 
@@ -75,7 +75,7 @@ class DynamicReadTest extends AssertionsForJUnit with MockitoSugar {
   val source2DepTracker = new ValueTracker(source2Dep)
 
   @Test
-  def addDynamicDependency1Before2() = {
+  def addDynamicDependency1Before2(): Unit = {
     LogUtils.log("======")
     source1.set(1)
     assert(depOfDynamic.now == 101)
@@ -87,7 +87,7 @@ class DynamicReadTest extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test
-  def addDynamicDependency2Before1() = {
+  def addDynamicDependency2Before1(): Unit = {
     LogUtils.log("======")
     source2.set(200)
     assert(depOfDynamic.now == 1)
@@ -99,7 +99,7 @@ class DynamicReadTest extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test()
-  def addDynamicDependencyParallel2Before1() = {
+  def addDynamicDependencyParallel2Before1(): Unit = {
 
 
     val thread1 = createThread {Thread.sleep(2*letOtherUpdateCreateFramesTime); source1.set(1) }
@@ -120,7 +120,7 @@ class DynamicReadTest extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test()
-  def addDynamicDependencyParallel1Before2() = {
+  def addDynamicDependencyParallel1Before2(): Unit = {
 
 
     val thread1 = createThread { source1.set(1) }
@@ -144,7 +144,7 @@ class DynamicReadTest extends AssertionsForJUnit with MockitoSugar {
 
 
   @Test
-  def exisitingTurnsAfterDynamicPropagateToNewNodes() = {
+  def exisitingTurnsAfterDynamicPropagateToNewNodes(): Unit = {
     // Need to enforce an order between turns that update
     // source1 and source2 when the dynamic dependency has
     // not been established

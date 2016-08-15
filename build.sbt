@@ -18,7 +18,7 @@ lazy val rescala = crossProject.in(file("."))
     name := "rescala",
     libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _),
     libraryDependencies += "org.mockito" % "mockito-all" % "1.10.19" % "test",
-    libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.6" % "test",
+    scalatestDependency,
     libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % "test",
     libraryDependencies += "org.scala-stm" %% "scala-stm" % "0.7",
 
@@ -116,7 +116,9 @@ lazy val rescalatags = project.in(file("Rescalatags"))
   .dependsOn(rescalaJS)
   .settings(
     incOptions := incOptions.value.withLogRecompileOnMacro(false),
-    libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.6.0"
+    libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.6.0",
+    scalatestDependency,
+    jsDependencies += RuntimeDOM
   )
 
 lazy val datastructures = project.in(file("Datastructures"))
@@ -128,15 +130,6 @@ lazy val datastructures = project.in(file("Datastructures"))
     publishLocal := {},
     libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.6" % "test"
   )
-
-val rssDependencies = libraryDependencies ++= Seq(
-    "joda-time" % "joda-time" % "2.9.4" withSources(),
-    "org.joda" % "joda-convert" % "1.8.1",
-    "org.codehaus.jsr166-mirror" % "jsr166y" % "1.7.0",
-    "org.scalatest" %% "scalatest" % "2.2.6" % "test",
-    "junit" % "junit" % "4.12" % "test->default",
-    "com.novocode" % "junit-interface" % "0.11" % "test->default",
-    "org.scala-lang" % "scala-swing" % "2.11+")
 
 
 lazy val caseStudyRSSEvents = project.in(file("CaseStudies/RSSReader/ReactiveScalaReader.Events"))
@@ -166,6 +159,23 @@ lazy val caseStudyRSSSimple = project.in(file("CaseStudies/RSSReader/SimpleRssRe
     publishLocal := {},
     rssDependencies)
 
+
+// ================================ dependencies
+
+lazy val rssDependencies = libraryDependencies ++= Seq(
+  "joda-time" % "joda-time" % "2.9.4" withSources(),
+  "org.joda" % "joda-convert" % "1.8.1",
+  "org.codehaus.jsr166-mirror" % "jsr166y" % "1.7.0",
+  "org.scalatest" %% "scalatest" % "2.2.6" % "test",
+  "junit" % "junit" % "4.12" % "test->default",
+  "com.novocode" % "junit-interface" % "0.11" % "test->default",
+  "org.scala-lang" % "scala-swing" % "2.11+")
+
+lazy val scalatestDependency = libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.0" % "test"
+
+
+
+// ================================= scalac options
 
 scalacOptions in ThisBuild ++= (
   "-deprecation" ::

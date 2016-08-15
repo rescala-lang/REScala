@@ -15,11 +15,11 @@ import tests.rescala.JUnitParameters
 object dropParam_EventTest extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])
-class dropParam_EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
+class dropParam_EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
   implicit val implicitEngine: Engine[S, Turn[S]] = engine
   import implicitEngine._
 
-  @Test def handlerOf_dropParam_IsExecuted() = {
+  @Test def handlerOf_dropParam_IsExecuted(): Unit = {
     var test = 0
     val e1 = Evt[Int]
     val e1_drop: Event[Unit] = e1.dropParam

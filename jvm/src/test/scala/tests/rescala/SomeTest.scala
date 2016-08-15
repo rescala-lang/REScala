@@ -9,7 +9,7 @@ import rescala.parrp.ParRP
 import rescala.reactives.Var
 
 
-class SomeTest() extends AssertionsForJUnit with MockitoSugar {
+class SomeTest() extends AssertionsForJUnit  {
 
   @Test def someTest(): Unit = {
     val v1 = rescala.Var(10)

@@ -14,7 +14,7 @@ import scala.util.{Failure, Success, Try}
 object ExceptionPropagationTestSuite extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])
-class ExceptionPropagationTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
+class ExceptionPropagationTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
   implicit val implicitEngine: Engine[S, Turn[S]] = engine
   import implicitEngine.{Event, Evt, Signal, Var}
 

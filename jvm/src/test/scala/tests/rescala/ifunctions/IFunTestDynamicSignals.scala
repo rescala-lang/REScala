@@ -14,7 +14,7 @@ import tests.rescala.JUnitParameters
 object IFunTestDynamicSignals extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])
-class IFunTestDynamicSignals[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
+class IFunTestDynamicSignals[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
   implicit val implicitEngine: Engine[S, Turn[S]] = engine
   import implicitEngine._
 

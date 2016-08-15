@@ -16,7 +16,7 @@ import rescala.reactives.Signals
 
 import scala.annotation.tailrec
 
-class ManyThreadsTest extends AssertionsForJUnit with MockitoSugar {
+class ManyThreadsTest extends AssertionsForJUnit  {
 
   implicit val engine = new PipelineEngine()
   type S = PipelineStruct.type
@@ -24,20 +24,20 @@ class ManyThreadsTest extends AssertionsForJUnit with MockitoSugar {
   /*
    * This test suite runs on the following topology: S1 and S2 are sources
    * and D1 and D2 are dependencies
-   * 
+   *
    * S1    S2
    * | \  / |
    * |  \/  |
    * |  /\  |
    * | /  \ |
    * vv    vv
-   * D1    D2 
+   * D1    D2
    */
 
   var opsOnD1: List[Turn[S]] = List()
   var opsOnD2: List[Turn[S]] = List()
 
-  def clearOps() = {
+  def clearOps(): Unit = {
     opsOnD1 = List()
     opsOnD2 = List()
   }
@@ -46,7 +46,7 @@ class ManyThreadsTest extends AssertionsForJUnit with MockitoSugar {
   var calculatesOn2 = false
 
   var enableCheck = false;
-  def checkCalculationOrder() = {
+  def checkCalculationOrder(): Unit = {
     @tailrec
     def check(ops1: List[Turn[S]], ops2: List[Turn[S]]): Boolean = {
       if (ops1.isEmpty || ops2.isEmpty)
@@ -92,7 +92,7 @@ class ManyThreadsTest extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test (timeout = 30000)
-  def testEvaluationParallel() = {
+  def testEvaluationParallel(): Unit = {
 
     for (i <- 1 to 100) {
       LogUtils.log("------")
@@ -141,7 +141,7 @@ class ManyThreadsTest extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test (timeout = 10000)
-  def testManyThreads() = {
+  def testManyThreads(): Unit = {
 
     LogUtils.log("------")
 
@@ -151,14 +151,14 @@ class ManyThreadsTest extends AssertionsForJUnit with MockitoSugar {
     val updateValues = List.iterate(1, numThreads)(x =>x+1)
     val updateSources = List.iterate(s1, numThreads)(x => if (x == s1) s2 else s1)
     val updateThreads = updateSources.zip(updateValues).map(
-        { case (source, value) => 
-          createThread { 
+        { case (source, value) =>
+          createThread {
             barrier.await()
             source.set(value) } })
-            
+
     assert(updateThreads.size == numThreads)
-    
-    
+
+
     clearOps
 
     enableCheck = true

@@ -20,12 +20,12 @@ object OOPropertiesEventTest extends JUnitParameters
  * polymorphism, overriding, etc...
  */
 @RunWith(value = classOf[Parameterized])
-class OOPropertiesEventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
+class OOPropertiesEventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
   implicit val implicitEngine: Engine[S, Turn[S]] = engine
   import implicitEngine.{Event, Evt}
 
 
-  @Test def eventsAreInherited() = {
+  @Test def eventsAreInherited(): Unit = {
 
     var test = 0
 
@@ -41,7 +41,7 @@ class OOPropertiesEventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends Ass
   }
 
 
-  @Test def canTriggerEventsInSuperclass() = {
+  @Test def canTriggerEventsInSuperclass(): Unit = {
 
     var test = 0
 
@@ -87,7 +87,7 @@ class OOPropertiesEventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends Ass
   class X {}
   class Y extends X {}
 
-  @Test def refine() = {
+  @Test def refine(): Unit = {
 
     var test = 0
 

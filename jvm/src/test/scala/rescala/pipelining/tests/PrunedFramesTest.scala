@@ -7,12 +7,12 @@ import rescala.pipelining.util.LogUtils
 import rescala.pipelining.{Pipeline, PipelineEngine, PipeliningTurn}
 import rescala.reactives.{Signals, Var}
 
-class PrunedFramesTest extends AssertionsForJUnit with MockitoSugar {
-  
+class PrunedFramesTest extends AssertionsForJUnit  {
+
   implicit val engine = new PipelineEngine()
-  
+
   var checkMark = false
-  
+
   val source = Var(0)
   val dep1Level1 = Signals.static(source)(implicit t => source.get)
   val dep2Level1 = Signals.static(source)(implicit t => 0)
@@ -25,9 +25,9 @@ class PrunedFramesTest extends AssertionsForJUnit with MockitoSugar {
     assert(!checkMark || Pipeline.pipelineFor(dep2Level2Pruned).needFrame()(t.asInstanceOf[PipeliningTurn]).isWritten)
     dep1Level2.get
   })
-  
+
   @Test
-  def testFramesOfPrunedNodesAreMarked() = {
+  def testFramesOfPrunedNodesAreMarked(): Unit = {
     checkMark = true
     LogUtils.log("======")
     source.set(1)

@@ -29,14 +29,14 @@ object PipelineTestUtils {
 
   def createThread(job : => Any) : Thread = {
     new Thread(new Runnable() {
-      override def run() = {
+      override def run(): Unit = {
         job
       }
     }
     )
   }
 
-  def readLatestValue(reader : PipeliningTurn => Unit)(implicit engine : PipelineEngine) = {
+  def readLatestValue(reader : PipeliningTurn => Unit)(implicit engine : PipelineEngine): Unit = {
     val dummyTurn = engine.makeTurn
     engine.addTurn(dummyTurn)
     reader(dummyTurn)

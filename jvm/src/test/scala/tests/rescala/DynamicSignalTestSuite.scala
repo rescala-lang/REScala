@@ -15,7 +15,7 @@ import rescala.reactives.Signals
 object DynamicSignalTestSuite extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])
-class DynamicSignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
+class DynamicSignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
   implicit val implicitEngine: Engine[S, Turn[S]] = engine
   import implicitEngine.{Var, dynamic}
 
@@ -214,7 +214,7 @@ class DynamicSignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) exten
     assert(testsig.now === 2)
   }
 
-  @Test def `dynamic dependency changes ontop of stuff that is not changing`() = {
+  @Test def `dynamic dependency changes ontop of stuff that is not changing`(): Unit = {
     val v0 = Var("level 0")
     val v3 = v0.map(_ => "level 1").map(_ => "level 2").map(_ => "level 3")
 
@@ -230,7 +230,7 @@ class DynamicSignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) exten
     assertLevel(`dynamic signal changing from level 1 to level 4`, 4)
   }
 
-  @Test def `creating signals in signals based on changing signals`() = {
+  @Test def `creating signals in signals based on changing signals`(): Unit = {
     val v0 = Var("level 0")
     val v3 = v0.map(_ + "level 1").map(_  + "level 2").map(_ + "level 3")
 
@@ -247,7 +247,7 @@ class DynamicSignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) exten
     assertLevel(`dynamic signal changing from level 1 to level 4`, 5)
   }
 
-  @Test def `creating signals in signals based on changing signals dynamic`() = {
+  @Test def `creating signals in signals based on changing signals dynamic`(): Unit = {
     val v0 = Var("level 0")
     val v3 = v0.map(_ + "level 1").map(_  + "level 2").map(_ + "level 3")
 

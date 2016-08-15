@@ -10,7 +10,7 @@ import rescala.reactives.Signals
 
 import scala.collection.immutable.Queue
 
-class ConflictResolvingTest extends AssertionsForJUnit with MockitoSugar {
+class ConflictResolvingTest extends AssertionsForJUnit  {
 
 
 
@@ -34,7 +34,7 @@ class ConflictResolvingTest extends AssertionsForJUnit with MockitoSugar {
 
 
   @Test
-  def testMultipleUpdates() = {
+  def testMultipleUpdates(): Unit = {
 
     val s1 = Var(0)
     val s2 = Var(0)
@@ -48,7 +48,7 @@ class ConflictResolvingTest extends AssertionsForJUnit with MockitoSugar {
     val turns = List.fill(6)(engine.makeTurn)
     val sources = List(s2, s1, s1, s2, s2, s1)
 
-    def makeFramesForUpdate(turn: PipeliningTurn, source: Reactive[PipelineStruct.type]) = {
+    def makeFramesForUpdate(turn: PipeliningTurn, source: Reactive[PipelineStruct.type]): Unit = {
       Pipeline(source).createFrame(turn)
       Pipeline(d1).createFrame(turn)
       Pipeline(d2).createFrame(turn)
@@ -67,7 +67,7 @@ class ConflictResolvingTest extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test
-  def testEvaluationSequential() = {
+  def testEvaluationSequential(): Unit = {
 
     val s1 = Var(0)
     val s2 = Var(0)

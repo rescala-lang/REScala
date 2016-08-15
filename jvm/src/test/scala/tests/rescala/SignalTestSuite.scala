@@ -15,7 +15,7 @@ import rescala.reactives.Signals
 object SignalTestSuite extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])
-class SignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
+class SignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
   implicit val implicitEngine: Engine[S, Turn[S]] = engine
 
   import implicitEngine.Signal

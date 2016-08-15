@@ -9,7 +9,7 @@ import rescala.pipelining.PipelineEngine
 import rescala.pipelining.tests.PipelineTestUtils._
 import rescala.reactives.{Signals, Var}
 
-class LateDynamicReadTest extends AssertionsForJUnit with MockitoSugar {
+class LateDynamicReadTest extends AssertionsForJUnit  {
 
   implicit val engine = new PipelineEngine()
 
@@ -27,7 +27,7 @@ class LateDynamicReadTest extends AssertionsForJUnit with MockitoSugar {
   val depDynamic = Signals.lift(dynamic)(_ + 1)
 
   @Test
-  def testSequential() = {
+  def testSequential(): Unit = {
     source1.set(1)
     source3.set(1)
     source2.set(1)
@@ -38,7 +38,7 @@ class LateDynamicReadTest extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test
-  def testParallelDynamicAddIsPropagated() = {
+  def testParallelDynamicAddIsPropagated(): Unit = {
     val initTurnStarted = new Semaphore(0)
     val newDynamicStarted = new Semaphore(0)
 

@@ -14,8 +14,8 @@ package object rescalatags {
       new Frag {
         val rendered: Signal[dom.Node] = signal
           .map(_.render)
-          .recoverFailure(t => span(t.toString).render)
-          .recoverEmpty(() => "".render)
+          .recover(t => span(t.toString).render)
+          .withDefault(() => "".render)
 
         rendered.change.observe { case (lastTag, newTag) =>
           if (lastTag.parentNode != null && !scalajs.js.isUndefined(lastTag.parentNode)) {

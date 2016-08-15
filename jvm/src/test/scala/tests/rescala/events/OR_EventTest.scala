@@ -15,11 +15,11 @@ import tests.rescala.JUnitParameters
 object OR_EventTest extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])
-class OR_EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
+class OR_EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
   implicit val implicitEngine: Engine[S, Turn[S]] = engine
   import implicitEngine._
 
-  @Test def handlerOf_OR_IsExecutedIfAnyOfTheEventsFires() = {
+  @Test def handlerOf_OR_IsExecutedIfAnyOfTheEventsFires(): Unit = {
     var test = 0
     val e1 = Evt[Int]
     val e2 = Evt[Int]
@@ -32,7 +32,7 @@ class OR_EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsFo
 
   }
 
-  @Test def handlerOf_OR_IsExecutedOnlyOnce() = {
+  @Test def handlerOf_OR_IsExecutedOnlyOnce(): Unit = {
 
     var test = 0
     val e1 = Evt[Int]

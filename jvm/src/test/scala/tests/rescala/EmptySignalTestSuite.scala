@@ -12,7 +12,7 @@ import rescala.propagation.Turn
 object EmptySignalTestSuite extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])
-class EmptySignalTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
+class EmptySignalTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
   implicit val implicitEngine: Engine[S, Turn[S]] = engine
   import engine._
 

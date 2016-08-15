@@ -14,7 +14,7 @@ import tests.rescala.JUnitParameters
 object except_EventTest extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])
-class except_EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
+class except_EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
   implicit val implicitEngine: Engine[S, Turn[S]] = engine
   import implicitEngine._
 

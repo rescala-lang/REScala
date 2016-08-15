@@ -14,7 +14,7 @@ import rescala.reactives.Signals
 object HigherOrderTestSuite extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])
-class HigherOrderTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
+class HigherOrderTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
   implicit val implicitEngine: Engine[S, Turn[S]] = engine
   import implicitEngine.{Event, Evt, Signal, Var, dynamic}
 

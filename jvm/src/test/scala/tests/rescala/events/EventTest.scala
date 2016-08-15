@@ -14,11 +14,11 @@ import tests.rescala.JUnitParameters
 object EventTest extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])
-class EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
+class EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
   implicit val implicitEngine: Engine[S, Turn[S]] = engine
   import implicitEngine._
 
-  @Test def handlersAreExecuted() = {
+  @Test def handlersAreExecuted(): Unit = {
     var test = 0
     val e1 = Evt[Int]
     e1 += ((x: Int) => { test += 1 })
@@ -27,7 +27,7 @@ class EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJU
     assert(test == 2)
   }
 
-  @Test def eventHandlersCanBeRemoved() = {
+  @Test def eventHandlersCanBeRemoved(): Unit = {
     var test = 0
     val e1 = Evt[Int]
     val f = (x: Int) => { test += 1 }
@@ -40,7 +40,7 @@ class EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJU
     assert(test == 2)
   }
 
-  @Test def correctValueIsReceived() = {
+  @Test def correctValueIsReceived(): Unit = {
     var test = 0
     val e1 = Evt[Int]
     e1 += ((x: Int) => { test += x })
@@ -48,7 +48,7 @@ class EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJU
     assert(test == 10)
   }
 
-  @Test def eventsWithoutParamsIsCalled() = {
+  @Test def eventsWithoutParamsIsCalled(): Unit = {
     var test = 0
     val e1 = Evt[Unit]
     e1 += (_ => { test += 1 })
@@ -57,7 +57,7 @@ class EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJU
   }
 
 
-  @Test def functionIsCalled() = {
+  @Test def functionIsCalled(): Unit = {
     var test = 0
 
     def f(x: Int): Unit = { test += 1 }
@@ -71,11 +71,11 @@ class EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJU
   }
 
 
-  @Test def eventsWithMethodHandlersWithParameter() = {
+  @Test def eventsWithMethodHandlersWithParameter(): Unit = {
 
     var test = 0
     val e = Evt[Int]
-    def m1(x: Int) = { test += 1 }
+    def m1(x: Int): Unit = { test += 1 }
 
     e += m1
     e(10)

@@ -14,7 +14,7 @@ import scala.language.implicitConversions
 object LightImplicitSyntaxTest extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])
-class LightImplicitSyntaxTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
+class LightImplicitSyntaxTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
   implicit val implicitEngine: Engine[S, Turn[S]] = engine
   import implicitEngine.{Signal, Var, dynamic}
 

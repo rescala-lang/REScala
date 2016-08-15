@@ -14,11 +14,11 @@ import tests.rescala.JUnitParameters
 object map_EventTest extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])
-class map_EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
+class map_EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
   implicit val implicitEngine: Engine[S, Turn[S]] = engine
   import implicitEngine.Evt
 
-  @Test def handlerOf_map_IsExecuted() = {
+  @Test def handlerOf_map_IsExecuted(): Unit = {
     var test = 0
     val e1 = Evt[Int]
     val e1_map = e1 map ((x: Int) => x * 2)
@@ -29,7 +29,7 @@ class map_EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsF
     assert(test == 2)
   }
 
-  @Test def theFunctionPassedTo_map_isApplied() = {
+  @Test def theFunctionPassedTo_map_isApplied(): Unit = {
     var test = 0
     val e1 = Evt[Int]
     val e1_map = e1 map ((x: Int) => x * 2)

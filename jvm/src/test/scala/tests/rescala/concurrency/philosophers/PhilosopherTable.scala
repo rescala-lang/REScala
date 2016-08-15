@@ -76,7 +76,7 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit 
       forksWereFree
     }
 
-  def eatOnce(seating: Seating[S]) = {
+  def eatOnce(seating: Seating[S]): Unit = {
     val bo = new Backoff()
     while(!tryEat(seating)) {bo.backoff()}
   }

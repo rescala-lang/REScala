@@ -5,18 +5,18 @@ import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import rescala.pipelining.{Frame, Pipeline, PipelineEngine}
 
-class FrameTest extends AssertionsForJUnit with MockitoSugar {
+class FrameTest extends AssertionsForJUnit  {
 
   implicit val engine = new PipelineEngine()
   val dummyReactive = new Pipeline()
 
   @Test
-  def testNewWriteFrameIsNotWritten() = {
+  def testNewWriteFrameIsNotWritten(): Unit = {
     assert(Frame(engine.makeTurn, dummyReactive).isWritten == false)
   }
 
   @Test
-  def testMarkWritten() = {
+  def testMarkWritten(): Unit = {
     val frame = Frame(engine.makeTurn, dummyReactive)
     assert(!frame.isWritten)
     frame.markWritten()
@@ -24,7 +24,7 @@ class FrameTest extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test
-  def testInsertFrame() = {
+  def testInsertFrame(): Unit = {
     val frame1 = Frame(engine.makeTurn, dummyReactive)
     val frame2 = Frame(engine.makeTurn, dummyReactive)
     val frame3 = Frame(engine.makeTurn, dummyReactive)
@@ -47,7 +47,7 @@ class FrameTest extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test
-  def testRemoveFrame() = {
+  def testRemoveFrame(): Unit = {
     val frame1 = Frame(engine.makeTurn, dummyReactive)
     val frame2 = Frame(engine.makeTurn, dummyReactive)
     val frame3 = Frame(engine.makeTurn, dummyReactive)
@@ -75,7 +75,7 @@ class FrameTest extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test
-  def testMoveFrame() = {
+  def testMoveFrame(): Unit = {
     val frame1 = Frame(engine.makeTurn, dummyReactive)
     val frame2 = Frame(engine.makeTurn, dummyReactive)
     val frame3 = Frame(engine.makeTurn, dummyReactive)

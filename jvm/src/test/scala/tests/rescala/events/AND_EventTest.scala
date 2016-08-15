@@ -14,12 +14,12 @@ import tests.rescala.JUnitParameters
 object AND_EventTest extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])
-class AND_EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
+class AND_EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
   implicit val implicitEngine: Engine[S, Turn[S]] = engine
   import implicitEngine._
 
 
-  @Test def handlerOf_AND_IsNOTExecutedIfEventsFireSingularly() = {
+  @Test def handlerOf_AND_IsNOTExecutedIfEventsFireSingularly(): Unit = {
     var test = 0
     val e1 = Evt[Int]
     val e2 = Evt[Int]
@@ -33,7 +33,7 @@ class AND_EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsF
 
   }
 
-  @Test def handlerOf_AND_DoesNotRememberOldRounds() = {
+  @Test def handlerOf_AND_DoesNotRememberOldRounds(): Unit = {
     var test = 0
     val e1 = Evt[Int]
     val e2 = Evt[Int]
@@ -48,7 +48,7 @@ class AND_EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsF
 
   }
 
-  @Test def handlerOf_AND_IsExecutedIfBothEventsFire() = {
+  @Test def handlerOf_AND_IsExecutedIfBothEventsFire(): Unit = {
 
     var test = 0
     val e1 = Evt[Int]

@@ -8,13 +8,13 @@ import rescala.pipelining.tests.PipelineTestUtils._
 import rescala.propagation.{Committable, Turn}
 import rescala.reactives.Signals
 
-class AdmissionPhaseTest extends AssertionsForJUnit with MockitoSugar {
+class AdmissionPhaseTest extends AssertionsForJUnit  {
 
   implicit val engine = new PipelineEngine()
   import engine.Var
 
   @Test
-  def testAdmissionPhaseReadsCorrectValues() = {
+  def testAdmissionPhaseReadsCorrectValues(): Unit = {
     @volatile var numAdmissions = 0
     val counter = Var(0)
     val numThreads = 20
@@ -37,7 +37,7 @@ class AdmissionPhaseTest extends AssertionsForJUnit with MockitoSugar {
   }
 
   @Test(timeout=100000)
-  def testAdmissionPhaseValueMatchesCommitPhaseValue() = {
+  def testAdmissionPhaseValueMatchesCommitPhaseValue(): Unit = {
     val numThreads = 100
 
     val counter = Var(0)
@@ -59,8 +59,8 @@ class AdmissionPhaseTest extends AssertionsForJUnit with MockitoSugar {
         val newValue = currentValue + 1
         counter.admit(newValue)
         t.schedule(new Committable{
-          override def release(implicit turn : Turn[_]) = {}
-          override def commit(implicit turn : Turn[_]) = {
+          override def release(implicit turn : Turn[_]): Unit = {}
+          override def commit(implicit turn : Turn[_]): Unit = {
             val counterVal = counter.get
             val dep1Val = dep1.get
             val dep2Val = dep2.get

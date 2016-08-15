@@ -29,7 +29,7 @@ class PessimisticTestTurn extends ParRP(backoff = new Backoff()) {
 }
 
 case class Barrier(ready: CountDownLatch, go: CountDownLatch) {
-  def await() = {
+  def await(): Unit = {
     ready.await(1, TimeUnit.SECONDS)
     go.countDown()
   }

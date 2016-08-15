@@ -14,13 +14,13 @@ import tests.rescala.JUnitParameters
 object EventCreationTest extends JUnitParameters
 
 @RunWith(value = classOf[Parameterized])
-class EventCreationTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit with MockitoSugar {
+class EventCreationTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
   implicit val implicitEngine: Engine[S, Turn[S]] = engine
 
   import implicitEngine._
 
 
-  @Test def addEventAfter() = {
+  @Test def addEventAfter(): Unit = {
     var res = 0
     val e0 = Evt[Int]
     val e1 = e0.map(identity)
