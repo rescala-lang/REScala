@@ -9,7 +9,7 @@ import rescala.engines.Engine
 import rescala.graph.Struct
 import rescala.propagation.Turn
 
-import scala.util.{Success, Try}
+import scala.util.{Failure, Success, Try}
 
 object ExceptionPropagationTestSuite extends JUnitParameters
 
@@ -42,8 +42,8 @@ class ExceptionPropagationTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) ext
     var dres: Try[Int] = null
     var sres: Try[Int] = null
 
-    de.toTry().observe(dres = _)
-    se.toTry().observe(sres = _)
+    de.map(Success(_)).recover(Failure(_)).observe(dres = _)
+    se.map(Success(_)).recover(Failure(_)).observe(sres = _)
 
     e.fire(42)
 
@@ -63,7 +63,7 @@ class ExceptionPropagationTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) ext
     val trimmed = input.map(_.trim)
     val toInted = trimmed.map(_.toInt)
     val folded = toInted.fold(100)((acc, v) => acc / v)
-    val `change'd` = folded.change.toTry()
+    val `change'd` = folded.change.map(Success(_)).recover(Failure(_))
 
     var res: Try[(Int, Int)] = null
 
@@ -98,7 +98,7 @@ class ExceptionPropagationTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) ext
     val input = Var("100")
     val trimmed = input.map(_.trim)
     val folded = trimmed.map(_.toInt)
-    val `change'd` = folded.change.toTry()
+    val `change'd` = folded.change.map(Success(_)).recover(Failure(_))
 
     var res: Try[(Int, Int)] = null
 
