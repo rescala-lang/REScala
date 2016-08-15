@@ -4,11 +4,11 @@ import java.util.concurrent.CompletionException
 
 import rescala.engines.Ticket
 import rescala.graph._
+import rescala.reactives.RExceptions.EmptySignalControlThrowable
 import rescala.reactives.Signals.Flatten
 
 import scala.collection.immutable.{LinearSeq, Queue}
 import scala.language.higherKinds
-import scala.util.{Success, Try}
 
 /**
   * Base signal interface for all signal implementations.
@@ -48,29 +48,26 @@ trait EventLike[+T, S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV]
     */
   def \[U](other: EV[U, S])(implicit ticket: Ticket[S]): EV[T, S]
 
-  /**
-    * Events conjunction
-    */
+  /** Events conjunctio */
   def and[U, R](other: EV[U, S])(merger: (T, U) => R)(implicit ticket: Ticket[S]): EV[R, S]
 
-  /**
-    * EV conjunction with a merge method creating a tuple of both event parameters
-    */
+  /** EV conjunction with a merge method creating a tuple of both event parameters */
   def zip[U](other: EV[U, S])(implicit ticket: Ticket[S]): EV[(T, U), S]
 
-  /**
-    * Transform the event parameter
-    */
+  /** Transform the event parameter */
   def map[U](mapping: T => U)(implicit ticket: Ticket[S]): EV[U, S]
 
-  /**
-    * Drop the event parameter; equivalent to map((_: Any) => ())
-    */
+  /** Drop the event parameter; equivalent to map((_: Any) => ()) */
   final def dropParam(implicit ticket: Ticket[S]): EV[Unit, S] = map(_ => ())
 
 
   /** folds events with a given fold function to create a SL */
   def fold[A](init: A)(fold: (A, T) => A)(implicit ticket: Ticket[S]): SL[A, S]
+
+  def lazyFold[A](init: => A)(folder: (=> A, T) => A)(implicit ticket: Ticket[S]): SL[A, S]
+
+  /** reduces events with a given reduce function to create a Signal */
+  final def reduce[A](reducer: (=> A, T) => A)(implicit ticket: Ticket[S]): SL[A, S] = lazyFold(throw new EmptySignalControlThrowable)(reducer)
 
   /** Iterates a value on the occurrence of the event. */
   final def iterate[A](init: A)(f: A => A)(implicit ticket: Ticket[S]): SL[A, S] = fold(init)((acc, _) => f(acc))
@@ -89,6 +86,7 @@ trait EventLike[+T, S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV]
 
   /** returns a signal holding the latest value of the event. */
   final def latest[T1 >: T](init: T1)(implicit ticket: Ticket[S]): SL[T1, S] = fold(init)((_, v) => v)
+  final def latest()(implicit ticket: Ticket[S]): SL[T, S] = reduce[T]((_, v) => v)
 
   /** Holds the latest value of an event as an Option, None before the first event occured */
   final def latestOption()(implicit ticket: Ticket[S]): SL[Option[T], S] = fold(None: Option[T]) { (_, v) => Some(v) }

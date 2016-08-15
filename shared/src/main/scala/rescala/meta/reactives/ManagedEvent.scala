@@ -78,6 +78,8 @@ class ManagedEventImpl[+T](override val node: ReactiveNode) extends ManagedEvent
 
   /** returns the values produced by the last event produced by mapping this value */
   override def flatMap[B](f: (T) => ManagedEvent[B, DummyStruct])(implicit ticket: Ticket[DummyStruct]): ManagedEventImpl[B] = ???
+
+  override def lazyFold[A](init: => A)(folder: (=> A, T) => A)(implicit ticket: Ticket[DummyStruct]): ManagedSignalImpl[A] = ???
 }
 
 trait ManagedEvt[T, S <: Struct] extends ManagedEvent[T, S] with EvtLike[T, S, ManagedSignal, ManagedEvent]

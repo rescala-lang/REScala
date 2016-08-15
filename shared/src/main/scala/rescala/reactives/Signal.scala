@@ -51,10 +51,7 @@ trait Signal[+A, S <: Struct] extends SignalLike[A, S, Signal, Event] with State
     */
   override def changed(implicit ticket: Ticket[S]): Event[A, S] = Events.static(s"(changed $this)", this) { turn => pulse(turn) }
 
-  /**
-    * Create an event that fires every time the signal changes. It fires the tuple
-    * (oldVal, newVal) for the signal. The first tuple is (null, newVal)
-    */
+  /** Create an event that fires every time the signal changes. It fires the tuple (oldVal, newVal) for the signal. */
   final override def change(implicit ticket: Ticket[S]) = {
     Events.static(s"(change $this)", this) { turn =>
       pulse(turn) match {

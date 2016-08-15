@@ -96,14 +96,12 @@ trait Event[+T, S <: Struct] extends EventLike[T, S, Signal, Event] with PulseOp
     def f(a: => A, t: T) = folder(a, t)
     lazyFold(init)(f)
   }
-  final def lazyFold[A](init: => A)(folder: (=> A, T) => A)(implicit ticket: Ticket[S]): Signal[A, S] = ticket { initialTurn =>
+  final override def lazyFold[A](init: => A)(folder: (=> A, T) => A)(implicit ticket: Ticket[S]): Signal[A, S] = ticket { initialTurn =>
     Signals.Impl.makeStatic(Set[Reactive[S]](this), init) { (turn, currentValue) =>
       get(turn).fold(currentValue)(value => folder(currentValue, value))
     }(initialTurn)
   }
 
-  /** reduces events with a given reduce function to create a Signal */
-  final def reduce[A](reducer: (=> A, T) => A)(implicit ticket: Ticket[S]) = lazyFold(throw new EmptySignalControlThrowable)(reducer)
 
   /** Switch back and forth between two signals on occurrence of event e */
   final override def toggle[A](a: Signal[A, S], b: Signal[A, S])(implicit ticket: Ticket[S]): Signal[A, S] = ticket { turn =>
