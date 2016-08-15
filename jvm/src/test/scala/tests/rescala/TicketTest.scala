@@ -4,7 +4,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mock.MockitoSugar
 import rescala.engines.{Engine, Ticket}
 import rescala.graph.Struct
 import rescala.pipelining.PipelineEngine

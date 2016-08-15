@@ -2,11 +2,10 @@ package tests.rescala.concurrency
 
 import java.util.concurrent.{ConcurrentLinkedQueue, CountDownLatch}
 
-import org.junit.{Ignore, Test}
+import org.junit.Ignore
 import org.scalatest.junit.AssertionsForJUnit
 import rescala.engines.Engines
-import rescala.reactives.Var
-import rescala.reactives.Signals
+import rescala.reactives.{Signals, Var}
 
 import scala.util.Random
 

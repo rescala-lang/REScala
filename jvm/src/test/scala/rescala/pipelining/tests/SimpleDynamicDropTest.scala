@@ -2,11 +2,10 @@ package rescala.pipelining.tests
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mock.MockitoSugar
 import rescala.engines.Ticket
+import rescala.pipelining.tests.PipelineTestUtils._
 import rescala.pipelining.util.LogUtils
 import rescala.pipelining.{Pipeline, PipelineEngine}
-import rescala.pipelining.tests.PipelineTestUtils._
 
 class SimpleDynamicDropTest extends AssertionsForJUnit  {
 

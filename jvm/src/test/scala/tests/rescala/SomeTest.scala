@@ -1,12 +1,7 @@
 package tests.rescala
 
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mock.MockitoSugar
-import rescala.parrp.ParRP
-import rescala.reactives.Var
 
 
 class SomeTest() extends AssertionsForJUnit  {

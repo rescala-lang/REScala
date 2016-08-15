@@ -4,12 +4,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mock.MockitoSugar
-import rescala.Infiltrator.assertLevel
 import rescala.engines.Engine
 import rescala.graph.LevelStruct
 import rescala.propagation.Turn
-import rescala.reactives.Signals
 
 object ReactiveCreationInTurnsTest extends JUnitParameters
 

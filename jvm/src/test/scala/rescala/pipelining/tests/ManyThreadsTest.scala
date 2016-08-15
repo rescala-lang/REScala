@@ -5,14 +5,12 @@ import java.util.concurrent.CyclicBarrier
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mock.MockitoSugar
-import rescala.pipelining.util.LogUtils
-import rescala.reactives.Var
 import rescala.pipelining.Pipeline._
 import rescala.pipelining.tests.PipelineTestUtils._
+import rescala.pipelining.util.LogUtils
 import rescala.pipelining.{PipelineEngine, PipelineStruct}
 import rescala.propagation.Turn
-import rescala.reactives.Signals
+import rescala.reactives.{Signals, Var}
 
 import scala.annotation.tailrec
 

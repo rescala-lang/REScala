@@ -4,9 +4,8 @@ import java.util.concurrent.CyclicBarrier
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mock.MockitoSugar
-import rescala.pipelining.{Pipeline, PipelineEngine, PipeliningTurn}
 import rescala.pipelining.tests.PipelineTestUtils._
+import rescala.pipelining.{Pipeline, PipelineEngine, PipeliningTurn}
 
 class FrameWaitWrittenTest extends AssertionsForJUnit  {
 

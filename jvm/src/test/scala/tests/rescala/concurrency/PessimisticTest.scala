@@ -10,7 +10,7 @@ import rescala.engines.{Engine, EngineImpl}
 import rescala.graph.Reactive
 import rescala.parrp.{Backoff, ParRP}
 import rescala.propagation.Turn
-import rescala.reactives.{SignalLike, Signal, Signals, Var}
+import rescala.reactives.{Signal, Signals, Var}
 
 import scala.collection.JavaConverters._
 

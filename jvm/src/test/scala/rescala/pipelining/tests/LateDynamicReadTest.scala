@@ -4,7 +4,6 @@ import java.util.concurrent.Semaphore
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mock.MockitoSugar
 import rescala.pipelining.PipelineEngine
 import rescala.pipelining.tests.PipelineTestUtils._
 import rescala.reactives.{Signals, Var}

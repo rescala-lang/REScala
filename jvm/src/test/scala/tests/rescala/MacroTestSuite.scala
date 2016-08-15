@@ -4,11 +4,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mock.MockitoSugar
-import rescala.Infiltrator
-import rescala.Infiltrator.{assertLevel, getLevel}
+import rescala.Infiltrator.assertLevel
 import rescala.engines.Engine
-import rescala.graph.{LevelStruct, Struct}
+import rescala.graph.LevelStruct
 import rescala.propagation.Turn
 import rescala.reactives.Signals
 

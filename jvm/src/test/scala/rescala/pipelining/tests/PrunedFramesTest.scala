@@ -2,7 +2,6 @@ package rescala.pipelining.tests
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mock.MockitoSugar
 import rescala.pipelining.util.LogUtils
 import rescala.pipelining.{Pipeline, PipelineEngine, PipeliningTurn}
 import rescala.reactives.{Signals, Var}

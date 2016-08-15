@@ -2,7 +2,6 @@ package rescala.pipelining.tests
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mock.MockitoSugar
 import rescala.pipelining.PipelineEngine
 import rescala.pipelining.tests.PipelineTestUtils._
 import rescala.propagation.{Committable, Turn}

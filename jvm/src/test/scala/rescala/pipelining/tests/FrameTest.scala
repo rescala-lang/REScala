@@ -2,7 +2,6 @@ package rescala.pipelining.tests
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mock.MockitoSugar
 import rescala.pipelining.{Frame, Pipeline, PipelineEngine}
 
 class FrameTest extends AssertionsForJUnit  {
