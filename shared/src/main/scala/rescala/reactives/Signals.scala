@@ -81,6 +81,9 @@ object Signals extends GeneratedSignalLift {
     implicit def flattenSignal[A, S <: Struct, B](implicit ev: A <:< Signal[B, S]) = new Flatten[A, S, Signal[B, S]] {
       def apply(sig: Signal[A, S])(implicit ticket: Ticket[S]): Signal[B, S] = Signals.dynamic(sig) { s => sig(s)(s) }
     }
+    implicit def flattenSignalSeq[A, S <: Struct, B](implicit ev: A <:< Seq[Signal[B, S]]) = new Flatten[A, S, Signal[Seq[B], S]] {
+      def apply(sig: Signal[A, S])(implicit ticket: Ticket[S]): Signal[Seq[B], S] = Signals.dynamic(sig) { s => sig(s).map(_(s)) }
+    }
     implicit def flattenEvent[A, S <: Struct, B](implicit ev: A <:< Event[B, S]) = new Flatten[A, S, Event[B, S]] {
       def apply(sig: Signal[A, S])(implicit ticket: Ticket[S]): Event[B, S] =  Events.wrapped(sig.map(ev))
     }

@@ -288,4 +288,27 @@ class HigherOrderTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends Asse
 
   }
 
+
+  @Test def flattenSignalSeq(): Unit = {
+    val v = Var.empty[Seq[Signal[Int]]]
+    var count = 0
+    val v1, v2, v3 = {count += 1 ; Var(count) }
+    v.set(List(v1, v2, v3))
+
+    val flat = v.flatten
+
+    assert(flat.now === Seq(1,2,3), "flatten fails")
+
+    v2.set(100)
+
+    assert(flat.now === Seq(1,100,3), "flatten fails 2")
+
+    v.set(List(v3, v2))
+
+    assert(flat.now === Seq(3,100), "flatten fails 3")
+
+
+
+  }
+
 }
