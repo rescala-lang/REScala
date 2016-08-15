@@ -31,7 +31,7 @@ trait SignalLike[+A, S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV
   def map[B](f: A => B)(implicit ticket: Ticket[S]): SL[B, S]
 
   /** flatten the inner signal */
-  def flatten[B]()(implicit ev: A <:< SL[B, S], ticket: Ticket[S]) : SL[B, S]
+  def flatten[B](implicit ev: A <:< SL[B, S], ticket: Ticket[S]) : SL[B, S]
 
   /** Return a Signal that gets updated only when e fires, and has the value of this Signal */
   final def snapshot(e: EV[_, S])(implicit ticket: Ticket[S]): SL[A, S] = e.snapshot(this)

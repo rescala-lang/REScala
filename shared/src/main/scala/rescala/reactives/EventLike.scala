@@ -93,7 +93,7 @@ trait EventLike[+T, S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV]
   final def latestOption()(implicit ticket: Ticket[S]): SL[Option[T], S] = fold(None: Option[T]) { (_, v) => Some(v) }
 
   /** calls factory on each occurrence of event e, resetting the SL to a newly generated one */
-  final def reset[T1 >: T, A](init: T1)(factory: T1 => SL[A, S])(implicit ticket: Ticket[S]): SL[A, S] = set(init)(factory).flatten()
+  final def reset[T1 >: T, A](init: T1)(factory: T1 => SL[A, S])(implicit ticket: Ticket[S]): SL[A, S] = set(init)(factory).flatten
 
   /**
     * Returns a signal which holds the last n events in a list. At the beginning the
@@ -134,7 +134,7 @@ trait EventLike[+T, S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV]
   def flatMap[B](f: T => EV[B, S])(implicit ticket: Ticket[S]): EV[B, S]
 
   /** promotes the latest inner event to an outer event */
-  final def flatten[B]()(implicit ticket: Ticket[S], ev: T <:< EV[B, S]): EV[B, S] = flatMap(ev.apply)
+  final def flatten[B](implicit ticket: Ticket[S], ev: T <:< EV[B, S]): EV[B, S] = flatMap(ev.apply)
 
   /** logs the events to a signal */
   final def log()(implicit ticket: Ticket[S]): SL[List[T], S] = fold[List[T]](Nil)((a, v) => v :: a)

@@ -34,7 +34,7 @@ class HigherOrderTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends Asse
     val v = Var(42)
     val s1: Signal[Int] = v.map(identity)
     val s2: Signal[Signal[Int]] = dynamic() { t => s1 }
-    val sDeref = s2.flatten()
+    val sDeref = s2.flatten
 
     assert(sDeref.now == 42)
 
@@ -47,7 +47,7 @@ class HigherOrderTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends Asse
     val v = Var(42)
     val sValue: Signal[Int] = v.map(identity)
     val sHigher: Signal[Signal[Int]] = dynamic() { t => sValue }
-    val sDeref = sHigher.flatten()
+    val sDeref = sHigher.flatten
 
     var sDerefChanged = false
     var sHigherChanged = false
@@ -72,7 +72,7 @@ class HigherOrderTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends Asse
 
     val selector: Var[Signal[Int]] = Var(s1)
     val sHigher = selector.map(identity)
-    val sDeref = sHigher.flatten()
+    val sDeref = sHigher.flatten
 
     var sDerefChanged = false
     var sHigherChanged = false
@@ -109,10 +109,10 @@ class HigherOrderTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends Asse
     val s1: Signal[Signal[Int]] = Signals.static() { t => s0 }
     val s2: Signal[Signal[Signal[Int]]] = Signals.static() { t => s1 }
 
-    val sDeref1 = s1.flatten()
-    val sDeref2 = s2.flatten().flatten()
-    val sDeref2_a = s2.flatten()
-    val sDeref2_b = sDeref2_a.flatten()
+    val sDeref1 = s1.flatten
+    val sDeref2 = s2.flatten.flatten
+    val sDeref2_a = s2.flatten
+    val sDeref2_b = sDeref2_a.flatten
 
     var sDeref1Changed = false
     var sDeref2Changed = false
@@ -143,7 +143,7 @@ class HigherOrderTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends Asse
 
     val listOfSignals: Signal[List[Signal[Int]]] = Signals.static() { t => List(doubled, count) }
     val selected: Signal[Signal[Int]] = dynamic(listOfSignals, mod2) { t => listOfSignals(t)(mod2(t)) }
-    val dereferenced = selected.flatten()
+    val dereferenced = selected.flatten
 
     var dereferencedChanged = false
     dereferenced.changed += { _ => dereferencedChanged = true }
@@ -214,7 +214,7 @@ class HigherOrderTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends Asse
 
 
     val higherOrder = dynamic() { t => if (v1(t) == 10) level3 else derived }
-    val flattened = higherOrder.flatten()
+    val flattened = higherOrder.flatten
 
     var higherOrderLog = List[Int]()
 
@@ -266,7 +266,7 @@ class HigherOrderTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends Asse
 
   @Test def flattenEvents(): Unit = {
     val e1 = Evt[Event[Int]]
-    val f1 = e1.flatten()
+    val f1 = e1.flatten
     val res = f1.log()
     val e2 = Evt[Int]
     val e3 = Evt[Int]

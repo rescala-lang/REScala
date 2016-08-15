@@ -35,7 +35,7 @@ class ManagedSignalImpl[+A](override val node : ReactiveNode) extends ManagedSig
   override def map[B](f: (A) => B)(implicit ticket: Ticket[DummyStruct]): ManagedSignalImpl[B] = ???
 
   /** flatten the inner signal */
-  override def flatten[B]()(implicit ev: <:<[A, ManagedSignal[B, DummyStruct]], ticket: Ticket[DummyStruct]): ManagedSignalImpl[B] = ???
+  override def flatten[B](implicit ev: <:<[A, ManagedSignal[B, DummyStruct]], ticket: Ticket[DummyStruct]): ManagedSignalImpl[B] = ???
 
   /** Unwraps a Signal[Event[EV, S], S] to an Event[EV, S] */
   override def unwrap[E](implicit evidence: <:<[A, ManagedEvent[E, DummyStruct]], ticket: Ticket[DummyStruct]): ManagedEventImpl[E] = ???

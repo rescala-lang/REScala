@@ -205,7 +205,7 @@ class DynamicSignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) exten
 
     val testsig = dynamic() { t =>
       dynamic() { t => outside(t) }
-    }.flatten()
+    }.flatten
 
     assert(testsig.now === 1)
     outside() = 2

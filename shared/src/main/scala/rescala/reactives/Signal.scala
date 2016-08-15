@@ -42,7 +42,7 @@ trait Signal[+A, S <: Struct] extends SignalLike[A, S, Signal, Event] with State
   final override def map[B](f: A => B)(implicit ticket: Ticket[S]) = Signals.lift(this) {f}
 
   /** flatten the inner signal */
-  final override def flatten[B]()(implicit ev: A <:< Signal[B, S], ticket: Ticket[S]): Signal[B, S] = Signals.dynamic(this) { s => this (s)(s) }
+  final override def flatten[B](implicit ev: A <:< Signal[B, S], ticket: Ticket[S]): Signal[B, S] = Signals.dynamic(this) { s => this (s)(s) }
 
   /** Unwraps a Signal[Event[EV, S], S] to an Event[EV, S] */
   final override def unwrap[E](implicit evidence: A <:< Event[E, S], ticket: Ticket[S]) = Events.wrapped(map(evidence))
