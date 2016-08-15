@@ -10,6 +10,7 @@ import rescala.Infiltrator.assertLevel
 import rescala.engines.{Engine, Ticket}
 import rescala.graph.LevelStruct
 import rescala.propagation.Turn
+import rescala.reactives.Signals
 
 object DynamicSignalTestSuite extends JUnitParameters
 
@@ -203,11 +204,12 @@ class DynamicSignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) exten
 
     val outside = Var(1)
 
-    val testsig = dynamic() { t =>
+    val dynsig: implicitEngine.Signal[implicitEngine.Signal[Int]] = dynamic() { t =>
       dynamic() { t => outside(t) }
-    }.flatten
+    }
+    val testsig = dynsig.flatten
 
-    assert(testsig.now === 1)
+      assert(testsig.now === 1)
     outside() = 2
     assert(testsig.now === 2)
   }

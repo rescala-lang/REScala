@@ -4,6 +4,7 @@ import java.util.concurrent.CompletionException
 
 import rescala.engines.Ticket
 import rescala.graph.Struct
+import rescala.reactives.Signals.Flatten
 
 import scala.language.higherKinds
 
@@ -31,7 +32,7 @@ trait SignalLike[+A, S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV
   def map[B](f: A => B)(implicit ticket: Ticket[S]): SL[B, S]
 
   /** flatten the inner signal */
-  def flatten[B](implicit ev: A <:< SL[B, S], ticket: Ticket[S]) : SL[B, S]
+  def flatten[R](implicit ev: Flatten[A, S ,R], ticket: Ticket[S]): R
 
   /** Return a Signal that gets updated only when e fires, and has the value of this Signal */
   final def snapshot(e: EV[_, S])(implicit ticket: Ticket[S]): SL[A, S] = e.snapshot(this)
@@ -47,9 +48,6 @@ trait SignalLike[+A, S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV
 
   /** Delays this signal by n occurrences */
   def delay(n: Int)(implicit ticket: Ticket[S]): SL[A, S]
-
-  /** Unwraps a Signal[Event[EV, S], S] to an Event[EV, S] */
-  def unwrap[E](implicit evidence: A <:< EV[E, S], ticket: Ticket[S]): EV[E, S]
 
   /**
     * Create an event that fires every time the signal changes. It fires the tuple

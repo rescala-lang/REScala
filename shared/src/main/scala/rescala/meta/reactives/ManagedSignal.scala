@@ -4,6 +4,7 @@ import rescala.engines.{Engine, Ticket}
 import rescala.graph.Struct
 import rescala.meta.{ManagedReactive, ReactiveNode}
 import rescala.propagation.Turn
+import rescala.reactives.Signals.Flatten
 import rescala.reactives.{Observe, SignalLike, VarLike}
 
 /**
@@ -35,10 +36,7 @@ class ManagedSignalImpl[+A](override val node : ReactiveNode) extends ManagedSig
   override def map[B](f: (A) => B)(implicit ticket: Ticket[DummyStruct]): ManagedSignalImpl[B] = ???
 
   /** flatten the inner signal */
-  override def flatten[B](implicit ev: <:<[A, ManagedSignal[B, DummyStruct]], ticket: Ticket[DummyStruct]): ManagedSignalImpl[B] = ???
-
-  /** Unwraps a Signal[Event[EV, S], S] to an Event[EV, S] */
-  override def unwrap[E](implicit evidence: <:<[A, ManagedEvent[E, DummyStruct]], ticket: Ticket[DummyStruct]): ManagedEventImpl[E] = ???
+  override def flatten[R](implicit ev: Flatten[A, DummyStruct, R], ticket: Ticket[DummyStruct]): R = ???
 
   /**
     * Create an event that fires every time the signal changes. It fires the tuple

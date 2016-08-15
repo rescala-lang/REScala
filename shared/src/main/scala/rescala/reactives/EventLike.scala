@@ -4,6 +4,7 @@ import java.util.concurrent.CompletionException
 
 import rescala.engines.Ticket
 import rescala.graph._
+import rescala.reactives.Signals.Flatten
 
 import scala.collection.immutable.{LinearSeq, Queue}
 import scala.language.higherKinds
@@ -93,7 +94,7 @@ trait EventLike[+T, S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV]
   final def latestOption()(implicit ticket: Ticket[S]): SL[Option[T], S] = fold(None: Option[T]) { (_, v) => Some(v) }
 
   /** calls factory on each occurrence of event e, resetting the SL to a newly generated one */
-  final def reset[T1 >: T, A](init: T1)(factory: T1 => SL[A, S])(implicit ticket: Ticket[S]): SL[A, S] = set(init)(factory).flatten
+  final def reset[T1 >: T, A, R](init: T1)(factory: T1 => SL[A, S])(implicit ticket: Ticket[S], ev: Flatten[SL[A, S], S, R]): R = set(init)(factory).flatten(ev, ticket)
 
   /**
     * Returns a signal which holds the last n events in a list. At the beginning the

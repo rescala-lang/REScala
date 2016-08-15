@@ -7,6 +7,7 @@ import rescala.propagation.Turn
 import rescala.reactives.RExceptions.EmptySignalControlThrowable
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.language.higherKinds
 import scala.util.{Failure, Success}
 
 object Signals extends GeneratedSignalLift {
@@ -70,6 +71,19 @@ object Signals extends GeneratedSignalLift {
     val v: Var[A, S] = rescala.reactives.Var.empty[A, S]
     fut.onComplete{v.setFromTry}
     v
+  }
+
+
+  sealed trait Flatten[-A, S <: Struct, R] {
+    def apply(sig: Signal[A, S])(implicit ticket: Ticket[S]): R
+  }
+  object Flatten {
+    implicit def flattenSignal[A, S <: Struct, B](implicit ev: A <:< Signal[B, S]) = new Flatten[A, S, Signal[B, S]] {
+      def apply(sig: Signal[A, S])(implicit ticket: Ticket[S]): Signal[B, S] = Signals.dynamic(sig) { s => sig(s)(s) }
+    }
+    implicit def flattenEvent[A, S <: Struct, B](implicit ev: A <:< Event[B, S]) = new Flatten[A, S, Event[B, S]] {
+      def apply(sig: Signal[A, S])(implicit ticket: Ticket[S]): Event[B, S] =  Events.wrapped(sig.map(ev))
+    }
   }
 
 }

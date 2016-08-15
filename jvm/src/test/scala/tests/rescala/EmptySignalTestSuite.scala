@@ -45,7 +45,7 @@ class EmptySignalTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends Asse
 
   @Test def unwrapEmptySignal(): Unit = {
     val v = Var.empty[Event[Int]]
-    val e = v.unwrap
+    val e = v.flatten
 
     var res = -100
 

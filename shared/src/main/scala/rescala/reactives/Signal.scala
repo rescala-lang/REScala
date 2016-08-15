@@ -4,6 +4,7 @@ import rescala.engines.Ticket
 import rescala.graph.Pulse.{Change, Exceptional, NoChange, Stable}
 import rescala.graph.{Pulse, Stateful, Struct}
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
+import rescala.reactives.Signals.Flatten
 
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success}
@@ -41,11 +42,8 @@ trait Signal[+A, S <: Struct] extends SignalLike[A, S, Signal, Event] with State
   /** Return a Signal with f applied to the value */
   final override def map[B](f: A => B)(implicit ticket: Ticket[S]) = Signals.lift(this) {f}
 
-  /** flatten the inner signal */
-  final override def flatten[B](implicit ev: A <:< Signal[B, S], ticket: Ticket[S]): Signal[B, S] = Signals.dynamic(this) { s => this (s)(s) }
-
-  /** Unwraps a Signal[Event[EV, S], S] to an Event[EV, S] */
-  final override def unwrap[E](implicit evidence: A <:< Event[E, S], ticket: Ticket[S]) = Events.wrapped(map(evidence))
+  /** flatten the inner reactive */
+  final override def flatten[R](implicit ev: Flatten[A, S ,R], ticket: Ticket[S]): R = ev.apply(this)
 
   /**
     * Create an event that fires every time the signal changes. The value associated

@@ -173,7 +173,7 @@ class HigherOrderTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends Asse
     val e2 = Evt[Int]
     val eventSelector = Var(e1)
     val selected = eventSelector.map(identity)
-    val unwrapped = selected.unwrap
+    val unwrapped = selected.flatten
 
     var lastEvent = -1
     unwrapped += { lastEvent = _ }
@@ -234,7 +234,7 @@ class HigherOrderTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends Asse
     val level2Event = level1Event.map(_ => "level 2")
     val dynamicSignal = dynamic() { t => if (condition(t) == 1) level1Event else level2Event }
 
-    val unwrapped = dynamicSignal.unwrap
+    val unwrapped = dynamicSignal.flatten
 
     var log = List[String]()
     unwrapped += (log ::= _)
@@ -252,7 +252,7 @@ class HigherOrderTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends Asse
     val level1EventB = e1.map(_ => "B")
     val dynamicSignal = dynamic() { t => if (level2Condition(t) == 1) level1EventA else level1EventB }
 
-    val unwrapped = dynamicSignal.unwrap
+    val unwrapped = dynamicSignal.flatten
 
     var log = List[String]()
     unwrapped += (log ::= _)
