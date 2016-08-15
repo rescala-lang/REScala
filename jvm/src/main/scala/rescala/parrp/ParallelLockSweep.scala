@@ -68,7 +68,7 @@ class ParallelLockSweep(backoff: Backoff, ex: Executor) extends LockSweep(backof
 
   var collectedDependenciesLocal: DynamicVariable[List[Reactive[TState]]] = new DynamicVariable[List[Reactive[TState]]](Nil)
 
-  override def collectDependencies[T](f: => T): (T, Set[Reactive[TState]]) = {
+  override def collectMarkedDependencies[T](f: => T): (T, Set[Reactive[TState]]) = {
     collectedDependenciesLocal.withValue(Nil) {
       val sideEffectingEvaluationResult = f
       val newDependencies = collectedDependenciesLocal.value.toSet
@@ -76,7 +76,7 @@ class ParallelLockSweep(backoff: Backoff, ex: Executor) extends LockSweep(backof
 
     }
   }
-  override def useDependency(dependency: Reactive[TState]): Unit = collectedDependenciesLocal.value ::= dependency
+  override def markDependencyAsUsed(dependency: Reactive[TState]): Unit = collectedDependenciesLocal.value ::= dependency
 
 
   /** allow turn to handle dynamic access to reactives */

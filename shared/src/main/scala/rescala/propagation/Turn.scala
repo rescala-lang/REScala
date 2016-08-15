@@ -87,12 +87,12 @@ trait Turn[S <: Struct] {
     * @tparam T Return type of the function
     * @return Return value of the function and set of all reactive values marked as its dependencies
     */
-  def collectDependencies[T](f: => T): (T, Set[Reactive[S]])
+  def collectMarkedDependencies[T](f: => T): (T, Set[Reactive[S]])
 
   /**
     * Marks a reactive element as used as dynamic dependency, so it is returned by `collectDependencies`
     *
     * @param dependency Reactive element to mark
     */
-  def useDependency(dependency: Reactive[S]): Unit
+  def markDependencyAsUsed(dependency: Reactive[S]): Unit
 }

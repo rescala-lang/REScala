@@ -31,7 +31,7 @@ object Signals extends GeneratedSignalLift {
 
     private class DynamicSignal[T, S <: Struct](_bud: S#SporeP[T, Reactive[S]], expr: Turn[S] => T) extends Base[T, S](_bud) with Signal[T, S] with DynamicReevaluation[T, S] {
       def calculatePulseDependencies(implicit turn: Turn[S]): (Pulse[T], Set[Reactive[S]]) = {
-        val (newValueTry, dependencies) = turn.collectDependencies {RExceptions.reTry(expr(turn))}
+        val (newValueTry, dependencies) = turn.collectMarkedDependencies {RExceptions.reTry(expr(turn))}
         newValueTry match {
           case Success(p) => (Pulse.diffPulse(p, pulses.base), dependencies)
           case Failure(t: EmptySignalControlThrowable) => (Pulse.NoChange, dependencies)

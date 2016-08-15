@@ -69,7 +69,7 @@ trait PulseOption[+P, S <: Struct] extends Pulsing[P, S] {
   def apply(): Option[P] = throw new IllegalAccessException(s"$this.apply called outside of macro")
   final def apply[T](turn: Turn[S]): Option[P] = {
     turn.dependencyInteraction(this)
-    turn.useDependency(this)
+    turn.markDependencyAsUsed(this)
     get(turn)
   }
 
@@ -94,7 +94,7 @@ trait Stateful[+A, S <: Struct] extends Pulsing[A, S] {
 
   final def apply[T](turn: Turn[S]): A = {
     turn.dependencyInteraction(this)
-    turn.useDependency(this)
+    turn.markDependencyAsUsed(this)
     get(turn)
   }
 
