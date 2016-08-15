@@ -1,7 +1,7 @@
 import org.scalajs.dom
 import rescala._
 
-import scala.language.implicitConversions
+import scala.language.{higherKinds, implicitConversions}
 import scalatags.JsDom.all._
 
 package object rescalatags {
@@ -10,7 +10,7 @@ package object rescalatags {
     /**
       * converts a Signal of a scalatags Tag to a scalatags Frag which automatically reflects changes to the signal in the dom
       */
-    def asFragment: Frag = {
+    def asFrag: Frag = {
       new Frag {
         val rendered: Signal[dom.Node] = signal
           .map(_.render)
@@ -30,14 +30,14 @@ package object rescalatags {
   }
 
 
-  implicit def attrValue[T: AttrValue]: AttrValue[Signal[T]] = new AttrValue[Signal[T]] {
-    def apply(t: dom.Element, a: Attr, signal: Signal[T]): Unit = {
+  implicit def attrValue[T: AttrValue, Sig[T2] <: Signal[T2]]: AttrValue[Sig[T]] = new AttrValue[Sig[T]] {
+    def apply(t: dom.Element, a: Attr, signal: Sig[T]): Unit = {
       signal.observe { value => implicitly[AttrValue[T]].apply(t, a, value) }
     }
   }
 
-  implicit def styleValue[T: StyleValue]: StyleValue[Signal[T]] = new StyleValue[Signal[T]] {
-    def apply(t: dom.Element, s: Style, signal: Signal[T]): Unit = {
+  implicit def styleValue[T: StyleValue, Sig[T2] <: Signal[T2]]: StyleValue[Sig[T]] = new StyleValue[Sig[T]] {
+    def apply(t: dom.Element, s: Style, signal: Sig[T]): Unit = {
       signal.observe { value => implicitly[StyleValue[T]].apply(t, s, value) }
     }
   }
