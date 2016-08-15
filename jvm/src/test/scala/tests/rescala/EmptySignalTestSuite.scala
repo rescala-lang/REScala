@@ -43,4 +43,24 @@ class EmptySignalTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends Asse
 
   }
 
+  @Test def unwrapEmptySignal(): Unit = {
+    val v = Var.empty[Event[Int]]
+    val e = v.unwrap
+
+    var res = -100
+
+    e.observe(res = _)
+
+    assert(res === -100, "sanity")
+
+    val evt = Evt[Int]
+
+    v.set(evt)
+
+    evt.fire(20)
+
+    assert(res === 20, "could unwrap after Val was empty")
+
+  }
+
 }

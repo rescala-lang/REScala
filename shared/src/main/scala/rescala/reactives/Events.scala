@@ -1,6 +1,7 @@
 package rescala.reactives
 
 import rescala.engines.Ticket
+import rescala.graph.Pulse.{Change, Exceptional, NoChange, Stable}
 import rescala.graph._
 import rescala.propagation.Turn
 import rescala.reactives.RExceptions.EmptySignalControlThrowable
@@ -48,9 +49,16 @@ object Events {
     creationTurn.create(Set[Reactive[S]](wrapper), dynamic = true) {
       new Base[T, S](creationTurn.bud(transient = true)) with Event[T, S] with DynamicReevaluation[T, S] {
         override def calculatePulseDependencies(implicit turn: Turn[S]): (Pulse[T], Set[Reactive[S]]) = {
-          val inner = wrapper.get
-          turn.dependencyInteraction(inner)
-          (inner.pulse, Set(wrapper, inner))
+          wrapper.pulse match {
+            case Change(inner) =>
+              turn.dependencyInteraction(inner)
+              (inner.pulse, Set(wrapper, inner))
+            case Stable(inner) =>
+              turn.dependencyInteraction(inner)
+              (inner.pulse, Set(wrapper, inner))
+            case NoChange => (NoChange, Set(wrapper))
+            case ex @ Exceptional(_) => (ex, Set(wrapper))
+          }
         }
       }
     }
