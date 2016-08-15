@@ -127,7 +127,7 @@ lazy val datastructures = project.in(file("Datastructures"))
     incOptions := incOptions.value.withLogRecompileOnMacro(false),
     publish := {},
     publishLocal := {},
-    libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.6" % "test"
+    scalatestDependency
   )
 
 
@@ -170,7 +170,7 @@ lazy val rssDependencies = libraryDependencies ++= Seq(
   "com.novocode" % "junit-interface" % "0.11" % "test->default",
   "org.scala-lang" % "scala-swing" % "2.11+")
 
-lazy val scalatestDependency = libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.0" % "test"
+lazy val scalatestDependency = libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.0" % "test"
 
 
 
