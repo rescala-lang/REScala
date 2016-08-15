@@ -26,13 +26,13 @@ trait Signal[+A, S <: Struct] extends SignalLike[A, S, Signal, Event] with State
     case Failure(t) => onFailure(t)
   }
 
-  final def recoverFailure[R >: A](onFailure: Throwable => R)(implicit ticket: Ticket[S]): Signal[R, S] = Signals.static(this) { turn =>
+  final def recover[R >: A](onFailure: Throwable => R)(implicit ticket: Ticket[S]): Signal[R, S] = Signals.static(this) { turn =>
     try this.get(turn) catch {
       case NonFatal(e) => onFailure(e)
     }
   }
 
-  final def recoverEmpty[R >: A](onEmpty: () => R)(implicit ticket: Ticket[S]): Signal[R, S] = Signals.static(this) { (turn) =>
+  final def withDefault[R >: A](onEmpty: () => R)(implicit ticket: Ticket[S]): Signal[R, S] = Signals.static(this) { (turn) =>
     try this.get(turn) catch {
       case e: EmptySignalControlThrowable => onEmpty()
     }
