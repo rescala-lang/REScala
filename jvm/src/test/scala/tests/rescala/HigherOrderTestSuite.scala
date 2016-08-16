@@ -306,9 +306,64 @@ class HigherOrderTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends Asse
     v.set(List(v3, v2))
 
     assert(flat.now === Seq(3,100), "flatten fails 3")
+  }
 
 
+  @Test def flattenSignalSet(): Unit = {
+    val v = Var.empty[Set[Var[Int]]]
+    var count = 0
+    val v1, v2, v3 = {count += 1 ; Var(count) }
+    v.set(Set(v1, v2, v3))
 
+    val flat = v.flatten
+
+    assert(flat.now === Set(1,2,3), "flatten fails")
+
+    v2.set(100)
+
+    assert(flat.now === Set(1,100,3), "flatten fails 2")
+
+    v.set(Set(v3, v2))
+
+    assert(flat.now === Set(3,100), "flatten fails 3")
+  }
+
+
+  @Test def flattenSignalArray(): Unit = {
+    val v = Var.empty[Array[Var[Int]]]
+    var count = 0
+    val v1, v2, v3 = {count += 1 ; Var(count) }
+    v.set(Array(v1, v2, v3))
+
+    val flat = v.flatten
+
+    assert(flat.now === Array(1,2,3), "flatten fails")
+
+    v2.set(100)
+
+    assert(flat.now === Array(1,100,3), "flatten fails 2")
+
+    v.set(Array(v3, v2))
+
+    assert(flat.now === Array(3,100), "flatten fails 3")
+  }
+
+
+  @Test def flattenSignalOption(): Unit = {
+    val v = Var(Option.empty[Var[Int]])
+    var w = Var(1)
+
+    val flat = v.flatten
+
+    assert(flat.now === None, "flatten fails")
+
+    v.set(Some(w))
+
+    assert(flat.now === Some(1), "flatten fails 2")
+
+    w.set(100)
+
+    assert(flat.now === Some(100), "flatten fails 3")
   }
 
 }
