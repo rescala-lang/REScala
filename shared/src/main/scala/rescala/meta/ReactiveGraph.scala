@@ -44,6 +44,28 @@ class ReactiveGraph {
 
     mergedNode
   }
+
+  def incoming(node : ReactiveNode) = node.dependencies
+  def outgoing(node : ReactiveNode) = nodes.filter(_.dependencies.contains(node))
+
+  private def findDominators(node : ReactiveNode) : Set[ReactiveNode] = {
+    incoming(node).foldLeft(nodes.toSet)((doms, pred) => doms.intersect(findDominators(pred))) + node
+  }
+
+  private def findPostdominators(node: ReactiveNode) : Set[ReactiveNode] = {
+    outgoing(node).foldLeft(nodes.toSet)((doms, pred) => doms.intersect(findPostdominators(pred))) + node
+  }
+
+  private def findEnclosedNodes(current: ReactiveNode, exit: ReactiveNode) : List[ReactiveNode] = {
+    if (current == exit) List(exit)
+    else outgoing(current).foldLeft(List[ReactiveNode]())(_ ++ findEnclosedNodes(_, exit)) :+ current
+  }
+
+  private def isSingleEntryExitArea(entry: ReactiveNode, exit: ReactiveNode) : Boolean = {
+    val dom = findDominators(exit)
+    val postdom = findPostdominators(entry)
+    dom.contains(entry) && postdom.contains(exit)
+  }
 }
 
 class ReactiveNode(protected[meta] val graph : ReactiveGraph, initDependencies : Set[ReactiveNode] = Set()) {
