@@ -1,12 +1,12 @@
 package tests.rescala
 
 import org.scalactic.source
-import org.scalatest.{FlatSpec, FunSpec, FunSuite}
+import org.scalatest.FunSuite
 import org.scalatest.prop.{TableDrivenPropertyChecks, TableFor1}
-import rescala.engines.{Engine, JVMEngines}
+import rescala.engines.Engine
 import rescala.engines.JVMEngines.TEngine
 import rescala.graph.{LevelStruct, Struct}
-import rescala.propagation.{LevelBasedPropagation, Turn}
+import rescala.propagation.Turn
 
 import scala.language.existentials
 

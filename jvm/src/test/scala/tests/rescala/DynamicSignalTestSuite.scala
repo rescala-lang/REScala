@@ -1,15 +1,9 @@
 package tests.rescala
 
 
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
-import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.prop.Whenever
 import rescala.Infiltrator.assertLevel
-import rescala.engines.{Engine, Ticket}
-import rescala.graph.LevelStruct
-import rescala.propagation.Turn
+import rescala.engines.Ticket
 
 
 
@@ -18,7 +12,7 @@ class DynamicSignalTestSuite extends RETests with Whenever {
 
 
 
-  allEngines("signalReEvaluatesTheExpressionWhenSomethingItDependsOnIsUpdated"){ engine => import engine._
+  allEngines("signal ReEvaluates The Expression When Something ItDepends OnIsUpdated"){ engine => import engine._
     val v = Var(0)
     var i = 1
     val s = dynamic(v) { s => v(s) + i }
@@ -27,7 +21,7 @@ class DynamicSignalTestSuite extends RETests with Whenever {
     assert(s.now == 4)
   }
 
-  allEngines("theExpressionIsNoteEvaluatedEveryTimeGetValIsCalled"){ engine => import engine._
+  allEngines("the Expression IsNote Evaluated Every Time Get Val IsCalled"){ engine => import engine._
     var a = 10
     val s = dynamic()(s => 1 + 1 + a)
     assert(s.now === 12)
@@ -36,12 +30,12 @@ class DynamicSignalTestSuite extends RETests with Whenever {
   }
 
 
-  allEngines("simpleSignalReturnsCorrectExpressions"){ engine => import engine._
+  allEngines("simple Signal Returns Correct Expressions"){ engine => import engine._
     val s = dynamic()(s => 1 + 1 + 1)
     assert(s.now === 3)
   }
 
-  allEngines("theExpressionIsEvaluatedOnlyOnce"){ engine => import engine._
+  allEngines("the Expression IsEvaluated Only Once"){ engine => import engine._
 
     var a = 0
     val v = Var(10)
@@ -56,7 +50,7 @@ class DynamicSignalTestSuite extends RETests with Whenever {
     assert(a == 3)
   }
 
-  allEngines("handlersAreExecuted"){ engine => import engine._
+  allEngines("handlers Are Executed"){ engine => import engine._
 
     var test = 0
     val v = Var(1)
@@ -76,7 +70,7 @@ class DynamicSignalTestSuite extends RETests with Whenever {
 
   }
 
-  allEngines("levelIsCorrectlyComputed"){ engine => import engine._
+  allEngines("level IsCorrectly Computed"){ engine => import engine._
 
     val v = Var(1)
 
@@ -96,7 +90,7 @@ class DynamicSignalTestSuite extends RETests with Whenever {
   /* Specific of SignalSynt */
 
 
-  allEngines("signalDoesNotReEvaluateTheExpressionIfDependsOnIsUpdatedThatIsNotInCurrentDependencies"){ engine => import engine._
+  allEngines("signal Does Not ReEvaluate The Expression IfDepends OnIsUpdated That IsNot InCurrent Dependencies"){ engine => import engine._
     val v1 = Var(true)
     val v2 = Var(0)
     val v3 = Var(10)
@@ -127,7 +121,7 @@ class DynamicSignalTestSuite extends RETests with Whenever {
   }
 
 
-  allEngines("keep_fixedDependencies"){ engine => import engine._
+  allEngines("keep_fixed Dependencies"){ engine => import engine._
 
     val v1 = Var(true)
     val v2 = Var(0)
@@ -163,7 +157,7 @@ class DynamicSignalTestSuite extends RETests with Whenever {
 
   }
 
-  allEngines("dependantIsOnlyInvokedOnValueChanges"){ engine => import engine._
+  allEngines("dependant IsOnly Invoked OnValue Changes"){ engine => import engine._
     var changes = 0
     val v = Var(1)
     val s = dynamic(v) { s =>
@@ -178,7 +172,7 @@ class DynamicSignalTestSuite extends RETests with Whenever {
     assert(changes === 2) // is actually 3
   }
 
-  allEngines("creatingSignalsInsideSignals") { engine => import engine._
+  allEngines("creating Signals Inside Signals") { engine => import engine._
 
     // ignore for locksweep, as it does not support predeclared levels, so would run into an endless loop below
     whenever(engine != rescala.engines.JVMEngines.locksweep &&
@@ -199,7 +193,7 @@ class DynamicSignalTestSuite extends RETests with Whenever {
     }
   }
 
-  allEngines("creatingSignalsInsideSignalsWorkaround"){ engine => import engine._
+  allEngines("creating Signals Inside Signals Workaround"){ engine => import engine._
 
 
     val outside = Var(1)

@@ -1,13 +1,5 @@
 package tests.rescala
 
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
-import org.scalatest.junit.AssertionsForJUnit
-import rescala.engines.Engine
-import rescala.graph.LevelStruct
-import rescala.propagation.Turn
-
 
 
 
@@ -16,7 +8,7 @@ class ReactiveCreationInTurnsTest extends RETests {
 
 
 
-  allEngines("evaluationsOfInnerSignals"){ engine => import engine._
+  allEngines("evaluations OfInner Signals"){ engine => import engine._
 
     val v1 = Var(5)
     val c1 = Var(0)
@@ -34,7 +26,7 @@ class ReactiveCreationInTurnsTest extends RETests {
 
   }
 
-  allEngines("evaluationsOfInnerRelatedSignals"){ engine => import engine._
+  allEngines("evaluations OfInner Related Signals"){ engine => import engine._
 
     val v1 = Var(5)
     val v2 = v1.map { x =>
@@ -52,7 +44,7 @@ class ReactiveCreationInTurnsTest extends RETests {
   }
 
 
-  allEngines("changeOfCreatedSignal"){ engine => import engine._
+  allEngines("change OfCreated Signal"){ engine => import engine._
 
     engine.plan() { implicit t =>
       val v1 = rescala.reactives.Var(0)

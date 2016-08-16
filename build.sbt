@@ -18,7 +18,6 @@ lazy val rescala = crossProject.in(file("."))
     name := "rescala",
     libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _),
     scalatestDependency,
-    libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % "test",
     libraryDependencies += "org.scala-stm" %% "scala-stm" % "0.7",
 
     incOptions := incOptions.value.withLogRecompileOnMacro(false),

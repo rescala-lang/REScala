@@ -1,13 +1,6 @@
 package tests.rescala
 
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
-import org.scalatest.junit.AssertionsForJUnit
 import rescala.Infiltrator.assertLevel
-import rescala.engines.Engine
-import rescala.graph.LevelStruct
-import rescala.propagation.Turn
 import rescala.reactives.Signals
 
 
@@ -17,7 +10,7 @@ class LevelPropagation extends RETests {
 
 
 
-  allEngines("worksOnElementsInQueue"){ engine => import engine._
+  allEngines("works OnElements InQueue"){ engine => import engine._
     val level0 = Var(0)
     val l1 = level0.map(_ + 1)
     val l2 = l1.map(_ + 1)
@@ -53,7 +46,7 @@ class LevelPropagation extends RETests {
 
   }
 
-  allEngines("doesNotBreakStuffWhenNothingChangesBeforeDependenciesAreCorrect"){ engine => import engine._
+  allEngines("does Not Break Stuff When Nothing Changes Before Dependencies Are Correct"){ engine => import engine._
     val l0 = Var(0)
     val l1 = l0.map(_ + 1)
     val l2 = l1.map(_ + 1)
@@ -80,7 +73,7 @@ class LevelPropagation extends RETests {
 
   }
 
-  allEngines("doesNotReevaluateStuffIfNothingChanges"){ engine => import engine._
+  allEngines("does Not Reevaluate Stuff IfNothing Changes"){ engine => import engine._
     val l0 = Var(0)
     val l1 = l0.map(_ + 1)
     val l2 = l1.map(_ + 1)
@@ -115,7 +108,7 @@ class LevelPropagation extends RETests {
 
   }
 
-  allEngines("levelIncreaseAndChangeFromeSomewhereElseWorksTogether"){ engine => import engine._
+  allEngines("level Increase And Change Frome Somewhere Else Works Together"){ engine => import engine._
     val l0 = Var(0)
     val l1 = l0.map(_ + 1)
     val l2 = l1.map(_ + 1)

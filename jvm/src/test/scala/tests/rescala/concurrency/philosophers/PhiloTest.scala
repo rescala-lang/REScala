@@ -1,7 +1,6 @@
 package tests.rescala.concurrency.philosophers
 
-import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatest.FunSuite
 import rescala.engines.{Engine, JVMEngines}
 import rescala.graph.Struct
 import rescala.propagation.Turn
@@ -12,7 +11,7 @@ import scala.annotation.tailrec
 import scala.util.Random
 
 
-class PhiloTest extends AssertionsForJUnit {
+class PhiloTest extends FunSuite {
 
   @tailrec
   final def deal[A](deck: List[A], hands: List[List[A]]): List[List[A]] = deck match {
@@ -31,7 +30,7 @@ class PhiloTest extends AssertionsForJUnit {
 
     @volatile var cancel = false
 
-    val threads = for (threadIndex <- Range(0, threadCount)) yield Spawn(name = s"Worker $threadIndex",  f = {
+    val threads = for (threadIndex <- Range(0, threadCount)) yield Spawn(name = s"Worker $threadIndex", f = {
       while (!cancel) {
         val myBlock = blocks(threadIndex % blocks.length)
         val seating = myBlock(Random.nextInt(myBlock.length))
@@ -48,16 +47,16 @@ class PhiloTest extends AssertionsForJUnit {
     println(s"philo party done sleeping on $engine (dynamic $dynamic)")
   }
 
-  @Test def eatingContestsSpinning(): Unit = `eat!`(JVMEngines.parrp, dynamic = false)
+  test("eating Contests Spinning") {`eat!`(JVMEngines.parrp, dynamic = false)}
 
-  @Test def eatingContestsSpinningDynamic(): Unit = `eat!`(JVMEngines.parrp, dynamic = true)
+  test("eating Contests Spinning Dynamic") {`eat!`(JVMEngines.parrp, dynamic = true)}
 
-  @Test def eatingContestsSpinningLocksweep(): Unit = `eat!`(JVMEngines.locksweep, dynamic = false)
+  test("eating Contests Spinning Locksweep") {`eat!`(JVMEngines.locksweep, dynamic = false)}
 
-  @Test def eatingContestsSpinningDynamicLocksweep(): Unit = `eat!`(JVMEngines.locksweep, dynamic = true)
+  test("eating Contests Spinning Dynamic Locksweep") {`eat!`(JVMEngines.locksweep, dynamic = true)}
 
-//  @Test def eatingContestsSpinningParallelLocksweep(): Unit = `eat!`(JVMEngines.parallellocksweep, dynamic = false)
-//
-//  @Test def eatingContestsSpinningDynamicParallelLocksweep(): Unit = `eat!`(JVMEngines.parallellocksweep, dynamic = true)
+  //  test("eatingContestsSpinningParallelLocksweep"){`eat!`(JVMEngines.parallellocksweep, dynamic = false)}
+  //
+  //  test("eatingContestsSpinningDynamicParallelLocksweep"){`eat!`(JVMEngines.parallellocksweep, dynamic = true)}
 
 }

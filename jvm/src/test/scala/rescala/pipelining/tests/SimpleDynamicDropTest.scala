@@ -1,46 +1,47 @@
 package rescala.pipelining.tests
 
-import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatest.FlatSpec
 import rescala.engines.Ticket
 import rescala.pipelining.tests.PipelineTestUtils._
 import rescala.pipelining.util.LogUtils
 import rescala.pipelining.{Pipeline, PipelineEngine}
 
-class SimpleDynamicDropTest extends AssertionsForJUnit  {
+class SimpleDynamicDropTest extends FlatSpec {
 
-  implicit val engine = new PipelineEngine()
+  trait PipelineState {
 
-  import engine.Var
+    implicit val engine = new PipelineEngine()
 
-  val timeToAllowOtherTurnToCreateFrames = 100l
+    import engine.Var
 
-  val source1 = Var(0)
-  val source2 = Var(2)
-  var numEvaluated = 0
-  val dynDep = engine.dynamic()(implicit t => {
-    LogUtils.log(s"BEGIN evaluate $t")
-    numEvaluated += 1
-    Thread.sleep(timeToAllowOtherTurnToCreateFrames)
-    val source1Val = source1(t)
-    LogUtils.log(s"Read val $source1Val")
-    val newValue = if (source1Val % 2 == 0) {
-      source2(t)
-    }
-    else {
-      0
-    }
-    LogUtils.log(s"END evaluate $t with $newValue")
-    newValue
-  })(Ticket(Right(engine)))
+    val timeToAllowOtherTurnToCreateFrames = 100l
 
-  val dynDepTracker = new ValueTracker(dynDep)
+    val source1 = Var(0)
+    val source2 = Var(2)
+    var numEvaluated = 0
+    val dynDep = engine.dynamic()(implicit t => {
+      LogUtils.log(s"BEGIN evaluate $t")
+      numEvaluated += 1
+      Thread.sleep(timeToAllowOtherTurnToCreateFrames)
+      val source1Val = source1(t)
+      LogUtils.log(s"Read val $source1Val")
+      val newValue = if (source1Val % 2 == 0) {
+        source2(t)
+      }
+      else {
+        0
+      }
+      LogUtils.log(s"END evaluate $t with $newValue")
+      newValue
+    })(Ticket(Right(engine)))
 
-  dynDepTracker.reset()
-  numEvaluated = 0
+    val dynDepTracker = new ValueTracker(dynDep)
 
-  @Test
-  def serialDropTest(): Unit = {
+    dynDepTracker.reset()
+    numEvaluated = 0
+  }
+
+  it should "serial Drop Test" in new PipelineState {
     LogUtils.log("=====")
     assert(dynDep.now == 2)
     source1.set(1)
@@ -58,8 +59,7 @@ class SimpleDynamicDropTest extends AssertionsForJUnit  {
     assert(dynDepTracker.values == List(0))
   }
 
-  @Test
-  def parallelAddAndRemove(): Unit = {
+  it should "parallel Add And Remove" in new PipelineState {
     var removeBeforeAdd = false
     var addBeforeRemove = false
 
@@ -123,8 +123,7 @@ class SimpleDynamicDropTest extends AssertionsForJUnit  {
     }
   }
 
-  @Test //(timeout = 10000)
-  def parallelRemoveAndUpdateFromRemovedDep(): Unit = {
+  it should "parallelRemoveAndUpdateFromRemovedDep" in new PipelineState {
     var removeBeforeUpdateSuspicious = false
     var updateBeforeRemove = false
 

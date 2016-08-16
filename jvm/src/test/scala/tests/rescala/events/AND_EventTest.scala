@@ -1,15 +1,5 @@
 package tests.rescala.events
 
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
-import org.scalatest.junit.AssertionsForJUnit
-import rescala.engines.Engine
-import rescala.graph.Struct
-import rescala.propagation.Turn
-import tests.rescala.JUnitParameters
-
-
 import tests.rescala.RETests
 
 
@@ -19,7 +9,7 @@ class AND_EventTest extends RETests {
 
 
 
-  allEngines("handlerOf_AND_IsNOTExecutedIfEventsFireSingularly"){ engine => import engine._
+  allEngines("handler Of_AN D_IsNOT Executed IfEvents Fire Singularly"){ engine => import engine._
     var test = 0
     val e1 = Evt[Int]
     val e2 = Evt[Int]
@@ -33,7 +23,7 @@ class AND_EventTest extends RETests {
 
   }
 
-  allEngines("handlerOf_AND_DoesNotRememberOldRounds"){ engine => import engine._
+  allEngines("handler Of_AN D_Does Not Remember Old Rounds"){ engine => import engine._
     var test = 0
     val e1 = Evt[Int]
     val e2 = Evt[Int]
@@ -48,7 +38,7 @@ class AND_EventTest extends RETests {
 
   }
 
-  allEngines("handlerOf_AND_IsExecutedIfBothEventsFire"){ engine => import engine._
+  allEngines("handler Of_AN D_IsExecuted IfBoth Events Fire"){ engine => import engine._
 
     var test = 0
     val e1 = Evt[Int]

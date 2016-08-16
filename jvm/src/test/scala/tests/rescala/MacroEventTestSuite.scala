@@ -4,7 +4,7 @@ package tests.rescala
 class MacroEventTestSuite extends RETests {
 
 
-  allEngines("useEventsInSignalExpression") { engine => import engine._
+  allEngines("use Events InSignal Expression") { engine => import engine._
     val e1 = Evt[Int]
     val e2 = Evt[Int]
     val res = Signal {List(e1(), e2()).flatten.sum}
@@ -22,7 +22,7 @@ class MacroEventTestSuite extends RETests {
 
   }
 
-  allEngines("useEventExpression") { engine => import engine._
+  allEngines("use Event Expression") { engine => import engine._
     val e1 = Evt[Int]
     val e2 = Evt[Int]
     val event = Event {Some(List(e1(), e2()).flatten)}

@@ -1,12 +1,5 @@
 package tests.rescala
 
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
-import org.scalatest.junit.AssertionsForJUnit
-import rescala.engines.Engine
-import rescala.graph.Struct
-import rescala.propagation.Turn
 import rescala.reactives.Signals
 
 
@@ -18,7 +11,7 @@ class HigherOrderTestSuite extends RETests {
 
 
 
-  allEngines("basicHigherOrderSignal_canBeAccessed"){ engine => import engine._
+  allEngines("basic Higher Order Signal_can BeAccessed"){ engine => import engine._
     val v = Var(42)
     val s1: Signal[Int] = v.map(identity)
     val s2: Signal[Signal[Int]] = dynamic() { t => s1 }
@@ -29,7 +22,7 @@ class HigherOrderTestSuite extends RETests {
     assert(s2.now.now == 0)
   }
 
-  allEngines("basicHigherOrderSignal_canBeDefereferenced"){ engine => import engine._
+  allEngines("basic Higher Order Signal_can BeDefereferenced"){ engine => import engine._
     val v = Var(42)
     val s1: Signal[Int] = v.map(identity)
     val s2: Signal[Signal[Int]] = dynamic() { t => s1 }
@@ -42,7 +35,7 @@ class HigherOrderTestSuite extends RETests {
   }
 
 
-  allEngines("basicHigherOrderSignal_derefFiresChange"){ engine => import engine._
+  allEngines("basic Higher Order Signal_deref Fires Change"){ engine => import engine._
     val v = Var(42)
     val sValue: Signal[Int] = v.map(identity)
     val sHigher: Signal[Signal[Int]] = dynamic() { t => sValue }
@@ -63,7 +56,7 @@ class HigherOrderTestSuite extends RETests {
   }
 
 
-  allEngines("basicHigherOrderSignal_higherOrderFiresChange"){ engine => import engine._
+  allEngines("basic Higher Order Signal_higher Order Fires Change"){ engine => import engine._
     val v1 = Var(42)
     val v2 = Var(123)
     val s1: Signal[Int] = v1.map(identity)
@@ -101,7 +94,7 @@ class HigherOrderTestSuite extends RETests {
   }
 
 
-  allEngines("order3Signal"){ engine => import engine._
+  allEngines("order3 Signal"){ engine => import engine._
 
     val v = Var(42)
     val s0: Signal[Int] = v.map(identity)
@@ -134,7 +127,7 @@ class HigherOrderTestSuite extends RETests {
   }
 
 
-  allEngines("listOfSignalsSection"){ engine => import engine._
+  allEngines("list OfSignals Section"){ engine => import engine._
     val tick = Evt[Unit]
     val count = tick.iterate(0)(_ + 1)
     val doubled = count.map(_ * 2)
@@ -167,7 +160,7 @@ class HigherOrderTestSuite extends RETests {
   }
 
 
-  allEngines("unwrap_Event"){ engine => import engine._
+  allEngines("unwrap_ Event"){ engine => import engine._
     val e1 = Evt[Int]
     val e2 = Evt[Int]
     val eventSelector = Var(e1)
@@ -190,7 +183,7 @@ class HigherOrderTestSuite extends RETests {
     assert(lastEvent == 5)
   }
 
-  allEngines("dynamicLevel"){ engine => import engine._
+  allEngines("dynamic Level"){ engine => import engine._
     val v1 = Var(1)
 
     val derived = v1.map(identity)
@@ -226,7 +219,7 @@ class HigherOrderTestSuite extends RETests {
     assert(log == List(1, 13, 1, 13))
   }
 
-  allEngines("wrappedEvent"){ engine => import engine._
+  allEngines("wrapped Event"){ engine => import engine._
     val e1 = Evt[Int]
     val condition = e1.latest(-1)
     val level1Event = e1.map(_ => "level 1")
@@ -244,7 +237,7 @@ class HigherOrderTestSuite extends RETests {
     assert(log == List("level 1", "level 2"))
   }
 
-  allEngines("wrappedEventSameLevel"){ engine => import engine._
+  allEngines("wrapped Event Same Level"){ engine => import engine._
     val e1 = Evt[Int]
     val level2Condition = e1.latest(-1).map(identity)
     val level1EventA = e1.map(_ => "A")
@@ -263,7 +256,7 @@ class HigherOrderTestSuite extends RETests {
   }
 
 
-  allEngines("flattenEvents"){ engine => import engine._
+  allEngines("flatten Events"){ engine => import engine._
     val e1 = Evt[Event[Int]]
     val f1 = e1.flatten
     val res = f1.log()
@@ -289,7 +282,7 @@ class HigherOrderTestSuite extends RETests {
   }
 
 
-  allEngines("flattenSignalSeq"){ engine => import engine._
+  allEngines("flatten Signal Seq"){ engine => import engine._
     val v = Var.empty[Seq[Signal[Int]]]
     var count = 0
     val v1, v2, v3 = {count += 1 ; Var(count) }
@@ -309,7 +302,7 @@ class HigherOrderTestSuite extends RETests {
   }
 
 
-  allEngines("flattenSignalSet"){ engine => import engine._
+  allEngines("flatten Signal Set"){ engine => import engine._
     val v = Var.empty[Set[Var[Int]]]
     var count = 0
     val v1, v2, v3 = {count += 1 ; Var(count) }
@@ -329,7 +322,7 @@ class HigherOrderTestSuite extends RETests {
   }
 
 
-  allEngines("flattenSignalArray"){ engine => import engine._
+  allEngines("flatten Signal Array"){ engine => import engine._
     val v = Var.empty[Array[Var[Int]]]
     var count = 0
     val v1, v2, v3 = {count += 1 ; Var(count) }
@@ -349,7 +342,7 @@ class HigherOrderTestSuite extends RETests {
   }
 
 
-  allEngines("flattenSignalOption"){ engine => import engine._
+  allEngines("flatten Signal Option"){ engine => import engine._
     val v = Var(Option.empty[Var[Int]])
     var w = Var(1)
 

@@ -8,13 +8,13 @@ class IFunTestDynamicSignals extends RETests {
 
 
   /* count */
-  allEngines("count_theInitialValueIsSetCorrectly"){ engine => import engine._
+  allEngines("count_the Initial Value IsSet Correctly"){ engine => import engine._
     val e = Evt[Int]
     val s: Signal[Int] = e.count
     assert(s.now == 0)
   }
 
-  allEngines("count_theResultSignalIncreasesWhenEventsOccur"){ engine => import engine._
+  allEngines("count_the Result Signal Increases When Events Occur"){ engine => import engine._
     val e = Evt[Int]
     val s: Signal[Int] = e.count
     e.fire(1)
@@ -23,7 +23,7 @@ class IFunTestDynamicSignals extends RETests {
   }
 
   /* toggle */
-  allEngines("toggle_theInitialValueIsSetCorrectly"){ engine => import engine._
+  allEngines("toggle_the Initial Value IsSet Correctly"){ engine => import engine._
     val e = Evt[Int]
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
@@ -34,7 +34,7 @@ class IFunTestDynamicSignals extends RETests {
     assert(s.now == 2)
   }
 
-  allEngines("toggle_theEventSwitchesTheSignal"){ engine => import engine._
+  allEngines("toggle_the Event Switches The Signal"){ engine => import engine._
     val e = Evt[Int]
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
@@ -58,7 +58,7 @@ class IFunTestDynamicSignals extends RETests {
   }
 
   /* snapshot */
-  allEngines("snapshot_theInitialValueIsSetCorrectly"){ engine => import engine._
+  allEngines("snapshot_the Initial Value IsSet Correctly"){ engine => import engine._
     val e = Evt[Int]
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
@@ -67,7 +67,7 @@ class IFunTestDynamicSignals extends RETests {
     assert(s.now == 2)
   }
 
-  allEngines("snapshot_takesASnapshotWhenTheEventOccurs"){ engine => import engine._
+  allEngines("snapshot_takesA Snapshot When The Event Occurs"){ engine => import engine._
     val e = Evt[Int]
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
@@ -83,7 +83,7 @@ class IFunTestDynamicSignals extends RETests {
   }
 
   /* delay[T](signal: Signal[T], n: Int): Signal[T] */
-  allEngines("delay1_theInitialValueIsSetCorrectly"){ engine => import engine._
+  allEngines("delay1_the Initial Value IsSet Correctly"){ engine => import engine._
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
     val s = s1.delay(3)
@@ -91,7 +91,7 @@ class IFunTestDynamicSignals extends RETests {
     assert(s.now == 2)
   }
 
-  allEngines("delay1_takesASnapshotWhenTheEventOccurs"){ engine => import engine._
+  allEngines("delay1_takesA Snapshot When The Event Occurs"){ engine => import engine._
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
     val s = s1.delay(3)
@@ -112,7 +112,7 @@ class IFunTestDynamicSignals extends RETests {
   }
 
   /* switchTo */
-  allEngines("switchTo_theInitialValueIsSetToTheSignal"){ engine => import engine._
+  allEngines("switch To_the Initial Value IsSet ToThe Signal"){ engine => import engine._
     val e = Evt[Int]
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
@@ -123,7 +123,7 @@ class IFunTestDynamicSignals extends RETests {
     assert(s2.now == 3)
   }
 
-  allEngines("switchTo_theEventSwitchesTheValueToTheValueOfTheEvent"){ engine => import engine._
+  allEngines("switch To_the Event Switches The Value ToThe Value OfThe Event"){ engine => import engine._
     val e = Evt[Int]
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
@@ -138,7 +138,7 @@ class IFunTestDynamicSignals extends RETests {
   }
 
   /* switchOnce */
-  allEngines("switchOnce_theInitialValueIsSetToTheSignal"){ engine => import engine._
+  allEngines("switch Once_the Initial Value IsSet ToThe Signal"){ engine => import engine._
     val e = Evt[Int]
     val v1 = Var(0)
     val v2 = Var(10)
@@ -151,7 +151,7 @@ class IFunTestDynamicSignals extends RETests {
     assert(s3.now == 2)
   }
 
-  allEngines("switchOnce_theEventSwitchesTheValueToTheValueOfTheOtherSignal"){ engine => import engine._
+  allEngines("switch Once_the Event Switches The Value ToThe Value OfThe Other Signal"){ engine => import engine._
     val e = Evt[Int]
     val v1 = Var(0)
     val v2 = Var(10)
@@ -167,7 +167,7 @@ class IFunTestDynamicSignals extends RETests {
   }
 
   /* reset */
-  allEngines("reset_TheInitialValueOfTheSignalIsGivenByInitAndTheFactory"){ engine => import engine._
+  allEngines("reset_ The Initial Value OfThe Signal IsGiven ByInit And The Factory"){ engine => import engine._
     val e = Evt[Int]
     val v1 = Var(0)
     val v2 = Var(10)
@@ -186,7 +186,7 @@ class IFunTestDynamicSignals extends RETests {
 
   }
 
-  allEngines("reset_TheValueOfTheSignalIsGivenByTheEventAndTheFactory"){ engine => import engine._
+  allEngines("reset_ The Value OfThe Signal IsGiven ByThe Event And The Factory"){ engine => import engine._
     val e = Evt[Int]
     val v1 = Var(0)
     val v2 = Var(10)
@@ -210,7 +210,7 @@ class IFunTestDynamicSignals extends RETests {
   }
 
   /* change */
-  allEngines("change_isNotTriggeredOnCreation"){ engine => import engine._
+  allEngines("change_is Not Triggered OnCreation"){ engine => import engine._
     var test = 0
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
@@ -220,7 +220,7 @@ class IFunTestDynamicSignals extends RETests {
     assert(test == 0)
   }
 
-  allEngines("change_isTriggeredWhenTheSignalChanges"){ engine => import engine._
+  allEngines("change_is Triggered When The Signal Changes"){ engine => import engine._
     var test = 0
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
@@ -233,7 +233,7 @@ class IFunTestDynamicSignals extends RETests {
     assert(test == 2)
   }
 
-  allEngines("change_theValueOfTheEventReflectsTheChangeInTheSignal"){ engine => import engine._
+  allEngines("change_the Value OfThe Event Reflects The Change InThe Signal"){ engine => import engine._
     var test = (0, 0)
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
@@ -247,7 +247,7 @@ class IFunTestDynamicSignals extends RETests {
   }
 
   /* changed */
-  allEngines("changed_isNotTriggeredOnCreation"){ engine => import engine._
+  allEngines("changed_is Not Triggered OnCreation"){ engine => import engine._
     var test = 0
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
@@ -257,7 +257,7 @@ class IFunTestDynamicSignals extends RETests {
     assert(test == 0)
   }
 
-  allEngines("changed_isTriggeredWhenTheSignalChanges"){ engine => import engine._
+  allEngines("changed_is Triggered When The Signal Changes"){ engine => import engine._
     var test = 0
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
@@ -270,7 +270,7 @@ class IFunTestDynamicSignals extends RETests {
     assert(test == 2)
   }
 
-  allEngines("changed_theValueOfTheEventReflectsTheChangeInTheSignal"){ engine => import engine._
+  allEngines("changed_the Value OfThe Event Reflects The Change InThe Signal"){ engine => import engine._
     var test = 0
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
@@ -284,7 +284,7 @@ class IFunTestDynamicSignals extends RETests {
   }
 
   /* changedTo */
-  allEngines("changedTo_isNotTriggeredOnCreation"){ engine => import engine._
+  allEngines("changed To_is Not Triggered OnCreation"){ engine => import engine._
     var test = 0
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
@@ -294,7 +294,7 @@ class IFunTestDynamicSignals extends RETests {
     assert(test == 0)
   }
 
-  allEngines("changedTo_isTriggeredWhenTheSignalHasTheGivenValue"){ engine => import engine._
+  allEngines("changed To_is Triggered When The Signal Has The Given Value"){ engine => import engine._
     var test = 0
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)

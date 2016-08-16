@@ -1,15 +1,6 @@
 package tests.rescala.events
 
 
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
-import org.scalatest.junit.AssertionsForJUnit
-import rescala.engines.Engine
-import rescala.graph.Struct
-import rescala.propagation.Turn
-import tests.rescala.JUnitParameters
-
 import tests.rescala.RETests
 
 
@@ -18,7 +9,7 @@ class EventTest extends RETests {
 
 
 
-  allEngines("handlersAreExecuted"){ engine => import engine._
+  allEngines("handlers Are Executed"){ engine => import engine._
     var test = 0
     val e1 = Evt[Int]
     e1 += ((x: Int) => { test += 1 })
@@ -27,7 +18,7 @@ class EventTest extends RETests {
     assert(test == 2)
   }
 
-  allEngines("eventHandlersCanBeRemoved"){ engine => import engine._
+  allEngines("event Handlers Can BeRemoved"){ engine => import engine._
     var test = 0
     val e1 = Evt[Int]
     val f = (x: Int) => { test += 1 }
@@ -40,7 +31,7 @@ class EventTest extends RETests {
     assert(test == 2)
   }
 
-  allEngines("correctValueIsReceived"){ engine => import engine._
+  allEngines("correct Value IsReceived"){ engine => import engine._
     var test = 0
     val e1 = Evt[Int]
     e1 += ((x: Int) => { test += x })
@@ -48,7 +39,7 @@ class EventTest extends RETests {
     assert(test == 10)
   }
 
-  allEngines("eventsWithoutParamsIsCalled"){ engine => import engine._
+  allEngines("events Without Params IsCalled"){ engine => import engine._
     var test = 0
     val e1 = Evt[Unit]
     e1 += (_ => { test += 1 })
@@ -57,7 +48,7 @@ class EventTest extends RETests {
   }
 
 
-  allEngines("functionIsCalled"){ engine => import engine._
+  allEngines("function IsCalled"){ engine => import engine._
     var test = 0
 
     def f(x: Int): Unit = { test += 1 }
@@ -71,7 +62,7 @@ class EventTest extends RETests {
   }
 
 
-  allEngines("eventsWithMethodHandlersWithParameter"){ engine => import engine._
+  allEngines("events With Method Handlers With Parameter"){ engine => import engine._
 
     var test = 0
     val e = Evt[Int]

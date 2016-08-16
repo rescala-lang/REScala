@@ -5,7 +5,7 @@ package tests.rescala
 
 class EmptySignalTestSuite extends RETests {
 
-  allEngines("basicEmptySignalTest"){ engine => import engine._
+  allEngines("basic Empty Signal Test"){ engine => import engine._
 
     val v = Var.empty[Int]
 
@@ -31,7 +31,7 @@ class EmptySignalTestSuite extends RETests {
 
   }
 
-  allEngines("unwrapEmptySignal"){ engine => import engine._
+  allEngines("unwrap Empty Signal"){ engine => import engine._
     val v = Var.empty[Event[Int]]
     val e = v.flatten
 

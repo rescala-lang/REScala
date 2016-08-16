@@ -12,7 +12,7 @@ class MacroTestSuite extends RETests {
 
 
 
-  allEngines("signalReEvaluatesTheExpression"){ engine => import engine._
+  allEngines("signal ReEvaluates The Expression"){ engine => import engine._
     val v = Var(0)
     var i = 1
     val s: Signal[Int] = Signal { v(): @unchecked; i }
@@ -21,7 +21,7 @@ class MacroTestSuite extends RETests {
     assert(s.now === 2)
   }
 
-  allEngines("theExpressionIsNotEvaluatedEveryTimeGetValIsCalled"){ engine => import engine._
+  allEngines("the Expression IsNot Evaluated Every Time Get Val IsCalled"){ engine => import engine._
     var a = 10
     val s: Signal[Int] = Signal { 1 + 1 + a }
     assert(s.now === 12)
@@ -30,12 +30,12 @@ class MacroTestSuite extends RETests {
   }
 
 
-  allEngines("simpleSignalReturnsCorrectExpressions"){ engine => import engine._
+  allEngines("simple Signal Returns Correct Expressions"){ engine => import engine._
     val s: Signal[Int] = Signal(1 + 1 + 1)
     assert(s.now === 3)
   }
 
-  allEngines("theExpressionIsEvaluatedOnlyOnce"){ engine => import engine._
+  allEngines("the Expression IsEvaluated Only Once"){ engine => import engine._
 
     var a = 0
     val v = Var(10)
@@ -49,7 +49,7 @@ class MacroTestSuite extends RETests {
     assert(a === 3)
   }
 
-  allEngines("handlersAreExecuted"){ engine => import engine._
+  allEngines("handlers Are Executed"){ engine => import engine._
 
     var test = 0
     val v = Var(1)
@@ -69,7 +69,7 @@ class MacroTestSuite extends RETests {
 
   }
 
-  allEngines("levelIsCorrectlyComputed"){ engine => import engine._
+  allEngines("level IsCorrectly Computed"){ engine => import engine._
 
     val v = Var(1)
 
@@ -86,7 +86,7 @@ class MacroTestSuite extends RETests {
   }
 
 
-  allEngines("conversionFunctionWithArgumentInSignal"){ engine => import engine._
+  allEngines("conversion Function With Argument InSignal"){ engine => import engine._
 
     var test = 0
     val e = Evt[Int]
@@ -102,7 +102,7 @@ class MacroTestSuite extends RETests {
   }
 
 
-  allEngines("conversionFunctionWithoutArgumentInSignal"){ engine => import engine._
+  allEngines("conversion Function Without Argument InSignal"){ engine => import engine._
 
     var test = 0
     val e = Evt[Int]
@@ -118,7 +118,7 @@ class MacroTestSuite extends RETests {
   }
 
 
-  allEngines("conversionFunctionsWorkInSignalsInObjectConstructionInOverridenDef"){ engine => import engine._
+  allEngines("conversion Functions Work InSignals InObject Construction InOverriden Def"){ engine => import engine._
     // a previous macro implementation yielded wrong results for code of the
     // following form, see:
     // https://github.com/guidosalva/examples/pull/4/files#r11724000
@@ -148,7 +148,7 @@ class MacroTestSuite extends RETests {
   }
 
 
-  allEngines("signalsNestedInVars"){ engine => import engine._
+  allEngines("signals Nested InVars"){ engine => import engine._
 
     val a = Var(3)
     val b = Var(Signal(a()))
@@ -163,7 +163,7 @@ class MacroTestSuite extends RETests {
   }
 
 
-  allEngines("nestedDefinedSignals"){ engine => import engine._
+  allEngines("nested Defined Signals"){ engine => import engine._
     val a = Var(3)
     val b = Signal {
       val c = Signal { a() }
@@ -178,7 +178,7 @@ class MacroTestSuite extends RETests {
   }
 
 
-  allEngines("useOfInsideSignal"){ engine => import engine._
+  allEngines("use OfInside Signal"){ engine => import engine._
     val outside = Var(1)
     val inside = Var(10)
 
@@ -195,7 +195,7 @@ class MacroTestSuite extends RETests {
     assert(testsig.now === 11)
   }
 
-  allEngines("useOfOutsideSignal"){ engine => import engine._
+  allEngines("use OfOutside Signal"){ engine => import engine._
     val outside = Var(1)
     val inside = Var(10)
 
@@ -216,7 +216,7 @@ class MacroTestSuite extends RETests {
   }
 
 
-  allEngines("caseClassesAndObjects"){ engine => import engine._
+  allEngines("case Classes And Objects"){ engine => import engine._
     // would fail due to https://issues.scala-lang.org/browse/SI-5467
     // if we didn't work around un-type-checking issues
 
@@ -264,7 +264,7 @@ class MacroTestSuite extends RETests {
     assert(sig.now == "value37")
   }
 
-  allEngines("lazyValues"){ engine => import engine._
+  allEngines("lazy Values"){ engine => import engine._
     // would fail due to https://issues.scala-lang.org/browse/SI-5466
     // if we didn't work around un-type-checking issues
 
@@ -289,7 +289,7 @@ class MacroTestSuite extends RETests {
     assert(sig.now == 0)
   }
 
-  allEngines("patternMatchingAndWildcard"){ engine => import engine._
+  allEngines("pattern Matching And Wildcard"){ engine => import engine._
     // would fail due to https://issues.scala-lang.org/browse/SI-5465
     // if we didn't work around un-type-checking issues
 
@@ -315,7 +315,7 @@ class MacroTestSuite extends RETests {
   }
 
 
-  allEngines("patternMatchingAnonymousFunction"){ engine => import engine._
+  allEngines("pattern Matching Anonymous Function"){ engine => import engine._
     val s1 = Signal { List(Some(1), Some(2), None, Some(4), None) }
     val s2 = Signal {
       s1() collect { case Some(n) => n }
@@ -323,7 +323,7 @@ class MacroTestSuite extends RETests {
     assert(s2.now === List(1, 2, 4))
   }
 
-  allEngines("patternMatchingAnonymousFunctionNestedSignals"){ engine => import engine._
+  allEngines("pattern Matching Anonymous Function Nested Signals"){ engine => import engine._
     val v1 = Var(1)
     val v2 = Var(2)
     val s1 = Signal { List(Some(v1), None, Some(v2), None) }
@@ -335,7 +335,7 @@ class MacroTestSuite extends RETests {
     assert(s2.now === List(10, 2))
   }
 
-  allEngines("outerAndInnerValues"){ engine => import engine._
+  allEngines("outer And Inner Values"){ engine => import engine._
     val v = Var(0)
     object obj {
       def sig = Signal { v() }
@@ -364,8 +364,9 @@ class MacroTestSuite extends RETests {
   }
 
 
-  allEngines("chainedSignals1"){ engine => import engine._
-    import scala.language.reflectiveCalls
+  allEngines("chained Signals1"){ engine => import engine._
+
+ import scala.language.reflectiveCalls
 
     val v1 = Var { 1 }
     val v2 = Var { 2 }
@@ -382,8 +383,9 @@ class MacroTestSuite extends RETests {
     assert(sig.now === List(7, 5))
   }
 
-  allEngines("chainedSignals2"){ engine => import engine._
-    import scala.language.reflectiveCalls
+  allEngines("chained Signals2"){ engine => import engine._
+
+ import scala.language.reflectiveCalls
 
     val v1 = Var { 20 }
     val v2 = Var { new {def signal = Signal { v1() } } }
@@ -409,8 +411,9 @@ class MacroTestSuite extends RETests {
   }
 
 
-  allEngines("functionAsGetterForSignal"){ engine => import engine._
-    import scala.language.reflectiveCalls
+  allEngines("function AsGetter For Signal"){ engine => import engine._
+
+ import scala.language.reflectiveCalls
 
     def getSignal(obj: {def signal: Signal[Int]}) = obj.signal
 
@@ -425,8 +428,9 @@ class MacroTestSuite extends RETests {
   }
 
 
-  allEngines("functionAsGetterForEventAndConversionFunction"){ engine => import engine._
-    import scala.language.reflectiveCalls
+  allEngines("function AsGetter For Event And Conversion Function"){ engine => import engine._
+
+ import scala.language.reflectiveCalls
 
     def getSignal(obj: {def evt: Event[Int]}) = obj.evt
 
@@ -440,7 +444,7 @@ class MacroTestSuite extends RETests {
     assert(sig.now === Some(30))
   }
 
-  allEngines("extractingSignalSideEffects"){ engine => import engine._
+  allEngines("extracting Signal Side Effects"){ engine => import engine._
     val e1 = Evt[Int]
     def newSignal(): Signal[Int] = e1.count()
 

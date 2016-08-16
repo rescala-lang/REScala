@@ -1,19 +1,23 @@
 package rescala.pipelining.tests
 
-import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatest.FlatSpec
+import org.scalatest.concurrent.TimeLimitedTests
+import org.scalatest.time.SpanSugar._
 import rescala.pipelining.PipelineEngine
 import rescala.pipelining.tests.PipelineTestUtils._
 import rescala.propagation.{Committable, Turn}
 import rescala.reactives.Signals
 
-class AdmissionPhaseTest extends AssertionsForJUnit  {
+class AdmissionPhaseTest extends FlatSpec with TimeLimitedTests {
 
   implicit val engine = new PipelineEngine()
   import engine.Var
 
-  @Test
-  def testAdmissionPhaseReadsCorrectValues(): Unit = {
+  override val timeLimit = 100000.millis
+
+  behavior of s"$engine"
+
+  it should "test Admission Phase Reads Correct Values" in {
     @volatile var numAdmissions = 0
     val counter = Var(0)
     val numThreads = 20
@@ -35,8 +39,7 @@ class AdmissionPhaseTest extends AssertionsForJUnit  {
 
   }
 
-  @Test(timeout=100000)
-  def testAdmissionPhaseValueMatchesCommitPhaseValue(): Unit = {
+  it should "test Admission Phase Value Matches Commit Phase Value" in {
     val numThreads = 100
 
     val counter = Var(0)

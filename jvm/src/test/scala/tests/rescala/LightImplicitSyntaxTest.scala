@@ -9,7 +9,7 @@ class LightImplicitSyntaxTest extends RETests {
 
 
 
-  allEngines("experimentWithImplicitSyntax"){ engine => import engine._
+  allEngines("experiment With Implicit Syntax"){ engine => import engine._
 
     implicit def getSignalValueDynamic[T](s: Signal[T])(implicit turn: engine.Turn): T = s.apply(turn)
     def Signal[T](f: Turn => T)(implicit maybe: Ticket): Signal[T] = dynamic()(f)

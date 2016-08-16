@@ -1,15 +1,6 @@
 package tests.rescala.events
 
 
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
-import org.scalatest.junit.AssertionsForJUnit
-import rescala.engines.Engine
-import rescala.graph.Struct
-import rescala.propagation.Turn
-import tests.rescala.JUnitParameters
-
 import tests.rescala.RETests
 
 
@@ -19,7 +10,7 @@ class OR_EventTest extends RETests {
 
 
 
-  allEngines("handlerOf_OR_IsExecutedIfAnyOfTheEventsFires"){ engine => import engine._
+  allEngines("handler Of_O R_IsExecuted IfAny OfThe Events Fires"){ engine => import engine._
     var test = 0
     val e1 = Evt[Int]
     val e2 = Evt[Int]
@@ -32,7 +23,7 @@ class OR_EventTest extends RETests {
 
   }
 
-  allEngines("handlerOf_OR_IsExecutedOnlyOnce"){ engine => import engine._
+  allEngines("handler Of_O R_IsExecuted Only Once"){ engine => import engine._
 
     var test = 0
     val e1 = Evt[Int]

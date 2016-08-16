@@ -3,8 +3,7 @@ package rescala.pipelining.tests
 import java.util.Random
 import java.util.concurrent.CyclicBarrier
 
-import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatest.FlatSpec
 import rescala.pipelining.Pipeline._
 import rescala.pipelining.tests.PipelineTestUtils._
 import rescala.pipelining.util.LogUtils
@@ -14,12 +13,14 @@ import rescala.reactives.{Signals, Var}
 
 import scala.annotation.tailrec
 
-class ManyThreadsTest extends AssertionsForJUnit  {
+class ManyThreadsTest extends FlatSpec  {
 
-  implicit val engine = new PipelineEngine()
-  type S = PipelineStruct.type
+  trait PipelineState {
 
-  /*
+    implicit val engine = new PipelineEngine()
+    type S = PipelineStruct.type
+
+    /*
    * This test suite runs on the following topology: S1 and S2 are sources
    * and D1 and D2 are dependencies
    *
@@ -32,65 +33,66 @@ class ManyThreadsTest extends AssertionsForJUnit  {
    * D1    D2
    */
 
-  var opsOnD1: List[Turn[S]] = List()
-  var opsOnD2: List[Turn[S]] = List()
+    var opsOnD1: List[Turn[S]] = List()
+    var opsOnD2: List[Turn[S]] = List()
 
-  def clearOps(): Unit = {
-    opsOnD1 = List()
-    opsOnD2 = List()
+    def clearOps(): Unit = {
+      opsOnD1 = List()
+      opsOnD2 = List()
+    }
+
+    var calculatesOn1 = false
+    var calculatesOn2 = false
+
+    var enableCheck = false;
+    def checkCalculationOrder(): Unit = {
+      @tailrec
+      def check(ops1: List[Turn[S]], ops2: List[Turn[S]]): Boolean = {
+        if (ops1.isEmpty || ops2.isEmpty)
+          true
+        else if (ops1.head != ops2.head)
+          false
+        else check(ops1.tail, ops2.tail)
+      }
+      if (enableCheck) {
+        val op1 = opsOnD1
+        val op2 = opsOnD2
+        val ok = check(op1, op2)
+        assyncAssert(ok, s"$op1 $op2")
+      }
+    }
+
+    def assyncAssert(ok: => Boolean, message: => String = ""): Unit = if (!ok) throw new AssertionError(s"$message\n")
+
+
+    val s1 = Var(0)
+    val s2 = Var(0)
+    val d1 = Signals.static(s1, s2) { implicit t =>
+      randomWait {
+        assyncAssert(!calculatesOn1)
+        calculatesOn1 = true
+        opsOnD1 :+= t
+        checkCalculationOrder
+        val newVal = s1.get - s2.get
+        calculatesOn1 = false
+        newVal
+      }
+    }
+    val d2 = Signals.static(s1, s2) { implicit t =>
+      randomWait {
+        assert(!calculatesOn2)
+        calculatesOn2 = true
+        opsOnD2 :+= t
+        checkCalculationOrder
+        val newVal = s1.get - 2 * s2.get
+        calculatesOn2 = false
+        newVal
+      }
+    }
+
   }
 
-  var calculatesOn1 = false
-  var calculatesOn2 = false
-
-  var enableCheck = false;
-  def checkCalculationOrder(): Unit = {
-    @tailrec
-    def check(ops1: List[Turn[S]], ops2: List[Turn[S]]): Boolean = {
-      if (ops1.isEmpty || ops2.isEmpty)
-        true
-      else if (ops1.head != ops2.head)
-        false
-      else check(ops1.tail, ops2.tail)
-    }
-    if (enableCheck) {
-      val op1 = opsOnD1
-      val op2 = opsOnD2
-      val ok = check(op1, op2)
-      assyncAssert(ok, s"$op1 $op2")
-    }
-  }
-
-  def assyncAssert(ok: => Boolean, message : =>String = ""): Unit = if (!ok) throw new AssertionError(s"$message\n")
-
-
-  val s1 = Var(0)
-  val s2 = Var(0)
-  val d1 = Signals.static(s1, s2) { implicit t =>
-    randomWait {
-      assyncAssert(!calculatesOn1)
-      calculatesOn1 = true
-      opsOnD1 :+= t
-      checkCalculationOrder
-      val newVal = s1.get - s2.get
-      calculatesOn1 = false
-      newVal
-    }
-  }
-  val d2 = Signals.static(s1, s2) { implicit t =>
-    randomWait {
-      assert(!calculatesOn2)
-      calculatesOn2 = true
-      opsOnD2 :+= t
-      checkCalculationOrder
-      val newVal = s1.get - 2 * s2.get
-      calculatesOn2 = false
-      newVal
-    }
-  }
-
-  @Test (timeout = 30000)
-  def testEvaluationParallel(): Unit = {
+  it should "testEvaluationParallel" in new PipelineState {
 
     for (i <- 1 to 100) {
       LogUtils.log("------")
@@ -138,8 +140,7 @@ class ManyThreadsTest extends AssertionsForJUnit  {
     }
   }
 
-  @Test (timeout = 10000)
-  def testManyThreads(): Unit = {
+  it should "testManyThreads" in new PipelineState {
 
     LogUtils.log("------")
 

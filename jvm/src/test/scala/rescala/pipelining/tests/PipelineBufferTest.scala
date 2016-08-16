@@ -1,39 +1,37 @@
 package rescala.pipelining.tests
 
-import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatest.FlatSpec
 import rescala.graph.Buffer
 import rescala.pipelining.{Frame, Pipeline, PipelineEngine, PipeliningTurn}
 
 import scala.collection.immutable.Queue
 
-class PipelineBufferTest extends AssertionsForJUnit  {
+class PipelineBufferTest extends FlatSpec {
 
+  trait PipelineState {
 
+    val pipelineBuffer = new Pipeline()
+    val engine = new PipelineEngine()
+    val buffer = pipelineBuffer.createNonblockingBuffer[Int](0, Buffer.commitAsIs)
 
-  val pipelineBuffer= new Pipeline()
-  val engine = new PipelineEngine()
-  val buffer  = pipelineBuffer.createNonblockingBuffer[Int](0, Buffer.commitAsIs)
+    def createTurn(): PipeliningTurn = {
+      val turn = engine.makeTurn
+      engine.addTurn(turn)
+      turn
+    }
 
-  private def createTurn(): PipeliningTurn = {
-    val turn = engine.makeTurn
-    engine.addTurn(turn)
-    turn
+    def readStableFrame(): Int = {
+      pipelineBuffer.getStableFrame().content.valueForBuffer(buffer).value
+    }
   }
 
-  def readStableFrame(): Int = {
-    pipelineBuffer.getStableFrame().content.valueForBuffer(buffer).value
-  }
-
-  @Test
-  def testInitialOnlyStable(): Unit = {
+  it should "test Initial Only Stable" in new PipelineState {
     assert(pipelineBuffer.getStableFrame() != null)
     assert(readStableFrame == 0)
     assert(pipelineBuffer.getPipelineFrames().isEmpty)
   }
 
-  @Test
-  def createFirstFrameHasSameValueAsStableExceptTurn(): Unit = {
+  it should "create First Frame Has Same Value As Stable Except Turn" in new PipelineState {
     implicit val turn = createTurn()
     pipelineBuffer.createFrame
     assert(readStableFrame == 0)
@@ -43,8 +41,7 @@ class PipelineBufferTest extends AssertionsForJUnit  {
     assert(newFrame.turn == turn)
   }
 
-  @Test
-  def createWriteAndRemoveFrame(): Unit = {
+  it should "create Write And Remove Frame" in new PipelineState {
     implicit val turn = createTurn()
     pipelineBuffer.createFrame
     assert(pipelineBuffer.hasFrame)
@@ -58,8 +55,7 @@ class PipelineBufferTest extends AssertionsForJUnit  {
     assert(readStableFrame == 1)
   }
 
-  @Test
-  def createMultipleFramesAndRemoveThem(): Unit = {
+  it should "create Multiple Frames And Remove Them" in new PipelineState {
     // Create three frames
     val turn1 = createTurn()
     pipelineBuffer.createFrame(turn1)
@@ -105,8 +101,7 @@ class PipelineBufferTest extends AssertionsForJUnit  {
   }
 
   // SUCH BEHVAIOR NOT SUPPORTED BY CURRENT API
-  /* @Test
-  def createFrameAtSpecificPosition(): Unit = {
+  /*   it should "createFrameAtSpecificPosition" in {
     // Create five frames
     for (i <- 1 to 5) {
       val turn = new PipeliningTurn(engine)
@@ -124,8 +119,7 @@ class PipelineBufferTest extends AssertionsForJUnit  {
 
   } */
 
-  @Test
-  def allFramesVisited(): Unit = {
+  it should "all Frames Visited" in new PipelineState {
     // Create five frames
     for (i <- 1 to 5) {
       val turn = createTurn()
@@ -137,7 +131,7 @@ class PipelineBufferTest extends AssertionsForJUnit  {
 
     assert(pipelineBuffer.getPipelineFrames() == Queue(frame1, frame2, frame3, frame4, frame5))
 
-    var seenFrames : List[Frame[_]] = List()
+    var seenFrames: List[Frame[_]] = List()
     pipelineBuffer.foreachFrameTopDown(frame => seenFrames :+= frame)
 
     assert(pipelineBuffer.getPipelineFrames() == Queue(frame1, frame2, frame3, frame4, frame5))

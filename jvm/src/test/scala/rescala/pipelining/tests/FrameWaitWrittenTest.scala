@@ -2,33 +2,40 @@ package rescala.pipelining.tests
 
 import java.util.concurrent.CyclicBarrier
 
-import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatest.FlatSpec
+import org.scalatest.concurrent.TimeLimitedTests
+import org.scalatest.time.SpanSugar._
 import rescala.pipelining.tests.PipelineTestUtils._
 import rescala.pipelining.{Pipeline, PipelineEngine, PipeliningTurn}
 
-class FrameWaitWrittenTest extends AssertionsForJUnit  {
 
-  implicit val engine = new PipelineEngine()
+class FrameWaitWrittenTest extends FlatSpec with TimeLimitedTests {
+
+  trait PipelineState {
+
+    implicit val engine = new PipelineEngine()
 
 
-  val readFrom = new Pipeline()
+    val readFrom = new Pipeline()
 
-  def createNewTurn(): PipeliningTurn = {
-    val turn = engine.makeTurn
-    engine.addTurn(turn)
-    turn
+    def createNewTurn(): PipeliningTurn = {
+      val turn = engine.makeTurn
+      engine.addTurn(turn)
+      turn
+    }
   }
 
-  @Test(timeout = 100)
-  def doesNotWaitIfNoFrame(): Unit = {
+  override val timeLimit = 100000.millis
+
+
+
+  it should "doesNotWaitIfNoFrame" in new PipelineState {
     val readTurn = createNewTurn
     readFrom.waitUntilCanRead(readTurn)
     // No waiting, so nothing to do to stop waiting
   }
 
-  @Test(timeout = 100)
-  def doesNotWaitOnLaterTurn(): Unit = {
+  it should "doesNotWaitOnLaterTurn" in new PipelineState {
     val readTurn = createNewTurn
     val frameTurn = createNewTurn
     readFrom.createFrame(frameTurn)
@@ -36,8 +43,7 @@ class FrameWaitWrittenTest extends AssertionsForJUnit  {
     // Again nothing to do
   }
 
-  @Test(timeout = 1000)
-  def doesWaitOnEarlierTurn(): Unit = {
+  it should "doesWaitOnEarlierTurn" in new PipelineState {
     val frameTurn = createNewTurn
     val readTurn = createNewTurn
     readFrom.createFrame(frameTurn)
@@ -55,11 +61,10 @@ class FrameWaitWrittenTest extends AssertionsForJUnit  {
     writeThread.start()
     readThread.join()
     writeThread.join()
-    assert(wasWritten, "waitUntilCanRead does not wait for an earlier turn")
+    assert(wasWritten, "wait Until Can Read does not wait for an earlier turn")
   }
 
-  @Test(timeout = 2000)
-  def doesWaitOnEarlierInsertedTurn(): Unit = {
+  it should "doesWaitOnEarlierInsertedTurn" in new PipelineState {
     val beginFrameTurn = createNewTurn
     val insertedFrameTurn = createNewTurn
     val readTurn = createNewTurn
@@ -98,12 +103,11 @@ class FrameWaitWrittenTest extends AssertionsForJUnit  {
     allFrames.foreach(_.start)
     allFrames.foreach(_.join)
 
-    assert(wasWritten, "waitUntilCanRead does not wait for an inserted but earlier turn")
+    assert(wasWritten, "wait Until Can Read does not wait for an inserted but earlier turn")
 
   }
 
-  @Test(timeout = 2000)
-  def doesWaitOnOtherFrameIfWaitingIsDeleted(): Unit = {
+  it should "doesWaitOnOtherFrameIfWaitingIsDeleted" in new PipelineState {
     val beginFrameTurn = createNewTurn
     val deletedFrameTurn = createNewTurn
     val readTurn = createNewTurn
@@ -136,11 +140,10 @@ class FrameWaitWrittenTest extends AssertionsForJUnit  {
     allThreads.foreach(_.start)
     allThreads.foreach(_.join)
 
-    assert(wasWritten, "waitUntilCanRead does not wait if an earlier frame is deleted but no frame remains")
+    assert(wasWritten, "wait Until Can Read does not wait if an earlier frame is deleted but no frame remains")
   }
 
-  @Test(timeout = 2000)
-  def stopsWaitingIfDependingFrameIsDeleted(): Unit = {
+  it should "stopsWaitingIfDependingFrameIsDeleted" in new PipelineState {
     val deletedFrameTurn = createNewTurn()
     val readTurn = createNewTurn()
 
@@ -157,16 +160,14 @@ class FrameWaitWrittenTest extends AssertionsForJUnit  {
 
   }
 
-  @Test(timeout = 1000)
-  def doesNotWaitForItself(): Unit = {
+  it should "doesNotWaitForItself" in new PipelineState {
     val readTurn = createNewTurn
     readFrom.createFrame (readTurn)
 
     readFrom.waitUntilCanRead(readTurn)
   }
 
-  @Test(timeout = 1000)
-  def doesWaitForPreceedingButNotForPostceedingFrames(): Unit = {
+  it should "doesWaitForPreceedingButNotForPostceedingFrames" in new PipelineState {
     val beforeFrameTurn = createNewTurn()
     val readTurn = createNewTurn()
     val afterFrameTurn = createNewTurn()
@@ -191,7 +192,7 @@ class FrameWaitWrittenTest extends AssertionsForJUnit  {
      writeThread.join
      readThread.join
 
-     assert(wasWritten, "waitUntilCanRead does not wait correctly if a postceeding frame is there")
+     assert(wasWritten, "wait Until Can Read does not wait correctly if a postceeding frame is there")
 
   }
 

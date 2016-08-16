@@ -16,7 +16,7 @@ class OOPropertiesEventTest extends RETests {
 
 
 
-  allEngines("eventsAreInherited"){ engine => import engine._
+  allEngines("events Are Inherited"){ engine => import engine._
 
     var test = 0
 
@@ -32,7 +32,7 @@ class OOPropertiesEventTest extends RETests {
   }
 
 
-  allEngines("canTriggerEventsInSuperclass"){ engine => import engine._
+  allEngines("can Trigger Events InSuperclass"){ engine => import engine._
 
     var test = 0
 
@@ -48,7 +48,7 @@ class OOPropertiesEventTest extends RETests {
   }
 
 
-  allEngines("issueWithOverridingEvents"){ engine => import engine._
+  allEngines("issue With Overriding Events"){ engine => import engine._
 
      intercept[NullPointerException] {
       var test = 0

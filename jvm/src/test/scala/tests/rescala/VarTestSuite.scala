@@ -2,14 +2,6 @@ package tests.rescala
 
 //These 3 are for JUnitRunner
 
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
-import org.scalatest.junit.AssertionsForJUnit
-import rescala.engines.Engine
-import rescala.graph.Struct
-import rescala.propagation.Turn
-
 
 
 
@@ -17,19 +9,19 @@ class VarTestSuite extends RETests {
 
 
 
-  allEngines("getValAfterCreationReturnsInitializationValue"){ engine => import engine._
+  allEngines("get Val After Creation Returns Initialization Value"){ engine => import engine._
     val v = Var(1)
     assert(v.now == 1)
   }
 
-  allEngines("getValReturnsCorrectValue"){ engine => import engine._
+  allEngines("get Val Returns Correct Value"){ engine => import engine._
     val v = Var(1)
     v.set(10)
     assert(v.now == 10)
   }
 
 
-  allEngines("varNotifiesSignalOfChanges"){ engine => import engine._
+  allEngines("var Notifies Signal OfChanges"){ engine => import engine._
     val v = Var(1)
     val s = v.map { _ + 1 }
     assert(v.now == 1)
@@ -41,7 +33,7 @@ class VarTestSuite extends RETests {
 
   }
 
-  allEngines("changeEventOnlyTriggeredOnValueChange"){ engine => import engine._
+  allEngines("change Event Only Triggered OnValue Change"){ engine => import engine._
     var changes = 0
     val v = Var(1)
     val changed = v.change
@@ -55,7 +47,7 @@ class VarTestSuite extends RETests {
     assert(changes == 2)
   }
 
-  allEngines("dependantIsOnlyInvokedOnValueChange"){ engine => import engine._
+  allEngines("dependant IsOnly Invoked OnValue Change"){ engine => import engine._
     var changes = 0
     val v = Var(1)
     val s = v.map { i => changes += 1; i + 1 }
@@ -66,7 +58,7 @@ class VarTestSuite extends RETests {
     assert(changes == 2)
   }
 
-  allEngines("transformVar"){ engine => import engine._
+  allEngines("transform Var"){ engine => import engine._
     val v1 = Var(0)
     def inc() = v1.transform(1.+)
 

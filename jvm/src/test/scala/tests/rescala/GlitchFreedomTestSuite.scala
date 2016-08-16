@@ -1,13 +1,6 @@
 package tests.rescala
 
 
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
-import org.scalatest.junit.AssertionsForJUnit
-import rescala.engines.Engine
-import rescala.graph.Struct
-import rescala.propagation.Turn
 import rescala.reactives.Signals
 
 import scala.language.implicitConversions
@@ -20,7 +13,7 @@ class GlitchFreedomTestSuite extends RETests {
 
 
 
-  allEngines("noGlitchesInSimpleCase"){ engine => import engine._
+  allEngines("no Glitches InSimple Case"){ engine => import engine._
 
     val v1 = Var(1)
     val s1 = v1.map { 2 * _ }

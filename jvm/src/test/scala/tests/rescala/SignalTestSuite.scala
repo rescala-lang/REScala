@@ -1,7 +1,7 @@
 package tests.rescala
 
-import rescala.reactives.Signals
 import rescala.Infiltrator.assertLevel
+import rescala.reactives.Signals
 
 
 class SignalTestSuite extends RETests {
@@ -10,7 +10,7 @@ class SignalTestSuite extends RETests {
 
 
 
-  allEngines("signalReEvaluatesTheExpression"){ engine => import engine._
+  allEngines("signal ReEvaluates The Expression"){ engine => import engine._
     val v = Var(0)
     var i = 1
     val s: Signal[Int] = v.map { _ => i }
@@ -19,7 +19,7 @@ class SignalTestSuite extends RETests {
     assert(s.now == 2)
   }
 
-  allEngines("theExpressionIsNoteEvaluatedEveryTimeGetValIsCalled"){ engine => import engine._
+  allEngines("the Expression IsNote Evaluated Every Time Get Val IsCalled"){ engine => import engine._
     var a = 10
     val s: Signal[Int] = Signals.static()(_ => 1 + 1 + a)
     assert(s.now === 12)
@@ -28,12 +28,12 @@ class SignalTestSuite extends RETests {
   }
 
 
-  allEngines("simpleSignalReturnsCorrectExpressions"){ engine => import engine._
+  allEngines("simple Signal Returns Correct Expressions"){ engine => import engine._
     val s: Signal[Int] = Signals.static()(_ => 1 + 1 + 1)
     assert(s.now === 3)
   }
 
-  allEngines("theExpressionIsEvaluatedOnlyOnce"){ engine => import engine._
+  allEngines("the Expression IsEvaluated Only Once"){ engine => import engine._
 
     var a = 0
     val v = Var(10)
@@ -50,7 +50,7 @@ class SignalTestSuite extends RETests {
     assert(a == 3)
   }
 
-  allEngines("handlersAreExecuted"){ engine => import engine._
+  allEngines("handlers Are Executed"){ engine => import engine._
 
     var test = 0
     val v = Var(1)
@@ -69,7 +69,7 @@ class SignalTestSuite extends RETests {
     assert(test == 3)
   }
 
-  allEngines("levelIsCorrectlyComputed"){ engine => import engine._
+  allEngines("level IsCorrectly Computed"){ engine => import engine._
 
     val v = Var(1)
 
@@ -84,7 +84,7 @@ class SignalTestSuite extends RETests {
   }
 
 
-  allEngines("noChangePropagations"){ engine => import engine._
+  allEngines("no Change Propagations"){ engine => import engine._
     val v = Var(1)
     val s = v.map(_ => 1)
     val s2 = Signal{ s() }

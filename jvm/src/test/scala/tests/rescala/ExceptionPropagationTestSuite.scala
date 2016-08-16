@@ -1,13 +1,5 @@
 package tests.rescala
 
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
-import org.scalatest.junit.AssertionsForJUnit
-import rescala.engines.Engine
-import rescala.graph.Struct
-import rescala.propagation.Turn
-
 import scala.util.{Failure, Success, Try}
 
 
@@ -18,7 +10,7 @@ class ExceptionPropagationTestSuite extends RETests {
 
 
 
-  allEngines("basicSignalExceptions"){ engine => import engine._
+  allEngines("basic Signal Exceptions"){ engine => import engine._
     val v = Var(42)
     val ds = Signal { 100 / v() }
     val ss = v.map(v => 100 / v)
@@ -33,7 +25,7 @@ class ExceptionPropagationTestSuite extends RETests {
 
   }
 
-  allEngines("basicEventExcepitons"){ engine => import engine._
+  allEngines("basic Event Excepitons"){ engine => import engine._
     val e = Evt[Int]
     val de = Event { e().map(100./) }
     val se = e.map(v => 100 / v)
@@ -57,7 +49,7 @@ class ExceptionPropagationTestSuite extends RETests {
   }
 
 
-  allEngines("moreExceptions"){ engine => import engine._
+  allEngines("more Exceptions"){ engine => import engine._
     val input = Evt[String]
     val trimmed = input.map(_.trim)
     val toInted = trimmed.map(_.toInt)
@@ -93,7 +85,7 @@ class ExceptionPropagationTestSuite extends RETests {
 
   }
 
-  allEngines("signalRegenerating"){ engine => import engine._
+  allEngines("signal Regenerating"){ engine => import engine._
     val input = Var("100")
     val trimmed = input.map(_.trim)
     val folded = trimmed.map(_.toInt)

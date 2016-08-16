@@ -1,7 +1,6 @@
 package rescala.pipelining.tests
 
-import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatest.FlatSpec
 import rescala.graph.Reactive
 import rescala.pipelining.Pipeline._
 import rescala.pipelining.{Pipeline, PipelineEngine, PipelineStruct, PipeliningTurn}
@@ -9,12 +8,9 @@ import rescala.reactives.Signals
 
 import scala.collection.immutable.Queue
 
-class ConflictResolvingTest extends AssertionsForJUnit  {
+class ConflictResolvingTest extends FlatSpec {
 
 
-
-  implicit val engine = new PipelineEngine()
-  import engine.Var
 
   /*
    * This test suite runs on the following topology: S1 and S2 are sources
@@ -30,10 +26,9 @@ class ConflictResolvingTest extends AssertionsForJUnit  {
    */
 
 
-
-
-  @Test
-  def testMultipleUpdates(): Unit = {
+  it should "test Multiple Updates" in {
+    implicit val engine = new PipelineEngine()
+    import engine.Var
 
     val s1 = Var(0)
     val s2 = Var(0)
@@ -65,8 +60,9 @@ class ConflictResolvingTest extends AssertionsForJUnit  {
 
   }
 
-  @Test
-  def testEvaluationSequential(): Unit = {
+  it should "test Evaluation Sequential" in {
+    implicit val engine = new PipelineEngine()
+    import engine.Var
 
     val s1 = Var(0)
     val s2 = Var(0)
