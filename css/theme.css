@@ -14,7 +14,6 @@ body {
   margin: 5px 0;
 }
 
-
 .blog-post {
   padding-bottom: 70px;
   font-size: 26px;
@@ -28,14 +27,10 @@ body {
   width: 90%
 }
 
-
 img {
     float: right;
     padding: 30px;
 }
-
-
-
 
 /*
  * Override Bootstrap's default container.
@@ -51,4 +46,56 @@ h1,h2,h3,h4 {
   padding-bottom: 9px;
   margin: 40px 0 20px;
   border-bottom: 1px solid #eee;
+}
+
+/*
+ * Navigation bar
+*/
+
+#navbar {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #333;
+  position: fixed;
+  right: 0;
+  left: 0;
+  top: 0;
+  z-index: 1030;
+}
+
+#navbar a {
+  display: inline-block;
+  color: #f2f2f2;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+  transition: 0.3s;
+  font-size: 17px;
+}
+
+#navbar a:hover {background-color: #555;}
+
+#navbar .icon {display: none;}
+
+@media screen and (max-width:680px) {
+  #navbar :not(:first-child) {display: none;}
+  #navbar .icon {
+    float: right;
+    display: inline-block;
+  }
+}
+
+@media screen and (max-width:680px) {
+  #navbar.responsive .icon {
+    position: absolute;
+    right: 0;
+    top: 0;
+  }
+  #navbar.responsive a {
+    display: block;
+    text-align: left;
+    float: none;
+  }
 }
