@@ -47,13 +47,6 @@ img {
   }
 }
 
-
-body .syntaxhighlighter code, body .syntaxhighlighter .gutter { 
-	overflow-y: hidden !important; 
-	overflow-x: auto !important; 
-  font-size: 20px !important; 
-}
-
 h1,h2,h3,h4 {
   padding-bottom: 9px;
   margin: 40px 0 20px;
