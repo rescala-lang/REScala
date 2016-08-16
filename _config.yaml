@@ -21,3 +21,17 @@ defaults:
       path: ""
     values:
       layout: "default"
+
+collections:
+  rescala:
+    nav_id: 1
+    name: REScala
+  escala:
+    nav_id: 2
+    name: EScala
+  distributed:
+    nav_id: 3
+    name: Distributed
+  jescala:
+    nav_id: 4
+    name: JEScala
