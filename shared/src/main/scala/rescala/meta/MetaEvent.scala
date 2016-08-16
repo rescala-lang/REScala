@@ -3,19 +3,40 @@ package rescala.meta
 import scala.util.Try
 
 trait MetaPointer[T] {
-  var node : ReactiveNode
+  protected[meta] var node : Option[ReactiveNode]
+  def isEmpty = node.isEmpty
+  def isDefined = node.isDefined
 
-  protected def createDependentNode() = {
-    node.graph.createReactiveNode(Set(node))
+  protected[meta] def createDependentNode() = {
+    node match {
+      case None => throw new IllegalAccessException("Cannot create new dependencies for a null pointer!")
+      case Some(n) => n.graph.createReactiveNode(Set(n))
+    }
   }
 
-  protected def createDependentNode(others : ReactiveNode*) = {
-    node.graph.createReactiveNode(Set(node) ++ others)
+  protected[meta] def createDependentNode(others : ReactiveNode*) = {
+    node match {
+      case None => throw new IllegalAccessException("Cannot create new dependencies for a null pointer!")
+      case Some(n) => n.graph.createReactiveNode(Set(n) ++ others)
+    }
   }
 
-  protected def merge(others : MetaPointer[T]*): Unit = {
-    val mergedNode = node.graph.mergeNodes((others.map(_.node) :+ node).toSet)
-    others.foreach(_.node = mergedNode)
+  protected[meta] def createDependentNode(others : Option[ReactiveNode]*) = {
+    if (others.exists(_.isEmpty)) throw new IllegalArgumentException("Cannot add a null pointer as a dependency!")
+    node match {
+      case None => throw new IllegalAccessException("Cannot create new dependencies for a null pointer!")
+      case Some(n) => Some(n.graph.createReactiveNode(Set(n) ++ others.map(_.get)))
+    }
+  }
+
+  protected[meta] def merge(others : MetaPointer[T]*): Unit = {
+    node match {
+      case None => throw new IllegalAccessException("Cannot merge into a null pointer!")
+      case Some(n) => val mergedNode = n.graph.mergeNodes((others.map(_.node.getOrElse(n)) :+ n).toSet)
+        node = Some(mergedNode)
+        others.foreach(_.node = None)
+    }
+
   }
 }
 
@@ -48,28 +69,28 @@ trait MetaSignalPointer[A] extends MetaPointer[A] {
   def change: ChangeEventPointer[A] = ChangeEventPointer(createDependentNode(), this)
 }
 
-case class MetaObservePointer[T](override val node : ReactiveNode, base : MetaReactivePointer[T], onSuccess: (T) => Unit, onFailure: (Throwable) => Unit) extends MetaPointer[Unit] {
+case class MetaObservePointer[T](protected[meta] override var node : Option[ReactiveNode], base : MetaReactivePointer[T], onSuccess: (T) => Unit, onFailure: (Throwable) => Unit) extends MetaPointer[Unit] {
 }
 
-case class EvtEventPointer[T](override val node : ReactiveNode) extends MetaEventPointer[T]
-case class ChangeEventPointer[T](override val node : ReactiveNode, base : MetaSignalPointer[T]) extends MetaEventPointer[(T, T)]
-case class FilteredEventPointer[T](override val node : ReactiveNode, base : MetaEventPointer[T], pred: (T) => Boolean) extends MetaEventPointer[T]
-case class OrEventPointer[T, U >: T](override val node : ReactiveNode, base : MetaEventPointer[T], other : MetaEventPointer[U]) extends MetaEventPointer[U]
-case class ExceptEventPointer[T, U](override val node : ReactiveNode, base : MetaEventPointer[T], other : MetaEventPointer[U]) extends MetaEventPointer[T]
-case class AndEventPointer[T, U, R](override val node : ReactiveNode, base : MetaEventPointer[T], other : MetaEventPointer[U], merger: (T, U) => R) extends MetaEventPointer[T]
-case class ZippedEventPointer[T, U](override val node : ReactiveNode, base : MetaEventPointer[T], other : MetaEventPointer[U]) extends MetaEventPointer[(T, U)]
-case class MappedEventPointer[T, U](override val node : ReactiveNode, base : MetaEventPointer[T], mapping: (T) => U) extends MetaEventPointer[U]
-case class FlatMappedEventPointer[T, B](override val node : ReactiveNode, base : MetaEventPointer[T], f: (T) => MetaEventPointer[B]) extends MetaEventPointer[B]
-case class UnwrappedEventPointer[A, T](override val node : ReactiveNode, base : MetaSignalPointer[A]) extends MetaEventPointer[T]
-case class TryEventPointer[T](override val node : ReactiveNode, base : MetaEventPointer[T]) extends MetaEventPointer[Try[T]]
+case class EvtEventPointer[T](protected[meta] override var node : Option[ReactiveNode]) extends MetaEventPointer[T]
+case class ChangeEventPointer[T](protected[meta] override var node : Option[ReactiveNode], base : MetaSignalPointer[T]) extends MetaEventPointer[(T, T)]
+case class FilteredEventPointer[T](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], pred: (T) => Boolean) extends MetaEventPointer[T]
+case class OrEventPointer[T, U >: T](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], other : MetaEventPointer[U]) extends MetaEventPointer[U]
+case class ExceptEventPointer[T, U](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], other : MetaEventPointer[U]) extends MetaEventPointer[T]
+case class AndEventPointer[T, U, R](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], other : MetaEventPointer[U], merger: (T, U) => R) extends MetaEventPointer[T]
+case class ZippedEventPointer[T, U](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], other : MetaEventPointer[U]) extends MetaEventPointer[(T, U)]
+case class MappedEventPointer[T, U](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], mapping: (T) => U) extends MetaEventPointer[U]
+case class FlatMappedEventPointer[T, B](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], f: (T) => MetaEventPointer[B]) extends MetaEventPointer[B]
+case class UnwrappedEventPointer[A, T](protected[meta] override var node : Option[ReactiveNode], base : MetaSignalPointer[A]) extends MetaEventPointer[T]
+case class TryEventPointer[T](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T]) extends MetaEventPointer[Try[T]]
 
-case class VarSignalPointer[A](override val node : ReactiveNode) extends MetaSignalPointer[A]
-case class FoldedSignalPointer[T, A](override val node : ReactiveNode, base : MetaEventPointer[T], init: A, fold: (A, T) => A) extends MetaSignalPointer[A]
-case class ToggledSignalPointer[T, A](override val node : ReactiveNode, base : MetaEventPointer[T], a : MetaSignalPointer[A], b : MetaSignalPointer[A]) extends MetaSignalPointer[A]
-case class SnapshotSignalPointer[T, A](override val node : ReactiveNode, base : MetaEventPointer[T], s : MetaSignalPointer[A]) extends MetaSignalPointer[A]
-case class SwitchOnceSignalPointer[T, A](override val node : ReactiveNode, base : MetaEventPointer[T], original : MetaSignalPointer[A], newSignal : MetaSignalPointer[A]) extends MetaSignalPointer[A]
-case class SwitchToSignalPointer[T, A >: T](override val node : ReactiveNode, base : MetaEventPointer[T], original : MetaSignalPointer[A]) extends MetaSignalPointer[A]
-case class DelayedSignalPointer[A](override val node : ReactiveNode, base : MetaSignalPointer[A], n: Int) extends MetaSignalPointer[A]
-case class MappedSignalPointer[A, U](override val node : ReactiveNode, base : MetaSignalPointer[A],  mapping: (A) => U) extends MetaSignalPointer[U]
-case class FlattenedSignalPointer[A, B](override val node : ReactiveNode, base : MetaSignalPointer[A]) extends MetaSignalPointer[B]
-case class TrySignalPointer[A](override val node : ReactiveNode, base : MetaSignalPointer[A]) extends MetaSignalPointer[Try[A]]
+case class VarSignalPointer[A](protected[meta] override var node : Option[ReactiveNode]) extends MetaSignalPointer[A]
+case class FoldedSignalPointer[T, A](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], init: A, fold: (A, T) => A) extends MetaSignalPointer[A]
+case class ToggledSignalPointer[T, A](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], a : MetaSignalPointer[A], b : MetaSignalPointer[A]) extends MetaSignalPointer[A]
+case class SnapshotSignalPointer[T, A](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], s : MetaSignalPointer[A]) extends MetaSignalPointer[A]
+case class SwitchOnceSignalPointer[T, A](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], original : MetaSignalPointer[A], newSignal : MetaSignalPointer[A]) extends MetaSignalPointer[A]
+case class SwitchToSignalPointer[T, A >: T](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], original : MetaSignalPointer[A]) extends MetaSignalPointer[A]
+case class DelayedSignalPointer[A](protected[meta] override var node : Option[ReactiveNode], base : MetaSignalPointer[A], n: Int) extends MetaSignalPointer[A]
+case class MappedSignalPointer[A, U](protected[meta] override var node : Option[ReactiveNode], base : MetaSignalPointer[A],  mapping: (A) => U) extends MetaSignalPointer[U]
+case class FlattenedSignalPointer[A, B](protected[meta] override var node : Option[ReactiveNode], base : MetaSignalPointer[A]) extends MetaSignalPointer[B]
+case class TrySignalPointer[A](protected[meta] override var node : Option[ReactiveNode], base : MetaSignalPointer[A]) extends MetaSignalPointer[Try[A]]

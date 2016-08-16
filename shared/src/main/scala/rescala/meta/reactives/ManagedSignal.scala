@@ -14,7 +14,7 @@ import scala.util.Try
   * @tparam A Type stored by the signal
   * @tparam S Struct type used for the propagation of the signal
   */
-trait ManagedSignal[+A, S <: Struct] extends SignalLike[A, S, ManagedSignal, ManagedEvent] with ManagedReactive
+trait ManagedSignal[+A, S <: Struct] extends SignalLike[A, S, ManagedSignal, ManagedEvent] with ManagedReactive[A]
 
 /**
   * Actual implementation of a managed signal that has its propagation handled by a connected meta-graph representation.

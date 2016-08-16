@@ -6,13 +6,13 @@ class ReactiveGraph {
   def createVar[A]() : VarSignalPointer[A] = {
     val node = new ReactiveNode(this, Set())
     nodes += node
-    VarSignalPointer[A](node)
+    VarSignalPointer[A](Some(node))
   }
 
   def createEvt[T]() : EvtEventPointer[T] = {
     val node = new ReactiveNode(this, Set())
     nodes += node
-    EvtEventPointer[T](node)
+    EvtEventPointer[T](Some(node))
   }
 
   protected[meta] def createReactiveNode[T](initDependencies : Set[ReactiveNode] = Set()): ReactiveNode = {

@@ -1,7 +1,5 @@
 package rescala.meta.reactives
 
-import java.util.concurrent.CompletionException
-
 import rescala.engines.{Engine, Ticket}
 import rescala.graph.Struct
 import rescala.meta.{ManagedReactive, ReactiveNode}
@@ -16,7 +14,7 @@ import scala.util.Try
   * @tparam T Type returned when the event fires
   * @tparam S Struct type used for the propagation of the event
   */
-trait ManagedEvent[+T, S <: Struct] extends EventLike[T, S, ManagedSignal, ManagedEvent] with ManagedReactive
+trait ManagedEvent[+T, S <: Struct] extends EventLike[T, S, ManagedSignal, ManagedEvent] with ManagedReactive[T]
 
 /**
   * Actual implementation of a managed event that has its propagation handled by a connected meta-graph representation.
