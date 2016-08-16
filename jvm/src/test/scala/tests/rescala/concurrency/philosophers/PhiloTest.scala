@@ -1,7 +1,7 @@
 package tests.rescala.concurrency.philosophers
 
 import org.scalatest.FunSuite
-import rescala.engines.{Engine, JVMEngines}
+import rescala.engines.{Engine, Engines}
 import rescala.graph.Struct
 import rescala.propagation.Turn
 import tests.rescala.concurrency.Spawn
@@ -47,13 +47,13 @@ class PhiloTest extends FunSuite {
     println(s"philo party done sleeping on $engine (dynamic $dynamic)")
   }
 
-  test("eating Contests Spinning") {`eat!`(JVMEngines.parrp, dynamic = false)}
+  test("eating Contests Spinning") {`eat!`(Engines.parrp, dynamic = false)}
 
-  test("eating Contests Spinning Dynamic") {`eat!`(JVMEngines.parrp, dynamic = true)}
+  test("eating Contests Spinning Dynamic") {`eat!`(Engines.parrp, dynamic = true)}
 
-  test("eating Contests Spinning Locksweep") {`eat!`(JVMEngines.locksweep, dynamic = false)}
+  test("eating Contests Spinning Locksweep") {`eat!`(Engines.locksweep, dynamic = false)}
 
-  test("eating Contests Spinning Dynamic Locksweep") {`eat!`(JVMEngines.locksweep, dynamic = true)}
+  test("eating Contests Spinning Dynamic Locksweep") {`eat!`(Engines.locksweep, dynamic = true)}
 
   //  test("eatingContestsSpinningParallelLocksweep"){`eat!`(JVMEngines.parallellocksweep, dynamic = false)}
   //

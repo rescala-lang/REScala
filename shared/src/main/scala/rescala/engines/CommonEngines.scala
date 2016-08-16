@@ -2,13 +2,19 @@ package rescala.engines
 
 import java.util.concurrent.locks.ReentrantLock
 
-import rescala.graph.{LevelSporeImpl, Pulse, SimpleStruct}
-import rescala.propagation.LevelBasedPropagation
+import rescala.graph.{LevelSporeImpl, Pulse, SimpleStruct, Struct}
+import rescala.propagation.{LevelBasedPropagation, Turn}
+
+import scala.language.existentials
 
 /**
   * Basic implementations of propagation engines
   */
-object Engines {
+trait CommonEngines {
+
+  type TEngine = Engine[S, Turn[S]] forSome { type S <: Struct }
+
+
   private[rescala] class SimpleNoLock extends LevelBasedPropagation[SimpleStruct] {
     def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): SimpleStruct#SporeP[P, R] =
       new LevelSporeImpl[P, R](initialValue, transient, initialIncoming)
@@ -34,11 +40,6 @@ object Engines {
   }
 
   implicit val unmanaged: SimpleEngine = new EngineImpl[SimpleStruct, SimpleNoLock]("Unmanaged", new SimpleNoLock())
-
-  implicit val default: SimpleEngine = synchron
-
-  val all: List[SimpleEngine] = List(synchron, unmanaged)
-
 
 }
 

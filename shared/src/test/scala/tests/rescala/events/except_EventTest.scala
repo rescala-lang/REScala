@@ -1,7 +1,5 @@
 package tests.rescala.events
 
-
-
 class except_EventTest extends tests.rescala.RETests {
 
 

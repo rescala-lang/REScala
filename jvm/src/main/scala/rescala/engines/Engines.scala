@@ -2,7 +2,6 @@ package rescala.engines
 
 import java.util.concurrent.{Executor, Executors}
 
-import rescala.engines.Engines.{synchron, synchronFair, unmanaged}
 import rescala.graph.Struct
 import rescala.parrp._
 import rescala.pipelining.{PipelineEngine, PipelineStruct, PipeliningTurn}
@@ -12,9 +11,8 @@ import rescala.stm.STMTurn
 import scala.concurrent.stm.atomic
 import scala.language.existentials
 
-object JVMEngines {
+object Engines extends CommonEngines {
 
-  type TEngine = Engine[S, Turn[S]] forSome { type S <: Struct }
 
   def byName[S <: Struct](name: String): Engine[S, Turn[S]] = name match {
     case "synchron" => synchron.asInstanceOf[Engine[S, Turn[S]]]

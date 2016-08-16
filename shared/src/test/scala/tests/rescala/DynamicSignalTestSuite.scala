@@ -175,8 +175,8 @@ class DynamicSignalTestSuite extends RETests with Whenever {
   allEngines("creating Signals Inside Signals") { engine => import engine._
 
     // ignore for locksweep, as it does not support predeclared levels, so would run into an endless loop below
-    whenever(engine != rescala.engines.JVMEngines.locksweep &&
-      engine != rescala.engines.JVMEngines.parallellocksweep) {
+    whenever(engine != rescala.engines.Engines.locksweep &&
+      engine != rescala.engines.Engines.parallellocksweep) {
 
       val outside = Var(1)
 

@@ -1,6 +1,5 @@
 package tests.rescala.events
 
-
 import tests.rescala.RETests
 
 

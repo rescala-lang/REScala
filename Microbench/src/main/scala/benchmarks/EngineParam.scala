@@ -1,7 +1,7 @@
 package benchmarks
 
 import org.openjdk.jmh.annotations.{Param, Scope, State}
-import rescala.engines.{Engine, JVMEngines}
+import rescala.engines.{Engine, Engines}
 import rescala.parrp.Backoff
 import rescala.propagation.Turn
 
@@ -18,8 +18,8 @@ class EngineParam[S <: rescala.graph.Struct] {
   var factorBackoff: Double = _
 
   def engine: Engine[S, Turn[S]] = {
-    if (engineName == "parrp") JVMEngines.parrpWithBackoff(() => new Backoff(minBackoff, maxBackoff, factorBackoff)).asInstanceOf[Engine[S, Turn[S]]]
-    if (engineName == "locksweep") JVMEngines.locksweepWithBackoff(() => new Backoff(minBackoff, maxBackoff, factorBackoff)).asInstanceOf[Engine[S, Turn[S]]]
-    else JVMEngines.byName[S](engineName)
+    if (engineName == "parrp") Engines.parrpWithBackoff(() => new Backoff(minBackoff, maxBackoff, factorBackoff)).asInstanceOf[Engine[S, Turn[S]]]
+    if (engineName == "locksweep") Engines.locksweepWithBackoff(() => new Backoff(minBackoff, maxBackoff, factorBackoff)).asInstanceOf[Engine[S, Turn[S]]]
+    else Engines.byName[S](engineName)
   }
 }

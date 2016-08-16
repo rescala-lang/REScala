@@ -8,12 +8,16 @@ import scala.util.{Failure, Success, Try}
 class ExceptionPropagationTestSuite extends RETests {
 
 
+  // we need this because scalajs does not throw exceptions
+  def div(in: Int) = div2(in, 100)
+  def div2(in: Int, acc: Int) = if (in == 0) throw new ArithmeticException() else acc / in
+
 
 
   allEngines("basic Signal Exceptions"){ engine => import engine._
     val v = Var(42)
-    val ds = Signal { 100 / v() }
-    val ss = v.map(v => 100 / v)
+    val ds = Signal { div(v()) }
+    val ss = v.map(div)
 
     assert(ds.now == 100 / v.now, "dynamic arithmetic error")
     assert(ss.now == 100 / v.now, "static arithmetic error")
@@ -27,8 +31,8 @@ class ExceptionPropagationTestSuite extends RETests {
 
   allEngines("basic Event Excepitons"){ engine => import engine._
     val e = Evt[Int]
-    val de = Event { e().map(100./) }
-    val se = e.map(v => 100 / v)
+    val de = Event { e().map(div) }
+    val se = e.map(div)
 
     var dres: Try[Int] = null
     var sres: Try[Int] = null
@@ -53,7 +57,7 @@ class ExceptionPropagationTestSuite extends RETests {
     val input = Evt[String]
     val trimmed = input.map(_.trim)
     val toInted = trimmed.map(_.toInt)
-    val folded = toInted.fold(100)((acc, v) => acc / v)
+    val folded = toInted.fold(100)((acc, v) => div2(v, acc))
     val `change'd` = folded.change.map(Success(_)).recover(Failure(_))
 
     var res: Try[(Int, Int)] = null

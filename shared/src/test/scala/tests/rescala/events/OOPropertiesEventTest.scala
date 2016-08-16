@@ -1,7 +1,5 @@
 package tests.rescala.events
 
-
-
 import tests.rescala.RETests
 
 
@@ -50,7 +48,7 @@ class OOPropertiesEventTest extends RETests {
 
   allEngines("issue With Overriding Events"){ engine => import engine._
 
-     intercept[NullPointerException] {
+     intercept[Exception] {
       var test = 0
 
       class A {

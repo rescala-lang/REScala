@@ -1,11 +1,6 @@
 package tests.rescala
 
 
-import rescala.pipelining.PipelineEngine
-
-
-
-
 class TicketTest extends RETests {
 
 
@@ -13,7 +8,7 @@ class TicketTest extends RETests {
    * you should not do this. */
   def getTurn[S2 <: rescala.graph.Struct](implicit engine: rescala.engines.Engine[S2, rescala.propagation.Turn[S2]]): rescala.propagation.Turn[S2] = engine.plan()(identity)
 
-  allEngines("none Dynamic NoImplicit"){ engine => import engine._
+  allEngines("none Dynamic NoImplicit") { engine => import engine._
     assert(implicitly[Ticket].self === Right(engine))
   }
 
@@ -24,29 +19,29 @@ class TicketTest extends RETests {
     }
   }
 
-  allEngines("none Dynamic Some Implicit"){ engine => import engine._
+  allEngines("none Dynamic Some Implicit") { engine => import engine._
     implicit val implicitTurn: Turn = getTurn
     assert(implicitly[Ticket].self === Left(implicitTurn))
     assert(implicitly[Ticket].apply(identity) === implicitTurn)
   }
 
   // Cannot run a turn inside a turn with pipelining
-  allEngines("some Dynamic Some Implicit"){ engine => import engine._
-    if (engine.isInstanceOf[PipelineEngine]) {
-      throw new IllegalStateException("pipeline engine cannot run a turn inside a turn")
+  allEngines("some Dynamic Some Implicit") { engine => import engine._
+    //    if (engine.isInstanceOf[PipelineEngine]) {
+    //      throw new IllegalStateException("pipeline engine cannot run a turn inside a turn")
+    //    }
+    //    else {
+    engine.plan() { (dynamicTurn: Turn) =>
+      implicit val implicitTurn: Turn = getTurn
+      assert(implicitly[Ticket].self === Left(implicitTurn))
+      assert(implicitly[Ticket].apply(identity) === implicitTurn)
+      //      }
     }
-    else {
-      engine.plan() { (dynamicTurn: Turn) =>
-        implicit val implicitTurn: Turn = getTurn
-        assert(implicitly[Ticket].self === Left(implicitTurn))
-        assert(implicitly[Ticket].apply(identity) === implicitTurn)
-      }
-}
-}
+  }
 
 
 
-  allEngines("implicit InClosures"){ engine => import engine._
+  allEngines("implicit InClosures") { engine => import engine._
     val closureDefinition = getTurn(engine)
     val closure = {
       implicit def it: Turn = closureDefinition
@@ -58,7 +53,7 @@ class TicketTest extends RETests {
     }
   }
 
-  allEngines("dynamic InClosures"){ engine => import engine._
+  allEngines("dynamic InClosures") { engine => import engine._
     val closure = {
       engine.plan() { t =>
         () => implicitly[Ticket]
