@@ -13,15 +13,15 @@ import rescala.propagation.Turn
 import rescala.reactives.Signals
 
 
-object SignalsAndVarsTestSuite extends JUnitParameters
-
-@RunWith(value = classOf[Parameterized])
-class SignalsAndVarsTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
-  implicit val implicitEngine: Engine[S, Turn[S]] = engine
-  import implicitEngine.Var
 
 
-  @Test def handlerIsCalledWhenChangeOccurs(): Unit = {
+
+class SignalsAndVarsTestSuite extends RETests {
+
+
+
+
+  allEngines("handlerIsCalledWhenChangeOccurs"){ engine => import engine._
 
     var test = 0
     val v1 = Var(1)

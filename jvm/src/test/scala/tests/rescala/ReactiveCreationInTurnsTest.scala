@@ -8,15 +8,15 @@ import rescala.engines.Engine
 import rescala.graph.LevelStruct
 import rescala.propagation.Turn
 
-object ReactiveCreationInTurnsTest extends JUnitParameters
 
-@RunWith(value = classOf[Parameterized])
-class ReactiveCreationInTurnsTest[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
-  implicit val implicitEngine: Engine[S, Turn[S]] = engine
 
-  import implicitEngine.Var
 
-  @Test def evaluationsOfInnerSignals(): Unit = {
+class ReactiveCreationInTurnsTest extends RETests {
+
+
+
+
+  allEngines("evaluationsOfInnerSignals"){ engine => import engine._
 
     val v1 = Var(5)
     val c1 = Var(0)
@@ -34,7 +34,7 @@ class ReactiveCreationInTurnsTest[S <: LevelStruct](engine: Engine[S, Turn[S]]) 
 
   }
 
-  @Test def evaluationsOfInnerRelatedSignals(): Unit = {
+  allEngines("evaluationsOfInnerRelatedSignals"){ engine => import engine._
 
     val v1 = Var(5)
     val v2 = v1.map { x =>
@@ -52,7 +52,7 @@ class ReactiveCreationInTurnsTest[S <: LevelStruct](engine: Engine[S, Turn[S]]) 
   }
 
 
-  @Test def changeOfCreatedSignal(): Unit = {
+  allEngines("changeOfCreatedSignal"){ engine => import engine._
 
     engine.plan() { implicit t =>
       val v1 = rescala.reactives.Var(0)

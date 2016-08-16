@@ -10,15 +10,16 @@ import rescala.graph.Struct
 import rescala.propagation.Turn
 import tests.rescala.JUnitParameters
 
+import tests.rescala.RETests
 
-object OR_EventTest extends JUnitParameters
 
-@RunWith(value = classOf[Parameterized])
-class OR_EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
-  implicit val implicitEngine: Engine[S, Turn[S]] = engine
-  import implicitEngine._
 
-  @Test def handlerOf_OR_IsExecutedIfAnyOfTheEventsFires(): Unit = {
+
+class OR_EventTest extends RETests {
+
+
+
+  allEngines("handlerOf_OR_IsExecutedIfAnyOfTheEventsFires"){ engine => import engine._
     var test = 0
     val e1 = Evt[Int]
     val e2 = Evt[Int]
@@ -31,7 +32,7 @@ class OR_EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsFo
 
   }
 
-  @Test def handlerOf_OR_IsExecutedOnlyOnce(): Unit = {
+  allEngines("handlerOf_OR_IsExecutedOnlyOnce"){ engine => import engine._
 
     var test = 0
     val e1 = Evt[Int]

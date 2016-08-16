@@ -1,25 +1,16 @@
 package tests.rescala
 
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
-import org.scalatest.junit.AssertionsForJUnit
+import rescala.reactives.Signals
 import rescala.Infiltrator.assertLevel
-import rescala.engines.Engine
-import rescala.graph.LevelStruct
-import rescala.propagation.Turn
-import rescala.reactives.{Signals, Var}
-
-object SignalTestSuite extends JUnitParameters
-
-@RunWith(value = classOf[Parameterized])
-class SignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
-  implicit val implicitEngine: Engine[S, Turn[S]] = engine
-
-  import implicitEngine.Signal
 
 
-  @Test def signalReEvaluatesTheExpression(): Unit = {
+class SignalTestSuite extends RETests {
+
+
+
+
+
+  allEngines("signalReEvaluatesTheExpression"){ engine => import engine._
     val v = Var(0)
     var i = 1
     val s: Signal[Int] = v.map { _ => i }
@@ -28,7 +19,7 @@ class SignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asse
     assert(s.now == 2)
   }
 
-  @Test def theExpressionIsNoteEvaluatedEveryTimeGetValIsCalled(): Unit = {
+  allEngines("theExpressionIsNoteEvaluatedEveryTimeGetValIsCalled"){ engine => import engine._
     var a = 10
     val s: Signal[Int] = Signals.static()(_ => 1 + 1 + a)
     assert(s.now === 12)
@@ -37,12 +28,12 @@ class SignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asse
   }
 
 
-  @Test def simpleSignalReturnsCorrectExpressions(): Unit = {
+  allEngines("simpleSignalReturnsCorrectExpressions"){ engine => import engine._
     val s: Signal[Int] = Signals.static()(_ => 1 + 1 + 1)
     assert(s.now === 3)
   }
 
-  @Test def theExpressionIsEvaluatedOnlyOnce(): Unit = {
+  allEngines("theExpressionIsEvaluatedOnlyOnce"){ engine => import engine._
 
     var a = 0
     val v = Var(10)
@@ -59,7 +50,7 @@ class SignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asse
     assert(a == 3)
   }
 
-  @Test def handlersAreExecuted(): Unit = {
+  allEngines("handlersAreExecuted"){ engine => import engine._
 
     var test = 0
     val v = Var(1)
@@ -78,7 +69,7 @@ class SignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asse
     assert(test == 3)
   }
 
-  @Test def levelIsCorrectlyComputed(): Unit = {
+  allEngines("levelIsCorrectlyComputed"){ engine => import engine._
 
     val v = Var(1)
 
@@ -93,7 +84,7 @@ class SignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asse
   }
 
 
-  @Test def noChangePropagations(): Unit = {
+  allEngines("noChangePropagations"){ engine => import engine._
     val v = Var(1)
     val s = v.map(_ => 1)
     val s2 = Signal{ s() }

@@ -1,22 +1,11 @@
 package tests.rescala
 
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
-import org.scalatest.junit.AssertionsForJUnit
-import rescala.engines.Engine
-import rescala.graph.Struct
-import rescala.propagation.Turn
-
-object EmptySignalTestSuite extends JUnitParameters
-
-@RunWith(value = classOf[Parameterized])
-class EmptySignalTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
-  implicit val implicitEngine: Engine[S, Turn[S]] = engine
-  import engine._
 
 
-  @Test def basicEmptySignalTest(): Unit = {
+
+class EmptySignalTestSuite extends RETests {
+
+  allEngines("basicEmptySignalTest"){ engine => import engine._
 
     val v = Var.empty[Int]
 
@@ -42,7 +31,7 @@ class EmptySignalTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends Asse
 
   }
 
-  @Test def unwrapEmptySignal(): Unit = {
+  allEngines("unwrapEmptySignal"){ engine => import engine._
     val v = Var.empty[Event[Int]]
     val e = v.flatten
 

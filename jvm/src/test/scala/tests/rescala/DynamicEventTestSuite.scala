@@ -9,15 +9,15 @@ import rescala.engines.Engine
 import rescala.graph.Struct
 import rescala.propagation.Turn
 
-object DynamicEventTestSuite extends JUnitParameters
 
-@RunWith(value = classOf[Parameterized])
-class DynamicEventTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
-  implicit val implicitEngine: Engine[S, Turn[S]] = engine
 
-  import implicitEngine.{Evt, Var, dynamicE}
 
-  @Test def simple(): Unit = {
+class DynamicEventTestSuite extends RETests {
+
+
+
+
+  allEngines("simple"){ engine => import engine._
     val ev1 = Evt[Int]
     val v1 = Var(8)
     val snapshotEvent = dynamicE() { t =>

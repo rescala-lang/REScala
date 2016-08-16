@@ -1,30 +1,20 @@
 package tests.rescala.ifunctions
 
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
-import org.scalatest.junit.AssertionsForJUnit
-import rescala.engines.Engine
-import rescala.graph.Struct
-import rescala.propagation.Turn
-import tests.rescala.JUnitParameters
+import tests.rescala.RETests
 
 
-object IFunTestDynamicSignals extends JUnitParameters
+class IFunTestDynamicSignals extends RETests {
 
-@RunWith(value = classOf[Parameterized])
-class IFunTestDynamicSignals[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
-  implicit val implicitEngine: Engine[S, Turn[S]] = engine
-  import implicitEngine._
+
 
   /* count */
-  @Test def count_theInitialValueIsSetCorrectly(): Unit = {
+  allEngines("count_theInitialValueIsSetCorrectly"){ engine => import engine._
     val e = Evt[Int]
     val s: Signal[Int] = e.count
     assert(s.now == 0)
   }
 
-  @Test def count_theResultSignalIncreasesWhenEventsOccur(): Unit = {
+  allEngines("count_theResultSignalIncreasesWhenEventsOccur"){ engine => import engine._
     val e = Evt[Int]
     val s: Signal[Int] = e.count
     e.fire(1)
@@ -33,7 +23,7 @@ class IFunTestDynamicSignals[S <: Struct](engine: Engine[S, Turn[S]]) extends As
   }
 
   /* toggle */
-  @Test def toggle_theInitialValueIsSetCorrectly(): Unit = {
+  allEngines("toggle_theInitialValueIsSetCorrectly"){ engine => import engine._
     val e = Evt[Int]
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
@@ -44,7 +34,7 @@ class IFunTestDynamicSignals[S <: Struct](engine: Engine[S, Turn[S]]) extends As
     assert(s.now == 2)
   }
 
-  @Test def toggle_theEventSwitchesTheSignal(): Unit = {
+  allEngines("toggle_theEventSwitchesTheSignal"){ engine => import engine._
     val e = Evt[Int]
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
@@ -68,7 +58,7 @@ class IFunTestDynamicSignals[S <: Struct](engine: Engine[S, Turn[S]]) extends As
   }
 
   /* snapshot */
-  @Test def snapshot_theInitialValueIsSetCorrectly(): Unit = {
+  allEngines("snapshot_theInitialValueIsSetCorrectly"){ engine => import engine._
     val e = Evt[Int]
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
@@ -77,7 +67,7 @@ class IFunTestDynamicSignals[S <: Struct](engine: Engine[S, Turn[S]]) extends As
     assert(s.now == 2)
   }
 
-  @Test def snapshot_takesASnapshotWhenTheEventOccurs(): Unit = {
+  allEngines("snapshot_takesASnapshotWhenTheEventOccurs"){ engine => import engine._
     val e = Evt[Int]
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
@@ -93,7 +83,7 @@ class IFunTestDynamicSignals[S <: Struct](engine: Engine[S, Turn[S]]) extends As
   }
 
   /* delay[T](signal: Signal[T], n: Int): Signal[T] */
-  @Test def delay1_theInitialValueIsSetCorrectly(): Unit = {
+  allEngines("delay1_theInitialValueIsSetCorrectly"){ engine => import engine._
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
     val s = s1.delay(3)
@@ -101,7 +91,7 @@ class IFunTestDynamicSignals[S <: Struct](engine: Engine[S, Turn[S]]) extends As
     assert(s.now == 2)
   }
 
-  @Test def delay1_takesASnapshotWhenTheEventOccurs(): Unit = {
+  allEngines("delay1_takesASnapshotWhenTheEventOccurs"){ engine => import engine._
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
     val s = s1.delay(3)
@@ -122,7 +112,7 @@ class IFunTestDynamicSignals[S <: Struct](engine: Engine[S, Turn[S]]) extends As
   }
 
   /* switchTo */
-  @Test def switchTo_theInitialValueIsSetToTheSignal(): Unit = {
+  allEngines("switchTo_theInitialValueIsSetToTheSignal"){ engine => import engine._
     val e = Evt[Int]
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
@@ -133,7 +123,7 @@ class IFunTestDynamicSignals[S <: Struct](engine: Engine[S, Turn[S]]) extends As
     assert(s2.now == 3)
   }
 
-  @Test def switchTo_theEventSwitchesTheValueToTheValueOfTheEvent(): Unit = {
+  allEngines("switchTo_theEventSwitchesTheValueToTheValueOfTheEvent"){ engine => import engine._
     val e = Evt[Int]
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
@@ -148,7 +138,7 @@ class IFunTestDynamicSignals[S <: Struct](engine: Engine[S, Turn[S]]) extends As
   }
 
   /* switchOnce */
-  @Test def switchOnce_theInitialValueIsSetToTheSignal(): Unit = {
+  allEngines("switchOnce_theInitialValueIsSetToTheSignal"){ engine => import engine._
     val e = Evt[Int]
     val v1 = Var(0)
     val v2 = Var(10)
@@ -161,7 +151,7 @@ class IFunTestDynamicSignals[S <: Struct](engine: Engine[S, Turn[S]]) extends As
     assert(s3.now == 2)
   }
 
-  @Test def switchOnce_theEventSwitchesTheValueToTheValueOfTheOtherSignal(): Unit = {
+  allEngines("switchOnce_theEventSwitchesTheValueToTheValueOfTheOtherSignal"){ engine => import engine._
     val e = Evt[Int]
     val v1 = Var(0)
     val v2 = Var(10)
@@ -177,7 +167,7 @@ class IFunTestDynamicSignals[S <: Struct](engine: Engine[S, Turn[S]]) extends As
   }
 
   /* reset */
-  @Test def reset_TheInitialValueOfTheSignalIsGivenByInitAndTheFactory(): Unit = {
+  allEngines("reset_TheInitialValueOfTheSignalIsGivenByInitAndTheFactory"){ engine => import engine._
     val e = Evt[Int]
     val v1 = Var(0)
     val v2 = Var(10)
@@ -196,7 +186,7 @@ class IFunTestDynamicSignals[S <: Struct](engine: Engine[S, Turn[S]]) extends As
 
   }
 
-  @Test def reset_TheValueOfTheSignalIsGivenByTheEventAndTheFactory(): Unit = {
+  allEngines("reset_TheValueOfTheSignalIsGivenByTheEventAndTheFactory"){ engine => import engine._
     val e = Evt[Int]
     val v1 = Var(0)
     val v2 = Var(10)
@@ -220,7 +210,7 @@ class IFunTestDynamicSignals[S <: Struct](engine: Engine[S, Turn[S]]) extends As
   }
 
   /* change */
-  @Test def change_isNotTriggeredOnCreation(): Unit = {
+  allEngines("change_isNotTriggeredOnCreation"){ engine => import engine._
     var test = 0
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
@@ -230,7 +220,7 @@ class IFunTestDynamicSignals[S <: Struct](engine: Engine[S, Turn[S]]) extends As
     assert(test == 0)
   }
 
-  @Test def change_isTriggeredWhenTheSignalChanges(): Unit = {
+  allEngines("change_isTriggeredWhenTheSignalChanges"){ engine => import engine._
     var test = 0
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
@@ -243,7 +233,7 @@ class IFunTestDynamicSignals[S <: Struct](engine: Engine[S, Turn[S]]) extends As
     assert(test == 2)
   }
 
-  @Test def change_theValueOfTheEventReflectsTheChangeInTheSignal(): Unit = {
+  allEngines("change_theValueOfTheEventReflectsTheChangeInTheSignal"){ engine => import engine._
     var test = (0, 0)
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
@@ -257,7 +247,7 @@ class IFunTestDynamicSignals[S <: Struct](engine: Engine[S, Turn[S]]) extends As
   }
 
   /* changed */
-  @Test def changed_isNotTriggeredOnCreation(): Unit = {
+  allEngines("changed_isNotTriggeredOnCreation"){ engine => import engine._
     var test = 0
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
@@ -267,7 +257,7 @@ class IFunTestDynamicSignals[S <: Struct](engine: Engine[S, Turn[S]]) extends As
     assert(test == 0)
   }
 
-  @Test def changed_isTriggeredWhenTheSignalChanges(): Unit = {
+  allEngines("changed_isTriggeredWhenTheSignalChanges"){ engine => import engine._
     var test = 0
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
@@ -280,7 +270,7 @@ class IFunTestDynamicSignals[S <: Struct](engine: Engine[S, Turn[S]]) extends As
     assert(test == 2)
   }
 
-  @Test def changed_theValueOfTheEventReflectsTheChangeInTheSignal(): Unit = {
+  allEngines("changed_theValueOfTheEventReflectsTheChangeInTheSignal"){ engine => import engine._
     var test = 0
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
@@ -294,7 +284,7 @@ class IFunTestDynamicSignals[S <: Struct](engine: Engine[S, Turn[S]]) extends As
   }
 
   /* changedTo */
-  @Test def changedTo_isNotTriggeredOnCreation(): Unit = {
+  allEngines("changedTo_isNotTriggeredOnCreation"){ engine => import engine._
     var test = 0
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
@@ -304,7 +294,7 @@ class IFunTestDynamicSignals[S <: Struct](engine: Engine[S, Turn[S]]) extends As
     assert(test == 0)
   }
 
-  @Test def changedTo_isTriggeredWhenTheSignalHasTheGivenValue(): Unit = {
+  allEngines("changedTo_isTriggeredWhenTheSignalHasTheGivenValue"){ engine => import engine._
     var test = 0
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)

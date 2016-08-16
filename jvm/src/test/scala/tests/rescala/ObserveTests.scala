@@ -1,21 +1,8 @@
 package tests.rescala
 
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
-import org.scalatest.junit.AssertionsForJUnit
-import rescala.engines.Engine
-import rescala.graph.Struct
-import rescala.propagation.Turn
+class ObserveTests extends RETests {
 
-object ObserveTests extends JUnitParameters
-
-@RunWith(value = classOf[Parameterized])
-class ObserveTests[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
-  implicit val implicitEngine: Engine[S, Turn[S]] = engine
-  import implicitEngine.Var
-
-  @Test def `can observe signals`(): Unit = {
+  allEngines("can observe signals") { engine => import engine._
     var result = List[Int]()
     val v1 = Var(0)
     v1.observe(result ::= _)
@@ -27,7 +14,7 @@ class ObserveTests[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsFo
     assert(result === List(10, 0))
   }
 //
-//  @Test def `self removing observers are possible, although maybe not as straight forward as one would wish?`(): Unit = {
+//  allEngines("self removing observers are possible, although maybe not as straight forward as one would wish?"){ engine => import engine._
 //    var result = List[Int]()
 //    val v1 = Var(0)
 //    lazy val link: Signal[Int] = Signals.static(v1) { t =>
@@ -53,7 +40,7 @@ class ObserveTests[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsFo
 //    assert(result === List(10, 0))
 //  }
 //
-//  @Test def `simpler self removing observers, but this does not fire on attach`(): Unit = {
+//  allEngines("simpler self removing observers, but this does not fire on attach"){ engine => import engine._
 //    var result = List[Int]()
 //    val v1 = Var(0)
 //

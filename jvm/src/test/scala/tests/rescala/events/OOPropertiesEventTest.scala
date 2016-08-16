@@ -1,30 +1,22 @@
 package tests.rescala.events
 
 
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
-import org.scalatest.junit.AssertionsForJUnit
-import rescala.engines.Engine
-import rescala.graph.Struct
-import rescala.propagation.Turn
-import tests.rescala.JUnitParameters
 
+import tests.rescala.RETests
 
-object OOPropertiesEventTest extends JUnitParameters
 
 /**
  * Demonstrates some of the features and of the limitations of the
  * current implementation w.r.t. OO design, like inheritance,
  * polymorphism, overriding, etc...
  */
-@RunWith(value = classOf[Parameterized])
-class OOPropertiesEventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
-  implicit val implicitEngine: Engine[S, Turn[S]] = engine
-  import implicitEngine.{Event, Evt}
+
+class OOPropertiesEventTest extends RETests {
 
 
-  @Test def eventsAreInherited(): Unit = {
+
+
+  allEngines("eventsAreInherited"){ engine => import engine._
 
     var test = 0
 
@@ -40,7 +32,7 @@ class OOPropertiesEventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends Ass
   }
 
 
-  @Test def canTriggerEventsInSuperclass(): Unit = {
+  allEngines("canTriggerEventsInSuperclass"){ engine => import engine._
 
     var test = 0
 
@@ -56,19 +48,21 @@ class OOPropertiesEventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends Ass
   }
 
 
-  @Test def issueWithOverridingEvents(): Unit = {
+  allEngines("issueWithOverridingEvents"){ engine => import engine._
 
-    try {
+     intercept[NullPointerException] {
       var test = 0
 
       class A {
         lazy val e1: Event[Int] = Evt[Int]
+        // this will force e1 which is overriden below
         e1 += ((x: Int) => { test += 1 })
       }
 
       class B extends A {
         val e2 = Evt[Int]
         val e3 = Evt[Int]
+        // but this override here requires e2 and e3 which are not yet initialized
         override lazy val e1: Event[Int] = e2 || e3
         e1 += ((x: Int) => { test += 1 })
         e2(10)
@@ -76,17 +70,13 @@ class OOPropertiesEventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends Ass
       new B()
 
     }
-    catch {
-      case e: NullPointerException => return
-    }
-    assert(false)
   }
 
 
   class X {}
   class Y extends X {}
 
-  @Test def refine(): Unit = {
+  allEngines("refine"){ engine => import engine._
 
     var test = 0
 

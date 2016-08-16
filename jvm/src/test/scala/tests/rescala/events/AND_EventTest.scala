@@ -10,15 +10,16 @@ import rescala.propagation.Turn
 import tests.rescala.JUnitParameters
 
 
-object AND_EventTest extends JUnitParameters
-
-@RunWith(value = classOf[Parameterized])
-class AND_EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
-  implicit val implicitEngine: Engine[S, Turn[S]] = engine
-  import implicitEngine._
+import tests.rescala.RETests
 
 
-  @Test def handlerOf_AND_IsNOTExecutedIfEventsFireSingularly(): Unit = {
+
+class AND_EventTest extends RETests {
+
+
+
+
+  allEngines("handlerOf_AND_IsNOTExecutedIfEventsFireSingularly"){ engine => import engine._
     var test = 0
     val e1 = Evt[Int]
     val e2 = Evt[Int]
@@ -32,7 +33,7 @@ class AND_EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsF
 
   }
 
-  @Test def handlerOf_AND_DoesNotRememberOldRounds(): Unit = {
+  allEngines("handlerOf_AND_DoesNotRememberOldRounds"){ engine => import engine._
     var test = 0
     val e1 = Evt[Int]
     val e2 = Evt[Int]
@@ -47,7 +48,7 @@ class AND_EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsF
 
   }
 
-  @Test def handlerOf_AND_IsExecutedIfBothEventsFire(): Unit = {
+  allEngines("handlerOf_AND_IsExecutedIfBothEventsFire"){ engine => import engine._
 
     var test = 0
     val e1 = Evt[Int]

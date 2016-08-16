@@ -10,15 +10,15 @@ import rescala.propagation.Turn
 import rescala.reactives.Signals
 
 
-object HigherOrderTestSuite extends JUnitParameters
-
-@RunWith(value = classOf[Parameterized])
-class HigherOrderTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
-  implicit val implicitEngine: Engine[S, Turn[S]] = engine
-  import implicitEngine.{Event, Evt, Signal, Var, dynamic}
 
 
-  @Test def basicHigherOrderSignal_canBeAccessed(): Unit = {
+
+class HigherOrderTestSuite extends RETests {
+
+
+
+
+  allEngines("basicHigherOrderSignal_canBeAccessed"){ engine => import engine._
     val v = Var(42)
     val s1: Signal[Int] = v.map(identity)
     val s2: Signal[Signal[Int]] = dynamic() { t => s1 }
@@ -29,7 +29,7 @@ class HigherOrderTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends Asse
     assert(s2.now.now == 0)
   }
 
-  @Test def basicHigherOrderSignal_canBeDefereferenced(): Unit = {
+  allEngines("basicHigherOrderSignal_canBeDefereferenced"){ engine => import engine._
     val v = Var(42)
     val s1: Signal[Int] = v.map(identity)
     val s2: Signal[Signal[Int]] = dynamic() { t => s1 }
@@ -42,7 +42,7 @@ class HigherOrderTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends Asse
   }
 
 
-  @Test def basicHigherOrderSignal_derefFiresChange(): Unit = {
+  allEngines("basicHigherOrderSignal_derefFiresChange"){ engine => import engine._
     val v = Var(42)
     val sValue: Signal[Int] = v.map(identity)
     val sHigher: Signal[Signal[Int]] = dynamic() { t => sValue }
@@ -63,7 +63,7 @@ class HigherOrderTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends Asse
   }
 
 
-  @Test def basicHigherOrderSignal_higherOrderFiresChange(): Unit = {
+  allEngines("basicHigherOrderSignal_higherOrderFiresChange"){ engine => import engine._
     val v1 = Var(42)
     val v2 = Var(123)
     val s1: Signal[Int] = v1.map(identity)
@@ -101,7 +101,7 @@ class HigherOrderTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends Asse
   }
 
 
-  @Test def order3Signal(): Unit = {
+  allEngines("order3Signal"){ engine => import engine._
 
     val v = Var(42)
     val s0: Signal[Int] = v.map(identity)
@@ -134,7 +134,7 @@ class HigherOrderTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends Asse
   }
 
 
-  @Test def listOfSignalsSection(): Unit = {
+  allEngines("listOfSignalsSection"){ engine => import engine._
     val tick = Evt[Unit]
     val count = tick.iterate(0)(_ + 1)
     val doubled = count.map(_ * 2)
@@ -167,7 +167,7 @@ class HigherOrderTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends Asse
   }
 
 
-  @Test def unwrap_Event(): Unit = {
+  allEngines("unwrap_Event"){ engine => import engine._
     val e1 = Evt[Int]
     val e2 = Evt[Int]
     val eventSelector = Var(e1)
@@ -190,7 +190,7 @@ class HigherOrderTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends Asse
     assert(lastEvent == 5)
   }
 
-  @Test def dynamicLevel(): Unit = {
+  allEngines("dynamicLevel"){ engine => import engine._
     val v1 = Var(1)
 
     val derived = v1.map(identity)
@@ -226,7 +226,7 @@ class HigherOrderTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends Asse
     assert(log == List(1, 13, 1, 13))
   }
 
-  @Test def wrappedEvent(): Unit = {
+  allEngines("wrappedEvent"){ engine => import engine._
     val e1 = Evt[Int]
     val condition = e1.latest(-1)
     val level1Event = e1.map(_ => "level 1")
@@ -244,7 +244,7 @@ class HigherOrderTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends Asse
     assert(log == List("level 1", "level 2"))
   }
 
-  @Test def wrappedEventSameLevel(): Unit = {
+  allEngines("wrappedEventSameLevel"){ engine => import engine._
     val e1 = Evt[Int]
     val level2Condition = e1.latest(-1).map(identity)
     val level1EventA = e1.map(_ => "A")
@@ -263,7 +263,7 @@ class HigherOrderTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends Asse
   }
 
 
-  @Test def flattenEvents(): Unit = {
+  allEngines("flattenEvents"){ engine => import engine._
     val e1 = Evt[Event[Int]]
     val f1 = e1.flatten
     val res = f1.log()
@@ -289,7 +289,7 @@ class HigherOrderTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends Asse
   }
 
 
-  @Test def flattenSignalSeq(): Unit = {
+  allEngines("flattenSignalSeq"){ engine => import engine._
     val v = Var.empty[Seq[Signal[Int]]]
     var count = 0
     val v1, v2, v3 = {count += 1 ; Var(count) }
@@ -309,7 +309,7 @@ class HigherOrderTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends Asse
   }
 
 
-  @Test def flattenSignalSet(): Unit = {
+  allEngines("flattenSignalSet"){ engine => import engine._
     val v = Var.empty[Set[Var[Int]]]
     var count = 0
     val v1, v2, v3 = {count += 1 ; Var(count) }
@@ -329,7 +329,7 @@ class HigherOrderTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends Asse
   }
 
 
-  @Test def flattenSignalArray(): Unit = {
+  allEngines("flattenSignalArray"){ engine => import engine._
     val v = Var.empty[Array[Var[Int]]]
     var count = 0
     val v1, v2, v3 = {count += 1 ; Var(count) }
@@ -349,7 +349,7 @@ class HigherOrderTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends Asse
   }
 
 
-  @Test def flattenSignalOption(): Unit = {
+  allEngines("flattenSignalOption"){ engine => import engine._
     val v = Var(Option.empty[Var[Int]])
     var w = Var(1)
 

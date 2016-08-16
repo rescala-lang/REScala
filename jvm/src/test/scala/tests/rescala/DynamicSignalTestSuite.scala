@@ -5,19 +5,20 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.scalatest.junit.AssertionsForJUnit
+import org.scalatest.prop.Whenever
 import rescala.Infiltrator.assertLevel
 import rescala.engines.{Engine, Ticket}
 import rescala.graph.LevelStruct
 import rescala.propagation.Turn
 
-object DynamicSignalTestSuite extends JUnitParameters
 
-@RunWith(value = classOf[Parameterized])
-class DynamicSignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
-  implicit val implicitEngine: Engine[S, Turn[S]] = engine
-  import implicitEngine.{Var, dynamic}
 
-  @Test def signalReEvaluatesTheExpressionWhenSomethingItDependsOnIsUpdated(): Unit = {
+
+class DynamicSignalTestSuite extends RETests with Whenever {
+
+
+
+  allEngines("signalReEvaluatesTheExpressionWhenSomethingItDependsOnIsUpdated"){ engine => import engine._
     val v = Var(0)
     var i = 1
     val s = dynamic(v) { s => v(s) + i }
@@ -26,7 +27,7 @@ class DynamicSignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) exten
     assert(s.now == 4)
   }
 
-  @Test def theExpressionIsNoteEvaluatedEveryTimeGetValIsCalled(): Unit = {
+  allEngines("theExpressionIsNoteEvaluatedEveryTimeGetValIsCalled"){ engine => import engine._
     var a = 10
     val s = dynamic()(s => 1 + 1 + a)
     assert(s.now === 12)
@@ -35,12 +36,12 @@ class DynamicSignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) exten
   }
 
 
-  @Test def simpleSignalReturnsCorrectExpressions(): Unit = {
+  allEngines("simpleSignalReturnsCorrectExpressions"){ engine => import engine._
     val s = dynamic()(s => 1 + 1 + 1)
     assert(s.now === 3)
   }
 
-  @Test def theExpressionIsEvaluatedOnlyOnce(): Unit = {
+  allEngines("theExpressionIsEvaluatedOnlyOnce"){ engine => import engine._
 
     var a = 0
     val v = Var(10)
@@ -55,7 +56,7 @@ class DynamicSignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) exten
     assert(a == 3)
   }
 
-  @Test def handlersAreExecuted(): Unit = {
+  allEngines("handlersAreExecuted"){ engine => import engine._
 
     var test = 0
     val v = Var(1)
@@ -75,7 +76,7 @@ class DynamicSignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) exten
 
   }
 
-  @Test def levelIsCorrectlyComputed(): Unit = {
+  allEngines("levelIsCorrectlyComputed"){ engine => import engine._
 
     val v = Var(1)
 
@@ -95,7 +96,7 @@ class DynamicSignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) exten
   /* Specific of SignalSynt */
 
 
-  @Test def signalDoesNotReEvaluateTheExpressionIfDependsOnIsUpdatedThatIsNotInCurrentDependencies(): Unit = {
+  allEngines("signalDoesNotReEvaluateTheExpressionIfDependsOnIsUpdatedThatIsNotInCurrentDependencies"){ engine => import engine._
     val v1 = Var(true)
     val v2 = Var(0)
     val v3 = Var(10)
@@ -126,7 +127,7 @@ class DynamicSignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) exten
   }
 
 
-  @Test def keep_fixedDependencies(): Unit = {
+  allEngines("keep_fixedDependencies"){ engine => import engine._
 
     val v1 = Var(true)
     val v2 = Var(0)
@@ -162,7 +163,7 @@ class DynamicSignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) exten
 
   }
 
-  @Test def dependantIsOnlyInvokedOnValueChanges(): Unit = {
+  allEngines("dependantIsOnlyInvokedOnValueChanges"){ engine => import engine._
     var changes = 0
     val v = Var(1)
     val s = dynamic(v) { s =>
@@ -177,32 +178,33 @@ class DynamicSignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) exten
     assert(changes === 2) // is actually 3
   }
 
-  @Test def creatingSignalsInsideSignals(): Unit = {
+  allEngines("creatingSignalsInsideSignals") { engine => import engine._
 
     // ignore for locksweep, as it does not support predeclared levels, so would run into an endless loop below
-    org.junit.Assume.assumeTrue("locksweep does not support predeclared levels", engine != rescala.engines.JVMEngines.locksweep)
-    org.junit.Assume.assumeTrue("locksweep does not support predeclared levels", engine != rescala.engines.JVMEngines.parallellocksweep)
+    whenever(engine != rescala.engines.JVMEngines.locksweep &&
+      engine != rescala.engines.JVMEngines.parallellocksweep) {
 
-    val outside = Var(1)
+      val outside = Var(1)
 
-    val testsig = dynamic() { t =>
-      //remark 01.10.2014: without the bound the inner signal will be enqueued (it is level 0 same as its dependency)
-      //this will cause testsig to reevaluate again, after the inner signal is fully updated.
-      // leading to an infinite loop
-      dynamic(outside) { t => outside(t) }.apply(t)
+      val testsig = dynamic() { t =>
+        //remark 01.10.2014: without the bound the inner signal will be enqueued (it is level 0 same as its dependency)
+        //this will cause testsig to reevaluate again, after the inner signal is fully updated.
+        // leading to an infinite loop
+        dynamic(outside) { t => outside(t) }.apply(t)
+      }
+
+      assert(testsig.now === 1)
+      outside() = 2
+      assert(testsig.now === 2)
     }
-
-    assert(testsig.now === 1)
-    outside() = 2
-    assert(testsig.now === 2)
   }
 
-  @Test def creatingSignalsInsideSignalsWorkaround(): Unit = {
+  allEngines("creatingSignalsInsideSignalsWorkaround"){ engine => import engine._
 
 
     val outside = Var(1)
 
-    val dynsig: implicitEngine.Signal[implicitEngine.Signal[Int]] = dynamic() { t =>
+    val dynsig: Signal[Signal[Int]] = dynamic() { t =>
       dynamic() { t => outside(t) }
     }
     val testsig = dynsig.flatten
@@ -212,7 +214,7 @@ class DynamicSignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) exten
     assert(testsig.now === 2)
   }
 
-  @Test def `dynamic dependency changes ontop of stuff that is not changing`(): Unit = {
+  allEngines("dynamic dependency changes ontop of stuff that is not changing"){ engine => import engine._
     val v0 = Var("level 0")
     val v3 = v0.map(_ => "level 1").map(_ => "level 2").map(_ => "level 3")
 
@@ -228,7 +230,7 @@ class DynamicSignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) exten
     assertLevel(`dynamic signal changing from level 1 to level 4`, 4)
   }
 
-  @Test def `creating signals in signals based on changing signals`(): Unit = {
+  allEngines("creating signals in signals based on changing signals"){ engine => import engine._
     val v0 = Var("level 0")
     val v3 = v0.map(_ + "level 1").map(_  + "level 2").map(_ + "level 3")
 
@@ -245,7 +247,7 @@ class DynamicSignalTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) exten
     assertLevel(`dynamic signal changing from level 1 to level 4`, 5)
   }
 
-  @Test def `creating signals in signals based on changing signals dynamic`(): Unit = {
+  allEngines("creating signals in signals based on changing signals dynamic"){ engine => import engine._
     val v0 = Var("level 0")
     val v3 = v0.map(_ + "level 1").map(_  + "level 2").map(_ + "level 3")
 

@@ -10,14 +10,15 @@ import rescala.graph.Struct
 import rescala.propagation.Turn
 import tests.rescala.JUnitParameters
 
-object EventTest extends JUnitParameters
+import tests.rescala.RETests
 
-@RunWith(value = classOf[Parameterized])
-class EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
-  implicit val implicitEngine: Engine[S, Turn[S]] = engine
-  import implicitEngine._
 
-  @Test def handlersAreExecuted(): Unit = {
+
+class EventTest extends RETests {
+
+
+
+  allEngines("handlersAreExecuted"){ engine => import engine._
     var test = 0
     val e1 = Evt[Int]
     e1 += ((x: Int) => { test += 1 })
@@ -26,7 +27,7 @@ class EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJU
     assert(test == 2)
   }
 
-  @Test def eventHandlersCanBeRemoved(): Unit = {
+  allEngines("eventHandlersCanBeRemoved"){ engine => import engine._
     var test = 0
     val e1 = Evt[Int]
     val f = (x: Int) => { test += 1 }
@@ -39,7 +40,7 @@ class EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJU
     assert(test == 2)
   }
 
-  @Test def correctValueIsReceived(): Unit = {
+  allEngines("correctValueIsReceived"){ engine => import engine._
     var test = 0
     val e1 = Evt[Int]
     e1 += ((x: Int) => { test += x })
@@ -47,7 +48,7 @@ class EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJU
     assert(test == 10)
   }
 
-  @Test def eventsWithoutParamsIsCalled(): Unit = {
+  allEngines("eventsWithoutParamsIsCalled"){ engine => import engine._
     var test = 0
     val e1 = Evt[Unit]
     e1 += (_ => { test += 1 })
@@ -56,7 +57,7 @@ class EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJU
   }
 
 
-  @Test def functionIsCalled(): Unit = {
+  allEngines("functionIsCalled"){ engine => import engine._
     var test = 0
 
     def f(x: Int): Unit = { test += 1 }
@@ -70,7 +71,7 @@ class EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJU
   }
 
 
-  @Test def eventsWithMethodHandlersWithParameter(): Unit = {
+  allEngines("eventsWithMethodHandlersWithParameter"){ engine => import engine._
 
     var test = 0
     val e = Evt[Int]

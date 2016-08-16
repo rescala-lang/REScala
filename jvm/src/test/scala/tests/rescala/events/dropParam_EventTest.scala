@@ -10,15 +10,16 @@ import rescala.graph.Struct
 import rescala.propagation.Turn
 import tests.rescala.JUnitParameters
 
+import tests.rescala.RETests
 
-object dropParam_EventTest extends JUnitParameters
 
-@RunWith(value = classOf[Parameterized])
-class dropParam_EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
-  implicit val implicitEngine: Engine[S, Turn[S]] = engine
-  import implicitEngine._
 
-  @Test def handlerOf_dropParam_IsExecuted(): Unit = {
+
+class dropParam_EventTest extends RETests {
+
+
+
+  allEngines("handlerOf_dropParam_IsExecuted"){ engine => import engine._
     var test = 0
     val e1 = Evt[Int]
     val e1_drop: Event[Unit] = e1.dropParam

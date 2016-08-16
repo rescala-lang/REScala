@@ -10,26 +10,26 @@ import rescala.engines.Engine
 import rescala.graph.Struct
 import rescala.propagation.Turn
 
-object VarTestSuite extends JUnitParameters
 
-@RunWith(value = classOf[Parameterized])
-class VarTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
-  implicit val implicitEngine: Engine[S, Turn[S]] = engine
-  import implicitEngine.Var
 
-  @Test def getValAfterCreationReturnsInitializationValue(): Unit = {
+
+class VarTestSuite extends RETests {
+
+
+
+  allEngines("getValAfterCreationReturnsInitializationValue"){ engine => import engine._
     val v = Var(1)
     assert(v.now == 1)
   }
 
-  @Test def getValReturnsCorrectValue(): Unit = {
+  allEngines("getValReturnsCorrectValue"){ engine => import engine._
     val v = Var(1)
     v.set(10)
     assert(v.now == 10)
   }
 
 
-  @Test def varNotifiesSignalOfChanges(): Unit = {
+  allEngines("varNotifiesSignalOfChanges"){ engine => import engine._
     val v = Var(1)
     val s = v.map { _ + 1 }
     assert(v.now == 1)
@@ -41,7 +41,7 @@ class VarTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsFo
 
   }
 
-  @Test def changeEventOnlyTriggeredOnValueChange(): Unit = {
+  allEngines("changeEventOnlyTriggeredOnValueChange"){ engine => import engine._
     var changes = 0
     val v = Var(1)
     val changed = v.change
@@ -55,7 +55,7 @@ class VarTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsFo
     assert(changes == 2)
   }
 
-  @Test def dependantIsOnlyInvokedOnValueChange(): Unit = {
+  allEngines("dependantIsOnlyInvokedOnValueChange"){ engine => import engine._
     var changes = 0
     val v = Var(1)
     val s = v.map { i => changes += 1; i + 1 }
@@ -66,7 +66,7 @@ class VarTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsFo
     assert(changes == 2)
   }
 
-  @Test def transformVar(): Unit = {
+  allEngines("transformVar"){ engine => import engine._
     val v1 = Var(0)
     def inc() = v1.transform(1.+)
 

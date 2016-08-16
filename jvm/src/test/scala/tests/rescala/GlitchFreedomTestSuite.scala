@@ -12,15 +12,15 @@ import rescala.reactives.Signals
 
 import scala.language.implicitConversions
 
-object GlitchFreedomTestSuite extends JUnitParameters
-
-@RunWith(value = classOf[Parameterized])
-class GlitchFreedomTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
-  implicit val implicitEngine: Engine[S, Turn[S]] = engine
-  import implicitEngine.Var
 
 
-  @Test def noGlitchesInSimpleCase(): Unit = {
+
+class GlitchFreedomTestSuite extends RETests {
+
+
+
+
+  allEngines("noGlitchesInSimpleCase"){ engine => import engine._
 
     val v1 = Var(1)
     val s1 = v1.map { 2 * _ }

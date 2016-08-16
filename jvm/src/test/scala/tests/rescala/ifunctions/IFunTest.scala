@@ -1,34 +1,21 @@
 package tests.rescala.ifunctions
 
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
-import org.scalatest.junit.AssertionsForJUnit
-import rescala.engines.Engine
-import rescala.graph.Struct
-import rescala.propagation.Turn
-import tests.rescala.JUnitParameters
+import tests.rescala.RETests
 
 import scala.collection.LinearSeq
 
 
-object IFunTest extends JUnitParameters
-
-@RunWith(value = classOf[Parameterized])
-class IFunTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
-  implicit val implicitEngine: Engine[S, Turn[S]] = engine
-  import implicitEngine._
-
+class IFunTest extends RETests {
 
   /* fold */
-  @Test def fold_theInitialValueIsSetCorrectly(): Unit = {
+  allEngines("fold_theInitialValueIsSetCorrectly") { engine => import engine._
     val e = Evt[Int]
     val f = (x: Int, y: Int) => x + y
     val s: Signal[Int] = e.fold(10)(f)
     assert(s.now == 10)
   }
 
-  @Test def fold_theResultSignalIncreasesWhenEventsOccur(): Unit = {
+  allEngines("fold_theResultSignalIncreasesWhenEventsOccur") { engine => import engine._
     val e = Evt[Int]
     val f = (x: Int, y: Int) => x + y
     val s: Signal[Int] = e.fold(10)(f)
@@ -39,17 +26,17 @@ class IFunTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUn
 
 
   /* iterate */
-  @Test def iterate_theInitialValueIsSetCorrectly(): Unit = {
+  allEngines("iterate_theInitialValueIsSetCorrectly") { engine => import engine._
     val e = Evt[Int]
     val f = (x: Int) => x
     val s: Signal[Int] = e.iterate(10)(f)
     assert(s.now == 10)
   }
 
-  @Test def iterate_theFunctionisExecutedEveryTimeTheEventFires(): Unit = {
+  allEngines("iterate_theFunctionisExecutedEveryTimeTheEventFires") { engine => import engine._
     var test: Int = 0
     val e = Evt[Int]
-    val f = (x: Int) => { test += 1; x }
+    val f = (x: Int) => {test += 1; x}
     val s: Signal[Int] = e.iterate(10)(f)
     e.fire(1)
     assert(test == 1)
@@ -60,10 +47,10 @@ class IFunTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUn
   }
 
   // TODO: does it make sense ?
-  @Test def iterate_theParameterIsAlwaysTheInitValue(): Unit = {
+  allEngines("iterate_theParameterIsAlwaysTheInitValue") { engine => import engine._
     var test: Int = 0
     val e = Evt[Int]
-    val f = (x: Int) => { test = x; x + 1 }
+    val f = (x: Int) => {test = x; x + 1}
     val s: Signal[Int] = e.iterate(10)(f)
     e.fire(1)
     assert(test == 10)
@@ -73,10 +60,10 @@ class IFunTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUn
     assert(test == 12)
   }
 
-  @Test def iterate_theResultSignalIsNeverChanged(): Unit = {
+  allEngines("iterate_theResultSignalIsNeverChanged") { engine => import engine._
     var test: Int = 0
     val e = Evt[Int]
-    val f = (x: Int) => { test += x; x }
+    val f = (x: Int) => {test += x; x}
     val s: Signal[Int] = e.iterate(10)(f)
     e.fire(1)
     assert(s.now == 10)
@@ -87,14 +74,14 @@ class IFunTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUn
   }
 
   /* latest */
-  @Test def latest_theInitialValueIsSetCorrectly(): Unit = {
+  allEngines("latest_theInitialValueIsSetCorrectly") { engine => import engine._
     val e = Evt[Int]
     val s: Signal[Int] = e.latest(10)
 
     assert(s.now == 10)
   }
 
-  @Test def latest_theFunctionisExecutedEveryTimeTheEventFires(): Unit = {
+  allEngines("latest_theFunctionisExecutedEveryTimeTheEventFires") { engine => import engine._
     val e = Evt[Int]
     val s: Signal[Int] = e.latest(10)
 
@@ -108,14 +95,14 @@ class IFunTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUn
 
 
   /* latestOption */
-  @Test def latestOption_theInitialValueIsSetCorrectly(): Unit = {
+  allEngines("latestOption_theInitialValueIsSetCorrectly") { engine => import engine._
     val e = Evt[Int]
     val s: Signal[Option[Int]] = e.latestOption()
 
     assert(s.now == None)
   }
 
-  @Test def latestOption_theFunctionisExecutedEveryTimeTheEventFires(): Unit = {
+  allEngines("latestOption_theFunctionisExecutedEveryTimeTheEventFires") { engine => import engine._
     val e = Evt[Int]
     val s: Signal[Option[Int]] = e.latestOption()
 
@@ -129,14 +116,14 @@ class IFunTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUn
 
 
   /* last */
-  @Test def last_theInitialValueIsSetCorrectly(): Unit = {
+  allEngines("last_theInitialValueIsSetCorrectly") { engine => import engine._
     val e = Evt[Int]
     val s: Signal[LinearSeq[Int]] = e.last(5)
 
     assert(s.now == List())
   }
 
-  @Test def last_collectsTheLastNEvents(): Unit = {
+  allEngines("last_collectsTheLastNEvents") { engine => import engine._
     val e = Evt[Int]
     val s: Signal[LinearSeq[Int]] = e.last(5)
 
@@ -156,14 +143,14 @@ class IFunTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUn
   }
 
   /* list */
-  @Test def list_theInitialValueIsSetCorrectly(): Unit = {
+  allEngines("list_theInitialValueIsSetCorrectly") { engine => import engine._
     val e = Evt[Int]
     val s = e.list()
 
     assert(s.now == List())
   }
 
-  @Test def list_theFunctionisExecutedEveryTimeTheEventFires(): Unit = {
+  allEngines("list_theFunctionisExecutedEveryTimeTheEventFires") { engine => import engine._
     val e = Evt[Int]
     val s = e.list()
 
@@ -181,23 +168,23 @@ class IFunTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUn
   }
 
   /* toggle */
-  @Test def toggle_theInitialValueIsSetCorrectly(): Unit = {
+  allEngines("toggle_theInitialValueIsSetCorrectly") { engine => import engine._
     val e = Evt[Int]
     val v1 = Var(1)
-    val s1 = v1.map { _ + 1 }
+    val s1 = v1.map {_ + 1}
     val v2 = Var(11)
-    val s2 = v2.map { _ + 1 }
+    val s2 = v2.map {_ + 1}
     val s = e.toggle(s1, s1)
 
     assert(s.now == 2)
   }
 
-  @Test def toggle_theEventSwitchesTheSignal(): Unit = {
+  allEngines("toggle_theEventSwitchesTheSignal") { engine => import engine._
     val e = Evt[Int]
     val v1 = Var(1)
-    val s1 = v1.map { _ + 1 }
+    val s1 = v1.map {_ + 1}
     val v2 = Var(11)
-    val s2 = v2.map { _ + 1 }
+    val s2 = v2.map {_ + 1}
     val s = e.toggle(s1, s2)
 
     assert(s.now == 2)
@@ -216,19 +203,19 @@ class IFunTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUn
   }
 
   /* snapshot */
-  @Test def snapshot_theInitialValueIsSetCorrectly(): Unit = {
+  allEngines("snapshot_theInitialValueIsSetCorrectly") { engine => import engine._
     val e = Evt[Int]
     val v1 = Var(1)
-    val s1 = v1.map { _ + 1 }
+    val s1 = v1.map {_ + 1}
     val s = e.snapshot(s1)
 
     assert(s.now == 2)
   }
 
-  @Test def snapshot_takesASnapshotWhenTheEventOccurs(): Unit = {
+  allEngines("snapshot_takesASnapshotWhenTheEventOccurs") { engine => import engine._
     val e = Evt[Int]
     val v1 = Var(1)
-    val s1 = v1.map { _ + 1 }
+    val s1 = v1.map {_ + 1}
     val s = e.snapshot(s1)
 
     e.fire(1)
@@ -242,14 +229,14 @@ class IFunTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUn
 
 
   /* delay[T](e: Event[T], init: T, n: Int): Signal[T] */
-  @Test def delay_theInitialValueIsSetCorrectly(): Unit = {
+  allEngines("delay_theInitialValueIsSetCorrectly") { engine => import engine._
     val e = Evt[Int]
     val s = e.delay(0, 3)
 
     assert(s.now == 0)
   }
 
-  @Test def delay_takesASnapshotWhenTheEventOccurs(): Unit = {
+  allEngines("delay_takesASnapshotWhenTheEventOccurs") { engine => import engine._
     val e = Evt[Int]
     val s = e.delay(0, 3)
 
@@ -271,17 +258,17 @@ class IFunTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUn
   }
 
   /* delay[T](signal: Signal[T], n: Int): Signal[T] */
-  @Test def delay1_theInitialValueIsSetCorrectly(): Unit = {
+  allEngines("delay1_theInitialValueIsSetCorrectly") { engine => import engine._
     val v1 = Var(1)
-    val s1 = v1.map { _ + 1 }
+    val s1 = v1.map {_ + 1}
     val s = s1.delay(3)
 
     assert(s.now == 2)
   }
 
-  @Test def delay1_takesASnapshotWhenTheEventOccurs(): Unit = {
+  allEngines("delay1_takesASnapshotWhenTheEventOccurs") { engine => import engine._
     val v1 = Var(1)
-    val s1 = v1.map { _ + 1 }
+    val s1 = v1.map {_ + 1}
     val s = s1.delay(3)
 
     // Initially remains the same for n times
@@ -300,10 +287,10 @@ class IFunTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUn
   }
 
   /* switchTo */
-  @Test def switchTo_theInitialValueIsSetToTheSignal(): Unit = {
+  allEngines("switchTo_theInitialValueIsSetToTheSignal") { engine => import engine._
     val e = Evt[Int]
     val v1 = Var(1)
-    val s1 = v1.map { _ + 1 }
+    val s1 = v1.map {_ + 1}
     val s2 = e.switchTo(s1)
 
     assert(s2.now == 2)
@@ -311,10 +298,10 @@ class IFunTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUn
     assert(s2.now == 3)
   }
 
-  @Test def switchTo_theEventSwitchesTheValueToTheValueOfTheEvent(): Unit = {
+  allEngines("switchTo_theEventSwitchesTheValueToTheValueOfTheEvent") { engine => import engine._
     val e = Evt[Int]
     val v1 = Var(1)
-    val s1 = v1.map { _ + 1 }
+    val s1 = v1.map {_ + 1}
     val s2 = e.switchTo(s1)
 
     e.fire(1)
@@ -326,12 +313,12 @@ class IFunTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUn
   }
 
   /* switchOnce */
-  @Test def switchOnce_theInitialValueIsSetToTheSignal(): Unit = {
+  allEngines("switchOnce_theInitialValueIsSetToTheSignal") { engine => import engine._
     val e = Evt[Int]
     val v1 = Var(0)
     val v2 = Var(10)
-    val s1 = v1.map { _ + 1 }
-    val s2 = v2.map { _ + 1 }
+    val s1 = v1.map {_ + 1}
+    val s2 = v2.map {_ + 1}
     val s3 = e.switchOnce(s1, s2)
 
     assert(s3.now == 1)
@@ -339,12 +326,12 @@ class IFunTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUn
     assert(s3.now == 2)
   }
 
-  @Test def switchOnce_theEventSwitchesTheValueToTheValueOfTheOtherSignal(): Unit = {
+  allEngines("switchOnce_theEventSwitchesTheValueToTheValueOfTheOtherSignal") { engine => import engine._
     val e = Evt[Int]
     val v1 = Var(0)
     val v2 = Var(10)
-    val s1 = v1.map { _ + 1 }
-    val s2 = v2.map { _ + 1 }
+    val s1 = v1.map {_ + 1}
+    val s2 = v2.map {_ + 1}
     val s3 = e.switchOnce(s1, s2)
 
     e.fire(1)
@@ -355,12 +342,12 @@ class IFunTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUn
   }
 
   /* reset */
-  @Test def reset_TheInitialValueOfTheSignalIsGivenByInitAndTheFactory(): Unit = {
+  allEngines("reset_TheInitialValueOfTheSignalIsGivenByInitAndTheFactory") { engine => import engine._
     val e = Evt[Int]
     val v1 = Var(0)
     val v2 = Var(10)
-    val s1 = v1.map { _ + 1 }
-    val s2 = v2.map { _ + 1 }
+    val s1 = v1.map {_ + 1}
+    val s2 = v2.map {_ + 1}
 
     def factory(x: Int) = x % 2 match {
       case 0 => s1
@@ -374,12 +361,12 @@ class IFunTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUn
 
   }
 
-  @Test def reset_TheValueOfTheSignalIsGivenByTheEventAndTheFactory(): Unit = {
+  allEngines("reset_TheValueOfTheSignalIsGivenByTheEventAndTheFactory") { engine => import engine._
     val e = Evt[Int]
     val v1 = Var(0)
     val v2 = Var(10)
-    val s1 = v1.map { _ + 1 }
-    val s2 = v2.map { _ + 1 }
+    val s1 = v1.map {_ + 1}
+    val s2 = v2.map {_ + 1}
 
     def factory(x: Int) = x % 2 match {
       case 0 => s1
@@ -398,20 +385,20 @@ class IFunTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUn
   }
 
   /* change */
-  @Test def change_isNotTriggeredOnCreation(): Unit = {
+  allEngines("change_isNotTriggeredOnCreation") { engine => import engine._
     var test = 0
     val v1 = Var(1)
-    val s1 = v1.map { _ + 1 }
+    val s1 = v1.map {_ + 1}
     val e = s1.change
     e += { x => test += 1 }
 
     assert(test == 0)
   }
 
-  @Test def change_isTriggeredWhenTheSignalChanges(): Unit = {
+  allEngines("change_isTriggeredWhenTheSignalChanges") { engine => import engine._
     var test = 0
     val v1 = Var(1)
-    val s1 = v1.map { _ + 1 }
+    val s1 = v1.map {_ + 1}
     val e = s1.change
     e += { x => test += 1 }
 
@@ -421,10 +408,10 @@ class IFunTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUn
     assert(test == 2)
   }
 
-  @Test def change_theValueOfTheEventReflectsTheChangeInTheSignal(): Unit = {
+  allEngines("change_theValueOfTheEventReflectsTheChangeInTheSignal") { engine => import engine._
     var test = (0, 0)
     val v1 = Var(1)
-    val s1 = v1.map { _ + 1 }
+    val s1 = v1.map {_ + 1}
     val e = s1.change
     e += { x => test = x }
 
@@ -435,22 +422,22 @@ class IFunTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUn
   }
 
   /* changed */
-  @Test def changed_isNotTriggeredOnCreation(): Unit = {
+  allEngines("changed_isNotTriggeredOnCreation") { engine => import engine._
     var test = 0
     val v1 = Var(1)
-    val s1 = v1.map { _ + 1 }
+    val s1 = v1.map {_ + 1}
     val e: Event[Int] = s1.changed
-    e += ((x: Int) => { test += 1 })
+    e += ((x: Int) => {test += 1})
 
     assert(test == 0)
   }
 
-  @Test def changed_isTriggeredWhenTheSignalChanges(): Unit = {
+  allEngines("changed_isTriggeredWhenTheSignalChanges") { engine => import engine._
     var test = 0
     val v1 = Var(1)
-    val s1 = v1.map { _ + 1 }
+    val s1 = v1.map {_ + 1}
     val e: Event[Int] = s1.changed
-    e += ((x: Int) => { test += 1 })
+    e += ((x: Int) => {test += 1})
 
     v1 set 2
     assert(test == 1)
@@ -458,12 +445,12 @@ class IFunTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUn
     assert(test == 2)
   }
 
-  @Test def changed_theValueOfTheEventReflectsTheChangeInTheSignal(): Unit = {
+  allEngines("changed_theValueOfTheEventReflectsTheChangeInTheSignal") { engine => import engine._
     var test = 0
     val v1 = Var(1)
-    val s1 = v1.map { _ + 1 }
+    val s1 = v1.map {_ + 1}
     val e: Event[Int] = s1.changed
-    e += ((x: Int) => { test = x })
+    e += ((x: Int) => {test = x})
 
     v1 set 2
     assert(test == 3)
@@ -472,22 +459,22 @@ class IFunTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUn
   }
 
   /* changedTo */
-  @Test def changedTo_isNotTriggeredOnCreation(): Unit = {
+  allEngines("changedTo_isNotTriggeredOnCreation") { engine => import engine._
     var test = 0
     val v1 = Var(1)
-    val s1 = v1.map { _ + 1 }
+    val s1 = v1.map {_ + 1}
     val e: Event[Unit] = s1.changedTo(1)
-    e += ((x: Unit) => { test += 1 })
+    e += ((x: Unit) => {test += 1})
 
     assert(test == 0)
   }
 
-  @Test def changedTo_isTriggeredWhenTheSignalHasTheGivenValue(): Unit = {
+  allEngines("changedTo_isTriggeredWhenTheSignalHasTheGivenValue") { engine => import engine._
     var test = 0
     val v1 = Var(1)
-    val s1 = v1.map { _ + 1 }
+    val s1 = v1.map {_ + 1}
     val e: Event[Unit] = s1.changedTo(3)
-    e += ((x: Unit) => { test += 1 })
+    e += ((x: Unit) => {test += 1})
 
     v1 set 2
     assert(test == 1)

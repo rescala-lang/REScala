@@ -10,14 +10,15 @@ import rescala.graph.Struct
 import rescala.propagation.Turn
 import tests.rescala.JUnitParameters
 
-object except_EventTest extends JUnitParameters
+import tests.rescala.RETests
 
-@RunWith(value = classOf[Parameterized])
-class except_EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
-  implicit val implicitEngine: Engine[S, Turn[S]] = engine
-  import implicitEngine._
 
-  @Test def handlerOf_except_IsExecutedIfBasicEventFires(): Unit = {
+
+class except_EventTest extends tests.rescala.RETests {
+
+
+
+  allEngines("handlerOf_except_IsExecutedIfBasicEventFires"){ engine => import engine._
     var test = 0
     val e1 = Evt[Int]
     val e2 = Evt[Int]
@@ -29,7 +30,7 @@ class except_EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends Assertio
 
   }
 
-  @Test def handlerOf_except_IgnoresTheSecondEventIfFires(): Unit = {
+  allEngines("handlerOf_except_IgnoresTheSecondEventIfFires"){ engine => import engine._
     var test = 0
     val e1 = Evt[Int]
     val e2 = Evt[Int]
@@ -41,7 +42,7 @@ class except_EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends Assertio
 
   }
 
-  @Test def handlerOf_except_IsExecutedOnlyIfFirstEventFiresAndNotTheSecond(): Unit = {
+  allEngines("handlerOf_except_IsExecutedOnlyIfFirstEventFiresAndNotTheSecond"){ engine => import engine._
 
     var test = 0
 
@@ -67,7 +68,7 @@ class except_EventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends Assertio
   }
 
 
-  @Test def handlerOf_except_GetsTheCorrectValue(): Unit = {
+  allEngines("handlerOf_except_GetsTheCorrectValue"){ engine => import engine._
 
     var value = 0
 

@@ -10,16 +10,17 @@ import rescala.propagation.Turn
 import tests.rescala.JUnitParameters
 
 
-object EventCreationTest extends JUnitParameters
-
-@RunWith(value = classOf[Parameterized])
-class EventCreationTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
-  implicit val implicitEngine: Engine[S, Turn[S]] = engine
-
-  import implicitEngine._
 
 
-  @Test def addEventAfter(): Unit = {
+import tests.rescala.RETests
+
+class EventCreationTest extends RETests {
+
+
+
+
+
+  allEngines("addEventAfter"){ engine => import engine._
     var res = 0
     val e0 = Evt[Int]
     val e1 = e0.map(identity)

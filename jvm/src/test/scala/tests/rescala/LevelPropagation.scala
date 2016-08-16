@@ -10,14 +10,14 @@ import rescala.graph.LevelStruct
 import rescala.propagation.Turn
 import rescala.reactives.Signals
 
-object LevelPropagation extends JUnitParameters
 
-@RunWith(value = classOf[Parameterized])
-class LevelPropagation[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
-  implicit val implicitEngine: Engine[S, Turn[S]] = engine
-  import implicitEngine.Var
 
-  @Test def worksOnElementsInQueue(): Unit = {
+
+class LevelPropagation extends RETests {
+
+
+
+  allEngines("worksOnElementsInQueue"){ engine => import engine._
     val level0 = Var(0)
     val l1 = level0.map(_ + 1)
     val l2 = l1.map(_ + 1)
@@ -53,7 +53,7 @@ class LevelPropagation[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Ass
 
   }
 
-  @Test def doesNotBreakStuffWhenNothingChangesBeforeDependenciesAreCorrect(): Unit = {
+  allEngines("doesNotBreakStuffWhenNothingChangesBeforeDependenciesAreCorrect"){ engine => import engine._
     val l0 = Var(0)
     val l1 = l0.map(_ + 1)
     val l2 = l1.map(_ + 1)
@@ -80,7 +80,7 @@ class LevelPropagation[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Ass
 
   }
 
-  @Test def doesNotReevaluateStuffIfNothingChanges(): Unit = {
+  allEngines("doesNotReevaluateStuffIfNothingChanges"){ engine => import engine._
     val l0 = Var(0)
     val l1 = l0.map(_ + 1)
     val l2 = l1.map(_ + 1)
@@ -115,7 +115,7 @@ class LevelPropagation[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Ass
 
   }
 
-  @Test def levelIncreaseAndChangeFromeSomewhereElseWorksTogether(): Unit = {
+  allEngines("levelIncreaseAndChangeFromeSomewhereElseWorksTogether"){ engine => import engine._
     val l0 = Var(0)
     val l1 = l0.map(_ + 1)
     val l2 = l1.map(_ + 1)

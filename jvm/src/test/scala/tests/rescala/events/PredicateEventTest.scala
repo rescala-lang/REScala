@@ -1,23 +1,13 @@
 package tests.rescala.events
 
+import tests.rescala.RETests
 
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
-import org.scalatest.junit.AssertionsForJUnit
-import rescala.engines.Engine
-import rescala.graph.Struct
-import rescala.propagation.Turn
-import tests.rescala.JUnitParameters
 
-object PredicateEventTest extends JUnitParameters
+class PredicateEventTest extends RETests {
 
-@RunWith(value = classOf[Parameterized])
-class PredicateEventTest[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
-  implicit val implicitEngine: Engine[S, Turn[S]] = engine
-  import implicitEngine._
 
-  @Test def predicateEventIsExecutedOnlyIfThePredicateIsTrue(): Unit = {
+
+  allEngines("predicateEventIsExecutedOnlyIfThePredicateIsTrue"){ engine => import engine._
     var test = 0
     var cond = false
     val e1 = Evt[Int]

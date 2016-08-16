@@ -2,67 +2,68 @@ package test
 
 import org.scalajs.dom.Node
 import org.scalajs.dom.html.Span
-import org.scalatest.FunSpec
+import org.scalatest.{FlatSpec, FunSpec}
 import org.scalatest.prop.TableDrivenPropertyChecks
 import rescalatags._
 
 import scalatags.JsDom.all._
 
-class RescalatagsTest extends FunSpec with TableDrivenPropertyChecks {
+class RescalatagsTest extends FlatSpec with TableDrivenPropertyChecks {
 
   forAll(Table("engine", rescala.engines.Engines.all: _*)) { engine =>
     import engine._
 
-    describe(s"$engine") {
+    behavior of engine.toString
 
-      it(s"put var into dom") {
-        val v = Var.empty[Tag]
-        val frag: Node = v.asFrag.render
-        assert(frag.textContent === "", "empty var gives empty frag")
+    it should s"put var into dom" in {
+      val v = Var.empty[Tag]
+      val frag: Node = v.asFrag.render
+      assert(frag.textContent === "", "empty var gives empty frag")
 
-        val outer = div(v.asFrag)
-        val outerR = outer.render
+      val outer = div(v.asFrag)
+      val outerR = outer.render
 
-        assert(outerR.innerHTML === "", "empty var into dom is empty")
+      assert(outerR.innerHTML === "", "empty var into dom is empty")
 
-        v.set(span("hallo welt"))
-        assert(outerR.innerHTML === "<span>hallo welt</span>", "setting var changes rendered outer tag")
+      v.set(span("hallo welt"))
+      assert(outerR.innerHTML === "<span>hallo welt</span>", "setting var changes rendered outer tag")
 
-        v.set(div("hallo div"))
-        assert(outerR.innerHTML === "<div>hallo div</div>", "resetting var changes rendered outer tag")
+      v.set(div("hallo div"))
+      assert(outerR.innerHTML === "<div>hallo div</div>", "resetting var changes rendered outer tag")
 
-      }
-      it(s"put style into dom") {
-        val v = Var.empty[String]
+    }
 
-        // we do this because this tends to be globally set from other tests …
-        span.render.style.setProperty("backgroundColor", "green")
+    it should s"put style into dom" in {
+      val v = Var.empty[String]
 
-        val ourTag: Span = span(backgroundColor := v).render
+      // we do this because this tends to be globally set from other tests …
+      span.render.style.setProperty("backgroundColor", "green")
 
-        assert(ourTag.style.getPropertyValue("backgroundColor") === "green", "empty color does not render")
+      val ourTag: Span = span(backgroundColor := v).render
 
-        v.set("red")
-        assert(ourTag.style.getPropertyValue("backgroundColor") === "red", "changing var changes color")
+      assert(ourTag.style.getPropertyValue("backgroundColor") === "green", "empty color does not render")
 
-        v.set("blue")
-        assert(ourTag.style.getPropertyValue("backgroundColor") === "blue", "changing var changes color again")
-      }
+      v.set("red")
+      assert(ourTag.style.getPropertyValue("backgroundColor") === "red", "changing var changes color")
 
-      it(s"put attribute into dom") {
-        val v = Var.empty[String]
+      v.set("blue")
+      assert(ourTag.style.getPropertyValue("backgroundColor") === "blue", "changing var changes color again")
+    }
 
-        val ourTag = a(href := v).render
+    it should s"put attribute into dom" in {
+      val v = Var.empty[String]
 
-        assert(ourTag.outerHTML === a.render.outerHTML, "empty href does not render")
+      val ourTag = a(href := v).render
 
-        v.set("www.rescala-lang.com")
-        assert(ourTag.outerHTML === a(href := "www.rescala-lang.com").render.outerHTML, "changing var changes href")
+      assert(ourTag.outerHTML === a.render.outerHTML, "empty href does not render")
 
-        v.set("index.html")
-        assert(ourTag.outerHTML === a(href := "index.html").render.outerHTML, "changing var changes href again")
+      v.set("www.rescala-lang.com")
+      assert(ourTag.outerHTML === a(href := "www.rescala-lang.com").render.outerHTML, "changing var changes href")
 
-      }
+      v.set("index.html")
+      assert(ourTag.outerHTML === a(href := "index.html").render.outerHTML, "changing var changes href again")
+
     }
   }
+
 }

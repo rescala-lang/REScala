@@ -1,23 +1,18 @@
 package tests.rescala
 
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
-import org.scalatest.junit.AssertionsForJUnit
+
 import rescala.Infiltrator.assertLevel
-import rescala.engines.Engine
-import rescala.graph.LevelStruct
-import rescala.propagation.Turn
 import rescala.reactives.Signals
 
-object MacroTestSuite extends JUnitParameters
 
-@RunWith(value = classOf[Parameterized])
-class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
-  implicit val implicitEngine: Engine[S, Turn[S]] = engine
-  import implicitEngine.{Event, Evt, Signal, Var}
 
-  @Test def signalReEvaluatesTheExpression(): Unit = {
+
+
+class MacroTestSuite extends RETests {
+
+
+
+  allEngines("signalReEvaluatesTheExpression"){ engine => import engine._
     val v = Var(0)
     var i = 1
     val s: Signal[Int] = Signal { v(): @unchecked; i }
@@ -26,7 +21,7 @@ class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asser
     assert(s.now === 2)
   }
 
-  @Test def theExpressionIsNotEvaluatedEveryTimeGetValIsCalled(): Unit = {
+  allEngines("theExpressionIsNotEvaluatedEveryTimeGetValIsCalled"){ engine => import engine._
     var a = 10
     val s: Signal[Int] = Signal { 1 + 1 + a }
     assert(s.now === 12)
@@ -35,12 +30,12 @@ class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asser
   }
 
 
-  @Test def simpleSignalReturnsCorrectExpressions(): Unit = {
+  allEngines("simpleSignalReturnsCorrectExpressions"){ engine => import engine._
     val s: Signal[Int] = Signal(1 + 1 + 1)
     assert(s.now === 3)
   }
 
-  @Test def theExpressionIsEvaluatedOnlyOnce(): Unit = {
+  allEngines("theExpressionIsEvaluatedOnlyOnce"){ engine => import engine._
 
     var a = 0
     val v = Var(10)
@@ -54,7 +49,7 @@ class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asser
     assert(a === 3)
   }
 
-  @Test def handlersAreExecuted(): Unit = {
+  allEngines("handlersAreExecuted"){ engine => import engine._
 
     var test = 0
     val v = Var(1)
@@ -74,7 +69,7 @@ class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asser
 
   }
 
-  @Test def levelIsCorrectlyComputed(): Unit = {
+  allEngines("levelIsCorrectlyComputed"){ engine => import engine._
 
     val v = Var(1)
 
@@ -91,7 +86,7 @@ class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asser
   }
 
 
-  @Test def conversionFunctionWithArgumentInSignal(): Unit = {
+  allEngines("conversionFunctionWithArgumentInSignal"){ engine => import engine._
 
     var test = 0
     val e = Evt[Int]
@@ -107,7 +102,7 @@ class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asser
   }
 
 
-  @Test def conversionFunctionWithoutArgumentInSignal(): Unit = {
+  allEngines("conversionFunctionWithoutArgumentInSignal"){ engine => import engine._
 
     var test = 0
     val e = Evt[Int]
@@ -123,7 +118,7 @@ class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asser
   }
 
 
-  @Test def conversionFunctionsWorkInSignalsInObjectConstructionInOverridenDef(): Unit = {
+  allEngines("conversionFunctionsWorkInSignalsInObjectConstructionInOverridenDef"){ engine => import engine._
     // a previous macro implementation yielded wrong results for code of the
     // following form, see:
     // https://github.com/guidosalva/examples/pull/4/files#r11724000
@@ -153,7 +148,7 @@ class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asser
   }
 
 
-  @Test def signalsNestedInVars(): Unit = {
+  allEngines("signalsNestedInVars"){ engine => import engine._
 
     val a = Var(3)
     val b = Var(Signal(a()))
@@ -168,7 +163,7 @@ class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asser
   }
 
 
-  @Test def nestedDefinedSignals(): Unit = {
+  allEngines("nestedDefinedSignals"){ engine => import engine._
     val a = Var(3)
     val b = Signal {
       val c = Signal { a() }
@@ -183,7 +178,7 @@ class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asser
   }
 
 
-  @Test def useOfInsideSignal(): Unit = {
+  allEngines("useOfInsideSignal"){ engine => import engine._
     val outside = Var(1)
     val inside = Var(10)
 
@@ -200,7 +195,7 @@ class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asser
     assert(testsig.now === 11)
   }
 
-  @Test def useOfOutsideSignal(): Unit = {
+  allEngines("useOfOutsideSignal"){ engine => import engine._
     val outside = Var(1)
     val inside = Var(10)
 
@@ -221,7 +216,7 @@ class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asser
   }
 
 
-  @Test def caseClassesAndObjects(): Unit = {
+  allEngines("caseClassesAndObjects"){ engine => import engine._
     // would fail due to https://issues.scala-lang.org/browse/SI-5467
     // if we didn't work around un-type-checking issues
 
@@ -269,7 +264,7 @@ class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asser
     assert(sig.now == "value37")
   }
 
-  @Test def lazyValues(): Unit = {
+  allEngines("lazyValues"){ engine => import engine._
     // would fail due to https://issues.scala-lang.org/browse/SI-5466
     // if we didn't work around un-type-checking issues
 
@@ -294,7 +289,7 @@ class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asser
     assert(sig.now == 0)
   }
 
-  @Test def patternMatchingAndWildcard(): Unit = {
+  allEngines("patternMatchingAndWildcard"){ engine => import engine._
     // would fail due to https://issues.scala-lang.org/browse/SI-5465
     // if we didn't work around un-type-checking issues
 
@@ -320,7 +315,7 @@ class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asser
   }
 
 
-  @Test def patternMatchingAnonymousFunction(): Unit = {
+  allEngines("patternMatchingAnonymousFunction"){ engine => import engine._
     val s1 = Signal { List(Some(1), Some(2), None, Some(4), None) }
     val s2 = Signal {
       s1() collect { case Some(n) => n }
@@ -328,7 +323,7 @@ class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asser
     assert(s2.now === List(1, 2, 4))
   }
 
-  @Test def patternMatchingAnonymousFunctionNestedSignals(): Unit = {
+  allEngines("patternMatchingAnonymousFunctionNestedSignals"){ engine => import engine._
     val v1 = Var(1)
     val v2 = Var(2)
     val s1 = Signal { List(Some(v1), None, Some(v2), None) }
@@ -340,7 +335,7 @@ class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asser
     assert(s2.now === List(10, 2))
   }
 
-  @Test def outerAndInnerValues(): Unit = {
+  allEngines("outerAndInnerValues"){ engine => import engine._
     val v = Var(0)
     object obj {
       def sig = Signal { v() }
@@ -369,7 +364,7 @@ class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asser
   }
 
 
-  @Test def chainedSignals1(): Unit = {
+  allEngines("chainedSignals1"){ engine => import engine._
     import scala.language.reflectiveCalls
 
     val v1 = Var { 1 }
@@ -387,7 +382,7 @@ class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asser
     assert(sig.now === List(7, 5))
   }
 
-  @Test def chainedSignals2(): Unit = {
+  allEngines("chainedSignals2"){ engine => import engine._
     import scala.language.reflectiveCalls
 
     val v1 = Var { 20 }
@@ -414,7 +409,7 @@ class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asser
   }
 
 
-  @Test def functionAsGetterForSignal(): Unit = {
+  allEngines("functionAsGetterForSignal"){ engine => import engine._
     import scala.language.reflectiveCalls
 
     def getSignal(obj: {def signal: Signal[Int]}) = obj.signal
@@ -430,7 +425,7 @@ class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asser
   }
 
 
-  @Test def functionAsGetterForEventAndConversionFunction(): Unit = {
+  allEngines("functionAsGetterForEventAndConversionFunction"){ engine => import engine._
     import scala.language.reflectiveCalls
 
     def getSignal(obj: {def evt: Event[Int]}) = obj.evt
@@ -445,13 +440,14 @@ class MacroTestSuite[S <: LevelStruct](engine: Engine[S, Turn[S]]) extends Asser
     assert(sig.now === Some(30))
   }
 
-  @Test def extractingSignalSideEffects(): Unit = {
+  allEngines("extractingSignalSideEffects"){ engine => import engine._
     val e1 = Evt[Int]
     def newSignal(): Signal[Int] = e1.count()
+
     val macroRes = Signal {
       newSignal().apply()
     }
-    val normalRes = Signals.dynamic() { t: Turn[S] =>
+    val normalRes = Signals.dynamic() { t: Turn =>
       newSignal().apply(t)
     }
     assert(macroRes.now === 0, "before, macro")

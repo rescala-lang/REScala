@@ -10,15 +10,15 @@ import rescala.propagation.Turn
 
 import scala.util.{Failure, Success, Try}
 
-object ExceptionPropagationTestSuite extends JUnitParameters
-
-@RunWith(value = classOf[Parameterized])
-class ExceptionPropagationTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) extends AssertionsForJUnit  {
-  implicit val implicitEngine: Engine[S, Turn[S]] = engine
-  import implicitEngine.{Event, Evt, Signal, Var}
 
 
-  @Test def basicSignalExceptions(): Unit = {
+
+class ExceptionPropagationTestSuite extends RETests {
+
+
+
+
+  allEngines("basicSignalExceptions"){ engine => import engine._
     val v = Var(42)
     val ds = Signal { 100 / v() }
     val ss = v.map(v => 100 / v)
@@ -33,7 +33,7 @@ class ExceptionPropagationTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) ext
 
   }
 
-  @Test def basicEventExcepitons(): Unit = {
+  allEngines("basicEventExcepitons"){ engine => import engine._
     val e = Evt[Int]
     val de = Event { e().map(100./) }
     val se = e.map(v => 100 / v)
@@ -57,7 +57,7 @@ class ExceptionPropagationTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) ext
   }
 
 
-  @Test def moreExceptions(): Unit = {
+  allEngines("moreExceptions"){ engine => import engine._
     val input = Evt[String]
     val trimmed = input.map(_.trim)
     val toInted = trimmed.map(_.toInt)
@@ -93,7 +93,7 @@ class ExceptionPropagationTestSuite[S <: Struct](engine: Engine[S, Turn[S]]) ext
 
   }
 
-  @Test def signalRegenerating(): Unit = {
+  allEngines("signalRegenerating"){ engine => import engine._
     val input = Var("100")
     val trimmed = input.map(_.trim)
     val folded = trimmed.map(_.toInt)
