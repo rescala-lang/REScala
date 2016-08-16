@@ -165,8 +165,6 @@ lazy val rssDependencies = libraryDependencies ++= Seq(
   "org.joda" % "joda-convert" % "1.8.1",
   "org.codehaus.jsr166-mirror" % "jsr166y" % "1.7.0",
   "org.scalatest" %% "scalatest" % "2.2.6" % "test",
-  "junit" % "junit" % "4.12" % "test->default",
-  "com.novocode" % "junit-interface" % "0.11" % "test->default",
   "org.scala-lang" % "scala-swing" % "2.11+")
 
 lazy val scalatestDependency = libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.0" % "test"
