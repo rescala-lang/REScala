@@ -4,7 +4,6 @@ import rescala.engines.Ticket
 import rescala.graph.Pulse.{Change, Exceptional, NoChange, Stable}
 import rescala.graph._
 import rescala.propagation.Turn
-import rescala.reactives.RExceptions.EmptySignalControlThrowable
 
 import scala.util.{Failure, Success}
 
@@ -21,7 +20,6 @@ object Events {
       val (newValueTry, dependencies) = turn.collectMarkedDependencies { RExceptions.reTry(expr(turn)) }
       newValueTry match {
         case Success(p) => (p, dependencies)
-        case Failure(t : EmptySignalControlThrowable) => (Pulse.NoChange, dependencies)
         case Failure(t) => (Pulse.Exceptional(t), dependencies)
       }
     }

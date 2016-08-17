@@ -86,6 +86,7 @@ sealed trait Pulse[+P] {
     case Change(up) => Some(Success(up))
     case Stable(current) if takeInitialValue => Some(Success(current))
     case NoChange => None
+    case Exceptional(t : EmptySignalControlThrowable) => None
     case Exceptional(t) => Some(Failure(t))
   }
 }
@@ -137,7 +138,7 @@ object Pulse {
 
   /** wrap a pulse generating function to store everntual exceptions into an exceptional pulse */
   def tryCatch[P](f: => Pulse[P]): Pulse[P] = try f catch {
-    case e: EmptySignalControlThrowable => NoChange
+    case e: EmptySignalControlThrowable => Exceptional(e)
     case NonFatal(t) => Exceptional(t)
   }
 

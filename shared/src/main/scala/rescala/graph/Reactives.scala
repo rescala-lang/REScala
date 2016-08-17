@@ -3,7 +3,7 @@ package rescala.graph
 import rescala.engines.Ticket
 import rescala.graph.Pulse.{Change, Exceptional, NoChange, Stable}
 import rescala.propagation.Turn
-import rescala.reactives.RExceptions.EmptySignalControlThrowable
+import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 
 import scala.annotation.compileTimeOnly
 import scala.util.Try
@@ -98,13 +98,14 @@ trait Stateful[+A, S <: Struct] extends Pulsing[A, S] {
     get(turn)
   }
 
-  final def now(implicit maybe: Ticket[S]): A = maybe { t =>
-    t.dependencyInteraction(this)
-    pulse(t) match {
+  final def now(implicit maybe: Ticket[S]): A = maybe { turn =>
+    turn.dependencyInteraction(this)
+    pulse(turn) match {
       case Stable(value) => value
       case Change(value) => value
+      case Exceptional(t : EmptySignalControlThrowable) => throw new NoSuchElementException(s"Signal $this is empty")
       case Exceptional(t) => throw t
-      case NoChange => throw new NoSuchElementException(s"Signal $this is empty")
+      case NoChange => throw new IllegalStateException(s"Signal $this has no value")
     }
   }
 
@@ -118,6 +119,7 @@ trait Stateful[+A, S <: Struct] extends Pulsing[A, S] {
     case Stable(value) => value
     case Change(value) => value
     case Exceptional(t) => throw t
-    case NoChange => throw new EmptySignalControlThrowable
+    case NoChange => throw new IllegalStateException(s"Signal $this has no value")
+
   }
 }

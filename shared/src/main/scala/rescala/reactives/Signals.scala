@@ -38,7 +38,6 @@ object Signals extends GeneratedSignalLift {
         val (newValueTry, dependencies) = turn.collectMarkedDependencies {RExceptions.reTry(expr(turn))}
         newValueTry match {
           case Success(p) => (Pulse.diffPulse(p, pulses.base), dependencies)
-          case Failure(t: EmptySignalControlThrowable) => (Pulse.NoChange, dependencies)
           case Failure(t) => (Pulse.Exceptional(t), dependencies)
         }
       }
@@ -52,7 +51,7 @@ object Signals extends GeneratedSignalLift {
 
     /** creates a dynamic signal */
     def makeDynamic[T, S <: Struct](dependencies: Set[Reactive[S]])(expr: Turn[S] => T)(initialTurn: Turn[S]): Signal[T, S] = initialTurn.create(dependencies, dynamic = true) {
-      val bud: S#SporeP[T, Reactive[S]] = initialTurn.bud(transient = false)
+      val bud: S#SporeP[T, Reactive[S]] = initialTurn.bud(initialValue = Pulse.Exceptional(new EmptySignalControlThrowable), transient = false)
       new DynamicSignal[T, S](bud, expr)
     }
   }
