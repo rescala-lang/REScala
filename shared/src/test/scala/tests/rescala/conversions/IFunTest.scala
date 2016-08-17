@@ -489,7 +489,6 @@ class IFunTest extends RETests {
     val v2 = Var.empty[String]
 
     val e1 = v1.changed.map(x => ("constant", x))
-    e1.observe(println)
     val e2 = v2.change
 
     val ored: Event[(String, String)] = e1 || e2
