@@ -6,11 +6,8 @@ import rescala.graph._
 import rescala.propagation.Turn
 import rescala.reactives.RExceptions.EmptySignalControlThrowable
 
-import scala.collection.generic.CanBuildFrom
-import scala.collection.TraversableLike
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.higherKinds
-import scala.reflect.ClassTag
 import scala.util.{Failure, Success}
 
 object Signals extends GeneratedSignalLift {

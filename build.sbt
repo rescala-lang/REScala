@@ -18,6 +18,8 @@ lazy val rescala = crossProject.in(file("."))
     name := "rescala",
     libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _),
     scalatestDependency,
+    libraryDependencies += "org.reactivestreams" % "reactive-streams" % "1.0.0",
+    libraryDependencies += "org.reactivestreams" % "reactive-streams-tck" % "1.0.0",
     libraryDependencies += "org.scala-stm" %% "scala-stm" % "0.7",
 
     incOptions := incOptions.value.withLogRecompileOnMacro(false),
