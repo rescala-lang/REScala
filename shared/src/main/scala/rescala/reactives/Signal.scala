@@ -4,7 +4,6 @@ import rescala.engines.Ticket
 import rescala.graph.Pulse.{Change, Exceptional, NoChange, Stable}
 import rescala.graph.{Pulse, Stateful, Struct}
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
-import rescala.reactives.Signals.Flatten
 
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success}

@@ -5,7 +5,6 @@ import java.util.concurrent.CompletionException
 import rescala.engines.Ticket
 import rescala.graph._
 import rescala.reactives.RExceptions.EmptySignalControlThrowable
-import rescala.reactives.Signals.Flatten
 
 import scala.collection.immutable.{LinearSeq, Queue}
 import scala.language.higherKinds

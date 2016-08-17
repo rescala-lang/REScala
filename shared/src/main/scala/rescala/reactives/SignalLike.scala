@@ -4,7 +4,6 @@ import java.util.concurrent.CompletionException
 
 import rescala.engines.Ticket
 import rescala.graph.Struct
-import rescala.reactives.Signals.Flatten
 
 import scala.language.higherKinds
 

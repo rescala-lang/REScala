@@ -4,8 +4,7 @@ import rescala.engines.{Engine, Ticket}
 import rescala.graph.Struct
 import rescala.meta.{ManagedReactive, ReactiveNode}
 import rescala.propagation.Turn
-import rescala.reactives.Signals.Flatten
-import rescala.reactives.{Observe, SignalLike, VarLike}
+import rescala.reactives.{Flatten, Observe, SignalLike, VarLike}
 
 /**
   * Intermediate trait mainly used to satisfy the type requirements of the Signal/Event interfaces.

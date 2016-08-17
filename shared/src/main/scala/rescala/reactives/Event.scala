@@ -142,8 +142,6 @@ trait Event[+T, S <: Struct] extends EventLike[T, S, Signal, Event] with PulseOp
   }
 
   /** returns the values produced by the last event produced by mapping this value */
-  final override def flatMap[B](f: T => Event[B, S])(implicit ticket: Ticket[S]): Event[B, S] = ticket { turn =>
-    Events.wrapped(map(f)(turn).latest(Evt()(turn))(turn))(turn)
-  }
+  final override def flatMap[B](f: T => Event[B, S])(implicit ticket: Ticket[S]): Event[B, S] = ticket { implicit turn => map(f).latest(Evt[B, S]).flatten }
 }
 

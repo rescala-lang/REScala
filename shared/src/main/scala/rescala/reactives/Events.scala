@@ -1,7 +1,6 @@
 package rescala.reactives
 
 import rescala.engines.Ticket
-import rescala.graph.Pulse.{Change, Exceptional, NoChange, Stable}
 import rescala.graph._
 import rescala.propagation.Turn
 
@@ -41,14 +40,4 @@ object Events {
     }
   }
 
-
-  /** A wrapped event inside a signal, that gets "flattened" to a plain event node */
-  def wrapped[T, S <: Struct](wrapper: Signal[Event[T, S], S])(implicit ticket: Ticket[S]): Event[T, S] =
-  ticket { initialTurn =>
-    initialTurn.create(Set[Reactive[S]](wrapper), dynamic = true)(
-      new DynamicEvent[T, S](initialTurn.bud(transient = true), { turn =>
-        val inner = wrapper(turn)
-        Pulse.fromOption(inner(turn))
-      }))
-  }
 }
