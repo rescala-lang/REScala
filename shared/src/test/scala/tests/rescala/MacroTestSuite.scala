@@ -335,6 +335,27 @@ class MacroTestSuite extends RETests {
     assert(s2.now === List(10, 2))
   }
 
+  allEngines("abstract Type Member"){ engine => import engine._
+    trait T {
+      type A
+      val v: Var[A]
+      val s = Signal { v() }
+    }
+    object o extends T {
+      type A = Int
+      lazy val v = Var(4)
+    }
+    assert(o.s.now == 4)
+  }
+
+  allEngines("default Arguments"){ engine => import engine._
+    val s = Signal {
+      def a(v: Int, i: Int = 8, j: Int = 8, k: Int = 8) = v + i + j + k
+      a(6, j = 5)
+    }
+    assert(s.now == 27)
+  }
+
   allEngines("outer And Inner Values"){ engine => import engine._
     val v = Var(0)
     object obj {

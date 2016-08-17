@@ -13,8 +13,8 @@ import scala.language.existentials
 
 abstract class RETests extends FunSuite with TableDrivenPropertyChecks {
 
-  type S  = Struct
-  type LS = LevelStruct
+  type S  <: Struct
+  type LS <: LevelStruct
 
   private val engines: TableFor1[TEngine] = Table("engine", rescala.engines.Engines.all: _*)
 
