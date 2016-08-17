@@ -309,6 +309,18 @@ object SignalMacro {
 //    out.close
 
 
-    c.Expr[DependentSignal[A]](Typer(c) untypecheck block)
+    val error =
+      Throw(
+        Apply(
+          Select(
+            New(Select(Select(Ident(termNames.ROOTPKG), TermName("scala")), TypeName("NotImplementedError"))),
+            termNames.CONSTRUCTOR),
+          List(Literal(Constant("signal macro not expanded")))))
+
+
+    if (!c.hasErrors)
+      c.Expr[DependentSignal[A]](Typer(c) untypecheck block)
+    else
+      c.Expr[DependentSignal[A]](error)
   }
 }
