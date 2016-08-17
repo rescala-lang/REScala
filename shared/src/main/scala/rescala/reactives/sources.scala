@@ -97,6 +97,7 @@ final class Var[A, S <: Struct](_bud: S#SporeP[A, Reactive[S]]) extends Base[A, 
     case Success(suc) => set(suc)
     case Failure(f) => fac.plan(this)(t => pulses(t).set(Pulse.Exceptional(f))(t))
   }
+  def setEmpty()(implicit fac: Engine[S, Turn[S]]): Unit = setFromTry(Failure(new EmptySignalControlThrowable))
 
   override def admit(value: A)(implicit turn: Turn[S]): Unit = {
     val p = Pulse.diffPulse(value, stable)
