@@ -1,0 +1,16 @@
+<!-- Fixed navbar -->
+<div id="navbar">
+  <div class="container">
+    <a href="{{ site.github.url }}/index">Home</a>
+	<a class="dropdown" href="javascript:void(0);" onclick="document.getElementById('navbar').classList.toggle('manual_content')">Content</a>
+	<ul id="manual_content">
+    {% assign docs = site.pages | sort: 'number' %}
+    {% for doc in docs %}
+      {% if doc.version %}
+    <li> <a href="{{ site.github.url }}/{{ col.label }}">{{ doc.number }} - {{ doc.title }}</a></li>
+      {% endif %}
+    {% endfor %}
+	</ul>
+    <a class="icon" href="javascript:void(0);" onclick="document.getElementById('navbar').classList.toggle('responsive')">&#9776;</a>
+  </div>
+</div>

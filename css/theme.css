@@ -80,6 +80,19 @@ h1,h2,h3,h4 {
 
 #navbar .icon {display: none;}
 
+#navbar #manual_content {
+  display: none;
+  position: fixed;
+  background-color: #333;
+  float: left;
+  padding: 0px 30px;
+  margin-left: 75px;
+}
+
+#navbar.manual_content #manual_content {
+  display: block;
+}
+
 @media screen and (max-width:680px) {
   #navbar :not(:first-child) {display: none;}
   #navbar .icon {
@@ -99,4 +112,16 @@ h1,h2,h3,h4 {
     text-align: left;
     float: none;
   }
+}
+
+.dropdown:after {
+	content: " ";
+	display: inline-block;
+    width: 0;
+    height: 0;
+    margin-left: 2px;
+    vertical-align: middle;
+    border-top: 4px solid;
+    border-right: 4px solid transparent;
+    border-left: 4px solid transparent;
 }

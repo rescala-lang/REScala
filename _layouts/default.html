@@ -21,9 +21,12 @@
 </head>
 
 <body>
-
-  {% include navbar.html %}
-
+  {% unless page.version %}
+    {% include navbar.html %}
+  {% endunless %}
+  {% if page.version %}
+    {% include navbar_manual.html %}
+  {% endif %}
   <div class="container" role="main">
     <div class="col-sm-8">
     {{ content }}
