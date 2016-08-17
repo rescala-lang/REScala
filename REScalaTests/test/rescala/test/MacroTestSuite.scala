@@ -349,6 +349,27 @@ class MacroTestSuite extends AssertionsForJUnit with MockitoSugar {
     assert(s2.get == List(1, 2, 4))
   }
 
+  @Test def abstractTypeMember() = {
+    trait T {
+      type A
+      val v: Var[A]
+      val s = Signal { v() }
+    }
+    object o extends T {
+      type A = Int
+      lazy val v = Var(4)
+    }
+    assert(o.s.get == 4)
+  }
+
+  @Test def defaultArguments() = {
+    val s = Signal {
+      def a(v: Int, i: Int = 8, j: Int = 8, k: Int = 8) = v + i + j + k
+      a(6, j = 5)
+    }
+    assert(s.get == 27)
+  }
+
   @Test def outerAndInnerValues() = {
     val v = Var(0)
     object obj {
