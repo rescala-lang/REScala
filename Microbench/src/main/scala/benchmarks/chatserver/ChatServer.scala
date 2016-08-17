@@ -15,6 +15,7 @@ class ChatServer[S <: Struct]()(implicit val engine: Engine[S, Turn[S]]) {
   type Room = Int
   type Client = Event[String]
   type Clients = Var[List[Client]]
+  type NewMessages = Event[List[String]]
   type History = Signal[LinearSeq[String]]
 
   val rooms = new java.util.concurrent.ConcurrentHashMap[Room, Clients]()
@@ -26,10 +27,11 @@ class ChatServer[S <: Struct]()(implicit val engine: Engine[S, Turn[S]]) {
 
   def create(room: Room): Boolean = {
     val clients: Clients = Var(Nil)
-    val history: History = Events.dynamic(clients) { implicit t =>
+    val newMessages: NewMessages = Events.dynamic(clients) { implicit t =>
       val messages: List[String] = clients(t).flatMap(_.apply(t))
       if (messages.isEmpty) None else Some(messages)
-    }.fold(Queue[String]()) { (queue, v) =>
+    }
+    val history: History = newMessages.fold(Queue[String]()) { (queue, v) =>
       if (queue.length >= 100) queue.tail.enqueue(v) else queue.enqueue(v)
     }
 
