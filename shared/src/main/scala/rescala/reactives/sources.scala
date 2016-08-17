@@ -9,16 +9,6 @@ import scala.language.higherKinds
 import scala.util.{Failure, Success, Try}
 
 /**
-  * Interface for source reactives with no dependencies that can be manually written by the user.
-  *
-  * @tparam T Type of the source reactive
-  * @tparam S Struct type used for the propagation of the reactive
-  */
-sealed trait Source[T, S <: Struct] {
-  def admit(value: T)(implicit turn: Turn[S]): Unit
-}
-
-/**
   * Inferface for source events with no dependencies that can be manually fired by the user.
   *
   * @tparam T Type returned when the event fires
@@ -26,7 +16,7 @@ sealed trait Source[T, S <: Struct] {
   * @tparam SL Signal type supported as parameter and used as return type for event methods
   * @tparam EV Event type supported as parameter and used as return type for event methods
   */
-trait EvtLike[T, S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], EV[+X, Z <: Struct] <: EventLike[X, Z, SL, EV]] extends EventLike[T, S, SL, EV] with Source[T, S] {
+trait EvtLike[T, S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], EV[+X, Z <: Struct] <: EventLike[X, Z, SL, EV]] extends EventLike[T, S, SL, EV]  {
   this : EV[T, S] =>
   /** Trigger the event */
   final def apply(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = fire(value)
@@ -44,14 +34,9 @@ trait EvtLike[T, S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], E
 final class Evt[T, S <: Struct]()(_bud: S#SporeP[T, Reactive[S]]) extends Base[T, S](_bud) with Event[T, S] with EvtLike[T, S, Signal, Event] {
   override def fire(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) {admit(value)(_)}
 
-  def fireFromTry(value: Try[T])(implicit fac: Engine[S, Turn[S]]): Unit = value match {
-    case Success(suc) => fire(suc)
-    case Failure(f) => fac.plan(this)(t => pulses(t).set(Pulse.Exceptional(f))(t))
-  }
+  def admit(value: T)(implicit turn: Turn[S]): Unit = admitPulse(Pulse.Change(value))
 
- override def admit(value: T)(implicit turn: Turn[S]): Unit = {
-    pulses.set(Pulse.Change(value))(turn)
-  }
+  def admitPulse(value: Pulse[T])(implicit turn: Turn[S]): Unit = pulses.set(value)(turn)
 
   override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[S] =
     ReevaluationResult.Static(changed = pulse.isChange)
@@ -72,7 +57,7 @@ object Evt {
   * @tparam SL Signal type supported as parameter and used as return type for signal methods
   * @tparam EV Event type supported as parameter and used as return type for signal methods
   */
-trait VarLike[A, S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], EV[+X, Z <: Struct] <: EventLike[X, Z, SL, EV]] extends SignalLike[A, S, SL, EV] with Source[A, S] {
+trait VarLike[A, S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], EV[+X, Z <: Struct] <: EventLike[X, Z, SL, EV]] extends SignalLike[A, S, SL, EV]  {
   this : SL[A, S] =>
 
   def update(value: A)(implicit fac: Engine[S, Turn[S]]): Unit = set(value)
@@ -91,20 +76,16 @@ trait VarLike[A, S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], E
   * @tparam S Struct type used for the propagation of the signal
   */
 final class Var[A, S <: Struct](_bud: S#SporeP[A, Reactive[S]]) extends Base[A, S](_bud) with Signal[A, S] with VarLike[A, S, Signal, Event] {
-  override def set(value: A)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) {admit(value)(_)}
-  override def transform(f: A => A)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) { t => admit(f(get(t)))(t) }
-  def setFromTry(value: Try[A])(implicit fac: Engine[S, Turn[S]]): Unit = value match {
-    case Success(suc) => set(suc)
-    case Failure(f) => fac.plan(this)(t => pulses(t).set(Pulse.Exceptional(f))(t))
-  }
-  def setEmpty()(implicit fac: Engine[S, Turn[S]]): Unit = setFromTry(Failure(new EmptySignalControlThrowable))
 
-  override def admit(value: A)(implicit turn: Turn[S]): Unit = {
-    val p = Pulse.diffPulse(value, stable)
-    if (p.isChange) {
-      pulses.set(p)
-    }
-  }
+  override def set(value: A)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) {admit(value)(_)}
+
+  override def transform(f: A => A)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) { t => admit(f(get(t)))(t) }
+
+  def setEmpty()(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this)(t => admitPulse(Pulse.Exceptional(new EmptySignalControlThrowable))(t))
+
+  def admit(value: A)(implicit turn: Turn[S]): Unit = admitPulse(Pulse.diffPulse(value, stable))
+
+  def admitPulse(p: Pulse[A])(implicit turn: Turn[S]): Unit = if (p.isChange) { pulses.set(p) }
 
   override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[S] =
     ReevaluationResult.Static(changed = pulse.isChange)

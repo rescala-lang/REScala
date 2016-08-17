@@ -87,5 +87,4 @@ trait ManagedEvt[T, S <: Struct] extends ManagedEvent[T, S] with EvtLike[T, S, M
 class ManagedEvtImpl[T](override val node: ReactiveNode) extends ManagedEventImpl[T](node) with ManagedEvt[T, DummyStruct] {
   override def fire(value: T)(implicit fac: Engine[DummyStruct, Turn[DummyStruct]]): Unit = ???
 
-  override def admit(value: T)(implicit turn: Turn[DummyStruct]): Unit = ???
 }

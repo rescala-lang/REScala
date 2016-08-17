@@ -1,5 +1,7 @@
-package tests.rescala.ifunctions
+package tests.rescala.conversions
 
+import rescala.graph.Pulse
+import rescala.reactives.RExceptions.EmptySignalControlThrowable
 import tests.rescala.RETests
 
 import scala.collection.LinearSeq
@@ -47,7 +49,7 @@ class IFunTest extends RETests {
   }
 
   // TODO: does it make sense ?
-  allEngines("iterate_the Parameter IsAlways The Init Value") { engine => import engine._
+  allEngines("iterate the Parameter Is Always The Init Value") { engine => import engine._
     var test: Int = 0
     val e = Evt[Int]
     val f = (x: Int) => {test = x; x + 1}
@@ -445,7 +447,7 @@ class IFunTest extends RETests {
     assert(test == 2)
   }
 
-  allEngines("changed_the Value OfThe Event Reflects The Change InThe Signal") { engine => import engine._
+  allEngines("changed the Value Of The Event Reflects The Change InThe Signal") { engine => import engine._
     var test = 0
     val v1 = Var(1)
     val s1 = v1.map {_ + 1}
@@ -459,7 +461,7 @@ class IFunTest extends RETests {
   }
 
   /* changedTo */
-  allEngines("changed To_is Not Triggered OnCreation") { engine => import engine._
+  allEngines("changed To_is Not Triggered On Creation") { engine => import engine._
     var test = 0
     val v1 = Var(1)
     val s1 = v1.map {_ + 1}
@@ -469,7 +471,7 @@ class IFunTest extends RETests {
     assert(test == 0)
   }
 
-  allEngines("changed To_is Triggered When The Signal Has The Given Value") { engine => import engine._
+  allEngines("changed To is Triggered When The Signal Has The Given Value") { engine => import engine._
     var test = 0
     val v1 = Var(1)
     val s1 = v1.map {_ + 1}
@@ -480,6 +482,48 @@ class IFunTest extends RETests {
     assert(test == 1)
     v1 set 3
     assert(test == 1)
+  }
+
+  allEngines("folding changing and emptyness") { engine => import engine._
+    val v1 = Var.empty[String]
+    val v2 = Var.empty[String]
+
+    val e1 = v1.changed.map(x => ("constant", x))
+    e1.observe(println)
+    val e2 = v2.change
+
+    val ored: Event[(String, String)] = e1 || e2
+
+    val log = ored.log()
+
+    assert(log.now === Nil)
+
+    v1.set("one")
+    assert(log.now === List("constant" -> "one"))
+
+    v2.set("two")
+    assert(log.now === List("constant" -> "one"))
+
+    v2.set("three")
+    assert(log.now === List("two" -> "three", "constant" -> "one"))
+
+
+    plan(v1, v2) { turn =>
+      v1.admit("four a")(turn)
+      v2.admit("four b")(turn)
+    }
+
+    assert(log.now === List("constant" -> "four a", "two" -> "three", "constant" -> "one"))
+
+
+
+    plan(v1, v2) { turn =>
+      v1.admitPulse(Pulse.Exceptional(new EmptySignalControlThrowable))(turn)
+      v2.admit("five b")(turn)
+    }
+
+    assert(log.now === List("four b" -> "five b", "constant" -> "four a", "two" -> "three", "constant" -> "one"))
+
   }
 
 

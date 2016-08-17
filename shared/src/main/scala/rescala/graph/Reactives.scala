@@ -75,7 +75,7 @@ trait PulseOption[+P, S <: Struct] extends Pulsing[P, S] {
 
   final def get(implicit turn: Turn[S]) = pulse(turn) match {
     case Change(update) => Some(update)
-    case NoChange | Stable(_)| Exceptional(_ : EmptySignalControlThrowable) => None
+    case NoChange | Stable(_) => None
     case Exceptional(t) => throw t
   }
 }

@@ -49,7 +49,12 @@ trait Signal[+A, S <: Struct] extends SignalLike[A, S, Signal, Event] with State
     * Create an event that fires every time the signal changes. The value associated
     * to the event is the new value of the signal
     */
-  override def changed(implicit ticket: Ticket[S]): Event[A, S] = Events.static(s"(changed $this)", this) { turn => pulse(turn) }
+  override def changed(implicit ticket: Ticket[S]): Event[A, S] = Events.static(s"(changed $this)", this) { turn =>
+    pulse(turn) match {
+      case ex@Exceptional(_ : EmptySignalControlThrowable) => Pulse.NoChange
+      case other => other
+    }
+  }
 
   /** Create an event that fires every time the signal changes. It fires the tuple (oldVal, newVal) for the signal.
     * Be aware that no change will be triggered when the signal changes to or from empty */
@@ -58,11 +63,13 @@ trait Signal[+A, S <: Struct] extends SignalLike[A, S, Signal, Event] with State
       pulse(turn) match {
         case Change(value) => stable(turn) match {
           case Stable(oldValue) => Pulse.Change((oldValue, value))
+          case ex@Exceptional(_ : EmptySignalControlThrowable) => Pulse.NoChange
           case ex@Exceptional(_) => ex
           case other => throw new IllegalStateException(s"stable value of signal was $other")
         }
         case NoChange | Stable(_) => Pulse.NoChange
-        case ex@Exceptional(t) => ex
+        case ex@Exceptional(_ : EmptySignalControlThrowable) => Pulse.NoChange
+        case ex@Exceptional(_) => ex
       }
     }
   }

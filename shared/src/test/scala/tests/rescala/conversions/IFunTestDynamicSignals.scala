@@ -1,4 +1,4 @@
-package tests.rescala.ifunctions
+package tests.rescala.conversions
 
 import tests.rescala.RETests
 
