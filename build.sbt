@@ -81,7 +81,7 @@ lazy val reswing = project.in(file("RESwing"))
   .dependsOn(rescalaJVM)
   .settings(
     name := "reswing",
-    libraryDependencies += "org.scala-lang" % "scala-swing" % "2.11+",
+    scalaswingDependency,
     licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")),
     incOptions := incOptions.value.withLogRecompileOnMacro(false))
 
@@ -90,7 +90,7 @@ lazy val examples = project.in(file("Examples/examples"))
   .dependsOn(rescalaJVM)
   .settings(
     name := "rescala-examples",
-    libraryDependencies += "org.scala-lang" % "scala-swing" % "2.11+",
+    scalaswingDependency,
     incOptions := incOptions.value.withLogRecompileOnMacro(false),
     publish := {},
     publishLocal := {})
@@ -139,7 +139,9 @@ lazy val caseStudyRSSEvents = project.in(file("CaseStudies/RSSReader/ReactiveSca
     incOptions := incOptions.value.withLogRecompileOnMacro(false),
     publish := {},
     publishLocal := {},
-    rssDependencies)
+    rssDependencies,
+    scalatestDependency,
+    scalaswingDependency)
 
 lazy val caseStudyRSSReactive = project.in(file("CaseStudies/RSSReader/ReactiveScalaReader.Reactive"))
   .dependsOn(reswing)
@@ -148,7 +150,9 @@ lazy val caseStudyRSSReactive = project.in(file("CaseStudies/RSSReader/ReactiveS
     incOptions := incOptions.value.withLogRecompileOnMacro(false),
     publish := {},
     publishLocal := {},
-    rssDependencies)
+    rssDependencies,
+    scalatestDependency,
+    scalaswingDependency)
 
 lazy val caseStudyRSSSimple = project.in(file("CaseStudies/RSSReader/SimpleRssReader"))
   .dependsOn(reswing)
@@ -157,7 +161,9 @@ lazy val caseStudyRSSSimple = project.in(file("CaseStudies/RSSReader/SimpleRssRe
     incOptions := incOptions.value.withLogRecompileOnMacro(false),
     publish := {},
     publishLocal := {},
-    rssDependencies)
+    rssDependencies,
+    scalatestDependency,
+    scalaswingDependency)
 
 lazy val universe = project.in(file("Universe"))
   .dependsOn(rescalaJVM)
@@ -174,12 +180,10 @@ lazy val universe = project.in(file("Universe"))
 lazy val rssDependencies = libraryDependencies ++= Seq(
   "joda-time" % "joda-time" % "2.9.4" withSources(),
   "org.joda" % "joda-convert" % "1.8.1",
-  "org.codehaus.jsr166-mirror" % "jsr166y" % "1.7.0",
-  "org.scalatest" %% "scalatest" % "2.2.6" % "test",
-  "org.scala-lang" % "scala-swing" % "2.11+")
+  "org.codehaus.jsr166-mirror" % "jsr166y" % "1.7.0")
 
+lazy val scalaswingDependency = libraryDependencies += "org.scala-lang" % "scala-swing" % "2.11.0-M7"
 lazy val scalatestDependency = libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.0" % "test"
-
 
 
 // ================================= scalac options
