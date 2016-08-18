@@ -9,26 +9,18 @@ import rescala.propagation.Turn
 import scala.util.{Failure, Success}
 
 
-
-
-
 object REPublisher {
 
   def apply[T, S <: Struct](dependency: Pulsing[T, S])(implicit fac: Engine[S, Turn[S]]): REPublisher[T, S] = new REPublisher[T, S](dependency, fac)
 
 
   class REPublisher[T, S <: Struct](dependency: Pulsing[T, S], fac: Engine[S, Turn[S]]) extends Publisher[T] {
-    var reactiveSubscriptions: List[SubscriptionReactive[_, _]] = Nil
 
     override def subscribe(s: Subscriber[_ >: T]): Unit = {
       val sub = REPublisher.subscription(dependency, s, fac)
-      synchronized(reactiveSubscriptions ::= sub)
       s.onSubscribe(sub)
     }
 
-    def signalComplete(): Unit = synchronized {
-      reactiveSubscriptions.foreach(_.cancel)
-    }
   }
 
   class SubscriptionReactive[T, S <: Struct](bud: S#SporeP[T, Reactive[S]], dependency: Pulsing[T, S], subscriber: Subscriber[_ >: T], fac: Engine[S, Turn[S]]) extends Base[T, S](bud) with Reactive[S] with Subscription {
@@ -42,36 +34,33 @@ object REPublisher {
         dependency.pulse(turn).toOptionTry(takeInitialValue = false) match {
           case None => ReevaluationResult.Static(changed = false)
           case Some(tryValue) =>
-          synchronized {
-            while (requested <= 0 && !cancelled) wait(100)
-            if (cancelled) ReevaluationResult.Dynamic(changed = false, DepDiff[S](Set.empty, Set(dependency)))
-            else {
-              requested -= 1
-              tryValue match {
-                case Success(v) =>
-                  subscriber.onNext(v)
-                  ReevaluationResult.Static(changed = false)
-                case Failure(t) =>
-                  subscriber.onError(t)
-                  ReevaluationResult.Static(changed = false)
+            synchronized {
+              while (requested <= 0 && !cancelled) wait(100)
+              if (cancelled) ReevaluationResult.Dynamic(changed = false, DepDiff[S](Set.empty, Set(dependency)))
+              else {
+                requested -= 1
+                tryValue match {
+                  case Success(v) =>
+                    subscriber.onNext(v)
+                    ReevaluationResult.Static(changed = false)
+                  case Failure(t) =>
+                    subscriber.onError(t)
+                    cancelled = true
+                    ReevaluationResult.Dynamic(changed = false, DepDiff[S](Set.empty, Set(dependency)))
+                }
               }
             }
-          }
         }
       }
     }
 
-    def signalComplete(): Unit = synchronized{
-      if (!cancelled) subscriber.onComplete()
-      cancelled = true
+    override def cancel(): Unit = {
+      synchronized {
+        cancelled = true
+        notifyAll()
+      }
     }
 
-    override def cancel(): Unit = {
-      fac.plan(this) { turn =>
-        turn.updateIncoming(this.bud, Set.empty)
-      }
-      synchronized(cancelled = true)
-    }
     override def request(n: Long): Unit = synchronized {
       requested += n
       notifyAll()
