@@ -159,6 +159,15 @@ lazy val caseStudyRSSSimple = project.in(file("CaseStudies/RSSReader/SimpleRssRe
     publishLocal := {},
     rssDependencies)
 
+lazy val universe = project.in(file("Universe"))
+  .dependsOn(rescalaJVM)
+  .settings(
+    name := "rescala-universe",
+    incOptions := incOptions.value.withLogRecompileOnMacro(false),
+    publish := {},
+    publishLocal := {})
+  .settings(com.typesafe.sbt.SbtStartScript.startScriptForClassesSettings)
+
 
 // ================================ dependencies
 
