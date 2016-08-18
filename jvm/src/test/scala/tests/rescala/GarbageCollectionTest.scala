@@ -14,23 +14,24 @@ class GarbageCollectionTest extends RETests with Whenever {
 
     whenever(engine != Engines.stm) {
 
-      val q = new ReferenceQueue[Signal[Int]]()
+      val q = new ReferenceQueue[Signal[Array[Int]]]()
 
       def makeGarbage() = {
         val v1 = Var(0)
-        val res = v1.map(identity)
+        val res = v1.map(_ => new Array[Int](1024 * 1024))
         val p = new PhantomReference(res, q)
         (v1, p)
       }
 
-      val `heap of garbage` = 1 to 1000 map (_ => makeGarbage())
-
       var done = false
       val start = System.currentTimeMillis()
 
+      var `heap of garbage` = List(makeGarbage())
+
       while (!done) {
+        `heap of garbage` ::= makeGarbage()
         System.gc()
-        val timeout = !(System.currentTimeMillis() < start + 1000)
+        val timeout = !(System.currentTimeMillis() < start + 10000)
         assert(!timeout, "did not GC a signal before timeout")
         if (q.poll() ne null) done = true
       }
