@@ -57,7 +57,7 @@ class ParallelLockSweep(backoff: Backoff, ex: Executor, engine: EngineImpl[LSStr
         case Dynamic(hasChanged, diff) =>
           diff.removed foreach drop(head)
           diff.added foreach discover(head)
-          head.bud.counter = recount(diff.novel)
+          head.bud.counter = recount(diff.novel.iterator)
 
           if (head.bud.counter == 0) done(head, hasChanged)
 

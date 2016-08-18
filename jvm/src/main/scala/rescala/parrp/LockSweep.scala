@@ -131,7 +131,7 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
         case Dynamic(hasChanged, diff) =>
           diff.removed foreach drop(head)
           diff.added foreach discover(head)
-          head.bud.counter = recount(diff.novel)
+          head.bud.counter = recount(diff.novel.iterator)
 
           if (head.bud.counter == 0) done(head, hasChanged)
 
@@ -139,7 +139,7 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
     }
   }
 
-  def recount(reactives: Set[Reactive[TState]]): Int = {
+  def recount(reactives: Iterator[Reactive[TState]]): Int = {
     reactives.count(r => r.bud.hasWritten != this && r.bud.willWrite == this)
   }
 
@@ -164,7 +164,7 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
     }
     else {
       dependencies.foreach(discover(reactive))
-      reactive.bud.counter = recount(dependencies)
+      reactive.bud.counter = recount(dependencies.iterator)
       val inputsChanged = dependencies.exists(_.bud.hasChanged == this)
       if (reactive.bud.counter == 0) {
         if (inputsChanged) evaluate(reactive)

@@ -121,7 +121,7 @@ trait BufferedSpore[P] extends PulsingSpore[P] with Buffer[Pulse[P]] {
 trait GraphSpore[R] {
   def incoming(implicit turn: Turn[_]): Set[R]
   def updateIncoming(reactives: Set[R])(implicit turn: Turn[_]): Unit
-  def outgoing(implicit turn: Turn[_]): Set[R]
+  def outgoing(implicit turn: Turn[_]): Iterator[R]
   def discover(reactive: R)(implicit turn: Turn[_]): Unit
   def drop(reactive: R)(implicit turn: Turn[_]): Unit
 }
@@ -147,12 +147,12 @@ trait LevelSpore[R] extends GraphSpore[R] {
   */
 abstract class PropagationSporeImpl[P, R](override var current: Pulse[P], override val transient: Boolean, initialIncoming: Set[R]) extends GraphSpore[R] with BufferedSpore[P] {
   var _incoming: Set[R] = initialIncoming
-  var _outgoing: Set[R] = Set.empty
+  var _outgoing: scala.collection.mutable.Map[R, Boolean] = scala.collection.mutable.WeakHashMap.empty
 
   def incoming(implicit turn: Turn[_]): Set[R] = _incoming
   def updateIncoming(reactives: Set[R])(implicit turn: Turn[_]): Unit = _incoming = reactives
-  override def outgoing(implicit turn: Turn[_]): Set[R] = _outgoing
-  override def discover(reactive: R)(implicit turn: Turn[_]): Unit = _outgoing += reactive
+  override def outgoing(implicit turn: Turn[_]): Iterator[R] = _outgoing.keysIterator
+  override def discover(reactive: R)(implicit turn: Turn[_]): Unit = _outgoing.put(reactive, true)
   override def drop(reactive: R)(implicit turn: Turn[_]): Unit = _outgoing -= reactive
 }
 

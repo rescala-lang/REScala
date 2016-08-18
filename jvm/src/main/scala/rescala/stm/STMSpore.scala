@@ -21,7 +21,7 @@ class STMSpore[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming
   override def level(implicit turn: Turn[_]): Int = _level.get
   override def drop(reactive: R)(implicit turn: Turn[_]): Unit = _outgoing.transformAndGet(_ - reactive)
   override def updateLevel(i: Int)(implicit turn: Turn[_]): Int = _level.transformAndGet(math.max(_, i))
-  override def outgoing(implicit turn: Turn[_]): Set[R] = _outgoing.get
+  override def outgoing(implicit turn: Turn[_]): Iterator[R] = _outgoing.get.iterator
   def updateIncoming(reactives: Set[R])(implicit turn: Turn[_]): Unit = _incoming.set(reactives)
   override def discover(reactive: R)(implicit turn: Turn[_]): Unit = _outgoing.transformAndGet(_ + reactive)
 
