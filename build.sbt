@@ -3,9 +3,17 @@ scalaVersion in ThisBuild := "2.11.8"
 
 version in ThisBuild := "0.18.0-SNAPSHOT"
 
+testOptions in Test in ThisBuild += Tests.Argument("-oICN")
+
+incOptions in ThisBuild := (incOptions in ThisBuild).value.withLogRecompileOnMacro(false)
+
+parallelExecution in Test in ThisBuild := true
+
+licenses in ThisBuild += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))
+
 
 lazy val root = project.in(file("."))
-  .aggregate(rescalaJVM, rescalaJS, microbench, reswing, examples, examplesReswing, caseStudyEditor, caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags, datastructures)
+  .aggregate(rescalaJVM, rescalaJS, microbench, reswing, examples, examplesReswing, caseStudyEditor, caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags, datastructures, universe)
   .settings(
     publish := {},
     publishLocal := {}
@@ -21,10 +29,6 @@ lazy val rescala = crossProject.in(file("."))
     libraryDependencies += "org.reactivestreams" % "reactive-streams" % "1.0.0",
     libraryDependencies += "org.reactivestreams" % "reactive-streams-tck" % "1.0.0",
     libraryDependencies += "org.scala-stm" %% "scala-stm" % "0.7",
-
-    incOptions := incOptions.value.withLogRecompileOnMacro(false),
-
-    parallelExecution in Test := true,
 
     sourceGenerators in Compile <+= sourceManaged in Compile map { dir =>
       val file = dir / "rescala" / "reactives" / "GeneratedSignalLift.scala"
@@ -53,7 +57,6 @@ lazy val rescala = crossProject.in(file("."))
          |""".stripMargin)
       Seq(file)
     },
-    licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")),
     initialCommands in console :=
       s"""import rescala._
        """.stripMargin
@@ -71,7 +74,6 @@ lazy val microbench = project.in(file("Microbench"))
   .settings(TaskKey[Unit]("compileJmh") <<= Seq(compile in pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh).dependOn)
   .dependsOn(rescalaJVM)
   .settings(
-    incOptions := incOptions.value.withLogRecompileOnMacro(false),
     publish := {},
     publishLocal := {}
   )
@@ -82,16 +84,13 @@ lazy val reswing = project.in(file("RESwing"))
   .settings(
     name := "reswing",
     scalaswingDependency,
-    licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")),
-    incOptions := incOptions.value.withLogRecompileOnMacro(false))
-
+    licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")))
 
 lazy val examples = project.in(file("Examples/examples"))
   .dependsOn(rescalaJVM)
   .settings(
     name := "rescala-examples",
     scalaswingDependency,
-    incOptions := incOptions.value.withLogRecompileOnMacro(false),
     publish := {},
     publishLocal := {})
 
@@ -99,7 +98,6 @@ lazy val examplesReswing = project.in(file("Examples/examples-reswing"))
   .dependsOn(reswing)
   .settings(
     name := "reswing-examples",
-    incOptions := incOptions.value.withLogRecompileOnMacro(false),
     publish := {},
     publishLocal := {})
 
@@ -107,7 +105,6 @@ lazy val caseStudyEditor = project.in(file("CaseStudies/Editor"))
   .dependsOn(reswing)
   .settings(
     name := "editor-case-study",
-    incOptions := incOptions.value.withLogRecompileOnMacro(false),
     publish := {},
     publishLocal := {})
 
@@ -115,7 +112,6 @@ lazy val rescalatags = project.in(file("Rescalatags"))
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(rescalaJS)
   .settings(
-    incOptions := incOptions.value.withLogRecompileOnMacro(false),
     libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.6.0",
     scalatestDependency,
     jsDependencies += RuntimeDOM
@@ -125,7 +121,6 @@ lazy val datastructures = project.in(file("Datastructures"))
   .dependsOn(rescalaJVM)
   .settings(
     name := "datastructures",
-    incOptions := incOptions.value.withLogRecompileOnMacro(false),
     publish := {},
     publishLocal := {},
     scalatestDependency
@@ -136,7 +131,6 @@ lazy val caseStudyRSSEvents = project.in(file("CaseStudies/RSSReader/ReactiveSca
   .dependsOn(reswing)
   .settings(
     name := "rssreader-case-study",
-    incOptions := incOptions.value.withLogRecompileOnMacro(false),
     publish := {},
     publishLocal := {},
     rssDependencies,
@@ -147,7 +141,6 @@ lazy val caseStudyRSSReactive = project.in(file("CaseStudies/RSSReader/ReactiveS
   .dependsOn(reswing)
   .settings(
     name := "rssreader-case-study",
-    incOptions := incOptions.value.withLogRecompileOnMacro(false),
     publish := {},
     publishLocal := {},
     rssDependencies,
@@ -158,7 +151,6 @@ lazy val caseStudyRSSSimple = project.in(file("CaseStudies/RSSReader/SimpleRssRe
   .dependsOn(reswing)
   .settings(
     name := "rssreader-case-study",
-    incOptions := incOptions.value.withLogRecompileOnMacro(false),
     publish := {},
     publishLocal := {},
     rssDependencies,
@@ -169,7 +161,6 @@ lazy val universe = project.in(file("Universe"))
   .dependsOn(rescalaJVM)
   .settings(
     name := "rescala-universe",
-    incOptions := incOptions.value.withLogRecompileOnMacro(false),
     publish := {},
     publishLocal := {})
   .settings(com.typesafe.sbt.SbtStartScript.startScriptForClassesSettings)
