@@ -146,8 +146,8 @@ trait LevelSpore[R] extends GraphSpore[R] {
   * @tparam R Type of the reactive values that are connected to this spore
   */
 abstract class PropagationSporeImpl[P, R](override var current: Pulse[P], override val transient: Boolean, initialIncoming: Set[R]) extends GraphSpore[R] with BufferedSpore[P] {
-  var _incoming: Set[R] = initialIncoming
-  var _outgoing: scala.collection.mutable.Map[R, Boolean] = scala.collection.mutable.WeakHashMap.empty
+  private var _incoming: Set[R] = initialIncoming
+  private var _outgoing: scala.collection.mutable.Map[R, Boolean] = scala.collection.mutable.WeakHashMap.empty
 
   def incoming(implicit turn: Turn[_]): Set[R] = _incoming
   def updateIncoming(reactives: Set[R])(implicit turn: Turn[_]): Unit = _incoming = reactives

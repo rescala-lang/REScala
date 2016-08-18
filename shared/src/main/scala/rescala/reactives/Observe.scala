@@ -1,5 +1,7 @@
 package rescala.reactives
 
+import java.util.concurrent.ConcurrentHashMap
+
 import rescala.engines.{Engine, Ticket}
 import rescala.graph._
 import rescala.propagation.{Committable, Turn}
@@ -18,6 +20,8 @@ trait Observe[S <: Struct] {
 
 object Observe {
 
+  val strongObserveReferences = new ConcurrentHashMap[Observe[_], Boolean]()
+
   private class Obs[T, S <: Struct](bud: S#SporeP[T, Reactive[S]], dependency: Pulsing[T, S], fun: Try[T] => Unit) extends Base[T, S](bud) with Reactive[S] with Observe[S] {
     override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[S] = {
       if (turn.incoming(bud).isEmpty) ReevaluationResult.Dynamic(changed = false, DepDiff(Set.empty, Set(dependency)))
@@ -26,18 +30,23 @@ object Observe {
         ReevaluationResult.Static(changed = false)
       }
     }
-    override def remove()(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) { turn =>
-      turn.updateIncoming(this.bud, Set.empty)
+    override def remove()(implicit fac: Engine[S, Turn[S]]): Unit = {
+      fac.plan(this) { turn =>
+        turn.updateIncoming(this.bud, Set.empty)
+      }
+      strongObserveReferences.remove(this: Observe[_])
     }
   }
 
   def apply[T, S <: Struct](dependency: Pulsing[T, S])(fun: Try[T] => Unit)(implicit maybe: Ticket[S]): Observe[S] = {
     val incoming = Set[Reactive[S]](dependency)
-    maybe(initTurn => initTurn.create(incoming) {
+    val obs = maybe(initTurn => initTurn.create(incoming) {
       val obs = new Obs(initTurn.bud[T, Reactive[S]](initialIncoming = incoming, transient = false), dependency, fun)
       dependency.pulse(initTurn).toOptionTry(takeInitialValue = true).foreach(t => initTurn.schedule(once(this, t, fun)))
       obs
     })
+    strongObserveReferences.put(obs, true)
+    obs
   }
 
 
