@@ -491,6 +491,5 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
 
   override def pulses[P](budP: S#SporeP[P, _]): Buffer[Pulse[P]] = budP.pulses
   override def incoming[R](bud: S#Spore[R]): Set[R] = bud.incoming(this)
-  override def updateIncoming[R](bud: S#Spore[R], newDependencies: Set[R]): Unit = bud.updateIncoming(newDependencies)(this)
 
 }

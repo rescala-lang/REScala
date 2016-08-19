@@ -2,7 +2,7 @@ package rescala.propagation
 
 import java.util
 
-import rescala.graph.{Buffer, PulsingGraphStruct, Pulse}
+import rescala.graph.{Buffer, DepDiff, Pulse, PulsingGraphStruct, Reactive}
 
 import scala.util.control.NonFatal
 
@@ -49,6 +49,17 @@ trait CommonPropagationImpl[S <: PulsingGraphStruct] extends AbstractPropagation
 
   override def pulses[P](budP: S#SporeP[P, _]): Buffer[Pulse[P]] = budP.pulses
   override def incoming[R](bud: S#Spore[R]): Set[R] = bud.incoming(this)
-  override def updateIncoming[R](bud: S#Spore[R], newDependencies: Set[R]): Unit = bud.updateIncoming(newDependencies)(this)
+
+  protected def discover(sink: Reactive[S])(source: Reactive[S]): Unit = source.bud.discover(sink)(this)
+
+  protected def drop(sink: Reactive[S])(source: Reactive[S]): Unit = source.bud.drop(sink)(this)
+
+  def applyDiff(head: Reactive[S], diff: DepDiff[S]): Unit = {
+    head.bud.updateIncoming(diff.novel)(this)
+    diff.removed foreach drop(head)
+    diff.added foreach discover(head)
+  }
+
+
 
 }

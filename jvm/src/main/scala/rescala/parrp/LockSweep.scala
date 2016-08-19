@@ -129,8 +129,7 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
         case Static(hasChanged) => done(head, hasChanged)
 
         case Dynamic(hasChanged, diff) =>
-          diff.removed foreach drop(head)
-          diff.added foreach discover(head)
+          applyDiff(head, diff)
           head.bud.counter = recount(diff.novel.iterator)
 
           if (head.bud.counter == 0) done(head, hasChanged)
@@ -179,7 +178,7 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
     * we let the other turn update the dependency and admit the dependent into the propagation queue
     * so that it gets updated when that turn continues
     * the responsibility for correctly passing the locks is moved to the commit phase */
-  def discover(sink: Reactive[TState])(source: Reactive[TState]): Unit = {
+  override def discover(sink: Reactive[TState])(source: Reactive[TState]): Unit = {
 
     val owner = acquireShared(source)
     if (owner ne key) {
@@ -198,7 +197,7 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
   }
 
   /** this is for cases where we register and then unregister the same dependency in a single turn */
-  def drop(sink: Reactive[TState])(source: Reactive[TState]): Unit = {
+  override def drop(sink: Reactive[TState])(source: Reactive[TState]): Unit = {
 
     val owner = acquireShared(source)
     if (owner ne key) {

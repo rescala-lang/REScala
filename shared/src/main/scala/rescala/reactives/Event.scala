@@ -1,8 +1,9 @@
 package rescala.reactives
 
-import rescala.engines.Ticket
+import rescala.engines.{Engine, Ticket}
 import rescala.graph.Pulse.{Change, Exceptional, NoChange, Stable}
-import rescala.graph.{Pulse, PulseOption, Reactive, Struct}
+import rescala.graph.{Disconnectable, Pulse, PulseOption, Reactive, Struct}
+import rescala.propagation.Turn
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 
 import scala.util.{Failure, Success}
@@ -31,6 +32,9 @@ trait Event[+T, S <: Struct] extends EventLike[T, S, Signal, Event] with PulseOp
       case other => other
     }
   }
+
+  def disconnect()(implicit engine: Engine[S, Turn[S]]): Unit
+
 
   /**
     * Events disjunction.

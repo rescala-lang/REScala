@@ -28,8 +28,7 @@ trait LevelBasedPropagation[S <: LevelStruct] extends CommonPropagationImpl[S] {
       case Static(hasChanged) =>
         requeue(hasChanged, level = -42, redo = false)
       case Dynamic(hasChanged, diff) =>
-        diff.removed foreach drop(head)
-        diff.added foreach discover(head)
+        applyDiff(head, diff)
         val newLevel = maximumLevel(diff.novel) + 1
         requeue(hasChanged, newLevel, redo = head.bud.level < newLevel)
     }
@@ -38,10 +37,6 @@ trait LevelBasedPropagation[S <: LevelStruct] extends CommonPropagationImpl[S] {
   }
 
   private def maximumLevel(dependencies: Set[Reactive[S]]): Int = dependencies.foldLeft(-1)((acc, r) => math.max(acc, r.bud.level))
-
-  protected def discover(sink: Reactive[S])(source: Reactive[S]): Unit = source.bud.discover(sink)
-
-  protected def drop(sink: Reactive[S])(source: Reactive[S]): Unit = source.bud.drop(sink)
 
 
   override def create[T <: Reactive[S]](dependencies: Set[Reactive[S]], dynamic: Boolean)(f: => T): T = {

@@ -18,15 +18,6 @@ trait Turn[S <: Struct] {
   def pulses[P](budP: S#SporeP[P, _]): Buffer[Pulse[P]]
 
   /**
-    * Replaces the incoming dependencies for a given spore. Used for dynamic reactive evaluation.
-    *
-    * @param bud Spore to replace dependencies for
-    * @param newDependencies New dependencies to assign to a spore
-    * @tparam R Reactive value type of the incoming dependencies of the spore
-    */
-  def updateIncoming[R](bud: S#Spore[R], newDependencies: Set[R]): Unit
-
-  /**
     * Reads the incoming dependencies of a given spore.
     *
     * @param bud Spore to read the dependencies from

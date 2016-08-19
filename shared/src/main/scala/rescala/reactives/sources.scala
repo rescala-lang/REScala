@@ -40,6 +40,8 @@ final class Evt[T, S <: Struct]()(_bud: S#SporeP[T, Reactive[S]]) extends Base[T
 
   override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[S] =
     ReevaluationResult.Static(changed = pulse.isChange)
+
+  override def disconnect()(implicit engine: Engine[S, Turn[S]]): Unit = ()
 }
 
 /**
@@ -89,6 +91,8 @@ final class Var[A, S <: Struct](_bud: S#SporeP[A, Reactive[S]]) extends Base[A, 
 
   override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[S] =
     ReevaluationResult.Static(changed = pulse.isChange)
+
+  override def disconnect()(implicit engine: Engine[S, Turn[S]]): Unit = ()
 }
 
 /**

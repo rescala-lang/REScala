@@ -22,18 +22,13 @@ object Observe {
 
   val strongObserveReferences = new ConcurrentHashMap[Observe[_], Boolean]()
 
-  private class Obs[T, S <: Struct](bud: S#SporeP[T, Reactive[S]], dependency: Pulsing[T, S], fun: Try[T] => Unit) extends Base[T, S](bud) with Reactive[S] with Observe[S] {
-    override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[S] = {
-      if (turn.incoming(bud).isEmpty) ReevaluationResult.Dynamic(changed = false, DepDiff(Set.empty, Set(dependency)))
-      else {
-        dependency.pulse(turn).toOptionTry(takeInitialValue = false).foreach(t => turn.schedule(once(this, t, fun)))
-        ReevaluationResult.Static(changed = false)
-      }
+  private class Obs[T, S <: Struct](bud: S#SporeP[T, Reactive[S]], dependency: Pulsing[T, S], fun: Try[T] => Unit) extends Base[T, S](bud) with Reactive[S] with Observe[S] with Disconnectable[S] {
+    override protected[rescala] def computeReevaluationResult()(implicit turn: Turn[S]): ReevaluationResult[S] = {
+      dependency.pulse(turn).toOptionTry(takeInitialValue = false).foreach(t => turn.schedule(once(this, t, fun)))
+      ReevaluationResult.Static(changed = false)
     }
     override def remove()(implicit fac: Engine[S, Turn[S]]): Unit = {
-      fac.plan(this) { turn =>
-        turn.updateIncoming(this.bud, Set.empty)
-      }
+      disconnect()
       strongObserveReferences.remove(this: Observe[_])
     }
   }
@@ -48,7 +43,6 @@ object Observe {
     strongObserveReferences.put(obs, true)
     obs
   }
-
 
 
   def once[V](self: AnyRef, value: Try[V], f: Try[V] => Unit): Committable = new Committable {
