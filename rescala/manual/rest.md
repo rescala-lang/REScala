@@ -2,6 +2,7 @@
 title: Rest
 version: 0.3
 number: 3
+permalink: /manual/Rest
 ---
 
 ## Signals
