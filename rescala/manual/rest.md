@@ -133,7 +133,7 @@ Note that using \code{println(space.get)} would also print the
 value of the signal, but only at the point in time in which the print
 statement is executed. Instead, the approach described so far prints
 {\it all} values of the signal. More details about converting signals
-into events and back are provided in {% include internal_link.html ref="conv-fun" %}.
+into events and back are provided in {% include internal_link.md ref="conv-fun" %}.
 
 
 \newpage

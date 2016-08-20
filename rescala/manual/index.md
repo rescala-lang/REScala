@@ -8,12 +8,12 @@ number: 1
 ## Introduction
 
 This manual covers the main features of the *REScala* programming language.
-{% include internal_link.html ref="sigAndVars" %} presents time-changing values
-in *REScala*, {% include internal_link.html ref="events" %} describes events,
-{% include internal_link.html ref="conv-fun" %} covers the conversion functions between
-events and time-changing values, {% include internal_link.html ref="technicalities" %}
+{% include internal_link.md ref="sigAndVars" %} presents time-changing values
+in *REScala*, {% include internal_link.md ref="events" %} describes events,
+{% include internal_link.md ref="conv-fun" %} covers the conversion functions between
+events and time-changing values, {% include internal_link.md ref="technicalities" %}
 presents technical details that are necessary to correctly run
-*REScala*, {% include internal_link.html ref="related" %} outlines the related work.
+*REScala*, {% include internal_link.md ref="related" %} outlines the related work.
 
 
 {% include paragraph.md text="Intended audience and prerequisites" %} This manuscript is
@@ -37,5 +37,5 @@ in~\cite{rescala,Gasiunas:2011:EME:1960275.1960303}.
 The manual introduces the concepts related to functional reactive
 programming and event-based programming from a practical
 perspective. The readers interested in a more general presentation of
-these topics can find in {% include internal_link.html ref="related" %} the essential
+these topics can find in {% include internal_link.md ref="related" %} the essential
 references.
