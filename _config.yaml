@@ -27,7 +27,7 @@ collections:
     nav_id: 1
     name: REScala
   manual:
-    nav_id: 5
+    nav_id: 1.5
     name: Manual
   escala:
     nav_id: 2
