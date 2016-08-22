@@ -7,7 +7,7 @@
     {% assign docs = site.pages | sort: 'number' %}
     {% for doc in docs %}
       {% if doc.version %}
-    <li> <a href="{{ doc.url }}">{{ doc.number }} - {{ doc.title }}</a></li>
+    <li> <a href="{{ site.github.url }}{{ doc.url }}">{{ doc.number }} - {{ doc.title }}</a></li>
       {% endif %}
     {% endfor %}
 	</ul>
