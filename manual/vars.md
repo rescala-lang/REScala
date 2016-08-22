@@ -2,7 +2,6 @@
 title: Vars
 version: 0.3
 number: 2.1
-permalink: /manual/Vars
 ---
 ## Vars
 
