@@ -2,6 +2,7 @@
 title: Signals and Vars
 version: 0.3
 number: 2
+permalink: /manual/SignalAndVars
 ---
 ## Signals and Vars
 
