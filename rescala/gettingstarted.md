@@ -99,5 +99,5 @@ snapshot function.
 
 # Where to Go Next
 
-[REScala download](./download.html)  
-[REScala user manual](./documentation.html)
+[REScala download](https://github.com/guidosalva/REScala/archive/master.zip)  
+[REScala user manual](/manual)
