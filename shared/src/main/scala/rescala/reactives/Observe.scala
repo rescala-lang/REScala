@@ -20,7 +20,7 @@ trait Observe[S <: Struct] {
 
 object Observe {
 
-  val strongObserveReferences = new ConcurrentHashMap[Observe[_], Boolean]()
+  private val strongObserveReferences = new ConcurrentHashMap[Observe[_], Boolean]()
 
   private class Obs[T, S <: Struct](bud: S#SporeP[T, Reactive[S]], dependency: Pulsing[T, S], fun: Try[T] => Unit) extends Base[T, S](bud) with Reactive[S] with Observe[S] with Disconnectable[S] {
     override protected[rescala] def computeReevaluationResult()(implicit turn: Turn[S]): ReevaluationResult[S] = {
