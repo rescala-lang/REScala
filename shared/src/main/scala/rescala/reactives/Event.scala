@@ -2,9 +2,9 @@ package rescala.reactives
 
 import rescala.engines.{Engine, Ticket}
 import rescala.graph.Pulse.{Change, Exceptional, NoChange, Stable}
-import rescala.graph.{Disconnectable, Pulse, PulseOption, Reactive, Struct}
+import rescala.graph.{Pulse, PulseOption, Reactive, Struct}
 import rescala.propagation.Turn
-import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
+import rescala.reactives.RExceptions.UnhandledFailureException
 
 import scala.util.{Failure, Success}
 
