@@ -43,3 +43,4 @@ trait CommonEngines {
 
 }
 
+object CommonEngines extends CommonEngines
