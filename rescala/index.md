@@ -51,3 +51,21 @@ Functions converting from a signal to an event are used when some
 piece of reactive functionality that is refactored to use signals
 still needs to interface to events, graphically depicted in Figure a.
 
+## Contributions
+
+REScala has been developed thanks to the contribution of
+several people:
+
+* [Guido Salvaneschi](http://www.guidosalvaneschi.com)
+* Gerold Hintz
+* Pascal Weisenburger
+* Markus Hauck
+* Przemyslaw Chrzastowski
+* Johannes Späth
+* Florian Mladitsch
+* Yannick Schroecker
+* Joscha Drechsler
+* Michael Hausl
+* Moritz Lichter
+* Ragnar Mogk
+* Simon Sprankel
