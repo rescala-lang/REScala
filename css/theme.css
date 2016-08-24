@@ -76,11 +76,13 @@ h1,h2,h3,h4 {
   font-size: 17px;
 }
 
+#navbar a.current {background-color: #666;}
+
 #navbar a:hover {background-color: #555;}
 
 #navbar .icon {display: none;}
 
-#navbar #manual_content {
+#navbar .dropdown_content {
   display: none;
   position: fixed;
   background-color: #333;
@@ -89,7 +91,7 @@ h1,h2,h3,h4 {
   margin-left: 75px;
 }
 
-#navbar.manual_content #manual_content {
+#navbar .dropdown_content.show_content{
   display: block;
 }
 

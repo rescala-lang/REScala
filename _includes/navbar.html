@@ -1,14 +1,28 @@
 <!-- Fixed navbar -->
 <div id="navbar">
   <div class="container">
-    <a href="{{ site.github.url }}/index">Home</a>
-    {% assign navs = site.collections | sort: 'nav_id' %}
-    {% for col in navs %}
-      {% if col.name %}
-    <a href="{{ site.github.url }}/{{ col.label }}">{{ col.name }}</a>
+    {% assign navs = site.pages | sort: 'nav' %}
+    {% for p in navs %}
+      {% if p.nav %}
+        {% if p.dropdown %}
+          {% assign id = p.title | remove:' ' %}
+          <a class="dropdown" href="javascript:void(0);" onclick="dropdown('{{ id }}')">{{ p.title }}</a>
+          <ul id="{{ id }}" class="dropdown_content">
+          {% assign dropdowns = p.dropdown %}
+          {% for check in dropdowns %}
+            {% for dropdownPage in navs %}
+              {% assign c = '/' | append: check %}
+              {% if dropdownPage.url contains c %}
+                <li> <a href="{{ site.github.url }}{{ dropdownPage.url }}">{{ dropdownPage.title }}</a></li>
+              {% endif %}
+            {% endfor %}
+          {% endfor %}
+          </ul>
+        {% else %}
+          <a class="{% if page.url == p.url %}current{% endif %}" href="{{ site.github.url}}{{ p.url }}">{{ p.title }}</a>
+        {% endif %}
       {% endif %}
     {% endfor %}
-    <a href="{{ site.github.url }}/contact">Contact</a>
     <a class="icon" href="javascript:void(0);" onclick="document.getElementById('navbar').classList.toggle('responsive')">&#9776;</a>
   </div>
 </div>
