@@ -83,9 +83,9 @@ sealed trait Pulse[+P] {
   def stabilize: Pulse[P] = this
 
   /** converts the pulse to an option of try */
-  def toOptionTry(takeInitialValue: Boolean = false): Option[Try[P]] = this match {
+  def toOptionTry(asSignal: Boolean): Option[Try[P]] = this match {
     case Change(up) => Some(Success(up))
-    case Stable(current) if takeInitialValue => Some(Success(current))
+    case Stable(current) => if (asSignal) Some(Success(current)) else None
     case NoChange => None
     case Pulse.empty => None
     case Exceptional(t) => Some(Failure(t))

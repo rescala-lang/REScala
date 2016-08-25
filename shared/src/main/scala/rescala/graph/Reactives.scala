@@ -1,12 +1,10 @@
 package rescala.graph
 
-import rescala.engines.{Engine, Ticket}
-import rescala.graph.Pulse.{Change, Exceptional, NoChange, Stable}
+import rescala.engines.Ticket
 import rescala.propagation.Turn
-import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
+import rescala.reactives.RExceptions.EmptySignalControlThrowable
 
 import scala.annotation.compileTimeOnly
-import scala.util.Try
 
 /**
   * A reactive value is something that can be reevaluated
@@ -73,11 +71,7 @@ trait PulseOption[+P, S <: Struct] extends Pulsing[P, S] {
     get(turn)
   }
 
-  final def get(implicit turn: Turn[S]) = pulse(turn) match {
-    case Change(update) => Some(update)
-    case NoChange | Stable(_) => None
-    case Exceptional(t) => throw t
-  }
+  final def get(implicit turn: Turn[S]) = pulse(turn).getE
 }
 
 
@@ -102,11 +96,6 @@ trait Stateful[+A, S <: Struct] extends Pulsing[A, S] {
     turn.dependencyInteraction(this)
     try { get(turn) }
     catch { case EmptySignalControlThrowable => throw new NoSuchElementException(s"Signal $this is empty") }
-  }
-
-  final def tryNow(implicit maybe: Ticket[S]): Option[Try[A]] = maybe { t =>
-    t.dependencyInteraction(this)
-    pulse(t).toOptionTry(takeInitialValue = true)
   }
 
 
