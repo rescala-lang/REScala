@@ -17,7 +17,7 @@ presents technical details that are necessary to correctly run
 *REScala*, {% include internal_link.md ref="related" %} outlines the related work.
 
 
-{% include paragraph.md text="Intended audience and prerequisites" %} This manuscript is
+**Intended audience and prerequisites** This manuscript is
 mainly intended for students who approach reactive programming in
 Scala for the first time.  The manual assumes basic knowledge of the
 Scala~\cite{scala} language and of functional programming (high-order
@@ -29,7 +29,7 @@ and signals, they can be used separately. For example a programmer can
 use only *REScala* events to design application that do not need
 time-changing values.
 
-{% include paragraph.md text="Scope" %} The manual covers the basic features of
+**Scope** The manual covers the basic features of
 *REScala*. Some functionalities, including implicit events and
 high-order signals are intentionally not covered, other, like event
 polymorphism, are only sketched. More details can be found
