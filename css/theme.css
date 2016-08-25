@@ -49,6 +49,16 @@ h1,h2,h3,h4 {
   border-bottom: 1px solid #eee;
 }
 
+/*add space before header, so scrolling is not hidden by top bar*/
+h1:before,h2:before,h3:before,h4:before {
+  display: block;
+  content: " ";
+  margin-top: -55px;
+  height: 55px;
+  visibility: hidden;
+}
+
+
 /*
  * Navigation bar
 */
@@ -136,7 +146,7 @@ h1,h2,h3,h4 {
   margin: 0px 0px 5px 0px;
 }
 
-#toc ol { 
+#toc ol {
   padding-left: 30px;
   list-style-type: none;
   counter-reset: item;
@@ -150,9 +160,9 @@ h1,h2,h3,h4 {
   margin: 0px 0px 5px 0px;
   line-height:20px;
 }
-#toc li a:before { 
+#toc li a:before {
   content: counters(item, ".") " ";
-  counter-increment: item; 
+  counter-increment: item;
   float: left;
   margin-right: 1em;
   position: relative;
@@ -166,14 +176,14 @@ h1,h2,h3,h4 {
   margin-left: -150px;
   width: 50px;
   height: 50px;
-  
+
   -webkit-border-radius: 15px;
   -moz-border-radius: 15px;
   border-radius: 15px;
   display: none;
   margin-bottom: 7px;
   border: 1px solid #bbb;
-  
+
   text-align: center;
   text-transform: uppercase;
   text-decoration: none;
