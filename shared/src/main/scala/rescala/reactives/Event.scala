@@ -21,7 +21,7 @@ trait Event[+T, S <: Struct] extends EventLike[T, S, Signal, Event] with PulseOp
   final def observe(
     onSuccess: T => Unit,
     onFailure: Throwable => Unit = t => throw new UnhandledFailureException(t)
-  )(implicit ticket: Ticket[S]): Observe[S] = Observe(this) {
+  )(implicit ticket: Ticket[S]): Observe[S] = Observe.strong(this) {
     case Success(v) => onSuccess(v)
     case Failure(t) => onFailure(t)
   }

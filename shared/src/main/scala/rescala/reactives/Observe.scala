@@ -33,13 +33,17 @@ object Observe {
     }
   }
 
-  def apply[T, S <: Struct](dependency: Pulsing[T, S])(fun: Try[T] => Unit)(implicit maybe: Ticket[S]): Observe[S] = {
+  def weak[T, S <: Struct](dependency: Pulsing[T, S])(fun: Try[T] => Unit)(implicit maybe: Ticket[S]): Observe[S] = {
     val incoming = Set[Reactive[S]](dependency)
-    val obs = maybe(initTurn => initTurn.create(incoming) {
+    maybe(initTurn => initTurn.create(incoming) {
       val obs = new Obs(initTurn.bud[T, Reactive[S]](initialIncoming = incoming, transient = false), dependency, fun)
       dependency.pulse(initTurn).toOptionTry(asSignal = true).foreach(t => initTurn.schedule(once(this, t, fun)))
       obs
     })
+  }
+
+  def strong[T, S <: Struct](dependency: Pulsing[T, S])(fun: Try[T] => Unit)(implicit maybe: Ticket[S]): Observe[S] = {
+    val obs = weak(dependency)(fun)
     strongObserveReferences.put(obs, true)
     obs
   }

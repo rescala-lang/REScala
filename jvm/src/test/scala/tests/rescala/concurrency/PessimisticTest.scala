@@ -67,7 +67,7 @@ trait PessimisticTestState {
 class PessimisticTest extends FlatSpec {
 
 
-  it should "runOnIndependentParts" in new PessimisticTestState {
+  it should "run On Independent Parts" in new PessimisticTestState {
       val v1 = Var(false)
       val v2 = Var(false)
       val s1 = v1.map {identity}
@@ -87,7 +87,7 @@ class PessimisticTest extends FlatSpec {
       assert(Pessigen.clear() == 0)
   }
 
-  it should "summedSignals" in new PessimisticTestState {
+  it should "summed Signals" in new PessimisticTestState {
       val size = 100
       val sources = List.fill(size)(Var(0))
       val latch = new CountDownLatch(size)
@@ -104,7 +104,7 @@ class PessimisticTest extends FlatSpec {
       assert(Pessigen.clear() == 0)
   }
 
-  it should "crossedDynamicDependencies" in new PessimisticTestState {
+  it should "crossed Dynamic Dependencies" in new PessimisticTestState {
       val v1 = Var(false)
       val v2 = Var(false)
       val s11 = v1.map {identity}
@@ -166,7 +166,7 @@ class PessimisticTest extends FlatSpec {
         })
   }
 
-  it should "addAndRemoveDependencyInOneTurn" in new PessimisticTestState {
+  it should "add And Remove Dependency In One Turn" in new PessimisticTestState {
 
 
       val b0 = Var(false)
@@ -212,7 +212,7 @@ class PessimisticTest extends FlatSpec {
       assert(Pessigen.clear() == 0)
   }
 
-  it should "addAndRemoveDependencyInOneTurnWhileOwnedByAnother" in new PessimisticTestState {
+  it should "add And Remove Dependency In One Turn While Owned By Another" in new PessimisticTestState {
 
       val bl0 = Var(false)
       val bl1 = bl0.map(identity)

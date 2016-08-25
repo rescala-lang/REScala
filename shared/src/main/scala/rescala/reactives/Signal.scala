@@ -21,7 +21,7 @@ trait Signal[+A, S <: Struct] extends SignalLike[A, S, Signal, Event] with State
   final override def observe(
     onSuccess: A => Unit,
     onFailure: Throwable => Unit = t => throw new UnhandledFailureException(t)
-  )(implicit ticket: Ticket[S]): Observe[S] = Observe(this) {
+  )(implicit ticket: Ticket[S]): Observe[S] = Observe.strong(this) {
     case Success(v) => onSuccess(v)
     case Failure(t) => onFailure(t)
   }

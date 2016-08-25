@@ -4,6 +4,7 @@ import java.lang.ref.{PhantomReference, ReferenceQueue}
 
 import org.scalatest.prop.Whenever
 import rescala.engines.Engines
+import rescala.reactives.Observe
 
 import scala.language.implicitConversions
 
@@ -19,6 +20,10 @@ class GarbageCollectionTest extends RETests with Whenever {
       def makeGarbage() = {
         val v1 = Var(0)
         val res = v1.map(_ => new Array[Int](1024 * 1024))
+        val obs = res.observe(_ => Unit)
+        obs.remove()
+        Observe.weak(res)(_ => Unit)
+
         val p = new PhantomReference(res, q)
         (v1, p)
       }
