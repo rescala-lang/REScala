@@ -210,7 +210,7 @@ class IFunTestDynamicSignals extends RETests {
   }
 
   /* change */
-  allEngines("change_is Not Triggered OnCreation"){ engine => import engine._
+  allEngines("change: is Not Triggered OnCreation"){ engine => import engine._
     var test = 0
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
@@ -220,7 +220,7 @@ class IFunTestDynamicSignals extends RETests {
     assert(test == 0)
   }
 
-  allEngines("change_is Triggered When The Signal Changes"){ engine => import engine._
+  allEngines("change: is Triggered When The Signal Changes"){ engine => import engine._
     var test = 0
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
@@ -233,12 +233,12 @@ class IFunTestDynamicSignals extends RETests {
     assert(test == 2)
   }
 
-  allEngines("change_the Value OfThe Event Reflects The Change InThe Signal"){ engine => import engine._
+  allEngines("change: the Value OfThe Event Reflects The Change In The Signal"){ engine => import engine._
     var test = (0, 0)
     val v1 = Var(1)
     val s1 = v1.map(_ + 1)
     val e = s1.change
-    e += { x => test = x }
+    e += { x => test = x.pair }
 
     v1 set 2
     assert(test === ((2, 3)))

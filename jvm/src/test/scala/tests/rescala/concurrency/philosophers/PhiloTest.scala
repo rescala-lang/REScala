@@ -40,7 +40,7 @@ class PhiloTest extends FunSuite {
     })
 
     println(s"philo party sleeping on $engine (dynamic $dynamic)")
-    Thread.sleep(2000)
+    Thread.sleep(1000)
     cancel = true
     threads.foreach(_.join(1000))
     assert(threads.forall(!_.isAlive), "threads did not finish")

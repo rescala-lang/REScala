@@ -52,7 +52,9 @@ class VarTestSuite extends RETests {
     val v = Var(1)
     val s = v.map { i => changes += 1; i + 1 }
     assert(s.now == 2)
+    assert(changes == 1)
     v.set(2)
+    assert(s.now == 3)
     assert(changes == 2)
     v.set(2)
     assert(changes == 2)

@@ -415,7 +415,7 @@ class IFunTest extends RETests {
     val v1 = Var(1)
     val s1 = v1.map {_ + 1}
     val e = s1.change
-    e += { x => test = x }
+    e += { x => test = x.pair }
 
     v1 set 2
     assert(test === ((2, 3)))
@@ -489,7 +489,7 @@ class IFunTest extends RETests {
     val v2 = Var.empty[String]
 
     val e1 = v1.changed.map(x => ("constant", x))
-    val e2 = v2.change
+    val e2 = v2.change.map(_.pair).recover(_ => "failed" -> "change")
 
     val ored: Event[(String, String)] = e1 || e2
 
@@ -501,10 +501,10 @@ class IFunTest extends RETests {
     assert(log.now === List("constant" -> "one"))
 
     v2.set("two")
-    assert(log.now === List("constant" -> "one"))
+    assert(log.now === List("failed" -> "change", "constant" -> "one"))
 
     v2.set("three")
-    assert(log.now === List("two" -> "three", "constant" -> "one"))
+    assert(log.now === List("two" -> "three", "failed" -> "change", "constant" -> "one"))
 
 
     plan(v1, v2) { turn =>
@@ -512,16 +512,16 @@ class IFunTest extends RETests {
       v2.admit("four b")(turn)
     }
 
-    assert(log.now === List("constant" -> "four a", "two" -> "three", "constant" -> "one"))
+    assert(log.now === List("constant" -> "four a", "two" -> "three", "failed" -> "change", "constant" -> "one"))
 
 
 
     plan(v1, v2) { turn =>
-      v1.admitPulse(Pulse.Exceptional(new EmptySignalControlThrowable))(turn)
+      v1.admitPulse(Pulse.Exceptional(EmptySignalControlThrowable))(turn)
       v2.admit("five b")(turn)
     }
 
-    assert(log.now === List("four b" -> "five b", "constant" -> "four a", "two" -> "three", "constant" -> "one"))
+    assert(log.now === List("four b" -> "five b", "constant" -> "four a", "two" -> "three", "failed" -> "change", "constant" -> "one"))
 
   }
 

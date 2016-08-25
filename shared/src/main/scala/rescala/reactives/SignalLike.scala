@@ -3,7 +3,7 @@ package rescala.reactives
 import java.util.concurrent.CompletionException
 
 import rescala.engines.Ticket
-import rescala.graph.Struct
+import rescala.graph.{Pulse, Struct}
 
 import scala.language.higherKinds
 
@@ -52,7 +52,7 @@ trait SignalLike[+A, S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV
     * Create an event that fires every time the signal changes. It fires the tuple
     * (oldVal, newVal) for the signal. The first tuple is (null, newVal)
     */
-  def change(implicit ticket: Ticket[S]): EV[(A, A), S]
+  def change(implicit ticket: Ticket[S]): EV[Signals.Diff[A], S]
 
   /**
     * Create an event that fires every time the signal changes. The value associated

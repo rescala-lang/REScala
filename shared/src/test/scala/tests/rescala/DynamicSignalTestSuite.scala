@@ -135,7 +135,7 @@ class DynamicSignalTestSuite extends RETests with Whenever {
     }
 
     val e = s.change
-    e += ((x: (Int, Int)) => test += 1)
+    e += (x => test += 1)
 
     assert(test == 0)
     v2.set(1)

@@ -62,17 +62,10 @@ trait Signal[+A, S <: Struct] extends SignalLike[A, S, Signal, Event] with State
     * Be aware that no change will be triggered when the signal changes to or from empty */
   final override def change(implicit ticket: Ticket[S]) = {
     Events.static(s"(change $this)", this) { turn =>
-      pulse(turn) match {
-        case Change(value) => stable(turn) match {
-          case Stable(oldValue) => Pulse.Change((oldValue, value))
-          case Pulse.empty => Pulse.NoChange
-          case ex@Exceptional(_) => ex
-          case other => throw new IllegalStateException(s"stable value of signal was $other")
-        }
-        case NoChange | Stable(_) => Pulse.NoChange
-        case Pulse.empty => Pulse.NoChange
-        case ex@Exceptional(_) => ex
-      }
+      val from = stable(turn)
+      val to = pulse(turn)
+      if (from != to) Pulse.Change(Signals.Diff(from, to))
+      else Pulse.NoChange
     }
   }
 

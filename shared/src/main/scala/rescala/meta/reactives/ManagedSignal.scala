@@ -1,7 +1,7 @@
 package rescala.meta.reactives
 
 import rescala.engines.{Engine, Ticket}
-import rescala.graph.Struct
+import rescala.graph.{Pulse, Struct}
 import rescala.meta.{ManagedReactive, ReactiveNode}
 import rescala.propagation.Turn
 import rescala.reactives.{Flatten, Observe, SignalLike, VarLike}
@@ -41,7 +41,7 @@ class ManagedSignalImpl[+A](override val node : ReactiveNode) extends ManagedSig
     * Create an event that fires every time the signal changes. It fires the tuple
     * (oldVal, newVal) for the signal. The first tuple is (null, newVal)
     */
-  override def change(implicit ticket: Ticket[DummyStruct]): ManagedEventImpl[(A, A)] = ???
+  override def change(implicit ticket: Ticket[DummyStruct]) = ???
 }
 
 trait ManagedVar[A, S <: Struct] extends ManagedSignal[A, S] with VarLike[A, S, ManagedSignal, ManagedEvent]

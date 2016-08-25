@@ -1,7 +1,6 @@
 package rescala.reactives
 
 import rescala.engines.{Engine, Ticket}
-import rescala.graph.Pulse.{Change, Exceptional, NoChange, Stable}
 import rescala.graph._
 import rescala.propagation.Turn
 import rescala.reactives.RExceptions.EmptySignalControlThrowable
@@ -16,21 +15,16 @@ object Signals extends GeneratedSignalLift {
       extends Base[T, S](_bud) with Signal[T, S] with StaticReevaluation[T, S] {
 
       override def calculatePulse()(implicit turn: Turn[S]): Pulse[T] = {
-        val currentValue: Pulse[T] = pulses.base
-        def theValue: T = currentValue match {
-          case Stable(value) => value
-          case Exceptional(t) => throw t
-          case Change(value) => value
-          case NoChange => throw EmptySignalControlThrowable
-        }
-        Pulse.diffPulse(expr(turn, theValue), currentValue)
+        val currentPulse: Pulse[T] = stable
+        def newValue = expr(turn, currentPulse.getS(throw EmptySignalControlThrowable))
+        Pulse.tryCatch(Pulse.diffPulse(newValue, currentPulse))
       }
     }
 
     private class DynamicSignal[T, S <: Struct](_bud: S#SporeP[T, Reactive[S]], expr: Turn[S] => T) extends Base[T, S](_bud) with Signal[T, S] with DynamicReevaluation[T, S] {
       def calculatePulseDependencies(implicit turn: Turn[S]): (Pulse[T], Set[Reactive[S]]) = {
         val (newValueTry, dependencies) = turn.collectMarkedDependencies {RExceptions.reTry(expr(turn))}
-        Pulse.diffPulse(newValueTry.get, pulses.base) -> dependencies
+        Pulse.tryCatch(Pulse.diffPulse(newValueTry.get, pulses.base)) -> dependencies
       }
     }
 
@@ -64,6 +58,18 @@ object Signals extends GeneratedSignalLift {
     val v: Var[A, S] = rescala.reactives.Var.empty[A, S]
     fut.onComplete { res => fac.plan(v)(t => v.admitPulse(Pulse.tryCatch(Pulse.Change(res.get)))(t)) }
     v
+  }
+
+  case class Diff[+A](from: Pulse[A], to: Pulse[A]) {
+    def pair: (A, A) = {
+      try {
+        val right = to.getS(throw new IllegalStateException())
+        val left = from.getS(throw new IllegalStateException())
+        left -> right
+      } catch {
+        case EmptySignalControlThrowable => throw new NoSuchElementException(s"Can not convert $this to pair")
+      }
+    }
   }
 
 }

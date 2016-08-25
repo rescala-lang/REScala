@@ -79,6 +79,7 @@ sealed trait Pulse[+P] {
     *
     * @return New pulse with a potential update set as current value
     */
+  /* this is overridden for Change to return Stable */
   def stabilize: Pulse[P] = this
 
   /** converts the pulse to an option of try */
@@ -88,6 +89,19 @@ sealed trait Pulse[+P] {
     case NoChange => None
     case Pulse.empty => None
     case Exceptional(t) => Some(Failure(t))
+  }
+
+  def getE: Option[P] = this match {
+    case Change(update) => Some(update)
+    case NoChange | Stable(_) => None
+    case Exceptional(t) => throw t
+  }
+
+  def getS(onNoChange: => Nothing): P = this match {
+    case Stable(value) => value
+    case Change(value) => value
+    case Exceptional(t) => throw t
+    case NoChange => onNoChange
   }
 }
 
@@ -104,40 +118,20 @@ object Pulse {
     */
   def fromOption[P](opt: Option[P]): Pulse[P] = opt.fold[Pulse[P]](NoChange)(Change.apply)
 
-  /**
-    * Transforms the given values into a pulse indicating change and containing they as current and updated values.
-    * The current value may also be null, resulting in it being marked as unset in the pulse.
-    * If updated and current value are equal, a pulse indicating no change is returned.
-    *
-    * @param newValue Value to store as updated value in the pulse
-    * @param oldValue Value to store as current value in the pulse
-    * @tparam P Type of the values
-    * @return Pulse storing the given values as updated and current value.
-    */
-  def diff[P](newValue: => P, oldValue: P): Pulse[P] = {
-    Pulse.tryCatch {
-      if (newValue == oldValue) Stable(oldValue)
-      else Change(newValue)
-    }
+  /** Transforms the given values into a pulse indicating change and containing they as current and updated values.
+    * If updated and current value are equal, a pulse indicating a stable value is returned. */
+  def diff[P](newValue: P, oldValue: P): Pulse[P] = {
+    if (newValue == oldValue) Stable(oldValue)
+    else Change(newValue)
   }
 
-  /**
-    * Transforms the given pulse and an updated value into a pulse indicating a change from the pulse's value to
-    * the given updated value.
-    *
-    * @param newValue Value to store as updated value in the pulse
-    * @param oldPulse Pulse to use as current value in the pulse
-    * @tparam P Type of the pulse and the value
-    * @return Pulse storing the given value as updated and the old pulse's value as current value.
-    */
-  def diffPulse[P](newValue: => P, oldPulse: Pulse[P]): Pulse[P] = oldPulse match {
-    case NoChange => Pulse.tryCatch(Change(newValue))
+  /** Transforms the given pulse and an updated value into a pulse indicating a change from the pulse's value to
+    * the given updated value. */
+  def diffPulse[P](newValue: P, oldPulse: Pulse[P]): Pulse[P] = oldPulse match {
+    case NoChange => Change(newValue)
     case Stable(value) => diff(newValue, value)
     case Change(update) => diff(newValue, update)
-    case ex@Exceptional(t) =>
-      val res = Pulse.tryCatch(Change(newValue))
-      if (res == ex) Pulse.NoChange
-      else res
+    case ex@Exceptional(t) => Change(newValue)
   }
 
   /** wrap a pulse generating function to store everntual exceptions into an exceptional pulse */
@@ -146,6 +140,7 @@ object Pulse {
     case NonFatal(t) => Exceptional(t)
   }
 
+  /** the pulse representing an empty signal */
   val empty = Exceptional(EmptySignalControlThrowable)
 
   /** Pulse indicating a current stable value */

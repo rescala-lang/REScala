@@ -49,8 +49,8 @@ class ReactiveCreationInTurnsTest extends RETests {
     engine.plan() { implicit t =>
       val v1 = rescala.reactives.Var(0)
       val v2 = v1.map(_ + 1)
-      val c1 = v1.change.observe(_ => assert(false, "created signals do not change"))
-      val c2 = v2.change.observe(_ => assert(false, "created mapped signals do not change"))
+      val c1 = v1.change.observe(v => assert(false, s"created signals do not change, but change was $v"))
+      val c2 = v2.change.observe(v => assert(false, s"created mapped signals do not change, but change was $v"))
     }
 
     {

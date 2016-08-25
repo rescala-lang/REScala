@@ -100,13 +100,8 @@ trait Stateful[+A, S <: Struct] extends Pulsing[A, S] {
 
   final def now(implicit maybe: Ticket[S]): A = maybe { turn =>
     turn.dependencyInteraction(this)
-    pulse(turn) match {
-      case Stable(value) => value
-      case Change(value) => value
-      case Pulse.empty => throw new NoSuchElementException(s"Signal $this is empty")
-      case Exceptional(t) => throw t
-      case NoChange => throw new IllegalStateException(s"Signal $this has no value")
-    }
+    try { get(turn) }
+    catch { case EmptySignalControlThrowable => throw new NoSuchElementException(s"Signal $this is empty") }
   }
 
   final def tryNow(implicit maybe: Ticket[S]): Option[Try[A]] = maybe { t =>
@@ -115,11 +110,5 @@ trait Stateful[+A, S <: Struct] extends Pulsing[A, S] {
   }
 
 
-  final def get(implicit turn: Turn[S]): A = pulse match {
-    case Stable(value) => value
-    case Change(value) => value
-    case Exceptional(t) => throw t
-    case NoChange => throw new IllegalStateException(s"Signal $this has no value")
-
-  }
+  final def get(implicit turn: Turn[S]): A = pulse.getS(onNoChange = throw new IllegalStateException(s"Signal $this has no value"))
 }

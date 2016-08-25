@@ -21,7 +21,8 @@ package object rescalatags {
           .recover(t => span(t.toString).render)
           .withDefault("".render)
 
-        result.change.observe { case (lastTag, newTag) =>
+        result.change.observe { diff =>
+          val (lastTag, newTag) = diff.pair
           if (lastTag.parentNode != null && !scalajs.js.isUndefined(lastTag.parentNode)) {
             lastTag.parentNode.replaceChild(newTag, lastTag)
           }
