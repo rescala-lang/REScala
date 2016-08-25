@@ -45,7 +45,7 @@ trait Signal[+A, S <: Struct] extends SignalLike[A, S, Signal, Event] with State
   final override def map[B](f: A => B)(implicit ticket: Ticket[S]): Signal[B, S] = Signals.lift(this) {f}
 
   /** flatten the inner reactive */
-  final override def flatten[R](implicit ev: Flatten[A, S ,R], ticket: Ticket[S]): R = ev.apply(this)
+  final override def flatten[R](implicit ev: Flatten[A, S, R], ticket: Ticket[S]): R = ev.apply(this)
 
   /**
     * Create an event that fires every time the signal changes. The value associated
@@ -53,7 +53,7 @@ trait Signal[+A, S <: Struct] extends SignalLike[A, S, Signal, Event] with State
     */
   override def changed(implicit ticket: Ticket[S]): Event[A, S] = Events.static(s"(changed $this)", this) { turn =>
     pulse(turn) match {
-      case ex@Exceptional(_ : EmptySignalControlThrowable) => Pulse.NoChange
+      case ex@Exceptional(_: EmptySignalControlThrowable) => Pulse.NoChange
       case other => other
     }
   }

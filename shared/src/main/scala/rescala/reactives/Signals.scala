@@ -8,7 +8,6 @@ import rescala.reactives.RExceptions.EmptySignalControlThrowable
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.higherKinds
-import scala.util.{Failure, Success}
 
 object Signals extends GeneratedSignalLift {
 
@@ -17,26 +16,21 @@ object Signals extends GeneratedSignalLift {
       extends Base[T, S](_bud) with Signal[T, S] with StaticReevaluation[T, S] {
 
       override def calculatePulse()(implicit turn: Turn[S]): Pulse[T] = {
-        Pulse.tryCatch {
-          val currentValue: Pulse[T] = pulses.base
-          def theValue: T = currentValue match {
-            case Stable(value) => value
-            case Exceptional(t) => throw t
-            case Change(value) => value
-            case NoChange => throw new EmptySignalControlThrowable
-          }
-          Pulse.diffPulse(expr(turn, theValue), currentValue)
+        val currentValue: Pulse[T] = pulses.base
+        def theValue: T = currentValue match {
+          case Stable(value) => value
+          case Exceptional(t) => throw t
+          case Change(value) => value
+          case NoChange => throw new EmptySignalControlThrowable
         }
+        Pulse.diffPulse(expr(turn, theValue), currentValue)
       }
     }
 
     private class DynamicSignal[T, S <: Struct](_bud: S#SporeP[T, Reactive[S]], expr: Turn[S] => T) extends Base[T, S](_bud) with Signal[T, S] with DynamicReevaluation[T, S] {
       def calculatePulseDependencies(implicit turn: Turn[S]): (Pulse[T], Set[Reactive[S]]) = {
         val (newValueTry, dependencies) = turn.collectMarkedDependencies {RExceptions.reTry(expr(turn))}
-        newValueTry match {
-          case Success(p) => (Pulse.diffPulse(p, pulses.base), dependencies)
-          case Failure(t) => (Pulse.Exceptional(t), dependencies)
-        }
+        Pulse.diffPulse(newValueTry.get, pulses.base) -> dependencies
       }
     }
 

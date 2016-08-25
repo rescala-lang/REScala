@@ -86,7 +86,7 @@ sealed trait Pulse[+P] {
     case Change(up) => Some(Success(up))
     case Stable(current) if takeInitialValue => Some(Success(current))
     case NoChange => None
-    case Exceptional(t : EmptySignalControlThrowable) => None
+    case Exceptional(t: EmptySignalControlThrowable) => None
     case Exceptional(t) => Some(Failure(t))
   }
 }
@@ -114,10 +114,11 @@ object Pulse {
     * @tparam P Type of the values
     * @return Pulse storing the given values as updated and current value.
     */
-  def diff[P](newValue: P, oldValue: P): Pulse[P] = {
-    if (null == oldValue) Change(newValue)
-    else if (newValue == oldValue) Stable(oldValue)
-    else Change(newValue)
+  def diff[P](newValue: => P, oldValue: P): Pulse[P] = {
+    Pulse.tryCatch {
+      if (newValue == oldValue) Stable(oldValue)
+      else Change(newValue)
+    }
   }
 
   /**
@@ -129,11 +130,14 @@ object Pulse {
     * @tparam P Type of the pulse and the value
     * @return Pulse storing the given value as updated and the old pulse's value as current value.
     */
-  def diffPulse[P](newValue: P, oldPulse: Pulse[P]): Pulse[P] = oldPulse match {
-    case NoChange => Change(newValue)
+  def diffPulse[P](newValue: => P, oldPulse: Pulse[P]): Pulse[P] = oldPulse match {
+    case NoChange => Pulse.tryCatch(Change(newValue))
     case Stable(value) => diff(newValue, value)
     case Change(update) => diff(newValue, update)
-    case Exceptional(t) => Change(newValue)
+    case ex@Exceptional(t) =>
+      val res = Pulse.tryCatch(Change(newValue))
+      if (res == ex) Pulse.NoChange
+      else res
   }
 
   /** wrap a pulse generating function to store everntual exceptions into an exceptional pulse */
@@ -149,6 +153,7 @@ object Pulse {
   case object NoChange extends Pulse[Nothing]
 
   /** Pulse indicating a change
+    *
     * @param update Updated value stored by the pulse */
   final case class Change[+P](update: P) extends Pulse[P] {
     override def stabilize: Pulse[P] = Stable(update)
