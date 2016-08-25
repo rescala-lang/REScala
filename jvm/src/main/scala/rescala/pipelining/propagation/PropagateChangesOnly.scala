@@ -2,7 +2,7 @@ package rescala.pipelining.propagation
 
 import rescala.graph.ReevaluationResult.{Dynamic, Static}
 import rescala.graph.{Reactive, ReevaluationResult}
-import rescala.pipelining.{PipeliningTurn, PipelineStruct}
+import rescala.pipelining.{PipelineStruct, PipeliningTurn}
 
 private[pipelining] trait PropagateChangesOnly {
 

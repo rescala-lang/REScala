@@ -2,7 +2,7 @@ package rescala.macros
 
 import rescala.graph.{PulseOption, Stateful, Struct}
 import rescala.propagation.Turn
-import rescala.reactives.{EventLike, Event, SignalLike, Signal}
+import rescala.reactives.{Event, Signal}
 
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox

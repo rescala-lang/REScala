@@ -1,15 +1,9 @@
 package reswing
 
-import scala.language.implicitConversions
-import scala.swing.Action
-import scala.swing.Alignment
-import scala.swing.Button
-import scala.swing.Color
-import scala.swing.Dimension
-import scala.swing.Font
-import scala.swing.Menu
-
 import javax.swing.Icon
+
+import scala.language.implicitConversions
+import scala.swing.{Action, Alignment, Color, Dimension, Font, Menu}
 
 class ReMenu(
     text: ReSwingValue[String] = (),

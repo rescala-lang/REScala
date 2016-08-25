@@ -1,11 +1,9 @@
 package universe
 
-import rescala.graph.Struct
 import rescala.reactives.Signals
-import rescala.engines.Ticket
+import universe.Animal._
 import universe.Globals.engine
 import universe.Globals.engine._
-import universe.Animal._
 
 object Animal {
   val StartEnergy = 200

@@ -3,7 +3,6 @@ package main.collections
 import rescala._
 
 import scala.collection._
-import scala.collection.generic._
 import scala.language.higherKinds
 
 trait ReactiveSetLike[A, ConcreteType[_]] extends ReactiveGenTraversableLike1[A, ConcreteType] {

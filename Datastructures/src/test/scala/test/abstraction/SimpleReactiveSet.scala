@@ -1,7 +1,8 @@
 package test.abstraction
 
-import rescala._
 import main.abstraction._
+import rescala._
+
 import scala.collection.GenTraversableOnce
 
 class SimpleReactiveSet[T](set: Signal[Set[T]]) extends SignalWrapper {

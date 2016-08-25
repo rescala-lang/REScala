@@ -1,13 +1,8 @@
-package reswing 
+package reswing
 
 import scala.language.implicitConversions
-import scala.swing.Component
-import scala.swing.BorderPanel
 import scala.swing.BorderPanel.Position
-import scala.swing.Color
-import scala.swing.Dimension
-import scala.swing.Font
-import scala.swing.Orientation
+import scala.swing.{BorderPanel, Color, Component, Dimension, Font}
 
 class ReBorderPanel(
     val contents: ReSwingValue[Map[Component, Position.Value]] = (),

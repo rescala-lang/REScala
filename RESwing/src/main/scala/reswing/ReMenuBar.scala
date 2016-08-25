@@ -1,13 +1,7 @@
 package reswing
 
 import scala.language.implicitConversions
-import scala.swing.Alignment
-import scala.swing.Color
-import scala.swing.Dimension
-import scala.swing.Font
-import scala.swing.MenuBar
-
-import javax.swing.Icon
+import scala.swing.{Color, Dimension, Font, MenuBar}
 
 class ReMenuBar(
     val contents: ReSwingValue[CompList] = (),

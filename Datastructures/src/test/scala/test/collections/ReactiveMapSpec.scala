@@ -1,10 +1,9 @@
 package test.collections
 
-import org.scalatest._
 import main.collections._
+import org.scalatest._
 import rescala._
 
-import scala.collection.Map.canBuildFrom
 import scala.language.implicitConversions
 
 class ReactiveMapSpec extends FunSpec {

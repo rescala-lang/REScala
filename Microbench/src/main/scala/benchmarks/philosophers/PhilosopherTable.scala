@@ -8,7 +8,6 @@ import rescala.engines.Engine
 import rescala.graph.Struct
 import rescala.propagation.Turn
 import rescala.reactives._
-import rescala.reactives.Signals.lift
 
 class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit val engine: Engine[S, Turn[S]]) {
 
@@ -32,11 +31,11 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit 
 
     val forks = for (i <- 0 until tableSize) yield {
       val nextCircularIndex = mod(i + 1)
-      lift(phils(i), phils(nextCircularIndex))(calcFork(i.toString, nextCircularIndex.toString))
+      Signals.lift(phils(i), phils(nextCircularIndex))(calcFork(i.toString, nextCircularIndex.toString))
     }
 
     for (i <- 0 until tableSize) yield {
-      val vision = lift(forks(i), forks(mod(i - 1)))(calcVision(i.toString))
+      val vision = Signals.lift(forks(i), forks(mod(i - 1)))(calcVision(i.toString))
       Seating(i, phils(i), forks(i), forks(mod(i - 1)), vision)
     }
   }

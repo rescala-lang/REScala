@@ -1,14 +1,7 @@
 package texteditor
 
-import java.awt.Cursor
-import java.awt.Dimension
-import java.awt.Rectangle
-
-import javax.swing.JComponent
-import javax.swing.JViewport
-import javax.swing.Scrollable
-import javax.swing.SwingConstants
-import javax.swing.UIManager
+import java.awt.{Cursor, Dimension, Rectangle}
+import javax.swing.{JComponent, JViewport, Scrollable, SwingConstants, UIManager}
 
 class JScrollableComponent extends JComponent with Scrollable {
   setFont(UIManager.getFont("TextField.font"))

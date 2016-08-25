@@ -1,15 +1,9 @@
 package reswing
 
-import scala.language.implicitConversions
-import scala.swing.Action
-import scala.swing.Alignment
-import scala.swing.Button
-import scala.swing.Color
-import scala.swing.Dimension
-import scala.swing.Font
-import scala.swing.MenuItem
-
 import javax.swing.Icon
+
+import scala.language.implicitConversions
+import scala.swing.{Action, Alignment, Color, Dimension, Font, MenuItem}
 
 class ReMenuItem(
     text: ReSwingValue[String] = (),
@@ -41,7 +35,7 @@ class ReMenuItem(
                      background, foreground, font, enabled,
                      minimumSize, maximumSize, preferredSize) {
   override protected lazy val peer = new MenuItem(null: String) with ComponentMixin
-  
+
   if (action != null)
     peer.action = action
 }

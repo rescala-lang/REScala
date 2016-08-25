@@ -1,8 +1,9 @@
 package main.collections
 
-import rescala._
-import scala.collection.immutable.HashSet
 import main.abstraction._
+import rescala._
+
+import scala.collection.immutable.HashSet
 
 class ReactiveHashSet[A](set: Signal[HashSet[A]]) extends ReactiveSetLike[A, ReactiveHashSet] {
 	override type InternalKind[B] = HashSet[B]

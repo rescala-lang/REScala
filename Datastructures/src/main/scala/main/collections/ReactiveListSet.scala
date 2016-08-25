@@ -1,8 +1,9 @@
 package main.collections
 
-import rescala._
-import scala.collection.immutable.ListSet
 import main.abstraction._
+import rescala._
+
+import scala.collection.immutable.ListSet
 
 class ReactiveListSet[A](set: Signal[ListSet[A]]) extends ReactiveSetLike[A, ReactiveListSet] {
 	override type InternalKind[B] = ListSet[B]

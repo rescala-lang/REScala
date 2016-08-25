@@ -2,7 +2,7 @@ package test
 
 import org.scalajs.dom.Node
 import org.scalajs.dom.html.Span
-import org.scalatest.{FlatSpec, FunSpec}
+import org.scalatest.FlatSpec
 import org.scalatest.prop.TableDrivenPropertyChecks
 import rescalatags._
 

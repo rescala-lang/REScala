@@ -3,10 +3,8 @@ package rescala.reactives
 import rescala.engines.{Engine, Ticket}
 import rescala.graph._
 import rescala.propagation.Turn
-import rescala.reactives.RExceptions.EmptySignalControlThrowable
 
 import scala.language.higherKinds
-import scala.util.{Failure, Success, Try}
 
 /**
   * Inferface for source events with no dependencies that can be manually fired by the user.

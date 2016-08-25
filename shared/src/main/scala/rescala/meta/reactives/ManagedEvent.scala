@@ -4,9 +4,7 @@ import rescala.engines.{Engine, Ticket}
 import rescala.graph.Struct
 import rescala.meta.{ManagedReactive, ReactiveNode}
 import rescala.propagation.Turn
-import rescala.reactives.{EventLike, Evt, EvtLike, Observe}
-
-import scala.util.Try
+import rescala.reactives.{EventLike, EvtLike, Observe}
 
 /**
   * Intermediate trait mainly used to satisfy the type requirements of the Signal/Event interfaces.

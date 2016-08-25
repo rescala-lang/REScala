@@ -1,7 +1,6 @@
 package tests.rescala.events
 
 import rescala.graph.Pulse
-import rescala.reactives.RExceptions.EmptySignalControlThrowable
 import tests.rescala.RETests
 
 

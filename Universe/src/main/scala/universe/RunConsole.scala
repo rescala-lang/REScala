@@ -1,6 +1,6 @@
 package universe
 
-import java.nio.file.{StandardOpenOption, Paths, Files}
+import java.nio.file.{Files, Paths, StandardOpenOption}
 
 import universe.Globals.engine
 

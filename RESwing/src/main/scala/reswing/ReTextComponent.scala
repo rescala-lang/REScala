@@ -1,12 +1,8 @@
 package reswing
 
 import scala.language.implicitConversions
-import scala.swing.Color
-import scala.swing.Dimension
-import scala.swing.Font
-import scala.swing.TextComponent
-import scala.swing.event.CaretUpdate
-import scala.swing.event.ValueChanged
+import scala.swing.{Color, Dimension, Font, TextComponent}
+import scala.swing.event.{CaretUpdate, ValueChanged}
 
 class ReTextComponent(
     val text: ReSwingValue[String] = (),

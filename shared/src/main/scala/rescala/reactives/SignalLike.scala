@@ -3,7 +3,7 @@ package rescala.reactives
 import java.util.concurrent.CompletionException
 
 import rescala.engines.Ticket
-import rescala.graph.{Pulse, Struct}
+import rescala.graph.Struct
 
 import scala.language.higherKinds
 

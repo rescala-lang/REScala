@@ -1,7 +1,7 @@
 package rescala.reactives
 
-import scala.util.{Failure, Success, Try}
 import scala.util.control.{ControlThrowable, NonFatal}
+import scala.util.{Failure, Success, Try}
 
 object RExceptions {
   object EmptySignalControlThrowable extends ControlThrowable

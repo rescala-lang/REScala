@@ -1,9 +1,9 @@
 package main.collections
 
+import main.abstraction._
 import rescala._
 
 import scala.collection.immutable.Vector
-import main.abstraction._
 
 class ReactiveVector[A](Vector: Signal[Vector[A]]) extends ReactiveSeqLike[A, ReactiveVector] {
 	override type InternalKind[B] = Vector[B]

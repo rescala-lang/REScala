@@ -1,9 +1,8 @@
 package reswing
 
+import rescala.{Engine, Event, Evt}
+
 import scala.language.implicitConversions
-import rescala.Event
-import rescala.Evt
-import rescala.Engine
 
 /**
  * Represents `Swing` events that are fired by the library or passed to the

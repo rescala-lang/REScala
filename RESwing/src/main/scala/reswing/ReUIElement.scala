@@ -1,12 +1,8 @@
 package reswing
 
 import scala.language.implicitConversions
-import scala.swing.Dimension
-import scala.swing.Point
-import scala.swing.Rectangle
-import scala.swing.UIElement
-import scala.swing.event.UIElementMoved
-import scala.swing.event.UIElementResized
+import scala.swing.{Dimension, UIElement}
+import scala.swing.event.{UIElementMoved, UIElementResized}
 
 abstract class ReUIElement(
     val minimumSize: ReSwingValue[Dimension] = (),

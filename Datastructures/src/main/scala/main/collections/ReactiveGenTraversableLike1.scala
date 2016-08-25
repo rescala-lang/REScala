@@ -1,10 +1,11 @@
 package main.collections
 
+import main.abstraction._
 import rescala._
+
 import scala.collection._
 import scala.collection.generic._
 import scala.language.higherKinds
-import main.abstraction._
 
 trait ReactiveGenTraversableLike1[A, ConcreteType[_]] extends SignalWrapper {
 	type InternalKind[B] <: GenTraversableLike[B, InternalKind[B]]

@@ -1,9 +1,9 @@
 package main.collections
 
+import main.abstraction._
 import rescala._
 
 import scala.collection.immutable.List
-import main.abstraction._
 
 class ReactiveList[A](list: Signal[List[A]]) extends ReactiveSeqLike[A, ReactiveList] {
 	override type InternalKind[B] = List[B]

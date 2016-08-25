@@ -1,12 +1,12 @@
 package main.collections
 
+import main.abstraction._
 import rescala._
 
-import scala.collection.immutable._
 import scala.collection.GenTraversableOnce
 import scala.collection.generic._
+import scala.collection.immutable._
 import scala.language.higherKinds
-import main.abstraction._
 
 // Not MapLike because MapLike is different from SeqLike and SetLike for some reason
 trait ReactiveMap[A,B, ConcreteType[_,_]] extends SignalWrapper {

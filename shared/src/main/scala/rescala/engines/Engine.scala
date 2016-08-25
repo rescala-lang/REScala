@@ -3,7 +3,7 @@ package rescala.engines
 import rescala.graph.Struct
 import rescala.macros.ReactiveMacros
 import rescala.propagation.Turn
-import rescala.reactives.{Events, Signals, Var}
+import rescala.reactives.{Events, Signals}
 import rescala.{propagation, reactives}
 
 import scala.annotation.implicitNotFound

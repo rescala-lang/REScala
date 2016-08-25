@@ -1,19 +1,10 @@
 package examples.dropdown
 
-import scala.swing.MainFrame
-import scala.swing.BoxPanel
-import scala.swing.Orientation
-import scala.swing.Label
-import reswing.ReLabel._
+import rescala.{Signal, Var}
 import reswing.ReTextField._
 import reswing._
-import scala.swing.SimpleSwingApplication
-import rescala.Signal
-import makro.SignalMacro.{SignalM => Signal}
-import scala.swing.FlowPanel
-import rescala.IFunctions
-import scala.swing.Button
-import rescala.Var
+
+import scala.swing.{BoxPanel, Button, FlowPanel, Label, MainFrame, Orientation, SimpleSwingApplication}
 
 object DropdownSample3 extends SimpleSwingApplication {
 

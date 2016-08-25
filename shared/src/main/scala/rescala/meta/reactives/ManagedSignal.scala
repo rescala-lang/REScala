@@ -1,7 +1,7 @@
 package rescala.meta.reactives
 
 import rescala.engines.{Engine, Ticket}
-import rescala.graph.{Pulse, Struct}
+import rescala.graph.Struct
 import rescala.meta.{ManagedReactive, ReactiveNode}
 import rescala.propagation.Turn
 import rescala.reactives.{Flatten, Observe, SignalLike, VarLike}

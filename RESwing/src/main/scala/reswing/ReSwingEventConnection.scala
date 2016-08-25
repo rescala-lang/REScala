@@ -1,12 +1,10 @@
 package reswing
 
-import java.awt.event.HierarchyEvent
-import java.awt.event.HierarchyListener
+import java.awt.event.{HierarchyEvent, HierarchyListener}
+
+import rescala._
 import scala.collection.mutable.ListBuffer
-import scala.swing.Publisher
-import scala.swing.Reactor
-import scala.swing.UIElement
-import rescala.Engine
+import scala.swing.{Publisher, Reactor, UIElement}
 
 /**
  * Introduces methods to connect a [[ReSwingEvent]] to the corresponding

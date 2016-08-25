@@ -1,10 +1,7 @@
 package reswing
 
 import scala.language.implicitConversions
-import scala.swing.Color
-import scala.swing.Dimension
-import scala.swing.Font
-import scala.swing.Panel
+import scala.swing.{Color, Dimension, Font, Panel}
 
 class RePanel(
     background: ReSwingValue[Color] = (),
