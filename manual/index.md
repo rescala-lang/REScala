@@ -4,23 +4,21 @@ version: 0.3
 nav: 3
 sidebar: manual
 ---
-# REScala Reference Manual
-
-## Introduction
+# Introduction
 
 This manual covers the main features of the *REScala* programming language.
-{% include internal_link.md ref="sigAndVars" %} presents time-changing values
-in *REScala*, {% include internal_link.md ref="events" %} describes events,
-{% include internal_link.md ref="conv-fun" %} covers the conversion functions between
-events and time-changing values, {% include internal_link.md ref="technicalities" %}
+[Signals and Vars](#signals-and-vars) presents time-changing values
+in *REScala*, [Events](#events) describes events,
+[ConversionFunctions](#conversion-functions) covers the conversion functions between
+events and time-changing values, [Technicalities](#technicalities)
 presents technical details that are necessary to correctly run
-*REScala*, {% include internal_link.md ref="related" %} outlines the related work.
+*REScala*, [Related](#related) outlines the related work.
 
 
 **Intended audience and prerequisites** This manuscript is
 mainly intended for students who approach reactive programming in
-Scala for the first time.  The manual assumes basic knowledge of the
-Scala~\cite{scala} language and of functional programming (high-order
+Scala for the first time. The manual assumes basic knowledge of the
+[Scala](http://scala-lang.org/) language and of functional programming (high-order
 functions, anonymous functions, etc.). No previous knowledge of
 reactive programming is assumed.
 
@@ -38,10 +36,10 @@ in~\cite{rescala,Gasiunas:2011:EME:1960275.1960303}.
 The manual introduces the concepts related to functional reactive
 programming and event-based programming from a practical
 perspective. The readers interested in a more general presentation of
-these topics can find in {% include internal_link.md ref="related" %} the essential
+these topics can find in [Related](#related) the essential
 references.
 
-## Signals and Vars
+# Signals and Vars
 
 A signal is language concept for expressing functional dependencies
 among values in a declarative way. Intuitively, a reactive value can
@@ -51,27 +49,27 @@ changes, the expression defining the reactive value is automatically
 recomputed by the language runtime to keep the reactive value
 up-to-date.
 
-Consider the following example:
+Consider the following [example](#first-example):
 
-\begin{codenv}
+~~~scala
 var a = 2
 var b = 3
-var c = a + b   (*@\label{sum}@*)
+var c = a + b
 println(a,b,c) // -> (2,3,5)
 a = 4
-println(a,b,c) // -> (2,4,5) (*@\label{nomore}@*)
-c = a + b (*@\label{update}@*)
+println(a,b,c) // -> (2,4,5)
+c = a + b
 println(a,b,c) // -> (4,3,7)
-\end{codenv}
+~~~
+{: #first-example}
 
-Line~\ref{sum} specifies the value of \code{c} as a function of
-\code{a} and \code{b}. Since Line~\ref{sum} defines a {\it statement},
-the relation $c = a + b$ is valid after the execution of
-Line~\ref{sum}. Clearly, when the value of \code{a} is updated, the
-relation $c = a + b$ is not valid anymore (Line~\ref{nomore}). To make
+Line 3 specifies the value of `c` as a function of
+`a` and `b`. Since Line 3 defines a *statement*,
+the relation `c = a + b` is valid after the execution of
+Line 3. Clearly, when the value of `a` is updated, the
+relation `c = a + b` is not valid anymore. To make
 sure that the relation still holds, the programmer needs to recompute
-the expression and reassign \code{c}, like in line \ref{update}.
-\\
+the expression and reassign `c`, like in Line 7.
 
 Reactive programming and *REScala* provide abstractions to express {\em
   constraints} in addition to statements. In *REScala*, the programmer
@@ -263,7 +261,7 @@ into events and back are provided in {% include internal_link.md ref="conv-fun" 
 
 
 
-## Events}\label{sec:events}
+# Events
 
 *REScala* supports different kind of events. Imperative events are
 directly triggered from the user. Declarative events trigger when the
@@ -288,14 +286,14 @@ event types.
 
 \end{itemize}
 
-## Imperative events
+# Imperative events
 
 *REScala* imperative events are triggered imperatively by the
 programmer. One can think to imperative events as a generalization of
 a method call which supports (multiple) bodies that are registered and
 unregistered dynamically.
 
-### Defining  Events
+## Defining  Events
 
 
 Imperative events are defined by the \code{ImperativeEvent[T]}
@@ -335,7 +333,7 @@ val e1: Event[Int] = new ImperativeEvent[Int]()
 
 
 
-### Registering Handlers
+## Registering Handlers
 
 
 Handlers are code blocks that are executed when the event fires. The
@@ -397,7 +395,7 @@ e(10)
 
 
 
-### Firing Events
+## Firing Events
 
 
 Events can be fired with the same syntax of a method call. When an
@@ -450,7 +448,7 @@ n: 10
 
 
 
-### Unregistering Handlers
+## Unregistering Handlers
 
 
 Handlers can be unregistered from events with the \code{-=}
@@ -479,7 +477,7 @@ n: 10
 
 
 
-## Declarative Events
+# Declarative Events
 
 *REScala* supports declarative events, which are defined as a
 combination of other events. For this purpose it offers operators like
@@ -490,7 +488,7 @@ models all the sources and the transformations that define an event
 occurrence.
 
 
-### Defining Declarative Events
+## Defining Declarative Events
 
 
 Declarative events are defined by composing other events. The
@@ -507,12 +505,12 @@ val e5 = e1 map ((x: Int)=> x.toString)
 \end{codenv}
 
 
-## Event Operators
+# Event Operators
 
 This section presents in details the operators that allow one to
 compose events into declarative events.
 
-### OR Events
+## OR Events
 
 
 The event $e_1 || e_2$ is fired upon the occurrence of one among $e_1$
@@ -532,7 +530,7 @@ e2(2)
 \end{codenv}
 
 
-### Predicate Events
+## Predicate Events
 
 
 The event $e \&\& p$ is fired if $e$ occurs and the predicate $p$ is
@@ -552,7 +550,7 @@ e(15)
 \end{codenv}
 
 
-### Map Events
+## Map Events
 
 
 The event $e\,map f$ is obtained by applying $f$ to the value carried
@@ -574,7 +572,7 @@ Here: 15
 
 
 
-%### dropParam
+%## dropParam
 
 %
 %The $dropParam$ operator transforms an event into an event with
@@ -618,7 +616,7 @@ Here: 15
 
 
 
-## Conversion Functions}\label{sec:conv-fun}
+# Conversion Functions
 
 *REScala* provides functions that interface signals and
 events. Conversion functions are fundamental to introduce
@@ -627,7 +625,7 @@ event-based.
 
 
 
-## Basic Conversion Functions
+# Basic Conversion Functions
 
 This section covers the basic conversions between signals and events.
 Figure~\ref{fig:event-signal} shows how basic conversion functions can
@@ -654,7 +652,7 @@ function fires a new event every time a signal changes its value.
 
 
 
-### Event to Signal: Latest
+## Event to Signal: Latest
 
 Returns a signal holding the latest value of the event \code{e}. The
 initial value of the signal is set to \code{init}.
@@ -679,7 +677,7 @@ assert(s.get == 1)
 \end{codenv}
 
 
-### Signal to Event: Changed
+## Signal to Event: Changed
 
 
 The \code{changed} function applies to a signal and returns an event
@@ -706,7 +704,7 @@ assert(test == 2)
 
 
 
-## Advanced Conversion Functions
+# Advanced Conversion Functions
 
 Some of the conversion functions can be called on a signal providing
 an event as the first parameter or can be called on an event providing
@@ -734,7 +732,7 @@ def snapshot[V](e : Event[_], s: Signal[V]): Signal[V]
 \end{codenv}
 
 
-### Fold
+## Fold
 
 The \code{fold} function creates a signal by folding events with a
 given function. Initially the signal holds the \code{init}
@@ -759,7 +757,7 @@ assert(s.get == 13)
 \end{codenv}
 
 
-### Iterate
+## Iterate
 
 Returns a signal holding the value computed by \code{f} on the
 occurrence of an event. Differently from \code{fold}, there is no
@@ -791,7 +789,7 @@ assert(s.get == 13)
 
 
 
-### LatestOption
+## LatestOption
 
 
 The \code{latestOption} function is a variant of the \code{latest}
@@ -819,7 +817,7 @@ assert(s.get == Option(1))
 \end{codenv}
 
 
-### Last
+## Last
 
 
 The \code{last} function generalizes the \code{latest} function and
@@ -851,7 +849,7 @@ assert(s.get == List(2,3,4,5,6))
 
 
 
-### List
+## List
 
 Collects the event values in a (growing) list. This function should be
 used carefully. Since the entire history of events is maintained, the
@@ -863,7 +861,7 @@ function can potentially introduce a memory overflow.
 
 
 
-### Count
+## Count
 
 
 Returns a signal that counts the occurrences of the event. Initially,
@@ -886,7 +884,7 @@ assert(s.get == 2)
 
 
 
-### Snapshot
+## Snapshot
 
 Returns a signal updated only when \code{e} fires. If \code{s} in the
 meanwhile changes its value, the change is ignored. When the event
@@ -915,7 +913,7 @@ assert(s.get == 3)
 
 
 
-### Change
+## Change
 
 
 The \code{change} function is similar to \code{changed}, but it
@@ -935,7 +933,7 @@ e += ((x:(Int,Int))=>{ ... })
 \end{codenv}
 
 
-### ChangedTo
+## ChangedTo
 
 
 The \code{changedTo} function is similar to \code{changed}, but it
@@ -962,7 +960,7 @@ assert(test == 1)
 
 
 
-### Reset
+## Reset
 
 
 When the \code{reset} function is called for the first time, the
@@ -1004,7 +1002,7 @@ assert(s3.get == 12)
 
 
 
-### Switch/toggle
+## Switch/toggle
 
 
 
@@ -1036,7 +1034,7 @@ parameter, once, on the occurrence of the event \code{e}.
 
 
 
-### Unwrap
+## Unwrap
 
 
 The \code{unwrap} function is used to ``unwrap'' an event inside a signal.
@@ -1057,12 +1055,17 @@ val anyChanged = innerChanges.unwrap
 \newpage
 
 
-## Common Pitfalls}~\label{sec:pitfalls} In this section we
+# Common Pitfalls}
+{: #pitfalls }
+
+In this section we
 collect the most common pitfalls for users that are new to reactive
 programming and *REScala*.
 
 
-## Accessing values in signal expressions The \code{()}
+# Accessing values in signal expressions
+
+The \code{()}
 operator used on a signal or a var, inside a signal expression,
 returns the signal/var value {\it and} creates a dependency. The
 \code{get} operator returns the current value but does {\it not}
@@ -1084,7 +1087,8 @@ expression is almost certainly a mistake. As a rule of dumb, signals
 and vars appear in signal expressions with the \code{()} operator.
 
 
-## Attempting to assign a signal Signals are not
+# Attempting to assign a signal
+Signals are not
 assignable. Signal depends on other signals and vars, the dependency
 is expressed by the signal expression. The value of the signal is
 automatically updated when one of the values it depends on
@@ -1092,7 +1096,8 @@ changes. Any attempt to set the value of a signal manually is a
 mistake.
 
 
-## Side effects in signal expressions Signal expressions
+# Side effects in signal expressions
+Signal expressions
 should be pure. i.e. they should not modify external variables. For
 example the following code is conceptually wrong because the variable
 \code{c} is imperatively assigned form inside the signal expression
@@ -1121,7 +1126,8 @@ foo(c.get)
 
 
 
-## Cyclic dependencies When a signal \code{s} is defined, a
+# Cyclic dependencies
+When a signal \code{s} is defined, a
 dependency is establishes with each of the signals or vars that appear
 in the signal expression of \code{s}. Cyclic dependencies produce a
 runtime error and must be avoided. For example the following code:
@@ -1137,7 +1143,8 @@ creates a mutual dependency between \code{s} and
 
 
 
-## Objects and mutability Vars and signals may behave
+# Objects and mutability
+Vars and signals may behave
 unexpectedly with mutable objects. Consider the following example.
 
 \begin{codenv}
@@ -1198,7 +1205,8 @@ varFoo()=foo
 \end{codenv}
 
 
-## Functions of reactive values Functions that operate on
+# Functions of reactive values
+Functions that operate on
 traditional values are not automatically transformed to operate on
 signals. For example consider the following functions:
 
@@ -1244,13 +1252,13 @@ val s = Signal{ increment(a()) + 1 }
 
 
 
-## Technicalities}~\label{sec:technicalities}
+# Technicalities
 
 This section is meant to cover the implementation details of *REScala*
 that are necessary to correctly run the current the library.
 
 
-## Imports and dependencies
+# Imports and dependencies
 
 To work with *REScala* programmers need to properly import the reactive
 abstractions offered by the language. The following imports are
@@ -1275,7 +1283,8 @@ to \code{Signal} (Line 3).
 
 
 
-## Essential Related Work}~\label{sec:related}
+# Essential Related Work
+{: #related }
 
 
 A more academic presentation of *REScala* is in \cite{rescala}. A
@@ -1303,7 +1312,7 @@ Scala.React~\cite{EPFL-REPORT-148043} (Scala).
 
 
 
-## Acknowledgments}\label{sec:ack}
+# Acknowledgments
 
 Several people contributed to this manual with their ideas and
 comments. Among the others Gerold Hintz and Pascal Weisenburger.
