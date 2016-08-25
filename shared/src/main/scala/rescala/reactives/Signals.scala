@@ -21,7 +21,7 @@ object Signals extends GeneratedSignalLift {
           case Stable(value) => value
           case Exceptional(t) => throw t
           case Change(value) => value
-          case NoChange => throw new EmptySignalControlThrowable
+          case NoChange => throw EmptySignalControlThrowable
         }
         Pulse.diffPulse(expr(turn, theValue), currentValue)
       }
@@ -42,7 +42,7 @@ object Signals extends GeneratedSignalLift {
 
     /** creates a dynamic signal */
     def makeDynamic[T, S <: Struct](dependencies: Set[Reactive[S]])(expr: Turn[S] => T)(initialTurn: Turn[S]): Signal[T, S] = initialTurn.create(dependencies, dynamic = true) {
-      val bud: S#SporeP[T, Reactive[S]] = initialTurn.bud(initialValue = Pulse.Exceptional(new EmptySignalControlThrowable), transient = false)
+      val bud: S#SporeP[T, Reactive[S]] = initialTurn.bud(initialValue = Pulse.empty, transient = false)
       new DynamicSignal[T, S](bud, expr)
     }
   }

@@ -103,7 +103,7 @@ trait Stateful[+A, S <: Struct] extends Pulsing[A, S] {
     pulse(turn) match {
       case Stable(value) => value
       case Change(value) => value
-      case Exceptional(t : EmptySignalControlThrowable) => throw new NoSuchElementException(s"Signal $this is empty")
+      case Pulse.empty => throw new NoSuchElementException(s"Signal $this is empty")
       case Exceptional(t) => throw t
       case NoChange => throw new IllegalStateException(s"Signal $this has no value")
     }

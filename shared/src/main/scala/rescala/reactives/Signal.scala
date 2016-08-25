@@ -34,7 +34,7 @@ trait Signal[+A, S <: Struct] extends SignalLike[A, S, Signal, Event] with State
 
   final def withDefault[R >: A](value: R)(implicit ticket: Ticket[S]): Signal[R, S] = Signals.static(this) { (turn) =>
     try this.get(turn) catch {
-      case e: EmptySignalControlThrowable => value
+      case EmptySignalControlThrowable => value
     }
   }
 
@@ -53,7 +53,7 @@ trait Signal[+A, S <: Struct] extends SignalLike[A, S, Signal, Event] with State
     */
   override def changed(implicit ticket: Ticket[S]): Event[A, S] = Events.static(s"(changed $this)", this) { turn =>
     pulse(turn) match {
-      case ex@Exceptional(_: EmptySignalControlThrowable) => Pulse.NoChange
+      case Pulse.empty => Pulse.NoChange
       case other => other
     }
   }
@@ -65,12 +65,12 @@ trait Signal[+A, S <: Struct] extends SignalLike[A, S, Signal, Event] with State
       pulse(turn) match {
         case Change(value) => stable(turn) match {
           case Stable(oldValue) => Pulse.Change((oldValue, value))
-          case ex@Exceptional(_ : EmptySignalControlThrowable) => Pulse.NoChange
+          case Pulse.empty => Pulse.NoChange
           case ex@Exceptional(_) => ex
           case other => throw new IllegalStateException(s"stable value of signal was $other")
         }
         case NoChange | Stable(_) => Pulse.NoChange
-        case ex@Exceptional(_ : EmptySignalControlThrowable) => Pulse.NoChange
+        case Pulse.empty => Pulse.NoChange
         case ex@Exceptional(_) => ex
       }
     }

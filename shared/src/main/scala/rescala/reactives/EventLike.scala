@@ -66,7 +66,7 @@ trait EventLike[+T, S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV]
   def lazyFold[A](init: => A)(folder: (=> A, T) => A)(implicit ticket: Ticket[S]): SL[A, S]
 
   /** reduces events with a given reduce function to create a Signal */
-  final def reduce[A](reducer: (=> A, T) => A)(implicit ticket: Ticket[S]): SL[A, S] = lazyFold(throw new EmptySignalControlThrowable)(reducer)
+  final def reduce[A](reducer: (=> A, T) => A)(implicit ticket: Ticket[S]): SL[A, S] = lazyFold(throw EmptySignalControlThrowable)(reducer)
 
   /** Iterates a value on the occurrence of the event. */
   final def iterate[A](init: A)(f: A => A)(implicit ticket: Ticket[S]): SL[A, S] = fold(init)((acc, _) => f(acc))
