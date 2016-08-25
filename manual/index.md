@@ -2,6 +2,7 @@
 title: Manual
 version: 0.3
 nav: 3
+sidebar: manual
 ---
 # REScala Reference Manual
 
