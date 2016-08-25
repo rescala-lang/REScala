@@ -32,9 +32,9 @@ trait Signal[+A, S <: Struct] extends SignalLike[A, S, Signal, Event] with State
     }
   }
 
-  final def withDefault[R >: A](onEmpty: () => R)(implicit ticket: Ticket[S]): Signal[R, S] = Signals.static(this) { (turn) =>
+  final def withDefault[R >: A](value: R)(implicit ticket: Ticket[S]): Signal[R, S] = Signals.static(this) { (turn) =>
     try this.get(turn) catch {
-      case e: EmptySignalControlThrowable => onEmpty()
+      case e: EmptySignalControlThrowable => value
     }
   }
 
