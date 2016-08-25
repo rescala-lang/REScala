@@ -33,18 +33,6 @@ trait SignalLike[+A, S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV
   /** flatten the inner signal */
   def flatten[R](implicit ev: Flatten[A, S, R], ticket: Ticket[S]): R
 
-  /** Return a Signal that gets updated only when e fires, and has the value of this Signal */
-  final def snapshot(e: EV[_, S])(implicit ticket: Ticket[S]): SL[A, S] = e.snapshot(this)
-
-  /** Switch to (and keep) event value on occurrence of e */
-  final def switchTo[U >: A](e: EV[U, S])(implicit ticket: Ticket[S]): SL[U, S] = e.switchTo(this)
-
-  /** Switch to (and keep) event value on occurrence of e */
-  final def switchOnce[V >: A](e: EV[_, S])(newSignal: SL[V, S])(implicit ticket: Ticket[S]): SL[V, S] = e.switchOnce(this, newSignal)
-
-  /** Switch back and forth between this and the other Signal on occurrence of event e */
-  final def toggle[V >: A](e: EV[_, S])(other: SL[V, S])(implicit ticket: Ticket[S]): SL[V, S] = e.toggle(this, other)
-
   /** Delays this signal by n occurrences */
   def delay(n: Int)(implicit ticket: Ticket[S]): SL[A, S]
 

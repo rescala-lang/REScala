@@ -1,12 +1,11 @@
 package examples.bouncing
 
 
+import java.awt.{Dimension, Graphics2D, Point}
+
 import rescala._
-import rescala.Signal
-import swing.{Panel, MainFrame, SimpleSwingApplication}
-import java.awt.{Color, Graphics2D, Dimension}
-import java.awt.Point
-import scala.swing.Swing
+
+import scala.swing.{MainFrame, Panel, SimpleSwingApplication, Swing}
 
 object SwitchVersion extends SimpleSwingApplication {
   lazy val application = new SwitchVersion
@@ -39,7 +38,7 @@ class SwitchVersion {
   val xBounce = x.changed && (x => x < 0 || x + Size > Max_X)
   val yBounce = y.changed && (y => y < 0 || y + Size > Max_Y)
 
-  val speedX = Signal {speed.x}.toggle(xBounce) {Var(- speed.x) }
+  val speedX = xBounce.toggle(Var(speed.x), Var(- speed.x))
   val speedY = yBounce.toggle(Var(speed.y), Var(- speed.y))
 
   tick += {_: Unit => frame.repaint()}

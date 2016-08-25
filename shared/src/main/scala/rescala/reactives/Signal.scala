@@ -1,8 +1,7 @@
 package rescala.reactives
 
 import rescala.engines.{Engine, Ticket}
-import rescala.graph.Pulse.{Change, Exceptional, NoChange, Stable}
-import rescala.graph.{Disconnectable, Pulse, Stateful, Struct}
+import rescala.graph.{Pulse, Stateful, Struct}
 import rescala.propagation.Turn
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 
@@ -42,7 +41,7 @@ trait Signal[+A, S <: Struct] extends SignalLike[A, S, Signal, Event] with State
 
 
   /** Return a Signal with f applied to the value */
-  final override def map[B](f: A => B)(implicit ticket: Ticket[S]): Signal[B, S] = Signals.lift(this) {f}
+  final override def map[B](f: A => B)(implicit ticket: Ticket[S]): Signal[B, S] = Signals.lift(this)(f)
 
   /** flatten the inner reactive */
   final override def flatten[R](implicit ev: Flatten[A, S, R], ticket: Ticket[S]): R = ev.apply(this)
