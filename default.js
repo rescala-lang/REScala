@@ -54,41 +54,6 @@ function wrapInLi(element) {
 	return wrapIn(element, "li");
 }
 
-
-
-function scrollIntoView(element) {
-	var start = scrollY;
-	element.scrollIntoView(true);
-	var end = scrollY - 55;
-	scrollTo(0, start);
-	scrollFromTo(start, end);
-}
-
-function scrollFromTo(start, end) {
-	var diff = end-start;
-	var step = Math.round(diff/500);
-	var missing = diff- (step*500);
-	var i = 0;
-	//console.log("from " + start + " to " + end + " = " + diff + " in " + step + "(" + missing + ")");
-	var interval = setInterval(function() {
-		if (i == 500) {
-			scrollBy(0, missing);
-		}
-		if (i < 500) {
-			var d = step;
-			if (missing > 0) {
-				d = step + 1;
-				missing--;
-			} else if (missing < 0) {
-				d = step - 1;
-				missing++;
-			}
-			scrollBy(0, d);
-		}
-		i++;
-	}, 1);
-}
-
 function updateArrowVisibility() {
 	var scrollArrow = document.body.querySelector("#back-to-top");
 	if (scrollY > 500)
