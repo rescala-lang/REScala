@@ -1,1 +1,0 @@
-{% assign p = nil %}{% for page in site.pages %}{% if page.path contains include.ref %}{% assign p = page %}{% endif %}{% endfor %}[{% unless p %}DEAD LINK {% endunless %}{% if p %}Section {{p.number}}{% endif %}]({{ site.github.url }}{{p.url}})
