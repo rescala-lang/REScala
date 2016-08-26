@@ -21,7 +21,7 @@ body {
 }
 
 .list-group-item {
-  font-size: 20px;
+  padding: 5px 15px;
 }
 
 .list-group {
@@ -143,23 +143,28 @@ h1:before,h2:before,h3:before,h4:before {
   padding-left: 0px;
   list-style-type: none;
   counter-reset: item;
-  margin: 0px 0px 5px 0px;
+  margin: 0px 0px 0px 0px;
+  color: #555;
 }
 
 #toc ol {
-  padding-left: 30px;
+  padding-left: 0px;
   list-style-type: none;
   counter-reset: item;
-  margin: 0px 0px 5px 0px;
+  margin: 0px 0px 0px 0px;
 }
 
 #toc li {
   display: block;
   float: none;
-  padding: 0px 0px;
-  margin: 0px 0px 5px 0px;
+  margin: 0px 0px -1px 0px;
   line-height:20px;
 }
+
+#toc li  a{
+	color: #555;
+}
+
 #toc li a:before {
   content: counters(item, ".") " ";
   counter-increment: item;

@@ -6,30 +6,33 @@ window.onload = function () {
 		document.querySelectorAll(".dropdown_content.show_content").forEach(function(element) {element.classList.remove("show_content")});
 	}, true);
 
-	var manualTOCitems = document.body.querySelectorAll("#main-content>h1,#main-content>h2,#main-content>h3,#main-content>h4");
 	var manualTOC = document.body.querySelector("#toc");
-	var currentList = manualTOC;
-	var currentDepth = 1;
-	manualTOCitems.forEach(function (headline) {
-		var depth = headline.nodeName == "H1" ? 1 : headline.nodeName == "H2" ? 2 : headline.nodeName == "H3" ? 3 : 4
+	if (manualTOC != undefined) {
+		var manualTOCitems = document.body.querySelectorAll("#main-content>h1,#main-content>h2,#main-content>h3,#main-content>h4");
+		var currentList = manualTOC;
+		var currentDepth = 1;
+		manualTOCitems.forEach(function (headline) {
+			var depth = headline.nodeName == "H1" ? 1 : headline.nodeName == "H2" ? 2 : headline.nodeName == "H3" ? 3 : 4
 
-		while (currentDepth < depth) {
-			var subList = document.createElement("ol");
-			currentList.appendChild(wrapInLi(subList));
-			currentList = subList;
-			currentDepth++;
-		}
-		while (currentDepth > depth) {
-			currentList = currentList.parentNode.parentNode;
-			currentDepth--;
-		}
-		// now we can assume that currentDepth === depth
-		var button = document.createElement("a");
-		button.innerHTML = headline.innerHTML;
-		button.href = "#" + headline.id;
-		currentList.appendChild(wrapInLi(button));
-	});
-
+			while (currentDepth < depth) {
+				var subList = document.createElement("ol");
+				currentList.appendChild(wrapInLi(subList));
+				currentList = subList;
+				currentDepth++;
+			}
+			while (currentDepth > depth) {
+				currentList = currentList.parentNode.parentNode;
+				currentDepth--;
+			}
+			// now we can assume that currentDepth === depth
+			var button = document.createElement("a");
+			button.innerHTML = headline.innerHTML;
+			button.href = "#" + headline.id
+			button.classList.add("list-group-item");
+			button.style.paddingLeft = ((depth-1)*30)+10 + "px";
+			currentList.appendChild(wrapInLi(button));
+		});
+	}
 	window.onscroll = function () {
 		updateArrowVisibility();
 	};
@@ -56,8 +59,10 @@ function wrapInLi(element) {
 
 function updateArrowVisibility() {
 	var scrollArrow = document.body.querySelector("#back-to-top");
-	if (scrollY > 500)
-		scrollArrow.classList.add("show");
-	else
-		scrollArrow.classList.remove("show");
+	if (scrollArrow != undefined) {
+		if (scrollY > 500)
+			scrollArrow.classList.add("show");
+		else
+			scrollArrow.classList.remove("show");
+	}
 }

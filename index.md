@@ -25,6 +25,8 @@ REScala supports the development of reactive applications by fostering a functio
 ---
 <a class="github-button" href="https://github.com/guidosalva/REScala/archive/master.zip" data-style="mega" aria-label="Download guidosalva/REScala on GitHub">Download</a>
 
+<a class="github-button" href="https://github.com/guidosalva/REScala/" data-style="mega" aria-label="Visit guidosalva/REScala on GitHub">Repository</a>
+
 Or pick a [Release](https://github.com/guidosalva/REScala/releases){: target="_blank"}
 
 ---
