@@ -9,7 +9,7 @@ nav: 1
 
 Bridging reactive and Object-oriented programming... and more.
 
-[Take a Tour... &raquo;](./rescala/overview){: class="btn btn-primary"}
+[Take a Tour... &raquo;](./rescala/){: class="btn btn-primary"}
 </div>
 
 # REScala
