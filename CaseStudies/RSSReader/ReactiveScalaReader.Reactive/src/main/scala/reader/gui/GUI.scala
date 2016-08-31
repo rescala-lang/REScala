@@ -1,20 +1,13 @@
 package reader.gui
 
-import java.awt.Dimension
-import java.awt.Point
-import java.awt.Toolkit
+import java.awt.{Dimension, Point, Toolkit}
+import javax.swing.ImageIcon
 
-import scala.swing._
+import reader.data.{FeedStore, RSSChannel, RSSItem}
+import rescala._
 import reswing._
 
-import javax.swing.ImageIcon
-import rescala._
-import rescala._
-import rescala._
-import rescala._
-import reader.data.FeedStore
-import reader.data.RSSChannel
-import reader.data.RSSItem
+import scala.swing._
 
 /**
  * Responsible for displaying the content of the given FeedStore

@@ -45,7 +45,7 @@ class CharacterIterator(buf: Array[Char], count: Int, caret: Int) extends Iterat
  * Moving the caret requires copying text from one segment to the other.
  */
 class GapBuffer {
-    val caretChanged = Evt[Int]() //#EVT
+    val caretChanged = Evt[Int] //#EVT
 
   private var buf = new Array[Char](0)
   private val size = Var(0) //#VAR

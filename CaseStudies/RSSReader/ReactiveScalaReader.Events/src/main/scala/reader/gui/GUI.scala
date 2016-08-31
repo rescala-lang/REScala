@@ -21,9 +21,9 @@ import reswing.ReListView
  * by an initialized content mediator
  */
 class GUI(store: FeedStore,
-          notifications: Event[String] = Evt(),
-          itemStatus: Event[String] = Evt(),
-          fetcherState: Event[String] = Evt())
+          notifications: Event[String] = Evt[String],
+          itemStatus: Event[String] = Evt[String],
+          fetcherState: Event[String] = Evt[String])
             extends SimpleSwingApplication {
   val refreshButton = new ReButton("Refresh")
   val refresh = refreshButton.clicked.dropParam: Event[Unit] //#EVT //#EF

@@ -1,11 +1,19 @@
 organization in ThisBuild := "de.tuda.stg"
-scalaVersion in ThisBuild := "2.11.7"
+scalaVersion in ThisBuild := "2.11.8"
 
-version in ThisBuild := "0.17.0-SNAPSHOT"
+version in ThisBuild := "0.18.0-SNAPSHOT"
+
+testOptions in Test in ThisBuild += Tests.Argument("-oICN")
+
+incOptions in ThisBuild := (incOptions in ThisBuild).value.withLogRecompileOnMacro(false)
+
+parallelExecution in Test in ThisBuild := true
+
+licenses in ThisBuild += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))
 
 
-lazy val root = project.in(file("."))
-  .aggregate(rescalaJVM, rescalaJS, reswing, examples, examplesReswing, caseStudyEditor, caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple)
+lazy val rescalaAggregate = project.in(file("."))
+  .aggregate(rescalaJVM, rescalaJS, microbench, reswing, examples, examplesReswing, caseStudyEditor, caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags, datastructures, universe)
   .settings(
     publish := {},
     publishLocal := {}
@@ -17,12 +25,10 @@ lazy val rescala = crossProject.in(file("."))
   .settings(
     name := "rescala",
     libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _),
-    libraryDependencies += "org.mockito" % "mockito-all" % "1.10.19" % "test",
-    libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.6" % "test",
-    libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % "test",
+    scalatestDependency,
+    libraryDependencies += "org.reactivestreams" % "reactive-streams" % "1.0.0",
+    libraryDependencies += "org.reactivestreams" % "reactive-streams-tck" % "1.0.0",
     libraryDependencies += "org.scala-stm" %% "scala-stm" % "0.7",
-
-    parallelExecution in Test := true,
 
     sourceGenerators in Compile <+= sourceManaged in Compile map { dir =>
       val file = dir / "rescala" / "reactives" / "GeneratedSignalLift.scala"
@@ -51,8 +57,6 @@ lazy val rescala = crossProject.in(file("."))
          |""".stripMargin)
       Seq(file)
     },
-    licenses += ("GPL-3.0", url("http://www.gnu.org/licenses/gpl-3.0.html")),
-    publishMavenStyle := false,
     initialCommands in console :=
       s"""import rescala._
        """.stripMargin
@@ -69,19 +73,24 @@ lazy val microbench = project.in(file("Microbench"))
   .settings(com.typesafe.sbt.SbtStartScript.startScriptForClassesSettings)
   .settings(TaskKey[Unit]("compileJmh") <<= Seq(compile in pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh).dependOn)
   .dependsOn(rescalaJVM)
+  .settings(
+    publish := {},
+    publishLocal := {}
+  )
 
 
 lazy val reswing = project.in(file("RESwing"))
   .dependsOn(rescalaJVM)
   .settings(
     name := "reswing",
-    libraryDependencies += "org.scala-lang" % "scala-swing" % "2.11+")
+    scalaswingDependency,
+    licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")))
 
 lazy val examples = project.in(file("Examples/examples"))
   .dependsOn(rescalaJVM)
   .settings(
     name := "rescala-examples",
-    libraryDependencies += "org.scala-lang" % "scala-swing" % "2.11+",
+    scalaswingDependency,
     publish := {},
     publishLocal := {})
 
@@ -99,15 +108,23 @@ lazy val caseStudyEditor = project.in(file("CaseStudies/Editor"))
     publish := {},
     publishLocal := {})
 
+lazy val rescalatags = project.in(file("Rescalatags"))
+  .enablePlugins(ScalaJSPlugin)
+  .dependsOn(rescalaJS)
+  .settings(
+    libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.6.0",
+    scalatestDependency,
+    jsDependencies += RuntimeDOM
+  )
 
-val rssDependencies = libraryDependencies ++= Seq(
-    "joda-time" % "joda-time" % "2.9.4" withSources(),
-    "org.joda" % "joda-convert" % "1.8.1",
-    "org.codehaus.jsr166-mirror" % "jsr166y" % "1.7.0",
-    "org.scalatest" %% "scalatest" % "2.2.6" % "test",
-    "junit" % "junit" % "4.12" % "test->default",
-    "com.novocode" % "junit-interface" % "0.11" % "test->default",
-    "org.scala-lang" % "scala-swing" % "2.11+")
+lazy val datastructures = project.in(file("Datastructures"))
+  .dependsOn(rescalaJVM)
+  .settings(
+    name := "datastructures",
+    publish := {},
+    publishLocal := {},
+    scalatestDependency
+  )
 
 
 lazy val caseStudyRSSEvents = project.in(file("CaseStudies/RSSReader/ReactiveScalaReader.Events"))
@@ -116,7 +133,9 @@ lazy val caseStudyRSSEvents = project.in(file("CaseStudies/RSSReader/ReactiveSca
     name := "rssreader-case-study",
     publish := {},
     publishLocal := {},
-    rssDependencies)
+    rssDependencies,
+    scalatestDependency,
+    scalaswingDependency)
 
 lazy val caseStudyRSSReactive = project.in(file("CaseStudies/RSSReader/ReactiveScalaReader.Reactive"))
   .dependsOn(reswing)
@@ -124,7 +143,9 @@ lazy val caseStudyRSSReactive = project.in(file("CaseStudies/RSSReader/ReactiveS
     name := "rssreader-case-study",
     publish := {},
     publishLocal := {},
-    rssDependencies)
+    rssDependencies,
+    scalatestDependency,
+    scalaswingDependency)
 
 lazy val caseStudyRSSSimple = project.in(file("CaseStudies/RSSReader/SimpleRssReader"))
   .dependsOn(reswing)
@@ -132,8 +153,31 @@ lazy val caseStudyRSSSimple = project.in(file("CaseStudies/RSSReader/SimpleRssRe
     name := "rssreader-case-study",
     publish := {},
     publishLocal := {},
-    rssDependencies)
+    rssDependencies,
+    scalatestDependency,
+    scalaswingDependency)
 
+lazy val universe = project.in(file("Universe"))
+  .dependsOn(rescalaJVM)
+  .settings(
+    name := "rescala-universe",
+    publish := {},
+    publishLocal := {})
+  .settings(com.typesafe.sbt.SbtStartScript.startScriptForClassesSettings)
+
+
+// ================================ dependencies
+
+lazy val rssDependencies = libraryDependencies ++= Seq(
+  "joda-time" % "joda-time" % "2.9.4" withSources(),
+  "org.joda" % "joda-convert" % "1.8.1",
+  "org.codehaus.jsr166-mirror" % "jsr166y" % "1.7.0")
+
+lazy val scalaswingDependency = libraryDependencies += "org.scala-lang" % "scala-swing" % "2.11.0-M7"
+lazy val scalatestDependency = libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.0" % "test"
+
+
+// ================================= scalac options
 
 scalacOptions in ThisBuild ++= (
   "-deprecation" ::

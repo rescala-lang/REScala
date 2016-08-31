@@ -1,14 +1,10 @@
 package reswing
 
-import java.awt.event.HierarchyEvent
-import java.awt.event.HierarchyListener
-import scala.collection.mutable.ListBuffer
-import scala.collection.mutable.Map
+import java.awt.event.{HierarchyEvent, HierarchyListener}
+
+import scala.collection.mutable.{ListBuffer, Map}
 import scala.language.implicitConversions
-import scala.swing.Publisher
-import scala.swing.Reactor
-import scala.swing.Swing
-import scala.swing.UIElement
+import scala.swing.{Publisher, Reactor, Swing, UIElement}
 import scala.swing.event.Event
 
 /**

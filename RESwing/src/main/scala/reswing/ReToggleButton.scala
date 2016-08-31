@@ -1,13 +1,9 @@
 package reswing
 
-import scala.language.implicitConversions
-import scala.swing.Alignment
-import scala.swing.Color
-import scala.swing.Dimension
-import scala.swing.Font
-import scala.swing.ToggleButton
-
 import javax.swing.Icon
+
+import scala.language.implicitConversions
+import scala.swing.{Alignment, Color, Dimension, Font, ToggleButton}
 
 class ReToggleButton(
     text: ReSwingValue[String] = (),

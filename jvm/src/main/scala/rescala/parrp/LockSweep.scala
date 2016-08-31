@@ -34,6 +34,8 @@ class LSSporeP[P, R](current: Pulse[P], transient: Boolean, val lock: TurnLock[L
   var willWrite: LockSweep = null
   var hasWritten: LockSweep = null
   var counter: Int = 0
+  var anyInputChanged: LockSweep = null
+  var hasChanged: LockSweep = null
 }
 
 trait LSInterTurn {
@@ -53,8 +55,6 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
   val queue = new util.ArrayDeque[Reactive[TState]]()
 
   final val key: Key[LSInterTurn] = new Key(this)
-
-  var currentIndex = 0
 
   var discovered: mutable.Map[Key[LSInterTurn], mutable.Set[Reactive[TState]]] = mutable.HashMap.empty
 
@@ -77,7 +77,7 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
           locked.add(reactive)
           reactive.bud.counter = 1
           reactive.bud.willWrite = this
-          reactive.bud.outgoing(this).foreach { stack.offer }
+          reactive.bud.outgoing(this).foreach {stack.offer}
         }
       }
       else {
@@ -93,8 +93,13 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
         backoff.backoff()
       }
     }
-    initialWrites.foreach(_.bud.counter = 0)
-    initialWrites.foreach(enqueue)
+    initialWrites.foreach{ source =>
+      source.bud.counter = 0
+      source.bud.anyInputChanged = this
+      source.bud.hasChanged = this
+      enqueue(source)
+    }
+
   }
 
   override def propagationPhase(): Unit = {
@@ -103,10 +108,12 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
     }
   }
 
-  def done(head: Reactive[TState]): Unit = {
+  def done(head: Reactive[TState], hasChanged: Boolean): Unit = {
     head.bud.hasWritten = this
+    if (hasChanged) head.bud.hasChanged = this
     head.bud.outgoing(this).foreach { r =>
       r.bud.counter -= 1
+      if (hasChanged) r.bud.anyInputChanged = this
       if (r.bud.counter <= 0) enqueue(r)
     }
   }
@@ -116,20 +123,22 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
   }
 
   def evaluate(head: Reactive[TState]): Unit = {
-    head.reevaluate()(this) match {
-      case Static(hasChanged) => done(head)
+    if (head.bud.anyInputChanged != this) done(head, hasChanged = false)
+    else {
+      head.reevaluate()(this) match {
+        case Static(hasChanged) => done(head, hasChanged)
 
-      case Dynamic(hasChanged, diff) =>
-        diff.removed foreach drop(head)
-        diff.added foreach discover(head)
-        head.bud.counter = recount(diff.novel)
+        case Dynamic(hasChanged, diff) =>
+          applyDiff(head, diff)
+          head.bud.counter = recount(diff.novel.iterator)
 
-        if (head.bud.counter == 0) done(head)
+          if (head.bud.counter == 0) done(head, hasChanged)
 
+      }
     }
   }
 
-  def recount(reactives: Set[Reactive[TState]]): Int = {
+  def recount(reactives: Iterator[Reactive[TState]]): Int = {
     reactives.count(r => r.bud.hasWritten != this && r.bud.willWrite == this)
   }
 
@@ -145,16 +154,21 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
     dependencies.map(acquireShared)
     val reactive = f
     val owner = reactive.bud.lock.tryLock(key)
-    reactive.bud.willWrite = this
     assert(owner eq key, s"$this failed to acquire lock on newly created reactive $reactive")
+    reactive.bud.willWrite = this
 
+    reactive.bud.anyInputChanged = this
     if (dynamic) {
-      enqueue(reactive)
+      evaluate(reactive)
     }
     else {
       dependencies.foreach(discover(reactive))
-      reactive.bud.counter = recount(dependencies)
-      if (reactive.bud.counter == 0) evaluate(reactive)
+      reactive.bud.counter = recount(dependencies.iterator)
+      val inputsChanged = dependencies.exists(_.bud.hasChanged == this)
+      if (reactive.bud.counter == 0) {
+        if (inputsChanged) evaluate(reactive)
+        else done(reactive, hasChanged = true)
+      }
     }
     reactive
   }
@@ -164,7 +178,7 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
     * we let the other turn update the dependency and admit the dependent into the propagation queue
     * so that it gets updated when that turn continues
     * the responsibility for correctly passing the locks is moved to the commit phase */
-  def discover(sink: Reactive[TState])(source: Reactive[TState]): Unit = {
+  override def discover(sink: Reactive[TState])(source: Reactive[TState]): Unit = {
 
     val owner = acquireShared(source)
     if (owner ne key) {
@@ -183,7 +197,7 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
   }
 
   /** this is for cases where we register and then unregister the same dependency in a single turn */
-  def drop(sink: Reactive[TState])(source: Reactive[TState]): Unit = {
+  override def drop(sink: Reactive[TState])(source: Reactive[TState]): Unit = {
 
     val owner = acquireShared(source)
     if (owner ne key) {
@@ -201,7 +215,7 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
 
   /** this is called after the turn has finished propagating, but before handlers are executed */
   override def releasePhase(): Unit = {
-    discovered.foreach{ case (owner, reactive) =>
+    discovered.foreach { case (owner, reactive) =>
       owner.turn.append(reactive)
     }
     key.releaseAll()
@@ -211,7 +225,7 @@ class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] w
   override def append(appendees: mutable.Set[Reactive[TState]]): Unit = {
     val stack = new java.util.ArrayDeque[Reactive[TState]](10)
 
-    appendees.foreach{stack.push}
+    appendees.foreach {stack.push}
 
     while (!stack.isEmpty) {
       val reactive = stack.pop()

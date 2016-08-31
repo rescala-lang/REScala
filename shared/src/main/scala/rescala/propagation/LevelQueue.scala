@@ -7,22 +7,50 @@ import rescala.propagation.LevelQueue.QueueElement
 
 import scala.collection.immutable.SortedSet
 
-private[propagation] class LevelQueue[S <: LevelStruct]()(implicit val currenTurn: Turn[S]) {
+/**
+  * Level-based queue used the determine an evaluation order for reactive elements
+  *
+  * @param currentTurn Turn of the evaluation
+  * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
+  */
+private[propagation] class LevelQueue[S <: LevelStruct]()(implicit val currentTurn: Turn[S]) {
 
   private var elements = SortedSet.empty[QueueElement[S]]
 
+  /**
+    * Gets the level of the current head element of the queue (if existing).
+    *
+    * @return Level of the current queue head
+    */
   def currentLevel(): Int = elements.headOption.fold(Int.MaxValue)(_.level)
 
-  /** mark the reactive as needing a reevaluation */
+  /**
+    * Adds a new reactive element to the queue
+    *
+    * @param minLevel Minimum level to assign the the element (overrides the elements original level if larger)
+    * @param needsEvaluate Indicates if the element needs re-evaulation itself
+    * @param dep Element to add to the queue
+    */
   def enqueue(minLevel: Int, needsEvaluate: Boolean = true)(dep: Reactive[S]): Unit = {
     elements += QueueElement[S](dep.bud.level, dep, minLevel, needsEvaluate)
   }
 
+  /**
+    * Removes a reactive element from the queue
+    *
+    * @param reactive Element to remove from the queue
+    */
   def remove(reactive: Reactive[S]): Unit = {
     elements = elements.filter(qe => qe.reactive ne reactive)
   }
 
-  final def handleHead(queueElement: QueueElement[S], evaluator: Reactive[S] => Unit): Unit = {
+  /**
+    * Handles a queue element by applying the given evaluator to it and scheduling the next elements for evaluation
+    *
+    * @param queueElement Element to evaluate
+    * @param evaluator Evaluator function to apply to the element
+    */
+  final private def handleElement(queueElement: QueueElement[S], evaluator: Reactive[S] => Unit): Unit = {
     val QueueElement(headLevel, head, headMinLevel, doEvaluate) = queueElement
     if (headLevel < headMinLevel) {
       head.bud.updateLevel(headMinLevel)
@@ -44,18 +72,26 @@ private[propagation] class LevelQueue[S <: LevelStruct]()(implicit val currenTur
     }
   }
 
-  /** Evaluates all the elements in the queue */
+  /**
+    * Evaluates all currently queued elements by applying the given evaluator to them.
+    *
+    * @param evaluator Evaluator function to apply to all elements
+    */
   def evaluateQueue(evaluator: Reactive[S] => Unit) = {
     while (elements.nonEmpty) {
       val head = elements.head
       elements = elements.tail
-      handleHead(head, evaluator)
+      handleElement(head, evaluator)
     }
   }
 
+  /**
+    * Resets the queue by removing all enqueued elements
+    */
   def clear() = elements = SortedSet[QueueElement[S]]()
 
 }
+
 
 private object LevelQueue {
 

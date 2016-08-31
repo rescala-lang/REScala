@@ -1,20 +1,9 @@
 package reswing
 
 import scala.language.implicitConversions
-import scala.swing.Color
-import scala.swing.Dimension
-import scala.swing.Font
-import scala.swing.Table
-import scala.swing.Table.AutoResizeMode
-import scala.swing.Table.ElementMode
-import scala.swing.Table.IntervalMode
-import scala.swing.event.TableChanged
-import scala.swing.event.TableColumnsSelected
-import scala.swing.event.TableRowsAdded
-import scala.swing.event.TableRowsRemoved
-import scala.swing.event.TableRowsSelected
-import scala.swing.event.TableStructureChanged
-import scala.swing.event.TableUpdated
+import scala.swing.{Color, Dimension, Font, Table}
+import scala.swing.Table.{AutoResizeMode, ElementMode, IntervalMode}
+import scala.swing.event.{TableChanged, TableColumnsSelected, TableRowsAdded, TableRowsRemoved, TableRowsSelected, TableStructureChanged, TableUpdated}
 
 class ReTable[A <: AnyRef](
     val rowData: ReSwingValue[Seq[Seq[A]]] = ReSwingNoValue[Seq[Seq[A]]],

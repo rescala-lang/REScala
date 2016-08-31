@@ -1,14 +1,11 @@
 package reader.network
 
-import org.junit.runner.RunWith
 import org.scalatest.BeforeAndAfter
 import org.scalatest.FunSpec
-import org.scalatest.junit.JUnitRunner
 import org.scalatest.Matchers
 
 import reader.EventShouldFireWrapper.convertToEventShouldFireWrapper
 
-@RunWith(classOf[JUnitRunner])
 class UrlCheckerSpec extends FunSpec with Matchers with BeforeAndAfter {
   var checker: UrlChecker = _
 

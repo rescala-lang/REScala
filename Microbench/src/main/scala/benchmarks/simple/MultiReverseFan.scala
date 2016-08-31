@@ -1,14 +1,14 @@
 package benchmarks.simple
 
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.locks.{ReentrantLock, Lock}
+import java.util.concurrent.locks.{Lock, ReentrantLock}
 
-import benchmarks.{Workload, EngineParam, Size, Step}
+import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations._
-import org.openjdk.jmh.infra.{ThreadParams, BenchmarkParams}
-import rescala.propagation.Turn
+import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
 import rescala.engines.Engine
-import rescala.reactives.{Signals, Signal}
+import rescala.propagation.Turn
+import rescala.reactives.{Signal, Signals}
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)

@@ -4,13 +4,10 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import benchmarks.philosophers.PhilosopherTable._
 import org.openjdk.jmh.infra.Blackhole
-import rescala.reactives.{Signals}
-import Signals.lift
+import rescala.engines.Engine
 import rescala.graph.Struct
 import rescala.propagation.Turn
-import rescala.engines.Engine
-import rescala.reactives.Signal
-import rescala.reactives.Var
+import rescala.reactives._
 
 class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit val engine: Engine[S, Turn[S]]) {
 
@@ -34,11 +31,11 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit 
 
     val forks = for (i <- 0 until tableSize) yield {
       val nextCircularIndex = mod(i + 1)
-      lift(phils(i), phils(nextCircularIndex))(calcFork(i.toString, nextCircularIndex.toString))
+      Signals.lift(phils(i), phils(nextCircularIndex))(calcFork(i.toString, nextCircularIndex.toString))
     }
 
     for (i <- 0 until tableSize) yield {
-      val vision = lift(forks(i), forks(mod(i - 1)))(calcVision(i.toString))
+      val vision = Signals.lift(forks(i), forks(mod(i - 1)))(calcVision(i.toString))
       Seating(i, phils(i), forks(i), forks(mod(i - 1)), vision)
     }
   }

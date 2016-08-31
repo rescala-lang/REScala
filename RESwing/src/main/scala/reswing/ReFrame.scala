@@ -1,11 +1,7 @@
 package reswing
 
 import scala.language.implicitConversions
-import scala.swing.Component
-import scala.swing.Dimension
-import scala.swing.Frame
-import scala.swing.Point
-import scala.swing.Rectangle
+import scala.swing.{Component, Dimension, Frame, Point, Rectangle}
 
 class ReFrame(
     contents: ReSwingValue[Component] = (),

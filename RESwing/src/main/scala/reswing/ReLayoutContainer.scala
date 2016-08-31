@@ -1,10 +1,8 @@
 package reswing
 
 import scala.language.implicitConversions
-import scala.swing.Component
-import scala.swing.LayoutContainer
-import scala.swing.event.ComponentAdded
-import scala.swing.event.ComponentRemoved
+import scala.swing.{Component, LayoutContainer}
+import scala.swing.event.{ComponentAdded, ComponentRemoved}
 
 trait ReLayoutContainer[Constraints] extends ReUIElement {
   protected def peer: LayoutContainer

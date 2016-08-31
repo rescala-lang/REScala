@@ -7,7 +7,7 @@ object AdvancedTimeElapsing extends App {
 
   println("start!")
 
-  val tick = Evt[Unit]()
+  val tick = Evt[Unit]
 
   val numTics = tick.count
   val seconds = Signal {numTics() % 60}

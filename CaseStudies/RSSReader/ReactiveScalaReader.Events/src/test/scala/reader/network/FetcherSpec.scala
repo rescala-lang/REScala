@@ -4,16 +4,13 @@ import java.net.URL
 
 import scala.xml.NodeSeq
 
-import org.junit.runner.RunWith
 import org.scalatest.BeforeAndAfter
 import org.scalatest.FlatSpec
-import org.scalatest.junit.JUnitRunner
 import org.scalatest.Matchers
 
 import reader.EventShouldFireWrapper.convertToEventShouldFireWrapper
 import reader.XMLFixtures.simpleRSS
 
-@RunWith(classOf[JUnitRunner])
 class FetcherSpec extends FlatSpec with Matchers with BeforeAndAfter {
   val validFeed = new URL("http://feeds.rssboard.org/rssboard")
   val invalidFeed = new URL("http://www.test.de")

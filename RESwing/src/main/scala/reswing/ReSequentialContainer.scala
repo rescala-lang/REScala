@@ -1,10 +1,8 @@
 package reswing
 
 import scala.language.implicitConversions
-import scala.swing.Component
-import scala.swing.SequentialContainer
-import scala.swing.event.ComponentAdded
-import scala.swing.event.ComponentRemoved
+import scala.swing.{Component, SequentialContainer}
+import scala.swing.event.{ComponentAdded, ComponentRemoved}
 
 trait ReSequentialContainer extends ReUIElement {
   protected def peer: SequentialContainer

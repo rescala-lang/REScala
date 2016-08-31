@@ -1,6 +1,6 @@
-import rescala._
-import rescala._
 import java.net._
+
+import rescala._
 
 class UrlChecker(val url: String) {
 

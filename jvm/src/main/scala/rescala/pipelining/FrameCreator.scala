@@ -1,9 +1,9 @@
 package rescala.pipelining
 
 import rescala.graph.Reactive
-import rescala.pipelining.util.LogUtils
-import LogUtils._
 import rescala.pipelining.propagation.PipelineQueue
+import rescala.pipelining.util.LogUtils
+import rescala.pipelining.util.LogUtils._
 
 private[pipelining] trait FrameCreator {
 

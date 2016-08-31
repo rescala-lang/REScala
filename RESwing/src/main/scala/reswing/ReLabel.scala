@@ -1,13 +1,9 @@
 package reswing
 
-import scala.language.implicitConversions
-import scala.swing.Alignment
-import scala.swing.Color
-import scala.swing.Dimension
-import scala.swing.Font
-import scala.swing.Label
-
 import javax.swing.Icon
+
+import scala.language.implicitConversions
+import scala.swing.{Alignment, Color, Dimension, Font, Label}
 
 class ReLabel(
     val text: ReSwingValue[String] = (),
@@ -28,9 +24,9 @@ class ReLabel(
     ReComponent(background, foreground, font, enabled,
                 minimumSize, maximumSize, preferredSize) {
   override protected lazy val peer = new Label with ComponentMixin
-  
+
   text using (peer.text _, peer.text_= _, "text")
-  
+
   horizontalAlignment using (peer.horizontalAlignment _,
                              peer.horizontalAlignment= _, "horizontalAlignment")
   verticalAlignment using (peer.verticalAlignment _,
@@ -39,7 +35,7 @@ class ReLabel(
                                 peer.horizontalTextPosition= _, "horizontalTextPosition")
   verticalTextPosition using (peer.verticalTextPosition _,
                               peer.verticalTextPosition_= _, "verticalTextPosition")
-  
+
   icon using (peer.icon _, peer.icon_= _, "icon")
   disabledIcon using (peer.disabledIcon _, peer.disabledIcon_= _, "disabledIcon")
 }

@@ -6,11 +6,9 @@ import rescala.engines.Engine
 import rescala.graph.Globals.named
 import rescala.graph.Struct
 import rescala.parrp.Backoff
-import rescala.propagation.{Committable, Turn}
+import rescala.propagation.Turn
 import rescala.reactives.{Signal, Var}
 import rescala.reactives.Signals.lift
-
-import scala.annotation.tailrec
 
 class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit val engine: Engine[S, Turn[S]]) {
 
@@ -76,7 +74,7 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit 
       forksWereFree
     }
 
-  def eatOnce(seating: Seating[S]) = {
+  def eatOnce(seating: Seating[S]): Unit = {
     val bo = new Backoff()
     while(!tryEat(seating)) {bo.backoff()}
   }

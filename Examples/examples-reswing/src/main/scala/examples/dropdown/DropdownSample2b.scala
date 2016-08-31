@@ -37,7 +37,7 @@ object DropdownSample2b extends SimpleSwingApplication {
 
     val innerChanged = Signal {listOfSignals().map(_.changed)}
     val anyChangedWrapped = Signal {innerChanged().reduce((a, b) => a || b)}
-    val anyChanged = anyChangedWrapped.unwrap
+    val anyChanged = anyChangedWrapped.flatten
 
 
     anyChanged += { x => println("some value has changed: " + x) }

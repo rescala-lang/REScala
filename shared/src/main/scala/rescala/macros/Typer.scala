@@ -1,8 +1,8 @@
 package rescala.macros
 
 import scala.collection.mutable
-import scala.reflect.macros.blackbox.Context
 import scala.reflect.macros.TypecheckException
+import scala.reflect.macros.blackbox.Context
 
 object Typer {
   def apply[C <: Context](c: C): Typer[c.type] =
@@ -35,13 +35,12 @@ class Typer[C <: Context](val c: C) {
    * This method tries to restore the AST to its original form, which can be
    * type-checked again.
    */
-  def typecheck(tree: Tree): Tree = {
-    try fixTypecheck(c typecheck tree)
+  def typecheck(tree: Tree): Tree =
+    try fixTypecheck(definedSymbolMarker transform (c typecheck tree))
     catch {
       case TypecheckException(pos, msg) =>
         c.abort(pos.asInstanceOf[Position], msg)
     }
-  }
 
   /**
    * Un-type-checks the given tree.
@@ -100,14 +99,6 @@ class Typer[C <: Context](val c: C) {
   def createTypeTree(tpe: Type): Tree = {
     def isClass(symbol: Symbol): Boolean =
       symbol.isClass && !symbol.isModule && !symbol.isPackage
-
-    def expandSymbol(symbol: Symbol): Tree =
-      if (symbol == c.mirror.RootClass)
-        Ident(termNames.ROOTPKG)
-      else if (symbol.owner == NoSymbol)
-        Ident(symbol.name.toTermName)
-      else
-        Select(expandSymbol(symbol.owner), symbol.name.toTermName)
 
     def expandType(tpe: Type): Tree = tpe.dealias match {
       case ThisType(pre) if isClass(pre) =>
@@ -264,6 +255,33 @@ class Typer[C <: Context](val c: C) {
   }
 
 
+  private case object DefinedTypeSymbol
+
+  private object definedSymbolMarker extends Transformer {
+    override def transform(tree: Tree) = tree match {
+      case TypeDef(_, _, _, _) =>
+        internal updateAttachment (tree.symbol, DefinedTypeSymbol)
+        super.transform(tree)
+
+      case ClassDef(_, _, _, _) =>
+        internal updateAttachment (tree.symbol, DefinedTypeSymbol)
+        super.transform(tree)
+
+      case _ =>
+        super.transform(tree)
+    }
+  }
+
+
+  private def expandSymbol(symbol: Symbol): Tree =
+    if (symbol == c.mirror.RootClass)
+      Ident(termNames.ROOTPKG)
+    else if (symbol.owner == NoSymbol)
+      Ident(symbol.name.toTermName)
+    else
+      Select(expandSymbol(symbol.owner), symbol.name.toTermName)
+
+
   private object typeApplicationCleaner extends Transformer {
     val processedMethodTrees = mutable.Set.empty[Tree]
 
@@ -276,11 +294,19 @@ class Typer[C <: Context](val c: C) {
         tree
     }
 
+    def isTypeUnderExpansion(tpe: Type) =
+      tpe exists {
+        case ThisType(sym) =>
+          sym.name.toString startsWith "$anon"
+        case tpe =>
+          (internal attachments tpe.typeSymbol).contains[DefinedTypeSymbol.type]
+      }
+
     override def transform(tree: Tree) = tree match {
       case tree: TypeTree =>
         if (tree.original != null)
           transform(prependRootPackage(tree.original))
-        else if (tree.tpe != null)
+        else if (tree.tpe != null && isTypeUnderExpansion(tree.tpe))
           createTypeTree(tree.tpe)
         else
           tree
@@ -501,8 +527,7 @@ class Typer[C <: Context](val c: C) {
         ((symbols contains symbol) || symbolsContains(symbol.owner))
 
       override def transform(tree: Tree) = tree match {
-        case _
-            if (internal attachments tree).get[CaseClassMarker.type].nonEmpty =>
+        case _ if (internal attachments tree).contains[CaseClassMarker.type] =>
           internal removeAttachment[CaseClassMarker.type] tree
           tree
         case tree: TypeTree if symbolsContains(tree.symbol) =>
@@ -534,8 +559,39 @@ class Typer[C <: Context](val c: C) {
         List(term.getterOrNoSymbol -> valDef, term.setterOrNoSymbol -> valDef)
     }).flatten.toMap - NoSymbol
 
+    def inScalaPackage(symbol: Symbol): Boolean =
+      symbol != NoSymbol &&
+      symbol != c.mirror.RootClass &&
+      ((symbol.name.toString == "scala" &&
+        symbol.owner == c.mirror.RootClass) ||
+       inScalaPackage(symbol.owner))
+
+    val expandingInScalaPackage =  inScalaPackage(c.internal.enclosingOwner)
+
     object typecheckFixer extends Transformer {
       override def transform(tree: Tree) = tree match {
+        case tree: TypeTree =>
+          if (tree.original != null)
+            internal setOriginal (tree, transform(tree.original))
+          tree
+
+        // fix names for compiler-generated values from the scala package
+        case Ident(_) if tree.symbol.isTerm =>
+          if (inScalaPackage(tree.symbol) && !expandingInScalaPackage)
+            internal setSymbol (
+              internal setType (expandSymbol(tree.symbol), tree.tpe),
+              tree.symbol)
+          else
+            tree
+
+        // fix renamed imports
+        case Select(qual, _) if tree.symbol != NoSymbol =>
+          internal setSymbol (
+            internal setType (
+              super.transform(Select(qual, tree.symbol.name)),
+              tree.tpe),
+            tree.symbol)
+
         // fix extractors
         case UnApply(
             Apply(fun, List(Ident(TermName("<unapply-selector>")))), args) =>
@@ -662,21 +718,18 @@ class Typer[C <: Context](val c: C) {
               mods.annotations exists { _ equalsStructure annotation }
             }
           val annotations = mods.annotations ++ defAnnotations
-          if (defDef.symbol.asTerm.privateWithin != NoSymbol ||
-              defAnnotations.nonEmpty ||
-              mods.flags != flags ||
-              tree.symbol.name == TermName("$init$")) {
-            val newDefDef = DefDef(
-              Modifiers(flags, privateWithin, annotations), name,
-              transformTypeDefs(tparams),
-              transformValDefss(vparamss),
-              transform(tpt),
-              transform(rhs))
-            internal setType (newDefDef, defDef.tpe)
-            internal setPos (newDefDef, defDef.pos)
-          }
+          val newDefDef = DefDef(
+            Modifiers(flags, privateWithin, annotations), name,
+            transformTypeDefs(tparams),
+            transformValDefss(vparamss),
+            transform(tpt),
+            transform(rhs))
+          internal setType (newDefDef, defDef.tpe)
+          internal setPos (newDefDef, defDef.pos)
+          if (tree.symbol.name != TermName("$init$"))
+            internal setSymbol (newDefDef, defDef.symbol)
           else
-            super.transform(tree)
+            newDefDef
 
         case _ =>
           super.transform(tree)
@@ -689,6 +742,11 @@ class Typer[C <: Context](val c: C) {
   private def fixUntypecheck(tree: Tree): Tree = {
     object untypecheckFixer extends Transformer {
       override def transform(tree: Tree) = tree match {
+        case tree: TypeTree =>
+          if (tree.original != null)
+            internal setOriginal (tree, transform(tree.original))
+          tree
+
         case Apply(fun, args) if fun.symbol != null && fun.symbol.isModule =>
           internal setSymbol (fun, NoSymbol)
           super.transform(tree)
@@ -721,6 +779,13 @@ class Typer[C <: Context](val c: C) {
             internal setSymbol (tree, NoSymbol)
           else
             tree
+
+        case DefDef(mods, name, _, _, _, _) =>
+          if ((mods hasFlag (SYNTHETIC | DEFAULTPARAM)) &&
+              (name.toString contains "$default$"))
+            EmptyTree
+          else
+            super.transform(tree)
 
         case _ =>
           super.transform(tree)

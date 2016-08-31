@@ -4,7 +4,9 @@ import java.util.concurrent.ThreadLocalRandom
 
 import scala.util.DynamicVariable
 
-/** support for dynamic dependency discovery */
+/**
+  * Provides names for dynamic dependencies based on their definition position to allow easier debugging
+  */
 object Globals {
   def declarationLocationName() =
     if (dynamicNameVar.value.nonEmpty) dynamicNameVar.value
@@ -14,7 +16,7 @@ object Globals {
       while (trace(i).toString.startsWith("scala.") || trace(i).toString.startsWith("java.") ||
         (trace(i).toString.startsWith("rescala.") && !trace(i).toString.startsWith("rescala.test."))) i += 1
 
-      s"${ trace(i).getFileName }(${ trace(i).getLineNumber })"
+      s"${trace(i).getFileName}(${trace(i).getLineNumber})"
     }
 
 

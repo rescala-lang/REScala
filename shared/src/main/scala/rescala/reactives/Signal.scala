@@ -1,50 +1,73 @@
 package rescala.reactives
 
-import rescala.engines.Ticket
-import rescala.graph.{Struct, Stateful}
+import rescala.engines.{Engine, Ticket}
+import rescala.graph.{Pulse, Stateful, Struct}
+import rescala.propagation.Turn
+import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 
-trait Signal[+A, S <: Struct] extends Stateful[A, S] {
+import scala.util.control.NonFatal
+import scala.util.{Failure, Success}
+
+/**
+  * Standard implementation of the signal interface using Spore-based propagation.
+  *
+  * @tparam A Type stored by the signal
+  * @tparam S Struct type used for the propagation of the signal
+  */
+trait Signal[+A, S <: Struct] extends SignalLike[A, S, Signal, Event] with Stateful[A, S] {
 
   /** add an observer */
-  final def observe(react: A => Unit)(implicit ticket: Ticket[S]): Observe[S] = Observe(this)(react)
+  final override def observe(
+    onSuccess: A => Unit,
+    onFailure: Throwable => Unit = t => throw new UnhandledFailureException(t)
+  )(implicit ticket: Ticket[S]): Observe[S] = Observe.strong(this) {
+    case Success(v) => onSuccess(v)
+    case Failure(t) => onFailure(t)
+  }
+
+  final def recover[R >: A](onFailure: Throwable => R)(implicit ticket: Ticket[S]): Signal[R, S] = Signals.static(this) { turn =>
+    try this.get(turn) catch {
+      case NonFatal(e) => onFailure(e)
+    }
+  }
+
+  final def withDefault[R >: A](value: R)(implicit ticket: Ticket[S]): Signal[R, S] = Signals.static(this) { (turn) =>
+    try this.get(turn) catch {
+      case EmptySignalControlThrowable => value
+    }
+  }
+
+  def disconnect()(implicit engine: Engine[S, Turn[S]]): Unit
+
 
   /** Return a Signal with f applied to the value */
-  final def map[B](f: A => B)(implicit ticket: Ticket[S]): Signal[B, S] = Signals.lift(this) {f}
+  final override def map[B](f: A => B)(implicit ticket: Ticket[S]): Signal[B, S] = Signals.lift(this)(f)
 
-  /** flatten the inner signal */
-  final def flatten[B]()(implicit ev: A <:< Signal[B, S], ticket: Ticket[S]) = Signals.dynamic(this) { s => this (s)(s) }
-
-  /** Return a Signal that gets updated only when e fires, and has the value of this Signal */
-  final def snapshot(e: Event[_, S])(implicit ticket: Ticket[S]): Signal[A, S] = e.snapshot(this)
-
-  /** Switch to (and keep) event value on occurrence of e */
-  final def switchTo[U >: A](e: Event[U, S])(implicit ticket: Ticket[S]): Signal[U, S] = e.switchTo(this)
-
-  /** Switch to (and keep) event value on occurrence of e */
-  final def switchOnce[V >: A](e: Event[_, S])(newSignal: Signal[V, S])(implicit ticket: Ticket[S]): Signal[V, S] = e.switchOnce(this, newSignal)
-
-  /** Switch back and forth between this and the other Signal on occurrence of event e */
-  final def toggle[V >: A](e: Event[_, S])(other: Signal[V, S])(implicit ticket: Ticket[S]): Signal[V, S] = e.toggle(this, other)
-
-  /** Delays this signal by n occurrences */
-  final def delay(n: Int)(implicit ticket: Ticket[S]): Signal[A, S] = ticket { implicit turn => changed.delay(this.get, n) }
-
-  /** Unwraps a Signal[Event[E, S], S] to an Event[E, S] */
-  final def unwrap[E](implicit evidence: A <:< Event[E, S], ticket: Ticket[S]): Event[E, S] = Events.wrapped(map(evidence))
-
-  /**
-    * Create an event that fires every time the signal changes. It fires the tuple
-    * (oldVal, newVal) for the signal. The first tuple is (null, newVal)
-    */
-  final def change(implicit ticket: Ticket[S]): Event[(A, A), S] = Events.change(this)
+  /** flatten the inner reactive */
+  final override def flatten[R](implicit ev: Flatten[A, S, R], ticket: Ticket[S]): R = ev.apply(this)
 
   /**
     * Create an event that fires every time the signal changes. The value associated
     * to the event is the new value of the signal
     */
-  final def changed(implicit ticket: Ticket[S]): Event[A, S] = change.map(_._2)
+  override def changed(implicit ticket: Ticket[S]): Event[A, S] = Events.static(s"(changed $this)", this) { turn =>
+    pulse(turn) match {
+      case Pulse.empty => Pulse.NoChange
+      case other => other
+    }
+  }
 
-  /** Convenience function filtering to events which change this reactive to value */
-  final def changedTo[V](value: V)(implicit ticket: Ticket[S]): Event[Unit, S] = (changed && {_ == value}).dropParam
+  /** Create an event that fires every time the signal changes. It fires the tuple (oldVal, newVal) for the signal.
+    * Be aware that no change will be triggered when the signal changes to or from empty */
+  final override def change(implicit ticket: Ticket[S]) = {
+    Events.static(s"(change $this)", this) { turn =>
+      val from = stable(turn)
+      val to = pulse(turn)
+      if (from != to) Pulse.Change(Signals.Diff(from, to))
+      else Pulse.NoChange
+    }
+  }
 
+
+  final def delay(n: Int)(implicit ticket: Ticket[S]): Signal[A, S] = ticket { implicit turn => changed.delay(this.get, n) }
 }

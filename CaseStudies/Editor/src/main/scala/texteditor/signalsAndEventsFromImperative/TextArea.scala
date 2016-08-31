@@ -127,7 +127,8 @@ class TextArea extends ReComponent {
 
     protected[TextArea] val blink = new Timer(500) start
     protected[TextArea] val steady = new Timer(500, false)
-    protected[TextArea] val visible = Signal{ hasFocus() }.toggle(blink.fired)(
+    protected[TextArea] val visible =blink.fired.toggle(
+        Signal{ hasFocus() },
         Signal{ hasFocus() && steady.running() })
   }
 

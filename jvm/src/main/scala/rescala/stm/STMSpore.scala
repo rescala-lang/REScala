@@ -1,11 +1,11 @@
 package rescala.stm
 
 import rescala.graph.{LevelSpore, _}
-import rescala.propagation.{Committable, Turn}
+import rescala.propagation.Turn
 
 import scala.concurrent.stm.{InTxn, Ref}
 
-class STMSpore[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends LevelSpore[R] with PulsingSpore[P] with Buffer[Pulse[P]] with Committable {
+class STMSpore[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends LevelSpore[R] with PulsingSpore[P] with Buffer[Pulse[P]] {
 
   implicit def inTxn(implicit turn: Turn[_]): InTxn = turn match {
     case stmTurn: STMTurn => stmTurn.inTxn
@@ -21,7 +21,7 @@ class STMSpore[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming
   override def level(implicit turn: Turn[_]): Int = _level.get
   override def drop(reactive: R)(implicit turn: Turn[_]): Unit = _outgoing.transformAndGet(_ - reactive)
   override def updateLevel(i: Int)(implicit turn: Turn[_]): Int = _level.transformAndGet(math.max(_, i))
-  override def outgoing(implicit turn: Turn[_]): Set[R] = _outgoing.get
+  override def outgoing(implicit turn: Turn[_]): Iterator[R] = _outgoing.get.iterator
   def updateIncoming(reactives: Set[R])(implicit turn: Turn[_]): Unit = _incoming.set(reactives)
   override def discover(reactive: R)(implicit turn: Turn[_]): Unit = _outgoing.transformAndGet(_ + reactive)
 
@@ -46,7 +46,7 @@ class STMSpore[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming
 
   override def commit(implicit turn: Turn[_]): Unit = {
     val updateValue: Option[Pulse[P]] = update.get
-    if (!transient && updateValue.isDefined) current.set(updateValue.get.keep)
+    if (!transient && updateValue.isDefined) current.set(updateValue.get.stabilize)
     release(turn)
   }
 }

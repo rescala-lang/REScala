@@ -2,11 +2,11 @@ package benchmarks.simple
 
 import java.util.concurrent.TimeUnit
 
-import benchmarks.{Workload, EngineParam, Size, Step}
+import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
-import rescala.propagation.Turn
 import rescala.engines.Engine
+import rescala.propagation.Turn
 import rescala.reactives.{Event, Evt}
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -26,7 +26,7 @@ class ChainEvent[S <: rescala.graph.Struct] {
   @Setup
   def setup(params: BenchmarkParams, size: Size, engineParam: EngineParam[S], work: Workload) = {
     engine = engineParam.engine
-    source = engine.Evt[Int]()
+    source = engine.Evt[Int]
     result = source
     for (_ <- Range(0, size.size)) {
       result = result.map{v => val r = v + 1; work.consume(); r}

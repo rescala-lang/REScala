@@ -1,6 +1,6 @@
-import scala.swing.Component
-import scala.swing.Swing
 import javax.swing.SwingUtilities
+
+import scala.swing.{Component, Swing}
 
 package object reswing {
   type CompItem = Component

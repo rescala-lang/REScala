@@ -1,16 +1,10 @@
 package reswing
 
-import scala.language.implicitConversions
 import scala.collection.JavaConverters._
-import scala.swing.Color
-import scala.swing.Dimension
-import scala.swing.Font
-import scala.swing.ListView
+import scala.language.implicitConversions
+import scala.swing.{Color, Dimension, Font, ListView}
 import scala.swing.ListView.IntervalMode
-import scala.swing.event.ListSelectionChanged
-import scala.swing.event.ListElementsAdded
-import scala.swing.event.ListChanged
-import scala.swing.event.ListElementsRemoved
+import scala.swing.event.{ListChanged, ListElementsAdded, ListElementsRemoved, ListSelectionChanged}
 
 class ReListView[A](
     val listData: ReSwingValue[Seq[A]] = ReSwingNoValue[Seq[A]],

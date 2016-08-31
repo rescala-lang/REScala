@@ -3,7 +3,7 @@ package examples.bouncing
 
 import java.awt.{Dimension, Graphics2D, Point}
 
-import rescala.{Signal, _}
+import rescala._
 
 import scala.swing.{MainFrame, Panel, SimpleSwingApplication, Swing}
 
@@ -14,7 +14,7 @@ object SignalVersion extends SimpleSwingApplication {
   override def main(args: Array[String]): Unit = {
     super.main(args)
     while (true) {
-      Swing onEDTWait {application.tick.transform(_ + 1)}
+      Swing onEDTWait {application.tick.transform(_ + 1)(rescala.Engine)}
       Thread sleep 20
     }
   }

@@ -3,10 +3,8 @@ package reader.data
 import java.net.URL
 import java.util.Calendar
 
-import org.junit.runner.RunWith
 import org.scalatest.BeforeAndAfter
 import org.scalatest.FlatSpec
-import org.scalatest.junit.JUnitRunner
 import org.scalatest.Matchers
 import reader.EventShouldFireWrapper.convertToEventShouldFireWrapper
 import reader.XMLFixtures.completeRSS2Items
@@ -18,7 +16,6 @@ import reader.XMLFixtures.simpleItem
 import reader.common.implicits.stringToUrl
 import rescala.Engine
 
-@RunWith(classOf[JUnitRunner])
 class XmlParserSpec extends FlatSpec with Matchers with BeforeAndAfter {
   var parser: XmlParser = _
 

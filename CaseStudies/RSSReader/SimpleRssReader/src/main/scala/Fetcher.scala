@@ -1,8 +1,8 @@
 import java.net._
+
 import rescala._
-import rescala._
-import scala.xml.XML
-import scala.xml.NodeSeq
+
+import scala.xml.{NodeSeq, XML}
 
 class Fetcher(val url: URL) {
 

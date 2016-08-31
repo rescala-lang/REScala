@@ -1,30 +1,25 @@
 package rescala.pipelining.tests
 
-import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.FlatSpec
 import rescala.pipelining.{Frame, Pipeline, PipelineEngine}
 
-class FrameTest extends AssertionsForJUnit with MockitoSugar {
+class FrameTest extends FlatSpec  {
 
   implicit val engine = new PipelineEngine()
   val dummyReactive = new Pipeline()
 
-  @Test
-  def testNewWriteFrameIsNotWritten() = {
+    it should "test New Write Frame Is Not Written" in {
     assert(Frame(engine.makeTurn, dummyReactive).isWritten == false)
   }
 
-  @Test
-  def testMarkWritten() = {
+    it should "test Mark Written" in {
     val frame = Frame(engine.makeTurn, dummyReactive)
     assert(!frame.isWritten)
     frame.markWritten()
     assert(frame.isWritten)
   }
 
-  @Test
-  def testInsertFrame() = {
+    it should "test Insert Frame" in {
     val frame1 = Frame(engine.makeTurn, dummyReactive)
     val frame2 = Frame(engine.makeTurn, dummyReactive)
     val frame3 = Frame(engine.makeTurn, dummyReactive)
@@ -46,8 +41,7 @@ class FrameTest extends AssertionsForJUnit with MockitoSugar {
     assert(frame3.next == null)
   }
 
-  @Test
-  def testRemoveFrame() = {
+    it should "test Remove Frame" in {
     val frame1 = Frame(engine.makeTurn, dummyReactive)
     val frame2 = Frame(engine.makeTurn, dummyReactive)
     val frame3 = Frame(engine.makeTurn, dummyReactive)
@@ -74,8 +68,7 @@ class FrameTest extends AssertionsForJUnit with MockitoSugar {
     assert(frame3.next == null)
   }
 
-  @Test
-  def testMoveFrame() = {
+    it should "test Move Frame" in {
     val frame1 = Frame(engine.makeTurn, dummyReactive)
     val frame2 = Frame(engine.makeTurn, dummyReactive)
     val frame3 = Frame(engine.makeTurn, dummyReactive)

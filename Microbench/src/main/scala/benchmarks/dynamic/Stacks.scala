@@ -8,7 +8,7 @@ import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
 import rescala.engines.{Engine, Engines}
 import rescala.graph.Struct
 import rescala.propagation.Turn
-import rescala.reactives.{Signal, Signals, Var}
+import rescala.reactives._
 
 import scala.collection.immutable.Range
 

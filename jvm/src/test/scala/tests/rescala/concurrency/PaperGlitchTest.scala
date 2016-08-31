@@ -2,17 +2,15 @@ package tests.rescala.concurrency
 
 import java.util.concurrent.{ConcurrentLinkedQueue, CountDownLatch}
 
-import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
+import org.scalatest.FunSuite
 import rescala.engines.Engines
-import rescala.reactives.Var
-import rescala.reactives.Signals
+import rescala.reactives.{Signals, Var}
 
 import scala.util.Random
 
-class PaperGlitchTest extends AssertionsForJUnit {
+class PaperGlitchTest extends FunSuite {
 
-  @Test def run(): Unit = {
+  ignore("execute paper glitch test"){
     val lnOf2 = scala.math.log(2) // natural log of 2
     def log2(x: Double): Double = scala.math.log(x) / lnOf2
     def isPowerOf2(x: Int) = (x & (x - 1)) == 0
@@ -39,7 +37,7 @@ class PaperGlitchTest extends AssertionsForJUnit {
 
     @volatile var cancelled = false
 
-    val latch = new CountDownLatch(2)
+    val latch = new CountDownLatch(3)
 
     Spawn {
       latch.countDown()
@@ -69,6 +67,7 @@ class PaperGlitchTest extends AssertionsForJUnit {
         }
       }
     }
+    latch.countDown()
     latch.await()
 
     Thread.sleep(1000)

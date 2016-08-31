@@ -1,9 +1,8 @@
 package rescala.macros
 
-import rescala.graph.{PulseOption, Struct, Stateful}
+import rescala.graph.{PulseOption, Stateful, Struct}
 import rescala.propagation.Turn
-import rescala.reactives.Signal
-import rescala.reactives.Event
+import rescala.reactives.{Event, Signal}
 
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox
@@ -16,19 +15,22 @@ object ReactiveMacros {
   def SignalMacro[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag](c: blackbox.Context)(expression: c.Expr[A]): c.Expr[Signal[A, S]] = {
     import c.universe._
 
-    val (cutOutSignals, signalExpression, filteredDetections ) =  ReactiveMacro(c)(expression)
+    if (!c.hasErrors) {
+      val (cutOutSignals, signalExpression, filteredDetections ) =  ReactiveMacro(c)(expression)
 
-    // create SignalSynt object
-    // use fully-qualified name, so no extra import is needed
-    val body = q"${termNames.ROOTPKG}.rescala.reactives.Signals.dynamic[${weakTypeOf[A]}, ${weakTypeOf[S]}](..$filteredDetections)($signalExpression)"
+      // create SignalSynt object
+      // use fully-qualified name, so no extra import is needed
+      val body = q"${termNames.ROOTPKG}.rescala.reactives.Signals.dynamic[${weakTypeOf[A]}, ${weakTypeOf[S]}](..$filteredDetections)($signalExpression)"
 
-    // assemble the SignalSynt object and the signal values that are accessed
-    // by the object, but were cut out of the signal expression during the code
-    // transformation
-    val block = Typed(Block(cutOutSignals.reverse, body), TypeTree(weakTypeOf[Signal[A, S]]))
+      // assemble the SignalSynt object and the signal values that are accessed
+      // by the object, but were cut out of the signal expression during the code
+      // transformation
+      val block = Typed(Block(cutOutSignals.reverse, body), TypeTree(weakTypeOf[Signal[A, S]]))
 
-
-    c.Expr[Signal[A, S]](Typer(c) untypecheck block)
+      c.Expr[Signal[A, S]](Typer(c) untypecheck block)
+    }
+    else
+      c.Expr[Signal[A, S]](q"""throw new ${termNames.ROOTPKG}.scala.NotImplementedError("signal macro not expanded")""")
   }
 
 
@@ -36,19 +38,22 @@ object ReactiveMacros {
   def EventMacro[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag](c: blackbox.Context)(expression: c.Expr[A]): c.Expr[Event[A, S]] = {
     import c.universe._
 
-    val (cutOutSignals, signalExpression, filteredDetections ) =  ReactiveMacro(c)(expression)
+    if (!c.hasErrors) {
+      val (cutOutSignals, signalExpression, filteredDetections ) =  ReactiveMacro(c)(expression)
 
-    // create SignalSynt object
-    // use fully-qualified name, so no extra import is needed
-    val body = q"${termNames.ROOTPKG}.rescala.reactives.Events.dynamic[${weakTypeOf[A]}, ${weakTypeOf[S]}](..$filteredDetections)($signalExpression)"
+      // create SignalSynt object
+      // use fully-qualified name, so no extra import is needed
+      val body = q"${termNames.ROOTPKG}.rescala.reactives.Events.dynamic[${weakTypeOf[A]}, ${weakTypeOf[S]}](..$filteredDetections)($signalExpression)"
 
-    // assemble the SignalSynt object and the signal values that are accessed
-    // by the object, but were cut out of the signal expression during the code
-    // transformation
-    val block = Typed(Block(cutOutSignals.reverse, body), TypeTree(weakTypeOf[Event[A, S]]))
+      // assemble the SignalSynt object and the signal values that are accessed
+      // by the object, but were cut out of the signal expression during the code
+      // transformation
+      val block = Typed(Block(cutOutSignals.reverse, body), TypeTree(weakTypeOf[Event[A, S]]))
 
-
-    c.Expr[Event[A, S]](Typer(c) untypecheck block)
+      c.Expr[Event[A, S]](Typer(c) untypecheck block)
+    }
+    else
+      c.Expr[Event[A, S]](q"""throw new ${termNames.ROOTPKG}.scala.NotImplementedError("event macro not expanded")""")
   }
 
   def ReactiveMacro[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag](c: blackbox.Context)(expression: c.Expr[A]): (List[c.universe.ValDef], c.universe.Tree, List[c.universe.Tree]) = {

@@ -2,43 +2,48 @@ package rescala.pipelining.tests
 
 import java.util.concurrent.CyclicBarrier
 
-import org.junit.Test
-import org.scalatest.junit.AssertionsForJUnit
-import org.scalatest.mock.MockitoSugar
-import rescala.pipelining.{Pipeline, PipelineEngine}
+import org.scalatest.FlatSpec
+import org.scalatest.concurrent.TimeLimitedTests
+import org.scalatest.time.SpanSugar._
 import rescala.pipelining.tests.PipelineTestUtils._
+import rescala.pipelining.{Pipeline, PipelineEngine, PipeliningTurn}
 
-class FrameWaitWrittenTest extends AssertionsForJUnit with MockitoSugar {
-  
-  implicit val engine = new PipelineEngine()
-  
-  
-  val readFrom = new Pipeline()
-  
-  def createNewTurn() = {
-    val turn = engine.makeTurn
-    engine.addTurn(turn)
-    turn
+
+class FrameWaitWrittenTest extends FlatSpec with TimeLimitedTests {
+
+  trait PipelineState {
+
+    implicit val engine = new PipelineEngine()
+
+
+    val readFrom = new Pipeline()
+
+    def createNewTurn(): PipeliningTurn = {
+      val turn = engine.makeTurn
+      engine.addTurn(turn)
+      turn
+    }
   }
-  
-  @Test(timeout = 100)
-  def doesNotWaitIfNoFrame() = {
+
+  override val timeLimit = 100000.millis
+
+
+
+  it should "doesNotWaitIfNoFrame" in new PipelineState {
     val readTurn = createNewTurn
     readFrom.waitUntilCanRead(readTurn)
     // No waiting, so nothing to do to stop waiting
   }
-  
-  @Test(timeout = 100)
-  def doesNotWaitOnLaterTurn() = {
+
+  it should "doesNotWaitOnLaterTurn" in new PipelineState {
     val readTurn = createNewTurn
     val frameTurn = createNewTurn
     readFrom.createFrame(frameTurn)
     readFrom.waitUntilCanRead(readTurn)
     // Again nothing to do
   }
-  
-  @Test(timeout = 1000)
-  def doesWaitOnEarlierTurn() = {
+
+  it should "doesWaitOnEarlierTurn" in new PipelineState {
     val frameTurn = createNewTurn
     val readTurn = createNewTurn
     readFrom.createFrame(frameTurn)
@@ -56,144 +61,139 @@ class FrameWaitWrittenTest extends AssertionsForJUnit with MockitoSugar {
     writeThread.start()
     readThread.join()
     writeThread.join()
-    assert(wasWritten, "waitUntilCanRead does not wait for an earlier turn")
+    assert(wasWritten, "wait Until Can Read does not wait for an earlier turn")
   }
-  
-  @Test(timeout = 2000)
-  def doesWaitOnEarlierInsertedTurn() = {
+
+  it should "doesWaitOnEarlierInsertedTurn" in new PipelineState {
     val beginFrameTurn = createNewTurn
     val insertedFrameTurn = createNewTurn
     val readTurn = createNewTurn
     readFrom.createFrame(beginFrameTurn)
-    
+
     val frameCreatedBarrier = new CyclicBarrier(2)
     val beginWrittenBarrier = new CyclicBarrier(2)
-    
+
     val beginWriteThread = createThread {
       frameCreatedBarrier.await()
       Thread.sleep(500)
       readFrom.markWritten(beginFrameTurn)
       beginWrittenBarrier.await();
     }
-    
+
     val insertFrameThread = createThread {
       Thread.sleep(500)
       readFrom.createFrame(insertedFrameTurn)
       frameCreatedBarrier.await()
     }
-    
+
     val writeInsertedThread = createThread {
       beginWrittenBarrier.await()
       readFrom.markWritten(insertedFrameTurn)
     }
-    
+
     @volatile
     var wasWritten = false
     val readThread = createThread {
       readFrom.waitUntilCanRead(readTurn)
       wasWritten = readFrom.frame(insertedFrameTurn).isWritten
     }
-    
-    
+
+
     val allFrames = List(readThread, writeInsertedThread, insertFrameThread, beginWriteThread)
     allFrames.foreach(_.start)
     allFrames.foreach(_.join)
-    
-    assert(wasWritten, "waitUntilCanRead does not wait for an inserted but earlier turn")
-    
+
+    assert(wasWritten, "wait Until Can Read does not wait for an inserted but earlier turn")
+
   }
-  
-  @Test(timeout = 2000)
-  def doesWaitOnOtherFrameIfWaitingIsDeleted() = {
+
+  it should "doesWaitOnOtherFrameIfWaitingIsDeleted" in new PipelineState {
     val beginFrameTurn = createNewTurn
     val deletedFrameTurn = createNewTurn
     val readTurn = createNewTurn
-    
+
     readFrom.createFrame(beginFrameTurn)
     readFrom.createFrame(deletedFrameTurn)
-    
+
     val frameRemovedBarrier = new CyclicBarrier(2)
-    
+
     val deletedFrameThread = createThread {
       Thread.sleep(500)
       readFrom.deleteFrames(deletedFrameTurn)
       frameRemovedBarrier.await()
     }
-    
+
     val writeThread = createThread {
       frameRemovedBarrier.await()
       Thread.sleep(500)
       readFrom.markWritten(beginFrameTurn)
     }
-    
+
     @volatile
     var wasWritten = false
     val readThread = createThread {
       readFrom.waitUntilCanRead(readTurn)
       wasWritten = readFrom.frame(beginFrameTurn).isWritten
     }
-    
+
     val allThreads = List(readThread, writeThread, deletedFrameThread)
     allThreads.foreach(_.start)
     allThreads.foreach(_.join)
-    
-    assert(wasWritten, "waitUntilCanRead does not wait if an earlier frame is deleted but no frame remains")
+
+    assert(wasWritten, "wait Until Can Read does not wait if an earlier frame is deleted but no frame remains")
   }
-  
-  @Test(timeout = 2000)
-  def stopsWaitingIfDependingFrameIsDeleted() = {
+
+  it should "stopsWaitingIfDependingFrameIsDeleted" in new PipelineState {
     val deletedFrameTurn = createNewTurn()
     val readTurn = createNewTurn()
-    
+
     readFrom.createFrame(deletedFrameTurn)
-    
+
     val deleteFrameThread = createThread {
       Thread.sleep(500)
       readFrom.deleteFrames(deletedFrameTurn)
     }
-    
+
     deleteFrameThread.start
-    
+
     readFrom.waitUntilCanRead(readTurn)
-    
+
   }
-  
-  @Test(timeout = 1000)
-  def doesNotWaitForItself() = {
+
+  it should "doesNotWaitForItself" in new PipelineState {
     val readTurn = createNewTurn
     readFrom.createFrame (readTurn)
-    
+
     readFrom.waitUntilCanRead(readTurn)
   }
-  
-  @Test(timeout = 1000)
-  def doesWaitForPreceedingButNotForPostceedingFrames() = {
+
+  it should "doesWaitForPreceedingButNotForPostceedingFrames" in new PipelineState {
     val beforeFrameTurn = createNewTurn()
     val readTurn = createNewTurn()
     val afterFrameTurn = createNewTurn()
-    
+
     readFrom.createFrame(beforeFrameTurn)
     readFrom.createFrame(afterFrameTurn)
-    
+
     val writeThread = createThread {
       Thread.sleep(500)
       readFrom.markWritten(beforeFrameTurn)
     }
-    
+
      @volatile
     var wasWritten = false
     val readThread = createThread {
       readFrom.waitUntilCanRead(readTurn)
       wasWritten = readFrom.frame(beforeFrameTurn).isWritten
     }
-     
+
      writeThread.start
      readThread.start
      writeThread.join
      readThread.join
-     
-     assert(wasWritten, "waitUntilCanRead does not wait correctly if a postceeding frame is there")
-    
+
+     assert(wasWritten, "wait Until Can Read does not wait correctly if a postceeding frame is there")
+
   }
 
 }

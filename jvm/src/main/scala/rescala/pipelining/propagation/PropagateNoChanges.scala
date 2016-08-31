@@ -2,7 +2,7 @@ package rescala.pipelining.propagation
 
 import rescala.graph.ReevaluationResult.{Dynamic, Static}
 import rescala.graph.{Reactive, ReevaluationResult}
-import rescala.pipelining.{PipeliningTurn, PipelineStruct}
+import rescala.pipelining.{PipelineStruct, PipeliningTurn}
 
 private[pipelining] trait PropagateNoChanges {
 
@@ -17,6 +17,7 @@ private[pipelining] trait PropagateNoChanges {
       case Static(hasChanged) =>
         (hasChanged, -1, EnqueueDependencies)
       case Dynamic(hasChanged, diff) =>
+        head.bud.updateIncoming(diff.novel)
         diff.removed foreach drop(head)
         diff.added foreach discover(head)
         val newLevel = maximumLevel(diff.novel) + 1
@@ -24,7 +25,7 @@ private[pipelining] trait PropagateNoChanges {
         (hasChanged, newLevel,  action)
     }
    }
-   
+
    def propagationPhase(): Unit = levelQueue.evaluateQueue(evaluate, evaluateNoChange)
 
 

@@ -6,9 +6,9 @@ import java.util.concurrent.locks.{ReadWriteLock, ReentrantReadWriteLock}
 import benchmarks.{EngineParam, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
-import rescala.reactives.Var
-import rescala.propagation.Turn
 import rescala.engines.{Engine, Engines}
+import rescala.propagation.Turn
+import rescala.reactives.Var
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
