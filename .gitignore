@@ -3,10 +3,9 @@ target
 *.iml
 */bin
 */.cache
-.project
-.cache
-.classpath
-.settings/*
+*/.project
+*/.classpath
+*/.settings/*
 *.sublime-project
 *.sublime-workspace
 Microbench/resultArchive/
