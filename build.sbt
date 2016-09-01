@@ -140,7 +140,7 @@ lazy val caseStudyRSSEvents = project.in(file("CaseStudies/RSSReader/ReactiveSca
 lazy val caseStudyRSSReactive = project.in(file("CaseStudies/RSSReader/ReactiveScalaReader.Reactive"))
   .dependsOn(reswing)
   .settings(
-    name := "rssreader-case-study",
+    name := "rssreader-case-study-reactive",
     publish := {},
     publishLocal := {},
     rssDependencies,
@@ -150,7 +150,7 @@ lazy val caseStudyRSSReactive = project.in(file("CaseStudies/RSSReader/ReactiveS
 lazy val caseStudyRSSSimple = project.in(file("CaseStudies/RSSReader/SimpleRssReader"))
   .dependsOn(reswing)
   .settings(
-    name := "rssreader-case-study",
+    name := "rssreader-case-study-simple",
     publish := {},
     publishLocal := {},
     rssDependencies,

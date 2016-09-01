@@ -38,7 +38,7 @@ trait Reactive[S <: Struct] {
 /** helper class to initialise engine and select lock */
 abstract class Base[+P, S <: Struct](budP: S#SporeP[P, Reactive[S]]) extends Pulsing[P, S] {
   final override protected[rescala] def bud: S#Spore[Reactive[S]] = budP
-  final override protected[this] def pulses(implicit turn: Turn[S]): Buffer[Pulse[P]] = turn.pulses(budP)
+  final override protected[this] def pulses(implicit turn: Turn[S]): PulsingSpore[P] = turn.pulses(budP)
 
   final protected[rescala] override def stable(implicit turn: Turn[S]): Pulse[P] = pulses.base
   final protected[rescala] override def pulse(implicit turn: Turn[S]): Pulse[P] = pulses.get
@@ -51,7 +51,7 @@ abstract class Base[+P, S <: Struct](budP: S#SporeP[P, Reactive[S]]) extends Pul
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
 trait Pulsing[+P, S <: Struct] extends Reactive[S] {
-  protected[this] def pulses(implicit turn: Turn[S]): Buffer[Pulse[P]]
+  protected[this] def pulses(implicit turn: Turn[S]): PulsingSpore[P]
   protected[rescala] def stable(implicit turn: Turn[S]): Pulse[P]
   protected[rescala] def pulse(implicit turn: Turn[S]): Pulse[P]
 }
@@ -92,7 +92,7 @@ trait Stateful[+A, S <: Struct] extends Pulsing[A, S] {
     get(turn)
   }
 
-  final def now(implicit maybe: Ticket[S]): A = maybe { turn =>
+  final def now(implicit ticket: Ticket[S]): A = ticket { turn =>
     turn.dependencyInteraction(this)
     try { get(turn) }
     catch { case EmptySignalControlThrowable => throw new NoSuchElementException(s"Signal $this is empty") }

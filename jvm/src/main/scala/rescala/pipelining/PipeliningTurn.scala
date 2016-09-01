@@ -3,12 +3,13 @@ package rescala.pipelining
 import java.util.concurrent.Semaphore
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
-import rescala.graph.{Buffer, Pulse, Reactive}
+import rescala.graph.{Pulse, Reactive}
 import rescala.pipelining.Pipeline._
 import rescala.pipelining.PipeliningTurn._
 import rescala.pipelining.propagation._
 import rescala.pipelining.util.LogUtils._
 import rescala.propagation._
+import rescala.graph.PulsingSpore
 
 
 private[pipelining] object PipeliningTurn {
@@ -489,7 +490,7 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
     !(this > other)
   }
 
-  override def pulses[P](budP: S#SporeP[P, _]): Buffer[Pulse[P]] = budP.pulses
+  override def pulses[P](budP: S#SporeP[P, _]): PulsingSpore[P] = budP.pulses
   override def incoming[R](bud: S#Spore[R]): Set[R] = bud.incoming(this)
 
 }

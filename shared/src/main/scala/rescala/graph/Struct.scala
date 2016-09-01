@@ -5,28 +5,6 @@ import rescala.propagation.{Committable, Turn}
 import scala.language.{existentials, higherKinds, implicitConversions}
 
 /**
-  * Buffer companion object. Only used for pipelining.
-  */
-object Buffer {
-  type CommitStrategy[A] = (A, A) => A
-  def commitAsIs[A](base: A, cur: A): A = cur
-  def transactionLocal[A](base: A, cur: A) = base
-  def keepPulse[P](base: Pulse[P], cur: Pulse[P]) = cur.stabilize
-}
-
-/**
-  * Buffer that stores a temporary new value for its content until it is committed.
-  *
-  * @tparam A Buffer stored content type
-  */
-trait Buffer[A] extends Committable {
-  def transform(f: (A) => A)(implicit turn: Turn[_]): A
-  def set(value: A)(implicit turn: Turn[_]): Unit
-  def base(implicit turn: Turn[_]): A
-  def get(implicit turn: Turn[_]): A
-}
-
-/**
   * Wrapper that adds a level of indirection for classes having a spore type dependency.
  */
 trait Struct {
@@ -74,7 +52,10 @@ trait SimpleStruct extends LevelStruct {
   * @tparam P Pulse stored value type
   */
 trait PulsingSpore[P] {
-  def pulses: Buffer[Pulse[P]]
+  def transform(f: (Pulse[P]) => Pulse[P])(implicit turn: Turn[_]): Pulse[P]
+  def set(value: Pulse[P])(implicit turn: Turn[_]): Unit
+  def base(implicit turn: Turn[_]): Pulse[P]
+  def get(implicit turn: Turn[_]): Pulse[P]
 }
 
 /**
@@ -82,10 +63,9 @@ trait PulsingSpore[P] {
   *
   * @tparam P Pulse stored value type
   */
-trait BufferedSpore[P] extends PulsingSpore[P] with Buffer[Pulse[P]] {
+trait BufferedSpore[P] extends PulsingSpore[P] with Committable {
   protected var current: Pulse[P]
   protected val transient: Boolean
-  val pulses: Buffer[Pulse[P]] = this
   protected var owner: Turn[_] = null
   private var update: Pulse[P] = Pulse.NoChange
 

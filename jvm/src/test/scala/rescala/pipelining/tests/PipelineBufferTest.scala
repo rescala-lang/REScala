@@ -1,10 +1,10 @@
 package rescala.pipelining.tests
 
 import org.scalatest.FlatSpec
-import rescala.graph.Buffer
 import rescala.pipelining.{Frame, Pipeline, PipelineEngine, PipeliningTurn}
 
 import scala.collection.immutable.Queue
+import rescala.pipelining.Buffer
 
 class PipelineBufferTest extends FlatSpec {
 
