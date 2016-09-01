@@ -6,7 +6,7 @@ import benchmarks.philosophers.PhilosopherTable._
 import org.openjdk.jmh.infra.Blackhole
 import rescala.engines.Engine
 import rescala.graph.Struct
-import rescala.propagation.Turn
+import rescala.propagation.{Committable, Turn}
 import rescala.reactives._
 
 class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit val engine: Engine[S, Turn[S]]) {
@@ -42,9 +42,13 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit 
 
   def tryEat(seating: Seating[S]): Boolean =
     engine.plan(seating.philosopher) { turn =>
-      val forksWereFree = seating.vision(turn) == Ready
+      val forksWereFree = seating.vision.get(turn) == Ready
       if (forksWereFree) seating.philosopher.admit(Eating)(turn)
-      turn.observe { if (forksWereFree) assert(seating.vision(turn) == Done, "philosopher should be done after turn") }
+      turn.schedule(new Committable {
+        override def commit(implicit t: Turn[_]): Unit = if (forksWereFree) assert(seating.vision.get(turn) == Done, "philosopher should be done after turn")
+        override def release(implicit t: Turn[_]): Unit = assert(assertion = false, "turn should not rollback")
+      })
+
       forksWereFree
     }
 
