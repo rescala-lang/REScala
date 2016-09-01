@@ -45,11 +45,12 @@ class ReactiveState[S <: Struct] {
     modifiedReadChance = globalReadChance / threads
 
     accounts = Array.fill(numberOfAccounts)(Var(0))
-    windows = accounts.sliding(numberOfAccounts / readWindowCount).toArray
+    windows = accounts.grouped(numberOfAccounts / readWindowCount).toArray
+    assert(windows.length == readWindowCount)
     if (engine.engineName == "unmanaged") {
       locks = Array.fill(numberOfAccounts)(new ReentrantLock())
-      lockWindows = locks.sliding(numberOfAccounts / readWindowCount).toArray
-
+      lockWindows = locks.grouped(numberOfAccounts / readWindowCount).toArray
+      assert(lockWindows.length == readWindowCount)
     }
   }
 }
@@ -77,7 +78,8 @@ class STMState {
     val threads = params.getThreads
     modifiedReadChance = globalReadChance / threads
     accounts = Array.fill(numberOfAccounts)(Ref(0))
-    windows = accounts.sliding(numberOfAccounts / readWindowCount).toArray
+    windows = accounts.grouped(numberOfAccounts / readWindowCount).toArray
+    assert(windows.length == readWindowCount)
   }
 }
 
@@ -106,11 +108,13 @@ class BankAccounts[S <: Struct] {
       else {
         val a1 = tlr.nextInt(rs.numberOfAccounts)
         val a2 = tlr.nextInt(rs.numberOfAccounts)
-        val account1 = rs.accounts(a1)
-        val account2 = rs.accounts(a2)
-        rs.engine.plan(account1, account2) { t =>
-          account1.admit(account1.get(t) + 4817)(t)
-          account2.admit(account2.get(t) - 4817)(t)
+        if (a1 != a2) {
+          val account1 = rs.accounts(a1)
+          val account2 = rs.accounts(a2)
+          rs.engine.plan(account1, account2) { t =>
+            account1.admit(account1.get(t) + 4817)(t)
+            account2.admit(account2.get(t) - 4817)(t)
+          }
         }
       }
     }
@@ -134,20 +138,22 @@ class BankAccounts[S <: Struct] {
       else {
         val a1 = tlr.nextInt(rs.numberOfAccounts)
         val a2 = tlr.nextInt(rs.numberOfAccounts)
-        val first = Math.min(a1, a2)
-        val second = Math.max(a1, a2)
-        rs.locks(first).lock()
-        rs.locks(second).lock()
-        try {
-          val account1 = rs.accounts(a1)
-          val account2 = rs.accounts(a2)
-          rs.engine.plan(account1, account2) { t =>
-            account1.admit(account1.get(t) + 4817)(t)
-            account2.admit(account2.get(t) - 4817)(t)
+        if (a1 != a2) {
+          val first = Math.min(a1, a2)
+          val second = Math.max(a1, a2)
+          rs.locks(first).lock()
+          rs.locks(second).lock()
+          try {
+            val account1 = rs.accounts(a1)
+            val account2 = rs.accounts(a2)
+            rs.engine.plan(account1, account2) { t =>
+              account1.admit(account1.get(t) + 4817)(t)
+              account2.admit(account2.get(t) - 4817)(t)
+            }
+          } finally {
+            rs.locks(first).unlock()
+            rs.locks(second).unlock()
           }
-        } finally {
-          rs.locks(first).unlock()
-          rs.locks(second).unlock()
         }
       }
     }
@@ -168,11 +174,13 @@ class BankAccounts[S <: Struct] {
     else {
       val a1 = tlr.nextInt(rs.numberOfAccounts)
       val a2 = tlr.nextInt(rs.numberOfAccounts)
-      val account1 = rs.accounts(a1)
-      val account2 = rs.accounts(a2)
-      atomic { t =>
-        account1.set(account1.get(t) + 4817)(t)
-        account2.set(account2.get(t) - 4817)(t)
+      if (a1 != a2) {
+        val account1 = rs.accounts(a1)
+        val account2 = rs.accounts(a2)
+        atomic { t =>
+          account1.set(account1.get(t) + 4817)(t)
+          account2.set(account2.get(t) - 4817)(t)
+        }
       }
     }
   }
