@@ -7,7 +7,7 @@ import rescala.propagation.Turn
 
 @State(Scope.Benchmark)
 class EngineParam[S <: rescala.graph.Struct] {
-  @Param(Array("synchron", "parrp", "stm"))
+  @Param(Array("synchron", "parrp", "locksweep", "stm"))
   var engineName: String = _
 
   @Param(Array("100000"))
