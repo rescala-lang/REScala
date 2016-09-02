@@ -138,6 +138,21 @@ h1:before,h2:before,h3:before,h4:before {
   border-left: 4px solid transparent;
 }
 
+#toc li.collapsed + li {
+  display: none;
+}
+
+#toc .collapseIcon {
+  float: right;
+}
+
+#toc .collapsible.collapsed .collapseIcon:before {
+  content: "[+]";
+}
+
+#toc .collapsible .collapseIcon:before {
+  content: "[-]";
+}
 
 #toc {
   padding-left: 0px;

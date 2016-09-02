@@ -3,7 +3,7 @@ window.onload = function () {
 	// listen for clicks on the document and close open dropdowns
 	document.body.addEventListener('click', function(element) {
 		if (element === undefined || element.classList === undefined || !element.classList.contains(".dropdown_content"))
-		document.querySelectorAll(".dropdown_content.show_content").forEach(function(element) {element.classList.remove("show_content")});
+		Util.DOMQueryAll(".dropdown_content.show_content").forEach(function(element) {element.classList.remove("show_content")});
 	}, true);
 
 	var manualTOC = document.body.querySelector("#toc");
@@ -36,6 +36,21 @@ window.onload = function () {
 	window.onscroll = function () {
 		updateArrowVisibility();
 	};
+	
+	Util.DOMQueryAll("li").filter(function(li) {
+		var next = li.nextElementSibling;
+		return next != null && next.nodeName == "LI" && next.firstElementChild != null && next.firstElementChild.nodeName == "OL";
+	}).forEach(function(li) {
+		var c = document.createElement("span");
+		c.classList.add("collapseIcon");
+		c.addEventListener("click", function(e) {
+			li.classList.toggle("collapsed");
+			e.stopPropagation();
+			e.preventDefault();
+		}, true);
+		li.firstElementChild.appendChild(c);
+		li.classList.add("collapsible");
+	});
 }
 
 function dropdown(id) {
@@ -58,11 +73,23 @@ function wrapInLi(element) {
 }
 
 function updateArrowVisibility() {
-	var scrollArrow = document.body.querySelector("#back-to-top");
+	var scrollArrow = Util.DOMQuery("#back-to-top");
 	if (scrollArrow != undefined) {
 		if (scrollY > 500)
 			scrollArrow.classList.add("show");
 		else
 			scrollArrow.classList.remove("show");
+	}
+}
+
+var Util = {
+	toArray: function(e) {
+		return Array.prototype.slice.call(e);
+	},
+	DOMQuery: function(s) {
+		return document.querySelector(s);
+	},
+	DOMQueryAll: function(s) {
+		return Util.toArray(document.querySelectorAll(s));
 	}
 }
