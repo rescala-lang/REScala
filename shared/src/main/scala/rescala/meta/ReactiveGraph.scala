@@ -2,16 +2,19 @@ package rescala.meta
 
 class ReactiveGraph {
   private val nodes : collection.mutable.Set[ReactiveNode] = collection.mutable.Set()
+  private val log : collection.mutable.MutableList[MetaLog] = collection.mutable.MutableList()
+
+  protected[meta] def addLog(newLog : MetaLog) = log += newLog
 
   def createVar[A]() : VarSignalPointer[A] = {
     val node = new ReactiveNode(this, Set())
-    nodes += node
+    registerReactiveNode(node)
     VarSignalPointer[A](Some(node))
   }
 
   def createEvt[T]() : EvtEventPointer[T] = {
     val node = new ReactiveNode(this, Set())
-    nodes += node
+    registerReactiveNode(node)
     EvtEventPointer[T](Some(node))
   }
 
@@ -30,6 +33,7 @@ class ReactiveGraph {
 
   protected[meta] def mergeNodes(mergeNodes : Set[ReactiveNode]): ReactiveNode = {
     if (mergeNodes.diff(nodes).nonEmpty) throw new IllegalArgumentException("Can only merge nodes within the same graph!")
+    if (log.exists(n => mergeNodes.contains(n.node))) throw new IllegalArgumentException("Can not merge nodes that have already a non-empty event log!")
 
     val mergedDependencies = mergeNodes.foldLeft(Set[ReactiveNode]())((acc, next) => acc.union(next.dependencies)) -- mergeNodes
     val mergedNode = new ReactiveNode(this, mergedDependencies)

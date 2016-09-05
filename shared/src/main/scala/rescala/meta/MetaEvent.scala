@@ -72,7 +72,13 @@ trait MetaSignalPointer[A] extends MetaPointer[A] {
 case class MetaObservePointer[T](protected[meta] override var node : Option[ReactiveNode], base : MetaReactivePointer[T], onSuccess: (T) => Unit, onFailure: (Throwable) => Unit) extends MetaPointer[Unit] {
 }
 
-case class EvtEventPointer[T](protected[meta] override var node : Option[ReactiveNode]) extends MetaEventPointer[T]
+
+case class EvtEventPointer[T](protected[meta] override var node : Option[ReactiveNode]) extends MetaEventPointer[T] {
+  def fire(value : T) : Unit = node match {
+    case Some(n) => n.graph.addLog(LoggedFire(n, value))
+    case None => throw new IllegalArgumentException("Cannot fire null pointer!")
+  }
+}
 case class ChangeEventPointer[T](protected[meta] override var node : Option[ReactiveNode], base : MetaSignalPointer[T]) extends MetaEventPointer[(T, T)]
 case class FilteredEventPointer[T](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], pred: (T) => Boolean) extends MetaEventPointer[T]
 case class OrEventPointer[T, U >: T](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], other : MetaEventPointer[U]) extends MetaEventPointer[U]
@@ -84,7 +90,12 @@ case class FlatMappedEventPointer[T, B](protected[meta] override var node : Opti
 case class UnwrappedEventPointer[A, T](protected[meta] override var node : Option[ReactiveNode], base : MetaSignalPointer[A]) extends MetaEventPointer[T]
 case class TryEventPointer[T](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T]) extends MetaEventPointer[Try[T]]
 
-case class VarSignalPointer[A](protected[meta] override var node : Option[ReactiveNode]) extends MetaSignalPointer[A]
+case class VarSignalPointer[A](protected[meta] override var node : Option[ReactiveNode]) extends MetaSignalPointer[A] {
+  def set(value : A) : Unit = node match {
+    case Some(n) => n.graph.addLog(LoggedSet(n, value))
+    case None => throw new IllegalArgumentException("Cannot fire null pointer!")
+  }
+}
 case class FoldedSignalPointer[T, A](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], init: A, fold: (A, T) => A) extends MetaSignalPointer[A]
 case class ToggledSignalPointer[T, A](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], a : MetaSignalPointer[A], b : MetaSignalPointer[A]) extends MetaSignalPointer[A]
 case class SnapshotSignalPointer[T, A](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], s : MetaSignalPointer[A]) extends MetaSignalPointer[A]
