@@ -13,6 +13,11 @@ class Keychain[InterTurn](init: Key[InterTurn]) {
   private val keys: util.ArrayDeque[Key[InterTurn]] = new util.ArrayDeque[Key[InterTurn]](2)
   keys.add(init)
 
+  /* fallthrough counts dynamic interactions:
+   * every time a turn adds a new outgoing dependency to the reactive of another turn,
+   * we count one fallthrough for that turn, remembering that the turn requires locks.
+   * we do not know which locks, so at the end we just pass all if there is any fallthrough.
+   * we count down one fallthrough, if a added dependecny is later removed again. */
   private var fallthrough: Map[Key[InterTurn], Int] = Map.empty
   def addFallthrough(key: Key[InterTurn], amount: Int = 1): Unit = synchronized { fallthrough = fallthrough.updated(key, fallthrough.getOrElse(key, 0) + amount) }
   def removeFallthrough(key: Key[InterTurn]): Unit = synchronized {

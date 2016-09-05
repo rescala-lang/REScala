@@ -18,6 +18,7 @@ import scala.annotation.tailrec
 @Warmup(iterations = 5, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
 @Measurement(iterations = 5, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
 @Fork(1)
+@Threads(2)
 class PhilosopherCompetition[S <: Struct] {
 
   @Benchmark
@@ -67,7 +68,7 @@ class PhilosopherCompetition[S <: Struct] {
 @State(Scope.Benchmark)
 class Competition[S <: Struct] {
 
-  @Param(Array("16", "32", "64", "128"))
+  @Param(Array("16", "32"))
   var philosophers: Int = _
 
   @Param(Array("noconflict", "alternating"))

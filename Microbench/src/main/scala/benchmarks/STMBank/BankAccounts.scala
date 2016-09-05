@@ -102,7 +102,7 @@ class BankAccounts[S <: Struct] {
         rs.engine.plan(window: _*) { t =>
           val sum = window.foldLeft(0)((acc, v) => acc + v.get(t))
           bh.consume(sum)
-          assert(sum == 0)
+          assert(rs.readWindowCount != 1 || sum == 0, "with a single window, the sum should be 0")
         }
       }
       else {
@@ -130,7 +130,7 @@ class BankAccounts[S <: Struct] {
           rs.engine.plan(window: _*) { t =>
             val sum = window.foldLeft(0)((acc, v) => acc + v.get(t))
             bh.consume(sum)
-            assert(sum == 0)
+            assert(rs.readWindowCount != 1 || sum == 0, "with a single window, the sum should be 0")
           }
         }
         finally { lockWindow.foreach(_.unlock()) }
@@ -168,7 +168,7 @@ class BankAccounts[S <: Struct] {
       atomic { t =>
         val sum = window.foldLeft(0)((acc, v) => acc + v.get(t))
         bh.consume(sum)
-        assert(sum == 0)
+        assert(rs.readWindowCount != 1 || sum == 0, "with a single window, the sum should be 0")
       }
     }
     else {
