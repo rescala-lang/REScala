@@ -7,7 +7,7 @@ sidebar: manual
 # Introduction
 
 This manual covers the main features of the *REScala* programming language.
-[Signals and Vars](#signals-and-vars) presents time-changing values
+[Signals and Vars] presents time-changing values
 in *REScala*, [Events](#events) describes events,
 [ConversionFunctions](#conversion-functions) covers the conversion functions between
 events and time-changing values, [Technicalities](#technicalities)
@@ -40,6 +40,7 @@ these topics can find in [Related](#related) the essential
 references.
 
 # Signals and Vars
+[Signals and Vars]: #signals-and-vars
 
 A signal is language concept for expressing functional dependencies
 among values in a declarative way. Intuitively, a reactive value can
