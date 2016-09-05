@@ -1,5 +1,7 @@
 package rescala.meta
 
+import rescala.reactives.RExceptions.UnhandledFailureException
+
 import scala.util.Try
 
 trait MetaPointer[T] {
@@ -41,10 +43,10 @@ trait MetaPointer[T] {
 }
 
 trait MetaReactivePointer[T] extends MetaPointer[T] {
-  def observe(onSuccess: (T) => Unit, onFailure: (Throwable) => Unit): MetaObservePointer[T] = MetaObservePointer(createDependentNode(), this, onSuccess, onFailure)
+  def observe(onSuccess: (T) => Unit, onFailure: (Throwable) => Unit = t => throw new UnhandledFailureException(t)): MetaObservePointer[T] = MetaObservePointer(createDependentNode(), this, onSuccess, onFailure)
 }
 
-trait MetaEventPointer[T] extends MetaPointer[T] {
+trait MetaEventPointer[T] extends MetaReactivePointer[T] {
   def toTry: TryEventPointer[T] = TryEventPointer(createDependentNode(), this)
   def ||[U >: T](other: MetaEventPointer[U]): OrEventPointer[T, U] = OrEventPointer(createDependentNode(other.node), this, other)
   def &&(pred: (T) => Boolean): FilteredEventPointer[T] = FilteredEventPointer(createDependentNode(), this, pred)
@@ -60,13 +62,14 @@ trait MetaEventPointer[T] extends MetaPointer[T] {
   def flatMap[B](f: (T) => MetaEventPointer[B]): FlatMappedEventPointer[T, B] = FlatMappedEventPointer(createDependentNode(), this, f)
 }
 
-trait MetaSignalPointer[A] extends MetaPointer[A] {
+trait MetaSignalPointer[A] extends MetaReactivePointer[A] {
   def delay(n: Int): DelayedSignalPointer[A] = DelayedSignalPointer(createDependentNode(), this, n)
   def toTry: TrySignalPointer[A] = TrySignalPointer(createDependentNode(), this)
   def map[B](f: (A) => B): MappedSignalPointer[A, B] = MappedSignalPointer(createDependentNode(), this, f)
   def flatten[B]()(implicit evidence: <:<[A, MetaSignalPointer[B]]): FlattenedSignalPointer[A, B] = FlattenedSignalPointer(createDependentNode(), this)
   def unwrap[E](implicit evidence: <:<[A, MetaEventPointer[E]]): UnwrappedEventPointer[A, E] = UnwrappedEventPointer(createDependentNode(), this)
   def change: ChangeEventPointer[A] = ChangeEventPointer(createDependentNode(), this)
+  def changed: ChangedEventPointer[A] = ChangedEventPointer(createDependentNode(), this)
 }
 
 case class MetaObservePointer[T](protected[meta] override var node : Option[ReactiveNode], base : MetaReactivePointer[T], onSuccess: (T) => Unit, onFailure: (Throwable) => Unit) extends MetaPointer[Unit] {
@@ -80,6 +83,7 @@ case class EvtEventPointer[T](protected[meta] override var node : Option[Reactiv
   }
 }
 case class ChangeEventPointer[T](protected[meta] override var node : Option[ReactiveNode], base : MetaSignalPointer[T]) extends MetaEventPointer[(T, T)]
+case class ChangedEventPointer[T](protected[meta] override var node : Option[ReactiveNode], base : MetaSignalPointer[T]) extends MetaEventPointer[T]
 case class FilteredEventPointer[T](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], pred: (T) => Boolean) extends MetaEventPointer[T]
 case class OrEventPointer[T, U >: T](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], other : MetaEventPointer[U]) extends MetaEventPointer[U]
 case class ExceptEventPointer[T, U](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], other : MetaEventPointer[U]) extends MetaEventPointer[T]
