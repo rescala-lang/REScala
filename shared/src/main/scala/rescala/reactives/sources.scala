@@ -89,7 +89,7 @@ final class Var[A, S <: Struct](_bud: S#SporeP[A, Reactive[S]]) extends Base[A, 
   def admit(value: A)(implicit turn: Turn[S]): Unit = admitPulse(Pulse.diffPulse(value, stable))
 
   def admitPulse(p: Pulse[A])(implicit turn: Turn[S]): Unit = {
-    require(!pulse.isChange, "can not admit the same reactive twice in the same turn")
+    require(pulse == stable, "can not admit the same reactive twice in the same turn")
     if (p.isChange) { pulses.set(p) }
   }
 
