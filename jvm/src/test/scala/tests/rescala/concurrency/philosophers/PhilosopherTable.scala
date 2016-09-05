@@ -6,7 +6,7 @@ import rescala.engines.Engine
 import rescala.graph.Globals.named
 import rescala.graph.Struct
 import rescala.parrp.Backoff
-import rescala.propagation.Turn
+import rescala.propagation.{Committable, Turn}
 import rescala.reactives.{Signal, Var}
 import rescala.reactives.Signals.lift
 
@@ -64,13 +64,13 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit 
 
 
   def tryEat(seating: Seating[S]): Boolean =
-    engine.plan(seating.philosopher) { t =>
-      val forksWereFree = seating.vision(t) == Ready
-      if (forksWereFree) seating.philosopher.admit(Hungry)(t)
-      t.observe { if (forksWereFree) {
-        assert(seating.vision.get(t) == Eating, s"philosopher should be done after turn but is ${seating.inspect(t)}")
-      } }
-
+    engine.plan(seating.philosopher) { turn =>
+      val forksWereFree = seating.vision.get(turn) == Ready
+      if (forksWereFree) seating.philosopher.admit(Hungry)(turn)
+      turn.schedule(new Committable {
+        override def commit(implicit t: Turn[_]): Unit = if (forksWereFree) assert(seating.vision.get(turn) == Eating, s"philosopher should be done after turn but is ${seating.inspect(turn)}")
+        override def release(implicit t: Turn[_]): Unit = assert(assertion = false, "turn should not rollback")
+      })
       forksWereFree
     }
 
