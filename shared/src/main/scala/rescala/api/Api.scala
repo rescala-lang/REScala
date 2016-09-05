@@ -7,8 +7,8 @@ import rescala.meta._
 import scala.language.higherKinds
 
 trait Api {
-  type Signal[A]
-  type Event[A]
+  type Signal[+A]
+  type Event[+A]
   type Var[A] <: Signal[A]
   type Evt[A] <: Event[A]
   def Evt[A](): Evt[A]
@@ -32,8 +32,8 @@ object Api {
 
     import rescala.engines.CommonEngines.synchron
 
-    override type Signal[A] = synchron.Signal[A]
-    override type Event[A] = synchron.Event[A]
+    override type Signal[+A] = synchron.Signal[A]
+    override type Event[+A] = synchron.Event[A]
     override type Var[A] = synchron.Var[A]
     override type Evt[A] = synchron.Evt[A]
 
@@ -53,8 +53,8 @@ object Api {
 
   class metaApi(graph : ReactiveGraph) extends Api {
 
-    override type Signal[A] = MetaSignalPointer[A]
-    override type Event[A] = MetaEventPointer[A]
+    override type Signal[+A] = MetaSignalPointer[A]
+    override type Event[+A] = MetaEventPointer[A]
     override type Var[A] = VarSignalPointer[A]
     override type Evt[A] = EvtEventPointer[A]
 
