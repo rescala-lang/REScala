@@ -1,5 +1,7 @@
 package rescala.pipelining.tests
 
+import java.util.concurrent.{Semaphore, TimeUnit}
+
 import org.scalatest.FlatSpec
 import org.scalatest.concurrent.TimeLimitedTests
 import org.scalatest.time.SpanSugar._
@@ -10,29 +12,32 @@ import rescala.reactives.Signals
 
 class AdmissionPhaseTest extends FlatSpec with TimeLimitedTests {
 
-  implicit val engine = new PipelineEngine()
-  import engine.Var
+  override val timeLimit = 10000.millis
 
-  override val timeLimit = 100000.millis
-
-  behavior of s"$engine"
+  behavior of s"pipeline admission phase"
 
   it should "test Admission Phase Reads Correct Values" in {
+    implicit val engine = new PipelineEngine()
+    import engine.Var
+
     @volatile var numAdmissions = 0
     val counter = Var(0)
     val numThreads = 20
 
+    val semaphore = new Semaphore(0)
+
     val threads = for (_ <- 1 to numThreads) yield createThread {
       engine.plan(counter)(implicit t => {
-        val currentValue = counter(t)
+        val currentValue = counter.get(t)
         assert(currentValue == numAdmissions)
         counter.admit(currentValue + 1)
         numAdmissions += 1
       })
+      semaphore.release()
     }
 
     threads.foreach { _.start }
-    threads.foreach { _.join }
+    semaphore.tryAcquire(numThreads, 1, TimeUnit.SECONDS)
 
     assert(numAdmissions == numThreads)
     assert(counter.now == numThreads)
@@ -40,6 +45,9 @@ class AdmissionPhaseTest extends FlatSpec with TimeLimitedTests {
   }
 
   it should "test Admission Phase Value Matches Commit Phase Value" in {
+    implicit val engine = new PipelineEngine()
+    import engine.Var
+
     val numThreads = 100
 
     val counter = Var(0)
@@ -50,13 +58,16 @@ class AdmissionPhaseTest extends FlatSpec with TimeLimitedTests {
     @volatile var threadsOk = true
     @volatile var numAdmissions = 0
 
+    val semaphore = new Semaphore(0)
+
+
     val threads = for( _ <- 1 to numThreads) yield createThread {
       engine.plan(counter)(implicit t => {
-        val currentValue = counter(t)
+        val currentValue = counter.get(t)
         assert(numAdmissions == currentValue)
-        assert(dep1(t) == currentValue +1)
-        assert(dep2(t) == currentValue + 2)
-        assert(dep12(t) == 2* currentValue +3)
+        assert(dep1.get(t) == currentValue +1)
+        assert(dep2.get(t) == currentValue + 2)
+        assert(dep12.get(t) == 2* currentValue +3)
         numAdmissions += 1
         val newValue = currentValue + 1
         counter.admit(newValue)
@@ -82,7 +93,7 @@ class AdmissionPhaseTest extends FlatSpec with TimeLimitedTests {
     }
 
     threads.foreach{_.start}
-    threads.foreach{_.join}
+    semaphore.tryAcquire(numThreads, 1, TimeUnit.SECONDS)
 
     assert(counter.now == numThreads)
     assert(threadsOk)
