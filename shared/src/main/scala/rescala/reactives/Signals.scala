@@ -16,7 +16,7 @@ object Signals extends GeneratedSignalLift {
 
       override def calculatePulse()(implicit turn: Turn[S]): Pulse[T] = {
         val currentPulse: Pulse[T] = stable
-        def newValue = expr(turn, currentPulse.getS(throw EmptySignalControlThrowable))
+        def newValue = expr(turn, currentPulse.getS)
         Pulse.tryCatch(Pulse.diffPulse(newValue, currentPulse))
       }
     }
@@ -64,8 +64,8 @@ object Signals extends GeneratedSignalLift {
   case class Diff[+A](from: Pulse[A], to: Pulse[A]) {
     def pair: (A, A) = {
       try {
-        val right = to.getS(throw new IllegalStateException())
-        val left = from.getS(throw new IllegalStateException())
+        val right = to.getS
+        val left = from.getS
         left -> right
       } catch {
         case EmptySignalControlThrowable => throw new NoSuchElementException(s"Can not convert $this to pair")

@@ -83,10 +83,10 @@ sealed trait Pulse[+P] {
     case Exceptional(t) => throw t
   }
 
-  def getS(onNoChange: => Nothing): P = this match {
+  def getS: P = this match {
     case Change(value) => value
     case Exceptional(t) => throw t
-    case NoChange => onNoChange
+    case NoChange => throw new IllegalStateException("NoChange used as Signal value")
   }
 }
 

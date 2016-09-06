@@ -101,5 +101,5 @@ trait Stateful[+A, S <: Struct] extends Pulsing[A, S] {
   }
 
 
-  final def get(implicit turn: Turn[S]): A = pulse.getS(onNoChange = throw new IllegalStateException(s"Signal $this has no value"))
+  final def get(implicit turn: Turn[S]): A = pulse.getS
 }
