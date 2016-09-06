@@ -1,6 +1,6 @@
 package rescala.meta
 
-abstract class MetaLog {
+trait MetaLog {
   protected[meta] val node : ReactiveNode
 }
 

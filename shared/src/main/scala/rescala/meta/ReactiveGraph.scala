@@ -5,6 +5,11 @@ class ReactiveGraph {
   private val log : collection.mutable.MutableList[MetaLog] = collection.mutable.MutableList()
 
   protected[meta] def addLog(newLog : MetaLog) = log += newLog
+  protected[meta] def popLog() : List[MetaLog] = {
+    val l = log.toList
+    log.clear()
+    l
+  }
 
   def createVar[A]() : VarSignalPointer[A] = {
     val node = new ReactiveNode(this, Set())

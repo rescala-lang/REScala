@@ -1,7 +1,8 @@
 package rescala.meta
 
 import rescala.graph.{SimpleStruct, Struct}
-import rescala.reactives._
+import rescala.reactives.{Evt, _}
+
 import scala.language.higherKinds
 
 trait Reifier[S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], EV[+X, Z <: Struct] <: EventLike[X, Z, SL, EV]] {
@@ -16,7 +17,19 @@ object SynchronousReifier extends Reifier[SimpleStruct, Signal, Event] {
   private val reifiedSignalCache : collection.mutable.Map[ReactiveNode, Signal[_, SimpleStruct]] = collection.mutable.Map()
   private val reifiedEventCache : collection.mutable.Map[ReactiveNode, Event[_, SimpleStruct]] = collection.mutable.Map()
 
-  // Find a way to prevent instanceOf-cast
+  // TODO: Find a way to prevent instanceOf-cast
+  private def applyLog(log : List[MetaLog]): Unit = {
+    log.foreach {
+      case LoggedFire(node, value : AnyRef) => reifiedEventCache.getOrElse(node, throw new IllegalArgumentException("Cannot fire a non-reified event!")) match {
+        case e : Evt[_, SimpleStruct] => e.asInstanceOf[Evt[value.type, SimpleStruct]].fire(value)
+      }
+      case LoggedSet(node, value : AnyRef) => reifiedSignalCache.getOrElse(node, throw new IllegalArgumentException("Cannot set a non-reified var!")) match {
+        case v: Var[_, SimpleStruct] => v.asInstanceOf[Var[value.type, SimpleStruct]].set(value)
+      }
+    }
+  }
+
+  // TODO: Find a way to prevent instanceOf-cast
   override def reifyEvent[T](eventPointer: MetaEventPointer[T]): Event[T, SimpleStruct] = eventPointer.node match {
     case None => throw new IllegalArgumentException("Cannot reify null pointer!")
     case Some(node) =>
@@ -33,9 +46,11 @@ object SynchronousReifier extends Reifier[SimpleStruct, Signal, Event] {
       //case FlattenedEventPointer(n, base) => base.reify(this).flatten
       })
       reifiedEventCache += node -> event
+      applyLog(node.graph.popLog())
       event.asInstanceOf[Event[T, SimpleStruct]]
   }
 
+  // TODO: Find a way to prevent instanceOf-cast
   override def reifySignal[A](signalPointer: MetaSignalPointer[A]): Signal[A, SimpleStruct] = signalPointer.node match {
     case None => throw new IllegalArgumentException("Cannot reify null pointer!")
     case Some(node) =>
@@ -51,6 +66,7 @@ object SynchronousReifier extends Reifier[SimpleStruct, Signal, Event] {
         case ToggledSignalPointer(n, base, a, b) => base.reify(this).toggle(a.reify(this), b.reify(this))
       })
       reifiedSignalCache += node -> event
+      applyLog(node.graph.popLog())
       event.asInstanceOf[Signal[A, SimpleStruct]]
   }
 }
