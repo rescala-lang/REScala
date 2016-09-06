@@ -135,8 +135,8 @@ object Pulse {
   }
 
   /** wrap a pulse generating function to store everntual exceptions into an exceptional pulse */
-  def tryCatch[P](f: => Pulse[P]): Pulse[P] = try f catch {
-    case EmptySignalControlThrowable => Pulse.empty
+  def tryCatch[P](f: => Pulse[P], onEmpty: Pulse[P] = Pulse.empty): Pulse[P] = try f catch {
+    case EmptySignalControlThrowable => onEmpty
     case NonFatal(t) => Exceptional(t)
   }
 
