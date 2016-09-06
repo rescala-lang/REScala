@@ -86,8 +86,3 @@ class ReactiveNode(protected[meta] val graph : ReactiveGraph, initDependencies :
     _dependencies ++= dependencies
   }
 }
-
-trait ManagedReactive[+T] {
-  val node : ReactiveNode
-}
-
