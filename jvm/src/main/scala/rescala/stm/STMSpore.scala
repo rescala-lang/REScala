@@ -30,11 +30,6 @@ class STMSpore[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming
   private val current: Ref[Pulse[P]] = Ref(initialValue)
   private val update: Ref[Option[Pulse[P]]] = Ref(None)
 
-  override def transform(f: (Pulse[P]) => Pulse[P])(implicit turn: Turn[_]): Pulse[P] = {
-    val value = f(get)
-    set(value)
-    value
-  }
   override def set(value: Pulse[P])(implicit turn: Turn[_]): Unit = {
     update.set(Some(value))
     turn.schedule(this)

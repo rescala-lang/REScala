@@ -36,7 +36,7 @@ final class Evt[T, S <: Struct]()(_bud: S#SporeP[T, Reactive[S]]) extends Base[T
 
   def admitPulse(value: Pulse[T])(implicit turn: Turn[S]): Unit = {
     require(!pulse.isChange, "can not admit the same reactive twice in the same turn")
-    pulses.set(value)(turn)
+    set(value)(turn)
   }
 
   override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[S] =
@@ -90,7 +90,7 @@ final class Var[A, S <: Struct](_bud: S#SporeP[A, Reactive[S]]) extends Base[A, 
 
   def admitPulse(p: Pulse[A])(implicit turn: Turn[S]): Unit = {
     require(pulse == stable, "can not admit the same reactive twice in the same turn")
-    if (p.isChange) { pulses.set(p) }
+    if (p.isChange) { set(p) }
   }
 
   override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[S] =

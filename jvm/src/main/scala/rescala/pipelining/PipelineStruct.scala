@@ -51,7 +51,6 @@ class PipelineSporeP[P, R](initialValue: Pulse[P], transient: Boolean, initialIn
 
   val pulses: PulsingSpore[P] = new PulsingSpore[P] {
     val delegate = pipeline.createBlockingBuffer[Pulse[P]](initialValue, if (transient) Buffer.transactionLocal else Buffer.keepPulse)
-    override def transform(f: (Pulse[P]) => Pulse[P])(implicit turn: Turn[_]): Pulse[P] = delegate.transform(f)
     override def set(value: Pulse[P])(implicit turn: Turn[_]): Unit = delegate.set(value)
     override def base(implicit turn: Turn[_]): Pulse[P] = delegate.base
     override def get(implicit turn: Turn[_]): Pulse[P] = delegate.get
