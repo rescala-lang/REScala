@@ -92,14 +92,8 @@ trait Event[+T, S <: Struct] extends EventLike[T, S, Signal, Event] with PulseOp
   final override def map[U](mapping: T => U)(implicit ticket: Ticket[S]): Event[U, S] = Events.static(s"(map $this)", this) { turn => pulse(turn).map(mapping) }
 
 
-  /** folds events with a given fold function to create a Signal */
-  final override def fold[A](init: A)(folder: (A, T) => A)(implicit ticket: Ticket[S]): Signal[A, S] = {
-    def f(a: => A, t: T) = folder(a, t)
-    lazyFold(init)(f)
-  }
-
   /** folds events with a given fold function to create a Signal allowing recovery of exceptional states by ignoring the stable value */
-  final override def lazyFold[A](init: => A)(folder: (=> A, T) => A)(implicit ticket: Ticket[S]): Signal[A, S] = ticket { initialTurn =>
+  final override def lazyFold[A](init: => A)(folder: (=> A, => T) => A)(implicit ticket: Ticket[S]): Signal[A, S] = ticket { initialTurn =>
     Signals.Impl.makeStatic(Set[Reactive[S]](this), init) { (turn, currentValue) =>
       get(turn).fold(currentValue)(value => folder(currentValue, value))
     }(initialTurn)
