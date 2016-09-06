@@ -60,13 +60,16 @@ trait EventLike[+T, S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV]
   final def dropParam(implicit ticket: Ticket[S]): EV[Unit, S] = map(_ => ())
 
 
-  /** folds events with a given fold function to create a SL */
-  def fold[A](init: A)(fold: (A, T) => A)(implicit ticket: Ticket[S]): SL[A, S]
+  /** folds events with a given fold function to create a Signal */
+  final def fold[A](init: A)(folder: (A, T) => A)(implicit ticket: Ticket[S]): SL[A, S] = {
+    def f(a: => A, t: => T) = folder(a, t)
+    lazyFold(init)(f)
+  }
 
-  def lazyFold[A](init: => A)(folder: (=> A, T) => A)(implicit ticket: Ticket[S]): SL[A, S]
+  def lazyFold[A](init: => A)(folder: (=> A, => T) => A)(implicit ticket: Ticket[S]): SL[A, S]
 
   /** reduces events with a given reduce function to create a Signal */
-  final def reduce[A](reducer: (=> A, T) => A)(implicit ticket: Ticket[S]): SL[A, S] = lazyFold(throw EmptySignalControlThrowable)(reducer)
+  final def reduce[A](reducer: (=> A, => T) => A)(implicit ticket: Ticket[S]): SL[A, S] = lazyFold(throw EmptySignalControlThrowable)(reducer)
 
   /** Iterates a value on the occurrence of the event. */
   final def iterate[A](init: A)(f: A => A)(implicit ticket: Ticket[S]): SL[A, S] = fold(init)((acc, _) => f(acc))

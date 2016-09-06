@@ -1,28 +1,23 @@
 package rescala.reactives
 
 import rescala.engines.Ticket
+import rescala.graph.Pulse.NoChange
 import rescala.graph._
 import rescala.propagation.Turn
-
-import scala.util.{Failure, Success}
 
 object Events {
 
 
   private class StaticEvent[T, S <: Struct](_bud: S#SporeP[T, Reactive[S]], expr: Turn[S] => Pulse[T], override val toString: String)
     extends Base[T, S](_bud) with Event[T, S] with StaticReevaluation[T, S] {
-    override def calculatePulse()(implicit turn: Turn[S]): Pulse[T] = Pulse.tryCatch(expr(turn))
+    override def calculatePulse()(implicit turn: Turn[S]): Pulse[T] = Pulse.tryCatch(expr(turn), onEmpty = NoChange)
   }
 
   private class DynamicEvent[T, S <: Struct](_bud: S#SporeP[T, Reactive[S]], expr: Turn[S] => Pulse[T]) extends Base[T, S](_bud) with Event[T, S] with DynamicReevaluation[T, S] {
     def calculatePulseDependencies(implicit turn: Turn[S]): (Pulse[T], Set[Reactive[S]]) = {
-      val (newValueTry, dependencies) = turn.collectMarkedDependencies {RExceptions.reTry(expr(turn))}
-      newValueTry match {
-        case Success(p) => (p, dependencies)
-        case Failure(t) => (Pulse.Exceptional(t), dependencies)
+      turn.collectMarkedDependencies {Pulse.tryCatch(expr(turn), onEmpty = NoChange)}
       }
     }
-  }
 
   /** the basic method to create static events */
   def static[T, S <: Struct](name: String, dependencies: Reactive[S]*)(calculate: Turn[S] => Pulse[T])(implicit ticket: Ticket[S]): Event[T, S] = ticket { initTurn =>
