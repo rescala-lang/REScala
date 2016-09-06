@@ -47,7 +47,7 @@ class VarTestSuite extends RETests {
     assert(changes == 2)
   }
 
-  allEngines("dependant IsOnly Invoked OnValue Change"){ engine => import engine._
+  allEngines("dependant Is Only Invoked On Value Change"){ engine => import engine._
     var changes = 0
     val v = Var(1)
     val s = v.map { i => changes += 1; i + 1 }

@@ -16,7 +16,7 @@ object Buffer {
   type CommitStrategy[A] = (A, A) => A
   def commitAsIs[A](base: A, cur: A): A = cur
   def transactionLocal[A](base: A, cur: A) = base
-  def keepPulse[P](base: Pulse[P], cur: Pulse[P]) = cur.stabilize
+  def keepPulse[P](base: Pulse[P], cur: Pulse[P]) = if (cur.isChange) cur else base
 }
 
 /**

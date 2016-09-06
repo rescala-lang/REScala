@@ -31,7 +31,7 @@ object Signals extends GeneratedSignalLift {
 
     /** creates a signal that statically depends on the dependencies with a given initial value */
     def makeStatic[T, S <: Struct](dependencies: Set[Reactive[S]], init: => T)(expr: (Turn[S], => T) => T)(initialTurn: Turn[S]): Signal[T, S] = initialTurn.create(dependencies) {
-      val bud: S#SporeP[T, Reactive[S]] = initialTurn.bud(Pulse.tryCatch(Pulse.Stable(init)), transient = false, initialIncoming = dependencies)
+      val bud: S#SporeP[T, Reactive[S]] = initialTurn.bud(Pulse.tryCatch(Pulse.Change(init)), transient = false, initialIncoming = dependencies)
       new StaticSignal(bud, expr)
     }
 

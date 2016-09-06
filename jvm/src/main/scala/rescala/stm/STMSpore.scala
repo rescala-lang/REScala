@@ -42,7 +42,7 @@ class STMSpore[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming
 
   override def commit(implicit turn: Turn[_]): Unit = {
     val updateValue: Option[Pulse[P]] = update.get
-    if (!transient && updateValue.isDefined) current.set(updateValue.get.stabilize)
+    if (!transient && updateValue.isDefined && updateValue.get.isChange) current.set(updateValue.get)
     release(turn)
   }
 }

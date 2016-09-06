@@ -31,7 +31,7 @@ object REPublisher {
     override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[S] = {
       if (turn.incoming(bud).isEmpty) ReevaluationResult.Dynamic(changed = false, DepDiff(Set.empty, Set(dependency)))
       else {
-        dependency.pulse(turn).toOptionTry(asSignal = false) match {
+        dependency.pulse(turn).toOptionTry match {
           case None => ReevaluationResult.Static(changed = false)
           case Some(tryValue) =>
             synchronized {

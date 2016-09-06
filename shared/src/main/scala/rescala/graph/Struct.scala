@@ -78,7 +78,7 @@ trait BufferedSpore[P] extends PulsingSpore[P] with Committable {
   override def base(implicit turn: Turn[_]): Pulse[P] = current
 
   override def commit(implicit turn: Turn[_]): Unit = {
-    if (!transient) current = update.stabilize
+    if (!transient) current = update
     release(turn)
   }
   override def release(implicit turn: Turn[_]): Unit = {

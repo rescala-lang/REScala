@@ -10,16 +10,22 @@ class LevelPropagation extends RETests {
 
 
 
-  allEngines("works OnElements InQueue"){ engine => import engine._
+  allEngines("works On Elements In Queue"){ engine => import engine._
     val level0 = Var(0)
     val l1 = level0.map(_ + 1)
     val l2 = l1.map(_ + 1)
     val level3 = l2.map(_ + 1)
+    assert(level0.now === 0)
+    assert(l1.now === 1)
+    assert(l2.now === 2)
+    assert(level3.now === 3)
     val level_1_to_4 = Signals.dynamic(level0) { t =>
       if (level0(t) == 10) level3(t) else 42
     }
+    assert(level_1_to_4.now === 42)
     var evaluatesOnlyOncePerTurn = 0
     val level_2_to_5 = Signals.lift(level0, level_1_to_4) { (x, y) => evaluatesOnlyOncePerTurn += 1; x + y }
+    assert(level_2_to_5.now === 0 + 42)
 
     assertLevel(level3, 3)
     assertLevel(level_1_to_4, 1)
@@ -73,7 +79,7 @@ class LevelPropagation extends RETests {
 
   }
 
-  allEngines("does Not Reevaluate Stuff IfNothing Changes"){ engine => import engine._
+  allEngines("does Not Reevaluate Stuff If Nothing Changes"){ engine => import engine._
     val l0 = Var(0)
     val l1 = l0.map(_ + 1)
     val l2 = l1.map(_ + 1)
@@ -94,6 +100,7 @@ class LevelPropagation extends RETests {
 
     l0.set(10)
 
+    assert(reevals === 1)
     assertLevel(l3, 3)
     assertLevel(l1t4, 4)
     assertLevel(l2t5, 5)
@@ -103,7 +110,6 @@ class LevelPropagation extends RETests {
     assert(l3.now === 13)
     assert(l1t4.now === 13)
     assert(l2t5.now === 14)
-    assert(reevals === 1)
 
 
   }
