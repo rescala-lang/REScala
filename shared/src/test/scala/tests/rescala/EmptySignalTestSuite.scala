@@ -29,6 +29,36 @@ class EmptySignalTestSuite extends RETests {
 
   }
 
+  allEngines("flatten empty signal when mapping event"){ engine => import engine._
+
+    val v = Var.empty[Event[Unit]]
+
+    val e1 = Evt[Unit]
+
+    val e2 = e1 map { _ => v.flatten.count }
+
+    var s: Signal[Int] = null
+
+    e2.observe(s = _)
+
+    e1.fire()
+
+    assert(s != null, "sanity")
+
+    assert(s.now == 0, "mapped event")
+
+
+    val e3 = Evt[Unit]
+
+    v.set(e3)
+
+    assert(s.now == 0, "mapped event after var set")
+
+    e3.fire()
+
+    assert(s.now == 1, "mapped event after event fire")
+  }
+
   allEngines("unwrap Empty Signal"){ engine => import engine._
     val v = Var.empty[Event[Int]]
     val e = v.flatten
