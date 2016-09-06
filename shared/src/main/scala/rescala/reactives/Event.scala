@@ -1,7 +1,7 @@
 package rescala.reactives
 
 import rescala.engines.{Engine, Ticket}
-import rescala.graph.Pulse.{Change, Exceptional, NoChange, Stable}
+import rescala.graph.Pulse.{Change, Exceptional, NoChange}
 import rescala.graph.{Pulse, PulseOption, Reactive, Struct}
 import rescala.propagation.Turn
 import rescala.reactives.RExceptions.UnhandledFailureException
@@ -61,7 +61,7 @@ trait Event[+T, S <: Struct] extends EventLike[T, S, Signal, Event] with PulseOp
   final override def \[U](except: Event[U, S])(implicit ticket: Ticket[S]): Event[T, S] = {
     Events.static(s"(except $this  $except)", this, except) { turn =>
       except.pulse(turn) match {
-        case NoChange | Stable(_) => this.pulse(turn)
+        case NoChange => this.pulse(turn)
         case Change(_) => Pulse.NoChange
         case ex@Exceptional(_) => ex
       }

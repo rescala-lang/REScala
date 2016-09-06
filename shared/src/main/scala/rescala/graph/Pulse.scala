@@ -1,6 +1,6 @@
 package rescala.graph
 
-import rescala.graph.Pulse.{Change, Exceptional, NoChange, Stable}
+import rescala.graph.Pulse.{Change, Exceptional, NoChange}
 import rescala.reactives.RExceptions.EmptySignalControlThrowable
 
 import scala.util.control.NonFatal
@@ -20,7 +20,7 @@ sealed trait Pulse[+P] {
     * @return True if the pulse indicates a change, false if not
     */
   final def isChange: Boolean = this match {
-    case NoChange | Stable(_) => false
+    case NoChange => false
     case _ => true
   }
 
@@ -35,7 +35,6 @@ sealed trait Pulse[+P] {
     */
   def map[Q](f: P => Q): Pulse[Q] = this match {
     case Change(value) => Change(f(value))
-    case Stable(_) => NoChange
     case NoChange => NoChange
     case ex@Exceptional(_) => ex
   }
@@ -51,7 +50,6 @@ sealed trait Pulse[+P] {
     */
   def flatMap[Q](f: P => Pulse[Q]): Pulse[Q] = this match {
     case Change(value) => f(value)
-    case Stable(_) => NoChange
     case NoChange => NoChange
     case ex@Exceptional(_) => ex
   }
@@ -67,25 +65,13 @@ sealed trait Pulse[+P] {
   def filter(p: P => Boolean): Pulse[P] = this match {
     case c@Change(value) if p(value) => c
     case Change(_) => NoChange
-    case Stable(_) => NoChange
     case NoChange => NoChange
     case ex@Exceptional(_) => ex
   }
 
-  /**
-    * If the pulse indicates a change: A new pulse with the updated value set as current value and indicating no
-    * change is created.
-    * If the pulse doesn't indicate a change: The current pulse is returned without modification.
-    *
-    * @return New pulse with a potential update set as current value
-    */
-  /* this is overridden for Change to return Stable */
-  def stabilize: Pulse[P] = this
-
   /** converts the pulse to an option of try */
-  def toOptionTry(asSignal: Boolean): Option[Try[P]] = this match {
+  def toOptionTry: Option[Try[P]] = this match {
     case Change(up) => Some(Success(up))
-    case Stable(current) => if (asSignal) Some(Success(current)) else None
     case NoChange => None
     case Pulse.empty => None
     case Exceptional(t) => Some(Failure(t))
@@ -93,15 +79,14 @@ sealed trait Pulse[+P] {
 
   def getE: Option[P] = this match {
     case Change(update) => Some(update)
-    case NoChange | Stable(_) => None
+    case NoChange => None
     case Exceptional(t) => throw t
   }
 
-  def getS(onNoChange: => Nothing): P = this match {
-    case Stable(value) => value
+  def getS: P = this match {
     case Change(value) => value
     case Exceptional(t) => throw t
-    case NoChange => onNoChange
+    case NoChange => throw new IllegalStateException("NoChange used as Signal value")
   }
 }
 
@@ -118,19 +103,13 @@ object Pulse {
     */
   def fromOption[P](opt: Option[P]): Pulse[P] = opt.fold[Pulse[P]](NoChange)(Change.apply)
 
-  /** Transforms the given values into a pulse indicating change and containing they as current and updated values.
-    * If updated and current value are equal, a pulse indicating a stable value is returned. */
-  def diff[P](newValue: P, oldValue: P): Pulse[P] = {
-    if (newValue == oldValue) Stable(oldValue)
-    else Change(newValue)
-  }
-
   /** Transforms the given pulse and an updated value into a pulse indicating a change from the pulse's value to
     * the given updated value. */
   def diffPulse[P](newValue: P, oldPulse: Pulse[P]): Pulse[P] = oldPulse match {
     case NoChange => Change(newValue)
-    case Stable(value) => diff(newValue, value)
-    case Change(update) => diff(newValue, update)
+    case Change(oldValue) =>
+      if (newValue == oldValue) NoChange
+      else Change(newValue)
     case ex@Exceptional(t) => Change(newValue)
   }
 
@@ -143,18 +122,13 @@ object Pulse {
   /** the pulse representing an empty signal */
   val empty = Exceptional(EmptySignalControlThrowable)
 
-  /** Pulse indicating a current stable value */
-  final case class Stable[+P](value: P) extends Pulse[P]
-
   /** Pulse indicating no change */
   case object NoChange extends Pulse[Nothing]
 
   /** Pulse indicating a change
     *
     * @param update Updated value stored by the pulse */
-  final case class Change[+P](update: P) extends Pulse[P] {
-    override def stabilize: Pulse[P] = Stable(update)
-  }
+  final case class Change[+P](update: P) extends Pulse[P]
 
   /** Pulse indicating an exception */
   final case class Exceptional(throwable: Throwable) extends Pulse[Nothing]

@@ -52,7 +52,6 @@ trait SimpleStruct extends LevelStruct {
   * @tparam P Pulse stored value type
   */
 trait PulsingSpore[P] {
-  def transform(f: (Pulse[P]) => Pulse[P])(implicit turn: Turn[_]): Pulse[P]
   def set(value: Pulse[P])(implicit turn: Turn[_]): Unit
   def base(implicit turn: Turn[_]): Pulse[P]
   def get(implicit turn: Turn[_]): Pulse[P]
@@ -69,11 +68,6 @@ trait BufferedSpore[P] extends PulsingSpore[P] with Committable {
   protected var owner: Turn[_] = null
   private var update: Pulse[P] = Pulse.NoChange
 
-  override def transform(f: (Pulse[P]) => Pulse[P])(implicit turn: Turn[_]): Pulse[P] = {
-    val value = f(get)
-    set(value)
-    value
-  }
   override def set(value: Pulse[P])(implicit turn: Turn[_]): Unit = {
     assert(owner == null || owner == turn, s"buffer owned by $owner written by $turn")
     update = value
@@ -84,7 +78,7 @@ trait BufferedSpore[P] extends PulsingSpore[P] with Committable {
   override def base(implicit turn: Turn[_]): Pulse[P] = current
 
   override def commit(implicit turn: Turn[_]): Unit = {
-    if (!transient) current = update.stabilize
+    if (!transient) current = update
     release(turn)
   }
   override def release(implicit turn: Turn[_]): Unit = {

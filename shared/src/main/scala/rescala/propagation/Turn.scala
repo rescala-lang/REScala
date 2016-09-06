@@ -16,7 +16,7 @@ trait Turn[S <: Struct] {
     * @tparam P Stored pulse value type
     * @return Buffer containing the stored pulse of the spore
     */
-  def pulses[P](budP: S#SporeP[P, _]): PulsingSpore[P]
+  private[rescala] def pulses[P](budP: S#SporeP[P, _]): PulsingSpore[P]
 
   /**
     * Reads the incoming dependencies of a given spore.
@@ -25,7 +25,7 @@ trait Turn[S <: Struct] {
     * @tparam R Reactive value type of the incoming dependencies of the spore
     * @return Incoming dependencies of the spore
     */
-  def incoming[R](bud: S#Spore[R]): Set[R]
+  private[rescala] def incoming[R](bud: S#Spore[R]): Set[R]
 
   /**
     * Creates a new spore initialized with the given parameters
@@ -37,14 +37,14 @@ trait Turn[S <: Struct] {
     * @tparam R Reactive value type of the incoming dependencies of the spore
     * @return
     */
-  def bud[P, R](initialValue: Pulse[P] = Pulse.NoChange, transient: Boolean = true, initialIncoming: Set[R] = Set.empty[R]): S#SporeP[P, R]
+  private[rescala] def bud[P, R](initialValue: Pulse[P] = Pulse.NoChange, transient: Boolean = true, initialIncoming: Set[R] = Set.empty[R]): S#SporeP[P, R]
 
   /**
     * Called to allow turn to handle dynamic access to reactive elements
     *
     * @param reactive Reactive element to handle
     */
-  def dependencyInteraction(reactive: Reactive[S]): Unit
+  private[rescala] def dependencyInteraction(reactive: Reactive[S]): Unit
 
   /**
     * Connects a reactive element with potentially existing dependencies and prepares re-evaluations to be
@@ -56,7 +56,7 @@ trait Turn[S <: Struct] {
     * @tparam T Reactive subtype of the reactive element
     * @return Connected reactive element
     */
-  def create[T <: Reactive[S]](dependencies: Set[Reactive[S]], dynamic: Boolean = false)(f: => T): T
+  private[rescala] def create[T <: Reactive[S]](dependencies: Set[Reactive[S]], dynamic: Boolean = false)(f: => T): T
 
   /**
     * Schedules a temporarily written change to be committed by the turn.
@@ -79,12 +79,12 @@ trait Turn[S <: Struct] {
     * @tparam T Return type of the function
     * @return Return value of the function and set of all reactive values marked as its dependencies
     */
-  def collectMarkedDependencies[T](f: => T): (T, Set[Reactive[S]])
+  private[rescala] def collectMarkedDependencies[T](f: => T): (T, Set[Reactive[S]])
 
   /**
     * Marks a reactive element as used as dynamic dependency, so it is returned by `collectDependencies`
     *
     * @param dependency Reactive element to mark
     */
-  def markDependencyAsUsed(dependency: Reactive[S]): Unit
+  private[rescala] def markDependencyAsUsed(dependency: Reactive[S]): Unit
 }

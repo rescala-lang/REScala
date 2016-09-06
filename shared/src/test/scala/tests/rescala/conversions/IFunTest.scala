@@ -260,7 +260,7 @@ class IFunTest extends RETests {
   }
 
   /* delay[T](signal: Signal[T], n: Int): Signal[T] */
-  allEngines("delay1_the Initial Value IsSet Correctly") { engine => import engine._
+  allEngines("delay1 the Initial Value Is Set Correctly") { engine => import engine._
     val v1 = Var(1)
     val s1 = v1.map {_ + 1}
     val s = s1.delay(3)
@@ -268,7 +268,7 @@ class IFunTest extends RETests {
     assert(s.now == 2)
   }
 
-  allEngines("delay1_takesA Snapshot When The Event Occurs") { engine => import engine._
+  allEngines("delay1 takes A Snapshot When The Event Occurs") { engine => import engine._
     val v1 = Var(1)
     val s1 = v1.map {_ + 1}
     val s = s1.delay(3)

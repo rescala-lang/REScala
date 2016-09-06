@@ -58,8 +58,8 @@ trait StaticReevaluation[+P, S <: Struct] extends Disconnectable[S] {
 
   final override protected[rescala] def computeReevaluationResult()(implicit turn: Turn[S]): ReevaluationResult[S] = {
     val p = calculatePulse()
-    pulses.set(p)
-    ReevaluationResult.Static(p.isChange)
+    set(p)
+    ReevaluationResult.Static(hasChanged)
   }
 
 
@@ -83,8 +83,8 @@ trait DynamicReevaluation[+P, S <: Struct] extends Disconnectable[S] {
     val (newPulse, newDependencies) = calculatePulseDependencies
 
     val oldDependencies = turn.incoming(bud)
-    pulses.set(newPulse)
-    ReevaluationResult.Dynamic(newPulse.isChange, DepDiff(newDependencies, oldDependencies))
+    set(newPulse)
+    ReevaluationResult.Dynamic(hasChanged, DepDiff(newDependencies, oldDependencies))
 
   }
 }

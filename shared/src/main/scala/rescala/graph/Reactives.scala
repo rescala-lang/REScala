@@ -38,8 +38,9 @@ trait Reactive[S <: Struct] {
 /** helper class to initialise engine and select lock */
 abstract class Base[+P, S <: Struct](budP: S#SporeP[P, Reactive[S]]) extends Pulsing[P, S] {
   final override protected[rescala] def bud: S#Spore[Reactive[S]] = budP
-  final override protected[this] def pulses(implicit turn: Turn[S]): PulsingSpore[P] = turn.pulses(budP)
+  private[this] def pulses(implicit turn: Turn[S]): PulsingSpore[P] = turn.pulses(budP)
 
+  final protected[this] override def set(value: Pulse[P])(implicit turn: Turn[S]): Unit = if (value.isChange) pulses.set(value) else if (hasChanged) pulses.set(stable)
   final protected[rescala] override def stable(implicit turn: Turn[S]): Pulse[P] = pulses.base
   final protected[rescala] override def pulse(implicit turn: Turn[S]): Pulse[P] = pulses.get
 }
@@ -51,7 +52,8 @@ abstract class Base[+P, S <: Struct](budP: S#SporeP[P, Reactive[S]]) extends Pul
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
 trait Pulsing[+P, S <: Struct] extends Reactive[S] {
-  protected[this] def pulses(implicit turn: Turn[S]): PulsingSpore[P]
+  protected[this] def set(value: Pulse[P])(implicit turn: Turn[S]): Unit
+  final private[rescala] def hasChanged(implicit turn: Turn[S]): Boolean = stable != pulse
   protected[rescala] def stable(implicit turn: Turn[S]): Pulse[P]
   protected[rescala] def pulse(implicit turn: Turn[S]): Pulse[P]
 }
@@ -99,5 +101,5 @@ trait Stateful[+A, S <: Struct] extends Pulsing[A, S] {
   }
 
 
-  final def get(implicit turn: Turn[S]): A = pulse.getS(onNoChange = throw new IllegalStateException(s"Signal $this has no value"))
+  final def get(implicit turn: Turn[S]): A = pulse.getS
 }

@@ -2,10 +2,9 @@ package rescala.propagation
 
 import java.util
 
-import rescala.graph.{DepDiff, Pulse, PulsingGraphStruct, Reactive}
+import rescala.graph.{DepDiff, PulsingGraphStruct, PulsingSpore, Reactive}
 
 import scala.util.control.NonFatal
-import rescala.graph.PulsingSpore
 
 /**
   * Basic implementation of the most fundamental propagation steps as defined by AbstractPropagation.

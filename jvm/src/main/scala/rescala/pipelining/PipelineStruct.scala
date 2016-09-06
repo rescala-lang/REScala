@@ -16,7 +16,7 @@ object Buffer {
   type CommitStrategy[A] = (A, A) => A
   def commitAsIs[A](base: A, cur: A): A = cur
   def transactionLocal[A](base: A, cur: A) = base
-  def keepPulse[P](base: Pulse[P], cur: Pulse[P]) = cur.stabilize
+  def keepPulse[P](base: Pulse[P], cur: Pulse[P]) = if (cur.isChange) cur else base
 }
 
 /**
@@ -51,7 +51,6 @@ class PipelineSporeP[P, R](initialValue: Pulse[P], transient: Boolean, initialIn
 
   val pulses: PulsingSpore[P] = new PulsingSpore[P] {
     val delegate = pipeline.createBlockingBuffer[Pulse[P]](initialValue, if (transient) Buffer.transactionLocal else Buffer.keepPulse)
-    override def transform(f: (Pulse[P]) => Pulse[P])(implicit turn: Turn[_]): Pulse[P] = delegate.transform(f)
     override def set(value: Pulse[P])(implicit turn: Turn[_]): Unit = delegate.set(value)
     override def base(implicit turn: Turn[_]): Pulse[P] = delegate.base
     override def get(implicit turn: Turn[_]): Pulse[P] = delegate.get

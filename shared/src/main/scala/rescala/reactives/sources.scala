@@ -35,12 +35,12 @@ final class Evt[T, S <: Struct]()(_bud: S#SporeP[T, Reactive[S]]) extends Base[T
   def admit(value: T)(implicit turn: Turn[S]): Unit = admitPulse(Pulse.Change(value))
 
   def admitPulse(value: Pulse[T])(implicit turn: Turn[S]): Unit = {
-    require(!pulse.isChange, "can not admit the same reactive twice in the same turn")
-    pulses.set(value)(turn)
+    require(!hasChanged, "can not admit the same reactive twice in the same turn")
+    set(value)(turn)
   }
 
   override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[S] =
-    ReevaluationResult.Static(changed = pulse.isChange)
+    ReevaluationResult.Static(changed = hasChanged)
 
   override def disconnect()(implicit engine: Engine[S, Turn[S]]): Unit = ()
 }
@@ -89,12 +89,12 @@ final class Var[A, S <: Struct](_bud: S#SporeP[A, Reactive[S]]) extends Base[A, 
   def admit(value: A)(implicit turn: Turn[S]): Unit = admitPulse(Pulse.diffPulse(value, stable))
 
   def admitPulse(p: Pulse[A])(implicit turn: Turn[S]): Unit = {
-    require(pulse == stable, "can not admit the same reactive twice in the same turn")
-    if (p.isChange) { pulses.set(p) }
+    require(!hasChanged, "can not admit the same reactive twice in the same turn")
+    if (p.isChange) { set(p) }
   }
 
   override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[S] =
-    ReevaluationResult.Static(changed = pulse.isChange)
+    ReevaluationResult.Static(changed = hasChanged)
 
   override def disconnect()(implicit engine: Engine[S, Turn[S]]): Unit = ()
 }
@@ -103,7 +103,7 @@ final class Var[A, S <: Struct](_bud: S#SporeP[A, Reactive[S]]) extends Base[A, 
   * Companion object that allows external users to create new source signals.
   */
 object Var {
-  def apply[T, S <: Struct](initval: T)(implicit ticket: Ticket[S]): Var[T, S] = ticket { t => t.create(Set.empty)(new Var(t.bud(Pulse.Stable(initval), transient = false))) }
+  def apply[T, S <: Struct](initval: T)(implicit ticket: Ticket[S]): Var[T, S] = ticket { t => t.create(Set.empty)(new Var(t.bud(Pulse.Change(initval), transient = false))) }
   def empty[T, S <: Struct]()(implicit ticket: Ticket[S]): Var[T, S] = ticket { t => t.create(Set.empty)(new Var(t.bud(Pulse.empty, transient = false))) }
 
 }
