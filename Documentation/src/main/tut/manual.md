@@ -42,14 +42,11 @@ references.
 # Signals
 [Signals]: #signals
 
-A signal is language concept for defining dependencies among values.
-Intuitively, a reactive value can depend on other reactive values.
-When any of the dependency sources
-changes, the expression defining the reactive value is automatically
-recomputed by the language runtime to keep the reactive value
-up-to-date.
+A signal defines a functional dependency between values.
+The runtime takes care that any derived signal is updated,
+whenever one of the inputs changes.
 
-Consider the following example
+Consider the following example which defines 3 signals `a`, `b`, and `c`.
 
 ```tut:book
 import rescala._
@@ -57,46 +54,21 @@ import rescala._
 val a = Var(2)
 val b = Var(3)
 val c = Signal { a() + b() }
-println((a.now,b.now,c.now))
+println((a.now, b.now, c.now))
 a.set(4)
-println((a.now,b.now,c.now))
-b() = 5
-println((a.now,b.now,c.now))
+println((a.now, b.now, c.now))
+b.set(5)
+println((a.now, b.now, c.now))
 ```
 
-Line 3 specifies the value of `c` as a function of
-`a` and `b`. Since Line 3 defines a *statement*,
-the relation `c = a + b` is valid after the execution of
-Line 3. Clearly, when the value of `a` is updated, the
-relation `c = a + b` is not valid anymore. To make
-sure that the relation still holds, the programmer needs to recompute
-the expression and reassign `c`, like in Line 7.
+`a` and `b` are input signals which can be changed manually,
+and `c` is a derived signal which depends on both `a` and `b`.
+When the value of `a` or `b` changes, the value of `c` is updated by the runtime.
+Signals are a simple concept, but can be used to specify complex systems
+which are automatically kept consistent.
 
-Reactive programming and *REScala* provide abstractions to express {\em
-  constraints} in addition to statements. In *REScala*, the programmer
-can specify that the constraint $c := a + b$ {\em always} holds during
-the execution of a program. Every time \code{a} or \code{b} change,
-the value of \code{c} is automatically recomputed.
+The rest of this section will explain the usage of signals in detail.
 
-For example:
-\begin{codenv}
-val a = Var(2)
-val b = Var(3)
-val c = Signal{ a() + b() }   (*@\label{sumS}@*)
-println(a.get,b.get,c.get) // -> (2,3,5)
-a()= 4  (*@\label{updated}@*)
-println(a.get,b.get,c.get) // -> (4,3,7)
-\end{codenv}
-
-In the code above, the signal in Line~\ref{sumS} defines the
-constraint $c := a + b$. When one of the reactive values involved in
-the constraint is updated (Line~\ref{updated}), the expression in the
-constraint is recomputed behind the scenes, and the value of \code{a}
-is automatically updated.
-
-As the reader may have noticed, expressing constraints in *REScala*
-requires to conform some syntactic conventions which are discussed in
-the next sections.
 
 ## Vars
 
