@@ -7,7 +7,7 @@ sidebar: manual
 # Introduction
 
 This manual covers the main features of the *REScala* programming language.
-[Signals and Vars] presents time-changing values
+[Signals] presents time-changing values
 in *REScala*, [Events](#events) describes events,
 [ConversionFunctions](#conversion-functions) covers the conversion functions between
 events and time-changing values, [Technicalities](#technicalities)
@@ -39,28 +39,29 @@ perspective. The readers interested in a more general presentation of
 these topics can find in [Related](#related) the essential
 references.
 
-# Signals and Vars
-[Signals and Vars]: #signals-and-vars
+# Signals
+[Signals]: #signals
 
-A signal is language concept for expressing functional dependencies
-among values in a declarative way. Intuitively, a reactive value can
-depend on variables -- sources of change without further dependencies
--- or on other reactive values.  When any of the dependency sources
+A signal is language concept for defining dependencies among values.
+Intuitively, a reactive value can depend on other reactive values.
+When any of the dependency sources
 changes, the expression defining the reactive value is automatically
 recomputed by the language runtime to keep the reactive value
 up-to-date.
 
-Consider the following example:
+Consider the following example
 
-```tut
-var a = 2
-var b = 3
-var c = a + b
-println((a,b,c))
-a = 4
-println((a,b,c))
-c = a + b
-println((a,b,c))
+```tut:book
+import rescala._
+
+val a = Var(2)
+val b = Var(3)
+val c = Signal { a() + b() }
+println((a.now,b.now,c.now))
+a.set(4)
+println((a.now,b.now,c.now))
+b() = 5
+println((a.now,b.now,c.now))
 ```
 
 Line 3 specifies the value of `c` as a function of

@@ -11,10 +11,8 @@ parallelExecution in Test in ThisBuild := true
 
 licenses in ThisBuild += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))
 
-tutSettings
-
 lazy val rescalaAggregate = project.in(file("."))
-  .aggregate(rescalaJVM, rescalaJS, microbench, reswing, examples, examplesReswing, caseStudyEditor, caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags, datastructures, universe, reactiveStreams)
+  .aggregate(rescalaJVM, rescalaJS, microbench, reswing, examples, examplesReswing, caseStudyEditor, caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags, datastructures, universe, reactiveStreams, documentation)
   .settings(
     publish := {},
     publishLocal := {}
@@ -66,6 +64,10 @@ lazy val rescala = crossProject.in(file("."))
 lazy val rescalaJVM = rescala.jvm
 
 lazy val rescalaJS = rescala.js
+
+lazy val documentation = project.in(file("Documentation"))
+  .settings(tutSettings: _*)
+  .dependsOn(rescalaJVM, rescalaJS)
 
 lazy val reactiveStreams = project.in(file("ReactiveStreams"))
   .dependsOn(rescalaJVM)
