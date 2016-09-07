@@ -20,11 +20,11 @@ object SynchronousReifier extends Reifier[SimpleStruct, Signal, Event] {
   // TODO: Find a way to prevent instanceOf-cast
   private def applyLog(log : List[MetaLog]): Unit = {
     log.foreach {
-      case LoggedFire(node, value : AnyRef) => reifiedEventCache.getOrElse(node, throw new IllegalArgumentException("Cannot fire a non-reified event!")) match {
-        case e : Evt[_, SimpleStruct] => e.asInstanceOf[Evt[value.type, SimpleStruct]].fire(value)
+      case LoggedFire(node, value) => reifiedEventCache.getOrElse(node, throw new IllegalArgumentException("Cannot fire a non-reified event!")) match {
+        case e : Evt[_, SimpleStruct] => e.asInstanceOf[Evt[Any, SimpleStruct]].fire(value)
       }
-      case LoggedSet(node, value : AnyRef) => reifiedSignalCache.getOrElse(node, throw new IllegalArgumentException("Cannot set a non-reified var!")) match {
-        case v: Var[_, SimpleStruct] => v.asInstanceOf[Var[value.type, SimpleStruct]].set(value)
+      case LoggedSet(node, value) => reifiedSignalCache.getOrElse(node, throw new IllegalArgumentException("Cannot set a non-reified var!")) match {
+        case v: Var[_, SimpleStruct] => v.asInstanceOf[Var[Any, SimpleStruct]].set(value)
       }
     }
   }
@@ -37,7 +37,7 @@ object SynchronousReifier extends Reifier[SimpleStruct, Signal, Event] {
       case EvtEventPointer(n) => synchron.Evt()
       case AndEventPointer(n, base, other, merger) => base.reify(this).and(other.reify(this))(merger)
       case OrEventPointer(n, base, other) => base.reify(this) || other.reify(this)
-      //case FilteredEventPointer(n, base, pred) => base.reify(this).filter(pred)
+      case fep@FilteredEventPointer(n, base, pred) => base.reify(this).filter(pred.asInstanceOf[T => Boolean])
       case ChangeEventPointer(n, base) => base.reify(this).change
       case ChangedEventPointer(n, base) => base.reify(this).changed
       case ExceptEventPointer(n, base, other) => base.reify(this) \ other.reify(this)

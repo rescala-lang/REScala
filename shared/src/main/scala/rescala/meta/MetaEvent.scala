@@ -1,5 +1,6 @@
 package rescala.meta
 
+import rescala.engines.Ticket
 import rescala.graph.Struct
 import rescala.reactives.RExceptions.UnhandledFailureException
 import rescala.reactives.{EventLike, SignalLike}
@@ -88,7 +89,12 @@ case class EvtEventPointer[T](protected[meta] override var node : Option[Reactiv
 }
 case class ChangeEventPointer[+T](protected[meta] override var node : Option[ReactiveNode], base : MetaSignalPointer[T]) extends MetaEventPointer[(T, T)]
 case class ChangedEventPointer[+T](protected[meta] override var node : Option[ReactiveNode], base : MetaSignalPointer[T]) extends MetaEventPointer[T]
-case class FilteredEventPointer[+T, U](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], pred: (U) => Boolean) extends MetaEventPointer[U]
+case class FilteredEventPointer[+T, U](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], pred: (U) => Boolean)(implicit ev: T <:< U) extends MetaEventPointer[T]
+//  def reify2[S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], EV[+X, Z <: Struct] <: EventLike[X, Z, SL, EV]](reifier: Reifier[S, SL, EV])(implicit ticket: Ticket[S]): EV[T, S]  = base.reify(reifier).filter(pred)
+//}
+//object FilteredEventPointer {
+//  def apply[T](node : Option[ReactiveNode], base : MetaEventPointer[T], pred: (T) => Boolean) = new FilteredEventPointer(node, base, pred)
+//}
 case class OrEventPointer[+T, +U](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], other : MetaEventPointer[U]) extends MetaEventPointer[U]
 case class ExceptEventPointer[+T, +U](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], other : MetaEventPointer[U]) extends MetaEventPointer[T]
 case class AndEventPointer[T, U, +R](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], other : MetaEventPointer[U], merger: (T, U) => R) extends MetaEventPointer[R]
