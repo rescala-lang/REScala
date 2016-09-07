@@ -13,7 +13,7 @@ licenses in ThisBuild += ("Apache-2.0", url("http://www.apache.org/licenses/LICE
 
 
 lazy val rescalaAggregate = project.in(file("."))
-  .aggregate(rescalaJVM, rescalaJS, microbench, reswing, examples, examplesReswing, caseStudyEditor, caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags, datastructures, universe)
+  .aggregate(rescalaJVM, rescalaJS, microbench, reswing, examples, examplesReswing, caseStudyEditor, caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags, datastructures, universe, reactiveStreams)
   .settings(
     publish := {},
     publishLocal := {}
@@ -24,11 +24,8 @@ lazy val rescala = crossProject.in(file("."))
   .disablePlugins(JmhPlugin)
   .settings(
     name := "rescala",
-    libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _),
+    libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-reflect" % _),
     scalatestDependency,
-    libraryDependencies += "org.reactivestreams" % "reactive-streams" % "1.0.0",
-    libraryDependencies += "org.reactivestreams" % "reactive-streams-tck" % "1.0.0",
-    libraryDependencies += "org.scala-stm" %% "scala-stm" % "0.7",
 
     sourceGenerators in Compile <+= sourceManaged in Compile map { dir =>
       val file = dir / "rescala" / "reactives" / "GeneratedSignalLift.scala"
@@ -61,11 +58,26 @@ lazy val rescala = crossProject.in(file("."))
       s"""import rescala._
        """.stripMargin
   )
-  .jvmSettings().jsSettings()
+  .jvmSettings(
+    libraryDependencies += "org.scala-stm" %% "scala-stm" % "0.7"
+  ).jsSettings()
 
 lazy val rescalaJVM = rescala.jvm
 
 lazy val rescalaJS = rescala.js
+
+lazy val reactiveStreams = project.in(file("ReactiveStreams"))
+  .dependsOn(rescalaJVM)
+  .settings(
+    libraryDependencies += "org.reactivestreams" % "reactive-streams" % "1.0.0",
+    libraryDependencies += "org.reactivestreams" % "reactive-streams-tck" % "1.0.0"
+  )
+  .settings(
+    publish := {},
+    publishLocal := {}
+  )
+
+
 
 lazy val microbench = project.in(file("Microbench"))
   .enablePlugins(JmhPlugin)
@@ -169,9 +181,10 @@ lazy val universe = project.in(file("Universe"))
 // ================================ dependencies
 
 lazy val rssDependencies = libraryDependencies ++= Seq(
-  "joda-time" % "joda-time" % "2.9.4" withSources(),
+  "joda-time" % "joda-time" % "2.9.4",
   "org.joda" % "joda-convert" % "1.8.1",
-  "org.codehaus.jsr166-mirror" % "jsr166y" % "1.7.0")
+  "org.codehaus.jsr166-mirror" % "jsr166y" % "1.7.0",
+  "org.scala-lang.modules" %% "scala-xml" % "1.0.3")
 
 lazy val scalaswingDependency = libraryDependencies += "org.scala-lang" % "scala-swing" % "2.11.0-M7"
 lazy val scalatestDependency = libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.0" % "test"
