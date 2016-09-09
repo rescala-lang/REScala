@@ -3,10 +3,12 @@ package tests.rescala.fullmv
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 import rescala.fullmv.Transaction
+import org.scalatest.Ignore
+import org.scalatest.Tag
+import org.scalatest.words.ResultOfStringPassedToVerb
 
-class LockUnionFindTest extends FlatSpec with Matchers {
-  import RemoteTestHost.remote
-
+class LockUnionFindTest extends FlatSpec with Matchers with TestWithRemoteHost {
+  
   def twoNodeTest(a: Transaction, b: Transaction): Unit = {
     a.lock() should be(a)
     a.tryLock() should be(None)
@@ -29,8 +31,8 @@ class LockUnionFindTest extends FlatSpec with Matchers {
     twoNodeTest(a, b)
   }
 
-  it should "work between two remote nodes" taggedAs (RemoteTestHost) in {
-    val a = Transaction("a")
+  ifRemote(it should "work between two remote nodes") { remote =>
+  val a = Transaction("a")
     val b = remote.newTransaction("b")
     twoNodeTest(a, b)
   }
@@ -63,7 +65,7 @@ class LockUnionFindTest extends FlatSpec with Matchers {
     subgraphsTest(a, b, c, d, e, f)
   }
 
-  it should "work between two distributed subgraphs" taggedAs (RemoteTestHost) in {
+  ifRemote(it should "work between two distributed subgraphs") { remote =>
     val a = Transaction("a")
     val b = remote.newTransaction("b")
     val c = Transaction("c")
@@ -74,7 +76,7 @@ class LockUnionFindTest extends FlatSpec with Matchers {
     subgraphsTest(a, b, c, d, e, f)
   }
 
-  it should "work between two subgraphs on different hosts" taggedAs (RemoteTestHost) in {
+  ifRemote(it should "work between two subgraphs on different hosts") { remote =>
     val a = Transaction("a")
     val b = Transaction("b")
     val c = remote.newTransaction("c")

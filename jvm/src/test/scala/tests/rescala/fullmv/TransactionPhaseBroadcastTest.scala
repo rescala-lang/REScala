@@ -4,8 +4,8 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 import rescala.fullmv._
 
-class TransactionPhaseBroadcastTest extends FlatSpec with Matchers {
-  import RemoteTestHost.remote
+class TransactionPhaseBroadcastTest extends FlatSpec with Matchers with TestWithRemoteHost{
+  import TestRemoteHost.remote
 
   "transaction phase transitions " should "work locally" in {
     val t = Transaction("t").assertLocal
@@ -34,7 +34,7 @@ class TransactionPhaseBroadcastTest extends FlatSpec with Matchers {
     }
   }
 
-  it should "be reflected remotely" in {
+  ifRemote(it should "be reflected remotely") { remote =>
     val t = remote.newTransaction("t")
     t.phase should be(Framing)
     remote.beginTransaction(t)
@@ -43,7 +43,7 @@ class TransactionPhaseBroadcastTest extends FlatSpec with Matchers {
     t.phase should be(Completed)
   }
 
-  "transaction ingranation" should "only happen once per host" in {
+  ifRemote("transaction ingranation" should "only happen once per host") { remote =>
     val a = Transaction("a").assertLocal
     a.sharedOnHosts.size should be(0)
     val b = remote.newTransaction("b")
