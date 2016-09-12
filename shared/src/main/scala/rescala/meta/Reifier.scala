@@ -37,13 +37,12 @@ object SynchronousReifier extends Reifier[SimpleStruct, Signal, Event] {
       case EvtEventPointer(n) => synchron.Evt()
       case AndEventPointer(n, base, other, merger) => base.reify(this).and(other.reify(this))(merger)
       case OrEventPointer(n, base, other) => base.reify(this) || other.reify(this)
-      case fep@FilteredEventPointer(n, base, pred) => base.reify(this).filter(pred.asInstanceOf[T => Boolean])
+      case FilteredEventPointer(n, base, pred) => base.reify(this).filter(pred.asInstanceOf[T => Boolean])
       case ChangeEventPointer(n, base) => base.reify(this).change
       case ChangedEventPointer(n, base) => base.reify(this).changed
       case ExceptEventPointer(n, base, other) => base.reify(this) \ other.reify(this)
       //case FlatMappedEventPointer(n, base, f) => base.reify(this).flatMap(f)
       //case MappedEventPointer(n, base, mapping) => base.reify(this).map(mapping)
-      //case FlattenedEventPointer(n, base) => base.reify(this).flatten
       })
       reifiedEventCache += node -> event
       applyLog(node.graph.popLog())
@@ -57,7 +56,6 @@ object SynchronousReifier extends Reifier[SimpleStruct, Signal, Event] {
       val event = reifiedSignalCache.getOrElse(node, signalPointer match {
         case VarSignalPointer(n) => synchron.Var(null)
         case DelayedSignalPointer(n, base, delay) => base.reify(this).delay(delay)
-        //case FlattenedSignalPointer(n, base) => base.reify(this).flatten
         //case FoldedSignalPointer(n, base, init, fold) => base.reify(this).fold(init)(fold)
         //case MappedSignalPointer(n, base, mapping) => base.reify(this).map(mapping)
         case SnapshotSignalPointer(n, base, s) => base.reify(this).snapshot(s.reify(this))

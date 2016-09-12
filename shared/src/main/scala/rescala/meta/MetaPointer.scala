@@ -1,6 +1,5 @@
 package rescala.meta
 
-import rescala.engines.Ticket
 import rescala.graph.Struct
 import rescala.reactives.RExceptions.UnhandledFailureException
 import rescala.reactives.{EventLike, SignalLike}
@@ -71,8 +70,6 @@ trait MetaSignalPointer[+A] extends MetaReactivePointer[A] {
 
   def delay(n: Int): DelayedSignalPointer[A] = DelayedSignalPointer(createDependentNode(), this, n)
   def map[X >: A, B](f: (X) => B): MappedSignalPointer[X, B] = MappedSignalPointer(createDependentNode(), this, f)
-  def flatten[B]()(implicit evidence: <:<[A, MetaSignalPointer[B]]): FlattenedSignalPointer[A, B] = FlattenedSignalPointer(createDependentNode(), this)
-  def unwrap[E](implicit evidence: <:<[A, MetaEventPointer[E]]): FlattenedEventPointer[A, E] = FlattenedEventPointer(createDependentNode(), this)
   def change: ChangeEventPointer[A] = ChangeEventPointer(createDependentNode(), this)
   def changed: ChangedEventPointer[A] = ChangedEventPointer(createDependentNode(), this)
 }
@@ -101,7 +98,6 @@ case class AndEventPointer[T, U, +R](protected[meta] override var node : Option[
 case class ZippedEventPointer[+T, +U](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], other : MetaEventPointer[U]) extends MetaEventPointer[(T, U)]
 case class MappedEventPointer[T, +U](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], mapping: (T) => U) extends MetaEventPointer[U]
 case class FlatMappedEventPointer[T, +B](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], f: (T) => MetaEventPointer[B]) extends MetaEventPointer[B]
-case class FlattenedEventPointer[+A, +T](protected[meta] override var node : Option[ReactiveNode], base : MetaSignalPointer[A]) extends MetaEventPointer[T]
 
 case class VarSignalPointer[A](protected[meta] override var node : Option[ReactiveNode]) extends MetaSignalPointer[A] {
   def set(value : A) : Unit = node match {
@@ -116,4 +112,3 @@ case class SwitchOnceSignalPointer[+T, +A](protected[meta] override var node : O
 case class SwitchToSignalPointer[+T, +A](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], original : MetaSignalPointer[A]) extends MetaSignalPointer[A]
 case class DelayedSignalPointer[+A](protected[meta] override var node : Option[ReactiveNode], base : MetaSignalPointer[A], n: Int) extends MetaSignalPointer[A]
 case class MappedSignalPointer[A, +U](protected[meta] override var node : Option[ReactiveNode], base : MetaSignalPointer[A],  mapping: (A) => U) extends MetaSignalPointer[U]
-case class FlattenedSignalPointer[+A, +B](protected[meta] override var node : Option[ReactiveNode], base : MetaSignalPointer[A]) extends MetaSignalPointer[B]
