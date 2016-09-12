@@ -4,6 +4,8 @@ class ReactiveGraph {
   private val nodes : collection.mutable.Set[ReactiveNode] = collection.mutable.Set()
   private val log : collection.mutable.MutableList[MetaLog] = collection.mutable.MutableList()
 
+  def numNodes = nodes.size
+
   protected[meta] def addLog(newLog : MetaLog) = log += newLog
   protected[meta] def popLog() : List[MetaLog] = {
     val l = log.toList

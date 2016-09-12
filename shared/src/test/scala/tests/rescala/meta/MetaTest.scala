@@ -15,7 +15,14 @@ class MetaTest extends FunSuite {
     val evt2 = g.createEvt[Boolean]()
     val comb = ((evt && (_ < 0)) \ evt2).zip(evt2)
     comb match {
-      case ZippedEventPointer(_, ExceptEventPointer(_, FilteredEventPointer(_, EvtEventPointer(_), _), EvtEventPointer(_)), EvtEventPointer(_)) => true
+      case ZippedEventPointer(_, ExceptEventPointer(_, FilteredEventPointer(_, EvtEventPointer(_), _), EvtEventPointer(_)), EvtEventPointer(_)) => assert(g.numNodes == 5, "graph has correct number of nodes")
+      case _ => fail("meta AST was not correctly built!")
+    }
+    val snl = g.createVar[Int]()
+    val snl2 = g.createVar[Char]()
+    val comb2 = snl.map(toString()).delay(1).changed.switchTo(snl2)
+    comb2 match {
+      case SwitchToSignalPointer(_, ChangedEventPointer(_, DelayedSignalPointer(_, MappedSignalPointer(_, VarSignalPointer(_), _), 1)), VarSignalPointer(_)) => assert(g.numNodes == 11, "graph has correct number of nodes")
       case _ => fail("meta AST was not correctly built!")
     }
   }
