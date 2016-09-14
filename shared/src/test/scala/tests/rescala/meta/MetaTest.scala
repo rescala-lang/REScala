@@ -22,7 +22,7 @@ class MetaTest extends FunSuite {
     val snl2 = g.createVar[Char]()
     val comb2 = snl.map(toString()).delay(1).changed.switchTo(snl2)
     comb2 match {
-      case SwitchToSignalPointer(_, ChangedEventPointer(_, DelayedSignalPointer(_, MappedSignalPointer(_, VarSignalPointer(_), _), 1)), VarSignalPointer(_)) => assert(g.numNodes == 11, "graph has correct number of nodes")
+      case SwitchToSignalPointer(_, ChangedEventPointer(_, DelayedSignalPointer(_, MappedSignalPointer(_, VarSignalPointer(_), _), 1)), VarSignalPointer(_)) => assert(g.numNodes == 13, "graph has correct number of nodes")
       case _ => fail("meta AST was not correctly built!")
     }
   }
