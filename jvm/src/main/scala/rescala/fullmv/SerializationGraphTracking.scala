@@ -22,7 +22,7 @@ import java.io.ObjectStreamException
   def distributeNewSuccessors(successors: Map[Transaction, Set[Transaction]], except: Host): Unit
   def receiveAdditionalSuccessors(successors: Map[Transaction, Set[Transaction]]): Unit
 }
-trait Host extends HostCommunication {
+trait Host extends HostCommunication with Serializable {
   val id: UUID
 }
 
