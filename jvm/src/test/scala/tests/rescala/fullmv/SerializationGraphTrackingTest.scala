@@ -22,7 +22,7 @@ class SerializationGraphTrackingTest extends FlatSpec with Matchers {
       visitedAndStillOnStack.get(transaction) match {
         case None =>
           visitedAndStillOnStack += transaction -> true
-          transaction.successors().foreach(searchForCycle(_))
+          transaction.successors.foreach(searchForCycle(_))
           visitedAndStillOnStack += transaction -> false
           false
         case Some(stillOnStack) =>
@@ -94,7 +94,7 @@ object SerializationGraphTrackingTest {
     val reduced = transitiveReduction(edges)
     val reducedEdges = countEdges(reduced)
     val difference = totalEdges - reducedEdges
-    val percentage = difference.toFloat / totalEdges
+    val percentage = difference.toFloat / totalEdges * 100
     println(f"[POST] Removed $difference%d of $totalEdges%d edges ($percentage%.2f%%).")
     println(s"[POST] Sending reduced SSG to dot...")
     val dot = Runtime.getRuntime.exec(Array[String]("dot", "-Tpdf", "-o" + pdf.getAbsolutePath()))
@@ -125,7 +125,11 @@ object SerializationGraphTrackingTest {
     }
     println(s"[POST] Postprocessing completed!")
   }
-  def edgesFromTransactions(transactions: Iterable[Transaction]) = transactions.map(transaction => transaction -> transaction.successors()).toMap
+  def edgesFromTransactions(transactions: Iterable[Transaction]): Map[Transaction, Set[Transaction]] = {
+    transactions.map { transaction =>
+      transaction -> transaction.successors
+    }.toMap
+  }
   def countEdges(edges: Map[Transaction, Set[Transaction]]): Int = edges.map(_._2.size).sum
   def transitiveReduction(edges: Map[Transaction, Set[Transaction]]): Map[Transaction, Set[Transaction]] = {
     edges.foldLeft(edges) {

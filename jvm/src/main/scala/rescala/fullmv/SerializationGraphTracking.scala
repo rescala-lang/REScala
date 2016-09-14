@@ -1,6 +1,7 @@
 package rescala.fullmv
 
 import scala.annotation.tailrec
+import scala.collection.mutable
 import java.rmi.server.UnicastRemoteObject
 import java.util.UUID
 import java.io.ObjectStreamException
@@ -18,14 +19,14 @@ import java.io.ObjectStreamException
   // ssg stuff
   def newRemote(node: Transaction, host: Host): (TransactionPhase, Set[Transaction])
   def receiveNewTransactionPhase(node: Transaction, newPhase: TransactionPhase): Unit
-  def sendAdditionalSuccessors(node: Transaction, newSuccessors: Set[Transaction]): Unit
+  def distributeNewSuccessors(successors: Map[Transaction, Set[Transaction]], except: Host): Unit
   def receiveAdditionalSuccessors(successors: Map[Transaction, Set[Transaction]]): Unit
 }
 trait Host extends HostCommunication {
   val id: UUID
 }
 
-case class RemoteHost(override val id: UUID, val proxy: HostCommunication) extends Host {
+class RemoteHost(override val id: UUID, val proxy: HostCommunication) extends Host {
   @throws[ObjectStreamException] protected def readResolve(): Any = Host.replaceOrRegisterReceivedHost(this)
 
   override def rank(node: Transaction): Int = proxy.rank(node)
@@ -38,7 +39,7 @@ case class RemoteHost(override val id: UUID, val proxy: HostCommunication) exten
 
   override def newRemote(node: Transaction, host: Host): (TransactionPhase, Set[Transaction]) = proxy.newRemote(node, host)
   override def receiveNewTransactionPhase(node: Transaction, newPhase: TransactionPhase): Unit = proxy.receiveNewTransactionPhase(node, newPhase)
-  override def sendAdditionalSuccessors(node: Transaction, newSuccessors: Set[Transaction]): Unit = proxy.sendAdditionalSuccessors(node, newSuccessors)
+  override def distributeNewSuccessors(successors: Map[Transaction, Set[Transaction]], except: Host): Unit = proxy.distributeNewSuccessors(successors, except)
   override def receiveAdditionalSuccessors(successors: Map[Transaction, Set[Transaction]]): Unit = proxy.receiveAdditionalSuccessors(successors)
 }
 
@@ -51,6 +52,9 @@ object Host {
     })
   }
 
+  type NewSuccessorsBroadcastBuffer = mutable.Map[Transaction, Set[Transaction]]
+  def newBuffer(): NewSuccessorsBroadcastBuffer = mutable.Map().withDefaultValue(Set())
+
   private val remoteReceiver = new UnicastRemoteObject with HostCommunication {
     override def rank(node: Transaction): Int = node.assertLocal.rank
     override def find(node: Transaction): Transaction = node.assertLocal.find()
@@ -62,7 +66,16 @@ object Host {
 
     override def newRemote(node: Transaction, host: Host): (TransactionPhase, Set[Transaction]) = node.assertLocal.addSharedHost(host)
     override def receiveNewTransactionPhase(node: Transaction, newPhase: TransactionPhase): Unit = node.assertRemote.phase = newPhase
-    override def sendAdditionalSuccessors(node: Transaction, newSuccessors: Set[Transaction]): Unit = node.assertLocal.addSuccessors(newSuccessors)
+    override def distributeNewSuccessors(successors: Map[Transaction, Set[Transaction]], except: Host): Unit = {
+      val mutableBuffer = newBuffer()
+      successors.foreach{ case(node, newSuccessors) =>
+        node.assertLocal.addSuccessorsLocally(newSuccessors, mutableBuffer)
+      }
+      (Map() ++ mutableBuffer).groupBy(_._1.host).foreach {
+        case (host, buffer) =>
+          if(host != except) host.receiveAdditionalSuccessors(buffer)
+      }
+    }
     override def receiveAdditionalSuccessors(successors: Map[Transaction, Set[Transaction]]): Unit = successors.foreach {
       case (node, newSuccessors) =>
         node.assertRemote.receiveAdditionalSuccessors(newSuccessors)
@@ -120,14 +133,22 @@ trait Transaction extends Serializable {
 
   // transaction and serialization order stuff
   def phase(): TransactionPhase
-  def successors(): Set[Transaction]
-  def searchClosure(target: Transaction): Boolean = {
-    val (found, visited) = searchClosure0(target, Set())
-    addSuccessors(visited)
-    found
+  import Host.NewSuccessorsBroadcastBuffer
+  var successors: Set[Transaction]
+  def addSuccessorsLocally(newSuccessors: Set[Transaction], mutableBuffer: NewSuccessorsBroadcastBuffer): Unit = synchronized {
+    val actuallyNewSuccessors = newSuccessors -- successors
+    if(actuallyNewSuccessors.nonEmpty) {
+      successors ++= actuallyNewSuccessors
+      mutableBuffer += (this -> (mutableBuffer(this) ++ actuallyNewSuccessors))
+    }
   }
-  def searchClosure0(target: Transaction, visited: Set[Transaction]): (Boolean, Set[Transaction]) = {
-    val succs = successors() -- visited
+  
+  def searchClosure(target: Transaction, mutableBuffer: NewSuccessorsBroadcastBuffer): Boolean = {
+    searchClosure0(target, Set(), mutableBuffer)._1
+  }
+  
+  def searchClosure0(target: Transaction, visited: Set[Transaction], mutableBuffer: NewSuccessorsBroadcastBuffer): (Boolean, Set[Transaction]) = {
+    val succs = successors -- visited
     val updatedVisited = visited ++ succs
     if (succs(target)) {
       (true, updatedVisited)
@@ -135,8 +156,8 @@ trait Transaction extends Serializable {
       @tailrec def loop(iterator: Iterator[Transaction], visited: Set[Transaction]): (Boolean, Set[Transaction]) = {
         if (iterator.hasNext) {
           val successor = iterator.next
-          val result @ (found, updatedVisited) = successor.searchClosure0(target, visited)
-          addSuccessors(successor.successors())
+          val result @ (found, updatedVisited) = successor.searchClosure0(target, visited, mutableBuffer)
+          addSuccessorsLocally(successor.successors, mutableBuffer)
           if (found) {
             result
           } else {
@@ -149,8 +170,18 @@ trait Transaction extends Serializable {
       loop(succs.iterator, updatedVisited)
     }
   }
-  // TODO calls to this method should ideally be asynchronous and batched broadcasts instead of indivudal RMIs?
-  def addSuccessors(newSuccessors: Set[Transaction]): Unit
+
+  private def searchOrEstablishAndSendAndUnlock(against: Transaction, rootLocked: Transaction, mutableBuffer: NewSuccessorsBroadcastBuffer): OrderResult = {
+    val resultLockedSearch = searchClosures(against, mutableBuffer)
+    if (resultLockedSearch.isDefined) {
+      rootLocked.unlock()
+      // can unlock before sending as new edges are only transitive shortcuts that can be written without locks
+      sendBuffer(mutableBuffer)
+      resultLockedSearch.get
+    } else {
+      establishAndSendAndUnlock(against, rootLocked, mutableBuffer)
+    }
+  }
   def ensureAndGetOrder(against: Transaction): OrderResult = {
     if (this == against) throw new IllegalArgumentException("Cannot order against self!")
     if (phase() == Completed) throw new IllegalStateException("Completed transactions may no longer perform operations");
@@ -158,47 +189,43 @@ trait Transaction extends Serializable {
       OtherFirst
     } else {
       if (find() == against.find()) {
-        searchClosures(against).getOrElse {
+        val mutableBuffer = Host.newBuffer()
+        val resultUnlockedSearch = searchClosures(against, mutableBuffer)
+        if (resultUnlockedSearch.isDefined) {
+          sendBuffer(mutableBuffer)
+          resultUnlockedSearch.get
+        } else {
           val rootLocked = lock()
-          val result = searchClosures(against).getOrElse {
-            establishOrder(against)
-          }
-          rootLocked.unlock()
-          result
+          searchOrEstablishAndSendAndUnlock(against, rootLocked, mutableBuffer)
         }
       } else {
-        def retry(lockFirst: Transaction, lockSecond: Transaction, self: Transaction, against: Transaction): OrderResult = {
+        @tailrec
+        def retryLock(lockFirst: Transaction, lockSecond: Transaction, self: Transaction, against: Transaction): OrderResult = {
           val rootFirstLocked = lockFirst.lock()
           val rootSecond = lockSecond.find()
           if (rootFirstLocked == rootSecond) {
-            val result = searchClosures(against).getOrElse {
-              establishOrder(against)
-            }
-            rootFirstLocked.unlock()
-            result
+            searchOrEstablishAndSendAndUnlock(against, rootFirstLocked, Host.newBuffer())
           } else {
             val rootSecondLocked = rootSecond.tryLock
             if (rootSecondLocked.isDefined) {
               val rootLocked = rootFirstLocked.union(rootSecondLocked.get)
-              val result = establishOrder(against)
-              rootLocked.unlock()
-              result
+              establishAndSendAndUnlock(against, rootLocked, Host.newBuffer())
             } else {
               rootFirstLocked.unlock()
-              retry(lockSecond, lockFirst, self, against)
+              retryLock(lockSecond, lockFirst, self, against)
             }
           }
         }
-        retry(this, against, this, against)
+        retryLock(this, against, this, against)
       }
     }
   }
-  private def searchClosures(against: Transaction): Option[OrderResult] = {
-    val foundAgainst = searchClosure(against)
+  private def searchClosures(against: Transaction, mutableBuffer: NewSuccessorsBroadcastBuffer): Option[OrderResult] = {
+    val foundAgainst = searchClosure(against, mutableBuffer)
     if (foundAgainst) {
       Some(SelfFirst)
     } else {
-      val foundThis = against.searchClosure(this)
+      val foundThis = against.searchClosure(this, mutableBuffer)
       if (foundThis) {
         Some(OtherFirst)
       } else {
@@ -206,13 +233,24 @@ trait Transaction extends Serializable {
       }
     }
   }
-  private def establishOrder(against: Transaction): OrderResult = {
+  private def establishAndSendAndUnlock(against: Transaction, rootLocked: Transaction, mutableBuffer: NewSuccessorsBroadcastBuffer): OrderResult = {
     if (phase() == Executing && against.phase() == Framing) {
-      against.addSuccessors(this.successors() + this)
+      establishEdgeAndSendAndUnlock(rootLocked, this, against, mutableBuffer)
       SelfFirst
     } else {
-      addSuccessors(against.successors() + against)
+      establishEdgeAndSendAndUnlock(rootLocked, against, this, mutableBuffer)
       OtherFirst
+    }
+  }
+  private def establishEdgeAndSendAndUnlock(rootLocked: Transaction, from: Transaction, to: Transaction, mutableBuffer: NewSuccessorsBroadcastBuffer): Unit = {
+    from.addSuccessorsLocally(to.successors + to, mutableBuffer)
+    sendBuffer(mutableBuffer)
+    rootLocked.unlock()
+  }
+  private def sendBuffer(mutableBuffer: NewSuccessorsBroadcastBuffer): Unit = {
+    (Map() ++ mutableBuffer).groupBy(_._1.host).foreach {
+      case (host, buffer) =>
+        host.distributeNewSuccessors(buffer, Host.LOCALHOST)
     }
   }
 }
@@ -397,7 +435,6 @@ class RemoteTransaction(override val host: Host, override val id: UUID, override
     if (newPhase == Completed) successors = null // breaking this on purpose; should not be accessed any more.
   }
   def receiveAdditionalSuccessors(newSuccessors: Set[Transaction]): Unit = synchronized { successors ++= newSuccessors }
-  override def addSuccessors(newSuccessors: Set[Transaction]): Unit = host.sendAdditionalSuccessors(this, newSuccessors)
 
   override def toString() = s"$data: NodeRemote($id @ $host)"
 
