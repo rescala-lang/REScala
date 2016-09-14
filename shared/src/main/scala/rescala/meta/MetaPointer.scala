@@ -1,8 +1,9 @@
 package rescala.meta
 
+import rescala.engines.Ticket
 import rescala.graph.Struct
 import rescala.reactives.RExceptions.UnhandledFailureException
-import rescala.reactives.{EventLike, SignalLike}
+import rescala.reactives._
 
 import scala.language.higherKinds
 
@@ -49,10 +50,12 @@ trait MetaReactivePointer[+T] extends MetaPointer[T] {
 }
 
 trait MetaEventPointer[+T] extends MetaReactivePointer[T] {
-  def reify[S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], EV[+X, Z <: Struct] <: EventLike[X, Z, SL, EV]](reifier: Reifier[S, SL, EV]): EV[T, S] = reifier.reifyEvent(this)
+  def reify[S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], EV[+X, Z <: Struct] <: EventLike[X, Z, SL, EV], VAR[X, Z <: Struct] <: VarLike[X, Z, SL, EV] with SL[X, Z], EVT[X, Z <: Struct] <: EvtLike[X, Z, SL, EV] with EV[X, Z]](reifier: Reifier[S, SL, EV, VAR, EVT]): EV[T, S] = reifier.reifyEvent(this)
+
+  protected[meta] def createReification[S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], EV[+X, Z <: Struct] <: EventLike[X, Z, SL, EV], VAR[X, Z <: Struct] <: VarLike[X, Z, SL, EV] with SL[X, Z], EVT[X, Z <: Struct] <: EvtLike[X, Z, SL, EV] with EV[X, Z]](reifier: Reifier[S, SL, EV, VAR, EVT])(implicit ticket: Ticket[S]): EV[T, S]
 
   def ||[U >: T](other: MetaEventPointer[U]): OrEventPointer[T, U] = OrEventPointer(createDependentNode(other.node), this, other)
-  def &&[U >: T](pred: (U) => Boolean): FilteredEventPointer[T, U] = FilteredEventPointer(createDependentNode(), this, pred)
+  def &&[U >: T](pred: (U) => Boolean): FilteredEventPointer[U, U] = FilteredEventPointer[U, U](createDependentNode(), this, pred)
   def \[U](other: MetaEventPointer[U]): ExceptEventPointer[T, U] = ExceptEventPointer(createDependentNode(other.node), this, other)
   def and[X >: T, U, R](other: MetaEventPointer[U])(merger: (X, U) => R): AndEventPointer[X, U, R] = AndEventPointer(createDependentNode(other.node), this, other, merger)
   def zip[U](other: MetaEventPointer[U]): ZippedEventPointer[T, U] = ZippedEventPointer(createDependentNode(other.node), this, other)
@@ -66,7 +69,9 @@ trait MetaEventPointer[+T] extends MetaReactivePointer[T] {
 }
 
 trait MetaSignalPointer[+A] extends MetaReactivePointer[A] {
-  def reify[S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], EV[+X, Z <: Struct] <: EventLike[X, Z, SL, EV]](reifier: Reifier[S, SL, EV]): SL[A, S] = reifier.reifySignal(this)
+  def reify[S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], EV[+X, Z <: Struct] <: EventLike[X, Z, SL, EV], VAR[X, Z <: Struct] <: VarLike[X, Z, SL, EV] with SL[X, Z], EVT[X, Z <: Struct] <: EvtLike[X, Z, SL, EV] with EV[X, Z]](reifier: Reifier[S, SL, EV, VAR, EVT]): SL[A, S] = reifier.reifySignal(this)
+
+  protected[meta] def createReification[S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], EV[+X, Z <: Struct] <: EventLike[X, Z, SL, EV], VAR[X, Z <: Struct] <: VarLike[X, Z, SL, EV] with SL[X, Z], EVT[X, Z <: Struct] <: EvtLike[X, Z, SL, EV] with EV[X, Z]](reifier: Reifier[S, SL, EV, VAR, EVT])(implicit ticket: Ticket[S]): SL[A, S]
 
   def delay(n: Int): DelayedSignalPointer[A] = DelayedSignalPointer(createDependentNode(), this, n)
   def map[X >: A, B](f: (X) => B): MappedSignalPointer[X, B] = MappedSignalPointer(createDependentNode(), this, f)
@@ -79,36 +84,67 @@ case class MetaObservePointer[T](protected[meta] override var node : Option[Reac
 
 
 case class EvtEventPointer[T](protected[meta] override var node : Option[ReactiveNode]) extends MetaEventPointer[T] {
+  override protected[meta] def createReification[S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], EV[+X, Z <: Struct] <: EventLike[X, Z, SL, EV], VAR[X, Z <: Struct] <: VarLike[X, Z, SL, EV] with SL[X, Z], EVT[X, Z <: Struct] <: EvtLike[X, Z, SL, EV] with EV[X, Z]](reifier: Reifier[S, SL, EV, VAR, EVT])(implicit ticket: Ticket[S]): EVT[T, S] = reifier.createEvt(this)
+
   def fire(value : T) : Unit = node match {
     case Some(n) => n.graph.addLog(LoggedFire(n, value))
     case None => throw new IllegalArgumentException("Cannot fire null pointer!")
   }
 }
-case class ChangeEventPointer[+T](protected[meta] override var node : Option[ReactiveNode], base : MetaSignalPointer[T]) extends MetaEventPointer[(T, T)]
-case class ChangedEventPointer[+T](protected[meta] override var node : Option[ReactiveNode], base : MetaSignalPointer[T]) extends MetaEventPointer[T]
-case class FilteredEventPointer[+T, U](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], pred: (U) => Boolean)(implicit ev: T <:< U) extends MetaEventPointer[T]
-//  def reify2[S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], EV[+X, Z <: Struct] <: EventLike[X, Z, SL, EV]](reifier: Reifier[S, SL, EV])(implicit ticket: Ticket[S]): EV[T, S]  = base.reify(reifier).filter(pred)
-//}
-//object FilteredEventPointer {
-//  def apply[T](node : Option[ReactiveNode], base : MetaEventPointer[T], pred: (T) => Boolean) = new FilteredEventPointer(node, base, pred)
-//}
-case class OrEventPointer[+T, +U](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], other : MetaEventPointer[U]) extends MetaEventPointer[U]
-case class ExceptEventPointer[+T, +U](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], other : MetaEventPointer[U]) extends MetaEventPointer[T]
-case class AndEventPointer[T, U, +R](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], other : MetaEventPointer[U], merger: (T, U) => R) extends MetaEventPointer[R]
-case class ZippedEventPointer[+T, +U](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], other : MetaEventPointer[U]) extends MetaEventPointer[(T, U)]
-case class MappedEventPointer[T, +U](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], mapping: (T) => U) extends MetaEventPointer[U]
-case class FlatMappedEventPointer[T, +B](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], f: (T) => MetaEventPointer[B]) extends MetaEventPointer[B]
+case class ChangeEventPointer[+T](protected[meta] override var node : Option[ReactiveNode], base : MetaSignalPointer[T]) extends MetaEventPointer[Signals.Diff[T]] {
+  override def createReification[S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], EV[+X, Z <: Struct] <: EventLike[X, Z, SL, EV], VAR[X, Z <: Struct] <: VarLike[X, Z, SL, EV] with SL[X, Z], EVT[X, Z <: Struct] <: EvtLike[X, Z, SL, EV] with EV[X, Z]](reifier: Reifier[S, SL, EV, VAR, EVT])(implicit ticket: Ticket[S]): EV[Signals.Diff[T], S] = base.reify(reifier).change
+}
+case class ChangedEventPointer[+T](protected[meta] override var node : Option[ReactiveNode], base : MetaSignalPointer[T]) extends MetaEventPointer[T] {
+  override protected [meta] def createReification[S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], EV[+X, Z <: Struct] <: EventLike[X, Z, SL, EV], VAR[X, Z <: Struct] <: VarLike[X, Z, SL, EV] with SL[X, Z], EVT[X, Z <: Struct] <: EvtLike[X, Z, SL, EV] with EV[X, Z]](reifier: Reifier[S, SL, EV, VAR, EVT])(implicit ticket: Ticket[S]): EV[T, S] = base.reify(reifier).changed
+}
+case class FilteredEventPointer[T, +U >: T](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], pred: (T) => Boolean) extends MetaEventPointer[U] {
+  override protected[meta] def createReification[S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], EV[+X, Z <: Struct] <: EventLike[X, Z, SL, EV], VAR[X, Z <: Struct] <: VarLike[X, Z, SL, EV] with SL[X, Z], EVT[X, Z <: Struct] <: EvtLike[X, Z, SL, EV] with EV[X, Z]](reifier: Reifier[S, SL, EV, VAR, EVT])(implicit ticket: Ticket[S]): EV[T, S] = base.reify(reifier).filter(pred)
+}
+case class OrEventPointer[+T <: U, +U](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], other : MetaEventPointer[U]) extends MetaEventPointer[U] {
+  override protected[meta] def createReification[S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], EV[+X, Z <: Struct] <: EventLike[X, Z, SL, EV], VAR[X, Z <: Struct] <: VarLike[X, Z, SL, EV] with SL[X, Z], EVT[X, Z <: Struct] <: EvtLike[X, Z, SL, EV] with EV[X, Z]](reifier: Reifier[S, SL, EV, VAR, EVT])(implicit ticket: Ticket[S]): EV[U, S] = base.reify(reifier) || other.reify(reifier)
+}
+case class ExceptEventPointer[+T, +U](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], other : MetaEventPointer[U]) extends MetaEventPointer[T] {
+  override protected[meta] def createReification[S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], EV[+X, Z <: Struct] <: EventLike[X, Z, SL, EV], VAR[X, Z <: Struct] <: VarLike[X, Z, SL, EV] with SL[X, Z], EVT[X, Z <: Struct] <: EvtLike[X, Z, SL, EV] with EV[X, Z]](reifier: Reifier[S, SL, EV, VAR, EVT])(implicit ticket: Ticket[S]): EV[T, S] = base.reify(reifier) \ other.reify(reifier)
+}
+case class AndEventPointer[T, U, +R](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], other : MetaEventPointer[U], merger: (T, U) => R) extends MetaEventPointer[R] {
+  override protected[meta] def createReification[S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], EV[+X, Z <: Struct] <: EventLike[X, Z, SL, EV], VAR[X, Z <: Struct] <: VarLike[X, Z, SL, EV] with SL[X, Z], EVT[X, Z <: Struct] <: EvtLike[X, Z, SL, EV] with EV[X, Z]](reifier: Reifier[S, SL, EV, VAR, EVT])(implicit ticket: Ticket[S]): EV[R, S] = base.reify(reifier).and(other.reify(reifier))(merger)
+}
+case class ZippedEventPointer[+T, +U](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], other : MetaEventPointer[U]) extends MetaEventPointer[(T, U)] {
+  override protected[meta] def createReification[S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], EV[+X, Z <: Struct] <: EventLike[X, Z, SL, EV], VAR[X, Z <: Struct] <: VarLike[X, Z, SL, EV] with SL[X, Z], EVT[X, Z <: Struct] <: EvtLike[X, Z, SL, EV] with EV[X, Z]](reifier: Reifier[S, SL, EV, VAR, EVT])(implicit ticket: Ticket[S]): EV[(T, U), S] = base.reify(reifier).zip(other.reify(reifier))
+}
+case class MappedEventPointer[T, +U](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], mapping: (T) => U) extends MetaEventPointer[U] {
+  override protected[meta] def createReification[S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], EV[+X, Z <: Struct] <: EventLike[X, Z, SL, EV], VAR[X, Z <: Struct] <: VarLike[X, Z, SL, EV] with SL[X, Z], EVT[X, Z <: Struct] <: EvtLike[X, Z, SL, EV] with EV[X, Z]](reifier: Reifier[S, SL, EV, VAR, EVT])(implicit ticket: Ticket[S]): EV[U, S] = base.reify(reifier).map(mapping)
+}
+case class FlatMappedEventPointer[T, +B](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], f: (T) => MetaEventPointer[B]) extends MetaEventPointer[B] {
+  override protected[meta] def createReification[S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], EV[+X, Z <: Struct] <: EventLike[X, Z, SL, EV], VAR[X, Z <: Struct] <: VarLike[X, Z, SL, EV] with SL[X, Z], EVT[X, Z <: Struct] <: EvtLike[X, Z, SL, EV] with EV[X, Z]](reifier: Reifier[S, SL, EV, VAR, EVT])(implicit ticket: Ticket[S]): EV[B, S] = base.reify(reifier).flatMap(f(_).reify(reifier))
+}
 
 case class VarSignalPointer[A](protected[meta] override var node : Option[ReactiveNode]) extends MetaSignalPointer[A] {
+  override protected[meta] def createReification[S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], EV[+X, Z <: Struct] <: EventLike[X, Z, SL, EV], VAR[X, Z <: Struct] <: VarLike[X, Z, SL, EV] with SL[X, Z], EVT[X, Z <: Struct] <: EvtLike[X, Z, SL, EV] with EV[X, Z]](reifier: Reifier[S, SL, EV, VAR, EVT])(implicit ticket: Ticket[S]): VAR[A, S] = reifier.createVar(this)
+
   def set(value : A) : Unit = node match {
     case Some(n) => n.graph.addLog(LoggedSet(n, value))
     case None => throw new IllegalArgumentException("Cannot fire null pointer!")
   }
 }
-case class FoldedSignalPointer[T, A](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], init: A, fold: (A, T) => A) extends MetaSignalPointer[A]
-case class ToggledSignalPointer[+T, +A](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], a : MetaSignalPointer[A], b : MetaSignalPointer[A]) extends MetaSignalPointer[A]
-case class SnapshotSignalPointer[+T, +A](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], s : MetaSignalPointer[A]) extends MetaSignalPointer[A]
-case class SwitchOnceSignalPointer[+T, +A](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], original : MetaSignalPointer[A], newSignal : MetaSignalPointer[A]) extends MetaSignalPointer[A]
-case class SwitchToSignalPointer[+T, +A](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], original : MetaSignalPointer[A]) extends MetaSignalPointer[A]
-case class DelayedSignalPointer[+A](protected[meta] override var node : Option[ReactiveNode], base : MetaSignalPointer[A], n: Int) extends MetaSignalPointer[A]
-case class MappedSignalPointer[A, +U](protected[meta] override var node : Option[ReactiveNode], base : MetaSignalPointer[A],  mapping: (A) => U) extends MetaSignalPointer[U]
+case class FoldedSignalPointer[T, A](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], init: A, fold: (A, T) => A) extends MetaSignalPointer[A] {
+  override protected[meta] def createReification[S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], EV[+X, Z <: Struct] <: EventLike[X, Z, SL, EV], VAR[X, Z <: Struct] <: VarLike[X, Z, SL, EV] with SL[X, Z], EVT[X, Z <: Struct] <: EvtLike[X, Z, SL, EV] with EV[X, Z]](reifier: Reifier[S, SL, EV, VAR, EVT])(implicit ticket: Ticket[S]): SL[A, S] = base.reify(reifier).fold(init)(fold)
+}
+case class ToggledSignalPointer[+T, +A](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], a : MetaSignalPointer[A], b : MetaSignalPointer[A]) extends MetaSignalPointer[A] {
+  override protected[meta] def createReification[S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], EV[+X, Z <: Struct] <: EventLike[X, Z, SL, EV], VAR[X, Z <: Struct] <: VarLike[X, Z, SL, EV] with SL[X, Z], EVT[X, Z <: Struct] <: EvtLike[X, Z, SL, EV] with EV[X, Z]](reifier: Reifier[S, SL, EV, VAR, EVT])(implicit ticket: Ticket[S]): SL[A, S] = base.reify(reifier).toggle(a.reify(reifier), b.reify(reifier))
+}
+case class SnapshotSignalPointer[+T, +A](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], s : MetaSignalPointer[A]) extends MetaSignalPointer[A] {
+  override protected[meta] def createReification[S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], EV[+X, Z <: Struct] <: EventLike[X, Z, SL, EV], VAR[X, Z <: Struct] <: VarLike[X, Z, SL, EV] with SL[X, Z], EVT[X, Z <: Struct] <: EvtLike[X, Z, SL, EV] with EV[X, Z]](reifier: Reifier[S, SL, EV, VAR, EVT])(implicit ticket: Ticket[S]): SL[A, S] = base.reify(reifier).snapshot(s.reify(reifier))
+}
+case class SwitchOnceSignalPointer[+T, +A](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], original : MetaSignalPointer[A], newSignal : MetaSignalPointer[A]) extends MetaSignalPointer[A] {
+  override protected[meta] def createReification[S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], EV[+X, Z <: Struct] <: EventLike[X, Z, SL, EV], VAR[X, Z <: Struct] <: VarLike[X, Z, SL, EV] with SL[X, Z], EVT[X, Z <: Struct] <: EvtLike[X, Z, SL, EV] with EV[X, Z]](reifier: Reifier[S, SL, EV, VAR, EVT])(implicit ticket: Ticket[S]): SL[A, S] = base.reify(reifier).switchOnce(original.reify(reifier), newSignal.reify(reifier))
+}
+case class SwitchToSignalPointer[+T <: A, +A](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], original : MetaSignalPointer[A]) extends MetaSignalPointer[A] {
+  override protected[meta] def createReification[S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], EV[+X, Z <: Struct] <: EventLike[X, Z, SL, EV], VAR[X, Z <: Struct] <: VarLike[X, Z, SL, EV] with SL[X, Z], EVT[X, Z <: Struct] <: EvtLike[X, Z, SL, EV] with EV[X, Z]](reifier: Reifier[S, SL, EV, VAR, EVT])(implicit ticket: Ticket[S]): SL[A, S] = base.reify(reifier).switchTo(original.reify(reifier))
+}
+case class DelayedSignalPointer[+A](protected[meta] override var node : Option[ReactiveNode], base : MetaSignalPointer[A], n: Int) extends MetaSignalPointer[A] {
+  override protected[meta] def createReification[S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], EV[+X, Z <: Struct] <: EventLike[X, Z, SL, EV], VAR[X, Z <: Struct] <: VarLike[X, Z, SL, EV] with SL[X, Z], EVT[X, Z <: Struct] <: EvtLike[X, Z, SL, EV] with EV[X, Z]](reifier: Reifier[S, SL, EV, VAR, EVT])(implicit ticket: Ticket[S]): SL[A, S] = base.reify(reifier).delay(n)
+}
+case class MappedSignalPointer[A, +U](protected[meta] override var node : Option[ReactiveNode], base : MetaSignalPointer[A],  mapping: (A) => U) extends MetaSignalPointer[U] {
+  override protected[meta] def createReification[S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], EV[+X, Z <: Struct] <: EventLike[X, Z, SL, EV], VAR[X, Z <: Struct] <: VarLike[X, Z, SL, EV] with SL[X, Z], EVT[X, Z <: Struct] <: EvtLike[X, Z, SL, EV] with EV[X, Z]](reifier: Reifier[S, SL, EV, VAR, EVT])(implicit ticket: Ticket[S]): SL[U, S] = base.reify(reifier).map(mapping)
+}
