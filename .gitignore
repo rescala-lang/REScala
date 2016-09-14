@@ -3,6 +3,7 @@ target
 *.iml
 bin
 .project
+*.class
 .cache
 .cache-main
 .cache-tests
