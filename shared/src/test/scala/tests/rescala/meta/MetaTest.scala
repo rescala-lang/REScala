@@ -13,9 +13,9 @@ class MetaTest extends FunSuite {
 
     val evt = g.createEvt[Int]()
     val evt2 = g.createEvt[Boolean]()
-    val comb = ((evt && (_ < 0)) \ evt2).zip(evt2)
+    val comb = ((evt.map((x : Int) => x + 1) && (_ < 0)) \ evt2).zip(evt2).fold(0)((a, b) => a + b._1)
     comb match {
-      case ZippedEventPointer(_, ExceptEventPointer(_, FilteredEventPointer(_, EvtEventPointer(_), _), EvtEventPointer(_)), EvtEventPointer(_)) => assert(g.numNodes == 5, "graph has correct number of nodes")
+      case FoldedSignalPointer(_, ZippedEventPointer(_, ExceptEventPointer(_, FilteredEventPointer(_, MappedEventPointer(_, EvtEventPointer(_), _), _), EvtEventPointer(_)), EvtEventPointer(_)), _, _) => assert(g.numNodes == 7, "graph has correct number of nodes")
       case _ => fail("meta AST was not correctly built!")
     }
     val snl = g.createVar[Int]()
