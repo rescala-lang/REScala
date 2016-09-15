@@ -50,6 +50,23 @@ window.onload = function () {
 		}, true);
 		li.firstElementChild.appendChild(c);
 		li.classList.add("collapsible");
+		
+		var collapsibleItems = li.nextElementSibling.firstElementChild.querySelectorAll("a").length - 1;
+		if (collapsibleItems > 0) {
+			var hr = document.createElement("hr");
+			hr.style.height = (collapsibleItems * 29) + "px";
+			
+			var node = li;
+			var level = 1;
+			while (node.id != "toc") {
+				if (node.nodeName == "OL")
+					level += 1;
+				node = node.parentElement;
+			}
+			
+			hr.style.left = (30 * level) + "px";
+			li.appendChild(hr);
+		}
 	});
 }
 

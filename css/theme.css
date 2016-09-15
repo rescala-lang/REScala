@@ -190,8 +190,13 @@ h1:before,h2:before,h3:before,h4:before {
   line-height:20px;
 }
 
+#toc > li {
+ border: 1px solid #ddd;
+}
+
 #toc li  a{
-	color: #555;
+  color: #555;
+  border: 0px;
 }
 
 #toc li a:before {
@@ -201,6 +206,17 @@ h1:before,h2:before,h3:before,h4:before {
   margin-right: 1em;
   position: relative;
   min-width: 2em;
+}
+
+#toc hr {
+  position: absolute;
+  left: 30px;
+  z-index: 1000;
+  border: 0;
+  margin-top: 16px;
+  margin-bottom: 16px;
+  width: 1px;
+  background: #ddd;
 }
 
 /*
