@@ -3,6 +3,7 @@ package rescala.api
 
 
 import rescala.meta._
+import rescala.reactives.Signals
 
 import scala.language.higherKinds
 
@@ -25,6 +26,17 @@ trait Api {
   def mapE[A, B](event: Event[A])(f: A => B): Event[B]
   def fold[A, Acc](event: Event[A])(init: Acc)(f: (Acc, A) => Acc): Signal[Acc]
   def changed[A](signal: Signal[A]): Event[A]
+  def filter[A](event: Event[A])(f: A => Boolean): Event[A]
+  def and[A, B, C](event: Event[A], other: Event[B])(merger: (A, B) => C): Event[C]
+  def or[A, B >: A](event: Event[A], other: Event[B]): Event[B]
+  def zip[A, B](event: Event[A], other: Event[B]): Event[(A, B)]
+  def except[A, B](event: Event[A], other: Event[B]): Event[A]
+  def change[A](signal: Signal[A]): Event[Signals.Diff[A]]
+  def flatMap[A, B](event: Event[A], f: A => Event[B]): Event[B]
+  def snapshot[A](event: Event[_], signal: Signal[A]): Signal[A]
+  def switchOnce[A](event: Event[_], a: Signal[A], b: Signal[A]): Signal[A]
+  def switchTo[A](event: Event[A], a: Signal[A]): Signal[A]
+  def toggle[A](event: Event[_], a: Signal[A], b: Signal[A]): Signal[A]
 }
 
 object Api {
@@ -49,6 +61,19 @@ object Api {
     override def now[A](signal: Signal[A]): A = signal.now
     override def fire[A](evt: Evt[A], value: A): Unit = evt.fire(value)
     override def set[A](vr: Var[A], value: A): Unit = vr.set(value)
+
+    override def filter[A](event: Event[A])(f: A => Boolean): Event[A] = event.filter(f)
+    override def and[A, B, C](event: Event[A], other: Event[B])(merger: (A, B) => C): Event[C] = event.and(other)(merger)
+    override def or[A, B >: A](event: Event[A], other: Event[B]): Event[B] = event || other
+    override def zip[A, B](event: Event[A], other: Event[B]): Event[(A, B)] = event.zip(other)
+    override def except[A, B](event: Event[A], other: Event[B]): Event[A] = event \ other
+    override def change[A](signal: Signal[A]): Event[Signals.Diff[A]] = signal.change
+    override def flatMap[A, B](event: Event[A], f: A => Event[B]): Event[B] = event.flatMap(f)
+    override def snapshot[A](event: Event[_], signal: Signal[A]): Signal[A] = event.snapshot(signal)
+    override def switchOnce[A](event: Event[_], a: Signal[A], b: Signal[A]): Signal[A] = event.switchOnce(a, b)
+    override def switchTo[A](event: Event[A], a: Signal[A]): Signal[A] = event.switchTo(a)
+    override def toggle[A](event: Event[_], a: Signal[A], b: Signal[A]): Signal[A] = event.toggle(a, b)
+
   }
 
   class metaApi(graph : ReactiveGraph) extends Api {
@@ -70,5 +95,17 @@ object Api {
     override def now[A](signal: Signal[A]): A = ??? //signal.now
     override def fire[A](evt: Evt[A], value: A): Unit = evt.fire(value)
     override def set[A](vr: Var[A], value: A): Unit = vr.set(value)
+
+    override def filter[A](event: Event[A])(f: A => Boolean): Event[A] = event && f
+    override def and[A, B, C](event: Event[A], other: Event[B])(merger: (A, B) => C): Event[C] = event.and(other)(merger)
+    override def or[A, B >: A](event: Event[A], other: Event[B]): Event[B] = event || other
+    override def zip[A, B](event: Event[A], other: Event[B]): Event[(A, B)] = event.zip(other)
+    override def except[A, B](event: Event[A], other: Event[B]): Event[A] = event \ other
+    override def change[A](signal: Signal[A]): Event[Signals.Diff[A]] = signal.change
+    override def flatMap[A, B](event: Event[A], f: A => Event[B]): Event[B] = event.flatMap(f)
+    override def snapshot[A](event: Event[_], signal: Signal[A]): Signal[A] = event.snapshot(signal)
+    override def switchOnce[A](event: Event[_], a: Signal[A], b: Signal[A]): Signal[A] = event.switchOnce(a, b)
+    override def switchTo[A](event: Event[A], a: Signal[A]): Signal[A] = event.switchTo(a)
+    override def toggle[A](event: Event[_], a: Signal[A], b: Signal[A]): Signal[A] = event.toggle(a, b)
   }
 }
