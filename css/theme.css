@@ -138,6 +138,19 @@ h1:before,h2:before,h3:before,h4:before {
   border-left: 4px solid transparent;
 }
 
+@media screen and (max-width:680px) {
+  body > div.container {
+    display: flex;
+    flex-direction: column;
+  }
+  #main-content {
+    order: 2;
+  }
+  .col-sm-4 {
+    order: 1;
+  }
+}
+
 #toc li.collapsed + li {
   display: none;
 }
