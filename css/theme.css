@@ -223,3 +223,12 @@ h1:before,h2:before,h3:before,h4:before {
   -webkit-transform:rotate(-45deg);
   transform:rotate(-45deg);
 }
+
+h1:target,h2:target,h3:target,h4:target,h5:target,h6:target {
+  animation: highlight 1s ease;
+}
+
+@keyframes highlight {
+  from { background: yellow; }
+  to { background: white; }
+}
