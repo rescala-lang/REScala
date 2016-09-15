@@ -203,6 +203,26 @@ h1:before,h2:before,h3:before,h4:before {
   min-width: 2em;
 }
 
+/*
+ * Override bootstrap behavior
+*/
+#toc .list-group-item {
+  border-bottom-left-radius: 0px;
+  border-bottom-right-radius: 0px;
+  border-top-left-radius: 0px;
+  border-top-right-radius: 0px;
+}
+
+#toc > li:first-Child > a {
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+}
+
+#toc > li:last-Child > a {
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
 #back-to-top {
   position: fixed;
   bottom: 30px;
