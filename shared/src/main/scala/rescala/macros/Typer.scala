@@ -283,8 +283,6 @@ class Typer[C <: Context](val c: C) {
 
 
   private object typeApplicationCleaner extends Transformer {
-    val processedMethodTrees = mutable.Set.empty[Tree]
-
     def prependRootPackage(tree: Tree): Tree = tree match {
       case Ident(name) if tree.symbol.owner == c.mirror.RootClass =>
         Select(Ident(termNames.ROOTPKG), name)
@@ -330,92 +328,6 @@ class Typer[C <: Context](val c: C) {
         internal setType (valDef, tree.tpe)
         internal setPos (valDef, tree.pos)
 
-      case DefDef(mods, name, tparams, vparamss, tpt, rhs) =>
-        val typeTree = tpt match {
-          case tree: TypeTree if tree.original == null => TypeTree()
-          case tree => transform(tree)
-        }
-
-        val defDef = DefDef(
-          transformModifiers(mods), name, transformTypeDefs(tparams),
-          transformValDefss(vparamss), typeTree, transform(rhs))
-        internal setSymbol (defDef, tree.symbol)
-        internal setType (defDef, tree.tpe)
-        internal setPos (defDef, tree.pos)
-
-      case Apply(fun, _) if !(processedMethodTrees contains tree) =>
-        def processApplications(tree: Tree, count: Int): (List[Tree], Int) =
-          tree match {
-            case Apply(fun, _) =>
-              processedMethodTrees += tree
-              processApplications(fun, count + 1)
-            case TypeApply(_, targs) =>
-              (targs, count)
-            case _ =>
-              (List.empty, count)
-          }
-
-        val (targs, applicationCount) = processApplications(tree, 0)
-
-        val hasImplicitParamList =
-          tree.symbol != null &&
-          tree.symbol.isMethod &&
-          tree.symbol.asMethod.paramLists.size == applicationCount &&
-          (tree.symbol.asMethod.paramLists.lastOption exists {
-            _.headOption exists { _.isImplicit }
-          })
-
-        val hasNonRepresentableType = targs exists { arg =>
-          arg.tpe != null && (arg.tpe exists {
-            case TypeRef(NoPrefix, name, List()) =>
-              name.toString endsWith ".type"
-            case _ =>
-              false
-          })
-        }
-
-        if (hasImplicitParamList && hasNonRepresentableType)
-          transform(fun)
-        else
-          transform(tree)
-
-      case Apply(TypeApply(fun, targs), args) =>
-        val typeArgsSynthetic = targs forall {
-          case tree: TypeTree if tree.original == null => true
-          case tree => false
-        }
-
-        val typeArgsInferable =
-          if (tree.symbol != null && tree.symbol.isMethod) {
-            val method = tree.symbol.asMethod
-            val hasImplicitParamList = method.paramLists.lastOption exists {
-              _.headOption exists { _.isImplicit }
-            }
-
-            if (!hasImplicitParamList) {
-              val typeParams = method.typeParams
-              val argTypes = method.paramLists.flatten map { _.typeSignature }
-
-              typeParams forall { typeParam =>
-                argTypes exists { _ contains typeParam }
-              }
-            }
-            else
-              false
-          }
-          else
-            false
-
-        if (typeArgsSynthetic && typeArgsInferable) {
-          val apply = Apply(fun, args)
-          internal setSymbol (apply, tree.symbol)
-          internal setType (apply, tree.tpe)
-          internal setPos (apply, tree.pos)
-          transform(apply)
-        }
-        else
-          super.transform(tree)
-
       case TypeApply(fun, targs) =>
         val hasNonRepresentableType = targs exists { arg =>
           arg.tpe != null && (arg.tpe exists {
@@ -430,6 +342,11 @@ class Typer[C <: Context](val c: C) {
           transform(fun)
         else
           super.transform(tree)
+
+      case Select(_, _) | Ident(_) | This(_)
+          if (tree.tpe != null && isTypeUnderExpansion(tree.tpe)) =>
+        internal setSymbol (tree, NoSymbol)
+        super.transform(tree)
 
       case _ =>
         super.transform(tree)
@@ -566,7 +483,66 @@ class Typer[C <: Context](val c: C) {
         symbol.owner == c.mirror.RootClass) ||
        inScalaPackage(symbol.owner))
 
-    val expandingInScalaPackage =  inScalaPackage(c.internal.enclosingOwner)
+    val expandingInScalaPackage = inScalaPackage(c.internal.enclosingOwner)
+
+    def defaultArgDef(defDef: DefDef): Boolean = {
+      val nameString = defDef.name.toString
+      defDef.symbol != NoSymbol &&
+      (nameString contains "$default$") &&
+      ((nameString endsWith "$macro") ||
+       (defDef.mods hasFlag (SYNTHETIC | DEFAULTPARAM)))
+    }
+
+    val definedDefaultArgs = tree collect {
+      case defDef @ DefDef(_, _, _, _, _, _) if defaultArgDef(defDef) =>
+        defDef.symbol
+    }
+
+    val accessedDefaultArgs = tree collect {
+      case select @ Select(_, _) if definedDefaultArgs contains select.symbol =>
+        select.symbol
+    }
+
+    def processDefaultArgs(stats: List[Tree]) = {
+      val macroDefaultArgs = mutable.ListBuffer.empty[DefDef]
+      val macroDefaultArgsPending = mutable.Map.empty[String, Option[DefDef]]
+
+      val processedStats = stats map {
+        case defDef @ DefDef(mods, name, tparams, vparamss, tpt, rhs)
+            if defaultArgDef(defDef) =>
+          val nameString = name.toString
+          val macroDefDef = DefDef(Modifiers(), TermName(s"$nameString$$macro"),
+            tparams, vparamss, tpt, rhs)
+
+          if (nameString endsWith "$macro") {
+            if (accessedDefaultArgs contains defDef.symbol)
+              (macroDefaultArgsPending
+                getOrElseUpdate (
+                  nameString substring (0, nameString.size - 6), None)
+                foreach { macroDefaultArgs += _ })
+            EmptyTree
+          }
+          else {
+            if ((accessedDefaultArgs contains defDef.symbol) ||
+                (macroDefaultArgsPending contains nameString))
+              macroDefaultArgs += macroDefDef
+            else
+              macroDefaultArgsPending += nameString -> Some(macroDefDef)
+            defDef
+          }
+
+        case stat =>
+          stat
+      }
+
+      processedStats ++ macroDefaultArgs
+    }
+
+    def applyMetaProperties(from: Tree, to: Tree) = {
+      if (from.symbol != null)
+        internal setSymbol (to, from.symbol)
+      internal setType (internal setPos (to, from.pos), from.tpe)
+    }
 
     object typecheckFixer extends Transformer {
       override def transform(tree: Tree) = tree match {
@@ -574,6 +550,24 @@ class Typer[C <: Context](val c: C) {
           if (tree.original != null)
             internal setOriginal (tree, transform(tree.original))
           tree
+
+        // workaround for default arguments
+        case Template(parents, self, body) =>
+          super.transform(
+            applyMetaProperties(
+              tree, Template(parents, self, processDefaultArgs(body))))
+
+        case Block(stats, expr) =>
+          val block = processDefaultArgs(expr :: stats)
+          super.transform(
+            applyMetaProperties(tree, Block(block.tail, block.head)))
+
+        case Select(qualifier, name)
+            if (accessedDefaultArgs contains tree.symbol) =>
+          val macroName =
+            if (name.toString endsWith "$macro") name
+            else TermName(s"${name.toString}$$macro")
+          super.transform(Select(qualifier, macroName))
 
         // fix names for compiler-generated values from the scala package
         case Ident(_) if tree.symbol.isTerm =>
@@ -586,11 +580,8 @@ class Typer[C <: Context](val c: C) {
 
         // fix renamed imports
         case Select(qual, _) if tree.symbol != NoSymbol =>
-          internal setSymbol (
-            internal setType (
-              super.transform(Select(qual, tree.symbol.name)),
-              tree.tpe),
-            tree.symbol)
+          super.transform(
+            applyMetaProperties(tree, Select(qual, tree.symbol.name)))
 
         // fix extractors
         case UnApply(
@@ -598,11 +589,8 @@ class Typer[C <: Context](val c: C) {
           fun collect {
             case Select(fun, TermName("unapply" | "unapplySeq")) => fun
           } match {
-            case fun :: _ =>
-              val apply = Apply(fun, args)
-              internal setType (apply, fun.tpe)
-              internal setPos (apply, fun.pos)
-              transform(apply)
+            case Seq(fun) =>
+              transform(applyMetaProperties(fun, Apply(fun, args)))
             case _ =>
               super.transform(tree)
           }
@@ -780,12 +768,10 @@ class Typer[C <: Context](val c: C) {
           else
             tree
 
-        case DefDef(mods, name, _, _, _, _) =>
-          if ((mods hasFlag (SYNTHETIC | DEFAULTPARAM)) &&
-              (name.toString contains "$default$"))
-            EmptyTree
-          else
-            super.transform(tree)
+        case DefDef(mods, name, _, _, _, _)
+            if (mods hasFlag (SYNTHETIC | DEFAULTPARAM)) &&
+               (name.toString contains "$default$") =>
+          EmptyTree
 
         case _ =>
           super.transform(tree)

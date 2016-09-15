@@ -92,11 +92,17 @@ object ReactiveMacros {
 
       private def isReactive(tree: Tree) =
         if (tree.tpe == null) { treeTypeNullWarning(); false }
-        else tree.tpe <:< typeOf[Stateful[_, _]] || tree.tpe <:< typeOf[PulseOption[_, _]]
+        else
+          !(tree.tpe <:< definitions.NullTpe) &&
+          !(tree.tpe <:< definitions.NothingTpe) &&
+          (tree.tpe <:< typeOf[Stateful[_, _]] || tree.tpe <:< typeOf[PulseOption[_, _]])
 
       private def isStatefulReactive(tree: Tree) =
         if (tree.tpe == null) { treeTypeNullWarning(); false }
-        else tree.tpe <:< typeOf[Stateful[_, _]]
+        else
+          !(tree.tpe <:< definitions.NullTpe) &&
+          !(tree.tpe <:< definitions.NothingTpe) &&
+          tree.tpe <:< typeOf[Stateful[_, _]]
 
       override def transform(tree: Tree) =
         tree match {
