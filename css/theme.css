@@ -125,6 +125,13 @@ h1:before,h2:before,h3:before,h4:before {
     text-align: left;
     float: none;
   }
+  #navbar .dropdown_content.show_content{
+    position: initial;
+    margin-left: 5%;
+  }
+  #navbar .dropdown_content.show_content li{
+    display: block;
+  }
 }
 
 .dropdown:after {
