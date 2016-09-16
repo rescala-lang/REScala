@@ -1,9 +1,11 @@
 // wait for html to finish loading, as we need document.body
 window.onload = function () {
 	// listen for clicks on the document and close open dropdowns
-	document.body.addEventListener('click', function(element) {
-		if (element === undefined || element.classList === undefined || !element.classList.contains(".dropdown_content"))
-		Util.DOMQueryAll(".dropdown_content.show_content").forEach(function(element) {element.classList.remove("show_content")});
+	document.body.addEventListener('click', function(event) {
+		var element = event.target;
+		if (element === undefined || element.classList === undefined || !element.classList.contains("dropdown")) {
+			Util.DOMQueryAll(".dropdown_content.show_content").forEach(function(element) {element.classList.remove("show_content")});
+		}
 	}, true);
 
 	var manualTOC = document.body.querySelector("#toc");
