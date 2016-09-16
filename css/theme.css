@@ -167,6 +167,10 @@ h1:before,h2:before,h3:before,h4:before {
   float: right;
 }
 
+#toc .collapsible {
+  margin-bottom: 0px;
+}
+
 #toc .collapsible.collapsed .collapseIcon:before {
   content: "[+]";
 }
@@ -215,7 +219,7 @@ h1:before,h2:before,h3:before,h4:before {
   min-width: 2em;
 }
 
-#toc hr {
+#toc .collapsible > hr {
   position: absolute;
   left: 30px;
   z-index: 1000;
@@ -224,6 +228,10 @@ h1:before,h2:before,h3:before,h4:before {
   margin-bottom: 16px;
   width: 1px;
   background: #ddd;
+}
+
+#toc .collapsible.collapsed > hr {
+  display: none;
 }
 
 /*
