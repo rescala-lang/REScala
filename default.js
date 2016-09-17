@@ -47,6 +47,7 @@ window.onload = function () {
 		c.classList.add("collapseIcon");
 		c.addEventListener("click", function(e) {
 			li.classList.toggle("collapsed");
+			updateTOClines();
 			e.stopPropagation();
 			e.preventDefault();
 		}, true);
@@ -56,8 +57,6 @@ window.onload = function () {
 		var collapsibleItems = li.nextElementSibling.firstElementChild.querySelectorAll("a").length - 1;
 		if (collapsibleItems > 0) {
 			var hr = document.createElement("hr");
-			hr.style.height = (collapsibleItems * 29) + "px";
-			
 			var node = li;
 			var level = 1;
 			while (node.id != "toc") {
@@ -68,6 +67,20 @@ window.onload = function () {
 			
 			hr.style.left = (30 * level) + "px";
 			li.appendChild(hr);
+		}
+	});
+	updateTOClines();
+}
+
+function updateTOClines() {
+	Util.DOMQueryAll("#toc hr").forEach(function(hr) {
+		var li = hr.parentElement;
+		var collapsibleItems = Util.QueryAll(li.nextElementSibling.firstElementChild,"a").filter(function(a) {
+			return a.offsetParent !== null;
+		}).length-1;
+		hr.style.height = "0px";
+		if (collapsibleItems > 0) {
+			hr.style.height = (collapsibleItems * 29) + "px";
 		}
 	});
 }
@@ -110,5 +123,11 @@ var Util = {
 	},
 	DOMQueryAll: function(s) {
 		return Util.toArray(document.querySelectorAll(s));
+	},
+	Query: function(element, s) {
+		return Util.toArray(element.querySelector(s));
+	},
+	QueryAll: function(element, s) {
+		return Util.toArray(element.querySelectorAll(s));
 	}
 }
