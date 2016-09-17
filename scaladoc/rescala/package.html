@@ -1,0 +1,665 @@
+<!DOCTYPE html >
+<html>
+        <head>
+          <title>rescala - rescala</title>
+          <meta name="description" content="rescala - rescala" />
+          <meta name="keywords" content="rescala rescala" />
+          <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+          
+      <link href="../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
+      <link href="../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css" />
+      <script type="text/javascript" src="../lib/jquery.js" id="jquery-js"></script>
+      <script type="text/javascript" src="../lib/jquery-ui.js"></script>
+      <script type="text/javascript" src="../lib/template.js"></script>
+      <script type="text/javascript" src="../lib/tools.tooltip.js"></script>
+      
+      <script type="text/javascript">
+         if(top === self) {
+            var url = '../index.html';
+            var hash = 'rescala.package';
+            var anchor = window.location.hash;
+            var anchor_opt = '';
+            if (anchor.length >= 1)
+              anchor_opt = '@' + anchor.substring(1);
+            window.location.href = url + '#' + hash + anchor_opt;
+         }
+   	  </script>
+    
+        </head>
+        <body class="value">
+      <div id="definition">
+        <img src="../lib/package_big.png" />
+        
+        <h1>rescala</h1> <span class="permalink">
+      <a href="../index.html#rescala.package" title="Permalink" target="_top">
+        <img src="../lib/permalink.png" />
+      </a>
+    </span>
+      </div>
+
+      <h4 id="signature" class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <span class="name">rescala</span>
+      </span>
+      </h4>
+      
+          <div id="comment" class="fullcommenttop"><div class="toggleContainer block">
+          <span class="toggle">Linear Supertypes</span>
+          <div class="superTypes hiddenContent"><span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+        </div></div>
+        
+
+      <div id="mbrsel">
+        <div id="textfilter"><span class="pre"></span><span class="input"><input id="mbrsel-input" type="text" accesskey="/" /></span><span class="post"></span></div>
+        <div id="order">
+              <span class="filtertype">Ordering</span>
+              <ol>
+                
+                <li class="alpha in"><span>Alphabetic</span></li>
+                <li class="inherit out"><span>By inheritance</span></li>
+              </ol>
+            </div>
+        <div id="ancestors">
+                <span class="filtertype">Inherited<br />
+                </span>
+                <ol id="linearization">
+                  <li class="in" name="rescala"><span>rescala</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                </ol>
+              </div><div id="ancestors">
+            <span class="filtertype"></span>
+            <ol>
+              <li class="hideall out"><span>Hide All</span></li>
+              <li class="showall in"><span>Show all</span></li>
+            </ol>
+            <a href="http://docs.scala-lang.org/overviews/scaladoc/usage.html#members" target="_blank">Learn more about member selection</a>
+          </div>
+        <div id="visbl">
+            <span class="filtertype">Visibility</span>
+            <ol><li class="public in"><span>Public</span></li><li class="all out"><span>All</span></li></ol>
+          </div>
+      </div>
+
+      <div id="template">
+        <div id="allMembers">
+        
+
+        <div id="types" class="types members">
+              <h3>Type Members</h3>
+              <ol><li name="rescala.Changing" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="Changing[+T]extendsAnyRef"></a>
+      <a id="Changing[+T]:Changing[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="Changing.html"><span class="name">Changing</span></a><span class="tparams">[<span name="T">+T</span>]</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../index.html#rescala.package@Changing[+T]extendsAnyRef" title="Permalink" target="_top">
+        <img src="../lib/permalink.png" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.DepHolder" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="DepHolderextendsReactive"></a>
+      <a id="DepHolder:DepHolder"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="DepHolder.html"><span class="name">DepHolder</span></a><span class="result"> extends <a href="Reactive.html" class="extype" name="rescala.Reactive">Reactive</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../index.html#rescala.package@DepHolderextendsReactive" title="Permalink" target="_top">
+        <img src="../lib/permalink.png" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">A node that has nodes that depend on it</p>
+    </li><li name="rescala.Dependent" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="DependentextendsReactive"></a>
+      <a id="Dependent:Dependent"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="Dependent.html"><span class="name">Dependent</span></a><span class="result"> extends <a href="Reactive.html" class="extype" name="rescala.Reactive">Reactive</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../index.html#rescala.package@DependentextendsReactive" title="Permalink" target="_top">
+        <img src="../lib/permalink.png" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">A node that depends on other nodes</p>
+    </li><li name="rescala.DependentSignal" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="DependentSignal[+T]extendsSignal[T]withDependent"></a>
+      <a id="DependentSignal[+T]:DependentSignal[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="DependentSignal.html"><span class="name">DependentSignal</span></a><span class="tparams">[<span name="T">+T</span>]</span><span class="result"> extends <a href="Signal.html" class="extype" name="rescala.Signal">Signal</a>[<span class="extype" name="rescala.DependentSignal.T">T</span>] with <a href="Dependent.html" class="extype" name="rescala.Dependent">Dependent</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../index.html#rescala.package@DependentSignal[+T]extendsSignal[T]withDependent" title="Permalink" target="_top">
+        <img src="../lib/permalink.png" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">An inner node which depends on other values</p>
+    </li><li name="rescala.DependentSignalImplementation" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="DependentSignalImplementation[+T]extendsDependentSignal[T]"></a>
+      <a id="DependentSignalImplementation[+T]:DependentSignalImplementation[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="DependentSignalImplementation.html"><span class="name">DependentSignalImplementation</span></a><span class="tparams">[<span name="T">+T</span>]</span><span class="result"> extends <a href="DependentSignal.html" class="extype" name="rescala.DependentSignal">DependentSignal</a>[<span class="extype" name="rescala.DependentSignalImplementation.T">T</span>]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../index.html#rescala.package@DependentSignalImplementation[+T]extendsDependentSignal[T]" title="Permalink" target="_top">
+        <img src="../lib/permalink.png" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.FoldableReactive" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="FoldableReactive[+A]extendsAnyRef"></a>
+      <a id="FoldableReactive[+A]:FoldableReactive[A]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="FoldableReactive.html"><span class="name">FoldableReactive</span></a><span class="tparams">[<span name="A">+A</span>]</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../index.html#rescala.package@FoldableReactive[+A]extendsAnyRef" title="Permalink" target="_top">
+        <img src="../lib/permalink.png" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.FoldedSignal" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="FoldedSignal[+T,+E]extendsDependentSignalImplementation[T]"></a>
+      <a id="FoldedSignal[+T,+E]:FoldedSignal[T,E]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="FoldedSignal.html"><span class="name">FoldedSignal</span></a><span class="tparams">[<span name="T">+T</span>, <span name="E">+E</span>]</span><span class="result"> extends <a href="DependentSignalImplementation.html" class="extype" name="rescala.DependentSignalImplementation">DependentSignalImplementation</a>[<span class="extype" name="rescala.FoldedSignal.T">T</span>]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../index.html#rescala.package@FoldedSignal[+T,+E]extendsDependentSignalImplementation[T]" title="Permalink" target="_top">
+        <img src="../lib/permalink.png" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.Reactive" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="ReactiveextendsAnyRef"></a>
+      <a id="Reactive:Reactive"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="Reactive.html"><span class="name">Reactive</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../index.html#rescala.package@ReactiveextendsAnyRef" title="Permalink" target="_top">
+        <img src="../lib/permalink.png" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">A Reactive is a value type which has a dependency to other Reactives</p>
+    </li><li name="rescala.Signal" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="Signal[+A]extendsChanging[A]withFoldableReactive[A]withDepHolder"></a>
+      <a id="Signal[+A]:Signal[A]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="Signal.html"><span class="name">Signal</span></a><span class="tparams">[<span name="A">+A</span>]</span><span class="result"> extends <a href="Changing.html" class="extype" name="rescala.Changing">Changing</a>[<span class="extype" name="rescala.Signal.A">A</span>] with <a href="FoldableReactive.html" class="extype" name="rescala.FoldableReactive">FoldableReactive</a>[<span class="extype" name="rescala.Signal.A">A</span>] with <a href="DepHolder.html" class="extype" name="rescala.DepHolder">DepHolder</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../index.html#rescala.package@Signal[+A]extendsChanging[A]withFoldableReactive[A]withDepHolder" title="Permalink" target="_top">
+        <img src="../lib/permalink.png" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.SignalSynt" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SignalSynt[+T]extendsDependentSignalImplementation[T]"></a>
+      <a id="SignalSynt[+T]:SignalSynt[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="SignalSynt.html"><span class="name">SignalSynt</span></a><span class="tparams">[<span name="T">+T</span>]</span><span class="result"> extends <a href="DependentSignalImplementation.html" class="extype" name="rescala.DependentSignalImplementation">DependentSignalImplementation</a>[<span class="extype" name="rescala.SignalSynt.T">T</span>]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../index.html#rescala.package@SignalSynt[+T]extendsDependentSignalImplementation[T]" title="Permalink" target="_top">
+        <img src="../lib/permalink.png" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">A dependant reactive value with dynamic dependencies (depending signals can change during evaluation)</p>
+    </li><li name="rescala.Stamp" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="StampextendsProductwithSerializable"></a>
+      <a id="Stamp:Stamp"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">sealed </span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="Stamp.html"><span class="name">Stamp</span></a><span class="params">(<span name="roundNum">roundNum: <span class="extype" name="scala.Int">Int</span></span>, <span name="sequenceNum">sequenceNum: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../index.html#rescala.package@StampextendsProductwithSerializable" title="Permalink" target="_top">
+        <img src="../lib/permalink.png" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.StaticSignal" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="StaticSignal[+T]extendsDependentSignalImplementation[T]"></a>
+      <a id="StaticSignal[+T]:StaticSignal[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="StaticSignal.html"><span class="name">StaticSignal</span></a><span class="tparams">[<span name="T">+T</span>]</span><span class="result"> extends <a href="DependentSignalImplementation.html" class="extype" name="rescala.DependentSignalImplementation">DependentSignalImplementation</a>[<span class="extype" name="rescala.StaticSignal.T">T</span>]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../index.html#rescala.package@StaticSignal[+T]extendsDependentSignalImplementation[T]" title="Permalink" target="_top">
+        <img src="../lib/permalink.png" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">A dependent reactive value which has static dependencies</p>
+    </li><li name="rescala.SwitchedSignal" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SwitchedSignal[+T,-E]extendsDependentSignalImplementation[T]"></a>
+      <a id="SwitchedSignal[+T,-E]:SwitchedSignal[T,E]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="SwitchedSignal.html"><span class="name">SwitchedSignal</span></a><span class="tparams">[<span name="T">+T</span>, <span name="E">-E</span>]</span><span class="result"> extends <a href="DependentSignalImplementation.html" class="extype" name="rescala.DependentSignalImplementation">DependentSignalImplementation</a>[<span class="extype" name="rescala.SwitchedSignal.T">T</span>]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../index.html#rescala.package@SwitchedSignal[+T,-E]extendsDependentSignalImplementation[T]" title="Permalink" target="_top">
+        <img src="../lib/permalink.png" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.Var" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="Var[T]extendsSignal[T]"></a>
+      <a id="Var[T]:Var[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="Var.html"><span class="name">Var</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="Signal.html" class="extype" name="rescala.Signal">Signal</a>[<span class="extype" name="rescala.Var.T">T</span>]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../index.html#rescala.package@Var[T]extendsSignal[T]" title="Permalink" target="_top">
+        <img src="../lib/permalink.png" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">A root Reactive value without dependencies which can be set</p>
+    </li><li name="rescala.VarSynt" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="VarSynt[T]extendsVar[T]"></a>
+      <a id="VarSynt[T]:VarSynt[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="VarSynt.html"><span class="name">VarSynt</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="Var.html" class="extype" name="rescala.Var">Var</a>[<span class="extype" name="rescala.VarSynt.T">T</span>]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../index.html#rescala.package@VarSynt[T]extendsVar[T]" title="Permalink" target="_top">
+        <img src="../lib/permalink.png" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.WrappedEvent" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="WrappedEvent[T]extendsEventNode[T]withDependent"></a>
+      <a id="WrappedEvent[T]:WrappedEvent[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="WrappedEvent.html"><span class="name">WrappedEvent</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="events/EventNode.html" class="extype" name="rescala.events.EventNode">EventNode</a>[<span class="extype" name="rescala.WrappedEvent.T">T</span>] with <a href="Dependent.html" class="extype" name="rescala.Dependent">Dependent</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../index.html#rescala.package@WrappedEvent[T]extendsEventNode[T]withDependent" title="Permalink" target="_top">
+        <img src="../lib/permalink.png" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">A wrapped event inside a signal, that gets &quot;flattened&quot; to a plain event node</p>
+    </li><li name="rescala.StaticVar" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="StaticVar[T]=rescala.VarSynt[T]"></a>
+      <a id="StaticVar[T]:StaticVar[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">type</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version unknown) use VarSynt instead of StaticVar">StaticVar</span><span class="tparams">[<span name="T">T</span>]</span><span class="result"> = <a href="VarSynt.html" class="extype" name="rescala.VarSynt">VarSynt</a>[<span class="extype" name="rescala.StaticVar.T">T</span>]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../index.html#rescala.package@StaticVar[T]=rescala.VarSynt[T]" title="Permalink" target="_top">
+        <img src="../lib/permalink.png" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">renaming for compatibility reasons</p><div class="fullcomment"><div class="comment cmt"><p>renaming for compatibility reasons</p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version unknown)</i> use VarSynt instead of StaticVar</p></dd></dl></div>
+    </li></ol>
+            </div>
+
+        
+
+        <div id="values" class="values members">
+              <h3>Value Members</h3>
+              <ol><li name="rescala.Handler" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Handler"></a>
+      <a id="Handler:Handler"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Handler$.html"><span class="name">Handler</span></a>
+      </span>
+      </h4><span class="permalink">
+      <a href="../index.html#rescala.package@Handler" title="Permalink" target="_top">
+        <img src="../lib/permalink.png" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.IFunctions" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="IFunctions"></a>
+      <a id="IFunctions:IFunctions"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="IFunctions$.html"><span class="name">IFunctions</span></a>
+      </span>
+      </h4><span class="permalink">
+      <a href="../index.html#rescala.package@IFunctions" title="Permalink" target="_top">
+        <img src="../lib/permalink.png" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.ReactiveEngine" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ReactiveEngine"></a>
+      <a id="ReactiveEngine:ReactiveEngine"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="ReactiveEngine$.html"><span class="name">ReactiveEngine</span></a>
+      </span>
+      </h4><span class="permalink">
+      <a href="../index.html#rescala.package@ReactiveEngine" title="Permalink" target="_top">
+        <img src="../lib/permalink.png" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">The engine that schedules the (glitch-free) evaluation
+of the nodes in the dependency graph.</p>
+    </li><li name="rescala.SignalSynt" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SignalSynt"></a>
+      <a id="SignalSynt:SignalSynt"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="SignalSynt$.html"><span class="name">SignalSynt</span></a>
+      </span>
+      </h4><span class="permalink">
+      <a href="../index.html#rescala.package@SignalSynt" title="Permalink" target="_top">
+        <img src="../lib/permalink.png" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">A syntactic signal
+</p>
+    </li><li name="rescala.Starter" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Starter"></a>
+      <a id="Starter:Starter"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Starter$.html"><span class="name">Starter</span></a><span class="result"> extends <span class="extype" name="scala.App">App</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../index.html#rescala.package@Starter" title="Permalink" target="_top">
+        <img src="../lib/permalink.png" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.StaticSignal" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="StaticSignal"></a>
+      <a id="StaticSignal:StaticSignal"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="StaticSignal$.html"><span class="name">StaticSignal</span></a>
+      </span>
+      </h4><span class="permalink">
+      <a href="../index.html#rescala.package@StaticSignal" title="Permalink" target="_top">
+        <img src="../lib/permalink.png" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Create a StaticSignal
+</p>
+    </li><li name="rescala.StaticVar" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="StaticVar"></a>
+      <a id="StaticVar:StaticVar"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="StaticVar$.html"><span class="name">StaticVar</span></a>
+      </span>
+      </h4><span class="permalink">
+      <a href="../index.html#rescala.package@StaticVar" title="Permalink" target="_top">
+        <img src="../lib/permalink.png" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Create a StaticVar
+</p>
+    </li><li name="rescala.TS" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="TS"></a>
+      <a id="TS:TS"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="TS$.html"><span class="name">TS</span></a>
+      </span>
+      </h4><span class="permalink">
+      <a href="../index.html#rescala.package@TS" title="Permalink" target="_top">
+        <img src="../lib/permalink.png" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.Var" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Var"></a>
+      <a id="Var:Var"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Var$.html"><span class="name">Var</span></a>
+      </span>
+      </h4><span class="permalink">
+      <a href="../index.html#rescala.package@Var" title="Permalink" target="_top">
+        <img src="../lib/permalink.png" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.VarSynt" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="VarSynt"></a>
+      <a id="VarSynt:VarSynt"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="VarSynt$.html"><span class="name">VarSynt</span></a>
+      </span>
+      </h4><span class="permalink">
+      <a href="../index.html#rescala.package@VarSynt" title="Permalink" target="_top">
+        <img src="../lib/permalink.png" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.commons" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="commons"></a>
+      <a id="commons:commons"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a href="commons/package.html"><span class="name">commons</span></a>
+      </span>
+      </h4><span class="permalink">
+      <a href="../index.html#rescala.package@commons" title="Permalink" target="_top">
+        <img src="../lib/permalink.png" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.conversions" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="conversions"></a>
+      <a id="conversions:conversions"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a href="conversions/package.html"><span class="name">conversions</span></a>
+      </span>
+      </h4><span class="permalink">
+      <a href="../index.html#rescala.package@conversions" title="Permalink" target="_top">
+        <img src="../lib/permalink.png" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.events" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="events"></a>
+      <a id="events:events"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a href="events/package.html"><span class="name">events</span></a>
+      </span>
+      </h4><span class="permalink">
+      <a href="../index.html#rescala.package@events" title="Permalink" target="_top">
+        <img src="../lib/permalink.png" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.log" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="log"></a>
+      <a id="log:log"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a href="log/package.html"><span class="name">log</span></a>
+      </span>
+      </h4><span class="permalink">
+      <a href="../index.html#rescala.package@log" title="Permalink" target="_top">
+        <img src="../lib/permalink.png" />
+      </a>
+    </span>
+      
+    </li></ol>
+            </div>
+
+        
+
+        
+        </div>
+
+        <div id="inheritedMembers">
+        <div class="parent" name="scala.AnyRef">
+              <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>
+            </div><div class="parent" name="scala.Any">
+              <h3>Inherited from <span class="extype" name="scala.Any">Any</span></h3>
+            </div>
+        
+        </div>
+
+        <div id="groupedMembers">
+        <div class="group" name="Ungrouped">
+              <h3>Ungrouped</h3>
+              
+            </div>
+        </div>
+
+      </div>
+
+      <div id="tooltip"></div>
+
+      <div id="footer">  </div>
+
+
+    </body>
+      </html>
