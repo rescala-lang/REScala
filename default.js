@@ -55,7 +55,7 @@ window.onload = function () {
 		li.classList.add("collapsible");
 		
 		var collapsibleItems = li.nextElementSibling.firstElementChild.querySelectorAll("a").length - 1;
-		if (collapsibleItems > 0) {
+		if (collapsibleItems >= 0) {
 			var hr = document.createElement("hr");
 			var node = li;
 			var level = 1;
@@ -79,7 +79,7 @@ function updateTOClines() {
 			return a.offsetParent !== null;
 		}).length-1;
 		hr.style.height = "0px";
-		if (collapsibleItems > 0) {
+		if (collapsibleItems >= 0) {
 			hr.style.height = (collapsibleItems * 29) + "px";
 		}
 	});
