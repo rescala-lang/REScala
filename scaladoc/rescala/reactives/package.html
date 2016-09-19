@@ -1,0 +1,426 @@
+<!DOCTYPE html >
+<html>
+        <head>
+          <title>reactives - rescala.reactives</title>
+          <meta name="description" content="reactives - rescala.reactives" />
+          <meta name="keywords" content="reactives rescala.reactives" />
+          <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+          
+      <link href="../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
+      <link href="../../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css" />
+      <script type="text/javascript" src="../../lib/jquery.js" id="jquery-js"></script>
+      <script type="text/javascript" src="../../lib/jquery-ui.js"></script>
+      <script type="text/javascript" src="../../lib/template.js"></script>
+      <script type="text/javascript" src="../../lib/tools.tooltip.js"></script>
+      
+      <script type="text/javascript">
+         if(top === self) {
+            var url = '../../index.html';
+            var hash = 'rescala.reactives.package';
+            var anchor = window.location.hash;
+            var anchor_opt = '';
+            if (anchor.length >= 1)
+              anchor_opt = '@' + anchor.substring(1);
+            window.location.href = url + '#' + hash + anchor_opt;
+         }
+   	  </script>
+    
+        </head>
+        <body class="value">
+      <div id="definition">
+        <img alt="Package" src="../../lib/package_big.png" />
+        <p id="owner"><a href="../package.html" class="extype" name="rescala">rescala</a></p>
+        <h1>reactives</h1><span class="permalink">
+      <a href="../../index.html#rescala.reactives.package" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      </div>
+
+      <h4 id="signature" class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <span class="name">reactives</span>
+      </span>
+      </h4>
+      
+          <div id="comment" class="fullcommenttop"></div>
+        
+
+      <div id="mbrsel">
+        <div id="textfilter"><span class="pre"></span><span class="input"><input id="mbrsel-input" type="text" accesskey="/" /></span><span class="post"></span></div>
+        
+        
+        <div id="visbl">
+            <span class="filtertype">Visibility</span>
+            <ol><li class="public in"><span>Public</span></li><li class="all out"><span>All</span></li></ol>
+          </div>
+      </div>
+
+      <div id="template">
+        <div id="allMembers">
+        
+
+        <div id="types" class="types members">
+              <h3>Type Members</h3>
+              <ol><li name="rescala.reactives.Event" visbl="pub" data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="Event[+T,S&lt;:rescala.graph.Struct]extendsEventLike[T,S,rescala.reactives.Signal,rescala.reactives.Event]withPulseOption[T,S]"></a>
+      <a id="Event[+T,S&lt;:Struct]:Event[T,S]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="Event.html"><span class="name">Event</span></a><span class="tparams">[<span name="T">+T</span>, <span name="S">S &lt;: <a href="../graph/Struct.html" class="extype" name="rescala.graph.Struct">Struct</a></span>]</span><span class="result"> extends <a href="EventLike.html" class="extype" name="rescala.reactives.EventLike">EventLike</a>[<span class="extype" name="rescala.reactives.Event.T">T</span>, <span class="extype" name="rescala.reactives.Event.S">S</span>, <a href="Signal.html" class="extype" name="rescala.reactives.Signal">Signal</a>, <a href="Event.html" class="extype" name="rescala.reactives.Event">Event</a>] with <a href="../graph/PulseOption.html" class="extype" name="rescala.graph.PulseOption">PulseOption</a>[<span class="extype" name="rescala.reactives.Event.T">T</span>, <span class="extype" name="rescala.reactives.Event.S">S</span>]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.reactives.package@Event[+T,S&lt;:rescala.graph.Struct]extendsEventLike[T,S,rescala.reactives.Signal,rescala.reactives.Event]withPulseOption[T,S]" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Standard implementation of the event interface using Spore-based propagation.</p><div class="fullcomment"><div class="comment cmt"><p>Standard implementation of the event interface using Spore-based propagation.
+</p></div><dl class="paramcmts block"><dt class="tparam">T</dt><dd class="cmt"><p>Type returned when the event fires</p></dd><dt class="tparam">S</dt><dd class="cmt"><p>Struct type used for the propagation of the event</p></dd></dl></div>
+    </li><li name="rescala.reactives.EventLike" visbl="pub" data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="EventLike[+T,S&lt;:rescala.graph.Struct,SL[+X,Z&lt;:rescala.graph.Struct]&lt;:rescala.reactives.SignalLike[X,Z,SL,EV],EV[+X,Z&lt;:rescala.graph.Struct]&lt;:rescala.reactives.EventLike[X,Z,SL,EV]]extendsAnyRef"></a>
+      <a id="EventLike[+T,S&lt;:Struct,SL[+X,Z&lt;:Struct]&lt;:SignalLike[X,Z,SL,EV],EV[+X,Z&lt;:Struct]&lt;:EventLike[X,Z,SL,EV]]:EventLike[T,S,SL,EV]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="EventLike.html"><span class="name">EventLike</span></a><span class="tparams">[<span name="T">+T</span>, <span name="S">S &lt;: <a href="../graph/Struct.html" class="extype" name="rescala.graph.Struct">Struct</a></span>, <span name="SL">SL<span class="tparams">[<span name="X">+X</span>, <span name="Z">Z &lt;: <a href="../graph/Struct.html" class="extype" name="rescala.graph.Struct">Struct</a></span>]</span> &lt;: <a href="SignalLike.html" class="extype" name="rescala.reactives.SignalLike">SignalLike</a>[<span class="extype" name="rescala.reactives.EventLike.SL.X">X</span>, <span class="extype" name="rescala.reactives.EventLike.SL.Z">Z</span>, <span class="extype" name="rescala.reactives.EventLike.SL">SL</span>, <span class="extype" name="rescala.reactives.EventLike.EV">EV</span>]</span>, <span name="EV">EV<span class="tparams">[<span name="X">+X</span>, <span name="Z">Z &lt;: <a href="../graph/Struct.html" class="extype" name="rescala.graph.Struct">Struct</a></span>]</span> &lt;: <a href="EventLike.html" class="extype" name="rescala.reactives.EventLike">EventLike</a>[<span class="extype" name="rescala.reactives.EventLike.EV.X">X</span>, <span class="extype" name="rescala.reactives.EventLike.EV.Z">Z</span>, <span class="extype" name="rescala.reactives.EventLike.SL">SL</span>, <span class="extype" name="rescala.reactives.EventLike.EV">EV</span>]</span>]</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.reactives.package@EventLike[+T,S&lt;:rescala.graph.Struct,SL[+X,Z&lt;:rescala.graph.Struct]&lt;:rescala.reactives.SignalLike[X,Z,SL,EV],EV[+X,Z&lt;:rescala.graph.Struct]&lt;:rescala.reactives.EventLike[X,Z,SL,EV]]extendsAnyRef" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Base signal interface for all signal implementations.</p><div class="fullcomment"><div class="comment cmt"><p>Base signal interface for all signal implementations.
+Please note that any event implementation should have the EV type parameter set to itself and be paired with
+exactly one signal implementation it is compatible with by setting the SL type parameter.
+This relationship needs to be symmetrical.
+</p></div><dl class="paramcmts block"><dt class="tparam">T</dt><dd class="cmt"><p>Type returned when the event fires</p></dd><dt class="tparam">S</dt><dd class="cmt"><p>Struct type used for the propagation of the event</p></dd><dt class="tparam">SL</dt><dd class="cmt"><p>Signal type supported as parameter and used as return type for event methods</p></dd><dt class="tparam">EV</dt><dd class="cmt"><p>Event type supported as parameter and used as return type for event methods</p></dd></dl></div>
+    </li><li name="rescala.reactives.Evt" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="Evt[T,S&lt;:rescala.graph.Struct]extendsBase[T,S]withEvent[T,S]withEvtLike[T,S,rescala.reactives.Signal,rescala.reactives.Event]"></a>
+      <a id="Evt[T,S&lt;:Struct]:Evt[T,S]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="Evt.html"><span class="name">Evt</span></a><span class="tparams">[<span name="T">T</span>, <span name="S">S &lt;: <a href="../graph/Struct.html" class="extype" name="rescala.graph.Struct">Struct</a></span>]</span><span class="result"> extends <a href="../graph/Base.html" class="extype" name="rescala.graph.Base">Base</a>[<span class="extype" name="rescala.reactives.Evt.T">T</span>, <span class="extype" name="rescala.reactives.Evt.S">S</span>] with <a href="Event.html" class="extype" name="rescala.reactives.Event">Event</a>[<span class="extype" name="rescala.reactives.Evt.T">T</span>, <span class="extype" name="rescala.reactives.Evt.S">S</span>] with <a href="EvtLike.html" class="extype" name="rescala.reactives.EvtLike">EvtLike</a>[<span class="extype" name="rescala.reactives.Evt.T">T</span>, <span class="extype" name="rescala.reactives.Evt.S">S</span>, <a href="Signal.html" class="extype" name="rescala.reactives.Signal">Signal</a>, <a href="Event.html" class="extype" name="rescala.reactives.Event">Event</a>]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.reactives.package@Evt[T,S&lt;:rescala.graph.Struct]extendsBase[T,S]withEvent[T,S]withEvtLike[T,S,rescala.reactives.Signal,rescala.reactives.Event]" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Standard implementation of the source event interface using Spore-based propagation.</p><div class="fullcomment"><div class="comment cmt"><p>Standard implementation of the source event interface using Spore-based propagation.
+</p></div><dl class="paramcmts block"><dt class="tparam">T</dt><dd class="cmt"><p>Type returned when the event fires</p></dd><dt class="tparam">S</dt><dd class="cmt"><p>Struct type used for the propagation of the event</p></dd></dl></div>
+    </li><li name="rescala.reactives.EvtLike" visbl="pub" data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="EvtLike[T,S&lt;:rescala.graph.Struct,SL[+X,Z&lt;:rescala.graph.Struct]&lt;:rescala.reactives.SignalLike[X,Z,SL,EV],EV[+X,Z&lt;:rescala.graph.Struct]&lt;:rescala.reactives.EventLike[X,Z,SL,EV]]extendsEventLike[T,S,SL,EV]"></a>
+      <a id="EvtLike[T,S&lt;:Struct,SL[+X,Z&lt;:Struct]&lt;:SignalLike[X,Z,SL,EV],EV[+X,Z&lt;:Struct]&lt;:EventLike[X,Z,SL,EV]]:EvtLike[T,S,SL,EV]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="EvtLike.html"><span class="name">EvtLike</span></a><span class="tparams">[<span name="T">T</span>, <span name="S">S &lt;: <a href="../graph/Struct.html" class="extype" name="rescala.graph.Struct">Struct</a></span>, <span name="SL">SL<span class="tparams">[<span name="X">+X</span>, <span name="Z">Z &lt;: <a href="../graph/Struct.html" class="extype" name="rescala.graph.Struct">Struct</a></span>]</span> &lt;: <a href="SignalLike.html" class="extype" name="rescala.reactives.SignalLike">SignalLike</a>[<span class="extype" name="rescala.reactives.EvtLike.SL.X">X</span>, <span class="extype" name="rescala.reactives.EvtLike.SL.Z">Z</span>, <span class="extype" name="rescala.reactives.EvtLike.SL">SL</span>, <span class="extype" name="rescala.reactives.EvtLike.EV">EV</span>]</span>, <span name="EV">EV<span class="tparams">[<span name="X">+X</span>, <span name="Z">Z &lt;: <a href="../graph/Struct.html" class="extype" name="rescala.graph.Struct">Struct</a></span>]</span> &lt;: <a href="EventLike.html" class="extype" name="rescala.reactives.EventLike">EventLike</a>[<span class="extype" name="rescala.reactives.EvtLike.EV.X">X</span>, <span class="extype" name="rescala.reactives.EvtLike.EV.Z">Z</span>, <span class="extype" name="rescala.reactives.EvtLike.SL">SL</span>, <span class="extype" name="rescala.reactives.EvtLike.EV">EV</span>]</span>]</span><span class="result"> extends <a href="EventLike.html" class="extype" name="rescala.reactives.EventLike">EventLike</a>[<span class="extype" name="rescala.reactives.EvtLike.T">T</span>, <span class="extype" name="rescala.reactives.EvtLike.S">S</span>, <span class="extype" name="rescala.reactives.EvtLike.SL">SL</span>, <span class="extype" name="rescala.reactives.EvtLike.EV">EV</span>]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.reactives.package@EvtLike[T,S&lt;:rescala.graph.Struct,SL[+X,Z&lt;:rescala.graph.Struct]&lt;:rescala.reactives.SignalLike[X,Z,SL,EV],EV[+X,Z&lt;:rescala.graph.Struct]&lt;:rescala.reactives.EventLike[X,Z,SL,EV]]extendsEventLike[T,S,SL,EV]" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Inferface for source events with no dependencies that can be manually fired by the user.</p><div class="fullcomment"><div class="comment cmt"><p>Inferface for source events with no dependencies that can be manually fired by the user.
+</p></div><dl class="paramcmts block"><dt class="tparam">T</dt><dd class="cmt"><p>Type returned when the event fires</p></dd><dt class="tparam">S</dt><dd class="cmt"><p>Struct type used for the propagation of the event</p></dd><dt class="tparam">SL</dt><dd class="cmt"><p>Signal type supported as parameter and used as return type for event methods</p></dd><dt class="tparam">EV</dt><dd class="cmt"><p>Event type supported as parameter and used as return type for event methods</p></dd></dl></div>
+    </li><li name="rescala.reactives.Flatten" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="Flatten[-A,S&lt;:rescala.graph.Struct,R]extendsAnyRef"></a>
+      <a id="Flatten[-A,S&lt;:Struct,R]:Flatten[A,S,R]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">sealed </span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="Flatten.html"><span class="name">Flatten</span></a><span class="tparams">[<span name="A">-A</span>, <span name="S">S &lt;: <a href="../graph/Struct.html" class="extype" name="rescala.graph.Struct">Struct</a></span>, <span name="R">R</span>]</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.reactives.package@Flatten[-A,S&lt;:rescala.graph.Struct,R]extendsAnyRef" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.reactives.GeneratedSignalLift" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="GeneratedSignalLiftextendsAnyRef"></a>
+      <a id="GeneratedSignalLift:GeneratedSignalLift"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="GeneratedSignalLift.html"><span class="name">GeneratedSignalLift</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.reactives.package@GeneratedSignalLiftextendsAnyRef" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.reactives.Observe" visbl="pub" data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="Observe[S&lt;:rescala.graph.Struct]extendsAnyRef"></a>
+      <a id="Observe[S&lt;:Struct]:Observe[S]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="Observe.html"><span class="name">Observe</span></a><span class="tparams">[<span name="S">S &lt;: <a href="../graph/Struct.html" class="extype" name="rescala.graph.Struct">Struct</a></span>]</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.reactives.package@Observe[S&lt;:rescala.graph.Struct]extendsAnyRef" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Generic interface for observers that represent a function registered to trigger for every reevaluation of a reactive value.</p><div class="fullcomment"><div class="comment cmt"><p>Generic interface for observers that represent a function registered to trigger for every reevaluation of a reactive value.
+Currently this interface is only used to allow a removal of registered observer functions.
+</p></div><dl class="paramcmts block"><dt class="tparam">S</dt><dd class="cmt"><p>Struct type used for the propagation of the signal</p></dd></dl></div>
+    </li><li name="rescala.reactives.Signal" visbl="pub" data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="Signal[+A,S&lt;:rescala.graph.Struct]extendsSignalLike[A,S,rescala.reactives.Signal,rescala.reactives.Event]withStateful[A,S]"></a>
+      <a id="Signal[+A,S&lt;:Struct]:Signal[A,S]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="Signal.html"><span class="name">Signal</span></a><span class="tparams">[<span name="A">+A</span>, <span name="S">S &lt;: <a href="../graph/Struct.html" class="extype" name="rescala.graph.Struct">Struct</a></span>]</span><span class="result"> extends <a href="SignalLike.html" class="extype" name="rescala.reactives.SignalLike">SignalLike</a>[<span class="extype" name="rescala.reactives.Signal.A">A</span>, <span class="extype" name="rescala.reactives.Signal.S">S</span>, <a href="Signal.html" class="extype" name="rescala.reactives.Signal">Signal</a>, <a href="Event.html" class="extype" name="rescala.reactives.Event">Event</a>] with <a href="../graph/Stateful.html" class="extype" name="rescala.graph.Stateful">Stateful</a>[<span class="extype" name="rescala.reactives.Signal.A">A</span>, <span class="extype" name="rescala.reactives.Signal.S">S</span>]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.reactives.package@Signal[+A,S&lt;:rescala.graph.Struct]extendsSignalLike[A,S,rescala.reactives.Signal,rescala.reactives.Event]withStateful[A,S]" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Standard implementation of the signal interface using Spore-based propagation.</p><div class="fullcomment"><div class="comment cmt"><p>Standard implementation of the signal interface using Spore-based propagation.
+</p></div><dl class="paramcmts block"><dt class="tparam">A</dt><dd class="cmt"><p>Type stored by the signal</p></dd><dt class="tparam">S</dt><dd class="cmt"><p>Struct type used for the propagation of the signal</p></dd></dl></div>
+    </li><li name="rescala.reactives.SignalLike" visbl="pub" data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="SignalLike[+A,S&lt;:rescala.graph.Struct,SL[+X,Z&lt;:rescala.graph.Struct]&lt;:rescala.reactives.SignalLike[X,Z,SL,EV],EV[+X,Z&lt;:rescala.graph.Struct]&lt;:rescala.reactives.EventLike[X,Z,SL,EV]]extendsAnyRef"></a>
+      <a id="SignalLike[+A,S&lt;:Struct,SL[+X,Z&lt;:Struct]&lt;:SignalLike[X,Z,SL,EV],EV[+X,Z&lt;:Struct]&lt;:EventLike[X,Z,SL,EV]]:SignalLike[A,S,SL,EV]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="SignalLike.html"><span class="name">SignalLike</span></a><span class="tparams">[<span name="A">+A</span>, <span name="S">S &lt;: <a href="../graph/Struct.html" class="extype" name="rescala.graph.Struct">Struct</a></span>, <span name="SL">SL<span class="tparams">[<span name="X">+X</span>, <span name="Z">Z &lt;: <a href="../graph/Struct.html" class="extype" name="rescala.graph.Struct">Struct</a></span>]</span> &lt;: <a href="SignalLike.html" class="extype" name="rescala.reactives.SignalLike">SignalLike</a>[<span class="extype" name="rescala.reactives.SignalLike.SL.X">X</span>, <span class="extype" name="rescala.reactives.SignalLike.SL.Z">Z</span>, <span class="extype" name="rescala.reactives.SignalLike.SL">SL</span>, <span class="extype" name="rescala.reactives.SignalLike.EV">EV</span>]</span>, <span name="EV">EV<span class="tparams">[<span name="X">+X</span>, <span name="Z">Z &lt;: <a href="../graph/Struct.html" class="extype" name="rescala.graph.Struct">Struct</a></span>]</span> &lt;: <a href="EventLike.html" class="extype" name="rescala.reactives.EventLike">EventLike</a>[<span class="extype" name="rescala.reactives.SignalLike.EV.X">X</span>, <span class="extype" name="rescala.reactives.SignalLike.EV.Z">Z</span>, <span class="extype" name="rescala.reactives.SignalLike.SL">SL</span>, <span class="extype" name="rescala.reactives.SignalLike.EV">EV</span>]</span>]</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.reactives.package@SignalLike[+A,S&lt;:rescala.graph.Struct,SL[+X,Z&lt;:rescala.graph.Struct]&lt;:rescala.reactives.SignalLike[X,Z,SL,EV],EV[+X,Z&lt;:rescala.graph.Struct]&lt;:rescala.reactives.EventLike[X,Z,SL,EV]]extendsAnyRef" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Base signal interface for all signal implementations.</p><div class="fullcomment"><div class="comment cmt"><p>Base signal interface for all signal implementations.
+Please note that any signal implementation should have the SL type parameter set to itself and be paired with
+exactly one event implementation it is compatible with by setting the EV type parameter.
+This relationship needs to be symmetrical.
+</p></div><dl class="paramcmts block"><dt class="tparam">A</dt><dd class="cmt"><p>Type stored by the signal</p></dd><dt class="tparam">S</dt><dd class="cmt"><p>Struct type used for the propagation of the signal</p></dd><dt class="tparam">SL</dt><dd class="cmt"><p>Signal type supported as parameter and used as return type for signal methods</p></dd><dt class="tparam">EV</dt><dd class="cmt"><p>Event type supported as parameter and used as return type for signal methods</p></dd></dl></div>
+    </li><li name="rescala.reactives.Var" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="Var[A,S&lt;:rescala.graph.Struct]extendsBase[A,S]withSignal[A,S]withVarLike[A,S,rescala.reactives.Signal,rescala.reactives.Event]"></a>
+      <a id="Var[A,S&lt;:Struct]:Var[A,S]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="Var.html"><span class="name">Var</span></a><span class="tparams">[<span name="A">A</span>, <span name="S">S &lt;: <a href="../graph/Struct.html" class="extype" name="rescala.graph.Struct">Struct</a></span>]</span><span class="result"> extends <a href="../graph/Base.html" class="extype" name="rescala.graph.Base">Base</a>[<span class="extype" name="rescala.reactives.Var.A">A</span>, <span class="extype" name="rescala.reactives.Var.S">S</span>] with <a href="Signal.html" class="extype" name="rescala.reactives.Signal">Signal</a>[<span class="extype" name="rescala.reactives.Var.A">A</span>, <span class="extype" name="rescala.reactives.Var.S">S</span>] with <a href="VarLike.html" class="extype" name="rescala.reactives.VarLike">VarLike</a>[<span class="extype" name="rescala.reactives.Var.A">A</span>, <span class="extype" name="rescala.reactives.Var.S">S</span>, <a href="Signal.html" class="extype" name="rescala.reactives.Signal">Signal</a>, <a href="Event.html" class="extype" name="rescala.reactives.Event">Event</a>]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.reactives.package@Var[A,S&lt;:rescala.graph.Struct]extendsBase[A,S]withSignal[A,S]withVarLike[A,S,rescala.reactives.Signal,rescala.reactives.Event]" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Standard implementation of the source signal interface using Spore-based propagation.</p><div class="fullcomment"><div class="comment cmt"><p>Standard implementation of the source signal interface using Spore-based propagation.
+</p></div><dl class="paramcmts block"><dt class="tparam">A</dt><dd class="cmt"><p>Type stored by the signal</p></dd><dt class="tparam">S</dt><dd class="cmt"><p>Struct type used for the propagation of the signal</p></dd></dl></div>
+    </li><li name="rescala.reactives.VarLike" visbl="pub" data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="VarLike[A,S&lt;:rescala.graph.Struct,SL[+X,Z&lt;:rescala.graph.Struct]&lt;:rescala.reactives.SignalLike[X,Z,SL,EV],EV[+X,Z&lt;:rescala.graph.Struct]&lt;:rescala.reactives.EventLike[X,Z,SL,EV]]extendsSignalLike[A,S,SL,EV]"></a>
+      <a id="VarLike[A,S&lt;:Struct,SL[+X,Z&lt;:Struct]&lt;:SignalLike[X,Z,SL,EV],EV[+X,Z&lt;:Struct]&lt;:EventLike[X,Z,SL,EV]]:VarLike[A,S,SL,EV]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="VarLike.html"><span class="name">VarLike</span></a><span class="tparams">[<span name="A">A</span>, <span name="S">S &lt;: <a href="../graph/Struct.html" class="extype" name="rescala.graph.Struct">Struct</a></span>, <span name="SL">SL<span class="tparams">[<span name="X">+X</span>, <span name="Z">Z &lt;: <a href="../graph/Struct.html" class="extype" name="rescala.graph.Struct">Struct</a></span>]</span> &lt;: <a href="SignalLike.html" class="extype" name="rescala.reactives.SignalLike">SignalLike</a>[<span class="extype" name="rescala.reactives.VarLike.SL.X">X</span>, <span class="extype" name="rescala.reactives.VarLike.SL.Z">Z</span>, <span class="extype" name="rescala.reactives.VarLike.SL">SL</span>, <span class="extype" name="rescala.reactives.VarLike.EV">EV</span>]</span>, <span name="EV">EV<span class="tparams">[<span name="X">+X</span>, <span name="Z">Z &lt;: <a href="../graph/Struct.html" class="extype" name="rescala.graph.Struct">Struct</a></span>]</span> &lt;: <a href="EventLike.html" class="extype" name="rescala.reactives.EventLike">EventLike</a>[<span class="extype" name="rescala.reactives.VarLike.EV.X">X</span>, <span class="extype" name="rescala.reactives.VarLike.EV.Z">Z</span>, <span class="extype" name="rescala.reactives.VarLike.SL">SL</span>, <span class="extype" name="rescala.reactives.VarLike.EV">EV</span>]</span>]</span><span class="result"> extends <a href="SignalLike.html" class="extype" name="rescala.reactives.SignalLike">SignalLike</a>[<span class="extype" name="rescala.reactives.VarLike.A">A</span>, <span class="extype" name="rescala.reactives.VarLike.S">S</span>, <span class="extype" name="rescala.reactives.VarLike.SL">SL</span>, <span class="extype" name="rescala.reactives.VarLike.EV">EV</span>]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.reactives.package@VarLike[A,S&lt;:rescala.graph.Struct,SL[+X,Z&lt;:rescala.graph.Struct]&lt;:rescala.reactives.SignalLike[X,Z,SL,EV],EV[+X,Z&lt;:rescala.graph.Struct]&lt;:rescala.reactives.EventLike[X,Z,SL,EV]]extendsSignalLike[A,S,SL,EV]" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Interface for source signals with no dependencies that can be manually set by the user.</p><div class="fullcomment"><div class="comment cmt"><p>Interface for source signals with no dependencies that can be manually set by the user.
+</p></div><dl class="paramcmts block"><dt class="tparam">A</dt><dd class="cmt"><p>Type stored by the signal</p></dd><dt class="tparam">S</dt><dd class="cmt"><p>Struct type used for the propagation of the signal</p></dd><dt class="tparam">SL</dt><dd class="cmt"><p>Signal type supported as parameter and used as return type for signal methods</p></dd><dt class="tparam">EV</dt><dd class="cmt"><p>Event type supported as parameter and used as return type for signal methods</p></dd></dl></div>
+    </li></ol>
+            </div>
+
+        
+
+        <div id="values" class="values members">
+              <h3>Value Members</h3>
+              <ol><li name="rescala.reactives.Events" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Events"></a>
+      <a id="Events:Events"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Events$.html"><span class="name">Events</span></a>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.reactives.package@Events" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.reactives.Evt" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Evt"></a>
+      <a id="Evt:Evt"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Evt$.html"><span class="name">Evt</span></a>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.reactives.package@Evt" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Companion object that allows external users to create new source events.</p>
+    </li><li name="rescala.reactives.Flatten" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Flatten"></a>
+      <a id="Flatten:Flatten"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Flatten$.html"><span class="name">Flatten</span></a>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.reactives.package@Flatten" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.reactives.Observe" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Observe"></a>
+      <a id="Observe:Observe"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Observe$.html"><span class="name">Observe</span></a>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.reactives.package@Observe" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.reactives.RExceptions" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="RExceptions"></a>
+      <a id="RExceptions:RExceptions"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="RExceptions$.html"><span class="name">RExceptions</span></a>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.reactives.package@RExceptions" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.reactives.Signals" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Signals"></a>
+      <a id="Signals:Signals"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Signals$.html"><span class="name">Signals</span></a><span class="result"> extends <a href="GeneratedSignalLift.html" class="extype" name="rescala.reactives.GeneratedSignalLift">GeneratedSignalLift</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.reactives.package@Signals" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.reactives.Var" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Var"></a>
+      <a id="Var:Var"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Var$.html"><span class="name">Var</span></a>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.reactives.package@Var" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Companion object that allows external users to create new source signals.</p>
+    </li></ol>
+            </div>
+
+        
+
+        
+        </div>
+
+        <div id="inheritedMembers">
+        
+        
+        </div>
+
+        <div id="groupedMembers">
+        <div class="group" name="Ungrouped">
+              <h3>Ungrouped</h3>
+              
+            </div>
+        </div>
+
+      </div>
+
+      <div id="tooltip"></div>
+
+      <div id="footer">  </div>
+
+
+    </body>
+      </html>

@@ -1,0 +1,614 @@
+<!DOCTYPE html >
+<html>
+        <head>
+          <title>meta - rescala.meta</title>
+          <meta name="description" content="meta - rescala.meta" />
+          <meta name="keywords" content="meta rescala.meta" />
+          <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+          
+      <link href="../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
+      <link href="../../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css" />
+      <script type="text/javascript" src="../../lib/jquery.js" id="jquery-js"></script>
+      <script type="text/javascript" src="../../lib/jquery-ui.js"></script>
+      <script type="text/javascript" src="../../lib/template.js"></script>
+      <script type="text/javascript" src="../../lib/tools.tooltip.js"></script>
+      
+      <script type="text/javascript">
+         if(top === self) {
+            var url = '../../index.html';
+            var hash = 'rescala.meta.package';
+            var anchor = window.location.hash;
+            var anchor_opt = '';
+            if (anchor.length >= 1)
+              anchor_opt = '@' + anchor.substring(1);
+            window.location.href = url + '#' + hash + anchor_opt;
+         }
+   	  </script>
+    
+        </head>
+        <body class="value">
+      <div id="definition">
+        <img alt="Package" src="../../lib/package_big.png" />
+        <p id="owner"><a href="../package.html" class="extype" name="rescala">rescala</a></p>
+        <h1>meta</h1><span class="permalink">
+      <a href="../../index.html#rescala.meta.package" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      </div>
+
+      <h4 id="signature" class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <span class="name">meta</span>
+      </span>
+      </h4>
+      
+          <div id="comment" class="fullcommenttop"></div>
+        
+
+      <div id="mbrsel">
+        <div id="textfilter"><span class="pre"></span><span class="input"><input id="mbrsel-input" type="text" accesskey="/" /></span><span class="post"></span></div>
+        
+        
+        <div id="visbl">
+            <span class="filtertype">Visibility</span>
+            <ol><li class="public in"><span>Public</span></li><li class="all out"><span>All</span></li></ol>
+          </div>
+      </div>
+
+      <div id="template">
+        <div id="allMembers">
+        
+
+        <div id="types" class="types members">
+              <h3>Type Members</h3>
+              <ol><li name="rescala.meta.AndEventPointer" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="AndEventPointer[T,U,+R]extendsMetaEventPointer[R]withProductwithSerializable"></a>
+      <a id="AndEventPointer[T,U,+R]:AndEventPointer[T,U,R]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="AndEventPointer.html"><span class="name">AndEventPointer</span></a><span class="tparams">[<span name="T">T</span>, <span name="U">U</span>, <span name="R">+R</span>]</span><span class="params">(<span name="node">node: <span class="extype" name="scala.Option">Option</span>[<a href="ReactiveNode.html" class="extype" name="rescala.meta.ReactiveNode">ReactiveNode</a>]</span>, <span name="base">base: <a href="MetaEventPointer.html" class="extype" name="rescala.meta.MetaEventPointer">MetaEventPointer</a>[<span class="extype" name="rescala.meta.AndEventPointer.T">T</span>]</span>, <span name="other">other: <a href="MetaEventPointer.html" class="extype" name="rescala.meta.MetaEventPointer">MetaEventPointer</a>[<span class="extype" name="rescala.meta.AndEventPointer.U">U</span>]</span>, <span name="merger">merger: (<span class="extype" name="rescala.meta.AndEventPointer.T">T</span>, <span class="extype" name="rescala.meta.AndEventPointer.U">U</span>) ⇒ <span class="extype" name="rescala.meta.AndEventPointer.R">R</span></span>)</span><span class="result"> extends <a href="MetaEventPointer.html" class="extype" name="rescala.meta.MetaEventPointer">MetaEventPointer</a>[<span class="extype" name="rescala.meta.AndEventPointer.R">R</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.meta.package@AndEventPointer[T,U,+R]extendsMetaEventPointer[R]withProductwithSerializable" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.meta.ChangeEventPointer" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ChangeEventPointer[+T]extendsMetaEventPointer[rescala.reactives.Signals.Diff[T]]withProductwithSerializable"></a>
+      <a id="ChangeEventPointer[+T]:ChangeEventPointer[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="ChangeEventPointer.html"><span class="name">ChangeEventPointer</span></a><span class="tparams">[<span name="T">+T</span>]</span><span class="params">(<span name="node">node: <span class="extype" name="scala.Option">Option</span>[<a href="ReactiveNode.html" class="extype" name="rescala.meta.ReactiveNode">ReactiveNode</a>]</span>, <span name="base">base: <a href="MetaSignalPointer.html" class="extype" name="rescala.meta.MetaSignalPointer">MetaSignalPointer</a>[<span class="extype" name="rescala.meta.ChangeEventPointer.T">T</span>]</span>)</span><span class="result"> extends <a href="MetaEventPointer.html" class="extype" name="rescala.meta.MetaEventPointer">MetaEventPointer</a>[<a href="../reactives/Signals$$Diff.html" class="extype" name="rescala.reactives.Signals.Diff">Diff</a>[<span class="extype" name="rescala.meta.ChangeEventPointer.T">T</span>]] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.meta.package@ChangeEventPointer[+T]extendsMetaEventPointer[rescala.reactives.Signals.Diff[T]]withProductwithSerializable" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.meta.ChangedEventPointer" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ChangedEventPointer[+T]extendsMetaEventPointer[T]withProductwithSerializable"></a>
+      <a id="ChangedEventPointer[+T]:ChangedEventPointer[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="ChangedEventPointer.html"><span class="name">ChangedEventPointer</span></a><span class="tparams">[<span name="T">+T</span>]</span><span class="params">(<span name="node">node: <span class="extype" name="scala.Option">Option</span>[<a href="ReactiveNode.html" class="extype" name="rescala.meta.ReactiveNode">ReactiveNode</a>]</span>, <span name="base">base: <a href="MetaSignalPointer.html" class="extype" name="rescala.meta.MetaSignalPointer">MetaSignalPointer</a>[<span class="extype" name="rescala.meta.ChangedEventPointer.T">T</span>]</span>)</span><span class="result"> extends <a href="MetaEventPointer.html" class="extype" name="rescala.meta.MetaEventPointer">MetaEventPointer</a>[<span class="extype" name="rescala.meta.ChangedEventPointer.T">T</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.meta.package@ChangedEventPointer[+T]extendsMetaEventPointer[T]withProductwithSerializable" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.meta.DelayedSignalPointer" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="DelayedSignalPointer[+A]extendsMetaSignalPointer[A]withProductwithSerializable"></a>
+      <a id="DelayedSignalPointer[+A]:DelayedSignalPointer[A]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="DelayedSignalPointer.html"><span class="name">DelayedSignalPointer</span></a><span class="tparams">[<span name="A">+A</span>]</span><span class="params">(<span name="node">node: <span class="extype" name="scala.Option">Option</span>[<a href="ReactiveNode.html" class="extype" name="rescala.meta.ReactiveNode">ReactiveNode</a>]</span>, <span name="base">base: <a href="MetaSignalPointer.html" class="extype" name="rescala.meta.MetaSignalPointer">MetaSignalPointer</a>[<span class="extype" name="rescala.meta.DelayedSignalPointer.A">A</span>]</span>, <span name="n">n: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result"> extends <a href="MetaSignalPointer.html" class="extype" name="rescala.meta.MetaSignalPointer">MetaSignalPointer</a>[<span class="extype" name="rescala.meta.DelayedSignalPointer.A">A</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.meta.package@DelayedSignalPointer[+A]extendsMetaSignalPointer[A]withProductwithSerializable" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.meta.EvtEventPointer" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="EvtEventPointer[T]extendsMetaEventPointer[T]withProductwithSerializable"></a>
+      <a id="EvtEventPointer[T]:EvtEventPointer[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="EvtEventPointer.html"><span class="name">EvtEventPointer</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="node">node: <span class="extype" name="scala.Option">Option</span>[<a href="ReactiveNode.html" class="extype" name="rescala.meta.ReactiveNode">ReactiveNode</a>]</span>)</span><span class="result"> extends <a href="MetaEventPointer.html" class="extype" name="rescala.meta.MetaEventPointer">MetaEventPointer</a>[<span class="extype" name="rescala.meta.EvtEventPointer.T">T</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.meta.package@EvtEventPointer[T]extendsMetaEventPointer[T]withProductwithSerializable" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.meta.ExceptEventPointer" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ExceptEventPointer[+T,+U]extendsMetaEventPointer[T]withProductwithSerializable"></a>
+      <a id="ExceptEventPointer[+T,+U]:ExceptEventPointer[T,U]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="ExceptEventPointer.html"><span class="name">ExceptEventPointer</span></a><span class="tparams">[<span name="T">+T</span>, <span name="U">+U</span>]</span><span class="params">(<span name="node">node: <span class="extype" name="scala.Option">Option</span>[<a href="ReactiveNode.html" class="extype" name="rescala.meta.ReactiveNode">ReactiveNode</a>]</span>, <span name="base">base: <a href="MetaEventPointer.html" class="extype" name="rescala.meta.MetaEventPointer">MetaEventPointer</a>[<span class="extype" name="rescala.meta.ExceptEventPointer.T">T</span>]</span>, <span name="other">other: <a href="MetaEventPointer.html" class="extype" name="rescala.meta.MetaEventPointer">MetaEventPointer</a>[<span class="extype" name="rescala.meta.ExceptEventPointer.U">U</span>]</span>)</span><span class="result"> extends <a href="MetaEventPointer.html" class="extype" name="rescala.meta.MetaEventPointer">MetaEventPointer</a>[<span class="extype" name="rescala.meta.ExceptEventPointer.T">T</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.meta.package@ExceptEventPointer[+T,+U]extendsMetaEventPointer[T]withProductwithSerializable" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.meta.FilteredEventPointer" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="FilteredEventPointer[T,+U&gt;:T]extendsMetaEventPointer[U]withProductwithSerializable"></a>
+      <a id="FilteredEventPointer[T,+U&gt;:T]:FilteredEventPointer[T,U]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="FilteredEventPointer.html"><span class="name">FilteredEventPointer</span></a><span class="tparams">[<span name="T">T</span>, <span name="U">+U &gt;: <span class="extype" name="rescala.meta.FilteredEventPointer.T">T</span></span>]</span><span class="params">(<span name="node">node: <span class="extype" name="scala.Option">Option</span>[<a href="ReactiveNode.html" class="extype" name="rescala.meta.ReactiveNode">ReactiveNode</a>]</span>, <span name="base">base: <a href="MetaEventPointer.html" class="extype" name="rescala.meta.MetaEventPointer">MetaEventPointer</a>[<span class="extype" name="rescala.meta.FilteredEventPointer.T">T</span>]</span>, <span name="pred">pred: (<span class="extype" name="rescala.meta.FilteredEventPointer.T">T</span>) ⇒ <span class="extype" name="scala.Boolean">Boolean</span></span>)</span><span class="result"> extends <a href="MetaEventPointer.html" class="extype" name="rescala.meta.MetaEventPointer">MetaEventPointer</a>[<span class="extype" name="rescala.meta.FilteredEventPointer.U">U</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.meta.package@FilteredEventPointer[T,+U&gt;:T]extendsMetaEventPointer[U]withProductwithSerializable" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.meta.FlatMappedEventPointer" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="FlatMappedEventPointer[T,+B]extendsMetaEventPointer[B]withProductwithSerializable"></a>
+      <a id="FlatMappedEventPointer[T,+B]:FlatMappedEventPointer[T,B]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="FlatMappedEventPointer.html"><span class="name">FlatMappedEventPointer</span></a><span class="tparams">[<span name="T">T</span>, <span name="B">+B</span>]</span><span class="params">(<span name="node">node: <span class="extype" name="scala.Option">Option</span>[<a href="ReactiveNode.html" class="extype" name="rescala.meta.ReactiveNode">ReactiveNode</a>]</span>, <span name="base">base: <a href="MetaEventPointer.html" class="extype" name="rescala.meta.MetaEventPointer">MetaEventPointer</a>[<span class="extype" name="rescala.meta.FlatMappedEventPointer.T">T</span>]</span>, <span name="f">f: (<span class="extype" name="rescala.meta.FlatMappedEventPointer.T">T</span>) ⇒ <a href="MetaEventPointer.html" class="extype" name="rescala.meta.MetaEventPointer">MetaEventPointer</a>[<span class="extype" name="rescala.meta.FlatMappedEventPointer.B">B</span>]</span>)</span><span class="result"> extends <a href="MetaEventPointer.html" class="extype" name="rescala.meta.MetaEventPointer">MetaEventPointer</a>[<span class="extype" name="rescala.meta.FlatMappedEventPointer.B">B</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.meta.package@FlatMappedEventPointer[T,+B]extendsMetaEventPointer[B]withProductwithSerializable" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.meta.FoldedSignalPointer" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="FoldedSignalPointer[T,A]extendsMetaSignalPointer[A]withProductwithSerializable"></a>
+      <a id="FoldedSignalPointer[T,A]:FoldedSignalPointer[T,A]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="FoldedSignalPointer.html"><span class="name">FoldedSignalPointer</span></a><span class="tparams">[<span name="T">T</span>, <span name="A">A</span>]</span><span class="params">(<span name="node">node: <span class="extype" name="scala.Option">Option</span>[<a href="ReactiveNode.html" class="extype" name="rescala.meta.ReactiveNode">ReactiveNode</a>]</span>, <span name="base">base: <a href="MetaEventPointer.html" class="extype" name="rescala.meta.MetaEventPointer">MetaEventPointer</a>[<span class="extype" name="rescala.meta.FoldedSignalPointer.T">T</span>]</span>, <span name="init">init: <span class="extype" name="rescala.meta.FoldedSignalPointer.A">A</span></span>, <span name="fold">fold: (<span class="extype" name="rescala.meta.FoldedSignalPointer.A">A</span>, <span class="extype" name="rescala.meta.FoldedSignalPointer.T">T</span>) ⇒ <span class="extype" name="rescala.meta.FoldedSignalPointer.A">A</span></span>)</span><span class="result"> extends <a href="MetaSignalPointer.html" class="extype" name="rescala.meta.MetaSignalPointer">MetaSignalPointer</a>[<span class="extype" name="rescala.meta.FoldedSignalPointer.A">A</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.meta.package@FoldedSignalPointer[T,A]extendsMetaSignalPointer[A]withProductwithSerializable" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.meta.LoggedFire" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="LoggedFire[T]extendsMetaLogwithProductwithSerializable"></a>
+      <a id="LoggedFire[T]:LoggedFire[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="LoggedFire.html"><span class="name">LoggedFire</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="node">node: <a href="ReactiveNode.html" class="extype" name="rescala.meta.ReactiveNode">ReactiveNode</a></span>, <span name="value">value: <span class="extype" name="rescala.meta.LoggedFire.T">T</span></span>)</span><span class="result"> extends <a href="MetaLog.html" class="extype" name="rescala.meta.MetaLog">MetaLog</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.meta.package@LoggedFire[T]extendsMetaLogwithProductwithSerializable" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.meta.LoggedSet" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="LoggedSet[T]extendsMetaLogwithProductwithSerializable"></a>
+      <a id="LoggedSet[T]:LoggedSet[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="LoggedSet.html"><span class="name">LoggedSet</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="node">node: <a href="ReactiveNode.html" class="extype" name="rescala.meta.ReactiveNode">ReactiveNode</a></span>, <span name="value">value: <span class="extype" name="rescala.meta.LoggedSet.T">T</span></span>)</span><span class="result"> extends <a href="MetaLog.html" class="extype" name="rescala.meta.MetaLog">MetaLog</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.meta.package@LoggedSet[T]extendsMetaLogwithProductwithSerializable" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.meta.MappedEventPointer" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="MappedEventPointer[T,+U]extendsMetaEventPointer[U]withProductwithSerializable"></a>
+      <a id="MappedEventPointer[T,+U]:MappedEventPointer[T,U]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="MappedEventPointer.html"><span class="name">MappedEventPointer</span></a><span class="tparams">[<span name="T">T</span>, <span name="U">+U</span>]</span><span class="params">(<span name="node">node: <span class="extype" name="scala.Option">Option</span>[<a href="ReactiveNode.html" class="extype" name="rescala.meta.ReactiveNode">ReactiveNode</a>]</span>, <span name="base">base: <a href="MetaEventPointer.html" class="extype" name="rescala.meta.MetaEventPointer">MetaEventPointer</a>[<span class="extype" name="rescala.meta.MappedEventPointer.T">T</span>]</span>, <span name="mapping">mapping: (<span class="extype" name="rescala.meta.MappedEventPointer.T">T</span>) ⇒ <span class="extype" name="rescala.meta.MappedEventPointer.U">U</span></span>)</span><span class="result"> extends <a href="MetaEventPointer.html" class="extype" name="rescala.meta.MetaEventPointer">MetaEventPointer</a>[<span class="extype" name="rescala.meta.MappedEventPointer.U">U</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.meta.package@MappedEventPointer[T,+U]extendsMetaEventPointer[U]withProductwithSerializable" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.meta.MappedSignalPointer" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="MappedSignalPointer[A,+U]extendsMetaSignalPointer[U]withProductwithSerializable"></a>
+      <a id="MappedSignalPointer[A,+U]:MappedSignalPointer[A,U]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="MappedSignalPointer.html"><span class="name">MappedSignalPointer</span></a><span class="tparams">[<span name="A">A</span>, <span name="U">+U</span>]</span><span class="params">(<span name="node">node: <span class="extype" name="scala.Option">Option</span>[<a href="ReactiveNode.html" class="extype" name="rescala.meta.ReactiveNode">ReactiveNode</a>]</span>, <span name="base">base: <a href="MetaSignalPointer.html" class="extype" name="rescala.meta.MetaSignalPointer">MetaSignalPointer</a>[<span class="extype" name="rescala.meta.MappedSignalPointer.A">A</span>]</span>, <span name="mapping">mapping: (<span class="extype" name="rescala.meta.MappedSignalPointer.A">A</span>) ⇒ <span class="extype" name="rescala.meta.MappedSignalPointer.U">U</span></span>)</span><span class="result"> extends <a href="MetaSignalPointer.html" class="extype" name="rescala.meta.MetaSignalPointer">MetaSignalPointer</a>[<span class="extype" name="rescala.meta.MappedSignalPointer.U">U</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.meta.package@MappedSignalPointer[A,+U]extendsMetaSignalPointer[U]withProductwithSerializable" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.meta.MetaEventPointer" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="MetaEventPointer[+T]extendsMetaReactivePointer[T]"></a>
+      <a id="MetaEventPointer[+T]:MetaEventPointer[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="MetaEventPointer.html"><span class="name">MetaEventPointer</span></a><span class="tparams">[<span name="T">+T</span>]</span><span class="result"> extends <a href="MetaReactivePointer.html" class="extype" name="rescala.meta.MetaReactivePointer">MetaReactivePointer</a>[<span class="extype" name="rescala.meta.MetaEventPointer.T">T</span>]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.meta.package@MetaEventPointer[+T]extendsMetaReactivePointer[T]" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.meta.MetaLog" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="MetaLogextendsAnyRef"></a>
+      <a id="MetaLog:MetaLog"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="MetaLog.html"><span class="name">MetaLog</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.meta.package@MetaLogextendsAnyRef" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.meta.MetaObservePointer" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="MetaObservePointer[T]extendsMetaPointer[Unit]withProductwithSerializable"></a>
+      <a id="MetaObservePointer[T]:MetaObservePointer[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="MetaObservePointer.html"><span class="name">MetaObservePointer</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="node">node: <span class="extype" name="scala.Option">Option</span>[<a href="ReactiveNode.html" class="extype" name="rescala.meta.ReactiveNode">ReactiveNode</a>]</span>, <span name="base">base: <a href="MetaReactivePointer.html" class="extype" name="rescala.meta.MetaReactivePointer">MetaReactivePointer</a>[<span class="extype" name="rescala.meta.MetaObservePointer.T">T</span>]</span>, <span name="onSuccess">onSuccess: (<span class="extype" name="rescala.meta.MetaObservePointer.T">T</span>) ⇒ <span class="extype" name="scala.Unit">Unit</span></span>, <span name="onFailure">onFailure: (<span class="extype" name="scala.Throwable">Throwable</span>) ⇒ <span class="extype" name="scala.Unit">Unit</span></span>)</span><span class="result"> extends <a href="MetaPointer.html" class="extype" name="rescala.meta.MetaPointer">MetaPointer</a>[<span class="extype" name="scala.Unit">Unit</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.meta.package@MetaObservePointer[T]extendsMetaPointer[Unit]withProductwithSerializable" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.meta.MetaPointer" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="MetaPointer[+T]extendsAnyRef"></a>
+      <a id="MetaPointer[+T]:MetaPointer[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="MetaPointer.html"><span class="name">MetaPointer</span></a><span class="tparams">[<span name="T">+T</span>]</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.meta.package@MetaPointer[+T]extendsAnyRef" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.meta.MetaReactivePointer" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="MetaReactivePointer[+T]extendsMetaPointer[T]"></a>
+      <a id="MetaReactivePointer[+T]:MetaReactivePointer[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="MetaReactivePointer.html"><span class="name">MetaReactivePointer</span></a><span class="tparams">[<span name="T">+T</span>]</span><span class="result"> extends <a href="MetaPointer.html" class="extype" name="rescala.meta.MetaPointer">MetaPointer</a>[<span class="extype" name="rescala.meta.MetaReactivePointer.T">T</span>]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.meta.package@MetaReactivePointer[+T]extendsMetaPointer[T]" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.meta.MetaSignalPointer" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="MetaSignalPointer[+A]extendsMetaReactivePointer[A]"></a>
+      <a id="MetaSignalPointer[+A]:MetaSignalPointer[A]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="MetaSignalPointer.html"><span class="name">MetaSignalPointer</span></a><span class="tparams">[<span name="A">+A</span>]</span><span class="result"> extends <a href="MetaReactivePointer.html" class="extype" name="rescala.meta.MetaReactivePointer">MetaReactivePointer</a>[<span class="extype" name="rescala.meta.MetaSignalPointer.A">A</span>]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.meta.package@MetaSignalPointer[+A]extendsMetaReactivePointer[A]" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.meta.OrEventPointer" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="OrEventPointer[+T&lt;:U,+U]extendsMetaEventPointer[U]withProductwithSerializable"></a>
+      <a id="OrEventPointer[+T&lt;:U,+U]:OrEventPointer[T,U]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="OrEventPointer.html"><span class="name">OrEventPointer</span></a><span class="tparams">[<span name="T">+T &lt;: <span class="extype" name="rescala.meta.OrEventPointer.U">U</span></span>, <span name="U">+U</span>]</span><span class="params">(<span name="node">node: <span class="extype" name="scala.Option">Option</span>[<a href="ReactiveNode.html" class="extype" name="rescala.meta.ReactiveNode">ReactiveNode</a>]</span>, <span name="base">base: <a href="MetaEventPointer.html" class="extype" name="rescala.meta.MetaEventPointer">MetaEventPointer</a>[<span class="extype" name="rescala.meta.OrEventPointer.T">T</span>]</span>, <span name="other">other: <a href="MetaEventPointer.html" class="extype" name="rescala.meta.MetaEventPointer">MetaEventPointer</a>[<span class="extype" name="rescala.meta.OrEventPointer.U">U</span>]</span>)</span><span class="result"> extends <a href="MetaEventPointer.html" class="extype" name="rescala.meta.MetaEventPointer">MetaEventPointer</a>[<span class="extype" name="rescala.meta.OrEventPointer.U">U</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.meta.package@OrEventPointer[+T&lt;:U,+U]extendsMetaEventPointer[U]withProductwithSerializable" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.meta.ReactiveGraph" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ReactiveGraphextendsAnyRef"></a>
+      <a id="ReactiveGraph:ReactiveGraph"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="ReactiveGraph.html"><span class="name">ReactiveGraph</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.meta.package@ReactiveGraphextendsAnyRef" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.meta.ReactiveNode" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ReactiveNodeextendsAnyRef"></a>
+      <a id="ReactiveNode:ReactiveNode"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="ReactiveNode.html"><span class="name">ReactiveNode</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.meta.package@ReactiveNodeextendsAnyRef" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.meta.Reifier" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="Reifier[S&lt;:rescala.graph.Struct,SL[+X,Z&lt;:rescala.graph.Struct]&lt;:rescala.reactives.SignalLike[X,Z,SL,EV],EV[+X,Z&lt;:rescala.graph.Struct]&lt;:rescala.reactives.EventLike[X,Z,SL,EV],VAR[X,Z&lt;:rescala.graph.Struct]&lt;:rescala.reactives.VarLike[X,Z,SL,EV]withSL[X,Z],EVT[X,Z&lt;:rescala.graph.Struct]&lt;:rescala.reactives.EvtLike[X,Z,SL,EV]withEV[X,Z]]extendsAnyRef"></a>
+      <a id="Reifier[S&lt;:Struct,SL[+X,Z&lt;:Struct]&lt;:SignalLike[X,Z,SL,EV],EV[+X,Z&lt;:Struct]&lt;:EventLike[X,Z,SL,EV],VAR[X,Z&lt;:Struct]&lt;:VarLike[X,Z,SL,EV]withSL[X,Z],EVT[X,Z&lt;:Struct]&lt;:EvtLike[X,Z,SL,EV]withEV[X,Z]]:Reifier[S,SL,EV,VAR,EVT]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="Reifier.html"><span class="name">Reifier</span></a><span class="tparams">[<span name="S">S &lt;: <a href="../graph/Struct.html" class="extype" name="rescala.graph.Struct">Struct</a></span>, <span name="SL">SL<span class="tparams">[<span name="X">+X</span>, <span name="Z">Z &lt;: <a href="../graph/Struct.html" class="extype" name="rescala.graph.Struct">Struct</a></span>]</span> &lt;: <a href="../reactives/SignalLike.html" class="extype" name="rescala.reactives.SignalLike">SignalLike</a>[<span class="extype" name="rescala.meta.Reifier.SL.X">X</span>, <span class="extype" name="rescala.meta.Reifier.SL.Z">Z</span>, <span class="extype" name="rescala.meta.Reifier.SL">SL</span>, <span class="extype" name="rescala.meta.Reifier.EV">EV</span>]</span>, <span name="EV">EV<span class="tparams">[<span name="X">+X</span>, <span name="Z">Z &lt;: <a href="../graph/Struct.html" class="extype" name="rescala.graph.Struct">Struct</a></span>]</span> &lt;: <a href="../reactives/EventLike.html" class="extype" name="rescala.reactives.EventLike">EventLike</a>[<span class="extype" name="rescala.meta.Reifier.EV.X">X</span>, <span class="extype" name="rescala.meta.Reifier.EV.Z">Z</span>, <span class="extype" name="rescala.meta.Reifier.SL">SL</span>, <span class="extype" name="rescala.meta.Reifier.EV">EV</span>]</span>, <span name="VAR">VAR<span class="tparams">[<span name="X">X</span>, <span name="Z">Z &lt;: <a href="../graph/Struct.html" class="extype" name="rescala.graph.Struct">Struct</a></span>]</span> &lt;: <a href="../reactives/VarLike.html" class="extype" name="rescala.reactives.VarLike">VarLike</a>[<span class="extype" name="rescala.meta.Reifier.VAR.X">X</span>, <span class="extype" name="rescala.meta.Reifier.VAR.Z">Z</span>, <span class="extype" name="rescala.meta.Reifier.SL">SL</span>, <span class="extype" name="rescala.meta.Reifier.EV">EV</span>] with <span class="extype" name="rescala.meta.Reifier.SL">SL</span>[<span class="extype" name="rescala.meta.Reifier.VAR.X">X</span>, <span class="extype" name="rescala.meta.Reifier.VAR.Z">Z</span>]</span>, <span name="EVT">EVT<span class="tparams">[<span name="X">X</span>, <span name="Z">Z &lt;: <a href="../graph/Struct.html" class="extype" name="rescala.graph.Struct">Struct</a></span>]</span> &lt;: <a href="../reactives/EvtLike.html" class="extype" name="rescala.reactives.EvtLike">EvtLike</a>[<span class="extype" name="rescala.meta.Reifier.EVT.X">X</span>, <span class="extype" name="rescala.meta.Reifier.EVT.Z">Z</span>, <span class="extype" name="rescala.meta.Reifier.SL">SL</span>, <span class="extype" name="rescala.meta.Reifier.EV">EV</span>] with <span class="extype" name="rescala.meta.Reifier.EV">EV</span>[<span class="extype" name="rescala.meta.Reifier.EVT.X">X</span>, <span class="extype" name="rescala.meta.Reifier.EVT.Z">Z</span>]</span>]</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.meta.package@Reifier[S&lt;:rescala.graph.Struct,SL[+X,Z&lt;:rescala.graph.Struct]&lt;:rescala.reactives.SignalLike[X,Z,SL,EV],EV[+X,Z&lt;:rescala.graph.Struct]&lt;:rescala.reactives.EventLike[X,Z,SL,EV],VAR[X,Z&lt;:rescala.graph.Struct]&lt;:rescala.reactives.VarLike[X,Z,SL,EV]withSL[X,Z],EVT[X,Z&lt;:rescala.graph.Struct]&lt;:rescala.reactives.EvtLike[X,Z,SL,EV]withEV[X,Z]]extendsAnyRef" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.meta.SnapshotSignalPointer" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SnapshotSignalPointer[+T,+A]extendsMetaSignalPointer[A]withProductwithSerializable"></a>
+      <a id="SnapshotSignalPointer[+T,+A]:SnapshotSignalPointer[T,A]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="SnapshotSignalPointer.html"><span class="name">SnapshotSignalPointer</span></a><span class="tparams">[<span name="T">+T</span>, <span name="A">+A</span>]</span><span class="params">(<span name="node">node: <span class="extype" name="scala.Option">Option</span>[<a href="ReactiveNode.html" class="extype" name="rescala.meta.ReactiveNode">ReactiveNode</a>]</span>, <span name="base">base: <a href="MetaEventPointer.html" class="extype" name="rescala.meta.MetaEventPointer">MetaEventPointer</a>[<span class="extype" name="rescala.meta.SnapshotSignalPointer.T">T</span>]</span>, <span name="s">s: <a href="MetaSignalPointer.html" class="extype" name="rescala.meta.MetaSignalPointer">MetaSignalPointer</a>[<span class="extype" name="rescala.meta.SnapshotSignalPointer.A">A</span>]</span>)</span><span class="result"> extends <a href="MetaSignalPointer.html" class="extype" name="rescala.meta.MetaSignalPointer">MetaSignalPointer</a>[<span class="extype" name="rescala.meta.SnapshotSignalPointer.A">A</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.meta.package@SnapshotSignalPointer[+T,+A]extendsMetaSignalPointer[A]withProductwithSerializable" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.meta.SwitchOnceSignalPointer" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SwitchOnceSignalPointer[+T,+A]extendsMetaSignalPointer[A]withProductwithSerializable"></a>
+      <a id="SwitchOnceSignalPointer[+T,+A]:SwitchOnceSignalPointer[T,A]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="SwitchOnceSignalPointer.html"><span class="name">SwitchOnceSignalPointer</span></a><span class="tparams">[<span name="T">+T</span>, <span name="A">+A</span>]</span><span class="params">(<span name="node">node: <span class="extype" name="scala.Option">Option</span>[<a href="ReactiveNode.html" class="extype" name="rescala.meta.ReactiveNode">ReactiveNode</a>]</span>, <span name="base">base: <a href="MetaEventPointer.html" class="extype" name="rescala.meta.MetaEventPointer">MetaEventPointer</a>[<span class="extype" name="rescala.meta.SwitchOnceSignalPointer.T">T</span>]</span>, <span name="original">original: <a href="MetaSignalPointer.html" class="extype" name="rescala.meta.MetaSignalPointer">MetaSignalPointer</a>[<span class="extype" name="rescala.meta.SwitchOnceSignalPointer.A">A</span>]</span>, <span name="newSignal">newSignal: <a href="MetaSignalPointer.html" class="extype" name="rescala.meta.MetaSignalPointer">MetaSignalPointer</a>[<span class="extype" name="rescala.meta.SwitchOnceSignalPointer.A">A</span>]</span>)</span><span class="result"> extends <a href="MetaSignalPointer.html" class="extype" name="rescala.meta.MetaSignalPointer">MetaSignalPointer</a>[<span class="extype" name="rescala.meta.SwitchOnceSignalPointer.A">A</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.meta.package@SwitchOnceSignalPointer[+T,+A]extendsMetaSignalPointer[A]withProductwithSerializable" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.meta.SwitchToSignalPointer" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SwitchToSignalPointer[+T&lt;:A,+A]extendsMetaSignalPointer[A]withProductwithSerializable"></a>
+      <a id="SwitchToSignalPointer[+T&lt;:A,+A]:SwitchToSignalPointer[T,A]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="SwitchToSignalPointer.html"><span class="name">SwitchToSignalPointer</span></a><span class="tparams">[<span name="T">+T &lt;: <span class="extype" name="rescala.meta.SwitchToSignalPointer.A">A</span></span>, <span name="A">+A</span>]</span><span class="params">(<span name="node">node: <span class="extype" name="scala.Option">Option</span>[<a href="ReactiveNode.html" class="extype" name="rescala.meta.ReactiveNode">ReactiveNode</a>]</span>, <span name="base">base: <a href="MetaEventPointer.html" class="extype" name="rescala.meta.MetaEventPointer">MetaEventPointer</a>[<span class="extype" name="rescala.meta.SwitchToSignalPointer.T">T</span>]</span>, <span name="original">original: <a href="MetaSignalPointer.html" class="extype" name="rescala.meta.MetaSignalPointer">MetaSignalPointer</a>[<span class="extype" name="rescala.meta.SwitchToSignalPointer.A">A</span>]</span>)</span><span class="result"> extends <a href="MetaSignalPointer.html" class="extype" name="rescala.meta.MetaSignalPointer">MetaSignalPointer</a>[<span class="extype" name="rescala.meta.SwitchToSignalPointer.A">A</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.meta.package@SwitchToSignalPointer[+T&lt;:A,+A]extendsMetaSignalPointer[A]withProductwithSerializable" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.meta.ToggledSignalPointer" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ToggledSignalPointer[+T,+A]extendsMetaSignalPointer[A]withProductwithSerializable"></a>
+      <a id="ToggledSignalPointer[+T,+A]:ToggledSignalPointer[T,A]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="ToggledSignalPointer.html"><span class="name">ToggledSignalPointer</span></a><span class="tparams">[<span name="T">+T</span>, <span name="A">+A</span>]</span><span class="params">(<span name="node">node: <span class="extype" name="scala.Option">Option</span>[<a href="ReactiveNode.html" class="extype" name="rescala.meta.ReactiveNode">ReactiveNode</a>]</span>, <span name="base">base: <a href="MetaEventPointer.html" class="extype" name="rescala.meta.MetaEventPointer">MetaEventPointer</a>[<span class="extype" name="rescala.meta.ToggledSignalPointer.T">T</span>]</span>, <span name="a">a: <a href="MetaSignalPointer.html" class="extype" name="rescala.meta.MetaSignalPointer">MetaSignalPointer</a>[<span class="extype" name="rescala.meta.ToggledSignalPointer.A">A</span>]</span>, <span name="b">b: <a href="MetaSignalPointer.html" class="extype" name="rescala.meta.MetaSignalPointer">MetaSignalPointer</a>[<span class="extype" name="rescala.meta.ToggledSignalPointer.A">A</span>]</span>)</span><span class="result"> extends <a href="MetaSignalPointer.html" class="extype" name="rescala.meta.MetaSignalPointer">MetaSignalPointer</a>[<span class="extype" name="rescala.meta.ToggledSignalPointer.A">A</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.meta.package@ToggledSignalPointer[+T,+A]extendsMetaSignalPointer[A]withProductwithSerializable" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.meta.VarSignalPointer" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="VarSignalPointer[A]extendsMetaSignalPointer[A]withProductwithSerializable"></a>
+      <a id="VarSignalPointer[A]:VarSignalPointer[A]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="VarSignalPointer.html"><span class="name">VarSignalPointer</span></a><span class="tparams">[<span name="A">A</span>]</span><span class="params">(<span name="node">node: <span class="extype" name="scala.Option">Option</span>[<a href="ReactiveNode.html" class="extype" name="rescala.meta.ReactiveNode">ReactiveNode</a>]</span>)</span><span class="result"> extends <a href="MetaSignalPointer.html" class="extype" name="rescala.meta.MetaSignalPointer">MetaSignalPointer</a>[<span class="extype" name="rescala.meta.VarSignalPointer.A">A</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.meta.package@VarSignalPointer[A]extendsMetaSignalPointer[A]withProductwithSerializable" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.meta.ZippedEventPointer" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ZippedEventPointer[+T,+U]extendsMetaEventPointer[(T,U)]withProductwithSerializable"></a>
+      <a id="ZippedEventPointer[+T,+U]:ZippedEventPointer[T,U]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="ZippedEventPointer.html"><span class="name">ZippedEventPointer</span></a><span class="tparams">[<span name="T">+T</span>, <span name="U">+U</span>]</span><span class="params">(<span name="node">node: <span class="extype" name="scala.Option">Option</span>[<a href="ReactiveNode.html" class="extype" name="rescala.meta.ReactiveNode">ReactiveNode</a>]</span>, <span name="base">base: <a href="MetaEventPointer.html" class="extype" name="rescala.meta.MetaEventPointer">MetaEventPointer</a>[<span class="extype" name="rescala.meta.ZippedEventPointer.T">T</span>]</span>, <span name="other">other: <a href="MetaEventPointer.html" class="extype" name="rescala.meta.MetaEventPointer">MetaEventPointer</a>[<span class="extype" name="rescala.meta.ZippedEventPointer.U">U</span>]</span>)</span><span class="result"> extends <a href="MetaEventPointer.html" class="extype" name="rescala.meta.MetaEventPointer">MetaEventPointer</a>[(<span class="extype" name="rescala.meta.ZippedEventPointer.T">T</span>, <span class="extype" name="rescala.meta.ZippedEventPointer.U">U</span>)] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.meta.package@ZippedEventPointer[+T,+U]extendsMetaEventPointer[(T,U)]withProductwithSerializable" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li></ol>
+            </div>
+
+        
+
+        <div id="values" class="values members">
+              <h3>Value Members</h3>
+              <ol><li name="rescala.meta.SynchronousReifier" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SynchronousReifier"></a>
+      <a id="SynchronousReifier:SynchronousReifier"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="SynchronousReifier$.html"><span class="name">SynchronousReifier</span></a><span class="result"> extends <a href="Reifier.html" class="extype" name="rescala.meta.Reifier">Reifier</a>[<a href="../graph/SimpleStruct.html" class="extype" name="rescala.graph.SimpleStruct">SimpleStruct</a>, <a href="../reactives/Signal.html" class="extype" name="rescala.reactives.Signal">reactives.Signal</a>, <a href="../reactives/Event.html" class="extype" name="rescala.reactives.Event">reactives.Event</a>, <a href="../reactives/Var.html" class="extype" name="rescala.reactives.Var">reactives.Var</a>, <a href="../reactives/Evt.html" class="extype" name="rescala.reactives.Evt">reactives.Evt</a>]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.meta.package@SynchronousReifier" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li></ol>
+            </div>
+
+        
+
+        
+        </div>
+
+        <div id="inheritedMembers">
+        
+        
+        </div>
+
+        <div id="groupedMembers">
+        <div class="group" name="Ungrouped">
+              <h3>Ungrouped</h3>
+              
+            </div>
+        </div>
+
+      </div>
+
+      <div id="tooltip"></div>
+
+      <div id="footer">  </div>
+
+
+    </body>
+      </html>

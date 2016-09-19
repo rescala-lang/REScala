@@ -1,0 +1,208 @@
+<!DOCTYPE html >
+<html>
+        <head>
+          <title>pipelining - rescala.pipelining</title>
+          <meta name="description" content="pipelining - rescala.pipelining" />
+          <meta name="keywords" content="pipelining rescala.pipelining" />
+          <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+          
+      <link href="../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
+      <link href="../../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css" />
+      <script type="text/javascript" src="../../lib/jquery.js" id="jquery-js"></script>
+      <script type="text/javascript" src="../../lib/jquery-ui.js"></script>
+      <script type="text/javascript" src="../../lib/template.js"></script>
+      <script type="text/javascript" src="../../lib/tools.tooltip.js"></script>
+      
+      <script type="text/javascript">
+         if(top === self) {
+            var url = '../../index.html';
+            var hash = 'rescala.pipelining.package';
+            var anchor = window.location.hash;
+            var anchor_opt = '';
+            if (anchor.length >= 1)
+              anchor_opt = '@' + anchor.substring(1);
+            window.location.href = url + '#' + hash + anchor_opt;
+         }
+   	  </script>
+    
+        </head>
+        <body class="value">
+      <div id="definition">
+        <img alt="Package" src="../../lib/package_big.png" />
+        <p id="owner"><a href="../package.html" class="extype" name="rescala">rescala</a></p>
+        <h1>pipelining</h1><span class="permalink">
+      <a href="../../index.html#rescala.pipelining.package" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      </div>
+
+      <h4 id="signature" class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <span class="name">pipelining</span>
+      </span>
+      </h4>
+      
+          <div id="comment" class="fullcommenttop"></div>
+        
+
+      <div id="mbrsel">
+        <div id="textfilter"><span class="pre"></span><span class="input"><input id="mbrsel-input" type="text" accesskey="/" /></span><span class="post"></span></div>
+        
+        
+        <div id="visbl">
+            <span class="filtertype">Visibility</span>
+            <ol><li class="public in"><span>Public</span></li><li class="all out"><span>All</span></li></ol>
+          </div>
+      </div>
+
+      <div id="template">
+        <div id="allMembers">
+        
+
+        <div id="types" class="types members">
+              <h3>Type Members</h3>
+              <ol><li name="rescala.pipelining.Buffer" visbl="pub" data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="Buffer[A]extendsCommittable"></a>
+      <a id="Buffer[A]:Buffer[A]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="Buffer.html"><span class="name">Buffer</span></a><span class="tparams">[<span name="A">A</span>]</span><span class="result"> extends <a href="../propagation/Committable.html" class="extype" name="rescala.propagation.Committable">Committable</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.pipelining.package@Buffer[A]extendsCommittable" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Buffer that stores a temporary new value for its content until it is committed.</p><div class="fullcomment"><div class="comment cmt"><p>Buffer that stores a temporary new value for its content until it is committed.
+</p></div><dl class="paramcmts block"><dt class="tparam">A</dt><dd class="cmt"><p>Buffer stored content type</p></dd></dl></div>
+    </li><li name="rescala.pipelining.PipelineEngine" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="PipelineEngineextendsPlanImpl[rescala.pipelining.PipelineStruct.type,rescala.pipelining.PipeliningTurn]"></a>
+      <a id="PipelineEngine:PipelineEngine"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="PipelineEngine.html"><span class="name">PipelineEngine</span></a><span class="result"> extends <a href="../engines/PlanImpl.html" class="extype" name="rescala.engines.PlanImpl">PlanImpl</a>[<a href="PipelineStruct$.html" class="extype" name="rescala.pipelining.PipelineStruct">PipelineStruct</a>.type, <a href="PipeliningTurn.html" class="extype" name="rescala.pipelining.PipeliningTurn">PipeliningTurn</a>]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.pipelining.package@PipelineEngineextendsPlanImpl[rescala.pipelining.PipelineStruct.type,rescala.pipelining.PipeliningTurn]" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt"></p>
+    </li><li name="rescala.pipelining.PipelineSporeP" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="PipelineSporeP[P,R]extendsAnyRef"></a>
+      <a id="PipelineSporeP[P,R]:PipelineSporeP[P,R]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="PipelineSporeP.html"><span class="name">PipelineSporeP</span></a><span class="tparams">[<span name="P">P</span>, <span name="R">R</span>]</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.pipelining.package@PipelineSporeP[P,R]extendsAnyRef" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.pipelining.PipeliningTurn" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="PipeliningTurnextendsPipelinePropagationImplwithPropagateNoChangeswithParallelFrameCreator"></a>
+      <a id="PipeliningTurn:PipeliningTurn"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="PipeliningTurn.html"><span class="name">PipeliningTurn</span></a><span class="result"> extends <span class="extype" name="rescala.pipelining.propagation.PipelinePropagationImpl">PipelinePropagationImpl</span> with <span class="extype" name="rescala.pipelining.propagation.PropagateNoChanges">PropagateNoChanges</span> with <span class="extype" name="rescala.pipelining.ParallelFrameCreator">ParallelFrameCreator</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.pipelining.package@PipeliningTurnextendsPipelinePropagationImplwithPropagateNoChangeswithParallelFrameCreator" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li></ol>
+            </div>
+
+        
+
+        <div id="values" class="values members">
+              <h3>Value Members</h3>
+              <ol><li name="rescala.pipelining.Buffer" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="Buffer"></a>
+      <a id="Buffer:Buffer"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Buffer$.html"><span class="name">Buffer</span></a>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.pipelining.package@Buffer" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Buffer companion object.</p><div class="fullcomment"><div class="comment cmt"><p>Buffer companion object. Only used for pipelining.
+</p></div></div>
+    </li><li name="rescala.pipelining.PipelineStruct" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="PipelineStruct"></a>
+      <a id="PipelineStruct:PipelineStruct"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="PipelineStruct$.html"><span class="name">PipelineStruct</span></a><span class="result"> extends <a href="../graph/Struct.html" class="extype" name="rescala.graph.Struct">Struct</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.pipelining.package@PipelineStruct" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li></ol>
+            </div>
+
+        
+
+        
+        </div>
+
+        <div id="inheritedMembers">
+        
+        
+        </div>
+
+        <div id="groupedMembers">
+        <div class="group" name="Ungrouped">
+              <h3>Ungrouped</h3>
+              
+            </div>
+        </div>
+
+      </div>
+
+      <div id="tooltip"></div>
+
+      <div id="footer">  </div>
+
+
+    </body>
+      </html>

@@ -1,0 +1,515 @@
+<!DOCTYPE html >
+<html>
+        <head>
+          <title>fullmv - rescala.fullmv</title>
+          <meta name="description" content="fullmv - rescala.fullmv" />
+          <meta name="keywords" content="fullmv rescala.fullmv" />
+          <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+          
+      <link href="../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
+      <link href="../../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css" />
+      <script type="text/javascript" src="../../lib/jquery.js" id="jquery-js"></script>
+      <script type="text/javascript" src="../../lib/jquery-ui.js"></script>
+      <script type="text/javascript" src="../../lib/template.js"></script>
+      <script type="text/javascript" src="../../lib/tools.tooltip.js"></script>
+      
+      <script type="text/javascript">
+         if(top === self) {
+            var url = '../../index.html';
+            var hash = 'rescala.fullmv.package';
+            var anchor = window.location.hash;
+            var anchor_opt = '';
+            if (anchor.length >= 1)
+              anchor_opt = '@' + anchor.substring(1);
+            window.location.href = url + '#' + hash + anchor_opt;
+         }
+   	  </script>
+    
+        </head>
+        <body class="value">
+      <div id="definition">
+        <img alt="Package" src="../../lib/package_big.png" />
+        <p id="owner"><a href="../package.html" class="extype" name="rescala">rescala</a></p>
+        <h1>fullmv</h1><span class="permalink">
+      <a href="../../index.html#rescala.fullmv.package" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      </div>
+
+      <h4 id="signature" class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <span class="name">fullmv</span>
+      </span>
+      </h4>
+      
+          <div id="comment" class="fullcommenttop"></div>
+        
+
+      <div id="mbrsel">
+        <div id="textfilter"><span class="pre"></span><span class="input"><input id="mbrsel-input" type="text" accesskey="/" /></span><span class="post"></span></div>
+        
+        
+        <div id="visbl">
+            <span class="filtertype">Visibility</span>
+            <ol><li class="public in"><span>Public</span></li><li class="all out"><span>All</span></li></ol>
+          </div>
+      </div>
+
+      <div id="template">
+        <div id="allMembers">
+        
+
+        <div id="types" class="types members">
+              <h3>Type Members</h3>
+              <ol><li name="rescala.fullmv.HasParent" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="HasParentextendsLockResultwithTryLockResultwithProductwithSerializable"></a>
+      <a id="HasParent:HasParent"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="HasParent.html"><span class="name">HasParent</span></a><span class="params">(<span name="parent">parent: <a href="Transaction.html" class="extype" name="rescala.fullmv.Transaction">Transaction</a></span>)</span><span class="result"> extends <a href="LockResult.html" class="extype" name="rescala.fullmv.LockResult">LockResult</a> with <a href="TryLockResult.html" class="extype" name="rescala.fullmv.TryLockResult">TryLockResult</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.fullmv.package@HasParentextendsLockResultwithTryLockResultwithProductwithSerializable" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.fullmv.Host" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="HostextendsHostCommunicationwithSerializable"></a>
+      <a id="Host:Host"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="Host.html"><span class="name">Host</span></a><span class="result"> extends <a href="HostCommunication.html" class="extype" name="rescala.fullmv.HostCommunication">HostCommunication</a> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.fullmv.package@HostextendsHostCommunicationwithSerializable" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.fullmv.HostCommunication" visbl="pub" data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="HostCommunicationextendsAnyRef"></a>
+      <a id="HostCommunication:HostCommunication"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="HostCommunication.html"><span class="name">HostCommunication</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.fullmv.package@HostCommunicationextendsAnyRef" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@remote</span><span class="args">()</span>
+              
+        </dd></dl></div>
+    </li><li name="rescala.fullmv.LocalTransaction" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="LocalTransactionextendsTransaction"></a>
+      <a id="LocalTransaction:LocalTransaction"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="LocalTransaction.html"><span class="name">LocalTransaction</span></a><span class="result"> extends <a href="Transaction.html" class="extype" name="rescala.fullmv.Transaction">Transaction</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.fullmv.package@LocalTransactionextendsTransaction" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.fullmv.LockResult" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="LockResultextendsAnyRef"></a>
+      <a id="LockResult:LockResult"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">sealed </span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="LockResult.html"><span class="name">LockResult</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.fullmv.package@LockResultextendsAnyRef" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.fullmv.OrderResult" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="OrderResultextendsAnyRef"></a>
+      <a id="OrderResult:OrderResult"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">sealed </span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="OrderResult.html"><span class="name">OrderResult</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.fullmv.package@OrderResultextendsAnyRef" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.fullmv.RemoteHost" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="RemoteHostextendsHost"></a>
+      <a id="RemoteHost:RemoteHost"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="RemoteHost.html"><span class="name">RemoteHost</span></a><span class="result"> extends <a href="Host.html" class="extype" name="rescala.fullmv.Host">Host</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.fullmv.package@RemoteHostextendsHost" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.fullmv.RemoteTransaction" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="RemoteTransactionextendsTransaction"></a>
+      <a id="RemoteTransaction:RemoteTransaction"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="RemoteTransaction.html"><span class="name">RemoteTransaction</span></a><span class="result"> extends <a href="Transaction.html" class="extype" name="rescala.fullmv.Transaction">Transaction</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.fullmv.package@RemoteTransactionextendsTransaction" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.fullmv.Subordinate" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SubordinateextendsTransactionStatewithProductwithSerializable"></a>
+      <a id="Subordinate:Subordinate"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="Subordinate.html"><span class="name">Subordinate</span></a><span class="params">(<span name="parent">parent: <a href="Transaction.html" class="extype" name="rescala.fullmv.Transaction">Transaction</a></span>)</span><span class="result"> extends <a href="TransactionState.html" class="extype" name="rescala.fullmv.TransactionState">TransactionState</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.fullmv.package@SubordinateextendsTransactionStatewithProductwithSerializable" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.fullmv.Transaction" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="TransactionextendsSerializable"></a>
+      <a id="Transaction:Transaction"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="Transaction.html"><span class="name">Transaction</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.fullmv.package@TransactionextendsSerializable" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.fullmv.TransactionPhase" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="TransactionPhaseextendsAnyRef"></a>
+      <a id="TransactionPhase:TransactionPhase"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">sealed </span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="TransactionPhase.html"><span class="name">TransactionPhase</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.fullmv.package@TransactionPhaseextendsAnyRef" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.fullmv.TransactionState" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="TransactionStateextendsAnyRef"></a>
+      <a id="TransactionState:TransactionState"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">sealed </span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="TransactionState.html"><span class="name">TransactionState</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.fullmv.package@TransactionStateextendsAnyRef" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.fullmv.TryLockResult" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="TryLockResultextendsAnyRef"></a>
+      <a id="TryLockResult:TryLockResult"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">sealed </span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="TryLockResult.html"><span class="name">TryLockResult</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.fullmv.package@TryLockResultextendsAnyRef" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li></ol>
+            </div>
+
+        
+
+        <div id="values" class="values members">
+              <h3>Value Members</h3>
+              <ol><li name="rescala.fullmv.Completed" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Completed"></a>
+      <a id="Completed:Completed"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Completed$.html"><span class="name">Completed</span></a><span class="result"> extends <a href="TransactionPhase.html" class="extype" name="rescala.fullmv.TransactionPhase">TransactionPhase</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.fullmv.package@Completed" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.fullmv.Executing" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Executing"></a>
+      <a id="Executing:Executing"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Executing$.html"><span class="name">Executing</span></a><span class="result"> extends <a href="TransactionPhase.html" class="extype" name="rescala.fullmv.TransactionPhase">TransactionPhase</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.fullmv.package@Executing" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.fullmv.Framing" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Framing"></a>
+      <a id="Framing:Framing"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Framing$.html"><span class="name">Framing</span></a><span class="result"> extends <a href="TransactionPhase.html" class="extype" name="rescala.fullmv.TransactionPhase">TransactionPhase</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.fullmv.package@Framing" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.fullmv.Host" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Host"></a>
+      <a id="Host:Host"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Host$.html"><span class="name">Host</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.fullmv.package@Host" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.fullmv.LockedHead" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="LockedHead"></a>
+      <a id="LockedHead:LockedHead"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="LockedHead$.html"><span class="name">LockedHead</span></a><span class="result"> extends <a href="TransactionState.html" class="extype" name="rescala.fullmv.TransactionState">TransactionState</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.fullmv.package@LockedHead" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.fullmv.LockedSelf" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="LockedSelf"></a>
+      <a id="LockedSelf:LockedSelf"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="LockedSelf$.html"><span class="name">LockedSelf</span></a><span class="result"> extends <a href="LockResult.html" class="extype" name="rescala.fullmv.LockResult">LockResult</a> with <a href="TryLockResult.html" class="extype" name="rescala.fullmv.TryLockResult">TryLockResult</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.fullmv.package@LockedSelf" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.fullmv.OtherFirst" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="OtherFirst"></a>
+      <a id="OtherFirst:OtherFirst"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="OtherFirst$.html"><span class="name">OtherFirst</span></a><span class="result"> extends <a href="OrderResult.html" class="extype" name="rescala.fullmv.OrderResult">OrderResult</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.fullmv.package@OtherFirst" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.fullmv.SelfFirst" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SelfFirst"></a>
+      <a id="SelfFirst:SelfFirst"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="SelfFirst$.html"><span class="name">SelfFirst</span></a><span class="result"> extends <a href="OrderResult.html" class="extype" name="rescala.fullmv.OrderResult">OrderResult</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.fullmv.package@SelfFirst" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.fullmv.SelfOccupied" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SelfOccupied"></a>
+      <a id="SelfOccupied:SelfOccupied"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="SelfOccupied$.html"><span class="name">SelfOccupied</span></a><span class="result"> extends <a href="TryLockResult.html" class="extype" name="rescala.fullmv.TryLockResult">TryLockResult</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.fullmv.package@SelfOccupied" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.fullmv.Transaction" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Transaction"></a>
+      <a id="Transaction:Transaction"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Transaction$.html"><span class="name">Transaction</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.fullmv.package@Transaction" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="rescala.fullmv.UnlockedHead" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="UnlockedHead"></a>
+      <a id="UnlockedHead:UnlockedHead"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="UnlockedHead$.html"><span class="name">UnlockedHead</span></a><span class="result"> extends <a href="TransactionState.html" class="extype" name="rescala.fullmv.TransactionState">TransactionState</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.fullmv.package@UnlockedHead" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li></ol>
+            </div>
+
+        
+
+        
+        </div>
+
+        <div id="inheritedMembers">
+        
+        
+        </div>
+
+        <div id="groupedMembers">
+        <div class="group" name="Ungrouped">
+              <h3>Ungrouped</h3>
+              
+            </div>
+        </div>
+
+      </div>
+
+      <div id="tooltip"></div>
+
+      <div id="footer">  </div>
+
+
+    </body>
+      </html>

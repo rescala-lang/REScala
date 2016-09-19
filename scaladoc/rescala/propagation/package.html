@@ -1,0 +1,192 @@
+<!DOCTYPE html >
+<html>
+        <head>
+          <title>propagation - rescala.propagation</title>
+          <meta name="description" content="propagation - rescala.propagation" />
+          <meta name="keywords" content="propagation rescala.propagation" />
+          <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+          
+      <link href="../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
+      <link href="../../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css" />
+      <script type="text/javascript" src="../../lib/jquery.js" id="jquery-js"></script>
+      <script type="text/javascript" src="../../lib/jquery-ui.js"></script>
+      <script type="text/javascript" src="../../lib/template.js"></script>
+      <script type="text/javascript" src="../../lib/tools.tooltip.js"></script>
+      
+      <script type="text/javascript">
+         if(top === self) {
+            var url = '../../index.html';
+            var hash = 'rescala.propagation.package';
+            var anchor = window.location.hash;
+            var anchor_opt = '';
+            if (anchor.length >= 1)
+              anchor_opt = '@' + anchor.substring(1);
+            window.location.href = url + '#' + hash + anchor_opt;
+         }
+   	  </script>
+    
+        </head>
+        <body class="value">
+      <div id="definition">
+        <img alt="Package" src="../../lib/package_big.png" />
+        <p id="owner"><a href="../package.html" class="extype" name="rescala">rescala</a></p>
+        <h1>propagation</h1><span class="permalink">
+      <a href="../../index.html#rescala.propagation.package" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      </div>
+
+      <h4 id="signature" class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <span class="name">propagation</span>
+      </span>
+      </h4>
+      
+          <div id="comment" class="fullcommenttop"></div>
+        
+
+      <div id="mbrsel">
+        <div id="textfilter"><span class="pre"></span><span class="input"><input id="mbrsel-input" type="text" accesskey="/" /></span><span class="post"></span></div>
+        
+        
+        <div id="visbl">
+            <span class="filtertype">Visibility</span>
+            <ol><li class="public in"><span>Public</span></li><li class="all out"><span>All</span></li></ol>
+          </div>
+      </div>
+
+      <div id="template">
+        <div id="allMembers">
+        
+
+        <div id="types" class="types members">
+              <h3>Type Members</h3>
+              <ol><li name="rescala.propagation.AbstractPropagation" visbl="pub" data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="AbstractPropagation[S&lt;:rescala.graph.Struct]extendsTurn[S]"></a>
+      <a id="AbstractPropagation[S&lt;:Struct]:AbstractPropagation[S]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="AbstractPropagation.html"><span class="name">AbstractPropagation</span></a><span class="tparams">[<span name="S">S &lt;: <a href="../graph/Struct.html" class="extype" name="rescala.graph.Struct">Struct</a></span>]</span><span class="result"> extends <a href="Turn.html" class="extype" name="rescala.propagation.Turn">Turn</a>[<span class="extype" name="rescala.propagation.AbstractPropagation.S">S</span>]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.propagation.package@AbstractPropagation[S&lt;:rescala.graph.Struct]extendsTurn[S]" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Abstract propagation definition that defines phases for reactive propagation through dependent reactive elements.</p><div class="fullcomment"><div class="comment cmt"><p>Abstract propagation definition that defines phases for reactive propagation through dependent reactive elements.
+</p></div><dl class="paramcmts block"><dt class="tparam">S</dt><dd class="cmt"><p>Struct type that defines the spore type used to manage the reactive evaluation</p></dd></dl></div>
+    </li><li name="rescala.propagation.Committable" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="CommittableextendsAnyRef"></a>
+      <a id="Committable:Committable"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="Committable.html"><span class="name">Committable</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.propagation.package@CommittableextendsAnyRef" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Indicates that a class stores buffered changes that can be committed or reverted
+</p>
+    </li><li name="rescala.propagation.CommonPropagationImpl" visbl="pub" data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="CommonPropagationImpl[S&lt;:rescala.graph.PulsingGraphStruct]extendsAbstractPropagation[S]"></a>
+      <a id="CommonPropagationImpl[S&lt;:PulsingGraphStruct]:CommonPropagationImpl[S]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="CommonPropagationImpl.html"><span class="name">CommonPropagationImpl</span></a><span class="tparams">[<span name="S">S &lt;: <a href="../graph/PulsingGraphStruct.html" class="extype" name="rescala.graph.PulsingGraphStruct">PulsingGraphStruct</a></span>]</span><span class="result"> extends <a href="AbstractPropagation.html" class="extype" name="rescala.propagation.AbstractPropagation">AbstractPropagation</a>[<span class="extype" name="rescala.propagation.CommonPropagationImpl.S">S</span>]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.propagation.package@CommonPropagationImpl[S&lt;:rescala.graph.PulsingGraphStruct]extendsAbstractPropagation[S]" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Basic implementation of the most fundamental propagation steps as defined by AbstractPropagation.</p><div class="fullcomment"><div class="comment cmt"><p>Basic implementation of the most fundamental propagation steps as defined by AbstractPropagation.
+Only compatible with spore definitions that store a pulse value and support graph operations.
+</p></div><dl class="paramcmts block"><dt class="tparam">S</dt><dd class="cmt"><p>Struct type that defines the spore type used to manage the reactive evaluation</p></dd></dl></div>
+    </li><li name="rescala.propagation.LevelBasedPropagation" visbl="pub" data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="LevelBasedPropagation[S&lt;:rescala.graph.LevelStruct]extendsCommonPropagationImpl[S]"></a>
+      <a id="LevelBasedPropagation[S&lt;:LevelStruct]:LevelBasedPropagation[S]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="LevelBasedPropagation.html"><span class="name">LevelBasedPropagation</span></a><span class="tparams">[<span name="S">S &lt;: <a href="../graph/LevelStruct.html" class="extype" name="rescala.graph.LevelStruct">LevelStruct</a></span>]</span><span class="result"> extends <a href="CommonPropagationImpl.html" class="extype" name="rescala.propagation.CommonPropagationImpl">CommonPropagationImpl</a>[<span class="extype" name="rescala.propagation.LevelBasedPropagation.S">S</span>]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.propagation.package@LevelBasedPropagation[S&lt;:rescala.graph.LevelStruct]extendsCommonPropagationImpl[S]" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Further implementation of level-based propagation based on the common propagation implementation.</p><div class="fullcomment"><div class="comment cmt"><p>Further implementation of level-based propagation based on the common propagation implementation.
+</p></div><dl class="paramcmts block"><dt class="tparam">S</dt><dd class="cmt"><p>Struct type that defines the spore type used to manage the reactive evaluation</p></dd></dl></div>
+    </li><li name="rescala.propagation.Turn" visbl="pub" data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="Turn[S&lt;:rescala.graph.Struct]extendsAnyRef"></a>
+      <a id="Turn[S&lt;:Struct]:Turn[S]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="Turn.html"><span class="name">Turn</span></a><span class="tparams">[<span name="S">S &lt;: <a href="../graph/Struct.html" class="extype" name="rescala.graph.Struct">Struct</a></span>]</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../index.html#rescala.propagation.package@Turn[S&lt;:rescala.graph.Struct]extendsAnyRef" title="Permalink" target="_top">
+        <img src="../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">The Turn interface glues the reactive interface and the propagation implementation together.</p><div class="fullcomment"><div class="comment cmt"><p>The Turn interface glues the reactive interface and the propagation implementation together.
+</p></div><dl class="paramcmts block"><dt class="tparam">S</dt><dd class="cmt"><p>Struct type that defines the spore type used to manage the reactive evaluation</p></dd></dl></div>
+    </li></ol>
+            </div>
+
+        
+
+        
+
+        
+
+        
+        </div>
+
+        <div id="inheritedMembers">
+        
+        
+        </div>
+
+        <div id="groupedMembers">
+        <div class="group" name="Ungrouped">
+              <h3>Ungrouped</h3>
+              
+            </div>
+        </div>
+
+      </div>
+
+      <div id="tooltip"></div>
+
+      <div id="footer">  </div>
+
+
+    </body>
+      </html>
