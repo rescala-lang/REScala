@@ -4,7 +4,6 @@ import java.util.concurrent.{Executor, Executors}
 
 import rescala.graph.Struct
 import rescala.parrp._
-import rescala.pipelining.{PipelineEngine, PipelineStruct, PipeliningTurn}
 import rescala.propagation.Turn
 import rescala.stm.STMTurn
 
@@ -20,7 +19,6 @@ object Engines extends CommonEngines {
     case "parrp" => parrp.asInstanceOf[Engine[S, Turn[S]]]
     case "stm" => stm.asInstanceOf[Engine[S, Turn[S]]]
     case "fair" => synchronFair.asInstanceOf[Engine[S, Turn[S]]]
-    case "pipeline" => pipeline.asInstanceOf[Engine[S, Turn[S]]]
     case "locksweep" => locksweep.asInstanceOf[Engine[S, Turn[S]]]
 
     case other => throw new IllegalArgumentException(s"unknown engine $other")
@@ -38,8 +36,6 @@ object Engines extends CommonEngines {
   }
 
   implicit val default: Engine[ParRP, ParRP] = parrp
-
-  implicit val pipeline: Engine[PipelineStruct.type, PipeliningTurn] = new PipelineEngine()
 
   implicit val stm: Engine[STMTurn, STMTurn] = new EngineImpl[STMTurn, STMTurn]("STM", new STMTurn()) {
     override def plan[R](i: Reactive*)(f: STMTurn => R): R = atomic { tx => super.plan(i: _*)(f) }
