@@ -1,7 +1,5 @@
 package rescala.engines
 
-import java.util.concurrent.{Executor, Executors}
-
 import rescala.graph.Struct
 import rescala.parrp._
 import rescala.propagation.Turn
@@ -29,11 +27,6 @@ object Engines extends CommonEngines {
   implicit val parrp: Engine[ParRP, ParRP] = parrpWithBackoff(() => new Backoff)
 
   implicit val locksweep: Engine[LSStruct.type, LockSweep] = locksweepWithBackoff(() => new Backoff())
-
-  implicit val parallellocksweep: EngineImpl[LSStruct.type, ParallelLockSweep] = {
-    val ex: Executor = Executors.newWorkStealingPool()
-    new EngineImpl[LSStruct.type, ParallelLockSweep]("ParallelLockSweep", engine => new ParallelLockSweep(new Backoff(), ex, engine))
-  }
 
   implicit val default: Engine[ParRP, ParRP] = parrp
 
