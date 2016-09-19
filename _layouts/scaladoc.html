@@ -18,8 +18,20 @@
   <link href="{{ site.github.url }}/css/theme.css" rel="stylesheet">
   <!-- styles for syntax highlighting -->
   <link href="{{ site.github.url }}/css/syntax.css" rel="stylesheet">
-  
   <script type="text/javascript" src="{{ site.github.url }}/default.js"> </script>
+  <script language="javascript"><!--
+    function fillFrame() {
+      var f = top.frames['scaladoc'];
+      with (f.document) {
+        open();
+        writeln(`{{ content }}`);
+        close();
+      }
+      f.window.onhashchange = function() {
+        window.location.hash = f.window.location.hash;
+      };
+    }
+  //--></script>
   <script async defer src="https://buttons.github.io/buttons.js"></script>    
 </head>
 
@@ -27,7 +39,8 @@
     {% include navbar.html %}
   <div  role="main">
     <div id="main-content">
-    {{ content }}
+
+    <iframe name="scaladoc" onload="fillFrame()" style="overflow: hidden; height: calc(100% - 52px); width: 100%; position: absolute;" frameborder="0" width="100%" height="100%" src="about:blank"></iframe>
     </div>
 
   </div>
