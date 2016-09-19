@@ -1,7 +1,7 @@
 organization in ThisBuild := "de.tuda.stg"
 scalaVersion in ThisBuild := "2.11.8"
 
-version in ThisBuild := "0.18.0-SNAPSHOT"
+version in ThisBuild := "0.18.0"
 
 testOptions in Test in ThisBuild += Tests.Argument("-oICN")
 
