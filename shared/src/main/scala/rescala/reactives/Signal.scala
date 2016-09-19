@@ -1,7 +1,5 @@
 package rescala.reactives
 
-import java.util.concurrent.CompletionException
-
 import rescala.engines.{Engine, Ticket}
 import rescala.graph.{Pulse, Stateful, Struct}
 import rescala.propagation.Turn
