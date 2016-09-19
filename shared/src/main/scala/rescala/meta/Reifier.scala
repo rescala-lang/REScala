@@ -5,7 +5,7 @@ import rescala.reactives.{Evt, _}
 
 import scala.language.higherKinds
 
-trait Reifier[S <: Struct, SL[+X, Z <: Struct] <: SignalLike[X, Z, SL, EV], EV[+X, Z <: Struct] <: EventLike[X, Z, SL, EV], VAR[X, Z <: Struct] <: VarLike[X, Z, SL, EV] with SL[X, Z], EVT[X, Z <: Struct] <: EvtLike[X, Z, SL, EV] with EV[X, Z]] {
+trait Reifier[S <: Struct, SL[+X, Z <: Struct], EV[+X, Z <: Struct] , VAR[X, Z <: Struct], EVT[X, Z <: Struct]] {
   protected[meta] def createEvt[T](evtPointer: EvtEventPointer[T]) : EVT[T, S]
   protected[meta] def createVar[A](varPointer: VarSignalPointer[A]) : VAR[A, S]
 
