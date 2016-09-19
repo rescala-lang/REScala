@@ -68,6 +68,10 @@ lazy val rescalaJS = rescala.js
 lazy val documentation = project.in(file("Documentation"))
   .settings(tutSettings: _*)
   .dependsOn(rescalaJVM, rescalaJS)
+  .settings(
+    publish := {},
+    publishLocal := {}
+  )
 
 lazy val reactiveStreams = project.in(file("ReactiveStreams"))
   .dependsOn(rescalaJVM)
