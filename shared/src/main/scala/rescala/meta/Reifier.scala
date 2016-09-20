@@ -5,18 +5,18 @@ import rescala.reactives.{Evt, _}
 
 import scala.language.higherKinds
 
-trait Reifier[S <: Struct, SL[+X, Z <: Struct], EV[+X, Z <: Struct] , VAR[X, Z <: Struct], EVT[X, Z <: Struct]] {
-  protected[meta] def createEvt[T](evtPointer: EvtEventPointer[T]) : EVT[T, S]
-  protected[meta] def createVar[A](varPointer: VarSignalPointer[A]) : VAR[A, S]
+trait Reifier[S <: Struct] {
+  protected[meta] def createEvt[T](evtPointer: EvtEventPointer[T]) : Evt[T, S]
+  protected[meta] def createVar[A](varPointer: VarSignalPointer[A]) : Var[A, S]
 
-  protected[meta] def reifyEvt[T](evtPointer: EvtEventPointer[T]) : EVT[T, S]
-  protected[meta] def reifyVar[A](varPointer: VarSignalPointer[A]) : VAR[A, S]
+  protected[meta] def reifyEvt[T](evtPointer: EvtEventPointer[T]) : Evt[T, S]
+  protected[meta] def reifyVar[A](varPointer: VarSignalPointer[A]) : Var[A, S]
 
-  protected[meta] def reifyEvent[T](eventPointer: MetaEventPointer[T]) : EV[T, S]
-  protected[meta] def reifySignal[A](eventPointer: MetaSignalPointer[A]) : SL[A, S]
+  protected[meta] def reifyEvent[T](eventPointer: MetaEventPointer[T]) : Event[T, S]
+  protected[meta] def reifySignal[A](eventPointer: MetaSignalPointer[A]) : Signal[A, S]
 }
 
-object SynchronousReifier extends Reifier[SimpleStruct, Signal, Event, Var, Evt] {
+object SynchronousReifier extends Reifier[SimpleStruct] {
   import rescala.engines.CommonEngines.synchron
 
   private val reifiedSignalCache : collection.mutable.Map[ReactiveNode, Signal[_, SimpleStruct]] = collection.mutable.Map()
