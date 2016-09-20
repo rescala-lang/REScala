@@ -54,7 +54,7 @@ trait MetaEventPointer[+T] extends MetaReactivePointer[T] {
 
   protected[meta] def createReification[S <: Struct](reifier: Reifier[S, Signal, Event, Var, Evt])(implicit ticket: Ticket[S]): Event[T, S]
 
-  def ||[U >: T](other: MetaEventPointer[U]): OrEventPointer[T, U] = OrEventPointer(createDependentNode(other.node), this, other)
+  def ||[U >: T](others: MetaEventPointer[U]*): OrEventPointer[T, U] = OrEventPointer(createDependentNode(others.map(_.node):_*), this, others:_*)
   def &&[U >: T](pred: (U) => Boolean): FilteredEventPointer[U, U] = FilteredEventPointer[U, U](createDependentNode(), this, pred)
   def \[U](other: MetaEventPointer[U]): ExceptEventPointer[T, U] = ExceptEventPointer(createDependentNode(other.node), this, other)
   def and[X >: T, U, R](other: MetaEventPointer[U])(merger: (X, U) => R): AndEventPointer[X, U, R] = AndEventPointer(createDependentNode(other.node), this, other, merger)
@@ -84,6 +84,8 @@ case class MetaObservePointer[T](protected[meta] override var node : Option[Reac
 
 
 case class EvtEventPointer[T](protected[meta] override var node : Option[ReactiveNode]) extends MetaEventPointer[T] {
+  override def reify[S <: Struct](reifier: Reifier[S, Signal, Event, Var, Evt]): Evt[T, S] = reifier.reifyEvt(this)
+
   override protected[meta] def createReification[S <: Struct](reifier: Reifier[S, Signal, Event, Var, Evt])(implicit ticket: Ticket[S]): Evt[T, S] = reifier.createEvt(this)
 
   def fire(value : T) : Unit = node match {
@@ -100,8 +102,8 @@ case class ChangedEventPointer[+T](protected[meta] override var node : Option[Re
 case class FilteredEventPointer[T, +U >: T](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], pred: (T) => Boolean) extends MetaEventPointer[U] {
   override protected[meta] def createReification[S <: Struct](reifier: Reifier[S, Signal, Event, Var, Evt])(implicit ticket: Ticket[S]): Event[T, S] = base.reify(reifier).filter(pred)
 }
-case class OrEventPointer[+T <: U, +U](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], other : MetaEventPointer[U]) extends MetaEventPointer[U] {
-  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S, Signal, Event, Var, Evt])(implicit ticket: Ticket[S]): Event[U, S] = base.reify(reifier) || other.reify(reifier)
+case class OrEventPointer[+T <: U, +U](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], others : MetaEventPointer[U]*) extends MetaEventPointer[U] {
+  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S, Signal, Event, Var, Evt])(implicit ticket: Ticket[S]): Event[U, S] = others.foldLeft(base.reify(reifier) : Event[U, S])((acc, next) => acc || next.reify(reifier))
 }
 case class ExceptEventPointer[+T, +U](protected[meta] override var node : Option[ReactiveNode], base : MetaEventPointer[T], other : MetaEventPointer[U]) extends MetaEventPointer[T] {
   override protected[meta] def createReification[S <: Struct](reifier: Reifier[S, Signal, Event, Var, Evt])(implicit ticket: Ticket[S]): Event[T, S] = base.reify(reifier) \ other.reify(reifier)
@@ -120,6 +122,8 @@ case class FlatMappedEventPointer[T, +B](protected[meta] override var node : Opt
 }
 
 case class VarSignalPointer[A](protected[meta] override var node : Option[ReactiveNode]) extends MetaSignalPointer[A] {
+  override def reify[S <: Struct](reifier: Reifier[S, Signal, Event, Var, Evt]): Var[A, S] = reifier.reifyVar(this)
+
   override protected[meta] def createReification[S <: Struct](reifier: Reifier[S, Signal, Event, Var, Evt])(implicit ticket: Ticket[S]): Var[A, S] = reifier.createVar(this)
 
   def set(value : A) : Unit = node match {

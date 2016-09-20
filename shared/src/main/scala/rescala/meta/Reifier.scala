@@ -9,6 +9,9 @@ trait Reifier[S <: Struct, SL[+X, Z <: Struct], EV[+X, Z <: Struct] , VAR[X, Z <
   protected[meta] def createEvt[T](evtPointer: EvtEventPointer[T]) : EVT[T, S]
   protected[meta] def createVar[A](varPointer: VarSignalPointer[A]) : VAR[A, S]
 
+  protected[meta] def reifyEvt[T](evtPointer: EvtEventPointer[T]) : EVT[T, S]
+  protected[meta] def reifyVar[A](varPointer: VarSignalPointer[A]) : VAR[A, S]
+
   protected[meta] def reifyEvent[T](eventPointer: MetaEventPointer[T]) : EV[T, S]
   protected[meta] def reifySignal[A](eventPointer: MetaSignalPointer[A]) : SL[A, S]
 }
@@ -30,6 +33,10 @@ object SynchronousReifier extends Reifier[SimpleStruct, Signal, Event, Var, Evt]
       }
     }
   }
+
+  override protected[meta] def reifyEvt[T](eventPointer: EvtEventPointer[T]): Evt[T, SimpleStruct] = reifyEvent(eventPointer).asInstanceOf[Evt[T, SimpleStruct]]
+
+  override protected[meta] def reifyVar[A](signalPointer: VarSignalPointer[A]): Var[A, SimpleStruct] = reifySignal(signalPointer).asInstanceOf[Var[A, SimpleStruct]]
 
   override protected[meta] def reifyEvent[T](eventPointer: MetaEventPointer[T]): Event[T, SimpleStruct] = eventPointer.node match {
     case None => throw new IllegalArgumentException("Cannot reify null pointer!")
@@ -54,6 +61,4 @@ object SynchronousReifier extends Reifier[SimpleStruct, Signal, Event, Var, Evt]
   override def createEvt[T](evtPointer: EvtEventPointer[T]) = synchron.Evt[T]()
 
   override def createVar[A](varPointer: VarSignalPointer[A]) = synchron.Var.empty[A]
-
-
 }
