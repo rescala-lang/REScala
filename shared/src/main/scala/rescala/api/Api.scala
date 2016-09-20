@@ -78,8 +78,8 @@ object Api {
 
   class metaApi(graph : ReactiveGraph) extends Api {
 
-    override type Signal[+A] = MetaSignalPointer[A]
-    override type Event[+A] = MetaEventPointer[A]
+    override type Signal[+A] = SignalPointer[A]
+    override type Event[+A] = EventPointer[A]
     override type Var[A] = VarSignalPointer[A]
     override type Evt[A] = EvtEventPointer[A]
 

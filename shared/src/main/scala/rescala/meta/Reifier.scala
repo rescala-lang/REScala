@@ -12,8 +12,9 @@ trait Reifier[S <: Struct] {
   protected[meta] def reifyEvt[T](evtPointer: EvtEventPointer[T]) : Evt[T, S]
   protected[meta] def reifyVar[A](varPointer: VarSignalPointer[A]) : Var[A, S]
 
-  protected[meta] def reifyEvent[T](eventPointer: MetaEventPointer[T]) : Event[T, S]
-  protected[meta] def reifySignal[A](eventPointer: MetaSignalPointer[A]) : Signal[A, S]
+  protected[meta] def reifyEvent[T](eventPointer: EventPointer[T]) : Event[T, S]
+  protected[meta] def reifySignal[A](signalPointer: SignalPointer[A]) : Signal[A, S]
+  protected[meta] def reifyObserve[A](observePointer: ObservePointer[A]) : Observe[S]
 }
 
 object SynchronousReifier extends Reifier[SimpleStruct] {
@@ -21,6 +22,7 @@ object SynchronousReifier extends Reifier[SimpleStruct] {
 
   private val reifiedSignalCache : collection.mutable.Map[ReactiveNode, Signal[_, SimpleStruct]] = collection.mutable.Map()
   private val reifiedEventCache : collection.mutable.Map[ReactiveNode, Event[_, SimpleStruct]] = collection.mutable.Map()
+  private val reifiedObserveCache : collection.mutable.Map[ReactiveNode, Observe[SimpleStruct]] = collection.mutable.Map()
 
   // TODO: Find a way to prevent instanceOf-cast
   private def applyLog(log : List[MetaLog]): Unit = {
@@ -38,7 +40,7 @@ object SynchronousReifier extends Reifier[SimpleStruct] {
 
   override protected[meta] def reifyVar[A](signalPointer: VarSignalPointer[A]): Var[A, SimpleStruct] = reifySignal(signalPointer).asInstanceOf[Var[A, SimpleStruct]]
 
-  override protected[meta] def reifyEvent[T](eventPointer: MetaEventPointer[T]): Event[T, SimpleStruct] = eventPointer.node match {
+  override protected[meta] def reifyEvent[T](eventPointer: EventPointer[T]): Event[T, SimpleStruct] = eventPointer.node match {
     case None => throw new IllegalArgumentException("Cannot reify null pointer!")
     case Some(node) =>
       val event = reifiedEventCache.getOrElse(node, eventPointer.createReification(this))
@@ -48,7 +50,7 @@ object SynchronousReifier extends Reifier[SimpleStruct] {
   }
 
   // TODO: Find a way to prevent instanceOf-cast
-  override protected[meta] def reifySignal[A](signalPointer: MetaSignalPointer[A]): Signal[A, SimpleStruct] = signalPointer.node match {
+  override protected[meta] def reifySignal[A](signalPointer: SignalPointer[A]): Signal[A, SimpleStruct] = signalPointer.node match {
     case None => throw new IllegalArgumentException("Cannot reify null pointer!")
     case Some(node) =>
       val event = reifiedSignalCache.getOrElse(node, signalPointer.createReification(this))
@@ -57,6 +59,15 @@ object SynchronousReifier extends Reifier[SimpleStruct] {
       event.asInstanceOf[Signal[A, SimpleStruct]]
   }
 
+
+  override protected[meta] def reifyObserve[A](observePointer: ObservePointer[A]): Observe[SimpleStruct] = observePointer.node match {
+    case None => throw new IllegalArgumentException("Cannot reify null pointer!")
+    case Some(node) =>
+      val observe = reifiedObserveCache.getOrElse(node, observePointer.createReification(this))
+      reifiedObserveCache += node -> observe
+      applyLog(node.graph.popLog())
+      observe
+  }
 
   override def createEvt[T](evtPointer: EvtEventPointer[T]) = synchron.Evt[T]()
 

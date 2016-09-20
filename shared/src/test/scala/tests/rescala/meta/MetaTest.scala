@@ -62,4 +62,35 @@ class MetaTest extends FunSuite {
     e3.reify(SynchronousReifier).fire(true)
     assert(fired == 3, "combined event didn't fire correctly")
   }
+
+  test("meta graph observer reification test") {
+    import rescala.engines.CommonEngines.synchron
+
+    val g = new ReactiveGraph()
+    val api = new Api.metaApi(g)
+    val e = api.Evt[Boolean]()
+    val v = api.Var[Int](0)
+    var count = 0
+    var count2 = 0
+    (e += ((x: Boolean) => {
+      count += 1
+    })).reify(SynchronousReifier)
+    e.observe((x: Boolean) => {
+      count2 += 1
+    }).reify(SynchronousReifier)
+    v.observe((x: Int) => {
+      count += x
+    }).reify(SynchronousReifier)
+    v.observe((x: Int) => {
+      count2 += x
+    }).reify(SynchronousReifier)
+    e.reify(SynchronousReifier).fire(true)
+    e.reify(SynchronousReifier).fire(true)
+    assert(count == 2, "observer function was not reified correctly")
+    assert(count2 == 2, "observer function was not reified correctly")
+    v.reify(SynchronousReifier).set(1)
+    v.reify(SynchronousReifier).set(20)
+    assert(count == 23, "observer function was not reified correctly")
+    assert(count2 == 23, "observer function was not reified correctly")
+  }
 }

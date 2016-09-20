@@ -19,7 +19,7 @@ import scala.util.{Failure, Success}
   * @tparam T  Type returned when the event fires
   * @tparam S  Struct type used for the propagation of the event
   */
-trait Event[+T, S <: Struct] extends PulseOption[T, S] {
+trait Event[+T, S <: Struct] extends PulseOption[T, S] with Observable[T, S] {
 
   def disconnect()(implicit engine: Engine[S, Turn[S]]): Unit
 
@@ -30,7 +30,7 @@ trait Event[+T, S <: Struct] extends PulseOption[T, S] {
   /** add an observer */
   final def +=(react: T => Unit)(implicit ticket: Ticket[S]): Observe[S] = observe(react)(ticket)
   /** add an observer */
-  final def observe(
+  override final def observe(
     onSuccess: T => Unit,
     onFailure: Throwable => Unit = t => throw new UnhandledFailureException(t)
   )(implicit ticket: Ticket[S]): Observe[S] = Observe.strong(this) {
