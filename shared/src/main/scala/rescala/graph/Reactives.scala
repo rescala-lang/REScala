@@ -6,6 +6,7 @@ import rescala.reactives.Observe
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 
 import scala.annotation.compileTimeOnly
+import scala.util.{Failure, Success}
 
 /**
   * A reactive value is something that can be reevaluated
@@ -44,16 +45,6 @@ abstract class Base[+P, S <: Struct](budP: S#SporeP[P, Reactive[S]]) extends Pul
   final protected[this] override def set(value: Pulse[P])(implicit turn: Turn[S]): Unit = if (value.isChange) pulses.set(value) else if (hasChanged) pulses.set(stable)
   final protected[rescala] override def stable(implicit turn: Turn[S]): Pulse[P] = pulses.base
   final protected[rescala] override def pulse(implicit turn: Turn[S]): Pulse[P] = pulses.get
-}
-
-/**
-  * Reactives that can be observed by a function outside the reactive graph
-  *
-  * @tparam P Value type stored by the pulse of the reactive value
-  * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
-  */
-trait Observable[+P, S <: Struct] {
-  def observe(onSuccess: P => Unit, onFailure: Throwable => Unit = t => throw new UnhandledFailureException(t))(implicit ticket: Ticket[S]): Observe[S]
 }
 
 /**

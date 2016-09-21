@@ -1,7 +1,7 @@
 package rescala.meta
 
 import rescala.engines.Ticket
-import rescala.graph.{Observable, Pulsing, Struct}
+import rescala.graph.{Pulsing, Struct}
 import rescala.reactives.RExceptions.UnhandledFailureException
 import rescala.reactives._
 

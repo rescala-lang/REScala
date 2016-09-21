@@ -5,8 +5,9 @@ import java.util.concurrent.ConcurrentHashMap
 import rescala.engines.{Engine, Ticket}
 import rescala.graph._
 import rescala.propagation.{Committable, Turn}
+import rescala.reactives.RExceptions.UnhandledFailureException
 
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 /**
   * Generic interface for observers that represent a function registered to trigger for every reevaluation of a reactive value.
@@ -54,5 +55,23 @@ object Observe {
     override def commit(implicit turn: Turn[_]): Unit = turn.observe(f(value))
     override def equals(obj: scala.Any): Boolean = self.equals(obj)
     override def hashCode(): Int = self.hashCode()
+  }
+}
+
+/**
+  * Reactives that can be observed by a function outside the reactive graph
+  *
+  * @tparam P Value type stored by the pulse of the reactive value
+  * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
+  */
+trait Observable[+P, S <: Struct] {
+  this : Pulsing[P, S] =>
+  /** add an observer */
+  final def observe(
+    onSuccess: P => Unit,
+    onFailure: Throwable => Unit = t => throw new UnhandledFailureException(t)
+  )(implicit ticket: Ticket[S]): Observe[S] = Observe.strong(this) {
+    case Success(v) => onSuccess(v)
+    case Failure(t) => onFailure(t)
   }
 }

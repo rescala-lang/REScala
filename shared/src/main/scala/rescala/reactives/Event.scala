@@ -4,11 +4,10 @@ import rescala.engines.{Engine, Ticket}
 import rescala.graph.Pulse.{Change, Exceptional, NoChange}
 import rescala.graph._
 import rescala.propagation.Turn
-import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
+import rescala.reactives.RExceptions.EmptySignalControlThrowable
 
 import scala.collection.immutable.{LinearSeq, Queue}
 import scala.language.higherKinds
-import scala.util.{Failure, Success}
 
 /**
   * Base signal interface for all signal implementations.
@@ -29,14 +28,7 @@ trait Event[+T, S <: Struct] extends PulseOption[T, S] with Observable[T, S] {
 
   /** add an observer */
   final def +=(react: T => Unit)(implicit ticket: Ticket[S]): Observe[S] = observe(react)(ticket)
-  /** add an observer */
-  override final def observe(
-    onSuccess: T => Unit,
-    onFailure: Throwable => Unit = t => throw new UnhandledFailureException(t)
-  )(implicit ticket: Ticket[S]): Observe[S] = Observe.strong(this) {
-    case Success(v) => onSuccess(v)
-    case Failure(t) => onFailure(t)
-  }
+
 
   final def recover[R >: T](onFailure: Throwable => R)(implicit ticket: Ticket[S]): Event[R, S] = Events.static(s"(recover $this)", this) { turn =>
     pulse(turn) match {

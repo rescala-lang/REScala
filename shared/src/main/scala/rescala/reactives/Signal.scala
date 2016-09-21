@@ -1,13 +1,12 @@
 package rescala.reactives
 
 import rescala.engines.{Engine, Ticket}
-import rescala.graph.{Observable, Pulse, Stateful, Struct}
+import rescala.graph.{Pulse, Stateful, Struct}
 import rescala.propagation.Turn
-import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
+import rescala.reactives.RExceptions.EmptySignalControlThrowable
 
 import scala.language.higherKinds
 import scala.util.control.NonFatal
-import scala.util.{Failure, Success}
 
 /**
   * Base signal interface for all signal implementations.
@@ -19,15 +18,6 @@ import scala.util.{Failure, Success}
   * @tparam S Struct type used for the propagation of the signal
   */
 trait Signal[+A, S <: Struct] extends Stateful[A, S] with Observable[A, S] {
-
-  /** add an observer */
-  override final def observe(
-    onSuccess: A => Unit,
-    onFailure: Throwable => Unit = t => throw new UnhandledFailureException(t)
-  )(implicit ticket: Ticket[S]): Observe[S] = Observe.strong(this) {
-    case Success(v) => onSuccess(v)
-    case Failure(t) => onFailure(t)
-  }
 
   final def recover[R >: A](onFailure: Throwable => R)(implicit ticket: Ticket[S]): Signal[R, S] = Signals.static(this) { turn =>
     try this.get(turn) catch {
