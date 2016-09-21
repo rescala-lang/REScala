@@ -2,11 +2,15 @@ package tests.rescala.meta
 
 import org.scalatest.FunSuite
 import rescala.api.Api
+import rescala.engines.CommonEngines
 import rescala.graph.SimpleStruct
 import rescala.meta._
 import rescala.reactives.Var
 
 class MetaTest extends FunSuite {
+
+  val SynchronousReifier = new EngineReifier()(CommonEngines.synchron)
+
   test("meta AST creation test") {
 
     val g = new ReactiveGraph()

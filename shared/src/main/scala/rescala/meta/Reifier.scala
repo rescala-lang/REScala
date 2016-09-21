@@ -1,6 +1,8 @@
 package rescala.meta
 
-import rescala.graph.{SimpleStruct, Struct}
+import rescala.engines.Engine
+import rescala.graph.Struct
+import rescala.propagation.Turn
 import rescala.reactives.{Evt, _}
 
 import scala.language.higherKinds
@@ -17,8 +19,7 @@ trait Reifier[S <: Struct] {
   protected[meta] def reifyObserve[A](observePointer: ObservePointer[A]) : Observe[S]
 }
 
-object SynchronousReifier extends Reifier[SimpleStruct] {
-  import rescala.engines.CommonEngines.synchron
+class EngineReifier[S <: Struct]()(implicit val engine: Engine[S, Turn[S]]) extends Reifier[S] {
 
   private val reifiedCache : collection.mutable.Map[ReactiveNode, Any] = collection.mutable.Map()
 
@@ -26,38 +27,38 @@ object SynchronousReifier extends Reifier[SimpleStruct] {
   private def applyLog(log : List[MetaLog]): Unit = {
     log.foreach {
       case LoggedFire(node, value) => reifiedCache.getOrElse(node, throw new IllegalArgumentException("Cannot fire a non-reified event!")) match {
-        case e : Evt[_, _] => e.asInstanceOf[Evt[Any, SimpleStruct]].fire(value)
+        case e : Evt[_, _] => e.asInstanceOf[Evt[Any, S]].fire(value)
       }
       case LoggedSet(node, value) => reifiedCache.getOrElse(node, throw new IllegalArgumentException("Cannot set a non-reified var!")) match {
-        case v: Var[_, _] => v.asInstanceOf[Var[Any, SimpleStruct]].set(value)
+        case v: Var[_, _] => v.asInstanceOf[Var[Any, S]].set(value)
       }
     }
   }
 
-  override protected[meta] def reifyEvt[T](evtPointer: EvtEventPointer[T]): Evt[T, SimpleStruct] = reifyEvent(evtPointer).asInstanceOf[Evt[T, SimpleStruct]]
+  override protected[meta] def reifyEvt[T](evtPointer: EvtEventPointer[T]): Evt[T, S] = reifyEvent(evtPointer).asInstanceOf[Evt[T, S]]
 
-  override protected[meta] def reifyVar[A](varPointer: VarSignalPointer[A]): Var[A, SimpleStruct] = reifySignal(varPointer).asInstanceOf[Var[A, SimpleStruct]]
+  override protected[meta] def reifyVar[A](varPointer: VarSignalPointer[A]): Var[A, S] = reifySignal(varPointer).asInstanceOf[Var[A, S]]
 
-  override protected[meta] def reifyEvent[T](eventPointer: EventPointer[T]): Event[T, SimpleStruct] = eventPointer.node match {
+  override protected[meta] def reifyEvent[T](eventPointer: EventPointer[T]): Event[T, S] = eventPointer.node match {
     case None => throw new IllegalArgumentException("Cannot reify null pointer!")
     case Some(node) =>
-      val reified = doReify(eventPointer).asInstanceOf[Event[T, SimpleStruct]]
+      val reified = doReify(eventPointer).asInstanceOf[Event[T, S]]
       applyLog(node.graph.popLog())
       reified
   }
 
-  override protected[meta] def reifySignal[A](signalPointer: SignalPointer[A]): Signal[A, SimpleStruct] = signalPointer.node match {
+  override protected[meta] def reifySignal[A](signalPointer: SignalPointer[A]): Signal[A, S] = signalPointer.node match {
     case None => throw new IllegalArgumentException("Cannot reify null pointer!")
     case Some(node) =>
-      val reified = doReify(signalPointer).asInstanceOf[Signal[A, SimpleStruct]]
+      val reified = doReify(signalPointer).asInstanceOf[Signal[A, S]]
       applyLog(node.graph.popLog())
       reified
   }
 
-  override protected[meta] def reifyObserve[T](observePointer: ObservePointer[T]): Observe[SimpleStruct] = observePointer.node match {
+  override protected[meta] def reifyObserve[T](observePointer: ObservePointer[T]): Observe[S] = observePointer.node match {
     case None => throw new IllegalArgumentException("Cannot reify null pointer!")
     case Some(node) =>
-      val reified = doReify(observePointer).asInstanceOf[Observe[SimpleStruct]]
+      val reified = doReify(observePointer).asInstanceOf[Observe[S]]
       applyLog(node.graph.popLog())
       reified
   }
@@ -72,7 +73,7 @@ object SynchronousReifier extends Reifier[SimpleStruct] {
       reifiedCache += node -> reified
       reified
   }
-  override def createEvt[T](evtPointer: EvtEventPointer[T]) = synchron.Evt[T]()
+  override def createEvt[T](evtPointer: EvtEventPointer[T]) = engine.Evt[T]()
 
-  override def createVar[A](varPointer: VarSignalPointer[A]) = synchron.Var.empty[A]
+  override def createVar[A](varPointer: VarSignalPointer[A]) = engine.Var.empty[A]
 }
