@@ -2,11 +2,9 @@ package rescala.graph
 
 import rescala.engines.Ticket
 import rescala.propagation.Turn
-import rescala.reactives.Observe
-import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
+import rescala.reactives.RExceptions.EmptySignalControlThrowable
 
 import scala.annotation.compileTimeOnly
-import scala.util.{Failure, Success}
 
 /**
   * A reactive value is something that can be reevaluated

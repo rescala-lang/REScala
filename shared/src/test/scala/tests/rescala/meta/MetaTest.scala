@@ -42,7 +42,7 @@ class MetaTest extends FunSuite {
     e.reify(SynchronousReifier) += ((x : Int) => { fired = true })
     assert(v.reify(SynchronousReifier).now == 2, "variable set to 2")
     assert(!fired, "event not yet fired")
-    v.reify(SynchronousReifier).asInstanceOf[Var[Int, SimpleStruct]].set(3)
+    v.reify(SynchronousReifier).set(3)
     assert(v.reify(SynchronousReifier).now == 3, "variable set to 3")
     assert(fired, "event fired")
   }
