@@ -52,7 +52,7 @@ up-to-date.
 
 Consider the following [example](#first-example):
 
-~~~scala
+```scala
 var a = 2
 var b = 3
 var c = a + b
@@ -61,7 +61,7 @@ a = 4
 println(a,b,c) // -> (2,4,5)
 c = a + b
 println(a,b,c) // -> (4,3,7)
-~~~
+```
 {: #first-example}
 
 Line 3 specifies the value of `c` as a function of
