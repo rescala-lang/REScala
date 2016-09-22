@@ -3,14 +3,13 @@ title: Home
 nav: 1
 ---
 
-<!-- Main jumbotron for a primary marketing message or call to action -->
-<div markdown="1" class="jumbotron">
 # The REScala Project
 
-Bridging reactive and Object-oriented programming... and more.
+
+## Principled Reactive Programming
+
 
 [Take a Tour... &raquo;](./rescala/){: class="btn btn-primary"}
-</div>
 
 # REScala
 Software applications must react to external changes such as the input from the user and network messages.
