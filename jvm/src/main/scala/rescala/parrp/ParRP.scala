@@ -58,10 +58,13 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
   override def preparationPhase(initialWrites: List[Reactive[TState]]): Unit = {
     val toVisit = new java.util.ArrayDeque[Reactive[TState]](10)
     initialWrites.foreach(toVisit.offer)
+    val priorKey = priorTurn.map(_.key).orNull
 
     while (!toVisit.isEmpty) {
       val reactive = toVisit.pop()
-      if (!reactive.bud.lock.isOwner(key)) {
+      val owner = reactive.bud.lock.getOwner
+      if ((priorKey ne null) && (owner eq priorKey)) throw new IllegalStateException(s"$this tried to lock reactive $reactive owned by its parent $priorKey")
+      if (owner ne key) {
         if (reactive.bud.lock.tryLock(key) eq key)
           reactive.bud.outgoing.foreach {toVisit.offer}
         else {
