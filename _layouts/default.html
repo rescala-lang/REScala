@@ -25,6 +25,9 @@
 
 <body>
     {% include navbar.html %}
+	{% if page.nav == 1 %}
+		{% include slideshow.html %}
+	{% endif %}
   <div class="container" role="main">
     <div id="main-content" class="col-sm-8">
     {{ content }}

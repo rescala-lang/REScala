@@ -1,6 +1,6 @@
 body {
   padding-top: 70px;
-  padding-bottom: 200px;
+  padding-bottom: 0px;
   font-weight: normal;
   width: calc(100vw - 17px);
 }
@@ -312,4 +312,65 @@ h1:target,h2:target,h3:target,h4:target,h5:target,h6:target {
 @keyframes highlight {
   from { background: yellow; }
   to { background: white; }
+}
+
+#slideshow-container {
+	position: relative;
+	float: left;
+	width: 800px;
+	height: 422px;
+	margin-bottom: 50px;
+}
+
+#slideshow > img {
+	display: none;
+	width: 100%;
+	height: 100%;
+	padding: 0px 50px;
+	margin: 0px;
+	animation: fadeIn 6s infinite;
+}
+
+#slideshow-indicator  {
+	width: 100%;
+	margin-top: 16px;
+	margin-bottom: 0px;
+	position: absolute;
+	left: 0;
+	bottom: -30px;
+	text-align: center
+}
+
+
+#slideshow-indicator  > span.current {
+	cursor: initial;
+	color: #000;
+	background-color: #333;
+}
+
+#slideshow-indicator  > span {
+	cursor: pointer;
+	display: inline-block;
+	height: 18px;
+	width: 18px;
+	padding: 0;
+	margin: 1px;
+	border: 2px solid #000;
+	border-radius: 50%;
+	background-color: #fff;
+}
+
+@keyframes fadeIn {
+	0% {
+		opacity: 0;
+	}
+	15% {
+		opacity: 1;
+	}
+	85% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+	}
 }

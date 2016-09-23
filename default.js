@@ -95,7 +95,17 @@ window.onload = function () {
 		addCollapseIcon(tocHeader, tocHeader);
 		Util.DOMQueryAll(".collapsible").forEach(function(li) { li.classList.add("collapsed")});
 	}
+	var imgs = Util.DOMQueryAll("#slideshow img");
+	var indicator = Util.DOMQuery("#slideshow-indicator");
+	imgs.forEach(function(img, i) {
+		var span = document.createElement("span");
+		span.onclick = function() {reStartSlideTimer(); showSlide(i+1)};
+		indicator.appendChild(span);
+	});
+	reStartSlideTimer();
+	updateSlide();
 }
+
 
 function updateTOClines() {
 	Util.DOMQueryAll("#toc hr").forEach(function(hr) {
@@ -137,6 +147,42 @@ function updateArrowVisibility() {
 		else
 			scrollArrow.classList.remove("show");
 	}
+}
+
+var slideIndex = 1;
+var slideTimer;
+
+function nextSlide() {
+	slideIndex += 1;
+	updateSlide();
+}
+
+function showSlide(n) {
+	slideIndex = n;
+	updateSlide();
+}
+
+function updateSlide() {
+	var imgs = Util.DOMQueryAll("#slideshow img");
+	var indicators = Util.DOMQueryAll("#slideshow-indicator span");
+	if (slideIndex > imgs.length)
+		slideIndex = 1;
+	if (slideIndex < 1)
+		slideIndex = imgs.length;
+	imgs.forEach(function(e) {
+		e.style.display = ""; 
+	});
+	indicators.forEach(function(e) {
+		e.classList.remove("current");
+	});
+	indicators[slideIndex-1].classList.add("current");
+	imgs[slideIndex-1].style.display = "block";
+}
+
+function reStartSlideTimer() {
+	if (slideTimer)
+		clearInterval(slideTimer);
+	slideTimer = setInterval(nextSlide, 6000);
 }
 
 var Util = {
