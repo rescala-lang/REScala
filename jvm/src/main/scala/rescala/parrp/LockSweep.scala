@@ -66,8 +66,11 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPr
 
     val locked = new util.ArrayList[Reactive[TState]]
 
+    val priorKey = priorTurn.map(_.key).orNull
+
     while (!stack.isEmpty) {
       val reactive = stack.pop()
+      if ((priorKey ne null) && reactive.bud.lock.isOwner(priorKey)) throw new IllegalStateException(s"$this tried to lock reactive $reactive owned by its parent $priorKey")
 
       if (reactive.bud.lock.tryLock(key) eq key) {
         if (reactive.bud.willWrite == this) {
