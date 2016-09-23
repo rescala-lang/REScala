@@ -34,7 +34,7 @@ object Engines extends CommonEngines {
 
   implicit val parallellocksweep: EngineImpl[LSStruct.type, ParallelLockSweep] = {
     val ex: Executor = Executors.newWorkStealingPool()
-    new EngineImpl[LSStruct.type, ParallelLockSweep]("ParallelLockSweep", engine => new ParallelLockSweep(new Backoff(), ex, engine))
+    new EngineImpl[LSStruct.type, ParallelLockSweep]("ParallelLockSweep", (engine, prior) => new ParallelLockSweep(new Backoff(), ex, engine, prior))
   }
 
   implicit val default: Engine[ParRP, ParRP] = parrp
@@ -45,7 +45,7 @@ object Engines extends CommonEngines {
     override def plan[R](i: Reactive*)(f: STMTurn => R): R = atomic { tx => super.plan(i: _*)(f) }
   }
 
-  def locksweepWithBackoff(backOff: () => Backoff):Engine[LSStruct.type, LockSweep]  = new EngineImpl[LSStruct.type, LockSweep]("LockSweep", new LockSweep(backOff()))
-  def parrpWithBackoff(backOff: () => Backoff): Engine[ParRP, ParRP] = new EngineImpl[ParRP, ParRP]("ParRP", new ParRP(backOff()))
+  def locksweepWithBackoff(backOff: () => Backoff):Engine[LSStruct.type, LockSweep]  = new EngineImpl[LSStruct.type, LockSweep]("LockSweep", (_, prior) => new LockSweep(backOff(), prior))
+  def parrpWithBackoff(backOff: () => Backoff): Engine[ParRP, ParRP] = new EngineImpl[ParRP, ParRP]("ParRP", (_, prior) => new ParRP(backOff(), prior))
 
 }

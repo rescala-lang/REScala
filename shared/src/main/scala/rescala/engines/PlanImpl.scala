@@ -18,7 +18,7 @@ trait PlanImpl[S <: Struct, TImpl <: AbstractPropagation[S]] extends Engine[S, T
     *
     * @return New turn
     */
-  protected def makeTurn(): TImpl
+  protected def makeTurn(priorTurn: Option[TImpl]): TImpl
 
   private val currentTurn: DynamicVariable[Option[TImpl]] = new DynamicVariable[Option[TImpl]](None)
 
@@ -48,7 +48,7 @@ trait PlanImpl[S <: Struct, TImpl <: AbstractPropagation[S]] extends Engine[S, T
     * */
   override def plan[Res](initialWrites: Reactive*)(admissionPhase: TImpl => Res): Res = {
 
-    val turn = makeTurn()
+    val turn = makeTurn(currentTurn.value)
     val result = try {
       val turnResult = currentTurn.withValue(Some(turn)) {
         turn.preparationPhase(initialWrites.toList)

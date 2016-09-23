@@ -9,10 +9,10 @@ import rescala.engines.PlanImpl
 class PipelineEngine extends PlanImpl[PipelineStruct.type, PipeliningTurn] {
 
   /** used for the creation of state inside reactives */
-  override final protected[rescala] def makeTurn(): PipeliningTurn = new PipeliningTurn(this)
+  override final protected[rescala] def makeTurn(priorTurn: Option[PTurn] = None): PipeliningTurn = new PipeliningTurn(this)
 
 
-  protected[pipelining] val stableTurn = makeTurn()
+  protected[pipelining] val stableTurn = makeTurn(None)
 
   private type PTurn = PipeliningTurn
 

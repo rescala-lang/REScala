@@ -19,7 +19,7 @@ class FrameWaitWrittenTest extends FlatSpec with TimeLimitedTests {
     val readFrom = new Pipeline()
 
     def createNewTurn(): PipeliningTurn = {
-      val turn = engine.makeTurn
+      val turn = engine.makeTurn()
       engine.addTurn(turn)
       turn
     }

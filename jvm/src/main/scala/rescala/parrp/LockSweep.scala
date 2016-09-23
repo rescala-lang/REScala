@@ -42,7 +42,7 @@ trait LSInterTurn {
   def append(reactives: mutable.Set[Reactive[LSStruct.type]]): Unit
 }
 
-class LockSweep(backoff: Backoff) extends CommonPropagationImpl[LSStruct.type] with LSInterTurn {
+class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPropagationImpl[LSStruct.type] with LSInterTurn {
 
   private type TState = LSStruct.type
 

@@ -10,7 +10,7 @@ import rescala.locking._
 
 import scala.util.DynamicVariable
 
-class ParallelLockSweep(backoff: Backoff, ex: Executor, engine: EngineImpl[LSStruct.type, ParallelLockSweep]) extends LockSweep(backoff) {
+class ParallelLockSweep(backoff: Backoff, ex: Executor, engine: EngineImpl[LSStruct.type, ParallelLockSweep], priorTurn: Option[ParallelLockSweep]) extends LockSweep(backoff, priorTurn) {
 
   private type TState = LSStruct.type
 

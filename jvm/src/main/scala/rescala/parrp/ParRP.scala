@@ -15,7 +15,7 @@ trait ParRPInterTurn {
 
 }
 
-class ParRP(backoff: Backoff) extends LevelBasedPropagation[ParRP] with ParRPInterTurn with LevelStruct {
+class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropagation[ParRP] with ParRPInterTurn with LevelStruct {
   override type SporeP[P, R] = ParRPSpore[P, R]
 
   private type TState = ParRP

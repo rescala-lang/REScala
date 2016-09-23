@@ -15,7 +15,7 @@ class PipelineBufferTest extends FlatSpec {
     val buffer = pipelineBuffer.createNonblockingBuffer[Int](0, Buffer.commitAsIs)
 
     def createTurn(): PipeliningTurn = {
-      val turn = engine.makeTurn
+      val turn = engine.makeTurn()
       engine.addTurn(turn)
       turn
     }

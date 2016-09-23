@@ -15,7 +15,7 @@ import scala.collection.JavaConverters._
 
 trait PessimisticTestState {
 
-  class PessimisticTestTurn extends ParRP(backoff = new Backoff()) {
+  class PessimisticTestTurn extends ParRP(backoff = new Backoff(), None) {
     override def evaluate(r: Reactive[ParRP]): Unit = {
       while (Pessigen.syncStack.get() match {
         case stack@(set, bar) :: tail if set(r) =>
@@ -154,7 +154,7 @@ class PessimisticTest extends FlatSpec {
   object MockFacFac {
     def apply(i0: Reactive[ParRP], reg: => Unit, unreg: => Unit): Engine[ParRP, Turn[ParRP]] =
       new EngineImpl[ParRP, ParRP]("Mock Fac Fac",
-        new ParRP(new Backoff()) {
+        new ParRP(new Backoff(), None) {
           override def discover(downstream: Reactive[ParRP])(upstream: Reactive[ParRP]): Unit = {
             if (upstream eq i0) reg
             super.discover(downstream)(upstream)

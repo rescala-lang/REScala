@@ -152,7 +152,7 @@ class SimpleDynamicDropTest extends FlatSpec {
       removeDepThread.join()
       updateDepThread.join()
 
-      implicit val dummyTurn = engine.makeTurn
+      implicit val dummyTurn = engine.makeTurn()
       engine.addTurn(dummyTurn)
 
       assert(Pipeline.pipelineFor(dynDep).getPipelineFrames().isEmpty)

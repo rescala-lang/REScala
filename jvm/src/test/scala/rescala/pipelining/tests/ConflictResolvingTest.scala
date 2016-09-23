@@ -39,7 +39,7 @@ class ConflictResolvingTest extends FlatSpec {
       s1.get - 2 * s2.get
     }
 
-    val turns = List.fill(6)(engine.makeTurn)
+    val turns = List.fill(6)(engine.makeTurn())
     val sources = List(s2, s1, s1, s2, s2, s1)
 
     def makeFramesForUpdate(turn: PipeliningTurn, source: Reactive[PipelineStruct.type]): Unit = {

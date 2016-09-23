@@ -9,20 +9,20 @@ class FrameTest extends FlatSpec  {
   val dummyReactive = new Pipeline()
 
     it should "test New Write Frame Is Not Written" in {
-    assert(Frame(engine.makeTurn, dummyReactive).isWritten == false)
+    assert(Frame(engine.makeTurn(), dummyReactive).isWritten == false)
   }
 
     it should "test Mark Written" in {
-    val frame = Frame(engine.makeTurn, dummyReactive)
+    val frame = Frame(engine.makeTurn(), dummyReactive)
     assert(!frame.isWritten)
     frame.markWritten()
     assert(frame.isWritten)
   }
 
     it should "test Insert Frame" in {
-    val frame1 = Frame(engine.makeTurn, dummyReactive)
-    val frame2 = Frame(engine.makeTurn, dummyReactive)
-    val frame3 = Frame(engine.makeTurn, dummyReactive)
+    val frame1 = Frame(engine.makeTurn(), dummyReactive)
+    val frame2 = Frame(engine.makeTurn(), dummyReactive)
+    val frame3 = Frame(engine.makeTurn(), dummyReactive)
 
     frame2.insertAfter(frame1)
 
@@ -42,9 +42,9 @@ class FrameTest extends FlatSpec  {
   }
 
     it should "test Remove Frame" in {
-    val frame1 = Frame(engine.makeTurn, dummyReactive)
-    val frame2 = Frame(engine.makeTurn, dummyReactive)
-    val frame3 = Frame(engine.makeTurn, dummyReactive)
+    val frame1 = Frame(engine.makeTurn(), dummyReactive)
+    val frame2 = Frame(engine.makeTurn(), dummyReactive)
+    val frame3 = Frame(engine.makeTurn(), dummyReactive)
 
     frame2.insertAfter(frame1)
     frame3.insertAfter(frame2)
@@ -69,9 +69,9 @@ class FrameTest extends FlatSpec  {
   }
 
     it should "test Move Frame" in {
-    val frame1 = Frame(engine.makeTurn, dummyReactive)
-    val frame2 = Frame(engine.makeTurn, dummyReactive)
-    val frame3 = Frame(engine.makeTurn, dummyReactive)
+    val frame1 = Frame(engine.makeTurn(), dummyReactive)
+    val frame2 = Frame(engine.makeTurn(), dummyReactive)
+    val frame3 = Frame(engine.makeTurn(), dummyReactive)
 
     frame2.insertAfter(frame1)
     frame3.insertAfter(frame2)

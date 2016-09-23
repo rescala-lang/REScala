@@ -37,7 +37,7 @@ object PipelineTestUtils {
   }
 
   def readLatestValue(reader : PipeliningTurn => Unit)(implicit engine : PipelineEngine): Unit = {
-    val dummyTurn = engine.makeTurn
+    val dummyTurn = engine.makeTurn()
     engine.addTurn(dummyTurn)
     reader(dummyTurn)
     engine.turnCompleted(dummyTurn)
