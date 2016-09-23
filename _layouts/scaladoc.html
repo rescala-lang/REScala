@@ -28,8 +28,14 @@
         close();
       }
       f.window.onhashchange = function() {
-        window.location.hash = f.window.location.hash;
+		if (window.location.hash)
+			window.history.pushState(null, null, f.window.location.hash);
+		else
+			window.history.replaceState(null, null, f.window.location.hash);
       };
+	  window.onhashchange = function() {
+		f.window.location.hash = window.location.hash;
+	  }
     }
   //--></script>
   <script async defer src="https://buttons.github.io/buttons.js"></script>    
