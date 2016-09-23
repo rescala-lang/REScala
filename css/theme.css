@@ -159,19 +159,19 @@ h1:before,h2:before,h3:before,h4:before {
   }
 }
 
-#toc li.collapsed + li {
+#toc-container .collapsible.collapsed + li,.collapsible.collapsed + ol {
   display: none;
 }
 
-#toc .collapseIcon {
+#toc-container .collapseIcon {
   float: right;
 }
 
-#toc .collapsible.collapsed .collapseIcon:before {
+#toc-container .collapsible.collapsed .collapseIcon:before {
   content: "[+]";
 }
 
-#toc .collapsible .collapseIcon:before {
+#toc-container .collapsible .collapseIcon:before {
   content: "[-]";
 }
 

@@ -39,25 +39,34 @@ window.onload = function () {
 		updateArrowVisibility();
 	};
 	
-	Util.DOMQueryAll("li").filter(function(li) {
-		var next = li.nextElementSibling;
-		return next != null && next.nodeName == "LI" && next.firstElementChild != null && next.firstElementChild.nodeName == "OL";
-	}).forEach(function(li) {
+/**
+ * add a collapsibleIcon to the collapsible element
+ * @param {DOMElement} header - The header that is always visible
+ * @param {DOMElement} iconParent - Where the Icon should be placed
+ */
+	function addCollapseIcon(header, iconParent) {
 		var c = document.createElement("span");
 		c.classList.add("collapseIcon");
 		c.addEventListener("click", function(e) {
-			li.classList.toggle("collapsed");
+			header.classList.toggle("collapsed");
 			updateTOClines();
 			e.stopPropagation();
 			e.preventDefault();
 		}, true);
-		li.firstElementChild.appendChild(c);
-		li.classList.add("collapsible");
-		
-		var collapsibleItems = li.nextElementSibling.firstElementChild.querySelectorAll("a").length - 1;
+		iconParent.appendChild(c);
+		header.classList.add("collapsible");
+	}
+	
+/**
+ * add a vertical lines to the collapsible element
+ * @param {DOMElement} parentNode - The parent node of all elements that can be hidden by collapsing
+ * @param {DOMElement} header - The header that is always visible
+ */
+	function addVerticalLines(parentNode, header) {
+		var collapsibleItems = parentNode.querySelectorAll("a").length - 1;
 		if (collapsibleItems >= 0) {
 			var hr = document.createElement("hr");
-			var node = li;
+			var node = header;
 			var level = 1;
 			while (node.id != "toc") {
 				if (node.nodeName == "OL")
@@ -66,10 +75,26 @@ window.onload = function () {
 			}
 			
 			hr.style.left = (30 * level) + "px";
-			li.appendChild(hr);
+			header.appendChild(hr);
 		}
+	}
+	
+	Util.DOMQueryAll("li").filter(function(li) {
+		var next = li.nextElementSibling;
+		return next != null && next.nodeName == "LI" && next.firstElementChild != null && next.firstElementChild.nodeName == "OL";
+	}).forEach(function(li) {
+		addCollapseIcon(li, li.firstElementChild);
+		addVerticalLines(li.nextElementSibling.firstElementChild, li);
+
 	});
 	updateTOClines();
+
+	var mq = window.matchMedia( "(max-width: 680px)" );
+	if (mq.matches) {
+		var tocHeader = Util.DOMQuery("#toc").previousElementSibling
+		addCollapseIcon(tocHeader, tocHeader);
+		Util.DOMQueryAll(".collapsible").forEach(function(li) { li.classList.add("collapsed")});
+	}
 }
 
 function updateTOClines() {
