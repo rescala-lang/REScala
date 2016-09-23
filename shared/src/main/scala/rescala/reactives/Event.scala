@@ -15,8 +15,8 @@ import scala.language.higherKinds
   * exactly one signal implementation it is compatible with by setting the SL type parameter.
   * This relationship needs to be symmetrical.
   *
-  * @tparam T  Type returned when the event fires
-  * @tparam S  Struct type used for the propagation of the event
+  * @tparam T Type returned when the event fires
+  * @tparam S Struct type used for the propagation of the event
   */
 trait Event[+T, S <: Struct] extends PulseOption[T, S] with Observable[T, S] {
 
@@ -149,7 +149,6 @@ trait Event[+T, S <: Struct] extends PulseOption[T, S] with Observable[T, S] {
       this.get(t).fold(current)(_ => s.get(t))
     }(turn)
   }
-
 
 
   /** Switch to a new Signal once, on the occurrence of event e. */

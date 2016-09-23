@@ -68,18 +68,5 @@ trait Signal[+A, S <: Struct] extends Stateful[A, S] with Observable[A, S] {
   final def changedTo[V](value: V)(implicit ticket: Ticket[S]): Event[Unit, S] = (changed filter {_ == value}).dropParam
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
 
