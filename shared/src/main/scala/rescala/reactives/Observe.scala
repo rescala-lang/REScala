@@ -69,7 +69,7 @@ trait Observable[+P, S <: Struct] {
   /** add an observer */
   final def observe(
     onSuccess: P => Unit,
-    onFailure: Throwable => Unit = t => throw new UnhandledFailureException(t)
+    onFailure: Throwable => Unit = t => throw new UnhandledFailureException(this, t)
   )(implicit ticket: Ticket[S]): Observe[S] = Observe.strong(this) {
     case Success(v) => onSuccess(v)
     case Failure(t) => onFailure(t)
