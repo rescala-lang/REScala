@@ -50,7 +50,7 @@ trait ReactivePointer[+T] extends MetaPointer[T] {
 
   protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Pulsing[T, S]
 
-  def observe[U >: T](onSuccess: (U) => Unit, onFailure: (Throwable) => Unit = t => throw new UnhandledFailureException(t)): ObservePointer[U] = ObservePointer(createDependentNode(), this, onSuccess, onFailure)
+  def observe[U >: T](onSuccess: (U) => Unit, onFailure: (Throwable) => Unit = t => throw t): ObservePointer[U] = ObservePointer(createDependentNode(), this, onSuccess, onFailure)
 }
 
 trait EventPointer[+T] extends ReactivePointer[T] {
@@ -84,7 +84,7 @@ trait SignalPointer[+A] extends ReactivePointer[A] {
   def changed: ChangedEventPointer[A] = ChangedEventPointer(createDependentNode(), this)
 }
 
-case class ObservePointer[T](protected[meta] override var node : Option[ReactiveNode], base : ReactivePointer[T], onSuccess: (T) => Unit, onFailure: (Throwable) => Unit = (cause) => { throw new UnhandledFailureException(cause)}) extends MetaPointer[Unit] {
+case class ObservePointer[T](protected[meta] override var node : Option[ReactiveNode], base : ReactivePointer[T], onSuccess: (T) => Unit, onFailure: (Throwable) => Unit = (cause) => { throw cause}) extends MetaPointer[Unit] {
   def reify[S <: Struct](reifier: Reifier[S]): Observe[S] = reifier.reifyObserve(this)
 
   protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Observe[S] = base.reify(reifier).observe(onSuccess, onFailure)
