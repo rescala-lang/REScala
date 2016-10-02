@@ -19,23 +19,26 @@ class ReactiveGraph {
   def createVar[A]() : VarSignalPointer[A] = {
     val node = new ReactiveNode[A](this, Set())
     registerReactiveNode(node)
-    val pointer = VarSignalPointer[A](node)
-    pointers += node -> mutable.Set(pointer)
-    pointer
+    VarSignalPointer[A](node)
   }
 
   def createEvt[T]() : EvtEventPointer[T] = {
     val node = new ReactiveNode[T](this, Set())
     registerReactiveNode(node)
-    val pointer = EvtEventPointer[T](node)
-    pointers += node -> mutable.Set(pointer)
-    pointer
+    EvtEventPointer[T](node)
   }
 
   protected[meta] def createReactiveNode[T](initDependencies : Set[ReactiveNode[_]] = Set()): ReactiveNode[T] = {
     val node = new ReactiveNode(this, initDependencies)
     registerReactiveNode(node)
     node
+  }
+
+  protected[meta] def addPointer[T](node: ReactiveNode[T], pointer: MetaPointer[T]): Unit = {
+    pointers.get(node) match {
+      case Some(set) => set += pointer
+      case None => pointers += node -> mutable.Set(pointer)
+    }
   }
 
   private def registerReactiveNode[T](reactive: ReactiveNode[T]) : Unit = {
@@ -62,6 +65,10 @@ class ReactiveGraph {
     nodes += mergedNode
 
     mergedNode
+  }
+
+  protected[meta] def pointers(node : ReactiveNode[_]) : Set[MetaPointer[_]] = {
+    Set[MetaPointer[_]]() ++ pointers.getOrElse(node, Set())
   }
 
   def incoming(node : ReactiveNode[_]) = node.dependencies

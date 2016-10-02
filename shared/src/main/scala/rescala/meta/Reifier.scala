@@ -11,12 +11,12 @@ trait Reifier[S <: Struct] {
   protected[meta] def createEvt[T](evtPointer: EvtEventPointer[T]) : Evt[T, S]
   protected[meta] def createVar[A](varPointer: VarSignalPointer[A]) : Var[A, S]
 
-  protected[meta] def reifyEvt[T](evtPointer: EvtEventPointer[T]) : Evt[T, S]
-  protected[meta] def reifyVar[A](varPointer: VarSignalPointer[A]) : Var[A, S]
+  protected[meta] def reifyEvt[T](evtPointer: EvtEventPointer[T], skipCollect: Boolean = false) : Evt[T, S]
+  protected[meta] def reifyVar[A](varPointer: VarSignalPointer[A], skipCollect: Boolean = false) : Var[A, S]
 
-  protected[meta] def reifyEvent[T](eventPointer: EventPointer[T]) : Event[T, S]
-  protected[meta] def reifySignal[A](signalPointer: SignalPointer[A]) : Signal[A, S]
-  protected[meta] def reifyObserve[A](observePointer: ObservePointer[A]) : Observe[S]
+  protected[meta] def reifyEvent[T](eventPointer: EventPointer[T], skipCollect: Boolean = false) : Event[T, S]
+  protected[meta] def reifySignal[A](signalPointer: SignalPointer[A], skipCollect: Boolean = false) : Signal[A, S]
+  protected[meta] def reifyObserve[A](observePointer: ObservePointer[A], skipCollect: Boolean = false) : Observe[S]
 }
 
 class EngineReifier[S <: Struct]()(implicit val engine: Engine[S, Turn[S]]) extends Reifier[S] {
@@ -35,32 +35,57 @@ class EngineReifier[S <: Struct]()(implicit val engine: Engine[S, Turn[S]]) exte
     }
   }
 
-  override protected[meta] def reifyEvt[T](evtPointer: EvtEventPointer[T]): Evt[T, S] = reifyEvent(evtPointer).asInstanceOf[Evt[T, S]]
+  override protected[meta] def reifyEvt[T](evtPointer: EvtEventPointer[T], skipCollect: Boolean = false): Evt[T, S] = reifyEvent(evtPointer, skipCollect).asInstanceOf[Evt[T, S]]
 
-  override protected[meta] def reifyVar[A](varPointer: VarSignalPointer[A]): Var[A, S] = reifySignal(varPointer).asInstanceOf[Var[A, S]]
+  override protected[meta] def reifyVar[A](varPointer: VarSignalPointer[A], skipCollect: Boolean = false): Var[A, S] = reifySignal(varPointer, skipCollect).asInstanceOf[Var[A, S]]
 
-  override protected[meta] def reifyEvent[T](eventPointer: EventPointer[T]): Event[T, S] = eventPointer.node match {
+  override protected[meta] def reifyEvent[T](eventPointer: EventPointer[T], skipCollect: Boolean = false): Event[T, S] = eventPointer.node match {
     case None => throw new IllegalArgumentException("Cannot reify null pointer!")
     case Some(node) =>
+      if (!skipCollect) {
+        val collected = collectNodes(node, Set())
+        collected.flatMap(n => n.graph.pointers(n)).foreach(n => doReify(n))
+      }
       val reified = doReify(eventPointer).asInstanceOf[Event[T, S]]
-      applyLog(node.graph.popLog())
+      if (!skipCollect) {
+        applyLog(node.graph.popLog())
+      }
       reified
   }
 
-  override protected[meta] def reifySignal[A](signalPointer: SignalPointer[A]): Signal[A, S] = signalPointer.node match {
+  override protected[meta] def reifySignal[A](signalPointer: SignalPointer[A], skipCollect: Boolean = false): Signal[A, S] = signalPointer.node match {
     case None => throw new IllegalArgumentException("Cannot reify null pointer!")
     case Some(node) =>
+      if (!skipCollect) {
+        val collected = collectNodes(node, Set())
+        collected.flatMap(n => n.graph.pointers(n)).foreach(n => doReify(n))
+      }
       val reified = doReify(signalPointer).asInstanceOf[Signal[A, S]]
-      applyLog(node.graph.popLog())
+      if (!skipCollect) {
+        applyLog(node.graph.popLog())
+      }
       reified
   }
 
-  override protected[meta] def reifyObserve[T](observePointer: ObservePointer[T]): Observe[S] = observePointer.node match {
+  override protected[meta] def reifyObserve[T](observePointer: ObservePointer[T], skipCollect: Boolean = false): Observe[S] = observePointer.node match {
     case None => throw new IllegalArgumentException("Cannot reify null pointer!")
     case Some(node) =>
+      if (!skipCollect) {
+        val collected = collectNodes(node, Set())
+        collected.flatMap(n => n.graph.pointers(n)).foreach(n => doReify(n))
+      }
       val reified = doReify(observePointer).asInstanceOf[Observe[S]]
-      applyLog(node.graph.popLog())
+      if (!skipCollect) {
+        applyLog(node.graph.popLog())
+      }
       reified
+  }
+
+  private def collectNodes(current: ReactiveNode[_], collected: Set[ReactiveNode[_]]): Set[ReactiveNode[_]] = {
+    val graph = current.graph
+    val out = graph.outgoing(current).flatMap(n => if (collected.contains(n)) Set[ReactiveNode[_]](current) else collectNodes(n, collected + current))
+    val in = graph.incoming(current).flatMap(n => if (collected.contains(n)) Set[ReactiveNode[_]](current) else collectNodes(n, collected ++ out))
+    collected ++ out ++ in
   }
 
   private def doReify[T](pointer: MetaPointer[T]): Any = pointer.node match {

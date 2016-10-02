@@ -13,6 +13,8 @@ trait MetaPointer[+T] {
   def isEmpty = deleted
   def isDefined = node.isDefined
 
+  if (!deleted) _node.graph.addPointer(_node, this)
+
   protected[meta] def createDependentNode[U]() = {
     node match {
       case None => throw new IllegalAccessException("Cannot create new dependencies for a null pointer!")
@@ -30,7 +32,7 @@ trait MetaPointer[+T] {
 }
 
 trait ReactivePointer[+T] extends MetaPointer[T] {
-  def reify[S <: Struct](reifier: Reifier[S]): Observable[T, S]
+  protected[meta] def reify[S <: Struct](reifier: Reifier[S], skipCollect : Boolean = false): Observable[T, S]
 
   protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Pulsing[T, S]
 
@@ -38,7 +40,7 @@ trait ReactivePointer[+T] extends MetaPointer[T] {
 }
 
 trait EventPointer[+T] extends ReactivePointer[T] {
-  override def reify[S <: Struct](reifier: Reifier[S]): Event[T, S] = reifier.reifyEvent(this)
+  override def reify[S <: Struct](reifier: Reifier[S], skipCollect : Boolean = false): Event[T, S] = reifier.reifyEvent(this, skipCollect)
 
   override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Event[T, S]
 
@@ -58,7 +60,7 @@ trait EventPointer[+T] extends ReactivePointer[T] {
 }
 
 trait SignalPointer[+A] extends ReactivePointer[A] {
-  override def reify[S <: Struct](reifier: Reifier[S]): Signal[A, S] = reifier.reifySignal(this)
+  override def reify[S <: Struct](reifier: Reifier[S], skipCollect : Boolean = false): Signal[A, S] = reifier.reifySignal(this, skipCollect)
 
   override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Signal[A, S]
 
@@ -69,14 +71,14 @@ trait SignalPointer[+A] extends ReactivePointer[A] {
 }
 
 case class ObservePointer[T](protected[meta] override val _node : ReactiveNode[Unit], base : ReactivePointer[T], onSuccess: (T) => Unit, onFailure: (Throwable) => Unit = (cause) => { throw cause}) extends MetaPointer[Unit] {
-  def reify[S <: Struct](reifier: Reifier[S]): Observe[S] = reifier.reifyObserve(this)
+  def reify[S <: Struct](reifier: Reifier[S], skipCollect : Boolean = false): Observe[S] = reifier.reifyObserve(this, skipCollect)
 
-  protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Observe[S] = base.reify(reifier).observe(onSuccess, onFailure)
+  protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Observe[S] = base.reify(reifier, skipCollect = true).observe(onSuccess, onFailure)
 }
 
 
 case class EvtEventPointer[T](protected[meta] override val _node : ReactiveNode[T]) extends EventPointer[T] {
-  override def reify[S <: Struct](reifier: Reifier[S]): Evt[T, S] = reifier.reifyEvt(this)
+  override def reify[S <: Struct](reifier: Reifier[S], skipCollect : Boolean = false): Evt[T, S] = reifier.reifyEvt(this, skipCollect)
 
   override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Evt[T, S] = reifier.createEvt(this)
 
@@ -86,35 +88,35 @@ case class EvtEventPointer[T](protected[meta] override val _node : ReactiveNode[
   }
 }
 case class ChangeEventPointer[+T](protected[meta] override val _node : ReactiveNode[Signals.Diff[T]], base : SignalPointer[T]) extends EventPointer[Signals.Diff[T]] {
-  override def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Event[Signals.Diff[T], S] = base.reify(reifier).change
+  override def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Event[Signals.Diff[T], S] = base.reify(reifier, skipCollect = true).change
 }
 case class ChangedEventPointer[+T](protected[meta] override val _node : ReactiveNode[T], base : SignalPointer[T]) extends EventPointer[T] {
-  override protected [meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Event[T, S] = base.reify(reifier).changed
+  override protected [meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Event[T, S] = base.reify(reifier, skipCollect = true).changed
 }
 case class FilteredEventPointer[T, +U >: T](protected[meta] override val _node : ReactiveNode[T], base : EventPointer[T], pred: (T) => Boolean) extends EventPointer[U] {
-  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Event[T, S] = base.reify(reifier).filter(pred)
+  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Event[T, S] = base.reify(reifier, skipCollect = true).filter(pred)
 }
 case class OrEventPointer[+T <: U, +U](protected[meta] override val _node : ReactiveNode[U], base : EventPointer[T], others : EventPointer[U]*) extends EventPointer[U] {
-  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Event[U, S] = others.foldLeft(base.reify(reifier) : Event[U, S])((acc, next) => acc || next.reify(reifier))
+  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Event[U, S] = others.foldLeft(base.reify(reifier, skipCollect = true) : Event[U, S])((acc, next) => acc || next.reify(reifier, skipCollect = true))
 }
 case class ExceptEventPointer[+T, +U](protected[meta] override val _node : ReactiveNode[T], base : EventPointer[T], other : EventPointer[U]) extends EventPointer[T] {
-  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Event[T, S] = base.reify(reifier) \ other.reify(reifier)
+  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Event[T, S] = base.reify(reifier, skipCollect = true) \ other.reify(reifier, skipCollect = true)
 }
 case class AndEventPointer[T, U, +R](protected[meta] override val _node : ReactiveNode[R], base : EventPointer[T], other : EventPointer[U], merger: (T, U) => R) extends EventPointer[R] {
-  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Event[R, S] = base.reify(reifier).and(other.reify(reifier))(merger)
+  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Event[R, S] = base.reify(reifier, skipCollect = true).and(other.reify(reifier, skipCollect = true))(merger)
 }
 case class ZippedEventPointer[+T, +U](protected[meta] override val _node : ReactiveNode[(T, U)], base : EventPointer[T], other : EventPointer[U]) extends EventPointer[(T, U)] {
-  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Event[(T, U), S] = base.reify(reifier).zip(other.reify(reifier))
+  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Event[(T, U), S] = base.reify(reifier, skipCollect = true).zip(other.reify(reifier, skipCollect = true))
 }
 case class MappedEventPointer[T, +U](protected[meta] override val _node : ReactiveNode[U], base : EventPointer[T], mapping: (T) => U) extends EventPointer[U] {
-  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Event[U, S] = base.reify(reifier).map(mapping)
+  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Event[U, S] = base.reify(reifier, skipCollect = true).map(mapping)
 }
 case class FlatMappedEventPointer[T, +B](protected[meta] override val _node : ReactiveNode[B], base : EventPointer[T], f: (T) => EventPointer[B]) extends EventPointer[B] {
-  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Event[B, S] = base.reify(reifier).flatMap(f(_).reify(reifier))
+  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Event[B, S] = base.reify(reifier, skipCollect = true).flatMap(f(_).reify(reifier))
 }
 
 case class VarSignalPointer[A](protected[meta] override val _node : ReactiveNode[A]) extends SignalPointer[A] {
-  override def reify[S <: Struct](reifier: Reifier[S]): Var[A, S] = reifier.reifyVar(this)
+  override def reify[S <: Struct](reifier: Reifier[S], skipCollect : Boolean = false): Var[A, S] = reifier.reifyVar(this, skipCollect)
 
   override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Var[A, S] = reifier.createVar(this)
 
@@ -124,23 +126,23 @@ case class VarSignalPointer[A](protected[meta] override val _node : ReactiveNode
   }
 }
 case class FoldedSignalPointer[T, A](protected[meta] override val _node : ReactiveNode[A], base : EventPointer[T], init: A, fold: (A, T) => A) extends SignalPointer[A] {
-  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Signal[A, S] = base.reify(reifier).fold(init)(fold)
+  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Signal[A, S] = base.reify(reifier, skipCollect = true).fold(init)(fold)
 }
 case class ToggledSignalPointer[+T, +A](protected[meta] override val _node : ReactiveNode[A], base : EventPointer[T], a : SignalPointer[A], b : SignalPointer[A]) extends SignalPointer[A] {
-  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Signal[A, S] = base.reify(reifier).toggle(a.reify(reifier), b.reify(reifier))
+  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Signal[A, S] = base.reify(reifier, skipCollect = true).toggle(a.reify(reifier, skipCollect = true), b.reify(reifier, skipCollect = true))
 }
 case class SnapshotSignalPointer[+T, +A](protected[meta] override val _node : ReactiveNode[A], base : EventPointer[T], s : SignalPointer[A]) extends SignalPointer[A] {
-  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Signal[A, S] = base.reify(reifier).snapshot(s.reify(reifier))
+  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Signal[A, S] = base.reify(reifier, skipCollect = true).snapshot(s.reify(reifier, skipCollect = true))
 }
 case class SwitchOnceSignalPointer[+T, +A](protected[meta] override val _node : ReactiveNode[A], base : EventPointer[T], original : SignalPointer[A], newSignal : SignalPointer[A]) extends SignalPointer[A] {
-  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Signal[A, S] = base.reify(reifier).switchOnce(original.reify(reifier), newSignal.reify(reifier))
+  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Signal[A, S] = base.reify(reifier, skipCollect = true).switchOnce(original.reify(reifier, skipCollect = true), newSignal.reify(reifier, skipCollect = true))
 }
 case class SwitchToSignalPointer[+T <: A, +A](protected[meta] override val _node : ReactiveNode[A], base : EventPointer[T], original : SignalPointer[A]) extends SignalPointer[A] {
-  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Signal[A, S] = base.reify(reifier).switchTo(original.reify(reifier))
+  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Signal[A, S] = base.reify(reifier, skipCollect = true).switchTo(original.reify(reifier, skipCollect = true))
 }
 case class DelayedSignalPointer[+A](protected[meta] override val _node : ReactiveNode[A], base : SignalPointer[A], n: Int) extends SignalPointer[A] {
-  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Signal[A, S] = base.reify(reifier).delay(n)
+  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Signal[A, S] = base.reify(reifier, skipCollect = true).delay(n)
 }
 case class MappedSignalPointer[A, +U](protected[meta] override val _node : ReactiveNode[U], base : SignalPointer[A], mapping: (A) => U) extends SignalPointer[U] {
-  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Signal[U, S] = base.reify(reifier).map(mapping)
+  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Signal[U, S] = base.reify(reifier, skipCollect = true).map(mapping)
 }

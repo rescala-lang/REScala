@@ -3,9 +3,7 @@ package tests.rescala.meta
 import org.scalatest.FunSuite
 import rescala.api.Api
 import rescala.engines.CommonEngines
-import rescala.graph.SimpleStruct
 import rescala.meta._
-import rescala.reactives.Var
 
 class MetaTest extends FunSuite {
 
@@ -45,6 +43,31 @@ class MetaTest extends FunSuite {
     v.reify(SynchronousReifier).set(3)
     assert(v.reify(SynchronousReifier).now == 3, "variable set to 3")
     assert(fired, "event fired")
+  }
+
+  test("meta graph full dependency reification test") {
+    import rescala.engines.CommonEngines.synchron
+
+    val api = new Api.metaApi(new ReactiveGraph())
+    val v = api.Var(1)
+    val v2 = v.map((x : Int) => x + 1)
+    val e = api.changed(v)
+    val e2 = api.changed(v2)
+
+    var fired = 0
+    e += ((x : Int) => { fired += 1 })
+    e2 += ((x : Int) => { fired += 1 })
+    api.set(v, 2)
+
+    assert(v.reify(SynchronousReifier).now == 2, "variable set to 2")
+    assert(v2.reify(SynchronousReifier).now == 3, "dependent variable set to 3")
+    assert(fired == 2, "event fired twice")
+    fired = 0
+    e += ((x : Int) => { fired += 1 })
+    v.reify(SynchronousReifier).set(3)
+    assert(v.reify(SynchronousReifier).now == 3, "variable set to 3")
+    assert(v2.reify(SynchronousReifier).now == 4, "dependent variable set to 4")
+    assert(fired == 3, "event fired three times")
   }
 
   test("meta graph OR reification test") {
