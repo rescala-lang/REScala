@@ -21,10 +21,10 @@ trait Reifier[S <: Struct] {
 
 class EngineReifier[S <: Struct]()(implicit val engine: Engine[S, Turn[S]]) extends Reifier[S] {
 
-  private val reifiedCache : collection.mutable.Map[ReactiveNode, Any] = collection.mutable.Map()
+  private val reifiedCache : collection.mutable.Map[ReactiveNode[_], Any] = collection.mutable.Map()
 
   // TODO: Find a way to prevent instanceOf-cast
-  private def applyLog(log : List[MetaLog]): Unit = {
+  private def applyLog(log : List[MetaLog[_]]): Unit = {
     log.foreach {
       case LoggedFire(node, value) => reifiedCache.getOrElse(node, throw new IllegalArgumentException("Cannot fire a non-reified event!")) match {
         case e : Evt[_, _] => e.asInstanceOf[Evt[Any, S]].fire(value)
