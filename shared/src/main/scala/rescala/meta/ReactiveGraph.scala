@@ -1,8 +1,11 @@
 package rescala.meta
 
+import scala.collection.mutable
+
 class ReactiveGraph {
   private val nodes : collection.mutable.Set[ReactiveNode[_]] = collection.mutable.Set()
   private val log : collection.mutable.MutableList[MetaLog[_]] = collection.mutable.MutableList()
+  private val pointers : collection.mutable.Map[ReactiveNode[_], collection.mutable.Set[MetaPointer[_]]] = collection.mutable.Map()
 
   def numNodes = nodes.size
 
@@ -14,15 +17,19 @@ class ReactiveGraph {
   }
 
   def createVar[A]() : VarSignalPointer[A] = {
-    val node = new ReactiveNode(this, Set())
+    val node = new ReactiveNode[A](this, Set())
     registerReactiveNode(node)
-    VarSignalPointer[A](node)
+    val pointer = VarSignalPointer[A](node)
+    pointers += node -> mutable.Set(pointer)
+    pointer
   }
 
   def createEvt[T]() : EvtEventPointer[T] = {
-    val node = new ReactiveNode(this, Set())
+    val node = new ReactiveNode[T](this, Set())
     registerReactiveNode(node)
-    EvtEventPointer[T](node)
+    val pointer = EvtEventPointer[T](node)
+    pointers += node -> mutable.Set(pointer)
+    pointer
   }
 
   protected[meta] def createReactiveNode[T](initDependencies : Set[ReactiveNode[_]] = Set()): ReactiveNode[T] = {
