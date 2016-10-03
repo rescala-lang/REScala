@@ -20,6 +20,24 @@ but hardly escape the functional setting. On the other hand, event-based languag
 
 REScala is a reactive language which integrates concepts from event-based and functional-reactive programming into the object-oriented world.
 REScala supports the development of reactive applications by fostering a functional and declarative style which complements the advantages of object-oriented design.
+---
+
+## Box1
+{: class="info-box"}
+Some Description about that Box
+
+## Long-Title-Box3
+{: class="info-box"}
+Lorem Ipsum yadda yadda yadda
+
+## Box3
+{: class="info-box"}
+Lorem Ipsum yadda yadda yadda
+
+## Box4
+{: class="info-box"}
+Lorem Ipsum yadda yadda yadda in dubio pro reo Caesar venit laudatio intervenit
+
 
 ---
 <a class="github-button" href="https://github.com/guidosalva/REScala/archive/master.zip" data-style="mega" aria-label="Download guidosalva/REScala on GitHub">Download</a>

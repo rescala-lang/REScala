@@ -104,6 +104,21 @@ window.onload = function () {
 	});
 	reStartSlideTimer();
 	updateSlide();
+	
+	var container = document.createElement("div");
+	container.id = "info-box-container";
+	var infoBoxes = Util.DOMQueryAll(".info-box");
+	infoBoxes[0].parentElement.insertBefore(container, infoBoxes[0]);
+	infoBoxes.forEach(function(box) {
+		var p = box.nextElementSibling;
+		var div = document.createElement("div");
+		box.classList.remove("info-box");
+		div.classList.add("info-box");
+		container.appendChild(div);
+		div.appendChild(box);
+		div.appendChild(p);
+	});
+	container.nextElementSibling.style = "clear: left;";
 }
 
 
