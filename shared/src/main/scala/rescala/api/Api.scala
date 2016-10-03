@@ -21,6 +21,8 @@ trait Api {
   def fire[A](evt: Evt[A], value: A): Unit
   def set[A](vr: Var[A], value: A): Unit
 
+  def disconnectE(event : Event[_]): Unit
+  def disconnectS(signal : Signal[_]): Unit
 
   def mapS[A, B](signal: Signal[A])(f: A => B): Signal[B]
   def mapE[A, B](event: Event[A])(f: A => B): Event[B]
@@ -61,6 +63,8 @@ object Api {
     override def now[A](signal: Signal[A]): A = signal.now
     override def fire[A](evt: Evt[A], value: A): Unit = evt.fire(value)
     override def set[A](vr: Var[A], value: A): Unit = vr.set(value)
+    override def disconnectE(event : Event[_]): Unit = event.disconnect()
+    override def disconnectS(signal : Signal[_]): Unit = signal.disconnect()
 
     override def filter[A](event: Event[A])(f: A => Boolean): Event[A] = event.filter(f)
     override def and[A, B, C](event: Event[A], other: Event[B])(merger: (A, B) => C): Event[C] = event.and(other)(merger)
@@ -95,6 +99,8 @@ object Api {
     override def now[A](signal: Signal[A]): A = ??? //signal.now
     override def fire[A](evt: Evt[A], value: A): Unit = evt.fire(value)
     override def set[A](vr: Var[A], value: A): Unit = vr.set(value)
+    override def disconnectE(event : Event[_]): Unit = event.disconnect()
+    override def disconnectS(signal : Signal[_]): Unit = signal.disconnect()
 
     override def filter[A](event: Event[A])(f: A => Boolean): Event[A] = event && f
     override def and[A, B, C](event: Event[A], other: Event[B])(merger: (A, B) => C): Event[C] = event.and(other)(merger)

@@ -15,6 +15,11 @@ trait MetaPointer[+T] {
 
   if (!deleted) _node.graph.addPointer(_node, this)
 
+  def disconnect() : Unit = node match {
+    case None => throw new IllegalAccessException("Cannot disconnect a null pointer!")
+    case Some(n) => n.graph.addLog(LoggedDisconnect(n))
+  }
+
   protected[meta] def createDependentNode[U]() = {
     node match {
       case None => throw new IllegalAccessException("Cannot create new dependencies for a null pointer!")

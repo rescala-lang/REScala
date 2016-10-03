@@ -147,4 +147,25 @@ class MetaTest extends FunSuite {
     assert(count == 23, "observer function was not reified correctly")
     assert(count2 == 23, "observer function was not reified correctly")
   }
+
+  test("meta graph disconnect reification test") {
+    import rescala.engines.CommonEngines.synchron
+
+    val api = new Api.metaApi(new ReactiveGraph())
+    val v = api.Var(1)
+    val v2 = v.map((x : Int) => x + 1)
+    val e = api.Evt[Int]()
+    val e2 = api.changed(v)
+    val e3 = api.changed(v2) || e
+
+    var fired = 0
+    e2 += ((x : Int) => { fired += 1 })
+    api.set(v, 2)
+    api.disconnectE(e2)
+    api.set(v, 3)
+
+    assert(v.reify(SynchronousReifier).now == 3, "variable setting to 3 not reified")
+    assert(v2.reify(SynchronousReifier).now == 4, "signal propagation to 4 not reified")
+    assert(fired == 1, "observer not triggered exactly once (only before event is disconnected)")
+  }
 }

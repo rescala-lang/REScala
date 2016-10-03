@@ -30,6 +30,10 @@ class EngineReifier[S <: Struct]()(implicit val engine: Engine[S, Turn[S]]) exte
         case Some(pointer) => doReify(pointer)
         case None => // Skip
       }
+      case LoggedDisconnect(node) => node.graph.pointers(node).headOption match {
+        case Some(pointer) => doDisconnect(pointer)
+        case None => // Skip
+      }
       case LoggedFire(node, value) => reifiedCache.getOrElse(node, throw new IllegalArgumentException("Cannot fire a non-reified event!")) match {
         case e : Evt[_, _] => e.asInstanceOf[Evt[Any, S]].fire(value)
       }
@@ -65,6 +69,16 @@ class EngineReifier[S <: Struct]()(implicit val engine: Engine[S, Turn[S]]) exte
       if (!skipCollect) applyLog(node.graph.popLog())
       val reified = doReify(observePointer).asInstanceOf[Observe[S]]
       reified
+  }
+
+  private def doDisconnect[T](pointer: MetaPointer[T]): Unit = pointer.node match {
+    case None => throw new IllegalArgumentException("Cannot disconnect null pointer!")
+    case Some(node) =>
+      pointer match {
+        case p: EventPointer[_] => p.reify(this).disconnect()
+        case p: SignalPointer[_] => p.reify(this).disconnect()
+        case p: ObservePointer[_] => p.reify(this).remove()
+      }
   }
 
   private def doReify[T](pointer: MetaPointer[T]): Any = pointer.node match {
