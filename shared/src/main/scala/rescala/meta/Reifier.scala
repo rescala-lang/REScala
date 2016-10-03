@@ -32,6 +32,7 @@ class EngineReifier[S <: Struct]()(implicit val engine: Engine[S, Turn[S]]) exte
       case LoggedSet(node, value) => reifiedCache.getOrElse(node, throw new IllegalArgumentException("Cannot set a non-reified var!")) match {
         case v: Var[_, _] => v.asInstanceOf[Var[Any, S]].set(value)
       }
+      case LoggedCreate(node) => 
     }
   }
 

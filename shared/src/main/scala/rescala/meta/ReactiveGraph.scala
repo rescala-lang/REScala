@@ -43,6 +43,7 @@ class ReactiveGraph {
 
   private def registerReactiveNode[T](reactive: ReactiveNode[T]) : Unit = {
     nodes += reactive
+    addLog(LoggedCreate(reactive))
     for (incoming <- reactive.dependencies.diff(nodes)) {
       registerReactiveNode(incoming)
     }
