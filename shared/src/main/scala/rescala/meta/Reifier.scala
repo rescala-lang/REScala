@@ -26,13 +26,16 @@ class EngineReifier[S <: Struct]()(implicit val engine: Engine[S, Turn[S]]) exte
   // TODO: Find a way to prevent instanceOf-cast
   private def applyLog(log : List[MetaLog[_]]): Unit = {
     log.foreach {
+      case LoggedCreate(node) => node.graph.pointers(node).headOption match {
+        case Some(pointer) => doReify(pointer)
+        case None => // Skip
+      }
       case LoggedFire(node, value) => reifiedCache.getOrElse(node, throw new IllegalArgumentException("Cannot fire a non-reified event!")) match {
         case e : Evt[_, _] => e.asInstanceOf[Evt[Any, S]].fire(value)
       }
       case LoggedSet(node, value) => reifiedCache.getOrElse(node, throw new IllegalArgumentException("Cannot set a non-reified var!")) match {
         case v: Var[_, _] => v.asInstanceOf[Var[Any, S]].set(value)
       }
-      case LoggedCreate(node) => 
     }
   }
 
@@ -43,50 +46,25 @@ class EngineReifier[S <: Struct]()(implicit val engine: Engine[S, Turn[S]]) exte
   override protected[meta] def reifyEvent[T](eventPointer: EventPointer[T], skipCollect: Boolean = false): Event[T, S] = eventPointer.node match {
     case None => throw new IllegalArgumentException("Cannot reify null pointer!")
     case Some(node) =>
-      if (!skipCollect) {
-        val collected = collectNodes(node, Set())
-        collected.flatMap(n => n.graph.pointers(n)).foreach(n => doReify(n))
-      }
+      if (!skipCollect) applyLog(node.graph.popLog())
       val reified = doReify(eventPointer).asInstanceOf[Event[T, S]]
-      if (!skipCollect) {
-        applyLog(node.graph.popLog())
-      }
       reified
   }
 
   override protected[meta] def reifySignal[A](signalPointer: SignalPointer[A], skipCollect: Boolean = false): Signal[A, S] = signalPointer.node match {
     case None => throw new IllegalArgumentException("Cannot reify null pointer!")
     case Some(node) =>
-      if (!skipCollect) {
-        val collected = collectNodes(node, Set())
-        collected.flatMap(n => n.graph.pointers(n)).foreach(n => doReify(n))
-      }
+      if (!skipCollect) applyLog(node.graph.popLog())
       val reified = doReify(signalPointer).asInstanceOf[Signal[A, S]]
-      if (!skipCollect) {
-        applyLog(node.graph.popLog())
-      }
       reified
   }
 
   override protected[meta] def reifyObserve[T](observePointer: ObservePointer[T], skipCollect: Boolean = false): Observe[S] = observePointer.node match {
     case None => throw new IllegalArgumentException("Cannot reify null pointer!")
     case Some(node) =>
-      if (!skipCollect) {
-        val collected = collectNodes(node, Set())
-        collected.flatMap(n => n.graph.pointers(n)).foreach(n => doReify(n))
-      }
+      if (!skipCollect) applyLog(node.graph.popLog())
       val reified = doReify(observePointer).asInstanceOf[Observe[S]]
-      if (!skipCollect) {
-        applyLog(node.graph.popLog())
-      }
       reified
-  }
-
-  private def collectNodes(current: ReactiveNode[_], collected: Set[ReactiveNode[_]]): Set[ReactiveNode[_]] = {
-    val graph = current.graph
-    val out = graph.outgoing(current).flatMap(n => if (collected.contains(n)) Set[ReactiveNode[_]](current) else collectNodes(n, collected + current))
-    val in = graph.incoming(current).flatMap(n => if (collected.contains(n)) Set[ReactiveNode[_]](current) else collectNodes(n, collected ++ out))
-    collected ++ out ++ in
   }
 
   private def doReify[T](pointer: MetaPointer[T]): Any = pointer.node match {

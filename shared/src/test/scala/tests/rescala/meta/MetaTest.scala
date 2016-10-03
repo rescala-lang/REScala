@@ -38,11 +38,11 @@ class MetaTest extends FunSuite {
     var fired = false
     api.set(v, 2)
     e.reify(SynchronousReifier) += ((x : Int) => { fired = true })
-    assert(v.reify(SynchronousReifier).now == 2, "variable set to 2")
-    assert(!fired, "event not yet fired")
+    assert(v.reify(SynchronousReifier).now == 2, "variable setting to 2 not reified")
+    assert(!fired, "observer added after reification prematurly triggered")
     v.reify(SynchronousReifier).set(3)
-    assert(v.reify(SynchronousReifier).now == 3, "variable set to 3")
-    assert(fired, "event fired")
+    assert(v.reify(SynchronousReifier).now == 3, "variable setting to 3 not reified")
+    assert(fired, "observer not triggered")
   }
 
   test("meta graph full dependency reification test") {
@@ -59,15 +59,42 @@ class MetaTest extends FunSuite {
     e2 += ((x : Int) => { fired += 1 })
     api.set(v, 2)
 
-    assert(v.reify(SynchronousReifier).now == 2, "variable set to 2")
-    assert(v2.reify(SynchronousReifier).now == 3, "dependent variable set to 3")
-    assert(fired == 2, "event fired twice")
+    assert(v.reify(SynchronousReifier).now == 2, "variable setting to 2 not reified")
+    assert(v2.reify(SynchronousReifier).now == 3, "signal propagation to 3 not reified")
+    assert(fired == 2, "event not fired or not both observers triggered")
     fired = 0
     e += ((x : Int) => { fired += 1 })
-    v.reify(SynchronousReifier).set(3)
-    assert(v.reify(SynchronousReifier).now == 3, "variable set to 3")
-    assert(v2.reify(SynchronousReifier).now == 4, "dependent variable set to 4")
-    assert(fired == 3, "event fired three times")
+    api.set(v, 3)
+    assert(v.reify(SynchronousReifier).now == 3, "variable setting to 3 not reified")
+    assert(v2.reify(SynchronousReifier).now == 4, "signal propagation to 4 not reified")
+    assert(fired == 3, "additionally added event not fired or not all observers triggered")
+  }
+
+  test("meta graph reification order test") {
+    import rescala.engines.CommonEngines.synchron
+
+    val api = new Api.metaApi(new ReactiveGraph())
+    val v = api.Var(1)
+    val v2 = v.map((x : Int) => x + 1)
+    val e = api.Evt[Int]()
+    val e2 = api.changed(v)
+    val e3 = api.changed(v2) || e
+
+    var fired = 0
+    e2 += ((x : Int) => { fired += 1 })
+    api.set(v, 2)
+    e3 += ((x : Int) => { fired += 1 })
+
+    assert(v.reify(SynchronousReifier).now == 2, "variable setting to 2 not reified")
+    assert(v2.reify(SynchronousReifier).now == 3, "signal propagation to 3 not reified")
+    assert(fired == 1, "observers not triggered exactly once (as only one observer was added before the event was fired)")
+    fired = 0
+    api.set(v, 3)
+    api.fire(e, 1)
+    e3 += ((x : Int) => { fired += 1 })
+    assert(v.reify(SynchronousReifier).now == 3, "variable setting to 3 not reified")
+    assert(v2.reify(SynchronousReifier).now == 4, "signal propagation to 4 not reified")
+    assert(fired == 3, "observers not triggered exactly three times (twice through variable setting, once through event firing)")
   }
 
   test("meta graph OR reification test") {
