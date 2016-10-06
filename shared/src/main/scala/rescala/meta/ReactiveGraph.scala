@@ -3,17 +3,39 @@ package rescala.meta
 import scala.collection.mutable
 
 class ReactiveGraph {
-  private val nodes : collection.mutable.Set[ReactiveNode[_]] = collection.mutable.Set()
-  private val log : collection.mutable.MutableList[MetaLog[_]] = collection.mutable.MutableList()
-  private val pointers : collection.mutable.Map[ReactiveNode[_], collection.mutable.Set[MetaPointer[_]]] = collection.mutable.Map()
+  private val _nodes : mutable.Set[ReactiveNode[_]] = mutable.Set()
+  private val _log : mutable.Queue[MetaLog[_]] = mutable.Queue()
+  private val _pointers : mutable.Map[ReactiveNode[_], mutable.Set[MetaPointer[_]]] = mutable.Map()
 
-  def numNodes = nodes.size
+  protected[meta] def nodes = _nodes.toSet
+  protected[meta] def log = _log.toList
 
-  protected[meta] def addLog(newLog : MetaLog[_]) = log += newLog
+  def numNodes = _nodes.size
+
+  protected[meta] def addLog(newLog : MetaLog[_]) = _log += newLog
   protected[meta] def popLog() : List[MetaLog[_]] = {
-    val l = log.toList
-    log.clear()
+    val l = _log.toList
+    _log.clear()
     l
+  }
+
+  protected[meta] def moveNodes(moveNodes : Set[ReactiveNode[_]], newGraph : ReactiveGraph): Unit = {
+    if (moveNodes.exists(!_nodes.contains(_)))
+      throw new IllegalArgumentException("Cannot move nodes from other graphs!")
+    if (moveNodes.exists(_.dependencies.exists(dep => !moveNodes.contains(dep))))
+      throw new IllegalArgumentException("Cannot move a non-independent set of nodes to another reactive graph!")
+
+    _nodes --= moveNodes
+    val extractedLogs = _log.filter(l => moveNodes.contains(l.node))
+    val remainingLogs = _log.filter(l => !extractedLogs.contains(l))
+    _log.clear()
+    _log ++= remainingLogs
+    val extractedPointers = _pointers.filter(p => moveNodes.contains(p._1))
+    _pointers --= extractedPointers.keys
+    newGraph._nodes ++= moveNodes
+    moveNodes.foreach(_.graph = newGraph)
+    newGraph._log ++= extractedLogs
+    newGraph._pointers ++= extractedPointers
   }
 
   def createVar[A]() : VarSignalPointer[A] = {
@@ -35,52 +57,52 @@ class ReactiveGraph {
   }
 
   protected[meta] def addPointer[T](node: ReactiveNode[T], pointer: MetaPointer[T]): Unit = {
-    pointers.get(node) match {
+    _pointers.get(node) match {
       case Some(set) => set += pointer
-      case None => pointers += node -> mutable.Set(pointer)
+      case None => _pointers += node -> mutable.Set(pointer)
     }
   }
 
-  private def registerReactiveNode[T](reactive: ReactiveNode[T]) : Unit = {
-    nodes += reactive
+  protected[meta] def registerReactiveNode[T](reactive: ReactiveNode[T]) : Unit = {
+    _nodes += reactive
     addLog(LoggedCreate(reactive))
-    for (incoming <- reactive.dependencies.diff(nodes)) {
+    for (incoming <- reactive.dependencies.diff(_nodes)) {
       registerReactiveNode(incoming)
     }
   }
 
   protected[meta] def mergeNodes[T](mergeNodes : Set[ReactiveNode[T]]): ReactiveNode[T] = {
     val mergeSet = Set[ReactiveNode[_]]() ++ mergeNodes
-    if (mergeSet.diff(nodes).nonEmpty) throw new IllegalArgumentException("Can only merge nodes within the same graph!")
-    if (log.exists(n => mergeSet.contains(n.node))) throw new IllegalArgumentException("Can not merge nodes that have already a non-empty event log!")
+    if (mergeSet.diff(_nodes).nonEmpty) throw new IllegalArgumentException("Can only merge nodes within the same graph!")
+    if (_log.exists(n => mergeSet.contains(n.node))) throw new IllegalArgumentException("Can not merge nodes that have already a non-empty event log!")
 
     val mergedDependencies = mergeNodes.foldLeft(Set[ReactiveNode[_]]())((acc, next) => acc.union(next.dependencies)) -- mergeNodes
     val mergedNode = new ReactiveNode(this, mergedDependencies)
 
-    for (node <- nodes -- mergeNodes if node.dependencies.intersect(mergeSet).nonEmpty) {
+    for (node <- _nodes -- mergeNodes if node.dependencies.intersect(mergeSet).nonEmpty) {
       node.setDependencies(node.dependencies -- mergeNodes)
       node.addDependency(mergedNode)
     }
 
-    nodes --= mergeNodes
-    nodes += mergedNode
+    _nodes --= mergeNodes
+    _nodes += mergedNode
 
     mergedNode
   }
 
   protected[meta] def pointers(node : ReactiveNode[_]) : Set[MetaPointer[_]] = {
-    Set[MetaPointer[_]]() ++ pointers.getOrElse(node, Set())
+    Set[MetaPointer[_]]() ++ _pointers.getOrElse(node, Set())
   }
 
-  def incoming(node : ReactiveNode[_]) = node.dependencies
-  def outgoing(node : ReactiveNode[_]) = nodes.filter(_.dependencies.contains(node))
+  protected[meta] def incoming(node : ReactiveNode[_]) = node.dependencies
+  protected[meta] def outgoing(node : ReactiveNode[_]) = _nodes.filter(_.dependencies.contains(node))
 
   private def findDominators(node : ReactiveNode[_]) : Set[ReactiveNode[_]] = {
-    incoming(node).foldLeft(nodes.toSet)((doms, pred) => doms.intersect(findDominators(pred))) + node
+    incoming(node).foldLeft(_nodes.toSet)((doms, pred) => doms.intersect(findDominators(pred))) + node
   }
 
   private def findPostdominators(node: ReactiveNode[_]) : Set[ReactiveNode[_]] = {
-    outgoing(node).foldLeft(nodes.toSet)((doms, pred) => doms.intersect(findPostdominators(pred))) + node
+    outgoing(node).foldLeft(_nodes.toSet)((doms, pred) => doms.intersect(findPostdominators(pred))) + node
   }
 
   private def findEnclosedNodes(current: ReactiveNode[_], exit: ReactiveNode[_]) : List[ReactiveNode[_]] = {
@@ -95,7 +117,7 @@ class ReactiveGraph {
   }
 }
 
-class ReactiveNode[+T](protected[meta] val graph : ReactiveGraph, initDependencies : Set[ReactiveNode[_]] = Set()) {
+class ReactiveNode[+T](protected[meta] var graph : ReactiveGraph, initDependencies : Set[ReactiveNode[_]] = Set()) {
   private val _dependencies : collection.mutable.Set[ReactiveNode[_]] = collection.mutable.Set() ++ initDependencies
 
   def dependencies = Set() ++ _dependencies
