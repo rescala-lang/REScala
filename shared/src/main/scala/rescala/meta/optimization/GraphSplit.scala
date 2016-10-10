@@ -14,7 +14,7 @@ class GraphSplit(override val verbose: Boolean = false, override val protocol: S
     while (changed) {
       changed = false
       nodeGroups = nodeGroups.foldLeft(Set[Set[DataFlowNode[_]]]())((groups, next) => {
-        groups.find(_.exists(n => n.dependencies.exists(next.contains) || next.exists(_.dependencies.contains(n)))) match {
+        groups.find(_.exists(n => n.dependencies.map(graph.pointers.get).collect{ case Some(p) => p}.exists(next.contains) || next.exists(_.dependencies.map(graph.pointers.get).collect{ case Some(p) => p}.contains(n)))) match {
           case Some(g) =>
             changed = true
             (groups - g) + (g ++ next)
