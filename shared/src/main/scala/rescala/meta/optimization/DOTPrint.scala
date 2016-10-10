@@ -18,7 +18,7 @@ class DOTPrint(val graphName: String = "graph", override val verbose: Boolean = 
     protocol(builder.toString())
   }
 
-  override protected def transform(graph: DataFlowGraph): Unit = ()
+  override protected def transform(graph: DataFlowGraph): Boolean = false
 }
 
 object DOTPrint extends DOTPrint("graph", false, println)

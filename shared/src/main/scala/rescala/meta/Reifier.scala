@@ -29,14 +29,15 @@ class EngineReifier[S <: Struct]()(implicit val engine: Engine[S, Turn[S]]) exte
 
   private def applyLog(log : List[MetaLog[_]]): Unit = {
     log.foreach {
-      case LoggedCreate(node) => doReify(node)
-      case LoggedDisconnect(node) => doDisconnect(node)
-      case LoggedFire(node, value) => reifiedCache.getOrElse(node, throw new IllegalArgumentException("Cannot fire a non-reified event!")) match {
+      case LoggedCreate(DataFlowRef(node)) => doReify(node)
+      case LoggedDisconnect(DataFlowRef(node)) => doDisconnect(node)
+      case LoggedFire(DataFlowRef(node), value) => reifiedCache.getOrElse(node, throw new IllegalArgumentException("Cannot fire a non-reified event!")) match {
         case e : Evt[_, _] => e.asInstanceOf[Evt[Any, S]].fire(value)
       }
-      case LoggedSet(node, value) => reifiedCache.getOrElse(node, throw new IllegalArgumentException("Cannot set a non-reified var!")) match {
+      case LoggedSet(DataFlowRef(node), value) => reifiedCache.getOrElse(node, throw new IllegalArgumentException("Cannot set a non-reified var!")) match {
         case v: Var[_, _] => v.asInstanceOf[Var[Any, S]].set(value)
       }
+      case _ => ()
     }
   }
 
