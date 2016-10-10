@@ -5,13 +5,6 @@ import rescala.graph.{Pulsing, Struct}
 import rescala.reactives._
 
 trait DataFlowNode[+T] {
-  protected[meta] var graph : DataFlowGraph
-  def dependencies : Set[DataFlowNode[_]]
-
-  def disconnect() = graph.addLog(LoggedDisconnect(this))
-
-  graph.registerNode(this)
-
   // Used only to prevent structural equality check for case-classes
   private class Node
   private val _node = new Node()
@@ -21,6 +14,14 @@ trait DataFlowNode[+T] {
     case _ => false
   }
   override def hashCode(): Int = _node.hashCode()
+
+  protected[meta] var graph : DataFlowGraph
+  def dependencies : Set[DataFlowNode[_]]
+
+  def disconnect() = graph.addLog(LoggedDisconnect(this))
+
+  graph.registerNode(this)
+
 }
 
 trait ReactiveNode[+T] extends DataFlowNode[T] {

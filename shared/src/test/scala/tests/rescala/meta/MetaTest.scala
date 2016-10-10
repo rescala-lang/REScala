@@ -107,7 +107,6 @@ class MetaTest extends FunSuite {
     val e2 = api.Evt[Boolean]()
     val e3 = api.Evt[Boolean]()
     val or = e1 || (e2, e3)
-    DOTPrint.optimize(g)
     or match {
       case OrEventNode(_, _, _ @ _*) => assert(g.numNodes == 4, "graph has incorrect number of nodes")
     }
