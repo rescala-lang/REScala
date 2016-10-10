@@ -2,13 +2,13 @@ package tests.rescala.meta
 
 import org.scalatest.FunSuite
 import rescala.api.Api
-import rescala.meta.ReactiveGraph
+import rescala.meta.DataFlowGraph
 import rescala.meta.optimization.GraphSplit
 
 class SplitTest extends FunSuite {
   test("Copy split test") {
 
-    val g = new ReactiveGraph()
+    val g = new DataFlowGraph()
     val api = new Api.metaApi(g)
 
     val v = api.Var(1)
@@ -25,7 +25,7 @@ class SplitTest extends FunSuite {
 
   test("Real split test") {
 
-    val g = new ReactiveGraph()
+    val g = new DataFlowGraph()
     val api = new Api.metaApi(g)
 
     val vSeperate = api.Var(10)

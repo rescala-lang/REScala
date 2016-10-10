@@ -5,35 +5,32 @@ import rescala.graph.Struct
 import rescala.propagation.Turn
 import rescala.reactives.{Evt, _}
 
-import scala.language.higherKinds
-
 trait Reifier[S <: Struct] {
-  protected[meta] def createEvt[T](evtPointer: EvtEventPointer[T]) : Evt[T, S]
-  protected[meta] def createVar[A](varPointer: VarSignalPointer[A]) : Var[A, S]
+  // External interface that can be used directly
+  def reifyEvent[T](eventNode: EventNode[T]) : Event[T, S]
+  def reifySignal[A](signalPointer: SignalNode[A]) : Signal[A, S]
+  def reifyObserve[T](observePointer: ObserveNode[T]) : Observe[S]
+  def reifyEvt[T](evtPointer: EvtEventNode[T]) : Evt[T, S]
+  def reifyVar[A](varPointer: VarSignalNode[A]) : Var[A, S]
 
-  protected[meta] def reifyEvt[T](evtPointer: EvtEventPointer[T], skipCollect: Boolean = false) : Evt[T, S]
-  protected[meta] def reifyVar[A](varPointer: VarSignalPointer[A], skipCollect: Boolean = false) : Var[A, S]
+  // Internal methods to create the corresponding reactive base value
+  protected[meta] def createEvt[T]() : Evt[T, S]
+  protected[meta] def createVar[A]() : Var[A, S]
 
-  protected[meta] def reifyEvent[T](eventPointer: EventPointer[T], skipCollect: Boolean = false) : Event[T, S]
-  protected[meta] def reifySignal[A](signalPointer: SignalPointer[A], skipCollect: Boolean = false) : Signal[A, S]
-  protected[meta] def reifyObserve[A](observePointer: ObservePointer[A], skipCollect: Boolean = false) : Observe[S]
+  // Internal methods to create reactive nodes with dependencies
+  protected[meta] def doReifyEvent[T](eventNode: EventNode[T]) : Event[T, S]
+  protected[meta] def doReifySignal[A](signalPointer: SignalNode[A]) : Signal[A, S]
+  protected[meta] def doReifyObserve[T](observePointer: ObserveNode[T]) : Observe[S]
 }
 
 class EngineReifier[S <: Struct]()(implicit val engine: Engine[S, Turn[S]]) extends Reifier[S] {
 
-  private val reifiedCache : collection.mutable.Map[ReactiveNode[_], Any] = collection.mutable.Map()
+  private val reifiedCache : collection.mutable.Map[DataFlowNode[_], Any] = collection.mutable.Map()
 
-  // TODO: Find a way to prevent instanceOf-cast
   private def applyLog(log : List[MetaLog[_]]): Unit = {
     log.foreach {
-      case LoggedCreate(node) => node.graph.pointers(node).headOption match {
-        case Some(pointer) => doReify(pointer)
-        case None => // Skip
-      }
-      case LoggedDisconnect(node) => node.graph.pointers(node).headOption match {
-        case Some(pointer) => doDisconnect(pointer)
-        case None => // Skip
-      }
+      case LoggedCreate(node) => doReify(node)
+      case LoggedDisconnect(node) => doDisconnect(node)
       case LoggedFire(node, value) => reifiedCache.getOrElse(node, throw new IllegalArgumentException("Cannot fire a non-reified event!")) match {
         case e : Evt[_, _] => e.asInstanceOf[Evt[Any, S]].fire(value)
       }
@@ -43,55 +40,53 @@ class EngineReifier[S <: Struct]()(implicit val engine: Engine[S, Turn[S]]) exte
     }
   }
 
-  override protected[meta] def reifyEvt[T](evtPointer: EvtEventPointer[T], skipCollect: Boolean = false): Evt[T, S] = reifyEvent(evtPointer, skipCollect).asInstanceOf[Evt[T, S]]
+  override def reifyEvt[T](evtNode: EvtEventNode[T]): Evt[T, S] = reifyEvent(evtNode).asInstanceOf[Evt[T, S]]
 
-  override protected[meta] def reifyVar[A](varPointer: VarSignalPointer[A], skipCollect: Boolean = false): Var[A, S] = reifySignal(varPointer, skipCollect).asInstanceOf[Var[A, S]]
+  override def reifyVar[A](varNode: VarSignalNode[A]): Var[A, S] = reifySignal(varNode).asInstanceOf[Var[A, S]]
 
-  override protected[meta] def reifyEvent[T](eventPointer: EventPointer[T], skipCollect: Boolean = false): Event[T, S] = eventPointer.node match {
-    case None => throw new IllegalArgumentException("Cannot reify null pointer!")
-    case Some(node) =>
-      if (!skipCollect) applyLog(node.graph.popLog())
-      val reified = doReify(eventPointer).asInstanceOf[Event[T, S]]
-      reified
+  override def reifyEvent[T](eventNode: EventNode[T]): Event[T, S] = {
+      applyLog(eventNode.graph.popLog())
+      doReifyEvent(eventNode)
   }
 
-  override protected[meta] def reifySignal[A](signalPointer: SignalPointer[A], skipCollect: Boolean = false): Signal[A, S] = signalPointer.node match {
-    case None => throw new IllegalArgumentException("Cannot reify null pointer!")
-    case Some(node) =>
-      if (!skipCollect) applyLog(node.graph.popLog())
-      val reified = doReify(signalPointer).asInstanceOf[Signal[A, S]]
-      reified
+  override def reifySignal[A](signalNode: SignalNode[A]): Signal[A, S] = {
+      applyLog(signalNode.graph.popLog())
+      doReifySignal(signalNode)
   }
 
-  override protected[meta] def reifyObserve[T](observePointer: ObservePointer[T], skipCollect: Boolean = false): Observe[S] = observePointer.node match {
-    case None => throw new IllegalArgumentException("Cannot reify null pointer!")
-    case Some(node) =>
-      if (!skipCollect) applyLog(node.graph.popLog())
-      val reified = doReify(observePointer).asInstanceOf[Observe[S]]
-      reified
+  override def reifyObserve[T](observeNode: ObserveNode[T]): Observe[S] = {
+      applyLog(observeNode.graph.popLog())
+      doReifyObserve(observeNode)
   }
 
-  private def doDisconnect[T](pointer: MetaPointer[T]): Unit = pointer.node match {
-    case None => throw new IllegalArgumentException("Cannot disconnect null pointer!")
-    case Some(node) =>
-      pointer match {
-        case p: EventPointer[_] => p.reify(this).disconnect()
-        case p: SignalPointer[_] => p.reify(this).disconnect()
-        case p: ObservePointer[_] => p.reify(this).remove()
-      }
+  override protected[meta] def doReifyEvent[T](eventNode: EventNode[T]): Event[T, S] = {
+    doReify(eventNode).asInstanceOf[Event[T, S]]
   }
 
-  private def doReify[T](pointer: MetaPointer[T]): Any = pointer.node match {
-    case None => throw new IllegalArgumentException("Cannot reify null pointer!")
-    case Some(node) =>
-      val reified = reifiedCache.getOrElse(node, pointer match {
-        case p: ReactivePointer[_] => p.createReification(this)
-        case p: ObservePointer[_] => p.createReification(this)
-      })
-      reifiedCache += node -> reified
-      reified
+  override protected[meta] def doReifySignal[A](signalNode: SignalNode[A]): Signal[A, S] = {
+    doReify(signalNode).asInstanceOf[Signal[A, S]]
   }
-  override def createEvt[T](evtPointer: EvtEventPointer[T]) = engine.Evt[T]()
 
-  override def createVar[A](varPointer: VarSignalPointer[A]) = engine.Var.empty[A]
+  override protected[meta] def doReifyObserve[T](observeNode: ObserveNode[T]): Observe[S] = {
+    doReify(observeNode).asInstanceOf[Observe[S]]
+
+  }
+
+  private def doDisconnect[T](node: DataFlowNode[T]): Unit = node match {
+    case p: EventNode[_] => p.reify(this).disconnect()
+    case p: SignalNode[_] => p.reify(this).disconnect()
+    case p: ObserveNode[_] => p.reify(this).remove()
+  }
+
+  private def doReify[T](node: DataFlowNode[T]): Any = {
+    val reified = reifiedCache.getOrElse(node, node match {
+      case p: ReactiveNode[_] => p.createReification(this)
+      case p: ObserveNode[_] => p.createReification(this)
+    })
+    reifiedCache += node -> reified
+    reified
+  }
+  override protected[meta] def createEvt[T]() = engine.Evt[T]()
+
+  override protected[meta] def createVar[A]() = engine.Var.empty[A]
 }

@@ -1,19 +1,19 @@
 package rescala.meta.optimization
 
-import rescala.meta.{ReactiveGraph, ReactiveNode}
+import rescala.meta.{DataFlowGraph, DataFlowNode}
 
 class GraphSplit(override val verbose: Boolean = false, override val protocol: String => Unit = println) extends MetaOptimization {
   override val name: String = "Graph splitter"
-  private var nodeGroups: Set[Set[ReactiveNode[_]]] = Set()
-  var splittedGraphs : Set[ReactiveGraph] = Set()
+  private var nodeGroups: Set[Set[DataFlowNode[_]]] = Set()
+  var splittedGraphs : Set[DataFlowGraph] = Set()
 
-  override protected def analyze(graph: ReactiveGraph): Unit = {
-    nodeGroups = graph.nodes.map(n => Set[ReactiveNode[_]](n))
+  override protected def analyze(graph: DataFlowGraph): Unit = {
+    nodeGroups = graph.nodes.map(n => Set[DataFlowNode[_]](n))
 
     var changed = true
     while (changed) {
       changed = false
-      nodeGroups = nodeGroups.foldLeft(Set[Set[ReactiveNode[_]]]())((groups, next) => {
+      nodeGroups = nodeGroups.foldLeft(Set[Set[DataFlowNode[_]]]())((groups, next) => {
         groups.find(_.exists(n => n.dependencies.exists(next.contains) || next.exists(_.dependencies.contains(n)))) match {
           case Some(g) =>
             changed = true
@@ -25,10 +25,10 @@ class GraphSplit(override val verbose: Boolean = false, override val protocol: S
     if (verbose) protocol("Found " + nodeGroups.size + " groups of distinct nodes.")
   }
 
-  override protected def transform(graph: ReactiveGraph): Unit = {
+  override protected def transform(graph: DataFlowGraph): Unit = {
     splittedGraphs = Set()
      for (group <- nodeGroups) {
-       val newGraph = new ReactiveGraph()
+       val newGraph = new DataFlowGraph()
        graph.moveNodes(group, newGraph)
        splittedGraphs = splittedGraphs + newGraph
      }
