@@ -16,17 +16,11 @@ class MetaTest extends FunSuite {
     val evt = g.createEvt[Int]()
     val evt2 = g.createEvt[Boolean]()
     val comb = ((evt.map((x : Int) => x + 1) && (_ < 0)) \ evt2).zip(evt2).fold(0)((a, b) => a + b._1)
-    comb match {
-      case FoldedSignalNode(_, ZippedEventNode(_, ExceptEventNode(_, FilteredEventNode(_, MappedEventNode(_, EvtEventNode(_), _), _), EvtEventNode(_)), EvtEventNode(_)), _, _) => assert(g.numNodes == 7, "graph has incorrect number of nodes")
-      case _ => fail("meta AST was not correctly built!")
-    }
+    assert(g.numNodes == 7, "graph has incorrect number of nodes")
     val snl = g.createVar[Int]()
     val snl2 = g.createVar[Char]()
     val comb2 = snl.map(toString()).delay(1).changed.switchTo(snl2)
-    comb2 match {
-      case SwitchToSignalNode(_, ChangedEventNode(_, DelayedSignalNode(_, MappedSignalNode(_, VarSignalNode(_), _), 1)), VarSignalNode(_)) => assert(g.numNodes == 13, "graph has incorrect number of nodes")
-      case _ => fail("meta AST was not correctly built!")
-    }
+    assert(g.numNodes == 13, "graph has incorrect number of nodes")
   }
 
   test("meta graph reification test") {
@@ -106,9 +100,7 @@ class MetaTest extends FunSuite {
     val e2 = api.Evt[Boolean]()
     val e3 = api.Evt[Boolean]()
     val or = e1 || (e2, e3)
-    or match {
-      case OrEventNode(_, _, _ @ _*) => assert(g.numNodes == 4, "graph has incorrect number of nodes")
-    }
+    assert(g.numNodes == 4, "graph has incorrect number of nodes")
     var fired = 0
     or.reify(SynchronousReifier) += ((x: Any) => { fired += 1 })
     e1.reify(SynchronousReifier).fire(true)

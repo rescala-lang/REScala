@@ -34,9 +34,9 @@ class DataFlowGraph {
     newGraph._log ++= extractedLogs
   }
 
-  def createVar[A]() : VarSignalNode[A] = VarSignalNode[A](this)
+  def createVar[A]() : VarPointer[A] = new VarPointer(VarSignalNode[A](this))
 
-  def createEvt[T]() : EvtEventNode[T] = EvtEventNode[T](this)
+  def createEvt[T]() : EvtPointer[T] = new EvtPointer(EvtEventNode[T](this))
 
   protected[meta] def registerNode[T](reactive: DataFlowNode[T]) : Unit = {
     _nodes += reactive

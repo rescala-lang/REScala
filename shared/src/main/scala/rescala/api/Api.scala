@@ -82,10 +82,10 @@ object Api {
 
   class metaApi(graph : DataFlowGraph) extends Api {
 
-    override type Signal[+A] = SignalNode[A]
-    override type Event[+A] = EventNode[A]
-    override type Var[A] = VarSignalNode[A]
-    override type Evt[A] = EvtEventNode[A]
+    override type Signal[+A] = SignalPointer[A]
+    override type Event[+A] = EventPointer[A]
+    override type Var[A] = VarPointer[A]
+    override type Evt[A] = EvtPointer[A]
 
 
     override def Evt[A](): Evt[A] = graph.createEvt()
