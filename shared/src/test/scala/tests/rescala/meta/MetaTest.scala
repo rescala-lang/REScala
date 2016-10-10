@@ -4,7 +4,6 @@ import org.scalatest.FunSuite
 import rescala.api.Api
 import rescala.engines.CommonEngines
 import rescala.meta._
-import rescala.meta.optimization.DOTPrint
 
 class MetaTest extends FunSuite {
 
