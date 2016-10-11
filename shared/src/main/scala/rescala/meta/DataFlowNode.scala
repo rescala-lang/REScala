@@ -8,6 +8,8 @@ trait DataFlowNode[+T] {
   // Used only to prevent structural equality check for case-classes
   private class Node
   private val _node = new Node()
+  protected[meta] var _hasReification = false
+  def hasReification = _hasReification
 
   override def equals(obj: scala.Any): Boolean = obj match {
     case n: DataFlowNode[_] => n._node == _node
@@ -18,6 +20,7 @@ trait DataFlowNode[+T] {
   protected[meta] var graph : DataFlowGraph
   def createRef(): DataFlowRef[T]
   def dependencies : Set[DataFlowRef[_]]
+  //def structuralEquals(dataFlowNode: DataFlowNode[_]): Boolean
 
   def disconnect() = graph.addLog(LoggedDisconnect(this.createRef()))
 

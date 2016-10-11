@@ -12,7 +12,7 @@ class MapFusion(override val verbose: Boolean = false, override val protocol: St
       case nOuter@MappedEventNode(_, outerBase, outerMap) =>
         outerBase.node match {
           case Some(nInner@MappedEventNode(_, innerBase, innerMap)) =>
-            if ((graph.outgoingDependencies(nInner) - nOuter).isEmpty) {
+            if (!nOuter.hasReification && !nInner.hasReification && (graph.outgoingDependencies(nInner) - nOuter).isEmpty) {
               countE += 1
             }
           case _ => ()
@@ -20,7 +20,7 @@ class MapFusion(override val verbose: Boolean = false, override val protocol: St
       case nOuter@MappedSignalNode(_, outerBase, outerMap) =>
         outerBase.node match {
           case Some(nInner@MappedSignalNode(_, innerBase, innerMap)) =>
-            if ((graph.outgoingDependencies(nInner) - nOuter).isEmpty) {
+            if (!nOuter.hasReification && !nInner.hasReification && (graph.outgoingDependencies(nInner) - nOuter).isEmpty) {
               countS += 1
             }
           case _ => ()
@@ -36,7 +36,7 @@ class MapFusion(override val verbose: Boolean = false, override val protocol: St
       case nOuter@MappedEventNode(_, outerBase, outerMap) =>
         outerBase.node match {
           case Some(nInner@MappedEventNode(_, innerBase, innerMap)) =>
-            if ((graph.outgoingDependencies(nInner) - nOuter).isEmpty) {
+            if (!nOuter.hasReification && !nInner.hasReification && (graph.outgoingDependencies(nInner) - nOuter).isEmpty) {
               val newNode = MappedEventNode(graph, innerBase, innerMap.asInstanceOf[Function[Any, Any]].andThen(outerMap.asInstanceOf[Function[Any, Any]]))
               graph.pointersForNode(nInner).foreach(graph.deletePointer)
               graph.pointersForNode(nOuter).foreach(graph.registerPointer(_, newNode))
@@ -49,7 +49,7 @@ class MapFusion(override val verbose: Boolean = false, override val protocol: St
       case nOuter@MappedSignalNode(_, outerBase, outerMap) =>
         outerBase.node match {
           case Some(nInner@MappedSignalNode(_, innerBase, innerMap)) =>
-            if ((graph.outgoingDependencies(nInner) - nOuter).isEmpty) {
+            if (!nOuter.hasReification && !nInner.hasReification  && (graph.outgoingDependencies(nInner) - nOuter).isEmpty) {
               val newNode = MappedSignalNode(graph, innerBase, innerMap.asInstanceOf[Function[Any, Any]].andThen(outerMap.asInstanceOf[Function[Any, Any]]))
               graph.pointersForNode(nInner).foreach(graph.deletePointer)
               graph.pointersForNode(nOuter).foreach(graph.registerPointer(_, newNode))

@@ -8,10 +8,11 @@ import rescala.reactives.{Evt, _}
 trait Reifier[S <: Struct] {
   // External interface that can be used directly
   def reifyEvent[T](eventNode: EventNode[T]) : Event[T, S]
-  def reifySignal[A](signalPointer: SignalNode[A]) : Signal[A, S]
-  def reifyObserve[T](observePointer: ObserveNode[T]) : Observe[S]
-  def reifyEvt[T](evtPointer: EvtEventNode[T]) : Evt[T, S]
-  def reifyVar[A](varPointer: VarSignalNode[A]) : Var[A, S]
+  def reifySignal[A](signalNode: SignalNode[A]) : Signal[A, S]
+  def reifyObserve[T](observeNode: ObserveNode[T]) : Observe[S]
+  def reifyEvt[T](evtNode: EvtEventNode[T]) : Evt[T, S]
+  def reifyVar[A](varNode: VarSignalNode[A]) : Var[A, S]
+  def hasReification(node: DataFlowNode[_]): Boolean
 
   // Internal methods to create the corresponding reactive base value
   protected[meta] def createEvt[T]() : Evt[T, S]
@@ -60,6 +61,8 @@ class EngineReifier[S <: Struct]()(implicit val engine: Engine[S, Turn[S]]) exte
       doReifyObserve(observeNode)
   }
 
+  override def hasReification(node: DataFlowNode[_]): Boolean = reifiedCache.contains(node)
+
   override protected[meta] def doReifyEvent[T](eventNode: EventNode[T]): Event[T, S] = {
     doReify(eventNode).asInstanceOf[Event[T, S]]
   }
@@ -84,6 +87,7 @@ class EngineReifier[S <: Struct]()(implicit val engine: Engine[S, Turn[S]]) exte
       case p: ReactiveNode[_] => p.createReification(this)
       case p: ObserveNode[_] => p.createReification(this)
     })
+    node._hasReification = true
     reifiedCache += node -> reified
     reified
   }
