@@ -10,7 +10,7 @@ class MapFusion(override val verbose: Boolean = false, override val protocol: St
     var countS = 0
     graph.nodes.foreach {
       case nOuter@MappedEventNode(_, outerBase, outerMap) =>
-        outerBase.node match {
+        outerBase.deref match {
           case Some(nInner@MappedEventNode(_, innerBase, innerMap)) =>
             if (!nOuter.hasReification && !nInner.hasReification && (graph.outgoingDependencies(nInner) - nOuter).isEmpty) {
               countE += 1
@@ -18,7 +18,7 @@ class MapFusion(override val verbose: Boolean = false, override val protocol: St
           case _ => ()
         }
       case nOuter@MappedSignalNode(_, outerBase, outerMap) =>
-        outerBase.node match {
+        outerBase.deref match {
           case Some(nInner@MappedSignalNode(_, innerBase, innerMap)) =>
             if (!nOuter.hasReification && !nInner.hasReification && (graph.outgoingDependencies(nInner) - nOuter).isEmpty) {
               countS += 1
@@ -34,12 +34,12 @@ class MapFusion(override val verbose: Boolean = false, override val protocol: St
     var transformed = false
     graph.nodes.foreach {
       case nOuter@MappedEventNode(_, outerBase, outerMap) =>
-        outerBase.node match {
+        outerBase.deref match {
           case Some(nInner@MappedEventNode(_, innerBase, innerMap)) =>
             if (!nOuter.hasReification && !nInner.hasReification && (graph.outgoingDependencies(nInner) - nOuter).isEmpty) {
               val newNode = MappedEventNode(graph, innerBase, innerMap.asInstanceOf[Function[Any, Any]].andThen(outerMap.asInstanceOf[Function[Any, Any]]))
-              graph.pointersForNode(nInner).foreach(graph.deletePointer)
-              graph.pointersForNode(nOuter).foreach(graph.registerPointer(_, newNode))
+              graph.nodeRefs(nInner).foreach(graph.deleteRef)
+              graph.nodeRefs(nOuter).foreach(graph.registerRef(_, newNode))
               graph.deleteNode(nInner)
               graph.deleteNode(nOuter)
               transformed = true
@@ -47,12 +47,12 @@ class MapFusion(override val verbose: Boolean = false, override val protocol: St
           case _ => ()
         }
       case nOuter@MappedSignalNode(_, outerBase, outerMap) =>
-        outerBase.node match {
+        outerBase.deref match {
           case Some(nInner@MappedSignalNode(_, innerBase, innerMap)) =>
             if (!nOuter.hasReification && !nInner.hasReification  && (graph.outgoingDependencies(nInner) - nOuter).isEmpty) {
               val newNode = MappedSignalNode(graph, innerBase, innerMap.asInstanceOf[Function[Any, Any]].andThen(outerMap.asInstanceOf[Function[Any, Any]]))
-              graph.pointersForNode(nInner).foreach(graph.deletePointer)
-              graph.pointersForNode(nOuter).foreach(graph.registerPointer(_, newNode))
+              graph.nodeRefs(nInner).foreach(graph.deleteRef)
+              graph.nodeRefs(nOuter).foreach(graph.registerRef(_, newNode))
               graph.deleteNode(nInner)
               graph.deleteNode(nOuter)
               transformed = true

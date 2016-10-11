@@ -13,7 +13,7 @@ class DataFlowGraph {
 
   def numNodes = _nodes.size
   def deleteNode(toDelete : DataFlowNode[_]): Unit = {
-    if (pointersForNode(toDelete).nonEmpty) throw new IllegalArgumentException("Cannot delete a node that is still referenced!")
+    if (nodeRefs(toDelete).nonEmpty) throw new IllegalArgumentException("Cannot delete a node that is still referenced!")
     _nodes -= toDelete
   }
 
@@ -24,13 +24,13 @@ class DataFlowGraph {
     l
   }
 
-  protected[meta] def resolvePointer[T](pointer: DataFlowRef[T]): Option[DataFlowNode[T]] = _refs.get(pointer) match {
+  protected[meta] def deref[T](pointer: DataFlowRef[T]): Option[DataFlowNode[T]] = _refs.get(pointer) match {
     case Some(p) => Some(p.asInstanceOf[DataFlowNode[T]])
     case None => None
   }
-  protected[meta] def pointersForNode[T](node: DataFlowNode[T]) = _refs.filter(_._2 == node).keySet
-  protected[meta] def registerPointer[T](pointer: DataFlowRef[T], node: DataFlowNode[T]) = _refs += (pointer -> node)
-  protected[meta] def deletePointer(pointer: DataFlowRef[_]) = _refs -= pointer
+  protected[meta] def nodeRefs[T](node: DataFlowNode[T]) = _refs.filter(_._2 == node).keySet
+  protected[meta] def registerRef[T](pointer: DataFlowRef[T], node: DataFlowNode[T]) = _refs += (pointer -> node)
+  protected[meta] def deleteRef(pointer: DataFlowRef[_]) = _refs -= pointer
 
   protected[meta] def moveNodes(moveNodes : Set[DataFlowNode[_]], newGraph : DataFlowGraph): Unit = {
     if (moveNodes.exists(!_nodes.contains(_)))
@@ -39,7 +39,7 @@ class DataFlowGraph {
       throw new IllegalArgumentException("Cannot move a non-independent set of nodes to another reactive graph!")
 
     _nodes --= moveNodes
-    val extractedLogs = _log.filter(l => moveNodes.contains(resolvePointer(l.node).orNull))
+    val extractedLogs = _log.filter(l => moveNodes.contains(deref(l.node).orNull))
     val remainingLogs = _log.filter(l => !extractedLogs.contains(l))
     val extractedPointers = _refs.filter(n => moveNodes.contains(n._2))
     _refs --= extractedPointers.keys
@@ -59,7 +59,7 @@ class DataFlowGraph {
   protected[meta] def registerNode[T](reactive: DataFlowNode[T]) : Unit = {
     if (reactive.dependencies.exists(!_refs.contains(_))) throw new IllegalArgumentException("Cannot register node that has dependencies not found in the same data flow graph!")
       _nodes += reactive
-    addLog(LoggedCreate(reactive.createRef()))
+    addLog(LoggedCreate(reactive.newRef()))
   }
 
   protected[meta] def incomingDependencies(node : DataFlowNode[_]) = node.dependencies.map(refs.get).collect{ case Some(n) => n }
