@@ -12,7 +12,7 @@ parallelExecution in Test in ThisBuild := true
 licenses in ThisBuild += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))
 
 lazy val rescalaAggregate = project.in(file("."))
-  .aggregate(rescalaJVM, rescalaJS, microbench, reswing, examples, examplesReswing, caseStudyEditor, caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags, datastructures, universe, reactiveStreams, documentation, meta)
+  .aggregate(rescalaJVM, rescalaJS, microbench, reswing, examples, examplesReswing, caseStudyEditor, caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags, datastructures, universe, reactiveStreams, documentation, meta, pipelining)
   .settings(
     publish := {},
     publishLocal := {}
@@ -192,6 +192,14 @@ lazy val fullmv = project.in(file("Multiversion"))
     scalatestDependency)
 
 lazy val meta = project.in(file("Meta"))
+  .dependsOn(rescalaJVM)
+  .settings(
+    scalatestDependency,
+    publish := {},
+    publishLocal := {}
+  )
+
+lazy val pipelining = project.in(file("pipelining"))
   .dependsOn(rescalaJVM)
   .settings(
     scalatestDependency,
