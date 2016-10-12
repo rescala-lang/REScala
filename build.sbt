@@ -12,7 +12,7 @@ parallelExecution in Test in ThisBuild := true
 licenses in ThisBuild += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))
 
 lazy val rescalaAggregate = project.in(file("."))
-  .aggregate(rescalaJVM, rescalaJS, microbench, reswing, examples, examplesReswing, caseStudyEditor, caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags, datastructures, universe, reactiveStreams, documentation, meta, pipelining)
+  .aggregate(rescalaJVM, rescalaJS, microbench, reswing, examples, examplesReswing, caseStudyEditor, caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags, datastructures, universe, reactiveStreams, documentation, meta, pipelining, stm)
   .settings(
     publish := {},
     publishLocal := {}
@@ -57,9 +57,7 @@ lazy val rescala = crossProject.in(file("."))
       s"""import rescala._
        """.stripMargin
   )
-  .jvmSettings(
-    libraryDependencies += "org.scala-stm" %% "scala-stm" % "0.7"
-  ).jsSettings()
+  .jvmSettings().jsSettings()
 
 lazy val rescalaJVM = rescala.jvm
 
@@ -205,6 +203,15 @@ lazy val pipelining = project.in(file("pipelining"))
     scalatestDependency,
     publish := {},
     publishLocal := {}
+  )
+
+lazy val stm = project.in(file("STM"))
+  .dependsOn(rescalaJVM)
+  .settings(
+    scalatestDependency,
+    publish := {},
+    publishLocal := {},
+    libraryDependencies += "org.scala-stm" %% "scala-stm" % "0.7"
   )
 
 
