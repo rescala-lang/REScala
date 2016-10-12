@@ -184,6 +184,13 @@ lazy val universe = project.in(file("Universe"))
     publishLocal := {})
   .settings(com.typesafe.sbt.SbtStartScript.startScriptForClassesSettings)
 
+lazy val fullmv = project.in(file("Multiversion"))
+  .settings(
+    name := "rescala-multiversion",
+    publish := {},
+    publishLocal := {},
+    scalatestDependency)
+
 
 // ================================ dependencies
 
