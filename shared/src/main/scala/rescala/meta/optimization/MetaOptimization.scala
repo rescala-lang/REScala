@@ -2,7 +2,7 @@ package rescala.meta.optimization
 
 import rescala.meta.DataFlowGraph
 
-trait MetaOptimization {
+trait MetaOptimization[T] {
   val name: String
   val verbose: Boolean
   protected val protocol: String => Unit
@@ -12,15 +12,15 @@ trait MetaOptimization {
     var iterate = true
     while (iterate) {
       if (verbose) protocol("Begin of analyze phase of optimization " + name)
-      analyze(graph)
+      val param = analyze(graph)
       if (verbose) protocol("End of analyze phase of optimization " + name)
       if (verbose) protocol("Begin of transform phase of optimization " + name)
-      iterate = transform(graph)
+      iterate = param.exists(transform(graph, _))
       if (verbose) protocol("End of transform phase of optimization " + name)
       if (iterate && verbose) protocol("Re-iterating optimization " + name)
     }
     if (verbose) protocol("Ending optimization " + name)
   }
-  protected def analyze(graph : DataFlowGraph): Unit
-  protected def transform(graph : DataFlowGraph): Boolean
+  protected def analyze(graph : DataFlowGraph): Option[T]
+  protected def transform(graph : DataFlowGraph, param: T): Boolean
 }

@@ -1,10 +1,10 @@
 package rescala.meta.optimization
 import rescala.meta.DataFlowGraph
 
-class DOTPrint(val graphName: String = "graph", override val verbose: Boolean = false, override val protocol: String => Unit = println) extends MetaOptimization {
+class DOTPrint(val graphName: String = "graph", override val verbose: Boolean = false, override val protocol: String => Unit = println) extends MetaOptimization[Unit] {
   override val name: String = "DOT graph printer"
 
-  override protected def analyze(graph: DataFlowGraph): Unit = {
+  override protected def analyze(graph: DataFlowGraph): Option[Unit] = {
     val builder = StringBuilder.newBuilder
     val elementsNumbered = graph.nodes.zip(1 to graph.nodes.size)
     builder ++= "digraph " + graphName + "{\n"
@@ -16,9 +16,10 @@ class DOTPrint(val graphName: String = "graph", override val verbose: Boolean = 
     }
     builder ++= "\n}"
     protocol(builder.toString())
+    None
   }
 
-  override protected def transform(graph: DataFlowGraph): Boolean = false
+  override protected def transform(graph: DataFlowGraph, param: Unit): Boolean = false
 }
 
 object DOTPrint extends DOTPrint("graph", false, println)

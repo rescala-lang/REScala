@@ -2,65 +2,55 @@ package rescala.meta.optimization
 
 import rescala.meta._
 
-class OperatorFusion(override val verbose: Boolean = false, override val protocol: String => Unit = println) extends MetaOptimization {
-  override val name: String = "Operator fusion"
-  private var nOuter: Option[DataFlowNode[_]] = None
-  private var nInner: Option[DataFlowNode[_]] = None
-  private var newNode: Option[DataFlowNode[_]] = None
+case class NodeTriple(
+  nOuter: DataFlowNode[_],
+  nInner: DataFlowNode[_],
+  newNode: DataFlowNode[_]
+)
 
-  override protected def analyze(graph: DataFlowGraph): Unit = {
-    nOuter = None
-    nInner = None
-    newNode = None
-    graph.nodes.find {
-      case nOuter@MappedEventNode(_, outerBase, outerMap) =>
-        outerBase.deref match {
-          case Some(nInner@MappedEventNode(_, innerBase, innerMap)) =>
-            if (!nOuter.hasReification && !nInner.hasReification && (graph.outgoingDependencies(nInner) - nOuter).isEmpty) {
+class OperatorFusion(override val verbose: Boolean = false, override val protocol: String => Unit = println) extends MetaOptimization[NodeTriple] {
+  override val name: String = "Operator fusion"
+
+  override protected def analyze(graph: DataFlowGraph): Option[NodeTriple] = {
+    def inner(nodes: List[DataFlowNode[_]]): Option[NodeTriple] = {
+      nodes match {
+        case (nOuter@MappedEventNode(_, outerBase, outerMap)) :: tail =>
+          outerBase.deref match {
+            case Some(nInner@MappedEventNode(_, innerBase, innerMap)) if !nOuter.hasReification && !nInner.hasReification && (graph.outgoingDependencies(nInner) - nOuter).isEmpty =>
               val newNode = MappedEventNode(graph, innerBase, innerMap.asInstanceOf[Function[Any, Any]].andThen(outerMap.asInstanceOf[Function[Any, Any]]))
-              this.nOuter = Some(nOuter)
-              this.nInner = Some(nInner)
-              this.newNode = Some(newNode)
-              true
-            } else false
-          case _ => false
-        }
-      case nOuter@FilteredEventNode(_, outerBase, outerFilter) =>
-        outerBase.deref match {
-          case Some(nInner@FilteredEventNode(_, innerBase, innerFilter)) =>
-            if (!nOuter.hasReification && !nInner.hasReification && (graph.outgoingDependencies(nInner) - nOuter).isEmpty) {
+              Some(NodeTriple(nOuter, nInner, newNode))
+            case _ => inner(tail)
+          }
+        case (nOuter@FilteredEventNode(_, outerBase, outerFilter)) :: tail =>
+          outerBase.deref match {
+            case Some(nInner@FilteredEventNode(_, innerBase, innerFilter)) if !nOuter.hasReification && !nInner.hasReification && (graph.outgoingDependencies(nInner) - nOuter).isEmpty =>
               val newNode = FilteredEventNode(graph, innerBase, { x: Any => innerFilter.asInstanceOf[Function[Any, Boolean]](x) && outerFilter.asInstanceOf[Function[Any, Boolean]](x) })
-              this.nOuter = Some(nOuter)
-              this.nInner = Some(nInner)
-              this.newNode = Some(newNode)
-              true
-            } else false
-          case _ => false
-        }
-      case nOuter@MappedSignalNode(_, outerBase, outerMap) =>
-        outerBase.deref match {
-          case Some(nInner@MappedSignalNode(_, innerBase, innerMap)) =>
-            if (!nOuter.hasReification && !nInner.hasReification && (graph.outgoingDependencies(nInner) - nOuter).isEmpty) {
+              Some(NodeTriple(nOuter, nInner, newNode))
+            case _ => inner(tail)
+          }
+        case (nOuter@MappedSignalNode(_, outerBase, outerMap)) :: tail =>
+          outerBase.deref match {
+            case Some(nInner@MappedSignalNode(_, innerBase, innerMap)) if !nOuter.hasReification && !nInner.hasReification && (graph.outgoingDependencies(nInner) - nOuter).isEmpty =>
               val newNode = MappedSignalNode(graph, innerBase, innerMap.asInstanceOf[Function[Any, Any]].andThen(outerMap.asInstanceOf[Function[Any, Any]]))
-              this.nOuter = Some(nOuter)
-              this.nInner = Some(nInner)
-              this.newNode = Some(newNode)
-              true
-            } else false
-          case _ => false
-        }
-      case _ => false
+              Some(NodeTriple(nOuter, nInner, newNode))
+            case _ => inner(tail)
+          }
+        case _ :: tail => inner(tail)
+        case Nil => None
+
+      }
     }
+
+    inner(graph.nodes.toList)
   }
 
-  override protected def transform(graph: DataFlowGraph): Boolean = (nOuter, nInner, newNode) match {
-    case (Some(nOut), Some(nIn), Some(newN)) =>
-      graph.nodeRefs(nIn).foreach(graph.deleteRef)
-      graph.nodeRefs(nOut).foreach(graph.registerRef(_, newN))
-      graph.deleteNode(nIn)
-      graph.deleteNode(nOut)
-      true
-    case _ => false
+  override protected def transform(graph: DataFlowGraph, nodeTriple: NodeTriple): Boolean = {
+    val NodeTriple(nOut, nIn, newN) = nodeTriple
+    graph.nodeRefs(nIn).foreach(graph.deleteRef)
+    graph.nodeRefs(nOut).foreach(graph.registerRef(_, newN))
+    graph.deleteNode(nIn)
+    graph.deleteNode(nOut)
+    true
   }
 }
 
