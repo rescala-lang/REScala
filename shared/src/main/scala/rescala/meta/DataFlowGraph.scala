@@ -7,7 +7,7 @@ class DataFlowGraph {
   private val _log : mutable.Queue[MetaLog[_]] = mutable.Queue()
   private val _refs : mutable.Map[DataFlowRef[_], DataFlowNode[_]] = mutable.Map()
 
-  protected[meta] def nodes: Set[DataFlowNode[_]] = _nodes.toSet
+  protected[meta] def nodes = _nodes.toSet
   protected[meta] def log = _log.toList
   protected[meta] def refs = _refs.toMap
 
