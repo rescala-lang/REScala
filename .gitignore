@@ -11,9 +11,9 @@ bin
 .settings/
 *.sublime-project
 *.sublime-workspace
-Microbench/resultArchive/
-Microbench/resultStore/
-Microbench/fig*
-Microbench/link.pl
+**/Microbench/resultArchive/
+**/Microbench/resultStore/
+**/Microbench/fig*
+**/Microbench/link.pl
 website/
 test-output/

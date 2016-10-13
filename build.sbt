@@ -77,7 +77,7 @@ lazy val testsJVM = tests.jvm.dependsOn(stm, pipelining)
 
 lazy val testsJS = tests.js
 
-lazy val documentation = project.in(file("Documentation"))
+lazy val documentation = project.in(file("Documentation/DocumentationProject"))
   .settings(tutSettings: _*)
   .dependsOn(rescalaJVM, rescalaJS)
   .settings(
@@ -85,7 +85,10 @@ lazy val documentation = project.in(file("Documentation"))
     publishLocal := {}
   )
 
-lazy val reactiveStreams = project.in(file("ReactiveStreams"))
+
+// Extensions
+
+lazy val reactiveStreams = project.in(file("Extensions/ReactiveStreams"))
   .dependsOn(rescalaJVM)
   .settings(
     libraryDependencies += "org.reactivestreams" % "reactive-streams" % "1.0.0",
@@ -98,7 +101,7 @@ lazy val reactiveStreams = project.in(file("ReactiveStreams"))
 
 
 
-lazy val microbench = project.in(file("Microbench"))
+lazy val microbench = project.in(file("Research/Microbenchmarks"))
   .enablePlugins(JmhPlugin)
   .settings(mainClass in Compile := Some("org.openjdk.jmh.Main"))
   .settings(com.typesafe.sbt.SbtStartScript.startScriptForClassesSettings)
@@ -111,7 +114,7 @@ lazy val microbench = project.in(file("Microbench"))
   )
 
 
-lazy val reswing = project.in(file("RESwing"))
+lazy val reswing = project.in(file("Extensions/RESwing"))
   .dependsOn(rescalaJVM)
   .settings(
     name := "reswing",
@@ -133,14 +136,14 @@ lazy val examplesReswing = project.in(file("Examples/examples-reswing"))
     publish := {},
     publishLocal := {})
 
-lazy val caseStudyEditor = project.in(file("CaseStudies/Editor"))
+lazy val caseStudyEditor = project.in(file("Examples/Editor"))
   .dependsOn(reswing)
   .settings(
     name := "editor-case-study",
     publish := {},
     publishLocal := {})
 
-lazy val rescalatags = project.in(file("Rescalatags"))
+lazy val rescalatags = project.in(file("Extensions/Rescalatags"))
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(rescalaJS)
   .settings(
@@ -149,7 +152,7 @@ lazy val rescalatags = project.in(file("Rescalatags"))
     jsDependencies += RuntimeDOM
   )
 
-lazy val datastructures = project.in(file("Datastructures"))
+lazy val datastructures = project.in(file("Extensions/Datastructures"))
   .dependsOn(rescalaJVM)
   .settings(
     name := "datastructures",
@@ -158,8 +161,26 @@ lazy val datastructures = project.in(file("Datastructures"))
     scalatestDependency
   )
 
+lazy val pipelining = project.in(file("Extensions/Pipelining"))
+  .dependsOn(rescalaJVM)
+  .settings(
+    scalatestDependency,
+    publish := {},
+    publishLocal := {}
+  )
 
-lazy val caseStudyRSSEvents = project.in(file("CaseStudies/RSSReader/ReactiveScalaReader.Events"))
+lazy val stm = project.in(file("Extensions/STM"))
+  .dependsOn(rescalaJVM)
+  .settings(
+    scalatestDependency,
+    publish := {},
+    publishLocal := {},
+    libraryDependencies += "org.scala-stm" %% "scala-stm" % "0.7"
+  )
+
+// Examples
+
+lazy val caseStudyRSSEvents = project.in(file("Examples/RSSReader/ReactiveScalaReader.Events"))
   .dependsOn(reswing)
   .settings(
     name := "rssreader-case-study",
@@ -169,7 +190,7 @@ lazy val caseStudyRSSEvents = project.in(file("CaseStudies/RSSReader/ReactiveSca
     scalatestDependency,
     scalaswingDependency)
 
-lazy val caseStudyRSSReactive = project.in(file("CaseStudies/RSSReader/ReactiveScalaReader.Reactive"))
+lazy val caseStudyRSSReactive = project.in(file("Examples/RSSReader/ReactiveScalaReader.Reactive"))
   .dependsOn(reswing)
   .settings(
     name := "rssreader-case-study-reactive",
@@ -179,7 +200,7 @@ lazy val caseStudyRSSReactive = project.in(file("CaseStudies/RSSReader/ReactiveS
     scalatestDependency,
     scalaswingDependency)
 
-lazy val caseStudyRSSSimple = project.in(file("CaseStudies/RSSReader/SimpleRssReader"))
+lazy val caseStudyRSSSimple = project.in(file("Examples/RSSReader/SimpleRssReader"))
   .dependsOn(reswing)
   .settings(
     name := "rssreader-case-study-simple",
@@ -189,7 +210,7 @@ lazy val caseStudyRSSSimple = project.in(file("CaseStudies/RSSReader/SimpleRssRe
     scalatestDependency,
     scalaswingDependency)
 
-lazy val universe = project.in(file("Universe"))
+lazy val universe = project.in(file("Examples/Universe"))
   .dependsOn(rescalaJVM)
   .settings(
     name := "rescala-universe",
@@ -197,14 +218,17 @@ lazy val universe = project.in(file("Universe"))
     publishLocal := {})
   .settings(com.typesafe.sbt.SbtStartScript.startScriptForClassesSettings)
 
-lazy val fullmv = project.in(file("Multiversion"))
+
+// Research
+
+lazy val fullmv = project.in(file("Research/Multiversion"))
   .settings(
     name := "rescala-multiversion",
     publish := {},
     publishLocal := {},
     scalatestDependency)
 
-lazy val meta = project.in(file("Meta"))
+lazy val meta = project.in(file("Research/Meta"))
   .dependsOn(rescalaJVM)
   .settings(
     scalatestDependency,
@@ -212,22 +236,6 @@ lazy val meta = project.in(file("Meta"))
     publishLocal := {}
   )
 
-lazy val pipelining = project.in(file("Pipelining"))
-  .dependsOn(rescalaJVM)
-  .settings(
-    scalatestDependency,
-    publish := {},
-    publishLocal := {}
-  )
-
-lazy val stm = project.in(file("STM"))
-  .dependsOn(rescalaJVM)
-  .settings(
-    scalatestDependency,
-    publish := {},
-    publishLocal := {},
-    libraryDependencies += "org.scala-stm" %% "scala-stm" % "0.7"
-  )
 
 
 // ================================ dependencies
