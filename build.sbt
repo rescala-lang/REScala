@@ -11,15 +11,17 @@ parallelExecution in Test in ThisBuild := true
 
 licenses in ThisBuild += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))
 
-lazy val rescalaAggregate = project.in(file("."))
-  .aggregate(rescalaJVM, rescalaJS, microbench, reswing, examples, examplesReswing, caseStudyEditor, caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags, datastructures, universe, reactiveStreams, documentation, meta, pipelining, stm)
+lazy val rescalaAggregate = project.in(file(".")).aggregate(rescalaJVM,
+  rescalaJS, microbench, reswing, examples, examplesReswing, caseStudyEditor,
+  caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags,
+  datastructures, universe, reactiveStreams, documentation, meta, pipelining,
+  stm, testsJVM, testsJS)
   .settings(
     publish := {},
-    publishLocal := {}
-  )
+    publishLocal := {})
 
 
-lazy val rescala = crossProject.in(file("."))
+lazy val rescala = crossProject.in(file("Main"))
   .disablePlugins(JmhPlugin)
   .settings(
     name := "rescala",
@@ -63,6 +65,18 @@ lazy val rescalaJVM = rescala.jvm
 
 lazy val rescalaJS = rescala.js
 
+lazy val tests = crossProject.in(file("Tests"))
+  .disablePlugins(JmhPlugin)
+  .settings(
+    name := "rescala-tests",
+    scalatestDependency)
+  .dependsOn(rescala)
+  .jvmSettings().jsSettings()
+
+lazy val testsJVM = tests.jvm
+
+lazy val testsJS = tests.js
+
 lazy val documentation = project.in(file("Documentation"))
   .settings(tutSettings: _*)
   .dependsOn(rescalaJVM, rescalaJS)
@@ -90,6 +104,7 @@ lazy val microbench = project.in(file("Microbench"))
   .settings(com.typesafe.sbt.SbtStartScript.startScriptForClassesSettings)
   .settings(TaskKey[Unit]("compileJmh") <<= Seq(compile in pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh).dependOn)
   .dependsOn(rescalaJVM)
+  .dependsOn(stm)
   .settings(
     publish := {},
     publishLocal := {}
