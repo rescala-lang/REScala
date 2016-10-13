@@ -73,7 +73,7 @@ lazy val tests = crossProject.in(file("Tests"))
   .dependsOn(rescala)
   .jvmSettings().jsSettings()
 
-lazy val testsJVM = tests.jvm
+lazy val testsJVM = tests.jvm.dependsOn(stm, pipelining)
 
 lazy val testsJS = tests.js
 
@@ -212,7 +212,7 @@ lazy val meta = project.in(file("Meta"))
     publishLocal := {}
   )
 
-lazy val pipelining = project.in(file("pipelining"))
+lazy val pipelining = project.in(file("Pipelining"))
   .dependsOn(rescalaJVM)
   .settings(
     scalatestDependency,
