@@ -70,6 +70,10 @@ lazy val tests = crossProject.in(file("Tests"))
   .settings(
     name := "rescala-tests",
     scalatestDependency)
+  .settings(
+    publish := {},
+    publishLocal := {}
+  )
   .dependsOn(rescala)
   .jvmSettings().jsSettings()
 
@@ -99,8 +103,6 @@ lazy val reactiveStreams = project.in(file("Extensions/ReactiveStreams"))
     publishLocal := {}
   )
 
-
-
 lazy val microbench = project.in(file("Research/Microbenchmarks"))
   .enablePlugins(JmhPlugin)
   .settings(mainClass in Compile := Some("org.openjdk.jmh.Main"))
@@ -113,7 +115,6 @@ lazy val microbench = project.in(file("Research/Microbenchmarks"))
     publishLocal := {}
   )
 
-
 lazy val reswing = project.in(file("Extensions/RESwing"))
   .dependsOn(rescalaJVM)
   .settings(
@@ -121,36 +122,18 @@ lazy val reswing = project.in(file("Extensions/RESwing"))
     scalaswingDependency,
     licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")))
 
-lazy val examples = project.in(file("Examples/examples"))
-  .dependsOn(rescalaJVM)
-  .settings(
-    name := "rescala-examples",
-    scalaswingDependency,
-    publish := {},
-    publishLocal := {})
-
-lazy val examplesReswing = project.in(file("Examples/examples-reswing"))
-  .dependsOn(reswing)
-  .settings(
-    name := "reswing-examples",
-    publish := {},
-    publishLocal := {})
-
-lazy val caseStudyEditor = project.in(file("Examples/Editor"))
-  .dependsOn(reswing)
-  .settings(
-    name := "editor-case-study",
-    publish := {},
-    publishLocal := {})
-
 lazy val rescalatags = project.in(file("Extensions/Rescalatags"))
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(rescalaJS)
   .settings(
     libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.6.0",
     scalatestDependency,
-    jsDependencies += RuntimeDOM
+    jsDependencies += RuntimeDOM,
+    licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")
   )
+
+// Examples
+
 
 lazy val datastructures = project.in(file("Extensions/Datastructures"))
   .dependsOn(rescalaJVM)
@@ -179,6 +162,28 @@ lazy val stm = project.in(file("Extensions/STM"))
   )
 
 // Examples
+
+lazy val examples = project.in(file("Examples/examples"))
+  .dependsOn(rescalaJVM)
+  .settings(
+    name := "rescala-examples",
+    scalaswingDependency,
+    publish := {},
+    publishLocal := {})
+
+lazy val examplesReswing = project.in(file("Examples/examples-reswing"))
+  .dependsOn(reswing)
+  .settings(
+    name := "reswing-examples",
+    publish := {},
+    publishLocal := {})
+
+lazy val caseStudyEditor = project.in(file("Examples/Editor"))
+  .dependsOn(reswing)
+  .settings(
+    name := "editor-case-study",
+    publish := {},
+    publishLocal := {})
 
 lazy val caseStudyRSSEvents = project.in(file("Examples/RSSReader/ReactiveScalaReader.Events"))
   .dependsOn(reswing)
