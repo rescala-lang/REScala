@@ -10,8 +10,7 @@ based on REScala reactive abstractions. The library is
 Attributes are exposed as reactive values
 and operations on the structure are updated reactively.
 
-
-{% highlight scala linenos %}
+```scala
 val b = Var(2)
 val a = Var(3)
 collection += 1
@@ -31,7 +30,7 @@ b() = 3
 assertResult(false)(filtered.contains(2)())
 a() = 2
 assertResult(true)(filtered.contains(2)())
-{% endhighlight %}
+```
 
 The Reactive Datastructures on GitHub:
 
