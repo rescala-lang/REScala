@@ -88,37 +88,40 @@ window.onload = function () {
 
 	});
 	updateTOClines();
-
-	var mq = window.matchMedia( "(max-width: 680px)" );
-	if (mq.matches) {
-		var tocHeader = Util.DOMQuery("#toc").previousElementSibling
+	
+	var toc = Util.DOMQuery("#toc");
+	if (toc != null && Util.isWindowWidth(680)) {
+		var tocHeader = toc.previousElementSibling
 		addCollapseIcon(tocHeader, tocHeader);
 		Util.DOMQueryAll(".collapsible").forEach(function(li) { li.classList.add("collapsed")});
 	}
 	var imgs = Util.DOMQueryAll("#slideshow img");
-	var indicator = Util.DOMQuery("#slideshow-indicator");
-	imgs.forEach(function(img, i) {
-		var span = document.createElement("span");
-		span.onclick = function() {reStartSlideTimer(); showSlide(i+1)};
-		indicator.appendChild(span);
-	});
-	reStartSlideTimer();
-	updateSlide();
-	
+	if (imgs.length > 0) {
+		var indicator = Util.DOMQuery("#slideshow-indicator");
+		imgs.forEach(function(img, i) {
+			var span = document.createElement("span");
+			span.onclick = function() {reStartSlideTimer(); showSlide(i+1)};
+			indicator.appendChild(span);
+		});
+		reStartSlideTimer();
+		updateSlide();
+	}
 	var container = document.createElement("div");
 	container.id = "info-box-container";
 	var infoBoxes = Util.DOMQueryAll(".info-box");
-	infoBoxes[0].parentElement.insertBefore(container, infoBoxes[0]);
-	infoBoxes.forEach(function(box) {
-		var p = box.nextElementSibling;
-		var div = document.createElement("div");
-		box.classList.remove("info-box");
-		div.classList.add("info-box");
-		container.appendChild(div);
-		div.appendChild(box);
-		div.appendChild(p);
-	});
-	container.nextElementSibling.style = "clear: left;";
+	if (infoBoxes.length > 0) {
+		infoBoxes[0].parentElement.insertBefore(container, infoBoxes[0]);
+		infoBoxes.forEach(function(box) {
+			var p = box.nextElementSibling;
+			var div = document.createElement("div");
+			box.classList.remove("info-box");
+			div.classList.add("info-box");
+			container.appendChild(div);
+			div.appendChild(box);
+			div.appendChild(p);
+		});
+		container.nextElementSibling.style = "clear: left;";
+	}
 }
 
 
@@ -215,5 +218,9 @@ var Util = {
 	},
 	QueryAll: function(element, s) {
 		return Util.toArray(element.querySelectorAll(s));
+	},
+	isWindowWidth: function(size) {
+		var mq = window.matchMedia( "(max-width: "+ size + "px)" );
+		return mq.matches;
 	}
 }
