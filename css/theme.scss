@@ -401,3 +401,13 @@ h1:before,h2:before,h3:before,h4:before {
     opacity: 0;
   }
 }
+
+.highlight {
+  background-color: #f5f5f5;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  pre {
+    border: initial;
+    background-color: initial;
+  }
+}
