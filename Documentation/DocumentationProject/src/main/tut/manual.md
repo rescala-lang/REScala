@@ -7,13 +7,12 @@ sidebar: manual
 # Introduction
 
 This manual covers the main features of the *REScala* programming language.
-[Signals] presents time-changing values
+[Signals and Vars] presents time-changing values
 in *REScala*, [Events](#events) describes events,
-[ConversionFunctions](#conversion-functions) covers the conversion functions between
+[Conversion Functions](#conversion-functions) covers the conversion functions between
 events and time-changing values, [Technicalities](#technicalities)
 presents technical details that are necessary to correctly run
 *REScala*, [Related](#related) outlines the related work.
-
 
 **Intended audience and prerequisites** This manuscript is
 mainly intended for students who approach reactive programming in
@@ -31,7 +30,7 @@ time-changing values.
 *REScala*. Some functionalities, including implicit events and
 high-order signals are intentionally not covered, other, like event
 polymorphism, are only sketched. More details can be found
-in~\cite{rescala,Gasiunas:2011:EME:1960275.1960303}.
+in [[7, 3]](#ref)
 
 The manual introduces the concepts related to functional reactive
 programming and event-based programming from a practical
@@ -39,45 +38,73 @@ perspective. The readers interested in a more general presentation of
 these topics can find in [Related](#related) the essential
 references.
 
-# Signals
-[Signals]: #signals
+# Signals and Vars
+[Signals and Vars]: #signals-and-vars
 
-A signal defines a functional dependency between values.
-The runtime takes care that any derived signal is updated,
-whenever one of the inputs changes.
+A signal is language concept for expressing functional dependencies
+among values in a declarative way. Intuitively, a reactive value can
+depend on variables -- sources of change without further dependencies
+-- or on other reactive values.  When any of the dependency sources
+changes, the expression defining the reactive value is automatically
+recomputed by the language runtime to keep the reactive value
+up-to-date.
 
-Consider the following example which defines 3 signals `a`, `b`, and `c`.
+Consider the following [example](#first-example):
 
-```tut:book
-import rescala._
+```scala
+var a = 2
+var b = 3
+var c = a + b
+println(a,b,c) // -> (2,3,5)
+a = 4
+println(a,b,c) // -> (4,3,5)
+c = a + b
+println(a,b,c) // -> (4,3,7)
+```
+{: #first-example}
 
+Line 3 specifies the value of `c` as a function of
+`a` and `b`. Since Line 3 defines a *statement*,
+the relation `c = a + b` is valid after the execution of
+Line 3. Clearly, when the value of `a` is updated, the
+relation `c = a + b` is not valid anymore. To make
+sure that the relation still holds, the programmer needs to recompute
+the expression and reassign `c`, like in Line 7.
+
+Reactive programming and *REScala* provide abstractions to express *constraints* in addition to statements. In *REScala*, the programmer
+can specify that the constraint `c := a + b` *always* holds during
+the execution of a program. Every time `a` or `b` change,
+the value of `c` is automatically recomputed.
+
+For example:
+
+```scala
 val a = Var(2)
 val b = Var(3)
-val c = Signal { a() + b() }
-println((a.now, b.now, c.now))
-a.set(4)
-println((a.now, b.now, c.now))
-b.set(5)
-println((a.now, b.now, c.now))
+val c = Signal{ a() + b() }
+println(a.get,b.get,c.get) // -> (2,3,5)
+a()= 4
+println(a.get,b.get,c.get) // -> (4,3,7)
 ```
 
-`a` and `b` are input signals which can be changed manually,
-and `c` is a derived signal which depends on both `a` and `b`.
-When the value of `a` or `b` changes, the value of `c` is updated by the runtime.
-Signals are a simple concept, but can be used to specify complex systems
-which are automatically kept consistent.
+In the code above, the signal in Line 3 defines the
+constraint `c := a + b`. When one of the reactive values involved in
+the constraint is updated (Line 5), the expression in the
+constraint is recomputed behind the scenes, and the value of `a`
+is automatically updated.
 
-The rest of this section will explain the usage of signals in detail.
-
+As the reader may have noticed, expressing constraints in *REScala*
+requires to conform some syntactic conventions which are discussed in
+the next sections.
 
 ## Vars
 
 ### Defining Vars
 Programmers express reactive
 computations starting from vars. Vars wrap normal Scala values. For
-example, \code{Var(2)} creates a var with an \code[Int] value and
+example, `Var(2)` creates a var with an `[Int]` value and
 initializes the var to the value 2. Vars are parametric types. A var
-that carries integer values has type \code{Var[Int]}. The following
+that carries integer values has type `Var[Int]`. The following
 code snippet shows valid var declarations.
 
 ```scala
@@ -91,8 +118,8 @@ val f: Var[Boolean] = Var(false)
 
 ### Assigning Vars
 Vars can be directly modified with the
-\code{()=} operator. For example \code{v()=3} replaces the current
-value of the \code{v} var with \code{3}. Therefore, vars are changed
+```()=``` operator. For example ```v()=3``` replaces the current
+value of the ```v``` var with ```3```. Therefore, vars are changed
 imperatively by the programmer.
 
 
@@ -100,30 +127,30 @@ imperatively by the programmer.
 
 ### Defining Signals
  Signals are defined by the syntax
-\code{Signal\{}{\it sigexpr}\code{\}}, where {\it sigexpr} is a side
+```Signal{```*sigexpr*```}```, where *sigexpr* is a side
 effect-free expression. Signals are parametric types. A signal that
-carries integer values has the type \code{Signal[Int]}.
+carries integer values has the type ```Signal[Int]```.
 
 ### Signal expressions
  When, inside a signal expression
-defining a signal \code{s}, a var or a signal is called with the
-\code{()} operator, the var or the signal are added to the values
-\code{s} depends on. In that case, \code{s} {\it is a dependency} of
+defining a signal ```s```, a var or a signal is called with the
+```()``` operator, the var or the signal are added to the values
+```s``` depends on. In that case, ```s``` *is a dependency* of
 the vars and the signals in the signal expression. For example in the
 code snippet:
 
-\begin{codenv}
+```scala
   val a = Var(0)
   val b = Var(0)
   val s = Signal{ a() + b() } // Multiple vars in a signal expression
-\end{codenv}
+```
 
-The signal \code{s} is a dependency of the vars \code{a} and \code{b},
-meaning that the values of \code{s} depends on both \code{a} and
-\code{b}. The following code snippets define valid signal
+The signal ```s``` is a dependency of the vars ```a``` and ```b```,
+meaning that the values of ```s``` depends on both ```a``` and
+```b```. The following code snippets define valid signal
 declarations.
 
-\begin{codenv}
+```scala
 val a = Var(0)
 val b = Var(0)
 val c = Var(0)
@@ -131,16 +158,16 @@ val r: Signal[Int] = Signal{ a() + 1 } // Explicit type in var decl
 val s = Signal{ a() + b() } // Multiple vars is a signal expression
 val t = Signal{ s() * c() + 10 } // Mix signals and vars in signal expressions
 val u = Signal{ s() * t() } // A signal that depends on other signals
-\end{codenv}
+```
 
-\begin{codenv}
+```scala
 val a = Var(0)
 val b = Var(2)
 val c = Var(true)
 val s = Signal{ if (c()) a() else b() }
-\end{codenv}
+```
 
-\begin{codenv}
+```scala
 def factorial(n: Int) = ...
 val a = Var(0)
 val s: Signal[Int] = Signal{ // A signal expression can be any code block
@@ -148,16 +175,16 @@ val s: Signal[Int] = Signal{ // A signal expression can be any code block
   val k = factorial(tmp)
   k + 2  // Returns an Int
 }
-\end{codenv}
+```
 
 
 
 ### Accessing reactive values
  The current value of a
-signal or a var can be accessed using the \code{get} method. For
+signal or a var can be accessed using the ```get``` method. For
 example:
 
-\begin{codenv}
+```scala
 val a = Var(0)
 val b = Var(2)
 val c = Var(true)
@@ -167,22 +194,20 @@ val x: Int = a.get
 val y: Int = s.get
 val z: Boolean = t.get
 println(z)
-\end{codenv}
-
-
+```
 
 ## Example: speed
-The following example computes the displacement \code{space} of a
-particle that is moving at constant speed \code{SPEED}. The
+The following example computes the displacement `space` of a
+particle that is moving at constant speed `SPEED`. The
 application prints all the values associated to the displacement over
 time.
 
-\begin{codenv}
+```scala
 val SPEED = 10
 val time = Var(0)
-val space = Signal{ SPEED * time() } (*@\label{sigexpr}@*)
+val space = Signal{ SPEED * time() }
 
-space.changed += ((x: Int) => println(x)) (*@\label{conversion}@*)
+space.changed += ((x: Int) => println(x))
 
 while (true) {
   Thread sleep 20
@@ -195,44 +220,37 @@ while (true) {
 30
 40
  ...
-\end{codenv}
-
+```
 
 The application behaves as follows. Every 20 milliseconds, the value
-of the \code{time} var is increased by 1 (Line~\ref{increasetime}).
-When the value of the \code{time} var changes, the signal expression
-at Line~\ref{sigexpr} is reevaluated and the value of \code{space} is
-updated. Finally, the current value of the \code{space} signal is
+of the `time` var is increased by 1 (Line 9).
+When the value of the `time` var changes, the signal expression
+at Line 3 is reevaluated and the value of `space` is
+updated. Finally, the current value of the `space` signal is
 printed every time the value of the signal changes.
 
 Printing the value of a signal deserves some more considerations.
-Technically, this is achieved by converting the \code{space} signal to
+Technically, this is achieved by converting the ```space``` signal to
 an event that is fired every time the signal changes its value
-(Line~\ref{conversion}). The conversion is performed by the
-\code{changed} operator. The \code{+=} operator attaches an handler to
-the event returned by the \code{changed} operator. When the event
-fires, the handler is executed. Line~\ref{conversion} is equivalent to
+(Line 5). The conversion is performed by the
+`changed` operator. The `+=` operator attaches an handler to
+the event returned by the `changed` operator. When the event
+fires, the handler is executed. Line 5 is equivalent to
 the following code:
 
-\begin{codenv}
+```scala
 val e: Event[Int] = space.changed
 val handler:  (Int => Unit) =  ((x: Int) => println(x))
 e += handler
-\end{codenv}
+```
 
-
-Note that using \code{println(space.get)} would also print the
+Note that using `println(space.get)` would also print the
 value of the signal, but only at the point in time in which the print
 statement is executed. Instead, the approach described so far prints
-{\it all} values of the signal. More details about converting signals
-into events and back are provided in [ConversionFunctions](#conversion-functions).
+*all* values of the signal. More details about converting signals
+into events and back are provided in [Conversion Functions](#conversion-functions).
 
-
-\newpage
-
-
-
-
+---
 
 # Events
 
@@ -244,20 +262,18 @@ time. For example a mouse click from the user or the arrival of a new
 network packet. Some features of *REScala* events are valid for all
 event types.
 
-\begin{itemize}
 
-\item Events carry a value. The value is associated to the event when
+* Events carry a value. The value is associated to the event when
   the event is fired and received by all the registered handlers when
   each handler is executed.
 
-\item Events are generic types parametrized with the type of value
-  they carry, like \code{Event[T]} and \code{ImpertiveEvent[T]} where
-  \code{T} is the value carried by the event.
+* Events are generic types parametrized with the type of value
+  they carry, like `Event[T]` and `ImpertiveEvent[T]` where
+  `T` is the value carried by the event.
 
-\item Both imperative events and declarative events are subtypes of
-  \code{Event[T]} and can referred to generically.
+* Both imperative events and declarative events are subtypes of
+  `Event[T]` and can referred to generically.
 
-\end{itemize}
 
 # Imperative events
 
@@ -268,14 +284,13 @@ unregistered dynamically.
 
 ## Defining  Events
 
-
-Imperative events are defined by the \code{ImperativeEvent[T]}
-type. The value of the parameter \code{T} defines the value that is
+Imperative events are defined by the `ImperativeEvent[T]`
+type. The value of the parameter `T` defines the value that is
 attached to the event. An event with no parameter attached has
-signature \code{ImpertiveEvent[Unit]}. The following code snippet show
+signature `ImpertiveEvent[Unit]`. The following code snippet show
 valid events definitions:
 
-\begin{codenv}
+```scala
 val e1 = new ImperativeEvent[Unit]()
 val e2 = new ImperativeEvent[Int]()
 val e3 = new ImperativeEvent[String]()
@@ -283,38 +298,35 @@ val e4 = new ImperativeEvent[Boolean]()
 val e5: ImperativeEvent[Int] = new ImperativeEvent[Int]()
 class Foo
 val e6 = new ImperativeEvent[Foo]()
-\end{codenv}
+```
 
 It is possible to attach more than one value to the same event. This
 is easily accomplished by using a tuple as a generic parameter
 type. For example:
 
-\begin{codenv}
+```scala
 val e1 = new ImperativeEvent[(Int,Int)]()
 val e2 = new ImperativeEvent[(String,String)]()
 val e3 = new ImperativeEvent[(String,Int)]()
 val e4 = new ImperativeEvent[(Boolean,String,Int)]()
 val e5: ImperativeEvent[(Int,Int)] = new ImperativeEvent[(Int,Int)]()
-\end{codenv}
+```
 
 Note that an imperative event is also an event. Therefore the
 following declaration is also valid:
 
-\begin{codenv}
+```scala
 val e1: Event[Int] = new ImperativeEvent[Int]()
-\end{codenv}
-
-
+```
 
 ## Registering Handlers
 
-
 Handlers are code blocks that are executed when the event fires. The
-\code{+=} operator attaches the handler to the event. The handler is a
+`+=` operator attaches the handler to the event. The handler is a
 first class function that receives the attached value as a parameter.
 The following are valid handler definitions.
 
-\begin{codenv}
+```scala
 var state = 0
 val e = new ImperativeEvent[Int]()
 e += { println(_) }
@@ -324,15 +336,14 @@ e += (x => {  // Multiple statements in the handler
   state = x
   println(x)
 })
-\end{codenv}
+```
 
 The signature of the handler must conform the signature of the event,
 since the handler is supposed to process the attached value and
 perform side effects. For example is the event is of type
-\code{Event[(Int,Int)]} the handler must be of type \code{(Int,Int) =>
-  Unit}.
+`Event[(Int,Int)]` the handler must be of type `(Int,Int) => Unit`.
 
-\begin{codenv}
+```scala
 val e = new ImperativeEvent[(Int,String)]()
 e += (x => {
   println(x._1)
@@ -341,22 +352,22 @@ e += (x => {
 e += ((x: (Int,String)) => {
   println(x)
 })
-\end{codenv}
+```
 
 Note that events without arguments still need an argument
 in the handler.
 
-\begin{codenv}
+```scala
 val e = new ImperativeEvent[Int]()
 e += { x => println() }
 e += { (x: Int) => println() }
-\end{codenv}
+```
 
 Scala allows one to refer to a method using the partially applied
 function syntax. This approach can be used to directly register a
 method as an event handler. For example:
 
-\begin{codenv}
+```scala
 def m1(x: Int) = {
   val y = x + 1
   println(y)
@@ -364,32 +375,29 @@ def m1(x: Int) = {
 val e = new ImperativeEvent[Int]
 e += m1 _
 e(10)
-\end{codenv}
-
-
+```
 
 ## Firing Events
-
 
 Events can be fired with the same syntax of a method call. When an
 event is fired, a proper value must be associated to the event
 call. Clearly, the value must conform the signature of the event. For
 example:
 
-\begin{codenv}
+```scala
 val e1 = new ImperativeEvent[Int]()
 val e2 = new ImperativeEvent[Boolean]()
 val e3 = new ImperativeEvent[(Int,String)]()
 e1(10)
 e2(false)
 e3((10,"Hallo"))
-\end{codenv}
+```
 
 When a handler is registered to an event, the handler is executed
 every time the event is fired. The actual parameter is provided to the
 handler.
 
-\begin{codenv}
+```scala
 val e = new ImperativeEvent[Int]()
 e += { x => println(x) }
 e(10)
@@ -397,16 +405,16 @@ e(10)
 -- output ----
 10
 10
-\end{codenv}
+```
 
 If multiple handlers are registered, all of them are executed when the
 event is fired. Applications should not rely on any specific execution
 order for handler execution.
 
-\begin{codenv}
+```scala
 val e = new ImperativeEvent[Int]()
 e += { x => println(x) }
-e += { x => println(f"n: $x")}  (*@\label{$}@*)
+e += { x => println(f"n: $x")}
 e(10)
 e(10)
 -- output ----
@@ -414,24 +422,18 @@ e(10)
 n: 10
 10
 n: 10
-\end{codenv}
-
-
-
-
-
+```
 
 ## Unregistering Handlers
 
-
-Handlers can be unregistered from events with the \code{-=}
+Handlers can be unregistered from events with the `-=`
 operator. When a handler is unregistered, it is not executed when the
 event is fired.
 
-\begin{codenv}
+```scala
 val e = new ImperativeEvent[Int]()
 val handler1 = { x: Int => println(x) }
-val handler2 = { x: Int => println(s"n: $x") } (*@\label{$}@*)
+val handler2 = { x: Int => println(s"n: $x") }
 
 e += handler1
 e += handler2
@@ -445,38 +447,32 @@ e(10)
 10
 n: 10
 10
-\end{codenv}
-
-
-
+```
 
 # Declarative Events
 
 *REScala* supports declarative events, which are defined as a
 combination of other events. For this purpose it offers operators like
-$e_1||e_2$ , $e_1\&\&p$ , $e_1.map(f)$. Event composition allows to
+`e_1 || e_2` , `e_1 && p` , `e_1.map(f)`. Event composition allows to
 express the application logic in a clear and declarative way. Also,
 the update logic is better localized because a single expression
 models all the sources and the transformations that define an event
 occurrence.
 
-
 ## Defining Declarative Events
-
 
 Declarative events are defined by composing other events. The
 following code snippet shows some examples of valid definitions for
 declarative events.
 
-\begin{codenv}
+```scala
 val e1 = new ImperativeEvent[Int]()
 val e2 = new ImperativeEvent[Int]()
 
 val e3 = e1 || e2
 val e4 = e1 && ((x: Int)=> x>10)
 val e5 = e1 map ((x: Int)=> x.toString)
-\end{codenv}
-
+```
 
 # Event Operators
 
@@ -485,12 +481,11 @@ compose events into declarative events.
 
 ## OR Events
 
+The event `e_1 || e_2` is fired upon the occurrence of one among `e_1`
+or `e_2`. Note that the events that appear in the event expression
+must have the same parameter type (`Int` in the next example).
 
-The event $e_1 || e_2$ is fired upon the occurrence of one among $e_1$
-or $e_2$. Note that the events that appear in the event expression
-must have the same parameter type (\code{Int} in the next example).
-
-\begin{codenv}
+```scala
 val e1 = new ImperativeEvent[Int]()
 val e2 = new ImperativeEvent[Int]()
 val e1_OR_e2 = e1 || e2
@@ -500,19 +495,17 @@ e2(2)
 -- output ----
 1
 2
-\end{codenv}
-
+```
 
 ## Predicate Events
 
-
-The event $e \&\& p$ is fired if $e$ occurs and the predicate $p$ is
+The event `e && p` is fired if `e` occurs and the predicate `p` is
 satisfied. The predicate is a function that accepts the event
-parameter as a formal parameter and returns \code{Boolean}. In other
-words the $\&\&$ operator filters the events according to their
+parameter as a formal parameter and returns `Boolean`. In other
+words the `&&` operator filters the events according to their
 parameter and a predicate.
 
-\begin{codenv}
+```scala
 val e = new ImperativeEvent[Int]()
 val e_AND: Event[Int] = e && ((x: Int) => x>10)
 e_AND += ((x: Int) => println(x))
@@ -520,74 +513,66 @@ e(5)
 e(15)
 -- output ----
 15
-\end{codenv}
-
+```
 
 ## Map Events
 
-
-The event $e\,map f$ is obtained by applying $f$ to the value carried
-by $e$. The map function must take the event parameter as a formal
+The event `e.map f` is obtained by applying `f` to the value carried
+by `e`. The map function must take the event parameter as a formal
 parameter. The return type of the map function is the type parameter
 value of the resulting event.
 
-\begin{codenv}
+```scala
 val e = new ImperativeEvent[Int]()
 val e_MAP: Event[String] = e map ((x: Int) => x.toString)
-e_MAP += ((x: String) => println(s"Here: $x")) (*@\label{$}@*)
+e_MAP += ((x: String) => println(s"Here: $x"))
 e(5)
 e(15)
 -- output ----
 Here: 5
 Here: 15
-\end{codenv}
+```
 
+{::comment}
+## dropParam
 
+The `dropParam` operator transforms an event into an event with
+`Unit` parameter. In the following example the `dropParam`
+operator transforms an `Event[Int]` into an `Event[Unit]`.
 
+```scala
+val e = new ImperativeEvent[Int]()
+val e_drop: Event[Unit] = e.dropParam
+e_drop += (_ => println("*"))
+e(10)
+e(10)
+-- output ----
+*
+*
+```
 
-%## dropParam
+The typical use case for the `dropParam` operator is to make events
+with different types compatible. For example the following snippet is
+rejected by the compiler since it attempts to combine two events of
+different types with the `||` operator.
 
-%
-%The $dropParam$ operator transforms an event into an event with
-%\code{Unit} parameter. In the following example the $dropParam$
-%operator transforms an \code{Event[Int]} into an \code{Event[Unit]}.
-%
-%\begin{codenv}
-%val e = new ImperativeEvent[Int]()
-%val e_drop: Event[Unit] = e.dropParam
-%e_drop += (_ => println("*"))
-%e(10)
-%e(10)
-%-- output ----
-%*
-%*
-%\end{codenv}
-%
-%The typical use case for the $dropParam$ operator is to make events
-%with different types compatible. For example the following snippet is
-%rejected by the compiler since it attempts to combine two events of
-%different types with the $||$ operator.
-%
-%\begin{codenv}     /* WRONG - DON'T DO THIS */
-%val e1 = new ImperativeEvent[Int]()
-%val e2 = new ImperativeEvent[Unit]()
-%val e1_OR_e2 = e1 || e2  // Compiler error
-%\end{codenv}
-%
-%The following example is correct. The $dropParam$ operator allows
-%one to make the events compatible with each other.
-%
-%\begin{codenv}
-%val e1 = new ImperativeEvent[Int]()
-%val e2 = new ImperativeEvent[Unit]()
-%val e1_OR_e2: Event[Unit] = e1.dropParam || e2
-%\end{codenv}
+```scala     /* WRONG - DON'T DO THIS */
+val e1 = new ImperativeEvent[Int]()
+val e2 = new ImperativeEvent[Unit]()
+val e1_OR_e2 = e1 || e2  // Compiler error
+```
 
+The following example is correct. The `dropParam` operator allows
+one to make the events compatible with each other.
 
+```scala
+val e1 = new ImperativeEvent[Int]()
+val e2 = new ImperativeEvent[Unit]()
+val e1_OR_e2: Event[Unit] = e1.dropParam || e2
+```
+{:/comment}
 
-\newpage
-
-
+---
 
 # Conversion Functions
 
@@ -596,48 +581,35 @@ events. Conversion functions are fundamental to introduce
 time-changing values into OO applications -- which are usually
 event-based.
 
-
-
 # Basic Conversion Functions
 
 This section covers the basic conversions between signals and events.
-Figure~\ref{fig:event-signal} shows how basic conversion functions can
-bridge signals and events. Events (Figure~\ref{fig:event-signal},
+Figure 1 shows how basic conversion functions can
+bridge signals and events. Events (Figure 1,
 left) occur at discrete point in time (x axis) and have an associate
 value (y axis). Signals, instead, hold a value for a continuous
-interval of time (Figure~\ref{fig:event-signal}, right). The
-\code{latest} conversion functions creates a signal from an event. The
+interval of time (Figure 1, right). The
+`latest` conversion functions creates a signal from an event. The
 signal holds the value associated to an event. The value is hold until
 the event is fired again and a new value is available. The
-\code{changed} conversion function creates an event from a signal. The
+`changed` conversion function creates an event from a signal. The
 function fires a new event every time a signal changes its value.
 
-
-
-\begin{figure}[tp]
-\begin{center}
-  \includegraphics[width=0.98\textwidth]{images/event-signal.png}
-\end{center}
-\vspace{-6mm}
-\caption{Basic conversion functions.}
-\label{fig:event-signal}
-\end{figure}
-
-
+<figure markdown="1">
+![Event-Signal](./images/event-signal.png)
+<figcaption>Figure 1: Basic conversion functions.</figcaption>
+</figure>
 
 ## Event to Signal: Latest
 
-Returns a signal holding the latest value of the event \code{e}. The
-initial value of the signal is set to \code{init}.
-\\
+Returns a signal holding the latest value of the event `e`. The
+initial value of the signal is set to `init`.
 
-\code{latest[T](e: Event[T], init: T): Signal[T]}
-\\
+`latest[T](e: Event[T], init: T): Signal[T]`
 
-\noindent
 Example:
 
-\begin{codenv}
+```scala
 val e = new ImperativeEvent[Int]()
 val s: Signal[Int] = e.latest(10)
 assert(s.get == 10)
@@ -647,23 +619,18 @@ e(2)
 assert(s.get == 2)
 e(1)
 assert(s.get == 1)
-\end{codenv}
-
+```
 
 ## Signal to Event: Changed
 
-
-The \code{changed} function applies to a signal and returns an event
+The `changed` function applies to a signal and returns an event
 that is fired every time the signal changes its value.
-\\
 
-\code{changed[U >: T]: Event[U]}
-\\
+`changed[U >: T]: Event[U]`
 
-\noindent
 Example:
 
-\begin{codenv}
+```scala
 var test = 0
 val v =  Var(1)
 val s = Signal{ v() + 1 }
@@ -673,9 +640,7 @@ v.set(2)
 assert(test == 1)
 v.set(3)
 assert(test == 2)
-\end{codenv}
-
-
+```
 
 # Advanced Conversion Functions
 
@@ -683,68 +648,59 @@ Some of the conversion functions can be called on a signal providing
 an event as the first parameter or can be called on an event providing
 a signal as the first parameter. While the behavior is the same, the
 signature of the function is obviously different. For example, the
-function \code{snapshot} can return a signal that is updated on an
+function `snapshot` can return a signal that is updated on an
 event occurrence. Hence, the function can be exposed both on the
-\code{Signal} and the \code{Event} interface. For example:
+`Signal` and the `Event` interface. For example:
 
-\begin{codenv}
+```scala
 val e: Event[V]  = ... // An event
 val s: Signal[V] = ... // A signal
 
 e.snapshot[V](s: Signal[V]): Signal[V]
 s.snapshot[V](e : Event[_]): Signal[V]
-\end{codenv}
-
+```
 
 For simplicity, in those cases, we document the signature of the
 function with all the interested objects in the parameters. For
 example:
 
-\begin{codenv}
+```scala
 def snapshot[V](e : Event[_], s: Signal[V]): Signal[V]
-\end{codenv}
-
+```
 
 ## Fold
 
-The \code{fold} function creates a signal by folding events with a
-given function. Initially the signal holds the \code{init}
-value. Every time a new event arrives, the function \code{f} is
+The `fold` function creates a signal by folding events with a
+given function. Initially the signal holds the `init`
+value. Every time a new event arrives, the function `f` is
 applied to the previous previous value of the signal and to the value
 associated to the event. The result is the new value of the signal.
-\\
 
-\code{fold[T,A](e: Event[T], init: A)(f :(A,T)=>A): Signal[A]}
-\\
+`fold[T,A](e: Event[T], init: A)(f :(A,T)=>A): Signal[A]`
 
-\noindent
 Example:
 
-\begin{codenv}
+```scala
 val e = new ImperativeEvent[Int]()
 val f = (x:Int,y:Int)=>(x+y)
 val s: Signal[Int] = e.fold(10)(f)
 e(1)
 e(2)
 assert(s.get == 13)
-\end{codenv}
-
+```
 
 ## Iterate
 
-Returns a signal holding the value computed by \code{f} on the
-occurrence of an event. Differently from \code{fold}, there is no
+Returns a signal holding the value computed by `f` on the
+occurrence of an event. Differently from `fold`, there is no
 carried value, i.e. the value of the signal does not depend on the
 current value but only on the accumulated value.
-\\
 
-\code{iterate[A](e: Event[\_], init: A)(f: A=>A): Signal[A]}
-\\
+`iterate[A](e: Event[_], init: A)(f: A=>A): Signal[A]`
 
-\noindent
 Example:
 
-\begin{codenv}
+```scala
 var test: Int = 0
 val e = new ImperativeEvent[Int]()
 val f = (x:Int)=>{test=x; x+1}
@@ -758,26 +714,20 @@ assert(s.get == 12)
 e(1)
 assert(test == 12)
 assert(s.get == 13)
-\end{codenv}
-
-
+```
 
 ## LatestOption
 
-
-The \code{latestOption} function is a variant of the \code{latest}
-function which uses the \code{Option} type to distinguish the case in
+The `latestOption` function is a variant of the `latest`
+function which uses the `Option` type to distinguish the case in
 which the event did not fire yet. Holds the latest value of an event
-as \code{Some(val)} or \code{None}.
-\\
+as `Some(val)` or `None`.
 
-\code{latestOption[T](e: Event[T]): Signal[Option[T]]}
-\\
+`latestOption[T](e: Event[T]): Signal[Option[T]]`
 
-\noindent
 Example:
 
-\begin{codenv}
+```scala
 val e = new ImperativeEvent[Int]()
 val s: Signal[Option[Int]] = e.latestOption
 assert(s.get == None)
@@ -787,24 +737,20 @@ e(2)
 assert(s.get == Option(2))
 e(1)
 assert(s.get == Option(1))
-\end{codenv}
-
+```
 
 ## Last
 
+The `last` function generalizes the `latest` function and
+returns a signal which holds the last `n` events.
 
-The \code{last} function generalizes the \code{latest} function and
-returns a signal which holds the last \code{n} events.
-\\
-
-\code{last[T](e: Event[T], n: Int): Signal[List[T]]}
-\\
+`last[T](e: Event[T], n: Int): Signal[List[T]]`
 
 Initially, an empty list is returned. Then the values are
 progressively filled up to the size specified by the
 programmer. Example:
 
-\begin{codenv}
+```scala
 val e = new ImperativeEvent[Int]()
 val s: Signal[List[Int]] = e.last(5)
 
@@ -818,60 +764,45 @@ e(3);e(4);e(5)
 assert(s.get == List(1,2,3,4,5))
 e(6)
 assert(s.get == List(2,3,4,5,6))
-\end{codenv}
-
-
+```
 
 ## List
 
 Collects the event values in a (growing) list. This function should be
 used carefully. Since the entire history of events is maintained, the
 function can potentially introduce a memory overflow.
-\\
 
-\code{list[T](e: Event[T]): Signal[List[T]]}
-
-
-
+`list[T](e: Event[T]): Signal[List[T]]`
 
 ## Count
-
 
 Returns a signal that counts the occurrences of the event. Initially,
 when the event has never been fired yet, the signal holds the value
 0. The argument of the event is simply discarded.
-\\
 
-\code{count(e: Event[\_]): Signal[Int]}
-\\
+`count(e: Event[_]): Signal[Int]`
 
-\begin{codenv}
+```scala
 val e = new ImperativeEvent[Int]()
 val s: Signal[Int] = e.count
 assert(s.get == 0)
 e(1)
 e(3)
 assert(s.get == 2)
-\end{codenv}
-
-
-
+```
 
 ## Snapshot
 
-Returns a signal updated only when \code{e} fires. If \code{s} in the
+Returns a signal updated only when ```e``` fires. If ```s``` in the
 meanwhile changes its value, the change is ignored. When the event
-\code{e} fires, the resulting signal is updated to the current value
-of \code{s}.
-\\
+```e``` fires, the resulting signal is updated to the current value
+of ```s```.
 
-\code{snapshot[V](e : Event[\_], s: Signal[V]): Signal[V]}
-\\
+```snapshot[V](e : Event[_], s: Signal[V]): Signal[V]```
 
-\noindent
 Example:
 
-\begin{codenv}
+```scala
 val e = new ImperativeEvent[Int]()
 val v =  Var(1)
 val s1 = Signal{ v() + 1 }
@@ -882,42 +813,32 @@ v.set(2)
 assert(s.get == 2)
 e(1)
 assert(s.get == 3)
-\end{codenv}
-
-
+```
 
 ## Change
 
-
-The \code{change} function is similar to \code{changed}, but it
+The ```change``` function is similar to ```changed```, but it
 provides both the old and the new value of the signal in a tuple.
-\\
 
-\code{change[U >: T]: Event[(U, U)]}
-\\
+```change[U >: T]: Event[(U, U)]```
 
-\noindent
 Example:
 
-\begin{codenv}
+```scala
 val s = Signal{ ... }
 val e: Event[(Int,Int)] = s.change
 e += ((x:(Int,Int))=>{ ... })
-\end{codenv}
-
+```
 
 ## ChangedTo
 
-
-The \code{changedTo} function is similar to \code{changed}, but it
+The ```changedTo``` function is similar to ```changed```, but it
 fires an event only when the signal changes its value to a given
 value.
-\\
 
-\code{changedTo[V](value: V): Event[Unit]}
-\\
+```changedTo[V](value: V): Event[Unit]```
 
-\begin{codenv}
+```scala
 var test = 0
 val v =  Var(1)
 val s = Signal{ v() + 1 }
@@ -929,27 +850,20 @@ v set(2)
 assert(test == 1)
 v set(3)
 assert(test == 1)
-\end{codenv}
-
-
+```
 
 ## Reset
 
-
-When the \code{reset} function is called for the first time, the
-\code{init} value is used by the factory to determine the signal
-returned by the \code{reset} function. When the event occurs the
+When the ```reset``` function is called for the first time, the
+```init``` value is used by the factory to determine the signal
+returned by the ```reset``` function. When the event occurs the
  factory is applied to the event value to determine the new signal.
-\\
 
-\code{reset[T,A](e: Event[T], init: T)(factory: (T)=>Signal[A]):
-Signal[A]}
-\\
+`reset[T,A](e: Event[T], init: T)(factory: (T)=>Signal[A]): Signal[A]`
 
-\noindent
 Example:
 
-\begin{codenv}
+```scala
 val e = new ImperativeEvent[Int]()
 val v1 =  Var(0)
 val v2 =  Var(10)
@@ -969,95 +883,76 @@ e(101)
 assert(s3.get == 11)
 v2.set(11)
 assert(s3.get == 12)
-\end{codenv}
-
-
-
-
+```
 
 ## Switch/toggle
 
-
-
-The \code{toggle} function switches alternatively between the given
-signals on the occurrence of an event \code{e}. The value attached to
+The ```toggle``` function switches alternatively between the given
+signals on the occurrence of an event ```e```. The value attached to
 the event is simply discarded.
-\\
 
-\code{toggle[T](e : Event[\_], a: Signal[T], b: Signal[T]): Signal[T]}
-\\
+```toggle[T](e : Event[_], a: Signal[T], b: Signal[T]): Signal[T]```
 
+The `switchTo` function switches the value of the signal on the
+occurrence of the event ```e```. The resulting signal is a constant
+signal whose value is the value carried by the event ```e```.
 
-The \code {switchTo} function switches the value of the signal on the
-occurrence of the event \code{e}. The resulting signal is a constant
-signal whose value is the value carried by the event \code{e}.
-\\
+```switchTo[T](e : Event[T], original: Signal[T]): Signal[T]```
 
-\code{switchTo[T](e : Event[T], original: Signal[T]): Signal[T]}
-\\
+The ```switchOnce``` function switches to a new signal provided as a
+parameter, once, on the occurrence of the event ```e```.
 
-\noindent
-The \code{switchOnce} function switches to a new signal provided as a
-parameter, once, on the occurrence of the event \code{e}.
-\\
-
-\code{switchOnce[T](e: Event[\_], original: Signal[T], newSignal:
-  Signal[T]): Signal[T]}
-\\
-
-
+`switchOnce[T](e: Event[_], original: Signal[T], newSignal: Signal[T]): Signal[T]`
 
 ## Unwrap
 
+The ```unwrap``` function is used to ``unwrap'' an event inside a signal.
 
-The \code{unwrap} function is used to ``unwrap'' an event inside a signal.
-\\
-
-\code{def unwrap[T](wrappedEvent: Signal[Event[T]]): Event[T]}\\
+```def unwrap[T](wrappedEvent: Signal[Event[T]]): Event[T]```
 
 It can, for instance, be used to detect if any signal within a collection of signals
-fired a changed event:\\
+fired a changed event:
 
-\begin{codenv}
+```scala
 val collection: List[Signal[_]] = ...
 val innerChanges = Signal {collection().map(_.changed).reduce((a, b) => a || b)}
 val anyChanged = innerChanges.unwrap
-\end{codenv}
+```
 
+---
 
-\newpage
-
-
-# Common Pitfalls}
-{: #pitfalls }
+# Common Pitfalls
 
 In this section we
 collect the most common pitfalls for users that are new to reactive
 programming and *REScala*.
 
-
 # Accessing values in signal expressions
 
-The \code{()}
+The ```()```
 operator used on a signal or a var, inside a signal expression,
-returns the signal/var value {\it and} creates a dependency. The
-\code{get} operator returns the current value but does {\it not}
+returns the signal/var value *and* creates a dependency. The
+```get``` operator returns the current value but does *not*
 create a dependency. For example the following signal declaration
-creates a dependency between \code{a} and \code{s}, and a dependency
-between \code{b} and \code{s}.
-\begin{codenv}
+creates a dependency between ```a``` and ```s```, and a dependency
+between ```b``` and ```s```.
+
+```scala
 val s = Signal{ a() + b() }
-\end{codenv}
+```
+
 The following code instead establishes only a dependency between
-\code{b} and \code{s}.
-\begin{codenv}
+```b``` and ```s```.
+
+```scala
 val s = Signal{ a.get + b() }
-\end{codenv}
-In other words, in the last example, if \code{a} is updated, \code{s}
+```
+
+In other words, in the last example, if ```a``` is updated, ```s```
 is not automatically updated. With the exception of the rare cases in
-which this behavior is desirable, using \code{get} inside a signal
+which this behavior is desirable, using ```get``` inside a signal
 expression is almost certainly a mistake. As a rule of dumb, signals
-and vars appear in signal expressions with the \code{()} operator.
+and vars appear in signal expressions with the ```()``` operator.
 
 
 # Attempting to assign a signal
@@ -1073,54 +968,52 @@ mistake.
 Signal expressions
 should be pure. i.e. they should not modify external variables. For
 example the following code is conceptually wrong because the variable
-\code{c} is imperatively assigned form inside the signal expression
-(Line~\ref{assign}).
-\begin{codenv}
+```c``` is imperatively assigned form inside the signal expression
+(Line 4).
+
+```scala
 var c = 0                 /* WRONG - DON'T DO IT */
 val s = Signal{
   val sum = a() + b();
-  c = sum * 2  (*@\label{assign}@*)
+  c = sum * 2
 }
  ...
 foo(c)
-\end{codenv}
+```
 
 A possible solution is to refactor the code above to a more functional
-style. For example, by removing the variable \code{c} and replacing it
+style. For example, by removing the variable ```c``` and replacing it
 directly with the signal.
-\begin{codenv}
+
+```scala
 val c = Signal{
   val sum = a() + b();
   sum * 2
 }
  ...
 foo(c.get)
-\end{codenv}
-
-
+```
 
 # Cyclic dependencies
-When a signal \code{s} is defined, a
+When a signal ```s``` is defined, a
 dependency is establishes with each of the signals or vars that appear
-in the signal expression of \code{s}. Cyclic dependencies produce a
+in the signal expression of ```s```. Cyclic dependencies produce a
 runtime error and must be avoided. For example the following code:
 
-\begin{codenv}
+```scala
 val a = Var(0)             /* WRONG - DON'T DO IT */
 val s = Signal{ a() + t() }
 val t = Signal{ a() + s() + 1 }
-\end{codenv}
+```
 
-creates a mutual dependency between \code{s} and
-\code{t}. Similarly, indirect cyclic dependencies must be avoided.
-
-
+creates a mutual dependency between ```s``` and
+```t```. Similarly, indirect cyclic dependencies must be avoided.
 
 # Objects and mutability
 Vars and signals may behave
 unexpectedly with mutable objects. Consider the following example.
 
-\begin{codenv}
+```scala
 class Foo(init: Int){            /* WRONG - DON'T DO IT */
   var x = init
 }
@@ -1129,17 +1022,17 @@ val foo = new Foo(1)
 val varFoo = Var(foo)
 val s = Signal{ varFoo().x + 10 }
 // s.get == 11
-foo.x = 2 (*@\label{same}@*)
+foo.x = 2
 // s.get == 11
-\end{codenv}
+```
 
-One may expect that after increasing the value of \code{foo.x} in
-Line~\ref{same}, the signal expression is evaluated again and updated
+One may expect that after increasing the value of ```foo.x``` in
+Line 9, the signal expression is evaluated again and updated
 to 12. The reason why the application behaves differently is that
-signals and vars hold {\it references} to objects, not the objects
-themselves. When the statement in Line~\ref{same} is executed, the
-value of the \code{x} field changes, but the reference hold by the
-\code{varFoo} var is the same. For this reason, no change is detected
+signals and vars hold *references* to objects, not the objects
+themselves. When the statement in Line 9 is executed, the
+value of the ```x``` field changes, but the reference hold by the
+```varFoo``` var is the same. For this reason, no change is detected
 by the var, the var does not propagate the change to the signal, and
 the signal is not reevaluated.
 
@@ -1148,7 +1041,7 @@ objects cannot be modified, the only way to change a filed is to
 create an entirely new object and assign it to the var. As a result,
 the var is reevaluated.
 
-\begin{codenv}
+```scala
 class Foo(x: Int){}
 val foo = new Foo(1)
 
@@ -1157,13 +1050,13 @@ val s = Signal{ varFoo().x + 10 }
 // s.get == 11
 varFoo()= newFoo(2)
 // s.get == 12
-\end{codenv}
+```
 
 Alternatively, one can still use mutable objects but assign again the
 var to force the reevaluation. However this style of programming is
 confusing for the reader and should be avoided when possible.
 
-\begin{codenv}
+```scala
 class Foo(init: Int){   /* WRONG - DON'T DO IT */
   var x = init
 }
@@ -1172,58 +1065,50 @@ val foo = new Foo(1)
 val varFoo = Var(foo)
 val s = Signal{ varFoo().x + 10 }
 // s.get == 11
-foo.x = 2 (*@\label{same}@*)
+foo.x = 2
 varFoo()=foo
 // s.get == 11
-\end{codenv}
-
+```
 
 # Functions of reactive values
 Functions that operate on
 traditional values are not automatically transformed to operate on
 signals. For example consider the following functions:
 
-\begin{codenv}
+```scala
 def increment(x: Int): (Int=>Int) = x + 1
-\end{codenv}
+```
 
 The following code does not compile because the compiler expects an
-integer, not a var as a parameter of the \code{increment} function. In
-addition, since the \code{increment} function returns an integer,
-\code{b} has type \code{Int}, and the call \code{b()} in the signal
+integer, not a var as a parameter of the ```increment``` function. In
+addition, since the ```increment``` function returns an integer,
+```b``` has type ```Int```, and the call ```b()``` in the signal
 expression is also rejected by the compiler.
 
-\begin{codenv}
+```scala
 val a = Var(1)           /* WRONG - DON'T DO IT */
 val b = increment(a)
 val s = Signal{ b() + 1 }
-\end{codenv}
+```
 
 The following code snippet is syntactically correct, but the signal
 has a constant value 2 and is not updated when the var changes.
 
-\begin{codenv}
+```scala
 val a = Var(1)
 val b = increment(a.get)
 val s = Signal{ b + 1 }
-\end{codenv}
+```
 
 The following solution is syntactically correct and the signal
-\code{s} is updated every time the var \code{a} is updated.
+```s``` is updated every time the var ```a``` is updated.
 
-\begin{codenv}
+```scala
 val a = Var(1)
 val s = Signal{ increment(a()) + 1 }
-\end{codenv}
+```
 
-
-
-
-
-\newpage
-
-
-
+---
 
 # Technicalities
 
@@ -1237,55 +1122,82 @@ To work with *REScala* programmers need to properly import the reactive
 abstractions offered by the language. The following imports are
 normally sufficient for all the basic functionalities of *REScala*:
 
-\begin{codenv}
+```scala
 import rescala._
 import rescala.events._
 import makro.SignalMacro.{SignalM => Signal}
-\end{codenv}
+```
 
 Note that signal expressions are currently implemented as macros,
 i.e. the body of a signal expression is analyzed to detect the
 reactive values and establish the dependencies. To use macros for
-signal expressions, the macro \code{SignalM} is imported and renamed
-to \code{Signal} (Line 3).
+signal expressions, the macro ```SignalM``` is imported and renamed
+to ```Signal``` (Line 3).
 
-
-
-
-\newpage
-
-
+---
 
 # Essential Related Work
 {: #related }
 
-
-A more academic presentation of *REScala* is in \cite{rescala}. A
+A more academic presentation of *REScala* is in [[7]](#ref). A
 complete bibliography on reactive programming is beyond the scope of
 this work. The interested reader can refer
-to~\cite{rective-progr-survey} for an overview of reactive programming
-and to~\cite{Salvaneschi:2013:RBO:2451436.2451442} for the issues
+to[[1]](#ref) for an overview of reactive programming
+and to[[8]](#ref) for the issues
 concerning the integration of RP with object-oriented programming.
 
 
 *REScala* builds on ideas originally developed in
-EScala~\cite{Gasiunas:2011:EME:1960275.1960303} -- which supports
+EScala [[3]](#ref) -- which supports
 event combination and implicit events. Other reactive languages
 directly represent time-changing values and remove inversion of
 control. Among the others, we mention
-FrTime~\cite{DBLP:conf/esop/CooperK06} (Scheme),
-FlapJax~\cite{Meyerovich:2009:FPL:1640089.1640091} (Javascript),
-AmbientTalk/R~\cite{ambienttalkR} and
-Scala.React~\cite{EPFL-REPORT-148043} (Scala).
+FrTime [[2]](#ref) (Scheme),
+FlapJax [[6]](#ref) (Javascript),
+AmbientTalk/R [[4]](#ref) and
+Scala.React [[5]](#ref) (Scala).
 
-
-
-
-\newpage
-
-
+---
 
 # Acknowledgments
 
 Several people contributed to this manual with their ideas and
 comments. Among the others Gerold Hintz and Pascal Weisenburger.
+
+---
+
+# References
+{: #ref}
+[1] E. Bainomugisha, A. Lombide Carreton, T. Van Cutsem, S. Mostinckx, and
+W. De Meuter. A survey on reactive programming. ACM Comput. Surv. (To appear),
+2013.
+
+[2] G. H. Cooper and S. Krishnamurthi. Embedding dynamic dataflow in a call-byvalue
+language. In ESOP, pages 294–308, 2006.
+
+[3] V. Gasiunas, L. Satabin, M. Mezini, A. N´u˜nez, and J. Noy´e. EScala: modular
+event-driven object interactions in Scala. AOSD ’11, pages 227–240. ACM, 2011.
+
+[4] A. Lombide Carreton, S. Mostinckx, T. Cutsem, and W. Meuter. Loosely-coupled
+distributed reactive programming in mobile ad hoc networks. In J. Vitek, editor,
+Objects, Models, Components, Patterns, volume 6141 of Lecture Notes in Computer
+Science, pages 41–60. Springer Berlin Heidelberg, 2010.
+
+[5] I. Maier and M. Odersky. Deprecating the Observer Pattern with Scala.react. Technical
+report, 2012.
+
+[6] L. A. Meyerovich, A. Guha, J. Baskin, G. H. Cooper, M. Greenberg, A. Bromfield,
+and S. Krishnamurthi. Flapjax: a programming language for ajax applications.
+OOPSLA ’09, pages 1–20. ACM, 2009.
+
+[7] G. Salvaneschi, G. Hintz, and M. Mezini. REScala: Bridging between objectoriented
+and functional style in reactive applications. In Proceedings of the 13th
+International Conference on Aspect-Oriented Software Development, AOSD ’14,
+New York, NY, USA, Accepted for publication, 2014. ACM.
+
+[8] G. Salvaneschi and M. Mezini. Reactive behavior in object-oriented applications:
+an analysis and a research roadmap. In Proceedings of the 12th annual international
+conference on Aspect-oriented software development, AOSD ’13, pages
+37–48, New York, NY, USA, 2013. ACM.
+
+[9] Scala site. http://www.scala-lang.org/.
