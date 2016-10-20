@@ -217,7 +217,6 @@ while (time.now < 5) {
   Thread sleep 20
   time() = time.now + 1
 }
-// --- output ---
 ```
 
 The application behaves as follows. Every 20 milliseconds, the value
@@ -400,7 +399,6 @@ val e = Evt[Int]()
 e += { x => println(x) }
 e(10)
 e(10)
-// -- output ----
 ```
 
 If multiple handlers are registered, all of them are executed when the
@@ -413,7 +411,6 @@ e += { x => println(x) }
 e += { x => println(f"n: $x")}
 e(10)
 e(10)
-// -- output ----
 ```
 
 ## Unregistering Handlers
@@ -432,7 +429,6 @@ handler2.remove()
 e(10)
 handler1.remove()
 e(10)
-// -- output ----
 ```
 
 # Declarative Events
@@ -478,7 +474,6 @@ val e1_OR_e2 = e1 || e2
 e1_OR_e2 += ((x: Int) => println(x))
 e1(1)
 e2(2)
-// -- output ----
 ```
 
 ## Predicate Events
@@ -495,7 +490,6 @@ val e_AND: Event[Int] = e && ((x: Int) => x>10)
 e_AND += ((x: Int) => println(x))
 e(5)
 e(15)
-// -- output ----
 ```
 
 ## Map Events
@@ -511,7 +505,6 @@ val e_MAP: Event[String] = e map ((x: Int) => x.toString)
 e_MAP += ((x: String) => println(s"Here: $x"))
 e(5)
 e(15)
-// -- output ----
 ```
 
 {::comment}
@@ -527,7 +520,6 @@ val e_drop: Event[Unit] = e.dropParam
 e_drop += (_ => println("*"))
 e(10)
 e(10)
-// -- output ----
 ```
 
 The typical use case for the `dropParam` operator is to make events
