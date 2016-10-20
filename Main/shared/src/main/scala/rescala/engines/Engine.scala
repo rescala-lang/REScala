@@ -20,6 +20,7 @@ trait Engine[S <: Struct, +TTurn <: Turn[S]] {
 
   implicit def Engine: this.type = this
 
+  final type Observe = reactives.Observe[S]
   final type Signal[+A] = reactives.Signal[A, S]
   final type Event[+A] = reactives.Event[A, S]
   final type Var[A] = reactives.Var[A, S]
