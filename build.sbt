@@ -129,8 +129,8 @@ lazy val rescalatags = project.in(file("Extensions/Rescalatags"))
     libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.6.0",
     scalatestDependency,
     jsDependencies += RuntimeDOM,
-    licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")
-  ))
+    licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))
+  )
 
 // Examples
 
