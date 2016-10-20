@@ -78,13 +78,17 @@ the value of `c` is automatically recomputed.
 
 For example:
 
-```scala
+```tut:book
+import rescala._
+
 val a = Var(2)
 val b = Var(3)
-val c = Signal{ a() + b() }
-println(a.get,b.get,c.get) // -> (2,3,5)
-a()= 4
-println(a.get,b.get,c.get) // -> (4,3,7)
+val c = Signal { a() + b() }
+println((a.now, b.now, c.now))
+a.set(4)
+println((a.now, b.now, c.now))
+b.set(5)
+println((a.now, b.now, c.now))
 ```
 
 In the code above, the signal in Line 3 defines the
@@ -107,7 +111,7 @@ initializes the var to the value 2. Vars are parametric types. A var
 that carries integer values has type `Var[Int]`. The following
 code snippet shows valid var declarations.
 
-```scala
+```tut:book
 val a = Var(0)
 val b = Var("Hello World")
 val c = Var(false)
@@ -139,7 +143,7 @@ defining a signal ```s```, a var or a signal is called with the
 the vars and the signals in the signal expression. For example in the
 code snippet:
 
-```scala
+```tut:book
   val a = Var(0)
   val b = Var(0)
   val s = Signal{ a() + b() } // Multiple vars in a signal expression
@@ -150,7 +154,7 @@ meaning that the values of ```s``` depends on both ```a``` and
 ```b```. The following code snippets define valid signal
 declarations.
 
-```scala
+```tut:book
 val a = Var(0)
 val b = Var(0)
 val c = Var(0)
@@ -160,15 +164,15 @@ val t = Signal{ s() * c() + 10 } // Mix signals and vars in signal expressions
 val u = Signal{ s() * t() } // A signal that depends on other signals
 ```
 
-```scala
+```tut:book
 val a = Var(0)
 val b = Var(2)
 val c = Var(true)
 val s = Signal{ if (c()) a() else b() }
 ```
 
-```scala
-def factorial(n: Int) = ...
+```tut:book
+def factorial(n: Int) = Range.inclusive(1,n).fold(1)(_ * _)
 val a = Var(0)
 val s: Signal[Int] = Signal{ // A signal expression can be any code block
   val tmp = a() * 2
@@ -181,18 +185,18 @@ val s: Signal[Int] = Signal{ // A signal expression can be any code block
 
 ### Accessing reactive values
  The current value of a
-signal or a var can be accessed using the ```get``` method. For
+signal or a var can be accessed using the ```now``` method. For
 example:
 
-```scala
+```tut:book
 val a = Var(0)
 val b = Var(2)
 val c = Var(true)
 val s: Signal[Int] = Signal{ a() + b() }
 val t: Signal[Boolean] = Signal{ !c() }
-val x: Int = a.get
-val y: Int = s.get
-val z: Boolean = t.get
+val x: Int = a.now
+val y: Int = s.now
+val z: Boolean = t.now
 println(z)
 ```
 
@@ -202,24 +206,18 @@ particle that is moving at constant speed `SPEED`. The
 application prints all the values associated to the displacement over
 time.
 
-```scala
+```tut:book
 val SPEED = 10
 val time = Var(0)
 val space = Signal{ SPEED * time() }
 
 space.changed += ((x: Int) => println(x))
 
-while (true) {
+while (time.now < 5) {
   Thread sleep 20
-  time() = time.get + 1  (*@\label{increasetime}@*)
+  time() = time.now + 1
 }
-
--- output --
-10
-20
-30
-40
- ...
+// --- output ---
 ```
 
 The application behaves as follows. Every 20 milliseconds, the value
@@ -238,13 +236,13 @@ the event returned by the `changed` operator. When the event
 fires, the handler is executed. Line 5 is equivalent to
 the following code:
 
-```scala
+```tut:book
 val e: Event[Int] = space.changed
 val handler:  (Int => Unit) =  ((x: Int) => println(x))
 e += handler
 ```
 
-Note that using `println(space.get)` would also print the
+Note that using `println(space.now)` would also print the
 value of the signal, but only at the point in time in which the print
 statement is executed. Instead, the approach described so far prints
 *all* values of the signal. More details about converting signals
@@ -268,7 +266,7 @@ event types.
   each handler is executed.
 
 * Events are generic types parametrized with the type of value
-  they carry, like `Event[T]` and `ImpertiveEvent[T]` where
+  they carry, like `Event[T]` and `Evt[T]` where
   `T` is the value carried by the event.
 
 * Both imperative events and declarative events are subtypes of
@@ -284,39 +282,39 @@ unregistered dynamically.
 
 ## Defining  Events
 
-Imperative events are defined by the `ImperativeEvent[T]`
+Imperative events are defined by the `Evt[T]`
 type. The value of the parameter `T` defines the value that is
 attached to the event. An event with no parameter attached has
-signature `ImpertiveEvent[Unit]`. The following code snippet show
+signature `Evt[Unit]`. The following code snippet show
 valid events definitions:
 
-```scala
-val e1 = new ImperativeEvent[Unit]()
-val e2 = new ImperativeEvent[Int]()
-val e3 = new ImperativeEvent[String]()
-val e4 = new ImperativeEvent[Boolean]()
-val e5: ImperativeEvent[Int] = new ImperativeEvent[Int]()
+```tut:book
+val e1 = Evt[Unit]()
+val e2 = Evt[Int]()
+val e3 = Evt[String]()
+val e4 = Evt[Boolean]()
+val e5: Evt[Int] = Evt[Int]()
 class Foo
-val e6 = new ImperativeEvent[Foo]()
+val e6 = Evt[Foo]()
 ```
 
 It is possible to attach more than one value to the same event. This
 is easily accomplished by using a tuple as a generic parameter
 type. For example:
 
-```scala
-val e1 = new ImperativeEvent[(Int,Int)]()
-val e2 = new ImperativeEvent[(String,String)]()
-val e3 = new ImperativeEvent[(String,Int)]()
-val e4 = new ImperativeEvent[(Boolean,String,Int)]()
-val e5: ImperativeEvent[(Int,Int)] = new ImperativeEvent[(Int,Int)]()
+```tut:book
+val e1 = Evt[(Int,Int)]()
+val e2 = Evt[(String,String)]()
+val e3 = Evt[(String,Int)]()
+val e4 = Evt[(Boolean,String,Int)]()
+val e5: Evt[(Int,Int)] = Evt[(Int,Int)]()
 ```
 
 Note that an imperative event is also an event. Therefore the
 following declaration is also valid:
 
-```scala
-val e1: Event[Int] = new ImperativeEvent[Int]()
+```tut:book
+val e1: Event[Int] = Evt[Int]()
 ```
 
 ## Registering Handlers
@@ -326,9 +324,9 @@ Handlers are code blocks that are executed when the event fires. The
 first class function that receives the attached value as a parameter.
 The following are valid handler definitions.
 
-```scala
+```tut:book
 var state = 0
-val e = new ImperativeEvent[Int]()
+val e = Evt[Int]()
 e += { println(_) }
 e += (x => println(x))
 e += ((x: Int) => println(x))
@@ -343,8 +341,8 @@ since the handler is supposed to process the attached value and
 perform side effects. For example is the event is of type
 `Event[(Int,Int)]` the handler must be of type `(Int,Int) => Unit`.
 
-```scala
-val e = new ImperativeEvent[(Int,String)]()
+```tut:book
+val e = Evt[(Int,String)]()
 e += (x => {
   println(x._1)
   println(x._2)
@@ -357,8 +355,8 @@ e += ((x: (Int,String)) => {
 Note that events without arguments still need an argument
 in the handler.
 
-```scala
-val e = new ImperativeEvent[Int]()
+```tut:book
+val e = Evt[Int]()
 e += { x => println() }
 e += { (x: Int) => println() }
 ```
@@ -367,12 +365,12 @@ Scala allows one to refer to a method using the partially applied
 function syntax. This approach can be used to directly register a
 method as an event handler. For example:
 
-```scala
+```tut:book
 def m1(x: Int) = {
   val y = x + 1
   println(y)
 }
-val e = new ImperativeEvent[Int]
+val e = Evt[Int]
 e += m1 _
 e(10)
 ```
@@ -384,10 +382,10 @@ event is fired, a proper value must be associated to the event
 call. Clearly, the value must conform the signature of the event. For
 example:
 
-```scala
-val e1 = new ImperativeEvent[Int]()
-val e2 = new ImperativeEvent[Boolean]()
-val e3 = new ImperativeEvent[(Int,String)]()
+```tut:book
+val e1 = Evt[Int]()
+val e2 = Evt[Boolean]()
+val e3 = Evt[(Int,String)]()
 e1(10)
 e2(false)
 e3((10,"Hallo"))
@@ -397,56 +395,44 @@ When a handler is registered to an event, the handler is executed
 every time the event is fired. The actual parameter is provided to the
 handler.
 
-```scala
-val e = new ImperativeEvent[Int]()
+```tut:book
+val e = Evt[Int]()
 e += { x => println(x) }
 e(10)
 e(10)
--- output ----
-10
-10
+// -- output ----
 ```
 
 If multiple handlers are registered, all of them are executed when the
 event is fired. Applications should not rely on any specific execution
 order for handler execution.
 
-```scala
-val e = new ImperativeEvent[Int]()
+```tut:book
+val e = Evt[Int]()
 e += { x => println(x) }
 e += { x => println(f"n: $x")}
 e(10)
 e(10)
--- output ----
-10
-n: 10
-10
-n: 10
+// -- output ----
 ```
 
 ## Unregistering Handlers
 
-Handlers can be unregistered from events with the `-=`
+Handlers can be unregistered from events with the `remove`
 operator. When a handler is unregistered, it is not executed when the
 event is fired.
 
-```scala
-val e = new ImperativeEvent[Int]()
-val handler1 = { x: Int => println(x) }
-val handler2 = { x: Int => println(s"n: $x") }
+```tut:book
+val e = Evt[Int]()
 
-e += handler1
-e += handler2
+val handler1 = e += println
+val handler2 = e += { x => println(s"n: $x") }
 e(10)
-e -= handler2
+handler2.remove()
 e(10)
-e -= handler1
+handler1.remove()
 e(10)
-
--- output ----
-10
-n: 10
-10
+// -- output ----
 ```
 
 # Declarative Events
@@ -465,9 +451,9 @@ Declarative events are defined by composing other events. The
 following code snippet shows some examples of valid definitions for
 declarative events.
 
-```scala
-val e1 = new ImperativeEvent[Int]()
-val e2 = new ImperativeEvent[Int]()
+```tut:book
+val e1 = Evt[Int]()
+val e2 = Evt[Int]()
 
 val e3 = e1 || e2
 val e4 = e1 && ((x: Int)=> x>10)
@@ -485,16 +471,14 @@ The event `e_1 || e_2` is fired upon the occurrence of one among `e_1`
 or `e_2`. Note that the events that appear in the event expression
 must have the same parameter type (`Int` in the next example).
 
-```scala
-val e1 = new ImperativeEvent[Int]()
-val e2 = new ImperativeEvent[Int]()
+```tut:book
+val e1 = Evt[Int]()
+val e2 = Evt[Int]()
 val e1_OR_e2 = e1 || e2
 e1_OR_e2 += ((x: Int) => println(x))
 e1(1)
 e2(2)
--- output ----
-1
-2
+// -- output ----
 ```
 
 ## Predicate Events
@@ -505,14 +489,13 @@ parameter as a formal parameter and returns `Boolean`. In other
 words the `&&` operator filters the events according to their
 parameter and a predicate.
 
-```scala
-val e = new ImperativeEvent[Int]()
+```tut:book
+val e = Evt[Int]()
 val e_AND: Event[Int] = e && ((x: Int) => x>10)
 e_AND += ((x: Int) => println(x))
 e(5)
 e(15)
--- output ----
-15
+// -- output ----
 ```
 
 ## Map Events
@@ -522,15 +505,13 @@ by `e`. The map function must take the event parameter as a formal
 parameter. The return type of the map function is the type parameter
 value of the resulting event.
 
-```scala
-val e = new ImperativeEvent[Int]()
+```tut:book
+val e = Evt[Int]()
 val e_MAP: Event[String] = e map ((x: Int) => x.toString)
 e_MAP += ((x: String) => println(s"Here: $x"))
 e(5)
 e(15)
--- output ----
-Here: 5
-Here: 15
+// -- output ----
 ```
 
 {::comment}
@@ -540,15 +521,13 @@ The `dropParam` operator transforms an event into an event with
 `Unit` parameter. In the following example the `dropParam`
 operator transforms an `Event[Int]` into an `Event[Unit]`.
 
-```scala
-val e = new ImperativeEvent[Int]()
+```tut:book
+val e = Evt[Int]()
 val e_drop: Event[Unit] = e.dropParam
 e_drop += (_ => println("*"))
 e(10)
 e(10)
--- output ----
-*
-*
+// -- output ----
 ```
 
 The typical use case for the `dropParam` operator is to make events
@@ -556,18 +535,19 @@ with different types compatible. For example the following snippet is
 rejected by the compiler since it attempts to combine two events of
 different types with the `||` operator.
 
-```scala     /* WRONG - DON'T DO THIS */
-val e1 = new ImperativeEvent[Int]()
-val e2 = new ImperativeEvent[Unit]()
+```tut:nofail
+/* WRONG - DON'T DO THIS */
+val e1 = Evt[Int]()
+val e2 = Evt[Unit]()
 val e1_OR_e2 = e1 || e2  // Compiler error
 ```
 
 The following example is correct. The `dropParam` operator allows
 one to make the events compatible with each other.
 
-```scala
-val e1 = new ImperativeEvent[Int]()
-val e2 = new ImperativeEvent[Unit]()
+```tut:book
+val e1 = Evt[Int]()
+val e2 = Evt[Unit]()
 val e1_OR_e2: Event[Unit] = e1.dropParam || e2
 ```
 {:/comment}
@@ -609,16 +589,16 @@ initial value of the signal is set to `init`.
 
 Example:
 
-```scala
-val e = new ImperativeEvent[Int]()
+```tut:book
+val e = Evt[Int]()
 val s: Signal[Int] = e.latest(10)
-assert(s.get == 10)
+assert(s.now == 10)
 e(1)
-assert(s.get == 1)
+assert(s.now == 1)
 e(2)
-assert(s.get == 2)
+assert(s.now == 2)
 e(1)
-assert(s.get == 1)
+assert(s.now == 1)
 ```
 
 ## Signal to Event: Changed
@@ -630,7 +610,7 @@ that is fired every time the signal changes its value.
 
 Example:
 
-```scala
+```tut:book
 var test = 0
 val v =  Var(1)
 val s = Signal{ v() + 1 }
@@ -642,7 +622,7 @@ v.set(3)
 assert(test == 2)
 ```
 
-# Advanced Conversion Functions
+<!-- # Advanced Conversion Functions
 
 Some of the conversion functions can be called on a signal providing
 an event as the first parameter or can be called on an event providing
@@ -653,8 +633,8 @@ event occurrence. Hence, the function can be exposed both on the
 `Signal` and the `Event` interface. For example:
 
 ```scala
-val e: Event[V]  = ... // An event
-val s: Signal[V] = ... // A signal
+val e: Event[V]  = … // An event
+val s: Signal[V] = … // A signal
 
 e.snapshot[V](s: Signal[V]): Signal[V]
 s.snapshot[V](e : Event[_]): Signal[V]
@@ -666,7 +646,7 @@ example:
 
 ```scala
 def snapshot[V](e : Event[_], s: Signal[V]): Signal[V]
-```
+``` -->
 
 ## Fold
 
@@ -680,13 +660,13 @@ associated to the event. The result is the new value of the signal.
 
 Example:
 
-```scala
-val e = new ImperativeEvent[Int]()
+```tut:book
+val e = Evt[Int]()
 val f = (x:Int,y:Int)=>(x+y)
 val s: Signal[Int] = e.fold(10)(f)
 e(1)
 e(2)
-assert(s.get == 13)
+assert(s.now == 13)
 ```
 
 ## Iterate
@@ -700,20 +680,20 @@ current value but only on the accumulated value.
 
 Example:
 
-```scala
+```tut:book
 var test: Int = 0
-val e = new ImperativeEvent[Int]()
+val e = Evt[Int]()
 val f = (x:Int)=>{test=x; x+1}
 val s: Signal[Int] = e.iterate(10)(f)
 e(1)
 assert(test == 10)
-assert(s.get == 11)
+assert(s.now == 11)
 e(2)
 assert(test == 11)
-assert(s.get == 12)
+assert(s.now == 12)
 e(1)
 assert(test == 12)
-assert(s.get == 13)
+assert(s.now == 13)
 ```
 
 ## LatestOption
@@ -727,16 +707,16 @@ as `Some(val)` or `None`.
 
 Example:
 
-```scala
-val e = new ImperativeEvent[Int]()
+```tut:book
+val e = Evt[Int]()
 val s: Signal[Option[Int]] = e.latestOption
-assert(s.get == None)
+assert(s.now == None)
 e(1)
-assert(s.get == Option(1))
+assert(s.now == Option(1))
 e(2)
-assert(s.get == Option(2))
+assert(s.now == Option(2))
 e(1)
-assert(s.get == Option(1))
+assert(s.now == Option(1))
 ```
 
 ## Last
@@ -750,20 +730,16 @@ Initially, an empty list is returned. Then the values are
 progressively filled up to the size specified by the
 programmer. Example:
 
-```scala
-val e = new ImperativeEvent[Int]()
-val s: Signal[List[Int]] = e.last(5)
+```tut:book
+val e = Evt[Int]()
+val s: Signal[scala.collection.LinearSeq[Int]] = e.last(5)
 
-assert(s.get == List())
+s observe println
+
 e(1)
-assert(s.get == List(1))
 e(2)
-assert(s.get == List(1,2))
-
 e(3);e(4);e(5)
-assert(s.get == List(1,2,3,4,5))
 e(6)
-assert(s.get == List(2,3,4,5,6))
 ```
 
 ## List
@@ -782,13 +758,13 @@ when the event has never been fired yet, the signal holds the value
 
 `count(e: Event[_]): Signal[Int]`
 
-```scala
-val e = new ImperativeEvent[Int]()
+```tut:book
+val e = Evt[Int]()
 val s: Signal[Int] = e.count
-assert(s.get == 0)
+assert(s.now == 0)
 e(1)
 e(3)
-assert(s.get == 2)
+assert(s.now == 2)
 ```
 
 ## Snapshot
@@ -802,17 +778,17 @@ of ```s```.
 
 Example:
 
-```scala
-val e = new ImperativeEvent[Int]()
+```tut:book
+val e = Evt[Int]()
 val v =  Var(1)
 val s1 = Signal{ v() + 1 }
 val s = e.snapshot(s1)
 e(1)
-assert(s.get == 2)
+assert(s.now == 2)
 v.set(2)
-assert(s.get == 2)
+assert(s.now == 2)
 e(1)
-assert(s.get == 3)
+assert(s.now == 3)
 ```
 
 ## Change
@@ -824,10 +800,13 @@ provides both the old and the new value of the signal in a tuple.
 
 Example:
 
-```scala
-val s = Signal{ ... }
-val e: Event[(Int,Int)] = s.change
-e += ((x:(Int,Int))=>{ ... })
+```tut:book
+val s = Var(5)
+val e = s.change
+e += println
+
+s.set(10)
+s.set(20)
 ```
 
 ## ChangedTo
@@ -838,7 +817,7 @@ value.
 
 ```changedTo[V](value: V): Event[Unit]```
 
-```scala
+```tut:book
 var test = 0
 val v =  Var(1)
 val s = Signal{ v() + 1 }
@@ -863,8 +842,8 @@ returned by the ```reset``` function. When the event occurs the
 
 Example:
 
-```scala
-val e = new ImperativeEvent[Int]()
+```tut:book
+val e = Evt[Int]()
 val v1 =  Var(0)
 val v2 =  Var(10)
 val s1 = Signal{ v1() + 1 }
@@ -876,13 +855,13 @@ def factory(x: Int) = x%2 match {
 }
 val s3 = e.reset(100)(factory)
 
-assert(s3.get == 1)
+assert(s3.now == 1)
 v1.set(1)
-assert(s3.get == 2)
+assert(s3.now == 2)
 e(101)
-assert(s3.get == 11)
+assert(s3.now == 11)
 v2.set(11)
-assert(s3.get == 12)
+assert(s3.now == 12)
 ```
 
 ## Switch/toggle
@@ -904,7 +883,7 @@ parameter, once, on the occurrence of the event ```e```.
 
 `switchOnce[T](e: Event[_], original: Signal[T], newSignal: Signal[T]): Signal[T]`
 
-## Unwrap
+## Flatten
 
 The ```unwrap``` function is used to ``unwrap'' an event inside a signal.
 
@@ -913,10 +892,17 @@ The ```unwrap``` function is used to ``unwrap'' an event inside a signal.
 It can, for instance, be used to detect if any signal within a collection of signals
 fired a changed event:
 
-```scala
-val collection: List[Signal[_]] = ...
-val innerChanges = Signal {collection().map(_.changed).reduce((a, b) => a || b)}
-val anyChanged = innerChanges.unwrap
+```tut:book
+val v1 = Var(1)
+val v2 = Var("Test")
+val v3 = Var(true)
+val collection: List[Signal[_]] = List(v1, v2, v3)
+val innerChanges = Signal {collection.map(_.changed).reduce((a, b) => a || b)}
+val anyChanged = innerChanges.flatten
+anyChanged += println
+v1.set(10)
+v2.set("Changed")
+v3.set(false)
 ```
 
 ---
@@ -932,25 +918,25 @@ programming and *REScala*.
 The ```()```
 operator used on a signal or a var, inside a signal expression,
 returns the signal/var value *and* creates a dependency. The
-```get``` operator returns the current value but does *not*
+```now``` operator returns the current value but does *not*
 create a dependency. For example the following signal declaration
 creates a dependency between ```a``` and ```s```, and a dependency
 between ```b``` and ```s```.
 
-```scala
+```tut:book
 val s = Signal{ a() + b() }
 ```
 
 The following code instead establishes only a dependency between
 ```b``` and ```s```.
 
-```scala
-val s = Signal{ a.get + b() }
+```tut:book
+val s = Signal{ a.now + b() }
 ```
 
 In other words, in the last example, if ```a``` is updated, ```s```
 is not automatically updated. With the exception of the rare cases in
-which this behavior is desirable, using ```get``` inside a signal
+which this behavior is desirable, using ```now``` inside a signal
 expression is almost certainly a mistake. As a rule of dumb, signals
 and vars appear in signal expressions with the ```()``` operator.
 
@@ -971,27 +957,27 @@ example the following code is conceptually wrong because the variable
 ```c``` is imperatively assigned form inside the signal expression
 (Line 4).
 
-```scala
+```tut:book:nofail
 var c = 0                 /* WRONG - DON'T DO IT */
 val s = Signal{
   val sum = a() + b();
   c = sum * 2
 }
- ...
-foo(c)
+// …
+println(c)
 ```
 
 A possible solution is to refactor the code above to a more functional
 style. For example, by removing the variable ```c``` and replacing it
 directly with the signal.
 
-```scala
+```tut:book
 val c = Signal{
   val sum = a() + b();
   sum * 2
 }
- ...
-foo(c.get)
+// …
+println(c.now)
 ```
 
 # Cyclic dependencies
@@ -1000,7 +986,7 @@ dependency is establishes with each of the signals or vars that appear
 in the signal expression of ```s```. Cyclic dependencies produce a
 runtime error and must be avoided. For example the following code:
 
-```scala
+```tut:book:nofail
 val a = Var(0)             /* WRONG - DON'T DO IT */
 val s = Signal{ a() + t() }
 val t = Signal{ a() + s() + 1 }
@@ -1013,7 +999,7 @@ creates a mutual dependency between ```s``` and
 Vars and signals may behave
 unexpectedly with mutable objects. Consider the following example.
 
-```scala
+```tut:book:nofail
 class Foo(init: Int){            /* WRONG - DON'T DO IT */
   var x = init
 }
@@ -1021,9 +1007,9 @@ val foo = new Foo(1)
 
 val varFoo = Var(foo)
 val s = Signal{ varFoo().x + 10 }
-// s.get == 11
+// s.now == 11
 foo.x = 2
-// s.get == 11
+// s.now == 11
 ```
 
 One may expect that after increasing the value of ```foo.x``` in
@@ -1041,22 +1027,22 @@ objects cannot be modified, the only way to change a filed is to
 create an entirely new object and assign it to the var. As a result,
 the var is reevaluated.
 
-```scala
-class Foo(x: Int){}
+```tut:book
+class Foo(val x: Int){}
 val foo = new Foo(1)
 
 val varFoo = Var(foo)
 val s = Signal{ varFoo().x + 10 }
-// s.get == 11
-varFoo()= newFoo(2)
-// s.get == 12
+// s.now == 11
+varFoo()= new Foo(2)
+// s.now == 12
 ```
 
 Alternatively, one can still use mutable objects but assign again the
 var to force the reevaluation. However this style of programming is
 confusing for the reader and should be avoided when possible.
 
-```scala
+```tut:book
 class Foo(init: Int){   /* WRONG - DON'T DO IT */
   var x = init
 }
@@ -1064,10 +1050,10 @@ val foo = new Foo(1)
 
 val varFoo = Var(foo)
 val s = Signal{ varFoo().x + 10 }
-// s.get == 11
+// s.now == 11
 foo.x = 2
 varFoo()=foo
-// s.get == 11
+// s.now == 11
 ```
 
 # Functions of reactive values
@@ -1075,8 +1061,8 @@ Functions that operate on
 traditional values are not automatically transformed to operate on
 signals. For example consider the following functions:
 
-```scala
-def increment(x: Int): (Int=>Int) = x + 1
+```tut:book
+def increment(x: Int): Int = x + 1
 ```
 
 The following code does not compile because the compiler expects an
@@ -1085,7 +1071,7 @@ addition, since the ```increment``` function returns an integer,
 ```b``` has type ```Int```, and the call ```b()``` in the signal
 expression is also rejected by the compiler.
 
-```scala
+```tut:book:nofail
 val a = Var(1)           /* WRONG - DON'T DO IT */
 val b = increment(a)
 val s = Signal{ b() + 1 }
@@ -1094,16 +1080,16 @@ val s = Signal{ b() + 1 }
 The following code snippet is syntactically correct, but the signal
 has a constant value 2 and is not updated when the var changes.
 
-```scala
+```tut:book
 val a = Var(1)
-val b = increment(a.get)
+val b = increment(a.now)
 val s = Signal{ b + 1 }
 ```
 
 The following solution is syntactically correct and the signal
 ```s``` is updated every time the var ```a``` is updated.
 
-```scala
+```tut:book
 val a = Var(1)
 val s = Signal{ increment(a()) + 1 }
 ```
@@ -1124,8 +1110,6 @@ normally sufficient for all the basic functionalities of *REScala*:
 
 ```scala
 import rescala._
-import rescala.events._
-import makro.SignalMacro.{SignalM => Signal}
 ```
 
 Note that signal expressions are currently implemented as macros,
