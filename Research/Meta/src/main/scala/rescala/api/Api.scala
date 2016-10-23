@@ -89,7 +89,7 @@ object Api {
 
 
     override def Evt[A](): Evt[A] = graph.createEvt()
-    override def Var[A](v: A): Var[A] = graph.createVar()
+    override def Var[A](v: A): Var[A] = graph.createVar(v)
     override def mapS[A, B](signal: Signal[A])(f: (A) => B): Signal[B] = signal.map(f)
     override def mapE[A, B](event: Event[A])(f: (A) => B): Event[B] = event.map(f)
     override def fold[A, Acc](event: Event[A])(init: Acc)(f: (Acc, A) => Acc): Signal[Acc] = event.fold(init)(f)

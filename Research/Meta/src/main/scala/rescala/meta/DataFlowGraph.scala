@@ -53,6 +53,12 @@ class DataFlowGraph {
   }
 
   def createVar[A]() : VarRef[A] = new VarRef(VarSignalNode[A](this))
+  def createVar[A](v : A) : VarRef[A] = {
+    val newVar = new VarRef(VarSignalNode[A](this))
+    newVar.set(v)
+    newVar
+  }
+
 
   def createEvt[T]() : EvtRef[T] = new EvtRef(EvtEventNode[T](this))
 
