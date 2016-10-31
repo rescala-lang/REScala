@@ -16,9 +16,9 @@ subsequent change of them triggers a reevaluation of s.
 	val a = Var(2)
 	val b = Var(3)
 	val s = Signal{ a() + b() }
-	println(a.getVal,b.getVal,s.getVal) // (2,3,5)
-	a()= 4
-	println(a.getVal,b.getVal,s.getVal) // (4,3,7)
+	println(a.now,b.now,s.now) // (2,3,5)
+	a() = 4
+	println(a.now,b.now,s.now) // (4,3,7)
 ```
 REScala signals integrate seamlessly with OO design. They are
 class attributes like fields and methods. They too can have
@@ -42,7 +42,7 @@ REScala supports a rich event system. Imperative events
 are fired directly by the programmer.
 
 ```scala
-	val e = new ImperativeEvent[Int]()
+	val e = Evt[Int]()
 	e += { x => println(x) }
 	e(10)
 	e(10)
@@ -60,10 +60,10 @@ one to express the application logic in a clear and
 declarative way
 
 ```scala
-	val e1 = new ImperativeEvent[Int]()
-	val e2 = new ImperativeEvent[Int]()
-	val e1 OR e2 = e1 | | e2
-	e1 OR e2 += ((x: Int) => println(x))
+	val e1 = Evt[Int]()
+	val e2 = Evt[Int]()
+	val e1_OR_e2 = e1 | | e2
+	e1_OR_e2 += ((x: Int) => println(x))
 	e1(10)
 	e2(10)
 	// − output −
@@ -84,7 +84,7 @@ of mouse clicks using the fold function.
 
 ```scala
 	val click: Event[(Int, Int)] = mouse.click
-	val nClick: Signal[Int] = click.fold(0)( (x, ) => x+1 )
+	val nClick: Signal[Int] = click.fold(0)( (x, _) => x+1 )
 ```
 
 The following code provides the position of the last click
@@ -94,10 +94,11 @@ snapshot function.
 ```scala
 	val clicked: Event[Unit] = mouse.clicked
 	val position: Signal[(Int,Int)] = mouse.position
-	val lastClick: Signal[(Int,Int)] = position snapshot clicked
+	val lastClick: Signal[(Int,Int)] = clicked snapshot position
 ```
 
 # Where to Go Next
 
-[REScala download](https://github.com/guidosalva/REScala/archive/master.zip)  
-[REScala user manual](/manual)
+* [REScala user manual](/manual)
+* [Signal documentation](/scaladoc/#rescala.reactives.Signal)
+* [Event documentation](/scaladoc/#rescala.reactives.Event)
