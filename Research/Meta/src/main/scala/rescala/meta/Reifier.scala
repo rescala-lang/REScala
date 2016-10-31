@@ -9,7 +9,6 @@ trait Reifier[S <: Struct] {
   // External interface that can be used directly
   def reifyEvent[T](eventNode: EventNode[T]) : Event[T, S]
   def reifySignal[A](signalNode: SignalNode[A]) : Signal[A, S]
-  def reifyObserve[T](observeNode: ObserveNode[T]) : Observe[S]
   def reifyEvt[T](evtNode: EvtEventNode[T]) : Evt[T, S]
   def reifyVar[A](varNode: VarSignalNode[A]) : Var[A, S]
   def hasReification(node: DataFlowNode[_]): Boolean
@@ -21,11 +20,9 @@ trait Reifier[S <: Struct] {
   // Internal methods to create reactive nodes with dependencies
   protected[meta] def doReifyEvent[T](eventNode: EventNode[T]) : Event[T, S]
   protected[meta] def doReifySignal[A](signalPointer: SignalNode[A]) : Signal[A, S]
-  protected[meta] def doReifyObserve[T](observePointer: ObserveNode[T]) : Observe[S]
 }
 
 class EngineReifier[S <: Struct]()(implicit val engine: Engine[S, Turn[S]]) extends Reifier[S] {
-
   private val reifiedCache : collection.mutable.Map[DataFlowNode[_], Any] = collection.mutable.Map()
 
   private def applyLog(log : List[MetaLog[_]]): Unit = {
@@ -56,11 +53,6 @@ class EngineReifier[S <: Struct]()(implicit val engine: Engine[S, Turn[S]]) exte
       doReifySignal(signalNode)
   }
 
-  override def reifyObserve[T](observeNode: ObserveNode[T]): Observe[S] = {
-      applyLog(observeNode.graph.popLog())
-      doReifyObserve(observeNode)
-  }
-
   override def hasReification(node: DataFlowNode[_]): Boolean = reifiedCache.contains(node)
 
   override protected[meta] def doReifyEvent[T](eventNode: EventNode[T]): Event[T, S] = {
@@ -71,21 +63,14 @@ class EngineReifier[S <: Struct]()(implicit val engine: Engine[S, Turn[S]]) exte
     doReify(signalNode).asInstanceOf[Signal[A, S]]
   }
 
-  override protected[meta] def doReifyObserve[T](observeNode: ObserveNode[T]): Observe[S] = {
-    doReify(observeNode).asInstanceOf[Observe[S]]
-
-  }
-
   private def doDisconnect[T](node: DataFlowNode[T]): Unit = node match {
     case p: EventNode[_] => p.reify(this).disconnect()
     case p: SignalNode[_] => p.reify(this).disconnect()
-    case p: ObserveNode[_] => p.reify(this).remove()
   }
 
   private def doReify[T](node: DataFlowNode[T]): Any = {
     val reified = reifiedCache.getOrElse(node, node match {
       case p: ReactiveNode[_] => p.createReification(this)
-      case p: ObserveNode[_] => p.createReification(this)
     })
     node._hasReification = true
     reifiedCache += node -> reified

@@ -7,7 +7,8 @@ import rescala.meta.optimization.RedundancyElimination
 import rescala.meta.{DataFlowGraph, EngineReifier}
 
 class RedundancyEliminationTest extends FunSuite {
-  val SynchronousReifier = new EngineReifier()(CommonEngines.synchron)
+  import rescala.engines.CommonEngines.synchron
+  implicit val reifier = new rescala.meta.EngineReifier
 
   test("Redundancy elimination test") {
 
@@ -21,17 +22,16 @@ class RedundancyEliminationTest extends FunSuite {
     val v3 = v1.map(fun)
     val e1 = v2.changed
     val e2 = v3.changed
+    assert(g.numNodes == 5, "Graph should contain 5 nodes before redundancy elimination")
+    RedundancyElimination.optimize(g)
+    assert(g.numNodes == 3, "Graph should contain 3 nodes after redundancy elimination")
     e1 += { x += _ }
     e2 += { x += _ }
     v1.set(1)
-    assert(g.numNodes == 7, "Graph should contain 7 nodes before fusion")
-
-    RedundancyElimination.optimize(g)
-    assert(g.numNodes == 5, "Graph should contain 5 nodes after fusion")
-    v1.reify(SynchronousReifier)
+    v1.reify
     assert(x == 4, "Propagation of pre-optimization values should still work correctly")
     v1.set(2)
-    v1.reify(SynchronousReifier)
+    v1.reify
     assert(x == 10, "Propagation of post-optimization values should work correctly")
   }
 
@@ -48,18 +48,17 @@ class RedundancyEliminationTest extends FunSuite {
     val v4 = v2.map(fun)
     val e1 = v3.changed
     val e2 = v4.changed
+    assert(g.numNodes == 6, "Graph should contain 6 nodes before redundancy elimination")
+    RedundancyElimination.optimize(g)
+    assert(g.numNodes == 6, "Graph should contain 6 nodes after redundancy elimination")
     e1 += { x += _ }
     e2 += { x += _ }
     v1.set(1)
     v2.set(1)
-    assert(g.numNodes == 8, "Graph should contain 8 nodes before fusion")
-
-    RedundancyElimination.optimize(g)
-    assert(g.numNodes == 8, "Graph should contain 8 nodes after fusion")
-    v1.reify(SynchronousReifier)
+    v1.reify
     assert(x == 4, "Propagation of pre-optimization values should work correctly")
     v1.set(2)
-    v1.reify(SynchronousReifier)
+    v1.reify
     assert(x == 7, "Propagation of post-optimization values should work correctly")
   }
 
@@ -74,16 +73,15 @@ class RedundancyEliminationTest extends FunSuite {
     val v2 = v1.map(fun)
     val v3 = v1.map(fun)
     val e = v2.changed || v3.changed
+    assert(g.numNodes == 6, "Graph should contain 6 nodes before redundancy elimination")
+    RedundancyElimination.optimize(g)
+    assert(g.numNodes == 4, "Graph should contain 4 nodes after redundancy elimination")
     e += { x += _ }
     v1.set(1)
-    assert(g.numNodes == 7, "Graph should contain 7 nodes before fusion")
-
-    RedundancyElimination.optimize(g)
-    assert(g.numNodes == 5, "Graph should contain 5 nodes after fusion")
-    v1.reify(SynchronousReifier)
+    v1.reify
     assert(x == 2, "Propagation of pre-optimization values should still work correctly")
     v1.set(2)
-    v1.reify(SynchronousReifier)
+    v1.reify
     assert(x == 5, "Propagation of post-optimization values should work correctly")
   }
 }

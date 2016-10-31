@@ -1,7 +1,8 @@
 package rescala.meta
 
+import rescala.engines.Ticket
 import rescala.graph.Struct
-import rescala.reactives.Signals
+import rescala.reactives.{Observe, Signals}
 
 trait DataFlowRef[+T] {
   protected[meta] var graph : DataFlowGraph
@@ -27,8 +28,8 @@ object DataFlowRef {
 trait ReactiveRef[+T] extends DataFlowRef[T] {
   override def deref : Option[ReactiveNode[T]]
 
-  def observe[U >: T](onSuccess: (U) => Unit, onFailure: (Throwable) => Unit = t => throw t): ObserveRef[U] = new ObserveRef(deref.get.observe(onSuccess, onFailure))
-  def reify[S <: Struct](reifier: Reifier[S]) = deref.get.reify(reifier)
+  def observe[S <: Struct](onSuccess: (T) => Unit, onFailure: (Throwable) => Unit = t => throw t)(implicit reifier: Reifier[S], ticket: Ticket[S]): Observe[S] = deref.get.observe(onSuccess, onFailure)
+  def reify[S <: Struct](implicit reifier: Reifier[S]) = deref.get.reify
 }
 
 object ReactiveRef {
@@ -41,9 +42,10 @@ class EventRef[+T](_node : EventNode[T]) extends ReactiveRef[T] {
 
   override def deref: Option[EventNode[T]] = graph.deref(this).asInstanceOf[Option[EventNode[T]]]
 
-  override def reify[S <: Struct](reifier: Reifier[S]) = deref.get.reify(reifier)
+  override def reify[S <: Struct](implicit reifier: Reifier[S]) = deref.get.reify
 
-  def +=[X >: T](react: X => Unit): ObserveRef[X] = new ObserveRef(deref.get += react)
+  def +=[S <: Struct](react: T => Unit)(implicit reifier: Reifier[S], ticket: Ticket[S]): Observe[S] = deref.get += react
+
   def ||[U >: T](others: EventRef[U]*): EventRef[U] = new EventRef(deref.get||(others.map(_.deref.get):_*))
   def &&[U >: T](pred: (U) => Boolean): EventRef[U] = new EventRef(deref.get && pred)
   def \[U](other: EventRef[U]): EventRef[T] = new EventRef(deref.get \ other.deref.get)
@@ -65,7 +67,7 @@ object EventRef {
 class EvtRef[T](__node : EvtEventNode[T]) extends EventRef(__node) {
   override def deref: Option[EvtEventNode[T]] = graph.deref(this).asInstanceOf[Option[EvtEventNode[T]]]
 
-  override def reify[S <: Struct](reifier: Reifier[S]) = deref.get.reify(reifier)
+  override def reify[S <: Struct](implicit reifier: Reifier[S]) = deref.get.reify
 
   def fire(value: T) = deref.get.fire(value)
 }
@@ -80,7 +82,9 @@ class SignalRef[+A](_node : SignalNode[A]) extends ReactiveRef[A] {
 
   override def deref: Option[SignalNode[A]] = graph.deref(this).asInstanceOf[Option[SignalNode[A]]]
 
-  override def reify[S <: Struct](reifier: Reifier[S]) = deref.get.reify(reifier)
+  override def reify[S <: Struct](implicit reifier: Reifier[S]) = deref.get.reify
+
+  def now[S <: Struct](implicit reifier: Reifier[S], ticket: Ticket[S]): A = deref.get.now
 
   def delay(n: Int): SignalRef[A] = new SignalRef(deref.get.delay(n))
   def map[X >: A, B](f: (X) => B): SignalRef[B] = new SignalRef(deref.get.map(f))
@@ -95,24 +99,11 @@ object SignalRef {
 class VarRef[A](__node : VarSignalNode[A]) extends SignalRef(__node) {
   override def deref: Option[VarSignalNode[A]] = graph.deref(this).asInstanceOf[Option[VarSignalNode[A]]]
 
-  override def reify[S <: Struct](reifier: Reifier[S]) = deref.get.reify(reifier)
+  override def reify[S <: Struct](implicit reifier: Reifier[S]) = deref.get.reify
 
   def set(value: A) = deref.get.set(value)
 }
 
 object VarRef {
   def unapply[T](arg: VarRef[T]): Option[VarSignalNode[T]] = arg.deref
-}
-
-class ObserveRef[T](_node : ObserveNode[T]) extends DataFlowRef[Unit] {
-  override protected[meta] var graph : DataFlowGraph = _node.graph
-  graph.registerRef(this, _node)
-
-  override def deref: Option[ObserveNode[T]] = graph.deref(this).asInstanceOf[Option[ObserveNode[T]]]
-
-  def reify[S <: Struct](reifier: Reifier[S]) = deref.get.reify(reifier)
-}
-
-object ObserveRef {
-  def unapply[T](arg: ObserveRef[T]): Option[ObserveNode[T]] = arg.deref
 }

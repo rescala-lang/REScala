@@ -6,6 +6,9 @@ import rescala.meta.DataFlowGraph
 import rescala.meta.optimization.GraphSplit
 
 class SplitTest extends FunSuite {
+  import rescala.engines.CommonEngines.synchron
+  implicit val reifier = new rescala.meta.EngineReifier
+
   test("Copy split test") {
 
     val g = new DataFlowGraph()

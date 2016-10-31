@@ -29,23 +29,24 @@ trait DataFlowNode[+T] {
 }
 
 trait ReactiveNode[+T] extends DataFlowNode[T] {
-  def reify[S <: Struct](reifier: Reifier[S]): Observable[T, S]
+  def reify[S <: Struct](implicit reifier: Reifier[S]): Observable[T, S]
   override def newRef(): ReactiveRef[T]
 
   protected[meta] def doReify[S <: Struct](reifier: Reifier[S]): Observable[T, S]
   protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Pulsing[T, S]
 
-  def observe[U >: T](onSuccess: (U) => Unit, onFailure: (Throwable) => Unit = t => throw t): ObserveNode[U] = ObserveNode(graph, newRef(), onSuccess, onFailure)
+  def observe[S <: Struct](onSuccess: (T) => Unit, onFailure: (Throwable) => Unit = t => throw t)(implicit reifier: Reifier[S], ticket: Ticket[S]): Observe[S] = reify.observe(onSuccess, onFailure)
 }
 
 trait EventNode[+T] extends ReactiveNode[T] {
-  override def reify[S <: Struct](reifier: Reifier[S]): Event[T, S] = reifier.reifyEvent(this)
+  override def reify[S <: Struct](implicit reifier: Reifier[S]): Event[T, S] = reifier.reifyEvent(this)
   override def newRef(): EventRef[T] = new EventRef(this)
 
   override protected[meta] def doReify[S <: Struct](reifier: Reifier[S]): Event[T, S] = reifier.doReifyEvent(this)
   override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Event[T, S]
 
-  def +=[X >: T](react: X => Unit): ObserveNode[X] = ObserveNode(graph, newRef(), react)
+  def +=[S <: Struct](react: T => Unit)(implicit reifier: Reifier[S], ticket: Ticket[S]): Observe[S] = observe(react)
+
   def ||[U >: T](others: EventNode[U]*): OrEventNode[T, U] = OrEventNode(graph, newRef(), others.map(_.newRef()):_*)
   def &&[U >: T](pred: (U) => Boolean): FilteredEventNode[U, U] = FilteredEventNode[U, U](graph, newRef(), pred)
   def \[U](other: EventNode[U]): ExceptEventNode[T, U] = ExceptEventNode(graph, newRef(), other.newRef())
@@ -61,11 +62,13 @@ trait EventNode[+T] extends ReactiveNode[T] {
 }
 
 trait SignalNode[+A] extends ReactiveNode[A] {
-  override def reify[S <: Struct](reifier: Reifier[S]): Signal[A, S] = reifier.reifySignal(this)
+  override def reify[S <: Struct](implicit reifier: Reifier[S]): Signal[A, S] = reifier.reifySignal(this)
   override def newRef(): SignalRef[A] = new SignalRef(this)
 
   override protected[meta] def doReify[S <: Struct](reifier: Reifier[S]): Signal[A, S] = reifier.doReifySignal(this)
   override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Signal[A, S]
+
+  def now[S <: Struct](implicit reifier: Reifier[S], ticket: Ticket[S]): A = reify.now
 
   def delay(n: Int): DelayedSignalNode[A] = DelayedSignalNode(graph, newRef(), n)
   def map[X >: A, B](f: (X) => B): MappedSignalNode[X, B] = MappedSignalNode(graph, newRef(), f)
@@ -73,24 +76,8 @@ trait SignalNode[+A] extends ReactiveNode[A] {
   def changed: ChangedEventNode[A] = ChangedEventNode(graph, newRef())
 }
 
-case class ObserveNode[T](override var graph: DataFlowGraph, base : ReactiveRef[T], onSuccess: (T) => Unit, onFailure: (Throwable) => Unit = (cause) => { throw cause}) extends DataFlowNode[Unit] {
-  def reify[S <: Struct](reifier: Reifier[S]): Observe[S] = reifier.reifyObserve(this)
-  override def newRef(): ObserveRef[T] = new ObserveRef(this)
-  def structuralEquals(node: DataFlowNode[_]): Boolean = node match {
-    case ObserveNode(g, bs, s, f) => graph == g && bs.structuralEquals(base) && onSuccess == s && onFailure == f
-    case _ => false
-  }
-
-  protected[meta] def doReify[S <: Struct](reifier: Reifier[S]): Observe[S] = reifier.doReifyObserve(this)
-  protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Observe[S] = base.deref.get.doReify(reifier).observe(onSuccess, onFailure)
-
-  override def dependencies: Set[DataFlowRef[_]] = Set(base)
-
-}
-
-
 case class EvtEventNode[T](override var graph: DataFlowGraph) extends EventNode[T] {
-  override def reify[S <: Struct](reifier: Reifier[S]): Evt[T, S] = reifier.reifyEvt(this)
+  override def reify[S <: Struct](implicit reifier: Reifier[S]): Evt[T, S] = reifier.reifyEvt(this)
   override def newRef(): EvtRef[T] = new EvtRef(this)
   def structuralEquals(node: DataFlowNode[_]): Boolean = this == node
 
@@ -182,7 +169,7 @@ case class FlatMappedEventNode[T, +B](override var graph: DataFlowGraph, base : 
 }
 
 case class VarSignalNode[A](override var graph: DataFlowGraph) extends SignalNode[A] {
-  override def reify[S <: Struct](reifier: Reifier[S]): Var[A, S] = reifier.reifyVar(this)
+  override def reify[S <: Struct](implicit reifier: Reifier[S]): Var[A, S] = reifier.reifyVar(this)
   override def newRef(): VarRef[A] = new VarRef(this)
   def structuralEquals(node: DataFlowNode[_]): Boolean = this == node
 

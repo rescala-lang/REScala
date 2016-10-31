@@ -2,6 +2,8 @@ package rescala.api
 
 
 
+import rescala.engines.Ticket
+import rescala.graph.Struct
 import rescala.meta._
 import rescala.reactives.Signals
 
@@ -80,13 +82,11 @@ object Api {
 
   }
 
-  class metaApi(graph : DataFlowGraph) extends Api {
-
+  class metaApi[S <: Struct](graph : DataFlowGraph)(implicit val reifier : Reifier[S], ticket : Ticket[S]) extends Api {
     override type Signal[+A] = SignalRef[A]
     override type Event[+A] = EventRef[A]
     override type Var[A] = VarRef[A]
     override type Evt[A] = EvtRef[A]
-
 
     override def Evt[A](): Evt[A] = graph.createEvt()
     override def Var[A](v: A): Var[A] = graph.createVar(v)
@@ -96,7 +96,7 @@ object Api {
     override def changed[A](signal: Signal[A]): Event[A] = signal.changed
 
     override def observe[A](event: Event[A])(f: (A) => Unit): Unit = event.observe(f)
-    override def now[A](signal: Signal[A]): A = ??? //signal.now
+    override def now[A](signal: Signal[A]): A = signal.now
     override def fire[A](evt: Evt[A], value: A): Unit = evt.fire(value)
     override def set[A](vr: Var[A], value: A): Unit = vr.set(value)
     override def disconnectE(event : Event[_]): Unit = event.disconnect()
