@@ -28,10 +28,8 @@ class RedundancyEliminationTest extends FunSuite {
     e1 += { x += _ }
     e2 += { x += _ }
     v1.set(1)
-    v1.reify
     assert(x == 4, "Propagation of pre-optimization values should still work correctly")
     v1.set(2)
-    v1.reify
     assert(x == 10, "Propagation of post-optimization values should work correctly")
   }
 
@@ -55,10 +53,8 @@ class RedundancyEliminationTest extends FunSuite {
     e2 += { x += _ }
     v1.set(1)
     v2.set(1)
-    v1.reify
     assert(x == 4, "Propagation of pre-optimization values should work correctly")
     v1.set(2)
-    v1.reify
     assert(x == 7, "Propagation of post-optimization values should work correctly")
   }
 
@@ -78,10 +74,8 @@ class RedundancyEliminationTest extends FunSuite {
     assert(g.numNodes == 4, "Graph should contain 4 nodes after redundancy elimination")
     e += { x += _ }
     v1.set(1)
-    v1.reify
     assert(x == 2, "Propagation of pre-optimization values should still work correctly")
     v1.set(2)
-    v1.reify
     assert(x == 5, "Propagation of post-optimization values should work correctly")
   }
 }

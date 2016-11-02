@@ -25,10 +25,8 @@ class OperatorFusionTest extends FunSuite {
     assert(g.numNodes == 2, "Graph should contain 2 nodes after fusion")
     val o = e3 += { x = _ }
     e.fire(2)
-    e.reify
     assert(x == 6, "Propagation of pre-optimization values should still work correctly")
     e.fire(3)
-    e.reify
     assert(x == 8, "Propagation of post-optimization values should work correctly")
   }
 
@@ -49,12 +47,10 @@ class OperatorFusionTest extends FunSuite {
     e.fire(6)
     e.fire(4)
     e.fire(3)
-    e.reify
     assert(x == 6, "Propagation of pre-optimization values should still work correctly")
     e.fire(12)
     e.fire(8)
     e.fire(9)
-    e.reify
     assert(x == 12, "Propagation of post-optimization values should work correctly")
   }
 
@@ -73,9 +69,9 @@ class OperatorFusionTest extends FunSuite {
 
     OperatorFusion.optimize(g)
     assert(g.numNodes == 3, "Graph should contain 3 nodes after fusion")
-    assert(v3.reify.now == 6, "Propagation of pre-optimization values should still work correctly")
+    assert(v3.now == 6, "Propagation of pre-optimization values should still work correctly")
     v.set(3)
-    assert(v3.reify.now == 8, "Propagation of post-optimization values should work correctly")
+    assert(v3.now == 8, "Propagation of post-optimization values should work correctly")
   }
 
   test("Multi fusion test") {
@@ -92,9 +88,9 @@ class OperatorFusionTest extends FunSuite {
 
     OperatorFusion.optimize(g)
     assert(g.numNodes == 3, "Graph should contain 3 nodes after fusion")
-    assert(v4.reify.now == 18, "Propagation of pre-optimization values should still work correctly")
+    assert(v4.now == 18, "Propagation of pre-optimization values should still work correctly")
     v.set(3)
-    assert(v4.reify.now == 24, "Propagation of post-optimization values should work correctly")
+    assert(v4.now == 24, "Propagation of post-optimization values should work correctly")
   }
 
   test("No fusion test") {
@@ -111,10 +107,10 @@ class OperatorFusionTest extends FunSuite {
 
     OperatorFusion.optimize(g)
     assert(g.numNodes == 5, "Graph should still contain 5 nodes after fusion")
-    assert(v3.reify.now == 6, "Propagation of pre-optimization values should still work correctly")
-    assert(v4.reify.now == 12, "Propagation of pre-optimization values should still work correctly")
+    assert(v3.now == 6, "Propagation of pre-optimization values should still work correctly")
+    assert(v4.now == 12, "Propagation of pre-optimization values should still work correctly")
     v.set(3)
-    assert(v3.reify.now == 8, "Propagation of post-optimization values should work correctly")
-    assert(v4.reify.now == 18, "Propagation of post-optimization values should work correctly")
+    assert(v3.now == 8, "Propagation of post-optimization values should work correctly")
+    assert(v4.now == 18, "Propagation of post-optimization values should work correctly")
   }
 }

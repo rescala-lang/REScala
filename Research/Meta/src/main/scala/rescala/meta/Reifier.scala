@@ -1,7 +1,7 @@
 package rescala.meta
 
 import rescala.engines.Engine
-import rescala.graph.Struct
+import rescala.graph.{Pulsing, Struct}
 import rescala.propagation.Turn
 import rescala.reactives.{Evt, _}
 
@@ -9,9 +9,11 @@ trait Reifier[S <: Struct] {
   // External interface that can be used directly
   def reifyEvent[T](eventNode: EventNode[T]) : Event[T, S]
   def reifySignal[A](signalNode: SignalNode[A]) : Signal[A, S]
-  def reifyEvt[T](evtNode: EvtEventNode[T]) : Evt[T, S]
-  def reifyVar[A](varNode: VarSignalNode[A]) : Var[A, S]
-  def hasReification(node: DataFlowNode[_]): Boolean
+  def reifyEvt[T](evtNode: EvtEventNode[T]) : Evt[T, S] = reifyEvent(evtNode).asInstanceOf[Evt[T, S]]
+  def reifyVar[A](varNode: VarSignalNode[A]) : Var[A, S] = reifySignal(varNode).asInstanceOf[Var[A, S]]
+
+  def logOrApply[T](metaLog: MetaLog[T]): Unit
+  //def unreify(node : DataFlowNode[_]): Unit
 
   // Internal methods to create the corresponding reactive base value
   protected[meta] def createEvt[T]() : Evt[T, S]
@@ -23,7 +25,24 @@ trait Reifier[S <: Struct] {
 }
 
 class EngineReifier[S <: Struct]()(implicit val engine: Engine[S, Turn[S]]) extends Reifier[S] {
-  private val reifiedCache : collection.mutable.Map[DataFlowNode[_], Any] = collection.mutable.Map()
+  private val reifiedCache : collection.mutable.Map[DataFlowNode[_], Pulsing[_, S]] = collection.mutable.Map()
+
+  /*def unreify(node : DataFlowNode[_]): Unit = {
+    val reification = reifiedCache(node)
+    reification match {
+      case e:Event[_, _] => e.disconnect()
+      case s:Signal[_, _] => s.disconnect()
+    }
+  }*/
+
+  def logOrApply[T](metaLog: MetaLog[T]): Unit = {
+    val graph = metaLog.node.graph
+    graph.addLog(metaLog)
+    metaLog match {
+      case LoggedSet(node, value) if node.deref.get.hasReification => applyLog(graph.popLog())
+      case LoggedFire(node, value) if node.deref.get.hasReification => applyLog(graph.popLog())
+    }
+  }
 
   private def applyLog(log : List[MetaLog[_]]): Unit = {
     log.foreach {
@@ -39,10 +58,6 @@ class EngineReifier[S <: Struct]()(implicit val engine: Engine[S, Turn[S]]) exte
     }
   }
 
-  override def reifyEvt[T](evtNode: EvtEventNode[T]): Evt[T, S] = reifyEvent(evtNode).asInstanceOf[Evt[T, S]]
-
-  override def reifyVar[A](varNode: VarSignalNode[A]): Var[A, S] = reifySignal(varNode).asInstanceOf[Var[A, S]]
-
   override def reifyEvent[T](eventNode: EventNode[T]): Event[T, S] = {
       applyLog(eventNode.graph.popLog())
       doReifyEvent(eventNode)
@@ -52,8 +67,6 @@ class EngineReifier[S <: Struct]()(implicit val engine: Engine[S, Turn[S]]) exte
       applyLog(signalNode.graph.popLog())
       doReifySignal(signalNode)
   }
-
-  override def hasReification(node: DataFlowNode[_]): Boolean = reifiedCache.contains(node)
 
   override protected[meta] def doReifyEvent[T](eventNode: EventNode[T]): Event[T, S] = {
     doReify(eventNode).asInstanceOf[Event[T, S]]
@@ -68,11 +81,10 @@ class EngineReifier[S <: Struct]()(implicit val engine: Engine[S, Turn[S]]) exte
     case p: SignalNode[_] => p.reify(this).disconnect()
   }
 
-  private def doReify[T](node: DataFlowNode[T]): Any = {
+  private def doReify[T](node: DataFlowNode[T]): Pulsing[T, S] = {
     val reified = reifiedCache.getOrElse(node, node match {
       case p: ReactiveNode[_] => p.createReification(this)
-    })
-    node._hasReification = true
+    }).asInstanceOf[Pulsing[T, S]]
     reifiedCache += node -> reified
     reified
   }
