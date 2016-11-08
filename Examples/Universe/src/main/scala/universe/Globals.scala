@@ -15,7 +15,7 @@ object Globals {
   def setParallelism(n: Int) = {
     if (taskSupport != null) taskSupport.environment.shutdown()
     taskSupport = {
-      new ForkJoinTaskSupport(new scala.concurrent.forkjoin.ForkJoinPool(n))
+      new ForkJoinTaskSupport(new java.util.concurrent.ForkJoinPool(n))
     }
   }
 

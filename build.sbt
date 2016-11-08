@@ -1,5 +1,6 @@
 organization in ThisBuild := "de.tuda.stg"
-scalaVersion in ThisBuild := "2.11.8"
+scalaVersion in ThisBuild := "2.12.0"
+crossScalaVersions := Seq("2.12.0", "2.11.8")
 
 version in ThisBuild := "0.19.0-SNAPSHOT"
 
@@ -126,7 +127,7 @@ lazy val rescalatags = project.in(file("Extensions/Rescalatags"))
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(rescalaJS)
   .settings(
-    libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.6.0",
+    libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.6.2",
     scalatestDependency,
     jsDependencies += RuntimeDOM,
     licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))
@@ -158,7 +159,7 @@ lazy val stm = project.in(file("Extensions/STM"))
     scalatestDependency,
     publish := {},
     publishLocal := {},
-    libraryDependencies += "org.scala-stm" %% "scala-stm" % "0.7"
+    libraryDependencies += "org.scala-stm" %% "scala-stm" % "0.8-SNAPSHOT"
   )
 
 // Examples
@@ -246,7 +247,7 @@ lazy val meta = project.in(file("Research/Meta"))
 // ================================ dependencies
 
 lazy val rssDependencies = libraryDependencies ++= Seq(
-  "joda-time" % "joda-time" % "2.9.4",
+  "joda-time" % "joda-time" % "2.9.5",
   "org.joda" % "joda-convert" % "1.8.1",
   "org.codehaus.jsr166-mirror" % "jsr166y" % "1.7.0",
   "org.scala-lang.modules" %% "scala-xml" % "1.0.6")
@@ -264,14 +265,14 @@ scalacOptions in ThisBuild ++= (
   "-encoding" :: "UTF-8" ::
   "-unchecked" ::
   "-feature" ::
-  "-target:jvm-1.7" ::
+  "-target:jvm-1.8" ::
   "-Xlint" ::
   "-Xfuture" ::
   //"-Xlog-implicits" ::
   //"-Yno-predef" ::
   //"-Yno-imports" ::
   "-Xfatal-warnings" ::
-  "-Yinline-warnings" ::
+  //"-Yinline-warnings" ::
   "-Yno-adapted-args" ::
   "-Ywarn-dead-code" ::
   "-Ywarn-nullary-override" ::
