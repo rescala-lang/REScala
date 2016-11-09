@@ -1,6 +1,6 @@
 organization in ThisBuild := "de.tuda.stg"
 scalaVersion in ThisBuild := "2.12.0"
-crossScalaVersions := Seq("2.12.0", "2.11.8")
+crossScalaVersions in ThisBuild := Seq("2.12.0", "2.11.8")
 
 version in ThisBuild := "0.19.0-SNAPSHOT"
 
@@ -60,7 +60,7 @@ lazy val rescala = crossProject.in(file("Main"))
       s"""import rescala._
        """.stripMargin
   )
-  .jvmSettings().jsSettings()
+  .jvmSettings().jsSettings(scalaJSUseRhino in Global := true)
 
 lazy val rescalaJVM = rescala.jvm
 
@@ -76,7 +76,7 @@ lazy val tests = crossProject.in(file("Tests"))
     publishLocal := {}
   )
   .dependsOn(rescala)
-  .jvmSettings().jsSettings()
+  .jvmSettings().jsSettings(scalaJSUseRhino in Global := true)
 
 lazy val testsJVM = tests.jvm.dependsOn(stm, pipelining)
 
@@ -127,6 +127,7 @@ lazy val rescalatags = project.in(file("Extensions/Rescalatags"))
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(rescalaJS)
   .settings(
+    scalaJSUseRhino in Global := true,
     libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.6.2",
     scalatestDependency,
     jsDependencies += RuntimeDOM,
@@ -158,9 +159,10 @@ lazy val stm = project.in(file("Extensions/STM"))
   .settings(
     scalatestDependency,
     publish := {},
-    publishLocal := {},
-    libraryDependencies += "org.scala-stm" %% "scala-stm" % "0.8-SNAPSHOT"
+    publishLocal := {}
+    //libraryDependencies += "org.scala-stm" %% "scala-stm" % "0.8-SNAPSHOT"
   )
+  .dependsOn(RootProject(uri("git://github.com/stg-tud/scala-stm.git#4c2f2c5f5e4489d3ff74fcc3532b4a32acf5d68c")))
 
 // Examples
 
@@ -221,7 +223,8 @@ lazy val universe = project.in(file("Examples/Universe"))
   .settings(
     name := "rescala-universe",
     publish := {},
-    publishLocal := {})
+    publishLocal := {},
+    scalacOptions := Nil)
   .settings(com.typesafe.sbt.SbtStartScript.startScriptForClassesSettings)
 
 
