@@ -16,7 +16,7 @@ but also strong guarantees such as glitch freedom, even in the presence of dynam
 Additionally REScala adds strong transactional semantics to enable integrations with the many concurrency features of the JVM,
 and provides extensions to build distributed applications from a single seamless codebase.
 
-[Take a Tour... &raquo;](./rescala/gettingstarted/){: class="btn btn-primary"}
+[Take a Tour... &raquo;](./rescala/gettingstarted){: class="btn btn-primary"}
 
 # REScala
 Software applications must react to external changes such as the input from the user and network messages.
