@@ -1,6 +1,6 @@
 package rescala.meta
 
-import rescala.engines.Engine
+import rescala.engines.{Engine, Ticket}
 import rescala.graph.{Pulsing, Struct}
 import rescala.propagation.Turn
 import rescala.reactives.{Evt, _}
@@ -13,7 +13,7 @@ trait Reifier[S <: Struct] {
   def reifyVar[A](varNode: VarSignalNode[A]) : Var[A, S] = reifySignal(varNode).asInstanceOf[Var[A, S]]
 
   def logOrApply[T](metaLog: MetaLog[T]): Unit
-  def unreify(node : DataFlowNode[_]): Unit
+  def unreify(node : DataFlowNode[_])(implicit ticket : Ticket[S]): Unit
 
   // Internal methods to create the corresponding reactive base value
   protected[meta] def createEvt[T]() : Evt[T, S]
@@ -27,11 +27,18 @@ trait Reifier[S <: Struct] {
 class EngineReifier[S <: Struct]()(implicit val engine: Engine[S, Turn[S]]) extends Reifier[S] {
   private val reifiedCache : collection.mutable.Map[DataFlowNode[_], Pulsing[_, S]] = collection.mutable.Map()
 
-  def unreify(node : DataFlowNode[_]) = {
-    val reification = reifiedCache(node)
-    reification match {
-      case e:Event[_, _] => e.disconnect()
-      case s:Signal[_, _] => s.disconnect()
+  def unreify(node : DataFlowNode[_])(implicit ticket : Ticket[S]): Unit = {
+    for (n <- node.graph.outgoingDependencies(node))
+      unreify(n)
+    reifiedCache.get(node) match {
+      case Some(r) =>
+        val savedPulse = ticket { t:Turn[S] => r.pulse(t) }
+        node.graph.savePulse(node, savedPulse)
+        r match {
+          case e:Event[_, _] => e.disconnect()
+          case s:Signal[_, _] => s.disconnect()
+        }
+      case None => ()
     }
   }
 
@@ -88,7 +95,7 @@ class EngineReifier[S <: Struct]()(implicit val engine: Engine[S, Turn[S]]) exte
     reifiedCache += node -> reified
     reified
   }
-  override protected[meta] def createEvt[T]() = engine.Evt[T]()
+  override protected[meta] def createEvt[T](): engine.Evt[T] = engine.Evt[T]()
 
-  override protected[meta] def createVar[A]() = engine.Var.empty[A]
+  override protected[meta] def createVar[A](): engine.Var[A] = engine.Var.empty[A]
 }

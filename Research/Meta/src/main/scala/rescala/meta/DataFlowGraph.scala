@@ -8,17 +8,22 @@ class DataFlowGraph {
   private val _nodes : mutable.Set[DataFlowNode[_]] = mutable.Set()
   private val _log : mutable.Queue[MetaLog[_]] = mutable.Queue()
   private val _refs : mutable.Map[DataFlowRef[_], DataFlowNode[_]] = mutable.Map()
-  private val _pulses : mutable.Map[DataFlowNode[_], Option[Pulse[_]]] = mutable.Map()
+  private val _pulses : mutable.Map[DataFlowNode[_], Pulse[_]] = mutable.Map()
 
   protected[meta] def nodes: Set[DataFlowNode[_]] = _nodes.toSet
   protected[meta] def log: List[MetaLog[_]] = _log.toList
   protected[meta] def refs: Map[DataFlowRef[_], DataFlowNode[_]] = _refs.toMap
-  protected[meta] def pulses: Map[DataFlowNode[_], Option[Pulse[_]]] = _pulses.toMap
+  protected[meta] def pulses: Map[DataFlowNode[_], Pulse[_]] = _pulses.toMap
 
   def numNodes: Int = _nodes.size
   def deleteNode(toDelete : DataFlowNode[_]): Unit = {
     if (nodeRefs(toDelete).nonEmpty) throw new IllegalArgumentException("Cannot delete a node that is still referenced!")
     _nodes -= toDelete
+  }
+  protected[meta] def registerNode[T](reactive: DataFlowNode[T]) : Unit = {
+    if (reactive.dependencies.exists(!_refs.contains(_))) throw new IllegalArgumentException("Cannot register node that has dependencies not found in the same data flow graph!")
+    _nodes += reactive
+    addLog(LoggedCreate(reactive.newRef()))
   }
 
   protected[meta] def addLog(newLog : MetaLog[_]): Unit = _log += newLog
@@ -35,6 +40,13 @@ class DataFlowGraph {
   protected[meta] def nodeRefs[T](node: DataFlowNode[T]): Set[DataFlowRef[_]] = _refs.filter(_._2 == node).keySet.toSet
   protected[meta] def registerRef[T](pointer: DataFlowRef[T], node: DataFlowNode[T]): mutable.Map[DataFlowRef[_], DataFlowNode[_]] = _refs += (pointer -> node)
   protected[meta] def deleteRef(pointer: DataFlowRef[_]): mutable.Map[DataFlowRef[_], DataFlowNode[_]] = _refs -= pointer
+
+  protected[meta] def savePulse[T](node: DataFlowNode[T], pulse: Pulse[T]): Unit = _pulses += (node -> pulse)
+  protected[meta] def restorePulse[T](node: DataFlowNode[T]) : Option[Pulse[T]] = {
+    val restored = _pulses.get(node)
+    _pulses -= node
+    restored.asInstanceOf[Option[Pulse[T]]]
+  }
 
   protected[meta] def moveNodes(moveNodes : Set[DataFlowNode[_]], newGraph : DataFlowGraph): Unit = {
     if (moveNodes.exists(!_nodes.contains(_)))
@@ -62,15 +74,7 @@ class DataFlowGraph {
     newVar.set(v)
     newVar
   }
-
-
   def createEvt[T]() : EvtRef[T] = new EvtRef(EvtEventNode[T](this))
-
-  protected[meta] def registerNode[T](reactive: DataFlowNode[T]) : Unit = {
-    if (reactive.dependencies.exists(!_refs.contains(_))) throw new IllegalArgumentException("Cannot register node that has dependencies not found in the same data flow graph!")
-      _nodes += reactive
-    addLog(LoggedCreate(reactive.newRef()))
-  }
 
   protected[meta] def incomingDependencies(node : DataFlowNode[_]): Set[DataFlowNode[_]] = node.dependencies.map(refs.get).collect{ case Some(n) => n }
   protected[meta] def outgoingDependencies(node : DataFlowNode[_]): Set[DataFlowNode[_]] = nodes.filter(_.dependencies.collect{ case DataFlowRef(n) => n }.contains(node))

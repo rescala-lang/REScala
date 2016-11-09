@@ -11,7 +11,7 @@ class RedundancyElimination(override val verbose: Boolean = false, override val 
     @scala.annotation.tailrec
     def inner(nodes: List[ReactiveNode[_]]): Option[RedundantNodes] = nodes match {
       case n :: tail =>
-        val r = (graph.nodes - n).find(n2 => n2.structuralEquals(n) && !n2.hasReification)
+        val r = (graph.nodes - n).find(n2 => n2.structuralEquals(n))
         r match {
           case None => inner(tail)
           case Some(red) => Some(RedundantNodes(n, red))

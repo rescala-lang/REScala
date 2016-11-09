@@ -37,7 +37,7 @@ trait ReactiveNode[+T] extends DataFlowNode[T] {
     assignedReifier = Some(reifier)
   }
   def reify[S <: Struct](implicit reifier: Reifier[S]): Observable[T, S]
-  def unreify[S <: Struct](implicit reifier: Reifier[S]): Unit = {
+  def unreify[S <: Struct](implicit reifier: Reifier[S], ticket : Ticket[S]): Unit = {
     reifier.unreify(this)
     assignedReifier = None
   }
