@@ -24,9 +24,9 @@ subsequent change of them triggers a reevaluation of s.
   val a = Var(2)
   val b = Var(3)
   val s = Signal{ a() + b() }
-  println(a.now,b.now,s.now) // (2,3,5)
+  println((a.now,b.now,s.now)) // (2,3,5)
   a() = 4
-  println(a.now,b.now,s.now) // (4,3,7)
+  println((a.now,b.now,s.now)) // (4,3,7)
 ```
 REScala signals integrate seamlessly with OO design. They are
 class attributes like fields and methods. They too can have
@@ -107,6 +107,6 @@ snapshot function.
 
 # Where to Go Next
 
-* [REScala user manual](/manual)
+* [REScala user manual](/manual/)
 * [Signal documentation](/scaladoc/#rescala.reactives.Signal)
 * [Event documentation](/scaladoc/#rescala.reactives.Event)
