@@ -53,13 +53,28 @@ Consider the following [example](#first-example):
 
 ```scala
 var a = 2
+// a: Int = 2
+
 var b = 3
+// b: Int = 3
+
 var c = a + b
-println(a,b,c) // -> (2,3,5)
+// c: Int = 5
+
+println((a,b,c))
+// (2,3,5)
+
 a = 4
-println(a,b,c) // -> (4,3,5)
+// a: Int = 4
+
+println((a,b,c))
+// (4,3,5)
+
 c = a + b
-println(a,b,c) // -> (4,3,7)
+// c: Int = 7
+
+println((a,b,c))
+// (4,3,7)
 ```
 {: #first-example}
 
@@ -201,10 +216,10 @@ val s = Signal{ a() + b() } // Multiple vars is a signal expression
 // s: rescala.Signal[Int] = <console>(17)
 
 val t = Signal{ s() * c() + 10 } // Mix signals and vars in signal expressions
-// t: rescala.Signal[Int] = <console>(19)
+// t: rescala.Signal[Int] = <console>(17)
 
 val u = Signal{ s() * t() } // A signal that depends on other signals
-// u: rescala.Signal[Int] = <console>(20)
+// u: rescala.Signal[Int] = <console>(17)
 ```
 
 ```scala
@@ -289,7 +304,7 @@ val space = Signal{ SPEED * time() }
 // space: rescala.Signal[Int] = <console>(17)
 
 space.changed += ((x: Int) => println(x))
-// res6: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(21)
+// res9: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
 
 while (time.now < 5) {
   Thread sleep 20
@@ -323,10 +338,10 @@ val e: Event[Int] = space.changed
 // e: rescala.Event[Int] = (changed <console>(17))
 
 val handler:  (Int => Unit) =  ((x: Int) => println(x))
-// handler: Int => Unit = <function1>
+// handler: Int => Unit = $$Lambda$2240/1907745255@84b787a
 
 e += handler
-// res8: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(23)
+// res11: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
 ```
 
 Note that using `println(space.now)` would also print the
@@ -442,19 +457,19 @@ val e = Evt[Int]()
 // e: rescala.Evt[Int] = <console>(15)
 
 e += { println(_) }
-// res9: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(17)
+// res12: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(17)
 
 e += (x => println(x))
-// res10: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(19)
+// res13: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
 
 e += ((x: Int) => println(x))
-// res11: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(19)
+// res14: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
 
 e += (x => {  // Multiple statements in the handler
   state = x
   println(x)
 })
-// res12: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(20)
+// res15: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(19)
 ```
 
 The signature of the handler must conform the signature of the event,
@@ -470,12 +485,12 @@ e += (x => {
   println(x._1)
   println(x._2)
 })
-// res13: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(19)
+// res16: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
 
 e += ((x: (Int,String)) => {
   println(x)
 })
-// res14: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(19)
+// res17: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
 ```
 
 Note that events without arguments still need an argument
@@ -486,10 +501,10 @@ val e = Evt[Int]()
 // e: rescala.Evt[Int] = <console>(15)
 
 e += { x => println() }
-// res15: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(17)
+// res18: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(17)
 
 e += { (x: Int) => println() }
-// res16: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(17)
+// res19: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(17)
 ```
 
 Scala allows one to refer to a method using the partially applied
@@ -507,7 +522,7 @@ val e = Evt[Int]
 // e: rescala.Evt[Int] = <console>(15)
 
 e += m1 _
-// res17: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(23)
+// res20: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
 
 e(10)
 // 11
@@ -546,7 +561,7 @@ val e = Evt[Int]()
 // e: rescala.Evt[Int] = <console>(15)
 
 e += { x => println(x) }
-// res22: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(19)
+// res25: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
 
 e(10)
 // 10
@@ -564,18 +579,18 @@ val e = Evt[Int]()
 // e: rescala.Evt[Int] = <console>(15)
 
 e += { x => println(x) }
-// res25: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(19)
+// res28: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
 
 e += { x => println(f"n: $x")}
-// res26: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(19)
+// res29: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
 
 e(10)
-// 10
 // n: 10
+// 10
 
 e(10)
-// 10
 // n: 10
+// 10
 ```
 
 ## Unregistering Handlers
@@ -592,11 +607,11 @@ val handler1 = e += println
 // handler1: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(16)
 
 val handler2 = e += { x => println(s"n: $x") }
-// handler2: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
+// handler2: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(17)
 
 e(10)
-// 10
 // n: 10
+// 10
 
 handler2.remove()
 
@@ -663,7 +678,7 @@ val e1_OR_e2 = e1 || e2
 // e1_OR_e2: rescala.reactives.Event[Int,rescala.parrp.ParRP] = (or <console>(15) <console>(15))
 
 e1_OR_e2 += ((x: Int) => println(x))
-// res34: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(21)
+// res37: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
 
 e1(1)
 // 1
@@ -688,7 +703,7 @@ val e_AND: Event[Int] = e && ((x: Int) => x>10)
 // e_AND: rescala.Event[Int] = (filter <console>(15))
 
 e_AND += ((x: Int) => println(x))
-// res37: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(20)
+// res40: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
 
 e(5)
 
@@ -711,7 +726,7 @@ val e_MAP: Event[String] = e map ((x: Int) => x.toString)
 // e_MAP: rescala.Event[String] = (map <console>(15))
 
 e_MAP += ((x: String) => println(s"Here: $x"))
-// res40: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(20)
+// res43: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
 
 e(5)
 // Here: 5
@@ -735,7 +750,7 @@ val e_drop: Event[Unit] = e.dropParam
 // e_drop: rescala.Event[Unit] = (map <console>(15))
 
 e_drop += (_ => println("*"))
-// res43: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
+// res46: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(17)
 
 e(10)
 // *
@@ -861,7 +876,7 @@ val e: Event[Int] = s.changed
 // e: rescala.Event[Int] = (changed <console>(16))
 
 e += ((x:Int)=>{test+=1})
-// res54: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(20)
+// res57: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
 
 v.set(2)
 
@@ -915,10 +930,10 @@ val e = Evt[Int]()
 // e: rescala.Evt[Int] = <console>(15)
 
 val f = (x:Int,y:Int)=>(x+y)
-// f: (Int, Int) => Int = <function2>
+// f: (Int, Int) => Int = $$Lambda$2315/699569956@70fc6d05
 
 val s: Signal[Int] = e.fold(10)(f)
-// s: rescala.Signal[Int] = <console>(22)
+// s: rescala.Signal[Int] = <console>(17)
 
 e(1)
 
@@ -946,10 +961,10 @@ val e = Evt[Int]()
 // e: rescala.Evt[Int] = <console>(15)
 
 val f = (x:Int)=>{test=x; x+1}
-// f: Int => Int = <function1>
+// f: Int => Int = $$Lambda$2316/937941171@49a7e8e9
 
 val s: Signal[Int] = e.iterate(10)(f)
-// s: rescala.Signal[Int] = <console>(20)
+// s: rescala.Signal[Int] = <console>(17)
 
 e(1)
 
@@ -1023,7 +1038,7 @@ val s: Signal[scala.collection.LinearSeq[Int]] = e.last(5)
 
 s observe println
 // Queue()
-// res78: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
+// res81: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(17)
 
 e(1)
 // Queue(1)
@@ -1094,7 +1109,7 @@ val s1 = Signal{ v() + 1 }
 // s1: rescala.Signal[Int] = <console>(16)
 
 val s = e.snapshot(s1)
-// s: rescala.reactives.Signal[Int,rescala.parrp.ParRP] = <console>(18)
+// s: rescala.reactives.Signal[Int,rescala.parrp.ParRP] = <console>(17)
 
 e(1)
 
@@ -1126,7 +1141,7 @@ val e = s.change
 // e: rescala.reactives.Event[rescala.reactives.Signals.Diff[Int],rescala.parrp.ParRP] = (change <console>(15))
 
 e += println
-// res93: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
+// res96: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(17)
 
 s.set(10)
 // Diff(Change(5),Change(10))
@@ -1157,7 +1172,7 @@ val e: Event[Unit] = s.changedTo(3)
 // e: rescala.Event[Unit] = (map (filter (changed <console>(16))))
 
 e += ((x:Unit)=>{test+=1})
-// res96: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(20)
+// res99: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
 
 assert(test == 0)
 
@@ -1204,7 +1219,7 @@ def factory(x: Int) = x%2 match {
 // factory: (x: Int)rescala.Signal[Int]
 
 val s3 = e.reset(100)(factory)
-// s3: rescala.reactives.Signal[Int,rescala.parrp.ParRP] = <console>(23)
+// s3: rescala.reactives.Signal[Int,rescala.parrp.ParRP] = <console>(17)
 
 assert(s3.now == 1)
 
@@ -1263,13 +1278,13 @@ val collection: List[Signal[_]] = List(v1, v2, v3)
 // collection: List[rescala.Signal[_]] = List(<console>(15), <console>(15), <console>(15))
 
 val innerChanges = Signal {collection.map(_.changed).reduce((a, b) => a || b)}
-// innerChanges: rescala.Signal[rescala.reactives.Event[Any,rescala.parrp.ParRP]] = <console>(21)
+// innerChanges: rescala.Signal[rescala.reactives.Event[Any,rescala.parrp.ParRP]] = <console>(18)
 
 val anyChanged = innerChanges.flatten
-// anyChanged: rescala.reactives.Event[Any,rescala.parrp.ParRP] = <console>(22)
+// anyChanged: rescala.reactives.Event[Any,rescala.parrp.ParRP] = <console>(16)
 
 anyChanged += println
-// res109: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(24)
+// res112: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(17)
 
 v1.set(10)
 // 10
@@ -1380,7 +1395,7 @@ val a = Var(0)             /* WRONG - DON'T DO IT */
 // a: rescala.Var[Int] = <console>(15)
 
 val s = Signal{ a() + t() }
-// <console>:18: error: overloaded method value + with alternatives:
+// <console>:17: error: overloaded method value + with alternatives:
 //   (x: Double)Double <and>
 //   (x: Float)Float <and>
 //   (x: Long)Long <and>
@@ -1394,7 +1409,7 @@ val s = Signal{ a() + t() }
 //                            ^
 
 val t = Signal{ a() + s() + 1 }
-// t: rescala.Signal[Int] = <console>(20)
+// t: rescala.Signal[Int] = <console>(17)
 ```
 
 creates a mutual dependency between ```s``` and
@@ -1411,13 +1426,13 @@ class Foo(init: Int){            /* WRONG - DON'T DO IT */
 // defined class Foo
 
 val foo = new Foo(1)
-// foo: Foo = Foo@15e0e50
+// foo: Foo = Foo@1afdc21c
 
 val varFoo = Var(foo)
-// varFoo: rescala.Var[Foo] = <console>(17)
+// varFoo: rescala.Var[Foo] = <console>(16)
 
 val s = Signal{ varFoo().x + 10 }
-// s: rescala.Signal[Int] = <console>(18)
+// s: rescala.Signal[Int] = <console>(16)
 
 // s.now == 11
 foo.x = 2
@@ -1446,13 +1461,13 @@ class Foo(val x: Int){}
 // defined class Foo
 
 val foo = new Foo(1)
-// foo: Foo = Foo@50acc9d1
+// foo: Foo = Foo@5faea4cd
 
 val varFoo = Var(foo)
-// varFoo: rescala.Var[Foo] = <console>(17)
+// varFoo: rescala.Var[Foo] = <console>(16)
 
 val s = Signal{ varFoo().x + 10 }
-// s: rescala.Signal[Int] = <console>(18)
+// s: rescala.Signal[Int] = <console>(16)
 
 // s.now == 11
 varFoo()= new Foo(2)
@@ -1471,13 +1486,13 @@ class Foo(init: Int){   /* WRONG - DON'T DO IT */
 // defined class Foo
 
 val foo = new Foo(1)
-// foo: Foo = Foo@47cca1b6
+// foo: Foo = Foo@717f773d
 
 val varFoo = Var(foo)
-// varFoo: rescala.Var[Foo] = <console>(17)
+// varFoo: rescala.Var[Foo] = <console>(16)
 
 val s = Signal{ varFoo().x + 10 }
-// s: rescala.Signal[Int] = <console>(18)
+// s: rescala.Signal[Int] = <console>(16)
 
 // s.now == 11
 foo.x = 2
@@ -1509,7 +1524,7 @@ val a = Var(1)           /* WRONG - DON'T DO IT */
 // a: rescala.Var[Int] = <console>(15)
 
 val b = increment(a)
-// <console>:20: error: type mismatch;
+// <console>:17: error: type mismatch;
 //  found   : rescala.Var[Int]
 //     (which expands to)  rescala.reactives.Var[Int,rescala.parrp.ParRP]
 //  required: Int
@@ -1531,7 +1546,7 @@ val b = increment(a.now)
 // b: Int = 2
 
 val s = Signal{ b + 1 }
-// s: rescala.Signal[Int] = <console>(21)
+// s: rescala.Signal[Int] = <console>(16)
 ```
 
 The following solution is syntactically correct and the signal
@@ -1542,7 +1557,7 @@ val a = Var(1)
 // a: rescala.Var[Int] = <console>(15)
 
 val s = Signal{ increment(a()) + 1 }
-// s: rescala.Signal[Int] = <console>(20)
+// s: rescala.Signal[Int] = <console>(17)
 ```
 
 ---
