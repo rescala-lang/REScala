@@ -134,9 +134,6 @@ lazy val rescalatags = project.in(file("Extensions/Rescalatags"))
     licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))
   )
 
-// Examples
-
-
 lazy val datastructures = project.in(file("Extensions/Datastructures"))
   .dependsOn(rescalaJVM)
   .settings(
