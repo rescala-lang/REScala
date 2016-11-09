@@ -107,6 +107,6 @@ snapshot function.
 
 # Where to Go Next
 
-* [REScala user manual](/manual/)
-* [Signal documentation](/scaladoc/#rescala.reactives.Signal)
-* [Event documentation](/scaladoc/#rescala.reactives.Event)
+* [REScala user manual](../manual/)
+* [Signal documentation](../scaladoc/#rescala.reactives.Signal)
+* [Event documentation](../scaladoc/#rescala.reactives.Event)
