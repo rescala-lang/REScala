@@ -13,7 +13,7 @@ trait Reifier[S <: Struct] {
   def reifyVar[A](varNode: VarSignalNode[A]) : Var[A, S] = reifySignal(varNode).asInstanceOf[Var[A, S]]
 
   def logOrApply[T](metaLog: MetaLog[T]): Unit
-  //def unreify(node : DataFlowNode[_]): Unit
+  def unreify(node : DataFlowNode[_]): Unit
 
   // Internal methods to create the corresponding reactive base value
   protected[meta] def createEvt[T]() : Evt[T, S]
@@ -27,13 +27,13 @@ trait Reifier[S <: Struct] {
 class EngineReifier[S <: Struct]()(implicit val engine: Engine[S, Turn[S]]) extends Reifier[S] {
   private val reifiedCache : collection.mutable.Map[DataFlowNode[_], Pulsing[_, S]] = collection.mutable.Map()
 
-  /*def unreify(node : DataFlowNode[_]): Unit = {
+  def unreify(node : DataFlowNode[_]) = {
     val reification = reifiedCache(node)
     reification match {
       case e:Event[_, _] => e.disconnect()
       case s:Signal[_, _] => s.disconnect()
     }
-  }*/
+  }
 
   def logOrApply[T](metaLog: MetaLog[T]): Unit = {
     val graph = metaLog.node.graph

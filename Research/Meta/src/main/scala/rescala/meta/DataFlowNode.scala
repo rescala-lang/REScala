@@ -1,7 +1,7 @@
 package rescala.meta
 
 import rescala.engines.{Engine, Ticket}
-import rescala.graph.{Pulsing, Struct}
+import rescala.graph.{Pulse, Pulsing, Struct}
 import rescala.propagation.Turn
 import rescala.reactives._
 
@@ -9,8 +9,6 @@ trait DataFlowNode[+T] {
   // Used only to prevent structural equality check for case-classes
   private class Node
   private val _node = new Node()
-  protected[meta] var assignedReifier : Option[Reifier[_ <: Struct]] = None
-  def hasReification = assignedReifier.nonEmpty
 
   override def equals(obj: scala.Any): Boolean = obj match {
     case n: DataFlowNode[_] => n._node == _node
@@ -23,18 +21,26 @@ trait DataFlowNode[+T] {
   def dependencies : Set[DataFlowRef[_]]
   def structuralEquals(dataFlowNode: DataFlowNode[_]): Boolean
 
-  def disconnect() = graph.addLog(LoggedDisconnect(this.newRef()))
+  def disconnect(): Unit = graph.addLog(LoggedDisconnect(this.newRef()))
 
   graph.registerNode(this)
 
 }
 
 trait ReactiveNode[+T] extends DataFlowNode[T] {
+  protected[meta] var assignedReifier : Option[Reifier[_ <: Struct]] = None
+  def hasReification: Boolean = assignedReifier.nonEmpty
+
+  protected[this] def registerReifier(reifier: Reifier[_ <: Struct]): Unit = {
+    if (assignedReifier.exists(_ != reifier))
+      throw new IllegalAccessException("Cannot reify a node with different reifiers at the same time!")
+    assignedReifier = Some(reifier)
+  }
   def reify[S <: Struct](implicit reifier: Reifier[S]): Observable[T, S]
-  /*def unreify[S <: Struct](implicit reifier: Reifier[S]) = {
+  def unreify[S <: Struct](implicit reifier: Reifier[S]): Unit = {
     reifier.unreify(this)
     assignedReifier = None
-  }*/
+  }
   override def newRef(): ReactiveRef[T]
 
   protected[meta] def doReify[S <: Struct](reifier: Reifier[S]): Observable[T, S]
@@ -50,7 +56,7 @@ trait EventNode[+T] extends ReactiveNode[T] {
   override def newRef(): EventRef[T] = new EventRef(this)
 
   override protected[meta] def doReify[S <: Struct](reifier: Reifier[S]): Event[T, S] = {
-    assignedReifier = Some(reifier)
+    registerReifier(reifier)
     reifier.doReifyEvent(this)
   }
   override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Event[T, S]
@@ -78,7 +84,7 @@ trait SignalNode[+A] extends ReactiveNode[A] {
   override def newRef(): SignalRef[A] = new SignalRef(this)
 
   override protected[meta] def doReify[S <: Struct](reifier: Reifier[S]): Signal[A, S] = {
-    assignedReifier = Some(reifier)
+    registerReifier(reifier)
     reifier.doReifySignal(this)
   }
   override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Signal[A, S]
@@ -93,7 +99,7 @@ trait SignalNode[+A] extends ReactiveNode[A] {
 
 case class EvtEventNode[T](override var graph: DataFlowGraph) extends EventNode[T] {
   override def reify[S <: Struct](implicit reifier: Reifier[S]): Evt[T, S] = {
-    assignedReifier = Some(reifier)
+    registerReifier(reifier)
     reifier.reifyEvt(this)
   }
 
@@ -195,7 +201,7 @@ case class FlatMappedEventNode[T, +B](override var graph: DataFlowGraph, base : 
 
 case class VarSignalNode[A](override var graph: DataFlowGraph) extends SignalNode[A] {
   override def reify[S <: Struct](implicit reifier: Reifier[S]): Var[A, S] = {
-    assignedReifier = Some(reifier)
+    registerReifier(reifier)
     reifier.reifyVar(this)
   }
   override def newRef(): VarRef[A] = new VarRef(this)

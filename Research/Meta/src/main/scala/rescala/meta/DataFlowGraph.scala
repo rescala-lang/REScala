@@ -1,23 +1,27 @@
 package rescala.meta
 
+import rescala.graph.Pulse
+
 import scala.collection.mutable
 
 class DataFlowGraph {
   private val _nodes : mutable.Set[DataFlowNode[_]] = mutable.Set()
   private val _log : mutable.Queue[MetaLog[_]] = mutable.Queue()
   private val _refs : mutable.Map[DataFlowRef[_], DataFlowNode[_]] = mutable.Map()
+  private val _pulses : mutable.Map[DataFlowNode[_], Option[Pulse[_]]] = mutable.Map()
 
-  protected[meta] def nodes = _nodes.toSet
-  protected[meta] def log = _log.toList
-  protected[meta] def refs = _refs.toMap
+  protected[meta] def nodes: Set[DataFlowNode[_]] = _nodes.toSet
+  protected[meta] def log: List[MetaLog[_]] = _log.toList
+  protected[meta] def refs: Map[DataFlowRef[_], DataFlowNode[_]] = _refs.toMap
+  protected[meta] def pulses: Map[DataFlowNode[_], Option[Pulse[_]]] = _pulses.toMap
 
-  def numNodes = _nodes.size
+  def numNodes: Int = _nodes.size
   def deleteNode(toDelete : DataFlowNode[_]): Unit = {
     if (nodeRefs(toDelete).nonEmpty) throw new IllegalArgumentException("Cannot delete a node that is still referenced!")
     _nodes -= toDelete
   }
 
-  protected[meta] def addLog(newLog : MetaLog[_]) = _log += newLog
+  protected[meta] def addLog(newLog : MetaLog[_]): Unit = _log += newLog
   protected[meta] def popLog() : List[MetaLog[_]] = {
     val l = _log.toList
     _log.clear()
@@ -28,9 +32,9 @@ class DataFlowGraph {
     case Some(p) => Some(p.asInstanceOf[DataFlowNode[T]])
     case None => None
   }
-  protected[meta] def nodeRefs[T](node: DataFlowNode[T]) = _refs.filter(_._2 == node).keySet
-  protected[meta] def registerRef[T](pointer: DataFlowRef[T], node: DataFlowNode[T]) = _refs += (pointer -> node)
-  protected[meta] def deleteRef(pointer: DataFlowRef[_]) = _refs -= pointer
+  protected[meta] def nodeRefs[T](node: DataFlowNode[T]): Set[DataFlowRef[_]] = _refs.filter(_._2 == node).keySet.toSet
+  protected[meta] def registerRef[T](pointer: DataFlowRef[T], node: DataFlowNode[T]): mutable.Map[DataFlowRef[_], DataFlowNode[_]] = _refs += (pointer -> node)
+  protected[meta] def deleteRef(pointer: DataFlowRef[_]): mutable.Map[DataFlowRef[_], DataFlowNode[_]] = _refs -= pointer
 
   protected[meta] def moveNodes(moveNodes : Set[DataFlowNode[_]], newGraph : DataFlowGraph): Unit = {
     if (moveNodes.exists(!_nodes.contains(_)))
@@ -68,8 +72,8 @@ class DataFlowGraph {
     addLog(LoggedCreate(reactive.newRef()))
   }
 
-  protected[meta] def incomingDependencies(node : DataFlowNode[_]) = node.dependencies.map(refs.get).collect{ case Some(n) => n }
-  protected[meta] def outgoingDependencies(node : DataFlowNode[_]) = nodes.filter(_.dependencies.collect{ case DataFlowRef(n) => n }.contains(node))
+  protected[meta] def incomingDependencies(node : DataFlowNode[_]): Set[DataFlowNode[_]] = node.dependencies.map(refs.get).collect{ case Some(n) => n }
+  protected[meta] def outgoingDependencies(node : DataFlowNode[_]): Set[DataFlowNode[_]] = nodes.filter(_.dependencies.collect{ case DataFlowRef(n) => n }.contains(node))
 }
 
 
