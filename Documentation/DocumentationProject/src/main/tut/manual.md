@@ -51,15 +51,15 @@ up-to-date.
 
 Consider the following [example](#first-example):
 
-```scala
+```tut:book
 var a = 2
 var b = 3
 var c = a + b
-println(a,b,c) // -> (2,3,5)
+println((a,b,c))
 a = 4
-println(a,b,c) // -> (4,3,5)
+println((a,b,c))
 c = a + b
-println(a,b,c) // -> (4,3,7)
+println((a,b,c))
 ```
 {: #first-example}
 
