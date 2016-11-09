@@ -335,17 +335,23 @@ class MacroTestSuite extends RETests {
     assert(s2.now === List(10, 2))
   }
 
-  allEngines("abstract Type Member"){ engine => import engine._
+  allEngines("abstract Type Member"){ engine =>
+    // the renamed engines are a workaround for this bug: https://issues.scala-lang.org/browse/SI-10036
+    // using the same engine in both trait and object causes the compiler to generate two field with the same name
+    val engine1 = engine
+    val engine2 = engine
     trait T {
+      import engine1._
       type A
       val v: Var[A]
       val s = Signal { v() }
     }
     object o extends T {
+      import engine2._
       type A = Int
       lazy val v = Var(4)
     }
-    assert(o.s.now == 4)
+    assert(o.s.now(engine) == 4)
   }
 
   allEngines("default Arguments"){ engine => import engine._
