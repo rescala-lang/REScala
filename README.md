@@ -6,9 +6,7 @@ Traditionally, object-oriented software adopts the Observer pattern to implement
 
 REScala ia a reactive language which integrates concepts from event-based and functional-reactive programming into the object-oriented world. REScala supports the development of reactive applications by fostering a functional declarative style which complements the advantages of object-oriented design.
 
-* Homepage: <http://www.guidosalvaneschi.com/rescala/main/index.html>
-* PDF Manual: <http://www.guidosalvaneschi.com/rescala/main/manual.pdf>
-* Examples: <https://github.com/guidosalva/examples>
+* Homepage: <www.rescala-lang.com/>
 
 
 # A Reactive Language for the Object-oriented World
