@@ -1,8 +1,6 @@
-import rescala.graph.Struct
-import rescala.propagation.Turn
-import rescala.engines._
+package rescala.stm
 
-import rescala.stm.STMTurn
+import rescala.engines._
 
 import scala.concurrent.stm.atomic
 

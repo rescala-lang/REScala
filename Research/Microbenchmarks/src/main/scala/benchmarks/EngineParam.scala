@@ -17,9 +17,10 @@ class EngineParam[S <: rescala.graph.Struct] {
   @Param(Array("1.2"))
   var factorBackoff: Double = _
 
-  def engine: Engine[S, Turn[S]] = {
-    if (engineName == "parrp") Engines.parrpWithBackoff(() => new Backoff(minBackoff, maxBackoff, factorBackoff)).asInstanceOf[Engine[S, Turn[S]]]
-    if (engineName == "locksweep") Engines.locksweepWithBackoff(() => new Backoff(minBackoff, maxBackoff, factorBackoff)).asInstanceOf[Engine[S, Turn[S]]]
-    else Engines.byName[S](engineName)
+  def engine: Engine[S, Turn[S]] = engineName match {
+    case "parrp" => Engines.parrpWithBackoff(() => new Backoff(minBackoff, maxBackoff, factorBackoff)).asInstanceOf[Engine[S, Turn[S]]]
+    case "locksweep" => Engines.locksweepWithBackoff(() => new Backoff(minBackoff, maxBackoff, factorBackoff)).asInstanceOf[Engine[S, Turn[S]]]
+    case "stm" => rescala.stm.STMEngine.stm.asInstanceOf[Engine[S, Turn[S]]]
+    case other => Engines.byName[S](other)
   }
 }

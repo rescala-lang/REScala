@@ -104,18 +104,6 @@ lazy val reactiveStreams = project.in(file("Extensions/ReactiveStreams"))
     publishLocal := {}
   )
 
-lazy val microbench = project.in(file("Research/Microbenchmarks"))
-  .enablePlugins(JmhPlugin)
-  .settings(mainClass in Compile := Some("org.openjdk.jmh.Main"))
-  .settings(com.typesafe.sbt.SbtStartScript.startScriptForClassesSettings)
-  .settings(TaskKey[Unit]("compileJmh") <<= Seq(compile in pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh).dependOn)
-  .dependsOn(rescalaJVM)
-  .dependsOn(stm)
-  .settings(
-    publish := {},
-    publishLocal := {}
-  )
-
 lazy val reswing = project.in(file("Extensions/RESwing"))
   .dependsOn(rescalaJVM)
   .settings(
@@ -238,6 +226,17 @@ lazy val meta = project.in(file("Research/Meta"))
   .dependsOn(rescalaJVM)
   .settings(
     scalatestDependency,
+    publish := {},
+    publishLocal := {}
+  )
+
+lazy val microbench = project.in(file("Research/Microbenchmarks"))
+  .enablePlugins(JmhPlugin)
+  .settings(mainClass in Compile := Some("org.openjdk.jmh.Main"))
+  .settings(com.typesafe.sbt.SbtStartScript.startScriptForClassesSettings)
+  .settings(TaskKey[Unit]("compileJmh") <<= Seq(compile in pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh).dependOn)
+  .dependsOn(stm)
+  .settings(
     publish := {},
     publishLocal := {}
   )
