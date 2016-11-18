@@ -67,28 +67,29 @@ When `a` or `b` are updated, the value of `c` is updated as well.
 
 ## Vars
 
-### Defining Vars
-Programmers express reactive
-computations starting from vars. Vars wrap normal Scala values. For
-example, `Var(2)` creates a var with an `[Int]` value and
-initializes the var to the value 2. Vars are parametric types. A var
-that carries integer values has type `Var[Int]`. The following
-code snippet shows valid var declarations.
+A `Var[T]` holds a simple value of type `T` and does not have any inputs.
+`Var[T]` is a subtype of `Signal[T]` and can be used as an input for any signal.
+Examples for var declarations are:
 
 ```tut:book
 val a = Var(0)
 val b = Var("Hello World")
-val c = Var(false)
-val d: Var[Int] = Var(30)
-val e: Var[String] = Var("REScala")
-val f: Var[Boolean] = Var(false)
+val c = Var(List(1,2,3))
+val d = Var((x: Int) => x * 2)
 ```
 
-### Assigning Vars
-Vars can be directly modified with the
-```()=``` operator. For example ```v()=3``` replaces the current
-value of the ```v``` var with ```3```. Therefore, vars are changed
-imperatively by the programmer.
+Vars enable the framework to track changes of input values.
+Vars can be changed directly by the programmer:
+
+```tut:book
+a() = 10
+b.set("The `set` method does the same as the update syntax above")
+c.transform( list => 0 :: list )
+```
+
+Vars are used by the framework to track changes to inputs,
+the value of a var must not be mutated indirectly,
+as such changes are hidden to the framework.
 
 
 ## Signals
