@@ -6,6 +6,7 @@
 Run with:
 ~~~
 $ sbt
-$ > fastOptJS
+> fastOptJS
+
 $ firefox index.html
 ~~~
