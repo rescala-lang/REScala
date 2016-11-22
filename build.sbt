@@ -1,5 +1,6 @@
 scalaVersion := "2.11.8"
 
+name := "rescalawebapps"
 resolvers += Resolver.bintrayRepo("rmgk", "maven")
 
 enablePlugins(ScalaJSPlugin)
