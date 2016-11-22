@@ -5,8 +5,10 @@
 
 Run with:
 ~~~
-$ sbt
-> fastOptJS
+$ npm install         # get js dependencies
 
-$ firefox index.html
+$ sbt
+> fastOptJS           # compile scala to js
+
+$ firefox index.html  # open result in browser
 ~~~
