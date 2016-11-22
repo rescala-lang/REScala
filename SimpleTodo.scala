@@ -1,4 +1,4 @@
-package tutorial.webapp
+package daimpl.simpletodo
 
 import scala.scalajs.js.JSApp
 import scalatags.JsDom.all._
@@ -27,25 +27,35 @@ object SimpleTodo extends JSApp {
     ))
 
     document.body.appendChild(div(
-      h1("TODO!"),
+      h1("DO TODOS!"),
 
       form(
         `class`:="task",
         onsubmit:= { e: dom.UIEvent =>
           e.preventDefault()
 
-          val value = document.getElementById("newtodo")
-            .asInstanceOf[dom.html.Input].value
-
-          tasks() = new Task(value, false) :: tasks.now
+          val input = document.getElementById("newtodo")
+            .asInstanceOf[dom.html.Input]
+          tasks() = new Task(input.value, false) :: tasks.now
+          input.value = ""
         },
         span(`class`:="span-input"),
         input(`class`:="descrip", id:="newtodo", placeholder:="new todo")
       ),
 
+      Signal {
+        div(
+          `class`:= Signal { if (tasks().size == 0) "info" else "hidden"},
+          "All clear"
+        )
+      }.asFrag,
+
       Signal { ul(tasks().map { t =>
         li(
+
+          // TODO why does this work, implicit function?
           `class`:=Signal{ if (t.done()) "task done" else "task" },
+
           Signal { input(
             `type`:="checkbox",
 
@@ -68,9 +78,13 @@ object SimpleTodo extends JSApp {
         )
       }) }.asFrag,
 
-      input(`type`:="button", value:="remove all done todos", onclick:={ e: dom.UIEvent =>
-        tasks() = tasks.now.filter { t => !t.done.now }
-      })
+      input(
+        `type`:="button",
+        `class`:=Signal { if (tasks().size==0) "hidden" else ""},
+        value:="remove all done todos", onclick:={ e: dom.UIEvent =>
+          tasks() = tasks.now.filter { t => !t.done.now }
+        }
+      )
     ).render)
   }
 }
