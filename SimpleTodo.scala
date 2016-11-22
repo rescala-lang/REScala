@@ -18,37 +18,59 @@ object SimpleTodo extends JSApp {
   }
 
   def main(): Unit = {
+
     val tasks = Var(List(
       new Task("get milk", false),
       new Task("get sugar", false),
       new Task("get coffee", false),
       new Task("walk the dog", false)
     ))
+
     document.body.appendChild(div(
       h1("TODO!"),
+
       form(
-        action:="#",
-        onsubmit:= { (e: dom.UIEvent) =>
-          val value = e.target.asInstanceOf[dom.html.Form].
-            children(0).asInstanceOf[dom.html.Input].value
-          tasks() = new Task(value, false) :: tasks.now
+        `class`:="task",
+        onsubmit:= { e: dom.UIEvent =>
           e.preventDefault()
+
+          val value = document.getElementById("newtodo")
+            .asInstanceOf[dom.html.Input].value
+
+          tasks() = new Task(value, false) :: tasks.now
         },
-        input(`class`:="descrip", name:="newtodo", placeholder:="new todo")
+        span(`class`:="span-input"),
+        input(`class`:="descrip", id:="newtodo", placeholder:="new todo")
       ),
-      Signal { ul(tasks().map {
-        (t) => {
-          li(`class` := "task",
-            input(
-              value := t.desc(),
-              onchange := { (e: dom.UIEvent) =>
-                t.desc() = e.target.asInstanceOf[dom.html.Input].value
-                tasks() = tasks.now.filter { (x)=> x.desc.now != "" }
-              }
-            )
+
+      Signal { ul(tasks().map { t =>
+        li(
+          `class`:=Signal{ if (t.done()) "task done" else "task" },
+          Signal { input(
+            `type`:="checkbox",
+
+            // TODO ? use attrValue / .asAttr
+            if (t.done()) checked:="checked" else "",
+
+            onchange:={ e: dom.UIEvent =>
+              t.done() = e.target.asInstanceOf[dom.html.Input].checked
+            }
+          ) }.asFrag,
+
+          // bidirectional binding only with onchange, not with oninput :(
+          input(
+            value := t.desc(),
+            onchange := { e: dom.UIEvent =>
+              t.desc() = e.target.asInstanceOf[dom.html.Input].value
+              tasks() = tasks.now.filter { (x)=> x.desc.now != "" }
+            }
           )
-        }
-      }) }.asFrag
+        )
+      }) }.asFrag,
+
+      input(`type`:="button", value:="remove all done todos", onclick:={ e: dom.UIEvent =>
+        tasks() = tasks.now.filter { t => !t.done.now }
+      })
     ).render)
   }
 }
