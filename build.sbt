@@ -26,11 +26,11 @@ lazy val rescala = crossProject.in(file("Main"))
   .disablePlugins(JmhPlugin)
   .settings(
     name := "rescala",
-    libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-reflect" % _),
+    libraryDependencies += scalaVersion("org.scala-lang" % "scala-reflect" % _).value,
     scalatestDependency,
 
-    sourceGenerators in Compile <+= sourceManaged in Compile map { dir =>
-      val file = dir / "rescala" / "reactives" / "GeneratedSignalLift.scala"
+    sourceGenerators in Compile += Def.task {
+      val file = (sourceManaged in Compile).value / "rescala" / "reactives" / "GeneratedSignalLift.scala"
       val definitions = (1 to 22).map{ i =>
         val params = 1 to i map ("n" + _)
         val types = 1 to i map ("A" + _)
@@ -55,7 +55,7 @@ lazy val rescala = crossProject.in(file("Main"))
          |}
          |""".stripMargin)
       Seq(file)
-    },
+    }.taskValue,
     initialCommands in console :=
       s"""import rescala._
        """.stripMargin
@@ -234,7 +234,7 @@ lazy val microbench = project.in(file("Research/Microbenchmarks"))
   .enablePlugins(JmhPlugin)
   .settings(mainClass in Compile := Some("org.openjdk.jmh.Main"))
   .settings(com.typesafe.sbt.SbtStartScript.startScriptForClassesSettings)
-  .settings(TaskKey[Unit]("compileJmh") <<= Seq(compile in pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh).dependOn)
+  .settings(TaskKey[Unit]("compileJmh") := Seq(compile in pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh).dependOn.value)
   .dependsOn(stm)
   .settings(
     publish := {},
@@ -246,13 +246,13 @@ lazy val microbench = project.in(file("Research/Microbenchmarks"))
 // ================================ dependencies
 
 lazy val rssDependencies = libraryDependencies ++= Seq(
-  "joda-time" % "joda-time" % "2.9.5",
+  "joda-time" % "joda-time" % "2.9.6",
   "org.joda" % "joda-convert" % "1.8.1",
   "org.codehaus.jsr166-mirror" % "jsr166y" % "1.7.0",
   "org.scala-lang.modules" %% "scala-xml" % "1.0.6")
 
 lazy val scalaswingDependency = libraryDependencies += "org.scala-lang" % "scala-swing" % "2.11.0-M7"
-lazy val scalatestDependency = libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.0" % "test"
+lazy val scalatestDependency = libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.1" % "test"
 
 
 // ================================= scalac options
