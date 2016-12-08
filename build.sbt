@@ -1,6 +1,6 @@
 organization in ThisBuild := "de.tuda.stg"
-scalaVersion in ThisBuild := "2.12.0"
-crossScalaVersions in ThisBuild := Seq("2.12.0", "2.11.8")
+scalaVersion in ThisBuild := "2.12.1"
+crossScalaVersions in ThisBuild := Seq("2.12.1", "2.11.8")
 
 version in ThisBuild := "0.19.0-SNAPSHOT"
 
