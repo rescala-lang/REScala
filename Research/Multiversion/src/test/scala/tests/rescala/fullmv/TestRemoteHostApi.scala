@@ -2,18 +2,21 @@ package tests.rescala.fullmv
 
 import java.rmi.registry.LocateRegistry
 import java.rmi.registry.Registry
-import java.rmi.Naming
+import java.rmi.{ConnectException, Naming, RemoteException}
 import java.rmi.server.UnicastRemoteObject
+
 import org.scalatest.Tag
 import rescala.fullmv.Transaction
 import rescala.fullmv.Host
-import java.rmi.ConnectException
 import org.scalatest.words.ResultOfStringPassedToVerb
 import org.scalatest.FlatSpecLike
 
-@remote trait TestRemoteHost {
+trait TestRemoteHostApi extends java.rmi.Remote {
+  @throws[RemoteException]
   def newTransaction(data: String): Transaction
+  @throws[RemoteException]
   def beginTransaction(node: Transaction): Unit
+  @throws[RemoteException]
   def endTransaction(node: Transaction): Unit
 }
 
@@ -21,28 +24,28 @@ object TestRemoteHost {
   val NAME = "foo"
   val PORT = Registry.REGISTRY_PORT
   val ADDRESS = "rmi://localhost:" + PORT + "/" + NAME
-  lazy val remote: Option[TestRemoteHost] = try{
-    Some(Naming.lookup(TestRemoteHost.ADDRESS).asInstanceOf[TestRemoteHost])
+  lazy val remote: Option[TestRemoteHostApi] = try{
+    Some(Naming.lookup(TestRemoteHost.ADDRESS).asInstanceOf[TestRemoteHostApi])
   } catch {
     case e: ConnectException => None
   }
 }
 
 trait TestWithRemoteHost extends FlatSpecLike {
-  def ifRemote(something: ResultOfStringPassedToVerb)(code: TestRemoteHost => Unit) = {
+  def ifRemote(something: ResultOfStringPassedToVerb)(code: TestRemoteHostApi => Unit) = {
     val remote = TestRemoteHost.remote
-    if(remote.isDefined) something in code(remote.get) else something ignore {} 
+    if(remote.isDefined) something in code(remote.get) else something ignore {}
   }
-  def ifRemote(something: ItVerbString)(code: TestRemoteHost => Unit) = {
+  def ifRemote(something: ItVerbString)(code: TestRemoteHostApi => Unit) = {
     val remote = TestRemoteHost.remote
-    if(remote.isDefined) something in code(remote.get) else something ignore {} 
+    if(remote.isDefined) something in code(remote.get) else something ignore {}
   }
 }
 
 object TestRemoteHostImpl {
   def main(args: Array[String]): Unit = {
     val registry = LocateRegistry.createRegistry(TestRemoteHost.PORT)
-    val server = new UnicastRemoteObject() with TestRemoteHost {
+    val server = new UnicastRemoteObject() with TestRemoteHostApi {
       override def newTransaction(data: String): Transaction = Transaction(data)
       override def beginTransaction(node: Transaction): Unit = node.assertLocal.beginTransaction()
       override def endTransaction(node: Transaction): Unit = node.assertLocal.endTransaction()

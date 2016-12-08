@@ -5,8 +5,6 @@ import org.scalatest.Matchers
 import rescala.fullmv._
 
 class TransactionPhaseBroadcastTest extends FlatSpec with Matchers with TestWithRemoteHost{
-  import TestRemoteHost.remote
-
   "transaction phase transitions " should "work locally" in {
     val t = Transaction("t").assertLocal
     t.phase should be(Framing)

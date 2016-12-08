@@ -5,21 +5,33 @@ import scala.collection.mutable
 import java.rmi.server.UnicastRemoteObject
 import java.util.UUID
 import java.io.ObjectStreamException
+import java.rmi.RemoteException
 
-@remote trait HostCommunication {
+trait HostCommunication extends java.rmi.Remote {
   // union find stuff
+  @throws[RemoteException]
   def rank(node: Transaction): Int
+  @throws[RemoteException]
   def find(node: Transaction): Transaction
+  @throws[RemoteException]
   def union(node: Transaction, other: Transaction): Transaction
+  @throws[RemoteException]
   def subordinate(node: Transaction, newParent: Transaction): Unit
+  @throws[RemoteException]
   def lock(node: Transaction): Transaction
+  @throws[RemoteException]
   def tryLock0(node: Transaction): (Transaction, Boolean)
+  @throws[RemoteException]
   def unlock(node: Transaction): Transaction
 
   // ssg stuff
+  @throws[RemoteException]
   def newRemote(node: Transaction, host: Host): (TransactionPhase, Set[Transaction])
+  @throws[RemoteException]
   def receiveNewTransactionPhase(node: Transaction, newPhase: TransactionPhase): Unit
+  @throws[RemoteException]
   def distributeNewSuccessors(successors: Map[Transaction, Set[Transaction]], except: Host): Unit
+  @throws[RemoteException]
   def receiveAdditionalSuccessors(successors: Map[Transaction, Set[Transaction]]): Unit
 }
 trait Host extends HostCommunication with Serializable {
@@ -142,11 +154,11 @@ trait Transaction extends Serializable {
       mutableBuffer += (this -> (mutableBuffer(this) ++ actuallyNewSuccessors))
     }
   }
-  
+
   def searchClosure(target: Transaction, mutableBuffer: NewSuccessorsBroadcastBuffer): Boolean = {
     searchClosure0(target, Set(), mutableBuffer)._1
   }
-  
+
   def searchClosure0(target: Transaction, visited: Set[Transaction], mutableBuffer: NewSuccessorsBroadcastBuffer): (Boolean, Set[Transaction]) = {
     val succs = successors -- visited
     val updatedVisited = visited ++ succs
