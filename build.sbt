@@ -16,7 +16,7 @@ lazy val rescalaAggregate = project.in(file(".")).aggregate(rescalaJVM,
   rescalaJS, microbench, reswing, examples, examplesReswing, caseStudyEditor,
   caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags,
   datastructures, universe, reactiveStreams, documentation, meta, pipelining,
-  stm, testsJVM, testsJS)
+  stm, testsJVM, testsJS, fullmv)
   .settings(
     publish := {},
     publishLocal := {})

@@ -9,6 +9,9 @@ import java.rmi.RemoteException
 
 trait HostCommunication extends java.rmi.Remote {
   // union find stuff
+  /**
+    * One-element trees are defined to have a rank of zero, and whenever two trees of the same rank r are united, the rank of the result is r+1.
+    */
   @throws[RemoteException]
   def rank(node: Transaction): Int
   @throws[RemoteException]
@@ -67,7 +70,7 @@ object Host {
   type NewSuccessorsBroadcastBuffer = mutable.Map[Transaction, Set[Transaction]]
   def newBuffer(): NewSuccessorsBroadcastBuffer = mutable.Map().withDefaultValue(Set())
 
-  private val remoteReceiver = new UnicastRemoteObject with HostCommunication {
+  private object remoteReceiver extends UnicastRemoteObject with HostCommunication {
     override def rank(node: Transaction): Int = node.assertLocal.rank
     override def find(node: Transaction): Transaction = node.assertLocal.find()
     override def union(node: Transaction, other: Transaction): Transaction = node.assertLocal.union(other)
