@@ -4,6 +4,8 @@ import rescala.graph.{PulseOption, Stateful, Struct}
 import rescala.propagation.Turn
 import rescala.reactives.{Event, Signal}
 
+import retypecheck._
+
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox
 
@@ -27,7 +29,7 @@ object ReactiveMacros {
       // transformation
       val block = Typed(Block(cutOutSignals.reverse, body), TypeTree(weakTypeOf[Signal[A, S]]))
 
-      c.Expr[Signal[A, S]](Typer(c) untypecheck block)
+      c.Expr[Signal[A, S]](c.retyper untypecheck block)
     }
     else
       c.Expr[Signal[A, S]](q"""throw new ${termNames.ROOTPKG}.scala.NotImplementedError("signal macro not expanded")""")
@@ -50,7 +52,7 @@ object ReactiveMacros {
       // transformation
       val block = Typed(Block(cutOutSignals.reverse, body), TypeTree(weakTypeOf[Event[A, S]]))
 
-      c.Expr[Event[A, S]](Typer(c) untypecheck block)
+      c.Expr[Event[A, S]](c.retyper untypecheck block)
     }
     else
       c.Expr[Event[A, S]](q"""throw new ${termNames.ROOTPKG}.scala.NotImplementedError("event macro not expanded")""")
