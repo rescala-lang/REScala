@@ -82,13 +82,17 @@ object Host {
     override def newRemote(node: Transaction, host: Host): (TransactionPhase, Set[Transaction]) = node.assertLocal.addSharedHost(host)
     override def receiveNewTransactionPhase(node: Transaction, newPhase: TransactionPhase): Unit = node.assertRemote.phase = newPhase
     override def distributeNewSuccessors(successors: Map[Transaction, Set[Transaction]], except: Host): Unit = {
-      val mutableBuffer = newBuffer()
-      successors.foreach{ case(node, newSuccessors) =>
-        node.assertLocal.addSuccessorsLocally(newSuccessors, mutableBuffer)
+      var unicasts = Map[Host, Map[Transaction, Set[Transaction]]]().withDefaultValue(Map())
+      successors.foreach{ case tuple @ (node, newSuccessors) =>
+        val mutableBuffer = newBuffer()
+        val localNode = node.assertLocal
+        localNode.addSuccessorsLocally(newSuccessors, mutableBuffer)
+          (localNode.sharedOnHosts - except).foreach { host =>
+            unicasts = unicasts + (host -> (unicasts(host) + tuple))
+          }
       }
-      (Map() ++ mutableBuffer).groupBy(_._1.host).foreach {
-        case (host, buffer) =>
-          if(host != except) host.receiveAdditionalSuccessors(buffer)
+      unicasts.foreach{case (host, successors) =>
+       host.receiveAdditionalSuccessors(successors)
       }
     }
     override def receiveAdditionalSuccessors(successors: Map[Transaction, Set[Transaction]]): Unit = successors.foreach {
@@ -108,13 +112,22 @@ object Host {
     transactionCache += transaction.id -> transaction
     LOCALHOST
   }
-  def replaceOrRegisterReceivedTransaction(transaction: Transaction): Transaction = synchronized {
-    transactionCache.getOrElse(transaction.id, {
-      val remote = transaction.assertRemote
-      registerTransaction(remote)
-      remote.ingrain()
-      remote
-    })
+  def replaceOrRegisterReceivedTransaction(transaction: Transaction): Transaction = {
+    synchronized { transactionCache.get(transaction.id) match {
+        case Some(existing) =>
+          Left(existing)
+        case None =>
+          val remote = transaction.assertRemote
+          registerTransaction(remote)
+          Right(remote)
+      }
+    } match {
+      case Left(existing) =>
+        existing
+      case Right(remote) =>
+        remote.ingrain()
+        remote
+    }
   }
 }
 
@@ -317,7 +330,7 @@ final class LocalTransaction(override val data: String) extends Transaction {
     sharedOnHosts
   }.foreach { _.receiveAdditionalSuccessors(Map(this -> newSuccessors)) }
 
-  override def toString() = s"$data: NodeImpl($id @ $host)"
+  override def toString() = s"$data: LocalTransaction($id @ $host)"
   var state: TransactionState = UnlockedHead
   var rank: Int = 0
   def subordinate(newParent: Transaction): Unit = {
@@ -451,7 +464,7 @@ class RemoteTransaction(override val host: Host, override val id: UUID, override
   }
   def receiveAdditionalSuccessors(newSuccessors: Set[Transaction]): Unit = synchronized { successors ++= newSuccessors }
 
-  override def toString() = s"$data: NodeRemote($id @ $host)"
+  override def toString() = s"$data: RemoteTransaction($id @ $host)"
 
   override def find(): Transaction = host.find(this)
   override def union(other: Transaction): Transaction = host.union(this, other)

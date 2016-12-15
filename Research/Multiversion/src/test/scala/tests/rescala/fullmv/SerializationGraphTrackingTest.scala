@@ -35,6 +35,13 @@ class SerializationGraphTrackingTest extends FlatSpec with Matchers {
 
 object SerializationGraphTrackingTest {
   type Node = SortedSet[Transaction]
+  // do not use this in practice; x.ensureAndGetOrder(y) is order-sensitive for fairness, but collections may call both compare(x, y) and compare(y, x).
+  val ordering = new Ordering[Transaction] {
+    override def compare(x: Transaction, y: Transaction): Int = {
+      if (x == y) 0 else if (x.ensureAndGetOrder(y) == SelfFirst) -1 else 1
+    }
+  }
+  def newNode() = SortedSet[Transaction]()(ordering)
 
   def main(args: Array[String]): Unit = {
     val (_, transactions) = randomRun()
@@ -48,15 +55,8 @@ object SerializationGraphTrackingTest {
     val numTransactionsPerThread = 32
     val numOpsPerTransaction = 16
 
-    // do not use this in practice; x.ensureAndGetOrder(y) is order-sensitive for fairness, but compare(x, y) is not.  
-    val ordering = new Ordering[Transaction] {
-      override def compare(x: Transaction, y: Transaction): Int = {
-        if (x == y) 0 else if (x.ensureAndGetOrder(y) == SelfFirst) -1 else 1
-      }
-    }
-
     // instantiate everything
-    val nodes = (0 until numNodes) map { _ => SortedSet[Transaction]()(ordering) }
+    val nodes = (0 until numNodes) map { _ => newNode() }
     class Runner(val index: Int) extends Runnable {
       val queue = Seq[Transaction]((0 until numTransactionsPerThread).map { i => Transaction(s"T($index,$i)") }: _*)
       override def run(): Unit = {
