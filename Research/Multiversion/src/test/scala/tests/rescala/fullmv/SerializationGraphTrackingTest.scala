@@ -2,6 +2,7 @@ package tests.rescala.fullmv
 
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
+
 import scala.collection.mutable.SortedSet
 import scala.util.Random
 import java.io.PrintStream
@@ -9,9 +10,12 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.util.function.Consumer
 import java.io.File
+
 import rescala.fullmv.Transaction
 import rescala.fullmv.SelfFirst
-import java.awt.Desktop
+import java.awt.{Color, Desktop}
+
+import scala.util.matching.Regex
 
 class SerializationGraphTrackingTest extends FlatSpec with Matchers {
   "Serialization Graph Tracking" should "keep SSG acyclic under concurrent bombardment" in {
@@ -85,7 +89,7 @@ object SerializationGraphTrackingTest {
     (nodes, transactions)
   }
 
-  def postProcess(transactions: Iterable[Transaction]): Unit = {
+  def postProcess(transactions: Iterable[Transaction], colorRanges: Option[(Int, Int)] = None): Unit = {
     val pdf = File.createTempFile("ssg-dot-viz", ".pdf")
     println(s"[POST] Starting Postprocessing!")
     println(s"[POST] Transitive reduction...")
@@ -113,7 +117,7 @@ object SerializationGraphTrackingTest {
         })
       }
     }, "DOT-stderr").start()
-    printDigraphDot(reduced, new PrintStream(dot.getOutputStream))
+    printDigraphDot(reduced, new PrintStream(dot.getOutputStream), colorRanges)
     dot.getOutputStream.close()
     println(s"[POST] dot rendering...")
     val dotExitCode = dot.waitFor()
@@ -143,8 +147,30 @@ object SerializationGraphTrackingTest {
         }
     }
   }
-  def printDigraphDot(edges: Map[Transaction, Set[Transaction]], out: PrintStream = System.out): Unit = {
+  def printDigraphDot(edges: Map[Transaction, Set[Transaction]], out: PrintStream = System.out, colorRanges: Option[(Int, Int)] = None): Unit = {
     out.println("digraph SSG {")
+
+    colorRanges.foreach { case (numHosts, numThreads) => {
+        val pattern = new Regex("T\\((\\d+)-(\\d+)\\D.*")
+        for (transaction <- edges.keys ++ edges.values.flatten) {
+          val parsedData = pattern.findFirstMatchIn(transaction.data)
+          parsedData match {
+            case None => println("No match!!")
+              out.println("\t\"" + transaction.data + "\"")
+            case Some(m) =>
+              val host = Integer.parseInt(m.group(1))
+              val thread = Integer.parseInt(m.group(2))
+
+              val skew = 0
+              val saturation = (numThreads - thread + skew).toFloat / (numThreads + skew) * .75f
+              val hue = .06 + host.toFloat / numHosts
+
+              out.println("\t\"" + transaction.data + "\" [style=filled fillcolor=\"%.03f %.03f %.03f\"]".format(hue, saturation, 1.0).replace(',','.'))
+          }
+        }
+      }
+    }
+
     for (
       (transaction, outgoing) <- edges;
       successor <- outgoing

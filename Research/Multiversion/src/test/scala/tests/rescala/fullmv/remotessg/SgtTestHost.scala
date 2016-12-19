@@ -4,7 +4,7 @@ import java.rmi.registry.LocateRegistry
 import java.rmi.server.UnicastRemoteObject
 import java.rmi.{Naming, Remote, RemoteException}
 
-import rescala.fullmv.Transaction
+import rescala.fullmv.{Host, Transaction}
 import tests.rescala.fullmv.SerializationGraphTrackingTest.Node
 import tests.rescala.fullmv.{SerializationGraphTrackingTest, TestRemoteHost}
 
@@ -27,7 +27,7 @@ trait SgtTestWorkerLogin extends Remote {
 }
 
 class SgtTestRandomWorker extends UnicastRemoteObject with SgtTestWorker {
-  val nodes = (1 to 32) map (_ => SerializationGraphTrackingTest.newNode())
+  val nodes = (1 to 64) map (_ => SerializationGraphTrackingTest.newNode())
   var id = -1
 
   override def runTransactions(parallel: Int, sequential: Int, ops: Int, workers: IndexedSeq[SgtTestWorker]): Iterable[Transaction] = {
@@ -40,7 +40,7 @@ class SgtTestRandomWorker extends UnicastRemoteObject with SgtTestWorker {
             println("starting transaction " + transaction)
             for (op <- 0 until ops) {
               val hostIdx = Random.nextInt(workers.size)
-              val nodeIdx = Random.nextInt(32)
+              val nodeIdx = Random.nextInt(64)
               if(hostIdx == id) {
                 println(transaction + " accessing LocalNode(" + id + "-" + nodeIdx + ")")
                 accessNode0(nodeIdx, transaction)
@@ -93,6 +93,7 @@ object SgtTestRandomWorker {
     worker.id = login.loginWorker(worker)
     println("Registered as worker " + worker.id)
     worker.await()
+    Host.shutdown(false)
     UnicastRemoteObject.unexportObject(worker, false)
   }
 }
@@ -124,7 +125,7 @@ object SgtTest {
     val threads = workers.map{ worker =>
       new Thread(new Runnable {
         override def run() = {
-          val workerTransactions = worker.runTransactions(3, 6, 6, workers)
+          val workerTransactions = worker.runTransactions(2, 32, 8, workers)
           SgtTest.synchronized{
             transactions += worker -> workerTransactions
           }
@@ -136,12 +137,13 @@ object SgtTest {
     threads.foreach(_.join())
     val nodes = workers.map(worker => worker -> worker.getNodes()).toMap
     workers.foreach(_.done())
+    Host.shutdown(false)
 
     println("Collected Transactions:")
     println("\t"+transactions.mapValues(_.mkString("\n\t\t")).mkString("\n\t"))
     println("Collected Nodes:")
     println("\t"+nodes.mapValues(_.mkString("\n\t\t")).mkString("\n\t"))
 
-    SerializationGraphTrackingTest.postProcess(transactions.values.flatten)
+    SerializationGraphTrackingTest.postProcess(transactions.values.flatten, Some((8, 2)))
   }
 }

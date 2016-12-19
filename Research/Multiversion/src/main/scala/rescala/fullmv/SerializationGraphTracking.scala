@@ -453,7 +453,7 @@ class RemoteTransaction(override val host: Host, override val id: UUID, override
 
   var phase: TransactionPhase = _
   var successors: Set[Transaction] = _
-  def ingrain(): Unit = {
+  def ingrain(): Unit = synchronized {
     val (initPhase, initSuccessors) = host.newRemote(this, Host.LOCALHOST)
     phase = initPhase
     successors = initSuccessors
