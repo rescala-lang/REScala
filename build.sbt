@@ -2,7 +2,7 @@ organization in ThisBuild := "de.tuda.stg"
 scalaVersion in ThisBuild := "2.12.1"
 crossScalaVersions in ThisBuild := Seq("2.12.1", "2.11.8")
 
-version in ThisBuild := "0.19.0-SNAPSHOT"
+version in ThisBuild := "0.19.0"
 
 testOptions in Test in ThisBuild += Tests.Argument("-oICN")
 
