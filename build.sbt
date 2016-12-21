@@ -248,7 +248,7 @@ lazy val microbench = project.in(file("Research/Microbenchmarks"))
 // ================================ dependencies
 
 lazy val rssDependencies = libraryDependencies ++= Seq(
-  "joda-time" % "joda-time" % "2.9.6",
+  "joda-time" % "joda-time" % "2.9.7",
   "org.joda" % "joda-convert" % "1.8.1",
   "org.codehaus.jsr166-mirror" % "jsr166y" % "1.7.0",
   "org.scala-lang.modules" %% "scala-xml" % "1.0.6")
