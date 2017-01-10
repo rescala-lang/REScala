@@ -4,6 +4,7 @@ import rescala.engines.{Engine, Ticket}
 import rescala.graph.{Pulse, Stateful, Struct}
 import rescala.propagation.Turn
 import rescala.reactives.RExceptions.EmptySignalControlThrowable
+import rescala.reactives.Signals.Diff
 
 import scala.language.higherKinds
 import scala.util.control.NonFatal
@@ -44,7 +45,7 @@ trait Signal[+A, S <: Struct] extends Stateful[A, S] with Observable[A, S] {
 
   /** Create an event that fires every time the signal changes. It fires the tuple (oldVal, newVal) for the signal.
     * Be aware that no change will be triggered when the signal changes to or from empty */
-  final def change(implicit ticket: Ticket[S]) = {
+  final def change(implicit ticket: Ticket[S]): Event[Diff[A], S] = {
     Events.static(s"(change $this)", this) { turn =>
       val from = stable(turn)
       val to = pulse(turn)

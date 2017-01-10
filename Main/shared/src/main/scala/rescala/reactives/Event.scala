@@ -163,9 +163,9 @@ trait Event[+T, S <: Struct] extends PulseOption[T, S] with Observable[T, S] {
   }
 
   /**
-    * Switch to a signal once, on the occurrence of event e. Initially the
-    * return value is set to the original signal. When the event fires,
-    * the result is a constant signal whose value is the value of the event.
+    * Initially the result signal has the value of the original signal.
+    * Every time the event fires, the result signal changes to the value of the event,
+    * the original signal is no longer used.
     */
   final def switchTo[T1 >: T](original: Signal[T1, S])(implicit ticket: Ticket[S]): Signal[T1, S] = ticket { turn =>
     val latest = latestOption()(turn)
@@ -189,6 +189,4 @@ trait Event[+T, S <: Struct] extends PulseOption[T, S] with Observable[T, S] {
   /** promotes the latest inner event to an outer event */
   final def flatten[B](implicit ticket: Ticket[S], ev: T <:< Event[B, S]): Event[B, S] = flatMap(ev.apply)
 
-  /** logs the events to a signal */
-  final def log()(implicit ticket: Ticket[S]): Signal[List[T], S] = fold[List[T]](Nil)((a, v) => v :: a)
 }

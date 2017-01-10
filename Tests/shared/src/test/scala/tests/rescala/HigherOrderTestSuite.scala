@@ -259,7 +259,7 @@ class HigherOrderTestSuite extends RETests {
   allEngines("flatten Events"){ engine => import engine._
     val e1 = Evt[Event[Int]]
     val f1 = e1.flatten
-    val res = f1.log()
+    val res = f1.list()
     val e2 = Evt[Int]
     val e3 = Evt[Int]
     e2(10)

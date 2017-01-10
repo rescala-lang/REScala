@@ -42,7 +42,7 @@ class OR_EventTest extends RETests {
 
     val e3 = e1 || e2
 
-    val log = e3.log()
+    val log = e3.list()
 
     assert(log.now === Nil)
 

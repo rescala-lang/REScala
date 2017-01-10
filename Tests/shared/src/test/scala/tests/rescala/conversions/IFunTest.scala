@@ -493,7 +493,7 @@ class IFunTest extends RETests {
 
     val ored: Event[(String, String)] = e1 || e2
 
-    val log = ored.log()
+    val log = ored.list()
 
     assert(log.now === Nil)
 
