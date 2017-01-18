@@ -220,9 +220,11 @@ lazy val universe = project.in(file("Examples/Universe"))
 lazy val fullmv = project.in(file("Research/Multiversion"))
   .settings(
     name := "rescala-multiversion",
+    libraryDependencies += "org.graphstream" % "gs-core" % "1.3",
     publish := {},
     publishLocal := {},
     scalatestDependency)
+  .dependsOn(RootProject(uri("git://github.com/misterd123/gs-ui")))
 
 lazy val meta = project.in(file("Research/Meta"))
   .dependsOn(rescalaJVM)
