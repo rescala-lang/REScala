@@ -1,182 +1,88 @@
 package tests.rescala.fullmv
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
-
-import scala.collection.mutable.SortedSet
-import scala.util.Random
-import java.io.PrintStream
-import java.io.BufferedReader
-import java.io.InputStreamReader
-import java.util.function.Consumer
-import java.io.File
-
-import rescala.fullmv.Transaction
-import rescala.fullmv.SelfFirst
-import java.awt.{Color, Desktop}
-
-import scala.util.matching.Regex
+import org.scalatest.{FlatSpec, Matchers}
+import rescala.fullmv.api._
 
 class SerializationGraphTrackingTest extends FlatSpec with Matchers {
-  "Serialization Graph Tracking" should "keep SSG acyclic under concurrent bombardment" in {
-    val (_, transactions) = SerializationGraphTrackingTest.randomRun()
-
-    var visitedAndStillOnStack = Map[Transaction, Boolean]()
-    def searchForCycle(transaction: Transaction): Boolean = {
-      visitedAndStillOnStack.get(transaction) match {
-        case None =>
-          visitedAndStillOnStack += transaction -> true
-          transaction.successors.foreach(searchForCycle(_))
-          visitedAndStillOnStack += transaction -> false
-          false
-        case Some(stillOnStack) =>
-          stillOnStack
-      }
-    }
-    transactions.find { searchForCycle(_) } should be(None)
-  }
-}
-
-object SerializationGraphTrackingTest {
-  type Node = SortedSet[Transaction]
-  // do not use this in practice; x.ensureAndGetOrder(y) is order-sensitive for fairness, but collections may call both compare(x, y) and compare(y, x).
-  val ordering = new Ordering[Transaction] {
-    override def compare(x: Transaction, y: Transaction): Int = {
-      if (x == y) 0 else if (x.ensureAndGetOrder(y) == SelfFirst) -1 else 1
-    }
-  }
-  def newNode() = SortedSet[Transaction]()(ordering)
-
-  def main(args: Array[String]): Unit = {
-    val (_, transactions) = randomRun()
-    SerializationGraphTrackingTest.postProcess(transactions)
+  private def assertOrder(sgt: SerializationGraphTracking, a: Transaction, b: Transaction) = {
+    sgt.getOrder(a, b) === FirstFirst
+    sgt.getOrder(b, a) === SecondFirst
+    sgt.requireOrder(a, b) === FirstFirst
+    sgt.requireOrder(b, a) === SecondFirst
   }
 
-  def randomRun(): (Iterable[Node], Iterable[Transaction]) = {
-    // test configuration
-    val cores = Runtime.getRuntime().availableProcessors()
-    val numNodes = 128 * cores
-    val numTransactionsPerThread = 32
-    val numOpsPerTransaction = 16
-
-    // instantiate everything
-    val nodes = (0 until numNodes) map { _ => newNode() }
-    class Runner(val index: Int) extends Runnable {
-      val queue = Seq[Transaction]((0 until numTransactionsPerThread).map { i => Transaction(s"T($index,$i)") }: _*)
-      override def run(): Unit = {
-        for (transaction <- queue; op <- 0 until numOpsPerTransaction) {
-          val nodeId = Random.nextInt(nodes.size)
-          val node = nodes(nodeId)
-          // println(f"Runner-$index%d ${transaction.data}%s Op-$op%02d: (a) entering monitor for node ${node._1}%02d")
-          node.synchronized {
-            // println(f"Runner-$index%d ${transaction.data}%s Op-$op%02d: (b) Inserting on node ${node._1}%02d -> ${node._2.map(_.data)}%s")
-            node.add(transaction)
-            // println(f"Runner-$index%d ${transaction.data}%s Op-$op%02d: (c) done")
-          }
-          // println(f"Runner-$index%d ${transaction.data}%s Op-$op%02d: (d) exited monitor")
-        }
-      }
-    }
-    val runners = (0 until cores) map { new Runner(_) }
-    val transactions = runners.flatMap { _.queue }
-
-    // execute all runners
-    val threads = runners.tail.map(runner => new Thread(runner, s"Runner-${runner.index}"))
-    for (thread <- threads) thread.start()
-    runners.head.run()
-    for (thread <- threads) thread.join()
-
-    (nodes, transactions)
+  "SGT" should "not establish orders for no reason" in {
+    val a, b = Transaction()
+    val sgt = SerializationGraphTracking()
+    sgt.getOrder(a, b) === None
+    sgt.getOrder(b, a) === None
   }
 
-  def postProcess(transactions: Iterable[Transaction], colorRanges: Option[(Int, Int)] = None): Unit = {
-    val pdf = File.createTempFile("ssg-dot-viz", ".pdf")
-    println(s"[POST] Starting Postprocessing!")
-    println(s"[POST] Transitive reduction...")
-    val edges = edgesFromTransactions(transactions)
-    val totalEdges = countEdges(edges)
-    val reduced = transitiveReduction(edges)
-    val reducedEdges = countEdges(reduced)
-    val difference = totalEdges - reducedEdges
-    val percentage = difference.toFloat / totalEdges * 100
-    println(f"[POST] Removed $difference%d of $totalEdges%d edges ($percentage%.2f%%).")
-    println(s"[POST] Sending reduced SSG to dot...")
-    val dot = Runtime.getRuntime.exec(Array[String]("dot", "-Tpdf", "-o" + pdf.getAbsolutePath()))
+  it should "order preparing transactions first-come-first-serve" in {
+    val a, b = Transaction()
+    val sgt = SerializationGraphTracking()
+    sgt.requireOrder(a, b) === FirstFirst
+    assertOrder(sgt, a, b)
+  }
 
-    new Thread(new Runnable() {
-      override def run(): Unit = {
-        new BufferedReader(new InputStreamReader(dot.getInputStream())).lines().forEach(new Consumer[String]() {
-          override def accept(line: String): Unit = println("[DOT] " + line)
-        })
-      }
-    }, "DOT-stdout").start()
-    new Thread(new Runnable() {
-      override def run(): Unit = {
-        new BufferedReader(new InputStreamReader(dot.getErrorStream())).lines().forEach(new Consumer[String]() {
-          override def accept(line: String): Unit = System.err.println("[DOT] " + line)
-        })
-      }
-    }, "DOT-stderr").start()
-    printDigraphDot(reduced, new PrintStream(dot.getOutputStream), colorRanges)
-    dot.getOutputStream.close()
-    println(s"[POST] dot rendering...")
-    val dotExitCode = dot.waitFor()
-    if (dotExitCode != 0) {
-      System.err.println(s"[POST] Rendering returned non-zero exit code $dotExitCode, skipping pdf viewer")
-    } else {
-      println(s"[POST] Rendering completed.")
-      Desktop.getDesktop().open(pdf)
-    }
-    println(s"[POST] Postprocessing completed!")
+  it should "order executing transactions first-come-first-serve" in {
+    val a, b = Transaction().start()
+    val sgt = SerializationGraphTracking()
+    sgt.requireOrder(a, b) === FirstFirst
+    assertOrder(sgt, a, b)
   }
-  def edgesFromTransactions(transactions: Iterable[Transaction]): Map[Transaction, Set[Transaction]] = {
-    transactions.map { transaction =>
-      transaction -> transaction.successors
-    }.toMap
-  }
-  def countEdges(edges: Map[Transaction, Set[Transaction]]): Int = edges.map(_._2.size).sum
-  def transitiveReduction(edges: Map[Transaction, Set[Transaction]]): Map[Transaction, Set[Transaction]] = {
-    edges.foldLeft(edges) {
-      case (reduced, (transaction, outgoing)) =>
-        outgoing.foldLeft(reduced) {
-          case (reduced, successor) =>
-            reduced(successor).foldLeft(reduced) {
-              case (reduced, transitive) =>
-                reduced + (transaction -> (reduced(transaction) - transitive))
-            }
-        }
+
+  it should "refuse to order completed contenders" in {
+    val a = Transaction()
+    val b = Transaction().done()
+    val sgt = SerializationGraphTracking()
+    a [IllegalArgumentException] should be thrownBy {
+      sgt.requireOrder(a, b)
     }
   }
-  def printDigraphDot(edges: Map[Transaction, Set[Transaction]], out: PrintStream = System.out, colorRanges: Option[(Int, Int)] = None): Unit = {
-    out.println("digraph SSG {")
 
-    colorRanges.foreach { case (numHosts, numThreads) => {
-        val pattern = new Regex("T\\((\\d+)-(\\d+)\\D.*")
-        for (transaction <- edges.keys ++ edges.values.flatten) {
-          val parsedData = pattern.findFirstMatchIn(transaction.data)
-          parsedData match {
-            case None => println("No match!!")
-              out.println("\t\"" + transaction.data + "\"")
-            case Some(m) =>
-              val host = Integer.parseInt(m.group(1))
-              val thread = Integer.parseInt(m.group(2))
+  it should "order preparing transactions after running ones" in {
+    val a = Transaction()
+    val b = Transaction().start()
+    val sgt = SerializationGraphTracking()
+    assertOrder(sgt, b, a)
+  }
 
-              val skew = 0
-              val saturation = (numThreads - thread + skew).toFloat / (numThreads + skew) * .75f
-              val hue = .06 + host.toFloat / numHosts
+  it should "order preparing transactions after completed ones" in {
+    val a, b, c = Transaction()
+    val sgt = SerializationGraphTracking()
+    sgt.requireOrder(c, b) === FirstFirst
+    b.done().phase === Completed
+    assertOrder(sgt, b, a)
+  }
 
-              out.println("\t\"" + transaction.data + "\" [style=filled fillcolor=\"%.03f %.03f %.03f\"]".format(hue, saturation, 1.0).replace(',','.'))
-          }
-        }
-      }
-    }
+  it should "order preparing transactions after obsolete ones" in {
+    val a, b = Transaction()
+    val sgt = SerializationGraphTracking()
+    b.done().phase === Obsolete
+    assertOrder(sgt, b, a)
+  }
 
-    for (
-      (transaction, outgoing) <- edges;
-      successor <- outgoing
-    ) {
-      out.println("\t\"" + transaction.data + "\" -> \"" + { successor.data } + "\"")
-    }
-    out.println("}")
+  it should "order executing transactions after completed ones" in {
+    val a, b, c = Transaction().start()
+    val sgt = SerializationGraphTracking()
+    sgt.requireOrder(c, b) === FirstFirst
+    b.done().phase === Completed
+    assertOrder(sgt, b, a)
+  }
+
+  it should "order executing transactions after obsolete ones" in {
+    val a, b = Transaction().start()
+    val sgt = SerializationGraphTracking()
+    b.done().phase === Obsolete
+    assertOrder(sgt, b, a)
+  }
+
+  it should "recognize transitive orderings" in {
+    val a, b, c = Transaction().start()
+    val sgt = SerializationGraphTracking()
+    sgt.requireOrder(a, b) === FirstFirst
+    sgt.requireOrder(b, c) === FirstFirst
+    assertOrder(sgt, a, c)
   }
 }
