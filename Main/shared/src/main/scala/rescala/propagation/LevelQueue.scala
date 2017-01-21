@@ -13,7 +13,7 @@ import scala.collection.immutable.SortedSet
   * @param currentTurn Turn of the evaluation
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
-private[propagation] class LevelQueue[S <: LevelStruct]()(implicit val currentTurn: Turn[S]) {
+private[propagation] class LevelQueue[S <: LevelStruct](evaluator: LevelQueue.Evaluator[S])(implicit val currentTurn: Turn[S]) {
 
   private var elements = SortedSet.empty[QueueElement[S]]
 
@@ -48,9 +48,8 @@ private[propagation] class LevelQueue[S <: LevelStruct]()(implicit val currentTu
     * Handles a queue element by applying the given evaluator to it and scheduling the next elements for evaluation
     *
     * @param queueElement Element to evaluate
-    * @param evaluator Evaluator function to apply to the element
     */
-  final private def handleElement(queueElement: QueueElement[S], evaluator: Reactive[S] => Unit): Unit = {
+  final private def handleElement(queueElement: QueueElement[S]): Unit = {
     val QueueElement(headLevel, head, headMinLevel, doEvaluate) = queueElement
     if (headLevel < headMinLevel) {
       head.bud.updateLevel(headMinLevel)
@@ -68,32 +67,34 @@ private[propagation] class LevelQueue[S <: LevelStruct]()(implicit val currentTu
       }
     }
     else if (doEvaluate) {
-      evaluator(head)
+      evaluator.evaluate(head)
     }
   }
 
   /**
     * Evaluates all currently queued elements by applying the given evaluator to them.
-    *
-    * @param evaluator Evaluator function to apply to all elements
     */
-  def evaluateQueue(evaluator: Reactive[S] => Unit) = {
+  def evaluateQueue(): Unit = {
     while (elements.nonEmpty) {
       val head = elements.head
       elements = elements.tail
-      handleElement(head, evaluator)
+      handleElement(head)
     }
   }
 
   /**
     * Resets the queue by removing all enqueued elements
     */
-  def clear() = elements = SortedSet[QueueElement[S]]()
+  def clear(): Unit = elements = SortedSet[QueueElement[S]]()
 
 }
 
 
-private object LevelQueue {
+object LevelQueue {
+
+  trait Evaluator[S <: Struct] {
+    def evaluate(r: Reactive[S]): Unit
+  }
 
   private case class QueueElement[S <: Struct](level: Int, reactive: Reactive[S], minLevel: Int, needsEvaluate: Boolean)
   private implicit val ordering: Ordering[QueueElement[_]] = new Ordering[QueueElement[_]] {
