@@ -11,9 +11,9 @@ import rescala.reactives.{Signal, Signals}
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
-@Warmup(iterations = 5, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
-@Measurement(iterations = 5, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
-@Fork(1)
+@Warmup(iterations = 3, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
+@Measurement(iterations = 3, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
+@Fork(3)
 @Threads(4)
 @State(Scope.Benchmark)
 class ReverseFan[S <: rescala.graph.Struct] {
