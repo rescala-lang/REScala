@@ -115,3 +115,9 @@ object TodoMVC extends JSApp {
     ).render, document.body.firstElementChild)
   }
 }
+
+// NOTE that setting a Var inside a Signal leads to the following warning:
+//   Statement may either be unnecessary or have side effects.
+//   Signal expressions should have no side effects.
+// This warning is not executed, but a function is defined.
+// Which happens alot here, for button onclicks handlers.
