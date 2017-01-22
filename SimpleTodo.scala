@@ -54,7 +54,7 @@ object SimpleTodo extends JSApp {
         li(
 
           // TODO why does this work, implicit function?
-          `class`:=Signal{ if (t.done()) "task done" else "task" },
+          `class`:= Signal{ if (t.done()) "task done" else "task" } ,
 
           Signal { input(
             `type`:="checkbox",
@@ -72,7 +72,7 @@ object SimpleTodo extends JSApp {
             value := t.desc(),
             onchange := { e: dom.UIEvent =>
               t.desc() = e.target.asInstanceOf[dom.html.Input].value
-              tasks() = tasks.now.filter { (x)=> x.desc.now != "" }
+//              tasks() = tasks.now.filter { (x)=> x.desc.now != "" }
             }
           )
         )
