@@ -8,7 +8,7 @@ import rescala.graph.{LevelStruct, Reactive}
   *
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
-trait LevelBasedPropagation[S <: LevelStruct] extends CommonPropagationImpl[S] {
+trait LevelBasedPropagation[S <: LevelStruct] extends CommonPropagationImpl[S] with LevelQueue.Evaluator[S] {
 
 
   implicit def currentTurn: LevelBasedPropagation[S] = this
@@ -16,9 +16,9 @@ trait LevelBasedPropagation[S <: LevelStruct] extends CommonPropagationImpl[S] {
 
   private var _evaluated = List.empty[Reactive[S]]
 
-  val levelQueue = new LevelQueue[S]()
+  val levelQueue = new LevelQueue[S](this)
 
-  protected def evaluate(head: Reactive[S]): Unit = {
+  def evaluate(head: Reactive[S]): Unit = {
 
     def requeue(changed: Boolean, level: Int, redo: Boolean): Unit =
       if (redo) levelQueue.enqueue(level, changed)(head)
@@ -66,7 +66,7 @@ trait LevelBasedPropagation[S <: LevelStruct] extends CommonPropagationImpl[S] {
     levelQueue.enqueue(reactive.bud.level)(reactive)
   }
 
-  def propagationPhase(): Unit = levelQueue.evaluateQueue(evaluate)
+  def propagationPhase(): Unit = levelQueue.evaluateQueue()
 
 
 }
