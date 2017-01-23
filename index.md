@@ -6,15 +6,33 @@ nav: 1
 # The REScala Project
 
 
-## Principled Reactive Programming
+The REScala Project aims to bring the principles of functional reactive programming to the JVM.
+FRP can do more than providing asynchronous collections of events with a rich API of stream transformations,
+we also automatically manage consistent up-to-date state with minimal syntactic overhead,
+and integrate seamlessly into modern, object-oriented and functional, concurrent, distributed programs on the JVM.
 
 <!-- {% include slideshow.html %} -->
 
-Modern reactive programming can do more than just providing asynchronous collections of events.
-The REScala Project aims to bring not only the syntax of functional reactive programming to the JVM,
-but also strong guarantees such as glitch freedom, even in the presence of dynamic changes to the topology.
-Additionally REScala adds strong transactional semantics to enable integrations with the many concurrency features of the JVM,
-and provides extensions to build distributed applications from a single seamless codebase.
+---
+
+## Functional Reactive
+{: class="info-box"}
+With abstractions for Events and Signals to handle interactions and state, and seamless conversions between them.
+
+## Long-Title-Box3
+{: class="info-box"}
+Lorem Ipsum yadda yadda yadda
+
+## Box3
+{: class="info-box"}
+Lorem Ipsum yadda yadda yadda
+
+## Box4
+{: class="info-box"}
+Lorem Ipsum yadda yadda yadda in dubio pro reo Caesar venit laudatio intervenit
+
+
+---
 
 [Take a Tour... &raquo;](./rescala/gettingstarted){: class="btn btn-primary"}
 
@@ -30,26 +48,7 @@ REScala is a reactive language which integrates concepts from event-based and fu
 REScala supports the development of reactive applications by fostering a functional and declarative style which complements the advantages of object-oriented design.
 
 
----
 
-<!-- ## Box1
-{: class="info-box"}
-Some Description about that Box
-
-## Long-Title-Box3
-{: class="info-box"}
-Lorem Ipsum yadda yadda yadda
-
-## Box3
-{: class="info-box"}
-Lorem Ipsum yadda yadda yadda
-
-## Box4
-{: class="info-box"}
-Lorem Ipsum yadda yadda yadda in dubio pro reo Caesar venit laudatio intervenit -->
-
-
----
 <!-- <a class="github-button" href="https://github.com/guidosalva/REScala/archive/master.zip" data-style="mega" aria-label="Download guidosalva/REScala on GitHub">Download</a> -->
 
 <a class="github-button" href="https://github.com/guidosalva/REScala/" data-style="mega" aria-label="Visit guidosalva/REScala on GitHub">Repository</a>
