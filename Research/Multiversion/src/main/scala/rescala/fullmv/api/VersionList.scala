@@ -31,8 +31,8 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
       } else {
         import scala.collection.Searching._
         _versions.search[Transaction](txn)(host.sgt.fairSearchOrdering) match {
-          case found @ Found(position) => found
-          case attempt @ InsertionPoint(position) => ensureOrdered(txn, attempt)
+          case found @ Found(_) => found
+          case attempt @ InsertionPoint(_) => ensureOrdered(txn, attempt)
           // TODO could optimize this case by not restarting with entire array bounds, but need to track fixedMin and min separately, following both above -1 cases.
         }
       }
@@ -229,6 +229,8 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
     maybeUserCompAndReevOut(maybeReevInResult)
   }
 
+  // =================== DYNAMIC REWRITE COMPENSATION ====================
+
   def dechange(txn: Transaction): Unit = synchronized {
     position(txn) match {
       case Found(position) =>
@@ -242,6 +244,8 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
         throw new IllegalStateException("Cannot process de-change notification - no Frame for " + txn)
     }
   }
+
+  // =================== READ OPERATIONS ====================
 
   private def ensureReadVersion(txn: Transaction): Int = {
     position(txn) match {
@@ -333,6 +337,8 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
         regReadPred(position)
     }
   }
+
+  // =================== DYNAMIC OPERATIONS ====================
 
   def discover(txn: Transaction, add: O): V = synchronized {
     val position = ensureReadVersion(txn)
