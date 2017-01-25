@@ -5,19 +5,18 @@ import scala.annotation.tailrec
 
 sealed abstract class Task extends Function0[Unit]
 case class NoChangeNotification(txn: Transaction, node: SignalVersionList[_]) extends Task {
-  override def apply(): Unit = node.unchanged(txn)
+  override def apply(): Unit = node.notifyUnchanged(txn)
 }
 case class ChangeNotification(txn: Transaction, node: SignalVersionList[_]) extends Task {
-  override def apply(): Unit = node.changed(txn)
+  override def apply(): Unit = node.notifyChanged(txn)
 }
 case class Framing(txn: Transaction, node: SignalVersionList[_]) extends Task {
   override def apply(): Unit = {
     val outgoings = node.incrementFrame(txn)
-    outgoings.foreach{out => node.host.taskPool.addFraming(txn, out)}
   }
 }
 
-trait TaskPool[O] {
+trait TaskPool {
   // highest priority, as these operations can never suspend and reduce suspensions on other reevaluations
   val noChangeNotifications: TaskList[NoChangeNotification]
   val changeNotifications: TaskList[Task]

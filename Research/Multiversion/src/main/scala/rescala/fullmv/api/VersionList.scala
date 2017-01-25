@@ -9,7 +9,7 @@ import scala.collection.{SortedMap, mutable}
 
 class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, val userComputation: V => V) {
   type O = SignalVersionList[_]
-  sealed abstract class Version(val txn: Transaction, var out: Set[O], val performedFraming: Boolean, val performedChangedPropagation: Boolean)
+  sealed abstract class Version (val txn: Transaction, var out: Set[O], val performedFraming: Boolean, val performedChangedPropagation: Boolean)
   final class ReadVersion(txn: Transaction, out: Set[O]) extends Version(txn, out, false, false)
   sealed abstract class Frame(txn: Transaction, out: Set[O]) extends Version(txn, out, true, false)
   final class Pending(txn: Transaction, out: Set[O], var pending: Int = 1, var changed: Int = 0) extends Frame(txn, out)
@@ -23,20 +23,20 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
   // =================== NAVIGATION ====================
 
   private def position(txn: Transaction): SearchResult = {
-    ensureOrdered(txn, InsertionPoint(_versions.size))
     @tailrec
     def ensureOrdered(txn: Transaction, attempt: InsertionPoint): SearchResult = {
       if(host.sgt.requireOrder(_versions(attempt.insertionPoint - 1).txn, txn) == FirstFirst) {
         attempt
       } else {
         import scala.collection.Searching._
-        _versions.search[Transaction](txn)(host.sgt.fairSearchOrdering) match {
+        _versions.map(_.txn).search(txn)(host.sgt.fairSearchOrdering) match {
           case found @ Found(_) => found
           case attempt @ InsertionPoint(_) => ensureOrdered(txn, attempt)
           // TODO could optimize this case by not restarting with entire array bounds, but need to track fixedMin and min separately, following both above -1 cases.
         }
       }
     }
+    ensureOrdered(txn, InsertionPoint(_versions.size))
   }
 
   private def prevReevPosition(from: Int): Int = {
@@ -81,28 +81,23 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
 
   // =================== FRAMING ====================
 
-  def incrementFrame(txn: Transaction): Set[O] = synchronized {
-    def createPending(position: Int, out: Set[O]): Pending = {
-      val pending = new Pending(txn, out)
-      if(_versions(prevReevPosition(position)).performedChangedPropagation) pending.pending += 1
-      pending
-    }
-
+  def incrementFrame(txn: Transaction): Unit = synchronized {
     position(txn) match {
       case Found(position) =>
         _versions(position) match {
           case frame: Pending =>
             frame.pending += 1
-            Set.empty
-          case read: ReadVersion =>
-            _versions(position) = createPending(position, read.out)
-            read.out
+            txn.branches(-1)
           case version =>
-            throw new IllegalStateException("Cannot incrementFrame: not a Frame or ReadVersion: " + version)
+            throw new IllegalStateException("Cannot incrementFrame: not a Frame: " + version)
         }
       case InsertionPoint(position) =>
         val out = _versions(position - 1).out
-        _versions.insert(position, createPending(position, out))
+        val pending = new Pending(txn, out)
+        if(_versions(prevReevPosition(position)).performedChangedPropagation) pending.pending += 1
+        _versions.insert(position, pending)
+        txn.branches(out.size - 1)
+        out.foreach{node => host.taskPool.addFraming(txn, node)}
         out
     }
   }
@@ -118,46 +113,49 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
    * doc/single node reevaluation pipeline mutual trampoline tail recursion.graphml
    */
 
-  private def notifyFrameRemovedAndCheckForSubsequentReevaluation(position: Int): Trampoline[Option[(Transaction, V)]] = {
-    frameRemoved(_versions(position).txn)
+  private def reevDone(position: Int): Trampoline[Option[(Transaction, V)]] = {
+    val version = _versions(position)
+    version.txn.branches(version.out.size - 1)
+    frameRemoved(version.txn)
     nextReevPosition(position) match {
-      case Some(next) => Recurse({ () => unchanged(next)})
+      case Some(next) => Recurse({ () => notifyUnchanged(next)})
       case None => Result(None)
     }
   }
 
-  private def reev_unchanged(position: Int): Trampoline[Option[(Transaction, V)]] = {
+  private def reevUnchanged(position: Int): Trampoline[Option[(Transaction, V)]] = {
     val frame = _versions(position)
     _versions(position) = new ReadVersion(frame.txn, frame.out)
     frame.out.foreach{ succ => host.taskPool.addNoChangeNotification(frame.txn, succ) }
-    notifyFrameRemovedAndCheckForSubsequentReevaluation(position)
+    reevDone(position)
   }
 
-  private def reev_changed(position: Int, value: V): Trampoline[Option[(Transaction, V)]] = {
+  private def reevChanged(position: Int, value: V): Trampoline[Option[(Transaction, V)]] = {
     val frame = _versions(position)
     _versions(position) = new Written(frame.txn, frame.out, value)
     frame.out.foreach{ succ => host.taskPool.addChangeNotification(frame.txn, succ) }
-    notifyFrameRemovedAndCheckForSubsequentReevaluation(position)
+    reevDone(position)
   }
 
-  private def reev_in(position: Int): Option[(Transaction, V)] = {
+  private def reevIn(position: Int): Option[(Transaction, V)] = {
     val frame = _versions(position)
     _versions(position) = new Active(frame.txn, frame.out)
     val v_in = regReadPred(position)
-    Some(frame.txn, v_in)
+    Some(frame.txn -> v_in)
   }
 
-  private def unchanged(position: Int): Trampoline[Option[(Transaction, V)]] = {
+  private def notifyUnchanged(position: Int): Trampoline[Option[(Transaction, V)]] = {
     _versions(position) match {
       case frame: Pending if (frame.pending > 0) =>
         frame.pending -= 1
         if (frame.pending == 0) {
           if (frame.changed > 0) {
-            Result(reev_in(position))
+            Result(reevIn(position))
           } else {
-            Recurse({ () => reev_unchanged(position)})
+            Recurse({ () => reevUnchanged(position)})
           }
         } else {
+          frame.txn.branches(-1)
           Result(None)
         }
       case version =>
@@ -173,14 +171,14 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
         val nextMaybeReevInResult = if (v_in == v_out) synchronized {
           position(txn) match {
             case Found(position) =>
-              reev_unchanged(position).bounce
+              reevUnchanged(position).bounce
             case _ =>
               throw new AssertionError("Cannot reevOutUnchanged - Frame was deleted during userComputation for " + txn)
           }
         } else synchronized {
           position(txn) match {
             case Found(position) =>
-              reev_changed(position, v_out).bounce
+              reevChanged(position, v_out).bounce
             case _ =>
               throw new AssertionError("Cannot reevOutChanged - Frame was deleted during userComputation for " + txn)
           }
@@ -190,11 +188,11 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
     }
   }
 
-  def unchanged(txn: Transaction): Unit = {
+  def notifyUnchanged(txn: Transaction): Unit = {
     val maybeReevInResult = synchronized {
       position(txn) match {
         case Found(position) =>
-          unchanged(position).bounce
+          notifyUnchanged(position).bounce
         case _ =>
           throw new IllegalStateException("Cannot process no-change notification - no Frame for " + txn)
       }
@@ -202,7 +200,7 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
     maybeUserCompAndReevOut(maybeReevInResult)
   }
 
-  def changed(txn: Transaction): Unit = synchronized {
+  def notifyChanged(txn: Transaction): Unit = synchronized {
     val maybeReevInResult = synchronized {
       position(txn) match {
         case Found(position) =>
@@ -214,9 +212,10 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
               frame.pending -= 1
               if (frame.pending == 0) {
                 // frame.changed > 0 is implicit because this itself is a change notification
-                reev_in(position)
+                reevIn(position)
               } else {
                 frame.changed += 1
+                frame.txn.branches(-1)
                 None
               }
             case version =>
@@ -227,22 +226,6 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
       }
     }
     maybeUserCompAndReevOut(maybeReevInResult)
-  }
-
-  // =================== DYNAMIC REWRITE COMPENSATION ====================
-
-  def dechange(txn: Transaction): Unit = synchronized {
-    position(txn) match {
-      case Found(position) =>
-        _versions(position) match {
-          case frame: Pending if (frame.pending > 0) =>
-            frame.changed -= 1
-          case version =>
-            throw new IllegalStateException("Cannot process de-change notification - not a Frame: " + version)
-        }
-      case _ =>
-        throw new IllegalStateException("Cannot process de-change notification - no Frame for " + txn)
-    }
   }
 
   // =================== READ OPERATIONS ====================
@@ -342,29 +325,30 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
 
   def discover(txn: Transaction, add: O): V = synchronized {
     val position = ensureReadVersion(txn)
-    for(pos <- position until _versions.size) {
+    _versions(position).out += add
+    for(pos <- (position + 1) until _versions.size) {
       val version = _versions(pos)
       version.out += add
       if(version.performedFraming) {
-        if(version.performedChangedPropagation) {
-          add.changed(version.txn)
-        }
+        add.reincrement(version.txn, version.performedChangedPropagation)
       }
     }
     after(txn)
   }
 
-  def drop(txn: Transaction, remove: O): V = synchronized{
+  def reincrement(txn: Transaction, change: Boolean): Unit = ???
+
+  def drop(txn: Transaction, remove: O): Unit = synchronized{
     val position = ensureReadVersion(txn)
-    for(pos <- position until _versions.size) {
+    _versions(position).out -= remove
+    for(pos <- (position + 1) until _versions.size) {
       val version = _versions(pos)
-      version.out += remove
+      version.out -= remove
       if(version.performedFraming) {
-        if(version.performedChangedPropagation) {
-          remove.dechange(version.txn)
-        }
-        maybeDeframe(remove, version.txn)
+        remove.redecrement(version.txn, version.performedChangedPropagation)
       }
     }
   }
+
+  def redecrement(txn: Transaction, change: Boolean): Unit = ???
 }

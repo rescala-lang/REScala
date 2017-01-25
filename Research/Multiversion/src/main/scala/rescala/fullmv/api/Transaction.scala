@@ -8,6 +8,7 @@ object Obsolete extends Phase
 
 trait Transaction {
   def phase: Phase
+  def branches(delta: Int): Unit
   def start(): this.type
   def done(): this.type
 }
