@@ -19,6 +19,7 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
 
   var _versions = new ArrayBuffer[Version](6)
   _versions += new Written(init, Set(), initialValue)
+  var latestValue: V = initialValue
 
   // =================== NAVIGATION ====================
 
@@ -109,43 +110,78 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
    * Upon any received change or no-change notification, this stack iterates through the version list
    * and executes all reevaluations that are not missing further notifications from other nodes.
    * The trampoline class is used to enable tail call optimization.
-   * For a control flow visualization, consult the following diagram:
-   * doc/single node reevaluation pipeline mutual trampoline tail recursion.graphml
+   * The control flow alternates between holding the monitor to count the notification and look up reevaluation input,
+   * releasing the monitor to execute the reevaluation's user computation, and again holding the monitor to process
+   * the reevaluation result and search for and update the pipeline-successive reevaluation before releasing it
+   * again for executing the user computation again.
+   * For a visualization of this control flow, consult the following diagram:
+   * "doc/single node reevaluation pipeline mutual trampoline tail recursion.graphml"
    */
 
-  private def reevDone(position: Int, maybeLastValue: Option[V]): Trampoline[Option[(Transaction, V)]] = {
+  /**
+    * Updates active transaction branches and notify suspended reads after a completed reevaluation.
+    * Tail-recursively traverses the version list onwards, looking for a pipeline-successive reevaluation.
+    * @param position the version's position
+    * @return Some(txn -> v) to start a pipeline-successive reevaluation,
+    *         or None if the pipeline-successor reevaluation is not ready or does not exists.
+    */
+  private def reevDone(position: Int): Trampoline[Option[Transaction]] = {
     val version = _versions(position)
     version.txn.branches(version.out.size - 1)
     frameRemoved(version.txn)
     nextReevPosition(position) match {
-      case Some(next) => Recurse({ () => notifyUnchanged(next, maybeLastValue)})
+      case Some(next) => Recurse({ () => notifyUnchanged(next)})
       case None => Result(None)
     }
   }
 
-  private def reevUnchanged(position: Int, maybeLastValue: Option[V]): Trampoline[Option[(Transaction, V)]] = {
+  /**
+    * Turns a frame into a read version after the frame was reevaluated as unchanged.
+    * Tail-recursively traverses the version list onwards, looking for a pipeline-successive reevaluation.
+    * @param position the version's position
+    * @return Some(txn -> v) to start a pipeline-successive reevaluation,
+    *         or None if the next reevaluation is not ready or no next reevaluation exists.
+    */
+  private def reevUnchanged(position: Int): Trampoline[Option[Transaction]] = {
     val frame = _versions(position)
     _versions(position) = new ReadVersion(frame.txn, frame.out)
     frame.out.foreach{ succ => host.taskPool.addNoChangeNotification(frame.txn, succ) }
-    reevDone(position, maybeLastValue)
+    reevDone(position)
   }
 
-  private def reevChanged(position: Int, value: V): Trampoline[Option[(Transaction, V)]] = {
+  /**
+    * Turns a frame into a written version after the frame was reevaluated as changed.
+    * Tail-recursively traverses the version list onwards, looking for a pipeline-successive reevaluation.
+    * @param position the version's position
+    * @param value the new value
+    * @return Some(txn -> v) to start a pipeline-successive reevaluation,
+    *         or None if the pipeline-successor reevaluation is not ready or does not exists.
+    */
+  private def reevChanged(position: Int, value: V): Trampoline[Option[Transaction]] = {
     val frame = _versions(position)
     _versions(position) = new Written(frame.txn, frame.out, value)
+    latestValue = value
     frame.out.foreach{ succ => host.taskPool.addChangeNotification(frame.txn, succ) }
-    reevDone(position, Some(value))
+    reevDone(position)
   }
 
-  private def notifyUnchanged(position: Int, maybeLastValue: Option[V]): Trampoline[Option[(Transaction, V)]] = {
+  /**
+    * Delivers a no-change to the frame at the given position, either from an external [[notifyUnchanged()]] message
+    * or from a pipeline-predecessor reevaluation having completed.
+    * Tail-recursively traverses the version list onwards, looking for a pipeline-successive reevaluation.
+    * @param position the version's position
+    * @return Some(txn -> v) to start a pipeline-successive reevaluation,
+    *         or None if the pipeline-successor reevaluation is not ready or does not exists.
+    */
+  private def notifyUnchanged(position: Int): Trampoline[Option[Transaction]] = {
     _versions(position) match {
       case frame: Pending if (frame.pending > 0) =>
         frame.pending -= 1
         if (frame.pending == 0) {
           if (frame.changed > 0) {
-            Result(Some(frame.txn -> maybeLastValue.getOrElse{ regReadPred(position) }))
+            Result(Some(frame.txn))
           } else {
-            Recurse({ () => reevUnchanged(position, maybeLastValue)})
+            Recurse({ () => reevUnchanged(position)})
           }
         } else {
           frame.txn.branches(-1)
@@ -156,56 +192,69 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
     }
   }
 
+  /**
+    * If the corresponding input is given, executes the reevaluation and tail-recursively all pipeline-successive
+    * reevaluations that are ready. Note that the user computation runs without holding the node's monitor!
+    * @param maybeTransaction Possibly a pair of transaction and v_in to start a reevaluation.
+    */
   @tailrec
-  private def maybeUserCompAndReevOut(maybeReevInResult: Option[(Transaction, V)]): Unit = {
-    maybeReevInResult match {
-      case Some((txn, v_in)) =>
-        val v_out = userComputation(v_in)
-        val nextMaybeReevInResult = if (v_in == v_out) synchronized {
-          position(txn) match {
-            case Found(position) =>
-              reevUnchanged(position, Some(v_in)).bounce
-            case _ =>
-              throw new AssertionError("Cannot reevOutUnchanged - Frame was deleted during userComputation for " + txn)
-          }
-        } else synchronized {
-          position(txn) match {
-            case Found(position) =>
-              reevChanged(position, v_out).bounce
-            case _ =>
-              throw new AssertionError("Cannot reevOutChanged - Frame was deleted during userComputation for " + txn)
-          }
+  private def maybeUserCompAndReevOut(maybeTransaction: Option[Transaction]): Unit = {
+    if(maybeTransaction.isDefined) {
+      val txn = maybeTransaction.get
+      val v_out = userComputation(latestValue)
+      val maybeNextTransaction = if (latestValue == v_out) synchronized {
+        position(txn) match {
+          case Found(position) =>
+            reevUnchanged(position).bounce
+          case _ =>
+            throw new AssertionError("Cannot reevOutUnchanged - Frame was deleted during userComputation for " + txn)
         }
-        maybeUserCompAndReevOut(nextMaybeReevInResult)
-      case None =>
+      } else synchronized {
+        position(txn) match {
+          case Found(position) =>
+            reevChanged(position, v_out).bounce
+          case _ =>
+            throw new AssertionError("Cannot reevOutChanged - Frame was deleted during userComputation for " + txn)
+        }
+      }
+      maybeUserCompAndReevOut(maybeNextTransaction)
     }
   }
 
+  /**
+    * receive an external no-change notification within the given transaction. Executes all pipelined reevaluations
+    * of this node that become ready due to this notification. Notifications (change and no-change) for other nodes
+    * spawned by any of these reevaluations are queued in the [[Host.taskPool]] of [[host]] for concurrent processing.
+    * @param txn the transaction
+    */
   def notifyUnchanged(txn: Transaction): Unit = {
-    val maybeReevInResult = synchronized {
+    val maybeTransaction = synchronized {
       position(txn) match {
         case Found(position) =>
-          notifyUnchanged(position, None).bounce
+          notifyUnchanged(position).bounce
         case _ =>
           throw new IllegalStateException("Cannot process no-change notification - no Frame for " + txn)
       }
     }
-    maybeUserCompAndReevOut(maybeReevInResult)
+    maybeUserCompAndReevOut(maybeTransaction)
   }
 
+  /**
+    * receive an external change notification within the given transaction. Executes all pipelined reevaluations
+    * of this node that become ready due to this notification. Notifications (change and no-change) for other nodes
+    * spawned by any of these reevaluations are queued in the [[Host.taskPool]] of [[host]] for concurrent processing.
+    * @param txn the transaction
+    */
   def notifyChanged(txn: Transaction): Unit = synchronized {
-    val maybeReevInResult = synchronized {
+    val maybeTransaction = synchronized {
       position(txn) match {
         case Found(position) =>
-          // similar to unchanged(Int), but not abstracted into a method because not relevant for mutual recursion:
-          // only the first reevaluation receives a change, within a single node's pipeline, otherwise, only
-          // no-change notifications are forwarded, so only unchanged(Int) is required during the tail recursion.
           _versions(position) match {
             case frame: Pending if (frame.pending > 0) =>
               frame.pending -= 1
               if (frame.pending == 0) {
                 // frame.changed > 0 is implicit because this itself is a change notification
-                Some(frame.txn -> regReadPred(position))
+                Some(frame.txn)
               } else {
                 frame.changed += 1
                 frame.txn.branches(-1)
@@ -218,7 +267,7 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
           throw new IllegalStateException("Cannot process change notification - no Frame for " + txn)
       }
     }
-    maybeUserCompAndReevOut(maybeReevInResult)
+    maybeUserCompAndReevOut(maybeTransaction)
   }
 
   // =================== READ OPERATIONS ====================
