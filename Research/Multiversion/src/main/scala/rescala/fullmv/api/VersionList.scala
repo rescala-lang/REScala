@@ -122,7 +122,7 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
     * Updates active transaction branches and notify suspended reads after a completed reevaluation.
     * Tail-recursively traverses the version list onwards, looking for a pipeline-successive reevaluation.
     * @param position the version's position
-    * @return Some(txn -> v) to start a pipeline-successive reevaluation,
+    * @return Some(txn) to start a pipeline-successive reevaluation,
     *         or None if the pipeline-successor reevaluation is not ready or does not exists.
     */
   private def reevDone(position: Int): Trampoline[Option[Transaction]] = {
@@ -139,7 +139,7 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
     * Turns a frame into a read version after the frame was reevaluated as unchanged.
     * Tail-recursively traverses the version list onwards, looking for a pipeline-successive reevaluation.
     * @param position the version's position
-    * @return Some(txn -> v) to start a pipeline-successive reevaluation,
+    * @return Some(txn) to start a pipeline-successive reevaluation,
     *         or None if the next reevaluation is not ready or no next reevaluation exists.
     */
   private def reevUnchanged(position: Int): Trampoline[Option[Transaction]] = {
@@ -154,7 +154,7 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
     * Tail-recursively traverses the version list onwards, looking for a pipeline-successive reevaluation.
     * @param position the version's position
     * @param value the new value
-    * @return Some(txn -> v) to start a pipeline-successive reevaluation,
+    * @return Some(txn) to start a pipeline-successive reevaluation,
     *         or None if the pipeline-successor reevaluation is not ready or does not exists.
     */
   private def reevChanged(position: Int, value: V): Trampoline[Option[Transaction]] = {
@@ -170,7 +170,7 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
     * or from a pipeline-predecessor reevaluation having completed.
     * Tail-recursively traverses the version list onwards, looking for a pipeline-successive reevaluation.
     * @param position the version's position
-    * @return Some(txn -> v) to start a pipeline-successive reevaluation,
+    * @return Some(txn) to start a pipeline-successive reevaluation,
     *         or None if the pipeline-successor reevaluation is not ready or does not exists.
     */
   private def notifyUnchanged(position: Int): Trampoline[Option[Transaction]] = {
@@ -195,7 +195,7 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
   /**
     * If the corresponding input is given, executes the reevaluation and tail-recursively all pipeline-successive
     * reevaluations that are ready. Note that the user computation runs without holding the node's monitor!
-    * @param maybeTransaction Possibly a pair of transaction and v_in to start a reevaluation.
+    * @param maybeTransaction Possibly a transaction to start a reevaluation.
     */
   @tailrec
   private def maybeUserCompAndReevOut(maybeTransaction: Option[Transaction]): Unit = {
