@@ -1,8 +1,0 @@
-*.cache
-bin/
-*.aux
-*.log
-*.out
-*.pdf
-*.toc
-*.swp

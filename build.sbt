@@ -16,7 +16,7 @@ lazy val rescalaAggregate = project.in(file(".")).aggregate(rescalaJVM,
   rescalaJS, microbench, reswing, examples, examplesReswing, caseStudyEditor,
   caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags,
   datastructures, universe, reactiveStreams, documentation, meta, pipelining,
-  stm, testsJVM, testsJS, fullmv)
+  stm, testsJVM, testsJS, fullmv, caseStudyShapes)
   .settings(
     publish := {},
     publishLocal := {})
@@ -213,6 +213,13 @@ lazy val universe = project.in(file("Examples/Universe"))
     publishLocal := {},
     scalacOptions := Nil)
   .settings(com.typesafe.sbt.SbtStartScript.startScriptForClassesSettings)
+
+lazy val caseStudyShapes = project.in(file("Examples/Shapes"))
+  .dependsOn(reswing)
+  .settings(
+    name := "shapes-case-study",
+    publish := {},
+    publishLocal := {})
 
 
 // Research
