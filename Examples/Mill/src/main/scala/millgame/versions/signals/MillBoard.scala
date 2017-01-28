@@ -11,7 +11,7 @@ import rescala._
 
 class MillBoard {
     /* wrap stones Var, to have the same interface as other versions */
-    def stones = stonesVar.get
+    def stones = stonesVar.now
 
 	/* spiral-indexed board slots, starting innermost lower left, going clockwise */
     val stonesVar: Var[Vector[Slot]] = Var(Vector.fill(24)(Empty)) //#VAR
@@ -35,11 +35,11 @@ class MillBoard {
 	*/
 
 	/* access slot state by index */
-	def apply(slot: SlotIndex) = stonesVar.get(slot.index)
-	def update(slot: SlotIndex, color: Slot) =
-	  stonesVar.set(stonesVar.get.updated(slot.index, color))
-	def update(indexColor: Map[SlotIndex, Slot]) =
-	  stonesVar.set(stonesVar.get.zipWithIndex.map({
+	def apply(slot: SlotIndex): Slot = stonesVar.now.apply(slot.index)
+	def update(slot: SlotIndex, color: Slot): Unit =
+	  stonesVar.transform(_.updated(slot.index, color))
+	def update(indexColor: Map[SlotIndex, Slot]): Unit =
+	  stonesVar.set(stonesVar.now.zipWithIndex.map({
 	    case (color, i) => indexColor.getOrElse(SlotIndex(i), color)
 	  }))
 
@@ -94,13 +94,13 @@ class MillBoard {
 	}
 
 	/// NOTE: Workaround because change fires even when there is no value change
-	val lineOwnersChanged = lineOwners.change && ((c: (Vector[Slot], Vector[Slot])) => c._2 != c._1) //#EVT //#IF
+	val lineOwnersChanged = lineOwners.change && (c => c._2 != c._1) //#EVT //#IF
 	val lineOwnersNotChanged = lineOwners.change.\(lineOwnersChanged)
 	lineOwnersNotChanged += { x =>
 	  println("not changed: " + x)
 	}
 	val millOpenedOrClosed = lineOwners.change.map { //#EVT //#IF
-	  change: (Vector[Slot], Vector[Slot]) =>
+	  change =>
 	  /// NOTE: Workaround because change event fires (null, new) tuple
 	  if (change._1 eq null) change._2.find(_ != Empty).get
 	  else (change._1 zip change._2).collectFirst {case (old, n) if old != n => n}.get

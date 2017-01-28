@@ -2,18 +2,17 @@ package millgame.versions.signals
 
 import millgame._
 import millgame.types._
-
 import rescala._
-
 import java.awt.BasicStroke
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.Font
 import java.awt.RenderingHints
+
 import swing.event._
 import swing._
 import reswing._
-
+import scala.language.reflectiveCalls
 import scala.Numeric.Implicits._
 
 object MainWindow extends SimpleSwingApplication {
@@ -71,7 +70,7 @@ class MillDrawer(val game: MillGame)
   val MiddlePercent = 2f / 3
   val InnerPercent = 1f / 3
 
-  val squareSize = Signal { //#SIG
+  val squareSize: rescala.Signal[Int] = Signal { //#SIG
     (math.min(size().width, size().height) * SizePercent).toInt
   }
 
@@ -82,10 +81,10 @@ class MillDrawer(val game: MillGame)
     val yFactors = List.fill(3)(List(-1, 0, 1, 1, 1, 0, -1, -1)).flatten
 
     for(((xF, yF), i) <- (xFactors zip yFactors).zipWithIndex) yield {
-      val distance = (i / 8 match {
-        case 0 => InnerPercent * squareSize()
-        case 1 => MiddlePercent * squareSize()
-        case 2 => squareSize()
+      val distance: Int = (i / 8 match {
+        case 0 => InnerPercent * squareSize().toFloat
+        case 1 => MiddlePercent * squareSize().toFloat
+        case 2 => squareSize().toFloat
       }).toInt / 2
       Point(midX + xF * distance, midY + yF * distance)
     }
@@ -111,9 +110,9 @@ class MillDrawer(val game: MillGame)
   }
 
   val highlightedIndex = Signal { //#SIG
-    val index = mouse.moves.moved.latestOption() match {
+    val index = mouse.moves.moved.latestOption().apply() match {
       case Some(e) => coordinates() indexWhere {
-        p => (p distance (e.point.x, e.point.y)) < ClickArea
+        p => (p.distance((e.point.x, e.point.y))) < ClickArea
       }
       case _ => -1
     }
@@ -127,7 +126,7 @@ class MillDrawer(val game: MillGame)
           case (from, to) => from == highlightedIndex() || to == highlightedIndex()
         }
       else
-        game.possibleNextMoves() filter (_ == (selectedIndex(), highlightedIndex())) match {
+        game.possibleNextMoves() filter (_ == ((selectedIndex(), highlightedIndex()))) match {
           case Nil => game.possibleMoves filter (_._1 == selectedIndex())
           case l => l
         }
@@ -137,8 +136,8 @@ class MillDrawer(val game: MillGame)
   }
 
   val indexClicked = (mouse.clicks.released map { e: MouseReleased => //#EF
-    val index = coordinates.get.indexWhere {
-      p => (p distance (e.point.x, e.point.y)) < ClickArea
+    val index = coordinates.now.indexWhere {
+      p => (p distance ((e.point.x, e.point.y))) < ClickArea
     }
     SlotIndex(index)
   }) && (_ != SlotIndex(-1)) //#EF
@@ -174,11 +173,11 @@ class MillDrawer(val game: MillGame)
     g.setRenderingHint(
         RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
 
-    for (p <- presentation.get)
+    for (p <- presentation.now)
       p match {
         case Presentation(shape, color, width) =>
           g.setColor(color)
-          g.setStroke(new BasicStroke(width))
+          g.setStroke(new BasicStroke(width.toFloat))
 
           shape match {
             case Line(from, to) =>

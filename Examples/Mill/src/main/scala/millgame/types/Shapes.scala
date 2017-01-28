@@ -7,8 +7,8 @@ import java.awt.Color
 //
 // presentational attributes
 //
-case class Presentation[T: Numeric, +S <% Shape[T]](
-    shape: S, color: Color = Color.BLACK, width: T = 1) {
+case class Presentation[T, +S](
+    shape: S, color: Color = Color.BLACK, width: T = 1)(implicit ev$1: S => Shape[T], ev$2: Numeric[T]) {
   def toDouble = Presentation(shape.toDouble, color, width.toDouble)
   def toInt = Presentation(shape.toInt, color, width.toInt)
 }
@@ -32,13 +32,13 @@ object Point {
 case class Point[@specialized(Int, Double) T: Numeric](x: T, y: T) extends Shape[T] {
   def toDouble = Point(x.toDouble, y.toDouble)
   def toInt = Point(x.toInt, y.toInt)
-  
+
   def +(p: Point[T]) = Point(x + p.x, y + p.y)
   def -(p: Point[T]) = Point(x - p.x, y - p.y)
   def unary_-() = Point(-x, -y)
   def *(d: T) = Point(x * d, y * d)
   def /(d: Double) = Point(x.toDouble / d, y.toDouble / d)
-  
+
   def euclidian = math.sqrt((x * x + y * y).toDouble)
   def normalize = if (x == 0 && y == 0) this else this / euclidian
   def distance(p: Point[T]) = (p - this).euclidian
@@ -49,15 +49,15 @@ case class Point[@specialized(Int, Double) T: Numeric](x: T, y: T) extends Shape
 // line
 //
 object Line {
-  implicit def fromLine[T](l: Line[T]) = (l.from, l.to)
-  implicit def toLine[T: Numeric, A <% Point[T], B <% Point[T]](l: (A, B)) =
+  implicit def fromLine[T](l: Line[T]): (Point[T], Point[T]) = (l.from, l.to)
+  implicit def toLine[T, A, B](l: (A, B))(implicit ev$1: A => Point[T], ev$2: B => Point[T], ev$3: Numeric[T]): Line[T] =
     Line(l._1, l._2)
 }
 
 case class Line[T: Numeric](from: Point[T], to: Point[T]) extends Shape[T] {
   def toDouble = Line(from.toDouble, to.toDouble)
   def toInt = Line(from.toInt, to.toInt)
-  
+
   def length = from distance to
 }
 
