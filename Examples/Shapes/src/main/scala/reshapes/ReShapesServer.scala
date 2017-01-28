@@ -25,7 +25,7 @@ object ReShapesServer {
       new Thread(new UpdateThread(updateThreadPort)).start()
     }
     else
-      println("invalid number of arguments")
+      println("invalid number of arguments please enter two port numbers")
   }
 
   /**
