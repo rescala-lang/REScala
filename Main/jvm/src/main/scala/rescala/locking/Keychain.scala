@@ -38,12 +38,13 @@ class Keychain[InterTurn](init: Key[InterTurn]) {
     keys.addAll(other.keys)
   }
 
-  def release(key: Key[InterTurn]) = {
+  def release(key: Key[InterTurn]): Unit = {
     assert(Thread.holdsLock(this), s"tried to release $key without holding $this")
     val head = keys.poll()
     assert(head eq key, s"tried to drop $key from $this but is not head! ($keys)")
     val locks = key.grabLocks()
-    val lockIt = locks.keySet().iterator()
+    assert(locks.toSet.size == locks.size, s"duplicated locks detected")
+    val lockIt = locks.iterator
     if (keys.isEmpty) {
       while (lockIt.hasNext) lockIt.next().transfer(null, key)
     }
@@ -53,7 +54,6 @@ class Keychain[InterTurn](init: Key[InterTurn]) {
       fallthrough -= target
       target.continue()
     }
-    locks.clear()
   }
 
 }
