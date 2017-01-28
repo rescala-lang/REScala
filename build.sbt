@@ -111,10 +111,10 @@ lazy val reactiveStreams = project.in(file("Extensions/ReactiveStreams"))
 
 lazy val reswing = project.in(file("Extensions/RESwing"))
   .dependsOn(rescalaJVM)
+  .dependsOn(scalaSwingRepo)
   .settings(
     name := "reswing",
     licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")))
-  .dependsOn(scalaSwingRepo)
 
 lazy val rescalatags = project.in(file("Extensions/Rescalatags"))
   .enablePlugins(ScalaJSPlugin)

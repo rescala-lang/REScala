@@ -14,9 +14,9 @@ install:
   - cmd: SET PATH=C:\sbt\sbt\bin;%JAVA_HOME%\bin;%PATH%
   - cmd: SET SBT_OPTS=-Xmx4g
 build_script:
-  - sbt clean compile
+  - sbt clean +compile
 test_script:
-  - sbt test
+  - sbt +test
 cache:
   - C:\sbt\
   - C:\Users\appveyor\.m2

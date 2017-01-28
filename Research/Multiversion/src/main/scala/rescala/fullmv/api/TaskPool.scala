@@ -1,17 +1,16 @@
 package rescala.fullmv.api
 
-import scala.annotation.tailrec
+import scala.language.existentials
 
-
-sealed abstract class Task extends Function0[Unit]
+sealed abstract class Task
 case class NoChangeNotification(txn: Transaction, node: SignalVersionList[_]) extends Task {
-  override def apply(): Unit = node.notifyUnchanged(txn)
+  def apply(): Unit = node.notifyUnchanged(txn)
 }
 case class ChangeNotification(txn: Transaction, node: SignalVersionList[_]) extends Task {
-  override def apply(): Unit = node.notifyChanged(txn)
+  def apply(): Unit = node.notifyChanged(txn)
 }
 case class Framing(txn: Transaction, node: SignalVersionList[_]) extends Task {
-  override def apply(): Unit = {
+  def apply(): Unit = {
     val outgoings = node.incrementFrame(txn)
   }
 }
@@ -23,13 +22,13 @@ trait TaskPool {
   val framings: TaskList[Framing]
 
   def addFraming(txn: Transaction, node: SignalVersionList[_]): Unit = {
-    framings.enqueue(new Framing(txn, node))
+    framings.enqueue(Framing(txn, node))
   }
   def addChangeNotification(txn: Transaction, node: SignalVersionList[_]): Unit = {
-    changeNotifications.enqueue(new ChangeNotification(txn, node))
+    changeNotifications.enqueue(ChangeNotification(txn, node))
   }
   def addNoChangeNotification(txn: Transaction, node: SignalVersionList[_]): Unit = {
-    noChangeNotifications.enqueue(new NoChangeNotification(txn, node))
+    noChangeNotifications.enqueue(NoChangeNotification(txn, node))
   }
 
   def dequeue(): Option[Task] = {
@@ -60,10 +59,10 @@ class TaskList[T] {
   }
 
   def dequeue(): Option[T] = {
-    val result = head.map(_.task);
+    val result = head.map(_.task)
     if(head.isDefined) {
         head = head.get.next
-        if(head == None) {
+        if(head.isEmpty) {
           tail = None
         }
       }

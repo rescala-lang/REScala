@@ -14,6 +14,7 @@ import scala.xml.Text
 
 import reshapes.drawing.DrawingSpaceState
 import reshapes.util.MathUtil
+import rescala._
 
 abstract class Shape(
     val drawingSpaceState: DrawingSpaceState,
