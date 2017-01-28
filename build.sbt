@@ -149,10 +149,10 @@ lazy val stm = project.in(file("Extensions/STM"))
   .settings(
     scalatestDependency,
     publish := {},
-    publishLocal := {}
-    //libraryDependencies += "org.scala-stm" %% "scala-stm" % "0.8-SNAPSHOT"
+    publishLocal := {},
+    libraryDependencies += "org.scala-stm" %% "scala-stm" % "0.8"
   )
-  .dependsOn(RootProject(uri("git://github.com/stg-tud/scala-stm.git#4c2f2c5f5e4489d3ff74fcc3532b4a32acf5d68c")))
+  //.dependsOn(RootProject(uri("git://github.com/stg-tud/scala-stm.git#4c2f2c5f5e4489d3ff74fcc3532b4a32acf5d68c")))
 
 // Examples
 
