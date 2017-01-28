@@ -62,6 +62,8 @@ object Signals extends GeneratedSignalLift {
   }
 
   case class Diff[+A](from: Pulse[A], to: Pulse[A]) {
+    def _1: A = from.getS
+    def _2: A = to.getS
     def pair: (A, A) = {
       try {
         val right = to.getS
