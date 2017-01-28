@@ -1,6 +1,6 @@
 organization in ThisBuild := "de.tuda.stg"
-scalaVersion in ThisBuild := "2.12.1"
 crossScalaVersions in ThisBuild := Seq("2.12.1", "2.11.8")
+scalaVersion in ThisBuild := crossScalaVersions.value.head
 
 version in ThisBuild := "0.20.0-SNAPSHOT"
 
@@ -110,8 +110,8 @@ lazy val reswing = project.in(file("Extensions/RESwing"))
   .dependsOn(rescalaJVM)
   .settings(
     name := "reswing",
-    scalaswingDependency,
     licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")))
+  .dependsOn(scalaSwingRepo)
 
 lazy val rescalatags = project.in(file("Extensions/Rescalatags"))
   .enablePlugins(ScalaJSPlugin)
@@ -155,9 +155,9 @@ lazy val stm = project.in(file("Extensions/STM"))
 
 lazy val examples = project.in(file("Examples/examples"))
   .dependsOn(rescalaJVM)
+  .dependsOn(scalaSwingRepo)
   .settings(
     name := "rescala-examples",
-    scalaswingDependency,
     publish := {},
     publishLocal := {})
 
@@ -177,33 +177,33 @@ lazy val caseStudyEditor = project.in(file("Examples/Editor"))
 
 lazy val caseStudyRSSEvents = project.in(file("Examples/RSSReader/ReactiveScalaReader.Events"))
   .dependsOn(reswing)
+  .dependsOn(scalaSwingRepo)
   .settings(
     name := "rssreader-case-study",
     publish := {},
     publishLocal := {},
     rssDependencies,
-    scalatestDependency,
-    scalaswingDependency)
+    scalatestDependency)
 
 lazy val caseStudyRSSReactive = project.in(file("Examples/RSSReader/ReactiveScalaReader.Reactive"))
   .dependsOn(reswing)
+  .dependsOn(scalaSwingRepo)
   .settings(
     name := "rssreader-case-study-reactive",
     publish := {},
     publishLocal := {},
     rssDependencies,
-    scalatestDependency,
-    scalaswingDependency)
+    scalatestDependency)
 
 lazy val caseStudyRSSSimple = project.in(file("Examples/RSSReader/SimpleRssReader"))
   .dependsOn(reswing)
+  .dependsOn(scalaSwingRepo)
   .settings(
     name := "rssreader-case-study-simple",
     publish := {},
     publishLocal := {},
     rssDependencies,
-    scalatestDependency,
-    scalaswingDependency)
+    scalatestDependency)
 
 lazy val universe = project.in(file("Examples/Universe"))
   .dependsOn(rescalaJVM)
@@ -270,7 +270,8 @@ lazy val rssDependencies = libraryDependencies ++= Seq(
   "org.codehaus.jsr166-mirror" % "jsr166y" % "1.7.0",
   "org.scala-lang.modules" %% "scala-xml" % "1.0.6")
 
-lazy val scalaswingDependency = libraryDependencies += "org.scala-lang" % "scala-swing" % "2.11.0-M7"
+//lazy val scalaswingDependency = libraryDependencies += "org.scala-lang" % "scala-swing" % "2.11.0-M7"
+lazy val scalaSwingRepo = ProjectRef(uri("git://github.com/scala/scala-swing.git#5b592f015f9a2e512e95528d6d97224de1d9aaab"), "swing")
 lazy val scalatestDependency = libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.1" % "test"
 
 
