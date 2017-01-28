@@ -36,12 +36,12 @@ class DrawingPanel(val state: DrawingSpaceState) extends Panel {
     g.setColor(java.awt.Color.BLACK)
     if (currentShape != null) {
       currentShape.draw(g)
-      for (shape <- state.shapes.get)
+      for (shape <- state.shapes.now)
         if (!shape.selected)
           shape.draw(g)
     }
     else
-      for (shape <- state.shapes.get)
+      for (shape <- state.shapes.now)
         shape.draw(g)
   }
 
@@ -52,12 +52,12 @@ class DrawingPanel(val state: DrawingSpaceState) extends Panel {
   reactions += {
     case e: MousePressed =>
       point = e.point
-      state.selectedShape.get match {
+      state.selectedShape.now match {
         case null =>
-          currentShape = state.nextShape.get.copy(
+          currentShape = state.nextShape.now.copy(
               path = List(point),
-              strokeWidth = state.strokeWidth.get,
-              color = state.color.get,
+              strokeWidth = state.strokeWidth.now,
+              color = state.color.now,
               current = {Shape.current += 1; Shape.current})
         case selectedShape =>
           currentShape = selectedShape.copy()
@@ -65,7 +65,7 @@ class DrawingPanel(val state: DrawingSpaceState) extends Panel {
                          MathUtil.isInCircle(currentShape.end, 6, e.point)
       }
     case e: MouseDragged =>
-      state.selectedShape.get match {
+      state.selectedShape.now match {
         case null =>
           currentShape = currentShape.copy(path = e.point :: currentShape.path)
         case _ =>
@@ -77,7 +77,7 @@ class DrawingPanel(val state: DrawingSpaceState) extends Panel {
       point = e.point
       repaint
     case e: MouseReleased =>
-      state.selectedShape.get match {
+      state.selectedShape.now match {
         case null =>
           drawn(new CreateShape(currentShape))
         case selectedShape =>
@@ -111,8 +111,8 @@ trait ShowIntersection extends DrawingPanel {
   def getIntersectionPoints() = {
     val points = new ListBuffer[Point]
 
-    for (shape <- state.shapes.get)
-      for (otherShape <- state.shapes.get)
+    for (shape <- state.shapes.now)
+      for (otherShape <- state.shapes.now)
         if (shape != otherShape)
           for (line <- shape.toLines)
             for (otherLine <- otherShape.toLines) {
@@ -157,7 +157,7 @@ trait ShowNameLabels extends DrawingPanel {
     g.setColor(new Color(200, 200, 200))
     g.setStroke(new BasicStroke)
 
-    for (shape <- state.shapes.get)
+    for (shape <- state.shapes.now)
       g.drawString(shape.toString, shape.start.x, shape.start.y)
   }
 }

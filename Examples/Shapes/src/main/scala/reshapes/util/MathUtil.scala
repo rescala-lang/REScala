@@ -4,11 +4,11 @@ import java.awt.Point
 
 object MathUtil {
   def isInCircle(center: Point, radius: Int, point: Point): Boolean = {
-    val dx = center.x - point.x
-    val dy = center.y - point.y
-    math.sqrt(dx * dx + dy * dy) <= radius
+    val dx: Int = center.x - point.x
+    val dy: Int = center.y - point.y
+    math.sqrt((dx * dx + dy * dy).toDouble) <= radius
   }
-  
+
   /**
    * returns the intersection points of two finite lines.
    * return null if the lines do not cross
@@ -34,7 +34,7 @@ object MathUtil {
           y1 - y2,
           x3 - x4,
           y3 - y4)
-      
+
       val y = determinant(
         determinant(x1, y1, x2, y2),
         y1 - y2,
@@ -44,7 +44,7 @@ object MathUtil {
           y1 - y2,
           x3 - x4,
           y3 - y4)
-      
+
       if (x >= math.min(x1, x2) && x <= math.max(x1, x2) &&
           y >= math.min(y1, y2) && y <= math.max(y1, y2) &&
           x >= math.min(x3, x4) && x <= math.max(x3, x4) &&
@@ -57,7 +57,7 @@ object MathUtil {
       case e: ArithmeticException => null
     }
   }
-  
+
   /**
    * Calculates the determinant of:
    * | a b |

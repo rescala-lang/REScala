@@ -1,26 +1,13 @@
 package reshapes.drawing
 
 import java.awt.Color
-import java.io.OutputStreamWriter
-import java.io.PrintWriter
-import java.net.InetAddress
-import java.net.ServerSocket
-import java.net.Socket
-import java.net.SocketException
-
-import scala.actors.Actor
-import scala.xml.Attribute
-import scala.xml.Null
-import scala.xml.Text
-import scala.xml.XML
+import java.io.{OutputStreamWriter, PrintWriter}
+import java.net.{InetAddress, ServerSocket, Socket, SocketException}
 
 import rescala._
-import rescala._
-import rescala._
-import rescala._
-import rescala._
-import reshapes.figures.Line
-import reshapes.figures.Shape
+import reshapes.figures.{Line, Shape}
+
+import scala.xml.{Attribute, Null, Text, XML}
 
 /**
  * Represents the current state of one drawing space
@@ -31,9 +18,9 @@ class DrawingSpaceState {
   // currently selected shape inside the drawing space
   final lazy val selectedShape: Signal[Shape] =  //#SIG
     ((shapes.changed && { shapes =>  //#IF  //#EF
-       !(shapes contains selectedShape.get) } map {_: Any => null}) ||
+       !(shapes contains selectedShape.now) } map {_: Any => null}) ||
      (select && { shape =>  //#EF
-       shape == null || (shapes.get contains shape) })) latest null  //#IF
+       shape == null || (shapes.now contains shape) })) latest null  //#IF
   // currently drawn shapes
   final lazy val shapes: Signal[List[Shape]] = Signal { commandsShapes() match { case (_, shapes) => shapes } }  //#SIG
   // all executed commands
@@ -46,8 +33,8 @@ class DrawingSpaceState {
   val fileName = Var("unnamed") //#VAR
 
   // can be overridden in order to declare events declaratively
-  lazy val executed: Event[Command] = Evt  //#EVT
-  lazy val reverted: Event[Command] = Evt  //#EVT
+  lazy val executed: Event[Command] = Evt[Command]()  //#EVT
+  lazy val reverted: Event[Command] = Evt[Command]()  //#EVT
 
   // events that can be called imperatively
   final lazy val execute = Evt[Command]  //#EVT
@@ -58,7 +45,7 @@ class DrawingSpaceState {
   private abstract class CommandType
   private case class Execute(command: Command) extends CommandType
   private case class Revert(command: Command) extends CommandType
-  private case class Clear extends CommandType
+  private case class Clear() extends CommandType
 
   private lazy val commandInvoked: Event[CommandType] =
     ((executed || execute) map { command: Command => Execute(command) }) || //#EF //#EF //#EF
@@ -98,36 +85,36 @@ class NetworkSpaceState(
   {
     val socket = new Socket(serverInetAddress, commandPort)
     val out = new PrintWriter(socket.getOutputStream, true)
-    out.println("register %d" format listenerPort)
-    out.close
-    socket.close
+    out.println(s"register $listenerPort")
+    out.close()
+    socket.close()
   }
 
   // listen for updates and send updates
   private val listener = new ServerSocket(listenerPort)
   private var updating = false
-  new Actor {
-    def act: Unit = {
+  new Thread(new Runnable {
+    override def run(): Unit = {
       println("start UpdateThread")
       try
-        while (true) {
-          println("receiving update")
-          val socket = listener.accept
-          val shapes = Shape.deserialize(XML.load(socket.getInputStream), drawingStateSpace)
-          shapeUpdateRunner {
-            updating = true
-            drawingStateSpace.clear()
-            for (shape <- shapes)
-              drawingStateSpace execute new CreateShape(shape)
-            updating = false
+          while (true) {
+            println("receiving update")
+            val socket = listener.accept
+            val shapes = Shape.deserialize(XML.load(socket.getInputStream), drawingStateSpace)
+            shapeUpdateRunner {
+              updating = true
+              drawingStateSpace.clear.fire()
+              for (shape <- shapes)
+                drawingStateSpace execute new CreateShape(shape)
+              updating = false
+            }
+            socket.close()
           }
-          socket.close
-        }
       catch {
         case e: SocketException =>
       }
     }
-  }.start
+  }).start()
 
   drawingStateSpace.shapes.changed += { shapes =>  //#IF //#HDL
     if (!updating) {
@@ -136,10 +123,10 @@ class NetworkSpaceState(
       val writer = new OutputStreamWriter(socket.getOutputStream)
       val port = Attribute(None, "port", Text(listenerPort.toString), Null)
       XML.write(writer, Shape.serialize(shapes) % port, "", false, null)
-      writer.close
-      socket.close
+      writer.close()
+      socket.close()
     }
   }
 
-  def dispose = listener.close
+  def dispose(): Unit = listener.close()
 }

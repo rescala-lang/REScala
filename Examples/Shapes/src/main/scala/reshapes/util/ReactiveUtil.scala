@@ -1,37 +1,28 @@
 package reshapes.util
 
+import rescala._
+import scala.language.higherKinds
 import scala.collection.mutable.ListBuffer
-
-import rescala._
-import rescala._
-import rescala._
 
 object ReactiveUtil {
   private class BilateralValue {
-    private trait Connectable extends Event[Any] {
-      def connect: Unit
-    }
 
-    private val events = ListBuffer[Event[Any] with Connectable]()
+    private val events = ListBuffer[() => Unit]()
 
-    private[ReactiveUtil] def applyConnections = events foreach (_.connect)
+    private[ReactiveUtil] def applyConnections() = events foreach (_())
 
     def apply[T](e: => Event[T]): Event[T] = {
-      val ev = Evt[T] with Connectable {
-        override def connect = e += apply _
-      }
-      events += ev
+      val ev = Evt[T]
+      events += { () => e.observe(ev.apply) }
       ev
     }
 
     def apply[T](s: => Signal[T], init: T = null.asInstanceOf[T]): Signal[T] = {
-      val ev = Evt[T] with Connectable {
-        override def connect {
-          s.changed += apply _
-          apply(s.get)
-        }
+      val ev = Evt[T]
+      events += { () =>
+        s.observe(ev.apply)
+        ev.apply(s.now)
       }
-      events += ev
       ev latest init
     }
   }
@@ -99,22 +90,9 @@ object ReactiveUtil {
   object UnionEvent {
     def apply[T, E[T] <: Event[T], L[E] <: Traversable[E]]
              (signal: Signal[L[E[T]]]): Event[T] = {
-      val res = Evt[T]
-      var events: Traversable[Event[T]] = List.empty[Event[T]]
-
-      def update(list: Traversable[Event[T]]): Unit = {
-        for (event <- events)
-          event -= res.apply
-
-        events = list
-
-        for (event <- events)
-          event += res.apply
+      Events.dynamic(signal) { t =>
+        signal(t).flatMap(e => e(t)).headOption
       }
-
-      signal.changed += update
-      update(signal.get)
-      res
     }
   }
 }

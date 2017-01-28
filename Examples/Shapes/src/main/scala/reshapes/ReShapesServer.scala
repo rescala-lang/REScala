@@ -8,7 +8,6 @@ import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.Socket
 
-import scala.actors.Actor
 import scala.xml.Elem
 import scala.xml.NodeSeq.seqToNodeSeq
 import scala.xml.XML
@@ -22,8 +21,8 @@ object ReShapesServer {
       val commandThreadPort = args(0).toInt
       val updateThreadPort = args(1).toInt
 
-      new CommandThread(commandThreadPort).start
-      new UpdateThread(updateThreadPort).start
+      new Thread(new CommandThread(commandThreadPort)).start()
+      new Thread(new UpdateThread(updateThreadPort)).start()
     }
     else
       println("invalid number of arguments")
@@ -34,7 +33,7 @@ object ReShapesServer {
    */
   def registerClient(inetAddress: InetAddress, port: Int) =
     if (!(clients contains ((inetAddress, port)))) {
-      clients ::= (inetAddress, port)
+      clients ::= ((inetAddress, port))
       println("ReshapesServer register new client (%s, %d)" format (inetAddress, port))
       println("\t registered clients: ")
       for (client <- clients)
@@ -86,8 +85,8 @@ object ReShapesServer {
  * Listens to string commands:
  * 	register [port] - registers a new client
  */
-class CommandThread(port: Int) extends Actor {
-  def act(): Unit = {
+class CommandThread(port: Int) extends Runnable {
+  override def run(): Unit = {
     println("start CommandThread")
     val listener = new ServerSocket(port)
     while (true) {
@@ -113,8 +112,8 @@ class CommandThread(port: Int) extends Actor {
 /**
  * Listens to shapes updates
  */
-class UpdateThread(port: Int) extends Actor {
-  def act(): Unit = {
+class UpdateThread(port: Int) extends Runnable {
+  override def run(): Unit = {
     println("start UpdateThread")
     val listener = new ServerSocket(port)
     while (true) {

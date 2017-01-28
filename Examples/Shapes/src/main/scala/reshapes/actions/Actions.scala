@@ -9,6 +9,7 @@ import scala.xml.XML
 import reshapes.ReShapes
 import reshapes.drawing.CreateShape
 import reshapes.figures.Shape
+import scala.language.reflectiveCalls
 
 /**
  * Serializes all currently drawn shapes to a chosen file
@@ -16,11 +17,11 @@ import reshapes.figures.Shape
 class SaveAction extends Action("Save") {
   def apply() = {
     val fileChooser = new FileChooser()
-    fileChooser.selectedFile = new File(ReShapes.drawingSpaceState.get.fileName.get)
+    fileChooser.selectedFile = new File(ReShapes.drawingSpaceState.now.fileName.now)
     if (fileChooser.showDialog(null, "save") == FileChooser.Result.Approve) {
       XML.save(fileChooser.selectedFile.getCanonicalPath,
-               Shape.serialize(ReShapes.drawingSpaceState.get.shapes.get))
-      ReShapes.drawingSpaceState.get.fileName() = fileChooser.selectedFile.getName
+               Shape.serialize(ReShapes.drawingSpaceState.now.shapes.now))
+      ReShapes.drawingSpaceState.now.fileName() = fileChooser.selectedFile.getName
       ReShapes.ui.tabbedPane.pages(ReShapes.ui.tabbedPane.selection.index).title = fileChooser.selectedFile.getName
     }
   }
@@ -33,10 +34,10 @@ class LoadAction extends Action("Load") {
   def apply() = {
     val fileChooser = new FileChooser()
     if (fileChooser.showDialog(null, "load") == FileChooser.Result.Approve) {
-      ReShapes.drawingSpaceState.get.clear()
+      ReShapes.drawingSpaceState.now.clear.fire()
       for (shape <- Shape.deserialize(XML.loadFile(fileChooser.selectedFile),
-                                      ReShapes.drawingSpaceState.get))
-        ReShapes.drawingSpaceState.get execute new CreateShape(shape)
+                                      ReShapes.drawingSpaceState.now))
+        ReShapes.drawingSpaceState.now execute new CreateShape(shape)
     }
   }
 }

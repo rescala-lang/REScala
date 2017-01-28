@@ -17,7 +17,7 @@ import reswing.ReButton
  * Panel for selection of shapes to draw
  */
 class ShapeSelectionPanel extends BoxPanel(Orientation.Vertical) {
-  def state = ReShapes.drawingSpaceState.get
+  def state = ReShapes.drawingSpaceState.now
 
   val lineBtn = new ReButton("Line")  //#EVT
   val rectBtn = new ReButton("Rectangle") //#EVT

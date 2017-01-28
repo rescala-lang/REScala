@@ -21,54 +21,54 @@ abstract class Shape(
     val color: Color = Color.BLACK,
     val current: Int = 0,
     val path: List[Point] = List.empty /* the mouse path while drawing this shape */) {
-  
-  def selected = drawingSpaceState.selectedShape.get == this
+
+  def selected = drawingSpaceState.selectedShape.now == this
   def start = if (path.isEmpty) null else path.head
   def end = if (path.isEmpty) null else path.last
-  
+
   def draw(g: Graphics2D) = {
     if (start != null && end != null) {
-      val stroke = if (!selected) new BasicStroke(strokeWidth) else new BasicStroke(strokeWidth,
+      val stroke = if (!selected) new BasicStroke(strokeWidth.toFloat) else new BasicStroke(strokeWidth.toFloat,
         BasicStroke.CAP_BUTT,
         BasicStroke.JOIN_MITER,
         10.0f, Array(10.0f), 0.0f)
-      
+
       g.setStroke(stroke)
       g.setColor(color)
       doDraw(g)
     }
   }
-  
+
   def copy(
       drawingSpaceState: DrawingSpaceState = drawingSpaceState,
       strokeWidth: Int = strokeWidth,
       color: Color = color,
       current: Int = current,
       path: List[Point] = path): Shape
-  
+
   override def toString(): String =
     this.getClass.getSimpleName + " #" + current.toString
-  
+
   def doUpdate(path: List[Point]) = {}
-  def doDraw(g: Graphics2D)
-  
+  def doDraw(g: Graphics2D): Unit
+
   def toLines(): List[(Point, Point)]
 }
 
 object Shape {
   var current = 0
-  
+
   def serialize(shapes: List[Shape]): Elem = {
     def shapePath(shape: Shape) =
       shape.path map { p => <point x={ p.x.toString } y={ p.y.toString } /> }
-      
+
       def shapeProps(shape: Shape, elem: Elem) =
         elem %
           Attribute(None, "stroke-width", Text(shape.strokeWidth.toString), Null) %
           Attribute(None, "color", Text(shape.color.getRGB.toString), Null) %
           Attribute(None, "current", Text(shape.current.toString), Null)
-        
-    
+
+
     <shapes> {
       shapes map {
         case shape: Freedraw => shapeProps(shape, <freedraw> { shapePath(shape) } </freedraw>)
@@ -80,13 +80,13 @@ object Shape {
       }
     }  </shapes>
   }
-  
+
   def deserialize(data: Elem, drawingSpaceState: DrawingSpaceState): List[Shape] = {
     def shapePath(elem: Node) =
       (elem \ "point" map { p =>
         new Point((p attribute "x").get.text.toInt, (p attribute "y").get.text.toInt)
       }).toList
-    
+
     if (data.label == "shapes")
       (data.child collect {
         case shape if shape.label == "freedraw" =>
@@ -139,17 +139,17 @@ trait Resizable extends Shape {
     else
       this: Shape
   }
-  
+
   override def draw(g: Graphics2D) = {
     super.draw(g)
     if (start != null && end != null && selected) {
       val origStroke = g.getStroke
       g.setStroke(new BasicStroke(1))
       g.setColor(new Color(200, 200, 200))
-      
+
       g.drawOval(start.x - 5, start.y - 5, 10, 10)
       g.drawOval(end.x - 5, end.y - 5, 10, 10)
-      
+
       g.setStroke(origStroke)
     }
   }

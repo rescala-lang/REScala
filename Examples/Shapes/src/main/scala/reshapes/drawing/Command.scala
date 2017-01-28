@@ -1,12 +1,13 @@
 package reshapes.drawing
 
 import reshapes.figures.Shape
+import rescala._
 
 abstract class Command {
   def execute(shapes: List[Shape]): List[Shape]
-  
+
   def revert(shapes: List[Shape]): List[Shape]
-  
+
   def description: String
 }
 
@@ -19,7 +20,7 @@ class DeleteShape(shapeToDelete: Shape) extends Command {
 
   override def revert(shapes: List[Shape]) =
     shapeToDelete :: shapes
-  
+
   override def description = "Delete %s".format(shapeToDelete)
 }
 
@@ -32,7 +33,7 @@ class CreateShape(shapeToCreate: Shape) extends Command {
 
   override def revert(shapes: List[Shape]) =
     shapes filterNot (_ == shapeToCreate)
-  
+
   override def description = "Create %s".format(shapeToCreate)
 }
 
@@ -45,7 +46,7 @@ class EditShape(shapeBeforeEdit: Shape, shapeAfterEdit: Shape) extends Command {
 
   override def revert(shapes: List[Shape]) =
     shapeBeforeEdit :: shapes filterNot (_ == shapeAfterEdit)
-  
+
   override def description = "Edit %s".format(shapeAfterEdit)
 }
 
@@ -55,13 +56,13 @@ class EditShape(shapeBeforeEdit: Shape, shapeAfterEdit: Shape) extends Command {
 class MergeDrawingSpaces(eventToMerge: DrawingSpaceState) extends Command {
   val eventTitle = eventToMerge.fileName
   val otherShapes = eventToMerge.shapes
-  
+
   override def execute(shapes: List[Shape]) =
-    otherShapes.get ::: shapes
+    otherShapes.now ::: shapes
 
   override def revert(shapes: List[Shape]) =
-    shapes filterNot (otherShapes.get contains _)
-  
-  override def description = "Merge with %s".format(eventTitle.get)
+    shapes filterNot (otherShapes.now contains _)
+
+  override def description = "Merge with %s".format(eventTitle.now)
 }
 

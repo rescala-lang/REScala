@@ -50,6 +50,8 @@ import reswing.ReMenu
 import reswing.ReMenuItem
 import reswing.ReMenuItem.toMenuItem
 
+import scala.language.reflectiveCalls
+
 object ReShapes extends SimpleSwingApplication {
   private val panelDrawingSpaceStates = new HashMap[TabbedPane.Page, (DrawingSpaceState, NetworkSpaceState)]
 
@@ -144,7 +146,7 @@ object ReShapes extends SimpleSwingApplication {
           null
 
       if (ui.tabbedPane.pages.size > 0)
-        menu.update()
+        menu.update.fire()
   }
 
   def addTab(networkSpaceState: DrawingSpaceState => NetworkSpaceState = {_ => null}): Unit = {
@@ -157,7 +159,7 @@ object ReShapes extends SimpleSwingApplication {
             state)
 
         lazy val state: DrawingSpaceState = new DrawingSpaceState {
-          def isCurrentState(x: Any) = drawingSpaceState.get == this
+          def isCurrentState(x: Any) = drawingSpaceState.now == this
 
           override lazy val nextShape: Signal[Shape] = Signal { ui.shapeSelectionPanel.nextShape().copy(this) } //#SIG
           override lazy val strokeWidth = Signal { ui.strokeInputPanel.strokeWidth() }  //#SIG
@@ -166,7 +168,7 @@ object ReShapes extends SimpleSwingApplication {
           override lazy val executed: Event[Command] =  //#EVT
             value(panel.drawn || ui.shapePanel.deleted || menu.merged) && isCurrentState _  //#EF //#EF //#EF
           override lazy val reverted: Event[Command] = (ui.commandPanel.revert || //#EVT //#EF
-              (menu.undo.clicked map {_: Any => commands.get.head })) && isCurrentState _ //#EF //#EF
+              (menu.undo.clicked map {_: Any => commands.now.head })) && isCurrentState _ //#EF //#EF
         }
 
         (state, panel)
@@ -190,7 +192,7 @@ object ReShapes extends SimpleSwingApplication {
     val page = new TabbedPane.Page("drawing#%d".format(ui.tabbedPane.pages.size + 1), panel)
     panelDrawingSpaceStates(page) = (panel.state, networkSpaceState)
     ui.tabbedPane.pages += page
-    menu.update()
+    menu.update.fire()
   }
 
   def addNetworkTab(): Unit = {
@@ -223,7 +225,7 @@ object ReShapes extends SimpleSwingApplication {
         networkSpaceState.dispose
       panelDrawingSpaceStates remove ui.tabbedPane.selection.page
       ui.tabbedPane.pages remove ui.tabbedPane.selection.index
-      menu.update()
+      menu.update.fire()
     }
   }
 }

@@ -218,6 +218,7 @@ lazy val caseStudyShapes = project.in(file("Examples/Shapes"))
   .dependsOn(reswing)
   .settings(
     name := "shapes-case-study",
+    libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
     publish := {},
     publishLocal := {})
 
