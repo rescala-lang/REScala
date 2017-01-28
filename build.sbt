@@ -12,6 +12,9 @@ parallelExecution in Test in ThisBuild := true
 
 licenses in ThisBuild += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))
 
+// set the prompt (for this build) to include the project id.
+shellPrompt in ThisBuild := { state => Project.extract(state).currentRef.project + "> " }
+
 lazy val rescalaAggregate = project.in(file(".")).aggregate(rescalaJVM,
   rescalaJS, microbench, reswing, examples, examplesReswing, caseStudyEditor,
   caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags,
