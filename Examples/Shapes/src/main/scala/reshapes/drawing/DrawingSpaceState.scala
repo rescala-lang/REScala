@@ -14,11 +14,11 @@ import scala.xml.Null
 import scala.xml.Text
 import scala.xml.XML
 
-import makro.SignalMacro.{SignalM => Signal}
-import rescala.Signal
-import rescala.Var
-import rescala.events.Event
-import rescala.events.ImperativeEvent
+import rescala._
+import rescala._
+import rescala._
+import rescala._
+import rescala._
 import reshapes.figures.Line
 import reshapes.figures.Shape
 
@@ -44,27 +44,27 @@ class DrawingSpaceState {
   lazy val color = Signal { Color.BLACK } //#SIG
   // filename after saving
   val fileName = Var("unnamed") //#VAR
-  
+
   // can be overridden in order to declare events declaratively
-  lazy val executed: Event[Command] = new ImperativeEvent  //#EVT
-  lazy val reverted: Event[Command] = new ImperativeEvent  //#EVT
-  
+  lazy val executed: Event[Command] = Evt  //#EVT
+  lazy val reverted: Event[Command] = Evt  //#EVT
+
   // events that can be called imperatively
-  final lazy val execute = new ImperativeEvent[Command]  //#EVT
-  final lazy val revert = new ImperativeEvent[Command]  //#EVT
-  final lazy val clear = new ImperativeEvent[Unit]  //#EVT
-  final lazy val select = new ImperativeEvent[Shape]  //#EVT
-  
+  final lazy val execute = Evt[Command]  //#EVT
+  final lazy val revert = Evt[Command]  //#EVT
+  final lazy val clear = Evt[Unit]  //#EVT
+  final lazy val select = Evt[Shape]  //#EVT
+
   private abstract class CommandType
   private case class Execute(command: Command) extends CommandType
   private case class Revert(command: Command) extends CommandType
   private case class Clear extends CommandType
-  
+
   private lazy val commandInvoked: Event[CommandType] =
     ((executed || execute) map { command: Command => Execute(command) }) || //#EF //#EF //#EF
     ((reverted || revert) map { command: Command => Revert(command) }) || //#EF //#EF //#EF
     (clear map { _: Unit => Clear() }) //#EF
-  
+
   private lazy val commandsShapes: Signal[(List[Command], List[Shape])] = //#SIG
     commandInvoked.fold((List.empty[Command], List.empty[Shape])) { //#IF
       case ((commands, shapes), commandType) => commandType match {
@@ -92,7 +92,7 @@ class NetworkSpaceState(
     val exchangePort: Int = 9999,
     val listenerPort: Int = 1337) {
   val serverInetAddress: InetAddress = InetAddress.getByName(serverHostname)
-  
+
   // Register this client with a server and tell it
   // which port the server has to send updates to
   {
@@ -102,12 +102,12 @@ class NetworkSpaceState(
     out.close
     socket.close
   }
-  
+
   // listen for updates and send updates
   private val listener = new ServerSocket(listenerPort)
   private var updating = false
   new Actor {
-    def act {
+    def act: Unit = {
       println("start UpdateThread")
       try
         while (true) {
@@ -128,7 +128,7 @@ class NetworkSpaceState(
       }
     }
   }.start
-  
+
   drawingStateSpace.shapes.changed += { shapes =>  //#IF //#HDL
     if (!updating) {
       println("sending update")
@@ -140,6 +140,6 @@ class NetworkSpaceState(
       socket.close
     }
   }
-  
+
   def dispose = listener.close
 }

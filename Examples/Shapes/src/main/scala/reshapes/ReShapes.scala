@@ -21,11 +21,11 @@ import scala.swing.event.SelectionChanged
 
 import drawing.DrawingSpaceState
 import javax.swing.JOptionPane
-import makro.SignalMacro.{SignalM => Signal}
-import rescala.Signal
-import rescala.Var
-import rescala.events.Event
-import rescala.events.ImperativeEvent
+import rescala._
+import rescala._
+import rescala._
+import rescala._
+import rescala._
 import reshapes.actions.LoadAction
 import reshapes.actions.SaveAction
 import reshapes.drawing.Command
@@ -52,23 +52,23 @@ import reswing.ReMenuItem.toMenuItem
 
 object ReShapes extends SimpleSwingApplication {
   private val panelDrawingSpaceStates = new HashMap[TabbedPane.Page, (DrawingSpaceState, NetworkSpaceState)]
-  
+
   val drawingSpaceState = Var[DrawingSpaceState](null) //#VAR
-  
+
   def top = new MainFrame {
     title = "ReShapes"
     preferredSize = new Dimension(1000, 600)
     menuBar = menu
     contents = ui
   }
-  
+
   val ui = new BorderPanel {
     val tabbedPane = new TabbedPane
     val strokeInputPanel = new StrokeInputPanel
     val shapeSelectionPanel = new ShapeSelectionPanel
     val shapePanel = new ShapePanel
     val commandPanel = new CommandPanel
-    
+
     layout(tabbedPane) = Position.Center
     layout(strokeInputPanel) = Position.North
     layout(new InfoPanel) = Position.South
@@ -78,22 +78,22 @@ object ReShapes extends SimpleSwingApplication {
       pages += new TabbedPane.Page("Commands", commandPanel)
     }) = Position.East
   }
-    
+
   val menu = new MenuBar {
     val undo = new ReMenuItem("Undo", enabled = Signal {  //#SIG //#IS( // )
       drawingSpaceState() != null && drawingSpaceState().commands().nonEmpty })
-    
+
     val merge = new ReMenu(
       text = "Merge with...", //#SIG //#IS( // )
       contents = Signal { //#SIG //#IS( // )
         itemsEvents() map { case (btn, _) => btn } }
     )
-    
+
     final lazy val merged = UnionEvent(Signal { //#SIG //#UE( //#EVT //#IF )
         itemsEvents() map { case (_, ev) => ev } })
-    
-    lazy val update = new ImperativeEvent[Unit]   //#EVT
-    
+
+    lazy val update = Evt[Unit]   //#EVT
+
     private lazy val itemsEvents: Signal[Seq[(Component, Event[Command])]] =  //#SIG
       (update map { _: Any =>  //#EF
         (ui.tabbedPane.pages filter
@@ -105,7 +105,7 @@ object ReShapes extends SimpleSwingApplication {
             (item: Component, command)
           })
       }) latest Seq.empty  //#IF
-    
+
     contents += new Menu("File") {
       contents += new MenuItem(Action("New tab") { addTab() })
       contents += new MenuItem(Action("New network tab") { addNetworkTab })
@@ -118,22 +118,22 @@ object ReShapes extends SimpleSwingApplication {
         clicked += { _ => quit }  //#HDL
       }
     }
-    
+
     contents += new Menu("Edit") {
       contents += undo
     }
-    
+
     contents += new Menu("Tools") {
       contents += merge
     }
   }
-  
+
   val newTabDialog = new NewTabDialog
-  
+
   val serverDialog = new ServerDialog
-  
+
   listenTo(ui.tabbedPane.selection)
-  
+
   reactions += {
     case SelectionChanged(ui.tabbedPane) =>
       drawingSpaceState() =
@@ -142,11 +142,11 @@ object ReShapes extends SimpleSwingApplication {
             panelDrawingSpaceStates(ui.tabbedPane.selection.page)._1
         else
           null
-      
+
       if (ui.tabbedPane.pages.size > 0)
         menu.update()
   }
-  
+
   def addTab(networkSpaceState: DrawingSpaceState => NetworkSpaceState = {_ => null}): Unit = {
     if (newTabDialog.showDialog(ui.locationOnScreen)) {
       val (state, panel) = bilateralValues{ value =>
@@ -155,26 +155,26 @@ object ReShapes extends SimpleSwingApplication {
             newTabDialog.showCoordinates.selected,
             newTabDialog.showNames.selected,
             state)
-        
+
         lazy val state: DrawingSpaceState = new DrawingSpaceState {
           def isCurrentState(x: Any) = drawingSpaceState.get == this
-          
+
           override lazy val nextShape: Signal[Shape] = Signal { ui.shapeSelectionPanel.nextShape().copy(this) } //#SIG
           override lazy val strokeWidth = Signal { ui.strokeInputPanel.strokeWidth() }  //#SIG
           override lazy val color = Signal { ui.strokeInputPanel.color() }  //#SIG
-          
+
           override lazy val executed: Event[Command] =  //#EVT
             value(panel.drawn || ui.shapePanel.deleted || menu.merged) && isCurrentState _  //#EF //#EF //#EF
           override lazy val reverted: Event[Command] = (ui.commandPanel.revert || //#EVT //#EF
-              (menu.undo.clicked map {_: Any => commands.get.head })) && isCurrentState _ //#EF //#EF 
+              (menu.undo.clicked map {_: Any => commands.get.head })) && isCurrentState _ //#EF //#EF
         }
-        
+
         (state, panel)
       }
       addDrawingPanel(panel, networkSpaceState(state))
     }
   }
-  
+
   def generateDrawingPanel(showIntersections: Boolean, showCoordinates: Boolean, showName: Boolean, state: => DrawingSpaceState): DrawingPanel =
     (showIntersections, showCoordinates, showName) match {
       case (true, false, false) => new DrawingPanel(state) with ShowIntersection
@@ -185,15 +185,15 @@ object ReShapes extends SimpleSwingApplication {
       case (true, true, true) => new DrawingPanel(state) with ShowIntersection with ShowCoordinateSystem with ShowNameLabels
       case _ => new DrawingPanel(state)
     }
-  
-  def addDrawingPanel(panel: DrawingPanel, networkSpaceState: NetworkSpaceState) {
+
+  def addDrawingPanel(panel: DrawingPanel, networkSpaceState: NetworkSpaceState): Unit = {
     val page = new TabbedPane.Page("drawing#%d".format(ui.tabbedPane.pages.size + 1), panel)
     panelDrawingSpaceStates(page) = (panel.state, networkSpaceState)
     ui.tabbedPane.pages += page
     menu.update()
   }
-  
-  def addNetworkTab() {
+
+  def addNetworkTab(): Unit = {
     if (serverDialog.showDialog(ui.locationOnScreen) && serverDialog.inputIsValid)
       try
         addTab({drawingSpaceState =>
@@ -215,8 +215,8 @@ object ReShapes extends SimpleSwingApplication {
           addNetworkTab
       }
   }
-  
-  def removeCurrentTab() {
+
+  def removeCurrentTab(): Unit = {
     if (ui.tabbedPane.pages.size > 0) {
       val (_, networkSpaceState) = panelDrawingSpaceStates(ui.tabbedPane.selection.page)
       if (networkSpaceState != null)

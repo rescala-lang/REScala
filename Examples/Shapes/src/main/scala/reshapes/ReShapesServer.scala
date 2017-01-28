@@ -16,19 +16,19 @@ import scala.xml.XML
 object ReShapesServer {
   var clients: List[(InetAddress, Int)] = List.empty
   var currentShapes: Elem = null
-  
-  def main(args: Array[String]) {
+
+  def main(args: Array[String]): Unit = {
     if (args.size >= 2) {
       val commandThreadPort = args(0).toInt
       val updateThreadPort = args(1).toInt
-      
+
       new CommandThread(commandThreadPort).start
       new UpdateThread(updateThreadPort).start
     }
     else
       println("invalid number of arguments")
   }
-  
+
   /**
    * Registers a client to the server if not already registered.
    */
@@ -42,25 +42,25 @@ object ReShapesServer {
       println
       sendToClient((inetAddress, port))
     }
-  
+
   /**
    * Removes a client so he no longer receives updates.
    */
-  def removeClient(client: (InetAddress, Int)) {
+  def removeClient(client: (InetAddress, Int)): Unit = {
     println("ReshapesServer removing client " + client.toString)
     clients = clients filterNot (_ == client)
   }
-  
+
   /**
    * Sends the given shapes to all registered clients except the original sender
    */
-  def sendUpdateToClients(shapes: Elem, sender: (InetAddress, Int)) {
+  def sendUpdateToClients(shapes: Elem, sender: (InetAddress, Int)): Unit = {
     currentShapes = shapes
     for (client <- clients)
       if (client != sender && !sendToClient(client))
           removeClient(client)
   }
-  
+
   /**
    * Sends shapes to a client.
    * returns true if shapes where successfully send, false otherwise (connection refused to client)
@@ -87,13 +87,13 @@ object ReShapesServer {
  * 	register [port] - registers a new client
  */
 class CommandThread(port: Int) extends Actor {
-  def act() {
+  def act(): Unit = {
     println("start CommandThread")
     val listener = new ServerSocket(port)
     while (true) {
       val clientSocket = listener.accept
       val in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream))
-      
+
       val command = in.readLine()
       println("CommandThread new command: '%s'" format command)
       command match {
@@ -102,7 +102,7 @@ class CommandThread(port: Int) extends Actor {
           ReShapesServer.registerClient(clientSocket.getInetAddress, clientPort)
         case _ => println("unkown command: " + command)
       }
-      
+
       in.close
       clientSocket.close
     }
@@ -114,13 +114,13 @@ class CommandThread(port: Int) extends Actor {
  * Listens to shapes updates
  */
 class UpdateThread(port: Int) extends Actor {
-  def act() {
+  def act(): Unit = {
     println("start UpdateThread")
     val listener = new ServerSocket(port)
     while (true) {
       val socket = listener.accept
       val shapes = XML.load(socket.getInputStream)
-      
+
       ReShapesServer.sendUpdateToClients(
           shapes.copy(attributes = shapes.attributes.remove("port")),
           (socket.getInetAddress, (shapes attribute "port").get.text.toInt))

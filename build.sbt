@@ -16,7 +16,7 @@ lazy val rescalaAggregate = project.in(file(".")).aggregate(rescalaJVM,
   rescalaJS, microbench, reswing, examples, examplesReswing, caseStudyEditor,
   caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags,
   datastructures, universe, reactiveStreams, documentation, meta, pipelining,
-  stm, testsJVM, testsJS, fullmv, caseStudyShapes)
+  stm, testsJVM, testsJS, fullmv, caseStudyShapes, caseStudyMill)
   .settings(
     publish := {},
     publishLocal := {})
@@ -218,6 +218,13 @@ lazy val caseStudyShapes = project.in(file("Examples/Shapes"))
   .dependsOn(reswing)
   .settings(
     name := "shapes-case-study",
+    publish := {},
+    publishLocal := {})
+
+lazy val caseStudyMill = project.in(file("Examples/Mill"))
+  .dependsOn(reswing)
+  .settings(
+    name := "mill-case-study",
     publish := {},
     publishLocal := {})
 

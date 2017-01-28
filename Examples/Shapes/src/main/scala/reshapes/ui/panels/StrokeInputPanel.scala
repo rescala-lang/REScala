@@ -12,7 +12,7 @@ import scala.swing.Label
 import scala.swing.Orientation
 
 import javax.swing.JColorChooser
-import rescala.Var
+import rescala._
 import reswing.ReButton
 import reswing.ReSlider
 
@@ -21,7 +21,7 @@ import reswing.ReSlider
  */
 class StrokeInputPanel extends FlowPanel {
   private val colorWindow = new ColorWindow
-  
+
   private val slider = new ReSlider(
       min = 1,
       max = 50,
@@ -29,25 +29,25 @@ class StrokeInputPanel extends FlowPanel {
       minorTickSpacing = 1,
       labels = scala.collection.Map.empty[Int, Label],
       paintTicks = true)
-  
-  private val showColorWindow = new ReButton("Show Colorinput") 
+
+  private val showColorWindow = new ReButton("Show Colorinput")
   showColorWindow.clicked += {_ => colorWindow.visible = !colorWindow.visible}
-  
+
   contents += new Label { text = "stroke width: " }
   contents += slider
   contents += showColorWindow
-  
+
   val strokeWidth = slider.value
   val color = colorWindow.color
 }
 
 class ColorWindow extends Frame {
   title = "Choose color"
-  
+
   private val colorChooser = new Component {
     override lazy val peer = new JColorChooser
   }
-  
+
   contents = new BoxPanel(Orientation.Vertical) {
     contents += colorChooser
     contents += new Button(Action("OK") {
@@ -55,6 +55,6 @@ class ColorWindow extends Frame {
       ColorWindow.this.visible = false
     })
   }
-  
+
   val color = Var(Color.BLACK) //#VAR
 }

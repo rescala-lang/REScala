@@ -12,9 +12,9 @@ import java.awt.Point
 
 abstract class CustomDialog extends Dialog {
   private var dialogResult = false
-  
+
   modal = true;
-  
+
   def showDialog(position: Point = null) = {
     if (position != null)
       location = position
@@ -22,8 +22,8 @@ abstract class CustomDialog extends Dialog {
     visible = true
     dialogResult
   }
-  
-  def hideDialog(result: Boolean) {
+
+  def hideDialog(result: Boolean): Unit = {
     dialogResult = result
     visible = false
   }
@@ -34,12 +34,12 @@ class ServerDialog extends CustomDialog {
   val commandPortInput = new TextField(10) { text = "9998" }
   val exchangePortInput = new TextField(10) { text = "9999" }
   val listenerPortInput = new TextField(10) { text = "1337" }
-  
+
   var hostname: String = null
   var commandPort: Int = -1
   var exchangePort: Int = -1
   var listenerPort: Int = -1
-  
+
   contents = new BoxPanel(Orientation.Vertical) {
     contents += new Label("Server hostname")
     contents += hostnameInput
@@ -57,8 +57,8 @@ class ServerDialog extends CustomDialog {
       contents += new Button(Action("Cancel") { hideDialog(false) })
     }
   }
-  
-  def applyPorts() {
+
+  def applyPorts(): Unit = {
     try {
       hostname = hostnameInput.text
       commandPort = commandPortInput.text.toInt
@@ -74,7 +74,7 @@ class ServerDialog extends CustomDialog {
         e.printStackTrace
     }
   }
-  
+
   def inputIsValid() =
     hostname != null &&
     hostname.length > 0 &&
@@ -87,7 +87,7 @@ class NewTabDialog extends CustomDialog {
   val showIntersections = new CheckBox("show intersections")
   val showCoordinates = new CheckBox("show coordinates")
   val showNames = new CheckBox("show shape names")
-  
+
   contents = new BoxPanel(Orientation.Vertical) {
     contents += showIntersections
     contents += showCoordinates
