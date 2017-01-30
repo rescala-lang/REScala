@@ -33,11 +33,11 @@ class SerializationGraphTrackingTest extends FlatSpec with Matchers {
   }
 
   it should "refuse to order completed contenders" in {
-    val a = Transaction()
+    val c = Transaction()
     val b = Transaction().done()
     val sgt = SerializationGraphTracking()
     a [IllegalArgumentException] should be thrownBy {
-      sgt.requireOrder(a, b)
+      sgt.requireOrder(c, b)
     }
   }
 

@@ -1,4 +1,4 @@
-package tests.rescala
+package rescala.testhelper
 
 import rescala.engines.{Engine, EngineImpl}
 import rescala.pipelining.{PipelineEngine, PipelineStruct, PipeliningTurn}
@@ -6,7 +6,7 @@ import rescala.stm.STMTurn
 
 import scala.concurrent.stm.atomic
 
-object Engines {
+object TestEngines {
 
   implicit val pipeline: Engine[PipelineStruct.type, PipeliningTurn] = new PipelineEngine()
   implicit val stm: Engine[STMTurn, STMTurn] = new EngineImpl[STMTurn, STMTurn]("STM", new STMTurn()) {

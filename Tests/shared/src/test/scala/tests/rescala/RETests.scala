@@ -15,7 +15,7 @@ abstract class RETests extends FunSuite with TableDrivenPropertyChecks {
   type S  <: Struct
   type LS <: LevelStruct
 
-  private val engines: TableFor1[rescala.engines.Engines.TEngine] = Table("engine", tests.rescala.Engines.all: _*)
+  private val engines: TableFor1[rescala.engines.Engines.TEngine] = Table("engine", rescala.testhelper.TestEngines.all: _*)
 
   def allEngines(text: String)(testCase: Engine[S, Turn[S]] => Unit)(implicit pos: source.Position): Unit = {
     test(text) {

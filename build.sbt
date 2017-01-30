@@ -297,4 +297,5 @@ scalacOptions in ThisBuild ++= (
   "-Ywarn-nullary-unit" ::
   "-Ywarn-numeric-widen" ::
   //"-Ywarn-value-discard" ::
+  //"-Ymacro-debug-lite" ::
   Nil)
