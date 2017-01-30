@@ -56,9 +56,9 @@ trait PessimisticTestState {
 
   }
 
-  implicit def factory: Engine[ParRP, Turn[ParRP]] = Pessigen
+  implicit def engine: Engine[ParRP, Turn[ParRP]] = Pessigen
   def unsafeNow[T](s: Signal[T, ParRP]): T = {
-    factory.plan()(s.get(_))
+    engine.plan()(s.get(_))
   }
 
 }
@@ -108,10 +108,10 @@ class PessimisticTest extends FlatSpec {
       val v2 = Var(false)
       val s11 = v1.map {identity}
       // so if s11 becomes true, this adds a dependency on v2
-      val s12 = Signals.dynamic(s11) { t => if (s11(t)) v2(t) else false }
+      val s12 = engine.Signal { if (s11()) v2() else false }
       val s21 = v2.map {identity}
       // this does as above, causing one or the other to access something which will change later
-      val s22 = Signals.dynamic(s21) { t => if (s21(t)) v1(t) else false }
+      val s22 = engine.Signal { if (s21()) v1() else false }
       var results = List[Boolean]()
       s12.changed observe { v => results ::= v }
       val c23 = s22.changed
@@ -172,7 +172,7 @@ class PessimisticTest extends FlatSpec {
       val b2 = b0.map(identity).map(!_)
       val i0 = Var(11)
       var reeval = 0
-      val i1_3 = Signals.dynamic(b0) { t => reeval += 1; if (b0(t) && b2(t)) i0(t) else 42 }
+      val i1_3 = engine.Signal { reeval += 1 : @unchecked; if (b0() && b2()) i0() else 42 }
 
       var regs = 0
       var unregs = 0
@@ -224,11 +224,11 @@ class PessimisticTest extends FlatSpec {
       // at that point both bl1 and bl3 are true which causes il1 to be added as a dependency
       // but then bl3 becomes false at level 3, causing il1 to be removed again
       // after that the level is increased and this nonesense no longer happens
-      val b2b3i2 = Signals.dynamic(bl1) { t =>
-        reeval += 1
-        if (bl1(t)) {
-          if (bl3(t)) {
-            val res = il1(t)
+      val b2b3i2 = engine.Signal {
+        reeval += 1 : @unchecked
+        if (bl1()) {
+          if (bl3()) {
+            val res = il1()
             assert(res === 11, "did not read old value, this may happen spouriosly, probably because of the timing issue in this test")
             res
           }
@@ -239,7 +239,7 @@ class PessimisticTest extends FlatSpec {
 
       // this is here, so that we have i lock bl1.
       // we need this to be a dynamic lock to lock just this single reactive and not bl3 etc.
-      val i2b2 = Signals.dynamic(il1)(t => if (il1(t) == 0) bl1(t) else false)
+      val i2b2 = engine.Signal(if (il1() == 0) bl1() else false)
       val c3 = i2b2.map(identity)
 
 
@@ -291,22 +291,22 @@ class PessimisticTest extends FlatSpec {
       // at that point both bl1 and bl3 are true which causes il1 and il0 to be added as a dependency
       // but then bl3 becomes false at level 3, causing il1 to be removed again (but il0 is still a dependency)
       // after that the level is increased and this nonesense no longer happens
-      val b2b3i2 = Signals.dynamic(bl1) { t =>
-        reeval += 1
-        if (bl1(t)) {
-          if (bl3(t)) {
-            val res = il0(t) + il1(t)
+      val b2b3i2 = engine.Signal {
+        reeval += 1 : @unchecked
+        if (bl1()) {
+          if (bl3()) {
+            val res = il0() + il1()
             assert(res === 22, "did not read old value")
             res
           }
-          else il0(t)
+          else il0()
         }
         else 42
       }
 
       // this is here, so that we have i lock bl1.
       // we need this to be a dynamic lock to lock just this single reactive and not bl3 etc.
-      val i2b2 = Signals.dynamic(il1)(t => if (il1(t) == 17) bl1(t) else false)
+      val i2b2 = engine.Signal(if (il1() == 17) bl1() else false)
       val c3 = i2b2.map(identity)
 
 

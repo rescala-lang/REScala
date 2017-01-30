@@ -106,7 +106,7 @@ object ReactiveMacros {
           !(tree.tpe <:< definitions.NothingTpe) &&
           tree.tpe <:< typeOf[Stateful[_, _]]
 
-      override def transform(tree: Tree) =
+      override def transform(tree: Tree): Tree =
         tree match {
           // pass the SignalSynt argument to every reactive
           // to obtain dynamic dependencies
@@ -118,9 +118,10 @@ object ReactiveMacros {
           case tree@q"$reactive.apply()"
             if isReactive(reactive) =>
             detectedReactives ::= reactive
-            val reactiveApply = q"$reactive.apply"
+            val reactiveApply = q"$signalSyntArgIdent.depend"
             internal setType(reactiveApply, tree.tpe)
-            q"${super.transform(reactiveApply)}($signalSyntArgIdent)"
+
+            q"$reactiveApply(${transform(reactive)})"
 
           // cut signal values out of the signal expression, that could
           // potentially create a new signal object for every access

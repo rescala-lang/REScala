@@ -12,18 +12,18 @@ class DynamicSignalTestSuite extends RETests with Whenever {
 
 
 
-  allEngines("signal ReEvaluates The Expression When Something ItDepends OnIsUpdated"){ engine => import engine._
+  allEngines("signal Re Evaluates The Expression When Something It Depends On Is Updated"){ engine => import engine._
     val v = Var(0)
     var i = 1
-    val s = dynamic(v) { s => v(s) + i }
+    val s = Signal { v() + i }
     i = 2
     v.set(2)
     assert(s.now == 4)
   }
 
-  allEngines("the Expression IsNote Evaluated Every Time Get Val IsCalled"){ engine => import engine._
+  allEngines("the Expression Is Note Evaluated Every Time now Is Called"){ engine => import engine._
     var a = 10
-    val s = dynamic()(s => 1 + 1 + a)
+    val s = Signal(1 + 1 + a)
     assert(s.now === 12)
     a = 11
     assert(s.now === 12)
@@ -31,16 +31,16 @@ class DynamicSignalTestSuite extends RETests with Whenever {
 
 
   allEngines("simple Signal Returns Correct Expressions"){ engine => import engine._
-    val s = dynamic()(s => 1 + 1 + 1)
+    val s = Signal(1 + 1 + 1)
     assert(s.now === 3)
   }
 
-  allEngines("the Expression IsEvaluated Only Once"){ engine => import engine._
+  allEngines("the Expression Is Evaluated Only Once"){ engine => import engine._
 
     var a = 0
     val v = Var(10)
-    val s1 = dynamic(v) { s => a += 1; v(s) % 10 }
-    var s2 = dynamic(s1) { s => a }
+    val s1 = Signal {a += 1 : @unchecked; v() % 10 }
+    var s2 = Signal { a }
 
 
     assert(a == 1)
@@ -55,9 +55,9 @@ class DynamicSignalTestSuite extends RETests with Whenever {
     var test = 0
     val v = Var(1)
 
-    val s1 = dynamic(v) { s => 2 * v(s) }
-    val s2 = dynamic(v) { s => 3 * v(s) }
-    val s3 = dynamic(s1, s2) { s => s1(s) + s2(s) }
+    val s1 = Signal { 2 * v() }
+    val s2 = Signal { 3 * v() }
+    val s3 = Signal { s1() + s2() }
 
     s1.changed += { (_) => test += 1 }
     s2.changed += { (_) => test += 1 }
@@ -74,9 +74,9 @@ class DynamicSignalTestSuite extends RETests with Whenever {
 
     val v = Var(1)
 
-    val s1 = dynamic() { s => 2 * v(s) }
-    val s2 = dynamic() { s => 3 * v(s) }
-    val s3 = dynamic() { s => s1(s) + s2(s) }
+    val s1 = Signal { 2 * v() }
+    val s2 = Signal { 3 * v() }
+    val s3 = Signal { s1() + s2() }
 
     assertLevel(v, 0)
     assertLevel(s1, 1)
@@ -95,9 +95,9 @@ class DynamicSignalTestSuite extends RETests with Whenever {
     val v2 = Var(0)
     val v3 = Var(10)
     var i = 0
-    val s = dynamic(v1, v2, v3) { s =>
+    val s = Signal {
       i += 1
-      if (v1(s)) v2(s) else v3(s)
+      if (v1()) v2() else v3()
     }
 
     assert(i == 1)
@@ -129,9 +129,9 @@ class DynamicSignalTestSuite extends RETests with Whenever {
     var i = 0
     var test = 0
 
-    val s = dynamic() { s =>
+    val s = Signal  {
       i += 1
-      if (v1(s)) v2(s) else v3(s)
+      if (v1()) v2() else v3()
     }
 
     val e = s.change
@@ -157,11 +157,11 @@ class DynamicSignalTestSuite extends RETests with Whenever {
 
   }
 
-  allEngines("dependant IsOnly Invoked OnValue Changes"){ engine => import engine._
+  allEngines("dependant Is Only Invoked OnValue Changes"){ engine => import engine._
     var changes = 0
     val v = Var(1)
-    val s = dynamic(v) { s =>
-      changes += 1; v(s) + 1
+    val s = Signal {
+      changes += 1; v() + 1
     }
     assert(changes === 1)
     assert(s.now === 2)
@@ -184,7 +184,7 @@ class DynamicSignalTestSuite extends RETests with Whenever {
         //remark 01.10.2014: without the bound the inner signal will be enqueued (it is level 0 same as its dependency)
         //this will cause testsig to reevaluate again, after the inner signal is fully updated.
         // leading to an infinite loop
-        dynamic(outside) { t => outside(t) }.apply(t)
+        t.depend(dynamic(outside) { t => t.depend(outside) })
       }
 
       assert(testsig.now === 1)
@@ -198,9 +198,7 @@ class DynamicSignalTestSuite extends RETests with Whenever {
 
     val outside = Var(1)
 
-    val dynsig: Signal[Signal[Int]] = dynamic() { t =>
-      dynamic() { t => outside(t) }
-    }
+    val dynsig: Signal[Signal[Int]] = Signal { Signal { outside() } }
     val testsig = dynsig.flatten
 
       assert(testsig.now === 1)
@@ -213,8 +211,8 @@ class DynamicSignalTestSuite extends RETests with Whenever {
     val v3 = v0.map(_ => "level 1").map(_ => "level 2").map(_ => "level 3")
 
     val condition = Var(false)
-    val `dynamic signal changing from level 1 to level 4` = dynamic() { turn =>
-      if (condition(turn)) v3(turn) else v0(turn)
+    val `dynamic signal changing from level 1 to level 4` = Signal  {
+      if (condition()) v3() else v0()
     }
     assert(`dynamic signal changing from level 1 to level 4`.now == "level 0")
     assertLevel(`dynamic signal changing from level 1 to level 4`, 1)
@@ -228,9 +226,9 @@ class DynamicSignalTestSuite extends RETests with Whenever {
     val v0 = Var("level 0")
     val v3 = v0.map(_ + "level 1").map(_  + "level 2").map(_ + "level 3")
 
-    val `dynamic signal changing from level 1 to level 4` = dynamic() { turn =>
-      if (v0(turn) == "level 0") v0(turn) else {
-        v3.map(_ + "level 4 inner")(turn).apply(turn)
+    val `dynamic signal changing from level 1 to level 4` = Signal {
+      if (v0() == "level 0") v0() else {
+        v3.map(_ + "level 4 inner").apply()
       }
     }
     assert(`dynamic signal changing from level 1 to level 4`.now == "level 0")
@@ -246,9 +244,9 @@ class DynamicSignalTestSuite extends RETests with Whenever {
     val v3 = v0.map(_ + "level 1").map(_  + "level 2").map(_ + "level 3")
 
     val `dynamic signal changing from level 1 to level 4` = dynamic() { turn =>
-      if (v0(turn) == "level 0") v0(turn) else {
+      if (turn.depend(v0) == "level 0") turn.depend(v0) else {
         // the static bound is necessary here, otherwise we get infinite loops
-        dynamic(v3) { t =>  v3(t) + "level 4 inner" }(Ticket.fromTurn(turn)).apply(turn)
+        turn.depend(dynamic() {t => turn.depend(v3) + "level 4 inner" }(Ticket.fromTurn(turn)))
       }
     }
     assert(`dynamic signal changing from level 1 to level 4`.now == "level 0")

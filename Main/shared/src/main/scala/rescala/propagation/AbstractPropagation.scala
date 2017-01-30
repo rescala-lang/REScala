@@ -54,7 +54,7 @@ trait AbstractPropagation[S <: Struct] extends Turn[S] {
     collectedDependencies = old
     (sideEffectingEvaluationResult, newDependencies)
   }
-  def markDependencyAsUsed(dependency: Reactive[S]): Unit = {
+  def establishDynamicDependency(dependency: Reactive[S]): Unit = {
     require(collectedDependencies != null, "can not dynamically access reactive outside of proper context")
     collectedDependencies ::= dependency
   }

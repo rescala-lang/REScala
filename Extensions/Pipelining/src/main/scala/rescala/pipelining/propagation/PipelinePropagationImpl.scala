@@ -66,7 +66,7 @@ private[pipelining] trait PipelinePropagationImpl extends AbstractPropagation[Pi
   def forget(reactive: Reactive[S]): Unit = levelQueue.remove(reactive)
 
   /** allow turn to handle dynamic access to reactives */
-  override def dependencyInteraction(dependency: Reactive[S]): Unit = ()
+  override def dynamicDependencyInteraction(dependency: Reactive[S]): Unit = ()
 
   def preparationPhase(initialWrites: List[Reactive[S]]): Unit = initialWrites.foreach(admit)
 

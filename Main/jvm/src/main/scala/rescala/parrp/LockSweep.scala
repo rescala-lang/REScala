@@ -254,7 +254,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPr
 
 
   /** allow turn to handle dynamic access to reactives */
-  override def dependencyInteraction(dependency: Reactive[TState]): Unit = acquireShared(dependency)
+  override def dynamicDependencyInteraction(dependency: Reactive[TState]): Unit = acquireShared(dependency)
 
   def acquireShared(reactive: Reactive[TState]): Key[LSInterTurn] = Keychains.acquireShared(reactive.bud.lock, key)
 }

@@ -39,7 +39,7 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
     * is executed, because the constructor typically accesses the dependencies to create its initial value.
     */
   override def create[T <: Reactive[TState]](dependencies: Set[Reactive[TState]], dynamic: Boolean)(f: => T): T = {
-    dependencies.foreach(dependencyInteraction)
+    dependencies.foreach(dynamicDependencyInteraction)
     val reactive = f
     val owner = reactive.bud.lock.tryLock(key)
     assert(owner eq key, s"$this failed to acquire lock on newly created reactive $reactive")
@@ -50,7 +50,7 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
   override def releasePhase(): Unit = key.releaseAll()
 
   /** allow turn to handle dynamic access to reactives */
-  override def dependencyInteraction(dependency: Reactive[TState]): Unit = acquireShared(dependency)
+  override def dynamicDependencyInteraction(dependency: Reactive[TState]): Unit = acquireShared(dependency)
 
 
   /** lock all reactives reachable from the initial sources

@@ -31,7 +31,7 @@ trait Reactive[S <: Struct] {
 
   /** for debugging */
   private val name = Globals.declarationLocationName()
-  override def toString = name
+  override def toString: String = name
 }
 
 
@@ -67,13 +67,7 @@ trait Pulsing[+P, S <: Struct] extends Reactive[S] {
 trait PulseOption[+P, S <: Struct] extends Pulsing[P, S] {
   @compileTimeOnly("Event.apply can only be used inside of Signal expressions")
   def apply(): Option[P] = throw new IllegalAccessException(s"$this.apply called outside of macro")
-  final def apply[T](turn: Turn[S]): Option[P] = {
-    turn.dependencyInteraction(this)
-    turn.markDependencyAsUsed(this)
-    get(turn)
-  }
-
-  final def get(implicit turn: Turn[S]) = pulse(turn).getE
+  final def get(implicit turn: Turn[S]): Option[P] = pulse(turn).getE
 }
 
 
@@ -88,18 +82,12 @@ trait Stateful[+A, S <: Struct] extends Pulsing[A, S] {
   @compileTimeOnly("Signal.apply can only be used inside of Signal expressions")
   final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")
 
-  final def apply[T](turn: Turn[S]): A = {
-    turn.dependencyInteraction(this)
-    turn.markDependencyAsUsed(this)
-    get(turn)
-  }
-
   final def now(implicit ticket: Ticket[S]): A = ticket { turn =>
-    turn.dependencyInteraction(this)
+    turn.dynamicDependencyInteraction(this)
     try { get(turn) }
     catch { case EmptySignalControlThrowable => throw new NoSuchElementException(s"Signal $this is empty") }
   }
 
 
-  final def get(implicit turn: Turn[S]): A = pulse.getS
+  final def get(implicit turn: Turn[S]): A = pulse(turn).getS
 }

@@ -7,7 +7,7 @@ import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
 import rescala.engines.{Engine, Engines}
 import rescala.propagation.Turn
-import rescala.reactives.{Signals, Var}
+import rescala.reactives.Var
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -25,13 +25,13 @@ class SingleSwitch[S <: rescala.graph.Struct] {
   var isManual: Boolean = false
 
   @Setup
-  def setup(params: BenchmarkParams, step: Step, engineParam: EngineParam[S]) = {
+  def setup(params: BenchmarkParams, step: Step, engineParam: EngineParam[S]): Unit = {
     engine = engineParam.engine
     source = Var(step.get())
     val d1 = Var("true")
     val d2 = Var("false")
-    val dynamic = Signals.dynamic(source) { t =>
-      if (step.test(source(t))) d1(t) else d2(t)
+    val dynamic = engine.Signal {
+      if (step.test(source())) d1() else d2()
     }
 
     if (engine == Engines.unmanaged) isManual = true

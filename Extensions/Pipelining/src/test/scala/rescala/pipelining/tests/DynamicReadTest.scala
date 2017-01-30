@@ -25,12 +25,13 @@ class DynamicReadTest extends FlatSpec {
     val source1 = Var(0)
     val source2 = Var(100)
 
-    val dynamicDep = engine.dynamic()(implicit t => {
-      LogUtils.log(s"$t: Evaluate base ${source1(t)}")
-      if (source1(t) % 2 != 0)
-        source2(t)
+    val dynamicDep = engine.Signal {
+      LogUtils.log(s"Evaluate base ${source1()}"): @unchecked
+      if (source1() % 2 != 0)
+        source2()
       else 0
-    })
+    }
+
     val depOfDynamic = Signals.static(dynamicDep)(implicit t => {
       Thread.sleep(minEvaluationTimeOfUpdate)
       LogUtils.log(s"$t: Eval of dyn dep completed")
@@ -148,7 +149,7 @@ class DynamicReadTest extends FlatSpec {
     val source1b = Var(0)
     val source2b = Var(0)
     val dep1 = Signals.static(source1b)(implicit t => {Thread.sleep(minEvaluationTimeOfUpdate); source1b.get})
-    val dynDep1 = engine.dynamic()(implicit t => if (dep1(t) % 2 == 0) dep1(t) else dep1(t) + source2b(t))
+    val dynDep1 = engine.Signal { if (dep1() % 2 == 0) dep1() else dep1() + source2b() }
     val dep2 = Signals.static(source2b)(implicit t => source2b.get)
     val dep12 = Signals.static(dynDep1, dep2)(implicit t => dynDep1.get + dep2.get)
 

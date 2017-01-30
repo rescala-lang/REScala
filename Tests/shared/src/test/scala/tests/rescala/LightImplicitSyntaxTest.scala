@@ -2,16 +2,12 @@ package tests.rescala
 
 import scala.language.implicitConversions
 
-
-
-
 class LightImplicitSyntaxTest extends RETests {
 
+  allEngines("experiment With Implicit Syntax") { engine =>
+    import engine._
 
-
-  allEngines("experiment With Implicit Syntax"){ engine => import engine._
-
-    implicit def getSignalValueDynamic[T](s: Signal[T])(implicit turn: engine.Turn): T = s.apply(turn)
+    implicit def getSignalValueDynamic[T](s: Signal[T])(implicit turn: engine.Turn): T = turn.depend(s)
     def Signal[T](f: Turn => T)(implicit maybe: Ticket): Signal[T] = dynamic()(f)
 
     val price = Var(3)

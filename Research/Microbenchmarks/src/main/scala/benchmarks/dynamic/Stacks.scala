@@ -27,10 +27,10 @@ class StackState[S <: Struct] {
   var isManual: Boolean = false
 
   @Setup(Level.Iteration)
-  def setup(params: BenchmarkParams, engine: EngineParam[S], work: Workload, size: Size, step: Step) = {
-    this.engine = engine.engine
+  def setup(params: BenchmarkParams, eParam: EngineParam[S], work: Workload, size: Size, step: Step) = {
+    engine = eParam.engine
     val threads = params.getThreads
-    implicit val e = this.engine
+    implicit val e = engine
     if (e == Engines.unmanaged) { isManual = true }
     sources = Range(0, threads).map(_ => Var(0)).toArray
     results = sources.map { source =>
@@ -38,14 +38,14 @@ class StackState[S <: Struct] {
       for (x <- Range(0, size.size)) {cur = cur.map(1.+)}
       cur.map { x => {work.consume(); x} }
     }
+
     dynamics = results.zipWithIndex.map { case (r, i) =>
-      Signals.dynamic(r) { t =>
-        val v = r(t)
+      e.Signal {
+        val v = r()
         val idx = i + (if (step.test(v)) 2 else 1)
-        results(idx % threads)(t)
+        results(idx % threads)()
       }
     }
-
   }
 }
 

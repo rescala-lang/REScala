@@ -3,7 +3,6 @@ package benchmarks.chatserver
 import rescala.engines.Engine
 import rescala.graph.Struct
 import rescala.propagation.Turn
-import rescala.reactives.Events
 
 import scala.collection.LinearSeq
 import scala.collection.immutable.Queue
@@ -27,8 +26,8 @@ class ChatServer[S <: Struct]()(implicit val engine: Engine[S, Turn[S]]) {
 
   def create(room: Room): Boolean = {
     val clients: Clients = Var(Nil)
-    val newMessages: NewMessages = Events.dynamic(clients) { implicit t =>
-      val messages: List[String] = clients(t).flatMap(_.apply(t))
+    val newMessages: NewMessages = Event {
+      val messages: List[String] = clients().flatMap(_.apply())
       if (messages.isEmpty) None else Some(messages)
     }
     val history: History = newMessages.fold(Queue[String]()) { (queue, v) =>

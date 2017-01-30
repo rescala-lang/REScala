@@ -1,7 +1,6 @@
 package rescala.propagation
 
-import rescala.graph.{Pulse, Reactive, Struct}
-import rescala.graph.PulsingSpore
+import rescala.graph.{Pulse, PulseOption, PulsingSpore, Reactive, Stateful, Struct}
 
 /**
   * The Turn interface glues the reactive interface and the propagation implementation together.
@@ -30,8 +29,8 @@ trait Turn[S <: Struct] {
   /**
     * Creates a new spore initialized with the given parameters
     *
-    * @param initialValue Initially stored pulse of the spore
-    * @param transient Indicates if the spore is transient (meaning that updates to it's pulse are reverted when committing)
+    * @param initialValue    Initially stored pulse of the spore
+    * @param transient       Indicates if the spore is transient (meaning that updates to it's pulse are reverted when committing)
     * @param initialIncoming Initial incoming dependencies of the spore
     * @tparam P Stored pulse value type
     * @tparam R Reactive value type of the incoming dependencies of the spore
@@ -44,15 +43,15 @@ trait Turn[S <: Struct] {
     *
     * @param reactive Reactive element to handle
     */
-  private[rescala] def dependencyInteraction(reactive: Reactive[S]): Unit
+  private[rescala] def dynamicDependencyInteraction(reactive: Reactive[S]): Unit
 
   /**
     * Connects a reactive element with potentially existing dependencies and prepares re-evaluations to be
     * propagated based on the turn's propagation scheme
     *
     * @param dependencies Existing reactive elements the element depends on
-    * @param dynamic Indicates if the element uses dynamic re-evaluation to determine it's dependencies
-    * @param f Reactive element to prepare and connect
+    * @param dynamic      Indicates if the element uses dynamic re-evaluation to determine it's dependencies
+    * @param f            Reactive element to prepare and connect
     * @tparam T Reactive subtype of the reactive element
     * @return Connected reactive element
     */
@@ -86,5 +85,17 @@ trait Turn[S <: Struct] {
     *
     * @param dependency Reactive element to mark
     */
-  private[rescala] def markDependencyAsUsed(dependency: Reactive[S]): Unit
+  private[rescala] def establishDynamicDependency(dependency: Reactive[S]): Unit
+
+  def depend[A](reactive: Stateful[A, S]): A = {
+    dynamicDependencyInteraction(reactive)
+    establishDynamicDependency(reactive)
+    reactive.get(this)
+  }
+
+  def depend[A](reactive: PulseOption[A, S]): Option[A] = {
+    dynamicDependencyInteraction(reactive)
+    establishDynamicDependency(reactive)
+    reactive.get(this)
+  }
 }

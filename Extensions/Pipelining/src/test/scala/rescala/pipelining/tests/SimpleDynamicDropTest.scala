@@ -23,10 +23,10 @@ class SimpleDynamicDropTest extends FlatSpec {
       LogUtils.log(s"BEGIN evaluate $t")
       numEvaluated += 1
       Thread.sleep(timeToAllowOtherTurnToCreateFrames)
-      val source1Val = source1(t)
+      val source1Val = t.depend(source1)
       LogUtils.log(s"Read val $source1Val")
       val newValue = if (source1Val % 2 == 0) {
-        source2(t)
+        t.depend(source2)
       }
       else {
         0

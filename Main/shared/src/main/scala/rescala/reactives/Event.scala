@@ -140,7 +140,7 @@ trait Event[+T, S <: Struct] extends PulseOption[T, S] with Observable[T, S] {
   /** Switch back and forth between two signals on occurrence of event e */
   final def toggle[A](a: Signal[A, S], b: Signal[A, S])(implicit ticket: Ticket[S]): Signal[A, S] = ticket { turn =>
     val switched: Signal[Boolean, S] = iterate(false) {!_}(turn)
-    Signals.dynamic(switched, a, b) { s => if (switched(s)) b(s) else a(s) }(turn)
+    Signals.dynamic(switched, a, b) { s => if (s.depend(switched)) s.depend(b) else s.depend(a) }(turn)
   }
 
   /** Return a Signal that is updated only when e fires, and has the value of the signal s */
@@ -155,9 +155,9 @@ trait Event[+T, S <: Struct] extends PulseOption[T, S] with Observable[T, S] {
   final def switchOnce[A](original: Signal[A, S], newSignal: Signal[A, S])(implicit ticket: Ticket[S]): Signal[A, S] = ticket { turn =>
     val latest = latestOption()(turn)
     Signals.dynamic(latest, original, newSignal) { t =>
-      latest(t) match {
-        case None => original(t)
-        case Some(_) => newSignal(t)
+      t.depend(latest) match {
+        case None => t.depend(original)
+        case Some(_) => t.depend(newSignal)
       }
     }(turn)
   }
@@ -170,8 +170,8 @@ trait Event[+T, S <: Struct] extends PulseOption[T, S] with Observable[T, S] {
   final def switchTo[T1 >: T](original: Signal[T1, S])(implicit ticket: Ticket[S]): Signal[T1, S] = ticket { turn =>
     val latest = latestOption()(turn)
     Signals.dynamic(latest, original) { s =>
-      latest(s) match {
-        case None => original(s)
+      s.depend(latest) match {
+        case None => s.depend(original)
         case Some(x) => x
       }
     }(turn)

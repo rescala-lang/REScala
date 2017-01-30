@@ -60,7 +60,7 @@ trait LevelBasedPropagation[S <: LevelStruct] extends CommonPropagationImpl[S] w
     }
 
   /** allow turn to handle dynamic access to reactives */
-  override def dependencyInteraction(dependency: Reactive[S]): Unit = ()
+  override def dynamicDependencyInteraction(dependency: Reactive[S]): Unit = ()
 
   override def preparationPhase(initialWrites: List[Reactive[S]]): Unit = initialWrites.foreach { reactive =>
     levelQueue.enqueue(reactive.bud.level)(reactive)

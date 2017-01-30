@@ -23,7 +23,7 @@ class LateDynamicReadTest extends FlatSpec {
 
     val source3 = Var(0)
     val delayDynamic = Signals.lift(source3)(x => {Thread.sleep(500); x})
-    val dynamic = Signals.dynamic(source3)(turn => if (source3(turn) % 2 == 0) 0 else source2(turn))
+    val dynamic = engine.Signal { if (source3() % 2 == 0) 0 else source2()}
     val depDynamic = Signals.lift(dynamic)(_ + 1)
   }
 

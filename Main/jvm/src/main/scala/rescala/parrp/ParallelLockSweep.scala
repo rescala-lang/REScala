@@ -76,11 +76,11 @@ class ParallelLockSweep(backoff: Backoff, ex: Executor, engine: EngineImpl[LSStr
 
     }
   }
-  override def markDependencyAsUsed(dependency: Reactive[TState]): Unit = collectedDependenciesLocal.value ::= dependency
+  override def establishDynamicDependency(dependency: Reactive[TState]): Unit = collectedDependenciesLocal.value ::= dependency
 
 
   /** allow turn to handle dynamic access to reactives */
-  override def dependencyInteraction(dependency: Reactive[TState]): Unit = synchronized(super.dependencyInteraction(dependency))
+  override def dynamicDependencyInteraction(dependency: Reactive[TState]): Unit = synchronized(super.dynamicDependencyInteraction(dependency))
 
 
   override def acquireShared(reactive: Reactive[TState]): Key[LSInterTurn] = synchronized(super.acquireShared(reactive))

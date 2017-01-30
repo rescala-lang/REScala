@@ -8,6 +8,8 @@ import rescala.reactives.{Signals, Var}
 
 class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(override implicit val engine: Engine[S, Turn[S]]) extends PhilosopherTable(philosopherCount, work)(engine) {
 
+  import engine.Signal
+
   override def createTable(tableSize: Int): Seq[Seating[S]] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
 
@@ -15,11 +17,11 @@ class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(ov
 
     val forks = for (i <- 0 until tableSize) yield {
       val nextCircularIndex = mod(i + 1)
-      Signals.dynamic(phils(i), phils(nextCircularIndex)) { turn =>
-        phils(i)(turn) match {
+      Signal {
+        phils(i)() match {
           case Eating => Taken(i.toString)
           case Thinking =>
-            phils(nextCircularIndex)(turn) match {
+            phils(nextCircularIndex)() match {
               case Eating => Taken(nextCircularIndex.toString)
               case Thinking => Free
             }
@@ -30,11 +32,11 @@ class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(ov
 
     for (i <- 0 until tableSize) yield {
       val ownName = i.toString
-      val vision = Signals.dynamic(forks(i), forks(mod(i - 1))) { turn =>
-        forks(i)(turn) match {
+      val vision = Signal {
+        forks(i)() match {
           case Taken(name) if name != ownName => BlockedBy(name)
           case Taken(`ownName`) => Done
-          case Free => forks(mod(i - 1))(turn) match {
+          case Free => forks(mod(i - 1))() match {
             case Free => Ready
             case Taken(name) => BlockedBy(name)
           }
@@ -48,6 +50,8 @@ class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(ov
 
 class HalfDynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(override implicit val engine: Engine[S, Turn[S]]) extends PhilosopherTable(philosopherCount, work)(engine) {
 
+  import engine.Signal
+
   override def createTable(tableSize: Int): Seq[Seating[S]] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
 
@@ -60,11 +64,11 @@ class HalfDynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long
 
     for (i <- 0 until tableSize) yield {
       val ownName = i.toString
-      val vision = Signals.dynamic(forks(i), forks(mod(i - 1))) { turn =>
-        forks(i)(turn) match {
+      val vision = Signal {
+        forks(i)() match {
           case Taken(name) if name != ownName => BlockedBy(name)
           case Taken(`ownName`) => Done
-          case Free => forks(mod(i - 1))(turn) match {
+          case Free => forks(mod(i - 1))() match {
             case Free => Ready
             case Taken(name) => BlockedBy(name)
           }
@@ -78,6 +82,8 @@ class HalfDynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long
 
 class OtherHalfDynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(override implicit val engine: Engine[S, Turn[S]]) extends PhilosopherTable(philosopherCount, work)(engine) {
 
+  import engine.Signal
+
   override def createTable(tableSize: Int): Seq[Seating[S]] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
 
@@ -85,11 +91,11 @@ class OtherHalfDynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work:
 
     val forks = for (i <- 0 until tableSize) yield {
       val nextCircularIndex = mod(i + 1)
-      Signals.dynamic(phils(i), phils(nextCircularIndex)) { turn =>
-        phils(i)(turn) match {
+      Signal {
+        phils(i)() match {
           case Eating => Taken(i.toString)
           case Thinking =>
-            phils(nextCircularIndex)(turn) match {
+            phils(nextCircularIndex)() match {
               case Eating => Taken(nextCircularIndex.toString)
               case Thinking => Free
             }
