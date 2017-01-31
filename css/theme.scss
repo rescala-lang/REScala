@@ -81,7 +81,7 @@ h1:before,h2:before,h3:before,h4:before {
   left: 0;
   top: 0;
   z-index: 1030;
-  
+
   a {
     display: inline-block;
     color: #f2f2f2;
@@ -181,9 +181,9 @@ h1:before,h2:before,h3:before,h4:before {
     padding-bottom: 0;
     display: block;
     text-align: justify;
-    border: 1px solid #ddd;
-    border-radius: 30px;
-    border-style: outset;
+    // border: 1px solid #eee;
+    // border-radius: 30px;
+    // border-style: outset;
 
     h1,h2,h3,h4,h5,h6{
       margin: 0;
@@ -305,14 +305,14 @@ h1:before,h2:before,h3:before,h4:before {
   text-decoration: none;
   background: #bbb;
   cursor:pointer;
-  
+
   &.show {
     display: block;
   }
-  
+
   :hover {
     background: #ccc;
-    
+
     .arrow {
       border-color:#444;
     }
@@ -352,7 +352,7 @@ h1:before,h2:before,h3:before,h4:before {
   height: 422px;
   margin-bottom: 50px;
   z-index: -1;
-  
+
   #slideshow > img {
     display: none;
     width: 100%;
@@ -370,7 +370,7 @@ h1:before,h2:before,h3:before,h4:before {
     left: 0;
     bottom: -30px;
     text-align: center;
-    
+
     > span {
       cursor: pointer;
       display: inline-block;
@@ -381,7 +381,7 @@ h1:before,h2:before,h3:before,h4:before {
       border: 2px solid #000;
       border-radius: 50%;
       background-color: #fff;
-      
+
       &.current {
         cursor: initial;
         color: #000;

@@ -34,7 +34,7 @@ Lorem Ipsum yadda yadda yadda in dubio pro reo Caesar venit laudatio intervenit
 
 ---
 
-[Take a Tour... &raquo;](./rescala/gettingstarted){: class="btn btn-primary"}
+<!-- [Take a Tour... &raquo;](./rescala/gettingstarted){: class="btn btn-primary"} -->
 
 # REScala
 Software applications must react to external changes such as the input from the user and network messages.
