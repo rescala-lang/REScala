@@ -19,24 +19,16 @@ and integrate seamlessly into modern, object-oriented and functional, concurrent
 {: class="info-box"}
 With abstractions for Events and Signals to handle interactions and state, and seamless conversions between them.
 
-## Long-Title-Box3
+## Consistent Reactive
 {: class="info-box"}
-Lorem Ipsum yadda yadda yadda
+No temporary inconsistencies, no data races, define logical constraints and derivations, and they will always be satisfied.
 
-## Box3
+## Concurrent Reactive
 {: class="info-box"}
-Lorem Ipsum yadda yadda yadda
-
-## Box4
-{: class="info-box"}
-Lorem Ipsum yadda yadda yadda in dubio pro reo Caesar venit laudatio intervenit
-
+Use reactive abstractions from any thread in any order, add reactives, remove them, change their connections, and it still just works.
 
 ---
 
-<!-- [Take a Tour... &raquo;](./rescala/gettingstarted){: class="btn btn-primary"} -->
-
-# REScala
 Software applications must react to external changes such as the input from the user and network messages.
 Traditionally, object-oriented software adopts the Observer pattern to implement reactivity and decouple the observers from the observables.
 Whereas researchers have highlighted the drawbacks of this style for a long time, alternatives struggle to be widely accepted.
@@ -47,13 +39,13 @@ but hardly escape the functional setting. On the other hand, event-based languag
 REScala is a reactive language which integrates concepts from event-based and functional-reactive programming into the object-oriented world.
 REScala supports the development of reactive applications by fostering a functional and declarative style which complements the advantages of object-oriented design.
 
-
+---
+[Get Started](./manual){: class="btn btn-primary"}
+[Sourcecode](https://github.com/guidosalva/REScala/){: class="btn btn-primary"}
 
 <!-- <a class="github-button" href="https://github.com/guidosalva/REScala/archive/master.zip" data-style="mega" aria-label="Download guidosalva/REScala on GitHub">Download</a> -->
 
-<a class="github-button" href="https://github.com/guidosalva/REScala/" data-style="mega" aria-label="Visit guidosalva/REScala on GitHub">Repository</a>
 
-Or pick a [Release](https://github.com/guidosalva/REScala/releases){: target="_blank"}
 
 ---
 REScala is a research project held at TU Darmstadt in the

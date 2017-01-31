@@ -165,12 +165,12 @@ h1:before,h2:before,h3:before,h4:before {
 #info-box-container {
   position: static;
   overflow: visible;
-  min-height: 175px;
+  #min-height: 175px;
 
   .info-box {
     float: left;
-    width: 20%;
-    height: 175px;
+    width: 30%;
+    #height: 175px;
     padding-left: 2%;
     padding-right: 2%;
     margin-left: 1.5%;
