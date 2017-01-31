@@ -20,17 +20,17 @@ trait CommonPropagationImpl[S <: PulsingGraphStruct] extends AbstractPropagation
   override def observe(f: => Unit): Unit = observers.add(f _)
 
 
-  override def commitPhase() = {
+  override def commitPhase(): Unit = {
     val it = toCommit.iterator()
     while (it.hasNext) it.next().commit(this)
   }
 
-  override def rollbackPhase() = {
+  override def rollbackPhase(): Unit = {
     val it = toCommit.iterator()
     while (it.hasNext) it.next().release(this)
   }
 
-  override def observerPhase() = {
+  override def observerPhase(): Unit = {
     val it = observers.iterator()
     var failure: Throwable = null
     while (it.hasNext) {
@@ -47,14 +47,14 @@ trait CommonPropagationImpl[S <: PulsingGraphStruct] extends AbstractPropagation
     if (failure != null) throw failure
   }
 
-  override def pulses[P](budP: S#SporeP[P, _]): PulsingSpore[P] = budP
-  override def incoming[R](bud: S#Spore[R]): Set[R] = bud.incoming(this)
+  final override def pulses[P](budP: S#SporeP[P, _]): PulsingSpore[P] = budP
+  final override def incoming[R](bud: S#Spore[R]): Set[R] = bud.incoming(this)
 
   protected def discover(sink: Reactive[S])(source: Reactive[S]): Unit = source.bud.discover(sink)(this)
 
   protected def drop(sink: Reactive[S])(source: Reactive[S]): Unit = source.bud.drop(sink)(this)
 
-  def applyDiff(head: Reactive[S], diff: DepDiff[S]): Unit = {
+  final def applyDiff(head: Reactive[S], diff: DepDiff[S]): Unit = {
     head.bud.updateIncoming(diff.novel)(this)
     diff.removed foreach drop(head)
     diff.added foreach discover(head)
