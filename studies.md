@@ -1,6 +1,5 @@
 ---
-title: Universe
-sidebar: rescala
+title: Case Studies
 ---
 # React Shapes
 
@@ -17,7 +16,7 @@ other clients that participate in the same task from
 remote.
 
 ---
-ReactEdit on GitHub:  
+ReactEdit on GitHub:
 [https://github.com/guidosalva/shapes](https://github.com/guidosalva/shapes)
 
 # ReactRSS
@@ -32,7 +31,7 @@ side bar. When the user selects one of them, the HTML
 content is rendered in the main view.
 
 ---
-ReactEdit on GitHub:  
+ReactEdit on GitHub:
 [https://github.com/guidosalva/rssreader](https://github.com/guidosalva/rssreader)
 
 # React Edit
@@ -46,7 +45,7 @@ SWT library, which is malleable to investigating various
 design alternatives based on reactive abstractions.
 
 ---
-ReactEdit on GitHub:  
+ReactEdit on GitHub:
 [https://github.com/guidosalva/editor](https://github.com/guidosalva/editor)
 
 # Universe
@@ -68,5 +67,5 @@ encapsulate state, so the OO and the functional style must
 be properly combined.
 
 ---
-Universe on GitHub:  
+Universe on GitHub:
 [https://github.com/guidosalva/universe](https://github.com/guidosalva/universe)

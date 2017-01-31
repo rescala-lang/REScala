@@ -32,10 +32,5 @@ a() = 2
 assertResult(true)(filtered.contains(2)())
 ```
 
-The Reactive Datastructures on GitHub:
-
-[https://github.com/guidosalva/reactive-datastructures](https://github.com/guidosalva/reactive-datastructures)
-
-
 The Reactive Datastructures library has been provided by
 Yannick Schrockers.

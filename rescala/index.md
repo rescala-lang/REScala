@@ -1,7 +1,6 @@
 ---
 title: REScala
 sidebar: rescala
-nav: 2
 ---
 # A Reactive Language for the Object-oriented World
 Software applications must react to external changes such

@@ -19,7 +19,3 @@ compatible with Java Swing.
 RESwing has been originally contributed by Pascal
 Weisenburger an is now used in most of the REScala projects
 with a GUI.
-
----
-RESwing on GitHub:  
-[https://github.com/guidosalva/RESwing](https://github.com/guidosalva/RESwing)
