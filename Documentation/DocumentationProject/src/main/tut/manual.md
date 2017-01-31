@@ -4,6 +4,22 @@ version: 0.3
 nav: 3
 sidebar: manual
 ---
+
+# From SBT
+
+```scala
+resolvers += Resolver.bintrayRepo("rmgk", "maven")
+resolvers += Resolver.bintrayRepo("pweisenburger", "maven")
+
+libraryDependencies += "de.tuda.stg" %% "rescala" % "0.19.0"
+```
+
+# API Documentation
+
+* [Signal documentation](../scaladoc/#rescala.reactives.Signal)
+* [Event documentation](../scaladoc/#rescala.reactives.Event)
+
+
 # Introduction
 
 This manual covers the main features of the *REScala* programming language.
