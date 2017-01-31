@@ -1,24 +1,18 @@
 package tests.rescala
 
-
 import rescala.reactives.Signals
 
 import scala.language.implicitConversions
 
-
-
-
 class GlitchFreedomTestSuite extends RETests {
 
-
-
-
-  allEngines("no Glitches InSimple Case"){ engine => import engine._
+  allEngines("no Glitches InSimple Case") { engine =>
+    import engine._
 
     val v1 = Var(1)
-    val s1 = v1.map { 2 * _ }
-    val s2 = v1.map { 3 * _ }
-    val s3 = Signals.static(s1, s2) { t => s1.get(t) + s2.get(t) }
+    val s1 = v1.map {2 * _}
+    val s2 = v1.map {3 * _}
+    val s3 = Signals.lift(s1, s2) { _ + _ }
 
     val s1List = s1.changed.list()
     val s2List = s2.changed.list()

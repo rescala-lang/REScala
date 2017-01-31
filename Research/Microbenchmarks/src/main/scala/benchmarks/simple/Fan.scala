@@ -30,7 +30,7 @@ class Fan[S <: rescala.graph.Struct] {
     val res = for (_ <- Range(0, size.size)) yield {
       source.map(_ + 1)
     }
-    result = Signals.static(res: _*) { t => res.foldLeft(0)((c, v) => v.get(t) + c) }
+    result = Signals.lift(res) { _.sum }
   }
 
   @Benchmark

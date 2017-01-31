@@ -11,8 +11,8 @@ class Carnivore(implicit world: World) extends Animal {
   private val canHunt = energy map {_ > Animal.AttackThreshold}
 
   // only adult carnivores with min energy can hunt, others eat plants
-  override val findFood: Signal[PartialFunction[BoardElement, BoardElement]] = Signals.static(isAdult, canHunt) { t =>
-    if (isAdult.get(t) && canHunt.get(t)) {case p: Herbivore => p}: PartialFunction[BoardElement, BoardElement]
+  override val findFood: Signal[PartialFunction[BoardElement, BoardElement]] = Signals.lift(isAdult, canHunt) { (isAdult, canHunt) =>
+    if (isAdult && canHunt) {case p: Herbivore => p}: PartialFunction[BoardElement, BoardElement]
     else {case p: Plant => p}: PartialFunction[BoardElement, BoardElement]
   }
 

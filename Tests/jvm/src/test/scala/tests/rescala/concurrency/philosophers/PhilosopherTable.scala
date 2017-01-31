@@ -65,10 +65,10 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit 
 
   def tryEat(seating: Seating[S]): Boolean =
     engine.plan(seating.philosopher) { turn =>
-      val forksWereFree = seating.vision.get(turn) == Ready
+      val forksWereFree = seating.vision.now(turn) == Ready
       if (forksWereFree) seating.philosopher.admit(Hungry)(turn)
       turn.schedule(new Committable {
-        override def commit(implicit t: Turn[_]): Unit = if (forksWereFree) assert(seating.vision.get(turn) == Eating, s"philosopher should be done after turn but is ${seating.inspect(turn)}")
+        override def commit(implicit t: Turn[_]): Unit = if (forksWereFree) assert(seating.vision.now(turn) == Eating, s"philosopher should be done after turn but is ${seating.inspect(turn)}")
         override def release(implicit t: Turn[_]): Unit = assert(assertion = false, "turn should not rollback")
       })
       forksWereFree
@@ -103,7 +103,7 @@ object PhilosopherTable {
   // ============================================ Entity Creation =========================================================
 
   case class Seating[S <: Struct](placeNumber: Int, philosopher: Var[Philosopher, S], leftFork: Signal[Fork, S], rightFork: Signal[Fork, S], vision: Signal[Vision, S]) {
-    def inspect(t: Turn[S]): String = s"Seating(${philosopher.get(t)}, ${leftFork.get(t)}, ${rightFork.get(t)}, ${vision.get(t)})"
+    def inspect(t: Turn[S]): String = s"Seating(${philosopher.now(t)}, ${leftFork.now(t)}, ${rightFork.now(t)}, ${vision.now(t)})"
   }
 
 }

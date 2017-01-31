@@ -87,12 +87,16 @@ trait Turn[S <: Struct] {
     */
   private[rescala] def establishDynamicDependency(dependency: Reactive[S]): Unit
 
+  /** Establish a dependency to the value of the reactive.
+    * Only use inside of dynamic reevaluation  */
   def depend[A](reactive: Stateful[A, S]): A = {
     dynamicDependencyInteraction(reactive)
     establishDynamicDependency(reactive)
     reactive.get(this)
   }
 
+  /** Establish a dependency to the value of the reactive
+    * * Only use inside of dynamic reevaluation  */
   def depend[A](reactive: PulseOption[A, S]): Option[A] = {
     dynamicDependencyInteraction(reactive)
     establishDynamicDependency(reactive)

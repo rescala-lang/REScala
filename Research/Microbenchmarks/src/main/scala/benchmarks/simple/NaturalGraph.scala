@@ -30,8 +30,8 @@ class NaturalGraph[S <: rescala.graph.Struct] {
     import localEngine._
 
     def inc(source: Signal[Int]): Signal[Int] = source.map { v => val r = v + 1; work.consume(); r}
-    def sum(s1: Signal[Int], s2: Signal[Int]): Signal[Int] = Signals.static(s1, s2) { implicit t => val r =  s1.get + s2.get; work.consume(); r}
-    def noc(sources: Signal[Int]*): Signal[Int] = Signals.static(sources: _*) { implicit t => work.consume(); 0 }
+    def sum(s1: Signal[Int], s2: Signal[Int]): Signal[Int] = Signals.lift(s1, s2) { (s1, s2) => val r =  s1 + s2; work.consume(); r}
+    def noc(sources: Signal[Int]*): Signal[Int] = Signals.lift(sources) { _ => work.consume(); 0 }
 
     source = Var(step.get())
 

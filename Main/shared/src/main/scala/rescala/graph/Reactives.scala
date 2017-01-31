@@ -67,7 +67,7 @@ trait Pulsing[+P, S <: Struct] extends Reactive[S] {
 trait PulseOption[+P, S <: Struct] extends Pulsing[P, S] {
   @compileTimeOnly("Event.apply can only be used inside of Signal expressions")
   def apply(): Option[P] = throw new IllegalAccessException(s"$this.apply called outside of macro")
-  final def get(implicit turn: Turn[S]): Option[P] = pulse(turn).getE
+  private[rescala] final def get(implicit turn: Turn[S]): Option[P] = pulse(turn).getE
 }
 
 
@@ -88,6 +88,5 @@ trait Stateful[+A, S <: Struct] extends Pulsing[A, S] {
     catch { case EmptySignalControlThrowable => throw new NoSuchElementException(s"Signal $this is empty") }
   }
 
-
-  final def get(implicit turn: Turn[S]): A = pulse(turn).getS
+  private[rescala] final def get(implicit turn: Turn[S]): A = pulse(turn).getS
 }

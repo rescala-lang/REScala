@@ -6,6 +6,7 @@ import java.util.concurrent.locks.{ReadWriteLock, ReentrantReadWriteLock}
 import benchmarks.{EngineParam, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
+import rescala.benchmarkutil.BenchmarkUtil
 import rescala.engines.{Engine, Engines}
 import rescala.propagation.Turn
 import rescala.reactives.Var
@@ -28,7 +29,7 @@ class SingleVar[S <: rescala.graph.Struct] {
 
 
   @Setup
-  def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam[S]) = {
+  def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam[S]): Unit = {
     engine = engineParam.engine
     current = false
     source = engine.Var(current)
@@ -68,7 +69,7 @@ class SingleVar[S <: rescala.graph.Struct] {
 
   @Benchmark
   def readIllegal(): Boolean = {
-    source.get(illegalTurn)
+    BenchmarkUtil.directGet(source, illegalTurn)
   }
 
 }

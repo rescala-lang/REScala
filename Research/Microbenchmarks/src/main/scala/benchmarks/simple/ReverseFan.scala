@@ -32,7 +32,7 @@ class ReverseFan[S <: rescala.graph.Struct] {
     val threads = params.getThreads
     sources = Array.fill(threads)(Var(step.get()))
     val intermediate = sources.map(_.map { v => {work.consume(); v + 1} })
-    result = Signals.static(intermediate.toSeq: _*) { t => val r = intermediate.foldLeft(0)((a, v) => v.get(t) + a); work.consumeSecondary(); r }
+    result = Signals.lift(intermediate) { values => work.consumeSecondary(); values.sum }
     if (engine == Engines.unmanaged) isManual = true
 
   }

@@ -5,6 +5,7 @@ import rescala.graph._
 import rescala.propagation.Turn
 import rescala.reactives.RExceptions.EmptySignalControlThrowable
 
+import scala.collection.TraversableLike
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.higherKinds
 
@@ -48,6 +49,10 @@ object Signals extends GeneratedSignalLift {
     // using an anonymous function instead of ignore2 causes dependencies to be captured, which we want to avoid
     def ignore2[I, C, R](f: I => R): (I, C) => R = (t, _) => f(t)
     Impl.makeStatic(dependencies.toSet[Reactive[S]], expr(initialTurn))(ignore2(expr))(initialTurn)
+  }
+
+  def lift[A, S <: Struct, R](los: Seq[Signal[A, S]])(fun: Seq[A] => R)(implicit ticket: Ticket[S]): Signal[R, S] = {
+    static(los: _*){t => fun(los.map(_.get(t)))}
   }
 
   /** creates a signal that has dynamic dependencies (which are detected at runtime with Signal.apply(turn)) */
