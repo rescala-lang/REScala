@@ -4,6 +4,22 @@ version: 0.3
 nav: 3
 sidebar: manual
 ---
+
+# From SBT
+
+```scala
+resolvers += Resolver.bintrayRepo("rmgk", "maven")
+resolvers += Resolver.bintrayRepo("pweisenburger", "maven")
+
+libraryDependencies += "de.tuda.stg" %% "rescala" % "0.19.0"
+```
+
+# API Documentation
+
+* [Signal documentation](../scaladoc/#rescala.reactives.Signal)
+* [Event documentation](../scaladoc/#rescala.reactives.Event)
+
+
 # Introduction
 
 This manual covers the main features of the *REScala* programming language.
@@ -14,89 +30,44 @@ events and time-changing values, [Technicalities](#technicalities)
 presents technical details that are necessary to correctly run
 *REScala*, [Related](#related) outlines the related work.
 
-**Intended audience and prerequisites** This manuscript is
-mainly intended for students who approach reactive programming in
-Scala for the first time. The manual assumes basic knowledge of the
-[Scala](http://scala-lang.org/) language and of functional programming (high-order
-functions, anonymous functions, etc.). No previous knowledge of
-reactive programming is assumed.
-
 While a major aspect of *REScala*'s design is the integration of events
 and signals, they can be used separately. For example a programmer can
 use only *REScala* events to design application that do not need
 time-changing values.
 
-**Scope** The manual covers the basic features of
-*REScala*. Some functionalities, including implicit events and
-high-order signals are intentionally not covered, other, like event
-polymorphism, are only sketched. More details can be found
-in [[7, 3]](#ref)
+**Scope** The manual serves as an introduction of the concepts in *REScala*.
+The full API is covered in the [scaladoc](../scaladoc/) especially for [Signals](../scaladoc/#rescala.reactives.Signal) and [Events](../scaladoc/#rescala.reactives.Signal).
+More details can be found in [[7, 3]](#ref).
 
 The manual introduces the concepts related to functional reactive
 programming and event-based programming from a practical
 perspective. The readers interested in a more general presentation of
-these topics can find in [Related](#related) the essential
-references.
+these topics can find thee essential
+references in the [related work](#related).
 
-# Signals and Vars
-[Signals and Vars]: #signals-and-vars
-
-A signal is language concept for expressing functional dependencies
-among values in a declarative way. Intuitively, a reactive value can
-depend on variables -- sources of change without further dependencies
--- or on other reactive values.  When any of the dependency sources
-changes, the expression defining the reactive value is automatically
-recomputed by the language runtime to keep the reactive value
-up-to-date.
-
-Consider the following [example](#first-example):
-
-```scala
-var a = 2
-// a: Int = 2
-
-var b = 3
-// b: Int = 3
-
-var c = a + b
-// c: Int = 5
-
-println((a,b,c))
-// (2,3,5)
-
-a = 4
-// a: Int = 4
-
-println((a,b,c))
-// (4,3,5)
-
-c = a + b
-// c: Int = 7
-
-println((a,b,c))
-// (4,3,7)
-```
-{: #first-example}
-
-Line 3 specifies the value of `c` as a function of
-`a` and `b`. Since Line 3 defines a *statement*,
-the relation `c = a + b` is valid after the execution of
-Line 3. Clearly, when the value of `a` is updated, the
-relation `c = a + b` is not valid anymore. To make
-sure that the relation still holds, the programmer needs to recompute
-the expression and reassign `c`, like in Line 7.
-
-Reactive programming and *REScala* provide abstractions to express *constraints* in addition to statements. In *REScala*, the programmer
-can specify that the constraint `c := a + b` *always* holds during
-the execution of a program. Every time `a` or `b` change,
-the value of `c` is automatically recomputed.
-
-For example:
+The code examples in the manual serve as a self contained Scala REPL session,
+all code is executed and results are annotated as comments using [tut](https://github.com/tpolecat/tut).
+To use all features of *REScala* the only required import is:
 
 ```scala
 import rescala._
 // import rescala._
+```
 
+Most code blocks can be executed on their own when adding this import,
+but some require definitions from the prior blocks.
+
+
+# Signals and Vars
+[Signals and Vars]: #signals-and-vars
+
+A signal expresses functional dependencies among values.
+Intuitively, the value of a signal is computed from one or multiple input values.
+Whenever any inputs changes, the value of the signal is also updated.
+
+For example:
+
+```scala
 val a = Var(2)
 // a: rescala.Var[Int] = <console>(15)
 
@@ -109,36 +80,26 @@ val c = Signal { a() + b() }
 println((a.now, b.now, c.now))
 // (2,3,5)
 
-a.set(4)
+a() = 4
 
 println((a.now, b.now, c.now))
 // (4,3,7)
 
-b.set(5)
+b() = 5
 
 println((a.now, b.now, c.now))
 // (4,5,9)
 ```
 
-In the code above, the signal in Line 3 defines the
-constraint `c := a + b`. When one of the reactive values involved in
-the constraint is updated (Line 5), the expression in the
-constraint is recomputed behind the scenes, and the value of `a`
-is automatically updated.
+In the code above, the signal `c` is defined to be `a + b` (details on syntax follows in the next section).
+When `a` or `b` are updated, the value of `c` is updated as well.
 
-As the reader may have noticed, expressing constraints in *REScala*
-requires to conform some syntactic conventions which are discussed in
-the next sections.
 
 ## Vars
 
-### Defining Vars
-Programmers express reactive
-computations starting from vars. Vars wrap normal Scala values. For
-example, `Var(2)` creates a var with an `[Int]` value and
-initializes the var to the value 2. Vars are parametric types. A var
-that carries integer values has type `Var[Int]`. The following
-code snippet shows valid var declarations.
+A `Var[T]` holds a simple value of type `T` and does not have any inputs.
+`Var[T]` is a subtype of `Signal[T]` and can be used as an input for any signal.
+Examples for var declarations are:
 
 ```scala
 val a = Var(0)
@@ -147,24 +108,27 @@ val a = Var(0)
 val b = Var("Hello World")
 // b: rescala.Var[String] = <console>(15)
 
-val c = Var(false)
-// c: rescala.Var[Boolean] = <console>(15)
+val c = Var(List(1,2,3))
+// c: rescala.Var[List[Int]] = <console>(15)
 
-val d: Var[Int] = Var(30)
-// d: rescala.Var[Int] = <console>(15)
-
-val e: Var[String] = Var("REScala")
-// e: rescala.Var[String] = <console>(15)
-
-val f: Var[Boolean] = Var(false)
-// f: rescala.Var[Boolean] = <console>(15)
+val d = Var((x: Int) => x * 2)
+// d: rescala.Var[Int => Int] = <console>(15)
 ```
 
-### Assigning Vars
-Vars can be directly modified with the
-```()=``` operator. For example ```v()=3``` replaces the current
-value of the ```v``` var with ```3```. Therefore, vars are changed
-imperatively by the programmer.
+Vars enable the framework to track changes of input values.
+Vars can be changed directly by the programmer:
+
+```scala
+a() = 10
+
+b.set("The `set` method does the same as the update syntax above")
+
+c.transform( list => 0 :: list )
+```
+
+Vars are used by the framework to track changes to inputs,
+the value of a var must not be mutated indirectly,
+as such changes are hidden to the framework.
 
 
 ## Signals
@@ -338,7 +302,7 @@ val e: Event[Int] = space.changed
 // e: rescala.Event[Int] = (changed <console>(17))
 
 val handler:  (Int => Unit) =  ((x: Int) => println(x))
-// handler: Int => Unit = $$Lambda$2240/1907745255@84b787a
+// handler: Int => Unit = $$Lambda$8356/325387143@297e1722
 
 e += handler
 // res11: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
@@ -930,7 +894,7 @@ val e = Evt[Int]()
 // e: rescala.Evt[Int] = <console>(15)
 
 val f = (x:Int,y:Int)=>(x+y)
-// f: (Int, Int) => Int = $$Lambda$2315/699569956@70fc6d05
+// f: (Int, Int) => Int = $$Lambda$8461/2126906156@7f7e948c
 
 val s: Signal[Int] = e.fold(10)(f)
 // s: rescala.Signal[Int] = <console>(17)
@@ -961,7 +925,7 @@ val e = Evt[Int]()
 // e: rescala.Evt[Int] = <console>(15)
 
 val f = (x:Int)=>{test=x; x+1}
-// f: Int => Int = $$Lambda$2316/937941171@49a7e8e9
+// f: Int => Int = $$Lambda$8462/1379393974@7b8e3ec0
 
 val s: Signal[Int] = e.iterate(10)(f)
 // s: rescala.Signal[Int] = <console>(17)
@@ -1304,7 +1268,7 @@ In this section we
 collect the most common pitfalls for users that are new to reactive
 programming and *REScala*.
 
-# Accessing values in signal expressions
+## Accessing values in signal expressions
 
 The ```()```
 operator used on a signal or a var, inside a signal expression,
@@ -1334,7 +1298,7 @@ expression is almost certainly a mistake. As a rule of dumb, signals
 and vars appear in signal expressions with the ```()``` operator.
 
 
-# Attempting to assign a signal
+## Attempting to assign a signal
 Signals are not
 assignable. Signal depends on other signals and vars, the dependency
 is expressed by the signal expression. The value of the signal is
@@ -1343,7 +1307,7 @@ changes. Any attempt to set the value of a signal manually is a
 mistake.
 
 
-# Side effects in signal expressions
+## Side effects in signal expressions
 Signal expressions
 should be pure. i.e. they should not modify external variables. For
 example the following code is conceptually wrong because the variable
@@ -1384,7 +1348,7 @@ println(c.now)
 // 4
 ```
 
-# Cyclic dependencies
+## Cyclic dependencies
 When a signal ```s``` is defined, a
 dependency is establishes with each of the signals or vars that appear
 in the signal expression of ```s```. Cyclic dependencies produce a
@@ -1415,7 +1379,7 @@ val t = Signal{ a() + s() + 1 }
 creates a mutual dependency between ```s``` and
 ```t```. Similarly, indirect cyclic dependencies must be avoided.
 
-# Objects and mutability
+## Objects and mutability
 Vars and signals may behave
 unexpectedly with mutable objects. Consider the following example.
 
@@ -1426,7 +1390,7 @@ class Foo(init: Int){            /* WRONG - DON'T DO IT */
 // defined class Foo
 
 val foo = new Foo(1)
-// foo: Foo = Foo@1afdc21c
+// foo: Foo = Foo@3744b985
 
 val varFoo = Var(foo)
 // varFoo: rescala.Var[Foo] = <console>(16)
@@ -1461,7 +1425,7 @@ class Foo(val x: Int){}
 // defined class Foo
 
 val foo = new Foo(1)
-// foo: Foo = Foo@5faea4cd
+// foo: Foo = Foo@97b2479
 
 val varFoo = Var(foo)
 // varFoo: rescala.Var[Foo] = <console>(16)
@@ -1486,7 +1450,7 @@ class Foo(init: Int){   /* WRONG - DON'T DO IT */
 // defined class Foo
 
 val foo = new Foo(1)
-// foo: Foo = Foo@717f773d
+// foo: Foo = Foo@13b976c1
 
 val varFoo = Var(foo)
 // varFoo: rescala.Var[Foo] = <console>(16)
@@ -1503,7 +1467,7 @@ varFoo()=foo
 // s.now == 11
 ```
 
-# Functions of reactive values
+## Functions of reactive values
 Functions that operate on
 traditional values are not automatically transformed to operate on
 signals. For example consider the following functions:
@@ -1562,30 +1526,6 @@ val s = Signal{ increment(a()) + 1 }
 
 ---
 
-# Technicalities
-
-This section is meant to cover the implementation details of *REScala*
-that are necessary to correctly run the current the library.
-
-
-# Imports and dependencies
-
-To work with *REScala* programmers need to properly import the reactive
-abstractions offered by the language. The following imports are
-normally sufficient for all the basic functionalities of *REScala*:
-
-```scala
-import rescala._
-```
-
-Note that signal expressions are currently implemented as macros,
-i.e. the body of a signal expression is analyzed to detect the
-reactive values and establish the dependencies. To use macros for
-signal expressions, the macro ```SignalM``` is imported and renamed
-to ```Signal``` (Line 3).
-
----
-
 # Essential Related Work
 {: #related }
 
@@ -1619,13 +1559,12 @@ comments. Among the others Gerold Hintz and Pascal Weisenburger.
 # References
 {: #ref}
 [1] E. Bainomugisha, A. Lombide Carreton, T. Van Cutsem, S. Mostinckx, and
-W. De Meuter. A survey on reactive programming. ACM Comput. Surv. (To appear),
-2013.
+W. De Meuter. A survey on reactive programming. ACM Comput. Surv. 2013.
 
 [2] G. H. Cooper and S. Krishnamurthi. Embedding dynamic dataflow in a call-byvalue
 language. In ESOP, pages 294–308, 2006.
 
-[3] V. Gasiunas, L. Satabin, M. Mezini, A. N´u˜nez, and J. Noy´e. EScala: modular
+[3] V. Gasiunas, L. Satabin, M. Mezini, A. Ńũnez, and J. Noýe. EScala: modular
 event-driven object interactions in Scala. AOSD ’11, pages 227–240. ACM, 2011.
 
 [4] A. Lombide Carreton, S. Mostinckx, T. Cutsem, and W. Meuter. Loosely-coupled
@@ -1649,5 +1588,3 @@ New York, NY, USA, Accepted for publication, 2014. ACM.
 an analysis and a research roadmap. In Proceedings of the 12th annual international
 conference on Aspect-oriented software development, AOSD ’13, pages
 37–48, New York, NY, USA, 2013. ACM.
-
-[9] Scala site. http://www.scala-lang.org/.
