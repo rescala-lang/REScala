@@ -68,7 +68,7 @@ private[pipelining] trait PipelinePropagationImpl extends AbstractPropagation[Pi
   /** allow turn to handle dynamic access to reactives */
   override def dynamicDependencyInteraction(dependency: Reactive[S]): Unit = ()
 
-  def preparationPhase(initialWrites: List[Reactive[S]]): Unit = initialWrites.foreach(admit)
+  def preparationPhase(initialWrites: Traversable[Reactive[S]]): Unit = initialWrites.foreach(admit)
 
   def propagationPhase(): Unit
 

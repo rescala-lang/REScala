@@ -6,7 +6,7 @@ import rescala.pipelining.util.TransferableLock
 private[pipelining] object ParallelFrameCreator {
 
   // Todo each engine should have its own copied of this values
-  
+
   private object turnOrderLock
   private var turnOrder = List[PipeliningTurn]()
 
@@ -24,7 +24,7 @@ private[pipelining] object ParallelFrameCreator {
     completeLock.lock()
 
     turnOrderLock.synchronized {
-      assert(turnOrder.head == turn)  
+      assert(turnOrder.head == turn)
       turnOrder = turnOrder.tail
       if (turnOrder.nonEmpty)
         completeLock.reserveLockFor(turnOrder.head.thread)
@@ -39,8 +39,8 @@ private[pipelining] trait ParallelFrameCreator extends QueueBasedFrameCreator {
   self: PipeliningTurn =>
 
   override protected[this] def createFrame(pipeline: Pipeline) : Unit =  pipeline.createFrameBefore(this)
-    
-  override protected[this] def createFrames(initialWrites: List[Reactive[PipelineStruct.type]]) = {
+
+  override protected def createFrames(initialWrites: Traversable[Reactive[S]]): Unit = {
     ParallelFrameCreator.addTurn(this)
     super.createFrames(initialWrites)
     ParallelFrameCreator.removeTurn(this)

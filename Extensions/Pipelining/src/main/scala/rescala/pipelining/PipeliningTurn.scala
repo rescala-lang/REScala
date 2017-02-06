@@ -425,7 +425,7 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
 
   }
 
-  override def preparationPhase(initialWrites: List[Reactive[S]]): Unit = {
+  override def preparationPhase(initialWrites: Traversable[Reactive[S]]): Unit = {
     log(s"$this starts framing phase")
     createFrames(initialWrites)
     log(s"$this completed framing phase")

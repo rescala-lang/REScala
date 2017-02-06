@@ -14,7 +14,7 @@ trait AbstractPropagation[S <: Struct] extends Turn[S] {
     *
     * @param initialWrites List of affected reactive values
     */
-  def preparationPhase(initialWrites: List[Reactive[S]]): Unit
+  def preparationPhase(initialWrites: Traversable[Reactive[S]]): Unit
 
   /**
     * Performs the actual propagation, setting the new (not yet committed) values for each reactive element.

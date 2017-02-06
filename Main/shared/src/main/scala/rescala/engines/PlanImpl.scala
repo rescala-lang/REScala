@@ -51,7 +51,7 @@ trait PlanImpl[S <: Struct, TImpl <: AbstractPropagation[S]] extends Engine[S, T
     val turn = makeTurn(currentTurn.value)
     val result = try {
       val turnResult = currentTurn.withValue(Some(turn)) {
-        turn.preparationPhase(initialWrites.toList)
+        turn.preparationPhase(initialWrites)
         val admissionResult = admissionPhase(turn)
         turn.propagationPhase()
         turn.commitPhase()

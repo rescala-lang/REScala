@@ -60,7 +60,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPr
 
   /** lock all reactives reachable from the initial sources
     * retry when acquire returns false */
-  override def preparationPhase(initialWrites: List[Reactive[TState]]): Unit = {
+  override def preparationPhase(initialWrites: Traversable[Reactive[TState]]): Unit = {
     val stack = new java.util.ArrayDeque[Reactive[TState]](10)
     initialWrites.foreach(stack.offer)
 

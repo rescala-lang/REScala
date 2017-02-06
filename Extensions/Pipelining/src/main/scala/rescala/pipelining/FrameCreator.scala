@@ -7,7 +7,7 @@ import rescala.pipelining.util.LogUtils._
 
 private[pipelining] trait FrameCreator {
 
-  protected[this] def createFrames(initialReactives: List[Reactive[PipelineStruct.type]]): Unit
+  protected def createFrames(initialReactives: Traversable[Reactive[PipelineStruct.type]]): Unit
 
 }
 
@@ -45,7 +45,7 @@ private[pipelining] trait QueueBasedFrameCreator extends FrameCreator {
   protected[this] def createFrame(pipeline : Pipeline) = pipeline.createFrame
 
 
-  protected[this] override def createFrames(initialWrites: List[Reactive[S]]) = {
+  protected override def createFrames(initialWrites: Traversable[Reactive[S]]): Unit = {
     evaluateQueue(initialWrites)
   }
 
