@@ -13,7 +13,7 @@ import scala.language.higherKinds
   * @tparam T Type returned when the event fires
   * @tparam S Struct type used for the propagation of the event
   */
-final class Evt[T, S <: Struct]()(_bud: S#SporeP[T, Reactive[S]]) extends Base[T, S](_bud) with Event[T, S] {
+final class Evt[T, S <: Struct]()(_bud: S#StructType[T, Reactive[S]]) extends Base[T, S](_bud) with Event[T, S] {
   /** Trigger the event */
   def apply(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = fire(value)
   def fire()(implicit fac: Engine[S, Turn[S]], ev: Unit =:= T): Unit = fire(ev(Unit))(fac)
@@ -46,7 +46,7 @@ object Evt {
   * @tparam A Type stored by the signal
   * @tparam S Struct type used for the propagation of the signal
   */
-final class Var[A, S <: Struct](_bud: S#SporeP[A, Reactive[S]]) extends Base[A, S](_bud) with Signal[A, S] {
+final class Var[A, S <: Struct](_bud: S#StructType[A, Reactive[S]]) extends Base[A, S](_bud) with Signal[A, S] {
 
   def update(value: A)(implicit fac: Engine[S, Turn[S]]): Unit = set(value)
   def set(value: A)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) {admit(value)(_)}

@@ -5,7 +5,7 @@ import rescala.propagation.Turn
 import rescala.propagation.Committable
 
 object PipelineStruct extends Struct {
-  override type SporeP[P, R] = PipelineSporeP[P, R]
+  override type StructType[P, R] = PipelineSporeP[P, R]
 
 }
 

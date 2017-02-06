@@ -16,7 +16,7 @@ trait CommonEngines {
 
 
   private[rescala] class SimpleNoLock extends LevelBasedPropagation[SimpleStruct] {
-    def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): SimpleStruct#SporeP[P, R] =
+    def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): SimpleStruct#StructType[P, R] =
       new LevelSporeImpl[P, R](initialValue, transient, initialIncoming)
     override def releasePhase(): Unit = ()
   }

@@ -14,28 +14,28 @@ trait Struct {
     * @tparam P Pulse stored value type
     * @tparam R Reactive value type represented by the spore
     */
-  type SporeP[P, R] <: EvaluationSpore[P] with GraphSpore[R]
+  type StructType[P, R] <: EvaluationSpore[P] with GraphSpore[R]
 }
 
 /**
   * Wrapper for a spore type combining GraphSpore and PulsingSpore
   */
 trait PulsingGraphStruct extends Struct {
-  override type SporeP[P, R] <: GraphSpore[R] with EvaluationSpore[P]
+  override type StructType[P, R] <: GraphSpore[R] with EvaluationSpore[P]
 }
 
 /**
   * Wrapper for a spore type that combines GraphSpore, PulsingSpore and is leveled
   */
 trait LevelStruct extends PulsingGraphStruct {
-  override type SporeP[P, R] <: LevelSpore[R] with GraphSpore[R] with EvaluationSpore[P]
+  override type StructType[P, R] <: LevelSpore[R] with GraphSpore[R] with EvaluationSpore[P]
 }
 
 /**
   * Wrapper for the instance of LevelSpore
   */
 trait SimpleStruct extends LevelStruct {
-  override type SporeP[P, R] = LevelSporeImpl[P, R]
+  override type StructType[P, R] = LevelSporeImpl[P, R]
 }
 
 /**

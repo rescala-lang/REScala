@@ -10,7 +10,7 @@ import rescala.propagation.{CommonPropagationImpl, Turn}
 import scala.collection.mutable
 
 object LSStruct extends PulsingGraphStruct {
-  override type SporeP[P, R] = LSSporeP[P, R]
+  override type StructType[P, R] = LSSporeP[P, R]
 }
 
 
@@ -46,7 +46,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPr
 
   private type TState = LSStruct.type
 
-  override def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): LSStruct.SporeP[P, R] = {
+  override def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): LSStruct.StructType[P, R] = {
     val lock = new TurnLock[LSInterTurn]
     new LSSporeP[P, R](initialValue, transient, lock, initialIncoming)
   }

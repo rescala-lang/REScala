@@ -31,7 +31,7 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
 
 
   /** used to create state containers of each reactive */
-  override def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): S#SporeP[P, R] = new PipelineSporeP[P, R](initialValue, transient, initialIncoming)
+  override def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): S#StructType[P, R] = new PipelineSporeP[P, R](initialValue, transient, initialIncoming)
 
 
   /**
