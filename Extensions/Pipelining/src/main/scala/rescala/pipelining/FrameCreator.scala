@@ -18,7 +18,7 @@ private[pipelining] trait QueueBasedFrameCreator extends FrameCreator {
   type S = PipelineStruct.type
 
 
-  protected[this] final def evaluateQueue(initialWrites: List[Reactive[S]]) = {
+  protected[this] final def evaluateQueue(initialWrites: Traversable[Reactive[S]]) = {
     val lq = new PipelineQueue()(this)
     initialWrites.foreach(lq.enqueue(-1))
 
