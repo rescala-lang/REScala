@@ -13,9 +13,12 @@ import scala.util.control.NonFatal
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
 trait CommonPropagationImpl[S <: PulsingGraphStruct] extends AbstractPropagation[S] {
-  private val toCommit = new util.HashSet[Committable]()
+  private val toCommit = new java.util.ArrayList[Committable]()
   private val observers = new java.util.ArrayList[() => Unit]()
-  override def schedule(commitable: Committable): Unit = toCommit.add(commitable)
+  override def schedule(commitable: Committable): Unit = {
+    assert(!toCommit.contains(commitable), s"tried to schedule same commitable twice: $commitable")
+    toCommit.add(commitable)
+  }
 
   override def observe(f: => Unit): Unit = observers.add(f _)
 
