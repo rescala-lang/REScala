@@ -14,21 +14,21 @@ trait Struct {
     * @tparam P Pulse stored value type
     * @tparam R Reactive value type represented by the spore
     */
-  type StructType[P, R] <: EvaluationSpore[P] with GraphSpore[R]
+  type StructType[P, R] <: PulseStruct[P] with ReadGraphStruct[R]
 }
 
 /**
   * Wrapper for a spore type combining GraphSpore and PulsingSpore
   */
-trait PulsingGraphStruct extends Struct {
-  override type StructType[P, R] <: GraphSpore[R] with EvaluationSpore[P]
+trait ChangableGraphStruct extends Struct {
+  override type StructType[P, R] <: GraphSpore[R] with PulseStruct[P]
 }
 
 /**
   * Wrapper for a spore type that combines GraphSpore, PulsingSpore and is leveled
   */
-trait LevelStruct extends PulsingGraphStruct {
-  override type StructType[P, R] <: LevelSpore[R] with GraphSpore[R] with EvaluationSpore[P]
+trait LevelStruct extends ChangableGraphStruct {
+  override type StructType[P, R] <: LevelSpore[R] with GraphSpore[R] with PulseStruct[P]
 }
 
 /**
@@ -44,7 +44,7 @@ trait SimpleStruct extends LevelStruct {
   *
   * @tparam P Pulse stored value type
   */
-trait EvaluationSpore[P] {
+trait PulseStruct[P] {
   def set(value: Pulse[P])(implicit turn: Turn[_]): Unit
   def base(implicit turn: Turn[_]): Pulse[P]
   def get(implicit turn: Turn[_]): Pulse[P]
@@ -55,7 +55,7 @@ trait EvaluationSpore[P] {
   *
   * @tparam P Pulse stored value type
   */
-trait BufferedSpore[P] extends EvaluationSpore[P] with Committable {
+trait BufferedSpore[P] extends PulseStruct[P] with Committable {
   protected var current: Pulse[P]
   protected val transient: Boolean
   protected var owner: Turn[_] = null
@@ -80,13 +80,16 @@ trait BufferedSpore[P] extends EvaluationSpore[P] with Committable {
   }
 }
 
+trait ReadGraphStruct[R] {
+  def incoming(implicit turn: Turn[_]): Set[R]
+}
+
 /**
   * Spore that can represent a node in a graph by providing information about incoming and outgoing edges.
   *
   * @tparam R Type of the reactive values that are connected to this spore
   */
-trait GraphSpore[R] {
-  def incoming(implicit turn: Turn[_]): Set[R]
+trait GraphSpore[R] extends ReadGraphStruct[R] {
   def updateIncoming(reactives: Set[R])(implicit turn: Turn[_]): Unit
   def outgoing(implicit turn: Turn[_]): Iterator[R]
   def discover(reactive: R)(implicit turn: Turn[_]): Unit

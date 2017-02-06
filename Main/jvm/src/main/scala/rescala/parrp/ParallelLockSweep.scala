@@ -31,7 +31,7 @@ class ParallelLockSweep(backoff: Backoff, ex: Executor, engine: EngineImpl[LSStr
   }
 
   def asyncEvaluate(head: Reactive[TState]): Unit = {
-    if (head.bud.anyInputChanged != this) done(head, hasChanged = false)
+    if (head.state.anyInputChanged != this) done(head, hasChanged = false)
     else {
       val turn = this
       jobsRunning.incrementAndGet()
@@ -57,9 +57,9 @@ class ParallelLockSweep(backoff: Backoff, ex: Executor, engine: EngineImpl[LSStr
         case Dynamic(hasChanged, diff) =>
           diff.removed foreach drop(head)
           diff.added foreach discover(head)
-          head.bud.counter = recount(diff.novel.iterator)
+          head.state.counter = recount(diff.novel.iterator)
 
-          if (head.bud.counter == 0) done(head, hasChanged)
+          if (head.state.counter == 0) done(head, hasChanged)
 
       }
     }

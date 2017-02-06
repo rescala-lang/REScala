@@ -20,7 +20,7 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
 
   private type TState = ParRP
 
-  override def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): TState#StructType[P, R] = {
+  override def makeStructState[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): TState#StructType[P, R] = {
     val lock = new TurnLock[ParRPInterTurn]
     new ParRPSpore[P, R](initialValue, transient, lock, initialIncoming)
   }
@@ -41,7 +41,7 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
   override def create[T <: Reactive[TState]](dependencies: Set[Reactive[TState]], dynamic: Boolean)(f: => T): T = {
     dependencies.foreach(dynamicDependencyInteraction)
     val reactive = f
-    val owner = reactive.bud.lock.tryLock(key)
+    val owner = reactive.state.lock.tryLock(key)
     assert(owner eq key, s"$this failed to acquire lock on newly created reactive $reactive")
     super.create(dependencies, dynamic)(reactive)
   }
@@ -62,11 +62,11 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
 
     while (!toVisit.isEmpty) {
       val reactive = toVisit.pop()
-      val owner = reactive.bud.lock.getOwner
+      val owner = reactive.state.lock.getOwner
       if ((priorKey ne null) && (owner eq priorKey)) throw new IllegalStateException(s"$this tried to lock reactive $reactive owned by its parent $priorKey")
       if (owner ne key) {
-        if (reactive.bud.lock.tryLock(key) eq key)
-          reactive.bud.outgoing.foreach {toVisit.offer}
+        if (reactive.state.lock.tryLock(key) eq key)
+          reactive.state.outgoing.foreach {toVisit.offer}
         else {
           key.reset()
           backoff.backoff()
@@ -80,7 +80,7 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
 
 
   override def forget(reactive: Reactive[TState]): Unit = levelQueue.remove(reactive)
-  override def admit(reactive: Reactive[TState]): Unit = levelQueue.enqueue(reactive.bud.level)(reactive)
+  override def admit(reactive: Reactive[TState]): Unit = levelQueue.enqueue(reactive.state.level)(reactive)
 
   /** registering a dependency on a node we do not personally own does require some additional care.
     * we let the other turn update the dependency and admit the dependent into the propagation queue
@@ -90,10 +90,10 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
 
     val owner = acquireShared(source)
     if (owner ne key) {
-      if (!source.bud.lock.isWriteLock) {
+      if (!source.state.lock.isWriteLock) {
         owner.turn.discover(sink)(source)
       }
-      else if (!source.bud.outgoing.contains(sink)) {
+      else if (!source.state.outgoing.contains(sink)) {
         owner.turn.discover(sink)(source)
         owner.turn.admit(sink)
         key.lockKeychain { _.addFallthrough(owner) }
@@ -111,14 +111,14 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
     val owner = acquireShared(source)
     if (owner ne key) {
       owner.turn.drop(sink)(source)
-      if (!source.bud.lock.isWriteLock) {
+      if (!source.state.lock.isWriteLock) {
         key.lockKeychain(_.removeFallthrough(owner))
-        if (!sink.bud.incoming(this).exists(_.bud.lock.isOwner(owner))) owner.turn.forget(sink)
+        if (!sink.state.incoming(this).exists(_.state.lock.isOwner(owner))) owner.turn.forget(sink)
       }
     }
     else super.drop(sink)(source)
   }
 
-  def acquireShared(reactive: Reactive[TState]): Key[ParRPInterTurn] = Keychains.acquireShared(reactive.bud.lock, key)
+  def acquireShared(reactive: Reactive[TState]): Key[ParRPInterTurn] = Keychains.acquireShared(reactive.state.lock, key)
 }
 

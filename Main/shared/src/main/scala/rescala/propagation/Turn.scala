@@ -1,6 +1,6 @@
 package rescala.propagation
 
-import rescala.graph.{Pulse, PulseOption, EvaluationSpore, Reactive, Stateful, Struct}
+import rescala.graph.{Pulse, PulseOption, Reactive, Stateful, Struct}
 
 /**
   * The Turn interface glues the reactive interface and the propagation implementation together.
@@ -19,7 +19,7 @@ trait Turn[S <: Struct] {
     * @tparam R Reactive value type of the incoming dependencies of the spore
     * @return
     */
-  private[rescala] def bud[P, R](initialValue: Pulse[P] = Pulse.NoChange, transient: Boolean = true, initialIncoming: Set[R] = Set.empty[R]): S#StructType[P, R]
+  private[rescala] def makeStructState[P, R](initialValue: Pulse[P] = Pulse.NoChange, transient: Boolean = true, initialIncoming: Set[R] = Set.empty[R]): S#StructType[P, R]
 
   /**
     * Called to allow turn to handle dynamic access to reactive elements

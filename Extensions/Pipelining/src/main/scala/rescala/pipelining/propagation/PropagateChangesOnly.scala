@@ -17,11 +17,11 @@ private[pipelining] trait PropagateChangesOnly {
       case Static(false) =>
         (false, -1, DoNothing)
       case Dynamic(hasChanged, diff) =>
-        head.bud.updateIncoming(diff.novel)
+        head.state.updateIncoming(diff.novel)
         diff.removed foreach drop(head)
         diff.added foreach discover(head)
         val newLevel = maximumLevel(diff.novel) + 1
-        if (head.bud.level < newLevel)
+        if (head.state.level < newLevel)
           (hasChanged, newLevel, RequeueReactive)
         else if (hasChanged)
           (true, newLevel, EnqueueDependencies)

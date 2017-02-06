@@ -18,7 +18,7 @@ private[pipelining] class PipelineQueue()(implicit val currentTurn: Turn[Pipelin
 
   /** mark the reactive as needing a reevaluation */
   def enqueue(minLevel: Int, needsEvaluate: Boolean = true)(dep: Reactive[S]): Unit = this.synchronized {
-    val newElem = QueueElement(dep.bud.level, dep, minLevel, needsEvaluate)
+    val newElem = QueueElement(dep.state.level, dep, minLevel, needsEvaluate)
     if (!elements.contains(newElem)) {
       elements += newElem
       numOccurences = numOccurences + (dep -> (numOccurences.getOrElse(dep, 0) + 1))
@@ -35,7 +35,7 @@ private[pipelining] class PipelineQueue()(implicit val currentTurn: Turn[Pipelin
   final def handleHead(queueElement: QueueElement, evaluator: Reactive[S] => Unit, notEvaluator: Reactive[S] => Unit): () => Unit = {
     val QueueElement(headLevel, head, headMinLevel, doEvaluate) = queueElement
     if (headLevel < headMinLevel) {
-      head.bud.updateLevel(headMinLevel)
+      head.state.updateLevel(headMinLevel)
       val reevaluate = if (doEvaluate) true
       else if (elements.isEmpty) false
       else if (elements.head.reactive ne head) false
@@ -44,8 +44,8 @@ private[pipelining] class PipelineQueue()(implicit val currentTurn: Turn[Pipelin
         true
       }
       enqueue(headMinLevel, reevaluate)(head)
-      head.bud.outgoing.foreach { r =>
-        if (r.bud.level <= headMinLevel)
+      head.state.outgoing.foreach { r =>
+        if (r.state.level <= headMinLevel)
           enqueue(headMinLevel + 1, needsEvaluate = false)(r)
       }
       () => {}

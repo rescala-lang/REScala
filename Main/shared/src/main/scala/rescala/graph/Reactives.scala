@@ -19,7 +19,7 @@ trait Reactive[S <: Struct] {
     *
     * @return Spore for this value
     */
-  protected[rescala] def bud: S#StructType[_, Reactive[S]]
+  protected[rescala] def state: S#StructType[_, Reactive[S]]
 
   /**
     * Reevaluates this value when it is internally scheduled for reevaluation
@@ -37,7 +37,7 @@ trait Reactive[S <: Struct] {
 
 /** helper class to initialise engine and select lock */
 abstract class Base[+P, S <: Struct](budP: S#StructType[P, Reactive[S]]) extends Pulsing[P, S] {
-  final override protected[rescala] def bud: S#StructType[_, Reactive[S]] = budP
+  final override protected[rescala] def state: S#StructType[_, Reactive[S]] = budP
 
   final protected[this] override def set(value: Pulse[P])(implicit turn: Turn[S]): Unit = if (value.isChange) budP.set(value) else if (hasChanged) budP.set(stable)
   final protected[rescala] override def stable(implicit turn: Turn[S]): Pulse[P] = budP.base

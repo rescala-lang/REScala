@@ -1,8 +1,6 @@
 package rescala.propagation
 
-import java.util
-
-import rescala.graph.{DepDiff, PulsingGraphStruct, EvaluationSpore, Reactive}
+import rescala.graph.{DepDiff, ChangableGraphStruct, Reactive}
 
 import scala.util.control.NonFatal
 
@@ -12,7 +10,7 @@ import scala.util.control.NonFatal
   *
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
-trait CommonPropagationImpl[S <: PulsingGraphStruct] extends AbstractPropagation[S] {
+trait CommonPropagationImpl[S <: ChangableGraphStruct] extends AbstractPropagation[S] {
   private val toCommit = new java.util.ArrayList[Committable]()
   private val observers = new java.util.ArrayList[() => Unit]()
   override def schedule(commitable: Committable): Unit = {
@@ -50,12 +48,12 @@ trait CommonPropagationImpl[S <: PulsingGraphStruct] extends AbstractPropagation
     if (failure != null) throw failure
   }
 
-  protected def discover(sink: Reactive[S])(source: Reactive[S]): Unit = source.bud.discover(sink)(this)
+  protected def discover(sink: Reactive[S])(source: Reactive[S]): Unit = source.state.discover(sink)(this)
 
-  protected def drop(sink: Reactive[S])(source: Reactive[S]): Unit = source.bud.drop(sink)(this)
+  protected def drop(sink: Reactive[S])(source: Reactive[S]): Unit = source.state.drop(sink)(this)
 
   final def applyDiff(head: Reactive[S], diff: DepDiff[S]): Unit = {
-    head.bud.updateIncoming(diff.novel)(this)
+    head.state.updateIncoming(diff.novel)(this)
     diff.removed foreach drop(head)
     diff.added foreach discover(head)
   }

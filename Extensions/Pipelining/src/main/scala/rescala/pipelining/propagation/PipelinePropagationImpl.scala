@@ -17,7 +17,7 @@ private[pipelining] trait PipelinePropagationImpl extends AbstractPropagation[Pi
   val levelQueue = new PipelineQueue()
 
   protected def requeue(head: Reactive[S], changed: Boolean, level: Int, action: QueueAction): Unit = action match {
-    case EnqueueDependencies =>  head.bud.outgoing.foreach(levelQueue.enqueue(level, changed))
+    case EnqueueDependencies =>  head.state.outgoing.foreach(levelQueue.enqueue(level, changed))
     case RequeueReactive => levelQueue.enqueue(level, changed)(head)
     case DoNothing =>
   }
@@ -36,11 +36,11 @@ private[pipelining] trait PipelinePropagationImpl extends AbstractPropagation[Pi
     action
   }
 
-  def maximumLevel(dependencies: Set[Reactive[S]])(implicit turn: Turn[S]): Int = dependencies.foldLeft(-1)((acc, r) => math.max(acc, r.bud.level))
+  def maximumLevel(dependencies: Set[Reactive[S]])(implicit turn: Turn[S]): Int = dependencies.foldLeft(-1)((acc, r) => math.max(acc, r.state.level))
 
-  def register(sink: Reactive[S])(source: Reactive[S]): Unit = source.bud.discover(sink)
+  def register(sink: Reactive[S])(source: Reactive[S]): Unit = source.state.discover(sink)
 
-  def unregister(sink: Reactive[S])(source: Reactive[S]): Unit = source.bud.drop(sink)
+  def unregister(sink: Reactive[S])(source: Reactive[S]): Unit = source.state.drop(sink)
 
   override def schedule(commitable: Committable): Unit = toCommit += commitable
 
@@ -57,12 +57,12 @@ private[pipelining] trait PipelinePropagationImpl extends AbstractPropagation[Pi
   def ensureLevel(dependant: Reactive[S], dependencies: Set[Reactive[S]]): Int =
     if (dependencies.isEmpty) 0
     else {
-      val newLevel = dependencies.map(_.bud.level).max + 1
-      dependant.bud.updateLevel(newLevel)
+      val newLevel = dependencies.map(_.state.level).max + 1
+      dependant.state.updateLevel(newLevel)
     }
 
   // TODO Need to synchronize the queue? I thinkg it is necessary
-  def admit(reactive: Reactive[S]): Unit = levelQueue.enqueue(reactive.bud.level)(reactive)
+  def admit(reactive: Reactive[S]): Unit = levelQueue.enqueue(reactive.state.level)(reactive)
   def forget(reactive: Reactive[S]): Unit = levelQueue.remove(reactive)
 
   /** allow turn to handle dynamic access to reactives */

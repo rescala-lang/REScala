@@ -33,7 +33,7 @@ final private[propagation] class LevelQueue[S <: LevelStruct](evaluator: LevelQu
     * @param dep           Element to add to the queue
     */
   def enqueue(minLevel: Int, needsEvaluate: Boolean = true)(dep: Reactive[S]): Unit = {
-    elements.offer(QueueElement[S](dep.bud.level, dep, minLevel, needsEvaluate))
+    elements.offer(QueueElement[S](dep.state.level, dep, minLevel, needsEvaluate))
   }
 
   /**
@@ -45,10 +45,10 @@ final private[propagation] class LevelQueue[S <: LevelStruct](evaluator: LevelQu
     val QueueElement(headLevel, head, headMinLevel, reevaluate) = queueElement
     // handle level increases
     if (headLevel < headMinLevel) {
-      head.bud.updateLevel(headMinLevel)
+      head.state.updateLevel(headMinLevel)
       enqueue(headMinLevel, reevaluate)(head)
-      head.bud.outgoing.foreach { r =>
-        if (r.bud.level <= headMinLevel)
+      head.state.outgoing.foreach { r =>
+        if (r.state.level <= headMinLevel)
           enqueue(headMinLevel + 1, needsEvaluate = false)(r)
       }
     }

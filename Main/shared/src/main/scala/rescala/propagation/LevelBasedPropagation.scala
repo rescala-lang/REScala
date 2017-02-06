@@ -22,7 +22,7 @@ trait LevelBasedPropagation[S <: LevelStruct] extends CommonPropagationImpl[S] w
 
     def requeue(changed: Boolean, level: Int, redo: Boolean): Unit =
       if (redo) levelQueue.enqueue(level, changed)(head)
-      else if (changed) head.bud.outgoing.foreach(levelQueue.enqueue(level, changed))
+      else if (changed) head.state.outgoing.foreach(levelQueue.enqueue(level, changed))
 
     head.reevaluate() match {
       case Static(hasChanged) =>
@@ -30,13 +30,13 @@ trait LevelBasedPropagation[S <: LevelStruct] extends CommonPropagationImpl[S] w
       case Dynamic(hasChanged, diff) =>
         applyDiff(head, diff)
         val newLevel = maximumLevel(diff.novel) + 1
-        requeue(hasChanged, newLevel, redo = head.bud.level < newLevel)
+        requeue(hasChanged, newLevel, redo = head.state.level < newLevel)
     }
     _evaluated ::= head
 
   }
 
-  private def maximumLevel(dependencies: Set[Reactive[S]]): Int = dependencies.foldLeft(-1)((acc, r) => math.max(acc, r.bud.level))
+  private def maximumLevel(dependencies: Set[Reactive[S]]): Int = dependencies.foldLeft(-1)((acc, r) => math.max(acc, r.state.level))
 
 
   override def create[T <: Reactive[S]](dependencies: Set[Reactive[S]], dynamic: Boolean)(f: => T): T = {
@@ -55,15 +55,15 @@ trait LevelBasedPropagation[S <: LevelStruct] extends CommonPropagationImpl[S] w
   def ensureLevel(dependant: Reactive[S], dependencies: Set[Reactive[S]]): Int =
     if (dependencies.isEmpty) 0
     else {
-      val newLevel = dependencies.map(_.bud.level).max + 1
-      dependant.bud.updateLevel(newLevel)
+      val newLevel = dependencies.map(_.state.level).max + 1
+      dependant.state.updateLevel(newLevel)
     }
 
   /** allow turn to handle dynamic access to reactives */
   override def dynamicDependencyInteraction(dependency: Reactive[S]): Unit = ()
 
   override def preparationPhase(initialWrites: Traversable[Reactive[S]]): Unit = initialWrites.foreach { reactive =>
-    levelQueue.enqueue(reactive.bud.level)(reactive)
+    levelQueue.enqueue(reactive.state.level)(reactive)
   }
 
   def propagationPhase(): Unit = levelQueue.evaluateQueue()

@@ -23,7 +23,7 @@ object Events {
   def static[T, S <: Struct](name: String, dependencies: Reactive[S]*)(calculate: Turn[S] => Pulse[T])(implicit ticket: Ticket[S]): Event[T, S] = ticket { initTurn =>
     val dependencySet: Set[Reactive[S]] = dependencies.toSet
     initTurn.create(dependencySet) {
-      new StaticEvent[T, S](initTurn.bud(initialIncoming = dependencySet, transient = true), calculate, name)
+      new StaticEvent[T, S](initTurn.makeStructState(initialIncoming = dependencySet, transient = true), calculate, name)
     }
   }
 
@@ -31,7 +31,7 @@ object Events {
   def dynamic[T, S <: Struct](dependencies: Reactive[S]*)(expr: Turn[S] => Option[T])(implicit ticket: Ticket[S]): Event[T, S] = {
     ticket { initialTurn =>
       initialTurn.create(dependencies.toSet, dynamic = true)(
-        new DynamicEvent[T, S](initialTurn.bud(transient = true), expr.andThen(Pulse.fromOption)))
+        new DynamicEvent[T, S](initialTurn.makeStructState(transient = true), expr.andThen(Pulse.fromOption)))
     }
   }
 

@@ -36,7 +36,7 @@ final class Evt[T, S <: Struct]()(_bud: S#StructType[T, Reactive[S]]) extends Ba
   * Companion object that allows external users to create new source events.
   */
 object Evt {
-  def apply[T, S <: Struct]()(implicit ticket: Ticket[S]): Evt[T, S] = ticket { t => t.create(Set.empty)(new Evt[T, S]()(t.bud(transient = true))) }
+  def apply[T, S <: Struct]()(implicit ticket: Ticket[S]): Evt[T, S] = ticket { t => t.create(Set.empty)(new Evt[T, S]()(t.makeStructState(transient = true))) }
 }
 
 /**
@@ -72,8 +72,8 @@ final class Var[A, S <: Struct](_bud: S#StructType[A, Reactive[S]]) extends Base
   * Companion object that allows external users to create new source signals.
   */
 object Var {
-  def apply[T, S <: Struct](initval: T)(implicit ticket: Ticket[S]): Var[T, S] = ticket { t => t.create(Set.empty)(new Var(t.bud(Pulse.Change(initval), transient = false))) }
-  def empty[T, S <: Struct]()(implicit ticket: Ticket[S]): Var[T, S] = ticket { t => t.create(Set.empty)(new Var(t.bud(Pulse.empty, transient = false))) }
+  def apply[T, S <: Struct](initval: T)(implicit ticket: Ticket[S]): Var[T, S] = ticket { t => t.create(Set.empty)(new Var(t.makeStructState(Pulse.Change(initval), transient = false))) }
+  def empty[T, S <: Struct]()(implicit ticket: Ticket[S]): Var[T, S] = ticket { t => t.create(Set.empty)(new Var(t.makeStructState(Pulse.empty, transient = false))) }
 
 }
 

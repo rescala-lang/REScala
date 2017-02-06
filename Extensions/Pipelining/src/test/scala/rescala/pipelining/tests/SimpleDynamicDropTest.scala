@@ -49,9 +49,9 @@ class SimpleDynamicDropTest extends FlatSpec {
     assert(numEvaluated == 1)
     numEvaluated = 0
     PipelineTestUtils.readLatestValue { implicit turn =>
-      assert(source2.bud.outgoing == Set())
-      assert(source1.bud.outgoing == Set(dynDep))
-      assert(dynDep.bud.incoming == Set(source1))
+      assert(source2.state.outgoing == Set())
+      assert(source1.state.outgoing == Set(dynDep))
+      assert(dynDep.state.incoming == Set(source1))
     }
     source2.set(93)
     assert(dynDep.now == 0)
@@ -70,9 +70,9 @@ class SimpleDynamicDropTest extends FlatSpec {
       source2.set(2)
 
       PipelineTestUtils.readLatestValue { implicit turn =>
-        assert(source1.bud.outgoing == Set(dynDep))
-        assert(source2.bud.outgoing == Set(dynDep))
-        assert(dynDep.bud.incoming == Set(source1, source2))
+        assert(source1.state.outgoing == Set(dynDep))
+        assert(source2.state.outgoing == Set(dynDep))
+        assert(dynDep.state.incoming == Set(source1, source2))
       }
 
       numEvaluated = 0
@@ -100,19 +100,19 @@ class SimpleDynamicDropTest extends FlatSpec {
         dynDep.now match {
           case 0 =>
             LogUtils.log("==> Add before remove")
-            assert(dynDep.bud.incoming == Set(source1))
+            assert(dynDep.state.incoming == Set(source1))
             assert(dynDep.now == 0)
-            assert(source1.bud.outgoing == Set(dynDep))
-            assert(source2.bud.outgoing == Set())
+            assert(source1.state.outgoing == Set(dynDep))
+            assert(source2.state.outgoing == Set())
             assert(numEvaluated == 2)
             assert(dynDepTracker.values == List(0)) // Only one change because the change 2 -> 2 is not observed
             addBeforeRemove = true
           case 2 =>
             LogUtils.log("==> Remove before add")
             assert(dynDep.now == 2)
-            assert(dynDep.bud.incoming == Set(source1, source2))
-            assert(source1.bud.outgoing == Set(dynDep))
-            assert(source2.bud.outgoing == Set(dynDep))
+            assert(dynDep.state.incoming == Set(source1, source2))
+            assert(source1.state.outgoing == Set(dynDep))
+            assert(source2.state.outgoing == Set(dynDep))
             removeBeforeAdd = true
             assert(numEvaluated == 2)
             assert(dynDepTracker.values == List(0, 2))
@@ -158,9 +158,9 @@ class SimpleDynamicDropTest extends FlatSpec {
       assert(Pipeline.pipelineFor(dynDep).getPipelineFrames().isEmpty)
 
       // in scheduling case, there should no dependency to source2
-      assert(dynDep.bud.incoming == Set(source1))
-      assert(source2.bud.outgoing == Set())
-      assert(source1.bud.outgoing == Set(dynDep))
+      assert(dynDep.state.incoming == Set(source1))
+      assert(source2.state.outgoing == Set())
+      assert(source1.state.outgoing == Set(dynDep))
 
       engine.turnCompleted(dummyTurn)
 

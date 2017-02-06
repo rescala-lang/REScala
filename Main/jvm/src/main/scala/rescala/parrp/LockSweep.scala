@@ -9,7 +9,7 @@ import rescala.propagation.{CommonPropagationImpl, Turn}
 
 import scala.collection.mutable
 
-object LSStruct extends PulsingGraphStruct {
+object LSStruct extends ChangableGraphStruct {
   override type StructType[P, R] = LSSporeP[P, R]
 }
 
@@ -46,7 +46,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPr
 
   private type TState = LSStruct.type
 
-  override def bud[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): LSStruct.StructType[P, R] = {
+  override def makeStructState[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): LSStruct.StructType[P, R] = {
     val lock = new TurnLock[LSInterTurn]
     new LSSporeP[P, R](initialValue, transient, lock, initialIncoming)
   }
@@ -70,24 +70,24 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPr
 
     while (!stack.isEmpty) {
       val reactive = stack.pop()
-      if ((priorKey ne null) && reactive.bud.lock.isOwner(priorKey)) throw new IllegalStateException(s"$this tried to lock reactive $reactive owned by its parent $priorKey")
+      if ((priorKey ne null) && reactive.state.lock.isOwner(priorKey)) throw new IllegalStateException(s"$this tried to lock reactive $reactive owned by its parent $priorKey")
 
-      if (reactive.bud.lock.tryLock(key) eq key) {
-        if (reactive.bud.willWrite == this) {
-          reactive.bud.counter += 1
+      if (reactive.state.lock.tryLock(key) eq key) {
+        if (reactive.state.willWrite == this) {
+          reactive.state.counter += 1
         }
         else {
           locked.add(reactive)
-          reactive.bud.counter = 1
-          reactive.bud.willWrite = this
-          reactive.bud.outgoing(this).foreach {stack.offer}
+          reactive.state.counter = 1
+          reactive.state.willWrite = this
+          reactive.state.outgoing(this).foreach {stack.offer}
         }
       }
       else {
         val it = locked.iterator()
         while (it.hasNext) {
           val curr = it.next()
-          curr.bud.willWrite = null
+          curr.state.willWrite = null
         }
         locked.clear()
         key.reset()
@@ -97,9 +97,9 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPr
       }
     }
     initialWrites.foreach{ source =>
-      source.bud.counter = 0
-      source.bud.anyInputChanged = this
-      source.bud.hasChanged = this
+      source.state.counter = 0
+      source.state.anyInputChanged = this
+      source.state.hasChanged = this
       enqueue(source)
     }
 
@@ -112,12 +112,12 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPr
   }
 
   def done(head: Reactive[TState], hasChanged: Boolean): Unit = {
-    head.bud.hasWritten = this
-    if (hasChanged) head.bud.hasChanged = this
-    head.bud.outgoing(this).foreach { r =>
-      r.bud.counter -= 1
-      if (hasChanged) r.bud.anyInputChanged = this
-      if (r.bud.counter <= 0) enqueue(r)
+    head.state.hasWritten = this
+    if (hasChanged) head.state.hasChanged = this
+    head.state.outgoing(this).foreach { r =>
+      r.state.counter -= 1
+      if (hasChanged) r.state.anyInputChanged = this
+      if (r.state.counter <= 0) enqueue(r)
     }
   }
 
@@ -126,23 +126,23 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPr
   }
 
   def evaluate(head: Reactive[TState]): Unit = {
-    if (head.bud.anyInputChanged != this) done(head, hasChanged = false)
+    if (head.state.anyInputChanged != this) done(head, hasChanged = false)
     else {
       head.reevaluate()(this) match {
         case Static(hasChanged) => done(head, hasChanged)
 
         case Dynamic(hasChanged, diff) =>
           applyDiff(head, diff)
-          head.bud.counter = recount(diff.novel.iterator)
+          head.state.counter = recount(diff.novel.iterator)
 
-          if (head.bud.counter == 0) done(head, hasChanged)
+          if (head.state.counter == 0) done(head, hasChanged)
 
       }
     }
   }
 
   def recount(reactives: Iterator[Reactive[TState]]): Int = {
-    reactives.count(r => r.bud.hasWritten != this && r.bud.willWrite == this)
+    reactives.count(r => r.state.hasWritten != this && r.state.willWrite == this)
   }
 
   /**
@@ -156,19 +156,19 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPr
   override def create[T <: Reactive[TState]](dependencies: Set[Reactive[TState]], dynamic: Boolean)(f: => T): T = {
     dependencies.map(acquireShared)
     val reactive = f
-    val owner = reactive.bud.lock.tryLock(key)
+    val owner = reactive.state.lock.tryLock(key)
     assert(owner eq key, s"$this failed to acquire lock on newly created reactive $reactive")
-    reactive.bud.willWrite = this
+    reactive.state.willWrite = this
 
-    reactive.bud.anyInputChanged = this
+    reactive.state.anyInputChanged = this
     if (dynamic) {
       evaluate(reactive)
     }
     else {
       dependencies.foreach(discover(reactive))
-      reactive.bud.counter = recount(dependencies.iterator)
-      val inputsChanged = dependencies.exists(_.bud.hasChanged == this)
-      if (reactive.bud.counter == 0) {
+      reactive.state.counter = recount(dependencies.iterator)
+      val inputsChanged = dependencies.exists(_.state.hasChanged == this)
+      if (reactive.state.counter == 0) {
         if (inputsChanged) evaluate(reactive)
         else done(reactive, hasChanged = true)
       }
@@ -185,17 +185,17 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPr
 
     val owner = acquireShared(source)
     if (owner ne key) {
-      if (source.bud.willWrite != owner.turn) {
-        source.bud.discover(sink)(this)
+      if (source.state.willWrite != owner.turn) {
+        source.state.discover(sink)(this)
       }
-      else if (!source.bud.outgoing(this).contains(sink)) {
-        source.bud.discover(sink)(this)
+      else if (!source.state.outgoing(this).contains(sink)) {
+        source.state.discover(sink)(this)
         discovered.getOrElseUpdate(owner, mutable.Set.empty).add(sink)
         key.lockKeychain {_.addFallthrough(owner)}
       }
     }
     else {
-      source.bud.discover(sink)(this)
+      source.state.discover(sink)(this)
     }
   }
 
@@ -204,15 +204,15 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPr
 
     val owner = acquireShared(source)
     if (owner ne key) {
-      source.bud.drop(sink)(this)
-      if (source.bud.willWrite != owner.turn) {
+      source.state.drop(sink)(this)
+      if (source.state.willWrite != owner.turn) {
         key.lockKeychain(_.removeFallthrough(owner))
-        if (!sink.bud.incoming(this).exists(_.bud.lock.isOwner(owner))) {
+        if (!sink.state.incoming(this).exists(_.state.lock.isOwner(owner))) {
           discovered.getOrElseUpdate(owner, mutable.Set.empty).remove(sink)
         }
       }
     }
-    else source.bud.drop(sink)(this)
+    else source.state.drop(sink)(this)
   }
 
 
@@ -233,21 +233,21 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPr
     while (!stack.isEmpty) {
       val reactive = stack.pop()
 
-      if (reactive.bud.willWrite == this) {
-        reactive.bud.counter += 1
+      if (reactive.state.willWrite == this) {
+        reactive.state.counter += 1
       }
       else {
-        reactive.bud.counter = 1
-        reactive.bud.willWrite = this
-        reactive.bud.outgoing(this).foreach { r =>
+        reactive.state.counter = 1
+        reactive.state.willWrite = this
+        reactive.state.outgoing(this).foreach { r =>
           stack.push(r)
         }
       }
     }
 
     appendees.foreach { appendee =>
-      appendee.bud.counter = recount(appendee.bud.outgoing(this))
-      if (appendee.bud.counter == 0) enqueue(appendee)
+      appendee.state.counter = recount(appendee.state.outgoing(this))
+      if (appendee.state.counter == 0) enqueue(appendee)
     }
 
   }
@@ -256,5 +256,5 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPr
   /** allow turn to handle dynamic access to reactives */
   override def dynamicDependencyInteraction(dependency: Reactive[TState]): Unit = acquireShared(dependency)
 
-  def acquireShared(reactive: Reactive[TState]): Key[LSInterTurn] = Keychains.acquireShared(reactive.bud.lock, key)
+  def acquireShared(reactive: Reactive[TState]): Key[LSInterTurn] = Keychains.acquireShared(reactive.state.lock, key)
 }

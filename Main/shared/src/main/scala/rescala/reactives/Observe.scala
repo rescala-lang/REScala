@@ -37,7 +37,7 @@ object Observe {
   def weak[T, S <: Struct](dependency: Pulsing[T, S])(fun: Try[T] => Unit)(implicit maybe: Ticket[S]): Observe[S] = {
     val incoming = Set[Reactive[S]](dependency)
     maybe(initTurn => initTurn.create(incoming) {
-      val obs = new Obs(initTurn.bud[T, Reactive[S]](initialIncoming = incoming, transient = false), dependency, fun)
+      val obs = new Obs(initTurn.makeStructState[T, Reactive[S]](initialIncoming = incoming, transient = false), dependency, fun)
       dependency.pulse(initTurn).toOptionTry.foreach(t => initTurn.observe(fun(t)))
       obs
     })

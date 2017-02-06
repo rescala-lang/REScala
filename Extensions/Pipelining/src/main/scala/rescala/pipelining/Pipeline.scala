@@ -7,8 +7,8 @@ import scala.annotation.tailrec
 import scala.collection.immutable.Queue
 
 private[pipelining] object Pipeline {
-  protected[pipelining] def pipelineFor(at: Reactive[PipelineStruct.type]) = at.bud.pipeline
-  protected[pipelining] def apply(at: Reactive[PipelineStruct.type]) = at.bud.pipeline
+  protected[pipelining] def pipelineFor(at: Reactive[PipelineStruct.type]) = at.state.pipeline
+  protected[pipelining] def apply(at: Reactive[PipelineStruct.type]) = at.state.pipeline
 }
 
 private[pipelining] class Pipeline() {
@@ -30,8 +30,8 @@ private[pipelining] class Pipeline() {
 
   private object pipelineLock
 
-  private[pipelining] object dynamicLock 
-  
+  private[pipelining] object dynamicLock
+
   protected[pipelining] def lockDynamic[A](op : => A) : A = dynamicLock.synchronized {
     op
   }
@@ -74,7 +74,7 @@ private[pipelining] class Pipeline() {
     frameToRemove.removeFrame()
     if (pipelineRest == null)
       queueTail = newStableFrame
-    else 
+    else
       pipelineRest.insertAfter(newStableFrame)
     stableFrame = newStableFrame*/
     val newStableFrame = stableFrame.next
@@ -243,8 +243,8 @@ private[pipelining] class Pipeline() {
     assert(!hasFrame)
     def createFrame(prev: CFrame): CFrame = {
       val newFrame = Frame[Content](turn, this)
-      
-      // Usually one would copy the data from the previous one. 
+
+      // Usually one would copy the data from the previous one.
       // When creating frames sequentially, this is true ever.
       // But for parallel framing we need to insert a frame above another one, while the other one
       // has changes in its outgoing due to an dynamic dependency add. Nothing else could have changed
@@ -252,7 +252,7 @@ private[pipelining] class Pipeline() {
       // that these changes should not be copied in this frame because the one which applied them to
       // all frames below it, is prev or an even earlier frame
       val copyFrame = if (prev.next() == null) prev else prev.next()
-      
+
       newFrame.content = duplicate(copyFrame.content, turn)
       assert(newFrame.turn == turn)
       newFrame
@@ -324,8 +324,8 @@ private[pipelining] class Pipeline() {
       assert(assertTurnOrder)
     }
   }
-  
-  
+
+
   protected[pipelining] def createFrameAfter(turn: PipeliningTurn, createFor: PipeliningTurn): Boolean = lockPipeline {
     // TODO first check for conflicts
     // resolveConflicts(turn, at.getPipelineFrames().map { _.turn.asInstanceOf[PipeliningTurn]}.toSet)
