@@ -2,7 +2,7 @@ package rescala.propagation
 
 import java.util
 
-import rescala.graph.{DepDiff, PulsingGraphStruct, PulsingSpore, Reactive}
+import rescala.graph.{DepDiff, PulsingGraphStruct, EvaluationSpore, Reactive}
 
 import scala.util.control.NonFatal
 
@@ -49,9 +49,6 @@ trait CommonPropagationImpl[S <: PulsingGraphStruct] extends AbstractPropagation
     // but this is not the place to invent exception aggregation
     if (failure != null) throw failure
   }
-
-  final override def pulses[P](budP: S#SporeP[P, _]): PulsingSpore[P] = budP
-  final override def incoming[R](bud: S#Spore[R]): Set[R] = bud.incoming(this)
 
   protected def discover(sink: Reactive[S])(source: Reactive[S]): Unit = source.bud.discover(sink)(this)
 

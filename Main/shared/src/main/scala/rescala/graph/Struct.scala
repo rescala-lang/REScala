@@ -9,33 +9,26 @@ import scala.language.{existentials, higherKinds, implicitConversions}
  */
 trait Struct {
   /**
-    * Spore type defined by this struct with inferred pulse value type
-    *
-    * @tparam R Reactive value type represented by the spore
-    */
-  final type Spore[R] = SporeP[_, R]
-
-  /**
     * Spore type defined by this struct
     *
     * @tparam P Pulse stored value type
     * @tparam R Reactive value type represented by the spore
     */
-  type SporeP[P, R]
+  type SporeP[P, R] <: EvaluationSpore[P] with GraphSpore[R]
 }
 
 /**
   * Wrapper for a spore type combining GraphSpore and PulsingSpore
   */
 trait PulsingGraphStruct extends Struct {
-  override type SporeP[P, R] <: GraphSpore[R] with PulsingSpore[P]
+  override type SporeP[P, R] <: GraphSpore[R] with EvaluationSpore[P]
 }
 
 /**
   * Wrapper for a spore type that combines GraphSpore, PulsingSpore and is leveled
   */
 trait LevelStruct extends PulsingGraphStruct {
-  override type SporeP[P, R] <: LevelSpore[R] with GraphSpore[R] with PulsingSpore[P]
+  override type SporeP[P, R] <: LevelSpore[R] with GraphSpore[R] with EvaluationSpore[P]
 }
 
 /**
@@ -51,7 +44,7 @@ trait SimpleStruct extends LevelStruct {
   *
   * @tparam P Pulse stored value type
   */
-trait PulsingSpore[P] {
+trait EvaluationSpore[P] {
   def set(value: Pulse[P])(implicit turn: Turn[_]): Unit
   def base(implicit turn: Turn[_]): Pulse[P]
   def get(implicit turn: Turn[_]): Pulse[P]
@@ -62,7 +55,7 @@ trait PulsingSpore[P] {
   *
   * @tparam P Pulse stored value type
   */
-trait BufferedSpore[P] extends PulsingSpore[P] with Committable {
+trait BufferedSpore[P] extends EvaluationSpore[P] with Committable {
   protected var current: Pulse[P]
   protected val transient: Boolean
   protected var owner: Turn[_] = null

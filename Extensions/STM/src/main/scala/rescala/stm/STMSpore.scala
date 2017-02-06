@@ -6,7 +6,7 @@ import rescala.propagation.Turn
 import scala.concurrent.stm.{InTxn, Ref}
 import rescala.propagation.Committable
 
-class STMSpore[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends LevelSpore[R] with PulsingSpore[P] with Committable {
+class STMSpore[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends LevelSpore[R] with EvaluationSpore[P] with Committable {
 
   implicit def inTxn(implicit turn: Turn[_]): InTxn = turn match {
     case stmTurn: STMTurn => stmTurn.inTxn
@@ -17,7 +17,7 @@ class STMSpore[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming
   val _outgoing: Ref[Set[R]] = Ref(Set.empty)
   val _incoming: Ref[Set[R]] = Ref(initialIncoming)
 
-  val pulses: PulsingSpore[P] = this
+  val pulses: EvaluationSpore[P] = this
   def incoming(implicit turn: Turn[_]): Set[R] = _incoming.get
   override def level(implicit turn: Turn[_]): Int = _level.get
   override def drop(reactive: R)(implicit turn: Turn[_]): Unit = _outgoing.transformAndGet(_ - reactive)

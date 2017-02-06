@@ -31,7 +31,7 @@ trait Buffer[A] extends Committable {
   def get(implicit turn: Turn[_]): A
 }
 
-class PipelineSporeP[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]) {
+class PipelineSporeP[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends EvaluationSpore[P] with GraphSpore[R] {
 
   val pipeline: Pipeline = new Pipeline()
 
@@ -45,14 +45,12 @@ class PipelineSporeP[P, R](initialValue: Pulse[P], transient: Boolean, initialIn
   def updateLevel(i: Int)(implicit turn: Turn[_]): Int = lvl.transform(math.max(i, _))
 
   private val _outgoing: NonblockingPipelineBuffer[Set[R]] = pipeline.createNonblockingBuffer(Set.empty, Buffer.commitAsIs)
-  def outgoing(implicit turn: Turn[_]): Set[R] = _outgoing.get
+  def outgoing(implicit turn: Turn[_]): Iterator[R] = _outgoing.get.iterator
   def discover(reactive: R)(implicit turn: Turn[_]): Unit = _outgoing.transform(_ + reactive)
   def drop(reactive: R)(implicit turn: Turn[_]): Unit = _outgoing.transform(_ - reactive)
 
-  val pulses: PulsingSpore[P] = new PulsingSpore[P] {
-    val delegate = pipeline.createBlockingBuffer[Pulse[P]](initialValue, if (transient) Buffer.transactionLocal else Buffer.keepPulse)
-    override def set(value: Pulse[P])(implicit turn: Turn[_]): Unit = delegate.set(value)
-    override def base(implicit turn: Turn[_]): Pulse[P] = delegate.base
-    override def get(implicit turn: Turn[_]): Pulse[P] = delegate.get
-  }
+  val delegate = pipeline.createBlockingBuffer[Pulse[P]](initialValue, if (transient) Buffer.transactionLocal else Buffer.keepPulse)
+  override def set(value: Pulse[P])(implicit turn: Turn[_]): Unit = delegate.set(value)
+  override def base(implicit turn: Turn[_]): Pulse[P] = delegate.base
+  override def get(implicit turn: Turn[_]): Pulse[P] = delegate.get
 }

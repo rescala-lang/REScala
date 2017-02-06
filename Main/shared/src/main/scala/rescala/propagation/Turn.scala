@@ -1,6 +1,6 @@
 package rescala.propagation
 
-import rescala.graph.{Pulse, PulseOption, PulsingSpore, Reactive, Stateful, Struct}
+import rescala.graph.{Pulse, PulseOption, EvaluationSpore, Reactive, Stateful, Struct}
 
 /**
   * The Turn interface glues the reactive interface and the propagation implementation together.
@@ -8,23 +8,6 @@ import rescala.graph.{Pulse, PulseOption, PulsingSpore, Reactive, Stateful, Stru
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
 trait Turn[S <: Struct] {
-  /**
-    * Reads the pulse of the given spore.
-    *
-    * @param budP Spore to read the pulse from
-    * @tparam P Stored pulse value type
-    * @return Buffer containing the stored pulse of the spore
-    */
-  private[rescala] def pulses[P](budP: S#SporeP[P, _]): PulsingSpore[P]
-
-  /**
-    * Reads the incoming dependencies of a given spore.
-    *
-    * @param bud Spore to read the dependencies from
-    * @tparam R Reactive value type of the incoming dependencies of the spore
-    * @return Incoming dependencies of the spore
-    */
-  private[rescala] def incoming[R](bud: S#Spore[R]): Set[R]
 
   /**
     * Creates a new spore initialized with the given parameters

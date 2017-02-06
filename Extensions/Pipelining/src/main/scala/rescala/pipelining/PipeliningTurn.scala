@@ -9,7 +9,7 @@ import rescala.pipelining.PipeliningTurn._
 import rescala.pipelining.propagation._
 import rescala.pipelining.util.LogUtils._
 import rescala.propagation._
-import rescala.graph.PulsingSpore
+import rescala.graph.EvaluationSpore
 
 
 private[pipelining] object PipeliningTurn {
@@ -489,8 +489,5 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
   def <=(other: Turn[S]) = {
     !(this > other)
   }
-
-  override def pulses[P](budP: S#SporeP[P, _]): PulsingSpore[P] = budP.pulses
-  override def incoming[R](bud: S#Spore[R]): Set[R] = bud.incoming(this)
 
 }
