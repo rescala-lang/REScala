@@ -10,14 +10,14 @@ import scala.collection.LinearSeq
 class IFunTest extends RETests {
 
   /* fold */
-  allEngines("fold_the Initial Value IsSet Correctly") { engine => import engine._
+  allEngines("fold the Initial Value Is Set Correctly") { engine => import engine._
     val e = Evt[Int]
     val f = (x: Int, y: Int) => x + y
     val s: Signal[Int] = e.fold(10)(f)
     assert(s.now == 10)
   }
 
-  allEngines("fold_the Result Signal Increases When Events Occur") { engine => import engine._
+  allEngines("fold the Result Signal Increases When Events Occur") { engine => import engine._
     val e = Evt[Int]
     val f = (x: Int, y: Int) => x + y
     val s: Signal[Int] = e.fold(10)(f)
@@ -28,14 +28,14 @@ class IFunTest extends RETests {
 
 
   /* iterate */
-  allEngines("iterate_the Initial Value IsSet Correctly") { engine => import engine._
+  allEngines("iterate the Initial Value Is Set Correctly") { engine => import engine._
     val e = Evt[Int]
     val f = (x: Int) => x
     val s: Signal[Int] = e.iterate(10)(f)
     assert(s.now == 10)
   }
 
-  allEngines("iterate_the Functionis Executed Every Time The Event Fires") { engine => import engine._
+  allEngines("iterate the Functionis Executed Every Time The Event Fires") { engine => import engine._
     var test: Int = 0
     val e = Evt[Int]
     val f = (x: Int) => {test += 1; x}
@@ -81,7 +81,7 @@ class IFunTest extends RETests {
     assert(s.now == 10)
   }
 
-  allEngines("latest_the Functionis Executed Every Time The Event Fires") { engine => import engine._
+  allEngines("latest the Functionis Executed Every Time The Event Fires") { engine => import engine._
     val e = Evt[Int]
     val s: Signal[Int] = e.latest(10)
 
@@ -95,14 +95,14 @@ class IFunTest extends RETests {
 
 
   /* latestOption */
-  allEngines("latest Option_the Initial Value IsSet Correctly") { engine => import engine._
+  allEngines("latest Option the Initial Value Is Set Correctly") { engine => import engine._
     val e = Evt[Int]
     val s: Signal[Option[Int]] = e.latestOption()
 
     assert(s.now == None)
   }
 
-  allEngines("latest Option_the Functionis Executed Every Time The Event Fires") { engine => import engine._
+  allEngines("latest Option the Functionis Executed Every Time The Event Fires") { engine => import engine._
     val e = Evt[Int]
     val s: Signal[Option[Int]] = e.latestOption()
 
@@ -116,14 +116,14 @@ class IFunTest extends RETests {
 
 
   /* last */
-  allEngines("last_the Initial Value IsSet Correctly") { engine => import engine._
+  allEngines("last the Initial Value Is Set Correctly") { engine => import engine._
     val e = Evt[Int]
     val s: Signal[LinearSeq[Int]] = e.last(5)
 
     assert(s.now == List())
   }
 
-  allEngines("last_collects The LastN Events") { engine => import engine._
+  allEngines("last collects The LastN Events") { engine => import engine._
     val e = Evt[Int]
     val s: Signal[LinearSeq[Int]] = e.last(5)
 
@@ -143,14 +143,14 @@ class IFunTest extends RETests {
   }
 
   /* list */
-  allEngines("list_the Initial Value IsSet Correctly") { engine => import engine._
+  allEngines("list the Initial Value Is Set Correctly") { engine => import engine._
     val e = Evt[Int]
     val s = e.list()
 
     assert(s.now == List())
   }
 
-  allEngines("list_the Functionis Executed Every Time The Event Fires") { engine => import engine._
+  allEngines("list the Functionis Executed Every Time The Event Fires") { engine => import engine._
     val e = Evt[Int]
     val s = e.list()
 
@@ -168,7 +168,7 @@ class IFunTest extends RETests {
   }
 
   /* toggle */
-  allEngines("toggle_the Initial Value IsSet Correctly") { engine => import engine._
+  allEngines("toggle the Initial Value Is Set Correctly") { engine => import engine._
     val e = Evt[Int]
     val v1 = Var(1)
     val s1 = v1.map {_ + 1}
@@ -179,7 +179,7 @@ class IFunTest extends RETests {
     assert(s.now == 2)
   }
 
-  allEngines("toggle_the Event Switches The Signal") { engine => import engine._
+  allEngines("toggle the Event Switches The Signal") { engine => import engine._
     val e = Evt[Int]
     val v1 = Var(1)
     val s1 = v1.map {_ + 1}
@@ -203,7 +203,7 @@ class IFunTest extends RETests {
   }
 
   /* snapshot */
-  allEngines("snapshot_the Initial Value IsSet Correctly") { engine => import engine._
+  allEngines("snapshot the Initial Value Is Set Correctly") { engine => import engine._
     val e = Evt[Int]
     val v1 = Var(1)
     val s1 = v1.map {_ + 1}
@@ -212,7 +212,7 @@ class IFunTest extends RETests {
     assert(s.now == 2)
   }
 
-  allEngines("snapshot_takesA Snapshot When The Event Occurs") { engine => import engine._
+  allEngines("snapshot takesA Snapshot When The Event Occurs") { engine => import engine._
     val e = Evt[Int]
     val v1 = Var(1)
     val s1 = v1.map {_ + 1}
@@ -229,14 +229,14 @@ class IFunTest extends RETests {
 
 
   /* delay[T](e: Event[T], init: T, n: Int): Signal[T] */
-  allEngines("delay_the Initial Value IsSet Correctly") { engine => import engine._
+  allEngines("delay the Initial Value Is Set Correctly") { engine => import engine._
     val e = Evt[Int]
     val s = e.delay(0, 3)
 
     assert(s.now == 0)
   }
 
-  allEngines("delay_takesA Snapshot When The Event Occurs") { engine => import engine._
+  allEngines("delay takesA Snapshot When The Event Occurs") { engine => import engine._
     val e = Evt[Int]
     val s = e.delay(0, 3)
 
@@ -287,7 +287,7 @@ class IFunTest extends RETests {
   }
 
   /* switchTo */
-  allEngines("switch To_the Initial Value IsSet ToThe Signal") { engine => import engine._
+  allEngines("switch To the Initial Value Is Set To The Signal") { engine => import engine._
     val e = Evt[Int]
     val v1 = Var(1)
     val s1 = v1.map {_ + 1}
@@ -298,7 +298,7 @@ class IFunTest extends RETests {
     assert(s2.now == 3)
   }
 
-  allEngines("switch To_the Event Switches The Value ToThe Value OfThe Event") { engine => import engine._
+  allEngines("switch To the Event Switches The Value To The Value Of The Event") { engine => import engine._
     val e = Evt[Int]
     val v1 = Var(1)
     val s1 = v1.map {_ + 1}
@@ -313,7 +313,7 @@ class IFunTest extends RETests {
   }
 
   /* switchOnce */
-  allEngines("switch Once_the Initial Value IsSet ToThe Signal") { engine => import engine._
+  allEngines("switch Once the Initial Value Is Set To The Signal") { engine => import engine._
     val e = Evt[Int]
     val v1 = Var(0)
     val v2 = Var(10)
@@ -326,7 +326,7 @@ class IFunTest extends RETests {
     assert(s3.now == 2)
   }
 
-  allEngines("switch Once_the Event Switches The Value ToThe Value OfThe Other Signal") { engine => import engine._
+  allEngines("switch Once the Event Switches The Value To The Value Of The Other Signal") { engine => import engine._
     val e = Evt[Int]
     val v1 = Var(0)
     val v2 = Var(10)
@@ -342,7 +342,7 @@ class IFunTest extends RETests {
   }
 
   /* reset */
-  allEngines("reset_ The Initial Value OfThe Signal IsGiven ByInit And The Factory") { engine => import engine._
+  allEngines("reset  The Initial Value Of The Signal Is Given By Init And The Factory") { engine => import engine._
     val e = Evt[Int]
     val v1 = Var(0)
     val v2 = Var(10)
@@ -361,7 +361,7 @@ class IFunTest extends RETests {
 
   }
 
-  allEngines("reset_ The Value OfThe Signal IsGiven ByThe Event And The Factory") { engine => import engine._
+  allEngines("reset  The Value Of The Signal Is Given By The Event And The Factory") { engine => import engine._
     val e = Evt[Int]
     val v1 = Var(0)
     val v2 = Var(10)
@@ -385,7 +385,7 @@ class IFunTest extends RETests {
   }
 
   /* change */
-  allEngines("change_is Not Triggered OnCreation") { engine => import engine._
+  allEngines("change is Not Triggered On Creation") { engine => import engine._
     var test = 0
     val v1 = Var(1)
     val s1 = v1.map {_ + 1}
@@ -395,7 +395,7 @@ class IFunTest extends RETests {
     assert(test == 0)
   }
 
-  allEngines("change_is Triggered When The Signal Changes") { engine => import engine._
+  allEngines("change is Triggered When The Signal Changes") { engine => import engine._
     var test = 0
     val v1 = Var(1)
     val s1 = v1.map {_ + 1}
@@ -408,7 +408,7 @@ class IFunTest extends RETests {
     assert(test == 2)
   }
 
-  allEngines("change_the Value OfThe Event Reflects The Change InThe Signal") { engine => import engine._
+  allEngines("change the Value Of The Event Reflects The Change In The Signal") { engine => import engine._
     var test = (0, 0)
     val v1 = Var(1)
     val s1 = v1.map {_ + 1}
@@ -422,7 +422,7 @@ class IFunTest extends RETests {
   }
 
   /* changed */
-  allEngines("changed_is Not Triggered OnCreation") { engine => import engine._
+  allEngines("changed is Not Triggered On Creation") { engine => import engine._
     var test = 0
     val v1 = Var(1)
     val s1 = v1.map {_ + 1}
@@ -432,7 +432,7 @@ class IFunTest extends RETests {
     assert(test == 0)
   }
 
-  allEngines("changed_is Triggered When The Signal Changes") { engine => import engine._
+  allEngines("changed is Triggered When The Signal Changes") { engine => import engine._
     var test = 0
     val v1 = Var(1)
     val s1 = v1.map {_ + 1}
@@ -445,7 +445,7 @@ class IFunTest extends RETests {
     assert(test == 2)
   }
 
-  allEngines("changed the Value Of The Event Reflects The Change InThe Signal") { engine => import engine._
+  allEngines("changed the Value Of The Event Reflects The Change In The Signal") { engine => import engine._
     var test = 0
     val v1 = Var(1)
     val s1 = v1.map {_ + 1}
@@ -459,7 +459,7 @@ class IFunTest extends RETests {
   }
 
   /* changedTo */
-  allEngines("changed To_is Not Triggered On Creation") { engine => import engine._
+  allEngines("changed To is Not Triggered On Creation") { engine => import engine._
     var test = 0
     val v1 = Var(1)
     val s1 = v1.map {_ + 1}

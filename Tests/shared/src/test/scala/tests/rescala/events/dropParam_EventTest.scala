@@ -9,7 +9,7 @@ class dropParam_EventTest extends RETests {
 
 
 
-  allEngines("handler Of_drop Param_ IsExecuted"){ engine => import engine._
+  allEngines("handler Of drop Param  Is Executed"){ engine => import engine._
     var test = 0
     val e1 = Evt[Int]
     val e1_drop: Event[Unit] = e1.dropParam

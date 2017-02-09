@@ -7,7 +7,7 @@ class PredicateEventTest extends RETests {
 
 
 
-  allEngines("predicate Event IsExecuted Only IfThe Predicate IsTrue"){ engine => import engine._
+  allEngines("predicate Event Is Executed Only If The Predicate Is True"){ engine => import engine._
     var test = 0
     var cond = false
     val e1 = Evt[Int]

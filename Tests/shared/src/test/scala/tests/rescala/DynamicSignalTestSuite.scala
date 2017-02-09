@@ -70,7 +70,7 @@ class DynamicSignalTestSuite extends RETests with Whenever {
 
   }
 
-  allEngines("level IsCorrectly Computed"){ engine => import engine._
+  allEngines("level Is Correctly Computed"){ engine => import engine._
 
     val v = Var(1)
 
@@ -90,7 +90,7 @@ class DynamicSignalTestSuite extends RETests with Whenever {
   /* Specific of SignalSynt */
 
 
-  allEngines("signal Does Not ReEvaluate The Expression IfDepends OnIsUpdated That IsNot InCurrent Dependencies"){ engine => import engine._
+  allEngines("signal Does Not Re Evaluate The Expression If Depends On IsUpdated That Is Not In Current Dependencies"){ engine => import engine._
     val v1 = Var(true)
     val v2 = Var(0)
     val v3 = Var(10)
@@ -121,7 +121,7 @@ class DynamicSignalTestSuite extends RETests with Whenever {
   }
 
 
-  allEngines("keep_fixed Dependencies"){ engine => import engine._
+  allEngines("keep fixed Dependencies"){ engine => import engine._
 
     val v1 = Var(true)
     val v2 = Var(0)
@@ -157,7 +157,7 @@ class DynamicSignalTestSuite extends RETests with Whenever {
 
   }
 
-  allEngines("dependant Is Only Invoked OnValue Changes"){ engine => import engine._
+  allEngines("dependant Is Only Invoked On Value Changes"){ engine => import engine._
     var changes = 0
     val v = Var(1)
     val s = Signal {

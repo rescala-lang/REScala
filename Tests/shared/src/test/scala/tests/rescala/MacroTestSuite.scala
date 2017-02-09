@@ -12,7 +12,7 @@ class MacroTestSuite extends RETests {
 
 
 
-  allEngines("signal ReEvaluates The Expression"){ engine => import engine._
+  allEngines("signal Re Evaluates The Expression"){ engine => import engine._
     val v = Var(0)
     var i = 1
     val s: Signal[Int] = Signal { v(): @unchecked; i }
@@ -21,7 +21,7 @@ class MacroTestSuite extends RETests {
     assert(s.now === 2)
   }
 
-  allEngines("the Expression IsNot Evaluated Every Time Get Val IsCalled"){ engine => import engine._
+  allEngines("the Expression Is Not Evaluated Every Time Get Val Is Called"){ engine => import engine._
     var a = 10
     val s: Signal[Int] = Signal { 1 + 1 + a }
     assert(s.now === 12)
@@ -35,7 +35,7 @@ class MacroTestSuite extends RETests {
     assert(s.now === 3)
   }
 
-  allEngines("the Expression IsEvaluated Only Once"){ engine => import engine._
+  allEngines("the Expression Is Evaluated Only Once"){ engine => import engine._
 
     var a = 0
     val v = Var(10)
@@ -69,7 +69,7 @@ class MacroTestSuite extends RETests {
 
   }
 
-  allEngines("level IsCorrectly Computed"){ engine => import engine._
+  allEngines("level Is Correctly Computed"){ engine => import engine._
 
     val v = Var(1)
 
@@ -86,7 +86,7 @@ class MacroTestSuite extends RETests {
   }
 
 
-  allEngines("conversion Function With Argument InSignal"){ engine => import engine._
+  allEngines("conversion Function With Argument In Signal"){ engine => import engine._
 
     var test = 0
     val e = Evt[Int]
@@ -102,7 +102,7 @@ class MacroTestSuite extends RETests {
   }
 
 
-  allEngines("conversion Function Without Argument InSignal"){ engine => import engine._
+  allEngines("conversion Function Without Argument In Signal"){ engine => import engine._
 
     var test = 0
     val e = Evt[Int]
@@ -118,7 +118,7 @@ class MacroTestSuite extends RETests {
   }
 
 
-  allEngines("conversion Functions Work InSignals InObject Construction InOverriden Def"){ engine => import engine._
+  allEngines("conversion Functions Work In Signals In Object Construction In Overriden Def"){ engine => import engine._
     // a previous macro implementation yielded wrong results for code of the
     // following form, see:
     // https://github.com/guidosalva/examples/pull/4/files#r11724000
@@ -148,7 +148,7 @@ class MacroTestSuite extends RETests {
   }
 
 
-  allEngines("signals Nested InVars"){ engine => import engine._
+  allEngines("signals Nested In Vars"){ engine => import engine._
 
     val a = Var(3)
     val b = Var(Signal(a()))
@@ -178,7 +178,7 @@ class MacroTestSuite extends RETests {
   }
 
 
-  allEngines("use OfInside Signal"){ engine => import engine._
+  allEngines("use Of Inside Signal"){ engine => import engine._
     val outside = Var(1)
     val inside = Var(10)
 
@@ -195,7 +195,7 @@ class MacroTestSuite extends RETests {
     assert(testsig.now === 11)
   }
 
-  allEngines("use OfOutside Signal"){ engine => import engine._
+  allEngines("use Of Outside Signal"){ engine => import engine._
     val outside = Var(1)
     val inside = Var(10)
 
@@ -438,7 +438,7 @@ class MacroTestSuite extends RETests {
   }
 
 
-  allEngines("function AsGetter For Signal"){ engine => import engine._
+  allEngines("function As Getter For Signal"){ engine => import engine._
 
  import scala.language.reflectiveCalls
 
@@ -455,7 +455,7 @@ class MacroTestSuite extends RETests {
   }
 
 
-  allEngines("function AsGetter For Event And Conversion Function"){ engine => import engine._
+  allEngines("function As Getter For Event And Conversion Function"){ engine => import engine._
 
  import scala.language.reflectiveCalls
 

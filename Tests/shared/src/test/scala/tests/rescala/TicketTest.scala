@@ -8,11 +8,11 @@ class TicketTest extends RETests {
    * you should not do this. */
   def getTurn[S2 <: rescala.graph.Struct](implicit engine: rescala.engines.Engine[S2, rescala.propagation.Turn[S2]]): rescala.propagation.Turn[S2] = engine.plan()(identity)
 
-  allEngines("none Dynamic NoImplicit") { engine => import engine._
+  allEngines("none Dynamic No Implicit") { engine => import engine._
     assert(implicitly[Ticket].self === Right(engine))
   }
 
-  allEngines("some Dynamic NoImplicit") { engine => import engine._
+  allEngines("some Dynamic No Implicit") { engine => import engine._
     engine.plan() { (dynamicTurn: Turn) =>
       assert(implicitly[Ticket].self === Right(engine))
       assert(implicitly[Ticket].apply(identity) === dynamicTurn)
@@ -41,7 +41,7 @@ class TicketTest extends RETests {
 
 
 
-  allEngines("implicit InClosures") { engine => import engine._
+  allEngines("implicit In Closures") { engine => import engine._
     val closureDefinition = getTurn(engine)
     val closure = {
       implicit def it: Turn = closureDefinition
@@ -53,7 +53,7 @@ class TicketTest extends RETests {
     }
   }
 
-  allEngines("dynamic InClosures") { engine => import engine._
+  allEngines("dynamic In Closures") { engine => import engine._
     val closure = {
       engine.plan() { t =>
         () => implicitly[Ticket]

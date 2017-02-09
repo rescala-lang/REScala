@@ -14,7 +14,7 @@ class SignalsAndVarsTestSuite extends RETests {
 
 
 
-  allEngines("handler IsCalled When Change Occurs"){ engine => import engine._
+  allEngines("handler Is Called When Change Occurs"){ engine => import engine._
 
     var test = 0
     val v1 = Var(1)

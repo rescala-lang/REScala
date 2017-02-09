@@ -4,7 +4,7 @@ class except_EventTest extends tests.rescala.RETests {
 
 
 
-  allEngines("handler Of_except_ IsExecuted IfBasic Event Fires"){ engine => import engine._
+  allEngines("handler Of except  Is Executed If Basic Event Fires"){ engine => import engine._
     var test = 0
     val e1 = Evt[Int]
     val e2 = Evt[Int]
@@ -16,7 +16,7 @@ class except_EventTest extends tests.rescala.RETests {
 
   }
 
-  allEngines("handler Of_except_ Ignores The Second Event IfFires"){ engine => import engine._
+  allEngines("handler Of except  Ignores The Second Event If Fires"){ engine => import engine._
     var test = 0
     val e1 = Evt[Int]
     val e2 = Evt[Int]
@@ -28,7 +28,7 @@ class except_EventTest extends tests.rescala.RETests {
 
   }
 
-  allEngines("handler Of_except_ IsExecuted Only IfFirst Event Fires And Not The Second"){ engine => import engine._
+  allEngines("handler Of except  Is Executed Only If First Event Fires And Not The Second"){ engine => import engine._
 
     var test = 0
 
@@ -54,7 +54,7 @@ class except_EventTest extends tests.rescala.RETests {
   }
 
 
-  allEngines("handler Of_except_ Gets The Correct Value"){ engine => import engine._
+  allEngines("handler Of except  Gets The Correct Value"){ engine => import engine._
 
     var value = 0
 

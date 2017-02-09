@@ -6,7 +6,7 @@ import scala.language.implicitConversions
 
 class GlitchFreedomTestSuite extends RETests {
 
-  allEngines("no Glitches InSimple Case") { engine =>
+  allEngines("no Glitches In Simple Case") { engine =>
     import engine._
 
     val v1 = Var(1)

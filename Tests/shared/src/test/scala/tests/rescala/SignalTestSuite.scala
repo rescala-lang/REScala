@@ -10,7 +10,7 @@ class SignalTestSuite extends RETests {
 
 
 
-  allEngines("signal ReEvaluates The Expression"){ engine => import engine._
+  allEngines("signal Re Evaluates The Expression"){ engine => import engine._
     val v = Var(0)
     var i = 1
     val s: Signal[Int] = v.map { _ => i }
@@ -19,7 +19,7 @@ class SignalTestSuite extends RETests {
     assert(s.now == 2)
   }
 
-  allEngines("the Expression IsNote Evaluated Every Time Get Val IsCalled"){ engine => import engine._
+  allEngines("the Expression Is Note Evaluated Every Time Get Val Is Called"){ engine => import engine._
     var a = 10
     val s: Signal[Int] = Signals.static()(_ => 1 + 1 + a)
     assert(s.now === 12)
@@ -33,7 +33,7 @@ class SignalTestSuite extends RETests {
     assert(s.now === 3)
   }
 
-  allEngines("the Expression IsEvaluated Only Once"){ engine => import engine._
+  allEngines("the Expression Is Evaluated Only Once"){ engine => import engine._
 
     var a = 0
     val v = Var(10)
@@ -69,7 +69,7 @@ class SignalTestSuite extends RETests {
     assert(test == 3)
   }
 
-  allEngines("level IsCorrectly Computed"){ engine => import engine._
+  allEngines("level Is Correctly Computed"){ engine => import engine._
 
     val v = Var(1)
 

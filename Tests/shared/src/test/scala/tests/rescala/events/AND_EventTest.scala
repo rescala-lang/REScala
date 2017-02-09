@@ -9,7 +9,7 @@ class AND_EventTest extends RETests {
 
 
 
-  allEngines("handler Of_AN D_IsNOT Executed IfEvents Fire Singularly"){ engine => import engine._
+  allEngines("handler Of AND Is NOT Executed If Events Fire Singularly"){ engine => import engine._
     var test = 0
     val e1 = Evt[Int]
     val e2 = Evt[Int]
@@ -23,7 +23,7 @@ class AND_EventTest extends RETests {
 
   }
 
-  allEngines("handler Of_AN D_Does Not Remember Old Rounds"){ engine => import engine._
+  allEngines("handler Of AND Does Not Remember Old Rounds"){ engine => import engine._
     var test = 0
     val e1 = Evt[Int]
     val e2 = Evt[Int]
@@ -38,7 +38,7 @@ class AND_EventTest extends RETests {
 
   }
 
-  allEngines("handler Of_AN D_IsExecuted IfBoth Events Fire"){ engine => import engine._
+  allEngines("handler Of AND IsExecuted If Both Events Fire"){ engine => import engine._
 
     var test = 0
     val e1 = Evt[Int]

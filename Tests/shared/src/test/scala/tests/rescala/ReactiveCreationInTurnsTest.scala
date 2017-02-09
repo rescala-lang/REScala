@@ -8,7 +8,7 @@ class ReactiveCreationInTurnsTest extends RETests {
 
 
 
-  allEngines("evaluations OfInner Signals"){ engine => import engine._
+  allEngines("evaluations Of Inner Signals"){ engine => import engine._
 
     val v1 = Var(5)
     val c1 = Var(0)
@@ -26,7 +26,7 @@ class ReactiveCreationInTurnsTest extends RETests {
 
   }
 
-  allEngines("evaluations OfInner Related Signals"){ engine => import engine._
+  allEngines("evaluations Of Inner Related Signals"){ engine => import engine._
 
     val v1 = Var(5)
     val v2 = v1.map { x =>
@@ -44,7 +44,7 @@ class ReactiveCreationInTurnsTest extends RETests {
   }
 
 
-  allEngines("change OfCreated Signal"){ engine => import engine._
+  allEngines("change Of Created Signal"){ engine => import engine._
 
     engine.plan() { implicit t =>
       val v1 = rescala.reactives.Var(0)

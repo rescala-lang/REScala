@@ -21,7 +21,7 @@ class VarTestSuite extends RETests {
   }
 
 
-  allEngines("var Notifies Signal OfChanges"){ engine => import engine._
+  allEngines("var Notifies Signal Of Changes"){ engine => import engine._
     val v = Var(1)
     val s = v.map { _ + 1 }
     assert(v.now == 1)
@@ -33,7 +33,7 @@ class VarTestSuite extends RETests {
 
   }
 
-  allEngines("change Event Only Triggered OnValue Change"){ engine => import engine._
+  allEngines("change Event Only Triggered On Value Change"){ engine => import engine._
     var changes = 0
     val v = Var(1)
     val changed = v.change

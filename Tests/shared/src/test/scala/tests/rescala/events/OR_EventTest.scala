@@ -7,7 +7,7 @@ import tests.rescala.RETests
 class OR_EventTest extends RETests {
 
 
-  allEngines("handler Of OR IsExecuted If Any Of The Events Fires") { engine => import engine._
+  allEngines("handler Of OR Is Executed If Any Of The Events Fires") { engine => import engine._
     var test = 0
     val e1 = Evt[Int]
     val e2 = Evt[Int]

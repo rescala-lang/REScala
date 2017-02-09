@@ -7,7 +7,7 @@ class map_EventTest extends RETests {
 
 
 
-  allEngines("handler Of_map_ IsExecuted"){ engine => import engine._
+  allEngines("handler Of map  Is Executed"){ engine => import engine._
     var test = 0
     val e1 = Evt[Int]
     val e1_map = e1 map ((x: Int) => x * 2)
@@ -18,7 +18,7 @@ class map_EventTest extends RETests {
     assert(test == 2)
   }
 
-  allEngines("the Function Passed To_map_is Applied"){ engine => import engine._
+  allEngines("the Function Passed To map is Applied"){ engine => import engine._
     var test = 0
     val e1 = Evt[Int]
     val e1_map = e1 map ((x: Int) => x * 2)

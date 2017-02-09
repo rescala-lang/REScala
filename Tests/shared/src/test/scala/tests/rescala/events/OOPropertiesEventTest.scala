@@ -30,7 +30,7 @@ class OOPropertiesEventTest extends RETests {
   }
 
 
-  allEngines("can Trigger Events InSuperclass"){ engine => import engine._
+  allEngines("can Trigger Events In Superclass"){ engine => import engine._
 
     var test = 0
 

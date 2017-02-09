@@ -17,7 +17,7 @@ class EventTest extends RETests {
     assert(test == 2)
   }
 
-  allEngines("event Handlers Can BeRemoved"){ engine => import engine._
+  allEngines("event Handlers Can Be Removed"){ engine => import engine._
     var test = 0
     val e1 = Evt[Int]
     val f = (x: Int) => { test += 1 }
@@ -30,7 +30,7 @@ class EventTest extends RETests {
     assert(test == 2)
   }
 
-  allEngines("correct Value IsReceived"){ engine => import engine._
+  allEngines("correct Value Is Received"){ engine => import engine._
     var test = 0
     val e1 = Evt[Int]
     e1 += ((x: Int) => { test += x })
@@ -38,7 +38,7 @@ class EventTest extends RETests {
     assert(test == 10)
   }
 
-  allEngines("events Without Params IsCalled"){ engine => import engine._
+  allEngines("events Without Params Is Called"){ engine => import engine._
     var test = 0
     val e1 = Evt[Unit]
     e1 += (_ => { test += 1 })
@@ -47,7 +47,7 @@ class EventTest extends RETests {
   }
 
 
-  allEngines("function IsCalled"){ engine => import engine._
+  allEngines("function Is Called"){ engine => import engine._
     var test = 0
 
     def f(x: Int): Unit = { test += 1 }

@@ -11,7 +11,7 @@ class HigherOrderTestSuite extends RETests {
 
 
 
-  allEngines("basic Higher Order Signal_can BeAccessed"){ engine => import engine._
+  allEngines("basic Higher Order Signal can Be Accessed"){ engine => import engine._
     val v = Var(42)
     val s1: Signal[Int] = v.map(identity)
     val s2: Signal[Signal[Int]] = dynamic() { t => s1 }
@@ -22,7 +22,7 @@ class HigherOrderTestSuite extends RETests {
     assert(s2.now.now == 0)
   }
 
-  allEngines("basic Higher Order Signal_can BeDefereferenced"){ engine => import engine._
+  allEngines("basic Higher Order Signal can Be Defereferenced"){ engine => import engine._
     val v = Var(42)
     val s1: Signal[Int] = v.map(identity)
     val s2: Signal[Signal[Int]] = dynamic() { t => s1 }
@@ -35,7 +35,7 @@ class HigherOrderTestSuite extends RETests {
   }
 
 
-  allEngines("basic Higher Order Signal_deref Fires Change"){ engine => import engine._
+  allEngines("basic Higher Order Signal deref Fires Change"){ engine => import engine._
     val v = Var(42)
     val sValue: Signal[Int] = v.map(identity)
     val sHigher: Signal[Signal[Int]] = dynamic() { t => sValue }
@@ -56,7 +56,7 @@ class HigherOrderTestSuite extends RETests {
   }
 
 
-  allEngines("basic Higher Order Signal_higher Order Fires Change"){ engine => import engine._
+  allEngines("basic Higher Order Signal higher Order Fires Change"){ engine => import engine._
     val v1 = Var(42)
     val v2 = Var(123)
     val s1: Signal[Int] = v1.map(identity)
@@ -127,7 +127,7 @@ class HigherOrderTestSuite extends RETests {
   }
 
 
-  allEngines("list OfSignals Section"){ engine => import engine._
+  allEngines("list Of Signals Section"){ engine => import engine._
     val tick = Evt[Unit]
     val count = tick.iterate(0)(_ + 1)
     val doubled = count.map(_ * 2)
@@ -160,7 +160,7 @@ class HigherOrderTestSuite extends RETests {
   }
 
 
-  allEngines("unwrap_ Event"){ engine => import engine._
+  allEngines("unwrap  Event"){ engine => import engine._
     val e1 = Evt[Int]
     val e2 = Evt[Int]
     val eventSelector = Var(e1)
