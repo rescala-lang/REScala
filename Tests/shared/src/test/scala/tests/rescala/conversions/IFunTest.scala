@@ -62,11 +62,9 @@ class IFunTest extends RETests {
     assert(test == 12)
   }
 
-  allEngines("iterate_the Result Signal IsNever Changed") { engine => import engine._
-    var test: Int = 0
+  allEngines("iterate the result signal does not depend on the event value") { engine => import engine._
     val e = Evt[Int]
-    val f = (x: Int) => {test += x; x}
-    val s: Signal[Int] = e.iterate(10)(f)
+    val s: Signal[Int] = e.iterate(10)(identity)
     e.fire(1)
     assert(s.now == 10)
     e.fire(2)
@@ -76,7 +74,7 @@ class IFunTest extends RETests {
   }
 
   /* latest */
-  allEngines("latest_the Initial Value IsSet Correctly") { engine => import engine._
+  allEngines("latest the Initial Value Is Set Correctly") { engine => import engine._
     val e = Evt[Int]
     val s: Signal[Int] = e.latest(10)
 
