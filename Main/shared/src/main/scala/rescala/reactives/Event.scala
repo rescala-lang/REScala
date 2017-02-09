@@ -99,7 +99,8 @@ trait Event[+T, S <: Struct] extends PulseOption[T, S] with Observable[T, S] {
   /** reduces events with a given reduce function to create a Signal */
   final def reduce[A](reducer: (=> A, => T) => A)(implicit ticket: Ticket[S]): Signal[A, S] = lazyFold(throw EmptySignalControlThrowable)(reducer)
 
-  /** Iterates a value on the occurrence of the event. */
+  /** Applies a function on the current value of the signal every time the event occurs,
+    * starting with the init value before the first event occurrence */
   final def iterate[A](init: A)(f: A => A)(implicit ticket: Ticket[S]): Signal[A, S] = fold(init)((acc, _) => f(acc))
 
   /**
