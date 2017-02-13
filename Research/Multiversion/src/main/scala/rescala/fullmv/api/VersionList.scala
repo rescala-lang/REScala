@@ -52,26 +52,40 @@ final class RewriteFramesBuffer(maxElementConut: Int) {
   def isWritten(idx: Int): Boolean = idx < written
 }
 
+class Version[V](val txn: Transaction, var out: Set[O], var pending: Int, var changed: Int, var value: Option[V]) {
+  def isWritten: Boolean = value.isDefined
+  def isFrame: Boolean = pending > 0 || (changed > 0 && !isWritten)
+  def isWrite: Boolean = pending > 0 || changed > 0
+  def isReadOrDynamic: Boolean = !isWrite
+  def isReadyForReevaluation: Boolean = pending == 0 && changed > 0 && !isWritten
+  def read(): V = value.get
+}
+
+sealed trait NotificationResultAction[+V]
+case object NoOp extends NotificationResultAction[Nothing]
+case class Reevaluation[V](version: Version[V]) extends NotificationResultAction[V]
+case class NotificationAndMaybeNextReevaluation[V](out: Set[O], txn: Transaction, changed: Boolean, maybeFollowFraming: Option[Transaction], maybeNextReevaluation: Option[Version[V]]) extends NotificationResultAction[V] {
+  def sendAndGetNextReevaluation(taskPool: TaskPool): Unit = {
+    if (changed) {
+      for (node <- out) taskPool.addChangeNotification(node, txn, maybeFollowFraming)
+    } else {
+      for (node <- out) taskPool.addNoChangeNotification(node, txn, maybeFollowFraming)
+    }
+  }
+}
+
 class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, val userComputation: (Transaction, V) => V) {
   // =================== STORAGE ====================
-  class Version(val txn: Transaction, var out: Set[O], var pending: Int, var changed: Int, var value: Option[V]) {
-    def isWritten: Boolean = value.isDefined
-    def isFrame: Boolean = pending > 0 || (changed > 0 && !isWritten)
-    def isWrite: Boolean = pending > 0 || changed > 0
-    def isReadOrDynamic: Boolean = !isWrite
-    def isReadyForReevaluation: Boolean = pending == 0 && changed > 0 && !isWritten
-    def read(): V = value.get
-  }
 
-  var _versions = new ArrayBuffer[Version](6)
-  _versions += new Version(init, Set(), 0, 0, Some(initialValue))
+  var _versions = new ArrayBuffer[Version[V]](6)
+  _versions += new Version[V](init, Set(), 0, 0, Some(initialValue))
   var latestValue: V = initialValue
 
-  def replace(pos: Int, version: Version): Unit = {
+  def replace(pos: Int, version: Version[V]): Unit = {
     assert(_versions(pos).txn == version.txn)
     _versions(pos) = version
   }
-  def insert(pos: Int, version: Version): Unit = {
+  def insert(pos: Int, version: Version[V]): Unit = {
     assert(pos > 0)
     _versions.insert(pos, version)
     if(pos <= firstFrame) firstFrame += 1
@@ -152,7 +166,7 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
     findOrPidgeonHole(txn, 0, 0, _versions.size)
   }
 
-  private def prevWrite(from: Int): Version = {
+  private def prevWrite(from: Int): Version[V] = {
     var position = from - 1
     while(position >= 0 && !_versions(position).isWrite) position -= 1
     if(position < 0) throw new IllegalArgumentException("Does not have a preceding Reevaluation: "+_versions(from))
@@ -195,7 +209,7 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
         _versions(position).pending -= 1
         if(_versions(position).isReadOrDynamic) frameRemoved(txn)
       } else {
-        val frame = new Version(supersede, _versions(-position - 1).out, pending = -1, changed = 0, None)
+        val frame = new Version[V](supersede, _versions(-position - 1).out, pending = -1, changed = 0, None)
         insert(-position, frame)
       }
       incrementFrame0(txn)
@@ -212,7 +226,7 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
       _versions(position).pending += 1
       FramingBranchEnd
     } else {
-      val frame = new Version(txn, _versions(-position - 1).out, pending = 1, changed = 0, None)
+      val frame = new Version[V](txn, _versions(-position - 1).out, pending = 1, changed = 0, None)
       insert(-position, frame)
       if(frame.out.isEmpty) {
         FramingBranchEnd
@@ -233,18 +247,6 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
   /*
    * =================== NOTIFICATIONS/ / REEVALUATION ====================
    */
-  sealed trait NotificationResultAction
-  case object NoOp extends NotificationResultAction
-  case class Reevaluation(version: Version) extends NotificationResultAction
-  case class NotificationAndMaybeNextReevaluation(out: Set[O], txn: Transaction, changed: Boolean, maybeFollowFraming: Option[Transaction], maybeNextReevaluation: Option[Version]) extends NotificationResultAction {
-    def sendAndGetNextReevaluation(taskPool: TaskPool): Unit = {
-      if (changed) {
-        for (node <- out) taskPool.addChangeNotification(node, txn, maybeFollowFraming)
-      } else {
-        for (node <- out) taskPool.addNoChangeNotification(node, txn, maybeFollowFraming)
-      }
-    }
-  }
 
   def notify(txn: Transaction, changed: Boolean, maybeFollowFrame: Option[Transaction]): Unit = {
     synchronized {
@@ -271,9 +273,9 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
         }
       }
     } match {
-      case Reevaluation(version) =>
-        progressReevaluation(version)
-      case notification: NotificationAndMaybeNextReevaluation =>
+      case reev: Reevaluation[V] =>
+        progressReevaluation(reev.version)
+      case notification: NotificationAndMaybeNextReevaluation[V] =>
         notification.sendAndGetNextReevaluation(host.taskPool)
         if (notification.maybeNextReevaluation.isDefined) {
           progressReevaluation(notification.maybeNextReevaluation.get)
@@ -282,7 +284,7 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
   }
 
   @tailrec
-  private def progressReevaluation(version: Version): Unit = {
+  private def progressReevaluation(version: Version[V]): Unit = {
     // do reevaluation
     val newValue = userComputation(version.txn, latestValue)
     val selfChanged = latestValue == newValue
@@ -309,17 +311,17 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
   }
 
   @tailrec
-  private def progressToNextWriteForNotification(out: Set[O], txn: Transaction, changed: Boolean): NotificationAndMaybeNextReevaluation = {
+  private def progressToNextWriteForNotification(out: Set[O], txn: Transaction, changed: Boolean): NotificationAndMaybeNextReevaluation[V] = {
     if(firstFrame < _versions.size) {
       val version = _versions(firstFrame)
       if(version.isWrite) {
-        NotificationAndMaybeNextReevaluation(out, txn, changed, Some(version.txn), if(version.isReadyForReevaluation) Some(version) else None)
+        NotificationAndMaybeNextReevaluation[V](out, txn, changed, Some(version.txn), if(version.isReadyForReevaluation) Some(version) else None)
       } else {
         firstFrame += 1
         progressToNextWriteForNotification(out, txn, changed)
       }
     } else {
-      NotificationAndMaybeNextReevaluation(out, txn, changed, None, None)
+      NotificationAndMaybeNextReevaluation[V](out, txn, changed, None, None)
     }
   }
 
@@ -493,7 +495,7 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
   private def ensureReadVersion(txn: Transaction): Int = {
     val position = find(txn)
     if(position < 0) {
-      _versions.insert(-position, new Version(txn, _versions(-position - 1).out, pending = 0, changed = 0, None))
+      _versions.insert(-position, new Version[V](txn, _versions(-position - 1).out, pending = 0, changed = 0, None))
       -position
     } else {
       position
@@ -609,9 +611,9 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
           }
         } else {
           val frame = if (rewrite.isWritten(idx)) {
-            new Version(txn, _versions(-position - 1).out, pending = 0, changed = 1, None)
+            new Version[V](txn, _versions(-position - 1).out, pending = 0, changed = 1, None)
           } else {
-            new Version(txn, _versions(-position - 1).out, pending = 1, changed = 0, None)
+            new Version[V](txn, _versions(-position - 1).out, pending = 1, changed = 0, None)
           }
           insert(-position, frame)
         }
@@ -621,7 +623,7 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
     retrofitDiscoverFrames0(rewrite, 0, firstFrame + 1)
   }
 
-  def drop(txn: Transaction, remove: O): Unit = synchronized{
+  def drop(txn: Transaction, remove: O): Unit = synchronized {
     val rewrite = synchronized {
       val position = ensureReadVersion(txn)
       val result = after(txn) // TODO technically unnecessary, think about if removing it violates anything.
@@ -662,9 +664,9 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
           if(_versions(position).isReadOrDynamic) frameRemoved(txn)
         } else {
           val frame = if (rewrite.isWritten(idx)) {
-            new Version(txn, _versions(-position - 1).out, pending = 0, changed = -1, None)
+            new Version[V](txn, _versions(-position - 1).out, pending = 0, changed = -1, None)
           } else {
-            new Version(txn, _versions(-position - 1).out, pending = -1, changed = 0, None)
+            new Version[V](txn, _versions(-position - 1).out, pending = -1, changed = 0, None)
           }
           insert(-position, frame)
         }
