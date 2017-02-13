@@ -19,12 +19,6 @@ trait TaskPool {
   def addNotification(node: SignalVersionList[_], txn: Transaction, changed: Boolean, maybeFollowFrame: Option[Transaction]): Unit
 }
 
-object ExecuteImmediatelyTaskPool extends TaskPool{
-  override def addFraming(node: SignalVersionList[_], txn: Transaction): Unit = node.incrementFrame(txn)
-  override def addSupersedingFraming(node: SignalVersionList[_], txn: Transaction, superseded: Transaction): Unit = node.incrementSupersedeFrame(txn, superseded)
-  override def addNotification(node: SignalVersionList[_], txn: Transaction, changed: Boolean, maybeFollowFrame: Option[Transaction]): Unit = node.notify(txn, changed, maybeFollowFrame)
-}
-
 class StoringTaskPool extends TaskPool {
   val supersedingFramings: TaskList[IncrementSupersedeFrame] = new TaskList[IncrementSupersedeFrame]
   val framings: TaskList[IncrementFrame] = new TaskList[IncrementFrame]

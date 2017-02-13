@@ -215,12 +215,15 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
       FramingBranchEnd
     } else {
       val frame = createVersion(-position, txn, pending = 1)
+      val previousFirstFrame = firstFrame
+      if(-position < firstFrame) {
+        firstFrame = -position
+      }
       if(frame.out.isEmpty) {
         FramingBranchEnd
-      } else if(-position < firstFrame) {
-        if(firstFrame < _versions.size) {
-          val supersede = _versions(firstFrame).txn
-          firstFrame = -position
+      } else if(-position < previousFirstFrame) {
+        if(previousFirstFrame < _versions.size) {
+          val supersede = _versions(previousFirstFrame).txn
           FramingBranchOutSuperseding(frame.out, supersede)
         } else {
           FramingBranchOut(frame.out)
@@ -236,7 +239,7 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
    */
 
   def notify(txn: Transaction, changed: Boolean, maybeFollowFrame: Option[Transaction]): Unit = {
-    synchronized {
+    val nextStep: NotificationResultAction[V] = synchronized {
       if(maybeFollowFrame.isDefined) {
         incrementFrame0(maybeFollowFrame.get)
         // ignore return value for branching out!
@@ -258,8 +261,12 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
         } else {
           NoOp
         }
+      } else {
+        NoOp
       }
-    } match {
+    }
+    nextStep match {
+      case NoOp => // noop
       case reev: Reevaluation[V] =>
         progressReevaluation(reev.version)
       case notification: NotificationAndMaybeNextReevaluation[V] =>
@@ -274,18 +281,17 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
   private def progressReevaluation(version: Version[V]): Unit = {
     // do reevaluation
     val newValue = userComputation(version.txn, latestValue)
-    val selfChanged = latestValue == newValue
+    val selfChanged = latestValue != newValue
 
     // update version and search for successor write
     val notification = synchronized {
-      frameRemoved(version.txn)
+      version.changed = 0
       if (selfChanged) {
+        version.value = Some(newValue)
         latestValue = newValue
-        version.changed = 0
-      } else {
-        version.value = Some(latestValue)
       }
       firstFrame += 1
+      frameRemoved(version.txn)
       progressToNextWriteForNotification(version.out, version.txn, selfChanged)
     }
 

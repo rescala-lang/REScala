@@ -3,10 +3,10 @@ package rescala.fullmv.api
 import java.util.concurrent.atomic.AtomicInteger
 
 sealed trait Phase
-object Preparing extends Phase
-object Running extends Phase
-object Completed extends Phase
-object Obsolete extends Phase
+case object Preparing extends Phase
+case object Running extends Phase
+case object Completed extends Phase
+case object Obsolete extends Phase
 
 trait Transaction {
   def phase: Phase

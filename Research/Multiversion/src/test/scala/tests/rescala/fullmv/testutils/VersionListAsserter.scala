@@ -1,4 +1,4 @@
-package tests.rescala.fullmv
+package tests.rescala.fullmv.testutils
 
 import org.scalatest.Matchers
 import rescala.fullmv.api.{SignalVersionList, Version}
