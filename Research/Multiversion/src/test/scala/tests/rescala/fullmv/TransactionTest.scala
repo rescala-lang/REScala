@@ -31,9 +31,9 @@ class TransactionTest extends FlatSpec with Matchers{
     val a, b, c, d = Transaction()
 
     val sgt = SerializationGraphTracking()
-    sgt.requireOrder(a, b)
-    sgt.requireOrder(b, c)
-    sgt.requireOrder(d, c)
+    sgt.ensureOrder(a, b)
+    sgt.ensureOrder(b, c)
+    sgt.ensureOrder(d, c)
 
     c.done().phase === Completed
     b.done()
@@ -48,9 +48,9 @@ class TransactionTest extends FlatSpec with Matchers{
     val a, b, c, d = Transaction()
 
     val sgt = SerializationGraphTracking()
-    sgt.requireOrder(a, b)
-    sgt.requireOrder(b, c)
-    sgt.requireOrder(d, c)
+    sgt.ensureOrder(a, b)
+    sgt.ensureOrder(b, c)
+    sgt.ensureOrder(d, c)
 
     a.done()
     b.done()
@@ -63,9 +63,9 @@ class TransactionTest extends FlatSpec with Matchers{
     val a, b, c, d= Transaction()
 
     val sgt = SerializationGraphTracking()
-    sgt.requireOrder(a, b)
-    sgt.requireOrder(a, c)
-    sgt.requireOrder(a, d)
+    sgt.ensureOrder(a, b)
+    sgt.ensureOrder(a, c)
+    sgt.ensureOrder(a, d)
 
     c.start()
     d.done()

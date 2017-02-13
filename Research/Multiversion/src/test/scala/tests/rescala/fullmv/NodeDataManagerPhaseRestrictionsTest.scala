@@ -9,7 +9,7 @@ class NodeDataManagerPhaseRestrictionsTest extends FlatSpec with Matchers {
     assertAllows(_ => Transaction().start(), op, when)
     assertAllows({sgt =>
       val t = Transaction()
-      sgt.requireOrder(Transaction().start, t)
+      sgt.ensureOrder(Transaction().start, t)
       t.done()
     }, op, when)
     assertAllows(_ => Transaction().done(), op, when)

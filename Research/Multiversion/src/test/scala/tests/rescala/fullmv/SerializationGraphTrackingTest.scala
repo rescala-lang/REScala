@@ -7,8 +7,8 @@ class SerializationGraphTrackingTest extends FlatSpec with Matchers {
   private def assertOrder(sgt: SerializationGraphTracking, a: Transaction, b: Transaction) = {
     sgt.getOrder(a, b) === FirstFirst
     sgt.getOrder(b, a) === SecondFirst
-    sgt.requireOrder(a, b) === FirstFirst
-    sgt.requireOrder(b, a) === SecondFirst
+    sgt.ensureOrder(a, b) === FirstFirst
+    sgt.ensureOrder(b, a) === SecondFirst
   }
 
   "SGT" should "not establish orders for no reason" in {
@@ -21,14 +21,14 @@ class SerializationGraphTrackingTest extends FlatSpec with Matchers {
   it should "order preparing transactions first-come-first-serve" in {
     val a, b = Transaction()
     val sgt = SerializationGraphTracking()
-    sgt.requireOrder(a, b) === FirstFirst
+    sgt.ensureOrder(a, b) === FirstFirst
     assertOrder(sgt, a, b)
   }
 
   it should "order executing transactions first-come-first-serve" in {
     val a, b = Transaction().start()
     val sgt = SerializationGraphTracking()
-    sgt.requireOrder(a, b) === FirstFirst
+    sgt.ensureOrder(a, b) === FirstFirst
     assertOrder(sgt, a, b)
   }
 
@@ -37,7 +37,7 @@ class SerializationGraphTrackingTest extends FlatSpec with Matchers {
     val b = Transaction().done()
     val sgt = SerializationGraphTracking()
     a [IllegalArgumentException] should be thrownBy {
-      sgt.requireOrder(c, b)
+      sgt.ensureOrder(c, b)
     }
   }
 
@@ -51,7 +51,7 @@ class SerializationGraphTrackingTest extends FlatSpec with Matchers {
   it should "order preparing transactions after completed ones" in {
     val a, b, c = Transaction()
     val sgt = SerializationGraphTracking()
-    sgt.requireOrder(c, b) === FirstFirst
+    sgt.ensureOrder(c, b) === FirstFirst
     b.done().phase === Completed
     assertOrder(sgt, b, a)
   }
@@ -66,7 +66,7 @@ class SerializationGraphTrackingTest extends FlatSpec with Matchers {
   it should "order executing transactions after completed ones" in {
     val a, b, c = Transaction().start()
     val sgt = SerializationGraphTracking()
-    sgt.requireOrder(c, b) === FirstFirst
+    sgt.ensureOrder(c, b) === FirstFirst
     b.done().phase === Completed
     assertOrder(sgt, b, a)
   }
@@ -81,8 +81,8 @@ class SerializationGraphTrackingTest extends FlatSpec with Matchers {
   it should "recognize transitive orderings" in {
     val a, b, c = Transaction().start()
     val sgt = SerializationGraphTracking()
-    sgt.requireOrder(a, b) === FirstFirst
-    sgt.requireOrder(b, c) === FirstFirst
+    sgt.ensureOrder(a, b) === FirstFirst
+    sgt.ensureOrder(b, c) === FirstFirst
     assertOrder(sgt, a, c)
   }
 }

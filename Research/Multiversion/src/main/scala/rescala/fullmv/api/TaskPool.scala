@@ -3,48 +3,41 @@ package rescala.fullmv.api
 import scala.language.existentials
 
 sealed abstract class Task
-case class NoChangeNotification(node: SignalVersionList[_], txn: Transaction, maybeFollowFrame: Option[Transaction]) extends Task {
-  def apply(): Unit = node.notify(txn, false, maybeFollowFrame)
+case class Notification(node: SignalVersionList[_], txn: Transaction, changed: Boolean, maybeFollowFrame: Option[Transaction]) extends Task {
+  def apply(): Unit = node.notify(txn, changed, maybeFollowFrame)
 }
-case class ChangeNotification(node: SignalVersionList[_], txn: Transaction, maybeFollowFrame: Option[Transaction]) extends Task {
-  def apply(): Unit = node.notify(txn, true, maybeFollowFrame)
-}
-case class Framing(node: SignalVersionList[_], txn: Transaction) extends Task {
+case class IncrementFrame(node: SignalVersionList[_], txn: Transaction) extends Task {
   def apply(): Unit = node.incrementFrame(txn)
 }
-case class SupersedingFraming(node: SignalVersionList[_], txn: Transaction, superseded: Transaction) extends Task {
+case class IncrementSupersedeFrame(node: SignalVersionList[_], txn: Transaction, superseded: Transaction) extends Task {
   def apply(): Unit = node.incrementSupersedeFrame(txn, superseded)
 }
 
 trait TaskPool {
-  // highest priority, as these operations can never suspend and reduce suspensions on other reevaluations
-  val noChangeNotifications: TaskList[NoChangeNotification]
-  val changeNotifications: TaskList[Task]
-  val framings: TaskList[Framing]
-  val supersedingFramings: TaskList[SupersedingFraming]
+  val supersedingFramings: TaskList[IncrementSupersedeFrame]
+  val framings: TaskList[IncrementFrame]
+  val notifications: TaskList[Notification]
 
   def addFraming(node: SignalVersionList[_], txn: Transaction): Unit = {
-    framings.enqueue(Framing(node, txn))
+    framings.enqueue(IncrementFrame(node, txn))
   }
   def addSupersedingFraming(node: SignalVersionList[_], txn: Transaction, superseded: Transaction): Unit = {
-    supersedingFramings.enqueue(SupersedingFraming(node, txn, superseded))
+    supersedingFramings.enqueue(IncrementSupersedeFrame(node, txn, superseded))
   }
-  def addChangeNotification(node: SignalVersionList[_], txn: Transaction, maybeFollowFrame: Option[Transaction]): Unit = {
-    changeNotifications.enqueue(ChangeNotification(node, txn, maybeFollowFrame))
-  }
-  def addNoChangeNotification(node: SignalVersionList[_], txn: Transaction, maybeFollowFrame: Option[Transaction]): Unit = {
-    noChangeNotifications.enqueue(NoChangeNotification(node, txn, maybeFollowFrame))
+  def addNotification(node: SignalVersionList[_], txn: Transaction, changed: Boolean, maybeFollowFrame: Option[Transaction]): Unit = {
+    notifications.enqueue(Notification(node, txn, changed, maybeFollowFrame))
   }
 
   def dequeue(): Option[Task] = {
-    noChangeNotifications.dequeue().orElse {
-      changeNotifications.dequeue().orElse {
-        framings.dequeue()
+    // dequeue framings before notifications to increase the chances of not having to perform complete framings
+    // dequeue superseding framings very first because they may stop framings from branching further
+    supersedingFramings.dequeue().orElse {
+      framings.dequeue().orElse {
+        notifications.dequeue()
       }
     }
   }
 }
-
 
 class TaskListEntry[T](val task: T, var next: Option[TaskListEntry[T]] = None)
 
