@@ -3,16 +3,17 @@ package rescala.fullmv.api
 import scala.language.existentials
 
 sealed abstract class Task
-case class NoChangeNotification(txn: Transaction, node: SignalVersionList[_]) extends Task {
-  def apply(): Unit = node.notifyUnchanged(txn)
+case class NoChangeNotification(node: SignalVersionList[_], txn: Transaction, maybeFollowFrame: Option[Transaction]) extends Task {
+  def apply(): Unit = node.notify(txn, false, maybeFollowFrame)
 }
-case class ChangeNotification(txn: Transaction, node: SignalVersionList[_]) extends Task {
-  def apply(): Unit = node.notifyChanged(txn)
+case class ChangeNotification(node: SignalVersionList[_], txn: Transaction, maybeFollowFrame: Option[Transaction]) extends Task {
+  def apply(): Unit = node.notify(txn, true, maybeFollowFrame)
 }
-case class Framing(txn: Transaction, node: SignalVersionList[_]) extends Task {
-  def apply(): Unit = {
-    val outgoings = node.incrementFrame(txn)
-  }
+case class Framing(node: SignalVersionList[_], txn: Transaction) extends Task {
+  def apply(): Unit = node.incrementFrame(txn)
+}
+case class SupersedingFraming(node: SignalVersionList[_], txn: Transaction, superseded: Transaction) extends Task {
+  def apply(): Unit = node.incrementSupersedeFrame(txn, superseded)
 }
 
 trait TaskPool {
@@ -20,15 +21,19 @@ trait TaskPool {
   val noChangeNotifications: TaskList[NoChangeNotification]
   val changeNotifications: TaskList[Task]
   val framings: TaskList[Framing]
+  val supersedingFramings: TaskList[SupersedingFraming]
 
-  def addFraming(txn: Transaction, node: SignalVersionList[_]): Unit = {
-    framings.enqueue(Framing(txn, node))
+  def addFraming(node: SignalVersionList[_], txn: Transaction): Unit = {
+    framings.enqueue(Framing(node, txn))
   }
-  def addChangeNotification(txn: Transaction, node: SignalVersionList[_]): Unit = {
-    changeNotifications.enqueue(ChangeNotification(txn, node))
+  def addSupersedingFraming(node: SignalVersionList[_], txn: Transaction, superseded: Transaction): Unit = {
+    supersedingFramings.enqueue(SupersedingFraming(node, txn, superseded))
   }
-  def addNoChangeNotification(txn: Transaction, node: SignalVersionList[_]): Unit = {
-    noChangeNotifications.enqueue(NoChangeNotification(txn, node))
+  def addChangeNotification(node: SignalVersionList[_], txn: Transaction, maybeFollowFrame: Option[Transaction]): Unit = {
+    changeNotifications.enqueue(ChangeNotification(node, txn, maybeFollowFrame))
+  }
+  def addNoChangeNotification(node: SignalVersionList[_], txn: Transaction, maybeFollowFrame: Option[Transaction]): Unit = {
+    noChangeNotifications.enqueue(NoChangeNotification(node, txn, maybeFollowFrame))
   }
 
   def dequeue(): Option[Task] = {

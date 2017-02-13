@@ -41,6 +41,13 @@ object SerializationGraphTrackingConcurrencyTest {
     SerializationGraphTrackingConcurrencyTest.postProcess(transactions)
   }
 
+  // do not use this in practice; x.ensureAndGetOrder(y) is order-sensitive for fairness, but compare(x, y) is not.
+  val ordering = new Ordering[Transaction] {
+    override def compare(x: Transaction, y: Transaction): Int = {
+      if (x == y) 0 else if (x.ensureAndGetOrder(y) == SelfFirst) -1 else 1
+    }
+  }
+
   def randomRun(): (Iterable[Node], Iterable[Transaction]) = {
     // test configuration
     val cores = Runtime.getRuntime().availableProcessors()
@@ -48,15 +55,8 @@ object SerializationGraphTrackingConcurrencyTest {
     val numTransactionsPerThread = 32
     val numOpsPerTransaction = 16
 
-    // do not use this in practice; x.ensureAndGetOrder(y) is order-sensitive for fairness, but compare(x, y) is not.
-    val ordering = new Ordering[Transaction] {
-      override def compare(x: Transaction, y: Transaction): Int = {
-        if (x == y) 0 else if (x.ensureAndGetOrder(y) == SelfFirst) -1 else 1
-      }
-    }
-
     // instantiate everything
-    val nodes = (0 until numNodes) map { _ => SortedSet[Transaction]()(ordering) }
+    val nodes = (0 until numNodes) map { _ => newNode() }
     class Runner(val index: Int) extends Runnable {
       val queue = Seq[Transaction]((0 until numTransactionsPerThread).map { i => Transaction(s"T($index,$i)") }: _*)
       override def run(): Unit = {
@@ -84,6 +84,8 @@ object SerializationGraphTrackingConcurrencyTest {
 
     (nodes, transactions)
   }
+
+  def newNode(): Node = SortedSet[Transaction]()(ordering)
 
   def postProcess(transactions: Iterable[Transaction]): Unit = {
     val pdf = File.createTempFile("ssg-dot-viz", ".pdf")

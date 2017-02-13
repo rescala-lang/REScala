@@ -4,7 +4,7 @@ import org.scalatest.{FlatSpec, Matchers}
 import rescala.fullmv.api._
 
 class NodeDataManagerPhaseRestrictionsTest extends FlatSpec with Matchers {
-  def assertAllows(op: (NodeDataManager[Unit, Unit], Transaction) => Unit, when: Transaction => Boolean) = {
+  def assertAllows(op: (NodeDataManager[Unit, Unit], Transaction) => Unit, when: Transaction => Boolean): Unit = {
     assertAllows(_ => Transaction(), op, when)
     assertAllows(_ => Transaction().start(), op, when)
     assertAllows({sgt =>
@@ -14,26 +14,25 @@ class NodeDataManagerPhaseRestrictionsTest extends FlatSpec with Matchers {
     }, op, when)
     assertAllows(_ => Transaction().done(), op, when)
   }
-  def assertAllows(prepare: SerializationGraphTracking => Unit, op: (NodeDataManager[Unit, Unit], Transaction) => Unit, when: Transaction => Boolean) = {
+  def assertAllows(prepare: SerializationGraphTracking => Transaction, op: (NodeDataManager[Unit, Unit], Transaction) => Unit, when: Transaction => Boolean): Unit = {
     val sgt = SerializationGraphTracking()
     val init = Transaction().start()
     val x = NodeDataManager[Unit, Unit](sgt, init, ())
     init.done()
 
-    val t = Transaction()
-    prepare(t)
+    val t = prepare(sgt)
 
     if(when(t)) {
-      op(t)
+      op(x, t)
     } else {
       a [IllegalStateException] should be thrownBy {
-        op(t)
+        op(x, t)
       }
     }
   }
 
   "A node DM" should "only allow .frame by preparing transactions" in {
-    assertAllows({ case (x, t) => x.frame(t) }, _.phase == Preparing)
+    assertAllows({ case (x, t) => x.incrementFrame(t) }, _.phase == Preparing)
   }
   it should "not allow .write without a frame" in {
     assertAllows({ case (x, t) => x.reevOut(t, ()) }, _ => false)
@@ -41,8 +40,8 @@ class NodeDataManagerPhaseRestrictionsTest extends FlatSpec with Matchers {
   it should "allow only a single .write only for executing transactions with a frame" in {
     val b, c, d = Transaction()
     val x = NodeDataManager[Unit, Unit](SerializationGraphTracking(), d.start(), ())
-    x.frame(b)
-    x.frame(c)
+    x.incrementFrame(b)
+    x.incrementFrame(c)
 
     a [IllegalStateException] should be thrownBy {
       x.reevOut(b, ())

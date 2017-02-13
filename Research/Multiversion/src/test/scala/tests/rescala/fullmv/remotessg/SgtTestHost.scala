@@ -5,8 +5,8 @@ import java.rmi.server.UnicastRemoteObject
 import java.rmi.{Naming, Remote, RemoteException}
 
 import rescala.fullmv.{Host, Transaction}
-import tests.rescala.fullmv.SerializationGraphTrackingTest.Node
-import tests.rescala.fullmv.{SerializationGraphTrackingTest, TestRemoteHost}
+import tests.rescala.fullmv.SerializationGraphTrackingConcurrencyTest.Node
+import tests.rescala.fullmv.{SerializationGraphTrackingConcurrencyTest, TestRemoteHost}
 
 import scala.util.Random
 
@@ -27,7 +27,7 @@ trait SgtTestWorkerLogin extends Remote {
 }
 
 class SgtTestRandomWorker extends UnicastRemoteObject with SgtTestWorker {
-  val nodes = (1 to 64) map (_ => SerializationGraphTrackingTest.newNode())
+  val nodes = (1 to 64) map (_ => SerializationGraphTrackingConcurrencyTest.newNode())
   var id = -1
 
   override def runTransactions(parallel: Int, sequential: Int, ops: Int, workers: IndexedSeq[SgtTestWorker]): Iterable[Transaction] = {
@@ -144,6 +144,6 @@ object SgtTest {
     println("Collected Nodes:")
     println("\t"+nodes.mapValues(_.mkString("\n\t\t")).mkString("\n\t"))
 
-    SerializationGraphTrackingTest.postProcess(transactions.values.flatten, Some((8, 2)))
+    SerializationGraphTrackingConcurrencyTest.postProcess(transactions.values.flatten/*, Some((8, 2))*/)
   }
 }
