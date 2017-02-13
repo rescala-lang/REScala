@@ -37,3 +37,33 @@ object SerializationGraphTracking {
   def apply(): SerializationGraphTracking = ???
 }
 
+object GlobalLockSGT extends SerializationGraphTracking {
+  var predecessors = Map[Transaction, Set[Transaction]]().withDefaultValue(Set.empty)
+  var successors = Map[Transaction, Set[Transaction]]().withDefaultValue(Set.empty)
+  override def getOrder(a: Transaction, b: Transaction): PartialOrderResult = synchronized {
+    if(successors(a).contains(b)) {
+      FirstFirst
+    } else if (predecessors(a).contains(b)) {
+      SecondFirst
+    } else {
+      Unordered
+    }
+  }
+  override def ensureOrder(defender: Transaction, contender: Transaction): OrderResult = synchronized {
+    if(successors(defender).contains(contender)) {
+      FirstFirst
+    } else if (predecessors(defender).contains(contender)) {
+      SecondFirst
+    } else {
+      val newSuccessors = successors(contender) + contender
+      val newPredecessors = predecessors(defender) + defender
+      for(successor <- newSuccessors) {
+        predecessors += successor -> (predecessors(successor) ++ newPredecessors)
+      }
+      for(predecessor <- newPredecessors) {
+        successors += predecessor -> (successors(predecessor) ++ newSuccessors)
+      }
+      FirstFirst
+    }
+  }
+}

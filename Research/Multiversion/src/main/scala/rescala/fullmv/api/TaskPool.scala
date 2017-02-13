@@ -14,17 +14,29 @@ case class IncrementSupersedeFrame(node: SignalVersionList[_], txn: Transaction,
 }
 
 trait TaskPool {
-  val supersedingFramings: TaskList[IncrementSupersedeFrame]
-  val framings: TaskList[IncrementFrame]
-  val notifications: TaskList[Notification]
+  def addFraming(node: SignalVersionList[_], txn: Transaction): Unit
+  def addSupersedingFraming(node: SignalVersionList[_], txn: Transaction, superseded: Transaction): Unit
+  def addNotification(node: SignalVersionList[_], txn: Transaction, changed: Boolean, maybeFollowFrame: Option[Transaction]): Unit
+}
 
-  def addFraming(node: SignalVersionList[_], txn: Transaction): Unit = {
+object ExecuteImmediatelyTaskPool extends TaskPool{
+  override def addFraming(node: SignalVersionList[_], txn: Transaction): Unit = node.incrementFrame(txn)
+  override def addSupersedingFraming(node: SignalVersionList[_], txn: Transaction, superseded: Transaction): Unit = node.incrementSupersedeFrame(txn, superseded)
+  override def addNotification(node: SignalVersionList[_], txn: Transaction, changed: Boolean, maybeFollowFrame: Option[Transaction]): Unit = node.notify(txn, changed, maybeFollowFrame)
+}
+
+class StoringTaskPool extends TaskPool {
+  val supersedingFramings: TaskList[IncrementSupersedeFrame] = new TaskList[IncrementSupersedeFrame]
+  val framings: TaskList[IncrementFrame] = new TaskList[IncrementFrame]
+  val notifications: TaskList[Notification] = new TaskList[Notification]
+
+  override def addFraming(node: SignalVersionList[_], txn: Transaction): Unit = {
     framings.enqueue(IncrementFrame(node, txn))
   }
-  def addSupersedingFraming(node: SignalVersionList[_], txn: Transaction, superseded: Transaction): Unit = {
+  override def addSupersedingFraming(node: SignalVersionList[_], txn: Transaction, superseded: Transaction): Unit = {
     supersedingFramings.enqueue(IncrementSupersedeFrame(node, txn, superseded))
   }
-  def addNotification(node: SignalVersionList[_], txn: Transaction, changed: Boolean, maybeFollowFrame: Option[Transaction]): Unit = {
+  override def addNotification(node: SignalVersionList[_], txn: Transaction, changed: Boolean, maybeFollowFrame: Option[Transaction]): Unit = {
     notifications.enqueue(Notification(node, txn, changed, maybeFollowFrame))
   }
 

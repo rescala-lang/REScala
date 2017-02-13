@@ -59,6 +59,8 @@ class Version[V](val txn: Transaction, var out: Set[O], var pending: Int, var ch
   def isReadOrDynamic: Boolean = !isWrite
   def isReadyForReevaluation: Boolean = pending == 0 && changed > 0 && !isWritten
   def read(): V = value.get
+
+  override def toString: String = "Version("+txn+", "+out+", pending="+pending+", changed="+changed+", "+value+")"
 }
 
 sealed trait NotificationResultAction[+V]
@@ -87,7 +89,7 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
 
 
   // =================== NAVIGATION ====================
-  var firstFrame: Int = -1
+  var firstFrame: Int = _versions.size
 
   /**
     * performs binary search for the given transaction in _versions. If no version associated with the given
