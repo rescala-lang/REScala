@@ -33,6 +33,7 @@ class NodeVersionListReevaluationTest extends FlatSpec with Matchers {
       new Version(t3, Set.empty, pending = 1, changed = 0, None),
       new Version(t4, Set.empty, pending = 1, changed = 0, None))
     assert(x.firstFrame == 1)
+    assert(tracker.executedTransactionsInReverseOrder == List())
 
     x.notify(t3, true, None)
     assertVersions(x,
@@ -41,6 +42,7 @@ class NodeVersionListReevaluationTest extends FlatSpec with Matchers {
       new Version(t3, Set.empty, pending = 0, changed = 1, None),
       new Version(t4, Set.empty, pending = 1, changed = 0, None))
     assert(x.firstFrame == 1)
+    assert(tracker.executedTransactionsInReverseOrder == List())
 
     x.notify(t2, true, None)
     assertVersions(x,
@@ -49,6 +51,9 @@ class NodeVersionListReevaluationTest extends FlatSpec with Matchers {
       new Version(t3, Set.empty, pending = 0, changed = 0, Some(t3)),
       new Version(t4, Set.empty, pending = 1, changed = 0, None))
     assert(x.firstFrame == 3)
+    assert(tracker.executedTransactionsInReverseOrder == List(t3, t2))
+    assert(tracker.receivedInputs(t2) == t)
+    assert(tracker.receivedInputs(t3) == t2)
 
     x.notify(t4, false, None)
     assertVersions(x,
@@ -57,5 +62,15 @@ class NodeVersionListReevaluationTest extends FlatSpec with Matchers {
       new Version(t3, Set.empty, pending = 0, changed = 0, Some(t3)),
       new Version(t4, Set.empty, pending = 0, changed = 0, None))
     assert(x.firstFrame == 4)
+    assert(tracker.executedTransactionsInReverseOrder == List(t3, t2))
   }
+
+  ignore should "propagate reevaluations" in {
+
+  }
+
+  ignore should "ensure glitch freedom" in {
+
+  }
+
 }

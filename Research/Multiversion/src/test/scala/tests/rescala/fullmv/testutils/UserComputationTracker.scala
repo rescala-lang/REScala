@@ -7,9 +7,10 @@ import rescala.fullmv.api.Transaction
   */
 class UserComputationTracker {
   var receivedInputs: Map[Transaction, Transaction] = Map.empty
-  var executedTransactionsInOrder: Seq[Transaction] = Seq.empty
+  var executedTransactionsInReverseOrder: List[Transaction] = List.empty
   val comp: (Transaction, Transaction) => Transaction = {(txn: Transaction, v_in: Transaction) =>
     receivedInputs += txn -> v_in
+    executedTransactionsInReverseOrder ::= txn
     txn
   }
 }
