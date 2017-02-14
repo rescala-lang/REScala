@@ -49,4 +49,3 @@ class Pong(val tick: Evt[Unit], val mouse: Mouse) {
 
   val score = Signal {pointsPlayer() + " : " + pointsComputer()}
 }
-,
