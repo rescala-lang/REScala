@@ -26,13 +26,9 @@ object VersionListAsserter extends Matchers {
         }
       }
       val suffix = equalSuffix(0)
-      if(suffix == 0) {
-        fail("Node is missing versions:\n\t" + versions.drop(prefix).mkString("\n\t"))
-      } else {
-        fail("Node versions mismatch (ignoring equal prefix of "+prefix+" and suffix of "+suffix+")!" +
-          "\n\tExpected:\n\t\t" + versions.drop(prefix).take(versions.size - suffix - prefix).mkString("\n\t\t") +
-          "\n\tActual:\n\t\t" + node._versions.drop(prefix).take(node._versions.size - suffix - prefix).mkString("\n\t\t"))
-      }
+      fail("Node versions mismatch (ignoring equal prefix of "+prefix+" and suffix of "+suffix+")!" +
+        "\n\tExpected:\n\t\t" + versions.drop(prefix).take(versions.size - suffix - prefix).mkString("\n\t\t") +
+        "\n\tActual:\n\t\t" + node._versions.drop(prefix).take(node._versions.size - suffix - prefix).mkString("\n\t\t"))
     }
   }
 
