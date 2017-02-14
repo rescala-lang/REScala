@@ -37,7 +37,7 @@ class CounterIdTransactionImpl extends Transaction {
   }
   override def done(): this.type = synchronized {
     if(branches.get() != 0) throw new IllegalStateException("Cannot switch phases due to "+branches+" still-active branches!")
-    if(phase != Running) throw new IllegalStateException("Cannot complete from phase "+phase)
+    if(phase != Preparing && phase != Running) throw new IllegalStateException("Cannot complete from phase "+phase)
     phase = Completed
     notifyAll()
     this

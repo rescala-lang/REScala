@@ -11,6 +11,7 @@ class NodeVersionListReevaluationTest extends FlatSpec with Matchers {
     val tracker = new UserComputationTracker
     val t = Transaction().start()
     val x = new SignalVersionList(TestHost, t, t, tracker.comp)
+    t.done()
 
     val t2 = Transaction()
     t2.branches(1)
@@ -35,6 +36,7 @@ class NodeVersionListReevaluationTest extends FlatSpec with Matchers {
     assert(x.firstFrame == 1)
     assert(tracker.executedTransactionsInReverseOrder == List())
 
+    t3.branches(1)
     x.notify(t3, true, None)
     assertVersions(x,
       new Version(t, Set.empty, pending = 0, changed = 0, Some(t)),
@@ -44,7 +46,10 @@ class NodeVersionListReevaluationTest extends FlatSpec with Matchers {
     assert(x.firstFrame == 1)
     assert(tracker.executedTransactionsInReverseOrder == List())
 
+    t2.branches(1)
     x.notify(t2, true, None)
+    t2.done()
+    t3.done()
     assertVersions(x,
       new Version(t, Set.empty, pending = 0, changed = 0, Some(t)),
       new Version(t2, Set.empty, pending = 0, changed = 0, Some(t2)),
@@ -55,7 +60,9 @@ class NodeVersionListReevaluationTest extends FlatSpec with Matchers {
     assert(tracker.receivedInputs(t2) == t)
     assert(tracker.receivedInputs(t3) == t2)
 
+    t4.branches(1)
     x.notify(t4, false, None)
+    t4.done()
     assertVersions(x,
       new Version(t, Set.empty, pending = 0, changed = 0, Some(t)),
       new Version(t2, Set.empty, pending = 0, changed = 0, Some(t2)),
@@ -66,6 +73,7 @@ class NodeVersionListReevaluationTest extends FlatSpec with Matchers {
   }
 
   it should "propagate reevaluations" in {
+    // x -> y -> z
     val trackerX, trackerY, trackerZ = new UserComputationTracker
     val t = Transaction().start()
     val x = new SignalVersionList(TestHost, t, t, trackerX.comp)
@@ -73,6 +81,7 @@ class NodeVersionListReevaluationTest extends FlatSpec with Matchers {
     x.discoverSuspend(t, y)
     val z = new SignalVersionList(TestHost, t, t, trackerZ.comp)
     y.discoverSuspend(t, z)
+    t.done()
 
     val t2 = Transaction()
     t2.branches(1)
@@ -105,6 +114,8 @@ class NodeVersionListReevaluationTest extends FlatSpec with Matchers {
 
     t2.branches(1)
     x.notify(t2, true, None)
+    t2.done()
+    t3.done()
 
     assertVersions(x,
       new Version(t, Set(y), pending = 0, changed = 0, Some(t)),
@@ -160,6 +171,7 @@ class NodeVersionListReevaluationTest extends FlatSpec with Matchers {
 
     t4.branches(1)
     x.notify(t4, true, None)
+    t4.done()
 
     assertVersions(x,
       new Version(t, Set(y), pending = 0, changed = 0, Some(t)),
@@ -197,7 +209,6 @@ class NodeVersionListReevaluationTest extends FlatSpec with Matchers {
     x.discoverSuspend(t, y)
     val z = new SignalVersionList(TestHost, t, t, trackerZ.comp)
     y.discoverSuspend(t, z)
-    val q = new SignalVersionList(TestHost, t, t, trackerQ.comp)
 
     val t2 = Transaction()
     t2.branches(1)
@@ -205,16 +216,16 @@ class NodeVersionListReevaluationTest extends FlatSpec with Matchers {
     t2.start()
 
     val t3 = Transaction()
-    t3.branches(2)
+    t3.branches(1)
     w.incrementFrame(t3)
-    q.incrementFrame(t3)
     t3.start()
 
     val t4 = Transaction()
-    t4.branches(2)
+    t4.branches(1)
     y.incrementFrame(t4)
-    q.incrementFrame(t4)
     t4.start()
+
+    assert(TestHost.sgt.ensureOrder(t3, t4) == FirstFirst)
 
     assertVersions(w,
       new Version(t, Set(x), pending = 0, changed = 0, Some(t)),
@@ -241,6 +252,7 @@ class NodeVersionListReevaluationTest extends FlatSpec with Matchers {
 
     t2.branches(1)
     w.notify(t2, true, None)
+    t2.done()
 
     assertVersions(w,
       new Version(t, Set(x), pending = 0, changed = 0, Some(t)),
@@ -380,6 +392,8 @@ class NodeVersionListReevaluationTest extends FlatSpec with Matchers {
 
     t2.branches(1)
     u.notify(t2, false, None) // changed=true would work equally
+    t2.done()
+    t3.done()
 
     assertVersions(u,
       new Version(t, Set(x), pending = 0, changed = 0, Some(t)),
@@ -415,13 +429,5 @@ class NodeVersionListReevaluationTest extends FlatSpec with Matchers {
     assert(z.firstFrame == 3)
     assert(trackerZ.executedTransactionsInReverseOrder == List(t3))
     assert(trackerZ.receivedInputs(t3) == t)
-  }
-
-  ignore should "ensure glitch freedom" in {
-
-  }
-
-  ignore should "ensure glitch freedom on nodes skipped by partial framing" in {
-
   }
 }

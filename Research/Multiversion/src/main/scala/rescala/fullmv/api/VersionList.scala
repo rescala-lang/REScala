@@ -20,13 +20,13 @@ case object FramingBranchEnd extends FramingBranchResult {
 }
 case class FramingBranchOut(out: Set[O]) extends FramingBranchResult {
   override def processBranching(txn: Transaction, taskPool: TaskPool): Unit = {
-    txn.branches(out.size - 1)
+    if(out.size != 1) txn.branches(out.size - 1)
     out.foreach { node => taskPool.addFraming(node, txn) }
   }
 }
 case class FramingBranchOutSuperseding(out: Set[O], supersede: Transaction) extends FramingBranchResult {
   override def processBranching(txn: Transaction, taskPool: TaskPool): Unit = {
-    txn.branches(out.size - 1)
+    if(out.size != 1) txn.branches(out.size - 1)
     out.foreach { node => taskPool.addSupersedingFraming(node, txn, supersede) }
   }
 }
@@ -64,10 +64,13 @@ class Version[V](val txn: Transaction, var out: Set[O], var pending: Int, var ch
 }
 
 sealed trait NotificationResultAction[+V]
-case object NoOp extends NotificationResultAction[Nothing]
-case class Reevaluation[V](version: Version[V]) extends NotificationResultAction[V]
+case object NotGlitchFreeReady extends NotificationResultAction[Nothing]
+case object ResolvedQueuedToUnchanged extends NotificationResultAction[Nothing]
+case object GlitchFreeReadyButQueued extends NotificationResultAction[Nothing]
+case class GlitchFreeReady[V](version: Version[V]) extends NotificationResultAction[V]
 case class NotificationAndMaybeNextReevaluation[V](out: Set[O], txn: Transaction, changed: Boolean, maybeFollowFraming: Option[Transaction], maybeNextReevaluation: Option[Version[V]]) extends NotificationResultAction[V] {
-  def sendAndGetNextReevaluation(taskPool: TaskPool): Unit = {
+  def send(taskPool: TaskPool): Unit = {
+    if(out.size != 1) txn.branches(out.size - 1)
     for (node <- out) taskPool.addNotification(node, txn, changed, maybeFollowFraming)
   }
 }
@@ -249,28 +252,37 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
       val version = _versions(position)
       version.pending -= 1
       if(changed) version.changed += 1
-      if(position == firstFrame) {
-        if(version.pending == 0) {
+      if(version.pending == 0) {
+        if(position == firstFrame) {
           if(version.changed > 0) {
-            Reevaluation(version)
+            GlitchFreeReady(version)
           } else {
             firstFrame += 1
             frameRemoved(txn)
             progressToNextWriteForNotification(version.out, version.txn, changed = false)
           }
         } else {
-          NoOp
+          if(version.changed > 0) {
+            GlitchFreeReadyButQueued
+          } else {
+            ResolvedQueuedToUnchanged
+          }
         }
       } else {
-        NoOp
+        NotGlitchFreeReady
       }
     }
     nextStep match {
-      case NoOp => // noop
-      case reev: Reevaluation[V] =>
-        progressReevaluation(reev.version)
+      case GlitchFreeReadyButQueued =>
+        // do nothing
+      case ResolvedQueuedToUnchanged =>
+        txn.branches(-1)
+      case NotGlitchFreeReady =>
+        txn.branches(-1)
+      case ready: GlitchFreeReady[V] =>
+        progressReevaluation(ready.version)
       case notification: NotificationAndMaybeNextReevaluation[V] =>
-        notification.sendAndGetNextReevaluation(host.taskPool)
+        notification.send(host.taskPool)
         if (notification.maybeNextReevaluation.isDefined) {
           progressReevaluation(notification.maybeNextReevaluation.get)
         }
@@ -295,7 +307,7 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
       progressToNextWriteForNotification(version.out, version.txn, selfChanged)
     }
 
-    notification.sendAndGetNextReevaluation(host.taskPool)
+    notification.send(host.taskPool)
 
     // progress to next reevaluation
     if (notification.maybeNextReevaluation.isDefined) {
