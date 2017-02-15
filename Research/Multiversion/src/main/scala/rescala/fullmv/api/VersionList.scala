@@ -62,6 +62,14 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
   _versions += new Version[V](init, Set(), 0, 0, Some(initialValue))
   var latestValue: V = initialValue
 
+  /**
+    * creates a version and inserts it at the given position; default parameters create a "read" version
+    * @param position the position
+    * @param txn the transaction this version is associated with
+    * @param pending the number of pending notifications, none by default
+    * @param changed the number of already received change notifications, none by default
+    * @return the created version
+    */
   def createVersion(position: Int, txn: Transaction, pending: Int = 0, changed: Int = 0): Version[V] = {
     assert(position > 0)
     val version = new Version[V](txn, _versions(position - 1).out, pending, changed, None)
@@ -128,14 +136,11 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
   }
 
   /**
-    * determine the position or insertion point for an operation known to be ordered into executed versions.
-    * @param txn the transaction
-    * @return the position (positive values) or insertion point (negative values)
+    * traverse history back in time from the given position until the first write (i.e. [[Version.isWrite]])
+    * @param txn the transaction for which the previous write is being searched; used for error reporting only.
+    * @param from the transaction's position, search starts at this position's predecessor version and moves backwards
+    * @return the first encountered version with [[Version.isWrite]]
     */
-  private def findExecuted(txn: Transaction): Int = {
-    findOrPidgeonHole(txn, 0, 0, firstFrame)
-  }
-
   private def prevWrite(txn: Transaction, from: Int): Version[V] = {
     var position = from - 1
     while(position >= 0 && !_versions(position).isWrite) position -= 1
@@ -162,6 +167,11 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
 
   // =================== FRAMING ====================
 
+  /**
+    * entry point for superseding framing
+    * @param txn the transaction visiting the node for framing
+    * @param supersede the transaction whose frame was superseded by the visiting transaction at the previous node
+    */
   def incrementSupersedeFrame(txn: Transaction, supersede: Transaction): Unit = {
     assert(txn.phase == Preparing)
     assert(supersede.phase == Preparing)
@@ -177,11 +187,20 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
     }.processBranching(txn, host.taskPool)
   }
 
+  /**
+    * entry point for regular framing
+    * @param txn the transaction visiting the node for framing
+    */
   def incrementFrame(txn: Transaction): Unit = {
     assert(txn.phase == Preparing)
     synchronized { incrementFrame0(txn) }.processBranching(txn, host.taskPool)
   }
 
+  /**
+    * creates a frame if none exists, or increments an existing frame's [[Version.pending]] counter.
+    * @param txn the transaction visiting the node for framing
+    * @return a descriptor of how this framing has to propagate
+    */
   private def incrementFrame0(txn: Transaction): FramingBranchResult = {
     val position = findFrame(txn)
     if(position >= 0) {
@@ -212,22 +231,41 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
    * =================== NOTIFICATIONS/ / REEVALUATION ====================
    */
 
+  /**
+    * entry point for change/nochange notification reception
+    * @param txn the transaction sending the notification
+    * @param changed whether or not the dependency changed
+    * @param maybeFollowFrame possibly a transaction for which to create a subsequent frame, furthering its partial framing.
+    */
   def notify(txn: Transaction, changed: Boolean, maybeFollowFrame: Option[Transaction]): Unit = {
     val nextStep: NotificationResultAction[V] = synchronized {
+      val position = findFrame(txn)
+
+      // do follow framing
       if(maybeFollowFrame.isDefined) {
-        incrementFrame0(maybeFollowFrame.get)
-        // ignore return value for branching out!
+        val followTxn = maybeFollowFrame.get
+        // because we know that txn << followTxn, followTxn cannot be involved with firstFrame stuff.
+        // thus followTxn also does not need this framing propagated by itself.
+        val followPosition = findOrPidgeonHole(followTxn, position + 1, position + 1, _versions.size)
+        if(followPosition >= 0) {
+          _versions(followPosition).pending += 1
+        } else {
+          createVersion(-followPosition, followTxn, pending = 1)
+        }
       }
 
-      val position = findFrame(txn)
+      // apply notification changes
       val version = _versions(position)
       version.pending -= 1
       if(changed) version.changed += 1
+
+      // check if the notification triggers subsequent actions
       if(version.pending == 0) {
         if(position == firstFrame) {
           if(version.changed > 0) {
             GlitchFreeReady(version)
           } else {
+            // ResolvedFirstFrameToUnchanged
             firstFrame += 1
             frameRemoved(txn)
             progressToNextWriteForNotification(version.out, version.txn, changed = false)
@@ -243,6 +281,8 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
         NotGlitchFreeReady
       }
     }
+
+    // enact subsequent action
     nextStep match {
       case GlitchFreeReadyButQueued =>
         // do nothing
@@ -260,13 +300,19 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
     }
   }
 
+  /**
+    * executes a reevaluation, progress [[firstFrame]] forward until a [[Version.isWrite]] is encountered, and
+    * send the resulting notifications (with reframing if subsequent write is found). Also execute the subsequent
+    * ready reevaluations if the new [[firstFrame]] is [[Version.isReadyForReevaluation]]
+    * @param version the version ready for reevaluation
+    */
   @tailrec
   private def progressReevaluation(version: Version[V]): Unit = {
     // do reevaluation
     val newValue = userComputation(ReevaluationTicket(version.txn, this), latestValue)
     val selfChanged = latestValue != newValue
 
-    // update version and search for successor write
+    // update version and search for successor framing and possibly reevaluation
     val notification = synchronized {
       version.changed = 0
       if (selfChanged) {
@@ -278,14 +324,25 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
       progressToNextWriteForNotification(version.out, version.txn, selfChanged)
     }
 
+    // send out notifications
     notification.send(host.taskPool)
 
-    // progress to next reevaluation
+    // progress with next reevaluation if found
     if (notification.maybeNextReevaluation.isDefined) {
       progressReevaluation(notification.maybeNextReevaluation.get)
     }
   }
 
+  /**
+    * progresses [[firstFrame]] forward until a [[Version.isWrite]] is encountered (which is implied not
+    * [[Version.isWritten]] due to being positioned at/behind [[firstFrame]]) and assemble all necessary
+    * information to send out change/nochange notifications for the given transaction. Also capture synchronized,
+    * whether or not the possibly encountered write [[Version.isReadyForReevaluation]].
+    * @param out the outgoing dependencies to notify
+    * @param txn the transaction that notifies
+    * @param changed change or nochange
+    * @return the notification and next reevaluation descriptor.
+    */
   @tailrec
   private def progressToNextWriteForNotification(out: Set[O], txn: Transaction, changed: Boolean): NotificationAndMaybeNextReevaluation[V] = {
     if(firstFrame < _versions.size) {
@@ -390,7 +447,7 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
     */
   def regRead(ticket: ReevaluationTicket): V = synchronized {
     val txn = ticket.txn
-    val position = findExecuted(txn)
+    val position = findOrPidgeonHole(txn, 0, 0, firstFrame)
     if(position >= 0) {
       val thisVersion = _versions(position)
       assert(thisVersion.out.contains(ticket.issuer), "regRead invoked without existing edge")
