@@ -31,27 +31,6 @@ case class FramingBranchOutSuperseding(out: Set[O], supersede: Transaction) exte
   }
 }
 
-final class RewriteFramesBuffer(maxElementConut: Int) {
-  val txns: Array[Transaction] = new Array[Transaction](maxElementConut)
-  var written: Int = 0
-  var framed: Int = 0
-
-  def addWritten(txn: Transaction): Unit = {
-    assert(framed == 0, "Written versions after frames should not exist!")
-    txns(written) = txn
-    written += 1
-  }
-
-  def addFramed(txn: Transaction): Unit = {
-    txns(written + framed) = txn
-    framed += 1
-  }
-
-  def size: Int = written + framed
-  def apply(idx: Int): Transaction = txns(idx)
-  def isWritten(idx: Int): Boolean = idx < written
-}
-
 class Version[V](val txn: Transaction, var out: Set[O], var pending: Int, var changed: Int, var value: Option[V]) {
   def isWritten: Boolean = value.isDefined
   def isFrame: Boolean = pending > 0 || (changed > 0 && !isWritten)
@@ -75,7 +54,7 @@ case class NotificationAndMaybeNextReevaluation[V](out: Set[O], txn: Transaction
   }
 }
 
-case class ReevaluationTicket(val txn: Transaction, val issuer: O)
+case class ReevaluationTicket(txn: Transaction, issuer: O)
 class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, val userComputation: (ReevaluationTicket, V) => V) {
   // =================== STORAGE ====================
 
@@ -155,15 +134,6 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
     */
   private def findExecuted(txn: Transaction): Int = {
     findOrPidgeonHole(txn, 0, 0, firstFrame)
-  }
-
-  /**
-    * determine the position or insertion point for an operation without additional knowledge
-    * @param txn the transaction
-    * @return the position (positive values) or insertion point (negative values)
-    */
-  private def find(txn: Transaction): Int = {
-    findOrPidgeonHole(txn, 0, 0, _versions.size)
   }
 
   private def prevWrite(txn: Transaction, from: Int): Version[V] = {
@@ -338,8 +308,8 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
     * @param txn the executing transaction
     * @return the version's position.
     */
-  private def ensureReadVersion(txn: Transaction): Int = {
-    val position = find(txn)
+  private def ensureReadVersion(txn: Transaction, knownMinPos: Int = 0): Int = {
+    val position = findOrPidgeonHole(txn, knownMinPos, knownMinPos, _versions.size)
     if(position < 0) {
       createVersion(-position, txn)
       -position
@@ -445,65 +415,16 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
   def discoverSuspend(ticket: ReevaluationTicket): V = {
     val txn = ticket.txn
     val add = ticket.issuer
-    val (result, rewrite) = synchronized {
+    val (result, (successorWrittenVersions, maybeSuccessorFrame)) = synchronized {
       val position = ensureReadVersion(txn)
       assert(!_versions(position).out.contains(add), "must not discover an already existing edge!")
       val result = after(txn)
       _versions(position).out += add
-      val rewrite = retrofitDiscover(position, add)
+      val rewrite = retrofitSourceOuts(position, add, +1)
       (result, rewrite)
     }
-    if(rewrite.size > 0) add.retrofitDiscoverFrames(rewrite)
+    add.retrofitSinkFrames(successorWrittenVersions, maybeSuccessorFrame, +1)
     result
-  }
-
-  /**
-    * rewrites all affected [[Version.out]] during discover(this, add), collecting transactions for reframing on add.
-    * @param position the executing transaction's version's position
-    * @param add the outgoing dpendency to add
-    * @return the list of rewrites
-    */
-  private def retrofitDiscover(position: Int, add: O): RewriteFramesBuffer = {
-    val rewrite = new RewriteFramesBuffer(_versions.size - position)
-    for(pos <- position + 1 until _versions.size) {
-      val version = _versions(pos)
-      version.out += add
-      if(version.isWrite) {
-        if(version.isWritten) {
-          rewrite.addWritten(version.txn)
-        } else {
-          rewrite.addFramed(version.txn)
-        }
-      }
-    }
-    rewrite
-  }
-
-  /**
-    * performs the reframings for a discover(n, this)
-    * @param rewrite the reframings to perform
-    */
-  def retrofitDiscoverFrames(rewrite: RewriteFramesBuffer): Unit = synchronized {
-    @tailrec
-    def retrofitDiscoverFrames0(idx: Int, minPos: Int): Unit = {
-      if(idx < rewrite.size) {
-        val txn = rewrite(idx)
-        val position = findOrPidgeonHole(txn, minPos, minPos, _versions.size)
-        val realPosition = if (position < 0) {
-          createVersion(-position, txn)
-          -position
-        } else {
-          position
-        }
-        if (rewrite.isWritten(idx)) {
-          _versions(realPosition).changed += 1
-        } else {
-          _versions(realPosition).pending += 1
-        }
-        retrofitDiscoverFrames0(idx + 1, realPosition + 1)
-      }
-    }
-    retrofitDiscoverFrames0(0, firstFrame + 1)
   }
 
   /**
@@ -513,63 +434,61 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
   def drop(ticket: ReevaluationTicket): Unit = {
     val txn = ticket.txn
     val remove = ticket.issuer
-    val rewrite = synchronized {
+    val (successorWrittenVersions, maybeSuccessorFrame) = synchronized {
       val position = ensureReadVersion(txn)
-      assert(_versions(position).out.contains(add), "must not drop a non-existing edge!")
+      assert(_versions(position).out.contains(remove), "must not drop a non-existing edge!")
       val result = after(txn) // TODO technically unnecessary, think about if removing it violates anything.
       _versions(position).out -= remove
-      retrofitDrop(position, remove)
+      retrofitSourceOuts(position, remove, -1)
     }
-    if(rewrite.size > 0) remove.retrofitDropFrames(rewrite)
+    remove.retrofitSinkFrames(successorWrittenVersions, maybeSuccessorFrame, -1)
   }
 
   /**
-    * rewrites all affected [[Version.out]] during drop(this, remove), collecting transactions for deframing on remove
-    * @param position the executing transaction's version's position
-    * @param remove the outgoing dependency to remove
-    * @return the deframings to perform
+    * performs the reframings on the sink of a discover(n, this) with arity +1, or drop(n, this) with arity -1
+    * @param successorWrittenVersions the reframings to perform for successor written versions
+    * @param maybeSuccessorFrame maybe a reframing to perform for the first successor frame
+    * @param arity +1 for discover adding frames, -1 for drop removing frames.
     */
-  private def retrofitDrop(position: Int, remove: O): RewriteFramesBuffer = {
-    val rewrite = new RewriteFramesBuffer(_versions.size - position)
+  def retrofitSinkFrames(successorWrittenVersions: ArrayBuffer[Transaction], maybeSuccessorFrame: Option[Transaction], arity: Int): Unit = synchronized {
+    @tailrec
+    def retrofitSinkFrames0(idx: Int, minPos: Int): Unit = {
+      if(idx < successorWrittenVersions.size) {
+        val txn = successorWrittenVersions(idx)
+        val position = ensureReadVersion(txn, minPos)
+        _versions(position).changed += arity
+        if(arity < 0 && _versions(position).isReadOrDynamic) frameRemoved(txn)
+        retrofitSinkFrames0(idx + 1, position + 1)
+      } else if (maybeSuccessorFrame.isDefined) {
+        val txn = maybeSuccessorFrame.get
+        val position = ensureReadVersion(txn, minPos)
+        _versions(position).pending += arity
+        if(arity < 0 && _versions(position).isReadOrDynamic) frameRemoved(txn)
+      }
+    }
+    retrofitSinkFrames0(0, firstFrame + 1)
+  }
+
+  /**
+    * rewrites all affected [[Version.out]] of the source this during drop(this, delta) with arity -1 or
+    * discover(this, delta) with arity +1, and collects transactions for retrofitting frames on the sink node
+    * @param position the executing transaction's version's position
+    * @param delta the outgoing dependency to add/remove
+    * @param arity +1 to add, -1 to remove delta to each [[Version.out]]
+    * @return a list of transactions with written successor versions and maybe the transaction of the first successor
+    *         frame if it exists, for which reframings have to be performed at the sink.
+    */
+  private def retrofitSourceOuts(position: Int, delta: O, arity: Int): (ArrayBuffer[Transaction], Option[Transaction]) = {
+    // allocate array to the maximum number of written versions that might follow
+    // (any version at index firstFrame or later can only be a frame, not written)
+    val successorWrittenVersions = new ArrayBuffer[Transaction](firstFrame - position - 1)
     for(pos <- position + 1 until _versions.size) {
       val version = _versions(pos)
-      version.out -= remove
-      if(version.isWrite) {
-        if(version.isWritten) {
-          rewrite.addWritten(version.txn)
-        } else {
-          rewrite.addFramed(version.txn)
-        }
-      }
+      if(arity < 0) version.out -= delta else version.out += delta
+      // as per above, this is implied false if pos >= firstFrame:
+      if(version.isWritten) successorWrittenVersions += version.txn
     }
-    rewrite
-  }
-
-  /**
-    * performs the deframings for a drop(n, this)
-    * @param rewrite the deframings to perform
-    */
-  def retrofitDropFrames(rewrite: RewriteFramesBuffer): Unit = synchronized {
-    @tailrec
-    def retrofitDropFrames0(idx: Int, minPos: Int): Unit = {
-      if(idx < rewrite.size) {
-        val txn = rewrite(idx)
-        val position = findOrPidgeonHole(txn, minPos, minPos, _versions.size)
-        val realPosition = if (position < 0) {
-          createVersion(-position, txn)
-          -position
-        } else {
-          position
-        }
-        if (rewrite.isWritten(idx)) {
-          _versions(realPosition).changed -= 1
-        } else {
-          _versions(realPosition).pending -= 1
-        }
-        if(position > 0 && _versions(position).isReadOrDynamic) frameRemoved(txn)
-        retrofitDropFrames0(idx + 1, realPosition + 1)
-      }
-    }
-    retrofitDropFrames0(0, firstFrame + 1)
+    val maybeSuccessorFrame = if (firstFrame < _versions.size) Some(_versions(firstFrame).txn)  else None
+    (successorWrittenVersions, maybeSuccessorFrame)
   }
 }
