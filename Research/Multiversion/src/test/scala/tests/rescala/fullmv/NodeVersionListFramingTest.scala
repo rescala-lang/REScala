@@ -4,8 +4,6 @@ import org.scalatest.{FlatSpec, Matchers}
 import rescala.fullmv.api._
 import tests.rescala.fullmv.testutils.{TestHost, UserComputationTracker}
 
-
-
 class NodeVersionListFramingTest extends FlatSpec with Matchers {
   import tests.rescala.fullmv.testutils.VersionListAsserter._
 
@@ -46,11 +44,11 @@ class NodeVersionListFramingTest extends FlatSpec with Matchers {
   }
 
   it should "establish dependency edges" in {
-    val trackerX, trackerY = new UserComputationTracker
+    val tracker = new UserComputationTracker
     val t = Transaction().start()
-    val x = new SignalVersionList(TestHost, t, t, trackerX.comp)
-    val y = new SignalVersionList(TestHost, t, t, trackerY.comp)
-    x.discoverSuspend(t, y)
+    val x = new SignalVersionList(TestHost, t, t, tracker.comp)
+    val y = new SignalVersionList(TestHost, t, t, tracker.comp)
+    x.discoverSuspend(ReevaluationTicket(t, y))
     t.done()
 
     assertVersions(x,
@@ -60,11 +58,10 @@ class NodeVersionListFramingTest extends FlatSpec with Matchers {
   }
 
   it should "propagate framing partially" in {
-    val trackerX, trackerY = new UserComputationTracker
+    val tracker = new UserComputationTracker
     val t = Transaction().start()
-    val x = new SignalVersionList(TestHost, t, t, trackerX.comp)
-    val y = new SignalVersionList(TestHost, t, t, trackerY.comp)
-    x.discoverSuspend(t, y)
+    val x, y = new SignalVersionList(TestHost, t, t, tracker.comp)
+    x.discoverSuspend(ReevaluationTicket(t, y))
     t.done()
 
     val t2 = Transaction()
@@ -96,18 +93,14 @@ class NodeVersionListFramingTest extends FlatSpec with Matchers {
   }
 
   it should "count up pending during framing" in {
-    val trackerX, trackerY, trackerZ, trackerQ, trackerR = new UserComputationTracker
+    val tracker = new UserComputationTracker
     val t = Transaction().start()
-    val x = new SignalVersionList(TestHost, t, t, trackerX.comp)
-    val y = new SignalVersionList(TestHost, t, t, trackerY.comp)
-    val z = new SignalVersionList(TestHost, t, t, trackerZ.comp)
-    val q = new SignalVersionList(TestHost, t, t, trackerQ.comp)
-    val r = new SignalVersionList(TestHost, t, t, trackerR.comp)
-    x.discoverSuspend(t, q)
-    y.discoverSuspend(t, q)
-    z.discoverSuspend(t, q)
-    q.discoverSuspend(t, r)
-    x.discoverSuspend(t, r)
+    val x, y, z, q, r = new SignalVersionList(TestHost, t, t, tracker.comp)
+    x.discoverSuspend(ReevaluationTicket(t, q))
+    y.discoverSuspend(ReevaluationTicket(t, q))
+    z.discoverSuspend(ReevaluationTicket(t, q))
+    q.discoverSuspend(ReevaluationTicket(t, r))
+    x.discoverSuspend(ReevaluationTicket(t, r))
     t.done()
 
     val t2 = Transaction()
@@ -127,12 +120,10 @@ class NodeVersionListFramingTest extends FlatSpec with Matchers {
   }
 
   it should "retroactively correct partial framing upon ill-ordered framings" in {
-    val trackerX, trackerY, trackerZ = new UserComputationTracker
+    val tracker = new UserComputationTracker
     val t = Transaction().start()
-    val x = new SignalVersionList(TestHost, t, t, trackerX.comp)
-    val y = new SignalVersionList(TestHost, t, t, trackerY.comp)
-    val z = new SignalVersionList(TestHost, t, t, trackerZ.comp)
-    x.discoverSuspend(t, y)
+    val x, y, z = new SignalVersionList(TestHost, t, t, tracker.comp)
+    x.discoverSuspend(ReevaluationTicket(t, y))
     t.done()
 
     val t2 = Transaction()

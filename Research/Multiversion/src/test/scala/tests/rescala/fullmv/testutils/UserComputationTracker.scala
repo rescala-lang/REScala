@@ -1,16 +1,13 @@
 package tests.rescala.fullmv.testutils
 
-import rescala.fullmv.api.Transaction
+import rescala.fullmv.api.{ReevaluationTicket, SignalVersionList, Transaction}
 
-/**
-  * Created by MisterD on 13.02.2017.
-  */
 class UserComputationTracker {
-  var receivedInputs: Map[Transaction, Transaction] = Map.empty
-  var executedTransactionsInReverseOrder: List[Transaction] = List.empty
-  val comp: (Transaction, Transaction) => Transaction = {(txn: Transaction, v_in: Transaction) =>
-    receivedInputs += txn -> v_in
-    executedTransactionsInReverseOrder ::= txn
+  var receivedInputs: Map[SignalVersionList.O, Map[Transaction, Transaction]] = Map.empty.withDefaultValue(Map.empty)
+  var executedTransactionsInReverseOrder: Map[SignalVersionList.O, List[Transaction]] = Map.empty.withDefaultValue(List.empty)
+  val comp: (ReevaluationTicket, Transaction) => Transaction = { case (ReevaluationTicket(txn, issuer), v_in) =>
+    receivedInputs += issuer -> (receivedInputs(issuer) + (txn -> v_in))
+    executedTransactionsInReverseOrder += issuer -> (txn :: executedTransactionsInReverseOrder(issuer))
     txn
   }
 }

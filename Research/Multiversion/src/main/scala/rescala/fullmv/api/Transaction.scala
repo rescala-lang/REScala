@@ -10,7 +10,7 @@ case object Obsolete extends Phase
 
 trait Transaction {
   def phase: Phase
-  def branches(delta: Int): Unit
+  def branches(delta: Int): this.type
   def start(): this.type
   def done(): this.type
 }
@@ -27,7 +27,10 @@ class CounterIdTransactionImpl extends Transaction {
   var phase: Phase = Preparing
   var branches = new AtomicInteger(0)
 
-  override def branches(delta: Int) = branches.addAndGet(delta)
+  override def branches(delta: Int): this.type = {
+    branches.addAndGet(delta)
+    this
+  }
   override def start(): this.type = synchronized {
     if(branches.get() != 0) throw new IllegalStateException("Cannot switch phases due to "+branches+" still-active branches!")
     if(phase != Preparing) throw new IllegalStateException("Cannot start from phase "+phase)

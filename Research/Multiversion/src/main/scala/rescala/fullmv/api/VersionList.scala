@@ -37,7 +37,7 @@ final class RewriteFramesBuffer(maxElementConut: Int) {
   var framed: Int = 0
 
   def addWritten(txn: Transaction): Unit = {
-    assert(framed == 0, "Shouldn't have written versions after frames!")
+    assert(framed == 0, "Written versions after frames should not exist!")
     txns(written) = txn
     written += 1
   }
@@ -55,9 +55,9 @@ final class RewriteFramesBuffer(maxElementConut: Int) {
 class Version[V](val txn: Transaction, var out: Set[O], var pending: Int, var changed: Int, var value: Option[V]) {
   def isWritten: Boolean = value.isDefined
   def isFrame: Boolean = pending > 0 || (changed > 0 && !isWritten)
-  def isWrite: Boolean = pending > 0 || changed > 0
+  def isWrite: Boolean = pending > 0 || changed > 0 || isWritten
   def isReadOrDynamic: Boolean = !isWrite
-  def isReadyForReevaluation: Boolean = pending == 0 && changed > 0 && !isWritten
+  def isReadyForReevaluation: Boolean = pending == 0 && changed > 0
   def read(): V = value.get
 
   override def toString: String = "Version("+txn+", "+out+", pending="+pending+", changed="+changed+", "+value+")"
@@ -75,7 +75,8 @@ case class NotificationAndMaybeNextReevaluation[V](out: Set[O], txn: Transaction
   }
 }
 
-class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, val userComputation: (Transaction, V) => V) {
+case class ReevaluationTicket(val txn: Transaction, val issuer: O)
+class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, val userComputation: (ReevaluationTicket, V) => V) {
   // =================== STORAGE ====================
 
   var _versions = new ArrayBuffer[Version[V]](6)
@@ -165,10 +166,10 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
     findOrPidgeonHole(txn, 0, 0, _versions.size)
   }
 
-  private def prevWrite(from: Int): Version[V] = {
+  private def prevWrite(txn: Transaction, from: Int): Version[V] = {
     var position = from - 1
     while(position >= 0 && !_versions(position).isWrite) position -= 1
-    if(position < 0) throw new IllegalArgumentException("Does not have a preceding Reevaluation: "+_versions(from))
+    if(position < 0) throw new IllegalArgumentException(txn + " does not have a preceding write in versions " + _versions.take(from))
     _versions(position)
   }
 
@@ -292,7 +293,7 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
   @tailrec
   private def progressReevaluation(version: Version[V]): Unit = {
     // do reevaluation
-    val newValue = userComputation(version.txn, latestValue)
+    val newValue = userComputation(ReevaluationTicket(version.txn, this), latestValue)
     val selfChanged = latestValue != newValue
 
     // update version and search for successor write
@@ -355,17 +356,17 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
     */
   def before(txn: Transaction): V = synchronized {
     @tailrec
-    def before0(txn: Transaction): V = {
+    def before0(): V = {
       val thisPosition = ensureReadVersion(txn)
-      val readFrom = prevWrite(thisPosition)
+      val readFrom = prevWrite(txn, thisPosition)
       if(readFrom.isWritten) {
         readFrom.read()
       } else {
         blockUntilNoLongerFrame(readFrom.txn)
-        before0(txn)
+        before0()
       }
     }
-    before0(txn)
+    before0()
   }
 
   /**
@@ -391,57 +392,62 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
     */
   def after(txn: Transaction): V = synchronized {
     @tailrec
-    def after0(txn: Transaction): V = {
+    def after0(): V = {
       val thisPosition = ensureReadVersion(txn)
       val thisVersion = _versions(thisPosition)
       if(thisVersion.isWritten) {
         thisVersion.read()
       } else if (thisVersion.isWrite) {
         blockUntilNoLongerFrame(thisVersion.txn)
-        after0(txn)
+        after0()
       } else {
-        val prevReev = prevWrite(thisPosition)
+        val prevReev = prevWrite(txn, thisPosition)
         if (prevReev.isWritten) {
           prevReev.read()
         } else {
           blockUntilNoLongerFrame(prevReev.txn)
-          after0(txn)
+          after0()
         }
       }
     }
-    after0(txn)
+    after0()
   }
 
   /**
-    * entry point for reg-read(this, d) (i.e., read [[Version.value]] assuming edge this -> d exists)
-    * @param txn the executing transaction
+    * entry point for reg-read(this, ticket.issuer) (i.e., read [[Version.value]] assuming edge this -> ticket.issuer exists)
+    * @param ticket the executing reevaluation's ticket
     * @return the corresponding [[Version.value]]
     */
-  def regRead(txn: Transaction): V = synchronized {
+  def regRead(ticket: ReevaluationTicket): V = synchronized {
+    val txn = ticket.txn
     val position = findExecuted(txn)
     if(position >= 0) {
       val thisVersion = _versions(position)
+      assert(thisVersion.out.contains(ticket.issuer), "regRead invoked without existing edge")
       if (thisVersion.isWrite) {
         thisVersion.read()
       } else {
-        prevWrite(position).read()
+        prevWrite(txn, position).read()
       }
     } else {
-      prevWrite(-position).read()
+      assert(_versions(-position - 1).out.contains(ticket.issuer), "regRead invoked without existing edge")
+      prevWrite(txn, -position).read()
     }
   }
 
   // =================== DYNAMIC OPERATIONS ====================
 
   /**
-    * entry point for discover(this, add). May suspend.
-    * @param txn the transaction executing
-    * @param add the outgoing dependency to add
+    * entry point for discover(this, ticket.issuer). May suspend.
+    * @param ticket the executing reevaluation's ticket
     * @return the appropriate [[Version.value]].
     */
-  def discoverSuspend(txn: Transaction, add: O): V = {
+  def discoverSuspend(ticket: ReevaluationTicket): V = {
+    val txn = ticket.txn
+    val add = ticket.issuer
     val (result, rewrite) = synchronized {
       val position = ensureReadVersion(txn)
+      assert(!_versions(position).out.contains(add), "must not discover an already existing edge!")
       val result = after(txn)
       _versions(position).out += add
       val rewrite = retrofitDiscover(position, add)
@@ -479,7 +485,7 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
     */
   def retrofitDiscoverFrames(rewrite: RewriteFramesBuffer): Unit = synchronized {
     @tailrec
-    def retrofitDiscoverFrames0(rewrite: RewriteFramesBuffer, idx: Int, minPos: Int): Unit = {
+    def retrofitDiscoverFrames0(idx: Int, minPos: Int): Unit = {
       if(idx < rewrite.size) {
         val txn = rewrite(idx)
         val position = findOrPidgeonHole(txn, minPos, minPos, _versions.size)
@@ -494,20 +500,22 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
         } else {
           _versions(realPosition).pending += 1
         }
-        retrofitDiscoverFrames0(rewrite, idx + 1, realPosition + 1)
+        retrofitDiscoverFrames0(idx + 1, realPosition + 1)
       }
     }
-    retrofitDiscoverFrames0(rewrite, 0, firstFrame + 1)
+    retrofitDiscoverFrames0(0, firstFrame + 1)
   }
 
   /**
-    * entry point for drop(this, remove); may suspend temporarily.
-    * @param txn the executing transaction
-    * @param remove the outgoing dependency to remove
+    * entry point for drop(this, ticket.issuer); may suspend temporarily.
+    * @param ticket the executing reevaluation's ticket
     */
-  def drop(txn: Transaction, remove: O): Unit = synchronized {
+  def drop(ticket: ReevaluationTicket): Unit = {
+    val txn = ticket.txn
+    val remove = ticket.issuer
     val rewrite = synchronized {
       val position = ensureReadVersion(txn)
+      assert(_versions(position).out.contains(add), "must not drop a non-existing edge!")
       val result = after(txn) // TODO technically unnecessary, think about if removing it violates anything.
       _versions(position).out -= remove
       retrofitDrop(position, remove)
@@ -543,7 +551,7 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
     */
   def retrofitDropFrames(rewrite: RewriteFramesBuffer): Unit = synchronized {
     @tailrec
-    def retrofitDropFrames0(rewrite: RewriteFramesBuffer, idx: Int, minPos: Int): Unit = {
+    def retrofitDropFrames0(idx: Int, minPos: Int): Unit = {
       if(idx < rewrite.size) {
         val txn = rewrite(idx)
         val position = findOrPidgeonHole(txn, minPos, minPos, _versions.size)
@@ -559,9 +567,9 @@ class SignalVersionList[V](val host: Host, init: Transaction, initialValue: V, v
           _versions(realPosition).pending -= 1
         }
         if(position > 0 && _versions(position).isReadOrDynamic) frameRemoved(txn)
-        retrofitDropFrames0(rewrite, idx + 1, realPosition + 1)
+        retrofitDropFrames0(idx + 1, realPosition + 1)
       }
     }
-    retrofitDropFrames0(rewrite, 0, firstFrame + 1)
+    retrofitDropFrames0(0, firstFrame + 1)
   }
 }
