@@ -2,7 +2,7 @@ package rescala.engines
 
 import java.util.concurrent.locks.ReentrantLock
 
-import rescala.graph.{LevelSporeImpl, Pulse, SimpleStruct, Struct}
+import rescala.graph.{LevelStructTypeImpl, Pulse, SimpleStruct, Struct}
 import rescala.propagation.{LevelBasedPropagation, Turn}
 
 import scala.language.existentials
@@ -17,7 +17,7 @@ trait CommonEngines {
 
   private[rescala] class SimpleNoLock extends LevelBasedPropagation[SimpleStruct] {
     def makeStructState[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): SimpleStruct#StructType[P, R] =
-      new LevelSporeImpl[P, R](initialValue, transient, initialIncoming)
+      new LevelStructTypeImpl[P, R](initialValue, transient, initialIncoming)
     override def releasePhase(): Unit = ()
   }
 

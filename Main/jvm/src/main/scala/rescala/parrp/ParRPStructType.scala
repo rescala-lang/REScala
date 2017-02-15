@@ -7,8 +7,8 @@ import rescala.propagation.Turn
 import scala.language.implicitConversions
 
 
-class ParRPSpore[P, R](current: Pulse[P], transient: Boolean, val lock: TurnLock[ParRPInterTurn], initialIncoming: Set[R])
-  extends LevelSporeImpl[P, R](current, transient, initialIncoming) {
+class ParRPStructType[P, R](current: Pulse[P], transient: Boolean, val lock: TurnLock[ParRPInterTurn], initialIncoming: Set[R])
+  extends LevelStructTypeImpl[P, R](current, transient, initialIncoming) {
 
   override def set(value: Pulse[P])(implicit turn: Turn[_]): Unit = {
     assert(turn match {

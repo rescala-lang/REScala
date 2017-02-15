@@ -1,12 +1,12 @@
 package rescala.stm
 
-import rescala.graph.{LevelSpore, _}
+import rescala.graph.{LevelStructType, _}
 import rescala.propagation.Turn
 
 import scala.concurrent.stm.{InTxn, Ref}
 import rescala.propagation.Committable
 
-class STMSpore[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends LevelSpore[R] with PulseStruct[P] with Committable {
+class STMStructType[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends LevelStructType[R] with PulseStruct[P] with Committable {
 
   implicit def inTxn(implicit turn: Turn[_]): InTxn = turn match {
     case stmTurn: STMTurn => stmTurn.inTxn

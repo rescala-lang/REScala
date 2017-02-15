@@ -5,37 +5,37 @@ import rescala.propagation.{Committable, Turn}
 import scala.language.{existentials, higherKinds, implicitConversions}
 
 /**
-  * Wrapper that adds a level of indirection for classes having a spore type dependency.
+  * Wrapper that adds a level of indirection for classes having a struct type dependency.
  */
 trait Struct {
   /**
     * Spore type defined by this struct
     *
     * @tparam P Pulse stored value type
-    * @tparam R Reactive value type represented by the spore
+    * @tparam R Reactive value type represented by the struct
     */
   type StructType[P, R] <: PulseStruct[P] with ReadGraphStruct[R]
 }
 
 /**
-  * Wrapper for a spore type combining GraphSpore and PulsingSpore
+  * Wrapper for a struct type combining GraphSpore and PulsingSpore
   */
 trait ChangableGraphStruct extends Struct {
-  override type StructType[P, R] <: GraphSpore[R] with PulseStruct[P]
+  override type StructType[P, R] <: GraphStruct[R] with PulseStruct[P]
 }
 
 /**
-  * Wrapper for a spore type that combines GraphSpore, PulsingSpore and is leveled
+  * Wrapper for a struct type that combines GraphSpore, PulsingSpore and is leveled
   */
 trait LevelStruct extends ChangableGraphStruct {
-  override type StructType[P, R] <: LevelSpore[R] with GraphSpore[R] with PulseStruct[P]
+  override type StructType[P, R] <: LevelStructType[R] with GraphStruct[R] with PulseStruct[P]
 }
 
 /**
   * Wrapper for the instance of LevelSpore
   */
 trait SimpleStruct extends LevelStruct {
-  override type StructType[P, R] = LevelSporeImpl[P, R]
+  override type StructType[P, R] = LevelStructTypeImpl[P, R]
 }
 
 /**
@@ -87,9 +87,9 @@ trait ReadGraphStruct[R] {
 /**
   * Spore that can represent a node in a graph by providing information about incoming and outgoing edges.
   *
-  * @tparam R Type of the reactive values that are connected to this spore
+  * @tparam R Type of the reactive values that are connected to this struct
   */
-trait GraphSpore[R] extends ReadGraphStruct[R] {
+trait GraphStruct[R] extends ReadGraphStruct[R] {
   def updateIncoming(reactives: Set[R])(implicit turn: Turn[_]): Unit
   def outgoing(implicit turn: Turn[_]): Iterator[R]
   def discover(reactive: R)(implicit turn: Turn[_]): Unit
@@ -97,25 +97,25 @@ trait GraphSpore[R] extends ReadGraphStruct[R] {
 }
 
 /**
-  * Graph spore that additionally can be assigned a level value that is used for topologically traversing the graph.
+  * Graph struct that additionally can be assigned a level value that is used for topologically traversing the graph.
   *
-  * @tparam R Type of the reactive values that are connected to this spore
+  * @tparam R Type of the reactive values that are connected to this struct
   */
-trait LevelSpore[R] extends GraphSpore[R] {
+trait LevelStructType[R] extends GraphStruct[R] {
   def level(implicit turn: Turn[_]): Int
   def updateLevel(i: Int)(implicit turn: Turn[_]): Int
 }
 
 /**
-  * Implementation of a spore with graph functionality and a buffered pulse storage.
+  * Implementation of a struct with graph functionality and a buffered pulse storage.
   *
-  * @param current Pulse used as initial value for the spore
-  * @param transient If a spore is marked as transient, changes to it can not be committed (and are released instead)
-  * @param initialIncoming Initial incoming edges in the spore's graph
+  * @param current Pulse used as initial value for the struct
+  * @param transient If a struct is marked as transient, changes to it can not be committed (and are released instead)
+  * @param initialIncoming Initial incoming edges in the struct's graph
   * @tparam P Pulse stored value type
-  * @tparam R Type of the reactive values that are connected to this spore
+  * @tparam R Type of the reactive values that are connected to this struct
   */
-abstract class PropagationSporeImpl[P, R](override var current: Pulse[P], override val transient: Boolean, initialIncoming: Set[R]) extends GraphSpore[R] with BufferedSpore[P] {
+abstract class PropagationSporeImpl[P, R](override var current: Pulse[P], override val transient: Boolean, initialIncoming: Set[R]) extends GraphStruct[R] with BufferedSpore[P] {
   private var _incoming: Set[R] = initialIncoming
   private var _outgoing: scala.collection.mutable.Map[R, Boolean] = rescala.util.WeakHashMap.empty
 
@@ -128,15 +128,15 @@ abstract class PropagationSporeImpl[P, R](override var current: Pulse[P], overri
 }
 
 /**
-  * Implementation of a spore with graph and buffered pulse storage functionality that also support setting a level.
+  * Implementation of a struct with graph and buffered pulse storage functionality that also support setting a level.
   *
-  * @param current Pulse used as initial value for the spore
-  * @param transient If a spore is marked as transient, changes to it can not be committed (and are released instead)
-  * @param initialIncoming Initial incoming edges in the spore's graph
+  * @param current Pulse used as initial value for the struct
+  * @param transient If a struct is marked as transient, changes to it can not be committed (and are released instead)
+  * @param initialIncoming Initial incoming edges in the struct's graph
   * @tparam P Pulse stored value type
-  * @tparam R Type of the reactive values that are connected to this spore
+  * @tparam R Type of the reactive values that are connected to this struct
   */
-class LevelSporeImpl[P, R](current: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends PropagationSporeImpl[P, R](current, transient, initialIncoming) with LevelSpore[R]  {
+class LevelStructTypeImpl[P, R](current: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends PropagationSporeImpl[P, R](current, transient, initialIncoming) with LevelStructType[R]  {
   var _level: Int = 0
 
   override def level(implicit turn: Turn[_]): Int = _level
