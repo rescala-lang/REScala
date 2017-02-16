@@ -2,8 +2,9 @@ package tests.rescala
 
 
 import org.scalatest.prop.Whenever
+import rescala.Engines
 import rescala.Infiltrator.assertLevel
-import rescala.engines.Ticket
+import rescala.engines.TurnSource
 
 
 
@@ -175,8 +176,8 @@ class DynamicSignalTestSuite extends RETests with Whenever {
   allEngines("creating Signals Inside Signals") { engine => import engine._
 
     // ignore for locksweep, as it does not support predeclared levels, so would run into an endless loop below
-    whenever(engine != rescala.engines.Engines.locksweep &&
-      engine != rescala.engines.Engines.parallellocksweep) {
+    whenever(engine != Engines.locksweep &&
+      engine != rescala.Engines.parallellocksweep) {
 
       val outside = Var(1)
 
@@ -246,7 +247,7 @@ class DynamicSignalTestSuite extends RETests with Whenever {
     val `dynamic signal changing from level 1 to level 4` = dynamic() { turn =>
       if (turn.depend(v0) == "level 0") turn.depend(v0) else {
         // the static bound is necessary here, otherwise we get infinite loops
-        turn.depend(dynamic(v3) {t => turn.depend(v3) + "level 4 inner" }(Ticket.fromTurn(turn)))
+        turn.depend(dynamic(v3) {t => turn.depend(v3) + "level 4 inner" }(TurnSource.fromTurn(turn)))
       }
     }
     assert(`dynamic signal changing from level 1 to level 4`.now == "level 0")

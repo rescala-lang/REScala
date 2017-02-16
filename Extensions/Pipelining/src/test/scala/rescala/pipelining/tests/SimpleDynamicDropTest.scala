@@ -1,7 +1,7 @@
 package rescala.pipelining.tests
 
 import org.scalatest.FlatSpec
-import rescala.engines.Ticket
+import rescala.engines.TurnSource
 import rescala.pipelining.tests.PipelineTestUtils._
 import rescala.pipelining.util.LogUtils
 import rescala.pipelining.{Pipeline, PipelineEngine}
@@ -33,7 +33,7 @@ class SimpleDynamicDropTest extends FlatSpec {
       }
       LogUtils.log(s"END evaluate $t with $newValue")
       newValue
-    })(Ticket(Right(engine)))
+    })(TurnSource(Right(engine)))
 
     val dynDepTracker = new ValueTracker(dynDep)
 

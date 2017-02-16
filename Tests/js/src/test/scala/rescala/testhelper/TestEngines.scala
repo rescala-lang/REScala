@@ -1,5 +1,7 @@
 package rescala.testhelper
 
+import rescala.Engines
+
 object TestEngines {
-  val all  = rescala.engines.Engines.all
+  val all  = Engines.all
 }

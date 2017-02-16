@@ -1,16 +1,17 @@
-package rescala.engines
+package rescala.levelbased
 
 import java.util.concurrent.locks.ReentrantLock
 
-import rescala.graph.{LevelStructTypeImpl, Pulse, SimpleStruct, Struct}
-import rescala.propagation.{LevelBasedPropagation, Turn}
+import rescala.engines.{Engine, EngineImpl}
+import rescala.graph.{Pulse, Struct}
+import rescala.propagation.Turn
 
 import scala.language.existentials
 
 /**
   * Basic implementations of propagation engines
   */
-trait CommonEngines {
+trait LevelBasedPropagationEngines {
 
   type TEngine = Engine[S, Turn[S]] forSome { type S <: Struct }
 
@@ -43,4 +44,4 @@ trait CommonEngines {
 
 }
 
-object CommonEngines extends CommonEngines
+object LevelBasedPropagationEngines extends LevelBasedPropagationEngines

@@ -1,8 +1,8 @@
 package rescala.parrp
 
-import rescala.graph.{LevelStruct, Pulse, Reactive}
+import rescala.graph.{Pulse, Reactive}
+import rescala.levelbased.{LevelBasedPropagation, LevelStruct}
 import rescala.locking._
-import rescala.propagation.LevelBasedPropagation
 
 trait ParRPInterTurn {
   private type TState = ParRP

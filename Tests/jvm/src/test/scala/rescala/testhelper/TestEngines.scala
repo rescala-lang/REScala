@@ -1,5 +1,6 @@
 package rescala.testhelper
 
+import rescala.Engines
 import rescala.engines.{Engine, EngineImpl}
 import rescala.pipelining.{PipelineEngine, PipelineStruct, PipeliningTurn}
 import rescala.stm.STMTurn
@@ -13,5 +14,5 @@ object TestEngines {
     override def plan[R](i: Reactive*)(f: STMTurn => R): R = atomic { tx => super.plan(i: _*)(f) }
   }
 
-  val all: List[rescala.engines.Engines.TEngine] = stm :: /*pipeline ::*/ rescala.engines.Engines.all
+  val all: List[Engines.TEngine] = stm :: /*pipeline ::*/ rescala.Engines.all
 }

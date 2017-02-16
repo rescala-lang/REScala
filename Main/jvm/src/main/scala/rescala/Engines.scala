@@ -1,22 +1,22 @@
-package rescala.engines
+package rescala
 
 import java.util.concurrent.{Executor, Executors}
 
+import rescala.engines._
 import rescala.graph.Struct
+import rescala.levelbased.LevelBasedPropagationEngines
 import rescala.parrp._
-import rescala.propagation.Turn
 
 import scala.language.existentials
 
-object Engines extends CommonEngines {
+object Engines extends LevelBasedPropagationEngines {
 
-
-  def byName[S <: Struct](name: String): Engine[S, Turn[S]] = name match {
-    case "synchron" => synchron.asInstanceOf[Engine[S, Turn[S]]]
-    case "unmanaged" => unmanaged.asInstanceOf[Engine[S, Turn[S]]]
-    case "parrp" => parrp.asInstanceOf[Engine[S, Turn[S]]]
-    case "fair" => synchronFair.asInstanceOf[Engine[S, Turn[S]]]
-    case "locksweep" => locksweep.asInstanceOf[Engine[S, Turn[S]]]
+  def byName[S <: Struct](name: String): Engine[S, propagation.Turn[S]] = name match {
+    case "synchron" => synchron.asInstanceOf[Engine[S, propagation.Turn[S]]]
+    case "unmanaged" => unmanaged.asInstanceOf[Engine[S, propagation.Turn[S]]]
+    case "parrp" => parrp.asInstanceOf[Engine[S, propagation.Turn[S]]]
+    case "fair" => synchronFair.asInstanceOf[Engine[S, propagation.Turn[S]]]
+    case "locksweep" => locksweep.asInstanceOf[Engine[S, propagation.Turn[S]]]
 
     case other => throw new IllegalArgumentException(s"unknown engine $other")
   }

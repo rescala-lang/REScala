@@ -1,7 +1,8 @@
 package benchmarks
 
 import org.openjdk.jmh.annotations.{Param, Scope, State}
-import rescala.engines.{Engine, Engines}
+import rescala.Engines
+import rescala.engines.Engine
 import rescala.parrp.Backoff
 import rescala.propagation.Turn
 

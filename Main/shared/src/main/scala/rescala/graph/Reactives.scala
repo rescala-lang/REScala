@@ -1,6 +1,6 @@
 package rescala.graph
 
-import rescala.engines.Ticket
+import rescala.engines.TurnSource
 import rescala.propagation.Turn
 import rescala.reactives.RExceptions.EmptySignalControlThrowable
 
@@ -81,7 +81,7 @@ trait Stateful[+A, S <: Struct] extends Pulsing[A, S] {
   @compileTimeOnly("Signal.apply can only be used inside of Signal expressions")
   final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")
 
-  final def now(implicit ticket: Ticket[S]): A = ticket { turn =>
+  final def now(implicit ticket: TurnSource[S]): A = ticket { turn =>
     turn.dynamicDependencyInteraction(this)
     try { get(turn) }
     catch { case EmptySignalControlThrowable => throw new NoSuchElementException(s"Signal $this is empty") }

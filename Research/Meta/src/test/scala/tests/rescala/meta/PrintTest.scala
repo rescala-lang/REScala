@@ -3,7 +3,7 @@ package tests.rescala.meta
 import org.scalatest.FunSuite
 
 class PrintTest extends FunSuite {
-  import rescala.engines.CommonEngines.synchron
+  import rescala.levelbased.LevelBasedPropagationEngines.synchron
   implicit val reifier = new rescala.meta.EngineReifier
 
   /*test("print test") {

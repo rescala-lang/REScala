@@ -1,9 +1,10 @@
-package rescala.propagation
+package rescala.levelbased
 
 import java.util.PriorityQueue
 
-import rescala.graph.{LevelStruct, Reactive, Struct}
-import rescala.propagation.LevelQueue.QueueElement
+import rescala.graph.{Reactive, Struct}
+import rescala.propagation.Turn
+import LevelQueue.QueueElement
 
 /**
   * Level-based queue used the determine an evaluation order for reactive elements
@@ -11,7 +12,7 @@ import rescala.propagation.LevelQueue.QueueElement
   * @param currentTurn Turn of the evaluation
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
-final private[propagation] class LevelQueue[S <: LevelStruct](evaluator: LevelQueue.Evaluator[S])(implicit val currentTurn: Turn[S]) {
+final private[levelbased] class LevelQueue[S <: LevelStruct](evaluator: LevelQueue.Evaluator[S])(implicit val currentTurn: Turn[S]) {
 
   private val elements = new PriorityQueue[QueueElement[S]]()
 
@@ -91,7 +92,7 @@ final private[propagation] class LevelQueue[S <: LevelStruct](evaluator: LevelQu
 }
 
 
-private[propagation] object LevelQueue {
+private[levelbased] object LevelQueue {
 
   trait Evaluator[S <: Struct] {
     def evaluate(r: Reactive[S]): Unit

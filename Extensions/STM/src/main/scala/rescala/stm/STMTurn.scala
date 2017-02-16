@@ -1,7 +1,7 @@
 package rescala.stm
 
-import rescala.graph.{LevelStruct, Pulse}
-import rescala.propagation.LevelBasedPropagation
+import rescala.graph.Pulse
+import rescala.levelbased.{LevelBasedPropagation, LevelStruct}
 
 import scala.concurrent.stm.{InTxn, atomic}
 

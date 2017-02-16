@@ -1,6 +1,6 @@
 package rescala.meta
 
-import rescala.engines.Ticket
+import rescala.engines.TurnSource
 import rescala.graph.Struct
 import rescala.reactives._
 
@@ -28,7 +28,7 @@ object DataFlowRef {
 trait ReactiveRef[+T] extends DataFlowRef[T] {
   override def deref : Option[ReactiveNode[T]]
 
-  def observe[S <: Struct](onSuccess: (T) => Unit, onFailure: (Throwable) => Unit = t => throw t)(implicit reifier: Reifier[S], ticket: Ticket[S]): Observe[S] = deref.get.observe(onSuccess, onFailure)
+  def observe[S <: Struct](onSuccess: (T) => Unit, onFailure: (Throwable) => Unit = t => throw t)(implicit reifier: Reifier[S], ticket: TurnSource[S]): Observe[S] = deref.get.observe(onSuccess, onFailure)
   def reify[S <: Struct](implicit reifier: Reifier[S]): Observable[T, S] = deref.get.reify
 }
 
@@ -44,7 +44,7 @@ class EventRef[+T](_node : EventNode[T]) extends ReactiveRef[T] {
 
   override def reify[S <: Struct](implicit reifier: Reifier[S]): Event[T, S] = deref.get.reify
 
-  def +=[S <: Struct](react: T => Unit)(implicit reifier: Reifier[S], ticket: Ticket[S]): Observe[S] = deref.get += react
+  def +=[S <: Struct](react: T => Unit)(implicit reifier: Reifier[S], ticket: TurnSource[S]): Observe[S] = deref.get += react
 
   def ||[U >: T](others: EventRef[U]*): EventRef[U] = new EventRef(deref.get||(others.map(_.deref.get):_*))
   def &&[U >: T](pred: (U) => Boolean): EventRef[U] = new EventRef(deref.get && pred)
@@ -84,7 +84,7 @@ class SignalRef[+A](_node : SignalNode[A]) extends ReactiveRef[A] {
 
   override def reify[S <: Struct](implicit reifier: Reifier[S]): Signal[A, S] = deref.get.reify
 
-  def now[S <: Struct](implicit reifier: Reifier[S], ticket: Ticket[S]): A = deref.get.now
+  def now[S <: Struct](implicit reifier: Reifier[S], ticket: TurnSource[S]): A = deref.get.now
 
   def delay(n: Int): SignalRef[A] = new SignalRef(deref.get.delay(n))
   def map[X >: A, B](f: (X) => B): SignalRef[B] = new SignalRef(deref.get.map(f))

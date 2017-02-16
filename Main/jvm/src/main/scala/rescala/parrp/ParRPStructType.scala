@@ -1,6 +1,7 @@
 package rescala.parrp
 
 import rescala.graph._
+import rescala.levelbased.LevelStructTypeImpl
 import rescala.locking.{Key, TurnLock}
 import rescala.propagation.Turn
 
