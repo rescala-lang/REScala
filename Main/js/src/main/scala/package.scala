@@ -1,8 +1,6 @@
-import rescala.engine.EngineImpl
-import rescala.levelbased.LevelBasedPropagationEngines.SimpleNoLock
-import rescala.levelbased.SimpleStruct
+import rescala.engine.Engine
+import rescala.levelbased.{LevelBasedPropagation, SimpleStruct}
 
-package object rescala extends EngineImpl[SimpleStruct, SimpleNoLock]("Unmanaged", new SimpleNoLock()) {
-  val Events = reactives.Events
-  val Signals = reactives.Signals
+package object rescala extends RescalaDefaultImports[SimpleStruct]{
+  override implicit def Engine: Engine[SimpleStruct, LevelBasedPropagation[SimpleStruct]] = rescala.Engines.default
 }

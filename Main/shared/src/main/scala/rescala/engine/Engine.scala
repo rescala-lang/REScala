@@ -1,10 +1,8 @@
 package rescala.engine
 
+import rescala.RescalaDefaultImports
 import rescala.graph.Struct
-import rescala.macros.ReactiveMacros
 import rescala.propagation.Turn
-import rescala.reactives.{Events, Signals}
-import rescala.{propagation, reactives}
 
 import scala.annotation.implicitNotFound
 import scala.language.experimental.macros
@@ -16,36 +14,9 @@ import scala.language.experimental.macros
   * @tparam TTurn Turn type used by the engine
   */
 @implicitNotFound(msg = "Could not find an implicit propagation engine. Did you forget an import?")
-trait Engine[S <: Struct, +TTurn <: Turn[S]] {
+trait Engine[S <: Struct, +TTurn <: Turn[S]] extends RescalaDefaultImports[S] {
 
-  implicit def Engine: this.type = this
-
-  final type Observe = reactives.Observe[S]
-  final type Signal[+A] = reactives.Signal[A, S]
-  final type Event[+A] = reactives.Event[A, S]
-  final type Var[A] = reactives.Var[A, S]
-  final type Evt[A] = reactives.Evt[A, S]
-  final type Turn = propagation.Turn[S]
-  final type Ticket = rescala.engine.TurnSource[S]
-  final type Reactive = rescala.graph.Reactive[S]
-  final def Evt[A](): Evt[A] = reactives.Evt[A, S]()
-
-//  final def Var[A](v: A): Var[A] = reactives.Var[A, S](v)(Ticket.fromEngineImplicit(this))
-//  final def Var[A](): Var[A] = reactives.Var[A, S]()(Ticket.fromEngineImplicit(this))
-
-  object Var {
-    def apply[A](v: A): Var[A] = reactives.Var[A, S](v)
-    def empty[A]: Var[A] = reactives.Var.empty[A, S]
-  }
-
-
-
-  final def static[T](dependencies: Reactive*)(expr: Turn => T)(implicit ticket: Ticket): Signal[T] = Signals.static(dependencies: _*)(expr)
-  final def dynamic[T](dependencies: Reactive*)(expr: Turn => T)(implicit ticket: Ticket): Signal[T] = Signals.dynamic(dependencies: _*)(expr)
-  final def dynamicE[T](dependencies: Reactive*)(expr: Turn => Option[T])(implicit ticket: Ticket): Event[T] = Events.dynamic(dependencies: _*)(expr)
-
-  final def Signal[A](expression: A): Signal[A] = macro ReactiveMacros.SignalMacro[A, S]
-  final def Event[A](expression: Option[A]): Event[A] = macro ReactiveMacros.EventMacro[A, S]
+  override implicit def Engine: this.type = this
 
   /**
     * Creates and executes a full turn by running through all of its phases.

@@ -1,7 +1,6 @@
-import rescala.engine.EngineImpl
-import rescala.parrp.{Backoff, ParRP}
+import rescala.engine.Engine
+import rescala.parrp.ParRP
 
-package object rescala extends EngineImpl[ParRP, ParRP]("ParRP", (_, prior) => new ParRP(new Backoff, prior)) {
-  val Events = reactives.Events
-  val Signals = reactives.Signals
+package object rescala extends RescalaDefaultImports[ParRP] {
+  override implicit def Engine: Engine[ParRP, ParRP] = rescala.Engines.parrp
 }

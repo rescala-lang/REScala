@@ -1,6 +1,6 @@
 package tests.rescala
 
-import rescala.reactives.Signals
+
 
 import scala.util.{Failure, Success, Try}
 

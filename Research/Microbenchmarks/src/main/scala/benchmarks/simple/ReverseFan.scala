@@ -8,7 +8,7 @@ import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
 import rescala.Engines
 import rescala.engine.Engine
 import rescala.propagation.Turn
-import rescala.reactives.{Signal, Signals}
+import rescala.reactives.Signal
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
