@@ -1,6 +1,7 @@
 package rescala.propagation
 
 import rescala.graph.{Pulse, PulseOption, Reactive, Stateful, Struct}
+import rescala.twoversion.Committable
 
 /**
   * The Turn interface glues the reactive interface and the propagation implementation together.
@@ -45,6 +46,7 @@ trait Turn[S <: Struct] {
     *
     * @param committable Commitable element to be scheduled
     */
+  // TODO should not use twoversion.Committable here
   def schedule(committable: Committable): Unit
 
   /**

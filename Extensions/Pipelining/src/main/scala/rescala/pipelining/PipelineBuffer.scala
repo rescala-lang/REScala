@@ -1,7 +1,8 @@
 package rescala.pipelining
 
 import rescala.graph._
-import rescala.propagation.{Committable, Turn}
+import rescala.propagation.Turn
+import rescala.twoversion.Committable
 
 private[pipelining] object ValueHolder {
 

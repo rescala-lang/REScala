@@ -5,17 +5,18 @@ import java.util
 import rescala.graph.ReevaluationResult.{Dynamic, Static}
 import rescala.graph._
 import rescala.locking._
-import rescala.propagation.{CommonPropagationImpl, Turn}
+import rescala.propagation.Turn
+import rescala.twoversion.{CommonPropagationImpl, PropagationStructImpl}
 
 import scala.collection.mutable
 
 object LSStruct extends ChangableGraphStruct {
-  override type StructType[P, R] = LSSporeP[P, R]
+  override type StructType[P, R] = LSPropagationStruct[P, R]
 }
 
 
-class LSSporeP[P, R](current: Pulse[P], transient: Boolean, val lock: TurnLock[LSInterTurn], initialIncoming: Set[R])
-  extends PropagationSporeImpl[P, R](current, transient, initialIncoming) {
+class LSPropagationStruct[P, R](current: Pulse[P], transient: Boolean, val lock: TurnLock[LSInterTurn], initialIncoming: Set[R])
+  extends PropagationStructImpl[P, R](current, transient, initialIncoming) {
 
   override def set(value: Pulse[P])(implicit turn: Turn[_]): Unit = {
     assert(turn match {
@@ -48,7 +49,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPr
 
   override def makeStructState[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): LSStruct.StructType[P, R] = {
     val lock = new TurnLock[LSInterTurn]
-    new LSSporeP[P, R](initialValue, transient, lock, initialIncoming)
+    new LSPropagationStruct[P, R](initialValue, transient, lock, initialIncoming)
   }
 
 

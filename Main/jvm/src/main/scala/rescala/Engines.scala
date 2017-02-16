@@ -6,6 +6,7 @@ import rescala.engine._
 import rescala.graph.Struct
 import rescala.levelbased.LevelBasedPropagationEngines
 import rescala.parrp._
+import rescala.twoversion.EngineImpl
 
 import scala.language.existentials
 

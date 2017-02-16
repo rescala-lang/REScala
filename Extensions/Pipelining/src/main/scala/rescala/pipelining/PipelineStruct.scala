@@ -2,7 +2,7 @@ package rescala.pipelining
 
 import rescala.graph._
 import rescala.propagation.Turn
-import rescala.propagation.Committable
+import rescala.twoversion.Committable
 
 object PipelineStruct extends Struct {
   override type StructType[P, R] = PipelineSporeP[P, R]

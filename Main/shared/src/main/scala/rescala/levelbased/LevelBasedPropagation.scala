@@ -2,7 +2,7 @@ package rescala.levelbased
 
 import rescala.graph.ReevaluationResult.{Dynamic, Static}
 import rescala.graph.Reactive
-import rescala.propagation.CommonPropagationImpl
+import rescala.twoversion.CommonPropagationImpl
 
 /**
   * Further implementation of level-based propagation based on the common propagation implementation.

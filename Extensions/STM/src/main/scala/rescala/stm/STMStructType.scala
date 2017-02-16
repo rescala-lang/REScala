@@ -3,9 +3,9 @@ package rescala.stm
 import rescala.graph._
 import rescala.levelbased.LevelStructType
 import rescala.propagation.Turn
+import rescala.twoversion.Committable
 
 import scala.concurrent.stm.{InTxn, Ref}
-import rescala.propagation.Committable
 
 class STMStructType[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends LevelStructType[R] with PulseStruct[P] with Committable {
 

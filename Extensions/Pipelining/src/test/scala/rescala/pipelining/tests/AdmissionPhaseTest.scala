@@ -7,8 +7,9 @@ import org.scalatest.concurrent.TimeLimitedTests
 import org.scalatest.time.SpanSugar._
 import rescala.pipelining.PipelineEngine
 import rescala.pipelining.tests.PipelineTestUtils._
-import rescala.propagation.{Committable, Turn}
+import rescala.propagation.Turn
 import rescala.reactives.Signals
+import rescala.twoversion.Committable
 
 class AdmissionPhaseTest extends FlatSpec with TimeLimitedTests {
 

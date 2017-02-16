@@ -6,8 +6,9 @@ import benchmarks.philosophers.PhilosopherTable._
 import org.openjdk.jmh.infra.Blackhole
 import rescala.engine.Engine
 import rescala.graph.Struct
-import rescala.propagation.{Committable, Turn}
+import rescala.propagation.Turn
 import rescala.reactives._
+import rescala.twoversion.Committable
 
 class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit val engine: Engine[S, Turn[S]]) {
 

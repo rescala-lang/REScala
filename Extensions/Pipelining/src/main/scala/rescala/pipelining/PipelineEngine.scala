@@ -1,6 +1,6 @@
 package rescala.pipelining
 
-import rescala.engine.PlanImpl
+import rescala.twoversion.PlanImpl
 
 /**
  * @author moritzlichter

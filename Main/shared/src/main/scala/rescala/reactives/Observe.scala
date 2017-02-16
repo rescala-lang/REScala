@@ -4,8 +4,9 @@ import java.util.concurrent.ConcurrentHashMap
 
 import rescala.engine.{Engine, TurnSource}
 import rescala.graph._
-import rescala.propagation.{Committable, Turn}
+import rescala.propagation.Turn
 import rescala.reactives.RExceptions.UnhandledFailureException
+import rescala.twoversion.Committable
 
 import scala.util.{Failure, Success, Try}
 

@@ -6,9 +6,10 @@ import rescala.engine.Engine
 import rescala.graph.Globals.named
 import rescala.graph.Struct
 import rescala.parrp.Backoff
-import rescala.propagation.{Committable, Turn}
+import rescala.propagation.Turn
 import rescala.reactives.{Signal, Var}
 import rescala.reactives.Signals.lift
+import rescala.twoversion.Committable
 
 class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit val engine: Engine[S, Turn[S]]) {
 

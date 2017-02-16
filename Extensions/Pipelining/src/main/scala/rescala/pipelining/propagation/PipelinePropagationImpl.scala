@@ -2,7 +2,8 @@ package rescala.pipelining.propagation
 
 import rescala.graph.{Reactive, ReevaluationResult}
 import rescala.pipelining.PipelineStruct
-import rescala.propagation.{AbstractPropagation, Committable, Turn}
+import rescala.propagation.Turn
+import rescala.twoversion.{AbstractPropagation, Committable}
 
 
 private[pipelining] trait PipelinePropagationImpl extends AbstractPropagation[PipelineStruct.type] {

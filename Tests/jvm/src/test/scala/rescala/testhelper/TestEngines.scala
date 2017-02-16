@@ -1,9 +1,10 @@
 package rescala.testhelper
 
 import rescala.Engines
-import rescala.engine.{Engine, EngineImpl}
+import rescala.engine.Engine
 import rescala.pipelining.{PipelineEngine, PipelineStruct, PipeliningTurn}
 import rescala.stm.STMTurn
+import rescala.twoversion.EngineImpl
 
 import scala.concurrent.stm.atomic
 

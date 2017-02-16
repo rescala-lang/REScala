@@ -1,7 +1,9 @@
 package rescala.levelbased
 
-import rescala.graph.{ChangableGraphStruct, GraphStruct, PropagationSporeImpl, Pulse, PulseStruct}
+import rescala.graph.{ChangableGraphStruct, GraphStruct, Pulse, PulseStruct}
 import rescala.propagation.Turn
+import rescala.twoversion.PropagationStructImpl
+
 import scala.language.higherKinds
 
 /**
@@ -37,7 +39,7 @@ trait LevelStructType[R] extends GraphStruct[R] {
   * @tparam P Pulse stored value type
   * @tparam R Type of the reactive values that are connected to this struct
   */
-class LevelStructTypeImpl[P, R](current: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends PropagationSporeImpl[P, R](current, transient, initialIncoming) with LevelStructType[R]  {
+class LevelStructTypeImpl[P, R](current: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends PropagationStructImpl[P, R](current, transient, initialIncoming) with LevelStructType[R]  {
   var _level: Int = 0
 
   override def level(implicit turn: Turn[_]): Int = _level

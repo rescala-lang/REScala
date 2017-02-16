@@ -3,12 +3,13 @@ package tests.rescala.concurrency
 import java.util.concurrent.{ConcurrentLinkedQueue, CountDownLatch}
 
 import org.scalatest.FlatSpec
-import rescala.engine.{Engine, EngineImpl}
+import rescala.engine.Engine
 import rescala.graph.Reactive
 import rescala.parrp.{Backoff, ParRP}
 import rescala.propagation.Turn
 import rescala.reactives.{Signals, Var}
 import rescala.testhelper.PessimisticTestState
+import rescala.twoversion.EngineImpl
 
 import scala.collection.JavaConverters._
 
