@@ -478,7 +478,7 @@ class MacroTestSuite extends RETests {
     val macroRes = Signal {
       newSignal()()
     }
-    val normalRes = Signals.dynamic() { t: Turn =>
+    val normalRes = Signals.dynamic() { t: ReevaluationTicket =>
       t.depend(newSignal())
     }
     assert(macroRes.now === 0, "before, macro")

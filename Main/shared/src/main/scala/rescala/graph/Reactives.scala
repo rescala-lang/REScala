@@ -36,12 +36,12 @@ trait Reactive[S <: Struct] {
 
 
 /** helper class to initialise engine and select lock */
-abstract class Base[+P, S <: Struct](budP: S#StructType[P, Reactive[S]]) extends Pulsing[P, S] {
-  final override protected[rescala] def state: S#StructType[_, Reactive[S]] = budP
+abstract class Base[+P, S <: Struct](struct: S#StructType[P, Reactive[S]]) extends Pulsing[P, S] {
+  final override protected[rescala] def state: S#StructType[_, Reactive[S]] = struct
 
-  final protected[this] override def set(value: Pulse[P])(implicit turn: Turn[S]): Unit = if (value.isChange) budP.set(value) else if (hasChanged) budP.set(stable)
-  final protected[rescala] override def stable(implicit turn: Turn[S]): Pulse[P] = budP.base
-  final protected[rescala] override def pulse(implicit turn: Turn[S]): Pulse[P] = budP.get
+  final protected[this] override def set(value: Pulse[P])(implicit turn: Turn[S]): Unit = if (value.isChange) struct.set(value) else if (hasChanged) struct.set(stable)
+  final protected[rescala] override def stable(implicit turn: Turn[S]): Pulse[P] = struct.base
+  final protected[rescala] override def pulse(implicit turn: Turn[S]): Pulse[P] = struct.get
 }
 
 /**
@@ -55,6 +55,11 @@ trait Pulsing[+P, S <: Struct] extends Reactive[S] {
   final private[rescala] def hasChanged(implicit turn: Turn[S]): Boolean = stable != pulse
   protected[rescala] def stable(implicit turn: Turn[S]): Pulse[P]
   protected[rescala] def pulse(implicit turn: Turn[S]): Pulse[P]
+  protected[rescala] def structBefore(implicit turn: Turn[S]): Pulse[P] = pulse(turn)
+  protected[rescala] def structNow(implicit turn: Turn[S]): Pulse[P] = pulse(turn)
+  protected[rescala] def structAfter(implicit turn: Turn[S]): Pulse[P] = pulse(turn)
+  protected[rescala] def structRegRead(implicit turn: Turn[S]): Pulse[P] = pulse(turn)
+  protected[rescala] def structDepend(implicit turn: Turn[S], reevaluatingNode: Reactive[S]): Pulse[P] = pulse(turn)
 }
 
 /**
@@ -66,7 +71,11 @@ trait Pulsing[+P, S <: Struct] extends Reactive[S] {
 trait PulseOption[+P, S <: Struct] extends Pulsing[P, S] {
   @compileTimeOnly("Event.apply can only be used inside of Signal expressions")
   def apply(): Option[P] = throw new IllegalAccessException(s"$this.apply called outside of macro")
-  private[rescala] final def get(implicit turn: Turn[S]): Option[P] = pulse(turn).getE
+
+  // access pulse as static dependency
+  protected[rescala] def regRead(implicit turn: Turn[S]): Option[P] = structRegRead(turn).getE
+  // access pulse as dynamic dependency
+  protected[rescala] def depend(implicit turn: Turn[S], reevaluatingNode: Reactive[S]): Option[P] = structDepend(turn, reevaluatingNode).getE
 }
 
 
@@ -81,11 +90,21 @@ trait Stateful[+A, S <: Struct] extends Pulsing[A, S] {
   @compileTimeOnly("Signal.apply can only be used inside of Signal expressions")
   final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")
 
+  final def before(implicit ticket: TurnSource[S]): A = ticket { turn =>
+    try { structBefore(turn).getS }
+    catch { case EmptySignalControlThrowable => throw new NoSuchElementException(s"Signal $this is empty") }
+  }
   final def now(implicit ticket: TurnSource[S]): A = ticket { turn =>
-    turn.dynamicDependencyInteraction(this)
-    try { get(turn) }
+    try { structNow(turn).getS }
+    catch { case EmptySignalControlThrowable => throw new NoSuchElementException(s"Signal $this is empty") }
+  }
+  final def after(implicit ticket: TurnSource[S]): A = ticket { turn =>
+    try { structAfter(turn).getS }
     catch { case EmptySignalControlThrowable => throw new NoSuchElementException(s"Signal $this is empty") }
   }
 
-  private[rescala] final def get(implicit turn: Turn[S]): A = pulse(turn).getS
+  // access value as static dependency
+  protected[rescala] def regRead(implicit turn: Turn[S]): A = structRegRead(turn).getS
+  // access value as dynamic dependency
+  protected[rescala] def depend(implicit turn: Turn[S], reevaluatingNode: Reactive[S]): A = structDepend(turn, reevaluatingNode).getS
 }

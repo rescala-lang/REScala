@@ -244,10 +244,10 @@ class DynamicSignalTestSuite extends RETests with Whenever {
     val v0 = Var("level 0")
     val v3 = v0.map(_ + "level 1").map(_  + "level 2").map(_ + "level 3")
 
-    val `dynamic signal changing from level 1 to level 4` = dynamic() { turn =>
-      if (turn.depend(v0) == "level 0") turn.depend(v0) else {
+    val `dynamic signal changing from level 1 to level 4` = dynamic() { ticket =>
+      if (ticket.depend(v0) == "level 0") ticket.depend(v0) else {
         // the static bound is necessary here, otherwise we get infinite loops
-        turn.depend(dynamic(v3) {t => turn.depend(v3) + "level 4 inner" }(TurnSource.fromTurn(turn)))
+        ticket.depend(dynamic(v3) {t => ticket.depend(v3) + "level 4 inner" }(TurnSource.fromReevaluationTicket(ticket)))
       }
     }
     assert(`dynamic signal changing from level 1 to level 4`.now == "level 0")

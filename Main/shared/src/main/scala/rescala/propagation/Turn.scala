@@ -55,38 +55,4 @@ trait Turn[S <: Struct] {
     * @param f Handler function to register.
     */
   def observe(f: => Unit): Unit
-
-  /**
-    * Calls a given function and collects all dependencies dynamically marked as used during its evaluation.
-    *
-    * @param f Function to execute and collect dependencies for
-    * @tparam T Return type of the function
-    * @return Return value of the function and set of all reactive values marked as its dependencies
-    */
-  // TODO this should not be necessary here
-  private[rescala] def collectMarkedDependencies[T](f: => T): (T, Set[Reactive[S]])
-
-  /**
-    * Marks a reactive element as used as dynamic dependency, so it is returned by `collectDependencies`
-    *
-    * @param dependency Reactive element to mark
-    */
-  // TODO this should not be necessary here
-  private[rescala] def establishDynamicDependency(dependency: Reactive[S]): Unit
-
-  /** Establish a dependency to the value of the reactive.
-    * Only use inside of dynamic reevaluation  */
-  def depend[A](reactive: Stateful[A, S]): A = {
-    dynamicDependencyInteraction(reactive)
-    establishDynamicDependency(reactive)
-    reactive.get(this)
-  }
-
-  /** Establish a dependency to the value of the reactive
-    * * Only use inside of dynamic reevaluation  */
-  def depend[A](reactive: PulseOption[A, S]): Option[A] = {
-    dynamicDependencyInteraction(reactive)
-    establishDynamicDependency(reactive)
-    reactive.get(this)
-  }
 }

@@ -1,7 +1,7 @@
 package rescala.engine
 
 import rescala.graph.Struct
-import rescala.propagation.Turn
+import rescala.propagation.{ReevaluationTicket, Turn}
 
 import scala.annotation.implicitNotFound
 import scala.language.implicitConversions
@@ -25,6 +25,8 @@ final case class TurnSource[S <: Struct](self: Either[Turn[S], Engine[S, Turn[S]
 object TurnSource extends LowPriorityTurnSource {
   implicit def fromTurnImplicit[S <: Struct](implicit turn: Turn[S]): TurnSource[S] = TurnSource(Left(turn))
   implicit def fromTurn[S <: Struct](turn: Turn[S]): TurnSource[S] = TurnSource(Left(turn))
+  implicit def fromReevaluationTicketImplicit[S <: Struct](implicit ticket: ReevaluationTicket[S]): TurnSource[S] = TurnSource(Left(ticket.turn))
+  implicit def fromReevaluationTicket[S <: Struct](ticket: ReevaluationTicket[S]): TurnSource[S] = TurnSource(Left(ticket.turn))
 }
 
 sealed trait LowPriorityTurnSource {

@@ -57,7 +57,7 @@ trait PessimisticTestState {
 
   implicit def engine: Engine[ParRP, Turn[ParRP]] = Pessigen
   def unsafeNow[T](s: Signal[T, ParRP]): T = {
-    engine.plan()(s.get(_))
+    engine.plan()(s.now(_))
   }
 
 }

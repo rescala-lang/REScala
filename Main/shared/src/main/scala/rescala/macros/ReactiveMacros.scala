@@ -1,7 +1,7 @@
 package rescala.macros
 
 import rescala.graph.{PulseOption, Stateful, Struct}
-import rescala.propagation.Turn
+import rescala.propagation.ReevaluationTicket
 import rescala.reactives.{Event, Signal}
 
 import retypecheck._
@@ -73,7 +73,7 @@ object ReactiveMacros {
     // every Signal { ... } macro instance gets expanded into a dynamic signal
     val signalSyntArgName = TermName(c.freshName("s$"))
     val signalSyntArgIdent = Ident(signalSyntArgName)
-    internal setType(signalSyntArgIdent, weakTypeOf[Turn[S]])
+    internal setType(signalSyntArgIdent, weakTypeOf[ReevaluationTicket[S]])
 
     // the signal values that will be cut out of the Signal expression
     var cutOutSignals = List[ValDef]()
@@ -229,7 +229,7 @@ object ReactiveMacros {
     val innerTree = transformer transform expression.tree
 
     // SignalSynt argument function
-    val signalExpression = q"{$signalSyntArgName: ${ weakTypeOf[Turn[S]] } => $innerTree }"
+    val signalExpression = q"{$signalSyntArgName: ${ weakTypeOf[ReevaluationTicket[S]] } => $innerTree }"
 
     // upper bound parameters, only use static outside declarations
     // note that this potentially misses many dependencies

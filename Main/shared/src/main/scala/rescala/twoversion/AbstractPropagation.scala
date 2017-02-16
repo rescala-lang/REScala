@@ -42,21 +42,4 @@ trait AbstractPropagation[S <: Struct] extends Turn[S] {
     * turns to run on them.
     */
   def releasePhase(): Unit
-
-
-  private var collectedDependencies: List[Reactive[S]] = null
-
-  def collectMarkedDependencies[T](f: => T): (T, Set[Reactive[S]]) = {
-    val old = collectedDependencies
-    collectedDependencies = Nil
-    // useDependency is called as a side effect of `f` adding new dependencies to collectedDependencies
-    val sideEffectingEvaluationResult = f
-    val newDependencies = collectedDependencies.toSet
-    collectedDependencies = old
-    (sideEffectingEvaluationResult, newDependencies)
-  }
-  def establishDynamicDependency(dependency: Reactive[S]): Unit = {
-    require(collectedDependencies != null, "can not dynamically access reactive outside of proper context")
-    collectedDependencies ::= dependency
-  }
 }

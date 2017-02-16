@@ -21,13 +21,13 @@ import scala.util.control.NonFatal
 trait Signal[+A, S <: Struct] extends Stateful[A, S] with Observable[A, S] {
 
   final def recover[R >: A](onFailure: Throwable => R)(implicit ticket: TurnSource[S]): Signal[R, S] = Signals.static(this) { turn =>
-    try this.get(turn) catch {
+    try this.regRead(turn) catch {
       case NonFatal(e) => onFailure(e)
     }
   }
 
   final def withDefault[R >: A](value: R)(implicit ticket: TurnSource[S]): Signal[R, S] = Signals.static(this) { (turn) =>
-    try this.get(turn) catch {
+    try this.regRead(turn) catch {
       case EmptySignalControlThrowable => value
     }
   }
@@ -41,7 +41,8 @@ trait Signal[+A, S <: Struct] extends Stateful[A, S] with Observable[A, S] {
   final def flatten[R](implicit ev: Flatten[A, S, R], ticket: TurnSource[S]): R = ev.apply(this)
 
   /** Delays this signal by n occurrences */
-  final def delay(n: Int)(implicit ticket: TurnSource[S]): Signal[A, S] = ticket { implicit turn => changed.delay(this.get, n) }
+  // TODO potentially glitched initialization!
+  final def delay(n: Int)(implicit ticket: TurnSource[S]): Signal[A, S] = ticket { implicit turn => changed.delay(this.regRead, n) }
 
   /** Create an event that fires every time the signal changes. It fires the tuple (oldVal, newVal) for the signal.
     * Be aware that no change will be triggered when the signal changes to or from empty */

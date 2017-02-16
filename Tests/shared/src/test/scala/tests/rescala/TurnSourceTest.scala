@@ -9,20 +9,20 @@ class TurnSourceTest extends RETests {
   def getTurn[S2 <: rescala.graph.Struct](implicit engine: rescala.engine.Engine[S2, rescala.propagation.Turn[S2]]): rescala.propagation.Turn[S2] = engine.plan()(identity)
 
   allEngines("none Dynamic No Implicit") { engine => import engine._
-    assert(implicitly[Ticket].self === Right(engine))
+    assert(implicitly[TurnSource].self === Right(engine))
   }
 
   allEngines("some Dynamic No Implicit") { engine => import engine._
     engine.plan() { (dynamicTurn: Turn) =>
-      assert(implicitly[Ticket].self === Right(engine))
-      assert(implicitly[Ticket].apply(identity) === dynamicTurn)
+      assert(implicitly[TurnSource].self === Right(engine))
+      assert(implicitly[TurnSource].apply(identity) === dynamicTurn)
     }
   }
 
   allEngines("none Dynamic Some Implicit") { engine => import engine._
     implicit val implicitTurn: Turn = getTurn
-    assert(implicitly[Ticket].self === Left(implicitTurn))
-    assert(implicitly[Ticket].apply(identity) === implicitTurn)
+    assert(implicitly[TurnSource].self === Left(implicitTurn))
+    assert(implicitly[TurnSource].apply(identity) === implicitTurn)
   }
 
   // Cannot run a turn inside a turn with pipelining
@@ -33,8 +33,8 @@ class TurnSourceTest extends RETests {
     //    else {
     engine.plan() { (dynamicTurn: Turn) =>
       implicit val implicitTurn: Turn = getTurn
-      assert(implicitly[Ticket].self === Left(implicitTurn))
-      assert(implicitly[Ticket].apply(identity) === implicitTurn)
+      assert(implicitly[TurnSource].self === Left(implicitTurn))
+      assert(implicitly[TurnSource].apply(identity) === implicitTurn)
       //      }
     }
   }
@@ -45,7 +45,7 @@ class TurnSourceTest extends RETests {
     val closureDefinition = getTurn(engine)
     val closure = {
       implicit def it: Turn = closureDefinition
-      () => implicitly[Ticket]
+      () => implicitly[TurnSource]
     }
     engine.plan() { dynamic =>
       assert(closure().self === Left(closureDefinition))
@@ -56,7 +56,7 @@ class TurnSourceTest extends RETests {
   allEngines("dynamic In Closures") { engine => import engine._
     val closure = {
       engine.plan() { t =>
-        () => implicitly[Ticket]
+        () => implicitly[TurnSource]
       }
     }
     engine.plan() { dynamic =>

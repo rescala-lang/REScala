@@ -35,13 +35,13 @@ class DynamicReadTest extends FlatSpec {
     val depOfDynamic = Signals.static(dynamicDep)(implicit t => {
       Thread.sleep(minEvaluationTimeOfUpdate)
       LogUtils.log(s"$t: Eval of dyn dep completed")
-      dynamicDep.get + 1
+      dynamicDep.regRead + 1
     })
 
     val source2Dep = Signals.static(source2)(implicit t => {
       Thread.sleep(minEvaluationTimeOfUpdate)
       LogUtils.log(s"$t: Eval of source2 dep completed")
-      source2.get + 1
+      source2.regRead + 1
     })
 
     /*
@@ -148,10 +148,10 @@ class DynamicReadTest extends FlatSpec {
     // To do that, I connect the paths with a new node
     val source1b = Var(0)
     val source2b = Var(0)
-    val dep1 = Signals.static(source1b)(implicit t => {Thread.sleep(minEvaluationTimeOfUpdate); source1b.get})
+    val dep1 = Signals.static(source1b)(implicit t => {Thread.sleep(minEvaluationTimeOfUpdate); source1b.regRead})
     val dynDep1 = engine.Signal { if (dep1() % 2 == 0) dep1() else dep1() + source2b() }
-    val dep2 = Signals.static(source2b)(implicit t => source2b.get)
-    val dep12 = Signals.static(dynDep1, dep2)(implicit t => dynDep1.get + dep2.get)
+    val dep2 = Signals.static(source2b)(implicit t => source2b.regRead)
+    val dep12 = Signals.static(dynDep1, dep2)(implicit t => dynDep1.regRead + dep2.regRead)
 
     val dep1Tracker = new ValueTracker(dep1)
     val dynDep1Tracker = new ValueTracker(dynDep1)

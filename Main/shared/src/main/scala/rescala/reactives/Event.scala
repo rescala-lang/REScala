@@ -24,7 +24,7 @@ trait Event[+T, S <: Struct] extends PulseOption[T, S] with Observable[T, S] {
 
 
   /** collect results from a partial function */
-  final def collect[U](pf: PartialFunction[T, U])(implicit ticket: TurnSource[S]): Event[U, S] = Events.static(s"(collect $this)", this) { turn => Pulse.fromOption(get(turn).flatMap(pf.lift)) }
+  final def collect[U](pf: PartialFunction[T, U])(implicit ticket: TurnSource[S]): Event[U, S] = Events.static(s"(collect $this)", this) { turn => Pulse.fromOption(regRead(turn).flatMap(pf.lift)) }
 
   /** add an observer */
   final def +=(react: T => Unit)(implicit ticket: TurnSource[S]): Observe[S] = observe(react)(ticket)
@@ -92,7 +92,7 @@ trait Event[+T, S <: Struct] extends PulseOption[T, S] with Observable[T, S] {
   /** folds events with a given fold function to create a Signal allowing recovery of exceptional states by ignoring the stable value */
   final def lazyFold[A](init: => A)(folder: (=> A, => T) => A)(implicit ticket: TurnSource[S]): Signal[A, S] = ticket { initialTurn =>
     Signals.Impl.makeStatic(Set[Reactive[S]](this), init) { (turn, currentValue) =>
-      get(turn).fold(currentValue)(value => folder(currentValue, value))
+      regRead(turn).fold(currentValue)(value => folder(currentValue, value))
     }(initialTurn)
   }
 
@@ -146,8 +146,9 @@ trait Event[+T, S <: Struct] extends PulseOption[T, S] with Observable[T, S] {
 
   /** Return a Signal that is updated only when e fires, and has the value of the signal s */
   final def snapshot[A](s: Signal[A, S])(implicit ticket: TurnSource[S]): Signal[A, S] = ticket { turn =>
-    Signals.Impl.makeStatic(Set[Reactive[S]](this, s), s.get(turn)) { (t, current) =>
-      this.get(t).fold(current)(_ => s.get(t))
+    // TODO potentially glitched initialization!
+    Signals.Impl.makeStatic(Set[Reactive[S]](this, s), s.regRead(turn)) { (t, current) =>
+      this.regRead(t).fold(current)(_ => s.regRead(t))
     }(turn)
   }
 

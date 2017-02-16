@@ -29,7 +29,7 @@ class AdmissionPhaseTest extends FlatSpec with TimeLimitedTests {
 
     val threads = for (_ <- 1 to numThreads) yield createThread {
       engine.plan(counter)(implicit t => {
-        val currentValue = counter.get(t)
+        val currentValue = counter.now(t)
         assert(currentValue == numAdmissions)
         counter.admit(currentValue + 1)
         numAdmissions += 1
@@ -64,21 +64,21 @@ class AdmissionPhaseTest extends FlatSpec with TimeLimitedTests {
 
     val threads = for( _ <- 1 to numThreads) yield createThread {
       engine.plan(counter)(implicit t => {
-        val currentValue = counter.get(t)
+        val currentValue = counter.now(t)
         assert(numAdmissions == currentValue)
-        assert(dep1.get(t) == currentValue +1)
-        assert(dep2.get(t) == currentValue + 2)
-        assert(dep12.get(t) == 2* currentValue +3)
+        assert(dep1.now(t) == currentValue +1)
+        assert(dep2.now(t) == currentValue + 2)
+        assert(dep12.now(t) == 2* currentValue +3)
         numAdmissions += 1
         val newValue = currentValue + 1
         counter.admit(newValue)
         t.schedule(new Committable{
           override def release(implicit turn : Turn[_]): Unit = {}
           override def commit(implicit turn : Turn[_]): Unit = {
-            val counterVal = counter.get
-            val dep1Val = dep1.get
-            val dep2Val = dep2.get
-            val dep12Val = dep12.get
+            val counterVal = counter.now
+            val dep1Val = dep1.now
+            val dep2Val = dep2.now
+            val dep12Val = dep12.now
             try {
             assert(counterVal == newValue)
             assert(dep1Val == newValue + 1)
