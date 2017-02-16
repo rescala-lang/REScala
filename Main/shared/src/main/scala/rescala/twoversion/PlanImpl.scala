@@ -1,7 +1,7 @@
-package rescala.engine
+package rescala.twoversion
 
+import rescala.engine.Engine
 import rescala.graph.Struct
-import rescala.propagation.AbstractPropagation
 
 import scala.util.DynamicVariable
 

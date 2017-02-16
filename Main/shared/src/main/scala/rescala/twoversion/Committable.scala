@@ -1,4 +1,6 @@
-package rescala.propagation
+package rescala.twoversion
+
+import rescala.propagation.Turn
 
 /**
   * Indicates that a class stores buffered changes that can be committed or reverted

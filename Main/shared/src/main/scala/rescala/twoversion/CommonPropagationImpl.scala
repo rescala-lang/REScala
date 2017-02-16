@@ -1,6 +1,6 @@
-package rescala.propagation
+package rescala.twoversion
 
-import rescala.graph.{DepDiff, ChangableGraphStruct, Reactive}
+import rescala.graph.{ChangableGraphStruct, DepDiff, Reactive}
 
 import scala.util.control.NonFatal
 

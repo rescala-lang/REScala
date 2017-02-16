@@ -1,7 +1,6 @@
-package rescala.engine
+package rescala.twoversion
 
 import rescala.graph.Struct
-import rescala.propagation.AbstractPropagation
 
 /**
   * Implementation of the turn creation function based on a given function as class parameter

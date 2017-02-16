@@ -1,6 +1,7 @@
-package rescala.propagation
+package rescala.twoversion
 
 import rescala.graph.{Reactive, Struct}
+import rescala.propagation.Turn
 
 /**
   * Abstract propagation definition that defines phases for reactive propagation through dependent reactive elements.
