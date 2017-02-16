@@ -1,6 +1,6 @@
 package rescala.meta
 
-import rescala.engines.{Engine, Ticket}
+import rescala.engines.{Engine, TurnSource}
 import rescala.graph.{Pulse, Pulsing, Struct}
 import rescala.propagation.Turn
 import rescala.reactives._
@@ -37,16 +37,16 @@ trait ReactiveNode[+T] extends DataFlowNode[T] {
     assignedReifier = Some(reifier)
   }
   def reify[S <: Struct](implicit reifier: Reifier[S]): Observable[T, S]
-  def unreify[S <: Struct](implicit reifier: Reifier[S], ticket : Ticket[S]): Unit = {
+  def unreify[S <: Struct](implicit reifier: Reifier[S], ticket : TurnSource[S]): Unit = {
     reifier.unreify(this)
     assignedReifier = None
   }
   override def newRef(): ReactiveRef[T]
 
   protected[meta] def doReify[S <: Struct](reifier: Reifier[S]): Observable[T, S]
-  protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Pulsing[T, S]
+  protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: TurnSource[S]): Pulsing[T, S]
 
-  def observe[S <: Struct](onSuccess: (T) => Unit, onFailure: (Throwable) => Unit = t => throw t)(implicit reifier: Reifier[S], ticket: Ticket[S]): Observe[S] = {
+  def observe[S <: Struct](onSuccess: (T) => Unit, onFailure: (Throwable) => Unit = t => throw t)(implicit reifier: Reifier[S], ticket: TurnSource[S]): Observe[S] = {
     reify.observe(onSuccess, onFailure)
   }
 }
@@ -59,9 +59,9 @@ trait EventNode[+T] extends ReactiveNode[T] {
     registerReifier(reifier)
     reifier.doReifyEvent(this)
   }
-  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Event[T, S]
+  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: TurnSource[S]): Event[T, S]
 
-  def +=[S <: Struct](react: T => Unit)(implicit reifier: Reifier[S], ticket: Ticket[S]): Observe[S] = observe(react)
+  def +=[S <: Struct](react: T => Unit)(implicit reifier: Reifier[S], ticket: TurnSource[S]): Observe[S] = observe(react)
 
   def ||[U >: T](others: EventNode[U]*): OrEventNode[T, U] = OrEventNode(graph, newRef(), others.map(_.newRef()):_*)
   def &&[U >: T](pred: (U) => Boolean): FilteredEventNode[U, U] = FilteredEventNode[U, U](graph, newRef(), pred)
@@ -87,9 +87,9 @@ trait SignalNode[+A] extends ReactiveNode[A] {
     registerReifier(reifier)
     reifier.doReifySignal(this)
   }
-  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Signal[A, S]
+  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: TurnSource[S]): Signal[A, S]
 
-  def now[S <: Struct](implicit reifier: Reifier[S], ticket: Ticket[S]): A = reify.now
+  def now[S <: Struct](implicit reifier: Reifier[S], ticket: TurnSource[S]): A = reify.now
 
   def delay(n: Int): DelayedSignalNode[A] = DelayedSignalNode(graph, newRef(), n)
   def map[X >: A, B](f: (X) => B): MappedSignalNode[X, B] = MappedSignalNode(graph, newRef(), f)
@@ -107,7 +107,7 @@ case class EvtEventNode[T](override var graph: DataFlowGraph) extends EventNode[
   def structuralEquals(node: DataFlowNode[_]): Boolean = this == node
 
   override def dependencies: Set[DataFlowRef[_]] = Set()
-  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Evt[T, S] = reifier.createEvt()
+  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: TurnSource[S]): Evt[T, S] = reifier.createEvt()
 
   def fire(value : T) : Unit = {
     val log = LoggedFire(this.newRef(), value)
@@ -124,7 +124,7 @@ case class ChangeEventNode[+T](override var graph: DataFlowGraph, base : SignalR
   }
 
   override def dependencies: Set[DataFlowRef[_]] = Set(base)
-  override def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Event[Signals.Diff[T], S] = base.deref.get.doReify(reifier).change
+  override def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: TurnSource[S]): Event[Signals.Diff[T], S] = base.deref.get.doReify(reifier).change
 }
 case class ChangedEventNode[+T](override var graph: DataFlowGraph, base : SignalRef[T]) extends EventNode[T] {
   def structuralEquals(node: DataFlowNode[_]): Boolean = node match {
@@ -133,7 +133,7 @@ case class ChangedEventNode[+T](override var graph: DataFlowGraph, base : Signal
   }
 
   override def dependencies: Set[DataFlowRef[_]] = Set(base)
-  override protected [meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Event[T, S] = base.deref.get.doReify(reifier).changed
+  override protected [meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: TurnSource[S]): Event[T, S] = base.deref.get.doReify(reifier).changed
 }
 case class FilteredEventNode[T, +U >: T](override var graph: DataFlowGraph, base : EventRef[T], pred: (T) => Boolean) extends EventNode[U] {
   def structuralEquals(node: DataFlowNode[_]): Boolean = node match {
@@ -142,7 +142,7 @@ case class FilteredEventNode[T, +U >: T](override var graph: DataFlowGraph, base
   }
 
   override def dependencies: Set[DataFlowRef[_]] = Set(base)
-  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Event[T, S] = base.deref.get.doReify(reifier).filter(pred)
+  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: TurnSource[S]): Event[T, S] = base.deref.get.doReify(reifier).filter(pred)
 }
 case class OrEventNode[+T <: U, +U](override var graph: DataFlowGraph, base : EventRef[T], others : EventRef[U]*) extends EventNode[U] {
   def structuralEquals(node: DataFlowNode[_]): Boolean = node match {
@@ -151,7 +151,7 @@ case class OrEventNode[+T <: U, +U](override var graph: DataFlowGraph, base : Ev
   }
 
   override def dependencies: Set[DataFlowRef[_]] = Set(base) ++ others
-  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Event[U, S] = others.foldLeft(base.deref.get.doReify(reifier) : Event[U, S])((acc, next) => acc || next.deref.get.doReify(reifier))
+  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: TurnSource[S]): Event[U, S] = others.foldLeft(base.deref.get.doReify(reifier) : Event[U, S])((acc, next) => acc || next.deref.get.doReify(reifier))
 }
 case class ExceptEventNode[+T, +U](override var graph: DataFlowGraph, base : EventRef[T], other : EventRef[U]) extends EventNode[T] {
   def structuralEquals(node: DataFlowNode[_]): Boolean = node match {
@@ -160,7 +160,7 @@ case class ExceptEventNode[+T, +U](override var graph: DataFlowGraph, base : Eve
   }
 
   override def dependencies: Set[DataFlowRef[_]] = Set(base, other)
-  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Event[T, S] = base.deref.get.doReify(reifier) \ other.deref.get.doReify(reifier)
+  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: TurnSource[S]): Event[T, S] = base.deref.get.doReify(reifier) \ other.deref.get.doReify(reifier)
 }
 case class AndEventNode[T, U, +R](override var graph: DataFlowGraph, base : EventRef[T], other : EventRef[U], merger: (T, U) => R) extends EventNode[R] {
   def structuralEquals(node: DataFlowNode[_]): Boolean = node match {
@@ -169,7 +169,7 @@ case class AndEventNode[T, U, +R](override var graph: DataFlowGraph, base : Even
   }
 
   override def dependencies: Set[DataFlowRef[_]] = Set(base, other)
-  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Event[R, S] = base.deref.get.doReify(reifier).and(other.deref.get.doReify(reifier))(merger)
+  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: TurnSource[S]): Event[R, S] = base.deref.get.doReify(reifier).and(other.deref.get.doReify(reifier))(merger)
 }
 case class ZippedEventNode[+T, +U](override var graph: DataFlowGraph, base : EventRef[T], other : EventRef[U]) extends EventNode[(T, U)] {
   def structuralEquals(node: DataFlowNode[_]): Boolean = node match {
@@ -178,7 +178,7 @@ case class ZippedEventNode[+T, +U](override var graph: DataFlowGraph, base : Eve
   }
 
   override def dependencies: Set[DataFlowRef[_]] = Set(base, other)
-  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Event[(T, U), S] = base.deref.get.doReify(reifier).zip(other.deref.get.doReify(reifier))
+  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: TurnSource[S]): Event[(T, U), S] = base.deref.get.doReify(reifier).zip(other.deref.get.doReify(reifier))
 }
 case class MappedEventNode[T, +U](override var graph: DataFlowGraph, base : EventRef[T], mapping: (T) => U) extends EventNode[U] {
   def structuralEquals(node: DataFlowNode[_]): Boolean = node match {
@@ -187,7 +187,7 @@ case class MappedEventNode[T, +U](override var graph: DataFlowGraph, base : Even
   }
 
   override def dependencies: Set[DataFlowRef[_]] = Set(base)
-  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Event[U, S] = base.deref.get.doReify(reifier).map(mapping)
+  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: TurnSource[S]): Event[U, S] = base.deref.get.doReify(reifier).map(mapping)
 }
 case class FlatMappedEventNode[T, +B](override var graph: DataFlowGraph, base : EventRef[T], f: (T) => EventRef[B]) extends EventNode[B] {
   def structuralEquals(node: DataFlowNode[_]): Boolean = node match {
@@ -196,7 +196,7 @@ case class FlatMappedEventNode[T, +B](override var graph: DataFlowGraph, base : 
   }
 
   override def dependencies: Set[DataFlowRef[_]] = Set(base)
-  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Event[B, S] = base.deref.get.doReify(reifier).flatMap(f(_).deref.get.doReify(reifier))
+  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: TurnSource[S]): Event[B, S] = base.deref.get.doReify(reifier).flatMap(f(_).deref.get.doReify(reifier))
 }
 
 case class VarSignalNode[A](override var graph: DataFlowGraph) extends SignalNode[A] {
@@ -208,7 +208,7 @@ case class VarSignalNode[A](override var graph: DataFlowGraph) extends SignalNod
   def structuralEquals(node: DataFlowNode[_]): Boolean = this == node
 
   override def dependencies: Set[DataFlowRef[_]] = Set()
-  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Var[A, S] = reifier.createVar()
+  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: TurnSource[S]): Var[A, S] = reifier.createVar()
 
   def set(value : A) : Unit = {
     val log = LoggedSet(this.newRef(), value)
@@ -225,7 +225,7 @@ case class FoldedSignalNode[T, A](override var graph: DataFlowGraph, base : Even
   }
 
   override def dependencies: Set[DataFlowRef[_]] = Set(base)
-  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Signal[A, S] = base.deref.get.doReify(reifier).fold(init)(fold)
+  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: TurnSource[S]): Signal[A, S] = base.deref.get.doReify(reifier).fold(init)(fold)
 }
 case class ToggledSignalNode[+T, +A](override var graph: DataFlowGraph, base : EventRef[T], a : SignalRef[A], b : SignalRef[A]) extends SignalNode[A] {
   def structuralEquals(node: DataFlowNode[_]): Boolean = node match {
@@ -234,7 +234,7 @@ case class ToggledSignalNode[+T, +A](override var graph: DataFlowGraph, base : E
   }
 
   override def dependencies: Set[DataFlowRef[_]] = Set(base, a, b)
-  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Signal[A, S] = base.deref.get.doReify(reifier).toggle(a.deref.get.doReify(reifier), b.deref.get.doReify(reifier))
+  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: TurnSource[S]): Signal[A, S] = base.deref.get.doReify(reifier).toggle(a.deref.get.doReify(reifier), b.deref.get.doReify(reifier))
 }
 case class SnapshotSignalNode[+T, +A](override var graph: DataFlowGraph, base : EventRef[T], s : SignalRef[A]) extends SignalNode[A] {
   def structuralEquals(node: DataFlowNode[_]): Boolean = node match {
@@ -243,7 +243,7 @@ case class SnapshotSignalNode[+T, +A](override var graph: DataFlowGraph, base : 
   }
 
   override def dependencies: Set[DataFlowRef[_]] = Set(base, s)
-  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Signal[A, S] = base.deref.get.doReify(reifier).snapshot(s.deref.get.doReify(reifier))
+  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: TurnSource[S]): Signal[A, S] = base.deref.get.doReify(reifier).snapshot(s.deref.get.doReify(reifier))
 }
 case class SwitchOnceSignalNode[+T, +A](override var graph: DataFlowGraph, base : EventRef[T], original : SignalRef[A], newSignal : SignalRef[A]) extends SignalNode[A] {
   def structuralEquals(node: DataFlowNode[_]): Boolean = node match {
@@ -252,7 +252,7 @@ case class SwitchOnceSignalNode[+T, +A](override var graph: DataFlowGraph, base 
   }
 
   override def dependencies: Set[DataFlowRef[_]] = Set(base, original, newSignal)
-  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Signal[A, S] = base.deref.get.doReify(reifier).switchOnce(original.deref.get.doReify(reifier), newSignal.deref.get.doReify(reifier))
+  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: TurnSource[S]): Signal[A, S] = base.deref.get.doReify(reifier).switchOnce(original.deref.get.doReify(reifier), newSignal.deref.get.doReify(reifier))
 }
 case class SwitchToSignalNode[+T <: A, +A](override var graph: DataFlowGraph, base : EventRef[T], original : SignalRef[A]) extends SignalNode[A] {
   def structuralEquals(node: DataFlowNode[_]): Boolean = node match {
@@ -261,7 +261,7 @@ case class SwitchToSignalNode[+T <: A, +A](override var graph: DataFlowGraph, ba
   }
 
   override def dependencies: Set[DataFlowRef[_]] = Set(base, original)
-  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Signal[A, S] = base.deref.get.doReify(reifier).switchTo(original.deref.get.doReify(reifier))
+  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: TurnSource[S]): Signal[A, S] = base.deref.get.doReify(reifier).switchTo(original.deref.get.doReify(reifier))
 }
 case class DelayedSignalNode[+A](override var graph: DataFlowGraph, base : SignalRef[A], n: Int) extends SignalNode[A] {
   def structuralEquals(node: DataFlowNode[_]): Boolean = node match {
@@ -270,7 +270,7 @@ case class DelayedSignalNode[+A](override var graph: DataFlowGraph, base : Signa
   }
 
   override def dependencies: Set[DataFlowRef[_]] = Set(base)
-  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Signal[A, S] = base.deref.get.doReify(reifier).delay(n)
+  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: TurnSource[S]): Signal[A, S] = base.deref.get.doReify(reifier).delay(n)
 }
 case class MappedSignalNode[A, +U](override var graph: DataFlowGraph, base : SignalRef[A], mapping: (A) => U) extends SignalNode[U] {
   def structuralEquals(node: DataFlowNode[_]): Boolean = node match {
@@ -279,5 +279,5 @@ case class MappedSignalNode[A, +U](override var graph: DataFlowGraph, base : Sig
   }
 
   override def dependencies: Set[DataFlowRef[_]] = Set(base)
-  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: Ticket[S]): Signal[U, S] = base.deref.get.doReify(reifier).map(mapping)
+  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: TurnSource[S]): Signal[U, S] = base.deref.get.doReify(reifier).map(mapping)
 }

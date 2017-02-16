@@ -1,6 +1,7 @@
 package rescala.stm
 
-import rescala.graph.{LevelStructType, _}
+import rescala.graph._
+import rescala.levelbased.LevelStructType
 import rescala.propagation.Turn
 
 import scala.concurrent.stm.{InTxn, Ref}

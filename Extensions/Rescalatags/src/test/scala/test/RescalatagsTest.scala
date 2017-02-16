@@ -4,13 +4,14 @@ import org.scalajs.dom.Node
 import org.scalajs.dom.html.Span
 import org.scalatest.FlatSpec
 import org.scalatest.prop.TableDrivenPropertyChecks
+import rescala.Engines
 import rescalatags._
 
 import scalatags.JsDom.all._
 
 class RescalatagsTest extends FlatSpec with TableDrivenPropertyChecks {
 
-  forAll(Table("engine", rescala.engines.Engines.all: _*)) { engine =>
+  forAll(Table("engine", Engines.all: _*)) { engine =>
     import engine._
 
     behavior of engine.toString

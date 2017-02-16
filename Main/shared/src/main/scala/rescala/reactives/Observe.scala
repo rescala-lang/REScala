@@ -2,7 +2,7 @@ package rescala.reactives
 
 import java.util.concurrent.ConcurrentHashMap
 
-import rescala.engines.{Engine, Ticket}
+import rescala.engines.{Engine, TurnSource}
 import rescala.graph._
 import rescala.propagation.{Committable, Turn}
 import rescala.reactives.RExceptions.UnhandledFailureException
@@ -34,7 +34,7 @@ object Observe {
     }
   }
 
-  def weak[T, S <: Struct](dependency: Pulsing[T, S])(fun: Try[T] => Unit)(implicit maybe: Ticket[S]): Observe[S] = {
+  def weak[T, S <: Struct](dependency: Pulsing[T, S])(fun: Try[T] => Unit)(implicit maybe: TurnSource[S]): Observe[S] = {
     val incoming = Set[Reactive[S]](dependency)
     maybe(initTurn => initTurn.create(incoming) {
       val obs = new Obs(initTurn.makeStructState[T, Reactive[S]](initialIncoming = incoming, transient = false), dependency, fun)
@@ -43,7 +43,7 @@ object Observe {
     })
   }
 
-  def strong[T, S <: Struct](dependency: Pulsing[T, S])(fun: Try[T] => Unit)(implicit maybe: Ticket[S]): Observe[S] = {
+  def strong[T, S <: Struct](dependency: Pulsing[T, S])(fun: Try[T] => Unit)(implicit maybe: TurnSource[S]): Observe[S] = {
     val obs = weak(dependency)(fun)
     strongObserveReferences.put(obs, true)
     obs
@@ -70,7 +70,7 @@ trait Observable[+P, S <: Struct] {
   final def observe(
     onSuccess: P => Unit,
     onFailure: Throwable => Unit = t => throw new UnhandledFailureException(this, t)
-  )(implicit ticket: Ticket[S]): Observe[S] = Observe.strong(this) {
+  )(implicit ticket: TurnSource[S]): Observe[S] = Observe.strong(this) {
     case Success(v) => onSuccess(v)
     case Failure(t) => onFailure(t)
   }

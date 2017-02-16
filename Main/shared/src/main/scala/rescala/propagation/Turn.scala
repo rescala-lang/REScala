@@ -61,6 +61,7 @@ trait Turn[S <: Struct] {
     * @tparam T Return type of the function
     * @return Return value of the function and set of all reactive values marked as its dependencies
     */
+  // TODO this should not be necessary here
   private[rescala] def collectMarkedDependencies[T](f: => T): (T, Set[Reactive[S]])
 
   /**
@@ -68,6 +69,7 @@ trait Turn[S <: Struct] {
     *
     * @param dependency Reactive element to mark
     */
+  // TODO this should not be necessary here
   private[rescala] def establishDynamicDependency(dependency: Reactive[S]): Unit
 
   /** Establish a dependency to the value of the reactive.

@@ -3,7 +3,7 @@ package tests.rescala.concurrency
 import java.util.concurrent.{ConcurrentLinkedQueue, CountDownLatch}
 
 import org.scalatest.FunSuite
-import rescala.engines.Engines
+import rescala.Engines
 import rescala.reactives.{Signals, Var}
 
 import scala.util.Random

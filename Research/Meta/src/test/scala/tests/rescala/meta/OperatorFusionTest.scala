@@ -2,12 +2,11 @@ package tests.rescala.meta
 
 import org.scalatest.FunSuite
 import rescala.api.Api
-import rescala.engines.CommonEngines
 import rescala.meta.optimization.OperatorFusion
 import rescala.meta.{DataFlowGraph, EngineReifier}
 
 class OperatorFusionTest extends FunSuite {
-  import rescala.engines.CommonEngines.synchron
+  import rescala.levelbased.LevelBasedPropagationEngines.synchron
   implicit val reifier = new rescala.meta.EngineReifier
 
   test("Event map fusion test") {
@@ -55,7 +54,7 @@ class OperatorFusionTest extends FunSuite {
   }
 
   test("Signal map fusion test") {
-    import rescala.engines.CommonEngines.synchron
+    import rescala.levelbased.LevelBasedPropagationEngines.synchron
 
     val g = new DataFlowGraph()
     val api = new Api.metaApi(g)

@@ -1,6 +1,6 @@
 package rescala.reactives
 
-import rescala.engines.{Engine, Ticket}
+import rescala.engines.{Engine, TurnSource}
 import rescala.graph._
 import rescala.propagation.Turn
 import rescala.reactives.RExceptions.EmptySignalControlThrowable
@@ -45,18 +45,18 @@ object Signals extends GeneratedSignalLift {
 
 
   /** creates a new static signal depending on the dependencies, reevaluating the function */
-  def static[T, S <: Struct](dependencies: Reactive[S]*)(expr: Turn[S] => T)(implicit ticket: Ticket[S]): Signal[T, S] = ticket { initialTurn =>
+  def static[T, S <: Struct](dependencies: Reactive[S]*)(expr: Turn[S] => T)(implicit ticket: TurnSource[S]): Signal[T, S] = ticket { initialTurn =>
     // using an anonymous function instead of ignore2 causes dependencies to be captured, which we want to avoid
     def ignore2[I, C, R](f: I => R): (I, C) => R = (t, _) => f(t)
     Impl.makeStatic(dependencies.toSet[Reactive[S]], expr(initialTurn))(ignore2(expr))(initialTurn)
   }
 
-  def lift[A, S <: Struct, R](los: Seq[Signal[A, S]])(fun: Seq[A] => R)(implicit ticket: Ticket[S]): Signal[R, S] = {
+  def lift[A, S <: Struct, R](los: Seq[Signal[A, S]])(fun: Seq[A] => R)(implicit ticket: TurnSource[S]): Signal[R, S] = {
     static(los: _*){t => fun(los.map(_.get(t)))}
   }
 
   /** creates a signal that has dynamic dependencies (which are detected at runtime with Signal.apply(turn)) */
-  def dynamic[T, S <: Struct](dependencies: Reactive[S]*)(expr: Turn[S] => T)(implicit ticket: Ticket[S]): Signal[T, S] =
+  def dynamic[T, S <: Struct](dependencies: Reactive[S]*)(expr: Turn[S] => T)(implicit ticket: TurnSource[S]): Signal[T, S] =
   ticket(Impl.makeDynamic(dependencies.toSet[Reactive[S]])(expr)(_))
 
   /** converts a future to a signal */

@@ -3,8 +3,10 @@ package tests.rescala
 import org.scalactic.source
 import org.scalatest.FunSuite
 import org.scalatest.prop.{TableDrivenPropertyChecks, TableFor1}
+import rescala.Engines
 import rescala.engines.Engine
-import rescala.graph.{LevelStruct, Struct}
+import rescala.graph.Struct
+import rescala.levelbased.LevelStruct
 import rescala.propagation.Turn
 
 import scala.language.existentials
@@ -15,7 +17,7 @@ abstract class RETests extends FunSuite with TableDrivenPropertyChecks {
   type S  <: Struct
   type LS <: LevelStruct
 
-  private val engines: TableFor1[rescala.engines.Engines.TEngine] = Table("engine", rescala.testhelper.TestEngines.all: _*)
+  private val engines: TableFor1[Engines.TEngine] = Table("engine", rescala.testhelper.TestEngines.all: _*)
 
   def allEngines(text: String)(testCase: Engine[S, Turn[S]] => Unit)(implicit pos: source.Position): Unit = {
     test(text) {

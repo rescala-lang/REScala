@@ -6,7 +6,7 @@ import java.util.concurrent.locks.{Lock, ReentrantLock}
 import benchmarks.{EngineParam, Size, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
-import rescala.engines.Engines
+import rescala.Engines
 import rescala.graph.Struct
 import rescala.reactives.Evt
 
