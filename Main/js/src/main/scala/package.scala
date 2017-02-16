@@ -1,4 +1,4 @@
-import rescala.engines.EngineImpl
+import rescala.engine.EngineImpl
 import rescala.levelbased.LevelBasedPropagationEngines.SimpleNoLock
 import rescala.levelbased.SimpleStruct
 

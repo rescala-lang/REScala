@@ -2,7 +2,7 @@ package rescala.reactivestreams
 
 
 import org.reactivestreams.{Publisher, Subscriber, Subscription}
-import rescala.engines.Engine
+import rescala.engine.Engine
 import rescala.graph._
 import rescala.propagation.Turn
 

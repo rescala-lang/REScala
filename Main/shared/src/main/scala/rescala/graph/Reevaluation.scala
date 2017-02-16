@@ -1,6 +1,6 @@
 package rescala.graph
 
-import rescala.engines.Engine
+import rescala.engine.Engine
 import rescala.propagation.Turn
 
 /**

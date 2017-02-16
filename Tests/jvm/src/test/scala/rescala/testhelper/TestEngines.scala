@@ -1,7 +1,7 @@
 package rescala.testhelper
 
 import rescala.Engines
-import rescala.engines.{Engine, EngineImpl}
+import rescala.engine.{Engine, EngineImpl}
 import rescala.pipelining.{PipelineEngine, PipelineStruct, PipeliningTurn}
 import rescala.stm.STMTurn
 

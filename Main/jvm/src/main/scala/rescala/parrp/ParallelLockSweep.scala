@@ -3,7 +3,7 @@ package rescala.parrp
 import java.util.concurrent.Executor
 import java.util.concurrent.atomic.AtomicInteger
 
-import rescala.engines.EngineImpl
+import rescala.engine.EngineImpl
 import rescala.graph.ReevaluationResult.{Dynamic, Static}
 import rescala.graph._
 import rescala.locking._

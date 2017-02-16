@@ -1,7 +1,7 @@
 package universe
 
 import rescala.Engines
-import rescala.engines.Engine
+import rescala.engine.Engine
 import rescala.graph.Struct
 import rescala.propagation.Turn
 

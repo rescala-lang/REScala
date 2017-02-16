@@ -2,7 +2,7 @@ package tests.rescala.concurrency.philosophers
 
 import org.scalatest.FunSuite
 import rescala.Engines
-import rescala.engines.Engine
+import rescala.engine.Engine
 import rescala.graph.Struct
 import rescala.propagation.Turn
 import tests.rescala.concurrency.Spawn

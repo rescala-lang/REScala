@@ -1,6 +1,6 @@
 package rescala.graph
 
-import rescala.engines.TurnSource
+import rescala.engine.TurnSource
 import rescala.propagation.Turn
 import rescala.reactives.RExceptions.EmptySignalControlThrowable
 

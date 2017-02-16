@@ -3,7 +3,7 @@ package rescala.testhelper
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 import java.util.concurrent.atomic.AtomicReference
 
-import rescala.engines.{Engine, EngineImpl}
+import rescala.engine.{Engine, EngineImpl}
 import rescala.graph.Reactive
 import rescala.parrp.{Backoff, ParRP}
 import rescala.propagation.Turn

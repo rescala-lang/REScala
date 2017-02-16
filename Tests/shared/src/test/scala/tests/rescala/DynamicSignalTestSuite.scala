@@ -4,7 +4,7 @@ package tests.rescala
 import org.scalatest.prop.Whenever
 import rescala.Engines
 import rescala.Infiltrator.assertLevel
-import rescala.engines.TurnSource
+import rescala.engine.TurnSource
 
 
 

@@ -1,6 +1,6 @@
 package tests.rescala.concurrency.philosophers
 
-import rescala.engines.Engine
+import rescala.engine.Engine
 import rescala.graph.Globals.named
 import rescala.graph.Struct
 import rescala.propagation.Turn

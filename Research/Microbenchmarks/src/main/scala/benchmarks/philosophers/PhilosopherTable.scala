@@ -4,7 +4,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import benchmarks.philosophers.PhilosopherTable._
 import org.openjdk.jmh.infra.Blackhole
-import rescala.engines.Engine
+import rescala.engine.Engine
 import rescala.graph.Struct
 import rescala.propagation.{Committable, Turn}
 import rescala.reactives._

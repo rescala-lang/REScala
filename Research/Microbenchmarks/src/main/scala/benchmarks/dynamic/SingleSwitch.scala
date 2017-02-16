@@ -6,7 +6,7 @@ import benchmarks.{EngineParam, Step}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
 import rescala.Engines
-import rescala.engines.Engine
+import rescala.engine.Engine
 import rescala.propagation.Turn
 import rescala.reactives.Var
 

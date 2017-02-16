@@ -4,7 +4,7 @@ import java.util.concurrent.TimeUnit
 
 import benchmarks.{EngineParam, Step}
 import org.openjdk.jmh.annotations._
-import rescala.engines.Engine
+import rescala.engine.Engine
 import rescala.propagation.Turn
 import rescala.reactives._
 
