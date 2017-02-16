@@ -1,4 +1,4 @@
-package rescala.engines
+package rescala.engine
 
 import rescala.graph.Struct
 import rescala.propagation.AbstractPropagation

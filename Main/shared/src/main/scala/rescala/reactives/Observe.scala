@@ -2,7 +2,7 @@ package rescala.reactives
 
 import java.util.concurrent.ConcurrentHashMap
 
-import rescala.engines.{Engine, TurnSource}
+import rescala.engine.{Engine, TurnSource}
 import rescala.graph._
 import rescala.propagation.{Committable, Turn}
 import rescala.reactives.RExceptions.UnhandledFailureException

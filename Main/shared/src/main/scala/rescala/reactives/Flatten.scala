@@ -1,6 +1,6 @@
 package rescala.reactives
 
-import rescala.engines.TurnSource
+import rescala.engine.TurnSource
 import rescala.graph.Struct
 
 import scala.collection.TraversableLike

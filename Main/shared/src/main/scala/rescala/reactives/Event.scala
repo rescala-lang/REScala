@@ -1,6 +1,6 @@
 package rescala.reactives
 
-import rescala.engines.{Engine, TurnSource}
+import rescala.engine.{Engine, TurnSource}
 import rescala.graph.Pulse.{Change, Exceptional, NoChange}
 import rescala.graph._
 import rescala.propagation.Turn

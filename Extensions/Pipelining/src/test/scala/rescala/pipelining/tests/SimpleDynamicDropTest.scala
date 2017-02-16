@@ -1,7 +1,7 @@
 package rescala.pipelining.tests
 
 import org.scalatest.FlatSpec
-import rescala.engines.TurnSource
+import rescala.engine.TurnSource
 import rescala.pipelining.tests.PipelineTestUtils._
 import rescala.pipelining.util.LogUtils
 import rescala.pipelining.{Pipeline, PipelineEngine}

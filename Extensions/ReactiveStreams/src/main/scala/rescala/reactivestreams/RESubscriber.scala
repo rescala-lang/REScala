@@ -3,7 +3,7 @@ package rescala.reactivestreams
 import java.util.Objects
 
 import org.reactivestreams.{Subscriber, Subscription}
-import rescala.engines.Engine
+import rescala.engine.Engine
 import rescala.graph.{Pulse, Struct}
 import rescala.propagation.Turn
 import rescala.reactives.Evt

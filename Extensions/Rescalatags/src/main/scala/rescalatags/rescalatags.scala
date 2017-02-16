@@ -1,5 +1,5 @@
 import org.scalajs.dom
-import rescala.engines.{Engine, TurnSource}
+import rescala.engine.{Engine, TurnSource}
 import rescala.graph.Struct
 import rescala.propagation.Turn
 import rescala.reactives.{Observe, Signal}

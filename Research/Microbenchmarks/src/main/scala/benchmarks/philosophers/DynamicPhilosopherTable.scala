@@ -1,7 +1,7 @@
 package benchmarks.philosophers
 
 import benchmarks.philosophers.PhilosopherTable._
-import rescala.engines.Engine
+import rescala.engine.Engine
 import rescala.graph.Struct
 import rescala.propagation.Turn
 import rescala.reactives.{Signals, Var}

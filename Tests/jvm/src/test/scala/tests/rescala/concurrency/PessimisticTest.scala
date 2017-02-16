@@ -3,7 +3,7 @@ package tests.rescala.concurrency
 import java.util.concurrent.{ConcurrentLinkedQueue, CountDownLatch}
 
 import org.scalatest.FlatSpec
-import rescala.engines.{Engine, EngineImpl}
+import rescala.engine.{Engine, EngineImpl}
 import rescala.graph.Reactive
 import rescala.parrp.{Backoff, ParRP}
 import rescala.propagation.Turn

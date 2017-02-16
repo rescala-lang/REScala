@@ -2,7 +2,7 @@ package rescala.levelbased
 
 import java.util.concurrent.locks.ReentrantLock
 
-import rescala.engines.{Engine, EngineImpl}
+import rescala.engine.{Engine, EngineImpl}
 import rescala.graph.{Pulse, Struct}
 import rescala.propagation.Turn
 
