@@ -39,8 +39,8 @@ object ReevaluationResult {
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
 case class DepDiff[S <: Struct](novel: Set[Reactive[S]], old: Set[Reactive[S]]) {
-  lazy val added = novel.diff(old)
-  lazy val removed = old.diff(novel)
+  lazy val added: Set[Reactive[S]] = novel.diff(old)
+  lazy val removed: Set[Reactive[S]] = old.diff(novel)
 }
 
 /**
