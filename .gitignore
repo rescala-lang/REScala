@@ -13,3 +13,5 @@ bin
 *.sublime-workspace
 website/
 test-output/
+Examples/Universe/*.csv
+Research/Microbenchmarks/Results.zip
