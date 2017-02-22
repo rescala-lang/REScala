@@ -15,7 +15,7 @@ object Events {
 
   private class DynamicEvent[T, S <: Struct](_bud: S#StructType[T, Reactive[S]], expr: ReevaluationTicket[S] => Pulse[T]) extends Base[T, S](_bud) with Event[T, S] with DynamicReevaluation[T, S] {
     def calculatePulseDependencies(implicit turn: Turn[S]): (Pulse[T], Set[Reactive[S]]) = {
-      val ticket = new ReevaluationTicket(turn, this)
+      val ticket = new ReevaluationTicket(turn)
       val result = Pulse.tryCatch(expr(ticket), onEmpty = NoChange)
       (result, ticket.collectedDependencies)
     }

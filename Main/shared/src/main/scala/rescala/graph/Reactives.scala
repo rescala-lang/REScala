@@ -55,11 +55,6 @@ trait Pulsing[+P, S <: Struct] extends Reactive[S] {
   final private[rescala] def hasChanged(implicit turn: Turn[S]): Boolean = stable != pulse
   protected[rescala] def stable(implicit turn: Turn[S]): Pulse[P]
   protected[rescala] def pulse(implicit turn: Turn[S]): Pulse[P]
-  protected[rescala] def structBefore(implicit turn: Turn[S]): Pulse[P] = pulse(turn)
-  protected[rescala] def structNow(implicit turn: Turn[S]): Pulse[P] = pulse(turn)
-  protected[rescala] def structAfter(implicit turn: Turn[S]): Pulse[P] = pulse(turn)
-  protected[rescala] def structRegRead(implicit turn: Turn[S]): Pulse[P] = pulse(turn)
-  protected[rescala] def structDepend(implicit turn: Turn[S], reevaluatingNode: Reactive[S]): Pulse[P] = pulse(turn)
 }
 
 /**
@@ -73,9 +68,7 @@ trait PulseOption[+P, S <: Struct] extends Pulsing[P, S] {
   def apply(): Option[P] = throw new IllegalAccessException(s"$this.apply called outside of macro")
 
   // access pulse as static dependency
-  protected[rescala] def regRead(implicit turn: Turn[S]): Option[P] = structRegRead(turn).getE
-  // access pulse as dynamic dependency
-  protected[rescala] def depend(implicit turn: Turn[S], reevaluatingNode: Reactive[S]): Option[P] = structDepend(turn, reevaluatingNode).getE
+  private[rescala] final def regRead(implicit turn: Turn[S]): Option[P] = pulse(turn).getE
 }
 
 
@@ -90,21 +83,13 @@ trait Stateful[+A, S <: Struct] extends Pulsing[A, S] {
   @compileTimeOnly("Signal.apply can only be used inside of Signal expressions")
   final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")
 
-  final def before(implicit ticket: TurnSource[S]): A = ticket { turn =>
-    try { structBefore(turn).getS }
-    catch { case EmptySignalControlThrowable => throw new NoSuchElementException(s"Signal $this is empty") }
-  }
+
   final def now(implicit ticket: TurnSource[S]): A = ticket { turn =>
-    try { structNow(turn).getS }
-    catch { case EmptySignalControlThrowable => throw new NoSuchElementException(s"Signal $this is empty") }
-  }
-  final def after(implicit ticket: TurnSource[S]): A = ticket { turn =>
-    try { structAfter(turn).getS }
+    turn.dynamicDependencyInteraction(this)
+    try { regRead(turn) }
     catch { case EmptySignalControlThrowable => throw new NoSuchElementException(s"Signal $this is empty") }
   }
 
   // access value as static dependency
-  protected[rescala] def regRead(implicit turn: Turn[S]): A = structRegRead(turn).getS
-  // access value as dynamic dependency
-  protected[rescala] def depend(implicit turn: Turn[S], reevaluatingNode: Reactive[S]): A = structDepend(turn, reevaluatingNode).getS
+  private[rescala] final def regRead(implicit turn: Turn[S]): A = pulse(turn).getS
 }

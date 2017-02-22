@@ -24,7 +24,7 @@ object Signals extends GeneratedSignalLift {
 
     private class DynamicSignal[T, S <: Struct](_bud: S#StructType[T, Reactive[S]], expr: ReevaluationTicket[S] => T) extends Base[T, S](_bud) with Signal[T, S] with DynamicReevaluation[T, S] {
       def calculatePulseDependencies(implicit turn: Turn[S]): (Pulse[T], Set[Reactive[S]]) = {
-        val ticket = new ReevaluationTicket(turn, this)
+        val ticket = new ReevaluationTicket(turn)
         val result = Pulse.tryCatch { Pulse.diffPulse(expr(ticket), stable) }
         (result, ticket.collectedDependencies)
       }

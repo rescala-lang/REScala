@@ -55,4 +55,5 @@ trait Turn[S <: Struct] {
     * @param f Handler function to register.
     */
   def observe(f: => Unit): Unit
+
 }
