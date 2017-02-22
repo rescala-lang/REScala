@@ -1,6 +1,6 @@
 package rescala.propagation
 
-import rescala.graph.{Pulse, PulseOption, Reactive, Stateful, Struct}
+import rescala.graph.{Pulse, Reactive, Struct}
 import rescala.twoversion.Committable
 
 /**
