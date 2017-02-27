@@ -30,7 +30,7 @@ lazy val rescala = crossProject.in(file("Main"))
   .settings(
     name := "rescala",
     resolvers += Resolver.bintrayRepo("pweisenburger", "maven"),
-    libraryDependencies += "de.tuda.stg" %% "retypecheck" % "0.1.0" % "provided",
+    libraryDependencies += "de.tuda.stg" %% "retypecheck" % "0.1.0",
     libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided",
     scalatestDependency,
 
