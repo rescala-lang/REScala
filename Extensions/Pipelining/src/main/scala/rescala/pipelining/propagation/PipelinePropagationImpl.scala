@@ -45,7 +45,7 @@ private[pipelining] trait PipelinePropagationImpl extends AbstractPropagation[Pi
 
   override def schedule(commitable: Committable): Unit = toCommit += commitable
 
-  override def observe(f: => Unit): Unit = observers ::= f _
+  override def observe(f: () => Unit): Unit = observers ::= f
 
   override def create[T <: Reactive[S]](dependencies: Set[Reactive[S]], dynamic: Boolean)(f: => T): T = {
     val reactive = f

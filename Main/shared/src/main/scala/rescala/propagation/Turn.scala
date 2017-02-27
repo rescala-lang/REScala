@@ -46,7 +46,6 @@ trait Turn[S <: Struct] {
     *
     * @param committable Commitable element to be scheduled
     */
-  // TODO should not use twoversion.Committable here
   def schedule(committable: Committable): Unit
 
   /**
@@ -54,6 +53,6 @@ trait Turn[S <: Struct] {
     *
     * @param f Handler function to register.
     */
-  def observe(f: => Unit): Unit
+  def observe(f: () => Unit): Unit
 
 }

@@ -6,9 +6,6 @@ import rescala.engine.{Engine, TurnSource}
 import rescala.graph._
 import rescala.propagation.Turn
 import rescala.reactives.RExceptions.UnhandledFailureException
-import rescala.twoversion.Committable
-
-import scala.util.{Failure, Success, Try}
 
 /**
   * Generic interface for observers that represent a function registered to trigger for every reevaluation of a reactive value.
@@ -24,9 +21,9 @@ object Observe {
 
   private val strongObserveReferences = new ConcurrentHashMap[Observe[_], Boolean]()
 
-  private class Obs[T, S <: Struct](bud: S#StructType[T, Reactive[S]], dependency: Pulsing[T, S], fun: Try[T] => Unit) extends Base[T, S](bud) with Reactive[S] with Observe[S] with Disconnectable[S] {
+  private class Obs[T, S <: Struct](bud: S#StructType[T, Reactive[S]], dependency: Pulsing[T, S], fun: T => Unit, fail: Throwable => Unit) extends Base[T, S](bud) with Reactive[S] with Observe[S] with Disconnectable[S] {
     override protected[rescala] def computeReevaluationResult()(implicit turn: Turn[S]): ReevaluationResult[S] = {
-      dependency.pulse(turn).toOptionTry.foreach(t => turn.schedule(once(this, t, fun)))
+      scheduleHandler(this, turn, dependency, fun, fail)
       ReevaluationResult.Static(changed = false)
     }
     override def remove()(implicit fac: Engine[S, Turn[S]]): Unit = {
@@ -35,25 +32,35 @@ object Observe {
     }
   }
 
-  def weak[T, S <: Struct](dependency: Pulsing[T, S])(fun: Try[T] => Unit)(implicit maybe: TurnSource[S]): Observe[S] = {
+  private def scheduleHandler[T, S <: Struct](obs: Obs[T,S], turn: Turn[S], dependency: Pulsing[T, S], fun: T => Unit, fail: Throwable => Unit) = {
+    dependency.pulse(turn) match {
+      case Pulse.NoChange =>
+      case Pulse.empty =>
+      case Pulse.Change(v) => turn.observe(once(obs, v, fun))
+      case Pulse.Exceptional(t) =>
+        if (fail eq null) throw t
+        else turn.observe(once(obs, t, fail))
+    }
+  }
+
+  def weak[T, S <: Struct](dependency: Pulsing[T, S])(fun: T => Unit, fail: Throwable => Unit = null)(implicit maybe: TurnSource[S]): Observe[S] = {
     val incoming = Set[Reactive[S]](dependency)
     maybe(initTurn => initTurn.create(incoming) {
-      val obs = new Obs(initTurn.makeStructState[T, Reactive[S]](initialIncoming = incoming, transient = false), dependency, fun)
-      dependency.pulse(initTurn).toOptionTry.foreach(t => initTurn.schedule(once(this, t, fun)))
+      val obs = new Obs(initTurn.makeStructState[T, Reactive[S]](initialIncoming = incoming, transient = false), dependency, fun, fail)
+      scheduleHandler(obs, initTurn, dependency, fun, fail)
       obs
     })
   }
 
-  def strong[T, S <: Struct](dependency: Pulsing[T, S])(fun: Try[T] => Unit)(implicit maybe: TurnSource[S]): Observe[S] = {
+  def strong[T, S <: Struct](dependency: Pulsing[T, S])(fun: T => Unit, fail: Throwable => Unit = null)(implicit maybe: TurnSource[S]): Observe[S] = {
     val obs = weak(dependency)(fun)
     strongObserveReferences.put(obs, true)
     obs
   }
 
 
-  def once[V](self: AnyRef, value: Try[V], f: Try[V] => Unit): Committable = new Committable {
-    override def release(implicit turn: Turn[_]): Unit = ()
-    override def commit(implicit turn: Turn[_]): Unit = turn.observe(f(value))
+  def once[V](self: AnyRef, value: V, f: V => Unit): () => Unit = new (() => Unit) {
+    override def apply(): Unit = f(value)
     override def equals(obj: scala.Any): Boolean = self.equals(obj)
     override def hashCode(): Int = self.hashCode()
   }
@@ -71,8 +78,5 @@ trait Observable[+P, S <: Struct] {
   final def observe(
     onSuccess: P => Unit,
     onFailure: Throwable => Unit = t => throw new UnhandledFailureException(this, t)
-  )(implicit ticket: TurnSource[S]): Observe[S] = Observe.strong(this) {
-    case Success(v) => onSuccess(v)
-    case Failure(t) => onFailure(t)
-  }
+  )(implicit ticket: TurnSource[S]): Observe[S] = Observe.strong(this)(onSuccess, onFailure)
 }

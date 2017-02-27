@@ -3,11 +3,10 @@ package rescala.stm
 import rescala.graph._
 import rescala.levelbased.LevelStructType
 import rescala.propagation.Turn
-import rescala.twoversion.Committable
 
-import scala.concurrent.stm.{InTxn, Ref}
+import scala.concurrent.stm.{InTxn, Ref, TxnLocal}
 
-class STMStructType[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends LevelStructType[R] with PulseStruct[P] with Committable {
+class STMStructType[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends LevelStructType[R] with PulseStruct[P] {
 
   implicit def inTxn(implicit turn: Turn[_]): InTxn = turn match {
     case stmTurn: STMTurn => stmTurn.inTxn
@@ -29,21 +28,15 @@ class STMStructType[P, R](initialValue: Pulse[P], transient: Boolean, initialInc
 
 
   private val current: Ref[Pulse[P]] = Ref(initialValue)
-  private val update: Ref[Option[Pulse[P]]] = Ref(None)
+  private val update: TxnLocal[Option[Pulse[P]]] = TxnLocal(None,beforeCommit = { implicit inTxn =>
+    val updateValue: Option[Pulse[P]] = update.get
+    if (!transient && updateValue.isDefined && updateValue.get.isChange) current.set(updateValue.get)
+  })
 
   override def set(value: Pulse[P])(implicit turn: Turn[_]): Unit = {
     update.set(Some(value))
-    turn.schedule(this)
   }
   override def base(implicit turn: Turn[_]) = current.get
   override def get(implicit turn: Turn[_]): Pulse[P] = update.get.getOrElse(current.get)
-  override def release(implicit turn: Turn[_]): Unit = {
-    update.set(None)
-  }
 
-  override def commit(implicit turn: Turn[_]): Unit = {
-    val updateValue: Option[Pulse[P]] = update.get
-    if (!transient && updateValue.isDefined && updateValue.get.isChange) current.set(updateValue.get)
-    release(turn)
-  }
 }

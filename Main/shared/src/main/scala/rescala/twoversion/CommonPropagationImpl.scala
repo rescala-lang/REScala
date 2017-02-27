@@ -12,11 +12,11 @@ import scala.util.control.NonFatal
   */
 trait CommonPropagationImpl[S <: ChangableGraphStruct] extends AbstractPropagation[S] {
   private val toCommit = new java.util.HashSet[Committable]()
-  private val observers = new java.util.ArrayList[() => Unit]()
+  private val observers = new java.util.HashSet[() => Unit]()
 
   override def schedule(commitable: Committable): Unit = toCommit.add(commitable)
 
-  override def observe(f: => Unit): Unit = observers.add(f _)
+  override def observe(f: () => Unit): Unit = observers.add(f)
 
 
   override def commitPhase(): Unit = {
