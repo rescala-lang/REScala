@@ -4,7 +4,7 @@ import rescala.engine.{Engine, TurnSource}
 import rescala.graph.Pulse.{Change, Exceptional, NoChange}
 import rescala.graph._
 import rescala.propagation.Turn
-import rescala.reactives.RExceptions.EmptySignalControlThrowable
+import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 
 import scala.collection.immutable.{LinearSeq, Queue}
 import scala.language.higherKinds
@@ -36,6 +36,8 @@ trait Event[+T, S <: Struct] extends PulseOption[T, S] with Observable[T, S] {
       case other => other
     }
   }
+
+  final def abortOnError()(implicit ticket: TurnSource[S]): Event[T, S] = recover(t => throw new UnhandledFailureException(this, t))
 
 
   /** Events disjunction. */

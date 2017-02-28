@@ -1,7 +1,7 @@
 package rescala.graph
 
 import rescala.graph.Pulse.{Change, Exceptional, NoChange}
-import rescala.reactives.RExceptions.EmptySignalControlThrowable
+import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
@@ -115,6 +115,7 @@ object Pulse {
 
   /** wrap a pulse generating function to store everntual exceptions into an exceptional pulse */
   def tryCatch[P](f: => Pulse[P], onEmpty: Pulse[P] = Pulse.empty): Pulse[P] = try f catch {
+    case ufe: UnhandledFailureException => throw ufe
     case EmptySignalControlThrowable => onEmpty
     case NonFatal(t) => Exceptional(t)
   }

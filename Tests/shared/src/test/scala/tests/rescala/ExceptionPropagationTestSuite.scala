@@ -173,4 +173,22 @@ class ExceptionPropagationTestSuite extends RETests {
     intercept[NoSuchElementException]{v.now}
   }
 
+  allEngines("abort combinator"){ engine => import engine._
+    val v = Var(0)
+    val ds = Signal { div(v()) }
+
+    var res = 100
+
+    intercept[UnhandledFailureException]{ds.abortOnError()}
+
+    v.set(42)
+    ds.abortOnError()
+    assert(ds.now === 100/42, "can add observers if no longer failed")
+
+
+    intercept[UnhandledFailureException]{ v.set(0) }
+    assert(ds.now===100/42, "observers are not triggered on failure")
+    assert(v.now === 42, "transaction is aborted on failure")
+  }
+
 }

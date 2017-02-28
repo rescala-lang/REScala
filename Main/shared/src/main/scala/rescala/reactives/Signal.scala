@@ -3,7 +3,7 @@ package rescala.reactives
 import rescala.engine.{Engine, TurnSource}
 import rescala.graph.{Pulse, Stateful, Struct}
 import rescala.propagation.Turn
-import rescala.reactives.RExceptions.EmptySignalControlThrowable
+import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 import rescala.reactives.Signals.Diff
 
 import scala.language.higherKinds
@@ -25,6 +25,8 @@ trait Signal[+A, S <: Struct] extends Stateful[A, S] with Observable[A, S] {
       case NonFatal(e) => onFailure(e)
     }
   }
+
+  final def abortOnError()(implicit ticket: TurnSource[S]): Signal[A, S] = recover(t => throw new UnhandledFailureException(this, t))
 
   final def withDefault[R >: A](value: R)(implicit ticket: TurnSource[S]): Signal[R, S] = Signals.static(this) { (turn) =>
     try this.regRead(turn) catch {
