@@ -41,8 +41,7 @@ trait Signal[+A, S <: Struct] extends Stateful[A, S] with Observable[A, S] {
   final def flatten[R](implicit ev: Flatten[A, S, R], ticket: TurnSource[S]): R = ev.apply(this)
 
   /** Delays this signal by n occurrences */
-  // TODO potentially glitched initialization!
-  final def delay(n: Int)(implicit ticket: TurnSource[S]): Signal[A, S] = ticket { implicit turn => changed.delay(this.regRead, n) }
+  final def delay(n: Int)(implicit ticket: TurnSource[S]): Signal[A, S] = ticket { implicit turn => changed.delay(this.now, n) }
 
   /** Create an event that fires every time the signal changes. It fires the tuple (oldVal, newVal) for the signal.
     * Be aware that no change will be triggered when the signal changes to or from empty */
