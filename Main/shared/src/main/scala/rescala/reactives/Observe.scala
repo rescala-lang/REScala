@@ -38,7 +38,7 @@ object Observe {
       case Pulse.empty =>
       case Pulse.Change(v) => turn.observe(() => fun(v))
       case Pulse.Exceptional(t) =>
-        if (fail eq null) throw t
+        if (fail eq null) throw new UnhandledFailureException(obs, t)
         else turn.observe(() => fail(t))
     }
   }
@@ -71,6 +71,6 @@ trait Observable[+P, S <: Struct] {
   /** add an observer */
   final def observe(
     onSuccess: P => Unit,
-    onFailure: Throwable => Unit = t => throw new UnhandledFailureException(this, t)
+    onFailure: Throwable => Unit = null
   )(implicit ticket: TurnSource[S]): Observe[S] = Observe.strong(this)(onSuccess, onFailure)
 }
