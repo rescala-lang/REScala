@@ -36,10 +36,10 @@ object Observe {
     dependency.pulse(turn) match {
       case Pulse.NoChange =>
       case Pulse.empty =>
-      case Pulse.Change(v) => turn.observe(once(obs, v, fun))
+      case Pulse.Change(v) => turn.observe(() => fun(v))
       case Pulse.Exceptional(t) =>
         if (fail eq null) throw t
-        else turn.observe(once(obs, t, fail))
+        else turn.observe(() => fail(t))
     }
   }
 
@@ -58,12 +58,6 @@ object Observe {
     obs
   }
 
-
-  def once[V](self: AnyRef, value: V, f: V => Unit): () => Unit = new (() => Unit) {
-    override def apply(): Unit = f(value)
-    override def equals(obj: scala.Any): Boolean = self.equals(obj)
-    override def hashCode(): Int = self.hashCode()
-  }
 }
 
 /**
