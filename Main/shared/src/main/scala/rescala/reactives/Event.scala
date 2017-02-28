@@ -179,7 +179,7 @@ trait Event[+T, S <: Struct] extends PulseOption[T, S] with Observable[T, S] {
   }
 
   /** Like latest, but delays the value of the resulting signal by n occurrences */
-  final def delay[T1 >: T](init: T1, n: Int)(implicit ticket: TurnSource[S]): Signal[T1, S] = ticket { turn =>
+  final def delay[T1 >: T](init: => T1, n: Int)(implicit ticket: TurnSource[S]): Signal[T1, S] = ticket { turn =>
     val history: Signal[LinearSeq[T], S] = last(n + 1)(turn)
     history.map { h => if (h.size <= n) init else h.head }(turn)
   }
