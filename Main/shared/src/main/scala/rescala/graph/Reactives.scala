@@ -1,10 +1,6 @@
 package rescala.graph
 
-import rescala.engine.TurnSource
 import rescala.propagation.Turn
-import rescala.reactives.RExceptions.EmptySignalControlThrowable
-
-import scala.annotation.compileTimeOnly
 
 /**
   * A reactive value is something that can be reevaluated
@@ -34,16 +30,6 @@ trait Reactive[S <: Struct] {
   override def toString: String = name
 }
 
-
-/** helper class to initialise engine and select lock */
-abstract class Base[+P, S <: Struct](struct: S#StructType[P, Reactive[S]]) extends Pulsing[P, S] {
-  final override protected[rescala] def state: S#StructType[_, Reactive[S]] = struct
-
-  final protected[this] override def set(value: Pulse[P])(implicit turn: Turn[S]): Unit = if (value.isChange) struct.set(value) else if (hasChanged) struct.set(stable)
-  final protected[rescala] override def stable(implicit turn: Turn[S]): Pulse[P] = struct.base
-  final protected[rescala] override def pulse(implicit turn: Turn[S]): Pulse[P] = struct.get
-}
-
 /**
   * A pulsing value is a reactive value that stores a pulse with it's old and new value
   *
@@ -57,3 +43,12 @@ trait Pulsing[+P, S <: Struct] extends Reactive[S] {
   protected[rescala] def pulse(implicit turn: Turn[S]): Pulse[P]
 }
 
+
+/** helper class to initialise engine and select lock */
+abstract class Base[+P, S <: Struct](struct: S#StructType[P, Reactive[S]]) extends Pulsing[P, S] {
+  final override protected[rescala] def state: S#StructType[_, Reactive[S]] = struct
+
+  final protected[this] override def set(value: Pulse[P])(implicit turn: Turn[S]): Unit = if (value.isChange) struct.set(value) else if (hasChanged) struct.set(stable)
+  final protected[rescala] override def stable(implicit turn: Turn[S]): Pulse[P] = struct.base
+  final protected[rescala] override def pulse(implicit turn: Turn[S]): Pulse[P] = struct.get
+}
