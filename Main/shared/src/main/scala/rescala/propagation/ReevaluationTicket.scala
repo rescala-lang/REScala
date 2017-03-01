@@ -1,6 +1,7 @@
 package rescala.propagation
 
 import rescala.graph._
+import rescala.reactives.Event
 
 final class ReevaluationTicket[S <: Struct](val turn: Turn[S]) {
   private[rescala] var collectedDependencies: Set[Reactive[S]] = Set.empty
@@ -11,9 +12,9 @@ final class ReevaluationTicket[S <: Struct](val turn: Turn[S]) {
     reactive.regRead(turn)
   }
 
-  def depend[A](reactive: PulseOption[A, S]): Option[A] = {
+  def depend[A](reactive: Event[A, S]): Option[A] = {
     collectedDependencies += reactive
     turn.dynamicDependencyInteraction(reactive)
-    reactive.regRead(turn)
+    reactive.pulse(turn).toOption
   }
 }

@@ -69,6 +69,12 @@ sealed trait Pulse[+P] {
     case ex@Exceptional(_) => ex
   }
 
+  def collect[U](pf: PartialFunction[P, U]): Pulse[U] = this match {
+    case Change(value) => pf.andThen(Pulse.Change(_)).applyOrElse[P, Pulse[U]](value, _ => NoChange)
+    case NoChange => NoChange
+    case ex@Exceptional(_) => ex
+  }
+
   /** converts the pulse to an option of try */
   def toOptionTry: Option[Try[P]] = this match {
     case Change(up) => Some(Success(up))
@@ -77,16 +83,16 @@ sealed trait Pulse[+P] {
     case Exceptional(t) => Some(Failure(t))
   }
 
-  def getE: Option[P] = this match {
+  def toOption: Option[P] = this match {
     case Change(update) => Some(update)
     case NoChange => None
     case Exceptional(t) => throw t
   }
 
-  def getS: P = this match {
+  def get: P = this match {
     case Change(value) => value
     case Exceptional(t) => throw t
-    case NoChange => throw new IllegalStateException("NoChange used as Signal value")
+    case NoChange => throw new NoSuchElementException("Tried to access the value of a NoChange Pulse")
   }
 }
 

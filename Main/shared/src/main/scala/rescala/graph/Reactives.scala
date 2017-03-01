@@ -57,20 +57,6 @@ trait Pulsing[+P, S <: Struct] extends Reactive[S] {
   protected[rescala] def pulse(implicit turn: Turn[S]): Pulse[P]
 }
 
-/**
-  * A reactive value that may have a current state that can be read.
-  *
-  * @tparam P Value type stored by the reactive value
-  * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
-  */
-trait PulseOption[+P, S <: Struct] extends Pulsing[P, S] {
-  @compileTimeOnly("Event.apply can only be used inside of Signal expressions")
-  def apply(): Option[P] = throw new IllegalAccessException(s"$this.apply called outside of macro")
-
-  // access pulse as static dependency
-  private[rescala] final def regRead(implicit turn: Turn[S]): Option[P] = pulse(turn).getE
-}
-
 
 /**
   * A reactive value that has a current state that can be read
@@ -91,5 +77,5 @@ trait Stateful[+A, S <: Struct] extends Pulsing[A, S] {
   }
 
   // access value as static dependency
-  private[rescala] final def regRead(implicit turn: Turn[S]): A = pulse(turn).getS
+  private[rescala] final def regRead(implicit turn: Turn[S]): A = pulse(turn).get
 }

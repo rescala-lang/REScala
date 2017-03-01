@@ -1,6 +1,6 @@
 package rescala.macros
 
-import rescala.graph.{PulseOption, Stateful, Struct}
+import rescala.graph.{Stateful, Struct}
 import rescala.propagation.ReevaluationTicket
 import rescala.reactives.{Event, Signal}
 
@@ -97,7 +97,7 @@ object ReactiveMacros {
         else
           !(tree.tpe <:< definitions.NullTpe) &&
           !(tree.tpe <:< definitions.NothingTpe) &&
-          (tree.tpe <:< typeOf[Stateful[_, _]] || tree.tpe <:< typeOf[PulseOption[_, _]])
+          (tree.tpe <:< typeOf[Stateful[_, _]] || tree.tpe <:< typeOf[Event[_, _]])
 
       private def isStatefulReactive(tree: Tree) =
         if (tree.tpe == null) { treeTypeNullWarning(); false }
