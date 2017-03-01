@@ -20,13 +20,14 @@ import scala.util.control.NonFatal
   */
 trait Signal[+A, S <: Struct] extends Stateful[A, S] with Observable[A, S] {
 
-  final def recover[R >: A](onFailure: Throwable => R)(implicit ticket: TurnSource[S]): Signal[R, S] = Signals.static(this) { turn =>
+  final def recover[R >: A](onFailure: PartialFunction[Throwable,R])(implicit ticket: TurnSource[S]): Signal[R, S] = Signals.static(this) { turn =>
     try this.regRead(turn) catch {
-      case NonFatal(e) => onFailure(e)
+      case NonFatal(e) => onFailure.applyOrElse[Throwable, R](e, throw _)
     }
   }
+  //final def recover[R >: A](onFailure: Throwable => R)(implicit ticket: TurnSource[S]): Signal[R, S] = recover(PartialFunction(onFailure))
 
-  final def abortOnError()(implicit ticket: TurnSource[S]): Signal[A, S] = recover(t => throw new UnhandledFailureException(this, t))
+  final def abortOnError()(implicit ticket: TurnSource[S]): Signal[A, S] = recover{case t => throw new UnhandledFailureException(this, t)}
 
   final def withDefault[R >: A](value: R)(implicit ticket: TurnSource[S]): Signal[R, S] = Signals.static(this) { (turn) =>
     try this.regRead(turn) catch {

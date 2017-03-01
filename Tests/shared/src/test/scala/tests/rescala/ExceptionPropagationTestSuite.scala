@@ -42,8 +42,8 @@ class ExceptionPropagationTestSuite extends RETests {
     var dres: Try[Int] = null
     var sres: Try[Int] = null
 
-    de.map(Success(_)).recover(Failure(_)).observe(dres = _)
-    se.map(Success(_)).recover(Failure(_)).observe(sres = _)
+    de.map(Success(_)).recover{ case t => Failure(t) }.observe(dres = _)
+    se.map(Success(_)).recover{ case t => Failure(t) }.observe(sres = _)
 
     e.fire(42)
 
@@ -191,4 +191,18 @@ class ExceptionPropagationTestSuite extends RETests {
     assert(v.now === 42, "transaction is aborted on failure")
   }
 
+  allEngines("partial recovery"){ engine => import engine._
+    val v = Var(2)
+    val ds = Signal { div(v()) }
+    val ds2: Signal[Int] = Signal { if (ds() == 10) throw new IndexOutOfBoundsException else ds() }
+    val recovered = ds2.recover{ case _: IndexOutOfBoundsException => 9000}
+
+    assert(recovered.now === 50)
+    v.set(0)
+    intercept[ArithmeticException](recovered.now)
+    v.set(10)
+    assert(recovered.now === 9000)
+    intercept[IndexOutOfBoundsException](ds2.now)
+
+  }
 }

@@ -30,14 +30,15 @@ trait Event[+T, S <: Struct] extends PulseOption[T, S] with Observable[T, S] {
   final def +=(react: T => Unit)(implicit ticket: TurnSource[S]): Observe[S] = observe(react)(ticket)
 
 
-  final def recover[R >: T](onFailure: Throwable => R)(implicit ticket: TurnSource[S]): Event[R, S] = Events.static(s"(recover $this)", this) { turn =>
+  final def recover[R >: T](onFailure: PartialFunction[Throwable,R])(implicit ticket: TurnSource[S]): Event[R, S] = Events.static(s"(recover $this)", this) { turn =>
     pulse(turn) match {
-      case Exceptional(t) => Pulse.Change(onFailure(t))
+      case Exceptional(t) => Pulse.Change(onFailure.applyOrElse[Throwable, R](t, throw _))
       case other => other
     }
   }
 
-  final def abortOnError()(implicit ticket: TurnSource[S]): Event[T, S] = recover(t => throw new UnhandledFailureException(this, t))
+
+  final def abortOnError()(implicit ticket: TurnSource[S]): Event[T, S] = recover{case t => throw new UnhandledFailureException(this, t)}
 
 
   /** Events disjunction. */
