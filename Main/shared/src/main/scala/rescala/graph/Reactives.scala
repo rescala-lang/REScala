@@ -57,25 +57,3 @@ trait Pulsing[+P, S <: Struct] extends Reactive[S] {
   protected[rescala] def pulse(implicit turn: Turn[S]): Pulse[P]
 }
 
-
-/**
-  * A reactive value that has a current state that can be read
-  *
-  * @tparam A Value type stored by the reactive value
-  * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
-  */
-trait Stateful[+A, S <: Struct] extends Pulsing[A, S] {
-  // only used inside macro and will be replaced there
-  @compileTimeOnly("Signal.apply can only be used inside of Signal expressions")
-  final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")
-
-
-  final def now(implicit ticket: TurnSource[S]): A = ticket { turn =>
-    turn.dynamicDependencyInteraction(this)
-    try { regRead(turn) }
-    catch { case EmptySignalControlThrowable => throw new NoSuchElementException(s"Signal $this is empty") }
-  }
-
-  // access value as static dependency
-  private[rescala] final def regRead(implicit turn: Turn[S]): A = pulse(turn).get
-}

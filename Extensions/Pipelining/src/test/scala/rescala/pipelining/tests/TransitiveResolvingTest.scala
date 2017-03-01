@@ -24,9 +24,9 @@ class TransitiveResolvingTest extends FlatSpec {
     val s1 = Var(0)
     val s2 = Var(0)
     val s3 = Var(0)
-    val d1 = Signals.static(s1, s2) { implicit t => s1.regRead - s2.regRead }
-    val d2 = Signals.static(s1, s3) { implicit t => s1.regRead - s3.regRead }
-    val d3 = Signals.static(s2, s3) { implicit t => s2.regRead - s3.regRead }
+    val d1 = Signals.static(s1, s2) { implicit t => s1.pulse.get - s2.pulse.get }
+    val d2 = Signals.static(s1, s3) { implicit t => s1.pulse.get - s3.pulse.get }
+    val d3 = Signals.static(s2, s3) { implicit t => s2.pulse.get - s3.pulse.get }
   }
 
 

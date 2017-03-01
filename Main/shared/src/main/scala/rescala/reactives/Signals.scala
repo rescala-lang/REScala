@@ -52,7 +52,7 @@ object Signals extends GeneratedSignalLift {
   }
 
   def lift[A, S <: Struct, R](los: Seq[Signal[A, S]])(fun: Seq[A] => R)(implicit ticket: TurnSource[S]): Signal[R, S] = {
-    static(los: _*){t => fun(los.map(_.regRead(t)))}
+    static(los: _*){t => fun(los.map(_.pulse(t).get))}
   }
 
   /** creates a signal that has dynamic dependencies (which are detected at runtime with Signal.apply(turn)) */

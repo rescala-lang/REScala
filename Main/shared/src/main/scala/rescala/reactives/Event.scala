@@ -153,8 +153,8 @@ trait Event[+T, S <: Struct] extends Pulsing[T, S] with Observable[T, S] {
 
   /** Return a Signal that is updated only when e fires, and has the value of the signal s */
   final def snapshot[A](s: Signal[A, S])(implicit ticket: TurnSource[S]): Signal[A, S] = ticket { turn =>
-    Signals.Impl.makeStatic(Set[Reactive[S]](this, s), s.regRead(turn)) { (t, current) =>
-      pulse(t).toOption.fold(current)(_ => s.regRead(t))
+    Signals.Impl.makeStatic(Set[Reactive[S]](this, s), s.pulse(turn).get) { (t, current) =>
+      pulse(t).toOption.fold(current)(_ => s.pulse(t).get)
     }(turn)
   }
 

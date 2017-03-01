@@ -33,10 +33,10 @@ class ConflictResolvingTest extends FlatSpec {
     val s1 = Var(0)
     val s2 = Var(0)
     val d1 = Signals.static(s1, s2) { implicit t =>
-      s1.regRead - s2.regRead
+      s1.pulse.get - s2.pulse.get
     }
     val d2 = Signals.static(s1, s2) { implicit t =>
-      s1.regRead - 2 * s2.regRead
+      s1.pulse.get - 2 * s2.pulse.get
     }
 
     val turns = List.fill(6)(engine.makeTurn())
@@ -67,10 +67,10 @@ class ConflictResolvingTest extends FlatSpec {
     val s1 = Var(0)
     val s2 = Var(0)
     val d1 = Signals.static(s1, s2) { implicit t =>
-      s1.regRead - s2.regRead
+      s1.pulse.get - s2.pulse.get
     }
     val d2 = Signals.static(s1, s2) { implicit t =>
-      s1.regRead - 2 * s2.regRead
+      s1.pulse.get - 2 * s2.pulse.get
     }
 
     // Everything sequential => there cannot be any conflict
