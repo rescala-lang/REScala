@@ -14,16 +14,16 @@ class PrunedFramesTest extends FlatSpec {
     var checkMark = false
 
     val source = Var(0)
-    val dep1Level1 = Signals.static(source)(implicit t => source.regRead)
+    val dep1Level1 = Signals.static(source)(implicit t => source.pulse.get)
     val dep2Level1 = Signals.static(source)(implicit t => 0)
-    val dep1Level2 = Signals.static(dep1Level1)(implicit t => dep1Level1.regRead)
+    val dep1Level2 = Signals.static(dep1Level1)(implicit t => dep1Level1.pulse.get)
     val dep2Level2Pruned = Signals.static(dep2Level1)(implicit t => {
       assert(!checkMark, "Pruned node is evaluated")
-      dep2Level1.regRead
+      dep2Level1.pulse.get
     })
     val dep1Level3 = Signals.static(dep1Level2)(implicit t => {
       assert(!checkMark || Pipeline.pipelineFor(dep2Level2Pruned).needFrame()(t.asInstanceOf[PipeliningTurn]).isWritten)
-      dep1Level2.regRead
+      dep1Level2.pulse.get
     })
 
     checkMark = true

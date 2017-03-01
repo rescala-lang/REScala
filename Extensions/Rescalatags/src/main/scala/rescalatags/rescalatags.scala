@@ -5,7 +5,6 @@ import rescala.propagation.Turn
 import rescala.reactives.{Observe, Signal}
 
 import scala.language.{higherKinds, implicitConversions}
-import scala.util.{Failure, Success}
 import scalatags.JsDom.all._
 
 package object rescalatags {
@@ -20,17 +19,17 @@ package object rescalatags {
 
         val result: Signal[dom.Node, S] = signal
           .map(_.render)
-          .recover(t => span(t.toString).render)
+          .recover { case t => span(t.toString).render }
           .withDefault("".render)
 
-        observer = Observe.weak(result.change) {
-          case Success(diff) =>
+        observer = Observe.weak(result.change)(
+          diff => {
             val (lastTag, newTag) = diff.pair
             if (lastTag.parentNode != null && !scalajs.js.isUndefined(lastTag.parentNode)) {
               lastTag.parentNode.replaceChild(newTag, lastTag)
             }
-          case Failure(t) => throw t
-        }
+          },
+          t => throw t)
         result
       }
 

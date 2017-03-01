@@ -73,7 +73,7 @@ class ManyThreadsTest extends FlatSpec  {
         calculatesOn1 = true
         opsOnD1 :+= t
         checkCalculationOrder
-        val newVal = s1.regRead - s2.regRead
+        val newVal = s1.pulse.get - s2.pulse.get
         calculatesOn1 = false
         newVal
       }
@@ -84,7 +84,7 @@ class ManyThreadsTest extends FlatSpec  {
         calculatesOn2 = true
         opsOnD2 :+= t
         checkCalculationOrder
-        val newVal = s1.regRead - 2 * s2.regRead
+        val newVal = s1.pulse.get - 2 * s2.pulse.get
         calculatesOn2 = false
         newVal
       }
