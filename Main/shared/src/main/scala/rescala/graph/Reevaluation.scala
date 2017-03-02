@@ -38,16 +38,13 @@ case class DepDiff[S <: Struct](novel: Set[Reactive[S]], old: Set[Reactive[S]]) 
   * Implementation of static re-evaluation of a reactive value.
   * Only calculates the stored value of the pulse and compares it with the old value.
   *
-  * @tparam P Value type stored by the reactive value and its pulse
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
-trait StaticReevaluation[P, S <: Struct] extends Disconnectable[S] {
-  this: Pulsing[P, S] =>
-
-  override type Value = P
+trait StaticReevaluation[S <: Struct] extends Disconnectable[S] {
+  this: Pulsing[_, S] =>
 
   /** side effect free calculation of the new pulse for the current turn */
-  protected[rescala] def calculatePulse()(implicit turn: Turn[S]): Pulse[P]
+  protected[rescala] def calculatePulse()(implicit turn: Turn[S]): Pulse[Value]
 
   final override protected[rescala] def computeReevaluationResult()(implicit turn: Turn[S]): ReevaluationResult[Value, S] = {
     ReevaluationResult.Static(calculatePulse())
@@ -61,17 +58,14 @@ trait StaticReevaluation[P, S <: Struct] extends Disconnectable[S] {
   * Implementation of dynamic re-evaluation of a reactive value.
   * Calculates the pulse and new dependencies, compares them with the old value and dependencies and returns the result.
   *
-  * @tparam P Value type stored by the reactive value and its pulse
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
-trait DynamicReevaluation[P, S <: Struct] extends Disconnectable[S] {
-  this: Pulsing[P, S] =>
-
-  override type Value = P
+trait DynamicReevaluation[S <: Struct] extends Disconnectable[S] {
+  this: Pulsing[_, S] =>
 
 
   /** side effect free calculation of the new pulse and the new dependencies for the current turn */
-  def calculatePulseDependencies(turn: ReevaluationTicket[S]): Pulse[P]
+  def calculatePulseDependencies(turn: ReevaluationTicket[S]): Pulse[Value]
 
   final override protected[rescala] def computeReevaluationResult()(implicit turn: Turn[S]): ReevaluationResult[Value, S] = {
     val ticket = new ReevaluationTicket(turn)
