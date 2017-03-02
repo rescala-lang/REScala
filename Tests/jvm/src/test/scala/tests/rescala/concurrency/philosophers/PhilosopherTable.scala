@@ -70,7 +70,7 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit 
       if (forksWereFree) seating.philosopher.admit(Hungry)(turn)
       turn.schedule(new Committable {
         override def commit(implicit t: Turn[_]): Unit = if (forksWereFree) assert(seating.vision.now(turn) == Eating, s"philosopher should be done after turn but is ${seating.inspect(turn)}")
-        override def release(implicit t: Turn[_]): Unit = assert(assertion = false, "turn should not rollback")
+        override def release(implicit t: Turn[_]): Unit = () /*assert(assertion = false, "turn should not rollback")*/ // assertion is unnecessary, exception propagation will take care
       })
       forksWereFree
     }

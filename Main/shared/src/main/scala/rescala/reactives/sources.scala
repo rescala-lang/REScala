@@ -6,6 +6,26 @@ import rescala.propagation.Turn
 
 import scala.language.higherKinds
 
+class Source[T, S <: Struct](_bud: S#StructType[T, Reactive[S]]) extends Base[T, S](_bud) {
+  private var result: Pulse[Value] = null
+  final def admit(value: T)(implicit turn: Turn[S]): Unit = admitPulse(Pulse.Change(value))
+
+  final def admitPulse(value: Pulse[T])(implicit turn: Turn[S]): Unit = {
+    require(result == null, "can not admit the same reactive twice in the same turn")
+    result = value
+  }
+
+  final override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[Value, S] = {
+    if (result == null) ReevaluationResult.Static(Pulse.NoChange)
+    else {
+      val res = ReevaluationResult.Static[Value, S](result)
+      result = null
+      res
+    }
+  }
+
+}
+
 /**
   * Standard implementation of the source event interface using Spore-based propagation.
   *
@@ -13,22 +33,11 @@ import scala.language.higherKinds
   * @tparam T Type returned when the event fires
   * @tparam S Struct type used for the propagation of the event
   */
-final class Evt[T, S <: Struct]()(_bud: S#StructType[T, Reactive[S]]) extends Base[T, S](_bud) with Event[T, S] {
+final class Evt[T, S <: Struct]()(_bud: S#StructType[T, Reactive[S]]) extends Source[T, S](_bud) with Event[T, S] {
   /** Trigger the event */
   def apply(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = fire(value)
   def fire()(implicit fac: Engine[S, Turn[S]], ev: Unit =:= T): Unit = fire(ev(Unit))(fac)
   def fire(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) {admit(value)(_)}
-
-  def admit(value: T)(implicit turn: Turn[S]): Unit = admitPulse(Pulse.Change(value))
-
-  def admitPulse(value: Pulse[T])(implicit turn: Turn[S]): Unit = {
-    require(state.get == state.base, "can not admit the same reactive twice in the same turn")
-    state.set(value)(turn)
-  }
-
-  override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[Value, S] =
-    ReevaluationResult.Static(state.get)
-
   override def disconnect()(implicit engine: Engine[S, Turn[S]]): Unit = ()
 }
 
@@ -46,25 +55,13 @@ object Evt {
   * @tparam A Type stored by the signal
   * @tparam S Struct type used for the propagation of the signal
   */
-final class Var[A, S <: Struct](_bud: S#StructType[A, Reactive[S]]) extends Base[A, S](_bud) with Signal[A, S] {
-
+final class Var[A, S <: Struct](_bud: S#StructType[A, Reactive[S]]) extends Source[A, S](_bud) with Signal[A, S] {
   def update(value: A)(implicit fac: Engine[S, Turn[S]]): Unit = set(value)
   def set(value: A)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) {admit(value)(_)}
 
   def transform(f: A => A)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) { t => admit(f(pulse(t).get))(t) }
 
   def setEmpty()(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this)(t => admitPulse(Pulse.empty)(t))
-
-  def admit(value: A)(implicit turn: Turn[S]): Unit = admitPulse(Pulse.diffPulse(value, stable))
-
-  def admitPulse(p: Pulse[A])(implicit turn: Turn[S]): Unit = {
-    require(state.get == state.base, "can not admit the same reactive twice in the same turn")
-    if (p.isChange) state.set(p)
-  }
-
-  override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[Value, S] = {
-    ReevaluationResult.Static(state.get)
-  }
 
   override def disconnect()(implicit engine: Engine[S, Turn[S]]): Unit = ()
 }

@@ -55,15 +55,21 @@ class ReactiveCreationInTurnsTest extends RETests {
 
     {
       val v1 = Var(0)
-      engine.plan() { implicit t =>
-        val v2 = v1.map(_ + 1)
+      var a1 = false
+      var a2 = false
+      var v2: Signal[Int] = null
+      Engine.plan(v1) { implicit t =>
+        v2 = v1.map(_ + 1)
         val c1 = v1.change
-        c1.observe(_ => assert(false, "created signals do not change when admitting in same turn"))
+        c1.observe(_ => a1 = true)
         val c2 = v2.change
-        c2.observe(_ => assert(false, "created mapped signals do not change when admitting in same turn"))
+        c2.observe(_ => a2 = true)
         v1.admit(10)
       }
+      assert(a1, "created signals do not change when admitting in same turn")
+      assert(a2, "created mapped signals do not change when admitting in same turn")
       assert(v1.now == 10)
+      assert(v2.now == 11)
     }
 
     {
