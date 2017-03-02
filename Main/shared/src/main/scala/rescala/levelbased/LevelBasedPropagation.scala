@@ -26,11 +26,13 @@ trait LevelBasedPropagation[S <: LevelStruct] extends CommonPropagationImpl[S] w
       else if (changed) head.state.outgoing.foreach(levelQueue.enqueue(level, changed))
 
     head.reevaluate() match {
-      case Static(hasChanged) =>
+      case Static(value) =>
+        val hasChanged = setIfChange(head)(value)
         requeue(hasChanged, level = -42, redo = false)
-      case Dynamic(hasChanged, diff) =>
+      case Dynamic(value, diff) =>
         applyDiff(head, diff)
         val newLevel = maximumLevel(diff.novel) + 1
+        val hasChanged = setIfChange(head)(value)
         requeue(hasChanged, newLevel, redo = head.state.level < newLevel)
     }
     _evaluated ::= head

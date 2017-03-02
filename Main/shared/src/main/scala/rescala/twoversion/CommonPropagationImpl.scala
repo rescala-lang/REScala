@@ -1,6 +1,6 @@
 package rescala.twoversion
 
-import rescala.graph.{ChangableGraphStruct, DepDiff, Reactive}
+import rescala.graph.{ChangableGraphStruct, DepDiff, Pulse, Reactive}
 
 import scala.util.control.NonFatal
 
@@ -18,6 +18,13 @@ trait CommonPropagationImpl[S <: ChangableGraphStruct] extends AbstractPropagati
 
   override def observe(f: () => Unit): Unit = observers.add(f)
 
+  def setIfChange(r: Reactive[S])(value: Pulse[r.Value]): Boolean = {
+    val differs = value != r.state.base(this)
+    val changed = differs && value.isChange
+    if (changed) r.state.set(value)(this)
+    else if (differs) r.state.set(r.state.base(this))(this)
+    changed
+  }
 
   override def commitPhase(): Unit = {
     val it = toCommit.iterator()
@@ -55,7 +62,6 @@ trait CommonPropagationImpl[S <: ChangableGraphStruct] extends AbstractPropagati
     diff.removed foreach drop(head)
     diff.added foreach discover(head)
   }
-
 
 
 }

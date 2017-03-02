@@ -39,8 +39,6 @@ trait Reactive[S <: Struct] {
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
 trait Pulsing[+P, S <: Struct] extends Reactive[S] {
-  protected[this] def set(value: Pulse[P])(implicit turn: Turn[S]): Unit
-  final private[rescala] def hasChanged(implicit turn: Turn[S]): Boolean = stable != pulse
   protected[rescala] def stable(implicit turn: Turn[S]): Pulse[P]
   protected[rescala] def pulse(implicit turn: Turn[S]): Pulse[P]
 }
@@ -51,7 +49,6 @@ abstract class Base[P, S <: Struct](struct: S#StructType[P, Reactive[S]]) extend
   override type Value = P
   final override protected[rescala] def state: S#StructType[Value, Reactive[S]] = struct
 
-  final protected[this] override def set(value: Pulse[P])(implicit turn: Turn[S]): Unit = if (value.isChange) struct.set(value) else if (hasChanged) struct.set(stable)
   final protected[rescala] override def stable(implicit turn: Turn[S]): Pulse[P] = struct.base
   final protected[rescala] override def pulse(implicit turn: Turn[S]): Pulse[P] = struct.get
 }

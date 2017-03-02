@@ -22,12 +22,12 @@ final class Evt[T, S <: Struct]()(_bud: S#StructType[T, Reactive[S]]) extends Ba
   def admit(value: T)(implicit turn: Turn[S]): Unit = admitPulse(Pulse.Change(value))
 
   def admitPulse(value: Pulse[T])(implicit turn: Turn[S]): Unit = {
-    require(!hasChanged, "can not admit the same reactive twice in the same turn")
-    set(value)(turn)
+    require(state.get == state.base, "can not admit the same reactive twice in the same turn")
+    state.set(value)(turn)
   }
 
   override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[Value, S] =
-    ReevaluationResult.Static(changed = hasChanged)
+    ReevaluationResult.Static(state.get)
 
   override def disconnect()(implicit engine: Engine[S, Turn[S]]): Unit = ()
 }
@@ -58,12 +58,13 @@ final class Var[A, S <: Struct](_bud: S#StructType[A, Reactive[S]]) extends Base
   def admit(value: A)(implicit turn: Turn[S]): Unit = admitPulse(Pulse.diffPulse(value, stable))
 
   def admitPulse(p: Pulse[A])(implicit turn: Turn[S]): Unit = {
-    require(!hasChanged, "can not admit the same reactive twice in the same turn")
-    if (p.isChange) { set(p) }
+    require(state.get == state.base, "can not admit the same reactive twice in the same turn")
+    if (p.isChange) state.set(p)
   }
 
-  override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[Value, S] =
-    ReevaluationResult.Static(changed = hasChanged)
+  override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[Value, S] = {
+    ReevaluationResult.Static(state.get)
+  }
 
   override def disconnect()(implicit engine: Engine[S, Turn[S]]): Unit = ()
 }

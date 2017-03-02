@@ -1,7 +1,7 @@
 package rescala.graph
 
 import rescala.engine.Engine
-import rescala.propagation.Turn
+import rescala.propagation.{ReevaluationTicket, Turn}
 
 /**
   * Indicator for the result of a re-evaluation of a reactive value.
@@ -12,23 +12,14 @@ object ReevaluationResult {
 
   /**
     * Result of the static re-evaluation of a reactive value.
-    *
-    * @param changed Indicates if the value of the reactive value has been changed and further re-evaluation of dependent
-    *                values is necessary.
-    * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
     */
-  case class Static[A, S <: Struct](changed: Boolean) extends ReevaluationResult[A, S]
+  case class Static[A, S <: Struct](value: Pulse[A]) extends ReevaluationResult[A, S]
 
   /**
     * Result of the dynamic re-evaluation of a reactive value.
     * When using a dynamic dependency model, the dependencies of a value may change at runtime if it is re-evaluated
-    *
-    * @param changed Indicates if the value of the reactive value has been changed and further re-evaluation of dependent
-    *                values is necessary.
-    * @param diff    List of reactive values this value depends on that have been removed or added through the re-evaluation
-    * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
     */
-  case class Dynamic[A, S <: Struct](changed: Boolean, diff: DepDiff[S]) extends ReevaluationResult[A, S]
+  case class Dynamic[A, S <: Struct](value: Pulse[A], diff: DepDiff[S]) extends ReevaluationResult[A, S]
 }
 
 /**
@@ -50,16 +41,16 @@ case class DepDiff[S <: Struct](novel: Set[Reactive[S]], old: Set[Reactive[S]]) 
   * @tparam P Value type stored by the reactive value and its pulse
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
-trait StaticReevaluation[+P, S <: Struct] extends Disconnectable[S] {
+trait StaticReevaluation[P, S <: Struct] extends Disconnectable[S] {
   this: Pulsing[P, S] =>
+
+  override type Value = P
 
   /** side effect free calculation of the new pulse for the current turn */
   protected[rescala] def calculatePulse()(implicit turn: Turn[S]): Pulse[P]
 
   final override protected[rescala] def computeReevaluationResult()(implicit turn: Turn[S]): ReevaluationResult[Value, S] = {
-    val p = calculatePulse()
-    set(p)
-    ReevaluationResult.Static(hasChanged)
+    ReevaluationResult.Static(calculatePulse())
   }
 
 
@@ -73,19 +64,21 @@ trait StaticReevaluation[+P, S <: Struct] extends Disconnectable[S] {
   * @tparam P Value type stored by the reactive value and its pulse
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
-trait DynamicReevaluation[+P, S <: Struct] extends Disconnectable[S] {
+trait DynamicReevaluation[P, S <: Struct] extends Disconnectable[S] {
   this: Pulsing[P, S] =>
 
+  override type Value = P
+
+
   /** side effect free calculation of the new pulse and the new dependencies for the current turn */
-  def calculatePulseDependencies(implicit turn: Turn[S]): (Pulse[P], Set[Reactive[S]])
+  def calculatePulseDependencies(turn: ReevaluationTicket[S]): Pulse[P]
 
   final override protected[rescala] def computeReevaluationResult()(implicit turn: Turn[S]): ReevaluationResult[Value, S] = {
-    val (newPulse, newDependencies) = calculatePulseDependencies
-
+    val ticket = new ReevaluationTicket(turn)
+    val newPulse = calculatePulseDependencies(ticket)
     val oldDependencies = state.incoming
-    set(newPulse)
-    ReevaluationResult.Dynamic(hasChanged, DepDiff(newDependencies, oldDependencies))
-
+    val newDependencies = ticket.collectedDependencies
+    ReevaluationResult.Dynamic(newPulse, DepDiff(newDependencies, oldDependencies))
   }
 }
 
@@ -104,7 +97,7 @@ trait Disconnectable[S <: Struct] {
 
   final override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[Value, S] = {
     if (disconnected) {
-      ReevaluationResult.Dynamic(changed = false, DepDiff(novel = Set.empty, old = state.incoming))
+      ReevaluationResult.Dynamic(Pulse.NoChange, DepDiff(novel = Set.empty, old = state.incoming))
     }
     else {
       computeReevaluationResult()

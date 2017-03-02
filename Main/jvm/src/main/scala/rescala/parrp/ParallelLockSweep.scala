@@ -8,8 +8,6 @@ import rescala.graph._
 import rescala.locking._
 import rescala.twoversion.EngineImpl
 
-import scala.util.DynamicVariable
-
 class ParallelLockSweep(backoff: Backoff, ex: Executor, engine: EngineImpl[LSStruct.type, ParallelLockSweep], priorTurn: Option[ParallelLockSweep]) extends LockSweep(backoff, priorTurn) {
 
   private type TState = LSStruct.type
@@ -52,14 +50,21 @@ class ParallelLockSweep(backoff: Backoff, ex: Executor, engine: EngineImpl[LSStr
     val res = head.reevaluate()(this)
     synchronized {
       res match {
-        case Static(hasChanged) => done(head, hasChanged)
+        case Static(value) =>
+          val hasChanged = value.isChange && value != head.state.base(this)
+          if (hasChanged) head.state.set(value)(this)
+          done(head, hasChanged)
 
-        case Dynamic(hasChanged, diff) =>
+        case Dynamic(value, diff) =>
           diff.removed foreach drop(head)
           diff.added foreach discover(head)
           head.state.counter = recount(diff.novel.iterator)
 
-          if (head.state.counter == 0) done(head, hasChanged)
+          if (head.state.counter == 0) {
+            val hasChanged = value.isChange && value != head.state.base(this)
+            if (hasChanged) head.state.set(value)(this)
+            done(head, hasChanged)
+          }
 
       }
     }

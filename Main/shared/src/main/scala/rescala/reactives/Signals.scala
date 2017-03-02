@@ -5,7 +5,6 @@ import rescala.graph._
 import rescala.propagation.{ReevaluationTicket, Turn}
 import rescala.reactives.RExceptions.EmptySignalControlThrowable
 
-import scala.collection.TraversableLike
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.higherKinds
 
@@ -23,10 +22,8 @@ object Signals extends GeneratedSignalLift {
     }
 
     private class DynamicSignal[T, S <: Struct](_bud: S#StructType[T, Reactive[S]], expr: ReevaluationTicket[S] => T) extends Base[T, S](_bud) with Signal[T, S] with DynamicReevaluation[T, S] {
-      def calculatePulseDependencies(implicit turn: Turn[S]): (Pulse[T], Set[Reactive[S]]) = {
-        val ticket = new ReevaluationTicket(turn)
-        val result = Pulse.tryCatch { Pulse.diffPulse(expr(ticket), stable) }
-        (result, ticket.collectedDependencies)
+      override def calculatePulseDependencies(ticket: ReevaluationTicket[S]): Pulse[T] = {
+        Pulse.tryCatch { Pulse.diffPulse(expr(ticket), stable(ticket.turn)) }
       }
     }
 

@@ -87,14 +87,14 @@ class SignalTestSuite extends RETests {
   allEngines("no Change Propagations"){ engine => import engine._
     val v = Var(1)
     val s = v.map(_ => 1)
-    val s2 = Signal{ s() }
+    val s2 = Signal { s() }
 
     assert(s2.now === 1)
     assert(s.now === 1)
 
     v.set(2)
-    assert(s2.now === 1)
     assert(s.now === 1)
+    assert(s2.now === 1)
 
 
     v.set(2)

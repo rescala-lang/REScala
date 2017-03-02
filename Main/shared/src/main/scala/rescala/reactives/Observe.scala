@@ -24,7 +24,7 @@ object Observe {
   private class Obs[T, S <: Struct](bud: S#StructType[T, Reactive[S]], dependency: Pulsing[T, S], fun: T => Unit, fail: Throwable => Unit) extends Base[T, S](bud) with Reactive[S] with Observe[S] with Disconnectable[S] {
     override protected[rescala] def computeReevaluationResult()(implicit turn: Turn[S]): ReevaluationResult[Value, S] = {
       scheduleHandler(this, turn, dependency, fun, fail)
-      ReevaluationResult.Static(changed = false)
+      ReevaluationResult.Static(Pulse.NoChange)
     }
     override def remove()(implicit fac: Engine[S, Turn[S]]): Unit = {
       disconnect()
