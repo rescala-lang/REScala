@@ -9,7 +9,7 @@ import rescala.pipelining.PipeliningTurn._
 import rescala.pipelining.propagation._
 import rescala.pipelining.util.LogUtils._
 import rescala.propagation._
-import rescala.graph.PulseStruct
+import rescala.graph.ReadWritePulseStruct
 import rescala.twoversion.Committable
 
 

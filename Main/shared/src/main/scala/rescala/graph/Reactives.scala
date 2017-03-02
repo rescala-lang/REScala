@@ -49,6 +49,6 @@ abstract class Base[P, S <: Struct](struct: S#StructType[P, Reactive[S]]) extend
   override type Value = P
   final override protected[rescala] def state: S#StructType[Value, Reactive[S]] = struct
 
-  final protected[rescala] override def stable(implicit turn: Turn[S]): Pulse[P] = struct.base
-  final protected[rescala] override def pulse(implicit turn: Turn[S]): Pulse[P] = struct.get
+  final protected[rescala] override def stable(implicit turn: Turn[S]): Pulse[P] = state.base
+  final protected[rescala] override def pulse(implicit turn: Turn[S]): Pulse[P] = state.get
 }

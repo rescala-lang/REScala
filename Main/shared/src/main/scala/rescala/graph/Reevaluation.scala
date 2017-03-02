@@ -19,7 +19,7 @@ object ReevaluationResult {
     * Result of the dynamic re-evaluation of a reactive value.
     * When using a dynamic dependency model, the dependencies of a value may change at runtime if it is re-evaluated
     */
-  case class Dynamic[A, S <: Struct](value: Pulse[A], diff: DepDiff[S]) extends ReevaluationResult[A, S]
+  case class Dynamic[A, S <: Struct](value: Pulse[A], dependencies: Set[Reactive[S]]) extends ReevaluationResult[A, S]
 }
 
 /**
@@ -76,9 +76,7 @@ trait DynamicReevaluation[P, S <: Struct] extends Disconnectable[S] {
   final override protected[rescala] def computeReevaluationResult()(implicit turn: Turn[S]): ReevaluationResult[Value, S] = {
     val ticket = new ReevaluationTicket(turn)
     val newPulse = calculatePulseDependencies(ticket)
-    val oldDependencies = state.incoming
-    val newDependencies = ticket.collectedDependencies
-    ReevaluationResult.Dynamic(newPulse, DepDiff(newDependencies, oldDependencies))
+    ReevaluationResult.Dynamic(newPulse, ticket.collectedDependencies)
   }
 }
 
@@ -97,7 +95,7 @@ trait Disconnectable[S <: Struct] {
 
   final override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[Value, S] = {
     if (disconnected) {
-      ReevaluationResult.Dynamic(Pulse.NoChange, DepDiff(novel = Set.empty, old = state.incoming))
+      ReevaluationResult.Dynamic(Pulse.NoChange, Set.empty)
     }
     else {
       computeReevaluationResult()

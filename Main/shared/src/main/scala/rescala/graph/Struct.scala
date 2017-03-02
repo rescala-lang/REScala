@@ -14,14 +14,19 @@ trait Struct {
     * @tparam P Pulse stored value type
     * @tparam R Reactive value type represented by the struct
     */
-  type StructType[P, R] <: PulseStruct[P] with ReadGraphStruct[R]
+  type StructType[P, R] <: ReadPulseStruct[P]
 }
 
 /**
   * Wrapper for a struct type combining GraphSpore and PulsingSpore
   */
 trait ChangableGraphStruct extends Struct {
-  override type StructType[P, R] <: GraphStruct[R] with PulseStruct[P]
+  override type StructType[P, R] <: GraphStruct[R] with ReadWritePulseStruct[P]
+}
+
+trait ReadPulseStruct[P] {
+  def base(implicit turn: Turn[_]): Pulse[P]
+  def get(implicit turn: Turn[_]): Pulse[P]
 }
 
 /**
@@ -30,10 +35,9 @@ trait ChangableGraphStruct extends Struct {
   *
   * @tparam P Pulse stored value type
   */
-trait PulseStruct[P] {
+trait ReadWritePulseStruct[P] <: ReadPulseStruct[P] {
   def set(value: Pulse[P])(implicit turn: Turn[_]): Unit
-  def base(implicit turn: Turn[_]): Pulse[P]
-  def get(implicit turn: Turn[_]): Pulse[P]
+
 }
 
 trait ReadGraphStruct[R] {

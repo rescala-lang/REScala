@@ -1,7 +1,7 @@
 package rescala.levelbased
 
 import rescala.graph.ReevaluationResult.{Dynamic, Static}
-import rescala.graph.Reactive
+import rescala.graph.{DepDiff, Reactive}
 import rescala.twoversion.CommonPropagationImpl
 
 /**
@@ -29,7 +29,8 @@ trait LevelBasedPropagation[S <: LevelStruct] extends CommonPropagationImpl[S] w
       case Static(value) =>
         val hasChanged = setIfChange(head)(value)
         requeue(hasChanged, level = -42, redo = false)
-      case Dynamic(value, diff) =>
+      case Dynamic(value, deps) =>
+        val diff = DepDiff(deps, head.state.incoming(this))
         applyDiff(head, diff)
         val newLevel = maximumLevel(diff.novel) + 1
         val hasChanged = setIfChange(head)(value)

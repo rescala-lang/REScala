@@ -1,6 +1,6 @@
 package rescala.twoversion
 
-import rescala.graph.{GraphStruct, Pulse, PulseStruct}
+import rescala.graph.{GraphStruct, Pulse, ReadWritePulseStruct}
 import rescala.propagation.Turn
 
 
@@ -9,7 +9,7 @@ import rescala.propagation.Turn
   *
   * @tparam P Pulse stored value type
   */
-trait BufferedPulseStruct[P] extends PulseStruct[P] with Committable {
+trait BufferedPulseStruct[P] extends ReadWritePulseStruct[P] with Committable {
   protected var current: Pulse[P]
   protected val transient: Boolean
   protected var owner: Turn[_] = null

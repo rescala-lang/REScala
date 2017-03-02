@@ -29,28 +29,25 @@ object REPublisher {
     var cancelled = false
 
     override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[Value, S] = {
-      if (bud.incoming.isEmpty) ReevaluationResult.Dynamic(Pulse.NoChange, DepDiff(Set.empty, Set(dependency)))
-      else {
-        dependency.pulse(turn).toOptionTry match {
-          case None => ReevaluationResult.Static(Pulse.NoChange)
-          case Some(tryValue) =>
-            synchronized {
-              while (requested <= 0 && !cancelled) wait(100)
-              if (cancelled) ReevaluationResult.Dynamic(Pulse.NoChange, DepDiff[S](Set.empty, Set(dependency)))
-              else {
-                requested -= 1
-                tryValue match {
-                  case Success(v) =>
-                    subscriber.onNext(v)
-                    ReevaluationResult.Static(Pulse.NoChange)
-                  case Failure(t) =>
-                    subscriber.onError(t)
-                    cancelled = true
-                    ReevaluationResult.Dynamic(Pulse.NoChange, DepDiff[S](Set.empty, Set(dependency)))
-                }
+      dependency.pulse(turn).toOptionTry match {
+        case None => ReevaluationResult.Static(Pulse.NoChange)
+        case Some(tryValue) =>
+          synchronized {
+            while (requested <= 0 && !cancelled) wait(100)
+            if (cancelled) ReevaluationResult.Dynamic(Pulse.NoChange, Set.empty)
+            else {
+              requested -= 1
+              tryValue match {
+                case Success(v) =>
+                  subscriber.onNext(v)
+                  ReevaluationResult.Static(Pulse.NoChange)
+                case Failure(t) =>
+                  subscriber.onError(t)
+                  cancelled = true
+                  ReevaluationResult.Dynamic(Pulse.NoChange, Set.empty)
               }
             }
-        }
+          }
       }
     }
 

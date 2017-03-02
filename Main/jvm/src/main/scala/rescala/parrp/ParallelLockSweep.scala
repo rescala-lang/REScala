@@ -55,9 +55,9 @@ class ParallelLockSweep(backoff: Backoff, ex: Executor, engine: EngineImpl[LSStr
           if (hasChanged) head.state.set(value)(this)
           done(head, hasChanged)
 
-        case Dynamic(value, diff) =>
-          diff.removed foreach drop(head)
-          diff.added foreach discover(head)
+        case Dynamic(value, deps) =>
+          val diff = DepDiff(deps, head.state.incoming(this))
+          applyDiff(head, diff)
           head.state.counter = recount(diff.novel.iterator)
 
           if (head.state.counter == 0) {
