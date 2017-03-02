@@ -14,17 +14,17 @@ trait Struct {
     * @tparam P Pulse stored value type
     * @tparam R Reactive value type represented by the struct
     */
-  type StructType[P, R] <: ReadPulseStruct[P]
+  type Type[P, R] <: ReadPulse[P]
 }
 
 /**
   * Wrapper for a struct type combining GraphSpore and PulsingSpore
   */
-trait ChangableGraphStruct extends Struct {
-  override type StructType[P, R] <: GraphStruct[R] with ReadWritePulseStruct[P]
+trait GraphStruct extends Struct {
+  override type Type[P, R] <: GraphStructType[R] with ReadWritePulse[P]
 }
 
-trait ReadPulseStruct[P] {
+trait ReadPulse[P] {
   def base(implicit turn: Turn[_]): Pulse[P]
   def get(implicit turn: Turn[_]): Pulse[P]
 }
@@ -35,13 +35,9 @@ trait ReadPulseStruct[P] {
   *
   * @tparam P Pulse stored value type
   */
-trait ReadWritePulseStruct[P] <: ReadPulseStruct[P] {
+trait ReadWritePulse[P] <: ReadPulse[P] {
   def set(value: Pulse[P])(implicit turn: Turn[_]): Unit
 
-}
-
-trait ReadGraphStruct[R] {
-  def incoming(implicit turn: Turn[_]): Set[R]
 }
 
 /**
@@ -49,7 +45,8 @@ trait ReadGraphStruct[R] {
   *
   * @tparam R Type of the reactive values that are connected to this struct
   */
-trait GraphStruct[R] extends ReadGraphStruct[R] {
+trait GraphStructType[R] {
+  def incoming(implicit turn: Turn[_]): Set[R]
   def updateIncoming(reactives: Set[R])(implicit turn: Turn[_]): Unit
   def outgoing(implicit turn: Turn[_]): Iterator[R]
   def discover(reactive: R)(implicit turn: Turn[_]): Unit

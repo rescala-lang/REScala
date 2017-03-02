@@ -16,11 +16,11 @@ trait ParRPInterTurn {
 }
 
 class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropagation[ParRP] with ParRPInterTurn with LevelStruct {
-  override type StructType[P, R] = ParRPStructType[P, R]
+  override type Type[P, R] = ParRPStructType[P, R]
 
   private type TState = ParRP
 
-  override def makeStructState[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): TState#StructType[P, R] = {
+  override def makeStructState[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): TState#Type[P, R] = {
     val lock = new TurnLock[ParRPInterTurn]
     new ParRPStructType[P, R](initialValue, transient, lock, initialIncoming)
   }

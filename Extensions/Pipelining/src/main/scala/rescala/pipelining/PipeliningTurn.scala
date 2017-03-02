@@ -9,7 +9,7 @@ import rescala.pipelining.PipeliningTurn._
 import rescala.pipelining.propagation._
 import rescala.pipelining.util.LogUtils._
 import rescala.propagation._
-import rescala.graph.ReadWritePulseStruct
+import rescala.graph.ReadWritePulse
 import rescala.twoversion.Committable
 
 
@@ -32,7 +32,7 @@ class PipeliningTurn(val engine: PipelineEngine, randomizeDeps: Boolean = false)
 
 
   /** used to create state containers of each reactive */
-  override def makeStructState[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): S#StructType[P, R] = new PipelineSporeP[P, R](initialValue, transient, initialIncoming)
+  override def makeStructState[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): S#Type[P, R] = new PipelineSporeP[P, R](initialValue, transient, initialIncoming)
 
 
   /**

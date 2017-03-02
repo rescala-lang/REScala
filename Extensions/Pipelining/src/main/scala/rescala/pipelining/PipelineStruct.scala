@@ -5,7 +5,7 @@ import rescala.propagation.Turn
 import rescala.twoversion.Committable
 
 object PipelineStruct extends Struct {
-  override type StructType[P, R] = PipelineSporeP[P, R]
+  override type Type[P, R] = PipelineSporeP[P, R]
 
 }
 
@@ -31,7 +31,7 @@ trait Buffer[A] extends Committable {
   def get(implicit turn: Turn[_]): A
 }
 
-class PipelineSporeP[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends ReadWritePulseStruct[P] with GraphStruct[R] {
+class PipelineSporeP[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends ReadWritePulse[P] with GraphStructType[R] {
 
   val pipeline: Pipeline = new Pipeline()
 

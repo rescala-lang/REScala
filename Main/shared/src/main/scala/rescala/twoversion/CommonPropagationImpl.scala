@@ -1,6 +1,6 @@
 package rescala.twoversion
 
-import rescala.graph.{ChangableGraphStruct, DepDiff, Pulse, Reactive}
+import rescala.graph.{GraphStruct, DepDiff, Pulse, Reactive}
 
 import scala.util.control.NonFatal
 
@@ -10,7 +10,7 @@ import scala.util.control.NonFatal
   *
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
-trait CommonPropagationImpl[S <: ChangableGraphStruct] extends AbstractPropagation[S] {
+trait CommonPropagationImpl[S <: GraphStruct] extends AbstractPropagation[S] {
   private val toCommit = new java.util.ArrayList[Committable]()
   private val observers = new java.util.ArrayList[() => Unit]()
 

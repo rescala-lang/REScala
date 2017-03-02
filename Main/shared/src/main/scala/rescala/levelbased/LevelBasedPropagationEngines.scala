@@ -18,7 +18,7 @@ trait LevelBasedPropagationEngines {
 
 
   private[rescala] class SimpleNoLock extends LevelBasedPropagation[SimpleStruct] {
-    def makeStructState[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): SimpleStruct#StructType[P, R] =
+    def makeStructState[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): SimpleStruct#Type[P, R] =
       new LevelStructTypeImpl[P, R](initialValue, transient, initialIncoming)
     override def releasePhase(): Unit = ()
   }

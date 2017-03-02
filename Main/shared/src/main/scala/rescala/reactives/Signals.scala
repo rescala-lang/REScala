@@ -11,7 +11,7 @@ import scala.language.higherKinds
 object Signals extends GeneratedSignalLift {
 
   object Impl {
-    private class StaticSignal[T, S <: Struct](_bud: S#StructType[T, Reactive[S]], expr: (Turn[S], => T) => T)
+    private class StaticSignal[T, S <: Struct](_bud: S#Type[T, Reactive[S]], expr: (Turn[S], => T) => T)
       extends Base[T, S](_bud) with Signal[T, S] with StaticReevaluation[T, S] {
 
       override def calculatePulse()(implicit turn: Turn[S]): Pulse[T] = {
@@ -21,7 +21,7 @@ object Signals extends GeneratedSignalLift {
       }
     }
 
-    private class DynamicSignal[T, S <: Struct](_bud: S#StructType[T, Reactive[S]], expr: ReevaluationTicket[S] => T) extends Base[T, S](_bud) with Signal[T, S] with DynamicReevaluation[T, S] {
+    private class DynamicSignal[T, S <: Struct](_bud: S#Type[T, Reactive[S]], expr: ReevaluationTicket[S] => T) extends Base[T, S](_bud) with Signal[T, S] with DynamicReevaluation[T, S] {
       override def calculatePulseDependencies(ticket: ReevaluationTicket[S]): Pulse[T] = {
         Pulse.tryCatch { Pulse.diffPulse(expr(ticket), stable(ticket.turn)) }
       }
@@ -29,13 +29,13 @@ object Signals extends GeneratedSignalLift {
 
     /** creates a signal that statically depends on the dependencies with a given initial value */
     def makeStatic[T, S <: Struct](dependencies: Set[Reactive[S]], init: => T)(expr: (Turn[S], => T) => T)(initialTurn: Turn[S]): Signal[T, S] = initialTurn.create(dependencies) {
-      val bud: S#StructType[T, Reactive[S]] = initialTurn.makeStructState(Pulse.tryCatch(Pulse.Change(init)), transient = false, initialIncoming = dependencies)
+      val bud: S#Type[T, Reactive[S]] = initialTurn.makeStructState(Pulse.tryCatch(Pulse.Change(init)), transient = false, initialIncoming = dependencies)
       new StaticSignal(bud, expr)
     }
 
     /** creates a dynamic signal */
     def makeDynamic[T, S <: Struct](dependencies: Set[Reactive[S]])(expr: ReevaluationTicket[S] => T)(initialTurn: Turn[S]): Signal[T, S] = initialTurn.create(dependencies, dynamic = true) {
-      val bud: S#StructType[T, Reactive[S]] = initialTurn.makeStructState(initialValue = Pulse.empty, transient = false)
+      val bud: S#Type[T, Reactive[S]] = initialTurn.makeStructState(initialValue = Pulse.empty, transient = false)
       new DynamicSignal[T, S](bud, expr)
     }
   }

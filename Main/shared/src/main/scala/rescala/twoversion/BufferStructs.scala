@@ -1,6 +1,6 @@
 package rescala.twoversion
 
-import rescala.graph.{GraphStruct, Pulse, ReadWritePulseStruct}
+import rescala.graph.{GraphStructType, Pulse, ReadWritePulse}
 import rescala.propagation.Turn
 
 
@@ -9,7 +9,7 @@ import rescala.propagation.Turn
   *
   * @tparam P Pulse stored value type
   */
-trait BufferedPulseStruct[P] extends ReadWritePulseStruct[P] with Committable {
+trait BufferedPulseStruct[P] extends ReadWritePulse[P] with Committable {
   protected var current: Pulse[P]
   protected val transient: Boolean
   protected var owner: Turn[_] = null
@@ -43,7 +43,7 @@ trait BufferedPulseStruct[P] extends ReadWritePulseStruct[P] with Committable {
   * @tparam P Pulse stored value type
   * @tparam R Type of the reactive values that are connected to this struct
   */
-abstract class PropagationStructImpl[P, R](override var current: Pulse[P], override val transient: Boolean, initialIncoming: Set[R]) extends GraphStruct[R] with BufferedPulseStruct[P] {
+abstract class PropagationStructImpl[P, R](override var current: Pulse[P], override val transient: Boolean, initialIncoming: Set[R]) extends GraphStructType[R] with BufferedPulseStruct[P] {
   private var _incoming: Set[R] = initialIncoming
   private var _outgoing: scala.collection.mutable.Map[R, Boolean] = rescala.util.WeakHashMap.empty
 

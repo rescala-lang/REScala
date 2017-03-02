@@ -1,6 +1,6 @@
 package rescala.levelbased
 
-import rescala.graph.{ChangableGraphStruct, GraphStruct, Pulse, ReadWritePulseStruct}
+import rescala.graph.{GraphStruct, GraphStructType, Pulse, ReadWritePulse}
 import rescala.propagation.Turn
 import rescala.twoversion.PropagationStructImpl
 
@@ -9,15 +9,15 @@ import scala.language.higherKinds
 /**
   * Wrapper for a struct type that combines GraphSpore, PulsingSpore and is leveled
   */
-trait LevelStruct extends ChangableGraphStruct {
-  override type StructType[P, R] <: LevelStructType[R] with GraphStruct[R] with ReadWritePulseStruct[P]
+trait LevelStruct extends GraphStruct {
+  override type Type[P, R] <: LevelStructType[R] with GraphStructType[R] with ReadWritePulse[P]
 }
 
 /**
   * Wrapper for the instance of LevelSpore
   */
 trait SimpleStruct extends LevelStruct {
-  override type StructType[P, R] = LevelStructTypeImpl[P, R]
+  override type Type[P, R] = LevelStructTypeImpl[P, R]
 }
 
 /**
@@ -25,7 +25,7 @@ trait SimpleStruct extends LevelStruct {
   *
   * @tparam R Type of the reactive values that are connected to this struct
   */
-trait LevelStructType[R] extends GraphStruct[R] {
+trait LevelStructType[R] extends GraphStructType[R] {
   def level(implicit turn: Turn[_]): Int
   def updateLevel(i: Int)(implicit turn: Turn[_]): Int
 }

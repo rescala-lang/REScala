@@ -10,8 +10,8 @@ import rescala.twoversion.{CommonPropagationImpl, PropagationStructImpl}
 
 import scala.collection.mutable
 
-object LSStruct extends ChangableGraphStruct {
-  override type StructType[P, R] = LSPropagationStruct[P, R]
+object LSStruct extends GraphStruct {
+  override type Type[P, R] = LSPropagationStruct[P, R]
 }
 
 
@@ -47,7 +47,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPr
 
   private type TState = LSStruct.type
 
-  override def makeStructState[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): LSStruct.StructType[P, R] = {
+  override def makeStructState[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): LSStruct.Type[P, R] = {
     val lock = new TurnLock[LSInterTurn]
     new LSPropagationStruct[P, R](initialValue, transient, lock, initialIncoming)
   }

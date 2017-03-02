@@ -8,12 +8,12 @@ import rescala.propagation.{Turn, ReevaluationTicket}
 object Events {
 
 
-  private class StaticEvent[T, S <: Struct](_bud: S#StructType[T, Reactive[S]], expr: Turn[S] => Pulse[T], override val toString: String)
+  private class StaticEvent[T, S <: Struct](_bud: S#Type[T, Reactive[S]], expr: Turn[S] => Pulse[T], override val toString: String)
     extends Base[T, S](_bud) with Event[T, S] with StaticReevaluation[T, S] {
     override def calculatePulse()(implicit turn: Turn[S]): Pulse[T] = Pulse.tryCatch(expr(turn), onEmpty = NoChange)
   }
 
-  private class DynamicEvent[T, S <: Struct](_bud: S#StructType[T, Reactive[S]], expr: ReevaluationTicket[S] => Pulse[T]) extends Base[T, S](_bud) with Event[T, S] with DynamicReevaluation[T, S] {
+  private class DynamicEvent[T, S <: Struct](_bud: S#Type[T, Reactive[S]], expr: ReevaluationTicket[S] => Pulse[T]) extends Base[T, S](_bud) with Event[T, S] with DynamicReevaluation[T, S] {
     override def calculatePulseDependencies(ticket: ReevaluationTicket[S]): Pulse[T] = {
       Pulse.tryCatch(expr(ticket), onEmpty = NoChange)
     }
