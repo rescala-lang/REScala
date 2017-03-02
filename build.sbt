@@ -18,7 +18,7 @@ shellPrompt in ThisBuild := { state => Project.extract(state).currentRef.project
 lazy val rescalaAggregate = project.in(file(".")).aggregate(rescalaJVM,
   rescalaJS, microbench, reswing, examples, examplesReswing, caseStudyEditor,
   caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags,
-  datastructures, universe, reactiveStreams, documentation, meta, pipelining,
+  datastructures, universe, reactiveStreams, documentation, meta,
   stm, testsJVM, testsJS, fullmv, caseStudyShapes, caseStudyMill)
   .settings(
     publish := {},
@@ -83,7 +83,7 @@ lazy val tests = crossProject.in(file("Tests"))
   .dependsOn(rescala)
   .jvmSettings().jsSettings(scalaJSUseRhino in Global := true)
 
-lazy val testsJVM = tests.jvm.dependsOn(stm, pipelining)
+lazy val testsJVM = tests.jvm.dependsOn(stm)
 
 lazy val testsJS = tests.js
 
