@@ -26,7 +26,7 @@ final class Evt[T, S <: Struct]()(_bud: S#StructType[T, Reactive[S]]) extends Ba
     set(value)(turn)
   }
 
-  override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[S] =
+  override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[Value, S] =
     ReevaluationResult.Static(changed = hasChanged)
 
   override def disconnect()(implicit engine: Engine[S, Turn[S]]): Unit = ()
@@ -62,7 +62,7 @@ final class Var[A, S <: Struct](_bud: S#StructType[A, Reactive[S]]) extends Base
     if (p.isChange) { set(p) }
   }
 
-  override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[S] =
+  override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[Value, S] =
     ReevaluationResult.Static(changed = hasChanged)
 
   override def disconnect()(implicit engine: Engine[S, Turn[S]]): Unit = ()

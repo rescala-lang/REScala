@@ -28,7 +28,7 @@ object REPublisher {
     var requested: Long = 0
     var cancelled = false
 
-    override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[S] = {
+    override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[Value, S] = {
       if (bud.incoming.isEmpty) ReevaluationResult.Dynamic(changed = false, DepDiff(Set.empty, Set(dependency)))
       else {
         dependency.pulse(turn).toOptionTry match {

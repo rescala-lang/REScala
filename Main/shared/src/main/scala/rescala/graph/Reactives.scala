@@ -8,6 +8,8 @@ import rescala.propagation.Turn
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
 trait Reactive[S <: Struct] {
+
+  type Value
   final override val hashCode: Int = Globals.nextID().hashCode()
 
   /**
@@ -15,7 +17,7 @@ trait Reactive[S <: Struct] {
     *
     * @return Spore for this value
     */
-  protected[rescala] def state: S#StructType[_, Reactive[S]]
+  protected[rescala] def state: S#StructType[Value, Reactive[S]]
 
   /**
     * Reevaluates this value when it is internally scheduled for reevaluation
@@ -23,7 +25,7 @@ trait Reactive[S <: Struct] {
     * @param turn Turn that handles the reevaluation
     * @return Result of the reevaluation
     */
-  protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[S]
+  protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[Value, S]
 
   /** for debugging */
   private val name = Globals.declarationLocationName()
@@ -45,8 +47,9 @@ trait Pulsing[+P, S <: Struct] extends Reactive[S] {
 
 
 /** helper class to initialise engine and select lock */
-abstract class Base[+P, S <: Struct](struct: S#StructType[P, Reactive[S]]) extends Pulsing[P, S] {
-  final override protected[rescala] def state: S#StructType[_, Reactive[S]] = struct
+abstract class Base[P, S <: Struct](struct: S#StructType[P, Reactive[S]]) extends Pulsing[P, S] {
+  override type Value = P
+  final override protected[rescala] def state: S#StructType[Value, Reactive[S]] = struct
 
   final protected[this] override def set(value: Pulse[P])(implicit turn: Turn[S]): Unit = if (value.isChange) struct.set(value) else if (hasChanged) struct.set(stable)
   final protected[rescala] override def stable(implicit turn: Turn[S]): Pulse[P] = struct.base

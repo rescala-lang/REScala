@@ -22,7 +22,7 @@ object Observe {
   private val strongObserveReferences = new ConcurrentHashMap[Observe[_], Boolean]()
 
   private class Obs[T, S <: Struct](bud: S#StructType[T, Reactive[S]], dependency: Pulsing[T, S], fun: T => Unit, fail: Throwable => Unit) extends Base[T, S](bud) with Reactive[S] with Observe[S] with Disconnectable[S] {
-    override protected[rescala] def computeReevaluationResult()(implicit turn: Turn[S]): ReevaluationResult[S] = {
+    override protected[rescala] def computeReevaluationResult()(implicit turn: Turn[S]): ReevaluationResult[Value, S] = {
       scheduleHandler(this, turn, dependency, fun, fail)
       ReevaluationResult.Static(changed = false)
     }
