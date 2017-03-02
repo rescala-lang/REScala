@@ -3,6 +3,7 @@ package tests.rescala.fullmv
 import org.scalatest._
 import rescala.fullmv.api._
 
+@Ignore
 class TransactionTest extends FlatSpec with Matchers{
   "A newly created transaction" should "be preparing" in {
     Transaction().phase === Preparing

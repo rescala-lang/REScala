@@ -1,8 +1,9 @@
 package tests.rescala.fullmv
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{FlatSpec, Ignore, Matchers}
 import rescala.fullmv.api._
 
+@Ignore
 class NodeDataManagerPhaseRestrictionsTest extends FlatSpec with Matchers {
   def assertAllows(op: (NodeDataManager[Unit, Unit], Transaction) => Unit, when: Transaction => Boolean): Unit = {
     assertAllows(_ => Transaction(), op, when)

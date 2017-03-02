@@ -1,8 +1,9 @@
 package tests.rescala.fullmv
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{FlatSpec, Ignore, Matchers}
 import rescala.fullmv.api._
 
+@Ignore
 class SerializationGraphTrackingTest extends FlatSpec with Matchers {
   private def assertOrder(sgt: SerializationGraphTracking, a: Transaction, b: Transaction) = {
     sgt.getOrder(a, b) === FirstFirst
