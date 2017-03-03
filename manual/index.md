@@ -5,14 +5,20 @@ nav: 3
 sidebar: manual
 ---
 
-# From SBT
+# Quickstart with sbt
+
+Create a `build.sbt` file in an empty folder with the following contents:
 
 ```scala
+scalaVersion := "2.12.1"
+
 resolvers += Resolver.bintrayRepo("rmgk", "maven")
 resolvers += Resolver.bintrayRepo("pweisenburger", "maven")
 
 libraryDependencies += "de.tuda.stg" %% "rescala" % "0.19.0"
 ```
+
+Install [sbt](http://www.scala-sbt.org/) and run `sbt console` inside the folder.
 
 # API Documentation
 
@@ -302,7 +308,7 @@ val e: Event[Int] = space.changed
 // e: rescala.Event[Int] = (changed <console>(17))
 
 val handler:  (Int => Unit) =  ((x: Int) => println(x))
-// handler: Int => Unit = $$Lambda$8356/325387143@297e1722
+// handler: Int => Unit = $$Lambda$2836/1313705184@1d853f83
 
 e += handler
 // res11: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
@@ -549,12 +555,12 @@ e += { x => println(f"n: $x")}
 // res29: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
 
 e(10)
-// n: 10
 // 10
+// n: 10
 
 e(10)
-// n: 10
 // 10
+// n: 10
 ```
 
 ## Unregistering Handlers
@@ -574,8 +580,8 @@ val handler2 = e += { x => println(s"n: $x") }
 // handler2: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(17)
 
 e(10)
-// n: 10
 // 10
+// n: 10
 
 handler2.remove()
 
@@ -894,7 +900,7 @@ val e = Evt[Int]()
 // e: rescala.Evt[Int] = <console>(15)
 
 val f = (x:Int,y:Int)=>(x+y)
-// f: (Int, Int) => Int = $$Lambda$8461/2126906156@7f7e948c
+// f: (Int, Int) => Int = $$Lambda$2913/1866806043@171771e9
 
 val s: Signal[Int] = e.fold(10)(f)
 // s: rescala.Signal[Int] = <console>(17)
@@ -925,7 +931,7 @@ val e = Evt[Int]()
 // e: rescala.Evt[Int] = <console>(15)
 
 val f = (x:Int)=>{test=x; x+1}
-// f: Int => Int = $$Lambda$8462/1379393974@7b8e3ec0
+// f: Int => Int = $$Lambda$2914/388127693@3a71888e
 
 val s: Signal[Int] = e.iterate(10)(f)
 // s: rescala.Signal[Int] = <console>(17)
@@ -1390,7 +1396,7 @@ class Foo(init: Int){            /* WRONG - DON'T DO IT */
 // defined class Foo
 
 val foo = new Foo(1)
-// foo: Foo = Foo@3744b985
+// foo: Foo = Foo@54ec9a53
 
 val varFoo = Var(foo)
 // varFoo: rescala.Var[Foo] = <console>(16)
@@ -1425,7 +1431,7 @@ class Foo(val x: Int){}
 // defined class Foo
 
 val foo = new Foo(1)
-// foo: Foo = Foo@97b2479
+// foo: Foo = Foo@49ed29b7
 
 val varFoo = Var(foo)
 // varFoo: rescala.Var[Foo] = <console>(16)
@@ -1450,7 +1456,7 @@ class Foo(init: Int){   /* WRONG - DON'T DO IT */
 // defined class Foo
 
 val foo = new Foo(1)
-// foo: Foo = Foo@13b976c1
+// foo: Foo = Foo@38961c03
 
 val varFoo = Var(foo)
 // varFoo: rescala.Var[Foo] = <console>(16)
