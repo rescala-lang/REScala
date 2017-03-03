@@ -5,14 +5,20 @@ nav: 3
 sidebar: manual
 ---
 
-# From SBT
+# Quickstart with sbt
+
+Create a `build.sbt` file in an empty folder with the following contents:
 
 ```scala
+scalaVersion := "2.12.1"
+
 resolvers += Resolver.bintrayRepo("rmgk", "maven")
 resolvers += Resolver.bintrayRepo("pweisenburger", "maven")
 
 libraryDependencies += "de.tuda.stg" %% "rescala" % "0.19.0"
 ```
+
+Install [sbt](http://www.scala-sbt.org/) and run `sbt console` inside the folder.
 
 # API Documentation
 
