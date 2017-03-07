@@ -33,8 +33,8 @@ final private[levelbased] class LevelQueue[S <: LevelStruct](evaluator: LevelQue
     * @param needsEvaluate Indicates if the element needs re-evaluation itself, otherwise it is just a level change
     * @param dep           Element to add to the queue
     */
-  def enqueue(minLevel: Int, needsEvaluate: Boolean = true)(dep: Reactive[S])(implicit ticket: S#Ticket[S]): Unit = {
-    elements.offer(QueueElement[S](dep.state.level, dep, minLevel, needsEvaluate))
+  def enqueue(minLevel: Int, needsEvaluate: Boolean = true)(dep: Reactive[S]): Unit = {
+    elements.offer(QueueElement[S](dep.state.level(currentTurn), dep, minLevel, needsEvaluate))
   }
 
   /**
@@ -43,7 +43,7 @@ final private[levelbased] class LevelQueue[S <: LevelStruct](evaluator: LevelQue
     * @param queueElement Element to evaluate
     */
   private def handleElement(queueElement: QueueElement[S]): Unit = {
-    implicit def ticket: S#Ticket[S] = currentTurn.makeTicket()
+    implicit def turn: LevelBasedPropagation[S] = currentTurn
     val QueueElement(headLevel, head, headMinLevel, reevaluate) = queueElement
     // handle level increases
     if (headLevel < headMinLevel) {
@@ -55,7 +55,7 @@ final private[levelbased] class LevelQueue[S <: LevelStruct](evaluator: LevelQue
       }
     }
     else if (reevaluate) {
-      evaluator.evaluate(head, ticket)
+      evaluator.evaluate(head, turn.makeTicket())
     }
   }
 

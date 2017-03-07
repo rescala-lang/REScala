@@ -1,6 +1,6 @@
 package rescala.parrp
 
-import rescala.graph.{Pulse, Reactive}
+import rescala.graph.{Pulse, Reactive, Struct}
 import rescala.levelbased.{LevelBasedPropagation, LevelStruct}
 import rescala.locking._
 
@@ -16,13 +16,14 @@ trait ParRPInterTurn {
 }
 
 class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropagation[ParRP] with ParRPInterTurn with LevelStruct {
-  override type Type[P, R] = ParRPStructType[P, R]
+  override type Type[P, S <: Struct] = ParRPStructType[P, S]
 
   private type TState = ParRP
 
-  override def makeStructState[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): TState#Type[P, R] = {
+
+  override private[rescala] def makeStructState[P](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[Reactive[TState]]): TState#Type[P, ParRP] = {
     val lock = new TurnLock[ParRPInterTurn]
-    new ParRPStructType[P, R](initialValue, transient, lock, initialIncoming)
+    new ParRPStructType[P, ParRP](initialValue, transient, lock, initialIncoming)
   }
 
 
@@ -56,6 +57,7 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
   /** lock all reactives reachable from the initial sources
     * retry when acquire returns false */
   override def preparationPhase(initialWrites: Traversable[Reactive[TState]]): Unit = {
+    implicit val ticket = makeTicket()
     val toVisit = new java.util.ArrayDeque[Reactive[TState]](10)
     initialWrites.foreach(toVisit.offer)
     val priorKey = priorTurn.map(_.key).orNull
@@ -66,7 +68,7 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
       if ((priorKey ne null) && (owner eq priorKey)) throw new IllegalStateException(s"$this tried to lock reactive $reactive owned by its parent $priorKey")
       if (owner ne key) {
         if (reactive.state.lock.tryLock(key) eq key)
-          reactive.state.outgoing.foreach {toVisit.offer}
+          reactive.state.outgoing(this).foreach {toVisit.offer}
         else {
           key.reset()
           backoff.backoff()
@@ -80,7 +82,7 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
 
 
   override def forget(reactive: Reactive[TState]): Unit = levelQueue.remove(reactive)
-  override def admit(reactive: Reactive[TState]): Unit = levelQueue.enqueue(reactive.state.level)(reactive)
+  override def admit(reactive: Reactive[TState]): Unit = levelQueue.enqueue(reactive.state.level(this))(reactive)
 
   /** registering a dependency on a node we do not personally own does require some additional care.
     * we let the other turn update the dependency and admit the dependent into the propagation queue
@@ -93,7 +95,7 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
       if (!source.state.lock.isWriteLock) {
         owner.turn.discover(sink)(source)
       }
-      else if (!source.state.outgoing.contains(sink)) {
+      else if (!source.state.outgoing(this).contains(sink)) {
         owner.turn.discover(sink)(source)
         owner.turn.admit(sink)
         key.lockKeychain { _.addFallthrough(owner) }

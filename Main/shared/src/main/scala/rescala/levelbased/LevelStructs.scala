@@ -1,6 +1,7 @@
 package rescala.levelbased
 
 import rescala.graph.{ATicket, GraphStruct, GraphStructType, Pulse, Reactive, ReadWritePulse, Struct}
+import rescala.propagation.Turn
 import rescala.twoversion.PropagationStructImpl
 
 import scala.language.higherKinds
@@ -10,7 +11,6 @@ import scala.language.higherKinds
   */
 trait LevelStruct extends GraphStruct {
   override type Type[P, S <: Struct] <: LevelStructType[S] with GraphStructType[S] with ReadWritePulse[P, S]
-  override type Ticket[S <: Struct] = ATicket[S]
 }
 
 /**
@@ -26,8 +26,8 @@ trait SimpleStruct extends LevelStruct {
   * @tparam R Type of the reactive values that are connected to this struct
   */
 trait LevelStructType[S <: Struct] extends GraphStructType[S] {
-  def level(implicit turn: S#Ticket[S]): Int
-  def updateLevel(i: Int)(implicit turn: S#Ticket[S]): Int
+  def level(implicit turn: Turn[S]): Int
+  def updateLevel(i: Int)(implicit turn: Turn[S]): Int
 }
 
 /**
@@ -42,9 +42,9 @@ trait LevelStructType[S <: Struct] extends GraphStructType[S] {
 class LevelStructTypeImpl[P, S <: Struct](current: Pulse[P], transient: Boolean, initialIncoming: Set[Reactive[S]]) extends PropagationStructImpl[P, S](current, transient, initialIncoming) with LevelStructType[S]  {
   var _level: Int = 0
 
-  override def level(implicit turn: S#Ticket[S]): Int = _level
+  override def level(implicit turn:Turn[S]): Int = _level
 
-  override def updateLevel(i: Int)(implicit turn: S#Ticket[S]): Int = {
+  override def updateLevel(i: Int)(implicit turn: Turn[S]): Int = {
     val max = math.max(i, _level)
     _level = max
     max

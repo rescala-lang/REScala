@@ -8,9 +8,9 @@ import rescala.graph._
 import rescala.locking._
 import rescala.twoversion.EngineImpl
 
-class ParallelLockSweep(backoff: Backoff, ex: Executor, engine: EngineImpl[LSStruct.type, ParallelLockSweep], priorTurn: Option[ParallelLockSweep]) extends LockSweep(backoff, priorTurn) {
+class ParallelLockSweep(backoff: Backoff, ex: Executor, engine: EngineImpl[LSStruct, ParallelLockSweep], priorTurn: Option[ParallelLockSweep]) extends LockSweep(backoff, priorTurn) {
 
-  private type TState = LSStruct.type
+  private type TState = LSStruct
 
   val jobsRunning = new AtomicInteger(0)
 
@@ -47,12 +47,13 @@ class ParallelLockSweep(backoff: Backoff, ex: Executor, engine: EngineImpl[LSStr
   }
 
   override def evaluate(head: Reactive[TState]): Unit = {
-    val res = head.reevaluate(this)
+    val ticket = makeTicket()
+    val res = head.reevaluate(ticket)
     synchronized {
       res match {
         case Static(value) =>
-          val hasChanged = value.isChange && value != head.state.base(this)
-          if (hasChanged) head.state.set(value)(this)
+          val hasChanged = value.isChange && value != head.state.base(ticket)
+          if (hasChanged) head.state.set(value)(ticket)
           done(head, hasChanged)
 
         case Dynamic(value, deps) =>
@@ -61,8 +62,8 @@ class ParallelLockSweep(backoff: Backoff, ex: Executor, engine: EngineImpl[LSStr
           head.state.counter = recount(diff.novel.iterator)
 
           if (head.state.counter == 0) {
-            val hasChanged = value.isChange && value != head.state.base(this)
-            if (hasChanged) head.state.set(value)(this)
+            val hasChanged = value.isChange && value != head.state.base(ticket)
+            if (hasChanged) head.state.set(value)(ticket)
             done(head, hasChanged)
           }
 

@@ -1,6 +1,7 @@
 package rescala.twoversion
 
-import rescala.graph.{GraphStruct, DepDiff, Pulse, Reactive}
+import rescala.graph.{ATicket, DepDiff, GraphStruct, Pulse, Reactive}
+import rescala.propagation.{DynamicTicket, StaticTicket}
 
 import scala.util.control.NonFatal
 
@@ -11,6 +12,14 @@ import scala.util.control.NonFatal
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
 trait CommonPropagationImpl[S <: GraphStruct] extends AbstractPropagation[S] {
+  outer =>
+
+  def makeTicket(): S#Ticket[S] = new ATicket[S] {
+    override def dynamic(): DynamicTicket[S] = new DynamicTicket[S](turn, this)
+    override def static(): StaticTicket[S] = new StaticTicket[S](turn, this)
+    override def turn(): CommonPropagationImpl[S] = outer
+  }
+
   private val toCommit = new java.util.ArrayList[Committable[S]]()
   private val observers = new java.util.ArrayList[() => Unit]()
 
@@ -53,12 +62,12 @@ trait CommonPropagationImpl[S <: GraphStruct] extends AbstractPropagation[S] {
     if (failure != null) throw failure
   }
 
-  protected def discover(sink: Reactive[S])(source: Reactive[S])(implicit ticket: S#Ticket[S]): Unit = source.state.discover(sink)
+  protected def discover(sink: Reactive[S])(source: Reactive[S]): Unit = source.state.discover(sink)(this)
 
-  protected def drop(sink: Reactive[S])(source: Reactive[S])(implicit ticket: S#Ticket[S]): Unit = source.state.drop(sink)
+  protected def drop(sink: Reactive[S])(source: Reactive[S]): Unit = source.state.drop(sink)(this)
 
-  final def applyDiff(head: Reactive[S], diff: DepDiff[S])(implicit ticket: S#Ticket[S]): Unit = {
-    head.state.updateIncoming(diff.novel)
+  final def applyDiff(head: Reactive[S], diff: DepDiff[S]): Unit = {
+    head.state.updateIncoming(diff.novel)(this)
     diff.removed foreach drop(head)
     diff.added foreach discover(head)
   }

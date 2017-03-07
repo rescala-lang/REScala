@@ -10,16 +10,6 @@ import rescala.twoversion.Committable
   */
 trait Turn[S <: Struct] {
   outer =>
-  /**
-    * Creates a new spore initialized with the given parameters
-    *
-    * @param initialValue    Initially stored pulse of the spore
-    * @param transient       Indicates if the spore is transient (meaning that updates to it's pulse are reverted when committing)
-    * @param initialIncoming Initial incoming dependencies of the spore
-    * @tparam P Stored pulse value type
-    * @tparam R Reactive value type of the incoming dependencies of the spore
-    * @return
-    */
   private[rescala] def makeStructState[P](initialValue: Pulse[P] = Pulse.NoChange, transient: Boolean = true, initialIncoming: Set[Reactive[S]] = Set.empty[Reactive[S]]): S#Type[P, S]
 
 

@@ -10,15 +10,18 @@ import rescala.twoversion.{CommonPropagationImpl, PropagationStructImpl}
 
 import scala.collection.mutable
 
-object LSStruct extends GraphStruct {
-  override type Type[P, R] = LSPropagationStruct[P, R]
+trait LSStruct extends GraphStruct {
+  override type Type[P, S <: Struct] = LSPropagationStruct[P, S]
+  override type Ticket[S <: Struct] = ATicket[S]
+
 }
 
 
-class LSPropagationStruct[P, R](current: Pulse[P], transient: Boolean, val lock: TurnLock[LSInterTurn], initialIncoming: Set[R])
-  extends PropagationStructImpl[P, R](current, transient, initialIncoming) {
+class LSPropagationStruct[P, S <: Struct](current: Pulse[P], transient: Boolean, val lock: TurnLock[LSInterTurn], initialIncoming: Set[Reactive[S]])
+  extends PropagationStructImpl[P, S](current, transient, initialIncoming) {
 
-  override def set(value: Pulse[P])(implicit turn: Turn[_]): Unit = {
+  override def set(value: Pulse[P])(implicit ticket: S#Ticket[S]): Unit = {
+    val turn = ticket.turn()
     assert(turn match {
       case pessimistic: LockSweep =>
         val wlo: Option[Key[LSInterTurn]] = Option(lock).map(_.getOwner)
@@ -40,16 +43,17 @@ class LSPropagationStruct[P, R](current: Pulse[P], transient: Boolean, val lock:
 }
 
 trait LSInterTurn {
-  def append(reactives: mutable.Set[Reactive[LSStruct.type]]): Unit
+  def append(reactives: mutable.Set[Reactive[LSStruct]]): Unit
 }
 
-class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPropagationImpl[LSStruct.type] with LSInterTurn {
+class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPropagationImpl[LSStruct] with LSInterTurn {
 
-  private type TState = LSStruct.type
+  private type TState = LSStruct
 
-  override def makeStructState[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]): LSStruct.Type[P, R] = {
+
+  override private[rescala] def makeStructState[P](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[Reactive[TState]]): LSStruct#Type[P, TState] = {
     val lock = new TurnLock[LSInterTurn]
-    new LSPropagationStruct[P, R](initialValue, transient, lock, initialIncoming)
+    new LSPropagationStruct[P, LSStruct](initialValue, transient, lock, initialIncoming)
   }
 
 
@@ -62,6 +66,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPr
   /** lock all reactives reachable from the initial sources
     * retry when acquire returns false */
   override def preparationPhase(initialWrites: Traversable[Reactive[TState]]): Unit = {
+    implicit val ticket = makeTicket()
     val stack = new java.util.ArrayDeque[Reactive[TState]](10)
     initialWrites.foreach(stack.offer)
 
@@ -127,22 +132,23 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPr
   }
 
   def evaluate(head: Reactive[TState]): Unit = {
+    val ticket = makeTicket()
     if (head.state.anyInputChanged != this) done(head, hasChanged = false)
     else {
-      head.reevaluate() match {
+      head.reevaluate(ticket) match {
         case Static(value: Pulse[head.Value]) =>
-          val hasChanged = value.isChange && head.state.base(this) != value
-          if (hasChanged) head.state.set(value)(this)
+          val hasChanged = value.isChange && head.state.base(ticket) != value
+          if (hasChanged) head.state.set(value)(ticket)
           done(head, hasChanged)
 
         case Dynamic(value, deps) =>
           val diff = DepDiff(deps, head.state.incoming(this))
           applyDiff(head, diff)
           head.state.counter = recount(diff.novel.iterator)
-          val hasChanged = value.isChange && head.state.base(this) != value
+          val hasChanged = value.isChange && head.state.base(ticket) != value
 
           if (head.state.counter == 0) {
-            if (hasChanged) head.state.set(value)(this)
+            if (hasChanged) head.state.set(value)(ticket)
             done(head, hasChanged)
           }
 
@@ -163,6 +169,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPr
     * is executed, because the constructor typically accesses the dependencies to create its initial value.
     */
   override def create[T <: Reactive[TState]](dependencies: Set[Reactive[TState]], dynamic: Boolean)(f: => T): T = {
+    implicit val ticket = makeTicket()
     dependencies.map(acquireShared)
     val reactive = f
     val owner = reactive.state.lock.tryLock(key)
@@ -191,37 +198,39 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPr
     * so that it gets updated when that turn continues
     * the responsibility for correctly passing the locks is moved to the commit phase */
   override def discover(sink: Reactive[TState])(source: Reactive[TState]): Unit = {
+    implicit def turn: Turn[TState] = this
 
     val owner = acquireShared(source)
     if (owner ne key) {
       if (source.state.willWrite != owner.turn) {
-        source.state.discover(sink)(this)
+        source.state.discover(sink)
       }
-      else if (!source.state.outgoing(this).contains(sink)) {
-        source.state.discover(sink)(this)
+      else if (!source.state.outgoing.contains(sink)) {
+        source.state.discover(sink)
         discovered.getOrElseUpdate(owner, mutable.Set.empty).add(sink)
         key.lockKeychain {_.addFallthrough(owner)}
       }
     }
     else {
-      source.state.discover(sink)(this)
+      source.state.discover(sink)
     }
   }
 
   /** this is for cases where we register and then unregister the same dependency in a single turn */
   override def drop(sink: Reactive[TState])(source: Reactive[TState]): Unit = {
+    implicit def turn: Turn[TState] = this
 
     val owner = acquireShared(source)
     if (owner ne key) {
-      source.state.drop(sink)(this)
+      source.state.drop(sink)
       if (source.state.willWrite != owner.turn) {
         key.lockKeychain(_.removeFallthrough(owner))
-        if (!sink.state.incoming(this).exists(_.state.lock.isOwner(owner))) {
+        if (!sink.state.incoming.exists(_.state.lock.isOwner(owner))) {
           discovered.getOrElseUpdate(owner, mutable.Set.empty).remove(sink)
         }
       }
     }
-    else source.state.drop(sink)(this)
+    else source.state.drop(sink)
   }
 
 

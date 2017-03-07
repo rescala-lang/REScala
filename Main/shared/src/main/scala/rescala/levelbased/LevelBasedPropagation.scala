@@ -11,42 +11,32 @@ import rescala.twoversion.CommonPropagationImpl
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
 trait LevelBasedPropagation[S <: LevelStruct] extends CommonPropagationImpl[S] with LevelQueue.Evaluator[S] {
-  outer =>
-
-  def makeTicket(): S#Ticket[S] = new ATicket[S] {
-    override def dynamic(): DynamicTicket[S] = new DynamicTicket[S](turn, this)
-    override def static(): StaticTicket[S] = new StaticTicket[S](turn, this)
-    override def turn(): LevelBasedPropagation[S] = outer
-  }
-
-
   private var _evaluated = List.empty[Reactive[S]]
 
   val levelQueue = new LevelQueue[S](this)(this)
 
   def evaluate(head: Reactive[S], ticket: S#Ticket[S]): Unit = {
-    implicit def currentTurn: S#Ticket[S] = ticket
 
     def requeue(changed: Boolean, level: Int, redo: Boolean): Unit =
       if (redo) levelQueue.enqueue(level, changed)(head)
-      else if (changed) head.state.outgoing.foreach(levelQueue.enqueue(level, changed))
+      else if (changed) head.state.outgoing(this).foreach(levelQueue.enqueue(level, changed))
 
-    head.reevaluate(currentTurn) match {
+    head.reevaluate(ticket) match {
       case Static(value) =>
-        val hasChanged = setIfChange(head)(value)
+        val hasChanged = setIfChange(head)(value)(ticket)
         requeue(hasChanged, level = -42, redo = false)
       case Dynamic(value, deps) =>
-        val diff = DepDiff(deps, head.state.incoming(currentTurn))
+        val diff = DepDiff(deps, head.state.incoming(this))
         applyDiff(head, diff)
         val newLevel = maximumLevel(diff.novel) + 1
-        val hasChanged = setIfChange(head)(value)
-        requeue(hasChanged, newLevel, redo = head.state.level < newLevel)
+        val hasChanged = setIfChange(head)(value)(ticket)
+        requeue(hasChanged, newLevel, redo = head.state.level(this) < newLevel)
     }
     _evaluated ::= head
 
   }
 
-  private def maximumLevel(dependencies: Set[Reactive[S]])(implicit ticket: S#Ticket[S]): Int = dependencies.foldLeft(-1)((acc, r) => math.max(acc, r.state.level))
+  private def maximumLevel(dependencies: Set[Reactive[S]]): Int = dependencies.foldLeft(-1)((acc, r) => math.max(acc, r.state.level(this)))
 
 
   override def create[T <: Reactive[S]](dependencies: Set[Reactive[S]], dynamic: Boolean)(f: => T): T = {
@@ -67,8 +57,8 @@ trait LevelBasedPropagation[S <: LevelStruct] extends CommonPropagationImpl[S] w
   def ensureLevel(dependant: Reactive[S], dependencies: Set[Reactive[S]])(implicit ticket: S#Ticket[S]): Int =
     if (dependencies.isEmpty) 0
     else {
-      val newLevel = dependencies.map(_.state.level).max + 1
-      dependant.state.updateLevel(newLevel)
+      val newLevel = dependencies.map(_.state.level(this)).max + 1
+      dependant.state.updateLevel(newLevel)(this)
     }
 
   /** allow turn to handle dynamic access to reactives */
@@ -78,7 +68,7 @@ trait LevelBasedPropagation[S <: LevelStruct] extends CommonPropagationImpl[S] w
     implicit val ticket: S#Ticket[S] = makeTicket()
 
     initialWrites.foreach { reactive =>
-      levelQueue.enqueue(reactive.state.level)(reactive)
+      levelQueue.enqueue(reactive.state.level(this))(reactive)
     }
   }
 

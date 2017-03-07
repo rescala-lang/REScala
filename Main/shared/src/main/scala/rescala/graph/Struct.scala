@@ -30,6 +30,8 @@ trait ATicket[S <: Struct] {
   */
 trait GraphStruct extends Struct {
   override type Type[P, S <: Struct] <: GraphStructType[S] with ReadWritePulse[P, S]
+  override type Ticket[S <: Struct] = ATicket[S]
+
 }
 
 trait ReadPulse[P, S <: Struct] {
@@ -53,9 +55,9 @@ trait ReadWritePulse[P, S <: Struct] <: ReadPulse[P, S] {
   * @tparam R Type of the reactive values that are connected to this struct
   */
 trait GraphStructType[S <: Struct] {
-  def incoming(implicit turn: S#Ticket[S]): Set[Reactive[S]]
-  def updateIncoming(reactives: Set[Reactive[S]])(implicit turn: S#Ticket[S]): Unit
-  def outgoing(implicit turn: S#Ticket[S]): Iterator[Reactive[S]]
-  def discover(reactive: Reactive[S])(implicit turn: S#Ticket[S]): Unit
-  def drop(reactive: Reactive[S])(implicit turn: S#Ticket[S]): Unit
+  def incoming(implicit turn: Turn[S]): Set[Reactive[S]]
+  def updateIncoming(reactives: Set[Reactive[S]])(implicit turn: Turn[S]): Unit
+  def outgoing(implicit turn: Turn[S]): Iterator[Reactive[S]]
+  def discover(reactive: Reactive[S])(implicit turn: Turn[S]): Unit
+  def drop(reactive: Reactive[S])(implicit turn: Turn[S]): Unit
 }

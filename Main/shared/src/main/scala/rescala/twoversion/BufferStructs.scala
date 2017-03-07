@@ -49,9 +49,9 @@ abstract class PropagationStructImpl[P, S <: Struct](override var current: Pulse
   private var _outgoing: scala.collection.mutable.Map[Reactive[S], Boolean] = rescala.util.WeakHashMap.empty
 
 
-  def incoming(implicit turn: S#Ticket[S]): Set[Reactive[S]] = _incoming
-  def updateIncoming(reactives: Set[Reactive[S]])(implicit turn: S#Ticket[S]): Unit = _incoming = reactives
-  override def outgoing(implicit turn: S#Ticket[S]): Iterator[Reactive[S]] = _outgoing.keysIterator
-  override def discover(reactive: Reactive[S])(implicit turn: S#Ticket[S]): Unit = _outgoing.put(reactive, true)
-  override def drop(reactive: Reactive[S])(implicit turn: S#Ticket[S]): Unit = _outgoing -= reactive
+  def incoming(implicit turn: Turn[S]): Set[Reactive[S]] = _incoming
+  def updateIncoming(reactives: Set[Reactive[S]])(implicit turn: Turn[S]): Unit = _incoming = reactives
+  override def outgoing(implicit turn: Turn[S]): Iterator[Reactive[S]] = _outgoing.keysIterator
+  override def discover(reactive: Reactive[S])(implicit turn: Turn[S]): Unit = _outgoing.put(reactive, true)
+  override def drop(reactive: Reactive[S])(implicit turn: Turn[S]): Unit = _outgoing -= reactive
 }

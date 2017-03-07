@@ -3,15 +3,16 @@ package rescala.parrp
 import rescala.graph._
 import rescala.levelbased.LevelStructTypeImpl
 import rescala.locking.{Key, TurnLock}
-import rescala.propagation.Turn
 
 import scala.language.implicitConversions
 
 
-class ParRPStructType[P, R](current: Pulse[P], transient: Boolean, val lock: TurnLock[ParRPInterTurn], initialIncoming: Set[R])
-  extends LevelStructTypeImpl[P, R](current, transient, initialIncoming) {
+class ParRPStructType[P, S <: Struct](current: Pulse[P], transient: Boolean, val lock: TurnLock[ParRPInterTurn], initialIncoming: Set[Reactive[S]])
+  extends LevelStructTypeImpl[P, S](current, transient, initialIncoming) {
 
-  override def set(value: Pulse[P])(implicit turn: Turn[_]): Unit = {
+
+  override def set(value: Pulse[P])(implicit ticket: S#Ticket[S]): Unit = {
+    val turn = ticket.turn()
     assert(turn match {
       case pessimistic: ParRP =>
         val wlo: Option[Key[ParRPInterTurn]] = Option(lock).map(_.getOwner)
@@ -22,6 +23,6 @@ class ParRPStructType[P, R](current: Pulse[P], transient: Boolean, val lock: Tur
       case _ =>
         throw new IllegalStateException(s"parrp buffer used with wrong turn")
     })
-    super.set(value)
+    super.set(value)(ticket)
   }
 }
