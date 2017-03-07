@@ -9,9 +9,9 @@ and is useful in many contexts such as traditional user interfaces, concurrent a
 
 REScala is a research project held at TU Darmstadt in the
 [Software Technology Group.](http://www.stg.tu-darmstadt.de/)
-In context of the [pace project](http://www.pace-erc.eu/)
+In context of the [PACE Project](http://www.pace-erc.eu/).
 
-## Contents
+## Repository Overview
 
 This repository contains mutliple subprojects, the most important ones are:
 
@@ -20,8 +20,6 @@ This repository contains mutliple subprojects, the most important ones are:
 * __Extensions/RESwing__: contains an integration with scalaswing to write UIs on the JVM.
 * __Extensions/Rescalatags__: contains an integration with scalatags to write web applications.
 * __Research/Microbenchmarks__: contains a benchmark suite for reactive programming.
+  Execute wit `jmh:run`
 * __Tests__: integration tests for various subprojects.
 * __Examples__: various example applications.
-
-
-
