@@ -44,7 +44,7 @@ trait Pulsing[+P, S <: Struct] extends Reactive[S] {
 }
 
 
-/** helper class to initialise engine and select lock */
+/** helper class implementing the state methods of reactive and pulsing */
 abstract class Base[P, S <: Struct](struct: S#Type[P, Reactive[S]]) extends Pulsing[P, S] {
   override type Value = P
   final override protected[rescala] def state: S#Type[Value, Reactive[S]] = struct
