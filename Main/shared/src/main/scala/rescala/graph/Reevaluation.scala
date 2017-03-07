@@ -40,13 +40,13 @@ case class DepDiff[S <: Struct](novel: Set[Reactive[S]], old: Set[Reactive[S]]) 
   *
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
-trait StaticReevaluation[S <: Struct] extends Disconnectable[S] {
+trait StaticReevaluation[S <: Struct] extends Reactive[S] {
   this: Pulsing[_, S] =>
 
   /** side effect free calculation of the new pulse for the current turn */
   protected[rescala] def calculatePulse()(implicit turn: Turn[S]): Pulse[Value]
 
-  final override protected[rescala] def computeReevaluationResult()(implicit turn: Turn[S]): ReevaluationResult[Value, S] = {
+  override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[Value, S] =  {
     ReevaluationResult.Static(calculatePulse())
   }
 
@@ -60,22 +60,21 @@ trait StaticReevaluation[S <: Struct] extends Disconnectable[S] {
   *
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
-trait DynamicReevaluation[S <: Struct] extends Disconnectable[S] {
+trait DynamicReevaluation[S <: Struct] extends Reactive[S] {
   this: Pulsing[_, S] =>
 
 
   /** side effect free calculation of the new pulse and the new dependencies for the current turn */
   def calculatePulseDependencies(turn: ReevaluationTicket[S]): Pulse[Value]
 
-  final override protected[rescala] def computeReevaluationResult()(implicit turn: Turn[S]): ReevaluationResult[Value, S] = {
+  override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[Value, S] = {
     val ticket = new ReevaluationTicket(turn)
     val newPulse = calculatePulseDependencies(ticket)
     ReevaluationResult.Dynamic(newPulse, ticket.collectedDependencies)
   }
 }
 
-trait Disconnectable[S <: Struct] {
-  this: Reactive[S] =>
+trait Disconnectable[S <: Struct] extends Reactive[S] {
 
   @volatile private var disconnected = false
 
@@ -85,14 +84,13 @@ trait Disconnectable[S <: Struct] {
     }
   }
 
-  protected[rescala] def computeReevaluationResult()(implicit turn: Turn[S]): ReevaluationResult[Value, S]
 
-  final override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[Value, S] = {
+  abstract final override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[Value, S] = {
     if (disconnected) {
       ReevaluationResult.Dynamic(Pulse.NoChange, Set.empty)
     }
     else {
-      computeReevaluationResult()
+      super.reevaluate()
     }
   }
 

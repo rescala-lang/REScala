@@ -12,7 +12,7 @@ object Signals extends GeneratedSignalLift {
 
   object Impl {
     private class StaticSignal[T, S <: Struct](_bud: S#Type[T, Reactive[S]], expr: (Turn[S], => T) => T)
-      extends Base[T, S](_bud) with Signal[T, S] with StaticReevaluation[S] {
+      extends Base[T, S](_bud) with Signal[T, S] with StaticReevaluation[S] with Disconnectable[S] {
 
       override def calculatePulse()(implicit turn: Turn[S]): Pulse[T] = {
         val currentPulse: Pulse[T] = stable
@@ -21,7 +21,7 @@ object Signals extends GeneratedSignalLift {
       }
     }
 
-    private class DynamicSignal[T, S <: Struct](_bud: S#Type[T, Reactive[S]], expr: ReevaluationTicket[S] => T) extends Base[T, S](_bud) with Signal[T, S] with DynamicReevaluation[S] {
+    private class DynamicSignal[T, S <: Struct](_bud: S#Type[T, Reactive[S]], expr: ReevaluationTicket[S] => T) extends Base[T, S](_bud) with Signal[T, S] with DynamicReevaluation[S] with Disconnectable[S] {
       override def calculatePulseDependencies(ticket: ReevaluationTicket[S]): Pulse[T] = {
         Pulse.tryCatch { Pulse.diffPulse(expr(ticket), stable(ticket.turn)) }
       }

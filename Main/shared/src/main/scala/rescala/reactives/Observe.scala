@@ -3,7 +3,7 @@ package rescala.reactives
 import java.util.concurrent.ConcurrentHashMap
 
 import rescala.engine.{Engine, TurnSource}
-import rescala.graph._
+import rescala.graph.{Disconnectable, _}
 import rescala.propagation.Turn
 import rescala.reactives.RExceptions.UnhandledFailureException
 
@@ -21,8 +21,10 @@ object Observe {
 
   private val strongObserveReferences = new ConcurrentHashMap[Observe[_], Boolean]()
 
-  private class Obs[T, S <: Struct](bud: S#Type[T, Reactive[S]], dependency: Pulsing[T, S], fun: T => Unit, fail: Throwable => Unit) extends Base[T, S](bud) with Reactive[S] with Observe[S] with Disconnectable[S] {
-    override protected[rescala] def computeReevaluationResult()(implicit turn: Turn[S]): ReevaluationResult[Value, S] = {
+  private abstract class Obs[T, S <: Struct](bud: S#Type[T, Reactive[S]], dependency: Pulsing[T, S], fun: T => Unit, fail: Throwable => Unit) extends Base[T, S](bud) with Reactive[S] with Observe[S]  {
+    this: Disconnectable[S] =>
+
+    override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[Value, S] = {
       scheduleHandler(this, turn, dependency, fun, fail)
       ReevaluationResult.Static(Pulse.NoChange)
     }
@@ -46,7 +48,7 @@ object Observe {
   def weak[T, S <: Struct](dependency: Pulsing[T, S])(fun: T => Unit, fail: Throwable => Unit = null)(implicit maybe: TurnSource[S]): Observe[S] = {
     val incoming = Set[Reactive[S]](dependency)
     maybe(initTurn => initTurn.create(incoming) {
-      val obs = new Obs(initTurn.makeStructState[T, Reactive[S]](initialIncoming = incoming, transient = false), dependency, fun, fail)
+      val obs = new Obs(initTurn.makeStructState[T, Reactive[S]](initialIncoming = incoming, transient = false), dependency, fun, fail) with Disconnectable[S]
       scheduleHandler(obs, initTurn, dependency, fun, fail)
       obs
     })
