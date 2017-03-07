@@ -1,7 +1,7 @@
 package rescala.graph
 
 import rescala.engine.Engine
-import rescala.propagation.{ReevaluationTicket, Turn}
+import rescala.propagation.Turn
 
 /**
   * Indicator for the result of a re-evaluation of a reactive value.
@@ -34,46 +34,6 @@ case class DepDiff[S <: Struct](novel: Set[Reactive[S]], old: Set[Reactive[S]]) 
   lazy val removed: Set[Reactive[S]] = old.diff(novel)
 }
 
-/**
-  * Implementation of static re-evaluation of a reactive value.
-  * Only calculates the stored value of the pulse and compares it with the old value.
-  *
-  * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
-  */
-trait StaticReevaluation[S <: Struct] extends Reactive[S] {
-  this: Pulsing[_, S] =>
-
-  /** side effect free calculation of the new pulse for the current turn */
-  protected[rescala] def calculatePulse()(implicit turn: Turn[S]): Pulse[Value]
-
-  override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[Value, S] =  {
-    ReevaluationResult.Static(calculatePulse())
-  }
-
-
-}
-
-
-/**
-  * Implementation of dynamic re-evaluation of a reactive value.
-  * Calculates the pulse and new dependencies, compares them with the old value and dependencies and returns the result.
-  *
-  * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
-  */
-trait DynamicReevaluation[S <: Struct] extends Reactive[S] {
-  this: Pulsing[_, S] =>
-
-
-  /** side effect free calculation of the new pulse and the new dependencies for the current turn */
-  def calculatePulseDependencies(turn: ReevaluationTicket[S]): Pulse[Value]
-
-  override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[Value, S] = {
-    val ticket = new ReevaluationTicket(turn)
-    val newPulse = calculatePulseDependencies(ticket)
-    ReevaluationResult.Dynamic(newPulse, ticket.collectedDependencies)
-  }
-}
-
 trait Disconnectable[S <: Struct] extends Reactive[S] {
 
   @volatile private var disconnected = false
@@ -85,12 +45,12 @@ trait Disconnectable[S <: Struct] extends Reactive[S] {
   }
 
 
-  abstract final override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[Value, S] = {
+  abstract final override protected[rescala] def reevaluate(ticket: S#Ticket[S]): ReevaluationResult[Value, S] = {
     if (disconnected) {
       ReevaluationResult.Dynamic(Pulse.NoChange, Set.empty)
     }
     else {
-      super.reevaluate()
+      super.reevaluate(ticket)
     }
   }
 

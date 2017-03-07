@@ -1,6 +1,6 @@
 package rescala.twoversion
 
-import rescala.graph.{GraphStructType, Pulse, ReadWritePulse}
+import rescala.graph.{GraphStructType, Pulse, Reactive, ReadWritePulse, Struct}
 import rescala.propagation.Turn
 
 
@@ -9,26 +9,27 @@ import rescala.propagation.Turn
   *
   * @tparam P Pulse stored value type
   */
-trait BufferedPulseStruct[P] extends ReadWritePulse[P] with Committable {
+trait BufferedPulseStruct[P, S <: Struct] extends ReadWritePulse[P, S] with Committable[S] {
   protected var current: Pulse[P]
   protected val transient: Boolean
-  protected var owner: Turn[_] = null
+  protected var owner: Turn[S] = null
   private var update: Pulse[P] = Pulse.NoChange
 
-  override def set(value: Pulse[P])(implicit turn: Turn[_]): Unit = {
+  override def set(value: Pulse[P])(implicit ticket: S#Ticket[S]): Unit = {
+    val turn = ticket.turn()
     assert(owner == null || owner == turn, s"buffer owned by $owner written by $turn")
     update = value
     if (owner == null) turn.schedule(this)
     owner = turn
   }
-  override def get(implicit turn: Turn[_]): Pulse[P] = { if (turn eq owner) update else current }
-  override def base(implicit turn: Turn[_]): Pulse[P] = current
+  override def get(implicit turn: S#Ticket[S]): Pulse[P] = { if (turn.turn() eq owner) update else current }
+  override def base(implicit turn: S#Ticket[S]): Pulse[P] = current
 
-  override def commit(implicit turn: Turn[_]): Unit = {
+  override def commit(implicit turn: Turn[S]): Unit = {
     if (!transient) current = update
     release(turn)
   }
-  override def release(implicit turn: Turn[_]): Unit = {
+  override def release(implicit turn: Turn[S]): Unit = {
     update = Pulse.NoChange
     owner = null
   }
@@ -43,14 +44,14 @@ trait BufferedPulseStruct[P] extends ReadWritePulse[P] with Committable {
   * @tparam P Pulse stored value type
   * @tparam R Type of the reactive values that are connected to this struct
   */
-abstract class PropagationStructImpl[P, R](override var current: Pulse[P], override val transient: Boolean, initialIncoming: Set[R]) extends GraphStructType[R] with BufferedPulseStruct[P] {
-  private var _incoming: Set[R] = initialIncoming
-  private var _outgoing: scala.collection.mutable.Map[R, Boolean] = rescala.util.WeakHashMap.empty
+abstract class PropagationStructImpl[P, S <: Struct](override var current: Pulse[P], override val transient: Boolean, initialIncoming: Set[Reactive[S]]) extends GraphStructType[S] with BufferedPulseStruct[P, S] {
+  private var _incoming: Set[Reactive[S]] = initialIncoming
+  private var _outgoing: scala.collection.mutable.Map[Reactive[S], Boolean] = rescala.util.WeakHashMap.empty
 
 
-  def incoming(implicit turn: Turn[_]): Set[R] = _incoming
-  def updateIncoming(reactives: Set[R])(implicit turn: Turn[_]): Unit = _incoming = reactives
-  override def outgoing(implicit turn: Turn[_]): Iterator[R] = _outgoing.keysIterator
-  override def discover(reactive: R)(implicit turn: Turn[_]): Unit = _outgoing.put(reactive, true)
-  override def drop(reactive: R)(implicit turn: Turn[_]): Unit = _outgoing -= reactive
+  def incoming(implicit turn: S#Ticket[S]): Set[Reactive[S]] = _incoming
+  def updateIncoming(reactives: Set[Reactive[S]])(implicit turn: S#Ticket[S]): Unit = _incoming = reactives
+  override def outgoing(implicit turn: S#Ticket[S]): Iterator[Reactive[S]] = _outgoing.keysIterator
+  override def discover(reactive: Reactive[S])(implicit turn: S#Ticket[S]): Unit = _outgoing.put(reactive, true)
+  override def drop(reactive: Reactive[S])(implicit turn: S#Ticket[S]): Unit = _outgoing -= reactive
 }

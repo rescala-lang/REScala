@@ -129,7 +129,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPr
   def evaluate(head: Reactive[TState]): Unit = {
     if (head.state.anyInputChanged != this) done(head, hasChanged = false)
     else {
-      head.reevaluate()(this) match {
+      head.reevaluate() match {
         case Static(value: Pulse[head.Value]) =>
           val hasChanged = value.isChange && head.state.base(this) != value
           if (hasChanged) head.state.set(value)(this)

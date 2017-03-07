@@ -28,8 +28,8 @@ object REPublisher {
     var requested: Long = 0
     var cancelled = false
 
-    override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[Value, S] = {
-      dependency.pulse(turn).toOptionTry match {
+    override protected def reevaluate(ticket: S#Ticket[Value, S]): ReevaluationResult[Value, S] = {
+      dependency.pulse(ticket).toOptionTry match {
         case None => ReevaluationResult.Static(Pulse.NoChange)
         case Some(tryValue) =>
           synchronized {

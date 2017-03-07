@@ -1,7 +1,6 @@
 package rescala.levelbased
 
-import rescala.graph.{GraphStruct, GraphStructType, Pulse, ReadWritePulse}
-import rescala.propagation.Turn
+import rescala.graph.{ATicket, GraphStruct, GraphStructType, Pulse, Reactive, ReadWritePulse, Struct}
 import rescala.twoversion.PropagationStructImpl
 
 import scala.language.higherKinds
@@ -10,14 +9,15 @@ import scala.language.higherKinds
   * Wrapper for a struct type that combines GraphSpore, PulsingSpore and is leveled
   */
 trait LevelStruct extends GraphStruct {
-  override type Type[P, R] <: LevelStructType[R] with GraphStructType[R] with ReadWritePulse[P]
+  override type Type[P, S <: Struct] <: LevelStructType[S] with GraphStructType[S] with ReadWritePulse[P, S]
+  override type Ticket[S <: Struct] = ATicket[S]
 }
 
 /**
   * Wrapper for the instance of LevelSpore
   */
 trait SimpleStruct extends LevelStruct {
-  override type Type[P, R] = LevelStructTypeImpl[P, R]
+  override type Type[P, S<: Struct] = LevelStructTypeImpl[P, S]
 }
 
 /**
@@ -25,9 +25,9 @@ trait SimpleStruct extends LevelStruct {
   *
   * @tparam R Type of the reactive values that are connected to this struct
   */
-trait LevelStructType[R] extends GraphStructType[R] {
-  def level(implicit turn: Turn[_]): Int
-  def updateLevel(i: Int)(implicit turn: Turn[_]): Int
+trait LevelStructType[S <: Struct] extends GraphStructType[S] {
+  def level(implicit turn: S#Ticket[S]): Int
+  def updateLevel(i: Int)(implicit turn: S#Ticket[S]): Int
 }
 
 /**
@@ -37,14 +37,14 @@ trait LevelStructType[R] extends GraphStructType[R] {
   * @param transient If a struct is marked as transient, changes to it can not be committed (and are released instead)
   * @param initialIncoming Initial incoming edges in the struct's graph
   * @tparam P Pulse stored value type
-  * @tparam R Type of the reactive values that are connected to this struct
+  * @tparam S Type of the reactive values that are connected to this struct
   */
-class LevelStructTypeImpl[P, R](current: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends PropagationStructImpl[P, R](current, transient, initialIncoming) with LevelStructType[R]  {
+class LevelStructTypeImpl[P, S <: Struct](current: Pulse[P], transient: Boolean, initialIncoming: Set[Reactive[S]]) extends PropagationStructImpl[P, S](current, transient, initialIncoming) with LevelStructType[S]  {
   var _level: Int = 0
 
-  override def level(implicit turn: Turn[_]): Int = _level
+  override def level(implicit turn: S#Ticket[S]): Int = _level
 
-  override def updateLevel(i: Int)(implicit turn: Turn[_]): Int = {
+  override def updateLevel(i: Int)(implicit turn: S#Ticket[S]): Int = {
     val max = math.max(i, _level)
     _level = max
     max

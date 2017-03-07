@@ -1,6 +1,6 @@
 package rescala.graph
 
-import rescala.propagation.Turn
+import rescala.propagation.{DynamicTicket, StaticTicket, Turn}
 
 import scala.language.{existentials, higherKinds, implicitConversions}
 
@@ -14,19 +14,27 @@ trait Struct {
     * @tparam P Pulse stored value type
     * @tparam R Reactive value type represented by the struct
     */
-  type Type[P, R] <: ReadPulse[P]
+  type Type[P, S <: Struct] <: ReadPulse[P, S]
+
+  type Ticket[S <: Struct] <: ATicket[S]
+}
+
+trait ATicket[S <: Struct] {
+  def dynamic(): DynamicTicket[S]
+  def static(): StaticTicket[S]
+  def turn(): Turn[S]
 }
 
 /**
   * Wrapper for a struct type combining GraphSpore and PulsingSpore
   */
 trait GraphStruct extends Struct {
-  override type Type[P, R] <: GraphStructType[R] with ReadWritePulse[P]
+  override type Type[P, S <: Struct] <: GraphStructType[S] with ReadWritePulse[P, S]
 }
 
-trait ReadPulse[P] {
-  def base(implicit turn: Turn[_]): Pulse[P]
-  def get(implicit turn: Turn[_]): Pulse[P]
+trait ReadPulse[P, S <: Struct] {
+  def base(implicit turn: S#Ticket[S]): Pulse[P]
+  def get(implicit turn: S#Ticket[S]): Pulse[P]
 }
 
 /**
@@ -35,9 +43,8 @@ trait ReadPulse[P] {
   *
   * @tparam P Pulse stored value type
   */
-trait ReadWritePulse[P] <: ReadPulse[P] {
-  def set(value: Pulse[P])(implicit turn: Turn[_]): Unit
-
+trait ReadWritePulse[P, S <: Struct] <: ReadPulse[P, S] {
+  def set(value: Pulse[P])(implicit turn: S#Ticket[S]): Unit
 }
 
 /**
@@ -45,10 +52,10 @@ trait ReadWritePulse[P] <: ReadPulse[P] {
   *
   * @tparam R Type of the reactive values that are connected to this struct
   */
-trait GraphStructType[R] {
-  def incoming(implicit turn: Turn[_]): Set[R]
-  def updateIncoming(reactives: Set[R])(implicit turn: Turn[_]): Unit
-  def outgoing(implicit turn: Turn[_]): Iterator[R]
-  def discover(reactive: R)(implicit turn: Turn[_]): Unit
-  def drop(reactive: R)(implicit turn: Turn[_]): Unit
+trait GraphStructType[S <: Struct] {
+  def incoming(implicit turn: S#Ticket[S]): Set[Reactive[S]]
+  def updateIncoming(reactives: Set[Reactive[S]])(implicit turn: S#Ticket[S]): Unit
+  def outgoing(implicit turn: S#Ticket[S]): Iterator[Reactive[S]]
+  def discover(reactive: Reactive[S])(implicit turn: S#Ticket[S]): Unit
+  def drop(reactive: Reactive[S])(implicit turn: S#Ticket[S]): Unit
 }

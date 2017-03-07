@@ -2,7 +2,7 @@ package rescala.reactives
 
 import rescala.engine.{Engine, TurnSource}
 import rescala.graph.{Pulse, Pulsing, Struct}
-import rescala.propagation.Turn
+import rescala.propagation.{StaticTicket, Turn}
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 import rescala.reactives.Signals.Diff
 
@@ -28,7 +28,7 @@ trait Signal[+A, S <: Struct] extends Pulsing[A, S] with Observable[A, S] {
 
   final def now(implicit ticket: TurnSource[S]): A = ticket { turn =>
     turn.dynamicDependencyInteraction(this)
-    try { pulse(turn).get }
+    try { pulse(turn.makeTicket().static()).get }
     catch { case EmptySignalControlThrowable => throw new NoSuchElementException(s"Signal $this is empty") }
   }
 
@@ -56,18 +56,11 @@ trait Signal[+A, S <: Struct] extends Pulsing[A, S] with Observable[A, S] {
   final def flatten[R](implicit ev: Flatten[A, S, R], ticket: TurnSource[S]): R = ev.apply(this)
 
   /** Delays this signal by n occurrences */
-  final def delay(n: Int)(implicit ticket: TurnSource[S]): Signal[A, S] = ticket { implicit turn => changed.delay(pulse(turn).get, n) }
+  final def delay(n: Int)(implicit ticket: TurnSource[S]): Signal[A, S] = ticket { implicit turn => changed.delay(now, n) }
 
   /** Create an event that fires every time the signal changes. It fires the tuple (oldVal, newVal) for the signal.
     * Be aware that no change will be triggered when the signal changes to or from empty */
-  final def change(implicit ticket: TurnSource[S]): Event[Diff[A], S] = {
-    Events.static(s"(change $this)", this) { turn =>
-      val from = stable(turn)
-      val to = pulse(turn)
-      if (from != to) Pulse.Change(Signals.Diff(from, to))
-      else Pulse.NoChange
-    }
-  }
+  final def change(implicit ticket: TurnSource[S]): Event[Diff[A], S] = Events.change(this)
 
   /**
     * Create an event that fires every time the signal changes. The value associated

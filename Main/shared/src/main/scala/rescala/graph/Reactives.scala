@@ -1,6 +1,6 @@
 package rescala.graph
 
-import rescala.propagation.Turn
+import rescala.propagation.StaticTicket
 
 /**
   * A reactive value is something that can be reevaluated
@@ -17,15 +17,9 @@ trait Reactive[S <: Struct] {
     *
     * @return Spore for this value
     */
-  protected[rescala] def state: S#Type[Value, Reactive[S]]
+  protected[rescala] def state: S#Type[Value, S]
 
-  /**
-    * Reevaluates this value when it is internally scheduled for reevaluation
-    *
-    * @param turn Turn that handles the reevaluation
-    * @return Result of the reevaluation
-    */
-  protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[Value, S]
+  protected[rescala] def reevaluate(ticket: S#Ticket[S]): ReevaluationResult[Value, S]
 
   /** for debugging */
   private val name = Globals.declarationLocationName()
@@ -39,16 +33,17 @@ trait Reactive[S <: Struct] {
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
 trait Pulsing[+P, S <: Struct] extends Reactive[S] {
-  protected[rescala] def stable(implicit turn: Turn[S]): Pulse[P]
-  protected[rescala] def pulse(implicit turn: Turn[S]): Pulse[P]
+  protected[rescala] def stable(implicit ticket: S#Ticket[S]): Pulse[P]
+  protected[rescala] def pulse(implicit ticket: S#Ticket[S]): Pulse[P]
+  protected[rescala] def pulse(implicit ticket: StaticTicket[S]): Pulse[P] = pulse(ticket.ticket)
 }
 
 
 /** helper class implementing the state methods of reactive and pulsing */
-abstract class Base[P, S <: Struct](struct: S#Type[P, Reactive[S]]) extends Pulsing[P, S] {
+abstract class Base[P, S <: Struct](struct: S#Type[P, S]) extends Pulsing[P, S] {
   override type Value = P
-  final override protected[rescala] def state: S#Type[Value, Reactive[S]] = struct
+  final override protected[rescala] def state: S#Type[Value, S] = struct
 
-  final protected[rescala] override def stable(implicit turn: Turn[S]): Pulse[P] = state.base
-  final protected[rescala] override def pulse(implicit turn: Turn[S]): Pulse[P] = state.get
+  final protected[rescala] override def stable(implicit ticket: S#Ticket[S]): Pulse[P] = state.base
+  final protected[rescala] override def pulse(implicit ticket: S#Ticket[S]): Pulse[P] = state.get
 }

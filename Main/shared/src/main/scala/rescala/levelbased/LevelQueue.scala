@@ -12,7 +12,7 @@ import LevelQueue.QueueElement
   * @param currentTurn Turn of the evaluation
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
-final private[levelbased] class LevelQueue[S <: LevelStruct](evaluator: LevelQueue.Evaluator[S])(implicit val currentTurn: Turn[S]) {
+final private[levelbased] class LevelQueue[S <: LevelStruct](evaluator: LevelQueue.Evaluator[S])(currentTurn: LevelBasedPropagation[S]) {
 
   private val elements = new PriorityQueue[QueueElement[S]]()
 
@@ -33,7 +33,7 @@ final private[levelbased] class LevelQueue[S <: LevelStruct](evaluator: LevelQue
     * @param needsEvaluate Indicates if the element needs re-evaluation itself, otherwise it is just a level change
     * @param dep           Element to add to the queue
     */
-  def enqueue(minLevel: Int, needsEvaluate: Boolean = true)(dep: Reactive[S]): Unit = {
+  def enqueue(minLevel: Int, needsEvaluate: Boolean = true)(dep: Reactive[S])(implicit ticket: S#Ticket[S]): Unit = {
     elements.offer(QueueElement[S](dep.state.level, dep, minLevel, needsEvaluate))
   }
 
@@ -43,6 +43,7 @@ final private[levelbased] class LevelQueue[S <: LevelStruct](evaluator: LevelQue
     * @param queueElement Element to evaluate
     */
   private def handleElement(queueElement: QueueElement[S]): Unit = {
+    implicit def ticket: S#Ticket[S] = currentTurn.makeTicket()
     val QueueElement(headLevel, head, headMinLevel, reevaluate) = queueElement
     // handle level increases
     if (headLevel < headMinLevel) {
@@ -54,7 +55,7 @@ final private[levelbased] class LevelQueue[S <: LevelStruct](evaluator: LevelQue
       }
     }
     else if (reevaluate) {
-      evaluator.evaluate(head)
+      evaluator.evaluate(head, ticket)
     }
   }
 
@@ -95,7 +96,7 @@ final private[levelbased] class LevelQueue[S <: LevelStruct](evaluator: LevelQue
 private[levelbased] object LevelQueue {
 
   trait Evaluator[S <: Struct] {
-    def evaluate(r: Reactive[S]): Unit
+    def evaluate(r: Reactive[S], ticket: S#Ticket[S]): Unit
   }
 
   private final case class QueueElement[S <: Struct](level: Int, reactive: Reactive[S], var minLevel: Int, var needsEvaluate: Boolean) extends Comparable[QueueElement[S]] {

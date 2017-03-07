@@ -11,18 +11,18 @@ import scala.util.control.NonFatal
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
 trait CommonPropagationImpl[S <: GraphStruct] extends AbstractPropagation[S] {
-  private val toCommit = new java.util.ArrayList[Committable]()
+  private val toCommit = new java.util.ArrayList[Committable[S]]()
   private val observers = new java.util.ArrayList[() => Unit]()
 
-  override def schedule(commitable: Committable): Unit = toCommit.add(commitable)
+  override def schedule(commitable: Committable[S]): Unit = toCommit.add(commitable)
 
   override def observe(f: () => Unit): Unit = observers.add(f)
 
-  def setIfChange(r: Reactive[S])(value: Pulse[r.Value]): Boolean = {
-    val differs = value != r.state.base(this)
+  def setIfChange(r: Reactive[S])(value: Pulse[r.Value])(implicit ticket: S#Ticket[S]): Boolean = {
+    val differs = value != r.state.base
     val changed = differs && value.isChange
-    if (changed) r.state.set(value)(this)
-    else if (differs) r.state.set(r.state.base(this))(this)
+    if (changed) r.state.set(value)
+    else if (differs) r.state.set(r.state.base)
     changed
   }
 
@@ -53,12 +53,12 @@ trait CommonPropagationImpl[S <: GraphStruct] extends AbstractPropagation[S] {
     if (failure != null) throw failure
   }
 
-  protected def discover(sink: Reactive[S])(source: Reactive[S]): Unit = source.state.discover(sink)(this)
+  protected def discover(sink: Reactive[S])(source: Reactive[S])(implicit ticket: S#Ticket[S]): Unit = source.state.discover(sink)
 
-  protected def drop(sink: Reactive[S])(source: Reactive[S]): Unit = source.state.drop(sink)(this)
+  protected def drop(sink: Reactive[S])(source: Reactive[S])(implicit ticket: S#Ticket[S]): Unit = source.state.drop(sink)
 
-  final def applyDiff(head: Reactive[S], diff: DepDiff[S]): Unit = {
-    head.state.updateIncoming(diff.novel)(this)
+  final def applyDiff(head: Reactive[S], diff: DepDiff[S])(implicit ticket: S#Ticket[S]): Unit = {
+    head.state.updateIncoming(diff.novel)
     diff.removed foreach drop(head)
     diff.added foreach discover(head)
   }

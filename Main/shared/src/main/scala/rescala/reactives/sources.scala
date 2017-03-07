@@ -2,11 +2,11 @@ package rescala.reactives
 
 import rescala.engine.{Engine, TurnSource}
 import rescala.graph._
-import rescala.propagation.Turn
+import rescala.propagation.{StaticTicket, Turn}
 
 import scala.language.higherKinds
 
-class Source[T, S <: Struct](_bud: S#Type[T, Reactive[S]]) extends Base[T, S](_bud) {
+class Source[T, S <: Struct](_bud: S#Type[T, S]) extends Base[T, S](_bud) {
   private var result: Pulse[Value] = null
   final def admit(value: T)(implicit turn: Turn[S]): Unit = admitPulse(Pulse.Change(value))
 
@@ -15,7 +15,7 @@ class Source[T, S <: Struct](_bud: S#Type[T, Reactive[S]]) extends Base[T, S](_b
     result = value
   }
 
-  final override protected[rescala] def reevaluate()(implicit turn: Turn[S]): ReevaluationResult[Value, S] = {
+  final override protected[rescala] def reevaluate(ticket: S#Ticket[S]): ReevaluationResult[Value, S] = {
     if (result == null) ReevaluationResult.Static(Pulse.NoChange)
     else {
       val res = ReevaluationResult.Static[Value, S](result)
@@ -33,7 +33,7 @@ class Source[T, S <: Struct](_bud: S#Type[T, Reactive[S]]) extends Base[T, S](_b
   * @tparam T Type returned when the event fires
   * @tparam S Struct type used for the propagation of the event
   */
-final class Evt[T, S <: Struct]()(_bud: S#Type[T, Reactive[S]]) extends Source[T, S](_bud) with Event[T, S] {
+final class Evt[T, S <: Struct]()(_bud: S#Type[T, S]) extends Source[T, S](_bud) with Event[T, S] {
   /** Trigger the event */
   def apply(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = fire(value)
   def fire()(implicit fac: Engine[S, Turn[S]], ev: Unit =:= T): Unit = fire(ev(Unit))(fac)
@@ -55,11 +55,14 @@ object Evt {
   * @tparam A Type stored by the signal
   * @tparam S Struct type used for the propagation of the signal
   */
-final class Var[A, S <: Struct](_bud: S#Type[A, Reactive[S]]) extends Source[A, S](_bud) with Signal[A, S] {
+final class Var[A, S <: Struct](_bud: S#Type[A, S]) extends Source[A, S](_bud) with Signal[A, S] {
   def update(value: A)(implicit fac: Engine[S, Turn[S]]): Unit = set(value)
   def set(value: A)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) {admit(value)(_)}
 
-  def transform(f: A => A)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) { t => admit(f(pulse(t).get))(t) }
+  def transform(f: A => A)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) { t =>
+    val ticket = t.makeTicket()
+
+    admit(f(pulse(ticket).get))(t) }
 
   def setEmpty()(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this)(t => admitPulse(Pulse.empty)(t))
 
