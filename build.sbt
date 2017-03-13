@@ -136,14 +136,6 @@ lazy val datastructures = project.in(file("Extensions/Datastructures"))
     scalatestDependency
   )
 
-lazy val pipelining = project.in(file("Extensions/Pipelining"))
-  .dependsOn(rescalaJVM)
-  .settings(
-    scalatestDependency,
-    publish := {},
-    publishLocal := {}
-  )
-
 lazy val stm = project.in(file("Extensions/STM"))
   .dependsOn(rescalaJVM)
   .settings(
