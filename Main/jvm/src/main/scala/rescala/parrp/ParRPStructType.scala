@@ -7,11 +7,11 @@ import rescala.locking.{Key, TurnLock}
 import scala.language.implicitConversions
 
 
-class ParRPStructType[P, S <: Struct](current: Pulse[P], transient: Boolean, val lock: TurnLock[ParRPInterTurn], initialIncoming: Set[Reactive[S]])
+class ParRPStructType[P, S <: Struct](current: P, transient: Boolean, val lock: TurnLock[ParRPInterTurn], initialIncoming: Set[Reactive[S]])
   extends LevelStructTypeImpl[P, S](current, transient, initialIncoming) {
 
 
-  override def set(value: Pulse[P])(implicit ticket: S#Ticket[S]): Unit = {
+  override def set(value: P)(implicit ticket: S#Ticket[S]): Unit = {
     val turn = ticket.turn()
     assert(turn match {
       case pessimistic: ParRP =>

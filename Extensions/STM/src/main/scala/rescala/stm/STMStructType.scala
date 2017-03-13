@@ -1,12 +1,12 @@
 package rescala.stm
 
-import rescala.graph._
+import rescala.graph.{Reactive, ReadWriteValue, Struct}
 import rescala.levelbased.LevelStructType
 import rescala.propagation.Turn
 
 import scala.concurrent.stm.{InTxn, Ref, TxnLocal}
 
-class STMStructType[P, S <: Struct](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[Reactive[S]]) extends LevelStructType[S] with ReadWriteValue[P, S] {
+class STMStructType[P, S <: Struct](initialValue: P, transient: Boolean, initialIncoming: Set[Reactive[S]]) extends LevelStructType[S] with ReadWriteValue[P, S] {
 
   implicit def inTxn(implicit turn: Turn[S]): InTxn = turn match {
     case stmTurn: STMTurn => stmTurn.inTxn
@@ -27,16 +27,16 @@ class STMStructType[P, S <: Struct](initialValue: Pulse[P], transient: Boolean, 
   override def discover(reactive: Reactive[S])(implicit turn: Turn[S]): Unit = _outgoing.transformAndGet(_ + reactive)
 
 
-  private val current: Ref[Pulse[P]] = Ref(initialValue)
-  private val update: TxnLocal[Option[Pulse[P]]] = TxnLocal(None,beforeCommit = { implicit inTxn =>
-    val updateValue: Option[Pulse[P]] = update.get
-    if (!transient && updateValue.isDefined && updateValue.get.isChange) current.set(updateValue.get)
+  private val current: Ref[P] = Ref(initialValue)
+  private val update: TxnLocal[Option[P]] = TxnLocal(None,beforeCommit = { implicit inTxn =>
+    val updateValue: Option[P] = update.get
+    if (!transient && updateValue.isDefined) current.set(updateValue.get)
   })
 
-  override def set(value: Pulse[P])(implicit turn: S#Ticket[S]): Unit = {
+  override def set(value: P)(implicit turn: S#Ticket[S]): Unit = {
     update.set(Some(value))(inTxn(turn.turn()))
   }
-  override def base(implicit turn: S#Ticket[S]) = current.get(inTxn(turn.turn()))
-  override def get(implicit turn: S#Ticket[S]): Pulse[P] = update.get(inTxn(turn.turn())).getOrElse(current.get(inTxn(turn.turn())))
+  override def base(implicit turn: S#Ticket[S]): P = current.get(inTxn(turn.turn()))
+  override def get(implicit turn: S#Ticket[S]): P = update.get(inTxn(turn.turn())).getOrElse(current.get(inTxn(turn.turn())))
 
 }

@@ -1,6 +1,6 @@
 package rescala.parrp
 
-import rescala.graph.{Pulse, Reactive, Struct}
+import rescala.graph.{Reactive, Struct}
 import rescala.levelbased.{LevelBasedPropagation, LevelStruct}
 import rescala.locking._
 
@@ -21,7 +21,7 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
   private type TState = ParRP
 
 
-  override private[rescala] def makeStructState[P](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[Reactive[TState]]): TState#Type[P, ParRP] = {
+  override private[rescala] def makeStructState[P](initialValue: P, transient: Boolean, initialIncoming: Set[Reactive[TState]]): TState#Type[P, ParRP] = {
     val lock = new TurnLock[ParRPInterTurn]
     new ParRPStructType[P, ParRP](initialValue, transient, lock, initialIncoming)
   }
