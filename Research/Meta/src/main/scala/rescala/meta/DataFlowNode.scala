@@ -44,7 +44,7 @@ trait ReactiveNode[+T] extends DataFlowNode[T] {
   override def newRef(): ReactiveRef[T]
 
   protected[meta] def doReify[S <: Struct](reifier: Reifier[S]): Observable[T, S]
-  protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: TurnSource[S]): Pulsing[T, S]
+  protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: TurnSource[S]): Pulsing[Pulse[T], S]
 
   def observe[S <: Struct](onSuccess: (T) => Unit, onFailure: (Throwable) => Unit = t => throw t)(implicit reifier: Reifier[S], ticket: TurnSource[S]): Observe[S] = {
     reify.observe(onSuccess, onFailure)

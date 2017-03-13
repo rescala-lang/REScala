@@ -3,17 +3,18 @@ package rescala.meta
 import rescala.graph.Pulse
 
 import scala.collection.mutable
+import scala.language.existentials
 
 class DataFlowGraph {
   private val _nodes : mutable.Set[DataFlowNode[_]] = mutable.Set()
   private val _log : mutable.Queue[MetaLog[_]] = mutable.Queue()
   private val _refs : mutable.Map[DataFlowRef[_], DataFlowNode[_]] = mutable.Map()
-  private val _pulses : mutable.Map[DataFlowNode[_], Pulse[_]] = mutable.Map()
+  private val _pulses : mutable.Map[DataFlowNode[_], Any] = mutable.Map()
 
   protected[meta] def nodes: Set[DataFlowNode[_]] = _nodes.toSet
   protected[meta] def log: List[MetaLog[_]] = _log.toList
   protected[meta] def refs: Map[DataFlowRef[_], DataFlowNode[_]] = _refs.toMap
-  protected[meta] def pulses: Map[DataFlowNode[_], Pulse[_]] = _pulses.toMap
+  protected[meta] def pulses: Map[DataFlowNode[_], _] = _pulses.toMap
 
   def numNodes: Int = _nodes.size
   def deleteNode(toDelete : DataFlowNode[_]): Unit = {
@@ -41,11 +42,11 @@ class DataFlowGraph {
   protected[meta] def registerRef[T](pointer: DataFlowRef[T], node: DataFlowNode[T]): mutable.Map[DataFlowRef[_], DataFlowNode[_]] = _refs += (pointer -> node)
   protected[meta] def deleteRef(pointer: DataFlowRef[_]): mutable.Map[DataFlowRef[_], DataFlowNode[_]] = _refs -= pointer
 
-  protected[meta] def savePulse[T](node: DataFlowNode[T], pulse: Pulse[T]): Unit = _pulses += (node -> pulse)
-  protected[meta] def restorePulse[T](node: DataFlowNode[T]) : Option[Pulse[T]] = {
+  protected[meta] def savePulse[T](node: DataFlowNode[T], pulse: Any): Unit = _pulses += (node -> pulse)
+  protected[meta] def restorePulse[T](node: DataFlowNode[T]) : Option[T] = {
     val restored = _pulses.get(node)
     _pulses -= node
-    restored.asInstanceOf[Option[Pulse[T]]]
+    restored.asInstanceOf[Option[T]]
   }
 
   protected[meta] def moveNodes(moveNodes : Set[DataFlowNode[_]], newGraph : DataFlowGraph): Unit = {

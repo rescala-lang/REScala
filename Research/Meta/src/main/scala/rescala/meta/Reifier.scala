@@ -32,7 +32,7 @@ class EngineReifier[S <: Struct]()(implicit val engine: Engine[S, Turn[S]]) exte
       unreify(n)
     reifiedCache.get(node) match {
       case Some(r) =>
-        val savedPulse = ticket { t:Turn[S] => r.pulse(t) }
+        val savedPulse = ticket { t:Turn[S] => r.pulse(t.makeTicket()) }
         node.graph.savePulse(node, savedPulse)
         r match {
           case e:Event[_, _] => e.disconnect()

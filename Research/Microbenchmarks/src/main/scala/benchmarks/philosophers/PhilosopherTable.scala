@@ -45,9 +45,9 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit 
     engine.plan(seating.philosopher) { turn =>
       val forksWereFree = seating.vision.now(turn) == Ready
       if (forksWereFree) seating.philosopher.admit(Eating)(turn)
-      turn.schedule(new Committable {
-        override def commit(implicit t: Turn[_]): Unit = if (forksWereFree) assert(seating.vision.now(turn) == Done, "philosopher should be done after turn")
-        override def release(implicit t: Turn[_]): Unit = assert(assertion = false, "turn should not rollback")
+      turn.schedule(new Committable[S] {
+        override def commit(implicit t: Turn[S]): Unit = if (forksWereFree) assert(seating.vision.now(turn) == Done, "philosopher should be done after turn")
+        override def release(implicit t: Turn[S]): Unit = assert(assertion = false, "turn should not rollback")
       })
 
       forksWereFree
