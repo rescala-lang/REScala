@@ -8,7 +8,7 @@ import scala.util.DynamicVariable
   * Provides names for dynamic dependencies based on their definition position to allow easier debugging
   */
 object Globals {
-  def declarationLocationName() =
+  def declarationLocationName(): String =
     if (dynamicNameVar.value.nonEmpty) dynamicNameVar.value
     else {
       val trace = Thread.currentThread().getStackTrace
@@ -23,5 +23,5 @@ object Globals {
   val dynamicNameVar = new DynamicVariable("")
   def named[S](n: String)(f: => S): S = dynamicNameVar.withValue(n)(f)
 
-  def nextID() = ThreadLocalRandom.current().nextLong()
+  def nextID(): Long = ThreadLocalRandom.current().nextLong()
 }
