@@ -27,12 +27,6 @@ trait CommonPropagationImpl[S <: GraphStruct] extends AbstractPropagation[S] {
 
   override def observe(f: () => Unit): Unit = observers.add(f)
 
-  def setIfChange(r: Reactive[S])(value: Option[r.Value])(implicit ticket: S#Ticket[S]): Boolean = {
-    val changed = value.isDefined && value.get != r.state.base
-    if (changed) r.state.set(value.get)
-    changed
-  }
-
   override def commitPhase(): Unit = {
     val it = toCommit.iterator()
     while (it.hasNext) it.next().commit(this)

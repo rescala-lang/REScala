@@ -13,5 +13,5 @@ object TestEngines {
     override def plan[R](i: Reactive*)(f: STMTurn => R): R = atomic { tx => super.plan(i: _*)(f) }
   }
 
-  val all: List[Engines.TEngine] = stm :: /*pipeline ::*/ rescala.Engines.all
+  val all: List[Engines.TEngine] = rescala.Engines.all ::: stm :: Nil
 }

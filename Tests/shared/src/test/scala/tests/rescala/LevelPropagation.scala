@@ -89,6 +89,7 @@ class LevelPropagation extends RETests {
     }
     var reevals = 0
     val l2t5 = l1t4.map { v => reevals += 1; v + 1 }
+    // in the initial state t1t4 depends on 20 which is not 10, so the result is 14
 
     assertLevel(l3, 3)
     assertLevel(l1t4, 1)
@@ -97,9 +98,10 @@ class LevelPropagation extends RETests {
     assert(l2t5.now === 14)
     assert(reevals === 1)
 
+    // changing l0 to 10 will update the dependencies of l1t4 to include l3, but that is 13 which is the same value
+    // as before, so the map is not executed again.
 
     l0.set(10)
-
     assert(reevals === 1)
     assertLevel(l3, 3)
     assertLevel(l1t4, 4)
@@ -114,7 +116,7 @@ class LevelPropagation extends RETests {
 
   }
 
-  allEngines("level Increase And Change Frome Somewhere Else Works Together"){ engine => import engine._
+  allEngines("level Increase And Change From Somewhere Else Works Together"){ engine => import engine._
     val l0 = Var(0)
     val l1 = l0.map(_ + 1)
     val l2 = l1.map(_ + 1)
@@ -148,5 +150,43 @@ class LevelPropagation extends RETests {
 
 
   }
+
+  allEngines("level increase but value change only after correct level is reached"){ engine => import engine._
+
+    val l0 = Var(0)
+    val l1 = l0.map(_ + 1)
+    val l2 = l1.map(_ + 1)
+    val l3 = l2.map(_ + 1)
+    val l1t4 = dynamic(l0) { t =>
+      if (t.depend(l0) == 10) t.depend(l3) else 3
+    }
+    var reevals = 0
+    val l2t5 = l1t4.map { v => reevals += 1; v + 1 }
+    // in the initial state t1t4 depends on 20 which is not 10, so the result is 14
+
+    assertLevel(l3, 3)
+    assertLevel(l1t4, 1)
+    assertLevel(l2t5, 2)
+    assert(l1t4.now === 3)
+    assert(l2t5.now === 4)
+    assert(reevals === 1)
+
+    // changing l0 to 10 will update the dependencies of l1t4 to include l3, but that is 13 which is the same value
+    // as before, so the map is not executed again.
+
+    l0.set(10)
+    assert(reevals === 2)
+    assertLevel(l3, 3)
+    assertLevel(l1t4, 4)
+    assertLevel(l2t5, 5)
+    assert(l0.now === 10)
+    assert(l1.now === 11)
+    assert(l2.now === 12)
+    assert(l3.now === 13)
+    assert(l1t4.now === 13)
+    assert(l2t5.now === 14)
+
+
+    }
 
 }

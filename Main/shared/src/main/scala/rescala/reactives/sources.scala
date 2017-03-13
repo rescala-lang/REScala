@@ -16,12 +16,11 @@ class Source[T, S <: Struct](_bud: S#Type[Pulse[T], S]) extends Base[T, S](_bud)
   }
 
   final override protected[rescala] def reevaluate(ticket: S#Ticket[S]): ReevaluationResult[Value, S] = {
-    if (result == null) ReevaluationResult.Static(Pulse.NoChange)
-    else {
-      val res = ReevaluationResult.Static[T, S](result)
-      result = null
-      res
-    }
+    val res: ReevaluationResult[Pulse[T], S] = if (result == null || result == stable(ticket))
+      ReevaluationResult.Static(Pulse.NoChange)
+    else ReevaluationResult.Static[T, S](result)
+    result = null
+    res
   }
 
 }

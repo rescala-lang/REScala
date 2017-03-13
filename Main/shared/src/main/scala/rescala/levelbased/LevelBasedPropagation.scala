@@ -22,14 +22,20 @@ trait LevelBasedPropagation[S <: LevelStruct] extends CommonPropagationImpl[S] w
 
     head.reevaluate(ticket) match {
       case Static(value) =>
-        val hasChanged = setIfChange(head)(value)(ticket)
-        requeue(hasChanged, level = -42, redo = false)
+        if (value.isDefined) {
+          head.state.set(value.get)(ticket)
+          requeue(changed = true, level = -42, redo = false)
+        }
       case Dynamic(value, deps) =>
         val diff = DepDiff(deps, head.state.incoming(this))
         applyDiff(head, diff)
         val newLevel = maximumLevel(diff.novel) + 1
-        val hasChanged = setIfChange(head)(value)(ticket)
-        requeue(hasChanged, newLevel, redo = head.state.level(this) < newLevel)
+        val redo = head.state.level(this) < newLevel
+        val hasChanged = value.isDefined
+        if (!redo && hasChanged) {
+          head.state.set(value.get)(ticket)
+        }
+        requeue(hasChanged, newLevel, redo)
     }
     _evaluated ::= head
 
