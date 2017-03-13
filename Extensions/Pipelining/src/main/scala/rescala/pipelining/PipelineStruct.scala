@@ -31,7 +31,7 @@ trait Buffer[A] extends Committable {
   def get(implicit turn: Turn[_]): A
 }
 
-class PipelineSporeP[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends ReadWritePulse[P] with GraphStructType[R] {
+class PipelineSporeP[P, R](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[R]) extends ReadWriteValue[P] with GraphStructType[R] {
 
   val pipeline: Pipeline = new Pipeline()
 

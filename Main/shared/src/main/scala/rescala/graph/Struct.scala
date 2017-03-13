@@ -14,7 +14,7 @@ trait Struct {
     * @tparam P Pulse stored value type
     * @tparam R Reactive value type represented by the struct
     */
-  type Type[P, S <: Struct] <: ReadPulse[P, S]
+  type Type[P, S <: Struct] <: ReadValue[P, S]
 
   type Ticket[S <: Struct] <: ATicket[S]
 }
@@ -29,14 +29,14 @@ trait ATicket[S <: Struct] {
   * Wrapper for a struct type combining GraphSpore and PulsingSpore
   */
 trait GraphStruct extends Struct {
-  override type Type[P, S <: Struct] <: GraphStructType[S] with ReadWritePulse[P, S]
+  override type Type[P, S <: Struct] <: GraphStructType[S] with ReadWriteValue[P, S]
   override type Ticket[S <: Struct] = ATicket[S]
 
 }
 
-trait ReadPulse[P, S <: Struct] {
-  def base(implicit turn: S#Ticket[S]): Pulse[P]
-  def get(implicit turn: S#Ticket[S]): Pulse[P]
+trait ReadValue[P, S <: Struct] {
+  def base(implicit turn: S#Ticket[S]): P
+  def get(implicit turn: S#Ticket[S]): P
 }
 
 /**
@@ -45,8 +45,8 @@ trait ReadPulse[P, S <: Struct] {
   *
   * @tparam P Pulse stored value type
   */
-trait ReadWritePulse[P, S <: Struct] <: ReadPulse[P, S] {
-  def set(value: Pulse[P])(implicit turn: S#Ticket[S]): Unit
+trait ReadWriteValue[P, S <: Struct] <: ReadValue[P, S] {
+  def set(value: P)(implicit turn: S#Ticket[S]): Unit
 }
 
 /**

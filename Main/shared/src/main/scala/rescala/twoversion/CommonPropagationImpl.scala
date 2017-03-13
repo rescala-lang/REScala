@@ -27,11 +27,9 @@ trait CommonPropagationImpl[S <: GraphStruct] extends AbstractPropagation[S] {
 
   override def observe(f: () => Unit): Unit = observers.add(f)
 
-  def setIfChange(r: Reactive[S])(value: Pulse[r.Value])(implicit ticket: S#Ticket[S]): Boolean = {
-    val differs = value != r.state.base
-    val changed = differs && value.isChange
-    if (changed) r.state.set(value)
-    else if (differs) r.state.set(r.state.base)
+  def setIfChange(r: Reactive[S])(value: Option[r.Value])(implicit ticket: S#Ticket[S]): Boolean = {
+    val changed = value.isDefined && value.get != r.state.base
+    if (changed) r.state.set(value.get)
     changed
   }
 

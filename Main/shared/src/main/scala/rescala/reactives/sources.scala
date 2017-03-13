@@ -2,12 +2,12 @@ package rescala.reactives
 
 import rescala.engine.{Engine, TurnSource}
 import rescala.graph._
-import rescala.propagation.{StaticTicket, Turn}
+import rescala.propagation.Turn
 
 import scala.language.higherKinds
 
-class Source[T, S <: Struct](_bud: S#Type[T, S]) extends Base[T, S](_bud) {
-  private var result: Pulse[Value] = null
+class Source[T, S <: Struct](_bud: S#Type[Pulse[T], S]) extends Base[T, S](_bud) {
+  private var result: Value = null
   final def admit(value: T)(implicit turn: Turn[S]): Unit = admitPulse(Pulse.Change(value))
 
   final def admitPulse(value: Pulse[T])(implicit turn: Turn[S]): Unit = {
@@ -18,7 +18,7 @@ class Source[T, S <: Struct](_bud: S#Type[T, S]) extends Base[T, S](_bud) {
   final override protected[rescala] def reevaluate(ticket: S#Ticket[S]): ReevaluationResult[Value, S] = {
     if (result == null) ReevaluationResult.Static(Pulse.NoChange)
     else {
-      val res = ReevaluationResult.Static[Value, S](result)
+      val res = ReevaluationResult.Static[T, S](result)
       result = null
       res
     }
@@ -33,7 +33,7 @@ class Source[T, S <: Struct](_bud: S#Type[T, S]) extends Base[T, S](_bud) {
   * @tparam T Type returned when the event fires
   * @tparam S Struct type used for the propagation of the event
   */
-final class Evt[T, S <: Struct]()(_bud: S#Type[T, S]) extends Source[T, S](_bud) with Event[T, S] {
+final class Evt[T, S <: Struct]()(_bud: S#Type[Pulse[T], S]) extends Source[T, S](_bud) with Event[T, S] {
   /** Trigger the event */
   def apply(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = fire(value)
   def fire()(implicit fac: Engine[S, Turn[S]], ev: Unit =:= T): Unit = fire(ev(Unit))(fac)
@@ -45,7 +45,7 @@ final class Evt[T, S <: Struct]()(_bud: S#Type[T, S]) extends Source[T, S](_bud)
   * Companion object that allows external users to create new source events.
   */
 object Evt {
-  def apply[T, S <: Struct]()(implicit ticket: TurnSource[S]): Evt[T, S] = ticket { t => t.create(Set.empty)(new Evt[T, S]()(t.makeStructState(transient = true))) }
+  def apply[T, S <: Struct]()(implicit ticket: TurnSource[S]): Evt[T, S] = ticket { t => t.create(Set.empty)(new Evt[T, S]()(t.makeStructState(Pulse.NoChange, transient = true))) }
 }
 
 /**
@@ -55,7 +55,7 @@ object Evt {
   * @tparam A Type stored by the signal
   * @tparam S Struct type used for the propagation of the signal
   */
-final class Var[A, S <: Struct](_bud: S#Type[A, S]) extends Source[A, S](_bud) with Signal[A, S] {
+final class Var[A, S <: Struct](_bud: S#Type[Pulse[A], S]) extends Source[A, S](_bud) with Signal[A, S] {
   def update(value: A)(implicit fac: Engine[S, Turn[S]]): Unit = set(value)
   def set(value: A)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) {admit(value)(_)}
 

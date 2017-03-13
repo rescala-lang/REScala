@@ -1,6 +1,6 @@
 package rescala.twoversion
 
-import rescala.graph.{GraphStructType, Pulse, Reactive, ReadWritePulse, Struct}
+import rescala.graph.{GraphStructType, Reactive, ReadWriteValue, Struct}
 import rescala.propagation.Turn
 
 
@@ -9,28 +9,27 @@ import rescala.propagation.Turn
   *
   * @tparam P Pulse stored value type
   */
-trait BufferedPulseStruct[P, S <: Struct] extends ReadWritePulse[P, S] with Committable[S] {
-  protected var current: Pulse[P]
+trait BufferedValueStruct[P, S <: Struct] extends ReadWriteValue[P, S] with Committable[S] {
+  protected var current: P
   protected val transient: Boolean
   protected var owner: Turn[S] = null
-  private var update: Pulse[P] = Pulse.NoChange
+  private var update: P = _
 
-  override def set(value: Pulse[P])(implicit ticket: S#Ticket[S]): Unit = {
+  override def set(value: P)(implicit ticket: S#Ticket[S]): Unit = {
     val turn = ticket.turn()
     assert(owner == null || owner == turn, s"buffer owned by $owner written by $turn")
     update = value
     if (owner == null) turn.schedule(this)
     owner = turn
   }
-  override def get(implicit turn: S#Ticket[S]): Pulse[P] = { if (turn.turn() eq owner) update else current }
-  override def base(implicit turn: S#Ticket[S]): Pulse[P] = current
+  override def get(implicit turn: S#Ticket[S]): P = { if (turn.turn() eq owner) update else current }
+  override def base(implicit turn: S#Ticket[S]): P = current
 
   override def commit(implicit turn: Turn[S]): Unit = {
     if (!transient) current = update
     release(turn)
   }
   override def release(implicit turn: Turn[S]): Unit = {
-    update = Pulse.NoChange
     owner = null
   }
 }
@@ -44,7 +43,7 @@ trait BufferedPulseStruct[P, S <: Struct] extends ReadWritePulse[P, S] with Comm
   * @tparam P Pulse stored value type
   * @tparam R Type of the reactive values that are connected to this struct
   */
-abstract class PropagationStructImpl[P, S <: Struct](override var current: Pulse[P], override val transient: Boolean, initialIncoming: Set[Reactive[S]]) extends GraphStructType[S] with BufferedPulseStruct[P, S] {
+abstract class PropagationStructImpl[P, S <: Struct](override var current: P, override val transient: Boolean, initialIncoming: Set[Reactive[S]]) extends GraphStructType[S] with BufferedValueStruct[P, S] {
   private var _incoming: Set[Reactive[S]] = initialIncoming
   private var _outgoing: scala.collection.mutable.Map[Reactive[S], Boolean] = rescala.util.WeakHashMap.empty
 

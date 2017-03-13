@@ -1,6 +1,6 @@
 package rescala.propagation
 
-import rescala.graph.{ATicket, Pulse, Reactive, Struct}
+import rescala.graph.{Reactive, Struct}
 import rescala.twoversion.Committable
 
 /**
@@ -10,7 +10,7 @@ import rescala.twoversion.Committable
   */
 trait Turn[S <: Struct] {
   outer =>
-  private[rescala] def makeStructState[P](initialValue: Pulse[P] = Pulse.NoChange, transient: Boolean = true, initialIncoming: Set[Reactive[S]] = Set.empty[Reactive[S]]): S#Type[P, S]
+  private[rescala] def makeStructState[P](initialValue: P, transient: Boolean = true, initialIncoming: Set[Reactive[S]] = Set.empty[Reactive[S]]): S#Type[P, S]
 
 
   def makeTicket(): S#Ticket[S]

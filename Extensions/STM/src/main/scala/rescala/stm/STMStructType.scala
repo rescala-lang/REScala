@@ -6,7 +6,7 @@ import rescala.propagation.Turn
 
 import scala.concurrent.stm.{InTxn, Ref, TxnLocal}
 
-class STMStructType[P, S <: Struct](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[Reactive[S]]) extends LevelStructType[S] with ReadWritePulse[P, S] {
+class STMStructType[P, S <: Struct](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[Reactive[S]]) extends LevelStructType[S] with ReadWriteValue[P, S] {
 
   implicit def inTxn(implicit turn: Turn[S]): InTxn = turn match {
     case stmTurn: STMTurn => stmTurn.inTxn
@@ -17,7 +17,7 @@ class STMStructType[P, S <: Struct](initialValue: Pulse[P], transient: Boolean, 
   val _outgoing: Ref[Set[Reactive[S]]] = Ref(Set.empty)
   val _incoming: Ref[Set[Reactive[S]]] = Ref(initialIncoming)
 
-  val pulses: ReadWritePulse[P, S] = this
+  val pulses: ReadWriteValue[P, S] = this
   def incoming(implicit turn: Turn[S]): Set[Reactive[S]] = _incoming.get
   override def level(implicit turn: Turn[S]): Int = _level.get
   override def drop(reactive: Reactive[S])(implicit turn: Turn[S]): Unit = _outgoing.transformAndGet(_ - reactive)

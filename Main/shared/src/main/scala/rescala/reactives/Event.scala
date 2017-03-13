@@ -3,7 +3,7 @@ package rescala.reactives
 import rescala.engine.{Engine, TurnSource}
 import rescala.graph.Pulse.{Change, Exceptional, NoChange}
 import rescala.graph._
-import rescala.propagation.{StaticTicket, Turn}
+import rescala.propagation.Turn
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 
 import scala.annotation.compileTimeOnly
@@ -19,7 +19,7 @@ import scala.language.higherKinds
   * @tparam T Type returned when the event fires
   * @tparam S Struct type used for the propagation of the event
   */
-trait Event[+T, S <: Struct] extends Pulsing[T, S] with Observable[T, S] {
+trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] {
 
   @compileTimeOnly("Event.apply can only be used inside of Signal expressions")
   def apply(): Option[T] = throw new IllegalAccessException(s"$this.apply called outside of macro")

@@ -17,10 +17,10 @@ trait LSStruct extends GraphStruct {
 }
 
 
-class LSPropagationStruct[P, S <: Struct](current: Pulse[P], transient: Boolean, val lock: TurnLock[LSInterTurn], initialIncoming: Set[Reactive[S]])
+class LSPropagationStruct[P, S <: Struct](current: P, transient: Boolean, val lock: TurnLock[LSInterTurn], initialIncoming: Set[Reactive[S]])
   extends PropagationStructImpl[P, S](current, transient, initialIncoming) {
 
-  override def set(value: Pulse[P])(implicit ticket: S#Ticket[S]): Unit = {
+  override def set(value: P)(implicit ticket: S#Ticket[S]): Unit = {
     val turn = ticket.turn()
     assert(turn match {
       case pessimistic: LockSweep =>
@@ -51,7 +51,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPr
   private type TState = LSStruct
 
 
-  override private[rescala] def makeStructState[P](initialValue: Pulse[P], transient: Boolean, initialIncoming: Set[Reactive[TState]]): LSStruct#Type[P, TState] = {
+  override private[rescala] def makeStructState[P](initialValue: P, transient: Boolean, initialIncoming: Set[Reactive[TState]]): LSStruct#Type[P, TState] = {
     val lock = new TurnLock[LSInterTurn]
     new LSPropagationStruct[P, LSStruct](initialValue, transient, lock, initialIncoming)
   }
@@ -136,16 +136,16 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPr
     if (head.state.anyInputChanged != this) done(head, hasChanged = false)
     else {
       head.reevaluate(ticket) match {
-        case Static(value: Pulse[head.Value]) =>
-          val hasChanged = value.isChange && head.state.base(ticket) != value
+        case Static(value: head.Value, isChange) =>
+          val hasChanged = isChange && head.state.base(ticket) != value
           if (hasChanged) head.state.set(value)(ticket)
           done(head, hasChanged)
 
-        case Dynamic(value, deps) =>
+        case Dynamic(value, deps, isChange) =>
           val diff = DepDiff(deps, head.state.incoming(this))
           applyDiff(head, diff)
           head.state.counter = recount(diff.novel.iterator)
-          val hasChanged = value.isChange && head.state.base(ticket) != value
+          val hasChanged = isChange && head.state.base(ticket) != value
 
           if (head.state.counter == 0) {
             if (hasChanged) head.state.set(value)(ticket)

@@ -13,13 +13,16 @@ object ReevaluationResult {
   /**
     * Result of the static re-evaluation of a reactive value.
     */
-  case class Static[A, S <: Struct](value: Pulse[A]) extends ReevaluationResult[A, S]
+  case class Static[A, S <: Struct](value: Option[A]) extends ReevaluationResult[A, S]
+  def Static[P, S <: Struct](value: Pulse[P]): ReevaluationResult[Pulse[P], S] =  Static(if (value.isChange) Some(value) else None)
 
   /**
     * Result of the dynamic re-evaluation of a reactive value.
     * When using a dynamic dependency model, the dependencies of a value may change at runtime if it is re-evaluated
     */
-  case class Dynamic[A, S <: Struct](value: Pulse[A], dependencies: Set[Reactive[S]]) extends ReevaluationResult[A, S]
+  case class Dynamic[A, S <: Struct](value: Option[A], dependencies: Set[Reactive[S]]) extends ReevaluationResult[A, S]
+  def Dynamic[P, S <: Struct](value: Pulse[P], dependencies: Set[Reactive[S]]): ReevaluationResult[Pulse[P], S] =  Dynamic(if (value.isChange) Some(value) else None, dependencies)
+
 }
 
 /**
@@ -47,7 +50,7 @@ trait Disconnectable[S <: Struct] extends Reactive[S] {
 
   abstract final override protected[rescala] def reevaluate(ticket: S#Ticket[S]): ReevaluationResult[Value, S] = {
     if (disconnected) {
-      ReevaluationResult.Dynamic(Pulse.NoChange, Set.empty)
+      ReevaluationResult.Dynamic(None, Set.empty)
     }
     else {
       super.reevaluate(ticket)

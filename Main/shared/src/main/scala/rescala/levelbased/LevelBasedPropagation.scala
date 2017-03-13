@@ -1,8 +1,7 @@
 package rescala.levelbased
 
 import rescala.graph.ReevaluationResult.{Dynamic, Static}
-import rescala.graph.{ATicket, DepDiff, Reactive}
-import rescala.propagation.{DynamicTicket, StaticTicket}
+import rescala.graph.{DepDiff, Reactive}
 import rescala.twoversion.CommonPropagationImpl
 
 /**
