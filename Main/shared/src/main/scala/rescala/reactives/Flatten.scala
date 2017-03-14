@@ -21,9 +21,12 @@ object Flatten {
     def apply(sig: Signal[A, S])(implicit ticket: TurnSource[S]): Signal[T[B], S] = Signals.dynamic(sig) { s => ev(s.depend(sig)) map { (r: Signal[B, S]) => s.depend(r)} }
   }
   implicit def flattenSignalTraversableEvent
-  [A, S <: Struct, B, T[U] <: TraversableLike[U, T[U]], Evt[A1, S1 <: Struct] <: Event[A1, S1]]
-  (implicit ev: A <:< T[Evt[B, S]], cbf: CanBuildFrom[T[_], Option[B], T[Option[B]]]): Flatten[A, S, Event[T[Option[B]], S]] = new Flatten[A, S, Event[T[Option[B]], S]] {
-    def apply(sig: Signal[A, S])(implicit ticket: TurnSource[S]): Event[T[Option[B]], S] = Events.dynamic(sig) { s => ev(s.depend(sig)) map { (r: Event[B, S]) => s.depend(r)} }
+  [A, S <: Struct, B, T[U] <: TraversableLike[U, T[U]], Evnt[A1, S1 <: Struct] <: Event[A1, S1]]
+  (implicit ev: A <:< T[Evnt[B, S]], cbf: CanBuildFrom[T[_], Option[B], T[Option[B]]]): Flatten[A, S, Event[T[Option[B]], S]] = new Flatten[A, S, Event[T[Option[B]], S]] {
+    def apply(sig: Signal[A, S])(implicit ticket: TurnSource[S]): Event[T[Option[B]], S] = Events.dynamic(sig) { s =>
+      val all = ev(s.depend(sig)) map { (r: Event[B, S]) => s.depend(r)}
+      if(all.exists(_.isDefined)) Some(all) else None
+    }
   }
   implicit def flattenSignalArray
   [A, S <: Struct, B: ClassTag, Sig[U, V <: Struct] <: Signal[U, V]]
