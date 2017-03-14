@@ -1,7 +1,5 @@
 package tests.rescala
 
-import rescala.reactives.Signals.Diff
-
 
 class HigherOrderTestSuite extends RETests {
 
@@ -341,9 +339,9 @@ class HigherOrderTestSuite extends RETests {
 
   allEngines("flatten Signal Option"){ engine => import engine._
     val v = Var(Option.empty[Var[Int]])
-    var w = Var(1)
+    val w = Var(1)
 
-    val flat = v.flatten
+    val flat: Signal[Option[Int]] = v.flatten
 
     assert(flat.now === None, "flatten fails")
 
