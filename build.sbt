@@ -1,3 +1,5 @@
+import sbtcrossproject.{crossProject, CrossType}
+
 organization in ThisBuild := "de.tuda.stg"
 crossScalaVersions in ThisBuild := Seq("2.12.1", "2.11.8")
 scalaVersion in ThisBuild := crossScalaVersions.value.head
@@ -16,7 +18,7 @@ licenses in ThisBuild += ("Apache-2.0", url("http://www.apache.org/licenses/LICE
 shellPrompt in ThisBuild := { state => Project.extract(state).currentRef.project + "> " }
 
 lazy val rescalaAggregate = project.in(file(".")).aggregate(rescalaJVM,
-  rescalaJS, microbench, reswing, examples, examplesReswing, caseStudyEditor,
+  rescalaJS, rescalaNative, microbench, reswing, examples, examplesReswing, caseStudyEditor,
   caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags,
   datastructures, universe, reactiveStreams, documentation, meta,
   stm, testsJVM, testsJS, fullmv, caseStudyShapes, caseStudyMill)
@@ -25,14 +27,13 @@ lazy val rescalaAggregate = project.in(file(".")).aggregate(rescalaJVM,
     publishLocal := {})
 
 
-lazy val rescala = crossProject.in(file("Main"))
+lazy val rescala = crossProject(JSPlatform, JVMPlatform, NativePlatform).in(file("Main"))
   .disablePlugins(JmhPlugin)
   .settings(
     name := "rescala",
     resolvers += Resolver.bintrayRepo("pweisenburger", "maven"),
     libraryDependencies += "de.tuda.stg" %% "retypecheck" % "0.1.0",
     libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-    scalatestDependency,
 
     sourceGenerators in Compile += Def.task {
       val file = (sourceManaged in Compile).value / "rescala" / "reactives" / "GeneratedSignalLift.scala"
@@ -65,13 +66,19 @@ lazy val rescala = crossProject.in(file("Main"))
       s"""import rescala._
        """.stripMargin
   )
-  .jvmSettings().jsSettings(scalaJSUseRhino in Global := true)
+  .jvmSettings()
+  .jsSettings(scalaJSUseRhino in Global := true)
+  .nativeSettings(
+    crossScalaVersions := Seq("2.11.8"),
+    scalaVersion := "2.11.8")
 
 lazy val rescalaJVM = rescala.jvm
 
 lazy val rescalaJS = rescala.js
 
-lazy val tests = crossProject.in(file("Tests"))
+lazy val rescalaNative = rescala.native
+
+lazy val tests = crossProject(JSPlatform, JVMPlatform).in(file("Tests"))
   .disablePlugins(JmhPlugin)
   .settings(
     name := "rescala-tests",
