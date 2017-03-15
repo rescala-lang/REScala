@@ -2,7 +2,7 @@ package rescala.fullmv.api
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ArrayBuffer
-
+import scala.language.existentials
 
 object SignalVersionList {
   type O = SignalVersionList[_]
