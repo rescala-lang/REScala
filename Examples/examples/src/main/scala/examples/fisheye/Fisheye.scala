@@ -2,7 +2,7 @@ package examples.fisheye
 
 import java.awt.{Color, Dimension, Font, Graphics2D, Rectangle}
 
-import rescala.{Engine, Signal}
+import rescala._
 
 import scala.swing.{MainFrame, Panel, SimpleSwingApplication}
 

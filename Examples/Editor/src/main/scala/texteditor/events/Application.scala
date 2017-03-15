@@ -12,7 +12,7 @@ import scala.swing.SimpleSwingApplication
 import reswing.ReButton
 import reswing.ReLabel
 
-import rescala.Engine
+import rescala._
 
 object Application extends SimpleSwingApplication {
   // event-based components (set initial value manually)

@@ -19,7 +19,7 @@ import rescala.reactives.Signal
 @State(Scope.Benchmark)
 class MultiReverseFan[S <: rescala.graph.Struct] {
 
-  implicit var engine: Engine[S, Turn[S]] = _
+  var engine: Engine[S, Turn[S]] = _
 
   var sources: Array[rescala.reactives.Var[Int, S]] = _
   var results: Array[Signal[Int, S]] = _
@@ -29,7 +29,7 @@ class MultiReverseFan[S <: rescala.graph.Struct] {
   @Setup
   def setup(params: BenchmarkParams, size: Size, step: Step, engineParam: EngineParam[S], work: Workload) = {
     engine = engineParam.engine
-    val localEngine = engine;
+    val localEngine = engine
     import localEngine._
     val threads = params.getThreads
 
@@ -48,11 +48,11 @@ class MultiReverseFan[S <: rescala.graph.Struct] {
   @Benchmark
   def run(step: Step, params: ThreadParams): Unit = {
     val index = params.getThreadIndex
-    if (locks == null) sources(index).set(step.run())
+    if (locks == null) sources(index).set(step.run())(engine)
     else {
       locks(index / groupSize).lock()
       try {
-        sources(index).set(step.run())
+        sources(index).set(step.run())(engine)
       }
       finally locks(index / groupSize).unlock()
     }

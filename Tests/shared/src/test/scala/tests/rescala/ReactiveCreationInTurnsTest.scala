@@ -58,7 +58,7 @@ class ReactiveCreationInTurnsTest extends RETests {
       var a1 = false
       var a2 = false
       var v2: Signal[Int] = null
-      Engine.plan(v1) { implicit t =>
+      implicitEngine.plan(v1) { implicit t =>
         v2 = v1.map(_ + 1)
         val c1 = v1.change
         c1.observe(_ => a1 = true)

@@ -2,7 +2,7 @@ package universe
 
 import rescala.reactives.Signals
 import universe.Animal._
-import universe.Globals.engine
+
 import universe.Globals.engine._
 
 class Carnivore(implicit world: World) extends Animal {

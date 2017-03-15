@@ -3,11 +3,11 @@ package examples.tempconverter
 
 
 // Escala lib + behaviour extensions
-import rescala.{Evt, Engine}
-import rescala.Signal
-import rescala.Var
-import rescala.Signal
-import rescala.Signal
+import rescala._
+import rescala._
+import rescala._
+import rescala._
+import rescala._
 
 // Scala swing events
 import swing._

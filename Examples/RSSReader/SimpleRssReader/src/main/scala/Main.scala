@@ -1,6 +1,6 @@
 import java.net.URL
 
-import rescala.Engine
+import rescala._
 
 object Main extends App {
 

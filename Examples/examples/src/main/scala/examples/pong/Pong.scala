@@ -3,7 +3,7 @@ package examples.pong
 import java.awt.Point
 
 import examples.pong.ui.Mouse
-import rescala.{Engine, Evt, Signal, Var}
+import rescala._
 
 object Pong {
   val Max_X = 800

@@ -5,7 +5,7 @@ package examples.tempconverter
 // Escala lib + behaviour extensions
 
 
-import rescala.{Signal, _}
+import rescala._
 
 // Scala swing events
 import scala.swing._

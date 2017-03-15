@@ -19,7 +19,7 @@ import rescala.reactives.Signal
 @State(Scope.Benchmark)
 class ReverseFan[S <: rescala.graph.Struct] {
 
-  implicit var engine: Engine[S, Turn[S]] = _
+  var engine: Engine[S, Turn[S]] = _
 
   var sources: Array[rescala.reactives.Var[Int, S]] = _
   var result: Signal[Int, S] = _
@@ -40,6 +40,6 @@ class ReverseFan[S <: rescala.graph.Struct] {
 
   @Benchmark
   def run(step: Step, params: ThreadParams): Unit =
-    if (isManual) synchronized {sources(params.getThreadIndex).set(step.run())}
-    else sources(params.getThreadIndex).set(step.run())
+    if (isManual) synchronized {sources(params.getThreadIndex).set(step.run())(engine)}
+    else sources(params.getThreadIndex).set(step.run())(engine)
 }

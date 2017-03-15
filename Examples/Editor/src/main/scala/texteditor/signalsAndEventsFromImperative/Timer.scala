@@ -2,7 +2,7 @@ package texteditor.signalsAndEventsFromImperative
 
 import javax.swing
 import rescala._
-import rescala.Var
+import rescala._
 import rescala._
 
 class Timer(delay0: Int) {

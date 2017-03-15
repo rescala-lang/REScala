@@ -2,7 +2,7 @@ package examples.pong
 
 import java.awt.Rectangle
 
-import rescala.{Signal, Engine}
+import rescala._
 
 object Racket {
   val Height = 80

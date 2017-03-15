@@ -2,7 +2,7 @@ package examples.followmouse
 
 import java.awt.{Dimension, Font, Graphics2D}
 
-import rescala.{Engine, Evt, Signal}
+import rescala._
 
 import scala.swing.{MainFrame, Panel, SimpleSwingApplication, Swing}
 

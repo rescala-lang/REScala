@@ -14,7 +14,7 @@ import reader.XMLFixtures.missingLinkItem
 import reader.XMLFixtures.simpleChannel
 import reader.XMLFixtures.simpleItem
 import reader.common.implicits.stringToUrl
-import rescala.Engine
+import rescala._
 
 class XmlParserSpec extends FlatSpec with Matchers with BeforeAndAfter {
   var parser: XmlParser = _

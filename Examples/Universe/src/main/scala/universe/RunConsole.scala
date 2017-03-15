@@ -2,7 +2,7 @@ package universe
 
 import java.nio.file.{Files, Paths, StandardOpenOption}
 
-import universe.Globals.engine
+
 
 object RunConsole {
   def main(args: Array[String]): Unit = {
@@ -29,7 +29,7 @@ object RunConsole {
       world batchSpawn(nAnimals, nPlants)
 
       val start = System.nanoTime()
-      while (world.time.week.now < 2) {
+      while (world.time.week.now(universe.Globals.engine) < 2) {
         world.tick()
         world.runPlan()
       }

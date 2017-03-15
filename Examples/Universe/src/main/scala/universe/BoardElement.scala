@@ -1,7 +1,7 @@
 package universe
 
 
-import universe.Globals.engine
+
 import universe.Globals.engine._
 
 abstract class BoardElement(implicit val world: World) {

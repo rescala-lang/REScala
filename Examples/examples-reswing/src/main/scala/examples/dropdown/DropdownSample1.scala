@@ -8,8 +8,8 @@ import reswing.ReLabel._
 import reswing.ReTextField._
 import reswing._
 import scala.swing.SimpleSwingApplication
-import rescala.Signal
-import rescala.Engine
+import rescala._
+import rescala._
 import scala.swing.FlowPanel
 
 object DropdownSample1 extends SimpleSwingApplication {

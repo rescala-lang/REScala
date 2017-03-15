@@ -4,7 +4,7 @@ import reader.data.FeedStore
 import reader.data.RSSChannel
 import reader.data.RSSItem
 import scala.swing.ListView
-import rescala.Engine
+import rescala._
 
 trait ContentMediator {
   def mediate(channelList: ReListViewEx[RSSChannel],

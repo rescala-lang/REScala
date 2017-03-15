@@ -2,7 +2,7 @@ package examples.catchup
 
 import java.awt._
 
-import rescala.{Signal, _}
+import rescala._
 
 import scala.swing.event._
 import scala.swing.{MainFrame, Panel, SimpleSwingApplication, Swing}

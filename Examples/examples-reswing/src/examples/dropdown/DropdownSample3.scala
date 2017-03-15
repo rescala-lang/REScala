@@ -1,6 +1,6 @@
 package examples.dropdown
 
-import rescala.{Signal, Var}
+import rescala._
 import reswing.ReTextField._
 import reswing._
 

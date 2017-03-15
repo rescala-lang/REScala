@@ -1,7 +1,7 @@
 package universe
 
 
-import universe.Globals.engine
+
 import universe.Globals.engine._
 
 class Plant(implicit world: World) extends BoardElement {

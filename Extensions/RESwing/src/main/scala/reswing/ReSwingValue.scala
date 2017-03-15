@@ -1,6 +1,6 @@
 package reswing
 
-import rescala.{Engine, Event, Evt, Signal}
+import rescala._
 
 import scala.language.implicitConversions
 

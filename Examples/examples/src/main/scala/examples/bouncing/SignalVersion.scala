@@ -14,7 +14,7 @@ object SignalVersion extends SimpleSwingApplication {
   override def main(args: Array[String]): Unit = {
     super.main(args)
     while (true) {
-      Swing onEDTWait {application.tick.transform(_ + 1)(rescala.Engine)}
+      Swing onEDTWait {application.tick.transform(_ + 1)}
       Thread sleep 20
     }
   }

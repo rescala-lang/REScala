@@ -1,8 +1,8 @@
 package texteditor.signalsAndEventsFromImperative
 
 import rescala._
-import rescala.Signal
-import rescala.Var
+import rescala._
+import rescala._
 import rescala._
 
 /**

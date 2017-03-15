@@ -3,7 +3,7 @@ package examples.pong.ui
 import java.awt.{Color, Dimension, Font, Graphics2D}
 
 import examples.pong._
-import rescala.{Engine, Evt}
+import rescala._
 
 import scala.swing.{MainFrame, Panel, SimpleSwingApplication, Swing}
 

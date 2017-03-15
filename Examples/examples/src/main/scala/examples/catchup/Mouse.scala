@@ -4,7 +4,7 @@ import scala.swing.Reactor
 import scala.swing.Component
 
 import rescala._
-import rescala.Signal
+import rescala._
 import java.awt.Point
 import scala.swing.event._
 import scala.swing.Reactions

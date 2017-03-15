@@ -7,7 +7,7 @@ import rescala.propagation.Turn
 import scala.collection.LinearSeq
 import scala.collection.immutable.Queue
 
-class ChatServer[S <: Struct]()(implicit val engine: Engine[S, Turn[S]]) {
+class ChatServer[S <: Struct]()(val engine: Engine[S, Turn[S]]) {
 
   import engine._
 

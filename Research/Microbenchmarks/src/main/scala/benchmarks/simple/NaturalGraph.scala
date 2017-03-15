@@ -18,7 +18,7 @@ import rescala.propagation.Turn
 @State(Scope.Thread)
 class NaturalGraph[S <: rescala.graph.Struct] {
 
-  implicit var engine: Engine[S, Turn[S]] = _
+  var engine: Engine[S, Turn[S]] = _
 
   var source: rescala.reactives.Var[Int, S] = _
   var result: rescala.reactives.Signal[Int, S] = _
@@ -81,6 +81,6 @@ class NaturalGraph[S <: rescala.graph.Struct] {
   }
 
   @Benchmark
-  def run(step: Step): Unit = source.set(step.run())
+  def run(step: Step): Unit = source.set(step.run())(engine)
 
 }

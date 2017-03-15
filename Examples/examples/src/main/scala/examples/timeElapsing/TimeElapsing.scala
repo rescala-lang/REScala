@@ -1,7 +1,7 @@
 package examples.timeElapsing
 
 import rescala._
-import rescala.Signal
+import rescala._
 
 
 

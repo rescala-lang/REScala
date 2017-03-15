@@ -14,7 +14,7 @@ import scala.math.min
 import scala.swing.Component
 import scala.swing.event.Key
 import rescala._
-import rescala.Var
+import rescala._
 import reswing.ReComponent
 import reswing.ReSwingValue
 import texteditor.JScrollableComponent

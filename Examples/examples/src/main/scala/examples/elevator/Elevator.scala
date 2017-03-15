@@ -1,7 +1,7 @@
 package examples.elevator
 
 import examples.datastructures._
-import rescala.{Signal, _}
+import rescala._
 
 class Elevator(val nFloors: Int) {
   // some constants

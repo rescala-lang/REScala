@@ -2,7 +2,7 @@ package universe
 
 
 import rescala.reactives.Signals
-import universe.Globals.engine
+
 import universe.Globals.engine._
 
 import scala.util.Random

@@ -57,7 +57,7 @@ class BenchState[S <: Struct] {
 
     val threads = params.getThreads
 
-    cs = new ChatServer[S]()
+    cs = new ChatServer[S]()(engine)
     Range(0, size.size).foreach(cs.create)
 
     clients = Array.fill(threads)(engine.Evt[String])

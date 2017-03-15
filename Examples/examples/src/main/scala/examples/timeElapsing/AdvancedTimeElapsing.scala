@@ -1,6 +1,6 @@
 package examples.timeElapsing
 
-import rescala.{Signal, _}
+import rescala._
 
 
 object AdvancedTimeElapsing extends App {

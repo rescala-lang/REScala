@@ -13,7 +13,7 @@ class ShapesPanel extends Panel {
   allChanges observe {_ => repaint() }
 
   override def paintComponent(g: Graphics2D): Unit = {
-    Engine.plan() {implicit turn =>
+    implicitEngine.plan() {implicit turn =>
       for (shape <- shapes.now) {
         shape.drawSnapshot(turn, g)
       }
