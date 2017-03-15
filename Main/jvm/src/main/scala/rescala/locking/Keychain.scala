@@ -2,7 +2,7 @@ package rescala.locking
 
 import java.util
 
-import rescala.graph.Globals
+import rescala.util.Globals
 
 class Keychain[InterTurn](init: Key[InterTurn]) {
 

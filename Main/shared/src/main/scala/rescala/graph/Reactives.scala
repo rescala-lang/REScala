@@ -1,6 +1,7 @@
 package rescala.graph
 
 import rescala.propagation.StaticTicket
+import rescala.util.Globals
 
 /**
   * A reactive value is something that can be reevaluated

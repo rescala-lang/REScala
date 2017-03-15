@@ -1,6 +1,6 @@
 package rescala.twoversion
 
-import rescala.graph.{ATicket, DepDiff, GraphStruct, Pulse, Reactive}
+import rescala.graph.{ATicket, DepDiff, GraphStruct, Reactive}
 import rescala.propagation.{DynamicTicket, StaticTicket}
 
 import scala.util.control.NonFatal

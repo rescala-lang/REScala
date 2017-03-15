@@ -3,7 +3,7 @@ package tests.rescala.concurrency.philosophers
 import java.util.concurrent.atomic.AtomicInteger
 
 import rescala.engine.Engine
-import rescala.graph.Globals.named
+import rescala.util.Globals.named
 import rescala.graph.Struct
 import rescala.parrp.Backoff
 import rescala.propagation.Turn
