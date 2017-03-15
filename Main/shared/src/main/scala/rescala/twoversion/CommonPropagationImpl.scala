@@ -20,25 +20,25 @@ trait CommonPropagationImpl[S <: GraphStruct] extends AbstractPropagation[S] {
     override def turn(): CommonPropagationImpl[S] = outer
   }
 
-  private val toCommit = new java.util.ArrayList[Committable[S]]()
-  private val observers = new java.util.ArrayList[() => Unit]()
+  private val toCommit = scala.collection.mutable.ArrayBuffer[Committable[S]]()
+  private val observers = scala.collection.mutable.ArrayBuffer[() => Unit]()
 
-  override def schedule(commitable: Committable[S]): Unit = toCommit.add(commitable)
+  override def schedule(commitable: Committable[S]): Unit = toCommit += commitable
 
-  override def observe(f: () => Unit): Unit = observers.add(f)
+  override def observe(f: () => Unit): Unit = observers += f
 
   override def commitPhase(): Unit = {
-    val it = toCommit.iterator()
+    val it = toCommit.iterator
     while (it.hasNext) it.next().commit(this)
   }
 
   override def rollbackPhase(): Unit = {
-    val it = toCommit.iterator()
+    val it = toCommit.iterator
     while (it.hasNext) it.next().release(this)
   }
 
   override def observerPhase(): Unit = {
-    val it = observers.iterator()
+    val it = observers.iterator
     var failure: Throwable = null
     while (it.hasNext) {
       try {

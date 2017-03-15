@@ -1,7 +1,5 @@
 package rescala.reactives
 
-import java.util.concurrent.ConcurrentHashMap
-
 import rescala.engine.{Engine, TurnSource}
 import rescala.graph.{Base, Disconnectable, Pulse, Pulsing, Reactive, ReevaluationResult, Struct}
 import rescala.propagation.Turn
@@ -19,7 +17,7 @@ trait Observe[S <: Struct] {
 
 object Observe {
 
-  private val strongObserveReferences = new ConcurrentHashMap[Observe[_], Boolean]()
+  private val strongObserveReferences = scala.collection.mutable.HashMap[Observe[_], Boolean]()
 
   private abstract class Obs[T, S <: Struct](bud: S#Type[Pulse[T], S], dependency: Pulsing[Pulse[T], S], fun: T => Unit, fail: Throwable => Unit) extends Base[T, S](bud) with Reactive[S] with Observe[S]  {
     this: Disconnectable[S] =>
@@ -30,7 +28,7 @@ object Observe {
     }
     override def remove()(implicit fac: Engine[S, Turn[S]]): Unit = {
       disconnect()
-      strongObserveReferences.remove(this: Observe[_])
+      strongObserveReferences.synchronized(strongObserveReferences.remove(this))
     }
   }
 
@@ -58,7 +56,7 @@ object Observe {
 
   def strong[T, S <: Struct](dependency: Pulsing[Pulse[T], S])(fun: T => Unit, fail: Throwable => Unit = null)(implicit maybe: TurnSource[S]): Observe[S] = {
     val obs = weak(dependency)(fun)
-    strongObserveReferences.put(obs, true)
+    strongObserveReferences.synchronized(strongObserveReferences.put(obs, true))
     obs
   }
 
