@@ -16,7 +16,6 @@ object Engines extends LevelBasedPropagationEngines {
     case "synchron" => synchron.asInstanceOf[Engine[S, propagation.Turn[S]]]
     case "unmanaged" => unmanaged.asInstanceOf[Engine[S, propagation.Turn[S]]]
     case "parrp" => parrp.asInstanceOf[Engine[S, propagation.Turn[S]]]
-    case "fair" => synchronFair.asInstanceOf[Engine[S, propagation.Turn[S]]]
     case "locksweep" => locksweep.asInstanceOf[Engine[S, propagation.Turn[S]]]
 
     case other => throw new IllegalArgumentException(s"unknown engine $other")
