@@ -28,7 +28,13 @@ trait Signal[+A, S <: Struct] extends Pulsing[Pulse[A], S] with Observable[A, S]
 
   final def now(implicit ticket: TurnSource[S]): A = ticket { turn =>
     turn.dynamicDependencyInteraction(this)
-    try { pulse(turn.makeTicket().static()).get }
+    try { pulse(turn.makeTicket()).get }
+    catch { case EmptySignalControlThrowable => throw new NoSuchElementException(s"Signal $this is empty") }
+  }
+
+  final def before(implicit ticket: TurnSource[S]): A = ticket { turn =>
+    turn.dynamicDependencyInteraction(this)
+    try { stable(turn.makeTicket()).get }
     catch { case EmptySignalControlThrowable => throw new NoSuchElementException(s"Signal $this is empty") }
   }
 

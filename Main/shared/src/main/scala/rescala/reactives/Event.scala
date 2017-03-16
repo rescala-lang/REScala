@@ -82,6 +82,15 @@ trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] 
   /** Event conjunction with a merge method creating a tuple of both event parameters */
   final def zip[U](other: Event[U, S])(implicit ticket: TurnSource[S]): Event[(T, U), S] = and(other)(Tuple2.apply)
 
+  /** Event disjunction with a merge method creating a tuple of both optional event parameters wrapped */
+  final def zipOuter[U](other: Event[U, S])(implicit ticket: TurnSource[S]): Event[(Option[T], Option[U]), S] = {
+    Events.static(s"(zipOuter $this $other)", this, other) { turn =>
+      val left = this.pulse(turn)
+      val right = other.pulse(turn)
+      if(right.isChange || left.isChange) Change(left.toOption -> right.toOption) else NoChange
+    }
+  }
+
   /** Transform the event parameter */
   final def map[U](mapping: T => U)(implicit ticket: TurnSource[S]): Event[U, S] = Events.static(s"(map $this)", this) { turn => pulse(turn).map(mapping) }
 
