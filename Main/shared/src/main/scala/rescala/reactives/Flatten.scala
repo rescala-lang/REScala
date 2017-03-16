@@ -3,11 +3,13 @@ package rescala.reactives
 import rescala.engine.TurnSource
 import rescala.graph.Struct
 
+import scala.annotation.implicitNotFound
 import scala.collection.TraversableLike
 import scala.collection.generic.CanBuildFrom
 import scala.language.higherKinds
 import scala.reflect.ClassTag
 
+@implicitNotFound(msg = "Could not flatten ${A}. Try to select a specific flatten strategy from rescala.reactives.Flatten.")
 sealed trait Flatten[-A, S <: Struct, R] {
   def apply(sig: Signal[A, S])(implicit ticket: TurnSource[S]): R
 }
