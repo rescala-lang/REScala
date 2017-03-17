@@ -27,15 +27,21 @@ class ShapesPanel(initShapes: Shape*) extends Panel {
 
 trait Shape {
   val changed: Event[Any]
+  def centerX: Signal[Int]
+  def centerY: Signal[Int]
+  def hitboxWidth: Signal[Int]
+  def hitboxHeight: Signal[Int]
   def drawSnapshot(g: Graphics2D)(implicit turn: Turn): Unit
 }
 
-class Circle (val centerX: Signal[Int],
-              val centerY: Signal[Int],
+class Circle (override val centerX: Signal[Int],
+              override val centerY: Signal[Int],
               val diameter: Signal[Int],
               val border: Signal[Option[Color]] = Var(Some(Color.BLACK)),
               val fill: Signal[Option[Color]] = Var(None)) extends Shape {
   override val changed = centerX.changed || centerY.changed || diameter.changed || border.changed || fill.changed
+  override val hitboxWidth = diameter
+  override val hitboxHeight = diameter
   override def drawSnapshot(g: Graphics2D)(implicit turn: Turn): Unit = {
     val d = diameter.now
     val x = centerX.now - d/2
@@ -53,16 +59,16 @@ class Circle (val centerX: Signal[Int],
   }
 }
 
-class Rectangle (val centerX: Signal[Int],
-                 val centerY: Signal[Int],
-                 val width: Signal[Int],
-                 val height: Signal[Int],
+class Rectangle (override val centerX: Signal[Int],
+                 override val centerY: Signal[Int],
+                 override val hitboxWidth: Signal[Int],
+                 override val hitboxHeight: Signal[Int],
                  val border: Signal[Option[Color]] = Var(Some(Color.BLACK)),
                  val fill: Signal[Option[Color]] = Var(None)) extends Shape {
-  override val changed = centerX.changed || centerY.changed || width.changed || height.changed || border.changed || fill.changed
+  override val changed = centerX.changed || centerY.changed || hitboxWidth.changed || hitboxHeight.changed || border.changed || fill.changed
   override def drawSnapshot(g: Graphics2D)(implicit turn: Turn): Unit = {
-    val w = width.now
-    val h = height.now
+    val w = hitboxWidth.now
+    val h = hitboxHeight.now
     val x = centerX.now - w/2
     val y = centerY.now - h/2
     val f = fill.now

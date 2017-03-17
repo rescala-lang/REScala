@@ -5,8 +5,6 @@ import rescala._
 
 object BNumericCirclingCircle extends Main {
   override def shapes() = {
-    val diameter = Var(50)
-
     val physicsTicks = Clock.time.change.map{ diff => diff.to.get - diff.from.get }
 
     val angle = Signal{ Clock.time().toDouble / Clock.NanoSecond }
@@ -23,8 +21,6 @@ object BNumericCirclingCircle extends Main {
       case (pY, (None, Some(tick))) => pY + tick * velocityY.before
     }
 
-    List(
-      new Circle(posX.map(_.toInt), posY.map(_.toInt), diameter)
-    )
+    List(new Circle(posX.map(_.toInt), posY.map(_.toInt), Var(50)))
   }
 }

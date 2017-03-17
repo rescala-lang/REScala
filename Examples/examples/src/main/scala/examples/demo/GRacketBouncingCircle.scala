@@ -5,7 +5,7 @@ import java.awt.Color
 import examples.demo.ui.{Circle, Clock, Rectangle, Shape}
 import rescala._
 
-object DMouseBouncingCircle extends Main {
+object GRacketBouncingCircle extends Main {
   class BouncingCircle(val diameter: Signal[Int], val reset: Event[Point]) {
     val physicsTicks = Clock.time.change.map{ diff => diff.to.get - diff.from.get }
 
@@ -38,10 +38,34 @@ object DMouseBouncingCircle extends Main {
     val outOfBoundsTop = Signal{ boundShape.centerY() < -centerBBVerticalDistance() }
     val outOfBoundsBottom = Signal{ boundShape.centerY() > centerBBVerticalDistance() }
 
+    val movedOutOfBoundsLeft = outOfBoundsLeft.changedTo(true)
+    val movedOutOfBoundsRight = outOfBoundsRight.changedTo(true)
+    val movedOutOfBoundsHorizontal = movedOutOfBoundsLeft || movedOutOfBoundsRight
+    val movedOutOfBoundsVertical = Signal{ outOfBoundsTop() || outOfBoundsBottom() }.changedTo(true)
+
     val shape = new Rectangle(Var(0), Var(0), width, height, Signal{
       if(outOfBoundsLeft() || outOfBoundsRight() || outOfBoundsTop() || outOfBoundsBottom())
         Some(Color.RED) else Some(Color.GREEN)
     })
+  }
+
+  class Racket(val fieldHeight: Signal[Int], val fieldWidth: Signal[Int], val height: Signal[Int], val isRight: Boolean, val inputY: Signal[Int]) {
+    val width = Var(10)
+
+    val posX = fieldWidth.map(w => (if(isRight) 1 else -1) * (w / 2 - 25))
+    val posY = Signal{ math.max(math.min(inputY(), (fieldHeight() - height()) / 2), - (fieldHeight() - height()) / 2) }
+
+    val shape = new Rectangle(posX, posY, width, height)
+
+    def collisionWith(collider: Shape): Event[Unit] = {
+      val collisionBoxHeight = Signal{ height() + collider.hitboxHeight() }
+      val collisionBoxWidth = Signal{ width() + collider.hitboxWidth() }
+      val shapeInsideRacket = Signal{ (posX() - collisionBoxWidth() / 2 < collider.centerX()) &&
+        (posX() + collisionBoxWidth() / 2 > collider.centerX()) &&
+        (posY() - collisionBoxHeight() / 2 < collider.centerY()) &&
+        (posY() + collisionBoxHeight() / 2 > collider.centerY())}
+      shapeInsideRacket.changedTo(true)
+    }
   }
 
   override def shapes() = {
@@ -50,10 +74,11 @@ object DMouseBouncingCircle extends Main {
 
     val bouncingCircle = new BouncingCircle(Var(50), Mouse.middleButton.pressed)
     val boundingBox = new BoundingBox(fieldWidth, fieldHeight, bouncingCircle.shape)
+    val racketRight = new Racket(fieldHeight, fieldWidth, Var(100), true, Mouse.y)
 
-    bouncingCircle.horizontalBounceSources.transform(Mouse.leftButton.pressed :: _)
-    bouncingCircle.verticalBounceSources.transform(Mouse.rightButton.pressed :: _)
+    bouncingCircle.horizontalBounceSources.transform(boundingBox.movedOutOfBoundsHorizontal :: racketRight.collisionWith(bouncingCircle.shape) :: _)
+    bouncingCircle.verticalBounceSources.transform(boundingBox.movedOutOfBoundsVertical :: _)
 
-    List(bouncingCircle.shape, boundingBox.shape)
+    List(bouncingCircle.shape, boundingBox.shape, racketRight.shape)
   }
 }
