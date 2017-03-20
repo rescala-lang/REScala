@@ -44,8 +44,8 @@ trait BufferedValueStruct[P, S <: Struct] extends ReadWriteValue[P, S] with Comm
   * @tparam R Type of the reactive values that are connected to this struct
   */
 abstract class PropagationStructImpl[P, S <: Struct](override var current: P, override val transient: Boolean, initialIncoming: Set[Reactive[S]]) extends GraphStructType[S] with BufferedValueStruct[P, S] {
-  private var _incoming: Set[Reactive[S]] = initialIncoming
-  private var _outgoing: scala.collection.mutable.Map[Reactive[S], Boolean] = rescala.util.WeakHashMap.empty
+  protected var _incoming: Set[Reactive[S]] = initialIncoming
+  protected var _outgoing: scala.collection.mutable.Map[Reactive[S], Boolean] = rescala.util.WeakHashMap.empty
 
 
   def incoming(implicit turn: Turn[S]): Set[Reactive[S]] = _incoming
