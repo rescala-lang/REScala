@@ -17,19 +17,22 @@ case class Storing(current: Any, level: Int, incoming: Set[Reactive[Struct]])
 
 class ReStoringTurn() extends LevelBasedPropagation[ReStoringStruct] {
 
-  override private[rescala] def makeStructState[P](initialValue: P, transient: Boolean, initialIncoming: Set[Reactive[ReStoringStruct]]): ReStoringStructType[P, ReStoringStruct] = {
-    val name = ReStore.count.toString
-    ReStore.count += 1
-    ReStore.values.get(name) match {
-      case None =>
-        println(s"new struct $name")
-        new ReStoringStructType(name, initialValue, transient, initialIncoming)
-      case Some(s@Storing(c, l, i)) =>
-        println(s"old struct $name $s")
-        val res = new ReStoringStructType(name, c.asInstanceOf[P], transient, initialIncoming)
-        res._level = l
-        res
+  override private[rescala] def makeStructState[P](initialValue: P, transient: Boolean, initialIncoming: Set[Reactive[ReStoringStruct]], isFold: Boolean): ReStoringStructType[P, ReStoringStruct] = {
+    if (isFold) {
+      val name = ReStore.count.toString
+      ReStore.count += 1
+      ReStore.values.get(name) match {
+        case None =>
+          println(s"new struct $name")
+          new ReStoringStructType(name, initialValue, transient, initialIncoming)
+        case Some(s@Storing(c, l, i)) =>
+          println(s"old struct $name $s")
+          val res = new ReStoringStructType(name, c.asInstanceOf[P], transient, initialIncoming)
+          res._level = l
+          res
+      }
     }
+    else new ReStoringStructType("", initialValue, transient, initialIncoming)
   }
   override def releasePhase(): Unit = ()
 }
@@ -37,8 +40,10 @@ class ReStoringTurn() extends LevelBasedPropagation[ReStoringStruct] {
 class ReStoringStructType[P, S <: Struct](key: String, initialVal: P, transient: Boolean, initialIncoming: Set[Reactive[S]]) extends LevelStructTypeImpl[P, S](initialVal, transient, initialIncoming) {
   override def commit(implicit turn: Turn[S]): Unit = {
     super.commit
-    println(s"updating $key")
-    ReStore.values.put(key, Storing(current, _level, _incoming.asInstanceOf[Set[Reactive[Struct]]]))
+    if (key.nonEmpty) {
+      println(s"updating $key to $current")
+      ReStore.values.put(key, Storing(current, _level, _incoming.asInstanceOf[Set[Reactive[Struct]]]))
+    }
   }
 }
 
