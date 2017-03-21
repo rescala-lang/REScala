@@ -1,19 +1,13 @@
 package tests.rescala
 
-import org.scalatest.{BeforeAndAfterEach, FunSuite}
-import rescala.restore.{ReStore, ReStoringEngine}
+import org.scalatest.FunSuite
+import rescala.restore.ReStoringEngine
 
-class RestoringTest extends FunSuite with BeforeAndAfterEach {
-
-  override def beforeEach(): Unit = {
-    ReStore.values.clear()
-    ReStore.crash()
-    super.beforeEach() // To be stackable, must call super.beforeEach
-  }
+class RestoringTest extends FunSuite {
 
   test("simple save and restore"){
 
-    {
+    val snapshot = {
       implicit val engine = new ReStoringEngine()
       val e = engine.Evt[Unit]()
       val c = e.count()
@@ -24,13 +18,13 @@ class RestoringTest extends FunSuite with BeforeAndAfterEach {
       e.fire()
 
       assert(c.now == 2)
+      engine.snapshot()
     }
 
-    ReStore.crash()
-    println(ReStore.values)
+    println(snapshot.values)
 
     {
-      implicit val engine1 = new ReStoringEngine()
+      implicit val engine1 = new ReStoringEngine(restoreFrom = snapshot.toSeq)
       val e = engine1.Evt[Unit]()
       val c = e.count()
 
@@ -45,7 +39,7 @@ class RestoringTest extends FunSuite with BeforeAndAfterEach {
 
   test("save and restore with changes in between"){
 
-    {
+    val snapshot = {
       implicit val engine = new ReStoringEngine()
       val e = engine.Evt[Unit]()
       val c = e.count()
@@ -61,13 +55,14 @@ class RestoringTest extends FunSuite with BeforeAndAfterEach {
 
       assert(mapped.now == 12)
 
+      engine.snapshot()
+
     }
 
-    ReStore.crash()
-    println(ReStore.values)
+    println(snapshot)
 
     {
-      implicit val engine1 = new ReStoringEngine()
+      implicit val engine1 = new ReStoringEngine(restoreFrom = snapshot.toSeq)
       val e = engine1.Evt[Unit]()
       val c = e.count()
 
