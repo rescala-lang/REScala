@@ -9,25 +9,25 @@ case class Storing(current: Any, level: Int, incoming: Set[Reactive[Struct]])
 
 class ReStoringTurn(engine: ReStoringEngine) extends LevelBasedPropagation[ReStoringStruct] {
 
-  override private[rescala] def makeStructState[P](initialValue: P, transient: Boolean, initialIncoming: Set[Reactive[ReStoringStruct]], isFold: Boolean): ReStoringStructType[P, ReStoringStruct] = {
-    if (isFold) {
+  override private[rescala] def makeStructState[P](initialValue: P, transient: Boolean, initialIncoming: Set[Reactive[ReStoringStruct]], hasState: Boolean): ReStoringStructType[P, ReStoringStruct] = {
+    if (hasState) {
       val name = engine.nextName
       def store(storing: Storing) = {
-        println(s"updating $name to $storing")
+        //println(s"updating $name to $storing")
         engine.values.put(name, storing)
       }
       engine.values.get(name) match {
         case None =>
-          println(s"new struct $name")
+          //println(s"new struct $name")
           new ReStoringStructType(store, initialValue, transient, initialIncoming)
         case Some(s@Storing(c, l, i)) =>
-          println(s"old struct $name $s")
+          //println(s"old struct $name $s")
           val res = new ReStoringStructType(store, c.asInstanceOf[P], transient, initialIncoming)
           res._level = l
           res
       }
     }
-    else new ReStoringStructType(_ => (), initialValue, transient, initialIncoming)
+    else new ReStoringStructType(null, initialValue, transient, initialIncoming)
   }
   override def releasePhase(): Unit = ()
 }
@@ -35,7 +35,7 @@ class ReStoringTurn(engine: ReStoringEngine) extends LevelBasedPropagation[ReSto
 class ReStoringStructType[P, S <: Struct](storage: Storing => Unit, initialVal: P, transient: Boolean, initialIncoming: Set[Reactive[S]]) extends LevelStructTypeImpl[P, S](initialVal, transient, initialIncoming) {
   override def commit(implicit turn: Turn[S]): Unit = {
     super.commit
-    storage(Storing(current, _level, _incoming.asInstanceOf[Set[Reactive[Struct]]]))
+    if (storage != null) storage(Storing(current, _level, _incoming.asInstanceOf[Set[Reactive[Struct]]]))
   }
 }
 

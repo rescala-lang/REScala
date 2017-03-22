@@ -10,7 +10,7 @@ import rescala.twoversion.Committable
   */
 trait Turn[S <: Struct] {
   outer =>
-  private[rescala] def makeStructState[P](initialValue: P, transient: Boolean = true, initialIncoming: Set[Reactive[S]] = Set.empty[Reactive[S]], isFold: Boolean = false): S#Type[P, S]
+  private[rescala] def makeStructState[P](initialValue: P, transient: Boolean = true, initialIncoming: Set[Reactive[S]] = Set.empty[Reactive[S]], hasState: Boolean = false): S#Type[P, S]
 
 
   def makeTicket(): S#Ticket[S]

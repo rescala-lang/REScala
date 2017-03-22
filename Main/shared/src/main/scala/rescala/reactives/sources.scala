@@ -72,8 +72,8 @@ final class Var[A, S <: Struct](_bud: S#Type[Pulse[A], S]) extends Source[A, S](
   * Companion object that allows external users to create new source signals.
   */
 object Var {
-  def apply[T, S <: Struct](initval: T)(implicit ticket: TurnSource[S]): Var[T, S] = ticket { t => t.create(Set.empty)(new Var(t.makeStructState(Pulse.Change(initval), transient = false))) }
-  def empty[T, S <: Struct]()(implicit ticket: TurnSource[S]): Var[T, S] = ticket { t => t.create(Set.empty)(new Var(t.makeStructState(Pulse.empty, transient = false))) }
+  def apply[T, S <: Struct](initval: T)(implicit ticket: TurnSource[S]): Var[T, S] = ticket { t => t.create(Set.empty)(new Var(t.makeStructState(Pulse.Change(initval), transient = false, hasState = true))) }
+  def empty[T, S <: Struct]()(implicit ticket: TurnSource[S]): Var[T, S] = ticket { t => t.create(Set.empty)(new Var(t.makeStructState(Pulse.empty, transient = false, hasState = true))) }
 
 }
 

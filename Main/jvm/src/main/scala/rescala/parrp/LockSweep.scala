@@ -51,7 +51,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPr
   private type TState = LSStruct
 
 
-  override private[rescala] def makeStructState[P](initialValue: P, transient: Boolean, initialIncoming: Set[Reactive[TState]], isFold: Boolean): LSStruct#Type[P, TState] = {
+  override private[rescala] def makeStructState[P](initialValue: P, transient: Boolean, initialIncoming: Set[Reactive[TState]], hasState: Boolean): LSStruct#Type[P, TState] = {
     val lock = new TurnLock[LSInterTurn]
     new LSPropagationStruct[P, LSStruct](initialValue, transient, lock, initialIncoming)
   }

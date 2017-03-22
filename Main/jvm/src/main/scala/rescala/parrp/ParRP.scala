@@ -21,7 +21,7 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
   private type TState = ParRP
 
 
-  override private[rescala] def makeStructState[P](initialValue: P, transient: Boolean, initialIncoming: Set[Reactive[TState]], isFold: Boolean): TState#Type[P, ParRP] = {
+  override private[rescala] def makeStructState[P](initialValue: P, transient: Boolean, initialIncoming: Set[Reactive[TState]], hasState: Boolean): TState#Type[P, ParRP] = {
     val lock = new TurnLock[ParRPInterTurn]
     new ParRPStructType[P, ParRP](initialValue, transient, lock, initialIncoming)
   }

@@ -11,7 +11,7 @@ class STMTurn extends LevelBasedPropagation[STMTurn] with LevelStruct {
 
 
   /** used to create state containers of each reactive */
-  override private[rescala] def makeStructState[P](initialValue: P, transient: Boolean, initialIncoming: Set[Reactive[STMTurn]], isFold: Boolean): Type[P, STMTurn] = {
+  override private[rescala] def makeStructState[P](initialValue: P, transient: Boolean, initialIncoming: Set[Reactive[STMTurn]], hasState: Boolean): Type[P, STMTurn] = {
     new STMStructType[P, STMTurn](initialValue, transient, initialIncoming)
   }
   override def releasePhase(): Unit = ()
