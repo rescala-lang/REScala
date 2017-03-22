@@ -2,7 +2,7 @@ package examples.demo
 
 import java.awt.Color
 
-import examples.demo.ui.{Circle, Clock, Rectangle, Shape}
+import examples.demo.ui._
 import rescala._
 
 object EBoundsBouncingCircle extends Main {
@@ -49,11 +49,11 @@ object EBoundsBouncingCircle extends Main {
     })
   }
 
-  override def shapes() = {
-    val fieldWidth = panelWidth.map(_ - 25)
-    val fieldHeight = panelHeight.map(_ - 25)
+  val fieldWidth = panel.width.map(_ - 25)
+  val fieldHeight = panel.height.map(_ - 25)
 
-    val bouncingCircle = new BouncingCircle(Var(50), Mouse.middleButton.pressed)
+  override def makeShapes() = {
+    val bouncingCircle = new BouncingCircle(Var(50), panel.Mouse.middleButton.pressed)
     val boundingBox = new BoundingBox(fieldWidth, fieldHeight, bouncingCircle.shape)
 
     bouncingCircle.horizontalBounceSources.transform(boundingBox.movedOutOfBoundsHorizontal :: _)

@@ -2,7 +2,7 @@ package examples.demo
 
 import java.awt.Color
 
-import examples.demo.ui.{Circle, Clock, Rectangle, Shape}
+import examples.demo.ui._
 import rescala._
 
 object FRacketCircle extends Main {
@@ -58,17 +58,17 @@ object FRacketCircle extends Main {
     val shape = new Rectangle(posX, posY, width, height)
   }
 
-  override def shapes() = {
-    val fieldWidth = panelWidth.map(_ - 25)
-    val fieldHeight = panelHeight.map(_ - 25)
+  val fieldWidth = panel.width.map(_ - 25)
+  val fieldHeight = panel.height.map(_ - 25)
 
-    val bouncingCircle = new BouncingCircle(Var(50), Mouse.middleButton.pressed)
+  override def makeShapes() = {
+    val bouncingCircle = new BouncingCircle(Var(50), panel.Mouse.middleButton.pressed)
     val boundingBox = new BoundingBox(fieldWidth, fieldHeight, bouncingCircle.shape)
-    val racketRight = new Racket(fieldHeight, fieldWidth, Var(100), true, Mouse.y)
+    val racket = new Racket(fieldHeight, fieldWidth, Var(100), true, panel.Mouse.y)
 
     bouncingCircle.horizontalBounceSources.transform(boundingBox.movedOutOfBoundsHorizontal :: _)
     bouncingCircle.verticalBounceSources.transform(boundingBox.movedOutOfBoundsVertical :: _)
 
-    List(bouncingCircle.shape, boundingBox.shape, racketRight.shape)
+    List(bouncingCircle.shape, boundingBox.shape, racket.shape)
   }
 }

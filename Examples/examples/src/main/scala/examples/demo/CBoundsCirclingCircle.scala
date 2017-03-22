@@ -2,7 +2,7 @@ package examples.demo
 
 import java.awt.Color
 
-import examples.demo.ui.{Circle, Clock, Rectangle, Shape}
+import examples.demo.ui._
 import rescala._
 
 object CBoundsCirclingCircle extends Main {
@@ -11,8 +11,8 @@ object CBoundsCirclingCircle extends Main {
 
     val angle = Signal{ Clock.time().toDouble / Clock.NanoSecond }
 
-    val velocityX = Signal{ panelWidth() / 3 * math.sin(angle()) / Clock.NanoSecond }
-    val velocityY = Signal{ panelHeight() / 3 * math.cos(angle()) / Clock.NanoSecond }
+    val velocityX = Signal{ panel.width() / 3 * math.sin(angle()) / Clock.NanoSecond }
+    val velocityY = Signal{ panel.height() / 3 * math.cos(angle()) / Clock.NanoSecond }
 
     val posX = reset.zipOuter(physicsTicks).fold(0d){
       case (_, (Some(Point(x, _)), _)) => x.toDouble
@@ -41,11 +41,11 @@ object CBoundsCirclingCircle extends Main {
     })
   }
 
-  override def shapes() = {
-    val fieldWidth = panelWidth.map(_ - 25)
-    val fieldHeight = panelHeight.map(_ - 25)
+  val fieldWidth = panel.width.map(_ - 25)
+  val fieldHeight = panel.height.map(_ - 25)
 
-    val bouncingCircle = new BouncingCircle(Var(50), Mouse.middleButton.pressed)
+  override def makeShapes() = {
+    val bouncingCircle = new BouncingCircle(Var(50), panel.Mouse.middleButton.pressed)
     val boundingBox = new BoundingBox(fieldWidth, fieldHeight, bouncingCircle.shape)
 
     List(bouncingCircle.shape, boundingBox.shape)

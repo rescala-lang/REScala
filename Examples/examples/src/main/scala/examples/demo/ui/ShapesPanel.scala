@@ -1,13 +1,15 @@
 package examples.demo.ui;
 
-import java.awt.{Color, Graphics2D, RenderingHints}
+import java.awt.event._
+import java.awt.{Event => _, _}
 
 import rescala._
 
 import scala.swing.Panel
 
-class ShapesPanel(initShapes: Shape*) extends Panel {
-  val shapes = Var(initShapes.toList)
+case class Point(x: Int, y: Int)
+
+class ShapesPanel(val shapes: Signal[Traversable[Shape]]) extends Panel {
   //val allChanges: Event[Any] = Event { shapes().find{ shape: Shape => shape.changed().isDefined } }
   val allChanges: Event[Any] = shapes.map(_.map(_.changed)).flatten
   allChanges observe {_ => repaint() }
@@ -23,63 +25,50 @@ class ShapesPanel(initShapes: Shape*) extends Panel {
       }
     }
   }
-}
 
-trait Shape {
-  val changed: Event[Any]
-  def centerX: Signal[Int]
-  def centerY: Signal[Int]
-  def hitboxWidth: Signal[Int]
-  def hitboxHeight: Signal[Int]
-  def drawSnapshot(g: Graphics2D)(implicit turn: Turn): Unit
-}
+  val _dimension: Var[Dimension] = Var(size)
+  peer.addComponentListener(new ComponentListener {
+    override def componentShown(e: ComponentEvent) = {}
+    override def componentHidden(e: ComponentEvent) = {}
+    override def componentMoved(e: ComponentEvent) = {}
+    override def componentResized(e: ComponentEvent) = _dimension.set(size)
+  })
 
-class Circle (override val centerX: Signal[Int],
-              override val centerY: Signal[Int],
-              val diameter: Signal[Int],
-              val border: Signal[Option[Color]] = Var(Some(Color.BLACK)),
-              val fill: Signal[Option[Color]] = Var(None)) extends Shape {
-  override val changed = centerX.changed || centerY.changed || diameter.changed || border.changed || fill.changed
-  override val hitboxWidth = diameter
-  override val hitboxHeight = diameter
-  override def drawSnapshot(g: Graphics2D)(implicit turn: Turn): Unit = {
-    val d = diameter.now
-    val x = centerX.now - d/2
-    val y = centerY.now - d/2
-    val f = fill.now
-    if(f.isDefined) {
-      g.setColor(f.get)
-      g.fillOval(x, y, d, d)
-    }
-    val b = border.now
-    if(b.isDefined) {
-      g.setColor(b.get)
-      g.drawOval(x, y, d, d)
-    }
-  }
-}
+  val width = _dimension.map(_.width)
+  val height = _dimension.map(_.height)
 
-class Rectangle (override val centerX: Signal[Int],
-                 override val centerY: Signal[Int],
-                 override val hitboxWidth: Signal[Int],
-                 override val hitboxHeight: Signal[Int],
-                 val border: Signal[Option[Color]] = Var(Some(Color.BLACK)),
-                 val fill: Signal[Option[Color]] = Var(None)) extends Shape {
-  override val changed = centerX.changed || centerY.changed || hitboxWidth.changed || hitboxHeight.changed || border.changed || fill.changed
-  override def drawSnapshot(g: Graphics2D)(implicit turn: Turn): Unit = {
-    val w = hitboxWidth.now
-    val h = hitboxHeight.now
-    val x = centerX.now - w/2
-    val y = centerY.now - h/2
-    val f = fill.now
-    if(f.isDefined) {
-      g.setColor(f.get)
-      g.fillRect(x, y, w, h)
+  object Mouse {
+    class MouseButton {
+      val pressed = Evt[Point]
+      val released = Evt[Point]
+      val clicked = Evt[Point]
+      val state = (pressed.map(_ => true) || released.map(_ => false)).latest(false)
     }
-    val b = border.now
-    if(b.isDefined) {
-      g.setColor(b.get)
-      g.drawRect(x, y, w, h)
+    val _position = Var[Point](Point(0, 0))
+    val x = _position.map(_.x)
+    val y = _position.map(_.y)
+    val wheel = Evt[Int]
+    val _buttons: Array[MouseButton] = (0 until MouseInfo.getNumberOfButtons).map{_ => new MouseButton}.toArray
+
+    def button(id: Int): MouseButton = _buttons(id - 1)
+    val leftButton = button(1)
+    val middleButton = button(2)
+    val rightButton = button(3)
+
+    def translatePoint(from: java.awt.Point): Point = {
+      Point(from.x - size.width / 2, from.y - size.height / 2)
     }
+    val listener = new MouseAdapter {
+      override def mousePressed(e: MouseEvent) = button(e.getButton()).pressed.fire(translatePoint(e.getPoint))
+      override def mouseReleased(e: MouseEvent) = button(e.getButton()).released.fire(translatePoint(e.getPoint))
+
+      override def mouseMoved(e: MouseEvent) = _position.set(translatePoint(e.getPoint))
+      override def mouseDragged(e: MouseEvent) = _position.set(translatePoint(e.getPoint))
+
+      override def mouseWheelMoved(e: MouseWheelEvent) = wheel.fire(e.getScrollAmount)
+    }
+    peer.addMouseListener(listener)
+    peer.addMouseMotionListener(listener)
+    peer.addMouseWheelListener(listener)
   }
 }
