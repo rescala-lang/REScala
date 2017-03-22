@@ -3,7 +3,8 @@ package examples.demo
 import java.awt.event.{ComponentEvent, ComponentListener, MouseAdapter, MouseEvent, MouseWheelEvent}
 import java.awt.{Dimension, MouseInfo}
 
-import examples.demo.ui.{Clock, Shape, ShapesPanel}
+import examples.demo.system.Clock
+import examples.demo.ui.{Shape, ShapesPanel}
 
 import scala.swing.{MainFrame, SimpleSwingApplication, UIElement}
 import rescala._

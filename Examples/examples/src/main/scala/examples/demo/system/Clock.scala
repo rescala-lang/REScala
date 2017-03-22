@@ -1,12 +1,12 @@
-package examples.demo.ui
+package examples.demo.system
 
 import rescala._
 
 object Clock {
   private val _time = Var(System.nanoTime())
-  val time: Signal[Long] = _time
-
   def tick() = _time.set(System.nanoTime())
+
+  val nsTime: Signal[Long] = _time
 
   val NanoSecond = 1e9d
 }

@@ -1,17 +1,17 @@
 package examples.demo
 
 import examples.demo.system.Clock
-import examples.demo.ui._
+import examples.demo.ui.{Circle, Point}
 import rescala._
 
-object DMouseBouncingCircle extends Main {
+object CNumericResettableCircle extends Main {
   override def makeShapes() = {
     val physicsTicks = Clock.nsTime.change.map{ diff => diff.to.get - diff.from.get }
 
     val angle = Signal{ Clock.nsTime().toDouble / Clock.NanoSecond }
 
-    val velocityX = panel.Mouse.leftButton.fold(150d / Clock.NanoSecond) { (old, _) => -old }
-    val velocityY = panel.Mouse.rightButton.fold(100d / Clock.NanoSecond) { (old, _ ) => -old }
+    val velocityX = Signal{ panel.width() / 3 * math.sin(angle()) / Clock.NanoSecond }
+    val velocityY = Signal{ panel.height() / 3 * math.cos(angle()) / Clock.NanoSecond }
 
     val posX = panel.Mouse.middleButton.pressed.zipOuter(physicsTicks).fold(0d){
       case (_, (Some(Point(x, _)), _)) => x.toDouble
