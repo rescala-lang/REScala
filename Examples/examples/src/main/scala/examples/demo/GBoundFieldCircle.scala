@@ -34,8 +34,8 @@ object GBoundFieldCircle extends Main {
     val bouncingCircle = new BouncingCircle(Var(50), panel.Mouse.middleButton.pressed)
     val playingField = new PlayingField(fieldWidth, fieldHeight, bouncingCircle.shape)
 
-    bouncingCircle.horizontalBounceSources.transform(boundingBox.movedOutOfBoundsHorizontal :: _)
-    bouncingCircle.verticalBounceSources.transform(boundingBox.movedOutOfBoundsVertical :: _)
+    bouncingCircle.horizontalBounceSources.transform(playingField.movedOutOfBoundsHorizontal :: _)
+    bouncingCircle.verticalBounceSources.transform(playingField.movedOutOfBoundsVertical :: _)
 
     List(bouncingCircle.shape, playingField.shape)
   }

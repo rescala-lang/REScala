@@ -10,8 +10,8 @@ object DMouseBouncingCircle extends Main {
 
     val angle = Signal{ Clock.nsTime().toDouble / Clock.NanoSecond }
 
-    val velocityX = panel.Mouse.leftButton.fold(150d / Clock.NanoSecond) { (old, _) => -old }
-    val velocityY = panel.Mouse.rightButton.fold(100d / Clock.NanoSecond) { (old, _ ) => -old }
+    val velocityX = panel.Mouse.leftButton.pressed.fold(150d / Clock.NanoSecond) { (old, _) => -old }
+    val velocityY = panel.Mouse.rightButton.pressed.fold(100d / Clock.NanoSecond) { (old, _ ) => -old }
 
     val posX = panel.Mouse.middleButton.pressed.zipOuter(physicsTicks).fold(0d){
       case (_, (Some(Point(x, _)), _)) => x.toDouble

@@ -32,8 +32,8 @@ object IRacketBouncingCircle extends Main {
     val playingField = new PlayingField(fieldWidth, fieldHeight, bouncingCircle.shape)
     val racket = new Racket(fieldWidth, fieldHeight, Var(100), true, panel.Mouse.y)
 
-    bouncingCircle.horizontalBounceSources.transform(boundingBox.movedOutOfBoundsHorizontal :: racket.collisionWith(bouncingCircle.shape) :: _)
-    bouncingCircle.verticalBounceSources.transform(boundingBox.movedOutOfBoundsVertical :: _)
+    bouncingCircle.horizontalBounceSources.transform(playingField.movedOutOfBoundsHorizontal :: racket.collisionWith(bouncingCircle.shape) :: _)
+    bouncingCircle.verticalBounceSources.transform(playingField.movedOutOfBoundsVertical :: _)
 
     List(bouncingCircle.shape, playingField.shape, racket.shape)
   }
