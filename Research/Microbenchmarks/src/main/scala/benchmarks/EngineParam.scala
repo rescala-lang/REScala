@@ -22,6 +22,7 @@ class EngineParam[S <: rescala.graph.Struct] {
     case "parrp" => Engines.parrpWithBackoff(() => new Backoff(minBackoff, maxBackoff, factorBackoff)).asInstanceOf[Engine[S, Turn[S]]]
     case "locksweep" => Engines.locksweepWithBackoff(() => new Backoff(minBackoff, maxBackoff, factorBackoff)).asInstanceOf[Engine[S, Turn[S]]]
     case "stm" => rescala.stm.STMEngine.stm.asInstanceOf[Engine[S, Turn[S]]]
+    case "restoring" => new rescala.restore.ReStoringEngine().asInstanceOf[Engine[S, Turn[S]]]
     case other => Engines.byName[S](other)
   }
 }
