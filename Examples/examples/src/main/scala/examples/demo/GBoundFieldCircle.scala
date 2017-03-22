@@ -2,7 +2,7 @@ package examples.demo
 
 import java.awt.Color
 
-import examples.demo.gameobjects.BouncingCircle
+import examples.demo.EModularMouseBouncingCircle.BouncingCircle
 import examples.demo.ui._
 import rescala._
 

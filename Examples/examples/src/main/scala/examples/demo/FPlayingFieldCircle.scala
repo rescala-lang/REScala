@@ -1,6 +1,6 @@
 package examples.demo
 
-import examples.demo.gameobjects.BouncingCircle
+import examples.demo.EModularMouseBouncingCircle.BouncingCircle
 import examples.demo.ui._
 import rescala._
 
