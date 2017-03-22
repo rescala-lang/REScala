@@ -2,9 +2,9 @@ package examples.demo.complete
 
 import java.awt.Dimension
 
-import examples.demo.EModularMouseBouncingCircle.BouncingCircle
-import examples.demo.GBoundFieldCircle.PlayingField
-import examples.demo.IRacketBouncingCircle.Racket
+import examples.demo.JModularMouseBouncingCircle.BouncingCircle
+import examples.demo.MBoundFieldCircle.PlayingField
+import examples.demo.ORacketBouncingCircle.Racket
 import examples.demo.system.Clock
 import examples.demo.ui._
 import rescala._

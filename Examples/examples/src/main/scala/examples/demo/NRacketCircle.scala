@@ -1,11 +1,11 @@
 package examples.demo
 
-import examples.demo.EModularMouseBouncingCircle.BouncingCircle
-import examples.demo.GBoundFieldCircle.PlayingField
+import examples.demo.JModularMouseBouncingCircle.BouncingCircle
+import examples.demo.MBoundFieldCircle.PlayingField
 import examples.demo.ui._
 import rescala._
 
-object IRacketBouncingCircle extends Main {
+object NRacketCircle extends Main {
   class Racket(val fieldWidth: Signal[Int], val fieldHeight: Signal[Int], val height: Signal[Int], val isRight: Boolean, val inputY: Signal[Int]) {
     val width = Var(10)
 
@@ -13,16 +13,6 @@ object IRacketBouncingCircle extends Main {
     val posY = Signal{ math.max(math.min(inputY(), (fieldHeight() - height()) / 2), - (fieldHeight() - height()) / 2) }
 
     val shape = new Rectangle(posX, posY, width, height)
-
-    def collisionWith(collider: Shape): Event[Unit] = {
-      val collisionBoxHeight = Signal{ height() + collider.hitboxHeight() }
-      val collisionBoxWidth = Signal{ width() + collider.hitboxWidth() }
-      val shapeInsideRacket = Signal{ (posX() - collisionBoxWidth() / 2 < collider.centerX()) &&
-        (posX() + collisionBoxWidth() / 2 > collider.centerX()) &&
-        (posY() - collisionBoxHeight() / 2 < collider.centerY()) &&
-        (posY() + collisionBoxHeight() / 2 > collider.centerY())}
-      shapeInsideRacket.changedTo(true)
-    }
   }
 
   val fieldWidth = panel.width.map(_ - 25)
@@ -33,7 +23,7 @@ object IRacketBouncingCircle extends Main {
     val playingField = new PlayingField(fieldWidth, fieldHeight, bouncingCircle.shape)
     val racket = new Racket(fieldWidth, fieldHeight, Var(100), true, panel.Mouse.y)
 
-    bouncingCircle.horizontalBounceSources.transform(playingField.movedOutOfBoundsHorizontal :: racket.collisionWith(bouncingCircle.shape) :: _)
+    bouncingCircle.horizontalBounceSources.transform(playingField.movedOutOfBoundsHorizontal :: _)
     bouncingCircle.verticalBounceSources.transform(playingField.movedOutOfBoundsVertical :: _)
 
     List(bouncingCircle.shape, playingField.shape, racket.shape)

@@ -4,7 +4,7 @@ import examples.demo.system.Clock
 import examples.demo.ui._
 import rescala._
 
-object EModularMouseBouncingCircle extends Main {
+object JModularMouseBouncingCircle extends Main {
   class BouncingCircle(val diameter: Signal[Int], val reset: Event[Point]) {
     val physicsTicks = Clock.nsTime.change.map{ diff => diff.to.get - diff.from.get }
 

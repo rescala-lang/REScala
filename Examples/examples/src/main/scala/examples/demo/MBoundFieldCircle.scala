@@ -2,11 +2,11 @@ package examples.demo
 
 import java.awt.Color
 
-import examples.demo.EModularMouseBouncingCircle.BouncingCircle
+import examples.demo.JModularMouseBouncingCircle.BouncingCircle
 import examples.demo.ui._
 import rescala._
 
-object FSensingFieldCircle extends Main {
+object MBoundFieldCircle extends Main {
   class PlayingField(val width: Signal[Int], val height: Signal[Int], val boundShape: Shape) {
     val horizontalHalfDistance = Signal{ (width() - boundShape.hitboxWidth()) / 2 }
     val verticalHalfDistance = Signal{ (height() - boundShape.hitboxHeight()) / 2 }
@@ -15,6 +15,11 @@ object FSensingFieldCircle extends Main {
     val outOfBoundsRight = Signal{ boundShape.centerX() > horizontalHalfDistance() }
     val outOfBoundsTop = Signal{ boundShape.centerY() < -verticalHalfDistance() }
     val outOfBoundsBottom = Signal{ boundShape.centerY() > verticalHalfDistance() }
+
+    val movedOutOfBoundsLeft = outOfBoundsLeft.changedTo(true)
+    val movedOutOfBoundsRight = outOfBoundsRight.changedTo(true)
+    val movedOutOfBoundsHorizontal = movedOutOfBoundsLeft || movedOutOfBoundsRight
+    val movedOutOfBoundsVertical = Signal{ outOfBoundsTop() || outOfBoundsBottom() }.changedTo(true)
 
     val shape = new Rectangle(Var(0), Var(0), width, height, Signal{
       if(outOfBoundsLeft() || outOfBoundsRight() || outOfBoundsTop() || outOfBoundsBottom())
@@ -29,8 +34,8 @@ object FSensingFieldCircle extends Main {
     val bouncingCircle = new BouncingCircle(Var(50), panel.Mouse.middleButton.pressed)
     val playingField = new PlayingField(fieldWidth, fieldHeight, bouncingCircle.shape)
 
-    bouncingCircle.horizontalBounceSources.transform(panel.Mouse.leftButton.pressed :: _)
-    bouncingCircle.verticalBounceSources.transform(panel.Mouse.rightButton.pressed :: _)
+    bouncingCircle.horizontalBounceSources.transform(playingField.movedOutOfBoundsHorizontal :: _)
+    bouncingCircle.verticalBounceSources.transform(playingField.movedOutOfBoundsVertical :: _)
 
     List(bouncingCircle.shape, playingField.shape)
   }

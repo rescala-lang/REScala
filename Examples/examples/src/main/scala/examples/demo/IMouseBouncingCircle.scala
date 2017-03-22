@@ -4,7 +4,7 @@ import examples.demo.system.Clock
 import examples.demo.ui._
 import rescala._
 
-object DMouseBouncingCircle extends Main {
+object IMouseBouncingCircle extends Main {
   override def makeShapes() = {
     val physicsTicks = Clock.nsTime.change.map{ diff => diff.to.get - diff.from.get }
 

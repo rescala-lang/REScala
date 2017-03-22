@@ -1,10 +1,10 @@
 package examples.demo
 
-import examples.demo.EModularMouseBouncingCircle.BouncingCircle
+import examples.demo.JModularMouseBouncingCircle.BouncingCircle
 import examples.demo.ui._
 import rescala._
 
-object FPlayingFieldCircle extends Main {
+object KPlayingFieldCircle extends Main {
   class PlayingField(val width: Signal[Int], val height: Signal[Int]) {
     val shape = new Rectangle(Var(0), Var(0), width, height)
   }
