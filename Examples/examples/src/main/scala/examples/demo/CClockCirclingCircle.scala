@@ -20,17 +20,17 @@ import scala.swing.{MainFrame, SimpleSwingApplication, UIElement}
   * time drift.
   */
 object CClockCirclingCircle extends SimpleSwingApplication {
-  val NanoSecond = 1e9d
+  val NanoSecond = 1000000000l
 
   val nsTime = Var(System.nanoTime())
   def tick() = nsTime.set(System.nanoTime())
 
-  val angle = nsTime.map( _ / NanoSecond * math.Pi)
+  val angle = nsTime.map( _.toDouble / NanoSecond * math.Pi)
 
   val posX = angle.map(a => 100d * math.sin(a))
   val posY = angle.map(a => 100d * math.cos(a))
 
-  override val top = {
+  override lazy val top = {
     val panel = new ShapesPanel(Var(List(
       new Circle(posX.map(_.toInt), posY.map(_.toInt), Var(50))
     )))

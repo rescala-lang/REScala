@@ -15,12 +15,12 @@ import scala.swing.{MainFrame, SimpleSwingApplication, UIElement}
   * which derives an event stream that emits a tuple of values (old, new)
   * whenever the signal is updated. From this, we derive another event stream
   * that transforms each of these tuples into a number by subtracting the old
-  * value from the new, thereby emitting the time elapsed on every nsTime
-  * update. Accordingly, the manual triggering of ticks in the main thread
-  * is no longer necessary.
+  * value from the new. This essentially implements numeric differentiation,
+  * emitting the time elapsed between each nsTime update. Accordingly, the
+  * manual triggering of ticks in the main thread is no longer necessary.
   */
 object FClockNumericCircle extends SimpleSwingApplication {
-  val NanoSecond = 1e9d
+  val NanoSecond = 1000000000l
 
   val nsTime = Var(System.nanoTime())
   def tick() = nsTime.set(System.nanoTime())
@@ -30,17 +30,17 @@ object FClockNumericCircle extends SimpleSwingApplication {
   val shapes = Var[List[Shape]](List.empty)
   val panel = new ShapesPanel(shapes)
 
-  val angle = nsTime.map( _ / NanoSecond * math.Pi)
+  val angle = nsTime.map( _.toDouble / NanoSecond * math.Pi)
 
-  val velocityX = Signal{ panel.width() / 3 * math.sin(angle()) / NanoSecond}
-  val velocityY = Signal{ panel.height() / 3 * math.cos(angle()) / NanoSecond }
+  val velocityX = Signal{ (panel.width() / 2 - 50).toDouble * math.sin(angle()) / NanoSecond }
+  val velocityY = Signal{ (panel.height() / 2 - 50).toDouble * math.cos(angle()) / NanoSecond }
 
-  val posX = ticks.fold(0d){ (pX, tick) => pX + tick * velocityX.before }
-  val posY = ticks.fold(0d){ (pY, tick) => pY + tick * velocityY.before }
+  val posX = ticks.fold(0d){ (pX, tick) => pX + tick.toDouble * velocityX.before }
+  val posY = ticks.fold(0d){ (pY, tick) => pY + tick.toDouble * velocityY.before }
 
   shapes.transform(new Circle(posX.map(_.toInt), posY.map(_.toInt), Var(50)) :: _)
 
-  override val top = {
+  override lazy val top = {
     panel.preferredSize = new Dimension(400, 300)
     new MainFrame {
       title = "REScala Demo"

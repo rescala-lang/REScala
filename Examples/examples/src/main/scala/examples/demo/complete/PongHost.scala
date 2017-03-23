@@ -2,10 +2,10 @@ package examples.demo.complete
 
 import java.awt.Dimension
 
-import examples.demo.JModularMouseBouncingCircle.BouncingCircle
-import examples.demo.MBoundFieldCircle.PlayingField
-import examples.demo.ORacketBouncingCircle.Racket
-import examples.demo.system.Clock
+import examples.demo.GModularClockCircle.Clock
+import examples.demo.LFullyModularBall.BouncingBall
+import examples.demo.MPlayingFieldBall.PlayingField
+import examples.demo.ORacketMultiBall.Racket
 import examples.demo.ui._
 import rescala._
 
@@ -19,34 +19,39 @@ trait PongHost {
 }
 
 object PongHostImpl extends SimpleSwingApplication with PongHost {
-  override val shapes = Var(List[Shape]())
+  val shapes = Var[List[Shape]](List.empty)
   val panel = new ShapesPanel(shapes)
-  panel.preferredSize = new Dimension(400, 300)
 
-  override val fieldWidth = panel.width.map(_ - 25)
-  override val fieldHeight = panel.height.map(_ - 25)
+  val fieldWidth = panel.width.map(_ - 25)
+  val fieldHeight = panel.height.map(_ - 25)
 
-  val bouncingCircle = new BouncingCircle(Var(50), panel.Mouse.middleButton.pressed)
-  val playingField = new PlayingField(fieldWidth, fieldHeight, bouncingCircle.shape)
-  val racket = new Racket(fieldWidth, fieldHeight, Var(100), true, panel.Mouse.y)
+  val playingField = new PlayingField(fieldWidth, fieldHeight)
+  val racket = new Racket(fieldWidth, true, fieldHeight, panel.Mouse.y)
+  shapes.transform(playingField.shape :: _)
 
-  bouncingCircle.horizontalBounceSources.transform(playingField.movedOutOfBoundsHorizontal :: racket.collisionWith(bouncingCircle.shape) :: _)
-  bouncingCircle.verticalBounceSources.transform(playingField.movedOutOfBoundsVertical :: _)
+  val bouncingBall = new BouncingBall(200d, 150d, Var(50), panel.Mouse.middleButton.pressed)
+  shapes.transform(bouncingBall.shape :: _)
 
-  shapes.set(List(bouncingCircle.shape, playingField.shape, racket.shape))
+  val fieldCollisions = playingField.colliders(bouncingBall.shape)
+  bouncingBall.horizontalBounceSources.transform(fieldCollisions.left :: fieldCollisions.right :: _)
+  bouncingBall.verticalBounceSources.transform(fieldCollisions.top :: fieldCollisions.bottom :: _)
 
-  override lazy val top = {
+  val racketCollision = racket.collisionWith(bouncingBall.shape)
+  bouncingBall.horizontalBounceSources.transform(racketCollision :: _)
+
+  override val top = {
+    panel.preferredSize = new Dimension(400, 300)
     new MainFrame {
-      title = "Pong"
+      title = "REScala Demo"
       contents = panel
       setLocationRelativeTo(new UIElement { override def peer = null })
     }
   }
 
   override def setRacketInput(inputY: Signal[Int]) : Unit = {
-    val opponentRacket = new Racket(fieldWidth, fieldHeight, racket.height, false, inputY)
+    val opponentRacket = new Racket(fieldWidth, false, fieldHeight, inputY)
     shapes.transform(opponentRacket.shape :: _)
-    bouncingCircle.horizontalBounceSources.transform(opponentRacket.collisionWith(bouncingCircle.shape) :: _)
+    bouncingBall.horizontalBounceSources.transform(opponentRacket.collisionWith(bouncingBall.shape) :: _)
   }
 
   override def main(args: Array[String]): Unit = {
@@ -57,8 +62,8 @@ object PongHostImpl extends SimpleSwingApplication with PongHost {
     new PongClient(this).main(Array())
 
     while(top.visible) {
-      Clock.tick()
       Thread.sleep(1)
+      Clock.tick()
     }
   }
 }

@@ -2,6 +2,7 @@ package examples.demo
 
 import java.awt.Dimension
 
+import examples.demo.GModularClockCircle.Clock
 import examples.demo.ui.ShapesPanel
 
 import scala.swing.{MainFrame, SimpleSwingApplication, UIElement}
@@ -9,7 +10,7 @@ import scala.swing.{MainFrame, SimpleSwingApplication, UIElement}
 abstract class Main extends SimpleSwingApplication {
   val panel: ShapesPanel
 
-  override val top = {
+  override lazy val top = {
     panel.preferredSize = new Dimension(400, 300)
     new MainFrame {
       title = "REScala Demo"
@@ -24,7 +25,7 @@ abstract class Main extends SimpleSwingApplication {
     while(!top.visible) Thread.sleep(5)
     while(top.visible) {
       Thread.sleep(1)
-      tick()
+      Clock.tick()
     }
   }
 }

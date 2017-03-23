@@ -36,7 +36,7 @@ import scala.swing.{MainFrame, SimpleSwingApplication, UIElement}
   * the displayed circle on that trajectory.
   */
 object DScaledClockCircle extends SimpleSwingApplication {
-  val NanoSecond = 1e9d
+  val NanoSecond = 1000000000l
 
   val nsTime = Var(System.nanoTime())
   def tick() = nsTime.set(System.nanoTime())
@@ -44,17 +44,14 @@ object DScaledClockCircle extends SimpleSwingApplication {
   val shapes = Var[List[Shape]](List.empty)
   val panel = new ShapesPanel(shapes)
 
-  val angle = nsTime.map( _ / NanoSecond * math.Pi)
+  val angle = nsTime.map( _.toDouble / NanoSecond * math.Pi)
 
-  val velocityX = Signal{ panel.width() / 3 * math.sin(angle()) / NanoSecond }
-  val velocityY = Signal{ panel.height() / 3 * math.cos(angle()) / NanoSecond }
-
-  val posX = ticks.fold(0d){ (pX, tick) => pX + tick * velocityX.before }
-  val posY = ticks.fold(0d){ (pY, tick) => pY + tick * velocityY.before }
+  val posX = Signal{ (panel.width() / 2 - 50).toDouble * math.sin(angle()) }
+  val posY = Signal{ (panel.height() / 2 - 50).toDouble * math.cos(angle()) }
 
   shapes.transform(new Circle(posX.map(_.toInt), posY.map(_.toInt), Var(50)) :: _)
 
-  override val top = {
+  override lazy val top = {
     panel.preferredSize = new Dimension(400, 300)
     new MainFrame {
       title = "REScala Demo"

@@ -1,0 +1,63 @@
+package examples.demo
+
+import examples.demo.LFullyModularBall.BouncingBall
+import examples.demo.MPlayingFieldBall.PlayingField
+import examples.demo.ui._
+import rescala._
+
+/**
+  * Lastly, we implement a Racket module, that implements a Rectangle
+  * positioned on either the left or right side of the field, and moving
+  * vertically to a desired position, but bound by the playing field height.
+  * We instantiate one for the left side, controlled by the Mouse.y position,
+  * and add it to the list of displayed shapes. To also support multiple
+  * balls, we again implement its collision computation as blueprint
+  * derivations inside a method. We add an according instantiation into
+  * the ball initialization closure, adding the collision event as a
+  * horizontal bounce source.
+  */
+object ORacketMultiBall extends Main {
+  class Racket(val fieldWidth: Signal[Int], val isRight: Boolean, val fieldHeight: Signal[Int], val inputY: Signal[Int]) {
+    val height = Var(100)
+    val width = Var(10)
+
+    val posX = fieldWidth.map(w => (if(isRight) 1 else -1) * (w / 2 - 25))
+    val posY = Signal{ math.max(math.min(inputY(), (fieldHeight() - height()) / 2), - (fieldHeight() - height()) / 2) }
+
+    def collisionWith(collider: Shape): Event[Unit] = {
+      val collisionBoxHeight = Signal{ height() + collider.hitboxHeight() }
+      val collisionBoxWidth = Signal{ width() + collider.hitboxWidth() }
+      val shapeInsideRacket = Signal{ (posX() - collisionBoxWidth() / 2 < collider.centerX()) &&
+        (posX() + collisionBoxWidth() / 2 > collider.centerX()) &&
+        (posY() - collisionBoxHeight() / 2 < collider.centerY()) &&
+        (posY() + collisionBoxHeight() / 2 > collider.centerY())}
+      shapeInsideRacket.changedTo(true)
+    }
+
+    val shape = new Rectangle(posX, posY, width, height)
+  }
+
+  val shapes = Var[List[Shape]](List.empty)
+  val panel = new ShapesPanel(shapes)
+
+  val fieldWidth = panel.width.map(_ - 25)
+  val fieldHeight = panel.height.map(_ - 25)
+
+  val playingField = new PlayingField(fieldWidth, fieldHeight)
+  val racket = new Racket(fieldWidth, true, fieldHeight, panel.Mouse.y)
+  shapes.transform(playingField.shape :: racket.shape :: _)
+
+  def makeBall(initVx: Double, initVy: Double) = {
+    val bouncingBall = new BouncingBall(initVx, initVy, Var(50), panel.Mouse.middleButton.pressed)
+    shapes.transform(bouncingBall.shape :: _)
+
+    val fieldCollisions = playingField.colliders(bouncingBall.shape)
+    bouncingBall.horizontalBounceSources.transform(fieldCollisions.left :: fieldCollisions.right :: _)
+    bouncingBall.verticalBounceSources.transform(fieldCollisions.top :: fieldCollisions.bottom :: _)
+
+    val racketCollision = racket.collisionWith(bouncingBall.shape)
+    bouncingBall.horizontalBounceSources.transform(racketCollision :: _)
+  }
+  makeBall(200d, 150d)
+  makeBall(-200d, 100d)
+}

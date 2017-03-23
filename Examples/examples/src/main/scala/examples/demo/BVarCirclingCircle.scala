@@ -35,7 +35,7 @@ object BVarCirclingCircle extends SimpleSwingApplication {
   val posX = angle.map(a => 100d * math.sin(a))
   val posY = angle.map(a => 100d * math.cos(a))
 
-  override val top = {
+  override lazy val top = {
     val panel = new ShapesPanel(Var(List(
       new Circle(posX.map(_.toInt), posY.map(_.toInt), Var(50))
     )))

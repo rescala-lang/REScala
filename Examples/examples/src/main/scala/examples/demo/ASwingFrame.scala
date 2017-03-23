@@ -14,11 +14,11 @@ import scala.swing.{MainFrame, SimpleSwingApplication, UIElement}
   * which we explain in the next step.
   */
 object ASwingFrame extends SimpleSwingApplication {
-  override val top = {
+  override lazy val top = {
     val panel = new ShapesPanel(Var(List(
       new Circle(centerX = Var(75), centerY = Var(30), diameter = Var(25)),
       new Circle(Var(100), Var(100), Var(50)),
-      new Rectangle(centerX = Var(-50), centerY = Var(-100), width = Var(10), height = Var(100))
+      new Rectangle(centerX = Var(-50), centerY = Var(-100), hitboxWidth = Var(10), hitboxHeight = Var(100))
     )))
     panel.preferredSize = new Dimension(400, 300)
     new MainFrame {
