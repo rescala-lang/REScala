@@ -26,16 +26,17 @@ class ShapesPanel(val shapes: Signal[Traversable[Shape]]) extends Panel {
     }
   }
 
-  val _dimension: Var[Dimension] = Var(size)
+  val _size: Var[Dimension] = Var(size)
+  val sigSize: Signal[Dimension] = _size
   peer.addComponentListener(new ComponentListener {
     override def componentShown(e: ComponentEvent) = {}
     override def componentHidden(e: ComponentEvent) = {}
     override def componentMoved(e: ComponentEvent) = {}
-    override def componentResized(e: ComponentEvent) = _dimension.set(size)
+    override def componentResized(e: ComponentEvent) = _size.set(size)
   })
 
-  val width = _dimension.map(_.width)
-  val height = _dimension.map(_.height)
+  val width = _size.map(_.width)
+  val height = _size.map(_.height)
 
   object Mouse {
     class MouseButton {

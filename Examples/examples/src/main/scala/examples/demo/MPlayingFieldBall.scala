@@ -46,10 +46,7 @@ object MPlayingFieldBall extends Main {
   val shapes = Var[List[Shape]](List.empty)
   val panel = new ShapesPanel(shapes)
 
-  val fieldWidth = panel.width.map(_ - 25)
-  val fieldHeight = panel.height.map(_ - 25)
-
-  val playingField = new PlayingField(fieldWidth, fieldHeight)
+  val playingField = new PlayingField(panel.width.map(_ - 25), panel.height.map(_ - 25))
   shapes.transform(playingField.shape :: _)
 
   val bouncingBall = new BouncingBall(200d, 150d, Var(50), panel.Mouse.middleButton.pressed)

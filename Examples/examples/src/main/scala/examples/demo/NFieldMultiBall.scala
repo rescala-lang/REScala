@@ -17,10 +17,7 @@ object NFieldMultiBall extends Main {
   val shapes = Var[List[Shape]](List.empty)
   val panel = new ShapesPanel(shapes)
 
-  val fieldWidth = panel.width.map(_ - 25)
-  val fieldHeight = panel.height.map(_ - 25)
-
-  val playingField = new PlayingField(fieldWidth, fieldHeight)
+  val playingField = new PlayingField(panel.width.map(_ - 25), panel.height.map(_ - 25))
   shapes.transform(playingField.shape :: _)
 
   def makeBall(initVx: Double, initVy: Double) = {
