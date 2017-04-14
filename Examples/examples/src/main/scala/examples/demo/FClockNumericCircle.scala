@@ -26,7 +26,7 @@ object FClockNumericCircle extends SimpleSwingApplication {
   val nsTime = Var(System.nanoTime())
   def tick() = nsTime.set(System.nanoTime())
 
-  val ticks = nsTime.diff.map{ case Diff(from, to) => to - from }
+  val ticks = nsTime.change.map{ case Diff(from, to) => to - from }
 
   val shapes = Var[List[Shape]](List.empty)
   val panel = new ShapesPanel(shapes)
