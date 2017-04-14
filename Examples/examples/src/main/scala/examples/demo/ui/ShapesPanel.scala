@@ -12,7 +12,7 @@ case class Point(x: Int, y: Int)
 
 class ShapesPanel(val shapes: Signal[Traversable[Shape]]) extends Panel {
   //val allChanges: Event[Any] = Event { shapes().find{ shape: Shape => shape.changed().isDefined } }
-  val allChanges: Event[Any] =  shapes.map(_.map(_.changed)).flatten
+  val allChanges: Event[Any] = shapes.map(_.map(_.changed)).flatten
 
   allChanges observe {_ => repaint() }
 

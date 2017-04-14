@@ -56,9 +56,7 @@ object LFullyModularBall extends Main {
   class BouncingBall(val initVx: Double, val initVy: Double, val diameter: Signal[Int], val reset: Event[Point]) {
     val horizontalBounceSources: Var[List[Event[Any]]] = Var(List())
     val verticalBounceSources: Var[List[Event[Any]]] = Var(List())
-    val filteredHorizontalBounceSources = Signal{ horizontalBounceSources().filter(e =>
-      try { e(): @unchecked; true } catch { case _: IllegalStateException => false }
-    ) }
+    val filteredHorizontalBounceSources = horizontalBounceSources.map(_.map(_.recover{case _: IllegalArgumentException => None}))
 
     val velocityX = filteredHorizontalBounceSources.flatten[Event[List[Option[Any]]]]
                     .fold(initVx / Clock.NanoSecond) { (old, _) => -old }
