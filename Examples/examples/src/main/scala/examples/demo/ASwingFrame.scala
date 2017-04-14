@@ -24,7 +24,7 @@ object ASwingFrame extends SimpleSwingApplication {
     new MainFrame {
       title = "REScala Demo"
       contents = panel
-      setLocationRelativeTo(new UIElement { override def peer = null })
+      setLocationRelativeTo(new UIElement {override def peer = null})
     }
   }
 

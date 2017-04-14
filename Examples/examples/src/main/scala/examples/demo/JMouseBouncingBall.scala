@@ -24,7 +24,7 @@ object JMouseBouncingBall extends Main {
   val velocityX = panel.Mouse.leftButton.pressed.fold(200d / Clock.NanoSecond) { (old, _) => -old }
   val velocityY = panel.Mouse.rightButton.pressed.fold(150d / Clock.NanoSecond) { (old, _ ) => -old }
 
-  val resetOrTick = Event { Some((panel.Mouse.middleButton.pressed(), Clock.ticks())) }
+  val resetOrTick = Event {Some((panel.Mouse.middleButton.pressed(), Clock.ticks()))}
 
   val posX = resetOrTick.fold(0d){
     case (_, (Some(Point(x, _)), _)) => x.toDouble

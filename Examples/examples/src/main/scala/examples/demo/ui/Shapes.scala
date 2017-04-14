@@ -4,7 +4,7 @@ import java.awt.{Color, Graphics2D}
 
 import rescala._
 
-trait Shape {
+trait Shape extends Serializable {
   val changed: Event[Any]
   def centerX: Signal[Int]
   def centerY: Signal[Int]

@@ -8,14 +8,13 @@ import rescala._
   * To resolve this circular initialization order, we introduce
   * higher-order reactives. Higher-order reactives are Signals
   * or Events, whose values contain references to other Signals
-  * or Events. This feature is much less scary than this
-  * description makes it sound. In particular, we have already
-  * been using a higher-order reactive for a while, namely since
-  * we made the circle's trajectory scale with the ShapesPanel's
-  * size. We started using shapes in its initialization, defined
-  * as a Var[List[Shape]], and each Shape contains several
-  * Signals defining its position, size, etc. Thus, shapes
-  * already is a higher-order reactive.
+  * or Events. We have already been using a higher-order
+  * reactive for a while, namely since we made the circle's
+  * trajectory scale with the ShapesPanel's size. We started
+  * using shapes in its initialization, defined as a
+  * Var[List[Shape]], and each Shape contains several Signals
+  * defining its position, size, etc. Thus, shapes already is a
+  * higher-order reactive.
   *
   * To implement our horizontal and vertical bounces, we now use
   * a similar pattern, although their higher-order-ness is much
@@ -58,19 +57,21 @@ object LFullyModularBall extends Main {
     val horizontalBounceSources: Var[List[Event[Any]]] = Var(List())
     val verticalBounceSources: Var[List[Event[Any]]] = Var(List())
 
-    val velocityX = horizontalBounceSources.flatten.fold(initVx / Clock.NanoSecond) { (old, _) => -old }
-    val velocityY = verticalBounceSources.flatten.fold(initVy / Clock.NanoSecond) { (old, _ ) => -old }
+    val velocityX = horizontalBounceSources.flatten[Event[List[Option[Any]]]]
+                    .fold(initVx / Clock.NanoSecond) { (old, _) => -old }
+    val velocityY = verticalBounceSources.flatten[Event[List[Option[Any]]]]
+                    .fold(initVy / Clock.NanoSecond) { (old, _ ) => -old }
 
-    val resetOrTick = Event { Some((reset(), Clock.ticks())) }
+    val resetOrTick = Event {Some((reset(), Clock.ticks()))}
 
-  val posX = resetOrTick.fold(0d){
-    case (_, (Some(Point(x, _)), _)) => x.toDouble
-    case (pX, (None, Some(tick))) => pX + tick.toDouble * velocityX.before
-  }
-  val posY = resetOrTick.fold(0d){
-    case (_, (Some(Point(_, y)), _)) => y.toDouble
-    case (pY, (None, Some(tick))) => pY + tick.toDouble * velocityY.before
-  }
+    val posX = resetOrTick.fold(0d){
+      case (_, (Some(Point(x, _)), _)) => x.toDouble
+      case (pX, (None, Some(tick))) => pX + tick.toDouble * velocityX.before
+    }
+    val posY = resetOrTick.fold(0d){
+      case (_, (Some(Point(_, y)), _)) => y.toDouble
+      case (pY, (None, Some(tick))) => pY + tick.toDouble * velocityY.before
+    }
 
     val shape = new Circle(posX.map(_.toInt), posY.map(_.toInt), diameter)
   }

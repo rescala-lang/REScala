@@ -29,7 +29,7 @@ import rescala._
 object MPlayingFieldBall extends Main {
   class PlayingField(val width: Signal[Int], val height: Signal[Int]) {
     case class Collisions(left: Event[Any], right: Event[Any], top: Event[Any], bottom: Event[Any])
-    def colliders(shape: Shape) = {
+    def colliders(shape: Shape): Collisions = {
       val horizontalHalfDistance = Signal{ (width() - shape.hitboxWidth()) / 2 }
       val verticalHalfDistance = Signal{ (height() - shape.hitboxHeight()) / 2 }
 

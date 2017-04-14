@@ -2,7 +2,7 @@ package examples.demo
 
 import examples.demo.LFullyModularBall.BouncingBall
 import examples.demo.MPlayingFieldBall.PlayingField
-import examples.demo.ORacketMultiBall.Racket
+import examples.demo.ORacketMultiBall.{Racket, panel}
 import examples.demo.ui._
 import rescala._
 
@@ -29,22 +29,26 @@ object PSplitscreenRacketBall extends Main {
   val racket = new Racket(playingField.width, true, playingField.height, panel.Mouse.y)
   shapes.transform(playingField.shape :: racket.shape :: _)
 
-  val opponent = new Opponent(panel.sigSize, shapes)
-  opponent.main(Array())
-  val racket2 = new Racket(playingField.width, false, playingField.height, opponent.panel2.Mouse.y)
-  shapes.transform(racket2.shape :: _)
+  val balls = List(
+    new BouncingBall(200d, 150d, Var(50), panel.Mouse.middleButton.pressed),
+    new BouncingBall(-200d, 100d, Var(50), panel.Mouse.middleButton.pressed))
 
-  def makeBall(initVx: Double, initVy: Double) = {
-    val bouncingBall = new BouncingBall(initVx, initVy, Var(50), panel.Mouse.middleButton.pressed)
+  for(bouncingBall <- balls) {
     shapes.transform(bouncingBall.shape :: _)
 
     val fieldCollisions = playingField.colliders(bouncingBall.shape)
     bouncingBall.horizontalBounceSources.transform(fieldCollisions.left :: fieldCollisions.right :: _)
     bouncingBall.verticalBounceSources.transform(fieldCollisions.top :: fieldCollisions.bottom :: _)
 
-    val racketCollision = racket.collisionWith(bouncingBall.shape) || racket2.collisionWith(bouncingBall.shape)
+    val racketCollision = racket.collisionWith(bouncingBall.shape)
     bouncingBall.horizontalBounceSources.transform(racketCollision :: _)
   }
-  makeBall(200d, 150d)
-  makeBall(-200d, 100d)
+
+  val opponent = new Opponent(panel.sigSize, shapes)
+  opponent.main(Array())
+  val racket2 = new Racket(playingField.width, false, playingField.height, opponent.panel2.Mouse.y)
+  shapes.transform(racket2.shape :: _)
+  for(bouncingBall <- balls) {
+    bouncingBall.horizontalBounceSources.transform(racket2.collisionWith(bouncingBall.shape) :: _)
+  }
 }

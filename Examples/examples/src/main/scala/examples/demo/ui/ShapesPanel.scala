@@ -2,6 +2,7 @@ package examples.demo.ui;
 
 import java.awt.event._
 import java.awt.{Event => _, _}
+import java.util.NoSuchElementException
 
 import rescala._
 
@@ -20,8 +21,12 @@ class ShapesPanel(val shapes: Signal[Traversable[Shape]]) extends Panel {
       g.fillRect(0, 0, size.width, size.height)
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
       g.translate(size.width / 2, size.height / 2)
-      for (shape <- shapes.now) {
-        shape.drawSnapshot(g)
+      for (shape <- shapes.withDefault(Nil).now) {
+        try {
+          shape.drawSnapshot(g)
+        } catch {
+          case _: NoSuchElementException => // ignore
+        }
       }
     }
   }

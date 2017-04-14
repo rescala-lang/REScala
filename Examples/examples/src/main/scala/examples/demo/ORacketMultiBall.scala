@@ -44,8 +44,11 @@ object ORacketMultiBall extends Main {
   val racket = new Racket(playingField.width, true, playingField.height, panel.Mouse.y)
   shapes.transform(playingField.shape :: racket.shape :: _)
 
-  def makeBall(initVx: Double, initVy: Double) = {
-    val bouncingBall = new BouncingBall(initVx, initVy, Var(50), panel.Mouse.middleButton.pressed)
+  val balls = List(
+    new BouncingBall(200d, 150d, Var(50), panel.Mouse.middleButton.pressed),
+    new BouncingBall(-200d, 100d, Var(50), panel.Mouse.middleButton.pressed))
+
+  for(bouncingBall <- balls) {
     shapes.transform(bouncingBall.shape :: _)
 
     val fieldCollisions = playingField.colliders(bouncingBall.shape)
@@ -55,6 +58,4 @@ object ORacketMultiBall extends Main {
     val racketCollision = racket.collisionWith(bouncingBall.shape)
     bouncingBall.horizontalBounceSources.transform(racketCollision :: _)
   }
-  makeBall(200d, 150d)
-  makeBall(-200d, 100d)
 }

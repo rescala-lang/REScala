@@ -18,13 +18,13 @@ import scala.swing.{MainFrame, SimpleSwingApplication, UIElement}
   * simulation. So far, we described the moving circle's trajectory
   * through arithmetic formulae. In the final application, though, the
   * ball should bounce off walls and rackets, making it much more
-  * cumbersome to describe its trajectory arithmetically. Therefore,
-  * we migrate its trajectory to be simulated through numeric integration,
+  * cumbersome to describe its trajectory arithmetically. Therefore, we
+  * migrate its trajectory to be simulated through numeric integration,
   * using the euler method as the simplest approach. This means, the
   * application has to be driven in discrete time increments, which we
   * can easily model as Evt ticks. Equally to Vars being a manually
-  * assignable type of Signals, Evts are manually triggerable Events.
-  * Thus, we can add an according trigger in our main method.
+  * assignable type of Signals, Evts are Events which can be manually
+  * triggered. Thus, we can add an according trigger in our main method.
   *
   * Events and Signals in RP are tightly integrated. We already showed,
   * how new Signals can be derived from existing ones, and new Events
@@ -54,7 +54,7 @@ import scala.swing.{MainFrame, SimpleSwingApplication, UIElement}
   * loop is broken, and the program is well-defined.
   */
 object EInaccurateNumericCircle extends SimpleSwingApplication {
-  val NanoSecond: Long = 1000000000l
+  val NanoSecond = 1000000000l
 
   val nsTime = Var(System.nanoTime())
   def tick() = nsTime.set(System.nanoTime())
@@ -66,11 +66,11 @@ object EInaccurateNumericCircle extends SimpleSwingApplication {
 
   val angle = nsTime.map( _.toDouble / NanoSecond * math.Pi)
 
-  val velocityX = Signal{ (panel.width() / 2 - 50).toDouble * math.sin(angle()) / NanoSecond }
-  val velocityY = Signal{ (panel.height() / 2 - 50).toDouble * math.cos(angle()) / NanoSecond }
+  val velocityX = Signal {(panel.width() / 2 - 50).toDouble * math.sin(angle()) / NanoSecond}
+  val velocityY = Signal {(panel.height() / 2 - 50).toDouble * math.cos(angle()) / NanoSecond}
 
-  val posX = ticks.fold(0d){ (pX, tick) => pX + tick.toDouble * velocityX.before }
-  val posY = ticks.fold(0d){ (pY, tick) => pY + tick.toDouble * velocityY.before }
+  val posX = ticks.fold(0d) { (pX, tick) => pX + tick.toDouble * velocityX.before }
+  val posY = ticks.fold(0d) { (pY, tick) => pY + tick.toDouble * velocityY.before }
 
   shapes.transform(new Circle(posX.map(_.toInt), posY.map(_.toInt), Var(50)) :: _)
 
@@ -79,7 +79,7 @@ object EInaccurateNumericCircle extends SimpleSwingApplication {
     new MainFrame {
       title = "REScala Demo"
       contents = panel
-      setLocationRelativeTo(new UIElement { override def peer = null })
+      setLocationRelativeTo(new UIElement {override def peer = null})
     }
   }
 
@@ -90,7 +90,7 @@ object EInaccurateNumericCircle extends SimpleSwingApplication {
     while(top.visible) {
       Thread.sleep(1)
       tick()
-      ticks(1 * NanoSecond / 1000)
+      ticks.fire(1 * NanoSecond / 1000l)
     }
   }
 }

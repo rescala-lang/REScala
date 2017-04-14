@@ -46,8 +46,8 @@ object DScaledClockCircle extends SimpleSwingApplication {
 
   val angle = nsTime.map( _.toDouble / NanoSecond * math.Pi)
 
-  val posX = Signal{ (panel.width() / 2 - 50).toDouble * math.sin(angle()) }
-  val posY = Signal{ (panel.height() / 2 - 50).toDouble * math.cos(angle()) }
+  val posX = Signal {(panel.width() / 2 - 50).toDouble * math.sin(angle())}
+  val posY = Signal {(panel.height() / 2 - 50).toDouble * math.cos(angle())}
 
   shapes.transform(new Circle(posX.map(_.toInt), posY.map(_.toInt), Var(50)) :: _)
 
@@ -56,7 +56,7 @@ object DScaledClockCircle extends SimpleSwingApplication {
     new MainFrame {
       title = "REScala Demo"
       contents = panel
-      setLocationRelativeTo(new UIElement { override def peer = null })
+      setLocationRelativeTo(new UIElement {override def peer = null})
     }
   }
 

@@ -32,7 +32,7 @@ object KSemiModularBall extends Main {
     val velocityX = panel.Mouse.leftButton.pressed.fold(initVx / Clock.NanoSecond) { (old, _) => -old }
     val velocityY = panel.Mouse.rightButton.pressed.fold(initVy / Clock.NanoSecond) { (old, _ ) => -old }
 
-    val resetOrTick = Event { Some((reset(), Clock.ticks())) }
+    val resetOrTick = Event {Some((reset(), Clock.ticks()))}
 
     val posX = resetOrTick.fold(0d){
       case (_, (Some(Point(x, _)), _)) => x.toDouble
