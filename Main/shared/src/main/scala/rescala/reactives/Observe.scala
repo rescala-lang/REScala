@@ -44,7 +44,7 @@ object Observe {
     }
   }
 
-  def weak[T, S <: Struct](dependency: Pulsing[Pulse[T], S])(fun: T => Unit, fail: Throwable => Unit = null)(implicit maybe: TurnSource[S]): Observe[S] = {
+  def weak[T, S <: Struct](dependency: Pulsing[Pulse[T], S])(fun: T => Unit, fail: Throwable => Unit)(implicit maybe: TurnSource[S]): Observe[S] = {
     val incoming = Set[Reactive[S]](dependency)
     maybe(initTurn => initTurn.create(incoming) {
       val obs = new Obs(initTurn.makeStructState[Pulse[T]](Pulse.NoChange, initialIncoming = incoming, transient = false), dependency, fun, fail) with Disconnectable[S]
@@ -54,8 +54,8 @@ object Observe {
     })
   }
 
-  def strong[T, S <: Struct](dependency: Pulsing[Pulse[T], S])(fun: T => Unit, fail: Throwable => Unit = null)(implicit maybe: TurnSource[S]): Observe[S] = {
-    val obs = weak(dependency)(fun)
+  def strong[T, S <: Struct](dependency: Pulsing[Pulse[T], S])(fun: T => Unit, fail: Throwable => Unit)(implicit maybe: TurnSource[S]): Observe[S] = {
+    val obs = weak(dependency)(fun, fail)
     strongObserveReferences.synchronized(strongObserveReferences.put(obs, true))
     obs
   }
