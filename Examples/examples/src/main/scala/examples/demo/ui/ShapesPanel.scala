@@ -1,4 +1,4 @@
-package examples.demo.ui;
+package examples.demo.ui
 
 import java.awt.event._
 import java.awt.{Event => _, _}
@@ -12,7 +12,8 @@ case class Point(x: Int, y: Int)
 
 class ShapesPanel(val shapes: Signal[Traversable[Shape]]) extends Panel {
   //val allChanges: Event[Any] = Event { shapes().find{ shape: Shape => shape.changed().isDefined } }
-  val allChanges: Event[Any] = shapes.map(_.map(_.changed)).flatten
+  val allChanges: Event[Any] =  shapes.map(_.map(_.changed)).flatten
+
   allChanges observe {_ => repaint() }
 
   override def paintComponent(g: Graphics2D): Unit = {
@@ -26,6 +27,7 @@ class ShapesPanel(val shapes: Signal[Traversable[Shape]]) extends Panel {
           shape.drawSnapshot(g)
         } catch {
           case _: NoSuchElementException => // ignore
+          case _: IllegalStateException => // ignore
         }
       }
     }
@@ -87,6 +89,9 @@ class ShapesPanel(val shapes: Signal[Traversable[Shape]]) extends Panel {
       override def keyTyped(e: KeyEvent): Unit = typed.fire(e)
       override def keyReleased(e: KeyEvent): Unit = released.fire(e)
     }
+
+    peer.setFocusable(true)
     peer.addKeyListener(listener)
+
   }
 }
