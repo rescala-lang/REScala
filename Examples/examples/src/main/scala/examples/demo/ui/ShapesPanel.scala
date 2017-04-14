@@ -77,4 +77,16 @@ class ShapesPanel(val shapes: Signal[Traversable[Shape]]) extends Panel {
     peer.addMouseMotionListener(listener)
     peer.addMouseWheelListener(listener)
   }
+
+  object Keyboard {
+    val pressed = Evt[KeyEvent]()
+    val typed = Evt[KeyEvent]()
+    val released = Evt[KeyEvent]()
+    val listener = new KeyListener {
+      override def keyPressed(e: KeyEvent): Unit = pressed.fire(e)
+      override def keyTyped(e: KeyEvent): Unit = typed.fire(e)
+      override def keyReleased(e: KeyEvent): Unit = released.fire(e)
+    }
+    peer.addKeyListener(listener)
+  }
 }
