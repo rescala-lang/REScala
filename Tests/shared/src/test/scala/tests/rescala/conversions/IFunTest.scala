@@ -487,7 +487,7 @@ class IFunTest extends RETests {
     val v2 = Var.empty[String]
 
     val e1 = v1.changed.map(x => ("constant", x))
-    val e2 = v2.change.map(_.pair).recover{case _ => "failed" -> "change"}
+    val e2 = v2.change.map(_.pair).recover{case _ => Some("failed" -> "change")}
 
     val ored: Event[(String, String)] = e1 || e2
 

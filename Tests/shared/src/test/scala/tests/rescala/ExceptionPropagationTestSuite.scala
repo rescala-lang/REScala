@@ -29,8 +29,8 @@ class ExceptionPropagationTestSuite extends RETests {
 
     v.set(0)
 
-    intercept[ArithmeticException](ds.now)
-    intercept[ArithmeticException](ss.now)
+    intercept[IllegalStateException](ds.now)
+    intercept[IllegalStateException](ss.now)
 
   }
 
@@ -42,8 +42,8 @@ class ExceptionPropagationTestSuite extends RETests {
     var dres: Try[Int] = null
     var sres: Try[Int] = null
 
-    de.map(Success(_)).recover{ case t => Failure(t) }.observe(dres = _)
-    se.map(Success(_)).recover{ case t => Failure(t) }.observe(sres = _)
+    de.map(Success(_)).recover{ case t => Some(Failure(t)) }.observe(dres = _)
+    se.map(Success(_)).recover{ case t => Some(Failure(t)) }.observe(sres = _)
 
     e.fire(42)
 
@@ -80,16 +80,16 @@ class ExceptionPropagationTestSuite extends RETests {
     assert(res.pair === (10 -> 5), "successful changed 2")
 
     input.fire(" 0  ")
-    intercept[ArithmeticException](folded.now)
+    intercept[IllegalStateException](folded.now)
     intercept[ArithmeticException](res.pair)
 
     input.fire(" aet ")
-    intercept[NumberFormatException](folded.now)
+    intercept[IllegalStateException](folded.now)
     intercept[NumberFormatException](res.pair)
 
 
     input.fire(" 2 ")
-    intercept[NumberFormatException](folded.now)
+    intercept[IllegalStateException](folded.now)
     intercept[NumberFormatException](res.pair)
 
   }
@@ -122,7 +122,7 @@ class ExceptionPropagationTestSuite extends RETests {
     assert(res.pair === (2 -> 0), "successful changed3")
 
     input.set(" aet ")
-    intercept[NumberFormatException](folded.now)
+    intercept[IllegalStateException](folded.now)
     intercept[NumberFormatException](res.pair)
 
 
@@ -199,10 +199,10 @@ class ExceptionPropagationTestSuite extends RETests {
 
     assert(recovered.now === 50)
     v.set(0)
-    intercept[ArithmeticException](recovered.now)
+    intercept[IllegalStateException](recovered.now)
     v.set(10)
     assert(recovered.now === 9000)
-    intercept[IndexOutOfBoundsException](ds2.now)
+    intercept[IllegalStateException](ds2.now)
 
   }
 }

@@ -66,7 +66,7 @@ class OR_EventTest extends RETests {
       e2.admit("five b")(turn)
     }
 
-    intercept[IllegalArgumentException](log.now)
+    intercept[IllegalStateException](log.now)
 
   }
 
