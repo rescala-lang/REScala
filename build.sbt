@@ -18,7 +18,7 @@ licenses in ThisBuild += ("Apache-2.0", url("http://www.apache.org/licenses/LICE
 shellPrompt in ThisBuild := { state => Project.extract(state).currentRef.project + "> " }
 
 lazy val rescalaAggregate = project.in(file(".")).aggregate(rescalaJVM,
-  rescalaJS, rescalaNative, microbench, reswing, examples, examplesReswing, caseStudyEditor,
+  rescalaJS, microbench, reswing, examples, examplesReswing, caseStudyEditor,
   caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags,
   datastructures, universe, reactiveStreams, documentation, meta,
   stm, testsJVM, testsJS, fullmv, caseStudyShapes, caseStudyMill)
@@ -27,7 +27,7 @@ lazy val rescalaAggregate = project.in(file(".")).aggregate(rescalaJVM,
     publishLocal := {})
 
 
-lazy val rescala = crossProject(JSPlatform, JVMPlatform, NativePlatform).in(file("Main"))
+lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Main"))
   .disablePlugins(JmhPlugin)
   .settings(
     name := "rescala",
@@ -68,15 +68,15 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform, NativePlatform).in(file
   )
   .jvmSettings()
   .jsSettings(scalaJSUseRhino in Global := true)
-  .nativeSettings(
-    crossScalaVersions := Seq("2.11.8"),
-    scalaVersion := "2.11.8")
+//  .nativeSettings(
+//    crossScalaVersions := Seq("2.11.8"),
+//    scalaVersion := "2.11.8")
 
 lazy val rescalaJVM = rescala.jvm
 
 lazy val rescalaJS = rescala.js
 
-lazy val rescalaNative = rescala.native
+//lazy val rescalaNative = rescala.native
 
 lazy val tests = crossProject(JSPlatform, JVMPlatform).in(file("Tests"))
   .disablePlugins(JmhPlugin)
