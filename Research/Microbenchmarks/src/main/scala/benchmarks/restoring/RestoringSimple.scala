@@ -21,14 +21,16 @@ class RestoringSimple[S <: rescala.graph.Struct] {
   implicit var engine: Engine[S, Turn[S]] = _
 
   var source: Evt[Int, S] = _
-  var result: Signal[Int, S] = _
+  var result: List[Any] = _
 
   @Setup
   def setup(size: Size, engineParam: EngineParam[S]) = {
     engine = engineParam.engine
     source = engine.Evt[Int]()
+    result = Nil
+    if (size.size <= 0) result = List(source.map(_+1))
     for (_ <- Range(0, size.size)) {
-      result = source.count
+      result = source.count :: result
     }
   }
 
