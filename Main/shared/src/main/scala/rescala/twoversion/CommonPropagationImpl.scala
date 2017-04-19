@@ -1,6 +1,6 @@
 package rescala.twoversion
 
-import rescala.graph.{ATicket, DepDiff, GraphStruct, Reactive}
+import rescala.graph.{ATicket, DepDiff, Reactive}
 import rescala.propagation.{DynamicTicket, StaticTicket}
 
 import scala.util.control.NonFatal
@@ -11,7 +11,7 @@ import scala.util.control.NonFatal
   *
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
-trait CommonPropagationImpl[S <: GraphStruct] extends AbstractPropagation[S] {
+trait CommonPropagationImpl[S <: GraphStruct] extends TwoVersionPropagation[S] {
   outer =>
 
   def makeTicket(): S#Ticket[S] = new ATicket[S] {

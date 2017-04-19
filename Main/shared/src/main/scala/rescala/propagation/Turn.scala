@@ -35,13 +35,6 @@ trait Turn[S <: Struct] {
   private[rescala] def create[T <: Reactive[S]](dependencies: Set[Reactive[S]], dynamic: Boolean = false)(f: => T): T
 
   /**
-    * Schedules a temporarily written change to be committed by the turn.
-    *
-    * @param committable Commitable element to be scheduled
-    */
-  def schedule(committable: Committable[S]): Unit
-
-  /**
     * Registers a new handler function that is called after all changes were written and committed.
     *
     * @param f Handler function to register.

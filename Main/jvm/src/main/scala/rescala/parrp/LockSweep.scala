@@ -6,22 +6,19 @@ import rescala.graph.ReevaluationResult.{Dynamic, Static}
 import rescala.graph._
 import rescala.locking._
 import rescala.propagation.Turn
-import rescala.twoversion.{CommonPropagationImpl, PropagationStructImpl}
+import rescala.twoversion.{CommonPropagationImpl, GraphStruct, PropagationStructImpl, TwoVersionPropagation}
 
 import scala.collection.mutable
 
 trait LSStruct extends GraphStruct {
   override type Type[P, S <: Struct] = LSPropagationStruct[P, S]
-  override type Ticket[S <: Struct] = ATicket[S]
-
 }
 
 
 class LSPropagationStruct[P, S <: Struct](current: P, transient: Boolean, val lock: TurnLock[LSInterTurn], initialIncoming: Set[Reactive[S]])
   extends PropagationStructImpl[P, S](current, transient, initialIncoming) {
 
-  override def set(value: P)(implicit ticket: S#Ticket[S]): Unit = {
-    val turn = ticket.turn()
+  override def set(value: P, turn: TwoVersionPropagation[S]): Unit = {
     assert(turn match {
       case pessimistic: LockSweep =>
         val wlo: Option[Key[LSInterTurn]] = Option(lock).map(_.getOwner)
@@ -32,7 +29,7 @@ class LSPropagationStruct[P, S <: Struct](current: P, transient: Boolean, val lo
       case _ =>
         throw new IllegalStateException(s"locksweep buffer used with wrong turn")
     })
-    super.set(value)
+    super.set(value, turn)
   }
 
   var willWrite: LockSweep = null
@@ -138,7 +135,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPr
       head.reevaluate(ticket) match {
         case Static(value: Option[head.Value]) =>
           val hasChanged = value.isDefined && head.state.base(ticket) != value.get
-          if (hasChanged) head.state.set(value.get)(ticket)
+          if (hasChanged) head.state.set(value.get, this)
           done(head, hasChanged)
 
         case Dynamic(value, deps) =>
@@ -148,7 +145,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPr
           val hasChanged = value.isDefined && head.state.base(ticket) != value.get
 
           if (head.state.counter == 0) {
-            if (hasChanged) head.state.set(value.get)(ticket)
+            if (hasChanged) head.state.set(value.get, this)
             done(head, hasChanged)
           }
 

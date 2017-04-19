@@ -1,8 +1,8 @@
 package rescala.levelbased
 
-import rescala.graph.{GraphStruct, GraphStructType, Reactive, ReadWriteValue, Struct}
+import rescala.graph.{Reactive, Struct}
 import rescala.propagation.Turn
-import rescala.twoversion.PropagationStructImpl
+import rescala.twoversion.{GraphStruct, GraphStructType, PropagationStructImpl, ReadWriteValue}
 
 import scala.language.higherKinds
 

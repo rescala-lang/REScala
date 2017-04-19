@@ -53,7 +53,7 @@ class ParallelLockSweep(backoff: Backoff, ex: Executor, engine: EngineImpl[LSStr
       res match {
         case Static(value) =>
           val hasChanged = value.isDefined && value.get != head.state.base(ticket)
-          if (hasChanged) head.state.set(value.get)(ticket)
+          if (hasChanged) head.state.set(value.get, this)
           done(head, hasChanged)
 
         case Dynamic(value, deps) =>
@@ -63,7 +63,7 @@ class ParallelLockSweep(backoff: Backoff, ex: Executor, engine: EngineImpl[LSStr
 
           if (head.state.counter == 0) {
             val hasChanged = value.isDefined && value != head.state.base(ticket)
-            if (hasChanged) head.state.set(value.get)(ticket)
+            if (hasChanged) head.state.set(value.get, this)
             done(head, hasChanged)
           }
 

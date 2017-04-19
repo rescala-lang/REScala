@@ -11,7 +11,7 @@ import scala.util.DynamicVariable
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   * @tparam TImpl Turn type used by the engine
   */
-trait PlanImpl[S <: Struct, TImpl <: AbstractPropagation[S]] extends Engine[S, TImpl] {
+trait PlanImpl[S <: Struct, TImpl <: TwoVersionPropagation[S]] extends Engine[S, TImpl] {
 
   /**
     * Returns a new turn to be used by the engine

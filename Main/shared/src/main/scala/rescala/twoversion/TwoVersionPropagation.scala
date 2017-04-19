@@ -8,7 +8,14 @@ import rescala.propagation.Turn
   *
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
-trait AbstractPropagation[S <: Struct] extends Turn[S] {
+trait TwoVersionPropagation[S <: Struct] extends Turn[S] {
+
+  /**
+    * Schedules a temporarily written change to be committed by the turn.
+    *
+    * @param committable Commitable element to be scheduled
+    */
+  def schedule(committable: Committable[S]): Unit
 
   /**
     * Locks (and potentially otherwise prepares) all affected reactive values to prevent interfering changes.

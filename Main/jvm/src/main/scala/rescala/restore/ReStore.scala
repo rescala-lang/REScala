@@ -3,7 +3,7 @@ package rescala.restore
 import rescala.graph.{Reactive, Struct}
 import rescala.levelbased.{LevelBasedPropagation, LevelStruct, LevelStructTypeImpl}
 import rescala.propagation.Turn
-import rescala.twoversion.PlanImpl
+import rescala.twoversion.{PlanImpl, TwoVersionPropagation}
 
 case class Storing(current: Any, level: Int, incoming: Set[Reactive[Struct]])
 
@@ -33,7 +33,7 @@ class ReStoringTurn(engine: ReStoringEngine) extends LevelBasedPropagation[ReSto
 }
 
 class ReStoringStructType[P, S <: Struct](storage: Storing => Unit, initialVal: P, transient: Boolean, initialIncoming: Set[Reactive[S]]) extends LevelStructTypeImpl[P, S](initialVal, transient, initialIncoming) {
-  override def commit(implicit turn: Turn[S]): Unit = {
+  override def commit(implicit turn: TwoVersionPropagation[S]): Unit = {
     super.commit
     if (storage != null) storage(Storing(current, _level, _incoming.asInstanceOf[Set[Reactive[Struct]]]))
   }

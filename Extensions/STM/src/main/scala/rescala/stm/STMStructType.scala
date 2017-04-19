@@ -1,8 +1,9 @@
 package rescala.stm
 
-import rescala.graph.{Reactive, ReadWriteValue, Struct}
+import rescala.graph.{Reactive, Struct}
 import rescala.levelbased.LevelStructType
 import rescala.propagation.Turn
+import rescala.twoversion.{ReadWriteValue, TwoVersionPropagation}
 
 import scala.concurrent.stm.{InTxn, Ref, TxnLocal}
 
@@ -33,8 +34,8 @@ class STMStructType[P, S <: Struct](initialValue: P, transient: Boolean, initial
     if (!transient && updateValue.isDefined) current.set(updateValue.get)
   })
 
-  override def set(value: P)(implicit turn: S#Ticket[S]): Unit = {
-    update.set(Some(value))(inTxn(turn.turn()))
+  override def set(value: P, turn: TwoVersionPropagation[S]): Unit = {
+    update.set(Some(value))(inTxn(turn))
   }
   override def base(implicit turn: S#Ticket[S]): P = current.get(inTxn(turn.turn()))
   override def get(implicit turn: S#Ticket[S]): P = update.get(inTxn(turn.turn())).getOrElse(current.get(inTxn(turn.turn())))
