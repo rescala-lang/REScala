@@ -17,7 +17,7 @@ class ShapesPanel(val shapes: Signal[Traversable[Shape]]) extends Panel {
   allChanges observe {_ => repaint() }
 
   override def paintComponent(g: Graphics2D): Unit = {
-    implicitEngine.plan() {implicit turn =>
+    implicitEngine.transaction() {implicit turn =>
       g.setColor(Color.WHITE)
       g.fillRect(0, 0, size.width, size.height)
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)

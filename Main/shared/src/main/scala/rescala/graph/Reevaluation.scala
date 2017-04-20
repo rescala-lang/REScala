@@ -41,7 +41,7 @@ trait Disconnectable[S <: Struct] extends Reactive[S] {
   @volatile private var disconnected = false
 
   final def disconnect()(implicit engine: Engine[S, Turn[S]]): Unit = {
-    engine.plan(this) { turn =>
+    engine.transaction(this) { turn =>
       disconnected = true
     }
   }

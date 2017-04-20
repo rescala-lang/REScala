@@ -505,7 +505,7 @@ class IFunTest extends RETests {
     assert(log.now === List("two" -> "three", "failed" -> "change", "constant" -> "one"))
 
 
-    plan(v1, v2) { turn =>
+    transaction(v1, v2) { turn =>
       v1.admit("four a")(turn)
       v2.admit("four b")(turn)
     }
@@ -514,7 +514,7 @@ class IFunTest extends RETests {
 
 
 
-    plan(v1, v2) { turn =>
+    transaction(v1, v2) { turn =>
       v1.admitPulse(Pulse.Exceptional(EmptySignalControlThrowable))(turn)
       v2.admit("five b")(turn)
     }

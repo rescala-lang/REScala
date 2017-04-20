@@ -26,7 +26,7 @@ class TurnCreation[S <: rescala.graph.Struct] {
 
   @Benchmark
   def run(): Turn[S] = {
-    engine.plan()(identity)
+    engine.transaction()(identity)
   }
 
 

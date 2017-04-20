@@ -53,7 +53,7 @@ class OR_EventTest extends RETests {
     assert(log.now === List("two", "one"))
 
 
-    plan(e1, e2) { turn =>
+    transaction(e1, e2) { turn =>
       e1.admit("three a")(turn)
       e2.admit("three b")(turn)
     }
@@ -61,7 +61,7 @@ class OR_EventTest extends RETests {
     assert(log.now === List("three a", "two", "one"))
 
 
-    plan(e1, e2) { turn =>
+    transaction(e1, e2) { turn =>
       e1.admitPulse(Pulse.Exceptional(new IllegalArgumentException))(turn)
       e2.admit("five b")(turn)
     }

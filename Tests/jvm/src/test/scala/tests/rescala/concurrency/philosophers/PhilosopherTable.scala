@@ -64,7 +64,7 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit 
 
 
   def tryEat(seating: Seating[S]): Boolean =
-    engine.plan(seating.philosopher) { turn =>
+    engine.transaction(seating.philosopher) { turn =>
       val forksWereFree = seating.vision.now(turn) == Ready
       if (forksWereFree) seating.philosopher.admit(Hungry)(turn)
       turn match {

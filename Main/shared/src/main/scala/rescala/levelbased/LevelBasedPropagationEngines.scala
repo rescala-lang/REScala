@@ -25,7 +25,7 @@ trait LevelBasedPropagationEngines {
 
 
   implicit val synchron: SimpleEngine = new EngineImpl[SimpleStruct, SimpleNoLock]("Synchron", new SimpleNoLock()) {
-    override def plan[R](i: Reactive*)(f: SimpleNoLock => R): R = synchronized(super.plan(i: _*)(f))
+    override def transaction[R](i: Reactive*)(f: SimpleNoLock => R): R = synchronized(super.transaction(i: _*)(f))
   }
 
   implicit val unmanaged: SimpleEngine = new EngineImpl[SimpleStruct, SimpleNoLock]("Unmanaged", new SimpleNoLock())

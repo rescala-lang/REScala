@@ -13,7 +13,7 @@ class RESubscriber[T, S <: Struct](evt: Evt[T, S], fac: Engine[S, Turn[S]]) exte
 
   override def onError(thrw: Throwable): Unit = synchronized {
     Objects.requireNonNull(thrw)
-    fac.plan(evt){implicit turn => evt.admitPulse(Pulse.Exceptional(thrw))}
+    fac.transaction(evt){implicit turn => evt.admitPulse(Pulse.Exceptional(thrw))}
   }
   override def onSubscribe(s: Subscription): Unit = synchronized {
     subscription = s

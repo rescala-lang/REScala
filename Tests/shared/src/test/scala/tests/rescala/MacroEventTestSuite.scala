@@ -14,7 +14,7 @@ class MacroEventTestSuite extends RETests {
     assert(res.now === 10)
     e2(11)
     assert(res.now === 11)
-    engine.plan(e1, e2) { t =>
+    engine.transaction(e1, e2) { t =>
       e1.admit(10)(t)
       e2.admit(10)(t)
     }
@@ -33,7 +33,7 @@ class MacroEventTestSuite extends RETests {
     assert(res.now === List(9))
     e2(10)
     assert(res.now === List(10))
-    engine.plan(e1, e2) { t =>
+    engine.transaction(e1, e2) { t =>
       e1.admit(11)(t)
       e2.admit(12)(t)
     }

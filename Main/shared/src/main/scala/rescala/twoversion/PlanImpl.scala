@@ -25,7 +25,7 @@ trait PlanImpl[S <: Struct, TImpl <: TwoVersionPropagation[S]] extends Engine[S,
   private[rescala] def setCurrentTurn(turn: Option[TImpl]): Unit = currentTurn.value = turn
 
   override def subplan[T](initialWrites: Reactive*)(f: TImpl => T): T = currentTurn.value match {
-    case None => plan(initialWrites: _*)(f)
+    case None => transaction(initialWrites: _*)(f)
     case Some(turn) => f(turn)
   }
 
@@ -46,7 +46,7 @@ trait PlanImpl[S <: Struct, TImpl <: TwoVersionPropagation[S]] extends Engine[S,
     * - run the party! phase
     *   - not yet implemented
     * */
-  override def plan[Res](initialWrites: Reactive*)(admissionPhase: TImpl => Res): Res = {
+  override def transaction[Res](initialWrites: Reactive*)(admissionPhase: TImpl => Res): Res = {
 
     val turn = makeTurn(currentTurn.value)
     val result = try {

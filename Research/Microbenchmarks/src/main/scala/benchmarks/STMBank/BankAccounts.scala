@@ -98,7 +98,7 @@ class BankAccounts[S <: Struct] {
       val tlr = ThreadLocalRandom.current()
       if (tlr.nextDouble() < rs.modifiedReadChance) {
         val window = rs.windows(tlr.nextInt(rs.windows.length))
-        rs.engine.plan(window: _*) { t =>
+        rs.engine.transaction(window: _*) { t =>
           val sum = window.foldLeft(0)((acc, v) => acc + v.now(t))
           bh.consume(sum)
           assert(rs.readWindowCount != 1 || sum == 0, "with a single window, the sum should be 0")
@@ -110,7 +110,7 @@ class BankAccounts[S <: Struct] {
         if (a1 != a2) {
           val account1 = rs.accounts(a1)
           val account2 = rs.accounts(a2)
-          rs.engine.plan(account1, account2) { t =>
+          rs.engine.transaction(account1, account2) { t =>
             account1.admit(account1.now(t) + 4817)(t)
             account2.admit(account2.now(t) - 4817)(t)
           }
@@ -126,7 +126,7 @@ class BankAccounts[S <: Struct] {
 
         lockWindow.foreach(_.lock())
         try {
-          rs.engine.plan(window: _*) { t =>
+          rs.engine.transaction(window: _*) { t =>
             val sum = window.foldLeft(0)((acc, v) => acc + v.now(t))
             bh.consume(sum)
             assert(rs.readWindowCount != 1 || sum == 0, "with a single window, the sum should be 0")
@@ -145,7 +145,7 @@ class BankAccounts[S <: Struct] {
           try {
             val account1 = rs.accounts(a1)
             val account2 = rs.accounts(a2)
-            rs.engine.plan(account1, account2) { t =>
+            rs.engine.transaction(account1, account2) { t =>
               account1.admit(account1.now(t) + 4817)(t)
               account2.admit(account2.now(t) - 4817)(t)
             }

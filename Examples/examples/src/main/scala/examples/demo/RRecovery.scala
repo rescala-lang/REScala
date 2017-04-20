@@ -21,7 +21,7 @@ object RRecovery extends Main {
       resizable = false
       override def closeOperation(): Unit = {
         val s = panel2.Mouse._position
-        rescala.explicitEngine.plan(s) { t =>
+        rescala.explicitEngine.transaction(s) { t =>
           s.admitPulse(Pulse.Exceptional(new IllegalArgumentException))(t)
         }
 

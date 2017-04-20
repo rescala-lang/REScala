@@ -27,8 +27,8 @@ object REPublisher {
     var requested: Long = 0
     var cancelled = false
 
-    override protected[rescala] def reevaluate(ticket: S#Ticket[S]): ReevaluationResult[Value, S] = {
-      dependency.pulse(ticket).toOptionTry match {
+    override protected[rescala] def reevaluate(ticket: Turn[S]): ReevaluationResult[Value, S] = {
+      ticket.after(dependency).toOptionTry match {
         case None => ReevaluationResult.Static(Pulse.NoChange)
         case Some(tryValue) =>
           synchronized {
@@ -65,7 +65,7 @@ object REPublisher {
 
   def subscription[T, S <: Struct](dependency: Pulsing[Pulse[T], S], subscriber: Subscriber[_ >: T], fac: Engine[S, Turn[S]]): SubscriptionReactive[T, S] = {
     val incoming = Set[Reactive[S]](dependency)
-    fac.plan(dependency)(initTurn => initTurn.create(incoming) {
+    fac.transaction(dependency)(initTurn => initTurn.create(incoming) {
       new SubscriptionReactive[T, S](initTurn.makeStructState[Pulse[T]](Pulse.NoChange, initialIncoming = incoming, transient = false), dependency, subscriber, fac)
     })
   }
