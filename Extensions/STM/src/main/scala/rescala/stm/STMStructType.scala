@@ -14,7 +14,7 @@ class STMStructType[P, S <: Struct](initialValue: P, transient: Boolean, initial
     case _ => throw new IllegalStateException(s"$turn has invalid type for $this")
   }
 
-  def inTxn(token: Token): InTxn = token match {
+  def inTxn(token: Token): InTxn = token.payload match {
     case stmTurn: InTxn => stmTurn
     case _ => throw new IllegalStateException(s"$token has invalid type for $this")
   }

@@ -76,7 +76,7 @@ trait GraphStructType[S <: Struct] {
   def drop(reactive: Reactive[S])(implicit turn: Turn[S]): Unit
 }
 
-case class Token()
+case class Token(payload: AnyRef = null)
 
 
 trait ReadValue[P, S <: Struct] {

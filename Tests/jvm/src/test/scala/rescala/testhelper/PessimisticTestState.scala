@@ -1,10 +1,10 @@
 package rescala.testhelper
 
-import java.util.concurrent.{CountDownLatch, TimeUnit}
 import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.{CountDownLatch, TimeUnit}
 
 import rescala.engine.Engine
-import rescala.graph.{ATicket, Reactive}
+import rescala.graph.Reactive
 import rescala.parrp.{Backoff, ParRP}
 import rescala.propagation.Turn
 import rescala.reactives.Signal
@@ -14,7 +14,7 @@ import tests.rescala.concurrency.Spawn
 trait PessimisticTestState {
 
   class PessimisticTestTurn extends ParRP(backoff = new Backoff(), None) {
-    override def evaluate(r: Reactive[ParRP], ticket: ATicket[ParRP]): Unit = {
+    override def evaluate(r: Reactive[ParRP]): Unit = {
       while (Pessigen.syncStack.get() match {
         case stack@(set, bar) :: tail if set(r) =>
           bar.ready.countDown()
@@ -23,7 +23,7 @@ trait PessimisticTestState {
           true
         case _ => false
       }) {}
-      super.evaluate(r, ticket)
+      super.evaluate(r)
     }
   }
 
@@ -57,7 +57,7 @@ trait PessimisticTestState {
 
   implicit def engine: Engine[ParRP, Turn[ParRP]] = Pessigen
   def unsafeNow[T](s: Signal[T, ParRP]): T = {
-    engine.plan()(t => s.pulse(t.makeTicket()).get)
+    engine.plan()(t => t.after(s).get)
   }
 
 }

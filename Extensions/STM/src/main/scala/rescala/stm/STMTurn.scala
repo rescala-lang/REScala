@@ -18,7 +18,7 @@ class STMTurn extends LevelBasedPropagation[STMTurn] with LevelStruct {
   override def releasePhase(): Unit = ()
   // this is unsafe when used improperly
   def inTxn: InTxn = atomic(identity)
-  override val token = inTxn.asInstanceOf[Token]
+  override val token = Token(inTxn)
 }
 
 
