@@ -34,6 +34,7 @@ trait Reactive[S <: Struct] {
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
 trait Pulsing[+P, S <: Struct] extends Reactive[S] {
+  override type Value <: P
   protected[rescala] def stable(implicit ticket: S#Ticket[S]): P
   protected[rescala] def pulse(implicit ticket: S#Ticket[S]): P
   protected[rescala] def pulse(implicit ticket: StaticTicket[S]): P = pulse(ticket.ticket)
@@ -45,6 +46,6 @@ abstract class Base[P, S <: Struct](struct: S#State[Pulse[P], S]) extends Pulsin
   override type Value = Pulse[P]
   final override protected[rescala] def state: S#State[Value, S] = struct
 
-  final protected[rescala] override def stable(implicit ticket: S#Ticket[S]): Pulse[P] = state.base
-  final protected[rescala] override def pulse(implicit ticket: S#Ticket[S]): Pulse[P] = state.get
+  final protected[rescala] override def stable(implicit ticket: S#Ticket[S]): Pulse[P] = ticket.turn().before(this)
+  final protected[rescala] override def pulse(implicit ticket: S#Ticket[S]): Pulse[P] = ticket.turn().after(this)
 }

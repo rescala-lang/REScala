@@ -11,7 +11,7 @@ final class DynamicTicket[S <: Struct](val turn: Turn[S], val ticket: S#Ticket[S
   def depend[A](reactive: Signal[A, S]): A = {
     collectedDependencies += reactive
     turn.dynamicDependencyInteraction(reactive)
-    reactive.pulse(ticket).get
+    turn.after(reactive).get
   }
 
   def depend[A](reactive: Event[A, S]): Option[A] = {

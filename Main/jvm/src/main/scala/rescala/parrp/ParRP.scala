@@ -1,7 +1,7 @@
 package rescala.parrp
 
 import rescala.graph.{Reactive, Struct}
-import rescala.levelbased.{LevelBasedPropagation, LevelStruct}
+import rescala.levelbased.{LevelBasedPropagation, LevelStruct, LevelStructTypeImpl}
 import rescala.locking._
 
 trait ParRPInterTurn {
@@ -15,6 +15,10 @@ trait ParRPInterTurn {
 
 }
 
+class ParRPStructType[P, S <: Struct](current: P, transient: Boolean, val lock: TurnLock[ParRPInterTurn], initialIncoming: Set[Reactive[S]])
+  extends LevelStructTypeImpl[P, S](current, transient, initialIncoming)
+
+
 class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropagation[ParRP] with ParRPInterTurn with LevelStruct {
   override type State[P, S <: Struct] = ParRPStructType[P, S]
 
@@ -24,6 +28,16 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
   override private[rescala] def makeStructState[P](initialValue: P, transient: Boolean, initialIncoming: Set[Reactive[TState]], hasState: Boolean): TState#State[P, ParRP] = {
     val lock = new TurnLock[ParRPInterTurn]
     new ParRPStructType[P, ParRP](initialValue, transient, lock, initialIncoming)
+  }
+
+
+  override def writeState[P](pulsing: Reactive[TState])(value: pulsing.Value): Unit = {
+    assert({
+      val wlo: Option[Key[ParRPInterTurn]] = Option(pulsing.state.lock.getOwner)
+      wlo.fold(true)(_ eq key)},
+      s"buffer ${pulsing.state}, controlled by ${pulsing.state.lock} with owner ${pulsing.state.lock.getOwner}" +
+        s" was written by $this who locks with ${key}, by now the owner is ${pulsing.state.lock.getOwner}")
+    super.writeState(pulsing)(value)
   }
 
 

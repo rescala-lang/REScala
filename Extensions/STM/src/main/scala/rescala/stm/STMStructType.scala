@@ -37,7 +37,7 @@ class STMStructType[P, S <: Struct](initialValue: P, transient: Boolean, initial
   override def set(value: P, turn: TwoVersionPropagation[S]): Unit = {
     update.set(Some(value))(inTxn(turn))
   }
-  override def base(implicit turn: S#Ticket[S]): P = current.get(inTxn(turn.turn()))
-  override def get(implicit turn: S#Ticket[S]): P = update.get(inTxn(turn.turn())).getOrElse(current.get(inTxn(turn.turn())))
+  override def base(token: Any): P = current.get(inTxn(token.turn()))
+  override def get(token: Any): P = update.get(inTxn(token.turn())).getOrElse(current.get(inTxn(token.turn())))
 
 }

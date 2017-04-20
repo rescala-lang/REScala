@@ -14,7 +14,7 @@ trait Struct {
     * @tparam P Pulse stored value type
     * @tparam R Reactive value type represented by the struct
     */
-  type State[P, S <: Struct] <: ReadValue[P, S]
+  type State[P, S <: Struct]
 
   type Ticket[S <: Struct] = ATicket[S]
 }
@@ -24,12 +24,6 @@ trait ATicket[S <: Struct] {
   def static(): StaticTicket[S]
   def turn(): Turn[S]
 }
-
-trait ReadValue[P, S <: Struct] {
-  def base(implicit turn: S#Ticket[S]): P
-  def get(implicit turn: S#Ticket[S]): P
-}
-
 
 
 

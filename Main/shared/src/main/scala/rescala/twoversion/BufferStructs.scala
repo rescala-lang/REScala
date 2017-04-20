@@ -1,6 +1,6 @@
 package rescala.twoversion
 
-import rescala.graph.{Reactive, ReadValue, Struct}
+import rescala.graph.{Reactive, Struct}
 import rescala.propagation.Turn
 import scala.language.higherKinds
 
@@ -12,17 +12,18 @@ import scala.language.higherKinds
 trait BufferedValueStruct[P, S <: Struct] extends ReadWriteValue[P, S] with Committable[S] {
   protected var current: P
   protected val transient: Boolean
-  protected var owner: Turn[S] = null
+  protected var owner: AnyRef = null
   private var update: P = _
 
-  override def set(value: P, turn: TwoVersionPropagation[S]): Unit = {
-    assert(owner == null || owner == turn, s"buffer owned by $owner written by $turn")
+  override def write(value: P, token: AnyRef): Boolean = {
+    assert(owner == null || owner == token, s"buffer owned by $owner written by $token")
     update = value
-    if (owner == null) turn.schedule(this)
-    owner = turn
+    val res = owner == null
+    owner = token
+    res
   }
-  override def get(implicit turn: S#Ticket[S]): P = { if (turn.turn() eq owner) update else current }
-  override def base(implicit turn: S#Ticket[S]): P = current
+  override def get(token: AnyRef): P = { if (token eq owner) update else current }
+  override def base(token: AnyRef): P = current
 
   override def commit(implicit turn: TwoVersionPropagation[S]): Unit = {
     if (!transient) current = update
@@ -64,7 +65,7 @@ trait GraphStruct extends Struct {
 /**
   * Spore that can represent a node in a graph by providing information about incoming and outgoing edges.
   *
-  * @tparam R Type of the reactive values that are connected to this struct
+  * @tparam S Type of the reactive values that are connected to this struct
   */
 trait GraphStructType[S <: Struct] {
   def incoming(implicit turn: Turn[S]): Set[Reactive[S]]
@@ -74,6 +75,10 @@ trait GraphStructType[S <: Struct] {
   def drop(reactive: Reactive[S])(implicit turn: Turn[S]): Unit
 }
 
+trait ReadValue[P, S <: Struct] {
+  def base(token: AnyRef): P
+  def get(token: AnyRef): P
+}
 
 /**
   * Spore that has a buffered pulse indicating a potential update and storing the updated and the old value.
@@ -81,6 +86,9 @@ trait GraphStructType[S <: Struct] {
   *
   * @tparam P Pulse stored value type
   */
-trait ReadWriteValue[P, S <: Struct] <: ReadValue[P, S] {
-  def set(value: P, turn: TwoVersionPropagation[S]): Unit
+trait ReadWriteValue[P, S <: Struct] extends ReadValue[P, S] with Committable[S] {
+  def write(value: P, token: AnyRef): Boolean
 }
+
+
+

@@ -1,6 +1,6 @@
 package rescala.twoversion
 
-import rescala.graph.{ATicket, DepDiff, Reactive}
+import rescala.graph.{ATicket, DepDiff, Pulsing, Reactive}
 import rescala.propagation.{DynamicTicket, StaticTicket}
 
 import scala.util.control.NonFatal
@@ -19,6 +19,8 @@ trait CommonPropagationImpl[S <: GraphStruct] extends TwoVersionPropagation[S] {
     override def static(): StaticTicket[S] = new StaticTicket[S](turn, this)
     override def turn(): CommonPropagationImpl[S] = outer
   }
+
+  val token: AnyRef = new Object { override val toString: String = outer.toString }
 
   private val toCommit = scala.collection.mutable.ArrayBuffer[Committable[S]]()
   private val observers = scala.collection.mutable.ArrayBuffer[() => Unit]()
@@ -63,6 +65,7 @@ trait CommonPropagationImpl[S <: GraphStruct] extends TwoVersionPropagation[S] {
     diff.removed foreach drop(head)
     diff.added foreach discover(head)
   }
-
-
+  override def before[P](pulsing: Pulsing[P, S]): P = pulsing.state.base(token)
+  override def after[P](pulsing: Pulsing[P, S]): P = pulsing.state.get(token)
+  def writeState[P](pulsing: Reactive[S])(value: pulsing.Value): Unit = if (pulsing.state.write(value, token)) this.schedule(pulsing.state)
 }

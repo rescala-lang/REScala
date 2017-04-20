@@ -1,6 +1,6 @@
 package rescala.propagation
 
-import rescala.graph.{Reactive, Struct}
+import rescala.graph.{Pulsing, Reactive, Struct}
 
 /**
   * The Turn interface glues the reactive interface and the propagation implementation together.
@@ -19,6 +19,9 @@ trait Turn[S <: Struct] {
     * @param reactive Reactive element to handle
     */
   private[rescala] def dynamicDependencyInteraction(reactive: Reactive[S]): Unit
+
+  def before[P](pulsing: Pulsing[P, S]): P
+  def after[P](pulsing: Pulsing[P, S]): P
 
   /**
     * Connects a reactive element with potentially existing dependencies and prepares re-evaluations to be

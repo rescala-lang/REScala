@@ -6,7 +6,7 @@ import rescala.graph.ReevaluationResult.{Dynamic, Static}
 import rescala.graph._
 import rescala.locking._
 import rescala.propagation.Turn
-import rescala.twoversion.{CommonPropagationImpl, GraphStruct, PropagationStructImpl, TwoVersionPropagation}
+import rescala.twoversion.{CommonPropagationImpl, GraphStruct, PropagationStructImpl}
 
 import scala.collection.mutable
 
@@ -17,20 +17,6 @@ trait LSStruct extends GraphStruct {
 
 class LSPropagationStruct[P, S <: Struct](current: P, transient: Boolean, val lock: TurnLock[LSInterTurn], initialIncoming: Set[Reactive[S]])
   extends PropagationStructImpl[P, S](current, transient, initialIncoming) {
-
-  override def set(value: P, turn: TwoVersionPropagation[S]): Unit = {
-    assert(turn match {
-      case pessimistic: LockSweep =>
-        val wlo: Option[Key[LSInterTurn]] = Option(lock).map(_.getOwner)
-        assert(wlo.fold(true)(_ eq pessimistic.key),
-          s"buffer owned by $owner, controlled by $lock with owner ${wlo.get}" +
-            s" was written by $turn who locks with ${pessimistic.key}, by now the owner is ${lock.getOwner}")
-        true
-      case _ =>
-        throw new IllegalStateException(s"locksweep buffer used with wrong turn")
-    })
-    super.set(value, turn)
-  }
 
   var willWrite: LockSweep = null
   var hasWritten: LockSweep = null
@@ -51,6 +37,16 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPr
   override private[rescala] def makeStructState[P](initialValue: P, transient: Boolean, initialIncoming: Set[Reactive[TState]], hasState: Boolean): LSStruct#State[P, TState] = {
     val lock = new TurnLock[LSInterTurn]
     new LSPropagationStruct[P, LSStruct](initialValue, transient, lock, initialIncoming)
+  }
+
+
+  override def writeState[P](pulsing: Reactive[TState])(value: pulsing.Value): Unit = {
+    assert({
+        val wlo: Option[Key[LSInterTurn]] = Option(pulsing.state.lock.getOwner)
+        wlo.fold(true)(_ eq key)},
+          s"buffer ${pulsing.state}, controlled by ${pulsing.state.lock} with owner ${pulsing.state.lock.getOwner}" +
+            s" was written by $this who locks with ${key}, by now the owner is ${pulsing.state.lock.getOwner}")
+    super.writeState(pulsing)(value)
   }
 
 
@@ -135,7 +131,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPr
       head.reevaluate(ticket) match {
         case Static(value: Option[head.Value]) =>
           val hasChanged = value.isDefined && head.state.base(ticket) != value.get
-          if (hasChanged) head.state.set(value.get, this)
+          if (hasChanged) writeState(head)(value.get)
           done(head, hasChanged)
 
         case Dynamic(value, deps) =>
@@ -145,7 +141,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPr
           val hasChanged = value.isDefined && head.state.base(ticket) != value.get
 
           if (head.state.counter == 0) {
-            if (hasChanged) head.state.set(value.get, this)
+            if (hasChanged) writeState(head)(value.get)
             done(head, hasChanged)
           }
 
