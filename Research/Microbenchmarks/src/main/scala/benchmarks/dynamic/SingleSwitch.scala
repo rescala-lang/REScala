@@ -6,8 +6,7 @@ import benchmarks.{EngineParam, Step}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
 import rescala.Engines
-import rescala.engine.Engine
-import rescala.propagation.Turn
+import rescala.engine.{Engine, Turn}
 import rescala.reactives.Var
 
 @BenchmarkMode(Array(Mode.Throughput))

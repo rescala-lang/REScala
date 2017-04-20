@@ -1,6 +1,6 @@
-package rescala.propagation
+package rescala.engine
 
-import rescala.graph.{Pulsing, Reactive, Struct}
+import rescala.graph.{DynamicTicket, Pulsing, Reactive, StaticTicket, Struct}
 
 /**
   * The Turn interface glues the reactive interface and the propagation implementation together.

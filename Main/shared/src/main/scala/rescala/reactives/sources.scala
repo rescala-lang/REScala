@@ -1,8 +1,7 @@
 package rescala.reactives
 
-import rescala.engine.{Engine, TurnSource}
+import rescala.engine.{Engine, Turn, TurnSource}
 import rescala.graph._
-import rescala.propagation.Turn
 
 import scala.language.higherKinds
 

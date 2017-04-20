@@ -2,7 +2,6 @@ package rescala.engine
 
 import rescala.RescalaDefaultImports
 import rescala.graph.Struct
-import rescala.propagation.Turn
 
 import scala.annotation.implicitNotFound
 import scala.language.experimental.macros

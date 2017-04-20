@@ -4,10 +4,9 @@ import org.scalactic.source
 import org.scalatest.FunSuite
 import org.scalatest.prop.{TableDrivenPropertyChecks, TableFor1}
 import rescala.Engines
-import rescala.engine.Engine
+import rescala.engine.{Engine, Turn}
 import rescala.graph.Struct
 import rescala.levelbased.LevelStruct
-import rescala.propagation.Turn
 
 import scala.language.existentials
 

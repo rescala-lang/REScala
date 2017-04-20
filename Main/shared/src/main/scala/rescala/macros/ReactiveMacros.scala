@@ -1,8 +1,7 @@
 package rescala.macros
 
 import rescala.engine.{LowPriorityTurnSource, TurnSource}
-import rescala.graph.Struct
-import rescala.propagation.DynamicTicket
+import rescala.graph.{DynamicTicket, Struct}
 import rescala.reactives.{Event, Signal}
 import retypecheck._
 

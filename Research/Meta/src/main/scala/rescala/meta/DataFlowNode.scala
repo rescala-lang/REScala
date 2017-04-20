@@ -2,7 +2,6 @@ package rescala.meta
 
 import rescala.engine.{Engine, TurnSource}
 import rescala.graph.{Pulse, Pulsing, Struct}
-import rescala.propagation.Turn
 import rescala.reactives._
 
 trait DataFlowNode[+T] {

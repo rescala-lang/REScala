@@ -1,9 +1,8 @@
 package rescala.reactives
 
-import rescala.engine.TurnSource
+import rescala.engine.{Turn, TurnSource}
 import rescala.graph.Pulse.NoChange
-import rescala.graph.{Base, Disconnectable, Pulse, Reactive, ReevaluationResult, Struct}
-import rescala.propagation.{DynamicTicket, StaticTicket, Turn}
+import rescala.graph.{Base, Disconnectable, DynamicTicket, Pulse, Reactive, ReevaluationResult, StaticTicket, Struct}
 import rescala.reactives.Signals.Diff
 
 object Events {

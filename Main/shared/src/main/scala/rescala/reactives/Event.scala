@@ -1,9 +1,8 @@
 package rescala.reactives
 
-import rescala.engine.{Engine, TurnSource}
+import rescala.engine.{Engine, Turn, TurnSource}
 import rescala.graph.Pulse.{Change, Exceptional, NoChange}
 import rescala.graph._
-import rescala.propagation.Turn
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 
 import scala.annotation.compileTimeOnly

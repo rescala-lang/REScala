@@ -1,7 +1,12 @@
 package rescala.graph
 
-import rescala.propagation.Turn
+import rescala.engine.Turn
 import rescala.util.Globals
+
+import scala.language.higherKinds
+
+
+trait Struct { type State[P, S <: Struct] }
 
 /**
   * A reactive value is something that can be reevaluated
@@ -43,3 +48,8 @@ abstract class Base[P, S <: Struct](struct: S#State[Pulse[P], S]) extends Pulsin
   override type Value = Pulse[P]
   final override protected[rescala] def state: S#State[Value, S] = struct
 }
+
+
+
+
+

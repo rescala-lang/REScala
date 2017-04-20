@@ -4,8 +4,7 @@ import java.util.concurrent.TimeUnit
 
 import benchmarks.{EngineParam, Size, Step}
 import org.openjdk.jmh.annotations._
-import rescala.engine.Engine
-import rescala.propagation.Turn
+import rescala.engine.{Engine, Turn}
 import rescala.reactives.{Evt, Signal, Var}
 import rescala.restore.{ReStoringEngine, Storing}
 

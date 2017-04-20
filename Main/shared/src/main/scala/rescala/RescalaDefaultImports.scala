@@ -16,9 +16,9 @@ abstract class RescalaDefaultImports[S <: Struct] {
   final type Event[+A] = reactives.Event[A, S]
   final type Var[A] = reactives.Var[A, S]
   final type Evt[A] = reactives.Evt[A, S]
-  final type Turn = propagation.Turn[S]
-  final type StaticTicket = propagation.StaticTicket[S]
-  final type DynamicTicket = propagation.DynamicTicket[S]
+  final type Turn = rescala.engine.Turn[S]
+  final type StaticTicket = rescala.graph.StaticTicket[S]
+  final type DynamicTicket = rescala.graph.DynamicTicket[S]
   final type TurnSource = rescala.engine.TurnSource[S]
   final type Reactive = rescala.graph.Reactive[S]
   final def Evt[A](): Evt[A] = reactives.Evt[A, S]()(explicitEngine)

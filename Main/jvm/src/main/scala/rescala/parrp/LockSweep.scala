@@ -2,10 +2,10 @@ package rescala.parrp
 
 import java.util
 
+import rescala.engine.Turn
 import rescala.graph.ReevaluationResult.{Dynamic, Static}
 import rescala.graph._
 import rescala.locking._
-import rescala.propagation.Turn
 import rescala.twoversion.{CommonPropagationImpl, GraphStruct, PropagationStructImpl}
 
 import scala.collection.mutable

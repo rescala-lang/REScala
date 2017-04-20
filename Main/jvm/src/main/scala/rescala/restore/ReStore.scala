@@ -2,7 +2,6 @@ package rescala.restore
 
 import rescala.graph.{Reactive, Struct}
 import rescala.levelbased.{LevelBasedPropagation, LevelStruct, LevelStructTypeImpl}
-import rescala.propagation.Turn
 import rescala.twoversion.{PlanImpl, TwoVersionPropagation}
 
 case class Storing(current: Any, level: Int, incoming: Set[Reactive[Struct]])

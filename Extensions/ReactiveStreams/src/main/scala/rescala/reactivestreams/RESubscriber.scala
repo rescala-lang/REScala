@@ -3,9 +3,8 @@ package rescala.reactivestreams
 import java.util.Objects
 
 import org.reactivestreams.{Subscriber, Subscription}
-import rescala.engine.Engine
+import rescala.engine.{Engine, Turn}
 import rescala.graph.{Pulse, Struct}
-import rescala.propagation.Turn
 import rescala.reactives.Evt
 
 class RESubscriber[T, S <: Struct](evt: Evt[T, S], fac: Engine[S, Turn[S]]) extends Subscriber[T] {

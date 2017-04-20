@@ -5,9 +5,8 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import benchmarks.{EngineParam, Workload}
 import org.openjdk.jmh.annotations._
-import rescala.engine.Engine
+import rescala.engine.{Engine, Turn}
 import rescala.graph.Struct
-import rescala.propagation.Turn
 import rescala.reactives._
 
 @AuxCounters

@@ -1,9 +1,8 @@
 package universe
 
 import rescala.Engines
-import rescala.engine.Engine
+import rescala.engine.{Engine, Turn}
 import rescala.graph.Struct
-import rescala.propagation.Turn
 
 import scala.collection.parallel.ForkJoinTaskSupport
 import scala.concurrent.forkjoin.ForkJoinPool

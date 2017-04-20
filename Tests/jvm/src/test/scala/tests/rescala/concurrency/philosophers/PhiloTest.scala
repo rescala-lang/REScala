@@ -2,9 +2,8 @@ package tests.rescala.concurrency.philosophers
 
 import org.scalatest.FunSuite
 import rescala.Engines
-import rescala.engine.Engine
+import rescala.engine.{Engine, Turn}
 import rescala.graph.Struct
-import rescala.propagation.Turn
 import tests.rescala.concurrency.Spawn
 import tests.rescala.concurrency.philosophers.PhilosopherTable.{Seating, Thinking}
 

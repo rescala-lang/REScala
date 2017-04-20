@@ -1,8 +1,7 @@
 package rescala.reactives
 
-import rescala.engine.{Engine, TurnSource}
+import rescala.engine.{Engine, Turn, TurnSource}
 import rescala.graph.{Pulse, Pulsing, Struct}
-import rescala.propagation.Turn
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 import rescala.reactives.Signals.Diff
 

@@ -1,8 +1,7 @@
 package rescala.reactives
 
-import rescala.engine.{Engine, TurnSource}
+import rescala.engine.{Engine, Turn, TurnSource}
 import rescala.graph._
-import rescala.propagation.{DynamicTicket, StaticTicket, Turn}
 import rescala.reactives.RExceptions.EmptySignalControlThrowable
 
 import scala.concurrent.{ExecutionContext, Future}

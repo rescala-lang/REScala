@@ -1,8 +1,7 @@
 package rescala.levelbased
 
-import rescala.engine.Engine
+import rescala.engine.{Engine, Turn}
 import rescala.graph.{Reactive, Struct}
-import rescala.propagation.Turn
 import rescala.twoversion.EngineImpl
 
 import scala.language.existentials

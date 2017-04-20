@@ -1,6 +1,6 @@
-package rescala.propagation
+package rescala.graph
 
-import rescala.graph._
+import rescala.engine.Turn
 import rescala.reactives.{Event, Signal}
 
 import scala.language.implicitConversions
@@ -21,5 +21,4 @@ final class DynamicTicket[S <: Struct](val turn: Turn[S]) {
   }
 }
 
-class StaticTicket[S <: Struct](val turn: Turn[S]) {
-}
+class StaticTicket[S <: Struct](val turn: Turn[S])

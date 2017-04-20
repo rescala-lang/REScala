@@ -2,8 +2,7 @@ package benchmarks
 
 import org.openjdk.jmh.annotations.{Param, Scope, State}
 import rescala.Engines
-import rescala.engine.Engine
-import rescala.propagation.Turn
+import rescala.engine.{Engine, Turn}
 
 @State(Scope.Benchmark)
 class EngineParam[S <: rescala.graph.Struct] {

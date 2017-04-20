@@ -3,7 +3,6 @@ package rescala.levelbased
 import java.util.PriorityQueue
 
 import rescala.graph.{Reactive, Struct}
-import rescala.propagation.Turn
 import LevelQueue.QueueElement
 
 /**

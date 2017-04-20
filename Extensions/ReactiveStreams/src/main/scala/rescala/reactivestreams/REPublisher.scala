@@ -2,9 +2,8 @@ package rescala.reactivestreams
 
 
 import org.reactivestreams.{Publisher, Subscriber, Subscription}
-import rescala.engine.Engine
+import rescala.engine.{Engine, Turn}
 import rescala.graph._
-import rescala.propagation.Turn
 
 import scala.util.{Failure, Success}
 

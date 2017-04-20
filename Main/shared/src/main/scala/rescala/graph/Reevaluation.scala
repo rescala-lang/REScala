@@ -1,7 +1,6 @@
 package rescala.graph
 
-import rescala.engine.Engine
-import rescala.propagation.Turn
+import rescala.engine.{Engine, Turn}
 
 /**
   * Indicator for the result of a re-evaluation of a reactive value.

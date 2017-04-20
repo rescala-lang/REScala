@@ -1,7 +1,6 @@
 import org.scalajs.dom
-import rescala.engine.{Engine, TurnSource}
+import rescala.engine.{Engine, Turn, TurnSource}
 import rescala.graph.Struct
-import rescala.propagation.Turn
 import rescala.reactives.{Observe, Signal}
 
 import scala.language.{higherKinds, implicitConversions}

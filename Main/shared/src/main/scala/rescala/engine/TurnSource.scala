@@ -1,7 +1,6 @@
 package rescala.engine
 
-import rescala.graph.Struct
-import rescala.propagation.{DynamicTicket, StaticTicket, Turn}
+import rescala.graph.{DynamicTicket, StaticTicket, Struct}
 
 import scala.annotation.implicitNotFound
 import scala.language.implicitConversions

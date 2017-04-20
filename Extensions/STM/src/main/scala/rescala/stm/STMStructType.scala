@@ -1,8 +1,8 @@
 package rescala.stm
 
+import rescala.engine.Turn
 import rescala.graph.{Reactive, Struct}
 import rescala.levelbased.LevelStructType
-import rescala.propagation.Turn
 import rescala.twoversion.{ReadWriteValue, Token, TwoVersionPropagation}
 
 import scala.concurrent.stm.{InTxn, Ref, TxnLocal, atomic}
