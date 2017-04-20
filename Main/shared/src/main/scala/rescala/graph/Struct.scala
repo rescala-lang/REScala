@@ -1,7 +1,6 @@
 package rescala.graph
 
 import rescala.propagation.{DynamicTicket, StaticTicket, Turn}
-import rescala.twoversion.TwoVersionPropagation
 
 import scala.language.{existentials, higherKinds, implicitConversions}
 
