@@ -58,7 +58,7 @@ abstract class PropagationStructImpl[P, S <: Struct](override var current: P, ov
   * Wrapper for a struct type combining GraphSpore and PulsingSpore
   */
 trait GraphStruct extends Struct {
-  override type Type[P, S <: Struct] <: GraphStructType[S] with ReadWriteValue[P, S]
+  override type State[P, S <: Struct] <: GraphStructType[S] with ReadWriteValue[P, S]
 }
 
 /**

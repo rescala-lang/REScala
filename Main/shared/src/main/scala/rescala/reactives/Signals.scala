@@ -11,7 +11,7 @@ import scala.language.higherKinds
 object Signals extends GeneratedSignalLift {
 
   object Impl {
-    private abstract class StaticSignal[T, S <: Struct](_bud: S#Type[Pulse[T], S], expr: (StaticTicket[S], => T) => T)
+    private abstract class StaticSignal[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: (StaticTicket[S], => T) => T)
       extends Base[T, S](_bud) with Signal[T, S] {
 
       override protected[rescala] def reevaluate(ticket: S#Ticket[S]): ReevaluationResult[Value, S] = {
@@ -22,7 +22,7 @@ object Signals extends GeneratedSignalLift {
       }
     }
 
-    private abstract class DynamicSignal[T, S <: Struct](_bud: S#Type[Pulse[T], S], expr: DynamicTicket[S] => T) extends Base[T, S](_bud) with Signal[T, S] {
+    private abstract class DynamicSignal[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: DynamicTicket[S] => T) extends Base[T, S](_bud) with Signal[T, S] {
       override protected[rescala] def reevaluate(ticket: S#Ticket[S]): ReevaluationResult[Value, S] = {
         val dt = ticket.dynamic()
         val newPulse = Pulse.tryCatch { Pulse.diffPulse(expr(dt), stable(ticket)) }
@@ -32,18 +32,18 @@ object Signals extends GeneratedSignalLift {
 
     /** creates a signal that statically depends on the dependencies with a given initial value */
     def makeFold[T, S <: Struct](dependencies: Set[Reactive[S]], init: StaticTicket[S] => T)(expr: (StaticTicket[S], => T) => T)(initialTurn: Turn[S]): Signal[T, S] = initialTurn.create(dependencies) {
-      val bud: S#Type[Pulse[T], S] = initialTurn.makeStructState(Pulse.tryCatch(Pulse.Change(init(initialTurn.makeTicket().static()))), transient = false, initialIncoming = dependencies, hasState = true)
+      val bud: S#State[Pulse[T], S] = initialTurn.makeStructState(Pulse.tryCatch(Pulse.Change(init(initialTurn.makeTicket().static()))), transient = false, initialIncoming = dependencies, hasState = true)
       new StaticSignal[T, S](bud, expr) with Disconnectable[S]
     }
 
     def makeStatic[T, S <: Struct](dependencies: Set[Reactive[S]], init: StaticTicket[S] => T)(expr: (StaticTicket[S], => T) => T)(initialTurn: Turn[S]): Signal[T, S] = initialTurn.create(dependencies) {
-      val bud: S#Type[Pulse[T], S] = initialTurn.makeStructState(Pulse.tryCatch(Pulse.Change(init(initialTurn.makeTicket().static()))), transient = false, initialIncoming = dependencies)
+      val bud: S#State[Pulse[T], S] = initialTurn.makeStructState(Pulse.tryCatch(Pulse.Change(init(initialTurn.makeTicket().static()))), transient = false, initialIncoming = dependencies)
       new StaticSignal[T, S](bud, expr) with Disconnectable[S]
     }
 
     /** creates a dynamic signal */
     def makeDynamic[T, S <: Struct](dependencies: Set[Reactive[S]])(expr: DynamicTicket[S] => T)(initialTurn: Turn[S]): Signal[T, S] = initialTurn.create(dependencies, dynamic = true) {
-      val bud: S#Type[Pulse[T], S] = initialTurn.makeStructState(initialValue = Pulse.empty, transient = false)
+      val bud: S#State[Pulse[T], S] = initialTurn.makeStructState(initialValue = Pulse.empty, transient = false)
       new DynamicSignal[T, S](bud, expr) with Disconnectable[S]
     }
   }

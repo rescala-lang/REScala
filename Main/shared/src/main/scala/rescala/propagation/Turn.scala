@@ -8,7 +8,7 @@ import rescala.graph.{Reactive, Struct}
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
 trait Turn[S <: Struct] {
-  private[rescala] def makeStructState[P](initialValue: P, transient: Boolean = true, initialIncoming: Set[Reactive[S]] = Set.empty[Reactive[S]], hasState: Boolean = false): S#Type[P, S]
+  private[rescala] def makeStructState[P](initialValue: P, transient: Boolean = true, initialIncoming: Set[Reactive[S]] = Set.empty[Reactive[S]], hasState: Boolean = false): S#State[P, S]
 
 
   def makeTicket(): S#Ticket[S]

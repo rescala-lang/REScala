@@ -41,7 +41,7 @@ class ReStoringStructType[P, S <: Struct](storage: Storing => Unit, initialVal: 
 
 
 trait ReStoringStruct extends LevelStruct {
-  override type Type[P, S <: Struct] = ReStoringStructType[P, S]
+  override type State[P, S <: Struct] = ReStoringStructType[P, S]
 }
 
 

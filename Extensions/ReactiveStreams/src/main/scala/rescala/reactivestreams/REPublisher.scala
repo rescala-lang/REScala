@@ -23,7 +23,7 @@ object REPublisher {
 
   }
 
-  class SubscriptionReactive[T, S <: Struct](bud: S#Type[Pulse[T], S], dependency: Pulsing[Pulse[T], S], subscriber: Subscriber[_ >: T], fac: Engine[S, Turn[S]]) extends Base[T, S](bud) with Reactive[S] with Subscription {
+  class SubscriptionReactive[T, S <: Struct](bud: S#State[Pulse[T], S], dependency: Pulsing[Pulse[T], S], subscriber: Subscriber[_ >: T], fac: Engine[S, Turn[S]]) extends Base[T, S](bud) with Reactive[S] with Subscription {
 
     var requested: Long = 0
     var cancelled = false

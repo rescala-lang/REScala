@@ -8,12 +8,12 @@ import rescala.reactives.Signals.Diff
 
 object Events {
 
-  private abstract class StaticEvent[T, S <: Struct](_bud: S#Type[Pulse[T], S], expr: StaticTicket[S] => Pulse[T], override val toString: String)
+  private abstract class StaticEvent[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: StaticTicket[S] => Pulse[T], override val toString: String)
     extends Base[T, S](_bud) with Event[T, S] {
     override protected[rescala] def reevaluate(ticket: S#Ticket[S]): ReevaluationResult[Value, S] = ReevaluationResult.Static(Pulse.tryCatch(expr(ticket.static()), onEmpty = NoChange))
   }
 
-  private abstract class ChangeEvent[T, S <: Struct](_bud: S#Type[Pulse[Diff[T]], S], signal: Signal[T, S])
+  private abstract class ChangeEvent[T, S <: Struct](_bud: S#State[Pulse[Diff[T]], S], signal: Signal[T, S])
     extends Base[Diff[T], S](_bud) with Event[Diff[T], S] {
     override protected[rescala] def reevaluate(ticket: S#Ticket[S]): ReevaluationResult[Value, S] = {
       val pulse = {
@@ -26,7 +26,7 @@ object Events {
     }
   }
 
-  private abstract class DynamicEvent[T, S <: Struct](_bud: S#Type[Pulse[T], S], expr: DynamicTicket[S] => Pulse[T]) extends Base[T, S](_bud) with Event[T, S] {
+  private abstract class DynamicEvent[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: DynamicTicket[S] => Pulse[T]) extends Base[T, S](_bud) with Event[T, S] {
 
     override protected[rescala] def reevaluate(ticket: S#Ticket[S]): ReevaluationResult[Pulse[T], S] = {
       val dt = ticket.dynamic()

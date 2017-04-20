@@ -11,7 +11,7 @@ import rescala.twoversion.{CommonPropagationImpl, GraphStruct, PropagationStruct
 import scala.collection.mutable
 
 trait LSStruct extends GraphStruct {
-  override type Type[P, S <: Struct] = LSPropagationStruct[P, S]
+  override type State[P, S <: Struct] = LSPropagationStruct[P, S]
 }
 
 
@@ -48,7 +48,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPr
   private type TState = LSStruct
 
 
-  override private[rescala] def makeStructState[P](initialValue: P, transient: Boolean, initialIncoming: Set[Reactive[TState]], hasState: Boolean): LSStruct#Type[P, TState] = {
+  override private[rescala] def makeStructState[P](initialValue: P, transient: Boolean, initialIncoming: Set[Reactive[TState]], hasState: Boolean): LSStruct#State[P, TState] = {
     val lock = new TurnLock[LSInterTurn]
     new LSPropagationStruct[P, LSStruct](initialValue, transient, lock, initialIncoming)
   }

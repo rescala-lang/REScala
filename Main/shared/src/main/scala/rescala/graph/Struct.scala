@@ -14,7 +14,7 @@ trait Struct {
     * @tparam P Pulse stored value type
     * @tparam R Reactive value type represented by the struct
     */
-  type Type[P, S <: Struct] <: ReadValue[P, S]
+  type State[P, S <: Struct] <: ReadValue[P, S]
 
   type Ticket[S <: Struct] = ATicket[S]
 }

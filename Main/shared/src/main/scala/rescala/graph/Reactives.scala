@@ -18,7 +18,7 @@ trait Reactive[S <: Struct] {
     *
     * @return Spore for this value
     */
-  protected[rescala] def state: S#Type[Value, S]
+  protected[rescala] def state: S#State[Value, S]
 
   protected[rescala] def reevaluate(ticket: S#Ticket[S]): ReevaluationResult[Value, S]
 
@@ -41,9 +41,9 @@ trait Pulsing[+P, S <: Struct] extends Reactive[S] {
 
 
 /** helper class implementing the state methods of reactive and pulsing */
-abstract class Base[P, S <: Struct](struct: S#Type[Pulse[P], S]) extends Pulsing[Pulse[P], S] {
+abstract class Base[P, S <: Struct](struct: S#State[Pulse[P], S]) extends Pulsing[Pulse[P], S] {
   override type Value = Pulse[P]
-  final override protected[rescala] def state: S#Type[Value, S] = struct
+  final override protected[rescala] def state: S#State[Value, S] = struct
 
   final protected[rescala] override def stable(implicit ticket: S#Ticket[S]): Pulse[P] = state.base
   final protected[rescala] override def pulse(implicit ticket: S#Ticket[S]): Pulse[P] = state.get

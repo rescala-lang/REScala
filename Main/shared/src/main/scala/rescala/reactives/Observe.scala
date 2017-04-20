@@ -19,7 +19,7 @@ object Observe {
 
   private val strongObserveReferences = scala.collection.mutable.HashMap[Observe[_], Boolean]()
 
-  private abstract class Obs[T, S <: Struct](bud: S#Type[Pulse[T], S], dependency: Pulsing[Pulse[T], S], fun: T => Unit, fail: Throwable => Unit) extends Base[T, S](bud) with Reactive[S] with Observe[S]  {
+  private abstract class Obs[T, S <: Struct](bud: S#State[Pulse[T], S], dependency: Pulsing[Pulse[T], S], fun: T => Unit, fail: Throwable => Unit) extends Base[T, S](bud) with Reactive[S] with Observe[S]  {
     this: Disconnectable[S] =>
 
     override protected[rescala] def reevaluate(ticket: S#Ticket[S]): ReevaluationResult[Value, S] = {
