@@ -24,7 +24,7 @@ class NaturalGraph[S <: rescala.graph.Struct] {
   var result: rescala.reactives.Signal[Int, S] = _
 
   @Setup
-  def setup(params: BenchmarkParams, size: Size, step: Step, engineParam: EngineParam[S], work: Workload): Unit = {
+  def setup(params: BenchmarkParams, step: Step, engineParam: EngineParam[S], work: Workload): Unit = {
     engine = engineParam.engine
     val localEngine = engine
     import localEngine._
