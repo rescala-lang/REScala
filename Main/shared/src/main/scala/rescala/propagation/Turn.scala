@@ -11,7 +11,8 @@ trait Turn[S <: Struct] {
   private[rescala] def makeStructState[P](initialValue: P, transient: Boolean = true, initialIncoming: Set[Reactive[S]] = Set.empty[Reactive[S]], hasState: Boolean = false): S#State[P, S]
 
 
-  def makeTicket(): S#Ticket[S]
+  def dynamic(): DynamicTicket[S] = new DynamicTicket[S](this)
+  def static(): StaticTicket[S] = new StaticTicket[S](this)
 
   /**
     * Called to allow turn to handle dynamic access to reactive elements

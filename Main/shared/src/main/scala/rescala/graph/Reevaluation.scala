@@ -48,7 +48,7 @@ trait Disconnectable[S <: Struct] extends Reactive[S] {
   }
 
 
-  abstract final override protected[rescala] def reevaluate(ticket: S#Ticket[S]): ReevaluationResult[Value, S] = {
+  abstract final override protected[rescala] def reevaluate(ticket: Turn[S]): ReevaluationResult[Value, S] = {
     if (disconnected) {
       ReevaluationResult.Dynamic(None, Set.empty)
     }

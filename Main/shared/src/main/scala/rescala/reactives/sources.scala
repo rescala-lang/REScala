@@ -15,8 +15,8 @@ class Source[T, S <: Struct](_bud: S#State[Pulse[T], S]) extends Base[T, S](_bud
     result = value
   }
 
-  final override protected[rescala] def reevaluate(ticket: S#Ticket[S]): ReevaluationResult[Value, S] = {
-    val res: ReevaluationResult[Pulse[T], S] = if (result == null || result == stable(ticket))
+  final override protected[rescala] def reevaluate(turn: Turn[S]): ReevaluationResult[Value, S] = {
+    val res: ReevaluationResult[Pulse[T], S] = if (result == null || result == turn.before(this))
       ReevaluationResult.Static(Pulse.NoChange)
     else ReevaluationResult.Static[T, S](result)
     result = null
@@ -59,9 +59,7 @@ final class Var[A, S <: Struct](_bud: S#State[Pulse[A], S]) extends Source[A, S]
   def set(value: A)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) {admit(value)(_)}
 
   def transform(f: A => A)(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this) { t =>
-    val ticket = t.makeTicket()
-
-    admit(f(pulse(ticket).get))(t) }
+    admit(f(t.before(this).get))(t) }
 
   def setEmpty()(implicit fac: Engine[S, Turn[S]]): Unit = fac.plan(this)(t => admitPulse(Pulse.empty)(t))
 

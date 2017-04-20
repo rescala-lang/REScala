@@ -59,7 +59,6 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPr
   /** lock all reactives reachable from the initial sources
     * retry when acquire returns false */
   override def preparationPhase(initialWrites: Traversable[Reactive[TState]]): Unit = {
-    implicit val ticket = makeTicket()
     val stack = new java.util.ArrayDeque[Reactive[TState]](10)
     initialWrites.foreach(stack.offer)
 
@@ -125,12 +124,11 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPr
   }
 
   def evaluate(head: Reactive[TState]): Unit = {
-    val ticket = makeTicket()
     if (head.state.anyInputChanged != this) done(head, hasChanged = false)
     else {
-      head.reevaluate(ticket) match {
+      head.reevaluate(this) match {
         case Static(value: Option[head.Value]) =>
-          val hasChanged = value.isDefined && head.state.base(ticket) != value.get
+          val hasChanged = value.isDefined && head.state.base(token) != value.get
           if (hasChanged) writeState(head)(value.get)
           done(head, hasChanged)
 
@@ -138,7 +136,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPr
           val diff = DepDiff(deps, head.state.incoming(this))
           applyDiff(head, diff)
           head.state.counter = recount(diff.novel.iterator)
-          val hasChanged = value.isDefined && head.state.base(ticket) != value.get
+          val hasChanged = value.isDefined && head.state.base(token) != value.get
 
           if (head.state.counter == 0) {
             if (hasChanged) writeState(head)(value.get)
@@ -162,7 +160,6 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPr
     * is executed, because the constructor typically accesses the dependencies to create its initial value.
     */
   override def create[T <: Reactive[TState]](dependencies: Set[Reactive[TState]], dynamic: Boolean)(f: => T): T = {
-    implicit val ticket = makeTicket()
     dependencies.map(acquireShared)
     val reactive = f
     val owner = reactive.state.lock.tryLock(key)

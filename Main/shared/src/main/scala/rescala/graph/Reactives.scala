@@ -1,6 +1,6 @@
 package rescala.graph
 
-import rescala.propagation.StaticTicket
+import rescala.propagation.{StaticTicket, Turn}
 import rescala.util.Globals
 
 /**
@@ -20,7 +20,7 @@ trait Reactive[S <: Struct] {
     */
   protected[rescala] def state: S#State[Value, S]
 
-  protected[rescala] def reevaluate(ticket: S#Ticket[S]): ReevaluationResult[Value, S]
+  protected[rescala] def reevaluate(turn: Turn[S]): ReevaluationResult[Value, S]
 
   /** for debugging */
   private val name = Globals.declarationLocationName()
@@ -35,9 +35,9 @@ trait Reactive[S <: Struct] {
   */
 trait Pulsing[+P, S <: Struct] extends Reactive[S] {
   override type Value <: P
-  protected[rescala] def stable(implicit ticket: S#Ticket[S]): P
-  protected[rescala] def pulse(implicit ticket: S#Ticket[S]): P
-  protected[rescala] def pulse(implicit ticket: StaticTicket[S]): P = pulse(ticket.ticket)
+  protected[rescala] def stable(implicit turn: Turn[S]): P
+  protected[rescala] def pulse(implicit turn: Turn[S]): P
+  protected[rescala] def pulse(ticket: StaticTicket[S]): P = pulse(ticket.turn)
 }
 
 
@@ -46,6 +46,6 @@ abstract class Base[P, S <: Struct](struct: S#State[Pulse[P], S]) extends Pulsin
   override type Value = Pulse[P]
   final override protected[rescala] def state: S#State[Value, S] = struct
 
-  final protected[rescala] override def stable(implicit ticket: S#Ticket[S]): Pulse[P] = ticket.turn().before(this)
-  final protected[rescala] override def pulse(implicit ticket: S#Ticket[S]): Pulse[P] = ticket.turn().after(this)
+  final protected[rescala] override def stable(implicit turn: Turn[S]): Pulse[P] = turn.before(this)
+  final protected[rescala] override def pulse(implicit turn: Turn[S]): Pulse[P] = turn.after(this)
 }

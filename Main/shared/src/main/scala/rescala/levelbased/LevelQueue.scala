@@ -55,7 +55,7 @@ final private[levelbased] class LevelQueue[S <: LevelStruct](evaluator: LevelQue
       }
     }
     else if (reevaluate) {
-      evaluator.evaluate(head, turn.makeTicket())
+      evaluator.evaluate(head)
     }
   }
 
@@ -96,7 +96,7 @@ final private[levelbased] class LevelQueue[S <: LevelStruct](evaluator: LevelQue
 private[levelbased] object LevelQueue {
 
   trait Evaluator[S <: Struct] {
-    def evaluate(r: Reactive[S], ticket: S#Ticket[S]): Unit
+    def evaluate(r: Reactive[S]): Unit
   }
 
   private final case class QueueElement[S <: Struct](level: Int, reactive: Reactive[S], var minLevel: Int, var needsEvaluate: Boolean) extends Comparable[QueueElement[S]] {

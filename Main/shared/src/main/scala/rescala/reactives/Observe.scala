@@ -22,7 +22,7 @@ object Observe {
   private abstract class Obs[T, S <: Struct](bud: S#State[Pulse[T], S], dependency: Pulsing[Pulse[T], S], fun: T => Unit, fail: Throwable => Unit) extends Base[T, S](bud) with Reactive[S] with Observe[S]  {
     this: Disconnectable[S] =>
 
-    override protected[rescala] def reevaluate(ticket: S#Ticket[S]): ReevaluationResult[Value, S] = {
+    override protected[rescala] def reevaluate(ticket: Turn[S]): ReevaluationResult[Value, S] = {
       scheduleHandler(this, ticket, dependency, fun, fail)
       ReevaluationResult.Static(Pulse.NoChange)
     }
@@ -32,9 +32,8 @@ object Observe {
     }
   }
 
-  private def scheduleHandler[T, S <: Struct](obs: Obs[T,S], ticket:S#Ticket[S], dependency: Pulsing[Pulse[T], S], fun: T => Unit, fail: Throwable => Unit) = {
-    val turn = ticket.turn()
-    dependency.pulse(ticket) match {
+  private def scheduleHandler[T, S <: Struct](obs: Obs[T,S], turn:Turn[S], dependency: Pulsing[Pulse[T], S], fun: T => Unit, fail: Throwable => Unit) = {
+    dependency.pulse(turn) match {
       case Pulse.NoChange =>
       case Pulse.empty =>
       case Pulse.Change(v) => turn.observe(() => fun(v))
@@ -48,8 +47,7 @@ object Observe {
     val incoming = Set[Reactive[S]](dependency)
     maybe(initTurn => initTurn.create(incoming) {
       val obs = new Obs(initTurn.makeStructState[Pulse[T]](Pulse.NoChange, initialIncoming = incoming, transient = false), dependency, fun, fail) with Disconnectable[S]
-      val ticket = initTurn.makeTicket
-      scheduleHandler(obs, ticket, dependency, fun, fail)
+      scheduleHandler(obs, initTurn, dependency, fun, fail)
       obs
     })
   }

@@ -2,6 +2,7 @@ package rescala.stm
 
 import rescala.graph.{Reactive, Struct}
 import rescala.levelbased.{LevelBasedPropagation, LevelStruct}
+import rescala.twoversion.Token
 
 import scala.concurrent.stm.{InTxn, atomic}
 
@@ -17,7 +18,7 @@ class STMTurn extends LevelBasedPropagation[STMTurn] with LevelStruct {
   override def releasePhase(): Unit = ()
   // this is unsafe when used improperly
   def inTxn: InTxn = atomic(identity)
-  override val token = inTxn
+  override val token = inTxn.asInstanceOf[Token]
 }
 
 

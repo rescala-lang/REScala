@@ -71,7 +71,6 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
   /** lock all reactives reachable from the initial sources
     * retry when acquire returns false */
   override def preparationPhase(initialWrites: Traversable[Reactive[TState]]): Unit = {
-    implicit val ticket = makeTicket()
     val toVisit = new java.util.ArrayDeque[Reactive[TState]](10)
     initialWrites.foreach(toVisit.offer)
     val priorKey = priorTurn.map(_.key).orNull

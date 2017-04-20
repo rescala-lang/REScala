@@ -5,7 +5,7 @@ import rescala.reactives.{Event, Signal}
 
 import scala.language.implicitConversions
 
-final class DynamicTicket[S <: Struct](val turn: Turn[S], val ticket: S#Ticket[S]) {
+final class DynamicTicket[S <: Struct](val turn: Turn[S]) {
   private[rescala] var collectedDependencies: Set[Reactive[S]] = Set.empty
 
   def depend[A](reactive: Signal[A, S]): A = {
@@ -17,9 +17,9 @@ final class DynamicTicket[S <: Struct](val turn: Turn[S], val ticket: S#Ticket[S
   def depend[A](reactive: Event[A, S]): Option[A] = {
     collectedDependencies += reactive
     turn.dynamicDependencyInteraction(reactive)
-    reactive.pulse(ticket).toOption
+    turn.after(reactive).toOption
   }
 }
 
-class StaticTicket[S <: Struct](val turn: Turn[S],  val ticket: S#Ticket[S]) {
+class StaticTicket[S <: Struct](val turn: Turn[S]) {
 }

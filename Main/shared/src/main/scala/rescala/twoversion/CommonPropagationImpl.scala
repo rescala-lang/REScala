@@ -1,7 +1,6 @@
 package rescala.twoversion
 
-import rescala.graph.{ATicket, DepDiff, Pulsing, Reactive}
-import rescala.propagation.{DynamicTicket, StaticTicket}
+import rescala.graph.{DepDiff, Pulsing, Reactive}
 
 import scala.util.control.NonFatal
 
@@ -14,13 +13,7 @@ import scala.util.control.NonFatal
 trait CommonPropagationImpl[S <: GraphStruct] extends TwoVersionPropagation[S] {
   outer =>
 
-  def makeTicket(): S#Ticket[S] = new ATicket[S] {
-    override def dynamic(): DynamicTicket[S] = new DynamicTicket[S](turn, this)
-    override def static(): StaticTicket[S] = new StaticTicket[S](turn, this)
-    override def turn(): CommonPropagationImpl[S] = outer
-  }
-
-  val token: AnyRef = new Object
+  val token: Token = Token()
 
   private val toCommit = scala.collection.mutable.ArrayBuffer[Committable[S]]()
   private val observers = scala.collection.mutable.ArrayBuffer[() => Unit]()

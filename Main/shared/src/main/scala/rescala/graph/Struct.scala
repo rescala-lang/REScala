@@ -1,8 +1,6 @@
 package rescala.graph
 
-import rescala.propagation.{DynamicTicket, StaticTicket, Turn}
-
-import scala.language.{existentials, higherKinds, implicitConversions}
+import scala.language.higherKinds
 
 /**
   * Wrapper that adds a level of indirection for classes having a struct type dependency.
@@ -16,13 +14,6 @@ trait Struct {
     */
   type State[P, S <: Struct]
 
-  type Ticket[S <: Struct] = ATicket[S]
-}
-
-trait ATicket[S <: Struct] {
-  def dynamic(): DynamicTicket[S]
-  def static(): StaticTicket[S]
-  def turn(): Turn[S]
 }
 
 

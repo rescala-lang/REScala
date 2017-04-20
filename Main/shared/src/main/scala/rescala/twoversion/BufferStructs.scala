@@ -4,6 +4,7 @@ import rescala.graph.{Reactive, Struct}
 import rescala.propagation.Turn
 import scala.language.higherKinds
 
+
 /**
   * Spore that implements both the buffered pulse and the buffering capabilities itself.
   *
@@ -12,18 +13,18 @@ import scala.language.higherKinds
 trait BufferedValueStruct[P, S <: Struct] extends ReadWriteValue[P, S] with Committable[S] {
   protected var current: P
   protected val transient: Boolean
-  protected var owner: AnyRef = null
+  protected var owner: Token = null
   private var update: P = _
 
-  override def write(value: P, token: AnyRef): Boolean = {
+  override def write(value: P, token: Token): Boolean = {
     assert(owner == null || owner == token, s"buffer owned by $owner written by $token")
     update = value
     val res = owner == null
     owner = token
     res
   }
-  override def get(token: AnyRef): P = { if (token eq owner) update else current }
-  override def base(token: AnyRef): P = current
+  override def get(token: Token): P = { if (token eq owner) update else current }
+  override def base(token: Token): P = current
 
   override def commit(implicit turn: TwoVersionPropagation[S]): Unit = {
     if (!transient) current = update
@@ -75,9 +76,12 @@ trait GraphStructType[S <: Struct] {
   def drop(reactive: Reactive[S])(implicit turn: Turn[S]): Unit
 }
 
+case class Token()
+
+
 trait ReadValue[P, S <: Struct] {
-  def base(token: AnyRef): P
-  def get(token: AnyRef): P
+  def base(token: Token): P
+  def get(token: Token): P
 }
 
 /**
@@ -87,7 +91,7 @@ trait ReadValue[P, S <: Struct] {
   * @tparam P Pulse stored value type
   */
 trait ReadWriteValue[P, S <: Struct] extends ReadValue[P, S] with Committable[S] {
-  def write(value: P, token: AnyRef): Boolean
+  def write(value: P, token: Token): Boolean
 }
 
 

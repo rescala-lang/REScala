@@ -14,13 +14,13 @@ trait LevelBasedPropagation[S <: LevelStruct] extends CommonPropagationImpl[S] w
 
   val levelQueue = new LevelQueue[S](this)(this)
 
-  def evaluate(head: Reactive[S], ticket: S#Ticket[S]): Unit = {
+  def evaluate(head: Reactive[S]): Unit = {
 
     def requeue(changed: Boolean, level: Int, redo: Boolean): Unit =
       if (redo) levelQueue.enqueue(level, changed)(head)
       else if (changed) head.state.outgoing(this).foreach(levelQueue.enqueue(level, changed))
 
-    head.reevaluate(ticket) match {
+    head.reevaluate(this) match {
       case Static(value) =>
         if (value.isDefined) {
           writeState(head)(value.get)
@@ -45,21 +45,20 @@ trait LevelBasedPropagation[S <: LevelStruct] extends CommonPropagationImpl[S] w
 
 
   override def create[T <: Reactive[S]](dependencies: Set[Reactive[S]], dynamic: Boolean)(f: => T): T = {
-    implicit val ticket: S#Ticket[S] = makeTicket()
 
     val reactive = f
     val level = ensureLevel(reactive, dependencies)
-    if (dynamic) evaluate(reactive, ticket)
+    if (dynamic) evaluate(reactive)
     else {
       dependencies.foreach(discover(reactive))
       if (level <= levelQueue.currentLevel() && dependencies.exists(_evaluated.contains)) {
-        evaluate(reactive, ticket)
+        evaluate(reactive)
       }
     }
     reactive
   }
 
-  def ensureLevel(dependant: Reactive[S], dependencies: Set[Reactive[S]])(implicit ticket: S#Ticket[S]): Int =
+  def ensureLevel(dependant: Reactive[S], dependencies: Set[Reactive[S]]): Int =
     if (dependencies.isEmpty) 0
     else {
       val newLevel = dependencies.map(_.state.level(this)).max + 1
@@ -70,8 +69,6 @@ trait LevelBasedPropagation[S <: LevelStruct] extends CommonPropagationImpl[S] w
   override def dynamicDependencyInteraction(dependency: Reactive[S]): Unit = ()
 
   override def preparationPhase(initialWrites: Traversable[Reactive[S]]): Unit = {
-    implicit val ticket: S#Ticket[S] = makeTicket()
-
     initialWrites.foreach { reactive =>
       levelQueue.enqueue(reactive.state.level(this))(reactive)
     }

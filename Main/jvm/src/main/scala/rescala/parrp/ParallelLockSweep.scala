@@ -47,12 +47,11 @@ class ParallelLockSweep(backoff: Backoff, ex: Executor, engine: EngineImpl[LSStr
   }
 
   override def evaluate(head: Reactive[TState]): Unit = {
-    val ticket = makeTicket()
-    val res = head.reevaluate(ticket)
+    val res = head.reevaluate(this)
     synchronized {
       res match {
         case Static(value) =>
-          val hasChanged = value.isDefined && value.get != head.state.base(ticket)
+          val hasChanged = value.isDefined && value.get != head.state.base(token)
           if (hasChanged) writeState(head)(value.get)
           done(head, hasChanged)
 
@@ -62,7 +61,7 @@ class ParallelLockSweep(backoff: Backoff, ex: Executor, engine: EngineImpl[LSStr
           head.state.counter = recount(diff.novel.iterator)
 
           if (head.state.counter == 0) {
-            val hasChanged = value.isDefined && value != head.state.base(ticket)
+            val hasChanged = value.isDefined && value != head.state.base(token)
             if (hasChanged) writeState(head)(value.get)
             done(head, hasChanged)
           }
