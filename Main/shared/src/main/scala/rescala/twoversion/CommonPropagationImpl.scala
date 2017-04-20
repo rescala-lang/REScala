@@ -20,7 +20,7 @@ trait CommonPropagationImpl[S <: GraphStruct] extends TwoVersionPropagation[S] {
     override def turn(): CommonPropagationImpl[S] = outer
   }
 
-  val token: AnyRef = new Object { override val toString: String = outer.toString }
+  val token: AnyRef = new Object
 
   private val toCommit = scala.collection.mutable.ArrayBuffer[Committable[S]]()
   private val observers = scala.collection.mutable.ArrayBuffer[() => Unit]()

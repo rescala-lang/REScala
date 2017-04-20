@@ -5,7 +5,7 @@ import rescala.levelbased.LevelStructType
 import rescala.propagation.Turn
 import rescala.twoversion.{ReadWriteValue, TwoVersionPropagation}
 
-import scala.concurrent.stm.{InTxn, Ref, TxnLocal}
+import scala.concurrent.stm.{InTxn, Ref, TxnLocal, atomic}
 
 class STMStructType[P, S <: Struct](initialValue: P, transient: Boolean, initialIncoming: Set[Reactive[S]]) extends LevelStructType[S] with ReadWriteValue[P, S] {
 
@@ -13,6 +13,12 @@ class STMStructType[P, S <: Struct](initialValue: P, transient: Boolean, initial
     case stmTurn: STMTurn => stmTurn.inTxn
     case _ => throw new IllegalStateException(s"$turn has invalid type for $this")
   }
+
+  def inTxn(token: AnyRef): InTxn = token match {
+    case stmTurn: InTxn => stmTurn
+    case _ => throw new IllegalStateException(s"$token has invalid type for $this")
+  }
+
 
   val _level: Ref[Int] = Ref(0)
   val _outgoing: Ref[Set[Reactive[S]]] = Ref(Set.empty)
@@ -34,10 +40,14 @@ class STMStructType[P, S <: Struct](initialValue: P, transient: Boolean, initial
     if (!transient && updateValue.isDefined) current.set(updateValue.get)
   })
 
-  override def set(value: P, turn: TwoVersionPropagation[S]): Unit = {
-    update.set(Some(value))(inTxn(turn))
+  override def write(value: P, token: AnyRef): Boolean = {
+    update.set(Some(value))(inTxn(token))
+    false
   }
-  override def base(token: Any): P = current.get(inTxn(token.turn()))
-  override def get(token: Any): P = update.get(inTxn(token.turn())).getOrElse(current.get(inTxn(token.turn())))
+  override def base(token: AnyRef): P = current.get(inTxn(token))
+  override def get(token: AnyRef): P = update.get(inTxn(token)).getOrElse(current.get(inTxn(token)))
 
+
+  override def commit(implicit turn: TwoVersionPropagation[S]): Unit = {}
+  override def release(implicit turn: TwoVersionPropagation[S]): Unit = {}
 }
