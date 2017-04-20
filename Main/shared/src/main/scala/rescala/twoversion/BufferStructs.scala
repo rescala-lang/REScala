@@ -80,7 +80,7 @@ trait GraphStructType[S <: Struct] {
 case class Token(payload: AnyRef = null)
 
 
-trait ReadValue[P, S <: Struct] {
+trait ReadValue[P] {
   def base(token: Token): P
   def get(token: Token): P
 }
@@ -91,7 +91,7 @@ trait ReadValue[P, S <: Struct] {
   *
   * @tparam P Pulse stored value type
   */
-trait ReadWriteValue[P, S <: Struct] extends ReadValue[P, S] with Committable[S] {
+trait ReadWriteValue[P, S <: Struct] extends ReadValue[P] with Committable[S] {
   def write(value: P, token: Token): Boolean
 }
 
