@@ -28,14 +28,14 @@ trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] 
 
 
   /** collect results from a partial function */
-  final def collect[U](pf: PartialFunction[T, U])(implicit ticket: TurnSource[S]): Event[U, S] = Events.static(s"(collect $this)", this) { turn => pulse(turn).collect(pf) }
+  final def collect[U](pf: PartialFunction[T, U])(implicit ticket: TurnSource[S]): Event[U, S] = Events.static(s"(collect $this)", this) { st => st.turn.after(this).collect(pf) }
 
   /** add an observer */
   final def +=(react: T => Unit)(implicit ticket: TurnSource[S]): Observe[S] = observe(react)(ticket)
 
 
-  final def recover[R >: T](onFailure: PartialFunction[Throwable,Option[R]])(implicit ticket: TurnSource[S]): Event[R, S] = Events.static(s"(recover $this)", this) { turn =>
-    pulse(turn) match {
+  final def recover[R >: T](onFailure: PartialFunction[Throwable,Option[R]])(implicit ticket: TurnSource[S]): Event[R, S] = Events.static(s"(recover $this)", this) { st =>
+    st.turn.after(this) match {
       case Exceptional(t) => onFailure.applyOrElse[Throwable, Option[R]](t, throw _).fold[Pulse[R]](Pulse.NoChange)(Pulse.Change(_))
       case other => other
     }
@@ -48,21 +48,21 @@ trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] 
   /** Events disjunction. */
   final def ||[U >: T](other: Event[U, S])(implicit ticket: TurnSource[S]): Event[U, S] = {
     Events.static(s"(or $this $other)", this, other) { turn =>
-      val tp = this.pulse(turn)
-      if (tp.isChange) tp else other.pulse(turn)
+      val tp = turn.turn.after(this)
+      if (tp.isChange) tp else turn.turn.after(other)
     }
   }
 
   /** EV filtered with a predicate */
-  final def filter(pred: T => Boolean)(implicit ticket: TurnSource[S]): Event[T, S] = Events.static(s"(filter $this)", this) { turn => pulse(turn).filter(pred) }
+  final def filter(pred: T => Boolean)(implicit ticket: TurnSource[S]): Event[T, S] = Events.static(s"(filter $this)", this) { st => st.turn.after(this).filter(pred) }
   /** EV filtered with a predicate */
   final def &&(pred: T => Boolean)(implicit ticket: TurnSource[S]): Event[T, S] = filter(pred)
 
   /** EV is triggered except if the other one is triggered */
   final def \[U](except: Event[U, S])(implicit ticket: TurnSource[S]): Event[T, S] = {
     Events.static(s"(except $this  $except)", this, except) { turn =>
-      except.pulse(turn) match {
-        case NoChange => this.pulse(turn)
+      turn.turn.after(except) match {
+        case NoChange => turn.turn.after(this)
         case Change(_) => Pulse.NoChange
         case ex@Exceptional(_) => ex
       }
@@ -73,8 +73,8 @@ trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] 
   final def and[U, R](other: Event[U, S])(merger: (T, U) => R)(implicit ticket: TurnSource[S]): Event[R, S] = {
     Events.static(s"(and $this $other)", this, other) { turn =>
       for {
-        left <- this.pulse(turn)
-        right <- other.pulse(turn)
+        left <- turn.turn.after(this)
+        right <- turn.turn.after(other)
       } yield {merger(left, right)}
     }
   }
@@ -85,14 +85,14 @@ trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] 
   /** Event disjunction with a merge method creating a tuple of both optional event parameters wrapped */
   final def zipOuter[U](other: Event[U, S])(implicit ticket: TurnSource[S]): Event[(Option[T], Option[U]), S] = {
     Events.static(s"(zipOuter $this $other)", this, other) { turn =>
-      val left = this.pulse(turn)
-      val right = other.pulse(turn)
+      val left = turn.turn.after(this)
+      val right = turn.turn.after(other)
       if(right.isChange || left.isChange) Change(left.toOption -> right.toOption) else NoChange
     }
   }
 
   /** Transform the event parameter */
-  final def map[U](mapping: T => U)(implicit ticket: TurnSource[S]): Event[U, S] = Events.static(s"(map $this)", this) { turn => pulse(turn).map(mapping) }
+  final def map[U](mapping: T => U)(implicit ticket: TurnSource[S]): Event[U, S] = Events.static(s"(map $this)", this) {  st => st.turn.after(this).map(mapping) }
 
 
   /** Drop the event parameter; equivalent to map((_: Any) => ()) */
@@ -107,8 +107,8 @@ trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] 
 
   /** folds events with a given fold function to create a Signal allowing recovery of exceptional states by ignoring the stable value */
   final def lazyFold[A](init: => A)(folder: (=> A, => T) => A)(implicit ticket: TurnSource[S]): Signal[A, S] = ticket { initialTurn =>
-    Signals.Impl.makeFold[A, S](Set[Reactive[S]](this), _ => init) { (turn, currentValue) =>
-      pulse(turn).toOption.fold(currentValue)(value => folder(currentValue, value))
+    Signals.Impl.makeFold[A, S](Set[Reactive[S]](this), _ => init) { (st, currentValue) =>
+      st.turn.after(this).toOption.fold(currentValue)(value => folder(currentValue, value))
     }(initialTurn)
   }
 
@@ -161,10 +161,10 @@ trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] 
   }
 
   /** Return a Signal that is updated only when e fires, and has the value of the signal s */
-  final def snapshot[A](s: Signal[A, S])(implicit ticket: TurnSource[S]): Signal[A, S] = ticket { turn =>
-    Signals.Impl.makeFold[A, S](Set[Reactive[S]](this, s), st => s.pulse(st).get) { (t, current) =>
-      pulse(t).toOption.fold(current)(_ => s.pulse(t).get)
-    }(turn)
+  final def snapshot[A](s: Signal[A, S])(implicit ticket: TurnSource[S]): Signal[A, S] = ticket {
+    Signals.Impl.makeFold[A, S](Set[Reactive[S]](this, s), st => st.turn.after(s).get) { (st, current) =>
+      st.turn.after(this).toOption.fold(current)(_ => st.turn.after(s).get)
+    }
   }
 
 

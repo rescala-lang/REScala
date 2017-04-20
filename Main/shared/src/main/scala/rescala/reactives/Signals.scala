@@ -15,7 +15,7 @@ object Signals extends GeneratedSignalLift {
       extends Base[T, S](_bud) with Signal[T, S] {
 
       override protected[rescala] def reevaluate(turn: Turn[S]): ReevaluationResult[Value, S] = {
-        val currentPulse: Pulse[T] = stable(turn)
+        val currentPulse: Pulse[T] = turn.before(this)
         def newValue = expr(turn.static, currentPulse.get)
         val newPulse = Pulse.tryCatch(Pulse.diffPulse(newValue, currentPulse))
         ReevaluationResult.Static(newPulse)
@@ -25,7 +25,7 @@ object Signals extends GeneratedSignalLift {
     private abstract class DynamicSignal[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: DynamicTicket[S] => T) extends Base[T, S](_bud) with Signal[T, S] {
       override protected[rescala] def reevaluate(turn: Turn[S]): ReevaluationResult[Value, S] = {
         val dt = turn.dynamic()
-        val newPulse = Pulse.tryCatch { Pulse.diffPulse(expr(dt), stable(turn)) }
+        val newPulse = Pulse.tryCatch { Pulse.diffPulse(expr(dt), turn.before(this)) }
         ReevaluationResult.Dynamic(newPulse, dt.collectedDependencies)
       }
     }
@@ -57,7 +57,7 @@ object Signals extends GeneratedSignalLift {
   }
 
   def lift[A, S <: Struct, R](los: Seq[Signal[A, S]])(fun: Seq[A] => R)(implicit maybe: TurnSource[S]): Signal[R, S] = {
-    static(los: _*){t => fun(los.map(_.pulse(t).get))}
+    static(los: _*){t => fun(los.map(s => t.turn.after(s).get))}
   }
 
   /** creates a signal that has dynamic dependencies (which are detected at runtime with Signal.apply(turn)) */

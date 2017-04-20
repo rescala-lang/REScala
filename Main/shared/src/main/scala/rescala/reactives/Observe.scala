@@ -33,7 +33,7 @@ object Observe {
   }
 
   private def scheduleHandler[T, S <: Struct](obs: Obs[T,S], turn:Turn[S], dependency: Pulsing[Pulse[T], S], fun: T => Unit, fail: Throwable => Unit) = {
-    dependency.pulse(turn) match {
+    turn.after(dependency) match {
       case Pulse.NoChange =>
       case Pulse.empty =>
       case Pulse.Change(v) => turn.observe(() => fun(v))

@@ -42,7 +42,7 @@ trait Signal[+A, S <: Struct] extends Pulsing[Pulse[A], S] with Observable[A, S]
   }
 
   final def recover[R >: A](onFailure: PartialFunction[Throwable,R])(implicit ticket: TurnSource[S]): Signal[R, S] = Signals.static(this) { turn =>
-    try this.pulse(turn).get catch {
+    try turn.turn.after(this).get catch {
       case NonFatal(e) => onFailure.applyOrElse[Throwable, R](e, throw _)
     }
   }
@@ -50,8 +50,8 @@ trait Signal[+A, S <: Struct] extends Pulsing[Pulse[A], S] with Observable[A, S]
 
   final def abortOnError()(implicit ticket: TurnSource[S]): Signal[A, S] = recover{case t => throw new UnhandledFailureException(this, t)}
 
-  final def withDefault[R >: A](value: R)(implicit ticket: TurnSource[S]): Signal[R, S] = Signals.static(this) { (turn) =>
-    try pulse(turn).get catch {
+  final def withDefault[R >: A](value: R)(implicit ticket: TurnSource[S]): Signal[R, S] = Signals.static(this) { (st) =>
+    try st.turn.after(this).get catch {
       case EmptySignalControlThrowable => value
     }
   }
@@ -75,8 +75,8 @@ trait Signal[+A, S <: Struct] extends Pulsing[Pulse[A], S] with Observable[A, S]
     * Create an event that fires every time the signal changes. The value associated
     * to the event is the new value of the signal
     */
-  final def changed(implicit ticket: TurnSource[S]): Event[A, S] = Events.static(s"(changed $this)", this) { turn =>
-    pulse(turn) match {
+  final def changed(implicit ticket: TurnSource[S]): Event[A, S] = Events.static(s"(changed $this)", this) { st =>
+    st.turn.after(this) match {
       case Pulse.empty => Pulse.NoChange
       case other => other
     }
