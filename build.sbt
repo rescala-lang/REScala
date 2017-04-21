@@ -32,8 +32,8 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Main"))
   .settings(
     name := "rescala",
     resolvers += Resolver.bintrayRepo("pweisenburger", "maven"),
-    libraryDependencies += "de.tuda.stg" %% "retypecheck" % "0.1.0",
-    libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+    libraryDependencies += "de.tuda.stg" %% "retypecheck" % "0.2.0",
+    libraryDependencies += scalaOrganization.value % "scala-reflect" % scalaVersion.value % "provided",
 
     sourceGenerators in Compile += Def.task {
       val file = (sourceManaged in Compile).value / "rescala" / "reactives" / "GeneratedSignalLift.scala"

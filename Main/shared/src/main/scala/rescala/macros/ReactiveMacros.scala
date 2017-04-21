@@ -91,19 +91,23 @@ object ReactiveMacros {
             "since it potentially creates a new reactive every time the " +
             "signal is evaluated which can lead to unintentional behavior")
 
+      private val signal = c.mirror staticClass "_root_.rescala.reactives.Signal"
+
+      private val event = c.mirror staticClass "_root_.rescala.reactives.Event"
+
       private def isReactive(tree: Tree) =
         if (tree.tpe == null) { treeTypeNullWarning(); false }
         else
           !(tree.tpe <:< definitions.NullTpe) &&
           !(tree.tpe <:< definitions.NothingTpe) &&
-          (tree.tpe <:< typeOf[Signal[_, _]] || tree.tpe <:< typeOf[Event[_, _]])
+          ((tree.tpe.baseClasses contains signal) || (tree.tpe.baseClasses contains event))
 
       private def isStatefulReactive(tree: Tree) =
         if (tree.tpe == null) { treeTypeNullWarning(); false }
         else
           !(tree.tpe <:< definitions.NullTpe) &&
           !(tree.tpe <:< definitions.NothingTpe) &&
-          tree.tpe <:< typeOf[Signal[_, _]]
+          (tree.tpe.baseClasses contains signal)
 
       override def transform(tree: Tree): Tree =
         tree match {
