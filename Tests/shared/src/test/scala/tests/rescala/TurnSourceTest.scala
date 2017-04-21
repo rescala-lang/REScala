@@ -1,14 +1,11 @@
 package tests.rescala
 
-import rescala.engine.Turn
-
-
 class TurnSourceTest extends RETests {
 
 
   /* this test uses some shady planned()(identity) to get the turn object out of the transaction
    * you should not do this. */
-  def getTurn[S2 <: rescala.graph.Struct](implicit engine: rescala.engine.Engine[S2, Turn[S2]]): Turn[S2] = engine.transaction()(identity)
+  def getTurn[S2 <: rescala.graph.Struct](implicit engine: rescala.engine.Engine[S2, rescala.engine.Turn[S2]]): rescala.engine.Turn[S2] = engine.transaction()(identity)
 
   allEngines("none Dynamic No Implicit") { engine => import engine._
     assert(implicitly[TurnSource].self === Right(engine))
