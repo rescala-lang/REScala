@@ -14,7 +14,7 @@ trait LevelBasedPropagation[S <: LevelStruct] extends CommonPropagationImpl[S] w
 
   val levelQueue = new LevelQueue[S](this)(this)
 
-  def evaluate(head: Reactive[S]): Unit = {
+  override def evaluate(head: Reactive[S]): Unit = {
 
     def requeue(changed: Boolean, level: Int, redo: Boolean): Unit =
       if (redo) levelQueue.enqueue(level, changed)(head)
