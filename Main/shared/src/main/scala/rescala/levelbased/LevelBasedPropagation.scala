@@ -15,27 +15,25 @@ trait LevelBasedPropagation[S <: LevelStruct] extends CommonPropagationImpl[S] w
   val levelQueue = new LevelQueue[S](this)(this)
 
   override def evaluate(head: Reactive[S]): Unit = {
-
-    def requeue(changed: Boolean, level: Int, redo: Boolean): Unit =
-      if (redo) levelQueue.enqueue(level, changed)(head)
-      else if (changed) head.state.outgoing(this).foreach(levelQueue.enqueue(level, changed))
+    def reevOut(level: Int, value: Option[head.Value]) = {
+      if (value.isDefined) {
+        writeState(head)(value.get)
+        head.state.outgoing(this).foreach(levelQueue.enqueue(level, true))
+      }
+    }
 
     head.reevaluate(this) match {
-      case Static(value) =>
-        if (value.isDefined) {
-          writeState(head)(value.get)
-          requeue(changed = true, level = -42, redo = false)
-        }
+      case Static(value) => reevOut(-42, value)
       case Dynamic(value, deps) =>
-        val diff = DepDiff(deps, head.state.incoming(this))
-        applyDiff(head, diff)
-        val newLevel = maximumLevel(diff.novel) + 1
+        val newLevel = maximumLevel(deps) + 1
         val redo = head.state.level(this) < newLevel
-        val hasChanged = value.isDefined
-        if (!redo && hasChanged) {
-          writeState(head)(value.get)
+        if(redo) {
+          levelQueue.enqueue(newLevel, true)(head)
+        } else {
+          val diff = DepDiff(deps, head.state.incoming(this))
+          applyDiff(head, diff)
+          reevOut(newLevel, value)
         }
-        requeue(hasChanged, newLevel, redo)
     }
     _evaluated ::= head
 

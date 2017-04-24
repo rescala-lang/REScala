@@ -105,13 +105,12 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
 
     val owner = acquireShared(source)
     if (owner ne key) {
-      if (!source.state.lock.isWriteLock) {
+      if (!source.state.outgoing(this).contains(sink)) {
         owner.turn.discover(sink)(source)
-      }
-      else if (!source.state.outgoing(this).contains(sink)) {
-        owner.turn.discover(sink)(source)
-        owner.turn.admit(sink)
-        key.lockKeychain { _.addFallthrough(owner) }
+        if (source.state.lock.isWriteLock) {
+          owner.turn.admit(sink)
+          key.lockKeychain { _.addFallthrough(owner) }
+        }
       }
     }
     else {
@@ -126,9 +125,12 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
     val owner = acquireShared(source)
     if (owner ne key) {
       owner.turn.drop(sink)(source)
-      if (!source.state.lock.isWriteLock) {
+      if (source.state.lock.isWriteLock) {
         key.lockKeychain(_.removeFallthrough(owner))
-        if (!sink.state.incoming(this).exists(_.state.lock.isOwner(owner))) owner.turn.forget(sink)
+        if (!sink.state.incoming(this).exists{ inc =>
+          val lock = inc.state.lock
+          lock.isOwner(owner) && lock.isWriteLock
+        }) owner.turn.forget(sink)
       }
     }
     else super.drop(sink)(source)

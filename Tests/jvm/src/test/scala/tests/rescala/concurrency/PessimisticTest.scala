@@ -55,21 +55,22 @@ class PessimisticTest extends FlatSpec {
   }
 
   it should "crossed Dynamic Dependencies" in new PessimisticTestState {
-      val v1 = Var(false)
-      val v2 = Var(false)
+      val v1 = Var(0)
+      val v2 = Var(1)
       val s11 = v1.map {identity}
       // so if s11 becomes true, this adds a dependency on v2
-      val s12 = engine.dynamic(s11) {t =>  if (t.depend(s11)) t.depend(v2) else false }
+      val s12 = engine.dynamic(s11) {t =>  if (t.depend(s11) != 0) t.depend(v2) else 2 }
       val s21 = v2.map {identity}
       // this does as above, causing one or the other to access something which will change later
-      val s22 = engine.dynamic(s21) {t => if (t.depend(s21)) t.depend(v1) else false }
-      var results = List[Boolean]()
-      s12.changed observe { v => results ::= v }
+      val s22 = engine.dynamic(s21) {t => if (t.depend(s21) != 1) t.depend(v1) else 3 }
+      var results1 = List[Int]()
+      s12.changed observe { v => results1 ::= v }
       val c23 = s22.changed
-      c23 observe { v => results ::= v }
+      var results2 = List[Int]()
+      c23 observe { v => results2 ::= v }
 
-
-      assert(results === Nil)
+      assert(results1 === Nil)
+      assert(results2 === Nil)
 
       // start both rescala.turns so they have their locks
       Pessigen.sync(s11, s21)
@@ -80,23 +81,25 @@ class PessimisticTest extends FlatSpec {
       // after turn 1 continues, it will use the reactives locked by turn 2 and finish before turn 2
       val l2 = Pessigen.syncm(c23)
 
-      val t1 = Spawn(v1.set(true))
-      val t2 = Spawn(v2.set(true))
+      val t1 = Spawn(v1.set(4))
+      val t2 = Spawn(v2.set(5))
 
       //this is a rather poor way to test if turn 2 is already waiting, this is your chance to replace this with something smart!
       while (t2.getState != Thread.State.WAITING) {Thread.sleep(1)}
       l1.await()
       t1.join(1000)
-      // still unchanged, turn 1 used the old value of v2
-      assert(results === Nil)
-      assert(unsafeNow(s12) === false)
+      // turn 1 used the old value of v2
+      assert(results1 === List(1))
+      assert(results2 === Nil)
+      assert(unsafeNow(s12) === 1)
 
       l2.await()
       t2.join(1000)
 
-      assert(unsafeNow(s12) === true)
-      assert(unsafeNow(s22) === true)
-      assert(results === List(true, true))
+      assert(unsafeNow(s12) === 5)
+      assert(unsafeNow(s22) === 4)
+      assert(results1 === List(5, 1))
+      assert(results2 === List(4))
 
       assert(Pessigen.clear() == 0)
   }
@@ -116,9 +119,8 @@ class PessimisticTest extends FlatSpec {
         })
   }
 
-  it should "add And Remove Dependency In One Turn" in new PessimisticTestState {
-
-
+  // I argue this shold not exist, because whether or not the dependency is added and removed within the same turn has no effect.
+  ignore should "(not?) Add And Remove Dependency In One Turn" in new PessimisticTestState {
       val b0 = Var(false)
       val b2 = b0.map(identity).map(!_)
       val i0 = Var(11)
@@ -130,7 +132,6 @@ class PessimisticTest extends FlatSpec {
 
       val mockFac = MockFacFac(i0, regs += 1, unregs += 1)
 
-
       assert(unsafeNow(i1_3) === 42)
       assert(reeval === 1)
       assert(regs === 0)
@@ -141,28 +142,28 @@ class PessimisticTest extends FlatSpec {
 
       assert(unsafeNow(i1_3) === 42)
       assert(reeval === 3)
-      assert(regs === 1)
-      assert(unregs === 1)
+      assert(regs === 0)
+      assert(unregs === 0)
 
       // this does not
       b0.set(false)(mockFac)
 
       assert(unsafeNow(i1_3) === 42)
       assert(reeval === 4)
-      assert(regs === 1)
-      assert(unregs === 1)
+      assert(regs === 0)
+      assert(unregs === 0)
 
       // this also does not, because the level of the dynamic signals stays on 3
       b0.set(true)(mockFac)
 
       assert(unsafeNow(i1_3) === 42)
       assert(reeval === 5)
-      assert(regs === 1)
-      assert(unregs === 1)
+      assert(regs === 0)
+      assert(unregs === 0)
       assert(Pessigen.clear() == 0)
   }
 
-  it should "add And Remove Dependency In One Turn While Owned By Another" in new PessimisticTestState {
+  it should "not retrofit a reevaluation for t2, after a dependency might have been added and removed again inside a single t1 While Owned By t2" in new PessimisticTestState {
 
       val bl0 = Var(false)
       val bl1 = bl0.map(identity)
@@ -170,13 +171,13 @@ class PessimisticTest extends FlatSpec {
       val il0 = Var(11)
       val il1 = il0.map(identity)
 
-      var reeval = 0
+      var reeval = List.empty[Any]
       // this starts on level 2. when bl0 becomes true bl1 becomes true on level 1
       // at that point both bl1 and bl3 are true which causes il1 to be added as a dependency
       // but then bl3 becomes false at level 3, causing il1 to be removed again
       // after that the level is increased and this nonesense no longer happens
       val b2b3i2 = engine.dynamic(bl1) { t =>
-        reeval += 1 : @unchecked
+        reeval ::= t.turn
         if (t.depend(bl1)) {
           if (t.depend(bl3)) {
             val res = t.depend(il1)
@@ -193,10 +194,12 @@ class PessimisticTest extends FlatSpec {
       val i2b2 = engine.dynamic(il1)(t => if (t.depend(il1) == 0) t.depend(bl1) else false)
       val c3 = i2b2.map(identity)
 
-
+      // bl0 -> bl1 -> (bl2) -> bl3
+      //           >--------------`--> b2b3i2
+      // il0 -> il1  `-> i2b2 -> c3
 
       assert(unsafeNow(b2b3i2) === 42)
-      assert(reeval === 1)
+      assert(reeval.size === 1)
 
       // start both rescala.turns
       Pessigen.sync(bl1, il1)
@@ -224,7 +227,7 @@ class PessimisticTest extends FlatSpec {
       t2.join()
 
       assert(unsafeNow(b2b3i2) === 37)
-      assert(reeval === 4, "did not reevaluate 4 times: init, aborted reeval, final reeval t1, final reeval t2")
+      assert(reeval.size == 3, ": b2b3i2 did not reevaluate 3 times (init, aborted reeval t1, final reeval t1)")
 
       assert(Pessigen.clear() == 0)
   }
@@ -290,9 +293,8 @@ class PessimisticTest extends FlatSpec {
       t1.join()
       t2.join()
 
-      assert(unsafeNow(b2b3i2) === 17)
-      // 4 reevaluations: initialisation; bl1 becomes true; bl3 becomes false; il0 changes from 11 to 17
-      assert(reeval === 4)
+    // 4 reevaluations: initialisation; bl1 becomes true; bl3 becomes false; il0 changes from 11 to 17
+      assert((reeval, unsafeNow(b2b3i2)) ===( (4, 17) ))
 
       assert(Pessigen.clear() == 0)
   }

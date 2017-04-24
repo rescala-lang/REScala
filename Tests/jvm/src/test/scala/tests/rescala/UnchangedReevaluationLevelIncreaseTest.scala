@@ -8,7 +8,7 @@ case object SetUnchanged extends ChangeX
 case object SetChanged extends ChangeX
 
 class UnchangedReevaluationLevelIncreaseTest extends RETests {
-  def run(engine: Engine[S, Turn[S]], changeX: ChangeX, whichX: Int): Unit = {
+  def run(engine: Engine[S, Turn[S]], changeX: ChangeX): Unit = {
     import engine._
 
     val results = for(i <- 0 to 10) yield {
@@ -16,10 +16,7 @@ class UnchangedReevaluationLevelIncreaseTest extends RETests {
       val newX = if (changeX == SetChanged) "qwertz" else initialX
 
       val x = Var(initialX)
-      val x1 = x.map(x => x)
-      val x2 = x.map(x => x)
-      val x3 = x.map(x => x)
-      val xs = Array(x1, x2, x3)
+      val x4 = x.map(identity).map(identity).map(identity).map(identity)
 
       val ho = Var(x: Signal[String])
       var reevaluationRestartTracker = List.empty[String]
@@ -29,17 +26,12 @@ class UnchangedReevaluationLevelIncreaseTest extends RETests {
         x
       }
 
-      val newBase: Signal[String] = xs(whichX - 1)
       changeX match {
-        case DontSet => ho.set(newBase)
+        case DontSet => ho.set(x4)
         case _ => engine.transaction(x, ho) { implicit t =>
           x.admit(newX)
-          ho.admit(newBase)
+          ho.admit(x4)
         }
-      }
-      engine.transaction(x, ho) { implicit t =>
-        x.admit(newX)
-        ho.admit(newBase)
       }
 
       // final value should be correct
@@ -52,11 +44,7 @@ class UnchangedReevaluationLevelIncreaseTest extends RETests {
     assert(countedOutcomes.size == 1)
   }
 
-  allEngines("dont set, x3")(run(_, DontSet, 3))
-  allEngines("set unchanged, x3")(run(_, SetUnchanged, 3))
-  allEngines("set changed, x3")(run(_, SetChanged, 3))
-
-  allEngines("dont set, x2")(run(_, DontSet, 2))
-  allEngines("set unchanged, x2")(run(_, SetUnchanged, 2))
-  allEngines("set changed, x2")(run(_, SetChanged, 2))
+  allEngines("dont set")(run(_, DontSet))
+  allEngines("set unchanged")(run(_, SetUnchanged))
+  allEngines("set changed")(run(_, SetChanged))
 }
