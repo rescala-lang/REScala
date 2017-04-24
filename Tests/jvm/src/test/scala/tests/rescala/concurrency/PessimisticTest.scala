@@ -119,8 +119,10 @@ class PessimisticTest extends FlatSpec {
         })
   }
 
-  // I argue this shold not exist, because whether or not the dependency is added and removed within the same turn has no effect.
-  ignore should "(not?) Add And Remove Dependency In One Turn" in new PessimisticTestState {
+  it should "(not?) Add And Remove Dependency In One Turn" in new PessimisticTestState {
+      // this behavior is not necessary for correctness; adding and removing the edge (i.e. regs and unregs +=1)
+      // would be equally correct. It is implemented purely to discover accidental behavior changes, but should
+      // have its exepected results changed upon intentional behavior changes!
       val b0 = Var(false)
       val b2 = b0.map(identity).map(!_)
       val i0 = Var(11)
