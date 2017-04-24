@@ -102,15 +102,12 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
     * so that it gets updated when that turn continues
     * the responsibility for correctly passing the locks is moved to the commit phase */
   override def discover(sink: Reactive[TState])(source: Reactive[TState]): Unit = {
-
     val owner = acquireShared(source)
     if (owner ne key) {
-      if (!source.state.outgoing(this).contains(sink)) {
-        owner.turn.discover(sink)(source)
-        if (source.state.lock.isWriteLock) {
-          owner.turn.admit(sink)
-          key.lockKeychain { _.addFallthrough(owner) }
-        }
+      owner.turn.discover(sink)(source)
+      if (source.state.lock.isWriteLock) {
+        owner.turn.admit(sink)
+        key.lockKeychain { _.addFallthrough(owner) }
       }
     }
     else {
@@ -120,8 +117,6 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
 
   /** this is for cases where we register and then unregister the same dependency in a single turn */
   override def drop(sink: Reactive[TState])(source: Reactive[TState]): Unit = {
-
-
     val owner = acquireShared(source)
     if (owner ne key) {
       owner.turn.drop(sink)(source)
