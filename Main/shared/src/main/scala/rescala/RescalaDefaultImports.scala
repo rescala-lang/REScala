@@ -2,6 +2,8 @@ package rescala
 
 import rescala.graph.Struct
 import rescala.macros.ReactiveMacros
+import rescala.reactives.Source
+import scala.language.existentials
 
 
 abstract class RescalaDefaultImports[S <: Struct] {
@@ -40,4 +42,32 @@ abstract class RescalaDefaultImports[S <: Struct] {
 
   val Events = reactives.Events
   val Signals = reactives.Signals
+
+
+  /**
+    * Executes a transaction.
+    *
+    * @param initialWrites All inputs that might be changed by the transaction
+    * @param admissionPhase An admission function that may perform arbitrary [[rescala.reactives.Signal.now]] reads
+    *                       to [[rescala.reactives.Evt.admit()]] / [[rescala.reactives.Var.admit()]] arbitrary
+    *                       input changes that will be applied as an atomic transaction at the end.
+    * @tparam R Result type of the admission function
+    * @return Result of the admission function
+    */
+  def transaction[R](initialWrites: Reactive*)(admissionPhase: Turn => R): R = {
+    explicitEngine.executeTurn(initialWrites, admissionPhase)
+  }
+
+  /**
+    * Atomically changes multiple inputs in a single [[transaction()]]
+    *
+    * @param changes the changes to perform, i.e., (i1 -> v1, i2 -> v2, ...)
+    * @return Result of the admission function
+    */
+  def update(changes: (Source[A, S], A) forSome { type A } *): Unit = {
+    transaction(changes.map(_._1):_*) { t =>
+      def apply[A](change: (Source[A, S], A)) = change._1.admit(change._2)(t)
+      for(change <- changes) apply(change)
+    }
+  }
 }

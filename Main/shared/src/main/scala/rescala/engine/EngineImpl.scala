@@ -14,7 +14,7 @@ import scala.util.DynamicVariable
   */
 @implicitNotFound(msg = "Could not find an implicit propagation engine. Did you forget an import?")
 trait EngineImpl[S <: Struct, TTurn <: Turn[S]] extends Engine[S, TTurn] {
-  override def transaction[R](initialWrites: Reactive*)(admissionPhase: TTurn => R): R = {
+  override private[rescala] def executeTurn[R](initialWrites: Traversable[Reactive], admissionPhase: TTurn => R): R = {
     val turn = makeTurn(initialWrites, currentTurn())
     withTurn(Some(turn))(executeTurn(turn, initialWrites, admissionPhase))
   }

@@ -28,10 +28,7 @@ class UnchangedReevaluationLevelIncreaseTest extends RETests {
 
       changeX match {
         case DontSet => ho.set(x4)
-        case _ => engine.transaction(x, ho) { implicit t =>
-          x.admit(newX)
-          ho.admit(x4)
-        }
+        case _ => update(x -> newX, ho -> x4)
       }
 
       // final value should be correct

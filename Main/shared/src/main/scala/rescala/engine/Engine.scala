@@ -17,16 +17,7 @@ trait Engine[S <: Struct, +TTurn <: Turn[S]] extends RescalaDefaultImports[S] {
 
   override def explicitEngine: this.type = this
 
-  /**
-    * Creates and executes a full turn by running through all of its phases.
-    *
-    * @param initialWrites Initially modified reactive values that are the source of the turn's propagation
-    * @param admissionPhase Function executed between the preparation and the propagation phase
-    * @tparam R Result type of the admission function
-    * @return Result of the admission function
-    */
-  def transaction[R](initialWrites: Reactive*)(admissionPhase: TTurn => R): R
-
+  private[rescala] def executeTurn[R](initialWrites: Traversable[Reactive], admissionPhase: TTurn => R): R
   private[rescala] def currentTurn(): Option[TTurn]
 }
 

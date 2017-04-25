@@ -19,7 +19,7 @@ final case class TurnSource[S <: Struct](self: Either[Turn[S], Engine[S, Turn[S]
     case Left(turn) => f(turn)
     case Right(engine) => engine.currentTurn() match {
       case Some(turn) => f(turn)
-      case None => engine.transaction()(f)
+      case None => engine.executeTurn(Set.empty, f)
     }
   }
 }

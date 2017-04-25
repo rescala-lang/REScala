@@ -53,10 +53,7 @@ class OR_EventTest extends RETests {
     assert(log.now === List("two", "one"))
 
 
-    transaction(e1, e2) { turn =>
-      e1.admit("three a")(turn)
-      e2.admit("three b")(turn)
-    }
+    update(e1 -> "three a", e2 -> "three b")
 
     assert(log.now === List("three a", "two", "one"))
 

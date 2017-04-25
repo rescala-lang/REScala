@@ -4,7 +4,7 @@ import java.lang.ref.{PhantomReference, ReferenceQueue}
 
 import org.scalatest.prop.Whenever
 import rescala.reactives.Observe
-import rescala.testhelper.TestEngines
+import rescala.stm.STMEngine
 
 import scala.language.implicitConversions
 
@@ -13,7 +13,7 @@ class GarbageCollectionTest extends RETests with Whenever {
 
   allEngines("garbage collection for simple signal mappings"){engine => import engine._
 
-    whenever(engine != TestEngines.stm) {
+    whenever(engine != STMEngine.stm) {
 
       val q = new ReferenceQueue[Signal[Array[Int]]]()
 
