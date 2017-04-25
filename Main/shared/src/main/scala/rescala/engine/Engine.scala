@@ -27,14 +27,6 @@ trait Engine[S <: Struct, +TTurn <: Turn[S]] extends RescalaDefaultImports[S] {
     */
   def transaction[R](initialWrites: Reactive*)(admissionPhase: TTurn => R): R
 
-  /**
-    * If there is already a current turn running, the given function is applied onto it. Otherwise, a new full turn
-    * is executed with all of its phases.
-    *
-    * @param initialWrites Initially modified reactive values that are the source of a new turn's propagation
-    * @param admissionPhase Function executed on the existing turn or between the preparation and the propagation phase of a new turn.
-    * @tparam T Result type of the admission function
-    * @return Result of the admission function
-    */
-  def subplan[T](initialWrites: Reactive*)(admissionPhase: TTurn => T): T
+  private[rescala] def currentTurn(): Option[TTurn]
 }
+

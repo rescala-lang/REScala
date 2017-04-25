@@ -17,7 +17,10 @@ import scala.language.implicitConversions
 final case class TurnSource[S <: Struct](self: Either[Turn[S], Engine[S, Turn[S]]]) extends AnyVal {
   def apply[T](f: Turn[S] => T): T = self match {
     case Left(turn) => f(turn)
-    case Right(factory) => factory.subplan()(f)
+    case Right(engine) => engine.currentTurn() match {
+      case Some(turn) => f(turn)
+      case None => engine.transaction()(f)
+    }
   }
 }
 

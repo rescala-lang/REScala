@@ -2,14 +2,14 @@ package rescala.levelbased
 
 import rescala.graph.ReevaluationResult.{Dynamic, Static}
 import rescala.graph.{Reactive, ReevaluationResult}
-import rescala.twoversion.CommonPropagationImpl
+import rescala.twoversion.TwoVersionPropagationImpl
 
 /**
   * Further implementation of level-based propagation based on the common propagation implementation.
   *
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
-trait LevelBasedPropagation[S <: LevelStruct] extends CommonPropagationImpl[S] with LevelQueue.Evaluator[S] {
+trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[S] with LevelQueue.Evaluator[S] {
   private var _evaluated = List.empty[Reactive[S]]
 
   val levelQueue = new LevelQueue[S](this)(this)

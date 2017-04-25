@@ -11,7 +11,7 @@ import scala.util.control.NonFatal
   *
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
-trait CommonPropagationImpl[S <: GraphStruct] extends TwoVersionPropagation[S] {
+trait TwoVersionPropagationImpl[S <: GraphStruct] extends TwoVersionPropagation[S] {
   outer =>
 
   val token: Token = Token()

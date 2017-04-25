@@ -2,7 +2,7 @@ package rescala.restore
 
 import rescala.graph.{Reactive, Struct}
 import rescala.levelbased.{LevelBasedPropagation, LevelStruct, LevelStructTypeImpl}
-import rescala.twoversion.{PlanImpl, TwoVersionPropagation}
+import rescala.twoversion.{TwoVersionEngine, TwoVersionPropagation}
 
 case class Storing(current: Any, level: Int, incoming: Set[Reactive[Struct]])
 
@@ -44,7 +44,7 @@ trait ReStoringStruct extends LevelStruct {
 }
 
 
-class ReStoringEngine(domain: String = "", restoreFrom: Seq[(String, Storing)] = Nil) extends PlanImpl[ReStoringStruct, ReStoringTurn] {
+class ReStoringEngine(domain: String = "", restoreFrom: Seq[(String, Storing)] = Nil) extends TwoVersionEngine[ReStoringStruct, ReStoringTurn] {
 
   val values: scala.collection.mutable.HashMap[String, Storing] = scala.collection.mutable.HashMap(restoreFrom: _*)
   var count = 0
@@ -54,10 +54,9 @@ class ReStoringEngine(domain: String = "", restoreFrom: Seq[(String, Storing)] =
   }
   def snapshot(): Map[String, Storing] = values.toMap
 
-  override protected def makeTurn(priorTurn: Option[ReStoringTurn]): ReStoringTurn = new ReStoringTurn(this)
+  override protected def makeTurn(initialWrites: Traversable[Reactive], priorTurn: Option[ReStoringTurn]): ReStoringTurn = new ReStoringTurn(this)
   lazy override val toString: String = s"Engine(Restoring: $domain)"
   override def transaction[R](i: Reactive*)(f: ReStoringTurn => R): R = synchronized(super.transaction(i: _*)(f))
-
 }
 
 

@@ -7,7 +7,7 @@ import org.openjdk.jmh.infra.Blackhole
 import rescala.engine.{Engine, Turn}
 import rescala.graph.Struct
 import rescala.reactives._
-import rescala.twoversion.{Committable, CommonPropagationImpl, TwoVersionPropagation}
+import rescala.twoversion.{Committable, TwoVersionPropagationImpl, TwoVersionPropagation}
 
 class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit val engine: Engine[S, Turn[S]]) {
 
@@ -45,7 +45,7 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit 
       val forksWereFree = seating.vision.now(turn) == Ready
       if (forksWereFree) seating.philosopher.admit(Eating)(turn)
       turn match {
-        case cmn: CommonPropagationImpl[S] =>
+        case cmn: TwoVersionPropagationImpl[S] =>
           cmn.schedule(new Committable[S] {
             override def commit(implicit t: TwoVersionPropagation[S]): Unit = if (forksWereFree) assert(seating.vision.now(turn) == Done, "philosopher should be done after turn")
             override def release(implicit t: TwoVersionPropagation[S]): Unit = assert(assertion = false, "turn should not rollback")

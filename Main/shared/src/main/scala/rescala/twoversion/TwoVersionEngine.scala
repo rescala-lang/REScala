@@ -1,6 +1,6 @@
 package rescala.twoversion
 
-import rescala.engine.Engine
+import rescala.engine.EngineImpl
 import rescala.graph.Struct
 
 import scala.util.DynamicVariable
@@ -11,24 +11,7 @@ import scala.util.DynamicVariable
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   * @tparam TImpl Turn type used by the engine
   */
-trait PlanImpl[S <: Struct, TImpl <: TwoVersionPropagation[S]] extends Engine[S, TImpl] {
-
-  /**
-    * Returns a new turn to be used by the engine
-    *
-    * @return New turn
-    */
-  protected def makeTurn(priorTurn: Option[TImpl]): TImpl
-
-  private val currentTurn: DynamicVariable[Option[TImpl]] = new DynamicVariable[Option[TImpl]](None)
-
-  private[rescala] def setCurrentTurn(turn: Option[TImpl]): Unit = currentTurn.value = turn
-
-  override def subplan[T](initialWrites: Reactive*)(f: TImpl => T): T = currentTurn.value match {
-    case None => transaction(initialWrites: _*)(f)
-    case Some(turn) => f(turn)
-  }
-
+trait TwoVersionEngine[S <: Struct, TImpl <: TwoVersionPropagation[S]] extends EngineImpl[S, TImpl] {
   /** goes through the whole turn lifecycle
     * - create a new turn and put it on the stack
     * - run the lock phase
@@ -46,18 +29,13 @@ trait PlanImpl[S <: Struct, TImpl <: TwoVersionPropagation[S]] extends Engine[S,
     * - run the party! phase
     *   - not yet implemented
     * */
-  override def transaction[Res](initialWrites: Reactive*)(admissionPhase: TImpl => Res): Res = {
-
-    val turn = makeTurn(currentTurn.value)
+  override protected def executeTurn[R](turn: TImpl, initialWrites: Traversable[Reactive], admissionPhase: TImpl => R): R = {
     val result = try {
-      val turnResult = currentTurn.withValue(Some(turn)) {
-        turn.preparationPhase(initialWrites)
-        val admissionResult = admissionPhase(turn)
-        turn.propagationPhase()
-        turn.commitPhase()
-        admissionResult
-      }
-      turnResult
+      turn.preparationPhase(initialWrites)
+      val admissionResult = admissionPhase(turn)
+      turn.propagationPhase()
+      turn.commitPhase()
+      admissionResult
     }
     catch {
       case e: Throwable =>

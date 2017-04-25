@@ -7,7 +7,7 @@ import rescala.engine.{Engine, Turn}
 import rescala.graph.Reactive
 import rescala.parrp.{Backoff, ParRP}
 import rescala.reactives.Signal
-import rescala.twoversion.EngineImpl
+import rescala.twoversion.TwoVersionEngineImpl
 import tests.rescala.concurrency.Spawn
 
 trait PessimisticTestState {
@@ -33,7 +33,7 @@ trait PessimisticTestState {
     }
   }
 
-  object Pessigen extends EngineImpl[ParRP, PessimisticTestTurn]("Pessigen", new PessimisticTestTurn) {
+  object Pessigen extends TwoVersionEngineImpl[ParRP, PessimisticTestTurn]("Pessigen", new PessimisticTestTurn) {
     val syncStack: AtomicReference[List[(Set[Reactive], Barrier)]] = new AtomicReference(Nil)
 
     def clear(): Int = syncStack.getAndSet(Nil).size

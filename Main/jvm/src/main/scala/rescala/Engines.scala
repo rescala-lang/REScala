@@ -6,7 +6,7 @@ import rescala.engine.Engine
 import rescala.graph.Struct
 import rescala.levelbased.LevelBasedPropagationEngines
 import rescala.parrp._
-import rescala.twoversion.EngineImpl
+import rescala.twoversion.TwoVersionEngineImpl
 
 import scala.language.existentials
 
@@ -27,14 +27,14 @@ object Engines extends LevelBasedPropagationEngines {
 
   implicit val locksweep: Engine[LSStruct, LockSweep] = locksweepWithBackoff(() => new Backoff())
 
-  implicit val parallellocksweep: EngineImpl[LSStruct, ParallelLockSweep] = {
+  implicit val parallellocksweep: TwoVersionEngineImpl[LSStruct, ParallelLockSweep] = {
     val ex: Executor = Executors.newWorkStealingPool()
-    new EngineImpl[LSStruct, ParallelLockSweep]("ParallelLockSweep", (engine, prior) => new ParallelLockSweep(new Backoff(), ex, engine, prior))
+    new TwoVersionEngineImpl[LSStruct, ParallelLockSweep]("ParallelLockSweep", (engine, prior) => new ParallelLockSweep(new Backoff(), ex, engine, prior))
   }
 
   implicit val default: Engine[ParRP, ParRP] = parrp
 
-  def locksweepWithBackoff(backOff: () => Backoff): Engine[LSStruct, LockSweep]  = new EngineImpl[LSStruct, LockSweep]("LockSweep", (_, prior) => new LockSweep(backOff(), prior))
-  def parrpWithBackoff(backOff: () => Backoff): Engine[ParRP, ParRP] = new EngineImpl[ParRP, ParRP]("ParRP", (_, prior) => new ParRP(backOff(), prior))
+  def locksweepWithBackoff(backOff: () => Backoff): Engine[LSStruct, LockSweep]  = new TwoVersionEngineImpl[LSStruct, LockSweep]("LockSweep", (_, prior) => new LockSweep(backOff(), prior))
+  def parrpWithBackoff(backOff: () => Backoff): Engine[ParRP, ParRP] = new TwoVersionEngineImpl[ParRP, ParRP]("ParRP", (_, prior) => new ParRP(backOff(), prior))
 
 }

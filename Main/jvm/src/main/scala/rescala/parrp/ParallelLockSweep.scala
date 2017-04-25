@@ -6,9 +6,9 @@ import java.util.concurrent.atomic.AtomicInteger
 import rescala.graph.ReevaluationResult.{Dynamic, Static}
 import rescala.graph._
 import rescala.locking._
-import rescala.twoversion.EngineImpl
+import rescala.twoversion.TwoVersionEngineImpl
 
-class ParallelLockSweep(backoff: Backoff, ex: Executor, engine: EngineImpl[LSStruct, ParallelLockSweep], priorTurn: Option[ParallelLockSweep]) extends LockSweep(backoff, priorTurn) {
+class ParallelLockSweep(backoff: Backoff, ex: Executor, engine: TwoVersionEngineImpl[LSStruct, ParallelLockSweep], priorTurn: Option[ParallelLockSweep]) extends LockSweep(backoff, priorTurn) {
 
   private type TState = LSStruct
 
@@ -36,9 +36,9 @@ class ParallelLockSweep(backoff: Backoff, ex: Executor, engine: EngineImpl[LSStr
       ex.execute {
         new Runnable {
           override def run(): Unit = {
-            engine.setCurrentTurn(Some(turn))
-            evaluate(head)
-            engine.setCurrentTurn(None)
+            engine.withTurn(Some(turn)) {
+              evaluate(head)
+            }
             jobsRunning.decrementAndGet()
           }
         }

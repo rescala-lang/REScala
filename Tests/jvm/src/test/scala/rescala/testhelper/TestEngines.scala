@@ -3,13 +3,13 @@ package rescala.testhelper
 import rescala.Engines
 import rescala.engine.Engine
 import rescala.stm.STMTurn
-import rescala.twoversion.EngineImpl
+import rescala.twoversion.TwoVersionEngineImpl
 
 import scala.concurrent.stm.atomic
 
 object TestEngines {
 
-  implicit val stm: Engine[STMTurn, STMTurn] = new EngineImpl[STMTurn, STMTurn]("STM", new STMTurn()) {
+  implicit val stm: Engine[STMTurn, STMTurn] = new TwoVersionEngineImpl[STMTurn, STMTurn]("STM", new STMTurn()) {
     override def transaction[R](i: Reactive*)(f: STMTurn => R): R = atomic { tx => super.transaction(i: _*)(f) }
   }
 

@@ -6,7 +6,7 @@ import rescala.engine.Turn
 import rescala.graph.ReevaluationResult.{Dynamic, Static}
 import rescala.graph._
 import rescala.locking._
-import rescala.twoversion.{CommonPropagationImpl, GraphStruct, PropagationStructImpl}
+import rescala.twoversion.{TwoVersionPropagationImpl, GraphStruct, PropagationStructImpl}
 
 import scala.collection.mutable
 
@@ -29,7 +29,7 @@ trait LSInterTurn {
   def append(reactives: mutable.Set[Reactive[LSStruct]]): Unit
 }
 
-class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPropagationImpl[LSStruct] with LSInterTurn {
+class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersionPropagationImpl[LSStruct] with LSInterTurn {
 
   private type TState = LSStruct
 

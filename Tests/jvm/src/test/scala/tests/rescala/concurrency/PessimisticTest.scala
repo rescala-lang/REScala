@@ -8,7 +8,7 @@ import rescala.graph.Reactive
 import rescala.parrp.{Backoff, ParRP}
 import rescala.reactives.{Signals, Var}
 import rescala.testhelper.PessimisticTestState
-import rescala.twoversion.EngineImpl
+import rescala.twoversion.TwoVersionEngineImpl
 
 import scala.collection.JavaConverters._
 
@@ -106,7 +106,7 @@ class PessimisticTest extends FlatSpec {
 
   object MockFacFac {
     def apply(i0: Reactive[ParRP], reg: => Unit, unreg: => Unit): Engine[ParRP, Turn[ParRP]] =
-      new EngineImpl[ParRP, ParRP]("Mock Fac Fac",
+      new TwoVersionEngineImpl[ParRP, ParRP]("Mock Fac Fac",
         new ParRP(new Backoff(), None) {
           override def discover(downstream: Reactive[ParRP])(upstream: Reactive[ParRP]): Unit = {
             if (upstream eq i0) reg

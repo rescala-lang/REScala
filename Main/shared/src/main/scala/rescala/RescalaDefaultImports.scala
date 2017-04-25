@@ -31,8 +31,6 @@ abstract class RescalaDefaultImports[S <: Struct] {
     def empty[A]: Var[A] = reactives.Var.empty[A, S]()(explicitEngine)
   }
 
-
-
   final def static[T](dependencies: Reactive*)(expr: StaticTicket => T)(implicit turnSource: TurnSource): Signal[T] = Signals.static(dependencies: _*)(expr)
   final def dynamic[T](dependencies: Reactive*)(expr: DynamicTicket => T)(implicit turnSource: TurnSource): Signal[T] = Signals.dynamic(dependencies: _*)(expr)
   final def dynamicE[T](dependencies: Reactive*)(expr: DynamicTicket => Option[T])(implicit turnSource: TurnSource): Event[T] = Events.dynamic(dependencies: _*)(expr)
