@@ -50,19 +50,18 @@ class ParallelLockSweep(backoff: Backoff, ex: Executor, engine: EngineImpl[LSStr
     val res = head.reevaluate(this)
     synchronized {
       res match {
-        case Static(value) =>
-          val hasChanged = value.isDefined && value.get != head.state.base(token)
-          if (hasChanged) writeState(head)(value.get)
+        case Static(isChange, value) =>
+          val hasChanged = isChange && value != head.state.base(token)
+          if (hasChanged) writeState(head)(value)
           done(head, hasChanged)
 
-        case Dynamic(value, deps) =>
-          val diff = DepDiff(deps, head.state.incoming(this))
-          applyDiff(head, diff)
-          head.state.counter = recount(diff.novel.iterator)
+        case res@Dynamic(isChange, value, deps) =>
+          applyDiff(head, res.depDiff(head.state.incoming(this)))
+          head.state.counter = recount(deps.iterator)
 
           if (head.state.counter == 0) {
-            val hasChanged = value.isDefined && value != head.state.base(token)
-            if (hasChanged) writeState(head)(value.get)
+            val hasChanged = isChange && value != head.state.base(token)
+            if (hasChanged) writeState(head)(value)
             done(head, hasChanged)
           }
 

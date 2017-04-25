@@ -127,19 +127,18 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends CommonPr
     if (head.state.anyInputChanged != this) done(head, hasChanged = false)
     else {
       head.reevaluate(this) match {
-        case Static(value: Option[head.Value]) =>
-          val hasChanged = value.isDefined && head.state.base(token) != value.get
-          if (hasChanged) writeState(head)(value.get)
+        case Static(isChange, value) =>
+          val hasChanged = isChange && head.state.base(token) != value
+          if (hasChanged) writeState(head)(value)
           done(head, hasChanged)
 
-        case Dynamic(value, deps) =>
-          val diff = DepDiff(deps, head.state.incoming(this))
-          applyDiff(head, diff)
-          head.state.counter = recount(diff.novel.iterator)
-          val hasChanged = value.isDefined && head.state.base(token) != value.get
+        case res@Dynamic(isChange, value, deps) =>
+          applyDiff(head, res.depDiff(head.state.incoming(this)))
+          head.state.counter = recount(deps.iterator)
+          val hasChanged = isChange && head.state.base(token) != value
 
           if (head.state.counter == 0) {
-            if (hasChanged) writeState(head)(value.get)
+            if (hasChanged) writeState(head)(value)
             done(head, hasChanged)
           }
 

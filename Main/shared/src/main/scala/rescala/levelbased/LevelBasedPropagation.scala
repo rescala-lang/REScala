@@ -1,7 +1,7 @@
 package rescala.levelbased
 
 import rescala.graph.ReevaluationResult.{Dynamic, Static}
-import rescala.graph.{DepDiff, Reactive}
+import rescala.graph.{Reactive, ReevaluationResult}
 import rescala.twoversion.CommonPropagationImpl
 
 /**
@@ -15,24 +15,23 @@ trait LevelBasedPropagation[S <: LevelStruct] extends CommonPropagationImpl[S] w
   val levelQueue = new LevelQueue[S](this)(this)
 
   override def evaluate(head: Reactive[S]): Unit = {
-    def reevOut(level: Int, value: Option[head.Value]) = {
-      if (value.isDefined) {
-        writeState(head)(value.get)
+    def reevOut(level: Int, res: ReevaluationResult[head.Value, S]) = {
+      if (res.isChange) {
+        writeState(head)(res.value)
         head.state.outgoing(this).foreach(levelQueue.enqueue(level, true))
       }
     }
 
     head.reevaluate(this) match {
-      case Static(value) => reevOut(-42, value)
-      case Dynamic(value, deps) =>
-        val newLevel = maximumLevel(deps) + 1
+      case res: Static[head.Value] => reevOut(-42, res)
+      case res: Dynamic[head.Value, S] =>
+        val newLevel = maximumLevel(res.dependencies) + 1
         val redo = head.state.level(this) < newLevel
         if(redo) {
           levelQueue.enqueue(newLevel, true)(head)
         } else {
-          val diff = DepDiff(deps, head.state.incoming(this))
-          applyDiff(head, diff)
-          reevOut(newLevel, value)
+          applyDiff(head, res.depDiff(head.state.incoming(this)))
+          reevOut(newLevel, res)
         }
     }
     _evaluated ::= head

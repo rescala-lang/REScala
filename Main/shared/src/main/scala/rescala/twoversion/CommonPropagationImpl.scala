@@ -1,6 +1,7 @@
 package rescala.twoversion
 
-import rescala.graph.{DepDiff, Pulsing, Reactive}
+import rescala.graph.ReevaluationResult.DepDiff
+import rescala.graph.{Pulsing, Reactive}
 
 import scala.util.control.NonFatal
 

@@ -17,7 +17,7 @@ class Source[T, S <: Struct](_bud: S#State[Pulse[T], S]) extends Base[T, S](_bud
   final override protected[rescala] def reevaluate(turn: Turn[S]): ReevaluationResult[Value, S] = {
     val res: ReevaluationResult[Pulse[T], S] = if (result == null || result == turn.before(this))
       ReevaluationResult.Static(Pulse.NoChange)
-    else ReevaluationResult.Static[T, S](result)
+    else ReevaluationResult.Static[T](result)
     result = null
     res
   }
