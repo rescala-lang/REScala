@@ -84,6 +84,11 @@ object TodoMVC extends JSApp {
 
               button(`class`:="destroy",
                 onclick:={ e: dom.UIEvent =>
+                  tasks.now.filter { it => it == t } .map { it =>
+                    it.desc.disconnect()
+                    it.done.disconnect()
+                    it.editing.disconnect()
+                  }
                   tasks() = tasks.now.filter { it => it != t } })
             ),
 
