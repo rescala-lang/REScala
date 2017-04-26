@@ -1,6 +1,6 @@
 package rescala.engine
 
-import rescala.graph.{DynamicTicket, Pulsing, Reactive, StaticTicket, Struct}
+import rescala.graph._
 
 /**
   * The Turn interface glues the reactive interface and the propagation implementation together.
@@ -8,9 +8,6 @@ import rescala.graph.{DynamicTicket, Pulsing, Reactive, StaticTicket, Struct}
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
 trait Turn[S <: Struct] {
-  private[rescala] def makeStructState[P](initialValue: P, transient: Boolean = true, initialIncoming: Set[Reactive[S]] = Set.empty[Reactive[S]], hasState: Boolean = false): S#State[P, S]
-
-
   def dynamic(): DynamicTicket[S] = new DynamicTicket[S](this)
   def static(): StaticTicket[S] = new StaticTicket[S](this)
 
@@ -49,13 +46,39 @@ trait Turn[S <: Struct] {
     * Connects a reactive element with potentially existing dependencies and prepares re-evaluations to be
     * propagated based on the turn's propagation scheme
     *
-    * @param dependencies Existing reactive elements the element depends on
-    * @param dynamic      Indicates if the element uses dynamic re-evaluation to determine it's dependencies
-    * @param f            Reactive element to prepare and connect
+    * @param incomingOrDynamic the static set of incoming dependencies or [[None]] if dynamic reevaluation
+    * @param valueOrTransient The initial value for creating the state, or [[None]] if transient
+    * @param hasAccumulatingState true if the reactive's value is accumulated over time,
+    *                             false if it is a pure transformation of its parameters.
+    * @param instantiateReactive The factory method to instantiate the reactive with the newly created state.
+    * @tparam P Reactive value type
     * @tparam T Reactive subtype of the reactive element
     * @return Connected reactive element
     */
-  private[rescala] def create[T <: Reactive[S]](dependencies: Set[Reactive[S]], dynamic: Boolean = false)(f: => T): T
+  private[rescala] def create[P, T <: Reactive[S]](incomingOrDynamic: Option[Set[Reactive[S]]], valueOrTransient: Option[Change[P]], hasAccumulatingState: Boolean)(instantiateReactive: S#State[Pulse[P], S] => T): T = {
+    val state = makeStructState(valueOrTransient, hasAccumulatingState)
+    val reactive = instantiateReactive(state)
+    ignite(reactive, incomingOrDynamic)
+    reactive
+  }
+
+  /**
+    * to be implemented by the scheduler, called when a new state storage object is required for instantiating a new reactive.
+    * @param valueOrTransient the initial value in case the reactive has a steady value, or [[None]] if it's transient
+    * @param hasAccumulatingState true if the reactive's value is accumulated over time,
+    *                             false if it is a pure transformation of its parameters.
+    * @tparam P the stored value type
+    * @return the initialized state storage
+    */
+  protected def makeStructState[P](valueOrTransient: Option[Change[P]], hasAccumulatingState: Boolean): S#State[Pulse[P], S]
+
+  /**
+    * to be implemented by the propagation algorithm, called when a new reactive has been instantiated and needs to be connected to the graph and potentially reevaluated.
+    * @param reactive the newly instantiated reactive
+    * @param incomingOrDynamic the static set of incoming dependencies or [[None]] if dynamic reevaluation
+    * @tparam T
+    */
+  protected def ignite[T <: Reactive[S]](reactive: T, incomingOrDynamic: Option[Set[Reactive[S]]]): Unit
 
   /**
     * Registers a new handler function that is called after all changes were written and committed.

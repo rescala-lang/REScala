@@ -41,12 +41,11 @@ trait BufferedValueStruct[P, S <: Struct] extends ReadWriteValue[P, S] with Comm
   *
   * @param current Pulse used as initial value for the struct
   * @param transient If a struct is marked as transient, changes to it can not be committed (and are released instead)
-  * @param initialIncoming Initial incoming edges in the struct's graph
   * @tparam P Pulse stored value type
-  * @tparam R Type of the reactive values that are connected to this struct
+  * @tparam S Type of the reactive values that are connected to this struct
   */
-abstract class PropagationStructImpl[P, S <: Struct](override var current: P, override val transient: Boolean, initialIncoming: Set[Reactive[S]]) extends GraphStructType[S] with BufferedValueStruct[P, S] {
-  protected var _incoming: Set[Reactive[S]] = initialIncoming
+abstract class PropagationStructImpl[P, S <: Struct](override var current: P, override val transient: Boolean) extends GraphStructType[S] with BufferedValueStruct[P, S] {
+  protected var _incoming: Set[Reactive[S]] = Set.empty
   protected var _outgoing: scala.collection.mutable.Map[Reactive[S], None.type] = rescala.util.WeakHashMap.empty
 
 

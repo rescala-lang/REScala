@@ -7,7 +7,7 @@ import rescala.twoversion.{ReadWriteValue, Token, TwoVersionPropagation}
 
 import scala.concurrent.stm.{InTxn, Ref, TxnLocal, atomic}
 
-class STMStructType[P, S <: Struct](initialValue: P, transient: Boolean, initialIncoming: Set[Reactive[S]]) extends LevelStructType[S] with ReadWriteValue[P, S] {
+class STMStructType[P, S <: Struct](initialValue: P, transient: Boolean) extends LevelStructType[S] with ReadWriteValue[P, S] {
 
   implicit def inTxn(implicit turn: Turn[S]): InTxn = turn match {
     case stmTurn: STMTurn => stmTurn.inTxn
@@ -22,7 +22,7 @@ class STMStructType[P, S <: Struct](initialValue: P, transient: Boolean, initial
 
   val _level: Ref[Int] = Ref(0)
   val _outgoing: Ref[Set[Reactive[S]]] = Ref(Set.empty)
-  val _incoming: Ref[Set[Reactive[S]]] = Ref(initialIncoming)
+  val _incoming: Ref[Set[Reactive[S]]] = Ref(Set.empty)
 
   val pulses: ReadWriteValue[P, S] = this
   def incoming(implicit turn: Turn[S]): Set[Reactive[S]] = _incoming.get

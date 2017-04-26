@@ -1,6 +1,7 @@
 package rescala.parrp
 
-import rescala.graph.{Reactive, Struct}
+import rescala.graph.Pulse.NoChange
+import rescala.graph.{Change, Pulse, Reactive, Struct}
 import rescala.levelbased.{LevelBasedPropagation, LevelStruct, LevelStructTypeImpl}
 import rescala.locking._
 
@@ -15,8 +16,8 @@ trait ParRPInterTurn {
 
 }
 
-class ParRPStructType[P, S <: Struct](current: P, transient: Boolean, val lock: TurnLock[ParRPInterTurn], initialIncoming: Set[Reactive[S]])
-  extends LevelStructTypeImpl[P, S](current, transient, initialIncoming)
+class ParRPStructType[P, S <: Struct](current: P, transient: Boolean, val lock: TurnLock[ParRPInterTurn])
+  extends LevelStructTypeImpl[P, S](current, transient)
 
 
 class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropagation[ParRP] with ParRPInterTurn with LevelStruct {
@@ -24,11 +25,6 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
 
   private type TState = ParRP
 
-
-  override private[rescala] def makeStructState[P](initialValue: P, transient: Boolean, initialIncoming: Set[Reactive[TState]], hasState: Boolean): TState#State[P, ParRP] = {
-    val lock = new TurnLock[ParRPInterTurn]
-    new ParRPStructType[P, ParRP](initialValue, transient, lock, initialIncoming)
-  }
 
 
   override def writeState[P](pulsing: Reactive[TState])(value: pulsing.Value): Unit = {
@@ -45,20 +41,11 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
 
   final val key: Key[ParRPInterTurn] = new Key(this)
 
-  /**
-    * creating a signal causes some unpredictable reactives to be used inside the turn.
-    * these will have their locks be acquired dynamically see below for how that works.
-    * the newly created reactive on the other hand can not be locked by anything, so we just grab the lock
-    * (we do need to grab it, so it can be transferred to some other waiting transaction).
-    * it is important, that the locks for the dependencies are acquired BEFORE the constructor for the new reactive.
-    * is executed, because the constructor typically accesses the dependencies to create its initial value.
-    */
-  override def create[T <: Reactive[TState]](dependencies: Set[Reactive[TState]], dynamic: Boolean)(f: => T): T = {
-    dependencies.foreach(dynamicDependencyInteraction)
-    val reactive = f
-    val owner = reactive.state.lock.tryLock(key)
-    assert(owner eq key, s"$this failed to acquire lock on newly created reactive $reactive")
-    super.create(dependencies, dynamic)(reactive)
+  override protected def makeStructState[P](valueOrTransient: Option[Change[P]], hasAccumulatingState: Boolean = false): ParRPStructType[Pulse[P], ParRP] = {
+    val lock = new TurnLock[ParRPInterTurn]
+    val owner = lock.tryLock(key)
+    assert(owner eq key, s"$this failed to acquire lock on newly created reactive")
+    new ParRPStructType[Pulse[P], ParRP](valueOrTransient.getOrElse(NoChange), valueOrTransient.isEmpty, lock)
   }
 
   /** this is called after the turn has finished propagating, but before handlers are executed */

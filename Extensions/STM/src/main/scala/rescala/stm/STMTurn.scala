@@ -1,6 +1,7 @@
 package rescala.stm
 
-import rescala.graph.{Reactive, Struct}
+import rescala.graph.Pulse.NoChange
+import rescala.graph.{Change, Pulse, Reactive, Struct}
 import rescala.levelbased.{LevelBasedPropagation, LevelStruct}
 import rescala.twoversion.Token
 
@@ -9,11 +10,9 @@ import scala.concurrent.stm.{InTxn, atomic}
 class STMTurn extends LevelBasedPropagation[STMTurn] with LevelStruct {
   override type State[P, S <: Struct] = STMStructType[P, S]
 
-
-
   /** used to create state containers of each reactive */
-  override private[rescala] def makeStructState[P](initialValue: P, transient: Boolean, initialIncoming: Set[Reactive[STMTurn]], hasState: Boolean): State[P, STMTurn] = {
-    new STMStructType[P, STMTurn](initialValue, transient, initialIncoming)
+  override protected def makeStructState[P](valueOrTransient: Option[Change[P]], hasAccumulatingState: Boolean = false): State[Pulse[P], STMTurn] = {
+    new STMStructType[Pulse[P], STMTurn](valueOrTransient.getOrElse(NoChange), valueOrTransient.isEmpty)
   }
   override def releasePhase(): Unit = ()
   // this is unsafe when used improperly

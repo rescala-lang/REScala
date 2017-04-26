@@ -3,10 +3,11 @@ package rescala.parrp
 import java.util
 
 import rescala.engine.Turn
+import rescala.graph.Pulse.NoChange
 import rescala.graph.ReevaluationResult.{Dynamic, Static}
 import rescala.graph._
 import rescala.locking._
-import rescala.twoversion.{TwoVersionPropagationImpl, GraphStruct, PropagationStructImpl}
+import rescala.twoversion.{GraphStruct, PropagationStructImpl, TwoVersionPropagationImpl}
 
 import scala.collection.mutable
 
@@ -15,8 +16,8 @@ trait LSStruct extends GraphStruct {
 }
 
 
-class LSPropagationStruct[P, S <: Struct](current: P, transient: Boolean, val lock: TurnLock[LSInterTurn], initialIncoming: Set[Reactive[S]])
-  extends PropagationStructImpl[P, S](current, transient, initialIncoming) {
+class LSPropagationStruct[P, S <: Struct](current: P, transient: Boolean, val lock: TurnLock[LSInterTurn])
+  extends PropagationStructImpl[P, S](current, transient) {
 
   var willWrite: LockSweep = null
   var hasWritten: LockSweep = null
@@ -33,10 +34,48 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
 
   private type TState = LSStruct
 
+  val queue = new util.ArrayDeque[Reactive[TState]]()
 
-  override private[rescala] def makeStructState[P](initialValue: P, transient: Boolean, initialIncoming: Set[Reactive[TState]], hasState: Boolean): LSStruct#State[P, TState] = {
+  final val key: Key[LSInterTurn] = new Key(this)
+
+  var discovered: mutable.Map[Key[LSInterTurn], mutable.Set[Reactive[TState]]] = mutable.HashMap.empty
+
+
+
+  override protected def makeStructState[P](valueOrTransient: Option[Change[P]], hasAccumulatingState: Boolean = false): LSStruct#State[Pulse[P], TState] = {
     val lock = new TurnLock[LSInterTurn]
-    new LSPropagationStruct[P, LSStruct](initialValue, transient, lock, initialIncoming)
+    val owner = lock.tryLock(key)
+    assert(owner eq key, s"$this failed to acquire lock on newly created reactive")
+    val state = new LSPropagationStruct[Pulse[P], LSStruct](valueOrTransient.getOrElse(NoChange), valueOrTransient.isEmpty, lock)
+    state.willWrite = this
+    state.anyInputChanged = this
+    state
+  }
+
+  /**
+    * creating a signal causes some unpredictable reactives to be used inside the turn.
+    * these will have their locks be acquired dynamically see below for how that works.
+    * the newly created reactive on the other hand can not be locked by anything, so we just grab the lock
+    * (we do need to grab it, so it can be transferred to some other waiting transaction).
+    * it is important, that the locks for the dependencies are acquired BEFORE the constructor for the new reactive.
+    * is executed, because the constructor typically accesses the dependencies to create its initial value.
+    */
+  protected def ignite[T <: Reactive[TState]](reactive: T, incomingOrDynamic: Option[Set[Reactive[TState]]]): Unit = {
+    incomingOrDynamic match {
+      case Some(incoming) =>
+        incoming.foreach { dep =>
+          acquireShared(dep)
+          discover(reactive)(dep)
+        }
+        reactive.state.counter = recount(incoming.iterator)
+        val inputsChanged = incoming.exists(_.state.hasChanged == this)
+        if (reactive.state.counter == 0) {
+          if (inputsChanged) evaluate(reactive)
+          else done(reactive, hasChanged = true)
+        }
+      case None =>
+        evaluate(reactive)
+    }
   }
 
 
@@ -49,12 +88,6 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
     super.writeState(pulsing)(value)
   }
 
-
-  val queue = new util.ArrayDeque[Reactive[TState]]()
-
-  final val key: Key[LSInterTurn] = new Key(this)
-
-  var discovered: mutable.Map[Key[LSInterTurn], mutable.Set[Reactive[TState]]] = mutable.HashMap.empty
 
   /** lock all reactives reachable from the initial sources
     * retry when acquire returns false */
@@ -148,37 +181,6 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
 
   def recount(reactives: Iterator[Reactive[TState]]): Int = {
     reactives.count(r => r.state.hasWritten != this && r.state.willWrite == this)
-  }
-
-  /**
-    * creating a signal causes some unpredictable reactives to be used inside the turn.
-    * these will have their locks be acquired dynamically see below for how that works.
-    * the newly created reactive on the other hand can not be locked by anything, so we just grab the lock
-    * (we do need to grab it, so it can be transferred to some other waiting transaction).
-    * it is important, that the locks for the dependencies are acquired BEFORE the constructor for the new reactive.
-    * is executed, because the constructor typically accesses the dependencies to create its initial value.
-    */
-  override def create[T <: Reactive[TState]](dependencies: Set[Reactive[TState]], dynamic: Boolean)(f: => T): T = {
-    dependencies.map(acquireShared)
-    val reactive = f
-    val owner = reactive.state.lock.tryLock(key)
-    assert(owner eq key, s"$this failed to acquire lock on newly created reactive $reactive")
-    reactive.state.willWrite = this
-
-    reactive.state.anyInputChanged = this
-    if (dynamic) {
-      evaluate(reactive)
-    }
-    else {
-      dependencies.foreach(discover(reactive))
-      reactive.state.counter = recount(dependencies.iterator)
-      val inputsChanged = dependencies.exists(_.state.hasChanged == this)
-      if (reactive.state.counter == 0) {
-        if (inputsChanged) evaluate(reactive)
-        else done(reactive, hasChanged = true)
-      }
-    }
-    reactive
   }
 
 

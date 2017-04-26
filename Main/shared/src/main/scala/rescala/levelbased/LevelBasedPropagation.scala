@@ -1,7 +1,7 @@
 package rescala.levelbased
 
 import rescala.graph.ReevaluationResult.{Dynamic, Static}
-import rescala.graph.{Reactive, ReevaluationResult}
+import rescala.graph.{Change, Reactive, ReevaluationResult}
 import rescala.twoversion.TwoVersionPropagationImpl
 
 /**
@@ -40,27 +40,25 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
 
   private def maximumLevel(dependencies: Set[Reactive[S]]): Int = dependencies.foldLeft(-1)((acc, r) => math.max(acc, r.state.level(this)))
 
+  override protected def ignite[T <: Reactive[S]](reactive: T, incomingOrDynamic: Option[Set[Reactive[S]]]): Unit = {
+    incomingOrDynamic match {
+      case Some(incoming) =>
+        val level = incoming.foldLeft(0) { (maxLevel, dep) =>
+          dynamicDependencyInteraction(dep)
+          discover(reactive)(dep)
+          math.max(maxLevel, dep.state.level(this))
+        }
 
-  override def create[T <: Reactive[S]](dependencies: Set[Reactive[S]], dynamic: Boolean)(f: => T): T = {
+        reactive.state.updateLevel(level)(this)
 
-    val reactive = f
-    val level = ensureLevel(reactive, dependencies)
-    if (dynamic) evaluate(reactive)
-    else {
-      dependencies.foreach(discover(reactive))
-      if (level <= levelQueue.currentLevel() && dependencies.exists(_evaluated.contains)) {
+        if (level <= levelQueue.currentLevel() && incoming.exists(_evaluated.contains)) {
+          // TODO evaluate if level <= levelQueue.current or enqueue otherwise, rather than possible double reevaluation?
+          evaluate(reactive)
+        }
+      case None =>
         evaluate(reactive)
-      }
     }
-    reactive
   }
-
-  def ensureLevel(dependant: Reactive[S], dependencies: Set[Reactive[S]]): Int =
-    if (dependencies.isEmpty) 0
-    else {
-      val newLevel = dependencies.map(_.state.level(this)).max + 1
-      dependant.state.updateLevel(newLevel)(this)
-    }
 
   /** allow turn to handle dynamic access to reactives */
   override def dynamicDependencyInteraction(dependency: Reactive[S]): Unit = ()

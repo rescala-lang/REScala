@@ -36,25 +36,24 @@ object Events {
 
   /** the basic method to create static events */
   def static[T, S <: Struct](name: String, dependencies: Reactive[S]*)(calculate: StaticTicket[S] => Pulse[T])(implicit maybe: TurnSource[S]): Event[T, S] = maybe { initTurn =>
-    val dependencySet: Set[Reactive[S]] = dependencies.toSet
-    initTurn.create(dependencySet) {
-      new StaticEvent[T, S](initTurn.makeStructState(Pulse.NoChange, initialIncoming = dependencySet, transient = true), calculate, name) with Disconnectable[S]
+    initTurn.create[T, Event[T, S]](Some(dependencies.toSet), valueOrTransient = None, hasAccumulatingState = false) {
+      new StaticEvent[T, S](_, calculate, name) with Disconnectable[S]
     }
   }
 
   /** create dynamic events */
   def dynamic[T, S <: Struct](dependencies: Reactive[S]*)(expr: DynamicTicket[S] => Option[T])(implicit maybe: TurnSource[S]): Event[T, S] = {
     maybe { initialTurn =>
-      initialTurn.create(dependencies.toSet, dynamic = true) {
-        new DynamicEvent[T, S](initialTurn.makeStructState(Pulse.NoChange, transient = true), expr.andThen(Pulse.fromOption)) with Disconnectable[S]
+      initialTurn.create[T, Event[T, S]](incomingOrDynamic = None, valueOrTransient = None, hasAccumulatingState = false) {
+        new DynamicEvent[T, S](_, expr.andThen(Pulse.fromOption)) with Disconnectable[S]
       }
     }
   }
 
   def change[A, S <: Struct](signal: Signal[A, S])(implicit maybe: TurnSource[S]): Event[Diff[A], S] = maybe { initTurn =>
     val dependencySet: Set[Reactive[S]] = Set(signal)
-    initTurn.create(dependencySet) {
-      new ChangeEvent[A, S](initTurn.makeStructState(Pulse.NoChange, initialIncoming = dependencySet, transient = true), signal) with Disconnectable[S]
+    initTurn.create[Diff[A], Event[Diff[A], S]](Some(Set(signal)), valueOrTransient = None, hasAccumulatingState = false) {
+      new ChangeEvent[A, S](_, signal) with Disconnectable[S]
     }
   }
 }

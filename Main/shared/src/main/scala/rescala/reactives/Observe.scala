@@ -1,6 +1,7 @@
 package rescala.reactives
 
 import rescala.engine.{Engine, Turn, TurnSource}
+import rescala.graph.Pulse.Value
 import rescala.graph.{Base, Disconnectable, Pulse, Pulsing, Reactive, ReevaluationResult, Struct}
 import rescala.reactives.RExceptions.UnhandledFailureException
 
@@ -18,7 +19,7 @@ object Observe {
 
   private val strongObserveReferences = scala.collection.mutable.HashMap[Observe[_], Boolean]()
 
-  private abstract class Obs[T, S <: Struct](bud: S#State[Pulse[T], S], dependency: Pulsing[Pulse[T], S], fun: T => Unit, fail: Throwable => Unit) extends Base[T, S](bud) with Reactive[S] with Observe[S]  {
+  private abstract class Obs[T, S <: Struct](bud: S#State[Pulse[Unit], S], dependency: Pulsing[Pulse[T], S], fun: T => Unit, fail: Throwable => Unit) extends Base[Unit, S](bud) with Reactive[S] with Observe[S]  {
     this: Disconnectable[S] =>
 
     override protected[rescala] def reevaluate(ticket: Turn[S]): ReevaluationResult[Value, S] = {
@@ -43,9 +44,8 @@ object Observe {
   }
 
   def weak[T, S <: Struct](dependency: Pulsing[Pulse[T], S])(fun: T => Unit, fail: Throwable => Unit)(implicit maybe: TurnSource[S]): Observe[S] = {
-    val incoming = Set[Reactive[S]](dependency)
-    maybe(initTurn => initTurn.create(incoming) {
-      val obs = new Obs(initTurn.makeStructState[Pulse[T]](Pulse.NoChange, initialIncoming = incoming, transient = false), dependency, fun, fail) with Disconnectable[S]
+    maybe(initTurn => initTurn.create[Unit, Obs[T, S]](Some(Set(dependency)), Some(Value(Unit)), hasAccumulatingState = false) { state =>
+      val obs = new Obs[T, S](state, dependency, fun, fail) with Disconnectable[S]
       scheduleHandler(obs, initTurn, dependency, fun, fail)
       obs
     })

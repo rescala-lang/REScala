@@ -23,7 +23,7 @@ trait SimpleStruct extends LevelStruct {
 /**
   * Graph struct that additionally can be assigned a level value that is used for topologically traversing the graph.
   *
-  * @tparam R Type of the reactive values that are connected to this struct
+  * @tparam S Type of the reactive values that are connected to this struct
   */
 trait LevelStructType[S <: Struct] extends GraphStructType[S] {
   def level(implicit turn: Turn[S]): Int
@@ -35,12 +35,11 @@ trait LevelStructType[S <: Struct] extends GraphStructType[S] {
   *
   * @param current         Pulse used as initial value for the struct
   * @param transient       If a struct is marked as transient, changes to it can not be committed (and are released instead)
-  * @param initialIncoming Initial incoming edges in the struct's graph
   * @tparam P Pulse stored value type
   * @tparam S Type of the reactive values that are connected to this struct
   */
-class LevelStructTypeImpl[P, S <: Struct](current: P, transient: Boolean, initialIncoming: Set[Reactive[S]])
-  extends PropagationStructImpl[P, S](current, transient, initialIncoming) with LevelStructType[S] {
+class LevelStructTypeImpl[P, S <: Struct](current: P, transient: Boolean)
+  extends PropagationStructImpl[P, S](current, transient) with LevelStructType[S] {
 
   var _level: Int = 0
 
