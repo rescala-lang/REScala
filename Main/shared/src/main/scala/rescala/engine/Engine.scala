@@ -14,7 +14,6 @@ import scala.language.experimental.macros
   */
 @implicitNotFound(msg = "Could not find an implicit propagation engine. Did you forget an import?")
 trait Engine[S <: Struct, +TTurn <: Turn[S]] extends RescalaDefaultImports[S] {
-
   override def explicitEngine: this.type = this
 
   private[rescala] def executeTurn[R](initialWrites: Traversable[Reactive], admissionPhase: TTurn => R): R
