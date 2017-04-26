@@ -1,6 +1,6 @@
 package rescala.graph
 
-import rescala.graph.Pulse.{Change, Exceptional, NoChange}
+import rescala.graph.Pulse.{Value, Exceptional, NoChange}
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 
 import scala.util.control.NonFatal
@@ -34,7 +34,7 @@ sealed trait Pulse[+P] {
     * @return Pulse indicating the update performed by the applied function or an empty pulse if there is no updated value
     */
   def map[Q](f: P => Q): Pulse[Q] = this match {
-    case Change(value) => Change(f(value))
+    case Value(value) => Value(f(value))
     case NoChange => NoChange
     case ex@Exceptional(_) => ex
   }
@@ -49,7 +49,7 @@ sealed trait Pulse[+P] {
     * @return Pulse returned by the applied function or an empty pulse if there is no updated value
     */
   def flatMap[Q](f: P => Pulse[Q]): Pulse[Q] = this match {
-    case Change(value) => f(value)
+    case Value(value) => f(value)
     case NoChange => NoChange
     case ex@Exceptional(_) => ex
   }
@@ -63,39 +63,40 @@ sealed trait Pulse[+P] {
     * @return A pulse with the updated pulse value if the filter function returns true, an empty pulse otherwise
     */
   def filter(p: P => Boolean): Pulse[P] = this match {
-    case c@Change(value) if p(value) => c
-    case Change(_) => NoChange
+    case c@Value(value) if p(value) => c
+    case Value(_) => NoChange
     case NoChange => NoChange
     case ex@Exceptional(_) => ex
   }
 
   def collect[U](pf: PartialFunction[P, U]): Pulse[U] = this match {
-    case Change(value) => pf.andThen(Pulse.Change(_)).applyOrElse[P, Pulse[U]](value, _ => NoChange)
+    case Value(value) => pf.andThen(Pulse.Value(_)).applyOrElse[P, Pulse[U]](value, _ => NoChange)
     case NoChange => NoChange
     case ex@Exceptional(_) => ex
   }
 
   /** converts the pulse to an option of try */
   def toOptionTry: Option[Try[P]] = this match {
-    case Change(up) => Some(Success(up))
+    case Value(up) => Some(Success(up))
     case NoChange => None
     case Pulse.empty => None
     case Exceptional(t) => Some(Failure(t))
   }
 
   def toOption: Option[P] = this match {
-    case Change(update) => Some(update)
+    case Value(update) => Some(update)
     case NoChange => None
     case Exceptional(t) => throw t
   }
 
   def get: P = this match {
-    case Change(value) => value
+    case Value(value) => value
     case Exceptional(t) => throw t
     case NoChange => throw new NoSuchElementException("Tried to access the value of a NoChange Pulse")
   }
 }
 
+sealed trait Change[+P] extends Pulse[P]
 
 /** Object containing utility functions for using pulses */
 object Pulse {
@@ -107,16 +108,16 @@ object Pulse {
     * @tparam P Value type of both option and returned pulse
     * @return Pulse with the option's value set as updated value, or an empty pulse if the option doesn't have a value.
     */
-  def fromOption[P](opt: Option[P]): Pulse[P] = opt.fold[Pulse[P]](NoChange)(Change.apply)
+  def fromOption[P](opt: Option[P]): Pulse[P] = opt.fold[Pulse[P]](NoChange)(Value.apply)
 
   /** Transforms the given pulse and an updated value into a pulse indicating a change from the pulse's value to
     * the given updated value. */
   def diffPulse[P](newValue: P, oldPulse: Pulse[P]): Pulse[P] = oldPulse match {
-    case NoChange => Change(newValue)
-    case Change(oldValue) =>
+    case NoChange => Value(newValue)
+    case Value(oldValue) =>
       if (newValue == oldValue) NoChange
-      else Change(newValue)
-    case ex@Exceptional(t) => Change(newValue)
+      else Value(newValue)
+    case ex@Exceptional(t) => Value(newValue)
   }
 
   /** wrap a pulse generating function to store eventual exceptions into an exceptional pulse */
@@ -135,8 +136,8 @@ object Pulse {
   /** Pulse indicating a change
     *
     * @param update Updated value stored by the pulse */
-  final case class Change[+P](update: P) extends Pulse[P]
+  final case class Value[+P](update: P) extends Change[P]
 
   /** Pulse indicating an exception */
-  final case class Exceptional(throwable: Throwable) extends Pulse[Nothing]
+  final case class Exceptional(throwable: Throwable) extends Change[Nothing]
 }

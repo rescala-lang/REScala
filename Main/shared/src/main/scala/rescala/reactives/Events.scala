@@ -18,7 +18,7 @@ object Events {
       val pulse = {
         val from = turn.before(signal)
         val to = turn.after(signal)
-        if (from != to) Pulse.Change(Diff(from, to))
+        if (from != to) Pulse.Value(Diff(from, to))
         else Pulse.NoChange
       }
       ReevaluationResult.Static(pulse)

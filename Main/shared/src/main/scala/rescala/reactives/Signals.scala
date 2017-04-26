@@ -31,12 +31,12 @@ object Signals extends GeneratedSignalLift {
 
     /** creates a signal that statically depends on the dependencies with a given initial value */
     def makeFold[T, S <: Struct](dependencies: Set[Reactive[S]], init: StaticTicket[S] => T)(expr: (StaticTicket[S], => T) => T)(initialTurn: Turn[S]): Signal[T, S] = initialTurn.create(dependencies) {
-      val bud: S#State[Pulse[T], S] = initialTurn.makeStructState(Pulse.tryCatch(Pulse.Change(init(initialTurn.static()))), transient = false, initialIncoming = dependencies, hasState = true)
+      val bud: S#State[Pulse[T], S] = initialTurn.makeStructState(Pulse.tryCatch(Pulse.Value(init(initialTurn.static()))), transient = false, initialIncoming = dependencies, hasState = true)
       new StaticSignal[T, S](bud, expr) with Disconnectable[S]
     }
 
     def makeStatic[T, S <: Struct](dependencies: Set[Reactive[S]], init: StaticTicket[S] => T)(expr: (StaticTicket[S], => T) => T)(initialTurn: Turn[S]): Signal[T, S] = initialTurn.create(dependencies) {
-      val bud: S#State[Pulse[T], S] = initialTurn.makeStructState(Pulse.tryCatch(Pulse.Change(init(initialTurn.static()))), transient = false, initialIncoming = dependencies)
+      val bud: S#State[Pulse[T], S] = initialTurn.makeStructState(Pulse.tryCatch(Pulse.Value(init(initialTurn.static()))), transient = false, initialIncoming = dependencies)
       new StaticSignal[T, S](bud, expr) with Disconnectable[S]
     }
 
@@ -66,7 +66,7 @@ object Signals extends GeneratedSignalLift {
   /** converts a future to a signal */
   def fromFuture[A, S <: Struct](fut: Future[A])(implicit fac: Engine[S, Turn[S]], ec: ExecutionContext): Signal[A, S] = {
     val v: Var[A, S] = rescala.reactives.Var.empty[A, S]
-    fut.onComplete { res => fac.transaction(v)(t => v.admitPulse(Pulse.tryCatch(Pulse.Change(res.get)))(t)) }
+    fut.onComplete { res => fac.transaction(v)(t => v.admitPulse(Pulse.tryCatch(Pulse.Value(res.get)))(t)) }
     v
   }
 
@@ -87,8 +87,8 @@ object Signals extends GeneratedSignalLift {
   object Diff {
     def apply[A](from: Pulse[A], to: Pulse[A]): Diff[A] = new Diff(from, to)
     def unapply[A](arg: Diff[A]): Option[(A, A)] = arg.from match {
-      case Pulse.Change(v1) => arg.to match {
-        case Pulse.Change(v2) => Some((v1, v2))
+      case Pulse.Value(v1) => arg.to match {
+        case Pulse.Value(v2) => Some((v1, v2))
         case _ => None
       }
       case _ => None

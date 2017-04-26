@@ -1,7 +1,7 @@
 package rescala.reactives
 
 import rescala.engine.{Engine, Turn, TurnSource}
-import rescala.graph.Pulse.{Change, Exceptional, NoChange}
+import rescala.graph.Pulse.{Value, Exceptional, NoChange}
 import rescala.graph._
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 
@@ -35,7 +35,7 @@ trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] 
 
   final def recover[R >: T](onFailure: PartialFunction[Throwable,Option[R]])(implicit ticket: TurnSource[S]): Event[R, S] = Events.static(s"(recover $this)", this) { st =>
     st.turn.after(this) match {
-      case Exceptional(t) => onFailure.applyOrElse[Throwable, Option[R]](t, throw _).fold[Pulse[R]](Pulse.NoChange)(Pulse.Change(_))
+      case Exceptional(t) => onFailure.applyOrElse[Throwable, Option[R]](t, throw _).fold[Pulse[R]](Pulse.NoChange)(Pulse.Value(_))
       case other => other
     }
   }
@@ -62,7 +62,7 @@ trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] 
     Events.static(s"(except $this  $except)", this, except) { turn =>
       turn.turn.after(except) match {
         case NoChange => turn.turn.after(this)
-        case Change(_) => Pulse.NoChange
+        case Value(_) => Pulse.NoChange
         case ex@Exceptional(_) => ex
       }
     }
@@ -86,7 +86,7 @@ trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] 
     Events.static(s"(zipOuter $this $other)", this, other) { turn =>
       val left = turn.turn.after(this)
       val right = turn.turn.after(other)
-      if(right.isChange || left.isChange) Change(left.toOption -> right.toOption) else NoChange
+      if(right.isChange || left.isChange) Value(left.toOption -> right.toOption) else NoChange
     }
   }
 

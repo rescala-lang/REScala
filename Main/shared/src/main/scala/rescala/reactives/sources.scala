@@ -7,7 +7,7 @@ import scala.language.higherKinds
 
 class Source[T, S <: Struct](_bud: S#State[Pulse[T], S]) extends Base[T, S](_bud) {
   private var result: Value = null
-  final def admit(value: T)(implicit turn: Turn[S]): Unit = admitPulse(Pulse.Change(value))
+  final def admit(value: T)(implicit turn: Turn[S]): Unit = admitPulse(Pulse.Value(value))
 
   final def admitPulse(value: Pulse[T])(implicit turn: Turn[S]): Unit = {
     require(result == null, "can not admit the same reactive twice in the same turn")
@@ -69,7 +69,7 @@ final class Var[A, S <: Struct](_bud: S#State[Pulse[A], S]) extends Source[A, S]
   * Companion object that allows external users to create new source signals.
   */
 object Var {
-  def apply[T, S <: Struct](initval: T)(implicit ticket: TurnSource[S]): Var[T, S] = ticket { t => t.create(Set.empty)(new Var(t.makeStructState(Pulse.Change(initval), transient = false, hasState = true))) }
+  def apply[T, S <: Struct](initval: T)(implicit ticket: TurnSource[S]): Var[T, S] = ticket { t => t.create(Set.empty)(new Var(t.makeStructState(Pulse.Value(initval), transient = false, hasState = true))) }
   def empty[T, S <: Struct]()(implicit ticket: TurnSource[S]): Var[T, S] = ticket { t => t.create(Set.empty)(new Var(t.makeStructState(Pulse.empty, transient = false, hasState = true))) }
 
 }

@@ -35,7 +35,7 @@ object Observe {
     turn.after(dependency) match {
       case Pulse.NoChange =>
       case Pulse.empty =>
-      case Pulse.Change(v) => turn.observe(() => fun(v))
+      case Pulse.Value(v) => turn.observe(() => fun(v))
       case Pulse.Exceptional(t) =>
         if (fail eq null) throw new UnhandledFailureException(obs, t)
         else turn.observe(() => fail(t))
