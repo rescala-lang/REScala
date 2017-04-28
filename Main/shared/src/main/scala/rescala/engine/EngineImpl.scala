@@ -2,7 +2,6 @@ package rescala.engine
 
 import rescala.graph.Struct
 
-import scala.annotation.implicitNotFound
 import scala.language.experimental.macros
 import scala.util.DynamicVariable
 

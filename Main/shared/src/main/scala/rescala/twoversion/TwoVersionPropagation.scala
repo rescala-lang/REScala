@@ -1,6 +1,5 @@
 package rescala.twoversion
 
-import rescala.engine.Turn
 import rescala.graph.{Reactive, Struct}
 
 /**
@@ -8,7 +7,7 @@ import rescala.graph.{Reactive, Struct}
   *
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
-trait TwoVersionPropagation[S <: Struct] extends Turn[S] {
+trait TwoVersionPropagation[S <: Struct]  {
 
   /**
     * Schedules a temporarily written change to be committed by the turn.

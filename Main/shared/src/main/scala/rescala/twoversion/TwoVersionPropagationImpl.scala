@@ -1,5 +1,6 @@
 package rescala.twoversion
 
+import rescala.engine.InitializationImpl
 import rescala.graph.ReevaluationResult.DepDiff
 import rescala.graph.{Pulsing, Reactive}
 
@@ -11,7 +12,7 @@ import scala.util.control.NonFatal
   *
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
-trait TwoVersionPropagationImpl[S <: GraphStruct] extends TwoVersionPropagation[S] {
+trait TwoVersionPropagationImpl[S <: GraphStruct] extends TwoVersionPropagation[S] with InitializationImpl[S] {
   outer =>
 
   val token: Token = Token()
