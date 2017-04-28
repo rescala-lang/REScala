@@ -30,7 +30,7 @@ object Signals extends GeneratedSignalLift {
     }
 
     /** creates a signal that statically depends on the dependencies with a given initial value */
-    def makeFold[T, S <: Struct](dependencies: Set[Reactive[S]], init: StaticTicket[S] => T)(expr: (StaticTicket[S], => T) => T)(initialTurn: Turn[S]): Signal[T, S] = {
+    private[rescala] def makeFold[T, S <: Struct](dependencies: Set[Reactive[S]], init: StaticTicket[S] => T)(expr: (StaticTicket[S], => T) => T)(initialTurn: Turn[S]): Signal[T, S] = {
       initialTurn.create[Pulse[T], Signal[T, S]](dependencies, dynamic = false, ValuePersistency.Accumulating(Pulse.tryCatch(Pulse.Value(init(initialTurn.static()))))) {
         state => new StaticSignal[T, S](state, expr) with Disconnectable[S]
       }
