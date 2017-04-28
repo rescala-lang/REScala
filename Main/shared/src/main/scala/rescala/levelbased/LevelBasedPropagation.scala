@@ -41,11 +41,11 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
 
   private def maximumLevel(dependencies: Set[Reactive[S]]): Int = dependencies.foldLeft(-1)((acc, r) => math.max(acc, r.state.level(this)))
 
-  override protected def ignite(reactive: Reactive[S], incoming: Set[Reactive[S]], dynamic: Boolean, valuePersistency: ValuePersistency[_]): Unit = {
+  override protected def ignite(reactive: Reactive[S], incoming: Set[Reactive[S]], valuePersistency: ValuePersistency[_]): Unit = {
     val level = if(incoming.isEmpty) 0 else incoming.map(_.state.level(this)).max + 1
     reactive.state.updateLevel(level)(this)
 
-    if(!dynamic) {
+    if(!valuePersistency.dynamic) {
       incoming.foreach { dep =>
         dynamicDependencyInteraction(dep)
         discover(reactive)(dep)

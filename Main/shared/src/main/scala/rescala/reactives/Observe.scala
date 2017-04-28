@@ -43,7 +43,7 @@ object Observe {
   }
 
   def weak[T, S <: Struct](dependency: Pulsing[Pulse[T], S])(fun: T => Unit, fail: Throwable => Unit)(implicit maybe: TurnSource[S]): Observe[S] = {
-    maybe(initTurn => initTurn.create[Pulse[Unit], Obs[T, S]](Set(dependency), dynamic = false, ValuePersistency.Derived) { state =>
+    maybe(initTurn => initTurn.create[Pulse[Unit], Obs[T, S]](Set(dependency), ValuePersistency.Event) { state =>
       new Obs[T, S](state, dependency, fun, fail) with Disconnectable[S]
     })
   }

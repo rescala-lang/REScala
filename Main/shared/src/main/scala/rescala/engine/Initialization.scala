@@ -4,10 +4,10 @@ import rescala.graph._
 
 
 trait InitializationImpl[S <: Struct] extends Turn[S] {
-  final private[rescala] def create[P, T <: Reactive[S]](incoming: Set[Reactive[S]], dynamic: Boolean, valuePersistency: ValuePersistency[P])(instantiateReactive: S#State[P, S] => T): T = {
+  final private[rescala] def create[P, T <: Reactive[S]](incoming: Set[Reactive[S]], valuePersistency: ValuePersistency[P])(instantiateReactive: S#State[P, S] => T): T = {
     val state = makeStructState(valuePersistency)
     val reactive = instantiateReactive(state)
-    ignite(reactive, incoming, dynamic, valuePersistency)
+    ignite(reactive, incoming, valuePersistency)
     reactive
   }
 
@@ -26,19 +26,22 @@ trait InitializationImpl[S <: Struct] extends Turn[S] {
     * @param dynamic false if the set of incoming dependencies is the correct final set of dependencies (static reactive)
     *                true if the set of incoming dependencies is just a best guess for the initial dependencies.
     */
-  protected def ignite(reactive: Reactive[S], incoming: Set[Reactive[S]], dynamic: Boolean, valuePersistency: ValuePersistency[_]): Unit
+  protected def ignite(reactive: Reactive[S], incoming: Set[Reactive[S]], valuePersistency: ValuePersistency[_]): Unit
 }
 
 sealed class ValuePersistency[+V](
   val initialValue: V,
   val isTransient: Boolean,
-  val ignitionRequiresReevaluation: Boolean
+  val ignitionRequiresReevaluation: Boolean,
+  val dynamic: Boolean
 )
 
 object ValuePersistency {
-  object Transient extends ValuePersistency[Pulse[Nothing]](Pulse.NoChange, isTransient = true, ignitionRequiresReevaluation = true)
-  object Derived extends ValuePersistency[Change[Nothing]](Pulse.empty, isTransient = false, ignitionRequiresReevaluation = true)
-  case class Accumulating[V](override val initialValue: Change[V])
-    extends ValuePersistency[Change[V]](initialValue, isTransient = false, ignitionRequiresReevaluation = false)
+  object Event extends ValuePersistency[Pulse[Nothing]](Pulse.NoChange, isTransient = true, ignitionRequiresReevaluation = true, dynamic = false)
+  object DynamicEvent extends ValuePersistency[Pulse[Nothing]](Pulse.NoChange, isTransient = true, ignitionRequiresReevaluation = true, dynamic = true)
+  object Signal extends ValuePersistency[Change[Nothing]](Pulse.empty, isTransient = false, ignitionRequiresReevaluation = true, dynamic = false)
+  object DynamicSignal extends ValuePersistency[Change[Nothing]](Pulse.empty, isTransient = false, ignitionRequiresReevaluation = true, dynamic = true)
+  case class InitializedSignal[V](override val initialValue: Change[V])
+    extends ValuePersistency[Change[V]](initialValue, isTransient = false, ignitionRequiresReevaluation = false, dynamic = false)
 }
 

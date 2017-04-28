@@ -29,7 +29,7 @@ class FullMVTurn(val sgt: SerializationGraphTracking) extends InitializationImpl
   }
 
   override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): NodeVersionHistory[P] = new NodeVersionHistory(sgt, this, valuePersistency.initialValue)
-  override protected def ignite(reactive: Reactive[FullMVStruct], incoming: Set[Reactive[FullMVStruct]], dynamic: Boolean, valuePersistency: ValuePersistency[_]): Unit = ???
+  override protected def ignite(reactive: Reactive[FullMVStruct], incoming: Set[Reactive[FullMVStruct]], valuePersistency: ValuePersistency[_]): Unit = ???
 
   override private[rescala] def dynamicDependencyInteraction(reactive: Reactive[FullMVStruct]) = reactive.state.ensureReadVersion(this)
   override private[rescala] def before[P](pulsing: Pulsing[P, FullMVStruct]) = pulsing.state.before(this)

@@ -11,7 +11,7 @@ class ReStoringTurn(engine: ReStoringEngine) extends LevelBasedPropagation[ReSto
 
   override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): ReStoringStructType[P, ReStoringStruct] = {
     valuePersistency match {
-      case ValuePersistency.Accumulating(init: P) =>
+      case ValuePersistency.InitializedSignal(init: P) =>
         val name = engine.nextName
         def store(storing: Storing) = {
           //println(s"updating $name to $storing")

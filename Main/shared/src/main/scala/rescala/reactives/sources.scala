@@ -45,7 +45,7 @@ final class Evt[T, S <: Struct]()(_bud: S#State[Pulse[T], S]) extends Source[T, 
   */
 object Evt {
   def apply[T, S <: Struct]()(implicit ticket: TurnSource[S]): Evt[T, S] = ticket { t =>
-    t.create[Pulse[T], Evt[T, S]](Set.empty, dynamic = false, ValuePersistency.Transient)(new Evt[T, S]()(_))
+    t.create[Pulse[T], Evt[T, S]](Set.empty, ValuePersistency.Event)(new Evt[T, S]()(_))
   }
 }
 
@@ -76,7 +76,7 @@ object Var {
   def apply[T, S <: Struct](initval: T)(implicit ticket: TurnSource[S]): Var[T, S] = fromChange(Value(initval))
   def empty[T, S <: Struct]()(implicit ticket: TurnSource[S]): Var[T, S] = fromChange(Pulse.empty)
   private[this] def fromChange[T, S <: Struct](change: Change[T])(implicit ticket: TurnSource[S]): Var[T, S] = ticket { t =>
-    t.create[Pulse[T], Var[T, S]](Set.empty, dynamic = false, ValuePersistency.Accumulating(change))(new Var[T, S](_))
+    t.create[Pulse[T], Var[T, S]](Set.empty, ValuePersistency.InitializedSignal(change))(new Var[T, S](_))
   }
 }
 

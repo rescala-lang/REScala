@@ -55,7 +55,7 @@ trait Turn[S <: Struct] {
     * @tparam T Reactive subtype of the reactive element
     * @return Connected reactive element
     */
-  private[rescala] def create[P, T <: Reactive[S]](incoming: Set[Reactive[S]], dynamic: Boolean, valuePersistency: ValuePersistency[P])(instantiateReactive: S#State[P, S] => T): T
+  private[rescala] def create[P, T <: Reactive[S]](incoming: Set[Reactive[S]], valuePersistency: ValuePersistency[P])(instantiateReactive: S#State[P, S] => T): T
   /**
     * Registers a new handler function that is called after all changes were written and committed.
     *
