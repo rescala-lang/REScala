@@ -39,7 +39,7 @@ class ReactiveCreationInTurnsTest extends RETests {
 
     v1.set(100)
 
-    assert(v2.now === 2, "related signal should be evaluated twice on change (this behaviour is actually undefined)")
+    assert(v2.now === 1, "related signal should be evaluated once on change (this behaviour is actually undefined)")
 
   }
 
@@ -49,8 +49,8 @@ class ReactiveCreationInTurnsTest extends RETests {
     engine.transaction() { implicit t =>
       val v1 = rescala.reactives.Var(0)
       val v2 = v1.map(_ + 1)
-      val c1 = v1.change.observe(v => assert(false, s"created signals do not change, but change was $v"))
-      val c2 = v2.change.observe(v => assert(false, s"created mapped signals do not change, but change was $v"))
+      val c1 = v1.change.observe(v => fail(s"created signals should not change, but change was $v"))
+      val c2 = v2.change.observe(v => fail(s"created mapped signals should not change, but change was $v"))
     }
 
     {
@@ -58,16 +58,16 @@ class ReactiveCreationInTurnsTest extends RETests {
       var a1 = false
       var a2 = false
       var v2: Signal[Int] = null
+      var v1changedFired = false
       implicitEngine.transaction(v1) { implicit t =>
-        v2 = v1.map(_ + 1)
         val c1 = v1.change
-        c1.observe(_ => a1 = true)
+        c1.observe(v => v1changedFired = true)
+        v2 = v1.map(_ + 1)
         val c2 = v2.change
-        c2.observe(_ => a2 = true)
+        c2.observe(v => fail("created mapped signals should not change when admitting in same turn, but change was " + v))
         v1.admit(10)
       }
-      assert(a1, "created signals do not change when admitting in same turn")
-      assert(a2, "created mapped signals do not change when admitting in same turn")
+      assert(v1changedFired, "created change events should fire when admitting in same turn, but did not.")
       assert(v1.now == 10)
       assert(v2.now == 11)
     }

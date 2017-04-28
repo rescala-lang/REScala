@@ -499,22 +499,22 @@ class IFunTest extends RETests {
     assert(log.now === List("constant" -> "one"))
 
     v2.set("two")
-    assert(log.now === List("failed" -> "change", "constant" -> "one"))
+    assert(log.now === List("constant" -> "one"))
 
     v2.set("three")
-    assert(log.now === List("two" -> "three", "failed" -> "change", "constant" -> "one"))
+    assert(log.now === List("two" -> "three", "constant" -> "one"))
 
 
     update(v1 -> "four a", v2 -> "four b")
 
-    assert(log.now === List("constant" -> "four a", "two" -> "three", "failed" -> "change", "constant" -> "one"))
+    assert(log.now === List("constant" -> "four a", "two" -> "three", "constant" -> "one"))
 
     transaction(v1, v2) { turn =>
       v1.admitPulse(Pulse.Exceptional(EmptySignalControlThrowable))(turn)
       v2.admit("five b")(turn)
     }
 
-    assert(log.now === List("four b" -> "five b", "constant" -> "four a", "two" -> "three", "failed" -> "change", "constant" -> "one"))
+    assert(log.now === List("four b" -> "five b", "constant" -> "four a", "two" -> "three", "constant" -> "one"))
 
   }
 
