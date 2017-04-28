@@ -379,4 +379,17 @@ class HigherOrderTestSuite extends RETests {
 
   }
 
+  allEngines("create folds during tx"){ engine => import engine._
+
+    val e = Evt[String]
+
+    val listed = transaction(e) { implicit t =>
+      e.admit("hello")
+      e.list()
+    }
+
+    assert(listed.now == List("hello"))
+
+  }
+
 }
