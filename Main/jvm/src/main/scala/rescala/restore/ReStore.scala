@@ -1,8 +1,7 @@
 package rescala.restore
 
-import rescala.engine.{Accumulating, ValuePersistency}
-import rescala.graph.Pulse.NoChange
-import rescala.graph.{Change, Pulse, Reactive, Struct}
+import rescala.engine.ValuePersistency
+import rescala.graph.{Reactive, Struct}
 import rescala.levelbased.{LevelBasedPropagation, LevelStruct, LevelStructTypeImpl}
 import rescala.twoversion.{TwoVersionEngine, TwoVersionPropagation}
 
@@ -12,7 +11,7 @@ class ReStoringTurn(engine: ReStoringEngine) extends LevelBasedPropagation[ReSto
 
   override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): ReStoringStructType[P, ReStoringStruct] = {
     valuePersistency match {
-      case Accumulating(init: P) =>
+      case ValuePersistency.Accumulating(init: P) =>
         val name = engine.nextName
         def store(storing: Storing) = {
           //println(s"updating $name to $storing")

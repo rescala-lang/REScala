@@ -44,7 +44,9 @@ final class Evt[T, S <: Struct]()(_bud: S#State[Pulse[T], S]) extends Source[T, 
   * Companion object that allows external users to create new source events.
   */
 object Evt {
-  def apply[T, S <: Struct]()(implicit ticket: TurnSource[S]): Evt[T, S] = ticket { t => t.create[Pulse[T], Evt[T, S]](Set.empty, dynamic = false, Transient)(new Evt[T, S]()(_)) }
+  def apply[T, S <: Struct]()(implicit ticket: TurnSource[S]): Evt[T, S] = ticket { t =>
+    t.create[Pulse[T], Evt[T, S]](Set.empty, dynamic = false, ValuePersistency.Transient)(new Evt[T, S]()(_))
+  }
 }
 
 /**
@@ -59,7 +61,8 @@ final class Var[A, S <: Struct](_bud: S#State[Pulse[A], S]) extends Source[A, S]
   def set(value: A)(implicit fac: Engine[S, Turn[S]]): Unit = fac.transaction(this) {admit(value)(_)}
 
   def transform(f: A => A)(implicit fac: Engine[S, Turn[S]]): Unit = fac.transaction(this) { t =>
-    admit(f(t.before(this).get))(t) }
+    admit(f(t.before(this).get))(t)
+  }
 
   def setEmpty()(implicit fac: Engine[S, Turn[S]]): Unit = fac.transaction(this)(t => admitPulse(Pulse.empty)(t))
 
@@ -72,6 +75,8 @@ final class Var[A, S <: Struct](_bud: S#State[Pulse[A], S]) extends Source[A, S]
 object Var {
   def apply[T, S <: Struct](initval: T)(implicit ticket: TurnSource[S]): Var[T, S] = fromChange(Value(initval))
   def empty[T, S <: Struct]()(implicit ticket: TurnSource[S]): Var[T, S] = fromChange(Pulse.empty)
-  private[this] def fromChange[T, S <: Struct](change: Change[T])(implicit ticket: TurnSource[S]): Var[T, S] = ticket { t => t.create[Pulse[T], Var[T, S]](Set.empty, dynamic = false, Accumulating(change))(new Var[T, S](_)) }
+  private[this] def fromChange[T, S <: Struct](change: Change[T])(implicit ticket: TurnSource[S]): Var[T, S] = ticket { t =>
+    t.create[Pulse[T], Var[T, S]](Set.empty, dynamic = false, ValuePersistency.Accumulating(change))(new Var[T, S](_))
+  }
 }
 

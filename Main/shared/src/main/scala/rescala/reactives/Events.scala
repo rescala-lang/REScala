@@ -1,6 +1,6 @@
 package rescala.reactives
 
-import rescala.engine.{Transient, Turn, TurnSource}
+import rescala.engine.{Turn, TurnSource, ValuePersistency}
 import rescala.graph.Pulse.NoChange
 import rescala.graph.{Base, Disconnectable, DynamicTicket, Pulse, Reactive, ReevaluationResult, StaticTicket, Struct}
 import rescala.reactives.Signals.Diff
@@ -36,7 +36,7 @@ object Events {
 
   /** the basic method to create static events */
   def static[T, S <: Struct](name: String, dependencies: Reactive[S]*)(calculate: StaticTicket[S] => Pulse[T])(implicit maybe: TurnSource[S]): Event[T, S] = maybe { initTurn =>
-    initTurn.create[Pulse[T], Event[T, S]](dependencies.toSet, dynamic = false, Transient) {
+    initTurn.create[Pulse[T], Event[T, S]](dependencies.toSet, dynamic = false, ValuePersistency.Transient) {
       new StaticEvent[T, S](_, calculate, name) with Disconnectable[S]
     }
   }
@@ -44,7 +44,7 @@ object Events {
   /** create dynamic events */
   def dynamic[T, S <: Struct](dependencies: Reactive[S]*)(expr: DynamicTicket[S] => Option[T])(implicit maybe: TurnSource[S]): Event[T, S] = {
     maybe { initialTurn =>
-      initialTurn.create[Pulse[T], Event[T, S]](dependencies.toSet, dynamic = true, Transient) {
+      initialTurn.create[Pulse[T], Event[T, S]](dependencies.toSet, dynamic = true, ValuePersistency.Transient) {
         new DynamicEvent[T, S](_, expr.andThen(Pulse.fromOption)) with Disconnectable[S]
       }
     }
@@ -52,7 +52,7 @@ object Events {
 
   def change[A, S <: Struct](signal: Signal[A, S])(implicit maybe: TurnSource[S]): Event[Diff[A], S] = maybe { initTurn =>
     val dependencySet: Set[Reactive[S]] = Set(signal)
-    initTurn.create[Pulse[Diff[A]], Event[Diff[A], S]](Set(signal), dynamic = false, Transient) {
+    initTurn.create[Pulse[Diff[A]], Event[Diff[A], S]](Set(signal), dynamic = false, ValuePersistency.Transient) {
       new ChangeEvent[A, S](_, signal) with Disconnectable[S]
     }
   }

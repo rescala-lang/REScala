@@ -1,8 +1,8 @@
 package rescala.levelbased
 
-import rescala.engine.{Accumulating, Derived, Transient, ValuePersistency}
+import rescala.engine.ValuePersistency
 import rescala.graph.ReevaluationResult.{Dynamic, Static}
-import rescala.graph.{Change, Reactive, ReevaluationResult}
+import rescala.graph.{Reactive, ReevaluationResult}
 import rescala.twoversion.TwoVersionPropagationImpl
 
 /**
