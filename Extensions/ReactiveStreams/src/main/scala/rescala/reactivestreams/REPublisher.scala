@@ -2,8 +2,9 @@ package rescala.reactivestreams
 
 
 import org.reactivestreams.{Publisher, Subscriber, Subscription}
-import rescala.engine.{Engine, Turn}
+import rescala.engine.{Engine, Turn, ValuePersistency}
 import rescala.graph._
+import rescala.reactives.Signal
 
 import scala.util.{Failure, Success}
 
@@ -65,9 +66,11 @@ object REPublisher {
 
   def subscription[T, S <: Struct](dependency: Pulsing[Pulse[T], S], subscriber: Subscriber[_ >: T], fac: Engine[S, Turn[S]]): SubscriptionReactive[T, S] = {
     val incoming = Set[Reactive[S]](dependency)
-    fac.transaction(dependency)(initTurn => initTurn.create(incoming) {
-      new SubscriptionReactive[T, S](initTurn.makeStructState[Pulse[T]](Pulse.NoChange, initialIncoming = incoming, transient = false), dependency, subscriber, fac)
-    })
+    fac.transaction(dependency) { initTurn =>
+      initTurn.create[Pulse[T], SubscriptionReactive[T, S]](incoming, dynamic = false, ValuePersistency.Derived) { state =>
+        new SubscriptionReactive[T, S](state, dependency, subscriber, fac)
+      }
+    }
   }
 
 }
