@@ -8,68 +8,34 @@ trait FullMVStruct extends Struct {
 }
 
 class FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
-  override protected def makeTurn(initialWrites: Traversable[Reactive], priorTurn: Option[FullMVTurn]): FullMVTurn = new FullMVTurn
+  def sgt: SerializationGraphTracking = ???
+  override protected def makeTurn(initialWrites: Traversable[Reactive], priorTurn: Option[FullMVTurn]): FullMVTurn = new FullMVTurn(sgt)
   override protected def executeTurn[R](turn: FullMVTurn, initialWrites: Traversable[Reactive], admissionPhase: (FullMVTurn) => R): R = ???
 }
 
-class FullMVTurn extends Turn[FullMVStruct] {
-  /**
-    * Synchronize for access (i.e., [[before()]] or [[after()]]) on this node when
-    * synchronization is unknown. Multiple invocations are redundant, but not harmful outside of an
-    * implementation-dependent performance penalty.
-    *
-    * @param reactive the reactive to be dynamically accessed
-    */
-  override private[rescala] def dynamicDependencyInteraction(reactive: Reactive[FullMVStruct]) = ???
+class FullMVTurn(val sgt: SerializationGraphTracking) extends Turn[FullMVStruct] {
+  def incrementFrame(node: Reactive[FullMVStruct]): Unit = {
+    val branching = node.state.incrementFrame(this)
+    // TODO
+  }
+  def incrementSupersedeFrame(node: Reactive[FullMVStruct], superseded: FullMVTurn): Unit = {
+    val branching = node.state.incrementSupersedeFrame(this, superseded)
+    // TODO
+  }
 
-  /**
-    * Read value from before this turn. Only call this if you know that you are synchronized with this node:
-    * Reads on dependencies where an edge exists (e.g., reading a static dependency) is always synchronized.
-    * Reads on other nodes must be synchronized through [[dynamicDependencyInteraction()]] first.
-    *
-    * @param pulsing the node to be read
-    * @tparam P the node's storage type
-    * @return the stored value from before this turn
-    */
-  override private[rescala] def before[P](pulsing: Pulsing[P, FullMVStruct]) = ???
+  def notify(node: Reactive[FullMVStruct], changed: Boolean, maybeFollowFrame: Option[FullMVTurn]): Unit = {
+    val notificationResultAction = node.state.notify(this, changed, maybeFollowFrame)
+    // TODO
+  }
 
-  /**
-    * Read value from after this turn. Implementations may return the node's current value, including
-    * changes already made by this turn but disregarding potential future changes, or may suspend to
-    * return only the value that is final until the end of this turn.
-    * Only call this if you know that you are synchronized with this node:
-    * Reads on dependencies where an edge exists (e.g., reading a static dependency) is always synchronized.
-    * Reads on other nodes must be synchronized through [[dynamicDependencyInteraction()]] first.
-    *
-    * @param pulsing the node to be read
-    * @tparam P the node's storage type
-    * @return the stored value from after this turn
-    */
-  override private[rescala] def after[P](pulsing: Pulsing[P, FullMVStruct]) = ???
-
-  /**
-    * to be implemented by the scheduler, called when a new state storage object is required for instantiating a new reactive.
-    *
-    * @param valuePersistency the value persistency
-    * @tparam P the stored value type
-    * @return the initialized state storage
-    */
-  override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): NodeVersionHistory[P] = ???
-
-  /**
-    * to be implemented by the propagation algorithm, called when a new reactive has been instantiated and needs to be connected to the graph and potentially reevaluated.
-    *
-    * @param reactive the newly instantiated reactive
-    * @param incoming a set of incoming dependencies
-    * @param dynamic  false if the set of incoming dependencies is the correct final set of dependencies (static reactive)
-    *                 true if the set of incoming dependencies is just a best guess for the initial dependencies.
-    */
+  override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): NodeVersionHistory[P] = new NodeVersionHistory(sgt, this, valuePersistency.initialValue)
   override protected def ignite(reactive: Reactive[FullMVStruct], incoming: Set[Reactive[FullMVStruct]], dynamic: Boolean, valuePersistency: ValuePersistency[_]): Unit = ???
 
-  /**
-    * Registers a new handler function that is called after all changes were written and committed.
-    *
-    * @param f Handler function to register.
-    */
-  override def observe(f: () => Unit): Unit = ???
+  override private[rescala] def dynamicDependencyInteraction(reactive: Reactive[FullMVStruct]) = reactive.state.ensureReadVersion(this)
+  override private[rescala] def before[P](pulsing: Pulsing[P, FullMVStruct]) = pulsing.state.before(this)
+  override private[rescala] def after[P](pulsing: Pulsing[P, FullMVStruct]) = pulsing.state.after(this)
+
+
+
+  override def observe(f: () => Unit): Unit = f()
 }

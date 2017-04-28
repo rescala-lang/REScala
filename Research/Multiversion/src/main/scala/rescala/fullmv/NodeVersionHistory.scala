@@ -6,29 +6,8 @@ import rescala.graph.Reactive
 import scala.annotation.tailrec
 import scala.collection.mutable.ArrayBuffer
 
-sealed trait FramingBranchResult[+R] {
-  def processBranching(txn: FullMVTurn, taskPool: TaskPool): Unit
-}
-case object FramingBranchEnd extends FramingBranchResult[Nothing] {
-  override def processBranching(txn: FullMVTurn, taskPool: TaskPool): Unit = {
-    txn.branches(-1)
-  }
-}
-case class FramingBranchOut[R](out: Set[Reactive[FullMVStruct]]) extends FramingBranchResult[R] {
-  override def processBranching(txn: FullMVTurn, taskPool: TaskPool): Unit = {
-    if(out.size != 1) txn.branches(out.size - 1)
-    out.foreach { node => taskPool.addFraming(node, txn) }
-  }
-}
-case class FramingBranchOutSuperseding[R](out: Set[Reactive[FullMVStruct]], supersede: FullMVTurn) extends FramingBranchResult[R] {
-  override def processBranching(txn: FullMVTurn, taskPool: TaskPool): Unit = {
-    if(out.size != 1) txn.branches(out.size - 1)
-    out.foreach { node => taskPool.addSupersedingFraming(node, txn, supersede) }
-  }
-}
-
-class Version[D <: Pulse[_], R](val txn: FullMVTurn, var out: Set[Reactive[FullMVStruct]], var pending: Int, var changed: Int, var value: D) {
-  def isWritten: Boolean = changed == 0 && value.isChange
+class Version[D, R](val txn: FullMVTurn, var out: Set[Reactive[FullMVStruct]], var pending: Int, var changed: Int, var value: Option[D]) {
+  def isWritten: Boolean = changed == 0 && value.isDefined
   def isFrame: Boolean = pending > 0 || (changed > 0 && !isWritten)
   def isWrite: Boolean = pending > 0 || changed > 0 || isWritten
   def isReadOrDynamic: Boolean = !isWrite
@@ -45,12 +24,13 @@ case object GlitchFreeReadyButQueued extends NotificationResultAction[Nothing]
 case class GlitchFreeReady(txn: FullMVTurn) extends NotificationResultAction[Nothing]
 case class NotificationAndMaybeNextReevaluation[R](out: Set[Reactive[FullMVStruct]], txn: FullMVTurn, changed: Boolean, maybeFollowFraming: Option[FullMVTurn], reevaluationReady: Boolean) extends NotificationResultAction[R]
 
-class NodeVersionHistory[V](val host: Host, init: FullMVTurn, initialValue: PersistentValue[V]) extends PersistentReevaluationStruct[V, R] with PersistentAccessStruct[V, R] {
+class NodeVersionHistory[V](val sgt: SerializationGraphTracking, init: FullMVTurn, initialValue: V) {
+  type R = Reactive[FullMVStruct]
   // =================== STORAGE ====================
 
-  var _versions = new ArrayBuffer[Version[PersistentValue[V], R]](6)
-  _versions += new Version[PersistentValue[V], R](init, Set(), 0, 0, Some(initialValue))
-  var latestValue: PersistentValue[V] = initialValue
+  var _versions = new ArrayBuffer[Version[V, R]](6)
+  _versions += new Version[V, R](init, Set(), 0, 0, Some(initialValue))
+  var latestValue: V = initialValue
 
   var incomings: Set[Reactive[FullMVStruct]] = Set.empty
 
@@ -63,9 +43,9 @@ class NodeVersionHistory[V](val host: Host, init: FullMVTurn, initialValue: Pers
     * @param changed the number of already received change notifications, none by default
     * @return the created version
     */
-  private def createVersion(position: Int, txn: FullMVTurn, pending: Int = 0, changed: Int = 0): Version[PersistentValue[V], R] = {
+  private def createVersion(position: Int, txn: FullMVTurn, pending: Int = 0, changed: Int = 0): Version[V, R] = {
     assert(position > 0)
-    val version = new Version[PersistentValue[V], R](txn, _versions(position - 1).out, pending, changed, None)
+    val version = new Version[V, R](txn, _versions(position - 1).out, pending, changed, None)
     _versions.insert(position, version)
     if(position <= firstFrame) firstFrame += 1
     version
@@ -79,12 +59,12 @@ class NodeVersionHistory[V](val host: Host, init: FullMVTurn, initialValue: Pers
     * performs binary search for the given FullMVTurn
     *in _versions. If no version associated with the given
     * FullMVTurn
-    *is found, it establishes an order in host.sgt against all other versions' FullMVTurn
+    *is found, it establishes an order in sgt against all other versions' FullMVTurn
     *s, placing
     * the given FullMVTurn
     *as late as possible. For this it first finds the latest possible insertion point. Assume,
     * for a given txn, this is between versions y and z. As the latest point is used, it is txn < z.txn. To fixate this
-    * order, the search thus attempts to establish y.txn < txn in host.sgt. This may fail, however, if concurrent
+    * order, the search thus attempts to establish y.txn < txn in sgt. This may fail, however, if concurrent
     * threads intervened and established txn < y.txn. For this case, the search keeps track of the latest x for which
     * x.txn < txn is already established. It then restarts the search in the reduced fallback range between x and y.
     * @param lookFor the FullMVTurn
@@ -108,7 +88,7 @@ class NodeVersionHistory[V](val host: Host, init: FullMVTurn, initialValue: Pers
   private def findOrPidgeonHole(lookFor: FullMVTurn, recoverFrom: Int, from: Int, to: Int): Int = {
     if (to == from) {
       assert(from > 0, "Found an insertion point of 0; insertion points must always be after the base state version.")
-      if(host.sgt.ensureOrder(_versions(math.abs(from) - 1).txn, lookFor) == FirstFirst) {
+      if(sgt.ensureOrder(_versions(math.abs(from) - 1).txn, lookFor) == FirstFirst) {
         -from
       } else {
         findOrPidgeonHole(lookFor, recoverFrom, recoverFrom, from)
@@ -118,7 +98,7 @@ class NodeVersionHistory[V](val host: Host, init: FullMVTurn, initialValue: Pers
       val candidate = _versions(idx).txn
       if(candidate == lookFor) {
         idx
-      } else host.sgt.getOrder(candidate, lookFor) match {
+      } else sgt.getOrder(candidate, lookFor) match {
         case FirstFirst =>
           findOrPidgeonHole(lookFor, idx + 1, idx + 1, to)
         case SecondFirst =>
@@ -148,7 +128,7 @@ class NodeVersionHistory[V](val host: Host, init: FullMVTurn, initialValue: Pers
     *            's position, search starts at this position's predecessor version and moves backwards
     * @return the first encountered version with [[Version.isWrite]]
     */
-  private def prevWrite(txn: FullMVTurn, from: Int): Version[PersistentValue[V], R] = {
+  private def prevWrite(txn: FullMVTurn, from: Int): Version[V, R] = {
     var position = from - 1
     while(position >= 0 && !_versions(position).isWrite) position -= 1
     if(position < 0) throw new IllegalArgumentException(txn + " does not have a preceding write in versions " + _versions.take(from))
@@ -182,9 +162,9 @@ class NodeVersionHistory[V](val host: Host, init: FullMVTurn, initialValue: Pers
     *                 whose frame was superseded by the visiting FullMVTurn
     *                 at the previous node
     */
-  def incrementSupersedeFrame(txn: FullMVTurn, supersede: FullMVTurn): Unit = {
-    assert(txn.phase == Preparing)
-    assert(supersede.phase == Preparing)
+  def incrementSupersedeFrame(txn: FullMVTurn, supersede: FullMVTurn): FramingBranchResult[R] = {
+//    assert(txn.phase == Preparing)
+//    assert(supersede.phase == Preparing)
     synchronized {
       val position = findFrame(supersede)
       if (position >= 0) {
@@ -194,7 +174,7 @@ class NodeVersionHistory[V](val host: Host, init: FullMVTurn, initialValue: Pers
         createVersion(-position, supersede, pending = -1)
       }
       incrementFrame0(txn)
-    }.processBranching(txn, host.taskPool)
+    }
   }
 
   /**
@@ -202,9 +182,9 @@ class NodeVersionHistory[V](val host: Host, init: FullMVTurn, initialValue: Pers
     * @param txn the FullMVTurn
     *           visiting the node for framing
     */
-  def incrementFrame(txn: FullMVTurn): Unit = {
-    assert(txn.phase == Preparing)
-    synchronized { incrementFrame0(txn) }.processBranching(txn, host.taskPool)
+  def incrementFrame(txn: FullMVTurn): FramingBranchResult[R] = {
+//    assert(txn.phase == Preparing)
+    synchronized { incrementFrame0(txn) }
   }
 
   /**
@@ -217,7 +197,7 @@ class NodeVersionHistory[V](val host: Host, init: FullMVTurn, initialValue: Pers
     val position = findFrame(txn)
     if(position >= 0) {
       _versions(position).pending += 1
-      FramingBranchEnd
+      FramingBranchResult.FramingBranchEnd
     } else {
       val frame = createVersion(-position, txn, pending = 1)
       val previousFirstFrame = firstFrame
@@ -225,16 +205,16 @@ class NodeVersionHistory[V](val host: Host, init: FullMVTurn, initialValue: Pers
         firstFrame = -position
       }
       if(frame.out.isEmpty) {
-        FramingBranchEnd
+        FramingBranchResult.FramingBranchEnd
       } else if(-position < previousFirstFrame) {
         if(previousFirstFrame < _versions.size) {
           val supersede = _versions(previousFirstFrame).txn
-          FramingBranchOutSuperseding(frame.out, supersede)
+          FramingBranchResult.FramingBranchOutSuperseding(frame.out, supersede)
         } else {
-          FramingBranchOut(frame.out)
+          FramingBranchResult.FramingBranchOut(frame.out)
         }
       } else {
-        FramingBranchEnd
+        FramingBranchResult.FramingBranchEnd
       }
     }
   }
@@ -313,14 +293,14 @@ class NodeVersionHistory[V](val host: Host, init: FullMVTurn, initialValue: Pers
     */
   }
 
-  override def reevIn(turn: Turn[_]): (PersistentValue[V], Set[Reactive[FullMVStruct]]) = {
+  def reevIn(turn: FullMVTurn): (V, Set[Reactive[FullMVStruct]]) = {
     assert(synchronized{_versions(firstFrame)}.txn == turn)
     (latestValue, incomings)
   }
 
-  override def reevDone(turn: Turn[_], maybeValue: PersistentValue[V], incomings: Set[Reactive[FullMVStruct]]): Unit = {
+  def reevDone(turn: FullMVTurn, maybeValue: Option[V], incomings: Set[Reactive[FullMVStruct]]): Unit = {
     assert(synchronized{_versions(firstFrame)}.txn == turn)
-    if(maybeValue.isChange) {
+    if(maybeValue.isDefined) {
       this.latestValue = maybeValue.get
       _versions(firstFrame).value = maybeValue
     }
@@ -332,7 +312,7 @@ class NodeVersionHistory[V](val host: Host, init: FullMVTurn, initialValue: Pers
     * return the resulting notification (with reframing if subsequent write is found).
     * Also include, whether the the new [[firstFrame]] is [[Version.isReadyForReevaluation]]
     */
-  def reevOut(turn: Turn[_]): NotificationAndMaybeNextReevaluation[R] = synchronized {
+  def reevOut(turn: FullMVTurn): NotificationAndMaybeNextReevaluation[R] = synchronized {
     val version = _versions(firstFrame)
     assert(version.txn == turn)
     version.changed = 0
@@ -387,7 +367,7 @@ class NodeVersionHistory[V](val host: Host, init: FullMVTurn, initialValue: Pers
     *
     * @return the version's position.
     */
-  private def ensureReadVersion(txn: FullMVTurn, knownMinPos: Int = 0): Int = {
+  def ensureReadVersion(txn: FullMVTurn, knownMinPos: Int = 0): Int = {
     val position = findOrPidgeonHole(txn, knownMinPos, knownMinPos, _versions.size)
     if(position < 0) {
       createVersion(-position, txn)
@@ -406,9 +386,9 @@ class NodeVersionHistory[V](val host: Host, init: FullMVTurn, initialValue: Pers
     *        's
     *         own writes.
     */
-  def before(txn: FullMVTurn): PersistentValue[V] = synchronized {
+  def before(txn: FullMVTurn): V = synchronized {
     @tailrec
-    def before0(): PersistentValue[V] = {
+    def before0(): V = {
       val thisPosition = ensureReadVersion(txn)
       val readFrom = prevWrite(txn, thisPosition)
       if(readFrom.isWritten) {
@@ -429,7 +409,7 @@ class NodeVersionHistory[V](val host: Host, init: FullMVTurn, initialValue: Pers
     *         possibly returning the FullMVTurn
     *        's own write if this already occurred.
     */
-  def now(txn: FullMVTurn): PersistentValue[V] = synchronized {
+  def now(txn: FullMVTurn): V = synchronized {
     val position = ensureReadVersion(txn)
     if(_versions(position).isWritten) {
       _versions(position).read()
@@ -447,9 +427,9 @@ class NodeVersionHistory[V](val host: Host, init: FullMVTurn, initialValue: Pers
     *         FullMVTurn
     *        's own write if one has occurred or will occur.
     */
-  def after(txn: FullMVTurn): PersistentValue[V] = synchronized {
+  def after(txn: FullMVTurn): V = synchronized {
     @tailrec
-    def after0(): PersistentValue[V] = {
+    def after0(): V = {
       val thisPosition = ensureReadVersion(txn)
       val thisVersion = _versions(thisPosition)
       if(thisVersion.isWritten) {
@@ -476,7 +456,7 @@ class NodeVersionHistory[V](val host: Host, init: FullMVTurn, initialValue: Pers
     *
     * @return the corresponding [[Version.value]]
     */
-  def regRead(txn: FullMVTurn): PersistentValue[V] = synchronized {
+  def regRead(txn: FullMVTurn): V = synchronized {
     val position = findOrPidgeonHole(txn, 0, 0, firstFrame)
     if(position >= 0) {
       val thisVersion = _versions(position)
@@ -501,17 +481,13 @@ class NodeVersionHistory[V](val host: Host, init: FullMVTurn, initialValue: Pers
     * @param add the new edge's sink node
     * @return the appropriate [[Version.value]].
     */
-  def discover(txn: FullMVTurn, add: Reactive[FullMVStruct]): PersistentValue[V] = {
-    val (result, (successorWrittenVersions, maybeSuccessorFrame)) = synchronized {
+  def discover(txn: FullMVTurn, add: Reactive[FullMVStruct]): (ArrayBuffer[FullMVTurn], Option[FullMVTurn]) = {
+    synchronized {
       val position = ensureReadVersion(txn)
       assert(!_versions(position).out.contains(add), "must not discover an already existing edge!")
-      val result = after(txn)
       _versions(position).out += add
-      val rewrite = retrofitSourceOuts(position, add, +1)
-      (result, rewrite)
+      retrofitSourceOuts(position, add, +1)
     }
-    add.struct.retrofitSinkFrames(successorWrittenVersions, maybeSuccessorFrame, +1)
-    result
   }
 
   /**
@@ -520,14 +496,13 @@ class NodeVersionHistory[V](val host: Host, init: FullMVTurn, initialValue: Pers
     *
     * @param remove the removed edge's sink node
     */
-  def drop(txn: FullMVTurn, remove: Reactive[FullMVStruct]): Unit = {
-    val (successorWrittenVersions, maybeSuccessorFrame) = synchronized {
+  def drop(txn: FullMVTurn, remove: Reactive[FullMVStruct]): (ArrayBuffer[FullMVTurn], Option[FullMVTurn]) = {
+    synchronized {
       val position = ensureReadVersion(txn)
       assert(_versions(position).out.contains(remove), "must not drop a non-existing edge!")
       _versions(position).out -= remove
       retrofitSourceOuts(position, remove, -1)
     }
-    remove.retrofitSinkFrames(successorWrittenVersions, maybeSuccessorFrame, -1)
   }
 
   /**
