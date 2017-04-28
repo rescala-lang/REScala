@@ -3,6 +3,7 @@ package rescala
 import rescala.graph.Struct
 import rescala.macros.ReactiveMacros
 import rescala.reactives.Source
+
 import scala.language.existentials
 
 

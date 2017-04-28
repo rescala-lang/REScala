@@ -1,7 +1,7 @@
 package rescala.reactives
 
 import rescala.engine.{Engine, Turn, TurnSource}
-import rescala.graph.Pulse.{Value, Exceptional, NoChange}
+import rescala.graph.Pulse.{Exceptional, NoChange, Value}
 import rescala.graph._
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 

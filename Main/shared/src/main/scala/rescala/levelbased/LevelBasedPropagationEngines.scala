@@ -1,8 +1,7 @@
 package rescala.levelbased
 
 import rescala.engine.{Engine, Turn, ValuePersistency}
-import rescala.graph.Pulse.NoChange
-import rescala.graph.{Change, Pulse, Reactive, Struct}
+import rescala.graph.Struct
 import rescala.twoversion.TwoVersionEngineImpl
 
 import scala.language.existentials

@@ -1,6 +1,6 @@
 package rescala.graph
 
-import rescala.graph.Pulse.{Value, Exceptional, NoChange}
+import rescala.graph.Pulse.{Exceptional, NoChange, Value}
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 
 import scala.util.control.NonFatal

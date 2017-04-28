@@ -3,7 +3,7 @@ package rescala.levelbased
 import java.util.PriorityQueue
 
 import rescala.graph.{Reactive, Struct}
-import LevelQueue.QueueElement
+import rescala.levelbased.LevelQueue.QueueElement
 
 /**
   * Level-based queue used the determine an evaluation order for reactive elements
