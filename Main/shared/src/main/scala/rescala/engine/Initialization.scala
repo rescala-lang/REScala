@@ -36,9 +36,9 @@ sealed class ValuePersistency[+V](
 )
 
 object ValuePersistency {
-  object Transient extends ValuePersistency[Pulse[Nothing]](Pulse.NoChange, true, false)
-  object Derived extends ValuePersistency[Change[Nothing]](Pulse.empty, false, true)
+  object Transient extends ValuePersistency[Pulse[Nothing]](Pulse.NoChange, isTransient = true, ignitionRequiresReevaluation = true)
+  object Derived extends ValuePersistency[Change[Nothing]](Pulse.empty, isTransient = false, ignitionRequiresReevaluation = true)
   case class Accumulating[V](override val initialValue: Change[V])
-    extends ValuePersistency[Change[V]](initialValue, false, false)
+    extends ValuePersistency[Change[V]](initialValue, isTransient = false, ignitionRequiresReevaluation = false)
 }
 
