@@ -19,7 +19,7 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
     def reevOut(level: Int, res: ReevaluationResult[head.Value, S]) = {
       if (res.isChange) {
         writeState(head)(res.value)
-        head.state.outgoing(this).foreach(levelQueue.enqueue(level, true))
+        head.state.outgoing(this).foreach(levelQueue.enqueue(level, needsEvaluate = true))
       }
     }
 
@@ -29,7 +29,7 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
         val newLevel = maximumLevel(res.dependencies) + 1
         val redo = head.state.level(this) < newLevel
         if(redo) {
-          levelQueue.enqueue(newLevel, true)(head)
+          levelQueue.enqueue(newLevel, needsEvaluate = true)(head)
         } else {
           applyDiff(head, res.depDiff(head.state.incoming(this)))
           reevOut(newLevel, res)
