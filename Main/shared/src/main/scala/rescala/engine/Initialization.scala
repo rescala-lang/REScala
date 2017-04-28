@@ -29,29 +29,16 @@ trait InitializationImpl[S <: Struct] extends Turn[S] {
   protected def ignite(reactive: Reactive[S], incoming: Set[Reactive[S]], dynamic: Boolean, valuePersistency: ValuePersistency[_]): Unit
 }
 
-
-
-sealed trait ValuePersistency[+V] {
-  val initialValue: V
-  val isTransient: Boolean
+sealed class ValuePersistency[+V](
+  val initialValue: V,
+  val isTransient: Boolean,
   val ignitionRequiresReevaluation: Boolean
-}
+)
 
 object ValuePersistency {
-  case object Transient extends ValuePersistency[Pulse[Nothing]] {
-    override val initialValue: Pulse[Nothing] = Pulse.NoChange
-    override val isTransient: Boolean = true
-    override val ignitionRequiresReevaluation: Boolean = false
-  }
-  sealed trait Steady[+V] extends ValuePersistency[V] {
-    override val isTransient: Boolean = false
-  }
-  case object Derived extends Steady[Change[Nothing]] {
-    override val initialValue: Change[Nothing] = Pulse.empty
-    override val ignitionRequiresReevaluation: Boolean = true
-  }
-  case class Accumulating[V](override val initialValue: Change[V]) extends Steady[Change[V]] {
-    override val ignitionRequiresReevaluation: Boolean = false
-  }
+  object Transient extends ValuePersistency[Pulse[Nothing]](Pulse.NoChange, true, false)
+  object Derived extends ValuePersistency[Change[Nothing]](Pulse.empty, false, true)
+  case class Accumulating[V](override val initialValue: Change[V])
+    extends ValuePersistency[Change[V]](initialValue, false, false)
 }
 
