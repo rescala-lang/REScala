@@ -1,6 +1,6 @@
 package rescala.reactives
 
-import rescala.engine.{Engine, Turn, TurnSource}
+import rescala.engine._
 import rescala.graph.Pulse.Value
 import rescala.graph._
 
@@ -44,7 +44,7 @@ final class Evt[T, S <: Struct]()(_bud: S#State[Pulse[T], S]) extends Source[T, 
   * Companion object that allows external users to create new source events.
   */
 object Evt {
-  def apply[T, S <: Struct]()(implicit ticket: TurnSource[S]): Evt[T, S] = ticket { t => t.create(Some(Set.empty), None, hasAccumulatingState = false)(new Evt[T, S]()(_)) }
+  def apply[T, S <: Struct]()(implicit ticket: TurnSource[S]): Evt[T, S] = ticket { t => t.create(Set.empty, dynamic = false, Transient)(new Evt[T, S]()(_)) }
 }
 
 /**
@@ -72,6 +72,6 @@ final class Var[A, S <: Struct](_bud: S#State[Pulse[A], S]) extends Source[A, S]
 object Var {
   def apply[T, S <: Struct](initval: T)(implicit ticket: TurnSource[S]): Var[T, S] = fromChange(Value(initval))
   def empty[T, S <: Struct]()(implicit ticket: TurnSource[S]): Var[T, S] = fromChange(Pulse.empty)
-  private[this] def fromChange[T, S <: Struct](change: Change[T])(implicit ticket: TurnSource[S]): Var[T, S] = ticket { t => t.create(Some(Set.empty), Some(change), hasAccumulatingState = true)(new Var[T, S](_)) }
+  private[this] def fromChange[T, S <: Struct](change: Change[T])(implicit ticket: TurnSource[S]): Var[T, S] = ticket { t => t.create(Set.empty, dynamic = false, Accumulating(change))(new Var[T, S](_)) }
 }
 

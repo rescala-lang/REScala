@@ -1,8 +1,8 @@
 package rescala.reactives
 
-import rescala.engine.{Engine, Turn, TurnSource}
+import rescala.engine._
 import rescala.graph.Pulse.Value
-import rescala.graph.{Base, Disconnectable, Pulse, Pulsing, Reactive, ReevaluationResult, Struct}
+import rescala.graph._
 import rescala.reactives.RExceptions.UnhandledFailureException
 
 /**
@@ -44,9 +44,9 @@ object Observe {
   }
 
   def weak[T, S <: Struct](dependency: Pulsing[Pulse[T], S])(fun: T => Unit, fail: Throwable => Unit)(implicit maybe: TurnSource[S]): Observe[S] = {
-    maybe(initTurn => initTurn.create[Unit, Obs[T, S]](Some(Set(dependency)), Some(Value(Unit)), hasAccumulatingState = false) { state =>
+    maybe(initTurn => initTurn.create[Unit, Obs[T, S]](Set(dependency), dynamic = false, Derived) { state =>
       val obs = new Obs[T, S](state, dependency, fun, fail) with Disconnectable[S]
-      scheduleHandler(obs, initTurn, dependency, fun, fail)
+//      scheduleHandler(obs, initTurn, dependency, fun, fail)
       obs
     })
   }

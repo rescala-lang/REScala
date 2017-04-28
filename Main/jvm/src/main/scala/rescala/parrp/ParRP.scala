@@ -1,5 +1,6 @@
 package rescala.parrp
 
+import rescala.engine.ValuePersistency
 import rescala.graph.Pulse.NoChange
 import rescala.graph.{Change, Pulse, Reactive, Struct}
 import rescala.levelbased.{LevelBasedPropagation, LevelStruct, LevelStructTypeImpl}
@@ -41,11 +42,11 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
 
   final val key: Key[ParRPInterTurn] = new Key(this)
 
-  override protected def makeStructState[P](valueOrTransient: Option[Change[P]], hasAccumulatingState: Boolean = false): ParRPStructType[Pulse[P], ParRP] = {
+  override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): ParRPStructType[Pulse[P], ParRP] = {
     val lock = new TurnLock[ParRPInterTurn]
     val owner = lock.tryLock(key)
     assert(owner eq key, s"$this failed to acquire lock on newly created reactive")
-    new ParRPStructType[Pulse[P], ParRP](valueOrTransient.getOrElse(NoChange), valueOrTransient.isEmpty, lock)
+    new ParRPStructType[Pulse[P], ParRP](valuePersistency.initialValuePulse, valuePersistency.isTransient, lock)
   }
 
   /** this is called after the turn has finished propagating, but before handlers are executed */

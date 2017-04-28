@@ -11,13 +11,13 @@ trait Committable[S <: Struct] {
     *
     * @param turn Turn to use for committing
     */
-  def commit(implicit turn: TwoVersionPropagation[S]): Unit
+  def commit(turn: TwoVersionPropagation[S]): Unit
 
   /**
     * Releases (reverts) the buffered changes.
     *
     * @param turn Turn to use for committing
     */
-  def release(implicit turn: TwoVersionPropagation[S]): Unit
+  def release(turn: TwoVersionPropagation[S]): Unit
 }
 

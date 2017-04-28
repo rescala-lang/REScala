@@ -1,6 +1,6 @@
 package rescala.reactives
 
-import rescala.engine.{Engine, Turn, TurnSource}
+import rescala.engine._
 import rescala.graph._
 import rescala.reactives.RExceptions.EmptySignalControlThrowable
 
@@ -31,21 +31,21 @@ object Signals extends GeneratedSignalLift {
 
     /** creates a signal that statically depends on the dependencies with a given initial value */
     def makeFold[T, S <: Struct](dependencies: Set[Reactive[S]], init: StaticTicket[S] => T)(expr: (StaticTicket[S], => T) => T)(initialTurn: Turn[S]): Signal[T, S] = {
-      initialTurn.create(Some(dependencies), Some(Pulse.tryCatch(Pulse.Value(init(initialTurn.static())))), hasAccumulatingState = true) {
+      initialTurn.create(dependencies, dynamic = false, Accumulating(Pulse.tryCatch(Pulse.Value(init(initialTurn.static()))))) {
         new StaticSignal[T, S](_, expr) with Disconnectable[S]
       }
     }
 
 
     def makeStatic[T, S <: Struct](dependencies: Set[Reactive[S]], init: StaticTicket[S] => T)(expr: (StaticTicket[S], => T) => T)(initialTurn: Turn[S]): Signal[T, S] = {
-      initialTurn.create(Some(dependencies), Some(Pulse.tryCatch(Pulse.Value(init(initialTurn.static())))), hasAccumulatingState = false) {
+      initialTurn.create(dependencies, dynamic = false, Derived: ValuePersistency[T]) {
         new StaticSignal[T, S](_, expr) with Disconnectable[S]
       }
     }
 
     /** creates a dynamic signal */
     def makeDynamic[T, S <: Struct](dependencies: Set[Reactive[S]])(expr: DynamicTicket[S] => T)(initialTurn: Turn[S]): Signal[T, S] = {
-      initialTurn.create(None, Some[Change[T]](Pulse.empty), hasAccumulatingState = false) {
+      initialTurn.create(dependencies, dynamic = true, Derived: ValuePersistency[T]) {
         new DynamicSignal[T, S](_, expr) with Disconnectable[S]
       }
     }
@@ -86,6 +86,8 @@ object Signals extends GeneratedSignalLift {
         case EmptySignalControlThrowable => throw new NoSuchElementException(s"Can not convert $this to pair")
       }
     }
+
+    override def toString: String = "Diff" + pair
   }
 
   object Diff {

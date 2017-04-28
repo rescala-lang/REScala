@@ -46,39 +46,38 @@ trait Turn[S <: Struct] {
     * Connects a reactive element with potentially existing dependencies and prepares re-evaluations to be
     * propagated based on the turn's propagation scheme
     *
-    * @param incomingOrDynamic the static set of incoming dependencies or [[None]] if dynamic reevaluation
-    * @param valueOrTransient The initial value for creating the state, or [[None]] if transient
-    * @param hasAccumulatingState true if the reactive's value is accumulated over time,
-    *                             false if it is a pure transformation of its parameters.
+    * @param incoming a set of incoming dependencies
+    * @param dynamic false if the set of incoming dependencies is the correct final set of dependencies (static reactive)
+    *                true if the set of incoming dependencies is just a best guess for the initial dependencies.
+    * @param valuePersistency the value persistency
     * @param instantiateReactive The factory method to instantiate the reactive with the newly created state.
     * @tparam P Reactive value type
     * @tparam T Reactive subtype of the reactive element
     * @return Connected reactive element
     */
-  private[rescala] def create[P, T <: Reactive[S]](incomingOrDynamic: Option[Set[Reactive[S]]], valueOrTransient: Option[Change[P]], hasAccumulatingState: Boolean)(instantiateReactive: S#State[Pulse[P], S] => T): T = {
-    val state = makeStructState(valueOrTransient, hasAccumulatingState)
+  private[rescala] def create[P, T <: Reactive[S]](incoming: Set[Reactive[S]], dynamic: Boolean, valuePersistency: ValuePersistency[P])(instantiateReactive: S#State[Pulse[P], S] => T): T = {
+    val state = makeStructState(valuePersistency)
     val reactive = instantiateReactive(state)
-    ignite(reactive, incomingOrDynamic)
+    ignite(reactive, incoming, dynamic, valuePersistency)
     reactive
   }
 
   /**
     * to be implemented by the scheduler, called when a new state storage object is required for instantiating a new reactive.
-    * @param valueOrTransient the initial value in case the reactive has a steady value, or [[None]] if it's transient
-    * @param hasAccumulatingState true if the reactive's value is accumulated over time,
-    *                             false if it is a pure transformation of its parameters.
+    * @param valuePersistency the value persistency
     * @tparam P the stored value type
     * @return the initialized state storage
     */
-  protected def makeStructState[P](valueOrTransient: Option[Change[P]], hasAccumulatingState: Boolean): S#State[Pulse[P], S]
+  protected def makeStructState[P](valuePersistency: ValuePersistency[P]): S#State[Pulse[P], S]
 
   /**
     * to be implemented by the propagation algorithm, called when a new reactive has been instantiated and needs to be connected to the graph and potentially reevaluated.
     * @param reactive the newly instantiated reactive
-    * @param incomingOrDynamic the static set of incoming dependencies or [[None]] if dynamic reevaluation
-    * @tparam T
+    * @param incoming a set of incoming dependencies
+    * @param dynamic false if the set of incoming dependencies is the correct final set of dependencies (static reactive)
+    *                true if the set of incoming dependencies is just a best guess for the initial dependencies.
     */
-  protected def ignite[T <: Reactive[S]](reactive: T, incomingOrDynamic: Option[Set[Reactive[S]]]): Unit
+  protected def ignite(reactive: Reactive[S], incoming: Set[Reactive[S]], dynamic: Boolean, valuePersistency: ValuePersistency[_]): Unit
 
   /**
     * Registers a new handler function that is called after all changes were written and committed.
@@ -88,3 +87,24 @@ trait Turn[S <: Struct] {
   def observe(f: () => Unit): Unit
 
 }
+
+sealed trait ValuePersistency[+V] {
+  def isTransient: Boolean = this match {
+    case Transient => true
+    case _: Steady[V] => false
+  }
+  def initialValuePulse: Pulse[V] = this match {
+    case Transient => Pulse.NoChange
+    case Derived => Pulse.empty
+    case Accumulating(v) => v
+  }
+  def ignitionRequiresReevaluation = this match {
+    case Transient => true
+    case Derived => true
+    case Accumulating(_) => false
+  }
+}
+case object Transient extends ValuePersistency[Nothing]
+sealed trait Steady[+V] extends ValuePersistency[V]
+case object Derived extends Steady[Nothing]
+case class Accumulating[V](initialValue: Change[V]) extends Steady[V]

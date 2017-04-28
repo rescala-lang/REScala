@@ -1,6 +1,6 @@
 package rescala.levelbased
 
-import rescala.engine.{Engine, Turn}
+import rescala.engine.{Engine, Turn, ValuePersistency}
 import rescala.graph.Pulse.NoChange
 import rescala.graph.{Change, Pulse, Reactive, Struct}
 import rescala.twoversion.TwoVersionEngineImpl
@@ -15,8 +15,8 @@ trait LevelBasedPropagationEngines {
   type TEngine = Engine[S, Turn[S]] forSome { type S <: Struct }
 
   private[rescala] class SimpleNoLock extends LevelBasedPropagation[SimpleStruct] {
-    override protected def makeStructState[P](valueOrTransient: Option[Change[P]], hasAccumulatingState: Boolean = false): SimpleStruct#State[Pulse[P], SimpleStruct] = {
-      new LevelStructTypeImpl[Pulse[P], SimpleStruct](valueOrTransient.getOrElse(NoChange), valueOrTransient.isEmpty)
+    override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): SimpleStruct#State[Pulse[P], SimpleStruct] = {
+      new LevelStructTypeImpl[Pulse[P], SimpleStruct](valuePersistency.initialValuePulse, valuePersistency.isTransient)
     }
     override def releasePhase(): Unit = ()
   }

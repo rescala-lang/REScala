@@ -2,7 +2,7 @@ package rescala.parrp
 
 import java.util
 
-import rescala.engine.Turn
+import rescala.engine.{Turn, ValuePersistency}
 import rescala.graph.Pulse.NoChange
 import rescala.graph.ReevaluationResult.{Dynamic, Static}
 import rescala.graph._
@@ -42,11 +42,11 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
 
 
 
-  override protected def makeStructState[P](valueOrTransient: Option[Change[P]], hasAccumulatingState: Boolean = false): LSStruct#State[Pulse[P], TState] = {
+  override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): LSStruct#State[Pulse[P], TState] = {
     val lock = new TurnLock[LSInterTurn]
     val owner = lock.tryLock(key)
     assert(owner eq key, s"$this failed to acquire lock on newly created reactive")
-    val state = new LSPropagationStruct[Pulse[P], LSStruct](valueOrTransient.getOrElse(NoChange), valueOrTransient.isEmpty, lock)
+    val state = new LSPropagationStruct[Pulse[P], LSStruct](valuePersistency.initialValuePulse, valuePersistency.isTransient, lock)
     state.willWrite = this
     state.anyInputChanged = this
     state
@@ -60,21 +60,18 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
     * it is important, that the locks for the dependencies are acquired BEFORE the constructor for the new reactive.
     * is executed, because the constructor typically accesses the dependencies to create its initial value.
     */
-  protected def ignite[T <: Reactive[TState]](reactive: T, incomingOrDynamic: Option[Set[Reactive[TState]]]): Unit = {
-    incomingOrDynamic match {
-      case Some(incoming) =>
-        incoming.foreach { dep =>
-          acquireShared(dep)
-          discover(reactive)(dep)
-        }
-        reactive.state.counter = recount(incoming.iterator)
-        val inputsChanged = incoming.exists(_.state.hasChanged == this)
-        if (reactive.state.counter == 0) {
-          if (inputsChanged) evaluate(reactive)
-          else done(reactive, hasChanged = true)
-        }
-      case None =>
+  protected def ignite(reactive: Reactive[TState], incoming: Set[Reactive[TState]], dynamic: Boolean, valuePersistency: ValuePersistency[_]): Unit = {
+    incoming.foreach { dep =>
+      acquireShared(dep)
+      discover(reactive)(dep)
+    }
+    reactive.state.updateIncoming(incoming)(this)
+    recount(reactive)
+    if(valuePersistency.ignitionRequiresReevaluation || incoming.exists(_.state.hasChanged == this)) {
+      reactive.state.anyInputChanged = this
+      if (reactive.state.counter == 0) {
         evaluate(reactive)
+      }
     }
   }
 
@@ -161,26 +158,23 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
     else {
       head.reevaluate(this) match {
         case Static(isChange, value) =>
-          val hasChanged = isChange && head.state.base(token) != value
-          if (hasChanged) writeState(head)(value)
-          done(head, hasChanged)
+          if (isChange) writeState(head)(value)
+          done(head, isChange)
 
         case res@Dynamic(isChange, value, deps) =>
           applyDiff(head, res.depDiff(head.state.incoming(this)))
-          head.state.counter = recount(deps.iterator)
-          val hasChanged = isChange && head.state.base(token) != value
-
+          recount(head)
           if (head.state.counter == 0) {
-            if (hasChanged) writeState(head)(value)
-            done(head, hasChanged)
+            if (isChange) writeState(head)(value)
+            done(head, isChange)
           }
 
       }
     }
   }
 
-  def recount(reactives: Iterator[Reactive[TState]]): Int = {
-    reactives.count(r => r.state.hasWritten != this && r.state.willWrite == this)
+  def recount(reactive: Reactive[TState]): Unit = {
+    reactive.state.counter = reactive.state.incoming(this).count(r => r.state.hasWritten != this && r.state.willWrite == this)
   }
 
 
@@ -189,39 +183,35 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
     * so that it gets updated when that turn continues
     * the responsibility for correctly passing the locks is moved to the commit phase */
   override def discover(sink: Reactive[TState])(source: Reactive[TState]): Unit = {
-    implicit def turn: Turn[TState] = this
-
     val owner = acquireShared(source)
     if (owner ne key) {
       if (source.state.willWrite != owner.turn) {
-        source.state.discover(sink)
+        source.state.discover(sink)(this)
       }
-      else if (!source.state.outgoing.contains(sink)) {
-        source.state.discover(sink)
+      else if (!source.state.outgoing(this).contains(sink)) {
+        source.state.discover(sink)(this)
         discovered.getOrElseUpdate(owner, mutable.Set.empty).add(sink)
         key.lockKeychain {_.addFallthrough(owner)}
       }
     }
     else {
-      source.state.discover(sink)
+      source.state.discover(sink)(this)
     }
   }
 
   /** this is for cases where we register and then unregister the same dependency in a single turn */
   override def drop(sink: Reactive[TState])(source: Reactive[TState]): Unit = {
-    implicit def turn: Turn[TState] = this
-
     val owner = acquireShared(source)
     if (owner ne key) {
-      source.state.drop(sink)
+      source.state.drop(sink)(this)
       if (source.state.willWrite != owner.turn) {
         key.lockKeychain(_.removeFallthrough(owner))
-        if (!sink.state.incoming.exists(_.state.lock.isOwner(owner))) {
+        if (!sink.state.incoming(this).exists(_.state.lock.isOwner(owner))) {
           discovered.getOrElseUpdate(owner, mutable.Set.empty).remove(sink)
         }
       }
     }
-    else source.state.drop(sink)
+    else source.state.drop(sink)(this)
   }
 
 
@@ -255,7 +245,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
     }
 
     appendees.foreach { appendee =>
-      appendee.state.counter = recount(appendee.state.outgoing(this))
+      recount(appendee)
       if (appendee.state.counter == 0) enqueue(appendee)
     }
 

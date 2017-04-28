@@ -26,8 +26,8 @@ trait SimpleStruct extends LevelStruct {
   * @tparam S Type of the reactive values that are connected to this struct
   */
 trait LevelStructType[S <: Struct] extends GraphStructType[S] {
-  def level(implicit turn: Turn[S]): Int
-  def updateLevel(i: Int)(implicit turn: Turn[S]): Int
+  def level(turn: Turn[S]): Int
+  def updateLevel(i: Int)(turn: Turn[S]): Int
 }
 
 /**
@@ -43,9 +43,9 @@ class LevelStructTypeImpl[P, S <: Struct](current: P, transient: Boolean)
 
   var _level: Int = 0
 
-  override def level(implicit turn: Turn[S]): Int = _level
+  override def level(turn: Turn[S]): Int = _level
 
-  override def updateLevel(i: Int)(implicit turn: Turn[S]): Int = {
+  override def updateLevel(i: Int)(turn: Turn[S]): Int = {
     val max = math.max(i, _level)
     _level = max
     max

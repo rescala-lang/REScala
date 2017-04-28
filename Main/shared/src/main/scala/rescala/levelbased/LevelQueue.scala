@@ -42,14 +42,13 @@ final private[levelbased] class LevelQueue[S <: LevelStruct](evaluator: LevelQue
     * @param queueElement Element to evaluate
     */
   private def handleElement(queueElement: QueueElement[S]): Unit = {
-    implicit def turn: LevelBasedPropagation[S] = currentTurn
     val QueueElement(headLevel, head, headMinLevel, reevaluate) = queueElement
     // handle level increases
     if (headLevel < headMinLevel) {
-      head.state.updateLevel(headMinLevel)
+      head.state.updateLevel(headMinLevel)(currentTurn)
       enqueue(headMinLevel, reevaluate)(head)
-      head.state.outgoing.foreach { r =>
-        if (r.state.level <= headMinLevel)
+      head.state.outgoing(currentTurn).foreach { r =>
+        if (r.state.level(currentTurn) <= headMinLevel)
           enqueue(headMinLevel + 1, needsEvaluate = false)(r)
       }
     }

@@ -1,5 +1,6 @@
 package rescala.restore
 
+import rescala.engine.{Accumulating, ValuePersistency}
 import rescala.graph.Pulse.NoChange
 import rescala.graph.{Change, Pulse, Reactive, Struct}
 import rescala.levelbased.{LevelBasedPropagation, LevelStruct, LevelStructTypeImpl}
@@ -9,32 +10,34 @@ case class Storing(current: Any, level: Int, incoming: Set[Reactive[Struct]])
 
 class ReStoringTurn(engine: ReStoringEngine) extends LevelBasedPropagation[ReStoringStruct] {
 
-  override protected def makeStructState[P](valueOrTransient: Option[Change[P]], hasAccumulatingState: Boolean): ReStoringStructType[Pulse[P], ReStoringStruct] = {
-    if (hasAccumulatingState) {
-      val name = engine.nextName
-      def store(storing: Storing) = {
-        //println(s"updating $name to $storing")
-        engine.values.put(name, storing)
-      }
-      engine.values.get(name) match {
-        case None =>
-          //println(s"new struct $name")
-          new ReStoringStructType(store, valueOrTransient.getOrElse(NoChange), valueOrTransient.isEmpty)
-        case Some(s@Storing(c, l, i)) =>
-          //println(s"old struct $name $s")
-          val res = new ReStoringStructType[Pulse[P], ReStoringStruct](store, c.asInstanceOf[Pulse[P]], valueOrTransient.isEmpty)
-          res._level = l
-          res
-      }
+  override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): ReStoringStructType[Pulse[P], ReStoringStruct] = {
+    valuePersistency match {
+      case Accumulating(init) =>
+        val name = engine.nextName
+        def store(storing: Storing) = {
+          //println(s"updating $name to $storing")
+          engine.values.put(name, storing)
+        }
+        engine.values.get(name) match {
+          case None =>
+            //println(s"new struct $name")
+            new ReStoringStructType(store, init, false)
+          case Some(s@Storing(c, l, i)) =>
+            //println(s"old struct $name $s")
+            val res = new ReStoringStructType[Pulse[P], ReStoringStruct](store, c.asInstanceOf[Pulse[P]], false)
+            res._level = l
+            res
+        }
+      case _ =>
+        new ReStoringStructType(null, valuePersistency.initialValuePulse, valuePersistency.isTransient)
     }
-    else new ReStoringStructType(null, valueOrTransient.getOrElse(NoChange), valueOrTransient.isEmpty)
   }
   override def releasePhase(): Unit = ()
 }
 
 class ReStoringStructType[P, S <: Struct](storage: Storing => Unit, initialVal: P, transient: Boolean) extends LevelStructTypeImpl[P, S](initialVal, transient) {
-  override def commit(implicit turn: TwoVersionPropagation[S]): Unit = {
-    super.commit
+  override def commit(turn: TwoVersionPropagation[S]): Unit = {
+    super.commit(turn)
     if (storage != null) storage(Storing(current, _level, _incoming.asInstanceOf[Set[Reactive[Struct]]]))
   }
 }

@@ -9,7 +9,7 @@ import scala.concurrent.stm.{InTxn, Ref, TxnLocal, atomic}
 
 class STMStructType[P, S <: Struct](initialValue: P, transient: Boolean) extends LevelStructType[S] with ReadWriteValue[P, S] {
 
-  implicit def inTxn(implicit turn: Turn[S]): InTxn = turn match {
+  def inTxn(turn: Turn[S]): InTxn = turn match {
     case stmTurn: STMTurn => stmTurn.inTxn
     case _ => throw new IllegalStateException(s"$turn has invalid type for $this")
   }
@@ -25,13 +25,13 @@ class STMStructType[P, S <: Struct](initialValue: P, transient: Boolean) extends
   val _incoming: Ref[Set[Reactive[S]]] = Ref(Set.empty)
 
   val pulses: ReadWriteValue[P, S] = this
-  def incoming(implicit turn: Turn[S]): Set[Reactive[S]] = _incoming.get
-  override def level(implicit turn: Turn[S]): Int = _level.get
-  override def drop(reactive: Reactive[S])(implicit turn: Turn[S]): Unit = _outgoing.transformAndGet(_ - reactive)
-  override def updateLevel(i: Int)(implicit turn: Turn[S]): Int = _level.transformAndGet(math.max(_, i))
-  override def outgoing(implicit turn: Turn[S]): Iterator[Reactive[S]] = _outgoing.get.iterator
-  def updateIncoming(reactives: Set[Reactive[S]])(implicit turn: Turn[S]): Unit = _incoming.set(reactives)
-  override def discover(reactive: Reactive[S])(implicit turn: Turn[S]): Unit = _outgoing.transformAndGet(_ + reactive)
+  def incoming(turn: Turn[S]): Set[Reactive[S]] = _incoming.get(inTxn(turn))
+  override def level(turn: Turn[S]): Int = _level.get(inTxn(turn))
+  override def drop(reactive: Reactive[S])(turn: Turn[S]): Unit = _outgoing.transformAndGet(_ - reactive)(inTxn(turn))
+  override def updateLevel(i: Int)(turn: Turn[S]): Int = _level.transformAndGet(math.max(_, i))(inTxn(turn))
+  override def outgoing(turn: Turn[S]): Iterator[Reactive[S]] = _outgoing.get(inTxn(turn)).iterator
+  def updateIncoming(reactives: Set[Reactive[S]])(turn: Turn[S]): Unit = _incoming.set(reactives)(inTxn(turn))
+  override def discover(reactive: Reactive[S])(turn: Turn[S]): Unit = _outgoing.transformAndGet(_ + reactive)(inTxn(turn))
 
 
   private val current: Ref[P] = Ref(initialValue)
@@ -48,6 +48,6 @@ class STMStructType[P, S <: Struct](initialValue: P, transient: Boolean) extends
   override def get(token: Token): P = update.get(inTxn(token)).getOrElse(current.get(inTxn(token)))
 
 
-  override def commit(implicit turn: TwoVersionPropagation[S]): Unit = {}
-  override def release(implicit turn: TwoVersionPropagation[S]): Unit = {}
+  override def commit(turn: TwoVersionPropagation[S]): Unit = {}
+  override def release(turn: TwoVersionPropagation[S]): Unit = {}
 }

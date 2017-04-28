@@ -57,7 +57,7 @@ class ParallelLockSweep(backoff: Backoff, ex: Executor, engine: TwoVersionEngine
 
         case res@Dynamic(isChange, value, deps) =>
           applyDiff(head, res.depDiff(head.state.incoming(this)))
-          head.state.counter = recount(deps.iterator)
+          recount(head)
 
           if (head.state.counter == 0) {
             val hasChanged = isChange && value != head.state.base(token)

@@ -70,8 +70,8 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit 
       turn match {
         case cmn: TwoVersionPropagationImpl[S] =>
           cmn.schedule(new Committable[S] {
-            override def commit(implicit t: TwoVersionPropagation[S]): Unit = if (forksWereFree) assert(seating.vision.now(turn) == Eating, s"philosopher should be done after turn but is ${seating.inspect(turn)}")
-            override def release(implicit t: TwoVersionPropagation[S]): Unit = () /*assert(assertion = false, "turn should not rollback")*/ // assertion is unnecessary, exception propagation will take care
+            override def commit(t: TwoVersionPropagation[S]): Unit = if (forksWereFree) assert(seating.vision.now(turn) == Eating, s"philosopher should be done after turn but is ${seating.inspect(turn)}")
+            override def release(t: TwoVersionPropagation[S]): Unit = () /*assert(assertion = false, "turn should not rollback")*/ // assertion is unnecessary, exception propagation will take care
           })
         case _ =>
       }
