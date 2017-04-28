@@ -23,4 +23,4 @@ final class DynamicTicket[S <: Struct](val turn: Turn[S]) {
   }
 }
 
-class StaticTicket[S <: Struct](val turn: Turn[S])
+class StaticTicket[S <: Struct](val turn: Turn[S]) extends AnyVal
