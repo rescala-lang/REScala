@@ -1,6 +1,6 @@
 package rescala.fullmv
 
-import rescala.engine.{EngineImpl, Turn, ValuePersistency}
+import rescala.engine.{EngineImpl, InitializationImpl, Turn, ValuePersistency}
 import rescala.graph.{Pulse, Pulsing, Reactive, Struct}
 
 trait FullMVStruct extends Struct {
@@ -13,7 +13,7 @@ class FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
   override protected def executeTurn[R](turn: FullMVTurn, initialWrites: Traversable[Reactive], admissionPhase: (FullMVTurn) => R): R = ???
 }
 
-class FullMVTurn(val sgt: SerializationGraphTracking) extends Turn[FullMVStruct] {
+class FullMVTurn(val sgt: SerializationGraphTracking) extends InitializationImpl[FullMVStruct] {
   def incrementFrame(node: Reactive[FullMVStruct]): Unit = {
     val branching = node.state.incrementFrame(this)
     // TODO
