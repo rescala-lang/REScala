@@ -46,10 +46,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
     val lock = new TurnLock[LSInterTurn]
     val owner = lock.tryLock(key)
     assert(owner eq key, s"$this failed to acquire lock on newly created reactive")
-    val state = new LSPropagationStruct[Pulse[P], LSStruct](valuePersistency.initialValuePulse, valuePersistency.isTransient, lock)
-    state.willWrite = this
-    state.anyInputChanged = this
-    state
+    new LSPropagationStruct[Pulse[P], LSStruct](valuePersistency.initialValuePulse, valuePersistency.isTransient, lock)
   }
 
   /**
@@ -69,6 +66,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
     recount(reactive)
     if(valuePersistency.ignitionRequiresReevaluation || incoming.exists(_.state.hasChanged == this)) {
       reactive.state.anyInputChanged = this
+      reactive.state.willWrite = this
       if (reactive.state.counter == 0) {
         evaluate(reactive)
       }
