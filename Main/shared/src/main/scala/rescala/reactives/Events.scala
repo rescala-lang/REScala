@@ -37,7 +37,7 @@ object Events {
   /** the basic method to create static events */
   def static[T, S <: Struct](name: String, dependencies: Reactive[S]*)(calculate: StaticTicket[S] => Pulse[T])(implicit maybe: TurnSource[S]): Event[T, S] = maybe { initTurn =>
     initTurn.create[Pulse[T], Event[T, S]](dependencies.toSet, dynamic = false, ValuePersistency.Transient) {
-      new StaticEvent[T, S](_, calculate, name) with Disconnectable[S]
+      state => new StaticEvent[T, S](state, calculate, name) with Disconnectable[S]
     }
   }
 
@@ -45,7 +45,7 @@ object Events {
   def dynamic[T, S <: Struct](dependencies: Reactive[S]*)(expr: DynamicTicket[S] => Option[T])(implicit maybe: TurnSource[S]): Event[T, S] = {
     maybe { initialTurn =>
       initialTurn.create[Pulse[T], Event[T, S]](dependencies.toSet, dynamic = true, ValuePersistency.Transient) {
-        new DynamicEvent[T, S](_, expr.andThen(Pulse.fromOption)) with Disconnectable[S]
+        state => new DynamicEvent[T, S](state, expr.andThen(Pulse.fromOption)) with Disconnectable[S]
       }
     }
   }
@@ -53,7 +53,7 @@ object Events {
   def change[A, S <: Struct](signal: Signal[A, S])(implicit maybe: TurnSource[S]): Event[Diff[A], S] = maybe { initTurn =>
     val dependencySet: Set[Reactive[S]] = Set(signal)
     initTurn.create[Pulse[Diff[A]], Event[Diff[A], S]](Set(signal), dynamic = false, ValuePersistency.Transient) {
-      new ChangeEvent[A, S](_, signal) with Disconnectable[S]
+      state => new ChangeEvent[A, S](state, signal) with Disconnectable[S]
     }
   }
 }

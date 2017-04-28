@@ -32,21 +32,21 @@ object Signals extends GeneratedSignalLift {
     /** creates a signal that statically depends on the dependencies with a given initial value */
     def makeFold[T, S <: Struct](dependencies: Set[Reactive[S]], init: StaticTicket[S] => T)(expr: (StaticTicket[S], => T) => T)(initialTurn: Turn[S]): Signal[T, S] = {
       initialTurn.create[Pulse[T], Signal[T, S]](dependencies, dynamic = false, ValuePersistency.Accumulating(Pulse.tryCatch(Pulse.Value(init(initialTurn.static()))))) {
-        new StaticSignal[T, S](_, expr) with Disconnectable[S]
+        state => new StaticSignal[T, S](state, expr) with Disconnectable[S]
       }
     }
 
 
     def makeStatic[T, S <: Struct](dependencies: Set[Reactive[S]], init: StaticTicket[S] => T)(expr: (StaticTicket[S], => T) => T)(initialTurn: Turn[S]): Signal[T, S] = {
       initialTurn.create[Pulse[T], Signal[T, S]](dependencies, dynamic = false, ValuePersistency.Derived) {
-        new StaticSignal[T, S](_, expr) with Disconnectable[S]
+        state => new StaticSignal[T, S](state, expr) with Disconnectable[S]
       }
     }
 
     /** creates a dynamic signal */
     def makeDynamic[T, S <: Struct](dependencies: Set[Reactive[S]])(expr: DynamicTicket[S] => T)(initialTurn: Turn[S]): Signal[T, S] = {
       initialTurn.create[Pulse[T], Signal[T, S]](dependencies, dynamic = true, ValuePersistency.Derived) {
-        new DynamicSignal[T, S](_, expr) with Disconnectable[S]
+        state => new DynamicSignal[T, S](state, expr) with Disconnectable[S]
       }
     }
   }
