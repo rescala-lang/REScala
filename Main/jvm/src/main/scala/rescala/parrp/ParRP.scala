@@ -42,11 +42,11 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
 
   final val key: Key[ParRPInterTurn] = new Key(this)
 
-  override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): ParRPStructType[Pulse[P], ParRP] = {
+  override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): ParRPStructType[P, ParRP] = {
     val lock = new TurnLock[ParRPInterTurn]
     val owner = lock.tryLock(key)
     assert(owner eq key, s"$this failed to acquire lock on newly created reactive")
-    new ParRPStructType[Pulse[P], ParRP](valuePersistency.initialValuePulse, valuePersistency.isTransient, lock)
+    new ParRPStructType(valuePersistency.initialValue, valuePersistency.isTransient, lock)
   }
 
   /** this is called after the turn has finished propagating, but before handlers are executed */

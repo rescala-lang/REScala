@@ -72,6 +72,4 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
   }
 
   def propagationPhase(): Unit = levelQueue.evaluateQueue()
-
-
 }

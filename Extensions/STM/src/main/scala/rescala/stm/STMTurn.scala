@@ -12,8 +12,8 @@ class STMTurn extends LevelBasedPropagation[STMTurn] with LevelStruct {
   override type State[P, S <: Struct] = STMStructType[P, S]
 
   /** used to create state containers of each reactive */
-  override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): State[Pulse[P], STMTurn] = {
-    new STMStructType[Pulse[P], STMTurn](valuePersistency.initialValuePulse, valuePersistency.isTransient)
+  override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): State[P, STMTurn] = {
+    new STMStructType(valuePersistency.initialValue, valuePersistency.isTransient)
   }
   override def releasePhase(): Unit = ()
   // this is unsafe when used improperly

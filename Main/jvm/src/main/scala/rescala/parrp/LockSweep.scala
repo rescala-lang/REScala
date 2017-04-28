@@ -42,11 +42,11 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
 
 
 
-  override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): LSStruct#State[Pulse[P], TState] = {
+  override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): LSStruct#State[P, TState] = {
     val lock = new TurnLock[LSInterTurn]
     val owner = lock.tryLock(key)
     assert(owner eq key, s"$this failed to acquire lock on newly created reactive")
-    new LSPropagationStruct[Pulse[P], LSStruct](valuePersistency.initialValuePulse, valuePersistency.isTransient, lock)
+    new LSPropagationStruct(valuePersistency.initialValue, valuePersistency.isTransient, lock)
   }
 
   /**

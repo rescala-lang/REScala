@@ -1,10 +1,10 @@
 package rescala.fullmv
 
-import rescala.engine.{EngineImpl, Turn}
-import rescala.graph.{Pulsing, Reactive, Struct}
+import rescala.engine.{EngineImpl, Turn, ValuePersistency}
+import rescala.graph.{Pulse, Pulsing, Reactive, Struct}
 
 trait FullMVStruct extends Struct {
-  override type  State[P, S <: Struct] = NodeVersionHistory[P, S]
+  override type State[P, S <: Struct] = NodeVersionHistory[P]
 }
 
 class FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
@@ -13,8 +13,6 @@ class FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
 }
 
 class FullMVTurn extends Turn[FullMVStruct] {
-  override private[rescala] def makeStructState[P](initialValue: P, transient: Boolean, initialIncoming: Set[Reactive[FullMVStruct]], hasState: Boolean) = new NodeVersionHistory[P, FullMVStruct]()
-
   /**
     * Synchronize for access (i.e., [[before()]] or [[after()]]) on this node when
     * synchronization is unknown. Multiple invocations are redundant, but not harmful outside of an
@@ -47,19 +45,26 @@ class FullMVTurn extends Turn[FullMVStruct] {
     * @tparam P the node's storage type
     * @return the stored value from after this turn
     */
-override private[rescala] def after[P](pulsing: Pulsing[P, FullMVStruct]) = ???
+  override private[rescala] def after[P](pulsing: Pulsing[P, FullMVStruct]) = ???
 
   /**
-    * Connects a reactive element with potentially existing dependencies and prepares re-evaluations to be
-    * propagated based on the turn's propagation scheme
+    * to be implemented by the scheduler, called when a new state storage object is required for instantiating a new reactive.
     *
-    * @param dependencies Existing reactive elements the element depends on
-    * @param dynamic      Indicates if the element uses dynamic re-evaluation to determine it's dependencies
-    * @param f            Reactive element to prepare and connect
-    * @tparam T Reactive subtype of the reactive element
-    * @return Connected reactive element
+    * @param valuePersistency the value persistency
+    * @tparam P the stored value type
+    * @return the initialized state storage
     */
-override private[rescala] def create[T <: Reactive[FullMVStruct]](dependencies: Set[Reactive[FullMVStruct]], dynamic: Boolean)(f: => T) = ???
+  override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): NodeVersionHistory[P] = ???
+
+  /**
+    * to be implemented by the propagation algorithm, called when a new reactive has been instantiated and needs to be connected to the graph and potentially reevaluated.
+    *
+    * @param reactive the newly instantiated reactive
+    * @param incoming a set of incoming dependencies
+    * @param dynamic  false if the set of incoming dependencies is the correct final set of dependencies (static reactive)
+    *                 true if the set of incoming dependencies is just a best guess for the initial dependencies.
+    */
+  override protected def ignite(reactive: Reactive[FullMVStruct], incoming: Set[Reactive[FullMVStruct]], dynamic: Boolean, valuePersistency: ValuePersistency[_]): Unit = ???
 
   /**
     * Registers a new handler function that is called after all changes were written and committed.

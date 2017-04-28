@@ -15,8 +15,8 @@ trait LevelBasedPropagationEngines {
   type TEngine = Engine[S, Turn[S]] forSome { type S <: Struct }
 
   private[rescala] class SimpleNoLock extends LevelBasedPropagation[SimpleStruct] {
-    override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): SimpleStruct#State[Pulse[P], SimpleStruct] = {
-      new LevelStructTypeImpl[Pulse[P], SimpleStruct](valuePersistency.initialValuePulse, valuePersistency.isTransient)
+    override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): SimpleStruct#State[P, SimpleStruct] = {
+      new LevelStructTypeImpl(valuePersistency.initialValue, valuePersistency.isTransient)
     }
     override def releasePhase(): Unit = ()
   }

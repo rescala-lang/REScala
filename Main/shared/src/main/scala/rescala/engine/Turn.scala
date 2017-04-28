@@ -55,7 +55,7 @@ trait Turn[S <: Struct] {
     * @tparam T Reactive subtype of the reactive element
     * @return Connected reactive element
     */
-  private[rescala] def create[P, T <: Reactive[S]](incoming: Set[Reactive[S]], dynamic: Boolean, valuePersistency: ValuePersistency[P])(instantiateReactive: S#State[Pulse[P], S] => T): T = {
+  private[rescala] def create[P, T <: Reactive[S]](incoming: Set[Reactive[S]], dynamic: Boolean, valuePersistency: ValuePersistency[P])(instantiateReactive: S#State[P, S] => T): T = {
     val state = makeStructState(valuePersistency)
     val reactive = instantiateReactive(state)
     ignite(reactive, incoming, dynamic, valuePersistency)
@@ -68,7 +68,7 @@ trait Turn[S <: Struct] {
     * @tparam P the stored value type
     * @return the initialized state storage
     */
-  protected def makeStructState[P](valuePersistency: ValuePersistency[P]): S#State[Pulse[P], S]
+  protected def makeStructState[P](valuePersistency: ValuePersistency[P]): S#State[P, S]
 
   /**
     * to be implemented by the propagation algorithm, called when a new reactive has been instantiated and needs to be connected to the graph and potentially reevaluated.
@@ -89,22 +89,22 @@ trait Turn[S <: Struct] {
 }
 
 sealed trait ValuePersistency[+V] {
-  def isTransient: Boolean = this match {
-    case Transient => true
-    case _: Steady[V] => false
-  }
-  def initialValuePulse: Pulse[V] = this match {
-    case Transient => Pulse.NoChange
-    case Derived => Pulse.empty
-    case Accumulating(v) => v
-  }
-  def ignitionRequiresReevaluation = this match {
-    case Transient => true
-    case Derived => true
-    case Accumulating(_) => false
-  }
+  val initialValue: V
+  val isTransient: Boolean
+  val ignitionRequiresReevaluation: Boolean
 }
-case object Transient extends ValuePersistency[Nothing]
-sealed trait Steady[+V] extends ValuePersistency[V]
-case object Derived extends Steady[Nothing]
-case class Accumulating[V](initialValue: Change[V]) extends Steady[V]
+case object Transient extends ValuePersistency[Pulse[Nothing]] {
+  override val initialValue: Pulse[Nothing] = Pulse.NoChange
+  override val isTransient: Boolean = true
+  override val ignitionRequiresReevaluation: Boolean = false
+}
+sealed trait Steady[+V] extends ValuePersistency[V] {
+  override val isTransient: Boolean = false
+}
+case object Derived extends Steady[Change[Nothing]] {
+  override val initialValue: Change[Nothing] = Pulse.empty
+  override val ignitionRequiresReevaluation: Boolean = true
+}
+case class Accumulating[V](override val initialValue: Change[V]) extends Steady[Change[V]] {
+  override val ignitionRequiresReevaluation: Boolean = false
+}

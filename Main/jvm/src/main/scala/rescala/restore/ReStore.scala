@@ -10,9 +10,9 @@ case class Storing(current: Any, level: Int, incoming: Set[Reactive[Struct]])
 
 class ReStoringTurn(engine: ReStoringEngine) extends LevelBasedPropagation[ReStoringStruct] {
 
-  override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): ReStoringStructType[Pulse[P], ReStoringStruct] = {
+  override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): ReStoringStructType[P, ReStoringStruct] = {
     valuePersistency match {
-      case Accumulating(init) =>
+      case Accumulating(init: P) =>
         val name = engine.nextName
         def store(storing: Storing) = {
           //println(s"updating $name to $storing")
@@ -24,12 +24,12 @@ class ReStoringTurn(engine: ReStoringEngine) extends LevelBasedPropagation[ReSto
             new ReStoringStructType(store, init, false)
           case Some(s@Storing(c, l, i)) =>
             //println(s"old struct $name $s")
-            val res = new ReStoringStructType[Pulse[P], ReStoringStruct](store, c.asInstanceOf[Pulse[P]], false)
+            val res = new ReStoringStructType[P, ReStoringStruct](store, c.asInstanceOf[P], false)
             res._level = l
             res
         }
       case _ =>
-        new ReStoringStructType(null, valuePersistency.initialValuePulse, valuePersistency.isTransient)
+        new ReStoringStructType(null, valuePersistency.initialValue, valuePersistency.isTransient)
     }
   }
   override def releasePhase(): Unit = ()
