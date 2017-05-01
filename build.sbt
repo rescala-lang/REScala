@@ -21,7 +21,8 @@ lazy val rescalaAggregate = project.in(file(".")).aggregate(rescalaJVM,
   rescalaJS, microbench, reswing, examples, examplesReswing, caseStudyEditor,
   caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags,
   datastructures, universe, reactiveStreams, documentation, meta,
-  stm, testsJVM, testsJS, fullmv, caseStudyShapes, caseStudyMill)
+  stm, testsJVM, testsJS, fullmv, caseStudyShapes, caseStudyMill,
+  baromter4Android)
   .settings(
     publish := {},
     publishLocal := {})
@@ -169,6 +170,19 @@ lazy val examplesReswing = project.in(file("Examples/examples-reswing"))
     publish := {},
     publishLocal := {})
 
+lazy val baromter4Android = project.in(file("Examples/Barometer4Android"))
+  .enablePlugins(AndroidApp)
+  .settings(
+    name := "barometer4Android",
+    publish := {},
+    publishLocal := {},
+    scalaVersion := "2.11.8",
+    androidDependencies,
+    javacOptions ++= Seq("-source", "1.7", "-target", "1.7"),
+    platformTarget := "android-25", //TODO: Move to androidJVM
+    android.useSupportVectors,
+    instrumentTestRunner := "android.support.test.runner.AndroidJUnitRunner")
+
 lazy val caseStudyEditor = project.in(file("Examples/Editor"))
   .dependsOn(reswing)
   .settings(
@@ -261,6 +275,11 @@ lazy val microbench = project.in(file("Research/Microbenchmarks"))
 
 
 // ================================ dependencies
+
+lazy val androidDependencies = libraryDependencies ++= Seq(
+  "com.android.support" % "appcompat-v7" % "25.3.1",
+  "com.android.support.test" % "runner" % "0.5" % "androidTest",
+  "com.android.support.test.espresso" % "espresso-core" % "2.2.2" % "androidTest")
 
 lazy val rssDependencies = libraryDependencies ++= Seq(
   "joda-time" % "joda-time" % "2.9.9",
