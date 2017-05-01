@@ -301,8 +301,7 @@ scalacOptions in ThisBuild ++= (
   "-encoding" :: "UTF-8" ::
   "-unchecked" ::
   "-feature" ::
-//  "-target:jvm-1.8" ::
-  "-target:jvm-1.7" ::
+//  "-target:jvm-1.8" :: // WE HAVE TO USE THE DEFAULT TARGET, OTHERWISE ANDROID APPS WILL >NOT< WORK
   "-Xlint" ::
   "-Xfuture" ::
   //"-Xlog-implicits" ::
