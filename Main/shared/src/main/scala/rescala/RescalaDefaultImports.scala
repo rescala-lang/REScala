@@ -50,7 +50,7 @@ abstract class RescalaDefaultImports[S <: Struct] {
     *
     * @param initialWrites All inputs that might be changed by the transaction
     * @param admissionPhase An admission function that may perform arbitrary [[rescala.reactives.Signal.now]] reads
-    *                       to [[rescala.reactives.Evt.admit()]] / [[rescala.reactives.Var.admit()]] arbitrary
+    *                       to [[rescala.reactives.Evt.admit]] / [[rescala.reactives.Var.admit]] arbitrary
     *                       input changes that will be applied as an atomic transaction at the end.
     * @tparam R Result type of the admission function
     * @return Result of the admission function
@@ -60,7 +60,7 @@ abstract class RescalaDefaultImports[S <: Struct] {
   }
 
   /**
-    * Atomically changes multiple inputs in a single [[transaction()]]
+    * Atomically changes multiple inputs in a single [[transaction]]
     *
     * @param changes the changes to perform, i.e., (i1 -> v1, i2 -> v2, ...)
     * @return Result of the admission function
