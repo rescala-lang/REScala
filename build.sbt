@@ -127,7 +127,7 @@ lazy val rescalatags = project.in(file("Extensions/Rescalatags"))
   .dependsOn(rescalaJS)
   .settings(
     scalaJSUseRhino in Global := true,
-    libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.6.2",
+    libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.6.5",
     scalatestDependency,
     jsDependencies += RuntimeDOM,
     licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))
@@ -263,13 +263,13 @@ lazy val microbench = project.in(file("Research/Microbenchmarks"))
 // ================================ dependencies
 
 lazy val rssDependencies = libraryDependencies ++= Seq(
-  "joda-time" % "joda-time" % "2.9.7",
+  "joda-time" % "joda-time" % "2.9.9",
   "org.joda" % "joda-convert" % "1.8.1",
   "org.codehaus.jsr166-mirror" % "jsr166y" % "1.7.0",
   "org.scala-lang.modules" %% "scala-xml" % "1.0.6")
 
 lazy val scalaswingDependency = libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "2.0.0"
-lazy val scalatestDependency = libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.1" % "test"
+lazy val scalatestDependency = libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.3" % "test"
 
 
 // ================================= scalac options
