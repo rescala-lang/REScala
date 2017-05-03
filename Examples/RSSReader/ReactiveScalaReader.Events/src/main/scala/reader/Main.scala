@@ -1,21 +1,15 @@
 package reader
 
-import rescala._
-import scala.io.Source
-import scala.swing.Dialog
-import scala.swing.Dialog.Message
-import scala.swing.Swing
-import scala.swing.Swing.EmptyIcon
-
-import reader.common.implicits.stringToUrl
-import reader.connectors.CentralizedEvents
-import reader.connectors.SimpleReporter
-import reader.data.FeedStore
-import reader.data.RSSItem
-import reader.data.XmlParser
+import reader.connectors.{CentralizedEvents, SimpleReporter}
+import reader.data.{FeedStore, RSSItem, XmlParser}
 import reader.gui.GUI
-import reader.network.Fetcher
-import reader.network.UrlChecker
+import reader.network.{Fetcher, UrlChecker}
+import rescala._
+
+import scala.io.Source
+import scala.swing.Dialog.Message
+import scala.swing.{Dialog, Swing}
+import scala.swing.Swing.EmptyIcon
 
 object Main extends App {
   val tick = Evt[Unit] //#EVT

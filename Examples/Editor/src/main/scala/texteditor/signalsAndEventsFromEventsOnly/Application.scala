@@ -1,16 +1,10 @@
 package texteditor.signalsAndEventsFromEventsOnly
 
-import scala.swing.BorderPanel
-import scala.swing.BorderPanel.Position
-import scala.swing.Dimension
-import scala.swing.GridPanel
-import scala.swing.MainFrame
-import scala.swing.ScrollPane
-import scala.swing.SimpleSwingApplication
-
 import rescala._
-import reswing.ReButton
-import reswing.ReLabel
+import reswing.{ReButton, ReLabel}
+
+import scala.swing.BorderPanel.Position
+import scala.swing.{BorderPanel, Dimension, GridPanel, MainFrame, ScrollPane, SimpleSwingApplication}
 
 object Application extends SimpleSwingApplication {
   // reactive components

@@ -2,6 +2,7 @@ package examples.catchup
 
 import java.awt._
 
+import examples.Mouse
 import rescala._
 
 import scala.swing.event._
@@ -85,7 +86,7 @@ class CatchUp {
       preferredSize = new Dimension(Max_X, Max_Y)
       val myFont = new Font("Tahoma", java.awt.Font.PLAIN, SizeY)
       override def paintComponent(g: Graphics2D): Unit = {
-        val fontMetrics = g.getFontMetrics(myFont)
+        //val fontMetrics = g.getFontMetrics(myFont)
         g.setColor(java.awt.Color.DARK_GRAY)
         g.fill(catchBox.now)
         if (caught.now)

@@ -2,7 +2,6 @@ package rescala.engine
 
 import rescala.graph.Struct
 
-import scala.language.experimental.macros
 import scala.util.DynamicVariable
 
 trait EngineImpl[S <: Struct, TTurn <: Turn[S]] extends Engine[S, TTurn] {

@@ -1,19 +1,14 @@
 package millgame.versions.signals
 
+import java.awt.{BasicStroke, Color, Dimension, Font, RenderingHints}
+
 import millgame._
 import millgame.types._
 import rescala._
-import java.awt.BasicStroke
-import java.awt.Color
-import java.awt.Dimension
-import java.awt.Font
-import java.awt.RenderingHints
-
-import swing.event._
-import swing._
 import reswing._
-import scala.language.reflectiveCalls
-import scala.Numeric.Implicits._
+
+import scala.swing._
+import scala.swing.event._
 
 object MainWindow extends SimpleSwingApplication {
   // uncomment to enable logging:
@@ -22,6 +17,8 @@ object MainWindow extends SimpleSwingApplication {
   val game = new MillGame
 
   def top = new MainFrame {
+    import scala.language.reflectiveCalls
+
     game.gameWon += { winner => //#HDL
        Dialog.showMessage(ui, "Game won by " + winner, "Game ended", Dialog.Message.Info)
     }

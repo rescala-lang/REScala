@@ -1,14 +1,11 @@
 package examples.dropdown
 
-import reswing._
-import scala.swing.ComboBox
-import javax.swing.JComboBox
-import scala.swing.event.KeyPressed
-import scala.swing.event.FocusGained
-import scala.swing.event.SelectionChanged
-import javax.swing.ComboBoxModel
 import java.awt.Color
-import reswing.ReSwingEvent
+import javax.swing.{ComboBoxModel, JComboBox}
+
+import reswing.{ReSwingEvent, _}
+
+import scala.swing.ComboBox
 import scala.swing.event.SelectionChanged
 
 

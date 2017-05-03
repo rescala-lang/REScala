@@ -1,7 +1,8 @@
 package examples.followmouse
 
-import java.awt.{Dimension, Font, Graphics2D}
+import java.awt.{Dimension, Graphics2D}
 
+import examples.Mouse
 import rescala._
 
 import scala.swing.{MainFrame, Panel, SimpleSwingApplication, Swing}
@@ -62,7 +63,7 @@ class FollowMouse {
 
 
       preferredSize = new Dimension(Max_X, Max_Y)
-      val scoreFont = new Font("Tahoma", java.awt.Font.PLAIN, 32)
+      //val scoreFont = new Font("Tahoma", java.awt.Font.PLAIN, 32)
       override def paintComponent(g: Graphics2D): Unit = {
         g.setColor(java.awt.Color.DARK_GRAY)
         g.fillOval(x.now, y.now, Size, Size)

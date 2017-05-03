@@ -1,9 +1,8 @@
 package examples.bouncing
 
-import swing.{Panel, MainFrame, SimpleSwingApplication}
-import java.awt.{Color, Graphics2D, Dimension}
-import java.awt.Point
-import scala.swing.Swing
+import java.awt.{Dimension, Graphics2D, Point}
+
+import scala.swing.{MainFrame, Panel, SimpleSwingApplication, Swing}
 
 object ImperativeVersion extends SimpleSwingApplication {
   lazy val application = new ImperativeVersion

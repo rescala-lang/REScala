@@ -1,8 +1,7 @@
 package texteditor.signals
 
 import javax.swing
-import rescala._
-import rescala._
+
 import rescala._
 
 class Timer(delay0: Int) {

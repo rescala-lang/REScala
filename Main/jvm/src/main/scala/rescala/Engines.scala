@@ -8,8 +8,6 @@ import rescala.levelbased.LevelBasedPropagationEngines
 import rescala.parrp._
 import rescala.twoversion.TwoVersionEngineImpl
 
-import scala.language.existentials
-
 object Engines extends LevelBasedPropagationEngines {
 
   def byName[S <: Struct](name: String): Engine[S, rescala.engine.Turn[S]] = name match {

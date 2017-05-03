@@ -6,7 +6,6 @@ import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFail
 import rescala.reactives.Signals.Diff
 
 import scala.annotation.compileTimeOnly
-import scala.language.higherKinds
 import scala.util.control.NonFatal
 
 /**

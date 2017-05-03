@@ -1,14 +1,7 @@
 package texteditor.imperative
 
-import scala.swing.BorderPanel
 import scala.swing.BorderPanel.Position
-import scala.swing.Button
-import scala.swing.Dimension
-import scala.swing.GridPanel
-import scala.swing.Label
-import scala.swing.MainFrame
-import scala.swing.ScrollPane
-import scala.swing.SimpleSwingApplication
+import scala.swing.{BorderPanel, Button, Dimension, GridPanel, Label, MainFrame, ScrollPane, SimpleSwingApplication}
 import scala.swing.event.ButtonClicked
 
 object Application extends SimpleSwingApplication {

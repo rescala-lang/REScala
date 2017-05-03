@@ -1,8 +1,8 @@
 package reader.data
 
-import scala.annotation.migration
-import scala.collection.mutable.Map
 import rescala._
+
+import scala.collection.mutable.Map
 
 
 /**

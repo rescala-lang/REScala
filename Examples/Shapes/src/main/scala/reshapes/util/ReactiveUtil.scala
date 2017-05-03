@@ -83,9 +83,9 @@ object ReactiveUtil {
   }
 
   /**
-   * Creates an [[scala.events.Event]] that fires whenever
+   * Creates an [[rescala.Event]] that fires whenever
    * any event in the given event list fires, where the list itself
-   * is wrapped in a [[scala.events.behaviour.Signal]].
+   * is wrapped in a [[rescala.Signal]].
    */
   object UnionEvent {
     def apply[T, E[T] <: Event[T], L[E] <: Traversable[E]]

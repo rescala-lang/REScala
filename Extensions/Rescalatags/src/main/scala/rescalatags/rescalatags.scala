@@ -3,7 +3,7 @@ import rescala.engine.{Engine, Turn, TurnSource}
 import rescala.graph.Struct
 import rescala.reactives.{Observe, Signal}
 
-import scala.language.{higherKinds, implicitConversions}
+import scala.language.higherKinds
 import scalatags.JsDom.all._
 
 package object rescalatags {

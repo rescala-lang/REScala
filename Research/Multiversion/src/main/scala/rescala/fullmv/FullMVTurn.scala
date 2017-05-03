@@ -1,7 +1,7 @@
 package rescala.fullmv
 
-import rescala.engine.{EngineImpl, InitializationImpl, Turn, ValuePersistency}
-import rescala.graph.{Pulse, Pulsing, Reactive, Struct}
+import rescala.engine.{EngineImpl, InitializationImpl, ValuePersistency}
+import rescala.graph.{Pulsing, Reactive, Struct}
 
 trait FullMVStruct extends Struct {
   override type State[P, S <: Struct] = NodeVersionHistory[P]
@@ -15,17 +15,17 @@ class FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
 
 class FullMVTurn(val sgt: SerializationGraphTracking) extends InitializationImpl[FullMVStruct] {
   def incrementFrame(node: Reactive[FullMVStruct]): Unit = {
-    val branching = node.state.incrementFrame(this)
     // TODO
+    //val branching = node.state.incrementFrame(this)
   }
   def incrementSupersedeFrame(node: Reactive[FullMVStruct], superseded: FullMVTurn): Unit = {
-    val branching = node.state.incrementSupersedeFrame(this, superseded)
     // TODO
+    //val branching = node.state.incrementSupersedeFrame(this, superseded)
   }
 
   def notify(node: Reactive[FullMVStruct], changed: Boolean, maybeFollowFrame: Option[FullMVTurn]): Unit = {
-    val notificationResultAction = node.state.notify(this, changed, maybeFollowFrame)
     // TODO
+    //val notificationResultAction = node.state.notify(this, changed, maybeFollowFrame)
   }
 
   override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): NodeVersionHistory[P] = new NodeVersionHistory(sgt, this, valuePersistency.initialValue)

@@ -12,7 +12,7 @@ trait Turn[S <: Struct] {
   def static(): StaticTicket[S] = new StaticTicket[S](this)
 
   /**
-    * Synchronize for access (i.e., [[before()]] or [[after()]]) on this node when
+    * Synchronize for access (i.e., [[before]] or [[after]]) on this node when
     * synchronization is unknown. Multiple invocations are redundant, but not harmful outside of an
     * implementation-dependent performance penalty.
     *
@@ -23,7 +23,7 @@ trait Turn[S <: Struct] {
   /**
     * Read value from before this turn. Only call this if you know that you are synchronized with this node:
     * Reads on dependencies where an edge exists (e.g., reading a static dependency) is always synchronized.
-    * Reads on other nodes must be synchronized through [[dynamicDependencyInteraction()]] first.
+    * Reads on other nodes must be synchronized through dynamicDependencyInteraction first.
     * @param pulsing the node to be read
     * @tparam P the node's storage type
     * @return the stored value from before this turn
@@ -35,7 +35,7 @@ trait Turn[S <: Struct] {
     * return only the value that is final until the end of this turn.
     * Only call this if you know that you are synchronized with this node:
     * Reads on dependencies where an edge exists (e.g., reading a static dependency) is always synchronized.
-    * Reads on other nodes must be synchronized through [[dynamicDependencyInteraction()]] first.
+    * Reads on other nodes must be synchronized through dynamicDependencyInteraction first.
     * @param pulsing the node to be read
     * @tparam P the node's storage type
     * @return the stored value from after this turn

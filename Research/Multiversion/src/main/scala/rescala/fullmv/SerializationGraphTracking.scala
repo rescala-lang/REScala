@@ -21,7 +21,7 @@ trait SerializationGraphTracking {
     * require and query for an order between the given transactions.
     * Must not be called with equal transactions in both parameters!
     * Note that the parameters in this method are order sensitive: If
-    * [[getOrder()]] would return [[Unordered]], [[FirstFirst]] will
+    * [[getOrder]] would return [[Unordered]], [[FirstFirst]] will
     * be established and returned, ensuring that newly arriving
     * transactions perform their operations AFTER those that have
     * acted there in the past. Reversing the parameters in a call to

@@ -31,7 +31,7 @@ class ChainSignalHalfChange[S <: rescala.graph.Struct] {
       result = result.map{v => val r = v + 1; work.consume(); r}
     }
     for (_ <- Range(0, size.size)) {
-      result = result.map{v => val r = v + 1; work.consume(); 0}
+      result = result.map{v => v + 1; work.consume(); 0}
     }
   }
 

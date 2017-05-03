@@ -1,16 +1,10 @@
 package examples.dropdown
 
-import scala.swing.MainFrame
-import scala.swing.BoxPanel
-import scala.swing.Orientation
-import scala.swing.Label
-import reswing.ReLabel._
+import rescala._
 import reswing.ReTextField._
 import reswing._
-import scala.swing.SimpleSwingApplication
-import rescala._
-import rescala._
-import scala.swing.FlowPanel
+
+import scala.swing.{BoxPanel, FlowPanel, Label, MainFrame, Orientation, SimpleSwingApplication}
 
 object DropdownSample2b extends SimpleSwingApplication {
 

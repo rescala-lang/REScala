@@ -4,14 +4,12 @@ import rescala.engine._
 import rescala.graph.Pulse.Value
 import rescala.graph._
 
-import scala.language.higherKinds
-
 class Source[T, S <: Struct](_bud: S#State[Pulse[T], S]) extends Base[T, S](_bud) {
   private var result: Value = null
   final def admit(value: T)(implicit turn: Turn[S]): Unit = admitPulse(Pulse.Value(value))
 
   final def admitPulse(value: Pulse[T])(implicit turn: Turn[S]): Unit = {
-    require(result == null, "can not admit the same reactive twice in the same turn")
+    require(result == null, s"can not admit the same reactive twice in the same turn: $turn")
     result = value
   }
 

@@ -1,15 +1,10 @@
-package examples.fisheye
+package examples
 
-import scala.swing.Reactor
-import scala.swing.Component
-import rescala._
-import rescala._
-import rescala._
-import rescala._
-import rescala._
 import java.awt.Point
+
+import rescala._
+
 import scala.swing.event._
-import scala.swing.Reactions
 
 class Mouse {
 
@@ -33,4 +28,5 @@ class Mouse {
         case e: MouseDragged => { mouseDraggedE(e.point) }
         case e: MouseReleased => mouseReleasedE(e.point)
      }
+
 }

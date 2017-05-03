@@ -1,7 +1,7 @@
 import sbtcrossproject.{crossProject, CrossType}
 
 organization in ThisBuild := "de.tuda.stg"
-crossScalaVersions in ThisBuild := Seq("2.12.1", "2.11.8")
+crossScalaVersions in ThisBuild := Seq("2.12.2", "2.11.11")
 scalaVersion in ThisBuild := crossScalaVersions.value.tail.head
 
 version in ThisBuild := "0.20.0-SNAPSHOT"
@@ -18,7 +18,7 @@ licenses in ThisBuild += ("Apache-2.0", url("http://www.apache.org/licenses/LICE
 shellPrompt in ThisBuild := { state => Project.extract(state).currentRef.project + "> " }
 
 lazy val rescalaAggregate = project.in(file(".")).aggregate(rescalaJVM,
-  rescalaJS, microbench, reswing, /* examples,*/ examplesReswing, caseStudyEditor,
+  rescalaJS, microbench, reswing, examples, examplesReswing, caseStudyEditor,
   caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags,
   datastructures, universe, reactiveStreams, documentation, meta,
   stm, testsJVM, testsJS, fullmv, caseStudyShapes, caseStudyMill,
@@ -54,7 +54,6 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Main"))
       IO.write(file,
       s"""package rescala.reactives
          |
-         |import rescala.reactives._
          |import rescala.graph._
          |import rescala.engine._
          |
@@ -131,7 +130,7 @@ lazy val rescalatags = project.in(file("Extensions/Rescalatags"))
   .dependsOn(rescalaJS)
   .settings(
     scalaJSUseRhino in Global := true,
-    libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.6.2",
+    libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.6.5",
     scalatestDependency,
     jsDependencies += RuntimeDOM,
     licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))
@@ -179,7 +178,7 @@ lazy val baromter4Android = project.in(file("Examples/Barometer4Android"))
     name := "barometer4Android",
     publish := {},
     publishLocal := {},
-    scalaVersion := "2.11.8",
+    scalaVersion := "2.11.11",
     androidDependencies,
     javacOptions ++= Seq("-source", "1.7", "-target", "1.7"),
     platformTarget := "android-25", //TODO: Move to androidJVM
@@ -286,13 +285,13 @@ lazy val androidDependencies = libraryDependencies ++= Seq(
   "com.android.support.test.espresso" % "espresso-core" % "2.2.2" % "androidTest")
 
 lazy val rssDependencies = libraryDependencies ++= Seq(
-  "joda-time" % "joda-time" % "2.9.7",
+  "joda-time" % "joda-time" % "2.9.9",
   "org.joda" % "joda-convert" % "1.8.1",
   "org.codehaus.jsr166-mirror" % "jsr166y" % "1.7.0",
   "org.scala-lang.modules" %% "scala-xml" % "1.0.6")
 
 lazy val scalaswingDependency = libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "2.0.0"
-lazy val scalatestDependency = libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.1" % "test"
+lazy val scalatestDependency = libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.3" % "test"
 
 
 // ================================= scalac options
@@ -319,5 +318,4 @@ scalacOptions in ThisBuild ++= (
   "-Ywarn-numeric-widen" ::
   //"-Ywarn-value-discard" ::
   //"-Ymacro-debug-lite" ::
-  "-language:higherKinds" ::
   Nil)

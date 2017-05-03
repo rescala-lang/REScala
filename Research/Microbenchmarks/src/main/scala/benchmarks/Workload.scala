@@ -11,8 +11,8 @@ class Workload {
   var work: Long = _
   @Param(Array("0"))
   var workSecondary: Long = _
-  def consume() = Blackhole.consumeCPU(work)
-  def consumeSecondary() = Blackhole.consumeCPU(workSecondary)
+  def consume(): Unit = Blackhole.consumeCPU(work)
+  def consumeSecondary(): Unit = Blackhole.consumeCPU(workSecondary)
 }
 
 @BenchmarkMode(Array(Mode.Throughput))
