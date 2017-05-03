@@ -18,7 +18,7 @@ class GUI extends SimpleSwingApplication{
      val channelList = List()
 
      contents = new BorderPanel {
-      val topPane = new GridPanel(1, 0) {
+      new GridPanel(1, 0) {
         contents += new BorderPanel {
           add(new Label("Choose Channel: "), BorderPanel.Position.West)
           add(new ListView(channelList), BorderPanel.Position.Center)

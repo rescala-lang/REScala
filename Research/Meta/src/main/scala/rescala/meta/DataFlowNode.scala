@@ -1,6 +1,6 @@
 package rescala.meta
 
-import rescala.engine.{Engine, TurnSource}
+import rescala.engine.TurnSource
 import rescala.graph.{Pulse, Pulsing, Struct}
 import rescala.reactives._
 

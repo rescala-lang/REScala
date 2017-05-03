@@ -2,6 +2,7 @@ package examples.pong.ui
 
 import java.awt.{Color, Dimension, Font, Graphics2D}
 
+import examples.Mouse
 import examples.pong._
 import rescala._
 

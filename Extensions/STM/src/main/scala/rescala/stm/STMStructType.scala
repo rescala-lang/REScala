@@ -5,7 +5,7 @@ import rescala.graph.{Reactive, Struct}
 import rescala.levelbased.LevelStructType
 import rescala.twoversion.{ReadWriteValue, Token, TwoVersionPropagation}
 
-import scala.concurrent.stm.{InTxn, Ref, TxnLocal, atomic}
+import scala.concurrent.stm.{InTxn, Ref, TxnLocal}
 
 class STMStructType[P, S <: Struct](initialValue: P, transient: Boolean) extends LevelStructType[S] with ReadWriteValue[P, S] {
 

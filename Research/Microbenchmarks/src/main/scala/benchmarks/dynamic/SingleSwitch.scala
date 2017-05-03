@@ -30,7 +30,7 @@ class SingleSwitch[S <: rescala.graph.Struct] {
     source = Var(step.get())
     val d1 = Var("true")
     val d2 = Var("false")
-    val dynamic = engine.Signal {
+    engine.Signal {
       if (step.test(source())) d1() else d2()
     }
 

@@ -1,8 +1,7 @@
 package rescala.stm
 
 import rescala.engine.ValuePersistency
-import rescala.graph.Pulse.NoChange
-import rescala.graph.{Change, Pulse, Reactive, Struct}
+import rescala.graph.Struct
 import rescala.levelbased.{LevelBasedPropagation, LevelStruct}
 import rescala.twoversion.Token
 

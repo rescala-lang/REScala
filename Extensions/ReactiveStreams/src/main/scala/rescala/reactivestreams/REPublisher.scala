@@ -4,7 +4,6 @@ package rescala.reactivestreams
 import org.reactivestreams.{Publisher, Subscriber, Subscription}
 import rescala.engine.{Engine, Turn, ValuePersistency}
 import rescala.graph._
-import rescala.reactives.Signal
 
 import scala.util.{Failure, Success}
 

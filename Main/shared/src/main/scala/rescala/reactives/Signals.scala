@@ -5,7 +5,6 @@ import rescala.graph._
 import rescala.reactives.RExceptions.EmptySignalControlThrowable
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.language.higherKinds
 
 object Signals extends GeneratedSignalLift {
 

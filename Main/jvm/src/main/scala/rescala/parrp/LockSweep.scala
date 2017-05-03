@@ -2,8 +2,7 @@ package rescala.parrp
 
 import java.util
 
-import rescala.engine.{Turn, ValuePersistency}
-import rescala.graph.Pulse.NoChange
+import rescala.engine.ValuePersistency
 import rescala.graph.ReevaluationResult.{Dynamic, Static}
 import rescala.graph._
 import rescala.locking._

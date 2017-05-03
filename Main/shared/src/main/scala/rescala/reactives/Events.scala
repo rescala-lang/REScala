@@ -51,7 +51,6 @@ object Events {
   }
 
   def change[A, S <: Struct](signal: Signal[A, S])(implicit maybe: TurnSource[S]): Event[Diff[A], S] = maybe { initTurn =>
-    val dependencySet: Set[Reactive[S]] = Set(signal)
     initTurn.create[Pulse[Diff[A]], Event[Diff[A], S]](Set(signal), ValuePersistency.Event) {
       state => new ChangeEvent[A, S](state, signal) with Disconnectable[S]
     }

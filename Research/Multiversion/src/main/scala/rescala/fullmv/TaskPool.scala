@@ -2,8 +2,6 @@ package rescala.fullmv
 
 import rescala.graph.Reactive
 
-import scala.language.existentials
-
 sealed abstract class Task
 case class Notification(node: Reactive[FullMVStruct], txn: FullMVTurn, changed: Boolean, maybeFollowFrame: Option[FullMVTurn]) extends Task {
   def apply(): Unit = txn.notify(node, changed, maybeFollowFrame)

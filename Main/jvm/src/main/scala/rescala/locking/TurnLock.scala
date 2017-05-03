@@ -4,7 +4,6 @@ import java.util.concurrent.atomic.AtomicReference
 
 import scala.annotation.tailrec
 import scala.collection.immutable.Queue
-import scala.language.existentials
 
 final class TurnLock[InterTurn]() {
 

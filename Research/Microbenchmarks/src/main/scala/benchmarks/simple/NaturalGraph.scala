@@ -2,7 +2,7 @@ package benchmarks.simple
 
 import java.util.concurrent.TimeUnit
 
-import benchmarks.{EngineParam, Size, Step, Workload}
+import benchmarks.{EngineParam, Step, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
 import rescala.engine.{Engine, Turn}
@@ -20,7 +20,7 @@ class NaturalGraph[S <: rescala.graph.Struct] {
   var engine: Engine[S, Turn[S]] = _
 
   var source: rescala.reactives.Var[Int, S] = _
-  var result: rescala.reactives.Signal[Int, S] = _
+  var result: List[rescala.reactives.Signal[Int, S]] = _
 
   @Setup
   def setup(params: BenchmarkParams, step: Step, engineParam: EngineParam[S], work: Workload): Unit = {
@@ -76,7 +76,7 @@ class NaturalGraph[S <: rescala.graph.Struct] {
     val e6 = inc(c2)
     val e7 = sum(e6, d1)
 
-    result = c5
+    result = List(c5,e5,e7)
   }
 
   @Benchmark

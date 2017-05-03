@@ -1,16 +1,10 @@
 package examples.dropdown
 
-import scala.swing.MainFrame
-import scala.swing.BoxPanel
-import scala.swing.Orientation
-import scala.swing.Label
-import reswing.ReLabel._
+import rescala._
 import reswing.ReTextField._
 import reswing._
-import scala.swing.SimpleSwingApplication
-import rescala._
-import rescala._
-import scala.swing.FlowPanel
+
+import scala.swing.{BoxPanel, FlowPanel, Label, MainFrame, Orientation, SimpleSwingApplication}
 
 object DropdownSample1 extends SimpleSwingApplication {
 
@@ -40,7 +34,7 @@ object DropdownSample1 extends SimpleSwingApplication {
       }
 
 
-    val listOfSignals = Signal {List(val1, val2, val3, val4)}
+    //val listOfSignals = Signal {List(val1, val2, val3, val4)}
 
     val dropdown = new ReDynamicComboBox(options = options, selection = -1)
     val selectionIndex = Signal {dropdown.selection()}

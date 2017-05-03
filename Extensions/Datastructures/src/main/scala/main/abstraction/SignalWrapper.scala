@@ -1,7 +1,6 @@
 package main.abstraction
 
 import rescala._
-import scala.language.higherKinds
 
 abstract class SignalWrapper {
   type InternalType

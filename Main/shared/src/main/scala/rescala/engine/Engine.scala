@@ -4,7 +4,6 @@ import rescala.RescalaDefaultImports
 import rescala.graph.Struct
 
 import scala.annotation.implicitNotFound
-import scala.language.experimental.macros
 
 /**
   * Propagation engine that defines the basic data-types available to the user and creates turns for propagation handling

@@ -7,7 +7,6 @@ import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFail
 
 import scala.annotation.compileTimeOnly
 import scala.collection.immutable.{LinearSeq, Queue}
-import scala.language.higherKinds
 
 /**
   * Base signal interface for all signal implementations.

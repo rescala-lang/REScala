@@ -1,30 +1,14 @@
 package texteditor.imperative
 
-import java.awt.Dimension
-import java.awt.Graphics2D
-import java.awt.Point
-import java.awt.Rectangle
-import java.awt.SystemColor
-import java.awt.Toolkit
-import java.awt.datatransfer.DataFlavor
-import java.awt.datatransfer.StringSelection
+import java.awt.datatransfer.{DataFlavor, StringSelection}
+import java.awt.{Dimension, Graphics2D, Point, Rectangle, SystemColor, Toolkit}
 
-import scala.math.max
-import scala.math.min
-import scala.swing.Component
-import scala.swing.Publisher
-import scala.swing.event.Event
-import scala.swing.event.Key
-import scala.swing.event.KeyPressed
-import scala.swing.event.KeyTyped
-import scala.swing.event.MouseDragged
-import scala.swing.event.MousePressed
-import texteditor.JScrollableComponent
-import texteditor.LineIterator
-import texteditor.LineOffset
-import texteditor.Position
+import texteditor.{JScrollableComponent, LineIterator, LineOffset, Position}
 
 import scala.language.postfixOps
+import scala.math.{max, min}
+import scala.swing.event.{Event, Key, KeyPressed, KeyTyped, MouseDragged, MousePressed}
+import scala.swing.{Component, Publisher}
 
 case class CaretUpdate(val source: TextArea) extends Event
 

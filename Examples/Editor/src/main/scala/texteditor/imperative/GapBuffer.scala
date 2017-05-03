@@ -86,7 +86,7 @@ class GapBuffer {
     // the two text segments have to be moved to a new buffer
     val postlength = size - caret
     val newlength = 2 * minsize
-    var newbuf = new Array[Char](newlength)
+    val newbuf = new Array[Char](newlength)
 
     Array.copy(buf, 0, newbuf, 0, caret)
     Array.copy(buf, buf.length - postlength, newbuf, newbuf.length - postlength, postlength)

@@ -1,7 +1,7 @@
 import sbtcrossproject.{crossProject, CrossType}
 
 organization in ThisBuild := "de.tuda.stg"
-crossScalaVersions in ThisBuild := Seq("2.12.1", "2.11.8")
+crossScalaVersions in ThisBuild := Seq("2.12.2", "2.11.11")
 scalaVersion in ThisBuild := crossScalaVersions.value.head
 
 version in ThisBuild := "0.20.0-SNAPSHOT"
@@ -51,7 +51,6 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Main"))
       IO.write(file,
       s"""package rescala.reactives
          |
-         |import rescala.reactives._
          |import rescala.graph._
          |import rescala.engine._
          |
@@ -297,5 +296,4 @@ scalacOptions in ThisBuild ++= (
   "-Ywarn-numeric-widen" ::
   //"-Ywarn-value-discard" ::
   //"-Ymacro-debug-lite" ::
-  "-language:higherKinds" ::
   Nil)

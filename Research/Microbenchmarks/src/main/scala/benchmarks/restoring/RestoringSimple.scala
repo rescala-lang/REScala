@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 import benchmarks.{EngineParam, Size, Step}
 import org.openjdk.jmh.annotations._
 import rescala.engine.{Engine, Turn}
-import rescala.reactives.{Evt, Signal, Var}
+import rescala.reactives.{Evt, Var}
 import rescala.restore.{ReStoringEngine, Storing}
 
 @BenchmarkMode(Array(Mode.Throughput))

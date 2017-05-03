@@ -2,7 +2,7 @@ package examples.pong
 
 import java.awt.Point
 
-import examples.pong.ui.Mouse
+import examples.Mouse
 import rescala._
 
 object Pong {

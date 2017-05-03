@@ -1,9 +1,6 @@
 package texteditor.signalsAndEventsFromEventsOnly
 
 import rescala._
-import rescala._
-import rescala._
-import rescala._
 
 /**
  * Iterates over `array` whose content has the size of `count`.
@@ -98,7 +95,7 @@ class GapBuffer {
     // the two text segments have to be moved to a new buffer
     val postlength = size.now - caret.now
     val newlength = 2 * minsize
-    var newbuf = new Array[Char](newlength)
+    val newbuf = new Array[Char](newlength)
 
     Array.copy(buf, 0, newbuf, 0, caret.now)
     Array.copy(buf, buf.length - postlength, newbuf, newbuf.length - postlength, postlength)

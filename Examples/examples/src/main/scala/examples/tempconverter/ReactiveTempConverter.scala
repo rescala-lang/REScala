@@ -4,16 +4,9 @@ package examples.tempconverter
 
 // Escala lib + behaviour extensions
 import rescala._
-import rescala._
-import rescala._
-import rescala._
-import rescala._
 
 // Scala swing events
-import swing._
-import event._
 import scala.swing._
-import scala.swing.event._
 
 
 object ReactiveTempConverter extends SimpleSwingApplication {

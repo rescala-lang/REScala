@@ -1,16 +1,15 @@
 package texteditor.events
 
-import java.awt.{Dimension, Graphics2D, Point, Rectangle, SystemColor, Toolkit}
 import java.awt.datatransfer.{DataFlavor, StringSelection}
+import java.awt.{Dimension, Graphics2D, Point, Rectangle, SystemColor, Toolkit}
 
 import rescala._
 import reswing.ReComponent
 import texteditor.{JScrollableComponent, LineIterator, LineOffset, Position}
 
-import scala.language.postfixOps
 import scala.math.{max, min}
-import scala.swing.{Component, Publisher}
 import scala.swing.event.{Key, KeyPressed, KeyTyped, MouseDragged, MouseEvent}
+import scala.swing.{Component, Publisher}
 
 class TextArea extends ReComponent {
   override protected lazy val peer = new Component with ComponentMixin {
@@ -230,7 +229,7 @@ class TextArea extends ReComponent {
 
   caret.changed += { _ =>  //#HDL
     def it = LineIterator(buffer.iterator)
-    peer preferredSize = new Dimension(2 * padding + it.map(stringWidth(_)).max, (it.size + 1) * lineHeight)
+    peer.preferredSize = new Dimension(2 * padding + it.map(stringWidth).max, (it.size + 1) * lineHeight)
 
     val point = pointFromPosition(caret.dotPos)
     peer.peer.scrollRectToVisible(new Rectangle(point.x - 8, point.y, 16, 2 * lineHeight))

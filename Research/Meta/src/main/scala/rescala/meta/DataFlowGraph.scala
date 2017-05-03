@@ -1,9 +1,7 @@
 package rescala.meta
 
-import rescala.graph.Pulse
 
 import scala.collection.mutable
-import scala.language.existentials
 
 class DataFlowGraph {
   private val _nodes : mutable.Set[DataFlowNode[_]] = mutable.Set()

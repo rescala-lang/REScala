@@ -1,7 +1,8 @@
 package examples.fisheye
 
-import java.awt.{Color, Dimension, Font, Graphics2D, Rectangle}
+import java.awt.{Color, Dimension, Graphics2D, Rectangle}
 
+import examples.Mouse
 import rescala._
 
 import scala.swing.{MainFrame, Panel, SimpleSwingApplication}
@@ -74,7 +75,7 @@ class Fisheye {
       reactions += Fisheye.this.mouse.react
 
       preferredSize = new Dimension(Max_X, Max_Y)
-      val scoreFont = new Font("Tahoma", java.awt.Font.PLAIN, 32)
+      //val scoreFont = new Font("Tahoma", java.awt.Font.PLAIN, 32)
       override def paintComponent(g: Graphics2D): Unit = {
         for (box <- boxes) {
           g.setColor(box.effectiveColor.now)

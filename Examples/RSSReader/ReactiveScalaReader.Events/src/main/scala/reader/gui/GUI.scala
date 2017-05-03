@@ -1,19 +1,13 @@
 package reader.gui
 
-import java.awt.Dimension
-import java.awt.Point
-import java.awt.Toolkit
-import rescala._
-import scala.swing._
+import java.awt.{Dimension, Point, Toolkit}
 import javax.swing.ImageIcon
-import reader.data.FeedStore
-import reader.data.RSSChannel
-import reader.data.RSSItem
-import reswing.ReButton
-import reswing.ReCheckBox
-import reswing.ReLabel
-import reswing.ReSwingValue
-import reswing.ReListView
+
+import reader.data.{FeedStore, RSSChannel, RSSItem}
+import rescala._
+import reswing.{ReButton, ReCheckBox, ReLabel, ReSwingValue}
+
+import scala.swing._
 
 /**
  * Responsible for displaying the content of the given FeedStore
@@ -85,7 +79,7 @@ class GUI(store: FeedStore,
         preferredSize = ReSwingValue(new Dimension(framewidth / 3, 15)),
         horizontalAlignment = Alignment.Left)
 
-    val mediator = SyncAll.mediate(channelList, itemList, renderArea, store)
+    //val mediator = SyncAll.mediate(channelList, itemList, renderArea, store)
 
     contents = new BorderPanel {
       val topPane = new GridPanel(1, 1) {

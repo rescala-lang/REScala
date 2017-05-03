@@ -2,7 +2,7 @@ package examples.demo
 
 import examples.demo.LFullyModularBall.BouncingBall
 import examples.demo.MPlayingFieldBall.PlayingField
-import examples.demo.ORacketMultiBall.{Racket, panel}
+import examples.demo.ORacketMultiBall.Racket
 import examples.demo.ui._
 import rescala._
 

@@ -1,28 +1,16 @@
 package texteditor.signalsAndEventsFromImperative
 
-import java.awt.Dimension
-import java.awt.Graphics2D
-import java.awt.Point
-import java.awt.Rectangle
-import java.awt.SystemColor
-import java.awt.Toolkit
-import java.awt.datatransfer.DataFlavor
-import java.awt.datatransfer.StringSelection
+import java.awt.{Dimension, Graphics2D, Point, Rectangle, SystemColor, Toolkit}
+import java.awt.datatransfer.{DataFlavor, StringSelection}
 
-import scala.math.max
-import scala.math.min
-import scala.swing.Component
-import scala.swing.event.Key
 import rescala._
-import rescala._
-import reswing.ReComponent
-import reswing.ReSwingValue
-import texteditor.JScrollableComponent
-import texteditor.LineIterator
-import texteditor.LineOffset
-import texteditor.Position
+import reswing.{ReComponent, ReSwingValue}
+import texteditor.{JScrollableComponent, LineIterator, LineOffset, Position}
 
 import scala.language.{implicitConversions, postfixOps}
+import scala.math.{max, min}
+import scala.swing.Component
+import scala.swing.event.Key
 
 class TextArea extends ReComponent {
   override protected lazy val peer = new Component with ComponentMixin {
