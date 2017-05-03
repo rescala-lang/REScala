@@ -3,6 +3,7 @@ import sbtcrossproject.{crossProject, CrossType}
 organization in ThisBuild := "de.tuda.stg"
 crossScalaVersions in ThisBuild := Seq("2.12.2", "2.11.11")
 scalaVersion in ThisBuild := crossScalaVersions.value.head
+crossScalaVersions in ThisBuild := Seq("2.12.1", "2.11.8")
 
 version in ThisBuild := "0.20.0-SNAPSHOT"
 
@@ -35,6 +36,8 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Main"))
     resolvers += Resolver.bintrayRepo("pweisenburger", "maven"),
     libraryDependencies += "de.tuda.stg" %% "retypecheck" % "0.2.0",
     libraryDependencies += scalaOrganization.value % "scala-reflect" % scalaVersion.value % "provided",
+
+    exportJars := true,
 
     sourceGenerators in Compile += Def.task {
       val file = (sourceManaged in Compile).value / "rescala" / "reactives" / "GeneratedSignalLift.scala"
@@ -182,6 +185,7 @@ lazy val baromter4Android = project.in(file("Examples/Barometer4Android"))
     platformTarget := "android-25", //TODO: Move to androidJVM
     android.useSupportVectors,
     instrumentTestRunner := "android.support.test.runner.AndroidJUnitRunner")
+  .dependsOn(rescalaJVM)
 
 lazy val caseStudyEditor = project.in(file("Examples/Editor"))
   .dependsOn(reswing)
