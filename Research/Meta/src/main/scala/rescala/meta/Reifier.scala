@@ -1,8 +1,7 @@
 package rescala.meta
 
-import rescala.engines.{Engine, Ticket}
+import rescala.engine.{Engine, Turn, TurnSource}
 import rescala.graph.{Pulsing, Struct}
-import rescala.propagation.Turn
 import rescala.reactives.{Evt, _}
 
 import scala.annotation.tailrec
@@ -18,7 +17,7 @@ trait Reifier[S <: Struct] {
   def reifyVar[A](varNode: VarSignalNode[A]) : Var[A, S] = reifySignal(varNode).asInstanceOf[Var[A, S]]
 
   def evaluateNecessaryReification(graph: DataFlowGraph): Unit
-  def unreify(node : DataFlowNode[_])(implicit ticket : Ticket[S]): Unit
+  def unreify(node : DataFlowNode[_])(implicit ticket : TurnSource[S]): Unit
 
   // Internal methods to create the corresponding reactive base value
   protected[meta] def createEvt[T]() : Evt[T, S]
@@ -34,7 +33,7 @@ class EngineReifier[S <: Struct]()(implicit val engine: Engine[S, Turn[S]]) exte
   private val reifiedCache : mutable.Map[DataFlowNode[_], Reification[S]] = collection.mutable.Map()
   private val savedState : mutable.Map[DataFlowNode[_], List[Signal[_, _]]] = collection.mutable.Map()
 
-  private def saveAllStates(node : DataFlowNode[_])(implicit ticket : Ticket[S]): Unit = {
+  private def saveAllStates(node : DataFlowNode[_])(implicit ticket : TurnSource[S]): Unit = {
     reifiedCache.get(node) match {
       case Some(Reification(reified, _)) =>
         savedState += (node -> Signals.Impl.getStates(reified)._2)
@@ -44,7 +43,7 @@ class EngineReifier[S <: Struct]()(implicit val engine: Engine[S, Turn[S]]) exte
       saveAllStates(n)
   }
 
-  private def _unreify(node : DataFlowNode[_])(implicit ticket : Ticket[S]) = {
+  private def _unreify(node : DataFlowNode[_])(implicit ticket : TurnSource[S]) = {
     for (n <- node.graph.outgoingDataFlow(node))
       n.unreify(this, ticket)
     reifiedCache.get(node) match {
@@ -58,7 +57,7 @@ class EngineReifier[S <: Struct]()(implicit val engine: Engine[S, Turn[S]]) exte
     }
   }
 
-  def unreify(node : DataFlowNode[_])(implicit ticket : Ticket[S]): Unit = {
+  def unreify(node : DataFlowNode[_])(implicit ticket : TurnSource[S]): Unit = {
     saveAllStates(node)
     _unreify(node)
   }
@@ -108,12 +107,12 @@ class EngineReifier[S <: Struct]()(implicit val engine: Engine[S, Turn[S]]) exte
         reifiedCache.getOrElse(node, throw new IllegalArgumentException("Cannot observe a non-reified reactive node!")) match {
         case Reification(e : Event[Nothing, S] @unchecked, observers) =>
           if (!observers.exists(_._1 == od)) {
-            val observe = e.observe(onSuccess, onFailure)(ticket.asInstanceOf[Ticket[S]])
+            val observe = e.observe(onSuccess, onFailure)(ticket.asInstanceOf[TurnSource[S]])
             observers += ((od.asInstanceOf[ObserverData[S]], observe))
           }
         case Reification(s : Signal[Nothing, S] @unchecked, observers) =>
           if (!observers.exists(_._1 == od)) {
-            val observe = s.observe(onSuccess, onFailure)(ticket.asInstanceOf[Ticket[S]])
+            val observe = s.observe(onSuccess, onFailure)(ticket.asInstanceOf[TurnSource[S]])
             observers += ((od.asInstanceOf[ObserverData[S]], observe))
           }
         case _ => throw new IllegalArgumentException("Found unknown log entry type!")

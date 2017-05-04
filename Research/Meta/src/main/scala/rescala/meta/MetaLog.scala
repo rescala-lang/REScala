@@ -1,9 +1,9 @@
 package rescala.meta
 
-import rescala.engines.Ticket
+import rescala.engine.TurnSource
 import rescala.graph.Struct
 
-case class ObserverData[S <: Struct](onSuccess: Nothing => Unit, onFailure: Throwable => Unit, ticket: Ticket[S]) {
+case class ObserverData[S <: Struct](onSuccess: Nothing => Unit, onFailure: Throwable => Unit, ticket: TurnSource[S]) {
   // Prevent structural equality check for case-classes
   private class Data
   private val _data = new Data()

@@ -1,6 +1,6 @@
 package rescala.meta
 
-import rescala.engines.Ticket
+import rescala.engine.TurnSource
 import rescala.graph.Struct
 import rescala.reactives._
 
@@ -30,7 +30,7 @@ trait ReactiveRef[+T] extends DataFlowRef[T] {
   override def tryDeref : Option[ReactiveNode[T]]
   override def deref : ReactiveNode[T] = tryDeref.getOrElse(throw new IllegalStateException("Trying to call operation on undefined reference!"))
 
-  def observe[S <: Struct](onSuccess: (T) => Unit, onFailure: (Throwable) => Unit = t => throw t)(implicit ticket: Ticket[S]): Unit =
+  def observe[S <: Struct](onSuccess: (T) => Unit, onFailure: (Throwable) => Unit = t => throw t)(implicit ticket: TurnSource[S]): Unit =
     deref.observe(onSuccess, onFailure)
   def reify[S <: Struct](implicit reifier: Reifier[S]): Observable[T, S] = deref.reify
 }
@@ -48,7 +48,7 @@ class EventRef[+T](_node : EventNode[T]) extends ReactiveRef[T] {
 
   override def reify[S <: Struct](implicit reifier: Reifier[S]): Event[T, S] = deref.reify
 
-  def +=[S <: Struct](react: T => Unit)(implicit ticket: Ticket[S]): Unit = deref += react
+  def +=[S <: Struct](react: T => Unit)(implicit ticket: TurnSource[S]): Unit = deref += react
 
   def ||[U >: T](others: EventRef[U]*): EventRef[U] = new EventRef(deref||(others.map(_.deref):_*))
   def &&[U >: T](pred: (U) => Boolean): EventRef[U] = new EventRef(deref && pred)
@@ -90,7 +90,7 @@ class SignalRef[+A](_node : SignalNode[A]) extends ReactiveRef[A] {
 
   override def reify[S <: Struct](implicit reifier: Reifier[S]): Signal[A, S] = deref.reify
 
-  def now[S <: Struct](implicit reifier: Reifier[S], ticket: Ticket[S]): A = deref.now
+  def now[S <: Struct](implicit reifier: Reifier[S], ticket: TurnSource[S]): A = deref.now
 
   def delay(n: Int): SignalRef[A] = new SignalRef(deref.delay(n))
   def map[X >: A, B](f: (X) => B): SignalRef[B] = new SignalRef(deref.map(f))
@@ -105,7 +105,7 @@ object SignalRef {
 class VarRef[A](__node : VarSignalNode[A]) extends SignalRef(__node) {
   override def tryDeref: Option[VarSignalNode[A]] = graph.deref(this).asInstanceOf[Option[VarSignalNode[A]]]
   override def deref: VarSignalNode[A] = super.deref.asInstanceOf[VarSignalNode[A]]
-  
+
   override def reify[S <: Struct](implicit reifier: Reifier[S]): Var[A, S] = deref.reify
 
   def set[S <: Struct](value: A)(implicit reifier: Reifier[S]): Unit = deref.set(value)

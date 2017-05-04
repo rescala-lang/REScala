@@ -1,5 +1,8 @@
 package rescala.meta.distributed
 
+/** this file contains code that used the meta model to compute an operator placement.
+    sadly it depends on a library which is GPL3 licensed, which we can not actually use */
+
 import rescala.meta.{DataFlowGraph, DataFlowNode}
 import rescala.meta.distributed.mcl.{MarkovClustering, SparseMatrix}
 
