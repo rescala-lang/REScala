@@ -1,8 +1,12 @@
 import sbtcrossproject.{crossProject, CrossType}
 
 organization in ThisBuild := "de.tuda.stg"
-crossScalaVersions in ThisBuild := Seq("2.12.2", "2.11.11")
-scalaVersion in ThisBuild := crossScalaVersions.value.head
+
+lazy val version_211 = "2.11.11"
+lazy val version_212 = "2.12.2"
+
+crossScalaVersions := Seq(version_212, version_211)
+scalaVersion in ThisBuild := version_212
 
 version in ThisBuild := "0.20.0-SNAPSHOT"
 
@@ -186,7 +190,6 @@ lazy val baromter4Android = project.in(file("Examples/Barometer4Android"))
     name := "barometer4Android",
     publish := {},
     publishLocal := {},
-    scalaVersion := "2.11.8",
     androidDependencies,
     javacOptions ++= Seq("-source", "1.7", "-target", "1.7"),
     platformTarget := "android-25", //TODO: Move to androidJVM
