@@ -276,12 +276,9 @@ lazy val scalatestDependency = libraryDependencies += "org.scalatest" %%% "scala
 
 scalacOptions in ThisBuild ++= (
   "-deprecation" ::
-  //"-Xdisable-assertions" ::
-  //"-Xelide-below" :: "9999999" ::
   "-encoding" :: "UTF-8" ::
   "-unchecked" ::
   "-feature" ::
-  "-target:jvm-1.8" ::
   "-Xlint" ::
   "-Xfuture" ::
   //"-Xlog-implicits" ::
@@ -296,4 +293,7 @@ scalacOptions in ThisBuild ++= (
   "-Ywarn-numeric-widen" ::
   //"-Ywarn-value-discard" ::
   //"-Ymacro-debug-lite" ::
-  Nil)
+  Nil) ++ (if (!version.value.endsWith("-SNAPSHOT")) (
+  "-Xdisable-assertions" ::
+  "-Xelide-below" :: "9999999" ::
+  Nil) else Nil)
