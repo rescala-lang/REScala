@@ -22,7 +22,7 @@ lazy val rescalaAggregate = project.in(file(".")).aggregate(rescalaJVM,
   caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags,
   datastructures, universe, reactiveStreams, documentation, meta,
   stm, testsJVM, testsJS, fullmv, caseStudyShapes, caseStudyMill,
-  baromter4Android)
+  reandroidthings, baromter4Android)
   .settings(
     publish := {},
     publishLocal := {})
@@ -118,6 +118,13 @@ lazy val reactiveStreams = project.in(file("Extensions/ReactiveStreams"))
     publishLocal := {}
   )
 
+lazy val reandroidthings = project.in(file("Extensions/REAndroidThings"))
+  .enablePlugins(AndroidLib)
+  .dependsOn(rescalaJVM)
+  .settings(
+    name := "reandroidthings",
+    exportJars := true)
+
 lazy val reswing = project.in(file("Extensions/RESwing"))
   .dependsOn(rescalaJVM)
   .settings(
@@ -174,6 +181,7 @@ lazy val examplesReswing = project.in(file("Examples/examples-reswing"))
 
 lazy val baromter4Android = project.in(file("Examples/Barometer4Android"))
   .enablePlugins(AndroidApp)
+  .dependsOn(reandroidthings)
   .settings(
     name := "barometer4Android",
     publish := {},
@@ -184,7 +192,6 @@ lazy val baromter4Android = project.in(file("Examples/Barometer4Android"))
     platformTarget := "android-25", //TODO: Move to androidJVM
     android.useSupportVectors,
     instrumentTestRunner := "android.support.test.runner.AndroidJUnitRunner")
-  .dependsOn(rescalaJVM)
 
 lazy val caseStudyEditor = project.in(file("Examples/Editor"))
   .dependsOn(reswing)
