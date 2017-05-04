@@ -5,7 +5,7 @@ import rescala.api.Api
 import rescala.meta._
 
 class MetaTest extends FunSuite {
-  import rescala.engines.CommonEngines.synchron
+  import rescala.Engines.synchron
   implicit val reifier = new rescala.meta.EngineReifier
 
   test("meta AST creation test") {
@@ -19,6 +19,7 @@ class MetaTest extends FunSuite {
     val snl2 = g.createVar[Char]()
     val comb2 = snl.map(toString()).delay(1).changed.switchTo(snl2)
     assert(g.numNodes == 13, "graph has incorrect number of nodes")
+    List(comb, comb2)
   }
 
   test("meta graph reification test") {
@@ -136,6 +137,7 @@ class MetaTest extends FunSuite {
 
     assert(v.now == 10, "variable value 10 not reified")
     assert(api.now(v) == 10, "variable value extraction not supported by API")
+    v2
   }
 
   test("meta graph disconnect reification test") {
@@ -155,5 +157,7 @@ class MetaTest extends FunSuite {
     assert(v.now == 3, "variable setting to 3 not reified")
     assert(v2.now == 4, "signal propagation to 4 not reified")
     assert(fired == 1, "observer not triggered exactly once (only before event is disconnected)")
+
+    e3
   }
 }

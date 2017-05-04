@@ -6,7 +6,7 @@ import rescala.meta.DataFlowGraph
 import rescala.meta.optimization.RedundancyElimination
 
 class RedundancyEliminationTest extends FunSuite {
-  import rescala.engines.CommonEngines.synchron
+  import rescala.Engines.synchron
   implicit val reifier = new rescala.meta.EngineReifier
 
   test("Redundancy elimination test") {

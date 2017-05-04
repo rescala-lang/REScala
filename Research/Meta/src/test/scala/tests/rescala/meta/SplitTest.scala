@@ -6,7 +6,7 @@ import rescala.meta.DataFlowGraph
 import rescala.meta.optimization.GraphSplit
 
 class SplitTest extends FunSuite {
-  import rescala.engines.CommonEngines.synchron
+  import rescala.Engines.synchron
   implicit val reifier = new rescala.meta.EngineReifier
 
   test("Copy split test") {
@@ -24,6 +24,7 @@ class SplitTest extends FunSuite {
     val split = GraphSplit.splittedGraphs
     assert(split.size == 1, "Connected graph should not have been split")
     assert(split.head.numNodes == 5, "Copied graph should contain all nodes")
+    e2
   }
 
   test("Real split test") {
@@ -44,5 +45,6 @@ class SplitTest extends FunSuite {
     val split = GraphSplit.splittedGraphs
     assert(split.size == 3, "Graph should have been split into 3 parts")
     assert(split.map(_.numNodes).toList.sorted == List(1, 2, 5), "Not all splitted graphs have the correct number of nodes")
+    List(eSeperate, eSeperate2, e2)
   }
 }
