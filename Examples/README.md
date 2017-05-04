@@ -62,3 +62,8 @@ examples.timeElapsing:
 	
 examples.dropdown:
 	GUI example of various dropdown applications, e.g. to illustrate the "unwrap" interface function
+	
+== REAndroidThings dependant projects ==
+
+Barometer4Android:
+  a simple barometer app
