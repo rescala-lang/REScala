@@ -3,7 +3,6 @@ import sbtcrossproject.{crossProject, CrossType}
 organization in ThisBuild := "de.tuda.stg"
 crossScalaVersions in ThisBuild := Seq("2.12.2", "2.11.11")
 scalaVersion in ThisBuild := crossScalaVersions.value.head
-crossScalaVersions in ThisBuild := Seq("2.12.1", "2.11.8")
 
 version in ThisBuild := "0.20.0-SNAPSHOT"
 
