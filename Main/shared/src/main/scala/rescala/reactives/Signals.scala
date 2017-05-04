@@ -5,10 +5,31 @@ import rescala.graph._
 import rescala.reactives.RExceptions.EmptySignalControlThrowable
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.DynamicVariable
 
 object Signals extends GeneratedSignalLift {
 
   object Impl {
+
+    /* TODO: this is currently used for meta research, but should be replaced with a sane implementation */
+
+    val restored = new DynamicVariable[List[_]](null)
+    val states = new DynamicVariable[List[Signal[_, _]]](null)
+
+    def getStates[R](f: => R): (R, List[Signal[_, _]]) = states.withValue(Nil) {
+      val res = f
+      (res, states.value)
+    }
+
+    def restoreFrom[R, S <: Struct](states: List[Signal[_, _]])(f: => R)(implicit turn: TurnSource[S]): R = {
+      restored.withValue(states.map(_.asInstanceOf[Signal[_, S]].now).reverse) {
+        f
+      }
+    }
+
+    /* TODO: end of meta hacks*/
+
+
     private abstract class StaticSignal[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: (StaticTicket[S], => T) => T)
       extends Base[T, S](_bud) with Signal[T, S] {
 
@@ -30,9 +51,18 @@ object Signals extends GeneratedSignalLift {
 
     /** creates a signal that statically depends on the dependencies with a given initial value */
     private[rescala] def makeFold[T, S <: Struct](dependencies: Set[Reactive[S]], init: StaticTicket[S] => T)(expr: (StaticTicket[S], => T) => T)(initialTurn: Turn[S]): Signal[T, S] = {
-      initialTurn.create[Pulse[T], Signal[T, S]](dependencies, ValuePersistency.InitializedSignal(Pulse.tryCatch(Pulse.Value(init(initialTurn.static()))))) {
+      def initOrRestored = {
+        if (restored.value eq null) init(initialTurn.static())
+        else {
+          restored.value = restored.value.drop(1)
+          restored.value.headOption.fold(init(initialTurn.static()))(_.asInstanceOf[T])
+        }
+      }
+      val res = initialTurn.create[Pulse[T], Signal[T, S]](dependencies, ValuePersistency.InitializedSignal(Pulse.tryCatch(Pulse.Value(initOrRestored)))) {
         state => new StaticSignal[T, S](state, expr) with Disconnectable[S]
       }
+      if (states.value ne null) states.value = res :: states.value
+      res
     }
 
 
@@ -44,6 +74,7 @@ object Signals extends GeneratedSignalLift {
 
     /** creates a dynamic signal */
     def makeDynamic[T, S <: Struct](dependencies: Set[Reactive[S]])(expr: DynamicTicket[S] => T)(initialTurn: Turn[S]): Signal[T, S] = {
+
       initialTurn.create[Pulse[T], Signal[T, S]](dependencies, ValuePersistency.DynamicSignal) {
         state => new DynamicSignal[T, S](state, expr) with Disconnectable[S]
       }
