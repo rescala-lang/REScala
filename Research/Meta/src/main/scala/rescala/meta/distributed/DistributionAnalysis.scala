@@ -1,0 +1,81 @@
+package rescala.meta.distributed
+
+import rescala.meta.{DataFlowGraph, DataFlowNode}
+import rescala.meta.distributed.mcl.{MarkovClustering, SparseMatrix}
+
+import scala.annotation.tailrec
+import scala.collection.mutable
+
+object DistributionAnalysis {
+  def clusterGraph(graph: DataFlowGraph): Set[Set[DataFlowNode[_]]] = {
+    val orderedNodes = graph.nodes.toList
+    val adjacencyMatrix = createAdjancencyMatrix(orderedNodes)
+    /*for (i <- 0 until adjacencyMatrix.size()) {
+      for (j <- 0 until adjacencyMatrix.size())
+        print(adjacencyMatrix.get(i, j) + ", ")
+      print("\n")
+    }*/
+    val resultMatrix = markovCluster(adjacencyMatrix, 0.001, 2.0, 2.0, 0.001)
+    /*for (i <- 0 until resultMatrix.size()) {
+      for (j <- 0 until resultMatrix.size())
+        print(resultMatrix.get(i, j) + ", ")
+      print("\n")
+    }*/
+    computeClusterSets(orderedNodes, resultMatrix)
+  }
+
+  def clusterGraph(graph: DataFlowGraph, clusterLimit: Int): Set[Set[DataFlowNode[_]]] = mergeClusters(clusterGraph(graph), clusterLimit)
+
+  private def createAdjancencyMatrix(nodes : List[DataFlowNode[_]]): SparseMatrix = {
+    val sm = new SparseMatrix(nodes.size, nodes.size)
+    for (i <- nodes.indices) {
+      for (e <- nodes(i).dependencies.flatMap(_.tryDeref)) {
+        val j = nodes.indexOf(e)
+        sm.set(i, j, 1)
+        sm.set(j, i, 1)
+      }
+    }
+    sm
+  }
+
+  private def markovCluster(matrix: SparseMatrix, maxResidual: Double, pGamma: Double, loopGain: Double, maxZero: Double): SparseMatrix = {
+    new MarkovClustering().run(matrix, maxResidual, pGamma, loopGain, maxZero)
+  }
+
+  private def computeClusterSets(orderedNodes: List[DataFlowNode[_]], matrix: SparseMatrix): Set[Set[DataFlowNode[_]]] = {
+    val clusters : mutable.Set[Set[DataFlowNode[_]]] = mutable.Set()
+    for (i <- 0 until matrix.size() if matrix.get(i, i) > 0.01) {
+      val cluster : mutable.Set[DataFlowNode[_]] = mutable.Set()
+      for (j <- 0 until matrix.size() if matrix.get(j, i) > 0.01)
+        cluster += orderedNodes(j)
+      clusters.find(_.intersect(cluster).nonEmpty) match {
+        case Some(otherCluster) =>
+          clusters -= otherCluster
+          clusters += (otherCluster ++ cluster)
+        case None => clusters += cluster.toSet
+      }
+    }
+    clusters.toSet
+  }
+
+  // The used merging strategy produces not as optimal results as using markov clustering,
+  //  so it cannot replace a choice of parameters for the algorithm!
+  @tailrec
+  private def mergeClusters(clusters: Set[Set[DataFlowNode[_]]], clusterLimit: Int): Set[Set[DataFlowNode[_]]] = {
+    if (clusters.size <= clusterLimit) clusters
+    else if (clusterLimit <= 1) Set(clusters.flatten)
+    else {
+      var maxEdges = 0
+      var (maxA, maxB): (Set[DataFlowNode[_]], Set[DataFlowNode[_]]) = (null, null)
+      for (a <- clusters; b <- clusters if a != b) {
+        val crossingEdges = a.foldLeft(0)((acc, n) => acc + b.intersect(n.dependencies.flatMap(_.tryDeref)).size)
+        if (crossingEdges >= maxEdges) {
+          maxEdges = crossingEdges
+          maxA = a
+          maxB = b
+        }
+      }
+      mergeClusters(((clusters - maxA) - maxB) + (maxA ++ maxB), clusterLimit)
+    }
+  }
+}

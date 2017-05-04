@@ -1,20 +1,21 @@
 package rescala.meta
 
-import rescala.engine.TurnSource
+import rescala.engines.Ticket
 import rescala.graph.Struct
 import rescala.reactives._
 
 trait DataFlowRef[+T] {
   protected[meta] var graph : DataFlowGraph
-  def deref : Option[DataFlowNode[T]]
+  def deref : DataFlowNode[T]
+  def tryDeref : Option[DataFlowNode[T]]
 
-  def disconnect(): Unit = deref.get.disconnect()
+  def disconnect(): Unit = tryDeref.foreach(_.disconnect())
 
-  def structuralEquals(dataFlowNode: DataFlowNode[_]): Boolean = deref match {
+  def structuralEquals(dataFlowNode: DataFlowNode[_]): Boolean = tryDeref match {
     case Some(n) => n.structuralEquals(dataFlowNode)
     case None => false
   }
-  def structuralEquals(dataFlowRef: DataFlowRef[_]): Boolean = (deref, dataFlowRef.deref) match {
+  def structuralEquals(dataFlowRef: DataFlowRef[_]): Boolean = (tryDeref, dataFlowRef.tryDeref) match {
     case (Some(n1), Some(n2)) => n1.structuralEquals(n2)
     case (None, None) => true
     case _ => false
@@ -22,88 +23,94 @@ trait DataFlowRef[+T] {
 }
 
 object DataFlowRef {
-  def unapply[T](arg: DataFlowRef[T]): Option[DataFlowNode[T]] = arg.deref
+  def unapply[T](arg: DataFlowRef[T]): Option[DataFlowNode[T]] = arg.tryDeref
 }
 
 trait ReactiveRef[+T] extends DataFlowRef[T] {
-  override def deref : Option[ReactiveNode[T]]
+  override def tryDeref : Option[ReactiveNode[T]]
+  override def deref : ReactiveNode[T] = tryDeref.getOrElse(throw new IllegalStateException("Trying to call operation on undefined reference!"))
 
-  def observe[S <: Struct](onSuccess: (T) => Unit, onFailure: (Throwable) => Unit = t => throw t)(implicit reifier: Reifier[S], ticket: TurnSource[S]): Observe[S] = deref.get.observe(onSuccess, onFailure)
-  def reify[S <: Struct](implicit reifier: Reifier[S]): Observable[T, S] = deref.get.reify
+  def observe[S <: Struct](onSuccess: (T) => Unit, onFailure: (Throwable) => Unit = t => throw t)(implicit ticket: Ticket[S]): Unit =
+    deref.observe(onSuccess, onFailure)
+  def reify[S <: Struct](implicit reifier: Reifier[S]): Observable[T, S] = deref.reify
 }
 
 object ReactiveRef {
-  def unapply[T](arg: ReactiveRef[T]): Option[ReactiveNode[T]] = arg.deref
+  def unapply[T](arg: ReactiveRef[T]): Option[ReactiveNode[T]] = arg.tryDeref
 }
 
 class EventRef[+T](_node : EventNode[T]) extends ReactiveRef[T] {
   override protected[meta] var graph : DataFlowGraph = _node.graph
   graph.registerRef(this, _node)
 
-  override def deref: Option[EventNode[T]] = graph.deref(this).asInstanceOf[Option[EventNode[T]]]
+  override def tryDeref: Option[EventNode[T]] = graph.deref(this).asInstanceOf[Option[EventNode[T]]]
+  override def deref: EventNode[T] = super.deref.asInstanceOf[EventNode[T]]
 
-  override def reify[S <: Struct](implicit reifier: Reifier[S]): Event[T, S] = deref.get.reify
+  override def reify[S <: Struct](implicit reifier: Reifier[S]): Event[T, S] = deref.reify
 
-  def +=[S <: Struct](react: T => Unit)(implicit reifier: Reifier[S], ticket: TurnSource[S]): Observe[S] = deref.get += react
+  def +=[S <: Struct](react: T => Unit)(implicit ticket: Ticket[S]): Unit = deref += react
 
-  def ||[U >: T](others: EventRef[U]*): EventRef[U] = new EventRef(deref.get||(others.map(_.deref.get):_*))
-  def &&[U >: T](pred: (U) => Boolean): EventRef[U] = new EventRef(deref.get && pred)
-  def \[U](other: EventRef[U]): EventRef[T] = new EventRef(deref.get \ other.deref.get)
-  def and[X >: T, U, R](other: EventRef[U])(merger: (X, U) => R): EventRef[R] = new EventRef(deref.get.and(other.deref.get)(merger))
-  def zip[U](other: EventRef[U]): EventRef[(T, U)] = new EventRef(deref.get.zip(other.deref.get))
-  def map[X >: T, U](mapping: (X) => U): EventRef[U] = new EventRef(deref.get.map(mapping))
-  def fold[X >: T, A](init: A)(fold: (A, X) => A): SignalRef[A] = new SignalRef(deref.get.fold(init)(fold))
-  def toggle[A](a: SignalRef[A], b: SignalRef[A]): SignalRef[A] = new SignalRef(deref.get.toggle(a.deref.get, b.deref.get))
-  def snapshot[A](s: SignalRef[A]): SignalRef[A] = new SignalRef(deref.get.snapshot(s.deref.get))
-  def switchOnce[A](original: SignalRef[A], newSignal: SignalRef[A]): SignalRef[A] = new SignalRef(deref.get.switchOnce(original.deref.get, newSignal.deref.get))
-  def switchTo[A >: T](original: SignalRef[A]): SignalRef[A] = new SignalRef(deref.get.switchTo(original.deref.get))
-  def flatMap[X >: T, B](f: (X) => EventRef[B]): EventRef[B] = new EventRef(deref.get.flatMap({ x : X => f(x).deref.get}))
+  def ||[U >: T](others: EventRef[U]*): EventRef[U] = new EventRef(deref||(others.map(_.deref):_*))
+  def &&[U >: T](pred: (U) => Boolean): EventRef[U] = new EventRef(deref && pred)
+  def \[U](other: EventRef[U]): EventRef[T] = new EventRef(deref \ other.deref)
+  def and[X >: T, U, R](other: EventRef[U])(merger: (X, U) => R): EventRef[R] = new EventRef(deref.and(other.deref)(merger))
+  def zip[U](other: EventRef[U]): EventRef[(T, U)] = new EventRef(deref.zip(other.deref))
+  def map[X >: T, U](mapping: (X) => U): EventRef[U] = new EventRef(deref.map(mapping))
+  def fold[X >: T, A](init: A)(fold: (A, X) => A): SignalRef[A] = new SignalRef(deref.fold(init)(fold))
+  def toggle[A](a: SignalRef[A], b: SignalRef[A]): SignalRef[A] = new SignalRef(deref.toggle(a.deref, b.deref))
+  def snapshot[A](s: SignalRef[A]): SignalRef[A] = new SignalRef(deref.snapshot(s.deref))
+  def switchOnce[A](original: SignalRef[A], newSignal: SignalRef[A]): SignalRef[A] = new SignalRef(deref.switchOnce(original.deref, newSignal.deref))
+  def switchTo[A >: T](original: SignalRef[A]): SignalRef[A] = new SignalRef(deref.switchTo(original.deref))
+  def flatMap[X >: T, B](f: (X) => EventRef[B]): EventRef[B] = new EventRef(deref.flatMap({ x : X => f(x).deref}))
 }
 
 object EventRef {
-  def unapply[T](arg: EventRef[T]): Option[EventNode[T]] = arg.deref
+  def unapply[T](arg: EventRef[T]): Option[EventNode[T]] = arg.tryDeref
 }
 
 class EvtRef[T](__node : EvtEventNode[T]) extends EventRef(__node) {
-  override def deref: Option[EvtEventNode[T]] = graph.deref(this).asInstanceOf[Option[EvtEventNode[T]]]
+  override def tryDeref: Option[EvtEventNode[T]] = graph.deref(this).asInstanceOf[Option[EvtEventNode[T]]]
+  override def deref: EvtEventNode[T] = super.deref.asInstanceOf[EvtEventNode[T]]
 
-  override def reify[S <: Struct](implicit reifier: Reifier[S]): Evt[T, S] = deref.get.reify
+  override def reify[S <: Struct](implicit reifier: Reifier[S]): Evt[T, S] = deref.reify
 
-  def fire(value: T): Unit = deref.get.fire(value)
+  def fire[S <: Struct](value: T)(implicit reifier: Reifier[S]): Unit = deref.fire(value)
 }
 
 object EvtRef {
-  def unapply[T](arg: EvtRef[T]): Option[EvtEventNode[T]] = arg.deref
+  def unapply[T](arg: EvtRef[T]): Option[EvtEventNode[T]] = arg.tryDeref
 }
 
 class SignalRef[+A](_node : SignalNode[A]) extends ReactiveRef[A] {
   override protected[meta] var graph : DataFlowGraph = _node.graph
   graph.registerRef(this, _node)
 
-  override def deref: Option[SignalNode[A]] = graph.deref(this).asInstanceOf[Option[SignalNode[A]]]
+  override def tryDeref: Option[SignalNode[A]] = graph.deref(this).asInstanceOf[Option[SignalNode[A]]]
+  override def deref: SignalNode[A] = super.deref.asInstanceOf[SignalNode[A]]
 
-  override def reify[S <: Struct](implicit reifier: Reifier[S]): Signal[A, S] = deref.get.reify
+  override def reify[S <: Struct](implicit reifier: Reifier[S]): Signal[A, S] = deref.reify
 
-  def now[S <: Struct](implicit reifier: Reifier[S], ticket: TurnSource[S]): A = deref.get.now
+  def now[S <: Struct](implicit reifier: Reifier[S], ticket: Ticket[S]): A = deref.now
 
-  def delay(n: Int): SignalRef[A] = new SignalRef(deref.get.delay(n))
-  def map[X >: A, B](f: (X) => B): SignalRef[B] = new SignalRef(deref.get.map(f))
-  def change: EventRef[Signals.Diff[A]] = new EventRef(deref.get.change)
-  def changed: EventRef[A] = new EventRef(deref.get.changed)
+  def delay(n: Int): SignalRef[A] = new SignalRef(deref.delay(n))
+  def map[X >: A, B](f: (X) => B): SignalRef[B] = new SignalRef(deref.map(f))
+  def change: EventRef[Signals.Diff[A]] = new EventRef(deref.change)
+  def changed: EventRef[A] = new EventRef(deref.changed)
 }
 
 object SignalRef {
-  def unapply[T](arg: SignalRef[T]): Option[SignalNode[T]] = arg.deref
+  def unapply[T](arg: SignalRef[T]): Option[SignalNode[T]] = arg.tryDeref
 }
 
 class VarRef[A](__node : VarSignalNode[A]) extends SignalRef(__node) {
-  override def deref: Option[VarSignalNode[A]] = graph.deref(this).asInstanceOf[Option[VarSignalNode[A]]]
+  override def tryDeref: Option[VarSignalNode[A]] = graph.deref(this).asInstanceOf[Option[VarSignalNode[A]]]
+  override def deref: VarSignalNode[A] = super.deref.asInstanceOf[VarSignalNode[A]]
+  
+  override def reify[S <: Struct](implicit reifier: Reifier[S]): Var[A, S] = deref.reify
 
-  override def reify[S <: Struct](implicit reifier: Reifier[S]): Var[A, S] = deref.get.reify
-
-  def set(value: A): Unit = deref.get.set(value)
+  def set[S <: Struct](value: A)(implicit reifier: Reifier[S]): Unit = deref.set(value)
 }
 
 object VarRef {
-  def unapply[T](arg: VarRef[T]): Option[VarSignalNode[T]] = arg.deref
+  def unapply[T](arg: VarRef[T]): Option[VarSignalNode[T]] = arg.tryDeref
 }

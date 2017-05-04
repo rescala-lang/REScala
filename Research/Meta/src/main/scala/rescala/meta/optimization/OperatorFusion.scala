@@ -15,22 +15,22 @@ class OperatorFusion(override val verbose: Boolean = false, override val protoco
     def inner(nodes: List[DataFlowNode[_]]): Option[NodeTriple] = {
       nodes match {
         case (nOuter@MappedEventNode(_, outerBase, outerMap)) :: tail =>
-          outerBase.deref match {
-            case Some(nInner@MappedEventNode(_, innerBase, innerMap)) if !nOuter.hasReification && !nInner.hasReification && (graph.outgoingDependencies(nInner) - nOuter).isEmpty =>
+          outerBase.tryDeref match {
+            case Some(nInner@MappedEventNode(_, innerBase, innerMap)) if !nOuter.hasReification && !nInner.hasReification && (graph.outgoingDataFlow(nInner) - nOuter).isEmpty =>
               val newNode = MappedEventNode(graph, innerBase, innerMap.asInstanceOf[Function[Any, Any]].andThen(outerMap.asInstanceOf[Function[Any, Any]]))
               Some(NodeTriple(nOuter, nInner, newNode))
             case _ => inner(tail)
           }
         case (nOuter@FilteredEventNode(_, outerBase, outerFilter)) :: tail =>
-          outerBase.deref match {
-            case Some(nInner@FilteredEventNode(_, innerBase, innerFilter)) if !nOuter.hasReification && !nInner.hasReification && (graph.outgoingDependencies(nInner) - nOuter).isEmpty =>
+          outerBase.tryDeref match {
+            case Some(nInner@FilteredEventNode(_, innerBase, innerFilter)) if !nOuter.hasReification && !nInner.hasReification && (graph.outgoingDataFlow(nInner) - nOuter).isEmpty =>
               val newNode = FilteredEventNode(graph, innerBase, { x: Any => innerFilter.asInstanceOf[Function[Any, Boolean]](x) && outerFilter.asInstanceOf[Function[Any, Boolean]](x) })
               Some(NodeTriple(nOuter, nInner, newNode))
             case _ => inner(tail)
           }
         case (nOuter@MappedSignalNode(_, outerBase, outerMap)) :: tail =>
-          outerBase.deref match {
-            case Some(nInner@MappedSignalNode(_, innerBase, innerMap)) if !nOuter.hasReification && !nInner.hasReification && (graph.outgoingDependencies(nInner) - nOuter).isEmpty =>
+          outerBase.tryDeref match {
+            case Some(nInner@MappedSignalNode(_, innerBase, innerMap)) if !nOuter.hasReification && !nInner.hasReification && (graph.outgoingDataFlow(nInner) - nOuter).isEmpty =>
               val newNode = MappedSignalNode(graph, innerBase, innerMap.asInstanceOf[Function[Any, Any]].andThen(outerMap.asInstanceOf[Function[Any, Any]]))
               Some(NodeTriple(nOuter, nInner, newNode))
             case _ => inner(tail)

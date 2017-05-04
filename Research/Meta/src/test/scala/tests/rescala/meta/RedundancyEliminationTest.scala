@@ -2,11 +2,11 @@ package tests.rescala.meta
 
 import org.scalatest.FunSuite
 import rescala.api.Api
+import rescala.meta.DataFlowGraph
 import rescala.meta.optimization.RedundancyElimination
-import rescala.meta.{DataFlowGraph, EngineReifier}
 
 class RedundancyEliminationTest extends FunSuite {
-  import rescala.levelbased.LevelBasedPropagationEngines.synchron
+  import rescala.engines.CommonEngines.synchron
   implicit val reifier = new rescala.meta.EngineReifier
 
   test("Redundancy elimination test") {
