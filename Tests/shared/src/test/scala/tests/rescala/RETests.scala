@@ -8,8 +8,6 @@ import rescala.engine.{Engine, Turn}
 import rescala.graph.Struct
 import rescala.levelbased.LevelStruct
 
-import scala.language.existentials
-
 
 abstract class RETests extends FunSuite with TableDrivenPropertyChecks {
 
@@ -18,7 +16,7 @@ abstract class RETests extends FunSuite with TableDrivenPropertyChecks {
 
   private val engines: TableFor1[Engines.TEngine] = Table("engine", rescala.testhelper.TestEngines.all: _*)
 
-  def allEngines(text: String)(testCase: Engine[S, Turn[S]] => Unit)(implicit pos: source.Position): Unit = {
+  def allEngines(text: String)(testCase: Engine[S, Turn[S]] => Any)(implicit pos: source.Position): Unit = {
     test(text) {
       forAll(engines)(e => testCase(e.asInstanceOf[Engine[S, Turn[S]]]))
     }

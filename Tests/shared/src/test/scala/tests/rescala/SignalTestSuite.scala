@@ -48,6 +48,7 @@ class SignalTestSuite extends RETests {
     assert(a == 2)
     v.set(21)
     assert(a == 3)
+    assert(s1.now === 1)
   }
 
   allEngines("handlers Are Executed"){ engine => import engine._

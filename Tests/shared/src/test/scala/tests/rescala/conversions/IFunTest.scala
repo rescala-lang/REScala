@@ -46,6 +46,7 @@ class IFunTest extends RETests {
     assert(test == 2)
     e.fire(1)
     assert(test == 3)
+    assert(s.now === 10)
   }
 
   // TODO: does it make sense ?
@@ -60,6 +61,7 @@ class IFunTest extends RETests {
     assert(test == 11)
     e.fire(1)
     assert(test == 12)
+    assert(s.now === 13)
   }
 
   allEngines("iterate the result signal does not depend on the event value") { engine => import engine._
@@ -174,9 +176,10 @@ class IFunTest extends RETests {
     val s1 = v1.map {_ + 1}
     val v2 = Var(11)
     val s2 = v2.map {_ + 1}
-    val s = e.toggle(s1, s1)
+    val s = e.toggle(s1, s2)
 
     assert(s.now == 2)
+    assert(s2.now == 12)
   }
 
   allEngines("toggle the Event Switches The Signal") { engine => import engine._

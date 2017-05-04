@@ -42,6 +42,7 @@ class MacroTestSuite extends RETests {
     assert(a === 2)
     v.set(21)
     assert(a === 3)
+    assert(s1.now === 1)
   }
 
   allEngines("handlers Are Executed"){ engine => import engine._
@@ -188,6 +189,7 @@ class MacroTestSuite extends RETests {
     outside() = 2
     inside() = 11
     assert(testsig.now === 11)
+    assert(sig.now === 2)
   }
 
   allEngines("use Of Outside Signal"){ engine => import engine._
@@ -351,7 +353,7 @@ class MacroTestSuite extends RETests {
 
   allEngines("default Arguments"){ engine => import engine._
     val s = Signal {
-      def a(v: Int, i: Int = 8, j: Int = 8, k: Int = 8) = v + i + j + k
+      def a(v: Int, i: Int = 8, j: Int, k: Int = 8) = v + i + j + k
       a(6, j = 5)
     }
     assert(s.now == 27)
