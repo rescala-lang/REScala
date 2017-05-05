@@ -127,6 +127,7 @@ lazy val reandroidthings = project.in(file("Extensions/REAndroidThings"))
   .dependsOn(rescalaJVM)
   .settings(
     name := "reandroidthings",
+    javacOptions ++= Seq("-source", "1.7", "-target", "1.7"),
     exportJars := true)
 
 lazy val reswing = project.in(file("Extensions/RESwing"))
@@ -292,7 +293,8 @@ lazy val microbench = project.in(file("Research/Microbenchmarks"))
 lazy val androidDependencies = libraryDependencies ++= Seq(
   "com.android.support" % "appcompat-v7" % "25.3.1",
   "com.android.support.test" % "runner" % "0.5" % "androidTest",
-  "com.android.support.test.espresso" % "espresso-core" % "2.2.2" % "androidTest")
+  "com.android.support.test.espresso" % "espresso-core" % "2.2.2" % "androidTest",
+  scalaOrganization.value % "scala-reflect" % scalaVersion.value)
 
 lazy val rssDependencies = libraryDependencies ++= Seq(
   "joda-time" % "joda-time" % "2.9.9",
