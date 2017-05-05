@@ -27,7 +27,7 @@ trait TwoVersionEngine[S <: Struct, TImpl <: TwoVersionPropagation[S] with Turn[
     * - run the party! phase
     *   - not yet implemented
     * */
-  override protected def executeTurn[R](turn: TImpl, initialWrites: Traversable[Reactive], admissionPhase: TImpl => R): R = {
+  override protected def executeInternal[R](turn: TImpl, initialWrites: Traversable[Reactive], admissionPhase: TImpl => R): R = {
     val result = try {
       turn.preparationPhase(initialWrites)
       val admissionResult = admissionPhase(turn)

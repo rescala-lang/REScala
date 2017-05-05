@@ -10,7 +10,7 @@ trait FullMVStruct extends Struct {
 class FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
   def sgt: SerializationGraphTracking = ???
   override protected def makeTurn(initialWrites: Traversable[Reactive], priorTurn: Option[FullMVTurn]): FullMVTurn = new FullMVTurn(sgt)
-  override protected def executeTurn[R](turn: FullMVTurn, initialWrites: Traversable[Reactive], admissionPhase: (FullMVTurn) => R): R = ???
+  override protected def executeInternal[R](turn: FullMVTurn, initialWrites: Traversable[Reactive], admissionPhase: (FullMVTurn) => R): R = ???
 }
 
 class FullMVTurn(val sgt: SerializationGraphTracking) extends InitializationImpl[FullMVStruct] {
