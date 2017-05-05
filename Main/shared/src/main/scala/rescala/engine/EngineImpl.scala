@@ -5,7 +5,7 @@ import rescala.graph.Struct
 import scala.util.DynamicVariable
 
 trait EngineImpl[S <: Struct, TTurn <: Turn[S]] extends Engine[S, TTurn] {
-  override private[rescala] def executeTurn[R](initialWrites: Traversable[Reactive], admissionPhase: TTurn => R): R = {
+  override protected[rescala] def executeTurn[R](initialWrites: Traversable[Reactive], admissionPhase: TTurn => R): R = {
     val turn = makeTurn(initialWrites, currentTurn())
     withTurn(Some(turn))(executeInternal(turn, initialWrites, admissionPhase))
   }
