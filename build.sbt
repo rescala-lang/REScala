@@ -287,6 +287,7 @@ lazy val microbench = project.in(file("Research/Microbenchmarks"))
 // ================================ dependencies
 
 lazy val androidDependencies = libraryDependencies ++= Seq(
+  scalaOrganization.value % "scala-reflect" % scalaVersion.value,
   "com.android.support" % "appcompat-v7" % "25.3.1",
   "com.android.support.test" % "runner" % "0.5" % "androidTest",
   "com.android.support.test.espresso" % "espresso-core" % "2.2.2" % "androidTest")
