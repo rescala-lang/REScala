@@ -303,7 +303,10 @@ lazy val androidDependencies = libraryDependencies ++= Seq(
 
 lazy val commonAndroidSettings = Seq(
   scalaVersion := "2.11.11",
-  javacOptions ++= Seq("-source", "1.7", "-target", "1.7"),
+  buildToolsVersion in Android := Some("26.0.0-rc1"), // please switch to "Dev Channel" in android studio and install the sdk manually!
+  minSdkVersion in Android := "24",
+  platformTarget in Android := "android-25",
+  javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
   platformTarget := "android-25", //TODO: Move to androidJVM
   instrumentTestRunner := "android.support.test.runner.AndroidJUnitRunner",
   androidDependencies)
@@ -317,7 +320,7 @@ scalacOptions in ThisBuild ++= (
   "-encoding" :: "UTF-8" ::
   "-unchecked" ::
   "-feature" ::
-//  "-target:jvm-1.8" :: // WE HAVE TO USE THE DEFAULT TARGET, OTHERWISE ANDROID APPS WILL >NOT< WORK
+  "-target:jvm-1.8" ::
   "-Xlint" ::
   "-Xfuture" ::
   //"-Xlog-implicits" ::
