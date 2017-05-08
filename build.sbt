@@ -123,8 +123,10 @@ lazy val reandroidthings = project.in(file("Extensions/REAndroidThings"))
   .dependsOn(rescalaJVM)
   .settings(
     commonAndroidSettings,
+    resolvers+=Resolver.bintrayRepo("google", "androidthings"),
     name := "reandroidthings",
-    exportJars := true)
+    exportJars := true,
+    libraryDependencies+= "com.google.android.things" % "androidthings" % "0.3.1-devpreview")
 
 lazy val reswing = project.in(file("Extensions/RESwing"))
   .dependsOn(rescalaJVM)
