@@ -96,7 +96,7 @@ lazy val tests = crossProject(JSPlatform, JVMPlatform).in(file("Tests"))
   .dependsOn(rescala)
   .jvmSettings().jsSettings(scalaJSUseRhino in Global := true)
 
-lazy val testsJVM = tests.jvm.dependsOn(stm)
+lazy val testsJVM = tests.jvm.dependsOn(fullmv, stm)
 
 lazy val testsJS = tests.js
 
