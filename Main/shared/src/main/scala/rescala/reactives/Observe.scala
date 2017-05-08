@@ -16,7 +16,7 @@ trait Observe[S <: Struct] {
 
 object Observe {
 
-  private val strongObserveReferences = scala.collection.mutable.HashMap[Observe[_], Boolean]()
+  private val strongObserveReferences = scala.collection.mutable.HashSet[Observe[_]]()
 
   private abstract class Obs[T, S <: Struct](bud: S#State[Pulse[Unit], S], dependency: Pulsing[Pulse[T], S], fun: T => Unit, fail: Throwable => Unit) extends Base[Unit, S](bud) with Reactive[S] with Observe[S]  {
     this: Disconnectable[S] =>
@@ -50,7 +50,7 @@ object Observe {
 
   def strong[T, S <: Struct](dependency: Pulsing[Pulse[T], S])(fun: T => Unit, fail: Throwable => Unit)(implicit maybe: TurnSource[S]): Observe[S] = {
     val obs = weak(dependency)(fun, fail)
-    strongObserveReferences.synchronized(strongObserveReferences.put(obs, true))
+    strongObserveReferences.synchronized(strongObserveReferences.add(obs))
     obs
   }
 
