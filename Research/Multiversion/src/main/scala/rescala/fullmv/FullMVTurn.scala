@@ -15,30 +15,61 @@ trait FullMVStruct extends Struct {
   override type State[P, S <: Struct] = NodeVersionHistory[P]
 }
 
-class FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
-  def sgt: SerializationGraphTracking = ???
+object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
+  object sgt extends SerializationGraphTracking {
+    var predecessors = Map[FullMVTurn, Set[FullMVTurn]]().withDefaultValue(Set())
+    var successors = Map[FullMVTurn, Set[FullMVTurn]]().withDefaultValue(Set())
+
+    override def ensureOrder(defender: FullMVTurn, contender: FullMVTurn): OrderResult = synchronized {
+      if (predecessors(defender)(contender)) {
+        SecondFirst
+      } else if (predecessors(contender)(defender)) {
+        FirstFirst
+      } else {
+        val allAfter = successors(contender) + contender
+        val allBefore = predecessors(defender) + defender
+        for(succ <- allAfter) predecessors += succ -> (predecessors(succ) ++ allBefore)
+        for(pred <- allBefore) successors += pred -> (successors(pred) ++ allAfter)
+        FirstFirst
+      }
+    }
+    override def getOrder(a: FullMVTurn, b: FullMVTurn): PartialOrderResult = synchronized {
+      if (predecessors(a)(b)) {
+        SecondFirst
+      } else if (predecessors(b)(a)) {
+        FirstFirst
+      } else {
+        Unordered
+      }
+    }
+  }
+
   override protected def makeTurn(initialWrites: Traversable[Reactive], priorTurn: Option[FullMVTurn]): FullMVTurn = new FullMVTurn(sgt)
   override protected def executeInternal[R](turn: FullMVTurn, initialWrites: Traversable[Reactive], admissionPhase: (FullMVTurn) => R): R = {
     // framing
     turn.activeBranches.set(initialWrites.size)
     initialWrites.foreach(turn.incrementFrame(_))
-    assert(turn.activeBranches == 0)
+    assert(turn.activeBranches.get() == 0, s"${turn.activeBranches.get()} active branches remained after fullmv framing phase")
 
     // admission
-    val result = admissionPhase(this)
+    val result = admissionPhase(turn)
 
     // propagation
     turn.activeBranches.set(initialWrites.size)
     initialWrites.foreach(turn.notify(_, changed = true, None))
-    assert(turn.activeBranches == 0)
+    assert(turn.activeBranches.get() == 0, s"${turn.activeBranches.get()} active branches remained after fullmv propagation phase")
 
     // result
     result
   }
-
 }
 
 class FullMVTurn(val sgt: SerializationGraphTracking) extends InitializationImpl[FullMVStruct] {
+  lazy val preTurn = {
+    val preTurn = new FullMVTurn(sgt)
+    assert(sgt.ensureOrder(preTurn, this) == FirstFirst, "preTurn could not be established")
+    preTurn
+  }
   val activeBranches = new AtomicInteger()
 
   def incrementFrame(node: Reactive[FullMVStruct]): Unit = {
@@ -97,11 +128,12 @@ class FullMVTurn(val sgt: SerializationGraphTracking) extends InitializationImpl
             val (successorWrittenVersions, maybeFollowFrame) = drop.state.drop(this, node)
             node.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, -1)
           }
-          diff.added.foreach { discover =>
+          val anyPendingDependency = diff.added.foldLeft(false) { (anyPendingDependency, discover) =>
             val (successorWrittenVersions, maybeFollowFrame) = discover.state.discover(this, node)
             node.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, +1)
+            anyPendingDependency || (maybeFollowFrame == Some(this))
           }
-          node.state.reevOut(this, if(isChange) Some(value) else None, Some(deps))
+          if(!anyPendingDependency) node.state.reevOut(this, if(isChange) Some(value) else None, Some(deps))
       }
       notificationOutAndSuccessorOperation match {
         case NoSuccessor(out) =>
@@ -119,18 +151,26 @@ class FullMVTurn(val sgt: SerializationGraphTracking) extends InitializationImpl
     out.foreach(notify(_, changed, maybeFollowFrame))
   }
 
-  override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): NodeVersionHistory[P] = new NodeVersionHistory(sgt, this, valuePersistency.initialValue)
+  override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): NodeVersionHistory[P] = {
+    val state = new NodeVersionHistory(sgt, preTurn, valuePersistency)
+    activeBranches.addAndGet(1)
+    state.incrementFrame(this)
+    state
+  }
   override protected def ignite(reactive: Reactive[FullMVStruct], incoming: Set[Reactive[FullMVStruct]], valuePersistency: ValuePersistency[_]): Unit = {
     incoming.foreach { discover =>
       dynamicDependencyInteraction(discover)
       val (successorWrittenVersions, maybeFollowFrame) = discover.state.discover(this, reactive)
       reactive.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, +1)
     }
+    reactive.state.incomings = incoming
+    activeBranches.addAndGet(1)
+    notify(reactive, changed = valuePersistency.ignitionRequiresReevaluation, None)
   }
 
-  override private[rescala] def dynamicDependencyInteraction(reactive: Reactive[FullMVStruct]) = reactive.state.ensureReadVersion(this)
-  override private[rescala] def before[P](pulsing: Pulsing[P, FullMVStruct]) = pulsing.state.before(this)
-  override private[rescala] def after[P](pulsing: Pulsing[P, FullMVStruct]) = pulsing.state.after(this)
+  override private[rescala] def dynamicDependencyInteraction(reactive: Reactive[FullMVStruct]) = reactive.state.synchronizeDynamicAccess(this)
+  override private[rescala] def before[P](pulsing: Pulsing[P, FullMVStruct]) = pulsing.state.staticBefore(this)
+  override private[rescala] def after[P](pulsing: Pulsing[P, FullMVStruct]) = pulsing.state.staticNow(this)
 
   override def observe(f: () => Unit): Unit = f()
 }

@@ -32,7 +32,3 @@ trait SerializationGraphTracking {
     */
   def ensureOrder(defender: FullMVTurn, contender: FullMVTurn): OrderResult
 }
-
-object SerializationGraphTracking {
-  def apply(): SerializationGraphTracking = ???
-}
