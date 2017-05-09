@@ -1,7 +1,6 @@
 package rescala.reactives
 
 import rescala.engine._
-import rescala.graph.Pulse.Value
 import rescala.graph._
 
 class Source[T, S <: Struct](_bud: S#State[Pulse[T], S]) extends Base[T, S](_bud) {
@@ -13,10 +12,8 @@ class Source[T, S <: Struct](_bud: S#State[Pulse[T], S]) extends Base[T, S](_bud
     result = value
   }
 
-  final override protected[rescala] def reevaluate(turn: Turn[S]): ReevaluationResult[Value, S] = {
-    val res: ReevaluationResult[Pulse[T], S] = if (result == null || result == turn.before(this))
-      ReevaluationResult.Static(Pulse.NoChange)
-    else ReevaluationResult.Static[T](result)
+  override protected[rescala] def reevaluate(turn: Turn[S]): ReevaluationResult.Static[Value] = {
+    val res = ReevaluationResult.Static[T](if(result == null) Pulse.NoChange else result)
     result = null
     res
   }
@@ -62,6 +59,11 @@ final class Var[A, S <: Struct](_bud: S#State[Pulse[A], S]) extends Source[A, S]
     admit(f(t.before(this).get))(t)
   }
 
+  override protected[rescala] def reevaluate(turn: Turn[S]): ReevaluationResult.Static[Pulse[A]] = {
+    val res = super.reevaluate(turn)
+    if(res == ReevaluationResult.Static(turn.before(this))) ReevaluationResult.Static(Pulse.NoChange) else res
+  }
+
   def setEmpty()(implicit fac: Engine[S, Turn[S]]): Unit = fac.transaction(this)(t => admitPulse(Pulse.empty)(t))
 
   override def disconnect()(implicit engine: Engine[S, Turn[S]]): Unit = ()
@@ -71,7 +73,7 @@ final class Var[A, S <: Struct](_bud: S#State[Pulse[A], S]) extends Source[A, S]
   * Companion object that allows external users to create new source signals.
   */
 object Var {
-  def apply[T, S <: Struct](initval: T)(implicit ticket: TurnSource[S]): Var[T, S] = fromChange(Value(initval))
+  def apply[T, S <: Struct](initval: T)(implicit ticket: TurnSource[S]): Var[T, S] = fromChange(Pulse.Value(initval))
   def empty[T, S <: Struct]()(implicit ticket: TurnSource[S]): Var[T, S] = fromChange(Pulse.empty)
   private[this] def fromChange[T, S <: Struct](change: Change[T])(implicit ticket: TurnSource[S]): Var[T, S] = ticket { t =>
     t.create[Pulse[T], Var[T, S]](Set.empty, ValuePersistency.InitializedSignal(change))(new Var[T, S](_))
