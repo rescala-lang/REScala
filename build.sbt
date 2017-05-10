@@ -304,12 +304,11 @@ lazy val androidDependencies = libraryDependencies ++= Seq(
   "com.android.support.test.espresso" % "espresso-core" % "2.2.2" % "androidTest")
 
 lazy val commonAndroidSettings = Seq(
-  scalaVersion := "2.11.11",
   buildToolsVersion in Android := Some("26.0.0-rc1"), // please switch to "Dev Channel" in android studio and install the sdk manually!
   minSdkVersion in Android := "24",
   platformTarget in Android := "android-25",
   javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
-  platformTarget := "android-25", //TODO: Move to androidJVM
+  platformTarget := "android-25",
   instrumentTestRunner := "android.support.test.runner.AndroidJUnitRunner",
   androidDependencies)
 
