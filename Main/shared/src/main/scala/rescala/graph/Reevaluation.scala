@@ -17,7 +17,7 @@ object ReevaluationResult {
     * Result of the static re-evaluation of a reactive value.
     */
   case class Static[A](isChange: Boolean, value: A) extends ReevaluationResult[A, Nothing]
-  def Static[P](value: Pulse[P]): ReevaluationResult[Pulse[P], Nothing] =  Static(value.isChange, value)
+  def Static[P](value: Pulse[P]): Static[Pulse[P]] =  Static(value.isChange, value)
 
   /**
     * Result of the dynamic re-evaluation of a reactive value.
@@ -26,7 +26,7 @@ object ReevaluationResult {
   case class Dynamic[A, S <: Struct](isChange: Boolean, value: A, dependencies: Set[Reactive[S]]) extends ReevaluationResult[A, S] {
     def depDiff(oldDependencies: Set[Reactive[S]]): DepDiff[S] = new DepDiff(dependencies, oldDependencies)
   }
-  def Dynamic[P, S <: Struct](value: Pulse[P], dependencies: Set[Reactive[S]]): ReevaluationResult[Pulse[P], S] =  Dynamic(value.isChange, value, dependencies)
+  def Dynamic[P, S <: Struct](value: Pulse[P], dependencies: Set[Reactive[S]]): Dynamic[Pulse[P], S] =  Dynamic(value.isChange, value, dependencies)
 
   /**
     * Calculates and stores added or removed dependencies of a reactive value.

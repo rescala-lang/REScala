@@ -1,8 +1,12 @@
 import sbtcrossproject.{crossProject, CrossType}
 
 organization in ThisBuild := "de.tuda.stg"
-crossScalaVersions in ThisBuild := Seq("2.12.2", "2.11.11")
-scalaVersion in ThisBuild := crossScalaVersions.value.tail.head
+
+lazy val version_211 = "2.11.11"
+lazy val version_212 = "2.12.2"
+
+crossScalaVersions := Seq(version_212, version_211)
+scalaVersion in ThisBuild := version_212
 
 version in ThisBuild := "0.20.0-SNAPSHOT"
 
@@ -92,7 +96,7 @@ lazy val tests = crossProject(JSPlatform, JVMPlatform).in(file("Tests"))
   .dependsOn(rescala)
   .jvmSettings().jsSettings(scalaJSUseRhino in Global := true)
 
-lazy val testsJVM = tests.jvm.dependsOn(stm)
+lazy val testsJVM = tests.jvm.dependsOn(fullmv, stm)
 
 lazy val testsJS = tests.js
 
@@ -316,12 +320,9 @@ lazy val commonAndroidSettings = Seq(
 
 scalacOptions in ThisBuild ++= (
   "-deprecation" ::
-  //"-Xdisable-assertions" ::
-  //"-Xelide-below" :: "9999999" ::
   "-encoding" :: "UTF-8" ::
   "-unchecked" ::
   "-feature" ::
-  "-target:jvm-1.8" ::
   "-Xlint" ::
   "-Xfuture" ::
   //"-Xlog-implicits" ::
@@ -336,4 +337,7 @@ scalacOptions in ThisBuild ++= (
   "-Ywarn-numeric-widen" ::
   //"-Ywarn-value-discard" ::
   //"-Ymacro-debug-lite" ::
-  Nil)
+  Nil) ++ (if (!version.value.endsWith("-SNAPSHOT")) (
+  "-Xdisable-assertions" ::
+  "-Xelide-below" :: "9999999" ::
+  Nil) else Nil)

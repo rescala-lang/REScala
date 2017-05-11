@@ -177,8 +177,6 @@ class ExceptionPropagationTestSuite extends RETests {
     val v = Var(0)
     val ds = Signal { div(v()) }
 
-    var res = 100
-
     intercept[UnhandledFailureException]{ds.abortOnError()}
 
     v.set(42)

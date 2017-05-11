@@ -49,14 +49,12 @@ class ReactiveCreationInTurnsTest extends RETests {
     engine.transaction() { implicit t =>
       val v1 = rescala.reactives.Var(0)
       val v2 = v1.map(_ + 1)
-      val c1 = v1.change.observe(v => fail(s"created signals should not change, but change was $v"))
-      val c2 = v2.change.observe(v => fail(s"created mapped signals should not change, but change was $v"))
+      v1.change.observe(v => fail(s"created signals should not change, but change was $v"))
+      v2.change.observe(v => fail(s"created mapped signals should not change, but change was $v"))
     }
 
     {
       val v1 = Var(0)
-      var a1 = false
-      var a2 = false
       var v2: Signal[Int] = null
       var v1changedFired = false
       implicitEngine.transaction(v1) { implicit t =>
@@ -77,8 +75,8 @@ class ReactiveCreationInTurnsTest extends RETests {
       val v2 = v1.map(_ + 1)
       var o1 = false
       var o2 = false
-      val c1 = v1.change.observe(_ => o1 = true)
-      val c2 = v2.change.observe(_ => o2 = true)
+      v1.change.observe(_ => o1 = true)
+      v2.change.observe(_ => o2 = true)
       assert(!o1, "created signals do not change outside of turn during creation")
       assert(!o2, "created mapped signals do not change outside of turn during creation")
       v1.set(10)

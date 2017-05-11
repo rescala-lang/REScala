@@ -46,7 +46,7 @@ trait Api {
 object Api {
   object synchronApi extends Api {
 
-    import rescala.levelbased.LevelBasedPropagationEngines.synchron
+    import rescala.Engines.synchron
 
     override type Signal[+A] = synchron.Signal[A]
     override type Event[+A] = synchron.Event[A]

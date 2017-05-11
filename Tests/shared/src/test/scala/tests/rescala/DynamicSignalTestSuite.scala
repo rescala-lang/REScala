@@ -4,7 +4,6 @@ package tests.rescala
 import org.scalatest.prop.Whenever
 import rescala.Engines
 import rescala.Infiltrator.assertLevel
-import rescala.engine.TurnSource
 
 
 
@@ -41,7 +40,7 @@ class DynamicSignalTestSuite extends RETests with Whenever {
     var a = 0
     val v = Var(10)
     val s1 = Signal {a += 1 : @unchecked; v() % 10 }
-    var s2 = Signal { a }
+    val s2 = Signal { a }
 
 
     assert(a == 1)
@@ -49,6 +48,8 @@ class DynamicSignalTestSuite extends RETests with Whenever {
     assert(a == 2)
     v.set(21)
     assert(a == 3)
+    assert(s1.now == 1)
+    assert(s2.now == 1)
   }
 
   allEngines("handlers Are Executed"){ engine => import engine._

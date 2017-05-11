@@ -132,6 +132,7 @@ class LevelPropagation extends RETests {
     assertLevel(l3, 3)
     assertLevel(l1t4, 1)
     assertLevel(l2t5, 2)
+    assertLevel(l3t6, 3)
     assert(l1t4.now === 13)
     assert(l2t5.now === 14)
     assert(reevals === 1)

@@ -2,11 +2,11 @@ package tests.rescala.meta
 
 import org.scalatest.FunSuite
 import rescala.api.Api
+import rescala.meta.DataFlowGraph
 import rescala.meta.optimization.OperatorFusion
-import rescala.meta.{DataFlowGraph, EngineReifier}
 
 class OperatorFusionTest extends FunSuite {
-  import rescala.levelbased.LevelBasedPropagationEngines.synchron
+  import rescala.Engines.synchron
   implicit val reifier = new rescala.meta.EngineReifier
 
   test("Event map fusion test") {
@@ -27,6 +27,7 @@ class OperatorFusionTest extends FunSuite {
     assert(x == 6, "Propagation of pre-optimization values should still work correctly")
     e.fire(3)
     assert(x == 8, "Propagation of post-optimization values should work correctly")
+    o
   }
 
   test("Event filter fusion test") {
@@ -51,10 +52,10 @@ class OperatorFusionTest extends FunSuite {
     e.fire(8)
     e.fire(9)
     assert(x == 12, "Propagation of post-optimization values should work correctly")
+    o
   }
 
   test("Signal map fusion test") {
-    import rescala.levelbased.LevelBasedPropagationEngines.synchron
 
     val g = new DataFlowGraph()
     val api = new Api.metaApi(g)
@@ -71,6 +72,7 @@ class OperatorFusionTest extends FunSuite {
     assert(v3.now == 6, "Propagation of pre-optimization values should still work correctly")
     v.set(3)
     assert(v3.now == 8, "Propagation of post-optimization values should work correctly")
+    e
   }
 
   test("Multi fusion test") {
@@ -90,6 +92,7 @@ class OperatorFusionTest extends FunSuite {
     assert(v4.now == 18, "Propagation of pre-optimization values should still work correctly")
     v.set(3)
     assert(v4.now == 24, "Propagation of post-optimization values should work correctly")
+    e
   }
 
   test("No fusion test") {
@@ -111,5 +114,6 @@ class OperatorFusionTest extends FunSuite {
     v.set(3)
     assert(v3.now == 8, "Propagation of post-optimization values should work correctly")
     assert(v4.now == 18, "Propagation of post-optimization values should work correctly")
+    e
   }
 }

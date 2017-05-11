@@ -11,8 +11,8 @@ import scala.util.Random
 class PaperGlitchTest extends FunSuite {
 
   ignore("execute paper glitch test"){
-    val lnOf2 = scala.math.log(2) // natural log of 2
-    def log2(x: Double): Double = scala.math.log(x) / lnOf2
+    /*val lnOf2 = scala.math.log(2) // natural log of 2*/
+    /*def log2(x: Double): Double = scala.math.log(x) / lnOf2*/
     def isPowerOf2(x: Int) = (x & (x - 1)) == 0
 
     // ============================================================================================================

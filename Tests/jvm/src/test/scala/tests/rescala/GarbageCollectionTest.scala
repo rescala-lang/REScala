@@ -6,8 +6,6 @@ import org.scalatest.prop.Whenever
 import rescala.reactives.Observe
 import rescala.stm.STMEngine
 
-import scala.language.implicitConversions
-
 class GarbageCollectionTest extends RETests with Whenever {
 
 
