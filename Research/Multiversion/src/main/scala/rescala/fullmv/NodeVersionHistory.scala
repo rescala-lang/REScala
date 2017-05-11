@@ -243,7 +243,10 @@ class NodeVersionHistory[V](val sgt: SerializationGraphTracking, init: FullMVTur
     // apply notification changes
     val version = _versions(position)
     version.pending -= 1
-    if(changed) version.changed += 1
+    if(changed) {
+      // note: if drop retrofitting overtook the change notification, change may update from -1 to 0 here!
+      version.changed += 1
+    }
 
     // check if the notification triggers subsequent actions
     if(version.pending == 0) {
@@ -505,21 +508,30 @@ class NodeVersionHistory[V](val sgt: SerializationGraphTracking, init: FullMVTur
     * @param maybeSuccessorFrame maybe a reframing to perform for the first successor frame
     * @param arity +1 for discover adding frames, -1 for drop removing frames.
     */
-  def retrofitSinkFrames(successorWrittenVersions: ArrayBuffer[FullMVTurn], maybeSuccessorFrame: Option[FullMVTurn], arity: Int): Unit = synchronized {
-    @tailrec
-    def retrofitSinkFrames0(idx: Int, minPos: Int): Unit = {
-      if(idx < successorWrittenVersions.size) {
-        val txn = successorWrittenVersions(idx)
-        val position = ensureReadVersion(txn, minPos)
-        _versions(position).changed += arity
-        retrofitSinkFrames0(idx + 1, position + 1)
-      } else if (maybeSuccessorFrame.isDefined) {
-        val txn = maybeSuccessorFrame.get
-        val position = ensureReadVersion(txn, minPos)
-        _versions(position).pending += arity
+  def retrofitSinkFrames(successorWrittenVersions: ArrayBuffer[FullMVTurn], maybeSuccessorFrame: Option[FullMVTurn], arity: Int): ArrayBuffer[FullMVTurn] = synchronized {
+    require(math.abs(arity) == 1)
+    var minPos = firstFrame
+    val changedQueuedReevaluation = new ArrayBuffer[FullMVTurn](successorWrittenVersions.size)
+    for(txn <- successorWrittenVersions) {
+      val position = ensureReadVersion(txn, minPos)
+      val version = _versions(position)
+      val reevReadyBefore = version.isReadyForReevaluation
+      // note: if drop retrofitting overtook a change notification, changed may update from 0 to -1 here!
+      version.changed += arity
+      val reevReadyAfter = version.isReadyForReevaluation
+      if(reevReadyBefore != reevReadyAfter) {
+        changedQueuedReevaluation += txn
       }
+      minPos = position + 1
     }
-    retrofitSinkFrames0(0, firstFrame)
+
+    if (maybeSuccessorFrame.isDefined) {
+      val txn = maybeSuccessorFrame.get
+      val position = ensureReadVersion(txn, minPos)
+      _versions(position).pending += arity
+    }
+
+    changedQueuedReevaluation
   }
 
   /**
@@ -536,6 +548,7 @@ class NodeVersionHistory[V](val sgt: SerializationGraphTracking, init: FullMVTur
     *         frame if it exists, for which reframings have to be performed at the sink.
     */
   private def retrofitSourceOuts(position: Int, delta: Reactive[FullMVStruct], arity: Int): (ArrayBuffer[FullMVTurn], Option[FullMVTurn]) = {
+    require(math.abs(arity) == 1)
     // allocate array to the maximum number of written versions that might follow
     // (any version at index firstFrame or later can only be a frame, not written)
     val successorWrittenVersions = new ArrayBuffer[FullMVTurn](firstFrame - position - 1)
