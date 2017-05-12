@@ -106,6 +106,8 @@ trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] 
   /** folds events with a given fold function to create a Signal allowing recovery of exceptional states by ignoring the stable value */
   final def lazyFold[A](init: => A)(folder: (=> A, => T) => A)(implicit ticket: TurnSource[S]): Signal[A, S] = ticket { initialTurn =>
     Signals.staticFold[A, S](Set[Reactive[S]](this), _ => init) { (st, currentValue) =>
+      // TODO this should be equivalent, but doesn't work for unmanaged engine; need to investigate.
+      // folder(currentValue, st.turn.after(this).get)
       st.turn.after(this).toOption.fold(currentValue)(value => folder(currentValue, value))
     }(initialTurn)
   }

@@ -9,6 +9,8 @@ import rescala.fullmv.NotificationResultAction._
 import NotificationOutAndSuccessorOperation._
 import rescala.graph.ReevaluationResult.{Dynamic, Static}
 
+import scala.util.Try
+
 trait FullMVStruct extends Struct {
   override type State[P, S <: Struct] = NodeVersionHistory[P]
 }
@@ -82,21 +84,20 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
 
     // admission
     turn.beginPhase(State.Executing, initialWrites.size)
-    try {
-      val result = admissionPhase(turn)
+    val result = Try(admissionPhase(turn))
 
-      // propagation start
-      initialWrites.foreach(turn.notify(_, changed = true, None))
+    // propagation start
+    initialWrites.foreach(turn.notify(_, changed = result.isSuccess, None))
 
-      result
-    } finally {
-      // propagation completion
-      awaitAllPredecessorsState(turn, State.Completed)
-      // TODO this should be an await once we add in-turn parallelism
-      assert(turn.activeBranches.get() == 0, s"${turn.activeBranches.get()} active branches remained after fullmv propagation phase")
-      turn.beginPhase(State.Completed, -1)
-      sgt.discard(turn)
-    }
+    // propagation completion
+    awaitAllPredecessorsState(turn, State.Completed)
+    // TODO this should be an await once we add in-turn parallelism
+    assert(turn.activeBranches.get() == 0, s"${turn.activeBranches.get()} active branches remained after fullmv propagation phase")
+    turn.beginPhase(State.Completed, -1)
+    sgt.discard(turn)
+
+    // result
+    result.get
   }
 
   def awaitAllPredecessorsState(turn: FullMVTurn, atLeast: State.Type): Unit = {

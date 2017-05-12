@@ -356,7 +356,7 @@ class NodeVersionHistory[V](val sgt: SerializationGraphTracking, init: FullMVTur
     val version = _versions(position)
     while(!version.stable) wait()
 
-    val stablePosition = findOrPidgeonHole(txn, 0, 0, firstFrame)
+    val stablePosition = if(version.isFrame) firstFrame else findOrPidgeonHole(txn, 0, 0, firstFrame)
     assert(stablePosition >= 0, "somehow, the version allocated above disappeared..")
     stablePosition
   }
