@@ -12,13 +12,13 @@ import rescala.graph.ReevaluationResult.{Dynamic, Static}
 import scala.util.Try
 
 trait FullMVStruct extends Struct {
-  override type State[P, S <: Struct] = NodeVersionHistory[P]
+  override type State[P, S <: Struct] = NodeVersionHistory[P, FullMVTurn, Reactive[FullMVStruct]]
 }
 
 object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
-  object sgt extends SerializationGraphTracking {
-    var predecessors = Map[FullMVTurn, Set[FullMVTurn]]().withDefaultValue(Set())
-    var successors = Map[FullMVTurn, Set[FullMVTurn]]().withDefaultValue(Set())
+  object sgt extends SerializationGraphTracking[FullMVTurn] {
+    private var predecessors = Map[FullMVTurn, Set[FullMVTurn]]().withDefaultValue(Set())
+    private var successors = Map[FullMVTurn, Set[FullMVTurn]]().withDefaultValue(Set())
 
     override def ensureOrder(defender: FullMVTurn, contender: FullMVTurn): OrderResult = synchronized {
       assert(defender.state > State.Initialized, "turns that were not started should never be involved in any operations")
@@ -69,6 +69,17 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
       for(succ <- successors(turn)) predecessors += succ -> (predecessors(succ) - turn)
       successors -= turn
     }
+
+    override def awaitAllPredecessorsState(turn: FullMVTurn, atLeast: State.Type): Unit = {
+      // Note that each turn on which this suspends has the opportunity to add additional predecessors to this turn
+      // transitively. We do, however, not need to repeatedly lookup the set of all predecessors, thereby ignoring these,
+      // because the turn on which this suspended will hold the suspension until these new transitive predecessors have
+      // reached the same stage first. Thus, looking up our own predecessors again after a suspension might reveal
+      // additional predecessors, but they would all have reached the required state already.
+      sgt.predecessors(turn).foreach {
+        _.awaitState(atLeast)
+      }
+    }
   }
 
   override protected def makeTurn(initialWrites: Traversable[Reactive], priorTurn: Option[FullMVTurn]): FullMVTurn = new FullMVTurn(sgt)
@@ -80,7 +91,7 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
     // framing completion
     // TODO this should be an await once we add in-turn parallelism
     assert(turn.activeBranches.get() == 0, s"${turn.activeBranches.get()} active branches remained after fullmv framing phase")
-    awaitAllPredecessorsState(turn, State.Executing)
+    sgt.awaitAllPredecessorsState(turn, State.Executing)
 
     // admission
     turn.beginPhase(State.Executing, initialWrites.size)
@@ -90,7 +101,7 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
     initialWrites.foreach(turn.notify(_, changed = result.isSuccess, None))
 
     // propagation completion
-    awaitAllPredecessorsState(turn, State.Completed)
+    sgt.awaitAllPredecessorsState(turn, State.Completed)
     // TODO this should be an await once we add in-turn parallelism
     assert(turn.activeBranches.get() == 0, s"${turn.activeBranches.get()} active branches remained after fullmv propagation phase")
     turn.beginPhase(State.Completed, -1)
@@ -100,28 +111,10 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
     result.get
   }
 
-  def awaitAllPredecessorsState(turn: FullMVTurn, atLeast: State.Type): Unit = {
-    // Note that each turn on which this suspends has the opportunity to add additional predecessors to this turn
-    // transitively. We do, however, not need to repeatedly lookup the set of all predecessors, thereby ignoring these,
-    // because the turn on which this suspended will hold the suspension until these new transitive predecessors have
-    // reached the same stage first. Thus, looking up our own predecessors again after a suspension might reveal
-    // additional predecessors, but they would all have reached the required state already.
-    sgt.predecessors(turn).foreach {
-      _.awaitState(atLeast)
-    }
-  }
 }
 
-object State {
-  type Type = Int
-  val Initialized: Type = 0
-  val Framing: Type = 1
-  val Executing: Type = 2
-  val Completed: Type = 3
-}
-
-class FullMVTurn(val sgt: SerializationGraphTracking) extends InitializationImpl[FullMVStruct] {
-  lazy val preTurn = {
+class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends InitializationImpl[FullMVStruct] {
+  private lazy val preTurn = {
     val preTurn = new FullMVTurn(sgt)
     preTurn.beginPhase(State.Completed, -1)
     preTurn
@@ -154,7 +147,7 @@ class FullMVTurn(val sgt: SerializationGraphTracking) extends InitializationImpl
     processBranching(node.state.incrementSupersedeFrame(this, superseded))
   }
 
-  private def processBranching(result: FramingBranchResult): Unit = {
+  private def processBranching(result: FramingBranchResult[FullMVTurn, Reactive[FullMVStruct]]): Unit = {
     result match {
       case FramingBranchEnd =>
         activeBranches.addAndGet(-1)
@@ -180,14 +173,14 @@ class FullMVTurn(val sgt: SerializationGraphTracking) extends InitializationImpl
       case GlitchFreeReady =>
         // no branch count change
         reevaluate(node)
-      case out: NotificationOutAndSuccessorOperation =>
-        processNotificationAndFollowOperation(node, changed = false, out)
+      case outAndSucc: NotificationOutAndSuccessorOperation[FullMVTurn, Reactive[FullMVStruct]] =>
+        processNotificationAndFollowOperation(node, changed = false, outAndSucc)
     }
   }
 
   // TODO optimize mutual tail-recursion with reevaluate?
-  private def processNotificationAndFollowOperation(node: Reactive[FullMVStruct], changed: Boolean, out: NotificationOutAndSuccessorOperation): Unit = {
-    out match {
+  private def processNotificationAndFollowOperation(node: Reactive[FullMVStruct], changed: Boolean, outAndSucc: NotificationOutAndSuccessorOperation[FullMVTurn, Reactive[FullMVStruct]]): Unit = {
+    outAndSucc match {
       case NoSuccessor(out) =>
         sendNotifications(out, changed, None)
       case FollowFraming(out, succTxn) =>
@@ -202,7 +195,7 @@ class FullMVTurn(val sgt: SerializationGraphTracking) extends InitializationImpl
   def reevaluate(node: Reactive[FullMVStruct]): Unit = {
       val result = node.reevaluate(this)
       result match {
-        case res @ Static(isChange, value) =>
+        case Static(isChange, value) =>
           val out = node.state.reevOut(this, if(isChange) Some(value) else None, None)
           processNotificationAndFollowOperation(node, isChange, out)
         case res @ Dynamic(isChange, value, deps) =>
@@ -215,7 +208,7 @@ class FullMVTurn(val sgt: SerializationGraphTracking) extends InitializationImpl
                 true
               } else {
                 txn.activeBranches.addAndGet(-1)
-                false
+                droppedOwnFrame
               }
             }
           }
@@ -228,7 +221,7 @@ class FullMVTurn(val sgt: SerializationGraphTracking) extends InitializationImpl
                 true
               } else {
                 txn.activeBranches.addAndGet(1)
-                false
+                rediscoveredOwnFrame
               }
             })
           }
@@ -254,8 +247,8 @@ class FullMVTurn(val sgt: SerializationGraphTracking) extends InitializationImpl
     out.foreach(notify(_, changed, maybeFollowFrame))
   }
 
-  override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): NodeVersionHistory[P] = {
-    val state = new NodeVersionHistory(sgt, preTurn, valuePersistency)
+  override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): NodeVersionHistory[P, FullMVTurn, Reactive[FullMVStruct]] = {
+    val state = new NodeVersionHistory[P, FullMVTurn, Reactive[FullMVStruct]](sgt, preTurn, valuePersistency)
     state.incrementFrame(this)
     state
   }
