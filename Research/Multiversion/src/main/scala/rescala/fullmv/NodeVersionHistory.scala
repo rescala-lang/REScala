@@ -284,7 +284,7 @@ class NodeVersionHistory[V](val sgt: SerializationGraphTracking, init: FullMVTur
     assert(version.txn == turn, s"Turn $turn called deevDone, but Turn ${version.txn} is first frame owner")
     assert(version.value.isEmpty, s"cannot write one version twice")
     assert(version.pending == 0, s"cannot write not-ready version")
-    assert(version.changed > 0, s"cannot write read-version")
+    assert(version.changed > 0 || (version.changed == 0 && maybeValue.isEmpty), s"cannot write read-version (changed="+version.changed+")")
 
     if(maybeValue.isDefined) {
       this.latestValue = maybeValue.get
@@ -485,7 +485,6 @@ class NodeVersionHistory[V](val sgt: SerializationGraphTracking, init: FullMVTur
   def discover(txn: FullMVTurn, add: Reactive[FullMVStruct]): (ArrayBuffer[FullMVTurn], Option[FullMVTurn]) = synchronized {
     val position = ensureReadVersion(txn)
     assert(!_versions(position).out.contains(add), "must not discover an already existing edge!")
-    _versions(position).out += add
     retrofitSourceOuts(position, add, +1)
   }
 
@@ -498,7 +497,6 @@ class NodeVersionHistory[V](val sgt: SerializationGraphTracking, init: FullMVTur
   def drop(txn: FullMVTurn, remove: Reactive[FullMVStruct]): (ArrayBuffer[FullMVTurn], Option[FullMVTurn]) = synchronized {
     val position = ensureReadVersion(txn)
     assert(_versions(position).out.contains(remove), "must not drop a non-existing edge!")
-    _versions(position).out -= remove
     retrofitSourceOuts(position, remove, -1)
   }
 
@@ -552,13 +550,13 @@ class NodeVersionHistory[V](val sgt: SerializationGraphTracking, init: FullMVTur
     // allocate array to the maximum number of written versions that might follow
     // (any version at index firstFrame or later can only be a frame, not written)
     val successorWrittenVersions = new ArrayBuffer[FullMVTurn](firstFrame - position - 1)
-    for(pos <- position + 1 until _versions.size) {
+    for(pos <- position until _versions.size) {
       val version = _versions(pos)
       if(arity < 0) version.out -= delta else version.out += delta
       // as per above, this is implied false if pos >= firstFrame:
       if(version.isWritten) successorWrittenVersions += version.txn
     }
-    val maybeSuccessorFrame = if (firstFrame < _versions.size) Some(_versions(firstFrame).txn)  else None
+    val maybeSuccessorFrame = if (firstFrame < _versions.size) Some(_versions(firstFrame).txn) else None
     (successorWrittenVersions, maybeSuccessorFrame)
   }
 }

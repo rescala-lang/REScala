@@ -207,17 +207,40 @@ class FullMVTurn(val sgt: SerializationGraphTracking) extends InitializationImpl
           processNotificationAndFollowOperation(node, isChange, out)
         case res @ Dynamic(isChange, value, deps) =>
           val diff = res.depDiff(node.state.incomings)
-          diff.removed.foreach { drop =>
+          val droppedOwnFrame = diff.removed.foldLeft(false) { (droppedOwnFrame, drop) =>
             val (successorWrittenVersions, maybeFollowFrame) = drop.state.drop(this, node)
             val removedQueuedReevaluations = node.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, -1)
-            for(turn <- removedQueuedReevaluations) turn.activeBranches.addAndGet(-1)
+            removedQueuedReevaluations.foldLeft(droppedOwnFrame) { (droppedOwnFrame, txn) =>
+              if(txn == this) {
+                true
+              } else {
+                txn.activeBranches.addAndGet(-1)
+                false
+              }
+            }
           }
-          // TODO after adding in-turn parallelism, nodes may be more complete here than they were during actual reevaluation, leading to missed gltiches
-          val anyPendingDependency = diff.added.foldLeft(false) { (anyPendingDependency, discover) =>
+          // TODO after adding in-turn parallelism, nodes may be more complete here than they were during actual reevaluation, leading to missed glitches
+          val (anyPendingDependency, rediscoveredOwnFrame) = diff.added.foldLeft((false, false)) { case ((anyPendingDependency, rediscoveredOwnFrame), discover) =>
             val (successorWrittenVersions, maybeFollowFrame) = discover.state.discover(this, node)
             val addedQueuedReevaluations = node.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, 1)
-            for(turn <- addedQueuedReevaluations) turn.activeBranches.addAndGet(1)
-            anyPendingDependency || (maybeFollowFrame == Some(this))
+            (anyPendingDependency || (maybeFollowFrame == Some(this)), addedQueuedReevaluations.foldLeft(rediscoveredOwnFrame) { (rediscoveredOwnFrame, txn) =>
+              if(txn == this) {
+                true
+              } else {
+                txn.activeBranches.addAndGet(1)
+                false
+              }
+            })
+          }
+          if(droppedOwnFrame) {
+            if(rediscoveredOwnFrame) {
+              System.err.println(s"[FullMV Warning] reevaluation of $node re-routed all its incoming changed edges. Not sure if this should be legal.")
+            } else {
+              assert(!isChange, s"Impossible Reevaluation by $node: Dropped all incoming changed edges, but still produced a change!")
+              System.err.println(s"[FullMV Warning] reevaluation (unchanged) of $node dropped all its incoming changed edges. This should probably be illegal, but dynamic events are implemented badly, causing this.")
+            }
+          } else {
+            assert(!rediscoveredOwnFrame, "either this is impossible or I am stupid.")
           }
           if(!anyPendingDependency) {
             val out = node.state.reevOut(this, if (isChange) Some(value) else None, Some(deps))
