@@ -7,7 +7,7 @@ case object FirstFirst extends OrderResult
 case object SecondFirst extends OrderResult
 
 
-trait SerializationGraphTracking {
+trait SerializationGraphTracking[T] {
   /**
     * query for existing order between transactions. Must not be called
     * with equal transactions in both parameters!
@@ -15,7 +15,7 @@ trait SerializationGraphTracking {
     * @param b second transaction
     * @return the previously established order or [[Unordered]]
     */
-  def getOrder(a: FullMVTurn, b: FullMVTurn): PartialOrderResult
+  def getOrder(a: T, b: T): PartialOrderResult
 
   /**
     * require and query for an order between the given transactions.
@@ -30,5 +30,15 @@ trait SerializationGraphTracking {
     * @param contender the transaction newly arriving at that variable
     * @return the established order
     */
-  def ensureOrder(defender: FullMVTurn, contender: FullMVTurn): OrderResult
+  def ensureOrder(defender: T, contender: T): OrderResult
+
+  def awaitAllPredecessorsState(turn: T, atLeast: State.Type): Unit
+}
+
+object State {
+  type Type = Int
+  val Initialized: Type = 0
+  val Framing: Type = 1
+  val Executing: Type = 2
+  val Completed: Type = 3
 }
