@@ -15,11 +15,10 @@ abstract class ReSensorManager {
 
   def self = peer
 
-  // TODO: find better name, since 'type' is a keyword in Scala, sth. like clazz in Java
-  def sensorList(tyipe: Int): List[ReSensor] = {
+  def sensorList(`type`: Int): List[ReSensor] = {
     //    val l: List[Int] = List(1, 2, 3, 4)
     //    print(l.map(_ * 2))
-    var l: List[Sensor] = peer.getSensorList(tyipe).asScala.toList
+    var l: List[Sensor] = peer.getSensorList(`type`).asScala.toList
     l.map(ReSensor.wrap(_))
   }
 

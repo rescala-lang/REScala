@@ -17,8 +17,7 @@ abstract class ReSensor {
   // getter
   def name: String = peer.getName
   def vendor: String = peer.getVendor
-  // TODO: find better name, since 'type' is a keyword in Scala, sth. like clazz in Java
-  def tyipe: Int = peer.getType
+  def `type`: Int = peer.getType
   def version: Int = peer.getVersion
   def id: Int = peer.getId
   def stringType: String = peer.getStringType
