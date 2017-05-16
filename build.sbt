@@ -1,4 +1,5 @@
-import sbtcrossproject.{crossProject, CrossType}
+import sbt.Keys.libraryDependencies
+import sbtcrossproject.crossProject
 
 organization in ThisBuild := "de.tuda.stg"
 
@@ -130,7 +131,9 @@ lazy val reandroidthings = project.in(file("Extensions/REAndroidThings"))
     resolvers+=Resolver.bintrayRepo("google", "androidthings"),
     name := "reandroidthings",
     exportJars := true,
-    libraryDependencies+= "com.google.android.things" % "androidthings" % "0.3.1-devpreview")
+    libraryDependencies+= "com.google.android.things" % "androidthings" % "0.3.1-devpreview",
+    libraryDependencies+= "com.google.android.things.contrib" % "driver-bmx280" % "0.2"
+  )
 
 lazy val reswing = project.in(file("Extensions/RESwing"))
   .dependsOn(rescalaJVM)
