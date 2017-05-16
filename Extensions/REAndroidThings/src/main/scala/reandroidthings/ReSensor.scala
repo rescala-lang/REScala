@@ -30,9 +30,9 @@ abstract class ReSensor {
   def minDelay: Int = peer.getMinDelay
   def maxDelay: Int = peer.getMaxDelay
 
-  def wakeUpSensor: Boolean = peer.isWakeUpSensor
-  def dynamicSensor: Boolean = peer.isDynamicSensor
-  def additionalInfoSupported: Boolean = peer.isAdditionalInfoSupported
+  def isWakeUpSensor: Boolean = peer.isWakeUpSensor
+  def isDynamicSensor: Boolean = peer.isDynamicSensor
+  def isAdditionalInfoSupported: Boolean = peer.isAdditionalInfoSupported
 
 //  def toString: String = peer.toString
 
