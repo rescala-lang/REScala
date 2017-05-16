@@ -131,7 +131,7 @@ lazy val reandroidthings = project.in(file("Extensions/REAndroidThings"))
     resolvers+=Resolver.bintrayRepo("google", "androidthings"),
     name := "reandroidthings",
     exportJars := true,
-    libraryDependencies+= "com.google.android.things" % "androidthings" % "0.3.1-devpreview",
+    libraryDependencies+= "com.google.android.things" % "androidthings" % "0.4-devpreview",
     libraryDependencies+= "com.google.android.things.contrib" % "driver-bmx280" % "0.2"
   )
 
