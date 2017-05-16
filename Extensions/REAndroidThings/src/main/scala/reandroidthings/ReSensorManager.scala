@@ -1,4 +1,4 @@
-package reswing
+package reandroidthings
 
 import scala.language.implicitConversions
 import android.hardware.SensorManager
@@ -38,7 +38,7 @@ object ReSensorManager {
   final val StandardGravity = Value(SensorManager.STANDARD_GRAVITY)
 
   /** Sun's gravity in SI units (m/s^2) */
-  final val GravitySun = Value(SensorManager.GravitySun)
+  final val GravitySun = Value(SensorManager.GRAVITY_SUN)
 
   /** Mercury's gravity in SI units (m/s^2) */
   final val GravityMercury = Value(SensorManager.GRAVITY_MERCURY)
