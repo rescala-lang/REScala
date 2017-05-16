@@ -16,3 +16,4 @@ test-output/
 Examples/Universe/*.csv
 Research/Microbenchmarks/Results.zip
 **/z-platform.sbt
+proguard-sbt.txt 
