@@ -131,7 +131,7 @@ lazy val reandroidthings = project.in(file("Extensions/REAndroidThings"))
     resolvers+=Resolver.bintrayRepo("google", "androidthings"),
     name := "reandroidthings",
     exportJars := true,
-    libraryDependencies+= "com.google.android.things" % "androidthings" % "0.4-devpreview",
+    libraryDependencies+= "com.google.android.things" % "androidthings" % "0.4-devpreview" % "provided",
     libraryDependencies+= "com.google.android.things.contrib" % "driver-bmx280" % "0.2"
   )
 
@@ -315,6 +315,7 @@ lazy val commonAndroidSettings = Seq(
   minSdkVersion in Android := "24",
   platformTarget in Android := "android-25",
   javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
+  proguardOptions in Android ++= Seq("-dontwarn com.google.android.things.contrib.**"),
   platformTarget := "android-25",
   instrumentTestRunner := "android.support.test.runner.AndroidJUnitRunner",
   androidDependencies)
