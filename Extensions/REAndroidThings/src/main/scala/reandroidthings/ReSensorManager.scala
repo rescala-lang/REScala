@@ -1,4 +1,4 @@
-package reswing
+package reandroidthings
 
 import scala.language.implicitConversions
 import android.hardware.SensorManager

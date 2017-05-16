@@ -2,10 +2,13 @@ package de.tuda.stg
 
 import android.content.Context
 import android.graphics.drawable.Animatable
-import android.hardware._
+//import android.hardware._
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
-import android.util.Log
 import java.io.IOException
 import com.google.android.things.contrib.driver.bmx280.Bmx280SensorDriver
 // TODO: SensorEventListener, SensorEvent
@@ -17,21 +20,40 @@ class MainActivity extends AppCompatActivity with SensorEventListener {
   var sensorManager: SensorManager = null
   private var mEnvironmentalSensorDriver: Bmx280SensorDriver = null
   private var mLastPressure = .0
+  private var mLastTemperature = .0
+  private val BAROMETER_RANGE_LOW = 965.0f
+  private val BAROMETER_RANGE_HIGH = 1035.0f
+  private val BAROMETER_RANGE_SUNNY = 1010.0f
+  private val BAROMETER_RANGE_RAINY = 990.0f
+
+
 
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
+
+
+    // type ascription is required due to SCL-10491
+    val vh: TypedViewHolder.main = TypedViewHolder.setContentView(this, TR.layout.main)
+    vh.text.setText(s"Hello world, from ${TR.string.app_name.value}")
+    vh.image.getDrawable match {
+      case a: Animatable => a.start()
+      case _ => // not animatable
+    }
+
+
 
     // get SensorService and cast it to SensorManager
     sensorManager = getSystemService(Context.SENSOR_SERVICE) match {
       case sm: SensorManager => sm
       case _ => throw new ClassCastException
     }
-    //    val pressureSensor: Sensor = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE)
     val deviceSensors = sensorManager.getSensorList(Sensor.TYPE_ALL)
-    Log.d("Barometer4Android", deviceSensors.toString)
+    print(deviceSensors.toString)
+    print(sensorManager.isDynamicSensorDiscoverySupported)
+    //    val pressureSensor: Sensor = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE)
     //    print(pressureSensor == null)
-    //    sensorManager.registerListener(this, pressureSensor, Sensor.)
+    //    sensorManager.registerListener(this, pressureSensor, Sensor.TYPE_PRESSURE)
 
 
     try {
@@ -46,13 +68,6 @@ class MainActivity extends AppCompatActivity with SensorEventListener {
     }
     sensorManager.registerDynamicSensorCallback(mDynamicSensorCallback)
 
-    // type ascription is required due to SCL-10491
-    val vh: TypedViewHolder.main = TypedViewHolder.setContentView(this, TR.layout.main)
-    vh.text.setText(s"Hello world, from ${TR.string.app_name.value}")
-    vh.image.getDrawable match {
-      case a: Animatable => a.start()
-      case _ => // not animatable
-    }
   }
 
 
