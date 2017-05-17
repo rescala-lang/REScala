@@ -1,6 +1,5 @@
 package reandroidthings
 
-import scala.language.implicitConversions
 import android.hardware.Sensor
 
 abstract class ReSensor {

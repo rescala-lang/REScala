@@ -18,7 +18,7 @@ abstract class ReSensorManager {
   def sensorList(`type`: Int): List[ReSensor] = {
     //    val l: List[Int] = List(1, 2, 3, 4)
     //    print(l.map(_ * 2))
-    var l: List[Sensor] = peer.getSensorList(`type`).asScala.toList
+    val l: List[Sensor] = peer.getSensorList(`type`).asScala.toList
     l.map(ReSensor.wrap(_))
   }
 

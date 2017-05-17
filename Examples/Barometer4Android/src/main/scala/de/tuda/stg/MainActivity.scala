@@ -20,8 +20,8 @@ class MainActivity extends AppCompatActivity with SensorEventListener {
 
   var sensorManager: SensorManager = null
   private var mEnvironmentalSensorDriver: Bmx280SensorDriver = null
-  private var mLastPressure = .0
-  private var mLastTemperature = .0
+//  private var mLastPressure = .0
+//  private var mLastTemperature = .0
 
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
