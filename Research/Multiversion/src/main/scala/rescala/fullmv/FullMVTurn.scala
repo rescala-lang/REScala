@@ -65,8 +65,16 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
 
     def discard(turn: FullMVTurn): Unit = synchronized {
       assert(turn.state == State.Completed, "Trying to discard an incomplete turn")
-      assert(predecessors(turn).isEmpty, "Compelted turn still has predecessors")
-      for(succ <- successors(turn)) predecessors += succ -> (predecessors(succ) - turn)
+      for(succ <- successors(turn)) {
+        val previousPredecessors = predecessors(succ)
+        if(previousPredecessors.size == 1) {
+          assert(previousPredecessors == Set(turn), "predecessor tracking was inaccurate..")
+          predecessors -= succ
+        } else {
+          val remainingPredecessors = predecessors(succ) - turn
+          predecessors += succ -> remainingPredecessors
+        }
+      }
       successors -= turn
     }
 
@@ -83,7 +91,7 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
   }
 
   override protected def makeTurn(initialWrites: Traversable[Reactive], priorTurn: Option[FullMVTurn]): FullMVTurn = new FullMVTurn(sgt)
-  override protected def executeInternal[R](turn: FullMVTurn, initialWrites: Traversable[Reactive], admissionPhase: (FullMVTurn) => R): R = {
+  override protected def executeInternal[R](turn: FullMVTurn, initialWrites: Traversable[Reactive], admissionPhase: () => R): R = {
     // framing start
     turn.beginPhase(State.Framing, initialWrites.size)
     initialWrites.foreach(turn.incrementFrame)
@@ -95,7 +103,7 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
 
     // admission
     turn.beginPhase(State.Executing, initialWrites.size)
-    val result = Try(admissionPhase(turn))
+    val result = Try(admissionPhase())
 
     // propagation start
     initialWrites.foreach(turn.notify(_, changed = result.isSuccess, None))
@@ -193,10 +201,10 @@ class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends Initia
 
   // TODO optimize mutual tail-recursion with processNotificationAndFollowOperation?
   def reevaluate(node: Reactive[FullMVStruct]): Unit = {
-      val result = node.reevaluate(this)
+      val result = FullMVEngine.withTurn(this){ node.reevaluate(this) }
       result match {
         case Static(isChange, value) =>
-          val out = node.state.reevOut(this, if(isChange) Some(value) else None, None)
+          val out = node.state.reevOut(this, if(isChange) Some(value) else None)
           processNotificationAndFollowOperation(node, isChange, out)
         case res @ Dynamic(isChange, value, deps) =>
           val diff = res.depDiff(node.state.incomings)
@@ -235,8 +243,11 @@ class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends Initia
           } else {
             assert(!rediscoveredOwnFrame, "either this is impossible or I am stupid.")
           }
-          if(!anyPendingDependency) {
-            val out = node.state.reevOut(this, if (isChange) Some(value) else None, Some(deps))
+          node.state.incomings = deps
+          if(anyPendingDependency) {
+            activeBranches.addAndGet(-1)
+          } else {
+            val out = node.state.reevOut(this, if (isChange) Some(value) else None)
             processNotificationAndFollowOperation(node, isChange, out)
           }
       }
@@ -269,4 +280,13 @@ class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends Initia
   override private[rescala] def after[P](pulsing: Pulsing[P, FullMVStruct]) = pulsing.state.staticNow(this)
 
   override def observe(f: () => Unit): Unit = f()
+
+  override def toString(): String = {
+    "FullMVTurn(" + System.identityHashCode(this) + ", " + (state match {
+      case 0 => "Initialized"
+      case 1 => "Framing("+activeBranches.get()+")"
+      case 2 => "Executing("+activeBranches.get()+")"
+      case 3 => "Completed"
+    })+ ")"
+  }
 }

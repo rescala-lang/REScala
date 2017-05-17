@@ -35,6 +35,10 @@ trait SerializationGraphTracking[T] {
   def awaitAllPredecessorsState(turn: T, atLeast: State.Type): Unit
 }
 
+trait IFullMVTurn {
+  def state: State.type
+}
+
 object State {
   type Type = Int
   val Initialized: Type = 0

@@ -39,7 +39,7 @@ class PaperGlitchTest extends FunSuite {
 
     val latch = new CountDownLatch(3)
 
-    Spawn {
+    val t1 = Spawn {
       latch.countDown()
       latch.await()
       while (!cancelled) {
@@ -53,7 +53,7 @@ class PaperGlitchTest extends FunSuite {
         }
       }
     }
-    Spawn {
+    val t2 = Spawn {
       latch.countDown()
       latch.await()
       while (!cancelled) {
@@ -73,5 +73,7 @@ class PaperGlitchTest extends FunSuite {
     Thread.sleep(1000)
     cancelled = true
     assert(glitches.size() > 0)
+    t1.join(1000)
+    t2.join(1000)
   }
 }

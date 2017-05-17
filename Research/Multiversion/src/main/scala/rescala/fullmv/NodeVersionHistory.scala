@@ -16,7 +16,21 @@ class Version[D, T, R](val txn: T, var stable: Boolean, var out: Set[R], var pen
     value.get
   }
 
-  override def toString: String = "Version("+txn+", stable="+stable+", out="+out+", pending="+pending+", changed="+changed+", "+value+")"
+  override def toString: String = {
+    if(isWritten){
+      "Written(" + txn + ", out=" + out + ", v=" + value.get + ")"
+    } else if (isFrame) {
+      if(isReadyForReevaluation) {
+        "Active(" + txn + ", out=" + out + ")"
+      } else {
+        "Frame(" + txn + ", out=" + out + ", pending=" + pending + ", changed=" + changed + ")"
+      }
+    } else if (isReadOrDynamic) {
+      (if(stable) "Stable" else "Unstable") + "Marker(" + txn + ", out=" + out + ")"
+    } else {
+      "UnknownVersionCase!(" + txn + ", " + (if(stable) "stable" else "unstable") + ", out=" + out + ", pending=" + pending + ", changed=" + changed + ", value = " + value + ")"
+    }
+  }
 }
 
 sealed trait FramingBranchResult[+T, +R]
@@ -223,6 +237,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     */
   def notify(txn: T, changed: Boolean, maybeFollowFrame: Option[T]): NotificationResultAction[T, R] = synchronized {
     val position = findFrame(txn)
+    assert(position > 0, "received notification for missing frame of "+txn)
 
     // do follow framing
     if(maybeFollowFrame.isDefined) {
@@ -276,7 +291,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     * progress [[firstFrame]] forward until a [[Version.isWrite]] is encountered, and
     * return the resulting notification out (with reframing if subsequent write is found).
     */
-  def reevOut(turn: T, maybeValue: Option[V], maybeIncomings: Option[Set[R]]): NotificationResultAction.NotificationOutAndSuccessorOperation[T, R] = synchronized {
+  def reevOut(turn: T, maybeValue: Option[V]): NotificationResultAction.NotificationOutAndSuccessorOperation[T, R] = synchronized {
     val version = _versions(firstFrame)
     assert(version.txn == turn, s"Turn $turn called deevDone, but Turn ${version.txn} is first frame owner")
     assert(version.value.isEmpty, s"cannot write one version twice")
@@ -286,9 +301,6 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     if(maybeValue.isDefined) {
       this.latestValue = maybeValue.get
       version.value = maybeValue
-    }
-    if(maybeIncomings.isDefined) {
-      this.incomings = maybeIncomings.get
     }
     version.changed = 0
 
