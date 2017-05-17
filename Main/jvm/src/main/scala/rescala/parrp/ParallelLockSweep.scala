@@ -36,7 +36,7 @@ class ParallelLockSweep(backoff: Backoff, ex: Executor, engine: TwoVersionEngine
       ex.execute {
         new Runnable {
           override def run(): Unit = {
-            engine.withTurn(Some(turn)) {
+            engine.withTurn(turn) {
               evaluate(head)
             }
             jobsRunning.decrementAndGet()

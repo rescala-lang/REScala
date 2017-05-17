@@ -45,6 +45,7 @@ abstract class RescalaDefaultImports[S <: Struct] {
   val Signals = reactives.Signals
 
 
+  final protected[rescala] def noWrapUp[R](intermediate: R, turn: Turn): R = intermediate
   /**
     * Executes a transaction.
     *
@@ -56,7 +57,26 @@ abstract class RescalaDefaultImports[S <: Struct] {
     * @return Result of the admission function
     */
   def transaction[R](initialWrites: Reactive*)(admissionPhase: Turn => R): R = {
-    explicitEngine.executeTurn(initialWrites, admissionPhase)
+    explicitEngine.executeTurn(initialWrites, admissionPhase, noWrapUp[R])
+  }
+
+  /**
+    * Executes a transaction with WrapUpPhase.
+    *
+    * @param initialWrites All inputs that might be changed by the transaction
+    * @param admissionPhase An admission function that may perform arbitrary [[rescala.reactives.Signal.now]] reads
+    *                       to [[rescala.reactives.Evt.admit]] / [[rescala.reactives.Var.admit]] arbitrary
+    *                       input changes that will be applied as an atomic transaction at the end.
+    *                       The return value of this phase will be passed to the wrapUpPhase
+    * @param wrapUpPhase A wrap-up function that receives the admissionPhase result and may perform arbitrary
+    *                    [[rescala.reactives.Signal.before]] and [[rescala.reactives.Signal.now]] reads which are
+    *                    executed after the update propagation.
+    * @tparam I Intermediate Result type passed from admission to wrapup phase
+    * @tparam R Final Result type of the wrapup phase
+    * @return Result of the wrapup function
+    */
+  def transactionWithWrapup[I, R](initialWrites: Reactive*)(admissionPhase: Turn => I)(wrapUpPhase: (I, Turn) => R): R = {
+    explicitEngine.executeTurn(initialWrites, admissionPhase, wrapUpPhase)
   }
 
   /**
@@ -69,6 +89,6 @@ abstract class RescalaDefaultImports[S <: Struct] {
     explicitEngine.executeTurn(changes.map(_._1), { t =>
       def apply[A](change: (Source[A, S], A)) = change._1.admit(change._2)(t)
       for(change <- changes) apply(change)
-    })
+    }, noWrapUp[Unit])
   }
 }

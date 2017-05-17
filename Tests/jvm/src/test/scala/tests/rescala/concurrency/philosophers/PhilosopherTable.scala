@@ -8,7 +8,6 @@ import rescala.graph.Struct
 import rescala.parrp.Backoff
 import rescala.reactives.{Signal, Var}
 import rescala.reactives.Signals.lift
-import rescala.twoversion.{Committable, TwoVersionPropagationImpl, TwoVersionPropagation}
 
 class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit val engine: Engine[S, Turn[S]]) {
 
@@ -62,20 +61,13 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit 
     }
   }
 
-
   def tryEat(seating: Seating[S]): Boolean =
-    engine.transaction(seating.philosopher) { turn =>
-      val forksWereFree = seating.vision.now(turn) == Ready
-      if (forksWereFree) seating.philosopher.admit(Hungry)(turn)
-      turn match {
-        case cmn: TwoVersionPropagationImpl[S] =>
-          cmn.schedule(new Committable[S] {
-            override def commit(t: TwoVersionPropagation[S]): Unit = if (forksWereFree) assert(seating.vision.now(turn) == Eating, s"philosopher should be done after turn but is ${seating.inspect(turn)}")
-            override def release(t: TwoVersionPropagation[S]): Unit = () /*assert(assertion = false, "turn should not rollback")*/ // assertion is unnecessary, exception propagation will take care
-          })
-        case _ =>
-      }
-
+    engine.transactionWithWrapup(seating.philosopher) { turn =>
+      val forksAreFree = seating.vision.now(turn) == Ready
+      if (forksAreFree) seating.philosopher.admit(Hungry)(turn)
+      forksAreFree
+    } /* propagation executes here */ { (forksWereFree, turn) =>
+      if (forksWereFree) assert(seating.vision.now(turn) == Eating, s"philosopher should be done after turn but is ${seating.inspect(turn)}")
       forksWereFree
     }
 
@@ -83,12 +75,9 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit 
     val bo = new Backoff()
     while(!tryEat(seating)) {bo.backoff()}
   }
-
 }
 
 object PhilosopherTable {
-
-
   // ============================================= Infrastructure ========================================================
 
   sealed trait Philosopher
