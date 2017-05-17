@@ -98,7 +98,7 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
 
     // framing completion
     // TODO this should be an await once we add in-turn parallelism
-    assert(turn.activeBranches.get() == 0, s"${turn.activeBranches.get()} active branches remained after fullmv framing phase")
+    assert(turn.activeBranches.get() == 0, s"${turn.activeBranches.get()} active branches remained after $turn framing phase")
     sgt.awaitAllPredecessorsState(turn, State.Executing)
 
     // admission
@@ -111,7 +111,7 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
     // propagation completion
     sgt.awaitAllPredecessorsState(turn, State.WrapUp)
     // TODO this should be an await once we add in-turn parallelism
-    assert(turn.activeBranches.get() == 0, s"${turn.activeBranches.get()} active branches remained after fullmv propagation phase")
+    assert(turn.activeBranches.get() == 0, s"${turn.activeBranches.get()} active branches remained after $turn propagation phase")
 
     // wrap-up
     turn.beginPhase(State.WrapUp, 0)
@@ -142,7 +142,7 @@ class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends Initia
 
   def beginPhase(state: State.Type, activeBranches: Int): Unit = synchronized {
     require(state > this.state, "Can only progress state forwards.")
-    assert(this.activeBranches.get() == 0, s"cannot start phase $state because ${this.activeBranches.get()} branches are still active in phase ${this.state}!")
+    assert(this.activeBranches.get() == 0, s"$this cannot start phase $state because ${this.activeBranches.get()} branches are still active in phase ${this.state}!")
     this.activeBranches.set(activeBranches)
     this.state = state
     notifyAll()
