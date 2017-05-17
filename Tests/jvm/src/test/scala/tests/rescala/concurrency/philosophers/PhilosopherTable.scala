@@ -64,16 +64,29 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit 
   def tryEat(seating: Seating[S]): Boolean =
     engine.transactionWithWrapup(seating.philosopher) { turn =>
       val forksAreFree = seating.vision.now(turn) == Ready
-      if (forksAreFree) seating.philosopher.admit(Hungry)(turn)
+      if (forksAreFree) {
+        println(Thread.currentThread().getName + " start " + turn + ": Eating on " + seating.philosopher)
+        seating.philosopher.admit(Hungry)(turn)
+      } else {
+        println(Thread.currentThread().getName + " start " + turn + ": No Change on " + seating.philosopher)
+      }
       forksAreFree
     } /* propagation executes here */ { (forksWereFree, turn) =>
       if (forksWereFree) assert(seating.vision.now(turn) == Eating, s"philosopher should be done after turn but is ${seating.inspect(turn)}")
+      println(Thread.currentThread().getName + " done " + turn)
       forksWereFree
     }
 
   def eatOnce(seating: Seating[S]): Unit = {
     val bo = new Backoff()
     while(!tryEat(seating)) {bo.backoff()}
+
+    engine.transactionWithWrapup(seating.philosopher){ turn =>
+      println(Thread.currentThread().getName + " start " + turn + ": Thinking on " + seating.philosopher)
+      seating.philosopher.admit(Thinking)(turn)
+    } { (x, turn) =>
+      println(Thread.currentThread().getName + " done " + turn)
+    }
   }
 }
 
