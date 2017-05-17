@@ -3,10 +3,10 @@ package tests.rescala.concurrency.philosophers
 import org.scalatest.FunSuite
 import rescala.Engines
 import rescala.engine.{Engine, Turn}
-import rescala.fullmv.FullMVEngine
+//import rescala.fullmv.FullMVEngine
 import rescala.graph.Struct
 import tests.rescala.concurrency.Spawn
-import tests.rescala.concurrency.philosophers.PhilosopherTable.{Seating, Thinking}
+import tests.rescala.concurrency.philosophers.PhilosopherTable.Thinking
 
 import scala.annotation.tailrec
 import scala.util.Random
@@ -22,19 +22,16 @@ class PhiloTest extends FunSuite {
 
 
   def `eat!`[S <: Struct](engine: Engine[S, Turn[S]], dynamic: Boolean): Unit = {
-    val philosophers = 5
-    val threadCount = 3
+    val size = 3
     val table =
-      if (!dynamic) new PhilosopherTable(philosophers, 0)(engine)
-      else new DynamicPhilosopherTable(philosophers, 0)(engine)
-    val blocks: Array[Array[Seating[S]]] = Array(table.seatings.toArray)
+      if (!dynamic) new PhilosopherTable(size, 0)(engine)
+      else new DynamicPhilosopherTable(size, 0)(engine)
 
     @volatile var cancel = false
 
-    val threads = for (threadIndex <- Range(0, threadCount)) yield Spawn(name = s"Worker $threadIndex", f = {
+    val threads = for (threadIndex <- Range(0, size)) yield Spawn(name = s"Worker $threadIndex", f = {
       while (!cancel) {
-        val myBlock = blocks(threadIndex % blocks.length)
-        val seating = myBlock(Random.nextInt(myBlock.length))
+        val seating = table.seatings(Random.nextInt(size))
         table.eatOnce(seating)
         seating.philosopher.set(Thinking)(table.engine)
       }
@@ -47,6 +44,7 @@ class PhiloTest extends FunSuite {
     println(s"philo party done sleeping on $engine (dynamic $dynamic)")
   }
 
+
   test("eating Contests Spinning") {`eat!`(Engines.parrp, dynamic = false)}
 
   test("eating Contests Spinning Dynamic") {`eat!`(Engines.parrp, dynamic = true)}
@@ -55,9 +53,9 @@ class PhiloTest extends FunSuite {
 
   test("eating Contests Spinning Dynamic Locksweep") {`eat!`(Engines.locksweep, dynamic = true)}
 
-  test("eating Contests Spinning FullMV") {`eat!`(FullMVEngine, dynamic = false)}
+//  test("eating Contests Spinning FullMV") {`eat!`(FullMVEngine, dynamic = false)}
 
-  test("eating Contests Spinning Dynamic FullMV") {`eat!`(FullMVEngine, dynamic = true)}
+//  test("eating Contests Spinning Dynamic FullMV") {`eat!`(FullMVEngine, dynamic = true)}
 
   //  test("eatingContestsSpinningParallelLocksweep"){`eat!`(JVMEngines.parallellocksweep, dynamic = false)}
   //

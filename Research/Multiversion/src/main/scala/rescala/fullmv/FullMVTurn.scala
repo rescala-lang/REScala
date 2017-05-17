@@ -91,7 +91,7 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
   }
 
   override protected def makeTurn(initialWrites: Traversable[Reactive], priorTurn: Option[FullMVTurn]): FullMVTurn = new FullMVTurn(sgt)
-  override protected def executeInternal[R](turn: FullMVTurn, initialWrites: Traversable[Reactive], admissionPhase: () => R): R = {
+  override protected def executeInternal[I, R](turn: FullMVTurn, initialWrites: Traversable[Reactive], admissionPhase: () => I, wrapUpPhase: I => R): R = {
     // framing start
     turn.beginPhase(State.Framing, initialWrites.size)
     initialWrites.foreach(turn.incrementFrame)
@@ -103,15 +103,22 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
 
     // admission
     turn.beginPhase(State.Executing, initialWrites.size)
-    val result = Try(admissionPhase())
+    val admissionResult = Try(admissionPhase())
 
     // propagation start
-    initialWrites.foreach(turn.notify(_, changed = result.isSuccess, None))
+    initialWrites.foreach(turn.notify(_, changed = admissionResult.isSuccess, None))
 
     // propagation completion
-    sgt.awaitAllPredecessorsState(turn, State.Completed)
+    sgt.awaitAllPredecessorsState(turn, State.WrapUp)
     // TODO this should be an await once we add in-turn parallelism
     assert(turn.activeBranches.get() == 0, s"${turn.activeBranches.get()} active branches remained after fullmv propagation phase")
+
+    // wrap-up
+    turn.beginPhase(State.WrapUp, 0)
+    val result = admissionResult.flatMap(i => Try { wrapUpPhase(i) })
+
+    // turn completion
+    sgt.awaitAllPredecessorsState(turn, State.Completed)
     turn.beginPhase(State.Completed, -1)
     sgt.discard(turn)
 
@@ -286,7 +293,8 @@ class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends Initia
       case 0 => "Initialized"
       case 1 => "Framing("+activeBranches.get()+")"
       case 2 => "Executing("+activeBranches.get()+")"
-      case 3 => "Completed"
+      case 3 => "WrapUp"
+      case 4 => "Completed"
     })+ ")"
   }
 }

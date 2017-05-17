@@ -5,7 +5,7 @@ import rescala.graph.Struct
 import scala.util.DynamicVariable
 
 trait EngineImpl[S <: Struct, TTurn <: Turn[S]] extends Engine[S, TTurn] {
-  override protected[rescala] def executeTurn[R](initialWrites: Traversable[Reactive], admissionPhase: TTurn => R): R = {
+  override protected[rescala] def executeTurn[I, R](initialWrites: Traversable[Reactive], admissionPhase: TTurn => I, wrapUpPhase: (I, TTurn) => R): R = {
     // TODO: This should be broken up differently here, sort-of meeting in the middle with TwoVersionEngineImpl, something like:
     /*
       // scheduling performs framing/locking/whatever
@@ -31,10 +31,9 @@ trait EngineImpl[S <: Struct, TTurn <: Turn[S]] extends Engine[S, TTurn] {
       // The propagation result should then be combined as:
       // afterPropagation = admissionResult.flatMap(propagationResult)).
 
-      // if we ever add a wrap-up phase, it should go here..
-      // again the parameter should not be the full-blown turn, but probably an second external ticket
+      // again the wrap-up turn parameter should not be the full-blown turn, but probably a second external ticket
       // offering a post-propagation external user API (before/now=after)
-      val wrapUpResult = admissionResult.flatMap { withTurn(turn) { Try { wrapUpPhase(turn) } } }
+      val result = admissionResult.flatMap { i => withTurn(turn) { Try { wrapUpPhase(i, turn) } } }
 
       // scheduling cleans up locks/versions/whatever; this should probably also receive the propagationResult
       // (if implemented) to allow dispatch towards commit+observers or rollback for TwoVersion stuff?
@@ -44,7 +43,7 @@ trait EngineImpl[S <: Struct, TTurn <: Turn[S]] extends Engine[S, TTurn] {
     */
 
     val turn = makeTurn(initialWrites, currentTurn())
-    executeInternal(turn, initialWrites, () => withTurn(turn){ admissionPhase(turn) })
+    executeInternal(turn, initialWrites, () => withTurn(turn){ admissionPhase(turn) }, { i: I => withTurn(turn){ wrapUpPhase(i, turn) } })
   }
 
   /**
@@ -53,7 +52,7 @@ trait EngineImpl[S <: Struct, TTurn <: Turn[S]] extends Engine[S, TTurn] {
     * @return New turn
     */
   protected def makeTurn(initialWrites: Traversable[Reactive], priorTurn: Option[TTurn]): TTurn
-  protected def executeInternal[R](turn: TTurn, initialWrites: Traversable[Reactive], admissionPhase: () => R): R
+  protected def executeInternal[I, R](turn: TTurn, initialWrites: Traversable[Reactive], admissionPhase: () => I, wrapUpPhase: I => R): R
 
   private val _currentTurn: DynamicVariable[Option[TTurn]] = new DynamicVariable[Option[TTurn]](None)
   override private[rescala] def currentTurn(): Option[TTurn] = _currentTurn.value

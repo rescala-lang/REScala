@@ -27,15 +27,16 @@ trait TwoVersionEngine[S <: Struct, TImpl <: TwoVersionPropagation[S] with Turn[
     * - run the party! phase
     *   - not yet implemented
     * */
-  override protected def executeInternal[R](turn: TImpl, initialWrites: Traversable[Reactive], admissionPhase: () => R): R = {
+  override protected def executeInternal[I, R](turn: TImpl, initialWrites: Traversable[Reactive], admissionPhase: () => I, wrapUpPhase: I => R): R = {
     val result = try {
       turn.preparationPhase(initialWrites)
       val admissionResult = admissionPhase()
       withTurn(turn) {
         turn.propagationPhase()
       }
+      val result = wrapUpPhase(admissionResult)
       turn.commitPhase()
-      admissionResult
+      result
     }
     catch {
       case e: Throwable =>
