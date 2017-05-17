@@ -9,7 +9,6 @@ import tests.rescala.concurrency.Spawn
 import tests.rescala.concurrency.philosophers.PhilosopherTable.Thinking
 
 import scala.annotation.tailrec
-import scala.util.Random
 
 
 class PhiloTest extends FunSuite {
@@ -29,7 +28,7 @@ class PhiloTest extends FunSuite {
 
     @volatile var cancel = false
 
-    val threads = for (threadIndex <- Range(0, size)) yield Spawn(name = s"Worker $threadIndex", f = {
+    val threads = for (threadIndex <- Range(0, size)) yield Spawn(desiredName = Some(s"Worker $threadIndex"), f = {
       while (!cancel) {
         val seating = table.seatings(Random.nextInt(size))
         table.eatOnce(seating)

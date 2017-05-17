@@ -6,32 +6,38 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
-class Spawn[T](val future: Future[T]) {
+class Spawn[T](val threadName: String, val future: Future[T]) {
   def join(milliseconds: Long): T = {
     Await.ready(future, milliseconds.millis)
     future.value.get match {
       case Success(v) => v
-      case Failure(ex) => throw new Spawn.SpawnedThreadFailedException(ex)
+      case Failure(ex) => throw new Spawn.SpawnedThreadFailedException(threadName, ex)
     }
   }
 }
 object Spawn {
-  class SpawnedThreadFailedException(ex: Throwable) extends Exception(ex)
+  class SpawnedThreadFailedException(threadName: String, ex: Throwable) extends Exception("Thread "+threadName+" failed.", ex)
   val threadpool = ExecutionContext.fromExecutor(new ThreadPoolExecutor(0, Integer.MAX_VALUE, 1L, TimeUnit.SECONDS, new SynchronousQueue[Runnable]()))
 
-  def apply[T](f: => T, name: String = "unnamed spawned thread"): Spawn[T] = {
+  def apply[T](f: => T, desiredName: Option[String] = None): Spawn[T] = {
     object lock
-    var started = false
+    var actualName: Option[String] = None
     val fut = Future {
-      lock.synchronized{
-        started = true
-        lock.notifyAll()
+      val oldThreadName = Thread.currentThread().getName()
+      if(desiredName.isDefined) Thread.currentThread().setName(desiredName.get)
+      try {
+        lock.synchronized {
+          actualName = Some(Thread.currentThread().getName)
+          lock.notifyAll()
+        }
+        f
+      } finally {
+        Thread.currentThread().setName(oldThreadName)
       }
-      f
     }(threadpool)
     lock.synchronized {
-      while(!started) lock.wait()
+      while(actualName.isEmpty) lock.wait()
     }
-    new Spawn(fut)
+    new Spawn(actualName.get, fut)
   }
 }

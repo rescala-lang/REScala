@@ -23,7 +23,7 @@ class Version[D, T, R](val txn: T, var stable: Boolean, var out: Set[R], var pen
       if(isReadyForReevaluation) {
         "Active(" + txn + ", out=" + out + ")"
       } else {
-        "Frame(" + txn + ", out=" + out + ", pending=" + pending + ", changed=" + changed + ")"
+        (if(stable) "First" else "") + "Frame(" + txn + ", out=" + out + ", pending=" + pending + ", changed=" + changed + ")"
       }
     } else if (isReadOrDynamic) {
       (if(stable) "Stable" else "Unstable") + "Marker(" + txn + ", out=" + out + ")"
