@@ -3,6 +3,7 @@ package tests.rescala.concurrency.philosophers
 import org.scalatest.FunSuite
 import rescala.Engines
 import rescala.engine.{Engine, Turn}
+import rescala.fullmv.FullMVEngine
 import rescala.graph.Struct
 import tests.rescala.concurrency.Spawn
 import tests.rescala.concurrency.philosophers.PhilosopherTable.{Seating, Thinking}
@@ -53,6 +54,10 @@ class PhiloTest extends FunSuite {
   test("eating Contests Spinning Locksweep") {`eat!`(Engines.locksweep, dynamic = false)}
 
   test("eating Contests Spinning Dynamic Locksweep") {`eat!`(Engines.locksweep, dynamic = true)}
+
+  test("eating Contests Spinning FullMV") {`eat!`(FullMVEngine, dynamic = false)}
+
+  test("eating Contests Spinning Dynamic FullMV") {`eat!`(FullMVEngine, dynamic = true)}
 
   //  test("eatingContestsSpinningParallelLocksweep"){`eat!`(JVMEngines.parallellocksweep, dynamic = false)}
   //
