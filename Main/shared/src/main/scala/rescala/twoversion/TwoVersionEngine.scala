@@ -31,7 +31,9 @@ trait TwoVersionEngine[S <: Struct, TImpl <: TwoVersionPropagation[S] with Turn[
     val result = try {
       turn.preparationPhase(initialWrites)
       val admissionResult = admissionPhase()
-      turn.propagationPhase()
+      withTurn(turn) {
+        turn.propagationPhase()
+      }
       turn.commitPhase()
       admissionResult
     }
