@@ -2,6 +2,7 @@ package de.tuda.stg
 
 import android.content.Context
 import android.graphics.drawable.Animatable
+import android.util.Log
 //import android.hardware._
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -21,12 +22,6 @@ class MainActivity extends AppCompatActivity with SensorEventListener {
   private var mEnvironmentalSensorDriver: Bmx280SensorDriver = null
   private var mLastPressure = .0
   private var mLastTemperature = .0
-  private val BAROMETER_RANGE_LOW = 965.0f
-  private val BAROMETER_RANGE_HIGH = 1035.0f
-  private val BAROMETER_RANGE_SUNNY = 1010.0f
-  private val BAROMETER_RANGE_RAINY = 990.0f
-
-
 
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
@@ -49,8 +44,8 @@ class MainActivity extends AppCompatActivity with SensorEventListener {
       case _ => throw new ClassCastException
     }
     val deviceSensors = sensorManager.getSensorList(Sensor.TYPE_ALL)
-    print(deviceSensors.toString)
-    print(sensorManager.isDynamicSensorDiscoverySupported)
+    Log.d("Barometer4Android", deviceSensors.toString)
+    Log.d("Barometer4Android", sensorManager.isDynamicSensorDiscoverySupported.toString)
     //    val pressureSensor: Sensor = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE)
     //    print(pressureSensor == null)
     //    sensorManager.registerListener(this, pressureSensor, Sensor.TYPE_PRESSURE)
@@ -61,7 +56,7 @@ class MainActivity extends AppCompatActivity with SensorEventListener {
       sensorManager.registerDynamicSensorCallback(mDynamicSensorCallback)
       mEnvironmentalSensorDriver.registerTemperatureSensor
       mEnvironmentalSensorDriver.registerPressureSensor
-      print("Initialized I2C BMP280")
+      Log.d("Barometer4Android", "Initialized I2C BMP280")
     } catch {
       case e: IOException =>
         throw new RuntimeException("Error initializing BMP280", e)
@@ -82,7 +77,7 @@ class MainActivity extends AppCompatActivity with SensorEventListener {
 
   private val mDynamicSensorCallback = new SensorManager.DynamicSensorCallback() {
     override def onDynamicSensorConnected(sensor: Sensor): Unit = {
-      print("Hi")
+      Log.d("Barometer4Android", "Hi")
       if (sensor.getType == Sensor.TYPE_AMBIENT_TEMPERATURE) { // Our sensor is connected. Start receiving temperature data.
         sensorManager.registerListener(mTemperatureListener, sensor, SensorManager.SENSOR_DELAY_NORMAL)
       }
