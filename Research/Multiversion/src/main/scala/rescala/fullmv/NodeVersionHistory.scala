@@ -237,14 +237,14 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     */
   def notify(txn: T, changed: Boolean, maybeFollowFrame: Option[T]): NotificationResultAction[T, R] = synchronized {
     val position = findFrame(txn)
-    assert(position > 0, "received notification for missing frame of "+txn)
 
     // do follow framing
     if(maybeFollowFrame.isDefined) {
+      val followFrameMinPosition = if(position > 0) position + 1 else -position
       val followTxn = maybeFollowFrame.get
       // because we know that txn << followTxn, followTxn cannot be involved with firstFrame stuff.
       // thus followTxn also does not need this framing propagated by itself.
-      val followPosition = findOrPidgeonHole(followTxn, position + 1, position + 1, _versions.size)
+      val followPosition = findOrPidgeonHole(followTxn, followFrameMinPosition, followFrameMinPosition, _versions.size)
       if(followPosition >= 0) {
         _versions(followPosition).pending += 1
       } else {
@@ -253,31 +253,48 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     }
 
     // apply notification changes
-    val version = _versions(position)
-    version.pending -= 1
-    if(changed) {
-      // note: if drop retrofitting overtook the change notification, change may update from -1 to 0 here!
-      version.changed += 1
-    }
-
-    // check if the notification triggers subsequent actions
-    if(version.pending == 0) {
-      if(position == firstFrame) {
-        if(version.changed > 0) {
-          NotificationResultAction.GlitchFreeReady
-        } else {
-          // ResolvedFirstFrameToUnchanged
-          progressToNextWriteForNotification(version.out)
-        }
+    if(position < 0) {
+      assert(-position > firstFrame)
+      // note: this case occurs if a (no)change notification overtook discovery retrofitting, and sets pending to -1!
+      // In this case, we simply return the results as if discovery retrofitting had already happened: As we know
+      // that it is still in progress, there must be a preceding active reevaluation (hence above assertion), so the
+      // retrofitting would simply create a queued frame, which this notification would either:
+      if(changed) {
+        // convert into a queued reevaluation
+        createVersion(-position, txn, pending = -1, changed = 1)
+        NotificationResultAction.GlitchFreeReadyButQueued
       } else {
-        if(version.changed > 0) {
-          NotificationResultAction.GlitchFreeReadyButQueued
-        } else {
-          NotificationResultAction.ResolvedQueuedToUnchanged
-        }
+        // or resolve into an unchanged marker
+        createVersion(-position, txn, pending = -1)
+        NotificationResultAction.ResolvedQueuedToUnchanged
       }
     } else {
-      NotificationResultAction.NotGlitchFreeReady
+      val version = _versions(position)
+      version.pending -= 1
+      if (changed) {
+        // note: if drop retrofitting overtook the change notification, change may update from -1 to 0 here!
+        version.changed += 1
+      }
+
+      // check if the notification triggers subsequent actions
+      if (version.pending == 0) {
+        if (position == firstFrame) {
+          if (version.changed > 0) {
+            NotificationResultAction.GlitchFreeReady
+          } else {
+            // ResolvedFirstFrameToUnchanged
+            progressToNextWriteForNotification(version.out)
+          }
+        } else {
+          if (version.changed > 0) {
+            NotificationResultAction.GlitchFreeReadyButQueued
+          } else {
+            NotificationResultAction.ResolvedQueuedToUnchanged
+          }
+        }
+      } else {
+        NotificationResultAction.NotGlitchFreeReady
+      }
     }
   }
 
@@ -535,7 +552,12 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     if (maybeSuccessorFrame.isDefined) {
       val txn = maybeSuccessorFrame.get
       val position = ensureReadVersion(txn, minPos)
-      _versions(position).pending += arity
+      val version = _versions(position)
+      // note: conversely, if a (no)change notification overtook discovery retrofitting, pending may change
+      // from -1 to 0 here. No handling is required for this case, because firstFrame < position is an active
+      // reevaluation (the one that's executing the discovery) and will afterwards progressToNextWrite, thereby
+      // executing this then-ready reevaluation, but for now the version is guaranteed not stable yet.
+      version.pending += arity
     }
 
     changedQueuedReevaluation
