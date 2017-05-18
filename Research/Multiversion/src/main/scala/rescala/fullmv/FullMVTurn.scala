@@ -19,6 +19,7 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
     private var successors = Map[FullMVTurn, Set[FullMVTurn]]().withDefaultValue(Set())
 
     override def ensureOrder(defender: FullMVTurn, contender: FullMVTurn): OrderResult = synchronized {
+      assert(defender != contender, s"cannot establish order between equal defender $defender and contender $contender")
       assert(defender.state > State.Initialized, s"$defender is not started and should thus not be involved in any operations")
       assert(contender.state > State.Initialized, s"$contender is not started and should thus not be involved in any operations")
       assert(contender.state < State.Completed, s"$contender cannot be a contender (already completed).")
@@ -45,6 +46,7 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
     }
 
     override def getOrder(found: FullMVTurn, searcher: FullMVTurn): PartialOrderResult = synchronized {
+      assert(found != searcher, s"$found compared with itself..?")
       assert(found.state > State.Initialized, s"$found is not started and should thus not be involved in any operations")
       assert(searcher.state > State.Initialized, s"$searcher is not started and should thus not be involved in any operations")
       assert(searcher.state < State.Completed, s"$searcher cannot be a searcher (already completed).")

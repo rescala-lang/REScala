@@ -60,7 +60,7 @@ object NotificationResultAction {
 class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: T, val valuePersistency: ValuePersistency[V]) {
   @elidable(ASSERTION) @inline
   def assertStabilityIsCorrect(debugOutputDescription: => String): Unit = {
-    assert(_versions.zipWithIndex.find{case (version, index) => version.stable != (index <= firstFrame)}.isEmpty,
+    assert(!_versions.zipWithIndex.exists{case (version, index) => version.stable != (index <= firstFrame)},
       s"$debugOutputDescription left broken version stability (firstFrame $firstFrame): \n  ${
         _versions.zipWithIndex.map{case (version, index) => s"$index: $version"}.mkString("\n  ")
       }")
@@ -178,33 +178,26 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     * @param supersede the FullMVTurn whose frame was superseded by the visiting FullMVTurn
     *                 at the previous node
     */
-  def incrementSupersedeFrame(txn: T, supersede: T): FramingBranchResult[T, R] = {
-//    assert(txn.phase == Preparing)
-//    assert(supersede.phase == Preparing)
-    synchronized {
-      val position = findFrame(supersede)
-      if (position >= 0) {
-        _versions(position).pending -= 1
-      } else {
-        createVersion(-position, supersede, pending = -1)
-      }
-      val result = incrementFrame0(txn)
-      assertStabilityIsCorrect(s"incrementSupersedeFrame($txn, $supersede)")
-      result
+  def incrementSupersedeFrame(txn: T, supersede: T): FramingBranchResult[T, R] = synchronized {
+    val position = findFrame(supersede)
+    if (position >= 0) {
+      _versions(position).pending -= 1
+    } else {
+      createVersion(-position, supersede, pending = -1)
     }
+    val result = incrementFrame0(txn)
+    assertStabilityIsCorrect(s"incrementSupersedeFrame($txn, $supersede)")
+    result
   }
 
   /**
     * entry point for regular framing
     * @param txn the FullMVTurn visiting the node for framing
     */
-  def incrementFrame(txn: T): FramingBranchResult[T, R] = {
-//    assert(txn.phase == Preparing)
-    synchronized {
-      val result = incrementFrame0(txn)
-      assertStabilityIsCorrect(s"incrementFrame($txn)")
-      result
-    }
+  def incrementFrame(txn: T): FramingBranchResult[T, R] = synchronized {
+    val result = incrementFrame0(txn)
+    assertStabilityIsCorrect(s"incrementFrame($txn)")
+    result
   }
 
   /**
