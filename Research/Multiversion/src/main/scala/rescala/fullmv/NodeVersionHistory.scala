@@ -2,7 +2,8 @@ package rescala.fullmv
 
 import rescala.engine.ValuePersistency
 
-import scala.annotation.tailrec
+import scala.annotation.elidable.ASSERTION
+import scala.annotation.{elidable, tailrec}
 import scala.collection.mutable.ArrayBuffer
 
 class Version[D, T, R](val txn: T, var stable: Boolean, var out: Set[R], var pending: Int, var changed: Int, var value: Option[D]) {
@@ -57,6 +58,13 @@ object NotificationResultAction {
 }
 
 class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: T, val valuePersistency: ValuePersistency[V]) {
+  @elidable(ASSERTION) @inline
+  def assertStabilityIsCorrect(debugOutputDescription: => String): Unit = {
+    assert(_versions.zipWithIndex.find{case (version, index) => version.stable != (index <= firstFrame)}.isEmpty,
+      s"$debugOutputDescription left broken version stability (firstFrame $firstFrame): \n  ${
+        _versions.zipWithIndex.map{case (version, index) => s"$index: $version"}.mkString("\n  ")
+      }")
+  }
   // =================== STORAGE ====================
 
   var _versions = new ArrayBuffer[Version[V, T, R]](6)
@@ -180,7 +188,9 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
       } else {
         createVersion(-position, supersede, pending = -1)
       }
-      incrementFrame0(txn)
+      val result = incrementFrame0(txn)
+      assertStabilityIsCorrect(s"incrementSupersedeFrame($txn, $supersede)")
+      result
     }
   }
 
@@ -190,7 +200,11 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     */
   def incrementFrame(txn: T): FramingBranchResult[T, R] = {
 //    assert(txn.phase == Preparing)
-    synchronized { incrementFrame0(txn) }
+    synchronized {
+      val result = incrementFrame0(txn)
+      assertStabilityIsCorrect(s"incrementFrame($txn)")
+      result
+    }
   }
 
   /**
@@ -205,16 +219,13 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
       FramingBranchResult.FramingBranchEnd
     } else {
       val frame = createVersion(-position, txn, pending = 1)
-      val previousFirstFrame = firstFrame
       if(-position < firstFrame) {
+        val previousFirstFrame = firstFrame
         firstFrame = -position
-      }
-      if(frame.out.isEmpty) {
-        FramingBranchResult.FramingBranchEnd
-      } else if(-position < previousFirstFrame) {
         if(previousFirstFrame < _versions.size) {
-          val supersede = _versions(previousFirstFrame).txn
-          FramingBranchResult.FramingBranchOutSuperseding(frame.out, supersede)
+          val supersede = _versions(previousFirstFrame)
+          supersede.stable = false
+          FramingBranchResult.FramingBranchOutSuperseding(frame.out, supersede.txn)
         } else {
           FramingBranchResult.FramingBranchOut(frame.out)
         }
@@ -253,7 +264,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     }
 
     // apply notification changes
-    if(position < 0) {
+    val result = if(position < 0) {
       assert(-position > firstFrame)
       // note: this case occurs if a (no)change notification overtook discovery retrofitting, and sets pending to -1!
       // In this case, we simply return the results as if discovery retrofitting had already happened: As we know
@@ -283,7 +294,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
             NotificationResultAction.GlitchFreeReady
           } else {
             // ResolvedFirstFrameToUnchanged
-            progressToNextWriteForNotification(version.out)
+            progressToNextWriteForNotification(s"$this notify ResolvedFirstFrame($position)ToUnchanged", version.out)
           }
         } else {
           if (version.changed > 0) {
@@ -296,6 +307,8 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
         NotificationResultAction.NotGlitchFreeReady
       }
     }
+    assertStabilityIsCorrect(s"notify($txn, $changed, $maybeFollowFrame)")
+    result
   }
 
   def reevIn(turn: T): (V, Set[R]) = {
@@ -309,7 +322,8 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     * return the resulting notification out (with reframing if subsequent write is found).
     */
   def reevOut(turn: T, maybeValue: Option[V]): NotificationResultAction.NotificationOutAndSuccessorOperation[T, R] = synchronized {
-    val version = _versions(firstFrame)
+    val position = firstFrame
+    val version = _versions(position)
     assert(version.txn == turn, s"Turn $turn called deevDone, but Turn ${version.txn} is first frame owner")
     assert(version.value.isEmpty, s"cannot write one version twice")
     assert(version.pending == 0, s"cannot write not-ready version")
@@ -321,7 +335,9 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     }
     version.changed = 0
 
-    progressToNextWriteForNotification(version.out)
+    val result = progressToNextWriteForNotification(s"$this ReevOut($position)${if(maybeValue.isDefined) "Changed" else "Unchanged"}", version.out)
+    assertStabilityIsCorrect(s"reevOut($turn, ${maybeValue.isDefined})")
+    result
   }
 
   /**
@@ -332,14 +348,14 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     * whether or not the possibly encountered write [[Version.isReadyForReevaluation]].
     * @return the notification and next reevaluation descriptor.
     */
-  private def progressToNextWriteForNotification(out: Set[R]): NotificationResultAction.NotificationOutAndSuccessorOperation[T, R] = {
+  private def progressToNextWriteForNotification(debugOutputString: => String, out: Set[R]): NotificationResultAction.NotificationOutAndSuccessorOperation[T, R] = {
     @tailrec
     def progressToNextWriteForNotification0(): NotificationResultAction.NotificationOutAndSuccessorOperation[T, R] = {
       firstFrame += 1
       if (firstFrame < _versions.size) {
         val version = _versions(firstFrame)
 
-        assert(!version.stable, s"already stable: $version")
+        assert(!version.stable, s"$debugOutputString cannot stabilize already-stable $version at position $firstFrame")
         version.stable = true
 
         if (version.isWrite) {
@@ -369,12 +385,14 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     */
   private def ensureReadVersion(txn: T, knownMinPos: Int = 0): Int = {
     val position = findOrPidgeonHole(txn, knownMinPos, knownMinPos, _versions.size)
-    if(position < 0) {
+    val result = if(position < 0) {
       createVersion(-position, txn)
       -position
     } else {
       position
     }
+    assertStabilityIsCorrect(s"ensureReadVersion($txn)")
+    result
   }
 
   def synchronizeDynamicAccess(txn: T): Int = synchronized {

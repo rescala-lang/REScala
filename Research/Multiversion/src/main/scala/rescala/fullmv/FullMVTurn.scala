@@ -1,7 +1,5 @@
 package rescala.fullmv
 
-import java.util.concurrent.atomic.AtomicInteger
-
 import rescala.engine.{EngineImpl, InitializationImpl, ValuePersistency}
 import rescala.graph.{Pulsing, Reactive, Struct}
 import rescala.fullmv.FramingBranchResult._
@@ -21,9 +19,9 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
     private var successors = Map[FullMVTurn, Set[FullMVTurn]]().withDefaultValue(Set())
 
     override def ensureOrder(defender: FullMVTurn, contender: FullMVTurn): OrderResult = synchronized {
-      assert(defender.state > State.Initialized, "turns that were not started should never be involved in any operations")
-      assert(contender.state > State.Initialized, "turns that were not started should never be involved in any operations")
-      assert(contender.state < State.Completed, "a completed turn cannot be a contender.")
+      assert(defender.state > State.Initialized, s"$defender is not started and should thus not be involved in any operations")
+      assert(contender.state > State.Initialized, s"$contender is not started and should thus not be involved in any operations")
+      assert(contender.state < State.Completed, s"$contender cannot be a contender (already completed).")
       if(defender.state == State.Completed) {
         FirstFirst
       } else if (predecessors(defender)(contender)) {
@@ -46,17 +44,17 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
       for(pred <- allBefore) successors += pred -> (successors(pred) ++ allAfter)
     }
 
-    override def getOrder(a: FullMVTurn, b: FullMVTurn): PartialOrderResult = synchronized {
-      assert(a.state > State.Initialized, "turns that were not started should never be involved in any operations")
-      assert(b.state > State.Initialized, "turns that were not started should never be involved in any operations")
-      assert(a.state != State.Completed || b.state != State.Completed, "two completed turns are being compared.")
-      if(a.state == State.Completed) {
+    override def getOrder(found: FullMVTurn, searcher: FullMVTurn): PartialOrderResult = synchronized {
+      assert(found.state > State.Initialized, s"$found is not started and should thus not be involved in any operations")
+      assert(searcher.state > State.Initialized, s"$searcher is not started and should thus not be involved in any operations")
+      assert(searcher.state < State.Completed, s"$searcher cannot be a searcher (already completed).")
+      if(found.state == State.Completed) {
         FirstFirst
-      } else if (b.state == State.Completed) {
+      } else if (searcher.state == State.Completed) {
         SecondFirst
-      } else if (predecessors(a)(b)) {
+      } else if (predecessors(found)(searcher)) {
         SecondFirst
-      } else if (predecessors(b)(a)) {
+      } else if (predecessors(searcher)(found)) {
         FirstFirst
       } else {
         Unordered
@@ -64,11 +62,11 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
     }
 
     def discard(turn: FullMVTurn): Unit = synchronized {
-      assert(turn.state == State.Completed, "Trying to discard an incomplete turn")
+      assert(turn.state == State.Completed, s"Trying to discard incomplete $turn")
       for(succ <- successors(turn)) {
         val previousPredecessors = predecessors(succ)
         if(previousPredecessors.size == 1) {
-          assert(previousPredecessors == Set(turn), "predecessor tracking was inaccurate..")
+          assert(previousPredecessors == Set(turn), s"predecessor tracking for $succ was inaccurate: should only contain $turn, but contained $previousPredecessors.")
           predecessors -= succ
         } else {
           val remainingPredecessors = predecessors(succ) - turn
@@ -98,7 +96,7 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
 
     // framing completion
     // TODO this should be an await once we add in-turn parallelism
-    assert(turn.activeBranches.get() == 0, s"${turn.activeBranches.get()} active branches remained after $turn framing phase")
+    turn.synchronized { assert(turn.activeBranches == 0, s"${turn.activeBranches} active branches remained after $turn framing phase") }
     sgt.awaitAllPredecessorsState(turn, State.Executing)
 
     // admission
@@ -111,10 +109,11 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
     // propagation completion
     sgt.awaitAllPredecessorsState(turn, State.WrapUp)
     // TODO this should be an await once we add in-turn parallelism
-    assert(turn.activeBranches.get() == 0, s"${turn.activeBranches.get()} active branches remained after $turn propagation phase")
+    turn.synchronized { assert(turn.activeBranches == 0, s"${turn.activeBranches} active branches remained after $turn propagation phase") }
 
     // wrap-up
     turn.beginPhase(State.WrapUp, 0)
+
     val result = admissionResult.flatMap(i => Try { wrapUpPhase(i) })
 
     // turn completion
@@ -137,13 +136,17 @@ class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends Initia
   /**
     * counts the sum of in-flight notifications, queued and in-progress reevaluations.
     */
-  val activeBranches = new AtomicInteger()
   @volatile var state: State.Type = State.Initialized
+  var activeBranches: Int = 0
+  def activeBranchDifferential(forState: State.Type, differential: Int): Unit = synchronized {
+    assert(state == forState, s"$this received branch differential for wrong state $state")
+    activeBranches += differential
+  }
 
-  def beginPhase(state: State.Type, activeBranches: Int): Unit = synchronized {
-    require(state > this.state, "Can only progress state forwards.")
-    assert(this.activeBranches.get() == 0, s"$this cannot start phase $state because ${this.activeBranches.get()} branches are still active in phase ${this.state}!")
-    this.activeBranches.set(activeBranches)
+  def beginPhase(state: State.Type, initialActiveBranches: Int): Unit = synchronized {
+    require(state > this.state, s"$this cannot progress backwards to phase $state.")
+    assert(this.activeBranches == 0, s"$this still has active branches and thus cannot start phase $state!")
+    this.activeBranches = initialActiveBranches
     this.state = state
     notifyAll()
   }
@@ -155,36 +158,43 @@ class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends Initia
   }
 
   def incrementFrame(node: Reactive[FullMVStruct]): Unit = {
-    processBranching(node.state.incrementFrame(this))
+    assert(state == State.Framing, s"$this cannot increment frame (requires framing phase)")
+    processFramingBranching(node.state.incrementFrame(this))
   }
 
   def incrementSupersedeFrame(node: Reactive[FullMVStruct], superseded: FullMVTurn): Unit = {
-    processBranching(node.state.incrementSupersedeFrame(this, superseded))
+    assert(state == State.Framing, s"$this cannot increment frame (requires framing phase)")
+    assert(superseded.state == State.Framing, s"$superseded cannot have frame superseded (requires framing phase)")
+    processFramingBranching(node.state.incrementSupersedeFrame(this, superseded))
   }
 
-  private def processBranching(result: FramingBranchResult[FullMVTurn, Reactive[FullMVStruct]]): Unit = {
+  private def processFramingBranching(result: FramingBranchResult[FullMVTurn, Reactive[FullMVStruct]]): Unit = {
     result match {
       case FramingBranchEnd =>
-        activeBranches.addAndGet(-1)
+        activeBranchDifferential(State.Framing, -1)
       case FramingBranchOut(out) =>
-        if(out.size != 1) activeBranches.addAndGet(out.size - 1)
+        if(out.size != 1) activeBranchDifferential(State.Framing, out.size - 1)
         out.foreach(incrementFrame)
       case FramingBranchOutSuperseding(out, supersede) =>
-        if(out.size != 1) activeBranches.addAndGet(out.size - 1)
+        if(out.size != 1) activeBranchDifferential(State.Framing, out.size - 1)
         out.foreach(d => incrementSupersedeFrame(d, supersede))
     }
   }
 
   def notify(node: Reactive[FullMVStruct], changed: Boolean, maybeFollowFrame: Option[FullMVTurn]): Unit = {
+    assert(state == State.Executing, s"$this cannot receive notification (requires executing phase)")
+    assert(!maybeFollowFrame.isDefined || maybeFollowFrame.get.state >= State.Framing, s"${maybeFollowFrame.get} cannot receive follow frame (requires at least Framing phase)")
+    assert(!maybeFollowFrame.isDefined || maybeFollowFrame.get.state <= State.Executing, s"${maybeFollowFrame.get} cannot receive follow frame (requires at most Executing phase)")
+
     val notificationResultAction = node.state.notify(this, changed, maybeFollowFrame)
     notificationResultAction match {
       case GlitchFreeReadyButQueued =>
         // in-flight notification turned into queued reevaluation = no branch count change
         // reevaluation is queued, so do nothing
       case ResolvedQueuedToUnchanged =>
-        activeBranches.addAndGet(-1)
+        activeBranchDifferential(State.Executing, -1)
       case NotGlitchFreeReady =>
-        activeBranches.addAndGet(-1)
+        activeBranchDifferential(State.Executing, -1)
       case GlitchFreeReady =>
         // no branch count change
         reevaluate(node)
@@ -222,7 +232,7 @@ class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends Initia
               if(txn == this) {
                 true
               } else {
-                txn.activeBranches.addAndGet(-1)
+                txn.activeBranchDifferential(State.Executing, -1)
                 droppedOwnFrame
               }
             }
@@ -235,24 +245,24 @@ class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends Initia
               if(txn == this) {
                 true
               } else {
-                txn.activeBranches.addAndGet(1)
+                txn.activeBranchDifferential(State.Executing, 1)
                 rediscoveredOwnFrame
               }
             })
           }
           if(droppedOwnFrame) {
             if(rediscoveredOwnFrame) {
-              System.err.println(s"[FullMV Warning] reevaluation of $node re-routed all its incoming changed edges. Not sure if this should be legal.")
+              System.err.println(s"[FullMV Warning] reevaluation of $node during $this re-routed all its incoming changed edges. Not sure if this should be legal.")
             } else {
-              assert(!isChange, s"Impossible Reevaluation by $node: Dropped all incoming changed edges, but still produced a change!")
-              System.err.println(s"[FullMV Warning] reevaluation (unchanged) of $node dropped all its incoming changed edges. This should probably be illegal, but dynamic events are implemented badly, causing this.")
+              assert(!isChange, s"Impossible Reevaluation of $node during $this: Dropped all incoming changed edges, but still produced a change!")
+              System.err.println(s"[FullMV Warning] reevaluation (unchanged) of $node during $this dropped all its incoming changed edges. This should probably be illegal, but dynamic events are implemented badly, causing this.")
             }
           } else {
             assert(!rediscoveredOwnFrame, "either this is impossible or I am stupid.")
           }
           node.state.incomings = deps
           if(anyPendingDependency) {
-            activeBranches.addAndGet(-1)
+            activeBranchDifferential(State.Executing, -1)
           } else {
             val out = node.state.reevOut(this, if (isChange) Some(value) else None)
             processNotificationAndFollowOperation(node, isChange, out)
@@ -261,7 +271,7 @@ class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends Initia
     }
 
   private def sendNotifications(out: Set[Reactive[FullMVStruct]], changed: Boolean, maybeFollowFrame: Option[FullMVTurn]): Unit = {
-    if(out.size != 1) activeBranches.addAndGet(out.size - 1)
+    if(out.size != 1) activeBranchDifferential(State.Executing,out.size - 1)
     out.foreach(notify(_, changed, maybeFollowFrame))
   }
 
@@ -271,12 +281,12 @@ class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends Initia
     state
   }
   override protected def ignite(reactive: Reactive[FullMVStruct], incoming: Set[Reactive[FullMVStruct]], valuePersistency: ValuePersistency[_]): Unit = {
-    activeBranches.addAndGet(1)
+    activeBranchDifferential(State.Executing, 1)
     incoming.foreach { discover =>
       dynamicDependencyInteraction(discover)
       val (successorWrittenVersions, maybeFollowFrame) = discover.state.discover(this, reactive)
       val addedQueuedReevaluations = reactive.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, 1)
-      for(turn <- addedQueuedReevaluations) turn.activeBranches.addAndGet(1)
+      for(turn <- addedQueuedReevaluations) turn.activeBranchDifferential(State.Executing, 1)
     }
     reactive.state.incomings = incoming
     notify(reactive, changed = valuePersistency.ignitionRequiresReevaluation, None)
@@ -288,11 +298,11 @@ class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends Initia
 
   override def observe(f: () => Unit): Unit = f()
 
-  override def toString(): String = {
+  override def toString(): String = synchronized {
     "FullMVTurn(" + System.identityHashCode(this) + ", " + (state match {
       case 0 => "Initialized"
-      case 1 => "Framing("+activeBranches.get()+")"
-      case 2 => "Executing("+activeBranches.get()+")"
+      case 1 => "Framing("+activeBranches+")"
+      case 2 => "Executing("+activeBranches+")"
       case 3 => "WrapUp"
       case 4 => "Completed"
     })+ ")"

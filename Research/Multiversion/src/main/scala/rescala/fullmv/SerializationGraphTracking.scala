@@ -11,11 +11,11 @@ trait SerializationGraphTracking[T] {
   /**
     * query for existing order between transactions. Must not be called
     * with equal transactions in both parameters!
-    * @param a first transaction
-    * @param b second transaction
+    * @param found a transaction already in place at a given variable
+    * @param searcher the transaction newly arriving at that variable
     * @return the previously established order or [[Unordered]]
     */
-  def getOrder(a: T, b: T): PartialOrderResult
+  def getOrder(found: T, searcher: T): PartialOrderResult
 
   /**
     * require and query for an order between the given transactions.
