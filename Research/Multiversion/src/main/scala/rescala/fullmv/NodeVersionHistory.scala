@@ -44,7 +44,7 @@ object FramingBranchResult {
 sealed trait NotificationResultAction[+T, +R]
 object NotificationResultAction {
   case object NotGlitchFreeReady extends NotificationResultAction[Nothing, Nothing]
-  case object ResolvedQueuedToUnchanged extends NotificationResultAction[Nothing, Nothing]
+  case object ResolvedNonFirstFrameToUnchanged extends NotificationResultAction[Nothing, Nothing]
   case object GlitchFreeReadyButQueued extends NotificationResultAction[Nothing, Nothing]
   case object GlitchFreeReady extends NotificationResultAction[Nothing, Nothing]
   sealed trait NotificationOutAndSuccessorOperation[+T, R] extends NotificationResultAction[T, R] {
@@ -277,7 +277,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
       } else {
         // or resolve into an unchanged marker
         createVersion(-position, txn, pending = -1)
-        NotificationResultAction.ResolvedQueuedToUnchanged
+        NotificationResultAction.ResolvedNonFirstFrameToUnchanged
       }
     } else {
       val version = _versions(position)
@@ -300,7 +300,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
           if (version.changed > 0) {
             NotificationResultAction.GlitchFreeReadyButQueued
           } else {
-            NotificationResultAction.ResolvedQueuedToUnchanged
+            NotificationResultAction.ResolvedNonFirstFrameToUnchanged
           }
         }
       } else {
@@ -550,20 +550,14 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     * @param maybeSuccessorFrame maybe a reframing to perform for the first successor frame
     * @param arity +1 for discover adding frames, -1 for drop removing frames.
     */
-  def retrofitSinkFrames(successorWrittenVersions: ArrayBuffer[T], maybeSuccessorFrame: Option[T], arity: Int): ArrayBuffer[T] = synchronized {
+  def retrofitSinkFrames(successorWrittenVersions: ArrayBuffer[T], maybeSuccessorFrame: Option[T], arity: Int): Unit = synchronized {
     require(math.abs(arity) == 1)
     var minPos = firstFrame
-    val changedQueuedReevaluation = new ArrayBuffer[T](successorWrittenVersions.size)
     for(txn <- successorWrittenVersions) {
       val position = ensureReadVersion(txn, minPos)
       val version = _versions(position)
-      val reevReadyBefore = version.isReadyForReevaluation
       // note: if drop retrofitting overtook a change notification, changed may update from 0 to -1 here!
       version.changed += arity
-      val reevReadyAfter = version.isReadyForReevaluation
-      if(reevReadyBefore != reevReadyAfter) {
-        changedQueuedReevaluation += txn
-      }
       minPos = position + 1
     }
 
@@ -577,8 +571,6 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
       // executing this then-ready reevaluation, but for now the version is guaranteed not stable yet.
       version.pending += arity
     }
-
-    changedQueuedReevaluation
   }
 
   /**

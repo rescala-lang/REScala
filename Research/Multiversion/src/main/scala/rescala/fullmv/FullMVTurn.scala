@@ -134,7 +134,7 @@ class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends Initia
     preTurn
   }
   /**
-    * counts the sum of in-flight notifications, queued and in-progress reevaluations.
+    * counts the sum of in-flight notifications, in-progress reevaluations.
     */
   @volatile var state: State.Type = State.Initialized
   var activeBranches: Int = 0
@@ -187,11 +187,11 @@ class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends Initia
     assert(!maybeFollowFrame.isDefined || maybeFollowFrame.get.state <= State.Executing, s"${maybeFollowFrame.get} cannot receive follow frame (requires at most Executing phase)")
 
     val notificationResultAction = node.state.notify(this, changed, maybeFollowFrame)
+    // println(s"$this notified $node changed=$changed resulting in $notificationResultAction")
     notificationResultAction match {
       case GlitchFreeReadyButQueued =>
-        // in-flight notification turned into queued reevaluation = no branch count change
-        // reevaluation is queued, so do nothing
-      case ResolvedQueuedToUnchanged =>
+        activeBranchDifferential(State.Executing, -1)
+      case ResolvedNonFirstFrameToUnchanged =>
         activeBranchDifferential(State.Executing, -1)
       case NotGlitchFreeReady =>
         activeBranchDifferential(State.Executing, -1)
@@ -212,6 +212,7 @@ class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends Initia
         sendNotifications(out, changed, Some(succTxn))
       case NextReevaluation(out, succTxn) =>
         sendNotifications(out, changed, Some(succTxn))
+        succTxn.activeBranchDifferential(State.Executing, 1)
         succTxn.reevaluate(node)
     }
   }
@@ -222,49 +223,36 @@ class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends Initia
       result match {
         case Static(isChange, value) =>
           val out = node.state.reevOut(this, if(isChange) Some(value) else None)
+          // println(s"$this reevaluated $node to $value, branching $out")
           processNotificationAndFollowOperation(node, isChange, out)
         case res @ Dynamic(isChange, value, deps) =>
           val diff = res.depDiff(node.state.incomings)
-          val droppedOwnFrame = diff.removed.foldLeft(false) { (droppedOwnFrame, drop) =>
+          diff.removed.foreach{ drop =>
             val (successorWrittenVersions, maybeFollowFrame) = drop.state.drop(this, node)
-            val removedQueuedReevaluations = node.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, -1)
-            removedQueuedReevaluations.foldLeft(droppedOwnFrame) { (droppedOwnFrame, txn) =>
-              if(txn == this) {
-                true
-              } else {
-                txn.activeBranchDifferential(State.Executing, -1)
-                droppedOwnFrame
-              }
-            }
+            node.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, -1)
           }
           // TODO after adding in-turn parallelism, nodes may be more complete here than they were during actual reevaluation, leading to missed glitches
-          val (anyPendingDependency, rediscoveredOwnFrame) = diff.added.foldLeft((false, false)) { case ((anyPendingDependency, rediscoveredOwnFrame), discover) =>
+          val anyPendingDependency = diff.added.foldLeft(false) { (anyPendingDependency, discover) =>
             val (successorWrittenVersions, maybeFollowFrame) = discover.state.discover(this, node)
-            val addedQueuedReevaluations = node.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, 1)
-            (anyPendingDependency || (maybeFollowFrame == Some(this)), addedQueuedReevaluations.foldLeft(rediscoveredOwnFrame) { (rediscoveredOwnFrame, txn) =>
-              if(txn == this) {
-                true
-              } else {
-                txn.activeBranchDifferential(State.Executing, 1)
-                rediscoveredOwnFrame
-              }
-            })
+            node.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, 1)
+            anyPendingDependency || (maybeFollowFrame == Some(this))
           }
-          if(droppedOwnFrame) {
-            if(rediscoveredOwnFrame) {
-              System.err.println(s"[FullMV Warning] reevaluation of $node during $this re-routed all its incoming changed edges. Not sure if this should be legal.")
-            } else {
-              assert(!isChange, s"Impossible Reevaluation of $node during $this: Dropped all incoming changed edges, but still produced a change!")
-              System.err.println(s"[FullMV Warning] reevaluation (unchanged) of $node during $this dropped all its incoming changed edges. This should probably be illegal, but dynamic events are implemented badly, causing this.")
-            }
-          } else {
-            assert(!rediscoveredOwnFrame, "either this is impossible or I am stupid.")
-          }
+          // if(droppedOwnFrame) {
+          //   if(rediscoveredOwnFrame) {
+          //     System.err.println(s"[FullMV Warning] reevaluation of $node during $this re-routed all its incoming changed edges. Not sure if this should be legal.")
+          //   } else {
+          //     assert(!isChange, s"Impossible Reevaluation of $node during $this: Dropped all incoming changed edges, but still produced a change!")
+          //     System.err.println(s"[FullMV Warning] reevaluation (unchanged) of $node during $this dropped all its incoming changed edges. This should probably be illegal, but dynamic events are implemented badly, causing this.")
+          //   }
+          // } else {
+          //   assert(!rediscoveredOwnFrame, "either this is impossible or I am stupid.")
+          // }
           node.state.incomings = deps
           if(anyPendingDependency) {
             activeBranchDifferential(State.Executing, -1)
           } else {
             val out = node.state.reevOut(this, if (isChange) Some(value) else None)
+            // println(s"$this reevaluated $node to $value, branching $out")
             processNotificationAndFollowOperation(node, isChange, out)
           }
       }
@@ -285,8 +273,7 @@ class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends Initia
     incoming.foreach { discover =>
       dynamicDependencyInteraction(discover)
       val (successorWrittenVersions, maybeFollowFrame) = discover.state.discover(this, reactive)
-      val addedQueuedReevaluations = reactive.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, 1)
-      for(turn <- addedQueuedReevaluations) turn.activeBranchDifferential(State.Executing, 1)
+      reactive.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, 1)
     }
     reactive.state.incomings = incoming
     notify(reactive, changed = valuePersistency.ignitionRequiresReevaluation, None)
