@@ -128,10 +128,11 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
   @tailrec
   private def findOrPidgeonHole(lookFor: T, recoverFrom: Int, from: Int, to: Int): Int = {
     if (to == from) {
-      assert(from > 0, "Found an insertion point of 0; insertion points must always be after the base state version.")
+      assert(from > 0, s"Found an insertion point of 0 for $lookFor; insertion points must always be after the base state version.")
       if(sgt.ensureOrder(_versions(math.abs(from) - 1).txn, lookFor) == FirstFirst) {
         -from
       } else {
+        assert(recoverFrom < from, s"Illegal position hint: $lookFor must be before $recoverFrom")
         findOrPidgeonHole(lookFor, recoverFrom, recoverFrom, from)
       }
     } else {
@@ -182,13 +183,13 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     *                 at the previous node
     */
   def incrementSupersedeFrame(txn: T, supersede: T): FramingBranchResult[T, R] = synchronized {
-    val position = findFrame(supersede)
-    if (position >= 0) {
-      _versions(position).pending -= 1
-    } else {
-      createVersion(-position, supersede, pending = -1)
-    }
     val result = incrementFrame0(txn)
+    val supersedePosition = findFrame(supersede)
+    if (supersedePosition >= 0) {
+      _versions(supersedePosition).pending -= 1
+    } else {
+      createVersion(-supersedePosition, supersede, pending = -1)
+    }
     assertStabilityIsCorrect(s"incrementSupersedeFrame($txn, $supersede)")
     result
   }
@@ -487,28 +488,6 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
       } else {
         beforeOrInit(txn, position)
       }
-    }
-  }
-
-  /**
-    * entry point for reg-read(this, ticket.issuer) (i.e., read [[Version.value]] assuming edge this -> ticket.issuer exists)
-    * @param txn the executing reevaluation's FullMVTurn
-    *
-    * @return the corresponding [[Version.value]]
-    */
-  def regRead(txn: T): V = synchronized {
-    val position = findOrPidgeonHole(txn, 0, 0, firstFrame)
-    if(position >= 0) {
-      val thisVersion = _versions(position)
-      //      assert(thisVersion.out.contains(ticket.issuer), "regRead invoked without existing edge")
-      if (thisVersion.isWrittenOrFrame) {
-        thisVersion.read()
-      } else {
-        prevWrite(txn, position).read()
-      }
-    } else {
-      //      assert(_versions(-position - 1).out.contains(ticket.issuer), "regRead invoked without existing edge")
-      prevWrite(txn, -position).read()
     }
   }
 
