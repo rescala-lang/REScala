@@ -14,6 +14,7 @@ trait FullMVStruct extends Struct {
 }
 
 object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
+  val DEBUG = false
   object sgt extends SerializationGraphTracking[FullMVTurn] {
     private var predecessors = Map[FullMVTurn, Set[FullMVTurn]]().withDefaultValue(Set())
     private var successors = Map[FullMVTurn, Set[FullMVTurn]]().withDefaultValue(Set())
@@ -161,13 +162,17 @@ class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends Initia
 
   def incrementFrame(node: Reactive[FullMVStruct]): Unit = {
     assert(state == State.Framing, s"$this cannot increment frame (requires framing phase)")
-    processFramingBranching(node.state.incrementFrame(this))
+    val framingBranchResult = node.state.incrementFrame(this)
+    if(FullMVEngine.DEBUG) println(s"$this framing $node resulting in $framingBranchResult")
+    processFramingBranching(framingBranchResult)
   }
 
   def incrementSupersedeFrame(node: Reactive[FullMVStruct], superseded: FullMVTurn): Unit = {
     assert(state == State.Framing, s"$this cannot increment frame (requires framing phase)")
     assert(superseded.state == State.Framing, s"$superseded cannot have frame superseded (requires framing phase)")
-    processFramingBranching(node.state.incrementSupersedeFrame(this, superseded))
+    val framingBranchResult = node.state.incrementSupersedeFrame(this, superseded)
+    if(FullMVEngine.DEBUG) println(s"$this framing $node superseding $superseded resulting in $framingBranchResult")
+    processFramingBranching(framingBranchResult)
   }
 
   private def processFramingBranching(result: FramingBranchResult[FullMVTurn, Reactive[FullMVStruct]]): Unit = {
@@ -189,7 +194,7 @@ class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends Initia
     assert(!maybeFollowFrame.isDefined || maybeFollowFrame.get.state <= State.Executing, s"${maybeFollowFrame.get} cannot receive follow frame (requires at most Executing phase)")
 
     val notificationResultAction = node.state.notify(this, changed, maybeFollowFrame)
-    // println(s"$this notified $node changed=$changed resulting in $notificationResultAction")
+    if(FullMVEngine.DEBUG) println(s"$this notified $node changed=$changed resulting in $notificationResultAction")
     notificationResultAction match {
       case GlitchFreeReadyButQueued =>
         activeBranchDifferential(State.Executing, -1)
@@ -225,17 +230,19 @@ class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends Initia
       result match {
         case Static(isChange, value) =>
           val out = node.state.reevOut(this, if(isChange) Some(value) else None)
-          // println(s"$this reevaluated $node to $value, branching $out")
+          if(FullMVEngine.DEBUG) println(s"$this reevaluated $node to $value, branching $out")
           processNotificationAndFollowOperation(node, isChange, out)
         case res @ Dynamic(isChange, value, deps) =>
           val diff = res.depDiff(node.state.incomings)
           diff.removed.foreach{ drop =>
             val (successorWrittenVersions, maybeFollowFrame) = drop.state.drop(this, node)
+            if(FullMVEngine.DEBUG) println(s"$this dropping $drop -> $node un-queueing $successorWrittenVersions and un-framing $maybeFollowFrame")
             node.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, -1)
           }
           // TODO after adding in-turn parallelism, nodes may be more complete here than they were during actual reevaluation, leading to missed glitches
           val anyPendingDependency = diff.added.foldLeft(false) { (anyPendingDependency, discover) =>
             val (successorWrittenVersions, maybeFollowFrame) = discover.state.discover(this, node)
+            if(FullMVEngine.DEBUG) println(s"$this discovering $discover-> $node re-queueing $successorWrittenVersions and re-framing $maybeFollowFrame")
             node.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, 1)
             anyPendingDependency || (maybeFollowFrame == Some(this))
           }
@@ -254,7 +261,7 @@ class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends Initia
             activeBranchDifferential(State.Executing, -1)
           } else {
             val out = node.state.reevOut(this, if (isChange) Some(value) else None)
-            // println(s"$this reevaluated $node to $value, branching $out")
+            if(FullMVEngine.DEBUG) println(s"$this reevaluated $node to $value, branching $out")
             processNotificationAndFollowOperation(node, isChange, out)
           }
       }

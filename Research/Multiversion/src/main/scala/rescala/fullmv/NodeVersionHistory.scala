@@ -8,9 +8,10 @@ import scala.collection.mutable.ArrayBuffer
 
 class Version[D, T, R](val txn: T, var stable: Boolean, var out: Set[R], var pending: Int, var changed: Int, var value: Option[D]) {
   def isWritten: Boolean = changed == 0 && value.isDefined
-  def isFrame: Boolean = pending > 0 || (changed > 0 && !isWritten)
-  def isWrite: Boolean = pending > 0 || changed > 0 || isWritten
-  def isReadOrDynamic: Boolean = !isWrite
+  def isReadOrDynamic: Boolean = pending == 0 && changed == 0 && value.isEmpty
+  def isOvertakeCompensation = pending < 0 || changed < 0
+  def isFrame: Boolean = pending > 0 || changed > 0
+  def isWrittenOrFrame: Boolean = isWritten || isFrame
   def isReadyForReevaluation: Boolean = pending == 0 && changed > 0
   def read(): D = {
     assert(isWritten, "reading un-written "+this)
@@ -20,14 +21,16 @@ class Version[D, T, R](val txn: T, var stable: Boolean, var out: Set[R], var pen
   override def toString: String = {
     if(isWritten){
       "Written(" + txn + ", out=" + out + ", v=" + value.get + ")"
-    } else if (isFrame) {
+    } else if (isReadOrDynamic) {
+      (if(stable) "Stable" else "Unstable") + "Marker(" + txn + ", out=" + out + ")"
+    } else if (isOvertakeCompensation) {
+      "OvertakeCompensation(" + txn + ", " + (if (stable) "stable" else "unstable") + ", out=" + out + ", pending=" + pending + ", changed=" + changed + ")"
+    } else if(isFrame) {
       if(isReadyForReevaluation) {
         "Active(" + txn + ", out=" + out + ")"
       } else {
         (if(stable) "First" else "") + "Frame(" + txn + ", out=" + out + ", pending=" + pending + ", changed=" + changed + ")"
       }
-    } else if (isReadOrDynamic) {
-      (if(stable) "Stable" else "Unstable") + "Marker(" + txn + ", out=" + out + ")"
     } else {
       "UnknownVersionCase!(" + txn + ", " + (if(stable) "stable" else "unstable") + ", out=" + out + ", pending=" + pending + ", changed=" + changed + ", value = " + value + ")"
     }
@@ -158,14 +161,14 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
   }
 
   /**
-    * traverse history back in time from the given position until the first write (i.e. [[Version.isWrite]])
+    * traverse history back in time from the given position until the first write (i.e. [[Version.isWrittenOrFrame]])
     * @param txn the FullMVTurn for which the previous write is being searched; used for error reporting only.
     * @param from the FullMVTurn's position, search starts at this position's predecessor version and moves backwards
-    * @return the first encountered version with [[Version.isWrite]]
+    * @return the first encountered version with [[Version.isWrittenOrFrame]]
     */
   private def prevWrite(txn: T, from: Int): Version[V, T, R] = {
     var position = from - 1
-    while(position >= 0 && !_versions(position).isWrite) position -= 1
+    while(position >= 0 && !_versions(position).isWrittenOrFrame) position -= 1
     if(position < 0) throw new IllegalArgumentException(txn + " does not have a preceding write in versions " + _versions.take(from))
     _versions(position)
   }
@@ -311,16 +314,15 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
   }
 
   /**
-    * progress [[firstFrame]] forward until a [[Version.isWrite]] is encountered, and
+    * progress [[firstFrame]] forward until a [[Version.isWrittenOrFrame]] is encountered, and
     * return the resulting notification out (with reframing if subsequent write is found).
     */
   def reevOut(turn: T, maybeValue: Option[V]): NotificationResultAction.NotificationOutAndSuccessorOperation[T, R] = synchronized {
     val position = firstFrame
     val version = _versions(position)
-    assert(version.txn == turn, s"Turn $turn called deevDone, but Turn ${version.txn} is first frame owner")
-    assert(version.value.isEmpty, s"cannot write one version twice")
-    assert(version.pending == 0, s"cannot write not-ready version")
-    assert(version.changed > 0 || (version.changed == 0 && maybeValue.isEmpty), s"cannot write read-version (changed="+version.changed+")")
+    assert(version.txn == turn, s"$turn called reevDone, but first frame is $version (different transaction)")
+    assert(version.value.isEmpty, s"cannot write twice: $version")
+    assert(!version.isOvertakeCompensation && (version.isReadyForReevaluation || (version.isReadOrDynamic && maybeValue.isEmpty)), s"cannot write $version")
 
     if(maybeValue.isDefined) {
       this.latestValue = maybeValue.get
@@ -334,7 +336,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
   }
 
   /**
-    * progresses [[firstFrame]] forward until a [[Version.isWrite]] is encountered (which is implied not
+    * progresses [[firstFrame]] forward until a [[Version.isWrittenOrFrame]] is encountered (which is implied not
     * [[Version.isWritten]] due to being positioned at/behind [[firstFrame]]) and assemble all necessary
     * information to send out change/nochange notifications for the given FullMVTurn
     *. Also capture synchronized,
@@ -351,7 +353,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
         assert(!version.stable, s"$debugOutputString cannot stabilize already-stable $version at position $firstFrame")
         version.stable = true
 
-        if (version.isWrite) {
+        if (version.isWrittenOrFrame) {
           if (version.isReadyForReevaluation) {
             NotificationResultAction.NotificationOutAndSuccessorOperation.NextReevaluation(out, version.txn)
           } else {
@@ -461,7 +463,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     val position = synchronizeDynamicAccess(txn)
     val version = _versions(position)
     // Note: isWrite, not isWritten!
-    if(version.isWrite) {
+    if(version.isWrittenOrFrame) {
       while(!version.isWritten) {
         // TODO figure out how we want to do this
         System.err.println(s"WARNING: Suspending "+txn+" for dynamic after on its own placeholder; aside from user-specified deadlocks, this may deadlock the application from depleting the task pool of workers.")
@@ -480,7 +482,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     } else {
       val version = _versions(position)
       // Note: isWrite, not isWritten!
-      if(version.isWrite) {
+      if(version.isWrittenOrFrame) {
         version.read()
       } else {
         beforeOrInit(txn, position)
@@ -499,7 +501,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     if(position >= 0) {
       val thisVersion = _versions(position)
       //      assert(thisVersion.out.contains(ticket.issuer), "regRead invoked without existing edge")
-      if (thisVersion.isWrite) {
+      if (thisVersion.isWrittenOrFrame) {
         thisVersion.read()
       } else {
         prevWrite(txn, position).read()
