@@ -9,7 +9,7 @@ import scala.collection.mutable.ArrayBuffer
 class Version[D, T, R](val txn: T, var stable: Boolean, var out: Set[R], var pending: Int, var changed: Int, var value: Option[D]) {
   def isWritten: Boolean = changed == 0 && value.isDefined
   def isReadOrDynamic: Boolean = pending == 0 && changed == 0 && value.isEmpty
-  def isOvertakeCompensation = pending < 0 || changed < 0
+  def isOvertakeCompensation: Boolean = pending < 0 || changed < 0
   def isFrame: Boolean = pending > 0 || changed > 0
   def isWrittenOrFrame: Boolean = isWritten || isFrame
   def isReadyForReevaluation: Boolean = pending == 0 && changed > 0

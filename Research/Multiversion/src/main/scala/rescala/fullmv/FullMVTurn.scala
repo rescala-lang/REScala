@@ -190,8 +190,8 @@ class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends Initia
 
   def notify(node: Reactive[FullMVStruct], changed: Boolean, maybeFollowFrame: Option[FullMVTurn]): Unit = {
     assert(state == State.Executing, s"$this cannot receive notification (requires executing phase)")
-    assert(!maybeFollowFrame.isDefined || maybeFollowFrame.get.state >= State.Framing, s"${maybeFollowFrame.get} cannot receive follow frame (requires at least Framing phase)")
-    assert(!maybeFollowFrame.isDefined || maybeFollowFrame.get.state <= State.Executing, s"${maybeFollowFrame.get} cannot receive follow frame (requires at most Executing phase)")
+    assert(maybeFollowFrame.isEmpty || maybeFollowFrame.get.state >= State.Framing, s"${maybeFollowFrame.get} cannot receive follow frame (requires at least Framing phase)")
+    assert(maybeFollowFrame.isEmpty || maybeFollowFrame.get.state <= State.Executing, s"${maybeFollowFrame.get} cannot receive follow frame (requires at most Executing phase)")
 
     val notificationResultAction = node.state.notify(this, changed, maybeFollowFrame)
     if(FullMVEngine.DEBUG) println(s"$this notified $node changed=$changed resulting in $notificationResultAction")
@@ -294,7 +294,7 @@ class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends Initia
 
   override def observe(f: () => Unit): Unit = f()
 
-  override def toString(): String = synchronized {
+  override def toString: String = synchronized {
     "FullMVTurn(" + System.identityHashCode(this) + ", " + (state match {
       case 0 => "Initialized"
       case 1 => "Framing("+activeBranches+")"
