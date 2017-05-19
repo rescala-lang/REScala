@@ -26,14 +26,13 @@ class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(ov
             }
         }
       })
-
     }
 
     for (i <- 0 until tableSize) yield {
       val ownName = i.toString
       val fork1 = forks(i)
       val fork2 = forks(mod(i - 1))
-      val vision = named(s"Vision($i, ${mod(i - 1)})")(Signal {
+      val vision = named(s"Vision($i)")(Signal {
         fork1() match {
           case Taken(name) if name != ownName => WaitingFor(name)
           case Taken(`ownName`) => Eating
@@ -43,7 +42,7 @@ class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(ov
           }
         }
       })
-      Seating(i, phils(i), fork1, forks(mod(i - 1)), vision)
+      Seating(i, phils(i), fork1, fork2, vision)
     }
   }
 
