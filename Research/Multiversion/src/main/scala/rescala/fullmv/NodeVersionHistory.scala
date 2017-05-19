@@ -60,6 +60,15 @@ object NotificationResultAction {
   }
 }
 
+/**
+  * A node version history datastructure
+  * @param sgt the transaction ordering authority
+  * @param init the initial creating transaction
+  * @param valuePersistency the value persistency descriptor
+  * @tparam V the type of stored values
+  * @tparam T the type of transactions
+  * @tparam R the type of dependency nodes (reactives)
+  */
 class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: T, val valuePersistency: ValuePersistency[V]) {
   @elidable(ASSERTION) @inline
   def assertStabilityIsCorrect(debugOutputDescription: => String): Unit = {
@@ -79,8 +88,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
   /**
     * creates a version and inserts it at the given position; default parameters create a "read" version
     * @param position the position
-    * @param txn the FullMVTurn
-    *           this version is associated with
+    * @param txn the transaction this version is associated with
     * @param pending the number of pending notifications, none by default
     * @param changed the number of already received change notifications, none by default
     * @return the created version
@@ -98,38 +106,29 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
   var firstFrame: Int = _versions.size
 
   /**
-    * performs binary search for the given FullMVTurn
-    *in _versions. If no version associated with the given
-    * FullMVTurn
-    *is found, it establishes an order in sgt against all other versions' FullMVTurn
-    *s, placing
-    * the given FullMVTurn
-    *as late as possible. For this it first finds the latest possible insertion point. Assume,
+    * performs binary search for the given transaction in _versions. If no version associated with the given
+    * transaction is found, it establishes an order in sgt against all other versions' transactions, placing
+    * the given transaction as late as possible. For this it first finds the latest possible insertion point. Assume,
     * for a given txn, this is between versions y and z. As the latest point is used, it is txn < z.txn. To fixate this
     * order, the search thus attempts to establish y.txn < txn in sgt. This may fail, however, if concurrent
     * threads intervened and established txn < y.txn. For this case, the search keeps track of the latest x for which
     * x.txn < txn is already established. It then restarts the search in the reduced fallback range between x and y.
-    * @param lookFor the FullMVTurn to look for
+    * @param lookFor the transaction to look for
     * @param recoverFrom current fallback from index in case of order establishment fallback
     * @param from current from index of the search range
     * @param to current to index (exclusive) of the search range
-    * @return the index of the version associated with the given FullMVTurn
-    *        , or if no such version exists the negative
+    * @return the index of the version associated with the given transaction, or if no such version exists the negative
     *         index it would have to be inserted. Note that we assume no insertion to ever occur at index 0 -- the
-    *         the first version of any node is either from the FullMVTurn
-    *        that created it or from some completed
-    *         FullMVTurn
-    *        . In the former case, no preceding FullMVTurn
-    *        should be aware of the node's existence. In the
-    *         latter case, there are no preceding FullMVTurn
-    *        s that still execute operations. Thus insertion at index 0
+    *         the first version of any node is either from the transaction that created it or from some completed
+    *         transaction. In the former case, no preceding transaction should be aware of the node's existence. In the
+    *         latter case, there are no preceding transactions that still execute operations. Thus insertion at index 0
     *         should be impossible. A return value of 0 thus means "found at 0", rather than "should insert at 0"
     */
   @tailrec
   private def findOrPidgeonHole(lookFor: T, recoverFrom: Int, from: Int, to: Int): Int = {
     if (to == from) {
       assert(from > 0, s"Found an insertion point of 0 for $lookFor; insertion points must always be after the base state version.")
-      if(sgt.ensureOrder(_versions(math.abs(from) - 1).txn, lookFor) == FirstFirst) {
+      if(sgt.ensureOrder(_versions(from - 1).txn, lookFor) == FirstFirst) {
         -from
       } else {
         assert(recoverFrom < from, s"Illegal position hint: $lookFor must be before $recoverFrom")
@@ -152,9 +151,9 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
   }
 
   /**
-    * determine the position or insertion point for a framing FullMVTurn
+    * determine the position or insertion point for a framing transaction
     *
-    * @param txn the FullMVTurn
+    * @param txn the transaction
     * @return the position (positive values) or insertion point (negative values)
     */
   private def findFrame(txn: T): Int = {
@@ -163,8 +162,8 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
 
   /**
     * traverse history back in time from the given position until the first write (i.e. [[Version.isWrittenOrFrame]])
-    * @param txn the FullMVTurn for which the previous write is being searched; used for error reporting only.
-    * @param from the FullMVTurn's position, search starts at this position's predecessor version and moves backwards
+    * @param txn the transaction for which the previous write is being searched; used for error reporting only.
+    * @param from the transaction's position, search starts at this position's predecessor version and moves backwards
     * @return the first encountered version with [[Version.isWrittenOrFrame]]
     */
   private def prevWrite(txn: T, from: Int): Version[V, T, R] = {
@@ -178,9 +177,8 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
 
   /**
     * entry point for superseding framing
-    * @param txn the FullMVTurn visiting the node for framing
-    * @param supersede the FullMVTurn whose frame was superseded by the visiting FullMVTurn
-    *                 at the previous node
+    * @param txn the transaction visiting the node for framing
+    * @param supersede the transaction whose frame was superseded by the visiting transaction at the previous node
     */
   def incrementSupersedeFrame(txn: T, supersede: T): FramingBranchResult[T, R] = synchronized {
     val result = incrementFrame0(txn)
@@ -196,7 +194,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
 
   /**
     * entry point for regular framing
-    * @param txn the FullMVTurn visiting the node for framing
+    * @param txn the transaction visiting the node for framing
     */
   def incrementFrame(txn: T): FramingBranchResult[T, R] = synchronized {
     val result = incrementFrame0(txn)
@@ -206,7 +204,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
 
   /**
     * creates a frame if none exists, or increments an existing frame's [[Version.pending]] counter.
-    * @param txn the FullMVTurn visiting the node for framing
+    * @param txn the transaction visiting the node for framing
     * @return a descriptor of how this framing has to propagate
     */
   private def incrementFrame0(txn: T): FramingBranchResult[T, R] = {
@@ -238,10 +236,9 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
 
   /**
     * entry point for change/nochange notification reception
-    * @param txn the FullMVTurn sending the notification
+    * @param txn the transaction sending the notification
     * @param changed whether or not the dependency changed
-    * @param maybeFollowFrame possibly a FullMVTurn
-    *                        for which to create a subsequent frame, furthering its partial framing.
+    * @param maybeFollowFrame possibly a transaction for which to create a subsequent frame, furthering its partial framing.
     */
   def notify(txn: T, changed: Boolean, maybeFollowFrame: Option[T]): NotificationResultAction[T, R] = synchronized {
     val position = findFrame(txn)
@@ -339,8 +336,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
   /**
     * progresses [[firstFrame]] forward until a [[Version.isWrittenOrFrame]] is encountered (which is implied not
     * [[Version.isWritten]] due to being positioned at/behind [[firstFrame]]) and assemble all necessary
-    * information to send out change/nochange notifications for the given FullMVTurn
-    *. Also capture synchronized,
+    * information to send out change/nochange notifications for the given transaction. Also capture synchronized,
     * whether or not the possibly encountered write [[Version.isReadyForReevaluation]].
     * @return the notification and next reevaluation descriptor.
     */
@@ -376,7 +372,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
 
   /**
     * ensures at least a read version is stored to track executed reads or dynamic operations.
-    * @param txn the executing FullMVTurn
+    * @param txn the executing transaction
     * @return the version's position.
     */
   private def ensureReadVersion(txn: T, knownMinPos: Int = 0): Int = {
@@ -403,8 +399,8 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
 
   /**
     * entry point for before(this); may suspend.
-    * @param txn the executing FullMVTurn
-    * @return the corresponding [[Version.value]] from before this FullMVTurn, i.e., ignoring the FullMVTurn's
+    * @param txn the executing transaction
+    * @return the corresponding [[Version.value]] from before this transaction, i.e., ignoring the transaction's
     *         own writes.
     */
   def dynamicBefore(txn: T): V = synchronized {
@@ -422,10 +418,9 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
 
   /**
     * entry point for now(this); may suspend.
-    * @param txn the executing FullMVTurn
+    * @param txn the executing transaction
     * @return the corresponding [[Version.value]] at the current point in time (but still serializable), i.e.,
-    *         possibly returning the FullMVTurn
-    *        's own write if this already occurred.
+    *         possibly returning the transaction's own write if this already occurred.
     */
   def dynamicNow(txn: T): V = synchronized {
     val position = synchronizeDynamicAccess(txn)
@@ -456,9 +451,9 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
 
   /**
     * entry point for after(this); may suspend.
-    * @param txn the executing FullMVTurn
-    * @return the corresponding [[Version.value]] from after this FullMVTurn, i.e., awaiting and returning the
-    *         FullMVTurn's own write if one has occurred or will occur.
+    * @param txn the executing transaction
+    * @return the corresponding [[Version.value]] from after this transaction, i.e., awaiting and returning the
+    *         transaction's own write if one has occurred or will occur.
     */
   def dynamicAfter(txn: T): V = {
     val position = synchronizeDynamicAccess(txn)
@@ -495,8 +490,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
 
   /**
     * entry point for discover(this, add). May suspend.
-    * @param txn the executing reevaluation's FullMVTurn
-    *
+    * @param txn the executing reevaluation's transaction
     * @param add the new edge's sink node
     * @return the appropriate [[Version.value]].
     */
@@ -508,8 +502,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
 
   /**
     * entry point for drop(this, ticket.issuer); may suspend temporarily.
-    * @param txn the executing reevaluation's FullMVTurn
-    *
+    * @param txn the executing reevaluation's transaction
     * @param remove the removed edge's sink node
     */
   def drop(txn: T, remove: R): (ArrayBuffer[T], Option[T]) = synchronized {
@@ -549,15 +542,11 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
 
   /**
     * rewrites all affected [[Version.out]] of the source this during drop(this, delta) with arity -1 or
-    * discover(this, delta) with arity +1, and collects FullMVTurn
-    *s for retrofitting frames on the sink node
-    * @param position the executing FullMVTurn
-    *                's version's position
+    * discover(this, delta) with arity +1, and collects transactions for retrofitting frames on the sink node
+    * @param position the executing transaction's version's position
     * @param delta the outgoing dependency to add/remove
     * @param arity +1 to add, -1 to remove delta to each [[Version.out]]
-    * @return a list of FullMVTurn
-    *        s with written successor versions and maybe the FullMVTurn
-    *        of the first successor
+    * @return a list of transactions with written successor versions and maybe the transaction of the first successor
     *         frame if it exists, for which reframings have to be performed at the sink.
     */
   private def retrofitSourceOuts(position: Int, delta: R, arity: Int): (ArrayBuffer[T], Option[T]) = {
