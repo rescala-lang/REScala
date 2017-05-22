@@ -30,21 +30,16 @@ class PhiloTest extends FunSuite {
     println(s"philo party done sleeping on $engine (dynamic $dynamic)")
   }
 
-
   test("eating Contests Spinning") {`eat!`(Engines.parrp, dynamic = false)}
-
   test("eating Contests Spinning Dynamic") {`eat!`(Engines.parrp, dynamic = true)}
 
   test("eating Contests Spinning Locksweep") {`eat!`(Engines.locksweep, dynamic = false)}
-
   test("eating Contests Spinning Dynamic Locksweep") {`eat!`(Engines.locksweep, dynamic = true)}
 
   test("eating Contests Spinning FullMV") {`eat!`(FullMVEngine, dynamic = false)}
-
-//  test("eating Contests Spinning Dynamic FullMV") {`eat!`(FullMVEngine, dynamic = true)}
+  test("eating Contests Spinning Dynamic FullMV") {`eat!`(FullMVEngine, dynamic = true)}
 
   //  test("eatingContestsSpinningParallelLocksweep"){`eat!`(JVMEngines.parallellocksweep, dynamic = false)}
-  //
   //  test("eatingContestsSpinningDynamicParallelLocksweep"){`eat!`(JVMEngines.parallellocksweep, dynamic = true)}
 
 }

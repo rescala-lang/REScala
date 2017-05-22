@@ -71,12 +71,18 @@ object NotificationResultAction {
   */
 class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: T, val valuePersistency: ValuePersistency[V]) {
   @elidable(ASSERTION) @inline
-  def assertStabilityIsCorrect(debugOutputDescription: => String): Unit = {
-    assert(!_versions.zipWithIndex.exists{case (version, index) => version.stable != (index <= firstFrame)},
-      s"$debugOutputDescription left broken version stability (firstFrame $firstFrame): \n  ${
-        _versions.zipWithIndex.map{case (version, index) => s"$index: $version"}.mkString("\n  ")
-      }")
+  def assertOptimizationsIntegrity(debugOutputDescription: => String): Unit = {
+    def debugStatement(whatsWrong: String): String = s"$debugOutputDescription left $whatsWrong (latestWritten $latestWritten, ${if(firstFrame > _versions.size) "no frames" else "firstFrame "+firstFrame}): \n" + _versions.zipWithIndex.map{case (version, index) => s"$index: $version"}.mkString("\n  ")
+
+    assert(firstFrame >= _versions.size || _versions(firstFrame).isFrame, debugStatement("firstFrame not frame"))
+    assert(!_versions.take(firstFrame).exists(_.isFrame), debugStatement("firstFrame not first"))
+
+    assert(_versions(latestWritten).isWritten, debugStatement("latestWritten not written"))
+    assert(!_versions.drop(latestWritten + 1).exists(_.isWritten), debugStatement("latestWritten not latest"))
+
+    assert(!_versions.zipWithIndex.exists{case (version, index) => version.stable != (index <= firstFrame)}, debugStatement("broken version stability"))
   }
+
   // =================== STORAGE ====================
 
   var _versions = new ArrayBuffer[Version[V, T, R]](6)
@@ -98,12 +104,14 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     val version = new Version[V, T, R](txn, stable = position <= firstFrame, _versions(position - 1).out, pending, changed, None)
     _versions.insert(position, version)
     if(position <= firstFrame) firstFrame += 1
+    if(position <= latestWritten) latestWritten += 1
     version
   }
 
 
   // =================== NAVIGATION ====================
   var firstFrame: Int = _versions.size
+  var latestWritten: Int = 0
 
   /**
     * performs binary search for the given transaction in _versions. If no version associated with the given
@@ -157,7 +165,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     * @return the position (positive values) or insertion point (negative values)
     */
   private def findFrame(txn: T): Int = {
-    findOrPidgeonHole(txn, firstFrame, firstFrame, _versions.size)
+    findOrPidgeonHole(txn, latestWritten, latestWritten, _versions.size)
   }
 
   /**
@@ -188,7 +196,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     } else {
       createVersion(-supersedePosition, supersede, pending = -1)
     }
-    assertStabilityIsCorrect(s"incrementSupersedeFrame($txn, $supersede)")
+    assertOptimizationsIntegrity(s"incrementSupersedeFrame($txn, $supersede)")
     result
   }
 
@@ -198,7 +206,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     */
   def incrementFrame(txn: T): FramingBranchResult[T, R] = synchronized {
     val result = incrementFrame0(txn)
-    assertStabilityIsCorrect(s"incrementFrame($txn)")
+    assertOptimizationsIntegrity(s"incrementFrame($txn)")
     result
   }
 
@@ -210,7 +218,24 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
   private def incrementFrame0(txn: T): FramingBranchResult[T, R] = {
     val position = findFrame(txn)
     if(position >= 0) {
-      _versions(position).pending += 1
+      val version = _versions(position)
+      version.pending += 1
+      if(version.pending == 1 && position < firstFrame) {
+        // this case (a version is framed for the "first" time, i.e., pending == 1, during framing, but already existed
+        // beforehand) is relevant if drop retrofitting downgraded a frame into a marker and the marker and subsequent
+        // versions were subsequently stabilized. Since this marker is now upgraded back into a frame, subsequent
+        // versions need to be unstabilized again. This is safe to do because this method is only called by framing
+        // transactions, meaning all subsequent versions must also be frames, deleted frame markers, or to be deleted
+        // frame drop compensations. This case cannot occur for follow framings attached to change notifications,
+        // because these imply a preceding reevaluation, meaning neither the incremented frame nor any subsequent
+        // frame can be stable yet.
+        firstFrame = position
+        var pos = position + 1
+        while(pos < _versions.size && _versions(pos).stable) {
+          _versions(pos).stable = false
+          pos += 1
+        }
+      }
       FramingBranchResult.FramingBranchEnd
     } else {
       val frame = createVersion(-position, txn, pending = 1)
@@ -259,7 +284,10 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
 
     // apply notification changes
     val result = if(position < 0) {
-      assert(-position > firstFrame)
+      assert(-position != firstFrame, "(no)change notification, which overtook (a) discovery retrofitting or " +
+        "(b) predecessor (no)change notification with followFraming for this transaction, wants to create FirstFrame, " +
+        "which should be impossible because firstFrame should be (a) the predecessor reevaluation performing said retrofitting or " +
+        "(b) the predecessor reevaluation pending reception of said (no)change notification.")
       // note: this case occurs if a (no)change notification overtook discovery retrofitting, and sets pending to -1!
       // In this case, we simply return the results as if discovery retrofitting had already happened: As we know
       // that it is still in progress, there must be a preceding active reevaluation (hence above assertion), so the
@@ -275,6 +303,12 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
       }
     } else {
       val version = _versions(position)
+      // This assertion is probably pointless as it only verifies a subset of assertStabilityIsCorrect, i.e., if this
+      // would fail, then assertStabilityIsCorrect will have failed at the end of the previous operation already.
+      assert((position == firstFrame) == version.stable, "firstFrame and stable diverted..")
+
+      // note: if the notification overtook a previous turn's notification with followFraming for this transaction,
+      // pending may update from 0 to -1 here
       version.pending -= 1
       if (changed) {
         // note: if drop retrofitting overtook the change notification, change may update from -1 to 0 here!
@@ -301,7 +335,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
         NotificationResultAction.NotGlitchFreeReady
       }
     }
-    assertStabilityIsCorrect(s"notify($txn, $changed, $maybeFollowFrame)")
+    assertOptimizationsIntegrity(s"notify($txn, $changed, $maybeFollowFrame)")
     result
   }
 
@@ -323,13 +357,14 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     assert(!version.isOvertakeCompensation && (version.isReadyForReevaluation || (version.isReadOrDynamic && maybeValue.isEmpty)), s"cannot write $version")
 
     if(maybeValue.isDefined) {
+      latestWritten = position
       this.latestValue = maybeValue.get
       version.value = maybeValue
     }
     version.changed = 0
 
     val result = progressToNextWriteForNotification(s"$this ReevOut($position)${if(maybeValue.isDefined) "Changed" else "Unchanged"}", version.out)
-    assertStabilityIsCorrect(s"reevOut($turn, ${maybeValue.isDefined})")
+    assertOptimizationsIntegrity(s"reevOut($turn, ${maybeValue.isDefined})")
     result
   }
 
@@ -383,7 +418,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     } else {
       position
     }
-    assertStabilityIsCorrect(s"ensureReadVersion($txn)")
+    assertOptimizationsIntegrity(s"ensureReadVersion($txn)")
     result
   }
 
@@ -392,7 +427,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     val version = _versions(position)
     while(!version.stable) wait()
 
-    val stablePosition = if(version.isFrame) firstFrame else findOrPidgeonHole(txn, 0, 0, firstFrame)
+    val stablePosition = if(version.isFrame) firstFrame else findOrPidgeonHole(txn, 1, 1, firstFrame)
     assert(stablePosition >= 0, "somehow, the version allocated above disappeared..")
     stablePosition
   }
@@ -408,7 +443,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
   }
 
   def staticBefore(txn: T): V = synchronized {
-    before(txn, math.abs(findOrPidgeonHole(txn, 0, 0, firstFrame)))
+    before(txn, math.abs(findOrPidgeonHole(txn, 1, 1, firstFrame)))
   }
 
   private def before(txn: T, position: Int): V = synchronized {
@@ -428,7 +463,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
   }
 
   def staticNow(txn: T): V = synchronized {
-    val position = findOrPidgeonHole(txn, 0, 0, firstFrame)
+    val position = findOrPidgeonHole(txn, 1, 1, firstFrame)
     if(position < 0) {
       beforeOrInit(txn, -position)
     } else {
@@ -472,7 +507,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
   }
 
   def staticAfter(txn: T): V = {
-    val position = findOrPidgeonHole(txn, 0, 0, firstFrame)
+    val position = findOrPidgeonHole(txn, 1, 1, firstFrame)
     if(position < 0) {
       beforeOrInit(txn, -position)
     } else {
