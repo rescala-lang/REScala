@@ -26,10 +26,18 @@ class Version[D, T, R](val txn: T, var stable: Boolean, var out: Set[R], var pen
     } else if (isOvertakeCompensation) {
       "OvertakeCompensation(" + txn + ", " + (if (stable) "stable" else "unstable") + ", out=" + out + ", pending=" + pending + ", changed=" + changed + ")"
     } else if(isFrame) {
-      if(isReadyForReevaluation) {
-        "Active(" + txn + ", out=" + out + ")"
+      if(stable) {
+        if(isReadyForReevaluation) {
+          "Active(" + txn + ", out=" + out + ")"
+        } else {
+          "FirstFrame(" + txn + ", out=" + out + ", pending=" + pending + ", changed=" + changed + ")"
+        }
       } else {
-        (if(stable) "First" else "") + "Frame(" + txn + ", out=" + out + ", pending=" + pending + ", changed=" + changed + ")"
+        if(isReadyForReevaluation) {
+          "Queued(" + txn + ", out=" + out + ")"
+        } else {
+          "Frame(" + txn + ", out=" + out + ", pending=" + pending + ", changed=" + changed + ")"
+        }
       }
     } else {
       "UnknownVersionCase!(" + txn + ", " + (if(stable) "stable" else "unstable") + ", out=" + out + ", pending=" + pending + ", changed=" + changed + ", value = " + value + ")"
@@ -72,7 +80,7 @@ object NotificationResultAction {
 class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: T, val valuePersistency: ValuePersistency[V]) {
   @elidable(ASSERTION) @inline
   def assertOptimizationsIntegrity(debugOutputDescription: => String): Unit = {
-    def debugStatement(whatsWrong: String): String = s"$debugOutputDescription left $whatsWrong (latestWritten $latestWritten, ${if(firstFrame > _versions.size) "no frames" else "firstFrame "+firstFrame}): \n" + _versions.zipWithIndex.map{case (version, index) => s"$index: $version"}.mkString("\n  ")
+    def debugStatement(whatsWrong: String): String = s"$debugOutputDescription left $whatsWrong (latestWritten $latestWritten, ${if(firstFrame > _versions.size) "no frames" else "firstFrame "+firstFrame}): \n  " + _versions.zipWithIndex.map{case (version, index) => s"$index: $version"}.mkString("\n  ")
 
     assert(firstFrame >= _versions.size || _versions(firstFrame).isFrame, debugStatement("firstFrame not frame"))
     assert(!_versions.take(firstFrame).exists(_.isFrame), debugStatement("firstFrame not first"))
@@ -196,7 +204,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     } else {
       createVersion(-supersedePosition, supersede, pending = -1)
     }
-    assertOptimizationsIntegrity(s"incrementSupersedeFrame($txn, $supersede)")
+    assertOptimizationsIntegrity(s"incrementSupersedeFrame($txn, $supersede) -> $result")
     result
   }
 
@@ -206,7 +214,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     */
   def incrementFrame(txn: T): FramingBranchResult[T, R] = synchronized {
     val result = incrementFrame0(txn)
-    assertOptimizationsIntegrity(s"incrementFrame($txn)")
+    assertOptimizationsIntegrity(s"incrementFrame($txn) -> $result")
     result
   }
 
@@ -335,7 +343,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
         NotificationResultAction.NotGlitchFreeReady
       }
     }
-    assertOptimizationsIntegrity(s"notify($txn, $changed, $maybeFollowFrame)")
+    assertOptimizationsIntegrity(s"notify($txn, $changed, $maybeFollowFrame) -> $result")
     result
   }
 
@@ -364,7 +372,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     version.changed = 0
 
     val result = progressToNextWriteForNotification(s"$this ReevOut($position)${if(maybeValue.isDefined) "Changed" else "Unchanged"}", version.out)
-    assertOptimizationsIntegrity(s"reevOut($turn, ${maybeValue.isDefined})")
+    assertOptimizationsIntegrity(s"reevOut($turn, ${maybeValue.isDefined}) -> $result")
     result
   }
 
@@ -412,18 +420,17 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     */
   private def ensureReadVersion(txn: T, knownMinPos: Int = 0): Int = {
     val position = findOrPidgeonHole(txn, knownMinPos, knownMinPos, _versions.size)
-    val result = if(position < 0) {
+    if(position < 0) {
       createVersion(-position, txn)
       -position
     } else {
       position
     }
-    assertOptimizationsIntegrity(s"ensureReadVersion($txn)")
-    result
   }
 
   def synchronizeDynamicAccess(txn: T): Int = synchronized {
     val position = ensureReadVersion(txn)
+    assertOptimizationsIntegrity(s"ensureReadVersion($txn)")
     val version = _versions(position)
     while(!version.stable) wait()
 
@@ -531,6 +538,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     */
   def discover(txn: T, add: R): (ArrayBuffer[T], Option[T]) = synchronized {
     val position = ensureReadVersion(txn)
+    assertOptimizationsIntegrity(s"ensureReadVersion($txn)")
     assert(!_versions(position).out.contains(add), "must not discover an already existing edge!")
     retrofitSourceOuts(position, add, +1)
   }
@@ -542,6 +550,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     */
   def drop(txn: T, remove: R): (ArrayBuffer[T], Option[T]) = synchronized {
     val position = ensureReadVersion(txn)
+    assertOptimizationsIntegrity(s"ensureReadVersion($txn)")
     assert(_versions(position).out.contains(remove), "must not drop a non-existing edge!")
     retrofitSourceOuts(position, remove, -1)
   }
