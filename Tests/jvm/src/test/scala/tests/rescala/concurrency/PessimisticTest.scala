@@ -28,7 +28,7 @@ class PessimisticTest extends RETests {
 
     v2.set(true)
     t1.join(1000)
-    assert(latch.getCount() == 0)
+    assert(latch.getCount == 0)
 
     assert(s1.now === true)
     trackS1.assertClear(true)
@@ -46,14 +46,14 @@ class PessimisticTest extends RETests {
 
     val latch = new CountDownLatch(size)
     val threads = sources.map(v => Spawn {
-      latch.countDown();
-      latch.await();
+      latch.countDown()
+      latch.await()
       v.set(1)
     })
 
     val timeout = System.currentTimeMillis() + 1000
     threads.foreach(_.join(math.max(0, timeout - System.currentTimeMillis())))
-    assert(latch.getCount() == 0)
+    assert(latch.getCount == 0)
 
     sumTracker.assert((0 to size).reverse:_*)
     assert(sum.now === size)
@@ -74,7 +74,7 @@ class PessimisticTest extends RETests {
 
     val threads = sources.map(v => Spawn {v.set(1)})
     threads.foreach(_.join(1000))
-    assert(latch.getCount() == 0)
+    assert(latch.getCount == 0)
 
     sumTracker.assert((0 to size).reverse:_*)
     assert(sum.now === size)
@@ -111,8 +111,8 @@ class PessimisticTest extends RETests {
     val t2 = Spawn(v2.set(5))
 
     Thread.sleep(100)
-    assert(latch.getCount() === 0) // common latch should be clear
-    assert(latch1.getCount() === 1) // t1 in should wait for manual approval only
+    assert(latch.getCount === 0) // common latch should be clear
+    assert(latch1.getCount === 1) // t1 in should wait for manual approval only
     results2.assertClear() // i should not have propagated over the dynamic discovery, despite being blocked manually
 
     latch1.countDown()
@@ -241,8 +241,8 @@ class PessimisticTest extends RETests {
     val t2 = Spawn {il0.set(0)}
 
     Thread.sleep(100)
-    assert(latch.getCount() === 0) // common latch should be clear
-    assert(latch1.getCount() === 1) // b should wait for manual approval only
+    assert(latch.getCount === 0) // common latch should be clear
+    assert(latch1.getCount === 1) // b should wait for manual approval only
     results2.assertClear() // i should not have propagated over the dynamic discovery, despite not being blocked manually
 
     latch1.countDown()
@@ -313,8 +313,8 @@ class PessimisticTest extends RETests {
     val t2 = Spawn {il0.set(17)}
 
     Thread.sleep(100)
-    assert(latch.getCount() === 0) // common latch should be clear
-    assert(latch1.getCount() === 1) // b should wait for manual approval only
+    assert(latch.getCount === 0) // common latch should be clear
+    assert(latch1.getCount === 1) // b should wait for manual approval only
     results2.assertClear() // i should not have propagated over the dynamic discovery, despite not being blocked manually
 
     latch1.countDown()
