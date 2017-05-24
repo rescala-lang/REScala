@@ -271,27 +271,40 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     * entry point for change/nochange notification reception
     * @param txn the transaction sending the notification
     * @param changed whether or not the dependency changed
-    * @param maybeFollowFrame possibly a transaction for which to create a subsequent frame, furthering its partial framing.
     */
-  def notify(txn: T, changed: Boolean, maybeFollowFrame: Option[T]): NotificationResultAction[T, R] = synchronized {
+  def notify(txn: T, changed: Boolean): NotificationResultAction[T, R] = synchronized {
+    val result = notify0(findFrame(txn), txn, changed)
+    assertOptimizationsIntegrity(s"notify($txn, $changed) -> $result")
+    result
+  }
+
+  /**
+    * entry point for change/nochange notification reception with follow-up framing
+    * @param txn the transaction sending the notification
+    * @param changed whether or not the dependency changed
+    * @param followFrame a transaction for which to create a subsequent frame, furthering its partial framing.
+    */
+  def notifyFollowFrame(txn: T, changed: Boolean, followFrame: T): NotificationResultAction[T, R] = synchronized {
     val position = findFrame(txn)
 
     // do follow framing
-    if(maybeFollowFrame.isDefined) {
-      val followFrameMinPosition = if(position > 0) position + 1 else -position
-      val followTxn = maybeFollowFrame.get
-      // because we know that txn << followTxn, followTxn cannot be involved with firstFrame stuff.
-      // thus followTxn also does not need this framing propagated by itself.
-      val followPosition = findOrPidgeonHole(followTxn, followFrameMinPosition, followFrameMinPosition, _versions.size)
-      if(followPosition >= 0) {
-        _versions(followPosition).pending += 1
-      } else {
-        createVersion(-followPosition, followTxn, pending = 1)
-      }
+    val followFrameMinPosition = if (position > 0) position + 1 else -position
+    // because we know that txn << followTxn, followTxn cannot be involved with firstFrame stuff.
+    // thus followTxn also does not need this framing propagated by itself.
+    val followPosition = findOrPidgeonHole(followFrame, followFrameMinPosition, followFrameMinPosition, _versions.size)
+    if (followPosition >= 0) {
+      _versions(followPosition).pending += 1
+    } else {
+      createVersion(-followPosition, followFrame, pending = 1)
     }
 
-    // apply notification changes
-    val result = if(position < 0) {
+    val result = notify0(findFrame(txn), txn, changed)
+    assertOptimizationsIntegrity(s"notifyFollowFrame($txn, $changed, $followFrame) -> $result")
+    result
+  }
+
+  def notify0(position: Int, txn: T, changed: Boolean): NotificationResultAction[T, R] = {
+    if(position < 0) {
       assert(-position != firstFrame, "(no)change notification, which overtook (a) discovery retrofitting or " +
         "(b) predecessor (no)change notification with followFraming for this transaction, wants to create FirstFrame, " +
         "which should be impossible because firstFrame should be (a) the predecessor reevaluation performing said retrofitting or " +
@@ -343,8 +356,6 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
         NotificationResultAction.NotGlitchFreeReady
       }
     }
-    assertOptimizationsIntegrity(s"notify($txn, $changed, $maybeFollowFrame) -> $result")
-    result
   }
 
   def reevIn(turn: T): (V, Set[R]) = {
