@@ -3,6 +3,7 @@ package rescala.fullmv
 import rescala.engine.EngineImpl
 import rescala.fullmv.wsdeque.NonBlockingCircularArrayWSDeque
 
+import scala.annotation.tailrec
 import scala.util.Try
 
 object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
@@ -23,6 +24,7 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
   }
 
   object sgt extends SerializationGraphTracking[FullMVTurn] {
+    val DEBUG = false
     private var predecessors = Map[FullMVTurn, Set[FullMVTurn]]().withDefaultValue(Set())
     private var successors = Map[FullMVTurn, Set[FullMVTurn]]().withDefaultValue(Set())
 
@@ -47,6 +49,7 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
     }
 
     private def establishOrder(first: FullMVTurn, second: FullMVTurn): Unit = {
+      if(DEBUG) println(s"[${Thread.currentThread().getName}] establish SGT order $first -> $second")
       val allAfter = successors(second) + second
       val allBefore = predecessors(first) + first
       for(succ <- allAfter) predecessors += succ -> (predecessors(succ) ++ allBefore)
@@ -92,8 +95,9 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
       // because the turn on which this suspended will hold the suspension until these new transitive predecessors have
       // reached the same stage first. Thus, looking up our own predecessors again after a suspension might reveal
       // additional predecessors, but they would all have reached the required state already.
-      sgt.predecessors(turn).foreach {
-        _.awaitState(atLeast)
+      synchronized{sgt.predecessors(turn)}.foreach { waitFor =>
+        if(DEBUG) println(s"[${Thread.currentThread().getName}] $turn awaiting state $atLeast of $waitFor")
+        waitFor.awaitState(atLeast)
       }
     }
   }
@@ -119,9 +123,17 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
       for(i <- initialWrites) entryWorkQueue.pushBottom(new Notification(turn, i, changed = admissionResult.isSuccess))
     }
 
-    // propagation completion
-    sgt.awaitAllPredecessorsState(turn, State.WrapUp)
-    turn.awaitBranches()
+    @tailrec def awaitPropagationCompletion(completedReevaluationsBefore: Int): Unit = {
+      // propagation completion
+      sgt.awaitAllPredecessorsState(turn, State.WrapUp)
+      val completedReevaluationsAfter = turn.awaitBranches()
+      if(completedReevaluationsBefore != completedReevaluationsAfter) {
+        // retrofitted reevaluations may perform dynamic reads that establish orders with previously
+        // entirely unrelated other turns, hence we have to repeat waiting here.
+        awaitPropagationCompletion(completedReevaluationsAfter)
+      }
+    }
+    awaitPropagationCompletion(0)
 
     // wrap-up
     turn.beginPhase(State.WrapUp, 0)

@@ -1,5 +1,7 @@
 package rescala.fullmv
 
+import java.util.concurrent.atomic.AtomicInteger
+
 import rescala.engine.{InitializationImpl, ValuePersistency}
 import rescala.fullmv.FramingBranchResult._
 import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation._
@@ -37,6 +39,7 @@ class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends Initia
   @volatile var state: State.Type = State.Initialized
   object stateParking
   var activeBranches: Int = 0
+  val completedReevaluations = new AtomicInteger(0)
 
   def activeBranchDifferential(forState: State.Type, differential: Int): Unit = synchronized {
     assert(state == forState, s"$this received branch differential for wrong state $state")
@@ -46,21 +49,22 @@ class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends Initia
     }
   }
 
-  def awaitBranches(): Unit = synchronized {
+  def awaitBranches(): Int = synchronized {
     while(activeBranches > 0) {
       wait()
     }
+    completedReevaluations.get
   }
 
   def beginPhase(state: State.Type, initialActiveBranches: Int): Unit = synchronized {
     require(state > this.state, s"$this cannot progress backwards to phase $state.")
     assert(this.activeBranches == 0, s"$this still has active branches and thus cannot start phase $state!")
     this.activeBranches = initialActiveBranches
-    if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this switched phase.")
     stateParking.synchronized{
       this.state = state
       stateParking.notifyAll()
     }
+    if(FullMVEngine.sgt.DEBUG) println(s"[${Thread.currentThread().getName}] $this switched phase.")
   }
 
   def awaitState(atLeast: State.Type): Unit = stateParking.synchronized {
@@ -130,6 +134,7 @@ class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends Initia
   }
 
   private def processNotificationAndFollowOperation(node: Reactive[FullMVStruct], changed: Boolean, outAndSucc: NotificationOutAndSuccessorOperation[FullMVTurn, Reactive[FullMVStruct]], writeableQueue: WriteableQueue[Task[FullMVTurn, Reactive[FullMVStruct]]]): Unit = {
+    if(changed) synchronized { completedReevaluations.incrementAndGet() }
     outAndSucc match {
       case NoSuccessor(out) =>
         if(out.size != 1) activeBranchDifferential(State.Executing, out.size - 1)
