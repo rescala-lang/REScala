@@ -6,7 +6,7 @@ import rescala.fullmv.wsdeque.NonBlockingCircularArrayWSDeque
 import scala.util.Try
 
 object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
-  val DEBUG = true
+  val DEBUG = false
 
   val PROCESSORS = Runtime.getRuntime.availableProcessors()
   val workQueues = Array.fill(PROCESSORS) { new NonBlockingCircularArrayWSDeque[Task[FullMVTurn, Reactive]] }

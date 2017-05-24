@@ -228,7 +228,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     if(position >= 0) {
       val version = _versions(position)
       version.pending += 1
-      if(version.pending == 1 && position < firstFrame) {
+      if(version.pending == 1) {
         // this case (a version is framed for the "first" time, i.e., pending == 1, during framing, but already existed
         // beforehand) is relevant if drop retrofitting downgraded a frame into a marker and the marker and subsequent
         // versions were subsequently stabilized. Since this marker is now upgraded back into a frame, subsequent
@@ -237,29 +237,33 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
         // frame drop compensations. This case cannot occur for follow framings attached to change notifications,
         // because these imply a preceding reevaluation, meaning neither the incremented frame nor any subsequent
         // frame can be stable yet.
-        firstFrame = position
-        var pos = position + 1
-        while(pos < _versions.size && _versions(pos).stable) {
-          _versions(pos).stable = false
-          pos += 1
-        }
-      }
-      FramingBranchResult.FramingBranchEnd
-    } else {
-      val frame = createVersion(-position, txn, pending = 1)
-      if(-position < firstFrame) {
-        val previousFirstFrame = firstFrame
-        firstFrame = -position
-        if(previousFirstFrame < _versions.size) {
-          val supersede = _versions(previousFirstFrame)
-          supersede.stable = false
-          FramingBranchResult.FramingBranchOutSuperseding(frame.out, supersede.txn)
-        } else {
-          FramingBranchResult.FramingBranchOut(frame.out)
-        }
+        frameCreated(position, version)
       } else {
         FramingBranchResult.FramingBranchEnd
       }
+    } else {
+      val frame = createVersion(-position, txn, pending = 1)
+      frameCreated(-position, frame)
+    }
+  }
+
+  private def frameCreated(position: Int, frame: Version[V, T, R]): FramingBranchResult[T, R] = {
+    if(position < firstFrame) {
+      for(pos <- (position + 1) until firstFrame) {
+        assert(_versions(pos).stable, s"${_versions(position).txn} cannot destabilize ${_versions(pos)}")
+        _versions(pos).stable = false
+      }
+      val result = if(firstFrame < _versions.size) {
+        assert(_versions(firstFrame).stable, s"${_versions(position).txn} cannot destabilize firstframe ${_versions(firstFrame)}")
+        _versions(firstFrame).stable = false
+        FramingBranchResult.FramingBranchOutSuperseding(frame.out, _versions(firstFrame).txn)
+      } else {
+        FramingBranchResult.FramingBranchOut(frame.out)
+      }
+      firstFrame = position
+      result
+    } else {
+      FramingBranchResult.FramingBranchEnd
     }
   }
 

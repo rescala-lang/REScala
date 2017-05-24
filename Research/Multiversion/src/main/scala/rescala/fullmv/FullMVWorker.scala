@@ -31,7 +31,13 @@ class FullMVWorker(threadGroup: ThreadGroup, name: String, val ownQueue: NonBloc
 
   final override def run(): Unit = {
     while("pigs" != "fly") {
-      ownQueue.popBottom().getOrElse(stealRandom(0))(ownQueue)
+      val task = ownQueue.popBottom().getOrElse(stealRandom(0))
+      try {
+        task(ownQueue)
+      } catch {
+        case t: Throwable =>
+          new Exception(s"[${Thread.currentThread().getName}] task $task failed", t).printStackTrace()
+      }
     }
   }
 }

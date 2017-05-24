@@ -56,6 +56,7 @@ class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends Initia
     require(state > this.state, s"$this cannot progress backwards to phase $state.")
     assert(this.activeBranches == 0, s"$this still has active branches and thus cannot start phase $state!")
     this.activeBranches = initialActiveBranches
+    if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this switched phase.")
     stateParking.synchronized{
       this.state = state
       stateParking.notifyAll()
@@ -109,7 +110,7 @@ class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends Initia
     assert(followFrame.state >= State.Framing, s"$followFrame cannot receive follow frame (requires at least Framing phase)")
     assert(followFrame.state <= State.Executing, s"$followFrame cannot receive follow frame (requires at most Executing phase)")
     val notificationResultAction = node.state.notifyFollowFrame(this, changed, followFrame)
-    if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this notified $node changed=$changed resulting in $notificationResultAction")
+    if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this notified $node changed=$changed followFrame=$followFrame resulting in $notificationResultAction")
     processNotificationResultAction(node, notificationResultAction, writeableQueue)
   }
 
@@ -137,14 +138,15 @@ class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends Initia
         if(out.size != 1) activeBranchDifferential(State.Executing, out.size - 1)
         for(succ <- out) writeableQueue.pushBottom(NotificationWithFollowFrame(this, succ, changed, succTxn))
       case NextReevaluation(out, succTxn) =>
+        succTxn.activeBranchDifferential(State.Executing, 1)
         if(out.size != 1) activeBranchDifferential(State.Executing, out.size - 1)
         for(succ <- out) writeableQueue.pushBottom(NotificationWithFollowFrame(this, succ, changed, succTxn))
-        succTxn.activeBranchDifferential(State.Executing, 1)
         writeableQueue.pushBottom(Reevaluation(succTxn, node))
     }
   }
 
   def reevaluate(node: Reactive[FullMVStruct], writeableQueue: WriteableQueue[Task[FullMVTurn, Reactive[FullMVStruct]]]): Unit = {
+    assert(state == State.Executing, s"$this cannot reevaluate (requires executing phase")
     val result = FullMVEngine.withTurn(this){ node.reevaluate(this) }
     result match {
       case Static(isChange, value) =>
