@@ -54,34 +54,13 @@ object Reevaluation {
           if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this dropping $drop -> $node un-queueing $successorWrittenVersions and un-framing $maybeFollowFrame")
           node.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, -1)
         }
-        // TODO after adding in-turn parallelism, nodes may be more complete here than they were during actual reevaluation, leading to missed glitches
-        val anyPendingDependency = diff.added.foldLeft(false) { (anyPendingDependency, discover) =>
+        diff.added.foreach { discover =>
           val (successorWrittenVersions, maybeFollowFrame) = discover.state.discover(turn, node)
           if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this discovering $discover-> $node re-queueing $successorWrittenVersions and re-framing $maybeFollowFrame")
           node.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, 1)
-          // this does not check for a frame by any preceding transaction but only for itself, because
-          // the synchronization at the beginning of discover makes it so that no preceding frames exist;
-          // should that be removed, we need to instead check, e.g.,
-          // maybeFollowFrame.exists{txn => txn == this || sgt.getOrder(txn, this) == FirstFirst}
-          anyPendingDependency || (maybeFollowFrame == Some(this))
         }
-        // if(droppedOwnFrame) {
-        //   if(rediscoveredOwnFrame) {
-        //     System.err.println(s"[FullMV Warning] reevaluation of $node during $this re-routed all its incoming changed edges. Not sure if this should be legal.")
-        //   } else {
-        //     assert(!isChange, s"Impossible Reevaluation of $node during $this: Dropped all incoming changed edges, but still produced a change!")
-        //     System.err.println(s"[FullMV Warning] reevaluation (unchanged) of $node during $this dropped all its incoming changed edges. This should probably be illegal, but dynamic events are implemented badly, causing this.")
-        //   }
-        // } else {
-        //   assert(!rediscoveredOwnFrame, "either this is impossible or I am stupid.")
-        // }
         node.state.incomings = deps
-        if(anyPendingDependency) {
-          assert(false, "this should no longer be happening.")
-          (NoSuccessor(Set.empty), false)
-        } else {
-          (node.state.reevOut(turn, if (isChange) Some(value) else None), isChange)
-        }
+        (node.state.reevOut(turn, if (isChange) Some(value) else None), isChange)
     }
   }
 }

@@ -5,7 +5,7 @@ import java.util.concurrent.CountDownLatch
 import rescala.Engines
 import rescala.fullmv.FullMVEngine
 import rescala.parrp.{Backoff, ParRP}
-import rescala.testhelper.{ParRPTestTooling, ReevaluationTracker, SynchronizedReevaluation}
+import rescala.testhelper.{ParRPTestTooling, ReevaluationTracker, SetAndExtractTransactionHandle, SynchronizedReevaluation}
 import rescala.twoversion.TwoVersionEngineImpl
 import tests.rescala.RETests
 
@@ -193,7 +193,7 @@ class PessimisticTest extends RETests {
     val il0 = Var(11)
     val (syncI1, il1) = SynchronizedReevaluation(il0)
 
-    var reeval = List.empty[Any]
+    var reeval = List.empty[Turn]
     // this starts on level 2. when bl0 becomes true bl1 becomes true on level 1
     // at that point both bl1 and bl3 are true which causes il1 to be added as a dependency
     // but then bl3 becomes false at level 3, causing il1 to be removed again
@@ -225,6 +225,7 @@ class PessimisticTest extends RETests {
 
     results.assertClear(42)
     assert(reeval.size === 1)
+    reeval = List() // drop creation turn
     results2.assertClear(false)
 
     // require both turns to start executing before either may perform dynamic discoveries
@@ -237,8 +238,8 @@ class PessimisticTest extends RETests {
 
     // we start the rescala.turns …
     // i will try to grab bl1, which is locked by b, so i will start to wait on b
-    val t1 = Spawn {bl0.set(true)}
-    val t2 = Spawn {il0.set(0)}
+    val t1 = Spawn { SetAndExtractTransactionHandle(bl0, true) }
+    val t2 = Spawn { SetAndExtractTransactionHandle(il0, 0) }
 
     Thread.sleep(100)
     assert(latch.getCount === 0) // common latch should be clear
@@ -249,12 +250,12 @@ class PessimisticTest extends RETests {
     // which causes b to continue and evaluate b2b3i2
     // that will add and remove dependencies on il1, which we have readlocked.
     // that should NOT cause b2b3i2 to be reevaluated when i finally finishes
-    t1.join(1000000)
-    t2.join(1000)
+    val turn1 = t1.join(1000)
+    val turn2 = t2.join(1000)
 
     results.assertClear(37)
     results2.assertClear(true)
-    assert(reeval.size == 3, ": b2b3i2 did not reevaluate 3 times (init, aborted reeval t1, final reeval t1)")
+    assert(Set(List(turn1, turn1), List(turn1)).contains(reeval), " -- for reference, turn2 was "+turn2)
   }
 
   engines(Engines.parrp, FullMVEngine)("pessimistic engines should add two dynamic dependencies and remove only one"){ engine =>
@@ -266,7 +267,7 @@ class PessimisticTest extends RETests {
     val il0 = Var(11)
     val (syncI1, il1) = SynchronizedReevaluation(il0)
 
-    var reeval = List.empty[Any]
+    var reeval = List.empty[Turn]
     // this starts on level 2. when bl0 becomes true bl1 becomes true on level 1
     // at that point both bl1 and bl3 are true which causes il1 and il0 to be added as a dependency
     // but then bl3 becomes false at level 3, causing il1 to be removed again (but il0 is still a dependency)
@@ -297,6 +298,7 @@ class PessimisticTest extends RETests {
 
     results.assertClear(42)
     assert(reeval.size === 1)
+    reeval = List() // drop creation turn
     results2.assertClear(false)
 
     // require both turns to start executing before either may perform dynamic discoveries
@@ -309,8 +311,8 @@ class PessimisticTest extends RETests {
 
     // we start the rescala.turns …
     // i will try to grab bl1, which is locked by b, so i will start to wait on b
-    val t1 = Spawn {bl0.set(true)}
-    val t2 = Spawn {il0.set(17)}
+    val t1 = Spawn { SetAndExtractTransactionHandle(bl0, true) }
+    val t2 = Spawn { SetAndExtractTransactionHandle(il0, 17)}
 
     Thread.sleep(100)
     assert(latch.getCount === 0) // common latch should be clear
@@ -322,12 +324,12 @@ class PessimisticTest extends RETests {
     // that will add a dependencay on i10 and add and remove dependencies on il1, which we have both readlocked.
     // that SHUOLD cause b2b3i2 to be reevaluated when i finally finishes (because the dependency to il0 remains)
 
-    t1.join(1000)
-    t2.join(1000)
+    val turn1 = t1.join(1000)
+    val turn2 = t2.join(1000)
 
     results2.assertClear(true)
     results.assertClear(17, 11)
-    assert(reeval.size == 4, ": b2b3i2 did not reevaluate 4 times (init, aborted reeval t1, final reeval t1, retrofitted reeval t2)")
+    assert(Set(List(turn2, turn1, turn1), List(turn2, turn1)).contains(reeval))
   }
 
 }
