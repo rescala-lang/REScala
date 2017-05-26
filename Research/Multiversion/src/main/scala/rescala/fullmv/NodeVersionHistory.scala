@@ -1,49 +1,13 @@
 package rescala.fullmv
 
+import java.util.concurrent.ForkJoinPool
+import java.util.concurrent.ForkJoinPool.ManagedBlocker
+
 import rescala.engine.ValuePersistency
 
 import scala.annotation.elidable.ASSERTION
 import scala.annotation.{elidable, tailrec}
 import scala.collection.mutable.ArrayBuffer
-
-class Version[D, T, R](val txn: T, var stable: Boolean, var out: Set[R], var pending: Int, var changed: Int, var value: Option[D]) {
-  def isWritten: Boolean = changed == 0 && value.isDefined
-  def isReadOrDynamic: Boolean = pending == 0 && changed == 0 && value.isEmpty
-  def isOvertakeCompensation: Boolean = pending < 0 || changed < 0
-  def isFrame: Boolean = pending > 0 || changed > 0
-  def isWrittenOrFrame: Boolean = isWritten || isFrame
-  def isReadyForReevaluation: Boolean = pending == 0 && changed > 0
-  def read(): D = {
-    assert(isWritten, "reading un-written "+this)
-    value.get
-  }
-
-  override def toString: String = {
-    if(isWritten){
-      "Written(" + txn + ", out=" + out + ", v=" + value.get + ")"
-    } else if (isReadOrDynamic) {
-      (if(stable) "Stable" else "Unstable") + "Marker(" + txn + ", out=" + out + ")"
-    } else if (isOvertakeCompensation) {
-      "OvertakeCompensation(" + txn + ", " + (if (stable) "stable" else "unstable") + ", out=" + out + ", pending=" + pending + ", changed=" + changed + ")"
-    } else if(isFrame) {
-      if(stable) {
-        if(isReadyForReevaluation) {
-          "Active(" + txn + ", out=" + out + ")"
-        } else {
-          "FirstFrame(" + txn + ", out=" + out + ", pending=" + pending + ", changed=" + changed + ")"
-        }
-      } else {
-        if(isReadyForReevaluation) {
-          "Queued(" + txn + ", out=" + out + ")"
-        } else {
-          "Frame(" + txn + ", out=" + out + ", pending=" + pending + ", changed=" + changed + ")"
-        }
-      }
-    } else {
-      "UnknownVersionCase!(" + txn + ", " + (if(stable) "stable" else "unstable") + ", out=" + out + ", pending=" + pending + ", changed=" + changed + ", value = " + value + ")"
-    }
-  }
-}
 
 sealed trait FramingBranchResult[+T, +R]
 object FramingBranchResult {
@@ -77,7 +41,85 @@ object NotificationResultAction {
   * @tparam T the type of transactions
   * @tparam R the type of dependency nodes (reactives)
   */
-class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: T, val valuePersistency: ValuePersistency[V]) {
+class NodeVersionHistory[V, T <: TurnPhase, R](val sgt: SerializationGraphTracking[T], init: T, val valuePersistency: ValuePersistency[V]) {
+  trait BlockOnHistoryManagedBlocker extends ManagedBlocker {
+    override def block(): Boolean = NodeVersionHistory.this.synchronized {
+      isReleasable || { NodeVersionHistory.this.wait(); isReleasable }
+    }
+  }
+  private class Version(val txn: T, @volatile var stable: Boolean, var out: Set[R], var pending: Int, var changed: Int, var value: Option[V]) extends BlockOnHistoryManagedBlocker {
+    // txn >= Executing, stable == true, node reevaluation completed changed
+    def isWritten: Boolean = changed == 0 && value.isDefined
+    // txn <= WrapUp, any following versions are stable == false
+    def isFrame: Boolean = pending > 0 || changed > 0
+    // isReadOrDynamic: has no implications really..
+    def isReadOrDynamic: Boolean = pending == 0 && changed == 0 && value.isEmpty
+    // isOvertakeCompensation: Will become isReadOrDynamic or isFrame once overtaken (no)change notifications have arrived.
+    def isOvertakeCompensation: Boolean = pending < 0 || changed < 0
+
+    // should only be used if isFrame == true is known (although it implies that)
+    def isReadyForReevaluation: Boolean = pending == 0 && changed > 0
+    // should only be used if txn >= Executing, as it may falsely return true in the case that a txn == Framing
+    // had a frame converted into a marker due to frame superseding (or drop retrofitting?) and that frame was
+    // marked stable after all preceding placeholders were removed but anoter txn2 == Framing inserts another
+    // preceding frame which destabilizes this version again.
+    def isFinal: Boolean = isWritten || (isReadOrDynamic && stable)
+
+    def read(): V = {
+      assert(isWritten, "reading un-written "+this)
+      value.get
+    }
+
+    override def isReleasable: Boolean = {
+      // this is a volatile read so that this check can be performed in a non-blocking fashion.
+      // this may result in the thread pool reading this version as unblocked despite the node's
+      // monitor still being held, i.e., the stabilization not actually having been made visible,
+      // but this is fine as the monitor is only held briefly and stabilization is never reverted
+      // once the propagation phase has been reached (which is a prerequisite for this blocker to be used).
+      stable
+    }
+
+    // fake lazy val without synchronization, because it is created only while the node's monitor is being held.
+    private var _blockForFinal: ManagedBlocker = null
+    def blockForFinal: ManagedBlocker = {
+      if(_blockForFinal == null) {
+        _blockForFinal = new BlockOnHistoryManagedBlocker {
+          override def isReleasable: Boolean = NodeVersionHistory.this.synchronized {
+            isWritten || isReadOrDynamic
+          }
+        }
+      }
+      _blockForFinal
+    }
+
+
+    override def toString: String = {
+      if(isWritten){
+        "Written(" + txn + ", out=" + out + ", v=" + value.get + ")"
+      } else if (isReadOrDynamic) {
+        (if(stable) "Stable" else "Unstable") + "Marker(" + txn + ", out=" + out + ")"
+      } else if (isOvertakeCompensation) {
+        "OvertakeCompensation(" + txn + ", " + (if (stable) "stable" else "unstable") + ", out=" + out + ", pending=" + pending + ", changed=" + changed + ")"
+      } else if(isFrame) {
+        if(stable) {
+          if(isReadyForReevaluation) {
+            "Active(" + txn + ", out=" + out + ")"
+          } else {
+            "FirstFrame(" + txn + ", out=" + out + ", pending=" + pending + ", changed=" + changed + ")"
+          }
+        } else {
+          if(isReadyForReevaluation) {
+            "Queued(" + txn + ", out=" + out + ")"
+          } else {
+            "Frame(" + txn + ", out=" + out + ", pending=" + pending + ", changed=" + changed + ")"
+          }
+        }
+      } else {
+        "UnknownVersionCase!(" + txn + ", " + (if(stable) "stable" else "unstable") + ", out=" + out + ", pending=" + pending + ", changed=" + changed + ", value = " + value + ")"
+      }
+    }
+  }
+
   @elidable(ASSERTION) @inline
   def assertOptimizationsIntegrity(debugOutputDescription: => String): Unit = {
     def debugStatement(whatsWrong: String): String = s"$debugOutputDescription left $whatsWrong (latestWritten $latestWritten, ${if(firstFrame > _versions.size) "no frames" else "firstFrame "+firstFrame}): \n  " + _versions.zipWithIndex.map{case (version, index) => s"$index: $version"}.mkString("\n  ")
@@ -93,8 +135,8 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
 
   // =================== STORAGE ====================
 
-  var _versions = new ArrayBuffer[Version[V, T, R]](6)
-  _versions += new Version[V, T, R](init, stable = true, out = Set(), pending = 0, changed = 0, Some(valuePersistency.initialValue))
+  private val _versions = new ArrayBuffer[Version](6)
+  _versions += new Version(init, stable = true, out = Set(), pending = 0, changed = 0, Some(valuePersistency.initialValue))
   var latestValue: V = valuePersistency.initialValue
 
   var incomings: Set[R] = Set.empty
@@ -107,9 +149,9 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     * @param changed the number of already received change notifications, none by default
     * @return the created version
     */
-  private def createVersion(position: Int, txn: T, pending: Int = 0, changed: Int = 0): Version[V, T, R] = {
+  private def createVersion(position: Int, txn: T, pending: Int = 0, changed: Int = 0): Version = {
     assert(position > 0, "cannot create a version at negative position")
-    val version = new Version[V, T, R](txn, stable = position <= firstFrame, _versions(position - 1).out, pending, changed, None)
+    val version = new Version(txn, stable = position <= firstFrame, _versions(position - 1).out, pending, changed, None)
     _versions.insert(position, version)
     if(position <= firstFrame) firstFrame += 1
     if(position <= latestWritten) latestWritten += 1
@@ -177,17 +219,16 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
   }
 
   /**
-    * traverse history back in time from the given position until the first write (i.e. [[Version.isWrittenOrFrame]])
-    * @param txn the transaction for which the previous write is being searched; used for error reporting only.
-    * @param from the transaction's position, search starts at this position's predecessor version and moves backwards
-    * @return the first encountered version with [[Version.isWrittenOrFrame]]
+    * determine the position or insertion point for a transaction for which
+    * this node is known to have become final
+    *
+    * @param txn the transaction
+    * @return the position (positive values) or insertion point (negative values)
     */
-  private def prevWrite(txn: T, from: Int): Version[V, T, R] = {
-    var position = from - 1
-    while(position >= 0 && !_versions(position).isWrittenOrFrame) position -= 1
-    if(position < 0) throw new IllegalArgumentException(txn + " does not have a preceding write in versions " + _versions.take(from))
-    _versions(position)
+  private def findFinal(txn: T) = {
+    findOrPidgeonHole(txn, 1, 1, firstFrame)
   }
+
 
   // =================== FRAMING ====================
 
@@ -247,7 +288,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     }
   }
 
-  private def frameCreated(position: Int, frame: Version[V, T, R]): FramingBranchResult[T, R] = {
+  private def frameCreated(position: Int, frame: Version): FramingBranchResult[T, R] = {
     if(position < firstFrame) {
       for(pos <- (position + 1) until firstFrame) {
         assert(_versions(pos).stable, s"${_versions(position).txn} cannot destabilize ${_versions(pos)}")
@@ -369,7 +410,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
   }
 
   /**
-    * progress [[firstFrame]] forward until a [[Version.isWrittenOrFrame]] is encountered, and
+    * progress [[firstFrame]] forward until a [[Version.isFrame]] is encountered, and
     * return the resulting notification out (with reframing if subsequent write is found).
     */
   def reevOut(turn: T, maybeValue: Option[V]): NotificationResultAction.NotificationOutAndSuccessorOperation[T, R] = synchronized {
@@ -392,8 +433,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
   }
 
   /**
-    * progresses [[firstFrame]] forward until a [[Version.isWrittenOrFrame]] is encountered (which is implied not
-    * [[Version.isWritten]] due to being positioned at/behind [[firstFrame]]) and assemble all necessary
+    * progresses [[firstFrame]] forward until a [[Version.isFrame]] is encountered and assemble all necessary
     * information to send out change/nochange notifications for the given transaction. Also capture synchronized,
     * whether or not the possibly encountered write [[Version.isReadyForReevaluation]].
     * @return the notification and next reevaluation descriptor.
@@ -406,9 +446,10 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
         val version = _versions(firstFrame)
 
         assert(!version.stable, s"$debugOutputString cannot stabilize already-stable $version at position $firstFrame")
+        assert(!version.isWritten, s"$debugOutputString found unstable but written $version at position $firstFrame")
         version.stable = true
 
-        if (version.isWrittenOrFrame) {
+        if (version.isFrame) {
           if (version.isReadyForReevaluation) {
             NotificationResultAction.NotificationOutAndSuccessorOperation.NextReevaluation(out, version.txn)
           } else {
@@ -443,19 +484,33 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     }
   }
 
-  def synchronizeDynamicAccess(txn: T): Int = synchronized {
-    val position = ensureReadVersion(txn)
-    assertOptimizationsIntegrity(s"ensureReadVersion($txn)")
-    val version = _versions(position)
-    while(!version.stable) wait()
+  def synchronizeDynamicAccess(txn: T): Int = {
+    synchronized {
+      val position = ensureReadVersion(txn)
+      assertOptimizationsIntegrity(s"ensureReadVersion($txn)")
+      val version = _versions(position)
+      if(version.stable) {
+        Left(position)
+      } else {
+        Right(version)
+      }
+    } match {
+      case Left(position) => position
+      case Right(version) =>
 
-    val stablePosition = if(version.isFrame) firstFrame else findOrPidgeonHole(txn, 1, 1, firstFrame)
-    assert(stablePosition >= 0, "somehow, the version allocated above disappeared..")
-    stablePosition
+        ForkJoinPool.managedBlock(version)
+
+        synchronized {
+          val stablePosition = if(version.isFrame) firstFrame else findFinal(txn)
+          assert(stablePosition >= 0, "somehow, the version allocated above disappeared..")
+          stablePosition
+        }
+    }
   }
 
   /**
     * entry point for before(this); may suspend.
+    *
     * @param txn the executing transaction
     * @return the corresponding [[Version.value]] from before this transaction, i.e., ignoring the transaction's
     *         own writes.
@@ -465,12 +520,23 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
   }
 
   def staticBefore(txn: T): V = synchronized {
-    before(txn, math.abs(findOrPidgeonHole(txn, 1, 1, firstFrame)))
+    before(txn, math.abs(findFinal(txn)))
   }
 
   private def before(txn: T, position: Int): V = synchronized {
     assert(!valuePersistency.isTransient, "before read on transient node")
-    prevWrite(txn, position).read()
+    assert(position > 0, "cannot read before first version")
+    @tailrec def readIfWriteOrSearchBackwards(pos: Int): V = {
+      assert(pos >= 0, "could not find a previous written version, although at least the first version should always be readable")
+      val version = _versions(pos)
+      assert(!version.isFrame, "Found frame while searching for predecessor version to read -- forgotten dynamic access synchronization?")
+      if(version.value.isDefined) {
+        version.value.get
+      } else {
+        readIfWriteOrSearchBackwards(pos - 1)
+      }
+    }
+    readIfWriteOrSearchBackwards(position - 1)
   }
 
   /**
@@ -485,7 +551,7 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
   }
 
   def staticNow(txn: T): V = synchronized {
-    val position = findOrPidgeonHole(txn, 1, 1, firstFrame)
+    val position = findFinal(txn)
     if(position < 0) {
       beforeOrInit(txn, -position)
     } else {
@@ -513,32 +579,40 @@ class NodeVersionHistory[V, T, R](val sgt: SerializationGraphTracking[T], init: 
     *         transaction's own write if one has occurred or will occur.
     */
   def dynamicAfter(txn: T): V = {
-    val position = synchronizeDynamicAccess(txn)
-    val version = _versions(position)
-    // Note: isWrite, not isWritten!
-    if(version.isWrittenOrFrame) {
-      while(!version.isWritten) {
-        // TODO figure out how we want to do this
-        System.err.println(s"WARNING: Suspending "+txn+" for dynamic after on its own placeholder; aside from user-specified deadlocks, this may deadlock the application from depleting the task pool of workers.")
-        wait()
+    synchronized {
+      val position = synchronizeDynamicAccess(txn)
+      val version = _versions(position)
+      if(version.isWritten) {
+        Left(version.value.get)
+      } else if (version.isFrame) {
+        Right(version)
+      } else {
+        Left(beforeOrInit(txn, position))
       }
-      version.read()
-    } else {
-      beforeOrInit(txn, position)
+    } match {
+      case Left(value) => value
+      case Right(version) =>
+
+        ForkJoinPool.managedBlock(version.blockForFinal)
+
+        synchronized {
+          assert(!version.isFrame, s"blockForFinal returned while $version is still a frame..")
+          version.value.getOrElse {
+            beforeOrInit(txn, findFinal(txn))
+          }
+        }
     }
   }
 
   def staticAfter(txn: T): V = {
-    val position = findOrPidgeonHole(txn, 1, 1, firstFrame)
+    val position = findFinal(txn)
     if(position < 0) {
       beforeOrInit(txn, -position)
     } else {
       val version = _versions(position)
-      // Note: isWrite, not isWritten!
-      if(version.isWrittenOrFrame) {
+      assert(!version.isFrame, s"staticAfter discovered frame $version -- did the caller wrongly assume a statically known dependency?")
+      version.value.getOrElse {
         version.read()
-      } else {
-        beforeOrInit(txn, position)
       }
     }
   }
