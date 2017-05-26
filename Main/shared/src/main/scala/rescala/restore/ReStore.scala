@@ -31,6 +31,8 @@ class ReStoringTurn(restore: ReStore) extends LevelBasedPropagation[ReStoringStr
         new ReStoringStructType(null, valuePersistency.initialValue, valuePersistency.isTransient)
     }
   }
+
+  override def dynamicDependencyInteraction(dependency: Reactive[ReStoringStruct]): Unit = ()
   override def releasePhase(): Unit = ()
 }
 
@@ -67,7 +69,7 @@ class ReStoringEngine(domain: String = "", restoreFrom: Seq[(String, Storing)] =
 
   override protected def makeTurn(initialWrites: Traversable[Reactive], priorTurn: Option[ReStoringTurn]): ReStoringTurn = new ReStoringTurn(this)
   lazy override val toString: String = s"Engine(Restoring: $domain)"
-  override protected[rescala] def executeTurn[I, R](initialWrites: Traversable[Reactive], admissionPhase: ReStoringTurn => I, wrapUpPhase: (I, ReStoringTurn) => R): R = synchronized(super.executeTurn(initialWrites, admissionPhase, wrapUpPhase))
+  override protected[rescala] def executeTurn[I, R](initialWrites: Traversable[Reactive], admissionPhase: AdmissionTicket => I, wrapUpPhase: (I, WrapUpTicket) => R): R = synchronized(super.executeTurn(initialWrites, admissionPhase, wrapUpPhase))
 }
 
 

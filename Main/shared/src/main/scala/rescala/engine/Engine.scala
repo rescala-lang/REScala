@@ -1,7 +1,7 @@
 package rescala.engine
 
 import rescala.RescalaDefaultImports
-import rescala.graph.Struct
+import rescala.graph.{Pulsing, Struct}
 
 import scala.annotation.implicitNotFound
 
@@ -15,7 +15,8 @@ import scala.annotation.implicitNotFound
 trait Engine[S <: Struct, +TTurn <: Turn[S]] extends RescalaDefaultImports[S] {
   override def explicitEngine: this.type = this
 
-  private[rescala] def executeTurn[I, R](initialWrites: Traversable[Reactive], admissionPhase: TTurn => I, wrapUpPhase: (I, TTurn) => R): R
+  private[rescala] def executeTurn[I, R](initialWrites: Traversable[Reactive], admissionPhase: AdmissionTicket => I, wrapUpPhase: (I, WrapUpTicket) => R): R
+  private[rescala] def singleNow[A](reactive: Pulsing[A, S]): A
   private[rescala] def currentTurn(): Option[TTurn]
 }
 

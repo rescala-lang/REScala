@@ -5,7 +5,7 @@ import rescala.graph.Struct
 import scala.util.DynamicVariable
 
 trait EngineImpl[S <: Struct, TTurn <: Turn[S]] extends Engine[S, TTurn] {
-  override protected[rescala] def executeTurn[I, R](initialWrites: Traversable[Reactive], admissionPhase: TTurn => I, wrapUpPhase: (I, TTurn) => R): R = {
+  override protected[rescala] def executeTurn[I, R](initialWrites: Traversable[Reactive], admissionPhase: AdmissionTicket => I, wrapUpPhase: (I, WrapUpTicket) => R): R = {
     // TODO: This should be broken up differently here, sort-of meeting in the middle with TwoVersionEngineImpl, something like:
     /*
       // scheduling performs framing/locking/whatever
@@ -43,7 +43,7 @@ trait EngineImpl[S <: Struct, TTurn <: Turn[S]] extends Engine[S, TTurn] {
     */
 
     val turn = makeTurn(initialWrites, currentTurn())
-    executeInternal(turn, initialWrites, () => withTurn(turn){ admissionPhase(turn) }, { i: I => withTurn(turn){ wrapUpPhase(i, turn) } })
+    executeInternal(turn, initialWrites, () => withTurn(turn){ admissionPhase(turn.makeAdmissionPhaseTicket()) }, { i: I => withTurn(turn){ wrapUpPhase(i, turn.makeWrapUpPhaseTicket()) } })
   }
 
   /**

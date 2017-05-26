@@ -26,14 +26,14 @@ trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] 
 
 
   /** collect results from a partial function */
-  final def collect[U](pf: PartialFunction[T, U])(implicit ticket: TurnSource[S]): Event[U, S] = Events.static(s"(collect $this)", this) { st => st.turn.after(this).collect(pf) }
+  final def collect[U](pf: PartialFunction[T, U])(implicit ticket: TurnSource[S]): Event[U, S] = Events.static(s"(collect $this)", this) { st => st.staticDepend(this).collect(pf) }
 
   /** add an observer */
   final def +=(react: T => Unit)(implicit ticket: TurnSource[S]): Observe[S] = observe(react)(ticket)
 
 
   final def recover[R >: T](onFailure: PartialFunction[Throwable,Option[R]])(implicit ticket: TurnSource[S]): Event[R, S] = Events.static(s"(recover $this)", this) { st =>
-    st.turn.after(this) match {
+    st.staticDepend(this) match {
       case Exceptional(t) => onFailure.applyOrElse[Throwable, Option[R]](t, throw _).fold[Pulse[R]](Pulse.NoChange)(Pulse.Value(_))
       case other => other
     }
@@ -45,22 +45,22 @@ trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] 
 
   /** Events disjunction. */
   final def ||[U >: T](other: Event[U, S])(implicit ticket: TurnSource[S]): Event[U, S] = {
-    Events.static(s"(or $this $other)", this, other) { turn =>
-      val tp = turn.turn.after(this)
-      if (tp.isChange) tp else turn.turn.after(other)
+    Events.static(s"(or $this $other)", this, other) { st =>
+      val tp = st.staticDepend(this)
+      if (tp.isChange) tp else st.staticDepend(other)
     }
   }
 
   /** EV filtered with a predicate */
-  final def filter(pred: T => Boolean)(implicit ticket: TurnSource[S]): Event[T, S] = Events.static(s"(filter $this)", this) { st => st.turn.after(this).filter(pred) }
+  final def filter(pred: T => Boolean)(implicit ticket: TurnSource[S]): Event[T, S] = Events.static(s"(filter $this)", this) { st => st.staticDepend(this).filter(pred) }
   /** EV filtered with a predicate */
   final def &&(pred: T => Boolean)(implicit ticket: TurnSource[S]): Event[T, S] = filter(pred)
 
   /** EV is triggered except if the other one is triggered */
   final def \[U](except: Event[U, S])(implicit ticket: TurnSource[S]): Event[T, S] = {
-    Events.static(s"(except $this  $except)", this, except) { turn =>
-      turn.turn.after(except) match {
-        case NoChange => turn.turn.after(this)
+    Events.static(s"(except $this  $except)", this, except) { st =>
+      st.staticDepend(except) match {
+        case NoChange => st.staticDepend(this)
         case Value(_) => Pulse.NoChange
         case ex@Exceptional(_) => ex
       }
@@ -69,10 +69,10 @@ trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] 
 
   /** Events conjunction */
   final def and[U, R](other: Event[U, S])(merger: (T, U) => R)(implicit ticket: TurnSource[S]): Event[R, S] = {
-    Events.static(s"(and $this $other)", this, other) { turn =>
+    Events.static(s"(and $this $other)", this, other) { st =>
       for {
-        left <- turn.turn.after(this)
-        right <- turn.turn.after(other)
+        left <- st.staticDepend(this)
+        right <- st.staticDepend(other)
       } yield {merger(left, right)}
     }
   }
@@ -82,15 +82,15 @@ trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] 
 
   /** Event disjunction with a merge method creating a tuple of both optional event parameters wrapped */
   final def zipOuter[U](other: Event[U, S])(implicit ticket: TurnSource[S]): Event[(Option[T], Option[U]), S] = {
-    Events.static(s"(zipOuter $this $other)", this, other) { turn =>
-      val left = turn.turn.after(this)
-      val right = turn.turn.after(other)
+    Events.static(s"(zipOuter $this $other)", this, other) { st =>
+      val left = st.staticDepend(this)
+      val right = st.staticDepend(other)
       if(right.isChange || left.isChange) Value(left.toOption -> right.toOption) else NoChange
     }
   }
 
   /** Transform the event parameter */
-  final def map[U](mapping: T => U)(implicit ticket: TurnSource[S]): Event[U, S] = Events.static(s"(map $this)", this) {  st => st.turn.after(this).map(mapping) }
+  final def map[U](mapping: T => U)(implicit ticket: TurnSource[S]): Event[U, S] = Events.static(s"(map $this)", this) {  st => st.staticDepend(this).map(mapping) }
 
 
   /** Drop the event parameter; equivalent to map((_: Any) => ()) */
@@ -108,7 +108,7 @@ trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] 
     Signals.staticFold[A, S](Set[Reactive[S]](this), _ => init) { (st, currentValue) =>
       // TODO this should be equivalent, but doesn't work for unmanaged engine; need to investigate.
       // folder(currentValue, st.turn.after(this).get)
-      st.turn.after(this).toOption.fold(currentValue)(value => folder(currentValue, value))
+      st.staticDepend(this).toOption.fold(currentValue)(value => folder(currentValue, value))
     }(initialTurn)
   }
 
@@ -157,7 +157,7 @@ trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] 
   /** Switch back and forth between two signals on occurrence of event e */
   final def toggle[A](a: Signal[A, S], b: Signal[A, S])(implicit ticket: TurnSource[S]): Signal[A, S] = ticket { turn =>
     val switched: Signal[Boolean, S] = iterate(false) {!_}(turn)
-    Signals.dynamic(switched, a, b) { s => if (s.depend(switched)) s.depend(b) else s.depend(a) }(turn)
+    Signals.dynamic(switched, a, b) { s => if (s.dynamicDepend(switched).get) s.dynamicDepend(b).get else s.dynamicDepend(a).get }(turn)
   }
 
   /** Return a Signal that is updated only when e fires, and has the value of the signal s */
@@ -165,10 +165,9 @@ trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] 
     Signals.staticFold[A, S](
       Set[Reactive[S]](this, s),
       st => {
-        st.turn.dynamicDependencyInteraction(s)
-        st.turn.after(s).get
+        st.after(s).get
       }) { (st, current) =>
-      st.turn.after(this).toOption.fold(current)(_ => st.turn.after(s).get)
+      st.staticDepend(this).toOption.fold(current)(_ => st.after(s).get)
     }
   }
 
@@ -177,9 +176,9 @@ trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] 
   final def switchOnce[A](original: Signal[A, S], newSignal: Signal[A, S])(implicit ticket: TurnSource[S]): Signal[A, S] = ticket { turn =>
     val latest = latestOption()(turn)
     Signals.dynamic(latest, original, newSignal) { t =>
-      t.depend(latest) match {
-        case None => t.depend(original)
-        case Some(_) => t.depend(newSignal)
+      t.dynamicDepend(latest).get match {
+        case None => t.dynamicDepend(original).get
+        case Some(_) => t.dynamicDepend(newSignal).get
       }
     }(turn)
   }
@@ -192,8 +191,8 @@ trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] 
   final def switchTo[T1 >: T](original: Signal[T1, S])(implicit ticket: TurnSource[S]): Signal[T1, S] = ticket { turn =>
     val latest = latestOption()(turn)
     Signals.dynamic(latest, original) { s =>
-      s.depend(latest) match {
-        case None => s.depend(original)
+      s.dynamicDepend(latest).get match {
+        case None => s.dynamicDepend(original).get
         case Some(x) => x
       }
     }(turn)

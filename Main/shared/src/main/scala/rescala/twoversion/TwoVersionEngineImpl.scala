@@ -1,7 +1,6 @@
 package rescala.twoversion
 
 import rescala.engine.Turn
-import rescala.graph.Struct
 
 /**
   * Implementation of the turn creation function based on a given function as class parameter
@@ -10,8 +9,9 @@ import rescala.graph.Struct
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   * @tparam TImpl Turn type used by the engine
   */
-class TwoVersionEngineImpl[S <: Struct, TImpl <: TwoVersionPropagation[S] with Turn[S]](name: String, newTurn: (TwoVersionEngineImpl[S,TImpl], Option[TImpl]) => TImpl) extends TwoVersionEngine[S, TImpl] {
+class TwoVersionEngineImpl[S <: TwoVersionStruct, TImpl <: TwoVersionPropagation[S] with Turn[S]](name: String, newTurn: (TwoVersionEngineImpl[S,TImpl], Option[TImpl]) => TImpl) extends TwoVersionEngine[S, TImpl] {
   def this(name: String, newTurn: => TImpl) = this(name, (_, _) => newTurn)
+
   override protected def makeTurn(initialWrites: Traversable[Reactive], priorTurn: Option[TImpl]): TImpl = newTurn(this, priorTurn)
   lazy override val toString: String = s"Engine($name)"
 }

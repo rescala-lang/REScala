@@ -62,9 +62,6 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
     }
   }
 
-  /** allow turn to handle dynamic access to reactives */
-  override def dynamicDependencyInteraction(dependency: Reactive[S]): Unit = ()
-
   override def preparationPhase(initialWrites: Traversable[Reactive[S]]): Unit = {
     initialWrites.foreach { reactive =>
       levelQueue.enqueue(reactive.state.level(this))(reactive)

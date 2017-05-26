@@ -5,10 +5,10 @@ import rescala.graph._
 
 class Source[T, S <: Struct](_bud: S#State[Pulse[T], S]) extends Base[T, S](_bud) {
   private var result: Value = null
-  final def admit(value: T)(implicit turn: Turn[S]): Unit = admitPulse(Pulse.Value(value))
+  final def admit(value: T)(implicit ticket: AdmissionTicket[S]): Unit = admitPulse(Pulse.Value(value))
 
-  final def admitPulse(value: Pulse[T])(implicit turn: Turn[S]): Unit = {
-    require(result == null, s"can not admit the same reactive twice in the same turn: $turn")
+  final def admitPulse(value: Pulse[T])(implicit ticket: AdmissionTicket[S]): Unit = {
+    require(result == null, s"can not admit the same reactive twice in the same turn: ${ticket.turn}")
     result = value
   }
 
@@ -56,12 +56,13 @@ final class Var[A, S <: Struct](_bud: S#State[Pulse[A], S]) extends Source[A, S]
   def set(value: A)(implicit fac: Engine[S, Turn[S]]): Unit = fac.transaction(this) {admit(value)(_)}
 
   def transform(f: A => A)(implicit fac: Engine[S, Turn[S]]): Unit = fac.transaction(this) { t =>
+    // minor TODO should f be evaluated only during reevaluation, given t.selfBefore(this) as parameter?
     admit(f(t.before(this).get))(t)
   }
 
   override protected[rescala] def reevaluate(turn: Turn[S]): ReevaluationResult.Static[Pulse[A]] = {
     val res = super.reevaluate(turn)
-    if(res == ReevaluationResult.Static(turn.before(this))) ReevaluationResult.Static(Pulse.NoChange) else res
+    if(res == ReevaluationResult.Static(turn.selfBefore(this))) ReevaluationResult.Static(Pulse.NoChange) else res
   }
 
   def setEmpty()(implicit fac: Engine[S, Turn[S]]): Unit = fac.transaction(this)(t => admitPulse(Pulse.empty)(t))

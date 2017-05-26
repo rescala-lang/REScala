@@ -61,7 +61,6 @@ class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends Initia
   override protected def ignite(reactive: Reactive[FullMVStruct], incoming: Set[Reactive[FullMVStruct]], valuePersistency: ValuePersistency[_]): Unit = {
     activeBranchDifferential(TurnPhase.Executing, 1)
     incoming.foreach { discover =>
-      dynamicDependencyInteraction(discover)
       val (successorWrittenVersions, maybeFollowFrame) = discover.state.discover(this, reactive)
       reactive.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, 1)
     }
@@ -87,9 +86,12 @@ class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends Initia
     }
   }
 
-  override private[rescala] def dynamicDependencyInteraction(reactive: Reactive[FullMVStruct]) = reactive.state.synchronizeDynamicAccess(this)
-  override private[rescala] def before[P](pulsing: Pulsing[P, FullMVStruct]) = pulsing.state.staticBefore(this)
-  override private[rescala] def after[P](pulsing: Pulsing[P, FullMVStruct]) = pulsing.state.staticNow(this)
+
+  override private[rescala] def staticBefore[P](reactive: Pulsing[P, FullMVStruct]) = reactive.state.staticBefore(this)
+  override private[rescala] def staticAfter[P](reactive: Pulsing[P, FullMVStruct]) = reactive.state.staticAfter(this)
+  override private[rescala] def dynamicBefore[P](reactive: Pulsing[P, FullMVStruct]) = reactive.state.dynamicBefore(this)
+  override private[rescala] def dynamicAfter[P](reactive: Pulsing[P, FullMVStruct]) = reactive.state.dynamicAfter(this)
+  override private[rescala] def selfBefore[P](reactive: Pulsing[P, FullMVStruct]) = reactive.state.reevIn(this)
 
   override def observe(f: () => Unit): Unit = f()
 

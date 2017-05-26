@@ -6,11 +6,11 @@ import rescala.engine.ValuePersistency
 import rescala.graph.ReevaluationResult.{Dynamic, Static}
 import rescala.graph._
 import rescala.locking._
-import rescala.twoversion.{GraphStruct, PropagationStructImpl, TwoVersionPropagationImpl}
+import rescala.twoversion.{PropagationStructImpl, TwoVersionPropagationImpl, TwoVersionStruct}
 
 import scala.collection.mutable
 
-trait LSStruct extends GraphStruct {
+trait LSStruct extends TwoVersionStruct {
   override type State[P, S <: Struct] = LSPropagationStruct[P, S]
 }
 

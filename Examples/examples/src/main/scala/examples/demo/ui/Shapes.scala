@@ -10,7 +10,7 @@ trait Shape extends Serializable {
   def centerY: Signal[Int]
   def hitboxWidth: Signal[Int]
   def hitboxHeight: Signal[Int]
-  def drawSnapshot(g: Graphics2D)(implicit turn: Turn): Unit
+  def drawSnapshot(g: Graphics2D)(implicit turn: OutsidePropagationTicket): Unit
 }
 
 class Circle (override val centerX: Signal[Int],
@@ -21,7 +21,7 @@ class Circle (override val centerX: Signal[Int],
   override val changed = centerX.changed || centerY.changed || diameter.changed || border.changed || fill.changed
   override val hitboxWidth = diameter
   override val hitboxHeight = diameter
-  override def drawSnapshot(g: Graphics2D)(implicit turn: Turn): Unit = {
+  override def drawSnapshot(g: Graphics2D)(implicit turn: OutsidePropagationTicket): Unit = {
     val d = diameter.now
     val x = centerX.now - d/2
     val y = centerY.now - d/2
@@ -45,7 +45,7 @@ class Rectangle (override val centerX: Signal[Int],
                  val border: Signal[Option[Color]] = Var(Some(Color.BLACK)),
                  val fill: Signal[Option[Color]] = Var(None)) extends Shape {
   override val changed = centerX.changed || centerY.changed || hitboxWidth.changed || hitboxHeight.changed || border.changed || fill.changed
-  override def drawSnapshot(g: Graphics2D)(implicit turn: Turn): Unit = {
+  override def drawSnapshot(g: Graphics2D)(implicit turn: OutsidePropagationTicket): Unit = {
     val w = hitboxWidth.now
     val h = hitboxHeight.now
     val x = centerX.now - w/2

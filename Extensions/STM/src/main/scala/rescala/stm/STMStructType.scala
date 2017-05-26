@@ -44,7 +44,11 @@ class STMStructType[P, S <: Struct](initialValue: P, transient: Boolean) extends
     update.set(Some(value))(inTxn(token))
     false
   }
-  override def base(token: Token): P = current.get(inTxn(token))
+  override def base(token: Token): P = if(token == null) {
+    current.single.get
+  } else {
+    current.get(inTxn(token))
+  }
   override def get(token: Token): P = update.get(inTxn(token)).getOrElse(current.get(inTxn(token)))
 
 

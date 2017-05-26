@@ -1,19 +1,29 @@
 package rescala.testhelper
 
-import java.util.concurrent.CountDownLatch
+import java.util.concurrent.{CountDownLatch, ForkJoinPool}
+import java.util.concurrent.ForkJoinPool.ManagedBlocker
 
 import rescala.engine.TurnSource
 import rescala.graph.Struct
 import rescala.reactives.{Event, Signal}
 
-class SynchronizedReevaluation {
+
+class SynchronizedReevaluation extends ManagedBlocker {
   var latches: List[CountDownLatch] = Nil
   def reev[X](v1: X): X = {
     latches.foreach { _.countDown() }
-    latches.foreach { _.await() }
+    ForkJoinPool.managedBlock(this)
     latches = Nil
     v1
   }
+
+  override def isReleasable: Boolean = !latches.exists(_.getCount > 0)
+
+  override def block(): Boolean = {
+    latches.foreach { _.await()  }
+    true
+  }
+
   def addSynchronizationPoint(latch: CountDownLatch): Unit = {
     latches ::= latch
   }

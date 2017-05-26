@@ -4,7 +4,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import rescala.engine.{Engine, Turn}
 import rescala.util.Globals.named
-import rescala.graph.Struct
+import rescala.graph.{OutsidePropagationTicket, Struct}
 import rescala.parrp.Backoff
 import rescala.reactives.{Signal, Var}
 import rescala.reactives.Signals.lift
@@ -110,7 +110,7 @@ object PhilosopherTable {
   // ============================================ Entity Creation =========================================================
 
   case class Seating[S <: Struct](placeNumber: Int, philosopher: Var[Philosopher, S], leftFork: Signal[Fork, S], rightFork: Signal[Fork, S], vision: Signal[Vision, S]) {
-    def inspect(t: Turn[S]): String = s"Seating(${philosopher.now(t)}, ${leftFork.now(t)}, ${rightFork.now(t)}, ${vision.now(t)})"
+    def inspect(t: OutsidePropagationTicket[S]): String = s"Seating(${philosopher.now(t)}, ${leftFork.now(t)}, ${rightFork.now(t)}, ${vision.now(t)})"
   }
 
 }

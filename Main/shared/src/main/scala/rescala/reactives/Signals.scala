@@ -22,8 +22,8 @@ object Signals extends GeneratedSignalLift {
       (res, states.value)
     }
 
-    def restoreFrom[R, S <: Struct](states: List[Signal[_, _]])(f: => R)(implicit turn: TurnSource[S]): R = {
-      restored.withValue(states.map(_.asInstanceOf[Signal[_, S]].now).reverse) {
+    def restoreFrom[R, S <: Struct](states: List[Signal[_, _]])(f: => R)(implicit turnSource: TurnSource[S]): R = turnSource { turn =>
+      restored.withValue(states.map(s => turn.dynamicBefore(s.asInstanceOf[Signal[_, S]]).get).reverse) {
         f
       }
     }
@@ -35,8 +35,8 @@ object Signals extends GeneratedSignalLift {
       extends Base[T, S](_bud) with Signal[T, S] {
 
       override protected[rescala] def reevaluate(turn: Turn[S]): ReevaluationResult[Value, S] = {
-        val currentPulse: Pulse[T] = turn.before(this)
-        def newValue = expr(turn.static, currentPulse.get)
+        val currentPulse: Pulse[T] = turn.selfBefore(this)
+        def newValue = expr(turn.makeStaticReevaluationTicket(), currentPulse.get)
         val newPulse = Pulse.tryCatch(Pulse.diffPulse(newValue, currentPulse))
         ReevaluationResult.Static(newPulse)
       }
@@ -44,8 +44,8 @@ object Signals extends GeneratedSignalLift {
 
     private[Signals] abstract class DynamicSignal[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: DynamicTicket[S] => T) extends Base[T, S](_bud) with Signal[T, S] {
       override protected[rescala] def reevaluate(turn: Turn[S]): ReevaluationResult[Value, S] = {
-        val dt = turn.dynamic()
-        val newPulse = Pulse.tryCatch { Pulse.diffPulse(expr(dt), turn.before(this)) }
+        val dt = turn.makeDynamicReevaluationTicket()
+        val newPulse = Pulse.tryCatch { Pulse.diffPulse(expr(dt), turn.selfBefore(this)) }
         ReevaluationResult.Dynamic(newPulse, dt.collectedDependencies)
       }
     }
@@ -56,10 +56,10 @@ object Signals extends GeneratedSignalLift {
   /** creates a signal that statically depends on the dependencies with a given initial value */
   private[rescala] def staticFold[T, S <: Struct](dependencies: Set[Reactive[S]], init: StaticTicket[S] => T)(expr: (StaticTicket[S], => T) => T)(initialTurn: Turn[S]): Signal[T, S] = {
     def initOrRestored = {
-      if (restored.value eq null) init(initialTurn.static())
+      if (restored.value eq null) init(initialTurn.makeStaticReevaluationTicket())
       else {
         restored.value = restored.value.drop(1)
-        restored.value.headOption.fold(init(initialTurn.static()))(_.asInstanceOf[T])
+        restored.value.headOption.fold(init(initialTurn.makeStaticReevaluationTicket()))(_.asInstanceOf[T])
       }
     }
     val res = initialTurn.create[Pulse[T], Signal[T, S]](dependencies, ValuePersistency.InitializedSignal(Pulse.tryCatch(Pulse.Value(initOrRestored)))) {
@@ -78,7 +78,7 @@ object Signals extends GeneratedSignalLift {
   }
 
   def lift[A, S <: Struct, R](los: Seq[Signal[A, S]])(fun: Seq[A] => R)(implicit maybe: TurnSource[S]): Signal[R, S] = {
-    static(los: _*){t => fun(los.map(s => t.turn.after(s).get))}
+    static(los: _*){t => fun(los.map(s => t.staticDepend(s).get))}
   }
 
   /** creates a signal that has dynamic dependencies (which are detected at runtime with Signal.apply(turn)) */

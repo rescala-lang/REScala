@@ -4,6 +4,7 @@ import java.util.concurrent.ForkJoinPool
 
 import rescala.engine.EngineImpl
 import rescala.fullmv.tasks.{Framing, Notification}
+import rescala.graph.Pulsing
 
 import scala.annotation.tailrec
 import scala.util.Try
@@ -14,6 +15,9 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
   val threadPool = new ForkJoinPool()
 
   val sgt = DumbSGT
+
+
+  override private[rescala] def singleNow[A](reactive: Pulsing[A, FullMVStruct]) = reactive.state.latestValue
 
   override protected def makeTurn(initialWrites: Traversable[Reactive], priorTurn: Option[FullMVTurn]): FullMVTurn = new FullMVTurn(sgt)
   override protected def executeInternal[I, R](turn: FullMVTurn, initialWrites: Traversable[Reactive], admissionPhase: () => I, wrapUpPhase: I => R): R = {

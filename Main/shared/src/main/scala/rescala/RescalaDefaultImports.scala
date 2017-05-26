@@ -22,7 +22,13 @@ abstract class RescalaDefaultImports[S <: Struct] {
   final type Turn = rescala.engine.Turn[S]
   final type StaticTicket = rescala.graph.StaticTicket[S]
   final type DynamicTicket = rescala.graph.DynamicTicket[S]
+  final type AdmissionTicket = rescala.graph.AdmissionTicket[S]
+  final type WrapUpTicket = rescala.graph.WrapUpTicket[S]
+  final type OutsidePropagationTicket = rescala.graph.OutsidePropagationTicket[S]
+  final type PropagationAndLaterTicket = rescala.graph.PropagationAndLaterTicket[S]
+  final type AlwaysTicket = rescala.graph.AlwaysTicket[S]
   final type TurnSource = rescala.engine.TurnSource[S]
+  final type TicketOrEngine = rescala.engine.TurnSource[S]
   final type Reactive = rescala.graph.Reactive[S]
   final def Evt[A](): Evt[A] = reactives.Evt[A, S]()(explicitEngine)
 
@@ -45,7 +51,7 @@ abstract class RescalaDefaultImports[S <: Struct] {
   val Signals = reactives.Signals
 
 
-  final protected[rescala] def noWrapUp[R](intermediate: R, turn: Turn): R = intermediate
+  final protected[rescala] def noWrapUp[R](intermediate: R, turn: WrapUpTicket): R = intermediate
   /**
     * Executes a transaction.
     *
@@ -56,7 +62,7 @@ abstract class RescalaDefaultImports[S <: Struct] {
     * @tparam R Result type of the admission function
     * @return Result of the admission function
     */
-  def transaction[R](initialWrites: Reactive*)(admissionPhase: Turn => R): R = {
+  def transaction[R](initialWrites: Reactive*)(admissionPhase: AdmissionTicket => R): R = {
     explicitEngine.executeTurn(initialWrites, admissionPhase, noWrapUp[R])
   }
 
@@ -75,7 +81,7 @@ abstract class RescalaDefaultImports[S <: Struct] {
     * @tparam R Final Result type of the wrapup phase
     * @return Result of the wrapup function
     */
-  def transactionWithWrapup[I, R](initialWrites: Reactive*)(admissionPhase: Turn => I)(wrapUpPhase: (I, Turn) => R): R = {
+  def transactionWithWrapup[I, R](initialWrites: Reactive*)(admissionPhase: AdmissionTicket => I)(wrapUpPhase: (I, WrapUpTicket) => R): R = {
     explicitEngine.executeTurn(initialWrites, admissionPhase, wrapUpPhase)
   }
 

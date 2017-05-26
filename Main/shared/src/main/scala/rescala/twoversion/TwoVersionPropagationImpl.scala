@@ -12,7 +12,7 @@ import scala.util.control.NonFatal
   *
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
-trait TwoVersionPropagationImpl[S <: GraphStruct] extends TwoVersionPropagation[S] with InitializationImpl[S] {
+trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropagation[S] with InitializationImpl[S] {
   outer =>
 
   val token: Token = Token()
@@ -60,7 +60,24 @@ trait TwoVersionPropagationImpl[S <: GraphStruct] extends TwoVersionPropagation[
     diff.removed foreach drop(head)
     diff.added foreach discover(head)
   }
-  override def before[P](pulsing: Pulsing[P, S]): P = pulsing.state.base(token)
-  override def after[P](pulsing: Pulsing[P, S]): P = pulsing.state.get(token)
+
+  /** allow turn to handle dynamic access to reactives */
+  def dynamicDependencyInteraction(dependency: Reactive[S]): Unit
+
+  override private[rescala] def staticBefore[P](reactive: Pulsing[P, S]) = reactive.state.base(token)
+  override private[rescala] def staticAfter[P](reactive: Pulsing[P, S]) = reactive.state.get(token)
+  override private[rescala] def dynamicBefore[P](reactive: Pulsing[P, S]) = {
+    dynamicDependencyInteraction(reactive)
+    reactive.state.base(token)
+  }
+  override private[rescala] def dynamicAfter[P](reactive: Pulsing[P, S]) = {
+    // Note: This only synchronizes reactive to be serializable-synchronized, but not glitch-free synchronized.
+    // Dynamic reads thus may return glitched values, which the reevaluation handling implemented in subclasses
+    // must account for by repeating glitched reevaluations!
+    dynamicDependencyInteraction(reactive)
+    reactive.state.get(token)
+  }
+  override private[rescala] def selfBefore[P](reactive: Pulsing[P, S]) = reactive.state.base(token)
+
   def writeState[P](pulsing: Reactive[S])(value: pulsing.Value): Unit = if (pulsing.state.write(value, token)) this.schedule(pulsing.state)
 }

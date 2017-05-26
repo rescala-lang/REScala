@@ -1,6 +1,6 @@
 package rescala.meta
 
-import rescala.engine.TurnSource
+import rescala.engine.{TicketOrEngine, TurnSource}
 import rescala.graph.Struct
 import rescala.reactives._
 
@@ -90,7 +90,7 @@ class SignalRef[+A](_node : SignalNode[A]) extends ReactiveRef[A] {
 
   override def reify[S <: Struct](implicit reifier: Reifier[S]): Signal[A, S] = deref.reify
 
-  def now[S <: Struct](implicit reifier: Reifier[S], ticket: TurnSource[S]): A = deref.now
+  def now[S <: Struct](implicit reifier: Reifier[S], ticket: TicketOrEngine[S]): A = deref.now
 
   def delay(n: Int): SignalRef[A] = new SignalRef(deref.delay(n))
   def map[X >: A, B](f: (X) => B): SignalRef[B] = new SignalRef(deref.map(f))

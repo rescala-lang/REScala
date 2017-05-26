@@ -4,10 +4,9 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import benchmarks.philosophers.PhilosopherTable._
 import org.openjdk.jmh.infra.Blackhole
-import rescala.engine.{Engine, Turn}
+import rescala.engine.{Engine, TicketOrEngine, Turn}
 import rescala.graph.Struct
 import rescala.reactives._
-import rescala.twoversion.{Committable, TwoVersionPropagationImpl, TwoVersionPropagation}
 
 class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit val engine: Engine[S, Turn[S]]) {
 
@@ -41,20 +40,14 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit 
   }
 
   def tryEat(seating: Seating[S]): Boolean =
-    engine.transaction(seating.philosopher) { turn =>
-      val forksWereFree = seating.vision.now(turn) == Ready
-      if (forksWereFree) seating.philosopher.admit(Eating)(turn)
-      turn match {
-        case cmn: TwoVersionPropagationImpl[S] =>
-          cmn.schedule(new Committable[S] {
-            override def commit(t: TwoVersionPropagation[S]): Unit = if (forksWereFree) assert(seating.vision.now(turn) == Done, "philosopher should be done after turn")
-            override def release(t: TwoVersionPropagation[S]): Unit = assert(assertion = false, "turn should not rollback")
-          })
-      }
+    engine.transactionWithWrapup(seating.philosopher) { t =>
+      val forksAreFree = seating.vision.now(TicketOrEngine.fromTicket(t)) == Ready
+      if (forksAreFree) seating.philosopher.admit(Eating)(t)
+      forksAreFree
+    } /* propagation executes here */ { (forksWereFree, t) =>
+      if (forksWereFree) assert(seating.vision.now(TicketOrEngine.fromTicket(t)) == Done, s"philosopher should be done after turn")
       forksWereFree
     }
-
-
 }
 
 object PhilosopherTable {

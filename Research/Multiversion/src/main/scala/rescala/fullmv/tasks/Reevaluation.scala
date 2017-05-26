@@ -77,6 +77,7 @@ object Reevaluation {
         // }
         node.state.incomings = deps
         if(anyPendingDependency) {
+          assert(false, "this should no longer be happening.")
           (NoSuccessor(Set.empty), false)
         } else {
           (node.state.reevOut(turn, if (isChange) Some(value) else None), isChange)

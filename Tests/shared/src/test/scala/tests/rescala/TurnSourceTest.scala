@@ -5,16 +5,16 @@ class TurnSourceTest extends RETests {
 
   /* this test uses some shady planned()(identity) to get the turn object out of the transaction
    * you should not do this. */
-  def getTurn[S2 <: rescala.graph.Struct](implicit engine: rescala.engine.Engine[S2, rescala.engine.Turn[S2]]): rescala.engine.Turn[S2] = engine.transaction()(identity)
+  def getTurn[S2 <: rescala.graph.Struct](implicit engine: rescala.engine.Engine[S2, rescala.engine.Turn[S2]]): rescala.engine.Turn[S2] = engine.transaction()(_.turn)
 
   allEngines("none Dynamic No Implicit") { engine => import engine._
     assert(implicitly[TurnSource].self === Right(engine))
   }
 
   allEngines("some Dynamic No Implicit") { engine => import engine._
-    engine.transaction() { (dynamicTurn: Turn) =>
+    engine.transaction() { (dynamicTurn: AdmissionTicket) =>
       assert(implicitly[TurnSource].self === Right(engine))
-      assert(implicitly[TurnSource].apply(identity) === dynamicTurn)
+      assert(implicitly[TurnSource].apply(_.turn) === dynamicTurn.turn)
     }
   }
 
@@ -30,10 +30,10 @@ class TurnSourceTest extends RETests {
     //      throw new IllegalStateException("pipeline engine cannot run a turn inside a turn")
     //    }
     //    else {
-    engine.transaction() { (dynamicTurn: Turn) =>
+    engine.transaction() { (dynamicTurn: AdmissionTicket) =>
       implicit val implicitTurn: Turn = getTurn
       assert(implicitly[TurnSource].self === Left(implicitTurn))
-      assert(implicitly[TurnSource].apply(identity) === implicitTurn)
+      assert(implicitly[TurnSource].apply(_.turn) === implicitTurn)
       //      }
     }
   }
@@ -48,7 +48,7 @@ class TurnSourceTest extends RETests {
     }
     engine.transaction() { dynamic =>
       assert(closure().self === Left(closureDefinition))
-      assert(closure().apply(identity) === closureDefinition)
+      assert(closure().apply(_.turn) === closureDefinition)
     }
   }
 
@@ -60,7 +60,7 @@ class TurnSourceTest extends RETests {
     }
     engine.transaction() { dynamic =>
       assert(closure().self === Right(engine))
-      assert(closure().apply(identity) === dynamic)
+      assert(closure().apply(_.turn) === dynamic.turn)
     }
   }
 

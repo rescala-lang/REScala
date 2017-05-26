@@ -403,10 +403,12 @@ class NodeVersionHistory[V, T <: TurnPhase, R](val sgt: SerializationGraphTracki
     }
   }
 
-  def reevIn(turn: T): (V, Set[R]) = {
-    val firstFrameTurn = synchronized {_versions(firstFrame).txn}
-    assert(firstFrameTurn == turn, s"Turn $turn called reevIn, but Turn $firstFrameTurn is first frame owner")
-    (latestValue, incomings)
+  def reevIn(turn: T): V = {
+    synchronized {
+      val firstFrameTurn = _versions(firstFrame).txn
+      assert(firstFrameTurn == turn, s"Turn $turn called reevIn, but Turn $firstFrameTurn is first frame owner")
+    }
+    latestValue
   }
 
   /**
@@ -525,11 +527,11 @@ class NodeVersionHistory[V, T <: TurnPhase, R](val sgt: SerializationGraphTracki
 
   private def before(txn: T, position: Int): V = synchronized {
     assert(!valuePersistency.isTransient, "before read on transient node")
-    assert(position > 0, "cannot read before first version")
+    assert(position > 0, s"$txn cannot read before first version")
     @tailrec def readIfWriteOrSearchBackwards(pos: Int): V = {
-      assert(pos >= 0, "could not find a previous written version, although at least the first version should always be readable")
+      assert(pos >= 0, s"$txn could not find a previous written version, although at least the first version should always be readable")
       val version = _versions(pos)
-      assert(!version.isFrame, "Found frame while searching for predecessor version to read -- forgotten dynamic access synchronization?")
+      assert(!version.isFrame, s"$txn found frame while searching for predecessor version to read -- forgotten dynamic access synchronization?")
       if(version.value.isDefined) {
         version.value.get
       } else {
@@ -612,7 +614,7 @@ class NodeVersionHistory[V, T <: TurnPhase, R](val sgt: SerializationGraphTracki
       val version = _versions(position)
       assert(!version.isFrame, s"staticAfter discovered frame $version -- did the caller wrongly assume a statically known dependency?")
       version.value.getOrElse {
-        version.read()
+        beforeOrInit(txn, position)
       }
     }
   }
