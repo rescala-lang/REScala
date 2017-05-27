@@ -58,14 +58,14 @@ class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends Initia
     state.incrementFrame(this)
     state
   }
-  override protected def ignite(reactive: Reactive[FullMVStruct], incoming: Set[Reactive[FullMVStruct]], valuePersistency: ValuePersistency[_]): Unit = {
+  override protected def ignite(reactive: Reactive[FullMVStruct], incoming: Set[Reactive[FullMVStruct]], ignitionRequiresReevaluation: Boolean): Unit = {
     activeBranchDifferential(TurnPhase.Executing, 1)
     incoming.foreach { discover =>
       val (successorWrittenVersions, maybeFollowFrame) = discover.state.discover(this, reactive)
       reactive.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, 1)
     }
     reactive.state.incomings = incoming
-    val ignitionNotification = Notification(this, reactive, changed = valuePersistency.ignitionRequiresReevaluation)
+    val ignitionNotification = Notification(this, reactive, changed = ignitionRequiresReevaluation)
     // Execute this notification manually to be able to execute a resulting reevaluation immediately.
     // Subsequent reevaluations from retrofitting will be added to the global pool, but not awaited.
     // This matches the required behavior where the code that creates this reactive is expecting the initial

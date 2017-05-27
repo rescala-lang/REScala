@@ -56,14 +56,14 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
     * it is important, that the locks for the dependencies are acquired BEFORE the constructor for the new reactive.
     * is executed, because the constructor typically accesses the dependencies to create its initial value.
     */
-  protected def ignite(reactive: Reactive[TState], incoming: Set[Reactive[TState]], valuePersistency: ValuePersistency[_]): Unit = {
+  protected def ignite(reactive: Reactive[TState], incoming: Set[Reactive[TState]], ignitionRequiresReevaluation: Boolean): Unit = {
     incoming.foreach { dep =>
       acquireShared(dep)
       discover(reactive)(dep)
     }
     reactive.state.updateIncoming(incoming)(this)
     recount(reactive)
-    if(valuePersistency.ignitionRequiresReevaluation || incoming.exists(_.state.hasChanged == this)) {
+    if(ignitionRequiresReevaluation || incoming.exists(_.state.hasChanged == this)) {
       reactive.state.anyInputChanged = this
       reactive.state.willWrite = this
       if (reactive.state.counter == 0) {

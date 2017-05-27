@@ -72,7 +72,7 @@ object Signals extends GeneratedSignalLift {
   /** creates a new static signal depending on the dependencies, reevaluating the function */
   def static[T, S <: Struct](dependencies: Reactive[S]*)(expr: StaticTicket[S] => T)(implicit maybe: TurnSource[S]): Signal[T, S] = maybe { initialTurn =>
     def ignore2[I, C, R](f: I => R): (I, C) => R = (t, _) => f(t)
-    initialTurn.create[Pulse[T], Signal[T, S]](dependencies.toSet[Reactive[S]], ValuePersistency.Signal) {
+    initialTurn.create[Pulse[T], Signal[T, S]](dependencies.toSet[Reactive[S]], ValuePersistency.DerivedSignal) {
       state => new StaticSignal[T, S](state, ignore2(expr)) with Disconnectable[S]
     }
   }
@@ -83,7 +83,7 @@ object Signals extends GeneratedSignalLift {
 
   /** creates a signal that has dynamic dependencies (which are detected at runtime with Signal.apply(turn)) */
   def dynamic[T, S <: Struct](dependencies: Reactive[S]*)(expr: DynamicTicket[S] => T)(implicit maybe: TurnSource[S]): Signal[T, S] = maybe { initialTurn =>
-    initialTurn.create[Pulse[T], Signal[T, S]](dependencies.toSet[Reactive[S]], ValuePersistency.DynamicSignal) {
+    initialTurn.create[Pulse[T], Signal[T, S]](dependencies.toSet[Reactive[S]], ValuePersistency.DerivedSignal) {
       state => new DynamicSignal[T, S](state, expr) with Disconnectable[S]
     }
   }

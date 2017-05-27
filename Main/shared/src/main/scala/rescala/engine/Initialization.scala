@@ -7,7 +7,7 @@ trait InitializationImpl[S <: Struct] extends Turn[S] {
   final private[rescala] def create[P, T <: Reactive[S]](incoming: Set[Reactive[S]], valuePersistency: ValuePersistency[P])(instantiateReactive: S#State[P, S] => T): T = {
     val state = makeStructState(valuePersistency)
     val reactive = instantiateReactive(state)
-    ignite(reactive, incoming, valuePersistency)
+    ignite(reactive, incoming, valuePersistency.ignitionRequiresReevaluation)
     reactive
   }
 
@@ -26,22 +26,25 @@ trait InitializationImpl[S <: Struct] extends Turn[S] {
     * @param dynamic false if the set of incoming dependencies is the correct final set of dependencies (static reactive)
     *                true if the set of incoming dependencies is just a best guess for the initial dependencies.
     */
-  protected def ignite(reactive: Reactive[S], incoming: Set[Reactive[S]], valuePersistency: ValuePersistency[_]): Unit
+  protected def ignite(reactive: Reactive[S], incoming: Set[Reactive[S]], ignitionRequiresReevaluation: Boolean): Unit
 }
 
 sealed class ValuePersistency[+V](
   val initialValue: V,
   val isTransient: Boolean,
-  val ignitionRequiresReevaluation: Boolean,
-  val dynamic: Boolean
+  val ignitionRequiresReevaluation: Boolean
 )
 
 object ValuePersistency {
-  object Event extends ValuePersistency[Pulse[Nothing]](Pulse.NoChange, isTransient = true, ignitionRequiresReevaluation = true, dynamic = false)
-  object DynamicEvent extends ValuePersistency[Pulse[Nothing]](Pulse.NoChange, isTransient = true, ignitionRequiresReevaluation = true, dynamic = true)
-  object Signal extends ValuePersistency[Change[Nothing]](Pulse.empty, isTransient = false, ignitionRequiresReevaluation = true, dynamic = false)
-  object DynamicSignal extends ValuePersistency[Change[Nothing]](Pulse.empty, isTransient = false, ignitionRequiresReevaluation = true, dynamic = true)
+  // Events do not have a value, so reevaluating them at ignition is pointless in theory.
+  // DynamicEvents however are part badly implemented and part not well-enough unterstood,
+  // so they DO require an initial reevaluation to establish their initial dependencies correctly.
+  // Since superfluous reevaluation of events without a good reason however do not actually have
+  // any effect, we simply set all events to just be reevaluated upon ignition unconditionally,
+  // which ensures that dynamic events work correctly and doesn't hurt others.
+  object Event extends ValuePersistency[Pulse[Nothing]](Pulse.NoChange, isTransient = true, ignitionRequiresReevaluation = true)
+  object DerivedSignal extends ValuePersistency[Change[Nothing]](Pulse.empty, isTransient = false, ignitionRequiresReevaluation = true)
   case class InitializedSignal[V](override val initialValue: Change[V])
-    extends ValuePersistency[Change[V]](initialValue, isTransient = false, ignitionRequiresReevaluation = false, dynamic = false)
+    extends ValuePersistency[Change[V]](initialValue, isTransient = false, ignitionRequiresReevaluation = false)
 }
 

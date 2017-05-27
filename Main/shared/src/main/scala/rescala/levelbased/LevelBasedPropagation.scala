@@ -1,6 +1,5 @@
 package rescala.levelbased
 
-import rescala.engine.ValuePersistency
 import rescala.graph.ReevaluationResult.{Dynamic, Static}
 import rescala.graph.{Reactive, ReevaluationResult}
 import rescala.twoversion.TwoVersionPropagationImpl
@@ -41,19 +40,17 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
 
   private def maximumLevel(dependencies: Set[Reactive[S]]): Int = dependencies.foldLeft(-1)((acc, r) => math.max(acc, r.state.level(this)))
 
-  override protected def ignite(reactive: Reactive[S], incoming: Set[Reactive[S]], valuePersistency: ValuePersistency[_]): Unit = {
+  override protected def ignite(reactive: Reactive[S], incoming: Set[Reactive[S]], ignitionRequiresReevaluation: Boolean): Unit = {
     val level = if(incoming.isEmpty) 0 else incoming.map(_.state.level(this)).max + 1
     reactive.state.updateLevel(level)(this)
 
-    if(!valuePersistency.dynamic) {
-      incoming.foreach { dep =>
-        dynamicDependencyInteraction(dep)
-        discover(reactive)(dep)
-      }
-      reactive.state.updateIncoming(incoming)(this)
+    incoming.foreach { dep =>
+      dynamicDependencyInteraction(dep)
+      discover(reactive)(dep)
     }
+    reactive.state.updateIncoming(incoming)(this)
 
-    if(valuePersistency.ignitionRequiresReevaluation || incoming.exists(_evaluated.contains)) {
+    if(ignitionRequiresReevaluation || incoming.exists(_evaluated.contains)) {
       if (level <= levelQueue.currentLevel()) {
         evaluate(reactive)
       } else {

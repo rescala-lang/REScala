@@ -44,7 +44,7 @@ object Events {
   /** create dynamic events */
   def dynamic[T, S <: Struct](dependencies: Reactive[S]*)(expr: DynamicTicket[S] => Option[T])(implicit maybe: TurnSource[S]): Event[T, S] = {
     maybe { initialTurn =>
-      initialTurn.create[Pulse[T], Event[T, S]](dependencies.toSet, ValuePersistency.DynamicEvent) {
+      initialTurn.create[Pulse[T], Event[T, S]](dependencies.toSet, ValuePersistency.Event) {
         state => new DynamicEvent[T, S](state, expr.andThen(Pulse.fromOption)) with Disconnectable[S]
       }
     }
