@@ -47,7 +47,7 @@ class NodeVersionHistory[V, T <: TurnPhase, R](val sgt: SerializationGraphTracki
       isReleasable || { NodeVersionHistory.this.wait(); isReleasable }
     }
   }
-  private class Version(val txn: T, @volatile var stable: Boolean, var out: Set[R], var pending: Int, var changed: Int, var value: Option[V]) extends BlockOnHistoryManagedBlocker {
+  private class Version(val txn: T, var stable: Boolean, var out: Set[R], var pending: Int, var changed: Int, var value: Option[V]) extends BlockOnHistoryManagedBlocker {
     // txn >= Executing, stable == true, node reevaluation completed changed
     def isWritten: Boolean = changed == 0 && value.isDefined
     // txn <= WrapUp, any following versions are stable == false
@@ -70,26 +70,25 @@ class NodeVersionHistory[V, T <: TurnPhase, R](val sgt: SerializationGraphTracki
       value.get
     }
 
-    override def isReleasable: Boolean = {
-      // this is a volatile read so that this check can be performed in a non-blocking fashion.
-      // this may result in the thread pool reading this version as unblocked despite the node's
-      // monitor still being held, i.e., the stabilization not actually having been made visible,
-      // but this is fine as the monitor is only held briefly and stabilization is never reverted
-      // once the propagation phase has been reached (which is a prerequisite for this blocker to be used).
-      stable
+    override def isReleasable: Boolean = NodeVersionHistory.this.synchronized {
+      isFinal
     }
 
-    // fake lazy val without synchronization, because it is created only while the node's monitor is being held.
-    private var _blockForFinal: ManagedBlocker = null
-    def blockForFinal: ManagedBlocker = {
-      if(_blockForFinal == null) {
-        _blockForFinal = new BlockOnHistoryManagedBlocker {
+    // common blocking case (now, dynamicDepend): Use self as blocker instance to reduce garbage
+    def blockForFinal: ManagedBlocker = this
+
+    // less common blocking case
+    // fake lazy val without synchronization, because it is accessed only while the node's monitor is being held.
+    private var _blockForStable: ManagedBlocker = null
+    def blockForStable: ManagedBlocker = {
+      if(_blockForStable == null) {
+        _blockForStable = new BlockOnHistoryManagedBlocker {
           override def isReleasable: Boolean = NodeVersionHistory.this.synchronized {
-            isWritten || isReadOrDynamic
+            stable
           }
         }
       }
-      _blockForFinal
+      _blockForStable
     }
 
 
@@ -265,6 +264,7 @@ class NodeVersionHistory[V, T <: TurnPhase, R](val sgt: SerializationGraphTracki
     * @return a descriptor of how this framing has to propagate
     */
   private def incrementFrame0(txn: T): FramingBranchResult[T, R] = {
+    maybeGC()
     val position = findFrame(txn)
     if(position >= 0) {
       val version = _versions(position)
@@ -330,6 +330,7 @@ class NodeVersionHistory[V, T <: TurnPhase, R](val sgt: SerializationGraphTracki
     * @param followFrame a transaction for which to create a subsequent frame, furthering its partial framing.
     */
   def notifyFollowFrame(txn: T, changed: Boolean, followFrame: T): NotificationResultAction[T, R] = synchronized {
+    maybeGC()
     val position = findFrame(txn)
 
     // do follow framing
@@ -486,30 +487,6 @@ class NodeVersionHistory[V, T <: TurnPhase, R](val sgt: SerializationGraphTracki
     }
   }
 
-  def synchronizeDynamicAccess(txn: T): Int = {
-    synchronized {
-      val position = ensureReadVersion(txn)
-      assertOptimizationsIntegrity(s"ensureReadVersion($txn)")
-      val version = _versions(position)
-      if(version.stable) {
-        Left(position)
-      } else {
-        Right(version)
-      }
-    } match {
-      case Left(position) => position
-      case Right(version) =>
-
-        ForkJoinPool.managedBlock(version)
-
-        synchronized {
-          val stablePosition = if(version.isFrame) firstFrame else findFinal(txn)
-          assert(stablePosition >= 0, "somehow, the version allocated above disappeared..")
-          stablePosition
-        }
-    }
-  }
-
   /**
     * entry point for before(this); may suspend.
     *
@@ -518,7 +495,29 @@ class NodeVersionHistory[V, T <: TurnPhase, R](val sgt: SerializationGraphTracki
     *         own writes.
     */
   def dynamicBefore(txn: T): V = synchronized {
-    before(txn, synchronizeDynamicAccess(txn))
+    assert(!valuePersistency.isTransient, s"$txn invoked dynamicBefore on transient node")
+    maybeGC()
+    synchronized {
+      val position = ensureReadVersion(txn)
+      assertOptimizationsIntegrity(s"ensureReadVersion($txn)")
+      val version = _versions(position)
+      if(version.stable) {
+        Left(before(txn, position))
+      } else {
+        Right(version)
+      }
+    } match {
+      case Left(value) => value
+      case Right(version) =>
+
+        ForkJoinPool.managedBlock(version.blockForStable)
+
+        synchronized {
+          val stablePosition = if(version.isFrame) firstFrame else findFinal(txn)
+          assert(stablePosition >= 0, "somehow, the version allocated above disappeared..")
+          before(txn, stablePosition)
+        }
+    }
   }
 
   def staticBefore(txn: T): V = synchronized {
@@ -528,50 +527,27 @@ class NodeVersionHistory[V, T <: TurnPhase, R](val sgt: SerializationGraphTracki
   private def before(txn: T, position: Int): V = synchronized {
     assert(!valuePersistency.isTransient, "before read on transient node")
     assert(position > 0, s"$txn cannot read before first version")
-    @tailrec def readIfWriteOrSearchBackwards(pos: Int): V = {
-      assert(pos >= 0, s"$txn could not find a previous written version, although at least the first version should always be readable")
-      val version = _versions(pos)
-      assert(!version.isFrame, s"$txn found frame while searching for predecessor version to read -- forgotten dynamic access synchronization?")
-      if(version.value.isDefined) {
-        version.value.get
-      } else {
-        readIfWriteOrSearchBackwards(pos - 1)
-      }
-    }
-    readIfWriteOrSearchBackwards(position - 1)
+    val lastWrite = lastWriteUpTo(position - 1)
+    lastWrite.value.get
   }
 
-  /**
-    * entry point for now(this); may suspend.
-    * @param txn the executing transaction
-    * @return the corresponding [[Version.value]] at the current point in time (but still serializable), i.e.,
-    *         possibly returning the transaction's own write if this already occurred.
-    */
-  def dynamicNow(txn: T): V = synchronized {
-    val position = synchronizeDynamicAccess(txn)
-    nowGivenOwnVersion(txn, position)
-  }
-
-  def staticNow(txn: T): V = synchronized {
-    val position = findFinal(txn)
-    if(position < 0) {
-      beforeOrInit(txn, -position)
+  @tailrec private def lastWriteUpTo(pos: Int): Version = {
+    assert(pos >= 0, s"could not find a previous written version, although at least the first version should always be readable")
+    val version = _versions(pos)
+    assert(!version.isFrame, s"found frame while searching for predecessor version to read -- forgotten dynamic access synchronization?")
+    if(version.value.isDefined) {
+      version
     } else {
-      nowGivenOwnVersion(txn, position)
+      lastWriteUpTo(pos - 1)
     }
   }
 
-  private def nowGivenOwnVersion(txn: T, position: Int): V = {
-    val ownVersion = _versions(position)
-    if(ownVersion.isWritten) {
-      ownVersion.read()
+  private def beforeOrInit(txn: T, position: Int): V = {
+    if(valuePersistency.isTransient) {
+      valuePersistency.initialValue
     } else {
-      beforeOrInit(txn, position)
+      before(txn, position)
     }
-  }
-
-  private def beforeOrInit(txn: T, position: Int): V = synchronized {
-    if(valuePersistency.isTransient) valuePersistency.initialValue else before(txn, position)
   }
 
   /**
@@ -582,14 +558,17 @@ class NodeVersionHistory[V, T <: TurnPhase, R](val sgt: SerializationGraphTracki
     */
   def dynamicAfter(txn: T): V = {
     synchronized {
-      val position = synchronizeDynamicAccess(txn)
+      maybeGC()
+      val position = ensureReadVersion(txn)
       val version = _versions(position)
-      if(version.isWritten) {
-        Left(version.value.get)
-      } else if (version.isFrame) {
-        Right(version)
+      if(version.isFinal) {
+        Left(if(version.value.isDefined) {
+          version.value.get
+        } else {
+          beforeOrInit(txn, position)
+        })
       } else {
-        Left(beforeOrInit(txn, position))
+        Right(version)
       }
     } match {
       case Left(value) => value
@@ -597,16 +576,17 @@ class NodeVersionHistory[V, T <: TurnPhase, R](val sgt: SerializationGraphTracki
 
         ForkJoinPool.managedBlock(version.blockForFinal)
 
-        synchronized {
-          assert(!version.isFrame, s"blockForFinal returned while $version is still a frame..")
-          version.value.getOrElse {
+        if(version.value.isDefined) {
+          version.value.get
+        } else {
+          synchronized {
             beforeOrInit(txn, findFinal(txn))
           }
         }
     }
   }
 
-  def staticAfter(txn: T): V = {
+  def staticAfter(txn: T): V = synchronized {
     val position = findFinal(txn)
     if(position < 0) {
       beforeOrInit(txn, -position)
@@ -697,5 +677,75 @@ class NodeVersionHistory[V, T <: TurnPhase, R](val sgt: SerializationGraphTracki
     }
     val maybeSuccessorFrame = if (firstFrame < _versions.size) Some(_versions(firstFrame).txn) else None
     (successorWrittenVersions, maybeSuccessorFrame)
+  }
+
+  private def maybeGC(): Int = {
+    // placeholder in case we want to have some mechanic that reduces the frequency of GC runs
+    if(true) {
+      gcObsoleteVersions()
+    } else {
+      0
+    }
+  }
+
+  def gcObsoleteVersions(): Int = synchronized {
+    if(_versions.size > 1) {
+      @tailrec
+      def findLastCompleted(from: Int, to: Int): Int = {
+        if (to < from) {
+          if (_versions(from).txn.phase == TurnPhase.Completed) {
+            from
+          } else {
+            0
+          }
+        } else {
+          val idx = from + (to - from - 1) / 2
+          val candidate = _versions(idx).txn
+          if (candidate.phase == TurnPhase.Completed) {
+            if (_versions(idx + 1).txn.phase == TurnPhase.Completed) {
+              findLastCompleted(idx + 1, to)
+            } else {
+              idx
+            }
+          } else {
+            if (_versions(idx - 1).txn.phase == TurnPhase.Completed) {
+              idx - 1
+            } else {
+              findLastCompleted(from, idx - 1)
+            }
+          }
+        }
+      }
+
+      val lastCompleted = findLastCompleted(1, math.min(_versions.size - 2, firstFrame))
+      assert(_versions(lastCompleted).txn.phase == TurnPhase.Completed)
+      if (lastCompleted > 0) {
+        if (_versions(lastCompleted).value.isDefined) {
+          firstFrame -= lastCompleted
+          latestWritten -= lastCompleted
+          _versions.remove(0, lastCompleted)
+          lastCompleted
+        } else if(lastCompleted > 1) {
+          val dumpCount = lastCompleted - 1
+          firstFrame -= dumpCount
+          _versions(0) = if(_versions(latestWritten).txn.phase == TurnPhase.Completed) {
+            val result = _versions(latestWritten)
+            latestWritten = 0
+            result
+          } else {
+            latestWritten -= dumpCount
+            lastWriteUpTo(lastCompleted)
+          }
+          _versions.remove(1, dumpCount)
+          dumpCount
+        } else {
+          0
+        }
+      } else {
+        0
+      }
+    } else {
+      0
+    }
   }
 }
