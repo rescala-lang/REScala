@@ -1,6 +1,6 @@
 package tests.rescala.concurrency
 
-import java.util.concurrent.CountDownLatch
+import java.util.concurrent.{CountDownLatch, TimeUnit}
 
 import rescala.Engines
 import rescala.fullmv.FullMVEngine
@@ -18,17 +18,18 @@ class PessimisticTest extends RETests {
     val (sync1, s1) = SynchronizedReevaluation(v1)
     val (sync2, s2) = SynchronizedReevaluation(v2)
     val trackS1 = new ReevaluationTracker(s1)
-    val latch = SynchronizedReevaluation.autoSyncNextReevaluation(sync1, sync2)
+    val reached1 = SynchronizedReevaluation.notifyOnceReached(sync1)
+    val autoSync = SynchronizedReevaluation.autoSyncNextReevaluation(sync1, sync2)
 
     val t1 = Spawn{ v1.set(true) }
 
-    Thread.sleep(100)
+    assert(reached1.await(1000, TimeUnit.MILLISECONDS))
     trackS1.assertClear(false) // turn did not finish yet
-    assert(latch.getCount === 1) // but has reduced latch to only second turn missing
+    assert(autoSync.getCount === 1) // but has reduced latch to only second turn missing
 
     v2.set(true)
     t1.join(1000)
-    assert(latch.getCount == 0)
+    assert(autoSync.getCount == 0)
 
     assert(s1.now === true)
     trackS1.assertClear(true)
@@ -110,8 +111,7 @@ class PessimisticTest extends RETests {
     val t1 = Spawn(v1.set(4))
     val t2 = Spawn(v2.set(5))
 
-    Thread.sleep(100)
-    assert(latch.getCount === 0) // common latch should be clear
+    assert(latch.await(1000, TimeUnit.MILLISECONDS))
     assert(latch1.getCount === 1) // t1 in should wait for manual approval only
     results2.assertClear() // i should not have propagated over the dynamic discovery, despite being blocked manually
 
@@ -241,8 +241,7 @@ class PessimisticTest extends RETests {
     val t1 = Spawn { SetAndExtractTransactionHandle(bl0, true) }
     val t2 = Spawn { SetAndExtractTransactionHandle(il0, 0) }
 
-    Thread.sleep(100)
-    assert(latch.getCount === 0) // common latch should be clear
+    assert(latch.await(1000, TimeUnit.MILLISECONDS))
     assert(latch1.getCount === 1) // b should wait for manual approval only
     results2.assertClear() // i should not have propagated over the dynamic discovery, despite not being blocked manually
 
@@ -314,8 +313,7 @@ class PessimisticTest extends RETests {
     val t1 = Spawn { SetAndExtractTransactionHandle(bl0, true) }
     val t2 = Spawn { SetAndExtractTransactionHandle(il0, 17)}
 
-    Thread.sleep(100)
-    assert(latch.getCount === 0) // common latch should be clear
+    assert(latch.await(1000, TimeUnit.MILLISECONDS))
     assert(latch1.getCount === 1) // b should wait for manual approval only
     results2.assertClear() // i should not have propagated over the dynamic discovery, despite not being blocked manually
 

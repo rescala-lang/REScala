@@ -10,10 +10,14 @@ import rescala.reactives.{Event, Signal}
 
 class SynchronizedReevaluation extends ManagedBlocker {
   var latches: List[CountDownLatch] = Nil
+  var notifies: List[CountDownLatch] = Nil
   def reev[X](v1: X): X = {
     latches.foreach { _.countDown() }
+    // notify after latches so tests can assert latch counts correctly
+    notifies.foreach { _.countDown() }
     ForkJoinPool.managedBlock(this)
     latches = Nil
+    notifies = Nil
     v1
   }
 
@@ -26,6 +30,10 @@ class SynchronizedReevaluation extends ManagedBlocker {
 
   def addSynchronizationPoint(latch: CountDownLatch): Unit = {
     latches ::= latch
+  }
+
+  def addNotifyPoint(latch: CountDownLatch): Unit = {
+    notifies ::= latch
   }
 }
 
@@ -48,6 +56,12 @@ object SynchronizedReevaluation {
   def manuallySyncNextReevaluation(syncs: SynchronizedReevaluation*): CountDownLatch = {
     val latch = new CountDownLatch(syncs.size + 1)
     syncs.foreach(_.addSynchronizationPoint(latch))
+    latch
+  }
+
+  def notifyOnceReached(syncs: SynchronizedReevaluation*): CountDownLatch = {
+    val latch = new CountDownLatch((syncs.size))
+    syncs.foreach(_.addNotifyPoint(latch))
     latch
   }
 }
