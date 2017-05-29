@@ -9,12 +9,6 @@ import rescala.fullmv.tasks.{Notification, Reevaluation}
 import rescala.graph.{Pulsing, Reactive}
 
 class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends InitializationImpl[FullMVStruct] with TurnPhase {
-  private lazy val preTurn = {
-    val preTurn = new FullMVTurn(sgt)
-    preTurn.beginPhase(TurnPhase.Completed, -1)
-    preTurn
-  }
-
   // counts the sum of in-flight notifications, in-progress reevaluations.
   @volatile var phase: TurnPhase.Type = TurnPhase.Initialized
   object stateParking
@@ -54,7 +48,7 @@ class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends Initia
   }
 
   override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): NodeVersionHistory[P, FullMVTurn, Reactive[FullMVStruct]] = {
-    val state = new NodeVersionHistory[P, FullMVTurn, Reactive[FullMVStruct]](sgt, preTurn, valuePersistency)
+    val state = new NodeVersionHistory[P, FullMVTurn, Reactive[FullMVStruct]](sgt, FullMVEngine.CREATE_PRETURN, valuePersistency)
     state.incrementFrame(this)
     state
   }

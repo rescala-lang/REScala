@@ -29,7 +29,7 @@ trait ReevaluationResultHandling extends FullMVAction {
 }
 
 case class Reevaluation(turn: FullMVTurn, node: Reactive[FullMVStruct]) extends ReevaluationResultHandling {
-  override def compute(): Unit = {
+  override def doCompute(): Unit = {
     val (outAndSucc, changed) = Reevaluation.doReevaluation(turn, node)
     if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this => ${if(changed) "changed" else "unchanged"} $outAndSucc")
     processReevaluationResult(outAndSucc, changed)

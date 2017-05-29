@@ -34,6 +34,10 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
     // admission
     turn.beginPhase(TurnPhase.Executing, initialWrites.size)
     val admissionResult = Try(admissionPhase())
+    if(DEBUG) admissionResult match {
+      case scala.util.Failure(e) => e.printStackTrace
+      case _ =>
+    }
 
     // propagation start
     for(i <- initialWrites) threadPool.submit(Notification(turn, i, changed = admissionResult.isSuccess))
@@ -61,5 +65,11 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
 
     // result
     result.get
+  }
+
+  val CREATE_PRETURN = {
+    val preTurn = new FullMVTurn(sgt)
+    preTurn.beginPhase(TurnPhase.Completed, -1)
+    preTurn
   }
 }

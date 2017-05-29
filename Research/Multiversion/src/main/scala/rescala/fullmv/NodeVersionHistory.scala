@@ -123,9 +123,16 @@ class NodeVersionHistory[V, T <: TurnPhase, R](val sgt: SerializationGraphTracki
   def assertOptimizationsIntegrity(debugOutputDescription: => String): Unit = {
     def debugStatement(whatsWrong: String): String = s"$debugOutputDescription left $whatsWrong (latestWritten $latestWritten, ${if(firstFrame > _versions.size) "no frames" else "firstFrame "+firstFrame}): \n  " + _versions.zipWithIndex.map{case (version, index) => s"$index: $version"}.mkString("\n  ")
 
-    assert(firstFrame >= _versions.size || _versions(firstFrame).isFrame, debugStatement("firstFrame not frame"))
+    assert(_versions.size >= 1, debugStatement("version list was cleared"))
+    assert(_versions(0).isWritten, debugStatement("first version not written"))
+
+    assert(firstFrame > 0, debugStatement("firstFrame out of bounds negative"))
+    assert(firstFrame <= _versions.size, debugStatement("firstFrame out of bounds positive"))
+    assert(firstFrame == _versions.size || _versions(firstFrame).isFrame, debugStatement("firstFrame not frame"))
     assert(!_versions.take(firstFrame).exists(_.isFrame), debugStatement("firstFrame not first"))
 
+    assert(latestWritten >= 0, debugStatement("latestWritten out of bounds negative"))
+    assert(latestWritten < _versions.size, debugStatement("latestWritten out of bounds positive"))
     assert(_versions(latestWritten).isWritten, debugStatement("latestWritten not written"))
     assert(!_versions.drop(latestWritten + 1).exists(_.isWritten), debugStatement("latestWritten not latest"))
 
@@ -214,7 +221,8 @@ class NodeVersionHistory[V, T <: TurnPhase, R](val sgt: SerializationGraphTracki
     * @return the position (positive values) or insertion point (negative values)
     */
   private def findFrame(txn: T): Int = {
-    findOrPidgeonHole(txn, latestWritten, latestWritten, _versions.size)
+    if(firstFrame < _versions.size && _versions(firstFrame).txn == txn) firstFrame else
+    findOrPidgeonHole(txn, latestWritten + 1, latestWritten + 1, _versions.size)
   }
 
   /**
@@ -225,6 +233,7 @@ class NodeVersionHistory[V, T <: TurnPhase, R](val sgt: SerializationGraphTracki
     * @return the position (positive values) or insertion point (negative values)
     */
   private def findFinal(txn: T) = {
+    if(_versions(latestWritten).txn == txn) latestWritten else
     findOrPidgeonHole(txn, 1, 1, firstFrame)
   }
 
@@ -527,7 +536,12 @@ class NodeVersionHistory[V, T <: TurnPhase, R](val sgt: SerializationGraphTracki
   private def before(txn: T, position: Int): V = synchronized {
     assert(!valuePersistency.isTransient, "before read on transient node")
     assert(position > 0, s"$txn cannot read before first version")
-    val lastWrite = lastWriteUpTo(position - 1)
+    val lastWrite = if(latestWritten < position) {
+      assert(!_versions.slice(latestWritten + 1, position).exists(_.isFrame))
+      _versions(latestWritten)
+    } else {
+      lastWriteUpTo(position - 1)
+    }
     lastWrite.value.get
   }
 
@@ -717,18 +731,23 @@ class NodeVersionHistory[V, T <: TurnPhase, R](val sgt: SerializationGraphTracki
         }
       }
 
-      val lastCompleted = findLastCompleted(1, math.min(_versions.size - 2, firstFrame))
+      val lastCompleted = if(_versions.last.txn.phase == TurnPhase.Completed) {
+        _versions.size - 1
+      } else {
+        findLastCompleted(1, math.min(_versions.size - 2, firstFrame))
+      }
       assert(_versions(lastCompleted).txn.phase == TurnPhase.Completed)
       if (lastCompleted > 0) {
         if (_versions(lastCompleted).value.isDefined) {
           firstFrame -= lastCompleted
           latestWritten -= lastCompleted
           _versions.remove(0, lastCompleted)
+          assertOptimizationsIntegrity(s"gc1")
           lastCompleted
         } else if(lastCompleted > 1) {
           val dumpCount = lastCompleted - 1
           firstFrame -= dumpCount
-          _versions(0) = if(_versions(latestWritten).txn.phase == TurnPhase.Completed) {
+          _versions(0) = if(latestWritten <= lastCompleted && _versions(latestWritten).txn.phase == TurnPhase.Completed) {
             val result = _versions(latestWritten)
             latestWritten = 0
             result
@@ -737,6 +756,7 @@ class NodeVersionHistory[V, T <: TurnPhase, R](val sgt: SerializationGraphTracki
             lastWriteUpTo(lastCompleted)
           }
           _versions.remove(1, dumpCount)
+          assertOptimizationsIntegrity(s"gc2")
           dumpCount
         } else {
           0

@@ -5,7 +5,7 @@ import rescala.fullmv._
 import rescala.graph.Reactive
 
 trait FramingTask extends FullMVAction {
-  override def compute(): Unit = {
+  override def doCompute(): Unit = {
     val branchResult = doFraming()
     if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this => $branchResult")
     branchResult match {

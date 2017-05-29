@@ -5,7 +5,7 @@ import rescala.fullmv._
 import rescala.graph.Reactive
 
 trait NotificationAction extends ReevaluationResultHandling {
-  override def compute(): Unit = {
+  override def doCompute(): Unit = {
     val notificationResultAction = deliverNotification()
     if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this => $notificationResultAction")
     processNotificationResult(notificationResultAction)
