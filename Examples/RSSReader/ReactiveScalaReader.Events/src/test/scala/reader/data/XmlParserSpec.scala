@@ -72,7 +72,7 @@ class XmlParserSpec extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   it should "set None for the link if it is not present in the tag" in {
-    val item = parser.parseItem(missingLinkItem).get.link should equal(None)
+    /*val item = */parser.parseItem(missingLinkItem).get.link should equal(None)
   }
 
   it should "fire an event after parsing a channel" in {

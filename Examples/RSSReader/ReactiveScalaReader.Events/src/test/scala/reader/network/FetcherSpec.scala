@@ -24,7 +24,7 @@ class FetcherSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
   it should "not add unreachable urls" in {
     val fetcher = new Fetcher { override def loadMethod(url: URL) = NodeSeq.Empty }
-    var numUrls = fetcher.currentURLs.size.toLong
+    val numUrls = fetcher.currentURLs.size.toLong
     fetcher.addURL(new URL("http://is.not.reachable"))
     fetcher.currentURLs should have size numUrls
   }
