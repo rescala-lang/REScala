@@ -27,18 +27,21 @@ object DecentralizedSGT extends SerializationGraphTracking[FullMVTurn] {
     } else if (defender.isTransitivePredecessor(contender)) {
       SecondFirst
     } else {
+      // unordered nested acquisition of two monitors here is safe against deadlocks because the turns' locks
+      // (see assertions) ensure that only a single thread at a time will ever attempt to do so.
       assert(defender.lock.getLockedRoot(Thread.currentThread()).isDefined, s"$defender is not locked")
       assert(contender.lock.getLockedRoot(Thread.currentThread()).isDefined, s"$contender is not locked")
       assert(defender.lock.getLockedRoot(Thread.currentThread()).get == contender.lock.getLockedRoot(Thread.currentThread()).get, s"$defender is not locked")
-      // contender is executing this thread, thus will not increase phase concurrently,
-      // thus no need to synchronize this addition with his state changes.
-      // defender however may increase his phase, thus perform compare-and-maybe-insert
-      // on him mutually exclusive against his phase switches (see also comment in method)
-      if(defender.addPredecessorIfHisPhaseIsLarger(contender)) {
-        SecondFirst
-      } else {
-        contender.addPredecessor(defender)
-        FirstFirst
+      contender.phaseLock.synchronized {
+        defender.phaseLock.synchronized {
+          if (defender.phase < contender.phase) {
+            defender.addPredecessor(contender)
+            SecondFirst
+          } else {
+            contender.addPredecessor(defender)
+            FirstFirst
+          }
+        }
       }
     }
   }

@@ -11,7 +11,6 @@ import scala.util.{Failure, Success, Try}
 trait ReevaluationResultHandling extends FullMVAction {
   val node: Reactive[FullMVStruct]
   def processReevaluationResult(outAndSucc: NotificationOutAndSuccessorOperation[FullMVTurn, Reactive[FullMVStruct]], changed: Boolean): Unit = {
-    if(changed) turn.completedReevaluations.incrementAndGet()
     outAndSucc match {
       case NoSuccessor(out) =>
         turn.activeBranchDifferential(TurnPhase.Executing, out.size - 1)

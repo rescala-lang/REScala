@@ -1,9 +1,5 @@
 package rescala.fullmv
 
-trait TurnPhase {
-  def phase: TurnPhase.Type
-}
-
 object TurnPhase {
   type Type = Int
   val Initialized: Type = 0

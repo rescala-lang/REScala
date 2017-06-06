@@ -6,7 +6,7 @@ sealed trait OrderResult extends PartialOrderResult
 case object FirstFirst extends OrderResult
 case object SecondFirst extends OrderResult
 
-trait SerializationGraphTracking[T <: TurnPhase] {
+trait SerializationGraphTracking[T] {
   /**
     * query for existing order between transactions. Must not be called
     * with equal transactions in both parameters!

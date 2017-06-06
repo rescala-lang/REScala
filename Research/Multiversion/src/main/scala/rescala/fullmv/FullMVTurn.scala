@@ -1,19 +1,17 @@
 package rescala.fullmv
 
 import java.util.concurrent.ForkJoinTask
-import java.util.concurrent.atomic.AtomicInteger
 
 import rescala.engine.{InitializationImpl, ValuePersistency}
 import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation.{NextReevaluation, NoSuccessor}
 import rescala.fullmv.NotificationResultAction.{GlitchFreeReady, NotificationOutAndSuccessorOperation}
+import rescala.fullmv.TurnPhase.Type
 import rescala.fullmv.sgt.reachability.DigraphNodeWithReachability
 import rescala.fullmv.tasks.{Notification, Reevaluation}
 import rescala.fullmv.sgt.synchronization.{SubsumableLock, SubsumableLockImpl}
 import rescala.graph.{Pulsing, Reactive}
 
-class FullMVTurn extends InitializationImpl[FullMVStruct] with TurnPhase {
-  val completedReevaluations = new AtomicInteger(0)
-
+class FullMVTurn extends InitializationImpl[FullMVStruct] {
   object phaseLock
   @volatile var phase: TurnPhase.Type = TurnPhase.Initialized
 
@@ -31,13 +29,23 @@ class FullMVTurn extends InitializationImpl[FullMVStruct] with TurnPhase {
       }
     }
   }
-  def awaitBranchCountZero(): Int = {
+
+  def awaitAndSwitchPhase(newPhase: TurnPhase.Type): Unit = {
+    assert(newPhase > this.phase, s"$this cannot progress backwards to phase $phase.")
+    while(this.phase != newPhase) {
+      awaitBranchCountZero()
+      val preds: Set[FullMVTurn] = awaitAllPredecessorsPhase(newPhase)
+      tryAtomicCompareBranchesPlusPredsAndSwitchPhase(preds, newPhase)
+    }
+    if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this switched phase.")
+  }
+
+  private def awaitBranchCountZero() = {
     branchLock.synchronized {
       while (activeBranches > 0) {
         branchLock.wait()
       }
     }
-    completedReevaluations.get
   }
 
   val lock: SubsumableLock = new SubsumableLockImpl()
@@ -47,59 +55,46 @@ class FullMVTurn extends InitializationImpl[FullMVStruct] with TurnPhase {
   def isTransitivePredecessor(candidate: FullMVTurn): Boolean = {
     sgtNode.isReachable(candidate.sgtNode)
   }
+
   def addPredecessor(predecessor: FullMVTurn): Unit = {
     assert(lock.getLockedRoot(Thread.currentThread()).isDefined)
     if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this new predecessor $predecessor.")
     // since we keep track of the past, predecessors in time are successors in the SSG.
-    sgtNode.addSuccessor(predecessor.sgtNode)
-    nonTransitivePredecessors += predecessor
-    if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this predecessors now $nonTransitivePredecessors")
-  }
-  def addPredecessorIfHisPhaseIsLarger(predecessor: FullMVTurn): Boolean = {
-    assert(lock.getLockedRoot(Thread.currentThread()).isDefined)
-    // note that predecessors may have been read to await a phase switch BEFORE this method,
-    // but the subsequent phase switch can occur AFTER this method (successor read to await
-    // phase switch and the phase switch itself are not synchronized together).
-    // Such a phase switch issued based on the previously read successor set may
-    // result in an interleaving of (successor read plus phase switch) with
-    // (phase read plus successor addition) that would not be possible if both were
-    // synchronized together. But, this is OKAY! The synchronization against phaseLock
-    // here serves to block such a concurrent phase switch from being executed until
-    // after successors have been added, which in turn blocks a SECOND phase switch successor
-    // read. In other words, this synchronization makes it impossible for a SECOND
-    // phase switches to be awaited concurrently, as only the second phase might actually
-    // have to await state progression of the given parameter turn: Since we act only on a
-    // strictly less than (i.e., not equal) phase comparison, a single concurrently issued
-    // phase increase can at most result in this turn's phase being equal to the parameter's
-    // phase, which the corresponding concurrent phase switch state awaiting would still not
-    // wait for. Only a second one might, but that is prevented by this synchronization.
-    phaseLock.synchronized {
-      val hisPhaseWasLarger = phase < predecessor.phase
-      if(hisPhaseWasLarger) {
-        addPredecessor(predecessor)
-      }
-      hisPhaseWasLarger
+    if(sgtNode.addSuccessor(predecessor.sgtNode)) {
+      nonTransitivePredecessors += predecessor
     }
   }
 
-  def awaitAllPredecessorsPhase(atLeast: TurnPhase.Type): Unit = {
-    if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this awaiting phase $atLeast on predecessors $nonTransitivePredecessors")
-    nonTransitivePredecessors.foreach { waitFor =>
+  private def awaitAllPredecessorsPhase(atLeast: TurnPhase.Type): Set[FullMVTurn] = {
+    val preds = nonTransitivePredecessors
+    if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this awaiting phase $atLeast+ on predecessors $preds")
+    preds.foreach { waitFor =>
       waitFor.awaitPhase(atLeast)
     }
+    preds
   }
 
-  def switchPhase(phase: TurnPhase.Type): Unit = {
-    phaseLock.synchronized{
-      require(phase > this.phase, s"$this cannot progress backwards to phase $phase.")
-      this.phase = phase
-      phaseLock.notifyAll()
+//  def switchPhase(phase: TurnPhase.Type): Unit = {
+//    phaseLock.synchronized{
+//      require(phase > this.phase, s"$this cannot progress backwards to phase $phase.")
+//      this.phase = phase
+//      if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this switched phase.")
+//      phaseLock.notifyAll()
+//    }
+//  }
+
+  private def tryAtomicCompareBranchesPlusPredsAndSwitchPhase(preds: Set[FullMVTurn], newPhase: Type): Unit = {
+    phaseLock.synchronized {
+      if (activeBranches == 0 && nonTransitivePredecessors == preds) {
+        this.phase = newPhase
+        if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this switched phase.")
+        phaseLock.notifyAll()
+      }
     }
-
-    if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this switched phase.")
   }
 
-  def awaitPhase(atLeast: TurnPhase.Type): Unit = phaseLock.synchronized {
+
+  private def awaitPhase(atLeast: TurnPhase.Type): Unit = phaseLock.synchronized {
     while(phase < atLeast) {
       phaseLock.wait()
     }

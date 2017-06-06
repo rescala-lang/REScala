@@ -115,13 +115,15 @@ public class DigraphNodeWithReachability {
     }
   }
 
-  public void addSuccessor(DigraphNodeWithReachability to) {
-    if (!isReachable(to)) {
+  public boolean addSuccessor(DigraphNodeWithReachability to) {
+    boolean isNew = !isReachable(to);
+    if (isNew) {
       for(DigraphNodeWithReachability predecessor: predecessors) {
 //        predecessor.maybeNewReachableSubtree(selfNode, to.selfNode);
         predecessor.maybeNewReachableSubtree(this, to.selfNode);
       }
     }
+    return isNew;
   }
 
 //  private void discardedSuccessor(DigraphNodeWithReachability node) {
