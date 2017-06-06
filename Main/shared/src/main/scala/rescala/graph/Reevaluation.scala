@@ -1,7 +1,6 @@
 package rescala.graph
 
 import rescala.engine.{Engine, Turn}
-import rescala.graph.Pulse.NoChange
 
 /**
   * Indicator for the result of a re-evaluation of a reactive value.
@@ -16,7 +15,7 @@ object ReevaluationResult {
   /**
     * Result of the static re-evaluation of a reactive value.
     */
-  case class Static[A](isChange: Boolean, value: A) extends ReevaluationResult[A, Nothing]
+  case class Static[+A](isChange: Boolean, value: A) extends ReevaluationResult[A, Nothing]
   def Static[P](value: Pulse[P]): Static[Pulse[P]] =  Static(value.isChange, value)
 
   /**
@@ -39,6 +38,8 @@ object ReevaluationResult {
     val added: Set[Reactive[S]] = novel.diff(old)
     val removed: Set[Reactive[S]] = old.diff(novel)
   }
+
+  val staticNoChange: Static[Pulse[Nothing]] = Static(Pulse.NoChange)
 }
 
 
@@ -55,7 +56,7 @@ trait Disconnectable[S <: Struct] extends Reactive[S] {
 
   abstract final override protected[rescala] def reevaluate(ticket: Turn[S]): ReevaluationResult[Value, S] = {
     if (disconnected) {
-      ReevaluationResult.Dynamic(NoChange, Set.empty[Reactive[S]])
+      ReevaluationResult.Dynamic(Pulse.NoChange, Set.empty[Reactive[S]])
     }
     else {
       super.reevaluate(ticket)

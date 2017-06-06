@@ -4,18 +4,19 @@ import rescala.engine._
 import rescala.graph._
 
 class Source[T, S <: Struct](_bud: S#State[Pulse[T], S]) extends Base[T, S](_bud) {
-  private var result: Value = null
+  private var nextReevaluationResult: Value = null
   final def admit(value: T)(implicit ticket: AdmissionTicket[S]): Unit = admitPulse(Pulse.Value(value))
 
   final def admitPulse(value: Pulse[T])(implicit ticket: AdmissionTicket[S]): Unit = {
-    require(result == null, s"can not admit the same reactive twice in the same turn: ${ticket.turn}")
-    result = value
+    require(nextReevaluationResult == null, s"can not admit the same reactive twice in the same turn: ${ticket.turn}")
+    nextReevaluationResult = value
   }
 
   override protected[rescala] def reevaluate(turn: Turn[S]): ReevaluationResult.Static[Value] = {
-    val res = ReevaluationResult.Static[T](if(result == null) Pulse.NoChange else result)
-    result = null
-    res
+    val value = nextReevaluationResult
+    nextReevaluationResult = null
+    if (value == null) ReevaluationResult.staticNoChange
+    else ReevaluationResult.Static[T](value)
   }
 
 }
@@ -62,7 +63,8 @@ final class Var[A, S <: Struct](_bud: S#State[Pulse[A], S]) extends Source[A, S]
 
   override protected[rescala] def reevaluate(turn: Turn[S]): ReevaluationResult.Static[Pulse[A]] = {
     val res = super.reevaluate(turn)
-    if(res == ReevaluationResult.Static(turn.selfBefore(this))) ReevaluationResult.Static(Pulse.NoChange) else res
+    if (res.value == turn.selfBefore(this)) ReevaluationResult.staticNoChange
+    else res
   }
 
   def setEmpty()(implicit fac: Engine[S, Turn[S]]): Unit = fac.transaction(this)(t => admitPulse(Pulse.empty)(t))
