@@ -8,4 +8,4 @@ object TicketOrEngine extends LowPriorityTicketOrEngine {
 sealed trait LowPriorityTicketOrEngine {
   implicit def fromEngine[S <: Struct](implicit engine: Engine[S, _ <: Turn[S]]): TicketOrEngine[S] = TicketOrEngine(Right(engine))
 }
-case class TicketOrEngine[S <: Struct](e: Either[OutsidePropagationTicket[S], Engine[S, _ <: Turn[S]]])
+case class TicketOrEngine[S <: Struct](e: Either[OutsidePropagationTicket[S], Engine[S, _ <: Turn[S]]]) extends AnyVal
