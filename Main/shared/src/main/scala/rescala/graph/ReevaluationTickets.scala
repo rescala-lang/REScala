@@ -3,7 +3,9 @@ package rescala.graph
 import rescala.engine.Turn
 import rescala.reactives.{Event, Signal}
 
-trait AlwaysTicket[S <: Struct] extends Any {
+/* tickets are created by the REScala schedulers, to restrict operations to the correct scopes */
+
+ trait AlwaysTicket[S <: Struct] extends Any {
   def turn: Turn[S]
   private[rescala] def before[A](reactive: Pulsing[A, S]): A = {
     turn.dynamicBefore(reactive)
@@ -20,7 +22,7 @@ trait PropagationAndLaterTicket[S <: Struct] extends Any with AlwaysTicket[S] {
   }
 }
 
-final class DynamicTicket[S <: Struct](val turn: Turn[S]) extends PropagationAndLaterTicket[S] {
+final class DynamicTicket[S <: Struct] private[rescala] (val turn: Turn[S]) extends PropagationAndLaterTicket[S] {
   private[rescala] var collectedDependencies: Set[Reactive[S]] = Set.empty
   private[rescala] def dynamicDepend[A](reactive: Pulsing[A, S]): A = {
     collectedDependencies += reactive
@@ -37,7 +39,7 @@ final class DynamicTicket[S <: Struct](val turn: Turn[S]) extends PropagationAnd
 
 }
 
-class StaticTicket[S <: Struct](val turn: Turn[S]) extends AnyVal with PropagationAndLaterTicket[S] {
+class StaticTicket[S <: Struct] private[rescala] (val turn: Turn[S]) extends AnyVal with PropagationAndLaterTicket[S] {
   private[rescala] def staticBefore[A](reactive: Pulsing[A, S]): A = {
     turn.staticBefore(reactive)
   }
@@ -46,13 +48,13 @@ class StaticTicket[S <: Struct](val turn: Turn[S]) extends AnyVal with Propagati
   }
 }
 
-class AdmissionTicket[S <: Struct](val turn: Turn[S]) extends AnyVal with OutsidePropagationTicket[S] {
+class AdmissionTicket[S <: Struct] private[rescala] (val turn: Turn[S]) extends AnyVal with OutsidePropagationTicket[S] {
   override private[rescala] def now[A](reactive: Pulsing[A, S]): A = {
     before(reactive)
   }
 }
 
-class WrapUpTicket[S <: Struct](val turn: Turn[S]) extends AnyVal with PropagationAndLaterTicket[S] with OutsidePropagationTicket[S] {
+class WrapUpTicket[S <: Struct] private[rescala] (val turn: Turn[S]) extends AnyVal with PropagationAndLaterTicket[S] with OutsidePropagationTicket[S] {
   override private[rescala] def now[A](reactive: Pulsing[A, S]): A = {
     after(reactive)
   }
