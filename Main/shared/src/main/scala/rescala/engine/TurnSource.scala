@@ -12,7 +12,7 @@ import scala.language.implicitConversions
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
 @implicitNotFound(msg = "could not generate a turn source." +
-  " An available implicit Turn will serve as turn source, or if no" +
+  " An available implicit Ticket will serve as turn source, or if no" +
   " such turn is present, an implicit Engine is accepted instead.")
 final case class TurnSource[S <: Struct](self: Either[Turn[S], Engine[S, Turn[S]]]) extends AnyVal {
   def requireCurrentTurn: Option[Turn[S]] = self match {
@@ -28,11 +28,8 @@ final case class TurnSource[S <: Struct](self: Either[Turn[S], Engine[S, Turn[S]
   }
 }
 
-object TurnSource extends MediumPriorityTurnSource {
-  implicit def fromTurnImplicit[S <: Struct](implicit turn: Turn[S]): TurnSource[S] = TurnSource(Left(turn))
-  implicit def fromTurn[S <: Struct](turn: Turn[S]): TurnSource[S] = TurnSource(Left(turn))
-}
-sealed trait MediumPriorityTurnSource extends LowPriorityTurnSource {
+
+object TurnSource extends LowPriorityTurnSource {
   implicit def fromTicketImplicit[S <: Struct](implicit ticket: AlwaysTicket[S]): TurnSource[S] = TurnSource(Left(ticket.turn))
   implicit def fromTicket[S <: Struct](ticket: AlwaysTicket[S]): TurnSource[S] = TurnSource(Left(ticket.turn))
 }
