@@ -4,6 +4,7 @@ import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.ForkJoinPool.ManagedBlocker
 
 import rescala.engine.ValuePersistency
+import rescala.fullmv.sgt.synchronization.SubsumableLock
 
 import scala.annotation.elidable.ASSERTION
 import scala.annotation.{elidable, tailrec}
@@ -41,7 +42,7 @@ object NotificationResultAction {
   * @tparam T the type of transactions
   * @tparam R the type of dependency nodes (reactives)
   */
-class NodeVersionHistory[V, T <: TurnPhase, R](val sgt: SerializationGraphTracking[T], init: T, val valuePersistency: ValuePersistency[V]) {
+class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTracking[T], init: T, val valuePersistency: ValuePersistency[V]) {
   trait BlockOnHistoryManagedBlocker extends ManagedBlocker {
     override def block(): Boolean = NodeVersionHistory.this.synchronized {
       isReleasable || { NodeVersionHistory.this.wait(); isReleasable }
@@ -123,7 +124,7 @@ class NodeVersionHistory[V, T <: TurnPhase, R](val sgt: SerializationGraphTracki
   def assertOptimizationsIntegrity(debugOutputDescription: => String): Unit = {
     def debugStatement(whatsWrong: String): String = s"$debugOutputDescription left $whatsWrong (latestWritten $latestWritten, ${if(firstFrame > _versions.size) "no frames" else "firstFrame "+firstFrame}): \n  " + _versions.zipWithIndex.map{case (version, index) => s"$index: $version"}.mkString("\n  ")
 
-    assert(_versions.size >= 1, debugStatement("version list was cleared"))
+    assert(_versions.nonEmpty, debugStatement("version list was cleared"))
     assert(_versions(0).isWritten, debugStatement("first version not written"))
 
     assert(firstFrame > 0, debugStatement("firstFrame out of bounds negative"))
@@ -178,7 +179,6 @@ class NodeVersionHistory[V, T <: TurnPhase, R](val sgt: SerializationGraphTracki
     * threads intervened and established txn < y.txn. For this case, the search keeps track of the latest x for which
     * x.txn < txn is already established. It then restarts the search in the reduced fallback range between x and y.
     * @param lookFor the transaction to look for
-    * @param recoverFrom current fallback from index in case of order establishment fallback
     * @param from current from index of the search range
     * @param to current to index (exclusive) of the search range
     * @return the index of the version associated with the given transaction, or if no such version exists the negative
@@ -188,16 +188,29 @@ class NodeVersionHistory[V, T <: TurnPhase, R](val sgt: SerializationGraphTracki
     *         latter case, there are no preceding transactions that still execute operations. Thus insertion at index 0
     *         should be impossible. A return value of 0 thus means "found at 0", rather than "should insert at 0"
     */
+  private def findOrPidgeonHole(lookFor: T, from: Int, to: Int): Int = {
+    assert(from <= to, s"binary search started with backwards indices from $from to $to")
+    assert(to <= _versions.size, s"binary search upper bound $to beyond history size ${_versions.size}")
+    assert(to == _versions.size || sgt.getOrder(lookFor, _versions(to).txn) == FirstFirst, s"given 'to' index for non-blocking search of $lookFor pointed to version of ${_versions(to).txn} which is not ordered yet.")
+    assert(from > 0, s"binary search started with non-positive lower bound $from")
+    findOrPidgeonHoleNonblocking(lookFor, from, fromIsKnownPredecessor = false, to)
+  }
+
   @tailrec
-  private def findOrPidgeonHole(lookFor: T, recoverFrom: Int, from: Int, to: Int): Int = {
+  private def findOrPidgeonHoleNonblocking(lookFor: T, from: Int, fromIsKnownPredecessor: Boolean, to: Int): Int = {
     if (to == from) {
-      assert(from > 0, s"Found an insertion point of 0 for $lookFor; insertion points must always be after the base state version.")
-      if(sgt.ensureOrder(_versions(from - 1).txn, lookFor) == FirstFirst) {
-        -from
-      } else {
-        assert(recoverFrom < from, s"Illegal position hint: $lookFor must be before $recoverFrom")
-        findOrPidgeonHole(lookFor, recoverFrom, recoverFrom, from)
+      if(!fromIsKnownPredecessor) {
+        val pred = _versions(from - 1).txn
+        val unblockedOrder = sgt.getOrder(pred, lookFor)
+        assert(unblockedOrder != SecondFirst)
+        if(unblockedOrder != FirstFirst) {
+          SubsumableLock.underLock(pred.lock, lookFor.lock) {
+            val establishedOrder = sgt.ensureOrder(pred, lookFor)
+            assert(establishedOrder == FirstFirst)
+          }
+        }
       }
+      -from
     } else {
       val idx = from+(to-from-1)/2
       val candidate = _versions(idx).txn
@@ -205,11 +218,41 @@ class NodeVersionHistory[V, T <: TurnPhase, R](val sgt: SerializationGraphTracki
         idx
       } else sgt.getOrder(candidate, lookFor) match {
         case FirstFirst =>
-          findOrPidgeonHole(lookFor, idx + 1, idx + 1, to)
+          findOrPidgeonHoleNonblocking(lookFor, idx + 1, fromIsKnownPredecessor = true, to)
         case SecondFirst =>
-          findOrPidgeonHole(lookFor, recoverFrom, from, idx)
+          findOrPidgeonHoleNonblocking(lookFor, from, fromIsKnownPredecessor, idx)
         case Unordered =>
-          findOrPidgeonHole(lookFor, recoverFrom, idx + 1, to)
+          SubsumableLock.underLock(candidate.lock, lookFor.lock) {
+            sgt.ensureOrder(candidate, lookFor) match {
+              case FirstFirst =>
+                findOrPidgeonHoleLocked(lookFor, idx + 1, fromKnownOrdered = true, to)
+              case SecondFirst =>
+                findOrPidgeonHoleLocked(lookFor, from, fromIsKnownPredecessor, idx)
+            }
+          }
+      }
+    }
+  }
+
+  @tailrec
+  private def findOrPidgeonHoleLocked(lookFor: T, from: Int, fromKnownOrdered: Boolean, to: Int): Int = {
+    if (to == from) {
+      if(!fromKnownOrdered) {
+        val pred = _versions(from).txn
+        val establishedOrder = sgt.ensureOrder(pred, lookFor)
+        assert(establishedOrder == FirstFirst)
+      }
+      -from
+    } else {
+      val idx = from+(to-from-1)/2
+      val candidate = _versions(idx).txn
+      if(candidate == lookFor) {
+        idx
+      } else sgt.ensureOrder(candidate, lookFor) match {
+        case FirstFirst =>
+          findOrPidgeonHoleLocked(lookFor, idx + 1, fromKnownOrdered = true, to)
+        case SecondFirst =>
+          findOrPidgeonHoleLocked(lookFor, from, fromKnownOrdered, idx)
       }
     }
   }
@@ -222,7 +265,7 @@ class NodeVersionHistory[V, T <: TurnPhase, R](val sgt: SerializationGraphTracki
     */
   private def findFrame(txn: T): Int = {
     if(firstFrame < _versions.size && _versions(firstFrame).txn == txn) firstFrame else
-    findOrPidgeonHole(txn, latestWritten + 1, latestWritten + 1, _versions.size)
+    findOrPidgeonHole(txn, latestWritten + 1, _versions.size)
   }
 
   /**
@@ -234,7 +277,7 @@ class NodeVersionHistory[V, T <: TurnPhase, R](val sgt: SerializationGraphTracki
     */
   private def findFinal(txn: T) = {
     if(_versions(latestWritten).txn == txn) latestWritten else
-    findOrPidgeonHole(txn, 1, 1, firstFrame)
+    findOrPidgeonHole(txn, 1, firstFrame)
   }
 
 
@@ -346,7 +389,7 @@ class NodeVersionHistory[V, T <: TurnPhase, R](val sgt: SerializationGraphTracki
     val followFrameMinPosition = if (position > 0) position + 1 else -position
     // because we know that txn << followTxn, followTxn cannot be involved with firstFrame stuff.
     // thus followTxn also does not need this framing propagated by itself.
-    val followPosition = findOrPidgeonHole(followFrame, followFrameMinPosition, followFrameMinPosition, _versions.size)
+    val followPosition = findOrPidgeonHole(followFrame, followFrameMinPosition, _versions.size)
     if (followPosition >= 0) {
       _versions(followPosition).pending += 1
     } else {
@@ -486,8 +529,8 @@ class NodeVersionHistory[V, T <: TurnPhase, R](val sgt: SerializationGraphTracki
     * @param txn the executing transaction
     * @return the version's position.
     */
-  private def ensureReadVersion(txn: T, knownMinPos: Int = 0): Int = {
-    val position = findOrPidgeonHole(txn, knownMinPos, knownMinPos, _versions.size)
+  private def ensureReadVersion(txn: T, knownMinPos: Int = 1): Int = {
+    val position = findOrPidgeonHole(txn, knownMinPos, _versions.size)
     if(position < 0) {
       createVersion(-position, txn)
       -position

@@ -30,7 +30,4 @@ trait SerializationGraphTracking[T <: TurnPhase] {
     * @return the established order
     */
   def ensureOrder(defender: T, contender: T): OrderResult
-
-  def awaitAllPredecessorsState(turn: T, atLeast: TurnPhase.Type): Unit
-  def completed(turn: FullMVTurn): Unit
 }

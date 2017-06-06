@@ -19,33 +19,36 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
 
   override private[rescala] def singleNow[A](reactive: Pulsing[A, FullMVStruct]) = reactive.state.latestValue
 
-  override protected def makeTurn(initialWrites: Traversable[Reactive], priorTurn: Option[FullMVTurn]): FullMVTurn = new FullMVTurn(sgt)
+  override protected def makeTurn(initialWrites: Traversable[Reactive], priorTurn: Option[FullMVTurn]): FullMVTurn = new FullMVTurn()
   override protected def executeInternal[I, R](turn: FullMVTurn, initialWrites: Traversable[Reactive], admissionPhase: () => I, wrapUpPhase: I => R): R = {
     if(initialWrites.nonEmpty) {
       // framing start
-      turn.beginPhase(TurnPhase.Framing, initialWrites.size)
+      turn.switchPhase(TurnPhase.Framing)
+      turn.activeBranchDifferential(TurnPhase.Framing, initialWrites.size)
       for (i <- initialWrites) threadPool.submit(Framing(turn, i))
 
       // framing completion
-      turn.awaitBranches()
-      sgt.awaitAllPredecessorsState(turn, TurnPhase.Executing)
+      turn.awaitAllPredecessorsPhase(TurnPhase.Executing)
+      turn.awaitBranchCountZero()
     }
 
     // admission
-    turn.beginPhase(TurnPhase.Executing, initialWrites.size)
+    turn.switchPhase(TurnPhase.Executing)
     val admissionResult = Try(admissionPhase())
     if(DEBUG) admissionResult match {
-      case scala.util.Failure(e) => e.printStackTrace
+      case scala.util.Failure(e) => e.printStackTrace()
       case _ =>
     }
+    assert(turn.activeBranches == 0, s"Admission phase left ${turn.activeBranches} active branches.")
 
     // propagation start
+    turn.activeBranchDifferential(TurnPhase.Executing, initialWrites.size)
     for(i <- initialWrites) threadPool.submit(Notification(turn, i, changed = admissionResult.isSuccess))
 
     // propagation completion
     @tailrec def awaitPropagationCompletion(completedReevaluationsBefore: Int): Unit = {
-      sgt.awaitAllPredecessorsState(turn, TurnPhase.WrapUp)
-      val completedReevaluationsAfter = turn.awaitBranches()
+      turn.awaitAllPredecessorsPhase(TurnPhase.WrapUp)
+      val completedReevaluationsAfter = turn.awaitBranchCountZero()
       if(completedReevaluationsBefore != completedReevaluationsAfter) {
         // retrofitted reevaluations may perform dynamic reads that establish orders with previously
         // entirely unrelated other turns, hence we have to repeat waiting here.
@@ -55,21 +58,21 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
     awaitPropagationCompletion(0)
 
     // wrap-up
-    turn.beginPhase(TurnPhase.WrapUp, 0)
+    turn.switchPhase(TurnPhase.WrapUp)
     val result = admissionResult.flatMap(i => Try { wrapUpPhase(i) })
+    assert(turn.activeBranches == 0, s"WrapUp phase left ${turn.activeBranches} active branches.")
 
     // turn completion
-    sgt.awaitAllPredecessorsState(turn, TurnPhase.Completed)
-    turn.beginPhase(TurnPhase.Completed, -1)
-    sgt.completed(turn)
+    turn.awaitAllPredecessorsPhase(TurnPhase.Completed)
+    turn.switchPhase(TurnPhase.Completed)
 
     // result
     result.get
   }
 
-  val CREATE_PRETURN = {
-    val preTurn = new FullMVTurn(sgt)
-    preTurn.beginPhase(TurnPhase.Completed, -1)
+  val CREATE_PRETURN: FullMVTurn = {
+    val preTurn = new FullMVTurn()
+    preTurn.switchPhase(TurnPhase.Completed)
     preTurn
   }
 }

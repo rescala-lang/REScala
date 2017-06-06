@@ -10,18 +10,18 @@ import scala.util.{Failure, Success, Try}
 
 trait ReevaluationResultHandling extends FullMVAction {
   val node: Reactive[FullMVStruct]
-  def processReevaluationResult(outAndSucc: NotificationOutAndSuccessorOperation[FullMVTurn, Reactive[FullMVStruct]], changed: Boolean) = {
-    if(changed) synchronized { turn.completedReevaluations.incrementAndGet() }
+  def processReevaluationResult(outAndSucc: NotificationOutAndSuccessorOperation[FullMVTurn, Reactive[FullMVStruct]], changed: Boolean): Unit = {
+    if(changed) turn.completedReevaluations.incrementAndGet()
     outAndSucc match {
       case NoSuccessor(out) =>
-        if (out.size != 1) turn.activeBranchDifferential(TurnPhase.Executing, out.size - 1)
+        turn.activeBranchDifferential(TurnPhase.Executing, out.size - 1)
         for (succ <- out) Notification(turn, succ, changed).fork()
       case FollowFraming(out, succTxn) =>
-        if (out.size != 1) turn.activeBranchDifferential(TurnPhase.Executing, out.size - 1)
+        turn.activeBranchDifferential(TurnPhase.Executing, out.size - 1)
         for (succ <- out) NotificationWithFollowFrame(turn, succ, changed, succTxn).fork()
       case NextReevaluation(out, succTxn) =>
         succTxn.activeBranchDifferential(TurnPhase.Executing, 1)
-        if (out.size != 1) turn.activeBranchDifferential(TurnPhase.Executing, out.size - 1)
+        turn.activeBranchDifferential(TurnPhase.Executing, out.size - 1)
         for (succ <- out) NotificationWithFollowFrame(turn, succ, changed, succTxn).fork()
         Reevaluation(succTxn, node).fork()
     }

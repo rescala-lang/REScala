@@ -1,9 +1,10 @@
 package rescala.testhelper
 
-import org.scalatest.{Assertions, Matchers}
 import rescala.engine.TurnSource
 import rescala.graph.Struct
 import rescala.reactives.{Event, Signal}
+
+import org.scalatest.{Assertions, Matchers}
 
 class ReevaluationTracker[A, S <: Struct] private() extends Matchers {
   var results: List[A] = Nil

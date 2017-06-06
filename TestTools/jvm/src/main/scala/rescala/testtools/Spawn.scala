@@ -1,4 +1,4 @@
-package tests.rescala.concurrency
+package rescala.testhelper
 
 import java.util.concurrent._
 

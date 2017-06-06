@@ -1,7 +1,7 @@
 package rescala.testhelper
 
-import java.util.concurrent.{CountDownLatch, ForkJoinPool}
 import java.util.concurrent.ForkJoinPool.ManagedBlocker
+import java.util.concurrent.{CountDownLatch, ForkJoinPool}
 
 import rescala.engine.TurnSource
 import rescala.graph.Struct

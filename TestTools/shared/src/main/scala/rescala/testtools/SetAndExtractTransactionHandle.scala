@@ -3,6 +3,7 @@ package rescala.testhelper
 import rescala.engine.{Engine, Turn}
 import rescala.graph.{AdmissionTicket, Reactive, Struct, WrapUpTicket}
 import rescala.reactives.Source
+;
 
 object SetAndExtractTransactionHandle {
   def apply[A, S <: Struct](source: Source[A, S], value: A)(implicit engine: Engine[S, _ <: Turn[S]]): engine.Turn = {

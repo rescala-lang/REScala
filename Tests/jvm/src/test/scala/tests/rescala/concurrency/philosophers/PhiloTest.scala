@@ -5,7 +5,7 @@ import rescala.Engines
 import rescala.engine.{Engine, Turn}
 import rescala.fullmv.FullMVEngine
 import rescala.graph.Struct
-import tests.rescala.concurrency.Spawn
+import rescala.testhelper.Spawn
 
 import scala.concurrent.TimeoutException
 import scala.util.{Failure, Success, Try}

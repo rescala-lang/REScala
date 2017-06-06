@@ -4,56 +4,110 @@ import java.util.concurrent.ForkJoinTask
 import java.util.concurrent.atomic.AtomicInteger
 
 import rescala.engine.{InitializationImpl, ValuePersistency}
-import rescala.fullmv.NotificationResultAction.GlitchFreeReady
+import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation.{NextReevaluation, NoSuccessor}
+import rescala.fullmv.NotificationResultAction.{GlitchFreeReady, NotificationOutAndSuccessorOperation}
+import rescala.fullmv.sgt.reachability.DigraphNodeWithReachability
 import rescala.fullmv.tasks.{Notification, Reevaluation}
+import rescala.fullmv.sgt.synchronization.{SubsumableLock, SubsumableLockImpl}
 import rescala.graph.{Pulsing, Reactive}
 
-class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends InitializationImpl[FullMVStruct] with TurnPhase {
-  // counts the sum of in-flight notifications, in-progress reevaluations.
-  @volatile var phase: TurnPhase.Type = TurnPhase.Initialized
-  object stateParking
-  var activeBranches: Int = 0
+class FullMVTurn extends InitializationImpl[FullMVStruct] with TurnPhase {
   val completedReevaluations = new AtomicInteger(0)
 
-  def activeBranchDifferential(forState: TurnPhase.Type, differential: Int): Unit = synchronized {
+  object phaseLock
+  @volatile var phase: TurnPhase.Type = TurnPhase.Initialized
+
+  object branchLock
+  // counts the sum of in-flight notifications, in-progress reevaluations.
+  var activeBranches: Int = 0
+  def activeBranchDifferential(forState: TurnPhase.Type, differential: Int): Unit = {
     assert(phase == forState, s"$this received branch differential for wrong state $phase")
-    activeBranches += differential
-    if(activeBranches == 0) {
-      notifyAll()
+    if(differential != 0) {
+      branchLock.synchronized {
+        activeBranches += differential
+        if(activeBranches == 0) {
+          branchLock.notifyAll()
+        }
+      }
     }
   }
-
-  def awaitBranches(): Int = synchronized {
-    while(activeBranches > 0) {
-      wait()
+  def awaitBranchCountZero(): Int = {
+    branchLock.synchronized {
+      while (activeBranches > 0) {
+        branchLock.wait()
+      }
     }
     completedReevaluations.get
   }
 
-  def beginPhase(state: TurnPhase.Type, initialActiveBranches: Int): Unit = synchronized {
-    require(state > this.phase, s"$this cannot progress backwards to phase $state.")
-    assert(this.activeBranches == 0, s"$this still has active branches and thus cannot start phase $state!")
-    this.activeBranches = initialActiveBranches
-    stateParking.synchronized{
-      this.phase = state
-      stateParking.notifyAll()
+  val lock: SubsumableLock = new SubsumableLockImpl()
+  private val sgtNode: DigraphNodeWithReachability = new DigraphNodeWithReachability()
+  var nonTransitivePredecessors: Set[FullMVTurn] = Set.empty
+
+  def isTransitivePredecessor(candidate: FullMVTurn): Boolean = {
+    sgtNode.isReachable(candidate.sgtNode)
+  }
+  def addPredecessor(predecessor: FullMVTurn): Unit = {
+    assert(lock.getLockedRoot(Thread.currentThread()).isDefined)
+    // since we keep track of the past, predecessors in time are successors in the SSG.
+    sgtNode.addSuccessor(predecessor.sgtNode)
+    nonTransitivePredecessors += predecessor
+  }
+  def addPredecessorIfHisPhaseIsLarger(predecessor: FullMVTurn): Boolean = {
+    assert(lock.getLockedRoot(Thread.currentThread()).isDefined)
+    // note that predecessors may have been read to await a phase switch BEFORE this method,
+    // but the subsequent phase switch can occur AFTER this method (successor read to await
+    // phase switch and the phase switch itself are not synchronized together).
+    // Such a phase switch issued based on the previously read successor set may
+    // result in an interleaving of (successor read plus phase switch) with
+    // (phase read plus successor addition) that would not be possible if both were
+    // synchronized together. But, this is OKAY! The synchronization against phaseLock
+    // here serves to block such a concurrent phase switch from being executed until
+    // after successors have been added, which in turn blocks a SECOND phase switch successor
+    // read. In other words, this synchronization makes it impossible for a SECOND
+    // phase switches to be awaited concurrently, as only the second phase might actually
+    // have to await state progression of the given parameter turn: Since we act only on a
+    // strictly less than (i.e., not equal) phase comparison, a single concurrently issued
+    // phase increase can at most result in this turn's phase being equal to the parameter's
+    // phase, which the corresponding concurrent phase switch state awaiting would still not
+    // wait for. Only a second one might, but that is prevented by this synchronization.
+    phaseLock.synchronized {
+      val hisPhaseWasLarger = phase < predecessor.phase
+      if(hisPhaseWasLarger) {
+        addPredecessor(predecessor)
+      }
+      hisPhaseWasLarger
     }
+  }
+
+  def awaitAllPredecessorsPhase(atLeast: TurnPhase.Type): Unit = {
+    nonTransitivePredecessors.foreach { waitFor =>
+      waitFor.awaitPhase(atLeast)
+    }
+  }
+
+  def switchPhase(state: TurnPhase.Type): Unit = {
+    phaseLock.synchronized{
+      require(state > this.phase, s"$this cannot progress backwards to phase $state.")
+      this.phase = state
+      phaseLock.notifyAll()
+    }
+
     if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this switched phase.")
   }
 
-  def awaitState(atLeast: TurnPhase.Type): Unit = stateParking.synchronized {
+  def awaitPhase(atLeast: TurnPhase.Type): Unit = phaseLock.synchronized {
     while(phase < atLeast) {
-      stateParking.wait()
+      phaseLock.wait()
     }
   }
 
   override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): NodeVersionHistory[P, FullMVTurn, Reactive[FullMVStruct]] = {
-    val state = new NodeVersionHistory[P, FullMVTurn, Reactive[FullMVStruct]](sgt, FullMVEngine.CREATE_PRETURN, valuePersistency)
+    val state = new NodeVersionHistory[P, FullMVTurn, Reactive[FullMVStruct]](FullMVEngine.sgt, FullMVEngine.CREATE_PRETURN, valuePersistency)
     state.incrementFrame(this)
     state
   }
   override protected def ignite(reactive: Reactive[FullMVStruct], incoming: Set[Reactive[FullMVStruct]], ignitionRequiresReevaluation: Boolean): Unit = {
-    activeBranchDifferential(TurnPhase.Executing, 1)
     incoming.foreach { discover =>
       val (successorWrittenVersions, maybeFollowFrame) = discover.state.discover(this, reactive)
       reactive.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, 1)
@@ -66,17 +120,28 @@ class FullMVTurn(val sgt: SerializationGraphTracking[FullMVTurn]) extends Initia
     // reevaluation (if one is required) to have been completed, but cannot access values from subsequent turns
     // and hence does not need to wait for those.
     val notificationResult = ignitionNotification.deliverNotification()
-    if(notificationResult == GlitchFreeReady) {
-      val reevaluation = Reevaluation(this, reactive)
-      if (ForkJoinTask.inForkJoinPool()) {
-        // this should be the case if reactive is created during another reevaluation
-        reevaluation.invoke()
-      } else {
-        // this should be the case if reactive is created during admission or wrap-up phase
-        FullMVEngine.threadPool.invoke(reevaluation)
-      }
-    } else {
-      ignitionNotification.processNotificationResult(notificationResult)
+    val followNotification = notificationResult match {
+      case GlitchFreeReady =>
+        val (notification, _) = Reevaluation.doReevaluation(this, reactive)
+        notification
+      case outAndSucc: NotificationOutAndSuccessorOperation[FullMVTurn, Reactive[FullMVStruct]] =>
+        outAndSucc
+      case _ =>
+        NoSuccessor(Set.empty[Reactive[FullMVStruct]])
+    }
+    followNotification match {
+      case NextReevaluation(out, succTxn) =>
+        assert(out.isEmpty, "newly created reactive should not be able to have outgoing dependencies")
+        val followReev = new Reevaluation(succTxn, reactive)
+        if (ForkJoinTask.inForkJoinPool()) {
+          // this should be the case if reactive is created during another reevaluation
+          followReev.fork()
+        } else {
+          // this should be the case if reactive is created during admission or wrap-up phase
+          FullMVEngine.threadPool.submit(followReev)
+        }
+      case outAndSucc: NotificationOutAndSuccessorOperation[FullMVTurn, Reactive[FullMVStruct]] =>
+        assert(outAndSucc.out.isEmpty, "newly created reactive should not be able to have outgoing dependencies")
     }
   }
 

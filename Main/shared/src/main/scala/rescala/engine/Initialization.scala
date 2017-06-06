@@ -23,8 +23,7 @@ trait InitializationImpl[S <: Struct] extends Turn[S] {
     * to be implemented by the propagation algorithm, called when a new reactive has been instantiated and needs to be connected to the graph and potentially reevaluated.
     * @param reactive the newly instantiated reactive
     * @param incoming a set of incoming dependencies
-    * @param dynamic false if the set of incoming dependencies is the correct final set of dependencies (static reactive)
-    *                true if the set of incoming dependencies is just a best guess for the initial dependencies.
+    * @param ignitionRequiresReevaluation true if the reactive must be reevaluated at creation even if none of its dependencies change in the creating turn.
     */
   protected def ignite(reactive: Reactive[S], incoming: Set[Reactive[S]], ignitionRequiresReevaluation: Boolean): Unit
 }

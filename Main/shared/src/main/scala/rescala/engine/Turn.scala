@@ -55,8 +55,6 @@ trait Turn[S <: Struct] extends AlwaysTicket[S] {
     * propagated based on the turn's propagation scheme
     *
     * @param incoming a set of incoming dependencies
-    * @param dynamic false if the set of incoming dependencies is the correct final set of dependencies (static reactive)
-    *                true if the set of incoming dependencies is just a best guess for the initial dependencies.
     * @param valuePersistency the value persistency
     * @param instantiateReactive The factory method to instantiate the reactive with the newly created state.
     * @tparam P Reactive value type

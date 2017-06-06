@@ -25,7 +25,7 @@ lazy val rescalaAggregate = project.in(file(".")).aggregate(rescalaJVM,
   rescalaJS, microbench, reswing, examples, examplesReswing, caseStudyEditor,
   caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags,
   datastructures, universe, reactiveStreams, documentation, meta,
-  stm, testsJVM, testsJS, fullmv, caseStudyShapes, caseStudyMill,
+  stm, testToolsJVM, testToolsJS, testsJVM, testsJS, fullmv, caseStudyShapes, caseStudyMill,
   reandroidthings, baromter4Android)
   .settings(
     publish := {},
@@ -84,6 +84,20 @@ lazy val rescalaJS = rescala.js
 
 //lazy val rescalaNative = rescala.native
 
+lazy val testTools = crossProject(JSPlatform, JVMPlatform).in(file("TestTools"))
+  .disablePlugins(JmhPlugin)
+  .settings(
+    name := "rescala-testtoolss",
+    libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.3")
+  .settings(
+    publish := {},
+    publishLocal := {}
+  )
+  .dependsOn(rescala)
+  .jvmSettings().jsSettings(scalaJSUseRhino in Global := true)
+lazy val testToolsJVM = testTools.jvm
+lazy val testToolsJS = testTools.js
+
 lazy val tests = crossProject(JSPlatform, JVMPlatform).in(file("Tests"))
   .disablePlugins(JmhPlugin)
   .settings(
@@ -96,9 +110,9 @@ lazy val tests = crossProject(JSPlatform, JVMPlatform).in(file("Tests"))
   .dependsOn(rescala)
   .jvmSettings().jsSettings(scalaJSUseRhino in Global := true)
 
-lazy val testsJVM = tests.jvm.dependsOn(fullmv, stm)
+lazy val testsJVM = tests.jvm.dependsOn(testToolsJVM % "test", fullmv, stm)
 
-lazy val testsJS = tests.js
+lazy val testsJS = tests.js.dependsOn(testToolsJS % "test")
 
 lazy val documentation = project.in(file("Documentation/DocumentationProject"))
   .settings(tutSettings: _*)
@@ -265,7 +279,7 @@ lazy val fullmv = project.in(file("Research/Multiversion"))
     publish := {},
     publishLocal := {},
     scalatestDependency)
-  .dependsOn(rescalaJVM)
+  .dependsOn(rescalaJVM, testToolsJVM % "test")
 
 lazy val meta = project.in(file("Research/Meta"))
   .dependsOn(rescalaJVM)
