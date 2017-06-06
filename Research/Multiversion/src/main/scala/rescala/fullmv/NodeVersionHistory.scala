@@ -188,10 +188,15 @@ class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTrack
     *         latter case, there are no preceding transactions that still execute operations. Thus insertion at index 0
     *         should be impossible. A return value of 0 thus means "found at 0", rather than "should insert at 0"
     */
-  private def findOrPidgeonHole(lookFor: T, from: Int, to: Int): Int = {
+  private def findOrPidgeonHole(lookFor: T, from: Int, to: Int, knownStatic: Boolean = false): Int = {
     assert(from <= to, s"binary search started with backwards indices from $from to $to")
     assert(to <= _versions.size, s"binary search upper bound $to beyond history size ${_versions.size}")
-    assert(to == _versions.size || sgt.getOrder(lookFor, _versions(to).txn) == FirstFirst, s"given 'to' index for non-blocking search of $lookFor pointed to version of ${_versions(to).txn} which is not ordered yet.")
+    if(knownStatic) {
+      assert(to == _versions.size || sgt.getOrder(_versions(to).txn, lookFor) != FirstFirst, s"to = $to successor for non-blocking search of known static $lookFor pointed to version of ${_versions(to).txn} which is ordered earlier.")
+    } else {
+      assert(to == _versions.size || sgt.getOrder(_versions(to).txn, lookFor) == SecondFirst, s"to = $to successor for non-blocking search of $lookFor pointed to version of ${_versions(to).txn} which is not already ordered later.")
+    }
+    assert(sgt.getOrder(_versions(from - 1).txn, lookFor) != SecondFirst, s"from - 1 = ${from - 1} predecessor for non-blocking search of $lookFor pointed to version of ${_versions(from - 1).txn} which is already ordered later.")
     assert(from > 0, s"binary search started with non-positive lower bound $from")
     findOrPidgeonHoleNonblocking(lookFor, from, fromIsKnownPredecessor = false, to)
   }
@@ -238,7 +243,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTrack
   private def findOrPidgeonHoleLocked(lookFor: T, from: Int, fromKnownOrdered: Boolean, to: Int): Int = {
     if (to == from) {
       if(!fromKnownOrdered) {
-        val pred = _versions(from).txn
+        val pred = _versions(from - 1).txn
         val establishedOrder = sgt.ensureOrder(pred, lookFor)
         assert(establishedOrder == FirstFirst)
       }
@@ -277,7 +282,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTrack
     */
   private def findFinal(txn: T) = {
     if(_versions(latestWritten).txn == txn) latestWritten else
-    findOrPidgeonHole(txn, 1, firstFrame)
+    findOrPidgeonHole(txn, 1, firstFrame, knownStatic = true)
   }
 
 
@@ -472,8 +477,8 @@ class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTrack
     val position = firstFrame
     val version = _versions(position)
     assert(version.txn == turn, s"$turn called reevDone, but first frame is $version (different transaction)")
-    assert(version.value.isEmpty, s"cannot write twice: $version")
-    assert(!version.isOvertakeCompensation && (version.isReadyForReevaluation || (version.isReadOrDynamic && maybeValue.isEmpty)), s"cannot write $version")
+    assert(version.value.isEmpty, s"$turn cannot write twice: $version")
+    assert((version.isFrame && version.isReadyForReevaluation) || (maybeValue.isEmpty && version.isReadOrDynamic), s"$turn cannot write changed=${maybeValue.isDefined} on $version")
 
     if(maybeValue.isDefined) {
       latestWritten = position

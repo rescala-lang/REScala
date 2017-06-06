@@ -14,7 +14,7 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
 
   val threadPool = new ForkJoinPool()
 
-  val sgt = DumbSGT
+  val sgt = DecentralizedSGT
 
 
   override private[rescala] def singleNow[A](reactive: Pulsing[A, FullMVStruct]) = reactive.state.latestValue
@@ -28,8 +28,8 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
       for (i <- initialWrites) threadPool.submit(Framing(turn, i))
 
       // framing completion
-      turn.awaitAllPredecessorsPhase(TurnPhase.Executing)
       turn.awaitBranchCountZero()
+      turn.awaitAllPredecessorsPhase(TurnPhase.Executing)
     }
 
     // admission
@@ -55,7 +55,7 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
         awaitPropagationCompletion(completedReevaluationsAfter)
       }
     }
-    awaitPropagationCompletion(0)
+    awaitPropagationCompletion(turn.awaitBranchCountZero())
 
     // wrap-up
     turn.switchPhase(TurnPhase.WrapUp)
@@ -65,6 +65,7 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
     // turn completion
     turn.awaitAllPredecessorsPhase(TurnPhase.Completed)
     turn.switchPhase(TurnPhase.Completed)
+    turn.sgtNode.discard()
 
     // result
     result.get

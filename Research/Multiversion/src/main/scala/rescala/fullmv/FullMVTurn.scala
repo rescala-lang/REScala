@@ -41,7 +41,7 @@ class FullMVTurn extends InitializationImpl[FullMVStruct] with TurnPhase {
   }
 
   val lock: SubsumableLock = new SubsumableLockImpl()
-  private val sgtNode: DigraphNodeWithReachability = new DigraphNodeWithReachability()
+  val sgtNode: DigraphNodeWithReachability = new DigraphNodeWithReachability()
   var nonTransitivePredecessors: Set[FullMVTurn] = Set.empty
 
   def isTransitivePredecessor(candidate: FullMVTurn): Boolean = {
@@ -49,9 +49,11 @@ class FullMVTurn extends InitializationImpl[FullMVStruct] with TurnPhase {
   }
   def addPredecessor(predecessor: FullMVTurn): Unit = {
     assert(lock.getLockedRoot(Thread.currentThread()).isDefined)
+    if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this new predecessor $predecessor.")
     // since we keep track of the past, predecessors in time are successors in the SSG.
     sgtNode.addSuccessor(predecessor.sgtNode)
     nonTransitivePredecessors += predecessor
+    if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this predecessors now $nonTransitivePredecessors")
   }
   def addPredecessorIfHisPhaseIsLarger(predecessor: FullMVTurn): Boolean = {
     assert(lock.getLockedRoot(Thread.currentThread()).isDefined)
@@ -81,15 +83,16 @@ class FullMVTurn extends InitializationImpl[FullMVStruct] with TurnPhase {
   }
 
   def awaitAllPredecessorsPhase(atLeast: TurnPhase.Type): Unit = {
+    if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this awaiting phase $atLeast on predecessors $nonTransitivePredecessors")
     nonTransitivePredecessors.foreach { waitFor =>
       waitFor.awaitPhase(atLeast)
     }
   }
 
-  def switchPhase(state: TurnPhase.Type): Unit = {
+  def switchPhase(phase: TurnPhase.Type): Unit = {
     phaseLock.synchronized{
-      require(state > this.phase, s"$this cannot progress backwards to phase $state.")
-      this.phase = state
+      require(phase > this.phase, s"$this cannot progress backwards to phase $phase.")
+      this.phase = phase
       phaseLock.notifyAll()
     }
 

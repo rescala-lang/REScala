@@ -51,12 +51,12 @@ object Reevaluation {
         val diff = res.depDiff(node.state.incomings)
         diff.removed.foreach{ drop =>
           val (successorWrittenVersions, maybeFollowFrame) = drop.state.drop(turn, node)
-          if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this dropping $drop -> $node un-queueing $successorWrittenVersions and un-framing $maybeFollowFrame")
+          if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] Reevaluation($turn,$node) dropping $drop -> $node un-queueing $successorWrittenVersions and un-framing $maybeFollowFrame")
           node.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, -1)
         }
         diff.added.foreach { discover =>
           val (successorWrittenVersions, maybeFollowFrame) = discover.state.discover(turn, node)
-          if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this discovering $discover-> $node re-queueing $successorWrittenVersions and re-framing $maybeFollowFrame")
+          if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] Reevaluation($turn,$node) discovering $discover-> $node re-queueing $successorWrittenVersions and re-framing $maybeFollowFrame")
           node.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, 1)
         }
         node.state.incomings = deps
