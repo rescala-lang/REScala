@@ -25,8 +25,7 @@ lazy val rescalaAggregate = project.in(file(".")).aggregate(rescalaJVM,
   rescalaJS, microbench, reswing, examples, examplesReswing, caseStudyEditor,
   caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags,
   datastructures, universe, reactiveStreams, documentation, meta,
-  stm, testToolsJVM, testToolsJS, testsJVM, testsJS, fullmv, caseStudyShapes, caseStudyMill,
-  reandroidthings, baromter4Android)
+  stm, testToolsJVM, testToolsJS, testsJVM, testsJS, fullmv, caseStudyShapes, caseStudyMill)
   .settings(
     publish := {},
     publishLocal := {})
@@ -136,14 +135,6 @@ lazy val reactiveStreams = project.in(file("Extensions/ReactiveStreams"))
     publishLocal := {}
   )
 
-lazy val reandroidthings = project.in(file("Extensions/REAndroidThings"))
-  .enablePlugins(AndroidLib)
-  .dependsOn(rescalaJVM)
-  .settings(
-    name := "reandroidthings",
-    javacOptions ++= Seq("-source", "1.7", "-target", "1.7"),
-    exportJars := true)
-
 lazy val reswing = project.in(file("Extensions/RESwing"))
   .dependsOn(rescalaJVM)
   .settings(
@@ -197,19 +188,6 @@ lazy val examplesReswing = project.in(file("Examples/examples-reswing"))
     name := "reswing-examples",
     publish := {},
     publishLocal := {})
-
-lazy val baromter4Android = project.in(file("Examples/Barometer4Android"))
-  .enablePlugins(AndroidApp)
-  .dependsOn(reandroidthings)
-  .settings(
-    name := "barometer4Android",
-    publish := {},
-    publishLocal := {},
-    androidDependencies,
-    javacOptions ++= Seq("-source", "1.7", "-target", "1.7"),
-    platformTarget := "android-25", //TODO: Move to androidJVM
-    android.useSupportVectors,
-    instrumentTestRunner := "android.support.test.runner.AndroidJUnitRunner")
 
 lazy val caseStudyEditor = project.in(file("Examples/Editor"))
   .dependsOn(reswing)
@@ -303,12 +281,6 @@ lazy val microbench = project.in(file("Research/Microbenchmarks"))
 
 
 // ================================ dependencies
-
-lazy val androidDependencies = libraryDependencies ++= Seq(
-  "com.android.support" % "appcompat-v7" % "25.3.1",
-  "com.android.support.test" % "runner" % "0.5" % "androidTest",
-  "com.android.support.test.espresso" % "espresso-core" % "2.2.2" % "androidTest",
-  scalaOrganization.value % "scala-reflect" % scalaVersion.value)
 
 lazy val rssDependencies = libraryDependencies ++= Seq(
   "joda-time" % "joda-time" % "2.9.9",
