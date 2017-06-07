@@ -58,7 +58,7 @@ final class Var[A, S <: Struct] private[rescala] (initialState: S#State[Pulse[A]
 
   def transform(f: A => A)(implicit fac: Engine[S, Turn[S]]): Unit = fac.transaction(this) { t =>
     // minor TODO should f be evaluated only during reevaluation, given t.selfBefore(this) as parameter?
-    admit(f(t.before(this).get))(t)
+    admit(f(t.now(this)))(t)
   }
 
   override protected[rescala] def reevaluate(turn: Turn[S]): ReevaluationResult.Static[Pulse[A]] = {

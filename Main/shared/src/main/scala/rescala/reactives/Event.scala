@@ -167,10 +167,8 @@ trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] 
   final def snapshot[A](s: Signal[A, S])(implicit ticket: TurnSource[S]): Signal[A, S] = ticket {
     Signals.staticFold[A, S](
       Set[Reactive[S]](this, s),
-      st => {
-        st.after(s).get
-      }) { (st, current) =>
-      st.staticDepend(this).toOption.fold(current)(_ => st.after(s).get)
+      st => st.staticDepend(s).get) { (st, current) =>
+      st.staticDepend(this).toOption.fold(current)(_ => st.staticDepend(s).get)
     }
   }
 

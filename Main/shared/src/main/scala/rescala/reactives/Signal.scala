@@ -41,13 +41,6 @@ trait Signal[+A, S <: Struct] extends Pulsing[Pulse[A], S] with Observable[A, S]
 
   final def now(implicit engine: Engine[S, Turn[S]], @deprecated("unused", "") ev: Signal.NowAllowed.type): A = Signal.now0(engine.singleNow(this))
 
-  final def before(implicit ticket: TurnSource[S]): A = {
-    val turn = ticket.requireCurrentTurn.getOrElse {
-      throw new IllegalAccessException("must not invoke reactive.before outside of turns; we should find a way to ensure this syntactically...")
-    }
-    turn.dynamicBefore(this).get
-  }
-
   final def recover[R >: A](onFailure: PartialFunction[Throwable,R])(implicit ticket: TurnSource[S]): Signal[R, S] = Signals.static(this) { st =>
     try st.staticDepend(this).get catch {
       case NonFatal(e) => onFailure.applyOrElse[Throwable, R](e, throw _)
@@ -75,7 +68,7 @@ trait Signal[+A, S <: Struct] extends Pulsing[Pulse[A], S] with Observable[A, S]
   final def flatten[R](implicit ev: Flatten[A, S, R], ticket: TurnSource[S]): R = ev.apply(this)(ticket)
 
   /** Delays this signal by n occurrences */
-  final def delay(n: Int)(implicit ticket: TurnSource[S]): Signal[A, S] = ticket { implicit turn => changed.delay(before(turn), n) }
+  final def delay(n: Int)(implicit ticket: TurnSource[S]): Signal[A, S] = ticket { implicit turn => changed.delay(turn.staticBefore(this).get, n) }
 
   /** Create an event that fires every time the signal changes. It fires the tuple (oldVal, newVal) for the signal.
     * Be aware that no change will be triggered when the signal changes to or from empty */

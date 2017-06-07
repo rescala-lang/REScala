@@ -23,24 +23,21 @@ import rescala.reactives.{Event, Signal}
 
 trait AlwaysTicket[S <: Struct] extends Any {
   def turn: Turn[S]
-  private[rescala] def before[A](reactive: Pulsing[A, S]): A = {
-    turn.dynamicBefore(reactive)
-  }
 }
 
 sealed trait OutsidePropagationTicket[S <: Struct] extends Any with AlwaysTicket[S]
 
-sealed trait PropagationAndLaterTicket[S <: Struct] extends Any with AlwaysTicket[S] {
-  private[rescala] def after[A](reactive: Pulsing[A, S]): A = {
-    turn.dynamicAfter(reactive)
-  }
-}
+sealed trait PropagationAndLaterTicket[S <: Struct] extends Any with AlwaysTicket[S]
 
 final class DynamicTicket[S <: Struct] private[rescala] (val turn: Turn[S]) extends PropagationAndLaterTicket[S] {
   private[rescala] var collectedDependencies: Set[Reactive[S]] = Set.empty
   private[rescala] def dynamicDepend[A](reactive: Pulsing[A, S]): A = {
     collectedDependencies += reactive
-    after(reactive)
+    turn.dynamicAfter(reactive)
+  }
+
+  def before[A](reactive: Signal[A, S]): A = {
+    turn.dynamicBefore(reactive).get
   }
 
   def depend[A](reactive: Signal[A, S]): A = {
@@ -64,18 +61,18 @@ final class StaticTicket[S <: Struct] private[rescala] (val turn: Turn[S]) exten
 
 final class AdmissionTicket[S <: Struct] private[rescala] (val turn: Turn[S]) extends AnyVal with OutsidePropagationTicket[S] {
   def now[A](reactive: Signal[A, S]): A = {
-    before(reactive).get
+    turn.dynamicBefore(reactive).get
   }
   def now[A](reactive: Event[A, S]): Option[A] = {
-    before(reactive).toOption
+    turn.dynamicBefore(reactive).toOption
   }
 }
 
 final class WrapUpTicket[S <: Struct] private[rescala] (val turn: Turn[S]) extends AnyVal with PropagationAndLaterTicket[S] with OutsidePropagationTicket[S] {
   def now[A](reactive: Signal[A, S]): A = {
-    after(reactive).get
+    turn.dynamicAfter(reactive).get
   }
   def now[A](reactive: Event[A, S]): Option[A] = {
-    after(reactive).toOption
+    turn.dynamicAfter(reactive).toOption
   }
 }
