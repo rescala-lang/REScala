@@ -9,20 +9,10 @@ import scala.annotation.compileTimeOnly
 import scala.util.control.NonFatal
 
 object Signal {
-  private def now0[A](pulse: Pulse[A]): A = {
-    try { pulse.get }
-    catch {
-      case EmptySignalControlThrowable => throw new NoSuchElementException(s"Signal $this is empty")
-      case other: Throwable => throw new IllegalStateException("Signal has an error value", other)
-    }
-  }
-
-
   @annotation.implicitAmbiguous("Do not use now during propagation. You have a Ticket available, use the accessors defined there.")
   implicit object NowAllowed
   @compileTimeOnly("only for implicit conflicts")
   implicit def nowNotAllowed[S <: Struct](implicit @deprecated("unused", "") outsidePropagationTicket: AlwaysTicket[S]): NowAllowed.type = ???
-
 }
 /**
   * Base signal interface for all signal implementations.
@@ -39,7 +29,13 @@ trait Signal[+A, S <: Struct] extends Pulsing[Pulse[A], S] with Observable[A, S]
   @compileTimeOnly("Signal.apply can only be used inside of Signal expressions")
   final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")
 
-  final def now(implicit engine: Engine[S, Turn[S]], @deprecated("unused", "") ev: Signal.NowAllowed.type): A = Signal.now0(engine.singleNow(this))
+  final def now(implicit engine: Engine[S, Turn[S]], @deprecated("unused", "") ev: Signal.NowAllowed.type): A = {
+    try { engine.singleNow(this).get }
+    catch {
+      case EmptySignalControlThrowable => throw new NoSuchElementException(s"Signal $this is empty")
+      case other: Throwable => throw new IllegalStateException("Signal has an error value", other)
+    }
+  }
 
   final def recover[R >: A](onFailure: PartialFunction[Throwable,R])(implicit ticket: TurnSource[S]): Signal[R, S] = Signals.static(this) { st =>
     try st.staticDepend(this).get catch {
