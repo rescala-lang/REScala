@@ -92,6 +92,9 @@ trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] 
   /** Transform the event parameter */
   final def map[U](mapping: T => U)(implicit ticket: TurnSource[S]): Event[U, S] = Events.static(s"(map $this)", this) {  st => st.staticDepend(this).map(mapping) }
 
+  final def dMap[U](mapping: DynamicTicket[S] => T => U)(implicit ticket: TurnSource[S]): Event[U, S] = Events.dynamic(this) {
+    dt => dt.depend(this).map(v => mapping(dt)(v))
+  }
 
   /** Drop the event parameter; equivalent to map((_: Any) => ()) */
   final def dropParam(implicit ticket: TurnSource[S]): Event[Unit, S] = map(_ => ())

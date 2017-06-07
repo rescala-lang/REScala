@@ -29,7 +29,8 @@ object RunConsole {
       world batchSpawn(nAnimals, nPlants)
 
       val start = System.nanoTime()
-      while (world.time.week.now(universe.Globals.engine) < 2) {
+      import universe.Globals.engine
+      while (world.time.week.now < 2) {
         world.tick()
         world.runPlan()
       }

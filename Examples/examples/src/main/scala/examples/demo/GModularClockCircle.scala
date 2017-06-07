@@ -39,8 +39,8 @@ object GModularClockCircle extends SimpleSwingApplication {
   val velocityX = Signal {(panel.width() / 2 - 50).toDouble * math.sin(angle()) / Clock.NanoSecond}
   val velocityY = Signal {(panel.height() / 2 - 50).toDouble * math.cos(angle()) / Clock.NanoSecond}
 
-  val posX = Clock.ticks.fold(0d){ (pX, tick) => pX + tick.toDouble * velocityX.before }
-  val posY = Clock.ticks.fold(0d){ (pY, tick) => pY + tick.toDouble * velocityY.before }
+  val posX = Clock.ticks.dMap(dt => tick => tick.toDouble + velocityX.before(dt)).fold(0d) { (cur, inc) => cur + inc }
+  val posY = Clock.ticks.dMap(dt => tick => tick.toDouble + velocityY.before(dt)).fold(0d) { (cur, inc) => cur + inc }
 
   shapes.transform(new Circle(posX.map(_.toInt), posY.map(_.toInt), Var(50)) :: _)
 

@@ -52,7 +52,6 @@ object INumericResettableCircle extends Main {
   val velocityY = Signal {(panel.height() / 2 - 50).toDouble * math.cos(angle()) / Clock.NanoSecond}
 
   val resetOrTick = Event {Some((panel.Mouse.middleButton.pressed(), Clock.ticks()))}
-
   val posX = resetOrTick.fold(0d){
     case (_, (Some(Point(x, _)), _)) => x.toDouble
     case (pX, (None, Some(tick))) => pX + tick.toDouble * velocityX.before

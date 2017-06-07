@@ -4,7 +4,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import benchmarks.philosophers.PhilosopherTable._
 import org.openjdk.jmh.infra.Blackhole
-import rescala.engine.{Engine, TicketOrEngine, Turn}
+import rescala.engine.{Engine, Turn}
 import rescala.graph.Struct
 import rescala.reactives._
 
@@ -41,11 +41,11 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit 
 
   def tryEat(seating: Seating[S]): Boolean =
     engine.transactionWithWrapup(seating.philosopher) { t =>
-      val forksAreFree = seating.vision.now(TicketOrEngine.fromTicket(t)) == Ready
+      val forksAreFree = t.now(seating.vision) == Ready
       if (forksAreFree) seating.philosopher.admit(Eating)(t)
       forksAreFree
     } /* propagation executes here */ { (forksWereFree, t) =>
-      if (forksWereFree) assert(seating.vision.now(TicketOrEngine.fromTicket(t)) == Done, s"philosopher should be done after turn")
+      if (forksWereFree) assert(t.now(seating.vision) == Done, s"philosopher should be done after turn")
       forksWereFree
     }
 }

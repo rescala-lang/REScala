@@ -1,6 +1,6 @@
 package rescala.reactives
 
-import rescala.engine.{Engine, TicketOrEngine, Turn, TurnSource}
+import rescala.engine.{Engine, Turn, TurnSource}
 import rescala.graph._
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 import rescala.reactives.Signals.Diff
@@ -16,6 +16,13 @@ object Signal {
       case other: Throwable => throw new IllegalStateException("Signal has an error value", other)
     }
   }
+
+
+  @annotation.implicitAmbiguous("Do not use now during propagation. Use before or after instead.")
+  implicit object NowAllowed
+  @compileTimeOnly("only for implicit conflicts")
+  implicit def nowNotAllowed[S <: Struct](implicit @deprecated("unused", "") outsidePropagationTicket: AlwaysTicket[S]): NowAllowed.type = ???
+
 }
 /**
   * Base signal interface for all signal implementations.
@@ -33,58 +40,13 @@ trait Signal[+A, S <: Struct] extends Pulsing[Pulse[A], S] with Observable[A, S]
   final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")
 
   // ========== Well-Defined, Non-Implicit variants of now/after/before ==========
-  final def now(engine: Engine[S, _ <: Turn[S]]): A = Signal.now0(engine.singleNow(this))
-  final def now(ticket: OutsidePropagationTicket[S]): A = Signal.now0(ticket.now(this))
-  final def before(ticket: AlwaysTicket[S]): A = {
-    try { ticket.before(this).get }
-    catch { case EmptySignalControlThrowable => throw new NoSuchElementException(s"Signal $this is empty") }
-  }
-  final def after(ticket: PropagationAndLaterTicket[S]): A = {
-    try { ticket.after(this).get }
-    catch { case EmptySignalControlThrowable => throw new NoSuchElementException(s"Signal $this is empty") }
-  }
-
-  // ========== Less-Well-Defined, Implicit variants of now/after/before ==========
-  // thoughts regarding implicit parameter variants of .now, .before and .after:
-  // before: can be used at any time during turns. Thus its parameter should accept implicit turns only.
-  //         However, we want to be able to invoke .before inside, e.g., the closure of a .fold, where the turn
-  //         is not present in the scope. Thus before also accepts engines, but dynamically checks, that this engine
-  //         has a current turn set. This could probably be ensured statically by making sure that every reactive
-  //         definition site somehow provides the reevaluating ticket as an implicit in the scope, but I'm not sure
-  //         if this is possible without significant syntactical inconvenience.
-  //  after: falls under the same considerations as before, with the added exception that it should only accept
-  //         turns that completed their admission phase and started their propagation phase. This is currently not
-  //         checked at all, but could also be ensured statically the same as above.
-  //    now: can be used inside turns only during admission and wrapup, or outside of turns at all times. Since during
-  //         admission and wrapup, a corresponding OutsidePropagationTicket is in scope, it accepts these tickets as
-  //         high priority implicit parameters. In case such a ticket is not available, it accepts engines, and then
-  //         dynamically checks that the engine does NOT have a current turn (in the current thread context). I think
-  //         this cannot be ensured statically, as users can always hide implicitly available current turns.
-  final def now(implicit ticketOrEngine: TicketOrEngine[S]): A = {
-    ticketOrEngine.e match {
-      case Left(ticket) => now(ticket)
-      case Right(engine) => if(engine.currentTurn().isDefined) {
-        throw new IllegalAccessException("reactive.now has undefined behavior and thus cannot be used inside turns, but outside admission or wrapUp phase." +
-          "If this error wrongly shows up during admission or wrapup of a turn, make sure that the implicit admission or wrapup ticket is in scope?")
-      } else {
-        now(engine)
-      }
-    }
-  }
+  final def now(implicit engine: Engine[S, Turn[S]], @deprecated("unused", "") ev: Signal.NowAllowed.type): A = Signal.now0(engine.singleNow(this))
 
   final def before(implicit ticket: TurnSource[S]): A = {
     val turn = ticket.requireCurrentTurn.getOrElse {
       throw new IllegalAccessException("must not invoke reactive.before outside of turns; we should find a way to ensure this syntactically...")
     }
-    before(turn)
-  }
-
-  final def after(implicit ticket: TurnSource[S]): A = {
-    val currentTurn = ticket.requireCurrentTurn.getOrElse{
-      throw new IllegalAccessException("must not invoke reactive.after outside of turns; we should find a way to ensure this syntactically...")
-    }
-    // TODO it should be checked that the turn is actually in Propagation or some later phase..
-    after(new PropagationAndLaterTicket[S]{ val turn = currentTurn })
+    turn.dynamicBefore(this).get
   }
 
   final def recover[R >: A](onFailure: PartialFunction[Throwable,R])(implicit ticket: TurnSource[S]): Signal[R, S] = Signals.static(this) { st =>

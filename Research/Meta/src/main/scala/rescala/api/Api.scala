@@ -2,7 +2,7 @@ package rescala.api
 
 
 
-import rescala.engine.{TicketOrEngine, TurnSource}
+import rescala.engine.{Engine, Turn, TurnSource}
 import rescala.graph.Struct
 import rescala.meta._
 import rescala.reactives.Signals
@@ -82,7 +82,7 @@ object Api {
 
   }
 
-  class metaApi[S <: Struct](graph : DataFlowGraph)(implicit val reifier : Reifier[S], ticket : TurnSource[S], ticket2: TicketOrEngine[S]) extends Api {
+  class metaApi[S <: Struct](graph : DataFlowGraph)(implicit val reifier : Reifier[S], ticket : TurnSource[S], engine: Engine[S, Turn[S]]) extends Api {
     override type Signal[+A] = SignalRef[A]
     override type Event[+A] = EventRef[A]
     override type Var[A] = VarRef[A]

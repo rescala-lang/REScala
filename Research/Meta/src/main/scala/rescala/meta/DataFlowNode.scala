@@ -1,7 +1,7 @@
 package rescala.meta
 
 
-import rescala.engine.{TicketOrEngine, TurnSource}
+import rescala.engine.{Engine, Turn, TurnSource}
 import rescala.graph.{Pulse, Pulsing, Struct}
 import rescala.reactives._
 import rescala.util.Globals
@@ -91,7 +91,7 @@ trait SignalNode[+A] extends ReactiveNode[A] {
   }
   override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: TurnSource[S]): Signal[A, S]
 
-  def now[S <: Struct](implicit reifier: Reifier[S], ticket: TicketOrEngine[S]): A = reify.now
+  def now[S <: Struct](implicit reifier: Reifier[S], ticket: Engine[S, Turn[S]]): A = reify.now
 
   def delay(n: Int): DelayedSignalNode[A] = DelayedSignalNode(graph, newRef(), n)
   def map[X >: A, B](f: (X) => B): MappedSignalNode[X, B] = MappedSignalNode(graph, newRef(), f)

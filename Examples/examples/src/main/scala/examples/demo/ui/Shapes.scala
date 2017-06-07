@@ -10,7 +10,7 @@ trait Shape extends Serializable {
   def centerY: Signal[Int]
   def hitboxWidth: Signal[Int]
   def hitboxHeight: Signal[Int]
-  def drawSnapshot(g: Graphics2D)(implicit turn: OutsidePropagationTicket): Unit
+  def drawSnapshot(g: Graphics2D)(implicit turn: AdmissionTicket): Unit
 }
 
 class Circle (override val centerX: Signal[Int],
@@ -21,16 +21,16 @@ class Circle (override val centerX: Signal[Int],
   override val changed = centerX.changed || centerY.changed || diameter.changed || border.changed || fill.changed
   override val hitboxWidth = diameter
   override val hitboxHeight = diameter
-  override def drawSnapshot(g: Graphics2D)(implicit turn: OutsidePropagationTicket): Unit = {
-    val d = diameter.now
-    val x = centerX.now - d/2
-    val y = centerY.now - d/2
-    val f = fill.now
+  override def drawSnapshot(g: Graphics2D)(implicit turn: AdmissionTicket): Unit = {
+    val d = turn.now(diameter)
+    val x = turn.now(centerX) - d/2
+    val y = turn.now(centerY) - d/2
+    val f = turn.now(fill)
     if(f.isDefined) {
       g.setColor(f.get)
       g.fillOval(x, y, d, d)
     }
-    val b = border.now
+    val b = turn.now(border)
     if(b.isDefined) {
       g.setColor(b.get)
       g.drawOval(x, y, d, d)
@@ -45,17 +45,17 @@ class Rectangle (override val centerX: Signal[Int],
                  val border: Signal[Option[Color]] = Var(Some(Color.BLACK)),
                  val fill: Signal[Option[Color]] = Var(None)) extends Shape {
   override val changed = centerX.changed || centerY.changed || hitboxWidth.changed || hitboxHeight.changed || border.changed || fill.changed
-  override def drawSnapshot(g: Graphics2D)(implicit turn: OutsidePropagationTicket): Unit = {
-    val w = hitboxWidth.now
-    val h = hitboxHeight.now
-    val x = centerX.now - w/2
-    val y = centerY.now - h/2
-    val f = fill.now
+  override def drawSnapshot(g: Graphics2D)(implicit turn: AdmissionTicket): Unit = {
+    val w = turn.now(hitboxWidth)
+    val h = turn.now(hitboxHeight)
+    val x = turn.now(centerX) - w/2
+    val y = turn.now(centerY) - h/2
+    val f = turn.now(fill)
     if(f.isDefined) {
       g.setColor(f.get)
       g.fillRect(x, y, w, h)
     }
-    val b = border.now
+    val b = turn.now(border)
     if(b.isDefined) {
       g.setColor(b.get)
       g.drawRect(x, y, w, h)
