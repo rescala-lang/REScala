@@ -38,8 +38,6 @@ lazy val rescala = crossProject.in(file("Main"))
     libraryDependencies += "de.tuda.stg" %% "retypecheck" % "0.2.0",
     libraryDependencies += scalaOrganization.value % "scala-reflect" % scalaVersion.value % "provided",
 
-    exportJars := true,
-
     sourceGenerators in Compile += Def.task {
       val file = (sourceManaged in Compile).value / "rescala" / "reactives" / "GeneratedSignalLift.scala"
       val definitions = (1 to 22).map{ i =>
@@ -139,8 +137,7 @@ lazy val reandroidthings = project.in(file("Extensions/REAndroidThings"))
   .dependsOn(rescalaJVM)
   .settings(
     name := "reandroidthings",
-    javacOptions ++= Seq("-source", "1.7", "-target", "1.7"),
-    exportJars := true)
+    javacOptions ++= Seq("-source", "1.7", "-target", "1.7"))
 
 lazy val reswing = project.in(file("Extensions/RESwing"))
   .dependsOn(rescalaJVM)
