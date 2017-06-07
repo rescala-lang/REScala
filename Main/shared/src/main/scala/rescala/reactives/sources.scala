@@ -3,7 +3,7 @@ package rescala.reactives
 import rescala.engine._
 import rescala.graph._
 
-class Source[T, S <: Struct](_bud: S#State[Pulse[T], S]) extends Base[T, S](_bud) {
+class Source[T, S <: Struct](initialState: S#State[Pulse[T], S]) extends Base[T, S](initialState) {
   private var nextReevaluationResult: Value = null
   final def admit(value: T)(implicit ticket: AdmissionTicket[S]): Unit = admitPulse(Pulse.Value(value))
 
@@ -22,13 +22,13 @@ class Source[T, S <: Struct](_bud: S#State[Pulse[T], S]) extends Base[T, S](_bud
 }
 
 /**
-  * Standard implementation of the source event interface using Spore-based propagation.
+  * Source events that can be imperatively updated
   *
-  * @param _bud Spore used by the event
+  * @param initialState of by the event
   * @tparam T Type returned when the event fires
   * @tparam S Struct type used for the propagation of the event
   */
-final class Evt[T, S <: Struct]()(_bud: S#State[Pulse[T], S]) extends Source[T, S](_bud) with Event[T, S] {
+final class Evt[T, S <: Struct] private[rescala] (initialState: S#State[Pulse[T], S]) extends Source[T, S](initialState) with Event[T, S] {
   /** Trigger the event */
   def apply(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = fire(value)
   def fire()(implicit fac: Engine[S, Turn[S]], ev: Unit =:= T): Unit = fire(ev(Unit))(fac)
@@ -41,18 +41,18 @@ final class Evt[T, S <: Struct]()(_bud: S#State[Pulse[T], S]) extends Source[T, 
   */
 object Evt {
   def apply[T, S <: Struct]()(implicit ticket: TurnSource[S]): Evt[T, S] = ticket { t =>
-    t.create[Pulse[T], Evt[T, S]](Set.empty, ValuePersistency.Event)(new Evt[T, S]()(_))
+    t.create[Pulse[T], Evt[T, S]](Set.empty, ValuePersistency.Event)(new Evt[T, S](_))
   }
 }
 
 /**
-  * Standard implementation of the source signal interface using Spore-based propagation.
+  * Source signals that can be imperatively updated
   *
-  * @param _bud Spore used by the signal
+  * @param initialState of the signal
   * @tparam A Type stored by the signal
   * @tparam S Struct type used for the propagation of the signal
   */
-final class Var[A, S <: Struct](_bud: S#State[Pulse[A], S]) extends Source[A, S](_bud) with Signal[A, S] {
+final class Var[A, S <: Struct] private[rescala] (initialState: S#State[Pulse[A], S]) extends Source[A, S](initialState) with Signal[A, S] {
   def update(value: A)(implicit fac: Engine[S, Turn[S]]): Unit = set(value)
   def set(value: A)(implicit fac: Engine[S, Turn[S]]): Unit = fac.transaction(this) {admit(value)(_)}
 
