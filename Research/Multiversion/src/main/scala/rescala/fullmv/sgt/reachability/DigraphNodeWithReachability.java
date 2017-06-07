@@ -79,14 +79,13 @@ public class DigraphNodeWithReachability {
   private final SpanningTreeNode selfNode = new SpanningTreeNode(this);
 //  private final SpanningTreeNode selfNode = new SpanningTreeNode(null, this);
 
-  private boolean discarded = false;
-
   public DigraphNodeWithReachability() {
     predecessors.add(this);
     successorSpanningTreeNodes.put(this, selfNode);
   }
 
   public boolean isReachable(DigraphNodeWithReachability node) {
+    assert hasNotBeenDiscarded();
     return successorSpanningTreeNodes.containsKey(node);
   }
 
@@ -110,12 +109,17 @@ public class DigraphNodeWithReachability {
 
 //  private void maybeNewReachableSubtree(SpanningTreeNode spanningTreeParent, SpanningTreeNode spanningSubTreeRoot) {
   private void maybeNewReachableSubtree(DigraphNodeWithReachability spanningTreeParent, SpanningTreeNode spanningSubTreeRoot) {
-    if(!spanningSubTreeRoot.digraphNode.discarded && !isReachable(spanningSubTreeRoot.digraphNode)) {
+    if(!isReachable(spanningSubTreeRoot.digraphNode)) {
       copySubTreeRootAndAssessChildren(spanningTreeParent, spanningSubTreeRoot);
     }
   }
 
+  private boolean hasNotBeenDiscarded() {
+    return successorSpanningTreeNodes.containsKey(this);
+  }
+
   public boolean addSuccessor(DigraphNodeWithReachability to) {
+    assert hasNotBeenDiscarded();
     boolean isNew = !isReachable(to);
     if (isNew) {
       for(DigraphNodeWithReachability predecessor: predecessors) {
@@ -132,9 +136,13 @@ public class DigraphNodeWithReachability {
 //  }
 
   public void discard() {
-    discarded = true;
+    assert hasNotBeenDiscarded();
+    // unlink all spanning tree nodes to allow other referenced nodes to be GC'd
+    successorSpanningTreeNodes.clear();
+    selfNode.spanningTreeSuccessors.clear();
 //    for(DigraphNodeWithReachability predecessor: predecessors) {
 //      discardedSuccessor(this);
 //    }
+//    predecessors.clear();
   }
 }
