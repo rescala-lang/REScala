@@ -1,5 +1,3 @@
-import sbtcrossproject.{crossProject, CrossType}
-
 organization in ThisBuild := "de.tuda.stg"
 
 lazy val version_211 = "2.11.11"
@@ -32,7 +30,7 @@ lazy val rescalaAggregate = project.in(file(".")).aggregate(rescalaJVM,
     publishLocal := {})
 
 
-lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Main"))
+lazy val rescala = crossProject.in(file("Main"))
   .disablePlugins(JmhPlugin)
   .settings(
     name := "rescala",
@@ -84,7 +82,7 @@ lazy val rescalaJS = rescala.js
 
 //lazy val rescalaNative = rescala.native
 
-lazy val testTools = crossProject(JSPlatform, JVMPlatform).in(file("TestTools"))
+lazy val testTools = crossProject.in(file("TestTools"))
   .disablePlugins(JmhPlugin)
   .settings(
     name := "rescala-testtoolss",
@@ -98,7 +96,7 @@ lazy val testTools = crossProject(JSPlatform, JVMPlatform).in(file("TestTools"))
 lazy val testToolsJVM = testTools.jvm
 lazy val testToolsJS = testTools.js
 
-lazy val tests = crossProject(JSPlatform, JVMPlatform).in(file("Tests"))
+lazy val tests = crossProject.in(file("Tests"))
   .disablePlugins(JmhPlugin)
   .settings(
     name := "rescala-tests",
@@ -115,7 +113,7 @@ lazy val testsJVM = tests.jvm.dependsOn(testToolsJVM % "test", fullmv, stm)
 lazy val testsJS = tests.js.dependsOn(testToolsJS % "test")
 
 lazy val documentation = project.in(file("Documentation/DocumentationProject"))
-  .settings(tutSettings: _*)
+  .enablePlugins(TutPlugin)
   .dependsOn(rescalaJVM, rescalaJS)
   .settings(
     publish := {},
@@ -341,7 +339,4 @@ scalacOptions in ThisBuild ++= (
   "-Ywarn-numeric-widen" ::
   //"-Ywarn-value-discard" ::
   //"-Ymacro-debug-lite" ::
-  Nil) ++ (if (!version.value.endsWith("-SNAPSHOT")) (
-  "-Xdisable-assertions" ::
-  "-Xelide-below" :: "9999999" ::
-  Nil) else Nil)
+  Nil) ++ (if (!version.value.endsWith("-SNAPSHOT")) List( "-Xdisable-assertions", "-Xelide-below", "9999999") else Nil)
