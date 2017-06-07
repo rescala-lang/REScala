@@ -39,7 +39,6 @@ trait Signal[+A, S <: Struct] extends Pulsing[Pulse[A], S] with Observable[A, S]
   @compileTimeOnly("Signal.apply can only be used inside of Signal expressions")
   final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")
 
-  // ========== Well-Defined, Non-Implicit variants of now/after/before ==========
   final def now(implicit engine: Engine[S, Turn[S]], @deprecated("unused", "") ev: Signal.NowAllowed.type): A = Signal.now0(engine.singleNow(this))
 
   final def before(implicit ticket: TurnSource[S]): A = {
