@@ -22,7 +22,8 @@ import rescala.reactives.{Event, Signal}
 //         this cannot be ensured statically, as users can always hide implicitly available current turns.
 
 trait AlwaysTicket[S <: Struct] extends Any {
-  def turn: Turn[S]
+  //TODO: only used to create TurnSource … maybe we can improve TurnSource, now that it is mostly used for creation?
+  private[rescala] def turn: Turn[S]
 }
 
 sealed trait OutsidePropagationTicket[S <: Struct] extends Any with AlwaysTicket[S]
@@ -62,9 +63,6 @@ final class StaticTicket[S <: Struct] private[rescala] (val turn: Turn[S]) exten
 final class AdmissionTicket[S <: Struct] private[rescala] (val turn: Turn[S]) extends AnyVal with OutsidePropagationTicket[S] {
   def now[A](reactive: Signal[A, S]): A = {
     turn.dynamicBefore(reactive).get
-  }
-  def now[A](reactive: Event[A, S]): Option[A] = {
-    turn.dynamicBefore(reactive).toOption
   }
 }
 
