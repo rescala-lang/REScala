@@ -51,7 +51,6 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
 
     // turn completion
     turn.awaitAndSwitchPhase(TurnPhase.Completed)
-    turn.sgtNode.discard()
 
     // result
     result.get

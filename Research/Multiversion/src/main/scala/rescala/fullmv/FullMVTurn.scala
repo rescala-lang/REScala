@@ -87,6 +87,7 @@ class FullMVTurn extends InitializationImpl[FullMVStruct] {
     phaseLock.synchronized {
       if (activeBranches == 0 && nonTransitivePredecessors == preds) {
         this.phase = newPhase
+        if(newPhase == TurnPhase.Completed) sgtNode.discard()
         if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this switched phase.")
         phaseLock.notifyAll()
       }
