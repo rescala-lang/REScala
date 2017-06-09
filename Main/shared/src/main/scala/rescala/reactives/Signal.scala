@@ -12,7 +12,7 @@ object Signal {
   @annotation.implicitAmbiguous("Do not use now during propagation. You have a Ticket available, use the accessors defined there.")
   implicit object NowAllowed
   @compileTimeOnly("only for implicit conflicts")
-  implicit def nowNotAllowed[S <: Struct](implicit @deprecated("unused", "") outsidePropagationTicket: AlwaysTicket[S]): NowAllowed.type = ???
+  implicit def nowNotAllowed[S <: Struct](implicit @deprecated("unused", "") ticket: AlwaysTicket[S]): NowAllowed.type = ???
 }
 /**
   * Base signal interface for all signal implementations.
