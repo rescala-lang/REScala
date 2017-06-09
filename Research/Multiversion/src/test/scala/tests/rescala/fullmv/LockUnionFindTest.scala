@@ -84,4 +84,45 @@ class LockUnionFindTest extends FunSuite {
     assert(a.tryLock(keyA) === TryLockResult(success = false, ab))
     assert(a.tryLock(keyB) === TryLockResult(success = true, ab))
   }
+
+  test("subsume correctly wakes all threads") {
+    object key
+    val a, b = new SubsumableLockImpl()
+    assert(a.tryLock(key).success)
+    assert(b.tryLock(key).success)
+
+    var counter = 0
+
+    val queued = List.fill(5){
+      Spawn {
+        object key
+        val r = a.lock(key)
+        val res = counter
+        counter += 1
+        r.unlock(key)
+        res
+      }
+    } ++ List.fill(5){
+      Spawn {
+        object key
+        val r = b.lock(key)
+        val res = counter
+        counter += 1
+        r.unlock(key)
+        res
+      }
+    }
+
+    val timeout = System.currentTimeMillis() + 50
+    queued.foreach { thread =>
+      intercept[TimeoutException]{
+        thread.join(timeout - System.currentTimeMillis())
+      }
+    }
+
+    val master = a.subsume(b)
+    master.unlock(key)
+
+    assert(queued.map(_.join(50)).toSet === (0 until 10).toSet)
+  }
 }
