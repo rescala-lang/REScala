@@ -29,9 +29,9 @@ object DecentralizedSGT extends SerializationGraphTracking[FullMVTurn] {
     } else {
       // unordered nested acquisition of two monitors here is safe against deadlocks because the turns' locks
       // (see assertions) ensure that only a single thread at a time will ever attempt to do so.
-      assert(defender.lock.getLockedRoot(Thread.currentThread()).isDefined, s"$defender is not locked")
-      assert(contender.lock.getLockedRoot(Thread.currentThread()).isDefined, s"$contender is not locked")
-      assert(defender.lock.getLockedRoot(Thread.currentThread()).get == contender.lock.getLockedRoot(Thread.currentThread()).get, s"$defender is not locked")
+      assert(defender.lock.getLockedRoot.isDefined, s"$defender is not locked")
+      assert(contender.lock.getLockedRoot.isDefined, s"$contender is not locked")
+      assert(defender.lock.getLockedRoot.get == contender.lock.getLockedRoot.get, s"$defender is not locked")
       contender.phaseLock.synchronized {
         defender.phaseLock.synchronized {
           if (defender.phase < contender.phase) {

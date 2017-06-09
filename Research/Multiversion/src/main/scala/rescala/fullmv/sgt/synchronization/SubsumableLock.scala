@@ -2,15 +2,13 @@ package rescala.fullmv.sgt.synchronization
 
 import rescala.parrp.Backoff
 
-import scala.annotation.{elidable, tailrec}
+import scala.annotation.tailrec
 
 trait SubsumableLock {
-  @elidable(elidable.ASSERTION)
-  private[synchronization] def isLockedRoot(key: Any): Boolean
-  def getLockedRoot(key: Any): Option[SubsumableLock]
-  def tryLock(key: Any): SubsumableLock.TryLockResult
-  def lock(key: Any): SubsumableLock
-  def unlock(key: Any): Unit
+  def getLockedRoot: Option[SubsumableLock]
+  def tryLock(): SubsumableLock.TryLockResult
+  def lock(): SubsumableLock
+  def unlock(): Unit
   protected def subsume(subsumableLock: SubsumableLock): SubsumableLock
 }
 
@@ -18,70 +16,67 @@ object SubsumableLock {
   case class TryLockResult(success: Boolean, newRoot: SubsumableLock)
 
   def underLock[R](lock: SubsumableLock)(thunk: => R): R = {
-    executeAndRelease(thunk, lock.lock(Thread.currentThread()))
+    executeAndRelease(thunk, lock.lock())
   }
   def underLock[R](lockA: SubsumableLock, lockB: SubsumableLock)(thunk: => R): R = {
-    executeAndRelease(thunk, lockAndMerge(Thread.currentThread(), lockA, lockB))
+    executeAndRelease(thunk, lockAndMerge(lockA, lockB))
   }
   private def executeAndRelease[R](thunk: => R, locked: SubsumableLock): R = {
     try { thunk } finally {
-      locked.unlock(Thread.currentThread())
+      locked.unlock()
     }
   }
 
-  private def lockAndMerge(key: Any, lockA: SubsumableLock, lockB: SubsumableLock): SubsumableLock = {
-//    lockAndMergeTryLockSpinOnly(key, lockA, lockB, new Backoff())
-    lockAndMergeWithBackoff(key, lockA, lockB, new Backoff())
-//    lockAndMergeWithoutBackoff(key, lockA, lockB)
+  private def lockAndMerge(lockA: SubsumableLock, lockB: SubsumableLock): SubsumableLock = {
+//    lockAndMergeTryLockSpinOnly(lockA, lockB, new Backoff())
+//    lockAndMergeWithBackoff(lockA, lockB, new Backoff())
+    lockAndMergeWithoutBackoff(lockA, lockB)
   }
 
-  @tailrec private def lockAndMergeTryLockSpinOnly(key: Any, lockA: SubsumableLock, lockB: SubsumableLock, backoff: Backoff): SubsumableLock = {
-    val TryLockResult(successA, newRootA) = lockA.tryLock(key)
+  @tailrec private def lockAndMergeTryLockSpinOnly(lockA: SubsumableLock, lockB: SubsumableLock, backoff: Backoff): SubsumableLock = {
+    val TryLockResult(successA, newRootA) = lockA.tryLock()
     if(!successA) {
       backoff.backoff()
-      lockAndMergeTryLockSpinOnly(key, newRootA, lockB, backoff)
+      lockAndMergeTryLockSpinOnly(newRootA, lockB, backoff)
     } else {
-      val TryLockResult(successB, newRootB) = lockB.tryLock(key)
+      val TryLockResult(successB, newRootB) = lockB.tryLock()
       if(newRootA == newRootB) {
-        assert(successB)
         newRootA
       } else if(successB) {
         newRootA.subsume(newRootB)
       } else {
-        newRootA.unlock(key)
+        newRootA.unlock()
 //        backoff.reset()
         backoff.backoff()
-        lockAndMergeTryLockSpinOnly(key, newRootB, newRootA, backoff)
+        lockAndMergeTryLockSpinOnly(newRootB, newRootA, backoff)
       }
     }
   }
 
-  @tailrec private def lockAndMergeWithBackoff(key: Any, lockA: SubsumableLock, lockB: SubsumableLock, backoff: Backoff): SubsumableLock = {
-    val lockedRootA = lockA.lock(key)
-    val TryLockResult(successB, newRootB) = lockB.tryLock(key)
+  @tailrec private def lockAndMergeWithBackoff(lockA: SubsumableLock, lockB: SubsumableLock, backoff: Backoff): SubsumableLock = {
+    val lockedRootA = lockA.lock()
+    val TryLockResult(successB, newRootB) = lockB.tryLock()
     if(lockedRootA == newRootB) {
-      assert(successB)
       lockedRootA
     } else if(successB) {
       lockedRootA.subsume(newRootB)
     } else {
-      lockedRootA.unlock(key)
+      lockedRootA.unlock()
       backoff.backoff()
-      lockAndMergeWithBackoff(key, newRootB, lockedRootA, backoff)
+      lockAndMergeWithBackoff(newRootB, lockedRootA, backoff)
     }
   }
 
-  @tailrec private def lockAndMergeWithoutBackoff(key: Any, lockA: SubsumableLock, lockB: SubsumableLock): SubsumableLock = {
-    val lockedRootA = lockA.lock(key)
-    val TryLockResult(successB, newRootB) = lockB.tryLock(key)
+  @tailrec private def lockAndMergeWithoutBackoff(lockA: SubsumableLock, lockB: SubsumableLock): SubsumableLock = {
+    val lockedRootA = lockA.lock()
+    val TryLockResult(successB, newRootB) = lockB.tryLock()
     if(lockedRootA == newRootB) {
-      assert(successB)
       lockedRootA
     } else if(successB) {
       lockedRootA.subsume(newRootB)
     } else {
-      lockedRootA.unlock(key)
-      lockAndMergeWithoutBackoff(key, newRootB, lockedRootA)
+      lockedRootA.unlock()
+      lockAndMergeWithoutBackoff(newRootB, lockedRootA)
     }
   }
 }

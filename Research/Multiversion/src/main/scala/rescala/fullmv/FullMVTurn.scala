@@ -57,7 +57,8 @@ class FullMVTurn extends InitializationImpl[FullMVStruct] {
   }
 
   def addPredecessor(predecessor: FullMVTurn): Unit = {
-    assert(lock.getLockedRoot(Thread.currentThread()).isDefined)
+    assert(predecessor.lock.getLockedRoot.isDefined, s"establishing order $predecessor -> $this: predecessor not locked")
+    assert(lock.getLockedRoot.isDefined, s"establishing order $predecessor -> $this: successor not locked")
     if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this new predecessor $predecessor.")
     // since we keep track of the past, predecessors in time are successors in the SSG.
     if(sgtNode.addSuccessor(predecessor.sgtNode)) {
