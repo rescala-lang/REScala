@@ -348,7 +348,8 @@ class MacroTestSuite extends RETests {
       type A = Int
       lazy val v = Var(4)
     }
-    assert(o.s.now(engine) == 4)
+    implicit val iengine = engine
+    assert(o.s.now == 4)
   }
 
   allEngines("default Arguments"){ engine => import engine._

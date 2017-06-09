@@ -4,7 +4,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import rescala.engine.{Engine, Turn}
 import rescala.util.Globals.named
-import rescala.graph.{OutsidePropagationTicket, Struct}
+import rescala.graph.{Struct, WrapUpTicket}
 import rescala.parrp.Backoff
 import rescala.reactives.{Signal, Var}
 import rescala.reactives.Signals.lift
@@ -62,7 +62,7 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit 
 
   def tryEat(seating: Seating[S]): Boolean =
     engine.transactionWithWrapup(seating.philosopher) { turn =>
-      val forksAreFree = seating.vision.now(turn) == Ready
+      val forksAreFree = turn.now(seating.vision) == Ready
       if (forksAreFree) {
         // println(Thread.currentThread().getName + " start " + turn + ": Eating on " + seating.philosopher)
         seating.philosopher.admit(Hungry)(turn)
@@ -71,7 +71,7 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit 
       // }
       forksAreFree
     } /* propagation executes here */ { (forksWereFree, turn) =>
-      if (forksWereFree) assert(seating.vision.now(turn) == Eating, s"philosopher should be done after turn but is ${seating.inspect(turn)}")
+      if (forksWereFree) assert(turn.now(seating.vision) == Eating, s"philosopher should be done after turn but is ${seating.inspect(turn)}")
       // println(Thread.currentThread().getName + " done " + turn)
       forksWereFree
     }
@@ -110,7 +110,7 @@ object PhilosopherTable {
   // ============================================ Entity Creation =========================================================
 
   case class Seating[S <: Struct](placeNumber: Int, philosopher: Var[Philosopher, S], leftFork: Signal[Fork, S], rightFork: Signal[Fork, S], vision: Signal[Vision, S]) {
-    def inspect(t: OutsidePropagationTicket[S]): String = s"Seating(${philosopher.now(t)}, ${leftFork.now(t)}, ${rightFork.now(t)}, ${vision.now(t)})"
+    def inspect(t: WrapUpTicket[S]): String = s"Seating(${t.now(philosopher)}, ${t.now(leftFork)}, ${t.now(rightFork)}, ${t.now(vision)})"
   }
 
 }
