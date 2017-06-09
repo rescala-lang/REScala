@@ -24,9 +24,7 @@ class PaperGlitchTest extends FunSuite {
     val price = Var(3)
     val tax = price.map { p => p / 3 }
     val quantity = Var(1)
-    val total = Signals.static(quantity, price, tax) { implicit t =>
-      quantity.now * (price.now + tax.now)
-    }
+    val total = Signals.lift(quantity, price, tax){ (q, p, t) => q * (p + t) }
 
     // ============================================================================================================
 
