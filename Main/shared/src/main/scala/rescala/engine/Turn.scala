@@ -58,10 +58,10 @@ trait Turn[S <: Struct] extends AlwaysTicket[S] {
     * @param valuePersistency the value persistency
     * @param instantiateReactive The factory method to instantiate the reactive with the newly created state.
     * @tparam P Reactive value type
-    * @tparam T Reactive subtype of the reactive element
+    * @tparam R Reactive subtype of the reactive element
     * @return Connected reactive element
     */
-  private[rescala] def create[P, T <: Reactive[S]](incoming: Set[Reactive[S]], valuePersistency: ValuePersistency[P])(instantiateReactive: S#State[P, S] => T): T
+  private[rescala] def create[P, R <: Reactive[S]](incoming: Set[Reactive[S]], valuePersistency: ValuePersistency[P])(instantiateReactive: S#State[P, S] => R): R
   /**
     * Registers a new handler function that is called after all changes were written and committed.
     *
