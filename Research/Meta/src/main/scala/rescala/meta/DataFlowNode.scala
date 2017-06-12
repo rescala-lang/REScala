@@ -78,7 +78,6 @@ trait EventNode[+T] extends ReactiveNode[T] {
   def snapshot[A](s: SignalNode[A]): SnapshotSignalNode[T, A] = SnapshotSignalNode(graph, newRef(), s.newRef())
   def switchOnce[A](original: SignalNode[A], newSignal: SignalNode[A]): SwitchOnceSignalNode[T, A] = SwitchOnceSignalNode(graph, newRef(), original.newRef(), newSignal.newRef())
   def switchTo[A >: T](original: SignalNode[A]): SwitchToSignalNode[T, A] = SwitchToSignalNode(graph, newRef(), original.newRef())
-  def flatMap[X >: T, B](f: (X) => EventNode[B]): FlatMappedEventNode[X, B] = FlatMappedEventNode(graph, newRef(), { x => f(x).newRef() })
 }
 
 trait SignalNode[+A] extends ReactiveNode[A] {
@@ -212,18 +211,6 @@ case class MappedEventNode[T, +U](override var graph: DataFlowGraph, base : Even
   override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: CreationTicket[S]): Event[U, S] = {
     registerReifier(reifier)
     base.deref.doReify(reifier).map(mapping)
-  }
-}
-case class FlatMappedEventNode[T, +B](override var graph: DataFlowGraph, base : EventRef[T], f: (T) => EventRef[B]) extends EventNode[B] {
-  def structuralEquals(node: DataFlowNode[_]): Boolean = node match {
-    case FlatMappedEventNode(g, bs, m) => graph == g && bs.structuralEquals(base) && f == m
-    case _ => false
-  }
-
-  override def dependencies: Set[DataFlowRef[_]] = Set(base)
-  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: CreationTicket[S]): Event[B, S] = {
-    registerReifier(reifier)
-    base.deref.doReify(reifier).flatMap(f(_).deref.doReify(reifier))
   }
 }
 

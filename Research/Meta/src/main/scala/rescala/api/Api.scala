@@ -36,7 +36,6 @@ trait Api {
   def zip[A, B](event: Event[A], other: Event[B]): Event[(A, B)]
   def except[A, B](event: Event[A], other: Event[B]): Event[A]
   def change[A](signal: Signal[A]): Event[Signals.Diff[A]]
-  def flatMap[A, B](event: Event[A], f: A => Event[B]): Event[B]
   def snapshot[A](event: Event[_], signal: Signal[A]): Signal[A]
   def switchOnce[A](event: Event[_], a: Signal[A], b: Signal[A]): Signal[A]
   def switchTo[A](event: Event[A], a: Signal[A]): Signal[A]
@@ -74,7 +73,6 @@ object Api {
     override def zip[A, B](event: Event[A], other: Event[B]): Event[(A, B)] = event.zip(other)
     override def except[A, B](event: Event[A], other: Event[B]): Event[A] = event \ other
     override def change[A](signal: Signal[A]): Event[Signals.Diff[A]] = signal.change
-    override def flatMap[A, B](event: Event[A], f: A => Event[B]): Event[B] = event.flatMap(f)
     override def snapshot[A](event: Event[_], signal: Signal[A]): Signal[A] = event.snapshot(signal)
     override def switchOnce[A](event: Event[_], a: Signal[A], b: Signal[A]): Signal[A] = event.switchOnce(a, b)
     override def switchTo[A](event: Event[A], a: Signal[A]): Signal[A] = event.switchTo(a)
@@ -108,7 +106,6 @@ object Api {
     override def zip[A, B](event: Event[A], other: Event[B]): Event[(A, B)] = event.zip(other)
     override def except[A, B](event: Event[A], other: Event[B]): Event[A] = event \ other
     override def change[A](signal: Signal[A]): Event[Signals.Diff[A]] = signal.change
-    override def flatMap[A, B](event: Event[A], f: A => Event[B]): Event[B] = event.flatMap(f)
     override def snapshot[A](event: Event[_], signal: Signal[A]): Signal[A] = event.snapshot(signal)
     override def switchOnce[A](event: Event[_], a: Signal[A], b: Signal[A]): Signal[A] = event.switchOnce(a, b)
     override def switchTo[A](event: Event[A], a: Signal[A]): Signal[A] = event.switchTo(a)

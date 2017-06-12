@@ -101,7 +101,7 @@ trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] 
 
 
   /** folds events with a given fold function to create a Signal */
-  final def fold[A](init: A)(folder: (A, T) => A)(implicit ticket: CreationTicket[S]): Signal[A, S] = {
+  final def fold[A: Serializable](init: A)(folder: (A, T) => A)(implicit ticket: CreationTicket[S]): Signal[A, S] = {
     def f(a: => A, t: => T) = folder(a, t)
     lazyFold(init)(f)
   }
@@ -116,50 +116,59 @@ trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] 
   }
 
   /** reduces events with a given reduce function to create a Signal */
-  final def reduce[A](reducer: (=> A, => T) => A)(implicit ticket: CreationTicket[S]): Signal[A, S] = lazyFold(throw EmptySignalControlThrowable)(reducer)
+  final def reduce[A](reducer: (=> A, => T) => A)(implicit ticket: CreationTicket[S]): Signal[A, S] =
+    lazyFold(throw EmptySignalControlThrowable)(reducer)
 
   /** Applies a function on the current value of the signal every time the event occurs,
     * starting with the init value before the first event occurrence */
-  final def iterate[A](init: A)(f: A => A)(implicit ticket: CreationTicket[S]): Signal[A, S] = fold(init)((acc, _) => f(acc))
+  final def iterate[A: Serializable](init: A)(f: A => A)(implicit ticket: CreationTicket[S]): Signal[A, S] =
+    fold(init)((acc, _) => f(acc))
 
   /**
     * Counts the occurrences of the event. Starts from 0, when the event has never been
     * fired yet. The argument of the event is simply discarded.
     */
-  final def count()(implicit ticket: CreationTicket[S]): Signal[Int, S] = fold(0)((acc, _) => acc + 1)
+  final def count()(implicit ticket: CreationTicket[S], ev: Serializable[Int]): Signal[Int, S] =
+    fold(0)((acc, _) => acc + 1)
 
   /**
     * Calls f on each occurrence of event e, setting the SL to the generated value.
     * The initial signal is obtained by f(init)
     */
-  final def set[B >: T, A](init: B)(f: (B => A))(implicit ticket: CreationTicket[S]): Signal[A, S] = fold(f(init))((_, v) => f(v))
+  final def set[B >: T : Serializable, A](init: B)(f: (B => A))(implicit ticket: CreationTicket[S]): Signal[A, S] =
+    latest(init).map(f)
 
   /** returns a signal holding the latest value of the event. */
-  final def latest[T1 >: T](init: T1)(implicit ticket: CreationTicket[S]): Signal[T1, S] = fold(init)((_, v) => v)
-  final def latest()(implicit ticket: CreationTicket[S]): Signal[T, S] = reduce[T]((_, v) => v)
+  final def latest[T1 >: T : Serializable](init: T1)(implicit ticket: CreationTicket[S]): Signal[T1, S] =
+    fold(init)((_, v) => v)
+  final def latest()(implicit ticket: CreationTicket[S]): Signal[T, S] =
+    reduce[T]((_, v) => v)
 
   /** Holds the latest value of an event as an Option, None before the first event occured */
-  final def latestOption()(implicit ticket: CreationTicket[S]): Signal[Option[T], S] = fold(None: Option[T]) { (_, v) => Some(v) }
+  final def latestOption[T1 >: T]()(implicit ticket: CreationTicket[S], ev: Serializable[Option[T1]]): Signal[Option[T1], S] =
+    fold(None: Option[T1]) { (_, v) => Some(v) }
 
   /** calls factory on each occurrence of event e, resetting the SL to a newly generated one */
-  final def reset[T1 >: T, A, R](init: T1)(factory: T1 => Signal[A, S])(implicit ticket: CreationTicket[S], ev: Flatten[Signal[A, S], S, R]): R = set(init)(factory).flatten(ev, ticket)
+  final def reset[T1 >: T : Serializable, A, R](init: T1)(factory: T1 => Signal[A, S])(implicit ticket: CreationTicket[S], ev: Flatten[Signal[A, S], S, R]): R =
+    set(init)(factory).flatten(ev, ticket)
 
   /**
     * Returns a signal which holds the last n events in a list. At the beginning the
     * list increases in size up to when n values are available
     */
-  final def last(n: Int)(implicit ticket: CreationTicket[S]): Signal[LinearSeq[T], S] = {
-    fold(Queue[T]()) { (queue: Queue[T], v: T) =>
+  final def last[T1 >: T](n: Int)(implicit ticket: CreationTicket[S], ev: Serializable[Queue[T1]]): Signal[LinearSeq[T1], S] = {
+    fold(Queue[T1]()) { (queue: Queue[T1], v: T) =>
       if (queue.length >= n) queue.tail.enqueue(v) else queue.enqueue(v)
     }
   }
 
   /** collects events resulting in a variable holding a list of all values. */
-  final def list()(implicit ticket: CreationTicket[S]): Signal[List[T], S] = fold(List[T]())((acc, v) => v :: acc)
+  final def list[T1 >: T]()(implicit ticket: CreationTicket[S], ev: Serializable[List[T1]]): Signal[List[T1], S] =
+    fold(List[T1]())((acc, v) => v :: acc)
 
   /** Switch back and forth between two signals on occurrence of event e */
-  final def toggle[A](a: Signal[A, S], b: Signal[A, S])(implicit ticket: CreationTicket[S]): Signal[A, S] = ticket { ict =>
-    val switched: Signal[Boolean, S] = iterate(false) {!_}(ict)
+  final def toggle[A](a: Signal[A, S], b: Signal[A, S])(implicit ticket: CreationTicket[S], ev: Serializable[Boolean]): Signal[A, S] = ticket { ict =>
+    val switched: Signal[Boolean, S] = iterate(false) {!_}(ev, ict)
     Signals.dynamic(switched, a, b) { s => if (s.dynamicDepend(switched).get) s.dynamicDepend(b).get else s.dynamicDepend(a).get }(ict)
   }
 
@@ -174,8 +183,8 @@ trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] 
 
 
   /** Switch to a new Signal once, on the occurrence of event e. */
-  final def switchOnce[A](original: Signal[A, S], newSignal: Signal[A, S])(implicit ticket: CreationTicket[S]): Signal[A, S] = ticket { turn =>
-    val latest = latestOption()(turn)
+  final def switchOnce[A, T1 >: T](original: Signal[A, S], newSignal: Signal[A, S])(implicit ticket: CreationTicket[S], ev: Serializable[Option[T1]]): Signal[A, S] = ticket { turn =>
+    val latest = latestOption[T1]()(turn, ev)
     Signals.dynamic(latest, original, newSignal) { t =>
       t.dynamicDepend(latest).get match {
         case None => t.dynamicDepend(original).get
@@ -189,8 +198,8 @@ trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] 
     * Every time the event fires, the result signal changes to the value of the event,
     * the original signal is no longer used.
     */
-  final def switchTo[T1 >: T](original: Signal[T1, S])(implicit ticket: CreationTicket[S]): Signal[T1, S] = ticket { turn =>
-    val latest = latestOption()(turn)
+  final def switchTo[T1 >: T](original: Signal[T1, S])(implicit ticket: CreationTicket[S], ev: Serializable[Option[T1]]): Signal[T1, S] = ticket { turn =>
+    val latest = latestOption[T1]()(turn, ev)
     Signals.dynamic(latest, original) { s =>
       s.dynamicDepend(latest).get match {
         case None => s.dynamicDepend(original).get
@@ -200,16 +209,16 @@ trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] 
   }
 
   /** Like latest, but delays the value of the resulting signal by n occurrences */
-  final def delay[T1 >: T](init: => T1, n: Int)(implicit ticket: CreationTicket[S]): Signal[T1, S] = ticket { turn =>
+  final def delay[T1 >: T](init: => T1, n: Int)(implicit ticket: CreationTicket[S], ev : Serializable[Queue[T1]]): Signal[T1, S] = ticket { turn =>
     lazy val initL = init
-    val history: Signal[LinearSeq[T], S] = last(n + 1)(turn)
+    val history: Signal[LinearSeq[T1], S] = last[T1](n + 1)(turn, ev)
     history.map { h => if (h.size <= n) initL else h.head }(turn)
   }
 
   /** returns the values produced by the last event produced by mapping this value */
-  final def flatMap[B](f: T => Event[B, S])(implicit ticket: CreationTicket[S]): Event[B, S] = ticket { implicit turn => map(f).latest(Evt[B, S]).flatten }
+  //final def flatMap[B](f: T => Event[B, S])(implicit ticket: CreationTicket[S]): Event[B, S] = ticket { implicit ict => map(f).latest(Evt[B, S]).flatten }
 
   /** promotes the latest inner event to an outer event */
-  final def flatten[B](implicit ticket: CreationTicket[S], ev: T <:< Event[B, S]): Event[B, S] = flatMap(ev.apply)
+  //final def flatten[B](implicit ticket: CreationTicket[S], ev: T <:< Event[B, S]): Event[B, S] = flatMap(ev.apply)
 
 }

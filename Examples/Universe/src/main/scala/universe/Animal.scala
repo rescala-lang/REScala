@@ -58,7 +58,7 @@ abstract class Animal(implicit world: World) extends BoardElement {
         if (prey) (FallPrey, oldPos)
         else (nextAction(newPos), newPos)
     }
-  }(CreationTicket.fromEngineImplicit)
+  }
 
   private val state: Signal[AnimalState] = statePos.map(_._1)
 

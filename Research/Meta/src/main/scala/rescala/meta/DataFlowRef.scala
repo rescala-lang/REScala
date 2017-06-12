@@ -61,7 +61,6 @@ class EventRef[+T](_node : EventNode[T]) extends ReactiveRef[T] {
   def snapshot[A](s: SignalRef[A]): SignalRef[A] = new SignalRef(deref.snapshot(s.deref))
   def switchOnce[A](original: SignalRef[A], newSignal: SignalRef[A]): SignalRef[A] = new SignalRef(deref.switchOnce(original.deref, newSignal.deref))
   def switchTo[A >: T](original: SignalRef[A]): SignalRef[A] = new SignalRef(deref.switchTo(original.deref))
-  def flatMap[X >: T, B](f: (X) => EventRef[B]): EventRef[B] = new EventRef(deref.flatMap({ x : X => f(x).deref}))
 }
 
 object EventRef {
