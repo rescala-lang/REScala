@@ -1,6 +1,6 @@
 package rescala.reactives
 
-import rescala.engine.{Engine, CreationTicket}
+import rescala.engine.Engine
 import rescala.graph.Pulse.{Exceptional, NoChange, Value}
 import rescala.graph._
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}

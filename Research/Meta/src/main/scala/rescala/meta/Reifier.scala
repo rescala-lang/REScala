@@ -1,7 +1,7 @@
 package rescala.meta
 
-import rescala.engine.{Engine, CreationTicket}
-import rescala.graph.{Pulsing, Struct}
+import rescala.engine.Engine
+import rescala.graph.{CreationTicket, Pulsing, Struct}
 import rescala.reactives.{Evt, _}
 
 import scala.annotation.tailrec

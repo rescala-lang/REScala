@@ -1,6 +1,6 @@
 import org.scalajs.dom
-import rescala.engine.{Engine, CreationTicket}
-import rescala.graph.Struct
+import rescala.engine.Engine
+import rescala.graph.{CreationTicket, Struct}
 import rescala.reactives.Signals.Diff
 import rescala.reactives.{Observe, Signal}
 

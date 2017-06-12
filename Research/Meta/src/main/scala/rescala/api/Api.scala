@@ -2,8 +2,8 @@ package rescala.api
 
 
 
-import rescala.engine.{Engine, CreationTicket}
-import rescala.graph.Struct
+import rescala.engine.Engine
+import rescala.graph.{CreationTicket, Struct}
 import rescala.meta._
 import rescala.reactives.Signals
 

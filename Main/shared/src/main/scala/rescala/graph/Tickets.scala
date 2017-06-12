@@ -1,7 +1,11 @@
 package rescala.graph
 
-import rescala.engine.Turn
+
+import rescala.engine.{Engine, Turn}
 import rescala.reactives.{Event, Signal}
+
+import scala.annotation.implicitNotFound
+import scala.language.implicitConversions
 
 /* tickets are created by the REScala schedulers, to restrict operations to the correct scopes */
 
@@ -73,4 +77,33 @@ final class WrapUpTicket[S <: Struct] private[rescala] (val turn: Turn[S]) exten
   def now[A](reactive: Event[A, S]): Option[A] = {
     turn.dynamicAfter(reactive).toOption
   }
+}
+
+
+object CreationTicket extends LowPriorityTurnSource {
+  implicit def fromTicketImplicit[S <: Struct](implicit ticket: AlwaysTicket[S]): CreationTicket[S] = CreationTicket(Left(ticket.turn))
+  implicit def fromTicket[S <: Struct](ticket: AlwaysTicket[S]): CreationTicket[S] = CreationTicket(Left(ticket.turn))
+}
+
+/**
+  * A turn source that stores a turn/engine and can be applied to a function to call it with the appropriate turn as parameter.
+  *
+  * @param self Turn or engine stored by the turn source
+  * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
+  */
+@implicitNotFound(msg = "could not generate a turn source." +
+  " An available implicit Ticket will serve as turn source, or if no" +
+  " such turn is present, an implicit Engine is accepted instead.")
+final case class CreationTicket[S <: Struct](self: Either[Turn[S], Engine[S]]) extends AnyVal {
+  def apply[T](f: Turn[S] => T): T = self match {
+    case Left(turn) => f(turn)
+    case Right(engine) => engine.currentTurn() match {
+      case Some(turn) => f(turn)
+      case None => engine.executeTurn(Set.empty, ticket => f(ticket.turn), engine.noWrapUp[T])
+    }
+  }
+}
+sealed trait LowPriorityTurnSource {
+  implicit def fromEngineImplicit[S <: Struct](implicit factory: Engine[S]): CreationTicket[S] = CreationTicket(Right(factory))
+  implicit def fromEngine[S <: Struct](factory: Engine[S]): CreationTicket[S] = CreationTicket(Right(factory))
 }

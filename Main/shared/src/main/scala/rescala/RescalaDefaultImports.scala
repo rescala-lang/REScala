@@ -27,8 +27,8 @@ abstract class RescalaDefaultImports[S <: Struct] {
   final type OutsidePropagationTicket = rescala.graph.OutsidePropagationTicket[S]
   final type PropagationAndLaterTicket = rescala.graph.PropagationAndLaterTicket[S]
   final type AlwaysTicket = rescala.graph.AlwaysTicket[S]
-  final type TurnSource = rescala.engine.CreationTicket[S]
-  final type TicketOrEngine = rescala.engine.CreationTicket[S]
+  final type TurnSource = rescala.graph.CreationTicket[S]
+  final type TicketOrEngine = rescala.graph.CreationTicket[S]
   final type Reactive = rescala.graph.Reactive[S]
   final def Evt[A](): Evt[A] = reactives.Evt[A, S]()(explicitEngine)
 

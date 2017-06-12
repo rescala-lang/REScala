@@ -1,9 +1,7 @@
 package rescala.testhelper
 
-import rescala.engine.CreationTicket
-import rescala.graph.Struct
+import rescala.graph.{CreationTicket, Struct}
 import rescala.reactives.{Event, Signal}
-
 import org.scalatest.{Assertions, Matchers}
 
 class ReevaluationTracker[A, S <: Struct] private() extends Matchers {

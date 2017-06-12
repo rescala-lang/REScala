@@ -1,8 +1,8 @@
 package rescala.meta
 
 
-import rescala.engine.{Engine, CreationTicket}
-import rescala.graph.{Pulse, Pulsing, Struct}
+import rescala.engine.Engine
+import rescala.graph.{CreationTicket, Pulse, Pulsing, Struct}
 import rescala.reactives._
 import rescala.util.Globals
 

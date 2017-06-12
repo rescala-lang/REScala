@@ -3,8 +3,7 @@ package rescala.testhelper
 import java.util.concurrent.ForkJoinPool.ManagedBlocker
 import java.util.concurrent.{CountDownLatch, ForkJoinPool}
 
-import rescala.engine.CreationTicket
-import rescala.graph.Struct
+import rescala.graph.{CreationTicket, Struct}
 import rescala.reactives.{Event, Signal}
 
 

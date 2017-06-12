@@ -1,7 +1,7 @@
 package rescala.meta
 
-import rescala.engine.{Engine, CreationTicket}
-import rescala.graph.Struct
+import rescala.engine.Engine
+import rescala.graph.{CreationTicket, Struct}
 import rescala.reactives._
 
 trait DataFlowRef[+T] {

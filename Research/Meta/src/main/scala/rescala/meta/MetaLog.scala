@@ -1,7 +1,6 @@
 package rescala.meta
 
-import rescala.engine.CreationTicket
-import rescala.graph.Struct
+import rescala.graph.{CreationTicket, Struct}
 
 case class ObserverData[S <: Struct](onSuccess: Nothing => Unit, onFailure: Throwable => Unit, ticket: CreationTicket[S]) {
   // Prevent structural equality check for case-classes
