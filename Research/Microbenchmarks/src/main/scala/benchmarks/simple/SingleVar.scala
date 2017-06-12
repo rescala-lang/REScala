@@ -20,7 +20,7 @@ import rescala.reactives.Var
 @State(Scope.Benchmark)
 class SingleVar[S <: rescala.graph.Struct] {
 
-  implicit var engine: Engine[S, Turn[S]] = _
+  implicit var engine: Engine[S] = _
 
   var source: Var[Boolean, S] = _
   var current: Boolean = _

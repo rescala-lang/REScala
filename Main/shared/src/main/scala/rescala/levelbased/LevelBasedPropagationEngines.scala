@@ -1,17 +1,13 @@
 package rescala.levelbased
 
-import rescala.engine.{Engine, Turn, ValuePersistency}
+import rescala.engine.{Engine, ValuePersistency}
 import rescala.graph._
 import rescala.twoversion.TwoVersionEngineImpl
-
-import scala.language.existentials
 
 /**
   * Basic implementations of propagation engines
   */
 trait LevelBasedPropagationEngines {
-
-  type TEngine = Engine[S, Turn[S]] forSome { type S <: Struct }
 
   private[rescala] class SimpleNoLock extends LevelBasedPropagation[SimpleStruct] {
     override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): SimpleStruct#State[P, SimpleStruct] = {
@@ -21,7 +17,7 @@ trait LevelBasedPropagationEngines {
     override def dynamicDependencyInteraction(dependency: Reactive[SimpleStruct]): Unit = {}
   }
 
-  type SimpleEngine = Engine[SimpleStruct, LevelBasedPropagation[SimpleStruct]]
+  type SimpleEngine = Engine[SimpleStruct]
 
 
   implicit val synchron: SimpleEngine = new TwoVersionEngineImpl[SimpleStruct, SimpleNoLock]("Synchron", new SimpleNoLock()) {

@@ -1,6 +1,6 @@
 package rescala.meta
 
-import rescala.engine.{Engine, Turn, TurnSource}
+import rescala.engine.{Engine, TurnSource}
 import rescala.graph.{Pulsing, Struct}
 import rescala.reactives.{Evt, _}
 
@@ -29,7 +29,7 @@ trait Reifier[S <: Struct] {
   protected[meta] def doReifySignal[A](signalPointer: SignalNode[A]) : Signal[A, S]
 }
 
-class EngineReifier[S <: Struct]()(implicit val engine: Engine[S, Turn[S]]) extends Reifier[S] {
+class EngineReifier[S <: Struct]()(implicit val engine: Engine[S]) extends Reifier[S] {
   private val reifiedCache : mutable.Map[DataFlowNode[_], Reification[S]] = collection.mutable.Map()
   private val savedState : mutable.Map[DataFlowNode[_], List[Signal[_, _]]] = collection.mutable.Map()
 

@@ -30,10 +30,10 @@ class Source[T, S <: Struct](initialState: S#State[Pulse[T], S]) extends Base[T,
   */
 final class Evt[T, S <: Struct] private[rescala] (initialState: S#State[Pulse[T], S]) extends Source[T, S](initialState) with Event[T, S] {
   /** Trigger the event */
-  def apply(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = fire(value)
-  def fire()(implicit fac: Engine[S, Turn[S]], ev: Unit =:= T): Unit = fire(ev(Unit))(fac)
-  def fire(value: T)(implicit fac: Engine[S, Turn[S]]): Unit = fac.transaction(this) {admit(value)(_)}
-  override def disconnect()(implicit engine: Engine[S, Turn[S]]): Unit = ()
+  def apply(value: T)(implicit fac: Engine[S]): Unit = fire(value)
+  def fire()(implicit fac: Engine[S], ev: Unit =:= T): Unit = fire(ev(Unit))(fac)
+  def fire(value: T)(implicit fac: Engine[S]): Unit = fac.transaction(this) {admit(value)(_)}
+  override def disconnect()(implicit engine: Engine[S]): Unit = ()
 }
 
 /**
@@ -53,10 +53,10 @@ object Evt {
   * @tparam S Struct type used for the propagation of the signal
   */
 final class Var[A, S <: Struct] private[rescala] (initialState: S#State[Pulse[A], S]) extends Source[A, S](initialState) with Signal[A, S] {
-  def update(value: A)(implicit fac: Engine[S, Turn[S]]): Unit = set(value)
-  def set(value: A)(implicit fac: Engine[S, Turn[S]]): Unit = fac.transaction(this) {admit(value)(_)}
+  def update(value: A)(implicit fac: Engine[S]): Unit = set(value)
+  def set(value: A)(implicit fac: Engine[S]): Unit = fac.transaction(this) {admit(value)(_)}
 
-  def transform(f: A => A)(implicit fac: Engine[S, Turn[S]]): Unit = fac.transaction(this) { t =>
+  def transform(f: A => A)(implicit fac: Engine[S]): Unit = fac.transaction(this) { t =>
     // minor TODO should f be evaluated only during reevaluation, given t.selfBefore(this) as parameter?
     admit(f(t.now(this)))(t)
   }
@@ -67,9 +67,9 @@ final class Var[A, S <: Struct] private[rescala] (initialState: S#State[Pulse[A]
     else res
   }
 
-  def setEmpty()(implicit fac: Engine[S, Turn[S]]): Unit = fac.transaction(this)(t => admitPulse(Pulse.empty)(t))
+  def setEmpty()(implicit fac: Engine[S]): Unit = fac.transaction(this)(t => admitPulse(Pulse.empty)(t))
 
-  override def disconnect()(implicit engine: Engine[S, Turn[S]]): Unit = ()
+  override def disconnect()(implicit engine: Engine[S]): Unit = ()
 }
 
 /**

@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 import benchmarks.{EngineParam, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
-import rescala.engine.{Engine, Turn}
+import rescala.engine.Engine
 import rescala.reactives._
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -17,7 +17,7 @@ import rescala.reactives._
 @State(Scope.Thread)
 class Creation[S <: rescala.graph.Struct] {
 
-  implicit var engine: Engine[S, Turn[S]] = _
+  implicit var engine: Engine[S] = _
 
   @Setup
   def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam[S]) = {

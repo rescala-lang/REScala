@@ -4,7 +4,7 @@ import java.util.concurrent.TimeUnit
 
 import benchmarks.{EngineParam, Size, Step}
 import org.openjdk.jmh.annotations._
-import rescala.engine.{Engine, Turn}
+import rescala.engine.Engine
 import rescala.reactives.{Evt, Var}
 import rescala.restore.{ReStoringEngine, Storing}
 
@@ -17,7 +17,7 @@ import rescala.restore.{ReStoringEngine, Storing}
 @State(Scope.Thread)
 class RestoringSimple[S <: rescala.graph.Struct] {
 
-  implicit var engine: Engine[S, Turn[S]] = _
+  implicit var engine: Engine[S] = _
 
   var source: Evt[Int, S] = _
   var result: List[Any] = _
@@ -48,7 +48,7 @@ class RestoringSimple[S <: rescala.graph.Struct] {
 @State(Scope.Thread)
 class RestoringVar[S <: rescala.graph.Struct] {
 
-  implicit var engine: Engine[S, Turn[S]] = _
+  implicit var engine: Engine[S] = _
   var sourceVar: Var[Int, S] = _
 
   @Setup

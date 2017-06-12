@@ -5,7 +5,7 @@ import rescala.parrp.ParRP
 import rescala.reactives.Signal
 
 object ParRPTestTooling {
-  def unsafeNow[T](s: Signal[T, ParRP])(implicit engine: Engine[ParRP, ParRP]): T = {
+  def unsafeNow[T](s: Signal[T, ParRP])(implicit engine: Engine[ParRP]): T = {
     engine.transaction()(t => t.turn.staticAfter(s).get)
   }
 }

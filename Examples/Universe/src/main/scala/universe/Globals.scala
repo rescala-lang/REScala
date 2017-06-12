@@ -1,7 +1,7 @@
 package universe
 
 import rescala.Engines
-import rescala.engine.{Engine, Turn}
+import rescala.engine.{Engine}
 import rescala.graph.Struct
 
 import scala.collection.parallel.ForkJoinTaskSupport
@@ -10,7 +10,7 @@ import scala.concurrent.forkjoin.ForkJoinPool
 object Globals {
   val engineName = System.getProperty("engineName", "parrp")
 
-  implicit val engine: Engine[Struct, Turn[Struct]] = Engines.byName[Struct](engineName)
+  implicit val engine: Engine[Struct] = Engines.byName[Struct](engineName)
 
   var taskSupport: ForkJoinTaskSupport = _
   def setParallelism(n: Int) = {

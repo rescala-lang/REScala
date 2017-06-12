@@ -1,6 +1,6 @@
 package rescala.reactives
 
-import rescala.engine.{Engine, Turn, TurnSource}
+import rescala.engine.{Engine, TurnSource}
 import rescala.graph._
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 import rescala.reactives.Signals.Diff
@@ -29,7 +29,7 @@ trait Signal[+A, S <: Struct] extends Pulsing[Pulse[A], S] with Observable[A, S]
   @compileTimeOnly("Signal.apply can only be used inside of Signal expressions")
   final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")
 
-  final def now(implicit engine: Engine[S, Turn[S]], @deprecated("unused", "") ev: Signal.NowAllowed.type): A = {
+  final def now(implicit engine: Engine[S], @deprecated("unused", "") ev: Signal.NowAllowed.type): A = {
     try { engine.singleNow(this).get }
     catch {
       case EmptySignalControlThrowable => throw new NoSuchElementException(s"Signal $this is empty")
@@ -55,7 +55,7 @@ trait Signal[+A, S <: Struct] extends Pulsing[Pulse[A], S] with Observable[A, S]
     }
   }
 
-  def disconnect()(implicit engine: Engine[S, Turn[S]]): Unit
+  def disconnect()(implicit engine: Engine[S]): Unit
 
   /** Return a Signal with f applied to the value */
   final def map[B](f: A => B)(implicit ticket: TurnSource[S]): Signal[B, S] = Signals.lift(this)(f)

@@ -12,11 +12,14 @@ import scala.annotation.implicitNotFound
   * @tparam TTurn Turn type used by the engine
   */
 @implicitNotFound(msg = "Could not find an implicit propagation engine. Did you forget an import?")
-trait Engine[S <: Struct, +TTurn <: Turn[S]] extends RescalaDefaultImports[S] {
+trait Engine[S <: Struct] extends RescalaDefaultImports[S] {
+
+  type ExactTurn <: Turn
+
   override def explicitEngine: this.type = this
 
   private[rescala] def executeTurn[I, R](initialWrites: Traversable[Reactive], admissionPhase: AdmissionTicket => I, wrapUpPhase: (I, WrapUpTicket) => R): R
   private[rescala] def singleNow[A](reactive: Pulsing[A, S]): A
-  private[rescala] def currentTurn(): Option[TTurn]
+  private[rescala] def currentTurn(): Option[ExactTurn]
 }
 

@@ -3,6 +3,7 @@ package tests.rescala.concurrency
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 
 import rescala.Engines
+import rescala.engine.Engine
 import rescala.fullmv.FullMVEngine
 import rescala.parrp.{Backoff, ParRP}
 import rescala.testhelper._
@@ -10,7 +11,7 @@ import rescala.twoversion.TwoVersionEngineImpl
 import tests.rescala.RETests
 
 class PessimisticTest extends RETests {
-  engines(Engines.parrp, FullMVEngine)("SynchronizedReevaluation should synchronize reevaluations"){ engine =>
+  engines(Engines.parrp, FullMVEngine)("SynchronizedReevaluation should synchronize reevaluations"){ (engine: Engine[TestStruct]) =>
     import engine._
 
     val v1 = Var(false)
@@ -125,8 +126,7 @@ class PessimisticTest extends RETests {
   }
 
   test("ParRP should (not?) Add And Remove Dependency In One Turn") {
-    implicit val engine = Engines.parrp
-    import engine._
+    import Engines.parrp._
 
     // this behavior is not necessary for correctness; adding and removing the edge (i.e. regs and unregs +=1)
     // would be equally correct. It is implemented purely to discover accidental behavior changes, but should
@@ -135,7 +135,7 @@ class PessimisticTest extends RETests {
     val b2 = b0.map(identity).map(!_) // dirty hacks to get il_3 to reevaluate first on levelbased engines
     val i0 = Var(11)
     var reeval = 0
-    val i1_3 = engine.dynamic(b0) { t => reeval += 1; if (t.depend(b0) && t.depend(b2)) t.depend(i0) else 42 }
+    val i1_3 = explicitEngine.dynamic(b0) { t => reeval += 1; if (t.depend(b0) && t.depend(b2)) t.depend(i0) else 42 }
 
     var regs = 0
     var unregs = 0

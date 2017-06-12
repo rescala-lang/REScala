@@ -1,6 +1,6 @@
 package tests.rescala
 
-import rescala.engine.{Engine, Turn}
+import rescala.engine.Engine
 
 sealed trait ChangeX
 case object DontSet extends ChangeX
@@ -8,7 +8,7 @@ case object SetUnchanged extends ChangeX
 case object SetChanged extends ChangeX
 
 class UnchangedReevaluationLevelIncreaseTest extends RETests {
-  def run(engine: Engine[S, Turn[S]], changeX: ChangeX): Unit = {
+  def run(engine: Engine[TestStruct], changeX: ChangeX): Unit = {
     import engine._
 
     val results = for(i <- 0 to 10) yield {

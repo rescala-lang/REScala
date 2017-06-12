@@ -11,8 +11,8 @@ abstract class RescalaDefaultImports[S <: Struct] {
   // need the import inside of the trait, otherwise scala complains that it is shadowed by rescala.macros
   import scala.language.experimental.macros
 
-  def explicitEngine: rescala.engine.Engine[S, Turn]
-  implicit def implicitEngine: rescala.engine.Engine[S, Turn] = explicitEngine
+  def explicitEngine: rescala.engine.Engine[S]
+  implicit def implicitEngine: rescala.engine.Engine[S] = explicitEngine
 
   final type Observe = reactives.Observe[S]
   final type Signal[+A] = reactives.Signal[A, S]

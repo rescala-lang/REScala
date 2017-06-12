@@ -1,6 +1,6 @@
 package rescala.reactives
 
-import rescala.engine.{Engine, Turn, TurnSource}
+import rescala.engine.{Engine, TurnSource}
 import rescala.graph.Pulse.{Exceptional, NoChange, Value}
 import rescala.graph._
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
@@ -22,7 +22,7 @@ trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] 
   @compileTimeOnly("Event.apply can only be used inside of Signal expressions")
   def apply(): Option[T] = throw new IllegalAccessException(s"$this.apply called outside of macro")
 
-  def disconnect()(implicit engine: Engine[S, Turn[S]]): Unit
+  def disconnect()(implicit engine: Engine[S]): Unit
 
 
   /** collect results from a partial function */

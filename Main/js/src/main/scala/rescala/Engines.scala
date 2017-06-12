@@ -1,5 +1,6 @@
 package rescala
 
+import rescala.engine.Engine
 import rescala.levelbased.LevelBasedPropagationEngines
 
 object Engines extends LevelBasedPropagationEngines {
@@ -7,7 +8,7 @@ object Engines extends LevelBasedPropagationEngines {
 
   val all: List[SimpleEngine] = List(synchron, unmanaged)
 
-  val locksweep: TEngine = null
-  val parallellocksweep: TEngine = null
+  val locksweep: Engine[_] = null
+  val parallellocksweep: Engine[_] = null
 
 }

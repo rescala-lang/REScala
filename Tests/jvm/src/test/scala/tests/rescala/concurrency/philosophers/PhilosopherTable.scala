@@ -2,14 +2,14 @@ package tests.rescala.concurrency.philosophers
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import rescala.engine.{Engine, Turn}
-import rescala.util.Globals.named
+import rescala.engine.Engine
 import rescala.graph.{Struct, WrapUpTicket}
 import rescala.parrp.Backoff
-import rescala.reactives.{Signal, Var}
 import rescala.reactives.Signals.lift
+import rescala.reactives.{Signal, Var}
+import rescala.util.Globals.named
 
-class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit val engine: Engine[S, Turn[S]]) {
+class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit val engine: Engine[S]) {
   import engine.Var
   import tests.rescala.concurrency.philosophers.PhilosopherTable._
 

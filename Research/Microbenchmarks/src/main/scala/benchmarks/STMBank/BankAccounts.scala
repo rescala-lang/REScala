@@ -6,7 +6,7 @@ import java.util.concurrent.{ThreadLocalRandom, TimeUnit}
 import benchmarks.EngineParam
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, Blackhole}
-import rescala.engine.{Engine, Turn}
+import rescala.engine.Engine
 import rescala.graph.Struct
 import rescala.reactives._
 
@@ -27,7 +27,7 @@ class ReactiveState[S <: Struct] {
   var globalReadChance: Double = _
   var modifiedReadChance: Double = _
 
-  var engine: Engine[S, Turn[S]] = _
+  var engine: Engine[S] = _
   var accounts: Array[Var[Int, S]] = _
   var windows: Array[Array[Var[Int, S]]] =_
 
