@@ -15,10 +15,6 @@ import scala.language.implicitConversions
   " An available implicit Ticket will serve as turn source, or if no" +
   " such turn is present, an implicit Engine is accepted instead.")
 final case class CreationTicket[S <: Struct](self: Either[Turn[S], Engine[S]]) extends AnyVal {
-  def requireCurrentTurn: Option[Turn[S]] = self match {
-    case Left(turn) => Some(turn)
-    case Right(engine) => engine.currentTurn()
-  }
   def apply[T](f: Turn[S] => T): T = self match {
     case Left(turn) => f(turn)
     case Right(engine) => engine.currentTurn() match {
