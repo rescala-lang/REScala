@@ -158,9 +158,9 @@ trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] 
   final def list()(implicit ticket: CreationTicket[S]): Signal[List[T], S] = fold(List[T]())((acc, v) => v :: acc)
 
   /** Switch back and forth between two signals on occurrence of event e */
-  final def toggle[A](a: Signal[A, S], b: Signal[A, S])(implicit ticket: CreationTicket[S]): Signal[A, S] = ticket { turn =>
-    val switched: Signal[Boolean, S] = iterate(false) {!_}(turn)
-    Signals.dynamic(switched, a, b) { s => if (s.dynamicDepend(switched).get) s.dynamicDepend(b).get else s.dynamicDepend(a).get }(turn)
+  final def toggle[A](a: Signal[A, S], b: Signal[A, S])(implicit ticket: CreationTicket[S]): Signal[A, S] = ticket { ict =>
+    val switched: Signal[Boolean, S] = iterate(false) {!_}(ict)
+    Signals.dynamic(switched, a, b) { s => if (s.dynamicDepend(switched).get) s.dynamicDepend(b).get else s.dynamicDepend(a).get }(ict)
   }
 
   /** Return a Signal that is updated only when e fires, and has the value of the signal s */

@@ -62,6 +62,7 @@ trait Turn[S <: Struct] extends AlwaysTicket[S] {
     * @return Connected reactive element
     */
   private[rescala] def create[P, R <: Reactive[S]](incoming: Set[Reactive[S]], valuePersistency: ValuePersistency[P])(instantiateReactive: S#State[P, S] => R): R
+
   /**
     * Registers a new handler function that is called after all changes were written and committed.
     *

@@ -22,8 +22,8 @@ object Signals extends GeneratedSignalLift {
       (res, states.value)
     }
 
-    def restoreFrom[R, S <: Struct](states: List[Signal[_, _]])(f: => R)(implicit turnSource: CreationTicket[S]): R = turnSource { turn =>
-      restored.withValue(states.map(s => turn.dynamicBefore(s.asInstanceOf[Signal[_, S]]).get).reverse) {
+    def restoreFrom[R, S <: Struct](states: List[Signal[_, _]])(f: => R)(implicit turnSource: CreationTicket[S]): R = turnSource { ctc =>
+      restored.withValue(states.map(s => ctc.turn.dynamicBefore(s.asInstanceOf[Signal[_, S]]).get).reverse) {
         f
       }
     }
@@ -54,15 +54,15 @@ object Signals extends GeneratedSignalLift {
   }
 
   /** creates a signal that statically depends on the dependencies with a given initial value */
-  private[rescala] def staticFold[T, S <: Struct](dependencies: Set[Reactive[S]], init: StaticTicket[S] => T)(expr: (StaticTicket[S], => T) => T)(initialTurn: Turn[S]): Signal[T, S] = {
+  private[rescala] def staticFold[T, S <: Struct](dependencies: Set[Reactive[S]], init: StaticTicket[S] => T)(expr: (StaticTicket[S], => T) => T)(ict: InnerCreationTicket[S]): Signal[T, S] = {
     def initOrRestored = {
-      if (restored.value eq null) init(initialTurn.makeStaticReevaluationTicket())
+      if (restored.value eq null) init(ict.turn.makeStaticReevaluationTicket())
       else {
         restored.value = restored.value.drop(1)
-        restored.value.headOption.fold(init(initialTurn.makeStaticReevaluationTicket()))(_.asInstanceOf[T])
+        restored.value.headOption.fold(init(ict.turn.makeStaticReevaluationTicket()))(_.asInstanceOf[T])
       }
     }
-    val res = initialTurn.create[Pulse[T], Signal[T, S]](dependencies, ValuePersistency.InitializedSignal(Pulse.tryCatch(Pulse.Value(initOrRestored)))) {
+    val res = ict.create[Pulse[T], Signal[T, S]](dependencies, ValuePersistency.InitializedSignal(Pulse.tryCatch(Pulse.Value(initOrRestored)))) {
       state => new StaticSignal[T, S](state, expr) with Disconnectable[S]
     }
     if (states.value ne null) states.value = res :: states.value
