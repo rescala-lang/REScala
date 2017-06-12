@@ -42,13 +42,13 @@ object Observe {
     }
   }
 
-  def weak[T, S <: Struct](dependency: Pulsing[Pulse[T], S])(fun: T => Unit, fail: Throwable => Unit)(implicit maybe: TurnSource[S]): Observe[S] = {
+  def weak[T, S <: Struct](dependency: Pulsing[Pulse[T], S])(fun: T => Unit, fail: Throwable => Unit)(implicit maybe: CreationTicket[S]): Observe[S] = {
     maybe(initTurn => initTurn.create[Pulse[Unit], Obs[T, S]](Set(dependency), ValuePersistency.Event) { state =>
       new Obs[T, S](state, dependency, fun, fail) with Disconnectable[S]
     })
   }
 
-  def strong[T, S <: Struct](dependency: Pulsing[Pulse[T], S])(fun: T => Unit, fail: Throwable => Unit)(implicit maybe: TurnSource[S]): Observe[S] = {
+  def strong[T, S <: Struct](dependency: Pulsing[Pulse[T], S])(fun: T => Unit, fail: Throwable => Unit)(implicit maybe: CreationTicket[S]): Observe[S] = {
     val obs = weak(dependency)(fun, fail)
     strongObserveReferences.synchronized(strongObserveReferences.add(obs))
     obs
@@ -68,5 +68,5 @@ trait Observable[+P, S <: Struct] {
   final def observe(
     onSuccess: P => Unit,
     onFailure: Throwable => Unit = null
-  )(implicit ticket: TurnSource[S]): Observe[S] = Observe.strong(this)(onSuccess, onFailure)
+  )(implicit ticket: CreationTicket[S]): Observe[S] = Observe.strong(this)(onSuccess, onFailure)
 }

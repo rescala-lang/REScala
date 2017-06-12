@@ -1,6 +1,6 @@
 package rescala.meta
 
-import rescala.engine.{Engine, TurnSource}
+import rescala.engine.{Engine, CreationTicket}
 import rescala.graph.Struct
 import rescala.reactives._
 
@@ -30,7 +30,7 @@ trait ReactiveRef[+T] extends DataFlowRef[T] {
   override def tryDeref : Option[ReactiveNode[T]]
   override def deref : ReactiveNode[T] = tryDeref.getOrElse(throw new IllegalStateException("Trying to call operation on undefined reference!"))
 
-  def observe[S <: Struct](onSuccess: (T) => Unit, onFailure: (Throwable) => Unit = t => throw t)(implicit ticket: TurnSource[S]): Unit =
+  def observe[S <: Struct](onSuccess: (T) => Unit, onFailure: (Throwable) => Unit = t => throw t)(implicit ticket: CreationTicket[S]): Unit =
     deref.observe(onSuccess, onFailure)
   def reify[S <: Struct](implicit reifier: Reifier[S]): Observable[T, S] = deref.reify
 }
@@ -48,7 +48,7 @@ class EventRef[+T](_node : EventNode[T]) extends ReactiveRef[T] {
 
   override def reify[S <: Struct](implicit reifier: Reifier[S]): Event[T, S] = deref.reify
 
-  def +=[S <: Struct](react: T => Unit)(implicit ticket: TurnSource[S]): Unit = deref += react
+  def +=[S <: Struct](react: T => Unit)(implicit ticket: CreationTicket[S]): Unit = deref += react
 
   def ||[U >: T](others: EventRef[U]*): EventRef[U] = new EventRef(deref||(others.map(_.deref):_*))
   def &&[U >: T](pred: (U) => Boolean): EventRef[U] = new EventRef(deref && pred)

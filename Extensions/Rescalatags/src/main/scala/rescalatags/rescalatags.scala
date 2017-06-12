@@ -1,5 +1,5 @@
 import org.scalajs.dom
-import rescala.engine.{Engine, TurnSource}
+import rescala.engine.{Engine, CreationTicket}
 import rescala.graph.Struct
 import rescala.reactives.Signals.Diff
 import rescala.reactives.{Observe, Signal}
@@ -13,7 +13,7 @@ package object rescalatags {
     /**
       * converts a Signal of a scalatags Tag to a scalatags Frag which automatically reflects changes to the signal in the dom
       */
-    def asFrag(implicit ticket: TurnSource[S], engine: Engine[S]): Frag = {
+    def asFrag(implicit ticket: CreationTicket[S], engine: Engine[S]): Frag = {
       ticket { implicit turn =>
         val result: Signal[dom.Node, S] = signal
           .map(_.render)

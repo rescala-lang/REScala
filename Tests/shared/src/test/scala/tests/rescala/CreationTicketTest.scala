@@ -1,6 +1,6 @@
 package tests.rescala
 
-class TurnSourceTest extends RETests {
+class CreationTicketTest extends RETests {
 
 
   /* this test uses some shady planned()(identity) to get the turn object out of the transaction

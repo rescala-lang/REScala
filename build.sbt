@@ -48,7 +48,7 @@ lazy val rescala = crossProject.in(file("Main"))
         val signals = params zip types map {case (p, t) => s"$p: Signal[$t, S]"}
         def sep(l: Seq[String]) = l.mkString(", ")
         val getValues = params map (v => s"t.staticDepend($v).get")
-        s"""  def lift[${sep(types)}, B, S <: Struct](${sep(signals)})(fun: (${sep(types)}) => B)(implicit maybe: TurnSource[S]): Signal[B, S] = {
+        s"""  def lift[${sep(types)}, B, S <: Struct](${sep(signals)})(fun: (${sep(types)}) => B)(implicit maybe: CreationTicket[S]): Signal[B, S] = {
            |    static(${sep(params)})(t => fun(${sep(getValues)}))
            |  }
            |""".stripMargin

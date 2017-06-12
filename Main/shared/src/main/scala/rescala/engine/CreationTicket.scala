@@ -14,7 +14,7 @@ import scala.language.implicitConversions
 @implicitNotFound(msg = "could not generate a turn source." +
   " An available implicit Ticket will serve as turn source, or if no" +
   " such turn is present, an implicit Engine is accepted instead.")
-final case class TurnSource[S <: Struct](self: Either[Turn[S], Engine[S]]) extends AnyVal {
+final case class CreationTicket[S <: Struct](self: Either[Turn[S], Engine[S]]) extends AnyVal {
   def requireCurrentTurn: Option[Turn[S]] = self match {
     case Left(turn) => Some(turn)
     case Right(engine) => engine.currentTurn()
@@ -29,11 +29,11 @@ final case class TurnSource[S <: Struct](self: Either[Turn[S], Engine[S]]) exten
 }
 
 
-object TurnSource extends LowPriorityTurnSource {
-  implicit def fromTicketImplicit[S <: Struct](implicit ticket: AlwaysTicket[S]): TurnSource[S] = TurnSource(Left(ticket.turn))
-  implicit def fromTicket[S <: Struct](ticket: AlwaysTicket[S]): TurnSource[S] = TurnSource(Left(ticket.turn))
+object CreationTicket extends LowPriorityTurnSource {
+  implicit def fromTicketImplicit[S <: Struct](implicit ticket: AlwaysTicket[S]): CreationTicket[S] = CreationTicket(Left(ticket.turn))
+  implicit def fromTicket[S <: Struct](ticket: AlwaysTicket[S]): CreationTicket[S] = CreationTicket(Left(ticket.turn))
 }
 sealed trait LowPriorityTurnSource {
-  implicit def fromEngineImplicit[S <: Struct](implicit factory: Engine[S]): TurnSource[S] = TurnSource(Right(factory))
-  implicit def fromEngine[S <: Struct](factory: Engine[S]): TurnSource[S] = TurnSource(Right(factory))
+  implicit def fromEngineImplicit[S <: Struct](implicit factory: Engine[S]): CreationTicket[S] = CreationTicket(Right(factory))
+  implicit def fromEngine[S <: Struct](factory: Engine[S]): CreationTicket[S] = CreationTicket(Right(factory))
 }

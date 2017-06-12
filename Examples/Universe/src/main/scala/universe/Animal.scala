@@ -1,6 +1,6 @@
 package universe
 
-import rescala.engine.TurnSource
+import rescala.engine.CreationTicket
 import rescala.reactives.Signals
 import universe.Animal._
 import universe.Globals.engine._
@@ -58,7 +58,7 @@ abstract class Animal(implicit world: World) extends BoardElement {
         if (prey) (FallPrey, oldPos)
         else (nextAction(newPos), newPos)
     }
-  }(TurnSource.fromEngineImplicit)
+  }(CreationTicket.fromEngineImplicit)
 
   private val state: Signal[AnimalState] = statePos.map(_._1)
 
@@ -114,7 +114,7 @@ abstract class Animal(implicit world: World) extends BoardElement {
 
   private val age: Signal[Int] = world.time.day.changed.iterate(1)(_ + 1) //#SIG //#IF //#IF
 
-  final val isAdult = age.map(_ > Animal.FertileAge)(TurnSource.fromEngineImplicit)
+  final val isAdult = age.map(_ > Animal.FertileAge)(CreationTicket.fromEngineImplicit)
 
   val isFertile = isAdult
 

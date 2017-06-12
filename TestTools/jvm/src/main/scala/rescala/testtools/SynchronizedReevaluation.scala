@@ -3,7 +3,7 @@ package rescala.testhelper
 import java.util.concurrent.ForkJoinPool.ManagedBlocker
 import java.util.concurrent.{CountDownLatch, ForkJoinPool}
 
-import rescala.engine.TurnSource
+import rescala.engine.CreationTicket
 import rescala.graph.Struct
 import rescala.reactives.{Event, Signal}
 
@@ -38,11 +38,11 @@ class SynchronizedReevaluation extends ManagedBlocker {
 }
 
 object SynchronizedReevaluation {
-  def apply[A, S <: Struct](sig: Signal[A, S])(implicit turnSource: TurnSource[S]): (SynchronizedReevaluation, Signal[A, S]) = {
+  def apply[A, S <: Struct](sig: Signal[A, S])(implicit turnSource: CreationTicket[S]): (SynchronizedReevaluation, Signal[A, S]) = {
     val sync = new SynchronizedReevaluation
     (sync, sig.map(sync.reev))
   }
-  def apply[A, S <: Struct](evt: Event[A, S])(implicit turnSource: TurnSource[S]): (SynchronizedReevaluation, Event[A, S]) = {
+  def apply[A, S <: Struct](evt: Event[A, S])(implicit turnSource: CreationTicket[S]): (SynchronizedReevaluation, Event[A, S]) = {
     val sync = new SynchronizedReevaluation
     (sync, evt.map(sync.reev))
   }

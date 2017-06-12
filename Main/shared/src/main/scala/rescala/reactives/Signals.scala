@@ -22,7 +22,7 @@ object Signals extends GeneratedSignalLift {
       (res, states.value)
     }
 
-    def restoreFrom[R, S <: Struct](states: List[Signal[_, _]])(f: => R)(implicit turnSource: TurnSource[S]): R = turnSource { turn =>
+    def restoreFrom[R, S <: Struct](states: List[Signal[_, _]])(f: => R)(implicit turnSource: CreationTicket[S]): R = turnSource { turn =>
       restored.withValue(states.map(s => turn.dynamicBefore(s.asInstanceOf[Signal[_, S]]).get).reverse) {
         f
       }
@@ -70,19 +70,19 @@ object Signals extends GeneratedSignalLift {
   }
 
   /** creates a new static signal depending on the dependencies, reevaluating the function */
-  def static[T, S <: Struct](dependencies: Reactive[S]*)(expr: StaticTicket[S] => T)(implicit maybe: TurnSource[S]): Signal[T, S] = maybe { initialTurn =>
+  def static[T, S <: Struct](dependencies: Reactive[S]*)(expr: StaticTicket[S] => T)(implicit maybe: CreationTicket[S]): Signal[T, S] = maybe { initialTurn =>
     def ignore2[I, C, R](f: I => R): (I, C) => R = (t, _) => f(t)
     initialTurn.create[Pulse[T], Signal[T, S]](dependencies.toSet[Reactive[S]], ValuePersistency.DerivedSignal) {
       state => new StaticSignal[T, S](state, ignore2(expr)) with Disconnectable[S]
     }
   }
 
-  def lift[A, S <: Struct, R](los: Seq[Signal[A, S]])(fun: Seq[A] => R)(implicit maybe: TurnSource[S]): Signal[R, S] = {
+  def lift[A, S <: Struct, R](los: Seq[Signal[A, S]])(fun: Seq[A] => R)(implicit maybe: CreationTicket[S]): Signal[R, S] = {
     static(los: _*){t => fun(los.map(s => t.staticDepend(s).get))}
   }
 
   /** creates a signal that has dynamic dependencies (which are detected at runtime with Signal.apply(turn)) */
-  def dynamic[T, S <: Struct](dependencies: Reactive[S]*)(expr: DynamicTicket[S] => T)(implicit maybe: TurnSource[S]): Signal[T, S] = maybe { initialTurn =>
+  def dynamic[T, S <: Struct](dependencies: Reactive[S]*)(expr: DynamicTicket[S] => T)(implicit maybe: CreationTicket[S]): Signal[T, S] = maybe { initialTurn =>
     initialTurn.create[Pulse[T], Signal[T, S]](dependencies.toSet[Reactive[S]], ValuePersistency.DerivedSignal) {
       state => new DynamicSignal[T, S](state, expr) with Disconnectable[S]
     }

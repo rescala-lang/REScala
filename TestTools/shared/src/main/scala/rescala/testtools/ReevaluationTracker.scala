@@ -1,6 +1,6 @@
 package rescala.testhelper
 
-import rescala.engine.TurnSource
+import rescala.engine.CreationTicket
 import rescala.graph.Struct
 import rescala.reactives.{Event, Signal}
 
@@ -9,11 +9,11 @@ import org.scalatest.{Assertions, Matchers}
 class ReevaluationTracker[A, S <: Struct] private() extends Matchers {
   var results: List[A] = Nil
   /* should be private but is unused */ var strongRef: AnyRef = _ // to prevent fake observers from being prematurely gc'd
-  def this(signal: Signal[A, S])(implicit turnSource: TurnSource[S]) = {
+  def this(signal: Signal[A, S])(implicit turnSource: CreationTicket[S]) = {
     this()
     strongRef = signal.map(reev)(turnSource)
   }
-  def this(event: Event[A, S])(implicit turnSource: TurnSource[S]) = {
+  def this(event: Event[A, S])(implicit turnSource: CreationTicket[S]) = {
     this()
     strongRef = event.map(reev)(turnSource)
   }
