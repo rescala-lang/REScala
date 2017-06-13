@@ -33,7 +33,7 @@ object REPublisher {
         case Some(tryValue) =>
           synchronized {
             while (requested <= 0 && !cancelled) wait(100)
-            if (cancelled) ReevaluationResult.Dynamic[T, S](Pulse.NoChange, Set.empty)
+            if (cancelled) ReevaluationResult.Dynamic[T, S](Pulse.NoChange, indepsAfter = Set.empty, indepsAdded = Set.empty, indepsRemoved = Set(dependency))
             else {
               requested -= 1
               tryValue match {
@@ -43,7 +43,7 @@ object REPublisher {
                 case Failure(t) =>
                   subscriber.onError(t)
                   cancelled = true
-                  ReevaluationResult.Dynamic[T, S](Pulse.NoChange, Set.empty)
+                  ReevaluationResult.Dynamic[T, S](Pulse.NoChange, indepsAfter = Set.empty, indepsAdded = Set.empty, indepsRemoved = Set(dependency))
               }
             }
           }

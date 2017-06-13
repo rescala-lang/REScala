@@ -1,8 +1,7 @@
 package rescala.twoversion
 
 import rescala.engine.InitializationImpl
-import rescala.graph.ReevaluationResult.DepDiff
-import rescala.graph.{Pulsing, Reactive}
+import rescala.graph.{Pulsing, Reactive, ReevaluationResult}
 
 import scala.util.control.NonFatal
 
@@ -55,10 +54,10 @@ trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropaga
 
   protected def drop(sink: Reactive[S])(source: Reactive[S]): Unit = source.state.drop(sink)(this)
 
-  final def applyDiff(head: Reactive[S], diff: DepDiff[S]): Unit = {
-    head.state.updateIncoming(diff.novel)(this)
-    diff.removed foreach drop(head)
-    diff.added foreach discover(head)
+  final def applyDiff(head: Reactive[S], res: ReevaluationResult.Dynamic[_, S]): Unit = {
+    head.state.updateIncoming(res.indepsAfter)(this)
+    res.indepsRemoved foreach drop(head)
+    res.indepsAdded foreach discover(head)
   }
 
   /** allow turn to handle dynamic access to reactives */
@@ -78,6 +77,7 @@ trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropaga
     reactive.state.get(token)
   }
   override private[rescala] def selfBefore[P](reactive: Pulsing[P, S]) = reactive.state.base(token)
+  override private[rescala] def selfIndeps(reactive: Reactive[S]) = reactive.state.incoming(this)
 
   def writeState[P](pulsing: Reactive[S])(value: pulsing.Value): Unit = if (pulsing.state.write(value, token)) this.schedule(pulsing.state)
 }

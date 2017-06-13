@@ -28,9 +28,9 @@ object Events {
   private abstract class DynamicEvent[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: DynamicTicket[S] => Pulse[T]) extends Base[T, S](_bud) with Event[T, S] {
 
     override protected[rescala] def reevaluate(turn: Turn[S]): ReevaluationResult[Pulse[T], S] = {
-      val dt = turn.makeDynamicReevaluationTicket()
+      val dt = turn.makeDynamicReevaluationTicket(turn.selfIndeps(this))
       val newPulse = Pulse.tryCatch(expr(dt), onEmpty = NoChange)
-      ReevaluationResult.Dynamic(newPulse, dt.collectedDependencies)
+      ReevaluationResult.Dynamic(newPulse, dt.indepsAfter, dt.indepsAdded, dt.indepsRemoved)
     }
   }
 

@@ -22,22 +22,8 @@ object ReevaluationResult {
     * Result of the dynamic re-evaluation of a reactive value.
     * When using a dynamic dependency model, the dependencies of a value may change at runtime if it is re-evaluated
     */
-  case class Dynamic[A, S <: Struct](isChange: Boolean, value: A, dependencies: Set[Reactive[S]]) extends ReevaluationResult[A, S] {
-    def depDiff(oldDependencies: Set[Reactive[S]]): DepDiff[S] = new DepDiff(dependencies, oldDependencies)
-  }
-  def Dynamic[P, S <: Struct](value: Pulse[P], dependencies: Set[Reactive[S]]): Dynamic[Pulse[P], S] =  Dynamic(value.isChange, value, dependencies)
-
-  /**
-    * Calculates and stores added or removed dependencies of a reactive value.
-    *
-    * @param novel Set of dependencies after re-evaluation
-    * @param old   Set of dependencies before re-evaluation
-    * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
-    */
-  class DepDiff[S <: Struct] private[ReevaluationResult] (val novel: Set[Reactive[S]], val old: Set[Reactive[S]]) {
-    val added: Set[Reactive[S]] = novel.diff(old)
-    val removed: Set[Reactive[S]] = old.diff(novel)
-  }
+  case class Dynamic[A, S <: Struct](isChange: Boolean, value: A, val indepsAfter: Set[Reactive[S]], val indepsAdded: Set[Reactive[S]], val indepsRemoved: Set[Reactive[S]]) extends ReevaluationResult[A, S]
+  def Dynamic[P, S <: Struct](value: Pulse[P], indepsAfter: Set[Reactive[S]], indepsAdded: Set[Reactive[S]], indepsRemoved: Set[Reactive[S]]): Dynamic[Pulse[P], S] =  Dynamic(value.isChange, value, indepsAfter, indepsAdded, indepsRemoved)
 
   val staticNoChange: Static[Pulse[Nothing]] = Static(Pulse.NoChange)
 }
@@ -54,12 +40,12 @@ trait Disconnectable[S <: Struct] extends Reactive[S] {
   }
 
 
-  abstract final override protected[rescala] def reevaluate(ticket: Turn[S]): ReevaluationResult[Value, S] = {
+  abstract final override protected[rescala] def reevaluate(turn: Turn[S]): ReevaluationResult[Value, S] = {
     if (disconnected) {
-      ReevaluationResult.Dynamic(Pulse.NoChange, Set.empty[Reactive[S]])
+      ReevaluationResult.Dynamic[Nothing, S](Pulse.NoChange, indepsAfter = Set.empty, indepsAdded = Set.empty, indepsRemoved = turn.selfIndeps(this))
     }
     else {
-      super.reevaluate(ticket)
+      super.reevaluate(turn)
     }
   }
 

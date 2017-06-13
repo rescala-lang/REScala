@@ -34,11 +34,21 @@ sealed trait OutsidePropagationTicket[S <: Struct] extends Any with AlwaysTicket
 
 sealed trait PropagationAndLaterTicket[S <: Struct] extends Any with AlwaysTicket[S]
 
-final class DynamicTicket[S <: Struct] private[rescala] (val turn: Turn[S]) extends PropagationAndLaterTicket[S] {
-  private[rescala] var collectedDependencies: Set[Reactive[S]] = Set.empty
+final class DynamicTicket[S <: Struct] private[rescala] (val turn: Turn[S], val indepsBefore: Set[Reactive[S]]) extends PropagationAndLaterTicket[S] {
+  private[rescala] var indepsAfter: Set[Reactive[S]] = Set.empty
+  private[rescala] var indepsAdded: Set[Reactive[S]] = Set.empty
+
   private[rescala] def dynamicDepend[A](reactive: Pulsing[A, S]): A = {
-    collectedDependencies += reactive
-    turn.dynamicAfter(reactive)
+    if(indepsBefore(reactive)) {
+      indepsAfter += reactive
+      turn.staticAfter(reactive)
+    } else if(indepsAdded(reactive)) {
+      turn.staticAfter(reactive)
+    } else {
+      indepsAfter += reactive
+      indepsAdded += reactive
+      turn.dynamicAfter(reactive)
+    }
   }
 
   def before[A](reactive: Signal[A, S]): A = {
@@ -53,6 +63,7 @@ final class DynamicTicket[S <: Struct] private[rescala] (val turn: Turn[S]) exte
     dynamicDepend(reactive).toOption
   }
 
+  def indepsRemoved = indepsBefore.diff(indepsAfter)
 }
 
 final class StaticTicket[S <: Struct] private[rescala] (val turn: Turn[S]) extends AnyVal with PropagationAndLaterTicket[S] {

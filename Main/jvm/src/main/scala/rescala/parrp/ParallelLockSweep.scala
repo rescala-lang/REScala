@@ -55,8 +55,8 @@ class ParallelLockSweep(backoff: Backoff, ex: Executor, engine: TwoVersionEngine
           if (hasChanged) writeState(head)(value)
           done(head, hasChanged)
 
-        case res@Dynamic(isChange, value, deps) =>
-          applyDiff(head, res.depDiff(head.state.incoming(this)))
+        case res@Dynamic(isChange, value, _, _, _) =>
+          applyDiff(head, res)
           recount(head)
 
           if (head.state.counter == 0) {

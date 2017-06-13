@@ -46,19 +46,18 @@ object Reevaluation {
         (node.state.reevOut(turn, None), false)
       case Success(Static(isChange, value)) =>
         (node.state.reevOut(turn, if(isChange) Some(value) else None), isChange)
-      case Success(res @ Dynamic(isChange, value, deps)) =>
-        val diff = res.depDiff(node.state.incomings)
-        diff.removed.foreach{ drop =>
+      case Success(res @ Dynamic(isChange, value, indepsAfter, indepsAdded, indepsRemoved)) =>
+        indepsRemoved.foreach{ drop =>
           val (successorWrittenVersions, maybeFollowFrame) = drop.state.drop(turn, node)
           if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] Reevaluation($turn,$node) dropping $drop -> $node un-queueing $successorWrittenVersions and un-framing $maybeFollowFrame")
           node.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, -1)
         }
-        diff.added.foreach { discover =>
+        indepsAdded.foreach { discover =>
           val (successorWrittenVersions, maybeFollowFrame) = discover.state.discover(turn, node)
           if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] Reevaluation($turn,$node) discovering $discover-> $node re-queueing $successorWrittenVersions and re-framing $maybeFollowFrame")
           node.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, 1)
         }
-        node.state.incomings = deps
+        node.state.incomings = indepsAfter
         (node.state.reevOut(turn, if (isChange) Some(value) else None), isChange)
     }
   }

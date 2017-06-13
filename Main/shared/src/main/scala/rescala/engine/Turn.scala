@@ -9,7 +9,7 @@ import rescala.graph._
   */
 trait Turn[S <: Struct] extends AlwaysTicket[S] {
   override val turn = this
-  private[rescala] def makeDynamicReevaluationTicket(): DynamicTicket[S] = new DynamicTicket[S](this)
+  private[rescala] def makeDynamicReevaluationTicket(indeps: Set[Reactive[S]]): DynamicTicket[S] = new DynamicTicket[S](this, indeps)
   private[rescala] def makeStaticReevaluationTicket(): StaticTicket[S] = new StaticTicket[S](this)
   private[rescala] def makeAdmissionPhaseTicket(): AdmissionTicket[S] = new AdmissionTicket[S](this)
   private[rescala] def makeWrapUpPhaseTicket(): WrapUpTicket[S] = new WrapUpTicket[S](this)
@@ -18,7 +18,8 @@ trait Turn[S <: Struct] extends AlwaysTicket[S] {
   private[rescala] def staticAfter[P](reactive: Pulsing[P, S]): P
   private[rescala] def dynamicBefore[P](reactive: Pulsing[P, S]): P
   private[rescala] def dynamicAfter[P](reactive: Pulsing[P, S]): P
-  private[rescala] def selfBefore/*aka reevIn*/[P](reactive: Pulsing[P, S]): P
+  private[rescala] def selfBefore/*aka first half of reevIn*/[P](reactive: Pulsing[P, S]): P
+  private[rescala] def selfIndeps/*aka second half of reevIn*/(reactive: Reactive[S]): Set[Reactive[S]]
 //  /**
 //    * Synchronize for access (i.e., [[before]] or [[after]]) on this node when
 //    * synchronization is unknown. Multiple invocations are redundant, but not harmful outside of an

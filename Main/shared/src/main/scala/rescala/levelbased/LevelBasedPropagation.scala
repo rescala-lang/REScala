@@ -25,12 +25,12 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
     head.reevaluate(this) match {
       case res: Static[head.Value] => reevOut(-42, res)
       case res: Dynamic[head.Value, S] =>
-        val newLevel = maximumLevel(res.dependencies) + 1
+        val newLevel = maximumLevel(res.indepsAfter) + 1
         val redo = head.state.level(this) < newLevel
         if(redo) {
           levelQueue.enqueue(newLevel, needsEvaluate = true)(head)
         } else {
-          applyDiff(head, res.depDiff(head.state.incoming(this)))
+          applyDiff(head, res)
           reevOut(newLevel, res)
         }
     }

@@ -44,9 +44,9 @@ object Signals extends GeneratedSignalLift {
 
     private[Signals] abstract class DynamicSignal[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: DynamicTicket[S] => T) extends Base[T, S](_bud) with Signal[T, S] {
       override protected[rescala] def reevaluate(turn: Turn[S]): ReevaluationResult[Value, S] = {
-        val dt = turn.makeDynamicReevaluationTicket()
+        val dt = turn.makeDynamicReevaluationTicket(turn.selfIndeps(this))
         val newPulse = Pulse.tryCatch { Pulse.diffPulse(expr(dt), turn.selfBefore(this)) }
-        ReevaluationResult.Dynamic(newPulse, dt.collectedDependencies)
+        ReevaluationResult.Dynamic(newPulse, dt.indepsAfter, dt.indepsAdded, dt.indepsRemoved)
       }
     }
 
