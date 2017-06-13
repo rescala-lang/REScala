@@ -290,7 +290,7 @@ lazy val microbench = project.in(file("Research/Microbenchmarks"))
   .settings(mainClass in Compile := Some("org.openjdk.jmh.Main"))
   .settings(com.typesafe.sbt.SbtStartScript.startScriptForClassesSettings)
   .settings(TaskKey[Unit]("compileJmh") := Seq(compile in pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh).dependOn.value)
-  .dependsOn(stm)
+  .dependsOn(stm, fullmv)
   .settings(
     publish := {},
     publishLocal := {}
