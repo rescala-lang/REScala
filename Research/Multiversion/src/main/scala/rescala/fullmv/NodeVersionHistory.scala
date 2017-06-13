@@ -401,7 +401,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTrack
       createVersion(-followPosition, followFrame, pending = 1)
     }
 
-    val result = notify0(findFrame(txn), txn, changed)
+    val result = notify0(position, txn, changed)
     assertOptimizationsIntegrity(s"notifyFollowFrame($txn, $changed, $followFrame) -> $result")
     result
   }
@@ -741,10 +741,13 @@ class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTrack
     (successorWrittenVersions, maybeSuccessorFrame)
   }
 
+  private var nextGcAtSize: Int = 5
   private def maybeGC(): Int = {
     // placeholder in case we want to have some mechanic that reduces the frequency of GC runs
-    if(true) {
-      gcObsoleteVersions()
+    if(_versions.size > nextGcAtSize) {
+      val dumped = gcObsoleteVersions()
+      nextGcAtSize += 5 - dumped
+      dumped
     } else {
       0
     }
