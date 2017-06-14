@@ -1,10 +1,10 @@
 package rescala
 
-import rescala.levelbased.{LevelStruct, LevelStructType}
 import rescala.graph.CreationTicket
+import rescala.levelbased.LevelStructType
 
 object Infiltrator {
-  final def getLevel[S <: LevelStruct](reactive: graph.Reactive[S])(implicit maybe: CreationTicket[S]) = maybe {t => reactive.state.level(t.turn)}
+  //final def getLevel[S <: LevelStruct](reactive: graph.Reactive[S])(implicit maybe: CreationTicket[S]) = maybe {t => reactive.state.level(t.turn)}
   final def assertLevel[S <: graph.Struct](reactive: graph.Reactive[S], level: Int, text: String = "level did not match")(implicit maybe: CreationTicket[S]) =
     reactive.state match {
       case rb: LevelStructType[S @unchecked] => {
