@@ -3,20 +3,23 @@ package de.tuda.stg
 import android.content.Context
 //import android.graphics.drawable.Animatable
 import android.util.Log
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import java.io.IOException
-import reandroidthings._
+//import reandroidthings._
 //import com.google.android.things.contrib.driver.bmx280.Bmx280SensorDriver
 import reandroidthings.driver.bmx280.Bmx280SensorDriver
 
-class MainActivity extends AppCompatActivity {
+class MainActivityOriginal extends AppCompatActivity {
   // allows accessing `.value` on TR.resource.constants
   implicit val context = this
 
   var sensorManager: SensorManager = null
-  var reSensorManager: ReSensorManager = null
+  //  var reSensorManager: ReSensorManager = null
   private var mEnvironmentalSensorDriver: Bmx280SensorDriver = null
   //  private var mLastPressure = .0
   //  private var mLastTemperature = .0
@@ -40,16 +43,19 @@ class MainActivity extends AppCompatActivity {
       case sm: SensorManager => sm
       case _ => throw new ClassCastException
     }
-    reSensorManager = ReSensorManager.wrap(sensorManager)
 
-//    val deviceSensors = reSensorManager.getSensorList(ReSensor.TYPE_ALL)
+//    val deviceSensors = sensorManager.getSensorList(Sensor.TYPE_ALL)
 //    Log.d("Barometer4Android", deviceSensors.toString)
-//    Log.d("Barometer4Android", "isDynamicSensorDiscoverySupported: " + reSensorManager.isDynamicSensorDiscoverySupported.toString)
+//    Log.d("Barometer4Android", "isDynamicSensorDiscoverySupported: " + sensorManager.isDynamicSensorDiscoverySupported.toString)
+    // usual procedure (does not work for rainbow hat)
+    //    val pressureSensor: Sensor = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE)
+    //    print(pressureSensor == null)
+    //    sensorManager.registerListener(this, pressureSensor, Sensor.TYPE_PRESSURE)
 
 
     try {
       mEnvironmentalSensorDriver = new Bmx280SensorDriver("I2C1")
-      reSensorManager.registerDynamicSensorCallback(mDynamicSensorCallback)
+      sensorManager.registerDynamicSensorCallback(mDynamicSensorCallback)
       mEnvironmentalSensorDriver.registerTemperatureSensor
       mEnvironmentalSensorDriver.registerPressureSensor
       Log.d("Barometer4Android", "Initialized I2C BMP280")
@@ -57,42 +63,53 @@ class MainActivity extends AppCompatActivity {
       case e: IOException =>
         throw new RuntimeException("Error initializing BMP280", e)
     }
+
   }
 
 
+  // --------------- SensorEventListener (usual procedure) ---------------
+  //  def onSensorChanged(event: SensorEvent): Unit = {
+  //    print("onSensorChanged")
+  //  }
+  //
+  //  def onAccuracyChanged(sensor: Sensor, accuracy: Int): Unit = {
+  //    print("onAccuracyChanged")
+  //  }
+
+
   // --------------- Dynamic ---------------
-  private val mDynamicSensorCallback = new ReSensorManager.DynamicSensorCallback() {
-    override def onDynamicSensorConnected(sensor: ReSensor): Unit = {
+  private val mDynamicSensorCallback = new SensorManager.DynamicSensorCallback() {
+    override def onDynamicSensorConnected(sensor: Sensor): Unit = {
       Log.d("Barometer4Android", "Hi")
-      if (sensor.`type` == ReSensor.TYPE_AMBIENT_TEMPERATURE) { // Our sensor is connected. Start receiving temperature data.
-        reSensorManager.registerListener(mTemperatureListener, sensor, ReSensorManager.SensorDelayNormal)
+      if (sensor.getType == Sensor.TYPE_AMBIENT_TEMPERATURE) { // Our sensor is connected. Start receiving temperature data.
+        sensorManager.registerListener(mTemperatureListener, sensor, SensorManager.SENSOR_DELAY_NORMAL)
       }
-      else if (sensor.`type` == ReSensor.TYPE_PRESSURE) { // Our sensor is connected. Start receiving pressure data.
-        reSensorManager.registerListener(mPressureListener, sensor, ReSensorManager.SensorDelayNormal)
+      else if (sensor.getType == Sensor.TYPE_PRESSURE) { // Our sensor is connected. Start receiving pressure data.
+        sensorManager.registerListener(mPressureListener, sensor, SensorManager.SENSOR_DELAY_NORMAL)
       }
     }
 
-    override def onDynamicSensorDisconnected(sensor: ReSensor): Unit = {
+    override def onDynamicSensorDisconnected(sensor: Sensor): Unit = {
       super.onDynamicSensorDisconnected(sensor)
     }
   }
 
   // Callback when SensorManager delivers temperature data.
-  private val mTemperatureListener = new ReSensorEventListener() {
-    override def onSensorChanged(event: ReSensorEvent): Unit = {
+  private val mTemperatureListener = new SensorEventListener() {
+    override def onSensorChanged(event: SensorEvent): Unit = {
       Log.d("Barometer4Android", "onSensorChanged - temperature " + event.values(0))
       //      mLastTemperature = event.values(0)
       //      Log.d(TAG, "sensor changed: " + mLastTemperature)
     }
 
-    override def onAccuracyChanged(sensor: ReSensor, accuracy: Int): Unit = {
+    override def onAccuracyChanged(sensor: Sensor, accuracy: Int): Unit = {
       Log.d("Barometer4Android", "onAccuracyChanged - temperature " + accuracy)
     }
   }
 
   // Callback when SensorManager delivers pressure data.
-  private val mPressureListener = new ReSensorEventListener() {
-    override def onSensorChanged(event: ReSensorEvent): Unit = {
+  private val mPressureListener = new SensorEventListener() {
+    override def onSensorChanged(event: SensorEvent): Unit = {
       Log.d("Barometer4Android", "onSensorChanged - pressure " + event.values(0))
       //      mLastPressure = event.values(0)
       //      Log.d(TAG, "sensor changed: " + mLastPressure)
@@ -100,7 +117,7 @@ class MainActivity extends AppCompatActivity {
       //      updateBarometer(mLastPressure)
     }
 
-    override def onAccuracyChanged(sensor: ReSensor, accuracy: Int): Unit = {
+    override def onAccuracyChanged(sensor: Sensor, accuracy: Int): Unit = {
       Log.d("Barometer4Android", "onAccuracyChanged - pressure " + accuracy)
     }
   }
