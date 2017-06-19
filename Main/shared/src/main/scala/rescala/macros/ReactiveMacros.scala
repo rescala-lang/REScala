@@ -1,6 +1,6 @@
 package rescala.macros
 
-import rescala.graph.{LowPriorityTurnSource, CreationTicket}
+import rescala.graph.{LowPriorityCreationImplicits, CreationTicket}
 import rescala.graph.{DynamicTicket, Struct}
 import rescala.reactives.{Event, Signal}
 import retypecheck._
@@ -112,7 +112,7 @@ object ReactiveMacros {
       override def transform(tree: Tree): Tree =
         tree match {
           // replace any used TurnSource in a Signal expression with the correct turn source for the current turn
-          case turnSource@q"$_.fromEngineImplicit[..$_](...$_)" if turnSource.tpe =:= weakTypeOf[CreationTicket[S]] && turnSource.symbol.owner == symbolOf[LowPriorityTurnSource] =>
+          case turnSource@q"$_.fromEngineImplicit[..$_](...$_)" if turnSource.tpe =:= weakTypeOf[CreationTicket[S]] && turnSource.symbol.owner == symbolOf[LowPriorityCreationImplicits] =>
             q"${termNames.ROOTPKG}.rescala.graph.CreationTicket.fromTicket($signalMacroArgumentName)"
 
           // Access every reactive through the SignalSynt argument
