@@ -1,7 +1,7 @@
 package rescala.testhelper
 
-import rescala.engine.{Engine}
-import rescala.graph.{AdmissionTicket, Reactive, Struct, WrapUpTicket}
+import rescala.core.{AdmissionTicket, Engine, Reactive, Struct, WrapUpTicket}
+
 import rescala.reactives.Source
 ;
 

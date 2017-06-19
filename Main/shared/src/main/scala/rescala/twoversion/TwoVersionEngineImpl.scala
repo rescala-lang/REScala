@@ -1,6 +1,6 @@
 package rescala.twoversion
 
-import rescala.engine.{Creation, Turn}
+import rescala.core.{Creation, Turn}
 
 /**
   * Implementation of the turn creation function based on a given function as class parameter

@@ -1,6 +1,6 @@
 package rescala.stm
 
-import rescala.engine._
+import rescala.core._
 import rescala.twoversion.TwoVersionEngineImpl
 
 import scala.concurrent.stm.atomic

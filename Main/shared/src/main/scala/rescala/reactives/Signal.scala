@@ -1,7 +1,6 @@
 package rescala.reactives
 
-import rescala.engine.Engine
-import rescala.graph._
+import rescala.core.{CreationIntegrated, CreationTicket, Engine, Pulse, Pulsing, Struct}
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 import rescala.reactives.Signals.Diff
 

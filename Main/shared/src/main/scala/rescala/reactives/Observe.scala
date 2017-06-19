@@ -1,7 +1,6 @@
 package rescala.reactives
 
-import rescala.engine._
-import rescala.graph._
+import rescala.core._
 import rescala.reactives.RExceptions.UnhandledFailureException
 
 /**

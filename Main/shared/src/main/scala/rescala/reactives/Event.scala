@@ -1,8 +1,7 @@
 package rescala.reactives
 
-import rescala.engine.Engine
-import rescala.graph.Pulse.{Exceptional, NoChange, Value}
-import rescala.graph._
+import rescala.core.{CreationTicket, DynamicTicket, Engine, Pulse, Pulsing, ReSerializable, Reactive, Struct}
+import rescala.core.Pulse.{Exceptional, NoChange, Value}
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 
 import scala.annotation.compileTimeOnly

@@ -1,7 +1,7 @@
 package rescala.levelbased
 
-import rescala.graph.ReevaluationResult.{Dynamic, Static}
-import rescala.graph.{Reactive, ReevaluationResult}
+import rescala.core.{Reactive, ReevaluationResult}
+import rescala.core.ReevaluationResult.{Dynamic, Static}
 import rescala.twoversion.TwoVersionPropagationImpl
 
 /**

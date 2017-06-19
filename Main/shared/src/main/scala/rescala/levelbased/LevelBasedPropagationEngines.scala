@@ -1,7 +1,6 @@
 package rescala.levelbased
 
-import rescala.engine.{Engine, ValuePersistency}
-import rescala.graph._
+import rescala.core.{Engine, Reactive, ValuePersistency}
 import rescala.twoversion.TwoVersionEngineImpl
 
 /**

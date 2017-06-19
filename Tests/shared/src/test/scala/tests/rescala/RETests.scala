@@ -3,8 +3,7 @@ package tests.rescala
 import org.scalactic.source
 import org.scalatest.FunSuite
 import org.scalatest.prop.TableDrivenPropertyChecks
-import rescala.engine.Engine
-import rescala.graph.Struct
+import rescala.core.{Engine, Struct}
 
 
 abstract class RETests extends FunSuite with TableDrivenPropertyChecks {

@@ -1,7 +1,6 @@
 package rescala.twoversion
 
-import rescala.engine.{Creation, EngineImpl, Turn}
-import rescala.graph.Pulsing
+import rescala.core.{Creation, EngineImpl, Pulsing, Turn}
 
 /**
   * Implementation of the turn handling defined in the Engine trait

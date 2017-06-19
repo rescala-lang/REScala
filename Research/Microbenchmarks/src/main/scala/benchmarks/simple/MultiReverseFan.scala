@@ -6,7 +6,7 @@ import java.util.concurrent.locks.{Lock, ReentrantLock}
 import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
-import rescala.engine.Engine
+import rescala.core.{Engine, Struct}
 import rescala.reactives.Signal
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -16,7 +16,7 @@ import rescala.reactives.Signal
 @Fork(3)
 @Threads(4)
 @State(Scope.Benchmark)
-class MultiReverseFan[S <: rescala.graph.Struct] {
+class MultiReverseFan[S <: Struct] {
 
   var engine: Engine[S] = _
 

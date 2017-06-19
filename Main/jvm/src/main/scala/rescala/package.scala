@@ -1,4 +1,4 @@
-import rescala.engine.Engine
+import rescala.core.Engine
 import rescala.parrp.ParRP
 
 package object rescala extends RescalaDefaultImports[ParRP] {

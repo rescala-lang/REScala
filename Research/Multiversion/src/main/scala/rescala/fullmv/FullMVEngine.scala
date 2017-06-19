@@ -2,9 +2,8 @@ package rescala.fullmv
 
 import java.util.concurrent.ForkJoinPool
 
-import rescala.engine.EngineImpl
+import rescala.core.{EngineImpl, Pulsing}
 import rescala.fullmv.tasks.{Framing, Notification}
-import rescala.graph.Pulsing
 
 import scala.util.Try
 

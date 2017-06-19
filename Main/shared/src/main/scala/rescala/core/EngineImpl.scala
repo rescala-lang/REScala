@@ -1,6 +1,4 @@
-package rescala.engine
-
-import rescala.graph.{InnerCreationTicket, Struct}
+package rescala.core
 
 import scala.util.DynamicVariable
 

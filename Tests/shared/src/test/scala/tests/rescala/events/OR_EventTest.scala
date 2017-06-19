@@ -2,7 +2,7 @@ package tests.rescala.events
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import rescala.graph.Pulse
+import rescala.core.Pulse
 import tests.rescala.RETests
 
 

@@ -1,7 +1,7 @@
 package rescala.stm
 
-import rescala.engine.Turn
-import rescala.graph.{Reactive, Struct}
+import rescala.core.{Reactive, Struct, Turn}
+
 import rescala.levelbased.LevelStructType
 import rescala.twoversion.{ReadWriteValue, Token, TwoVersionPropagation}
 

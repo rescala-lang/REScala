@@ -1,4 +1,4 @@
-package rescala.graph
+package rescala.core
 
 import scala.annotation.implicitNotFound
 import scala.util.Try

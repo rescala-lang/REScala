@@ -2,8 +2,8 @@ package tests.rescala.concurrency.philosophers
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import rescala.engine.Engine
-import rescala.graph.{Struct, WrapUpTicket}
+import rescala.core.{Engine, Struct, WrapUpTicket}
+
 import rescala.parrp.Backoff
 import rescala.reactives.Signals.lift
 import rescala.reactives.{Signal, Var}

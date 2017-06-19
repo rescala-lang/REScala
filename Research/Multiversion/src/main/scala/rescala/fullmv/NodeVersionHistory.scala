@@ -3,7 +3,7 @@ package rescala.fullmv
 import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.ForkJoinPool.ManagedBlocker
 
-import rescala.engine.ValuePersistency
+import rescala.core.ValuePersistency
 import rescala.fullmv.sgt.synchronization.SubsumableLock
 
 import scala.annotation.elidable.ASSERTION

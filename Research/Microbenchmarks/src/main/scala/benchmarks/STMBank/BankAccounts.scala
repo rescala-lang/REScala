@@ -6,8 +6,7 @@ import java.util.concurrent.{ThreadLocalRandom, TimeUnit}
 import benchmarks.EngineParam
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, Blackhole}
-import rescala.engine.Engine
-import rescala.graph.Struct
+import rescala.core.{Engine, Struct}
 import rescala.reactives._
 
 import scala.concurrent.stm.{Ref, atomic}

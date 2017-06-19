@@ -4,8 +4,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import benchmarks.philosophers.PhilosopherTable._
 import org.openjdk.jmh.infra.Blackhole
-import rescala.engine.Engine
-import rescala.graph.Struct
+import rescala.core.{Engine, Struct}
 import rescala.reactives._
 
 class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit val engine: Engine[S]) {

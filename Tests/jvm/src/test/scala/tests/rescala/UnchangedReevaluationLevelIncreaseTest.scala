@@ -1,6 +1,6 @@
 package tests.rescala
 
-import rescala.engine.Engine
+import rescala.core.Engine
 
 sealed trait ChangeX
 case object DontSet extends ChangeX

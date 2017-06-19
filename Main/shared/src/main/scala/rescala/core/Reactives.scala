@@ -1,6 +1,5 @@
-package rescala.graph
+package rescala.core
 
-import rescala.engine.Turn
 import rescala.util.Globals
 
 import scala.language.higherKinds

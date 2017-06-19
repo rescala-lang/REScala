@@ -1,6 +1,6 @@
 package tests.rescala.conversions
 
-import rescala.graph.Pulse
+import rescala.core.Pulse
 import rescala.reactives.RExceptions.EmptySignalControlThrowable
 import tests.rescala.RETests
 

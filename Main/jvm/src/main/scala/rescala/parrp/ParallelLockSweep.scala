@@ -3,8 +3,8 @@ package rescala.parrp
 import java.util.concurrent.Executor
 import java.util.concurrent.atomic.AtomicInteger
 
-import rescala.graph.ReevaluationResult.{Dynamic, Static}
-import rescala.graph._
+import rescala.core.Reactive
+import rescala.core.ReevaluationResult.{Dynamic, Static}
 import rescala.locking._
 import rescala.twoversion.TwoVersionEngineImpl
 

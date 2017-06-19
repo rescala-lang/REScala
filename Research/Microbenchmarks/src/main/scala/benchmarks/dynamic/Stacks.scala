@@ -6,8 +6,7 @@ import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
 import rescala.Engines
-import rescala.engine.Engine
-import rescala.graph.Struct
+import rescala.core.{Engine, Struct}
 import rescala.reactives._
 
 import scala.collection.immutable.Range

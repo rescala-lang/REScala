@@ -1,8 +1,8 @@
 package rescala.fullmv.tasks
 
+import rescala.core.Reactive
 import rescala.fullmv.NotificationResultAction._
 import rescala.fullmv._
-import rescala.graph.Reactive
 
 trait NotificationAction extends ReevaluationResultHandling {
   override def doCompute(): Unit = {

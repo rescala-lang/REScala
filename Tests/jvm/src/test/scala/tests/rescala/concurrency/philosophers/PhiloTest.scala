@@ -2,9 +2,8 @@ package tests.rescala.concurrency.philosophers
 
 import org.scalatest.FunSuite
 import rescala.Engines
-import rescala.engine.Engine
+import rescala.core.{Engine, Struct}
 import rescala.fullmv.FullMVEngine
-import rescala.graph.Struct
 import rescala.testhelper.Spawn
 
 import scala.concurrent.TimeoutException

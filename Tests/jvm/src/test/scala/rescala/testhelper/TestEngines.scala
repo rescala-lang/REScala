@@ -1,8 +1,7 @@
 package rescala.testhelper
 
-import rescala.engine.Engine
+import rescala.core.{Engine, Struct}
 import rescala.fullmv.FullMVEngine
-import rescala.graph.Struct
 import rescala.stm.STMEngine
 
 object TestEngines {

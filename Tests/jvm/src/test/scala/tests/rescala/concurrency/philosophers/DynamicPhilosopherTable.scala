@@ -1,7 +1,6 @@
 package tests.rescala.concurrency.philosophers
 
-import rescala.engine.Engine
-import rescala.graph.Struct
+import rescala.core.{Engine, Struct}
 import rescala.util.Globals.named
 import tests.rescala.concurrency.philosophers.PhilosopherTable._
 

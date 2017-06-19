@@ -1,6 +1,6 @@
 package universe
 
-import rescala.graph.CreationTicket
+import rescala.core.CreationTicket
 import rescala.reactives.Signals
 import universe.Animal._
 import universe.Globals.engine._

@@ -1,7 +1,6 @@
 package rescala.twoversion
 
-import rescala.engine.TurnImpl
-import rescala.graph.{Pulsing, Reactive, ReevaluationResult}
+import rescala.core.{Pulsing, Reactive, ReevaluationResult, TurnImpl}
 
 import scala.util.control.NonFatal
 

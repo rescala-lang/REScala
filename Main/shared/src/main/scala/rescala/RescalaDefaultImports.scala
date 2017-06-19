@@ -1,6 +1,6 @@
 package rescala
 
-import rescala.graph.{ReSerializable, Struct}
+import rescala.core.{CreationTicket, ReSerializable, Struct}
 import rescala.macros.ReactiveMacros
 import rescala.reactives.Source
 
@@ -11,26 +11,23 @@ abstract class RescalaDefaultImports[S <: Struct] {
   // need the import inside of the trait, otherwise scala complains that it is shadowed by rescala.macros
   import scala.language.experimental.macros
 
-  def explicitEngine: rescala.engine.Engine[S]
-  implicit def implicitEngine: rescala.engine.Engine[S] = explicitEngine
+  def explicitEngine: rescala.core.Engine[S]
+  implicit def implicitEngine: rescala.core.Engine[S] = explicitEngine
 
   final type Observe = reactives.Observe[S]
   final type Signal[+A] = reactives.Signal[A, S]
   final type Event[+A] = reactives.Event[A, S]
   final type Var[A] = reactives.Var[A, S]
   final type Evt[A] = reactives.Evt[A, S]
-  final type Turn = rescala.engine.Turn[S]
-  final type StaticTicket = rescala.graph.StaticTicket[S]
-  final type DynamicTicket = rescala.graph.DynamicTicket[S]
-  final type AdmissionTicket = rescala.graph.AdmissionTicket[S]
-  final type WrapUpTicket = rescala.graph.WrapUpTicket[S]
-  final type OutsidePropagationTicket = rescala.graph.OutsidePropagationTicket[S]
-  final type PropagationAndLaterTicket = rescala.graph.PropagationAndLaterTicket[S]
-  final type CreationAllowed = rescala.graph.CreationIntegrated[S]
-  final type AlwaysTicket = rescala.graph.CreationIntegrated[S]
-  final type TurnSource = rescala.graph.CreationTicket[S]
-  final type TicketOrEngine = rescala.graph.CreationTicket[S]
-  final type Reactive = rescala.graph.Reactive[S]
+  final type Turn = rescala.core.Turn[S]
+  final type StaticTicket = rescala.core.StaticTicket[S]
+  final type DynamicTicket = rescala.core.DynamicTicket[S]
+  final type AdmissionTicket = rescala.core.AdmissionTicket[S]
+  final type WrapUpTicket = rescala.core.WrapUpTicket[S]
+  final type CreationIntegrated = rescala.core.CreationIntegrated[S]
+  final type TurnSource = CreationTicket[S]
+  final type TicketOrEngine = CreationTicket[S]
+  final type Reactive = rescala.core.Reactive[S]
   final def Evt[A](): Evt[A] = reactives.Evt[A, S]()(explicitEngine)
 
   //  final def Var[A](v: A): Var[A] = reactives.Var[A, S](v)(Ticket.fromEngineImplicit(this))

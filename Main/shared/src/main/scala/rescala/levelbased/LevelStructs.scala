@@ -1,7 +1,6 @@
 package rescala.levelbased
 
-import rescala.engine.Turn
-import rescala.graph.Struct
+import rescala.core.{Struct, Turn}
 import rescala.twoversion._
 
 import scala.language.higherKinds

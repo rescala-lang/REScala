@@ -1,6 +1,6 @@
 package rescala.testhelper
 
-import rescala.engine.Engine
+import rescala.core.Engine
 import rescala.parrp.ParRP
 import rescala.reactives.Signal
 

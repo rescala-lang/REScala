@@ -1,8 +1,8 @@
 package tests.rescala
 
 import org.scalatest.prop.Whenever
+import rescala.core.Struct
 import rescala.fullmv.FullMVEngine
-import rescala.graph.Struct
 import rescala.testhelper.{ReevaluationTracker, Spawn}
 
 import scala.collection.mutable.ArrayBuffer

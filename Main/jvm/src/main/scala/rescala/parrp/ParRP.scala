@@ -1,7 +1,6 @@
 package rescala.parrp
 
-import rescala.engine.ValuePersistency
-import rescala.graph.{Reactive, Struct}
+import rescala.core.{Reactive, Struct, ValuePersistency}
 import rescala.levelbased.{LevelBasedPropagation, LevelStruct, LevelStructTypeImpl}
 import rescala.locking._
 

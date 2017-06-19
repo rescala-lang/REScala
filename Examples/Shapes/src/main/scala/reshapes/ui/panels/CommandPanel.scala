@@ -6,7 +6,6 @@ import scala.swing.Orientation
 import scala.swing.ScrollPane
 
 import rescala._
-import rescala._
 import reshapes.ReShapes
 import reshapes.drawing.Command
 import reshapes.util.ReactiveUtil.UnionEvent

@@ -2,8 +2,7 @@ package rescala
 
 import java.util.concurrent.{Executor, Executors}
 
-import rescala.engine.Engine
-import rescala.graph.Struct
+import rescala.core.{Engine, Struct}
 import rescala.levelbased.LevelBasedPropagationEngines
 import rescala.parrp._
 import rescala.twoversion.TwoVersionEngineImpl

@@ -1,6 +1,6 @@
 package rescala.reactives
 
-import rescala.graph.{CreationTicket, Struct}
+import rescala.core.{CreationTicket, Struct}
 
 import scala.annotation.implicitNotFound
 import scala.collection.TraversableLike

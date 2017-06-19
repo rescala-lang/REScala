@@ -3,7 +3,7 @@ package tests.rescala.concurrency
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 
 import rescala.Engines
-import rescala.engine.Engine
+import rescala.core.Engine
 import rescala.fullmv.FullMVEngine
 import rescala.parrp.{Backoff, ParRP}
 import rescala.testhelper._

@@ -2,8 +2,7 @@ package rescala.reactivestreams
 
 
 import org.reactivestreams.{Publisher, Subscriber, Subscription}
-import rescala.engine.{Engine, Turn, ValuePersistency}
-import rescala.graph._
+import rescala.core.{Base, Engine, Pulse, Pulsing, Reactive, ReevaluationResult, Struct, Turn, ValuePersistency}
 
 import scala.util.{Failure, Success}
 

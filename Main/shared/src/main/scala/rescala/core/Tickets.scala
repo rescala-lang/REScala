@@ -1,7 +1,5 @@
-package rescala.graph
+package rescala.core
 
-
-import rescala.engine.{Creation, Engine, StateAccess, ValuePersistency}
 import rescala.reactives.{Event, Signal}
 
 import scala.annotation.implicitNotFound

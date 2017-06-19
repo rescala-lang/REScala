@@ -1,8 +1,7 @@
 package benchmarks.philosophers
 
 import benchmarks.philosophers.PhilosopherTable._
-import rescala.engine.Engine
-import rescala.graph.Struct
+import rescala.core.{Engine, Struct}
 import rescala.reactives.{Signals, Var}
 
 class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(override implicit val engine: Engine[S]) extends PhilosopherTable(philosopherCount, work)(engine) {

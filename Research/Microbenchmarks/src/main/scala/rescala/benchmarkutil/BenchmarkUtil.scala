@@ -1,7 +1,6 @@
 package rescala.benchmarkutil
 
-import rescala.engine.Turn
-import rescala.graph.Struct
+import rescala.core.{Struct, Turn}
 import rescala.reactives.Signal
 
 object BenchmarkUtil {

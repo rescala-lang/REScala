@@ -1,7 +1,7 @@
 package rescala.stm
 
-import rescala.engine.ValuePersistency
-import rescala.graph.{Reactive, Struct}
+import rescala.core.{Reactive, Struct, ValuePersistency}
+
 import rescala.levelbased.{LevelBasedPropagation, LevelStruct}
 import rescala.twoversion.Token
 

@@ -8,7 +8,7 @@ import benchmarks.philosophers.PhilosopherTable.{Seating, Thinking}
 import benchmarks.{EngineParam, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
-import rescala.graph.Struct
+import rescala.core.Struct
 import rescala.parrp.Backoff
 
 import scala.annotation.tailrec

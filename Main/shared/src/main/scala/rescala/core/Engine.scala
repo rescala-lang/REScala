@@ -1,7 +1,6 @@
-package rescala.engine
+package rescala.core
 
 import rescala.RescalaDefaultImports
-import rescala.graph.{InnerCreationTicket, Pulsing, Struct}
 
 import scala.annotation.implicitNotFound
 

@@ -1,7 +1,6 @@
 package rescala.restore
 
-import rescala.engine.ValuePersistency
-import rescala.graph.{ReSerializable, Reactive, Struct}
+import rescala.core.{ReSerializable, Reactive, Struct, ValuePersistency}
 import rescala.levelbased.{LevelBasedPropagation, LevelStruct, LevelStructTypeImpl}
 import rescala.twoversion.{TwoVersionEngine, TwoVersionPropagation}
 

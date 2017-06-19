@@ -2,7 +2,7 @@ package rescala.levelbased
 
 import java.util.PriorityQueue
 
-import rescala.graph.{Reactive, Struct}
+import rescala.core.{Reactive, Struct}
 import rescala.levelbased.LevelQueue.QueueElement
 
 /**

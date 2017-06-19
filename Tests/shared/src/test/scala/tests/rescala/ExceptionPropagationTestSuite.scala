@@ -1,8 +1,7 @@
 package tests.rescala
 
 
-
-import rescala.graph.Pulse
+import rescala.core.Pulse
 import rescala.reactives.RExceptions.UnhandledFailureException
 
 import scala.util.{Failure, Success, Try}

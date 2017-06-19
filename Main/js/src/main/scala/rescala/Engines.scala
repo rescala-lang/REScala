@@ -1,6 +1,6 @@
 package rescala
 
-import rescala.engine.Engine
+import rescala.core.Engine
 import rescala.levelbased.LevelBasedPropagationEngines
 
 object Engines extends LevelBasedPropagationEngines {

@@ -1,8 +1,8 @@
 package rescala.fullmv.tasks
 
+import rescala.core.Reactive
 import rescala.fullmv.FramingBranchResult.{FramingBranchEnd, FramingBranchOut, FramingBranchOutSuperseding}
 import rescala.fullmv._
-import rescala.graph.Reactive
 
 trait FramingTask extends FullMVAction {
   override def doCompute(): Unit = {

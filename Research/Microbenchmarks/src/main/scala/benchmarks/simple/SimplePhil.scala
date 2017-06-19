@@ -4,7 +4,7 @@ import java.util.concurrent.TimeUnit
 
 import benchmarks.{EngineParam, Step}
 import org.openjdk.jmh.annotations._
-import rescala.engine.Engine
+import rescala.core.{Engine, Struct}
 import rescala.reactives._
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -14,7 +14,7 @@ import rescala.reactives._
 @Fork(1)
 @Threads(1)
 @State(Scope.Thread)
-class SimplePhil[S <: rescala.graph.Struct] {
+class SimplePhil[S <: Struct] {
 
   import benchmarks.philosophers.PhilosopherTable._
 

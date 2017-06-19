@@ -2,10 +2,10 @@ package benchmarks
 
 import org.openjdk.jmh.annotations.{Param, Scope, State}
 import rescala.Engines
-import rescala.engine.Engine
+import rescala.core.{Engine, Struct}
 
 @State(Scope.Benchmark)
-class EngineParam[S <: rescala.graph.Struct] {
+class EngineParam[S <: Struct] {
   @Param(Array("synchron", "parrp", "locksweep", "stm", "fullmv"))
   var engineName: String = _
 

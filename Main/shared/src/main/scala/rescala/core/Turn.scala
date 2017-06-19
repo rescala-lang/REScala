@@ -1,8 +1,4 @@
-package rescala.engine
-
-import rescala.graph._
-
-
+package rescala.core
 
 /**
   * The Turn interface glues the reactive interface and the propagation implementation together.

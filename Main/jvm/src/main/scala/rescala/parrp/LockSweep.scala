@@ -2,9 +2,8 @@ package rescala.parrp
 
 import java.util
 
-import rescala.engine.ValuePersistency
-import rescala.graph.ReevaluationResult.{Dynamic, Static}
-import rescala.graph._
+import rescala.core.{Reactive, Struct, ValuePersistency}
+import rescala.core.ReevaluationResult.{Dynamic, Static}
 import rescala.locking._
 import rescala.twoversion.{PropagationStructImpl, TwoVersionPropagationImpl, TwoVersionStruct}
 

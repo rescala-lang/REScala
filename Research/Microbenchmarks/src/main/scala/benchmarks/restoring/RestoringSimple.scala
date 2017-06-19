@@ -4,9 +4,9 @@ import java.util.concurrent.TimeUnit
 
 import benchmarks.{EngineParam, Size, Step}
 import org.openjdk.jmh.annotations._
-import rescala.engine.Engine
+import rescala.core.{Engine, Struct}
 import rescala.reactives.{Evt, Var}
-import rescala.restore.{ReStoringEngine}
+import rescala.restore.ReStoringEngine
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -15,7 +15,7 @@ import rescala.restore.{ReStoringEngine}
 @Fork(3)
 @Threads(1)
 @State(Scope.Thread)
-class RestoringSimple[S <: rescala.graph.Struct] {
+class RestoringSimple[S <: Struct] {
 
   implicit var engine: Engine[S] = _
 
@@ -46,7 +46,7 @@ class RestoringSimple[S <: rescala.graph.Struct] {
 @Fork(3)
 @Threads(1)
 @State(Scope.Thread)
-class RestoringVar[S <: rescala.graph.Struct] {
+class RestoringVar[S <: Struct] {
 
   implicit var engine: Engine[S] = _
   var sourceVar: Var[Int, S] = _
@@ -68,7 +68,7 @@ class RestoringVar[S <: rescala.graph.Struct] {
 @Fork(3)
 @Threads(1)
 @State(Scope.Thread)
-class RestoringSnapshot[S <: rescala.graph.Struct] {
+class RestoringSnapshot[S <: Struct] {
 
   var snapshot: Seq[(String, String)] = _
 

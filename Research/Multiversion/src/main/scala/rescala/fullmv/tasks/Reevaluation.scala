@@ -1,10 +1,10 @@
 package rescala.fullmv.tasks
 
+import rescala.core.Reactive
+import rescala.core.ReevaluationResult.{Dynamic, Static}
 import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation
 import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation.{FollowFraming, NextReevaluation, NoSuccessor}
 import rescala.fullmv._
-import rescala.graph.Reactive
-import rescala.graph.ReevaluationResult.{Dynamic, Static}
 
 import scala.util.{Failure, Success, Try}
 

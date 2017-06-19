@@ -56,7 +56,7 @@ lazy val rescala = crossProject.in(file("Main"))
       IO.write(file,
       s"""package rescala.reactives
          |
-         |import rescala.graph._
+         |import rescala.core._
          |
          |trait GeneratedSignalLift {
          |self: Signals.type =>

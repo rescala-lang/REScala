@@ -1,7 +1,6 @@
 package rescala.twoversion
 
-import rescala.engine.Turn
-import rescala.graph.{Reactive, Struct}
+import rescala.core.{Reactive, Struct, Turn}
 
 import scala.language.higherKinds
 
