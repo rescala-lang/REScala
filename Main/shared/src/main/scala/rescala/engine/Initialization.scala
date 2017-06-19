@@ -28,7 +28,7 @@ trait InitializationImpl[S <: Struct] extends Turn[S] {
   protected def ignite(reactive: Reactive[S], incoming: Set[Reactive[S]], ignitionRequiresReevaluation: Boolean): Unit
 }
 
-sealed class ValuePersistency[+V](
+sealed class ValuePersistency[V](
   val initialValue: V,
   val isTransient: Boolean,
   val ignitionRequiresReevaluation: Boolean
@@ -41,9 +41,14 @@ object ValuePersistency {
   // Since superfluous reevaluation of events without a good reason however do not actually have
   // any effect, we simply set all events to just be reevaluated upon ignition unconditionally,
   // which ensures that dynamic events work correctly and doesn't hurt others.
-  object Event extends ValuePersistency[Pulse[Nothing]](Pulse.NoChange, isTransient = true, ignitionRequiresReevaluation = true)
-  object DerivedSignal extends ValuePersistency[Change[Nothing]](Pulse.empty, isTransient = false, ignitionRequiresReevaluation = true)
-  case class InitializedSignal[V](override val initialValue: Change[V])(implicit val serializable: ReSerializable[V])
-    extends ValuePersistency[Change[V]](initialValue, isTransient = false, ignitionRequiresReevaluation = false)
+  private object _Event extends ValuePersistency[Pulse[Nothing]](Pulse.NoChange, isTransient = true, ignitionRequiresReevaluation = true)
+  def Event[V]: ValuePersistency[V] = _Event.asInstanceOf[ValuePersistency[V]]
+  private object _DerivedSignal extends ValuePersistency[Change[Nothing]](Pulse.empty, isTransient = false, ignitionRequiresReevaluation = true)
+  def DerivedSignal[V]: ValuePersistency[V] = _DerivedSignal.asInstanceOf[ValuePersistency[V]]
+
+  case class InitializedSignal[V: ReSerializable](override val initialValue: Change[V])
+    extends ValuePersistency[Pulse[V]](initialValue, isTransient = false, ignitionRequiresReevaluation = false) {
+    def serializable: ReSerializable[Pulse[V]] = implicitly
+  }
 }
 
