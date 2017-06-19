@@ -119,11 +119,8 @@ final class InnerCreationTicket[S <: Struct](val creation: Creation[S]) extends 
 final case class CreationTicket[S <: Struct](self: Either[CreationIntegrated[S], Engine[S]]) extends AnyVal {
 
   def apply[T](f: InnerCreationTicket[S] => T): T = self match {
-    case Left(turn) => f(new InnerCreationTicket[S](turn.creation))
-    case Right(engine) => engine.currentTurn() match {
-      case Some(turn) => f(new InnerCreationTicket[S](turn))
-      case None => engine.executeTurn(Set.empty, ticket => f(new InnerCreationTicket(ticket.creation)), engine.noWrapUp[T])
-    }
+    case Left(integrated) => f(new InnerCreationTicket[S](integrated.creation))
+    case Right(engine) => engine.create(f)
   }
 }
 

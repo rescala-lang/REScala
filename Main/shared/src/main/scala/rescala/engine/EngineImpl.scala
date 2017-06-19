@@ -1,11 +1,10 @@
 package rescala.engine
 
-import rescala.graph.Struct
+import rescala.graph.{InnerCreationTicket, Struct}
 
 import scala.util.DynamicVariable
 
-trait EngineImpl[S <: Struct, TTurn <: Turn[S]  with Creation[S]] extends Engine[S] {
-  override type ExactTurn = TTurn
+trait EngineImpl[S <: Struct, ExactTurn <: Turn[S]  with Creation[S]] extends Engine[S] {
   override protected[rescala] def executeTurn[I, R](initialWrites: Traversable[Reactive], admissionPhase: AdmissionTicket => I, wrapUpPhase: (I, WrapUpTicket) => R): R = {
     // TODO: This should be broken up differently here, sort-of meeting in the middle with TwoVersionEngineImpl, something like:
     /*
@@ -43,7 +42,7 @@ trait EngineImpl[S <: Struct, TTurn <: Turn[S]  with Creation[S]] extends Engine
       result
     */
 
-    val turn = makeTurn(initialWrites, currentTurn())
+    val turn = makeTurn(initialWrites, _currentTurn.value)
     executeInternal(turn, initialWrites, () => withTurn(turn){ admissionPhase(turn.makeAdmissionPhaseTicket()) }, { i: I => withTurn(turn){ wrapUpPhase(i, turn.makeWrapUpPhaseTicket()) } })
   }
 
@@ -55,8 +54,16 @@ trait EngineImpl[S <: Struct, TTurn <: Turn[S]  with Creation[S]] extends Engine
   protected def makeTurn(initialWrites: Traversable[Reactive], priorTurn: Option[ExactTurn]): ExactTurn
   protected def executeInternal[I, R](turn: ExactTurn, initialWrites: Traversable[Reactive], admissionPhase: () => I, wrapUpPhase: I => R): R
 
+
+  override private[rescala] def create[T](f: (InnerCreationTicket[S]) => T) = {
+    _currentTurn.value match {
+      case Some(turn) => f(new InnerCreationTicket[S](turn))
+      case None => executeTurn(Set.empty, ticket => f(new InnerCreationTicket(ticket.creation)), noWrapUp[T])
+    }
+  }
+
+
   private val _currentTurn: DynamicVariable[Option[ExactTurn]] = new DynamicVariable[Option[ExactTurn]](None)
-  override private[rescala] def currentTurn(): Option[ExactTurn] = _currentTurn.value
   // TODO currently the responsibility of setting the current turn around each reevaluation lies with each turn itself.
   // This is silly because this behavior is the same for every turn implementation. Moreover, turns can only set
   // the current turn for the available engine that they were started from. However, (probably because this TurnSource
