@@ -13,7 +13,7 @@ import scala.annotation.implicitNotFound
 @implicitNotFound(msg = "Could not find an implicit propagation engine. Did you forget an import?")
 trait Engine[S <: Struct] extends RescalaDefaultImports[S] {
 
-  type ExactTurn <: Turn
+  type ExactTurn <: Creation[S]
 
   override def explicitEngine: this.type = this
 

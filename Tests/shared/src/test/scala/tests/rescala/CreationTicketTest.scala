@@ -5,7 +5,7 @@ class CreationTicketTest extends RETests {
 
   /* this test uses some shady planned()(identity) to get the turn object out of the transaction
    * you should not do this. */
-  def getTurn[S2 <: rescala.graph.Struct](implicit engine: rescala.engine.Engine[S2]): rescala.graph.CreationAllowed[S2] = engine.transaction()(identity)
+  def getTurn[S2 <: rescala.graph.Struct](implicit engine: rescala.engine.Engine[S2]): rescala.graph.CreationIntegrated[S2] = engine.transaction()(identity)
 
   allEngines("none Dynamic No Implicit") { engine => import engine._
     assert(implicitly[TurnSource].self === Right(engine))
@@ -14,14 +14,14 @@ class CreationTicketTest extends RETests {
   allEngines("some Dynamic No Implicit") { engine => import engine._
     engine.transaction() { (dynamicTurn: AdmissionTicket) =>
       assert(implicitly[TurnSource].self === Right(engine))
-      assert(implicitly[TurnSource].apply(_.turn) === dynamicTurn.turn)
+      assert(implicitly[TurnSource].apply(_.creation) === dynamicTurn.creation)
     }
   }
 
   allEngines("none Dynamic Some Implicit") { engine => import engine._
     implicit val implicitTurn: CreationAllowed = getTurn
     assert(implicitly[TurnSource].self === Left(implicitTurn))
-    assert(implicitly[TurnSource].apply(identity).turn === implicitTurn)
+    assert(implicitly[TurnSource].apply(identity).creation === implicitTurn)
   }
 
   // Cannot run a turn inside a turn with pipelining
@@ -33,7 +33,7 @@ class CreationTicketTest extends RETests {
     engine.transaction() { (dynamicTurn: AdmissionTicket) =>
       implicit val implicitTurn: CreationAllowed = getTurn
       assert(implicitly[TurnSource].self === Left(implicitTurn))
-      assert(implicitly[TurnSource].apply(_.turn) === implicitTurn)
+      assert(implicitly[TurnSource].apply(_.creation) === implicitTurn)
       //      }
     }
   }
@@ -48,7 +48,7 @@ class CreationTicketTest extends RETests {
     }
     engine.transaction() { dynamic =>
       assert(closure().self === Left(closureDefinition))
-      assert(closure().apply(_.turn) === closureDefinition)
+      assert(closure().apply(_.creation) === closureDefinition)
     }
   }
 
@@ -60,7 +60,7 @@ class CreationTicketTest extends RETests {
     }
     engine.transaction() { dynamic =>
       assert(closure().self === Right(engine))
-      assert(closure().apply(_.turn) === dynamic.turn)
+      assert(closure().apply(_.creation) === dynamic.creation)
     }
   }
 

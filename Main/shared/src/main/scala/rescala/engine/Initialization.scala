@@ -3,7 +3,7 @@ package rescala.engine
 import rescala.graph._
 
 
-trait Creation[S <: Struct] {
+trait Creation[S <: Struct] extends Any {
   private[rescala] def create[P, T <: Reactive[S]](incoming: Set[Reactive[S]], valuePersistency: ValuePersistency[P])(instantiateReactive: S#State[P, S] => T): T
 }
 

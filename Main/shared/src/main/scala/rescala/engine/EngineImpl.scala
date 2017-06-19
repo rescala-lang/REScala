@@ -4,7 +4,7 @@ import rescala.graph.Struct
 
 import scala.util.DynamicVariable
 
-trait EngineImpl[S <: Struct, TTurn <: Turn[S]] extends Engine[S] {
+trait EngineImpl[S <: Struct, TTurn <: Turn[S]  with Creation[S]] extends Engine[S] {
   override type ExactTurn = TTurn
   override protected[rescala] def executeTurn[I, R](initialWrites: Traversable[Reactive], admissionPhase: AdmissionTicket => I, wrapUpPhase: (I, WrapUpTicket) => R): R = {
     // TODO: This should be broken up differently here, sort-of meeting in the middle with TwoVersionEngineImpl, something like:

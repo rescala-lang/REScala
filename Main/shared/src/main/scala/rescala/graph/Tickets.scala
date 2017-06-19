@@ -25,34 +25,34 @@ import scala.language.implicitConversions
 //         dynamically checks that the engine does NOT have a current turn (in the current thread context). I think
 //         this cannot be ensured statically, as users can always hide implicitly available current turns.
 
-trait CreationAllowed[S <: Struct] extends Any {
+trait CreationIntegrated[S <: Struct] extends Any {
   //TODO: only used to create TurnSource … maybe we can improve TurnSource, now that it is mostly used for creation?
-  private[rescala] def turn: Creation[S]
+  private[rescala] def creation: Creation[S]
 }
 
-sealed trait OutsidePropagationTicket[S <: Struct] extends Any with CreationAllowed[S]
+sealed trait OutsidePropagationTicket[S <: Struct] extends Any with CreationIntegrated[S]
 
-sealed trait PropagationAndLaterTicket[S <: Struct] extends Any with CreationAllowed[S]
+sealed trait PropagationAndLaterTicket[S <: Struct] extends Any with CreationIntegrated[S]
 
-final class DynamicTicket[S <: Struct] private[rescala] (val turn: StateAccess[S], val indepsBefore: Set[Reactive[S]]) extends PropagationAndLaterTicket[S] {
+final class DynamicTicket[S <: Struct] private[rescala] (val creation: StateAccess[S] with Creation[S], val indepsBefore: Set[Reactive[S]]) extends PropagationAndLaterTicket[S] {
   private[rescala] var indepsAfter: Set[Reactive[S]] = Set.empty
   private[rescala] var indepsAdded: Set[Reactive[S]] = Set.empty
 
   private[rescala] def dynamicDepend[A](reactive: Pulsing[A, S]): A = {
     if(indepsBefore(reactive)) {
       indepsAfter += reactive
-      turn.staticAfter(reactive)
+      creation.staticAfter(reactive)
     } else if(indepsAdded(reactive)) {
-      turn.staticAfter(reactive)
+      creation.staticAfter(reactive)
     } else {
       indepsAfter += reactive
       indepsAdded += reactive
-      turn.dynamicAfter(reactive)
+      creation.dynamicAfter(reactive)
     }
   }
 
   def before[A](reactive: Signal[A, S]): A = {
-    turn.dynamicBefore(reactive).get
+    creation.dynamicBefore(reactive).get
   }
 
   def depend[A](reactive: Signal[A, S]): A = {
@@ -66,31 +66,31 @@ final class DynamicTicket[S <: Struct] private[rescala] (val turn: StateAccess[S
   def indepsRemoved = indepsBefore.diff(indepsAfter)
 }
 
-final class StaticTicket[S <: Struct] private[rescala] (val turn: StateAccess[S]) extends AnyVal with PropagationAndLaterTicket[S] {
+final class StaticTicket[S <: Struct] private[rescala] (val creation: StateAccess[S] with Creation[S]) extends AnyVal with PropagationAndLaterTicket[S] {
   private[rescala] def staticBefore[A](reactive: Pulsing[A, S]): A = {
-    turn.staticBefore(reactive)
+    creation.staticBefore(reactive)
   }
   private[rescala] def staticDepend[A](reactive: Pulsing[A, S]): A = {
-    turn.staticAfter(reactive)
+    creation.staticAfter(reactive)
   }
 }
 
-final class AdmissionTicket[S <: Struct] private[rescala] (val turn: StateAccess[S]) extends AnyVal with OutsidePropagationTicket[S] {
+final class AdmissionTicket[S <: Struct] private[rescala] (val creation: StateAccess[S] with Creation[S]) extends AnyVal with OutsidePropagationTicket[S] {
   def now[A](reactive: Signal[A, S]): A = {
-    turn.dynamicBefore(reactive).get
+    creation.dynamicBefore(reactive).get
   }
 }
 
-final class WrapUpTicket[S <: Struct] private[rescala] (val turn: StateAccess[S]) extends AnyVal with PropagationAndLaterTicket[S] with OutsidePropagationTicket[S] {
+final class WrapUpTicket[S <: Struct] private[rescala] (val creation: StateAccess[S] with Creation[S]) extends AnyVal with PropagationAndLaterTicket[S] with OutsidePropagationTicket[S] {
   def now[A](reactive: Signal[A, S]): A = {
-    turn.dynamicAfter(reactive).get
+    creation.dynamicAfter(reactive).get
   }
   def now[A](reactive: Event[A, S]): Option[A] = {
-    turn.dynamicAfter(reactive).toOption
+    creation.dynamicAfter(reactive).toOption
   }
 }
 
-final class InnerCreationTicket[S <: Struct](val turn: Creation[S]) extends AnyVal with CreationAllowed[S]  {
+final class InnerCreationTicket[S <: Struct](val creation: Creation[S]) extends AnyVal with CreationIntegrated[S]  {
   /**
     * Connects a reactive element with potentially existing dependencies and prepares re-evaluations to be
     * propagated based on the turn's propagation scheme
@@ -103,7 +103,7 @@ final class InnerCreationTicket[S <: Struct](val turn: Creation[S]) extends AnyV
     * @return Connected reactive element
     */
   private[rescala] def create[P, R <: Reactive[S]](incoming: Set[Reactive[S]], valuePersistency: ValuePersistency[P])(instantiateReactive: S#State[P, S] => R): R =
-    turn.create(incoming, valuePersistency)(instantiateReactive)
+    creation.create(incoming, valuePersistency)(instantiateReactive)
 }
 
 
@@ -116,20 +116,20 @@ final class InnerCreationTicket[S <: Struct](val turn: Creation[S]) extends AnyV
 @implicitNotFound(msg = "could not generate a turn source." +
   " An available implicit Ticket will serve as turn source, or if no" +
   " such turn is present, an implicit Engine is accepted instead.")
-final case class CreationTicket[S <: Struct](self: Either[CreationAllowed[S], Engine[S]]) extends AnyVal {
+final case class CreationTicket[S <: Struct](self: Either[CreationIntegrated[S], Engine[S]]) extends AnyVal {
 
   def apply[T](f: InnerCreationTicket[S] => T): T = self match {
-    case Left(turn) => f(new InnerCreationTicket[S](turn.turn))
+    case Left(turn) => f(new InnerCreationTicket[S](turn.creation))
     case Right(engine) => engine.currentTurn() match {
       case Some(turn) => f(new InnerCreationTicket[S](turn))
-      case None => engine.executeTurn(Set.empty, ticket => f(new InnerCreationTicket(ticket.turn)), engine.noWrapUp[T])
+      case None => engine.executeTurn(Set.empty, ticket => f(new InnerCreationTicket(ticket.creation)), engine.noWrapUp[T])
     }
   }
 }
 
 object CreationTicket extends LowPriorityCreationImplicits {
-  implicit def fromTicketImplicit[S <: Struct](implicit ticket: CreationAllowed[S]): CreationTicket[S] = CreationTicket(Left(ticket))
-  implicit def fromTicket[S <: Struct](ticket: CreationAllowed[S]): CreationTicket[S] = CreationTicket(Left(ticket))
+  implicit def fromTicketImplicit[S <: Struct](implicit ticket: CreationIntegrated[S]): CreationTicket[S] = CreationTicket(Left(ticket))
+  implicit def fromTicket[S <: Struct](ticket: CreationIntegrated[S]): CreationTicket[S] = CreationTicket(Left(ticket))
 }
 
 sealed trait LowPriorityCreationImplicits {

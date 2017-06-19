@@ -1,6 +1,6 @@
 package rescala.twoversion
 
-import rescala.engine.{EngineImpl, Turn}
+import rescala.engine.{Creation, EngineImpl, Turn}
 import rescala.graph.Pulsing
 
 /**
@@ -9,7 +9,7 @@ import rescala.graph.Pulsing
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   * @tparam TImpl Turn type used by the engine
   */
-trait TwoVersionEngine[S <: TwoVersionStruct, TImpl <: TwoVersionPropagation[S] with Turn[S]] extends EngineImpl[S, TImpl] {
+trait TwoVersionEngine[S <: TwoVersionStruct, TImpl <: TwoVersionPropagation[S] with Turn[S] with Creation[S]] extends EngineImpl[S, TImpl] {
   override private[rescala] def singleNow[A](reactive: Pulsing[A, S]) = reactive.state.base(null)
 
   /** goes through the whole turn lifecycle

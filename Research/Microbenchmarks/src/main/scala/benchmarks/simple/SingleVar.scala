@@ -33,7 +33,7 @@ class SingleVar[S <: rescala.graph.Struct] {
     engine = engineParam.engine
     current = false
     source = engine.Var(current)
-    illegalTurn = engine.transaction()(_.turn)
+    illegalTurn = engine.transaction()(_.creation.asInstanceOf[Turn[S]])
     if (engineParam.engine == Engines.unmanaged) lock = new ReentrantReadWriteLock()
   }
 

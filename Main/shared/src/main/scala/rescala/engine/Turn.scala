@@ -9,7 +9,7 @@ import rescala.graph._
   *
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
-trait Turn[S <: Struct] extends Creation[S] {
+trait Turn[S <: Struct] {
   private[rescala] def makeDynamicReevaluationTicket(indeps: Set[Reactive[S]]): DynamicTicket[S]
   private[rescala] def makeStaticReevaluationTicket(): StaticTicket[S]
   private[rescala] def makeAdmissionPhaseTicket(): AdmissionTicket[S]

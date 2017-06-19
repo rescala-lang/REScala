@@ -66,7 +66,7 @@ object REPublisher {
   def subscription[T, S <: Struct](dependency: Pulsing[Pulse[T], S], subscriber: Subscriber[_ >: T], fac: Engine[S]): SubscriptionReactive[T, S] = {
     val incoming = Set[Reactive[S]](dependency)
     fac.transaction(dependency) { ticket =>
-      ticket.turn.create[Pulse[T], SubscriptionReactive[T, S]](incoming, ValuePersistency.DerivedSignal) { state =>
+      ticket.creation.create[Pulse[T], SubscriptionReactive[T, S]](incoming, ValuePersistency.DerivedSignal) { state =>
         new SubscriptionReactive[T, S](state, dependency, subscriber, fac)
       }
     }

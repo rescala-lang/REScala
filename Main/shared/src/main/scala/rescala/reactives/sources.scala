@@ -8,7 +8,7 @@ class Source[T, S <: Struct](initialState: S#State[Pulse[T], S]) extends Base[T,
   final def admit(value: T)(implicit ticket: AdmissionTicket[S]): Unit = admitPulse(Pulse.Value(value))
 
   final def admitPulse(value: Pulse[T])(implicit ticket: AdmissionTicket[S]): Unit = {
-    require(nextReevaluationResult == null, s"can not admit the same reactive twice in the same turn: ${ticket.turn}")
+    require(nextReevaluationResult == null, s"can not admit the same reactive twice in the same turn: ${ticket.creation}")
     nextReevaluationResult = value
   }
 
