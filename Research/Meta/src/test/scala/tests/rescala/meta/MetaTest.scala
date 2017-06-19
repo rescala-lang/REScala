@@ -17,8 +17,8 @@ class MetaTest extends FunSuite {
     assert(g.numNodes == 7, "graph has incorrect number of nodes")
     val snl = g.createVar[Int]()
     val snl2 = g.createVar[Char]()
-    val comb2 = snl.map(toString()).delay(1).changed.switchTo(snl2)
-    assert(g.numNodes == 13, "graph has incorrect number of nodes")
+    val comb2 = snl.map(toString()).changed.switchTo(snl2)
+    assert(g.numNodes == 12, "graph has incorrect number of nodes")
     List(comb, comb2)
   }
 

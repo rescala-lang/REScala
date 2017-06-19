@@ -83,33 +83,33 @@ class IFunTestDynamicSignals extends RETests {
   }
 
   /* delay[T](signal: Signal[T], n: Int): Signal[T] */
-  allEngines("delay1 the Initial Value Is Set Correctly"){ engine => import engine._
-    val v1 = Var(1)
-    val s1 = v1.map(_ + 1)
-    val s = s1.delay(3)
-
-    assert(s.now == 2)
-  }
-
-  allEngines("delay1 takesA Snapshot When The Event Occurs"){ engine => import engine._
-    val v1 = Var(1)
-    val s1 = v1.map(_ + 1)
-    val s = s1.delay(3)
-
-    // Initially remains the same for n times
-    v1.set(2)
-    assert(s.now == 2)
-    v1.set(3)
-    assert(s.now == 2)
-    v1.set(4)
-    assert(s.now == 2)
-
-    // Now starts changing
-    v1.set(5)
-    assert(s.now == 3)
-    v1.set(6)
-    assert(s.now == 4)
-  }
+//  allEngines("delay1 the Initial Value Is Set Correctly"){ engine => import engine._
+//    val v1 = Var(1)
+//    val s1 = v1.map(_ + 1)
+//    val s = s1.delay(3)
+//
+//    assert(s.now == 2)
+//  }
+//
+//  allEngines("delay1 takesA Snapshot When The Event Occurs"){ engine => import engine._
+//    val v1 = Var(1)
+//    val s1 = v1.map(_ + 1)
+//    val s = s1.delay(3)
+//
+//    // Initially remains the same for n times
+//    v1.set(2)
+//    assert(s.now == 2)
+//    v1.set(3)
+//    assert(s.now == 2)
+//    v1.set(4)
+//    assert(s.now == 2)
+//
+//    // Now starts changing
+//    v1.set(5)
+//    assert(s.now == 3)
+//    v1.set(6)
+//    assert(s.now == 4)
+//  }
 
   /* switchTo */
   allEngines("switch To the Initial Value Is Set To The Signal"){ engine => import engine._

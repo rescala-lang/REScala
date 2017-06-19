@@ -21,7 +21,7 @@ class CreationTicketTest extends RETests {
   allEngines("none Dynamic Some Implicit") { engine => import engine._
     implicit val implicitTurn: Turn = getTurn
     assert(implicitly[TurnSource].self === Left(implicitTurn))
-    assert(implicitly[TurnSource].apply(identity) === implicitTurn)
+    assert(implicitly[TurnSource].apply(identity).turn === implicitTurn)
   }
 
   // Cannot run a turn inside a turn with pipelining
