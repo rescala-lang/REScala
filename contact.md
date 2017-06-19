@@ -30,17 +30,17 @@ several people:
 
 * [Mira Mezini](http://www.stg.tu-darmstadt.de/staff/mira_mezini/)
 * [Guido Salvaneschi](http://www.guidosalvaneschi.com)
-* Gerold Hintz
+* Ragnar Mogk
+* Joscha Drechsler
 * Pascal Weisenburger
 * Markus Hauck
+* Gerold Hintz
 * Przemyslaw Chrzastowski
 * Johannes Späth
 * Florian Mladitsch
 * Yannick Schroecker
-* Joscha Drechsler
 * Michael Hausl
 * Moritz Lichter
-* Ragnar Mogk
 * Simon Sprankel
 
 
