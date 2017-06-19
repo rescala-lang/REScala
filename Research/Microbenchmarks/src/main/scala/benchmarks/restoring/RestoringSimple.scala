@@ -6,7 +6,7 @@ import benchmarks.{EngineParam, Size, Step}
 import org.openjdk.jmh.annotations._
 import rescala.engine.Engine
 import rescala.reactives.{Evt, Var}
-import rescala.restore.{ReStoringEngine, Storing}
+import rescala.restore.{ReStoringEngine}
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -70,7 +70,7 @@ class RestoringVar[S <: rescala.graph.Struct] {
 @State(Scope.Thread)
 class RestoringSnapshot[S <: rescala.graph.Struct] {
 
-  var snapshot: Seq[(String, Storing)] = _
+  var snapshot: Seq[(String, String)] = _
 
   def build(implicit engine: ReStoringEngine, size: Int) = {
     val source = engine.Evt[Int]()

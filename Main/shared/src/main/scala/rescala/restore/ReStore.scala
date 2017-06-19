@@ -1,39 +1,38 @@
 package rescala.restore
 
 import rescala.engine.ValuePersistency
-import rescala.engine.ValuePersistency.InitializedSignal
 import rescala.graph.{ReSerializable, Reactive, Struct}
 import rescala.levelbased.{LevelBasedPropagation, LevelStruct, LevelStructTypeImpl}
 import rescala.twoversion.{TwoVersionEngine, TwoVersionPropagation}
 
 class ReStoringTurn(restore: ReStore) extends LevelBasedPropagation[ReStoringStruct] {
 
-  override protected def makeStructState[P, I](valuePersistency: ValuePersistency[P, I]): ReStoringStructType[P, ReStoringStruct] = {
+  override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): ReStoringStructType[P, ReStoringStruct] = {
     valuePersistency match {
       case is@ValuePersistency.InitializedSignal(init) =>
-        val is2: InitializedSignal[I] = is
         val name = restore.nextName
         restore.get(name) match {
           case None =>
             //println(s"new struct $name")
-            new ReStoringStructType[P, ReStoringStruct](restore, is.serializable, init, false)
+            new ReStoringStructType[P, ReStoringStruct](restore, name, is.serializable, init, false)
           case Some(v) =>
             //println(s"old struct $name $s")
-            new ReStoringStructType[P, ReStoringStruct](restore, is.serializable, is.serializable.deserialize(v).get, false)
+            new ReStoringStructType[P, ReStoringStruct](restore, name, is.serializable, is.serializable.deserialize(v).get, false)
         }
       case _ =>
-        new ReStoringStructType(null, valuePersistency.initialValue, valuePersistency.isTransient)
+        new ReStoringStructType(null, null, null, valuePersistency.initialValue, valuePersistency.isTransient)
     }
   }
 
   override def dynamicDependencyInteraction(dependency: Reactive[ReStoringStruct]): Unit = ()
   override def releasePhase(): Unit = ()
+
 }
 
-class ReStoringStructType[P, S <: Struct](storage: ReStore, serializable: ReSerializable[P], initialVal: P, transient: Boolean) extends LevelStructTypeImpl[P, S](initialVal, transient) {
+class ReStoringStructType[P, S <: Struct](storage: ReStore, name: String, serializable: ReSerializable[P], initialVal: P, transient: Boolean) extends LevelStructTypeImpl[P, S](initialVal, transient) {
   override def commit(turn: TwoVersionPropagation[S]): Unit = {
     super.commit(turn)
-    if (storage != null) storage.put(serializable.serialize(current))
+    if (storage != null) storage.put(name, serializable.serialize(current))
   }
 }
 
