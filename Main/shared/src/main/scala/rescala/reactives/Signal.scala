@@ -65,7 +65,7 @@ trait Signal[+A, S <: Struct] extends Pulsing[Pulse[A], S] with Observable[A, S]
   final def flatten[R](implicit ev: Flatten[A, S, R], ticket: CreationTicket[S]): R = ev.apply(this)(ticket)
 
   /** Delays this signal by n occurrences */
-  final def delay[A1 >: A](n: Int)(implicit ticket: CreationTicket[S], ev: Serializable[Queue[A1]]): Signal[A1, S] =
+  final def delay[A1 >: A](n: Int)(implicit ticket: CreationTicket[S], ev: ReSerializable[Queue[A1]]): Signal[A1, S] =
     ticket { implicit ict => changed.delay[A1](ict.turn.staticBefore(this).get, n) }
 
   /** Create an event that fires every time the signal changes. It fires the tuple (oldVal, newVal) for the signal.

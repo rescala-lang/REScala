@@ -43,7 +43,7 @@ object ValuePersistency {
   // which ensures that dynamic events work correctly and doesn't hurt others.
   object Event extends ValuePersistency[Pulse[Nothing]](Pulse.NoChange, isTransient = true, ignitionRequiresReevaluation = true)
   object DerivedSignal extends ValuePersistency[Change[Nothing]](Pulse.empty, isTransient = false, ignitionRequiresReevaluation = true)
-  case class InitializedSignal[V](override val initialValue: Change[V])(implicit val serializable: Serializable[V])
+  case class InitializedSignal[V](override val initialValue: Change[V])(implicit val serializable: ReSerializable[V])
     extends ValuePersistency[Change[V]](initialValue, isTransient = false, ignitionRequiresReevaluation = false)
 }
 

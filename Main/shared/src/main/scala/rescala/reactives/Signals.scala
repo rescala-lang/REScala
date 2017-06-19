@@ -54,15 +54,16 @@ object Signals extends GeneratedSignalLift {
   }
 
   /** creates a signal that statically depends on the dependencies with a given initial value */
-  private[rescala] def staticFold[T: Serializable, S <: Struct](dependencies: Set[Reactive[S]], init: StaticTicket[S] => T)(expr: (StaticTicket[S], => T) => T)(ict: InnerCreationTicket[S]): Signal[T, S] = {
-    def initOrRestored = {
+  private[rescala] def staticFold[T: ReSerializable, S <: Struct](dependencies: Set[Reactive[S]], init: StaticTicket[S] => T)(expr: (StaticTicket[S], => T) => T)(ict: InnerCreationTicket[S]): Signal[T, S] = {
+    def initOrRestored: T = {
       if (restored.value eq null) init(ict.turn.makeStaticReevaluationTicket())
       else {
         restored.value = restored.value.drop(1)
         restored.value.headOption.fold(init(ict.turn.makeStaticReevaluationTicket()))(_.asInstanceOf[T])
       }
     }
-    val res = ict.create[Pulse[T], Signal[T, S]](dependencies, ValuePersistency.InitializedSignal(Pulse.tryCatch(Pulse.Value(initOrRestored)))) {
+    val iorPulse: Change[T] = Pulse.tryCatch(Pulse.Value(initOrRestored))
+    val res = ict.create[Pulse[T], Signal[T, S]](dependencies, ValuePersistency.InitializedSignal[T](iorPulse)) {
       state => new StaticSignal[T, S](state, expr) with Disconnectable[S]
     }
     if (states.value ne null) states.value = res :: states.value

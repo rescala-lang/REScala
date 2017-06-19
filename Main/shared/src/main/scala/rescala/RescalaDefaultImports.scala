@@ -1,6 +1,6 @@
 package rescala
 
-import rescala.graph.Struct
+import rescala.graph.{ReSerializable, Struct}
 import rescala.macros.ReactiveMacros
 import rescala.reactives.Source
 
@@ -49,6 +49,10 @@ abstract class RescalaDefaultImports[S <: Struct] {
 
   val Events = reactives.Events
   val Signals = reactives.Signals
+
+
+  implicit def everythingIsSerializable[A]: ReSerializable[A] = null
+
 
 
   final protected[rescala] def noWrapUp[R](intermediate: R, turn: WrapUpTicket): R = intermediate

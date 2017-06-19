@@ -128,7 +128,7 @@ object Pulse {
   }
 
   /** the pulse representing an empty signal */
-  val empty = Exceptional(EmptySignalControlThrowable)
+  val empty: Pulse.Exceptional = Exceptional(EmptySignalControlThrowable)
 
   /** Pulse indicating no change */
   case object NoChange extends Pulse[Nothing]
