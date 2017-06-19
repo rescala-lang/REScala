@@ -60,7 +60,7 @@ object Signals extends GeneratedSignalLift {
         restored.value.headOption.fold(init(ict.creation.asInstanceOf[TurnImpl[S]].makeStaticReevaluationTicket()))(_.asInstanceOf[T])
       }
     }
-    val iorPulse: Change[T] = Pulse.tryCatch(Pulse.Value(initOrRestored))
+    val iorPulse: Pulse.Change[T] = Pulse.tryCatch(Pulse.Value(initOrRestored))
     val res = ict.create[Pulse[T], Signal[T, S]](dependencies, ValuePersistency.InitializedSignal[T](iorPulse)) {
       state => new StaticSignal[T, S](state, expr) with Disconnectable[S]
     }

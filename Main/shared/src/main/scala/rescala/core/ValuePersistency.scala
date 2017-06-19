@@ -15,10 +15,10 @@ object ValuePersistency {
   // which ensures that dynamic events work correctly and doesn't hurt others.
   private object _Event extends ValuePersistency[Pulse[Nothing]](Pulse.NoChange, isTransient = true, ignitionRequiresReevaluation = true)
   def Event[V]: ValuePersistency[V] = _Event.asInstanceOf[ValuePersistency[V]]
-  private object _DerivedSignal extends ValuePersistency[Change[Nothing]](Pulse.empty, isTransient = false, ignitionRequiresReevaluation = true)
+  private object _DerivedSignal extends ValuePersistency[Pulse.Change[Nothing]](Pulse.empty, isTransient = false, ignitionRequiresReevaluation = true)
   def DerivedSignal[V]: ValuePersistency[V] = _DerivedSignal.asInstanceOf[ValuePersistency[V]]
 
-  case class InitializedSignal[V: ReSerializable](override val initialValue: Change[V])
+  case class InitializedSignal[V: ReSerializable](override val initialValue: Pulse.Change[V])
     extends ValuePersistency[Pulse[V]](initialValue, isTransient = false, ignitionRequiresReevaluation = false) {
     def serializable: ReSerializable[Pulse[V]] = implicitly
   }

@@ -77,7 +77,7 @@ final class Var[A, S <: Struct] private[rescala] (initialState: S#State[Pulse[A]
 object Var {
   def apply[T, S <: Struct](initval: T)(implicit ticket: CreationTicket[S]): Var[T, S] = fromChange(Pulse.Value(initval))
   def empty[T, S <: Struct]()(implicit ticket: CreationTicket[S]): Var[T, S] = fromChange(Pulse.empty)
-  private[this] def fromChange[T, S <: Struct](change: Change[T])(implicit ticket: CreationTicket[S]): Var[T, S] = ticket { t =>
+  private[this] def fromChange[T, S <: Struct](change: Pulse.Change[T])(implicit ticket: CreationTicket[S]): Var[T, S] = ticket { t =>
     t.create[Pulse[T], Var[T, S]](Set.empty, ValuePersistency.InitializedSignal(change))(new Var[T, S](_))
   }
 }

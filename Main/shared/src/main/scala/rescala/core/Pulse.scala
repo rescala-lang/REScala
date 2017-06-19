@@ -96,10 +96,11 @@ sealed trait Pulse[+P] {
   }
 }
 
-sealed trait Change[+P] extends Pulse[P]
-
 /** Object containing utility functions for using pulses */
 object Pulse {
+
+  sealed trait Change[+P] extends Pulse[P]
+
   /**
     * Transforms an optional value into a pulse. If the option doesn't contain a value, an empty pulse indicating no
     * change is returned. Otherwise, a pulse with the option's value set as updated value is returned.

@@ -10,20 +10,20 @@ class CreationTicketTest extends RETests {
   def getTurn[S2 <: Struct](implicit engine: rescala.core.Engine[S2]): rescala.core.CreationIntegrated[S2] = engine.transaction()(identity)
 
   allEngines("none Dynamic No Implicit") { engine => import engine._
-    assert(implicitly[TurnSource].self === Right(engine))
+    assert(implicitly[CreationTicket].self === Right(engine))
   }
 
   allEngines("some Dynamic No Implicit") { engine => import engine._
     engine.transaction() { (dynamicTurn: AdmissionTicket) =>
-      assert(implicitly[TurnSource].self === Right(engine))
-      assert(implicitly[TurnSource].apply(_.creation) === dynamicTurn.creation)
+      assert(implicitly[CreationTicket].self === Right(engine))
+      assert(implicitly[CreationTicket].apply(_.creation) === dynamicTurn.creation)
     }
   }
 
   allEngines("none Dynamic Some Implicit") { engine => import engine._
     implicit val implicitTurn: CreationIntegrated = getTurn
-    assert(implicitly[TurnSource].self === Left(implicitTurn))
-    assert(implicitly[TurnSource].apply(identity).creation === implicitTurn)
+    assert(implicitly[CreationTicket].self === Left(implicitTurn))
+    assert(implicitly[CreationTicket].apply(identity).creation === implicitTurn)
   }
 
   // Cannot run a turn inside a turn with pipelining
@@ -34,8 +34,8 @@ class CreationTicketTest extends RETests {
     //    else {
     engine.transaction() { (dynamicTurn: AdmissionTicket) =>
       implicit val implicitTurn: CreationIntegrated = getTurn
-      assert(implicitly[TurnSource].self === Left(implicitTurn))
-      assert(implicitly[TurnSource].apply(_.creation) === implicitTurn)
+      assert(implicitly[CreationTicket].self === Left(implicitTurn))
+      assert(implicitly[CreationTicket].apply(_.creation) === implicitTurn)
       //      }
     }
   }
@@ -46,7 +46,7 @@ class CreationTicketTest extends RETests {
     val closureDefinition: CreationIntegrated = getTurn(engine)
     val closure = {
       implicit def it: CreationIntegrated = closureDefinition
-      () => implicitly[TurnSource]
+      () => implicitly[CreationTicket]
     }
     engine.transaction() { dynamic =>
       assert(closure().self === Left(closureDefinition))
@@ -57,7 +57,7 @@ class CreationTicketTest extends RETests {
   allEngines("dynamic In Closures") { engine => import engine._
     val closure = {
       engine.transaction() { t =>
-        () => implicitly[TurnSource]
+        () => implicitly[CreationTicket]
       }
     }
     engine.transaction() { dynamic =>

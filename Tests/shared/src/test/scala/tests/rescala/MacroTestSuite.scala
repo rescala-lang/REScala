@@ -196,7 +196,7 @@ class MacroTestSuite extends RETests {
     val outside = Var(1)
     val inside = Var(10)
 
-    def sig()(implicit turnSource: TurnSource) = Signal { outside() }
+    def sig()(implicit turnSource: CreationTicket) = Signal { outside() }
 
     val testsig = Signal {
       {

@@ -1,6 +1,6 @@
 package rescala
 
-import rescala.core.{CreationTicket, ReSerializable, Struct}
+import rescala.core.{ReSerializable, Struct}
 import rescala.macros.ReactiveMacros
 import rescala.reactives.Source
 
@@ -25,9 +25,9 @@ abstract class RescalaDefaultImports[S <: Struct] {
   final type AdmissionTicket = rescala.core.AdmissionTicket[S]
   final type WrapUpTicket = rescala.core.WrapUpTicket[S]
   final type CreationIntegrated = rescala.core.CreationIntegrated[S]
-  final type TurnSource = CreationTicket[S]
-  final type TicketOrEngine = CreationTicket[S]
+  final type CreationTicket = rescala.core.CreationTicket[S]
   final type Reactive = rescala.core.Reactive[S]
+
   final def Evt[A](): Evt[A] = reactives.Evt[A, S]()(explicitEngine)
 
   //  final def Var[A](v: A): Var[A] = reactives.Var[A, S](v)(Ticket.fromEngineImplicit(this))
@@ -38,9 +38,9 @@ abstract class RescalaDefaultImports[S <: Struct] {
     def empty[A]: Var[A] = reactives.Var.empty[A, S]()(explicitEngine)
   }
 
-  final def static[T](dependencies: Reactive*)(expr: StaticTicket => T)(implicit turnSource: TurnSource): Signal[T] = Signals.static(dependencies: _*)(expr)
-  final def dynamic[T](dependencies: Reactive*)(expr: DynamicTicket => T)(implicit turnSource: TurnSource): Signal[T] = Signals.dynamic(dependencies: _*)(expr)
-  final def dynamicE[T](dependencies: Reactive*)(expr: DynamicTicket => Option[T])(implicit turnSource: TurnSource): Event[T] = Events.dynamic(dependencies: _*)(expr)
+  final def static[T](dependencies: Reactive*)(expr: StaticTicket => T)(implicit turnSource: CreationTicket): Signal[T] = Signals.static(dependencies: _*)(expr)
+  final def dynamic[T](dependencies: Reactive*)(expr: DynamicTicket => T)(implicit turnSource: CreationTicket): Signal[T] = Signals.dynamic(dependencies: _*)(expr)
+  final def dynamicE[T](dependencies: Reactive*)(expr: DynamicTicket => Option[T])(implicit turnSource: CreationTicket): Event[T] = Events.dynamic(dependencies: _*)(expr)
 
   final def Signal[A](expression: A): Signal[A] = macro ReactiveMacros.SignalMacro[A, S]
   final def Event[A](expression: Option[A]): Event[A] = macro ReactiveMacros.EventMacro[A, S]
