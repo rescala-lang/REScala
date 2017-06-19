@@ -17,8 +17,9 @@ object Events {
     extends Base[Diff[T], S](_bud) with Event[Diff[T], S] {
     override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[Diff[T]], indeps: Set[Reactive[S]]): ReevaluationResult[Value, S] = {
       val pulse = {
-        val from = turn.staticBefore(signal)
-        val to = turn.staticAfter(signal)
+        val st = turn.makeStaticReevaluationTicket()
+        val from = st.staticBefore(signal)
+        val to = st.staticDepend(signal)
         if (from != Pulse.empty && from != to) Pulse.Value(Diff(from, to))
         else Pulse.NoChange
       }

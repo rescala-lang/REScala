@@ -92,7 +92,6 @@ trait SignalNode[+A] extends ReactiveNode[A] {
 
   def now[S <: Struct](implicit reifier: Reifier[S], ticket: Engine[S]): A = reify.now
 
-  def delay(n: Int): DelayedSignalNode[A] = DelayedSignalNode(graph, newRef(), n)
   def map[X >: A, B](f: (X) => B): MappedSignalNode[X, B] = MappedSignalNode(graph, newRef(), f)
   def change: ChangeEventNode[A] = ChangeEventNode(graph, newRef())
   def changed: ChangedEventNode[A] = ChangedEventNode(graph, newRef())
@@ -291,18 +290,6 @@ case class SwitchToSignalNode[+T <: A, +A](override var graph: DataFlowGraph, ba
   override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: CreationTicket[S]): Signal[A, S] = {
     registerReifier(reifier)
     base.deref.doReify(reifier).switchTo(original.deref.doReify(reifier))
-  }
-}
-case class DelayedSignalNode[+A](override var graph: DataFlowGraph, base : SignalRef[A], n: Int) extends SignalNode[A] {
-  def structuralEquals(node: DataFlowNode[_]): Boolean = node match {
-    case DelayedSignalNode(g, bs, no) => graph == g && bs.structuralEquals(base) && n == no
-    case _ => false
-  }
-
-  override def dependencies: Set[DataFlowRef[_]] = Set(base)
-  override protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: CreationTicket[S]): Signal[A, S] = {
-    registerReifier(reifier)
-    base.deref.doReify(reifier).delay(n)
   }
 }
 case class MappedSignalNode[A, +U](override var graph: DataFlowGraph, base : SignalRef[A], mapping: (A) => U) extends SignalNode[U] {

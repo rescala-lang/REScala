@@ -23,7 +23,7 @@ object Signals extends GeneratedSignalLift {
     }
 
     def restoreFrom[R, S <: Struct](states: List[Signal[_, _]])(f: => R)(implicit turnSource: CreationTicket[S]): R = turnSource { ctc =>
-      restored.withValue(states.map(s => ctc.turn.dynamicBefore(s.asInstanceOf[Signal[_, S]]).get).reverse) {
+      restored.withValue(states.map(s => ctc.turn.asInstanceOf[StateAccess[S]].dynamicBefore(s.asInstanceOf[Signal[_, S]]).get).reverse) {
         f
       }
     }

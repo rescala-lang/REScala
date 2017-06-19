@@ -6,7 +6,6 @@ import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFail
 import rescala.reactives.Signals.Diff
 
 import scala.annotation.compileTimeOnly
-import scala.collection.immutable.Queue
 import scala.util.control.NonFatal
 
 object Signal {
@@ -64,9 +63,9 @@ trait Signal[+A, S <: Struct] extends Pulsing[Pulse[A], S] with Observable[A, S]
   /** flatten the inner reactive */
   final def flatten[R](implicit ev: Flatten[A, S, R], ticket: CreationTicket[S]): R = ev.apply(this)(ticket)
 
-  /** Delays this signal by n occurrences */
-  final def delay[A1 >: A](n: Int)(implicit ticket: CreationTicket[S], ev: ReSerializable[Queue[A1]]): Signal[A1, S] =
-    ticket { implicit ict => changed.delay[A1](ict.turn.staticBefore(this).get, n) }
+//  /** Delays this signal by n occurrences */
+//  final def delay[A1 >: A](n: Int)(implicit ticket: CreationTicket[S], ev: ReSerializable[Queue[A1]]): Signal[A1, S] =
+//    ticket { implicit ict => changed.delay[A1](ict.turn.staticBefore(this).get, n) }
 
   /** Create an event that fires every time the signal changes. It fires the tuple (oldVal, newVal) for the signal.
     * Be aware that no change will be triggered when the signal changes to or from empty */

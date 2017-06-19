@@ -91,7 +91,6 @@ class SignalRef[+A](_node : SignalNode[A]) extends ReactiveRef[A] {
 
   def now[S <: Struct](implicit reifier: Reifier[S], ticket: Engine[S]): A = deref.now
 
-  def delay(n: Int): SignalRef[A] = new SignalRef(deref.delay(n))
   def map[X >: A, B](f: (X) => B): SignalRef[B] = new SignalRef(deref.map(f))
   def change: EventRef[Signals.Diff[A]] = new EventRef(deref.change)
   def changed: EventRef[A] = new EventRef(deref.changed)

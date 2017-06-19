@@ -2,22 +2,18 @@ package rescala.engine
 
 import rescala.graph._
 
+
+
 /**
   * The Turn interface glues the reactive interface and the propagation implementation together.
   *
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
 trait Turn[S <: Struct] extends AlwaysTicket[S] {
-  override val turn = this
-  private[rescala] def makeDynamicReevaluationTicket(indeps: Set[Reactive[S]]): DynamicTicket[S] = new DynamicTicket[S](this, indeps)
-  private[rescala] def makeStaticReevaluationTicket(): StaticTicket[S] = new StaticTicket[S](this)
-  private[rescala] def makeAdmissionPhaseTicket(): AdmissionTicket[S] = new AdmissionTicket[S](this)
-  private[rescala] def makeWrapUpPhaseTicket(): WrapUpTicket[S] = new WrapUpTicket[S](this)
-
-  private[rescala] def staticBefore/*aka regRead/depRead*/[P](reactive: Pulsing[P, S]): P
-  private[rescala] def staticAfter[P](reactive: Pulsing[P, S]): P
-  private[rescala] def dynamicBefore[P](reactive: Pulsing[P, S]): P
-  private[rescala] def dynamicAfter[P](reactive: Pulsing[P, S]): P
+  private[rescala] def makeDynamicReevaluationTicket(indeps: Set[Reactive[S]]): DynamicTicket[S]
+  private[rescala] def makeStaticReevaluationTicket(): StaticTicket[S]
+  private[rescala] def makeAdmissionPhaseTicket(): AdmissionTicket[S]
+  private[rescala] def makeWrapUpPhaseTicket(): WrapUpTicket[S]
 
 //  /**
 //    * Synchronize for access (i.e., [[before]] or [[after]]) on this node when
@@ -50,17 +46,7 @@ trait Turn[S <: Struct] extends AlwaysTicket[S] {
 //    */
 //  private[rescala] def after[P](pulsing: Pulsing[P, S]): P
 
-  /**
-    * Connects a reactive element with potentially existing dependencies and prepares re-evaluations to be
-    * propagated based on the turn's propagation scheme
-    *
-    * @param incoming a set of incoming dependencies
-    * @param valuePersistency the value persistency
-    * @param instantiateReactive The factory method to instantiate the reactive with the newly created state.
-    * @tparam P Reactive value type
-    * @tparam R Reactive subtype of the reactive element
-    * @return Connected reactive element
-    */
+
   private[rescala] def create[P, R <: Reactive[S]](incoming: Set[Reactive[S]], valuePersistency: ValuePersistency[P])(instantiateReactive: S#State[P, S] => R): R
 
   /**

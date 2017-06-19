@@ -1,7 +1,7 @@
 package rescala.graph
 
 
-import rescala.engine.{Engine, Turn, ValuePersistency}
+import rescala.engine.{Engine, StateAccess, Turn, ValuePersistency}
 import rescala.reactives.{Event, Signal}
 
 import scala.annotation.implicitNotFound
@@ -34,7 +34,7 @@ sealed trait OutsidePropagationTicket[S <: Struct] extends Any with AlwaysTicket
 
 sealed trait PropagationAndLaterTicket[S <: Struct] extends Any with AlwaysTicket[S]
 
-final class DynamicTicket[S <: Struct] private[rescala] (val turn: Turn[S], val indepsBefore: Set[Reactive[S]]) extends PropagationAndLaterTicket[S] {
+final class DynamicTicket[S <: Struct] private[rescala] (val turn: StateAccess[S], val indepsBefore: Set[Reactive[S]]) extends PropagationAndLaterTicket[S] {
   private[rescala] var indepsAfter: Set[Reactive[S]] = Set.empty
   private[rescala] var indepsAdded: Set[Reactive[S]] = Set.empty
 
@@ -66,7 +66,7 @@ final class DynamicTicket[S <: Struct] private[rescala] (val turn: Turn[S], val 
   def indepsRemoved = indepsBefore.diff(indepsAfter)
 }
 
-final class StaticTicket[S <: Struct] private[rescala] (val turn: Turn[S]) extends AnyVal with PropagationAndLaterTicket[S] {
+final class StaticTicket[S <: Struct] private[rescala] (val turn: StateAccess[S]) extends AnyVal with PropagationAndLaterTicket[S] {
   private[rescala] def staticBefore[A](reactive: Pulsing[A, S]): A = {
     turn.staticBefore(reactive)
   }
@@ -75,13 +75,13 @@ final class StaticTicket[S <: Struct] private[rescala] (val turn: Turn[S]) exten
   }
 }
 
-final class AdmissionTicket[S <: Struct] private[rescala] (val turn: Turn[S]) extends AnyVal with OutsidePropagationTicket[S] {
+final class AdmissionTicket[S <: Struct] private[rescala] (val turn: StateAccess[S]) extends AnyVal with OutsidePropagationTicket[S] {
   def now[A](reactive: Signal[A, S]): A = {
     turn.dynamicBefore(reactive).get
   }
 }
 
-final class WrapUpTicket[S <: Struct] private[rescala] (val turn: Turn[S]) extends AnyVal with PropagationAndLaterTicket[S] with OutsidePropagationTicket[S] {
+final class WrapUpTicket[S <: Struct] private[rescala] (val turn: StateAccess[S]) extends AnyVal with PropagationAndLaterTicket[S] with OutsidePropagationTicket[S] {
   def now[A](reactive: Signal[A, S]): A = {
     turn.dynamicAfter(reactive).get
   }
