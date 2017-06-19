@@ -28,6 +28,7 @@ S2|02 A222 Hochschulstr. 10 64289 Darmstadt
 REScala has been developed thanks to the contribution of
 several people:
 
+* [Mira Mezini](http://www.stg.tu-darmstadt.de/staff/mira_mezini/)
 * [Guido Salvaneschi](http://www.guidosalvaneschi.com)
 * Gerold Hintz
 * Pascal Weisenburger
