@@ -40,12 +40,12 @@ trait Disconnectable[S <: Struct] extends Reactive[S] {
   }
 
 
-  abstract final override protected[rescala] def reevaluate(turn: Turn[S]): ReevaluationResult[Value, S] = {
+  abstract final override protected[rescala] def reevaluate(turn: Turn[S], before: Value, indeps: Set[Reactive[S]]): ReevaluationResult[Value, S] = {
     if (disconnected) {
-      ReevaluationResult.Dynamic[Nothing, S](Pulse.NoChange, indepsAfter = Set.empty, indepsAdded = Set.empty, indepsRemoved = turn.selfIndeps(this))
+      ReevaluationResult.Dynamic[Nothing, S](Pulse.NoChange, indepsAfter = Set.empty, indepsAdded = Set.empty, indepsRemoved = indeps)
     }
     else {
-      super.reevaluate(turn)
+      super.reevaluate(turn, before, indeps)
     }
   }
 

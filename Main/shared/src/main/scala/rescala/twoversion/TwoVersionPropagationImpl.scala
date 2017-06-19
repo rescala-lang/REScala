@@ -76,8 +76,5 @@ trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropaga
     dynamicDependencyInteraction(reactive)
     reactive.state.get(token)
   }
-  override private[rescala] def selfBefore[P](reactive: Pulsing[P, S]) = reactive.state.base(token)
-  override private[rescala] def selfIndeps(reactive: Reactive[S]) = reactive.state.incoming(this)
-
   def writeState[P](pulsing: Reactive[S])(value: pulsing.Value): Unit = if (pulsing.state.write(value, token)) this.schedule(pulsing.state)
 }

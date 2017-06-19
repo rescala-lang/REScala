@@ -47,7 +47,7 @@ class ParallelLockSweep(backoff: Backoff, ex: Executor, engine: TwoVersionEngine
   }
 
   override def evaluate(head: Reactive[TState]): Unit = {
-    val res = head.reevaluate(this)
+    val res = head.reevaluate(this, head.state.base(token), head.state.incoming(this))
     synchronized {
       res match {
         case Static(isChange, value) =>

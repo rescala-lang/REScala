@@ -27,7 +27,7 @@ object REPublisher {
     var requested: Long = 0
     var cancelled = false
 
-    override protected[rescala] def reevaluate(ticket: Turn[S]): ReevaluationResult[Value, S] = {
+    override protected[rescala] def reevaluate(ticket: Turn[S], before: Pulse[T], indeps: Set[Reactive[S]]): ReevaluationResult[Value, S] = {
       ticket.staticAfter(dependency).toOptionTry match {
         case None => ReevaluationResult.Static(Pulse.NoChange)
         case Some(tryValue) =>

@@ -25,7 +25,7 @@ trait Reactive[S <: Struct] {
     */
   protected[rescala] def state: S#State[Value, S]
 
-  protected[rescala] def reevaluate(turn: Turn[S]): ReevaluationResult[Value, S]
+  protected[rescala] def reevaluate(turn: Turn[S], before: Value, indeps: Set[Reactive[S]]): ReevaluationResult[Value, S]
 
   /** for debugging */
   private val name = Globals.declarationLocationName()

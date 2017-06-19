@@ -150,8 +150,6 @@ class FullMVTurn extends InitializationImpl[FullMVStruct] {
   override private[rescala] def staticAfter[P](reactive: Pulsing[P, FullMVStruct]) = reactive.state.staticAfter(this)
   override private[rescala] def dynamicBefore[P](reactive: Pulsing[P, FullMVStruct]) = reactive.state.dynamicBefore(this)
   override private[rescala] def dynamicAfter[P](reactive: Pulsing[P, FullMVStruct]) = reactive.state.dynamicAfter(this)
-  override private[rescala] def selfBefore[P](reactive: Pulsing[P, FullMVStruct]) = reactive.state.reevIn(this)
-  override private[rescala] def selfIndeps(reactive: Reactive[FullMVStruct]) = reactive.state.incomings
 
   override def observe(f: () => Unit): Unit = f()
 

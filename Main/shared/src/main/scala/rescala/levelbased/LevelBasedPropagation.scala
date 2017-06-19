@@ -22,7 +22,7 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
       }
     }
 
-    head.reevaluate(this) match {
+    head.reevaluate(this, head.state.base(token), head.state.incoming(this)) match {
       case res: Static[head.Value] => reevOut(-42, res)
       case res: Dynamic[head.Value, S] =>
         val newLevel = maximumLevel(res.indepsAfter) + 1

@@ -12,7 +12,7 @@ class Source[T, S <: Struct](initialState: S#State[Pulse[T], S]) extends Base[T,
     nextReevaluationResult = value
   }
 
-  override protected[rescala] def reevaluate(turn: Turn[S]): ReevaluationResult.Static[Value] = {
+  override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[T], indeps: Set[Reactive[S]]): ReevaluationResult.Static[Value] = {
     val value = nextReevaluationResult
     nextReevaluationResult = null
     if (value == null) ReevaluationResult.staticNoChange
@@ -61,9 +61,9 @@ final class Var[A, S <: Struct] private[rescala] (initialState: S#State[Pulse[A]
     admit(f(t.now(this)))(t)
   }
 
-  override protected[rescala] def reevaluate(turn: Turn[S]): ReevaluationResult.Static[Pulse[A]] = {
-    val res = super.reevaluate(turn)
-    if (res.value == turn.selfBefore(this)) ReevaluationResult.staticNoChange
+  override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[A], indeps: Set[Reactive[S]]): ReevaluationResult.Static[Pulse[A]] = {
+    val res = super.reevaluate(turn, before, indeps)
+    if (res.value == before) ReevaluationResult.staticNoChange
     else res
   }
 

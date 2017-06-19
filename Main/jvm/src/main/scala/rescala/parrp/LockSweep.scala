@@ -153,7 +153,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
   def evaluate(head: Reactive[TState]): Unit = {
     if (head.state.anyInputChanged != this) done(head, hasChanged = false)
     else {
-      head.reevaluate(this) match {
+      head.reevaluate(this, head.state.base(token), head.state.incoming(this)) match {
         case Static(isChange, value) =>
           if (isChange) writeState(head)(value)
           done(head, isChange)

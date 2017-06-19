@@ -18,8 +18,7 @@ trait Turn[S <: Struct] extends AlwaysTicket[S] {
   private[rescala] def staticAfter[P](reactive: Pulsing[P, S]): P
   private[rescala] def dynamicBefore[P](reactive: Pulsing[P, S]): P
   private[rescala] def dynamicAfter[P](reactive: Pulsing[P, S]): P
-  private[rescala] def selfBefore/*aka first half of reevIn*/[P](reactive: Pulsing[P, S]): P
-  private[rescala] def selfIndeps/*aka second half of reevIn*/(reactive: Reactive[S]): Set[Reactive[S]]
+
 //  /**
 //    * Synchronize for access (i.e., [[before]] or [[after]]) on this node when
 //    * synchronization is unknown. Multiple invocations are redundant, but not harmful outside of an
