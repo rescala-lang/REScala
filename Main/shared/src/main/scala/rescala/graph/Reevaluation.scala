@@ -22,7 +22,7 @@ object ReevaluationResult {
     * Result of the dynamic re-evaluation of a reactive value.
     * When using a dynamic dependency model, the dependencies of a value may change at runtime if it is re-evaluated
     */
-  case class Dynamic[A, S <: Struct](isChange: Boolean, value: A, val indepsAfter: Set[Reactive[S]], val indepsAdded: Set[Reactive[S]], val indepsRemoved: Set[Reactive[S]]) extends ReevaluationResult[A, S]
+  case class Dynamic[A, S <: Struct](isChange: Boolean, value: A, indepsAfter: Set[Reactive[S]], indepsAdded: Set[Reactive[S]], indepsRemoved: Set[Reactive[S]]) extends ReevaluationResult[A, S]
   def Dynamic[P, S <: Struct](value: Pulse[P], indepsAfter: Set[Reactive[S]], indepsAdded: Set[Reactive[S]], indepsRemoved: Set[Reactive[S]]): Dynamic[Pulse[P], S] =  Dynamic(value.isChange, value, indepsAfter, indepsAdded, indepsRemoved)
 
   val staticNoChange: Static[Pulse[Nothing]] = Static(Pulse.NoChange)
