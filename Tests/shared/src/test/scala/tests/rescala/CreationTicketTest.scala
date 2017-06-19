@@ -1,11 +1,11 @@
 package tests.rescala
 
-class CreationTicketTest extends RETests {
 
+class CreationTicketTest extends RETests {
 
   /* this test uses some shady planned()(identity) to get the turn object out of the transaction
    * you should not do this. */
-  def getTurn[S2 <: rescala.graph.Struct](implicit engine: rescala.engine.Engine[S2]): rescala.engine.Turn[S2] = engine.transaction()(_.turn)
+  def getTurn[S2 <: rescala.graph.Struct](implicit engine: rescala.engine.Engine[S2]): rescala.graph.CreationAllowed[S2] = engine.transaction()(identity)
 
   allEngines("none Dynamic No Implicit") { engine => import engine._
     assert(implicitly[TurnSource].self === Right(engine))
@@ -19,7 +19,7 @@ class CreationTicketTest extends RETests {
   }
 
   allEngines("none Dynamic Some Implicit") { engine => import engine._
-    implicit val implicitTurn: Turn = getTurn
+    implicit val implicitTurn: CreationAllowed = getTurn
     assert(implicitly[TurnSource].self === Left(implicitTurn))
     assert(implicitly[TurnSource].apply(identity).turn === implicitTurn)
   }
@@ -31,7 +31,7 @@ class CreationTicketTest extends RETests {
     //    }
     //    else {
     engine.transaction() { (dynamicTurn: AdmissionTicket) =>
-      implicit val implicitTurn: Turn = getTurn
+      implicit val implicitTurn: CreationAllowed = getTurn
       assert(implicitly[TurnSource].self === Left(implicitTurn))
       assert(implicitly[TurnSource].apply(_.turn) === implicitTurn)
       //      }
@@ -41,9 +41,9 @@ class CreationTicketTest extends RETests {
 
 
   allEngines("implicit In Closures") { engine => import engine._
-    val closureDefinition = getTurn(engine)
+    val closureDefinition: CreationAllowed = getTurn(engine)
     val closure = {
-      implicit def it: Turn = closureDefinition
+      implicit def it: CreationAllowed = closureDefinition
       () => implicitly[TurnSource]
     }
     engine.transaction() { dynamic =>

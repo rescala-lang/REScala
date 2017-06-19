@@ -9,7 +9,6 @@ import scala.annotation.implicitNotFound
   * Propagation engine that defines the basic data-types available to the user and creates turns for propagation handling
   *
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
-  * @tparam TTurn Turn type used by the engine
   */
 @implicitNotFound(msg = "Could not find an implicit propagation engine. Did you forget an import?")
 trait Engine[S <: Struct] extends RescalaDefaultImports[S] {

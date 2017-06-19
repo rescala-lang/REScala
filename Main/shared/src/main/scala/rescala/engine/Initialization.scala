@@ -3,7 +3,11 @@ package rescala.engine
 import rescala.graph._
 
 
-trait CreationImpl[S <: Struct] extends DirectAccessTicketsImpl[S] {
+trait Creation[S <: Struct] {
+  private[rescala] def create[P, T <: Reactive[S]](incoming: Set[Reactive[S]], valuePersistency: ValuePersistency[P])(instantiateReactive: S#State[P, S] => T): T
+}
+
+trait CreationImpl[S <: Struct] extends Creation[S] {
   /**
     * Connects a reactive element with potentially existing dependencies and prepares re-evaluations to be
     * propagated based on the turn's propagation scheme

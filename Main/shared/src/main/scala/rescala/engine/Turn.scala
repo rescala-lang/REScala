@@ -9,7 +9,7 @@ import rescala.graph._
   *
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
-trait Turn[S <: Struct] extends AlwaysTicket[S] {
+trait Turn[S <: Struct] extends Creation[S] {
   private[rescala] def makeDynamicReevaluationTicket(indeps: Set[Reactive[S]]): DynamicTicket[S]
   private[rescala] def makeStaticReevaluationTicket(): StaticTicket[S]
   private[rescala] def makeAdmissionPhaseTicket(): AdmissionTicket[S]
@@ -46,9 +46,6 @@ trait Turn[S <: Struct] extends AlwaysTicket[S] {
 //    */
 //  private[rescala] def after[P](pulsing: Pulsing[P, S]): P
 
-
-  private[rescala] def create[P, R <: Reactive[S]](incoming: Set[Reactive[S]], valuePersistency: ValuePersistency[P])(instantiateReactive: S#State[P, S] => R): R
-
   /**
     * Registers a new handler function that is called after all changes were written and committed.
     *
@@ -57,3 +54,5 @@ trait Turn[S <: Struct] extends AlwaysTicket[S] {
   private[rescala] def observe(f: () => Unit): Unit
 }
 
+
+trait TurnImpl[S <: Struct] extends Turn[S] with CreationImpl[S] with DirectAccessTicketsImpl[S]

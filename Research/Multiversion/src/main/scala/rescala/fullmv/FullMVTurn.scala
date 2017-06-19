@@ -2,7 +2,7 @@ package rescala.fullmv
 
 import java.util.concurrent.ForkJoinTask
 
-import rescala.engine.{CreationImpl, ValuePersistency}
+import rescala.engine.{TurnImpl, ValuePersistency}
 import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation.{NextReevaluation, NoSuccessor}
 import rescala.fullmv.NotificationResultAction.{GlitchFreeReady, NotificationOutAndSuccessorOperation}
 import rescala.fullmv.TurnPhase.Type
@@ -11,7 +11,7 @@ import rescala.fullmv.tasks.{Notification, Reevaluation}
 import rescala.fullmv.sgt.synchronization.{SubsumableLock, SubsumableLockImpl}
 import rescala.graph.{Pulsing, Reactive}
 
-class FullMVTurn extends CreationImpl[FullMVStruct] {
+class FullMVTurn extends TurnImpl[FullMVStruct] {
   object phaseLock
   @volatile var phase: TurnPhase.Type = TurnPhase.Initialized
 
