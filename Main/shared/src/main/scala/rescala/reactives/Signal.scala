@@ -8,7 +8,7 @@ import scala.annotation.compileTimeOnly
 import scala.util.control.NonFatal
 
 object Signal {
-  @annotation.implicitAmbiguous("Do not use now during propagation. You have a Ticket available, use the accessors defined there.")
+  //@annotation.implicitAmbiguous("Do not use now during propagation. You have a Ticket available, use the accessors defined there.")
   implicit object NowAllowed
   @compileTimeOnly("only for implicit conflicts")
   implicit def nowNotAllowed[S <: Struct](implicit @deprecated("unused", "") ticket: CreationIntegrated[S]): NowAllowed.type = ???
