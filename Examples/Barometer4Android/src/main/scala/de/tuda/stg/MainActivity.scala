@@ -1,14 +1,12 @@
 package de.tuda.stg
 
 import android.content.Context
-//import android.graphics.drawable.Animatable
 import android.util.Log
 import android.hardware.SensorManager
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import java.io.IOException
 import reandroidthings._
-//import com.google.android.things.contrib.driver.bmx280.Bmx280SensorDriver
 import reandroidthings.driver.bmx280.Bmx280SensorDriver
 
 class MainActivity extends AppCompatActivity {
@@ -27,7 +25,7 @@ class MainActivity extends AppCompatActivity {
 
 
     // type ascription is required due to SCL-10491
-    val vh: TypedViewHolder.main = TypedViewHolder.setContentView(this, TR.layout.main)
+    //val vh: TypedViewHolder.main = TypedViewHolder.setContentView(this, TR.layout.main)
     //    vh.text.setText(s"Hello world, from ${TR.string.app_name.value}")
     //    vh.image.getDrawable match {
     //      case a: Animatable => a.start()

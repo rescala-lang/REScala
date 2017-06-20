@@ -1,6 +1,5 @@
 package reandroidthings
 
-import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 
 // the pure interface does not require an Android peer

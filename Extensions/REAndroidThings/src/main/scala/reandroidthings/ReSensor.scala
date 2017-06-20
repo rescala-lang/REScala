@@ -1,7 +1,6 @@
 package reandroidthings
 
 import android.hardware.Sensor
-import rescala.graph.Pulse.Value
 
 abstract class ReSensor {
 

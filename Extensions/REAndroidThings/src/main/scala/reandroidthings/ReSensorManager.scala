@@ -3,8 +3,6 @@ package reandroidthings
 import scala.language.implicitConversions
 import android.hardware.{Sensor, SensorEventListener, SensorManager}
 import android.os.Handler
-import android.util.Log
-import rescala.graph.Pulse.Value
 // needed for implicit conversation of Java->Scala List
 import scala.collection.JavaConverters._
 
