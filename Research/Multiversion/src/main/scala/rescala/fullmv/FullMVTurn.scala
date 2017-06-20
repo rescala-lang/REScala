@@ -1,6 +1,8 @@
 package rescala.fullmv
 
 import java.util.concurrent.ForkJoinTask
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.locks.LockSupport
 
 import rescala.core.{Pulsing, Reactive, TurnImpl, ValuePersistency}
 import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation.{NextReevaluation, NoSuccessor}
@@ -10,22 +12,18 @@ import rescala.fullmv.sgt.reachability.DigraphNodeWithReachability
 import rescala.fullmv.tasks.{Notification, Reevaluation}
 import rescala.fullmv.sgt.synchronization.{SubsumableLock, SubsumableLockImpl}
 
-
-class FullMVTurn extends TurnImpl[FullMVStruct] {
+class FullMVTurn(val userlandThread: Thread) extends TurnImpl[FullMVStruct] {
   object phaseLock
   @volatile var phase: TurnPhase.Type = TurnPhase.Initialized
 
-  object branchLock
   // counts the sum of in-flight notifications, in-progress reevaluations.
-  var activeBranches: Int = 0
+  var activeBranches = new AtomicInteger(0)
   def activeBranchDifferential(forState: TurnPhase.Type, differential: Int): Unit = {
     assert(phase == forState, s"$this received branch differential for wrong state $phase")
     if(differential != 0) {
-      branchLock.synchronized {
-        activeBranches += differential
-        if(activeBranches == 0) {
-          branchLock.notifyAll()
-        }
+      val remaining = activeBranches.addAndGet(differential)
+      if(remaining == 0) {
+        LockSupport.unpark(userlandThread)
       }
     }
   }
@@ -41,10 +39,8 @@ class FullMVTurn extends TurnImpl[FullMVStruct] {
   }
 
   private def awaitBranchCountZero() = {
-    branchLock.synchronized {
-      while (activeBranches > 0) {
-        branchLock.wait()
-      }
+    while (activeBranches.get > 0) {
+      LockSupport.park(this)
     }
   }
 
@@ -86,7 +82,7 @@ class FullMVTurn extends TurnImpl[FullMVStruct] {
 
   private def tryAtomicCompareBranchesPlusPredsAndSwitchPhase(preds: Set[FullMVTurn], newPhase: Type): Unit = {
     phaseLock.synchronized {
-      if (activeBranches == 0 && nonTransitivePredecessors == preds) {
+      if (activeBranches.get == 0 && nonTransitivePredecessors == preds) {
         this.phase = newPhase
         if(newPhase == TurnPhase.Completed) sgtNode.discard()
         if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this switched phase.")
@@ -156,8 +152,8 @@ class FullMVTurn extends TurnImpl[FullMVStruct] {
   override def toString: String = synchronized {
     "FullMVTurn(" + System.identityHashCode(this) + ", " + (phase match {
       case 0 => "Initialized"
-      case 1 => "Framing("+activeBranches+")"
-      case 2 => "Executing("+activeBranches+")"
+      case 1 => "Framing("+activeBranches.get+")"
+      case 2 => "Executing("+activeBranches.get+")"
       case 3 => "WrapUp"
       case 4 => "Completed"
     })+ ")"

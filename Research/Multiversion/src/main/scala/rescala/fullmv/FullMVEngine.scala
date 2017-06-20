@@ -18,7 +18,7 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
 
   override private[rescala] def singleNow[A](reactive: Pulsing[A, FullMVStruct]) = reactive.state.latestValue
 
-  override protected def makeTurn(initialWrites: Traversable[Reactive], priorTurn: Option[FullMVTurn]): FullMVTurn = new FullMVTurn()
+  override protected def makeTurn(initialWrites: Traversable[Reactive], priorTurn: Option[FullMVTurn]): FullMVTurn = new FullMVTurn(Thread.currentThread())
   override protected def executeInternal[I, R](turn: FullMVTurn, initialWrites: Traversable[Reactive], admissionPhase: () => I, wrapUpPhase: I => R): R = {
     if(initialWrites.nonEmpty) {
       // framing phase
@@ -35,7 +35,7 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
       case scala.util.Failure(e) => e.printStackTrace()
       case _ =>
     }
-    assert(turn.activeBranches == 0, s"Admission phase left ${turn.activeBranches} active branches.")
+    assert(turn.activeBranches.get == 0, s"Admission phase left ${turn.activeBranches.get} active branches.")
 
     // propagation phase
     turn.activeBranchDifferential(TurnPhase.Executing, initialWrites.size)
@@ -46,7 +46,7 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
 
     // wrap-up "phase" (executes in parallel with propagation)
     val result = admissionResult.flatMap(i => Try { wrapUpPhase(i) })
-    if(EXECUTE_WRAPUP_SEQUENTIALLY) assert(turn.activeBranches == 0, s"WrapUp phase left ${turn.activeBranches} active branches.")
+    if(EXECUTE_WRAPUP_SEQUENTIALLY) assert(turn.activeBranches.get == 0, s"WrapUp phase left ${turn.activeBranches.get} active branches.")
 
     // turn completion
     turn.awaitAndSwitchPhase(TurnPhase.Completed)
@@ -55,6 +55,6 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
     result.get
   }
 
-  val CREATE_PRETURN: FullMVTurn = new FullMVTurn()
+  val CREATE_PRETURN: FullMVTurn = new FullMVTurn(null)
   CREATE_PRETURN.awaitAndSwitchPhase(TurnPhase.Completed)
 }

@@ -95,8 +95,8 @@ abstract class RescalaDefaultImports[S <: Struct] {
     */
   def update(changes: (Source[A, S], A) forSome { type A } *): Unit = {
     explicitEngine.executeTurn(changes.map(_._1), { t =>
-      def apply[A](change: (Source[A, S], A)) = change._1.admit(change._2)(t)
-      for(change <- changes) apply(change)
+      def admit[A](change: (Source[A, S], A)) = change._1.admit(change._2)(t)
+      for(change <- changes) admit(change)
     }, noWrapUp[Unit])
   }
 }
