@@ -19,7 +19,6 @@ abstract class RescalaDefaultImports[S <: Struct] {
   final type Event[+A] = reactives.Event[A, S]
   final type Var[A] = reactives.Var[A, S]
   final type Evt[A] = reactives.Evt[A, S]
-  final type Turn = rescala.core.Turn[S]
   final type StaticTicket = rescala.core.StaticTicket[S]
   final type DynamicTicket = rescala.core.DynamicTicket[S]
   final type AdmissionTicket = rescala.core.AdmissionTicket[S]

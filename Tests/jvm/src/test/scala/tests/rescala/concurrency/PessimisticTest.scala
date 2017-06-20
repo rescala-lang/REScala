@@ -3,7 +3,7 @@ package tests.rescala.concurrency
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 
 import rescala.Engines
-import rescala.core.Engine
+import rescala.core.{Engine, Turn}
 import rescala.fullmv.FullMVEngine
 import rescala.parrp.{Backoff, ParRP}
 import rescala.testhelper._
@@ -193,13 +193,13 @@ class PessimisticTest extends RETests {
     val il0 = Var(11)
     val (syncI1, il1) = SynchronizedReevaluation(il0)
 
-    var reeval = List.empty[Turn]
+    var reeval = List.empty[Turn[TestStruct]]
     // this starts on level 2. when bl0 becomes true bl1 becomes true on level 1
     // at that point both bl1 and bl3 are true which causes il1 to be added as a dependency
     // but then bl3 becomes false at level 3, causing il1 to be removed again
     // after that the level is increased and this nonesense no longer happens
     val b2b3i2 = engine.dynamic(bl1) { t =>
-      reeval ::= t.creation.asInstanceOf[engine.Turn]
+      reeval ::= t.creation.asInstanceOf[Turn[TestStruct]]
       if (t.depend(bl1)) {
         if (t.depend(bl3)) {
           val res = t.depend(il1)
@@ -266,13 +266,13 @@ class PessimisticTest extends RETests {
     val il0 = Var(11)
     val (syncI1, il1) = SynchronizedReevaluation(il0)
 
-    var reeval = List.empty[Turn]
+    var reeval = List.empty[Turn[TestStruct]]
     // this starts on level 2. when bl0 becomes true bl1 becomes true on level 1
     // at that point both bl1 and bl3 are true which causes il1 and il0 to be added as a dependency
     // but then bl3 becomes false at level 3, causing il1 to be removed again (but il0 is still a dependency)
     // after that the level is increased and this nonesense no longer happens
     val b2b3i2 = engine.dynamic(bl1) { t =>
-      reeval ::= t.creation.asInstanceOf[engine.Turn]
+      reeval ::= t.creation.asInstanceOf[Turn[TestStruct]]
       if (t.depend(bl1)) {
         if (t.depend(bl3)) {
           val res = t.depend(il0) + t.depend(il1)
