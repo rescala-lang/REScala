@@ -40,7 +40,7 @@ lazy val rescala = crossProject.in(file("Main"))
     libraryDependencies += "de.tuda.stg" %% "retypecheck" % "0.2.0",
     libraryDependencies += scalaOrganization.value % "scala-reflect" % scalaVersion.value % "provided",
 
-    exportJars := true,
+    androidAware,
 
     sourceGenerators in Compile += Def.task {
       val file = (sourceManaged in Compile).value / "rescala" / "reactives" / "GeneratedSignalLift.scala"
@@ -142,9 +142,8 @@ lazy val reandroidthings = project.in(file("Extensions/REAndroidThings"))
     commonAndroidSettings,
     resolvers+=Resolver.bintrayRepo("google", "androidthings"),
     name := "reandroidthings",
-    exportJars := true,
-    libraryDependencies+= "com.google.android.things" % "androidthings" % "0.4-devpreview" % "provided",
-    libraryDependencies+= "com.google.android.things.contrib" % "driver-bmx280" % "0.2"
+    libraryDependencies+= "com.google.android.things" % "androidthings" % "0.4.1-devpreview" % "provided",
+    libraryDependencies+= "com.google.android.things.contrib" % "driver-bmx280" % "0.3"
   )
 
 lazy val reswing = project.in(file("Extensions/RESwing"))
@@ -322,15 +321,18 @@ lazy val androidDependencies = libraryDependencies ++= Seq(
   "com.android.support.test" % "runner" % "0.5" % "androidTest",
   "com.android.support.test.espresso" % "espresso-core" % "2.2.2" % "androidTest")
 
-lazy val commonAndroidSettings = Seq(
-  buildToolsVersion in Android := Some("26.0.0-rc1"), // please switch to "Dev Channel" in android studio and install the sdk manually!
+lazy val androidAware = Seq(
+  buildToolsVersion in Android := Some("26.0.0-rc2"), // please switch to "Dev Channel" in android studio and install the sdk manually!
   minSdkVersion in Android := "24",
-  platformTarget in Android := "android-25",
+  platformTarget in Android := "android-26",
   javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
-  proguardOptions in Android ++= Seq("-dontwarn com.google.android.things.contrib.**"),
-  platformTarget := "android-25",
+  exportJars := true)
+
+lazy val commonAndroidSettings = androidAware ++ Seq(
   instrumentTestRunner := "android.support.test.runner.AndroidJUnitRunner",
+  proguardOptions in Android ++= Seq("-dontwarn com.google.android.things.contrib.**"),
   androidDependencies)
+
 
 // ================================= scalac options
 
@@ -347,7 +349,7 @@ scalacOptions in ThisBuild ++= (
   "-Xfatal-warnings" ::
   //"-Yinline-warnings" ::
   "-Yno-adapted-args" ::
-  "-Ywarn-dead-code" ::
+//  "-Ywarn-dead-code" ::
   "-Ywarn-nullary-override" ::
   "-Ywarn-nullary-unit" ::
   "-Ywarn-numeric-widen" ::
