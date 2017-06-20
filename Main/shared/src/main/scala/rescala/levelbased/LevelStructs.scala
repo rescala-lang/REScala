@@ -1,15 +1,14 @@
 package rescala.levelbased
 
-import rescala.engine.Turn
-import rescala.graph.Struct
-import rescala.twoversion.{GraphStruct, GraphStructType, PropagationStructImpl, ReadWriteValue}
+import rescala.core.{Struct, Turn}
+import rescala.twoversion._
 
 import scala.language.higherKinds
 
 /**
   * Wrapper for a struct type that combines GraphSpore, PulsingSpore and is leveled
   */
-trait LevelStruct extends GraphStruct {
+trait LevelStruct extends TwoVersionStruct {
   override type State[P, S <: Struct] <: LevelStructType[S] with GraphStructType[S] with ReadWriteValue[P, S]
 }
 

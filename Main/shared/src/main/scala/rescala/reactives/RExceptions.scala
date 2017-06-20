@@ -1,6 +1,6 @@
 package rescala.reactives
 
-import rescala.graph.Reactive
+import rescala.core.Reactive
 
 import scala.util.control.ControlThrowable
 

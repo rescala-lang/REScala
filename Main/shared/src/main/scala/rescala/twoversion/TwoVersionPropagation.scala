@@ -1,6 +1,6 @@
 package rescala.twoversion
 
-import rescala.graph.{Reactive, Struct}
+import rescala.core.{Reactive, Struct}
 
 /**
   * Abstract propagation definition that defines phases for reactive propagation through dependent reactive elements.

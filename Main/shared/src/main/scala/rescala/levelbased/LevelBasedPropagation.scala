@@ -1,8 +1,7 @@
 package rescala.levelbased
 
-import rescala.engine.ValuePersistency
-import rescala.graph.ReevaluationResult.{Dynamic, Static}
-import rescala.graph.{Reactive, ReevaluationResult}
+import rescala.core.{Reactive, ReevaluationResult}
+import rescala.core.ReevaluationResult.{Dynamic, Static}
 import rescala.twoversion.TwoVersionPropagationImpl
 
 /**
@@ -23,15 +22,15 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
       }
     }
 
-    head.reevaluate(this) match {
+    head.reevaluate(this, head.state.base(token), head.state.incoming(this)) match {
       case res: Static[head.Value] => reevOut(-42, res)
       case res: Dynamic[head.Value, S] =>
-        val newLevel = maximumLevel(res.dependencies) + 1
+        val newLevel = maximumLevel(res.indepsAfter) + 1
         val redo = head.state.level(this) < newLevel
         if(redo) {
           levelQueue.enqueue(newLevel, needsEvaluate = true)(head)
         } else {
-          applyDiff(head, res.depDiff(head.state.incoming(this)))
+          applyDiff(head, res)
           reevOut(newLevel, res)
         }
     }
@@ -41,19 +40,17 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
 
   private def maximumLevel(dependencies: Set[Reactive[S]]): Int = dependencies.foldLeft(-1)((acc, r) => math.max(acc, r.state.level(this)))
 
-  override protected def ignite(reactive: Reactive[S], incoming: Set[Reactive[S]], valuePersistency: ValuePersistency[_]): Unit = {
+  override protected def ignite(reactive: Reactive[S], incoming: Set[Reactive[S]], ignitionRequiresReevaluation: Boolean): Unit = {
     val level = if(incoming.isEmpty) 0 else incoming.map(_.state.level(this)).max + 1
     reactive.state.updateLevel(level)(this)
 
-    if(!valuePersistency.dynamic) {
-      incoming.foreach { dep =>
-        dynamicDependencyInteraction(dep)
-        discover(reactive)(dep)
-      }
-      reactive.state.updateIncoming(incoming)(this)
+    incoming.foreach { dep =>
+      dynamicDependencyInteraction(dep)
+      discover(reactive)(dep)
     }
+    reactive.state.updateIncoming(incoming)(this)
 
-    if(valuePersistency.ignitionRequiresReevaluation || incoming.exists(_evaluated.contains)) {
+    if(ignitionRequiresReevaluation || incoming.exists(_evaluated.contains)) {
       if (level <= levelQueue.currentLevel()) {
         evaluate(reactive)
       } else {
@@ -61,9 +58,6 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
       }
     }
   }
-
-  /** allow turn to handle dynamic access to reactives */
-  override def dynamicDependencyInteraction(dependency: Reactive[S]): Unit = ()
 
   override def preparationPhase(initialWrites: Traversable[Reactive[S]]): Unit = {
     initialWrites.foreach { reactive =>

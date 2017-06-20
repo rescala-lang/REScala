@@ -1,43 +1,37 @@
 package rescala.restore
 
-import rescala.engine.ValuePersistency
-import rescala.graph.{Reactive, Struct}
+import rescala.core.{ReSerializable, Reactive, Struct, ValuePersistency}
 import rescala.levelbased.{LevelBasedPropagation, LevelStruct, LevelStructTypeImpl}
 import rescala.twoversion.{TwoVersionEngine, TwoVersionPropagation}
-
-case class Storing(current: Any, level: Int, incoming: Set[Reactive[Struct]])
 
 class ReStoringTurn(restore: ReStore) extends LevelBasedPropagation[ReStoringStruct] {
 
   override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): ReStoringStructType[P, ReStoringStruct] = {
     valuePersistency match {
-      case ValuePersistency.InitializedSignal(init: P) =>
+      case is@ValuePersistency.InitializedSignal(init) =>
         val name = restore.nextName
-        def store(storing: Storing) = {
-          //println(s"updating $name to $storing")
-          restore.put(name, storing)
-        }
         restore.get(name) match {
           case None =>
             //println(s"new struct $name")
-            new ReStoringStructType(store, init, false)
-          case Some(s@Storing(c, l, i)) =>
+            new ReStoringStructType[P, ReStoringStruct](restore, name, is.serializable, init, false)
+          case Some(v) =>
             //println(s"old struct $name $s")
-            val res = new ReStoringStructType[P, ReStoringStruct](store, c.asInstanceOf[P], false)
-            res._level = l
-            res
+            new ReStoringStructType[P, ReStoringStruct](restore, name, is.serializable, is.serializable.deserialize(v).get, false)
         }
       case _ =>
-        new ReStoringStructType(null, valuePersistency.initialValue, valuePersistency.isTransient)
+        new ReStoringStructType(null, null, null, valuePersistency.initialValue, valuePersistency.isTransient)
     }
   }
+
+  override def dynamicDependencyInteraction(dependency: Reactive[ReStoringStruct]): Unit = ()
   override def releasePhase(): Unit = ()
+
 }
 
-class ReStoringStructType[P, S <: Struct](storage: Storing => Unit, initialVal: P, transient: Boolean) extends LevelStructTypeImpl[P, S](initialVal, transient) {
+class ReStoringStructType[P, S <: Struct](storage: ReStore, name: String, serializable: ReSerializable[P], initialVal: P, transient: Boolean) extends LevelStructTypeImpl[P, S](initialVal, transient) {
   override def commit(turn: TwoVersionPropagation[S]): Unit = {
     super.commit(turn)
-    if (storage != null) storage(Storing(current, _level, _incoming.asInstanceOf[Set[Reactive[Struct]]]))
+    if (storage != null) storage.put(name, serializable.serialize(current))
   }
 }
 
@@ -48,26 +42,27 @@ trait ReStoringStruct extends LevelStruct {
 
 trait ReStore {
   def nextName(): String
-  def put(key: String, value: Storing): Unit
-  def get(key: String): Option[Storing]
+  def put(key: String, value: String): Unit
+  def get(key: String): Option[String]
 }
 
 
-class ReStoringEngine(domain: String = "", restoreFrom: Seq[(String, Storing)] = Nil) extends TwoVersionEngine[ReStoringStruct, ReStoringTurn] with ReStore {
+class ReStoringEngine(domain: String = "", restoreFrom: Seq[(String, String)] = Nil) extends TwoVersionEngine[ReStoringStruct, ReStoringTurn] with ReStore {
 
-  val values: scala.collection.mutable.HashMap[String, Storing] = scala.collection.mutable.HashMap(restoreFrom: _*)
+  val values: scala.collection.mutable.HashMap[String, String] = scala.collection.mutable.HashMap(restoreFrom: _*)
   var count = 0
   def nextName(): String = {
     count += 1
     domain + count
   }
-  override def put(key: String, value: Storing): Unit = values.put(key, value)
-  override def get(key: String): Option[Storing] = values.get(key)
-  def snapshot(): Map[String, Storing] = values.toMap
+  override def put(key: String, value: String): Unit = values.put(key, value)
+  override def get(key: String): Option[String] = values.get(key)
+  def snapshot(): Map[String, String] = values.toMap
 
   override protected def makeTurn(initialWrites: Traversable[Reactive], priorTurn: Option[ReStoringTurn]): ReStoringTurn = new ReStoringTurn(this)
   lazy override val toString: String = s"Engine(Restoring: $domain)"
-  override protected[rescala] def executeTurn[I, R](initialWrites: Traversable[Reactive], admissionPhase: ReStoringTurn => I, wrapUpPhase: (I, ReStoringTurn) => R): R = synchronized(super.executeTurn(initialWrites, admissionPhase, wrapUpPhase))
+  override protected[rescala] def executeTurn[I, R](initialWrites: Traversable[Reactive], admissionPhase: AdmissionTicket => I, wrapUpPhase: (I, WrapUpTicket) => R): R =
+    synchronized(super.executeTurn(initialWrites, admissionPhase, wrapUpPhase))
 }
 
 

@@ -1,6 +1,6 @@
 package rescala.meta
 
-import rescala.graph.Struct
+import rescala.core.Struct
 
 import scala.collection.mutable
 

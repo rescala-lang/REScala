@@ -22,7 +22,7 @@ class ShapesPanel(val shapes: Signal[Traversable[Shape]]) extends Panel {
       g.fillRect(0, 0, size.width, size.height)
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
       g.translate(size.width / 2, size.height / 2)
-      for (shape <- shapes.withDefault(Nil).now) {
+      for (shape <- turn.now(shapes.withDefault(Nil))) {
         try {
           shape.drawSnapshot(g)
         } catch {

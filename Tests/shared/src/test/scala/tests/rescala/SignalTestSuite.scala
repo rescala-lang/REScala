@@ -1,5 +1,7 @@
 package tests.rescala
 
+import java.util.concurrent.atomic.AtomicInteger
+
 import rescala.Infiltrator.assertLevel
 
 
@@ -53,21 +55,21 @@ class SignalTestSuite extends RETests {
 
   allEngines("handlers Are Executed"){ engine => import engine._
 
-    var test = 0
+    val test = new AtomicInteger(0)
     val v = Var(1)
 
     val s1 = v.map { 2 * _ }
     val s2 = v.map { 3 * _ }
     val s3 = Signals.lift(s1, s2) { _ + _ }
 
-    s1.changed += { (_) => test += 1 }
-    s2.changed += { (_) => test += 1 }
-    s3.changed += { (_) => test += 1 }
+    s1.changed += { (_) => test.incrementAndGet() }
+    s2.changed += { (_) => test.incrementAndGet() }
+    s3.changed += { (_) => test.incrementAndGet() }
 
-    assert(test == 0)
+    assert(test.get == 0)
 
     v.set(3)
-    assert(test == 3)
+    assert(test.get == 3)
   }
 
   allEngines("level Is Correctly Computed"){ engine => import engine._

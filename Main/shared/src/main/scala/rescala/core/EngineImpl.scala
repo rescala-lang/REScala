@@ -1,11 +1,9 @@
-package rescala.engine
-
-import rescala.graph.Struct
+package rescala.core
 
 import scala.util.DynamicVariable
 
-trait EngineImpl[S <: Struct, TTurn <: Turn[S]] extends Engine[S, TTurn] {
-  override protected[rescala] def executeTurn[I, R](initialWrites: Traversable[Reactive], admissionPhase: TTurn => I, wrapUpPhase: (I, TTurn) => R): R = {
+trait EngineImpl[S <: Struct, ExactTurn <: Turn[S]  with Creation[S]] extends Engine[S] {
+  override protected[rescala] def executeTurn[I, R](initialWrites: Traversable[Reactive], admissionPhase: AdmissionTicket => I, wrapUpPhase: (I, WrapUpTicket) => R): R = {
     // TODO: This should be broken up differently here, sort-of meeting in the middle with TwoVersionEngineImpl, something like:
     /*
       // scheduling performs framing/locking/whatever
@@ -42,8 +40,8 @@ trait EngineImpl[S <: Struct, TTurn <: Turn[S]] extends Engine[S, TTurn] {
       result
     */
 
-    val turn = makeTurn(initialWrites, currentTurn())
-    executeInternal(turn, initialWrites, () => withTurn(turn){ admissionPhase(turn) }, { i: I => withTurn(turn){ wrapUpPhase(i, turn) } })
+    val turn = makeTurn(initialWrites, _currentTurn.value)
+    executeInternal(turn, initialWrites, () => withTurn(turn){ admissionPhase(turn.makeAdmissionPhaseTicket()) }, { i: I => withTurn(turn){ wrapUpPhase(i, turn.makeWrapUpPhaseTicket()) } })
   }
 
   /**
@@ -51,11 +49,19 @@ trait EngineImpl[S <: Struct, TTurn <: Turn[S]] extends Engine[S, TTurn] {
     *
     * @return New turn
     */
-  protected def makeTurn(initialWrites: Traversable[Reactive], priorTurn: Option[TTurn]): TTurn
-  protected def executeInternal[I, R](turn: TTurn, initialWrites: Traversable[Reactive], admissionPhase: () => I, wrapUpPhase: I => R): R
+  protected def makeTurn(initialWrites: Traversable[Reactive], priorTurn: Option[ExactTurn]): ExactTurn
+  protected def executeInternal[I, R](turn: ExactTurn, initialWrites: Traversable[Reactive], admissionPhase: () => I, wrapUpPhase: I => R): R
 
-  private val _currentTurn: DynamicVariable[Option[TTurn]] = new DynamicVariable[Option[TTurn]](None)
-  override private[rescala] def currentTurn(): Option[TTurn] = _currentTurn.value
+
+  override private[rescala] def create[T](f: (InnerCreationTicket[S]) => T) = {
+    _currentTurn.value match {
+      case Some(turn) => f(new InnerCreationTicket[S](turn))
+      case None => executeTurn(Set.empty, ticket => f(new InnerCreationTicket(ticket.creation)), noWrapUp[T])
+    }
+  }
+
+
+  private val _currentTurn: DynamicVariable[Option[ExactTurn]] = new DynamicVariable[Option[ExactTurn]](None)
   // TODO currently the responsibility of setting the current turn around each reevaluation lies with each turn itself.
   // This is silly because this behavior is the same for every turn implementation. Moreover, turns can only set
   // the current turn for the available engine that they were started from. However, (probably because this TurnSource
@@ -66,6 +72,6 @@ trait EngineImpl[S <: Struct, TTurn <: Turn[S]] extends Engine[S, TTurn] {
   // TODO clean-up changes if we ever implement it this way:
   // - FullMV and ParallelLockSweep turns no longer need their engine reference.
   // - TwoVersionEngine no longer needs to wrap its propagationPhase
-  private[rescala] def withTurn[R](turn: TTurn)(thunk: => R): R = _currentTurn.withValue(Some(turn))(thunk)
+  private[rescala] def withTurn[R](turn: ExactTurn)(thunk: => R): R = _currentTurn.withValue(Some(turn))(thunk)
 }
 

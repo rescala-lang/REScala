@@ -86,7 +86,7 @@ class MacroTestSuite extends RETests {
 
     var test = 0
     val e = Evt[Int]
-    val s: Signal[Int] = Signal { 2 * e.latest(0)(implicitly)() }
+    val s: Signal[Int] = Signal { 2 * e.latest(0).apply() }
 
     s.change += { _ => test += 1 }
     assert(s.now === 0)
@@ -102,7 +102,7 @@ class MacroTestSuite extends RETests {
 
     var test = 0
     val e = Evt[Int]
-    val s: Signal[Option[Int]] = Signal { e.latestOption()(implicitly)() }
+    val s: Signal[Option[Int]] = Signal { e.latestOption().apply() }
 
     s.change += { _ => test += 1 }
     assert(s.now === None)
@@ -126,7 +126,7 @@ class MacroTestSuite extends RETests {
     val a = new A {
       def obj() = new {
         val evt = Evt[Int]
-        val sig: Signal[Int] = Signal { 2 * evt.latest(0)(implicitly)() }
+        val sig: Signal[Int] = Signal { 2 * evt.latest(0).apply() }
 
         e = evt
         s = sig
@@ -196,7 +196,7 @@ class MacroTestSuite extends RETests {
     val outside = Var(1)
     val inside = Var(10)
 
-    def sig()(implicit turnSource: TurnSource) = Signal { outside() }
+    def sig()(implicit turnSource: CreationTicket) = Signal { outside() }
 
     val testsig = Signal {
       {
@@ -348,7 +348,8 @@ class MacroTestSuite extends RETests {
       type A = Int
       lazy val v = Var(4)
     }
-    assert(o.s.now(engine) == 4)
+    implicit val iengine = engine
+    assert(o.s.now == 4)
   }
 
   allEngines("default Arguments"){ engine => import engine._
@@ -461,7 +462,7 @@ class MacroTestSuite extends RETests {
     val e = Evt[Int]
     val o = new {val evt = e }
 
-    val sig = Signal { getSignal(o).latestOption()(implicitly)() }
+    val sig = Signal { getSignal(o).latestOption().apply() }
 
     assert(sig.now === None)
     e(30)

@@ -1,5 +1,5 @@
 import rescala.RescalaDefaultImports
-import rescala.engine.Engine
+import rescala.core.Engine
 import rescala.levelbased.{LevelBasedPropagation, SimpleStruct}
 
 package object rescala extends RescalaDefaultImports[SimpleStruct] {

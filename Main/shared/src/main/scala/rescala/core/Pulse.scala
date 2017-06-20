@@ -1,6 +1,6 @@
-package rescala.graph
+package rescala.core
 
-import rescala.graph.Pulse.{Exceptional, NoChange, Value}
+import rescala.core.Pulse._
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 
 import scala.util.control.NonFatal
@@ -96,10 +96,11 @@ sealed trait Pulse[+P] {
   }
 }
 
-sealed trait Change[+P] extends Pulse[P]
-
 /** Object containing utility functions for using pulses */
 object Pulse {
+
+  sealed trait Change[+P] extends Pulse[P]
+
   /**
     * Transforms an optional value into a pulse. If the option doesn't contain a value, an empty pulse indicating no
     * change is returned. Otherwise, a pulse with the option's value set as updated value is returned.
@@ -128,7 +129,7 @@ object Pulse {
   }
 
   /** the pulse representing an empty signal */
-  val empty = Exceptional(EmptySignalControlThrowable)
+  val empty: Pulse.Exceptional = Exceptional(EmptySignalControlThrowable)
 
   /** Pulse indicating no change */
   case object NoChange extends Pulse[Nothing]

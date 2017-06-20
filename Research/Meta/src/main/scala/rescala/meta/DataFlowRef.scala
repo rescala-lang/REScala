@@ -1,7 +1,7 @@
 package rescala.meta
 
-import rescala.engine.TurnSource
-import rescala.graph.Struct
+import rescala.core.{CreationTicket, Engine, Struct}
+
 import rescala.reactives._
 
 trait DataFlowRef[+T] {
@@ -30,7 +30,7 @@ trait ReactiveRef[+T] extends DataFlowRef[T] {
   override def tryDeref : Option[ReactiveNode[T]]
   override def deref : ReactiveNode[T] = tryDeref.getOrElse(throw new IllegalStateException("Trying to call operation on undefined reference!"))
 
-  def observe[S <: Struct](onSuccess: (T) => Unit, onFailure: (Throwable) => Unit = t => throw t)(implicit ticket: TurnSource[S]): Unit =
+  def observe[S <: Struct](onSuccess: (T) => Unit, onFailure: (Throwable) => Unit = t => throw t)(implicit ticket: CreationTicket[S]): Unit =
     deref.observe(onSuccess, onFailure)
   def reify[S <: Struct](implicit reifier: Reifier[S]): Observable[T, S] = deref.reify
 }
@@ -48,7 +48,7 @@ class EventRef[+T](_node : EventNode[T]) extends ReactiveRef[T] {
 
   override def reify[S <: Struct](implicit reifier: Reifier[S]): Event[T, S] = deref.reify
 
-  def +=[S <: Struct](react: T => Unit)(implicit ticket: TurnSource[S]): Unit = deref += react
+  def +=[S <: Struct](react: T => Unit)(implicit ticket: CreationTicket[S]): Unit = deref += react
 
   def ||[U >: T](others: EventRef[U]*): EventRef[U] = new EventRef(deref||(others.map(_.deref):_*))
   def &&[U >: T](pred: (U) => Boolean): EventRef[U] = new EventRef(deref && pred)
@@ -61,7 +61,6 @@ class EventRef[+T](_node : EventNode[T]) extends ReactiveRef[T] {
   def snapshot[A](s: SignalRef[A]): SignalRef[A] = new SignalRef(deref.snapshot(s.deref))
   def switchOnce[A](original: SignalRef[A], newSignal: SignalRef[A]): SignalRef[A] = new SignalRef(deref.switchOnce(original.deref, newSignal.deref))
   def switchTo[A >: T](original: SignalRef[A]): SignalRef[A] = new SignalRef(deref.switchTo(original.deref))
-  def flatMap[X >: T, B](f: (X) => EventRef[B]): EventRef[B] = new EventRef(deref.flatMap({ x : X => f(x).deref}))
 }
 
 object EventRef {
@@ -90,9 +89,8 @@ class SignalRef[+A](_node : SignalNode[A]) extends ReactiveRef[A] {
 
   override def reify[S <: Struct](implicit reifier: Reifier[S]): Signal[A, S] = deref.reify
 
-  def now[S <: Struct](implicit reifier: Reifier[S], ticket: TurnSource[S]): A = deref.now
+  def now[S <: Struct](implicit reifier: Reifier[S], ticket: Engine[S]): A = deref.now
 
-  def delay(n: Int): SignalRef[A] = new SignalRef(deref.delay(n))
   def map[X >: A, B](f: (X) => B): SignalRef[B] = new SignalRef(deref.map(f))
   def change: EventRef[Signals.Diff[A]] = new EventRef(deref.change)
   def changed: EventRef[A] = new EventRef(deref.changed)

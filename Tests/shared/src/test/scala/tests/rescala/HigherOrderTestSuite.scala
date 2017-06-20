@@ -251,30 +251,30 @@ class HigherOrderTestSuite extends RETests {
   }
 
 
-  allEngines("flatten Events"){ engine => import engine._
-    val e1 = Evt[Event[Int]]
-    val f1 = e1.flatten
-    val res = f1.list()
-    val e2 = Evt[Int]
-    val e3 = Evt[Int]
-    e2(10)
-    e3(10)
-
-    assert(res.now === Nil)
-    e1(e2)
-    assert(res.now === Nil)
-    e3(10)
-    assert(res.now === Nil)
-    e2(10)
-    assert(res.now === List(10))
-    e1(e3)
-    assert(res.now === List(10))
-    e2(20)
-    assert(res.now === List(10))
-    e3(30)
-    assert(res.now === List(30, 10))
-
-  }
+//  allEngines("flatten Events"){ engine => import engine._
+//    val e1 = Evt[Event[Int]]
+//    val f1 = e1.flatten
+//    val res = f1.list()
+//    val e2 = Evt[Int]
+//    val e3 = Evt[Int]
+//    e2(10)
+//    e3(10)
+//
+//    assert(res.now === Nil)
+//    e1(e2)
+//    assert(res.now === Nil)
+//    e3(10)
+//    assert(res.now === Nil)
+//    e2(10)
+//    assert(res.now === List(10))
+//    e1(e3)
+//    assert(res.now === List(10))
+//    e2(20)
+//    assert(res.now === List(10))
+//    e3(30)
+//    assert(res.now === List(30, 10))
+//
+//  }
 
 
   allEngines("flatten Signal Seq"){ engine => import engine._

@@ -1,13 +1,12 @@
 package tests.rescala.concurrency.philosophers
 
-import rescala.engine.{Engine, Turn}
+import rescala.core.{Engine, Struct}
 import rescala.util.Globals.named
-import rescala.graph.Struct
 import tests.rescala.concurrency.philosophers.PhilosopherTable._
 
-class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(override implicit val engine: Engine[S, Turn[S]]) extends PhilosopherTable(philosopherCount, work)(engine) {
+class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(override implicit val engine: Engine[S]) extends PhilosopherTable(philosopherCount, work)(engine) {
 
-  import engine.{Var, Signal}
+  import engine.{Signal, Var}
 
   override def createTable(tableSize: Int): Seq[Seating[S]] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
@@ -26,14 +25,13 @@ class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(ov
             }
         }
       })
-
     }
 
     for (i <- 0 until tableSize) yield {
       val ownName = i.toString
       val fork1 = forks(i)
       val fork2 = forks(mod(i - 1))
-      val vision = named(s"Vision($i, ${mod(i - 1)})")(Signal {
+      val vision = named(s"Vision($i)")(Signal {
         fork1() match {
           case Taken(name) if name != ownName => WaitingFor(name)
           case Taken(`ownName`) => Eating
@@ -43,7 +41,7 @@ class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(ov
           }
         }
       })
-      Seating(i, phils(i), fork1, forks(mod(i - 1)), vision)
+      Seating(i, phils(i), fork1, fork2, vision)
     }
   }
 

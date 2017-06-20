@@ -28,19 +28,22 @@ object KSemiModularBall extends Main {
   val shapes = Var[List[Shape]](List.empty)
   val panel = new ShapesPanel(shapes)
 
-  class BouncingBall(val initVx: Double, val initVy: Double, val diameter: Signal[Int], val reset: Event[Point]) {
+  class BouncingBall(val initVx: Double, val initVy: Double, val diameter: Signal[Int], val resetIn: Event[Point]) {
     val velocityX = panel.Mouse.leftButton.pressed.fold(initVx / Clock.NanoSecond) { (old, _) => -old }
     val velocityY = panel.Mouse.rightButton.pressed.fold(initVy / Clock.NanoSecond) { (old, _ ) => -old }
 
-    val resetOrTick = Event {Some((reset(), Clock.ticks()))}
+    val incX = Clock.ticks.dMap(dt => tick => Right[Point, Double](tick.toDouble * dt.before(velocityX)))
+    val incY = Clock.ticks.dMap(dt => tick => Right[Point, Double](tick.toDouble * dt.before(velocityY)))
 
-    val posX = resetOrTick.fold(0d){
-      case (_, (Some(Point(x, _)), _)) => x.toDouble
-      case (pX, (None, Some(tick))) => pX + tick.toDouble * velocityX.before
+    val reset = resetIn.map(pos => Left[Point, Double](pos))
+
+    val posX = (reset || incX).fold(0d){
+      case (_, Left(Point(x, _))) => x.toDouble
+      case (pX, Right(inc)) => pX + inc
     }
-    val posY = resetOrTick.fold(0d){
-      case (_, (Some(Point(_, y)), _)) => y.toDouble
-      case (pY, (None, Some(tick))) => pY + tick.toDouble * velocityY.before
+    val posY = (reset || incX).fold(0d){
+      case (_, Left(Point(_, y))) => y.toDouble
+      case (pY, Right(inc)) => pY + inc
     }
 
     val shape = new Circle(posX.map(_.toInt), posY.map(_.toInt), diameter)

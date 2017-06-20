@@ -1,6 +1,3 @@
-import sbt.Keys.libraryDependencies
-import sbtcrossproject.crossProject
-
 organization in ThisBuild := "de.tuda.stg"
 
 lazy val version_211 = "2.11.11"
@@ -19,6 +16,8 @@ parallelExecution in Test in ThisBuild := true
 
 licenses in ThisBuild += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))
 
+maxErrors in ThisBuild := 5
+
 // set the prompt (for this build) to include the project id.
 shellPrompt in ThisBuild := { state => Project.extract(state).currentRef.project + "> " }
 
@@ -26,14 +25,14 @@ lazy val rescalaAggregate = project.in(file(".")).aggregate(rescalaJVM,
   rescalaJS, microbench, reswing, examples, examplesReswing, caseStudyEditor,
   caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags,
   datastructures, universe, reactiveStreams, documentation, meta,
-  stm, testsJVM, testsJS, fullmv, caseStudyShapes, caseStudyMill,
+  stm, testToolsJVM, testToolsJS, testsJVM, testsJS, fullmv, caseStudyShapes, caseStudyMill,
   reandroidthings, barometer4Android)
   .settings(
     publish := {},
     publishLocal := {})
 
 
-lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Main"))
+lazy val rescala = crossProject.in(file("Main"))
   .disablePlugins(JmhPlugin)
   .settings(
     name := "rescala",
@@ -50,8 +49,8 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Main"))
         val types = 1 to i map ("A" + _)
         val signals = params zip types map {case (p, t) => s"$p: Signal[$t, S]"}
         def sep(l: Seq[String]) = l.mkString(", ")
-        val getValues = params map (v => s"t.turn.after($v).get")
-        s"""  def lift[${sep(types)}, B, S <: Struct](${sep(signals)})(fun: (${sep(types)}) => B)(implicit maybe: TurnSource[S]): Signal[B, S] = {
+        val getValues = params map (v => s"t.staticDepend($v).get")
+        s"""  def lift[${sep(types)}, B, S <: Struct](${sep(signals)})(fun: (${sep(types)}) => B)(implicit maybe: CreationTicket[S]): Signal[B, S] = {
            |    static(${sep(params)})(t => fun(${sep(getValues)}))
            |  }
            |""".stripMargin
@@ -59,8 +58,7 @@ lazy val rescala = crossProject(JSPlatform, JVMPlatform).in(file("Main"))
       IO.write(file,
       s"""package rescala.reactives
          |
-         |import rescala.graph._
-         |import rescala.engine._
+         |import rescala.core._
          |
          |trait GeneratedSignalLift {
          |self: Signals.type =>
@@ -85,7 +83,21 @@ lazy val rescalaJS = rescala.js
 
 //lazy val rescalaNative = rescala.native
 
-lazy val tests = crossProject(JSPlatform, JVMPlatform).in(file("Tests"))
+lazy val testTools = crossProject.in(file("TestTools"))
+  .disablePlugins(JmhPlugin)
+  .settings(
+    name := "rescala-testtoolss",
+    libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.3")
+  .settings(
+    publish := {},
+    publishLocal := {}
+  )
+  .dependsOn(rescala)
+  .jvmSettings().jsSettings(scalaJSUseRhino in Global := true)
+lazy val testToolsJVM = testTools.jvm
+lazy val testToolsJS = testTools.js
+
+lazy val tests = crossProject.in(file("Tests"))
   .disablePlugins(JmhPlugin)
   .settings(
     name := "rescala-tests",
@@ -97,12 +109,12 @@ lazy val tests = crossProject(JSPlatform, JVMPlatform).in(file("Tests"))
   .dependsOn(rescala)
   .jvmSettings().jsSettings(scalaJSUseRhino in Global := true)
 
-lazy val testsJVM = tests.jvm.dependsOn(fullmv, stm)
+lazy val testsJVM = tests.jvm.dependsOn(testToolsJVM % "test", fullmv, stm)
 
-lazy val testsJS = tests.js
+lazy val testsJS = tests.js.dependsOn(testToolsJS % "test")
 
 lazy val documentation = project.in(file("Documentation/DocumentationProject"))
-  .settings(tutSettings: _*)
+  .enablePlugins(TutPlugin)
   .dependsOn(rescalaJVM, rescalaJS)
   .settings(
     publish := {},
@@ -267,7 +279,7 @@ lazy val fullmv = project.in(file("Research/Multiversion"))
     publish := {},
     publishLocal := {},
     scalatestDependency)
-  .dependsOn(rescalaJVM)
+  .dependsOn(rescalaJVM, testToolsJVM % "test")
 
 lazy val meta = project.in(file("Research/Meta"))
   .dependsOn(rescalaJVM)
@@ -282,7 +294,7 @@ lazy val microbench = project.in(file("Research/Microbenchmarks"))
   .settings(mainClass in Compile := Some("org.openjdk.jmh.Main"))
   .settings(com.typesafe.sbt.SbtStartScript.startScriptForClassesSettings)
   .settings(TaskKey[Unit]("compileJmh") := Seq(compile in pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh).dependOn.value)
-  .dependsOn(stm)
+  .dependsOn(stm, fullmv)
   .settings(
     publish := {},
     publishLocal := {}
@@ -341,7 +353,4 @@ scalacOptions in ThisBuild ++= (
   "-Ywarn-numeric-widen" ::
   //"-Ywarn-value-discard" ::
   //"-Ymacro-debug-lite" ::
-  Nil) ++ (if (!version.value.endsWith("-SNAPSHOT")) (
-  "-Xdisable-assertions" ::
-  "-Xelide-below" :: "9999999" ::
-  Nil) else Nil)
+  Nil) ++ (if (!version.value.endsWith("-SNAPSHOT")) List( "-Xdisable-assertions", "-Xelide-below", "9999999") else Nil)

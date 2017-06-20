@@ -1,11 +1,10 @@
 package benchmarks.philosophers
 
 import benchmarks.philosophers.PhilosopherTable._
-import rescala.engine.{Engine, Turn}
-import rescala.graph.Struct
+import rescala.core.{Engine, Struct}
 import rescala.reactives.{Signals, Var}
 
-class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(override implicit val engine: Engine[S, Turn[S]]) extends PhilosopherTable(philosopherCount, work)(engine) {
+class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(override implicit val engine: Engine[S]) extends PhilosopherTable(philosopherCount, work)(engine) {
 
   import engine.Signal
 
@@ -47,7 +46,7 @@ class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(ov
 
 }
 
-class HalfDynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(override implicit val engine: Engine[S, Turn[S]]) extends PhilosopherTable(philosopherCount, work)(engine) {
+class HalfDynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(override implicit val engine: Engine[S]) extends PhilosopherTable(philosopherCount, work)(engine) {
 
   import engine.Signal
 
@@ -79,7 +78,7 @@ class HalfDynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long
 
 }
 
-class OtherHalfDynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(override implicit val engine: Engine[S, Turn[S]]) extends PhilosopherTable(philosopherCount, work)(engine) {
+class OtherHalfDynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(override implicit val engine: Engine[S]) extends PhilosopherTable(philosopherCount, work)(engine) {
 
   import engine.Signal
 

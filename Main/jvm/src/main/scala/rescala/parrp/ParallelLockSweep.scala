@@ -3,8 +3,8 @@ package rescala.parrp
 import java.util.concurrent.Executor
 import java.util.concurrent.atomic.AtomicInteger
 
-import rescala.graph.ReevaluationResult.{Dynamic, Static}
-import rescala.graph._
+import rescala.core.Reactive
+import rescala.core.ReevaluationResult.{Dynamic, Static}
 import rescala.locking._
 import rescala.twoversion.TwoVersionEngineImpl
 
@@ -47,7 +47,7 @@ class ParallelLockSweep(backoff: Backoff, ex: Executor, engine: TwoVersionEngine
   }
 
   override def evaluate(head: Reactive[TState]): Unit = {
-    val res = head.reevaluate(this)
+    val res = head.reevaluate(this, head.state.base(token), head.state.incoming(this))
     synchronized {
       res match {
         case Static(isChange, value) =>
@@ -55,8 +55,8 @@ class ParallelLockSweep(backoff: Backoff, ex: Executor, engine: TwoVersionEngine
           if (hasChanged) writeState(head)(value)
           done(head, hasChanged)
 
-        case res@Dynamic(isChange, value, deps) =>
-          applyDiff(head, res.depDiff(head.state.incoming(this)))
+        case res@Dynamic(isChange, value, _, _, _) =>
+          applyDiff(head, res)
           recount(head)
 
           if (head.state.counter == 0) {

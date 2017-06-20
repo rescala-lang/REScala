@@ -1,6 +1,8 @@
 package tests.rescala.events
 
-import rescala.graph.Pulse
+import java.util.concurrent.atomic.AtomicInteger
+
+import rescala.core.Pulse
 import tests.rescala.RETests
 
 
@@ -22,18 +24,18 @@ class OR_EventTest extends RETests {
 
   allEngines("handler Of OR Is Executed Only Once") { engine => import engine._
 
-    var test = 0
+    val test = new AtomicInteger(0)
     val e1 = Evt[Int]
     val e2 = e1 map (_ * 2)
     val e3 = e1 map (_ * 2)
     val e2_OR_e3 = e2 || e3
-    e1 += { _ => test += 1 }
-    e2 += { _ => test += 1 }
-    e3 += { _ => test += 1 }
-    e2_OR_e3 += { _ => test += 1 }
+    e1 += { _ => test.incrementAndGet() }
+    e2 += { _ => test.incrementAndGet() }
+    e3 += { _ => test.incrementAndGet() }
+    e2_OR_e3 += { _ => test.incrementAndGet() }
 
     e1(10)
-    assert(test == 4)
+    assert(test.get == 4)
   }
 
   allEngines("OR event select correct event") { engine => import engine._

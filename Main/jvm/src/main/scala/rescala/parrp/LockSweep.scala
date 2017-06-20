@@ -2,15 +2,14 @@ package rescala.parrp
 
 import java.util
 
-import rescala.engine.ValuePersistency
-import rescala.graph.ReevaluationResult.{Dynamic, Static}
-import rescala.graph._
+import rescala.core.{Reactive, Struct, ValuePersistency}
+import rescala.core.ReevaluationResult.{Dynamic, Static}
 import rescala.locking._
-import rescala.twoversion.{GraphStruct, PropagationStructImpl, TwoVersionPropagationImpl}
+import rescala.twoversion.{PropagationStructImpl, TwoVersionPropagationImpl, TwoVersionStruct}
 
 import scala.collection.mutable
 
-trait LSStruct extends GraphStruct {
+trait LSStruct extends TwoVersionStruct {
   override type State[P, S <: Struct] = LSPropagationStruct[P, S]
 }
 
@@ -56,14 +55,14 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
     * it is important, that the locks for the dependencies are acquired BEFORE the constructor for the new reactive.
     * is executed, because the constructor typically accesses the dependencies to create its initial value.
     */
-  protected def ignite(reactive: Reactive[TState], incoming: Set[Reactive[TState]], valuePersistency: ValuePersistency[_]): Unit = {
+  protected def ignite(reactive: Reactive[TState], incoming: Set[Reactive[TState]], ignitionRequiresReevaluation: Boolean): Unit = {
     incoming.foreach { dep =>
       acquireShared(dep)
       discover(reactive)(dep)
     }
     reactive.state.updateIncoming(incoming)(this)
     recount(reactive)
-    if(valuePersistency.ignitionRequiresReevaluation || incoming.exists(_.state.hasChanged == this)) {
+    if(ignitionRequiresReevaluation || incoming.exists(_.state.hasChanged == this)) {
       reactive.state.anyInputChanged = this
       reactive.state.willWrite = this
       if (reactive.state.counter == 0) {
@@ -153,13 +152,13 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
   def evaluate(head: Reactive[TState]): Unit = {
     if (head.state.anyInputChanged != this) done(head, hasChanged = false)
     else {
-      head.reevaluate(this) match {
+      head.reevaluate(this, head.state.base(token), head.state.incoming(this)) match {
         case Static(isChange, value) =>
           if (isChange) writeState(head)(value)
           done(head, isChange)
 
-        case res@Dynamic(isChange, value, deps) =>
-          applyDiff(head, res.depDiff(head.state.incoming(this)))
+        case res@Dynamic(isChange, value, _, _, _) =>
+          applyDiff(head, res)
           recount(head)
           if (head.state.counter == 0) {
             if (isChange) writeState(head)(value)

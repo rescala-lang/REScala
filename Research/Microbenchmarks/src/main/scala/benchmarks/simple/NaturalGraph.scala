@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 import benchmarks.{EngineParam, Step, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
-import rescala.engine.{Engine, Turn}
+import rescala.core.{Engine, Struct}
 
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -15,9 +15,9 @@ import rescala.engine.{Engine, Turn}
 @Fork(1)
 @Threads(1)
 @State(Scope.Thread)
-class NaturalGraph[S <: rescala.graph.Struct] {
+class NaturalGraph[S <: Struct] {
 
-  var engine: Engine[S, Turn[S]] = _
+  var engine: Engine[S] = _
 
   var source: rescala.reactives.Var[Int, S] = _
   var result: List[rescala.reactives.Signal[Int, S]] = _

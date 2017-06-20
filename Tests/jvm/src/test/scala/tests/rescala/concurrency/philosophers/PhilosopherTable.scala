@@ -2,15 +2,14 @@ package tests.rescala.concurrency.philosophers
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import rescala.engine.{Engine, Turn}
-import rescala.util.Globals.named
-import rescala.graph.Struct
+import rescala.core.{Engine, Struct, WrapUpTicket}
+
 import rescala.parrp.Backoff
-import rescala.reactives.{Signal, Var}
 import rescala.reactives.Signals.lift
+import rescala.reactives.{Signal, Var}
+import rescala.util.Globals.named
 
-class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit val engine: Engine[S, Turn[S]]) {
-
+class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit val engine: Engine[S]) {
   import engine.Var
   import tests.rescala.concurrency.philosophers.PhilosopherTable._
 
@@ -27,7 +26,6 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit 
       }
     }
   }
-
 
   def calcFork(leftName: String, rightName: String)(leftState: Philosopher, rightState: Philosopher): Fork =
     (leftState, rightState) match {
@@ -56,24 +54,39 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit 
     }
 
     for (i <- 0 until tableSize) yield {
-      val vision = named(s"Vision($i, ${mod(i - 1)})")(lift(forks(i), forks(mod(i - 1)))(calcVision(i.toString)))
-      Seating(i, phils(i), forks(i), forks(mod(i - 1)), vision)
+      val previousCircularIndex = mod(i - 1)
+      val vision = named(s"Vision($i)")(lift(forks(previousCircularIndex), forks(i))(calcVision(i.toString)))
+      Seating(i, phils(i), forks(previousCircularIndex), forks(i), vision)
     }
   }
 
   def tryEat(seating: Seating[S]): Boolean =
     engine.transactionWithWrapup(seating.philosopher) { turn =>
-      val forksAreFree = seating.vision.now(turn) == Ready
-      if (forksAreFree) seating.philosopher.admit(Hungry)(turn)
+      val forksAreFree = turn.now(seating.vision) == Ready
+      if (forksAreFree) {
+        // println(Thread.currentThread().getName + " start " + turn + ": Eating on " + seating.philosopher)
+        seating.philosopher.admit(Hungry)(turn)
+      } // else {
+      //   println(Thread.currentThread().getName + " start " + turn + ": No Change on " + seating.philosopher)
+      // }
       forksAreFree
     } /* propagation executes here */ { (forksWereFree, turn) =>
-      if (forksWereFree) assert(seating.vision.now(turn) == Eating, s"philosopher should be done after turn but is ${seating.inspect(turn)}")
+      if (forksWereFree) assert(turn.now(seating.vision) == Eating, s"philosopher should be done after turn but is ${seating.inspect(turn)}")
+      // println(Thread.currentThread().getName + " done " + turn)
       forksWereFree
     }
 
   def eatOnce(seating: Seating[S]): Unit = {
     val bo = new Backoff()
     while(!tryEat(seating)) {bo.backoff()}
+
+    seating.philosopher.set(Thinking)
+    // engine.transactionWithWrapup(seating.philosopher){ turn =>
+    //   println(Thread.currentThread().getName + " start " + turn + ": Thinking on " + seating.philosopher)
+    //   seating.philosopher.admit(Thinking)(turn)
+    // } { (x, turn) =>
+    //   println(Thread.currentThread().getName + " done " + turn)
+    // }
   }
 }
 
@@ -97,7 +110,7 @@ object PhilosopherTable {
   // ============================================ Entity Creation =========================================================
 
   case class Seating[S <: Struct](placeNumber: Int, philosopher: Var[Philosopher, S], leftFork: Signal[Fork, S], rightFork: Signal[Fork, S], vision: Signal[Vision, S]) {
-    def inspect(t: Turn[S]): String = s"Seating(${philosopher.now(t)}, ${leftFork.now(t)}, ${rightFork.now(t)}, ${vision.now(t)})"
+    def inspect(t: WrapUpTicket[S]): String = s"Seating(${t.now(philosopher)}, ${t.now(leftFork)}, ${t.now(rightFork)}, ${t.now(vision)})"
   }
 
 }

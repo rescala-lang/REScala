@@ -6,8 +6,7 @@ import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
 import rescala.Engines
-import rescala.engine.{Engine, Turn}
-import rescala.graph.Struct
+import rescala.core.{Engine, Struct}
 import rescala.reactives._
 
 import scala.collection.immutable.Range
@@ -23,7 +22,7 @@ class StackState[S <: Struct] {
   var sources: Array[Var[Int, S]] = _
   var results: Array[Signal[Int, S]] = _
   var dynamics: Array[Signal[Int, S]] = _
-  var engine: Engine[S, Turn[S]] = _
+  var engine: Engine[S] = _
   var isManual: Boolean = false
 
   @Setup(Level.Iteration)

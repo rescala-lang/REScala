@@ -8,7 +8,7 @@ import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
 import rescala.Engines
 import rescala.benchmarkutil.BenchmarkUtil
-import rescala.engine.{Engine, Turn}
+import rescala.core.{Engine, Struct, Turn}
 import rescala.reactives.Var
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -18,9 +18,9 @@ import rescala.reactives.Var
 @Fork(3)
 @Threads(1)
 @State(Scope.Benchmark)
-class SingleVar[S <: rescala.graph.Struct] {
+class SingleVar[S <: Struct] {
 
-  implicit var engine: Engine[S, Turn[S]] = _
+  implicit var engine: Engine[S] = _
 
   var source: Var[Boolean, S] = _
   var current: Boolean = _
@@ -33,7 +33,7 @@ class SingleVar[S <: rescala.graph.Struct] {
     engine = engineParam.engine
     current = false
     source = engine.Var(current)
-    illegalTurn = engine.transaction()(identity)
+    illegalTurn = engine.transaction()(_.creation.asInstanceOf[Turn[S]])
     if (engineParam.engine == Engines.unmanaged) lock = new ReentrantReadWriteLock()
   }
 

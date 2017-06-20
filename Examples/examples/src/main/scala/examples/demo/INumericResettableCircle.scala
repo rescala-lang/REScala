@@ -51,15 +51,18 @@ object INumericResettableCircle extends Main {
   val velocityX = Signal {(panel.width() / 2 - 50).toDouble * math.sin(angle()) / Clock.NanoSecond}
   val velocityY = Signal {(panel.height() / 2 - 50).toDouble * math.cos(angle()) / Clock.NanoSecond}
 
-  val resetOrTick = Event {Some((panel.Mouse.middleButton.pressed(), Clock.ticks()))}
+  val incX = Clock.ticks.dMap(dt => tick => Right[Point, Double](tick.toDouble * dt.before(velocityX)))
+  val incY = Clock.ticks.dMap(dt => tick => Right[Point, Double](tick.toDouble * dt.before(velocityY)))
 
-  val posX = resetOrTick.fold(0d){
-    case (_, (Some(Point(x, _)), _)) => x.toDouble
-    case (pX, (None, Some(tick))) => pX + tick.toDouble * velocityX.before
+  val reset = panel.Mouse.middleButton.pressed.map(pos => Left[Point, Double](pos))
+
+  val posX = (reset || incX).fold(0d){
+    case (_, Left(Point(x, _))) => x.toDouble
+    case (pX, Right(inc)) => pX + inc
   }
-  val posY = resetOrTick.fold(0d){
-    case (_, (Some(Point(_, y)), _)) => y.toDouble
-    case (pY, (None, Some(tick))) => pY + tick.toDouble * velocityY.before
+  val posY = (reset || incX).fold(0d){
+    case (_, Left(Point(_, y))) => y.toDouble
+    case (pY, Right(inc)) => pY + inc
   }
 
   shapes.transform(new Circle(posX.map(_.toInt), posY.map(_.toInt), Var(50)) :: _)

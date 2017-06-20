@@ -7,7 +7,7 @@ import examples.demo.MPlayingFieldBall.PlayingField
 import examples.demo.ORacketMultiBall.Racket
 import examples.demo.ui._
 import rescala._
-import rescala.graph.Pulse
+import rescala.core.Pulse
 
 import scala.swing.{Dimension, MainFrame, SimpleSwingApplication}
 

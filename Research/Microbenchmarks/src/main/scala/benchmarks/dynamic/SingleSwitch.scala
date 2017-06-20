@@ -6,7 +6,7 @@ import benchmarks.{EngineParam, Step}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
 import rescala.Engines
-import rescala.engine.{Engine, Turn}
+import rescala.core.{Engine, Struct}
 import rescala.reactives.Var
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -16,9 +16,9 @@ import rescala.reactives.Var
 @Fork(1)
 @Threads(1)
 @State(Scope.Benchmark)
-class SingleSwitch[S <: rescala.graph.Struct] {
+class SingleSwitch[S <: Struct] {
 
-  implicit var engine: Engine[S, Turn[S]] = _
+  implicit var engine: Engine[S] = _
 
   var source: Var[Int, S] = _
 

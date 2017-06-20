@@ -1,10 +1,12 @@
 package rescala.twoversion
 
-import rescala.engine.Turn
-import rescala.graph.{Reactive, Struct}
+import rescala.core.{Reactive, Struct, Turn}
 
 import scala.language.higherKinds
 
+trait TwoVersionStruct extends GraphStruct {
+  override type State[P, S <: Struct] <: GraphStructType[S] with ReadWriteValue[P, S]
+}
 
 /**
   * Spore that implements both the buffered pulse and the buffering capabilities itself.
@@ -12,7 +14,7 @@ import scala.language.higherKinds
   * @tparam P Pulse stored value type
   */
 trait BufferedValueStruct[P, S <: Struct] extends ReadWriteValue[P, S] with Committable[S] {
-  protected var current: P
+  var current: P
   protected val transient: Boolean
   protected var owner: Token = null
   private var update: P = _
