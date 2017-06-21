@@ -34,6 +34,7 @@ lazy val rescalaAggregate = project.in(file(".")).aggregate(rescalaJVM,
 
 lazy val rescala = crossProject.in(file("Main"))
   .disablePlugins(JmhPlugin)
+  .settings(circeDependencies)
   .settings(
     name := "rescala",
     resolvers += Resolver.bintrayRepo("pweisenburger", "maven"),
@@ -314,6 +315,14 @@ lazy val rssDependencies = libraryDependencies ++= Seq(
 
 lazy val scalaswingDependency = libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "2.0.0"
 lazy val scalatestDependency = libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.3" % "test"
+
+val circeVersion = "0.8.0"
+
+lazy val circeDependencies = libraryDependencies ++= Seq(
+  "io.circe" %% "circe-core",
+  "io.circe" %% "circe-generic",
+  "io.circe" %% "circe-parser"
+).map(_ % circeVersion)
 
 
 // ================================= scalac options

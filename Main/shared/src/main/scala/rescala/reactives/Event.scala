@@ -115,7 +115,7 @@ trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] 
   }
 
   /** reduces events with a given reduce function to create a Signal */
-  final def reduce[A](reducer: (=> A, => T) => A)(implicit ticket: CreationTicket[S]): Signal[A, S] =
+  final def reduce[A: ReSerializable](reducer: (=> A, => T) => A)(implicit ticket: CreationTicket[S]): Signal[A, S] =
     lazyFold(throw EmptySignalControlThrowable)(reducer)
 
   /** Applies a function on the current value of the signal every time the event occurs,
@@ -140,8 +140,8 @@ trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] 
   /** returns a signal holding the latest value of the event. */
   final def latest[T1 >: T : ReSerializable](init: T1)(implicit ticket: CreationTicket[S]): Signal[T1, S] =
     fold(init)((_, v) => v)
-  final def latest()(implicit ticket: CreationTicket[S]): Signal[T, S] =
-    reduce[T]((_, v) => v)
+  final def latest[T1 >: T : ReSerializable]()(implicit ticket: CreationTicket[S]): Signal[T1, S] =
+    reduce[T1]((_, v) => v)
 
   /** Holds the latest value of an event as an Option, None before the first event occured */
   final def latestOption[T1 >: T]()(implicit ticket: CreationTicket[S], ev: ReSerializable[Option[T1]]): Signal[Option[T1], S] =
@@ -172,7 +172,7 @@ trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] 
   }
 
   /** Return a Signal that is updated only when e fires, and has the value of the signal s */
-  final def snapshot[A](s: Signal[A, S])(implicit ticket: CreationTicket[S]): Signal[A, S] = ticket {
+  final def snapshot[A: ReSerializable](s: Signal[A, S])(implicit ticket: CreationTicket[S]): Signal[A, S] = ticket {
     Signals.staticFold[A, S](
       Set[Reactive[S]](this, s),
       st => st.staticDepend(s).get) { (st, current) =>

@@ -88,7 +88,7 @@ object Signals extends GeneratedSignalLift {
   }
 
   /** converts a future to a signal */
-  def fromFuture[A, S <: Struct](fut: Future[A])(implicit fac: Engine[S], ec: ExecutionContext): Signal[A, S] = {
+  def fromFuture[A: ReSerializable, S <: Struct](fut: Future[A])(implicit fac: Engine[S], ec: ExecutionContext): Signal[A, S] = {
     val v: Var[A, S] = rescala.reactives.Var.empty[A, S]
     fut.onComplete { res => fac.transaction(v)(t => v.admitPulse(Pulse.tryCatch(Pulse.Value(res.get)))(t)) }
     v

@@ -20,6 +20,6 @@ object ValuePersistency {
 
   case class InitializedSignal[V: ReSerializable](override val initialValue: Pulse.Change[V])
     extends ValuePersistency[Pulse[V]](initialValue, isTransient = false, ignitionRequiresReevaluation = false) {
-    def serializable: ReSerializable[Pulse[V]] = implicitly
+    def serializable: ReSerializable[Pulse[V]] = ReSerializable.pulseSerializable()
   }
 }

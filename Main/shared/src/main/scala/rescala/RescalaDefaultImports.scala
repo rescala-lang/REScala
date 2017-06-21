@@ -33,8 +33,8 @@ abstract class RescalaDefaultImports[S <: Struct] {
   //  final def Var[A](): Var[A] = reactives.Var[A, S]()(Ticket.fromEngineImplicit(this))
 
   object Var {
-    def apply[A](v: A): Var[A] = reactives.Var[A, S](v)(explicitEngine)
-    def empty[A]: Var[A] = reactives.Var.empty[A, S]()(explicitEngine)
+    def apply[A: ReSerializable](v: A): Var[A] = reactives.Var[A, S](v)(implicitly, explicitEngine)
+    def empty[A: ReSerializable]: Var[A] = reactives.Var.empty[A, S]()(implicitly, explicitEngine)
   }
 
   final def static[T](dependencies: Reactive*)(expr: StaticTicket => T)(implicit turnSource: CreationTicket): Signal[T] = Signals.static(dependencies: _*)(expr)
@@ -46,10 +46,6 @@ abstract class RescalaDefaultImports[S <: Struct] {
 
   val Events = reactives.Events
   val Signals = reactives.Signals
-
-
-  implicit def everythingIsSerializable[A]: ReSerializable[A] = null
-
 
 
   final protected[rescala] def noWrapUp[R](intermediate: R, turn: WrapUpTicket): R = intermediate
