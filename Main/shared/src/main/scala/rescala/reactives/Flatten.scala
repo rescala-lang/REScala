@@ -13,34 +13,34 @@ sealed trait Flatten[-A, S <: Struct, R] {
   def apply(sig: Signal[A, S])(implicit ticket: CreationTicket[S]): R
 }
 object Flatten {
-  implicit def flattenSignal[A, S <: Struct, B](implicit ev: A <:< Signal[B, S]): Flatten[A, S, Signal[B, S]] = new Flatten[A, S, Signal[B, S]] {
-    def apply(sig: Signal[A, S])(implicit ticket: CreationTicket[S]): Signal[B, S] = Signals.dynamic(sig) { s => s.dynamicDepend(ev(s.dynamicDepend(sig).get)).get }
+  implicit def flattenSignal[S <: Struct, B]: Flatten[Signal[B, S], S, Signal[B, S]] = new Flatten[Signal[B, S], S, Signal[B, S]] {
+    def apply(sig: Signal[Signal[B, S], S])(implicit ticket: CreationTicket[S]): Signal[B, S] = { Signals.dynamic(sig) { s => s.dynamicDepend(s.dynamicDepend(sig).get).get }}
   }
   implicit def flattenSignalTraversableSignal
-  [A, S <: Struct, B, T[U] <: TraversableLike[U, T[U]], Sig[A1, S1 <: Struct] <: Signal[A1, S1]]
-  (implicit ev: A <:< T[Sig[B, S]], cbf: CanBuildFrom[T[_], B, T[B]]): Flatten[A, S, Signal[T[B], S]] = new Flatten[A, S, Signal[T[B], S]] {
-    def apply(sig: Signal[A, S])(implicit ticket: CreationTicket[S]): Signal[T[B], S] = Signals.dynamic(sig) { s => ev(s.dynamicDepend(sig).get) map { (r: Signal[B, S]) => s.dynamicDepend(r).get} }
+  [S <: Struct, B, T[U] <: TraversableLike[U, T[U]], Sig[A1, S1 <: Struct] <: Signal[A1, S1]]
+  (implicit cbf: CanBuildFrom[T[_], B, T[B]]): Flatten[T[Sig[B, S]], S, Signal[T[B], S]] = new Flatten[T[Sig[B, S]], S, Signal[T[B], S]] {
+    def apply(sig: Signal[T[Sig[B, S]], S])(implicit ticket: CreationTicket[S]): Signal[T[B], S] = Signals.dynamic(sig) { s => s.dynamicDepend(sig).get map { (r: Signal[B, S]) => s.dynamicDepend(r).get} }
   }
   implicit def flattenSignalTraversableEvent
-  [A, S <: Struct, B, T[U] <: TraversableLike[U, T[U]], Evnt[A1, S1 <: Struct] <: Event[A1, S1]]
-  (implicit ev: A <:< T[Evnt[B, S]], cbf: CanBuildFrom[T[_], Option[B], T[Option[B]]]): Flatten[A, S, Event[T[Option[B]], S]] = new Flatten[A, S, Event[T[Option[B]], S]] {
-    def apply(sig: Signal[A, S])(implicit ticket: CreationTicket[S]): Event[T[Option[B]], S] = Events.dynamic(sig) { s =>
-      val all = ev(s.dynamicDepend(sig).get) map { (r: Event[B, S]) => s.dynamicDepend(r).toOption}
+  [S <: Struct, B, T[U] <: TraversableLike[U, T[U]], Evnt[A1, S1 <: Struct] <: Event[A1, S1]]
+  (implicit cbf: CanBuildFrom[T[_], Option[B], T[Option[B]]]): Flatten[T[Evnt[B, S]], S, Event[T[Option[B]], S]] = new Flatten[T[Evnt[B, S]], S, Event[T[Option[B]], S]] {
+    def apply(sig: Signal[T[Evnt[B, S]], S])(implicit ticket: CreationTicket[S]): Event[T[Option[B]], S] = Events.dynamic(sig) { s =>
+      val all = s.dynamicDepend(sig).get map { (r: Event[B, S]) => s.dynamicDepend(r).toOption}
       if(all.exists(_.isDefined)) Some(all) else None
     }
   }
   implicit def flattenSignalArray
-  [A, S <: Struct, B: ClassTag, Sig[U, V <: Struct] <: Signal[U, V]]
-  (implicit ev: A <:< Array[Sig[B, S]]): Flatten[A, S, Signal[Array[B], S]] = new Flatten[A, S, Signal[Array[B], S]] {
-    def apply(sig: Signal[A, S])(implicit ticket: CreationTicket[S]): Signal[Array[B], S] = Signals.dynamic(sig) { s => ev(s.dynamicDepend(sig).get) map { (r: Signal[B, S]) => s.dynamicDepend(r).get} }
+  [S <: Struct, B: ClassTag, Sig[U, V <: Struct] <: Signal[U, V]]
+  : Flatten[Array[Sig[B, S]], S, Signal[Array[B], S]] = new Flatten[Array[Sig[B, S]], S, Signal[Array[B], S]] {
+    def apply(sig: Signal[Array[Sig[B, S]], S])(implicit ticket: CreationTicket[S]): Signal[Array[B], S] = Signals.dynamic(sig) { s => s.dynamicDepend(sig).get map { (r: Signal[B, S]) => s.dynamicDepend(r).get} }
   }
   implicit def flattenSignalOption
-  [A, S <: Struct, B, Sig[U, V <: Struct] <: Signal[U, V]]
-  (implicit ev: A <:< Option[Sig[B, S]]): Flatten[A, S, Signal[Option[B], S]] = new Flatten[A, S, Signal[Option[B], S]] {
-    def apply(sig: Signal[A, S])(implicit ticket: CreationTicket[S]): Signal[Option[B], S] = Signals.dynamic(sig) { s => ev(s.dynamicDepend(sig).get) map { (r: Signal[B, S]) => s.dynamicDepend(r).get} }
+  [S <: Struct, B, Sig[U, V <: Struct] <: Signal[U, V]]
+  : Flatten[Option[Sig[B, S]], S, Signal[Option[B], S]] = new Flatten[Option[Sig[B, S]], S, Signal[Option[B], S]] {
+    def apply(sig: Signal[Option[Sig[B, S]], S])(implicit ticket: CreationTicket[S]): Signal[Option[B], S] = Signals.dynamic(sig) { s => s.dynamicDepend(sig).get map { (r: Signal[B, S]) => s.dynamicDepend(r).get} }
   }
-  implicit def flattenEvent[A, S <: Struct, B](implicit ev: A <:< Event[B, S]): Flatten[A, S, Event[B, S]] = new Flatten[A, S, Event[B, S]] {
-    def apply(sig: Signal[A, S])(implicit ticket: CreationTicket[S]): Event[B, S] = Events.dynamic(sig) { s => s.dynamicDepend(s.dynamicDepend(sig).get).toOption }
+  implicit def flattenEvent[A, S <: Struct, B]: Flatten[Event[B, S], S, Event[B, S]] = new Flatten[Event[B, S], S, Event[B, S]] {
+    def apply(sig: Signal[Event[B, S], S])(implicit ticket: CreationTicket[S]): Event[B, S] = Events.dynamic(sig) { s => s.dynamicDepend(s.dynamicDepend(sig).get).toOption }
 
   }
 }
