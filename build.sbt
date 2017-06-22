@@ -24,9 +24,8 @@ shellPrompt in ThisBuild := { state => Project.extract(state).currentRef.project
 lazy val rescalaAggregate = project.in(file(".")).aggregate(rescalaJVM,
   rescalaJS, microbench, reswing, examples, examplesReswing, caseStudyEditor,
   caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags,
-  datastructures, universe, reactiveStreams, documentation, meta,
-  stm, testToolsJVM, testToolsJS, testsJVM, testsJS, fullmv, caseStudyShapes, caseStudyMill,
-  reandroidthings, baromter4Android)
+  datastructures, universe, reactiveStreams, documentation,
+  stm, testToolsJVM, testToolsJS, testsJVM, testsJS, fullmv, caseStudyShapes, caseStudyMill)
   .settings(
     publish := {},
     publishLocal := {})
@@ -319,9 +318,9 @@ lazy val scalatestDependency = libraryDependencies += "org.scalatest" %%% "scala
 val circeVersion = "0.8.0"
 
 lazy val circeDependencies = libraryDependencies ++= Seq(
-  "io.circe" %% "circe-core",
-  "io.circe" %% "circe-generic",
-  "io.circe" %% "circe-parser"
+  "io.circe" %%% "circe-core",
+  "io.circe" %%% "circe-generic",
+  "io.circe" %%% "circe-parser"
 ).map(_ % circeVersion)
 
 

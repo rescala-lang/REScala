@@ -2,6 +2,7 @@ package tests.rescala
 
 import org.scalatest.FunSuite
 import rescala.restore.ReStoringEngine
+import rescala.core.ReCirce.recirce
 
 class RestoringTest extends FunSuite {
 
