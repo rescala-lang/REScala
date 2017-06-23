@@ -61,7 +61,7 @@ trait EngineImpl[S <: Struct, ExactTurn <: Turn[S]  with Creation[S]] extends En
   }
 
 
-  private val _currentTurn: DynamicVariable[Option[ExactTurn]] = new DynamicVariable[Option[ExactTurn]](None)
+  protected val _currentTurn: DynamicVariable[Option[ExactTurn]] = new DynamicVariable[Option[ExactTurn]](None)
   // TODO currently the responsibility of setting the current turn around each reevaluation lies with each turn itself.
   // This is silly because this behavior is the same for every turn implementation. Moreover, turns can only set
   // the current turn for the available engine that they were started from. However, (probably because this TurnSource

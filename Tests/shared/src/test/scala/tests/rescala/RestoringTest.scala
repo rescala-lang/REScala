@@ -22,8 +22,6 @@ class RestoringTest extends FunSuite {
       engine.snapshot()
     }
 
-    println(snapshot.values)
-
     {
       implicit val engine1 = new ReStoringEngine(restoreFrom = snapshot.toSeq)
       val e = engine1.Evt[Unit]()
@@ -59,8 +57,6 @@ class RestoringTest extends FunSuite {
       engine.snapshot()
 
     }
-
-    println(snapshot)
 
     {
       implicit val engine1 = new ReStoringEngine(restoreFrom = snapshot.toSeq)
