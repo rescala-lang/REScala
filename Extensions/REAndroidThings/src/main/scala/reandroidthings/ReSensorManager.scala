@@ -14,15 +14,11 @@ trait ReSensorManager {
   protected def peer: SensorManager
 
   def sensorList(`type`: Int): List[ReSensor] = {
-    //    val l: List[Int] = List(1, 2, 3, 4)
-    //    print(l.map(_ * 2))
     val l: List[Sensor] = peer.getSensorList(`type`).asScala.toList
     l.map(ReSensor.wrap(_))
   }
 
   def dynamicSensorList(`type`: Int): List[ReSensor] = {
-    //    val l: List[Int] = List(1, 2, 3, 4)
-    //    print(l.map(_ * 2))
     val l: List[Sensor] = peer.getDynamicSensorList(`type`).asScala.toList
     l.map(ReSensor.wrap(_))
   }
@@ -43,15 +39,11 @@ trait ReSensorManager {
     }
   }
 
-  //  def defaultSensor(tyipe: Int, wakeUp: boolean): List[ReSensor] = peer.getDefaultSensor(tyipe, wakeUp)
-
 
   def registerDynamicSensorCallback(callback: ReSensorManager.DynamicSensorCallback): Unit = {
     // cast to SensorManager.DynamicSensorCallback
-    val callbackSensorManager: SensorManager.DynamicSensorCallback = callback match {
-      case cb: SensorManager.DynamicSensorCallback => cb
-      case _ => null
-    }
+    val callbackSensorManager: SensorManager.DynamicSensorCallback =
+      callback.asInstanceOf[SensorManager.DynamicSensorCallback]
 
     peer.registerDynamicSensorCallback(callbackSensorManager, null)
   }
@@ -65,12 +57,12 @@ trait ReSensorManager {
   }
 
   def registerListener(listener: ReSensorEventListener, sensor: ReSensor, samplingPeriodUs: Int, maxReportLatencyUs: Int): Boolean = {
-    peer.registerListener(castToSensorEventListener(listener), sensor.peer, samplingPeriodUs, maxReportLatencyUs)
+    peer.registerListener(listener.asInstanceOf[SensorEventListener], sensor.peer, samplingPeriodUs, maxReportLatencyUs)
   }
 
   // TODO: Wrapper für Handler?
   def registerListener(listener: ReSensorEventListener, sensor: ReSensor, samplingPeriodUs: Int, handler: Handler): Unit = {
-    peer.registerListener(castToSensorEventListener(listener), sensor.peer, samplingPeriodUs, handler)
+    peer.registerListener(listener.asInstanceOf[SensorEventListener], sensor.peer, samplingPeriodUs, handler)
   }
 
   def unregisterListener(listener: ReSensorEventListener): Unit = {
@@ -78,12 +70,7 @@ trait ReSensorManager {
   }
 
   def unregisterListener(listener: ReSensorEventListener, sensor: ReSensor): Unit = {
-    peer.unregisterListener(castToSensorEventListener(listener), sensor.peer)
-  }
-
-  def castToSensorEventListener(listener: ReSensorEventListener): SensorEventListener = listener match {
-    case ls: SensorEventListener => ls
-    case _ => null
+    peer.unregisterListener(listener.asInstanceOf[SensorEventListener], sensor.peer)
   }
 }
 
@@ -226,10 +213,7 @@ object ReSensorManager {
   implicit def toSensorManager(reSensorManager: ReSensorManager): SensorManager = reSensorManager.peer
 
   implicit def toSensorManagerCallback(callback: ReSensorManager.DynamicSensorCallback): SensorManager.DynamicSensorCallback = {
-    callback match {
-      case cb: SensorManager.DynamicSensorCallback => cb
-      case _ => null
-    }
+    callback.asInstanceOf[SensorManager.DynamicSensorCallback]
   }
 
 
@@ -242,7 +226,7 @@ object ReSensorManager {
   abstract class DynamicSensorCallback extends android.hardware.SensorManager.DynamicSensorCallback {
 
     override def onDynamicSensorConnected(sensor: Sensor): Unit = {
-      onDynamicSensorConnected(ReSensor.wrap(sensor))
+      onDynamicSensorConnected(sensor == null ? null : ReSensor.wrap(sensor))
     }
 
     /**
@@ -253,7 +237,7 @@ object ReSensorManager {
     def onDynamicSensorConnected(sensor: ReSensor): Unit = {}
 
     override def onDynamicSensorDisconnected(sensor: Sensor) : Unit = {
-      onDynamicSensorDisconnected(ReSensor.wrap(sensor))
+      onDynamicSensorDisconnected(sensor == null ? null : ReSensor.wrap(sensor))
     }
 
     /**

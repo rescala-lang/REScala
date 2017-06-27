@@ -16,8 +16,6 @@ class MainActivity extends AppCompatActivity {
   var sensorManager: SensorManager = null
   var reSensorManager: ReSensorManager = null
   private var mEnvironmentalSensorDriver: Bmx280SensorDriver = null
-  //  private var mLastPressure = .0
-  //  private var mLastTemperature = .0
 
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
@@ -34,16 +32,8 @@ class MainActivity extends AppCompatActivity {
 
 
     // get SensorService and cast it to SensorManager
-    sensorManager = getSystemService(Context.SENSOR_SERVICE) match {
-      case sm: SensorManager => sm
-      case _ => throw new ClassCastException
-    }
+    sensorManager = getSystemService(Context.SENSOR_SERVICE).asInstanceOf[SensorManager]
     reSensorManager = ReSensorManager.wrap(sensorManager)
-
-//    val deviceSensors = reSensorManager.getSensorList(ReSensor.TYPE_ALL)
-//    Log.d("Barometer4Android", deviceSensors.toString)
-//    Log.d("Barometer4Android", "isDynamicSensorDiscoverySupported: " + reSensorManager.isDynamicSensorDiscoverySupported.toString)
-
 
     try {
       mEnvironmentalSensorDriver = new Bmx280SensorDriver("I2C1")
@@ -61,7 +51,6 @@ class MainActivity extends AppCompatActivity {
   // --------------- Dynamic ---------------
   private val mDynamicSensorCallback = new ReSensorManager.DynamicSensorCallback() {
     override def onDynamicSensorConnected(sensor: ReSensor): Unit = {
-      Log.d("Barometer4Android", "Hi")
       if (sensor.`type` == ReSensor.TYPE_AMBIENT_TEMPERATURE) { // Our sensor is connected. Start receiving temperature data.
         reSensorManager.registerListener(mTemperatureListener, sensor, ReSensorManager.SensorDelayNormal)
       }
@@ -79,8 +68,6 @@ class MainActivity extends AppCompatActivity {
   private val mTemperatureListener = new ReSensorEventListener() {
     override def onSensorChanged(event: ReSensorEvent): Unit = {
       Log.d("Barometer4Android", "onSensorChanged - temperature " + event.values(0))
-      //      mLastTemperature = event.values(0)
-      //      Log.d(TAG, "sensor changed: " + mLastTemperature)
     }
 
     override def onAccuracyChanged(sensor: ReSensor, accuracy: Int): Unit = {
@@ -92,10 +79,6 @@ class MainActivity extends AppCompatActivity {
   private val mPressureListener = new ReSensorEventListener() {
     override def onSensorChanged(event: ReSensorEvent): Unit = {
       Log.d("Barometer4Android", "onSensorChanged - pressure " + event.values(0))
-      //      mLastPressure = event.values(0)
-      //      Log.d(TAG, "sensor changed: " + mLastPressure)
-      //      if (mDisplayMode eq DisplayMode.PRESSURE) updateDisplay(mLastPressure)
-      //      updateBarometer(mLastPressure)
     }
 
     override def onAccuracyChanged(sensor: ReSensor, accuracy: Int): Unit = {

@@ -6,16 +6,7 @@
 
     <uses-library android:name="com.google.android.things"/>
 
-    <!--<activity android:name="MainActivity"-->
-              <!--android:theme="@style/Theme.AppCompat"-->
-              <!--android:label="@string/app_name">-->
-      <!--<intent-filter>-->
-        <!--<action android:name="android.intent.action.MAIN"/>-->
-        <!--<category android:name="android.intent.category.LAUNCHER"/>-->
-      <!--</intent-filter>-->
-    <!--</activity>-->
-
-    <activity android:name="MainActivityOriginal"
+    <activity android:name="MainActivity"
               android:theme="@style/Theme.AppCompat"
               android:label="@string/app_name">
       <intent-filter>
@@ -23,6 +14,15 @@
         <category android:name="android.intent.category.LAUNCHER"/>
       </intent-filter>
     </activity>
+
+    <!--<activity android:name="MainActivityOriginal"-->
+              <!--android:theme="@style/Theme.AppCompat"-->
+              <!--android:label="@string/app_name">-->
+      <!--<intent-filter>-->
+        <!--<action android:name="android.intent.action.MAIN"/>-->
+        <!--<category android:name="android.intent.category.LAUNCHER"/>-->
+      <!--</intent-filter>-->
+    <!--</activity>-->
 
   </application>
 </manifest>

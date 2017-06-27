@@ -2,6 +2,7 @@ package reandroidthings
 
 import android.hardware.SensorEvent
 
+// TODO: extends Event?
 abstract class ReSensorEvent {
 
   /**
