@@ -240,12 +240,21 @@ object ReSensorManager {
   }
 
   abstract class DynamicSensorCallback extends android.hardware.SensorManager.DynamicSensorCallback {
+
+    override def onDynamicSensorConnected(sensor: Sensor): Unit = {
+      onDynamicSensorConnected(ReSensor.wrap(sensor))
+    }
+
     /**
       * Called when there is a dynamic sensor being connected to the system.
       *
       * @param sensor the newly connected sensor. See { @link android.hardware.Sensor Sensor}.
       */
     def onDynamicSensorConnected(sensor: ReSensor): Unit = {}
+
+    override def onDynamicSensorDisconnected(sensor: Sensor) : Unit = {
+      onDynamicSensorDisconnected(ReSensor.wrap(sensor))
+    }
 
     /**
       * Called when there is a dynamic sensor being disconnected from the system.
