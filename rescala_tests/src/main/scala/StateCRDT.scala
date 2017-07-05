@@ -1,7 +1,6 @@
 import scala.collection.immutable.HashMap
 
-trait StateCRDT[A, B, C <: StateCRDT[A, B, C]] {
-  this: C => // self - type
+abstract class StateCRDT[A, B, C] {this: C =>
 
   /**
     * the public state of the CRDT
@@ -14,12 +13,11 @@ trait StateCRDT[A, B, C <: StateCRDT[A, B, C]] {
   def payload: B
 
   /**
-    * Merge two instances of this CRDT
     *
-    * @param CRDT to be merged with this one
-    * @return the resulting CRDT
+    * @param c
+    * @return
     */
-  def merge(crdt: C): C
+  def merge(c: C): C
 
   def +(crdt: C): C = merge(crdt)
 
@@ -34,27 +32,50 @@ trait StateCRDT[A, B, C <: StateCRDT[A, B, C]] {
   def fromPayload(payload: B): C
 }
 
-
-// c: rescala.Signal[Int] = <console>(17)
-
 case class CIncOnlyCounter(id: String, payload: HashMap[String, Int]) extends StateCRDT[Int, HashMap[String, Int], CIncOnlyCounter] {
-  def merge(c: CIncOnlyCounter) = CIncOnlyCounter(id,
-    payload.merged(c.payload) {
-      case ((k, v1), (_, v2)) => (k, v1 max v2)
-    })
+  def value = payload.values.sum
 
-  def value: Int = payload.values.sum
+  def merge(c: CIncOnlyCounter) = c match {
+    case CIncOnlyCounter(i, p) => CIncOnlyCounter(id,
+      payload.merged(p) {
+        case ((k, v1), (_, v2)) => (k, v1 max v2)
+      })
+  }
 
-  def increment: CIncOnlyCounter = this + 1
-
-  def +(i: Int): CIncOnlyCounter = CIncOnlyCounter(id, payload + (id -> (payload(id) + i)))
-
-  def fromPayload(payload: HashMap[String, Int]): StateCRDT[Int, HashMap[String, Int], CIncOnlyCounter] = CIncOnlyCounter(id, payload)
+  override def fromPayload(payload: HashMap[String, Int]): CIncOnlyCounter = CIncOnlyCounter(payload)
+}
+object CIncOnlyCounter {
+  def genId = DistributionEngine.host+java.util.UUID.randomUUID.toString
+  def apply(value: Int): CIncOnlyCounter = {
+    //val id = DistributionEngine.host + java.util.UUID.randomUUID.toString // assign random id based on host
+    val id = genId // assign random id based on host
+    CIncOnlyCounter(id, HashMap(id -> value))
+  }
+  def apply(payload: HashMap[String, Int]): CIncOnlyCounter = {
+    CIncOnlyCounter(genId, payload)
+  }
 }
 
-object CIncOnlyCounter {
-  def apply(value: Int): CIncOnlyCounter = {
-    val id = DistributionEngine.host + java.util.UUID.randomUUID.toString // assign random id based on host
-    new CIncOnlyCounter(id, HashMap(id -> value))
+case class Foo(id: String, payload: HashMap[String, Float]) extends StateCRDT[Float, HashMap[String, Float], Foo] {
+  def value = payload.values.sum
+
+  def merge(c: Foo) = c match {
+    case Foo(i, p) => Foo(id,
+      payload.merged(p) {
+        case ((k, v1), (_, v2)) => (k, v1 max v2)
+      })
+  }
+
+  override def fromPayload(payload: HashMap[String, Float]): Foo = Foo(payload)
+}
+object Foo {
+  def genId = java.util.UUID.randomUUID.toString
+  def apply(value: Float): Foo = {
+    val id = DistributionEngine.host+java.util.UUID.randomUUID.toString // assign random id based on host
+    new Foo(id, HashMap(id -> value))
+  }
+
+  def apply(payload: HashMap[String, Float]): Foo = {
+    new Foo(genId, payload)
   }
 }
