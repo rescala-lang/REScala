@@ -1,4 +1,5 @@
 import java.net.InetAddress
+
 import rescala._
 
 /**
@@ -15,7 +16,7 @@ object DistributionEngine {
   // TODO: make private
   var cloudStorage: Map[String, Map[String, Any]] = Map().withDefaultValue(Map())
 
-  var localSignals: List[Signal[StateCRDT[_,_,_]]] = List()
+  var localVars: Map[String, Map[String, Any]] = Map().withDefaultValue(Map())
 
   /**
     * Publishes a variable on this host to the other hosts.
@@ -26,21 +27,32 @@ object DistributionEngine {
     * @tparam B
     * @tparam C
     */
-  def publish[A,B,C <: StateCRDT[A,B,C]](varName: String, localVar: Signal[StateCRDT[A, B, C]]) = {
+  def publish(varName: String, localVar: Var[_ <: StateCRDT]) = {
     // LookupServer Registration:
     val crdt = localVar.now // retrieve current value of CRDT
     val hosts = LookupServer.register(varName, host) // register this instance
     registry = registry + (varName -> hosts) // update local registry
 
+    //set(varName, mergedCrdt) // update other hosts with new value
+
+    println("Adding listener for " + localVar)
+
+    localVar.changed += ((c) => {
+      println("localVar " + c.asInstanceOf[CIncOnlyCounter].id + " changed!")
+      set(varName, c)
+    })
+
     // Fetch all other hosts:
     val mergedCrdt = registry(varName)
       .filter((hostname) => hostname != host)
       .foldLeft(crdt)((mergedCrdt, hostname) => // update local value by pulling all hosts
-        mergedCrdt.merge(crdt.fromPayload(cloudStorage(hostname)(varName).asInstanceOf[B]))) // merge new value for this var with the the old one
+        mergedCrdt.merge(mergedCrdt.fromPayload(cloudStorage(hostname)(varName).asInstanceOf[mergedCrdt.payloadType]))) // merge new value for this var with the the old one
+
+    localVar.asInstanceOf[Var[StateCRDT]].set(mergedCrdt) // update value with mergedCrdt
     cloudStorage = cloudStorage +
       (host -> (cloudStorage(host) + (varName -> mergedCrdt.payload))) // update storage for this host
-    set(varName, mergedCrdt) // update other hosts with new value
-    localVar.changed += ((c:StateCRDT[_,B,C]) => set(varName, c))
+
+    localVars = localVars + (host -> (localVars(host) + (varName -> localVar))) // add the var to this host
   }
 
   /**
@@ -50,22 +62,28 @@ object DistributionEngine {
     * @param value
     * @tparam C
     */
-  def set[C <: StateCRDT[_,_,C]](varName: String, value: StateCRDT[_,_,C]) =
+  def set(varName: String, value: StateCRDT) =
     registry(varName).filter((hostname) => hostname != host) // get all hosts differing from this one
       .foreach((hostname) => {
       cloudStorage = cloudStorage +
         (hostname -> (cloudStorage(hostname) +
           (varName -> value.payload))) // add new value to cloudStorage
-      Thread sleep 2000
-      println(hostname + " updated")
+
+      val localVar = localVars(hostname)(varName).asInstanceOf[Var[StateCRDT]]
+      val localPayload = localVar.now.payload
+      if (localVar.now.payload != value.payload) { // only update local instance if payload changed
+        localVar.set(localVar.now.merge(value))
+        println("[" + hostname + "] Setting " + varName + "(" + localVar.now.asInstanceOf[CIncOnlyCounter].id + ") from " + localPayload + " to " + value.payload)
+      }
+      //Thread sleep 2000
     })
 
   /**
     * Pull all hosts and return the new merged value for a given name
     */
-  def update[A <: StateCRDT[_, _, A]](varName: String, localVal: A): A =
+  def update(varName: String, localVal: StateCRDT) =
     registry(varName).foldLeft(localVal)((newValue, hostname) =>
-      newValue.merge(cloudStorage(hostname)(varName).asInstanceOf[A]))
+      newValue.merge(newValue.fromPayload(cloudStorage(hostname)(varName).asInstanceOf[newValue.payloadType])).asInstanceOf[StateCRDT])
 }
 
 object LookupServer {
