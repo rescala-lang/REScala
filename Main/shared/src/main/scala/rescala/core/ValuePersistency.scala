@@ -8,7 +8,7 @@ sealed class ValuePersistency[V](
 
 object ValuePersistency {
   // Events do not have a value, so reevaluating them at ignition is pointless in theory.
-  // DynamicEvents however are part badly implemented and part not well-enough unterstood,
+  // DynamicEvents however are part badly implemented and part not well-enough understood,
   // so they DO require an initial reevaluation to establish their initial dependencies correctly.
   // Since superfluous reevaluation of events without a good reason however do not actually have
   // any effect, we simply set all events to just be reevaluated upon ignition unconditionally,
