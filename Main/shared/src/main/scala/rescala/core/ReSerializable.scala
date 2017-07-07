@@ -19,6 +19,8 @@ object ReSerializable {
   implicit def restrav[T <: Traversable[_ <: Reactive[_]]]: ReSerializable[T] = doNotSerialize
   implicit def resopt[T <: Option[_ <: Reactive[_]]]: ReSerializable[T] = doNotSerialize
 
+  implicit def defaultRecirceSerialize[T: Encoder : Decoder] = ReCirce.recirce
+
   def doNotSerialize[T]: ReSerializable[T] = null
 
   def pulseEncoder[T: Encoder](): Encoder[Pulse[T]] = io.circe.Encoder.encodeOption[T].contramap(_.toOption)
