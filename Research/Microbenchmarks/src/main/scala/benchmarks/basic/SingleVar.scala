@@ -1,4 +1,4 @@
-package benchmarks.simple
+package benchmarks.basic
 
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.{ReadWriteLock, ReentrantReadWriteLock}
