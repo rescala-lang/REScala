@@ -16,7 +16,7 @@ object main {
     val b = Var(CIncOnlyCounter(13))
     DistributionEngine.publish("moppi", b)
     println(b.now.payload)
-    b.set(b.now.increase)
+    b.transform(_.increase)
 
     DistributionEngine.host = "Host1"
     //a.set(a.now.increase)
