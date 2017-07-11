@@ -7,7 +7,7 @@ class CreationTicketTest extends RETests {
 
   /* this test uses some shady planned()(identity) to get the turn object out of the transaction
    * you should not do this. */
-  def getTurn[S2 <: Struct](implicit engine: rescala.core.Engine[S2]): rescala.core.CreationIntegrated[S2] = engine.transaction()(identity)
+  def getTurn[S2 <: Struct](implicit engine: rescala.core.Engine[S2]): rescala.core.Creation[S2] = engine.transaction()(_.creation)
 
   allEngines("none Dynamic No Implicit") { engine => import engine._
     assert(implicitly[CreationTicket].self === Right(engine))
@@ -16,14 +16,14 @@ class CreationTicketTest extends RETests {
   allEngines("some Dynamic No Implicit") { engine => import engine._
     engine.transaction() { (dynamicTurn: AdmissionTicket) =>
       assert(implicitly[CreationTicket].self === Right(engine))
-      assert(implicitly[CreationTicket].apply(_.creation) === dynamicTurn.creation)
+      assert(implicitly[CreationTicket].apply(identity) === dynamicTurn.creation)
     }
   }
 
   allEngines("none Dynamic Some Implicit") { engine => import engine._
-    implicit val implicitTurn: CreationIntegrated = getTurn
+    implicit val implicitTurn: Creation = getTurn
     assert(implicitly[CreationTicket].self === Left(implicitTurn))
-    assert(implicitly[CreationTicket].apply(identity).creation === implicitTurn)
+    assert(implicitly[CreationTicket].apply(identity) === implicitTurn)
   }
 
   // Cannot run a turn inside a turn with pipelining
@@ -33,9 +33,9 @@ class CreationTicketTest extends RETests {
     //    }
     //    else {
     engine.transaction() { (dynamicTurn: AdmissionTicket) =>
-      implicit val implicitTurn: CreationIntegrated = getTurn
+      implicit val implicitTurn: Creation = getTurn
       assert(implicitly[CreationTicket].self === Left(implicitTurn))
-      assert(implicitly[CreationTicket].apply(_.creation) === implicitTurn)
+      assert(implicitly[CreationTicket].apply(identity) === implicitTurn)
       //      }
     }
   }
@@ -43,14 +43,14 @@ class CreationTicketTest extends RETests {
 
 
   allEngines("implicit In Closures") { engine => import engine._
-    val closureDefinition: CreationIntegrated = getTurn(engine)
+    val closureDefinition: Creation = getTurn(engine)
     val closure = {
-      implicit def it: CreationIntegrated = closureDefinition
+      implicit def it: Creation = closureDefinition
       () => implicitly[CreationTicket]
     }
     engine.transaction() { dynamic =>
       assert(closure().self === Left(closureDefinition))
-      assert(closure().apply(_.creation) === closureDefinition)
+      assert(closure().apply(identity) === closureDefinition)
     }
   }
 
@@ -62,7 +62,7 @@ class CreationTicketTest extends RETests {
     }
     engine.transaction() { dynamic =>
       assert(closure().self === Right(engine))
-      assert(closure().apply(_.creation) === dynamic.creation)
+      assert(closure().apply(identity) === dynamic.creation)
     }
   }
 

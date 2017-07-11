@@ -24,6 +24,7 @@ abstract class RescalaDefaultImports[S <: Struct] {
   final type AdmissionTicket = rescala.core.AdmissionTicket[S]
   final type WrapUpTicket = rescala.core.WrapUpTicket[S]
   final type CreationTicket = rescala.core.CreationTicket[S]
+  final type Creation = rescala.core.Creation[S]
   final type Reactive = rescala.core.Reactive[S]
 
   final def Evt[A](): Evt[A] = reactives.Evt[A, S]()(explicitEngine)

@@ -1,6 +1,6 @@
 package rescala.core
 
-import rescala.util.Globals
+import rescala.util.{Globals, REName}
 
 import scala.language.higherKinds
 
@@ -43,8 +43,9 @@ trait Pulsing[+P, S <: Struct] extends Reactive[S] {
 
 
 /** helper class implementing the state methods of reactive and pulsing */
-abstract class Base[P, S <: Struct](initialState: S#State[Pulse[P], S]) extends Pulsing[Pulse[P], S] {
+abstract class Base[P, S <: Struct](initialState: S#State[Pulse[P], S], rename: REName) extends Pulsing[Pulse[P], S] {
   override type Value = Pulse[P]
+  override def toString = rename.name
   final override protected[rescala] def state: S#State[Value, S] = initialState
 }
 

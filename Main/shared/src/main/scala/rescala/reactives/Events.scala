@@ -3,17 +3,18 @@ package rescala.reactives
 import rescala.core.{Base, CreationTicket, Disconnectable, DynamicTicket, Pulse, Reactive, ReevaluationResult, StaticTicket, Struct, Turn, ValuePersistency}
 import rescala.core.Pulse.NoChange
 import rescala.reactives.Signals.Diff
+import rescala.util.REName
 
 object Events {
 
-  private abstract class StaticEvent[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: StaticTicket[S] => Pulse[T], override val toString: String)
-    extends Base[T, S](_bud) with Event[T, S] {
+  private abstract class StaticEvent[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: StaticTicket[S] => Pulse[T], name: REName)
+    extends Base[T, S](_bud, name) with Event[T, S] {
     override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[T], indeps: Set[Reactive[S]]): ReevaluationResult[Value, S] =
       ReevaluationResult.Static(Pulse.tryCatch(expr(turn.makeStaticReevaluationTicket()), onEmpty = NoChange))
   }
 
-  private abstract class ChangeEvent[T, S <: Struct](_bud: S#State[Pulse[Diff[T]], S], signal: Signal[T, S])
-    extends Base[Diff[T], S](_bud) with Event[Diff[T], S] {
+  private abstract class ChangeEvent[T, S <: Struct](_bud: S#State[Pulse[Diff[T]], S], signal: Signal[T, S], name: REName)
+    extends Base[Diff[T], S](_bud, name) with Event[Diff[T], S] {
     override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[Diff[T]], indeps: Set[Reactive[S]]): ReevaluationResult[Value, S] = {
       val pulse = {
         val st = turn.makeStaticReevaluationTicket()
@@ -26,7 +27,7 @@ object Events {
     }
   }
 
-  private abstract class DynamicEvent[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: DynamicTicket[S] => Pulse[T]) extends Base[T, S](_bud) with Event[T, S] {
+  private abstract class DynamicEvent[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: DynamicTicket[S] => Pulse[T], name: REName) extends Base[T, S](_bud, name) with Event[T, S] {
 
     override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[T], indeps: Set[Reactive[S]]): ReevaluationResult[Pulse[T], S] = {
       val dt = turn.makeDynamicReevaluationTicket(indeps)
@@ -46,14 +47,14 @@ object Events {
   def dynamic[T, S <: Struct](dependencies: Reactive[S]*)(expr: DynamicTicket[S] => Option[T])(implicit maybe: CreationTicket[S]): Event[T, S] = {
     maybe { initialTurn =>
       initialTurn.create[Pulse[T], Event[T, S]](dependencies.toSet, ValuePersistency.Event) {
-        state => new DynamicEvent[T, S](state, expr.andThen(Pulse.fromOption)) with Disconnectable[S]
+        state => new DynamicEvent[T, S](state, expr.andThen(Pulse.fromOption), maybe.rename) with Disconnectable[S]
       }
     }
   }
 
   def change[A, S <: Struct](signal: Signal[A, S])(implicit maybe: CreationTicket[S]): Event[Diff[A], S] = maybe { initTurn =>
     initTurn.create[Pulse[Diff[A]], Event[Diff[A], S]](Set(signal), ValuePersistency.Event) {
-      state => new ChangeEvent[A, S](state, signal) with Disconnectable[S]
+      state => new ChangeEvent[A, S](state, signal, maybe.rename) with Disconnectable[S]
     }
   }
 }

@@ -111,7 +111,7 @@ trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] 
       // TODO this should be equivalent, but doesn't work for unmanaged engine; need to investigate.
       // folder(currentValue, st.turn.after(this).get)
       st.staticDepend(this).toOption.fold(currentValue)(value => folder(currentValue, value))
-    }(initialTurn)
+    }(initialTurn)(ticket.rename)
   }
 
   /** reduces events with a given reduce function to create a Signal */
@@ -177,7 +177,7 @@ trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] 
       Set[Reactive[S]](this, s),
       st => st.staticDepend(s).get) { (st, current) =>
       st.staticDepend(this).toOption.fold(current)(_ => st.staticDepend(s).get)
-    }
+    }(_)(ticket.rename)
   }
 
 

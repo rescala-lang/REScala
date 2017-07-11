@@ -16,7 +16,7 @@ parallelExecution in Test in ThisBuild := true
 
 licenses in ThisBuild += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))
 
-maxErrors in ThisBuild := 5
+//maxErrors in ThisBuild := 5
 
 // set the prompt (for this build) to include the project id.
 shellPrompt in ThisBuild := { state => Project.extract(state).currentRef.project + "> " }
@@ -39,6 +39,7 @@ lazy val rescala = crossProject.in(file("Main"))
     resolvers += Resolver.bintrayRepo("pweisenburger", "maven"),
     libraryDependencies += "de.tuda.stg" %% "retypecheck" % "0.2.0",
     libraryDependencies += scalaOrganization.value % "scala-reflect" % scalaVersion.value % "provided",
+    libraryDependencies += "com.lihaoyi" %%% "sourcecode" % "0.1.4",
 
     sourceGenerators in Compile += Def.task {
       val file = (sourceManaged in Compile).value / "rescala" / "reactives" / "GeneratedSignalLift.scala"
@@ -66,7 +67,7 @@ lazy val rescala = crossProject.in(file("Main"))
       Seq(file)
     }.taskValue,
     initialCommands in console :=
-      s"""import rescala._
+      s"""
        """.stripMargin
   )
   .jvmSettings()

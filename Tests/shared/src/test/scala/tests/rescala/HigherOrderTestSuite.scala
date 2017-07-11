@@ -1,5 +1,7 @@
 package tests.rescala
 
+import rescala.core.CreationTicket
+
 
 class HigherOrderTestSuite extends RETests {
 
@@ -359,7 +361,7 @@ class HigherOrderTestSuite extends RETests {
     val mapped = v.map(_ + 0)
 
     val sm = Signal { mapped.change.apply() }
-    val sd = dynamic() {t => t.depend(mapped.change(t)) }
+    val sd = dynamic() {t => t.depend(mapped.change(CreationTicket.fromTicketDImplicit(t, implicitly))) }
 
 
     //intercept[NoSuchElementException](sm.now)

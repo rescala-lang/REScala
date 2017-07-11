@@ -1,8 +1,9 @@
 package rescala.reactives
 
 import rescala.core._
+import rescala.util.REName
 
-class Source[T, S <: Struct](initialState: S#State[Pulse[T], S]) extends Base[T, S](initialState) {
+class Source[T, S <: Struct](initialState: S#State[Pulse[T], S], name: REName) extends Base[T, S](initialState, name) {
   private var nextReevaluationResult: Value = null
   final def admit(value: T)(implicit ticket: AdmissionTicket[S]): Unit = admitPulse(Pulse.Value(value))
 
@@ -27,7 +28,7 @@ class Source[T, S <: Struct](initialState: S#State[Pulse[T], S]) extends Base[T,
   * @tparam T Type returned when the event fires
   * @tparam S Struct type used for the propagation of the event
   */
-final class Evt[T, S <: Struct] private[rescala] (initialState: S#State[Pulse[T], S]) extends Source[T, S](initialState) with Event[T, S] {
+final class Evt[T, S <: Struct] private[rescala] (initialState: S#State[Pulse[T], S], name: REName) extends Source[T, S](initialState, name) with Event[T, S] {
   /** Trigger the event */
   def apply(value: T)(implicit fac: Engine[S]): Unit = fire(value)
   def fire()(implicit fac: Engine[S], ev: Unit =:= T): Unit = fire(ev(Unit))(fac)
@@ -40,7 +41,7 @@ final class Evt[T, S <: Struct] private[rescala] (initialState: S#State[Pulse[T]
   */
 object Evt {
   def apply[T, S <: Struct]()(implicit ticket: CreationTicket[S]): Evt[T, S] = ticket { t =>
-    t.create[Pulse[T], Evt[T, S]](Set.empty, ValuePersistency.Event)(new Evt[T, S](_))
+    t.create[Pulse[T], Evt[T, S]](Set.empty, ValuePersistency.Event)(new Evt[T, S](_, ticket.rename))
   }
 }
 
@@ -51,7 +52,7 @@ object Evt {
   * @tparam A Type stored by the signal
   * @tparam S Struct type used for the propagation of the signal
   */
-final class Var[A, S <: Struct] private[rescala] (initialState: S#State[Pulse[A], S]) extends Source[A, S](initialState) with Signal[A, S] {
+final class Var[A, S <: Struct] private[rescala] (initialState: S#State[Pulse[A], S], name: REName) extends Source[A, S](initialState, name) with Signal[A, S] {
   def update(value: A)(implicit fac: Engine[S]): Unit = set(value)
   def set(value: A)(implicit fac: Engine[S]): Unit = fac.transaction(this) {admit(value)(_)}
 
@@ -78,7 +79,7 @@ object Var {
   def apply[T: ReSerializable, S <: Struct](initval: T)(implicit ticket: CreationTicket[S]): Var[T, S] = fromChange(Pulse.Value(initval))
   def empty[T: ReSerializable, S <: Struct]()(implicit ticket: CreationTicket[S]): Var[T, S] = fromChange(Pulse.empty)
   private[this] def fromChange[T: ReSerializable, S <: Struct](change: Pulse.Change[T])(implicit ticket: CreationTicket[S]): Var[T, S] = ticket { t =>
-    t.create[Pulse[T], Var[T, S]](Set.empty, ValuePersistency.InitializedSignal(change))(new Var[T, S](_))
+    t.create[Pulse[T], Var[T, S]](Set.empty, ValuePersistency.InitializedSignal(change))(new Var[T, S](_, ticket.rename))
   }
 }
 

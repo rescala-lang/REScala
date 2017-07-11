@@ -3,6 +3,7 @@ package rescala.reactivestreams
 
 import org.reactivestreams.{Publisher, Subscriber, Subscription}
 import rescala.core.{Base, Engine, Pulse, Pulsing, Reactive, ReevaluationResult, Struct, Turn, ValuePersistency}
+import rescala.util.REName
 
 import scala.util.{Failure, Success}
 
@@ -21,7 +22,7 @@ object REPublisher {
 
   }
 
-  class SubscriptionReactive[T, S <: Struct](bud: S#State[Pulse[T], S], dependency: Pulsing[Pulse[T], S], subscriber: Subscriber[_ >: T], fac: Engine[S]) extends Base[T, S](bud) with Reactive[S] with Subscription {
+  class SubscriptionReactive[T, S <: Struct](bud: S#State[Pulse[T], S], dependency: Pulsing[Pulse[T], S], subscriber: Subscriber[_ >: T], fac: Engine[S], name: REName) extends Base[T, S](bud, name) with Reactive[S] with Subscription {
 
     var requested: Long = 0
     var cancelled = false
@@ -66,7 +67,7 @@ object REPublisher {
     val incoming = Set[Reactive[S]](dependency)
     fac.transaction(dependency) { ticket =>
       ticket.creation.create[Pulse[T], SubscriptionReactive[T, S]](incoming, ValuePersistency.DerivedSignal) { state =>
-        new SubscriptionReactive[T, S](state, dependency, subscriber, fac)
+        new SubscriptionReactive[T, S](state, dependency, subscriber, fac, s"forSubscriber(${subscriber})")
       }
     }
   }

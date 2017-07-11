@@ -1,6 +1,7 @@
 package rescala.core
 
 import rescala.reactives.{Event, Signal}
+import rescala.util.REName
 
 import scala.annotation.implicitNotFound
 import scala.language.implicitConversions
@@ -95,7 +96,7 @@ final class WrapUpTicket[S <: Struct] private[rescala](val creation: StateAccess
 @implicitNotFound(msg = "could not generate a turn source." +
   " An available implicit Ticket will serve as turn source, or if no" +
   " such turn is present, an implicit Engine is accepted instead.")
-final case class CreationTicket[S <: Struct](self: Either[Creation[S], Engine[S]]) extends AnyVal {
+final case class CreationTicket[S <: Struct](self: Either[Creation[S], Engine[S]])(implicit val rename: REName) {
 
   def apply[T](f: Creation[S] => T): T = self match {
     case Left(integrated) => f(integrated)
@@ -104,20 +105,20 @@ final case class CreationTicket[S <: Struct](self: Either[Creation[S], Engine[S]
 }
 
 object CreationTicket extends LowPriorityCreationImplicits {
-  implicit def fromTicketAImplicit[S <: Struct](implicit ticket: AdmissionTicket[S]): CreationTicket[S] = CreationTicket(Left(ticket.creation))
-  implicit def fromTicketA[S <: Struct](ticket: AdmissionTicket[S]): CreationTicket[S] = CreationTicket(Left(ticket.creation))
+  implicit def fromTicketAImplicit[S <: Struct](implicit ticket: AdmissionTicket[S], line: REName): CreationTicket[S] = CreationTicket(Left(ticket.creation))
+  //implicit def fromTicketA[S <: Struct](ticket: AdmissionTicket[S])(implicit line: REName): CreationTicket[S] = CreationTicket(Left(ticket.creation))
 
-  implicit def fromTicketSImplicit[S <: Struct](implicit ticket: StaticTicket[S]): CreationTicket[S] = CreationTicket(Left(ticket.creation))
-  implicit def fromTicketS[S <: Struct](ticket: StaticTicket[S]): CreationTicket[S] = CreationTicket(Left(ticket.creation))
+  implicit def fromTicketSImplicit[S <: Struct](implicit ticket: StaticTicket[S], line: REName): CreationTicket[S] = CreationTicket(Left(ticket.creation))
+  //implicit def fromTicketS[S <: Struct](ticket: StaticTicket[S])(implicit line: REName): CreationTicket[S] = CreationTicket(Left(ticket.creation))
 
-  implicit def fromTicketDImplicit[S <: Struct](implicit ticket: DynamicTicket[S]): CreationTicket[S] = CreationTicket(Left(ticket.creation))
-  implicit def fromTicketD[S <: Struct](ticket: DynamicTicket[S]): CreationTicket[S] = CreationTicket(Left(ticket.creation))
+  implicit def fromTicketDImplicit[S <: Struct](implicit ticket: DynamicTicket[S], line: REName): CreationTicket[S] = CreationTicket(Left(ticket.creation))
+  //implicit def fromTicketD[S <: Struct](ticket: DynamicTicket[S])(implicit line: REName): CreationTicket[S] = CreationTicket(Left(ticket.creation))
 
-  implicit def fromCreationImplicit[S <: Struct](implicit creation: Creation[S]): CreationTicket[S] = CreationTicket(Left(creation))
-  implicit def fromCreation[S <: Struct](creation: Creation[S]): CreationTicket[S] = CreationTicket(Left(creation))
+  implicit def fromCreationImplicit[S <: Struct](implicit creation: Creation[S], line: REName): CreationTicket[S] = CreationTicket(Left(creation))
+  implicit def fromCreation[S <: Struct](creation: Creation[S])(implicit line: REName): CreationTicket[S] = CreationTicket(Left(creation))
 }
 
 sealed trait LowPriorityCreationImplicits {
-  implicit def fromEngineImplicit[S <: Struct](implicit factory: Engine[S]): CreationTicket[S] = CreationTicket(Right(factory))
-  implicit def fromEngine[S <: Struct](factory: Engine[S]): CreationTicket[S] = CreationTicket(Right(factory))
+  implicit def fromEngineImplicit[S <: Struct](implicit factory: Engine[S], line: REName): CreationTicket[S] = CreationTicket(Right(factory))
+  implicit def fromEngine[S <: Struct](factory: Engine[S])(implicit line: REName): CreationTicket[S] = CreationTicket(Right(factory))
 }
