@@ -1,7 +1,6 @@
 package tests.rescala.concurrency.philosophers
 
-import rescala.core.{Engine, Struct}
-import rescala.util.REName
+import rescala.core.{Engine, REName, Struct}
 import tests.rescala.concurrency.philosophers.PhilosopherTable._
 
 class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(override implicit val engine: Engine[S]) extends PhilosopherTable(philosopherCount, work)(engine) {

@@ -1,7 +1,6 @@
 package rescala.core
 
 import rescala.reactives.{Event, Signal}
-import rescala.util.REName
 
 import scala.annotation.implicitNotFound
 import scala.language.implicitConversions

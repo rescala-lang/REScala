@@ -1,9 +1,8 @@
 package rescala.reactives
 
-import rescala.core._
+import rescala.core.{REName, _}
 import rescala.reactives.RExceptions.EmptySignalControlThrowable
 import rescala.reactives.Signals.Impl.{DynamicSignal, StaticSignal, restored, states}
-import rescala.util.REName
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.DynamicVariable

@@ -1,15 +1,10 @@
-package rescala.util
-
-import java.util.concurrent.ThreadLocalRandom
+package rescala.core
 
 import scala.language.implicitConversions
 
 /**
   * Provides names for dynamic dependencies based on their definition position to allow easier debugging
   */
-object Globals {
-  def nextID(): Long = ThreadLocalRandom.current().nextLong()
-}
 
 trait REName {
   def name: String

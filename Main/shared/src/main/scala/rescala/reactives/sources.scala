@@ -1,7 +1,6 @@
 package rescala.reactives
 
-import rescala.core._
-import rescala.util.REName
+import rescala.core.{REName, _}
 
 class Source[T, S <: Struct](initialState: S#State[Pulse[T], S], name: REName) extends Base[T, S](initialState, name) {
   private var nextReevaluationResult: Value = null

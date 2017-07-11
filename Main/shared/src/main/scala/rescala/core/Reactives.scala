@@ -1,7 +1,5 @@
 package rescala.core
 
-import rescala.util.{Globals, REName}
-
 import scala.language.higherKinds
 
 
@@ -15,7 +13,7 @@ trait Struct { type State[P, S <: Struct] }
 trait Reactive[S <: Struct] {
 
   type Value
-  final override val hashCode: Int = Globals.nextID().hashCode()
+  //final override val hashCode: Int = ThreadLocalRandom.current().nextLong().hashCode()
 
   /**
     * Spore that is used to internally manage the reactive evaluation of this value

@@ -1,12 +1,11 @@
 package rescala.locking
 
 import java.util
-
-import rescala.util.Globals
+import java.util.concurrent.ThreadLocalRandom
 
 class Keychain[InterTurn](init: Key[InterTurn]) {
 
-  val id = Globals.nextID()
+  val id = ThreadLocalRandom.current().nextLong()
   override def toString = s"Keychain($id)"
 
   /** synchronized on this */

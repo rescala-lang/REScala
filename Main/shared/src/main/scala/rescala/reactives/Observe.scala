@@ -1,8 +1,7 @@
 package rescala.reactives
 
-import rescala.core._
+import rescala.core.{REName, _}
 import rescala.reactives.RExceptions.UnhandledFailureException
-import rescala.util.REName
 
 /**
   * Generic interface for observers that represent a function registered to trigger for every reevaluation of a reactive value.
