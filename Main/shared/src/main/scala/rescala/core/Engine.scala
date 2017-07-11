@@ -16,6 +16,6 @@ trait Engine[S <: Struct] extends RescalaDefaultImports[S] {
 
   private[rescala] def executeTurn[I, R](initialWrites: Traversable[Reactive], admissionPhase: AdmissionTicket => I, wrapUpPhase: (I, WrapUpTicket) => R): R
   private[rescala] def singleNow[A](reactive: Pulsing[A, S]): A
-  private[rescala] def create[T](f: (InnerCreationTicket[S]) => T): T
+  private[rescala] def create[T](f: (Creation[S]) => T): T
 }
 

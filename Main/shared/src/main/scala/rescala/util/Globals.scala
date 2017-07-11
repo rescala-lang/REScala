@@ -25,3 +25,4 @@ object Globals {
 
   def nextID(): Long = ThreadLocalRandom.current().nextLong()
 }
+

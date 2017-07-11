@@ -22,7 +22,7 @@ object Signals extends GeneratedSignalLift {
     }
 
     def restoreFrom[R, S <: Struct](states: List[Signal[_, _]])(f: => R)(implicit turnSource: CreationTicket[S]): R = turnSource { ctc =>
-      restored.withValue(states.map(s => ctc.creation.asInstanceOf[StateAccess[S]].dynamicBefore(s.asInstanceOf[Signal[_, S]]).get).reverse) {
+      restored.withValue(states.map(s => ctc.asInstanceOf[StateAccess[S]].dynamicBefore(s.asInstanceOf[Signal[_, S]]).get).reverse) {
         f
       }
     }
@@ -52,12 +52,12 @@ object Signals extends GeneratedSignalLift {
   }
 
   /** creates a signal that statically depends on the dependencies with a given initial value */
-  private[rescala] def staticFold[T: ReSerializable, S <: Struct](dependencies: Set[Reactive[S]], init: StaticTicket[S] => T)(expr: (StaticTicket[S], => T) => T)(ict: InnerCreationTicket[S]): Signal[T, S] = {
+  private[rescala] def staticFold[T: ReSerializable, S <: Struct](dependencies: Set[Reactive[S]], init: StaticTicket[S] => T)(expr: (StaticTicket[S], => T) => T)(ict: Creation[S]): Signal[T, S] = {
     def initOrRestored: T = {
-      if (restored.value eq null) init(ict.creation.asInstanceOf[TurnImpl[S]].makeStaticReevaluationTicket())
+      if (restored.value eq null) init(ict.asInstanceOf[TurnImpl[S]].makeStaticReevaluationTicket())
       else {
         restored.value = restored.value.drop(1)
-        restored.value.headOption.fold(init(ict.creation.asInstanceOf[TurnImpl[S]].makeStaticReevaluationTicket()))(_.asInstanceOf[T])
+        restored.value.headOption.fold(init(ict.asInstanceOf[TurnImpl[S]].makeStaticReevaluationTicket()))(_.asInstanceOf[T])
       }
     }
     val iorPulse: Pulse.Change[T] = Pulse.tryCatch(Pulse.Value(initOrRestored))

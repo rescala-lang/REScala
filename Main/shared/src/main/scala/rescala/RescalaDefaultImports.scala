@@ -23,7 +23,6 @@ abstract class RescalaDefaultImports[S <: Struct] {
   final type DynamicTicket = rescala.core.DynamicTicket[S]
   final type AdmissionTicket = rescala.core.AdmissionTicket[S]
   final type WrapUpTicket = rescala.core.WrapUpTicket[S]
-  final type CreationIntegrated = rescala.core.CreationIntegrated[S]
   final type CreationTicket = rescala.core.CreationTicket[S]
   final type Reactive = rescala.core.Reactive[S]
 

@@ -112,7 +112,7 @@ object ReactiveMacros {
         tree match {
           // replace any used TurnSource in a Signal expression with the correct turn source for the current turn
           case turnSource@q"$_.fromEngineImplicit[..$_](...$_)" if turnSource.tpe =:= weakTypeOf[CreationTicket[S]] && turnSource.symbol.owner == symbolOf[LowPriorityCreationImplicits] =>
-            q"${termNames.ROOTPKG}.rescala.core.CreationTicket.fromTicket($signalMacroArgumentName)"
+            q"${termNames.ROOTPKG}.rescala.core.CreationTicket.fromTicketD($signalMacroArgumentName)"
 
           // Access every reactive through the SignalSynt argument
           // to obtain dynamic dependencies

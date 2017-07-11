@@ -53,10 +53,10 @@ trait EngineImpl[S <: Struct, ExactTurn <: Turn[S]  with Creation[S]] extends En
   protected def executeInternal[I, R](turn: ExactTurn, initialWrites: Traversable[Reactive], admissionPhase: () => I, wrapUpPhase: I => R): R
 
 
-  override private[rescala] def create[T](f: (InnerCreationTicket[S]) => T) = {
+  override private[rescala] def create[T](f: (Creation[S]) => T) = {
     _currentTurn.value match {
-      case Some(turn) => f(new InnerCreationTicket[S](turn))
-      case None => executeTurn(Set.empty, ticket => f(new InnerCreationTicket(ticket.creation)), noWrapUp[T])
+      case Some(turn) => f(turn)
+      case None => executeTurn(Set.empty, ticket => f(ticket.creation), noWrapUp[T])
     }
   }
 

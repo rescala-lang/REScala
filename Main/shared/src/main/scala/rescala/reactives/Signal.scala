@@ -1,6 +1,6 @@
 package rescala.reactives
 
-import rescala.core.{CreationIntegrated, CreationTicket, Engine, Pulse, Pulsing, Struct}
+import rescala.core.{AnyTicket, CreationTicket, Engine, Pulse, Pulsing, Struct}
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 import rescala.reactives.Signals.Diff
 
@@ -11,7 +11,7 @@ object Signal {
   @annotation.implicitAmbiguous("Do not use now during propagation. You have a Ticket available, use the accessors defined there.")
   implicit object NowAllowed
   @compileTimeOnly("only for implicit conflicts")
-  implicit def nowNotAllowed[S <: Struct](implicit @deprecated("unused", "") ticket: CreationIntegrated[S]): NowAllowed.type = ???
+  implicit def nowNotAllowed(implicit @deprecated("unused", "") ticket: AnyTicket): NowAllowed.type = ???
 }
 /**
   * Base signal interface for all signal implementations.
