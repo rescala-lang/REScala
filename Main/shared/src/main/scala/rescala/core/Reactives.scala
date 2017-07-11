@@ -26,9 +26,6 @@ trait Reactive[S <: Struct] {
 
   protected[rescala] def reevaluate(turn: Turn[S], before: Value, indeps: Set[Reactive[S]]): ReevaluationResult[Value, S]
 
-  /** for debugging */
-  private val name = Globals.declarationLocationName()
-  override def toString: String = name
 }
 
 /**
@@ -45,7 +42,7 @@ trait Pulsing[+P, S <: Struct] extends Reactive[S] {
 /** helper class implementing the state methods of reactive and pulsing */
 abstract class Base[P, S <: Struct](initialState: S#State[Pulse[P], S], rename: REName) extends Pulsing[Pulse[P], S] {
   override type Value = Pulse[P]
-  override def toString = rename.name
+  override def toString: String = rename.name
   final override protected[rescala] def state: S#State[Value, S] = initialState
 }
 

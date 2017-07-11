@@ -1,7 +1,7 @@
 package tests.rescala.concurrency.philosophers
 
 import rescala.core.{Engine, Struct}
-import rescala.util.Globals.named
+import rescala.util.REName
 import tests.rescala.concurrency.philosophers.PhilosopherTable._
 
 class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(override implicit val engine: Engine[S]) extends PhilosopherTable(philosopherCount, work)(engine) {
@@ -11,11 +11,12 @@ class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(ov
   override def createTable(tableSize: Int): Seq[Seating[S]] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
 
-    val phils = for (i <- 0 until tableSize) yield named(s"Phil($i)")(Var[Philosopher](Thinking))
+    val phils = for (i <- 0 until tableSize) yield Var[Philosopher](Thinking)(implicitly, s"Phil($i)")
 
     val forks = for (i <- 0 until tableSize) yield {
       val nextCircularIndex = mod(i + 1)
-      named(s"Fork($i, $nextCircularIndex)")(Signal {
+      implicit val name: REName = s"Fork($i, $nextCircularIndex)"
+      Signal {
         phils(i)() match {
           case Hungry => Taken(i.toString)
           case Thinking =>
@@ -24,14 +25,15 @@ class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(ov
               case Thinking => Free
             }
         }
-      })
+      }
     }
 
     for (i <- 0 until tableSize) yield {
       val ownName = i.toString
       val fork1 = forks(i)
       val fork2 = forks(mod(i - 1))
-      val vision = named(s"Vision($i)")(Signal {
+      implicit val name: REName = s"Vision($i)"
+      val vision = Signal {
         fork1() match {
           case Taken(name) if name != ownName => WaitingFor(name)
           case Taken(`ownName`) => Eating
@@ -40,7 +42,7 @@ class DynamicPhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(ov
             case Taken(name) => WaitingFor(name)
           }
         }
-      })
+      }
       Seating(i, phils(i), fork1, fork2, vision)
     }
   }

@@ -7,24 +7,21 @@ import rescala.core.{Engine, Struct, WrapUpTicket}
 import rescala.parrp.Backoff
 import rescala.reactives.Signals.lift
 import rescala.reactives.{Signal, Var}
-import rescala.util.Globals.named
 
 class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit val engine: Engine[S]) {
   import engine.Var
   import tests.rescala.concurrency.philosophers.PhilosopherTable._
 
-  val seatings = createTable(philosopherCount)
+  val seatings: Seq[Seating[S]] = createTable(philosopherCount)
 
-  val eaten = new AtomicInteger(0)
+  val eaten: AtomicInteger = new AtomicInteger(0)
 
   seatings.foreach { seating =>
-    named(s"Observer ${seating.vision}") {
-      seating.vision.observe { state =>
-        if (state == Eating) {
-          eaten.incrementAndGet()
-        }
+    seating.vision.observe { state =>
+      if (state == Eating) {
+        eaten.incrementAndGet()
       }
-    }
+    }(s"Observer ${seating.vision}")
   }
 
   def calcFork(leftName: String, rightName: String)(leftState: Philosopher, rightState: Philosopher): Fork =
@@ -46,16 +43,16 @@ class PhilosopherTable[S <: Struct](philosopherCount: Int, work: Long)(implicit 
   def createTable(tableSize: Int): Seq[Seating[S]] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
 
-    val phils = for (i <- 0 until tableSize) yield named(s"Phil($i)")(Var[Philosopher](Thinking))
+    val phils = for (i <- 0 until tableSize) yield Var[Philosopher](Thinking)(implicitly, s"Phil($i)")
 
     val forks = for (i <- 0 until tableSize) yield {
       val nextCircularIndex = mod(i + 1)
-      named(s"Fork($i, $nextCircularIndex)")(lift(phils(i), phils(nextCircularIndex))(calcFork(i.toString, nextCircularIndex.toString)))
+      lift(phils(i), phils(nextCircularIndex))(calcFork(i.toString, nextCircularIndex.toString))(s"Fork($i, $nextCircularIndex)")
     }
 
     for (i <- 0 until tableSize) yield {
       val previousCircularIndex = mod(i - 1)
-      val vision = named(s"Vision($i)")(lift(forks(previousCircularIndex), forks(i))(calcVision(i.toString)))
+      val vision = lift(forks(previousCircularIndex), forks(i))(calcVision(i.toString))(s"Vision($i)")
       Seating(i, phils(i), forks(previousCircularIndex), forks(i), vision)
     }
   }
