@@ -16,6 +16,7 @@ object main {
     val b = Var(CIncOnlyCounter(13))
     DistributionEngine.publish("moppi", b)
     println(b.now.payload)
+    
     b.transform(_.increase)
 
     DistributionEngine.host = "Host1"
@@ -23,6 +24,20 @@ object main {
     //b.set(b.now.increase)
     println(a.now)
     println(b.now)
+   
+    
+
+    val counter: Signal[CIncOnlyCounter] =  e.fold(CIncOnlyCounter(13)) { (c, _) => c.increase }
+    
+    val syncedCounter: Signal[CIncOnlyCounter] = DistributionEngine.publish("moppi", counter)
+    
+    
+    DistributionEngine.host = "Host2"
+    val otherCounter = DistributionEngine.subscribe(counter)
+    
+    
+    
+  
 
     /**
     DistributionEngine.host = "Host3"
