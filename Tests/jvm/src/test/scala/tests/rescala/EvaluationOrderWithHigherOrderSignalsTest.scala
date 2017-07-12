@@ -7,13 +7,14 @@ case object DontSet extends ChangeX
 case object SetUnchanged extends ChangeX
 case object SetChanged extends ChangeX
 
-class UnchangedReevaluationLevelIncreaseTest extends RETests {
+class EvaluationOrderWithHigherOrderSignalsTest extends RETests {
   def run(engine: Engine[TestStruct], changeX: ChangeX): Unit = {
     import engine._
 
+    val initialX = "initialValue"
+    val newX = if (changeX == SetChanged) "changedValue" else initialX
+
     val results = for(i <- 0 to 10) yield {
-      val initialX = "asdf"
-      val newX = if (changeX == SetChanged) "qwertz" else initialX
 
       val x = Var(initialX)
       val x4 = x.map(identity).map(identity).map(identity).map(identity)
@@ -21,9 +22,9 @@ class UnchangedReevaluationLevelIncreaseTest extends RETests {
       val ho = Var(x: Signal[String])
       var reevaluationRestartTracker = List.empty[String]
       val flatten = Signal {
-        val x = ho()()
-        reevaluationRestartTracker ::= x
-        x
+        val res = ho()()
+        reevaluationRestartTracker ::= res
+        res
       }
 
       changeX match {
@@ -37,8 +38,9 @@ class UnchangedReevaluationLevelIncreaseTest extends RETests {
       reevaluationRestartTracker
     }
 
-    val countedOutcomes = results.groupBy(x=>x).mapValues(_.size)
-    assert(countedOutcomes.size == 1)
+    results.foreach{ r =>
+      assert(r.dropWhile(_ == newX).dropWhile(_ == initialX) == List())
+    }
   }
 
   allEngines("dont set")(run(_, DontSet))

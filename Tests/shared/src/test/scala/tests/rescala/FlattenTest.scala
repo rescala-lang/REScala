@@ -16,7 +16,7 @@ class FlattenTest extends RETests {
 
   allEngines("flatten array") { engine => import engine._
     val sv = Signal { Array(Var(10)) }.flatten
-    assert (sv.now == Array(10))
+    assert (sv.now sameElements Array(10))
 
   }
 }
