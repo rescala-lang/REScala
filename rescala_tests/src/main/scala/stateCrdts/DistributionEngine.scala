@@ -1,3 +1,4 @@
+package stateCrdts
 import java.net.InetAddress
 
 import rescala._
@@ -6,7 +7,7 @@ import rescala._
   * Handles distribution on the client side and provides a frontend for the programmer to interact with.
   */
 object DistributionEngine {
-  var host = InetAddress.getLocalHost.getHostAddress
+  var host: String = InetAddress.getLocalHost.getHostAddress
   // list of hosts for a given name
   // TODO: make private
   var registry: Map[String, List[String]] = Map().withDefaultValue(List())
@@ -18,16 +19,15 @@ object DistributionEngine {
 
   var localVars: Map[String, Map[String, Any]] = Map().withDefaultValue(Map())
 
+  def genId: String = host + java.util.UUID.randomUUID.toString
+
   /**
-    * Publishes a variable on this host to the other hosts.
+    * Publishes a variable on this host to the other hosts under a given name.
     *
-    * @param varName
-    * @param crdt
-    * @tparam A
-    * @tparam B
-    * @tparam C
+    * @param varName  The public name for the published variable
+    * @param localVar the local Var to be published
     */
-  def publish(varName: String, localVar: Var[_ <: StateCRDT]) = {
+  def publish(varName: String, localVar: Var[_ <: StateCRDT]): Unit = {
     // LookupServer Registration:
     val crdt = localVar.now // retrieve current value of CRDT
     val hosts = LookupServer.register(varName, host) // register this instance
@@ -58,11 +58,10 @@ object DistributionEngine {
   /**
     * Updates the value of a given variable on all hosts.
     *
-    * @param varName
-    * @param value
-    * @tparam C
+    * @param varName The public name of the published variable
+    * @param value   The new value for the published variable
     */
-  def set(varName: String, value: StateCRDT) =
+  def set(varName: String, value: StateCRDT): Unit =
     registry(varName).filter((hostname) => hostname != host) // get all hosts differing from this one
       .foreach((hostname) => {
       cloudStorage = cloudStorage +
@@ -81,9 +80,11 @@ object DistributionEngine {
   /**
     * Pull all hosts and return the new merged value for a given name
     */
+  /* TODO: implement or remove
   def update(varName: String, localVal: StateCRDT) =
     registry(varName).foldLeft(localVal)((newValue, hostname) =>
       newValue.merge(newValue.fromPayload(cloudStorage(hostname)(varName).asInstanceOf[newValue.payloadType])).asInstanceOf[StateCRDT])
+  */
 }
 
 object LookupServer {
@@ -91,14 +92,13 @@ object LookupServer {
   private var registry: Map[String, List[String]] = Map().withDefaultValue(List())
 
   /**
-    * Registers a new shared variable to the lookup server.
-    * If the variable name is already known to the server,
+    * Registers a new shared variable to the lookup server and returns a list of other hosts sharing this variable.
     *
-    * @param name
-    * @tparam B
-    * @return
+    * @param name     The name of the public variable
+    * @param hostname The hostname of the server to be registered
+    * @return A list of other hosts sharing this variable
     */
-  def register[B](name: String, hostname: String): List[String] = {
+  def register(name: String, hostname: String): List[String] = {
     val listOfHosts: List[String] = registry(name)
     val newListOfHosts: List[String] = listOfHosts :+ hostname // append new id to list of ids
     registry = registry + (name -> newListOfHosts) // update registry

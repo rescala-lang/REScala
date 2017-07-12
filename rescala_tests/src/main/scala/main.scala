@@ -1,4 +1,5 @@
 import rescala._
+import stateCrdts._
 
 import scala.collection.immutable.HashMap
 
@@ -7,7 +8,7 @@ import scala.collection.immutable.HashMap
   */
 object main {
   def main(args: Array[String]): Unit = {
-    DistributionEngine.host = "Host1"
+    /*Engine.host = "Host1"
 
     val a = Var(CIncOnlyCounter(11))
     DistributionEngine.publish("moppi", a)
@@ -23,6 +24,19 @@ object main {
     //b.set(b.now.increase)
     println(a.now)
     println(b.now)
+    */
+
+    var c = ORSet(1, 2, 3)
+    println(c)
+    var d = c
+    println(d)
+    c = c.remove(3)
+    d = d.add(3)
+    d = d merge c
+    println(d)
+    println(d.payload)
+    d = d.fromValue(d.value)
+    println(d.payload)
 
     /**
     DistributionEngine.host = "Host3"
