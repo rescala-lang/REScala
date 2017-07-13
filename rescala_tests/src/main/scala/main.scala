@@ -17,13 +17,15 @@ object main {
     val b = Var(CIncOnlyCounter(13))
     DistributionEngine.publish("moppi", b)
     println(b.now.payload)
-    b.set(b.now.increase)
+    
+    b.transform(_.increase)
 
     DistributionEngine.host = "Host1"
     //a.set(a.now.increase)
     //b.set(b.now.increase)
     println(a.now)
     println(b.now)
+<<<<<<< HEAD
     */
 
     var c = ORSet(1, 2, 3)
@@ -37,6 +39,22 @@ object main {
     println(d.payload)
     d = d.fromValue(d.value)
     println(d.payload)
+=======
+   
+    
+
+    val counter: Signal[CIncOnlyCounter] =  e.fold(CIncOnlyCounter(13)) { (c, _) => c.increase }
+    
+    val syncedCounter: Signal[CIncOnlyCounter] = DistributionEngine.publish("moppi", counter)
+    
+    
+    DistributionEngine.host = "Host2"
+    val otherCounter = DistributionEngine.subscribe(counter)
+    
+    
+    
+  
+>>>>>>> b919066e1410a0a448e86367559a8882971422ff
 
     /**
     DistributionEngine.host = "Host3"
