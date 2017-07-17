@@ -7,30 +7,11 @@ import stateCrdts._
   */
 object main {
   def main(args: Array[String]): Unit = {
-    /*Engine.host = "Host1"
-
-    val a = Var(CIncOnlyCounter(11))
-    DistributionEngine.publish("moppi", a)
-
-    DistributionEngine.host = "Host2"
-    val b = Var(CIncOnlyCounter(13))
-    DistributionEngine.publish("moppi", b)
-    println(b.now.payload)
-
-    b.transform(_.increase)
-
-    DistributionEngine.host = "Host1"
-    //a.set(a.now.increase)
-    //b.set(b.now.increase)
-    println(a.now)
-    println(b.now)
-    */
-
     val system: ActorSystem = ActorSystem("crdtTestbench")
 
-    val l: ActorRef = system.actorOf(LookupServer.props, "lookupServer")
-    val host1: ActorRef = system.actorOf(DistributionEngine.props("Host1", l), "Host1")
-    val host2: ActorRef = system.actorOf(DistributionEngine.props("Host2", l), "Host2")
+    val lookupServer: ActorRef = system.actorOf(LookupServer.props, "lookupServer")
+    val host1: ActorRef = system.actorOf(DistributionEngine.props("Host1", lookupServer), "Host1")
+    val host2: ActorRef = system.actorOf(DistributionEngine.props("Host2", lookupServer), "Host2")
 
     val c = CCounter(host1, "moppi", 12)
     c.increase
@@ -39,9 +20,12 @@ object main {
 
     val d = CCounter(host2, "moppi", 0)
     val doubledMoppi = Signal {
-      c.toSignal() + d.toSignal()
+      c.toSignal().value + d.toSignal().value
     }
+
+    doubledMoppi.observe(v => println("Observed: " + v))
     d.increase
+
 
     println(s"doubledMoppi: ${doubledMoppi.now}")
     println(c.value)
@@ -53,6 +37,27 @@ object main {
     println(c.value)
     println(d.value)
 
+    //system.terminate()
+
+
+    /*Engine.host = "Host1"
+
+val a = Var(CIncOnlyCounter(11))
+DistributionEngine.publish("moppi", a)
+
+DistributionEngine.host = "Host2"
+val b = Var(CIncOnlyCounter(13))
+DistributionEngine.publish("moppi", b)
+println(b.now.payload)
+
+b.transform(_.increase)
+
+DistributionEngine.host = "Host1"
+//a.set(a.now.increase)
+//b.set(b.now.increase)
+println(a.now)
+println(b.now)
+*/
 
     /*
     val system: ActorSystem = ActorSystem("crdtTestbench")
@@ -100,9 +105,9 @@ object main {
 
 
     /**
-    DistributionEngine.host = "Host3"
-    val c = Var(CIncOnlyCounter(0))
-    DistributionEngine.publish("moppi", c)
+      *DistributionEngine.host = "Host3"
+      * val c = Var(CIncOnlyCounter(0))
+      *DistributionEngine.publish("moppi", c)
       **/
   }
 }

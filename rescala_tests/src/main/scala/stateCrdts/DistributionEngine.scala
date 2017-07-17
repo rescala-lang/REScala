@@ -43,7 +43,7 @@ class DistributionEngine(hostName: String = InetAddress.getLocalHost.getHostAddr
       registry += (varName -> newHosts) // add sender to registry
     case QueryMessage(varName) =>
       sleep
-      sender ! UpdateMessage(varName, localCVars(varName).toSignal.now, self)
+      sender ! UpdateMessage(varName, localCVars(varName).signal.now, self)
   }
 
   def publishNew(cvar: CVar[StateCRDT]): Int = {
@@ -72,7 +72,7 @@ class DistributionEngine(hostName: String = InetAddress.getLocalHost.getHostAddr
           localCVars += (cvar.name -> cvar)
 
           // Update and query all other hosts
-          sendUpdates(varName, cvar.toSignal.now)
+          sendUpdates(varName, cvar.signal.now)
           query(varName)
 
           // set return value to 0 if everything was successful
