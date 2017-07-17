@@ -1,15 +1,15 @@
 package stateCrdts
 
-import akka.actor._
-import akka.pattern.ask
 import java.net.InetAddress
 
+import akka.actor._
+import akka.pattern.ask
 import akka.util.Timeout
 import rescala._
 import stateCrdts.DistributionEngine._
 import stateCrdts.LookupServer.{LookupMessage, RegisterMessage}
 
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
@@ -21,23 +21,67 @@ class DistributionEngine(hostName: String = InetAddress.getLocalHost.getHostAddr
 
   private var registry: Map[String, Set[ActorRef]] = Map().withDefaultValue(Set())
   var localVars: Map[String, Var[StateCRDT]] = Map()
+  var localCVars: Map[String, CVar[StateCRDT]] = Map()
+  var extChangeEvts: Map[String, Evt[StateCRDT]] = Map()
 
   // fakes the existence of a server infrastructure
   // maps hostname to map of varName and value
   // TODO: make private
   //var cloudStorage: Map[String, Map[String, Any]] = Map().withDefaultValue(Map())
 
-  def receive = {
-    case Publish(varName, localVar) => publish(varName, localVar.asInstanceOf[Var[StateCRDT]])
+  def receive: PartialFunction[Any, Unit] = {
+    case PublishEvt(cVar) => sender ! publishNew(cVar)
+    case Publish(varName, localVar) =>
+      publish(varName, localVar.asInstanceOf[Var[StateCRDT]])
+      sender ! 0
     case UpdateMessage(varName, value, hostRef) =>
       sleep
       println(s"[$hostName] received value $value for $varName from ${hostRef.path.name}")
-      localVars(varName).transform(_.merge(value)) // update value with merged crdt
-    val newHosts = registry(varName) + hostRef
+      //localVars(varName).transform(_.merge(value)) // update value with merged crdt
+      extChangeEvts(varName)(value)
+      val newHosts = registry(varName) + hostRef
       registry += (varName -> newHosts) // add sender to registry
     case QueryMessage(varName) =>
       sleep
-      sender ! UpdateMessage(varName, localVars(varName).now, self)
+      sender ! UpdateMessage(varName, localCVars(varName).toSignal.now, self)
+  }
+
+  def publishNew(cvar: CVar[StateCRDT]): Int = {
+    val varName = cvar.name
+    // LookupServer Registration:
+    implicit val timeout = Timeout(60.second)
+    var returnValue: Int = 1
+    val sendMessage = lookupServer ? RegisterMessage(varName, self) // register this instance
+    val registration = sendMessage andThen {
+      case Success(v) => v match {
+        case l: Set[ActorRef] =>
+          println("[" + hostName + "] registered " + varName + " on lookup server!")
+          registry += (varName -> l.filter(a => a != self))
+          println("[" + hostName + "] Setting registry to " + l.filter(a => a != self))
+
+          // add listener for internal changes
+          cvar.internalChanges += (newValue => {
+            println(s"Recognized internal change on ${cvar.name}")
+            sendUpdates(varName, newValue)
+          })
+
+          // save event type for external changes
+          extChangeEvts += (varName -> cvar.externalChanges)
+
+          // save reference to local var
+          localCVars += (cvar.name -> cvar)
+
+          // Update and query all other hosts
+          sendUpdates(varName, cvar.toSignal.now)
+          query(varName)
+
+          // set return value to 0 if everything was successful
+          returnValue = 0
+      }
+      case Failure(_) => println("[" + hostName + "] Could not reach lookup server!")
+    }
+    Await.ready(registration, Duration.Inf) // await the answer of the lookupServer
+    returnValue
   }
 
   /**
@@ -48,17 +92,16 @@ class DistributionEngine(hostName: String = InetAddress.getLocalHost.getHostAddr
     */
   private def publish(varName: String, localVar: Var[StateCRDT]): Unit = {
     // LookupServer Registration:
-    implicit val timeout = Timeout(60.second)
+    implicit var timeout = Timeout(60.second)
     val crdt = localVar.now // retrieve current value of CRDT
 
     val sendMessage = lookupServer ? RegisterMessage(varName, self) // register this instance
     val registration = sendMessage andThen {
       case Success(v) => v match {
-        case l: Set[ActorRef] => {
+        case l: Set[ActorRef] =>
           println("[" + hostName + "] registered " + varName + " on lookup server!")
           registry += (varName -> l.filter(a => a != self))
           println("[" + hostName + "] Setting registry to " + l.filter(a => a != self))
-        }
       }
       case Failure(_) => println("[" + hostName + "] Could not reach lookup server!")
     }
@@ -126,12 +169,14 @@ object DistributionEngine {
 
   final case class Publish(varName: String, localVar: Var[_ <: StateCRDT])
 
+  final case class PublishEvt(cVar: CVar[StateCRDT])
+
   final case class UpdateMessage(varName: String, value: StateCRDT, hostRef: ActorRef)
 
   final case class QueryMessage(varName: String)
 
-  def host = InetAddress.getLocalHost // hostname + IP
-  def ip = InetAddress.getLocalHost.getHostAddress
+  def host: InetAddress = InetAddress.getLocalHost // hostname + IP
+  def ip: Identifier = InetAddress.getLocalHost.getHostAddress
 
   /**
     * Generates unique identifiers based on the current Hostname, IP address and a UUID based on the current system time.
@@ -167,19 +212,15 @@ class LookupServer extends Actor {
     */
   def lookup(name: String): Set[ActorRef] = registry(name)
 
-  def receive = {
-    case RegisterMessage(varName, host) => {
+  def receive: PartialFunction[Any, Unit] = {
+    case RegisterMessage(varName, host) =>
       sleep
       println("[LookupServer] reveived register message for " + varName + " from " + host)
       sender ! register(varName, host) // register sender and send return new list of hosts
-    } // TODO: implement
-    case LookupMessage(varName) => {
+    case LookupMessage(varName) =>
       sleep
       sender ! lookup(varName)
-    }
   }
-
-
 }
 
 object LookupServer {

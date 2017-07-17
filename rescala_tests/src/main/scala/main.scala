@@ -1,13 +1,6 @@
-import akka.actor.ActorRef
+import akka.actor.{ActorRef, ActorSystem}
 import rescala._
 import stateCrdts._
-import scala.concurrent.duration._
-import akka.pattern.ask
-import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props}
-import akka.util.Timeout
-import stateCrdts.DistributionEngine.Publish
-
-import scala.collection.immutable.HashMap
 
 /**
   * Created by julian on 05.07.17.
@@ -32,6 +25,36 @@ object main {
     println(a.now)
     println(b.now)
     */
+
+    val system: ActorSystem = ActorSystem("crdtTestbench")
+
+    val l: ActorRef = system.actorOf(LookupServer.props, "lookupServer")
+    val host1: ActorRef = system.actorOf(DistributionEngine.props("Host1", l), "Host1")
+    val host2: ActorRef = system.actorOf(DistributionEngine.props("Host2", l), "Host2")
+
+    val c = CCounter(host1, "moppi", 12)
+    c.increase
+    println(c.value)
+    println()
+
+    val d = CCounter(host2, "moppi", 0)
+    val doubledMoppi = Signal {
+      c.toSignal() + d.toSignal()
+    }
+    d.increase
+
+    println(s"doubledMoppi: ${doubledMoppi.now}")
+    println(c.value)
+    println(d.value)
+    println()
+
+    Thread sleep 10000
+    println(s"doubledMoppi: ${doubledMoppi.now}")
+    println(c.value)
+    println(d.value)
+
+
+    /*
     val system: ActorSystem = ActorSystem("crdtTestbench")
 
     val l: ActorRef = system.actorOf(LookupServer.props, "lookupServer")
@@ -45,6 +68,8 @@ object main {
     host2 ! Publish("moppi", b)
 
     b.transform(_.increase)
+    */
+
 
     /*
     var c = ORSet(1, 2, 3)

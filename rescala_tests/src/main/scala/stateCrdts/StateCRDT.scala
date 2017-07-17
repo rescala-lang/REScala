@@ -25,7 +25,7 @@ trait StateCRDT {
     */
   def merge(c: StateCRDT): selfType
 
-  //def +(crdt: StateCRDT): StateCRDT = merge(crdt)
+  def +(crdt: StateCRDT): selfType = merge(crdt)
 
   override def toString: String = value.toString
 
