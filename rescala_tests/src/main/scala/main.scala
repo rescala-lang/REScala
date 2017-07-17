@@ -20,7 +20,7 @@ object main {
 
     val d = CCounter(host2, "moppi", 0)
     val doubledMoppi = Signal {
-      c.toSignal().value + d.toSignal().value
+      c.signal().value + d.signal().value
     }
 
     doubledMoppi.observe(v => println("Observed: " + v))

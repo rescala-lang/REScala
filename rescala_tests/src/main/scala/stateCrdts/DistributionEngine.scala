@@ -21,7 +21,7 @@ class DistributionEngine(hostName: String = InetAddress.getLocalHost.getHostAddr
 
   private var registry: Map[String, Set[ActorRef]] = Map().withDefaultValue(Set())
   var localVars: Map[String, Var[StateCRDT]] = Map()
-  var localCVars: Map[String, CVar[StateCRDT]] = Map()
+  var localCVars: Map[String, Publishable[_ <: StateCRDT]] = Map()
   var extChangeEvts: Map[String, Evt[StateCRDT]] = Map()
 
   // fakes the existence of a server infrastructure
@@ -31,9 +31,6 @@ class DistributionEngine(hostName: String = InetAddress.getLocalHost.getHostAddr
 
   def receive: PartialFunction[Any, Unit] = {
     case PublishEvt(cVar) => sender ! publishNew(cVar)
-    case Publish(varName, localVar) =>
-      publish(varName, localVar.asInstanceOf[Var[StateCRDT]])
-      sender ! 0
     case UpdateMessage(varName, value, hostRef) =>
       sleep
       println(s"[$hostName] received value $value for $varName from ${hostRef.path.name}")
@@ -46,7 +43,7 @@ class DistributionEngine(hostName: String = InetAddress.getLocalHost.getHostAddr
       sender ! UpdateMessage(varName, localCVars(varName).signal.now, self)
   }
 
-  def publishNew(cvar: CVar[StateCRDT]): Int = {
+  def publishNew(cvar: Publishable[_ <: StateCRDT]): Int = {
     val varName = cvar.name
     // LookupServer Registration:
     implicit val timeout = Timeout(60.second)
@@ -66,9 +63,9 @@ class DistributionEngine(hostName: String = InetAddress.getLocalHost.getHostAddr
           })
 
           // save event type for external changes
-          extChangeEvts += (varName -> cvar.externalChanges)
+          extChangeEvts += (varName -> cvar.externalChanges.asInstanceOf[Evt[StateCRDT]])
 
-          // save reference to local var
+          // save reference to local varwith
           localCVars += (cvar.name -> cvar)
 
           // Update and query all other hosts
@@ -169,7 +166,7 @@ object DistributionEngine {
 
   final case class Publish(varName: String, localVar: Var[_ <: StateCRDT])
 
-  final case class PublishEvt(cVar: CVar[StateCRDT])
+  final case class PublishEvt(cVar: Publishable[_ <: StateCRDT])
 
   final case class UpdateMessage(varName: String, value: StateCRDT, hostRef: ActorRef)
 
