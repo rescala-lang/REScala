@@ -11,7 +11,6 @@ trait FramingTask extends FullMVAction {
     branchResult match {
       case FramingBranchEnd =>
         turn.activeBranchDifferential(TurnPhase.Framing, -1)
-        Traversable.empty
       case FramingBranchOut(out) =>
         turn.activeBranchDifferential(TurnPhase.Framing, out.size - 1)
         for(succ <- out) Framing(turn, succ).fork()
