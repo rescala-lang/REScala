@@ -18,6 +18,8 @@ licenses in ThisBuild += ("Apache-2.0", url("http://www.apache.org/licenses/LICE
 
 maxErrors in ThisBuild := 5
 
+bintrayOrganization in ThisBuild := Some("stg-tud")
+
 // set the prompt (for this build) to include the project id.
 shellPrompt in ThisBuild := { state => Project.extract(state).currentRef.project + "> " }
 
