@@ -80,9 +80,8 @@ object RRecovery extends Main {
     }
   }
 
-  panel.Keyboard.released.observe { e: KeyEvent =>
-    if (e.getKeyChar() == KeyEvent.VK_ENTER) {
-      addOpponent()
-    }
+  panel.Keyboard.released.map(_.getKeyChar).observe {
+    case KeyEvent.VK_ENTER => addOpponent()
+    case _ =>
   }
 }

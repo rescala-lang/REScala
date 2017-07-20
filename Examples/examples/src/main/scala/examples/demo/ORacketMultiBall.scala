@@ -1,5 +1,7 @@
 package examples.demo
 
+import java.awt.Color
+
 import examples.demo.LFullyModularBall.BouncingBall
 import examples.demo.MPlayingFieldBall.PlayingField
 import examples.demo.ui._
@@ -34,7 +36,7 @@ object ORacketMultiBall extends Main {
       shapeInsideRacket.changedTo(true)
     }
 
-    val shape = new Rectangle(posX, posY, width, height)
+    val shape = new Rectangle(posX, posY, width, height, fill = Var(Some(if (isRight) Color.BLUE else Color.RED)))
   }
 
   val shapes = Var[List[Shape]](List.empty)
