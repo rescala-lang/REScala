@@ -10,6 +10,7 @@ import rescala._
 import rescala.core.Pulse
 
 import scala.swing.{Dimension, MainFrame, SimpleSwingApplication}
+import scala.util.Try
 
 object RRecovery extends Main {
   class Opponent(panelSize: Signal[Dimension], shapes: Signal[List[Shape]]) extends SimpleSwingApplication {
@@ -33,17 +34,8 @@ object RRecovery extends Main {
       top.pack()
     }
   }
-
   val unfilteredShapes = Var[List[Shape]](List.empty)
-  val shapes = dynamic(unfilteredShapes) { implicit t =>
-    t.depend(unfilteredShapes).filter { s =>
-      try {
-        t.depend(s.changed)
-        true
-      }
-      catch {case _: Throwable => false}
-    }
-  }
+  val shapes = Signal{ unfilteredShapes().filter { q => Try(q.changed()).isSuccess} }
   val panel = new ShapesPanel(shapes)
 
   val playingField = new PlayingField(panel.width.map(_ - 25), panel.height.map(_ - 25))
