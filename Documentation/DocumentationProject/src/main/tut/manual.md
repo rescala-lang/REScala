@@ -687,7 +687,7 @@ Example:
 
 ```tut:book
 val e = Evt[Int]()
-val s: Signal[Option[Int]] = e.latestOption
+val s: Signal[Option[Int]] = e.latestOption()
 assert(s.now == None)
 e(1)
 assert(s.now == Option(1))

@@ -214,10 +214,4 @@ trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] 
     history.map { h => if (h.size <= n) initL else h.head }(turn)
   }
 
-  /** returns the values produced by the last event produced by mapping this value */
-  //final def flatMap[B](f: T => Event[B, S])(implicit ticket: CreationTicket[S]): Event[B, S] = ticket { implicit ict => map(f).latest(Evt[B, S]).flatten }
-
-  /** promotes the latest inner event to an outer event */
-  //final def flatten[B](implicit ticket: CreationTicket[S], ev: T <:< Event[B, S]): Event[B, S] = flatMap(ev.apply)
-
 }

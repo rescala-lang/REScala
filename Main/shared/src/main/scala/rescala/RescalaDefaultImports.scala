@@ -72,7 +72,7 @@ abstract class RescalaDefaultImports[S <: Struct] {
     *                       input changes that will be applied as an atomic transaction at the end.
     *                       The return value of this phase will be passed to the wrapUpPhase
     * @param wrapUpPhase A wrap-up function that receives the admissionPhase result and may perform arbitrary
-    *                    [[rescala.reactives.Signal.before]] and [[rescala.reactives.Signal.now]] reads which are
+    *                    [[rescala.reactives.Signal.now]] reads which are
     *                    executed after the update propagation.
     * @tparam I Intermediate Result type passed from admission to wrapup phase
     * @tparam R Final Result type of the wrapup phase
