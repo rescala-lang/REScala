@@ -6,7 +6,6 @@ maxErrors := 5
 crossScalaVersions := Seq(cfg.version_211, cfg.version_212)
 (incOptions in ThisBuild) := (incOptions in ThisBuild).value.withLogRecompileOnMacro(false)
 
-
 lazy val rescalaAggregate = project.in(file(".")).aggregate(rescalaJVM,
   rescalaJS, microbench, reswing, examples, examplesReswing, caseStudyEditor,
   caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags,
@@ -218,7 +217,8 @@ lazy val cfg = new {
     organization := "de.tuda.stg",
     version := "0.20.0-SNAPSHOT",
     scalaVersion := version_212,
-    baseScalac
+    baseScalac,
+    autoAPIMappings := true
   )
 
   val test = List(
