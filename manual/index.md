@@ -10,10 +10,9 @@ sidebar: manual
 Create a `build.sbt` file in an empty folder with the following contents:
 
 ```scala
-scalaVersion := "2.12.1"
+scalaVersion := "2.12.2"
 
-resolvers += Resolver.bintrayRepo("rmgk", "maven")
-resolvers += Resolver.bintrayRepo("pweisenburger", "maven")
+resolvers += Resolver.bintrayRepo("stg-tud", "maven")
 
 libraryDependencies += "de.tuda.stg" %% "rescala" % "0.19.0"
 ```
@@ -57,6 +56,9 @@ To use all features of *REScala* the only required import is:
 
 ```scala
 import rescala._
+// <console>:12: warning: Unused import
+//        import rescala._
+//                       ^
 // import rescala._
 ```
 
@@ -75,13 +77,13 @@ For example:
 
 ```scala
 val a = Var(2)
-// a: rescala.Var[Int] = <console>(15)
+// a: rescala.Var[Int] = a:15
 
 val b = Var(3)
-// b: rescala.Var[Int] = <console>(15)
+// b: rescala.Var[Int] = b:15
 
 val c = Signal { a() + b() }
-// c: rescala.Signal[Int] = <console>(17)
+// c: rescala.Signal[Int] = c:17
 
 println((a.now, b.now, c.now))
 // (2,3,5)
@@ -109,16 +111,16 @@ Examples for var declarations are:
 
 ```scala
 val a = Var(0)
-// a: rescala.Var[Int] = <console>(15)
+// a: rescala.Var[Int] = a:15
 
 val b = Var("Hello World")
-// b: rescala.Var[String] = <console>(15)
+// b: rescala.Var[String] = b:15
 
 val c = Var(List(1,2,3))
-// c: rescala.Var[List[Int]] = <console>(15)
+// c: rescala.Var[List[Int]] = c:15
 
 val d = Var((x: Int) => x * 2)
-// d: rescala.Var[Int => Int] = <console>(15)
+// d: rescala.Var[Int => Int] = d:15
 ```
 
 Vars enable the framework to track changes of input values.
@@ -155,13 +157,13 @@ code snippet:
 
 ```scala
   val a = Var(0)
-// a: rescala.Var[Int] = <console>(15)
+// a: rescala.Var[Int] = a:15
 
   val b = Var(0)
-// b: rescala.Var[Int] = <console>(15)
+// b: rescala.Var[Int] = b:15
 
   val s = Signal{ a() + b() } // Multiple vars in a signal expression
-// s: rescala.Signal[Int] = <console>(17)
+// s: rescala.Signal[Int] = s:17
 ```
 
 The signal ```s``` is a dependency of the vars ```a``` and ```b```,
@@ -171,54 +173,57 @@ declarations.
 
 ```scala
 val a = Var(0)
-// a: rescala.Var[Int] = <console>(15)
+// a: rescala.Var[Int] = a:15
 
 val b = Var(0)
-// b: rescala.Var[Int] = <console>(15)
+// b: rescala.Var[Int] = b:15
 
 val c = Var(0)
-// c: rescala.Var[Int] = <console>(15)
+// c: rescala.Var[Int] = c:15
 
 val r: Signal[Int] = Signal{ a() + 1 } // Explicit type in var decl
-// r: rescala.Signal[Int] = <console>(16)
+// r: rescala.Signal[Int] = r:16
 
 val s = Signal{ a() + b() } // Multiple vars is a signal expression
-// s: rescala.Signal[Int] = <console>(17)
+// s: rescala.Signal[Int] = s:17
 
 val t = Signal{ s() * c() + 10 } // Mix signals and vars in signal expressions
-// t: rescala.Signal[Int] = <console>(17)
+// t: rescala.Signal[Int] = t:17
 
 val u = Signal{ s() * t() } // A signal that depends on other signals
-// u: rescala.Signal[Int] = <console>(17)
+// u: rescala.Signal[Int] = u:17
 ```
 
 ```scala
 val a = Var(0)
-// a: rescala.Var[Int] = <console>(15)
+// a: rescala.Var[Int] = a:15
 
 val b = Var(2)
-// b: rescala.Var[Int] = <console>(15)
+// b: rescala.Var[Int] = b:15
 
 val c = Var(true)
-// c: rescala.Var[Boolean] = <console>(15)
+// c: rescala.Var[Boolean] = c:15
 
 val s = Signal{ if (c()) a() else b() }
-// s: rescala.Signal[Int] = <console>(18)
+// s: rescala.Signal[Int] = s:18
 ```
 
 ```scala
 def factorial(n: Int) = Range.inclusive(1,n).fold(1)(_ * _)
+// <console>:10: warning: Unused import
+// import rescala._
+//                ^
 // factorial: (n: Int)Int
 
 val a = Var(0)
-// a: rescala.Var[Int] = <console>(15)
+// a: rescala.Var[Int] = a:15
 
 val s: Signal[Int] = Signal{ // A signal expression can be any code block
   val tmp = a() * 2
   val k = factorial(tmp)
   k + 2  // Returns an Int
 }
-// s: rescala.Signal[Int] = <console>(17)
+// s: rescala.Signal[Int] = s:17
 ```
 
 
@@ -230,19 +235,19 @@ example:
 
 ```scala
 val a = Var(0)
-// a: rescala.Var[Int] = <console>(15)
+// a: rescala.Var[Int] = a:15
 
 val b = Var(2)
-// b: rescala.Var[Int] = <console>(15)
+// b: rescala.Var[Int] = b:15
 
 val c = Var(true)
-// c: rescala.Var[Boolean] = <console>(15)
+// c: rescala.Var[Boolean] = c:15
 
 val s: Signal[Int] = Signal{ a() + b() }
-// s: rescala.Signal[Int] = <console>(17)
+// s: rescala.Signal[Int] = s:17
 
 val t: Signal[Boolean] = Signal{ !c() }
-// t: rescala.Signal[Boolean] = <console>(16)
+// t: rescala.Signal[Boolean] = t:16
 
 val x: Int = a.now
 // x: Int = 0
@@ -254,6 +259,9 @@ val z: Boolean = t.now
 // z: Boolean = false
 
 println(z)
+// <console>:10: warning: Unused import
+// import rescala._
+//                ^
 // false
 ```
 
@@ -265,16 +273,22 @@ time.
 
 ```scala
 val SPEED = 10
+// <console>:10: warning: Unused import
+// import rescala._
+//                ^
 // SPEED: Int = 10
 
 val time = Var(0)
-// time: rescala.Var[Int] = <console>(15)
+// time: rescala.Var[Int] = time:15
 
 val space = Signal{ SPEED * time() }
-// space: rescala.Signal[Int] = <console>(17)
+// space: rescala.Signal[Int] = space:17
 
 space.changed += ((x: Int) => println(x))
-// res9: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
+// <console>:12: warning: Unused import
+// import x
+//                                      ^
+// res9: rescala.reactives.Observe[rescala.parrp.ParRP] = res9:18
 
 while (time.now < 5) {
   Thread sleep 20
@@ -305,13 +319,19 @@ the following code:
 
 ```scala
 val e: Event[Int] = space.changed
-// e: rescala.Event[Int] = (changed <console>(17))
+// e: rescala.Event[Int] = (changed space:17)
 
 val handler:  (Int => Unit) =  ((x: Int) => println(x))
-// handler: Int => Unit = $$Lambda$2836/1313705184@1d853f83
+// <console>:10: warning: Unused import
+// import rescala._
+//                ^
+// <console>:12: warning: Unused import
+// import x
+//                                      ^
+// handler: Int => Unit = $$Lambda$14124/99155818@722e04e
 
 e += handler
-// res11: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
+// res11: rescala.reactives.Observe[rescala.parrp.ParRP] = res11:18
 ```
 
 Note that using `println(space.now)` would also print the
@@ -362,25 +382,28 @@ valid events definitions:
 
 ```scala
 val e1 = Evt[Unit]()
-// e1: rescala.Evt[Unit] = <console>(15)
+// e1: rescala.Evt[Unit] = rescala.RescalaDefaultImports#Evt:30
 
 val e2 = Evt[Int]()
-// e2: rescala.Evt[Int] = <console>(15)
+// e2: rescala.Evt[Int] = rescala.RescalaDefaultImports#Evt:30
 
 val e3 = Evt[String]()
-// e3: rescala.Evt[String] = <console>(15)
+// e3: rescala.Evt[String] = rescala.RescalaDefaultImports#Evt:30
 
 val e4 = Evt[Boolean]()
-// e4: rescala.Evt[Boolean] = <console>(15)
+// e4: rescala.Evt[Boolean] = rescala.RescalaDefaultImports#Evt:30
 
 val e5: Evt[Int] = Evt[Int]()
-// e5: rescala.Evt[Int] = <console>(15)
+// e5: rescala.Evt[Int] = rescala.RescalaDefaultImports#Evt:30
 
 class Foo
+// <console>:10: warning: Unused import
+// import rescala._
+//                ^
 // defined class Foo
 
 val e6 = Evt[Foo]()
-// e6: rescala.Evt[Foo] = <console>(16)
+// e6: rescala.Evt[Foo] = rescala.RescalaDefaultImports#Evt:30
 ```
 
 It is possible to attach more than one value to the same event. This
@@ -389,19 +412,19 @@ type. For example:
 
 ```scala
 val e1 = Evt[(Int,Int)]()
-// e1: rescala.Evt[(Int, Int)] = <console>(15)
+// e1: rescala.Evt[(Int, Int)] = rescala.RescalaDefaultImports#Evt:30
 
 val e2 = Evt[(String,String)]()
-// e2: rescala.Evt[(String, String)] = <console>(15)
+// e2: rescala.Evt[(String, String)] = rescala.RescalaDefaultImports#Evt:30
 
 val e3 = Evt[(String,Int)]()
-// e3: rescala.Evt[(String, Int)] = <console>(15)
+// e3: rescala.Evt[(String, Int)] = rescala.RescalaDefaultImports#Evt:30
 
 val e4 = Evt[(Boolean,String,Int)]()
-// e4: rescala.Evt[(Boolean, String, Int)] = <console>(15)
+// e4: rescala.Evt[(Boolean, String, Int)] = rescala.RescalaDefaultImports#Evt:30
 
 val e5: Evt[(Int,Int)] = Evt[(Int,Int)]()
-// e5: rescala.Evt[(Int, Int)] = <console>(15)
+// e5: rescala.Evt[(Int, Int)] = rescala.RescalaDefaultImports#Evt:30
 ```
 
 Note that an imperative event is also an event. Therefore the
@@ -409,7 +432,7 @@ following declaration is also valid:
 
 ```scala
 val e1: Event[Int] = Evt[Int]()
-// e1: rescala.Event[Int] = <console>(15)
+// e1: rescala.Event[Int] = rescala.RescalaDefaultImports#Evt:30
 ```
 
 ## Registering Handlers
@@ -421,25 +444,37 @@ The following are valid handler definitions.
 
 ```scala
 var state = 0
+// <console>:10: warning: Unused import
+// import rescala._
+//                ^
 // state: Int = 0
 
 val e = Evt[Int]()
-// e: rescala.Evt[Int] = <console>(15)
+// e: rescala.Evt[Int] = rescala.RescalaDefaultImports#Evt:30
 
 e += { println(_) }
-// res12: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(17)
+// res12: rescala.reactives.Observe[rescala.parrp.ParRP] = res12:17
 
 e += (x => println(x))
-// res13: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
+// <console>:12: warning: Unused import
+// import x
+//                                      ^
+// res13: rescala.reactives.Observe[rescala.parrp.ParRP] = res13:18
 
 e += ((x: Int) => println(x))
-// res14: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
+// <console>:12: warning: Unused import
+// import x
+//                                      ^
+// res14: rescala.reactives.Observe[rescala.parrp.ParRP] = res14:18
 
 e += (x => {  // Multiple statements in the handler
   state = x
   println(x)
 })
-// res15: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(19)
+// <console>:12: warning: Unused import
+// import x
+//                                      ^
+// res15: rescala.reactives.Observe[rescala.parrp.ParRP] = res15:19
 ```
 
 The signature of the handler must conform the signature of the event,
@@ -449,18 +484,24 @@ perform side effects. For example is the event is of type
 
 ```scala
 val e = Evt[(Int,String)]()
-// e: rescala.Evt[(Int, String)] = <console>(15)
+// e: rescala.Evt[(Int, String)] = rescala.RescalaDefaultImports#Evt:30
 
 e += (x => {
   println(x._1)
   println(x._2)
 })
-// res16: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
+// <console>:12: warning: Unused import
+// import x
+//                                      ^
+// res16: rescala.reactives.Observe[rescala.parrp.ParRP] = res16:18
 
 e += ((x: (Int,String)) => {
   println(x)
 })
-// res17: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
+// <console>:12: warning: Unused import
+// import x
+//                                      ^
+// res17: rescala.reactives.Observe[rescala.parrp.ParRP] = res17:18
 ```
 
 Note that events without arguments still need an argument
@@ -468,13 +509,13 @@ in the handler.
 
 ```scala
 val e = Evt[Int]()
-// e: rescala.Evt[Int] = <console>(15)
+// e: rescala.Evt[Int] = rescala.RescalaDefaultImports#Evt:30
 
 e += { x => println() }
-// res18: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(17)
+// res18: rescala.reactives.Observe[rescala.parrp.ParRP] = res18:17
 
 e += { (x: Int) => println() }
-// res19: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(17)
+// res19: rescala.reactives.Observe[rescala.parrp.ParRP] = res19:17
 ```
 
 Scala allows one to refer to a method using the partially applied
@@ -486,13 +527,22 @@ def m1(x: Int) = {
   val y = x + 1
   println(y)
 }
+// <console>:10: warning: Unused import
+// import rescala._
+//                ^
+// <console>:12: warning: Unused import
+// import x
+//                                      ^
+// <console>:13: warning: Unused import
+// import y
+//                                      ^
 // m1: (x: Int)Unit
 
 val e = Evt[Int]
-// e: rescala.Evt[Int] = <console>(15)
+// e: rescala.Evt[Int] = rescala.RescalaDefaultImports#Evt:30
 
 e += m1 _
-// res20: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
+// res20: rescala.reactives.Observe[rescala.parrp.ParRP] = res20:18
 
 e(10)
 // 11
@@ -507,13 +557,13 @@ example:
 
 ```scala
 val e1 = Evt[Int]()
-// e1: rescala.Evt[Int] = <console>(15)
+// e1: rescala.Evt[Int] = rescala.RescalaDefaultImports#Evt:30
 
 val e2 = Evt[Boolean]()
-// e2: rescala.Evt[Boolean] = <console>(15)
+// e2: rescala.Evt[Boolean] = rescala.RescalaDefaultImports#Evt:30
 
 val e3 = Evt[(Int,String)]()
-// e3: rescala.Evt[(Int, String)] = <console>(15)
+// e3: rescala.Evt[(Int, String)] = rescala.RescalaDefaultImports#Evt:30
 
 e1(10)
 
@@ -528,10 +578,13 @@ handler.
 
 ```scala
 val e = Evt[Int]()
-// e: rescala.Evt[Int] = <console>(15)
+// e: rescala.Evt[Int] = rescala.RescalaDefaultImports#Evt:30
 
 e += { x => println(x) }
-// res25: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
+// <console>:12: warning: Unused import
+// import x
+//                                      ^
+// res25: rescala.reactives.Observe[rescala.parrp.ParRP] = res25:18
 
 e(10)
 // 10
@@ -546,13 +599,19 @@ order for handler execution.
 
 ```scala
 val e = Evt[Int]()
-// e: rescala.Evt[Int] = <console>(15)
+// e: rescala.Evt[Int] = rescala.RescalaDefaultImports#Evt:30
 
 e += { x => println(x) }
-// res28: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
+// <console>:12: warning: Unused import
+// import x
+//                                      ^
+// res28: rescala.reactives.Observe[rescala.parrp.ParRP] = res28:18
 
 e += { x => println(f"n: $x")}
-// res29: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
+// <console>:12: warning: Unused import
+// import x
+//                                      ^
+// res29: rescala.reactives.Observe[rescala.parrp.ParRP] = res29:18
 
 e(10)
 // 10
@@ -571,13 +630,16 @@ event is fired.
 
 ```scala
 val e = Evt[Int]()
-// e: rescala.Evt[Int] = <console>(15)
+// e: rescala.Evt[Int] = rescala.RescalaDefaultImports#Evt:30
 
 val handler1 = e += println
-// handler1: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(16)
+// handler1: rescala.reactives.Observe[rescala.parrp.ParRP] = handler1:16
 
 val handler2 = e += { x => println(s"n: $x") }
-// handler2: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(17)
+// <console>:12: warning: Unused import
+// import x
+//                                      ^
+// handler2: rescala.reactives.Observe[rescala.parrp.ParRP] = handler2:17
 
 e(10)
 // 10
@@ -611,19 +673,25 @@ declarative events.
 
 ```scala
 val e1 = Evt[Int]()
-// e1: rescala.Evt[Int] = <console>(15)
+// e1: rescala.Evt[Int] = rescala.RescalaDefaultImports#Evt:30
 
 val e2 = Evt[Int]()
-// e2: rescala.Evt[Int] = <console>(15)
+// e2: rescala.Evt[Int] = rescala.RescalaDefaultImports#Evt:30
 
 val e3 = e1 || e2
-// e3: rescala.reactives.Event[Int,rescala.parrp.ParRP] = (or <console>(15) <console>(15))
+// e3: rescala.reactives.Event[Int,rescala.parrp.ParRP] = (or rescala.RescalaDefaultImports#Evt:30 rescala.RescalaDefaultImports#Evt:30)
 
 val e4 = e1 && ((x: Int)=> x>10)
-// e4: rescala.reactives.Event[Int,rescala.parrp.ParRP] = (filter <console>(15))
+// <console>:12: warning: Unused import
+// import x
+//                                      ^
+// e4: rescala.reactives.Event[Int,rescala.parrp.ParRP] = (filter rescala.RescalaDefaultImports#Evt:30)
 
 val e5 = e1 map ((x: Int)=> x.toString)
-// e5: rescala.reactives.Event[String,rescala.parrp.ParRP] = (map <console>(15))
+// <console>:12: warning: Unused import
+// import x
+//                                      ^
+// e5: rescala.reactives.Event[String,rescala.parrp.ParRP] = (map rescala.RescalaDefaultImports#Evt:30)
 ```
 
 # Event Operators
@@ -639,16 +707,19 @@ must have the same parameter type (`Int` in the next example).
 
 ```scala
 val e1 = Evt[Int]()
-// e1: rescala.Evt[Int] = <console>(15)
+// e1: rescala.Evt[Int] = rescala.RescalaDefaultImports#Evt:30
 
 val e2 = Evt[Int]()
-// e2: rescala.Evt[Int] = <console>(15)
+// e2: rescala.Evt[Int] = rescala.RescalaDefaultImports#Evt:30
 
 val e1_OR_e2 = e1 || e2
-// e1_OR_e2: rescala.reactives.Event[Int,rescala.parrp.ParRP] = (or <console>(15) <console>(15))
+// e1_OR_e2: rescala.reactives.Event[Int,rescala.parrp.ParRP] = (or rescala.RescalaDefaultImports#Evt:30 rescala.RescalaDefaultImports#Evt:30)
 
 e1_OR_e2 += ((x: Int) => println(x))
-// res37: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
+// <console>:12: warning: Unused import
+// import x
+//                                      ^
+// res37: rescala.reactives.Observe[rescala.parrp.ParRP] = res37:18
 
 e1(1)
 // 1
@@ -667,13 +738,19 @@ parameter and a predicate.
 
 ```scala
 val e = Evt[Int]()
-// e: rescala.Evt[Int] = <console>(15)
+// e: rescala.Evt[Int] = rescala.RescalaDefaultImports#Evt:30
 
 val e_AND: Event[Int] = e && ((x: Int) => x>10)
-// e_AND: rescala.Event[Int] = (filter <console>(15))
+// <console>:12: warning: Unused import
+// import x
+//                                      ^
+// e_AND: rescala.Event[Int] = (filter rescala.RescalaDefaultImports#Evt:30)
 
 e_AND += ((x: Int) => println(x))
-// res40: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
+// <console>:12: warning: Unused import
+// import x
+//                                      ^
+// res40: rescala.reactives.Observe[rescala.parrp.ParRP] = res40:18
 
 e(5)
 
@@ -690,13 +767,19 @@ value of the resulting event.
 
 ```scala
 val e = Evt[Int]()
-// e: rescala.Evt[Int] = <console>(15)
+// e: rescala.Evt[Int] = rescala.RescalaDefaultImports#Evt:30
 
 val e_MAP: Event[String] = e map ((x: Int) => x.toString)
-// e_MAP: rescala.Event[String] = (map <console>(15))
+// <console>:12: warning: Unused import
+// import x
+//                                      ^
+// e_MAP: rescala.Event[String] = (map rescala.RescalaDefaultImports#Evt:30)
 
 e_MAP += ((x: String) => println(s"Here: $x"))
-// res43: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
+// <console>:12: warning: Unused import
+// import x
+//                                      ^
+// res43: rescala.reactives.Observe[rescala.parrp.ParRP] = res43:18
 
 e(5)
 // Here: 5
@@ -714,13 +797,13 @@ operator transforms an `Event[Int]` into an `Event[Unit]`.
 
 ```scala
 val e = Evt[Int]()
-// e: rescala.Evt[Int] = <console>(15)
+// e: rescala.Evt[Int] = rescala.RescalaDefaultImports#Evt:30
 
 val e_drop: Event[Unit] = e.dropParam
-// e_drop: rescala.Event[Unit] = (map <console>(15))
+// e_drop: rescala.Event[Unit] = (map rescala.RescalaDefaultImports#Evt:30)
 
 e_drop += (_ => println("*"))
-// res46: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(17)
+// res46: rescala.reactives.Observe[rescala.parrp.ParRP] = res46:17
 
 e(10)
 // *
@@ -737,16 +820,16 @@ different types with the `||` operator.
 ```scala
 scala> /* WRONG - DON'T DO THIS */
      | val e1 = Evt[Int]()
-e1: rescala.Evt[Int] = <console>(16)
+e1: rescala.Evt[Int] = rescala.RescalaDefaultImports#Evt:30
 
 scala> val e2 = Evt[Unit]()
-e2: rescala.Evt[Unit] = <console>(15)
+e2: rescala.Evt[Unit] = rescala.RescalaDefaultImports#Evt:30
 
 scala> val e1_OR_e2 = e1 || e2  // Compiler error
 <console>:17: warning: a type was inferred to be `AnyVal`; this may indicate a programming error.
        val e1_OR_e2 = e1 || e2  // Compiler error
-                            ^
-error: No warnings can be incurred under -Xfatal-warnings.
+                         ^
+e1_OR_e2: rescala.reactives.Event[AnyVal,rescala.parrp.ParRP] = (or rescala.RescalaDefaultImports#Evt:30 rescala.RescalaDefaultImports#Evt:30)
 ```
 
 The following example is correct. The `dropParam` operator allows
@@ -754,13 +837,13 @@ one to make the events compatible with each other.
 
 ```scala
 val e1 = Evt[Int]()
-// e1: rescala.Evt[Int] = <console>(15)
+// e1: rescala.Evt[Int] = rescala.RescalaDefaultImports#Evt:30
 
 val e2 = Evt[Unit]()
-// e2: rescala.Evt[Unit] = <console>(15)
+// e2: rescala.Evt[Unit] = rescala.RescalaDefaultImports#Evt:30
 
 val e1_OR_e2: Event[Unit] = e1.dropParam || e2
-// e1_OR_e2: rescala.Event[Unit] = (or (map <console>(15)) <console>(15))
+// e1_OR_e2: rescala.Event[Unit] = (or (map rescala.RescalaDefaultImports#Evt:30) rescala.RescalaDefaultImports#Evt:30)
 ```
 {:/comment}
 
@@ -803,10 +886,10 @@ Example:
 
 ```scala
 val e = Evt[Int]()
-// e: rescala.Evt[Int] = <console>(15)
+// e: rescala.Evt[Int] = rescala.RescalaDefaultImports#Evt:30
 
 val s: Signal[Int] = e.latest(10)
-// s: rescala.Signal[Int] = <console>(16)
+// s: rescala.Signal[Int] = s:16
 
 assert(s.now == 10)
 
@@ -834,27 +917,36 @@ Example:
 
 ```scala
 var test = 0
+// <console>:10: warning: Unused import
+// import rescala._
+//                ^
 // test: Int = 0
 
 val v =  Var(1)
-// v: rescala.Var[Int] = <console>(15)
+// v: rescala.Var[Int] = v:15
 
 val s = Signal{ v() + 1 }
-// s: rescala.Signal[Int] = <console>(16)
+// s: rescala.Signal[Int] = s:16
 
 val e: Event[Int] = s.changed
-// e: rescala.Event[Int] = (changed <console>(16))
+// e: rescala.Event[Int] = (changed s:16)
 
 e += ((x:Int)=>{test+=1})
-// res57: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
+// res57: rescala.reactives.Observe[rescala.parrp.ParRP] = res57:18
 
 v.set(2)
 
 assert(test == 1)
+// <console>:10: warning: Unused import
+// import rescala._
+//                ^
 
 v.set(3)
 
 assert(test == 2)
+// <console>:10: warning: Unused import
+// import rescala._
+//                ^
 ```
 
 <!-- # Advanced Conversion Functions
@@ -897,13 +989,22 @@ Example:
 
 ```scala
 val e = Evt[Int]()
-// e: rescala.Evt[Int] = <console>(15)
+// e: rescala.Evt[Int] = rescala.RescalaDefaultImports#Evt:30
 
 val f = (x:Int,y:Int)=>(x+y)
-// f: (Int, Int) => Int = $$Lambda$2913/1866806043@171771e9
+// <console>:10: warning: Unused import
+// import rescala._
+//                ^
+// <console>:12: warning: Unused import
+// import x
+//                                      ^
+// <console>:13: warning: Unused import
+// import y
+//                                      ^
+// f: (Int, Int) => Int = $$Lambda$14248/1220727052@58fd4c5d
 
 val s: Signal[Int] = e.fold(10)(f)
-// s: rescala.Signal[Int] = <console>(17)
+// s: rescala.Signal[Int] = s:17
 
 e(1)
 
@@ -925,32 +1026,50 @@ Example:
 
 ```scala
 var test: Int = 0
+// <console>:10: warning: Unused import
+// import rescala._
+//                ^
 // test: Int = 0
 
 val e = Evt[Int]()
-// e: rescala.Evt[Int] = <console>(15)
+// e: rescala.Evt[Int] = rescala.RescalaDefaultImports#Evt:30
 
 val f = (x:Int)=>{test=x; x+1}
-// f: Int => Int = $$Lambda$2914/388127693@3a71888e
+// <console>:10: warning: Unused import
+// import rescala._
+//                ^
+// <console>:12: warning: Unused import
+// import x
+//                                      ^
+// f: Int => Int = $$Lambda$14251/920585765@1329afb9
 
 val s: Signal[Int] = e.iterate(10)(f)
-// s: rescala.Signal[Int] = <console>(17)
+// s: rescala.Signal[Int] = s:17
 
 e(1)
 
 assert(test == 10)
+// <console>:10: warning: Unused import
+// import rescala._
+//                ^
 
 assert(s.now == 11)
 
 e(2)
 
 assert(test == 11)
+// <console>:10: warning: Unused import
+// import rescala._
+//                ^
 
 assert(s.now == 12)
 
 e(1)
 
 assert(test == 12)
+// <console>:10: warning: Unused import
+// import rescala._
+//                ^
 
 assert(s.now == 13)
 ```
@@ -968,10 +1087,10 @@ Example:
 
 ```scala
 val e = Evt[Int]()
-// e: rescala.Evt[Int] = <console>(15)
+// e: rescala.Evt[Int] = rescala.RescalaDefaultImports#Evt:30
 
-val s: Signal[Option[Int]] = e.latestOption
-// s: rescala.Signal[Option[Int]] = <console>(16)
+val s: Signal[Option[Int]] = e.latestOption()
+// s: rescala.Signal[Option[Int]] = s:16
 
 assert(s.now == None)
 
@@ -1001,14 +1120,14 @@ programmer. Example:
 
 ```scala
 val e = Evt[Int]()
-// e: rescala.Evt[Int] = <console>(15)
+// e: rescala.Evt[Int] = rescala.RescalaDefaultImports#Evt:30
 
 val s: Signal[scala.collection.LinearSeq[Int]] = e.last(5)
-// s: rescala.Signal[scala.collection.LinearSeq[Int]] = <console>(16)
+// s: rescala.Signal[scala.collection.LinearSeq[Int]] = s:16
 
 s observe println
 // Queue()
-// res81: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(17)
+// res81: rescala.reactives.Observe[rescala.parrp.ParRP] = res81:17
 
 e(1)
 // Queue(1)
@@ -1043,10 +1162,10 @@ when the event has never been fired yet, the signal holds the value
 
 ```scala
 val e = Evt[Int]()
-// e: rescala.Evt[Int] = <console>(15)
+// e: rescala.Evt[Int] = rescala.RescalaDefaultImports#Evt:30
 
 val s: Signal[Int] = e.count
-// s: rescala.Signal[Int] = <console>(16)
+// s: rescala.Signal[Int] = s:16
 
 assert(s.now == 0)
 
@@ -1070,16 +1189,16 @@ Example:
 
 ```scala
 val e = Evt[Int]()
-// e: rescala.Evt[Int] = <console>(15)
+// e: rescala.Evt[Int] = rescala.RescalaDefaultImports#Evt:30
 
 val v =  Var(1)
-// v: rescala.Var[Int] = <console>(15)
+// v: rescala.Var[Int] = v:15
 
 val s1 = Signal{ v() + 1 }
-// s1: rescala.Signal[Int] = <console>(16)
+// s1: rescala.Signal[Int] = s1:16
 
 val s = e.snapshot(s1)
-// s: rescala.reactives.Signal[Int,rescala.parrp.ParRP] = <console>(17)
+// s: rescala.reactives.Signal[Int,rescala.parrp.ParRP] = s:17
 
 e(1)
 
@@ -1105,19 +1224,19 @@ Example:
 
 ```scala
 val s = Var(5)
-// s: rescala.Var[Int] = <console>(15)
+// s: rescala.Var[Int] = s:15
 
 val e = s.change
-// e: rescala.reactives.Event[rescala.reactives.Signals.Diff[Int],rescala.parrp.ParRP] = (change <console>(15))
+// e: rescala.reactives.Event[rescala.reactives.Signals.Diff[Int],rescala.parrp.ParRP] = e:16
 
 e += println
-// res96: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(17)
+// res96: rescala.reactives.Observe[rescala.parrp.ParRP] = res96:17
 
 s.set(10)
-// Diff(Change(5),Change(10))
+// Diff(5,10)
 
 s.set(20)
-// Diff(Change(10),Change(20))
+// Diff(10,20)
 ```
 
 ## ChangedTo
@@ -1130,29 +1249,41 @@ value.
 
 ```scala
 var test = 0
+// <console>:10: warning: Unused import
+// import rescala._
+//                ^
 // test: Int = 0
 
 val v =  Var(1)
-// v: rescala.Var[Int] = <console>(15)
+// v: rescala.Var[Int] = v:15
 
 val s = Signal{ v() + 1 }
-// s: rescala.Signal[Int] = <console>(16)
+// s: rescala.Signal[Int] = s:16
 
 val e: Event[Unit] = s.changedTo(3)
-// e: rescala.Event[Unit] = (map (filter (changed <console>(16))))
+// e: rescala.Event[Unit] = (map (filter (changed s:16)))
 
 e += ((x:Unit)=>{test+=1})
-// res99: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(18)
+// res99: rescala.reactives.Observe[rescala.parrp.ParRP] = res99:18
 
 assert(test == 0)
+// <console>:10: warning: Unused import
+// import rescala._
+//                ^
 
 v set(2)
 
 assert(test == 1)
+// <console>:10: warning: Unused import
+// import rescala._
+//                ^
 
 v set(3)
 
 assert(test == 1)
+// <console>:10: warning: Unused import
+// import rescala._
+//                ^
 ```
 
 ## Reset
@@ -1168,28 +1299,34 @@ Example:
 
 ```scala
 val e = Evt[Int]()
-// e: rescala.Evt[Int] = <console>(15)
+// e: rescala.Evt[Int] = rescala.RescalaDefaultImports#Evt:30
 
 val v1 =  Var(0)
-// v1: rescala.Var[Int] = <console>(15)
+// v1: rescala.Var[Int] = v1:15
 
 val v2 =  Var(10)
-// v2: rescala.Var[Int] = <console>(15)
+// v2: rescala.Var[Int] = v2:15
 
 val s1 = Signal{ v1() + 1 }
-// s1: rescala.Signal[Int] = <console>(16)
+// s1: rescala.Signal[Int] = s1:16
 
 val s2 = Signal{ v2() + 1 }
-// s2: rescala.Signal[Int] = <console>(16)
+// s2: rescala.Signal[Int] = s2:16
 
 def factory(x: Int) = x%2 match {
   case 0 => s1
   case 1 => s2
 }
+// <console>:10: warning: Unused import
+// import rescala._
+//                ^
+// <console>:12: warning: Unused import
+// import x
+//                                      ^
 // factory: (x: Int)rescala.Signal[Int]
 
 val s3 = e.reset(100)(factory)
-// s3: rescala.reactives.Signal[Int,rescala.parrp.ParRP] = <console>(17)
+// s3: rescala.reactives.Signal[Int,rescala.parrp.ParRP] = s3:17
 
 assert(s3.now == 1)
 
@@ -1236,25 +1373,31 @@ fired a changed event:
 
 ```scala
 val v1 = Var(1)
-// v1: rescala.Var[Int] = <console>(15)
+// v1: rescala.Var[Int] = v1:15
 
 val v2 = Var("Test")
-// v2: rescala.Var[String] = <console>(15)
+// v2: rescala.Var[String] = v2:15
 
 val v3 = Var(true)
-// v3: rescala.Var[Boolean] = <console>(15)
+// v3: rescala.Var[Boolean] = v3:15
 
 val collection: List[Signal[_]] = List(v1, v2, v3)
-// collection: List[rescala.Signal[_]] = List(<console>(15), <console>(15), <console>(15))
+// collection: List[rescala.Signal[_]] = List(v1:15, v2:15, v3:15)
 
 val innerChanges = Signal {collection.map(_.changed).reduce((a, b) => a || b)}
-// innerChanges: rescala.Signal[rescala.reactives.Event[Any,rescala.parrp.ParRP]] = <console>(18)
+// <console>:12: warning: Unused import
+// import a
+//                                      ^
+// <console>:13: warning: Unused import
+// import b
+//                                      ^
+// innerChanges: rescala.Signal[rescala.reactives.Event[Any,rescala.parrp.ParRP]] = innerChanges:18
 
 val anyChanged = innerChanges.flatten
-// anyChanged: rescala.reactives.Event[Any,rescala.parrp.ParRP] = <console>(16)
+// anyChanged: rescala.reactives.Event[Any,rescala.parrp.ParRP] = anyChanged:16
 
 anyChanged += println
-// res112: rescala.reactives.Observe[rescala.parrp.ParRP] = <console>(17)
+// res112: rescala.reactives.Observe[rescala.parrp.ParRP] = res112:17
 
 v1.set(10)
 // 10
@@ -1286,7 +1429,7 @@ between ```b``` and ```s```.
 
 ```scala
 val s = Signal{ a() + b() }
-// s: rescala.Signal[Int] = <console>(17)
+// s: rescala.Signal[Int] = s:17
 ```
 
 The following code instead establishes only a dependency between
@@ -1294,7 +1437,7 @@ The following code instead establishes only a dependency between
 
 ```scala
 val s = Signal{ a.now + b() }
-// s: rescala.Signal[Int] = <console>(17)
+// s: rescala.Signal[Int] = s:17
 ```
 
 In other words, in the last example, if ```a``` is updated, ```s```
@@ -1322,6 +1465,9 @@ example the following code is conceptually wrong because the variable
 
 ```scala
 var c = 0                 /* WRONG - DON'T DO IT */
+// <console>:10: warning: Unused import
+// import rescala._
+//                ^
 // c: Int = 0
 
 val s = Signal{
@@ -1331,11 +1477,14 @@ val s = Signal{
 // <console>:20: warning: Statement may either be unnecessary or have side effects. Signal expressions should have no side effects.
 //          c = sum * 2
 //            ^
-// error: No warnings can be incurred under -Xfatal-warnings.
+// s: rescala.Signal[Unit] = s:18
 
 // …
 println(c)
-// 0
+// <console>:10: warning: Unused import
+// import rescala._
+//                ^
+// 4
 ```
 
 A possible solution is to refactor the code above to a more functional
@@ -1347,7 +1496,7 @@ val c = Signal{
   val sum = a() + b();
   sum * 2
 }
-// c: rescala.Signal[Int] = <console>(17)
+// c: rescala.Signal[Int] = c:17
 
 // …
 println(c.now)
@@ -1362,7 +1511,7 @@ runtime error and must be avoided. For example the following code:
 
 ```scala
 val a = Var(0)             /* WRONG - DON'T DO IT */
-// a: rescala.Var[Int] = <console>(15)
+// a: rescala.Var[Int] = a:15
 
 val s = Signal{ a() + t() }
 // <console>:17: error: overloaded method value + with alternatives:
@@ -1379,7 +1528,18 @@ val s = Signal{ a() + t() }
 //                            ^
 
 val t = Signal{ a() + s() + 1 }
-// t: rescala.Signal[Int] = <console>(17)
+// <console>:17: error: overloaded method value + with alternatives:
+//   (x: Double)Double <and>
+//   (x: Float)Float <and>
+//   (x: Long)Long <and>
+//   (x: Int)Int <and>
+//   (x: Char)Int <and>
+//   (x: Short)Int <and>
+//   (x: Byte)Int <and>
+//   (x: String)String
+//  cannot be applied to (Unit)
+//        val t = Signal{ a() + s() + 1 }
+//                            ^
 ```
 
 creates a mutual dependency between ```s``` and
@@ -1393,19 +1553,28 @@ unexpectedly with mutable objects. Consider the following example.
 class Foo(init: Int){            /* WRONG - DON'T DO IT */
   var x = init
 }
+// <console>:10: warning: Unused import
+// import rescala._
+//                ^
 // defined class Foo
 
 val foo = new Foo(1)
-// foo: Foo = Foo@54ec9a53
+// <console>:10: warning: Unused import
+// import rescala._
+//                ^
+// foo: Foo = Foo@7bcaf983
 
 val varFoo = Var(foo)
-// varFoo: rescala.Var[Foo] = <console>(16)
+// varFoo: rescala.Var[Foo] = varFoo:16
 
 val s = Signal{ varFoo().x + 10 }
-// s: rescala.Signal[Int] = <console>(16)
+// s: rescala.Signal[Int] = s:16
 
 // s.now == 11
 foo.x = 2
+// <console>:10: warning: Unused import
+// import rescala._
+//                ^
 // foo.x: Int = 2
 
 // s.now == 11
@@ -1428,16 +1597,22 @@ the var is reevaluated.
 
 ```scala
 class Foo(val x: Int){}
+// <console>:10: warning: Unused import
+// import rescala._
+//                ^
 // defined class Foo
 
 val foo = new Foo(1)
-// foo: Foo = Foo@49ed29b7
+// <console>:10: warning: Unused import
+// import rescala._
+//                ^
+// foo: Foo = Foo@2223275b
 
 val varFoo = Var(foo)
-// varFoo: rescala.Var[Foo] = <console>(16)
+// varFoo: rescala.Var[Foo] = varFoo:16
 
 val s = Signal{ varFoo().x + 10 }
-// s: rescala.Signal[Int] = <console>(16)
+// s: rescala.Signal[Int] = s:16
 
 // s.now == 11
 varFoo()= new Foo(2)
@@ -1453,19 +1628,28 @@ confusing for the reader and should be avoided when possible.
 class Foo(init: Int){   /* WRONG - DON'T DO IT */
   var x = init
 }
+// <console>:10: warning: Unused import
+// import rescala._
+//                ^
 // defined class Foo
 
 val foo = new Foo(1)
-// foo: Foo = Foo@38961c03
+// <console>:10: warning: Unused import
+// import rescala._
+//                ^
+// foo: Foo = Foo@8d6150
 
 val varFoo = Var(foo)
-// varFoo: rescala.Var[Foo] = <console>(16)
+// varFoo: rescala.Var[Foo] = varFoo:16
 
 val s = Signal{ varFoo().x + 10 }
-// s: rescala.Signal[Int] = <console>(16)
+// s: rescala.Signal[Int] = s:16
 
 // s.now == 11
 foo.x = 2
+// <console>:10: warning: Unused import
+// import rescala._
+//                ^
 // foo.x: Int = 2
 
 varFoo()=foo
@@ -1480,6 +1664,12 @@ signals. For example consider the following functions:
 
 ```scala
 def increment(x: Int): Int = x + 1
+// <console>:10: warning: Unused import
+// import rescala._
+//                ^
+// <console>:12: warning: Unused import
+// import x
+//                                      ^
 // increment: (x: Int)Int
 ```
 
@@ -1491,7 +1681,7 @@ expression is also rejected by the compiler.
 
 ```scala
 val a = Var(1)           /* WRONG - DON'T DO IT */
-// a: rescala.Var[Int] = <console>(15)
+// a: rescala.Var[Int] = a:15
 
 val b = increment(a)
 // <console>:17: error: type mismatch;
@@ -1500,9 +1690,12 @@ val b = increment(a)
 //  required: Int
 //        val b = increment(a)
 //                          ^
+// <console>:10: warning: Unused import
+// import rescala._
+//                ^
 
 val s = Signal{ b() + 1 }
-// s: rescala.Signal[Int] = <console>(16)
+// s: rescala.Signal[Int] = s:16
 ```
 
 The following code snippet is syntactically correct, but the signal
@@ -1510,13 +1703,13 @@ has a constant value 2 and is not updated when the var changes.
 
 ```scala
 val a = Var(1)
-// a: rescala.Var[Int] = <console>(15)
+// a: rescala.Var[Int] = a:15
 
 val b = increment(a.now)
 // b: Int = 2
 
 val s = Signal{ b + 1 }
-// s: rescala.Signal[Int] = <console>(16)
+// s: rescala.Signal[Int] = s:16
 ```
 
 The following solution is syntactically correct and the signal
@@ -1524,10 +1717,10 @@ The following solution is syntactically correct and the signal
 
 ```scala
 val a = Var(1)
-// a: rescala.Var[Int] = <console>(15)
+// a: rescala.Var[Int] = a:15
 
 val s = Signal{ increment(a()) + 1 }
-// s: rescala.Signal[Int] = <console>(17)
+// s: rescala.Signal[Int] = s:17
 ```
 
 ---
