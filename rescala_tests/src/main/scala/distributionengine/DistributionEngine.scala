@@ -1,4 +1,4 @@
-package stateCrdts
+package distributionengine
 
 import java.net.InetAddress
 
@@ -6,8 +6,7 @@ import akka.actor._
 import akka.pattern.ask
 import akka.util.Timeout
 import rescala._
-import stateCrdts.DistributionEngine._
-import stateCrdts.LookupServer.{LookupMessage, RegisterMessage}
+import statecrdts._
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -32,14 +31,14 @@ class DistributionEngine(hostName: String = InetAddress.getLocalHost.getHostAddr
   def receive: PartialFunction[Any, Unit] = {
     case PublishEvt(cVar) => sender ! publishNew(cVar)
     case UpdateMessage(varName, value, hostRef) =>
-      sleep
+      sleep()
       println(s"[$hostName] received value $value for $varName from ${hostRef.path.name}")
       //localVars(varName).transform(_.merge(value)) // update value with merged crdt
       extChangeEvts(varName)(value)
       val newHosts = registry(varName) + hostRef
       registry += (varName -> newHosts) // add sender to registry
     case QueryMessage(varName) =>
-      sleep
+      sleep()
       sender ! UpdateMessage(varName, localCVars(varName).signal.now, self)
   }
 
@@ -164,14 +163,6 @@ class DistributionEngine(hostName: String = InetAddress.getLocalHost.getHostAddr
 object DistributionEngine {
   def props(host: String, lookupServer: ActorRef): Props = Props(new DistributionEngine(host, lookupServer))
 
-  final case class Publish(varName: String, localVar: Var[_ <: StateCRDT])
-
-  final case class PublishEvt(cVar: Publishable[_ <: StateCRDT])
-
-  final case class UpdateMessage(varName: String, value: StateCRDT, hostRef: ActorRef)
-
-  final case class QueryMessage(varName: String)
-
   def host: InetAddress = InetAddress.getLocalHost // hostname + IP
   def ip: Identifier = InetAddress.getLocalHost.getHostAddress
 
@@ -211,20 +202,15 @@ class LookupServer extends Actor {
 
   def receive: PartialFunction[Any, Unit] = {
     case RegisterMessage(varName, host) =>
-      sleep
+      sleep()
       println("[LookupServer] reveived register message for " + varName + " from " + host)
       sender ! register(varName, host) // register sender and send return new list of hosts
     case LookupMessage(varName) =>
-      sleep
+      sleep()
       sender ! lookup(varName)
   }
 }
 
 object LookupServer {
   def props: Props = Props[LookupServer]
-
-  final case class RegisterMessage(varName: String, host: ActorRef)
-
-  final case class LookupMessage(varName: String)
-
 }

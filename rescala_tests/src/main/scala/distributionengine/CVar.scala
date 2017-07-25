@@ -1,11 +1,11 @@
-package stateCrdts
+package distributionengine
 
 import akka.actor._
 import akka.pattern.ask
 import akka.util.Timeout
 import rescala._
 import rescala.parrp.ParRP
-import stateCrdts.DistributionEngine._
+import statecrdts.{CIncOnlyCounter, StateCRDT}
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -24,7 +24,7 @@ trait Publishable[A <: StateCRDT] {
   def value: A#valueType = signal.now.value
 }
 
-case class CCounter(name: String, private val start: Int) extends Publishable[CIncOnlyCounter] {
+case class DistributedGCounter(name: String, private val start: Int) extends Publishable[CIncOnlyCounter] {
   val initial = CIncOnlyCounter(start)
   val internalChanges: rescala.Evt[CIncOnlyCounter] = Evt[CIncOnlyCounter]
   val externalChanges: rescala.Evt[CIncOnlyCounter] = Evt[CIncOnlyCounter]
@@ -34,9 +34,9 @@ case class CCounter(name: String, private val start: Int) extends Publishable[CI
   }
 }
 
-object CCounter {
-  def apply(engine: ActorRef, name: String, start: Int): CCounter = {
-    val c = new CCounter(name, start)
+object DistributedGCounter {
+  def apply(engine: ActorRef, name: String, start: Int): DistributedGCounter = {
+    val c = new DistributedGCounter(name, start)
     implicit val timeout = Timeout(60.second)
     val sendMessage = engine ? PublishEvt(c)
     Await.ready(sendMessage, Duration.Inf) // make publish a blocking operation
