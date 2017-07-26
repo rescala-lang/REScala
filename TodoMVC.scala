@@ -2,10 +2,12 @@ package daimpl.todomvc
 
 import scala.scalajs.js.JSApp
 import scalatags.JsDom.all._
+import scalatags.JsDom.tags2.section
 import rescalatags._
 import rescala.LocalStorageStore
 import org.scalajs.dom
-import dom.document
+import org.scalajs.dom.html.Input
+import org.scalajs.dom.{UIEvent, document}
 import rescala.core.ReCirce.recirce
 import rescala.core.ReSerializable
 
@@ -43,40 +45,38 @@ object TodoMVC extends JSApp {
     storingEngine.addNextNames("tasklist")
     val tasks = Var(innerTasks)
 
-    val section = div // TODO
+    lazy val newTodo: Input = input(
+      id := "newtodo",
+      `class` := "new-todo",
+      placeholder := "What needs to be done?",
+      autofocus := "",
+
+      // TODO onchange --> on enter
+      onchange := { e: UIEvent =>
+        e.preventDefault()
+        tasks.transform(new Task(newTodo.value, false) :: _)
+        newTodo.value = ""
+      }
+    ).render
 
     document.body.replaceChild(div(
       `class`:="todoapp",
       header(
         `class`:="header",
         h1("todos"),
-        input(
-          id:="newtodo",
-          `class`:="new-todo",
-          placeholder:="What needs to be done?",
-          autofocus:="",
-
-          // TODO onchange --> on enter
-          onchange:= { e: dom.UIEvent =>
-            e.preventDefault()
-            val input = document.getElementById("newtodo")
-              .asInstanceOf[dom.html.Input]
-            tasks.transform(new Task(input.value, false) :: _)
-            input.value = ""
-          }
-
-        )
+        newTodo
       ),
 
       section(
-        `class`:="main",
-        `style`:=Signal { if(tasks().size==0) "display:hidden" else "" },
+        `class`:= "main",
+        `style`:= Signal { if(tasks().size==0) "display:hidden" else "" },
         input( `class`:="toggle-all", `type`:="checkbox",
 //          checked:=tasks.now.map { it => it.done.now }
 //                   .reduce {  (a, b) => a && b},
           onclick:={ e: dom.UIEvent =>
+            println("eh?")
             tasks.now.foreach { it =>
-              it.done() = e.target.asInstanceOf[dom.html.Input].checked } }),
+              it.done() = !e.target.asInstanceOf[dom.html.Input].checked } }),
         label(`for`:="toggle-all", "Mark all as complete"),
         Signal { ul(`class`:="todo-list", tasks().map { t =>
 
@@ -99,13 +99,9 @@ object TodoMVC extends JSApp {
               label(t.desc()),
 
               button(`class`:="destroy",
-                onclick:={ e: dom.UIEvent =>
-                  tasks.now.filter { it => it == t } .map { it =>
-                    it.desc.disconnect()
-                    it.done.disconnect()
-                    it.editing.disconnect()
-                  }
-                  tasks() = tasks.now.filter { it => it != t } })
+                onclick:= { e: dom.UIEvent =>
+                  tasks.transform(_.filter { it => it != t })
+                })
             ),
 
             input( `class`:="edit", `type`:="text",
