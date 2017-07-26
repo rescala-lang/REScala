@@ -2,30 +2,46 @@ package daimpl.todomvc
 
 import scala.scalajs.js.JSApp
 import scalatags.JsDom.all._
-import rescala._
 import rescalatags._
+import rescala.LocalStorageStore
 import org.scalajs.dom
 import dom.document
+import rescala.core.ReCirce.recirce
+import rescala.core.ReSerializable
 
 object TodoMVC extends JSApp {
+
+  implicit val storingEngine: LocalStorageStore = new LocalStorageStore()
+  import storingEngine._
+
 //  var unique = 0
+
+  implicit val taskDecoder: io.circe.Decoder[Task] = io.circe.Decoder.forProduct3[String, Boolean, List[String], Task]("decs", "done", "names") { (dec, don, names) =>
+    storingEngine.addNextNames(names: _*)
+    new Task(dec, don)
+  }
+  implicit val taskEncoder: io.circe.Encoder[Task] = io.circe.Encoder.forProduct3[String, Boolean, List[String], Task]("decs", "done", "names"){t =>
+    (t.desc.now, t.done.now, List(getName(t.desc), getName(t.done)))
+  }
 
   class Task(desc_ : String, done_ : Boolean) {
 //    val id   = unique
     val desc = Var(desc_)
     val done = Var(done_)
-    val editing = Var(false)
+    val editing = Var(false)(ReSerializable.doNotSerialize, implicitly)
 //    unique += 1
   }
 
   def main(): Unit = {
 
-    val tasks = Var(List(
+    val innerTasks = List(
       new Task("get milk", false),
       new Task("get sugar", false),
       new Task("get coffee", false),
       new Task("walk the dog", false)
-    ))
+    )
+    storingEngine.addNextNames("tasklist")
+    val tasks = Var(innerTasks)
 
     val section = div // TODO
 
@@ -45,7 +61,7 @@ object TodoMVC extends JSApp {
             e.preventDefault()
             val input = document.getElementById("newtodo")
               .asInstanceOf[dom.html.Input]
-            tasks() = new Task(input.value, false) :: tasks.now
+            tasks.transform(new Task(input.value, false) :: _)
             input.value = ""
           }
 
