@@ -1,6 +1,6 @@
 package rescala.fullmv.sgt.reachability;
 
-/**
+/*
  * using scala, we could define SpanningTreeNode to just be a recursively typed Map.Entry from java's maps.
  * This way we technically don't need the SpanningTreeNode class
  */
@@ -61,12 +61,15 @@ import java.util.Set;
  *    of turn completion through their Subsumable .lock
  *  TODO get this to cooperate with distribution
  */
+// TODO must have remote reference counterpart
 public class DigraphNodeWithReachability {
+  // TODO must be serializable
   private static class SpanningTreeNode {
 //    final SpanningTreeNode parent;
+    // TODO must include remote refs
     final DigraphNodeWithReachability digraphNode;
-    final Set<SpanningTreeNode> spanningTreeSuccessors = new java.util.HashSet<>();
-//    final Set<SpanningTreeNode> spanningTreeSuccessors = java.util.concurrent.ConcurrentHashMap.newKeySet();
+    final Set<SpanningTreeNode> children = new java.util.HashSet<>();
+//    final Set<SpanningTreeNode> children = java.util.concurrent.ConcurrentHashMap.newKeySet();
 //    SpanningTreeNode(SpanningTreeNode parent, DigraphNodeWithReachability digraphNode) {
 //      this.parent = parent;
     SpanningTreeNode(DigraphNodeWithReachability digraphNode) {
@@ -74,13 +77,14 @@ public class DigraphNodeWithReachability {
     }
   }
 
-  private final Collection<DigraphNodeWithReachability> predecessors = new java.util.ArrayList<>();
+  // TODO must include remote refs
+  private final Collection<DigraphNodeWithReachability> predecessorsIncludingSelf = new java.util.ArrayList<>();
   private final Map<DigraphNodeWithReachability, SpanningTreeNode> successorSpanningTreeNodes = new java.util.concurrent.ConcurrentHashMap<>();
   private final SpanningTreeNode selfNode = new SpanningTreeNode(this);
 //  private final SpanningTreeNode selfNode = new SpanningTreeNode(null, this);
 
   public DigraphNodeWithReachability() {
-    predecessors.add(this);
+    predecessorsIncludingSelf.add(this);
     successorSpanningTreeNodes.put(this, selfNode);
   }
 
@@ -89,28 +93,30 @@ public class DigraphNodeWithReachability {
     return successorSpanningTreeNodes.containsKey(node);
   }
 
-//  private void copySubTreeRootAndAssessChildren(SpanningTreeNode spanningTreeParent, SpanningTreeNode spanningSubTreeRoot) {
-//    assert spanningTreeParent == successorSpanningTreeNodes.get(spanningTreeParent.digraphNode);
-  private void copySubTreeRootAndAssessChildren(DigraphNodeWithReachability spanningTreeParent, SpanningTreeNode spanningSubTreeRoot) {
+//  private void copySubTreeRootAndAssessChildren(SpanningTreeNode attachBelow, SpanningTreeNode spanningSubTreeRoot) {
+//    assert attachBelow == successorSpanningTreeNodes.get(attachBelow.digraphNode);
+  private void copySubTreeRootAndAssessChildren(DigraphNodeWithReachability attachBelow, SpanningTreeNode spanningSubTreeRoot) {
     DigraphNodeWithReachability newNode = spanningSubTreeRoot.digraphNode;
-    newNode.predecessors.add(this);
+    newNode.predecessorsIncludingSelf.add(this);
 
-//    SpanningTreeNode copiedSpanningTreeNode = new SpanningTreeNode(spanningTreeParent, newNode);
+//    SpanningTreeNode copiedSpanningTreeNode = new SpanningTreeNode(attachBelow, newNode);
     SpanningTreeNode copiedSpanningTreeNode = new SpanningTreeNode(newNode);
     successorSpanningTreeNodes.put(newNode, copiedSpanningTreeNode);
-    successorSpanningTreeNodes.get(spanningTreeParent).spanningTreeSuccessors.add(copiedSpanningTreeNode);
-//    successorSpanningTreeNodes.get(spanningTreeParent.digraphNode).spanningTreeSuccessors.add(copiedSpanningTreeNode);
+    successorSpanningTreeNodes.get(attachBelow).children.add(copiedSpanningTreeNode);
+//    successorSpanningTreeNodes.get(attachBelow.digraphNode).children.add(copiedSpanningTreeNode);
 
-    for(SpanningTreeNode child : spanningSubTreeRoot.spanningTreeSuccessors){
+    for(SpanningTreeNode child : spanningSubTreeRoot.children){
       maybeNewReachableSubtree(newNode, child);
 //      maybeNewReachableSubtree(copiedSpanningTreeNode, child);
     }
   }
 
-//  private void maybeNewReachableSubtree(SpanningTreeNode spanningTreeParent, SpanningTreeNode spanningSubTreeRoot) {
-  private void maybeNewReachableSubtree(DigraphNodeWithReachability spanningTreeParent, SpanningTreeNode spanningSubTreeRoot) {
+//  private void maybeNewReachableSubtree(SpanningTreeNode attachBelow, SpanningTreeNode spanningSubTreeRoot) {
+  // TODO remote callable
+  // TODO should collect newly reachable nodes, and top level call should broadcast them to enable local mirroring; requires pointer to FullMVTurn or class merge
+  private void maybeNewReachableSubtree(DigraphNodeWithReachability attachBelow, SpanningTreeNode spanningSubTreeRoot) {
     if(!isReachable(spanningSubTreeRoot.digraphNode)) {
-      copySubTreeRootAndAssessChildren(spanningTreeParent, spanningSubTreeRoot);
+      copySubTreeRootAndAssessChildren(attachBelow, spanningSubTreeRoot);
     }
   }
 
@@ -118,13 +124,15 @@ public class DigraphNodeWithReachability {
     return successorSpanningTreeNodes.containsKey(this);
   }
 
+  // TODO remote callable
   public boolean addSuccessor(DigraphNodeWithReachability to) {
     assert hasNotBeenDiscarded();
     boolean isNew = !isReachable(to);
     if (isNew) {
-      for(DigraphNodeWithReachability predecessor: predecessors) {
+      for(DigraphNodeWithReachability predecessorOrSelf: predecessorsIncludingSelf) {
 //        predecessor.maybeNewReachableSubtree(selfNode, to.selfNode);
-        predecessor.maybeNewReachableSubtree(this, to.selfNode);
+        // TODO possible remote call
+        predecessorOrSelf.maybeNewReachableSubtree(this, to.selfNode);
       }
     }
     return isNew;
@@ -132,17 +140,17 @@ public class DigraphNodeWithReachability {
 
 //  private void discardedSuccessor(DigraphNodeWithReachability node) {
 //    SpanningTreeNode removed = successorSpanningTreeNodes.remove(node);
-//    removed.parent.spanningTreeSuccessors.remove(removed);
+//    removed.parent.children.remove(removed);
 //  }
 
   public void discard() {
     assert hasNotBeenDiscarded();
     // unlink all spanning tree nodes to allow other referenced nodes to be GC'd
     successorSpanningTreeNodes.clear();
-    selfNode.spanningTreeSuccessors.clear();
-//    for(DigraphNodeWithReachability predecessor: predecessors) {
+    selfNode.children.clear();
+//    for(DigraphNodeWithReachability predecessor: predecessorsIncludingSelf) {
 //      discardedSuccessor(this);
 //    }
-//    predecessors.clear();
+//    predecessorsIncludingSelf.clear();
   }
 }

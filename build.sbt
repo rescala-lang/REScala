@@ -273,6 +273,9 @@ lazy val fullmv = project.in(file("Research/Multiversion"))
   .settings(
     name := "rescala-multiversion",
     //libraryDependencies += "org.graphstream" % "gs-core" % "1.3",
+    libraryDependencies += "de.tuda.stg" %% "retier-communication" % "0.0.1-SNAPSHOT",
+    libraryDependencies += "de.tuda.stg" %% "retier-communicator-tcp" % "0.0.1-SNAPSHOT" % "test",
+    libraryDependencies += "de.tuda.stg" %% "retier-serializer-upickle" % "0.0.1-SNAPSHOT" % "test",
     publish := {},
     publishLocal := {},
     scalatestDependency)

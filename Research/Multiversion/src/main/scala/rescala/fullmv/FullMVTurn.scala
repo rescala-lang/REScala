@@ -18,6 +18,8 @@ class FullMVTurn(val userlandThread: Thread) extends TurnImpl[FullMVStruct] {
 
   // counts the sum of in-flight notifications, in-progress reevaluations.
   var activeBranches = new AtomicInteger(0)
+  // TODO must be remote callable
+  // TODO should use local buffering?
   def activeBranchDifferential(forState: TurnPhase.Type, differential: Int): Unit = {
     assert(phase == forState, s"$this received branch differential for wrong state $phase")
     if(differential != 0) {
@@ -38,6 +40,24 @@ class FullMVTurn(val userlandThread: Thread) extends TurnImpl[FullMVStruct] {
     if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this switched phase.")
   }
 
+  private def tryAtomicCompareBranchesPlusPredsAndSwitchPhase(preds: Set[FullMVTurn], newPhase: Type): Unit = {
+    phaseLock.synchronized {
+      if (activeBranches.get == 0 && nonTransitivePredecessors == preds) {
+        this.phase = newPhase
+        if(newPhase == TurnPhase.Completed) sgtNode.discard()
+        if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this switched phase.")
+        phaseLock.notifyAll()
+      }
+    }
+  }
+
+  // TODO should be resolved by local mirroring
+  private def awaitPhase(atLeast: TurnPhase.Type): Unit = phaseLock.synchronized {
+    while(phase < atLeast) {
+      phaseLock.wait()
+    }
+  }
+
   private def awaitBranchCountZero() = {
     while (activeBranches.get > 0) {
       LockSupport.park(this)
@@ -45,13 +65,16 @@ class FullMVTurn(val userlandThread: Thread) extends TurnImpl[FullMVStruct] {
   }
 
   val lock: SubsumableLock = new SubsumableLockImpl()
+  // TODO probably needs to be integrated into this class, either merge or F-Bound polymorphism?
   val sgtNode: DigraphNodeWithReachability = new DigraphNodeWithReachability()
   var nonTransitivePredecessors: Set[FullMVTurn] = Set.empty
 
+  // TODO should be resolved by local mirroring
   def isTransitivePredecessor(candidate: FullMVTurn): Boolean = {
     sgtNode.isReachable(candidate.sgtNode)
   }
 
+  // TODO must be remote callable
   def addPredecessor(predecessor: FullMVTurn): Unit = {
     assert(predecessor.lock.getLockedRoot.isDefined, s"establishing order $predecessor -> $this: predecessor not locked")
     assert(lock.getLockedRoot.isDefined, s"establishing order $predecessor -> $this: successor not locked")
@@ -69,33 +92,6 @@ class FullMVTurn(val userlandThread: Thread) extends TurnImpl[FullMVStruct] {
       waitFor.awaitPhase(atLeast)
     }
     preds
-  }
-
-//  def switchPhase(phase: TurnPhase.Type): Unit = {
-//    phaseLock.synchronized{
-//      require(phase > this.phase, s"$this cannot progress backwards to phase $phase.")
-//      this.phase = phase
-//      if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this switched phase.")
-//      phaseLock.notifyAll()
-//    }
-//  }
-
-  private def tryAtomicCompareBranchesPlusPredsAndSwitchPhase(preds: Set[FullMVTurn], newPhase: Type): Unit = {
-    phaseLock.synchronized {
-      if (activeBranches.get == 0 && nonTransitivePredecessors == preds) {
-        this.phase = newPhase
-        if(newPhase == TurnPhase.Completed) sgtNode.discard()
-        if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this switched phase.")
-        phaseLock.notifyAll()
-      }
-    }
-  }
-
-
-  private def awaitPhase(atLeast: TurnPhase.Type): Unit = phaseLock.synchronized {
-    while(phase < atLeast) {
-      phaseLock.wait()
-    }
   }
 
   override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): NodeVersionHistory[P, FullMVTurn, Reactive[FullMVStruct]] = {

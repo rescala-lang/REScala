@@ -4,12 +4,14 @@ import rescala.parrp.Backoff
 
 import scala.annotation.tailrec
 
+// TODO must be a remote interface
 trait SubsumableLock {
+  // used for assertions only
   def getLockedRoot: Option[SubsumableLock]
   def tryLock(): SubsumableLock.TryLockResult
   def lock(): SubsumableLock
   def unlock(): Unit
-  protected def subsume(subsumableLock: SubsumableLock): SubsumableLock
+  def subsume(subsumableLock: SubsumableLock): SubsumableLock
 }
 
 object SubsumableLock {
