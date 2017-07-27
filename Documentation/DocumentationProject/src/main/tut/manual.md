@@ -10,10 +10,9 @@ sidebar: manual
 Create a `build.sbt` file in an empty folder with the following contents:
 
 ```scala
-scalaVersion := "2.12.1"
+scalaVersion := "2.12.2"
 
-resolvers += Resolver.bintrayRepo("rmgk", "maven")
-resolvers += Resolver.bintrayRepo("pweisenburger", "maven")
+resolvers += Resolver.bintrayRepo("stg-tud", "maven")
 
 libraryDependencies += "de.tuda.stg" %% "rescala" % "0.19.0"
 ```
@@ -688,7 +687,7 @@ Example:
 
 ```tut:book
 val e = Evt[Int]()
-val s: Signal[Option[Int]] = e.latestOption
+val s: Signal[Option[Int]] = e.latestOption()
 assert(s.now == None)
 e(1)
 assert(s.now == Option(1))

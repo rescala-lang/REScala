@@ -6,7 +6,6 @@ import rescala.reactives.Source
 
 import scala.language.existentials
 
-
 abstract class RescalaDefaultImports[S <: Struct] {
   // need the import inside of the trait, otherwise scala complains that it is shadowed by rescala.macros
   import scala.language.experimental.macros
@@ -14,9 +13,11 @@ abstract class RescalaDefaultImports[S <: Struct] {
   def explicitEngine: rescala.core.Engine[S]
   implicit def implicitEngine: rescala.core.Engine[S] = explicitEngine
 
-  final type Observe = reactives.Observe[S]
+  /** Signals represent time changing values of type A */
   final type Signal[+A] = reactives.Signal[A, S]
+  /** Events represent discrete occurences of values of type A */
   final type Event[+A] = reactives.Event[A, S]
+  final type Observe = reactives.Observe[S]
   final type Var[A] = reactives.Var[A, S]
   final type Evt[A] = reactives.Evt[A, S]
   final type StaticTicket = rescala.core.StaticTicket[S]
@@ -41,6 +42,14 @@ abstract class RescalaDefaultImports[S <: Struct] {
   final def dynamic[T](dependencies: Reactive*)(expr: DynamicTicket => T)(implicit ct: CreationTicket): Signal[T] = Signals.dynamic(dependencies: _*)(expr)
   final def dynamicE[T](dependencies: Reactive*)(expr: DynamicTicket => Option[T])(implicit ct: CreationTicket): Event[T] = Events.dynamic(dependencies: _*)(expr)
 
+  /** A signal expression can be used to create signals accessing arbitrary other signals.
+    * Use the apply method on a signal to access its value inside of a signal expression.
+    * {{{
+    * val a: Signal[Int]
+    * val b: Signal[Int]
+    * val result: Signal[String] = Signal { a().toString + b().toString}
+    * }}}
+    */
   final def Signal[A](expression: A): Signal[A] = macro ReactiveMacros.SignalMacro[A, S]
   final def Event[A](expression: Option[A]): Event[A] = macro ReactiveMacros.EventMacro[A, S]
 
@@ -72,7 +81,7 @@ abstract class RescalaDefaultImports[S <: Struct] {
     *                       input changes that will be applied as an atomic transaction at the end.
     *                       The return value of this phase will be passed to the wrapUpPhase
     * @param wrapUpPhase A wrap-up function that receives the admissionPhase result and may perform arbitrary
-    *                    [[rescala.reactives.Signal.before]] and [[rescala.reactives.Signal.now]] reads which are
+    *                    [[rescala.reactives.Signal.now]] reads which are
     *                    executed after the update propagation.
     * @tparam I Intermediate Result type passed from admission to wrapup phase
     * @tparam R Final Result type of the wrapup phase

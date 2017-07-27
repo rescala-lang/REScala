@@ -241,7 +241,7 @@ object ReactiveMacros {
     // note that this potentially misses many dependencies
     // these will be detected dynamically, but that may cause multiple evaluations when creating a signal
     val filteredDetections = detectedReactives.filter(tree =>
-      !definedSymbols.contains(tree.symbol) &&
+      tree.forAll{ t => !definedSymbols.contains(t.symbol)} &&
         tree.symbol.isTerm &&
         (tree.symbol.asTerm.isVal ||
           tree.symbol.asTerm.isVar))

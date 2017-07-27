@@ -1,5 +1,7 @@
 package examples.demo
 
+import java.awt.Color
+
 import examples.demo.GModularClockCircle.Clock
 import examples.demo.ui._
 import rescala._
@@ -72,12 +74,12 @@ object LFullyModularBall extends Main {
       case (_, Left(Point(x, _))) => x.toDouble
       case (pX, Right(inc)) => pX + inc
     }
-    val posY = (reset || incX).fold(0d){
+    val posY = (reset || incY).fold(0d){
       case (_, Left(Point(_, y))) => y.toDouble
       case (pY, Right(inc)) => pY + inc
     }
 
-    val shape = new Circle(posX.map(_.toInt), posY.map(_.toInt), diameter)
+    val shape = new Circle(posX.map(_.toInt), posY.map(_.toInt), diameter, fill = Var(Some(Color.GREEN)))
   }
 
   val shapes = Var[List[Shape]](List.empty)
