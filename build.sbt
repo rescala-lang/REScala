@@ -192,6 +192,7 @@ lazy val fullmv = project.in(file("Research/Multiversion"))
 
 lazy val meta = project.in(file("Research/Meta"))
   .dependsOn(rescalaJVM)
+  .settings(cfg.base)
   .settings(cfg.test)
   .settings(cfg.noPublish)
 
