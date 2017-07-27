@@ -4,7 +4,6 @@ import java.util.concurrent.Executor
 import java.util.concurrent.atomic.AtomicInteger
 
 import rescala.core.Reactive
-import rescala.core.ReevaluationResult.{Dynamic, Static}
 import rescala.locking._
 import rescala.twoversion.TwoVersionEngineImpl
 
@@ -29,14 +28,13 @@ class ParallelLockSweep(backoff: Backoff, ex: Executor, engine: TwoVersionEngine
   }
 
   def asyncEvaluate(head: Reactive[TState]): Unit = {
-    if (head.state.anyInputChanged != this) done(head, hasChanged = false)
+    if (head.state.anyInputChanged != this) synchronized { done(head, hasChanged = false, head.state.outgoing(this)) }
     else {
-      val turn = this
       jobsRunning.incrementAndGet()
       ex.execute {
         new Runnable {
           override def run(): Unit = {
-            engine.withTurn(turn) {
+            engine.withTurn(ParallelLockSweep.this) {
               evaluate(head)
             }
             jobsRunning.decrementAndGet()
@@ -49,33 +47,22 @@ class ParallelLockSweep(backoff: Backoff, ex: Executor, engine: TwoVersionEngine
   override def evaluate(head: Reactive[TState]): Unit = {
     val res = head.reevaluate(this, head.state.base(token), head.state.incoming(this))
     synchronized {
-      res match {
-        case Static(isChange, value) =>
-          val hasChanged = isChange && value != head.state.base(token)
-          if (hasChanged) writeState(head)(value)
-          done(head, hasChanged)
+      res.commitDependencyDiff()
+      if (head.state.isGlitchFreeReady) {
+        // val outgoings = res.commitValueChange()
+        if(res.valueChanged) writeState(res.commitTuple)
 
-        case res@Dynamic(isChange, value, _, _, _) =>
-          applyDiff(head, res)
-          recount(head)
+        head.state.hasWritten = this
 
-          if (head.state.counter == 0) {
-            val hasChanged = isChange && value != head.state.base(token)
-            if (hasChanged) writeState(head)(value)
-            done(head, hasChanged)
-          }
-
+        // done(head, res.valueChanged, res.commitValueChange())
+        done(head, res.valueChanged, head.state.outgoing(this))
       }
     }
   }
 
-
   /** allow turn to handle dynamic access to reactives */
   override def dynamicDependencyInteraction(dependency: Reactive[TState]): Unit = synchronized(super.dynamicDependencyInteraction(dependency))
 
-
   override def acquireShared(reactive: Reactive[TState]): Key[LSInterTurn] = synchronized(super.acquireShared(reactive))
-
-
 }
 

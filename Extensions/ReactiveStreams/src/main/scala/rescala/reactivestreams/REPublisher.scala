@@ -2,17 +2,17 @@ package rescala.reactivestreams
 
 
 import org.reactivestreams.{Publisher, Subscriber, Subscription}
-import rescala.core.{Base, Engine, Pulse, Pulsing, REName, Reactive, ReevaluationResult, Struct, Turn, ValuePersistency}
+import rescala.core.{Base, Engine, Pulse, ReadableReactive, REName, Reactive, ReevaluationResult, Struct, Turn, ValuePersistency}
 
 import scala.util.{Failure, Success}
 
 
 object REPublisher {
 
-  def apply[T, S <: Struct](dependency: Pulsing[Pulse[T], S])(implicit fac: Engine[S]): REPublisher[T, S] = new REPublisher[T, S](dependency, fac)
+  def apply[T, S <: Struct](dependency: ReadableReactive[Pulse[T], S])(implicit fac: Engine[S]): REPublisher[T, S] = new REPublisher[T, S](dependency, fac)
 
 
-  class REPublisher[T, S <: Struct](dependency: Pulsing[Pulse[T], S], fac: Engine[S]) extends Publisher[T] {
+  class REPublisher[T, S <: Struct](dependency: ReadableReactive[Pulse[T], S], fac: Engine[S]) extends Publisher[T] {
 
     override def subscribe(s: Subscriber[_ >: T]): Unit = {
       val sub = REPublisher.subscription(dependency, s, fac)
@@ -21,28 +21,28 @@ object REPublisher {
 
   }
 
-  class SubscriptionReactive[T, S <: Struct](bud: S#State[Pulse[T], S], dependency: Pulsing[Pulse[T], S], subscriber: Subscriber[_ >: T], fac: Engine[S], name: REName) extends Base[T, S](bud, name) with Reactive[S] with Subscription {
+  class SubscriptionReactive[T, S <: Struct](bud: S#State[Pulse[T], S], dependency: ReadableReactive[Pulse[T], S], subscriber: Subscriber[_ >: T], fac: Engine[S], name: REName) extends Base[T, S](bud, name) with Reactive[S] with Subscription {
 
     var requested: Long = 0
     var cancelled = false
 
-    override protected[rescala] def reevaluate(ticket: Turn[S], before: Pulse[T], indeps: Set[Reactive[S]]): ReevaluationResult[Value, S] = {
+    override protected[rescala] def reevaluate(ticket: Turn[S], before: Pulse[T], indeps: Set[Reactive[S]]): ReevaluationResult[S] = {
       ticket.makeStaticReevaluationTicket().staticDepend(dependency).toOptionTry match {
-        case None => ReevaluationResult.Static(Pulse.NoChange)
+        case None => ReevaluationResult.Static(ticket, this, Pulse.NoChange, indeps)
         case Some(tryValue) =>
           synchronized {
             while (requested <= 0 && !cancelled) wait(100)
-            if (cancelled) ReevaluationResult.Dynamic[T, S](Pulse.NoChange, indepsAfter = Set.empty, indepsAdded = Set.empty, indepsRemoved = Set(dependency))
+            if (cancelled) ReevaluationResult.Dynamic[T, S](ticket, this, Pulse.NoChange, indepsAfter = Set.empty, indepsAdded = Set.empty, indepsRemoved = Set(dependency))
             else {
               requested -= 1
               tryValue match {
                 case Success(v) =>
                   subscriber.onNext(v)
-                  ReevaluationResult.Static(Pulse.NoChange)
+                  ReevaluationResult.Static(ticket, this, Pulse.NoChange, indeps)
                 case Failure(t) =>
                   subscriber.onError(t)
                   cancelled = true
-                  ReevaluationResult.Dynamic[T, S](Pulse.NoChange, indepsAfter = Set.empty, indepsAdded = Set.empty, indepsRemoved = Set(dependency))
+                  ReevaluationResult.Dynamic(ticket, this, Pulse.NoChange, indepsAfter = Set.empty, indepsAdded = Set.empty, indepsRemoved = Set(dependency))
               }
             }
           }
@@ -62,7 +62,7 @@ object REPublisher {
     }
   }
 
-  def subscription[T, S <: Struct](dependency: Pulsing[Pulse[T], S], subscriber: Subscriber[_ >: T], fac: Engine[S]): SubscriptionReactive[T, S] = {
+  def subscription[T, S <: Struct](dependency: ReadableReactive[Pulse[T], S], subscriber: Subscriber[_ >: T], fac: Engine[S]): SubscriptionReactive[T, S] = {
     val incoming = Set[Reactive[S]](dependency)
     fac.transaction(dependency) { ticket =>
       ticket.creation.create[Pulse[T], SubscriptionReactive[T, S]](incoming, ValuePersistency.DerivedSignal) { state =>

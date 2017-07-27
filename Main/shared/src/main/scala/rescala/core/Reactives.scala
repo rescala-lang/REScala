@@ -22,29 +22,35 @@ trait Reactive[S <: Struct] {
     */
   protected[rescala] def state: S#State[Value, S]
 
-  protected[rescala] def reevaluate(turn: Turn[S], before: Value, indeps: Set[Reactive[S]]): ReevaluationResult[Value, S]
+  protected[rescala] def reevaluate(turn: Turn[S], before: Value, indeps: Set[Reactive[S]]): ReevaluationResult[S]
 
 }
 
+
 /**
-  * A pulsing value is a reactive value that stores a pulse with it's old and new value
+  * A reactive that user computations can read values from (e.g., before, after, etc.)
   *
   * @tparam P Value type stored by the pulse of the reactive value
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
-trait Pulsing[+P, S <: Struct] extends Reactive[S] {
+trait ReadableReactive[+P, S <: Struct] extends Reactive[S] {
   override type Value <: P
 }
 
+/**
+  * A reactive that the scheduler can write values on (i.e., reevOut)
+  * @tparam P
+  * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
+  */
+trait WriteableReactive[-P, S <: Struct] extends Reactive[S] {
+  override type Value >: P
+}
 
-/** helper class implementing the state methods of reactive and pulsing */
-abstract class Base[P, S <: Struct](initialState: S#State[Pulse[P], S], rename: REName) extends Pulsing[Pulse[P], S] {
+/**
+  * A base implementation for all reactives, tying together the Readable interface for user computations and the Writeable interface for schedulers.
+  */
+abstract class Base[P, S <: Struct](initialState: S#State[Pulse[P], S], rename: REName) extends ReadableReactive[Pulse[P], S] with WriteableReactive[Pulse[P], S] {
   override type Value = Pulse[P]
   override def toString: String = rename.name
   final override protected[rescala] def state: S#State[Value, S] = initialState
 }
-
-
-
-
-

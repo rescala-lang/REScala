@@ -1,14 +1,14 @@
 package rescala.parrp
 
-import rescala.core.{Reactive, Struct, ValuePersistency}
+import rescala.core._
 import rescala.levelbased.{LevelBasedPropagation, LevelStruct, LevelStructTypeImpl}
 import rescala.locking._
 
 trait ParRPInterTurn {
   private type TState = ParRP
 
-  def discover(sink: Reactive[TState])(source: Reactive[TState]): Unit
-  def drop(sink: Reactive[TState])(source: Reactive[TState]): Unit
+  def discover(sink: Reactive[TState], source: Reactive[TState]): Unit
+  def drop(sink: Reactive[TState], source: Reactive[TState]): Unit
 
   def forget(reactive: Reactive[TState]): Unit
   def admit(reactive: Reactive[TState]): Unit
@@ -25,14 +25,14 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
   private type TState = ParRP
 
 
-
-  override def writeState[P](pulsing: Reactive[TState])(value: pulsing.Value): Unit = {
+  override def writeState[P](commitTuple: (WriteableReactive[Pulse.Change[P], TState], Pulse.Change[P])): Unit = {
+    @inline def pulsing = commitTuple._1
     assert({
       val wlo: Option[Key[ParRPInterTurn]] = Option(pulsing.state.lock.getOwner)
       wlo.fold(true)(_ eq key)},
       s"buffer ${pulsing.state}, controlled by ${pulsing.state.lock} with owner ${pulsing.state.lock.getOwner}" +
-        s" was written by $this who locks with ${key}, by now the owner is ${pulsing.state.lock.getOwner}")
-    super.writeState(pulsing)(value)
+        s" was written by $this who locks with $key, by now the owner is ${pulsing.state.lock.getOwner}")
+    super.writeState(commitTuple)
   }
 
 
@@ -87,25 +87,25 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
     * we let the other turn update the dependency and admit the dependent into the propagation queue
     * so that it gets updated when that turn continues
     * the responsibility for correctly passing the locks is moved to the commit phase */
-  override def discover(sink: Reactive[TState])(source: Reactive[TState]): Unit = {
+  override def discover(source: Reactive[TState], sink: Reactive[TState]): Unit = {
     val owner = acquireShared(source)
     if (owner ne key) {
-      owner.turn.discover(sink)(source)
+      owner.turn.discover(source, sink)
       if (source.state.lock.isWriteLock) {
         owner.turn.admit(sink)
         key.lockKeychain { _.addFallthrough(owner) }
       }
     }
     else {
-      super.discover(sink)(source)
+      super.discover(source, sink)
     }
   }
 
   /** this is for cases where we register and then unregister the same dependency in a single turn */
-  override def drop(sink: Reactive[TState])(source: Reactive[TState]): Unit = {
+  override def drop(source: Reactive[TState], sink: Reactive[TState]): Unit = {
     val owner = acquireShared(source)
     if (owner ne key) {
-      owner.turn.drop(sink)(source)
+      owner.turn.drop(source, sink)
       if (source.state.lock.isWriteLock) {
         key.lockKeychain(_.removeFallthrough(owner))
         if (!sink.state.incoming(this).exists{ inc =>
@@ -114,7 +114,7 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
         }) owner.turn.forget(sink)
       }
     }
-    else super.drop(sink)(source)
+    else super.drop(source, sink)
   }
 
   def acquireShared(reactive: Reactive[TState]): Key[ParRPInterTurn] = Keychains.acquireShared(reactive.state.lock, key)

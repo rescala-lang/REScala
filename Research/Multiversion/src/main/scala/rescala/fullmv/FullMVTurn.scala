@@ -4,7 +4,7 @@ import java.util.concurrent.ForkJoinTask
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.LockSupport
 
-import rescala.core.{Pulsing, Reactive, TurnImpl, ValuePersistency}
+import rescala.core.{ReadableReactive, Reactive, TurnImpl, ValuePersistency}
 import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation.{NextReevaluation, NoSuccessor}
 import rescala.fullmv.NotificationResultAction.{GlitchFreeReady, NotificationOutAndSuccessorOperation}
 import rescala.fullmv.TurnPhase.Type
@@ -142,10 +142,24 @@ class FullMVTurn(val userlandThread: Thread) extends TurnImpl[FullMVStruct] {
   }
 
 
-  override private[rescala] def staticBefore[P](reactive: Pulsing[P, FullMVStruct]) = reactive.state.staticBefore(this)
-  override private[rescala] def staticAfter[P](reactive: Pulsing[P, FullMVStruct]) = reactive.state.staticAfter(this)
-  override private[rescala] def dynamicBefore[P](reactive: Pulsing[P, FullMVStruct]) = reactive.state.dynamicBefore(this)
-  override private[rescala] def dynamicAfter[P](reactive: Pulsing[P, FullMVStruct]) = reactive.state.dynamicAfter(this)
+  override private[rescala] def discover(node: Reactive[FullMVStruct], addOutgoing: Reactive[FullMVStruct]): Unit = {
+    val (successorWrittenVersions, maybeFollowFrame) = node.state.discover(this, addOutgoing)
+    if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] Reevaluation($this,$node) discovering $node -> $addOutgoing re-queueing $successorWrittenVersions and re-framing $maybeFollowFrame")
+    addOutgoing.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, 1)
+  }
+
+  override private[rescala] def drop(node: Reactive[FullMVStruct], removeOutgoing: Reactive[FullMVStruct]): Unit = {
+    val (successorWrittenVersions, maybeFollowFrame) = node.state.drop(this, removeOutgoing)
+    if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] Reevaluation($this,$node) dropping $node -> $removeOutgoing de-queueing $successorWrittenVersions and de-framing $maybeFollowFrame")
+    removeOutgoing.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, -1)
+  }
+
+  override private[rescala] def writeIndeps(node: Reactive[FullMVStruct], indepsAfter: Set[Reactive[FullMVStruct]]) = node.state.incomings = indepsAfter
+
+  override private[rescala] def staticBefore[P](reactive: ReadableReactive[P, FullMVStruct]) = reactive.state.staticBefore(this)
+  override private[rescala] def staticAfter[P](reactive: ReadableReactive[P, FullMVStruct]) = reactive.state.staticAfter(this)
+  override private[rescala] def dynamicBefore[P](reactive: ReadableReactive[P, FullMVStruct]) = reactive.state.dynamicBefore(this)
+  override private[rescala] def dynamicAfter[P](reactive: ReadableReactive[P, FullMVStruct]) = reactive.state.dynamicAfter(this)
 
   override def observe(f: () => Unit): Unit = f()
 

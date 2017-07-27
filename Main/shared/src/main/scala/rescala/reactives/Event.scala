@@ -1,6 +1,6 @@
 package rescala.reactives
 
-import rescala.core.{CreationTicket, DynamicTicket, Engine, Pulse, Pulsing, ReSerializable, Reactive, Struct}
+import rescala.core.{CreationTicket, DynamicTicket, Engine, Pulse, ReadableReactive, ReSerializable, Reactive, Struct}
 import rescala.core.Pulse.{Exceptional, NoChange, Value}
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 
@@ -16,7 +16,7 @@ import scala.collection.immutable.{LinearSeq, Queue}
   * @tparam T Type returned when the event fires
   * @tparam S Struct type used for the propagation of the event
   */
-trait Event[+T, S <: Struct] extends Pulsing[Pulse[T], S] with Observable[T, S] {
+trait Event[+T, S <: Struct] extends ReadableReactive[Pulse[T], S] with Observable[T, S] {
 
   @compileTimeOnly("Event.apply can only be used inside of Signal expressions")
   def apply(): Option[T] = throw new IllegalAccessException(s"$this.apply called outside of macro")

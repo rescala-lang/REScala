@@ -1,6 +1,6 @@
 package rescala.twoversion
 
-import rescala.core.{Creation, EngineImpl, Pulsing, Turn}
+import rescala.core.{Creation, EngineImpl, ReadableReactive, Turn}
 
 /**
   * Implementation of the turn handling defined in the Engine trait
@@ -9,7 +9,7 @@ import rescala.core.{Creation, EngineImpl, Pulsing, Turn}
   * @tparam TImpl Turn type used by the engine
   */
 trait TwoVersionEngine[S <: TwoVersionStruct, TImpl <: TwoVersionPropagation[S] with Turn[S] with Creation[S]] extends EngineImpl[S, TImpl] {
-  override private[rescala] def singleNow[A](reactive: Pulsing[A, S]) = reactive.state.base(null)
+  override private[rescala] def singleNow[A](reactive: ReadableReactive[A, S]) = reactive.state.base(null)
 
   /** goes through the whole turn lifecycle
     * - create a new turn and put it on the stack
