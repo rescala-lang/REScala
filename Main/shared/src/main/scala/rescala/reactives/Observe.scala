@@ -17,12 +17,12 @@ object Observe {
 
   private val strongObserveReferences = scala.collection.mutable.HashSet[Observe[_]]()
 
-  private abstract class Obs[T, S <: Struct](bud: S#State[Pulse[Unit], S], dependency: Pulsing[Pulse[T], S], fun: T => Unit, fail: Throwable => Unit, name: REName) extends Base[Unit, S](bud, name) with Reactive[S] with Observe[S]  {
+  private abstract class Obs[T, S <: Struct](bud: S#State[Pulse[Unit], S], dependency: ReadableReactive[Pulse[T], S], fun: T => Unit, fail: Throwable => Unit, name: REName) extends Base[Unit, S](bud, name) with Reactive[S] with Observe[S]  {
     this: Disconnectable[S] =>
 
-    override protected[rescala] def reevaluate(ticket: Turn[S], before: Pulse[Unit], indeps: Set[Reactive[S]]): ReevaluationResult[Value, S] = {
-      scheduleHandler(this, ticket, dependency, fun, fail)
-      ReevaluationResult.Static(Pulse.NoChange)
+    override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[Unit], indeps: Set[Reactive[S]]): ReevaluationResult[S] = {
+      scheduleHandler(this, turn, dependency, fun, fail)
+      ReevaluationResult.Static[Unit, S](turn, this, Pulse.NoChange, indeps)
     }
     override def remove()(implicit fac: Engine[S]): Unit = {
       disconnect()
@@ -30,7 +30,7 @@ object Observe {
     }
   }
 
-  private def scheduleHandler[T, S <: Struct](obs: Obs[T,S], turn:Turn[S], dependency: Pulsing[Pulse[T], S], fun: T => Unit, fail: Throwable => Unit) = {
+  private def scheduleHandler[T, S <: Struct](obs: Obs[T,S], turn:Turn[S], dependency: ReadableReactive[Pulse[T], S], fun: T => Unit, fail: Throwable => Unit) = {
     turn.makeStaticReevaluationTicket().staticDepend(dependency) match {
       case Pulse.NoChange =>
       case Pulse.empty =>
@@ -41,13 +41,13 @@ object Observe {
     }
   }
 
-  def weak[T, S <: Struct](dependency: Pulsing[Pulse[T], S])(fun: T => Unit, fail: Throwable => Unit)(implicit ct: CreationTicket[S]): Observe[S] = {
+  def weak[T, S <: Struct](dependency: ReadableReactive[Pulse[T], S])(fun: T => Unit, fail: Throwable => Unit)(implicit ct: CreationTicket[S]): Observe[S] = {
     ct(initTurn => initTurn.create[Pulse[Unit], Obs[T, S]](Set(dependency), ValuePersistency.Event) { state =>
       new Obs[T, S](state, dependency, fun, fail, ct.rename) with Disconnectable[S]
     })
   }
 
-  def strong[T, S <: Struct](dependency: Pulsing[Pulse[T], S])(fun: T => Unit, fail: Throwable => Unit)(implicit maybe: CreationTicket[S]): Observe[S] = {
+  def strong[T, S <: Struct](dependency: ReadableReactive[Pulse[T], S])(fun: T => Unit, fail: Throwable => Unit)(implicit maybe: CreationTicket[S]): Observe[S] = {
     val obs = weak(dependency)(fun, fail)
     strongObserveReferences.synchronized(strongObserveReferences.add(obs))
     obs
@@ -62,7 +62,7 @@ object Observe {
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
 trait Observable[+P, S <: Struct] {
-  this : Pulsing[Pulse[P], S] =>
+  this : ReadableReactive[Pulse[P], S] =>
   /** add an observer */
   final def observe(
     onSuccess: P => Unit,

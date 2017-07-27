@@ -2,7 +2,7 @@ package rescala.fullmv
 
 import java.util.concurrent.ForkJoinPool
 
-import rescala.core.{EngineImpl, Pulsing}
+import rescala.core.{EngineImpl, ReadableReactive}
 import rescala.fullmv.tasks.{Framing, Notification}
 
 import scala.util.Try
@@ -16,7 +16,7 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
 
   val sgt = DecentralizedSGT
 
-  override private[rescala] def singleNow[A](reactive: Pulsing[A, FullMVStruct]) = reactive.state.latestValue
+  override private[rescala] def singleNow[A](reactive: ReadableReactive[A, FullMVStruct]) = reactive.state.latestValue
 
   override protected def makeTurn(initialWrites: Traversable[Reactive], priorTurn: Option[FullMVTurn]): FullMVTurn = new FullMVTurn(Thread.currentThread())
   override protected def executeInternal[I, R](turn: FullMVTurn, initialWrites: Traversable[Reactive], admissionPhase: () => I, wrapUpPhase: I => R): R = {

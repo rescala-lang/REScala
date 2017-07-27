@@ -1,7 +1,7 @@
 package rescala.meta
 
 
-import rescala.core.{CreationTicket, Engine, Pulse, Pulsing, Struct}
+import rescala.core.{CreationTicket, Engine, Pulse, ReadableReactive, Struct}
 
 import rescala.reactives._
 import rescala.util.Globals
@@ -50,7 +50,7 @@ trait ReactiveNode[+T] extends DataFlowNode[T] {
   override def newRef(): ReactiveRef[T]
 
   protected[meta] def doReify[S <: Struct](reifier: Reifier[S]): Observable[T, S]
-  protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: CreationTicket[S]): Pulsing[Pulse[T], S]
+  protected[meta] def createReification[S <: Struct](reifier: Reifier[S])(implicit ticket: CreationTicket[S]): ReadableReactive[Pulse[T], S]
 
   def observe[S <: Struct](onSuccess: (T) => Unit, onFailure: (Throwable) => Unit = t => throw t)(implicit ticket : CreationTicket[S]): Unit =
     graph.addLog(LoggedObserve(this.newRef(), ObserverData(onSuccess, onFailure, ticket)))

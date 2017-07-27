@@ -1,6 +1,6 @@
 package rescala.twoversion
 
-import rescala.core.{Pulsing, Reactive, ReevaluationResult, TurnImpl}
+import rescala.core._
 
 import scala.util.control.NonFatal
 
@@ -49,31 +49,29 @@ trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropaga
     if (failure != null) throw failure
   }
 
-  protected def discover(sink: Reactive[S])(source: Reactive[S]): Unit = source.state.discover(sink)(this)
+  override private[rescala] def discover(node: Reactive[S], addOutgoing: Reactive[S]): Unit = node.state.discover(addOutgoing)(this)
+  override private[rescala] def drop(node: Reactive[S], removeOutgoing: Reactive[S]): Unit = node.state.drop(removeOutgoing)(this)
 
-  protected def drop(sink: Reactive[S])(source: Reactive[S]): Unit = source.state.drop(sink)(this)
-
-  final def applyDiff(head: Reactive[S], res: ReevaluationResult.Dynamic[_, S]): Unit = {
-    head.state.updateIncoming(res.indepsAfter)(this)
-    res.indepsRemoved foreach drop(head)
-    res.indepsAdded foreach discover(head)
-  }
+  override private[rescala] def writeIndeps(node: Reactive[S], indepsAfter: Set[Reactive[S]]): Unit = node.state.updateIncoming(indepsAfter)(this)
 
   /** allow turn to handle dynamic access to reactives */
   def dynamicDependencyInteraction(dependency: Reactive[S]): Unit
 
-  override private[rescala] def staticBefore[P](reactive: Pulsing[P, S]) = reactive.state.base(token)
-  override private[rescala] def staticAfter[P](reactive: Pulsing[P, S]) = reactive.state.get(token)
-  override private[rescala] def dynamicBefore[P](reactive: Pulsing[P, S]) = {
+  override private[rescala] def staticBefore[P](reactive: ReadableReactive[P, S]) = reactive.state.base(token)
+  override private[rescala] def staticAfter[P](reactive: ReadableReactive[P, S]) = reactive.state.get(token)
+  override private[rescala] def dynamicBefore[P](reactive: ReadableReactive[P, S]) = {
     dynamicDependencyInteraction(reactive)
     reactive.state.base(token)
   }
-  override private[rescala] def dynamicAfter[P](reactive: Pulsing[P, S]) = {
+  override private[rescala] def dynamicAfter[P](reactive: ReadableReactive[P, S]) = {
     // Note: This only synchronizes reactive to be serializable-synchronized, but not glitch-free synchronized.
     // Dynamic reads thus may return glitched values, which the reevaluation handling implemented in subclasses
     // must account for by repeating glitched reevaluations!
     dynamicDependencyInteraction(reactive)
     reactive.state.get(token)
   }
-  def writeState[P](pulsing: Reactive[S])(value: pulsing.Value): Unit = if (pulsing.state.write(value, token)) this.schedule(pulsing.state)
+  def writeState[P](commitTuple: (WriteableReactive[Pulse.Change[P], S], Pulse.Change[P])): Unit = {
+    val (pulsing, value) = commitTuple
+    if (pulsing.state.write(value, token)) this.schedule(pulsing.state)
+  }
 }

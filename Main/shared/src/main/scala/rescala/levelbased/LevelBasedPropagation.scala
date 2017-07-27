@@ -1,7 +1,6 @@
 package rescala.levelbased
 
-import rescala.core.{Reactive, ReevaluationResult}
-import rescala.core.ReevaluationResult.{Dynamic, Static}
+import rescala.core.Reactive
 import rescala.twoversion.TwoVersionPropagationImpl
 
 /**
@@ -15,25 +14,29 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
   val levelQueue = new LevelQueue[S](this)(this)
 
   override def evaluate(head: Reactive[S]): Unit = {
-    def reevOut(level: Int, res: ReevaluationResult[head.Value, S]) = {
-      if (res.isChange) {
-        writeState(head)(res.value)
-        head.state.outgoing(this).foreach(levelQueue.enqueue(level, needsEvaluate = true))
+    val res = head.reevaluate(this, head.state.base(token), head.state.incoming(this))
+    if(!res.indepsChanged) {
+      // res.commitValueChange().foreach(levelQueue.enqueue(-42))
+      if(res.valueChanged) {
+        writeState(res.commitTuple)
+        head.state.outgoing(this).foreach(levelQueue.enqueue(-42))
+      }
+    } else {
+      val newLevel = maximumLevel(res.indepsAfter) + 1
+      val redo = head.state.level(this) < newLevel
+      if(redo) {
+        levelQueue.enqueue(newLevel)(head)
+      } else {
+        res.commitDependencyDiff()
+
+        // res.commitValueChange().foreach(levelQueue.enqueue(-42))
+        if(res.valueChanged) {
+          writeState(res.commitTuple)
+          head.state.outgoing(this).foreach(levelQueue.enqueue(newLevel))
+        }
       }
     }
 
-    head.reevaluate(this, head.state.base(token), head.state.incoming(this)) match {
-      case res: Static[head.Value] => reevOut(-42, res)
-      case res: Dynamic[head.Value, S] =>
-        val newLevel = maximumLevel(res.indepsAfter) + 1
-        val redo = head.state.level(this) < newLevel
-        if(redo) {
-          levelQueue.enqueue(newLevel, needsEvaluate = true)(head)
-        } else {
-          applyDiff(head, res)
-          reevOut(newLevel, res)
-        }
-    }
     _evaluated ::= head
 
   }
@@ -46,7 +49,7 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
 
     incoming.foreach { dep =>
       dynamicDependencyInteraction(dep)
-      discover(reactive)(dep)
+      discover(dep, reactive)
     }
     reactive.state.updateIncoming(incoming)(this)
 

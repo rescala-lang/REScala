@@ -1,7 +1,6 @@
 package rescala.fullmv.tasks
 
-import rescala.core.Reactive
-import rescala.core.ReevaluationResult.{Dynamic, Static}
+import rescala.core.{Pulse, Reactive, WriteableReactive}
 import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation
 import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation.{FollowFraming, NextReevaluation, NoSuccessor}
 import rescala.fullmv._
@@ -44,21 +43,18 @@ object Reevaluation {
         System.err.println(s"[FullMV Error] Reevaluation of $node failed with ${exception.getClass.getName}: ${exception.getMessage}; Completing reevaluation as NoChange.")
         exception.printStackTrace()
         (node.state.reevOut(turn, None), false)
-      case Success(Static(isChange, value)) =>
-        (node.state.reevOut(turn, if(isChange) Some(value) else None), isChange)
-      case Success(res @ Dynamic(isChange, value, indepsAfter, indepsAdded, indepsRemoved)) =>
-        indepsRemoved.foreach{ drop =>
-          val (successorWrittenVersions, maybeFollowFrame) = drop.state.drop(turn, node)
-          if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] Reevaluation($turn,$node) dropping $drop -> $node un-queueing $successorWrittenVersions and un-framing $maybeFollowFrame")
-          node.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, -1)
+      case Success(res) =>
+        res.commitDependencyDiff()
+        if(res.valueChanged) {
+          (reevOut(turn, res.commitTuple), true)
+        } else {
+          (res.node.state.reevOut(turn, None), false)
         }
-        indepsAdded.foreach { discover =>
-          val (successorWrittenVersions, maybeFollowFrame) = discover.state.discover(turn, node)
-          if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] Reevaluation($turn,$node) discovering $discover-> $node re-queueing $successorWrittenVersions and re-framing $maybeFollowFrame")
-          node.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, 1)
-        }
-        node.state.incomings = indepsAfter
-        (node.state.reevOut(turn, if (isChange) Some(value) else None), isChange)
     }
+  }
+  @inline
+  def reevOut[P](turn: FullMVTurn, commitTuple: (WriteableReactive[Pulse.Change[P], FullMVStruct], Pulse.Change[P])): NotificationOutAndSuccessorOperation[FullMVTurn, Reactive[FullMVStruct]] = {
+    val (node, value) = commitTuple
+    node.state.reevOut(turn, if (value.isChange) Some(value) else None)
   }
 }

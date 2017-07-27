@@ -26,11 +26,11 @@ import scala.language.implicitConversions
 
 trait AnyTicket extends Any
 
-final class DynamicTicket[S <: Struct] private[rescala](val creation: StateAccess[S] with Creation[S], val indepsBefore: Set[Reactive[S]]) extends AnyTicket {
+final class DynamicTicket[S <: Struct] private[rescala](val creation: ComputationStateAccess[S] with Creation[S], val indepsBefore: Set[Reactive[S]]) extends AnyTicket {
   private[rescala] var indepsAfter: Set[Reactive[S]] = Set.empty
   private[rescala] var indepsAdded: Set[Reactive[S]] = Set.empty
 
-  private[rescala] def dynamicDepend[A](reactive: Pulsing[A, S]): A = {
+  private[rescala] def dynamicDepend[A](reactive: ReadableReactive[A, S]): A = {
     if (indepsBefore(reactive)) {
       indepsAfter += reactive
       creation.staticAfter(reactive)
@@ -60,22 +60,22 @@ final class DynamicTicket[S <: Struct] private[rescala](val creation: StateAcces
   def indepsRemoved = indepsBefore.diff(indepsAfter)
 }
 
-final class StaticTicket[S <: Struct] private[rescala](val creation: StateAccess[S] with Creation[S]) extends AnyVal with AnyTicket {
-  private[rescala] def staticBefore[A](reactive: Pulsing[A, S]): A = {
+final class StaticTicket[S <: Struct] private[rescala](val creation: ComputationStateAccess[S] with Creation[S]) extends AnyVal with AnyTicket {
+  private[rescala] def staticBefore[A](reactive: ReadableReactive[A, S]): A = {
     creation.staticBefore(reactive)
   }
-  private[rescala] def staticDepend[A](reactive: Pulsing[A, S]): A = {
+  private[rescala] def staticDepend[A](reactive: ReadableReactive[A, S]): A = {
     creation.staticAfter(reactive)
   }
 }
 
-final class AdmissionTicket[S <: Struct] private[rescala](val creation: StateAccess[S] with Creation[S]) extends AnyVal with AnyTicket {
+final class AdmissionTicket[S <: Struct] private[rescala](val creation: ComputationStateAccess[S] with Creation[S]) extends AnyVal with AnyTicket {
   def now[A](reactive: Signal[A, S]): A = {
     creation.dynamicBefore(reactive).get
   }
 }
 
-final class WrapUpTicket[S <: Struct] private[rescala](val creation: StateAccess[S] with Creation[S]) extends AnyVal with AnyTicket {
+final class WrapUpTicket[S <: Struct] private[rescala](val creation: ComputationStateAccess[S] with Creation[S]) extends AnyVal with AnyTicket {
   def now[A](reactive: Signal[A, S]): A = {
     creation.dynamicAfter(reactive).get
   }

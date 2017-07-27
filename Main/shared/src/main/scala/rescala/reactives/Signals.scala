@@ -22,7 +22,7 @@ object Signals extends GeneratedSignalLift {
     }
 
     def restoreFrom[R, S <: Struct](states: List[Signal[_, _]])(f: => R)(implicit turnSource: CreationTicket[S]): R = turnSource { ctc =>
-      restored.withValue(states.map(s => ctc.asInstanceOf[StateAccess[S]].dynamicBefore(s.asInstanceOf[Signal[_, S]]).get).reverse) {
+      restored.withValue(states.map(s => ctc.asInstanceOf[ComputationStateAccess[S]].dynamicBefore(s.asInstanceOf[Signal[_, S]]).get).reverse) {
         f
       }
     }
@@ -33,18 +33,18 @@ object Signals extends GeneratedSignalLift {
     private[Signals] abstract class StaticSignal[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: (StaticTicket[S], => T) => T, name: REName)
       extends Base[T, S](_bud, name) with Signal[T, S] {
 
-      override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[T], indeps: Set[Reactive[S]]): ReevaluationResult[Value, S] = {
+      override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[T], indeps: Set[Reactive[S]]): ReevaluationResult[S] = {
         def newValue = expr(turn.makeStaticReevaluationTicket(), before.get)
         val newPulse = Pulse.tryCatch(Pulse.diffPulse(newValue, before))
-        ReevaluationResult.Static(newPulse)
+        ReevaluationResult.Static(turn, this, newPulse, indeps)
       }
     }
 
     private[Signals] abstract class DynamicSignal[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: DynamicTicket[S] => T, name: REName) extends Base[T, S](_bud, name) with Signal[T, S] {
-      override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[T], indeps: Set[Reactive[S]]): ReevaluationResult[Value, S] = {
+      override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[T], indeps: Set[Reactive[S]]): ReevaluationResult[S] = {
         val dt = turn.makeDynamicReevaluationTicket(indeps)
         val newPulse = Pulse.tryCatch {Pulse.diffPulse(expr(dt), before)}
-        ReevaluationResult.Dynamic(newPulse, dt.indepsAfter, dt.indepsAdded, dt.indepsRemoved)
+        ReevaluationResult.Dynamic(turn, this, newPulse, dt.indepsAfter, dt.indepsAdded, dt.indepsRemoved)
       }
     }
 

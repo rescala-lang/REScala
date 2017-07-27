@@ -1,6 +1,6 @@
 package rescala.reactives
 
-import rescala.core.{AnyTicket, CreationTicket, Engine, Pulse, Pulsing, Struct}
+import rescala.core.{AnyTicket, CreationTicket, Engine, Pulse, ReadableReactive, Struct}
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 import rescala.reactives.Signals.Diff
 
@@ -22,7 +22,7 @@ object Signal {
   * @tparam A Type stored by the signal
   * @tparam S Struct type used for the propagation of the signal
   */
-trait Signal[+A, S <: Struct] extends Pulsing[Pulse[A], S] with Observable[A, S] {
+trait Signal[+A, S <: Struct] extends ReadableReactive[Pulse[A], S] with Observable[A, S] {
 
   // only used inside macro and will be replaced there
   @compileTimeOnly("Signal.apply can only be used inside of Signal expressions")

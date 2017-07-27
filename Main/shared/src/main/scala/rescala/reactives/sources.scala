@@ -2,7 +2,7 @@ package rescala.reactives
 
 import rescala.core.{REName, _}
 
-class Source[T, S <: Struct](initialState: S#State[Pulse[T], S], name: REName) extends Base[T, S](initialState, name) {
+abstract class Source[T, S <: Struct](initialState: S#State[Pulse[T], S], name: REName) extends Base[T, S](initialState, name) {
   private var nextReevaluationResult: Value = null
   final def admit(value: T)(implicit ticket: AdmissionTicket[S]): Unit = admitPulse(Pulse.Value(value))
 
@@ -11,13 +11,13 @@ class Source[T, S <: Struct](initialState: S#State[Pulse[T], S], name: REName) e
     nextReevaluationResult = value
   }
 
-  override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[T], indeps: Set[Reactive[S]]): ReevaluationResult.Static[Value] = {
+  final override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[T], indeps: Set[Reactive[S]]): ReevaluationResultImpl[T, S] = {
     val value = nextReevaluationResult
     nextReevaluationResult = null
-    if (value == null) ReevaluationResult.staticNoChange
-    else ReevaluationResult.Static[T](value)
+    ReevaluationResult.Static(turn, this, if(value == null) Pulse.NoChange else pulseFromBufferedPulse(turn, before, value), indeps)
   }
 
+  protected def pulseFromBufferedPulse(turn: Turn[S], before: Pulse[T], value: Pulse[T]): Pulse[T]
 }
 
 /**
@@ -33,6 +33,8 @@ final class Evt[T, S <: Struct] private[rescala] (initialState: S#State[Pulse[T]
   def fire()(implicit fac: Engine[S], ev: Unit =:= T): Unit = fire(ev(Unit))(fac)
   def fire(value: T)(implicit fac: Engine[S]): Unit = fac.transaction(this) {admit(value)(_)}
   override def disconnect()(implicit engine: Engine[S]): Unit = ()
+
+  override protected def pulseFromBufferedPulse(turn: Turn[S], before: Pulse[T], value: Pulse[T]): Pulse[T] = value
 }
 
 /**
@@ -60,11 +62,7 @@ final class Var[A, S <: Struct] private[rescala] (initialState: S#State[Pulse[A]
     admit(f(t.now(this)))(t)
   }
 
-  override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[A], indeps: Set[Reactive[S]]): ReevaluationResult.Static[Pulse[A]] = {
-    val res = super.reevaluate(turn, before, indeps)
-    if (res.value == before) ReevaluationResult.staticNoChange
-    else res
-  }
+  override protected def pulseFromBufferedPulse(turn: Turn[S], before: Pulse[A], value: Pulse[A]): Pulse[A] = if(value == before) Pulse.NoChange else value
 
   def setEmpty()(implicit fac: Engine[S]): Unit = fac.transaction(this)(t => admitPulse(Pulse.empty)(t))
 

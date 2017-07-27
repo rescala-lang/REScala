@@ -2,8 +2,7 @@ package rescala.parrp
 
 import java.util
 
-import rescala.core.{Reactive, Struct, ValuePersistency}
-import rescala.core.ReevaluationResult.{Dynamic, Static}
+import rescala.core._
 import rescala.locking._
 import rescala.twoversion.{PropagationStructImpl, TwoVersionPropagationImpl, TwoVersionStruct}
 
@@ -20,6 +19,7 @@ class LSPropagationStruct[P, S <: Struct](current: P, transient: Boolean, val lo
   var willWrite: LockSweep = null
   var hasWritten: LockSweep = null
   var counter: Int = 0
+  def isGlitchFreeReady: Boolean = counter == 0
   var anyInputChanged: LockSweep = null
   var hasChanged: LockSweep = null
 }
@@ -58,27 +58,28 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
   protected def ignite(reactive: Reactive[TState], incoming: Set[Reactive[TState]], ignitionRequiresReevaluation: Boolean): Unit = {
     incoming.foreach { dep =>
       acquireShared(dep)
-      discover(reactive)(dep)
+      discover(dep, reactive)
     }
-    reactive.state.updateIncoming(incoming)(this)
-    recount(reactive)
+    writeIndeps(reactive, incoming)
     if(ignitionRequiresReevaluation || incoming.exists(_.state.hasChanged == this)) {
       reactive.state.anyInputChanged = this
       reactive.state.willWrite = this
-      if (reactive.state.counter == 0) {
+      if (reactive.state.isGlitchFreeReady) {
         evaluate(reactive)
       }
     }
   }
 
 
-  override def writeState[P](pulsing: Reactive[TState])(value: pulsing.Value): Unit = {
+  override def writeState[P](commitTuple: (WriteableReactive[Pulse.Change[P], TState], Pulse.Change[P])): Unit = {
+    val pulsing = commitTuple._1
     assert({
         val wlo: Option[Key[LSInterTurn]] = Option(pulsing.state.lock.getOwner)
         wlo.fold(true)(_ eq key)},
           s"buffer ${pulsing.state}, controlled by ${pulsing.state.lock} with owner ${pulsing.state.lock.getOwner}" +
-            s" was written by $this who locks with ${key}, by now the owner is ${pulsing.state.lock.getOwner}")
-    super.writeState(pulsing)(value)
+            s" was written by $this who locks with $key, by now the owner is ${pulsing.state.lock.getOwner}")
+    super.writeState(commitTuple)
+    pulsing.state.hasChanged = this
   }
 
 
@@ -135,10 +136,8 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
     }
   }
 
-  def done(head: Reactive[TState], hasChanged: Boolean): Unit = {
-    head.state.hasWritten = this
-    if (hasChanged) head.state.hasChanged = this
-    head.state.outgoing(this).foreach { r =>
+  def done(head: Reactive[TState], hasChanged: Boolean, outgoings: collection.Set[Reactive[TState]]): Unit = {
+    outgoings.foreach { r =>
       r.state.counter -= 1
       if (hasChanged) r.state.anyInputChanged = this
       if (r.state.counter <= 0) enqueue(r)
@@ -150,23 +149,25 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
   }
 
   def evaluate(head: Reactive[TState]): Unit = {
-    if (head.state.anyInputChanged != this) done(head, hasChanged = false)
+    if (head.state.anyInputChanged != this) done(head, hasChanged = false, head.state.outgoing(this))
     else {
-      head.reevaluate(this, head.state.base(token), head.state.incoming(this)) match {
-        case Static(isChange, value) =>
-          if (isChange) writeState(head)(value)
-          done(head, isChange)
+      val res = head.reevaluate(this, head.state.base(token), head.state.incoming(this))
+      res.commitDependencyDiff()
+      if (head.state.isGlitchFreeReady) {
+        // val outgoings = res.commitValueChange()
+        if(res.valueChanged) writeState(res.commitTuple)
 
-        case res@Dynamic(isChange, value, _, _, _) =>
-          applyDiff(head, res)
-          recount(head)
-          if (head.state.counter == 0) {
-            if (isChange) writeState(head)(value)
-            done(head, isChange)
-          }
+        head.state.hasWritten = this
 
+        // done(head, res.valueChanged, outgoings)
+        done(head, res.valueChanged, head.state.outgoing(this))
       }
     }
+  }
+
+  override def writeIndeps(node: Reactive[TState], indepsAfter: Set[Reactive[TState]]): Unit = {
+    super.writeIndeps(node, indepsAfter)
+    recount(node)
   }
 
   def recount(reactive: Reactive[TState]): Unit = {
@@ -178,7 +179,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
     * we let the other turn update the dependency and admit the dependent into the propagation queue
     * so that it gets updated when that turn continues
     * the responsibility for correctly passing the locks is moved to the commit phase */
-  override def discover(sink: Reactive[TState])(source: Reactive[TState]): Unit = {
+  override def discover(source: Reactive[TState], sink: Reactive[TState]): Unit =  {
     val owner = acquireShared(source)
     if (owner ne key) {
       if (source.state.willWrite != owner.turn) {
@@ -196,7 +197,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
   }
 
   /** this is for cases where we register and then unregister the same dependency in a single turn */
-  override def drop(sink: Reactive[TState])(source: Reactive[TState]): Unit = {
+  override private[rescala] def drop(source: Reactive[TState], sink: Reactive[TState]) = {
     val owner = acquireShared(source)
     if (owner ne key) {
       source.state.drop(sink)(this)
