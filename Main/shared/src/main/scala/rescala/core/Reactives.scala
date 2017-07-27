@@ -5,21 +5,15 @@ import scala.language.higherKinds
 
 trait Struct { type State[P, S <: Struct] }
 
-/**
-  * A reactive value is something that can be reevaluated
+/** A reactive value is something that can be reevaluated
   *
-  * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
+  * @tparam S Defines the structure of the internal state, as used by the propagation engine.
   */
 trait Reactive[S <: Struct] {
 
   type Value
-  //final override val hashCode: Int = ThreadLocalRandom.current().nextLong().hashCode()
 
-  /**
-    * Spore that is used to internally manage the reactive evaluation of this value
-    *
-    * @return Spore for this value
-    */
+  /** Internal state of this reactive, managed by the propagation engine */
   protected[rescala] def state: S#State[Value, S]
 
   protected[rescala] def reevaluate(turn: Turn[S], before: Value, indeps: Set[Reactive[S]]): ReevaluationResult[S]
