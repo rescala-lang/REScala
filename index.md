@@ -13,6 +13,8 @@ and integrate seamlessly into modern, object-oriented and functional, concurrent
 
 <!-- {% include slideshow.html %} -->
 
+<br />
+
 ## Functional
 {: class="info-box"}
 With abstractions for Events and Signals to handle interactions and state, and seamless conversions between them.
@@ -25,7 +27,7 @@ No temporary inconsistencies, no data races, define logical constraints and deri
 {: class="info-box"}
 Use reactive abstractions from any thread in any order, add reactives, remove them, change their connections, and it still just works.
 
----
+<br />
 
 Software applications must react to external changes such as the input from the user and network messages.
 Traditionally, object-oriented software adopts the Observer pattern to implement reactivity and decouple the observers from the observables.

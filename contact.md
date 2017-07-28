@@ -3,26 +3,22 @@ title: Contact
 nav: 5
 ---
 
-# Software Technology Group
+# Acknowledgements
 
 REScala is a research project held at TU Darmstadt in the
-[Software Technology Group.](http://www.stg.tu-darmstadt.de/)
-in context of the [PACE project](http://www.pace-erc.eu/)
-and the [NICER project](http://nicer.network/).
+[Software Technology Group](http://www.stg.tu-darmstadt.de/)
+in the context of the [PACE](http://www.pace-erc.eu/)
+and [NICER](http://nicer.network/) projects.
 
 # Contact
 
-Prof. Dr. Ing. Guido Salvaneschi
-salvaneschi   AT    st.informatik.tu-darmstadt.de
+Prof. Dr. Ing. Guido Salvaneschi <br />
+salvaneschi   AT    st.informatik.tu-darmstadt.de <br />
 
-My Home Page:
-[www.guidosalvaneschi.com](http://www.guidosalvaneschi.com)
-
----
-Technische Universität Darmstadt
-S2|02 A222 Hochschulstr. 10 64289 Darmstadt
-+49 6151 16-5306
-+49 6151 16-5410
+Technische Universität Darmstadt <br />
+S2|02 A222 Hochschulstr. 10 64289 Darmstadt <br />
++49 6151 16-5306 <br />
++49 6151 16-5410 <br />
 
 ## Contributions
 
@@ -43,5 +39,4 @@ several people:
 * Michael Hausl
 * Moritz Lichter
 * Simon Sprankel
-
 
