@@ -13,17 +13,15 @@ and integrate seamlessly into modern, object-oriented and functional, concurrent
 
 <!-- {% include slideshow.html %} -->
 
----
-
-## Functional Reactive
+## Functional
 {: class="info-box"}
 With abstractions for Events and Signals to handle interactions and state, and seamless conversions between them.
 
-## Consistent Reactive
+## Consistent
 {: class="info-box"}
 No temporary inconsistencies, no data races, define logical constraints and derivations, and they will always be satisfied.
 
-## Concurrent Reactive
+## Concurrent
 {: class="info-box"}
 Use reactive abstractions from any thread in any order, add reactives, remove them, change their connections, and it still just works.
 
