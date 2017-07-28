@@ -38,7 +38,7 @@ window.onload = function () {
 	window.onscroll = function () {
 		updateArrowVisibility();
 	};
-	
+
 /**
  * add a collapsibleIcon to the collapsible element
  * @param {DOMElement} header - The header that is always visible
@@ -56,7 +56,7 @@ window.onload = function () {
 		iconParent.appendChild(c);
 		header.classList.add("collapsible");
 	}
-	
+
 /**
  * add a vertical lines to the collapsible element
  * @param {DOMElement} parentNode - The parent node of all elements that can be hidden by collapsing
@@ -73,12 +73,12 @@ window.onload = function () {
 					level += 1;
 				node = node.parentElement;
 			}
-			
+
 			hr.style.left = (30 * level) + "px";
 			header.appendChild(hr);
 		}
 	}
-	
+
 	Util.DOMQueryAll("li").filter(function(li) {
 		var next = li.nextElementSibling;
 		return next != null && next.nodeName == "LI" && next.firstElementChild != null && next.firstElementChild.nodeName == "OL";
@@ -88,7 +88,7 @@ window.onload = function () {
 
 	});
 	updateTOClines();
-	
+
 	var toc = Util.DOMQuery("#toc");
 	if (toc != null && Util.isWindowWidth(680)) {
 		var tocHeader = toc.previousElementSibling
@@ -188,7 +188,7 @@ function updateSlide() {
 	if (slideIndex < 1)
 		slideIndex = imgs.length;
 	imgs.forEach(function(e) {
-		e.style.display = ""; 
+		e.style.display = "";
 	});
 	indicators.forEach(function(e) {
 		e.classList.remove("current");
