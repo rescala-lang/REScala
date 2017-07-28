@@ -15,3 +15,5 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-multi-node-testkit" % akkaVersion)
 
 libraryDependencies += "org.scalafx" %% "scalafx" % "8.0.102-R11"
+
+libraryDependencies += "org.scala-lang.modules" % "scala-jline" % "2.12.1"
