@@ -1,6 +1,5 @@
 ---
 title: Datastructures
-sidebar: rescala
 ---
 # Reactive Datastructures
 

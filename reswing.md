@@ -1,6 +1,5 @@
 ---
 title: RESwing
-sidebar: rescala
 ---
 # The RESwing Library
 
