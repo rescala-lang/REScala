@@ -15,12 +15,13 @@ lazy val rescalaAggregate = project.in(file(".")).aggregate(rescalaJVM,
 
 
 lazy val rescala = crossProject.in(file("Main"))
-  .settings(cfg.base)
-  .settings(name := "rescala",
-    cfg.strictScalac, cfg.snapshotAssertions, lib.circe,
-    cfg.generateLiftFunctions, lib.sourcecode)
-  .settings(lib.retypecheck)
-  .settings(cfg.bintray)
+  .settings(
+    name := "rescala",
+    cfg.base,
+    lib.retypecheck, lib.sourcecode, lib.circe,
+    cfg.strictScalac, cfg.snapshotAssertions,
+    cfg.generateLiftFunctions,
+    cfg.bintray)
   .jvmSettings()
   .jsSettings(cfg.js)
 //  .nativeSettings(
@@ -34,99 +35,70 @@ lazy val rescalaJS = rescala.js
 //lazy val rescalaNative = rescala.native
 
 lazy val testTools = crossProject.in(file("TestTools"))
-  .settings(cfg.base)
-  .settings(name := "rescala-testtoolss", cfg.noPublish)
-  .settings(cfg.test)
+  .settings(name := "rescala-testtoolss", cfg.base, cfg.noPublish, cfg.test)
   .dependsOn(rescala)
   .jvmSettings().jsSettings(cfg.js)
 lazy val testToolsJVM = testTools.jvm
 lazy val testToolsJS = testTools.js
 
 lazy val tests = crossProject.in(file("Tests"))
-  .settings(cfg.base)
-  .settings(name := "rescala-tests", cfg.noPublish)
-  .settings(cfg.test)
+  .settings(name := "rescala-tests", cfg.noPublish, cfg.base, cfg.test)
   .dependsOn(rescala)
   .jvmSettings().jsSettings(cfg.js)
 lazy val testsJVM = tests.jvm.dependsOn(testToolsJVM % "test->test", fullmv, stm)
 lazy val testsJS = tests.js.dependsOn(testToolsJS % "test->test")
 
 lazy val documentation = project.in(file("Documentation/DocumentationProject"))
-  .settings(cfg.base)
+  .settings(cfg.base, cfg.noPublish)
   .enablePlugins(TutPlugin)
   .dependsOn(rescalaJVM, rescalaJS)
-  .settings(cfg.noPublish)
 
 
 // Extensions
 
 lazy val reactiveStreams = project.in(file("Extensions/ReactiveStreams"))
-  .settings(cfg.base)
+  .settings(cfg.base, cfg.noPublish, lib.reactivestreams)
   .dependsOn(rescalaJVM)
-  .settings(lib.reactivestreams)
-  .settings(cfg.noPublish)
 
 lazy val reandroidthings = project.in(file("Extensions/REAndroidThings"))
-  .settings(cfg.base)
-  .settings(cfg.noPublish)
+  .settings(name := "reandroidthings",cfg.base, cfg.noPublish,
+    javacOptions ++= Seq("-source", "1.7", "-target", "1.7"))
   .enablePlugins(AndroidLib)
   .dependsOn(rescalaJVM)
-  .settings(
-    name := "reandroidthings",
-    javacOptions ++= Seq("-source", "1.7", "-target", "1.7"))
 
 lazy val reswing = project.in(file("Extensions/RESwing"))
-  .settings(cfg.base)
-  .settings(cfg.strictScalac)
+  .settings(name := "reswing", cfg.base, cfg.bintray, cfg.strictScalac, lib.scalaswing)
   .dependsOn(rescalaJVM)
-  .settings(cfg.bintray)
-  .settings(lib.scalaswing)
-  .settings(name := "reswing")
 
 lazy val rescalatags = project.in(file("Extensions/Rescalatags"))
-  .settings(cfg.base)
-  .settings(cfg.strictScalac)
+  .settings(cfg.base, cfg.strictScalac, cfg.bintray, cfg.test,
+    cfg.js, lib.scalatags, jsDependencies += RuntimeDOM)
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(rescalaJS)
-  .settings(cfg.js, lib.scalatags, jsDependencies += RuntimeDOM)
-  .settings(cfg.bintray)
-  .settings(cfg.test)
 
 lazy val datastructures = project.in(file("Extensions/Datastructures"))
   .dependsOn(rescalaJVM)
-  .settings(cfg.base)
-  .settings(name := "datastructures")
-  .settings(lib.scalatest)
-  .settings(cfg.noPublish)
+  .settings(cfg.base, name := "datastructures", lib.scalatest, cfg.noPublish)
 
 lazy val stm = project.in(file("Extensions/STM"))
-  .settings(cfg.base)
+  .settings(cfg.base, cfg.noPublish, lib.scalaStm)
   .dependsOn(rescalaJVM)
-  .settings(cfg.noPublish)
-  .settings(lib.scalaStm)
 
 // Examples
 
 lazy val examples = project.in(file("Examples/examples"))
   .dependsOn(rescalaJVM)
-  .settings(cfg.base)
-  .settings(name := "rescala-examples")
-  .settings(cfg.noPublish)
-  .settings(lib.scalaswing)
+  .settings(name := "rescala-examples", cfg.base, cfg.noPublish, lib.scalaswing)
 
 lazy val examplesReswing = project.in(file("Examples/examples-reswing"))
   .dependsOn(reswing)
-  .settings(cfg.base)
-  .settings(name := "reswing-examples")
-  .settings(cfg.noPublish)
+  .settings(name := "reswing-examples", cfg.base, cfg.noPublish)
 
 
 lazy val baromter4Android = project.in(file("Examples/Barometer4Android"))
   .enablePlugins(AndroidApp)
   .dependsOn(reandroidthings)
-  .settings(cfg.base)
-  .settings(cfg.noPublish)
-  .settings(
+  .settings(cfg.base, cfg.noPublish,
     name := "barometer4Android",
     javacOptions ++= Seq("-source", "1.7", "-target", "1.7"),
     lib.android,
@@ -136,73 +108,48 @@ lazy val baromter4Android = project.in(file("Examples/Barometer4Android"))
 
 lazy val caseStudyEditor = project.in(file("Examples/Editor"))
   .dependsOn(reswing)
-  .settings(cfg.base)
-  .settings(cfg.noPublish)
-  .settings(name := "editor-case-study")
+  .settings(name := "editor-case-study", cfg.base, cfg.noPublish)
 
 lazy val caseStudyRSSEvents = project.in(file("Examples/RSSReader/ReactiveScalaReader.Events"))
   .dependsOn(reswing)
-  .settings(cfg.base)
-  .settings(name := "rssreader-case-study", lib.rss)
-  .settings(cfg.noPublish)
-  .settings(cfg.test)
+  .settings(name := "rssreader-case-study", lib.rss, cfg.base, cfg.noPublish, cfg.test)
 
 lazy val caseStudyRSSReactive = project.in(file("Examples/RSSReader/ReactiveScalaReader.Reactive"))
   .dependsOn(reswing)
-  .settings(cfg.base)
-  .settings(name := "rssreader-case-study-reactive", lib.rss)
-  .settings(cfg.noPublish)
-  .settings(cfg.test)
+  .settings(cfg.base, name := "rssreader-case-study-reactive", lib.rss, cfg.noPublish, cfg.test)
 
 lazy val caseStudyRSSSimple = project.in(file("Examples/RSSReader/SimpleRssReader"))
   .dependsOn(reswing)
-  .settings(cfg.base)
-  .settings(name := "rssreader-case-study-simple", lib.rss)
-  .settings(cfg.noPublish)
-  .settings(cfg.test)
+  .settings(cfg.base, name := "rssreader-case-study-simple", lib.rss, cfg.noPublish, cfg.test)
 
 lazy val universe = project.in(file("Examples/Universe"))
   .dependsOn(rescalaJVM)
-  .settings(cfg.base)
-  .settings(cfg.noPublish)
-  .settings(name := "rescala-universe")
-  .settings(com.typesafe.sbt.SbtStartScript.startScriptForClassesSettings)
+  .settings(cfg.base, cfg.noPublish, name := "rescala-universe", com.typesafe.sbt.SbtStartScript.startScriptForClassesSettings)
 
 lazy val caseStudyShapes = project.in(file("Examples/Shapes"))
   .dependsOn(reswing)
-  .settings(cfg.base)
-  .settings(cfg.noPublish)
-  .settings(name := "shapes-case-study", lib.scalaXml)
+  .settings(cfg.base, cfg.noPublish, name := "shapes-case-study", lib.scalaXml)
 
 lazy val caseStudyMill = project.in(file("Examples/Mill"))
   .dependsOn(reswing)
-  .settings(cfg.base)
-  .settings(cfg.noPublish)
-  .settings(name := "mill-case-study")
+  .settings(cfg.base, cfg.noPublish, name := "mill-case-study")
 
 
 // Research
 
 lazy val fullmv = project.in(file("Research/Multiversion"))
-  .settings(cfg.base)
-  .settings(name := "rescala-multiversion")
-  .settings(cfg.test)
-  .settings(cfg.noPublish)
+  .settings(cfg.base, name := "rescala-multiversion", cfg.test, cfg.noPublish)
   .dependsOn(rescalaJVM, testToolsJVM % "test->test")
 
 lazy val meta = project.in(file("Research/Meta"))
   .dependsOn(rescalaJVM)
-  .settings(cfg.base)
-  .settings(cfg.test)
-  .settings(cfg.noPublish)
+  .settings(cfg.base, cfg.test, cfg.noPublish, name := "meta")
 
 lazy val microbench = project.in(file("Research/Microbenchmarks"))
   .enablePlugins(JmhPlugin)
-  .settings(cfg.base)
-  .settings(cfg.noPublish)
-  .settings(mainClass in Compile := Some("org.openjdk.jmh.Main"))
-  .settings(com.typesafe.sbt.SbtStartScript.startScriptForClassesSettings)
-  .settings(TaskKey[Unit]("compileJmh") := Seq(compile in pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh).dependOn.value)
+  .settings(name := "microbenchmarks", cfg.base, cfg.noPublish, mainClass in Compile := Some("org.openjdk.jmh.Main"),
+    com.typesafe.sbt.SbtStartScript.startScriptForClassesSettings,
+    TaskKey[Unit]("compileJmh") := Seq(compile in pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh).dependOn.value)
   .dependsOn(stm, fullmv)
 
 

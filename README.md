@@ -8,8 +8,9 @@ and is useful in many contexts such as traditional user interfaces, concurrent a
 * Usage Manual: <http://www.rescala-lang.com/manual/>
 
 REScala is a research project held at TU Darmstadt in the
-[Software Technology Group.](http://www.stg.tu-darmstadt.de/)
-In context of the [PACE Project](http://www.pace-erc.eu/).
+[Software Technology Group](http://www.stg.tu-darmstadt.de/)
+in the context of the [PACE](http://www.pace-erc.eu/)
+and [NICER](http://nicer.network/) projects.
 
 ## Repository Overview
 

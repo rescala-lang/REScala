@@ -17,7 +17,8 @@ resolvers += Resolver.bintrayRepo("stg-tud", "maven")
 libraryDependencies += "de.tuda.stg" %% "rescala" % "0.19.0"
 ```
 
-Install [sbt](http://www.scala-sbt.org/) and run `sbt console` inside the folder.
+Install [sbt](http://www.scala-sbt.org/) and run `sbt console` inside the folder,
+this should allow you to follow along the following examples.
 
 # API Documentation
 
