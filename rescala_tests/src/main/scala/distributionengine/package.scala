@@ -7,14 +7,16 @@ import statecrdts.StateCRDT
 package object distributionengine {
 
   // Message types:
-  final case class PublishEvt(cVar: Publishable[_ <: StateCRDT])
+  final case class PublishVar(cVar: Publishable[_ <: StateCRDT])
+
+  final case class SyncVar(cVar: Publishable[_ <: StateCRDT])
 
   final case class UpdateMessage(varName: String, value: StateCRDT, hostRef: ActorRef)
 
-  final case class QueryMessage(varName: String)
+  final case class QueryMessage(varName: String, host: ActorRef)
 
   final case class RegisterMessage(varName: String, host: ActorRef)
 
-  final case class LookupMessage(varName: String)
+  final case class SyncAllMessage()
 
 }

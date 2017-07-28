@@ -11,6 +11,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 
 trait Publishable[A <: StateCRDT] {
+  val engine: ActorRef
   val name: String
   val initial: A
   val internalChanges: Event[A]
@@ -22,9 +23,11 @@ trait Publishable[A <: StateCRDT] {
     }
   }
   def value: A#valueType = signal.now.value
+
+  def sync(): Unit = engine ! SyncVar(this)
 }
 
-case class DistributedGCounter(name: String, private val start: Int) extends Publishable[CIncOnlyCounter] {
+case class DistributedGCounter(engine: ActorRef, name: String, private val start: Int) extends Publishable[CIncOnlyCounter] {
   val initial = CIncOnlyCounter(start)
   val internalChanges: rescala.Evt[CIncOnlyCounter] = Evt[CIncOnlyCounter]
   val externalChanges: rescala.Evt[CIncOnlyCounter] = Evt[CIncOnlyCounter]
@@ -32,13 +35,15 @@ case class DistributedGCounter(name: String, private val start: Int) extends Pub
     internalChanges(signal.now.increase)
     value
   }
+
+  // add this() method
 }
 
 object DistributedGCounter {
   def apply(engine: ActorRef, name: String, start: Int): DistributedGCounter = {
-    val c = new DistributedGCounter(name, start)
+    val c = new DistributedGCounter(engine, name, start)
     implicit val timeout = Timeout(60.second)
-    val sendMessage = engine ? PublishEvt(c)
+    val sendMessage = engine ? PublishVar(c)
     Await.ready(sendMessage, Duration.Inf) // make publish a blocking operation
     c
   }

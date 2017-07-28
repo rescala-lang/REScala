@@ -1,5 +1,43 @@
-import akka.actor.ActorSystem
+import akka.actor.{ActorRef, ActorSystem}
+import com.typesafe.config.ConfigFactory
+import distributionengine._
+import rescala._
 import statecrdts._
+
+object testDistribution {
+  def main(args: Array[String]): Unit = {
+    val config = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + 2551).
+      withFallback(ConfigFactory.load())
+
+    val system: ActorSystem = ActorSystem("ClusterSystem", config)
+    val host1: ActorRef = system.actorOf(DistributionEngine.props("Host1"), "Host1")
+    val host2: ActorRef = system.actorOf(DistributionEngine.props("Host2"), "Host2")
+
+    val c = DistributedGCounter(host1, "moppi", 12)
+    c.increase
+    println(c.value)
+    println()
+
+    val d = DistributedGCounter(host2, "moppi", 0)
+    val doubledMoppi = Signal {
+      c.signal().value + d.signal().value
+    }
+
+    println(s"doubledMoppi: ${doubledMoppi.now}")
+    println(c.value)
+    println(d.value)
+    println()
+
+    Thread sleep 20000
+    d.increase
+
+    println(s"doubledMoppi: ${doubledMoppi.now}")
+    println(c.value)
+    println(d.value)
+
+    system.terminate()
+  }
+}
 
 /**
   * Created by julian on 05.07.17.
@@ -40,8 +78,7 @@ object main {
         val doubledMoppi = Signal {
           c.signal().value + d.signal().value
         }
-    */
-    /*
+
     doubledMoppi.observe(v => println("Observed: " + v))
     d.increase
 
