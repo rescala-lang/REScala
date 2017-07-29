@@ -7,6 +7,7 @@ import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe, Subscr
 import akka.cluster.pubsub._
 import akka.pattern.ask
 import akka.util.Timeout
+import com.typesafe.scalalogging._
 import rescala._
 import statecrdts._
 
@@ -19,6 +20,8 @@ import scala.util.{Failure, Success}
   * Handles distribution on the client side and provides a frontend for the programmer to interact with.
   */
 class DistributionEngine(hostName: String = InetAddress.getLocalHost.getHostAddress) extends Actor {
+  val logger: Logger = Logger[DistributionEngine]
+
   val mediator: ActorRef = DistributedPubSub(context.system).mediator
 
   private var registry: Map[String, Set[ActorRef]] = Map().withDefaultValue(Set())
@@ -36,14 +39,14 @@ class DistributionEngine(hostName: String = InetAddress.getLocalHost.getHostAddr
     case SyncVar(cVar) => ??? // TODO: implement blocking sync operation, maybe with garbage collection
     case UpdateMessage(varName, value, hostRef) =>
       sleep()
-      println(s"[$hostName] received value $value for $varName from ${hostRef.path.name}")
+      logger.debug(s"[$hostName] received value $value for $varName from ${hostRef.path.name}")
       localCVars(varName).externalChanges.asInstanceOf[Evt[StateCRDT]](value) // issue external change event
       val newHosts = registry(varName) + hostRef
       registry += (varName -> newHosts) // add sender to registry
-      println(s"registry is now: $registry")
+      logger.debug(s"registry is now: $registry")
     case QueryMessage(varName, hostRef) =>
       sleep()
-      println(s"[$hostName] ${hostRef.path.name} queried variable $varName")
+      logger.debug(s"[$hostName] ${hostRef.path.name} queried variable $varName")
       hostRef ! UpdateMessage(varName, localCVars(varName).signal.now, self) // send reply
     case SyncAllMessage => localCVars.foreach {
       case (varName: String, dVar: Publishable[StateCRDT]) => sendUpdates(varName, dVar.signal.now)
@@ -61,29 +64,31 @@ class DistributionEngine(hostName: String = InetAddress.getLocalHost.getHostAddr
     implicit val timeout = Timeout(20.second)
     var returnValue: Int = 1
 
-    // Query value from all subscribers. This will also update our registry of other hosts.
-    mediator ! Publish(varName, QueryMessage(varName, self))
-    val sendMessage = mediator ? Subscribe(varName, self) // register this instance
+    if (!localCVars.contains(varName)) { // only publish if this hasn't been published before
+      // Query value from all subscribers. This will also update our registry of other hosts.
+      mediator ! Publish(varName, QueryMessage(varName, self))
+      val sendMessage = mediator ? Subscribe(varName, self) // register this instance
 
-    val registration = sendMessage andThen {
-      case Success(m) => m match {
-        case SubscribeAck(Subscribe(`varName`, None, `self`)) =>
-          // save reference to local var
-          localCVars += (dVar.name -> dVar)
+      val registration = sendMessage andThen {
+        case Success(m) => m match {
+          case SubscribeAck(Subscribe(`varName`, None, `self`)) =>
+            // save reference to local var
+            localCVars += (dVar.name -> dVar)
 
-          // add listener for internal changes
-          dVar.internalChanges += (newValue => {
-            println(s"[$hostName] Recognized internal change on ${dVar.name}. ${dVar.name} is now $newValue")
-            sendUpdates(varName, newValue)
-          })
+            // add listener for internal changes
+            dVar.internalChanges += (newValue => {
+              logger.debug(s"[$hostName] Recognized internal change on ${dVar.name}. ${dVar.name} is now $newValue")
+              sendUpdates(varName, newValue)
+            })
 
-          // set return value to 0 if everything was successful
-          returnValue = 0
+            // set return value to 0 if everything was successful
+            returnValue = 0
+        }
+        case Failure(_) => logger.debug("[" + hostName + "] Could not reach lookup server!")
       }
-      case Failure(_) => println("[" + hostName + "] Could not reach lookup server!")
-    }
 
-    Await.ready(registration, Duration.Inf) // await the answer of the lookupServer
+      Await.ready(registration, Duration.Inf) // await the answer of the lookupServer
+    }
 
     // Update all other hosts
     sendUpdates(varName, dVar.signal.now)
@@ -92,9 +97,8 @@ class DistributionEngine(hostName: String = InetAddress.getLocalHost.getHostAddr
   }
 
   private def sendUpdates(varName: String, value: StateCRDT): Unit = {
-    println(s"[$hostName] Sending updates. Registry is $registry")
+    logger.debug(s"[$hostName] Sending updates for $varName to ${registry(varName)}")
     registry(varName).foreach(a => {
-      println(s"[$hostName] Sending update message to ${a.path.name}")
       a ! UpdateMessage(varName, value, self)
     })
   }
