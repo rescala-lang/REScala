@@ -1,12 +1,5 @@
 import java.util.Scanner
 
-import scalafx.Includes._
-import scalafx.application.JFXApp
-import scalafx.scene.Scene
-import scalafx.scene.paint.Color._
-import scalafx.scene.shape.Rectangle
-
-
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent._
 import statecrdts._
@@ -44,9 +37,9 @@ object ChatApp {
   val console = new jline.console.ConsoleReader()
 
   def main(args: Array[String]): Unit = args(0) match {
-    case "Alice" => startup("Alice", "2251")
-    case "Bob" => startup("Bob", "2252")
-    case "Charlie" => startup("Charlie", "2253")
+    case "Alice" => startup("Alice", "2551")
+    case "Bob" => startup("Bob", "2552")
+    case "Charlie" => startup("Charlie", "2553")
   }
 
   def startup(name: String, port: String): Unit = {
@@ -55,11 +48,9 @@ object ChatApp {
 
     // Create an Akka system
     val system = ActorSystem("ClusterSystem", config)
+    val host: ActorRef = system.actorOf(DistributionEngine.props(name), name)
 
-    val cluster = Cluster(context.system)
-    val host: ActorRef = system.actorOf(DistributionEngine.props("Host1", lookupServer), "Host1")
-    // Create an actor that handles cluster domain events
-    //system.actorOf(Props[SimpleClusterListener], name = "clusterListener")
+    Thread sleep 2000
     run(name)
   }
 
@@ -72,7 +63,7 @@ object ChatApp {
 
       // print input prompt
       val msg: String = console.readLine(s"[$name]: ")
-      history = history :+ (s"[$name] $msg")
+      history = history :+ s"[$name] $msg"
     }
 
     def drawInterface(name: String, log: List[String]): Unit = {
@@ -92,7 +83,7 @@ object ChatApp {
 
       // print history
       log.foreach {
-        case s: String => {
+        s: String =>
           // slice output string into substrings of the same length as the terminal
           if (s.length > terminalWidth) {
             s.grouped(terminalWidth).foreach(slice => {
@@ -104,7 +95,6 @@ object ChatApp {
             println(s)
             outputLines += 1
           }
-        }
       }
 
       // print empty lines if the terminal window is bigger than the current history to place footer at the bottom of the screen
