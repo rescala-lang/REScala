@@ -1,6 +1,5 @@
 import akka.actor.{ActorRef, ActorSystem}
 import com.typesafe.config.ConfigFactory
-import com.typesafe.scalalogging.Logger
 import distributionengine._
 import rescala._
 import statecrdts._
@@ -18,7 +17,7 @@ object testDistribution {
     c.publish()
     c.increase
     c.publish()
-    println(c.value)
+    println(c.getValue)
     println()
 
     val d = DistributedGCounter(host2, "moppi", 0)
@@ -28,16 +27,16 @@ object testDistribution {
     }
 
     println(s"doubledMoppi: ${doubledMoppi.now}")
-    println(c.value)
-    println(d.value)
+    println(c.getValue)
+    println(d.getValue)
     println()
 
     Thread sleep 20000
     d.increase
 
     println(s"doubledMoppi: ${doubledMoppi.now}")
-    println(c.value)
-    println(d.value)
+    println(c.getValue)
+    println(d.getValue)
 
     system.terminate()
   }
@@ -52,7 +51,7 @@ object main {
 
     val m1 = Vertex("[Alice] Hello Bob!")
     var log = RGA[String]()
-    log = log.addRight(start, m1)
+    log = log.addRight(Vertex.start, m1)
     val m2 = Vertex("[Bob] Hey Alice!")
     val m3 = Vertex("[Alice] How are you?")
     log = log addRight(m1, m2) addRight(m2, m3)

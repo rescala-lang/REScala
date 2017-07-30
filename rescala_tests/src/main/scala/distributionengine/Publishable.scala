@@ -1,44 +1,35 @@
 package distributionengine
 
-import akka.actor.ActorRef
-import akka.util.Timeout
-import rescala.parrp.ParRP
-import rescala.{Event, Signal, reactives}
-import statecrdts.StateCRDT
-import akka.actor._
+import akka.actor.{ActorRef, _}
 import akka.pattern.ask
 import akka.util.Timeout
-import rescala._
-import rescala.parrp.ParRP
-import statecrdts.{CIncOnlyCounter, RGA, StateCRDT, Vertex}
+import rescala.{Event, Signal}
+import statecrdts.StateCRDT
 
 import scala.concurrent.Await
-import scala.concurrent.duration._
-import scala.concurrent.Await
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.{Duration, _}
 
 /**
   * Classes implementing this trait can be published and are then synchronized by the DistributionEngine `engine`.
   * Internal changes to the underlying StateCRDT are made by firing an internalChanges event containing the new
   * StateCRDT. Similarly external changes recognized by the DistributionEngine fire an `externalChanges` event.
   *
-  * Methods allowing internal changes must be implemented by the implementing class. Otherwise it is impossible to fire
-  * `internalChanges` events.
+  * Methods allowing internal changes should be implemented by the implementing class.
   *
   * @tparam A The type of the underlying StateCRDT.
   */
 trait Publishable[A <: StateCRDT] {
-  val engine: ActorRef
-  val name: String
-  val initial: A
-  protected val internalChanges: Event[A] // protected to prevent firing of internalChanges events outside the implementing class
-  val externalChanges: Event[A]
   lazy val changes: Event[A] = internalChanges || externalChanges
   lazy val signal: Signal[A] = changes.fold(initial) { (c1, c2) =>
     c1.merge(c2) match {
       case a: A => a
     }
   }
+  val engine: ActorRef
+  val name: String
+  val initial: A
+  val internalChanges: Event[A]
+  val externalChanges: Event[A]
 
   /**
     * Returns an immutable object representing the public value of the published CvRDT.

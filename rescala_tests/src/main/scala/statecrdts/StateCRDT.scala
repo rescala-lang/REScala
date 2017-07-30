@@ -1,5 +1,8 @@
 package statecrdts
 
+import com.typesafe.scalalogging.Logger
+import statecrdts.Vertex.{end, start}
+
 import scala.collection.AbstractIterator
 import scala.collection.immutable.HashMap
 
@@ -65,7 +68,7 @@ case class CIncOnlyCounter(id: String, payload: HashMap[String, Int]) extends St
   def value: valueType = payload.values.sum
 
   def merge(c: StateCRDT): CIncOnlyCounter = c match {
-    case CIncOnlyCounter(i, p) => CIncOnlyCounter(id,
+    case CIncOnlyCounter(_, p) => CIncOnlyCounter(id,
       payload.merged(p) {
         case ((k, v1), (_, v2)) => (k, v1 max v2)
       })
@@ -99,11 +102,6 @@ case class ORSet[A](payload: (Set[(A, Identifier)], Set[Identifier])) extends St
   override type Element = A
   val (entries, tombstones) = payload
 
-  override def value: valueType = {
-    val (values, _) = entries.filter(e => !tombstones(e._2)).unzip // filter all entries with tombstones
-    values
-  }
-
   override def merge(c: StateCRDT): ORSet[A] = c match {
     case o: ORSet[A] =>
       val (entries1, tombs1) = payload
@@ -114,16 +112,21 @@ case class ORSet[A](payload: (Set[(A, Identifier)], Set[Identifier])) extends St
 
   override def fromPayload(payload: payloadType): ORSet[A] = ORSet(payload)
 
-  override def add(e: A): ORSet[A] = {
-    ORSet((entries + ((e, genId)), tombstones))
+  override def add(a: A): ORSet[A] = {
+    ORSet((entries + ((a, genId)), tombstones))
   }
 
-  override def remove(e: A): ORSet[A] = {
-    val (_, newTombs) = entries.filter(entry => entry._1 == e).unzip // fetch ids of all instances of the element
+  override def remove(a: A): ORSet[A] = {
+    val (_, newTombs) = entries.filter(entry => entry._1 == a).unzip // fetch ids of all instances of the element
     ORSet((entries, tombstones ++ newTombs)) // add them to tombstones
   }
 
-  override def contains(e: A): Boolean = value(e)
+  override def contains(a: A): Boolean = value(a)
+
+  override def value: valueType = {
+    val (values, _) = entries.filter(e => !tombstones(e._2)).unzip // filter all entries with tombstones
+    values
+  }
 
   override def fromValue(value: Set[A]): ORSet[A] = {
     val entries = value.map((a) => (a, genId))
@@ -246,6 +249,7 @@ case class RGA[A](payload: (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[An
   override type selfType = RGA[A]
   override type valueType = List[A]
   override type payloadType = (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[Any]], HashMap[Vertex[Any], Timestamp])
+  val logger: Logger = Logger[RGA[A]]
   val (vertices, edges, timestamps): ((TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[Any]], HashMap[Vertex[Any], Timestamp])) = payload
 
   override def contains[A1 >: A](v: Vertex[A1]): Boolean = v match {
@@ -254,15 +258,15 @@ case class RGA[A](payload: (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[An
     case v: Vertex[A] => vertices.contains(v)
   }
 
-  override def before[A1 >: A](v: Vertex[A1], u: Vertex[A1]): Boolean = v match {
+  override def before[A1 >: A](u: Vertex[A1], v: Vertex[A1]): Boolean = u match {
     case `end` => false
     case `start` => true
-    case _ => edges(v) == u || before(edges(v), u)
+    case _ => edges(u) == v || before(edges(u), v)
   }
 
   def successor[A1 >: A](v: Vertex[A1]): Vertex[A1] = v match {
     case `end` =>
-      println("There is no successor to the end node! ")
+      logger.warn("There is no successor to the end node! ")
       v
     case _ =>
       val u: Vertex[A1] = edges(v).asInstanceOf[Vertex[A1]]
@@ -276,33 +280,6 @@ case class RGA[A](payload: (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[An
   def addRight[A1 >: A](position: Vertex[A1], a: A): RGA[A] = addRight(position, new Vertex(a))
 
   def addRight[A1 >: A](position: Vertex[A1], v: Vertex[A]): RGA[A] = insert(position, v)
-
-  /**
-    * This method allows insertions of any type into the RAG. This is used to move the start and end nodes
-    *
-    * @param position the vertex specifying the position
-    * @param v        the vertex to be inserted right to position
-    * @tparam A1 type of both the inserted vertex and the vertex specifying the position
-    * @return A new RAG containing the inserted element
-    */
-  private def insert[A1 >: A](position: Vertex[A1], v: Vertex[A1]): RGA[A] = position match {
-    case `end` => println("Cannot insert after end node!"); this
-    case _ => println(s"value ${v.value} matches")
-      if (vertices.contains(position)) {
-        val (l, r) = (position, successor(position))
-        val timestamp: Timestamp = genTimestamp
-        val newVertices = vertices.add(v)
-        val newEdges = edges + (l -> v) + (v -> r)
-        val newTimestamps = timestamps + (v -> timestamp)
-        new RGA((newVertices, newEdges, newTimestamps))
-      }
-      else {
-        println("Insertion failed")
-        this
-      }
-    case x => println(s"Type mismatch! Vertex[_] of type ${x.getClass.getSimpleName} cannot be added to RGA of type ${this.getClass.getSimpleName}"); this
-  }
-
 
   override def remove[A1 >: A](v: Vertex[A1]): RGA[A] = RGA((vertices.remove(v), edges, timestamps))
 
@@ -322,8 +299,6 @@ case class RGA[A](payload: (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[An
       suc.value.asInstanceOf[A]
     }
   }
-
-  // TODO: Implement Vertex[_] Iterator
 
   override def merge(c: StateCRDT): RGA[A] = c match {
     case r: RGA[A] =>
@@ -348,6 +323,8 @@ case class RGA[A](payload: (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[An
       }
   }
 
+  // TODO: Implement Vertex[_] Iterator
+
   override def fromPayload(payload: payloadType): RGA[A] = RGA(payload)
 
   override def fromValue(value: valueType): RGA[A] = {
@@ -355,18 +332,42 @@ case class RGA[A](payload: (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[An
     val newRGA: RGA[A] = fromPayload(emptyPayload)
 
     value.reverse.foldLeft(newRGA) {
-      case (r: RGA[A], a: A) => r.addRight(start, a)
+      case (r: RGA[A], a) => r.addRight(start, a)
+    }
+  }
+
+  /**
+    * This method allows insertions of any type into the RAG. This is used to move the start and end nodes
+    *
+    * @param position the vertex specifying the position
+    * @param v        the vertex to be inserted right to position
+    * @tparam A1 type of both the inserted vertex and the vertex specifying the position
+    * @return A new RAG containing the inserted element
+    */
+  private def insert[A1 >: A](position: Vertex[A1], v: Vertex[A1]): RGA[A] = position match {
+    case `end` => logger.error("Cannot insert after end node!"); this
+    case _ => if (vertices.contains(position)) {
+      val (l, r) = (position, successor(position))
+      val timestamp: Timestamp = genTimestamp
+      val newVertices = vertices.add(v)
+      val newEdges = edges + (l -> v) + (v -> r)
+      val newTimestamps = timestamps + (v -> timestamp)
+      new RGA((newVertices, newEdges, newTimestamps))
+    }
+    else {
+      logger.error(s"Insertion failed! RGA does not contain specified position vertex $position!")
+      this
     }
   }
 }
 
 object RGA {
-  def empty[A]: RGA[A] = new RGA[A]((TwoPSet(start, end), HashMap(start -> end), HashMap(start -> -1, end -> 0)))
-
-  def apply[A](): RGA[A] = empty
-
   def apply[A](values: A*): RGA[A] = {
     val r = RGA[A]()
     r.fromValue(values.toList)
   }
+
+  def apply[A](): RGA[A] = empty
+
+  def empty[A]: RGA[A] = new RGA[A]((TwoPSet(start, end), HashMap(start -> end), HashMap(start -> -1, end -> 0)))
 }

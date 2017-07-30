@@ -23,32 +23,26 @@ class DistributionEngine(hostName: String = InetAddress.getLocalHost.getHostAddr
   val logger: Logger = Logger[DistributionEngine]
 
   val mediator: ActorRef = DistributedPubSub(context.system).mediator
-
-  private var registry: Map[String, Set[ActorRef]] = Map().withDefaultValue(Set())
-  var localVars: Map[String, Var[StateCRDT]] = Map()
-  var localCVars: Map[String, Publishable[_ <: StateCRDT]] = Map()
+  var localDVars: Map[String, Publishable[_ <: StateCRDT]] = Map()
   var extChangeEvts: Map[String, Evt[StateCRDT]] = Map()
-
-  // fakes the existence of a server infrastructure
-  // maps hostname to map of varName and value
-  // TODO: make private
-  //var cloudStorage: Map[String, Map[String, Any]] = Map().withDefaultValue(Map())
+  private var registry: Map[String, Set[ActorRef]] = Map().withDefaultValue(Set())
 
   def receive: PartialFunction[Any, Unit] = {
-    case PublishVar(cVar) => sender ! publish(cVar)
-    case SyncVar(cVar) => ??? // TODO: implement blocking sync operation, maybe with garbage collection
+    case PublishVar(dVar) => sender ! publish(dVar)
+    case SyncVar(dVar) => //noinspection NotImplementedCode
+      ??? // TODO: implement blocking sync operation, maybe with garbage collection
     case UpdateMessage(varName, value, hostRef) =>
       sleep()
       logger.debug(s"[$hostName] received value $value for $varName from ${hostRef.path.name}")
-      localCVars(varName).externalChanges.asInstanceOf[Evt[StateCRDT]](value) // issue external change event
-      val newHosts = registry(varName) + hostRef
+      localDVars(varName).externalChanges.asInstanceOf[Evt[StateCRDT]](value) // issue external change event
+    val newHosts = registry(varName) + hostRef
       registry += (varName -> newHosts) // add sender to registry
       logger.debug(s"registry is now: $registry")
     case QueryMessage(varName, hostRef) =>
       sleep()
       logger.debug(s"[$hostName] ${hostRef.path.name} queried variable $varName")
-      hostRef ! UpdateMessage(varName, localCVars(varName).signal.now, self) // send reply
-    case SyncAllMessage => localCVars.foreach {
+      hostRef ! UpdateMessage(varName, localDVars(varName).signal.now, self) // send reply
+    case SyncAllMessage => localDVars foreach {
       case (varName: String, dVar: Publishable[StateCRDT]) => sendUpdates(varName, dVar.signal.now)
     }
   }
@@ -64,7 +58,7 @@ class DistributionEngine(hostName: String = InetAddress.getLocalHost.getHostAddr
     implicit val timeout = Timeout(20.second)
     var returnValue: Int = 1
 
-    if (!localCVars.contains(varName)) { // only publish if this hasn't been published before
+    if (!localDVars.contains(varName)) { // only publish if this hasn't been published before
       // Query value from all subscribers. This will also update our registry of other hosts.
       mediator ! Publish(varName, QueryMessage(varName, self))
       val sendMessage = mediator ? Subscribe(varName, self) // register this instance
@@ -73,7 +67,7 @@ class DistributionEngine(hostName: String = InetAddress.getLocalHost.getHostAddr
         case Success(m) => m match {
           case SubscribeAck(Subscribe(`varName`, None, `self`)) =>
             // save reference to local var
-            localCVars += (dVar.name -> dVar)
+            localDVars += (dVar.name -> dVar)
 
             // add listener for internal changes
             dVar.internalChanges += (newValue => {
@@ -144,7 +138,6 @@ class DistributionEngine(hostName: String = InetAddress.getLocalHost.getHostAddr
 object DistributionEngine {
   def props(host: String): Props = Props(new DistributionEngine(host))
 
-  def host: InetAddress = InetAddress.getLocalHost // hostname + IP
   def ip: Identifier = InetAddress.getLocalHost.getHostAddress
 
   /**
@@ -153,4 +146,6 @@ object DistributionEngine {
     * @return A new unique identifier (e.g. hostname/127.0.0.1::1274f9fe-cdf7-3f10-a7a4-33e8062d7435)
     */
   def genId: String = host + "::" + java.util.UUID.nameUUIDFromBytes(BigInt(System.currentTimeMillis).toByteArray)
+
+  def host: InetAddress = InetAddress.getLocalHost // hostname + IP
 }

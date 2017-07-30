@@ -5,24 +5,28 @@ package object statecrdts {
   type Removed = Boolean
   type Timestamp = Long
 
+  def sleep(): Unit = Thread sleep 2000
+
+  def genId: String = host + "::" + java.util.UUID.nameUUIDFromBytes(BigInt(System.currentTimeMillis).toByteArray)
+
+  def host: InetAddress = InetAddress.getLocalHost // hostname + IP
+
   class Vertex[+A](val value: A) {
     override def toString: String = value.toString
   }
 
-  case object start extends Vertex(AnyRef) {
-    override def toString: String = "start"
-  }
-
-  case object end extends Vertex(AnyRef) {
-    override def toString: String = "end"
-  }
-
   object Vertex {
     def apply[A](value: A): Vertex[A] = new Vertex(value)
+
+    case object start2
+
+    case object start extends Vertex[Any](None) {
+      override def toString: String = "start"
+    }
+
+    case object end extends Vertex[Any](None) {
+      override def toString: String = "end"
+    }
+
   }
-
-  def sleep(): Unit = Thread sleep 2000
-
-  def host: InetAddress = InetAddress.getLocalHost // hostname + IP
-  def genId: String = host + "::" + java.util.UUID.nameUUIDFromBytes(BigInt(System.currentTimeMillis).toByteArray)
 }

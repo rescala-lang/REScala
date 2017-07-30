@@ -1,68 +1,97 @@
 package distributionengine
 
 import akka.actor._
-import akka.pattern.ask
-import akka.util.Timeout
 import rescala._
-import rescala.parrp.ParRP
-import statecrdts.{CIncOnlyCounter, RGA, StateCRDT, Vertex}
+import statecrdts._
 
-import scala.concurrent.Await
-import scala.concurrent.duration._
-
-trait Publishable[A <: StateCRDT] {
-  val engine: ActorRef
-  val name: String
-  val initial: A
-  val internalChanges: Event[A]
-  val externalChanges: Event[A]
-  lazy val changes: reactives.Event[A, ParRP] = internalChanges || externalChanges
-  lazy val signal: Signal[A] = changes.fold(initial) { (c1, c2) =>
-    c1.merge(c2) match {
-      case a: A => a
-    }
-  }
-
-  def value: A#valueType = signal.now.value
-
-  def sync(): Unit = engine ! SyncVar(this)
-
-  // publish this to the distribution engine
-  def publish(): Unit = {
-    implicit val timeout = Timeout(60.second)
-    val sendMessage = engine ? PublishVar(this)
-    Await.ready(sendMessage, Duration.Inf) // make publish a blocking operation
-  }
-}
-
-case class DistributedGCounter(engine: ActorRef, name: String, private val start: Int) extends Publishable[CIncOnlyCounter]{
-  val initial = CIncOnlyCounter(start)
-  val internalChanges: rescala.Evt[CIncOnlyCounter] = Evt[CIncOnlyCounter]
-  val externalChanges: rescala.Evt[CIncOnlyCounter] = Evt[CIncOnlyCounter]
-
+/**
+  * DistributedGCounters are increase-only counter variables.
+  *
+  * @param engine  The DistributionEngine used to handle distribution.
+  * @param name    The name of this variable. Has to be the same on all hosts to be synchronized!
+  * @param initial The initial value of this variable.
+  */
+case class DistributedGCounter(engine: ActorRef, name: String, initial: CIncOnlyCounter = CIncOnlyCounter(0),
+                               internalChanges: rescala.Evt[CIncOnlyCounter] = Evt[CIncOnlyCounter],
+                               externalChanges: rescala.Evt[CIncOnlyCounter] = Evt[CIncOnlyCounter])
+  extends Publishable[CIncOnlyCounter] {
 
   def increase: Int = {
     internalChanges(signal.now.increase)
-    value
+    getValue
   }
 }
 
-case class DistributedArray[A](engine: ActorRef, name: String) extends Publishable[RGA[A]] {
-  override val initial: RGA[A] = RGA()
-  override val internalChanges: Evt[RGA[A]] = Evt[RGA[A]]
-  override val externalChanges: Evt[RGA[A]]= Evt[RGA[A]]
-
-  def addRight(position: Vertex[A], vertex: Vertex[A]): Unit = internalChanges(signal.now.addRight(position, vertex))
-}
-
-/*
 object DistributedGCounter {
+  /**
+    * Allows creation of DistributedGCounters by passing a start value.
+    */
   def apply(engine: ActorRef, name: String, start: Int): DistributedGCounter = {
-    val c = new DistributedGCounter(engine, name, start)
-    implicit val timeout = Timeout(60.second)
-    val sendMessage = engine ? PublishVar(c)
-    Await.ready(sendMessage, Duration.Inf) // make publish a blocking operation
-    c
+    val init: CIncOnlyCounter = CIncOnlyCounter(start)
+    new DistributedGCounter(engine, name, init)
   }
 }
-*/
+
+/**
+  * DistributedVertexLists are LinkedLists operating on so called Vertices. Vertices store a value of type `A`.
+  *
+  * @param engine  The DistributionEngine used to handle distribution.
+  * @param name    The name of this variable. Has to be the same on all hosts to be synchronized!
+  * @param initial The initial value of this variable.
+  */
+case class DistributedVertexList[A](engine: ActorRef, name: String, initial: RGA[A] = RGA(),
+                                    internalChanges: Evt[RGA[A]] = Evt[RGA[A]],
+                                    externalChanges: Evt[RGA[A]] = Evt[RGA[A]]) extends Publishable[RGA[A]] {
+  def contains[A1 >: A](v: Vertex[A1]): Boolean = signal.now.contains(v)
+
+  def before[A1 >: A](u: Vertex[A1], v: Vertex[A1]): Boolean = signal.now.before(u, v)
+
+  /**
+    * To store values in a DistributedVertexList one has to wrap the value in a Vertex by writing Vertex(value). The
+    * insertion position is specified by passing the vertex left of the new vertex.
+    *
+    * @param position the vertex left of the new vertex
+    * @param vertex   the vertex to be inserted
+    */
+  def addRight[A1 >: A](position: Vertex[A1], vertex: Vertex[A]): Unit = internalChanges(signal.now.addRight(position, vertex))
+
+  def successor[A1 >: A](v: Vertex[A1]): Vertex[A1] = signal.now.successor(v)
+
+  /**
+    * Converts this DistributedVertexList into a list of type `A`.
+    *
+    * @return A list containing all values of the vertices in this vertex list in order.
+    */
+  def toList: List[A] = getValue
+}
+
+object DistributedVertexList {
+  /**
+    * Allows creation of DistributedVertexLists by passing a list of initial values.
+    */
+  def apply[A](engine: ActorRef, name: String, values: List[A]): DistributedVertexList[A] = {
+    val init: RGA[A] = RGA.empty[A].fromValue(values)
+    new DistributedVertexList[A](engine, name, init)
+  }
+}
+
+case class DistributedSet[A](engine: ActorRef, name: String, initial: ORSet[A] = ORSet(),
+                             internalChanges: Evt[ORSet[A]] = Evt[ORSet[A]],
+                             externalChanges: Evt[ORSet[A]] = Evt[ORSet[A]]) extends Publishable[ORSet[A]] {
+
+  def add(a: A): Unit = internalChanges(signal.now.add(a))
+
+  def remove(a: A): Unit = internalChanges(signal.now.remove(a))
+
+  def contains(a: A): Boolean = signal.now.contains(a)
+}
+
+object DistributedSet {
+  /**
+    * Allows creation of DistributedSets by passing a set of initial values.
+    */
+  def apply[A](engine: ActorRef, name: String, values: Set[A]): DistributedSet[A] = {
+    val init: ORSet[A] = ORSet().fromValue(values)
+    new DistributedSet[A](engine, name, init)
+  }
+}

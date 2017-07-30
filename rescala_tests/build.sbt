@@ -4,6 +4,8 @@ version := "1.0"
 
 scalaVersion := "2.12.1"
 
+scalacOptions ++= Seq("-unchecked", "-deprecation")
+
 val akkaVersion = "2.5.3"
 
 // rescala:
