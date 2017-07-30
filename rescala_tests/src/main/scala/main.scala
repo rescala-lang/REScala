@@ -1,12 +1,13 @@
 import akka.actor.{ActorRef, ActorSystem}
 import com.typesafe.config.ConfigFactory
+import com.typesafe.scalalogging.Logger
 import distributionengine._
 import rescala._
 import statecrdts._
 
 object testDistribution {
   def main(args: Array[String]): Unit = {
-    val config = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + 2551).
+    val config = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + 2560).
       withFallback(ConfigFactory.load())
 
     val system: ActorSystem = ActorSystem("ClusterSystem", config)
@@ -14,11 +15,14 @@ object testDistribution {
     val host2: ActorRef = system.actorOf(DistributionEngine.props("Host2"), "Host2")
 
     val c = DistributedGCounter(host1, "moppi", 12)
+    c.publish()
     c.increase
+    c.publish()
     println(c.value)
     println()
 
     val d = DistributedGCounter(host2, "moppi", 0)
+    d.publish()
     val doubledMoppi = Signal {
       c.signal().value + d.signal().value
     }
