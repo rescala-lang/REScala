@@ -6,14 +6,34 @@ import statecrdts._
 
 object testVertices {
   def main(args: Array[String]): Unit = {
-    val v1 = Vertex(1)
-    val v2 = Vertex(1)
-    val v3 = v1
+    val v1 = Vertex("System: Hello Alice")
+    val v2 = Vertex("[Alice]: Hey Bob!")
+    val v3 = Vertex("[Alice]: How are you?")
 
-    println(v1 == v1)
-    println(v3 == v1)
-    println(v2 == v1)
-    println(Vertex.start == Vertex.start)
+    val vset = Set(v1,v1)
+    //println(v1)
+    Thread sleep 2000
+
+    val u1 = Vertex("System: Hello Bob")
+    val u2 = Vertex("[Bob]: Hey Alice!")
+    val u3 = Vertex("[Bob]: How is Eve doing?")
+
+    var r: RGA[String] = RGA.empty
+    r = r.append(v1)
+    r = r.append(v2)
+    r = r.addRight(v2, v3)
+
+    var s:RGA[String] = RGA.empty
+    s = s.append(u1).append(u2).append(u3)
+
+    println(v1.timestamp < u1.timestamp)
+
+    var r2 = r.merge(s)
+    println(r2)
+    r2 = r2.merge(r)
+    println(r2)
+    //r2 = r2.addRight(v3, Vertex("[Bob]: I am fine! How about you?"))
+    //println(r)
   }
 }
 

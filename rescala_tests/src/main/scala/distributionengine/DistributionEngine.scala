@@ -20,7 +20,7 @@ import scala.util.{Failure, Success}
   * Handles distribution on the client side and provides a frontend for the programmer to interact with.
   */
 class DistributionEngine(hostName: String = InetAddress.getLocalHost.getHostAddress) extends Actor {
-  // val tick = context.system.scheduler.schedule(500 millis, 1000 millis, self, "tick")
+  val tick = context.system.scheduler.schedule(500 millis, 1000 millis, self, "tick")
 
   val logger: Logger = Logger[DistributionEngine]
 

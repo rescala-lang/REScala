@@ -1,5 +1,7 @@
 package statecrdts
 
+import java.rmi.MarshalledObject
+
 import com.typesafe.scalalogging.Logger
 import statecrdts.Vertex.{end, start}
 
@@ -308,6 +310,24 @@ case class RGA[A](payload: (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[An
 
   def merge(c: StateCRDT): RGA[A] = c match {
     case r: RGA[A] =>
+      val newVertices = r.value.filter(!this.vertices.contains(_))
+
+      logger.debug(s"Merging $c into $this")
+      logger.debug(s"found new vertices: $newVertices")
+
+      // build map of old insertion positions of the new vertices
+      val oldPositions = r.edges.foldLeft(Map(): Map[Vertex[Any], Vertex[Any]]) {
+        case (m, (u, v)) => if (newVertices.contains(v)) m + (v -> u) else m
+      }
+
+      // insert new vertices at the appropriate places
+      newVertices.foldLeft(this) {
+        case (merged: RGA[A], v: Vertex[A]) => logger.debug(s"inserting $v at position ${oldPositions(v)}"); merged.insert(oldPositions(v), v)
+      }
+  }
+
+  def mergeOld2(c: StateCRDT): RGA[A] = c match {
+    case r: RGA[A] =>
       logger.debug(s"Merging $this with $r")
       var orphans: Set[(Vertex[Any], Vertex[Any])] = Set()
 
@@ -382,10 +402,13 @@ case class RGA[A](payload: (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[An
       this
     case _ => if (vertices.contains(position)) {
       val (l, r) = (position, successor(position))
-      val timestamp: Timestamp = genTimestamp
-      val newVertices = vertices.add(v)
-      val newEdges = edges + (l -> v) + (v -> r)
-      new RGA((newVertices, newEdges))
+      // Check if the vertex right to us has been inserted after us.  If yes, insert v after the new vertex.
+      if (r.timestamp > v.timestamp) insert(r, v)
+      else {
+        val newVertices = vertices.add(v)
+        val newEdges = edges + (l -> v) + (v -> r)
+        new RGA((newVertices, newEdges))
+      }
     }
     else {
       logger.error(s"Insertion failed! RGA does not contain specified position vertex $position!")
