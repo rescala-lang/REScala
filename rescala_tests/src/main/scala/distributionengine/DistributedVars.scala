@@ -39,7 +39,7 @@ object DistributedGCounter {
   * @param name    The name of this variable. Has to be the same on all hosts to be synchronized!
   * @param initial The initial value of this variable.
   */
-case class DistributedVertexList[A](engine: ActorRef, name: String, initial: RGA[A] = RGA(),
+case class DistributedVertexList[A](engine: ActorRef, name: String, initial: RGA[A] = RGA.empty,
                                     internalChanges: Evt[RGA[A]] = Evt[RGA[A]],
                                     externalChanges: Evt[RGA[A]] = Evt[RGA[A]]) extends Publishable[RGA[A]] {
   def contains[A1 >: A](v: Vertex[A1]): Boolean = signal.now.contains(v)
@@ -55,14 +55,13 @@ case class DistributedVertexList[A](engine: ActorRef, name: String, initial: RGA
     */
   def addRight[A1 >: A](position: Vertex[A1], vertex: Vertex[A]): Unit = internalChanges(signal.now.addRight(position, vertex))
 
+  def append(vertex: Vertex[A]): Unit = internalChanges(signal.now.append(vertex))
+
   def successor[A1 >: A](v: Vertex[A1]): Vertex[A1] = signal.now.successor(v)
 
-  /**
-    * Converts this DistributedVertexList into a list of type `A`.
-    *
-    * @return A list containing all values of the vertices in this vertex list in order.
-    */
-  def toList: List[A] = getValue
+  def valueIterator: Iterator[A] = signal.now.valueIterator
+
+  def iterator: Iterator[Vertex[A]] = signal.now.iterator
 }
 
 object DistributedVertexList {
@@ -70,7 +69,7 @@ object DistributedVertexList {
     * Allows creation of DistributedVertexLists by passing a list of initial values.
     */
   def apply[A](engine: ActorRef, name: String, values: List[A]): DistributedVertexList[A] = {
-    val init: RGA[A] = RGA.empty[A].fromValue(values)
+    val init: RGA[A] = RGA.empty[A].fromValue(values.map(a => Vertex(a)))
     new DistributedVertexList[A](engine, name, init)
   }
 }

@@ -3,7 +3,7 @@ package distributionengine
 import java.net.InetAddress
 
 import akka.actor._
-import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe, SubscribeAck}
+import akka.cluster.pubsub.DistributedPubSubMediator._
 import akka.cluster.pubsub._
 import akka.pattern.ask
 import akka.util.Timeout
@@ -20,9 +20,11 @@ import scala.util.{Failure, Success}
   * Handles distribution on the client side and provides a frontend for the programmer to interact with.
   */
 class DistributionEngine(hostName: String = InetAddress.getLocalHost.getHostAddress) extends Actor {
+  // val tick = context.system.scheduler.schedule(500 millis, 1000 millis, self, "tick")
+
   val logger: Logger = Logger[DistributionEngine]
 
-  val mediator: ActorRef = DistributedPubSub(context.system).mediator
+  val mediator: ActorRef = DistributedPubSub.get(context.system).mediator
   var localDVars: Map[String, Publishable[_ <: StateCRDT]] = Map()
   var extChangeEvts: Map[String, Evt[StateCRDT]] = Map()
   private var registry: Map[String, Set[ActorRef]] = Map().withDefaultValue(Set())
@@ -34,17 +36,20 @@ class DistributionEngine(hostName: String = InetAddress.getLocalHost.getHostAddr
     case UpdateMessage(varName, value, hostRef) =>
       sleep()
       logger.debug(s"[$hostName] received value $value for $varName from ${hostRef.path.name}")
-      localDVars(varName).externalChanges.asInstanceOf[Evt[StateCRDT]](value) // issue external change event
+      val crdt = localDVars(varName).signal.now
+      localDVars(varName).externalChanges.asInstanceOf[Evt[StateCRDT]](crdt.fromPayload(value.asInstanceOf[crdt.payloadType])) // issue external change event
     val newHosts = registry(varName) + hostRef
       registry += (varName -> newHosts) // add sender to registry
       logger.debug(s"registry is now: $registry")
     case QueryMessage(varName, hostRef) =>
       sleep()
       logger.debug(s"[$hostName] ${hostRef.path.name} queried variable $varName")
-      hostRef ! UpdateMessage(varName, localDVars(varName).signal.now, self) // send reply
+      hostRef ! UpdateMessage(varName, localDVars(varName).signal.now.payload, self) // send reply
     case SyncAllMessage => localDVars foreach {
       case (varName: String, dVar: Publishable[StateCRDT]) => sendUpdates(varName, dVar.signal.now)
     }
+    case "tick" => localDVars foreach { // pulse updates every second
+      case (varName: String, dVar: Publishable[StateCRDT]) => mediator ! Publish(varName, UpdateMessage(varName, dVar.signal.now.payload, self))}
   }
 
   /**
@@ -60,8 +65,9 @@ class DistributionEngine(hostName: String = InetAddress.getLocalHost.getHostAddr
 
     if (!localDVars.contains(varName)) { // only publish if this hasn't been published before
       // Query value from all subscribers. This will also update our registry of other hosts.
-      mediator ! Publish(varName, QueryMessage(varName, self))
+      logger.info(s"Publishing $varName")
       val sendMessage = mediator ? Subscribe(varName, self) // register this instance
+      mediator ! Publish(varName, QueryMessage(varName, self))
 
       val registration = sendMessage andThen {
         case Success(m) => m match {
@@ -92,9 +98,13 @@ class DistributionEngine(hostName: String = InetAddress.getLocalHost.getHostAddr
 
   private def sendUpdates(varName: String, value: StateCRDT): Unit = {
     logger.debug(s"[$hostName] Sending updates for $varName to ${registry(varName)}")
+    /*
     registry(varName).foreach(a => {
-      a ! UpdateMessage(varName, value, self)
+      a ! UpdateMessage(varName, value.payload, self)
     })
+    */
+
+    mediator ! Publish(varName, UpdateMessage(varName, value.payload, self))
   }
 
   private def query(varName: String): Unit = {

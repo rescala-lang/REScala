@@ -244,13 +244,13 @@ trait RemovableSequence extends StateCRDTSequence {
   *                between vertices and one HashMap which stores a Timestamp for each Vertex.
   * @tparam A The type of the elements stored in this array
   */
-case class RGA[A](payload: (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[Any]], HashMap[Vertex[Any], Timestamp])) extends StateCRDTSequence with RemovableSequence {
+case class RGA[A](payload: (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[Any]])) extends StateCRDTSequence with RemovableSequence {
   override type Atom = A
   override type selfType = RGA[A]
-  override type valueType = List[A]
-  override type payloadType = (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[Any]], HashMap[Vertex[Any], Timestamp])
+  override type valueType = List[Vertex[A]]
+  override type payloadType = (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[Any]])
   val logger: Logger = Logger[RGA[A]]
-  val (vertices, edges, timestamps): ((TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[Any]], HashMap[Vertex[Any], Timestamp])) = payload
+  val (vertices, edges): ((TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[Any]])) = payload
 
   override def contains[A1 >: A](v: Vertex[A1]): Boolean = v match {
     case `start` => true
@@ -275,52 +275,85 @@ case class RGA[A](payload: (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[An
   }
 
   //def genTimestamp = timestamps.values.max + 1
-  def genTimestamp: Timestamp = System.currentTimeMillis
 
-  def addRight[A1 >: A](position: Vertex[A1], a: A): RGA[A] = addRight(position, new Vertex(a))
+  def addRight[A1 >: A](position: Vertex[A1], a: A): RGA[A] = addRight(position, new Vertex(a, genTimestamp))
 
   def addRight[A1 >: A](position: Vertex[A1], v: Vertex[A]): RGA[A] = insert(position, v)
 
-  override def remove[A1 >: A](v: Vertex[A1]): RGA[A] = RGA((vertices.remove(v), edges, timestamps))
+  def append(v: Vertex[A]): RGA[A] = {
+    val position = if (iterator.length > 0) iterator.toList.last else `start`
+    insert(position, v)
+  }
+
+  override def remove[A1 >: A](v: Vertex[A1]): RGA[A] = RGA((vertices.remove(v), edges))
 
   override def value: valueType = iterator.toList
 
-  def iterator: Iterator[A] = new AbstractIterator[A] {
-    var lastVertex: Vertex[_] = start
+  def valueIterator: Iterator[A] = iterator.map(v => v.value)
+
+  def iterator: Iterator[Vertex[A]] = new AbstractIterator[Vertex[A]] {
+    var lastVertex: Vertex[Any] = `start`
 
     override def hasNext: Boolean = successor(lastVertex) match {
       case `end` => false
       case _ => true
     }
 
-    override def next(): A = {
-      val suc: Vertex[_] = successor(lastVertex)
-      lastVertex = suc
-      suc.value.asInstanceOf[A]
+    override def next(): Vertex[A] = {
+      successor(lastVertex) match {
+        case v: Vertex[A] => lastVertex = v; v
+      }
     }
   }
 
-  override def merge(c: StateCRDT): RGA[A] = c match {
+  def merge(c: StateCRDT): RGA[A] = c match {
     case r: RGA[A] =>
-      val mergedTimestamps = timestamps.merged(r.timestamps) {
-        // merge timestamps
-        case ((v, t1), (_, t2)) => (v, t1 max t2)
+      logger.debug(s"Merging $this with $r")
+      var orphans: Set[(Vertex[Any], Vertex[Any])] = Set()
+
+      edges.merged(r.edges) {
+        case ((u, v1), (_, v2)) =>
+          if (v1 == v2) {
+            (u, v1)
+          }
+          else if (v1.timestamp > v2.timestamp) {
+            orphans += ((u, v2))
+            (u, v1)
+          }
+          else {
+            orphans += ((u, v1))
+            (u, v2)
+          }
       }
+
+      orphans.foldLeft(r) {
+        case (mergedR, (u, v)) => mergedR.insert(u, v)
+      }
+  }
+
+  def mergeOld(c: StateCRDT): RGA[A] = c match {
+    case r: RGA[A] =>
+      logger.debug(s"Merging $this with $r")
       val newVertices = vertices.merge(r.vertices) // merge vertices
 
       // find conflicting edges
       val (conflictingEdges, rest): (HashMap[Vertex[Any], Vertex[Any]], HashMap[Vertex[Any], Vertex[Any]]) = r.edges.partition(e => edges.contains(e._1) && edges(e._1) != e._2)
+      logger.debug(s"Conflicting edges found: $conflictingEdges")
 
-      val s = new RGA[A]((newVertices, edges ++: rest, mergedTimestamps)) // construct new RGA
+      val s = new RGA[A]((newVertices, edges ++: rest)) // construct new RGA
 
-      conflictingEdges.foldLeft(s) {
+      val mergeResult = conflictingEdges.foldLeft(s) {
         // resolve conflicting edges
         case (s: RGA[A], (u: Vertex[Any], v: Vertex[Any])) =>
           // find the right place for our insertion
           var place = u
-          while (s.timestamps(v) < s.timestamps(s.edges(place))) place = successor(place)
+          while (v.timestamp < s.edges(place).timestamp) place = s.edges(place)
           s.insert(place, v)
       }
+
+      logger.debug(s"Merge result: $mergeResult")
+
+      mergeResult
   }
 
   // TODO: Implement Vertex[_] Iterator
@@ -328,7 +361,7 @@ case class RGA[A](payload: (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[An
   override def fromPayload(payload: payloadType): RGA[A] = RGA(payload)
 
   override def fromValue(value: valueType): RGA[A] = {
-    val emptyPayload: payloadType = (TwoPSet[Vertex[Any]](start, end), HashMap[Vertex[Any], Vertex[Any]](start -> end), HashMap[Vertex[Any], Timestamp](start -> -1, end -> 0))
+    val emptyPayload: payloadType = (TwoPSet[Vertex[Any]](start, end), HashMap[Vertex[Any], Vertex[Any]](start -> end))
     val newRGA: RGA[A] = fromPayload(emptyPayload)
 
     value.reverse.foldLeft(newRGA) {
@@ -345,14 +378,14 @@ case class RGA[A](payload: (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[An
     * @return A new RAG containing the inserted element
     */
   private def insert[A1 >: A](position: Vertex[A1], v: Vertex[A1]): RGA[A] = position match {
-    case `end` => logger.error("Cannot insert after end node!"); this
+    case `end` => logger.error("Cannot insert after end node!");
+      this
     case _ => if (vertices.contains(position)) {
       val (l, r) = (position, successor(position))
       val timestamp: Timestamp = genTimestamp
       val newVertices = vertices.add(v)
       val newEdges = edges + (l -> v) + (v -> r)
-      val newTimestamps = timestamps + (v -> timestamp)
-      new RGA((newVertices, newEdges, newTimestamps))
+      new RGA((newVertices, newEdges))
     }
     else {
       logger.error(s"Insertion failed! RGA does not contain specified position vertex $position!")
@@ -364,10 +397,10 @@ case class RGA[A](payload: (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[An
 object RGA {
   def apply[A](values: A*): RGA[A] = {
     val r = RGA[A]()
-    r.fromValue(values.toList)
+    r.fromValue(values.toList.map(a => Vertex(a)))
   }
 
   def apply[A](): RGA[A] = empty
 
-  def empty[A]: RGA[A] = new RGA[A]((TwoPSet(start, end), HashMap(start -> end), HashMap(start -> -1, end -> 0)))
+  def empty[A]: RGA[A] = new RGA[A]((TwoPSet(start, end), HashMap(start -> end)))
 }

@@ -4,6 +4,19 @@ import distributionengine._
 import rescala._
 import statecrdts._
 
+object testVertices {
+  def main(args: Array[String]): Unit = {
+    val v1 = Vertex(1)
+    val v2 = Vertex(1)
+    val v3 = v1
+
+    println(v1 == v1)
+    println(v3 == v1)
+    println(v2 == v1)
+    println(Vertex.start == Vertex.start)
+  }
+}
+
 object testDistribution {
   def main(args: Array[String]): Unit = {
     val config = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + 2560).

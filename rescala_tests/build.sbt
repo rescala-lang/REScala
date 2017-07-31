@@ -26,3 +26,6 @@ libraryDependencies ++= Seq(
 // logging:
 libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.3"
 libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.7.2"
+
+mappings in (Compile, packageBin) ~= { _.filter(!_._1.getName.endsWith(".conf")) }
+mappings in (Compile, packageBin) ~= { _.filter(!_._1.getName.endsWith(".xml")) }

@@ -36,10 +36,19 @@ object HelloStageDemo extends JFXApp {
 object ChatApp {
   val console = new jline.console.ConsoleReader()
 
-  def main(args: Array[String]): Unit = args(0) match {
-    case "Alice" => startup("Alice", "2551")
-    case "Bob" => startup("Bob", "2552")
-    case "Charlie" => startup("Charlie", "2553")
+  def main(args: Array[String]): Unit = if (args.length >= 1) args(0) match {
+    case "Alice" => startup("Alice", "2550")
+    case "Bob" => startup("Bob", "2551")
+    case "Charlie" => startup ("Charlie", "2552")
+  }
+  else {
+    val config = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + 2553).
+      withFallback(ConfigFactory.load())
+    val system = ActorSystem("ClusterSystem")
+    val joinAddress = Cluster(system).selfAddress
+    Cluster(system).join(joinAddress)
+
+    val logActor = system.actorOf(Props[MemberListener], "memberListener")
   }
 
   def startup(name: String, port: String): Unit = {
@@ -48,26 +57,30 @@ object ChatApp {
 
     // Create an Akka system
     val system = ActorSystem("ClusterSystem", config)
-    val host: ActorRef = system.actorOf(DistributionEngine.props(name), name)
+    val distribution: ActorRef = system.actorOf(DistributionEngine.props(name), name)
 
-    Thread sleep 2000
-    run(name)
+    run(name, distribution)
   }
 
-  def run(name: String): Unit = {
-    var history: List[String] = List()
-    history = history :+ s"System: Hello $name!"
+  def run(name: String, dist: ActorRef): Unit = {
+    val history: DistributedVertexList[String] = DistributedVertexList(dist, "ChatHistory", List())
+    history.publish()
+
+    // redraw interface every time the history changes:
+    history.changes += {_ => drawInterface(name, history.getValue.map(_.value))}
+
+    history.append(Vertex(s"System: Hello $name!"))
 
     while (true) {
-      drawInterface(name, history)
-
       // print input prompt
       val msg: String = console.readLine(s"[$name]: ")
-      history = history :+ s"[$name] $msg"
+
+      // add messages to the end of the history
+      history.append(Vertex(s"[$name] $msg"))
     }
 
     def drawInterface(name: String, log: List[String]): Unit = {
-      // clear screen twice to make some room between current interface and older interfaces
+      // clear screen and make some room between current interface and older interfaces
       (0 to 50).foreach(_ => println())
       console.clearScreen()
 

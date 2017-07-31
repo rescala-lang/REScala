@@ -11,7 +11,7 @@ package object distributionengine {
 
   final case class SyncVar(cVar: Publishable[_ <: StateCRDT])
 
-  final case class UpdateMessage(varName: String, value: StateCRDT, hostRef: ActorRef)
+  final case class UpdateMessage(varName: String, payload: Any, hostRef: ActorRef)
 
   final case class QueryMessage(varName: String, host: ActorRef)
 

@@ -6,6 +6,11 @@ scalaVersion := "2.12.1"
 
 val akkaVersion = "2.5.3"
 
+// rescala:
+resolvers += Resolver.bintrayRepo("rmgk", "maven")
+resolvers += Resolver.bintrayRepo("pweisenburger", "maven")
+libraryDependencies += "de.tuda.stg" %% "rescala" % "0.19.0"
+
 // akka:
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-slf4j" % "2.5.3",
