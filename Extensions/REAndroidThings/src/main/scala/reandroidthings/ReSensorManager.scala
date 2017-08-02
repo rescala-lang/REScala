@@ -1,81 +1,63 @@
 package reandroidthings
 
-import scala.language.implicitConversions
-import android.hardware.{Sensor, SensorEventListener, SensorManager}
-import android.os.Handler
-// needed for implicit conversation of Java->Scala List
-import scala.collection.JavaConverters._
-
+import android.hardware.{Sensor, SensorEvent, SensorEventListener, SensorManager}
+import android.content.Context
 
 trait ReSensorManager {
-  /**
-    * The underlying Android peer
-    */
   protected def peer: SensorManager
-
-  def sensorList(`type`: Int): List[ReSensor] = {
-    val l: List[Sensor] = peer.getSensorList(`type`).asScala.toList
-    l.map(new ReSensor(_))
-  }
-
-  def dynamicSensorList(`type`: Int): List[ReSensor] = {
-    val dynSensors: java.util.List[Sensor] = peer.getDynamicSensorList(`type`)
-    var l: scala.collection.immutable.List[ReSensor] = List()
-    for (i <- 0 to dynSensors.size()) {
-      l = l :+ new ReSensor(dynSensors.get(i))
-    }
-    // Remark: the following is shorter and looks nicer, but currently Android does not seem to know
-    // Scala's abstract function (Lscala/runtime/AbstractFunction1), which seems to be needed here
-    //    val l: List[Sensor] = peer.getDynamicSensorList(`type`).asScala.toList
-    //    l.map(new ReSensor(_))
-    l
-  }
-
-  def defaultSensor(`type`: Int): ReSensor = {
-    val sensor = peer.getDefaultSensor(`type`)
-    new ReSensor(sensor)
-  }
-
-  def defaultSensor(`type`: Int, wakeUp: Boolean): ReSensor = {
-    val sensor = peer.getDefaultSensor(`type`, wakeUp)
-    new ReSensor(sensor)
-  }
-
-
-  def registerDynamicSensorCallback(callback: ReSensorManager.DynamicSensorCallback): Unit = {
-    // cast to SensorManager.DynamicSensorCallback
-    val callbackSensorManager: SensorManager.DynamicSensorCallback =
-      callback.asInstanceOf[SensorManager.DynamicSensorCallback]
-
-    peer.registerDynamicSensorCallback(callbackSensorManager, null)
-  }
-
-  def registerDynamicSensorCallback(callback: ReSensorManager.DynamicSensorCallback, handler: Handler): Unit = {
-    peer.registerDynamicSensorCallback(callback, handler)
-  }
-
-  def registerListener(listener: ReSensorEventListener, sensor: ReSensor, samplingPeriodUs: Int): Unit = {
-    registerListener(listener, sensor, samplingPeriodUs, null)
-  }
-
-  def registerListener(listener: ReSensorEventListener, sensor: ReSensor, samplingPeriodUs: Int, maxReportLatencyUs: Int): Boolean = {
-    peer.registerListener(listener.peer, sensor.peer, samplingPeriodUs, maxReportLatencyUs)
-  }
-
-  // TODO: Wrapper für Handler?
-  def registerListener(listener: ReSensorEventListener, sensor: ReSensor, samplingPeriodUs: Int, handler: Handler): Unit = {
-    peer.registerListener(listener.peer, sensor.peer, samplingPeriodUs, handler)
-  }
-
-  def unregisterListener(listener: ReSensorEventListener): Unit = {
-    unregisterListener(listener, null)
-  }
-
-  def unregisterListener(listener: ReSensorEventListener, sensor: ReSensor): Unit = {
-    peer.unregisterListener(listener.asInstanceOf[SensorEventListener], sensor.peer)
-  }
 }
 
+object ReSensorManager {
+
+  private var context: Context = null
+
+  def init(contextGiven: Context): Unit = {
+    context = contextGiven
+  }
+
+  def getSensor(sensorType: Int): ReSensor = {
+    val reSensor: ReSensor = sensorType match {
+      case ReSensor.TypeDynamicSensorMetaPressure => new RePressureSensor()
+      case ReSensor.TypeDynamicSensorMetaTemperature => new ReTemperatureSensor()
+      case _ => throw new RuntimeException("not implemented")
+    }
+
+    reSensor.initialize()
+
+    return reSensor
+  }
+
+  def getSensorManager(): SensorManager = {
+    if (context == null) {
+      throw new IllegalStateException("ReSensorManager has not yet been initialized, call 'ReSensorManager.init' first.")
+    }
+
+    // get sensorManager, when needed
+    return context.getSystemService(Context.SENSOR_SERVICE).asInstanceOf[SensorManager]
+  }
+
+
+  // TODO: implement SensorManager-methods (sensorList, dynamicSensorList, ... ) - see beneath
+  def sensorList(`type`: Int): List[Int] = {
+    val list: java.util.List[Sensor] = getSensorManager.getSensorList(`type`)
+
+    convertToScala(list)
+  }
+
+  def dynamicSensorList(`type`: Int): List[Int] = {
+    val dynSensors: java.util.List[Sensor] = getSensorManager.getDynamicSensorList(`type`)
+
+    convertToScala(dynSensors)
+  }
+
+  private def convertToScala(javaList: java.util.List[Sensor]): scala.collection.immutable.List[Int] = {
+    var l: scala.collection.immutable.List[Int] = List()
+    for (i <- 0 to javaList.size()) {
+      l = l :+ javaList.get(i).getType
+    }
+    l
+  }
+}
 
 object ReSensorManager {
 
@@ -211,42 +193,4 @@ object ReSensorManager {
 
   /** see {@link #remapCoordinateSystem} */
   final val AxisMinusZ = SensorManager.AXIS_MINUS_Z
-
-  implicit def toSensorManager(reSensorManager: ReSensorManager): SensorManager = reSensorManager.peer
-
-  implicit def toSensorManagerCallback(callback: ReSensorManager.DynamicSensorCallback): SensorManager.DynamicSensorCallback = {
-    callback.asInstanceOf[SensorManager.DynamicSensorCallback]
-  }
-
-
-  def wrap(sensorManager: SensorManager): ReSensorManager = {
-    new ReSensorManager {
-      def peer = sensorManager
-    }
-  }
-
-  abstract class DynamicSensorCallback extends android.hardware.SensorManager.DynamicSensorCallback {
-
-    override def onDynamicSensorConnected(sensor: Sensor): Unit = {
-      onDynamicSensorConnected(if (sensor == null) null else ReSensor.wrap(sensor))
-    }
-
-    /**
-      * Called when there is a dynamic sensor being connected to the system.
-      *
-      * @param sensor the newly connected sensor. See { @link android.hardware.Sensor Sensor}.
-      */
-    def onDynamicSensorConnected(sensor: ReSensor): Unit = {}
-
-    override def onDynamicSensorDisconnected(sensor: Sensor): Unit = {
-      onDynamicSensorDisconnected(if (sensor == null) null else ReSensor.wrap(sensor))
-    }
-
-    /**
-      * Called when there is a dynamic sensor being disconnected from the system.
-      *
-      * @param sensor the disconnected sensor. See { @link android.hardware.Sensor Sensor}.
-      */
-    def onDynamicSensorDisconnected(sensor: ReSensor): Unit = {}
-  }
 }

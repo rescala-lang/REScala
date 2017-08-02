@@ -1,6 +1,7 @@
 package reandroidthings
 
 import java.io.IOException
+import java.util.concurrent.atomic.AtomicBoolean
 
 import android.hardware.{Sensor, SensorEvent, SensorEventListener, SensorManager}
 import android.util.Log
@@ -8,56 +9,56 @@ import driver.bmx280.Bmx280SensorDriver
 import iot_devices.BoardDefaults
 import rescala._
 
-//abstract class ReSensor {
-class ReSensor(sensor: Sensor) {
+/**
+  * The SensorManager associated with this Sensor
+  */
 
-  /**
-    * The SensorManager associated with this Sensor
-    */
-  var reSensorManager: ReSensorManager = null
-  // the buildModel, e.g. "iot_rpi3"
-  private var buildModel: String = android.os.Build.MODEL
-  private var mEnvironmentalSensorDriver: Bmx280SensorDriver = null
-
-  /**
-    * The current value and accuracy (as ReScala-Vars)
-    */
-  var value: Var[Float] = Var(Float.MinValue)
-  var accuracy: Var[Int] = Var(Int.MinValue)
-
+abstract class ReSensor() {
   /**
     * The underlying Android peer
     */
-  var peer: Sensor = sensor
+  protected var peer: Sensor = null
 
-  def self = peer
+  /**
+    * The current value and accuracy (as ReScala Vars, Signals and Events)
+    */
+  private val valueVar: Var[Float] = Var(Float.MinValue)
+  private val accuracyVar: Var[Int] = Var(Int.MinValue)
 
-  def this(sensorType: Int, sensorManager: SensorManager) {
-    this(null);
-
-    // init SensorManager and Sensor
-    reSensorManager = ReSensorManager.wrap(sensorManager)
-    peer = sensorManager.getDefaultSensor(sensorType)
-
-    // dynamic sensor stuff
-    val dynamicPressure: Int = ReSensor.TypeDynamicSensorMetaPressure
-    val dynamicTemperature: Int = ReSensor.TypeDynamicSensorMetaTemperature
-    if (sensorType == dynamicPressure || sensorType == dynamicTemperature) {
-      try {
-        mEnvironmentalSensorDriver = new Bmx280SensorDriver(BoardDefaults.getI2cBus)
-        //        mEnvironmentalSensorDriver = new Bmx280SensorDriver("I2C1")
-        reSensorManager.registerDynamicSensorCallback(mDynamicSensorCallback)
-        if (sensorType == dynamicTemperature) {
-          mEnvironmentalSensorDriver.registerTemperatureSensor
-        } else if (sensorType == dynamicPressure) {
-          mEnvironmentalSensorDriver.registerPressureSensor
-        }
-        Log.i("Barometer4Android", "Initialized I2C BMP280")
-      } catch {
-        case e: IOException => throw new RuntimeException("Error initializing I2C BMP280", e)
-      }
-    }
+  val value: Signal[Float] = Signal {
+    valueVar()
   }
+  val accuracy: Signal[Int] = Signal {
+    accuracyVar()
+  }
+
+  val valueChanged: Evt[Float] = Evt[Float]()
+  val accuracyChanged: Evt[Int] = Evt[Int]()
+
+  private var initialized: AtomicBoolean = new AtomicBoolean(false)
+
+
+  /**
+    * initializes the Sensor Manager, conducts the pre and post initialize routine and assigns
+    * the peer
+    */
+  def initialize(): Unit = {
+    if (initialized.getAndSet(true)) {
+      throw new RuntimeException("is already initialized!")
+    }
+
+    val sensorManager: SensorManager = ReSensorManager.getSensorManager()
+    preInitialize(sensorManager)
+    // TODO: just for the moment
+    peer = sensorManager.getDefaultSensor(ReSensor.TypeDynamicSensorMeta)
+    postInitialize(sensorManager)
+  }
+
+  protected def preInitialize(sensorManager: SensorManager): Unit = {}
+
+  protected def postInitialize(sensorManager: SensorManager): Unit = {}
+
+  def sensorType: Int
 
   /**
     * its methods
@@ -97,55 +98,66 @@ class ReSensor(sensor: Sensor) {
   def getReportingMode: Int = peer.getReportingMode
 
 
-  private val abstractSensorListener = ReSensorEventListener.wrap(new SensorEventListener {
-
+  /**
+    * the sensorListener simply assigns any new value given by the SensorEvent
+    * to the according rescala.Var
+    */
+  protected val sensorListener: SensorEventListener = new SensorEventListener {
     override def onSensorChanged(event: SensorEvent): Unit = {
-      //      try {
-      value() = event.values(0)
-      //      } catch {
-      //        case e: Exception => throw new RuntimeException("Error assigning Value Vars", e)
-      //      }
+      valueVar() = event.values(0)
+      valueChanged(event.values(0))
     }
 
-    override def onAccuracyChanged(sensor: Sensor, newAccuracy: Int): Unit =
-    //      try {
-      accuracy() = newAccuracy
-
-    //      } catch {
-    //        case e: Exception => throw new RuntimeException("Error assigning Accuracy Vars", e)
-    //      }
+    override def onAccuracyChanged(sensor: Sensor, newAccuracy: Int): Unit = {
+      accuracyVar() = newAccuracy
+      accuracyChanged(newAccuracy)
+    }
   }
+}
 
-
-  )
-
-  /*
-    special handling of IOT devices/ dynamic sensors
+/**
+  * Bmx280 sensor deals with the Bmx280 driver, that requires special treatment
+  * (dynamic sensor callback)
   */
-  private val mDynamicSensorCallback = new ReSensorManager.DynamicSensorCallback() {
-    override def onDynamicSensorConnected(sensor: ReSensor): Unit = {
-      if (sensor.`type` == ReSensor.TypeAmbientTemperature) {
-        reSensorManager.registerListener(abstractSensorListener, sensor, SensorManager.SENSOR_DELAY_NORMAL)
-      }
-      else if (sensor.`type` == ReSensor.TypePressure) {
-        reSensorManager.registerListener(abstractSensorListener, sensor, SensorManager.SENSOR_DELAY_NORMAL)
-      }
-    }
+abstract class ReBmx280Sensor extends ReSensor {
+  val bmx280Driver: Bmx280SensorDriver = new Bmx280SensorDriver(BoardDefaults.getI2cBus)
 
-    override def onDynamicSensorDisconnected(sensor: ReSensor): Unit = {
-      super.onDynamicSensorDisconnected(sensor)
-    }
+  override def postInitialize(sensorManager: SensorManager): Unit = {
+    sensorManager.registerDynamicSensorCallback(new SensorManager.DynamicSensorCallback() {
+
+      override def onDynamicSensorConnected(sensor: Sensor): Unit = {
+        if (sensor.getType == sensorType) {
+          sensorManager.registerListener(sensorListener, sensor, SensorManager.SENSOR_DELAY_NORMAL)
+        }
+      }
+
+      override def onDynamicSensorDisconnected(sensor: Sensor): Unit = {
+        if (sensor.getType == sensorType) {
+          sensorManager.unregisterListener(sensorListener)
+        }
+      }
+    })
+  }
+}
+
+class RePressureSensor extends ReBmx280Sensor {
+  override def preInitialize(sensorManager: SensorManager) = {
+    bmx280Driver.registerPressureSensor
   }
 
+  override def sensorType: Int = ReSensor.TypePressure
+}
+
+class ReTemperatureSensor extends ReBmx280Sensor {
+  override def preInitialize(sensorManager: SensorManager) = {
+    bmx280Driver.registerTemperatureSensor
+  }
+
+  override def sensorType: Int = ReSensor.TypeAmbientTemperature
 }
 
 
 object ReSensor {
-
-  def wrap(sensor: Sensor): ReSensor = {
-    new ReSensor(sensor)
-  }
-
   val TypeAccelerometer = Sensor.TYPE_ACCELEROMETER
   val StringTypeAccelerometer = Sensor.STRING_TYPE_ACCELEROMETER
 
@@ -189,7 +201,7 @@ object ReSensor {
   val StringTypeGyroscopeUncalibrated = Sensor.STRING_TYPE_GYROSCOPE_UNCALIBRATED
 
   val TypeSignificantMotion = Sensor.TYPE_SIGNIFICANT_MOTION
-  val StringTypeGyroscopeUncalibrated = Sensor.STRING_TYPE_SIGNIFICANT_MOTION
+  val StringTypeSignificantMotion = Sensor.STRING_TYPE_SIGNIFICANT_MOTION
 
   val TypeStepDetector = Sensor.TYPE_STEP_DETECTOR
   val StringTypeStepDetector = Sensor.STRING_TYPE_STEP_DETECTOR
@@ -217,8 +229,9 @@ object ReSensor {
 
   // need to be accessed via reflection, because they are usually hidden
   val TypeDynamicSensorMeta = classOf[Sensor].getDeclaredField("TYPE_DYNAMIC_SENSOR_META").getInt(null)
-  val StringTypeHeartBeat = classOf[Sensor].getDeclaredField("STRING_TYPE_DYNAMIC_SENSOR_META").get(null).toString
+  val StringTypeDynamicSensorMeta = classOf[Sensor].getDeclaredField("STRING_TYPE_DYNAMIC_SENSOR_META").get(null).toString
 
+  // special Sensor-types present in the RPi3 Rainbow-Head (a dynamic temperature and pressure sensor)
   val TypeDynamicSensorMetaPressure = 40
   val TypeDynamicSensorMetaTemperature = 41
 
