@@ -30,6 +30,7 @@ object Main1 extends App {
     variable transform { _ + 1 }
     Thread.sleep(1000)
   }
+  registry.terminate()
 }
 
 object Main2 extends App {
@@ -43,4 +44,9 @@ object Main2 extends App {
 //  val signal: Signal[Int] = Await result (registry.lookup[Signal[Int]]("variable", remote), Duration.Inf)
   val signal: Signal[Int] = Await result (registry.lookup(Bindings.variableBinding, remote), Duration.Inf)
   signal observe println
+
+  while (System.in.available() == 0) {
+    Thread.sleep(10)
+  }
+  registry.terminate()
 }
