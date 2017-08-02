@@ -15,28 +15,30 @@ trait ReSensorManager {
 
   def sensorList(`type`: Int): List[ReSensor] = {
     val l: List[Sensor] = peer.getSensorList(`type`).asScala.toList
-    l.map(ReSensor.wrap(_))
+    l.map(new ReSensor(_))
   }
 
   def dynamicSensorList(`type`: Int): List[ReSensor] = {
-    val l: List[Sensor] = peer.getDynamicSensorList(`type`).asScala.toList
-    l.map(ReSensor.wrap(_))
+    val dynSensors: java.util.List[Sensor] = peer.getDynamicSensorList(`type`)
+    var l: scala.collection.immutable.List[ReSensor] = List()
+    for (i <- 0 to dynSensors.size()) {
+      l = l :+ new ReSensor(dynSensors.get(i))
+    }
+    // Remark: the following is shorter and looks nicer, but currently Android does not seem to know
+    // Scala's abstract function (Lscala/runtime/AbstractFunction1), which seems to be needed here
+    //    val l: List[Sensor] = peer.getDynamicSensorList(`type`).asScala.toList
+    //    l.map(new ReSensor(_))
+    l
   }
 
   def defaultSensor(`type`: Int): ReSensor = {
     val sensor = peer.getDefaultSensor(`type`)
-
-    new ReSensor {
-      def peer = sensor
-    }
+    new ReSensor(sensor)
   }
 
   def defaultSensor(`type`: Int, wakeUp: Boolean): ReSensor = {
     val sensor = peer.getDefaultSensor(`type`, wakeUp)
-
-    new ReSensor {
-      def peer = sensor
-    }
+    new ReSensor(sensor)
   }
 
 
@@ -57,12 +59,12 @@ trait ReSensorManager {
   }
 
   def registerListener(listener: ReSensorEventListener, sensor: ReSensor, samplingPeriodUs: Int, maxReportLatencyUs: Int): Boolean = {
-    peer.registerListener(listener.asInstanceOf[SensorEventListener], sensor.peer, samplingPeriodUs, maxReportLatencyUs)
+    peer.registerListener(listener.peer, sensor.peer, samplingPeriodUs, maxReportLatencyUs)
   }
 
   // TODO: Wrapper für Handler?
   def registerListener(listener: ReSensorEventListener, sensor: ReSensor, samplingPeriodUs: Int, handler: Handler): Unit = {
-    peer.registerListener(listener.asInstanceOf[SensorEventListener], sensor.peer, samplingPeriodUs, handler)
+    peer.registerListener(listener.peer, sensor.peer, samplingPeriodUs, handler)
   }
 
   def unregisterListener(listener: ReSensorEventListener): Unit = {
@@ -226,7 +228,7 @@ object ReSensorManager {
   abstract class DynamicSensorCallback extends android.hardware.SensorManager.DynamicSensorCallback {
 
     override def onDynamicSensorConnected(sensor: Sensor): Unit = {
-      onDynamicSensorConnected(sensor == null ? null : ReSensor.wrap(sensor))
+      onDynamicSensorConnected(if (sensor == null) null else ReSensor.wrap(sensor))
     }
 
     /**
@@ -236,8 +238,8 @@ object ReSensorManager {
       */
     def onDynamicSensorConnected(sensor: ReSensor): Unit = {}
 
-    override def onDynamicSensorDisconnected(sensor: Sensor) : Unit = {
-      onDynamicSensorDisconnected(sensor == null ? null : ReSensor.wrap(sensor))
+    override def onDynamicSensorDisconnected(sensor: Sensor): Unit = {
+      onDynamicSensorDisconnected(if (sensor == null) null else ReSensor.wrap(sensor))
     }
 
     /**

@@ -1,14 +1,13 @@
 package reandroidthings
 
-import android.hardware.SensorEventListener
+import android.hardware.{Sensor, SensorEvent, SensorEventListener}
 
-// the pure interface does not require an Android peer
+
 trait ReSensorEventListener {
 
-  //  def this(sensorEventListener: SensorEventListener) {
-  //    onSensorChanged = sensorEventListener.onSensorChanged
-  //    onAccuracyChanged = sensorEventListener.onAccuracyChanged
-  //  }
+  def peer: android.hardware.SensorEventListener
+
+  def self = peer
 
   def onSensorChanged(event: ReSensorEvent): Unit
 
@@ -18,9 +17,10 @@ trait ReSensorEventListener {
 
 object ReSensorEventListener {
   def wrap(sensorEventListener: SensorEventListener): ReSensorEventListener = {
-    new ReSensorEventListener {
-      override def onSensorChanged(event: ReSensorEvent): Unit = sensorEventListener.onSensorChanged(event.peer)
 
+    new ReSensorEventListener {
+      def peer = sensorEventListener
+      override def onSensorChanged(event: ReSensorEvent): Unit = sensorEventListener.onSensorChanged(event.peer)
       override def onAccuracyChanged(sensor: ReSensor, accuracy: Int): Unit =
         sensorEventListener.onAccuracyChanged(sensor.peer, accuracy)
     }
