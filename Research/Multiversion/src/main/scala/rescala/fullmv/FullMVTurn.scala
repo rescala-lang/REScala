@@ -4,20 +4,25 @@ import java.util.concurrent.ForkJoinTask
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.LockSupport
 
-import rescala.core.{ReadableReactive, Reactive, TurnImpl, ValuePersistency}
+import rescala.core.{Reactive, ReadableReactive, TurnImpl, ValuePersistency}
 import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation.{NextReevaluation, NoSuccessor}
 import rescala.fullmv.NotificationResultAction.{GlitchFreeReady, NotificationOutAndSuccessorOperation}
 import rescala.fullmv.TurnPhase.Type
-import rescala.fullmv.sgt.reachability.DigraphNodeWithReachability
 import rescala.fullmv.tasks.{Notification, Reevaluation}
 import rescala.fullmv.sgt.synchronization.{SubsumableLock, SubsumableLockImpl}
+
+import scala.collection.mutable.ArrayBuffer
 
 class FullMVTurn(val userlandThread: Thread) extends TurnImpl[FullMVStruct] {
   object phaseLock
   @volatile var phase: TurnPhase.Type = TurnPhase.Initialized
-
+  val lock: SubsumableLock = new SubsumableLockImpl()
+  val successorsIncludingSelf = ArrayBuffer[FullMVTurn](this)
+  val selfNode = new TransactionSpanningTreeNode(this)
+  @volatile var predecessorSpanningTreeNodes = Map(this -> selfNode)
   // counts the sum of in-flight notifications, in-progress reevaluations.
   var activeBranches = new AtomicInteger(0)
+
   // TODO must be remote callable
   // TODO should use local buffering?
   def activeBranchDifferential(forState: TurnPhase.Type, differential: Int): Unit = {
@@ -34,17 +39,20 @@ class FullMVTurn(val userlandThread: Thread) extends TurnImpl[FullMVStruct] {
     assert(newPhase > this.phase, s"$this cannot progress backwards to phase $phase.")
     while(this.phase != newPhase) {
       awaitBranchCountZero()
-      val preds: Set[FullMVTurn] = awaitAllPredecessorsPhase(newPhase)
-      tryAtomicCompareBranchesPlusPredsAndSwitchPhase(preds, newPhase)
+      val compare = awaitAllPredecessorsPhase(newPhase)
+      tryAtomicCompareBranchesPlusPredsAndSwitchPhase(compare, newPhase)
     }
     if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this switched phase.")
   }
 
-  private def tryAtomicCompareBranchesPlusPredsAndSwitchPhase(preds: Set[FullMVTurn], newPhase: Type): Unit = {
+  private def tryAtomicCompareBranchesPlusPredsAndSwitchPhase(compare: Map[FullMVTurn, TransactionSpanningTreeNode[FullMVTurn]], newPhase: Type): Unit = {
     phaseLock.synchronized {
-      if (activeBranches.get == 0 && nonTransitivePredecessors == preds) {
+      if (activeBranches.get == 0 && (predecessorSpanningTreeNodes eq compare)) {
         this.phase = newPhase
-        if(newPhase == TurnPhase.Completed) sgtNode.discard()
+        if(newPhase == TurnPhase.Completed) {
+          predecessorSpanningTreeNodes = Map.empty
+          selfNode.children.clear()
+        }
         if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this switched phase.")
         phaseLock.notifyAll()
       }
@@ -64,32 +72,45 @@ class FullMVTurn(val userlandThread: Thread) extends TurnImpl[FullMVStruct] {
     }
   }
 
-  val lock: SubsumableLock = new SubsumableLockImpl()
-  // TODO probably needs to be integrated into this class, either merge or F-Bound polymorphism?
-  val sgtNode: DigraphNodeWithReachability = new DigraphNodeWithReachability()
-  var nonTransitivePredecessors: Set[FullMVTurn] = Set.empty
-
-  // TODO should be resolved by local mirroring
-  def isTransitivePredecessor(candidate: FullMVTurn): Boolean = {
-    sgtNode.isReachable(candidate.sgtNode)
+  def isTransitivePredecessor(txn: FullMVTurn): Boolean = {
+    predecessorSpanningTreeNodes.contains(txn)
   }
 
   // TODO must be remote callable
   def addPredecessor(predecessor: FullMVTurn): Unit = {
     assert(predecessor.lock.getLockedRoot.isDefined, s"establishing order $predecessor -> $this: predecessor not locked")
     assert(lock.getLockedRoot.isDefined, s"establishing order $predecessor -> $this: successor not locked")
+    assert(!isTransitivePredecessor(predecessor), s"attempted to establish already existing predecessor relation $predecessor -> $this")
     if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this new predecessor $predecessor.")
-    // since we keep track of the past, predecessors in time are successors in the SSG.
-    if(sgtNode.addSuccessor(predecessor.sgtNode)) {
-      nonTransitivePredecessors += predecessor
+    for (successorOrSelf <- successorsIncludingSelf) {
+      // TODO possible remote call
+      successorOrSelf.maybeNewReachableSubtree(this, predecessor.selfNode)
     }
   }
 
-  private def awaitAllPredecessorsPhase(atLeast: TurnPhase.Type): Set[FullMVTurn] = {
-    val preds = nonTransitivePredecessors
+  private def copySubTreeRootAndAssessChildren(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]) = {
+    val newTransitivePredecessor = spanningSubTreeRoot.txn
+    newTransitivePredecessor.successorsIncludingSelf += this
+    val copiedSpanningTreeNode = new TransactionSpanningTreeNode(newTransitivePredecessor)
+    predecessorSpanningTreeNodes += newTransitivePredecessor -> copiedSpanningTreeNode
+    predecessorSpanningTreeNodes(attachBelow).children.add(copiedSpanningTreeNode)
+
+    for (child <- scala.collection.JavaConverters.collectionAsScalaIterable(spanningSubTreeRoot.children)) {
+      maybeNewReachableSubtree(newTransitivePredecessor, child)
+    }
+  }
+
+  // TODO remote callable
+  // TODO should collect newly reachable nodes, and top level call should broadcast them to enable local mirroring; requires pointer to FullMVTurn or class merge
+  private def maybeNewReachableSubtree(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]): Unit = {
+    if (!isTransitivePredecessor(spanningSubTreeRoot.txn)) copySubTreeRootAndAssessChildren(attachBelow, spanningSubTreeRoot)
+  }
+
+  private def awaitAllPredecessorsPhase(atLeast: TurnPhase.Type) = {
+    val preds = predecessorSpanningTreeNodes
     if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this awaiting phase $atLeast+ on predecessors $preds")
-    preds.foreach { waitFor =>
-      waitFor.awaitPhase(atLeast)
+    preds.keySet.foreach { waitFor =>
+      if(waitFor != this) waitFor.awaitPhase(atLeast)
     }
     preds
   }
