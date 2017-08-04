@@ -17,7 +17,7 @@ class FullMVTurn(val userlandThread: Thread) extends TurnImpl[FullMVStruct] {
   object phaseLock
   @volatile var phase: TurnPhase.Type = TurnPhase.Initialized
   val lock: SubsumableLock = new SubsumableLockImpl()
-  val successorsIncludingSelf = ArrayBuffer[FullMVTurn](this)
+  val successorsIncludingSelf = ArrayBuffer[FullMVTurn](this) // this is implicitly a set
   val selfNode = new TransactionSpanningTreeNode(this)
   @volatile var predecessorSpanningTreeNodes = Map(this -> selfNode)
   // counts the sum of in-flight notifications, in-progress reevaluations.

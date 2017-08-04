@@ -16,7 +16,7 @@ object Bindings {
 }
 
 object Main1 extends App {
-  def test(x: Int) = { Thread.sleep(10) ; 2 * x }
+  def test(x: Int) = { Thread.sleep(x) ; 2 * x }
   val variable = Var(0)
 
   val registry = new Registry
@@ -40,9 +40,8 @@ object Main2 extends App {
   import scala.concurrent.ExecutionContext.Implicits._
 //  val test: Int => Future[Int] = registry.lookup[Int => Int]("test", remote)
   val test: Int => Future[Int] = registry.lookup(Bindings.testBinding, remote)
-  test(21).onComplete( x => println("test(21)"+ x))
-  test(22).onComplete( x => println("test(22)"+ x))
-  test(23).onComplete( x => println("test(23)"+ x))
+  test(1000).onComplete( x => println("test(1000)" + x))
+  test(50).onComplete( x => println("test(50)"+ x))
 
 //  val signal: Signal[Int] = Await result (registry.lookup[Signal[Int]]("variable", remote), Duration.Inf)
   val signal: Signal[Int] = Await result (registry.lookup(Bindings.variableBinding, remote), Duration.Inf)
