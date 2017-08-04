@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 import android.hardware.{Sensor, SensorEvent, SensorEventListener, SensorManager}
 import android.util.Log
-import driver.bmx280.Bmx280SensorDriver
+import com.google.android.things.contrib.driver.bmx280.Bmx280SensorDriver
 import iot_devices.BoardDefaults
 import rescala._
 

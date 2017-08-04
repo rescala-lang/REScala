@@ -132,14 +132,15 @@ import java.util
     sBoardVariant = Build.DEVICE
     // For the edison check the pin prefix
     // to always return Edison Breakout pin name when applicable.
-    if (sBoardVariant == DEVICE_EDISON) {
-      val pioService: PeripheralManagerService = new PeripheralManagerService
-      val gpioList = pioService.getGpioList
-      if (gpioList.size != 0) {
-        val pin = gpioList.get(0)
-        if (pin.startsWith("IO")) sBoardVariant = DEVICE_EDISON_ARDUINO
-      }
-    }
+    // TODO: sometimes breaks unpreparedly, have a look at why
+//    if (sBoardVariant == DEVICE_EDISON) {
+//      val pioService: PeripheralManagerService = new PeripheralManagerService
+//      val gpioList = pioService.getGpioList
+//      if (gpioList.size != 0) {
+//        val pin = gpioList.get(0)
+//        if (pin.startsWith("IO")) sBoardVariant = DEVICE_EDISON_ARDUINO
+//      }
+//    }
     sBoardVariant
   }
 }

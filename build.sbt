@@ -44,11 +44,13 @@ lazy val rescala = crossProject.in(file("Main"))
 
     sourceGenerators in Compile += Def.task {
       val file = (sourceManaged in Compile).value / "rescala" / "reactives" / "GeneratedSignalLift.scala"
-      val definitions = (1 to 22).map{ i =>
+      val definitions = (1 to 22).map { i =>
         val params = 1 to i map ("n" + _)
         val types = 1 to i map ("A" + _)
-        val signals = params zip types map {case (p, t) => s"$p: Signal[$t, S]"}
+        val signals = params zip types map { case (p, t) => s"$p: Signal[$t, S]" }
+
         def sep(l: Seq[String]) = l.mkString(", ")
+
         val getValues = params map (v => s"t.staticDepend($v).get")
         s"""  def lift[${sep(types)}, B, S <: Struct](${sep(signals)})(fun: (${sep(types)}) => B)(implicit maybe: CreationTicket[S]): Signal[B, S] = {
            |    static(${sep(params)})(t => fun(${sep(getValues)}))
@@ -56,15 +58,15 @@ lazy val rescala = crossProject.in(file("Main"))
            |""".stripMargin
       }
       IO.write(file,
-      s"""package rescala.reactives
-         |
+        s"""package rescala.reactives
+           |
          |import rescala.core._
-         |
+           |
          |trait GeneratedSignalLift {
-         |self: Signals.type =>
-         |${definitions.mkString("\n")}
-         |}
-         |""".stripMargin)
+           |self: Signals.type =>
+           |${definitions.mkString("\n")}
+           |}
+           |""".stripMargin)
       Seq(file)
     }.taskValue,
     initialCommands in console :=
@@ -140,10 +142,11 @@ lazy val reandroidthings = project.in(file("Extensions/REAndroidThings"))
   .dependsOn(rescalaJVM)
   .settings(
     commonAndroidSettings,
-    resolvers+=Resolver.bintrayRepo("google", "androidthings"),
+    resolvers += Resolver.bintrayRepo("google", "androidthings"),
     name := "reandroidthings",
-    libraryDependencies+= "com.google.android.things" % "androidthings" % "0.4.1-devpreview" % "provided",
-    libraryDependencies+= "com.google.android.things.contrib" % "driver-bmx280" % "0.3"
+    libraryDependencies += "com.google.android.things" % "androidthings" % "0.4.1-devpreview" % "provided",
+    libraryDependencies += "com.google.android.things.contrib" % "driver-bmx280" % "0.3" % "compile",
+    libraryDependencies += "com.google.android.things.contrib" % "driver-ht16k33" % "0.3" % "compile"
   )
 
 lazy val reswing = project.in(file("Extensions/RESwing"))
@@ -181,7 +184,7 @@ lazy val stm = project.in(file("Extensions/STM"))
     publishLocal := {},
     libraryDependencies += "org.scala-stm" %% "scala-stm" % "0.8"
   )
-  //.dependsOn(RootProject(uri("git://github.com/stg-tud/scala-stm.git#4c2f2c5f5e4489d3ff74fcc3532b4a32acf5d68c")))
+//.dependsOn(RootProject(uri("git://github.com/stg-tud/scala-stm.git#4c2f2c5f5e4489d3ff74fcc3532b4a32acf5d68c")))
 
 // Examples
 
@@ -338,21 +341,21 @@ lazy val commonAndroidSettings = androidAware ++ Seq(
 
 scalacOptions in ThisBuild ++= (
   "-deprecation" ::
-  "-encoding" :: "UTF-8" ::
-  "-unchecked" ::
-  "-feature" ::
-  "-Xlint" ::
-  "-Xfuture" ::
-  //"-Xlog-implicits" ::
-  //"-Yno-predef" ::
-  //"-Yno-imports" ::
-  "-Xfatal-warnings" ::
-  //"-Yinline-warnings" ::
-  "-Yno-adapted-args" ::
-//  "-Ywarn-dead-code" ::
-  "-Ywarn-nullary-override" ::
-  "-Ywarn-nullary-unit" ::
-  "-Ywarn-numeric-widen" ::
-  //"-Ywarn-value-discard" ::
-  //"-Ymacro-debug-lite" ::
-  Nil) ++ (if (!version.value.endsWith("-SNAPSHOT")) List( "-Xdisable-assertions", "-Xelide-below", "9999999") else Nil)
+    "-encoding" :: "UTF-8" ::
+    "-unchecked" ::
+    "-feature" ::
+    "-Xlint" ::
+    "-Xfuture" ::
+    //"-Xlog-implicits" ::
+    //"-Yno-predef" ::
+    //"-Yno-imports" ::
+    "-Xfatal-warnings" ::
+    //"-Yinline-warnings" ::
+    "-Yno-adapted-args" ::
+    //  "-Ywarn-dead-code" ::
+    "-Ywarn-nullary-override" ::
+    "-Ywarn-nullary-unit" ::
+    "-Ywarn-numeric-widen" ::
+    //"-Ywarn-value-discard" ::
+    //"-Ymacro-debug-lite" ::
+    Nil) ++ (if (!version.value.endsWith("-SNAPSHOT")) List("-Xdisable-assertions", "-Xelide-below", "9999999") else Nil)

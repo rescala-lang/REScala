@@ -57,9 +57,11 @@ object ReSensorManager {
     }
     l
   }
-}
 
-object ReSensorManager {
+  def removeSensors(): Unit = {
+    // TODO: remove all SensorListeners
+  }
+
 
   /** Standard gravity (g) on Earth. This value is equivalent to 1G */
   final val StandardGravity = SensorManager.STANDARD_GRAVITY
