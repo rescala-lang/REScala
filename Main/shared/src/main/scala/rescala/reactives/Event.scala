@@ -18,8 +18,13 @@ import scala.collection.immutable.{LinearSeq, Queue}
   */
 trait Event[+T, S <: Struct] extends ReadableReactive[Pulse[T], S] with Observable[T, S] {
 
+  // only used inside macro and will be replaced there
   @compileTimeOnly("Event.apply can only be used inside of Signal expressions")
   def apply(): Option[T] = throw new IllegalAccessException(s"$this.apply called outside of macro")
+  @compileTimeOnly("Event.! can only be used inside of Signal expressions")
+  def ! : Option[T] = throw new IllegalAccessException(s"$this.! called outside of macro")
+  @compileTimeOnly("Event.unary_! can only be used inside of Signal expressions")
+  def unary_! : Option[T] = throw new IllegalAccessException(s"$this.unary_! called outside of macro")
 
   def disconnect()(implicit engine: Engine[S]): Unit
 
