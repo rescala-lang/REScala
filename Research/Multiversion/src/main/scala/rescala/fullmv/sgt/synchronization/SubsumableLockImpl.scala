@@ -1,6 +1,6 @@
 package rescala.fullmv.sgt.synchronization
 
-import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.{ConcurrentLinkedQueue, ThreadLocalRandom}
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.LockSupport
 
@@ -14,10 +14,12 @@ class SubsumableLockImpl extends SubsumableLock {
 
   val state = new AtomicReference[SubsumableLock](null)
 
-  override def getLockedRoot: Option[SubsumableLock] = {
+  val gUID: GUID = ThreadLocalRandom.current().nextLong()
+
+  override def getLockedRoot: Option[GUID] = {
     state.get match {
       case null => None
-      case Self => Some(this)
+      case Self => Some(gUID)
       case parent => parent.getLockedRoot
     }
   }
@@ -27,24 +29,24 @@ class SubsumableLockImpl extends SubsumableLock {
       case null =>
         val success = state.compareAndSet(null, Self)
         if(DEBUG) println(s"[${Thread.currentThread().getName}]: ${if(success) "trylocked" else "failed trylock to contention"} $this")
-        TryLockResult(success, this)
+        TryLockResult(success, this, gUID)
       case Self =>
         if(DEBUG) println(s"[${Thread.currentThread().getName}]: trylock $this blocked")
-        TryLockResult(success = false, this)
+        TryLockResult(success = false, this, gUID)
       case parent =>
         val res = parent.tryLock()
-        state.set(res.newRoot)
+        state.set(res.newParent)
         res
     }
   }
 
   val waiters = new ConcurrentLinkedQueue[Thread]()
-  @tailrec final override def lock(): SubsumableLock = {
+  @tailrec final override def lock(): TryLockResult = {
     state.get match {
       case null =>
         if(state.compareAndSet(null, Self)) {
           if(DEBUG) println(s"[${Thread.currentThread().getName}]: locked $this")
-          this
+          TryLockResult(success = true, this, gUID)
         } else {
           if(DEBUG) println(s"[${Thread.currentThread().getName}]: retrying contended lock attempt of $this")
           lock()
@@ -70,7 +72,7 @@ class SubsumableLockImpl extends SubsumableLock {
         lock()
       case parent =>
         val res = parent.lock()
-        state.set(res)
+        state.set(res.newParent)
         res
     }
   }
@@ -84,16 +86,16 @@ class SubsumableLockImpl extends SubsumableLock {
     LockSupport.unpark(peeked)
   }
 
-  override def subsume(subsumableLock: SubsumableLock): SubsumableLock = synchronized {
-    assert(subsumableLock != this, s"trying to create endless loops, are you?")
-    assert(subsumableLock.getLockedRoot.isDefined, s"subsume partner $subsumableLock is unlocked.")
-    assert(subsumableLock.getLockedRoot.get == subsumableLock, s"subsume partner $subsumableLock is subsumed.")
+  override def subsume(opponentLock: TryLockResult): TryLockResult = synchronized {
+    assert(opponentLock.success, s"trying to subsume on failed lock")
+    assert(opponentLock.globalRoot != gUID, s"trying to create endless loops, are you?")
+    assert(opponentLock.newParent.getLockedRoot.isDefined, s"subsume partner $opponentLock is unlocked.")
     assert(state.get != null, s"subsume attempt on unlocked $this")
     assert(state.get == Self, s"subsume attempt on subsumed $this")
-    if(!state.compareAndSet(Self, subsumableLock)) throw new AssertionError(s"$this subsume failed due to contention!?")
+    if(!state.compareAndSet(Self, opponentLock.newParent)) throw new AssertionError(s"$this subsume failed due to contention!?")
     val peeked = waiters.peek()
-    if(DEBUG) println(s"[${Thread.currentThread().getName}]: subsume $this to $subsumableLock, unparking " + (if(peeked == null) "none" else peeked.getName))
+    if(DEBUG) println(s"[${Thread.currentThread().getName}]: subsume $this to $opponentLock, unparking " + (if(peeked == null) "none" else peeked.getName))
     LockSupport.unpark(peeked)
-    subsumableLock
+    opponentLock
   }
 }

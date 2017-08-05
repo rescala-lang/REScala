@@ -11,10 +11,15 @@ class FullMVTurnTransitiveReachabilityTest extends FunSuite {
     // put all transactions under a common locked lock, so that all locking assertions hold
     trees.values.foreach(_.awaitAndSwitchPhase(TurnPhase.Executing))
     trees.values.map(_.lock).reduce{ (lockA, lockB) =>
-      val lockedA = lockA.tryLock().newRoot
-      val lockedB = lockB.tryLock().newRoot
-      lockedA.subsume(lockedB)
+      val resA = lockA.tryLock()
+      assert(resA.success)
+      val resB = lockB.tryLock()
+      assert(resB.success)
+      val res = resA.newParent.subsume(resB)
+      res.newParent.unlock()
+      res.newParent
     }
+    assert(trees.head._2.lock.tryLock().success)
 
     for((from, tos) <- edges; to <- tos) {
       val fromTree = trees(from)
