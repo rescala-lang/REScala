@@ -13,11 +13,10 @@ class FullMVTurnTransitiveReachabilityTest extends FunSuite {
     trees.values.map(_.lock).reduce{ (lockA, lockB) =>
       val resA = lockA.tryLock()
       assert(resA.success)
-      val resB = lockB.tryLock()
-      assert(resB.success)
-      val res = resA.newParent.subsume(resB)
-      res.newParent.unlock()
-      res.newParent
+      val resB = lockB.trySubsume(resA)
+      assert(resB.isEmpty)
+      resA.newParent.unlock()
+      resA.newParent
     }
     assert(trees.head._2.lock.tryLock().success)
 

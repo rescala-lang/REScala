@@ -22,24 +22,28 @@ object DecentralizedSGT extends SerializationGraphTracking[FullMVTurn] {
     assert(defender.phase > TurnPhase.Initialized, s"$defender is not started and should thus not be involved in any operations")
     assert(contender.phase > TurnPhase.Initialized, s"$contender is not started and should thus not be involved in any operations")
     assert(contender.phase < TurnPhase.Completed, s"$contender cannot be a contender (already completed).")
-    if(defender.phase == TurnPhase.Completed || contender.isTransitivePredecessor(defender)) {
+    assert(contender.lock.getLockedRoot.isDefined, s"$contender is not locked (${contender.lock})")
+    if(defender.phase == TurnPhase.Completed) {
       FirstFirst
-    } else if (defender.isTransitivePredecessor(contender)) {
-      SecondFirst
-    } else {
-      // unordered nested acquisition of two monitors here is safe against deadlocks because the turns' locks
-      // (see assertions) ensure that only a single thread at a time will ever attempt to do so.
-      assert(defender.lock.getLockedRoot.isDefined, s"$defender is not locked")
-      assert(contender.lock.getLockedRoot.isDefined, s"$contender is not locked")
-      assert(defender.lock.getLockedRoot.get == contender.lock.getLockedRoot.get, s"$defender is not locked")
-      contender.phaseLock.synchronized {
-        defender.phaseLock.synchronized {
-          if (defender.phase < contender.phase) {
-            defender.addPredecessor(contender)
-            SecondFirst
-          } else {
-            contender.addPredecessor(defender)
-            FirstFirst
+    } else{
+      assert(defender.lock.getLockedRoot.isDefined, s"$defender is not locked (${defender.lock})")
+      assert(defender.lock.getLockedRoot.get == contender.lock.getLockedRoot.get, s"$defender and $contender not merged (roots ${defender.lock.getLockedRoot.get} and ${contender.lock.getLockedRoot.get})")
+      if(contender.isTransitivePredecessor(defender)) {
+        FirstFirst
+      } else if (defender.isTransitivePredecessor(contender)) {
+        SecondFirst
+      } else {
+        // unordered nested acquisition of two monitors here is safe against deadlocks because the turns' locks
+        // (see assertions) ensure that only a single thread at a time will ever attempt to do so.
+        contender.phaseLock.synchronized {
+          defender.phaseLock.synchronized {
+            if (defender.phase < contender.phase) {
+              defender.addPredecessor(contender)
+              SecondFirst
+            } else {
+              contender.addPredecessor(defender)
+              FirstFirst
+            }
           }
         }
       }

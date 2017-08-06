@@ -5,13 +5,12 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.LockSupport
 
 import rescala.fullmv.sgt.synchronization.SubsumableLock._
+import rescala.parrp.Backoff
 
 import scala.annotation.tailrec
 
 class SubsumableLockImpl extends SubsumableLock {
   Self =>
-  val DEBUG = false
-
   val state = new AtomicReference[SubsumableLock](null)
 
   val gUID: GUID = ThreadLocalRandom.current().nextLong()
@@ -37,6 +36,33 @@ class SubsumableLockImpl extends SubsumableLock {
         val res = parent.tryLock()
         state.set(res.newParent)
         res
+    }
+  }
+
+  override def trySubsume(lockedNewParent: TryLockResult): Option[SubsumableLock] = {
+    if(lockedNewParent.globalRoot == this.gUID) {
+      assert(state.get == Self, s"passed in a TryLockResult indicates that $this was successfully locked, but it currently isn't!")
+      if (DEBUG) println(s"[${Thread.currentThread().getName}]: trySubsume $this to itself reentrant success")
+      None
+    } else {
+      state.get match {
+        case null =>
+          val success = state.compareAndSet(null, lockedNewParent.newParent)
+          if(success) {
+            if (DEBUG) println(s"[${Thread.currentThread().getName}]: trySubsume $this succeeded")
+            None
+          } else {
+            if (DEBUG) println(s"[${Thread.currentThread().getName}]: trySubsume $this to ${lockedNewParent.newParent} failed to contention")
+            Some(this)
+          }
+        case Self =>
+          if (DEBUG) println(s"[${Thread.currentThread().getName}]: trySubsume $this to ${lockedNewParent.newParent} blocked")
+          Some(this)
+        case parent =>
+          val res = parent.trySubsume(lockedNewParent)
+          state.set(res.getOrElse(lockedNewParent.newParent))
+          res
+      }
     }
   }
 
@@ -86,16 +112,38 @@ class SubsumableLockImpl extends SubsumableLock {
     LockSupport.unpark(peeked)
   }
 
-  override def subsume(opponentLock: TryLockResult): TryLockResult = synchronized {
-    assert(opponentLock.success, s"trying to subsume on failed lock")
-    assert(opponentLock.globalRoot != gUID, s"trying to create endless loops, are you?")
-    assert(opponentLock.newParent.getLockedRoot.isDefined, s"subsume partner $opponentLock is unlocked.")
+
+  override def spinOnce(backoff: Long): TryLockResult = {
+    // this method may seem silly, but serves as an local redirect for preventing back-and-forth remote messages.
+    state.get match {
+      case null =>
+        throw new IllegalStateException(s"spinOnce on unlocked $this")
+      case Self =>
+        unlock()
+        Backoff.backoff(backoff)
+        lock()
+      case parent =>
+        val res = parent.spinOnce(backoff)
+        state.set(res.newParent)
+        res
+    }
+  }
+
+  override def subsume(lockedNewParent: TryLockResult): Unit = synchronized {
+    assert(lockedNewParent.success, s"trying to subsume on failed lock")
+    assert(lockedNewParent.globalRoot != gUID, s"trying to create endless loops, are you?")
+    assert(lockedNewParent.newParent.getLockedRoot.isDefined, s"subsume partner $lockedNewParent is unlocked.")
     assert(state.get != null, s"subsume attempt on unlocked $this")
     assert(state.get == Self, s"subsume attempt on subsumed $this")
-    if(!state.compareAndSet(Self, opponentLock.newParent)) throw new AssertionError(s"$this subsume failed due to contention!?")
+    if(!state.compareAndSet(Self, lockedNewParent.newParent)) throw new AssertionError(s"$this subsume failed due to contention!?")
     val peeked = waiters.peek()
-    if(DEBUG) println(s"[${Thread.currentThread().getName}]: subsume $this to $opponentLock, unparking " + (if(peeked == null) "none" else peeked.getName))
+    if(DEBUG) println(s"[${Thread.currentThread().getName}]: subsumed $this, unparking " + (if(peeked == null) "none" else peeked.getName))
     LockSupport.unpark(peeked)
-    opponentLock
   }
+
+  override def toString = s"Lock($gUID, ${state.get match {
+      case null => "unlocked"
+      case Self => "locked"
+      case other => s"subsumed($other)"
+    }})"
 }
