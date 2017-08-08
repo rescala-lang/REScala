@@ -4,19 +4,21 @@ import rescala.parrp.Backoff
 
 import scala.annotation.tailrec
 
-// TODO must be a remote interface
-trait SubsumableLock {
+trait SubsumableLockEntryPoints {
   // used for assertions only
   def getLockedRoot: Option[SubsumableLock.GUID]
   def tryLock(): SubsumableLock.TryLockResult
   def lock(): SubsumableLock.TryLockResult
-  def unlock(): Unit
   def spinOnce(backoff: Long): SubsumableLock.TryLockResult
-  def subsume(lockedNewParent: SubsumableLock.TryLockResult): Unit
   // if failed, returns Some(newParent) that should be used as new Parent
   // if successful, returns None; lockedNewParent.newParent should be used as newParent.
   // newParent is not a uniform part of all possible return values to avoid establishing unnecessary back-and-forth remote paths
   def trySubsume(lockedNewParent: SubsumableLock.TryLockResult): Option[SubsumableLock]
+}
+
+trait SubsumableLock extends SubsumableLockEntryPoints {
+  def subsume(lockedNewParent: SubsumableLock.TryLockResult): Unit
+  def unlock(): Unit
 }
 
 object SubsumableLock {
@@ -24,10 +26,10 @@ object SubsumableLock {
   type GUID = Long
   case class TryLockResult(success: Boolean, newParent: SubsumableLock, globalRoot: GUID)
 
-  def underLock[R](lock: SubsumableLock)(thunk: => R): R = {
+  def underLock[R](lock: SubsumableLockEntryPoints)(thunk: => R): R = {
     executeAndRelease(thunk, lock.lock().newParent)
   }
-  def underLock[R](lockA: SubsumableLock, lockB: SubsumableLock)(thunk: => R): R = {
+  def underLock[R](lockA: SubsumableLockEntryPoints, lockB: SubsumableLockEntryPoints)(thunk: => R): R = {
     executeAndRelease(thunk, lockAndMerge(lockA, lockB).newParent)
   }
   private def executeAndRelease[R](thunk: => R, locked: SubsumableLock): R = {
@@ -36,13 +38,15 @@ object SubsumableLock {
     }
   }
 
-  private def lockAndMerge(lockA: SubsumableLock, lockB: SubsumableLock): TryLockResult = {
+  private def lockAndMerge(lockA: SubsumableLockEntryPoints, lockB: SubsumableLockEntryPoints): TryLockResult = {
+    if(DEBUG) System.out.println(s"[${Thread.currentThread().getName}] syncing $lockA and $lockB")
 //    lockAndMergeTryLockSpinOnly(lockA, lockB, new Backoff())
 //    lockAndMergeWithBackoff(lockA, lockB, new Backoff())
     lockAndMergeWithoutBackoff(lockA, lockB)
+//    lockAndMergeWithRemoteSpin(lockA, lockB, new Backoff())
   }
 
-  @tailrec private def lockAndMergeTryLockSpinOnly(lockA: SubsumableLock, lockB: SubsumableLock, backoff: Backoff): TryLockResult = {
+  @tailrec private def lockAndMergeTryLockSpinOnly(lockA: SubsumableLockEntryPoints, lockB: SubsumableLockEntryPoints, backoff: Backoff): TryLockResult = {
     val resA = lockA.tryLock()
     if(!resA.success) {
       backoff.backoff()
@@ -55,12 +59,12 @@ object SubsumableLock {
         resA.newParent.unlock()
 //        backoff.reset()
         backoff.backoff()
-        lockAndMergeTryLockSpinOnly(resB.get, resA.newParent, backoff)
+        lockAndMergeTryLockSpinOnly(lockB, lockA, backoff)
       }
     }
   }
 
-  @tailrec private def lockAndMergeWithBackoff(lockA: SubsumableLock, lockB: SubsumableLock, backoff: Backoff): TryLockResult = {
+  @tailrec private def lockAndMergeWithBackoff(lockA: SubsumableLockEntryPoints, lockB: SubsumableLockEntryPoints, backoff: Backoff): TryLockResult = {
     val resA = lockA.lock()
     val resB = lockB.trySubsume(resA)
     if(resB.isEmpty) {
@@ -68,19 +72,32 @@ object SubsumableLock {
     } else {
       resA.newParent.unlock()
       backoff.backoff()
-      lockAndMergeWithBackoff(resB.get, resA.newParent, backoff)
+      lockAndMergeWithBackoff(lockB, lockA, backoff)
     }
   }
 
-  @tailrec private def lockAndMergeWithoutBackoff(lockA: SubsumableLock, lockB: SubsumableLock): TryLockResult = {
-    if(DEBUG) System.out.println(s"[${Thread.currentThread().getName}] syncing $lockA and $lockB")
+  @tailrec private def lockAndMergeWithoutBackoff(lockA: SubsumableLockEntryPoints, lockB: SubsumableLockEntryPoints): TryLockResult = {
     val resA = lockA.lock()
     val resB = lockB.trySubsume(resA)
     if(resB.isEmpty) {
       resA
     } else {
       resA.newParent.unlock()
-      lockAndMergeWithoutBackoff(resB.get, resA.newParent)
+      lockAndMergeWithoutBackoff(lockB, lockA)
     }
+  }
+
+  private def lockAndMergeWithRemoteSpin(lockA: SubsumableLockEntryPoints, lockB: SubsumableLockEntryPoints, backoff: Backoff): TryLockResult = {
+    val resA = lockA.lock()
+    @tailrec def tryBandSpinAifFailed(resA: TryLockResult): TryLockResult = {
+      val resB = lockB.trySubsume(resA)
+      if (resB.isEmpty) {
+        resA
+      } else {
+        val newResA = lockA.spinOnce(backoff.getAndIncrementBackoff())
+        tryBandSpinAifFailed(newResA)
+      }
+    }
+    tryBandSpinAifFailed(resA)
   }
 }

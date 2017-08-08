@@ -1,119 +1,49 @@
 package rescala.fullmv
 
 import java.util.concurrent.ForkJoinTask
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.locks.LockSupport
 
 import rescala.core.{Reactive, ReadableReactive, TurnImpl, ValuePersistency}
 import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation.{NextReevaluation, NoSuccessor}
 import rescala.fullmv.NotificationResultAction.{GlitchFreeReady, NotificationOutAndSuccessorOperation}
-import rescala.fullmv.TurnPhase.Type
 import rescala.fullmv.tasks.{Notification, Reevaluation}
-import rescala.fullmv.sgt.synchronization.{SubsumableLock, SubsumableLockImpl}
+import rescala.fullmv.sgt.synchronization.SubsumableLockEntryPoints
 
-import scala.collection.mutable.ArrayBuffer
+import scala.concurrent.Future
 
-class FullMVTurn(val userlandThread: Thread) extends TurnImpl[FullMVStruct] {
-  object phaseLock
-  @volatile var phase: TurnPhase.Type = TurnPhase.Initialized
-  val lock: SubsumableLock = new SubsumableLockImpl()
-  val successorsIncludingSelf = ArrayBuffer[FullMVTurn](this) // this is implicitly a set
-  val selfNode = new TransactionSpanningTreeNode(this)
-  @volatile var predecessorSpanningTreeNodes = Map(this -> selfNode)
-  // counts the sum of in-flight notifications, in-progress reevaluations.
-  var activeBranches = new AtomicInteger(0)
+trait FullMVTurnReplicator {
+  def newPhase(phase: TurnPhase.Type): Future[Unit]
+  def newPredecessors(predecessors: Iterable[FullMVTurn]): Future[Unit]
+}
 
-  // TODO must be remote callable
-  // TODO should use local buffering?
-  def activeBranchDifferential(forState: TurnPhase.Type, differential: Int): Unit = {
-    assert(phase == forState, s"$this received branch differential for wrong state $phase")
-    if(differential != 0) {
-      val remaining = activeBranches.addAndGet(differential)
-      if(remaining == 0) {
-        LockSupport.unpark(userlandThread)
-      }
-    }
-  }
+trait FullMVTurn extends TurnImpl[FullMVStruct] with SubsumableLockEntryPoints {
+  //========================================================Internal Management============================================================
 
-  def awaitAndSwitchPhase(newPhase: TurnPhase.Type): Unit = {
-    assert(newPhase > this.phase, s"$this cannot progress backwards to phase $phase.")
-    while(this.phase != newPhase) {
-      awaitBranchCountZero()
-      val compare = awaitAllPredecessorsPhase(newPhase)
-      tryAtomicCompareBranchesPlusPredsAndSwitchPhase(compare, newPhase)
-    }
-    if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this switched phase.")
-  }
+  // ===== Turn State Manangement External API
+  // should be mirrored/buffered locally
+  def phase: TurnPhase.Type
+  def awaitPhase(atLeast: TurnPhase.Type): Unit
+  def activeBranchDifferential(forState: TurnPhase.Type, differential: Int): Unit
 
-  private def tryAtomicCompareBranchesPlusPredsAndSwitchPhase(compare: Map[FullMVTurn, TransactionSpanningTreeNode[FullMVTurn]], newPhase: Type): Unit = {
-    phaseLock.synchronized {
-      if (activeBranches.get == 0 && (predecessorSpanningTreeNodes eq compare)) {
-        this.phase = newPhase
-        if(newPhase == TurnPhase.Completed) {
-          predecessorSpanningTreeNodes = Map.empty
-          selfNode.children.clear()
-        }
-        if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this switched phase.")
-        phaseLock.notifyAll()
-      }
-    }
-  }
+  // ===== Ordering Search&Establishment External API
+  // should be mirrored/buffered locally
+  def isTransitivePredecessor(txn: FullMVTurn): Boolean
+  // must be remote calls
+  def acquirePhaseLockAndGetEstablishmentBundle(): Future[(TurnPhase.Type, TransactionSpanningTreeNode[FullMVTurn])]
+  def blockingAddPredecessorAndReleasePhaseLock(predecessorSpanningTree: TransactionSpanningTreeNode[FullMVTurn]): Unit
+  def asyncReleasePhaseLock(): Unit
 
-  // TODO should be resolved by local mirroring
-  private def awaitPhase(atLeast: TurnPhase.Type): Unit = phaseLock.synchronized {
-    while(phase < atLeast) {
-      phaseLock.wait()
-    }
-  }
+  // ===== Ordering Establishment Internal Operations
+  // must be remote calls
+  def maybeNewReachableSubtree(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit]
+  def newSuccessor(successor: FullMVTurn): Future[Unit]
 
-  private def awaitBranchCountZero() = {
-    while (activeBranches.get > 0) {
-      LockSupport.park(this)
-    }
-  }
+  // ===== Remote Replication Stuff
+  // should be local-only, but needs to be available on remote mirrors too to support multi-hop communication.
+  def addReplicator(replicator: FullMVTurnReplicator): (TurnPhase.Type, Set[FullMVTurn])
+  def removeReplicator(replicator: FullMVTurnReplicator): Unit
 
-  def isTransitivePredecessor(txn: FullMVTurn): Boolean = {
-    predecessorSpanningTreeNodes.contains(txn)
-  }
 
-  // TODO must be remote callable
-  def addPredecessor(predecessor: FullMVTurn): Unit = {
-    assert(predecessor.lock.getLockedRoot.isDefined, s"establishing order $predecessor -> $this: predecessor not locked")
-    assert(lock.getLockedRoot.isDefined, s"establishing order $predecessor -> $this: successor not locked")
-    assert(!isTransitivePredecessor(predecessor), s"attempted to establish already existing predecessor relation $predecessor -> $this")
-    if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this new predecessor $predecessor.")
-    for (successorOrSelf <- successorsIncludingSelf) {
-      // TODO possible remote call
-      successorOrSelf.maybeNewReachableSubtree(this, predecessor.selfNode)
-    }
-  }
-
-  private def copySubTreeRootAndAssessChildren(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]) = {
-    val newTransitivePredecessor = spanningSubTreeRoot.txn
-    newTransitivePredecessor.successorsIncludingSelf += this
-    val copiedSpanningTreeNode = new TransactionSpanningTreeNode(newTransitivePredecessor)
-    predecessorSpanningTreeNodes += newTransitivePredecessor -> copiedSpanningTreeNode
-    predecessorSpanningTreeNodes(attachBelow).children.add(copiedSpanningTreeNode)
-
-    for (child <- scala.collection.JavaConverters.collectionAsScalaIterable(spanningSubTreeRoot.children)) {
-      maybeNewReachableSubtree(newTransitivePredecessor, child)
-    }
-  }
-
-  // TODO remote callable
-  // TODO should collect newly reachable nodes, and top level call should broadcast them to enable local mirroring; requires pointer to FullMVTurn or class merge
-  private def maybeNewReachableSubtree(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]): Unit = {
-    if (!isTransitivePredecessor(spanningSubTreeRoot.txn)) copySubTreeRootAndAssessChildren(attachBelow, spanningSubTreeRoot)
-  }
-
-  private def awaitAllPredecessorsPhase(atLeast: TurnPhase.Type) = {
-    val preds = predecessorSpanningTreeNodes
-    if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this awaiting phase $atLeast+ on predecessors $preds")
-    preds.keySet.foreach { waitFor =>
-      if(waitFor != this) waitFor.awaitPhase(atLeast)
-    }
-    preds
-  }
+  //========================================================Scheduler Interface============================================================
 
   override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): NodeVersionHistory[P, FullMVTurn, Reactive[FullMVStruct]] = {
     val state = new NodeVersionHistory[P, FullMVTurn, Reactive[FullMVStruct]](FullMVEngine.sgt, FullMVEngine.CREATE_PRETURN, valuePersistency)
@@ -179,14 +109,4 @@ class FullMVTurn(val userlandThread: Thread) extends TurnImpl[FullMVStruct] {
   override private[rescala] def dynamicAfter[P](reactive: ReadableReactive[P, FullMVStruct]) = reactive.state.dynamicAfter(this)
 
   override def observe(f: () => Unit): Unit = f()
-
-  override def toString: String = synchronized {
-    "FullMVTurn(" + System.identityHashCode(this) + ", " + (phase match {
-      case 0 => "Initialized"
-      case 1 => "Framing("+activeBranches.get+")"
-      case 2 => "Executing("+activeBranches.get+")"
-      case 3 => "WrapUp"
-      case 4 => "Completed"
-    })+ ")"
-  }
 }

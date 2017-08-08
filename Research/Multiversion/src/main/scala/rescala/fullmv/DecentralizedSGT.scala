@@ -1,5 +1,8 @@
 package rescala.fullmv
 
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
+
 object DecentralizedSGT extends SerializationGraphTracking[FullMVTurn] {
   // look mom, no centralized state!
 
@@ -22,12 +25,12 @@ object DecentralizedSGT extends SerializationGraphTracking[FullMVTurn] {
     assert(defender.phase > TurnPhase.Initialized, s"$defender is not started and should thus not be involved in any operations")
     assert(contender.phase > TurnPhase.Initialized, s"$contender is not started and should thus not be involved in any operations")
     assert(contender.phase < TurnPhase.Completed, s"$contender cannot be a contender (already completed).")
-    assert(contender.lock.getLockedRoot.isDefined, s"$contender is not locked (${contender.lock})")
+    assert(contender.getLockedRoot.isDefined, s"$contender is not locked")
     if(defender.phase == TurnPhase.Completed) {
       FirstFirst
     } else{
-      assert(defender.lock.getLockedRoot.isDefined, s"$defender is not locked (${defender.lock})")
-      assert(defender.lock.getLockedRoot.get == contender.lock.getLockedRoot.get, s"$defender and $contender not merged (roots ${defender.lock.getLockedRoot.get} and ${contender.lock.getLockedRoot.get})")
+      assert(defender.getLockedRoot.isDefined, s"$defender is not locked")
+      assert(defender.getLockedRoot.get == contender.getLockedRoot.get, s"$defender and $contender not merged (roots ${defender.getLockedRoot.get} and ${contender.getLockedRoot.get})")
       if(contender.isTransitivePredecessor(defender)) {
         FirstFirst
       } else if (defender.isTransitivePredecessor(contender)) {
@@ -35,16 +38,19 @@ object DecentralizedSGT extends SerializationGraphTracking[FullMVTurn] {
       } else {
         // unordered nested acquisition of two monitors here is safe against deadlocks because the turns' locks
         // (see assertions) ensure that only a single thread at a time will ever attempt to do so.
-        contender.phaseLock.synchronized {
-          defender.phaseLock.synchronized {
-            if (defender.phase < contender.phase) {
-              defender.addPredecessor(contender)
-              SecondFirst
-            } else {
-              contender.addPredecessor(defender)
-              FirstFirst
-            }
-          }
+
+        val contenderBundle = contender.acquirePhaseLockAndGetEstablishmentBundle()
+        val defenderBundle = defender.acquirePhaseLockAndGetEstablishmentBundle()
+        val (contenderPhase, contenderPredecessorsSpanningTree) = Await.result(contenderBundle, Duration.Zero) // TODO Duration.Inf
+        val (defenderPhase, defenderPredecessorsSpanningTree) = Await.result(defenderBundle, Duration.Zero) // TODO Duration.Inf
+        if (defenderPhase < contenderPhase) {
+          defender.blockingAddPredecessorAndReleasePhaseLock(contenderPredecessorsSpanningTree)
+          contender.asyncReleasePhaseLock()
+          SecondFirst
+        } else {
+          contender.blockingAddPredecessorAndReleasePhaseLock(defenderPredecessorsSpanningTree)
+          defender.asyncReleasePhaseLock()
+          FirstFirst
         }
       }
     }

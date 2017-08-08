@@ -7,7 +7,7 @@ import rescala.fullmv.tasks.{Framing, Notification}
 
 import scala.util.Try
 
-object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
+object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn, FullMVTurnImpl] {
   val EXECUTE_WRAPUP_SEQUENTIALLY = false
 
   val DEBUG = false
@@ -18,8 +18,8 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
 
   override private[rescala] def singleNow[A](reactive: ReadableReactive[A, FullMVStruct]) = reactive.state.latestValue
 
-  override protected def makeTurn(initialWrites: Traversable[Reactive], priorTurn: Option[FullMVTurn]): FullMVTurn = new FullMVTurn(Thread.currentThread())
-  override protected def executeInternal[I, R](turn: FullMVTurn, initialWrites: Traversable[Reactive], admissionPhase: () => I, wrapUpPhase: I => R): R = {
+  override protected def makeTurn(initialWrites: Traversable[Reactive], priorTurn: Option[FullMVTurn]): FullMVTurnImpl = new FullMVTurnImpl(Thread.currentThread())
+  override protected def executeInternal[I, R](turn: FullMVTurnImpl, initialWrites: Traversable[Reactive], admissionPhase: () => I, wrapUpPhase: I => R): R = {
     if(initialWrites.nonEmpty) {
       // framing phase
       turn.awaitAndSwitchPhase(TurnPhase.Framing)
@@ -55,6 +55,6 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn] {
     result.get
   }
 
-  val CREATE_PRETURN: FullMVTurn = new FullMVTurn(null)
+  val CREATE_PRETURN: FullMVTurnImpl = new FullMVTurnImpl(null)
   CREATE_PRETURN.awaitAndSwitchPhase(TurnPhase.Completed)
 }

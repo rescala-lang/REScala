@@ -209,7 +209,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTrack
         val unblockedOrder = sgt.getOrder(pred, lookFor)
         assert(unblockedOrder != SecondFirst)
         if(unblockedOrder != FirstFirst) {
-          SubsumableLock.underLock(pred.lock, lookFor.lock) {
+          SubsumableLock.underLock(pred, lookFor) {
             val establishedOrder = sgt.ensureOrder(pred, lookFor)
             assert(establishedOrder == FirstFirst)
           }
@@ -227,7 +227,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTrack
         case SecondFirst =>
           findOrPidgeonHoleNonblocking(lookFor, from, fromIsKnownPredecessor, idx)
         case Unordered =>
-          SubsumableLock.underLock(candidate.lock, lookFor.lock) {
+          SubsumableLock.underLock(candidate, lookFor) {
             sgt.ensureOrder(candidate, lookFor) match {
               case FirstFirst =>
                 findOrPidgeonHoleLocked(lookFor, idx + 1, fromKnownOrdered = true, to)
