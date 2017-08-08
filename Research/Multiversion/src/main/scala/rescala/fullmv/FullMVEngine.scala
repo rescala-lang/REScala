@@ -14,8 +14,6 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn, FullMVTurnImpl]
 
   val threadPool = new ForkJoinPool()
 
-  val sgt = DecentralizedSGT
-
   override private[rescala] def singleNow[A](reactive: ReadableReactive[A, FullMVStruct]) = reactive.state.latestValue
 
   override protected def makeTurn(initialWrites: Traversable[Reactive], priorTurn: Option[FullMVTurn]): FullMVTurnImpl = new FullMVTurnImpl(Thread.currentThread())

@@ -5,6 +5,7 @@ import rescala.fullmv.NotificationResultAction._
 import rescala.fullmv._
 
 trait NotificationAction extends ReevaluationResultHandling {
+  val changed: Boolean
   override def doCompute(): Unit = {
     val notificationResultAction = deliverNotification()
     if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this => $notificationResultAction")
@@ -22,7 +23,8 @@ trait NotificationAction extends ReevaluationResultHandling {
       case GlitchFreeReady =>
         Reevaluation(turn, node).fork
       case outAndSucc: NotificationOutAndSuccessorOperation[FullMVTurn, Reactive[FullMVStruct]] =>
-        processReevaluationResult(outAndSucc, changed = false)
+        assert(!changed, s"somehow, $this was digested into an unchanged reevaluation?!")
+        processReevaluationResult(outAndSucc, changed)
     }
   }
 

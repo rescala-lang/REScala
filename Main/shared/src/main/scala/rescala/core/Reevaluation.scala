@@ -1,5 +1,7 @@
 package rescala.core
 
+import rescala.core.Node.InDep
+
 import scala.language.existentials // stupid Disconnectable implementation requires stupid self-type stupid!
 
 /**
@@ -9,7 +11,7 @@ sealed trait ReevaluationResult[S <: Struct]{
   val node: Reactive[S]
   val valueChanged: Boolean
   val indepsChanged: Boolean
-  val indepsAfter: Set[Reactive[S]]
+  val indepsAfter: Set[InDep[S]]
 
   def commitDependencyDiff(): Unit
 
@@ -18,8 +20,8 @@ sealed trait ReevaluationResult[S <: Struct]{
   def commitTuple: (WriteableReactive[Pulse.Change[P], S], Pulse.Change[P]) forSome { type P }
 }
 
-final case class ReevaluationResultImpl[P, S <: Struct](turn: ReevaluationStateAccess[S], node: WriteableReactive[Pulse.Change[P], S], value: Pulse[P], indepsChanged: Boolean, indepsAfter: Set[Reactive[S]], indepsAdded: Set[Reactive[S]], indepsRemoved: Set[Reactive[S]]) extends ReevaluationResult[S] {
-  override val valueChanged = value.isChange
+final case class ReevaluationResultImpl[P, S <: Struct](turn: ReevaluationStateAccess[S], node: WriteableReactive[Pulse.Change[P], S] with Reactive[S], value: Pulse[P], indepsChanged: Boolean, indepsAfter: Set[InDep[S]], indepsAdded: Set[InDep[S]], indepsRemoved: Set[InDep[S]]) extends ReevaluationResult[S] {
+  override val valueChanged: Boolean = value.isChange
   override def commitDependencyDiff(): Unit = {
     if(indepsChanged) {
       indepsRemoved.foreach(turn.drop(_, node))
@@ -37,7 +39,7 @@ final case class ReevaluationResultImpl[P, S <: Struct](turn: ReevaluationStateA
 //      turn.reevOutUnchanged(node)
 //    }
 //  }
-  override def commitTuple = (node, value.asInstanceOf[Pulse.Change[P]])
+  override def commitTuple: (WriteableReactive[Pulse.Change[P], S], Pulse.Change[P]) = (node, value.asInstanceOf[Pulse.Change[P]])
 }
 
 object ReevaluationResult {
@@ -45,13 +47,13 @@ object ReevaluationResult {
   /**
     * Result of the static re-evaluation of a reactive value.
     */
-  def Static[P, S <: Struct](turn: ReevaluationStateAccess[S], node: WriteableReactive[Pulse[P], S], value: Pulse[P], unchangedIndeps: Set[Reactive[S]]): ReevaluationResultImpl[P, S] =  new ReevaluationResultImpl(turn, node, value, false, unchangedIndeps, Set.empty, Set.empty)
+  def Static[P, S <: Struct](turn: ReevaluationStateAccess[S], node: WriteableReactive[Pulse[P], S] with Reactive[S], value: Pulse[P], unchangedIndeps: Set[InDep[S]]): ReevaluationResultImpl[P, S] =  ReevaluationResultImpl(turn, node, value, indepsChanged = false, unchangedIndeps, Set.empty, Set.empty)
 
   /**
     * Result of the dynamic re-evaluation of a reactive value.
     * When using a dynamic dependency model, the dependencies of a value may change at runtime if it is re-evaluated
     */
-  def Dynamic[P, S <: Struct](turn: ReevaluationStateAccess[S], node: WriteableReactive[Pulse[P], S], value: Pulse[P], indepsAfter: Set[Reactive[S]], indepsAdded: Set[Reactive[S]], indepsRemoved: Set[Reactive[S]]): ReevaluationResultImpl[P, S] = new ReevaluationResultImpl(turn, node, value, indepsAdded.nonEmpty || indepsRemoved.nonEmpty, indepsAfter, indepsAdded, indepsRemoved)
+  def Dynamic[P, S <: Struct](turn: ReevaluationStateAccess[S], node: WriteableReactive[Pulse[P], S] with Reactive[S], value: Pulse[P], indepsAfter: Set[InDep[S]], indepsAdded: Set[InDep[S]], indepsRemoved: Set[InDep[S]]): ReevaluationResultImpl[P, S] = ReevaluationResultImpl(turn, node, value, indepsAdded.nonEmpty || indepsRemoved.nonEmpty, indepsAfter, indepsAdded, indepsRemoved)
 }
 
 
@@ -66,7 +68,7 @@ trait Disconnectable[S <: Struct] extends Reactive[S] {
   }
 
 
-  abstract final override protected[rescala] def reevaluate(turn: Turn[S], before: Value, indeps: Set[Reactive[S]]): ReevaluationResult[S] = {
+  abstract final override protected[rescala] def reevaluate(turn: Turn[S], before: Value, indeps: Set[InDep[S]]): ReevaluationResult[S] = {
     if (disconnected) {
       ReevaluationResult.Dynamic[Nothing, S](turn, this, Pulse.NoChange, Set.empty, Set.empty, indeps)
     }

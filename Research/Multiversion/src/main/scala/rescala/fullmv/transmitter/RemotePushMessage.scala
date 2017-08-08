@@ -1,48 +1,45 @@
 package rescala.fullmv.transmitter
 
-import rescala.core.{Reactive, WriteableReactive}
-import rescala.fullmv.NotificationResultAction.GlitchFreeReady
-import rescala.fullmv.tasks.{FullMVAction, ReevaluationResultHandling}
-import rescala.fullmv.{FullMVStruct, FullMVTurn, NotificationResultAction}
+import rescala.fullmv.tasks.FullMVAction
+import rescala.fullmv.FullMVTurn
 
-sealed trait RemotePushMessage[T] {
+sealed trait RemotePushMessage[+T] {
   val txn: FullMVTurn
-  def toTask(localMirrorNode: WriteableReactive[T, FullMVStruct]): FullMVAction
+  def toTask(localMirrorNode: Reflection[T]): FullMVAction
 }
 
 case class Framing(txn: FullMVTurn) extends RemotePushMessage[Nothing] {
-  override def toTask(localMirrorNode: WriteableReactive[Nothing, FullMVStruct]): FullMVAction = rescala.fullmv.tasks.Framing(txn, localMirrorNode)
+  override def toTask(localMirrorNode: Reflection[Nothing]): FullMVAction = rescala.fullmv.tasks.Framing(txn, localMirrorNode)
 }
 case class SupersedeFraming(txn: FullMVTurn, supersede: FullMVTurn) extends RemotePushMessage[Nothing] {
-  override def toTask(localMirrorNode: WriteableReactive[Nothing, FullMVStruct]): FullMVAction = rescala.fullmv.tasks.SupersedeFraming(txn, localMirrorNode, supersede)
+  override def toTask(localMirrorNode: Reflection[Nothing]): FullMVAction = rescala.fullmv.tasks.SupersedeFraming(txn, localMirrorNode, supersede)
 }
 
-case class UnchangedNotification(txn: FullMVTurn) extends RemotePushMessage[Nothing] {
-  override def toTask(localMirrorNode: WriteableReactive[Nothing, FullMVStruct]): FullMVAction = rescala.fullmv.tasks.Notification(txn, localMirrorNode, changed = false)
+sealed trait NotificationMessage[+T] extends RemotePushMessage[T] {
+  val changed: Boolean
 }
-case class UnchangedNotificationWithFollowFrame(txn: FullMVTurn, followFrame: FullMVTurn) extends RemotePushMessage[Nothing] {
-  override def toTask(localMirrorNode: WriteableReactive[Nothing, FullMVStruct]): FullMVAction = rescala.fullmv.tasks.NotificationWithFollowFrame(txn, localMirrorNode, changed = false, followFrame)
+sealed trait NoFollowFrameNotificationMessage[+T] extends NotificationMessage[T] {
+  override def toTask(localMirrorNode: Reflection[T]): FullMVAction = rescala.fullmv.tasks.Notification(txn, localMirrorNode, changed)
 }
-case class ChangeNotification[T](txn: FullMVTurn, newValue: T) extends RemotePushMessage[T] {
-  override def toTask(localMirrorNode: WriteableReactive[T, FullMVStruct]): FullMVAction = new ChangeNotificationTask(txn, localMirrorNode, newValue) {
-    override def deliverNotification(): NotificationResultAction[FullMVTurn, Reactive[FullMVStruct]] = localMirrorNode.state.notify(txn, changed = true)
-  }
+sealed trait NotificationWithFollowFrameMessage[+T] extends NotificationMessage[T] {
+  val followFrame: FullMVTurn
+  override def toTask(localMirrorNode: Reflection[T]): FullMVAction = rescala.fullmv.tasks.NotificationWithFollowFrame(txn, localMirrorNode, changed, followFrame)
 }
-case class ChangeNotificationWithFollowFrame[T](txn: FullMVTurn, newValue: T, followFrame: FullMVTurn) extends RemotePushMessage[T] {
-  override def toTask(localMirrorNode: WriteableReactive[T, FullMVStruct]): FullMVAction = new ChangeNotificationTask(txn, localMirrorNode, newValue) {
-    override def deliverNotification(): NotificationResultAction[FullMVTurn, Reactive[FullMVStruct]] = localMirrorNode.state.notifyFollowFrame(txn, changed = true, followFrame)
+
+sealed trait UnChangedMessage extends NotificationMessage[Nothing] {
+  override val changed = false
+}
+sealed trait ChangeMessage[+T] extends NotificationMessage[T] {
+  override val changed = true
+  val newValue: T
+  abstract override def toTask(localMirrorNode: Reflection[T]): FullMVAction = {
+    localMirrorNode.buffer(txn, newValue)
+    super.toTask(localMirrorNode)
   }
 }
 
-abstract class ChangeNotificationTask[T](override val turn: FullMVTurn, override val node: WriteableReactive[T, FullMVStruct], val newValue: T) extends ReevaluationResultHandling {
-  override def doCompute(): Unit = {
-    val reev = deliverNotification()
-    assert(reev == GlitchFreeReady, s"Somehow, $node was not ready for reevaluation after remote change notification by $turn, but returned $reev. Communication channel not FIFO?")
-    // Yes, asInstanceOf... don't ask me why the compiler isn't able to prove that these type fit together, when it works
-    // just fine in Reevaluation.reevOut(...) (writing a value of type X into WriteableReactive[X, _].state.reevOut(...))
-    val res = node.state.reevOut(turn, Some(newValue.asInstanceOf[node.Value]))
-    processReevaluationResult(res, changed = true)
-  }
+case class UnchangedNotification(txn: FullMVTurn) extends NoFollowFrameNotificationMessage[Nothing] with UnChangedMessage
+case class UnchangedNotificationWithFollowFrame(txn: FullMVTurn, followFrame: FullMVTurn) extends NotificationWithFollowFrameMessage[Nothing] with UnChangedMessage
 
-  def deliverNotification(): NotificationResultAction[FullMVTurn, Reactive[FullMVStruct]]
-}
+case class ChangeNotification[T](txn: FullMVTurn, newValue: T) extends NoFollowFrameNotificationMessage[T] with ChangeMessage[T]
+case class ChangeNotificationWithFollowFrame[T](txn: FullMVTurn, newValue: T, followFrame: FullMVTurn) extends NotificationWithFollowFrameMessage[T] with ChangeMessage[T]

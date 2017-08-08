@@ -1,6 +1,6 @@
 package rescala.reactives
 
-import rescala.core.{CreationTicket, DynamicTicket, Engine, Pulse, ReadableReactive, ReSerializable, Reactive, Struct}
+import rescala.core.{CreationTicket, DynamicTicket, Engine, Pulse, ReadableReactive, ReSerializable, Struct}
 import rescala.core.Pulse.{Exceptional, NoChange, Value}
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 
@@ -107,7 +107,7 @@ trait Event[+T, S <: Struct] extends ReadableReactive[Pulse[T], S] with Observab
 
   /** folds events with a given fold function to create a Signal allowing recovery of exceptional states by ignoring the stable value */
   final def lazyFold[A: ReSerializable](init: => A)(folder: (=> A, => T) => A)(implicit ticket: CreationTicket[S]): Signal[A, S] = ticket { initialTurn =>
-    Signals.staticFold[A, S](Set[Reactive[S]](this), _ => init) { (st, currentValue) =>
+    Signals.staticFold[A, S](Set(this), _ => init) { (st, currentValue) =>
       // TODO this should be equivalent, but doesn't work for unmanaged engine; need to investigate.
       // folder(currentValue, st.turn.after(this).get)
       st.staticDepend(this).toOption.fold(currentValue)(value => folder(currentValue, value))
@@ -174,7 +174,7 @@ trait Event[+T, S <: Struct] extends ReadableReactive[Pulse[T], S] with Observab
   /** Return a Signal that is updated only when e fires, and has the value of the signal s */
   final def snapshot[A: ReSerializable](s: Signal[A, S])(implicit ticket: CreationTicket[S]): Signal[A, S] = ticket {
     Signals.staticFold[A, S](
-      Set[Reactive[S]](this, s),
+      Set(this, s),
       st => st.staticDepend(s).get) { (st, current) =>
       st.staticDepend(this).toOption.fold(current)(_ => st.staticDepend(s).get)
     }(_)(ticket.rename)
