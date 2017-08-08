@@ -96,6 +96,7 @@ class FullMVTurnImpl(val userlandThread: Thread) extends FullMVTurn {
 
 
   override def acquirePhaseLockAndGetEstablishmentBundle(): Future[(TurnPhase.Type, TransactionSpanningTreeNode[FullMVTurn])] = {
+    // TODO think about how and where to try{}finally{unlock()} this..
     phaseLock.lock()
     Future.successful((phase, selfNode))
   }
@@ -110,6 +111,7 @@ class FullMVTurnImpl(val userlandThread: Thread) extends FullMVTurn {
     for(pre <- possiblyRemoteExecutions) {
       Await.result(pre, Duration.Zero) // TODO Duration.Inf
     }
+    phaseLock.unlock()
   }
 
   override def maybeNewReachableSubtree(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = {

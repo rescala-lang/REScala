@@ -42,8 +42,8 @@ object SubsumableLock {
     if(DEBUG) System.out.println(s"[${Thread.currentThread().getName}] syncing $lockA and $lockB")
 //    lockAndMergeTryLockSpinOnly(lockA, lockB, new Backoff())
 //    lockAndMergeWithBackoff(lockA, lockB, new Backoff())
-    lockAndMergeWithoutBackoff(lockA, lockB)
-//    lockAndMergeWithRemoteSpin(lockA, lockB, new Backoff())
+//    lockAndMergeWithoutBackoff(lockA, lockB)
+    lockAndMergeWithRemoteSpin(lockA, lockB, new Backoff())
   }
 
   @tailrec private def lockAndMergeTryLockSpinOnly(lockA: SubsumableLockEntryPoints, lockB: SubsumableLockEntryPoints, backoff: Backoff): TryLockResult = {
