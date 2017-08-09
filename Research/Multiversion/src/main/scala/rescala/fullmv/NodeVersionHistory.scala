@@ -662,7 +662,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     * @param add the new edge's sink node
     * @return the appropriate [[Version.value]].
     */
-  override def discover(txn: T, add: OutDep): (ArrayBuffer[T], Option[T]) = synchronized {
+  override def discover(txn: T, add: OutDep): (Iterable[T], Option[T]) = synchronized {
     val position = ensureReadVersion(txn)
     assertOptimizationsIntegrity(s"ensureReadVersion($txn)")
     assert(!_versions(position).out.contains(add), "must not discover an already existing edge!")
@@ -674,7 +674,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     * @param txn the executing reevaluation's transaction
     * @param remove the removed edge's sink node
     */
-  override def drop(txn: T, remove: OutDep): (ArrayBuffer[T], Option[T]) = synchronized {
+  override def drop(txn: T, remove: OutDep): (Iterable[T], Option[T]) = synchronized {
     val position = ensureReadVersion(txn)
     assertOptimizationsIntegrity(s"ensureReadVersion($txn)")
     assert(_versions(position).out.contains(remove), "must not drop a non-existing edge!")
@@ -719,21 +719,39 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     * @return a list of transactions with written successor versions and maybe the transaction of the first successor
     *         frame if it exists, for which reframings have to be performed at the sink.
     */
-  private def retrofitSourceOuts(position: Int, delta: OutDep, arity: Int): (ArrayBuffer[T], Option[T]) = {
+  private def retrofitSourceOuts(position: Int, delta: OutDep, arity: Int): (Iterable[T], Option[T]) = {
     require(math.abs(arity) == 1)
     // allocate array to the maximum number of written versions that might follow
     // (any version at index firstFrame or later can only be a frame, not written)
-    val successorWrittenVersions = new ArrayBuffer[T](firstFrame - position - 1)
+    val sizePrediction = firstFrame - position - 1
+    val successorWrittenVersions = new ArrayBuffer[T](sizePrediction)
     for(pos <- position until _versions.size) {
       val version = _versions(pos)
       if(arity < 0) version.out -= delta else version.out += delta
       // as per above, this is implied false if pos >= firstFrame:
       if(version.isWritten) successorWrittenVersions += version.txn
     }
+    if(successorWrittenVersions.size > sizePrediction) System.err.println(s"FullMV retrofitSourceOuts predicted size $firstFrame - $position - 1 = $sizePrediction, but size eventually was ${successorWrittenVersions.size}")
     val maybeSuccessorFrame = if (firstFrame < _versions.size) Some(_versions(firstFrame).txn) else None
     (successorWrittenVersions, maybeSuccessorFrame)
   }
 
+//  def getHistory(since: T): (Iterable[(T, V)], Option[T]) = synchronized {
+//    val position = findOrPidgeonHole(since, 0, _versions.size)
+//    val sizePrediction = firstFrame - math.abs(position) - 1
+//    val writes = new ArrayBuffer[(T, V)](sizePrediction)
+//    val initialWriteAtMost = if(position < 0) -position - 1 else position
+//    val lastWrite = lastWriteUpTo(initialWriteAtMost)
+//    writes += since -> lastWrite.value.get
+//    for(pos <- initialWriteAtMost + 1 until _versions.size) {
+//      val version = _versions(pos)
+//      if(version.isWritten) writes += version.txn -> version.value.get
+//    }
+//    if(writes.size > sizePrediction) System.err.println(s"FullMV getHistory predicted size $firstFrame - abs($position) - 1 = $sizePrediction, but size eventually was ${writes.size}")
+//    val maybeSuccessorFrame = if (firstFrame < _versions.size) Some(_versions(firstFrame).txn) else None
+//    (writes, maybeSuccessorFrame)
+//  }
+//
   private var nextGcAtSize: Int = 5
   private def maybeGC(): Int = {
     // placeholder in case we want to have some mechanic that reduces the frequency of GC runs

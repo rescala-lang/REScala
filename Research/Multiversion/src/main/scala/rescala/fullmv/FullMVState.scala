@@ -1,7 +1,5 @@
 package rescala.fullmv
 
-import scala.collection.mutable.ArrayBuffer
-
 trait FullMVState[V, T <: FullMVTurn, InDep, OutDep] {
   var incomings: Set[InDep] = Set.empty
 
@@ -76,7 +74,7 @@ trait FullMVState[V, T <: FullMVTurn, InDep, OutDep] {
     * @param add the new edge's sink node
     * @return the appropriate [[Version.value]].
     */
-  def discover(txn: T, add: OutDep): (ArrayBuffer[T], Option[T])
+  def discover(txn: T, add: OutDep): (Iterable[T], Option[T])
 
   /**
     * entry point for drop(this, ticket.issuer); may suspend temporarily.
@@ -84,7 +82,7 @@ trait FullMVState[V, T <: FullMVTurn, InDep, OutDep] {
     * @param txn    the executing reevaluation's transaction
     * @param remove the removed edge's sink node
     */
-  def drop(txn: T, remove: OutDep): (ArrayBuffer[T], Option[T])
+  def drop(txn: T, remove: OutDep): (Iterable[T], Option[T])
 
   /**
     * performs the reframings on the sink of a discover(n, this) with arity +1, or drop(n, this) with arity -1
