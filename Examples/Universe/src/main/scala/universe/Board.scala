@@ -24,8 +24,8 @@ class Board(val width: Int, val height: Int) {
   val elementRemoved = Evt[BoardElement]()
   val animalSpawned = elementSpawned && (_.isAnimal)
   val animalRemoved = elementRemoved && (_.isAnimal)
-  val animalsBorn = animalSpawned.iterate(0)(_ + 1)
-  val animalsDied = animalRemoved.iterate(0)(_ + 1)
+  val animalsBorn = animalSpawned.count()
+  val animalsDied = animalRemoved.count()
   val animalsAlive = Signals.lift(animalsBorn, animalsDied) {_ - _}
   var elements: Map[Pos, BoardElement] = scala.collection.concurrent.TrieMap()
   /** adds a board element at given position */

@@ -56,8 +56,19 @@ object ReactiveMacros {
       c.Expr[Event[A, S]](q"""throw new ${termNames.ROOTPKG}.scala.NotImplementedError("event macro not expanded")""")
   }
 
+
+
   def ReactiveMacro[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag](c: blackbox.Context)(expression: c.Expr[A]): (List[c.universe.ValDef], c.universe.Tree, List[c.universe.Tree]) = {
     import c.universe._
+
+    object REApply {
+      def unapply(arg: Tree): Option[Tree] = arg match {
+        case q"$reactive.apply()" => Some(reactive)
+        case q"$reactive.!" => Some(reactive)
+        case q"$reactive.unary_!" => Some(reactive)
+        case _ => None
+      }
+    }
 
     val uncheckedExpressions: Set[Tree] = calcUncheckedExpressions(c)(expression)
     checkForPotentialSideEffects(c)(expression, uncheckedExpressions)
@@ -121,7 +132,7 @@ object ReactiveMacros {
           //   Signal { a() + b() }
           // to
           //   SignalSynt { s => s.depend(a) + s.depend(b) }
-          case tree@q"$reactive.apply()"
+          case tree @ REApply(reactive)
             if isReactive(reactive) =>
             detectedReactives ::= reactive
             val reactiveApply = q"$signalSyntArgIdent.depend"
@@ -160,7 +171,7 @@ object ReactiveMacros {
                 val critical = tree match {
                   // check if reactive results from a function that is
                   // itself called on a reactive value
-                  case q"$chainedReactive.apply()" =>
+                  case REApply(chainedReactive) =>
                     isStatefulReactive(chainedReactive)
 
                   // check reference definitions that are defined within the
