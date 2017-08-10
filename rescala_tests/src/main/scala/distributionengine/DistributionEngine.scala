@@ -36,7 +36,7 @@ class DistributionEngine(hostName: String = InetAddress.getLocalHost.getHostAddr
     case UpdateMessage(varName, value, hostRef) =>
       sleep()
       logger.debug(s"[$hostName] received value $value for $varName from ${hostRef.path.name}")
-      val crdt = localDVars(varName).signal.now
+      val crdt = localDVars(varName).crdtSignal.now
       localDVars(varName).externalChanges.asInstanceOf[Evt[StateCRDT]](crdt.fromPayload(value.asInstanceOf[crdt.payloadType])) // issue external change event
     val newHosts = registry(varName) + hostRef
       registry += (varName -> newHosts) // add sender to registry
@@ -44,12 +44,13 @@ class DistributionEngine(hostName: String = InetAddress.getLocalHost.getHostAddr
     case QueryMessage(varName, hostRef) =>
       sleep()
       logger.debug(s"[$hostName] ${hostRef.path.name} queried variable $varName")
-      hostRef ! UpdateMessage(varName, localDVars(varName).signal.now.payload, self) // send reply
+      hostRef ! UpdateMessage(varName, localDVars(varName).crdtSignal.now.payload, self) // send reply
     case SyncAllMessage => localDVars foreach {
-      case (varName: String, dVar: Publishable[StateCRDT]) => sendUpdates(varName, dVar.signal.now)
+      case (varName: String, dVar: Publishable[StateCRDT]) => sendUpdates(varName, dVar.crdtSignal.now)
     }
     case "tick" => localDVars foreach { // pulse updates every second
-      case (varName: String, dVar: Publishable[StateCRDT]) => mediator ! Publish(varName, UpdateMessage(varName, dVar.signal.now.payload, self))}
+      case (varName: String, dVar: Publishable[StateCRDT]) => mediator ! Publish(varName, UpdateMessage(varName, dVar.crdtSignal.now.payload, self))
+    }
   }
 
   /**
@@ -91,7 +92,7 @@ class DistributionEngine(hostName: String = InetAddress.getLocalHost.getHostAddr
     }
 
     // Update all other hosts
-    sendUpdates(varName, dVar.signal.now)
+    sendUpdates(varName, dVar.crdtSignal.now)
 
     returnValue
   }

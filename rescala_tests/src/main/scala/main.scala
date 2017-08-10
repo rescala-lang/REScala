@@ -1,14 +1,61 @@
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.ActorSystem
 import com.typesafe.config.ConfigFactory
 import distributionengine._
 import rescala._
 import statecrdts._
+
+object testSignalExpressions {
+  def main(args: Array[String]): Unit = {
+    val config = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + 2506).
+      withFallback(ConfigFactory.load())
+    val system: ActorSystem = ActorSystem("ClusterSystem", config)
+    implicit val engine = system.actorOf(DistributionEngine.props("Host1"), "Host1")
+    val c1 = PGCounter("c1")
+    val c2 = PGCounter("c2", 1)
+
+    val sig = Signal {
+      c1() + c2()
+    }
+
+    val v1 = Var(List(0))
+    val v2 = Var(List(1))
+
+    val test = PVar("test", CIncOnlyCounter(5))
+    println(test.now)
+
+    test.set(test.now.increase)
+
+
+    val sig3 = Signal {
+      v1() ++ v2()
+    }
+    println(sig3)
+
+    val l1 = PVertexList[Int]("l1", List(0, 1, 2))
+    val l2 = PVertexList[Int]("l2", List(4, 5))
+
+    l1.publish
+
+    val sig2 = Signal {
+      l1() ++ l2()
+    }
+
+    println(sig2.now)
+
+    l2.addRight(Vertex.start, Vertex(3))
+
+    println(sig2.now)
+
+    system.terminate()
+  }
+}
 
 object testVertices {
   def main(args: Array[String]): Unit = {
     val v1 = Vertex("System: Hello Alice")
     val v2 = Vertex("[Alice]: Hey Bob!")
     val v3 = Vertex("[Alice]: How are you?")
+
 
     val vset = Set(v1,v1)
     //println(v1)
@@ -22,6 +69,7 @@ object testVertices {
     r = r.append(v1)
     r = r.append(v2)
     r = r.addRight(v2, v3)
+
 
     var s:RGA[String] = RGA.empty
     s = s.append(u1).append(u2).append(u3)
@@ -37,6 +85,7 @@ object testVertices {
   }
 }
 
+/*
 object testDistribution {
   def main(args: Array[String]): Unit = {
     val config = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + 2560).
@@ -50,7 +99,7 @@ object testDistribution {
     c.publish()
     c.increase
     c.publish()
-    println(c.getValue)
+    println(c.value)
     println()
 
     val d = DistributedGCounter(host2, "moppi", 0)
@@ -60,20 +109,21 @@ object testDistribution {
     }
 
     println(s"doubledMoppi: ${doubledMoppi.now}")
-    println(c.getValue)
-    println(d.getValue)
+    println(c.value)
+    println(d.value)
     println()
 
     Thread sleep 20000
     d.increase
 
     println(s"doubledMoppi: ${doubledMoppi.now}")
-    println(c.getValue)
-    println(d.getValue)
+    println(c.value)
+    println(d.value)
 
     system.terminate()
   }
 }
+*/
 
 /**
   * Created by julian on 05.07.17.

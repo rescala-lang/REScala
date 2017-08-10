@@ -1,9 +1,9 @@
 package distributionengine
 
-import akka.actor.{ActorRef, _}
+import akka.actor.ActorRef
 import akka.pattern.ask
 import akka.util.Timeout
-import rescala.{Event, Signal}
+import rescala._
 import statecrdts.StateCRDT
 
 import scala.concurrent.Await
@@ -20,30 +20,41 @@ import scala.concurrent.duration.{Duration, _}
   */
 trait Publishable[A <: StateCRDT] {
   lazy val changes: Event[A] = internalChanges || externalChanges
-  lazy val signal: Signal[A] = changes.fold(initial) { (c1, c2) =>
+  lazy val crdtSignal: Signal[A] = changes.fold(initial) { (c1, c2) =>
     c1.merge(c2) match {
       case a: A => a
     }
   }
-  val engine: ActorRef
+  lazy val valueSignal: Signal[A#valueType] = crdtSignal.map(_.value)
+
   val name: String
   val initial: A
   val internalChanges: Event[A]
   val externalChanges: Event[A]
 
+  def get: A = now
+
   /**
-    * Returns an immutable object representing the public value of the published CvRDT.
+    * Returns the current state of this pulishable.
+    *
+    * @return a CRDT representing the current state
+    */
+  def now: A = crdtSignal.now
+
+  /**
+    * Shortcut to get the public value of the published CvRDT.
     * The actual return type depends on the chosen CvRDT. It could be Integer for Counter CRDTs or List for Sequence
     * based CvRDTs.
     *
     * @return an immutable object representing the public value of the published CvRDT
     */
-  def getValue: A#valueType = signal.now.value
+  def value: A#valueType = valueSignal.now
 
-  def sync(): Unit = engine ! SyncVar(this)
+  // TODO: implement
+  //def sync(implicit engine: ActorRef): Unit = engine ! SyncVar(this)
 
   // publish this to the distribution engine
-  def publish(): Unit = {
+  def publish(implicit engine: ActorRef): Unit = {
     implicit val timeout = Timeout(60.second)
     val sendMessage = engine ? PublishVar(this)
     Await.ready(sendMessage, Duration.Inf) // make publish a blocking operation

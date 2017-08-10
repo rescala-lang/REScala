@@ -1,4 +1,5 @@
 import akka.actor.ActorRef
+import rescala._
 import statecrdts.StateCRDT
 
 /**
@@ -19,4 +20,5 @@ package object distributionengine {
 
   final case class SyncAllMessage()
 
+  implicit def publishableAsSignal[A <: StateCRDT](pub: Publishable[A]): Signal[A#valueType] = pub.valueSignal
 }

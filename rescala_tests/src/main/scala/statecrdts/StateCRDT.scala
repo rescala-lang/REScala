@@ -1,7 +1,5 @@
 package statecrdts
 
-import java.rmi.MarshalledObject
-
 import com.typesafe.scalalogging.Logger
 import statecrdts.Vertex.{end, start}
 
@@ -31,7 +29,7 @@ trait StateCRDT {
     */
   def merge(c: StateCRDT): selfType
 
-  def +(crdt: StateCRDT): selfType = merge(crdt)
+  //def +(crdt: StateCRDT): selfType = merge(crdt)
 
   override def toString: String = value.toString
 
@@ -249,7 +247,7 @@ trait RemovableSequence extends StateCRDTSequence {
 case class RGA[A](payload: (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[Any]])) extends StateCRDTSequence with RemovableSequence {
   override type Atom = A
   override type selfType = RGA[A]
-  override type valueType = List[Vertex[A]]
+  override type valueType = List[A]
   override type payloadType = (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[Any]])
   val logger: Logger = Logger[RGA[A]]
   val (vertices, edges): ((TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[Any]])) = payload
@@ -283,7 +281,7 @@ case class RGA[A](payload: (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[An
   def addRight[A1 >: A](position: Vertex[A1], v: Vertex[A]): RGA[A] = insert(position, v)
 
   def append(v: Vertex[A]): RGA[A] = {
-    val position = if (iterator.length > 0) iterator.toList.last else `start`
+    val position = if (vertexIterator.length > 0) vertexIterator.toList.last else `start`
     insert(position, v)
   }
 
@@ -291,9 +289,9 @@ case class RGA[A](payload: (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[An
 
   override def value: valueType = iterator.toList
 
-  def valueIterator: Iterator[A] = iterator.map(v => v.value)
+  def iterator: Iterator[A] = vertexIterator.map(v => v.value)
 
-  def iterator: Iterator[Vertex[A]] = new AbstractIterator[Vertex[A]] {
+  def vertexIterator: Iterator[Vertex[A]] = new AbstractIterator[Vertex[A]] {
     var lastVertex: Vertex[Any] = `start`
 
     override def hasNext: Boolean = successor(lastVertex) match {
@@ -310,7 +308,7 @@ case class RGA[A](payload: (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[An
 
   def merge(c: StateCRDT): RGA[A] = c match {
     case r: RGA[A] =>
-      val newVertices = r.value.filter(!this.vertices.contains(_))
+      val newVertices = r.vertexIterator.toList.filter(!this.vertices.contains(_))
 
       logger.debug(s"Merging $c into $this")
       logger.debug(s"found new vertices: $newVertices")
@@ -420,7 +418,7 @@ case class RGA[A](payload: (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[An
 object RGA {
   def apply[A](values: A*): RGA[A] = {
     val r = RGA[A]()
-    r.fromValue(values.toList.map(a => Vertex(a)))
+    r.fromValue(values.toList)
   }
 
   def apply[A](): RGA[A] = empty
