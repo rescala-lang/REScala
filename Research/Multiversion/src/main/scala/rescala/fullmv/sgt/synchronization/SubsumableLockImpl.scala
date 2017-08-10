@@ -34,7 +34,7 @@ class SubsumableLockImpl extends SubsumableLock {
         TryLockResult(success = false, this, gUID)
       case parent =>
         val res = parent.tryLock()
-        state.set(res.newParent)
+        state.compareAndSet(parent, res.newParent)
         res
     }
   }
@@ -60,7 +60,7 @@ class SubsumableLockImpl extends SubsumableLock {
           Some(this)
         case parent =>
           val res = parent.trySubsume(lockedNewParent)
-          state.set(res.getOrElse(lockedNewParent.newParent))
+          state.compareAndSet(parent, res.getOrElse(lockedNewParent.newParent))
           res
       }
     }
@@ -98,7 +98,7 @@ class SubsumableLockImpl extends SubsumableLock {
         lock()
       case parent =>
         val res = parent.lock()
-        state.set(res.newParent)
+        state.compareAndSet(parent, res.newParent)
         res
     }
   }
@@ -124,7 +124,7 @@ class SubsumableLockImpl extends SubsumableLock {
         lock()
       case parent =>
         val res = parent.spinOnce(backoff)
-        state.set(res.newParent)
+        state.compareAndSet(parent, res.newParent)
         res
     }
   }
