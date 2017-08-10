@@ -9,3 +9,5 @@ addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.17")
 addSbtPlugin("org.foundweekends" % "sbt-bintray" % "0.5.1")
 
 addSbtPlugin("org.tpolecat" % "tut-plugin" % "0.5.2")
+
+addSbtPlugin("org.scala-android" % "sbt-android" % "1.7.7")

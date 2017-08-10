@@ -60,6 +60,12 @@ lazy val reactiveStreams = project.in(file("Extensions/ReactiveStreams"))
   .settings(cfg.base, cfg.noPublish, lib.reactivestreams)
   .dependsOn(rescalaJVM)
 
+lazy val reandroidthings = project.in(file("Extensions/REAndroidThings"))
+  .settings(name := "reandroidthings",cfg.base, cfg.noPublish,
+    javacOptions ++= Seq("-source", "1.7", "-target", "1.7"))
+  .enablePlugins(AndroidLib)
+  .dependsOn(rescalaJVM)
+
 lazy val reswing = project.in(file("Extensions/RESwing"))
   .settings(name := "reswing", cfg.base, cfg.bintray, cfg.strictScalac, lib.scalaswing)
   .dependsOn(rescalaJVM)
@@ -88,6 +94,17 @@ lazy val examplesReswing = project.in(file("Examples/examples-reswing"))
   .dependsOn(reswing)
   .settings(name := "reswing-examples", cfg.base, cfg.noPublish)
 
+
+lazy val baromter4Android = project.in(file("Examples/Barometer4Android"))
+  .enablePlugins(AndroidApp)
+  .dependsOn(reandroidthings)
+  .settings(cfg.base, cfg.noPublish,
+    name := "barometer4Android",
+    javacOptions ++= Seq("-source", "1.7", "-target", "1.7"),
+    lib.android,
+    platformTarget := "android-25", //TODO: Move to androidJVM
+    android.useSupportVectors,
+    instrumentTestRunner := "android.support.test.runner.AndroidJUnitRunner")
 
 lazy val caseStudyEditor = project.in(file("Examples/Editor"))
   .dependsOn(reswing)
@@ -235,6 +252,12 @@ lazy val cfg = new {
 // ================================ dependencies
 
 lazy val lib = new {
+
+  lazy val android = libraryDependencies ++= Seq(
+    "com.android.support" % "appcompat-v7" % "25.3.1",
+    "com.android.support.test" % "runner" % "0.5" % "androidTest",
+    "com.android.support.test.espresso" % "espresso-core" % "2.2.2" % "androidTest",
+    scalaOrganization.value % "scala-reflect" % scalaVersion.value)
 
   lazy val rss = libraryDependencies ++= Seq(
     "joda-time" % "joda-time" % "2.9.9",
