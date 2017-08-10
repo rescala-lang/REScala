@@ -1,6 +1,6 @@
 package rescala.reactives
 
-import rescala.core.{CreationTicket, DynamicTicket, Engine, Pulse, ReadableReactive, ReSerializable, Struct}
+import rescala.core._
 import rescala.core.Pulse.{Exceptional, NoChange, Value}
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 
@@ -17,6 +17,7 @@ import scala.collection.immutable.{LinearSeq, Queue}
   * @tparam S Struct type used for the propagation of the event
   */
 trait Event[+T, S <: Struct] extends ReadableReactive[Pulse[T], S] with Observable[T, S] {
+  self: RENamed =>
 
   // only used inside macro and will be replaced there
   @compileTimeOnly("Event.apply can only be used inside of Signal expressions")

@@ -12,6 +12,7 @@ trait Struct { type State[P, S <: Struct] }
   * @tparam S Defines the structure of the internal state, as used by the propagation engine.
   */
 trait Node[S <: Struct] {
+  self: RENamed =>
   type Value
 
   /** Internal state of this reactive, managed by the propagation engine */
@@ -28,6 +29,7 @@ object Node {
   * @tparam S Defines the structure of the internal state, as used by the propagation engine.
   */
 trait Reactive[S <: Struct] extends Node[S] {
+  self: RENamed =>
   protected[rescala] def reevaluate(turn: Turn[S], before: Value, indeps: Set[InDep[S]]): ReevaluationResult[S]
 }
 
@@ -39,6 +41,7 @@ trait Reactive[S <: Struct] extends Node[S] {
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
 trait ReadableReactive[+P, S <: Struct] extends Node[S] {
+  self: RENamed =>
   override type Value <: P
 }
 
@@ -48,19 +51,21 @@ trait ReadableReactive[+P, S <: Struct] extends Node[S] {
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
 trait WriteableReactive[-P, S <: Struct] extends Node[S] {
+  self: RENamed =>
   override type Value >: P
 }
 
 /**
   * A base implementation for all reactives, tying together the Readable interface for user computations and the Writeable interface for schedulers.
   */
-abstract class ReadWriteReactive[P, S <: Struct](initialState: S#State[P, S], rename: REName) extends ReadableReactive[P, S] with WriteableReactive[P, S] {
+trait ReadWriteReactive[P, S <: Struct] extends ReadableReactive[P, S] with WriteableReactive[P, S]{
+  self: RENamed =>
   override type Value = P
-  override def toString: String = rename.name
-  final override protected[rescala] def state: S#State[Value, S] = initialState
 }
 
 /**
   * A base implementation for all reactives, tying together the Readable interface for user computations and the Writeable interface for schedulers.
   */
-abstract class Base[P, S <: Struct](initialState: S#State[Pulse[P], S], rename: REName) extends ReadWriteReactive[Pulse[P], S](initialState, rename) with Reactive[S]
+abstract class Base[P, S <: Struct](initialState: S#State[Pulse[P], S], rename: REName) extends RENamed(rename) with ReadWriteReactive[Pulse[P], S] with Reactive[S] {
+  final override protected[rescala] def state: S#State[Pulse[P], S] = initialState
+}

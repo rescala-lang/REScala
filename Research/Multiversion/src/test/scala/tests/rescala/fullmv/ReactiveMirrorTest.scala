@@ -2,14 +2,14 @@ package tests.rescala.fullmv
 
 import org.scalatest.FunSuite
 import rescala.fullmv.FullMVEngine._
-import rescala.fullmv.transmitter.ReactiveMirror
+import rescala.fullmv.mirrors.ReactiveMirror
 
 import scala.collection.mutable.ArrayBuffer
 
 class ReactiveMirrorTest extends FunSuite {
   test("basic mirroring works") {
     val input = Var(5)
-    val reflection = ReactiveMirror(input)
+    val reflection = ReactiveMirror.createLocalPushClone(input)
 
     assert(reflection.now == 5)
     input.set(123)
@@ -18,7 +18,7 @@ class ReactiveMirrorTest extends FunSuite {
 
   test("reflection supports derivations") {
     val input = Var(5)
-    val reflection = ReactiveMirror(input)
+    val reflection = ReactiveMirror.createLocalPushClone(input)
     val derived = reflection.map(_ * 2)
 
     assert(derived.now == 10)
@@ -29,7 +29,7 @@ class ReactiveMirrorTest extends FunSuite {
   test("reflection maintains glitch freedom") {
     val input = Var(5)
     val local1 = input.map(1 -> _)
-    val reflection = ReactiveMirror(input)
+    val reflection = ReactiveMirror.createLocalPushClone(input)
     val local2 = input.map(2 -> _)
 
     val tracker = ArrayBuffer[((Int, Int), Int, (Int, Int))]()
@@ -53,7 +53,7 @@ class ReactiveMirrorTest extends FunSuite {
   test("events work too") {
     val input = Var[Int](5)
     val local1 = input.map(1 -> _)
-    val reflection = ReactiveMirror(input.changed)
+    val reflection = ReactiveMirror.createLocalPushClone(input.changed)
     val local2 = input.map(2 -> _)
 
     val tracker = ArrayBuffer[((Int, Int), Int, (Int, Int))]()
