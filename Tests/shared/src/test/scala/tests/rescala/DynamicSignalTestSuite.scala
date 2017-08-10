@@ -12,7 +12,7 @@ class DynamicSignalTestSuite extends RETests with Whenever {
 
 
 
-  allEngines("signal Re Evaluates The Expression When Something It Depends On Is Updated"){ engine => import engine._
+  allEngines("signal Reevaluates The Expression When Something It Depends On Is Updated"){ engine => import engine._
     val v = Var(0)
     var i = 1
     val s = Signal { v() + i }
@@ -92,7 +92,7 @@ class DynamicSignalTestSuite extends RETests with Whenever {
   /* Specific of SignalSynt */
 
 
-  allEngines("signal Does Not Re Evaluate The Expression If Depends On IsUpdated That Is Not In Current Dependencies"){ engine => import engine._
+  allEngines("signal Does Not Reevaluate The Expression If Depends On IsUpdated That Is Not In Current Dependencies"){ engine => import engine._
     val v1 = Var(true)
     val v2 = Var(0)
     val v3 = Var(10)
