@@ -27,7 +27,7 @@ class MainActivity extends AppCompatActivity {
 
     ReSensorManager.init(this.getApplicationContext)
     // TODO: check for interesting event-values (define classes + type parameter)
-    val temperatureSensor = ReSensorManager.getSensor(ReSensor.TypeDynamicSensorMetaTemperature)
+    val temperatureSensor : ReTemperatureSensor = ReSensorManager.getSensor(ReSensor.TypeDynamicSensorMetaTemperature)
 
     //    temperatureSensor.value.map(_.toInt) observe { v => Log.d("Barometer4Android: ", String.valueOf(v)) }
     //    temperatureSensor.valueChanged += { v: Float => Log.d("Barometer4Android: ", String.valueOf(v)) }

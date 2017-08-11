@@ -2,6 +2,7 @@ package reandroidthings
 
 import android.hardware.{Sensor, SensorEvent, SensorEventListener, SensorManager}
 import android.content.Context
+import scala.reflect.ClassTag
 
 trait ReSensorManager {
   protected def peer: SensorManager
@@ -15,10 +16,11 @@ object ReSensorManager {
     context = contextGiven
   }
 
-  def getSensor(sensorType: Int): ReSensor = {
-    val reSensor: ReSensor = sensorType match {
+  def getSensor(sensorType: Int): ReSensor[_] = {
+    val reSensor: ReSensor[_] = sensorType match {
       case ReSensor.TypeDynamicSensorMetaPressure => new RePressureSensor()
       case ReSensor.TypeDynamicSensorMetaTemperature => new ReTemperatureSensor()
+      case ReSensor.TypeGyroscope => new ReGyroscopeSensor()
       case _ => throw new RuntimeException("not implemented")
     }
 

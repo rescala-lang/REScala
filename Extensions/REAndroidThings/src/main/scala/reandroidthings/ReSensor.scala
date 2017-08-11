@@ -1,19 +1,17 @@
 package reandroidthings
 
-import java.io.IOException
 import java.util.concurrent.atomic.AtomicBoolean
 
 import android.hardware.{Sensor, SensorEvent, SensorEventListener, SensorManager}
-import android.util.Log
 import com.google.android.things.contrib.driver.bmx280.Bmx280SensorDriver
-import iot_devices.BoardDefaults
+import reandroidthings.iot_devices.BoardDefaults
 import rescala._
 
 /**
   * The SensorManager associated with this Sensor
   */
 
-abstract class ReSensor() {
+abstract class ReSensor[E](initialValue: E) {
   /**
     * The underlying Android peer
     */
@@ -22,17 +20,17 @@ abstract class ReSensor() {
   /**
     * The current value and accuracy (as ReScala Vars, Signals and Events)
     */
-  private val valueVar: Var[Float] = Var(Float.MinValue)
-  private val accuracyVar: Var[Int] = Var(Int.MinValue)
+  protected val valueVar: Var[E] = Var(initialValue)
+  protected val accuracyVar: Var[Int] = Var(Int.MinValue)
 
-  val value: Signal[Float] = Signal {
+  val value: Signal[E] = Signal {
     valueVar()
   }
   val accuracy: Signal[Int] = Signal {
     accuracyVar()
   }
 
-  val valueChanged: Evt[Float] = Evt[Float]()
+  val valueChanged: Evt[E] = Evt[E]()
   val accuracyChanged: Evt[Int] = Evt[Int]()
 
   private var initialized: AtomicBoolean = new AtomicBoolean(false)
@@ -49,16 +47,40 @@ abstract class ReSensor() {
 
     val sensorManager: SensorManager = ReSensorManager.getSensorManager()
     preInitialize(sensorManager)
-    // TODO: just for the moment
-    peer = sensorManager.getDefaultSensor(ReSensor.TypeDynamicSensorMeta)
+    initializePeer(sensorManager)
     postInitialize(sensorManager)
   }
 
   protected def preInitialize(sensorManager: SensorManager): Unit = {}
 
-  protected def postInitialize(sensorManager: SensorManager): Unit = {}
+  protected def initializePeer(sensorManager: SensorManager): Unit = {
+    peer = sensorManager.getDefaultSensor(sensorType)
+  }
 
-  def sensorType: Int
+  protected def postInitialize(sensorManager: SensorManager): Unit = {
+    sensorManager.registerListener(sensorListener, peer, SensorManager.SENSOR_DELAY_NORMAL)
+  }
+
+  /**
+    * the sensorListener simply assigns any new value given by the SensorEvent
+    * to the according rescala.Var
+    */
+  protected val sensorListener: SensorEventListener = new SensorEventListener {
+    override def onSensorChanged(event: SensorEvent): Unit = {
+      val e : E = parseSensorValues(event.values)
+      valueVar() = e
+      valueChanged(e)
+    }
+
+    override def onAccuracyChanged(sensor: Sensor, newAccuracy: Int): Unit = {
+      accuracyVar() = newAccuracy
+      accuracyChanged(newAccuracy)
+    }
+  }
+
+  protected def parseSensorValues(values: Array[Float]): E
+
+  protected def sensorType: Int
 
   /**
     * its methods
@@ -97,30 +119,18 @@ abstract class ReSensor() {
 
   def getReportingMode: Int = peer.getReportingMode
 
-
-  /**
-    * the sensorListener simply assigns any new value given by the SensorEvent
-    * to the according rescala.Var
-    */
-  protected val sensorListener: SensorEventListener = new SensorEventListener {
-    override def onSensorChanged(event: SensorEvent): Unit = {
-      valueVar() = event.values(0)
-      valueChanged(event.values(0))
-    }
-
-    override def onAccuracyChanged(sensor: Sensor, newAccuracy: Int): Unit = {
-      accuracyVar() = newAccuracy
-      accuracyChanged(newAccuracy)
-    }
-  }
 }
 
 /**
   * Bmx280 sensor deals with the Bmx280 driver, that requires special treatment
   * (dynamic sensor callback)
   */
-abstract class ReBmx280Sensor extends ReSensor {
+abstract class ReBmx280Sensor extends ReSensor[Float](Float.MinValue) {
   val bmx280Driver: Bmx280SensorDriver = new Bmx280SensorDriver(BoardDefaults.getI2cBus)
+
+  override def initializePeer(sensorManager: SensorManager): Unit = {
+    peer = sensorManager.getDefaultSensor(ReSensor.TypeDynamicSensorMeta)
+  }
 
   override def postInitialize(sensorManager: SensorManager): Unit = {
     sensorManager.registerDynamicSensorCallback(new SensorManager.DynamicSensorCallback() {
@@ -138,6 +148,8 @@ abstract class ReBmx280Sensor extends ReSensor {
       }
     })
   }
+
+  override def parseSensorValues(values: Array[Float]): Float = values(0)
 }
 
 class RePressureSensor extends ReBmx280Sensor {
@@ -154,6 +166,13 @@ class ReTemperatureSensor extends ReBmx280Sensor {
   }
 
   override def sensorType: Int = ReSensor.TypeAmbientTemperature
+}
+
+class ReGyroscopeSensor extends ReSensor[(Float, Float, Float)]((0, 0, 0)) {
+
+  override def sensorType: Int = ReSensor.TypeGyroscope
+
+  override def parseSensorValues(values: Array[Float]): (Float, Float, Float) = (values(0), values(1), values(2))
 }
 
 
