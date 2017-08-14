@@ -281,8 +281,12 @@ case class RGA[A](payload: (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[An
   def addRight[A1 >: A](position: Vertex[A1], v: Vertex[A]): RGA[A] = insert(position, v)
 
   def append(v: Vertex[A]): RGA[A] = {
-    val position = if (vertexIterator.length > 0) vertexIterator.toList.last else `start`
+    val position = if (vertexIterator.nonEmpty) vertexIterator.toList.last else `start`
     insert(position, v)
+  }
+
+  def prepend(v: Vertex[A]): RGA[A] = {
+    insert(Vertex.start, v)
   }
 
   override def remove[A1 >: A](v: Vertex[A1]): RGA[A] = RGA((vertices.remove(v), edges))
@@ -396,7 +400,8 @@ case class RGA[A](payload: (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[An
     * @return A new RAG containing the inserted element
     */
   private def insert[A1 >: A](position: Vertex[A1], v: Vertex[A1]): RGA[A] = position match {
-    case `end` => logger.error("Cannot insert after end node!");
+    case `end` =>
+      logger.error("Cannot insert after end node!")
       this
     case _ => if (vertices.contains(position)) {
       val (l, r) = (position, successor(position))

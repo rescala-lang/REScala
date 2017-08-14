@@ -6,10 +6,9 @@ import statecrdts._
 /**
   * DistributedGCounters are increase-only counter variables.
   *
-  * @param name    The name of this variable. Has to be the same on all hosts to be synchronized!
   * @param initial The initial value of this variable.
   */
-case class PGCounter(name: String, initial: CIncOnlyCounter = CIncOnlyCounter(0),
+case class PGCounter(initial: CIncOnlyCounter = CIncOnlyCounter(0),
                      internalChanges: rescala.Evt[CIncOnlyCounter] = Evt[CIncOnlyCounter],
                      externalChanges: rescala.Evt[CIncOnlyCounter] = Evt[CIncOnlyCounter])
   extends Publishable[CIncOnlyCounter] {
@@ -24,19 +23,18 @@ object PGCounter {
   /**
     * Allows creation of DistributedGCounters by passing a start value.
     */
-  def apply(name: String, start: Int): PGCounter = {
+  def apply(start: Int): PGCounter = {
     val init: CIncOnlyCounter = CIncOnlyCounter(start)
-    new PGCounter(name, init)
+    new PGCounter(init)
   }
 }
 
 /**
   * DistributedVertexLists are LinkedLists operating on so called Vertices. Vertices store a value of type `A`.
   *
-  * @param name    The name of this variable. Has to be the same on all hosts to be synchronized!
   * @param initial The initial value of this variable.
   */
-case class PVertexList[A](name: String, initial: RGA[A] = RGA.empty[A],
+case class PVertexList[A](initial: RGA[A] = RGA.empty[A],
                           internalChanges: Evt[RGA[A]] = Evt[RGA[A]],
                           externalChanges: Evt[RGA[A]] = Evt[RGA[A]]) extends Publishable[RGA[A]] {
   def contains[A1 >: A](v: Vertex[A1]): Boolean = crdtSignal.now.contains(v)
@@ -70,13 +68,13 @@ object PVertexList {
   /**
     * Allows creation of DistributedVertexLists by passing a list of initial values.
     */
-  def apply[A](name: String, values: List[A]): PVertexList[A] = {
+  def apply[A](values: List[A]): PVertexList[A] = {
     val init: RGA[A] = RGA.empty[A].fromValue(values)
-    new PVertexList[A](name, init)
+    new PVertexList[A](init)
   }
 }
 
-case class DistributedSet[A](name: String, initial: ORSet[A] = ORSet(),
+case class DistributedSet[A](initial: ORSet[A] = ORSet(),
                              internalChanges: Evt[ORSet[A]] = Evt[ORSet[A]],
                              externalChanges: Evt[ORSet[A]] = Evt[ORSet[A]]) extends Publishable[ORSet[A]] {
 
@@ -91,13 +89,13 @@ object DistributedSet {
   /**
     * Allows creation of DistributedSets by passing a set of initial values.
     */
-  def apply[A](name: String, values: Set[A]): DistributedSet[A] = {
+  def apply[A](values: Set[A]): DistributedSet[A] = {
     val init: ORSet[A] = ORSet().fromValue(values)
-    new DistributedSet[A](name, init)
+    new DistributedSet[A](init)
   }
 }
 
-case class PVar[A <: StateCRDT](name: String, initial: A) extends Publishable[A] {
+case class PVar[A <: StateCRDT](initial: A) extends Publishable[A] {
   override val internalChanges: Evt[A] = Evt[A]
   override val externalChanges: Evt[A] = Evt[A]
 

@@ -4,23 +4,28 @@ import distributionengine._
 import rescala._
 import statecrdts._
 
+//noinspection ScalaUnusedSymbol,ScalaUnusedSymbol
 object testSignalExpressions {
   def main(args: Array[String]): Unit = {
+
+    // set up networking
     val config = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + 2506).
       withFallback(ConfigFactory.load())
     val system: ActorSystem = ActorSystem("ClusterSystem", config)
-    implicit val engine = system.actorOf(DistributionEngine.props("Host1"), "Host1")
-    val c1 = PGCounter("c1")
-    val c2 = PGCounter("c2", 1)
+    implicit val engine = system.actorOf(DistributionEngine.props("Host1", 1000), "Host1")
+
+    val c1 = PGCounter()
+    val c2 = PGCounter(1)
 
     val sig = Signal {
       c1() + c2()
     }
 
+
     val v1 = Var(List(0))
     val v2 = Var(List(1))
 
-    val test = PVar("test", CIncOnlyCounter(5))
+    val test = PVar(CIncOnlyCounter(5))
     println(test.now)
 
     test.set(test.now.increase)
@@ -31,10 +36,10 @@ object testSignalExpressions {
     }
     println(sig3)
 
-    val l1 = PVertexList[Int]("l1", List(0, 1, 2))
-    val l2 = PVertexList[Int]("l2", List(4, 5))
+    val l1 = PVertexList(List(0, 1, 2))
+    val l2 = PVertexList(List(4, 5))
 
-    l1.publish
+    l1.publish("l1")
 
     val sig2 = Signal {
       l1() ++ l2()
@@ -46,10 +51,21 @@ object testSignalExpressions {
 
     println(sig2.now)
 
-    system.terminate()
+
+    val subscribedSig: Signal[List[Int]] = subscribe("l1", List[Int]())
+
+    println("sig4: " +
+      subscribedSig.now)
+
+    Thread sleep 10000 // TODO: implement failsafe variant
+    println("sig4: " +
+      subscribedSig.now)
+
+    // system.terminate()
   }
 }
 
+//noinspection ScalaUnusedSymbol
 object testVertices {
   def main(args: Array[String]): Unit = {
     val v1 = Vertex("System: Hello Alice")
