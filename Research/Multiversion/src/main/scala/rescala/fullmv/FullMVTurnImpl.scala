@@ -3,8 +3,11 @@ package rescala.fullmv
 import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
 import java.util.concurrent.locks.{LockSupport, ReentrantLock}
 
+import rescala.fullmv.TurnPhase.Type
+import rescala.fullmv.mirrors.FullMVTurnReflectionProxy
 import rescala.fullmv.sgt.synchronization.{SubsumableLock, SubsumableLockImpl}
 
+import scala.annotation.tailrec
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
@@ -17,36 +20,69 @@ class FullMVTurnImpl(val userlandThread: Thread) extends FullMVTurn {
   object phaseParking
   @volatile var phase: TurnPhase.Type = TurnPhase.Initialized
 
-  val subsumableLock: AtomicReference[SubsumableLock] = new AtomicReference(new SubsumableLockImpl())
+  private val initialLock = new SubsumableLockImpl()
+  val subsumableLock: AtomicReference[SubsumableLock] = new AtomicReference(initialLock)
   val successorsIncludingSelf: ArrayBuffer[FullMVTurn] = ArrayBuffer(this) // this is implicitly a set
   val selfNode = new TransactionSpanningTreeNode[FullMVTurn](this)
   @volatile var predecessorSpanningTreeNodes: Map[FullMVTurn, TransactionSpanningTreeNode[FullMVTurn]] = Map(this -> selfNode)
 
-  var replicators: Set[FullMVTurnReplicator] = Set.empty
+  override val guid: SubsumableLock.GUID = initialLock.guid
+
+  var replicators: Set[FullMVTurnReflectionProxy] = Set.empty
+
+  override def asyncRemoteBranchComplete(forPhase: Type): Unit = activeBranchDifferential(forPhase, -1)
 
   def activeBranchDifferential(forState: TurnPhase.Type, differential: Int): Unit = {
-    assert(phase == forState, s"$this received branch differential for wrong state $phase")
-    if(differential != 0) {
-      val remaining = activeBranches.addAndGet(differential)
-      if(remaining == 0) {
-        LockSupport.unpark(userlandThread)
-      }
+    assert(phase == forState, s"$this received branch differential for wrong state $forState")
+    assert(differential != 0, s"$this received 0 branch diff")
+    assert(activeBranches.get + differential >= 0, s"$this received branch diff into negative count")
+    val remaining = activeBranches.addAndGet(differential)
+    if(remaining == 0) {
+      LockSupport.unpark(userlandThread)
     }
   }
 
   //========================================================Local State Control============================================================
 
   def awaitAndSwitchPhase(newPhase: TurnPhase.Type): Unit = {
-    assert(newPhase > this.phase, s"$this cannot progress backwards to phase $phase.")
-    while(this.phase != newPhase) {
+    assert(newPhase > this.phase, s"$this cannot progress backwards to phase $newPhase.")
+    @tailrec def awaitAndAtomicCasPhaseAndGetReps(): Set[FullMVTurnReflectionProxy] = {
       awaitBranchCountZero()
       val compare = awaitAllPredecessorsPhase(newPhase)
-      tryAtomicCompareBranchesPlusPredsAndSwitchPhase(compare, newPhase)
+      phaseLock.lock()
+      val success = try {
+        if (activeBranches.get == 0 && (predecessorSpanningTreeNodes eq compare)) {
+          phaseParking.synchronized {
+            this.phase = newPhase
+            if (newPhase == TurnPhase.Completed) {
+              predecessorSpanningTreeNodes = Map.empty
+              selfNode.children = Set.empty
+            }
+            if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this switched phase.")
+            phaseParking.notifyAll()
+          }
+          Some(replicators)
+        } else {
+          None
+        }
+      } finally {
+        phaseLock.unlock()
+      }
+      success match {
+        case None => awaitAndAtomicCasPhaseAndGetReps()
+        case Some(x) => x
+      }
+    }
+    val reps = awaitAndAtomicCasPhaseAndGetReps()
+    val forwards = reps.map(_.newPhase(phase))
+    for(call <- forwards) {
+      Await.result(call, Duration.Zero) // TODO Duration.Inf
     }
     if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this switched phase.")
   }
 
-  private def awaitBranchCountZero() = {
+
+  private def awaitBranchCountZero(): Unit = {
     while (activeBranches.get > 0) {
       LockSupport.park(this)
     }
@@ -61,24 +97,6 @@ class FullMVTurnImpl(val userlandThread: Thread) extends FullMVTurn {
     preds
   }
 
-  private def tryAtomicCompareBranchesPlusPredsAndSwitchPhase(compare: Map[FullMVTurn, TransactionSpanningTreeNode[FullMVTurn]], newPhase: TurnPhase.Type): Unit = {
-    phaseLock.lock()
-    try {
-      if (activeBranches.get == 0 && (predecessorSpanningTreeNodes eq compare)) {
-        phaseParking.synchronized {
-          this.phase = newPhase
-          if (newPhase == TurnPhase.Completed) {
-            predecessorSpanningTreeNodes = Map.empty
-            selfNode.children.clear()
-          }
-          if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this switched phase.")
-          phaseParking.notifyAll()
-        }
-      }
-    } finally {
-      phaseLock.unlock()
-    }
-  }
 
   //========================================================Remote State Control============================================================
 
@@ -117,10 +135,16 @@ class FullMVTurnImpl(val userlandThread: Thread) extends FullMVTurn {
   override def maybeNewReachableSubtree(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = {
     if (!isTransitivePredecessor(spanningSubTreeRoot.txn)) {
       val buffer = ArrayBuffer[FullMVTurn]()
-      copySubTreeRootAndAssessChildren(attachBelow, spanningSubTreeRoot, buffer)
+      phaseLock.lock()
+      val reps = try {
+        copySubTreeRootAndAssessChildren(attachBelow, spanningSubTreeRoot, buffer)
+        replicators
+      } finally {
+        phaseLock.unlock()
+      }
 
       val newSuccessorRemoteCalls = buffer.map(_.newSuccessor(this))
-      val newPredecessorRemoteCalls = replicators.map(_.newPredecessors(buffer))
+      val newPredecessorRemoteCalls = reps.map(_.newPredecessors(buffer))
 
       for(call <- newSuccessorRemoteCalls) {
         Await.result(call, Duration.Zero) // TODO Duration.Inf
@@ -137,9 +161,9 @@ class FullMVTurnImpl(val userlandThread: Thread) extends FullMVTurn {
     buffer += newTransitivePredecessor
     val copiedSpanningTreeNode = new TransactionSpanningTreeNode(newTransitivePredecessor)
     predecessorSpanningTreeNodes += newTransitivePredecessor -> copiedSpanningTreeNode
-    predecessorSpanningTreeNodes(attachBelow).children.add(copiedSpanningTreeNode)
+    predecessorSpanningTreeNodes(attachBelow).children += copiedSpanningTreeNode
 
-    for (child <- scala.collection.JavaConverters.collectionAsScalaIterable(spanningSubTreeRoot.children)) {
+    for (child <- spanningSubTreeRoot.children) {
       if(!isTransitivePredecessor(child.txn)) {
         copySubTreeRootAndAssessChildren(newTransitivePredecessor, child, buffer)
       }
@@ -155,7 +179,7 @@ class FullMVTurnImpl(val userlandThread: Thread) extends FullMVTurn {
 
   //========================================================State Replication============================================================
 
-  override def addReplicator(replicator: FullMVTurnReplicator): (TurnPhase.Type, Set[FullMVTurn]) = {
+  override def addReplicator(replicator: FullMVTurnReflectionProxy): (TurnPhase.Type, Set[FullMVTurn]) = {
     phaseLock.lock()
     try{
       replicators += replicator
@@ -165,7 +189,7 @@ class FullMVTurnImpl(val userlandThread: Thread) extends FullMVTurn {
     }
   }
 
-  override def removeReplicator(replicator: FullMVTurnReplicator): Unit = {
+  override def removeReplicator(replicator: FullMVTurnReflectionProxy): Unit = {
     phaseLock.lock()
     try{
       replicators -= replicator

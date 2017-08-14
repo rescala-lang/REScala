@@ -5,23 +5,37 @@ import java.util.concurrent.ConcurrentHashMap
 import rescala.core.Node.InDep
 import rescala.core._
 import rescala.fullmv.tasks._
-import rescala.fullmv.{FullMVEngine, FullMVState, FullMVStruct, FullMVTurn}
+import rescala.fullmv.{FullMVEngine, FullMVState, FullMVStruct, FullMVTurn, TurnPhase}
 
 
 
 trait ReactiveReflection[-P] extends WriteableReactive[P, FullMVStruct] with Reactive[FullMVStruct] with ReactiveReflectionProxy[P] {
   self: RENamed =>
-  def submit(action: FullMVAction) = FullMVEngine.threadPool.submit(action)
+  def submit(action: FullMVAction): Unit = FullMVEngine.threadPool.submit(action)
 
-  override def incrementFrame(turn: FullMVTurn): Unit = submit(Framing(turn, this))
-  override def incrementSupersedeFrame(turn: FullMVTurn, supersede: FullMVTurn): Unit = submit(SupersedeFraming(turn, this, supersede))
-  override def resolvedUnchanged(turn: FullMVTurn): Unit = submit(Notification(turn, this, changed = false))
-  override def resolvedUnchanged(turn: FullMVTurn, followFrame: FullMVTurn): Unit = submit(NotificationWithFollowFrame(turn, this, changed = false, followFrame))
-  override def newValue(turn: FullMVTurn, value: P): Unit = {
+  override def asyncIncrementFrame(turn: FullMVTurn): Unit = {
+    turn.activeBranchDifferential(TurnPhase.Framing, 1)
+    submit(Framing(turn, this))
+  }
+  override def asyncIncrementSupersedeFrame(turn: FullMVTurn, supersede: FullMVTurn): Unit = {
+    turn.activeBranchDifferential(TurnPhase.Framing, 1)
+    submit(SupersedeFraming(turn, this, supersede))
+  }
+  override def asyncResolvedUnchanged(turn: FullMVTurn): Unit = {
+    turn.activeBranchDifferential(TurnPhase.Executing, 1)
+    submit(Notification(turn, this, changed = false))
+  }
+  override def asyncResolvedUnchangedFollowFrame(turn: FullMVTurn, followFrame: FullMVTurn): Unit = {
+    turn.activeBranchDifferential(TurnPhase.Executing, 1)
+    submit(NotificationWithFollowFrame(turn, this, changed = false, followFrame))
+  }
+  override def asyncNewValue(turn: FullMVTurn, value: P): Unit = {
+    turn.activeBranchDifferential(TurnPhase.Executing, 1)
     buffer(turn, value)
     submit(Notification(turn, this, changed = true))
   }
-  override def newValueFollowFrame(turn: FullMVTurn, value: P, followFrame: FullMVTurn): Unit = {
+  override def asyncNewValueFollowFrame(turn: FullMVTurn, value: P, followFrame: FullMVTurn): Unit = {
+    turn.activeBranchDifferential(TurnPhase.Executing, 1)
     buffer(turn, value)
     submit(NotificationWithFollowFrame(turn, this, changed = true, followFrame))
   }

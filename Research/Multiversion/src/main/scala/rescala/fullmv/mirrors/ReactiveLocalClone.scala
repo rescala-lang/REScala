@@ -34,7 +34,14 @@ object ReactiveLocalClone {
 
   def connectAndInitializeLocalPushClone[A](reactive: ReadableReactive[Pulse[A], FullMVStruct], turn: FullMVTurn, reflection: ReactiveReflectionImpl[A], reflectionIsTransient: Boolean, rename: REName): Unit = {
     // simple remote interface for transfer in one direction
-    val reflectionProxy: ReactiveReflectionProxy[Pulse[A]] = reflection
+    val reflectionProxy: ReactiveReflectionProxy[Pulse[A]] = new ReactiveReflectionProxy[Pulse[A]] {
+      override def asyncIncrementFrame(turn: FullMVTurn): Unit = reflection.asyncIncrementFrame(FullMVTurnLocalClone.apply(turn))
+      override def asyncIncrementSupersedeFrame(turn: FullMVTurn, supersede: FullMVTurn): Unit = reflection.asyncIncrementSupersedeFrame(FullMVTurnLocalClone.apply(turn), FullMVTurnLocalClone.apply(supersede))
+      override def asyncNewValue(turn: FullMVTurn, value: Pulse[A]): Unit = reflection.asyncNewValue(FullMVTurnLocalClone.apply(turn), value)
+      override def asyncResolvedUnchanged(turn: FullMVTurn): Unit = reflection.asyncResolvedUnchanged(FullMVTurnLocalClone.apply(turn))
+      override def asyncResolvedUnchangedFollowFrame(turn: FullMVTurn, followFrame: FullMVTurn): Unit = reflection.asyncResolvedUnchangedFollowFrame(FullMVTurnLocalClone.apply(turn), FullMVTurnLocalClone.apply(followFrame))
+      override def asyncNewValueFollowFrame(turn: FullMVTurn, value: Pulse[A], followFrame: FullMVTurn): Unit = reflection.asyncNewValueFollowFrame(FullMVTurnLocalClone.apply(turn), value, FullMVTurnLocalClone.apply(followFrame))
+    }
     // simple initialization data for transfer in the other direction
     val (initValues, maybeFirstFrame) = ReactiveMirror(reactive, turn, reflectionProxy, reflectionIsTransient, rename.derive("Mirror"))
 

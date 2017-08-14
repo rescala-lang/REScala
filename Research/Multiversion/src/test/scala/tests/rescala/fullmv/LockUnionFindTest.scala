@@ -12,23 +12,23 @@ class LockUnionFindTest extends FunSuite {
   test("tryLock works"){
     // we can lock
     val a = new SubsumableLockImpl()
-    assert(a.tryLock() === TryLockResult(success = true, a, a.gUID))
+    assert(a.tryLock() === TryLockResult(success = true, a, a.guid))
 
     // lock is exclusive
-    assert(a.tryLock() === TryLockResult(success = false, a, a.gUID))
+    assert(a.tryLock() === TryLockResult(success = false, a, a.guid))
 
     // unlock works
     a.unlock()
-    assert(a.tryLock() === TryLockResult(success = true, a, a.gUID))
+    assert(a.tryLock() === TryLockResult(success = true, a, a.guid))
   }
 
   test("lock works") {
     // we can lock
     val a = new SubsumableLockImpl()
-    assert(Spawn{a.lock()}.join(101) === TryLockResult(success = true, a, a.gUID))
+    assert(Spawn{a.lock()}.join(101) === TryLockResult(success = true, a, a.guid))
 
     // lock is exclusive
-    assert(a.tryLock() === TryLockResult(success = false, a, a.gUID))
+    assert(a.tryLock() === TryLockResult(success = false, a, a.guid))
     // and blocks..
     val blockedB = Spawn{a.lock()}
     intercept[TimeoutException] {
@@ -37,33 +37,33 @@ class LockUnionFindTest extends FunSuite {
 
     // unlock unblocks
     a.unlock()
-    assert(blockedB.join(104) === TryLockResult(success = true, a, a.gUID))
+    assert(blockedB.join(104) === TryLockResult(success = true, a, a.guid))
   }
 
   test("union works") {
     val a = new SubsumableLockImpl
     val b = new SubsumableLockImpl
 
-    assert(a.tryLock() === TryLockResult(success = true, a, a.gUID))
+    assert(a.tryLock() === TryLockResult(success = true, a, a.guid))
     val resB = b.tryLock()
-    assert(resB === TryLockResult(success = true, b, b.gUID))
+    assert(resB === TryLockResult(success = true, b, b.guid))
 
     a.subsume(resB)
 
-    assert(a.getLockedRoot.contains(b.gUID))
-    assert(b.getLockedRoot.contains(b.gUID))
+    assert(a.getLockedRoot.contains(b.guid))
+    assert(b.getLockedRoot.contains(b.guid))
 
     b.unlock()
 
-    assert(a.tryLock() === TryLockResult(success = true, b, b.gUID))
-    assert(a.tryLock() === TryLockResult(success = false, b, b.gUID))
-    assert(b.tryLock() === TryLockResult(success = false, b, b.gUID))
+    assert(a.tryLock() === TryLockResult(success = true, b, b.guid))
+    assert(a.tryLock() === TryLockResult(success = false, b, b.guid))
+    assert(b.tryLock() === TryLockResult(success = false, b, b.guid))
 
     b.unlock()
 
-    assert(b.tryLock() === TryLockResult(success = true, b, b.gUID))
-    assert(b.tryLock() === TryLockResult(success = false, b, b.gUID))
-    assert(a.tryLock() === TryLockResult(success = false, b, b.gUID))
+    assert(b.tryLock() === TryLockResult(success = true, b, b.guid))
+    assert(b.tryLock() === TryLockResult(success = false, b, b.guid))
+    assert(a.tryLock() === TryLockResult(success = false, b, b.guid))
   }
 
   test("subsume correctly wakes all threads") {

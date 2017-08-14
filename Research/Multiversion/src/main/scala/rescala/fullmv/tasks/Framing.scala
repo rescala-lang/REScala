@@ -12,10 +12,12 @@ trait FramingTask extends FullMVAction {
       case FramingBranchEnd =>
         turn.activeBranchDifferential(TurnPhase.Framing, -1)
       case FramingBranchOut(out) =>
-        turn.activeBranchDifferential(TurnPhase.Framing, out.size - 1)
+        val branchDiff = out.size - 1
+        if(branchDiff != 0) turn.activeBranchDifferential(TurnPhase.Framing, branchDiff)
         for(succ <- out) Framing(turn, succ).fork()
       case FramingBranchOutSuperseding(out, supersede) =>
-        turn.activeBranchDifferential(TurnPhase.Framing, out.size - 1)
+        val branchDiff = out.size - 1
+        if(branchDiff != 0) turn.activeBranchDifferential(TurnPhase.Framing, branchDiff)
         for(succ <- out) SupersedeFraming(turn, succ, supersede).fork()
     }
 

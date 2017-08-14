@@ -13,12 +13,12 @@ class SubsumableLockImpl extends SubsumableLock {
   Self =>
   val state = new AtomicReference[SubsumableLock](null)
 
-  val gUID: GUID = ThreadLocalRandom.current().nextLong()
+  val guid: GUID = ThreadLocalRandom.current().nextLong()
 
   override def getLockedRoot: Option[GUID] = {
     state.get match {
       case null => None
-      case Self => Some(gUID)
+      case Self => Some(guid)
       case parent => parent.getLockedRoot
     }
   }
@@ -28,10 +28,10 @@ class SubsumableLockImpl extends SubsumableLock {
       case null =>
         val success = state.compareAndSet(null, Self)
         if(DEBUG) println(s"[${Thread.currentThread().getName}]: ${if(success) "trylocked" else "failed trylock to contention"} $this")
-        TryLockResult(success, this, gUID)
+        TryLockResult(success, this, guid)
       case Self =>
         if(DEBUG) println(s"[${Thread.currentThread().getName}]: trylock $this blocked")
-        TryLockResult(success = false, this, gUID)
+        TryLockResult(success = false, this, guid)
       case parent =>
         val res = parent.tryLock()
         state.compareAndSet(parent, res.newParent)
@@ -40,7 +40,7 @@ class SubsumableLockImpl extends SubsumableLock {
   }
 
   override def trySubsume(lockedNewParent: TryLockResult): Option[SubsumableLock] = {
-    if(lockedNewParent.globalRoot == this.gUID) {
+    if(lockedNewParent.globalRoot == this.guid) {
       assert(state.get == Self, s"passed in a TryLockResult indicates that $this was successfully locked, but it currently isn't!")
       if (DEBUG) println(s"[${Thread.currentThread().getName}]: trySubsume $this to itself reentrant success")
       None
@@ -72,7 +72,7 @@ class SubsumableLockImpl extends SubsumableLock {
       case null =>
         if(state.compareAndSet(null, Self)) {
           if(DEBUG) println(s"[${Thread.currentThread().getName}]: locked $this")
-          TryLockResult(success = true, this, gUID)
+          TryLockResult(success = true, this, guid)
         } else {
           if(DEBUG) println(s"[${Thread.currentThread().getName}]: retrying contended lock attempt of $this")
           lock()
@@ -131,7 +131,7 @@ class SubsumableLockImpl extends SubsumableLock {
 
   override def subsume(lockedNewParent: TryLockResult): Unit = synchronized {
     assert(lockedNewParent.success, s"trying to subsume on failed lock")
-    assert(lockedNewParent.globalRoot != gUID, s"trying to create endless loops, are you?")
+    assert(lockedNewParent.globalRoot != guid, s"trying to create endless loops, are you?")
     assert(lockedNewParent.newParent.getLockedRoot.isDefined, s"subsume partner $lockedNewParent is unlocked.")
     assert(state.get != null, s"subsume attempt on unlocked $this")
     assert(state.get == Self, s"subsume attempt on subsumed $this")
@@ -141,7 +141,7 @@ class SubsumableLockImpl extends SubsumableLock {
     LockSupport.unpark(peeked)
   }
 
-  override def toString = s"Lock($gUID, ${state.get match {
+  override def toString = s"Lock($guid, ${state.get match {
       case null => "unlocked"
       case Self => "locked"
       case other => s"subsumed($other)"

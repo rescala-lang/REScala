@@ -12,14 +12,17 @@ trait ReevaluationResultHandling extends FullMVAction {
   def processReevaluationResult(outAndSucc: NotificationOutAndSuccessorOperation[FullMVTurn, Reactive[FullMVStruct]], changed: Boolean): Unit = {
     outAndSucc match {
       case NoSuccessor(out) =>
-        turn.activeBranchDifferential(TurnPhase.Executing, out.size - 1)
+        val branchDiff = out.size - 1
+        if(branchDiff != 0) turn.activeBranchDifferential(TurnPhase.Executing, branchDiff)
         for (succ <- out) Notification(turn, succ, changed).fork()
       case FollowFraming(out, succTxn) =>
-        turn.activeBranchDifferential(TurnPhase.Executing, out.size - 1)
+        val branchDiff = out.size - 1
+        if(branchDiff != 0) turn.activeBranchDifferential(TurnPhase.Executing, branchDiff)
         for (succ <- out) NotificationWithFollowFrame(turn, succ, changed, succTxn).fork()
       case NextReevaluation(out, succTxn) =>
         succTxn.activeBranchDifferential(TurnPhase.Executing, 1)
-        turn.activeBranchDifferential(TurnPhase.Executing, out.size - 1)
+        val branchDiff = out.size - 1
+        if(branchDiff != 0) turn.activeBranchDifferential(TurnPhase.Executing, branchDiff)
         for (succ <- out) NotificationWithFollowFrame(turn, succ, changed, succTxn).fork()
         Reevaluation(succTxn, node).fork()
     }

@@ -28,29 +28,29 @@ class ReactiveMirror[A](val getValue: FullMVTurn => A, val reflectionProxy: Reac
   override protected[rescala] val state = this
   override def incrementFrame(txn: FullMVTurn): FramingBranchResult[FullMVTurn, Reactive[FullMVStruct]] = {
     txn.activeBranchDifferential(TurnPhase.Framing, 1)
-    reflectionProxy.incrementFrame(txn)
+    reflectionProxy.asyncIncrementFrame(txn)
     FramingBranchResult.FramingBranchEnd
   }
   override def incrementSupersedeFrame(txn: FullMVTurn, supersede: FullMVTurn): FramingBranchResult[FullMVTurn, Reactive[FullMVStruct]] = {
     txn.activeBranchDifferential(TurnPhase.Framing, 1)
-    reflectionProxy.incrementSupersedeFrame(txn, supersede)
+    reflectionProxy.asyncIncrementSupersedeFrame(txn, supersede)
     FramingBranchResult.FramingBranchEnd
   }
   override def notify(txn: FullMVTurn, changed: Boolean): NotificationResultAction[FullMVTurn, Reactive[FullMVStruct]] = {
     txn.activeBranchDifferential(TurnPhase.Executing, 1)
     if(changed) {
-      reflectionProxy.newValue(txn, getValue(txn))
+      reflectionProxy.asyncNewValue(txn, getValue(txn))
     } else {
-      reflectionProxy.resolvedUnchanged(txn)
+      reflectionProxy.asyncResolvedUnchanged(txn)
     }
     NotificationResultAction.GlitchFreeReadyButQueued
   }
   override def notifyFollowFrame(txn: FullMVTurn, changed: Boolean, followFrame: FullMVTurn): NotificationResultAction[FullMVTurn, Reactive[FullMVStruct]] = {
     txn.activeBranchDifferential(TurnPhase.Executing, 1)
     if(changed) {
-      reflectionProxy.newValueFollowFrame(txn, getValue(txn), followFrame)
+      reflectionProxy.asyncNewValueFollowFrame(txn, getValue(txn), followFrame)
     } else {
-      reflectionProxy.resolvedUnchanged(txn, followFrame)
+      reflectionProxy.asyncResolvedUnchangedFollowFrame(txn, followFrame)
     }
     NotificationResultAction.GlitchFreeReadyButQueued
   }

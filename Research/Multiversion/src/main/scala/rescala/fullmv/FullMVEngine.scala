@@ -36,8 +36,10 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn, FullMVTurnImpl]
     assert(turn.activeBranches.get == 0, s"Admission phase left ${turn.activeBranches.get} active branches.")
 
     // propagation phase
-    turn.activeBranchDifferential(TurnPhase.Executing, initialWrites.size)
-    for(i <- initialWrites) threadPool.submit(Notification(turn, i, changed = admissionResult.isSuccess))
+    if(initialWrites.nonEmpty){
+      turn.activeBranchDifferential(TurnPhase.Executing, initialWrites.size)
+      for(i <- initialWrites) threadPool.submit(Notification(turn, i, changed = admissionResult.isSuccess))
+    }
 
     // propagation completion
     if(EXECUTE_WRAPUP_SEQUENTIALLY) turn.awaitAndSwitchPhase(TurnPhase.WrapUp)
