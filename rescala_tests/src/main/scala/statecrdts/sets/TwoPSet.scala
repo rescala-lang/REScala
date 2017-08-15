@@ -7,18 +7,16 @@ package sets
   * @param payload The payload consisting of one set for added entries and one set for removed entries (tombstones).
   * @tparam A The type of the elements in the set.
   */
-case class TwoPSet[A](payload: (Set[A], Set[A])) extends StateCRDTSet {
-  override type Element = A
+case class TwoPSet[A](payload: (Set[A], Set[A])) extends RemovableStateCRDTSet[A] {
   override type selfType = TwoPSet[A]
-  override type valueType = Set[A]
   override type payloadType = (Set[A], Set[A])
   val (entries, tombstones): (Set[A], Set[A]) = payload
 
-  override def add(e: Element): selfType = TwoPSet((entries + e, tombstones))
+  override def add(e: A): selfType = TwoPSet((entries + e, tombstones))
 
-  override def remove(e: Element): selfType = if (entries(e)) TwoPSet((entries, tombstones + e)) else this
+  override def remove(e: A): selfType = if (entries(e)) TwoPSet((entries, tombstones + e)) else this
 
-  override def contains(e: Element): Boolean = entries.contains(e) && !tombstones.contains(e)
+  override def contains(e: A): Boolean = entries.contains(e) && !tombstones.contains(e)
 
   override def value: valueType = entries -- tombstones
 

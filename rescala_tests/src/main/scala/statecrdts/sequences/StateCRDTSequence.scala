@@ -1,10 +1,22 @@
 package statecrdts
 package sequences
 
-trait StateCRDTSequence extends StateCRDT {
-  type Atom
+import statecrdts.sets.StateCRDTSet
 
-  def contains[A1 >: Atom](v: Vertex[A1]): Boolean
+import scala.collection.immutable.HashMap
 
-  def before[A1 >: Atom](u: Vertex[A1], v: Vertex[A1]): Boolean
+trait StateCRDTSequence[A] extends StateCRDT {
+  def vertices: StateCRDTSet[Vertex[Any]]
+
+  def edges: HashMap[Vertex[Any], Vertex[Any]]
+
+  def contains[A1 >: A](v: Vertex[A1]): Boolean = v match {
+    case Vertex.start => true
+    case Vertex.end => true
+    case v: Vertex[A] => vertices.contains(v)
+  }
+
+  def containsValue(a: A): Boolean = vertices.value.map(_.value).contains(a)
+
+  def before[A1 >: A](u: Vertex[A1], v: Vertex[A1]): Boolean
 }

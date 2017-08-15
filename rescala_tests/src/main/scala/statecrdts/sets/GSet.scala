@@ -3,7 +3,6 @@ package sets
 
 case class GSet[A](payload: Set[A]) extends StateCRDTSet[A] {
   override type selfType = GSet[A]
-  override type valueType = Set[A]
   override type payloadType = Set[A]
 
   override def add(e: A): GSet[A] = GSet(payload + e)

@@ -9,11 +9,9 @@ import pvars.distributionengine.DistributionEngine.Identifier
   * @param payload The internal state of the set, consisting of two sets. One to store entries and their identifiers and one to track removed entries (tombstones).
   * @tparam A The type of the elements stored in this set
   */
-case class ORSet[A](payload: (Set[(A, Identifier)], Set[Identifier])) extends StateCRDTSet { //TODO: maybe use a Map[A,List(Identifier)] for entries. This would speed up removes but slow down adds
+case class ORSet[A](payload: (Set[(A, Identifier)], Set[Identifier])) extends RemovableStateCRDTSet[A] { //TODO: maybe use a Map[A,List(Identifier)] for entries. This would speed up removes but slow down adds
 override type selfType = ORSet[A]
-  override type valueType = Set[A]
   override type payloadType = (Set[(A, Identifier)], Set[Identifier])
-  override type Element = A
   val (entries, tombstones) = payload
 
   override def merge(c: StateCRDT): ORSet[A] = c match {

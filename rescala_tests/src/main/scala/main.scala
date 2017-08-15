@@ -2,7 +2,7 @@ import akka.actor.ActorSystem
 import com.typesafe.config.ConfigFactory
 import pvars._
 import rescala._
-import statecrdts.sequences.RGA
+import statecrdts.sequences.{RGA, RGOA}
 
 //noinspection ScalaUnusedSymbol
 object testSignalExpressions {
@@ -80,6 +80,7 @@ object testVertices {
     r = r.append(v2)
     r = r.addRight(v2, v3)
 
+    var r3: RGOA[String] = RGOA.empty
 
     var s:RGA[String] = RGA.empty
     s = s.append(u1).append(u2).append(u3)

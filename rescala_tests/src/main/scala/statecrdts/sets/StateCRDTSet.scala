@@ -1,12 +1,10 @@
 package statecrdts
 package sets
 
-trait StateCRDTSet extends StateCRDT {
-  type Element
+trait StateCRDTSet[A] extends StateCRDT {
+  override type valueType = Set[A]
 
-  def add(e: Element): selfType
+  def add(e: A): StateCRDTSet[A]
 
-  def remove(e: Element): selfType
-
-  def contains(e: Element): Boolean
+  def contains(e: A): Boolean
 }

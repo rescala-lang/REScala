@@ -2,24 +2,27 @@ package statecrdts
 package sequences
 
 import com.typesafe.scalalogging.Logger
-import statecrdts.sets.TwoPSet
+import statecrdts.sets.GSet
 
 import scala.collection.AbstractIterator
 import scala.collection.immutable.HashMap
 
+// TODO: Refactor RGA classes to make proper use of the traits. The current version includes lots of duplicate code.
 /**
-  * Replicated Growable Array
+  * Replicated Grow Only Array - A modified RGA version using grow only sets for vertices
   *
   * @param payload The payload consist of one TwoPhase Set which stores the vertices, one HashMap which stores the edges
   *                between vertices and one HashMap which stores a Timestamp for each Vertex.
   * @tparam A The type of the elements stored in this array
   */
-case class RGA[A](payload: (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[Any]])) extends RemovableSequence[A] {
-  override type selfType = RGA[A]
+case class RGOA[A](payload: (GSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[Any]])) extends StateCRDTSequence[A] {
+  override type selfType = RGOA[A]
   override type valueType = List[A]
-  override type payloadType = (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[Any]])
-  val logger: Logger = Logger[RGA[A]]
-  val (_, edges): ((TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[Any]])) = payload
+  override type payloadType = (GSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[Any]])
+  val logger: Logger = Logger[RGOA[A]]
+  val (_, edges): ((GSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[Any]])) = payload
+
+  override def vertices: GSet[Vertex[Any]] = payload._1
 
   override def before[A1 >: A](u: Vertex[A1], v: Vertex[A1]): Boolean = u match {
     case Vertex.end => false
@@ -37,22 +40,18 @@ case class RGA[A](payload: (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[An
       else successor(u)
   }
 
-  def addRight[A1 >: A](position: Vertex[A1], a: A): RGA[A] = addRight(position, new Vertex(a, Vertex.genTimestamp))
+  def addRight[A1 >: A](position: Vertex[A1], a: A): RGOA[A] = addRight(position, new Vertex(a, Vertex.genTimestamp))
 
-  def addRight[A1 >: A](position: Vertex[A1], v: Vertex[A]): RGA[A] = insert(position, v)
+  def addRight[A1 >: A](position: Vertex[A1], v: Vertex[A]): RGOA[A] = insert(position, v)
 
-  def append(v: Vertex[A]): RGA[A] = {
+  def append(v: Vertex[A]): RGOA[A] = {
     val position = if (vertexIterator.nonEmpty) vertexIterator.toList.last else Vertex.start
     insert(position, v)
   }
 
-  def prepend(v: Vertex[A]): RGA[A] = {
+  def prepend(v: Vertex[A]): RGOA[A] = {
     insert(Vertex.start, v)
   }
-
-  override def remove[A1 >: A](v: Vertex[A1]): RGA[A] = RGA((vertices.remove(v), edges))
-
-  override def vertices: TwoPSet[Vertex[Any]] = payload._1
 
   override def value: List[A] = iterator.toList
 
@@ -73,8 +72,8 @@ case class RGA[A](payload: (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[An
     }
   }
 
-  def merge(c: StateCRDT): RGA[A] = c match {
-    case r: RGA[A] =>
+  def merge(c: StateCRDT): RGOA[A] = c match {
+    case r: RGOA[A] =>
       val newVertices = r.vertexIterator.toList.filter(!this.vertices.contains(_))
 
       logger.debug(s"Merging $c into $this")
@@ -86,24 +85,19 @@ case class RGA[A](payload: (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[An
       }
 
       // update edges by inserting vertices at the right positions
-      val mergedEdges = newVertices.foldLeft(this) {
-        case (merged: RGA[A], v: Vertex[A]) => logger.debug(s"inserting $v at position ${oldPositions(v)}"); merged.insert(oldPositions(v), v)
-      }.edges
-
-      // merge vertices
-      val mergedVertices = vertices.merge(r.vertices)
-
-      fromPayload(mergedVertices, mergedEdges)
+      newVertices.foldLeft(this) {
+        case (merged: RGOA[A], v: Vertex[A]) => logger.debug(s"inserting $v at position ${oldPositions(v)}"); merged.insert(oldPositions(v), v)
+      }
   }
 
-  override def fromPayload(payload: payloadType): RGA[A] = RGA(payload)
+  override def fromPayload(payload: payloadType): RGOA[A] = RGOA(payload)
 
-  override def fromValue(value: valueType): RGA[A] = {
-    val emptyPayload: payloadType = (TwoPSet[Vertex[Any]](Vertex.start, Vertex.end), HashMap[Vertex[Any], Vertex[Any]](Vertex.start -> Vertex.end))
-    val newRGA: RGA[A] = fromPayload(emptyPayload)
+  override def fromValue(value: valueType): RGOA[A] = {
+    val emptyPayload: payloadType = (GSet[Vertex[Any]](Vertex.start, Vertex.end), HashMap[Vertex[Any], Vertex[Any]](Vertex.start -> Vertex.end))
+    val newRGA: RGOA[A] = fromPayload(emptyPayload)
 
     value.reverse.foldLeft(newRGA) {
-      case (r: RGA[A], a) => r.addRight(Vertex.start, a)
+      case (r: RGOA[A], a) => r.addRight(Vertex.start, a)
     }
   }
 
@@ -115,7 +109,7 @@ case class RGA[A](payload: (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[An
     * @tparam A1 type of both the inserted vertex and the vertex specifying the position
     * @return A new RAG containing the inserted element
     */
-  private def insert[A1 >: A](position: Vertex[A1], v: Vertex[A1]): RGA[A] = position match {
+  private def insert[A1 >: A](position: Vertex[A1], v: Vertex[A1]): RGOA[A] = position match {
     case Vertex.end =>
       logger.error("Cannot insert after end node!")
       this
@@ -126,7 +120,7 @@ case class RGA[A](payload: (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[An
       else {
         val newVertices = vertices.add(v)
         val newEdges = edges + (l -> v) + (v -> r)
-        new RGA((newVertices, newEdges))
+        new RGOA((newVertices, newEdges))
       }
     }
     else {
@@ -136,13 +130,13 @@ case class RGA[A](payload: (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[An
   }
 }
 
-object RGA {
-  def apply[A](values: A*): RGA[A] = {
-    val r = RGA[A]()
+object RGOA {
+  def apply[A](values: A*): RGOA[A] = {
+    val r = RGOA[A]()
     r.fromValue(values.toList)
   }
 
-  def apply[A](): RGA[A] = empty
+  def apply[A](): RGOA[A] = empty
 
-  def empty[A]: RGA[A] = new RGA[A]((TwoPSet(Vertex.start, Vertex.end), HashMap(Vertex.start -> Vertex.end)))
+  def empty[A]: RGOA[A] = new RGOA[A]((GSet(Vertex.start, Vertex.end), HashMap(Vertex.start -> Vertex.end)))
 }
