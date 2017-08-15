@@ -1,12 +1,13 @@
 package rescala.fullmv.sgt.synchronization
 
+import rescala.fullmv.mirrors.{Host, Hosted, SubsumableLockHost}
 import rescala.parrp.Backoff
 
 import scala.annotation.tailrec
 
-trait SubsumableLockEntryPoints {
+trait SubsumableLockEntryPoints extends Hosted {
   // used for assertions only
-  def getLockedRoot: Option[SubsumableLock.GUID]
+  def getLockedRoot: Option[Host.GUID]
   def tryLock(): SubsumableLock.TryLockResult
   def lock(): SubsumableLock.TryLockResult
   def spinOnce(backoff: Long): SubsumableLock.TryLockResult
@@ -17,19 +18,20 @@ trait SubsumableLockEntryPoints {
 }
 
 trait SubsumableLock extends SubsumableLockEntryPoints {
+  override val host: SubsumableLockHost
   def subsume(lockedNewParent: SubsumableLock.TryLockResult): Unit
   def unlock(): Unit
 }
 
 object SubsumableLock {
   val DEBUG = false
-  type GUID = Long
-  case class TryLockResult(success: Boolean, newParent: SubsumableLock, globalRoot: GUID)
+  case class TryLockResult(success: Boolean, newParent: SubsumableLock, globalRoot: Host.GUID)
 
   def underLock[R](lock: SubsumableLockEntryPoints)(thunk: => R): R = {
     executeAndRelease(thunk, lock.lock().newParent)
   }
   def underLock[R](lockA: SubsumableLockEntryPoints, lockB: SubsumableLockEntryPoints)(thunk: => R): R = {
+    assert(lockA.host == lockB.host)
     executeAndRelease(thunk, lockAndMerge(lockA, lockB).newParent)
   }
   private def executeAndRelease[R](thunk: => R, locked: SubsumableLock): R = {

@@ -3,20 +3,26 @@ package rescala.fullmv
 import java.util.concurrent.ForkJoinPool
 
 import rescala.core.{EngineImpl, ReadableReactive}
+import rescala.fullmv.mirrors.{FullMVTurnHost, HostImpl, SubsumableLockHostImpl}
 import rescala.fullmv.tasks.{Framing, Notification}
 
 import scala.util.Try
 
-object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn, FullMVTurnImpl] {
-  val EXECUTE_WRAPUP_SEQUENTIALLY = false
-
-  val DEBUG = false
+class FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn, FullMVTurnImpl] with FullMVTurnHost with HostImpl[FullMVTurn] {
+  override object lockHost extends SubsumableLockHostImpl
+  def newTurn(): FullMVTurnImpl = createLocal(new FullMVTurnImpl(this, _, Thread.currentThread(), lockHost.newLock()))
+  override val dummy: FullMVTurnImpl = {
+    val dummy = new FullMVTurnImpl(this, 0, null, null)
+    instances.put(0, dummy)
+    dummy.awaitAndSwitchPhase(TurnPhase.Completed)
+    dummy
+  }
 
   val threadPool = new ForkJoinPool()
 
   override private[rescala] def singleNow[A](reactive: ReadableReactive[A, FullMVStruct]) = reactive.state.latestValue
 
-  override protected def makeTurn(initialWrites: Traversable[Reactive], priorTurn: Option[FullMVTurn]): FullMVTurnImpl = new FullMVTurnImpl(Thread.currentThread())
+  override protected def makeTurn(initialWrites: Traversable[Reactive], priorTurn: Option[FullMVTurn]): FullMVTurnImpl = newTurn()
   override protected def executeInternal[I, R](turn: FullMVTurnImpl, initialWrites: Traversable[Reactive], admissionPhase: () => I, wrapUpPhase: I => R): R = {
     if(initialWrites.nonEmpty) {
       // framing phase
@@ -29,7 +35,7 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn, FullMVTurnImpl]
 
     // admission phase
     val admissionResult = Try(admissionPhase())
-    if(DEBUG) admissionResult match {
+    if(FullMVEngine.DEBUG) admissionResult match {
       case scala.util.Failure(e) => e.printStackTrace()
       case _ =>
     }
@@ -42,11 +48,11 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn, FullMVTurnImpl]
     }
 
     // propagation completion
-    if(EXECUTE_WRAPUP_SEQUENTIALLY) turn.awaitAndSwitchPhase(TurnPhase.WrapUp)
+    if(FullMVEngine.SEPARATE_WRAPUP_PHASE) turn.awaitAndSwitchPhase(TurnPhase.WrapUp)
 
     // wrap-up "phase" (executes in parallel with propagation)
     val result = admissionResult.flatMap(i => Try { wrapUpPhase(i) })
-    if(EXECUTE_WRAPUP_SEQUENTIALLY) assert(turn.activeBranches.get == 0, s"WrapUp phase left ${turn.activeBranches.get} active branches.")
+    if(FullMVEngine.SEPARATE_WRAPUP_PHASE) assert(turn.activeBranches.get == 0, s"WrapUp phase left ${turn.activeBranches.get} active branches.")
 
     // turn completion
     turn.awaitAndSwitchPhase(TurnPhase.Completed)
@@ -54,7 +60,11 @@ object FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn, FullMVTurnImpl]
     // result
     result.get
   }
+}
 
-  val CREATE_PRETURN: FullMVTurnImpl = new FullMVTurnImpl(null)
-  CREATE_PRETURN.awaitAndSwitchPhase(TurnPhase.Completed)
+object FullMVEngine {
+  val SEPARATE_WRAPUP_PHASE = false
+  val DEBUG = false
+
+  val default = new FullMVEngine()
 }

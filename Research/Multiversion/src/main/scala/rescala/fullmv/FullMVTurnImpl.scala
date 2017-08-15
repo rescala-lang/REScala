@@ -4,15 +4,15 @@ import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
 import java.util.concurrent.locks.{LockSupport, ReentrantLock}
 
 import rescala.fullmv.TurnPhase.Type
-import rescala.fullmv.mirrors.FullMVTurnReflectionProxy
-import rescala.fullmv.sgt.synchronization.{SubsumableLock, SubsumableLockImpl}
+import rescala.fullmv.mirrors.{FullMVTurnReflectionProxy, Host}
+import rescala.fullmv.sgt.synchronization.SubsumableLock
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
 
-class FullMVTurnImpl(val userlandThread: Thread) extends FullMVTurn {
+class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GUID, val userlandThread: Thread, initialLock: SubsumableLock) extends FullMVTurn {
   // counts the sum of in-flight notifications, in-progress reevaluations.
   var activeBranches = new AtomicInteger(0)
 
@@ -20,13 +20,10 @@ class FullMVTurnImpl(val userlandThread: Thread) extends FullMVTurn {
   object phaseParking
   @volatile var phase: TurnPhase.Type = TurnPhase.Initialized
 
-  private val initialLock = new SubsumableLockImpl()
   val subsumableLock: AtomicReference[SubsumableLock] = new AtomicReference(initialLock)
   val successorsIncludingSelf: ArrayBuffer[FullMVTurn] = ArrayBuffer(this) // this is implicitly a set
   val selfNode = new TransactionSpanningTreeNode[FullMVTurn](this)
   @volatile var predecessorSpanningTreeNodes: Map[FullMVTurn, TransactionSpanningTreeNode[FullMVTurn]] = Map(this -> selfNode)
-
-  override val guid: SubsumableLock.GUID = initialLock.guid
 
   var replicators: Set[FullMVTurnReflectionProxy] = Set.empty
 
@@ -42,6 +39,11 @@ class FullMVTurnImpl(val userlandThread: Thread) extends FullMVTurn {
     }
   }
 
+  override def newBranchFromRemote(forState: TurnPhase.Type): Unit = {
+    assert(phase == forState, s"$this received branch differential for wrong state $forState")
+    activeBranches.getAndIncrement()
+  }
+
   //========================================================Local State Control============================================================
 
   def awaitAndSwitchPhase(newPhase: TurnPhase.Type): Unit = {
@@ -52,15 +54,16 @@ class FullMVTurnImpl(val userlandThread: Thread) extends FullMVTurn {
       phaseLock.lock()
       val success = try {
         if (activeBranches.get == 0 && (predecessorSpanningTreeNodes eq compare)) {
+          this.phase = newPhase
           phaseParking.synchronized {
-            this.phase = newPhase
-            if (newPhase == TurnPhase.Completed) {
-              predecessorSpanningTreeNodes = Map.empty
-              selfNode.children = Set.empty
-            }
-            if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this switched phase.")
             phaseParking.notifyAll()
           }
+          if (newPhase == TurnPhase.Completed) {
+            predecessorSpanningTreeNodes = Map.empty
+            selfNode.children = Set.empty
+            host.dropInstance(guid, this)
+          }
+          if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this switched phase.")
           Some(replicators)
         } else {
           None
@@ -74,7 +77,7 @@ class FullMVTurnImpl(val userlandThread: Thread) extends FullMVTurn {
       }
     }
     val reps = awaitAndAtomicCasPhaseAndGetReps()
-    val forwards = reps.map(_.newPhase(phase))
+    val forwards = reps.map(_.newPhase(newPhase))
     for(call <- forwards) {
       Await.result(call, Duration.Zero) // TODO Duration.Inf
     }
@@ -109,6 +112,7 @@ class FullMVTurnImpl(val userlandThread: Thread) extends FullMVTurn {
   //========================================================Ordering Search and Establishment Interface============================================================
 
   def isTransitivePredecessor(txn: FullMVTurn): Boolean = {
+    assert(txn.host == host, s"predecessor query for $txn before $this is hosted on ${txn.host} different from $host")
     predecessorSpanningTreeNodes.contains(txn)
   }
 
@@ -158,6 +162,7 @@ class FullMVTurnImpl(val userlandThread: Thread) extends FullMVTurn {
 
   private def copySubTreeRootAndAssessChildren(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn], buffer: collection.generic.Growable[FullMVTurn]): Unit = {
     val newTransitivePredecessor = spanningSubTreeRoot.txn
+    assert(newTransitivePredecessor.host == host, s"new predecessor $newTransitivePredecessor of $this is hosted on ${newTransitivePredecessor.host} different from $host")
     buffer += newTransitivePredecessor
     val copiedSpanningTreeNode = new TransactionSpanningTreeNode(newTransitivePredecessor)
     predecessorSpanningTreeNodes += newTransitivePredecessor -> copiedSpanningTreeNode
@@ -171,6 +176,7 @@ class FullMVTurnImpl(val userlandThread: Thread) extends FullMVTurn {
   }
 
   override def newSuccessor(successor: FullMVTurn): Future[Unit] = {
+    assert(successor.host == host, s"new successor $successor of $this is hosted on ${successor.host} different from $host")
     successorsIncludingSelf += successor
     Future.successful(Unit)
   }
@@ -183,7 +189,7 @@ class FullMVTurnImpl(val userlandThread: Thread) extends FullMVTurn {
     phaseLock.lock()
     try{
       replicators += replicator
-      (phase, predecessorSpanningTreeNodes.keySet)
+      (phase, predecessorSpanningTreeNodes.keySet - this)
     } finally {
       phaseLock.unlock()
     }
@@ -200,7 +206,7 @@ class FullMVTurnImpl(val userlandThread: Thread) extends FullMVTurn {
 
   //========================================================SSG SCC Mutual Exclusion Control============================================================
 
-  override def getLockedRoot: Option[SubsumableLock.GUID] = subsumableLock.get.getLockedRoot
+  override def getLockedRoot: Option[Host.GUID] = subsumableLock.get.getLockedRoot
   override def lock(): SubsumableLock.TryLockResult = {
     val l = subsumableLock.get()
     val res = l.lock()
@@ -229,7 +235,7 @@ class FullMVTurnImpl(val userlandThread: Thread) extends FullMVTurn {
   //========================================================ToString============================================================
 
   override def toString: String = synchronized {
-    "FullMVTurn(" + System.identityHashCode(this) + ", " + (phase match {
+    "FullMVTurn(" + guid + " on " + host + ", " + (phase match {
       case 0 => "Initialized"
       case 1 => "Framing("+activeBranches.get+")"
       case 2 => "Executing("+activeBranches.get+")"

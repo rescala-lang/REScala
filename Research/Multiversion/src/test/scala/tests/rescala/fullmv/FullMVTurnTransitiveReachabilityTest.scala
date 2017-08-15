@@ -6,10 +6,12 @@ import rescala.fullmv.{FullMVTurnImpl, TurnPhase}
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
+import rescala.fullmv.FullMVEngine.default._
+
 class FullMVTurnTransitiveReachabilityTest extends FunSuite {
   case class Disagreement[T](from: T, to: T, closure: Boolean, addEdgeSearchPath: Boolean)
   def getDisagreementsBetweenDigraphReachabilityVsTransitiveClosure[T](edges: Map[T, Set[T]]): Traversable[Disagreement[T]] = {
-    val trees: Map[T, FullMVTurnImpl] = edges.keySet.map(e => (e, new FullMVTurnImpl(null))).toMap
+    val trees: Map[T, FullMVTurnImpl] = edges.keySet.map(e => (e, newTurn())).toMap
 
     // put all transactions under a common locked lock, so that all locking assertions hold
     trees.values.foreach(_.awaitAndSwitchPhase(TurnPhase.Executing))

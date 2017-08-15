@@ -8,6 +8,7 @@ object DecentralizedSGT extends SerializationGraphTracking[FullMVTurn] {
 
   override def getOrder(defender: FullMVTurn, contender: FullMVTurn): PartialOrderResult = {
     assert(defender != contender, s"$defender compared with itself..?")
+    assert(defender.host == contender.host, s"$defender and $contender are of different hosts ${defender.host} and ${contender.host}")
     assert(defender.phase > TurnPhase.Initialized, s"$defender is not started and should thus not be involved in any operations")
     assert(contender.phase > TurnPhase.Initialized, s"$contender is not started and should thus not be involved in any operations")
     assert(contender.phase < TurnPhase.Completed, s"$contender cannot be a searcher (already completed).")
@@ -22,6 +23,7 @@ object DecentralizedSGT extends SerializationGraphTracking[FullMVTurn] {
 
   override def ensureOrder(defender: FullMVTurn, contender: FullMVTurn): OrderResult = {
     assert(defender != contender, s"cannot establish order between equal defender $defender and contender $contender")
+    assert(defender.host == contender.host, s"$defender and $contender are of different hosts ${defender.host} and ${contender.host}")
     assert(defender.phase > TurnPhase.Initialized, s"$defender is not started and should thus not be involved in any operations")
     assert(contender.phase > TurnPhase.Initialized, s"$contender is not started and should thus not be involved in any operations")
     assert(contender.phase < TurnPhase.Completed, s"$contender cannot be a contender (already completed).")

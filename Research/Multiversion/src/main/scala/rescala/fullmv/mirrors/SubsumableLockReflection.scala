@@ -1,12 +1,12 @@
 package rescala.fullmv.mirrors
 
 import rescala.fullmv.sgt.synchronization.SubsumableLock
-import rescala.fullmv.sgt.synchronization.SubsumableLock.{GUID, TryLockResult}
+import rescala.fullmv.sgt.synchronization.SubsumableLock.TryLockResult
 
-class SubsumableLockReflection(mirrorProxy: SubsumableLockMirrorProxy) extends SubsumableLock {
+class SubsumableLockReflection(override val host: SubsumableLockHost, override val guid: Host.GUID, val mirrorProxy: SubsumableLockMirrorProxy) extends SubsumableLock {
   override def subsume(lockedNewParent: SubsumableLock.TryLockResult): Unit = mirrorProxy.subsume(lockedNewParent)
   override def unlock(): Unit = mirrorProxy.unlock()
-  override def getLockedRoot: Option[GUID] = mirrorProxy.getLockedRoot
+  override def getLockedRoot: Option[Host.GUID] = mirrorProxy.getLockedRoot
   override def tryLock(): SubsumableLock.TryLockResult = {
     val(success, root) = mirrorProxy.tryLock()
     TryLockResult(success, this, root)
@@ -23,4 +23,6 @@ class SubsumableLockReflection(mirrorProxy: SubsumableLockMirrorProxy) extends S
     val success = mirrorProxy.trySubsume(lockedNewParent)
     if(success) None else Some(this)
   }
+
+  override def toString: String = s"SubsumableLockReflection($guid on $host)"
 }

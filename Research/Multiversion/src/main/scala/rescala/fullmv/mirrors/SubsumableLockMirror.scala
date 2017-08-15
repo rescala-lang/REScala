@@ -3,7 +3,7 @@ package rescala.fullmv.mirrors
 import java.util.concurrent.atomic.AtomicReference
 
 import rescala.fullmv.sgt.synchronization.SubsumableLock
-import rescala.fullmv.sgt.synchronization.SubsumableLock.{GUID, TryLockResult}
+import rescala.fullmv.sgt.synchronization.SubsumableLock.TryLockResult
 
 class SubsumableLockMirror(initialLocalLeaf: SubsumableLock) extends SubsumableLockMirrorProxy {
   val localLeaf = new AtomicReference[SubsumableLock](initialLocalLeaf)
@@ -13,23 +13,23 @@ class SubsumableLockMirror(initialLocalLeaf: SubsumableLock) extends SubsumableL
 
   override def unlock(): Unit = localLeaf.get.unlock()
 
-  override def getLockedRoot: Option[GUID] = localLeaf.get.getLockedRoot
+  override def getLockedRoot: Option[Host.GUID] = localLeaf.get.getLockedRoot
 
-  override def tryLock(): (Boolean, GUID) = {
+  override def tryLock(): (Boolean, Host.GUID) = {
     val v = localLeaf.get
     val TryLockResult(success, newParent, root) = v.tryLock()
     localLeaf.compareAndSet(v, newParent)
     (success, root)
   }
 
-  override def lock(): GUID = {
+  override def lock(): Host.GUID = {
     val v = localLeaf.get()
     val TryLockResult(_, newParent, root) = v.lock()
     localLeaf.compareAndSet(v, newParent)
     root
   }
 
-  override def spinOnce(backoff: Long): GUID = {
+  override def spinOnce(backoff: Long): Host.GUID = {
     val v = localLeaf.get()
     val TryLockResult(_, newParent, root) = v.spinOnce(backoff)
     localLeaf.compareAndSet(v, newParent)

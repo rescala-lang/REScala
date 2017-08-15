@@ -2,20 +2,18 @@ package rescala.fullmv.mirrors
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import rescala.fullmv.TurnPhase
+import rescala.fullmv.{FullMVEngine, FullMVTurn, TransactionSpanningTreeNode, TurnPhase}
 import rescala.fullmv.TurnPhase.Type
-import rescala.fullmv.{FullMVTurn, TransactionSpanningTreeNode}
 import rescala.fullmv.sgt.synchronization.SubsumableLock
-import rescala.fullmv.sgt.synchronization.SubsumableLock.GUID
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
-class FullMVTurnReflection(override val guid: SubsumableLock.GUID, val proxy: FullMVTurnMirrorProxy) extends FullMVTurn with FullMVTurnReflectionProxy {
+class FullMVTurnReflection(override val host: FullMVEngine, override val guid: Host.GUID, val proxy: FullMVTurnMirrorProxy, initialPhase: TurnPhase.Type, initialPredecessors: Set[FullMVTurn]) extends FullMVTurn with FullMVTurnReflectionProxy {
   object phaseParking
-  var phase: TurnPhase.Type = TurnPhase.Initialized
+  var phase: TurnPhase.Type = initialPhase
   object subLock
-  @volatile var predecessors: Set[FullMVTurn] = Set.empty
+  @volatile var predecessors: Set[FullMVTurn] = initialPredecessors
 
   var localBranchCountBuffer = new AtomicInteger(0)
 
@@ -35,9 +33,16 @@ class FullMVTurnReflection(override val guid: SubsumableLock.GUID, val proxy: Fu
     }
   }
 
+  override def newBranchFromRemote(forState: TurnPhase.Type): Unit = {
+    assert(phase == forState, s"$this received branch differential for wrong state $forState")
+    if(localBranchCountBuffer.getAndIncrement() != 0) {
+      proxy.asyncRemoteBranchComplete(forState)
+    }
+  }
+
   override def asyncRemoteBranchComplete(forPhase: Type): Unit = activeBranchDifferential(forPhase, -1)
 
-  override def isTransitivePredecessor(txn: FullMVTurn): Boolean = predecessors(txn)
+  override def isTransitivePredecessor(txn: FullMVTurn): Boolean = txn == this || predecessors(txn)
 
   override def addReplicator(replicator: FullMVTurnReflectionProxy): (TurnPhase.Type, Set[FullMVTurn]) = subLock.synchronized {
     replicators += replicator
@@ -63,11 +68,13 @@ class FullMVTurnReflection(override val guid: SubsumableLock.GUID, val proxy: Fu
 
   override def newPhase(phase: TurnPhase.Type): Future[Unit] = {
     val reps = subLock.synchronized {
+      this.phase = phase
       phaseParking.synchronized {
-        if (this.phase < phase) {
-          this.phase = phase
-          phaseParking.notifyAll()
-        }
+        phaseParking.notifyAll()
+      }
+      if(phase == TurnPhase.Completed) {
+        predecessors = Set.empty
+        host.dropInstance(guid, this)
       }
       replicators
     }
@@ -84,9 +91,19 @@ class FullMVTurnReflection(override val guid: SubsumableLock.GUID, val proxy: Fu
   override def maybeNewReachableSubtree(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = proxy.maybeNewReachableSubtree(attachBelow, spanningSubTreeRoot)
 
   override def newSuccessor(successor: FullMVTurn): Future[Unit] = proxy.newSuccessor(successor)
-  override def getLockedRoot: Option[GUID] = proxy.getLockedRoot
+  override def getLockedRoot: Option[Host.GUID] = proxy.getLockedRoot
   override def tryLock(): SubsumableLock.TryLockResult = proxy.tryLock()
   override def lock(): SubsumableLock.TryLockResult = proxy.lock()
   override def spinOnce(backoff: Long): SubsumableLock.TryLockResult = proxy.spinOnce(backoff)
   override def trySubsume(lockedNewParent: SubsumableLock.TryLockResult): Option[SubsumableLock] = proxy.trySubsume(lockedNewParent)
+
+  override def toString: String = {
+    "FullMVTurnReflection(" + guid + " on " + host + ", " + (phase match {
+      case 0 => "Initialized"
+      case 1 => "Framing("+localBranchCountBuffer.get+")"
+      case 2 => "Executing("+localBranchCountBuffer.get+")"
+      case 3 => "WrapUp"
+      case 4 => "Completed"
+    })+ ")"
+  }
 }

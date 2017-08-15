@@ -43,6 +43,8 @@ object NotificationResultAction {
   * @tparam OutDep the type of outgoing dependency nodes
   */
 class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePersistency: ValuePersistency[V]) extends FullMVState[V, T, InDep, OutDep] {
+  override val host = init.host
+
   trait BlockOnHistoryManagedBlocker extends ManagedBlocker {
     override def block(): Boolean = NodeVersionHistory.this.synchronized {
       isReleasable || { NodeVersionHistory.this.wait(); isReleasable }

@@ -1,21 +1,20 @@
 package rescala.fullmv.sgt.synchronization
 
-import java.util.concurrent.{ConcurrentLinkedQueue, ThreadLocalRandom}
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.LockSupport
 
+import rescala.fullmv.mirrors.{Host, SubsumableLockHost}
 import rescala.fullmv.sgt.synchronization.SubsumableLock._
 import rescala.parrp.Backoff
 
 import scala.annotation.tailrec
 
-class SubsumableLockImpl extends SubsumableLock {
+class SubsumableLockImpl(override val host: SubsumableLockHost, override val guid: Host.GUID) extends SubsumableLock {
   Self =>
   val state = new AtomicReference[SubsumableLock](null)
 
-  val guid: GUID = ThreadLocalRandom.current().nextLong()
-
-  override def getLockedRoot: Option[GUID] = {
+  override def getLockedRoot: Option[Host.GUID] = {
     state.get match {
       case null => None
       case Self => Some(guid)
@@ -40,6 +39,7 @@ class SubsumableLockImpl extends SubsumableLock {
   }
 
   override def trySubsume(lockedNewParent: TryLockResult): Option[SubsumableLock] = {
+    assert(lockedNewParent.newParent.host == host, s"trySubsume $this to ${lockedNewParent.newParent} is hosted on ${lockedNewParent.newParent.host} different from $host")
     if(lockedNewParent.globalRoot == this.guid) {
       assert(state.get == Self, s"passed in a TryLockResult indicates that $this was successfully locked, but it currently isn't!")
       if (DEBUG) println(s"[${Thread.currentThread().getName}]: trySubsume $this to itself reentrant success")
@@ -130,6 +130,7 @@ class SubsumableLockImpl extends SubsumableLock {
   }
 
   override def subsume(lockedNewParent: TryLockResult): Unit = synchronized {
+    assert(lockedNewParent.newParent.host == host, s"subsume $this to ${lockedNewParent.newParent} is hosted on ${lockedNewParent.newParent.host} different from $host")
     assert(lockedNewParent.success, s"trying to subsume on failed lock")
     assert(lockedNewParent.globalRoot != guid, s"trying to create endless loops, are you?")
     assert(lockedNewParent.newParent.getLockedRoot.isDefined, s"subsume partner $lockedNewParent is unlocked.")
@@ -141,7 +142,7 @@ class SubsumableLockImpl extends SubsumableLock {
     LockSupport.unpark(peeked)
   }
 
-  override def toString = s"Lock($guid, ${state.get match {
+  override def toString = s"Lock($guid on $host, ${state.get match {
       case null => "unlocked"
       case Self => "locked"
       case other => s"subsumed($other)"

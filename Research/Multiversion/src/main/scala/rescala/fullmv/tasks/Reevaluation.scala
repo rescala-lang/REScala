@@ -40,7 +40,7 @@ case class Reevaluation(turn: FullMVTurn, node: Reactive[FullMVStruct]) extends 
 object Reevaluation {
   def doReevaluation(turn: FullMVTurn, node: Reactive[FullMVStruct]): (NotificationOutAndSuccessorOperation[FullMVTurn, Reactive[FullMVStruct]], Boolean) = {
     assert(turn.phase == TurnPhase.Executing, s"$this cannot reevaluate (requires executing phase")
-    val result = FullMVEngine.withTurn(turn){ Try { node.reevaluate(turn, node.state.reevIn(turn), node.state.incomings) } }
+    val result = turn.host.withTurn(turn){ Try { node.reevaluate(turn, node.state.reevIn(turn), node.state.incomings) } }
     result match {
       case Failure(exception) =>
         System.err.println(s"[FullMV Error] Reevaluation of $node failed with ${exception.getClass.getName}: ${exception.getMessage}; Completing reevaluation as NoChange.")

@@ -7,6 +7,7 @@ import rescala.fullmv._
 
 object ReactiveMirror {
   def apply[A](reactive: ReadableReactive[A, FullMVStruct], turn: FullMVTurn, reflectionProxy: ReactiveReflectionProxy[A], reflectionIsTransient: Boolean, rename: REName): (Array[(FullMVTurn, A)], Option[FullMVTurn]) = {
+    assert(turn.host == reactive.state.host, s"mirror installation for $reactive on ${reactive.state.host} with $turn from different ${turn.host}")
     def getValue(turn: FullMVTurn): A = turn.staticAfter(reactive)
     val mirror = new ReactiveMirror(getValue, reflectionProxy, rename)
 
@@ -26,6 +27,7 @@ object ReactiveMirror {
 class ReactiveMirror[A](val getValue: FullMVTurn => A, val reflectionProxy: ReactiveReflectionProxy[A], rename: REName) extends RENamed(rename) with Reactive[FullMVStruct] with FullMVState[Nothing, FullMVTurn, InDep[FullMVStruct], Reactive[FullMVStruct]] {
   override type Value = Nothing
   override protected[rescala] val state = this
+  override val host: FullMVEngine = null
   override def incrementFrame(txn: FullMVTurn): FramingBranchResult[FullMVTurn, Reactive[FullMVStruct]] = {
     txn.activeBranchDifferential(TurnPhase.Framing, 1)
     reflectionProxy.asyncIncrementFrame(txn)

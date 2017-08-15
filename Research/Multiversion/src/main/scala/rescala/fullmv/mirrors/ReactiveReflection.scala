@@ -11,41 +11,41 @@ import rescala.fullmv.{FullMVEngine, FullMVState, FullMVStruct, FullMVTurn, Turn
 
 trait ReactiveReflection[-P] extends WriteableReactive[P, FullMVStruct] with Reactive[FullMVStruct] with ReactiveReflectionProxy[P] {
   self: RENamed =>
-  def submit(action: FullMVAction): Unit = FullMVEngine.threadPool.submit(action)
+  def buffer(turn: FullMVTurn, value: P): Unit
+  def submit(action: FullMVAction): Unit
 
   override def asyncIncrementFrame(turn: FullMVTurn): Unit = {
-    turn.activeBranchDifferential(TurnPhase.Framing, 1)
+    turn.newBranchFromRemote(TurnPhase.Framing)
     submit(Framing(turn, this))
   }
   override def asyncIncrementSupersedeFrame(turn: FullMVTurn, supersede: FullMVTurn): Unit = {
-    turn.activeBranchDifferential(TurnPhase.Framing, 1)
+    turn.newBranchFromRemote(TurnPhase.Framing)
     submit(SupersedeFraming(turn, this, supersede))
   }
   override def asyncResolvedUnchanged(turn: FullMVTurn): Unit = {
-    turn.activeBranchDifferential(TurnPhase.Executing, 1)
+    turn.newBranchFromRemote(TurnPhase.Executing)
     submit(Notification(turn, this, changed = false))
   }
   override def asyncResolvedUnchangedFollowFrame(turn: FullMVTurn, followFrame: FullMVTurn): Unit = {
-    turn.activeBranchDifferential(TurnPhase.Executing, 1)
+    turn.newBranchFromRemote(TurnPhase.Executing)
     submit(NotificationWithFollowFrame(turn, this, changed = false, followFrame))
   }
   override def asyncNewValue(turn: FullMVTurn, value: P): Unit = {
-    turn.activeBranchDifferential(TurnPhase.Executing, 1)
+    turn.newBranchFromRemote(TurnPhase.Executing)
     buffer(turn, value)
     submit(Notification(turn, this, changed = true))
   }
   override def asyncNewValueFollowFrame(turn: FullMVTurn, value: P, followFrame: FullMVTurn): Unit = {
-    turn.activeBranchDifferential(TurnPhase.Executing, 1)
+    turn.newBranchFromRemote(TurnPhase.Executing)
     buffer(turn, value)
     submit(NotificationWithFollowFrame(turn, this, changed = true, followFrame))
   }
-
-  def buffer(turn: FullMVTurn, value: P): Unit
 }
 
-class ReactiveReflectionImpl[P](var ignoreTurn: Option[FullMVTurn], initialState: FullMVState[Pulse[P], FullMVTurn, InDep[FullMVStruct], Reactive[FullMVStruct]], rename: REName) extends Base[P, FullMVStruct](initialState, rename) with ReactiveReflection[Pulse[P]] {
+class ReactiveReflectionImpl[P](val host: FullMVEngine, var ignoreTurn: Option[FullMVTurn], initialState: FullMVState[Pulse[P], FullMVTurn, InDep[FullMVStruct], Reactive[FullMVStruct]], rename: REName) extends Base[P, FullMVStruct](initialState, rename) with ReactiveReflection[Pulse[P]] {
   val _buffer = new ConcurrentHashMap[FullMVTurn, Pulse[P]]()
   override def buffer(turn: FullMVTurn, value: Pulse[P]): Unit = _buffer.put(turn, value)
+  override def submit(action: FullMVAction): Unit = host.threadPool.submit(action)
 
   override protected[rescala] def reevaluate(turn: Turn[FullMVStruct], before: Value, indeps: Set[InDep[FullMVStruct]]): ReevaluationResult[FullMVStruct] = {
     val value = _buffer.remove(turn)

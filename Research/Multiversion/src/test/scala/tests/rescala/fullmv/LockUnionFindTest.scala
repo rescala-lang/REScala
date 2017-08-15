@@ -1,6 +1,7 @@
 package tests.rescala.fullmv
 
 import org.scalatest.FunSuite
+import rescala.fullmv.mirrors.SubsumableLockHostImpl
 import rescala.fullmv.sgt.synchronization.SubsumableLock.TryLockResult
 import rescala.fullmv.sgt.synchronization.SubsumableLockImpl
 import rescala.testhelper.Spawn
@@ -9,9 +10,10 @@ import scala.concurrent.TimeoutException
 import scala.util.{Failure, Try}
 
 class LockUnionFindTest extends FunSuite {
+  object host extends SubsumableLockHostImpl
   test("tryLock works"){
     // we can lock
-    val a = new SubsumableLockImpl()
+    val a = host.newLock()
     assert(a.tryLock() === TryLockResult(success = true, a, a.guid))
 
     // lock is exclusive
@@ -24,7 +26,7 @@ class LockUnionFindTest extends FunSuite {
 
   test("lock works") {
     // we can lock
-    val a = new SubsumableLockImpl()
+    val a = host.newLock()
     assert(Spawn{a.lock()}.join(101) === TryLockResult(success = true, a, a.guid))
 
     // lock is exclusive
@@ -41,8 +43,8 @@ class LockUnionFindTest extends FunSuite {
   }
 
   test("union works") {
-    val a = new SubsumableLockImpl
-    val b = new SubsumableLockImpl
+    val a = host.newLock()
+    val b = host.newLock()
 
     assert(a.tryLock() === TryLockResult(success = true, a, a.guid))
     val resB = b.tryLock()
@@ -67,7 +69,7 @@ class LockUnionFindTest extends FunSuite {
   }
 
   test("subsume correctly wakes all threads") {
-    val a, b = new SubsumableLockImpl()
+    val a, b = host.newLock()
     assert(a.tryLock().success)
     val resB = b.tryLock()
     assert(resB.success)

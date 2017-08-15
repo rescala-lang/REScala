@@ -6,15 +6,14 @@ import rescala.core.Node.InDep
 import rescala.core.{Reactive, ReadableReactive, TurnImpl, ValuePersistency}
 import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation.{NextReevaluation, NoSuccessor}
 import rescala.fullmv.NotificationResultAction.{GlitchFreeReady, NotificationOutAndSuccessorOperation}
-import rescala.fullmv.mirrors.{FullMVTurnMirrorProxy, FullMVTurnReflectionProxy}
-import rescala.fullmv.sgt.synchronization.SubsumableLock
+import rescala.fullmv.mirrors.{FullMVTurnMirrorProxy, FullMVTurnReflectionProxy, Hosted}
+import rescala.fullmv.sgt.synchronization.SubsumableLockEntryPoints
 import rescala.fullmv.tasks.{Notification, Reevaluation}
 
 import scala.concurrent.Future
 
-trait FullMVTurn extends TurnImpl[FullMVStruct] with FullMVTurnMirrorProxy {
-  val guid: SubsumableLock.GUID
-  override def equals(obj: scala.Any): Boolean = obj.isInstanceOf[FullMVTurn] && obj.asInstanceOf[FullMVTurn].guid == guid
+trait FullMVTurn extends TurnImpl[FullMVStruct] with FullMVTurnMirrorProxy with SubsumableLockEntryPoints with  Hosted {
+  override val host: FullMVEngine
 
   //========================================================Internal Management============================================================
 
@@ -23,6 +22,7 @@ trait FullMVTurn extends TurnImpl[FullMVStruct] with FullMVTurnMirrorProxy {
   def phase: TurnPhase.Type
   def awaitPhase(atLeast: TurnPhase.Type): Unit
   def activeBranchDifferential(forState: TurnPhase.Type, differential: Int): Unit
+  def newBranchFromRemote(forState: TurnPhase.Type): Unit
 
   // ===== Ordering Search&Establishment External API
   // should be mirrored/buffered locally
@@ -46,7 +46,7 @@ trait FullMVTurn extends TurnImpl[FullMVStruct] with FullMVTurnMirrorProxy {
   //========================================================Scheduler Interface============================================================
 
   override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): NodeVersionHistory[P, FullMVTurn, InDep[FullMVStruct], Reactive[FullMVStruct]] = {
-    val state = new NodeVersionHistory[P, FullMVTurn, InDep[FullMVStruct], Reactive[FullMVStruct]](FullMVEngine.CREATE_PRETURN, valuePersistency)
+    val state = new NodeVersionHistory[P, FullMVTurn, InDep[FullMVStruct], Reactive[FullMVStruct]](host.dummy, valuePersistency)
     state.incrementFrame(this)
     state
   }
@@ -81,7 +81,7 @@ trait FullMVTurn extends TurnImpl[FullMVStruct] with FullMVTurnMirrorProxy {
           followReev.fork()
         } else {
           // this should be the case if reactive is created during admission or wrap-up phase
-          FullMVEngine.threadPool.submit(followReev)
+          host.threadPool.submit(followReev)
         }
       case outAndSucc: NotificationOutAndSuccessorOperation[FullMVTurn, Reactive[FullMVStruct]] =>
         assert(outAndSucc.out.isEmpty, "newly created reactive should not be able to have outgoing dependencies")
@@ -101,7 +101,7 @@ trait FullMVTurn extends TurnImpl[FullMVStruct] with FullMVTurnMirrorProxy {
     removeOutgoing.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, -1)
   }
 
-  override private[rescala] def writeIndeps(node: Reactive[FullMVStruct], indepsAfter: Set[InDep[FullMVStruct]]) = node.state.incomings = indepsAfter
+  override private[rescala] def writeIndeps(node: Reactive[FullMVStruct], indepsAfter: Set[InDep[FullMVStruct]]): Unit = node.state.incomings = indepsAfter
 
   override private[rescala] def staticBefore[P](reactive: ReadableReactive[P, FullMVStruct]) = reactive.state.staticBefore(this)
   override private[rescala] def staticAfter[P](reactive: ReadableReactive[P, FullMVStruct]) = reactive.state.staticAfter(this)

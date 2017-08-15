@@ -1,11 +1,17 @@
 package rescala.fullmv.mirrors
 
 import rescala.fullmv.{FullMVTurn, TransactionSpanningTreeNode, TurnPhase}
-import rescala.fullmv.sgt.synchronization.SubsumableLockEntryPoints
+import rescala.fullmv.sgt.synchronization.SubsumableLock
 
 import scala.concurrent.Future
 
-trait FullMVTurnMirrorProxy extends SubsumableLockEntryPoints {
+trait FullMVTurnMirrorProxy {
+  def getLockedRoot: Option[Host.GUID]
+  def tryLock(): SubsumableLock.TryLockResult
+  def lock(): SubsumableLock.TryLockResult
+  def spinOnce(backoff: Long): SubsumableLock.TryLockResult
+  def trySubsume(lockedNewParent: SubsumableLock.TryLockResult): Option[SubsumableLock]
+
   def asyncRemoteBranchComplete(forPhase: TurnPhase.Type): Unit
 
   def acquirePhaseLockAndGetEstablishmentBundle(): Future[(TurnPhase.Type, TransactionSpanningTreeNode[FullMVTurn])]

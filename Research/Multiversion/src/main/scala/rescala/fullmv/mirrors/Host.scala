@@ -1,0 +1,75 @@
+package rescala.fullmv.mirrors
+
+import java.util.concurrent.{ConcurrentHashMap, ConcurrentMap, ThreadLocalRandom}
+
+import rescala.fullmv.FullMVTurn
+import rescala.fullmv.mirrors.Host.GUID
+import rescala.fullmv.sgt.synchronization.{SubsumableLock, SubsumableLockImpl}
+
+import scala.annotation.tailrec
+
+trait Hosted {
+  val host: Host[_]
+  val guid: Host.GUID
+  override def equals(obj: scala.Any): Boolean = obj.isInstanceOf[Hosted] && obj.asInstanceOf[Hosted].guid == guid
+  override def hashCode(): Int = guid.hashCode()
+}
+
+object Host {
+  type GUID = Long
+}
+trait Host[T] {
+  def getCachedOrReceiveRemote(guid: Host.GUID)(instantiateReflection: (T => Unit) => T): T
+  def dropInstance(guid: GUID, instance: T): Unit
+  def createLocal[U <: T](create: Host.GUID => U): U
+}
+
+trait HostImpl[T] extends Host[T] {
+  val instances: ConcurrentMap[Host.GUID, T] = new ConcurrentHashMap()
+  val dummy: T
+  override def getCachedOrReceiveRemote(guid: GUID)(instantiateReflection: (T => Unit) => T): T = {
+    @inline @tailrec def findOrReserveInstance(): T = {
+      val found = instances.putIfAbsent(guid, dummy)
+      if(found != dummy) {
+        found
+      } else {
+        Thread.`yield`()
+        findOrReserveInstance()
+      }
+    }
+    val known = findOrReserveInstance()
+    if(known != null) {
+      known
+    } else {
+      instantiateReflection { instance: T =>
+        val replaced = instances.replace(guid, dummy, instance)
+        assert(replaced, s"someone stole the dummy placeholder while instantiating remotely received $guid on $this!")
+      }
+    }
+  }
+  override def dropInstance(guid: GUID, instance: T): Unit = {
+    val removed = instances.remove(guid, instance)
+    assert(removed, s"removal of $instance on $this failed")
+  }
+  override def createLocal[U <: T](create: GUID => U): U = {
+    @inline @tailrec def redoId(): GUID = {
+      val id = ThreadLocalRandom.current().nextLong()
+      val known = instances.putIfAbsent(id, dummy)
+      if(known == null) id else redoId()
+    }
+    val guid = redoId()
+    val instance = create(guid)
+    val replaced = instances.replace(guid, dummy, instance)
+    assert(replaced, s"someone stole the dummy placeholder while creating new instance $guid on $this!")
+    instance
+  }
+}
+trait SubsumableLockHost extends Host[SubsumableLock]
+
+trait SubsumableLockHostImpl extends SubsumableLockHost with HostImpl[SubsumableLock] {
+  override val dummy = new SubsumableLockImpl(this, 0L)
+  def newLock(): SubsumableLockImpl = createLocal(new SubsumableLockImpl(this, _))
+}
+trait FullMVTurnHost extends Host[FullMVTurn] {
+  val lockHost: SubsumableLockHost
+}
