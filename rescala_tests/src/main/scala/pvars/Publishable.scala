@@ -1,8 +1,9 @@
-package distributionengine
+package pvars
 
 import akka.actor.ActorRef
 import akka.pattern.ask
 import akka.util.Timeout
+import pvars.distributionengine.DistributionEngine.{PublishReadOnly, PublishVar}
 import rescala._
 import statecrdts.StateCRDT
 
@@ -19,14 +20,14 @@ import scala.concurrent.duration.{Duration, _}
   *
   * @tparam A The type of the underlying StateCRDT.
   */
-trait Publishable[A <: StateCRDT] extends Subscribable {
+trait Publishable[A <: StateCRDT] {
   lazy val changes: Event[A] = internalChanges || externalChanges
   lazy val crdtSignal: Signal[A] = changes.fold(initial) { (c1, c2) =>
     c1.merge(c2) match {
       case a: A => a
     }
   }
-  override lazy val valueSignal: Signal[A#valueType] = crdtSignal.map(_.value)
+  lazy val valueSignal: Signal[A#valueType] = crdtSignal.map(_.value)
 
   //val name: String
   val initial: A
@@ -74,9 +75,4 @@ trait Publishable[A <: StateCRDT] extends Subscribable {
     val sendMessage = engine ? PublishReadOnly(name, this)
     Await.ready(sendMessage, Duration.Inf) // make publish a blocking operation
   }
-}
-
-trait Subscribable {
-  lazy val valueSignal: Signal[_] = externalChanges.latest.map(_.value)
-  val externalChanges: Event[_ <: StateCRDT]
 }

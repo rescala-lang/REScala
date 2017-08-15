@@ -1,10 +1,10 @@
 import akka.actor.ActorSystem
 import com.typesafe.config.ConfigFactory
-import distributionengine._
+import pvars._
 import rescala._
-import statecrdts._
+import statecrdts.sequences.RGA
 
-//noinspection ScalaUnusedSymbol,ScalaUnusedSymbol
+//noinspection ScalaUnusedSymbol
 object testSignalExpressions {
   def main(args: Array[String]): Unit = {
 
@@ -14,8 +14,8 @@ object testSignalExpressions {
     val system: ActorSystem = ActorSystem("ClusterSystem", config)
     implicit val engine = system.actorOf(DistributionEngine.props("Host1", 1000), "Host1")
 
-    val c1 = PGCounter()
-    val c2 = PGCounter(1)
+    val c1 = PGrowOnlyCounter()
+    val c2 = PGrowOnlyCounter(1)
 
     val sig = Signal {
       c1() + c2()
@@ -24,12 +24,6 @@ object testSignalExpressions {
 
     val v1 = Var(List(0))
     val v2 = Var(List(1))
-
-    val test = PVar(CIncOnlyCounter(5))
-    println(test.now)
-
-    test.set(test.now.increase)
-
 
     val sig3 = Signal {
       v1() ++ v2()

@@ -1,4 +1,4 @@
-package distributionengine
+package pvars.distributionengine
 
 import java.net.InetAddress
 
@@ -8,6 +8,8 @@ import akka.cluster.pubsub._
 import akka.pattern.ask
 import akka.util.Timeout
 import com.typesafe.scalalogging._
+import pvars.Publishable
+import pvars.distributionengine.DistributionEngine._
 import rescala._
 import statecrdts._
 
@@ -20,7 +22,7 @@ import scala.util.{Failure, Success}
   * Handles distribution on the client side.
   */
 class DistributionEngine(hostName: String = InetAddress.getLocalHost.getHostAddress, val pulseEvery: Long = 1000,
-                         private var delayTime: Long = 0, private var online: Boolean = true) extends Actor {
+                         private var delayTime: Time = 0, private var online: Boolean = true) extends Actor {
 
   if (pulseEvery > 0) { //noinspection ScalaUnusedSymbol
     // update from time to time, if pulse is set
@@ -55,7 +57,7 @@ class DistributionEngine(hostName: String = InetAddress.getLocalHost.getHostAddr
     case "tick" => pVars foreach { // pulse updates every second
       case (varName: String, pVar: Publishable[StateCRDT]) => mediator ! Publish(varName, UpdateMessage(varName, pVar.crdtSignal.now, self))
     }
-    case SetDelay(time: Long) => delayTime = time
+    case SetDelay(time: Time) => delayTime = time
   }
 
   def delay(): Unit = Thread sleep delayTime
@@ -137,18 +139,34 @@ class DistributionEngine(hostName: String = InetAddress.getLocalHost.getHostAddr
 }
 
 object DistributionEngine {
+  // types
+  type Identifier = String
+  type Time = Long
+
   def props(host: String): Props = Props(new DistributionEngine(host))
 
   def props(host: String, pulseEvery: Long): Props = Props(new DistributionEngine(host, pulseEvery))
 
+  def host: InetAddress = InetAddress.getLocalHost // hostname + IP
+
   def ip: Identifier = InetAddress.getLocalHost.getHostAddress
 
-  /**
-    * Generates unique identifiers based on the current Hostname, IP address and a UUID based on the current system time.
-    *
-    * @return A new unique identifier (e.g. hostname/127.0.0.1::1274f9fe-cdf7-3f10-a7a4-33e8062d7435)
-    */
-  def genId: String = host + "::" + java.util.UUID.nameUUIDFromBytes(BigInt(System.currentTimeMillis).toByteArray)
+  // Message types:
+  final case class PublishVar(varName: String, pVar: Publishable[_ <: StateCRDT])
 
-  def host: InetAddress = InetAddress.getLocalHost // hostname + IP
+  final case class PublishReadOnly(varName: String, pVar: Publishable[_ <: StateCRDT])
+
+  final case class SubscribeVar(varName: String, event: Evt[StateCRDT])
+
+  final case class SyncVar(cVar: Publishable[_ <: StateCRDT])
+
+  final case class SyncAllMessage()
+
+  final case class UpdateMessage(varName: String, crdt: StateCRDT, hostRef: ActorRef)
+
+  final case class QueryMessage(varName: String, host: ActorRef)
+
+  final case class RegisterMessage(varName: String, host: ActorRef)
+
+  final case class SetDelay(time: Time)
 }
