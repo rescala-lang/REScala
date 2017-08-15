@@ -291,7 +291,7 @@ case class RGA[A](payload: (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[An
 
   override def remove[A1 >: A](v: Vertex[A1]): RGA[A] = RGA((vertices.remove(v), edges))
 
-  override def value: valueType = iterator.toList
+  override def value: List[A] = iterator.toList
 
   def iterator: Iterator[A] = vertexIterator.map(v => v.value)
 

@@ -16,7 +16,7 @@ class MemberListener extends Actor with ActorLogging {
 
   var nodes = Set.empty[Address]
 
-  def receive = {
+  def receive: PartialFunction[Any, Unit] = {
     case state: CurrentClusterState =>
       nodes = state.members.collect {
         case m if m.status == MemberStatus.Up => m.address

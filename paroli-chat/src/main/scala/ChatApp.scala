@@ -57,19 +57,20 @@ object ChatApp {
 
     // Create an Akka system
     val system = ActorSystem("ClusterSystem", config)
-    val distribution: ActorRef = system.actorOf(DistributionEngine.props(name), name)
+    val engine: ActorRef = system.actorOf(DistributionEngine.props(name), name)
 
-    run(name, distribution)
+    run(name, engine)
   }
 
-  def run(name: String, dist: ActorRef): Unit = {
-    val history: DistributedVertexList[String] = DistributedVertexList(dist, "ChatHistory", List())
-    history.publish()
+  def run(name: String, e: ActorRef): Unit = {
+    implicit val engine = e
+    val history: PVertexList[String] = PVertexList(List())
+    history.publish("ChatHistory")
 
     // redraw interface every time the history changes:
     history.changes += { _ => {
       val safeLine = console.getCursorBuffer().copy()
-      drawInterface(name, history.getValue.map(_.value))
+      drawInterface(name, history.value)
       console.resetPromptLine(console.getPrompt(), safeLine.toString, safeLine.cursor)
     }
     }
