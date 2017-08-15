@@ -11,7 +11,7 @@ import rescala.twoversion.TwoVersionEngineImpl
 import tests.rescala.RETests
 
 class PessimisticTest extends RETests {
-  engines(Engines.parrp, FullMVEngine)("SynchronizedReevaluation should synchronize reevaluations"){ (engine: Engine[TestStruct]) =>
+  engines(Engines.parrp, FullMVEngine.default)("SynchronizedReevaluation should synchronize reevaluations"){ (engine: Engine[TestStruct]) =>
     import engine._
 
     val v1 = Var(false)
@@ -37,7 +37,7 @@ class PessimisticTest extends RETests {
     assert(s2.now === true)
   }
 
-  engines(Engines.parrp, FullMVEngine)("Pessimistic Engines should safely execute concurrently admitted updates to summed signals"){ engine =>
+  engines(Engines.parrp, FullMVEngine.default)("Pessimistic Engines should safely execute concurrently admitted updates to summed signals"){ engine =>
     import engine._
 
     val size = 10
@@ -62,7 +62,7 @@ class PessimisticTest extends RETests {
   }
 
   // This deadlocks for ParRP, because it blocks turns from starting to run concurrently if their regions intersect beforehand
-  engines(FullMVEngine)("safely execute concurrently running updates on summed signals"){ engine =>
+  engines(FullMVEngine.default)("safely execute concurrently running updates on summed signals"){ engine =>
     import engine._
 
     val size = 10
@@ -82,7 +82,7 @@ class PessimisticTest extends RETests {
     assert(sum.now === size)
   }
 
-  engines(Engines.parrp, FullMVEngine)("Pessimistic Engines should correctly execute crossed dynamic discoveries"){ engine =>
+  engines(Engines.parrp, FullMVEngine.default)("Pessimistic Engines should correctly execute crossed dynamic discoveries"){ engine =>
     import engine._
 
     val v1 = Var(0)
@@ -184,7 +184,7 @@ class PessimisticTest extends RETests {
     assert(unregs === 0)
   }
 
-  engines(Engines.parrp, FullMVEngine)("Pessimistic Engines should not retrofit a reevaluation for t2, after a dependency might have been added and removed again inside a single t1 While Owned By t2"){ engine =>
+  engines(Engines.parrp, FullMVEngine.default)("Pessimistic Engines should not retrofit a reevaluation for t2, after a dependency might have been added and removed again inside a single t1 While Owned By t2"){ engine =>
     import engine._
 
     val bl0 = Var(false)
@@ -257,7 +257,7 @@ class PessimisticTest extends RETests {
     assert(Set(List(turn1, turn1), List(turn1)).contains(reeval), " -- for reference, turn2 was "+turn2)
   }
 
-  engines(Engines.parrp, FullMVEngine)("pessimistic engines should add two dynamic dependencies and remove only one"){ engine =>
+  engines(Engines.parrp, FullMVEngine.default)("pessimistic engines should add two dynamic dependencies and remove only one"){ engine =>
     import engine._
 
     val bl0 = Var(false)
