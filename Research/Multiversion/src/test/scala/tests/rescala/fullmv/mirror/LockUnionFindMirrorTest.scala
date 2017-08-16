@@ -9,7 +9,7 @@ import rescala.fullmv.mirrors.localcloning.SubsumableLockLocalClone
 import scala.concurrent.TimeoutException
 
 class LockUnionFindMirrorTest extends FunSuite {
-  val host0, hostA, hostB = new SubsumableLockHostImpl {}
+  val host0, hostA, hostB = new SubsumableLockHostImpl
   test("instance lookup and equality"){
     val a = host0.newLock()
     assert((SubsumableLockLocalClone(a, host0) eq a) === true)

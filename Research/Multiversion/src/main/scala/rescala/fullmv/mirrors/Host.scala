@@ -17,6 +17,7 @@ trait Hosted {
 
 object Host {
   type GUID = Long
+  val dummyGuid: GUID = 0L
 }
 trait Host[T] {
   def getCachedOrReceiveRemote(guid: Host.GUID)(instantiateReflection: (T => Unit) => T): T
@@ -54,8 +55,12 @@ trait HostImpl[T] extends Host[T] {
   override def createLocal[U <: T](create: GUID => U): U = {
     @inline @tailrec def redoId(): GUID = {
       val id = ThreadLocalRandom.current().nextLong()
-      val known = instances.putIfAbsent(id, dummy)
-      if(known == null) id else redoId()
+      if(id == Host.dummyGuid) {
+        redoId()
+      } else {
+        val known = instances.putIfAbsent(id, dummy)
+        if(known == null) id else redoId()
+      }
     }
     val guid = redoId()
     val instance = create(guid)
@@ -66,8 +71,8 @@ trait HostImpl[T] extends Host[T] {
 }
 trait SubsumableLockHost extends Host[SubsumableLock]
 
-trait SubsumableLockHostImpl extends SubsumableLockHost with HostImpl[SubsumableLock] {
-  override val dummy = new SubsumableLockImpl(this, 0L)
+class SubsumableLockHostImpl extends SubsumableLockHost with HostImpl[SubsumableLock] {
+  override val dummy = new SubsumableLockImpl(this, Host.dummyGuid)
   def newLock(): SubsumableLockImpl = createLocal(new SubsumableLockImpl(this, _))
 }
 trait FullMVTurnHost extends Host[FullMVTurn] {

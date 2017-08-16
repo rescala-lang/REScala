@@ -13,7 +13,7 @@ class ReactiveMirrorTest extends FunSuite {
     val reflection = ReactiveLocalClone(input, engineB)
 
     assert({import engineB._; reflection.now} === 5)
-    val _ = {import engineA._; input.set(123)}
+    ;{import engineA._; input.set(123)}
     assert({import engineB._; reflection.now} === 123)
   }
 
@@ -23,7 +23,7 @@ class ReactiveMirrorTest extends FunSuite {
     val derived = {import engineB._; reflection.map(_ * 2)}
 
     assert({import engineB._; derived.now} === 10)
-    val _ = {import engineA._; input.set(123)}
+    ;{import engineA._; input.set(123)}
     assert({import engineB._; derived.now} === 246)
   }
 
@@ -48,7 +48,7 @@ class ReactiveMirrorTest extends FunSuite {
     assert(tracker === ArrayBuffer((("1b", ("1a", 5)), 5, ("2b", ("2a", 5)))))
     tracker.clear()
 
-    val _ = {import engineA._; input.set(123)}
+    ;{import engineA._; input.set(123)}
     assert({import engineB._; derived.now} === ((("1b", ("1a", 123)), 123, ("2b", ("2a", 123)))))
     assert(tracker === ArrayBuffer((("1b", ("1a", 123)), 123, ("2b", ("2a", 123)))))
   }
@@ -75,7 +75,7 @@ class ReactiveMirrorTest extends FunSuite {
     assert(tracker === ArrayBuffer((None, None, None))) // because dynamic events are stupid :) This *should* be tracker.isEmpty === true
     tracker.clear()
 
-    val _ = {import engineA._; input.fire(123)}
+    ;{import engineA._; input.fire(123)}
     assert({import engineB._; hold.now} === List((Some(("1b", ("1a", 123))), Some(123), Some(("2b", ("2a", 123))))))
     assert(tracker === ArrayBuffer((Some(("1b", ("1a", 123))), Some(123), Some(("2b", ("2a", 123))))))
   }

@@ -3,7 +3,7 @@ package rescala.fullmv
 import java.util.concurrent.ForkJoinPool
 
 import rescala.core.{EngineImpl, ReadableReactive}
-import rescala.fullmv.mirrors.{FullMVTurnHost, HostImpl, SubsumableLockHostImpl}
+import rescala.fullmv.mirrors.{FullMVTurnHost, Host, HostImpl, SubsumableLockHostImpl}
 import rescala.fullmv.tasks.{Framing, Notification}
 
 import scala.util.Try
@@ -12,8 +12,8 @@ class FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn, FullMVTurnImpl] 
   override object lockHost extends SubsumableLockHostImpl
   def newTurn(): FullMVTurnImpl = createLocal(new FullMVTurnImpl(this, _, Thread.currentThread(), lockHost.newLock()))
   override val dummy: FullMVTurnImpl = {
-    val dummy = new FullMVTurnImpl(this, 0, null, null)
-    instances.put(0, dummy)
+    val dummy = new FullMVTurnImpl(this, Host.dummyGuid, null, null)
+    instances.put(Host.dummyGuid, dummy)
     dummy.awaitAndSwitchPhase(TurnPhase.Completed)
     dummy
   }
