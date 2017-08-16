@@ -10,6 +10,7 @@ import rescala.fullmv.sgt.synchronization.SubsumableLock.TryLockResult
 import retier.transmitter._
 
 import scala.annotation.tailrec
+import scala.concurrent.Future
 
 object SubsumableLockTransmittable {
   type EndPointWithInfrastructure[T] = Endpoint[MessageWithInfrastructure[T], MessageWithInfrastructure[T]]
@@ -68,8 +69,12 @@ object SubsumableLockTransmittable {
       case (Host.dummyGuid, _, requestId, returns) =>
         handleResponse(requestId, returns)
       case (receiver, op, requestId, parameters) =>
-        val response = handleRequest(endpoint, receiverCache.get(receiver), op, parameters)
-        endpoint.send((Host.dummyGuid, 0, requestId, response))
+        // TODO better choice than global?
+        import scala.concurrent.ExecutionContext.Implicits.global
+        Future {
+          val response = handleRequest(endpoint, receiverCache.get(receiver), op, parameters)
+          endpoint.send((Host.dummyGuid, 0, requestId, response))
+        }
     }
     override def send(value: SubsumableLock, remote: RemoteRef, endpoint: EndPointWithInfrastructure[ParametersOrReturns]): MessageWithInfrastructure[ParametersOrReturns] = {
       assert(value.host == host)

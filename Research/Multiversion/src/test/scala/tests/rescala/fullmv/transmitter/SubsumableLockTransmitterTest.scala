@@ -52,24 +52,24 @@ class SubsumableLockTransmitterTest extends FunSuite {
         try {
           val remoteB = getRemote(TCP("localhost", portA))
 
-//          val lock = newLock()
-//          val lockA = remoteA()
-//          val lockB = remoteB()
-//
-//          val res = lock.tryLock()
-//          assert(res.success === true)
-//          val resA = lockA.trySubsume(res)
-//          assert(resA.isEmpty === true)
-//          res.newParent.unlock()
-//
-//          val resB = lockB.tryLock()
-//          assert(resB.success === true)
-//          val res2 = lock.trySubsume(resB)
-//          assert(res2.isEmpty === true)
-//
-//          val resA2 = lockA.tryLock()
-//          assert(resA2.success === false)
-//          assert(resA2.globalRoot === lockB.guid)
+          val lock = newLock()
+          val lockA = remoteA()
+          val lockB = remoteB()
+
+          val res = lock.tryLock()
+          assert(res.success === true)
+          val resA = lockA.trySubsume(res)
+          assert(resA.isEmpty === true)
+          res.newParent.unlock()
+
+          val resB = lockB.tryLock()
+          assert(resB.success === true)
+          val res2 = lock.trySubsume(resB)
+          assert(res2.isEmpty === true)
+
+          val resA2 = lockA.tryLock()
+          assert(resA2.success === false)
+          assert(resA2.globalRoot === lockB.guid)
         } finally {
           hostB.terminate
         }
