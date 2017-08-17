@@ -6,13 +6,12 @@ import rescala.core.Node.InDep
 import rescala.core.{Reactive, ReadableReactive, TurnImpl, ValuePersistency}
 import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation.{NextReevaluation, NoSuccessor}
 import rescala.fullmv.NotificationResultAction.{GlitchFreeReady, NotificationOutAndSuccessorOperation}
-import rescala.fullmv.mirrors.{FullMVTurnMirrorProxy, FullMVTurnReflectionProxy, Hosted}
-import rescala.fullmv.sgt.synchronization.SubsumableLockEntryPoints
+import rescala.fullmv.mirrors.{FullMVTurnProxy, FullMVTurnReflectionProxy, Hosted}
 import rescala.fullmv.tasks.{Notification, Reevaluation}
 
 import scala.concurrent.Future
 
-trait FullMVTurn extends TurnImpl[FullMVStruct] with FullMVTurnMirrorProxy with SubsumableLockEntryPoints with  Hosted {
+trait FullMVTurn extends TurnImpl[FullMVStruct] with FullMVTurnProxy with Hosted {
   override val host: FullMVEngine
 
   //========================================================Internal Management============================================================

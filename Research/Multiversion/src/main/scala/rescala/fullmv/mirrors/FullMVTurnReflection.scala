@@ -4,12 +4,11 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import rescala.fullmv.{FullMVEngine, FullMVTurn, TransactionSpanningTreeNode, TurnPhase}
 import rescala.fullmv.TurnPhase.Type
-import rescala.fullmv.sgt.synchronization.SubsumableLock
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
-class FullMVTurnReflection(override val host: FullMVEngine, override val guid: Host.GUID, val proxy: FullMVTurnMirrorProxy, initialPhase: TurnPhase.Type, initialPredecessors: Set[FullMVTurn]) extends FullMVTurn with FullMVTurnReflectionProxy {
+class FullMVTurnReflection(override val host: FullMVEngine, override val guid: Host.GUID, override val proxy: FullMVTurnProxy, initialPhase: TurnPhase.Type, initialPredecessors: Set[FullMVTurn]) extends FullMVTurn with SubsumableLockReflectionMethodsToProxy with FullMVTurnReflectionProxy {
   object phaseParking
   var phase: TurnPhase.Type = initialPhase
   object subLock
@@ -91,11 +90,6 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
   override def maybeNewReachableSubtree(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = proxy.maybeNewReachableSubtree(attachBelow, spanningSubTreeRoot)
 
   override def newSuccessor(successor: FullMVTurn): Future[Unit] = proxy.newSuccessor(successor)
-  override def getLockedRoot: Option[Host.GUID] = proxy.getLockedRoot
-  override def tryLock(): SubsumableLock.TryLockResult = proxy.tryLock()
-  override def lock(): SubsumableLock.TryLockResult = proxy.lock()
-  override def spinOnce(backoff: Long): SubsumableLock.TryLockResult = proxy.spinOnce(backoff)
-  override def trySubsume(lockedNewParent: SubsumableLock.TryLockResult): Option[SubsumableLock] = proxy.trySubsume(lockedNewParent)
 
   override def toString: String = {
     "FullMVTurnReflection(" + guid + " on " + host + ", " + (phase match {

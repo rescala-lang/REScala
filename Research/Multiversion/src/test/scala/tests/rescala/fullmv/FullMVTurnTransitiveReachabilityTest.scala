@@ -18,7 +18,7 @@ class FullMVTurnTransitiveReachabilityTest extends FunSuite {
     trees.values.reduce{ (tA, tB) =>
       val resA = tA.tryLock()
       assert(resA.success)
-      val resB = tB.trySubsume(resA)
+      val resB = tB.trySubsume(resA.newParent)
       assert(resB.isEmpty)
       resA.newParent.unlock()
       tA

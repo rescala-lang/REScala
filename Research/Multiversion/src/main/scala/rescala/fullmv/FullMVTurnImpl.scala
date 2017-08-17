@@ -207,10 +207,10 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
   //========================================================SSG SCC Mutual Exclusion Control============================================================
 
   override def getLockedRoot: Option[Host.GUID] = subsumableLock.get.getLockedRoot
-  override def lock(): SubsumableLock.TryLockResult = {
+  override def lock(): SubsumableLock = {
     val l = subsumableLock.get()
     val res = l.lock()
-    subsumableLock.compareAndSet(l, res.newParent)
+    subsumableLock.compareAndSet(l, res)
     res
   }
   override def tryLock(): SubsumableLock.TryLockResult = {
@@ -219,16 +219,27 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
     subsumableLock.compareAndSet(l, res.newParent)
     res
   }
-  override def spinOnce(backoff: Long): SubsumableLock.TryLockResult = {
+  override def spinOnce(backoff: Long): SubsumableLock = {
     val l = subsumableLock.get()
     val res = l.spinOnce(backoff)
-    subsumableLock.compareAndSet(l, res.newParent)
+    subsumableLock.compareAndSet(l, res)
     res
   }
-  override def trySubsume(lockedNewParent: SubsumableLock.TryLockResult): Option[SubsumableLock] = {
+  override def trySubsume(lockedNewParent: SubsumableLock): Option[SubsumableLock] = {
     val l = subsumableLock.get()
     val res = l.trySubsume(lockedNewParent)
-    subsumableLock.compareAndSet(l, res.getOrElse(lockedNewParent.newParent))
+    subsumableLock.compareAndSet(l, res.getOrElse(lockedNewParent))
+    res
+  }
+  override def subsume(lockedNewParent: SubsumableLock): Unit = {
+    val l = subsumableLock.get()
+    l.subsume(lockedNewParent)
+    subsumableLock.compareAndSet(l, lockedNewParent)
+  }
+  override def unlock(): SubsumableLock = {
+    val l = subsumableLock.get()
+    val res = l.unlock()
+    subsumableLock.compareAndSet(l, res)
     res
   }
 

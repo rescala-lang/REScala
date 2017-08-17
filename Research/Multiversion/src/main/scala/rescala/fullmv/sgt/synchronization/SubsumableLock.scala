@@ -1,46 +1,32 @@
 package rescala.fullmv.sgt.synchronization
 
-import rescala.fullmv.mirrors.{Host, Hosted, SubsumableLockHost}
+import rescala.fullmv.mirrors._
 import rescala.parrp.Backoff
 
 import scala.annotation.tailrec
 
-trait SubsumableLockEntryPoints extends Hosted {
-  // used for assertions only
-  def getLockedRoot: Option[Host.GUID]
-  def tryLock(): SubsumableLock.TryLockResult
-  def lock(): SubsumableLock.TryLockResult
-  def spinOnce(backoff: Long): SubsumableLock.TryLockResult
-  // if failed, returns Some(newParent) that should be used as new Parent
-  // if successful, returns None; lockedNewParent.newParent should be used as newParent.
-  // newParent is not a uniform part of all possible return values to avoid establishing unnecessary back-and-forth remote paths
-  def trySubsume(lockedNewParent: SubsumableLock.TryLockResult): Option[SubsumableLock]
-}
-
-trait SubsumableLock extends SubsumableLockEntryPoints {
+trait SubsumableLock extends SubsumableLockProxy with Hosted {
   override val host: SubsumableLockHost
-  def subsume(lockedNewParent: SubsumableLock.TryLockResult): Unit
-  def unlock(): Unit
 }
 
 object SubsumableLock {
   val DEBUG = false
-  case class TryLockResult(success: Boolean, newParent: SubsumableLock, globalRoot: Host.GUID)
+  case class TryLockResult(success: Boolean, newParent: SubsumableLock)
 
-  def underLock[R](lock: SubsumableLockEntryPoints)(thunk: => R): R = {
-    executeAndRelease(thunk, lock.lock().newParent)
+  def underLock[R](lock: SubsumableLockProxy with Hosted)(thunk: => R): R = {
+    executeAndRelease(thunk, lock.lock())
   }
-  def underLock[R](lockA: SubsumableLockEntryPoints, lockB: SubsumableLockEntryPoints)(thunk: => R): R = {
+  def underLock[R](lockA: SubsumableLockProxy with Hosted, lockB: SubsumableLockProxy with Hosted)(thunk: => R): R = {
     assert(lockA.host == lockB.host)
-    executeAndRelease(thunk, lockAndMerge(lockA, lockB).newParent)
+    executeAndRelease(thunk, lockAndMerge(lockA, lockB))
   }
-  private def executeAndRelease[R](thunk: => R, locked: SubsumableLock): R = {
+  private def executeAndRelease[R](thunk: => R, locked: SubsumableLockProxy): R = {
     try { thunk } finally {
       locked.unlock()
     }
   }
 
-  private def lockAndMerge(lockA: SubsumableLockEntryPoints, lockB: SubsumableLockEntryPoints): TryLockResult = {
+  private def lockAndMerge(lockA: SubsumableLockProxy with Hosted, lockB: SubsumableLockProxy with Hosted): SubsumableLock = {
     if(DEBUG) System.out.println(s"[${Thread.currentThread().getName}] syncing $lockA and $lockB")
 //    lockAndMergeTryLockSpinOnly(lockA, lockB, new Backoff())
 //    lockAndMergeWithBackoff(lockA, lockB, new Backoff())
@@ -48,17 +34,17 @@ object SubsumableLock {
     lockAndMergeWithRemoteSpin(lockA, lockB, new Backoff())
   }
 
-  @tailrec private def lockAndMergeTryLockSpinOnly(lockA: SubsumableLockEntryPoints, lockB: SubsumableLockEntryPoints, backoff: Backoff): TryLockResult = {
-    val resA = lockA.tryLock()
-    if(!resA.success) {
+  @tailrec private def lockAndMergeTryLockSpinOnly(lockA: SubsumableLockProxy with Hosted, lockB: SubsumableLockProxy with Hosted, backoff: Backoff): SubsumableLock = {
+    val TryLockResult(success, lockedRoot) = lockA.tryLock()
+    if(!success) {
       backoff.backoff()
-      lockAndMergeTryLockSpinOnly(resA.newParent, lockB, backoff)
+      lockAndMergeTryLockSpinOnly(lockedRoot, lockB, backoff)
     } else {
-      val resB = lockB.trySubsume(resA)
+      val resB = lockB.trySubsume(lockedRoot)
       if(resB.isEmpty) {
-        resA
+        lockedRoot
       } else {
-        resA.newParent.unlock()
+        lockedRoot.unlock()
 //        backoff.reset()
         backoff.backoff()
         lockAndMergeTryLockSpinOnly(lockB, lockA, backoff)
@@ -66,40 +52,40 @@ object SubsumableLock {
     }
   }
 
-  @tailrec private def lockAndMergeWithBackoff(lockA: SubsumableLockEntryPoints, lockB: SubsumableLockEntryPoints, backoff: Backoff): TryLockResult = {
-    val resA = lockA.lock()
-    val resB = lockB.trySubsume(resA)
+  @tailrec private def lockAndMergeWithBackoff(lockA: SubsumableLockProxy with Hosted, lockB: SubsumableLockProxy with Hosted, backoff: Backoff): SubsumableLock = {
+    val lockedRoot = lockA.lock()
+    val resB = lockB.trySubsume(lockedRoot)
     if(resB.isEmpty) {
-      resA
+      lockedRoot
     } else {
-      resA.newParent.unlock()
+      lockedRoot.unlock()
       backoff.backoff()
       lockAndMergeWithBackoff(lockB, lockA, backoff)
     }
   }
 
-  @tailrec private def lockAndMergeWithoutBackoff(lockA: SubsumableLockEntryPoints, lockB: SubsumableLockEntryPoints): TryLockResult = {
-    val resA = lockA.lock()
-    val resB = lockB.trySubsume(resA)
+  @tailrec private def lockAndMergeWithoutBackoff(lockA: SubsumableLockProxy with Hosted, lockB: SubsumableLockProxy with Hosted): SubsumableLock = {
+    val lockedRoot = lockA.lock()
+    val resB = lockB.trySubsume(lockedRoot)
     if(resB.isEmpty) {
-      resA
+      lockedRoot
     } else {
-      resA.newParent.unlock()
+      lockedRoot.unlock()
       lockAndMergeWithoutBackoff(lockB, lockA)
     }
   }
 
-  private def lockAndMergeWithRemoteSpin(lockA: SubsumableLockEntryPoints, lockB: SubsumableLockEntryPoints, backoff: Backoff): TryLockResult = {
-    val resA = lockA.lock()
-    @tailrec def tryBandSpinAifFailed(resA: TryLockResult): TryLockResult = {
-      val resB = lockB.trySubsume(resA)
+  private def lockAndMergeWithRemoteSpin(lockA: SubsumableLockProxy with Hosted, lockB: SubsumableLockProxy with Hosted, backoff: Backoff): SubsumableLock = {
+    val lockedRoot = lockA.lock()
+    @tailrec def tryBandSpinAifFailed(lockedRoot: SubsumableLock): SubsumableLock = {
+      val resB = lockB.trySubsume(lockedRoot)
       if (resB.isEmpty) {
-        resA
+        lockedRoot
       } else {
-        val newResA = lockA.spinOnce(backoff.getAndIncrementBackoff())
-        tryBandSpinAifFailed(newResA)
+        val newLockedRoot = lockA.spinOnce(backoff.getAndIncrementBackoff())
+        tryBandSpinAifFailed(newLockedRoot)
       }
     }
-    tryBandSpinAifFailed(resA)
+    tryBandSpinAifFailed(lockedRoot)
   }
 }

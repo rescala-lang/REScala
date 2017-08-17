@@ -58,26 +58,26 @@ class SubsumableLockTransmitterTest extends FunSuite {
 
           val res = lock.tryLock()
           assert(res.success === true)
-          val resA = lockA.trySubsume(res)
+          val resA = lockA.trySubsume(res.newParent)
           assert(resA.isEmpty === true)
           res.newParent.unlock()
 
           val resB = lockB.tryLock()
           assert(resB.success === true)
-          val res2 = lock.trySubsume(resB)
+          val res2 = lock.trySubsume(resB.newParent)
           assert(res2.isEmpty === true)
 
           val resA2 = lockA.tryLock()
           assert(resA2.success === false)
-          assert(resA2.globalRoot === lockB.guid)
+          assert(resA2.newParent === lockB)
         } finally {
-          hostB.terminate
+          hostB.terminate()
         }
       } finally {
-        hostA.terminate
+        hostA.terminate()
       }
     } finally {
-      host0.terminate
+      host0.terminate()
     }
   }
 }

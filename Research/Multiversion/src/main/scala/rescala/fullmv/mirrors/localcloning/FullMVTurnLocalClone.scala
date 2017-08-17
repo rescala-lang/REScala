@@ -2,7 +2,6 @@ package rescala.fullmv.mirrors.localcloning
 
 import rescala.fullmv.TurnPhase.Type
 import rescala.fullmv.mirrors._
-import rescala.fullmv.sgt.synchronization.SubsumableLock
 import rescala.fullmv.{FullMVEngine, FullMVTurn, TransactionSpanningTreeNode, TurnPhase}
 
 import scala.concurrent.duration.Duration
@@ -19,8 +18,8 @@ object FullMVTurnLocalClone {
   def apply(turn: FullMVTurn, reflectionHost: FullMVEngine): FullMVTurn = {
     reflectionHost.getCachedOrReceiveRemote(turn.guid) { cacheNow =>
       val mirrorHost = turn.host
-      val localMirror: FullMVTurnMirrorProxy = turn
-      val mirrorProxy: FullMVTurnMirrorProxy = new FullMVTurnMirrorProxy {
+      val localMirror: FullMVTurnProxy = turn
+      val mirrorProxy: FullMVTurnProxy = new SubsumableLockLocalCloneProxy(mirrorHost.lockHost, localMirror, reflectionHost.lockHost) with FullMVTurnProxy {
         override def blockingAddPredecessorAndReleasePhaseLock(predecessorSpanningTree: TransactionSpanningTreeNode[FullMVTurn]): Unit = {
           localMirror.blockingAddPredecessorAndReleasePhaseLock(localCloneSpanningTree(predecessorSpanningTree, mirrorHost))
         }
@@ -34,13 +33,6 @@ object FullMVTurnLocalClone {
         override def asyncRemoteBranchComplete(forPhase: Type): Unit = localMirror.asyncRemoteBranchComplete(forPhase)
         override def newSuccessor(successor: FullMVTurn): Future[Unit] = localMirror.newSuccessor(FullMVTurnLocalClone(successor, mirrorHost))
         override def asyncReleasePhaseLock(): Unit = localMirror.asyncReleasePhaseLock()
-        override def spinOnce(backoff: Long): SubsumableLock.TryLockResult = SubsumableLockLocalClone.localCloneTryLockResult(localMirror.spinOnce(backoff), reflectionHost.lockHost)
-        override def trySubsume(lockedNewParent: SubsumableLock.TryLockResult): Option[SubsumableLock] = {
-          localMirror.trySubsume(SubsumableLockLocalClone.localCloneTryLockResult(lockedNewParent, mirrorHost.lockHost)).map(SubsumableLockLocalClone(_, reflectionHost.lockHost))
-        }
-        override def tryLock(): SubsumableLock.TryLockResult = SubsumableLockLocalClone.localCloneTryLockResult(localMirror.tryLock(), reflectionHost.lockHost)
-        override def lock(): SubsumableLock.TryLockResult = SubsumableLockLocalClone.localCloneTryLockResult(localMirror.lock(), reflectionHost.lockHost)
-        override def getLockedRoot: Option[Host.GUID] = localMirror.getLockedRoot
       }
 
       val reflectionPromise = Promise[FullMVTurnReflection]

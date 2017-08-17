@@ -14,23 +14,23 @@ class LockUnionFindTest extends FunSuite {
   test("tryLock works"){
     // we can lock
     val a = host.newLock()
-    assert(a.tryLock() === TryLockResult(success = true, a, a.guid))
+    assert(a.tryLock() === TryLockResult(success = true, a))
 
     // lock is exclusive
-    assert(a.tryLock() === TryLockResult(success = false, a, a.guid))
+    assert(a.tryLock() === TryLockResult(success = false, a))
 
     // unlock works
     a.unlock()
-    assert(a.tryLock() === TryLockResult(success = true, a, a.guid))
+    assert(a.tryLock() === TryLockResult(success = true, a))
   }
 
   test("lock works") {
     // we can lock
     val a = host.newLock()
-    assert(Spawn{a.lock()}.join(101) === TryLockResult(success = true, a, a.guid))
+    assert(Spawn{a.lock()}.join(101) === a)
 
     // lock is exclusive
-    assert(a.tryLock() === TryLockResult(success = false, a, a.guid))
+    assert(a.tryLock() === TryLockResult(success = false, a))
     // and blocks..
     val blockedB = Spawn{a.lock()}
     intercept[TimeoutException] {
@@ -39,33 +39,33 @@ class LockUnionFindTest extends FunSuite {
 
     // unlock unblocks
     a.unlock()
-    assert(blockedB.join(104) === TryLockResult(success = true, a, a.guid))
+    assert(blockedB.join(104) === a)
   }
 
   test("union works") {
     val a = host.newLock()
     val b = host.newLock()
 
-    assert(a.tryLock() === TryLockResult(success = true, a, a.guid))
+    assert(a.tryLock() === TryLockResult(success = true, a))
     val resB = b.tryLock()
-    assert(resB === TryLockResult(success = true, b, b.guid))
+    assert(resB === TryLockResult(success = true, b))
 
-    a.subsume(resB)
+    a.subsume(resB.newParent)
 
     assert(a.getLockedRoot.contains(b.guid))
     assert(b.getLockedRoot.contains(b.guid))
 
     b.unlock()
 
-    assert(a.tryLock() === TryLockResult(success = true, b, b.guid))
-    assert(a.tryLock() === TryLockResult(success = false, b, b.guid))
-    assert(b.tryLock() === TryLockResult(success = false, b, b.guid))
+    assert(a.tryLock() === TryLockResult(success = true, b))
+    assert(a.tryLock() === TryLockResult(success = false, b))
+    assert(b.tryLock() === TryLockResult(success = false, b))
 
     b.unlock()
 
-    assert(b.tryLock() === TryLockResult(success = true, b, b.guid))
-    assert(b.tryLock() === TryLockResult(success = false, b, b.guid))
-    assert(a.tryLock() === TryLockResult(success = false, b, b.guid))
+    assert(b.tryLock() === TryLockResult(success = true, b))
+    assert(b.tryLock() === TryLockResult(success = false, b))
+    assert(a.tryLock() === TryLockResult(success = false, b))
   }
 
   test("subsume correctly wakes all threads") {
@@ -77,12 +77,11 @@ class LockUnionFindTest extends FunSuite {
     var counter = 0
     def spawnIncrementUnderLockThread(lock: SubsumableLockImpl) = {
       Spawn {
-        val res = lock.lock()
-        assert(res.success)
+        val newParent = lock.lock()
         val c = counter
         counter += 1
-        res.newParent.unlock()
-        c -> res.globalRoot
+        newParent.unlock()
+        c -> newParent.guid
       }
     }
 
@@ -95,9 +94,9 @@ class LockUnionFindTest extends FunSuite {
       case _ => true
     }, s"All threads should have timed out, but some did not.")
 
-    a.subsume(resB)
+    a.subsume(resB.newParent)
     resB.newParent.unlock()
 
-    assert(queued.map(_.join(50)).toSet === (0 until 10).map(_ -> resB.globalRoot).toSet)
+    assert(queued.map(_.join(50)).toSet === (0 until 10).map(_ -> resB.newParent.guid).toSet)
   }
 }
