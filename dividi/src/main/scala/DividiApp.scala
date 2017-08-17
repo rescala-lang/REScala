@@ -17,13 +17,7 @@ import scalafx.scene.control._
   * @see scalafx.scene.layout.BorderPane
   */
 object DividiApp extends JFXApp {
-  // define event fired on submit
-  type Title = String
-  type Amount = BigDecimal
-  type Payer = String
-  if (username == "") System.exit(0)
-  type Timestamp = Long
-  val logger: Logger = Logger("Dividi")
+  // ask for username
   val enterNameDialog = new TextInputDialog(defaultValue = "Alice") {
     initOwner(stage)
     title = "Dividi"
@@ -31,7 +25,26 @@ object DividiApp extends JFXApp {
     contentText = "Please enter your name:"
   }
   val username = enterNameDialog.showAndWait().getOrElse("")
+  if (username == "") System.exit(0)
 
+  val port: Int = {
+    if (username == "Alice") 2500
+    else if (username == "Bob") 2501
+    else if (username == "Charlie") 2502
+    else 2503
+  }
+
+  // create an Akka system & engine
+  val config = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + port).
+    withFallback(ConfigFactory.load())
+  val system = ActorSystem("ClusterSystem", config)
+
+  implicit val engine = system.actorOf(DistributionEngine.props(username), username)
+
+  val onlineGui = BooleanProperty(true)
+  val delayGui = IntegerProperty(0)
+
+  // bind gui properties to engine
   onlineGui.onChange((_, _, newVal) => {
     DistributionEngine.setOnline(newVal.booleanValue())
     if (newVal.booleanValue())
@@ -39,54 +52,59 @@ object DividiApp extends JFXApp {
     else
       logger.debug(s"Setting engine to offline mode")
   })
-  val port: Int = {
-    if (username == "Alice") 2500
-    else if (username == "Bob") 2501
-    else if (username == "Charlie") 2502
-    else 2503
-  }
   delayGui.onChange((_, _, newVal) => {
     DistributionEngine.setDelay(newVal.longValue() * 1000)
     logger.debug(s"Setting engine delay to ${newVal.longValue() * 1000}ms")
   })
-  // create an Akka system & engine
-  val config = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + port).
-    withFallback(ConfigFactory.load())
-  val system = ActorSystem("ClusterSystem", config)
-  implicit val engine = system.actorOf(DistributionEngine.props(username), username)
-  // bind gui properties to engine
-  val onlineGui = BooleanProperty(true)
-  val delayGui = IntegerProperty(0)
-  val submitEvent = Evt[Transaction]()
+
+  // define event fired on submit
+  type Title = String
+  type Amount = BigDecimal
+  type Payer = String
+  type Timestamp = Long
+  val logger: Logger = Logger("Dividi")
+
+  case class Transaction(title: Title, amount: Amount, payer: Payer, sharedBetween: Set[Payer], timestamp: Timestamp) {
+    override def toString: String = {
+      val sharers = sharedBetween.toList.sorted
+      if (sharers.length > 1) s"$payer paid $amount for $title. Shared between ${sharers.dropRight(1).mkString(", ")} and ${sharers.last}."
+      else s"$payer paid $amount for $title. Shared between ${sharers.mkString(",")}."
+    }
+  }
+
+  val newTransaction = Evt[Transaction]()
+  // listen for new transactions and append them to the log
+  newTransaction.observe(transaction => transactionLog.append(transaction))
+
   // instanciate shared log
   val transactionLog = PGrowOnlyLog[Transaction]()
-  // extract all people involved
-  val peopleInvolved = Signal {
-    transactionLog().foldLeft(Set[Payer](username))((people, transaction) =>
-      people + transaction.payer ++ transaction.sharedBetween).toList.sorted
-  }
   transactionLog.publish("TransactionLog")
-  // listen for new transactions and add them to the log
-  submitEvent.observe(transaction => transactionLog.append(transaction))
+
+  // extract all people involved
+  val peopleInvolved: Signal[Set[Payer]] = Signal {
+    transactionLog().foldLeft(Set[Payer](username))((people, transaction) =>
+      people + transaction.payer ++ transaction.sharedBetween)
+  }
+
   // calculate a map keeping track of the debts of all users
   val debts: Signal[Map[Payer, Amount]] = Signal {
-    transactionLog().foldLeft(Map[Payer, Amount]().withDefaultValue(0: Amount))((map, transaction) => {
+    transactionLog().foldLeft(Map[Payer, Amount]().withDefaultValue(0: Amount))((debts, transaction) => {
       val payer = transaction.payer
       val amount = transaction.amount
       val share = transaction.amount / transaction.sharedBetween.size
 
       // map with updated debt for all people involved in transaction
-      val updatedDebtorEntries = transaction.sharedBetween.foldLeft(map)((map, debtor) => {
+      val updatedDebtorEntries = transaction.sharedBetween.foldLeft(debts)((map, debtor) => {
         map + (debtor -> (map(debtor) - share).setScale(2, RoundingMode.CEILING))
       })
 
       // add positive amount for payer
       updatedDebtorEntries + (payer -> (updatedDebtorEntries(payer) + amount))
-    }
-    )
+    })
   }
+
+  // propose transactions to settle debts
   val howToSettle: Signal[List[(Payer, Payer, Amount)]] = debts.map(resolveDebts(_))
-  //debts.observe(println(_))
 
   def resolveDebts(debts: Map[Payer, Amount], neededTransactions: List[(Payer, Payer, Amount)] = List()): List[(Payer, Payer, Amount)] = {
     if (!debts.exists(_.getValue < 0))
@@ -120,15 +138,6 @@ object DividiApp extends JFXApp {
     }
   }
 
-  case class Transaction(title: Title, amount: Amount, payer: Payer, sharedBetween: Set[Payer], timestamp: Timestamp) {
-    override def toString: String = {
-      val sharers = sharedBetween.toList.sorted
-      if (sharers.length > 1) s"$payer paid $amount for $title. Shared between ${sharers.dropRight(1).mkString(", ")} and ${sharers.last}."
-      else s"$payer paid $amount for $title. Shared between ${sharers.mkString(",")}."
-    }
-  }
-
-  debts.observe(d => println(resolveDebts(d)))
-
   stage = MainStage
+  stage.onCloseRequest = _ => system.terminate()
 }
