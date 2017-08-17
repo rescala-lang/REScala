@@ -1,7 +1,7 @@
 package statecrdts
 package sets
 
-import pvars.distributionengine.DistributionEngine.Identifier
+import statecrdts.sets.ORSet.Identifier
 
 /**
   * Implementation of an Observed-Remove Set as described by Shapiro et al. (2011)

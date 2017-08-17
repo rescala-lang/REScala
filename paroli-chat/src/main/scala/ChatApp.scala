@@ -2,33 +2,12 @@ import java.util.Scanner
 
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent._
-import statecrdts._
-import distributionengine._
+import pvars._
 import com.typesafe.config.ConfigFactory
 import akka.actor._
 import akka.actor.Props
 
 import scala.tools.jline
-
-/*
-object HelloStageDemo extends JFXApp {
-  stage = new JFXApp.PrimaryStage {
-    title.value = "Hello Stage"
-    width = 600
-    height = 450
-    scene = new Scene {
-      fill = White
-      content = new Rectangle {
-        x = 25
-        y = 40
-        width = 100
-        height = 100
-        fill <== when (hover) choose Green otherwise Red
-      }
-    }
-  }
-}
-*/
 
 /**
   * Created by julian on 26.07.17.
@@ -44,7 +23,7 @@ object ChatApp {
   else {
     val config = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + 2553).
       withFallback(ConfigFactory.load())
-    val system = ActorSystem("ClusterSystem")
+    val system = ActorSystem("ClusterSystem", config)
     val joinAddress = Cluster(system).selfAddress
     Cluster(system).join(joinAddress)
 

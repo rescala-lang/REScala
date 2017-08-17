@@ -44,6 +44,10 @@ case class RGOA[A](payload: (GSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[Any]
 
   def addRight[A1 >: A](position: Vertex[A1], v: Vertex[A]): RGOA[A] = insert(position, v)
 
+  def append(a: A): RGOA[A] = {
+    append(Vertex(a))
+  }
+
   def append(v: Vertex[A]): RGOA[A] = {
     val position = if (vertexIterator.nonEmpty) vertexIterator.toList.last else Vertex.start
     insert(position, v)

@@ -13,7 +13,7 @@ libraryDependencies += "de.tuda.stg" %% "rescala" % "0.19.0"
 
 // akka:
 libraryDependencies ++= Seq(
-  "com.typesafe.akka" %% "akka-slf4j" % "2.5.3",
+  "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
   "com.typesafe.akka" %% "akka-actor" % akkaVersion,
   "com.typesafe.akka" %% "akka-remote" % akkaVersion,
   "com.typesafe.akka" %% "akka-cluster" % akkaVersion,

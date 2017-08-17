@@ -75,15 +75,18 @@ object testVertices {
     val u2 = Vertex("[Bob]: Hey Alice!")
     val u3 = Vertex("[Bob]: How is Eve doing?")
 
-    var r: RGA[String] = RGA.empty
+    var r: RGOA[String] = RGOA()
     r = r.append(v1)
     r = r.append(v2)
     r = r.addRight(v2, v3)
 
     var r3: RGOA[String] = RGOA.empty
 
-    var s:RGA[String] = RGA.empty
+    var s:RGOA[String] = RGOA()
     s = s.append(u1).append(u2).append(u3)
+
+    println(s.contains(u1))
+    println(s.containsValue("[Bob]: Hey Alice!"))
 
     println(v1.timestamp < u1.timestamp)
 

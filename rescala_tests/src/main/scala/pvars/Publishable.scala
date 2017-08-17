@@ -3,7 +3,7 @@ package pvars
 import akka.actor.ActorRef
 import akka.pattern.ask
 import akka.util.Timeout
-import pvars.distributionengine.DistributionEngine.{PublishReadOnly, PublishVar}
+import pvars.DistributionEngine.{PublishReadOnly, PublishVar}
 import rescala._
 import statecrdts.StateCRDT
 
