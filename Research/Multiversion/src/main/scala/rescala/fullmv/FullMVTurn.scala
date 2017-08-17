@@ -9,8 +9,6 @@ import rescala.fullmv.NotificationResultAction.{GlitchFreeReady, NotificationOut
 import rescala.fullmv.mirrors.{FullMVTurnProxy, FullMVTurnReflectionProxy, Host, Hosted}
 import rescala.fullmv.tasks.{Notification, Reevaluation}
 
-import scala.concurrent.Future
-
 trait FullMVTurn extends TurnImpl[FullMVStruct] with FullMVTurnProxy with Hosted {
   override val host: FullMVEngine
 
@@ -26,15 +24,6 @@ trait FullMVTurn extends TurnImpl[FullMVStruct] with FullMVTurnProxy with Hosted
   // ===== Ordering Search&Establishment External API
   // should be mirrored/buffered locally
   def isTransitivePredecessor(txn: FullMVTurn): Boolean
-  // must be remote calls
-  def acquirePhaseLockAndGetEstablishmentBundle(): Future[(TurnPhase.Type, TransactionSpanningTreeNode[FullMVTurn])]
-  def blockingAddPredecessorAndReleasePhaseLock(predecessorSpanningTree: TransactionSpanningTreeNode[FullMVTurn]): Unit
-  def asyncReleasePhaseLock(): Unit
-
-  // ===== Ordering Establishment Internal Operations
-  // must be remote calls
-  def maybeNewReachableSubtree(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit]
-  def newSuccessor(successor: FullMVTurn): Future[Unit]
 
   // ===== Remote Replication Stuff
   // should be local-only, but needs to be available on remote mirrors too to support multi-hop communication.
