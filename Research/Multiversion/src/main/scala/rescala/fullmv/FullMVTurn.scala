@@ -6,7 +6,7 @@ import rescala.core.Node.InDep
 import rescala.core.{Reactive, ReadableReactive, TurnImpl, ValuePersistency}
 import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation.{NextReevaluation, NoSuccessor}
 import rescala.fullmv.NotificationResultAction.{GlitchFreeReady, NotificationOutAndSuccessorOperation}
-import rescala.fullmv.mirrors.{FullMVTurnProxy, FullMVTurnReflectionProxy, Hosted}
+import rescala.fullmv.mirrors.{FullMVTurnProxy, FullMVTurnReflectionProxy, Host, Hosted}
 import rescala.fullmv.tasks.{Notification, Reevaluation}
 
 import scala.concurrent.Future
@@ -38,7 +38,7 @@ trait FullMVTurn extends TurnImpl[FullMVStruct] with FullMVTurnProxy with Hosted
 
   // ===== Remote Replication Stuff
   // should be local-only, but needs to be available on remote mirrors too to support multi-hop communication.
-  def addReplicator(replicator: FullMVTurnReflectionProxy): (TurnPhase.Type, Set[FullMVTurn])
+  def addReplicator(replicator: FullMVTurnReflectionProxy): (TurnPhase.Type, Set[Host.GUID])
   def removeReplicator(replicator: FullMVTurnReflectionProxy): Unit
 
 

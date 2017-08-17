@@ -38,12 +38,11 @@ object FullMVTurnLocalClone {
       val reflectionPromise = Promise[FullMVTurnReflection]
       val reflectionProxy: FullMVTurnReflectionProxy = new FullMVTurnReflectionProxy {
         override def newPhase(phase: Type): Future[Unit] = Await.result(reflectionPromise.future, Duration.Inf).newPhase(phase)
-        override def newPredecessors(predecessors: Iterable[FullMVTurn]): Future[Unit] = Await.result(reflectionPromise.future, Duration.Inf).newPredecessors(predecessors.map(FullMVTurnLocalClone.apply(_, reflectionHost)))
+        override def newPredecessors(predecessors: Iterable[Host.GUID]): Future[Unit] = Await.result(reflectionPromise.future, Duration.Inf).newPredecessors(predecessors)
       }
-      val (initPhase, mirrorInitPreds) = turn.addReplicator(reflectionProxy)
-      val reflectionInitPreds = mirrorInitPreds.map(FullMVTurnLocalClone(_, reflectionHost))
+      val (initPhase, initPreds) = turn.addReplicator(reflectionProxy)
 
-      val reflection = new FullMVTurnReflection(reflectionHost, turn.guid, mirrorProxy, initPhase, reflectionInitPreds)
+      val reflection = new FullMVTurnReflection(reflectionHost, turn.guid, mirrorProxy, initPhase, initPreds)
       cacheNow(reflection)
       if(initPhase == TurnPhase.Completed) {
         reflectionHost.dropInstance(turn.guid, reflection)

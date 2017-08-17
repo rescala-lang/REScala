@@ -148,7 +148,8 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
       }
 
       val newSuccessorRemoteCalls = buffer.map(_.newSuccessor(this))
-      val newPredecessorRemoteCalls = reps.map(_.newPredecessors(buffer))
+      val preds = buffer.map(_.guid)
+      val newPredecessorRemoteCalls = reps.map(_.newPredecessors(preds))
 
       for(call <- newSuccessorRemoteCalls) {
         Await.result(call, Duration.Zero) // TODO Duration.Inf
@@ -185,11 +186,11 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
 
   //========================================================State Replication============================================================
 
-  override def addReplicator(replicator: FullMVTurnReflectionProxy): (TurnPhase.Type, Set[FullMVTurn]) = {
+  override def addReplicator(replicator: FullMVTurnReflectionProxy): (TurnPhase.Type, Set[Host.GUID]) = {
     phaseLock.lock()
     try{
       replicators += replicator
-      (phase, predecessorSpanningTreeNodes.keySet - this)
+      (phase, (predecessorSpanningTreeNodes.keySet - this).map(_.guid))
     } finally {
       phaseLock.unlock()
     }

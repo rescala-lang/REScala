@@ -8,11 +8,11 @@ import rescala.fullmv.TurnPhase.Type
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
-class FullMVTurnReflection(override val host: FullMVEngine, override val guid: Host.GUID, override val proxy: FullMVTurnProxy, initialPhase: TurnPhase.Type, initialPredecessors: Set[FullMVTurn]) extends FullMVTurn with SubsumableLockReflectionMethodsToProxy with FullMVTurnReflectionProxy {
+class FullMVTurnReflection(override val host: FullMVEngine, override val guid: Host.GUID, override val proxy: FullMVTurnProxy, initialPhase: TurnPhase.Type, initialPredecessors: Set[Host.GUID]) extends FullMVTurn with SubsumableLockReflectionMethodsToProxy with FullMVTurnReflectionProxy {
   object phaseParking
   var phase: TurnPhase.Type = initialPhase
   object subLock
-  @volatile var predecessors: Set[FullMVTurn] = initialPredecessors
+  @volatile var predecessors: Set[Host.GUID] = initialPredecessors
 
   var localBranchCountBuffer = new AtomicInteger(0)
 
@@ -41,9 +41,9 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
 
   override def asyncRemoteBranchComplete(forPhase: Type): Unit = activeBranchDifferential(forPhase, -1)
 
-  override def isTransitivePredecessor(txn: FullMVTurn): Boolean = txn == this || predecessors(txn)
+  override def isTransitivePredecessor(txn: FullMVTurn): Boolean = txn == this || predecessors(txn.guid)
 
-  override def addReplicator(replicator: FullMVTurnReflectionProxy): (TurnPhase.Type, Set[FullMVTurn]) = subLock.synchronized {
+  override def addReplicator(replicator: FullMVTurnReflectionProxy): (TurnPhase.Type, Set[Host.GUID]) = subLock.synchronized {
     replicators += replicator
     (phase, predecessors)
   }
@@ -52,7 +52,7 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
     replicators -= replicator
   }
 
-  override def newPredecessors(predecessors: Iterable[FullMVTurn]): Future[Unit] = {
+  override def newPredecessors(predecessors: Iterable[Host.GUID]): Future[Unit] = {
     val reps = subLock.synchronized {
       this.predecessors ++= predecessors
       Future.successful(Unit)
