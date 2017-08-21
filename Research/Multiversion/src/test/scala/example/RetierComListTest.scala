@@ -54,7 +54,14 @@ object Client extends App {
     }else if (input == "add"){
       println("enter a value")
       input = scala.io.StdIn.readLine()
-      add(input.toInt).onComplete(x => println(x))
+      try
+        {
+          add(input.toInt).onComplete(x => println(x))
+        }
+      catch
+      {
+        case e:Exception => println("please enter a valid number")
+      }
     }
     Thread.sleep(10)
   }
