@@ -8,11 +8,11 @@ import rescala.fullmv.TurnPhase.Type
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
-class FullMVTurnReflection(override val host: FullMVEngine, override val guid: Host.GUID, override val proxy: FullMVTurnProxy, initialPhase: TurnPhase.Type, initialPredecessors: Set[Host.GUID]) extends FullMVTurn with SubsumableLockReflectionMethodsToProxy with FullMVTurnReflectionProxy {
+class FullMVTurnReflection(override val host: FullMVEngine, override val guid: Host.GUID, override val proxy: FullMVTurnProxy) extends FullMVTurn with SubsumableLockReflectionMethodsToProxy with FullMVTurnReflectionProxy {
   object phaseParking
-  var phase: TurnPhase.Type = initialPhase
+  var phase: TurnPhase.Type = TurnPhase.Initialized
   object subLock
-  @volatile var predecessors: Set[Host.GUID] = initialPredecessors
+  @volatile var predecessors: Set[Host.GUID] = Set()
 
   var localBranchCountBuffer = new AtomicInteger(0)
 
@@ -48,10 +48,6 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
     (phase, predecessors)
   }
 
-  override def removeReplicator(replicator: FullMVTurnReflectionProxy): Unit = subLock.synchronized {
-    replicators -= replicator
-  }
-
   override def newPredecessors(predecessors: Iterable[Host.GUID]): Future[Unit] = {
     val reps = subLock.synchronized {
       this.predecessors ++= predecessors
@@ -67,18 +63,22 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
 
   override def newPhase(phase: TurnPhase.Type): Future[Unit] = {
     val reps = subLock.synchronized {
-      this.phase = phase
-      phaseParking.synchronized {
-        phaseParking.notifyAll()
+      if(this.phase < phase) {
+        this.phase = phase
+        phaseParking.synchronized {
+          phaseParking.notifyAll()
+        }
+        if (phase == TurnPhase.Completed) {
+          predecessors = Set.empty
+          host.dropInstance(guid, this)
+        }
+        replicators
+      } else {
+        Set.empty
       }
-      if(phase == TurnPhase.Completed) {
-        predecessors = Set.empty
-        host.dropInstance(guid, this)
-      }
-      replicators
     }
     val forwards = reps.map(_.newPhase(phase))
-    for(call <- forwards) {
+    for (call <- forwards) {
       Await.result(call, Duration.Zero) // TODO Duration.Inf
     }
     Future.successful(Unit)

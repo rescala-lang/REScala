@@ -196,15 +196,6 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
     }
   }
 
-  override def removeReplicator(replicator: FullMVTurnReflectionProxy): Unit = {
-    phaseLock.lock()
-    try{
-      replicators -= replicator
-    } finally {
-      phaseLock.unlock()
-    }
-  }
-
   //========================================================SSG SCC Mutual Exclusion Control============================================================
 
   override def getLockedRoot: Option[Host.GUID] = subsumableLock.get.getLockedRoot

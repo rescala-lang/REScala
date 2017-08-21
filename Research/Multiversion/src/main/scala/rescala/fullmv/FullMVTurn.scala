@@ -28,8 +28,6 @@ trait FullMVTurn extends TurnImpl[FullMVStruct] with FullMVTurnProxy with Hosted
   // ===== Remote Replication Stuff
   // should be local-only, but needs to be available on remote mirrors too to support multi-hop communication.
   def addReplicator(replicator: FullMVTurnReflectionProxy): (TurnPhase.Type, Set[Host.GUID])
-  def removeReplicator(replicator: FullMVTurnReflectionProxy): Unit
-
 
   //========================================================Scheduler Interface============================================================
 
