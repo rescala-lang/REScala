@@ -72,13 +72,14 @@ object DividiApp extends JFXApp {
     }
   }
 
-  val newTransaction = Evt[Transaction]()
-  // listen for new transactions and append them to the log
-  newTransaction.observe(transaction => transactionLog.append(transaction))
-
   // instanciate shared log
   val transactionLog = PGrowOnlyLog[Transaction]()
   transactionLog.publish("TransactionLog")
+
+  val newTransaction = Evt[Transaction]()
+  // listen for new transactions and append them to the log
+  //newTransaction.observe(transaction => transactionLog.append(transaction))
+  transactionLog.observe(newTransaction)
 
   // extract all people involved
   val peopleInvolved: Signal[Set[Payer]] = Signal {

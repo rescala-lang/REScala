@@ -10,6 +10,9 @@ case class PGrowOnlyLog[A](initial: RGOA[A] = RGOA[A](),
   def append(a: A): Unit = internalChanges(crdtSignal.now.append(Vertex(a)))
 
   def contains(a: A): Boolean = crdtSignal.now.containsValue(a)
+
+  // allows the log to log events of type a and append them to the log
+  def observe(e: Event[A]):Unit = e.observe(a => append(a))
 }
 
 object PGrowOnlyLog {
