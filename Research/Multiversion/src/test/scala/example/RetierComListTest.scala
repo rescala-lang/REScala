@@ -11,7 +11,7 @@ import scala.concurrent.{Await, Future}
 import rescala.fullmv.transmitter.SignalTransmittable._
 
 object Bindings1 {
-  val listBinding = Binding [Int => Unit]("listAdd")
+  val eventBinding = Binding [Evt[Int]]("listAdd")
   val variableBinding1 = Binding[Signal[List[Int]]]("variable")
 }
 //This method represents the server
@@ -20,11 +20,15 @@ object Server extends App {
   var testList1 = Var( List(1,2,3))
   def add(x: Int) = { testList1()= testList1.now :+ x}
 
+  val e0 =  Evt[Int]
+  e0 += add
+  e0(10)
+
   val registry = new Registry
   registry.listen(TCP(1099))
 
   registry.bind(Bindings1.variableBinding1)(testList1)
-  registry.bind(Bindings1.listBinding)(add)
+  registry.bind(Bindings1.eventBinding)(e0)
 
   testList1 observe println
 
@@ -45,7 +49,7 @@ object Client extends App {
 
   var input =""
   var continueProgram = true
-  val add: Int => Future[Unit] = registry.lookup(Bindings1.listBinding, remote)
+  //val e0 :  Future[Evt[Int]] = registry.lookup(Bindings1.eventBinding, remote)
   while (continueProgram) {
     println("enter \"add\" to add a vaule or \"end\" to end")
     input = scala.io.StdIn.readLine()
@@ -56,7 +60,7 @@ object Client extends App {
       input = scala.io.StdIn.readLine()
       try
         {
-          add(input.toInt).onComplete(x => println(x))
+          //e0(1)
         }
       catch
       {
