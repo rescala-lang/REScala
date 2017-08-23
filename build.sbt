@@ -54,7 +54,7 @@ lazy val documentation = project.in(file("Documentation/DocumentationProject"))
   .dependsOn(rescalaJVM, rescalaJS)
 
 
-// Extensions
+// ===================================================================================== Extensions
 
 lazy val reactiveStreams = project.in(file("Extensions/ReactiveStreams"))
   .settings(cfg.base, cfg.noPublish, lib.reactivestreams)
@@ -134,8 +134,12 @@ lazy val caseStudyMill = project.in(file("Examples/Mill"))
   .dependsOn(reswing)
   .settings(cfg.base, cfg.noPublish, name := "mill-case-study")
 
+lazy val todolist = project.in(file("Examples/Todolist"))
+  .enablePlugins(ScalaJSPlugin)
+  .dependsOn(rescalatags)
+  .settings(cfg.base, cfg.noPublish, name := "todolist", scalaSource in Compile := baseDirectory.value)
 
-// Research
+// ===================================================================================== Research
 
 lazy val fullmv = project.in(file("Research/Multiversion"))
   .settings(cfg.base, name := "rescala-multiversion", cfg.test, cfg.noPublish)
@@ -153,7 +157,7 @@ lazy val microbench = project.in(file("Research/Microbenchmarks"))
   .dependsOn(stm, fullmv)
 
 
-// ================================== settings
+// ===================================================================================== Settings
 
 lazy val cfg = new {
 
