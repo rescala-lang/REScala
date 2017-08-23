@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html><head>
+  <meta charset="UTF-8">
+  <title>Reactive TODO</title>
+  <style>
+html { margin: 20px; padding: 0; }
+body {
+  font: 16px/1.4 sans;
+  background: #eee; color: #4d4d4d;
+  max-width: 550px; margin: 0 auto;
+}
+ul { list-style: none; padding: 0; }
+input { font-size: 1rem; padding: 1rem; border: none; }
+input:not([type]) { width: 90%; }
+.descrip { width: 80%; }
+.task { padding: .5em; background: white; margin: .5rem 0; padding: 0 .5rem; }
+.task > label { margin: -.4rem; padding: .4rem; }
+.done { background: #eee; opacity: .5; }
+.done > input { text-decoration: line-through; }
+
+.info:before { content: "✔"; color: white; background: silver; display: block; width: 1.3em; margin: auto; font-size: 60px; margin-bottom: .2em; }
+.info { text-align: center; font: 30px sans; padding-top: 4rem; color: silver; }
+
+.span-input { width: 1.3rem; display: inline-block; }
+.hidden { display: none; }
+body { position: relative; }
+  </style>
+</head><body>
+  <noscript>Please enable javascript!</noscript>
+  <script type="text/javascript" src="./target/scala-2.12/daimpl-fastopt.js"></script>
+  <script type="text/javascript">
+    daimpl.simpletodo.SimpleTodo().main();
+  </script>
+</body></html>

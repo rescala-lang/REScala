@@ -1,0 +1,44 @@
+### rescalatags ###
+
++ [warn] Statement may either be unnecessary or have side effects.
+         Signal expressions should have no side effects.
+
+  Signal { signal_list_of_channel_names().map { channel_name =>
+      div( onclick:={ e: dom.raw.Event => signal_list_of_channel_names ()= ... } )
+  } }
+
+  Onclick-Handlers müssen manchmal in einem Singal drin definiert werden,
+  falls sie lokale Variablen aus der Umgebung brauchen. Diese Onclick-Handler
+  setzen dann häufig ein Var. In diesem Fall generiert rescala die oben genannte
+  Warnung.
+
+  Das ist jedoch nicht passend und deswegen verwirrend, da der onclick-Handler
+  erst später und außerhalb des Signals ausgeführt wird.
+
+
+### multitier ###
+
++ Für jede Stelle an der ein Objekt über das Netzwerk geschickt wird,
+  wird eine Serialisierfunktion erzeugt. Auch wenn eine Funktion pro Objekttyp
+  reichen würde. Compile-Zeit wird dadurch lang.
+
++ Es ist klar, dass man in einer richtigen Web-Anwendung Logins und
+  User implementieren muss.
+
+  Trotzdem ist es unangenehm, dass man auch in simplen
+  Programmen mit multitier, Logik implementieren muss, um den einzelnen
+  Clients, die nicht serialisierbar sind, eine serialisierbare Identität
+  (zb. Nummer) zuzuordnen, damit man sie über das Netzwerk übertragen kann.
+
+  Wenn man beispielsweise die Nachricht schicken möchte ("Nutzer 3 hat das und
+  das gemacht").
+
++ Sobald irgendein Fehler mit multitier passiert, ensteht ein überfüssiger
+  zusätzlicher Fehler am Ende der Klasse ( in der Nähe des '}' ), der in etwa
+  so lautet:
+
+  "constructor definition not allowed here"
+
++ Man sollte vllt irgendwo nochmal erklären, wo man Klassen / Funktionen
+  definiert, so dass sie in placed[X] { ... } benutzt werden können...
+
