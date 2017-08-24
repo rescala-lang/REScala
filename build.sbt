@@ -6,7 +6,7 @@ maxErrors := 5
 crossScalaVersions := Seq(cfg.version_211, cfg.version_212)
 (incOptions in ThisBuild) := (incOptions in ThisBuild).value.withLogRecompileOnMacro(false)
 
-lazy val rescalaAggregate = project.in(file(".")).aggregate(rescalaJVM,
+lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(rescalaJVM,
   rescalaJS, microbench, reswing, examples, examplesReswing, caseStudyEditor,
   caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags,
   datastructures, universe, reactiveStreams, documentation,
@@ -162,7 +162,7 @@ lazy val microbench = project.in(file("Research/Microbenchmarks"))
 lazy val cfg = new {
 
   val version_211 = "2.11.11"
-  val version_212 = "2.12.2"
+  val version_212 = "2.12.3"
 
 
   val base = List(
@@ -170,7 +170,7 @@ lazy val cfg = new {
     version := "0.20.0-SNAPSHOT",
     scalaVersion := version_212,
     baseScalac,
-    autoAPIMappings := true
+    autoAPIMappings := true // scaladoc
   )
 
   val test = List(
@@ -259,12 +259,12 @@ lazy val lib = new {
 
   lazy val rss = libraryDependencies ++= Seq(
     "joda-time" % "joda-time" % "2.9.9",
-    "org.joda" % "joda-convert" % "1.8.1",
+    "org.joda" % "joda-convert" % "1.8.3",
     "org.codehaus.jsr166-mirror" % "jsr166y" % "1.7.0",
     "org.scala-lang.modules" %% "scala-xml" % "1.0.6")
 
   lazy val scalaswing = libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "2.0.0"
-  lazy val scalatest = libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.3" % "test"
+  lazy val scalatest = libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.4" % "test"
 
 
   lazy val circe = {
@@ -276,8 +276,8 @@ lazy val lib = new {
   }
 
   val reactivestreams = libraryDependencies ++= List(
-    "org.reactivestreams" % "reactive-streams" % "1.0.0",
-    "org.reactivestreams" % "reactive-streams-tck" % "1.0.0"
+    "org.reactivestreams" % "reactive-streams" % "1.0.1",
+    "org.reactivestreams" % "reactive-streams-tck" % "1.0.1"
   )
 
   val scalaStm = libraryDependencies += "org.scala-stm" %% "scala-stm" % "0.8"
