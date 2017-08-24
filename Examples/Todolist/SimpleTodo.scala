@@ -56,7 +56,9 @@ object SimpleTodo extends JSApp {
           // TODO why does this work, implicit function?
           `class`:= Signal{ if (t.done()) "task done" else "task" } ,
 
-          Signal { input(
+          // TODO: should be inner signal
+          {
+            input(
             `type`:="checkbox",
 
             // TODO ? use attrValue / .asAttr
@@ -65,7 +67,7 @@ object SimpleTodo extends JSApp {
             onchange:={ e: dom.UIEvent =>
               t.done() = e.target.asInstanceOf[dom.html.Input].checked
             }
-          ) }.asFrag,
+          ) },
 
           // bidirectional binding only with onchange, not with oninput :(
           {
