@@ -26,6 +26,9 @@ object SimpleTodo extends JSApp {
       new Task("walk the dog", false)
     ))
 
+    val newTodoInput = input(`class`:="descrip", id:="newtodo", placeholder:="new todo").render
+
+
     document.body.appendChild(div(
       h1("DO TODOS!"),
 
@@ -33,14 +36,11 @@ object SimpleTodo extends JSApp {
         `class`:="task",
         onsubmit:= { e: dom.UIEvent =>
           e.preventDefault()
-
-          val input = document.getElementById("newtodo")
-            .asInstanceOf[dom.html.Input]
-          tasks() = new Task(input.value, false) :: tasks.now
-          input.value = ""
+          tasks.transform(new Task(newTodoInput.value, false) :: _)
+          newTodoInput.value = ""
         },
         span(`class`:="span-input"),
-        input(`class`:="descrip", id:="newtodo", placeholder:="new todo")
+        newTodoInput
       ),
 
       Signal {
@@ -68,13 +68,16 @@ object SimpleTodo extends JSApp {
           ) }.asFrag,
 
           // bidirectional binding only with onchange, not with oninput :(
-          input(
-            value := t.desc(),
-            onchange := { e: dom.UIEvent =>
-              t.desc() = e.target.asInstanceOf[dom.html.Input].value
-//              tasks() = tasks.now.filter { (x)=> x.desc.now != "" }
-            }
-          )
+          {
+            lazy val todoinput: dom.html.Input = input(
+              value := t.desc(),
+              onchange := { e: dom.UIEvent =>
+                t.desc() = todoinput.value
+  //              tasks() = tasks.now.filter { (x)=> x.desc.now != "" }
+              }
+              ).render
+            todoinput
+          }
         )
       }) }.asFrag,
 
