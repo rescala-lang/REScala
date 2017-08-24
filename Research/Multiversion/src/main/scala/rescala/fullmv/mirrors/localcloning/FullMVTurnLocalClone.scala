@@ -28,7 +28,7 @@ object FullMVTurnLocalClone {
         override def asyncReleasePhaseLock(): Unit = localMirror.asyncReleasePhaseLock()
       }
 
-      val reflection = new FullMVTurnReflection(reflectionHost, turn.guid, mirrorProxy)
+      val reflection = new FullMVTurnReflection(reflectionHost, turn.guid, mirrorProxy, turn.timeout)
       cacheNow(reflection)
 
       val reflectionProxy = new FullMVTurnReflectionProxy {

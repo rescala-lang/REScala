@@ -20,6 +20,7 @@ object FramingBranchResult {
 
 sealed trait NotificationResultAction[+T, +R]
 object NotificationResultAction {
+  // branch merge: T/F, reev: wait/ready/unchanged
   case object NotGlitchFreeReady extends NotificationResultAction[Nothing, Nothing]
   case object ResolvedNonFirstFrameToUnchanged extends NotificationResultAction[Nothing, Nothing]
   case object GlitchFreeReadyButQueued extends NotificationResultAction[Nothing, Nothing]
@@ -43,9 +44,7 @@ object NotificationResultAction {
   * @tparam InDep the type of incoming dependency nodes
   * @tparam OutDep the type of outgoing dependency nodes
   */
-class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePersistency: ValuePersistency[V]) extends FullMVState[V, T, InDep, OutDep] {
-  val timeout = Duration.Inf // TODO
-
+class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePersistency: ValuePersistency[V], val timeout: Duration) extends FullMVState[V, T, InDep, OutDep] {
   override val host = init.host
 
   trait BlockOnHistoryManagedBlocker extends ManagedBlocker {

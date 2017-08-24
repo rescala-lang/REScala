@@ -8,7 +8,7 @@ import rescala.fullmv.TurnPhase.Type
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
-class FullMVTurnReflection(override val host: FullMVEngine, override val guid: Host.GUID, override val proxy: FullMVTurnProxy) extends FullMVTurn with SubsumableLockReflectionMethodsToProxy with FullMVTurnReflectionProxy {
+class FullMVTurnReflection(override val host: FullMVEngine, override val guid: Host.GUID, override val proxy: FullMVTurnProxy, timeout: Duration) extends FullMVTurn(timeout) with SubsumableLockReflectionMethodsToProxy with FullMVTurnReflectionProxy {
   object phaseParking
   var phase: TurnPhase.Type = TurnPhase.Initialized
   object subLock
@@ -56,7 +56,7 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
     }
     val forwards = reps.map(_.newPredecessors(predecessors))
     for(call <- forwards) {
-      Await.result(call, Duration.Zero) // TODO Duration.Inf
+      Await.result(call, timeout)
     }
     Future.successful(Unit)
   }
@@ -79,7 +79,7 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
     }
     val forwards = reps.map(_.newPhase(phase))
     for (call <- forwards) {
-      Await.result(call, Duration.Zero) // TODO Duration.Inf
+      Await.result(call, timeout)
     }
     Future.successful(Unit)
   }

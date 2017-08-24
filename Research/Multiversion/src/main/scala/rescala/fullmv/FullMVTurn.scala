@@ -9,7 +9,9 @@ import rescala.fullmv.NotificationResultAction.{GlitchFreeReady, NotificationOut
 import rescala.fullmv.mirrors.{FullMVTurnProxy, FullMVTurnReflectionProxy, Host, Hosted}
 import rescala.fullmv.tasks.{Notification, Reevaluation}
 
-trait FullMVTurn extends TurnImpl[FullMVStruct] with FullMVTurnProxy with Hosted {
+import scala.concurrent.duration.Duration
+
+abstract class FullMVTurn(val timeout: Duration) extends TurnImpl[FullMVStruct] with FullMVTurnProxy with Hosted {
   override val host: FullMVEngine
 
   //========================================================Internal Management============================================================
@@ -32,11 +34,12 @@ trait FullMVTurn extends TurnImpl[FullMVStruct] with FullMVTurnProxy with Hosted
   //========================================================Scheduler Interface============================================================
 
   override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): NodeVersionHistory[P, FullMVTurn, InDep[FullMVStruct], Reactive[FullMVStruct]] = {
-    val state = new NodeVersionHistory[P, FullMVTurn, InDep[FullMVStruct], Reactive[FullMVStruct]](host.dummy, valuePersistency)
+    val state = new NodeVersionHistory[P, FullMVTurn, InDep[FullMVStruct], Reactive[FullMVStruct]](host.dummy, valuePersistency, timeout)
     state.incrementFrame(this)
     state
   }
   override protected def ignite(reactive: Reactive[FullMVStruct], incoming: Set[InDep[FullMVStruct]], ignitionRequiresReevaluation: Boolean): Unit = {
+    if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this igniting $reactive on $incoming")
     incoming.foreach { discover =>
       val (successorWrittenVersions, maybeFollowFrame) = discover.state.discover(this, reactive)
       reactive.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, 1)

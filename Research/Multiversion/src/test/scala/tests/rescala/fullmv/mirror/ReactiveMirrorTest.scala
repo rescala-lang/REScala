@@ -5,9 +5,10 @@ import rescala.fullmv.FullMVEngine
 import rescala.fullmv.mirrors.localcloning.ReactiveLocalClone
 
 import scala.collection.mutable.ArrayBuffer
+import scala.concurrent.duration.Duration
 
 class ReactiveMirrorTest extends FunSuite {
-  val engineA, engineB = new FullMVEngine()
+  val engineA, engineB = new FullMVEngine(Duration.Zero)
   test("basic mirroring works") {
     val input = {import engineA._; Var(5)}
     val reflection = ReactiveLocalClone(input, engineB)

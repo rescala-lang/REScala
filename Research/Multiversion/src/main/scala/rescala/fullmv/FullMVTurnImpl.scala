@@ -13,7 +13,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
 
-class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GUID, val userlandThread: Thread, initialLock: SubsumableLock) extends FullMVTurn {
+class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GUID, val userlandThread: Thread, timeout: Duration, initialLock: SubsumableLock) extends FullMVTurn(timeout) {
   // counts the sum of in-flight notifications, in-progress reevaluations.
   var activeBranches = new AtomicInteger(0)
 
@@ -85,7 +85,6 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
     for(call <- forwards) {
       Await.result(call, Duration.Zero) // TODO Duration.Inf
     }
-    if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this switched phase.")
   }
 
 
@@ -97,7 +96,7 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
 
   private def awaitAllPredecessorsPhase(atLeast: TurnPhase.Type) = {
     val preds = predecessorSpanningTreeNodes
-    if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this awaiting phase $atLeast+ on predecessors $preds")
+    if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this awaiting phase $atLeast+ on predecessors ${preds.keySet}")
     preds.keySet.foreach { waitFor =>
       if(waitFor != this) waitFor.awaitPhase(atLeast)
     }

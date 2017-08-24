@@ -6,13 +6,14 @@ import rescala.core.{EngineImpl, ReadableReactive}
 import rescala.fullmv.mirrors.{FullMVTurnHost, Host, HostImpl, SubsumableLockHostImpl}
 import rescala.fullmv.tasks.{Framing, Notification}
 
+import scala.concurrent.duration.Duration
 import scala.util.Try
 
-class FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn, FullMVTurnImpl] with FullMVTurnHost with HostImpl[FullMVTurn] {
+class FullMVEngine(val timeout: Duration) extends EngineImpl[FullMVStruct, FullMVTurn, FullMVTurnImpl] with FullMVTurnHost with HostImpl[FullMVTurn] {
   override object lockHost extends SubsumableLockHostImpl
-  def newTurn(): FullMVTurnImpl = createLocal(new FullMVTurnImpl(this, _, Thread.currentThread(), lockHost.newLock()))
+  def newTurn(): FullMVTurnImpl = createLocal(new FullMVTurnImpl(this, _, Thread.currentThread(), timeout, lockHost.newLock()))
   override val dummy: FullMVTurnImpl = {
-    val dummy = new FullMVTurnImpl(this, Host.dummyGuid, null, null)
+    val dummy = new FullMVTurnImpl(this, Host.dummyGuid, null, Duration.Zero, null)
     instances.put(Host.dummyGuid, dummy)
     dummy.awaitAndSwitchPhase(TurnPhase.Completed)
     dummy
@@ -64,7 +65,7 @@ class FullMVEngine extends EngineImpl[FullMVStruct, FullMVTurn, FullMVTurnImpl] 
 
 object FullMVEngine {
   val SEPARATE_WRAPUP_PHASE = false
-  val DEBUG = false
+  val DEBUG = true
 
-  val default = new FullMVEngine()
+  val default = new FullMVEngine(Duration.Zero)
 }

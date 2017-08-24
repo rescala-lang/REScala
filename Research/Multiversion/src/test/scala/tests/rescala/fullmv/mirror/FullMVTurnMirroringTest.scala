@@ -8,7 +8,7 @@ import rescala.fullmv.mirrors.localcloning.FullMVTurnLocalClone
 import scala.concurrent.duration.Duration
 
 class FullMVTurnMirroringTest extends FunSuite {
-  val host0, hostA, hostB = new FullMVEngine()
+  val host0, hostA, hostB = new FullMVEngine(Duration.Zero)
   test("instance lookup and equality"){
     val a = host0.newTurn()
     val turn0 = FullMVTurnLocalClone(a, host0)

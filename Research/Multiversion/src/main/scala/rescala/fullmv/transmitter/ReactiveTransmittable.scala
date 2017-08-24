@@ -198,7 +198,7 @@ object ReactiveTransmittable {
 
     def localTurnInstance(guid: Host.GUID, endpoint: EndPointWithInfrastructure[ParametersOrReturns]): FullMVTurn = {
       host.getCachedOrReceiveRemote(guid) { doCache =>
-        val instance = new FullMVTurnReflection(host, guid, new FullMVTurnMirrorProxyToEndpoint(guid, endpoint))
+        val instance = new FullMVTurnReflection(host, guid, new FullMVTurnMirrorProxyToEndpoint(guid, endpoint), host.timeout)
         doCache(instance)
         val(_, _, _, _, initPhase, _, initPreds, _, _) = doBlocking(endpoint, ADD_REPLICATOR, allEmpty.copy(_2 = guid))
         instance.newPredecessors(initPreds)
