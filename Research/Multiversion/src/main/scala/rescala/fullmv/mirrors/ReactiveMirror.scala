@@ -63,9 +63,9 @@ class ReactiveMirror[A](val getValue: FullMVTurn => A, val reflectionProxy: Reac
   override def staticBefore(txn: FullMVTurn): Nothing = ???
   override def dynamicAfter(txn: FullMVTurn): Nothing = ???
   override def staticAfter(txn: FullMVTurn): Nothing = ???
-  override def discover(txn: FullMVTurn, add: Reactive[FullMVStruct]): (Iterable[FullMVTurn], Option[FullMVTurn]) = ???
-  override def drop(txn: FullMVTurn, remove: Reactive[FullMVStruct]): (Iterable[FullMVTurn], Option[FullMVTurn]) = ???
-  override def retrofitSinkFrames(successorWrittenVersions: Iterable[FullMVTurn], maybeSuccessorFrame: Option[FullMVTurn], arity: Int): Unit = ???
+  override def discover(txn: FullMVTurn, add: Reactive[FullMVStruct]): (Seq[FullMVTurn], Option[FullMVTurn]) = ???
+  override def drop(txn: FullMVTurn, remove: Reactive[FullMVStruct]): (Seq[FullMVTurn], Option[FullMVTurn]) = ???
+  override def retrofitSinkFrames(successorWrittenVersions: Seq[FullMVTurn], maybeSuccessorFrame: Option[FullMVTurn], arity: Int): Unit = ???
 
   override protected[rescala] def reevaluate(turn: Turn[FullMVStruct], before: Value, indeps: Set[InDep[FullMVStruct]]): ReevaluationResult[FullMVStruct] = ???
 }

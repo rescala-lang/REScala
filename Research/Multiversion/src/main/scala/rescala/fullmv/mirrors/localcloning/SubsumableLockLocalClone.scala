@@ -4,6 +4,9 @@ import rescala.fullmv.mirrors._
 import rescala.fullmv.mirrors.localcloning.SubsumableLockLocalClone.localCloneTryLockResult
 import rescala.fullmv.sgt.synchronization.SubsumableLock
 import rescala.fullmv.sgt.synchronization.SubsumableLock.TryLockResult
+import rescala.fullmv.transmitter.ReactiveTransmittable
+
+import scala.concurrent.Future
 
 object SubsumableLockLocalClone {
   def localCloneTryLockResult(tryLockResult: TryLockResult, reflectionHost: SubsumableLockHost): TryLockResult = {
@@ -23,11 +26,11 @@ object SubsumableLockLocalClone {
 }
 
 class SubsumableLockLocalCloneProxy(mirrorHost: SubsumableLockHost, localProxy: SubsumableLockProxy, reflectionHost: SubsumableLockHost) extends SubsumableLockProxy {
-  override def spinOnce(backoff: Long): SubsumableLock = SubsumableLockLocalClone(localProxy.spinOnce(backoff), reflectionHost)
-  override def unlock(): SubsumableLock = SubsumableLockLocalClone(localProxy.unlock(), reflectionHost)
-  override def trySubsume(lockedNewParent: SubsumableLock): Option[SubsumableLock] = localProxy.trySubsume(SubsumableLockLocalClone(lockedNewParent, mirrorHost)).map(SubsumableLockLocalClone(_, reflectionHost))
-  override def tryLock(): TryLockResult = localCloneTryLockResult(localProxy.tryLock(), reflectionHost)
-  override def subsume(lockedNewParent: SubsumableLock): Unit = localProxy.subsume(SubsumableLockLocalClone(lockedNewParent, mirrorHost))
-  override def lock(): SubsumableLock = SubsumableLockLocalClone(localProxy.lock(), reflectionHost)
-  override def getLockedRoot: Option[Host.GUID] = localProxy.getLockedRoot
+  override def spinOnce(backoff: Long): Future[SubsumableLock] = localProxy.spinOnce(backoff).map(SubsumableLockLocalClone(_, reflectionHost))(ReactiveTransmittable.notWorthToMoveToTaskpool)
+  override def unlock(): Future[SubsumableLock] = localProxy.unlock().map(SubsumableLockLocalClone(_, reflectionHost))(ReactiveTransmittable.notWorthToMoveToTaskpool)
+  override def trySubsume(lockedNewParent: SubsumableLock): Future[Option[SubsumableLock]] = localProxy.trySubsume(SubsumableLockLocalClone(lockedNewParent, mirrorHost)).map(_.map(SubsumableLockLocalClone(_, reflectionHost)))(ReactiveTransmittable.notWorthToMoveToTaskpool)
+  override def tryLock(): Future[TryLockResult] = localProxy.tryLock().map(localCloneTryLockResult(_, reflectionHost))(ReactiveTransmittable.notWorthToMoveToTaskpool)
+  override def subsume(lockedNewParent: SubsumableLock): Future[Unit] = localProxy.subsume(SubsumableLockLocalClone(lockedNewParent, mirrorHost))
+  override def lock(): Future[SubsumableLock] = localProxy.lock().map(SubsumableLockLocalClone(_, reflectionHost))(ReactiveTransmittable.notWorthToMoveToTaskpool)
+  override def getLockedRoot: Future[Option[Host.GUID]] = localProxy.getLockedRoot
 }

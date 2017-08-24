@@ -16,14 +16,14 @@ class FullMVTurnTransitiveReachabilityTest extends FunSuite {
     // put all transactions under a common locked lock, so that all locking assertions hold
     trees.values.foreach(_.awaitAndSwitchPhase(TurnPhase.Executing))
     trees.values.reduce{ (tA, tB) =>
-      val resA = tA.tryLock()
+      val resA = Await.result(tA.tryLock(), Duration.Zero)
       assert(resA.success)
-      val resB = tB.trySubsume(resA.newParent)
+      val resB = Await.result(tB.trySubsume(resA.newParent), Duration.Zero)
       assert(resB.isEmpty)
-      resA.newParent.unlock()
+      Await.result(resA.newParent.unlock(), Duration.Zero)
       tA
     }
-    assert(trees.head._2.tryLock().success)
+    assert(Await.result(trees.head._2.tryLock(), Duration.Zero).success)
 
     for((from, tos) <- edges; to <- tos) {
       val fromTree = trees(from)
@@ -31,7 +31,7 @@ class FullMVTurnTransitiveReachabilityTest extends FunSuite {
       if(!fromTree.isTransitivePredecessor(toTree)) {
         val (_, toTreeRoot) = Await.result(toTree.acquirePhaseLockAndGetEstablishmentBundle(), Duration.Zero)
         Await.result(fromTree.acquirePhaseLockAndGetEstablishmentBundle(), Duration.Zero)
-        fromTree.blockingAddPredecessorAndReleasePhaseLock(toTreeRoot)
+        Await.result(fromTree.addPredecessorAndReleasePhaseLock(toTreeRoot), Duration.Zero)
         toTree.asyncReleasePhaseLock()
       }
     }

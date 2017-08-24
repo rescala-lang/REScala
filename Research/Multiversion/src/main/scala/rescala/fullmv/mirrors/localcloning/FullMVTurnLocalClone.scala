@@ -1,10 +1,10 @@
 package rescala.fullmv.mirrors.localcloning
 
 import rescala.fullmv.mirrors._
+import rescala.fullmv.transmitter.ReactiveTransmittable
 import rescala.fullmv.{FullMVEngine, FullMVTurn, TransactionSpanningTreeNode, TurnPhase}
 
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 
 object FullMVTurnLocalClone {
   def apply(turn: FullMVTurn, reflectionHost: FullMVEngine): FullMVTurn = {
@@ -12,15 +12,16 @@ object FullMVTurnLocalClone {
       val mirrorHost = turn.host
       val localMirror: FullMVTurnProxy = turn
       val mirrorProxy: FullMVTurnProxy = new SubsumableLockLocalCloneProxy(mirrorHost.lockHost, localMirror, reflectionHost.lockHost) with FullMVTurnProxy {
-        override def blockingAddPredecessorAndReleasePhaseLock(predecessorSpanningTree: TransactionSpanningTreeNode[FullMVTurn]): Unit = {
-          localMirror.blockingAddPredecessorAndReleasePhaseLock(predecessorSpanningTree.map(FullMVTurnLocalClone(_, mirrorHost)))
+        override def addPredecessorAndReleasePhaseLock(predecessorSpanningTree: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = {
+          localMirror.addPredecessorAndReleasePhaseLock(predecessorSpanningTree.map(FullMVTurnLocalClone(_, mirrorHost)))
         }
         override def maybeNewReachableSubtree(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = {
           localMirror.maybeNewReachableSubtree(FullMVTurnLocalClone(attachBelow, mirrorHost), spanningSubTreeRoot.map(FullMVTurnLocalClone(_, mirrorHost)))
         }
         override def acquirePhaseLockAndGetEstablishmentBundle(): Future[(TurnPhase.Type, TransactionSpanningTreeNode[FullMVTurn])] = {
-          val (phase, spanningTree) = Await.result(localMirror.acquirePhaseLockAndGetEstablishmentBundle(), Duration.Zero)
-          Future.successful(phase -> spanningTree.map(FullMVTurnLocalClone(_, reflectionHost)))
+          localMirror.acquirePhaseLockAndGetEstablishmentBundle().map { case (phase, spanningTree) =>
+            (phase, spanningTree.map(FullMVTurnLocalClone(_, reflectionHost)))
+          }(ReactiveTransmittable.notWorthToMoveToTaskpool)
         }
         override def asyncRemoteBranchComplete(forPhase: TurnPhase.Type): Unit = localMirror.asyncRemoteBranchComplete(forPhase)
         override def newSuccessor(successor: FullMVTurn): Future[Unit] = localMirror.newSuccessor(FullMVTurnLocalClone(successor, mirrorHost))
@@ -32,7 +33,7 @@ object FullMVTurnLocalClone {
 
       val reflectionProxy = new FullMVTurnReflectionProxy {
         override def newPhase(phase: TurnPhase.Type): Future[Unit] = reflection.newPhase(phase)
-        override def newPredecessors(predecessors: Iterable[Host.GUID]): Future[Unit] = reflection.newPredecessors(predecessors)
+        override def newPredecessors(predecessors: Seq[Host.GUID]): Future[Unit] = reflection.newPredecessors(predecessors)
       }
       val (initPhase, initPreds) = turn.addReplicator(reflectionProxy)
       reflection.newPhase(initPhase)

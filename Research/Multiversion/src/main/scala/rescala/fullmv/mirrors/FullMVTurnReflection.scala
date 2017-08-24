@@ -43,12 +43,12 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
 
   override def isTransitivePredecessor(txn: FullMVTurn): Boolean = txn == this || predecessors(txn.guid)
 
-  override def addReplicator(replicator: FullMVTurnReflectionProxy): (TurnPhase.Type, Set[Host.GUID]) = subLock.synchronized {
+  override def addReplicator(replicator: FullMVTurnReflectionProxy): (TurnPhase.Type, Seq[Host.GUID]) = subLock.synchronized {
     replicators += replicator
-    (phase, predecessors)
+    (phase, predecessors.toSeq)
   }
 
-  override def newPredecessors(predecessors: Iterable[Host.GUID]): Future[Unit] = {
+  override def newPredecessors(predecessors: Seq[Host.GUID]): Future[Unit] = {
     val reps = subLock.synchronized {
       this.predecessors ++= predecessors
       Future.successful(Unit)
@@ -85,7 +85,7 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
   }
 
   override def acquirePhaseLockAndGetEstablishmentBundle(): Future[(TurnPhase.Type, TransactionSpanningTreeNode[FullMVTurn])] = proxy.acquirePhaseLockAndGetEstablishmentBundle()
-  override def blockingAddPredecessorAndReleasePhaseLock(predecessorSpanningTree: TransactionSpanningTreeNode[FullMVTurn]): Unit = proxy.blockingAddPredecessorAndReleasePhaseLock(predecessorSpanningTree)
+  override def addPredecessorAndReleasePhaseLock(predecessorSpanningTree: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = proxy.addPredecessorAndReleasePhaseLock(predecessorSpanningTree)
   override def asyncReleasePhaseLock(): Unit = proxy.asyncReleasePhaseLock()
   override def maybeNewReachableSubtree(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = proxy.maybeNewReachableSubtree(attachBelow, spanningSubTreeRoot)
 
@@ -93,11 +93,11 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
 
   override def toString: String = {
     "FullMVTurnReflection(" + guid + " on " + host + ", " + (phase match {
-      case 0 => "Initialized"
-      case 1 => "Framing("+localBranchCountBuffer.get+")"
-      case 2 => "Executing("+localBranchCountBuffer.get+")"
-      case 3 => "WrapUp"
-      case 4 => "Completed"
+      case 1 => "Initialized"
+      case 2 => "Framing("+localBranchCountBuffer.get+")"
+      case 3 => "Executing("+localBranchCountBuffer.get+")"
+      case 4 => "WrapUp"
+      case 5 => "Completed"
     })+ ")"
   }
 }

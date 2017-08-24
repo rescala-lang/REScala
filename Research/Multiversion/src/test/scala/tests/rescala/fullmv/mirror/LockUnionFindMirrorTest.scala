@@ -6,7 +6,8 @@ import rescala.fullmv.sgt.synchronization.SubsumableLock.TryLockResult
 import rescala.testhelper.Spawn
 import rescala.fullmv.mirrors.localcloning.SubsumableLockLocalClone
 
-import scala.concurrent.TimeoutException
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, TimeoutException}
 
 class LockUnionFindMirrorTest extends FunSuite {
   val host0, hostA, hostB = new SubsumableLockHostImpl
@@ -37,14 +38,14 @@ class LockUnionFindMirrorTest extends FunSuite {
     val a = host0.newLock()
     val cloneA = SubsumableLockLocalClone(a, hostA)
     val cloneB = SubsumableLockLocalClone(a, hostB)
-    assert(cloneA.tryLock() === TryLockResult(success = true, cloneA))
+    assert(Await.result(cloneA.tryLock(), Duration.Zero) === TryLockResult(success = true, cloneA))
 
     // lock is exclusive
-    assert(cloneB.tryLock() === TryLockResult(success = false, cloneB))
+    assert(Await.result(cloneB.tryLock(), Duration.Zero) === TryLockResult(success = false, cloneB))
 
     // unlock works
-    cloneA.unlock()
-    assert(cloneB.tryLock() === TryLockResult(success = true, cloneB))
+    Await.result(cloneA.unlock(), Duration.Zero)
+    assert(Await.result(cloneB.tryLock(), Duration.Zero) === TryLockResult(success = true, cloneB))
   }
 
   test("lock works") {
@@ -52,18 +53,18 @@ class LockUnionFindMirrorTest extends FunSuite {
     val a = host0.newLock()
     val cloneA = SubsumableLockLocalClone(a, hostA)
     val cloneB = SubsumableLockLocalClone(a, hostB)
-    assert(Spawn{cloneA.lock()}.join(101) === cloneA)
+    assert(Spawn{Await.result(cloneA.lock(), Duration.Zero)}.join(101) === cloneA)
 
     // lock is exclusive
-    assert(cloneB.tryLock() === TryLockResult(success = false, cloneB))
+    assert(Await.result(cloneB.tryLock(), Duration.Zero) === TryLockResult(success = false, cloneB))
     // and blocks..
-    val blockedB = Spawn{cloneB.lock()}
+    val blockedB = Spawn{Await.result(cloneB.lock(), Duration.Zero)}
     intercept[TimeoutException] {
       blockedB.join(103)
     }
 
     // unlock unblocks
-    cloneA.unlock()
+    Await.result(cloneA.unlock(), Duration.Zero)
     assert(blockedB.join(104) === cloneB)
   }
 
@@ -72,35 +73,35 @@ class LockUnionFindMirrorTest extends FunSuite {
     val lockOneOnA = SubsumableLockLocalClone(lockOneOn0, hostA)
     val lockTwoOnA = hostA.newLock()
 
-    val resOneOnA = lockOneOnA.tryLock()
+    val resOneOnA = Await.result(lockOneOnA.tryLock(), Duration.Zero)
     assert(resOneOnA === TryLockResult(success = true, lockOneOnA))
     assert((resOneOnA.newParent eq lockOneOnA) === true)
-    val resTwoOnA = lockTwoOnA.tryLock()
+    val resTwoOnA = Await.result(lockTwoOnA.tryLock(), Duration.Zero)
     assert(resTwoOnA === TryLockResult(success = true, lockTwoOnA))
     assert((resTwoOnA.newParent eq lockTwoOnA) === true)
 
-    lockOneOnA.subsume(resTwoOnA.newParent)
+    Await.result(lockOneOnA.subsume(resTwoOnA.newParent), Duration.Zero)
 
-    assert(lockOneOn0.getLockedRoot.contains(lockTwoOnA.guid))
-    assert(lockOneOnA.getLockedRoot.contains(lockTwoOnA.guid))
-    assert(lockTwoOnA.getLockedRoot.contains(lockTwoOnA.guid))
+    assert(Await.result(lockOneOn0.getLockedRoot, Duration.Zero).contains(lockTwoOnA.guid))
+    assert(Await.result(lockOneOnA.getLockedRoot, Duration.Zero).contains(lockTwoOnA.guid))
+    assert(Await.result(lockTwoOnA.getLockedRoot, Duration.Zero).contains(lockTwoOnA.guid))
 
-    lockOneOnA.unlock()
+    Await.result(lockOneOnA.unlock(), Duration.Zero)
 
-    val resOneOnA2 = lockOneOnA.tryLock()
+    val resOneOnA2 = Await.result(lockOneOnA.tryLock(), Duration.Zero)
     assert(resOneOnA2 === TryLockResult(success = true, lockTwoOnA))
     assert((resOneOnA2.newParent eq lockTwoOnA) === true)
 
-    val resOneOn0 = lockOneOn0.tryLock()
+    val resOneOn0 = Await.result(lockOneOn0.tryLock(), Duration.Zero)
     assert(resOneOn0 === TryLockResult(success = false, lockTwoOnA))
     assert((resOneOn0.newParent ne lockTwoOnA) === true)
-    val resTwoOnA2 = lockTwoOnA.tryLock()
+    val resTwoOnA2 = Await.result(lockTwoOnA.tryLock(), Duration.Zero)
     assert(resTwoOnA2 === TryLockResult(success = false, lockTwoOnA))
     assert((resTwoOnA2.newParent eq lockTwoOnA) === true)
 
-    lockTwoOnA.unlock()
+    Await.result(lockTwoOnA.unlock(), Duration.Zero)
 
-    val resTwoOnA3 = lockTwoOnA.tryLock()
+    val resTwoOnA3 = Await.result(lockTwoOnA.tryLock(), Duration.Zero)
     assert(resTwoOnA3 === TryLockResult(success = true, lockTwoOnA))
     assert((resTwoOnA3.newParent eq lockTwoOnA) === true)
   }
@@ -109,53 +110,53 @@ class LockUnionFindMirrorTest extends FunSuite {
     val a = host0.newLock()
     val cloneA = SubsumableLockLocalClone(a, hostA)
     val childOfCloneA = hostA.newLock()
-    val resA = cloneA.tryLock()
+    val resA = Await.result(cloneA.tryLock(), Duration.Zero)
     assert(resA === TryLockResult(success = true, cloneA))
-    assert(childOfCloneA.trySubsume(resA.newParent).isEmpty)
-    cloneA.unlock()
+    assert(Await.result(childOfCloneA.trySubsume(resA.newParent), Duration.Zero).isEmpty)
+    Await.result(cloneA.unlock(), Duration.Zero)
 
     val b = hostA.newLock()
 
-    val resB = b.tryLock()
+    val resB = Await.result( b.tryLock(), Duration.Zero)
     assert(resB === TryLockResult(success = true, b))
-    val resAA = childOfCloneA.trySubsume(resB.newParent)
+    val resAA = Await.result(childOfCloneA.trySubsume(resB.newParent), Duration.Zero)
     assert(resAA === None)
 
-    assert(a.getLockedRoot.contains(b.guid))
-    assert(cloneA.getLockedRoot.contains(b.guid))
-    assert(childOfCloneA.getLockedRoot.contains(b.guid))
-    assert(b.getLockedRoot.contains(b.guid))
+    assert(Await.result(a.getLockedRoot, Duration.Zero).contains(b.guid))
+    assert(Await.result(cloneA.getLockedRoot, Duration.Zero).contains(b.guid))
+    assert(Await.result(childOfCloneA.getLockedRoot, Duration.Zero).contains(b.guid))
+    assert(Await.result(b.getLockedRoot, Duration.Zero).contains(b.guid))
 
-    cloneA.unlock()
+    Await.result(cloneA.unlock(), Duration.Zero)
 
-    assert(childOfCloneA.tryLock() === TryLockResult(success = true, b))
+    assert(Await.result(childOfCloneA.tryLock(), Duration.Zero) === TryLockResult(success = true, b))
   }
 
   test("subsume parameter does not increase multihops") {
     val a = host0.newLock()
     val cloneA = SubsumableLockLocalClone(a, hostA)
     val childOfCloneA = hostA.newLock()
-    val resA = cloneA.tryLock()
+    val resA = Await.result(cloneA.tryLock(), Duration.Zero)
     assert(resA === TryLockResult(success = true, cloneA))
-    assert(childOfCloneA.trySubsume(resA.newParent).isEmpty)
-    cloneA.unlock()
+    assert(Await.result(childOfCloneA.trySubsume(resA.newParent), Duration.Zero).isEmpty)
+    Await.result(cloneA.unlock(), Duration.Zero)
 
     val b = hostA.newLock()
 
-    assert(childOfCloneA.tryLock() === TryLockResult(success = true, cloneA))
-    val resB = b.tryLock()
+    assert(Await.result(childOfCloneA.tryLock(), Duration.Zero) === TryLockResult(success = true, cloneA))
+    val resB = Await.result(b.tryLock(), Duration.Zero)
     assert(resB === TryLockResult(success = true, b))
 
-    cloneA.subsume(resB.newParent)
+    Await.result(cloneA.subsume(resB.newParent), Duration.Zero)
 
-    assert(a.getLockedRoot.contains(b.guid))
-    assert(cloneA.getLockedRoot.contains(b.guid))
-    assert(childOfCloneA.getLockedRoot.contains(b.guid))
-    assert(b.getLockedRoot.contains(b.guid))
+    assert(Await.result(a.getLockedRoot, Duration.Zero).contains(b.guid))
+    assert(Await.result(cloneA.getLockedRoot, Duration.Zero).contains(b.guid))
+    assert(Await.result(childOfCloneA.getLockedRoot, Duration.Zero).contains(b.guid))
+    assert(Await.result(b.getLockedRoot, Duration.Zero).contains(b.guid))
 
-    cloneA.unlock()
+    Await.result(cloneA.unlock(), Duration.Zero)
 
-    val res = childOfCloneA.tryLock()
+    val res = Await.result(childOfCloneA.tryLock(), Duration.Zero)
     assert(res === TryLockResult(success = true, b))
     assert((res.newParent eq b) === true)
   }

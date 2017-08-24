@@ -9,6 +9,7 @@ import rescala.fullmv.sgt.synchronization.SubsumableLock
 import scala.annotation.elidable.ASSERTION
 import scala.annotation.{elidable, tailrec}
 import scala.collection.mutable.ArrayBuffer
+import scala.concurrent.duration.Duration
 
 sealed trait FramingBranchResult[+T, +R]
 object FramingBranchResult {
@@ -43,6 +44,8 @@ object NotificationResultAction {
   * @tparam OutDep the type of outgoing dependency nodes
   */
 class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePersistency: ValuePersistency[V]) extends FullMVState[V, T, InDep, OutDep] {
+  val timeout = Duration.Inf // TODO
+
   override val host = init.host
 
   trait BlockOnHistoryManagedBlocker extends ManagedBlocker {
@@ -209,8 +212,8 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
         val unblockedOrder = DecentralizedSGT.getOrder(pred, lookFor)
         assert(unblockedOrder != SecondFirst)
         if(unblockedOrder != FirstFirst) {
-          SubsumableLock.underLock(pred, lookFor) {
-            val establishedOrder = DecentralizedSGT.ensureOrder(pred, lookFor)
+          SubsumableLock.underLock(pred, lookFor, timeout) {
+            val establishedOrder = DecentralizedSGT.ensureOrder(pred, lookFor, timeout)
             assert(establishedOrder == FirstFirst)
           }
         }
@@ -227,7 +230,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
         case SecondFirst =>
           findOrPidgeonHoleNonblocking(lookFor, from, fromIsKnownPredecessor, idx)
         case Unordered =>
-          SubsumableLock.underLock(candidate, lookFor) {
+          SubsumableLock.underLock(candidate, lookFor, timeout) {
             findOrPidgeonHoleLocked(lookFor, from, fromIsKnownPredecessor, to)
           }
       }
@@ -239,7 +242,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     if (to == from) {
       if(!fromKnownOrdered) {
         val pred = _versions(from - 1).txn
-        val establishedOrder = DecentralizedSGT.ensureOrder(pred, lookFor)
+        val establishedOrder = DecentralizedSGT.ensureOrder(pred, lookFor, timeout)
         assert(establishedOrder == FirstFirst)
       }
       -from
@@ -248,7 +251,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
       val candidate = _versions(idx).txn
       if(candidate == lookFor) {
         idx
-      } else DecentralizedSGT.ensureOrder(candidate, lookFor) match {
+      } else DecentralizedSGT.ensureOrder(candidate, lookFor, timeout) match {
         case FirstFirst =>
           findOrPidgeonHoleLocked(lookFor, idx + 1, fromKnownOrdered = true, to)
         case SecondFirst =>
@@ -664,7 +667,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     * @param add the new edge's sink node
     * @return the appropriate [[Version.value]].
     */
-  override def discover(txn: T, add: OutDep): (Iterable[T], Option[T]) = synchronized {
+  override def discover(txn: T, add: OutDep): (Seq[T], Option[T]) = synchronized {
     val position = ensureReadVersion(txn)
     assertOptimizationsIntegrity(s"ensureReadVersion($txn)")
     assert(!_versions(position).out.contains(add), "must not discover an already existing edge!")
@@ -676,7 +679,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     * @param txn the executing reevaluation's transaction
     * @param remove the removed edge's sink node
     */
-  override def drop(txn: T, remove: OutDep): (Iterable[T], Option[T]) = synchronized {
+  override def drop(txn: T, remove: OutDep): (Seq[T], Option[T]) = synchronized {
     val position = ensureReadVersion(txn)
     assertOptimizationsIntegrity(s"ensureReadVersion($txn)")
     assert(_versions(position).out.contains(remove), "must not drop a non-existing edge!")
@@ -689,7 +692,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     * @param maybeSuccessorFrame maybe a reframing to perform for the first successor frame
     * @param arity +1 for discover adding frames, -1 for drop removing frames.
     */
-  override def retrofitSinkFrames(successorWrittenVersions: Iterable[T], maybeSuccessorFrame: Option[T], arity: Int): Unit = synchronized {
+  override def retrofitSinkFrames(successorWrittenVersions: Seq[T], maybeSuccessorFrame: Option[T], arity: Int): Unit = synchronized {
     require(math.abs(arity) == 1)
     var minPos = firstFrame
     for(txn <- successorWrittenVersions) {
@@ -721,7 +724,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     * @return a list of transactions with written successor versions and maybe the transaction of the first successor
     *         frame if it exists, for which reframings have to be performed at the sink.
     */
-  private def retrofitSourceOuts(position: Int, delta: OutDep, arity: Int): (Iterable[T], Option[T]) = {
+  private def retrofitSourceOuts(position: Int, delta: OutDep, arity: Int): (Seq[T], Option[T]) = {
     require(math.abs(arity) == 1)
     // allocate array to the maximum number of written versions that might follow
     // (any version at index firstFrame or later can only be a frame, not written)

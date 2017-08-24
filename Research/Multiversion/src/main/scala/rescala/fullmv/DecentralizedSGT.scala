@@ -21,18 +21,18 @@ object DecentralizedSGT extends SerializationGraphTracking[FullMVTurn] {
     }
   }
 
-  override def ensureOrder(defender: FullMVTurn, contender: FullMVTurn): OrderResult = {
+  override def ensureOrder(defender: FullMVTurn, contender: FullMVTurn, timeout: Duration): OrderResult = {
     assert(defender != contender, s"cannot establish order between equal defender $defender and contender $contender")
     assert(defender.host == contender.host, s"$defender and $contender are of different hosts ${defender.host} and ${contender.host}")
     assert(defender.phase > TurnPhase.Initialized, s"$defender is not started and should thus not be involved in any operations")
     assert(contender.phase > TurnPhase.Initialized, s"$contender is not started and should thus not be involved in any operations")
     assert(contender.phase < TurnPhase.Completed, s"$contender cannot be a contender (already completed).")
-    assert(contender.getLockedRoot.isDefined, s"$contender is not locked")
+    assert(Await.result(contender.getLockedRoot, timeout).isDefined, s"$contender is not locked")
     if(defender.phase == TurnPhase.Completed) {
       FirstFirst
     } else{
-      assert(defender.getLockedRoot.isDefined, s"$defender is not locked")
-      assert(defender.getLockedRoot.get == contender.getLockedRoot.get, s"$defender and $contender not merged (roots ${defender.getLockedRoot.get} and ${contender.getLockedRoot.get})")
+      assert(Await.result(defender.getLockedRoot, timeout).isDefined, s"$defender is not locked")
+      assert(Await.result(defender.getLockedRoot, timeout).get == Await.result(contender.getLockedRoot, timeout).get, s"$defender and $contender not merged (roots ${Await.result(defender.getLockedRoot, timeout).get} and ${Await.result(contender.getLockedRoot, timeout).get})")
       if(contender.isTransitivePredecessor(defender)) {
         FirstFirst
       } else if (defender.isTransitivePredecessor(contender)) {
@@ -43,14 +43,14 @@ object DecentralizedSGT extends SerializationGraphTracking[FullMVTurn] {
 
         val contenderBundle = contender.acquirePhaseLockAndGetEstablishmentBundle()
         val defenderBundle = defender.acquirePhaseLockAndGetEstablishmentBundle()
-        val (contenderPhase, contenderPredecessorsSpanningTree) = Await.result(contenderBundle, Duration.Zero) // TODO Duration.Inf
-        val (defenderPhase, defenderPredecessorsSpanningTree) = Await.result(defenderBundle, Duration.Zero) // TODO Duration.Inf
+        val (contenderPhase, contenderPredecessorsSpanningTree) = Await.result(contenderBundle, timeout)
+        val (defenderPhase, defenderPredecessorsSpanningTree) = Await.result(defenderBundle, timeout)
         if (defenderPhase < contenderPhase) {
-          defender.blockingAddPredecessorAndReleasePhaseLock(contenderPredecessorsSpanningTree)
+          Await.result(defender.addPredecessorAndReleasePhaseLock(contenderPredecessorsSpanningTree), timeout)
           contender.asyncReleasePhaseLock()
           SecondFirst
         } else {
-          contender.blockingAddPredecessorAndReleasePhaseLock(defenderPredecessorsSpanningTree)
+          Await.result(contender.addPredecessorAndReleasePhaseLock(defenderPredecessorsSpanningTree), timeout)
           defender.asyncReleasePhaseLock()
           FirstFirst
         }

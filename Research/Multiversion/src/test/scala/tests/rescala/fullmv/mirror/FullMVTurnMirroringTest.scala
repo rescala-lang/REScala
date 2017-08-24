@@ -5,6 +5,8 @@ import rescala.fullmv._
 import rescala.fullmv.sgt.synchronization.SubsumableLock
 import rescala.fullmv.mirrors.localcloning.FullMVTurnLocalClone
 
+import scala.concurrent.duration.Duration
+
 class FullMVTurnMirroringTest extends FunSuite {
   val host0, hostA, hostB = new FullMVEngine()
   test("instance lookup and equality"){
@@ -114,8 +116,8 @@ class FullMVTurnMirroringTest extends FunSuite {
     assert(turnThreeB.isTransitivePredecessor(turnOneB) === false)
     assert(turnThreeB.isTransitivePredecessor(turnTwoB) === false)
 
-    SubsumableLock.underLock(turnOneB, turnTwoB) {
-      assert(DecentralizedSGT.ensureOrder(turnOneB, turnTwoB) === FirstFirst)
+    SubsumableLock.underLock(turnOneB, turnTwoB, Duration.Zero) {
+      assert(DecentralizedSGT.ensureOrder(turnOneB, turnTwoB, Duration.Zero) === FirstFirst)
     }
 
     assert(turnOne.isTransitivePredecessor(turnTwo) === false)
@@ -139,8 +141,8 @@ class FullMVTurnMirroringTest extends FunSuite {
     assert(turnThreeB.isTransitivePredecessor(turnOneB) === false)
     assert(turnThreeB.isTransitivePredecessor(turnTwoB) === false)
 
-    SubsumableLock.underLock(turnThreeA, turnTwoA) {
-      assert(DecentralizedSGT.ensureOrder(turnThreeA, turnTwoA) === SecondFirst)
+    SubsumableLock.underLock(turnThreeA, turnTwoA, Duration.Zero) {
+      assert(DecentralizedSGT.ensureOrder(turnThreeA, turnTwoA, Duration.Zero) === SecondFirst)
     }
 
     assert(turnOne.isTransitivePredecessor(turnTwo) === false)
