@@ -284,7 +284,7 @@ lazy val lib = new {
 
   val retypecheck = List(
     resolvers += Resolver.bintrayRepo("pweisenburger", "maven"),
-    libraryDependencies += "de.tuda.stg" %% "retypecheck" % "0.3.0"
+    libraryDependencies += "de.tuda.stg" %% "retypecheck" % "0.4.0"
   )
 
   val reflectionForMacroDefinitions = libraryDependencies += scalaOrganization.value % "scala-reflect" % scalaVersion.value % "provided"
