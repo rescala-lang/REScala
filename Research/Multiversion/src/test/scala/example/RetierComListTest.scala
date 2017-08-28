@@ -15,13 +15,17 @@ import rescala.fullmv.transmitter.EventTransmittable._
 object Bindings1 {
   //val eventBinding = Binding [Evt[Int]]("listEvt")
   val variableBinding1 = Binding[Signal[List[Int]]]("variable")
-  val addBinding = Binding [Int => Unit]("listAdd")
+  val addBinding = Binding [Event[Int] => Unit]("listAdd")
 }
 //This method represents the server
 object Server extends App {
 
   var testList1 = Var( List(1,2,3))
   def add(x: Int) = { testList1()= testList1.now :+ x}
+  val eventList :  Var[ List[Event[Int]]]= Var (List())
+  def eventAdd(x: Event[Int]) = {eventList() = eventList.now :+ x;x += add}
+ // val e0 = Evt[Int]
+  //e0 += add
 
 
   //val e0 =  Evt[Int]
@@ -34,7 +38,7 @@ object Server extends App {
 
   registry.bind(Bindings1.variableBinding1)(testList1)
   //registry.bind(Bindings1.eventBinding)(e0)
-  registry.bind(Bindings1.addBinding)(add)
+  registry.bind(Bindings1.addBinding)(eventAdd)
 
   testList1 observe println
 
@@ -59,10 +63,9 @@ object Client extends App {
 
   //val e0: Future[rescala.Evt[Int]] = registry.lookup(Bindings1.eventBinding, remote)
 
-  val add: Int => Future [Unit] =  registry.lookup(Bindings1.addBinding, remote)
+  val eventAdd: Event[Int] =>  Future[Unit] =registry.lookup(Bindings1.addBinding, remote)
   val e1 = Evt[Int]
-  def add1(x:Int) = {add(x)}
-  e1 += add1
+  eventAdd(e1)
 
   while (continueProgram) {
     println("enter \"add\" to add a vaule or \"end\" to end")
