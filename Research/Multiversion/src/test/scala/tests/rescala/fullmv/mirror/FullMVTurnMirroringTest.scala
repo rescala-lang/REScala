@@ -8,7 +8,10 @@ import rescala.fullmv.mirrors.localcloning.FullMVTurnLocalClone
 import scala.concurrent.duration.Duration
 
 class FullMVTurnMirroringTest extends FunSuite {
-  val host0, hostA, hostB = new FullMVEngine(Duration.Zero)
+  val host0 = new FullMVEngine(Duration.Zero, "0")
+  val hostA = new FullMVEngine(Duration.Zero, "A")
+  val hostB = new FullMVEngine(Duration.Zero, "B")
+
   test("instance lookup and equality"){
     val a = host0.newTurn()
     val turn0 = FullMVTurnLocalClone(a, host0)
@@ -53,21 +56,46 @@ class FullMVTurnMirroringTest extends FunSuite {
   test("branch counting") {
     val turn = host0.newTurn()
     turn.awaitAndSwitchPhase(TurnPhase.Executing)
-
     turn.activeBranchDifferential(TurnPhase.Executing, 1)
+
+    // turn goes remote to hostA
     val turnA = FullMVTurnLocalClone(turn, hostA)
+    turn.addRemoteBranch(TurnPhase.Executing)
+    turn.activeBranchDifferential(TurnPhase.Executing, -1)
+    turnA.newBranchFromRemote(TurnPhase.Executing)
+    assert(turn.activeBranches.get == 1)
+
+    // turn on hostA splits into three branches
     turnA.activeBranchDifferential(TurnPhase.Executing, 1)
     assert(turn.activeBranches.get == 1)
 
-    turnA.activeBranchDifferential(TurnPhase.Executing, -1)
-    assert(turn.activeBranches.get == 0)
-
-    turn.activeBranchDifferential(TurnPhase.Executing, 1)
-    turnA.activeBranchDifferential(TurnPhase.Executing, 1)
+    // first branch goes remote to hostB
     val turnB = FullMVTurnLocalClone(turnA, hostB)
-    turnB.activeBranchDifferential(TurnPhase.Executing, 1)
+    turnA.addRemoteBranch(TurnPhase.Executing)
+    turnA.activeBranchDifferential(TurnPhase.Executing, -1)
+    turnB.newBranchFromRemote(TurnPhase.Executing)
+    assert(turn.activeBranches.get == 2)
+
+    // second branch goes remote back to host0
+    turnA.addRemoteBranch(TurnPhase.Executing)
+    turn.newBranchFromRemote(TurnPhase.Executing)
+    assert(turn.activeBranches.get == 3)
+
+    // third branch goes remote also to hostB
+    turnA.addRemoteBranch(TurnPhase.Executing)
+    turnA.activeBranchDifferential(TurnPhase.Executing, -1)
+    turnB.newBranchFromRemote(TurnPhase.Executing)
+    assert(turn.activeBranches.get == 2)
+
+    // branch on host0 terminates
+    turn.activeBranchDifferential(TurnPhase.Executing, -1)
     assert(turn.activeBranches.get == 1)
 
+    // One branch on hostB terminates
+    turnB.activeBranchDifferential(TurnPhase.Executing, -1)
+    assert(turn.activeBranches.get == 1)
+
+    // Other branch on hostB terminates
     turnB.activeBranchDifferential(TurnPhase.Executing, -1)
     assert(turn.activeBranches.get == 0)
   }

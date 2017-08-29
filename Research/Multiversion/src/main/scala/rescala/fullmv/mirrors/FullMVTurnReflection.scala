@@ -23,23 +23,29 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
   }
 
   override def activeBranchDifferential(forState: TurnPhase.Type, differential: Int): Unit = {
-    assert(phase == forState, s"$this received branch differential for wrong state $forState")
+    assert(phase == forState, s"$this received branch differential for wrong state ${TurnPhase.toString(forState)}")
     assert(differential != 0, s"$this received 0 branch diff")
     assert(localBranchCountBuffer.get + differential >= 0, s"$this received branch diff into negative count")
-    val remaining = localBranchCountBuffer.addAndGet(differential)
-    if(remaining == 0) {
+    val before = localBranchCountBuffer.getAndAdd(differential)
+    val after = before + differential
+    if(before == 0) {
+      if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this reactivated locally, registering remote branch.")
+      Await.result(proxy.addRemoteBranch(forState), timeout)
+    } else if(after == 0) {
+      if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this done locally, deregistering remote branch.")
       proxy.asyncRemoteBranchComplete(forState)
     }
   }
 
   override def newBranchFromRemote(forState: TurnPhase.Type): Unit = {
-    assert(phase == forState, s"$this received branch differential for wrong state $forState")
+    assert(phase == forState, s"$this received branch differential for wrong state ${TurnPhase.toString(forState)}")
     if(localBranchCountBuffer.getAndIncrement() != 0) {
+      if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this received remote branch but still active; deregistering immediately.")
       proxy.asyncRemoteBranchComplete(forState)
+    } else {
+      if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this (re-)activated by remote branch.")
     }
   }
-
-  override def asyncRemoteBranchComplete(forPhase: Type): Unit = activeBranchDifferential(forPhase, -1)
 
   override def isTransitivePredecessor(txn: FullMVTurn): Boolean = txn == this || predecessors(txn.guid)
 
@@ -84,6 +90,9 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
     Future.successful(Unit)
   }
 
+  override def asyncRemoteBranchComplete(forPhase: Type): Unit = proxy.asyncRemoteBranchComplete(forPhase)
+  override def addRemoteBranch(forPhase: TurnPhase.Type): Future[Unit] = proxy.addRemoteBranch(forPhase)
+
   override def acquirePhaseLockAndGetEstablishmentBundle(): Future[(TurnPhase.Type, TransactionSpanningTreeNode[FullMVTurn])] = proxy.acquirePhaseLockAndGetEstablishmentBundle()
   override def addPredecessorAndReleasePhaseLock(predecessorSpanningTree: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = proxy.addPredecessorAndReleasePhaseLock(predecessorSpanningTree)
   override def asyncReleasePhaseLock(): Unit = proxy.asyncReleasePhaseLock()
@@ -91,13 +100,5 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
 
   override def newSuccessor(successor: FullMVTurn): Future[Unit] = proxy.newSuccessor(successor)
 
-  override def toString: String = {
-    "FullMVTurnReflection(" + guid + " on " + host + ", " + (phase match {
-      case 1 => "Initialized"
-      case 2 => "Framing("+localBranchCountBuffer.get+")"
-      case 3 => "Executing("+localBranchCountBuffer.get+")"
-      case 4 => "WrapUp"
-      case 5 => "Completed"
-    })+ ")"
-  }
+  override def toString: String = s"FullMVTurnReflection($guid on $host, ${TurnPhase.toString(phase)}${if(localBranchCountBuffer.get != 0) s"(${localBranchCountBuffer.get})" else ""})"
 }

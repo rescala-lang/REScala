@@ -24,12 +24,12 @@ object FullMVTurnLocalClone {
           }(ReactiveTransmittable.notWorthToMoveToTaskpool)
         }
         override def asyncRemoteBranchComplete(forPhase: TurnPhase.Type): Unit = localMirror.asyncRemoteBranchComplete(forPhase)
+        override def addRemoteBranch(forPhase: TurnPhase.Type): Future[Unit] = localMirror.addRemoteBranch(forPhase)
         override def newSuccessor(successor: FullMVTurn): Future[Unit] = localMirror.newSuccessor(FullMVTurnLocalClone(successor, mirrorHost))
         override def asyncReleasePhaseLock(): Unit = localMirror.asyncReleasePhaseLock()
       }
 
       val reflection = new FullMVTurnReflection(reflectionHost, turn.guid, mirrorProxy, turn.timeout)
-      cacheNow(reflection)
 
       val reflectionProxy = new FullMVTurnReflectionProxy {
         override def newPhase(phase: TurnPhase.Type): Future[Unit] = reflection.newPhase(phase)
@@ -38,6 +38,9 @@ object FullMVTurnLocalClone {
       val (initPhase, initPreds) = turn.addReplicator(reflectionProxy)
       reflection.newPhase(initPhase)
       reflection.newPredecessors(initPreds)
+
+      // since we initialize synchronously and don't have to worry about blocking receiver threads, its fine to initialize at the end here
+      cacheNow(reflection)
 
       reflection
     }

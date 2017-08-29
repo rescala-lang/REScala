@@ -9,7 +9,7 @@ import rescala.fullmv.tasks.{Framing, Notification}
 import scala.concurrent.duration.Duration
 import scala.util.Try
 
-class FullMVEngine(val timeout: Duration) extends EngineImpl[FullMVStruct, FullMVTurn, FullMVTurnImpl] with FullMVTurnHost with HostImpl[FullMVTurn] {
+class FullMVEngine(val timeout: Duration, val name: String) extends EngineImpl[FullMVStruct, FullMVTurn, FullMVTurnImpl] with FullMVTurnHost with HostImpl[FullMVTurn] {
   override object lockHost extends SubsumableLockHostImpl
   def newTurn(): FullMVTurnImpl = createLocal(new FullMVTurnImpl(this, _, Thread.currentThread(), timeout, lockHost.newLock()))
   override val dummy: FullMVTurnImpl = {
@@ -61,11 +61,13 @@ class FullMVEngine(val timeout: Duration) extends EngineImpl[FullMVStruct, FullM
     // result
     result.get
   }
+
+  override def toString: String = "Host " + name
 }
 
 object FullMVEngine {
   val SEPARATE_WRAPUP_PHASE = false
-  val DEBUG = true
+  val DEBUG = false
 
-  val default = new FullMVEngine(Duration.Zero)
+  val default = new FullMVEngine(Duration.Zero, "default")
 }

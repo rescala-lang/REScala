@@ -20,7 +20,11 @@ object FramingBranchResult {
 
 sealed trait NotificationResultAction[+T, +R]
 object NotificationResultAction {
-  // branch merge: T/F, reev: wait/ready/unchanged
+  // upon notify:
+  //    branch merge: T/F
+  //    reev: wait/ready/unchanged/unchanged+FF/unchanged+next
+  // upon reevOut:
+  //    done/FF/next
   case object NotGlitchFreeReady extends NotificationResultAction[Nothing, Nothing]
   case object ResolvedNonFirstFrameToUnchanged extends NotificationResultAction[Nothing, Nothing]
   case object GlitchFreeReadyButQueued extends NotificationResultAction[Nothing, Nothing]

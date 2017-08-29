@@ -33,12 +33,12 @@ abstract class FullMVTurn(val timeout: Duration) extends TurnImpl[FullMVStruct] 
 
   //========================================================Scheduler Interface============================================================
 
-  override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): NodeVersionHistory[P, FullMVTurn, InDep[FullMVStruct], Reactive[FullMVStruct]] = {
+  override def makeStructState[P](valuePersistency: ValuePersistency[P]): NodeVersionHistory[P, FullMVTurn, InDep[FullMVStruct], Reactive[FullMVStruct]] = {
     val state = new NodeVersionHistory[P, FullMVTurn, InDep[FullMVStruct], Reactive[FullMVStruct]](host.dummy, valuePersistency, timeout)
     state.incrementFrame(this)
     state
   }
-  override protected def ignite(reactive: Reactive[FullMVStruct], incoming: Set[InDep[FullMVStruct]], ignitionRequiresReevaluation: Boolean): Unit = {
+  override def ignite(reactive: Reactive[FullMVStruct], incoming: Set[InDep[FullMVStruct]], ignitionRequiresReevaluation: Boolean): Unit = {
     if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this igniting $reactive on $incoming")
     incoming.foreach { discover =>
       val (successorWrittenVersions, maybeFollowFrame) = discover.state.discover(this, reactive)

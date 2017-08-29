@@ -5,6 +5,7 @@ import rescala.fullmv.{FullMVTurn, TransactionSpanningTreeNode, TurnPhase}
 import scala.concurrent.Future
 
 trait FullMVTurnProxy extends SubsumableLockProxy {
+  def addRemoteBranch(forPhase: TurnPhase.Type): Future[Unit]
   def asyncRemoteBranchComplete(forPhase: TurnPhase.Type): Unit
 
   def acquirePhaseLockAndGetEstablishmentBundle(): Future[(TurnPhase.Type, TransactionSpanningTreeNode[FullMVTurn])]

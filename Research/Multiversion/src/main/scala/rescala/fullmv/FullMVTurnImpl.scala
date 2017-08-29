@@ -32,7 +32,7 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
   override def asyncRemoteBranchComplete(forPhase: Type): Unit = activeBranchDifferential(forPhase, -1)
 
   def activeBranchDifferential(forState: TurnPhase.Type, differential: Int): Unit = {
-    assert(phase == forState, s"$this received branch differential for wrong state $forState")
+    assert(phase == forState, s"$this received branch differential for wrong state ${TurnPhase.toString(forState)}")
     assert(differential != 0, s"$this received 0 branch diff")
     assert(activeBranches.get + differential >= 0, s"$this received branch diff into negative count")
     val remaining = activeBranches.addAndGet(differential)
@@ -41,9 +41,16 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
     }
   }
 
-  override def newBranchFromRemote(forState: TurnPhase.Type): Unit = {
-    assert(phase == forState, s"$this received branch differential for wrong state $forState")
+  override def newBranchFromRemote(forPhase: Type): Unit = {
+    assert(phase == forPhase, s"$this received branch differential for wrong state ${TurnPhase.toString(forPhase)}")
+    // technically, move one remote branch to a local branch, but as we don't count these separately, currently doing nothing.
+  }
+
+  override def addRemoteBranch(forPhase: TurnPhase.Type): Future[Unit] = {
+    assert(phase == forPhase, s"$this received branch differential for wrong state ${TurnPhase.toString(forPhase)}")
+    if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this new branch on some remote")
     activeBranches.getAndIncrement()
+    Future.successful(Unit)
   }
 
   //========================================================Local State Control============================================================
@@ -83,7 +90,7 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
     val reps = awaitAndAtomicCasPhaseAndGetReps()
     val forwards = reps.map(_.newPhase(newPhase))
     for(call <- forwards) {
-      Await.result(call, Duration.Zero) // TODO Duration.Inf
+      Await.result(call, timeout)
     }
   }
 
@@ -237,13 +244,5 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
 
   //========================================================ToString============================================================
 
-  override def toString: String = synchronized {
-    "FullMVTurn(" + guid + " on " + host + ", " + (phase match {
-      case 1 => "Initialized"
-      case 2 => "Framing("+activeBranches.get+")"
-      case 3 => "Executing("+activeBranches.get+")"
-      case 4 => "WrapUp"
-      case 5 => "Completed"
-    })+ ")"
-  }
+  override def toString: String = s"FullMVTurn($guid on $host, ${TurnPhase.toString(phase)}${if(activeBranches.get != 0) s"(${activeBranches.get})" else ""})"
 }
