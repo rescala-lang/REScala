@@ -7,6 +7,7 @@ import org.openjdk.jmh.annotations._
 import rescala.core.{Engine, Struct}
 import rescala.reactives.{Evt, Var}
 import rescala.restore.ReStoringEngine
+import rescala.core.ReCirce._
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -74,18 +75,16 @@ class RestoringSnapshot[S <: Struct] {
 
   def build(implicit engine: ReStoringEngine, size: Int) = {
     val source = engine.Evt[Int]()
-    var i = 0
-    while (i < size) {
+    val res = for (i <- 1 to size) yield {
       source.count.map(_+1).map(_+1)
-      i += 1
     }
-    source
+    (source, res)
   }
 
   @Setup
   def setup(size: Size) = {
     val engine = new ReStoringEngine()
-    val source = build(engine, size.size)
+    val (source, res) = build(engine, size.size)
     source.fire(10)(engine)
     source.fire(20)(engine)
     snapshot = engine.snapshot().toSeq
@@ -95,7 +94,10 @@ class RestoringSnapshot[S <: Struct] {
   def fresh(size: Size): Unit = build(new ReStoringEngine(), size.size)
 
   @Benchmark
-  def restored(size: Size): Unit = build(new ReStoringEngine(restoreFrom = snapshot), size.size)
+  def restored(size: Size): Unit = {
+    val engine = new ReStoringEngine(restoreFrom = snapshot)
+    build(engine, size.size)
+  }
 
 
 }
