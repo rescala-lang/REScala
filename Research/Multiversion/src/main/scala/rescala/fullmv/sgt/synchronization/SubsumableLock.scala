@@ -4,7 +4,7 @@ import rescala.fullmv.mirrors._
 import rescala.parrp.Backoff
 
 import scala.annotation.tailrec
-import scala.concurrent.Await
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
 
 trait SubsumableLock extends SubsumableLockProxy with Hosted {
@@ -90,4 +90,6 @@ object SubsumableLock {
     }
     tryBandSpinAifFailed(lockedRoot)
   }
+
+  val futureNone: Future[None.type] = Future.successful(None)
 }

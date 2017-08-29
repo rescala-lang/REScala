@@ -50,7 +50,7 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
     assert(phase == forPhase, s"$this received branch differential for wrong state ${TurnPhase.toString(forPhase)}")
     if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this new branch on some remote")
     activeBranches.getAndIncrement()
-    Future.successful(Unit)
+    Future.unit
   }
 
   //========================================================Local State Control============================================================
@@ -144,7 +144,7 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
       Await.result(pre, Duration.Zero) // TODO Duration.Inf
     }
     phaseLock.unlock()
-    Future.successful(Unit)
+    Future.unit
   }
 
   override def maybeNewReachableSubtree(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = {
@@ -166,7 +166,7 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
         Await.result(call, Duration.Zero) // TODO Duration.Inf
       }
     }
-    Future.successful(Unit)
+    Future.unit
   }
 
   private def copySubTreeRootAndAssessChildren(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn], buffer: collection.generic.Growable[FullMVTurn]): Unit = {
@@ -187,7 +187,7 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
   override def newSuccessor(successor: FullMVTurn): Future[Unit] = {
     assert(successor.host == host, s"new successor $successor of $this is hosted on ${successor.host} different from $host")
     successorsIncludingSelf += successor
-    Future.successful(Unit)
+    Future.unit
   }
 
   override def asyncReleasePhaseLock(): Unit = phaseLock.unlock()

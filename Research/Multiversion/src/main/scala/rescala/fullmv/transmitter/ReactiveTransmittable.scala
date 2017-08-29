@@ -32,9 +32,98 @@ object ReactiveTransmittable {
   type EndPointWithInfrastructure[T] = Endpoint[MessageWithInfrastructure[T], MessageWithInfrastructure[T]]
   type MessageWithInfrastructure[T] = (Long, T)
 
+  type Msg[+T] = (String, Host.GUID, Host.GUID, Option[T], Seq[(Host.GUID, T)], TurnPhase.Type, CaseClassTransactionSpanningTreeNode[Host.GUID], Boolean, Long, Seq[Host.GUID])
+  def allEmpty[T](name: String): Msg[T] = (name, Host.dummyGuid, Host.dummyGuid, None, null, TurnPhase.dummy, null, false, 0L, null)
   val ASYNC_REQUEST = 0
 
-  sealed trait Message[+P]
+  sealed trait Message[+P] {
+    def toTuple: Msg[P] = this match {
+      case UnitResponse => allEmpty("UnitResponse")
+      case Connect(turn) => allEmpty("Connect").copy(_2 = turn)
+      case Initialize(initValues, maybeFirstFrame) => allEmpty("Initialize").copy(_2 = maybeFirstFrame.getOrElse(Host.dummyGuid), _5 = initValues, _8 = maybeFirstFrame.isDefined)
+      case AsyncIncrementFrame(turn) => allEmpty("AsyncIncrementFrame").copy(_2 = turn)
+      case AsyncIncrementSupersedeFrame(turn, supersede) => allEmpty("AsyncIncrementSupersedeFrame").copy(_2 = turn, _3 = supersede)
+      case AsyncResolveUnchanged(turn) => allEmpty("AsyncResolveUnchanged").copy(_2 = turn)
+      case AsyncResolveUnchangedFollowFrame(turn, followFrame) => allEmpty("AsyncResolveUnchangedFollowFrame").copy(_2 = turn, _3 = followFrame)
+      case AsyncNewValue(turn, value) => allEmpty("AsyncNewValue").copy(_2 = turn, _4 = Some(value))
+      case AsyncNewValueFollowFrame(turn, value, followFrame) => allEmpty("AsyncNewValueFollowFrame").copy(_2 = turn, _3 = followFrame, _4 = Some(value))
+      case AddReplicator(turn) => allEmpty("AddReplicator").copy(_2 = turn)
+      case AddReplicatorResponse(initPhase, initPreds) => allEmpty("AddReplicatorResponse").copy(_6 = initPhase, _10 = initPreds)
+      case AddRemoteBranch(turn, forPhase) => allEmpty("AddRemoteBranch").copy(_2 = turn, _6 = forPhase)
+      case AsyncRemoteBranchComplete(turn, forPhase) => allEmpty("AsyncRemoteBranchComplete").copy(_2 = turn, _6 = forPhase)
+      case AcquirePhaseLockAndGetEstablishmentBundle(turn) => allEmpty("AcquirePhaseLockAndGetEstablishmentBundle").copy(_2 = turn)
+      case AcquirePhaseLockAndGetEstablishmentBundleResponse(phase, predecessorTree) => allEmpty("AcquirePhaseLockAndGetEstablishmentBundleResponse").copy(_6 = phase, _7 = predecessorTree)
+      case AddPredecessorAndReleasePhaseLock(turn, predecessorTree) => allEmpty("AddPredecessorAndReleasePhaseLock").copy(_2 = turn, _7 = predecessorTree)
+      case AsyncReleasePhaseLock(turn) => allEmpty("AsyncReleasePhaseLock").copy(_2 = turn)
+      case MaybeNewReachableSubtree(turn, attachBelow, spanningTree) => allEmpty("MaybeNewReachableSubtree").copy(_2 = turn, _3 = attachBelow, _7 = spanningTree)
+      case NewSuccessor(turn, successor) => allEmpty("NewSuccessor").copy(_2 = turn, _3 = successor)
+      case TurnGetLockedRoot(turn) => allEmpty("TurnGetLockedRoot").copy(_2 = turn)
+      case LockGetLockedRoot(lock) => allEmpty("LockGetLockedRoot").copy(_2 = lock)
+      case TurnTryLock(turn) => allEmpty("TurnTryLock").copy(_2 = turn)
+      case LockTryLock(lock) => allEmpty("LockTryLock").copy(_2 = lock)
+      case TryLockResponse(success, newParent) => allEmpty("TryLockResponse").copy(_2 = newParent, _8 = success)
+      case TurnLock(turn) => allEmpty("TurnLock").copy(_2 = turn)
+      case LockLock(lock) => allEmpty("LockLock").copy(_2 = lock)
+      case TurnSpinOnce(turn, backoff) => allEmpty("TurnSpinOnce").copy(_2 = turn, _9 = backoff)
+      case LockSpinOnce(lock, backoff) => allEmpty("LockSpinOnce").copy(_2 = lock, _9 = backoff)
+      case LockResponse(newParent) => allEmpty("LockResponse").copy(_2 = newParent)
+      case TurnTrySubsume(turn, lockedNewParent) => allEmpty("TurnTrySubsume").copy(_2 = turn, _3 = lockedNewParent)
+      case LockTrySubsume(lock, lockedNewParent) => allEmpty("LockTrySubsume").copy(_2 = lock, _3 = lockedNewParent)
+      case MaybeLockResponse(newParentIfFailed) => allEmpty("MaybeLockResponse").copy(_2 = newParentIfFailed.getOrElse(Host.dummyGuid), _8 = newParentIfFailed.isDefined)
+      case TurnSubsume(turn, lockedNewParent) => allEmpty("TurnSubsume").copy(_2 = turn, _3 = lockedNewParent)
+      case LockSubsume(lock, lockedNewParent) => allEmpty("LockSubsume").copy(_2 = lock, _3 = lockedNewParent)
+      case TurnUnlock(turn) => allEmpty("TurnUnlock").copy(_2 = turn)
+      case LockUnlock(lock) => allEmpty("LockUnlock").copy(_2 = lock)
+      case NewPredecessors(turn, newPredecessors) => allEmpty("NewPredecessors").copy(_2 = turn, _10 = newPredecessors)
+      case NewPhase(turn, phase) => allEmpty("NewPhase").copy(_2 = turn, _6 = phase)
+    }
+  }
+  object Message {
+    def fromTuple[P](tuple: Msg[P]): Message[P] = tuple match {
+      case ("UnitResponse", _, _, _, _, _, _, _, _, _) => UnitResponse
+      case ("Connect", turn, _, _, _, _, _, _, _, _) => Connect(turn)
+      case ("Initialize", mbff, _, _, initValues, _, _, mb, _, _) => Initialize(initValues, if(mb) Some(mbff) else None)
+      case ("AsyncIncrementFrame", turn, _, _, _, _, _, _, _, _) => AsyncIncrementFrame(turn)
+      case ("AsyncIncrementSupersedeFrame", turn, supersede, _, _, _, _, _, _, _) => AsyncIncrementSupersedeFrame(turn, supersede)
+      case ("AsyncResolveUnchanged", turn, _, _, _, _, _, _, _, _) => AsyncResolveUnchanged(turn)
+      case ("AsyncResolveUnchangedFollowFrame", turn, followFrame, _, _, _, _, _, _, _) => AsyncResolveUnchangedFollowFrame(turn, followFrame)
+      case ("AsyncNewValue", turn, _, Some(value), _, _, _, _, _, _) => AsyncNewValue(turn, value)
+      case ("AsyncNewValueFollowFrame", turn, followFrame, Some(value), _, _, _, _, _, _) => AsyncNewValueFollowFrame(turn, value, followFrame)
+      case ("AddReplicator", turn, _, _, _, _, _, _, _, _) => AddReplicator(turn)
+      case ("AddReplicatorResponse", _, _, _, _, initPhase, _, _, _, initPreds) => AddReplicatorResponse(initPhase, initPreds)
+      case ("AddRemoteBranch", turn, _, _, _, forPhase, _, _, _, _) => AddRemoteBranch(turn, forPhase)
+      case ("AsyncRemoteBranchComplete", turn, _, _, _, forPhase, _, _, _, _)=> AsyncRemoteBranchComplete(turn, forPhase)
+      case ("AcquirePhaseLockAndGetEstablishmentBundle", turn, _, _, _, _, _, _, _, _) => AcquirePhaseLockAndGetEstablishmentBundle(turn)
+      case ("AcquirePhaseLockAndGetEstablishmentBundleResponse", _, _, _, _, phase, predecessorTree, _, _, _) => AcquirePhaseLockAndGetEstablishmentBundleResponse(phase, predecessorTree)
+      case ("AddPredecessorAndReleasePhaseLock", turn, _, _, _, _, predecessorTree, _, _, _) => AddPredecessorAndReleasePhaseLock(turn, predecessorTree)
+      case ("AsyncReleasePhaseLock", turn, _, _, _, _, _, _, _, _) => AsyncReleasePhaseLock(turn)
+      case ("MaybeNewReachableSubtree", turn, attachBelow, _, _, _, spanningTree, _, _, _) => MaybeNewReachableSubtree(turn, attachBelow, spanningTree)
+      case ("NewSuccessor", turn, successor, _, _, _, _, _, _, _) => NewSuccessor(turn, successor)
+      case ("TurnGetLockedRoot", turn, _, _, _, _, _, _, _, _) => TurnGetLockedRoot(turn)
+      case ("LockGetLockedRoot", lock, _, _, _, _, _, _, _, _) => LockGetLockedRoot(lock)
+      case ("TurnTryLock", turn, _, _, _, _, _, _, _, _) => TurnTryLock(turn)
+      case ("LockTryLock", lock, _, _, _, _, _, _, _, _) => LockTryLock(lock)
+      case ("TryLockResponse", newParent, _, _, _, _, _, success, _, _) => TryLockResponse(success, newParent)
+      case ("TurnLock", turn, _, _, _, _, _, _, _, _) => TurnLock(turn)
+      case ("LockLock", lock, _, _, _, _, _, _, _, _) => LockLock(lock)
+      case ("TurnSpinOnce", turn, _, _, _, _, _, _, backoff, _) => TurnSpinOnce(turn, backoff)
+      case ("LockSpinOnce", lock, _, _, _, _, _, _, backoff, _) => LockSpinOnce(lock, backoff)
+      case ("LockResponse", newParent, _, _, _, _, _, _, _, _) => LockResponse(newParent)
+      case ("TurnTrySubsume", turn, lockedNewParent, _, _, _, _, _, _, _) => TurnTrySubsume(turn, lockedNewParent)
+      case ("LockTrySubsume", lock, lockedNewParent, _, _, _, _, _, _, _) => LockTrySubsume(lock, lockedNewParent)
+      case ("MaybeLockResponse", mbnp, _, _, _, _, _, mb, _, _) => MaybeLockResponse(if(mb) Some(mbnp) else None)
+      case ("TurnSubsume", turn, lockedNewParent, _, _, _, _, _, _, _) => TurnSubsume(turn, lockedNewParent)
+      case ("LockSubsume", lock, lockedNewParent, _, _, _, _, _, _, _) => LockSubsume(lock, lockedNewParent)
+      case ("TurnUnlock", turn, _, _, _, _, _, _, _, _) => TurnUnlock(turn)
+      case ("LockUnlock", lock, _, _, _, _, _, _, _, _) => LockUnlock(lock)
+      case ("NewPredecessors", turn, _, _, _, _, _, _, _, newPredecessors) => NewPredecessors(turn, newPredecessors)
+      case ("NewPhase", turn, _, _, _, phase, _, _, _, _) => NewPhase(turn, phase)
+      case otherwise =>
+        val e = new AssertionError("Unrecognized message: " + otherwise)
+        e.printStackTrace()
+        throw e
+    }
+  }
   sealed trait Async[+P] extends Message[P]
   sealed trait Request[+P] extends Message[P] {
     type Response <: ReactiveTransmittable.this.Response[P]
@@ -43,7 +132,7 @@ object ReactiveTransmittable {
   case object UnitResponse extends Response[Nothing]
 
   case class Connect[P](turn: Host.GUID) extends Request[P]{ override type Response = Initialize[P] }
-  case class Initialize[P](initValues: Seq[(Host.GUID, P)], mabyeFirstFrame: Option[Host.GUID]) extends Response[P]
+  case class Initialize[P](initValues: Seq[(Host.GUID, P)], maybeFirstFrame: Option[Host.GUID]) extends Response[P]
 
   case class AsyncIncrementFrame(turn: Host.GUID) extends Async[Nothing]
   case class AsyncIncrementSupersedeFrame(turn: Host.GUID, supersede: Host.GUID) extends Async[Nothing]
@@ -114,7 +203,8 @@ object ReactiveTransmittable {
     final case class Exceptional(serializedThrowable: Array[Byte]) extends Pluse[Nothing]
   }
 
-  implicit def signalTransmittable[P, S](implicit host: FullMVEngine, messageTransmittable: Transmittable[MessageWithInfrastructure[Message[Pluse[P]]], S, MessageWithInfrastructure[Message[Pluse[P]]]], serializable: Serializable[S]): Transmittable[Signal[P, FullMVStruct], S, Signal[P, FullMVStruct]] = new PushBasedTransmittable[Signal[P, FullMVStruct], MessageWithInfrastructure[Message[Pluse[P]]], S, MessageWithInfrastructure[Message[Pluse[P]]], Signal[P, FullMVStruct]] {
+  implicit def signalTransmittable[P, S](implicit host: FullMVEngine, messageTransmittable: Transmittable[MessageWithInfrastructure[Msg[Pluse[P]]], S, MessageWithInfrastructure[Msg[Pluse[P]]]], serializable: Serializable[S]): Transmittable[Signal[P, FullMVStruct], S, Signal[P, FullMVStruct]] = new PushBasedTransmittable[Signal[P, FullMVStruct], MessageWithInfrastructure[Msg[Pluse[P]]], S, MessageWithInfrastructure[Msg[Pluse[P]]], Signal[P, FullMVStruct]] {
+    type Msg = ReactiveTransmittable.this.Msg[Pluse[P]]
     type Message = ReactiveTransmittable.this.Message[Pluse[P]]
     type Async = ReactiveTransmittable.this.Async[Pluse[P]]
     type Request = ReactiveTransmittable.this.Request[Pluse[P]]
@@ -130,9 +220,10 @@ object ReactiveTransmittable {
       promise.complete(Success(response))
     }
 
-    def handleMessage(localReactive: Either[ReadableReactive[Pulse[P], FullMVStruct], ReactiveReflection[Pulse[P]]], endpoint: EndPointWithInfrastructure[Message])(msg: MessageWithInfrastructure[Message]): Unit = {
+    def handleMessage(localReactive: Either[ReadableReactive[Pulse[P], FullMVStruct], ReactiveReflection[Pulse[P]]], endpoint: EndPointWithInfrastructure[Msg])(msg: MessageWithInfrastructure[Msg]): Unit = {
       if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host receive incoming $msg")
-      msg match {
+      (msg._1, Message.fromTuple(msg._2)) match {
+//      msg match {
         case (_, async: Async) =>
           host.threadPool.submit(new Runnable {
             if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host processing async $async")
@@ -148,7 +239,7 @@ object ReactiveTransmittable {
                   new Exception(s"$host failed processing request $request", e).printStackTrace()
                 case Success(response) =>
                   if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host replying $requestId: $response")
-                  endpoint.send((requestId, response))
+                  endpoint.send((requestId, response.toTuple))
               }(ReactiveTransmittable.notWorthToMoveToTaskpool)
             }
           })
@@ -158,17 +249,20 @@ object ReactiveTransmittable {
       }
     }
 
-    override def send(value: Signal[P, FullMVStruct], remote: RemoteRef, endpoint: EndPointWithInfrastructure[Message]): MessageWithInfrastructure[Message] = {
+    override def send(value: Signal[P, FullMVStruct], remote: RemoteRef, endpoint: EndPointWithInfrastructure[Msg]): MessageWithInfrastructure[Msg] = {
+      if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host sending $value")
       endpoint.receive.notify (handleMessage(Left(value: ReadableReactive[Pulse[P], FullMVStruct]), endpoint))
-      (0L, UnitResponse)
+      val s = (0L, UnitResponse.toTuple)
+      println(s)
+      s
     }
 
-    def doAsync(endpoint: EndPointWithInfrastructure[Message], parameters: Async): Unit = {
+    def doAsync(endpoint: EndPointWithInfrastructure[Msg], parameters: Async): Unit = {
       if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host send async $parameters")
-      endpoint.send((0L, parameters))
+      endpoint.send((0L, parameters.toTuple))
     }
 
-    def doRequest(endpoint: EndPointWithInfrastructure[Message],  parameters: Request): Future[parameters.Response] = {
+    def doRequest(endpoint: EndPointWithInfrastructure[Msg],  parameters: Request): Future[parameters.Response] = {
       val promise = Promise[parameters.Response]()
       @inline @tailrec def createRequest(): Long = {
         val requestId = ThreadLocalRandom.current().nextLong()
@@ -176,11 +270,11 @@ object ReactiveTransmittable {
       }
       val requestId = createRequest()
       if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host send request $requestId: $parameters")
-      endpoint.send((requestId, parameters))
+      endpoint.send((requestId, parameters.toTuple))
       promise.future
     }
 
-    def localLockInstance(guid: Host.GUID, endpoint: EndPointWithInfrastructure[Message]): SubsumableLock = {
+    def localLockInstance(guid: Host.GUID, endpoint: EndPointWithInfrastructure[Msg]): SubsumableLock = {
       host.lockHost.getCachedOrReceiveRemote(guid) { doCache =>
         if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host connecting lock $guid")
         val instance = new SubsumableLockReflection(host.lockHost, guid, new SubsumableLockMirrorProxyToEndpoint(guid, endpoint))
@@ -189,7 +283,7 @@ object ReactiveTransmittable {
       }
     }
 
-    def localTurnInstance0(guid: Host.GUID, endpoint: EndPointWithInfrastructure[Message]): FullMVTurn = {
+    def localTurnInstance0(guid: Host.GUID, endpoint: EndPointWithInfrastructure[Msg]): FullMVTurn = {
       host.getCachedOrReceiveRemote(guid) { doCache =>
         if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host connecting turn $guid")
         val instance = new FullMVTurnReflection(host, guid, new FullMVTurnMirrorProxyToEndpoint(guid, endpoint), host.timeout)
@@ -200,17 +294,18 @@ object ReactiveTransmittable {
         instance
       }
     }
-    def localTurnInstance(guid: Host.GUID, endpoint: EndPointWithInfrastructure[Message]): FullMVTurn = {
+    def localTurnInstance(guid: Host.GUID, endpoint: EndPointWithInfrastructure[Msg]): FullMVTurn = {
       val turn = localTurnInstance0(guid, endpoint)
       // TODO there might be a cleverer way to do this..
       turn.awaitPhase(TurnPhase.Initialized + 1)
       turn
     }
-    def localTurnReflection(guid: Host.GUID, endpoint: EndPointWithInfrastructure[Message]): FullMVTurnReflection = {
+    def localTurnReflection(guid: Host.GUID, endpoint: EndPointWithInfrastructure[Msg]): FullMVTurnReflection = {
       localTurnInstance0(guid, endpoint).asInstanceOf[FullMVTurnReflection]
     }
 
-    override def receive(value: MessageWithInfrastructure[Message], remote: RemoteRef, endpoint: EndPointWithInfrastructure[Message]): Signal[P, FullMVStruct] = {
+    override def receive(value: MessageWithInfrastructure[Msg], remote: RemoteRef, endpoint: EndPointWithInfrastructure[Msg]): Signal[P, FullMVStruct] = {
+      if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host receiving a value")
       val valuePersistency = ValuePersistency.DerivedSignal[P]
       val turn = host.newTurn()
       turn.awaitAndSwitchPhase(TurnPhase.Executing)
@@ -237,7 +332,7 @@ object ReactiveTransmittable {
       reflection
     }
 
-    def handleAsync(localReactive: Either[ReadableReactive[Pulse[P], FullMVStruct], ReactiveReflection[Pulse[P]]], endpoint: EndPointWithInfrastructure[Message], message: Async): Unit = message match {
+    def handleAsync(localReactive: Either[ReadableReactive[Pulse[P], FullMVStruct], ReactiveReflection[Pulse[P]]], endpoint: EndPointWithInfrastructure[Msg], message: Async): Unit = message match {
       case AsyncIncrementFrame(turn) =>
         localReactive.right.get.asyncIncrementFrame(localTurnInstance(turn, endpoint))
       case AsyncIncrementSupersedeFrame(turn, supersede) =>
@@ -257,7 +352,7 @@ object ReactiveTransmittable {
         localTurnInstance(receiver, endpoint).asyncReleasePhaseLock()
     }
 
-    def handleRequest(localReactive: Either[ReadableReactive[Pulse[P], FullMVStruct], ReactiveReflection[Pulse[P]]], endpoint: EndPointWithInfrastructure[Message], request: Request): Future[Response] = request match {
+    def handleRequest(localReactive: Either[ReadableReactive[Pulse[P], FullMVStruct], ReactiveReflection[Pulse[P]]], endpoint: EndPointWithInfrastructure[Msg], request: Request): Future[Response] = request match {
       case Connect(turn) =>
         val (initValues, maybeFirstFrame) = ReactiveMirror[Pulse[P]](localReactive.left.get, localTurnInstance(turn, endpoint), new ReactiveReflectionProxyToEndpoint(endpoint), reflectionIsTransient = false, "SignalMirror")
         Future.successful(Initialize(initValues.map { case (aTurn, value) =>
@@ -362,7 +457,7 @@ object ReactiveTransmittable {
         throw new AssertionError("undefined message : "+otherwise)
     }
 
-    class FullMVTurnMirrorProxyToEndpoint(val guid: Host.GUID, endpoint: EndPointWithInfrastructure[Message]) extends FullMVTurnProxy {
+    class FullMVTurnMirrorProxyToEndpoint(val guid: Host.GUID, endpoint: EndPointWithInfrastructure[Msg]) extends FullMVTurnProxy {
       override def addRemoteBranch(forPhase: Type): Future[Unit] = {
         doRequest(endpoint, AddRemoteBranch(guid, forPhase)).map(_ => ())(notWorthToMoveToTaskpool)
       }
@@ -440,7 +535,7 @@ object ReactiveTransmittable {
       }
     }
 
-    class FullMVTurnReflectionProxyToEndpoint(val guid: Host.GUID, endpoint: EndPointWithInfrastructure[Message]) extends FullMVTurnReflectionProxy {
+    class FullMVTurnReflectionProxyToEndpoint(val guid: Host.GUID, endpoint: EndPointWithInfrastructure[Msg]) extends FullMVTurnReflectionProxy {
       override def newPredecessors(predecessors: Seq[GUID]): Future[Unit] = {
         doRequest(endpoint, NewPredecessors(guid, predecessors)).map(_ => ())(notWorthToMoveToTaskpool)
       }
@@ -450,7 +545,7 @@ object ReactiveTransmittable {
       }
     }
 
-    class SubsumableLockMirrorProxyToEndpoint(val guid: Host.GUID, endpoint: EndPointWithInfrastructure[Message]) extends SubsumableLockProxy {
+    class SubsumableLockMirrorProxyToEndpoint(val guid: Host.GUID, endpoint: EndPointWithInfrastructure[Msg]) extends SubsumableLockProxy {
       override def subsume(lockedNewParent: SubsumableLock): Future[Unit] = {
         assert(lockedNewParent.host == host.lockHost)
         doRequest(endpoint, LockSubsume(guid, lockedNewParent.guid)).map(_ => ())(notWorthToMoveToTaskpool)
@@ -494,7 +589,7 @@ object ReactiveTransmittable {
       }
     }
 
-    class ReactiveReflectionProxyToEndpoint(endpoint: EndPointWithInfrastructure[Message]) extends ReactiveReflectionProxy[Pulse[P]] {
+    class ReactiveReflectionProxyToEndpoint(endpoint: EndPointWithInfrastructure[Msg]) extends ReactiveReflectionProxy[Pulse[P]] {
       override def asyncIncrementFrame(turn: FullMVTurn): Unit = {
         assert(turn.host == host)
         doAsync(endpoint, AsyncIncrementFrame(turn.guid))

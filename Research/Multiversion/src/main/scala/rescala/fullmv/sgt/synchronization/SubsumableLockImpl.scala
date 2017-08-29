@@ -19,7 +19,7 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
 
   override def getLockedRoot: Future[Option[Host.GUID]] = {
     state.get match {
-      case null => Future.successful(None)
+      case null => futureNone
       case Self => Future.successful(Some(guid))
       case parent => parent.getLockedRoot
     }
@@ -47,14 +47,14 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
       assert(lockedNewParent eq this, s"instance caching broken? $this came into contact with reflection of itself on same host")
       assert(state.get == Self, s"passed in a TryLockResult indicates that $this was successfully locked, but it currently isn't!")
       if (DEBUG) println(s"[${Thread.currentThread().getName}]: trySubsume $this to itself reentrant success")
-      Future.successful(None)
+      futureNone
     } else {
       state.get match {
         case null =>
           val success = state.compareAndSet(null, lockedNewParent)
           if(success) {
             if (DEBUG) println(s"[${Thread.currentThread().getName}]: trySubsume $this succeeded")
-            Future.successful(None)
+            futureNone
           } else {
             if (DEBUG) println(s"[${Thread.currentThread().getName}]: trySubsume $this to $lockedNewParent failed to contention")
             Future.successful(Some(this))
@@ -155,7 +155,7 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
     val peeked = waiters.peek()
     if(DEBUG) println(s"[${Thread.currentThread().getName}]: subsumed $this, unparking " + (if(peeked == null) "none" else peeked.getName))
     LockSupport.unpark(peeked)
-    Future.successful(Unit)
+    Future.unit
   }
 
   override def toString = s"Lock($guid on $host, ${state.get match {
