@@ -10,7 +10,6 @@ import reandroidthings._
 class MainActivity extends AppCompatActivity {
   private val TAG = "Barometer4Android"
   implicit val context = this
-  var alphNumDisplay: ReAlphaNumericDisplay[Float] = null
 
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
@@ -22,8 +21,7 @@ class MainActivity extends AppCompatActivity {
     val temperatureSensor: ReTemperatureSensor =
       ReSensorManager.getSensor(ReSensor.TypeDynamicSensorMetaTemperature).asInstanceOf[ReTemperatureSensor]
 
-    alphNumDisplay = new ReAlphaNumericDisplay(temperatureSensor.valueChanged)
-    alphNumDisplay.init
+    ReAlphaNumericDisplay.init(temperatureSensor.valueChanged)
   }
 
 
@@ -40,6 +38,6 @@ class MainActivity extends AppCompatActivity {
     ReSensorManager.removeSensors()
 
     // turn off display
-    alphNumDisplay.destroy()
+    ReAlphaNumericDisplay.destroy()
   }
 }

@@ -7,13 +7,13 @@ import com.google.android.things.contrib.driver.ht16k33.AlphanumericDisplay
 import reandroidthings.iot_devices.BoardDefaults
 import rescala._
 
-class ReAlphaNumericDisplay[T](protected val inputEvent: Event[T]) {
+object ReAlphaNumericDisplay {
   protected var peer: AlphanumericDisplay = null
   private val TAG: String = "ReAlphaNumericDisplay"
   private var eventObserver: Observe = null
 
 
-  def init(): Unit = {
+  def init(inputEvent: Event[Any]): Unit = {
     try {
       peer = new AlphanumericDisplay(BoardDefaults.getI2cBus)
       peer.clear

@@ -261,8 +261,8 @@ object ReSensor {
   val StringTypeDynamicSensorMeta = classOf[Sensor].getDeclaredField("STRING_TYPE_DYNAMIC_SENSOR_META").get(null).toString
 
   // special Sensor-types present in the RPi3 Rainbow-Head (a dynamic temperature and pressure sensor)
-  val TypeDynamicSensorMetaPressure = ReSensorDescriptor[RePressureSensor](40)
-  val TypeDynamicSensorMetaTemperature = ReSensorDescriptor[ReTemperatureSensor](41)
+  val TypeDynamicSensorMetaPressure = /*ReSensorDescriptor[RePressureSensor](*/40/*)*/
+  val TypeDynamicSensorMetaTemperature = /*ReSensorDescriptor[ReTemperatureSensor](*/41/*)*/
 
   val TypeAll = Sensor.TYPE_ALL
   val TypeDevicePrivateBase = Sensor.TYPE_DEVICE_PRIVATE_BASE
