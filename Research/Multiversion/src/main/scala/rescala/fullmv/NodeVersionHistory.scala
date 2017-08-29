@@ -731,7 +731,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     require(math.abs(arity) == 1)
     // allocate array to the maximum number of written versions that might follow
     // (any version at index firstFrame or later can only be a frame, not written)
-    val sizePrediction = firstFrame - position
+    val sizePrediction = math.max(firstFrame - position, 0)
     val successorWrittenVersions = new ArrayBuffer[T](sizePrediction)
     for(pos <- position until _versions.size) {
       val version = _versions(pos)
@@ -739,7 +739,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
       // as per above, this is implied false if pos >= firstFrame:
       if(version.isWritten) successorWrittenVersions += version.txn
     }
-    if(successorWrittenVersions.size > sizePrediction) System.err.println(s"FullMV retrofitSourceOuts predicted size $firstFrame - $position = $sizePrediction, but size eventually was ${successorWrittenVersions.size}")
+    if(successorWrittenVersions.size > sizePrediction) System.err.println(s"FullMV retrofitSourceOuts predicted size max($firstFrame - $position, 0) = $sizePrediction, but size eventually was ${successorWrittenVersions.size}")
     val maybeSuccessorFrame = if (firstFrame < _versions.size) Some(_versions(firstFrame).txn) else None
     (successorWrittenVersions, maybeSuccessorFrame)
   }

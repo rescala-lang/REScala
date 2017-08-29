@@ -41,6 +41,7 @@ abstract class FullMVTurn(val timeout: Duration) extends TurnImpl[FullMVStruct] 
   override def ignite(reactive: Reactive[FullMVStruct], incoming: Set[InDep[FullMVStruct]], ignitionRequiresReevaluation: Boolean): Unit = {
     if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this igniting $reactive on $incoming")
     incoming.foreach { discover =>
+      discover.state.dynamicAfter(this) // TODO should we get rid of this?
       val (successorWrittenVersions, maybeFollowFrame) = discover.state.discover(this, reactive)
       reactive.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, 1)
     }

@@ -103,7 +103,7 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
 
   private def awaitAllPredecessorsPhase(atLeast: TurnPhase.Type) = {
     val preds = predecessorSpanningTreeNodes
-    if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this awaiting phase $atLeast+ on predecessors ${preds.keySet}")
+    if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this awaiting phase $atLeast+ on predecessors ${preds.keySet - this}")
     preds.keySet.foreach { waitFor =>
       if(waitFor != this) waitFor.awaitPhase(atLeast)
     }

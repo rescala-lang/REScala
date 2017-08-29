@@ -46,82 +46,84 @@ class SignalTransmittableTest extends FunSuite {
     }
   }
 
-//  test("transmission supports derivations") {
-//    val hostA = new Host("derivationA")
-//    val port = ports.getAndIncrement()
-//    hostA.registry.listen(TCP(port))
-//    try {
-//      val input = {import hostA._; Var(5)}
-//      hostA.registry.bind(hostA.binding)(input)
-//
-//      val hostB = new Host("derivationB")
-//      val remoteA = Await.result(hostB.registry.request(TCP("localhost", port)), 10.second)
-//      val reflection: rescala.reactives.Signal[Int, FullMVStruct] = Await.result(hostB.registry.lookup(hostB.binding, remoteA), 10.second)
-//      Thread.sleep(1000)
-//      val derived = {import hostB._; reflection.map(_ * 2)}
-//
-//      assert({import hostB._; derived.now} === 10)
-//      ;{import hostA._; input.set(123)}
-//      assert({import hostB._; derived.now} === 246)
-//    } finally {
-//      hostA.registry.terminate()
-//    }
-//  }
+  test("transmission supports derivations") {
+    val hostA = new Host("derivationA")
+    val port = ports.getAndIncrement()
+    hostA.registry.listen(TCP(port))
+    try {
+      val input = {import hostA._; Var(5)}
+      hostA.registry.bind(hostA.binding)(input)
 
-//  test("transmission maintains glitch freedom") {
-//    class GFHost(name: String) extends Host(name) {
-//      import io.circe.generic.auto._
-//      import rescala.fullmv.transmitter.CirceSerialization._
-//      import ReactiveTransmittable._
-//
-//      val branch1 = Binding[Signal[(String, Int)]]("branch1")
-//      val branch2 = Binding[Signal[(String, Int)]]("branch2")
-//    }
-//
-//    val hostA = new GFHost("gfA")
-//    val port = ports.getAndIncrement()
-//    hostA.registry.listen(TCP(port))
-//    try {
-//      val input = {import hostA._; Var(5)}
-//      val branch1A = {import hostA._; input.map("1a" -> _)}
-//      hostA.registry.bind(hostA.branch1)(branch1A)
-//      hostA.registry.bind(hostA.binding)(input)
-//      val branch2A = {import hostA._; input.map("2a" -> _)}
-//      hostA.registry.bind(hostA.branch2)(branch2A)
-//
-//      val hostB = new GFHost("gfB")
-//      val remoteA = Await.result(hostB.registry.request(TCP("localhost", port)), 10.second)
-//
-//      val remoteBranch1: rescala.reactives.Signal[(String, Int), FullMVStruct] = Await.result(hostB.registry.lookup(hostB.branch1, remoteA), 10.second)
-//      val reflection: rescala.reactives.Signal[Int, FullMVStruct] = Await.result(hostB.registry.lookup(hostB.binding, remoteA), 10.second)
-//      val remoteBranch2: rescala.reactives.Signal[(String, Int), FullMVStruct] = Await.result(hostB.registry.lookup(hostB.branch2, remoteA), 10.second)
-//
-//      Thread.sleep(1000)
-//
-//      val branch1B = {import hostB._; remoteBranch1.map("1b" -> _)}
-//      val branch2B = {import hostB._; remoteBranch2.map("2b" -> _)}
-//
-//      val tracker = ArrayBuffer[((String, (String, Int)), Int, (String, (String, Int)))]()
-//      val derived = {import hostB._; Signal {
-//        tracker.synchronized {
-//          val v = (branch1B(), reflection(), branch2B())
-//          tracker += v
-//          v
-//        }
-//      }}
-//
-//      assert({import hostB._; derived.now} === ((("1b", ("1a", 5)), 5, ("2b", ("2a", 5)))))
-//      assert(tracker === ArrayBuffer((("1b", ("1a", 5)), 5, ("2b", ("2a", 5)))))
-//      tracker.clear()
-//
-//      ;{import hostA._; input.set(123)}
-//      assert({import hostB._; derived.now} === ((("1b", ("1a", 123)), 123, ("2b", ("2a", 123)))))
-//      assert(tracker === ArrayBuffer((("1b", ("1a", 123)), 123, ("2b", ("2a", 123)))))
-//    } finally {
-//      hostA.registry.terminate()
-//    }
-//  }
-//
+      val hostB = new Host("derivationB")
+      val remoteA = Await.result(hostB.registry.request(TCP("localhost", port)), 10.second)
+      val reflection: rescala.reactives.Signal[Int, FullMVStruct] = Await.result(hostB.registry.lookup(hostB.binding, remoteA), 10.second)
+
+      val derived = {import hostB._; reflection.map(_ * 2)}
+
+      Thread.sleep(1000)
+
+      assert({import hostB._; derived.now} === 10)
+      ;{import hostA._; input.set(123)}
+      assert({import hostB._; derived.now} === 246)
+    } finally {
+      hostA.registry.terminate()
+    }
+  }
+
+  test("transmission maintains glitch freedom") {
+    class GFHost(name: String) extends Host(name) {
+      import io.circe.generic.auto._
+      import rescala.fullmv.transmitter.CirceSerialization._
+      import ReactiveTransmittable._
+
+      val branch1 = Binding[Signal[(String, Int)]]("branch1")
+      val branch2 = Binding[Signal[(String, Int)]]("branch2")
+    }
+
+    val hostA = new GFHost("gfA")
+    val port = ports.getAndIncrement()
+    hostA.registry.listen(TCP(port))
+    try {
+      val input = {import hostA._; Var(5)}
+      val branch1A = {import hostA._; input.map("1a" -> _)}
+      hostA.registry.bind(hostA.branch1)(branch1A)
+      hostA.registry.bind(hostA.binding)(input)
+      val branch2A = {import hostA._; input.map("2a" -> _)}
+      hostA.registry.bind(hostA.branch2)(branch2A)
+
+      val hostB = new GFHost("gfB")
+      val remoteA = Await.result(hostB.registry.request(TCP("localhost", port)), 10.second)
+
+      val remoteBranch1: rescala.reactives.Signal[(String, Int), FullMVStruct] = Await.result(hostB.registry.lookup(hostB.branch1, remoteA), 10.second)
+      val reflection: rescala.reactives.Signal[Int, FullMVStruct] = Await.result(hostB.registry.lookup(hostB.binding, remoteA), 10.second)
+      val remoteBranch2: rescala.reactives.Signal[(String, Int), FullMVStruct] = Await.result(hostB.registry.lookup(hostB.branch2, remoteA), 10.second)
+
+      val branch1B = {import hostB._; remoteBranch1.map("1b" -> _)}
+      val branch2B = {import hostB._; remoteBranch2.map("2b" -> _)}
+
+      val tracker = ArrayBuffer[((String, (String, Int)), Int, (String, (String, Int)))]()
+      val derived = {import hostB._; Signal {
+        tracker.synchronized {
+          val v = (branch1B(), reflection(), branch2B())
+          tracker += v
+          v
+        }
+      }}
+
+      Thread.sleep(1000)
+
+      assert({import hostB._; derived.now} === ((("1b", ("1a", 5)), 5, ("2b", ("2a", 5)))))
+      assert(tracker === ArrayBuffer((("1b", ("1a", 5)), 5, ("2b", ("2a", 5)))))
+      tracker.clear()
+
+      ;{import hostA._; input.set(123)}
+      assert({import hostB._; derived.now} === ((("1b", ("1a", 123)), 123, ("2b", ("2a", 123)))))
+      assert(tracker === ArrayBuffer((("1b", ("1a", 123)), 123, ("2b", ("2a", 123)))))
+    } finally {
+      hostA.registry.terminate()
+    }
+  }
+
 //  test("events work too") {
 //    val input = {import hostA._; Evt[Int]()}
 //    val branch1A = {import hostA._; input.map("1a" -> _)}

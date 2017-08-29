@@ -33,7 +33,7 @@ object ReactiveTransmittable {
   type MessageWithInfrastructure[T] = (Long, T)
 
   type Msg[+T] = (String, Host.GUID, Host.GUID, Option[T], Seq[(Host.GUID, T)], TurnPhase.Type, CaseClassTransactionSpanningTreeNode[Host.GUID], Boolean, Long, Seq[Host.GUID])
-  def allEmpty[T](name: String): Msg[T] = (name, Host.dummyGuid, Host.dummyGuid, None, null, TurnPhase.dummy, null, false, 0L, null)
+  def allEmpty[T](name: String): Msg[T] = (name, Host.dummyGuid, Host.dummyGuid, None, Seq.empty, TurnPhase.dummy, CaseClassTransactionSpanningTreeNode[Host.GUID](Host.dummyGuid, Set.empty), false, 0L, Seq.empty)
   val ASYNC_REQUEST = 0
 
   sealed trait Message[+P] {
@@ -223,7 +223,6 @@ object ReactiveTransmittable {
     def handleMessage(localReactive: Either[ReadableReactive[Pulse[P], FullMVStruct], ReactiveReflection[Pulse[P]]], endpoint: EndPointWithInfrastructure[Msg])(msg: MessageWithInfrastructure[Msg]): Unit = {
       if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host receive incoming $msg")
       (msg._1, Message.fromTuple(msg._2)) match {
-//      msg match {
         case (_, async: Async) =>
           host.threadPool.submit(new Runnable {
             if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host processing async $async")
@@ -252,9 +251,7 @@ object ReactiveTransmittable {
     override def send(value: Signal[P, FullMVStruct], remote: RemoteRef, endpoint: EndPointWithInfrastructure[Msg]): MessageWithInfrastructure[Msg] = {
       if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host sending $value")
       endpoint.receive.notify (handleMessage(Left(value: ReadableReactive[Pulse[P], FullMVStruct]), endpoint))
-      val s = (0L, UnitResponse.toTuple)
-      println(s)
-      s
+      (0L, UnitResponse.toTuple)
     }
 
     def doAsync(endpoint: EndPointWithInfrastructure[Msg], parameters: Async): Unit = {
