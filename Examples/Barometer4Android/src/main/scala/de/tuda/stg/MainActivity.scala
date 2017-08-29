@@ -3,19 +3,15 @@ package de.tuda.stg
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
-import java.io.IOException
 
-import android.graphics.drawable.Animatable
 import rescala._
 import reandroidthings._
-import com.google.android.things.contrib.driver.ht16k33.AlphanumericDisplay
 
 
 class MainActivity extends AppCompatActivity {
   private val TAG = "Barometer4Android"
-  // allows accessing `.value` on TR.resource.constants
   implicit val context = this
-  private var mDisplay: AlphanumericDisplay = null
+  var alphNumDisplay: ReAlphaNumericDisplay = null
 
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
@@ -23,67 +19,60 @@ class MainActivity extends AppCompatActivity {
     Log.d(TAG, "Started ReSensor MainActivity")
 
     // nice Activity View, if connected to Monitor
-        makeNiceMonitorDisplay()
+    //    makeNiceMonitorDisplay()
 
     ReSensorManager.init(this.getApplicationContext)
-    // TODO: check for interesting event-values (define classes + type parameter)
-    val temperatureSensor : ReTemperatureSensor = ReSensorManager.getSensor(ReSensor.TypeDynamicSensorMetaTemperature)
+    // get temperature sensor (requires cast)
+    val temperatureSensor: ReTemperatureSensor =
+      ReSensorManager.getSensor(ReSensor.TypeDynamicSensorMetaTemperature).asInstanceOf[ReTemperatureSensor]
 
-    //    temperatureSensor.value.map(_.toInt) observe { v => Log.d("Barometer4Android: ", String.valueOf(v)) }
-    //    temperatureSensor.valueChanged += { v: Float => Log.d("Barometer4Android: ", String.valueOf(v)) }
-    // Display on Alphanumeric Display of Rainbowhead
-    temperatureSensor.valueChanged += { v: Float => updateDisplay(v.asInstanceOf[Double]) }
+    alphNumDisplay = new ReAlphaNumericDisplay(temperatureSensor.valueChanged)
+    alphNumDisplay.init
 
-    val temperatureReading: Signal[Float] = temperatureSensor.value
-
-    try {
-      mDisplay = new AlphanumericDisplay("I2C1")
-      mDisplay.setEnabled(true)
-      mDisplay.clear
-    } catch {
-      case e: Exception => {
-        import android.util.Log
-
-        Log.e(TAG, "Error initializing display", e)
-        mDisplay = null
-      }
-    }
+    //    // turn display off and on again and simulate stop (all for testing reasons)
+    //    import scala.concurrent.Future
+    //    import scala.concurrent.ExecutionContext.Implicits.global
+    //    val future = Future {
+    //      Thread.sleep(3000)
+    //      alphNumDisplay.turnOff
+    //
+    //      Thread.sleep(3000)
+    //      alphNumDisplay.turnOn
+    //
+    //      //      Thread.sleep(3000)
+    //      //      simulateStop()
+    //    }
   }
 
-
-  private def updateDisplay(value: Double) = {
-    if (mDisplay != null) try
-      mDisplay.display(value)
-    catch {
-      case e: IOException =>
-        Log.e(TAG, "" +
-          "Error setting display", e)
-    }
-  }
-
+  // actual method called on stopped activity
   override def onDestroy(): Unit = {
     super.onDestroy()
+    Log.d(TAG, "Destroying ReSensor MainActivity")
 
+    destroy()
+  }
+
+  def destroy(): Unit = {
     // remove sensors
     ReSensorManager.removeSensors()
 
-    //
-    if (mDisplay != null) try {
-      mDisplay.clear
-      mDisplay.setEnabled(false)
-      mDisplay.close
-    } catch {
-      case e: IOException =>
-        Log.e(TAG, "Error disabling display", e)
-    } finally mDisplay = null
+    // turn off display
+    alphNumDisplay.destroy()
   }
 
-  private def makeNiceMonitorDisplay(): Unit = {
-    val vh: TypedViewHolder.main = TypedViewHolder.setContentView(this, TR.layout.main).asInstanceOf[TypedViewHolder.main]
-    vh.text.setText(s"Hello world, from ${TR.string.app_name.value}")
-    vh.image.getDrawable match {
-      case a: Animatable => a.start()
-      case _ => // not animatable
-    }
-  }
+  // simulate stopping the activity (only for testing)
+  //  def simulateStop(): Unit = {
+  //    destroy()
+  //  }
+
+  //  private def makeNiceMonitorDisplay(): Unit = {
+  //  import android.graphics.drawable.Animatable
+  //    val vh: TypedViewHolder.main =
+  //      TypedViewHolder.setContentView(this, TR.layout.main).asInstanceOf[TypedViewHolder.main]
+  //    vh.text.setText(s"Hello world, from ${TR.string.app_name.value}")
+  //    vh.image.getDrawable match {
+  //      case a: Animatable => a.start()
+  //      case _ => // not animatable
+  //    }
+  //  }
 }
