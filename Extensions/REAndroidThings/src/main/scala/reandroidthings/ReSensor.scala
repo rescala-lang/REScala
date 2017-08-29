@@ -23,15 +23,23 @@ abstract class ReSensor[E](initialValue: E) {
   protected val valueVar: Var[E] = Var(initialValue)
   protected val accuracyVar: Var[Int] = Var(Int.MinValue)
 
-  val value: Signal[E] = Signal {
-    valueVar()
-  }
-  val accuracy: Signal[Int] = Signal {
-    accuracyVar()
+//  val value: Signal[E] = Signal {
+//    valueVar()
+//  }
+//  val accuracy: Signal[Int] = Signal {
+//    accuracyVar()
+//  }
+
+  def valueChanged(): Event[E] = {
+    valueChangedEvt
   }
 
-  val valueChanged: Evt[E] = Evt[E]()
-  val accuracyChanged: Evt[Int] = Evt[Int]()
+  def accuracyChanged(): Event[Int] = {
+    accuracyChangedEvt
+  }
+
+  private val valueChangedEvt: Evt[E] = Evt[E]()
+  private val accuracyChangedEvt: Evt[Int] = Evt[Int]()
 
   private var initialized: AtomicBoolean = new AtomicBoolean(false)
 
@@ -67,14 +75,14 @@ abstract class ReSensor[E](initialValue: E) {
     */
   protected val sensorListener: SensorEventListener = new SensorEventListener {
     override def onSensorChanged(event: SensorEvent): Unit = {
-      val e : E = parseSensorValues(event.values)
-      valueVar() = e
-      valueChanged(e)
+      val e: E = parseSensorValues(event.values)
+//      valueVar() = e
+      valueChangedEvt(e)
     }
 
     override def onAccuracyChanged(sensor: Sensor, newAccuracy: Int): Unit = {
-      accuracyVar() = newAccuracy
-      accuracyChanged(newAccuracy)
+//      accuracyVar() = newAccuracy
+      accuracyChangedEvt(newAccuracy)
     }
   }
 
@@ -175,6 +183,8 @@ class ReGyroscopeSensor extends ReSensor[(Float, Float, Float)]((0, 0, 0)) {
   override def parseSensorValues(values: Array[Float]): (Float, Float, Float) = (values(0), values(1), values(2))
 }
 
+case class ReSensorDescriptor[T](sensorType: Int)
+
 
 object ReSensor {
   val TypeAccelerometer = Sensor.TYPE_ACCELEROMETER
@@ -251,8 +261,8 @@ object ReSensor {
   val StringTypeDynamicSensorMeta = classOf[Sensor].getDeclaredField("STRING_TYPE_DYNAMIC_SENSOR_META").get(null).toString
 
   // special Sensor-types present in the RPi3 Rainbow-Head (a dynamic temperature and pressure sensor)
-  val TypeDynamicSensorMetaPressure = 40
-  val TypeDynamicSensorMetaTemperature = 41
+  val TypeDynamicSensorMetaPressure = ReSensorDescriptor[RePressureSensor](40)
+  val TypeDynamicSensorMetaTemperature = ReSensorDescriptor[ReTemperatureSensor](41)
 
   val TypeAll = Sensor.TYPE_ALL
   val TypeDevicePrivateBase = Sensor.TYPE_DEVICE_PRIVATE_BASE

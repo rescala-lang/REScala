@@ -3,7 +3,6 @@ package de.tuda.stg
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
-
 import rescala._
 import reandroidthings._
 
@@ -11,7 +10,7 @@ import reandroidthings._
 class MainActivity extends AppCompatActivity {
   private val TAG = "Barometer4Android"
   implicit val context = this
-  var alphNumDisplay: ReAlphaNumericDisplay = null
+  var alphNumDisplay: ReAlphaNumericDisplay[Float] = null
 
 
   override def onCreate(savedInstanceState: Bundle): Unit = {

@@ -7,25 +7,24 @@ import com.google.android.things.contrib.driver.ht16k33.AlphanumericDisplay
 import reandroidthings.iot_devices.BoardDefaults
 import rescala._
 
-class ReAlphaNumericDisplay(ev: Evt[_]) {
+class ReAlphaNumericDisplay[T](protected val inputEvent: Event[T]) {
   protected var peer: AlphanumericDisplay = null
-  protected val inputEvent: Evt[_] = ev
   private val TAG: String = "ReAlphaNumericDisplay"
+  private var eventObserver: Observe = null
+
 
   def init(): Unit = {
     try {
       peer = new AlphanumericDisplay(BoardDefaults.getI2cBus)
       peer.clear
 
-      inputEvent += { newV => {
+      eventObserver = inputEvent += { newV => {
         newV match {
           case v: Double => peer.display(v)
-          case v: Float => peer.display(v.asInstanceOf[Double])
+          case v: Float => peer.display(v.toDouble)
           case v: String => peer.display(v)
           case v: Int => peer.display(v)
-          case _ => {
-            throw new Exception("Event must be of type Double, Float, Integer or String")
-          }
+          case v => peer.display(v.toString)
         }
       }
       }
@@ -67,7 +66,7 @@ class ReAlphaNumericDisplay(ev: Evt[_]) {
       peer.clear
       peer.setEnabled(false)
 
-      inputEvent = null
+      eventObserver.remove
       peer.close
     } catch {
       case e: IOException =>
