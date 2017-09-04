@@ -13,34 +13,44 @@ import rescala.fullmv.transmitter.EventTransmittable._
 
 
 object Bindings1 {
-  //val eventBinding = Binding [Evt[Int]]("listEvt")
+  val eventBinding = Binding [Evt[Int]]("listEvt")
   val variableBinding1 = Binding[Signal[List[Int]]]("variable")
   val addBinding = Binding [Event[Int] => Unit]("listAdd")
 }
 //This method represents the server
 object Server extends App {
 
-  var testList1 = Var( List(1,2,3))
-  def add(x: Int) = { testList1()= testList1.now :+ x}
-  val eventList :  Var[ List[Event[Int]]]= Var (List())
-  def eventAdd(x: Event[Int]) = {eventList() = eventList.now :+ x;x += add}
- // val e0 = Evt[Int]
-  //e0 += add
+
+  def add(x: Int, list:Var[List[Int]]) = { list()= list.now :+ x}
+  val eventList :   Var[List[Event[Int]]]= Var(List())
+  def eventAdd(x: Event[Int]) = {eventList() = eventList.now :+ x}
+  val testList1 = Var (List(1,2,3))
 
 
-  //val e0 =  Evt[Int]
-  //e0 += add
-  //e0(10)
+  def eventToIntList(eList: List[Event[Int]]) = {
+    if(!(eventList.now == Nil)) {
+      eList.last.map {
+        add(_, testList1)
+      }
+    }
+
+  }
+  eventList observe eventToIntList
+
+  testList1 observe println
+
+
+
+
 
 
   val registry = new Registry
   registry.listen(TCP(1099))
 
   registry.bind(Bindings1.variableBinding1)(testList1)
-  //registry.bind(Bindings1.eventBinding)(e0)
   registry.bind(Bindings1.addBinding)(eventAdd)
 
-  testList1 observe println
+
 
    while (System.in.available() == 0) {
      Thread.sleep(1000)
@@ -63,7 +73,7 @@ object Client extends App {
 
   //val e0: Future[rescala.Evt[Int]] = registry.lookup(Bindings1.eventBinding, remote)
 
-  val eventAdd: Event[Int] =>  Future[Unit] =registry.lookup(Bindings1.addBinding, remote)
+  val eventAdd: Event[Int] =>  Future[Unit] =  registry.lookup(Bindings1.addBinding, remote)
   val e1 = Evt[Int]
   eventAdd(e1)
 
