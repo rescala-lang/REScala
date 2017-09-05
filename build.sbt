@@ -98,6 +98,10 @@ lazy val examples = project.in(file("Examples/examples"))
   .dependsOn(rescalaJVM)
   .settings(name := "rescala-examples", cfg.base, cfg.noPublish, lib.scalaswing)
 
+lazy val pongDemo = project.in(file("Examples/PongDemo"))
+  .dependsOn(rescalaJVM)
+  .settings(name := "pong-demo", cfg.base, cfg.noPublish, lib.scalaswing)
+
 lazy val examplesReswing = project.in(file("Examples/examples-reswing"))
   .dependsOn(reswing)
   .settings(name := "reswing-examples", cfg.base, cfg.noPublish)
