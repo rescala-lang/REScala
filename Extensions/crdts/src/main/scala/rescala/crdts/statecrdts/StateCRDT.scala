@@ -1,4 +1,4 @@
-package statecrdts
+package rescala.crdts.statecrdts
 
 import java.net.InetAddress
 

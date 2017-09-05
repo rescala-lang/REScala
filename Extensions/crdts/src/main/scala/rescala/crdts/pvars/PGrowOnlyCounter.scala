@@ -1,7 +1,7 @@
-package pvars
+package rescala.crdts.pvars
 
 import rescala.Evt
-import statecrdts.counters.GCounter
+import rescala.crdts.statecrdts.counters.GCounter
 
 /**
   * DistributedGCounters are increase-only counter variables.

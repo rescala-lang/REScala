@@ -1,7 +1,7 @@
-package statecrdts
+package rescala.crdts.statecrdts
 package sequences
 
-import statecrdts.sequences.Vertex.Timestamp
+import rescala.crdts.statecrdts.sequences.Vertex.Timestamp
 
 case class Vertex[+A](value: A, timestamp: Timestamp) extends Serializable {
   override def toString: String = s"$value{$timestamp}"

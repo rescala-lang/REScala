@@ -1,11 +1,11 @@
-package pvars
+package rescala.crdts.pvars
 
 import akka.actor.ActorRef
 import akka.pattern.ask
 import akka.util.Timeout
-import pvars.DistributionEngine.{PublishReadOnly, PublishVar}
+import rescala.crdts.pvars.DistributionEngine.{PublishReadOnly, PublishVar}
 import rescala._
-import statecrdts.StateCRDT
+import rescala.crdts.statecrdts.StateCRDT
 
 import scala.concurrent.Await
 import scala.concurrent.duration.{Duration, _}

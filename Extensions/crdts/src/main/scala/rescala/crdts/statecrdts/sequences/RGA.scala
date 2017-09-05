@@ -1,8 +1,8 @@
-package statecrdts
+package rescala.crdts.statecrdts
 package sequences
 
 import com.typesafe.scalalogging.Logger
-import statecrdts.sets.TwoPSet
+import rescala.crdts.statecrdts.sets.TwoPSet
 
 import scala.collection.AbstractIterator
 import scala.collection.immutable.HashMap

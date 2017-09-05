@@ -1,7 +1,7 @@
-package pvars
+package rescala.crdts.pvars
 
 import rescala._
-import statecrdts.StateCRDT
+import rescala.crdts.statecrdts.StateCRDT
 
 case class PVar[A <: StateCRDT](initial: A) extends Publishable[A] {
   override val internalChanges: Evt[A] = Evt[A]

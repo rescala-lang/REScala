@@ -1,4 +1,4 @@
-package statecrdts
+package rescala.crdts.statecrdts
 package sets
 
 case class GSet[A](payload: Set[A]) extends StateCRDTSet[A] {

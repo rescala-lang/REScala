@@ -1,7 +1,7 @@
-package statecrdts
+package rescala.crdts.statecrdts
 package sequences
 
-import statecrdts.sets.StateCRDTSet
+import rescala.crdts.statecrdts.sets.StateCRDTSet
 
 import scala.collection.immutable.HashMap
 

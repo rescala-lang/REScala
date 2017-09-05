@@ -1,4 +1,4 @@
-package statecrdts
+package rescala.crdts.statecrdts
 package sets
 
 trait RemovableStateCRDTSet[A] extends StateCRDTSet[A] {

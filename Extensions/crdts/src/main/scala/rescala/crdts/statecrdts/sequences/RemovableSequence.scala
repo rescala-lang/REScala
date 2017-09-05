@@ -1,4 +1,4 @@
-package statecrdts
+package rescala.crdts.statecrdts
 package sequences
 
 trait RemovableSequence[A] extends StateCRDTSequence[A] {

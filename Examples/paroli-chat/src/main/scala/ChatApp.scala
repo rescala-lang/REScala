@@ -2,7 +2,7 @@ import java.util.Scanner
 
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent._
-import pvars._
+import rescala.crdts.pvars._
 import com.typesafe.config.ConfigFactory
 import akka.actor._
 import akka.actor.Props

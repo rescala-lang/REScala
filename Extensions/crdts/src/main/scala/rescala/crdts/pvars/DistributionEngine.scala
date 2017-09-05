@@ -1,4 +1,4 @@
-package pvars
+package rescala.crdts.pvars
 
 import java.net.InetAddress
 
@@ -8,9 +8,9 @@ import akka.cluster.pubsub._
 import akka.pattern.ask
 import akka.util.Timeout
 import com.typesafe.scalalogging._
-import pvars.DistributionEngine._
+import rescala.crdts.pvars.DistributionEngine._
 import rescala._
-import statecrdts._
+import rescala.crdts.statecrdts._
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global

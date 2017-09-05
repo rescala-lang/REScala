@@ -1,7 +1,7 @@
-package statecrdts
+package rescala.crdts.statecrdts
 package sets
 
-import statecrdts.sets.ORSet.Identifier
+import rescala.crdts.statecrdts.sets.ORSet.Identifier
 
 /**
   * Implementation of an Observed-Remove Set as described by Shapiro et al. (2011)

@@ -1,7 +1,7 @@
-package pvars
+package rescala.crdts.pvars
 
 import rescala._
-import statecrdts.sets.ORSet
+import rescala.crdts.statecrdts.sets.ORSet
 
 case class PSet[A](initial: ORSet[A] = ORSet(),
                    internalChanges: Evt[ORSet[A]] = Evt[ORSet[A]],

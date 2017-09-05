@@ -1,8 +1,10 @@
+package rescala.crdts
+
 import akka.actor.ActorSystem
 import com.typesafe.config.ConfigFactory
-import pvars._
+import pvars.{subscribe, _}
 import rescala._
-import statecrdts.sequences.{RGA, RGOA}
+import rescala.crdts.statecrdts.sequences.{RGA, RGOA, Vertex}
 
 //noinspection ScalaUnusedSymbol
 object testSignalExpressions {

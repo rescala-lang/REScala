@@ -1,6 +1,8 @@
+package rescala.crdts
+
 import akka.actor.ActorRef
 import rescala._
-import statecrdts.StateCRDT
+import rescala.crdts.statecrdts.StateCRDT
 
 import scala.util.hashing.Hashing.Default
 

@@ -1,7 +1,7 @@
-package pvars
+package rescala.crdts.pvars
 
 import rescala._
-import statecrdts.sets.GSet
+import rescala.crdts.statecrdts.sets.GSet
 
 case class PGrowOnlySet[A](initial: GSet[A] = GSet[A](),
                            internalChanges: Evt[GSet[A]] = Evt[GSet[A]],

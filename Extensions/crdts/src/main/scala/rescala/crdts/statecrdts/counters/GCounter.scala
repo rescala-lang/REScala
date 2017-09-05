@@ -1,4 +1,4 @@
-package statecrdts
+package rescala.crdts.statecrdts
 package counters
 
 import scala.collection.immutable.HashMap

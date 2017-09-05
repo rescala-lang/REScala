@@ -1,7 +1,7 @@
-package pvars
+package rescala.crdts.pvars
 
 import rescala._
-import statecrdts.sequences.{RGA, Vertex}
+import rescala.crdts.statecrdts.sequences.{RGA, Vertex}
 
 /**
   * DistributedVertexLists are LinkedLists operating on so called Vertices. Vertices store a value of type `A`.

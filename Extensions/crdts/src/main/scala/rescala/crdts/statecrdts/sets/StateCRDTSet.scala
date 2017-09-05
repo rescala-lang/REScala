@@ -1,4 +1,4 @@
-package statecrdts
+package rescala.crdts.statecrdts
 package sets
 
 trait StateCRDTSet[A] extends StateCRDT {
