@@ -84,7 +84,11 @@ lazy val stm = project.in(file("Extensions/STM"))
   .settings(cfg.base, cfg.noPublish, lib.scalaStm)
   .dependsOn(rescalaJVM)
 
-// Examples
+lazy val crdts = project.in(file("Extensions/crdts"))
+  .dependsOn(rescalaJVM)
+  .settings(name := "recrdt", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.akka, lib.scalaLogback)
+
+// ===================================================================================== Examples
 
 lazy val examples = project.in(file("Examples/examples"))
   .dependsOn(rescalaJVM)
@@ -138,6 +142,15 @@ lazy val todolist = project.in(file("Examples/Todolist"))
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(rescalatags)
   .settings(cfg.base, cfg.noPublish, name := "todolist", scalaSource in Compile := baseDirectory.value)
+
+lazy val dividi = project.in(file("Examples/dividi"))
+  .dependsOn(crdts)
+  .settings(name := "dividi", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.akka, lib.scalaLogback, lib.scalafx)
+
+lazy val paroli = project.in(file("Examples/paroli-chat"))
+  .dependsOn(crdts)
+  .settings(name := "paroli-chat", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.akka, lib.scalaLogback, lib.jline)
+
 
 // ===================================================================================== Research
 
@@ -245,6 +258,11 @@ lazy val cfg = new {
     Seq(file)
   }.taskValue
 
+  val mappingFilters = Seq(
+    mappings in (Compile, packageBin) ~= { _.filter(!_._1.getName.endsWith(".conf")) },
+    mappings in (Compile, packageBin) ~= { _.filter(!_._1.getName.endsWith(".xml")) }
+  )
+
 }
 
 // ================================ dependencies
@@ -294,5 +312,31 @@ lazy val lib = new {
   val scalaXml = libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.0.6"
 
   val scalatags = libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.6.5"
+
+  val akka = {
+    val akkaVersion = "2.5.3"
+    // akka:
+    libraryDependencies ++= Seq(
+      "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
+      "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+      "com.typesafe.akka" %% "akka-remote" % akkaVersion,
+      "com.typesafe.akka" %% "akka-cluster" % akkaVersion,
+      "com.typesafe.akka" %% "akka-cluster-metrics" % akkaVersion,
+      "com.typesafe.akka" %% "akka-cluster-tools" % akkaVersion,
+      "com.typesafe.akka" %% "akka-multi-node-testkit" % akkaVersion)
+  }
+
+  val scalaLogback = Seq(
+    libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.3",
+    libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.7.2"
+  )
+
+  val scalafx = Seq(
+    libraryDependencies += "org.scalafx" %% "scalafx" % "8.0.102-R11",
+    scalaswing,
+    unmanagedJars in Compile += Attributed.blank(file(System.getenv("JAVA_HOME") + "/lib/ext/jfxrt.jar"))
+  )
+
+  val jline = libraryDependencies += "org.scala-lang.modules" % "scala-jline" % "2.12.1"
 
 }
