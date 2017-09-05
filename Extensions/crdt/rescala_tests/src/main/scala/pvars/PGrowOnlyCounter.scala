@@ -1,0 +1,30 @@
+package pvars
+
+import rescala.Evt
+import statecrdts.counters.GCounter
+
+/**
+  * DistributedGCounters are increase-only counter variables.
+  *
+  * @param initial The initial value of this variable.
+  */
+case class PGrowOnlyCounter(initial: GCounter = GCounter(0),
+                            internalChanges: rescala.Evt[GCounter] = Evt[GCounter],
+                            externalChanges: rescala.Evt[GCounter] = Evt[GCounter])
+  extends Publishable[GCounter] {
+
+  def increase: Int = {
+    internalChanges(crdtSignal.now.increase)
+    value
+  }
+}
+
+object PGrowOnlyCounter {
+  /**
+    * Allows creation of DistributedGCounters by passing a start value.
+    */
+  def apply(start: Int): PGrowOnlyCounter = {
+    val init: GCounter = GCounter(start)
+    new PGrowOnlyCounter(init)
+  }
+}
