@@ -88,6 +88,10 @@ lazy val crdts = project.in(file("Extensions/crdts"))
   .dependsOn(rescalaJVM)
   .settings(name := "recrdt", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.akka, lib.scalaLogback)
 
+lazy val rescalafx = project.in(file("Extensions/javafx"))
+  .dependsOn(rescalaJVM)
+  .settings(name := "rescalafx", cfg.base, cfg.noPublish, lib.scalafx)
+
 // ===================================================================================== Examples
 
 lazy val examples = project.in(file("Examples/examples"))
