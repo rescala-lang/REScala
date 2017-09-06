@@ -135,7 +135,7 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
         val peeked = waiters.peek()
         if(DEBUG) println(s"[${Thread.currentThread().getName}]: release $this, unparking $peeked")
         LockSupport.unpark(peeked)
-        Backoff.backoff(backoff)
+        Backoff.milliSleepNanoSpin(backoff)
         lock()
       case parent =>
         val newParent = parent.spinOnce(backoff)

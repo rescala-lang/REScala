@@ -2,7 +2,7 @@ package rescala.parrp
 
 class Backoff(val initialBackoff: Long = 100L * 1000L, val maxBackoff: Long = 10L * 1000L * 1000L, val factor: Double = 1.2D) {
   var currentBackoff = initialBackoff
-  def backoff(): Unit = Backoff.backoff(getAndIncrementBackoff())
+  def backoff(): Unit = Backoff.milliSleepNanoSpin(getAndIncrementBackoff())
   def getAndIncrementBackoff(): Long = {
     val res = currentBackoff
     currentBackoff = Math.min(Math.round(currentBackoff * factor), maxBackoff)
@@ -14,7 +14,7 @@ class Backoff(val initialBackoff: Long = 100L * 1000L, val maxBackoff: Long = 10
 }
 
 object Backoff{
-  def backoff(backoff: Long): Unit = {
+  def milliSleepNanoSpin(backoff: Long): Unit = {
     if (backoff < 1000000L) {
       val start = System.nanoTime()
       while (System.nanoTime() < backoff + start) {Thread.`yield`()}
