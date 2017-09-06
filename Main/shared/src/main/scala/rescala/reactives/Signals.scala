@@ -1,6 +1,6 @@
 package rescala.reactives
 
-import rescala.core.{REName, Reactive, _}
+import rescala.core._
 import rescala.reactives.RExceptions.EmptySignalControlThrowable
 import rescala.reactives.Signals.Impl.{DynamicSignal, StaticSignal, restored, states}
 

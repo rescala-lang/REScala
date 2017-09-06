@@ -1,6 +1,6 @@
 package rescala.twoversion
 
-import rescala.core.{Reactive, _}
+import rescala.core._
 
 import scala.util.control.NonFatal
 
