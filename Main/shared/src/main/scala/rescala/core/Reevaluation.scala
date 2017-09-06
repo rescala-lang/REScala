@@ -1,6 +1,6 @@
 package rescala.core
 
-import scala.language.existentials // stupid Disconnectable implementation requires stupid self-type stupid!
+import scala.language.existentials
 
 /**
   * Indicator for the result of a re-evaluation of a reactive value.
