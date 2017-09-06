@@ -56,9 +56,8 @@ object ReevaluationResult {
 
 
 trait Disconnectable[S <: Struct] extends Reactive[S] {
-  self: RENamed with WriteableReactive[Pulse[Nothing], S] =>
+  self: WriteableReactive[Pulse[Nothing], S] =>
   @volatile private var disconnected = false
-
   final def disconnect()(implicit engine: Engine[S]): Unit = {
     engine.transaction(this) { turn =>
       disconnected = true
