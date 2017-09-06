@@ -11,10 +11,10 @@ abstract class Source[T, S <: Struct](initialState: S#State[Pulse[T], S], name: 
     nextReevaluationResult = value
   }
 
-  final override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[T], indeps: Set[Reactive[S]]): ReevaluationResultImpl[T, S] = {
+  final override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[T], indeps: Set[Reactive[S]]): ReevaluationResult[Value, S] = {
     val value = nextReevaluationResult
     nextReevaluationResult = null
-    ReevaluationResult.Static(turn, this, if(value == null) Pulse.NoChange else pulseFromBufferedPulse(turn, before, value), indeps)
+    ReevaluationResult.Static(if(value == null) Pulse.NoChange else pulseFromBufferedPulse(turn, before, value), indeps)
   }
 
   protected def pulseFromBufferedPulse(turn: Turn[S], before: Pulse[T], value: Pulse[T]): Pulse[T]

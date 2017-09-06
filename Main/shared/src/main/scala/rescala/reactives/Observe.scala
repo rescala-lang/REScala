@@ -20,9 +20,9 @@ object Observe {
   private abstract class Obs[T, S <: Struct](bud: S#State[Pulse[Unit], S], dependency: ReadableReactive[Pulse[T], S], fun: T => Unit, fail: Throwable => Unit, name: REName) extends Base[Unit, S](bud, name) with Reactive[S] with Observe[S]  {
     this: Disconnectable[S] =>
 
-    override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[Unit], indeps: Set[Reactive[S]]): ReevaluationResult[S] = {
+    override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[Unit], indeps: Set[Reactive[S]]): ReevaluationResult[Value, S] = {
       scheduleHandler(this, turn, dependency, fun, fail)
-      ReevaluationResult.Static[Unit, S](turn, this, Pulse.NoChange, indeps)
+      ReevaluationResult.Static[Unit, S](Pulse.NoChange, indeps)
     }
     override def remove()(implicit fac: Engine[S]): Unit = {
       disconnect()

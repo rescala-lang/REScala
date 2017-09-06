@@ -18,7 +18,7 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
     if(!res.indepsChanged) {
       // res.commitValueChange().foreach(levelQueue.enqueue(-42))
       if(res.valueChanged) {
-        writeState(res.commitTuple)
+        writeState(head)(res.value)
         head.state.outgoing(this).foreach(levelQueue.enqueue(-42))
       }
     } else {
@@ -27,11 +27,11 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
       if(redo) {
         levelQueue.enqueue(newLevel)(head)
       } else {
-        res.commitDependencyDiff()
+        res.commitDependencyDiff(this, head)
 
         // res.commitValueChange().foreach(levelQueue.enqueue(-42))
         if(res.valueChanged) {
-          writeState(res.commitTuple)
+          writeState(head)(res.value)
           head.state.outgoing(this).foreach(levelQueue.enqueue(newLevel))
         }
       }

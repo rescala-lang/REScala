@@ -14,7 +14,7 @@ trait Reactive[S <: Struct] {
 
   /** Internal state of this reactive, managed by the propagation engine */
   protected[rescala] def state: S#State[Value, S]
-  protected[rescala] def reevaluate(turn: Turn[S], before: Value, indeps: Set[Reactive[S]]): ReevaluationResult[S]
+  protected[rescala] def reevaluate(turn: Turn[S], before: Value, indeps: Set[Reactive[S]]): ReevaluationResult[Value, S]
 }
 
 

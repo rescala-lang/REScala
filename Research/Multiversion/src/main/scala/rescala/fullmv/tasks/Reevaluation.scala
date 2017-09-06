@@ -1,6 +1,6 @@
 package rescala.fullmv.tasks
 
-import rescala.core.{Pulse, Reactive, WriteableReactive}
+import rescala.core.Reactive
 import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation
 import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation.{FollowFraming, NextReevaluation, NoSuccessor}
 import rescala.fullmv._
@@ -47,17 +47,12 @@ object Reevaluation {
         exception.printStackTrace()
         (node.state.reevOut(turn, None), false)
       case Success(res) =>
-        res.commitDependencyDiff()
+        res.commitDependencyDiff(turn, node)
         if(res.valueChanged) {
-          (reevOut(turn, res.commitTuple), true)
+          (node.state.reevOut(turn, if (res.valueChanged) Some(res.value) else None), true)
         } else {
-          (res.node.state.reevOut(turn, None), false)
+          (node.state.reevOut(turn, None), false)
         }
     }
-  }
-  @inline
-  def reevOut[P](turn: FullMVTurn, commitTuple: (WriteableReactive[Pulse.Change[P], FullMVStruct], Pulse.Change[P])): NotificationOutAndSuccessorOperation[FullMVTurn, Reactive[FullMVStruct]] = {
-    val (node, value) = commitTuple
-    node.state.reevOut(turn, if (value.isChange) Some(value) else None)
   }
 }

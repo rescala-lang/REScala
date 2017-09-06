@@ -25,14 +25,13 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
   private type TState = ParRP
 
 
-  override def writeState[P](commitTuple: (WriteableReactive[Pulse.Change[P], TState], Pulse.Change[P])): Unit = {
-    @inline def pulsing = commitTuple._1
+  override def writeState(pulsing: Reactive[TState])(value: pulsing.Value): Unit = {
     assert({
       val wlo: Option[Key[ParRPInterTurn]] = Option(pulsing.state.lock.getOwner)
       wlo.fold(true)(_ eq key)},
       s"buffer ${pulsing.state}, controlled by ${pulsing.state.lock} with owner ${pulsing.state.lock.getOwner}" +
         s" was written by $this who locks with $key, by now the owner is ${pulsing.state.lock.getOwner}")
-    super.writeState(commitTuple)
+    super.writeState(pulsing)(value)
   }
 
 

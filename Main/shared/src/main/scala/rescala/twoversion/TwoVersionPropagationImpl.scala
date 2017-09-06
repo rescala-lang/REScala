@@ -70,8 +70,7 @@ trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropaga
     dynamicDependencyInteraction(reactive)
     reactive.state.get(token)
   }
-  def writeState[P](commitTuple: (WriteableReactive[Pulse.Change[P], S], Pulse.Change[P])): Unit = {
-    val (pulsing, value) = commitTuple
+  def writeState(pulsing: Reactive[S])(value: pulsing.Value): Unit = {
     if (pulsing.state.write(value, token)) this.schedule(pulsing.state)
   }
 }

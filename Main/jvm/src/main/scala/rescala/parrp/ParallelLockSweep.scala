@@ -47,10 +47,10 @@ class ParallelLockSweep(backoff: Backoff, ex: Executor, engine: TwoVersionEngine
   override def evaluate(head: Reactive[TState]): Unit = {
     val res = head.reevaluate(this, head.state.base(token), head.state.incoming(this))
     synchronized {
-      res.commitDependencyDiff()
+      res.commitDependencyDiff(this, head)
       if (head.state.isGlitchFreeReady) {
         // val outgoings = res.commitValueChange()
-        if(res.valueChanged) writeState(res.commitTuple)
+        if(res.valueChanged) writeState(head)(res.value)
 
         head.state.hasWritten = this
 
