@@ -2,7 +2,7 @@ package rescala.parrp
 
 import java.util
 
-import rescala.core.{Reactive, _}
+import rescala.core._
 import rescala.locking._
 import rescala.twoversion.{PropagationStructImpl, TwoVersionPropagationImpl, TwoVersionStruct}
 

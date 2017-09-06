@@ -1,6 +1,6 @@
 package rescala.parrp
 
-import rescala.core.{Reactive, _}
+import rescala.core._
 import rescala.levelbased.{LevelBasedPropagation, LevelStruct, LevelStructTypeImpl}
 import rescala.locking._
 

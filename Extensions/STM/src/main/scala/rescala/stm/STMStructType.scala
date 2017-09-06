@@ -1,6 +1,5 @@
 package rescala.stm
 
-import rescala.core.Reactive
 import rescala.core.{Reactive, Struct, Turn}
 import rescala.levelbased.LevelStructType
 import rescala.twoversion.{ReadWriteValue, Token, TwoVersionPropagation}
