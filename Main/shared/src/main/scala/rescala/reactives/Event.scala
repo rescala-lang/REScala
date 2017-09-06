@@ -17,7 +17,6 @@ import scala.collection.immutable.{LinearSeq, Queue}
   * @tparam S Struct type used for the propagation of the event
   */
 trait Event[+T, S <: Struct] extends ReadableReactive[Pulse[T], S] with Observable[T, S] {
-  self: RENamed =>
 
   // only used inside macro and will be replaced there
   @compileTimeOnly("Event.apply can only be used inside of Signal expressions")

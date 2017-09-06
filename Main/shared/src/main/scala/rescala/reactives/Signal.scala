@@ -23,8 +23,7 @@ object Signal {
   * @tparam S Struct type used for the propagation of the signal
   */
 trait Signal[+A, S <: Struct] extends ReadableReactive[Pulse[A], S] with Observable[A, S] {
-  self: RENamed =>
-  
+
   // only used inside macro and will be replaced there
   @compileTimeOnly("Signal.apply can only be used inside of Signal expressions")
   final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")
