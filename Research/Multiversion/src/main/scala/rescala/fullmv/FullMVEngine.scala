@@ -6,7 +6,7 @@ import rescala.core.{EngineImpl, ReadableReactive}
 import rescala.fullmv.mirrors.{FullMVTurnHost, Host, HostImpl, SubsumableLockHostImpl}
 import rescala.fullmv.tasks.{Framing, Notification}
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
 import scala.util.Try
 
 class FullMVEngine(val timeout: Duration, val name: String) extends EngineImpl[FullMVStruct, FullMVTurn, FullMVTurnImpl] with FullMVTurnHost with HostImpl[FullMVTurn] {
@@ -69,5 +69,5 @@ object FullMVEngine {
   val SEPARATE_WRAPUP_PHASE = false
   val DEBUG = false
 
-  val default = new FullMVEngine(Duration.Zero, "default")
+  val default = new FullMVEngine(10.seconds, "default")
 }

@@ -1,16 +1,19 @@
 package example
 
-import rescala._
+import rescala.fullmv.FullMVEngine
+import rescala.fullmv.FullMVEngine.default._
 import retier.communicator.tcp._
 import retier.registry.{Binding, Registry}
-import retier.serializer.upickle._
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-import rescala.fullmv.transmitter.SignalTransmittable._
-
 object Bindings {
+  import rescala.fullmv.transmitter.ReactiveTransmittable._
+  import io.circe.generic.auto._
+  import rescala.fullmv.transmitter.CirceSerialization._
+  implicit val host: FullMVEngine = explicitEngine
+
   val testBinding = Binding[Int => Int]("test")
   val variableBinding = Binding[Signal[Int]]("variable")
 }

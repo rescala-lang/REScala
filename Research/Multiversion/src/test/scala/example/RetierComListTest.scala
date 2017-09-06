@@ -1,48 +1,42 @@
 package example
 
-import rescala._
+import rescala.fullmv.FullMVEngine
+import rescala.fullmv.FullMVEngine.default._
 import retier.communicator.tcp._
 import retier.registry.{Binding, Registry}
-import retier.serializer.upickle._
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-import rescala.fullmv.transmitter.SignalTransmittable._
-import rescala.fullmv.transmitter.EventTransmittable._
-
-
 object Bindings1 {
-  val eventBinding = Binding [Evt[Int]]("listEvt")
+  import rescala.fullmv.transmitter.ReactiveTransmittable._
+  import io.circe.generic.auto._
+  import rescala.fullmv.transmitter.CirceSerialization._
+  implicit val host: FullMVEngine = explicitEngine
+
+  val eventBinding = Binding[Event[Int]]("listEvt")
   val variableBinding1 = Binding[Signal[List[Int]]]("variable")
-  val addBinding = Binding [Event[Int] => Unit]("listAdd")
+  val addBinding = Binding[Event[Int] => Unit]("listAdd")
 }
 //This method represents the server
 object Server extends App {
-
-
-  def add(x: Int, list:Var[List[Int]]) = { list()= list.now :+ x}
   val eventList :   Var[List[Event[Int]]]= Var(List())
-  def eventAdd(x: Event[Int]) = {eventList() = eventList.now :+ x}
-  val testList1 = Var (List(1,2,3))
-
-
-  def eventToIntList(eList: List[Event[Int]]) = {
-    if(!(eventList.now == Nil)) {
-      eList.last.map {
-        add(_, testList1)
+  def eventAdd(x: Event[Int]) = {
+    threadPool.submit(new Runnable {
+      // need to move off of the network receive thread to not block it
+      override def run(): Unit = {
+        try {
+          eventList() = eventList.now :+ x
+        } catch {
+          case e => new Exception("Client Connect processing failed", e).printStackTrace()
+        }
       }
-    }
-
+    })
   }
-  eventList observe eventToIntList
-
+  val testList1 = eventList.flatten.fold(List(1,2,3)) { (list, adds) =>
+    list ++ adds.flatten
+  }
   testList1 observe println
-
-
-
-
-
 
   val registry = new Registry
   registry.listen(TCP(1099))
@@ -50,20 +44,15 @@ object Server extends App {
   registry.bind(Bindings1.variableBinding1)(testList1)
   registry.bind(Bindings1.addBinding)(eventAdd)
 
-
-
-   while (System.in.available() == 0) {
-     Thread.sleep(1000)
-   }
+  while (System.in.available() == 0) {
+   Thread.sleep(10)
+  }
   registry.terminate()
 }
 // This method represents a client. Multiple clients may be active at a time.
 object Client extends App {
   val registry = new Registry
   val remote = Await result (registry.request(TCP("localhost", 1099)), Duration.Inf)
-
-  import scala.concurrent.ExecutionContext.Implicits._
-
 
   val listOnServer: Signal[List[Int]] = Await result (registry.lookup(Bindings1.variableBinding1, remote), Duration.Inf)
   listOnServer observe println
