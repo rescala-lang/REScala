@@ -3,7 +3,7 @@ package rescala.fullmv
 import java.util.concurrent.ForkJoinTask
 
 import rescala.core.Reactive
-import rescala.core.{Reactive, ReadableReactive, TurnImpl, ValuePersistency}
+import rescala.core.{Reactive, ReactiV, TurnImpl, ValuePersistency}
 import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation.{NextReevaluation, NoSuccessor}
 import rescala.fullmv.NotificationResultAction.{GlitchFreeReady, NotificationOutAndSuccessorOperation}
 import rescala.fullmv.mirrors.{FullMVTurnProxy, FullMVTurnReflectionProxy, Host, Hosted}
@@ -93,10 +93,10 @@ abstract class FullMVTurn(val timeout: Duration) extends TurnImpl[FullMVStruct] 
 
   override private[rescala] def writeIndeps(node: Reactive[FullMVStruct], indepsAfter: Set[Reactive[FullMVStruct]]): Unit = node.state.incomings = indepsAfter
 
-  override private[rescala] def staticBefore[P](reactive: ReadableReactive[P, FullMVStruct]) = reactive.state.staticBefore(this)
-  override private[rescala] def staticAfter[P](reactive: ReadableReactive[P, FullMVStruct]) = reactive.state.staticAfter(this)
-  override private[rescala] def dynamicBefore[P](reactive: ReadableReactive[P, FullMVStruct]) = reactive.state.dynamicBefore(this)
-  override private[rescala] def dynamicAfter[P](reactive: ReadableReactive[P, FullMVStruct]) = reactive.state.dynamicAfter(this)
+  override private[rescala] def staticBefore[P](reactive: ReactiV[P, FullMVStruct]) = reactive.state.staticBefore(this)
+  override private[rescala] def staticAfter[P](reactive: ReactiV[P, FullMVStruct]) = reactive.state.staticAfter(this)
+  override private[rescala] def dynamicBefore[P](reactive: ReactiV[P, FullMVStruct]) = reactive.state.dynamicBefore(this)
+  override private[rescala] def dynamicAfter[P](reactive: ReactiV[P, FullMVStruct]) = reactive.state.dynamicAfter(this)
 
   override def observe(f: () => Unit): Unit = f()
 }

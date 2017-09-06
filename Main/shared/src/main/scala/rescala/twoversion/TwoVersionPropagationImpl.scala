@@ -57,13 +57,13 @@ trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropaga
   /** allow turn to handle dynamic access to reactives */
   def dynamicDependencyInteraction(dependency: Reactive[S]): Unit
 
-  override private[rescala] def staticBefore[P](reactive: ReadableReactive[P, S]) = reactive.state.base(token)
-  override private[rescala] def staticAfter[P](reactive: ReadableReactive[P, S]) = reactive.state.get(token)
-  override private[rescala] def dynamicBefore[P](reactive: ReadableReactive[P, S]) = {
+  override private[rescala] def staticBefore[P](reactive: ReactiV[P, S]) = reactive.state.base(token)
+  override private[rescala] def staticAfter[P](reactive: ReactiV[P, S]) = reactive.state.get(token)
+  override private[rescala] def dynamicBefore[P](reactive: ReactiV[P, S]) = {
     dynamicDependencyInteraction(reactive)
     reactive.state.base(token)
   }
-  override private[rescala] def dynamicAfter[P](reactive: ReadableReactive[P, S]) = {
+  override private[rescala] def dynamicAfter[P](reactive: ReactiV[P, S]) = {
     // Note: This only synchronizes reactive to be serializable-synchronized, but not glitch-free synchronized.
     // Dynamic reads thus may return glitched values, which the reevaluation handling implemented in subclasses
     // must account for by repeating glitched reevaluations!

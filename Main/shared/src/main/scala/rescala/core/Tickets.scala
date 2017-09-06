@@ -30,7 +30,7 @@ final class DynamicTicket[S <: Struct] private[rescala](val creation: Computatio
   private[rescala] var indepsAfter: Set[Reactive[S]] = Set.empty
   private[rescala] var indepsAdded: Set[Reactive[S]] = Set.empty
 
-  private[rescala] def dynamicDepend[A](reactive: ReadableReactive[A, S]): A = {
+  private[rescala] def dynamicDepend[A](reactive: ReactiV[A, S]): A = {
     if (indepsBefore(reactive)) {
       indepsAfter += reactive
       creation.staticAfter(reactive)
@@ -61,10 +61,10 @@ final class DynamicTicket[S <: Struct] private[rescala](val creation: Computatio
 }
 
 final class StaticTicket[S <: Struct] private[rescala](val creation: ComputationStateAccess[S] with Creation[S]) extends AnyVal with AnyTicket {
-  private[rescala] def staticBefore[A](reactive: ReadableReactive[A, S]): A = {
+  private[rescala] def staticBefore[A](reactive: ReactiV[A, S]): A = {
     creation.staticBefore(reactive)
   }
-  private[rescala] def staticDepend[A](reactive: ReadableReactive[A, S]): A = {
+  private[rescala] def staticDepend[A](reactive: ReactiV[A, S]): A = {
     creation.staticAfter(reactive)
   }
 }

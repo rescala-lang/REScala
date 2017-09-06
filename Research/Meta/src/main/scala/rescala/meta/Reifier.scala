@@ -1,6 +1,6 @@
 package rescala.meta
 
-import rescala.core.{CreationTicket, Engine, ReadableReactive, Struct}
+import rescala.core.{CreationTicket, Engine, ReactiV, Struct}
 
 import rescala.reactives.{Evt, _}
 
@@ -145,14 +145,14 @@ class EngineReifier[S <: Struct]()(implicit val engine: Engine[S]) extends Reifi
     case p: SignalNode[_] => doReifySignal(p).disconnect()
   }
 
-  private def doReify[T](node: DataFlowNode[T]): ReadableReactive[T, S] = {
+  private def doReify[T](node: DataFlowNode[T]): ReactiV[T, S] = {
     val reification = reifiedCache.getOrElse(node, node match {
       case p: ReactiveNode[_] => savedState.get(node) match {
         case Some(state) => Reification(Signals.Impl.restoreFrom(state){ p.createReification(this) }, mutable.Set[(ObserverData[S], Observe[S])]())
         case None => Reification(p.createReification(this), mutable.Set[(ObserverData[S], Observe[S])]())
     }})
     reifiedCache += node -> reification
-    reification.reified.asInstanceOf[ReadableReactive[T, S]]
+    reification.reified.asInstanceOf[ReactiV[T, S]]
   }
 
   override protected[meta] def createEvt[T](): engine.Evt[T] = engine.Evt[T]()

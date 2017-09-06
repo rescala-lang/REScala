@@ -19,12 +19,12 @@ trait Reactive[S <: Struct] {
 
 
 /**
-  * A reactive that user computations can read values from (e.g., before, after, etc.)
+  * A reactive with a known value type, such that user computations can read values from (e.g., before, after, etc.)
   *
-  * @tparam P Value type stored by the pulse of the reactive value
+  * @tparam P Value type stored by the reactive
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
-trait ReadableReactive[+P, S <: Struct] extends Reactive[S] {
+trait ReactiV[+P, S <: Struct] extends Reactive[S] {
   override type Value <: P
 }
 
@@ -32,7 +32,7 @@ trait ReadableReactive[+P, S <: Struct] extends Reactive[S] {
 /**
   * A base implementation for all reactives, tying together the Readable interface for user computations and the Writeable interface for schedulers.
   */
-abstract class Base[P, S <: Struct](initialState: S#State[Pulse[P], S], rename: REName) extends RENamed(rename) with ReadableReactive[Pulse[P], S] with Reactive[S] {
+abstract class Base[P, S <: Struct](initialState: S#State[Pulse[P], S], rename: REName) extends RENamed(rename) with ReactiV[Pulse[P], S] with Reactive[S] {
   override type Value = Pulse[P]
   final override protected[rescala] def state: S#State[Pulse[P], S] = initialState
 }

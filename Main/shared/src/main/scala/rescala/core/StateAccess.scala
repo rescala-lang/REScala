@@ -1,10 +1,10 @@
 package rescala.core
 
 trait ComputationStateAccess[S <: Struct] {
-  private[rescala] def staticBefore/*aka regRead/depRead*/[P](reactive: ReadableReactive[P, S]): P
-  private[rescala] def staticAfter[P](reactive: ReadableReactive[P, S]): P
-  private[rescala] def dynamicBefore[P](reactive: ReadableReactive[P, S]): P
-  private[rescala] def dynamicAfter[P](reactive: ReadableReactive[P, S]): P
+  private[rescala] def staticBefore/*aka regRead/depRead*/[P](reactive: ReactiV[P, S]): P
+  private[rescala] def staticAfter[P](reactive: ReactiV[P, S]): P
+  private[rescala] def dynamicBefore[P](reactive: ReactiV[P, S]): P
+  private[rescala] def dynamicAfter[P](reactive: ReactiV[P, S]): P
 }
 
 trait ReevaluationStateAccess[S <: Struct] {
