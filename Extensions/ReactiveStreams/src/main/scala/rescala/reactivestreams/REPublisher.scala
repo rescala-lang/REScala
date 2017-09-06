@@ -29,7 +29,7 @@ object REPublisher {
 
     override protected[rescala] def reevaluate(ticket: Turn[S], before: Pulse[T], indeps: Set[InDep[S]]): ReevaluationResult[S] = {
       ticket.makeStaticReevaluationTicket().staticDepend(dependency).toOptionTry match {
-        case None => ReevaluationResult.Static(ticket, this, Pulse.NoChange, indeps)
+        case None => ReevaluationResult.Static[T, S](ticket, this, Pulse.NoChange, indeps)
         case Some(tryValue) =>
           synchronized {
             while (requested <= 0 && !cancelled) wait(100)
@@ -39,11 +39,11 @@ object REPublisher {
               tryValue match {
                 case Success(v) =>
                   subscriber.onNext(v)
-                  ReevaluationResult.Static(ticket, this, Pulse.NoChange, indeps)
+                  ReevaluationResult.Static[T, S](ticket, this, Pulse.NoChange, indeps)
                 case Failure(t) =>
                   subscriber.onError(t)
                   cancelled = true
-                  ReevaluationResult.Dynamic(ticket, this, Pulse.NoChange, indepsAfter = Set.empty, indepsAdded = Set.empty, indepsRemoved = Set(dependency))
+                  ReevaluationResult.Dynamic[T, S](ticket, this, Pulse.NoChange, indepsAfter = Set.empty, indepsAdded = Set.empty, indepsRemoved = Set(dependency))
               }
             }
           }
