@@ -2,7 +2,7 @@ package rescala.core
 
 import scala.util.DynamicVariable
 
-trait EngineImpl[S <: Struct, ExactTurn <: Turn[S]  with Creation[S]] extends Engine[S] {
+trait EngineImpl[S <: Struct, ExactTurn <: Turn[S] with Creation[S], LocalTurn <: ExactTurn] extends Engine[S] {
   override protected[rescala] def executeTurn[I, R](initialWrites: Traversable[Reactive], admissionPhase: AdmissionTicket => I, wrapUpPhase: (I, WrapUpTicket) => R): R = {
     // TODO: This should be broken up differently here, sort-of meeting in the middle with TwoVersionEngineImpl, something like:
     /*
@@ -49,8 +49,8 @@ trait EngineImpl[S <: Struct, ExactTurn <: Turn[S]  with Creation[S]] extends En
     *
     * @return New turn
     */
-  protected def makeTurn(initialWrites: Traversable[Reactive], priorTurn: Option[ExactTurn]): ExactTurn
-  protected def executeInternal[I, R](turn: ExactTurn, initialWrites: Traversable[Reactive], admissionPhase: () => I, wrapUpPhase: I => R): R
+  protected def makeTurn(initialWrites: Traversable[Reactive], priorTurn: Option[ExactTurn]): LocalTurn
+  protected def executeInternal[I, R](turn: LocalTurn, initialWrites: Traversable[Reactive], admissionPhase: () => I, wrapUpPhase: I => R): R
 
 
   override private[rescala] def create[T](f: (Creation) => T) = {

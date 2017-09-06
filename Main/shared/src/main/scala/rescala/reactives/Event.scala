@@ -1,6 +1,6 @@
 package rescala.reactives
 
-import rescala.core.{CreationTicket, DynamicTicket, Engine, Pulse, ReadableReactive, ReSerializable, Reactive, Struct}
+import rescala.core._
 import rescala.core.Pulse.{Exceptional, NoChange, Value}
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 
@@ -17,9 +17,15 @@ import scala.collection.immutable.{LinearSeq, Queue}
   * @tparam S Struct type used for the propagation of the event
   */
 trait Event[+T, S <: Struct] extends ReadableReactive[Pulse[T], S] with Observable[T, S] {
+  self: RENamed =>
 
+  // only used inside macro and will be replaced there
   @compileTimeOnly("Event.apply can only be used inside of Signal expressions")
   def apply(): Option[T] = throw new IllegalAccessException(s"$this.apply called outside of macro")
+  @compileTimeOnly("Event.! can only be used inside of Signal expressions")
+  def ! : Option[T] = throw new IllegalAccessException(s"$this.! called outside of macro")
+  @compileTimeOnly("Event.unary_! can only be used inside of Signal expressions")
+  def unary_! : Option[T] = throw new IllegalAccessException(s"$this.unary_! called outside of macro")
 
   def disconnect()(implicit engine: Engine[S]): Unit
 
@@ -107,7 +113,7 @@ trait Event[+T, S <: Struct] extends ReadableReactive[Pulse[T], S] with Observab
 
   /** folds events with a given fold function to create a Signal allowing recovery of exceptional states by ignoring the stable value */
   final def lazyFold[A: ReSerializable](init: => A)(folder: (=> A, => T) => A)(implicit ticket: CreationTicket[S]): Signal[A, S] = ticket { initialTurn =>
-    Signals.staticFold[A, S](Set[Reactive[S]](this), _ => init) { (st, currentValue) =>
+    Signals.staticFold[A, S](Set(this), _ => init) { (st, currentValue) =>
       // TODO this should be equivalent, but doesn't work for unmanaged engine; need to investigate.
       // folder(currentValue, st.turn.after(this).get)
       st.staticDepend(this).toOption.fold(currentValue)(value => folder(currentValue, value))
@@ -174,7 +180,7 @@ trait Event[+T, S <: Struct] extends ReadableReactive[Pulse[T], S] with Observab
   /** Return a Signal that is updated only when e fires, and has the value of the signal s */
   final def snapshot[A: ReSerializable](s: Signal[A, S])(implicit ticket: CreationTicket[S]): Signal[A, S] = ticket {
     Signals.staticFold[A, S](
-      Set[Reactive[S]](this, s),
+      Set(this, s),
       st => st.staticDepend(s).get) { (st, current) =>
       st.staticDepend(this).toOption.fold(current)(_ => st.staticDepend(s).get)
     }(_)(ticket.rename)

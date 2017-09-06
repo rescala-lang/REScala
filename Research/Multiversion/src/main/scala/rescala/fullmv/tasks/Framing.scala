@@ -1,6 +1,6 @@
 package rescala.fullmv.tasks
 
-import rescala.core.Reactive
+import rescala.core.{Node, Reactive}
 import rescala.fullmv.FramingBranchResult.{FramingBranchEnd, FramingBranchOut, FramingBranchOutSuperseding}
 import rescala.fullmv._
 
@@ -12,10 +12,12 @@ trait FramingTask extends FullMVAction {
       case FramingBranchEnd =>
         turn.activeBranchDifferential(TurnPhase.Framing, -1)
       case FramingBranchOut(out) =>
-        turn.activeBranchDifferential(TurnPhase.Framing, out.size - 1)
+        val branchDiff = out.size - 1
+        if(branchDiff != 0) turn.activeBranchDifferential(TurnPhase.Framing, branchDiff)
         for(succ <- out) Framing(turn, succ).fork()
       case FramingBranchOutSuperseding(out, supersede) =>
-        turn.activeBranchDifferential(TurnPhase.Framing, out.size - 1)
+        val branchDiff = out.size - 1
+        if(branchDiff != 0) turn.activeBranchDifferential(TurnPhase.Framing, branchDiff)
         for(succ <- out) SupersedeFraming(turn, succ, supersede).fork()
     }
 
@@ -23,14 +25,14 @@ trait FramingTask extends FullMVAction {
   def doFraming(): FramingBranchResult[FullMVTurn, Reactive[FullMVStruct]]
 }
 
-case class Framing(turn: FullMVTurn, node: Reactive[FullMVStruct]) extends FramingTask {
+case class Framing(turn: FullMVTurn, node: Node[FullMVStruct]) extends FramingTask {
   override def doFraming(): FramingBranchResult[FullMVTurn, Reactive[FullMVStruct]] = {
     assert(turn.phase == TurnPhase.Framing, s"$this cannot increment frame (requires framing phase)")
     node.state.incrementFrame(turn)
   }
 }
 
-case class SupersedeFraming(turn: FullMVTurn, node: Reactive[FullMVStruct], supersede: FullMVTurn) extends FramingTask {
+case class SupersedeFraming(turn: FullMVTurn, node: Node[FullMVStruct], supersede: FullMVTurn) extends FramingTask {
   override def doFraming(): FramingBranchResult[FullMVTurn, Reactive[FullMVStruct]] = {
     assert(turn.phase == TurnPhase.Framing, s"$this cannot increment frame (requires framing phase)")
     assert(supersede.phase == TurnPhase.Framing, s"$supersede cannot have frame superseded (requires framing phase)")

@@ -14,7 +14,7 @@ class ParallelismTest extends RETests with Whenever {
   allEngines("use Events In Signal Expression") { engine =>
     import engine._
 
-    whenever(engine == FullMVEngine) {
+    whenever(engine == FullMVEngine.default) {
 
       test(s"in-turn parallelism is supported by $engine") {
         object lock

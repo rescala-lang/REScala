@@ -1,5 +1,7 @@
 package rescala.core
 
+import rescala.core.Node.InDep
+
 import scala.language.higherKinds
 
 
@@ -9,15 +11,26 @@ trait Struct { type State[P, S <: Struct] }
   *
   * @tparam S Defines the structure of the internal state, as used by the propagation engine.
   */
-trait Reactive[S <: Struct] {
-
+trait Node[S <: Struct] {
+  self: RENamed =>
   type Value
 
   /** Internal state of this reactive, managed by the propagation engine */
   protected[rescala] def state: S#State[Value, S]
+}
 
-  protected[rescala] def reevaluate(turn: Turn[S], before: Value, indeps: Set[Reactive[S]]): ReevaluationResult[S]
+object Node {
+  type InDep[S <: Struct] = ReadableReactive[_, S]
+  type OutDep[S <: Struct] = Reactive[S]
+}
 
+/** A reactive value is something that can be reevaluated
+  *
+  * @tparam S Defines the structure of the internal state, as used by the propagation engine.
+  */
+trait Reactive[S <: Struct] extends Node[S] {
+  self: RENamed =>
+  protected[rescala] def reevaluate(turn: Turn[S], before: Value, indeps: Set[InDep[S]]): ReevaluationResult[S]
 }
 
 
@@ -27,24 +40,32 @@ trait Reactive[S <: Struct] {
   * @tparam P Value type stored by the pulse of the reactive value
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
-trait ReadableReactive[+P, S <: Struct] extends Reactive[S] {
+trait ReadableReactive[+P, S <: Struct] extends Node[S] {
+  self: RENamed =>
   override type Value <: P
 }
 
 /**
   * A reactive that the scheduler can write values on (i.e., reevOut)
-  * @tparam P
+  * @tparam P Value type stored by the pulse of the reactive value
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
-trait WriteableReactive[-P, S <: Struct] extends Reactive[S] {
+trait WriteableReactive[-P, S <: Struct] extends Node[S] {
+  self: RENamed =>
   override type Value >: P
 }
 
 /**
   * A base implementation for all reactives, tying together the Readable interface for user computations and the Writeable interface for schedulers.
   */
-abstract class Base[P, S <: Struct](initialState: S#State[Pulse[P], S], rename: REName) extends ReadableReactive[Pulse[P], S] with WriteableReactive[Pulse[P], S] {
-  override type Value = Pulse[P]
-  override def toString: String = rename.name
-  final override protected[rescala] def state: S#State[Value, S] = initialState
+trait ReadWriteReactive[P, S <: Struct] extends ReadableReactive[P, S] with WriteableReactive[P, S]{
+  self: RENamed =>
+  override type Value = P
+}
+
+/**
+  * A base implementation for all reactives, tying together the Readable interface for user computations and the Writeable interface for schedulers.
+  */
+abstract class Base[P, S <: Struct](initialState: S#State[Pulse[P], S], rename: REName) extends RENamed(rename) with ReadWriteReactive[Pulse[P], S] with Reactive[S] {
+  final override protected[rescala] def state: S#State[Pulse[P], S] = initialState
 }

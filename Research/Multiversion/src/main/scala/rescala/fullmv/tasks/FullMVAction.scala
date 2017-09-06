@@ -13,6 +13,6 @@ trait FullMVAction extends RecursiveAction {
     doCompute()
   } catch {
     case e: Throwable =>
-      new Exception(s"Task $this failed.", e).printStackTrace()
+      new Exception(s"Task $this failed on Thread ${Thread.currentThread().getName}.", e).printStackTrace()
   }
 }

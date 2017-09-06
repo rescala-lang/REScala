@@ -1,31 +1,39 @@
 package tests.rescala.fullmv
 
 import org.scalatest.FunSuite
-import rescala.fullmv.{FullMVTurn, TurnPhase}
+import rescala.fullmv.{FullMVTurnImpl, TurnPhase}
+
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
+
+import rescala.fullmv.FullMVEngine.default._
 
 class FullMVTurnTransitiveReachabilityTest extends FunSuite {
   case class Disagreement[T](from: T, to: T, closure: Boolean, addEdgeSearchPath: Boolean)
   def getDisagreementsBetweenDigraphReachabilityVsTransitiveClosure[T](edges: Map[T, Set[T]]): Traversable[Disagreement[T]] = {
-    val trees: Map[T, FullMVTurn] = edges.keySet.map(e => (e, new FullMVTurn(null))).toMap
+    val trees: Map[T, FullMVTurnImpl] = edges.keySet.map(e => (e, newTurn())).toMap
 
     // put all transactions under a common locked lock, so that all locking assertions hold
     trees.values.foreach(_.awaitAndSwitchPhase(TurnPhase.Executing))
-    trees.values.map(_.lock).reduce{ (lockA, lockB) =>
-      val resA = lockA.tryLock()
+    trees.values.reduce{ (tA, tB) =>
+      val resA = Await.result(tA.tryLock(), Duration.Zero)
       assert(resA.success)
-      val resB = lockB.tryLock()
-      assert(resB.success)
-      val res = resA.newParent.subsume(resB)
-      res.newParent.unlock()
-      res.newParent
+      val resB = Await.result(tB.trySubsume(resA.newParent), Duration.Zero)
+      assert(resB.isEmpty)
+      Await.result(resA.newParent.unlock(), Duration.Zero)
+      tA
     }
-    assert(trees.head._2.lock.tryLock().success)
+    assert(Await.result(trees.head._2.tryLock(), Duration.Zero).success)
 
     for((from, tos) <- edges; to <- tos) {
       val fromTree = trees(from)
       val toTree = trees(to)
-      if(!fromTree.isTransitivePredecessor(toTree))
-        fromTree.addPredecessor(trees(to))
+      if(!fromTree.isTransitivePredecessor(toTree)) {
+        val (_, toTreeRoot) = Await.result(toTree.acquirePhaseLockAndGetEstablishmentBundle(), Duration.Zero)
+        Await.result(fromTree.acquirePhaseLockAndGetEstablishmentBundle(), Duration.Zero)
+        Await.result(fromTree.addPredecessorAndReleasePhaseLock(toTreeRoot), Duration.Zero)
+        toTree.asyncReleasePhaseLock()
+      }
     }
 
     var transitiveClosure = edges

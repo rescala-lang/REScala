@@ -12,14 +12,17 @@ trait ReevaluationResultHandling extends FullMVAction {
   def processReevaluationResult(outAndSucc: NotificationOutAndSuccessorOperation[FullMVTurn, Reactive[FullMVStruct]], changed: Boolean): Unit = {
     outAndSucc match {
       case NoSuccessor(out) =>
-        turn.activeBranchDifferential(TurnPhase.Executing, out.size - 1)
+        val branchDiff = out.size - 1
+        if(branchDiff != 0) turn.activeBranchDifferential(TurnPhase.Executing, branchDiff)
         for (succ <- out) Notification(turn, succ, changed).fork()
       case FollowFraming(out, succTxn) =>
-        turn.activeBranchDifferential(TurnPhase.Executing, out.size - 1)
+        val branchDiff = out.size - 1
+        if(branchDiff != 0) turn.activeBranchDifferential(TurnPhase.Executing, branchDiff)
         for (succ <- out) NotificationWithFollowFrame(turn, succ, changed, succTxn).fork()
       case NextReevaluation(out, succTxn) =>
         succTxn.activeBranchDifferential(TurnPhase.Executing, 1)
-        turn.activeBranchDifferential(TurnPhase.Executing, out.size - 1)
+        val branchDiff = out.size - 1
+        if(branchDiff != 0) turn.activeBranchDifferential(TurnPhase.Executing, branchDiff)
         for (succ <- out) NotificationWithFollowFrame(turn, succ, changed, succTxn).fork()
         Reevaluation(succTxn, node).fork()
     }
@@ -37,7 +40,7 @@ case class Reevaluation(turn: FullMVTurn, node: Reactive[FullMVStruct]) extends 
 object Reevaluation {
   def doReevaluation(turn: FullMVTurn, node: Reactive[FullMVStruct]): (NotificationOutAndSuccessorOperation[FullMVTurn, Reactive[FullMVStruct]], Boolean) = {
     assert(turn.phase == TurnPhase.Executing, s"$this cannot reevaluate (requires executing phase")
-    val result = FullMVEngine.withTurn(turn){ Try { node.reevaluate(turn, node.state.reevIn(turn), node.state.incomings) } }
+    val result = turn.host.withTurn(turn){ Try { node.reevaluate(turn, node.state.reevIn(turn), node.state.incomings) } }
     result match {
       case Failure(exception) =>
         System.err.println(s"[FullMV Error] Reevaluation of $node failed with ${exception.getClass.getName}: ${exception.getMessage}; Completing reevaluation as NoChange.")

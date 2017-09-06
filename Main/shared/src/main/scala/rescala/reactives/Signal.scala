@@ -1,6 +1,6 @@
 package rescala.reactives
 
-import rescala.core.{AnyTicket, CreationTicket, Engine, Pulse, ReadableReactive, Struct}
+import rescala.core._
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 import rescala.reactives.Signals.Diff
 
@@ -23,10 +23,15 @@ object Signal {
   * @tparam S Struct type used for the propagation of the signal
   */
 trait Signal[+A, S <: Struct] extends ReadableReactive[Pulse[A], S] with Observable[A, S] {
-
+  self: RENamed =>
+  
   // only used inside macro and will be replaced there
   @compileTimeOnly("Signal.apply can only be used inside of Signal expressions")
   final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")
+  @compileTimeOnly("Signal.! can only be used inside of Signal expressions")
+  final def ! : A = throw new IllegalAccessException(s"$this.! called outside of macro")
+  @compileTimeOnly("Signal.unary_! can only be used inside of Signal expressions")
+  final def unary_! : A = throw new IllegalAccessException(s"$this.unary_! called outside of macro")
 
   final def now(implicit engine: Engine[S], @deprecated("unused", "") ev: Signal.NowAllowed.type): A = {
     try { engine.singleNow(this).get }

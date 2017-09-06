@@ -1,5 +1,7 @@
 package rescala.fullmv
 
+import scala.concurrent.duration.Duration
+
 sealed trait PartialOrderResult
 case object Unordered extends PartialOrderResult
 sealed trait OrderResult extends PartialOrderResult
@@ -29,5 +31,5 @@ trait SerializationGraphTracking[T] {
     * @param contender the transaction newly arriving at that variable
     * @return the established order
     */
-  def ensureOrder(defender: T, contender: T): OrderResult
+  def ensureOrder(defender: T, contender: T, timeout: Duration): OrderResult
 }

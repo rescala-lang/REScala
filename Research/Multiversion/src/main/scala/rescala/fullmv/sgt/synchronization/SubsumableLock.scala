@@ -1,85 +1,95 @@
 package rescala.fullmv.sgt.synchronization
 
+import rescala.fullmv.mirrors._
 import rescala.parrp.Backoff
 
 import scala.annotation.tailrec
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration.Duration
 
-// TODO must be a remote interface
-trait SubsumableLock {
-  // used for assertions only
-  def getLockedRoot: Option[SubsumableLock.GUID]
-  def tryLock(): SubsumableLock.TryLockResult
-  def lock(): SubsumableLock.TryLockResult
-  def unlock(): Unit
-  def subsume(subsumableLock: SubsumableLock.TryLockResult): SubsumableLock.TryLockResult
+trait SubsumableLock extends SubsumableLockProxy with Hosted {
+  override val host: SubsumableLockHost
 }
 
 object SubsumableLock {
-  type GUID = Long
-  case class TryLockResult(success: Boolean, newParent: SubsumableLock, globalRoot: GUID)
+  val DEBUG = false
+  case class TryLockResult(success: Boolean, newParent: SubsumableLock)
 
-  def underLock[R](lock: SubsumableLock)(thunk: => R): R = {
-    executeAndRelease(thunk, lock.lock().newParent)
+  def underLock[R](lock: SubsumableLockProxy with Hosted, timeout: Duration)(thunk: => R): R = {
+    executeAndRelease(thunk, Await.result(lock.lock(), timeout), timeout)
   }
-  def underLock[R](lockA: SubsumableLock, lockB: SubsumableLock)(thunk: => R): R = {
-    executeAndRelease(thunk, lockAndMerge(lockA, lockB).newParent)
+  def underLock[R](lockA: SubsumableLockProxy with Hosted, lockB: SubsumableLockProxy with Hosted, timeout: Duration)(thunk: => R): R = {
+    assert(lockA.host == lockB.host)
+    executeAndRelease(thunk, lockAndMerge(lockA, lockB, timeout), timeout)
   }
-  private def executeAndRelease[R](thunk: => R, locked: SubsumableLock): R = {
+  private def executeAndRelease[R](thunk: => R, locked: SubsumableLockProxy, timeout: Duration): R = {
     try { thunk } finally {
-      locked.unlock()
+      Await.result(locked.unlock(), timeout)
     }
   }
 
-  private def lockAndMerge(lockA: SubsumableLock, lockB: SubsumableLock): TryLockResult = {
-//    lockAndMergeTryLockSpinOnly(lockA, lockB, new Backoff())
-//    lockAndMergeWithBackoff(lockA, lockB, new Backoff())
-    lockAndMergeWithoutBackoff(lockA, lockB)
+  private def lockAndMerge(lockA: SubsumableLockProxy with Hosted, lockB: SubsumableLockProxy with Hosted, timeout: Duration): SubsumableLock = {
+    if(DEBUG) System.out.println(s"[${Thread.currentThread().getName}] syncing $lockA and $lockB")
+//    lockAndMergeTryLockSpinOnly(lockA, lockB, timeout, new Backoff())
+//    lockAndMergeWithBackoff(lockA, lockB, timeout, new Backoff())
+//    lockAndMergeWithoutBackoff(lockA, lockB, timeout)
+    lockAndMergeWithRemoteSpin(lockA, lockB, timeout, new Backoff())
   }
 
-  @tailrec private def lockAndMergeTryLockSpinOnly(lockA: SubsumableLock, lockB: SubsumableLock, backoff: Backoff): TryLockResult = {
-    val resA = lockA.tryLock()
-    if(!resA.success) {
+  @tailrec private def lockAndMergeTryLockSpinOnly(lockA: SubsumableLockProxy with Hosted, lockB: SubsumableLockProxy with Hosted, timeout: Duration, backoff: Backoff): SubsumableLock = {
+    val TryLockResult(success, lockedRoot) = Await.result(lockA.tryLock(), timeout)
+    if(!success) {
       backoff.backoff()
-      lockAndMergeTryLockSpinOnly(resA.newParent, lockB, backoff)
+      lockAndMergeTryLockSpinOnly(lockedRoot, lockB, timeout, backoff)
     } else {
-      val resB = lockB.tryLock()
-      if(resA.globalRoot == resB.globalRoot) {
-        resA
-      } else if(resB.success) {
-        resA.newParent.subsume(resB)
+      val resB = Await.result(lockB.trySubsume(lockedRoot), timeout)
+      if(resB.isEmpty) {
+        lockedRoot
       } else {
-        resA.newParent.unlock()
+        Await.result(lockedRoot.unlock(), timeout)
 //        backoff.reset()
         backoff.backoff()
-        lockAndMergeTryLockSpinOnly(resB.newParent, resA.newParent, backoff)
+        lockAndMergeTryLockSpinOnly(lockB, lockA, timeout, backoff)
       }
     }
   }
 
-  @tailrec private def lockAndMergeWithBackoff(lockA: SubsumableLock, lockB: SubsumableLock, backoff: Backoff): TryLockResult = {
-    val resA = lockA.lock()
-    val resB = lockB.tryLock()
-    if(resA.globalRoot == resB.globalRoot) {
-      resA
-    } else if(resB.success) {
-      resA.newParent.subsume(resB)
+  @tailrec private def lockAndMergeWithBackoff(lockA: SubsumableLockProxy with Hosted, lockB: SubsumableLockProxy with Hosted, timeout: Duration, backoff: Backoff): SubsumableLock = {
+    val lockedRoot = Await.result(lockA.lock(), timeout)
+    val resB = Await.result(lockB.trySubsume(lockedRoot), timeout)
+    if(resB.isEmpty) {
+      lockedRoot
     } else {
-      resA.newParent.unlock()
+      Await.result(lockedRoot.unlock(), timeout)
       backoff.backoff()
-      lockAndMergeWithBackoff(resB.newParent, resA.newParent, backoff)
+      lockAndMergeWithBackoff(lockB, lockA, timeout, backoff)
     }
   }
 
-  @tailrec private def lockAndMergeWithoutBackoff(lockA: SubsumableLock, lockB: SubsumableLock): TryLockResult = {
-    val resA = lockA.lock()
-    val resB = lockB.tryLock()
-    if(resA.globalRoot == resB.globalRoot) {
-      resA
-    } else if(resB.success) {
-      resA.newParent.subsume(resB)
+  @tailrec private def lockAndMergeWithoutBackoff(lockA: SubsumableLockProxy with Hosted, lockB: SubsumableLockProxy with Hosted, timeout: Duration): SubsumableLock = {
+    val lockedRoot = Await.result(lockA.lock(), timeout)
+    val resB = Await.result(lockB.trySubsume(lockedRoot), timeout)
+    if(resB.isEmpty) {
+      lockedRoot
     } else {
-      resA.newParent.unlock()
-      lockAndMergeWithoutBackoff(resB.newParent, resA.newParent)
+      Await.result(lockedRoot.unlock(), timeout)
+      lockAndMergeWithoutBackoff(lockB, lockA, timeout)
     }
   }
+
+  private def lockAndMergeWithRemoteSpin(lockA: SubsumableLockProxy with Hosted, lockB: SubsumableLockProxy with Hosted, timeout: Duration, backoff: Backoff): SubsumableLock = {
+    val lockedRoot = Await.result(lockA.lock(), timeout)
+    @tailrec def tryBandSpinAifFailed(lockedRoot: SubsumableLock): SubsumableLock = {
+      val resB = Await.result(lockB.trySubsume(lockedRoot), timeout)
+      if (resB.isEmpty) {
+        lockedRoot
+      } else {
+        val newLockedRoot = Await.result(lockA.spinOnce(backoff.getAndIncrementBackoff()), timeout)
+        tryBandSpinAifFailed(newLockedRoot)
+      }
+    }
+    tryBandSpinAifFailed(lockedRoot)
+  }
+
+  val futureNone: Future[None.type] = Future.successful(None)
 }

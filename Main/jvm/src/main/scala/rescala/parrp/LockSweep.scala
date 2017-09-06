@@ -2,6 +2,7 @@ package rescala.parrp
 
 import java.util
 
+import rescala.core.Node.InDep
 import rescala.core._
 import rescala.locking._
 import rescala.twoversion.{PropagationStructImpl, TwoVersionPropagationImpl, TwoVersionStruct}
@@ -55,7 +56,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
     * it is important, that the locks for the dependencies are acquired BEFORE the constructor for the new reactive.
     * is executed, because the constructor typically accesses the dependencies to create its initial value.
     */
-  protected def ignite(reactive: Reactive[TState], incoming: Set[Reactive[TState]], ignitionRequiresReevaluation: Boolean): Unit = {
+  protected def ignite(reactive: Reactive[TState], incoming: Set[InDep[TState]], ignitionRequiresReevaluation: Boolean): Unit = {
     incoming.foreach { dep =>
       acquireShared(dep)
       discover(dep, reactive)
@@ -165,7 +166,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
     }
   }
 
-  override def writeIndeps(node: Reactive[TState], indepsAfter: Set[Reactive[TState]]): Unit = {
+  override def writeIndeps(node: Reactive[TState], indepsAfter: Set[InDep[TState]]): Unit = {
     super.writeIndeps(node, indepsAfter)
     recount(node)
   }
@@ -179,7 +180,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
     * we let the other turn update the dependency and admit the dependent into the propagation queue
     * so that it gets updated when that turn continues
     * the responsibility for correctly passing the locks is moved to the commit phase */
-  override def discover(source: Reactive[TState], sink: Reactive[TState]): Unit =  {
+  override def discover(source: InDep[TState], sink: Reactive[TState]): Unit =  {
     val owner = acquireShared(source)
     if (owner ne key) {
       if (source.state.willWrite != owner.turn) {
@@ -197,7 +198,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
   }
 
   /** this is for cases where we register and then unregister the same dependency in a single turn */
-  override private[rescala] def drop(source: Reactive[TState], sink: Reactive[TState]) = {
+  override private[rescala] def drop(source: InDep[TState], sink: Reactive[TState]) = {
     val owner = acquireShared(source)
     if (owner ne key) {
       source.state.drop(sink)(this)
@@ -250,7 +251,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
 
 
   /** allow turn to handle dynamic access to reactives */
-  override def dynamicDependencyInteraction(dependency: Reactive[TState]): Unit = acquireShared(dependency)
+  override def dynamicDependencyInteraction(dependency: InDep[TState]): Unit = acquireShared(dependency)
 
-  def acquireShared(reactive: Reactive[TState]): Key[LSInterTurn] = Keychains.acquireShared(reactive.state.lock, key)
+  def acquireShared(reactive: InDep[TState]): Key[LSInterTurn] = Keychains.acquireShared(reactive.state.lock, key)
 }

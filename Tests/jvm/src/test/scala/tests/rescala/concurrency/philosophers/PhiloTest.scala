@@ -50,8 +50,8 @@ class PhiloTest extends FunSuite {
   test("eating Contests Spinning Locksweep") {`eat!`(Engines.locksweep, dynamic = false)}
   test("eating Contests Spinning Dynamic Locksweep") {`eat!`(Engines.locksweep, dynamic = true)}
 
-  test("eating Contests Spinning FullMV") {`eat!`(FullMVEngine, dynamic = false)}
-  test("eating Contests Spinning Dynamic FullMV") {`eat!`(FullMVEngine, dynamic = true)}
+  test("eating Contests Spinning FullMV") {`eat!`(FullMVEngine.default, dynamic = false)}
+  test("eating Contests Spinning Dynamic FullMV") {`eat!`(FullMVEngine.default, dynamic = true)}
 
   //  test("eatingContestsSpinningParallelLocksweep"){`eat!`(JVMEngines.parallellocksweep, dynamic = false)}
   //  test("eatingContestsSpinningDynamicParallelLocksweep"){`eat!`(JVMEngines.parallellocksweep, dynamic = true)}

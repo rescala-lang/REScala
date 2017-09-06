@@ -9,6 +9,7 @@ import rescala.fullmv.sgt.synchronization.SubsumableLock
 import scala.annotation.elidable.ASSERTION
 import scala.annotation.{elidable, tailrec}
 import scala.collection.mutable.ArrayBuffer
+import scala.concurrent.duration.Duration
 
 sealed trait FramingBranchResult[+T, +R]
 object FramingBranchResult {
@@ -19,6 +20,11 @@ object FramingBranchResult {
 
 sealed trait NotificationResultAction[+T, +R]
 object NotificationResultAction {
+  // upon notify:
+  //    branch merge: T/F
+  //    reev: wait/ready/unchanged/unchanged+FF/unchanged+next
+  // upon reevOut:
+  //    done/FF/next
   case object NotGlitchFreeReady extends NotificationResultAction[Nothing, Nothing]
   case object ResolvedNonFirstFrameToUnchanged extends NotificationResultAction[Nothing, Nothing]
   case object GlitchFreeReadyButQueued extends NotificationResultAction[Nothing, Nothing]
@@ -35,20 +41,22 @@ object NotificationResultAction {
 
 /**
   * A node version history datastructure
-  * @param sgt the transaction ordering authority
   * @param init the initial creating transaction
   * @param valuePersistency the value persistency descriptor
   * @tparam V the type of stored values
   * @tparam T the type of transactions
-  * @tparam R the type of dependency nodes (reactives)
+  * @tparam InDep the type of incoming dependency nodes
+  * @tparam OutDep the type of outgoing dependency nodes
   */
-class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTracking[T], init: T, val valuePersistency: ValuePersistency[V]) {
+class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePersistency: ValuePersistency[V], val timeout: Duration) extends FullMVState[V, T, InDep, OutDep] {
+  override val host = init.host
+
   trait BlockOnHistoryManagedBlocker extends ManagedBlocker {
     override def block(): Boolean = NodeVersionHistory.this.synchronized {
       isReleasable || { NodeVersionHistory.this.wait(); isReleasable }
     }
   }
-  private class Version(val txn: T, var stable: Boolean, var out: Set[R], var pending: Int, var changed: Int, var value: Option[V]) extends BlockOnHistoryManagedBlocker {
+  private class Version(val txn: T, var stable: Boolean, var out: Set[OutDep], var pending: Int, var changed: Int, var value: Option[V]) extends BlockOnHistoryManagedBlocker {
     // txn >= Executing, stable == true, node reevaluation completed changed
     def isWritten: Boolean = changed == 0 && value.isDefined
     // txn <= WrapUp, any following versions are stable == false
@@ -95,23 +103,23 @@ class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTrack
 
     override def toString: String = {
       if(isWritten){
-        "Written(" + txn + ", out=" + out + ", v=" + value.get + ")"
+        s"Written($txn, out=$out, v=${value.get})"
       } else if (isReadOrDynamic) {
-        (if(stable) "Stable" else "Unstable") + "Marker(" + txn + ", out=" + out + ")"
+        (if(stable) "Stable" else "Unstable") + s"Marker($txn, out=$out)"
       } else if (isOvertakeCompensation) {
-        "OvertakeCompensation(" + txn + ", " + (if (stable) "stable" else "unstable") + ", out=" + out + ", pending=" + pending + ", changed=" + changed + ")"
+        s"OvertakeCompensation($txn, ${if (stable) "stable" else "unstable"}, out=$out, pending=$pending, changed=$changed)"
       } else if(isFrame) {
         if(stable) {
           if(isReadyForReevaluation) {
-            "Active(" + txn + ", out=" + out + ")"
+            s"Active($txn, out=$out)"
           } else {
-            "FirstFrame(" + txn + ", out=" + out + ", pending=" + pending + ", changed=" + changed + ")"
+            s"FirstFrame($txn, out=$out, pending=$pending, changed=$changed)"
           }
         } else {
           if(isReadyForReevaluation) {
-            "Queued(" + txn + ", out=" + out + ")"
+            s"Queued($txn, out=$out)"
           } else {
-            "Frame(" + txn + ", out=" + out + ", pending=" + pending + ", changed=" + changed + ")"
+            s"Frame($txn, out=$out, pending=$pending, changed=$changed)"
           }
         }
       } else {
@@ -145,8 +153,6 @@ class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTrack
   private val _versions = new ArrayBuffer[Version](6)
   _versions += new Version(init, stable = true, out = Set(), pending = 0, changed = 0, Some(valuePersistency.initialValue))
   var latestValue: V = valuePersistency.initialValue
-
-  var incomings: Set[R] = Set.empty
 
   /**
     * creates a version and inserts it at the given position; default parameters create a "read" version
@@ -192,11 +198,11 @@ class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTrack
     assert(from <= to, s"binary search started with backwards indices from $from to $to")
     assert(to <= _versions.size, s"binary search upper bound $to beyond history size ${_versions.size}")
     if(knownStatic) {
-      assert(to == _versions.size || sgt.getOrder(_versions(to).txn, lookFor) != FirstFirst, s"to = $to successor for non-blocking search of known static $lookFor pointed to version of ${_versions(to).txn} which is ordered earlier.")
+      assert(to == _versions.size || DecentralizedSGT.getOrder(_versions(to).txn, lookFor) != FirstFirst, s"to = $to successor for non-blocking search of known static $lookFor pointed to version of ${_versions(to).txn} which is ordered earlier.")
     } else {
-      assert(to == _versions.size || sgt.getOrder(_versions(to).txn, lookFor) == SecondFirst, s"to = $to successor for non-blocking search of $lookFor pointed to version of ${_versions(to).txn} which is not already ordered later.")
+      assert(to == _versions.size || DecentralizedSGT.getOrder(_versions(to).txn, lookFor) == SecondFirst, s"to = $to successor for non-blocking search of $lookFor pointed to version of ${_versions(to).txn} which is not already ordered later.")
     }
-    assert(sgt.getOrder(_versions(from - 1).txn, lookFor) != SecondFirst, s"from - 1 = ${from - 1} predecessor for non-blocking search of $lookFor pointed to version of ${_versions(from - 1).txn} which is already ordered later.")
+    assert(DecentralizedSGT.getOrder(_versions(from - 1).txn, lookFor) != SecondFirst, s"from - 1 = ${from - 1} predecessor for non-blocking search of $lookFor pointed to version of ${_versions(from - 1).txn} which is already ordered later.")
     assert(from > 0, s"binary search started with non-positive lower bound $from")
     findOrPidgeonHoleNonblocking(lookFor, from, fromIsKnownPredecessor = false, to)
   }
@@ -206,11 +212,11 @@ class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTrack
     if (to == from) {
       if(!fromIsKnownPredecessor) {
         val pred = _versions(from - 1).txn
-        val unblockedOrder = sgt.getOrder(pred, lookFor)
+        val unblockedOrder = DecentralizedSGT.getOrder(pred, lookFor)
         assert(unblockedOrder != SecondFirst)
         if(unblockedOrder != FirstFirst) {
-          SubsumableLock.underLock(pred.lock, lookFor.lock) {
-            val establishedOrder = sgt.ensureOrder(pred, lookFor)
+          SubsumableLock.underLock(pred, lookFor, timeout) {
+            val establishedOrder = DecentralizedSGT.ensureOrder(pred, lookFor, timeout)
             assert(establishedOrder == FirstFirst)
           }
         }
@@ -221,19 +227,14 @@ class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTrack
       val candidate = _versions(idx).txn
       if(candidate == lookFor) {
         idx
-      } else sgt.getOrder(candidate, lookFor) match {
+      } else DecentralizedSGT.getOrder(candidate, lookFor) match {
         case FirstFirst =>
           findOrPidgeonHoleNonblocking(lookFor, idx + 1, fromIsKnownPredecessor = true, to)
         case SecondFirst =>
           findOrPidgeonHoleNonblocking(lookFor, from, fromIsKnownPredecessor, idx)
         case Unordered =>
-          SubsumableLock.underLock(candidate.lock, lookFor.lock) {
-            sgt.ensureOrder(candidate, lookFor) match {
-              case FirstFirst =>
-                findOrPidgeonHoleLocked(lookFor, idx + 1, fromKnownOrdered = true, to)
-              case SecondFirst =>
-                findOrPidgeonHoleLocked(lookFor, from, fromIsKnownPredecessor, idx)
-            }
+          SubsumableLock.underLock(candidate, lookFor, timeout) {
+            findOrPidgeonHoleLocked(lookFor, from, fromIsKnownPredecessor, to)
           }
       }
     }
@@ -244,7 +245,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTrack
     if (to == from) {
       if(!fromKnownOrdered) {
         val pred = _versions(from - 1).txn
-        val establishedOrder = sgt.ensureOrder(pred, lookFor)
+        val establishedOrder = DecentralizedSGT.ensureOrder(pred, lookFor, timeout)
         assert(establishedOrder == FirstFirst)
       }
       -from
@@ -253,7 +254,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTrack
       val candidate = _versions(idx).txn
       if(candidate == lookFor) {
         idx
-      } else sgt.ensureOrder(candidate, lookFor) match {
+      } else DecentralizedSGT.ensureOrder(candidate, lookFor, timeout) match {
         case FirstFirst =>
           findOrPidgeonHoleLocked(lookFor, idx + 1, fromKnownOrdered = true, to)
         case SecondFirst =>
@@ -270,7 +271,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTrack
     */
   private def findFrame(txn: T): Int = {
     if(firstFrame < _versions.size && _versions(firstFrame).txn == txn) firstFrame else
-    findOrPidgeonHole(txn, latestWritten + 1, _versions.size)
+      findOrPidgeonHole(txn, latestWritten + 1, _versions.size)
   }
 
   /**
@@ -282,7 +283,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTrack
     */
   private def findFinal(txn: T) = {
     if(_versions(latestWritten).txn == txn) latestWritten else
-    findOrPidgeonHole(txn, 1, firstFrame, knownStatic = true)
+      findOrPidgeonHole(txn, 1, firstFrame, knownStatic = true)
   }
 
 
@@ -293,7 +294,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTrack
     * @param txn the transaction visiting the node for framing
     * @param supersede the transaction whose frame was superseded by the visiting transaction at the previous node
     */
-  def incrementSupersedeFrame(txn: T, supersede: T): FramingBranchResult[T, R] = synchronized {
+  override def incrementSupersedeFrame(txn: T, supersede: T): FramingBranchResult[T, OutDep] = synchronized {
     val result = incrementFrame0(txn)
     val supersedePosition = findFrame(supersede)
     if (supersedePosition >= 0) {
@@ -309,7 +310,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTrack
     * entry point for regular framing
     * @param txn the transaction visiting the node for framing
     */
-  def incrementFrame(txn: T): FramingBranchResult[T, R] = synchronized {
+  override def incrementFrame(txn: T): FramingBranchResult[T, OutDep] = synchronized {
     val result = incrementFrame0(txn)
     assertOptimizationsIntegrity(s"incrementFrame($txn) -> $result")
     result
@@ -320,7 +321,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTrack
     * @param txn the transaction visiting the node for framing
     * @return a descriptor of how this framing has to propagate
     */
-  private def incrementFrame0(txn: T): FramingBranchResult[T, R] = {
+  private def incrementFrame0(txn: T): FramingBranchResult[T, OutDep] = {
     maybeGC()
     val position = findFrame(txn)
     if(position >= 0) {
@@ -345,7 +346,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTrack
     }
   }
 
-  private def frameCreated(position: Int, frame: Version): FramingBranchResult[T, R] = {
+  private def frameCreated(position: Int, frame: Version): FramingBranchResult[T, OutDep] = {
     if(position < firstFrame) {
       for(pos <- (position + 1) until firstFrame) {
         assert(_versions(pos).stable, s"${_versions(position).txn} cannot destabilize ${_versions(pos)}")
@@ -374,7 +375,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTrack
     * @param txn the transaction sending the notification
     * @param changed whether or not the dependency changed
     */
-  def notify(txn: T, changed: Boolean): NotificationResultAction[T, R] = synchronized {
+  override def notify(txn: T, changed: Boolean): NotificationResultAction[T, OutDep] = synchronized {
     val result = notify0(findFrame(txn), txn, changed)
     assertOptimizationsIntegrity(s"notify($txn, $changed) -> $result")
     result
@@ -386,7 +387,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTrack
     * @param changed whether or not the dependency changed
     * @param followFrame a transaction for which to create a subsequent frame, furthering its partial framing.
     */
-  def notifyFollowFrame(txn: T, changed: Boolean, followFrame: T): NotificationResultAction[T, R] = synchronized {
+  override def notifyFollowFrame(txn: T, changed: Boolean, followFrame: T): NotificationResultAction[T, OutDep] = synchronized {
     maybeGC()
     val position = findFrame(txn)
 
@@ -406,7 +407,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTrack
     result
   }
 
-  def notify0(position: Int, txn: T, changed: Boolean): NotificationResultAction[T, R] = {
+  private def notify0(position: Int, txn: T, changed: Boolean): NotificationResultAction[T, OutDep] = {
     if(position < 0) {
       assert(-position != firstFrame, "(no)change notification, which overtook (a) discovery retrofitting or " +
         "(b) predecessor (no)change notification with followFraming for this transaction, wants to create FirstFrame, " +
@@ -461,7 +462,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTrack
     }
   }
 
-  def reevIn(turn: T): V = {
+  override def reevIn(turn: T): V = {
     synchronized {
       val firstFrameTurn = _versions(firstFrame).txn
       assert(firstFrameTurn == turn, s"Turn $turn called reevIn, but Turn $firstFrameTurn is first frame owner")
@@ -473,11 +474,11 @@ class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTrack
     * progress [[firstFrame]] forward until a [[Version.isFrame]] is encountered, and
     * return the resulting notification out (with reframing if subsequent write is found).
     */
-  def reevOut(turn: T, maybeValue: Option[V]): NotificationResultAction.NotificationOutAndSuccessorOperation[T, R] = synchronized {
+  override def reevOut(turn: T, maybeValue: Option[V]): NotificationResultAction.NotificationOutAndSuccessorOperation[T, OutDep] = synchronized {
     val position = firstFrame
     val version = _versions(position)
     assert(version.txn == turn, s"$turn called reevDone, but first frame is $version (different transaction)")
-    assert(version.value.isEmpty, s"$turn cannot write twice: $version")
+    assert(!version.isWritten, s"$turn cannot write twice: $version")
     assert((version.isFrame && version.isReadyForReevaluation) || (maybeValue.isEmpty && version.isReadOrDynamic), s"$turn cannot write changed=${maybeValue.isDefined} on $version")
 
     if(maybeValue.isDefined) {
@@ -498,9 +499,9 @@ class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTrack
     * whether or not the possibly encountered write [[Version.isReadyForReevaluation]].
     * @return the notification and next reevaluation descriptor.
     */
-  private def progressToNextWriteForNotification(debugOutputString: => String, out: Set[R]): NotificationResultAction.NotificationOutAndSuccessorOperation[T, R] = {
+  private def progressToNextWriteForNotification(debugOutputString: => String, out: Set[OutDep]): NotificationResultAction.NotificationOutAndSuccessorOperation[T, OutDep] = {
     @tailrec
-    def progressToNextWriteForNotification0(): NotificationResultAction.NotificationOutAndSuccessorOperation[T, R] = {
+    def progressToNextWriteForNotification0(): NotificationResultAction.NotificationOutAndSuccessorOperation[T, OutDep] = {
       firstFrame += 1
       if (firstFrame < _versions.size) {
         val version = _versions(firstFrame)
@@ -551,7 +552,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTrack
     * @return the corresponding [[Version.value]] from before this transaction, i.e., ignoring the transaction's
     *         own writes.
     */
-  def dynamicBefore(txn: T): V = synchronized {
+  override def dynamicBefore(txn: T): V = synchronized {
     assert(!valuePersistency.isTransient, s"$txn invoked dynamicBefore on transient node")
     maybeGC()
     synchronized {
@@ -577,7 +578,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTrack
     }
   }
 
-  def staticBefore(txn: T): V = synchronized {
+  override def staticBefore(txn: T): V = synchronized {
     before(txn, math.abs(findFinal(txn)))
   }
 
@@ -618,7 +619,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTrack
     * @return the corresponding [[Version.value]] from after this transaction, i.e., awaiting and returning the
     *         transaction's own write if one has occurred or will occur.
     */
-  def dynamicAfter(txn: T): V = {
+  override def dynamicAfter(txn: T): V = {
     synchronized {
       maybeGC()
       val position = ensureReadVersion(txn)
@@ -648,7 +649,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTrack
     }
   }
 
-  def staticAfter(txn: T): V = synchronized {
+  override def staticAfter(txn: T): V = synchronized {
     val position = findFinal(txn)
     if(position < 0) {
       beforeOrInit(txn, -position)
@@ -669,7 +670,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTrack
     * @param add the new edge's sink node
     * @return the appropriate [[Version.value]].
     */
-  def discover(txn: T, add: R): (ArrayBuffer[T], Option[T]) = synchronized {
+  override def discover(txn: T, add: OutDep): (Seq[T], Option[T]) = synchronized {
     val position = ensureReadVersion(txn)
     assertOptimizationsIntegrity(s"ensureReadVersion($txn)")
     assert(!_versions(position).out.contains(add), "must not discover an already existing edge!")
@@ -681,7 +682,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTrack
     * @param txn the executing reevaluation's transaction
     * @param remove the removed edge's sink node
     */
-  def drop(txn: T, remove: R): (ArrayBuffer[T], Option[T]) = synchronized {
+  override def drop(txn: T, remove: OutDep): (Seq[T], Option[T]) = synchronized {
     val position = ensureReadVersion(txn)
     assertOptimizationsIntegrity(s"ensureReadVersion($txn)")
     assert(_versions(position).out.contains(remove), "must not drop a non-existing edge!")
@@ -694,7 +695,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTrack
     * @param maybeSuccessorFrame maybe a reframing to perform for the first successor frame
     * @param arity +1 for discover adding frames, -1 for drop removing frames.
     */
-  def retrofitSinkFrames(successorWrittenVersions: ArrayBuffer[T], maybeSuccessorFrame: Option[T], arity: Int): Unit = synchronized {
+  override def retrofitSinkFrames(successorWrittenVersions: Seq[T], maybeSuccessorFrame: Option[T], arity: Int): Unit = synchronized {
     require(math.abs(arity) == 1)
     var minPos = firstFrame
     for(txn <- successorWrittenVersions) {
@@ -726,17 +727,19 @@ class NodeVersionHistory[V, T <: FullMVTurn, R](val sgt: SerializationGraphTrack
     * @return a list of transactions with written successor versions and maybe the transaction of the first successor
     *         frame if it exists, for which reframings have to be performed at the sink.
     */
-  private def retrofitSourceOuts(position: Int, delta: R, arity: Int): (ArrayBuffer[T], Option[T]) = {
+  private def retrofitSourceOuts(position: Int, delta: OutDep, arity: Int): (Seq[T], Option[T]) = {
     require(math.abs(arity) == 1)
     // allocate array to the maximum number of written versions that might follow
     // (any version at index firstFrame or later can only be a frame, not written)
-    val successorWrittenVersions = new ArrayBuffer[T](firstFrame - position - 1)
+    val sizePrediction = math.max(firstFrame - position, 0)
+    val successorWrittenVersions = new ArrayBuffer[T](sizePrediction)
     for(pos <- position until _versions.size) {
       val version = _versions(pos)
       if(arity < 0) version.out -= delta else version.out += delta
       // as per above, this is implied false if pos >= firstFrame:
       if(version.isWritten) successorWrittenVersions += version.txn
     }
+    if(successorWrittenVersions.size > sizePrediction) System.err.println(s"FullMV retrofitSourceOuts predicted size max($firstFrame - $position, 0) = $sizePrediction, but size eventually was ${successorWrittenVersions.size}")
     val maybeSuccessorFrame = if (firstFrame < _versions.size) Some(_versions(firstFrame).txn) else None
     (successorWrittenVersions, maybeSuccessorFrame)
   }

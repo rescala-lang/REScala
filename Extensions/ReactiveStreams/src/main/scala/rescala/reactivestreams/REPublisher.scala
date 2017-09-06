@@ -2,7 +2,8 @@ package rescala.reactivestreams
 
 
 import org.reactivestreams.{Publisher, Subscriber, Subscription}
-import rescala.core.{Base, Engine, Pulse, ReadableReactive, REName, Reactive, ReevaluationResult, Struct, Turn, ValuePersistency}
+import rescala.core.Node.InDep
+import rescala.core.{Base, Engine, Pulse, REName, ReadableReactive, ReevaluationResult, Struct, Turn, ValuePersistency}
 
 import scala.util.{Failure, Success}
 
@@ -21,12 +22,12 @@ object REPublisher {
 
   }
 
-  class SubscriptionReactive[T, S <: Struct](bud: S#State[Pulse[T], S], dependency: ReadableReactive[Pulse[T], S], subscriber: Subscriber[_ >: T], fac: Engine[S], name: REName) extends Base[T, S](bud, name) with Reactive[S] with Subscription {
+  class SubscriptionReactive[T, S <: Struct](bud: S#State[Pulse[T], S], dependency: ReadableReactive[Pulse[T], S], subscriber: Subscriber[_ >: T], fac: Engine[S], name: REName) extends Base[T, S](bud, name) with Subscription {
 
     var requested: Long = 0
     var cancelled = false
 
-    override protected[rescala] def reevaluate(ticket: Turn[S], before: Pulse[T], indeps: Set[Reactive[S]]): ReevaluationResult[S] = {
+    override protected[rescala] def reevaluate(ticket: Turn[S], before: Pulse[T], indeps: Set[InDep[S]]): ReevaluationResult[S] = {
       ticket.makeStaticReevaluationTicket().staticDepend(dependency).toOptionTry match {
         case None => ReevaluationResult.Static(ticket, this, Pulse.NoChange, indeps)
         case Some(tryValue) =>
@@ -63,9 +64,8 @@ object REPublisher {
   }
 
   def subscription[T, S <: Struct](dependency: ReadableReactive[Pulse[T], S], subscriber: Subscriber[_ >: T], fac: Engine[S]): SubscriptionReactive[T, S] = {
-    val incoming = Set[Reactive[S]](dependency)
-    fac.transaction(dependency) { ticket =>
-      ticket.creation.create[Pulse[T], SubscriptionReactive[T, S]](incoming, ValuePersistency.DerivedSignal) { state =>
+    fac.transaction() { ticket =>
+      ticket.creation.create[Pulse[T], SubscriptionReactive[T, S]](Set(dependency), ValuePersistency.DerivedSignal) { state =>
         new SubscriptionReactive[T, S](state, dependency, subscriber, fac, s"forSubscriber(${subscriber})")
       }
     }
