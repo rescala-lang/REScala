@@ -28,7 +28,7 @@ object Server extends App {
         try {
           eventList() = eventList.now :+ x
         } catch {
-          case e => new Exception("Client Connect processing failed", e).printStackTrace()
+          case e: Throwable => new Exception("Client Connect processing failed", e).printStackTrace()
         }
       }
     })
@@ -60,10 +60,8 @@ object Client extends App {
   var input =""
   var continueProgram = true
 
-  //val e0: Future[rescala.Evt[Int]] = registry.lookup(Bindings1.eventBinding, remote)
-
   val eventAdd: Event[Int] =>  Future[Unit] =  registry.lookup(Bindings1.addBinding, remote)
-  val e1 = Evt[Int]
+  val e1 = Evt[Int]()
   eventAdd(e1)
 
   while (continueProgram) {
