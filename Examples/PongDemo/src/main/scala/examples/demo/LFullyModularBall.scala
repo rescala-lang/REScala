@@ -3,7 +3,7 @@ package examples.demo
 import java.awt.Color
 
 import examples.demo.GModularClockCircle.Clock
-import examples.demo.ui._
+import examples.demo.ui.{Circle, Point, Shape, ShapesPanel}
 import rescala._
 
 /**

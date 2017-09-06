@@ -7,7 +7,7 @@ class MacroTestSuite extends RETests {
 
 
 
-  allEngines("signal Re Evaluates The Expression"){ engine => import engine._
+  allEngines("signal Reevaluates The Expression"){ engine => import engine._
     val v = Var(0)
     var i = 1
     val s: Signal[Int] = Signal { v(): @unchecked; i }

@@ -6,7 +6,7 @@ maxErrors := 5
 crossScalaVersions := Seq(cfg.version_211, cfg.version_212)
 (incOptions in ThisBuild) := (incOptions in ThisBuild).value.withLogRecompileOnMacro(false)
 
-lazy val rescalaAggregate = project.in(file(".")).aggregate(rescalaJVM,
+lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(rescalaJVM,
   rescalaJS, microbench, reswing, examples, examplesReswing, caseStudyEditor,
   caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags,
   datastructures, universe, reactiveStreams, documentation,
@@ -54,7 +54,7 @@ lazy val documentation = project.in(file("Documentation/DocumentationProject"))
   .dependsOn(rescalaJVM, rescalaJS)
 
 
-// Extensions
+// ===================================================================================== Extensions
 
 lazy val reactiveStreams = project.in(file("Extensions/ReactiveStreams"))
   .settings(cfg.base, cfg.noPublish, lib.reactivestreams)
@@ -84,11 +84,23 @@ lazy val stm = project.in(file("Extensions/STM"))
   .settings(cfg.base, cfg.noPublish, lib.scalaStm)
   .dependsOn(rescalaJVM)
 
-// Examples
+lazy val crdts = project.in(file("Extensions/crdts"))
+  .dependsOn(rescalaJVM)
+  .settings(name := "recrdt", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.akka, lib.scalaLogback)
+
+lazy val rescalafx = project.in(file("Extensions/javafx"))
+  .dependsOn(rescalaJVM)
+  .settings(name := "rescalafx", cfg.base, cfg.noPublish, lib.scalafx)
+
+// ===================================================================================== Examples
 
 lazy val examples = project.in(file("Examples/examples"))
   .dependsOn(rescalaJVM)
   .settings(name := "rescala-examples", cfg.base, cfg.noPublish, lib.scalaswing)
+
+lazy val pongDemo = project.in(file("Examples/PongDemo"))
+  .dependsOn(rescalaJVM)
+  .settings(name := "pong-demo", cfg.base, cfg.noPublish, lib.scalaswing)
 
 lazy val examplesReswing = project.in(file("Examples/examples-reswing"))
   .dependsOn(reswing)
@@ -134,8 +146,21 @@ lazy val caseStudyMill = project.in(file("Examples/Mill"))
   .dependsOn(reswing)
   .settings(cfg.base, cfg.noPublish, name := "mill-case-study")
 
+lazy val todolist = project.in(file("Examples/Todolist"))
+  .enablePlugins(ScalaJSPlugin)
+  .dependsOn(rescalatags)
+  .settings(cfg.base, cfg.noPublish, name := "todolist", scalaSource in Compile := baseDirectory.value)
 
-// Research
+lazy val dividi = project.in(file("Examples/dividi"))
+  .dependsOn(crdts)
+  .settings(name := "dividi", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.akka, lib.scalaLogback, lib.scalafx)
+
+lazy val paroli = project.in(file("Examples/paroli-chat"))
+  .dependsOn(crdts)
+  .settings(name := "paroli-chat", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.akka, lib.scalaLogback, lib.jline)
+
+
+// ===================================================================================== Research
 
 lazy val fullmv = project.in(file("Research/Multiversion"))
   .settings(
@@ -159,12 +184,12 @@ lazy val microbench = project.in(file("Research/Microbenchmarks"))
   .dependsOn(stm, fullmv)
 
 
-// ================================== settings
+// ===================================================================================== Settings
 
 lazy val cfg = new {
 
   val version_211 = "2.11.11"
-  val version_212 = "2.12.2"
+  val version_212 = "2.12.3"
 
 
   val base = List(
@@ -172,7 +197,7 @@ lazy val cfg = new {
     version := "0.20.0-SNAPSHOT",
     scalaVersion := version_212,
     baseScalac,
-    autoAPIMappings := true
+    autoAPIMappings := true // scaladoc
   )
 
   val test = List(
@@ -247,6 +272,11 @@ lazy val cfg = new {
     Seq(file)
   }.taskValue
 
+  val mappingFilters = Seq(
+    mappings in (Compile, packageBin) ~= { _.filter(!_._1.getName.endsWith(".conf")) },
+    mappings in (Compile, packageBin) ~= { _.filter(!_._1.getName.endsWith(".xml")) }
+  )
+
 }
 
 // ================================ dependencies
@@ -261,12 +291,12 @@ lazy val lib = new {
 
   lazy val rss = libraryDependencies ++= Seq(
     "joda-time" % "joda-time" % "2.9.9",
-    "org.joda" % "joda-convert" % "1.8.1",
+    "org.joda" % "joda-convert" % "1.8.3",
     "org.codehaus.jsr166-mirror" % "jsr166y" % "1.7.0",
     "org.scala-lang.modules" %% "scala-xml" % "1.0.6")
 
   lazy val scalaswing = libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "2.0.0"
-  lazy val scalatest = libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.3" % "test"
+  lazy val scalatest = libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.4" % "test"
 
 
   lazy val circe = {
@@ -278,15 +308,15 @@ lazy val lib = new {
   }
 
   val reactivestreams = libraryDependencies ++= List(
-    "org.reactivestreams" % "reactive-streams" % "1.0.0",
-    "org.reactivestreams" % "reactive-streams-tck" % "1.0.0"
+    "org.reactivestreams" % "reactive-streams" % "1.0.1",
+    "org.reactivestreams" % "reactive-streams-tck" % "1.0.1"
   )
 
   val scalaStm = libraryDependencies += "org.scala-stm" %% "scala-stm" % "0.8"
 
   val retypecheck = List(
     resolvers += Resolver.bintrayRepo("pweisenburger", "maven"),
-    libraryDependencies += "de.tuda.stg" %% "retypecheck" % "0.3.0"
+    libraryDependencies += "de.tuda.stg" %% "retypecheck" % "0.4.0"
   )
 
   val reflectionForMacroDefinitions = libraryDependencies += scalaOrganization.value % "scala-reflect" % scalaVersion.value % "provided"
@@ -296,5 +326,31 @@ lazy val lib = new {
   val scalaXml = libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.0.6"
 
   val scalatags = libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.6.5"
+
+  val akka = {
+    val akkaVersion = "2.5.3"
+    // akka:
+    libraryDependencies ++= Seq(
+      "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
+      "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+      "com.typesafe.akka" %% "akka-remote" % akkaVersion,
+      "com.typesafe.akka" %% "akka-cluster" % akkaVersion,
+      "com.typesafe.akka" %% "akka-cluster-metrics" % akkaVersion,
+      "com.typesafe.akka" %% "akka-cluster-tools" % akkaVersion,
+      "com.typesafe.akka" %% "akka-multi-node-testkit" % akkaVersion)
+  }
+
+  val scalaLogback = Seq(
+    libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.3",
+    libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.7.2"
+  )
+
+  val scalafx = Seq(
+    libraryDependencies += "org.scalafx" %% "scalafx" % "8.0.102-R11",
+    scalaswing,
+    unmanagedJars in Compile += Attributed.blank(file(System.getenv("JAVA_HOME") + "/lib/ext/jfxrt.jar"))
+  )
+
+  val jline = libraryDependencies += "org.scala-lang.modules" % "scala-jline" % "2.12.1"
 
 }

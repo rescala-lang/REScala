@@ -1,7 +1,7 @@
 package examples.demo
 
 import examples.demo.LFullyModularBall.BouncingBall
-import examples.demo.ui._
+import examples.demo.ui.{Rectangle, Shape, ShapesPanel}
 import rescala._
 
 /**

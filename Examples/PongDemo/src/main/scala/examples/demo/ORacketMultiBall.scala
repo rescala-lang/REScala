@@ -4,7 +4,7 @@ import java.awt.Color
 
 import examples.demo.LFullyModularBall.BouncingBall
 import examples.demo.MPlayingFieldBall.PlayingField
-import examples.demo.ui._
+import examples.demo.ui.{Rectangle, Shape, ShapesPanel}
 import rescala._
 
 /**

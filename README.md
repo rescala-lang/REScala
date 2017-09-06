@@ -25,3 +25,15 @@ This repository contains mutliple subprojects, the most important ones are:
   Execute wit `jmh:run`
 * __Tests__: integration tests for various subprojects.
 * __Examples__: various example applications.
+  * __dividi__: money dividing application, showing the use of distributed CRDTs integrated into rescala
+  * __Editor__: basic text editor in different implementation styles (imperative, to full reactive)
+  * __examples__: misc examples involing swing, time, datastructures (no reswing, using swing directly)
+  * __examples-reswing__: misc reswing examples
+  * __Mill__: mill game using reswing
+  * __paroli-chat__: console application demoing distributed CRTDs
+  * __PongDemo__: application design demonstrating, showing multiple steps of adding features to a reactive application
+  * __RSSReader__: imperative/reactive versions of a reswing RSS reader (actual network request, no support for failures yet)
+  * __Shapes__: reswing drawing application
+  * __Todolist__: Rescalatags todo application in the style of common todo applications
+  * __Universe__: console application demoing parallel execution of simulations
+

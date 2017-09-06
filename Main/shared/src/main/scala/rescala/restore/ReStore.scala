@@ -9,7 +9,8 @@ class ReStoringTurn(restore: ReStore) extends LevelBasedPropagation[ReStoringStr
 
   override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): ReStoringStructType[P, ReStoringStruct] = {
     valuePersistency match {
-      case is@ValuePersistency.InitializedSignal(init) if is.serializable != null =>
+      case is@ValuePersistency.InitializedSignal(init) if is.serializable != rescala.core.ReSerializable.doNotSerialize =>
+        if (is.serializable == rescala.core.ReSerializable.serializationUnavailable) throw new Exception(s"restore requires serializable reactive: $valuePersistency")
         val name = restore.nextName
         restore.get(name) match {
           case None =>
@@ -32,7 +33,9 @@ class ReStoringTurn(restore: ReStore) extends LevelBasedPropagation[ReStoringStr
 class ReStoringStructType[P, S <: Struct](storage: ReStore, val name: String, serializable: ReSerializable[P], initialVal: P, transient: Boolean) extends LevelStructTypeImpl[P, S](initialVal, transient) {
   override def commit(turn: TwoVersionPropagation[S]): Unit = {
     super.commit(turn)
-    if (storage != null) storage.put(name, serializable.serialize(current))
+    if (storage != null) {
+      storage.put(name, serializable.serialize(current))
+    }
   }
 }
 

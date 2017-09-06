@@ -19,13 +19,24 @@ object ReSerializable {
   implicit def restrav[T <: Traversable[_ <: Reactive[_]]]: ReSerializable[T] = doNotSerialize
   implicit def resopt[T <: Option[_ <: Reactive[_]]]: ReSerializable[T] = doNotSerialize
 
-  def doNotSerialize[T]: ReSerializable[T] = null
+  object DoNotSerialize extends ReSerializable[Any] {
+    override def serialize(value: Any): String = ???
+    override def deserialize(value: String): Try[Any] = ???
+  }
+  object NoSerializer extends ReSerializable[Any] {
+    override def serialize(value: Any): String = ???
+    override def deserialize(value: String): Try[Any] = ???
+  }
+
+  def doNotSerialize[T]: ReSerializable[T] = DoNotSerialize.asInstanceOf[ReSerializable[T]]
+  def serializationUnavailable[T]: _root_.rescala.core.ReSerializable[T] = NoSerializer.asInstanceOf[ReSerializable[T]]
+
 
   def pulseEncoder[T: Encoder](): Encoder[Pulse[T]] = io.circe.Encoder.encodeOption[T].contramap(_.toOption)
   def pulseDecoder[T: Decoder](): Decoder[Pulse[T]] = io.circe.Decoder.decodeOption[T].map(Pulse.fromOption)
 
   def pulseSerializable[T](implicit s: ReSerializable[T]): ReSerializable[Pulse[T]] = {
-    if (s == null) null else if (s == doNotSerialize) doNotSerialize
+    if (s == null) null else if (s == doNotSerialize) doNotSerialize else if (s == serializationUnavailable) serializationUnavailable
     else new ReSerializable[Pulse[T]] {
       override def serialize(value: Pulse[T]): String = value.toOption.fold("")(s.serialize)
       override def deserialize(value: String): Try[Pulse[T]] = if (value.isEmpty) Success(Pulse.empty)
