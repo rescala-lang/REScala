@@ -12,7 +12,6 @@ trait Struct { type State[P, S <: Struct] }
   * @tparam S Defines the structure of the internal state, as used by the propagation engine.
   */
 trait Node[S <: Struct] {
-  self: RENamed =>
   type Value
 
   /** Internal state of this reactive, managed by the propagation engine */
@@ -29,7 +28,6 @@ object Node {
   * @tparam S Defines the structure of the internal state, as used by the propagation engine.
   */
 trait Reactive[S <: Struct] extends Node[S] {
-  self: RENamed =>
   protected[rescala] def reevaluate(turn: Turn[S], before: Value, indeps: Set[InDep[S]]): ReevaluationResult[S]
 }
 
@@ -41,7 +39,6 @@ trait Reactive[S <: Struct] extends Node[S] {
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
 trait ReadableReactive[+P, S <: Struct] extends Node[S] {
-  self: RENamed =>
   override type Value <: P
 }
 
@@ -51,7 +48,6 @@ trait ReadableReactive[+P, S <: Struct] extends Node[S] {
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
 trait WriteableReactive[-P, S <: Struct] extends Node[S] {
-  self: RENamed =>
   override type Value >: P
 }
 
@@ -59,7 +55,6 @@ trait WriteableReactive[-P, S <: Struct] extends Node[S] {
   * A base implementation for all reactives, tying together the Readable interface for user computations and the Writeable interface for schedulers.
   */
 trait ReadWriteReactive[P, S <: Struct] extends ReadableReactive[P, S] with WriteableReactive[P, S]{
-  self: RENamed =>
   override type Value = P
 }
 
