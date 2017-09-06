@@ -163,13 +163,8 @@ lazy val paroli = project.in(file("Examples/paroli-chat"))
 // ===================================================================================== Research
 
 lazy val fullmv = project.in(file("Research/Multiversion"))
-  .settings(
-    cfg.base,
-    name := "rescala-multiversion",
-    cfg.test, cfg.noPublish,
-    libraryDependencies += "de.tuda.stg" %% "retier-communication" % "0.0.1-SNAPSHOT",
-    libraryDependencies += "de.tuda.stg" %% "retier-communicator-tcp" % "0.0.1-SNAPSHOT" % "test",
-    libraryDependencies += "de.tuda.stg" %% "retier-serializer-upickle" % "0.0.1-SNAPSHOT" % "test")
+  .settings( cfg.base, name := "rescala-multiversion",
+    cfg.test, cfg.noPublish, lib.retierTransmitter)
   .dependsOn(rescalaJVM, testToolsJVM % "test->test")
 
 lazy val meta = project.in(file("Research/Meta"))
@@ -352,5 +347,10 @@ lazy val lib = new {
   )
 
   val jline = libraryDependencies += "org.scala-lang.modules" % "scala-jline" % "2.12.1"
+
+  val retierTransmitter = Seq(
+    libraryDependencies += "de.tuda.stg" %% "retier-communication" % "0.0.1-SNAPSHOT",
+    libraryDependencies += "de.tuda.stg" %% "retier-communicator-tcp" % "0.0.1-SNAPSHOT" % "test",
+    libraryDependencies += "de.tuda.stg" %% "retier-serializer-upickle" % "0.0.1-SNAPSHOT" % "test")
 
 }
