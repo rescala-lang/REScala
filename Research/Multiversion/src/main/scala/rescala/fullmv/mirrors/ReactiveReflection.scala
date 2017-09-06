@@ -9,7 +9,7 @@ import rescala.fullmv.{FullMVEngine, FullMVState, FullMVStruct, FullMVTurn, Turn
 
 
 
-trait ReactiveReflection[-P] extends WriteableReactive[P, FullMVStruct] with Reactive[FullMVStruct] with ReactiveReflectionProxy[P] {
+trait ReactiveReflection[-P] extends Reactive[FullMVStruct] with ReactiveReflectionProxy[P] {
   self: RENamed =>
   def buffer(turn: FullMVTurn, value: P): Unit
   def submit(action: FullMVAction): Unit

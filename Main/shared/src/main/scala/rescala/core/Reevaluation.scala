@@ -41,7 +41,7 @@ object ReevaluationResult {
 
 
 trait Disconnectable[S <: Struct] extends Reactive[S] {
-  self: WriteableReactive[Pulse[Nothing], S] =>
+  override type Value >: Pulse[Nothing]
   @volatile private var disconnected = false
   final def disconnect()(implicit engine: Engine[S]): Unit = {
     engine.transaction(this) { turn =>
