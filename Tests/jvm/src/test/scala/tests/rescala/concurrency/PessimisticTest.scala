@@ -4,14 +4,13 @@ import java.util.concurrent.{CountDownLatch, TimeUnit}
 
 import rescala.Engines
 import rescala.core.{Engine}
-import rescala.fullmv.FullMVEngine
 import rescala.parrp.{Backoff, ParRP}
 import rescala.testhelper._
 import rescala.twoversion.TwoVersionEngineImpl
 import tests.rescala.RETests
 
 class PessimisticTest extends RETests {
-  engines(Engines.parrp, FullMVEngine.default)("SynchronizedReevaluation should synchronize reevaluations"){ (engine: Engine[TestStruct]) =>
+  engines(Engines.parrp)("SynchronizedReevaluation should synchronize reevaluations"){ (engine: Engine[TestStruct]) =>
     import engine._
 
     val v1 = Var(false)
@@ -37,7 +36,7 @@ class PessimisticTest extends RETests {
     assert(s2.now === true)
   }
 
-  engines(Engines.parrp, FullMVEngine.default)("Pessimistic Engines should safely execute concurrently admitted updates to summed signals"){ engine =>
+  engines(Engines.parrp)("Pessimistic Engines should safely execute concurrently admitted updates to summed signals"){ engine =>
     import engine._
 
     val size = 10
@@ -61,28 +60,7 @@ class PessimisticTest extends RETests {
     assert(sum.now === size)
   }
 
-  // This deadlocks for ParRP, because it blocks turns from starting to run concurrently if their regions intersect beforehand
-  engines(FullMVEngine.default)("safely execute concurrently running updates on summed signals"){ engine =>
-    import engine._
-
-    val size = 10
-    val sources = List.fill(size)(Var(0))
-
-    val (syncs, maps) = sources.map(SynchronizedReevaluation(_)).unzip
-    val latch = SynchronizedReevaluation.autoSyncNextReevaluation(syncs:_*)
-
-    val sum = maps.reduce(Signals.lift(_, _)(_ + _))
-    val sumTracker = new ReevaluationTracker(sum)
-
-    val threads = sources.map(v => Spawn {v.set(1)})
-    threads.foreach(_.join(1000))
-    assert(latch.getCount == 0)
-
-    sumTracker.assert((0 to size).reverse:_*)
-    assert(sum.now === size)
-  }
-
-  engines(Engines.parrp, FullMVEngine.default)("Pessimistic Engines should correctly execute crossed dynamic discoveries"){ engine =>
+  engines(Engines.parrp)("Pessimistic Engines should correctly execute crossed dynamic discoveries"){ engine =>
     import engine._
 
     val v1 = Var(0)
@@ -184,7 +162,7 @@ class PessimisticTest extends RETests {
     assert(unregs === 0)
   }
 
-  engines(Engines.parrp, FullMVEngine.default)("Pessimistic Engines should not retrofit a reevaluation for t2, after a dependency might have been added and removed again inside a single t1 While Owned By t2"){ engine =>
+  engines(Engines.parrp)("Pessimistic Engines should not retrofit a reevaluation for t2, after a dependency might have been added and removed again inside a single t1 While Owned By t2"){ engine =>
     import engine._
 
     val bl0 = Var(false)
@@ -257,7 +235,7 @@ class PessimisticTest extends RETests {
     assert(Set(List(turn1, turn1), List(turn1)).contains(reeval), " -- for reference, turn2 was "+turn2)
   }
 
-  engines(Engines.parrp, FullMVEngine.default)("pessimistic engines should add two dynamic dependencies and remove only one"){ engine =>
+  engines(Engines.parrp)("pessimistic engines should add two dynamic dependencies and remove only one"){ engine =>
     import engine._
 
     val bl0 = Var(false)

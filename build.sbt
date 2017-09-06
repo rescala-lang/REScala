@@ -10,7 +10,7 @@ lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(r
   rescalaJS, microbench, reswing, examples, examplesReswing, caseStudyEditor,
   caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags,
   datastructures, universe, reactiveStreams, documentation,
-  stm, testToolsJVM, testToolsJS, testsJVM, testsJS, fullmv, caseStudyShapes, caseStudyMill,
+  stm, testToolsJVM, testToolsJS, testsJVM, testsJS, caseStudyShapes, caseStudyMill,
   dividi, paroli)
   .settings(cfg.noPublish)
 
@@ -46,7 +46,7 @@ lazy val tests = crossProject.in(file("Tests"))
   .settings(name := "rescala-tests", cfg.noPublish, cfg.base, cfg.test)
   .dependsOn(rescala)
   .jvmSettings().jsSettings(cfg.js)
-lazy val testsJVM = tests.jvm.dependsOn(testToolsJVM % "test->test", fullmv, stm)
+lazy val testsJVM = tests.jvm.dependsOn(testToolsJVM % "test->test", stm)
 lazy val testsJS = tests.js.dependsOn(testToolsJS % "test->test")
 
 lazy val documentation = project.in(file("Documentation/DocumentationProject"))
