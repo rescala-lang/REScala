@@ -1,6 +1,6 @@
 package rescala.stm
 
-import rescala.core.Node.InDep
+import rescala.core.Reactive
 import rescala.core.{Struct, ValuePersistency}
 import rescala.levelbased.{LevelBasedPropagation, LevelStruct}
 import rescala.twoversion.Token
@@ -18,7 +18,7 @@ class STMTurn extends LevelBasedPropagation[STMTurn] with LevelStruct {
   // this is unsafe when used improperly
   def inTxn: InTxn = atomic(identity)
   override val token = Token(inTxn)
-  override def dynamicDependencyInteraction(dependency: InDep[STMTurn]): Unit = ()
+  override def dynamicDependencyInteraction(dependency: Reactive[STMTurn]): Unit = ()
 }
 
 

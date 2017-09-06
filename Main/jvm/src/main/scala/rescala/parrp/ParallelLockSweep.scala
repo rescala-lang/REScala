@@ -3,7 +3,6 @@ package rescala.parrp
 import java.util.concurrent.Executor
 import java.util.concurrent.atomic.AtomicInteger
 
-import rescala.core.Node.InDep
 import rescala.core.Reactive
 import rescala.locking._
 import rescala.twoversion.TwoVersionEngineImpl
@@ -62,8 +61,8 @@ class ParallelLockSweep(backoff: Backoff, ex: Executor, engine: TwoVersionEngine
   }
 
   /** allow turn to handle dynamic access to reactives */
-  override def dynamicDependencyInteraction(dependency: InDep[TState]): Unit = synchronized(super.dynamicDependencyInteraction(dependency))
+  override def dynamicDependencyInteraction(dependency: Reactive[TState]): Unit = synchronized(super.dynamicDependencyInteraction(dependency))
 
-  override def acquireShared(reactive: InDep[TState]): Key[LSInterTurn] = synchronized(super.acquireShared(reactive))
+  override def acquireShared(reactive: Reactive[TState]): Key[LSInterTurn] = synchronized(super.acquireShared(reactive))
 }
 

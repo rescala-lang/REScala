@@ -1,6 +1,5 @@
 package rescala.levelbased
 
-import rescala.core.Node.InDep
 import rescala.core.Reactive
 import rescala.twoversion.TwoVersionPropagationImpl
 
@@ -42,9 +41,9 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
 
   }
 
-  private def maximumLevel(dependencies: Set[InDep[S]]): Int = dependencies.foldLeft(-1)((acc, r) => math.max(acc, r.state.level(this)))
+  private def maximumLevel(dependencies: Set[Reactive[S]]): Int = dependencies.foldLeft(-1)((acc, r) => math.max(acc, r.state.level(this)))
 
-  override protected def ignite(reactive: Reactive[S], incoming: Set[InDep[S]], ignitionRequiresReevaluation: Boolean): Unit = {
+  override protected def ignite(reactive: Reactive[S], incoming: Set[Reactive[S]], ignitionRequiresReevaluation: Boolean): Unit = {
     val level = if(incoming.isEmpty) 0 else incoming.map(_.state.level(this)).max + 1
     reactive.state.updateLevel(level)(this)
 

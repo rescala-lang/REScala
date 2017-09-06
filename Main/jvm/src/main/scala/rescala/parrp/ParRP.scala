@@ -1,15 +1,14 @@
 package rescala.parrp
 
-import rescala.core.Node.InDep
-import rescala.core._
+import rescala.core.{Reactive, _}
 import rescala.levelbased.{LevelBasedPropagation, LevelStruct, LevelStructTypeImpl}
 import rescala.locking._
 
 trait ParRPInterTurn {
   private type TState = ParRP
 
-  def discover(sink: InDep[TState], source: Reactive[TState]): Unit
-  def drop(sink: InDep[TState], source: Reactive[TState]): Unit
+  def discover(sink: Reactive[TState], source: Reactive[TState]): Unit
+  def drop(sink: Reactive[TState], source: Reactive[TState]): Unit
 
   def forget(reactive: Reactive[TState]): Unit
   def admit(reactive: Reactive[TState]): Unit
@@ -52,7 +51,7 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
   override def releasePhase(): Unit = key.releaseAll()
 
   /** allow turn to handle dynamic access to reactives */
-  override def dynamicDependencyInteraction(dependency: InDep[TState]): Unit = acquireShared(dependency)
+  override def dynamicDependencyInteraction(dependency: Reactive[TState]): Unit = acquireShared(dependency)
 
 
   /** lock all reactives reachable from the initial sources
@@ -88,7 +87,7 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
     * we let the other turn update the dependency and admit the dependent into the propagation queue
     * so that it gets updated when that turn continues
     * the responsibility for correctly passing the locks is moved to the commit phase */
-  override def discover(source: InDep[TState], sink: Reactive[TState]): Unit = {
+  override def discover(source: Reactive[TState], sink: Reactive[TState]): Unit = {
     val owner = acquireShared(source)
     if (owner ne key) {
       owner.turn.discover(source, sink)
@@ -103,7 +102,7 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
   }
 
   /** this is for cases where we register and then unregister the same dependency in a single turn */
-  override def drop(source: InDep[TState], sink: Reactive[TState]): Unit = {
+  override def drop(source: Reactive[TState], sink: Reactive[TState]): Unit = {
     val owner = acquireShared(source)
     if (owner ne key) {
       owner.turn.drop(source, sink)
@@ -118,6 +117,6 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
     else super.drop(source, sink)
   }
 
-  def acquireShared(reactive: InDep[TState]): Key[ParRPInterTurn] = Keychains.acquireShared(reactive.state.lock, key)
+  def acquireShared(reactive: Reactive[TState]): Key[ParRPInterTurn] = Keychains.acquireShared(reactive.state.lock, key)
 }
 

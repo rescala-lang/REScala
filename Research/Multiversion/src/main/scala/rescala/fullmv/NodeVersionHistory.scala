@@ -48,7 +48,7 @@ object NotificationResultAction {
   * @tparam InDep the type of incoming dependency nodes
   * @tparam OutDep the type of outgoing dependency nodes
   */
-class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePersistency: ValuePersistency[V], val timeout: Duration) extends FullMVState[V, T, InDep, OutDep] {
+class NodeVersionHistory[V, T <: FullMVTurn, Reactive, OutDep](init: T, val valuePersistency: ValuePersistency[V], val timeout: Duration) extends FullMVState[V, T, Reactive, OutDep] {
   override val host = init.host
 
   trait BlockOnHistoryManagedBlocker extends ManagedBlocker {

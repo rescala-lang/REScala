@@ -26,9 +26,9 @@ import scala.language.implicitConversions
 
 trait AnyTicket extends Any
 
-final class DynamicTicket[S <: Struct] private[rescala](val creation: ComputationStateAccess[S] with Creation[S], val indepsBefore: Set[ReadableReactive[_, S]]) extends AnyTicket {
-  private[rescala] var indepsAfter: Set[ReadableReactive[_, S]] = Set.empty
-  private[rescala] var indepsAdded: Set[ReadableReactive[_, S]] = Set.empty
+final class DynamicTicket[S <: Struct] private[rescala](val creation: ComputationStateAccess[S] with Creation[S], val indepsBefore: Set[Reactive[S]]) extends AnyTicket {
+  private[rescala] var indepsAfter: Set[Reactive[S]] = Set.empty
+  private[rescala] var indepsAdded: Set[Reactive[S]] = Set.empty
 
   private[rescala] def dynamicDepend[A](reactive: ReadableReactive[A, S]): A = {
     if (indepsBefore(reactive)) {
@@ -57,7 +57,7 @@ final class DynamicTicket[S <: Struct] private[rescala](val creation: Computatio
     dynamicDepend(reactive).toOption
   }
 
-  def indepsRemoved = indepsBefore.diff(indepsAfter)
+  def indepsRemoved: Set[Reactive[S]] = indepsBefore.diff(indepsAfter)
 }
 
 final class StaticTicket[S <: Struct] private[rescala](val creation: ComputationStateAccess[S] with Creation[S]) extends AnyVal with AnyTicket {

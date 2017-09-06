@@ -1,7 +1,7 @@
 package rescala.fullmv.mirrors
 
 
-import rescala.core.Node.InDep
+import rescala.core.Reactive
 import rescala.core._
 import rescala.fullmv._
 
@@ -27,7 +27,7 @@ object ReactiveMirror {
   }
 }
 
-class ReactiveMirror[A](val getValue: FullMVTurn => A, val reflectionProxy: ReactiveReflectionProxy[A], val timeout: Duration, rename: REName) extends RENamed(rename) with Reactive[FullMVStruct] with FullMVState[Nothing, FullMVTurn, InDep[FullMVStruct], Reactive[FullMVStruct]] {
+class ReactiveMirror[A](val getValue: FullMVTurn => A, val reflectionProxy: ReactiveReflectionProxy[A], val timeout: Duration, rename: REName) extends RENamed(rename) with Reactive[FullMVStruct] with FullMVState[Nothing, FullMVTurn, Reactive[FullMVStruct], Reactive[FullMVStruct]] {
   override type Value = Nothing
   override protected[rescala] val state = this
   override val host: FullMVEngine = null
@@ -74,5 +74,5 @@ class ReactiveMirror[A](val getValue: FullMVTurn => A, val reflectionProxy: Reac
   override def drop(txn: FullMVTurn, remove: Reactive[FullMVStruct]): (Seq[FullMVTurn], Option[FullMVTurn]) = ???
   override def retrofitSinkFrames(successorWrittenVersions: Seq[FullMVTurn], maybeSuccessorFrame: Option[FullMVTurn], arity: Int): Unit = ???
 
-  override protected[rescala] def reevaluate(turn: Turn[FullMVStruct], before: Value, indeps: Set[InDep[FullMVStruct]]): ReevaluationResult[FullMVStruct] = ???
+  override protected[rescala] def reevaluate(turn: Turn[FullMVStruct], before: Value, indeps: Set[Reactive[FullMVStruct]]): ReevaluationResult[FullMVStruct] = ???
 }

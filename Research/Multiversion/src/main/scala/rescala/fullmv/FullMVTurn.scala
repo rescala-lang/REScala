@@ -2,7 +2,7 @@ package rescala.fullmv
 
 import java.util.concurrent.ForkJoinTask
 
-import rescala.core.Node.InDep
+import rescala.core.Reactive
 import rescala.core.{Reactive, ReadableReactive, TurnImpl, ValuePersistency}
 import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation.{NextReevaluation, NoSuccessor}
 import rescala.fullmv.NotificationResultAction.{GlitchFreeReady, NotificationOutAndSuccessorOperation}
@@ -33,12 +33,12 @@ abstract class FullMVTurn(val timeout: Duration) extends TurnImpl[FullMVStruct] 
 
   //========================================================Scheduler Interface============================================================
 
-  override def makeStructState[P](valuePersistency: ValuePersistency[P]): NodeVersionHistory[P, FullMVTurn, InDep[FullMVStruct], Reactive[FullMVStruct]] = {
-    val state = new NodeVersionHistory[P, FullMVTurn, InDep[FullMVStruct], Reactive[FullMVStruct]](host.dummy, valuePersistency, timeout)
+  override def makeStructState[P](valuePersistency: ValuePersistency[P]): NodeVersionHistory[P, FullMVTurn, Reactive[FullMVStruct], Reactive[FullMVStruct]] = {
+    val state = new NodeVersionHistory[P, FullMVTurn, Reactive[FullMVStruct], Reactive[FullMVStruct]](host.dummy, valuePersistency, timeout)
     state.incrementFrame(this)
     state
   }
-  override def ignite(reactive: Reactive[FullMVStruct], incoming: Set[InDep[FullMVStruct]], ignitionRequiresReevaluation: Boolean): Unit = {
+  override def ignite(reactive: Reactive[FullMVStruct], incoming: Set[Reactive[FullMVStruct]], ignitionRequiresReevaluation: Boolean): Unit = {
     if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this igniting $reactive on $incoming")
     incoming.foreach { discover =>
       discover.state.dynamicAfter(this) // TODO should we get rid of this?
@@ -79,19 +79,19 @@ abstract class FullMVTurn(val timeout: Duration) extends TurnImpl[FullMVStruct] 
   }
 
 
-  override private[rescala] def discover(node: InDep[FullMVStruct], addOutgoing: Reactive[FullMVStruct]): Unit = {
+  override private[rescala] def discover(node: Reactive[FullMVStruct], addOutgoing: Reactive[FullMVStruct]): Unit = {
     val (successorWrittenVersions, maybeFollowFrame) = node.state.discover(this, addOutgoing)
     if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] Reevaluation($this,$node) discovering $node -> $addOutgoing re-queueing $successorWrittenVersions and re-framing $maybeFollowFrame")
     addOutgoing.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, 1)
   }
 
-  override private[rescala] def drop(node: InDep[FullMVStruct], removeOutgoing: Reactive[FullMVStruct]): Unit = {
+  override private[rescala] def drop(node: Reactive[FullMVStruct], removeOutgoing: Reactive[FullMVStruct]): Unit = {
     val (successorWrittenVersions, maybeFollowFrame) = node.state.drop(this, removeOutgoing)
     if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] Reevaluation($this,$node) dropping $node -> $removeOutgoing de-queueing $successorWrittenVersions and de-framing $maybeFollowFrame")
     removeOutgoing.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, -1)
   }
 
-  override private[rescala] def writeIndeps(node: Reactive[FullMVStruct], indepsAfter: Set[InDep[FullMVStruct]]): Unit = node.state.incomings = indepsAfter
+  override private[rescala] def writeIndeps(node: Reactive[FullMVStruct], indepsAfter: Set[Reactive[FullMVStruct]]): Unit = node.state.incomings = indepsAfter
 
   override private[rescala] def staticBefore[P](reactive: ReadableReactive[P, FullMVStruct]) = reactive.state.staticBefore(this)
   override private[rescala] def staticAfter[P](reactive: ReadableReactive[P, FullMVStruct]) = reactive.state.staticAfter(this)

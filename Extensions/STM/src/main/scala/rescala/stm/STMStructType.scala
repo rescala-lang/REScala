@@ -1,6 +1,6 @@
 package rescala.stm
 
-import rescala.core.Node.InDep
+import rescala.core.Reactive
 import rescala.core.{Reactive, Struct, Turn}
 import rescala.levelbased.LevelStructType
 import rescala.twoversion.{ReadWriteValue, Token, TwoVersionPropagation}
@@ -22,15 +22,15 @@ class STMStructType[P, S <: Struct](initialValue: P, transient: Boolean) extends
 
   val _level: Ref[Int] = Ref(0)
   val _outgoing: Ref[Set[Reactive[S]]] = Ref(Set.empty)
-  val _incoming: Ref[Set[InDep[S]]] = Ref(Set.empty)
+  val _incoming: Ref[Set[Reactive[S]]] = Ref(Set.empty)
 
   val pulses: ReadWriteValue[P, S] = this
-  def incoming(turn: Turn[S]): Set[InDep[S]] = _incoming.get(inTxn(turn))
+  def incoming(turn: Turn[S]): Set[Reactive[S]] = _incoming.get(inTxn(turn))
   override def level(turn: Turn[S]): Int = _level.get(inTxn(turn))
   override def drop(reactive: Reactive[S])(turn: Turn[S]): Unit = _outgoing.transformAndGet(_ - reactive)(inTxn(turn))
   override def updateLevel(i: Int)(turn: Turn[S]): Int = _level.transformAndGet(math.max(_, i))(inTxn(turn))
   override def outgoing(turn: Turn[S]): collection.Set[Reactive[S]] = _outgoing.get(inTxn(turn))
-  def updateIncoming(reactives: Set[InDep[S]])(turn: Turn[S]): Unit = _incoming.set(reactives)(inTxn(turn))
+  def updateIncoming(reactives: Set[Reactive[S]])(turn: Turn[S]): Unit = _incoming.set(reactives)(inTxn(turn))
   override def discover(reactive: Reactive[S])(turn: Turn[S]): Unit = _outgoing.transformAndGet(_ + reactive)(inTxn(turn))
 
 

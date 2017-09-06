@@ -1,7 +1,5 @@
 package rescala.core
 
-import rescala.core.Node.InDep
-
 import scala.language.higherKinds
 
 
@@ -11,24 +9,12 @@ trait Struct { type State[P, S <: Struct] }
   *
   * @tparam S Defines the structure of the internal state, as used by the propagation engine.
   */
-trait Node[S <: Struct] {
+trait Reactive[S <: Struct] {
   type Value
 
   /** Internal state of this reactive, managed by the propagation engine */
   protected[rescala] def state: S#State[Value, S]
-}
-
-object Node {
-  type InDep[S <: Struct] = ReadableReactive[_, S]
-  type OutDep[S <: Struct] = Reactive[S]
-}
-
-/** A reactive value is something that can be reevaluated
-  *
-  * @tparam S Defines the structure of the internal state, as used by the propagation engine.
-  */
-trait Reactive[S <: Struct] extends Node[S] {
-  protected[rescala] def reevaluate(turn: Turn[S], before: Value, indeps: Set[InDep[S]]): ReevaluationResult[S]
+  protected[rescala] def reevaluate(turn: Turn[S], before: Value, indeps: Set[Reactive[S]]): ReevaluationResult[S]
 }
 
 
@@ -38,7 +24,7 @@ trait Reactive[S <: Struct] extends Node[S] {
   * @tparam P Value type stored by the pulse of the reactive value
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
-trait ReadableReactive[+P, S <: Struct] extends Node[S] {
+trait ReadableReactive[+P, S <: Struct] extends Reactive[S] {
   override type Value <: P
 }
 
@@ -47,7 +33,7 @@ trait ReadableReactive[+P, S <: Struct] extends Node[S] {
   * @tparam P Value type stored by the pulse of the reactive value
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
-trait WriteableReactive[-P, S <: Struct] extends Node[S] {
+trait WriteableReactive[-P, S <: Struct] extends Reactive[S] {
   override type Value >: P
 }
 

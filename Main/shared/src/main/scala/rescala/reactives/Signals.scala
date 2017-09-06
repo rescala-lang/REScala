@@ -1,7 +1,6 @@
 package rescala.reactives
 
-import rescala.core.Node.InDep
-import rescala.core.{REName, _}
+import rescala.core.{REName, Reactive, _}
 import rescala.reactives.RExceptions.EmptySignalControlThrowable
 import rescala.reactives.Signals.Impl.{DynamicSignal, StaticSignal, restored, states}
 
@@ -34,7 +33,7 @@ object Signals extends GeneratedSignalLift {
     private[Signals] abstract class StaticSignal[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: (StaticTicket[S], => T) => T, name: REName)
       extends Base[T, S](_bud, name) with Signal[T, S] {
 
-      override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[T], indeps: Set[InDep[S]]): ReevaluationResult[S] = {
+      override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[T], indeps: Set[Reactive[S]]): ReevaluationResult[S] = {
         def newValue = expr(turn.makeStaticReevaluationTicket(), before.get)
         val newPulse = Pulse.tryCatch(Pulse.diffPulse(newValue, before))
         ReevaluationResult.Static(turn, this, newPulse, indeps)
@@ -42,7 +41,7 @@ object Signals extends GeneratedSignalLift {
     }
 
     private[Signals] abstract class DynamicSignal[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: DynamicTicket[S] => T, name: REName) extends Base[T, S](_bud, name) with Signal[T, S] {
-      override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[T], indeps: Set[InDep[S]]): ReevaluationResult[S] = {
+      override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[T], indeps: Set[Reactive[S]]): ReevaluationResult[S] = {
         val dt = turn.makeDynamicReevaluationTicket(indeps)
         val newPulse = Pulse.tryCatch {Pulse.diffPulse(expr(dt), before)}
         ReevaluationResult.Dynamic(turn, this, newPulse, dt.indepsAfter, dt.indepsAdded, dt.indepsRemoved)
@@ -53,7 +52,7 @@ object Signals extends GeneratedSignalLift {
   }
 
   /** creates a signal that statically depends on the dependencies with a given initial value */
-  private[rescala] def staticFold[T: ReSerializable, S <: Struct](dependencies: Set[InDep[S]], init: StaticTicket[S] => T)(expr: (StaticTicket[S], => T) => T)(ict: Creation[S])(name: REName): Signal[T, S] = {
+  private[rescala] def staticFold[T: ReSerializable, S <: Struct](dependencies: Set[Reactive[S]], init: StaticTicket[S] => T)(expr: (StaticTicket[S], => T) => T)(ict: Creation[S])(name: REName): Signal[T, S] = {
     def initOrRestored: T = {
       if (restored.value eq null) init(ict.asInstanceOf[TurnImpl[S]].makeStaticReevaluationTicket())
       else {
@@ -70,7 +69,7 @@ object Signals extends GeneratedSignalLift {
   }
 
   /** creates a new static signal depending on the dependencies, reevaluating the function */
-  def static[T, S <: Struct](dependencies: InDep[S]*)(expr: StaticTicket[S] => T)(implicit ct: CreationTicket[S]): Signal[T, S] = ct { initialTurn =>
+  def static[T, S <: Struct](dependencies: Reactive[S]*)(expr: StaticTicket[S] => T)(implicit ct: CreationTicket[S]): Signal[T, S] = ct { initialTurn =>
     def ignore2[I, C, R](f: I => R): (I, C) => R = (t, _) => f(t)
     initialTurn.create[Pulse[T], StaticSignal[T, S]](dependencies.toSet, ValuePersistency.DerivedSignal) {
       state => new StaticSignal[T, S](state, ignore2(expr), ct.rename) with Disconnectable[S]
@@ -82,7 +81,7 @@ object Signals extends GeneratedSignalLift {
   }
 
   /** creates a signal that has dynamic dependencies (which are detected at runtime with Signal.apply(turn)) */
-  def dynamic[T, S <: Struct](dependencies: InDep[S]*)(expr: DynamicTicket[S] => T)(implicit ct: CreationTicket[S]): Signal[T, S] = ct { initialTurn =>
+  def dynamic[T, S <: Struct](dependencies: Reactive[S]*)(expr: DynamicTicket[S] => T)(implicit ct: CreationTicket[S]): Signal[T, S] = ct { initialTurn =>
     initialTurn.create[Pulse[T], DynamicSignal[T, S]](dependencies.toSet, ValuePersistency.DerivedSignal) {
       state => new DynamicSignal[T, S](state, expr, ct.rename) with Disconnectable[S]
     }

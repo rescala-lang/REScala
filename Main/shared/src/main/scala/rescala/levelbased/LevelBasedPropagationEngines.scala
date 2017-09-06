@@ -1,7 +1,6 @@
 package rescala.levelbased
 
-import rescala.core.Node.InDep
-import rescala.core.{Engine, ValuePersistency}
+import rescala.core.{Engine, Reactive, ValuePersistency}
 import rescala.twoversion.TwoVersionEngineImpl
 
 /**
@@ -14,7 +13,7 @@ trait LevelBasedPropagationEngines {
       new LevelStructTypeImpl(valuePersistency.initialValue, valuePersistency.isTransient)
     }
     override def releasePhase(): Unit = ()
-    override def dynamicDependencyInteraction(dependency: InDep[SimpleStruct]): Unit = {}
+    override def dynamicDependencyInteraction(dependency: Reactive[SimpleStruct]): Unit = {}
   }
 
   type SimpleEngine = Engine[SimpleStruct]

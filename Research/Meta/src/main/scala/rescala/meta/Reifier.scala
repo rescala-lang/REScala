@@ -7,7 +7,7 @@ import rescala.reactives.{Evt, _}
 import scala.annotation.tailrec
 import scala.collection.mutable
 
-case class Reification[S <: Struct](reified : ReadableReactive[_, S], observers : mutable.Set[(ObserverData[S], Observe[S])])
+case class Reification[S <: Struct](reified : Reactive[S], observers : mutable.Set[(ObserverData[S], Observe[S])])
 
 trait Reifier[S <: Struct] {
   // External interface that can be used directly

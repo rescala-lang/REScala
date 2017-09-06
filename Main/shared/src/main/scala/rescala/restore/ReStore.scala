@@ -1,7 +1,6 @@
 package rescala.restore
 
-import rescala.core.Node.InDep
-import rescala.core.{ReSerializable, Struct, ValuePersistency}
+import rescala.core.{ReSerializable, Reactive, Struct, ValuePersistency}
 import rescala.levelbased.{LevelBasedPropagation, LevelStruct, LevelStructTypeImpl}
 import rescala.twoversion.{TwoVersionEngine, TwoVersionPropagation}
 
@@ -25,7 +24,7 @@ class ReStoringTurn(restore: ReStore) extends LevelBasedPropagation[ReStoringStr
     }
   }
 
-  override def dynamicDependencyInteraction(dependency: InDep[ReStoringStruct]): Unit = ()
+  override def dynamicDependencyInteraction(dependency: Reactive[ReStoringStruct]): Unit = ()
   override def releasePhase(): Unit = ()
 
 }

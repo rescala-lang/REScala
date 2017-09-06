@@ -1,10 +1,10 @@
 package rescala.reactives
 
-import rescala.core.Node
+import rescala.core.Reactive
 
 import scala.util.control.ControlThrowable
 
 object RExceptions {
   object EmptySignalControlThrowable extends ControlThrowable
-  class UnhandledFailureException(location: Node[_], cause: Throwable) extends RuntimeException(s"a failure was observed but not handled by: $location", cause)
+  class UnhandledFailureException(location: Reactive[_], cause: Throwable) extends RuntimeException(s"a failure was observed but not handled by: $location", cause)
 }

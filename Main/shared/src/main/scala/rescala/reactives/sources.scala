@@ -1,7 +1,6 @@
 package rescala.reactives
 
-import rescala.core.Node.InDep
-import rescala.core.{REName, _}
+import rescala.core.{REName, Reactive, _}
 
 abstract class Source[T, S <: Struct](initialState: S#State[Pulse[T], S], name: REName) extends Base[T, S](initialState, name) {
   private var nextReevaluationResult: Value = null
@@ -12,7 +11,7 @@ abstract class Source[T, S <: Struct](initialState: S#State[Pulse[T], S], name: 
     nextReevaluationResult = value
   }
 
-  final override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[T], indeps: Set[InDep[S]]): ReevaluationResultImpl[T, S] = {
+  final override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[T], indeps: Set[Reactive[S]]): ReevaluationResultImpl[T, S] = {
     val value = nextReevaluationResult
     nextReevaluationResult = null
     ReevaluationResult.Static(turn, this, if(value == null) Pulse.NoChange else pulseFromBufferedPulse(turn, before, value), indeps)

@@ -2,7 +2,7 @@ package rescala.reactivestreams
 
 
 import org.reactivestreams.{Publisher, Subscriber, Subscription}
-import rescala.core.Node.InDep
+import rescala.core.Reactive
 import rescala.core.{Base, Engine, Pulse, REName, ReadableReactive, ReevaluationResult, Struct, Turn, ValuePersistency}
 
 import scala.util.{Failure, Success}
@@ -27,7 +27,7 @@ object REPublisher {
     var requested: Long = 0
     var cancelled = false
 
-    override protected[rescala] def reevaluate(ticket: Turn[S], before: Pulse[T], indeps: Set[InDep[S]]): ReevaluationResult[S] = {
+    override protected[rescala] def reevaluate(ticket: Turn[S], before: Pulse[T], indeps: Set[Reactive[S]]): ReevaluationResult[S] = {
       ticket.makeStaticReevaluationTicket().staticDepend(dependency).toOptionTry match {
         case None => ReevaluationResult.Static[T, S](ticket, this, Pulse.NoChange, indeps)
         case Some(tryValue) =>

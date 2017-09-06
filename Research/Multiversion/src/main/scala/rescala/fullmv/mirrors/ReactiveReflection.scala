@@ -2,7 +2,7 @@ package rescala.fullmv.mirrors
 
 import java.util.concurrent.ConcurrentHashMap
 
-import rescala.core.Node.InDep
+import rescala.core.Reactive
 import rescala.core._
 import rescala.fullmv.tasks._
 import rescala.fullmv.{FullMVEngine, FullMVState, FullMVStruct, FullMVTurn, TurnPhase}
@@ -42,12 +42,12 @@ trait ReactiveReflection[-P] extends WriteableReactive[P, FullMVStruct] with Rea
   }
 }
 
-class ReactiveReflectionImpl[P](val host: FullMVEngine, var ignoreTurn: Option[FullMVTurn], initialState: FullMVState[Pulse[P], FullMVTurn, InDep[FullMVStruct], Reactive[FullMVStruct]], rename: REName) extends Base[P, FullMVStruct](initialState, rename) with ReactiveReflection[Pulse[P]] {
+class ReactiveReflectionImpl[P](val host: FullMVEngine, var ignoreTurn: Option[FullMVTurn], initialState: FullMVState[Pulse[P], FullMVTurn, Reactive[FullMVStruct], Reactive[FullMVStruct]], rename: REName) extends Base[P, FullMVStruct](initialState, rename) with ReactiveReflection[Pulse[P]] {
   val _buffer = new ConcurrentHashMap[FullMVTurn, Pulse[P]]()
   override def buffer(turn: FullMVTurn, value: Pulse[P]): Unit = _buffer.put(turn, value)
   override def submit(action: FullMVAction): Unit = host.threadPool.submit(action)
 
-  override protected[rescala] def reevaluate(turn: Turn[FullMVStruct], before: Value, indeps: Set[InDep[FullMVStruct]]): ReevaluationResult[FullMVStruct] = {
+  override protected[rescala] def reevaluate(turn: Turn[FullMVStruct], before: Value, indeps: Set[Reactive[FullMVStruct]]): ReevaluationResult[FullMVStruct] = {
     val value = _buffer.remove(turn)
     if(value == null) {
       if(ignoreTurn.contains(turn)){

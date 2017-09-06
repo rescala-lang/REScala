@@ -1,7 +1,6 @@
 package rescala.twoversion
 
-import rescala.core.Node.InDep
-import rescala.core._
+import rescala.core.{Reactive, _}
 
 import scala.util.control.NonFatal
 
@@ -50,13 +49,13 @@ trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropaga
     if (failure != null) throw failure
   }
 
-  override private[rescala] def discover(node: InDep[S], addOutgoing: Reactive[S]): Unit = node.state.discover(addOutgoing)(this)
-  override private[rescala] def drop(node: InDep[S], removeOutgoing: Reactive[S]): Unit = node.state.drop(removeOutgoing)(this)
+  override private[rescala] def discover(node: Reactive[S], addOutgoing: Reactive[S]): Unit = node.state.discover(addOutgoing)(this)
+  override private[rescala] def drop(node: Reactive[S], removeOutgoing: Reactive[S]): Unit = node.state.drop(removeOutgoing)(this)
 
-  override private[rescala] def writeIndeps(node: Reactive[S], indepsAfter: Set[InDep[S]]): Unit = node.state.updateIncoming(indepsAfter)(this)
+  override private[rescala] def writeIndeps(node: Reactive[S], indepsAfter: Set[Reactive[S]]): Unit = node.state.updateIncoming(indepsAfter)(this)
 
   /** allow turn to handle dynamic access to reactives */
-  def dynamicDependencyInteraction(dependency: InDep[S]): Unit
+  def dynamicDependencyInteraction(dependency: Reactive[S]): Unit
 
   override private[rescala] def staticBefore[P](reactive: ReadableReactive[P, S]) = reactive.state.base(token)
   override private[rescala] def staticAfter[P](reactive: ReadableReactive[P, S]) = reactive.state.get(token)
