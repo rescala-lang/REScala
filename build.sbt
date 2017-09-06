@@ -10,7 +10,8 @@ lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(r
   rescalaJS, microbench, reswing, examples, examplesReswing, caseStudyEditor,
   caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags,
   datastructures, universe, reactiveStreams, documentation,
-  stm, testToolsJVM, testToolsJS, testsJVM, testsJS, fullmv, caseStudyShapes, caseStudyMill)
+  stm, testToolsJVM, testToolsJS, testsJVM, testsJS, fullmv, caseStudyShapes, caseStudyMill,
+  dividi, paroli)
   .settings(cfg.noPublish)
 
 
