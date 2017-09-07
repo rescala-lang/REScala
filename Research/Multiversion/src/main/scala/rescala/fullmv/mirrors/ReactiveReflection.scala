@@ -9,9 +9,10 @@ import rescala.fullmv.{FullMVEngine, FullMVState, FullMVStruct, FullMVTurn, Turn
 
 
 
-trait ReactiveReflection[-P] extends Reactive[FullMVStruct] with ReactiveReflectionProxy[P] {
+trait ReactiveReflection[-P] extends Reactive[FullMVStruct] with ReactiveReflectionProxy[Pulse[P]] {
   self: RENamed =>
-  def buffer(turn: FullMVTurn, value: P): Unit
+  val host: FullMVEngine
+  def buffer(turn: FullMVTurn, value: Pulse[P]): Unit
   def submit(action: FullMVAction): Unit
 
   override def asyncIncrementFrame(turn: FullMVTurn): Unit = {
@@ -30,19 +31,19 @@ trait ReactiveReflection[-P] extends Reactive[FullMVStruct] with ReactiveReflect
     turn.newBranchFromRemote(TurnPhase.Executing)
     submit(NotificationWithFollowFrame(turn, this, changed = false, followFrame))
   }
-  override def asyncNewValue(turn: FullMVTurn, value: P): Unit = {
+  override def asyncNewValue(turn: FullMVTurn, value: Pulse[P]): Unit = {
     turn.newBranchFromRemote(TurnPhase.Executing)
     buffer(turn, value)
     submit(Notification(turn, this, changed = true))
   }
-  override def asyncNewValueFollowFrame(turn: FullMVTurn, value: P, followFrame: FullMVTurn): Unit = {
+  override def asyncNewValueFollowFrame(turn: FullMVTurn, value: Pulse[P], followFrame: FullMVTurn): Unit = {
     turn.newBranchFromRemote(TurnPhase.Executing)
     buffer(turn, value)
     submit(NotificationWithFollowFrame(turn, this, changed = true, followFrame))
   }
 }
 
-class ReactiveReflectionImpl[P](val host: FullMVEngine, var ignoreTurn: Option[FullMVTurn], initialState: FullMVState[Pulse[P], FullMVTurn, Reactive[FullMVStruct], Reactive[FullMVStruct]], rename: REName) extends Base[P, FullMVStruct](initialState, rename) with ReactiveReflection[Pulse[P]] {
+class ReactiveReflectionImpl[P](override val host: FullMVEngine, var ignoreTurn: Option[FullMVTurn], initialState: FullMVState[Pulse[P], FullMVTurn, Reactive[FullMVStruct], Reactive[FullMVStruct]], rename: REName) extends Base[P, FullMVStruct](initialState, rename) with ReactiveReflection[P] {
   val _buffer = new ConcurrentHashMap[FullMVTurn, Pulse[P]]()
   override def buffer(turn: FullMVTurn, value: Pulse[P]): Unit = _buffer.put(turn, value)
   override def submit(action: FullMVAction): Unit = host.threadPool.submit(action)

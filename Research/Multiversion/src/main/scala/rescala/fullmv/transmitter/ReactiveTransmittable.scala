@@ -237,7 +237,7 @@ abstract class ReactiveTransmittable[P, R <: ReactiV[Pulse[P], FullMVStruct], S]
     promise.complete(Success(response))
   }
 
-  def handleMessage(localReactive: Either[ReactiV[Pulse[P], FullMVStruct], ReactiveReflection[Pulse[P]]], endpoint: EndPointWithInfrastructure[Msg])(msg: MessageWithInfrastructure[Msg]): Unit = {
+  def handleMessage(localReactive: Either[ReactiV[Pulse[P], FullMVStruct], ReactiveReflection[P]], endpoint: EndPointWithInfrastructure[Msg])(msg: MessageWithInfrastructure[Msg]): Unit = {
     if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host receive incoming $msg")
     (msg._1, Message.fromTuple(msg._2)) match {
       case (_, async: Async) =>
@@ -347,7 +347,7 @@ abstract class ReactiveTransmittable[P, R <: ReactiV[Pulse[P], FullMVStruct], S]
 
   def instantiate(state: NodeVersionHistory[Pulse[P], FullMVTurn, Reactive[FullMVStruct], Reactive[FullMVStruct]], initTurn: FullMVTurn): ReactiveReflectionImpl[P] with R
 
-  def handleAsync(localReactive: Either[ReactiV[Pulse[P], FullMVStruct], ReactiveReflection[Pulse[P]]], endpoint: EndPointWithInfrastructure[Msg], message: Async): Unit = message match {
+  def handleAsync(localReactive: Either[ReactiV[Pulse[P], FullMVStruct], ReactiveReflection[P]], endpoint: EndPointWithInfrastructure[Msg], message: Async): Unit = message match {
     case AsyncIncrementFrame(turn) =>
       localReactive.right.get.asyncIncrementFrame(localTurnInstance(turn, endpoint))
     case AsyncIncrementSupersedeFrame(turn, supersede) =>
@@ -367,7 +367,7 @@ abstract class ReactiveTransmittable[P, R <: ReactiV[Pulse[P], FullMVStruct], S]
       localTurnInstance(receiver, endpoint).asyncReleasePhaseLock()
   }
 
-  def handleRequest(localReactive: Either[ReactiV[Pulse[P], FullMVStruct], ReactiveReflection[Pulse[P]]], endpoint: EndPointWithInfrastructure[Msg], request: Request): Future[Response] = request match {
+  def handleRequest(localReactive: Either[ReactiV[Pulse[P], FullMVStruct], ReactiveReflection[P]], endpoint: EndPointWithInfrastructure[Msg], request: Request): Future[Response] = request match {
     case Connect(turn) =>
       val (initValues, maybeFirstFrame) = ReactiveMirror[Pulse[P]](localReactive.left.get, localTurnInstance(turn, endpoint), new ReactiveReflectionProxyToEndpoint(endpoint), valuePersistency.isTransient, s"Mirror($endpoint)")
       Future.successful(Initialize(initValues.map { case (aTurn, value) =>
