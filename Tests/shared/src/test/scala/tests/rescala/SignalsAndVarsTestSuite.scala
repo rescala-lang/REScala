@@ -1,18 +1,8 @@
 package tests.rescala
 
 
-//These 3 are for JUnitRunner
-
-
-
-
-
-
 
 class SignalsAndVarsTestSuite extends RETests {
-
-
-
 
   allEngines("handler Is Called When Change Occurs"){ engine => import engine._
 

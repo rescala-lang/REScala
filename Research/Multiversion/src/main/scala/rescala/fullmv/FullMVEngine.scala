@@ -23,7 +23,7 @@ class FullMVEngine(val timeout: Duration, val name: String) extends EngineImpl[F
 
   override private[rescala] def singleNow[A](reactive: ReactiV[A, FullMVStruct]) = reactive.state.latestValue
 
-  override protected def makeTurn(initialWrites: Traversable[Reactive], priorTurn: Option[FullMVTurn]): FullMVTurnImpl = newTurn()
+  override protected def makeTurn(priorTurn: Option[FullMVTurn]): FullMVTurnImpl = newTurn()
   override protected def executeInternal[I, R](turn: FullMVTurnImpl, initialWrites: Traversable[Reactive], admissionPhase: () => I, wrapUpPhase: I => R): R = {
     if(initialWrites.nonEmpty) {
       // framing phase

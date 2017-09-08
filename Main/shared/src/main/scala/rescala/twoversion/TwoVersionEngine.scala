@@ -28,14 +28,18 @@ trait TwoVersionEngine[S <: TwoVersionStruct, TImpl <: TwoVersionPropagation[S] 
     * - run the party! phase
     *   - not yet implemented
     * */
-  override protected def executeInternal[I, R](turn: TImpl, initialWrites: Traversable[Reactive], admissionPhase: () => I, wrapUpPhase: I => R): R = {
+  override private[rescala] def executeTurn[I, R](initialWrites: Traversable[Reactive], admissionPhase: (AdmissionTicket) => I, wrapUpPhase: (I, WrapUpTicket) => R) = {
+    val turn = makeTurn(_currentTurn.value)
+
     val result = try {
       turn.preparationPhase(initialWrites)
-      val admissionResult = admissionPhase()
-      withTurn(turn) {
+      val result = withTurn(turn) {
+        val admissionTicket = turn.makeAdmissionPhaseTicket()
+        val admissionResult = admissionPhase(admissionTicket)
+        turn.initializationPhase(admissionTicket.initialChanges)
         turn.propagationPhase()
+        wrapUpPhase(admissionResult, turn.makeWrapUpPhaseTicket())
       }
-      val result = wrapUpPhase(admissionResult)
       turn.commitPhase()
       result
     }

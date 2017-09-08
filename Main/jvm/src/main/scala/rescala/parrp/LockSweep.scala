@@ -120,15 +120,15 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
         backoff.backoff()
       }
     }
-    initialWrites.foreach{ source =>
-      source.state.counter = 0
-      source.state.anyInputChanged = this
-      source.state.hasChanged = this
-      enqueue(source)
-    }
-
   }
 
+
+  override def initializationPhase(initialChanges: Seq[InitialChange[TState]]): Unit =     initialChanges.foreach{ ic =>
+    ic.r.state.counter = 0
+    ic.r.state.anyInputChanged = this
+    ic.r.state.hasChanged = this
+    applyResult(ic.r)(ic.v(ic.r.state.base(token)))
+  }
   override def propagationPhase(): Unit = {
     while (!queue.isEmpty) {
       evaluate(queue.pop())
@@ -151,16 +151,20 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
     if (head.state.anyInputChanged != this) done(head, hasChanged = false, head.state.outgoing(this))
     else {
       val res = head.reevaluate(this, head.state.base(token), head.state.incoming(this))
-      res.commitDependencyDiff(this, head)
-      if (head.state.isGlitchFreeReady) {
-        // val outgoings = res.commitValueChange()
-        if(res.valueChanged) writeState(head)(res.value)
+      applyResult(head)(res)
+    }
+  }
 
-        head.state.hasWritten = this
+  private def applyResult(head: Reactive[TState])(res: ReevaluationResult[head.Value, TState]) = {
+    res.commitDependencyDiff(this, head)
+    if (head.state.isGlitchFreeReady) {
+      // val outgoings = res.commitValueChange()
+      if (res.valueChanged) writeState(head)(res.value)
 
-        // done(head, res.valueChanged, outgoings)
-        done(head, res.valueChanged, head.state.outgoing(this))
-      }
+      head.state.hasWritten = this
+
+      // done(head, res.valueChanged, outgoings)
+      done(head, res.valueChanged, head.state.outgoing(this))
     }
   }
 

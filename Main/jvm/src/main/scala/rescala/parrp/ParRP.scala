@@ -75,7 +75,6 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
         }
       }
     }
-    super.preparationPhase(initialWrites)
   }
 
 

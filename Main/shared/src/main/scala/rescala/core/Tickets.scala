@@ -3,6 +3,7 @@ package rescala.core
 import rescala.reactives.{Event, Signal}
 
 import scala.annotation.implicitNotFound
+import scala.collection.mutable.ArrayBuffer
 import scala.language.implicitConversions
 
 /* tickets are created by the REScala schedulers, to restrict operations to the correct scopes */
@@ -69,7 +70,14 @@ final class StaticTicket[S <: Struct] private[rescala](val creation: Computation
   }
 }
 
-final class AdmissionTicket[S <: Struct] private[rescala](val creation: ComputationStateAccess[S] with Creation[S]) extends AnyVal with AnyTicket {
+trait InitialChange[S <: Struct]{
+  val r: Reactive[S]
+  def v(before: r.Value): ReevaluationResult[r.Value, S]
+}
+final class AdmissionTicket[S <: Struct] private[rescala](val creation: ComputationStateAccess[S] with Creation[S]) extends AnyTicket {
+
+  val initialChanges: ArrayBuffer[InitialChange[S]] = ArrayBuffer()
+  def recordChange[T](ic: InitialChange[S]) = initialChanges += ic
   def now[A](reactive: Signal[A, S]): A = {
     creation.dynamicBefore(reactive).get
   }

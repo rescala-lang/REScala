@@ -1,25 +1,16 @@
 package rescala.reactives
 
-import java.util.concurrent.{ConcurrentHashMap, ConcurrentMap}
+import rescala.core._
 
-import rescala.core.{REName, Reactive, _}
 
 abstract class Source[T, S <: Struct](initialState: S#State[Pulse[T], S], name: REName) extends Base[T, S](initialState, name) {
-  // TODO this should be stored on the admission ticket
-  private val buffer: ConcurrentMap[Turn[S], Pulse[T]] = new ConcurrentHashMap()
   final def admit(value: T)(implicit ticket: AdmissionTicket[S]): Unit = admitPulse(Pulse.Value(value))
+  final def admitPulse(value: Pulse[T])(implicit ticket: AdmissionTicket[S]): Unit = ticket.recordChange(new InitialChange[S] {
+    override val r: Source[T, S] = Source.this
+    override def v(before: Pulse[T]): ReevaluationResult[Pulse[T], S] = ReevaluationResult.Static(if (before == value) Pulse.NoChange else value, Set.empty)
+  })
 
-  final def admitPulse(value: Pulse[T])(implicit ticket: AdmissionTicket[S]): Unit = {
-    require(value != null, s"cannot admit null")
-    val turn: Turn[S] = ticket.creation.asInstanceOf[Turn[S]]
-    val wasSetBefore = buffer.putIfAbsent(turn, value) != null
-    require(!wasSetBefore, s"cannot admit the same reactive twice in the same turn: ${ticket.creation}")
-  }
-
-  final override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[T], indeps: Set[Reactive[S]]): ReevaluationResult[Value, S] = {
-    val value = buffer.remove(turn)
-    ReevaluationResult.Static(if(value == null) Pulse.NoChange else pulseFromBufferedPulse(turn, before, value), indeps)
-  }
+  final override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[T], indeps: Set[Reactive[S]]): ReevaluationResult[Value, S] = ReevaluationResult.Static(Pulse.NoChange, indeps)
 
   protected def pulseFromBufferedPulse(turn: Turn[S], before: Pulse[T], value: Pulse[T]): Pulse[T]
 }

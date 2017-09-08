@@ -14,6 +14,7 @@ trait LevelBasedPropagationEngines {
     }
     override def releasePhase(): Unit = ()
     override def dynamicDependencyInteraction(dependency: Reactive[SimpleStruct]): Unit = {}
+    override def preparationPhase(initialWrites: Traversable[Reactive[SimpleStruct]]): Unit = {}
   }
 
   type SimpleEngine = Engine[SimpleStruct]

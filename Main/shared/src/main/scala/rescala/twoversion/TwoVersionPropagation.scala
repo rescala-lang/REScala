@@ -1,6 +1,6 @@
 package rescala.twoversion
 
-import rescala.core.{Reactive, Struct}
+import rescala.core.{InitialChange, Reactive, Struct}
 
 /**
   * Abstract propagation definition that defines phases for reactive propagation through dependent reactive elements.
@@ -22,6 +22,12 @@ trait TwoVersionPropagation[S <: Struct]  {
     * @param initialWrites List of affected reactive values
     */
   def preparationPhase(initialWrites: Traversable[Reactive[S]]): Unit
+
+  /**
+    * Starts the propagation by applying the initial changes
+    * @param initialChanges
+    */
+  def initializationPhase(initialChanges: Seq[InitialChange[S]]): Unit
 
   /**
     * Performs the actual propagation, setting the new (not yet committed) values for each reactive element.
