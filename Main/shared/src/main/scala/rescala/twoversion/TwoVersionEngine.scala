@@ -8,7 +8,7 @@ import rescala.core.{Creation, EngineImpl, ReactiV, Turn}
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   * @tparam TImpl Turn type used by the engine
   */
-trait TwoVersionEngine[S <: TwoVersionStruct, TImpl <: TwoVersionPropagation[S] with Turn[S] with Creation[S]] extends EngineImpl[S, TImpl, TImpl] {
+trait TwoVersionEngine[S <: TwoVersionStruct, TImpl <: TwoVersionPropagation[S] with Turn[S] with Creation[S]] extends EngineImpl[S, TImpl] {
   override private[rescala] def singleNow[A](reactive: ReactiV[A, S]) = reactive.state.base(null)
 
   /** goes through the whole turn lifecycle
@@ -54,5 +54,7 @@ trait TwoVersionEngine[S <: TwoVersionStruct, TImpl <: TwoVersionPropagation[S] 
     turn.observerPhase()
     result
   }
+
+  protected def makeTurn(priorTurn: Option[TImpl]): TImpl
 
 }
