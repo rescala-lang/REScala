@@ -2,33 +2,13 @@ package rescala.reactives
 
 import rescala.core._
 import rescala.reactives.RExceptions.EmptySignalControlThrowable
-import rescala.reactives.Signals.Impl.{DynamicSignal, StaticSignal, restored, states}
+import rescala.reactives.Signals.Impl.{DynamicSignal, StaticSignal}
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.DynamicVariable
 
 object Signals extends GeneratedSignalLift {
 
   object Impl {
-
-    /* TODO: this is currently used for meta research, but should be replaced with a sane implementation */
-
-    val restored = new DynamicVariable[List[_]](null)
-    val states = new DynamicVariable[List[Signal[_, _]]](null)
-
-    def getStates[R](f: => R): (R, List[Signal[_, _]]) = states.withValue(Nil) {
-      val res = f
-      (res, states.value)
-    }
-
-    def restoreFrom[R, S <: Struct](states: List[Signal[_, _]])(f: => R)(implicit turnSource: CreationTicket[S]): R = turnSource { ctc =>
-      restored.withValue(states.map(s => ctc.asInstanceOf[ComputationStateAccess[S]].dynamicBefore(s.asInstanceOf[Signal[_, S]]).get).reverse) {
-        f
-      }
-    }
-
-    /* TODO: end of meta hacks*/
-
 
     private[Signals] abstract class StaticSignal[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: (StaticTicket[S], => T) => T, name: REName)
       extends Base[T, S](_bud, name) with Signal[T, S] {
@@ -53,19 +33,12 @@ object Signals extends GeneratedSignalLift {
 
   /** creates a signal that statically depends on the dependencies with a given initial value */
   private[rescala] def staticFold[T: ReSerializable, S <: Struct](dependencies: Set[Reactive[S]], init: StaticTicket[S] => T)(expr: (StaticTicket[S], => T) => T)(ict: Creation[S])(name: REName): Signal[T, S] = {
-    def initOrRestored: T = {
-      if (restored.value eq null) init(ict.asInstanceOf[TurnImpl[S]].makeStaticReevaluationTicket())
-      else {
-        restored.value = restored.value.drop(1)
-        restored.value.headOption.fold(init(ict.asInstanceOf[TurnImpl[S]].makeStaticReevaluationTicket()))(_.asInstanceOf[T])
-      }
-    }
+    //TODO: should really not cast here … seemingly needed for snapshot semantics
+    def initOrRestored: T = init(ict.asInstanceOf[TurnImpl[S]].makeStaticReevaluationTicket())
     val iorPulse: Pulse.Change[T] = Pulse.tryCatch(Pulse.Value(initOrRestored))
-    val res = ict.create[Pulse[T], StaticSignal[T, S]](dependencies, ValuePersistency.InitializedSignal[T](iorPulse)) {
+    ict.create[Pulse[T], StaticSignal[T, S]](dependencies, ValuePersistency.InitializedSignal[T](iorPulse)) {
       state => new StaticSignal[T, S](state, expr, name) with Disconnectable[S]
     }
-    if (states.value ne null) states.value = res :: states.value
-    res
   }
 
   /** creates a new static signal depending on the dependencies, reevaluating the function */
