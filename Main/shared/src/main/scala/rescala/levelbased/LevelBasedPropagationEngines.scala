@@ -21,7 +21,7 @@ trait LevelBasedPropagationEngines {
 
 
   implicit val synchron: SimpleEngine = new TwoVersionEngineImpl[SimpleStruct, SimpleNoLock]("Synchron", new SimpleNoLock()) {
-    override protected[rescala] def executeTurn[I, R](initialWrites: Traversable[Reactive], admissionPhase: AdmissionTicket => I, wrapUpPhase: (I, WrapUpTicket) => R): R = synchronized(super.executeTurn(initialWrites, admissionPhase, wrapUpPhase))
+    override protected[rescala] def executeTurn[R](initialWrites: Traversable[Reactive], admissionPhase: AdmissionTicket => R): R = synchronized(super.executeTurn(initialWrites, admissionPhase))
   }
 
   implicit val unmanaged: SimpleEngine = new TwoVersionEngineImpl[SimpleStruct, SimpleNoLock]("Unmanaged", new SimpleNoLock())

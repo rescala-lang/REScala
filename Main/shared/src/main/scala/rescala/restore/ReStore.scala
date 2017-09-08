@@ -66,8 +66,8 @@ class ReStoringEngine(domain: String = "", restoreFrom: Seq[(String, String)] = 
 
   override protected def makeTurn(priorTurn: Option[ReStoringTurn]): ReStoringTurn = new ReStoringTurn(this)
   lazy override val toString: String = s"Engine(Restoring: $domain)"
-  override protected[rescala] def executeTurn[I, R](initialWrites: Traversable[Reactive], admissionPhase: AdmissionTicket => I, wrapUpPhase: (I, WrapUpTicket) => R): R =
-    synchronized(super.executeTurn(initialWrites, admissionPhase, wrapUpPhase))
+  override protected[rescala] def executeTurn[R](initialWrites: Traversable[Reactive], admissionPhase: AdmissionTicket => R): R =
+    synchronized(super.executeTurn(initialWrites, admissionPhase))
 }
 
 

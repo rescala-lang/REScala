@@ -56,8 +56,6 @@ abstract class RescalaDefaultImports[S <: Struct] {
   val Events = reactives.Events
   val Signals = reactives.Signals
 
-
-  final protected[rescala] def noWrapUp[R](intermediate: R, turn: WrapUpTicket): R = intermediate
   /**
     * Executes a transaction.
     *
@@ -69,7 +67,7 @@ abstract class RescalaDefaultImports[S <: Struct] {
     * @return Result of the admission function
     */
   def transaction[R](initialWrites: Reactive*)(admissionPhase: AdmissionTicket => R): R = {
-    explicitEngine.executeTurn(initialWrites, admissionPhase, noWrapUp[R])
+    explicitEngine.executeTurn(initialWrites, admissionPhase)
   }
 
   /**
@@ -88,7 +86,12 @@ abstract class RescalaDefaultImports[S <: Struct] {
     * @return Result of the wrapup function
     */
   def transactionWithWrapup[I, R](initialWrites: Reactive*)(admissionPhase: AdmissionTicket => I)(wrapUpPhase: (I, WrapUpTicket) => R): R = {
-    explicitEngine.executeTurn(initialWrites, admissionPhase, wrapUpPhase)
+    explicitEngine.executeTurn(initialWrites, at => {
+      val apr: I = admissionPhase(at)
+      var res: Option[R] = None
+      at.wrapUp = wut => { res = Some(wrapUpPhase(apr, wut))}
+      res.get
+    })
   }
 
   /**
@@ -101,6 +104,6 @@ abstract class RescalaDefaultImports[S <: Struct] {
     explicitEngine.executeTurn(changes.map(_._1), { t =>
       def admit[A](change: (Source[A, S], A)) = change._1.admit(change._2)(t)
       for(change <- changes) admit(change)
-    }, noWrapUp[Unit])
+    })
   }
 }

@@ -76,6 +76,8 @@ trait InitialChange[S <: Struct]{
 }
 final class AdmissionTicket[S <: Struct] private[rescala](val creation: ComputationStateAccess[S] with Creation[S]) extends AnyTicket {
 
+  var wrapUp: WrapUpTicket[S] => Unit = null
+
   val initialChanges: ArrayBuffer[InitialChange[S]] = ArrayBuffer()
   def recordChange[T](ic: InitialChange[S]) = initialChanges += ic
   def now[A](reactive: Signal[A, S]): A = {
