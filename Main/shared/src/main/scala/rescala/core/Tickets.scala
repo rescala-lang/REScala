@@ -27,11 +27,11 @@ import scala.language.implicitConversions
 
 trait AnyTicket extends Any
 
-final class DynamicTicket[S <: Struct] private[rescala](val creation: ComputationStateAccess[S] with Creation[S], val indepsBefore: Set[Reactive[S]]) extends AnyTicket {
-  private[rescala] var indepsAfter: Set[Reactive[S]] = Set.empty
-  private[rescala] var indepsAdded: Set[Reactive[S]] = Set.empty
+final class DynamicTicket[S <: Struct] private[rescala](val creation: ComputationStateAccess[S] with Creation[S], val indepsBefore: Set[ReSource[S]]) extends AnyTicket {
+  private[rescala] var indepsAfter: Set[ReSource[S]] = Set.empty
+  private[rescala] var indepsAdded: Set[ReSource[S]] = Set.empty
 
-  private[rescala] def dynamicDepend[A](reactive: ReactiV[A, S]): A = {
+  private[rescala] def dynamicDepend[A](reactive: ReSourciV[A, S]): A = {
     if (indepsBefore(reactive)) {
       indepsAfter += reactive
       creation.staticAfter(reactive)
@@ -58,20 +58,20 @@ final class DynamicTicket[S <: Struct] private[rescala](val creation: Computatio
     dynamicDepend(reactive).toOption
   }
 
-  def indepsRemoved: Set[Reactive[S]] = indepsBefore.diff(indepsAfter)
+  def indepsRemoved: Set[ReSource[S]] = indepsBefore.diff(indepsAfter)
 }
 
 final class StaticTicket[S <: Struct] private[rescala](val creation: ComputationStateAccess[S] with Creation[S]) extends AnyVal with AnyTicket {
-  private[rescala] def staticBefore[A](reactive: ReactiV[A, S]): A = {
+  private[rescala] def staticBefore[A](reactive: ReSourciV[A, S]): A = {
     creation.staticBefore(reactive)
   }
-  private[rescala] def staticDepend[A](reactive: ReactiV[A, S]): A = {
+  private[rescala] def staticDepend[A](reactive: ReSourciV[A, S]): A = {
     creation.staticAfter(reactive)
   }
 }
 
 trait InitialChange[S <: Struct]{
-  val r: Reactive[S]
+  val r: ReSource[S]
   def v(before: r.Value): ReevaluationResult[r.Value, S]
 }
 final class AdmissionTicket[S <: Struct] private[rescala](val creation: ComputationStateAccess[S] with Creation[S]) extends AnyTicket {

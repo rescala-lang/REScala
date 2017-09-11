@@ -49,28 +49,28 @@ trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropaga
     if (failure != null) throw failure
   }
 
-  override private[rescala] def discover(node: Reactive[S], addOutgoing: Reactive[S]): Unit = node.state.discover(addOutgoing)(this)
-  override private[rescala] def drop(node: Reactive[S], removeOutgoing: Reactive[S]): Unit = node.state.drop(removeOutgoing)(this)
+  override private[rescala] def discover(node: ReSource[S], addOutgoing: Reactive[S]): Unit = node.state.discover(addOutgoing)(this)
+  override private[rescala] def drop(node: ReSource[S], removeOutgoing: Reactive[S]): Unit = node.state.drop(removeOutgoing)(this)
 
-  override private[rescala] def writeIndeps(node: Reactive[S], indepsAfter: Set[Reactive[S]]): Unit = node.state.updateIncoming(indepsAfter)(this)
+  override private[rescala] def writeIndeps(node: Reactive[S], indepsAfter: Set[ReSource[S]]): Unit = node.state.updateIncoming(indepsAfter)(this)
 
   /** allow turn to handle dynamic access to reactives */
-  def dynamicDependencyInteraction(dependency: Reactive[S]): Unit
+  def dynamicDependencyInteraction(dependency: ReSource[S]): Unit
 
-  override private[rescala] def staticBefore[P](reactive: ReactiV[P, S]) = reactive.state.base(token)
-  override private[rescala] def staticAfter[P](reactive: ReactiV[P, S]) = reactive.state.get(token)
-  override private[rescala] def dynamicBefore[P](reactive: ReactiV[P, S]) = {
+  override private[rescala] def staticBefore[P](reactive: ReSourciV[P, S]) = reactive.state.base(token)
+  override private[rescala] def staticAfter[P](reactive: ReSourciV[P, S]) = reactive.state.get(token)
+  override private[rescala] def dynamicBefore[P](reactive: ReSourciV[P, S]) = {
     dynamicDependencyInteraction(reactive)
     reactive.state.base(token)
   }
-  override private[rescala] def dynamicAfter[P](reactive: ReactiV[P, S]) = {
+  override private[rescala] def dynamicAfter[P](reactive: ReSourciV[P, S]) = {
     // Note: This only synchronizes reactive to be serializable-synchronized, but not glitch-free synchronized.
     // Dynamic reads thus may return glitched values, which the reevaluation handling implemented in subclasses
     // must account for by repeating glitched reevaluations!
     dynamicDependencyInteraction(reactive)
     reactive.state.get(token)
   }
-  def writeState(pulsing: Reactive[S])(value: pulsing.Value): Unit = {
+  def writeState(pulsing: ReSource[S])(value: pulsing.Value): Unit = {
     if (pulsing.state.write(value, token)) this.schedule(pulsing.state)
   }
 }

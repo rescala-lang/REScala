@@ -1,6 +1,6 @@
 package rescala.restore
 
-import rescala.core.{ReSerializable, Reactive, Struct, ValuePersistency}
+import rescala.core.{ReSerializable, ReSource, Struct, ValuePersistency}
 import rescala.levelbased.{LevelBasedPropagation, LevelStruct, LevelStructTypeImpl}
 import rescala.twoversion.{TwoVersionEngine, TwoVersionPropagation}
 
@@ -24,9 +24,9 @@ class ReStoringTurn(restore: ReStore) extends LevelBasedPropagation[ReStoringStr
     }
   }
 
-  override def dynamicDependencyInteraction(dependency: Reactive[ReStoringStruct]): Unit = ()
+  override def dynamicDependencyInteraction(dependency: ReSource[ReStoringStruct]): Unit = ()
   override def releasePhase(): Unit = ()
-  override def preparationPhase(initialWrites: Traversable[Reactive[ReStoringStruct]]): Unit = ()
+  override def preparationPhase(initialWrites: Traversable[ReSource[ReStoringStruct]]): Unit = ()
 
 
 }
@@ -66,7 +66,7 @@ class ReStoringEngine(domain: String = "", restoreFrom: Seq[(String, String)] = 
 
   override protected def makeTurn(priorTurn: Option[ReStoringTurn]): ReStoringTurn = new ReStoringTurn(this)
   lazy override val toString: String = s"Engine(Restoring: $domain)"
-  override protected[rescala] def executeTurn[R](initialWrites: Traversable[Reactive], admissionPhase: AdmissionTicket => R): R =
+  override protected[rescala] def executeTurn[R](initialWrites: Traversable[ReSource], admissionPhase: AdmissionTicket => R): R =
     synchronized(super.executeTurn(initialWrites, admissionPhase))
 }
 

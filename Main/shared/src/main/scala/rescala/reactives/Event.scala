@@ -16,7 +16,7 @@ import scala.collection.immutable.{LinearSeq, Queue}
   * @tparam T Type returned when the event fires
   * @tparam S Struct type used for the propagation of the event
   */
-trait Event[+T, S <: Struct] extends ReactiV[Pulse[T], S] with Observable[T, S] {
+trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with Observable[T, S] {
 
   // only used inside macro and will be replaced there
   @compileTimeOnly("Event.apply can only be used inside of Signal expressions")

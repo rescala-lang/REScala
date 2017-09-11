@@ -27,6 +27,7 @@ abstract class RescalaDefaultImports[S <: Struct] {
   final type CreationTicket = rescala.core.CreationTicket[S]
   final type Creation = rescala.core.Creation[S]
   final type Reactive = rescala.core.Reactive[S]
+  final type ReSource = rescala.core.ReSource[S]
 
   final def Evt[A](): Evt[A] = reactives.Evt[A, S]()(explicitEngine)
 
@@ -66,7 +67,7 @@ abstract class RescalaDefaultImports[S <: Struct] {
     * @tparam R Result type of the admission function
     * @return Result of the admission function
     */
-  def transaction[R](initialWrites: Reactive*)(admissionPhase: AdmissionTicket => R): R = {
+  def transaction[R](initialWrites: ReSource*)(admissionPhase: AdmissionTicket => R): R = {
     explicitEngine.executeTurn(initialWrites, admissionPhase)
   }
 
@@ -85,7 +86,7 @@ abstract class RescalaDefaultImports[S <: Struct] {
     * @tparam R Final Result type of the wrapup phase
     * @return Result of the wrapup function
     */
-  def transactionWithWrapup[I, R](initialWrites: Reactive*)(admissionPhase: AdmissionTicket => I)(wrapUpPhase: (I, WrapUpTicket) => R): R = {
+  def transactionWithWrapup[I, R](initialWrites: ReSource*)(admissionPhase: AdmissionTicket => I)(wrapUpPhase: (I, WrapUpTicket) => R): R = {
     explicitEngine.executeTurn(initialWrites, at => {
       val apr: I = admissionPhase(at)
       var res: Option[R] = None

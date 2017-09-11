@@ -2,15 +2,15 @@ package rescala.reactives
 
 import rescala.core._
 
+abstract class Source[T, S <: Struct](initialState: S#State[Pulse[T], S], name: REName) extends RENamed(name) with ReSourciV[Pulse[T], S] {
+  override type Value = Pulse[T]
+  final override protected[rescala] def state: S#State[Pulse[T], S] = initialState
 
-abstract class Source[T, S <: Struct](initialState: S#State[Pulse[T], S], name: REName) extends Base[T, S](initialState, name) {
   final def admit(value: T)(implicit ticket: AdmissionTicket[S]): Unit = admitPulse(Pulse.Value(value))
   final def admitPulse(value: Pulse[T])(implicit ticket: AdmissionTicket[S]): Unit = ticket.recordChange(new InitialChange[S] {
     override val r: Source[T, S] = Source.this
     override def v(before: Pulse[T]): ReevaluationResult[Pulse[T], S] = ReevaluationResult.Static(if (before == value) Pulse.NoChange else value, Set.empty)
   })
-
-  final override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[T], indeps: Set[Reactive[S]]): ReevaluationResult[Value, S] = ReevaluationResult.Static(Pulse.NoChange, indeps)
 }
 
 /**
@@ -33,7 +33,7 @@ final class Evt[T, S <: Struct] private[rescala] (initialState: S#State[Pulse[T]
   */
 object Evt {
   def apply[T, S <: Struct]()(implicit ticket: CreationTicket[S]): Evt[T, S] = ticket { t =>
-    t.create[Pulse[T], Evt[T, S]](Set.empty, ValuePersistency.Event)(new Evt[T, S](_, ticket.rename))
+    t.createS[Pulse[T], Evt[T, S]](ValuePersistency.Event)(new Evt[T, S](_, ticket.rename))
   }
 }
 
@@ -65,7 +65,7 @@ object Var {
   def apply[T: ReSerializable, S <: Struct](initval: T)(implicit ticket: CreationTicket[S]): Var[T, S] = fromChange(Pulse.Value(initval))
   def empty[T: ReSerializable, S <: Struct]()(implicit ticket: CreationTicket[S]): Var[T, S] = fromChange(Pulse.empty)
   private[this] def fromChange[T: ReSerializable, S <: Struct](change: Pulse.Change[T])(implicit ticket: CreationTicket[S]): Var[T, S] = ticket { t =>
-    t.create[Pulse[T], Var[T, S]](Set.empty, ValuePersistency.InitializedSignal(change))(new Var[T, S](_, ticket.rename))
+    t.createS[Pulse[T], Var[T, S]](ValuePersistency.InitializedSignal(change))(new Var[T, S](_, ticket.rename))
   }
 }
 

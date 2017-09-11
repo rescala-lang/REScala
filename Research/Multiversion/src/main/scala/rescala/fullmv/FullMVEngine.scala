@@ -2,7 +2,7 @@ package rescala.fullmv
 
 import java.util.concurrent.ForkJoinPool
 
-import rescala.core.{EngineImpl, ReactiV}
+import rescala.core.{EngineImpl, ReSourciV, ReactiV}
 import rescala.fullmv.mirrors.{FullMVTurnHost, Host, HostImpl, SubsumableLockHostImpl}
 import rescala.fullmv.tasks.{Framing, Notification}
 
@@ -21,7 +21,7 @@ class FullMVEngine(val timeout: Duration, val name: String) extends EngineImpl[F
 
   val threadPool = new ForkJoinPool()
 
-  override private[rescala] def singleNow[A](reactive: ReactiV[A, FullMVStruct]) = reactive.state.latestValue
+  override private[rescala] def singleNow[A](reactive: ReSourciV[A, FullMVStruct]) = reactive.state.latestValue
 
   override protected def makeTurn(priorTurn: Option[FullMVTurn]): FullMVTurnImpl = newTurn()
   override protected def executeInternal[I, R](turn: FullMVTurnImpl, initialWrites: Traversable[Reactive], admissionPhase: () => I, wrapUpPhase: I => R): R = {

@@ -1,6 +1,6 @@
 package rescala.twoversion
 
-import rescala.core.{Reactive, Struct, Turn}
+import rescala.core.{ReSource, Reactive, Struct, Turn}
 
 import scala.language.higherKinds
 
@@ -47,12 +47,12 @@ trait BufferedValueStruct[P, S <: Struct] extends ReadWriteValue[P, S] with Comm
   * @tparam S Type of the reactive values that are connected to this struct
   */
 abstract class PropagationStructImpl[P, S <: Struct](override var current: P, override val transient: Boolean) extends GraphStructType[S] with BufferedValueStruct[P, S] {
-  protected var _incoming: Set[Reactive[S]] = Set.empty
+  protected var _incoming: Set[ReSource[S]] = Set.empty
   protected var _outgoing: scala.collection.mutable.Map[Reactive[S], None.type] = rescala.util.WeakHashMap.empty
 
 
-  def incoming(turn: Turn[S]): Set[Reactive[S]] = _incoming
-  def updateIncoming(reactives: Set[Reactive[S]])(turn: Turn[S]): Unit = _incoming = reactives
+  def incoming(turn: Turn[S]): Set[ReSource[S]] = _incoming
+  def updateIncoming(reactives: Set[ReSource[S]])(turn: Turn[S]): Unit = _incoming = reactives
   override def outgoing(turn: Turn[S]): collection.Set[Reactive[S]] = _outgoing.keySet
   override def discover(reactive: Reactive[S])(turn: Turn[S]): Unit = _outgoing.put(reactive, None)
   override def drop(reactive: Reactive[S])(turn: Turn[S]): Unit = _outgoing -= reactive
@@ -71,8 +71,8 @@ trait GraphStruct extends Struct {
   * @tparam S Type of the reactive values that are connected to this struct
   */
 trait GraphStructType[S <: Struct] {
-  def incoming(turn: Turn[S]): Set[Reactive[S]]
-  def updateIncoming(reactives: Set[Reactive[S]])(turn: Turn[S]): Unit
+  def incoming(turn: Turn[S]): Set[ReSource[S]]
+  def updateIncoming(reactives: Set[ReSource[S]])(turn: Turn[S]): Unit
   def outgoing(turn: Turn[S]): collection.Set[Reactive[S]]
   def discover(reactive: Reactive[S])(turn: Turn[S]): Unit
   def drop(reactive: Reactive[S])(turn: Turn[S]): Unit

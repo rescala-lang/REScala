@@ -55,7 +55,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
     * it is important, that the locks for the dependencies are acquired BEFORE the constructor for the new reactive.
     * is executed, because the constructor typically accesses the dependencies to create its initial value.
     */
-  protected def ignite(reactive: Reactive[TState], incoming: Set[Reactive[TState]], ignitionRequiresReevaluation: Boolean): Unit = {
+  protected def ignite(reactive: Reactive[TState], incoming: Set[ReSource[TState]], ignitionRequiresReevaluation: Boolean): Unit = {
     incoming.foreach { dep =>
       acquireShared(dep)
       discover(dep, reactive)
@@ -71,7 +71,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
   }
 
 
-  override def writeState(pulsing: Reactive[TState])(value: pulsing.Value): Unit = {
+  override def writeState(pulsing: ReSource[TState])(value: pulsing.Value): Unit = {
     assert({
         val wlo: Option[Key[LSInterTurn]] = Option(pulsing.state.lock.getOwner)
         wlo.fold(true)(_ eq key)},
@@ -84,11 +84,11 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
 
   /** lock all reactives reachable from the initial sources
     * retry when acquire returns false */
-  override def preparationPhase(initialWrites: Traversable[Reactive[TState]]): Unit = {
-    val stack = new java.util.ArrayDeque[Reactive[TState]](10)
+  override def preparationPhase(initialWrites: Traversable[ReSource[TState]]): Unit = {
+    val stack = new java.util.ArrayDeque[ReSource[TState]](10)
     initialWrites.foreach(stack.offer)
 
-    val locked = new util.ArrayList[Reactive[TState]]
+    val locked = new util.ArrayList[ReSource[TState]]
 
     val priorKey = priorTurn.map(_.key).orNull
 
@@ -135,7 +135,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
     }
   }
 
-  def done(head: Reactive[TState], hasChanged: Boolean, outgoings: collection.Set[Reactive[TState]]): Unit = {
+  def done(head: ReSource[TState], hasChanged: Boolean, outgoings: collection.Set[Reactive[TState]]): Unit = {
     outgoings.foreach { r =>
       r.state.counter -= 1
       if (hasChanged) r.state.anyInputChanged = this
@@ -151,12 +151,12 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
     if (head.state.anyInputChanged != this) done(head, hasChanged = false, head.state.outgoing(this))
     else {
       val res = head.reevaluate(this, head.state.base(token), head.state.incoming(this))
+      res.commitDependencyDiff(this, head)
       applyResult(head)(res)
     }
   }
 
-  private def applyResult(head: Reactive[TState])(res: ReevaluationResult[head.Value, TState]) = {
-    res.commitDependencyDiff(this, head)
+  private def applyResult(head: ReSource[TState])(res: ReevaluationResult[head.Value, TState]) = {
     if (head.state.isGlitchFreeReady) {
       // val outgoings = res.commitValueChange()
       if (res.valueChanged) writeState(head)(res.value)
@@ -168,7 +168,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
     }
   }
 
-  override def writeIndeps(node: Reactive[TState], indepsAfter: Set[Reactive[TState]]): Unit = {
+  override def writeIndeps(node: Reactive[TState], indepsAfter: Set[ReSource[TState]]): Unit = {
     super.writeIndeps(node, indepsAfter)
     recount(node)
   }
@@ -182,7 +182,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
     * we let the other turn update the dependency and admit the dependent into the propagation queue
     * so that it gets updated when that turn continues
     * the responsibility for correctly passing the locks is moved to the commit phase */
-  override def discover(source: Reactive[TState], sink: Reactive[TState]): Unit =  {
+  override def discover(source: ReSource[TState], sink: Reactive[TState]): Unit =  {
     val owner = acquireShared(source)
     if (owner ne key) {
       if (source.state.willWrite != owner.turn) {
@@ -200,7 +200,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
   }
 
   /** this is for cases where we register and then unregister the same dependency in a single turn */
-  override private[rescala] def drop(source: Reactive[TState], sink: Reactive[TState]) = {
+  override private[rescala] def drop(source: ReSource[TState], sink: Reactive[TState]) = {
     val owner = acquireShared(source)
     if (owner ne key) {
       source.state.drop(sink)(this)
@@ -253,7 +253,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
 
 
   /** allow turn to handle dynamic access to reactives */
-  override def dynamicDependencyInteraction(dependency: Reactive[TState]): Unit = acquireShared(dependency)
+  override def dynamicDependencyInteraction(dependency: ReSource[TState]): Unit = acquireShared(dependency)
 
-  def acquireShared(reactive: Reactive[TState]): Key[LSInterTurn] = Keychains.acquireShared(reactive.state.lock, key)
+  def acquireShared(reactive: ReSource[TState]): Key[LSInterTurn] = Keychains.acquireShared(reactive.state.lock, key)
 }

@@ -1,6 +1,6 @@
 package rescala.twoversion
 
-import rescala.core.{Creation, EngineImpl, ReactiV, Turn}
+import rescala.core.{Creation, EngineImpl, ReSourciV, Turn}
 
 /**
   * Implementation of the turn handling defined in the Engine trait
@@ -9,7 +9,7 @@ import rescala.core.{Creation, EngineImpl, ReactiV, Turn}
   * @tparam TImpl Turn type used by the engine
   */
 trait TwoVersionEngine[S <: TwoVersionStruct, TImpl <: TwoVersionPropagation[S] with Turn[S] with Creation[S]] extends EngineImpl[S, TImpl] {
-  override private[rescala] def singleNow[A](reactive: ReactiV[A, S]) = reactive.state.base(null)
+  override private[rescala] def singleNow[A](reactive: ReSourciV[A, S]) = reactive.state.base(null)
 
   /** goes through the whole turn lifecycle
     * - create a new turn and put it on the stack
@@ -28,7 +28,7 @@ trait TwoVersionEngine[S <: TwoVersionStruct, TImpl <: TwoVersionPropagation[S] 
     * - run the party! phase
     *   - not yet implemented
     * */
-  override private[rescala] def executeTurn[R](initialWrites: Traversable[Reactive], admissionPhase: (AdmissionTicket) => R) = {
+  override private[rescala] def executeTurn[R](initialWrites: Traversable[ReSource], admissionPhase: (AdmissionTicket) => R) = {
     val turn = makeTurn(_currentTurn.value)
 
     val result = try {
