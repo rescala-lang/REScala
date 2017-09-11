@@ -120,11 +120,11 @@ class PessimisticTest extends RETests {
 
     val mockFac = new TwoVersionEngineImpl[ParRP, ParRP]("Reg/Unreg counting ParRP",
       new ParRP(new Backoff(), None) {
-        override def discover(source: Reactive, sink: Reactive): Unit = {
+        override def discover(source: ReSource, sink: Reactive): Unit = {
           if (source eq i0) regs += 1
           super.discover(source, sink)
         }
-        override def drop(source: Reactive, sink: Reactive): Unit = {
+        override def drop(source: ReSource, sink: Reactive): Unit = {
           if (source eq i0) unregs += 1
           super.drop(source, sink)
         }
