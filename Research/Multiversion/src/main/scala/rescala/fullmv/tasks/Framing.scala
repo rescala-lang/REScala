@@ -5,22 +5,22 @@ import rescala.fullmv.FramingBranchResult.{FramingBranchEnd, FramingBranchOut, F
 import rescala.fullmv._
 
 trait FramingTask extends FullMVAction {
-  override def doCompute(): Unit = {
+  override def doCompute(): Traversable[FullMVAction] = {
     val branchResult = doFraming()
     if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this => $branchResult")
     branchResult match {
       case FramingBranchEnd =>
         turn.activeBranchDifferential(TurnPhase.Framing, -1)
+        Traversable.empty
       case FramingBranchOut(out) =>
         val branchDiff = out.size - 1
         if(branchDiff != 0) turn.activeBranchDifferential(TurnPhase.Framing, branchDiff)
-        for(succ <- out) Framing(turn, succ).fork()
+        out.map(Framing(turn, _))
       case FramingBranchOutSuperseding(out, supersede) =>
         val branchDiff = out.size - 1
         if(branchDiff != 0) turn.activeBranchDifferential(TurnPhase.Framing, branchDiff)
-        for(succ <- out) SupersedeFraming(turn, succ, supersede).fork()
+        out.map(SupersedeFraming(turn, _, supersede))
     }
-
   }
   def doFraming(): FramingBranchResult[FullMVTurn, Reactive[FullMVStruct]]
 }

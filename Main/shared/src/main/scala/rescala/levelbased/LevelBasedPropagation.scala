@@ -59,7 +59,7 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
     }
   }
 
-  override def initializationPhase(initialChanges: Seq[InitialChange[S]]): Unit = initialChanges.foreach { ic =>
+  override def initializationPhase(initialChanges: Traversable[InitialChange[S]]): Unit = initialChanges.foreach { ic =>
     applyResult(ic.r)(ic.v(ic.r.state.base(token)))
   }
 

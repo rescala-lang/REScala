@@ -2,10 +2,7 @@ package rescala.fullmv
 
 import java.util.concurrent.ForkJoinTask
 
-import rescala.core.Reactive
-import rescala.core.{Reactive, ReactiV, TurnImpl, ValuePersistency}
-import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation.{NextReevaluation, NoSuccessor}
-import rescala.fullmv.NotificationResultAction.{GlitchFreeReady, NotificationOutAndSuccessorOperation}
+import rescala.core.{ReactiV, Reactive, TurnImpl, ValuePersistency}
 import rescala.fullmv.mirrors.{FullMVTurnProxy, FullMVTurnReflectionProxy, Host, Hosted}
 import rescala.fullmv.tasks.{Notification, Reevaluation}
 
@@ -52,29 +49,23 @@ abstract class FullMVTurn(val timeout: Duration) extends TurnImpl[FullMVStruct] 
     // This matches the required behavior where the code that creates this reactive is expecting the initial
     // reevaluation (if one is required) to have been completed, but cannot access values from subsequent turns
     // and hence does not need to wait for those.
-    val notificationResult = ignitionNotification.deliverNotification()
-    val followNotification = notificationResult match {
-      case GlitchFreeReady =>
-        val (notification, _) = Reevaluation.doReevaluation(this, reactive)
-        notification
-      case outAndSucc: NotificationOutAndSuccessorOperation[FullMVTurn, Reactive[FullMVStruct]] =>
-        outAndSucc
-      case _ =>
-        NoSuccessor(Set.empty[Reactive[FullMVStruct]])
-    }
-    followNotification match {
-      case NextReevaluation(out, succTxn) =>
-        assert(out.isEmpty, "newly created reactive should not be able to have outgoing dependencies")
-        val followReev = new Reevaluation(succTxn, reactive)
+    val notificationResult = ignitionNotification.doCompute()
+    if(notificationResult.nonEmpty) {
+      assert(notificationResult.size == 1)
+      assert(notificationResult.head == Reevaluation(this, reactive))
+      val reevaluation = notificationResult.head.asInstanceOf[Reevaluation]
+      val nextReev = reevaluation.doCompute()
+      if(nextReev.nonEmpty) {
+        assert(notificationResult.size == 1)
+        assert(notificationResult.head.isInstanceOf[Reevaluation])
+        val followReev = notificationResult.head.asInstanceOf[Reevaluation]
         if (ForkJoinTask.inForkJoinPool()) {
-          // this should be the case if reactive is created during another reevaluation
           followReev.fork()
         } else {
           // this should be the case if reactive is created during admission or wrap-up phase
           host.threadPool.submit(followReev)
         }
-      case outAndSucc: NotificationOutAndSuccessorOperation[FullMVTurn, Reactive[FullMVStruct]] =>
-        assert(outAndSucc.out.isEmpty, "newly created reactive should not be able to have outgoing dependencies")
+      }
     }
   }
 

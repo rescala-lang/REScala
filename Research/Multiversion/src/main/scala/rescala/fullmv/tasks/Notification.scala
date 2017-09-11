@@ -4,27 +4,31 @@ import rescala.core.Reactive
 import rescala.fullmv.NotificationResultAction._
 import rescala.fullmv._
 
-trait NotificationAction extends ReevaluationResultHandling {
+trait NotificationAction extends FullMVAction {
+  val node: Reactive[FullMVStruct]
   val changed: Boolean
-  override def doCompute(): Unit = {
+  override def doCompute(): Traversable[FullMVAction] = {
     val notificationResultAction = deliverNotification()
     if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this => $notificationResultAction")
     processNotificationResult(notificationResultAction)
   }
 
-  def processNotificationResult(notificationResultAction: NotificationResultAction[FullMVTurn, Reactive[FullMVStruct]]) = {
+  def processNotificationResult(notificationResultAction: NotificationResultAction[FullMVTurn, Reactive[FullMVStruct]]): Traversable[FullMVAction] = {
     notificationResultAction match {
       case GlitchFreeReadyButQueued =>
         turn.activeBranchDifferential(TurnPhase.Executing, -1)
+        Traversable.empty
       case ResolvedNonFirstFrameToUnchanged =>
         turn.activeBranchDifferential(TurnPhase.Executing, -1)
+        Traversable.empty
       case NotGlitchFreeReady =>
         turn.activeBranchDifferential(TurnPhase.Executing, -1)
+        Traversable.empty
       case GlitchFreeReady =>
-        Reevaluation(turn, node).fork
+        Traversable(Reevaluation(turn, node))
       case outAndSucc: NotificationOutAndSuccessorOperation[FullMVTurn, Reactive[FullMVStruct]] =>
         assert(!changed, s"somehow, $this was digested into an unchanged reevaluation?!")
-        processReevaluationResult(outAndSucc, changed)
+        Reevaluation.processReevaluationResult(node, turn, outAndSucc, changed)
     }
   }
 

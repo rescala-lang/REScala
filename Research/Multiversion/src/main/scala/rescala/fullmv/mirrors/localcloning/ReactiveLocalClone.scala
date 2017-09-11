@@ -6,7 +6,7 @@ import rescala.fullmv.{FullMVEngine, FullMVStruct, FullMVTurn}
 import rescala.reactives.{Event, Signal}
 
 object ReactiveLocalClone {
-  def apply[A](signal: Signal[A, FullMVStruct], host: FullMVEngine)(implicit name: REName): Signal[A, FullMVStruct] = apply(signal)(CreationTicket.fromEngine(host))
+  def apply[A](signal: Signal[A, FullMVStruct], host: FullMVEngine)(implicit name: REName): Signal[A, FullMVStruct] = apply(signal)(CreationTicket.fromEngine(host)(name))
   def apply[A](signal: Signal[A, FullMVStruct])(implicit ticket: CreationTicket[FullMVStruct]): Signal[A, FullMVStruct] = {
     val valuePersistency = ValuePersistency.DerivedSignal[A]
     ticket { creation =>
@@ -21,7 +21,7 @@ object ReactiveLocalClone {
     }
   }
 
-  def apply[P](event: Event[P, FullMVStruct], host: FullMVEngine)(implicit name: REName): Event[P, FullMVStruct] = apply(event)(CreationTicket.fromEngine(host))
+  def apply[P](event: Event[P, FullMVStruct], host: FullMVEngine)(implicit name: REName): Event[P, FullMVStruct] = apply(event)(CreationTicket.fromEngine(host)(name))
   def apply[P](event: Event[P, FullMVStruct])(implicit ticket: CreationTicket[FullMVStruct]): Event[P, FullMVStruct] = {
     val valuePersistency = ValuePersistency.Event[P]
     ticket { creation =>

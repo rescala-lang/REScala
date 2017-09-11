@@ -27,7 +27,7 @@ trait TwoVersionPropagation[S <: Struct]  {
     * Starts the propagation by applying the initial changes
     * @param initialChanges
     */
-  def initializationPhase(initialChanges: Seq[InitialChange[S]]): Unit
+  def initializationPhase(initialChanges: Traversable[InitialChange[S]]): Unit
 
   /**
     * Performs the actual propagation, setting the new (not yet committed) values for each reactive element.

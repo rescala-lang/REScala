@@ -3,7 +3,7 @@ package rescala.core
 import rescala.reactives.{Event, Signal}
 
 import scala.annotation.implicitNotFound
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable
 import scala.language.implicitConversions
 
 /* tickets are created by the REScala schedulers, to restrict operations to the correct scopes */
@@ -78,8 +78,12 @@ final class AdmissionTicket[S <: Struct] private[rescala](val creation: Computat
 
   var wrapUp: WrapUpTicket[S] => Unit = null
 
-  val initialChanges: ArrayBuffer[InitialChange[S]] = ArrayBuffer()
-  def recordChange[T](ic: InitialChange[S]) = initialChanges += ic
+  val _initialChanges: mutable.Map[Reactive[S], InitialChange[S]] = mutable.HashMap()
+  def initialChanges: Traversable[InitialChange[S]] = _initialChanges.values
+  def recordChange[T](ic: InitialChange[S]): Unit = {
+    assert(!_initialChanges.contains(ic.r), "must not admit same source twice in one turn")
+    _initialChanges.put(ic.r, ic)
+  }
   def now[A](reactive: Signal[A, S]): A = {
     creation.dynamicBefore(reactive).get
   }
