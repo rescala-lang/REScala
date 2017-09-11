@@ -7,14 +7,12 @@ sealed class ValuePersistency[V](
 )
 
 object ValuePersistency {
-  // Events do not have a value, so reevaluating them at ignition is pointless in theory.
-  // DynamicEvents however are part badly implemented and part not well-enough understood,
-  // so they DO require an initial reevaluation to establish their initial dependencies correctly.
-  // Since superfluous reevaluation of events without a good reason however do not actually have
-  // any effect, we simply set all events to just be reevaluated upon ignition unconditionally,
-  // which ensures that dynamic events work correctly and doesn't hurt others.
-  private object _Event extends ValuePersistency[Pulse[Nothing]](Pulse.NoChange, isTransient = true, ignitionRequiresReevaluation = true)
+  private object _Event extends ValuePersistency[Pulse[Nothing]](Pulse.NoChange, isTransient = true, ignitionRequiresReevaluation = false)
   def Event[V]: ValuePersistency[Pulse[V]] = _Event.asInstanceOf[ValuePersistency[Pulse[V]]]
+
+  private object _DynamicEvent extends ValuePersistency[Pulse[Nothing]](Pulse.NoChange, isTransient = true, ignitionRequiresReevaluation = true)
+  def DynamicEvent[V]: ValuePersistency[Pulse[V]] = _DynamicEvent.asInstanceOf[ValuePersistency[Pulse[V]]]
+
   private object _DerivedSignal extends ValuePersistency[Pulse.Change[Nothing]](Pulse.empty, isTransient = false, ignitionRequiresReevaluation = true)
   def DerivedSignal[V]: ValuePersistency[Pulse[V]] = _DerivedSignal.asInstanceOf[ValuePersistency[Pulse[V]]]
 

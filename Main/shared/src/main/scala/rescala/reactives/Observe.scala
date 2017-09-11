@@ -44,7 +44,7 @@ object Observe {
   }
 
   def weak[T, S <: Struct](dependency: ReSourciV[Pulse[T], S])(fun: T => Unit, fail: Throwable => Unit)(implicit ct: CreationTicket[S]): Observe[S] = {
-    ct(initTurn => initTurn.create[Pulse[Unit], Obs[T, S]](Set(dependency), ValuePersistency.Event) { state =>
+    ct(initTurn => initTurn.create[Pulse[Unit], Obs[T, S]](Set(dependency), ValuePersistency.DynamicEvent) { state =>
       new Obs[T, S](state, dependency, fun, fail, ct.rename) with Disconnectable[S]
     })
   }
