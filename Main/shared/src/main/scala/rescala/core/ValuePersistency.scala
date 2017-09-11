@@ -18,7 +18,7 @@ object ValuePersistency {
   private object _DerivedSignal extends ValuePersistency[Pulse.Change[Nothing]](Pulse.empty, isTransient = false, ignitionRequiresReevaluation = true)
   def DerivedSignal[V]: ValuePersistency[Pulse[V]] = _DerivedSignal.asInstanceOf[ValuePersistency[Pulse[V]]]
 
-  case class InitializedSignal[V: ReSerializable](override val initialValue: Pulse.Change[V])
+  case class InitializedSignal[V: ReSerializable](override val initialValue: Pulse[V])
     extends ValuePersistency[Pulse[V]](initialValue, isTransient = false, ignitionRequiresReevaluation = false) {
     def serializable: ReSerializable[Pulse[V]] = ReSerializable.pulseSerializable
   }

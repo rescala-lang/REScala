@@ -1,8 +1,8 @@
 package rescala.reactives
 
-import rescala.core._
 import rescala.core.Pulse.{Exceptional, NoChange, Value}
-import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
+import rescala.core._
+import rescala.reactives.RExceptions.UnhandledFailureException
 
 import scala.annotation.compileTimeOnly
 import scala.collection.immutable.{LinearSeq, Queue}
@@ -106,22 +106,21 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with Observable[T, S
 
   /** folds events with a given fold function to create a Signal */
   final def fold[A: ReSerializable](init: A)(folder: (A, T) => A)(implicit ticket: CreationTicket[S]): Signal[A, S] = {
-    def f(a: => A, t: => T) = folder(a, t)
-    lazyFold(init)(f)
-  }
-
-  /** folds events with a given fold function to create a Signal allowing recovery of exceptional states by ignoring the stable value */
-  final def lazyFold[A: ReSerializable](init: => A)(folder: (=> A, => T) => A)(implicit ticket: CreationTicket[S]): Signal[A, S] = ticket { initialTurn =>
-    Signals.staticFold[A, S](Set(this), _ => init) { (st, currentValue) =>
-      // TODO this should be equivalent, but doesn't work for unmanaged engine; need to investigate.
-      // folder(currentValue, st.turn.after(this).get)
-      st.staticDepend(this).toOption.fold(currentValue)(value => folder(currentValue, value))
-    }(initialTurn)(ticket.rename)
+    ticket { initialTurn =>
+      Signals.staticFold[A, S](Set(this), Pulse.tryCatch(Pulse.Value(init))) { (st, currentValue) =>
+        val value = st.staticDepend(this).get
+        folder(currentValue(), value)
+      }(initialTurn)(ticket.rename)
+    }
   }
 
   /** reduces events with a given reduce function to create a Signal */
   final def reduce[A: ReSerializable](reducer: (=> A, => T) => A)(implicit ticket: CreationTicket[S]): Signal[A, S] =
-    lazyFold(throw EmptySignalControlThrowable)(reducer)
+    ticket { initialTurn =>
+      Signals.staticFold[A, S](Set(this), Pulse.empty) { (st, currentValue) =>
+        reducer(currentValue(), st.staticDepend(this).get)
+      }(initialTurn)(ticket.rename)
+    }
 
   /** Applies a function on the current value of the signal every time the event occurs,
     * starting with the init value before the first event occurrence */
@@ -177,12 +176,12 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with Observable[T, S
   }
 
   /** Return a Signal that is updated only when e fires, and has the value of the signal s */
-  final def snapshot[A: ReSerializable](s: Signal[A, S])(implicit ticket: CreationTicket[S]): Signal[A, S] = ticket {
+  final def snapshot[A: ReSerializable](s: Signal[A, S])(implicit ticket: CreationTicket[S]): Signal[A, S] = ticket { ct =>
     Signals.staticFold[A, S](
       Set(this, s),
-      st => st.staticDepend(s).get) { (st, current) =>
-      st.staticDepend(this).toOption.fold(current)(_ => st.staticDepend(s).get)
-    }(_)(ticket.rename)
+      ct.dynamicBefore(s)) { (st, current) =>
+      st.staticDepend(this).toOption.fold(current())(_ => st.staticDepend(s).get)
+    }(ct)(ticket.rename)
   }
 
 

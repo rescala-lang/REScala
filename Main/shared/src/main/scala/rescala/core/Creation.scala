@@ -3,6 +3,7 @@ package rescala.core
 sealed trait Creation[S <: Struct] extends Any {
   private[rescala] def create[P, T <: Reactive[S]](incoming: Set[ReSource[S]], valuePersistency: ValuePersistency[P])(instantiateReactive: S#State[P, S] => T): T
   private[rescala] def createSource[P, T <: ReSource[S]](valuePersistency: ValuePersistency[P])(instantiateReactive: S#State[P, S] => T): T
+  private[rescala] def dynamicBefore[P](reactive: ReSourciV[P, S]): P
 }
 
 trait CreationImpl[S <: Struct] extends Creation[S] {

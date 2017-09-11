@@ -10,11 +10,11 @@ object Signals extends GeneratedSignalLift {
 
   object Impl {
 
-    private[Signals] abstract class StaticSignal[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: (StaticTicket[S], => T) => T, name: REName)
+    private[Signals] abstract class StaticSignal[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: (StaticTicket[S], () => T) => T, name: REName)
       extends Base[T, S](_bud, name) with Signal[T, S] {
 
       override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[T], indeps: Set[ReSource[S]]): ReevaluationResult[Value, S] = {
-        def newValue = expr(turn.makeStaticReevaluationTicket(), before.get)
+        def newValue = expr(turn.makeStaticReevaluationTicket(), () => before.get)
         val newPulse = Pulse.tryCatch(Pulse.diffPulse(newValue, before))
         ReevaluationResult.Static(newPulse, indeps)
       }
@@ -32,18 +32,15 @@ object Signals extends GeneratedSignalLift {
   }
 
   /** creates a signal that statically depends on the dependencies with a given initial value */
-  private[rescala] def staticFold[T: ReSerializable, S <: Struct](dependencies: Set[ReSource[S]], init: StaticTicket[S] => T)(expr: (StaticTicket[S], => T) => T)(ict: Creation[S])(name: REName): Signal[T, S] = {
-    //TODO: should really not cast here … seemingly needed for snapshot semantics
-    def initOrRestored: T = init(ict.asInstanceOf[TurnImpl[S]].makeStaticReevaluationTicket())
-    val iorPulse: Pulse.Change[T] = Pulse.tryCatch(Pulse.Value(initOrRestored))
-    ict.create[Pulse[T], StaticSignal[T, S]](dependencies, ValuePersistency.InitializedSignal[T](iorPulse)) {
+  private[rescala] def staticFold[T: ReSerializable, S <: Struct](dependencies: Set[ReSource[S]], init: Pulse[T])(expr: (StaticTicket[S], () => T) => T)(ict: Creation[S])(name: REName): Signal[T, S] = {
+    ict.create[Pulse[T], StaticSignal[T, S]](dependencies, ValuePersistency.InitializedSignal[T](init)) {
       state => new StaticSignal[T, S](state, expr, name) with Disconnectable[S]
     }
   }
 
   /** creates a new static signal depending on the dependencies, reevaluating the function */
   def static[T, S <: Struct](dependencies: ReSource[S]*)(expr: StaticTicket[S] => T)(implicit ct: CreationTicket[S]): Signal[T, S] = ct { initialTurn =>
-    def ignore2[I, C, R](f: I => R): (I, C) => R = (t, _) => f(t)
+    def ignore2[Ticket, Current, Result](f: Ticket => Result): (Ticket, Current) => Result = (ticket, _) => f(ticket)
     initialTurn.create[Pulse[T], StaticSignal[T, S]](dependencies.toSet, ValuePersistency.DerivedSignal) {
       state => new StaticSignal[T, S](state, ignore2(expr), ct.rename) with Disconnectable[S]
     }
