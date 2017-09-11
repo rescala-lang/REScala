@@ -11,8 +11,6 @@ abstract class Source[T, S <: Struct](initialState: S#State[Pulse[T], S], name: 
   })
 
   final override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[T], indeps: Set[Reactive[S]]): ReevaluationResult[Value, S] = ReevaluationResult.Static(Pulse.NoChange, indeps)
-
-  protected def pulseFromBufferedPulse(turn: Turn[S], before: Pulse[T], value: Pulse[T]): Pulse[T]
 }
 
 /**
@@ -28,8 +26,6 @@ final class Evt[T, S <: Struct] private[rescala] (initialState: S#State[Pulse[T]
   def fire()(implicit fac: Engine[S], ev: Unit =:= T): Unit = fire(ev(Unit))(fac)
   def fire(value: T)(implicit fac: Engine[S]): Unit = fac.transaction(this) {admit(value)(_)}
   override def disconnect()(implicit engine: Engine[S]): Unit = ()
-
-  override protected def pulseFromBufferedPulse(turn: Turn[S], before: Pulse[T], value: Pulse[T]): Pulse[T] = value
 }
 
 /**
@@ -56,8 +52,6 @@ final class Var[A, S <: Struct] private[rescala] (initialState: S#State[Pulse[A]
     // minor TODO should f be evaluated only during reevaluation, given t.selfBefore(this) as parameter?
     admit(f(t.now(this)))(t)
   }
-
-  override protected def pulseFromBufferedPulse(turn: Turn[S], before: Pulse[A], value: Pulse[A]): Pulse[A] = if(value == before) Pulse.NoChange else value
 
   def setEmpty()(implicit fac: Engine[S]): Unit = fac.transaction(this)(t => admitPulse(Pulse.empty)(t))
 
