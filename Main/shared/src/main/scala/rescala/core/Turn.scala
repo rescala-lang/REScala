@@ -21,7 +21,7 @@ trait Turn[S <: Struct] extends ReevaluationStateAccess[S] {
 
 
 
-trait TurnImpl[S <: Struct] extends Turn[S] with CreationImpl[S] with ComputationStateAccess[S] {
+trait TurnImpl[S <: Struct] extends Turn[S] with Creation[S] with ComputationStateAccess[S] {
   private[rescala] def makeDynamicReevaluationTicket(indeps: Set[ReSource[S]]): DynamicTicket[S] = new DynamicTicket[S](this, indeps)
   private[rescala] def makeStaticReevaluationTicket(): StaticTicket[S] = new StaticTicket[S](this)
   private[rescala] def makeAdmissionPhaseTicket(): AdmissionTicket[S] = new AdmissionTicket[S](this)

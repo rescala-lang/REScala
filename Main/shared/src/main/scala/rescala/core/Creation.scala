@@ -1,12 +1,6 @@
 package rescala.core
 
-sealed trait Creation[S <: Struct] extends Any {
-  private[rescala] def create[P, T <: Reactive[S]](incoming: Set[ReSource[S]], valuePersistency: ValuePersistency[P])(instantiateReactive: S#State[P, S] => T): T
-  private[rescala] def createSource[P, T <: ReSource[S]](valuePersistency: ValuePersistency[P])(instantiateReactive: S#State[P, S] => T): T
-  private[rescala] def dynamicBefore[P](reactive: ReSourciV[P, S]): P
-}
-
-trait CreationImpl[S <: Struct] extends Creation[S] {
+trait Creation[S <: Struct] {
   /**
     * Connects a reactive element with potentially existing dependencies and prepares re-evaluations to be
     * propagated based on the turn's propagation scheme
@@ -28,6 +22,8 @@ trait CreationImpl[S <: Struct] extends Creation[S] {
     val state = makeSourceStructState(valuePersistency)
     instantiateReactive(state)
   }
+  private[rescala] def dynamicBefore[P](reactive: ReSourciV[P, S]): P
+
 
   /**
     * to be implemented by the scheduler, called when a new state storage object is required for instantiating a new reactive.
@@ -35,7 +31,7 @@ trait CreationImpl[S <: Struct] extends Creation[S] {
     * @tparam P the stored value type
     * @return the initialized state storage
     */
-  protected def makeDerivedStructState[P](valuePersistency: ValuePersistency[P]): S#State[P, S]
+  protected[this] def makeDerivedStructState[P](valuePersistency: ValuePersistency[P]): S#State[P, S]
 
   /**
     * to be implemented by the scheduler, called when a new state storage object is required for instantiating a new reactive.
@@ -43,14 +39,14 @@ trait CreationImpl[S <: Struct] extends Creation[S] {
     * @tparam P the stored value type
     * @return the initialized state storage
     */
-  protected def makeSourceStructState[P](valuePersistency: ValuePersistency[P]): S#State[P, S] = makeDerivedStructState(valuePersistency)
+  protected[this] def makeSourceStructState[P](valuePersistency: ValuePersistency[P]): S#State[P, S] = makeDerivedStructState(valuePersistency)
   /**
     * to be implemented by the propagation algorithm, called when a new reactive has been instantiated and needs to be connected to the graph and potentially reevaluated.
     * @param reactive the newly instantiated reactive
     * @param incoming a set of incoming dependencies
     * @param ignitionRequiresReevaluation true if the reactive must be reevaluated at creation even if none of its dependencies change in the creating turn.
     */
-  protected def ignite(reactive: Reactive[S], incoming: Set[ReSource[S]], ignitionRequiresReevaluation: Boolean): Unit
+  protected[this] def ignite(reactive: Reactive[S], incoming: Set[ReSource[S]], ignitionRequiresReevaluation: Boolean): Unit
 }
 
 
