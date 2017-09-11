@@ -87,12 +87,12 @@ abstract class RescalaDefaultImports[S <: Struct] {
     * @return Result of the wrapup function
     */
   def transactionWithWrapup[I, R](initialWrites: ReSource*)(admissionPhase: AdmissionTicket => I)(wrapUpPhase: (I, WrapUpTicket) => R): R = {
+    var res: Option[R] = None
     explicitEngine.executeTurn(initialWrites, at => {
       val apr: I = admissionPhase(at)
-      var res: Option[R] = None
       at.wrapUp = wut => { res = Some(wrapUpPhase(apr, wut))}
-      res.get
     })
+    res.get
   }
 
   /**
