@@ -1,6 +1,6 @@
 package rescala.fullmv.tasks
 
-import rescala.core.Reactive
+import rescala.core.ReSource
 import rescala.fullmv.FramingBranchResult.{FramingBranchEnd, FramingBranchOut, FramingBranchOutSuperseding}
 import rescala.fullmv._
 
@@ -22,18 +22,18 @@ trait FramingTask extends FullMVAction {
         out.map(SupersedeFraming(turn, _, supersede))
     }
   }
-  def doFraming(): FramingBranchResult[FullMVTurn, Reactive[FullMVStruct]]
+  def doFraming(): FramingBranchResult[FullMVTurn, ReSource[FullMVStruct]]
 }
 
-case class Framing(turn: FullMVTurn, node: Reactive[FullMVStruct]) extends FramingTask {
-  override def doFraming(): FramingBranchResult[FullMVTurn, Reactive[FullMVStruct]] = {
+case class Framing(turn: FullMVTurn, node: ReSource[FullMVStruct]) extends FramingTask {
+  override def doFraming(): FramingBranchResult[FullMVTurn, ReSource[FullMVStruct]] = {
     assert(turn.phase == TurnPhase.Framing, s"$this cannot increment frame (requires framing phase)")
     node.state.incrementFrame(turn)
   }
 }
 
-case class SupersedeFraming(turn: FullMVTurn, node: Reactive[FullMVStruct], supersede: FullMVTurn) extends FramingTask {
-  override def doFraming(): FramingBranchResult[FullMVTurn, Reactive[FullMVStruct]] = {
+case class SupersedeFraming(turn: FullMVTurn, node: ReSource[FullMVStruct], supersede: FullMVTurn) extends FramingTask {
+  override def doFraming(): FramingBranchResult[FullMVTurn, ReSource[FullMVStruct]] = {
     assert(turn.phase == TurnPhase.Framing, s"$this cannot increment frame (requires framing phase)")
     assert(supersede.phase == TurnPhase.Framing, s"$supersede cannot have frame superseded (requires framing phase)")
     node.state.incrementSupersedeFrame(turn, supersede)

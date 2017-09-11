@@ -36,7 +36,7 @@ object ReactiveLocalClone {
     }
   }
 
-  def connectAndInitializeLocalPushClone[A](reactive: ReactiV[Pulse[A], FullMVStruct], connectTurn: FullMVTurn, reflection: ReactiveReflectionImpl[A], reflectionIsTransient: Boolean, rename: REName): Unit = {
+  def connectAndInitializeLocalPushClone[A](reactive: ReSourciV[Pulse[A], FullMVStruct], connectTurn: FullMVTurn, reflection: ReactiveReflectionImpl[A], reflectionIsTransient: Boolean, rename: REName): Unit = {
     val reflectionHost = connectTurn.host
     // simple remote interface for transfer in one direction
     val reflectionProxy: ReactiveReflectionProxy[Pulse[A]] = new ReactiveReflectionProxy[Pulse[A]] {

@@ -78,7 +78,7 @@ final class AdmissionTicket[S <: Struct] private[rescala](val creation: Computat
 
   var wrapUp: WrapUpTicket[S] => Unit = null
 
-  val _initialChanges: mutable.Map[Reactive[S], InitialChange[S]] = mutable.HashMap()
+  val _initialChanges: mutable.Map[ReSource[S], InitialChange[S]] = mutable.HashMap()
   def initialChanges: Traversable[InitialChange[S]] = _initialChanges.values
   def recordChange[T](ic: InitialChange[S]): Unit = {
     assert(!_initialChanges.contains(ic.r), "must not admit same source twice in one turn")

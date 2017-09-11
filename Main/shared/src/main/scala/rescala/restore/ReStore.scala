@@ -6,7 +6,7 @@ import rescala.twoversion.{TwoVersionEngine, TwoVersionPropagation}
 
 class ReStoringTurn(restore: ReStore) extends LevelBasedPropagation[ReStoringStruct] {
 
-  override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): ReStoringStructType[P, ReStoringStruct] = {
+  override protected def makeDerivedStructState[P](valuePersistency: ValuePersistency[P]): ReStoringStructType[P, ReStoringStruct] = {
     valuePersistency match {
       case is@ValuePersistency.InitializedSignal(init) if is.serializable != rescala.core.ReSerializable.doNotSerialize =>
         if (is.serializable == rescala.core.ReSerializable.serializationUnavailable) throw new Exception(s"restore requires serializable reactive: $valuePersistency")

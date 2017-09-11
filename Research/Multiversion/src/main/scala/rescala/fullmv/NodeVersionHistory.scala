@@ -48,7 +48,7 @@ object NotificationResultAction {
   * @tparam InDep the type of incoming dependency nodes
   * @tparam OutDep the type of outgoing dependency nodes
   */
-class NodeVersionHistory[V, T <: FullMVTurn, Reactive, OutDep](init: T, val valuePersistency: ValuePersistency[V], val timeout: Duration) extends FullMVState[V, T, Reactive, OutDep] {
+class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePersistency: ValuePersistency[V], val timeout: Duration) extends FullMVState[V, T, InDep, OutDep] {
   override val host = init.host
 
   trait BlockOnHistoryManagedBlocker extends ManagedBlocker {
@@ -130,7 +130,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, Reactive, OutDep](init: T, val valu
 
   @elidable(ASSERTION) @inline
   def assertOptimizationsIntegrity(debugOutputDescription: => String): Unit = {
-    def debugStatement(whatsWrong: String): String = s"$debugOutputDescription left $whatsWrong (latestWritten $latestWritten, ${if(firstFrame > _versions.size) "no frames" else "firstFrame "+firstFrame}): \n  " + _versions.zipWithIndex.map{case (version, index) => s"$index: $version"}.mkString("\n  ")
+    def debugStatement(whatsWrong: String): String = s"$debugOutputDescription left $whatsWrong in $this"
 
     assert(_versions.nonEmpty, debugStatement("version list was cleared"))
     assert(_versions(0).isWritten, debugStatement("first version not written"))
@@ -147,6 +147,8 @@ class NodeVersionHistory[V, T <: FullMVTurn, Reactive, OutDep](init: T, val valu
 
     assert(!_versions.zipWithIndex.exists{case (version, index) => version.stable != (index <= firstFrame)}, debugStatement("broken version stability"))
   }
+
+  override def toString = super.toString + s" -> latestWritten $latestWritten, ${if(firstFrame > _versions.size) "no frames" else "firstFrame "+firstFrame}): \n  " + _versions.zipWithIndex.map{case (version, index) => s"$index: $version"}.mkString("\n  ")
 
   // =================== STORAGE ====================
 

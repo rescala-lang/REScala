@@ -2,7 +2,7 @@ package rescala.core
 
 sealed trait Creation[S <: Struct] extends Any {
   private[rescala] def create[P, T <: Reactive[S]](incoming: Set[ReSource[S]], valuePersistency: ValuePersistency[P])(instantiateReactive: S#State[P, S] => T): T
-  private[rescala] def createS[P, T <: ReSource[S]](valuePersistency: ValuePersistency[P])(instantiateReactive: S#State[P, S] => T): T
+  private[rescala] def createSource[P, T <: ReSource[S]](valuePersistency: ValuePersistency[P])(instantiateReactive: S#State[P, S] => T): T
 }
 
 trait CreationImpl[S <: Struct] extends Creation[S] {
@@ -18,13 +18,14 @@ trait CreationImpl[S <: Struct] extends Creation[S] {
     * @return Connected reactive element
     */
   final private[rescala] def create[P, T <: Reactive[S]](incoming: Set[ReSource[S]], valuePersistency: ValuePersistency[P])(instantiateReactive: S#State[P, S] => T): T = {
-    val reactive = createS(valuePersistency)(instantiateReactive)
+    val state = makeDerivedStructState(valuePersistency)
+    val reactive = instantiateReactive(state)
     ignite(reactive, incoming, valuePersistency.ignitionRequiresReevaluation)
     reactive
   }
 
-  final private[rescala] def createS[P, T <: ReSource[S]](valuePersistency: ValuePersistency[P])(instantiateReactive: S#State[P, S] => T): T = {
-    val state = makeStructState(valuePersistency)
+  final private[rescala] def createSource[P, T <: ReSource[S]](valuePersistency: ValuePersistency[P])(instantiateReactive: S#State[P, S] => T): T = {
+    val state = makeSourceStructState(valuePersistency)
     instantiateReactive(state)
   }
 
@@ -34,7 +35,15 @@ trait CreationImpl[S <: Struct] extends Creation[S] {
     * @tparam P the stored value type
     * @return the initialized state storage
     */
-  protected def makeStructState[P](valuePersistency: ValuePersistency[P]): S#State[P, S]
+  protected def makeDerivedStructState[P](valuePersistency: ValuePersistency[P]): S#State[P, S]
+
+  /**
+    * to be implemented by the scheduler, called when a new state storage object is required for instantiating a new reactive.
+    * @param valuePersistency the value persistency
+    * @tparam P the stored value type
+    * @return the initialized state storage
+    */
+  protected def makeSourceStructState[P](valuePersistency: ValuePersistency[P]): S#State[P, S]
 
   /**
     * to be implemented by the propagation algorithm, called when a new reactive has been instantiated and needs to be connected to the graph and potentially reevaluated.

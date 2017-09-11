@@ -29,7 +29,10 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
 
   var replicators: Set[FullMVTurnReflectionProxy] = Set.empty
 
-  override def asyncRemoteBranchComplete(forPhase: Type): Unit = activeBranchDifferential(forPhase, -1)
+  override def asyncRemoteBranchComplete(forPhase: Type): Unit = {
+    if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this branch on some remote completed")
+    activeBranchDifferential(forPhase, -1)
+  }
 
   def activeBranchDifferential(forState: TurnPhase.Type, differential: Int): Unit = {
     assert(phase == forState, s"$this received branch differential for wrong state ${TurnPhase.toString(forState)}")
@@ -43,6 +46,7 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
 
   override def newBranchFromRemote(forPhase: Type): Unit = {
     assert(phase == forPhase, s"$this received branch differential for wrong state ${TurnPhase.toString(forPhase)}")
+    if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this new branch on remote is actually loop-back to local")
     // technically, move one remote branch to a local branch, but as we don't count these separately, currently doing nothing.
   }
 

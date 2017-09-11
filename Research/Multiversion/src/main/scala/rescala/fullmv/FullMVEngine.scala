@@ -2,9 +2,11 @@ package rescala.fullmv
 
 import java.util.concurrent.ForkJoinPool
 
-import rescala.core.{EngineImpl, ReSourciV, ReactiV}
+import rescala.core.{EngineImpl, ReSourciV}
+import rescala.fullmv.NotificationResultAction.GlitchFreeReady
+import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation.{FollowFraming, NoSuccessor}
 import rescala.fullmv.mirrors.{FullMVTurnHost, Host, HostImpl, SubsumableLockHostImpl}
-import rescala.fullmv.tasks.{Framing, Notification, Reevaluation}
+import rescala.fullmv.tasks.{Framing, Notification, NotificationWithFollowFrame}
 
 import scala.concurrent.duration._
 import scala.util.Try
@@ -23,15 +25,15 @@ class FullMVEngine(val timeout: Duration, val name: String) extends EngineImpl[F
 
   override private[rescala] def singleNow[A](reactive: ReSourciV[A, FullMVStruct]) = reactive.state.latestValue
 
-
-  override private[rescala] def executeTurn[R](declaredWrites: Traversable[Reactive], admissionPhase: (AdmissionTicket) => R): R = {
+  override private[rescala] def executeTurn[R](declaredWrites: Traversable[ReSource], admissionPhase: (AdmissionTicket) => R): R = {
     val turn = newTurn()
 
-    if(declaredWrites.nonEmpty) {
+    val setWrites = declaredWrites.toSet // this *should* be part of the interface..
+    if(setWrites.nonEmpty) {
       // framing phase
       turn.awaitAndSwitchPhase(TurnPhase.Framing)
-      turn.activeBranchDifferential(TurnPhase.Framing, declaredWrites.size)
-      for (i <- declaredWrites) threadPool.submit(Framing(turn, i))
+      turn.activeBranchDifferential(TurnPhase.Framing, setWrites.size)
+      for (i <- setWrites) threadPool.submit(Framing(turn, i))
     }
 
     turn.awaitAndSwitchPhase(TurnPhase.Executing)
@@ -46,22 +48,51 @@ class FullMVEngine(val timeout: Duration, val name: String) extends EngineImpl[F
     assert(turn.activeBranches.get == 0, s"Admission phase left ${turn.activeBranches.get} active branches.")
 
     // propagation phase
-    if(declaredWrites.nonEmpty){
-      turn.activeBranchDifferential(TurnPhase.Executing, declaredWrites.size)
+    if(setWrites.nonEmpty){
+      turn.activeBranchDifferential(TurnPhase.Executing, setWrites.size)
 
       val noChanges = admissionResult match {
-        case scala.util.Failure(_) => declaredWrites
+        case scala.util.Failure(_) =>
+          setWrites
         case _ =>
           for (change <- admissionTicket.initialChanges) {
-            val res = change.v(change.r.state.reevIn(turn))
-            res.commitDependencyDiff(turn, change.r)
-            change.r.state.notify(turn, changed = true)
-            val changePropagationTasks = Reevaluation.processReevaluationResult(change.r, turn, change.r.state.reevOut(turn, if (res.valueChanged) Some(res.value) else None), res.valueChanged)
-            for(task <- changePropagationTasks) threadPool.submit(task)
+            val res = change.v(
+              if(change.r.state.asInstanceOf[NodeVersionHistory[_, _, _, _]].valuePersistency.isTransient){
+                change.r.state.asInstanceOf[NodeVersionHistory[change.r.Value, _, _, _]].valuePersistency.initialValue
+              } else {
+                change.r.state.dynamicBefore(turn)
+              })
+            val notificationResult = change.r.state.notify(turn, changed = true)
+            assert(notificationResult == GlitchFreeReady)
+            val reevOutResult = change.r.state.reevOut(turn, if (res.valueChanged) Some(res.value) else None)
+            reevOutResult match {
+              case NoSuccessor(out) =>
+                val diff = out.size - 1
+                if(diff != 0) turn.activeBranchDifferential(TurnPhase.Executing, diff)
+                for(succ <- out) threadPool.submit(Notification(turn, succ, res.valueChanged))
+              case FollowFraming(out, succTxn: FullMVTurn) =>
+                val diff = out.size - 1
+                if(diff != 0) turn.activeBranchDifferential(TurnPhase.Executing, diff)
+                for(succ <- out) threadPool.submit(NotificationWithFollowFrame(turn, succ, res.valueChanged, succTxn))
+              case otherwise => throw new AssertionError("Source reevaluation should not be able to yield "+otherwise)
+            }
           }
-          declaredWrites.toSet.diff(admissionTicket.initialChanges.map(_.r).toSet)
+          setWrites.diff(admissionTicket.initialChanges.map(_.r).toSet)
       }
-      for(i <- noChanges) threadPool.submit(Notification(turn, i, changed = false))
+      for(i <- noChanges) {
+        val notificationResult = i.state.notify(turn, changed = false)
+        notificationResult match {
+          case NoSuccessor(out) =>
+            val diff = out.size - 1
+            if(diff != 0) turn.activeBranchDifferential(TurnPhase.Executing, diff)
+            for(succ <- out) threadPool.submit(Notification(turn, succ, changed = false))
+          case FollowFraming(out, succTxn: FullMVTurn) =>
+            val diff = out.size - 1
+            if(diff != 0) turn.activeBranchDifferential(TurnPhase.Executing, diff)
+            for(succ <- out) threadPool.submit(NotificationWithFollowFrame(turn, succ, changed = false, succTxn))
+          case otherwise => throw new AssertionError("Source reevaluation should not be able to yield "+otherwise)
+        }
+      }
     }
 
     // propagation completion

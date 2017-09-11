@@ -9,7 +9,7 @@ import rescala.twoversion.TwoVersionEngineImpl
 trait LevelBasedPropagationEngines {
 
   private[rescala] class SimpleNoLock extends LevelBasedPropagation[SimpleStruct] {
-    override protected def makeStructState[P](valuePersistency: ValuePersistency[P]): SimpleStruct#State[P, SimpleStruct] = {
+    override protected def makeDerivedStructState[P](valuePersistency: ValuePersistency[P]): SimpleStruct#State[P, SimpleStruct] = {
       new LevelStructTypeImpl(valuePersistency.initialValue, valuePersistency.isTransient)
     }
     override def releasePhase(): Unit = ()
