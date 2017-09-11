@@ -49,9 +49,6 @@ trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropaga
     if (failure != null) throw failure
   }
 
-  // centralized unlocking means sources don't need separate treatment? possibly just misplaced code or bad design though.
-  override protected def makeSourceStructState[P](valuePersistency: ValuePersistency[P]): S#State[P, S] = makeDerivedStructState(valuePersistency)
-
   override private[rescala] def discover(node: ReSource[S], addOutgoing: Reactive[S]): Unit = node.state.discover(addOutgoing)(this)
   override private[rescala] def drop(node: ReSource[S], removeOutgoing: Reactive[S]): Unit = node.state.drop(removeOutgoing)(this)
 

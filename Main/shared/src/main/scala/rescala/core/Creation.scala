@@ -43,8 +43,7 @@ trait CreationImpl[S <: Struct] extends Creation[S] {
     * @tparam P the stored value type
     * @return the initialized state storage
     */
-  protected def makeSourceStructState[P](valuePersistency: ValuePersistency[P]): S#State[P, S]
-
+  protected def makeSourceStructState[P](valuePersistency: ValuePersistency[P]): S#State[P, S] = makeDerivedStructState(valuePersistency)
   /**
     * to be implemented by the propagation algorithm, called when a new reactive has been instantiated and needs to be connected to the graph and potentially reevaluated.
     * @param reactive the newly instantiated reactive
