@@ -14,7 +14,6 @@ trait CreationImpl[S <: Struct] extends Creation[S] {
     * @param valuePersistency the value persistency
     * @param instantiateReactive The factory method to instantiate the reactive with the newly created state.
     * @tparam P Reactive value type
-    * @tparam R Reactive subtype of the reactive element
     * @return Connected reactive element
     */
   final private[rescala] def create[P, T <: Reactive[S]](incoming: Set[ReSource[S]], valuePersistency: ValuePersistency[P])(instantiateReactive: S#State[P, S] => T): T = {
