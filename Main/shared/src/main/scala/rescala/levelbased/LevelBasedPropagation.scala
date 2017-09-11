@@ -9,7 +9,7 @@ import rescala.twoversion.TwoVersionPropagationImpl
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
 trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[S] with LevelQueue.Evaluator[S] {
-  private var _evaluated = List.empty[Reactive[S]]
+  private var _changed = List.empty[ReSource[S]]
 
   val levelQueue = new LevelQueue[S](this)(this)
 
@@ -27,14 +27,13 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
         applyResult(head, newLevel)(res)
       }
     }
-
-    _evaluated ::= head
   }
 
   private def applyResult(head: ReSource[S], minLevel: Int = -42)(res: ReevaluationResult[head.Value, S]): Unit = {
     if (res.valueChanged) {
       writeState(head)(res.value)
       head.state.outgoing(this).foreach(levelQueue.enqueue(-42))
+      _changed ::= head
     }
   }
 
@@ -50,7 +49,7 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
     }
     reactive.state.updateIncoming(incoming)(this)
 
-    if (ignitionRequiresReevaluation || incoming.exists(_evaluated.contains)) {
+    if (ignitionRequiresReevaluation || incoming.exists(_changed.contains)) {
       if (level <= levelQueue.currentLevel()) {
         evaluate(reactive)
       } else {
