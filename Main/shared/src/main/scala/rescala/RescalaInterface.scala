@@ -6,7 +6,7 @@ import rescala.reactives.Source
 
 import scala.language.existentials
 
-abstract class RescalaDefaultImports[S <: Struct] {
+abstract class RescalaInterface[S <: Struct] {
   // need the import inside of the trait, otherwise scala complains that it is shadowed by rescala.macros
   import scala.language.experimental.macros
 

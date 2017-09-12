@@ -7,7 +7,7 @@ import rescala.parrp.ParRP
   * Events and signals can be created from other reactives by using combinators,
   * signals additionally can be created using [[rescala.Signal]] expressions.
   **/
-package object rescala extends RescalaDefaultImports[ParRP] {
+package object rescala extends RescalaInterface[ParRP] {
   override def explicitEngine: Engine[ParRP] = rescala.Engines.parrp
   implicit def noSerialization[T]: ReSerializable[T] = ReSerializable.serializationUnavailable
 }

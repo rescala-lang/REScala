@@ -1,6 +1,6 @@
 package rescala.core
 
-import rescala.RescalaDefaultImports
+import rescala.RescalaInterface
 
 import scala.annotation.implicitNotFound
 import scala.util.DynamicVariable
@@ -11,7 +11,7 @@ import scala.util.DynamicVariable
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
 @implicitNotFound(msg = "Could not find an implicit propagation engine. Did you forget an import?")
-trait Engine[S <: Struct] extends RescalaDefaultImports[S] {
+trait Engine[S <: Struct] extends RescalaInterface[S] {
 
   override def explicitEngine: this.type = this
 
