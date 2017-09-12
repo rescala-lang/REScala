@@ -23,14 +23,23 @@ class RestoringSimple[S <: Struct] {
   var source: Evt[Int, S] = _
   var result: List[Any] = _
 
+  @Param(Array("0", "0.2", "1"))
+  var foldPercent: Float = _
+
   @Setup
   def setup(size: Size, engineParam: EngineParam[S]) = {
     engine = engineParam.engine
     source = engine.Evt[Int]()
+    val otherSource = engine.Evt[Int]()
     result = Nil
     if (size.size <= 0) result = List(source.map(_+1))
-    for (_ <- Range(0, size.size)) {
+    val split = math.round(size.size * foldPercent)
+    for (_ <- Range(0, split)) {
       result = source.count :: result
+    }
+    for (_ <- Range(split, size.size)) {
+      result = source.map(_ + 1) :: result
+      otherSource.count
     }
   }
 
@@ -101,3 +110,4 @@ class RestoringSnapshot[S <: Struct] {
 
 
 }
+
