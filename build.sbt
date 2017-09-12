@@ -73,7 +73,7 @@ lazy val reswing = project.in(file("Extensions/RESwing"))
 
 lazy val rescalatags = project.in(file("Extensions/Rescalatags"))
   .settings(cfg.base, cfg.strictScalac, cfg.bintray, cfg.test,
-    cfg.js, lib.scalatags, jsDependencies += RuntimeDOM)
+    cfg.js, lib.scalatags, jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv)
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(rescalaJS)
 
@@ -324,7 +324,7 @@ lazy val lib = new {
   val scalatags = libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.6.5"
 
   val akka = {
-    val akkaVersion = "2.5.3"
+    val akkaVersion = "2.5.4"
     // akka:
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
