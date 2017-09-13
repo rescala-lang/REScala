@@ -69,7 +69,7 @@ object TodoMVC extends JSApp {
 
       section(
         `class`:= "main",
-        `style`:= Signal { if(tasks().size==0) "display:hidden" else "" },
+        `style`:= Signal { if(tasks().isEmpty) "display:hidden" else "" },
         input( `class`:="toggle-all", `type`:="checkbox",
 //          checked:=tasks.now.map { it => it.done.now }
 //                   .reduce {  (a, b) => a && b},
@@ -113,7 +113,7 @@ object TodoMVC extends JSApp {
               }
             )
           )
-          
+
         }) }.asFrag
       ),
 
