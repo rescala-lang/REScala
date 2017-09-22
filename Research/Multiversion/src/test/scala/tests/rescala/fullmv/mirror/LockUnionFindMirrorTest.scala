@@ -86,7 +86,7 @@ class LockUnionFindMirrorTest extends FunSuite {
     assert(Await.result(lockOneOnA.getLockedRoot, Duration.Zero).contains(lockTwoOnA.guid))
     assert(Await.result(lockTwoOnA.getLockedRoot, Duration.Zero).contains(lockTwoOnA.guid))
 
-    Await.result(lockOneOnA.unlock(), Duration.Zero)
+    Await.result(resTwoOnA.newParent.unlock(), Duration.Zero)
 
     val resOneOnA2 = Await.result(lockOneOnA.tryLock(), Duration.Zero)
     assert(resOneOnA2 === TryLockResult(success = true, lockTwoOnA))
@@ -127,7 +127,7 @@ class LockUnionFindMirrorTest extends FunSuite {
     assert(Await.result(childOfCloneA.getLockedRoot, Duration.Zero).contains(b.guid))
     assert(Await.result(b.getLockedRoot, Duration.Zero).contains(b.guid))
 
-    Await.result(cloneA.unlock(), Duration.Zero)
+    Await.result(resB.newParent.unlock(), Duration.Zero)
 
     assert(Await.result(childOfCloneA.tryLock(), Duration.Zero) === TryLockResult(success = true, b))
   }
@@ -154,7 +154,7 @@ class LockUnionFindMirrorTest extends FunSuite {
     assert(Await.result(childOfCloneA.getLockedRoot, Duration.Zero).contains(b.guid))
     assert(Await.result(b.getLockedRoot, Duration.Zero).contains(b.guid))
 
-    Await.result(cloneA.unlock(), Duration.Zero)
+    Await.result(resB.newParent.unlock(), Duration.Zero)
 
     val res = Await.result(childOfCloneA.tryLock(), Duration.Zero)
     assert(res === TryLockResult(success = true, b))

@@ -118,9 +118,7 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
         LockSupport.unpark(peeked)
         Future.successful(this)
       case parent =>
-        val newParent = parent.unlock()
-        newParent.foreach { p => state.compareAndSet(parent, p)}(ReactiveTransmittable.notWorthToMoveToTaskpool)
-        newParent
+        throw new IllegalStateException(s"unlock on subsumed $this")
     }
   }
 
@@ -149,8 +147,8 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
     assert(lockedNewParent ne this, s"trying to create endless loops, are you?")
     assert(lockedNewParent != this, s"instance caching broken? $this came into contact with reflection of itself on same host")
     assert(Await.result(lockedNewParent.getLockedRoot, Duration.Inf).isDefined, s"subsume partner $lockedNewParent is unlocked.")
-    assert(state.get != null, s"subsume attempt on unlocked $this")
-    assert(state.get == Self, s"subsume attempt on subsumed $this")
+    assert(state.get != null, s"subsume on unlocked $this")
+    assert(state.get == Self, s"subsume on subsumed $this")
     if(!state.compareAndSet(Self, lockedNewParent)) throw new AssertionError(s"$this subsume failed due to contention!?")
     val peeked = waiters.peek()
     if(DEBUG) println(s"[${Thread.currentThread().getName}]: subsumed $this, unparking " + (if(peeked == null) "none" else peeked.getName))
