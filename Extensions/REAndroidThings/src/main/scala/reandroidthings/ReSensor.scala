@@ -1,17 +1,19 @@
 package reandroidthings
 
-import java.util.concurrent.atomic.AtomicBoolean
-
 import android.hardware.{Sensor, SensorEvent, SensorEventListener, SensorManager}
 import com.google.android.things.contrib.driver.bmx280.Bmx280SensorDriver
 import reandroidthings.iot_devices.BoardDefaults
 import rescala._
+
+import scala.reflect.ClassTag
 
 /**
   * The SensorManager associated with this Sensor
   */
 
 abstract class ReSensor[E](initialValue: E) {
+  initialize()
+
   /**
     * The underlying Android peer
     */
@@ -22,13 +24,6 @@ abstract class ReSensor[E](initialValue: E) {
     */
   protected val valueVar: Var[E] = Var(initialValue)
   protected val accuracyVar: Var[Int] = Var(Int.MinValue)
-
-//  val value: Signal[E] = Signal {
-//    valueVar()
-//  }
-//  val accuracy: Signal[Int] = Signal {
-//    accuracyVar()
-//  }
 
   def valueChanged(): Event[E] = {
     valueChangedEvt
@@ -41,18 +36,11 @@ abstract class ReSensor[E](initialValue: E) {
   private val valueChangedEvt: Evt[E] = Evt[E]()
   private val accuracyChangedEvt: Evt[Int] = Evt[Int]()
 
-  private var initialized: AtomicBoolean = new AtomicBoolean(false)
-
-
   /**
     * initializes the Sensor Manager, conducts the pre and post initialize routine and assigns
     * the peer
     */
-  def initialize(): Unit = {
-    if (initialized.getAndSet(true)) {
-      throw new RuntimeException("is already initialized!")
-    }
-
+  private def initialize(): Unit = {
     val sensorManager: SensorManager = ReSensorManager.getSensorManager()
     preInitialize(sensorManager)
     initializePeer(sensorManager)
@@ -183,8 +171,8 @@ class ReGyroscopeSensor extends ReSensor[(Float, Float, Float)]((0, 0, 0)) {
   override def parseSensorValues(values: Array[Float]): (Float, Float, Float) = (values(0), values(1), values(2))
 }
 
-case class ReSensorDescriptor[T](sensorType: Int)
-
+case class ReSensorDescriptor[T](sensorType: Int) {
+}
 
 object ReSensor {
   val TypeAccelerometer = Sensor.TYPE_ACCELEROMETER
@@ -263,6 +251,9 @@ object ReSensor {
   // special Sensor-types present in the RPi3 Rainbow-Head (a dynamic temperature and pressure sensor)
   val TypeDynamicSensorMetaPressure = /*ReSensorDescriptor[RePressureSensor](*/40/*)*/
   val TypeDynamicSensorMetaTemperature = /*ReSensorDescriptor[ReTemperatureSensor](*/41/*)*/
+
+  val TypeDynamicSensorMetaPressureDescriptor = ReSensorDescriptor[Float](40)
+  val TypeDynamicSensorMetaTemperatureDescriptor = ReSensorDescriptor[Float](41)
 
   val TypeAll = Sensor.TYPE_ALL
   val TypeDevicePrivateBase = Sensor.TYPE_DEVICE_PRIVATE_BASE

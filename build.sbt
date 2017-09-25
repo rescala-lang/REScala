@@ -325,7 +325,7 @@ lazy val androidDependencies = libraryDependencies ++= Seq(
   "com.android.support.test.espresso" % "espresso-core" % "2.2.2" % "androidTest")
 
 lazy val androidAware = Seq(
-  buildToolsVersion in Android := Some("26.0.0-rc2"), // please switch to "Dev Channel" in android studio and install the sdk manually!
+  buildToolsVersion in Android := Some("26.0.1"),
   minSdkVersion in Android := "24",
   platformTarget in Android := "android-26",
   javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),

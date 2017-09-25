@@ -2,7 +2,6 @@ package reandroidthings
 
 import android.hardware.{Sensor, SensorEvent, SensorEventListener, SensorManager}
 import android.content.Context
-import scala.reflect.ClassTag
 
 trait ReSensorManager {
   protected def peer: SensorManager
@@ -16,17 +15,15 @@ object ReSensorManager {
     context = contextGiven
   }
 
-  def getSensor(sensorType: Int): ReSensor[_] = {
-    val reSensor: ReSensor[_] = sensorType match {
+  def getSensor[E](sensorDescriptor: ReSensorDescriptor[E]): ReSensor[E] = {
+    val reSensor: ReSensor[_] = sensorDescriptor.sensorType match {
       case ReSensor.TypeDynamicSensorMetaPressure => new RePressureSensor()
       case ReSensor.TypeDynamicSensorMetaTemperature => new ReTemperatureSensor()
       case ReSensor.TypeGyroscope => new ReGyroscopeSensor()
       case _ => throw new RuntimeException("not implemented")
     }
 
-    reSensor.initialize()
-
-    return reSensor
+    return reSensor.asInstanceOf[ReSensor[E]]
   }
 
   def getSensorManager(): SensorManager = {
@@ -38,16 +35,14 @@ object ReSensorManager {
     return context.getSystemService(Context.SENSOR_SERVICE).asInstanceOf[SensorManager]
   }
 
-
-  // TODO: implement SensorManager-methods (sensorList, dynamicSensorList, ... ) - see beneath
-  def sensorList(`type`: Int): List[Int] = {
-    val list: java.util.List[Sensor] = getSensorManager.getSensorList(`type`)
+  def sensorList(descriptor: ReSensorDescriptor[_]): List[Int] = {
+    val list: java.util.List[Sensor] = getSensorManager.getSensorList(descriptor.sensorType)
 
     convertToScala(list)
   }
 
-  def dynamicSensorList(`type`: Int): List[Int] = {
-    val dynSensors: java.util.List[Sensor] = getSensorManager.getDynamicSensorList(`type`)
+  def dynamicSensorList(descriptor: ReSensorDescriptor[_]): List[Int] = {
+    val dynSensors: java.util.List[Sensor] = getSensorManager.getDynamicSensorList(descriptor.sensorType)
 
     convertToScala(dynSensors)
   }
@@ -57,7 +52,7 @@ object ReSensorManager {
     for (i <- 0 to javaList.size()) {
       l = l :+ javaList.get(i).getType
     }
-    l
+    return l
   }
 
   def removeSensors(): Unit = {

@@ -6,7 +6,6 @@ import android.util.Log
 import rescala._
 import reandroidthings._
 
-
 class MainActivity extends AppCompatActivity {
   private val TAG = "Barometer4Android"
   implicit val context = this
@@ -18,8 +17,7 @@ class MainActivity extends AppCompatActivity {
 
     ReSensorManager.init(this.getApplicationContext)
     // get temperature sensor (requires cast)
-    val temperatureSensor: ReTemperatureSensor =
-      ReSensorManager.getSensor(ReSensor.TypeDynamicSensorMetaTemperature).asInstanceOf[ReTemperatureSensor]
+    val temperatureSensor: ReSensor[Float] = ReSensorManager.getSensor(ReSensor.TypeDynamicSensorMetaTemperatureDescriptor)
 
     ReAlphaNumericDisplay.init(temperatureSensor.valueChanged)
   }
