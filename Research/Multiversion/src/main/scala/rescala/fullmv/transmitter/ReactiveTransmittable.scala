@@ -9,7 +9,6 @@ import rescala.fullmv.TurnPhase.Type
 import rescala.fullmv.mirrors.Host.GUID
 import rescala.fullmv.mirrors._
 import rescala.fullmv.sgt.synchronization.SubsumableLock
-import rescala.fullmv.sgt.synchronization.SubsumableLock.TryLockResult
 import rescala.fullmv._
 import rescala.reactives.{Event, Signal}
 import retier.transmitter._
@@ -59,22 +58,18 @@ object ReactiveTransmittable {
       case MaybeNewReachableSubtree(turn, attachBelow, spanningTree) => allEmpty("MaybeNewReachableSubtree").copy(_2 = turn, _3 = attachBelow, _7 = spanningTree)
       case NewSuccessor(turn, successor) => allEmpty("NewSuccessor").copy(_2 = turn, _3 = successor)
       case TurnGetLockedRoot(turn) => allEmpty("TurnGetLockedRoot").copy(_2 = turn)
-      case LockGetLockedRoot(lock) => allEmpty("LockGetLockedRoot").copy(_2 = lock)
-      case TurnTryLock(turn) => allEmpty("TurnTryLock").copy(_2 = turn)
-      case LockTryLock(lock) => allEmpty("LockTryLock").copy(_2 = lock)
-      case TryLockResponse(success, newParent) => allEmpty("TryLockResponse").copy(_2 = newParent, _8 = success)
+      case MaybeLockResponse(newParentIfFailed) => allEmpty("MaybeLockResponse").copy(_2 = newParentIfFailed.getOrElse(Host.dummyGuid), _8 = newParentIfFailed.isDefined)
       case TurnLock(turn) => allEmpty("TurnLock").copy(_2 = turn)
-      case LockLock(lock) => allEmpty("LockLock").copy(_2 = lock)
       case TurnSpinOnce(turn, backoff) => allEmpty("TurnSpinOnce").copy(_2 = turn, _9 = backoff)
+      case TurnTrySubsume(turn, lockedNewParent) => allEmpty("TurnTrySubsume").copy(_2 = turn, _3 = lockedNewParent)
+      case BooleanResponse(bool) => allEmpty("BooleanResponse").copy(_8 = bool)
+      case LockGetLockedRoot(lock) => allEmpty("LockGetLockedRoot").copy(_2 = lock)
+      case LockLock(lock) => allEmpty("LockLock").copy(_2 = lock)
       case LockSpinOnce(lock, backoff) => allEmpty("LockSpinOnce").copy(_2 = lock, _9 = backoff)
       case LockResponse(newParent) => allEmpty("LockResponse").copy(_2 = newParent)
-      case TurnTrySubsume(turn, lockedNewParent) => allEmpty("TurnTrySubsume").copy(_2 = turn, _3 = lockedNewParent)
       case LockTrySubsume(lock, lockedNewParent) => allEmpty("LockTrySubsume").copy(_2 = lock, _3 = lockedNewParent)
-      case MaybeLockResponse(newParentIfFailed) => allEmpty("MaybeLockResponse").copy(_2 = newParentIfFailed.getOrElse(Host.dummyGuid), _8 = newParentIfFailed.isDefined)
-      case TurnSubsume(turn, lockedNewParent) => allEmpty("TurnSubsume").copy(_2 = turn, _3 = lockedNewParent)
-      case LockSubsume(lock, lockedNewParent) => allEmpty("LockSubsume").copy(_2 = lock, _3 = lockedNewParent)
-      case TurnUnlock(turn) => allEmpty("TurnUnlock").copy(_2 = turn)
       case LockUnlock(lock) => allEmpty("LockUnlock").copy(_2 = lock)
+      case LockRemoteRefDropped(lock) => allEmpty("LockRemoteRefDropped").copy(_2 = lock)
       case NewPredecessors(turn, newPredecessors) => allEmpty("NewPredecessors").copy(_2 = turn, _10 = newPredecessors)
       case NewPhase(turn, phase) => allEmpty("NewPhase").copy(_2 = turn, _6 = phase)
     }
@@ -101,22 +96,18 @@ object ReactiveTransmittable {
       case ("MaybeNewReachableSubtree", turn, attachBelow, _, _, _, spanningTree, _, _, _) => MaybeNewReachableSubtree(turn, attachBelow, spanningTree)
       case ("NewSuccessor", turn, successor, _, _, _, _, _, _, _) => NewSuccessor(turn, successor)
       case ("TurnGetLockedRoot", turn, _, _, _, _, _, _, _, _) => TurnGetLockedRoot(turn)
-      case ("LockGetLockedRoot", lock, _, _, _, _, _, _, _, _) => LockGetLockedRoot(lock)
-      case ("TurnTryLock", turn, _, _, _, _, _, _, _, _) => TurnTryLock(turn)
-      case ("LockTryLock", lock, _, _, _, _, _, _, _, _) => LockTryLock(lock)
-      case ("TryLockResponse", newParent, _, _, _, _, _, success, _, _) => TryLockResponse(success, newParent)
+      case ("MaybeLockResponse", mbnp, _, _, _, _, _, mb, _, _) => MaybeLockResponse(if(mb) Some(mbnp) else None)
       case ("TurnLock", turn, _, _, _, _, _, _, _, _) => TurnLock(turn)
-      case ("LockLock", lock, _, _, _, _, _, _, _, _) => LockLock(lock)
       case ("TurnSpinOnce", turn, _, _, _, _, _, _, backoff, _) => TurnSpinOnce(turn, backoff)
+      case ("TurnTrySubsume", turn, lockedNewParent, _, _, _, _, _, _, _) => TurnTrySubsume(turn, lockedNewParent)
+      case ("BooleanResponse", _, _, _, _, _, _, bool, _, _) => BooleanResponse(bool)
+      case ("LockGetLockedRoot", lock, _, _, _, _, _, _, _, _) => LockGetLockedRoot(lock)
+      case ("LockLock", lock, _, _, _, _, _, _, _, _) => LockLock(lock)
       case ("LockSpinOnce", lock, _, _, _, _, _, _, backoff, _) => LockSpinOnce(lock, backoff)
       case ("LockResponse", newParent, _, _, _, _, _, _, _, _) => LockResponse(newParent)
-      case ("TurnTrySubsume", turn, lockedNewParent, _, _, _, _, _, _, _) => TurnTrySubsume(turn, lockedNewParent)
       case ("LockTrySubsume", lock, lockedNewParent, _, _, _, _, _, _, _) => LockTrySubsume(lock, lockedNewParent)
-      case ("MaybeLockResponse", mbnp, _, _, _, _, _, mb, _, _) => MaybeLockResponse(if(mb) Some(mbnp) else None)
-      case ("TurnSubsume", turn, lockedNewParent, _, _, _, _, _, _, _) => TurnSubsume(turn, lockedNewParent)
-      case ("LockSubsume", lock, lockedNewParent, _, _, _, _, _, _, _) => LockSubsume(lock, lockedNewParent)
-      case ("TurnUnlock", turn, _, _, _, _, _, _, _, _) => TurnUnlock(turn)
       case ("LockUnlock", lock, _, _, _, _, _, _, _, _) => LockUnlock(lock)
+      case ("LockRemoteRefDropped", lock, _, _, _, _, _, _, _, _) => LockRemoteRefDropped(lock)
       case ("NewPredecessors", turn, _, _, _, _, _, _, _, newPredecessors) => NewPredecessors(turn, newPredecessors)
       case ("NewPhase", turn, _, _, _, phase, _, _, _, _) => NewPhase(turn, phase)
       case otherwise =>
@@ -154,22 +145,19 @@ object ReactiveTransmittable {
   case class NewSuccessor(turn: Host.GUID, successor: Host.GUID) extends Request[Nothing]{ override type Response = UnitResponse.type }
 
   case class TurnGetLockedRoot(turn: Host.GUID) extends Request[Nothing]{ override type Response = MaybeLockResponse }
-  case class LockGetLockedRoot(lock: Host.GUID) extends Request[Nothing]{ override type Response = MaybeLockResponse }
-  case class TurnTryLock(turn: Host.GUID) extends Request[Nothing]{ override type Response = TryLockResponse }
-  case class LockTryLock(lock: Host.GUID) extends Request[Nothing]{ override type Response = TryLockResponse }
-  case class TryLockResponse(success: Boolean, newParent: Host.GUID) extends Response[Nothing]
+  case class MaybeLockResponse(newParentIfFailed: Option[Host.GUID]) extends Response[Nothing]
   case class TurnLock(turn: Host.GUID) extends Request[Nothing]{ override type Response = LockResponse }
-  case class LockLock(lock: Host.GUID) extends Request[Nothing]{ override type Response = LockResponse }
   case class TurnSpinOnce(turn: Host.GUID, backoff: Long) extends Request[Nothing]{ override type Response = LockResponse }
+  case class TurnTrySubsume(turn: Host.GUID, lockedNewParent: Host.GUID) extends Request[Nothing]{ override type Response = BooleanResponse }
+  case class BooleanResponse(bool: Boolean) extends Response[Nothing]
+
+  case class LockGetLockedRoot(lock: Host.GUID) extends Request[Nothing]{ override type Response = MaybeLockResponse }
+  case class LockLock(lock: Host.GUID) extends Request[Nothing]{ override type Response = LockResponse }
   case class LockSpinOnce(lock: Host.GUID, backoff: Long) extends Request[Nothing]{ override type Response = LockResponse }
   case class LockResponse(newParent: Host.GUID) extends Response[Nothing]
-  case class TurnTrySubsume(turn: Host.GUID, lockedNewParent: Host.GUID) extends Request[Nothing]{ override type Response = MaybeLockResponse }
   case class LockTrySubsume(lock: Host.GUID, lockedNewParent: Host.GUID) extends Request[Nothing]{ override type Response = MaybeLockResponse }
-  case class MaybeLockResponse(newParentIfFailed: Option[Host.GUID]) extends Response[Nothing]
-  case class TurnSubsume(turn: Host.GUID, lockedNewParent: Host.GUID) extends Request[Nothing]{ override type Response = UnitResponse.type }
-  case class LockSubsume(lock: Host.GUID, lockedNewParent: Host.GUID) extends Request[Nothing]{ override type Response = UnitResponse.type }
-  case class TurnUnlock(turn: Host.GUID) extends Request[Nothing]{ override type Response = LockResponse }
-  case class LockUnlock(lock: Host.GUID) extends Request[Nothing]{ override type Response = LockResponse }
+  case class LockUnlock(lock: Host.GUID) extends Async[Nothing]
+  case class LockRemoteRefDropped(lock: Host.GUID) extends Async[Nothing]
 
   case class NewPredecessors(turn: Host.GUID, newPredecessors: Seq[Host.GUID]) extends Request[Nothing]{ override type Response = UnitResponse.type }
   case class NewPhase(turn: Host.GUID, phase: TurnPhase.Type) extends Request[Nothing]{ override type Response = UnitResponse.type }
@@ -288,7 +276,7 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
     promise.future
   }
 
-  def localLockInstance(guid: Host.GUID, endpoint: EndPointWithInfrastructure[Msg]): SubsumableLock = {
+  def localLockParameterInstance(guid: Host.GUID, endpoint: EndPointWithInfrastructure[Msg]): SubsumableLock = {
     host.lockHost.getCachedOrReceiveRemote(guid) { doCache =>
       if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host connecting lock $guid")
       val instance = new SubsumableLockReflection(host.lockHost, guid, new SubsumableLockProxyToEndpoint(guid, endpoint))
@@ -297,25 +285,32 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
     }
   }
 
-  def localTurnInstance0(guid: Host.GUID, endpoint: EndPointWithInfrastructure[Msg]): FullMVTurn = {
-    host.getCachedOrReceiveRemote(guid) { doCache =>
+  def localLockReceiverInstance(guid: Host.GUID): SubsumableLockProxy = {
+    // TODO .get might have been concurrently GC'd
+    host.lockHost.getInstance(guid).get
+  }
+
+  def localTurnParameterInstance(guid: Host.GUID, endpoint: EndPointWithInfrastructure[Msg]): FullMVTurn = {
+    val turn = host.getCachedOrReceiveRemote(guid) { doCache =>
       if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host connecting turn $guid")
-      val instance = new FullMVTurnReflection(host, guid, new FullMVTurnMirrorProxyToEndpoint(guid, endpoint), host.timeout)
+      val instance = new FullMVTurnReflection(host, guid, new FullMVTurnMirrorProxyToEndpoint(guid, endpoint))
       doCache(instance)
       val AddReplicatorResponse(initPhase, initPreds) =  Await.result(doRequest(endpoint, AddReplicator(guid)), host.timeout)
       instance.newPredecessors(initPreds)
       instance.newPhase(initPhase)
       instance
     }
-  }
-  def localTurnInstance(guid: Host.GUID, endpoint: EndPointWithInfrastructure[Msg]): FullMVTurn = {
-    val turn = localTurnInstance0(guid, endpoint)
     // TODO there might be a cleverer way to do this..
     turn.awaitPhase(TurnPhase.Initialized + 1)
     turn
   }
-  def localTurnReflection(guid: Host.GUID, endpoint: EndPointWithInfrastructure[Msg]): FullMVTurnReflection = {
-    localTurnInstance0(guid, endpoint).asInstanceOf[FullMVTurnReflection]
+
+  def localTurnReceiverInstance(guid: Host.GUID): FullMVTurn = {
+    host.getInstance(guid).get
+  }
+
+  def localTurnReflectionReceiverInstance(guid: Host.GUID): FullMVTurnReflection = {
+    localTurnReceiverInstance(guid).asInstanceOf[FullMVTurnReflection]
   }
 
   val valuePersistency: ValuePersistency[Pulse[P]]
@@ -331,8 +326,8 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
     doRequest(endpoint, Connect[Pluse[P]](turn.guid)).foreach {
       case Initialize(initValues, maybeFirstFrame) =>
         if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host received initialization package for $reflection")
-        val reflectionInitValues = initValues.map{ case (mirrorTurn, v) => localTurnInstance(mirrorTurn, endpoint) -> v }
-        val reflectionMaybeFirstFrame = maybeFirstFrame.map(localTurnInstance(_, endpoint))
+        val reflectionInitValues = initValues.map{ case (mirrorTurn, v) => localTurnParameterInstance(mirrorTurn, endpoint) -> v }
+        val reflectionMaybeFirstFrame = maybeFirstFrame.map(localTurnParameterInstance(_, endpoint))
 
         state.retrofitSinkFrames(reflectionInitValues.map(_._1), reflectionMaybeFirstFrame, +1)
         for((reflectionTurn, v) <- reflectionInitValues) reflection.buffer(reflectionTurn, v.toPulse)
@@ -349,119 +344,97 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
 
   def handleAsync(localReactive: Either[ReSourciV[Pulse[P], FullMVStruct], ReactiveReflection[P]], endpoint: EndPointWithInfrastructure[Msg], message: Async): Unit = message match {
     case AsyncIncrementFrame(turn) =>
-      localReactive.right.get.asyncIncrementFrame(localTurnInstance(turn, endpoint))
+      localReactive.right.get.asyncIncrementFrame(localTurnParameterInstance(turn, endpoint))
     case AsyncIncrementSupersedeFrame(turn, supersede) =>
-      localReactive.right.get.asyncIncrementSupersedeFrame(localTurnInstance(turn, endpoint), localTurnInstance(supersede, endpoint))
+      localReactive.right.get.asyncIncrementSupersedeFrame(localTurnParameterInstance(turn, endpoint), localTurnParameterInstance(supersede, endpoint))
     case AsyncResolveUnchanged(turn) =>
-      localReactive.right.get.asyncResolvedUnchanged(localTurnInstance(turn, endpoint))
+      localReactive.right.get.asyncResolvedUnchanged(localTurnParameterInstance(turn, endpoint))
     case AsyncResolveUnchangedFollowFrame(turn, followFrame) =>
-      localReactive.right.get.asyncResolvedUnchangedFollowFrame(localTurnInstance(turn, endpoint), localTurnInstance(followFrame, endpoint))
+      localReactive.right.get.asyncResolvedUnchangedFollowFrame(localTurnParameterInstance(turn, endpoint), localTurnParameterInstance(followFrame, endpoint))
     case AsyncNewValue(turn, value) =>
-      localReactive.right.get.asyncNewValue(localTurnInstance(turn, endpoint), value.toPulse)
+      localReactive.right.get.asyncNewValue(localTurnParameterInstance(turn, endpoint), value.toPulse)
     case AsyncNewValueFollowFrame(turn, value, followFrame) =>
-      localReactive.right.get.asyncNewValueFollowFrame(localTurnInstance(turn, endpoint), value.toPulse, localTurnInstance(followFrame, endpoint))
+      localReactive.right.get.asyncNewValueFollowFrame(localTurnParameterInstance(turn, endpoint), value.toPulse, localTurnParameterInstance(followFrame, endpoint))
 
     case AsyncRemoteBranchComplete(receiver, forPhase) =>
-      localTurnInstance(receiver, endpoint).asyncRemoteBranchComplete(forPhase)
+      localTurnReceiverInstance(receiver).asyncRemoteBranchComplete(forPhase)
     case AsyncReleasePhaseLock(receiver) =>
-      localTurnInstance(receiver, endpoint).asyncReleasePhaseLock()
+      localTurnReceiverInstance(receiver).asyncReleasePhaseLock()
+
+    case LockUnlock(receiver) =>
+      localLockReceiverInstance(receiver).unlock()
+    case LockRemoteRefDropped(receiver) =>
+      localLockReceiverInstance(receiver).remoteRefDropped()
   }
 
   def handleRequest(localReactive: Either[ReSourciV[Pulse[P], FullMVStruct], ReactiveReflection[P]], endpoint: EndPointWithInfrastructure[Msg], request: Request): Future[Response] = request match {
     case Connect(turn) =>
-      val (initValues, maybeFirstFrame) = ReactiveMirror[Pulse[P]](localReactive.left.get, localTurnInstance(turn, endpoint), new ReactiveReflectionProxyToEndpoint(endpoint), valuePersistency.isTransient, s"Mirror($endpoint)")
+      val (initValues, maybeFirstFrame) = ReactiveMirror[Pulse[P]](localReactive.left.get, localTurnParameterInstance(turn, endpoint), new ReactiveReflectionProxyToEndpoint(endpoint), valuePersistency.isTransient, s"Mirror($endpoint)")
       Future.successful(Initialize(initValues.map { case (aTurn, value) =>
         assert(aTurn.host == host)
         (aTurn.guid, Pluse.fromPulse(value))
       }, maybeFirstFrame.map(_.guid)))
     case AddReplicator(receiver) =>
-      val (initPhase, initPreds) = localTurnInstance(receiver, endpoint).addReplicator(new FullMVTurnReflectionProxyToEndpoint(receiver, endpoint))
+      val (initPhase, initPreds) = localTurnReceiverInstance(receiver).addReplicator(new FullMVTurnReflectionProxyToEndpoint(receiver, endpoint))
       Future.successful(AddReplicatorResponse(initPhase, initPreds))
     case AddRemoteBranch(receiver, forPhase) =>
-      localTurnInstance(receiver, endpoint).addRemoteBranch(forPhase).map(_ => UnitResponse)(notWorthToMoveToTaskpool)
+      localTurnReceiverInstance(receiver).addRemoteBranch(forPhase).map(_ => UnitResponse)(notWorthToMoveToTaskpool)
     case AcquirePhaseLockAndGetEstablishmentBundle(receiver) =>
-      localTurnInstance(receiver, endpoint).acquirePhaseLockAndGetEstablishmentBundle().map {
+      localTurnReceiverInstance(receiver).acquirePhaseLockAndGetEstablishmentBundle().map {
         case (phase, predecessorTree) => AcquirePhaseLockAndGetEstablishmentBundleResponse(phase, predecessorTree.map { turn =>
           assert(turn.host == host)
           turn.guid
         })
       }(ReactiveTransmittable.notWorthToMoveToTaskpool)
     case AddPredecessorAndReleasePhaseLock(receiver, predecessorSpanningTree) =>
-      localTurnInstance(receiver, endpoint).addPredecessorAndReleasePhaseLock(predecessorSpanningTree.map(localTurnInstance(_, endpoint))).map(_ => UnitResponse)(notWorthToMoveToTaskpool)
+      localTurnReceiverInstance(receiver).addPredecessorAndReleasePhaseLock(predecessorSpanningTree.map(localTurnParameterInstance(_, endpoint))).map(_ => UnitResponse)(notWorthToMoveToTaskpool)
     case MaybeNewReachableSubtree(receiver, attachBelow, spanningSubTreeRoot) =>
-      localTurnInstance(receiver, endpoint).maybeNewReachableSubtree(localTurnInstance(attachBelow, endpoint), spanningSubTreeRoot.map(localTurnInstance(_, endpoint))).map(_ => UnitResponse)(notWorthToMoveToTaskpool)
+      localTurnReceiverInstance(receiver).maybeNewReachableSubtree(localTurnParameterInstance(attachBelow, endpoint), spanningSubTreeRoot.map(localTurnParameterInstance(_, endpoint))).map(_ => UnitResponse)(notWorthToMoveToTaskpool)
     case NewSuccessor(receiver, successor) =>
-      localTurnInstance(receiver, endpoint).newSuccessor(localTurnInstance(successor, endpoint)).map(_ => UnitResponse)(notWorthToMoveToTaskpool)
+      localTurnReceiverInstance(receiver).newSuccessor(localTurnParameterInstance(successor, endpoint)).map(_ => UnitResponse)(notWorthToMoveToTaskpool)
 
-    case TurnSubsume(receiver, newParent) =>
-      localTurnInstance(receiver, endpoint).subsume(localLockInstance(newParent, endpoint)).map(_ => UnitResponse)(notWorthToMoveToTaskpool)
-    case TurnUnlock(receiver) =>
-      localTurnInstance(receiver, endpoint).unlock().map{ newParent =>
-        assert(newParent.host == host.lockHost)
-        LockResponse(newParent.guid)
-      }(notWorthToMoveToTaskpool)
     case TurnGetLockedRoot(receiver) =>
-      localTurnInstance(receiver, endpoint).getLockedRoot.map { res =>
+      localTurnReceiverInstance(receiver).getLockedRoot.map { res =>
         MaybeLockResponse(res)
       }(notWorthToMoveToTaskpool)
-    case TurnTryLock(receiver) =>
-      localTurnInstance(receiver, endpoint).tryLock().map { case TryLockResult(success, newParent) =>
-        assert(newParent.host == host)
-        TryLockResponse(success, newParent.guid)
-      }(notWorthToMoveToTaskpool)
     case TurnLock(receiver) =>
-      localTurnInstance(receiver, endpoint).lock().map { newParent =>
+      localTurnReceiverInstance(receiver).lock().map { newParent =>
         assert(newParent.host == host)
         LockResponse(newParent.guid)
       }(notWorthToMoveToTaskpool)
     case TurnSpinOnce(receiver, backoff) =>
-      localTurnInstance(receiver, endpoint).spinOnce(backoff).map { newParent =>
+      localTurnReceiverInstance(receiver).spinOnce(backoff).map { newParent =>
         assert(newParent.host == host)
         LockResponse(newParent.guid)
       }(notWorthToMoveToTaskpool)
     case TurnTrySubsume(receiver, lockedNewParent) =>
-      localTurnInstance(receiver, endpoint).trySubsume(localLockInstance(lockedNewParent, endpoint)).map { res =>
-        MaybeLockResponse(res.map { resNewParent =>
-          assert(resNewParent.host == host)
-          resNewParent.guid
-        })
+      localTurnReceiverInstance(receiver).trySubsume(localLockParameterInstance(lockedNewParent, endpoint)).map { success =>
+        BooleanResponse(success)
       }(notWorthToMoveToTaskpool)
 
 
     case NewPredecessors(receiver, predecessors) =>
-      localTurnReflection(receiver, endpoint).newPredecessors(predecessors).map(_ => UnitResponse)(notWorthToMoveToTaskpool)
+      localTurnReflectionReceiverInstance(receiver).newPredecessors(predecessors).map(_ => UnitResponse)(notWorthToMoveToTaskpool)
     case NewPhase(receiver, phase) =>
-      localTurnReflection(receiver, endpoint).newPhase(phase).map(_ => UnitResponse)(notWorthToMoveToTaskpool)
+      localTurnReflectionReceiverInstance(receiver).newPhase(phase).map(_ => UnitResponse)(notWorthToMoveToTaskpool)
 
 
-    case LockSubsume(receiver, newParent) =>
-      localLockInstance(receiver, endpoint).subsume(localLockInstance(newParent, endpoint)).map(_ => UnitResponse)(notWorthToMoveToTaskpool)
-    case LockUnlock(receiver) =>
-      localLockInstance(receiver, endpoint).unlock().map{ newParent =>
-        assert(newParent.host == host.lockHost)
-        LockResponse(newParent.guid)
-      }(notWorthToMoveToTaskpool)
     case LockGetLockedRoot(receiver) =>
-      localLockInstance(receiver, endpoint).getLockedRoot.map { res =>
+      localLockReceiverInstance(receiver).getLockedRoot.map { res =>
         MaybeLockResponse(res)
       }(notWorthToMoveToTaskpool)
-    case LockTryLock(receiver) =>
-      localLockInstance(receiver, endpoint).tryLock().map { case TryLockResult(success, newParent) =>
-        assert(newParent.host == host)
-        TryLockResponse(success, newParent.guid)
-      }(notWorthToMoveToTaskpool)
     case LockLock(receiver) =>
-      localLockInstance(receiver, endpoint).lock().map { newParent =>
+      localLockReceiverInstance(receiver).lock().map { newParent =>
         assert(newParent.host == host)
         LockResponse(newParent.guid)
       }(notWorthToMoveToTaskpool)
     case LockSpinOnce(receiver, backoff) =>
-      localLockInstance(receiver, endpoint).spinOnce(backoff).map { newParent =>
+      localLockReceiverInstance(receiver).spinOnce(backoff).map { newParent =>
         assert(newParent.host == host)
         LockResponse(newParent.guid)
       }(notWorthToMoveToTaskpool)
     case LockTrySubsume(receiver, lockedNewParent) =>
-      localLockInstance(receiver, endpoint).trySubsume(localLockInstance(lockedNewParent, endpoint)).map { res =>
+      localLockReceiverInstance(receiver).trySubsume(localLockParameterInstance(lockedNewParent, endpoint)).map { res =>
         MaybeLockResponse(res.map { resNewParent =>
           assert(resNewParent.host == host)
           resNewParent.guid
@@ -483,7 +456,7 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
     override def acquirePhaseLockAndGetEstablishmentBundle(): Future[(TurnPhase.Type, TransactionSpanningTreeNode[FullMVTurn])] = {
       doRequest(endpoint, AcquirePhaseLockAndGetEstablishmentBundle(guid)).map {
         case AcquirePhaseLockAndGetEstablishmentBundleResponse(phase, tree) =>
-          (phase, tree.map(localTurnInstance(_, endpoint)))
+          (phase, tree.map(localTurnParameterInstance(_, endpoint)))
       }(executeInTaskPool)
     }
     override def addPredecessorAndReleasePhaseLock(predecessorSpanningTree: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = {
@@ -507,45 +480,28 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
       doRequest(endpoint, NewSuccessor(guid, successor.guid)).map(_ => ())(notWorthToMoveToTaskpool)
     }
 
-    override def subsume(lockedNewParent: SubsumableLock): Future[Unit] = {
-      assert(lockedNewParent.host == host.lockHost)
-      doRequest(endpoint, TurnSubsume(guid, lockedNewParent.guid)).map(_ => ())(notWorthToMoveToTaskpool)
-    }
-    override def unlock(): Future[SubsumableLock] = {
-      doRequest(endpoint, TurnUnlock(guid)).map {
-        case LockResponse(newParent) =>
-          localLockInstance(newParent, endpoint)
-      }(executeInTaskPool)
-    }
     override def getLockedRoot: Future[Option[Host.GUID]] = {
       doRequest(endpoint, TurnGetLockedRoot(guid)).map {
         case MaybeLockResponse(maybeRoot) =>
           maybeRoot
       }(notWorthToMoveToTaskpool)
     }
-    override def tryLock(): Future[TryLockResult] = {
-      doRequest(endpoint, TurnTryLock(guid)).map {
-        case TryLockResponse(success, newParent) =>
-          TryLockResult(success, localLockInstance(newParent, endpoint))
-      }(executeInTaskPool)
-    }
     override def lock(): Future[SubsumableLock] = {
       doRequest(endpoint, TurnLock(guid)).map {
         case LockResponse(newParent) =>
-          localLockInstance(newParent, endpoint)
+          localLockParameterInstance(newParent, endpoint)
       }(executeInTaskPool)
     }
     override def spinOnce(backoff: Host.GUID): Future[SubsumableLock] = {
       doRequest(endpoint, TurnSpinOnce(guid, backoff)).map {
         case LockResponse(newParent) =>
-          localLockInstance(newParent, endpoint)
+          localLockParameterInstance(newParent, endpoint)
       }(executeInTaskPool)
     }
-    override def trySubsume(lockedNewParent: SubsumableLock): Future[Option[SubsumableLock]] = {
+    override def trySubsume(lockedNewParent: SubsumableLock): Future[Boolean] = {
       assert(lockedNewParent.host == host.lockHost)
       doRequest(endpoint, TurnTrySubsume(guid, lockedNewParent.guid)).map {
-        case MaybeLockResponse(newParentIfFailed) =>
-          newParentIfFailed.map(localLockInstance(_, endpoint))
+        case BooleanResponse(bool) => bool
       }(executeInTaskPool)
     }
   }
@@ -561,15 +517,8 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
   }
 
   class SubsumableLockProxyToEndpoint(val guid: Host.GUID, endpoint: EndPointWithInfrastructure[Msg]) extends SubsumableLockProxy {
-    override def subsume(lockedNewParent: SubsumableLock): Future[Unit] = {
-      assert(lockedNewParent.host == host.lockHost)
-      doRequest(endpoint, LockSubsume(guid, lockedNewParent.guid)).map(_ => ())(notWorthToMoveToTaskpool)
-    }
-    override def unlock(): Future[SubsumableLock] = {
-      doRequest(endpoint, LockUnlock(guid)).map {
-        case LockResponse(newParent) =>
-          localLockInstance(newParent, endpoint)
-      }(executeInTaskPool)
+    override def unlock(): Unit = {
+      doAsync(endpoint, LockUnlock(guid))
     }
     override def getLockedRoot: Future[Option[Host.GUID]] = {
       doRequest(endpoint, LockGetLockedRoot(guid)).map {
@@ -577,30 +526,27 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
           maybeRoot
       }(notWorthToMoveToTaskpool)
     }
-    override def tryLock(): Future[TryLockResult] = {
-      doRequest(endpoint, LockTryLock(guid)).map {
-        case TryLockResponse(success, newParent) =>
-          TryLockResult(success, localLockInstance(newParent, endpoint))
-      }(executeInTaskPool)
-    }
     override def lock(): Future[SubsumableLock] = {
       doRequest(endpoint, LockLock(guid)).map {
         case LockResponse(newParent) =>
-          localLockInstance(newParent, endpoint)
+          localLockParameterInstance(newParent, endpoint)
       }(executeInTaskPool)
     }
     override def spinOnce(backoff: Host.GUID): Future[SubsumableLock] = {
       doRequest(endpoint, LockSpinOnce(guid, backoff)).map {
         case LockResponse(newParent) =>
-          localLockInstance(newParent, endpoint)
+          localLockParameterInstance(newParent, endpoint)
       }(executeInTaskPool)
     }
     override def trySubsume(lockedNewParent: SubsumableLock): Future[Option[SubsumableLock]] = {
       assert(lockedNewParent.host == host.lockHost)
       doRequest(endpoint, LockTrySubsume(guid, lockedNewParent.guid)).map {
         case MaybeLockResponse(newParentIfFailed) =>
-          newParentIfFailed.map(localLockInstance(_, endpoint))
+          newParentIfFailed.map(localLockParameterInstance(_, endpoint))
       }(executeInTaskPool)
+    }
+    override def remoteRefDropped(): Unit = {
+      doAsync(endpoint, LockRemoteRefDropped(guid))
     }
   }
 

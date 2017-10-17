@@ -13,9 +13,9 @@ import scala.util.Try
 
 class FullMVEngine(val timeout: Duration, val name: String) extends EngineImpl[FullMVStruct, FullMVTurn] with FullMVTurnHost with HostImpl[FullMVTurn] {
   override object lockHost extends SubsumableLockHostImpl
-  def newTurn(): FullMVTurnImpl = createLocal(new FullMVTurnImpl(this, _, Thread.currentThread(), timeout, lockHost.newLock()))
+  def newTurn(): FullMVTurnImpl = createLocal(new FullMVTurnImpl(this, _, Thread.currentThread(), lockHost.newLock()))
   override val dummy: FullMVTurnImpl = {
-    val dummy = new FullMVTurnImpl(this, Host.dummyGuid, null, Duration.Zero, null)
+    val dummy = new FullMVTurnImpl(this, Host.dummyGuid, null, null)
     instances.put(Host.dummyGuid, dummy)
     dummy.awaitAndSwitchPhase(TurnPhase.Completed)
     dummy

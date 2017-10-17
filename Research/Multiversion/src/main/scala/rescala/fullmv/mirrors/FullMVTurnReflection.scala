@@ -4,11 +4,12 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import rescala.fullmv.{FullMVEngine, FullMVTurn, TransactionSpanningTreeNode, TurnPhase}
 import rescala.fullmv.TurnPhase.Type
+import rescala.fullmv.mirrors.Host.GUID
+import rescala.fullmv.sgt.synchronization.{SubsumableLock, SubsumableLockEntryPoint}
 
-import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
-class FullMVTurnReflection(override val host: FullMVEngine, override val guid: Host.GUID, override val proxy: FullMVTurnProxy, timeout: Duration) extends FullMVTurn(timeout) with SubsumableLockReflectionMethodsToProxy with FullMVTurnReflectionProxy {
+class FullMVTurnReflection(override val host: FullMVEngine, override val guid: Host.GUID, val proxy: FullMVTurnProxy) extends FullMVTurn with SubsumableLockEntryPoint with FullMVTurnReflectionProxy {
   object phaseParking
   var phase: TurnPhase.Type = TurnPhase.Initialized
   object subLock
@@ -30,7 +31,7 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
     val after = before + differential
     if(before == 0) {
       if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this reactivated locally, registering remote branch.")
-      Await.result(proxy.addRemoteBranch(forState), timeout)
+      Await.result(proxy.addRemoteBranch(forState), host.timeout)
     } else if(after == 0) {
       if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this done locally, deregistering remote branch.")
       proxy.asyncRemoteBranchComplete(forState)
@@ -62,7 +63,7 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
     }
     val forwards = reps.map(_.newPredecessors(predecessors))
     for(call <- forwards) {
-      Await.result(call, timeout)
+      Await.result(call, host.timeout)
     }
     Future.successful(Unit)
   }
@@ -85,7 +86,7 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
     }
     val forwards = reps.map(_.newPhase(phase))
     for (call <- forwards) {
-      Await.result(call, timeout)
+      Await.result(call, host.timeout)
     }
     Future.successful(Unit)
   }
@@ -99,6 +100,11 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
   override def maybeNewReachableSubtree(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = proxy.maybeNewReachableSubtree(attachBelow, spanningSubTreeRoot)
 
   override def newSuccessor(successor: FullMVTurn): Future[Unit] = proxy.newSuccessor(successor)
+
+  override def getLockedRoot: Future[Option[GUID]] = proxy.getLockedRoot
+  override def lock(): Future[SubsumableLock] = proxy.lock()
+  override def spinOnce(backoff: Long): Future[SubsumableLock] = proxy.spinOnce(backoff)
+  override def trySubsume(lockedNewParent: SubsumableLock): Future[Boolean] = proxy.trySubsume(lockedNewParent)
 
   override def toString: String = s"FullMVTurnReflection($guid on $host, ${TurnPhase.toString(phase)}${if(localBranchCountBuffer.get != 0) s"(${localBranchCountBuffer.get})" else ""})"
 }

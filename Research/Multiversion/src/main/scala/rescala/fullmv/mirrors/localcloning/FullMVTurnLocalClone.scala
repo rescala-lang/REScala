@@ -1,6 +1,7 @@
 package rescala.fullmv.mirrors.localcloning
 
 import rescala.fullmv.mirrors._
+import rescala.fullmv.sgt.synchronization.SubsumableLock
 import rescala.fullmv.transmitter.ReactiveTransmittable
 import rescala.fullmv.{FullMVEngine, FullMVTurn, TransactionSpanningTreeNode, TurnPhase}
 
@@ -11,7 +12,7 @@ object FullMVTurnLocalClone {
     reflectionHost.getCachedOrReceiveRemote(turn.guid) { cacheNow =>
       val mirrorHost = turn.host
       val localMirror: FullMVTurnProxy = turn
-      val mirrorProxy: FullMVTurnProxy = new SubsumableLockLocalCloneProxy(mirrorHost.lockHost, localMirror, reflectionHost.lockHost) with FullMVTurnProxy {
+      val mirrorProxy: FullMVTurnProxy = new FullMVTurnProxy {
         override def addPredecessorAndReleasePhaseLock(predecessorSpanningTree: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = {
           localMirror.addPredecessorAndReleasePhaseLock(predecessorSpanningTree.map(FullMVTurnLocalClone(_, mirrorHost)))
         }
@@ -27,9 +28,14 @@ object FullMVTurnLocalClone {
         override def addRemoteBranch(forPhase: TurnPhase.Type): Future[Unit] = localMirror.addRemoteBranch(forPhase)
         override def newSuccessor(successor: FullMVTurn): Future[Unit] = localMirror.newSuccessor(FullMVTurnLocalClone(successor, mirrorHost))
         override def asyncReleasePhaseLock(): Unit = localMirror.asyncReleasePhaseLock()
+
+        override def getLockedRoot = localMirror.getLockedRoot
+        override def lock() = localMirror.lock().map(SubsumableLockLocalClone(_, reflectionHost.lockHost))(ReactiveTransmittable.notWorthToMoveToTaskpool)
+        override def spinOnce(backoff: Long) = localMirror.spinOnce(backoff).map(SubsumableLockLocalClone(_, reflectionHost.lockHost))(ReactiveTransmittable.notWorthToMoveToTaskpool)
+        override def trySubsume(lockedNewParent: SubsumableLock) = localMirror.trySubsume(SubsumableLockLocalClone(lockedNewParent, mirrorHost.lockHost))
       }
 
-      val reflection = new FullMVTurnReflection(reflectionHost, turn.guid, mirrorProxy, turn.timeout)
+      val reflection = new FullMVTurnReflection(reflectionHost, turn.guid, mirrorProxy)
 
       val reflectionProxy = new FullMVTurnReflectionProxy {
         override def newPhase(phase: TurnPhase.Type): Future[Unit] = reflection.newPhase(phase)

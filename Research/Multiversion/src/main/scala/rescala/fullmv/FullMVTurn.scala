@@ -7,9 +7,7 @@ import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperat
 import rescala.fullmv.mirrors.{FullMVTurnProxy, FullMVTurnReflectionProxy, Host, Hosted}
 import rescala.fullmv.tasks.{Notification, Reevaluation}
 
-import scala.concurrent.duration.Duration
-
-abstract class FullMVTurn(val timeout: Duration) extends TurnImpl[FullMVStruct] with FullMVTurnProxy with Hosted {
+trait FullMVTurn extends TurnImpl[FullMVStruct] with FullMVTurnProxy with Hosted {
   override val host: FullMVEngine
 
   //========================================================Internal Management============================================================
@@ -32,7 +30,7 @@ abstract class FullMVTurn(val timeout: Duration) extends TurnImpl[FullMVStruct] 
   //========================================================Scheduler Interface============================================================
 
   override def makeDerivedStructState[P](valuePersistency: ValuePersistency[P]): NodeVersionHistory[P, FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]] = {
-    val state = new NodeVersionHistory[P, FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]](host.dummy, valuePersistency, timeout)
+    val state = new NodeVersionHistory[P, FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]](host.dummy, valuePersistency, host.timeout)
     state.incrementFrame(this)
     state
   }

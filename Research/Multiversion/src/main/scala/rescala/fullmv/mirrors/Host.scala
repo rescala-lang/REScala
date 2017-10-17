@@ -20,7 +20,7 @@ object Host {
   val dummyGuid: GUID = 0L
 }
 trait Host[T] {
-  def getInstance(guid: Host.GUID): T
+  def getInstance(guid: Host.GUID): Option[T]
   def getCachedOrReceiveRemote(guid: Host.GUID)(instantiateReflection: (T => Unit) => T): T
   def dropInstance(guid: GUID, instance: T): Unit
   def createLocal[U <: T](create: Host.GUID => U): U
@@ -30,12 +30,7 @@ trait HostImpl[T] extends Host[T] {
   val instances: ConcurrentMap[GUID, T] = new ConcurrentHashMap()
   val dummy: T
 
-  override def getInstance(guid: GUID) = {
-    val instance = instances.get(guid)
-    assert(instance != null)
-    instance
-  }
-
+  override def getInstance(guid: GUID): Option[T] = Option(instances.get(guid))
   override def getCachedOrReceiveRemote(guid: GUID)(instantiateReflection: (T => Unit) => T): T = {
     @inline @tailrec def findOrReserveInstance(): T = {
       val found = instances.putIfAbsent(guid, dummy)

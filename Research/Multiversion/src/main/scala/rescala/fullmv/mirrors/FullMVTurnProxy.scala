@@ -1,10 +1,11 @@
 package rescala.fullmv.mirrors
 
+import rescala.fullmv.sgt.synchronization.SubsumableLockEntryPoint
 import rescala.fullmv.{FullMVTurn, TransactionSpanningTreeNode, TurnPhase}
 
 import scala.concurrent.Future
 
-trait FullMVTurnProxy extends SubsumableLockProxy {
+trait FullMVTurnProxy extends SubsumableLockEntryPoint {
   def addRemoteBranch(forPhase: TurnPhase.Type): Future[Unit]
   def asyncRemoteBranchComplete(forPhase: TurnPhase.Type): Unit
 

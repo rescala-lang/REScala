@@ -13,7 +13,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
 
-class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GUID, val userlandThread: Thread, timeout: Duration, initialLock: SubsumableLock) extends FullMVTurn(timeout) {
+class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GUID, val userlandThread: Thread, initialLock: SubsumableLock) extends FullMVTurn {
   // counts the sum of in-flight notifications, in-progress reevaluations.
   var activeBranches = new AtomicInteger(0)
 
@@ -94,7 +94,7 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
     val reps = awaitAndAtomicCasPhaseAndGetReps()
     val forwards = reps.map(_.newPhase(newPhase))
     for(call <- forwards) {
-      Await.result(call, timeout)
+      Await.result(call, host.timeout)
     }
   }
 
@@ -211,42 +211,46 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
   override def getLockedRoot: Future[Option[Host.GUID]] = subsumableLock.get.getLockedRoot
   override def lock(): Future[SubsumableLock] = {
     val l = subsumableLock.get()
-    val res = l.lock()
-    res.foreach(subsumableLock.compareAndSet(l, _))(ReactiveTransmittable.notWorthToMoveToTaskpool)
-    res
-  }
-  override def tryLock(): Future[SubsumableLock.TryLockResult] = {
-    val l = subsumableLock.get()
-    val res = l.tryLock()
-    res.foreach(r => subsumableLock.compareAndSet(l, r.newParent))(ReactiveTransmittable.notWorthToMoveToTaskpool)
-    res
+    val res = l.lock(0)
+    res.map{ case (failedRefChanges, newRoot) =>
+      casLockAndNotifyFailedRefChanges(l, failedRefChanges, newRoot)
+      newRoot
+    }(ReactiveTransmittable.notWorthToMoveToTaskpool)
   }
   override def spinOnce(backoff: Long): Future[SubsumableLock] = {
     val l = subsumableLock.get()
-    val res = l.spinOnce(backoff)
-    res.foreach(subsumableLock.compareAndSet(l, _))(ReactiveTransmittable.notWorthToMoveToTaskpool)
-    res
+    val res = l.spinOnce(0, backoff)
+    res.map{ case (failedRefChanges, newRoot) =>
+      casLockAndNotifyFailedRefChanges(l, failedRefChanges, newRoot)
+      newRoot
+    }(ReactiveTransmittable.notWorthToMoveToTaskpool)
   }
-  override def trySubsume(lockedNewParent: SubsumableLock): Future[Option[SubsumableLock]] = {
+  override def trySubsume(lockedNewParent: SubsumableLock): Future[Boolean] = {
     val l = subsumableLock.get()
-    val res = l.trySubsume(lockedNewParent)
-    res.foreach(r => subsumableLock.compareAndSet(l, r.getOrElse(lockedNewParent)))(ReactiveTransmittable.notWorthToMoveToTaskpool)
-    res
+    val res = l.trySubsume(0, lockedNewParent)
+    res.map{
+      case (failedRefChanges, Some(newRoot)) =>
+        casLockAndNotifyFailedRefChanges(l, failedRefChanges, newRoot)
+        false
+      case (failedRefChanges, None) =>
+        casLockAndNotifyFailedRefChanges(l, failedRefChanges, lockedNewParent)
+        false
+    }(ReactiveTransmittable.notWorthToMoveToTaskpool)
   }
-  override def subsume(lockedNewParent: SubsumableLock): Future[Unit] = {
-    val l = subsumableLock.get()
-    val res = l.subsume(lockedNewParent)
-    subsumableLock.compareAndSet(l, lockedNewParent)
-    res
-  }
-  override def unlock(): Future[SubsumableLock] = {
-    val l = subsumableLock.get()
-    val res = l.unlock()
-    res.foreach(subsumableLock.compareAndSet(l, _))(ReactiveTransmittable.notWorthToMoveToTaskpool)
-    res
+
+  private def casLockAndNotifyFailedRefChanges(from: SubsumableLock, failedRefChanges: Type, newRoot: SubsumableLock): Unit = {
+    val success = subsumableLock.compareAndSet(from, newRoot)
+    val finalFailedRefChanges = failedRefChanges + (if (success) {
+      from.asyncSubRefs(1)
+      0
+    } else {
+      1
+    })
+    newRoot.asyncSubRefs(finalFailedRefChanges)
   }
 
   //========================================================ToString============================================================
+
 
   override def toString: String = s"FullMVTurn($guid on $host, ${TurnPhase.toString(phase)}${if(activeBranches.get != 0) s"(${activeBranches.get})" else ""})"
 }

@@ -12,7 +12,7 @@ object ReactiveMirror {
   def apply[A](reactive: ReSourciV[A, FullMVStruct], turn: FullMVTurn, reflectionProxy: ReactiveReflectionProxy[A], reflectionIsTransient: Boolean, rename: REName): (Array[(FullMVTurn, A)], Option[FullMVTurn]) = {
     assert(turn.host == reactive.state.host, s"mirror installation for $reactive on ${reactive.state.host} with $turn from different ${turn.host}")
     def getValue(turn: FullMVTurn): A = reactive.state.staticAfter(turn)
-    val mirror = new ReactiveMirror(getValue, reflectionProxy, turn.timeout, rename)
+    val mirror = new ReactiveMirror(getValue, reflectionProxy, turn.host.timeout, rename)
 
     val ownValue = reactive.state.dynamicAfter(turn)
     val (successorWrittenVersions, maybeFirstFrame) = reactive.state.discover(turn, mirror)
