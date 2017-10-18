@@ -24,5 +24,11 @@ class SubsumableLockReflection(override val host: SubsumableLockHost, override v
   override def spinOnce(backoff: GUID): Future[SubsumableLock] = proxy.spinOnce(backoff)
   override def trySubsume(lockedNewParent: SubsumableLock): Future[Option[SubsumableLock]] = proxy.trySubsume(lockedNewParent)
 
-  override def toString: String = s"SubsumableLockReflection($guid on $host)"
+
+  override protected def dumped(): Unit = proxy.remoteRefDropped()
+
+  override def toString: String = {
+    val refs = refCount.get()
+    s"SubsumableLockReflection($guid on $host, ${if(refs <= 0) "gc'd" else refs + " refs"})"
+  }
 }

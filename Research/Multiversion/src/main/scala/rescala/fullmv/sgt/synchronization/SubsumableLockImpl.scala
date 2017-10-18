@@ -30,7 +30,7 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
       assert(lockedNewParent eq this, s"instance caching broken? $this came into contact with reflection of itself on same host")
       assert(state.get == Self, s"passed in a TryLockResult indicates that $this was successfully locked, but it currently isn't!")
       if (DEBUG) println(s"[${Thread.currentThread().getName}]: trySubsume $this to itself reentrant success")
-      refCount.getAndAdd(hopCount)
+      addRefs(hopCount)
       futureZeroNone
     } else {
       state.get match {
@@ -38,26 +38,24 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
           val success = state.compareAndSet(null, lockedNewParent)
           if(success) {
             if (DEBUG) println(s"[${Thread.currentThread().getName}]: trySubsume $this succeeded")
-            lockedNewParent.addRefs(hopCount + 1).map(_ => (0, None))(ReactiveTransmittable.notWorthToMoveToTaskpool)
+            val obsolete = refCount.get() <= 1
+            if(obsolete && refCount.getAndSet(Integer.MIN_VALUE / 2) > 0) {
+              host.dropInstance(guid, this)
+              if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this preemptive dump")
+            }
+            lockedNewParent.addRefs(hopCount + (if (obsolete) 1 else 2)).map(_ => (0, None))(ReactiveTransmittable.notWorthToMoveToTaskpool)
           } else {
             if (DEBUG) println(s"[${Thread.currentThread().getName}]: retrying contended trySubsume $this to $lockedNewParent")
             trySubsume(hopCount, lockedNewParent)
           }
         case Self =>
           if (DEBUG) println(s"[${Thread.currentThread().getName}]: trySubsume $this to $lockedNewParent blocked")
-          refCount.getAndAdd(hopCount)
+          addRefs(hopCount)
           Future.successful((0, Some(this)))
         case parent =>
-          val remainingRefs = refCount.get - 1
-          val res = parent.trySubsume(if(remainingRefs == 0) hopCount else hopCount + 1, lockedNewParent)
-          res.map { case r @ (failedRefChanges, p) =>
-            if(state.compareAndSet(parent, p.getOrElse(lockedNewParent))){
-              parent.asyncSubRefs(1)
-              r
-            } else {
-              (failedRefChanges + 1, p)
-            }
-          }(ReactiveTransmittable.notWorthToMoveToTaskpool)
+          val obsoleteAfterwards = refCount.get <= 1
+          val res = parent.trySubsume(if(obsoleteAfterwards) hopCount else hopCount + 1, lockedNewParent)
+          res.map { res => trySwap(parent, res._2.getOrElse(lockedNewParent), obsoleteAfterwards, res) }(ReactiveTransmittable.notWorthToMoveToTaskpool)
       }
     }
   }
@@ -68,7 +66,7 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
       case null =>
         if(state.compareAndSet(null, Self)) {
           if(DEBUG) println(s"[${Thread.currentThread().getName}]: locked $this; $hopCount new refs")
-          refCount.getAndAdd(hopCount)
+          addRefs(hopCount)
           Future.successful((0, this))
         } else {
           if(DEBUG) println(s"[${Thread.currentThread().getName}]: retrying contended lock attempt of $this")
@@ -89,16 +87,9 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
         lock(hopCount)
       case parent =>
         LockSupport.unpark(waiters.peek())
-        val remainingRefs = refCount.get - 1
-        val newParent = parent.lock(if(remainingRefs == 0) hopCount else hopCount + 1)
-        newParent.map { case res @ (failedRefChanges, p) =>
-          if(state.compareAndSet(parent, p)) {
-            parent.asyncSubRefs(1)
-            res
-          } else {
-            (failedRefChanges + 1, p)
-          }
-        }(ReactiveTransmittable.notWorthToMoveToTaskpool)
+        val obsoleteAfterwards = refCount.get <= 1
+        val newParent = parent.lock(if(obsoleteAfterwards) hopCount else hopCount + 1)
+        newParent.map { res => trySwap(parent, res._2, obsoleteAfterwards, res) }(ReactiveTransmittable.notWorthToMoveToTaskpool)
     }
   }
 
@@ -131,24 +122,37 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
         Backoff.milliSleepNanoSpin(backoff)
         lock(hopCount)
       case parent =>
-        val remainingRefs = refCount.get - 1
-        val newParent = parent.spinOnce(if(remainingRefs == 0) hopCount else hopCount + 1, backoff)
-        newParent.map { case res @ (failedRefChanges, p) =>
-          if(state.compareAndSet(parent, p)) {
-            parent.asyncSubRefs(1)
-            res
-          } else {
-            (failedRefChanges + 1, p)
-          }
-        }(ReactiveTransmittable.notWorthToMoveToTaskpool)
+        val obsoleteAfterwards = refCount.get <= 1
+        val newParent = parent.spinOnce(if(obsoleteAfterwards) hopCount else hopCount + 1, backoff)
+        newParent.map { res => trySwap(parent, res._2, obsoleteAfterwards, res) }(ReactiveTransmittable.notWorthToMoveToTaskpool)
     }
   }
 
-  override def toString = s"Lock($guid on $host, ${state.get match {
+  def trySwap[T](from: SubsumableLock, to: SubsumableLock, obsolete: Boolean, res: (Int, T)): (Int, T) = {
+    if(from == to) {
+      res
+    } else if(state.compareAndSet(from, to)) {
+      from.asyncSubRefs(1)
+      if(obsolete && refCount.getAndSet(Integer.MIN_VALUE / 2) > 0) {
+        host.dropInstance(guid, this)
+        if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this preemptive dump")
+      }
+      res
+    } else {
+      if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this parent cas $from -> $to preempted by contention")
+      val (failedRefChanges, t) = res
+      (failedRefChanges + 1, t)
+    }
+  }
+
+  override def toString = {
+    val refs = refCount.get()
+    s"Lock($guid on $host, ${state.get match {
       case null => "unlocked"
       case Self => "locked"
       case other => s"subsumed($other)"
-    }}, ${refCount.get()} refs)"
+    }}, ${if(refs <= 0) "gc'd" else refs + " refs"})"
+  }
 
   override def lock(): Future[SubsumableLock] = {
     val res = lock(0)
@@ -174,5 +178,13 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
         lockedNewParent.asyncSubRefs(failedRefChanges)
         r
     }(ReactiveTransmittable.notWorthToMoveToTaskpool)
+  }
+
+  override protected def dumped(): Unit = {
+    state.get match {
+      case null => // do nothing
+      case Self => throw new AssertionError(s"$this was garbage collected while locked")
+      case parent => parent.remoteRefDropped()
+    }
   }
 }

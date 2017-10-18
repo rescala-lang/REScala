@@ -12,10 +12,12 @@ import scala.concurrent.duration._
 import scala.util.Try
 
 class FullMVEngine(val timeout: Duration, val name: String) extends EngineImpl[FullMVStruct, FullMVTurn] with FullMVTurnHost with HostImpl[FullMVTurn] {
-  override object lockHost extends SubsumableLockHostImpl
+  override object lockHost extends SubsumableLockHostImpl {
+    override def toString: String = "Locks " + name
+  }
   def newTurn(): FullMVTurnImpl = createLocal(new FullMVTurnImpl(this, _, Thread.currentThread(), lockHost.newLock()))
   override val dummy: FullMVTurnImpl = {
-    val dummy = new FullMVTurnImpl(this, Host.dummyGuid, null, null)
+    val dummy = new FullMVTurnImpl(this, Host.dummyGuid, null, lockHost.newLock())
     instances.put(Host.dummyGuid, dummy)
     dummy.awaitAndSwitchPhase(TurnPhase.Completed)
     dummy

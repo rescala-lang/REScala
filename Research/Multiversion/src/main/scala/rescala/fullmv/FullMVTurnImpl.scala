@@ -75,6 +75,7 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
             if (newPhase == TurnPhase.Completed) {
               predecessorSpanningTreeNodes = Map.empty
               selfNode.children = Set.empty
+              subsumableLock.getAndSet(null).remoteRefDropped()
               host.dropInstance(guid, this)
             }
             if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this switched phase.")
@@ -234,19 +235,20 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
         false
       case (failedRefChanges, None) =>
         casLockAndNotifyFailedRefChanges(l, failedRefChanges, lockedNewParent)
-        false
+        true
     }(ReactiveTransmittable.notWorthToMoveToTaskpool)
   }
 
-  private def casLockAndNotifyFailedRefChanges(from: SubsumableLock, failedRefChanges: Type, newRoot: SubsumableLock): Unit = {
-    val success = subsumableLock.compareAndSet(from, newRoot)
-    val finalFailedRefChanges = failedRefChanges + (if (success) {
+  private def casLockAndNotifyFailedRefChanges(from: SubsumableLock, failedRefChanges: Int, newRoot: SubsumableLock): Unit = {
+    val finalFailedRefChanges = failedRefChanges + (if (from == newRoot) {
+      0
+    } else if(subsumableLock.compareAndSet(from, newRoot)) {
       from.asyncSubRefs(1)
       0
     } else {
       1
     })
-    newRoot.asyncSubRefs(finalFailedRefChanges)
+    if(finalFailedRefChanges != 0) newRoot.asyncSubRefs(finalFailedRefChanges)
   }
 
   //========================================================ToString============================================================

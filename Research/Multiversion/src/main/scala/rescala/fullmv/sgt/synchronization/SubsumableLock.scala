@@ -35,17 +35,20 @@ trait SubsumableLock extends SubsumableLockProxy with Hosted {
     Future.unit
   }
   def asyncSubRefs(refs: Int): Unit = {
-    val remaining = refCount.addAndGet(refs)
+    assert(refs > 0)
+    val remaining = refCount.addAndGet(-refs)
     if(remaining == 0 && refCount.compareAndSet(0, Int.MinValue / 2)) {
       host.dropInstance(guid, this)
       if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this dumped $refs refs, deallocated")
+      dumped()
     } else if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this dumped $refs refs, $remaining remaining")
   }
   override def remoteRefDropped(): Unit = asyncSubRefs(1)
+  protected def dumped(): Unit
 }
 
 object SubsumableLock {
-  val DEBUG = false
+  val DEBUG = true
   def underLock[R](lock: SubsumableLockProxy with Hosted, timeout: Duration)(thunk: => R): R = {
     executeAndRelease(thunk, Await.result(lock.lock(), timeout))
   }
