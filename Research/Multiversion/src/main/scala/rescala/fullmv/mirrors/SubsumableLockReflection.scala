@@ -8,16 +8,40 @@ import scala.concurrent.Future
 
 class SubsumableLockReflection(override val host: SubsumableLockHost, override val guid: Host.GUID, val proxy: SubsumableLockProxy) extends SubsumableLock {
   override def getLockedRoot: Future[Option[GUID]] = proxy.getLockedRoot
-  override def lock(hopCount: Int): Future[(Int, SubsumableLock)] = proxy.lock().map { (0, _) }(ReactiveTransmittable.notWorthToMoveToTaskpool)
-  override def spinOnce(hopCount: Int, backoff: Long): Future[(Int, SubsumableLock)] = proxy.spinOnce(backoff).map { (0, _) }(ReactiveTransmittable.notWorthToMoveToTaskpool)
+  override def lock(hopCount: Int): Future[(Int, SubsumableLock)] = {
+    proxy.lock().map { res =>
+      if(res == this) {
+        addRefs(hopCount)
+      } else {
+        res.addRefs(hopCount + 1)
+      }
+      (0, res)
+    }(ReactiveTransmittable.notWorthToMoveToTaskpool)
+  }
+  override def spinOnce(hopCount: Int, backoff: Long): Future[(Int, SubsumableLock)] = proxy.spinOnce(backoff).map { res =>
+    if(res == this) {
+      addRefs(hopCount)
+    } else {
+      res.addRefs(hopCount + 1)
+    }
+    (0, res)
+  }(ReactiveTransmittable.notWorthToMoveToTaskpool)
   override def trySubsume(hopCount: Int, lockedNewParent: SubsumableLock): Future[(Int, Option[SubsumableLock])] = {
     if(lockedNewParent == this) {
       assert(lockedNewParent eq this, s"instance caching broken? $this came into contact with different reflection of same origin on same host")
       Future.successful((0, None))
     } else {
-      proxy.trySubsume(lockedNewParent).map{(0, _)}(ReactiveTransmittable.notWorthToMoveToTaskpool)
+      proxy.trySubsume(lockedNewParent).map{ res =>
+        val newParent = res.getOrElse(lockedNewParent)
+        if(newParent == this) {
+          addRefs(hopCount)
+        } else {
+          newParent.addRefs(hopCount + 1)
+        }
+        (0, res)}(ReactiveTransmittable.notWorthToMoveToTaskpool)
     }
   }
+
   override def unlock(): Unit = proxy.unlock()
 
   override def lock(): Future[SubsumableLock] = proxy.lock()

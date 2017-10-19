@@ -48,7 +48,7 @@ trait SubsumableLock extends SubsumableLockProxy with Hosted {
 }
 
 object SubsumableLock {
-  val DEBUG = true
+  val DEBUG = false
   def underLock[R](lock: SubsumableLockProxy with Hosted, timeout: Duration)(thunk: => R): R = {
     executeAndRelease(thunk, Await.result(lock.lock(), timeout))
   }
