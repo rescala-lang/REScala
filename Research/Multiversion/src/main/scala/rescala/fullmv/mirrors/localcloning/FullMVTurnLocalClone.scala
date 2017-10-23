@@ -9,7 +9,7 @@ import scala.concurrent.Future
 
 object FullMVTurnLocalClone {
   def apply(turn: FullMVTurn, reflectionHost: FullMVEngine): FullMVTurn = {
-    reflectionHost.getCachedOrReceiveRemote(turn.guid) { cacheNow =>
+    reflectionHost.getCachedOrReceiveRemote(turn.guid, { cacheNow =>
       val mirrorHost = turn.host
       val localMirror: FullMVTurnProxy = turn
       val mirrorProxy: FullMVTurnProxy = new FullMVTurnProxy {
@@ -31,7 +31,6 @@ object FullMVTurnLocalClone {
 
         override def getLockedRoot = localMirror.getLockedRoot
         override def lock() = localMirror.lock().map(SubsumableLockLocalClone(_, reflectionHost.lockHost))(ReactiveTransmittable.notWorthToMoveToTaskpool)
-        override def spinOnce(backoff: Long) = localMirror.spinOnce(backoff).map(SubsumableLockLocalClone(_, reflectionHost.lockHost))(ReactiveTransmittable.notWorthToMoveToTaskpool)
         override def trySubsume(lockedNewParent: SubsumableLock) = localMirror.trySubsume(SubsumableLockLocalClone(lockedNewParent, mirrorHost.lockHost))
       }
 
@@ -49,6 +48,6 @@ object FullMVTurnLocalClone {
       cacheNow(reflection)
 
       reflection
-    }
+    }, Unit)
   }
 }

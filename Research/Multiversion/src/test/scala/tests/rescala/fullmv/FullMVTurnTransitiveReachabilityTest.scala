@@ -19,7 +19,7 @@ class FullMVTurnTransitiveReachabilityTest extends FunSuite {
       val resA = Await.result(tA.lock(), Duration.Zero)
       val resB = Await.result(tB.trySubsume(resA), Duration.Zero)
       assert(resB === true)
-      resA.unlock()
+      resA.asyncUnlock()
       tA
     }
     Await.result(trees.head._2.lock(), Duration.Zero)

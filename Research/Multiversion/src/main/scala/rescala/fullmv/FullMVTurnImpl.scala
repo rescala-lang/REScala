@@ -11,7 +11,6 @@ import rescala.fullmv.transmitter.ReactiveTransmittable
 import scala.annotation.tailrec
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.{Await, Future}
-import scala.concurrent.duration.Duration
 
 class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GUID, val userlandThread: Thread, initialLock: SubsumableLock) extends FullMVTurn {
   // counts the sum of in-flight notifications, in-progress reevaluations.
@@ -75,7 +74,9 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
             if (newPhase == TurnPhase.Completed) {
               predecessorSpanningTreeNodes = Map.empty
               selfNode.children = Set.empty
-              subsumableLock.getAndSet(null).remoteRefDropped()
+              val l = subsumableLock.getAndSet(null)
+              if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this deallocating, dropping reference on $l.")
+              l.localSubRefs(1)
               host.dropInstance(guid, this)
             }
             if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this switched phase.")
@@ -140,13 +141,13 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
 
   def addPredecessorAndReleasePhaseLock(predecessorSpanningTree: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = {
     @inline def predecessor = predecessorSpanningTree.txn
-    assert(Await.result(predecessor.getLockedRoot, Duration.Inf).isDefined, s"establishing order $predecessor -> $this: predecessor not locked")
-    assert(Await.result(getLockedRoot, Duration.Inf).isDefined, s"establishing order $predecessor -> $this: successor not locked")
+    assert(Await.result(predecessor.getLockedRoot, host.timeout).isDefined, s"establishing order $predecessor -> $this: predecessor not locked")
+    assert(Await.result(getLockedRoot, host.timeout).isDefined, s"establishing order $predecessor -> $this: successor not locked")
     assert(!isTransitivePredecessor(predecessor), s"attempted to establish already existing predecessor relation $predecessor -> $this")
     if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this new predecessor $predecessor.")
     val possiblyRemoteExecutions = successorsIncludingSelf.map(_.maybeNewReachableSubtree(this, predecessorSpanningTree))
     for(pre <- possiblyRemoteExecutions) {
-      Await.result(pre, Duration.Zero) // TODO Duration.Inf
+      Await.result(pre, host.timeout)
     }
     phaseLock.unlock()
     Future.unit
@@ -165,10 +166,10 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
       val newPredecessorRemoteCalls = reps.map(_.newPredecessors(preds))
 
       for(call <- newSuccessorRemoteCalls) {
-        Await.result(call, Duration.Zero) // TODO Duration.Inf
+        Await.result(call, host.timeout)
       }
       for(call <- newPredecessorRemoteCalls) {
-        Await.result(call, Duration.Zero) // TODO Duration.Inf
+        Await.result(call, host.timeout)
       }
     }
     Future.unit
@@ -212,23 +213,16 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
   override def getLockedRoot: Future[Option[Host.GUID]] = subsumableLock.get.getLockedRoot
   override def lock(): Future[SubsumableLock] = {
     val l = subsumableLock.get()
-    val res = l.lock(0)
+    val res = l.lock0(1)
     res.map{ case (failedRefChanges, newRoot) =>
       casLockAndNotifyFailedRefChanges(l, failedRefChanges, newRoot)
       newRoot
     }(ReactiveTransmittable.notWorthToMoveToTaskpool)
   }
-  override def spinOnce(backoff: Long): Future[SubsumableLock] = {
-    val l = subsumableLock.get()
-    val res = l.spinOnce(0, backoff)
-    res.map{ case (failedRefChanges, newRoot) =>
-      casLockAndNotifyFailedRefChanges(l, failedRefChanges, newRoot)
-      newRoot
-    }(ReactiveTransmittable.notWorthToMoveToTaskpool)
-  }
+
   override def trySubsume(lockedNewParent: SubsumableLock): Future[Boolean] = {
     val l = subsumableLock.get()
-    val res = l.trySubsume(0, lockedNewParent)
+    val res = l.trySubsume0(0, lockedNewParent)
     res.map{
       case (failedRefChanges, Some(newRoot)) =>
         casLockAndNotifyFailedRefChanges(l, failedRefChanges, newRoot)
@@ -243,12 +237,17 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
     val finalFailedRefChanges = failedRefChanges + (if (from == newRoot) {
       0
     } else if(subsumableLock.compareAndSet(from, newRoot)) {
-      from.asyncSubRefs(1)
+      if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this parent cas $from to $newRoot succeeded, dropping ref")
+      from.localSubRefs(1)
       0
     } else {
+      if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this parent cas $from to $newRoot failed due to contention")
       1
     })
-    if(finalFailedRefChanges != 0) newRoot.asyncSubRefs(finalFailedRefChanges)
+    if(finalFailedRefChanges != 0) {
+      if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this correcting $finalFailedRefChanges failed ref changes to $newRoot")
+      newRoot.localSubRefs(finalFailedRefChanges)
+    }
   }
 
   //========================================================ToString============================================================
