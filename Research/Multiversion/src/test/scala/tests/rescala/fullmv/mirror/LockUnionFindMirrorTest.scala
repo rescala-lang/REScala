@@ -6,7 +6,7 @@ import rescala.fullmv.TurnPhase
 import rescala.fullmv.mirrors.localcloning.FullMVTurnLocalClone
 
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, TimeoutException}
+import scala.concurrent.Await
 
 class LockUnionFindMirrorTest extends FunSuite {
   test("single remote subsume and gc works") {
@@ -23,22 +23,32 @@ class LockUnionFindMirrorTest extends FunSuite {
     assert(lock1on2 === lock1)
     assert((lock1on2 ne lock1) === true)
 
-    assert(lock1.refCount.get === 2)
-    assert(lock1on2.refCount.get === 1)
+    assert(lock1.refCount.get === 2) // turn1, lock1on2
+    assert(lock1on2.refCount.get === 1) // thread
 
     val turn2 = host2.newTurn()
     turn2.awaitAndSwitchPhase(TurnPhase.Executing)
     val lock2 = turn2.subsumableLock.get
 
-    assert(Await.result(lock2.remoteTrySubsume(lock1on2), Duration.Zero) === true)
+    assert(Await.result(turn2.trySubsume(lock1on2), Duration.Zero) === true)
 
-    assert(lock1.refCount.get === 2)
-    assert(lock1on2.refCount.get === 2)
+    assert(lock1.refCount.get === 2) // turn1, lock1on2
+    assert(lock1on2.refCount.get === 2) // thread, turn2
+    assert(lock2.refCount.get <= 0)
 
-    // TODO this same call *should* be necessary if lock was called on a local turn!
-    lock1on2.asyncRemoteRefDropped()
-    assert(lock1.refCount.get === 2)
-    assert(lock1on2.refCount.get === 1)
+    lock1on2.asyncUnlock()
+    assert(lock1.refCount.get === 2) // turn1, lock1on2
+    assert(lock1on2.refCount.get === 1) // turn2
+    assert(lock2.refCount.get <= 0)
 
+    turn1.awaitAndSwitchPhase(TurnPhase.Completed)
+    assert(lock1.refCount.get === 1) // lock1on2
+    assert(lock1on2.refCount.get === 1) // turn2
+    assert(lock2.refCount.get <= 0)
+
+    turn2.awaitAndSwitchPhase(TurnPhase.Completed)
+    assert(lock1.refCount.get <= 0)
+    assert(lock1on2.refCount.get <= 0)
+    assert(lock2.refCount.get <= 0)
   }
 }

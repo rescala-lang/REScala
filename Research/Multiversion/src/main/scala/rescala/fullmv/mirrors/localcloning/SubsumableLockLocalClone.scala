@@ -8,7 +8,6 @@ import scala.concurrent.Future
 
 object SubsumableLockLocalClone {
   def apply(subsumableLock: SubsumableLock, reflectionHost: SubsumableLockHost): SubsumableLock = {
-    subsumableLock.localAddRefs(1)
     val mirrorHost = subsumableLock.host
     reflectionHost.getCachedOrReceiveRemote(subsumableLock.guid, { cacheNow =>
       val localProxy: SubsumableLockProxy = subsumableLock
