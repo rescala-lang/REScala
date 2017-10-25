@@ -3,7 +3,7 @@ package tests.rescala.fullmv
 import rescala.testhelper.Spawn
 
 import scala.concurrent.duration.Duration
-import scala.util.Try
+import scala.util.{Failure, Try}
 
 object PaperPhilosophers {
   val SIZE = 2
@@ -86,6 +86,11 @@ object PaperPhilosophers {
 
     println("Philosophers done. Individual scores:")
     println("\t" + scores.zipWithIndex.map { case (count, idx) => idx + ": " + count }.mkString("\n\t"))
-    println("Total score: " + successCount.now)
+    scores.find(_.isFailure) match {
+      case Some(Failure(ex)) =>
+        ex.printStackTrace()
+      case None =>
+        println("Total score: " + successCount.now)
+    }
   }
 }

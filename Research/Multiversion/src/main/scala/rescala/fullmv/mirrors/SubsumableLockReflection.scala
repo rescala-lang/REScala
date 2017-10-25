@@ -50,7 +50,10 @@ class SubsumableLockReflection(override val host: SubsumableLockHost, override v
   override def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[Option[SubsumableLock]] = proxy.remoteTrySubsume(lockedNewParent)
 
 
-  override protected def dumped(): Unit = proxy.asyncRemoteRefDropped()
+  override protected def dumped(): Unit = {
+    if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this no refs remaining, deallocating and dropping remote reference")
+    proxy.asyncRemoteRefDropped()
+  }
 
   override def toString: String = {
     val refs = refCount.get()

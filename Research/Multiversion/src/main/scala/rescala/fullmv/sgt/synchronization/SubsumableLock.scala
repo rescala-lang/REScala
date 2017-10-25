@@ -2,6 +2,7 @@ package rescala.fullmv.sgt.synchronization
 
 import java.util.concurrent.atomic.AtomicInteger
 
+import rescala.fullmv.FullMVTurn
 import rescala.fullmv.mirrors._
 import rescala.fullmv.transmitter.ReactiveTransmittable
 import rescala.parrp.Backoff
@@ -10,10 +11,16 @@ import scala.annotation.tailrec
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
 
+
+sealed trait TrySubsumeResult
+case object Subsumed extends TrySubsumeResult
+case object Blocked extends TrySubsumeResult
+case object Deallocated extends TrySubsumeResult
+
 trait SubsumableLockEntryPoint {
   def getLockedRoot: Future[Option[Host.GUID]]
   def lock(): Future[SubsumableLock]
-  def trySubsume(lockedNewParent: SubsumableLock): Future[Boolean]
+  def trySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult]
 }
 
 trait SubsumableLock extends SubsumableLockProxy with Hosted {
@@ -49,6 +56,15 @@ trait SubsumableLock extends SubsumableLockProxy with Hosted {
     }(ReactiveTransmittable.notWorthToMoveToTaskpool)
   }
 
+  def tryNewLocalRef(): Boolean = {
+    val after = refCount.addAndGet(1)
+    if(after > 0) {
+      true
+    } else {
+      refCount.addAndGet(-1)
+      false
+    }
+  }
   def localAddRefs(refs: Int): Unit = {
     assert(refs > 0)
     assert(refCount.getAndAdd(refs) > 0)
@@ -58,7 +74,6 @@ trait SubsumableLock extends SubsumableLockProxy with Hosted {
     val remaining = refCount.addAndGet(-refs)
     assert(remaining >= 0)
     if(remaining == 0 && refCount.compareAndSet(0, Int.MinValue / 2)) {
-      if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this no refs remaining, deallocating")
       host.dropInstance(guid, this)
       dumped()
     }
@@ -72,25 +87,28 @@ trait SubsumableLock extends SubsumableLockProxy with Hosted {
 
 object SubsumableLock {
   val DEBUG = false
-  def underLock[R](lockA: SubsumableLockEntryPoint with Hosted, lockB: SubsumableLockEntryPoint with Hosted, timeout: Duration)(thunk: => R): R = {
-    assert(lockA.host == lockB.host)
-    if(DEBUG) System.out.println(s"[${Thread.currentThread().getName}] syncing $lockA and $lockB")
-    val lockedRootA = Await.result(lockA.lock(), timeout)
+  def underLock[R](defender: FullMVTurn, contender: FullMVTurn, timeout: Duration)(thunk: => R): Option[R] = {
+    assert(defender.host == contender.host)
+    if(DEBUG) System.out.println(s"[${Thread.currentThread().getName}] syncing $defender and $contender")
+    val lockedRootA = Await.result(contender.lock(), timeout)
 
     val backoff = new Backoff()
-    @inline @tailrec def trySecondAndSpinFirstIfFailed(lockedRootA: SubsumableLock): SubsumableLock = {
-      if (Await.result(lockB.trySubsume(lockedRootA), timeout)) {
-        lockedRootA
-      } else {
-        val newLockedRootA = Await.result(lockedRootA.spinOnce(backoff.getAndIncrementBackoff()), timeout)
-        trySecondAndSpinFirstIfFailed(newLockedRootA)
+    @inline @tailrec def trySecondAndSpinFirstIfFailed(lockedRootA: SubsumableLock): Option[R] = {
+      Await.result(defender.trySubsume(lockedRootA), timeout) match {
+        case Subsumed =>
+          val res = try { thunk } finally {
+            lockedRootA.asyncUnlock()
+          }
+          Some(res)
+        case Blocked =>
+          val newLockedRootA = Await.result(lockedRootA.spinOnce(backoff.getAndIncrementBackoff()), timeout)
+          trySecondAndSpinFirstIfFailed(newLockedRootA)
+        case Deallocated =>
+          lockedRootA.asyncUnlock()
+          None
       }
     }
-    val commonLockedRoot = trySecondAndSpinFirstIfFailed(lockedRootA)
-
-    try { thunk } finally {
-      commonLockedRoot.asyncUnlock()
-    }
+    trySecondAndSpinFirstIfFailed(lockedRootA)
   }
 
   val futureNone: Future[None.type] = Future.successful(None)

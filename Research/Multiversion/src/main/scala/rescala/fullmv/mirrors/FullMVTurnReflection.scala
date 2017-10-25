@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import rescala.fullmv.{FullMVEngine, FullMVTurn, TransactionSpanningTreeNode, TurnPhase}
 import rescala.fullmv.TurnPhase.Type
 import rescala.fullmv.mirrors.Host.GUID
-import rescala.fullmv.sgt.synchronization.{SubsumableLock, SubsumableLockEntryPoint}
+import rescala.fullmv.sgt.synchronization.{SubsumableLock, SubsumableLockEntryPoint, TrySubsumeResult}
 
 import scala.concurrent.{Await, Future}
 
@@ -103,7 +103,7 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
 
   override def getLockedRoot: Future[Option[GUID]] = proxy.getLockedRoot
   override def lock(): Future[SubsumableLock] = proxy.lock()
-  override def trySubsume(lockedNewParent: SubsumableLock): Future[Boolean] = proxy.trySubsume(lockedNewParent)
+  override def trySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult] = proxy.trySubsume(lockedNewParent)
 
   override def toString: String = s"FullMVTurnReflection($guid on $host, ${TurnPhase.toString(phase)}${if(localBranchCountBuffer.get != 0) s"(${localBranchCountBuffer.get})" else ""})"
 }

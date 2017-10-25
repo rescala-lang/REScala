@@ -2,7 +2,7 @@ package tests.rescala.fullmv
 
 import org.scalatest.FunSuite
 import rescala.fullmv.{FullMVEngine, FullMVTurn, TurnPhase}
-import rescala.fullmv.sgt.synchronization.SubsumableLock
+import rescala.fullmv.sgt.synchronization.{Blocked, Deallocated, SubsumableLock, Subsumed}
 import rescala.testhelper.Spawn
 
 import scala.annotation.tailrec
@@ -89,7 +89,7 @@ class LockUnionFindTest extends FunSuite {
     turn2.awaitAndSwitchPhase(TurnPhase.Completed)
     assert(lock2.refCount.get === 1) // thread1
 
-    val max = System.currentTimeMillis() + 50
+    val max = System.currentTimeMillis() + 500
     @tailrec def spinL1UntilSubsumed(): SubsumableLock = {
       if (System.currentTimeMillis() > max) throw new TimeoutException("spinning was not subsumed within timeout")
       val l3 = Await.result(l1.spinOnce(5), Duration.Zero)
@@ -104,8 +104,10 @@ class LockUnionFindTest extends FunSuite {
       if(System.currentTimeMillis() > max){
         thread2.join(10)
         fail("subsume attempts timed out")
-      } else if(!Await.result(turn1.trySubsume(l2), Duration.Zero)) {
-        trySubsumeL1UnderL2UntilSuccess()
+      } else Await.result(turn1.trySubsume(l2), Duration.Zero) match {
+        case Blocked => trySubsumeL1UnderL2UntilSuccess()
+        case Subsumed => // ok
+        case Deallocated => fail("lock was deallocated despite no concurrent thread performing any deallocation?")
       }
     }
     trySubsumeL1UnderL2UntilSuccess() // switches lock1 ref by turn1 to lock2
@@ -125,6 +127,27 @@ class LockUnionFindTest extends FunSuite {
     assert(lock2.refCount.get <= 0)
   }
 
+  test("underLock works") {
+    val turn1 = engine.newTurn()
+    turn1.awaitAndSwitchPhase(TurnPhase.Framing)
+    val lock1 = turn1.subsumableLock.get()
+
+    val turn2 = engine.newTurn()
+    turn2.awaitAndSwitchPhase(TurnPhase.Framing)
+    val lock2 = turn2.subsumableLock.get()
+
+    assert(lock1.refCount.get === 1)
+    assert(lock2.refCount.get === 1)
+
+    SubsumableLock.underLock(turn1, turn2, engine.timeout) { /* do nothing */ }
+
+    assert(
+      (lock1.refCount.get === 2 && lock2.refCount.get <= 0)
+      ||
+      (lock1.refCount.get <= 0 && lock2.refCount.get === 2)
+    )
+  }
+
   test("single subsumed gc works") {
     val turn1 = engine.newTurn()
     turn1.awaitAndSwitchPhase(TurnPhase.Framing)
@@ -137,7 +160,7 @@ class LockUnionFindTest extends FunSuite {
     if(SubsumableLock.DEBUG) println(s"single subsumed gc with $turn1 using $lock1 and $turn2 using $lock2")
 
     val l1 = Await.result(turn1.lock(), Duration.Zero)
-    assert(Await.result(turn2.trySubsume(l1), Duration.Zero) === true)
+    assert(Await.result(turn2.trySubsume(l1), Duration.Zero) === Subsumed)
     l1.asyncUnlock()
 
     assert(lock1.refCount.get === 2) // turn2 and turn1
@@ -172,7 +195,7 @@ class LockUnionFindTest extends FunSuite {
 
     turns.reduce{ (t1, t2) =>
       val l = Await.result(t2.lock(), Duration.Zero)
-      assert(Await.result(t1.trySubsume(l), Duration.Zero) === true)
+      assert(Await.result(t1.trySubsume(l), Duration.Zero) === Subsumed)
       l.asyncUnlock()
       t2
     }
@@ -233,7 +256,7 @@ class LockUnionFindTest extends FunSuite {
 
     val res = Spawn{ Await.result(b.lock(), Duration.Zero) }.join(101)
 
-    assert(Await.result(a.trySubsume(res), Duration.Zero) === true)
+    assert(Await.result(a.trySubsume(res), Duration.Zero) === Subsumed)
 
     assert(Await.result(a.getLockedRoot, Duration.Zero) === Some(res.guid))
     assert(Await.result(b.getLockedRoot, Duration.Zero) === Some(res.guid))
@@ -255,7 +278,7 @@ class LockUnionFindTest extends FunSuite {
   test("subsume correctly wakes all threads") {
     val a, b = engine.newTurn()
     val res = Await.result(a.lock(), Duration.Zero)
-    assert(Await.result(b.trySubsume(res), Duration.Zero) === true)
+    assert(Await.result(b.trySubsume(res), Duration.Zero) === Subsumed)
 
     var counter = 0
     def spawnIncrementUnderLockThread(lockable: FullMVTurn) = {

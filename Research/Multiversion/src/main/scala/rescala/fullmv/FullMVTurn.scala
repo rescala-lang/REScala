@@ -30,7 +30,7 @@ trait FullMVTurn extends TurnImpl[FullMVStruct] with FullMVTurnProxy with Hosted
   //========================================================Scheduler Interface============================================================
 
   override def makeDerivedStructState[P](valuePersistency: ValuePersistency[P]): NodeVersionHistory[P, FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]] = {
-    val state = new NodeVersionHistory[P, FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]](host.dummy, valuePersistency, host.timeout)
+    val state = new NodeVersionHistory[P, FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]](host.dummy, valuePersistency)
     state.incrementFrame(this)
     state
   }

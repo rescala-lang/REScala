@@ -179,9 +179,13 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
 
   override protected def dumped(): Unit = {
     state.get match {
-      case null => // do nothing
-      case Self => throw new AssertionError(s"$this was garbage collected while locked")
-      case parent => parent.asyncRemoteRefDropped()
+      case null =>
+        if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this no refs remaining, deallocating")
+      case Self =>
+        throw new AssertionError(s"$this was garbage collected while locked")
+      case parent =>
+        if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this no refs remaining, deallocating and dropping ref on parent $parent")
+        parent.localSubRefs(1)
     }
   }
 }

@@ -9,7 +9,6 @@ import rescala.fullmv.sgt.synchronization.SubsumableLock
 import scala.annotation.elidable.ASSERTION
 import scala.annotation.{elidable, tailrec}
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.duration.Duration
 
 sealed trait FramingBranchResult[+T, +R]
 object FramingBranchResult {
@@ -48,8 +47,8 @@ object NotificationResultAction {
   * @tparam InDep the type of incoming dependency nodes
   * @tparam OutDep the type of outgoing dependency nodes
   */
-class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePersistency: ValuePersistency[V], val timeout: Duration) extends FullMVState[V, T, InDep, OutDep] {
-  override val host = init.host
+class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePersistency: ValuePersistency[V]) extends FullMVState[V, T, InDep, OutDep] {
+  override val host: FullMVEngine = init.host
 
   trait BlockOnHistoryManagedBlocker extends ManagedBlocker {
     override def block(): Boolean = NodeVersionHistory.this.synchronized {
@@ -148,7 +147,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     assert(!_versions.zipWithIndex.exists{case (version, index) => version.stable != (index <= firstFrame)}, debugStatement("broken version stability"))
   }
 
-  override def toString = super.toString + s" -> latestWritten $latestWritten, ${if(firstFrame > _versions.size) "no frames" else "firstFrame "+firstFrame}): \n  " + _versions.zipWithIndex.map{case (version, index) => s"$index: $version"}.mkString("\n  ")
+  override def toString: String = super.toString + s" -> latestWritten $latestWritten, ${if(firstFrame > _versions.size) "no frames" else "firstFrame "+firstFrame}): \n  " + _versions.zipWithIndex.map{case (version, index) => s"$index: $version"}.mkString("\n  ")
 
   // =================== STORAGE ====================
 
@@ -196,17 +195,23 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     *         latter case, there are no preceding transactions that still execute operations. Thus insertion at index 0
     *         should be impossible. A return value of 0 thus means "found at 0", rather than "should insert at 0"
     */
-  private def findOrPidgeonHole(lookFor: T, from: Int, to: Int, knownStatic: Boolean = false): Int = {
+  private def findOrPidgeonHole(lookFor: T, from: Int, to: Int): Int = {
     assert(from <= to, s"binary search started with backwards indices from $from to $to")
     assert(to <= _versions.size, s"binary search upper bound $to beyond history size ${_versions.size}")
-    if(knownStatic) {
-      assert(to == _versions.size || DecentralizedSGT.getOrder(_versions(to).txn, lookFor) != FirstFirst, s"to = $to successor for non-blocking search of known static $lookFor pointed to version of ${_versions(to).txn} which is ordered earlier.")
-    } else {
-      assert(to == _versions.size || DecentralizedSGT.getOrder(_versions(to).txn, lookFor) == SecondFirst, s"to = $to successor for non-blocking search of $lookFor pointed to version of ${_versions(to).txn} which is not already ordered later.")
-    }
+    assert(to == _versions.size || DecentralizedSGT.getOrder(_versions(to).txn, lookFor) != FirstFirst, s"to = $to successor for non-blocking search of known static $lookFor pointed to version of ${_versions(to).txn} which is ordered earlier.")
     assert(DecentralizedSGT.getOrder(_versions(from - 1).txn, lookFor) != SecondFirst, s"from - 1 = ${from - 1} predecessor for non-blocking search of $lookFor pointed to version of ${_versions(from - 1).txn} which is already ordered later.")
     assert(from > 0, s"binary search started with non-positive lower bound $from")
-    findOrPidgeonHoleNonblocking(lookFor, from, fromIsKnownPredecessor = false, to)
+
+    val res = findOrPidgeonHoleNonblocking(lookFor, from, fromIsKnownPredecessor = false, to)
+
+    if(res >= 0) {
+      assert(res < _versions.size, s"binary search returned found at $res for $lookFor, which is out of bounds in $this")
+      assert(_versions(res).txn == lookFor, s"binary search returned found at $res for $lookFor, which is wrong in $this")
+    } else {
+      assert(DecentralizedSGT.getOrder(_versions(-res - 1).txn, lookFor) == FirstFirst, s"binary search returned insert at ${-res} for $lookFor, but predecessor isn't ordered first in $this")
+      assert(-res == to || DecentralizedSGT.getOrder(_versions(-res).txn, lookFor) == SecondFirst, s"binary search returned insert at ${-res} for $lookFor, but it isn't ordered before successor in $this")
+    }
+    res
   }
 
   @tailrec
@@ -217,10 +222,10 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
         val unblockedOrder = DecentralizedSGT.getOrder(pred, lookFor)
         assert(unblockedOrder != SecondFirst)
         if(unblockedOrder != FirstFirst) {
-          SubsumableLock.underLock(pred, lookFor, timeout) {
-            val establishedOrder = DecentralizedSGT.ensureOrder(pred, lookFor, timeout)
-            assert(establishedOrder == FirstFirst)
+          val establishedOrder = SubsumableLock.underLock(pred, lookFor, host.timeout) {
+            DecentralizedSGT.ensureOrder(pred, lookFor, host.timeout)
           }
+          assert(establishedOrder.contains(FirstFirst) || DecentralizedSGT.getOrder(pred, lookFor) == FirstFirst, s"establishing order under lock failed due to opponent completing, but completion did not induce implicit ordering")
         }
       }
       -from
@@ -235,8 +240,13 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
         case SecondFirst =>
           findOrPidgeonHoleNonblocking(lookFor, from, fromIsKnownPredecessor, idx)
         case Unordered =>
-          SubsumableLock.underLock(candidate, lookFor, timeout) {
+          SubsumableLock.underLock(candidate, lookFor, host.timeout) {
             findOrPidgeonHoleLocked(lookFor, from, fromIsKnownPredecessor, to)
+          } match {
+            case Some(res) => res
+            case None =>
+              assert(DecentralizedSGT.getOrder(candidate, lookFor) == FirstFirst, s"continuing search under lock failed due to entry opponent completing, but completion did not induce implicit ordering")
+              findOrPidgeonHoleNonblocking(lookFor, idx + 1, fromIsKnownPredecessor = true, to)
           }
       }
     }
@@ -247,7 +257,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     if (to == from) {
       if(!fromKnownOrdered) {
         val pred = _versions(from - 1).txn
-        val establishedOrder = DecentralizedSGT.ensureOrder(pred, lookFor, timeout)
+        val establishedOrder = DecentralizedSGT.ensureOrder(pred, lookFor, host.timeout)
         assert(establishedOrder == FirstFirst)
       }
       -from
@@ -256,7 +266,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
       val candidate = _versions(idx).txn
       if(candidate == lookFor) {
         idx
-      } else DecentralizedSGT.ensureOrder(candidate, lookFor, timeout) match {
+      } else DecentralizedSGT.ensureOrder(candidate, lookFor, host.timeout) match {
         case FirstFirst =>
           findOrPidgeonHoleLocked(lookFor, idx + 1, fromKnownOrdered = true, to)
         case SecondFirst =>
@@ -285,7 +295,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     */
   private def findFinal(txn: T) = {
     if(_versions(latestWritten).txn == txn) latestWritten else
-      findOrPidgeonHole(txn, 1, firstFrame, knownStatic = true)
+      findOrPidgeonHole(txn, 1, firstFrame)
   }
 
 

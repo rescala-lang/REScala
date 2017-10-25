@@ -31,8 +31,11 @@ object DecentralizedSGT extends SerializationGraphTracking[FullMVTurn] {
     if(defender.phase == TurnPhase.Completed) {
       FirstFirst
     } else{
-      assert(Await.result(defender.getLockedRoot, timeout).isDefined, s"$defender is not locked")
-      assert(Await.result(defender.getLockedRoot, timeout).get == Await.result(contender.getLockedRoot, timeout).get, s"$defender and $contender not merged (roots ${Await.result(defender.getLockedRoot, timeout).get} and ${Await.result(contender.getLockedRoot, timeout).get})")
+      assert({
+        val lockedRoot = Await.result(defender.getLockedRoot, timeout)
+        // have to check turn completed here again as it might have *become* completed concurrently since above check
+        defender.phase == TurnPhase.Completed || (lockedRoot.isDefined && lockedRoot == Await.result(contender.getLockedRoot, timeout))
+      }, s"$defender and $contender not merged (locked roots ${Await.result(defender.getLockedRoot, timeout)} and ${Await.result(contender.getLockedRoot, timeout)})")
       if(contender.isTransitivePredecessor(defender)) {
         FirstFirst
       } else if (defender.isTransitivePredecessor(contender)) {
