@@ -4,7 +4,7 @@ import org.scalatest.FunSuite
 import rescala.fullmv.FullMVEngine
 import rescala.fullmv.TurnPhase
 import rescala.fullmv.mirrors.localcloning.FullMVTurnLocalClone
-import rescala.fullmv.sgt.synchronization.Subsumed
+import rescala.fullmv.sgt.synchronization.Successful
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.Await
@@ -31,7 +31,7 @@ class LockUnionFindMirrorTest extends FunSuite {
     turn2.awaitAndSwitchPhase(TurnPhase.Executing)
     val lock2 = turn2.subsumableLock.get
 
-    assert(Await.result(turn2.trySubsume(lock1on2), Duration.Zero) === Subsumed)
+    assert(Await.result(turn2.trySubsume(lock1on2), Duration.Zero) === Successful)
 
     assert(lock1.refCount.get === 2) // turn1, lock1on2
     assert(lock1on2.refCount.get === 2) // thread, turn2

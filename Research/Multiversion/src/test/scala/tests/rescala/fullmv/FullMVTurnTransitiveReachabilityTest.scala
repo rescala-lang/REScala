@@ -6,7 +6,7 @@ import rescala.fullmv.{FullMVTurnImpl, TurnPhase}
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import rescala.fullmv.FullMVEngine.default._
-import rescala.fullmv.sgt.synchronization.Subsumed
+import rescala.fullmv.sgt.synchronization.Successful
 
 class FullMVTurnTransitiveReachabilityTest extends FunSuite {
   case class Disagreement[T](from: T, to: T, closure: Boolean, addEdgeSearchPath: Boolean)
@@ -18,7 +18,7 @@ class FullMVTurnTransitiveReachabilityTest extends FunSuite {
     trees.values.reduce{ (tA, tB) =>
       val resA = Await.result(tA.lock(), Duration.Zero)
       val resB = Await.result(tB.trySubsume(resA), Duration.Zero)
-      assert(resB === Subsumed)
+      assert(resB === Successful)
       resA.asyncUnlock()
       tA
     }

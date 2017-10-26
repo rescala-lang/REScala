@@ -212,30 +212,32 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
 
   override def getLockedRoot: Future[Option[Host.GUID]] = {
     val l = subsumableLock.get
-    if(l == null) Future.successful(None) else l.getLockedRoot
+    if(l == null) SubsumableLock.futureNone else l.getLockedRoot
   }
   override def lock(): Future[SubsumableLock] = {
     val l = subsumableLock.get()
-    val res = l.lock0(1)
+    val res = l.lock0(1, lastHopWasGCd = false)
     res.map{ case (failedRefChanges, newRoot) =>
       casLockAndNotifyFailedRefChanges(l, failedRefChanges, newRoot)
       newRoot
     }(ReactiveTransmittable.notWorthToMoveToTaskpool)
   }
 
-  override def trySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult] = {
+  @tailrec final override def trySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult] = {
     val l = subsumableLock.get()
-    if(l == null || !l.tryNewLocalRef()) {
-      if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this trySubsume failed to grab ref on $l")
+    if(l == null) {
       Future.successful(Deallocated)
+    } else if(!l.tryNewLocalRef()) {
+      assert(l != subsumableLock.get(), "lock was garbage collected despite still being in use?!")
+      trySubsume(lockedNewParent)
     } else {
       if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this trySubsume acquired temporary ref on $l")
-      val res = l.trySubsume0(0, lockedNewParent)
+      val res = l.trySubsume0(0, lastHopWasGCd = false, lockedNewParent)
       res.map { case (failedRefChanges, newParentIfFailed) =>
         if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this trySubsume dropping temporary ref on $l")
         l.localSubRefs(1)
         casLockAndNotifyFailedRefChanges(l, failedRefChanges, newParentIfFailed.getOrElse(lockedNewParent))
-        if(newParentIfFailed.isDefined) Blocked else Subsumed
+        if(newParentIfFailed.isDefined) Blocked else Successful
       }(ReactiveTransmittable.notWorthToMoveToTaskpool)
     }
   }
@@ -258,7 +260,6 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
   }
 
   //========================================================ToString============================================================
-
 
   override def toString: String = s"FullMVTurn($guid on $host, ${TurnPhase.toString(phase)}${if(activeBranches.get != 0) s"(${activeBranches.get})" else ""})"
 }

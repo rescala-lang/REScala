@@ -8,20 +8,22 @@ import scala.concurrent.Future
 
 class SubsumableLockReflection(override val host: SubsumableLockHost, override val guid: Host.GUID, val proxy: SubsumableLockProxy) extends SubsumableLock {
   override def getLockedRoot: Future[Option[GUID]] = proxy.getLockedRoot
-  override def lock0(hopCount: Int): Future[(Int, SubsumableLock)] = {
+  override def lock0(hopCount: Int, lastHopWasGCd: Boolean): Future[(Int, SubsumableLock)] = {
     proxy.remoteLock().map { res =>
       if(res == this) {
-        if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this locked remotely; $hopCount new refs")
-        if(hopCount > 0) localAddRefs(hopCount)
+        val addHops = hopCount + (if(lastHopWasGCd) 1 else 0)
+        if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this locked remotely; $addHops new refs")
+        if(addHops > 0) localAddRefs(addHops)
       } else {
-        if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this remote lock returned new parent $res, passing ${hopCount + 1} new refs")
-        res.localAddRefs(hopCount + 1)
+        val addHops = 1 + hopCount + (if(lastHopWasGCd) 1 else 0)
+        if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this remote lock returned new parent $res, passing $addHops new refs")
+        res.localAddRefs(addHops)
       }
       (0, res)
     }(ReactiveTransmittable.notWorthToMoveToTaskpool)
   }
 
-  override def trySubsume0(hopCount: Int, lockedNewParent: SubsumableLock): Future[(Int, Option[SubsumableLock])] = {
+  override def trySubsume0(hopCount: Int, lastHopWasGCd: Boolean, lockedNewParent: SubsumableLock): Future[(Int, Option[SubsumableLock])] = {
     if(lockedNewParent == this) {
       assert(lockedNewParent eq this, s"instance caching broken? $this came into contact with different reflection of same origin on same host")
       Future.successful((0, None))
@@ -29,11 +31,13 @@ class SubsumableLockReflection(override val host: SubsumableLockHost, override v
       proxy.remoteTrySubsume(lockedNewParent).map{ res =>
         val newParent = res.getOrElse(lockedNewParent)
         if(newParent == this) {
-          if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this remote trySubsume failed, ${hopCount} new refs")
-          if(hopCount > 0) localAddRefs(hopCount)
+          val addHops = hopCount + (if(lastHopWasGCd) 1 else 0)
+          if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this remote trySubsume failed, $addHops new refs")
+          if(addHops > 0) localAddRefs(addHops)
         } else {
-          if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this remote trySubsume succeeded, sending $res ${hopCount + 1} new refs")
-          newParent.localAddRefs(hopCount + 1)
+          val addHops = 1 + hopCount + (if(lastHopWasGCd) 1 else 0)
+          if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this remote trySubsume succeeded, sending $res ${addHops} new refs")
+          newParent.localAddRefs(addHops)
         }
         (0, res)}(ReactiveTransmittable.notWorthToMoveToTaskpool)
     }

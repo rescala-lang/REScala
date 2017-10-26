@@ -13,7 +13,7 @@ import scala.concurrent.duration.Duration
 
 
 sealed trait TrySubsumeResult
-case object Subsumed extends TrySubsumeResult
+case object Successful extends TrySubsumeResult
 case object Blocked extends TrySubsumeResult
 case object Deallocated extends TrySubsumeResult
 
@@ -29,12 +29,12 @@ trait SubsumableLock extends SubsumableLockProxy with Hosted {
   override val host: SubsumableLockHost
 
   def getLockedRoot: Future[Option[Host.GUID]]
-  def lock0(hopCount: Int): Future[(Int, SubsumableLock)]
+  def lock0(hopCount: Int, lastHopWasGCd: Boolean): Future[(Int, SubsumableLock)]
   def spinOnce0(backoff: Long): Future[(Int, SubsumableLock)]
   // if failed, returns Some(newParent) that should be used as new Parent
   // if successful, returns None; lockedNewParent.newParent should be used as newParent.
   // newParent is not a uniform part of all possible return values to avoid establishing unnecessary back-and-forth remote paths
-  def trySubsume0(hopCount: Int, lockedNewParent: SubsumableLock): Future[(Int, Option[SubsumableLock])]
+  def trySubsume0(hopCount: Int, lastHopWasGCd: Boolean, lockedNewParent: SubsumableLock): Future[(Int, Option[SubsumableLock])]
   def asyncUnlock0(): Unit
 
   def asyncUnlock(): Unit = {
@@ -87,6 +87,7 @@ trait SubsumableLock extends SubsumableLockProxy with Hosted {
 
 object SubsumableLock {
   val DEBUG = false
+
   def underLock[R](defender: FullMVTurn, contender: FullMVTurn, timeout: Duration)(thunk: => R): Option[R] = {
     assert(defender.host == contender.host)
     if(DEBUG) System.out.println(s"[${Thread.currentThread().getName}] syncing $defender and $contender")
@@ -95,7 +96,7 @@ object SubsumableLock {
     val backoff = new Backoff()
     @inline @tailrec def trySecondAndSpinFirstIfFailed(lockedRootA: SubsumableLock): Option[R] = {
       Await.result(defender.trySubsume(lockedRootA), timeout) match {
-        case Subsumed =>
+        case Successful =>
           val res = try { thunk } finally {
             lockedRootA.asyncUnlock()
           }

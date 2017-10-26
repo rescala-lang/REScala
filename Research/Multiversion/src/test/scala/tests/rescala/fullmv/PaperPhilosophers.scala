@@ -2,16 +2,19 @@ package tests.rescala.fullmv
 
 import rescala.testhelper.Spawn
 
+import scala.concurrent.TimeoutException
 import scala.concurrent.duration.Duration
-import scala.util.{Failure, Try}
+import scala.util.{Failure, Success, Try}
 
 object PaperPhilosophers {
-  val SIZE = 2
-  val engine = new rescala.fullmv.FullMVEngine(Duration.Zero, "PaperPhilosophers")
-  import engine._
-  //import rescala._
 
   def main(args: Array[String]): Unit = {
+    val SIZE = if(args.length >= 1) Integer.parseInt(args(0)) else 5
+
+    val engine = new rescala.fullmv.FullMVEngine(Duration.Zero, "PaperPhilosophers")
+    import engine._
+    //import rescala._
+
     sealed trait Philosopher
     case object Eating extends Philosopher
     case object Thinking extends Philosopher
@@ -38,7 +41,7 @@ object PaperPhilosophers {
     case object Done extends Sight
     case class Blocked(by: Int) extends Sight
     case object Ready extends Sight
-
+/*
     val sights = for(idx <- 0 until SIZE) yield
       Signal[Sight] {
         val prevIdx = (idx - 1 + SIZE) % SIZE
@@ -54,6 +57,23 @@ object PaperPhilosophers {
             } else {
               Blocked(by)
             }
+        }
+      }
+*/
+    val sights = for(idx <- 0 until SIZE) yield
+      Signal[Sight] {
+        val prevIdx = (idx - 1 + SIZE) % SIZE
+        (forks(prevIdx)(), forks(idx)()) match {
+          case(Free, Free) =>
+            Ready
+          case (Taken(left), Taken(right)) if left == idx && right == idx =>
+            Done
+          case (Taken(by), _) =>
+            assert(by != idx)
+            Blocked(by)
+          case (_, Taken(by)) =>
+            assert(by != idx)
+            Blocked(by)
         }
       }
 
@@ -86,11 +106,21 @@ object PaperPhilosophers {
 
     println("Philosophers done. Individual scores:")
     println("\t" + scores.zipWithIndex.map { case (count, idx) => idx + ": " + count }.mkString("\n\t"))
-    scores.find(_.isFailure) match {
-      case Some(Failure(ex)) =>
+    scores.find(_ match {
+      case Failure(ex: TimeoutException) => false
+      case Failure(_) => true
+      case Success(_) => false
+    }).foreach {
+      case Failure(ex) =>
         ex.printStackTrace()
-      case None =>
-        println("Total score: " + successCount.now)
     }
+    if(scores.exists(_.isFailure)) {
+      println("There were failures -> not accessing total score")
+    } else {
+      println("Total score: " + successCount.now)
+    }
+
+    assert(engine.instances.size() == 0, "some turn instances were not garbage collected")
+    assert(engine.lockHost.instances.size() == 0, "some lock instances were not garbage collected")
   }
 }
