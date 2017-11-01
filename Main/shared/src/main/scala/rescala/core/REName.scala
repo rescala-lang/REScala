@@ -16,6 +16,7 @@ abstract class RENamed(rename: REName) {
 //  implicit def fromCreation[S <: Struct](implicit ct: CreationTicket[S]): REName = ct.rename
 object REName extends LowPriorityREName {
   implicit def fromString(s: String): REName = REName(s)
+  def named[T](name: String)(f: /* implicit */ REName => T) = f(REName(name))
 }
 
 trait LowPriorityREName {
