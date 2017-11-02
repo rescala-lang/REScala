@@ -1,5 +1,6 @@
 package tests.rescala.fullmv
 
+import rescala.core.REName
 import rescala.testhelper.Spawn
 
 import scala.concurrent.TimeoutException
@@ -27,13 +28,15 @@ object PaperPhilosophers {
     case class Taken(by: Int) extends Fork
 
     val forks = for(idx <- 0 until SIZE) yield
-      Signal[Fork] {
-        val nextIdx = (idx + 1) % SIZE
-        (phils(idx)(), phils(nextIdx)()) match {
-          case (Thinking, Thinking) => Free
-          case (Eating, Thinking) => Taken(idx)
-          case (Thinking, Eating) => Taken(nextIdx)
-          case (Eating, Eating) => throw new AssertionError()
+      REName.named(s"fork($idx)"){ implicit! =>
+        Signal[Fork] {
+          val nextIdx = (idx + 1) % SIZE
+          (phils(idx)(), phils(nextIdx)()) match {
+            case (Thinking, Thinking) => Free
+            case (Eating, Thinking) => Taken(idx)
+            case (Thinking, Eating) => Taken(nextIdx)
+            case (Eating, Eating) => throw new AssertionError()
+          }
         }
       }
 
@@ -41,41 +44,47 @@ object PaperPhilosophers {
     case object Done extends Sight
     case class Blocked(by: Int) extends Sight
     case object Ready extends Sight
-/*
+
+    // Dynamic Sight
     val sights = for(idx <- 0 until SIZE) yield
-      Signal[Sight] {
-        val prevIdx = (idx - 1 + SIZE) % SIZE
-        forks(prevIdx)() match {
-          case Free => forks(idx)() match {
-            case Taken(neighbor) => Blocked(neighbor)
-            case Free => Ready
-          }
-          case Taken(by) =>
-            if(by == idx) {
-              assert(forks(idx)() == Taken(idx))
-              Done
-            } else {
-              Blocked(by)
+      REName.named(s"sight($idx)") { implicit ! =>
+        Signal[Sight] {
+          val prevIdx = (idx - 1 + SIZE) % SIZE
+          forks(prevIdx)() match {
+            case Free => forks(idx)() match {
+              case Taken(neighbor) => Blocked(neighbor)
+              case Free => Ready
             }
+            case Taken(by) =>
+              if (by == idx) {
+                assert(forks(idx)() == Taken(idx))
+                Done
+              } else {
+                Blocked(by)
+              }
+          }
         }
       }
-*/
-    val sights = for(idx <- 0 until SIZE) yield
-      Signal[Sight] {
-        val prevIdx = (idx - 1 + SIZE) % SIZE
-        (forks(prevIdx)(), forks(idx)()) match {
-          case(Free, Free) =>
-            Ready
-          case (Taken(left), Taken(right)) if left == idx && right == idx =>
-            Done
-          case (Taken(by), _) =>
-            assert(by != idx)
-            Blocked(by)
-          case (_, Taken(by)) =>
-            assert(by != idx)
-            Blocked(by)
-        }
-      }
+
+    // "Static" Sight
+//    val sights = for(idx <- 0 until SIZE) yield
+//      REName.named(s"sight($idx)") { implicit ! =>
+//        Signal[Sight] {
+//          val prevIdx = (idx - 1 + SIZE) % SIZE
+//          (forks(prevIdx)(), forks(idx)()) match {
+//            case (Free, Free) =>
+//              Ready
+//            case (Taken(left), Taken(right)) if left == idx && right == idx =>
+//              Done
+//            case (Taken(by), _) =>
+//              assert(by != idx)
+//              Blocked(by)
+//            case (_, Taken(by)) =>
+//              assert(by != idx)
+//              Blocked(by)
+//          }
+//        }
+//      }
 
     val sightChngs: Seq[Event[Sight]] =
       for(i <- 0 until SIZE) yield sights(i).changed
@@ -83,7 +92,9 @@ object PaperPhilosophers {
       sightChngs(i).filter(_ == Done)
     val anySuccess = successes.reduce(_ || _)
     val successCount: Signal[Int] =
-      anySuccess.fold(0) { (acc, _) => acc + 1 }
+      REName.named(s"successCount") { implicit ! =>
+        anySuccess.fold(0) { (acc, _) => acc + 1 }
+      }
 
     val end = System.currentTimeMillis() + 10000
     def driver(idx: Int): Int = {

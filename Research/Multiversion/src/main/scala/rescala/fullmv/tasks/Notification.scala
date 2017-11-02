@@ -27,8 +27,7 @@ trait NotificationAction extends FullMVAction {
       case GlitchFreeReady =>
         Traversable(Reevaluation(turn, node))
       case outAndSucc: NotificationOutAndSuccessorOperation[FullMVTurn, Reactive[FullMVStruct]] =>
-        assert(!changed, s"somehow, $this was digested into an unchanged reevaluation?!")
-        Reevaluation.processReevaluationResult(node, turn, outAndSucc, changed)
+        Reevaluation.processReevaluationResult(node, turn, outAndSucc, changed = false)
     }
   }
 

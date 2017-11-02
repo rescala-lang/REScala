@@ -29,7 +29,7 @@ case class Reevaluation(turn: FullMVTurn, node: Reactive[FullMVStruct]) extends 
 
 object Reevaluation {
   def processReevaluationResult(node: Reactive[FullMVStruct], turn: FullMVTurn, outAndSucc: NotificationOutAndSuccessorOperation[FullMVTurn, Reactive[FullMVStruct]], changed: Boolean): Traversable[FullMVAction] = {
-    if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] Reevaluation($turn, $node) => ${if(changed) "changed" else "unchanged"} $outAndSucc")
+    if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] Reevaluation($turn,$node) => ${if(changed) "changed" else "unchanged"} $outAndSucc")
     outAndSucc match {
       case NoSuccessor(out) =>
         val branchDiff = out.size - 1
