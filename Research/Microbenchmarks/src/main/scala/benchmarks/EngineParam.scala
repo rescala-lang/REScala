@@ -12,7 +12,7 @@ class EngineParam[S <: Struct] {
   def engine: Engine[S] = engineName match {
     case "stm" => rescala.stm.STMEngine.stm.asInstanceOf[Engine[S]]
     case "restoring" => new rescala.restore.ReStoringEngine().asInstanceOf[Engine[S]]
-    case "fullmv" => rescala.fullmv.FullMVEngine.asInstanceOf[Engine[S]]
+    case "fullmv" => rescala.fullmv.FullMVEngine.default.asInstanceOf[Engine[S]]
     case other => Engines.byName[S](other)
   }
 }
