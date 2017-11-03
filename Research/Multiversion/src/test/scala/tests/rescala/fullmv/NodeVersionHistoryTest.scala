@@ -2,7 +2,7 @@ package tests.rescala.fullmv
 
 import org.scalatest.FunSuite
 import rescala.core.{Pulse, ValuePersistency}
-import rescala.fullmv.FramingBranchResult.{FramingBranchEnd, FramingBranchOut}
+import rescala.fullmv.FramingBranchResult.{Deframe, Frame, FramingBranchEnd}
 import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation.FollowFraming
 import rescala.fullmv._
 import rescala.fullmv.sgt.synchronization.SubsumableLock
@@ -20,7 +20,7 @@ class NodeVersionHistoryTest extends FunSuite {
 
     val reevaluate = engine.newTurn()
     reevaluate.awaitAndSwitchPhase(TurnPhase.Framing)
-    assert(n.incrementFrame(reevaluate) === FramingBranchOut(Set.empty))
+    assert(n.incrementFrame(reevaluate) === Frame(Set.empty, reevaluate))
     reevaluate.awaitAndSwitchPhase(TurnPhase.Executing)
 
     val framing1 = engine.newTurn()
@@ -37,6 +37,6 @@ class NodeVersionHistoryTest extends FunSuite {
     n.retrofitSinkFrames(Seq.empty, Some(framing1), -1)
     assert(n.reevOut(reevaluate, Some(Pulse.Value(11))) === FollowFraming(Set.empty, framing2))
 
-    n.incrementSupersedeFrame(framing1, framing2)
+    assert(n.incrementSupersedeFrame(framing1, framing2) == Deframe(Set.empty, framing2))
   }
 }

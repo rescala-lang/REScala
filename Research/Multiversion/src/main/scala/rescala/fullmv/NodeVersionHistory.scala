@@ -13,8 +13,10 @@ import scala.collection.mutable.ArrayBuffer
 sealed trait FramingBranchResult[+T, +R]
 object FramingBranchResult {
   case object FramingBranchEnd extends FramingBranchResult[Nothing, Nothing]
-  case class FramingBranchOut[R](out: Set[R]) extends FramingBranchResult[Nothing, R]
-  case class FramingBranchOutSuperseding[T, R](out: Set[R], supersede: T) extends FramingBranchResult[T, R]
+  case class Frame[T, R](out: Set[R], frame: T) extends FramingBranchResult[T, R]
+  case class FrameSupersede[T, R](out: Set[R], frame: T, supersede: T) extends FramingBranchResult[T, R]
+  case class Deframe[T, R](out: Set[R], deframe: T) extends FramingBranchResult[T, R]
+  case class DeframeReframe[T, R](out: Set[R], deframe: T, reframe: T) extends FramingBranchResult[T, R]
 }
 
 sealed trait NotificationResultAction[+T, +R]
@@ -281,9 +283,15 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     * @param txn the transaction
     * @return the position (positive values) or insertion point (negative values)
     */
-  private def findFrame(txn: T): Int = {
-    if(firstFrame < _versions.size && _versions(firstFrame).txn == txn) firstFrame else
-      findOrPidgeonHole(txn, latestWritten + 1, _versions.size)
+  private def findFrameFraming(txn: T): Int = {
+    findOrPidgeonHole(txn, latestWritten + 1, _versions.size)
+  }
+
+  private def findFramePropagating(txn: T): Int = {
+    if(firstFrame < _versions.size && _versions(firstFrame).txn == txn)
+      firstFrame
+    else
+      findFrameFraming(txn)
   }
 
   /**
@@ -293,7 +301,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     * @param txn the transaction
     * @return the position (positive values) or insertion point (negative values)
     */
-  private def findFinal(txn: T) = {
+  private def findFinal/*Propagating*/(txn: T)  = {
     if(_versions(latestWritten).txn == txn) latestWritten else
       findOrPidgeonHole(txn, 1, firstFrame)
   }
@@ -302,79 +310,122 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
   // =================== FRAMING ====================
 
   /**
-    * entry point for superseding framing
-    * @param txn the transaction visiting the node for framing
-    * @param supersede the transaction whose frame was superseded by the visiting transaction at the previous node
-    */
-  override def incrementSupersedeFrame(txn: T, supersede: T): FramingBranchResult[T, OutDep] = synchronized {
-    val result = incrementFrame0(txn)
-    val supersedePosition = findFrame(supersede)
-    if (supersedePosition >= 0) {
-      _versions(supersedePosition).pending -= 1
-    } else {
-      createVersion(-supersedePosition, supersede, pending = -1)
-    }
-    assertOptimizationsIntegrity(s"incrementSupersedeFrame($txn, $supersede) -> $result")
-    result
-  }
-
-  /**
     * entry point for regular framing
+    *
     * @param txn the transaction visiting the node for framing
     */
   override def incrementFrame(txn: T): FramingBranchResult[T, OutDep] = synchronized {
+    maybeGC()
     val result = incrementFrame0(txn)
     assertOptimizationsIntegrity(s"incrementFrame($txn) -> $result")
     result
   }
 
   /**
-    * creates a frame if none exists, or increments an existing frame's [[Version.pending]] counter.
+    * entry point for superseding framing
     * @param txn the transaction visiting the node for framing
-    * @return a descriptor of how this framing has to propagate
+    * @param supersede the transaction whose frame was superseded by the visiting transaction at the previous node
     */
-  private def incrementFrame0(txn: T): FramingBranchResult[T, OutDep] = {
+  override def incrementSupersedeFrame(txn: T, supersede: T): FramingBranchResult[T, OutDep] = synchronized {
     maybeGC()
-    val position = findFrame(txn)
-    if(position >= 0) {
-      val version = _versions(position)
-      version.pending += 1
-      if(version.pending == 1) {
-        // this case (a version is framed for the "first" time, i.e., pending == 1, during framing, but already existed
-        // beforehand) is relevant if drop retrofitting downgraded a frame into a marker and the marker and subsequent
-        // versions were subsequently stabilized. Since this marker is now upgraded back into a frame, subsequent
-        // versions need to be unstabilized again. This is safe to do because this method is only called by framing
-        // transactions, meaning all subsequent versions must also be frames, deleted frame markers, or to be deleted
-        // frame drop compensations. This case cannot occur for follow framings attached to change notifications,
-        // because these imply a preceding reevaluation, meaning neither the incremented frame nor any subsequent
-        // frame can be stable yet.
-        frameCreated(position, version)
-      } else {
-        FramingBranchResult.FramingBranchEnd
-      }
+    val position = updateOrCreatePending(txn, 1)
+    val result = if(position < firstFrame && _versions(position).pending == 1) {
+      updateOrCreatePending(supersede, -1)
+      incrementFrameResultAfterNewFirstFrameWasCreated(txn, position)
     } else {
-      val frame = createVersion(-position, txn, pending = 1)
-      frameCreated(-position, frame)
+      decrementFrame0(supersede)
+    }
+    assertOptimizationsIntegrity(s"incrementSupersedeFrame($txn, $supersede) -> $result")
+    result
+  }
+
+  override def decrementFrame(txn: T): FramingBranchResult[T, OutDep] = synchronized {
+    val result = decrementFrame0(txn)
+    assertOptimizationsIntegrity(s"decrementFrame($txn) -> $result")
+    result
+  }
+
+  override def decrementReframe(txn: T, reframe: T): FramingBranchResult[T, OutDep] = synchronized {
+    val position = updateOrCreatePending(txn, -1)
+    val result = if(position == firstFrame && _versions(position).pending == 0) {
+      updateOrCreatePending(reframe, 1)
+      deframeResultAfterPreviousFirstFrameWasRemoved(txn, position)
+    } else {
+      incrementFrame0(reframe)
+    }
+    assertOptimizationsIntegrity(s"deframeReframe($txn, $reframe) -> $result")
+    result
+  }
+
+  private def incrementFrame0(txn: T): FramingBranchResult[T, OutDep] = {
+    val position: Int = updateOrCreatePending(txn, 1)
+    if (position < firstFrame && _versions(position).pending == 1) {
+      incrementFrameResultAfterNewFirstFrameWasCreated(txn, position)
+    } else {
+      FramingBranchResult.FramingBranchEnd
     }
   }
 
-  private def frameCreated(position: Int, frame: Version): FramingBranchResult[T, OutDep] = {
-    if(position < firstFrame) {
-      for(pos <- (position + 1) until firstFrame) {
-        assert(_versions(pos).stable, s"${_versions(position).txn} cannot destabilize ${_versions(pos)}")
-        _versions(pos).stable = false
-      }
-      val result = if(firstFrame < _versions.size) {
-        assert(_versions(firstFrame).stable, s"${_versions(position).txn} cannot destabilize firstframe ${_versions(firstFrame)}")
-        _versions(firstFrame).stable = false
-        FramingBranchResult.FramingBranchOutSuperseding(frame.out, _versions(firstFrame).txn)
-      } else {
-        FramingBranchResult.FramingBranchOut(frame.out)
-      }
-      firstFrame = position
-      result
+  private def decrementFrame0(txn: T): FramingBranchResult[T, OutDep] = {
+    val position = updateOrCreatePending(txn, -1)
+    if (position == firstFrame && _versions(position).pending == 0) {
+      deframeResultAfterPreviousFirstFrameWasRemoved(txn, position)
     } else {
       FramingBranchResult.FramingBranchEnd
+    }
+  }
+
+  private def updateOrCreatePending(txn: T, by: Int) = {
+    val maybeFoundPosition = findFrameFraming(txn)
+    val position = if (maybeFoundPosition >= 0) {
+      _versions(maybeFoundPosition).pending += by
+      maybeFoundPosition
+    } else {
+      createVersion(-maybeFoundPosition, txn, pending = by)
+      -maybeFoundPosition
+    }
+    position
+  }
+
+  private def incrementFrameResultAfterNewFirstFrameWasCreated(txn: T, position: Int) = {
+    val previousFirstFrame = firstFrame
+
+    @tailrec @inline def destabilizeBackwardsUntilFrame(): Unit = {
+      if(firstFrame < _versions.size) {
+        val version = _versions(firstFrame)
+        assert(version.stable, s"cannot destabilize $firstFrame: $version")
+        version.stable = false
+      }
+      firstFrame -= 1
+      if(!_versions(firstFrame).isFrame) destabilizeBackwardsUntilFrame()
+    }
+    destabilizeBackwardsUntilFrame()
+    assert(firstFrame == position, s"destablizeBackwards did not reach $position: ${_versions(position)} but stopped at $firstFrame: ${_versions(firstFrame)}")
+
+    if(previousFirstFrame < _versions.size) {
+      FramingBranchResult.FrameSupersede(_versions(position).out, txn, _versions(previousFirstFrame).txn)
+    } else {
+      FramingBranchResult.Frame(_versions(position).out, txn)
+    }
+  }
+
+
+  private def deframeResultAfterPreviousFirstFrameWasRemoved(txn: T, position: Int) = {
+    @tailrec @inline def stabilizeForwardsUntilFrame(): Unit = {
+      firstFrame += 1
+      if(firstFrame < _versions.size) {
+        val version = _versions(firstFrame)
+        assert(!version.stable, s"cannot stabilize $firstFrame: $version")
+        version.stable = true
+        if (!version.isFrame) stabilizeForwardsUntilFrame()
+      }
+    }
+    stabilizeForwardsUntilFrame()
+
+    if(firstFrame < _versions.size) {
+      FramingBranchResult.DeframeReframe(_versions(position).out, txn, _versions(firstFrame).txn)
+    } else {
+      FramingBranchResult.Deframe(_versions(position).out, txn)
     }
   }
 
@@ -388,7 +439,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     * @param changed whether or not the dependency changed
     */
   override def notify(txn: T, changed: Boolean): NotificationResultAction[T, OutDep] = synchronized {
-    val result = notify0(findFrame(txn), txn, changed)
+    val result = notify0(findFramePropagating(txn), txn, changed)
     assertOptimizationsIntegrity(s"notify($txn, $changed) -> $result")
     result
   }
@@ -401,7 +452,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     */
   override def notifyFollowFrame(txn: T, changed: Boolean, followFrame: T): NotificationResultAction[T, OutDep] = synchronized {
     maybeGC()
-    val position = findFrame(txn)
+    val position = findFramePropagating(txn)
 
     // do follow framing
     val followFrameMinPosition = if (position > 0) position + 1 else -position

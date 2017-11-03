@@ -38,9 +38,21 @@ class ReactiveMirror[A](val getValue: FullMVTurn => A, val reflectionProxy: Reac
     Await.result(add, timeout)
     FramingBranchResult.FramingBranchEnd
   }
+  override def decrementFrame(txn: FullMVTurn): FramingBranchResult[FullMVTurn, Reactive[FullMVStruct]] = {
+    val add = txn.addRemoteBranch(TurnPhase.Framing)
+    reflectionProxy.asyncDecrementFrame(txn)
+    Await.result(add, timeout)
+    FramingBranchResult.FramingBranchEnd
+  }
   override def incrementSupersedeFrame(txn: FullMVTurn, supersede: FullMVTurn): FramingBranchResult[FullMVTurn, Reactive[FullMVStruct]] = {
     val add = txn.addRemoteBranch(TurnPhase.Framing)
     reflectionProxy.asyncIncrementSupersedeFrame(txn, supersede)
+    Await.result(add, timeout)
+    FramingBranchResult.FramingBranchEnd
+  }
+  override def decrementReframe(txn: FullMVTurn, reframe: FullMVTurn): FramingBranchResult[FullMVTurn, Reactive[FullMVStruct]] = {
+    val add = txn.addRemoteBranch(TurnPhase.Framing)
+    reflectionProxy.asyncDeframeReframe(txn, reframe)
     Await.result(add, timeout)
     FramingBranchResult.FramingBranchEnd
   }

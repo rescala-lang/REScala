@@ -8,6 +8,20 @@ trait FullMVState[V, T <: FullMVTurn, Reactive, OutDep] {
   def latestValue: V
 
   /**
+    * entry point for regular framing
+    *
+    * @param txn the transaction visiting the node for framing
+    */
+  def incrementFrame(txn: T): FramingBranchResult[T, OutDep]
+
+  /**
+    * entry point for framing compensation
+    *
+    * @param txn the transaction visiting the node for deframing
+    */
+  def decrementFrame(txn: T): FramingBranchResult[T, OutDep]
+
+  /**
     * entry point for superseding framing
     *
     * @param txn       the transaction visiting the node for framing
@@ -16,11 +30,12 @@ trait FullMVState[V, T <: FullMVTurn, Reactive, OutDep] {
   def incrementSupersedeFrame(txn: T, supersede: T): FramingBranchResult[T, OutDep]
 
   /**
-    * entry point for regular framing
+    * entry point for deframe-reframe framing
     *
-    * @param txn the transaction visiting the node for framing
+    * @param txn       the transaction visiting the node for deframing
+    * @param reframe the transaction whose frame has become new firstFrame instead
     */
-  def incrementFrame(txn: T): FramingBranchResult[T, OutDep]
+  def decrementReframe(txn: T, reframe: T): FramingBranchResult[T, OutDep]
 
   /**
     * entry point for change/nochange notification reception

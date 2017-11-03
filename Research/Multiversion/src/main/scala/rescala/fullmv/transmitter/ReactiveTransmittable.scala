@@ -42,7 +42,9 @@ object ReactiveTransmittable {
       case Connect(turn) => allEmpty("Connect").copy(_2 = turn)
       case Initialize(initValues, maybeFirstFrame) => allEmpty("Initialize").copy(_2 = maybeFirstFrame.getOrElse(Host.dummyGuid), _5 = initValues, _8 = maybeFirstFrame.isDefined)
       case AsyncIncrementFrame(turn) => allEmpty("AsyncIncrementFrame").copy(_2 = turn)
+      case AsyncDecrementFrame(turn) => allEmpty("AsyncDecrementFrame").copy(_2 = turn)
       case AsyncIncrementSupersedeFrame(turn, supersede) => allEmpty("AsyncIncrementSupersedeFrame").copy(_2 = turn, _3 = supersede)
+      case AsyncDeframeReframe(turn, reframe) => allEmpty("AsyncDeframeReframe").copy(_2 = turn, _3 = reframe)
       case AsyncResolveUnchanged(turn) => allEmpty("AsyncResolveUnchanged").copy(_2 = turn)
       case AsyncResolveUnchangedFollowFrame(turn, followFrame) => allEmpty("AsyncResolveUnchangedFollowFrame").copy(_2 = turn, _3 = followFrame)
       case AsyncNewValue(turn, value) => allEmpty("AsyncNewValue").copy(_2 = turn, _4 = Some(value))
@@ -81,7 +83,9 @@ object ReactiveTransmittable {
       case ("Connect", turn, _, _, _, _, _, _, _, _) => Connect(turn)
       case ("Initialize", mbff, _, _, initValues, _, _, mb, _, _) => Initialize(initValues, if(mb) Some(mbff) else None)
       case ("AsyncIncrementFrame", turn, _, _, _, _, _, _, _, _) => AsyncIncrementFrame(turn)
+      case ("AsyncDecrementFrame", turn, _, _, _, _, _, _, _, _) => AsyncDecrementFrame(turn)
       case ("AsyncIncrementSupersedeFrame", turn, supersede, _, _, _, _, _, _, _) => AsyncIncrementSupersedeFrame(turn, supersede)
+      case ("AsyncDeframeReframe", turn, reframe, _, _, _, _, _, _, _) => AsyncDeframeReframe(turn, reframe)
       case ("AsyncResolveUnchanged", turn, _, _, _, _, _, _, _, _) => AsyncResolveUnchanged(turn)
       case ("AsyncResolveUnchangedFollowFrame", turn, followFrame, _, _, _, _, _, _, _) => AsyncResolveUnchangedFollowFrame(turn, followFrame)
       case ("AsyncNewValue", turn, _, Some(value), _, _, _, _, _, _) => AsyncNewValue(turn, value)
@@ -129,7 +133,9 @@ object ReactiveTransmittable {
   case class Initialize[P](initValues: Seq[(Host.GUID, P)], maybeFirstFrame: Option[Host.GUID]) extends Response[P]
 
   case class AsyncIncrementFrame(turn: Host.GUID) extends Async[Nothing]
+  case class AsyncDecrementFrame(turn: Host.GUID) extends Async[Nothing]
   case class AsyncIncrementSupersedeFrame(turn: Host.GUID, supersede: Host.GUID) extends Async[Nothing]
+  case class AsyncDeframeReframe(turn: Host.GUID, reframe: Host.GUID) extends Async[Nothing]
   case class AsyncResolveUnchanged(turn: Host.GUID) extends Async[Nothing]
   case class AsyncResolveUnchangedFollowFrame(turn: Host.GUID, followFrame: Host.GUID) extends Async[Nothing]
   case class AsyncNewValue[P](turn: Host.GUID, value: P) extends Async[P]
@@ -346,8 +352,12 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
   def handleAsync(localReactive: Either[ReSourciV[Pulse[P], FullMVStruct], ReactiveReflection[P]], endpoint: EndPointWithInfrastructure[Msg], message: Async): Unit = message match {
     case AsyncIncrementFrame(turn) =>
       localReactive.right.get.asyncIncrementFrame(localTurnParameterInstance(turn, endpoint))
+    case AsyncDecrementFrame(turn) =>
+      localReactive.right.get.asyncDecrementFrame(localTurnParameterInstance(turn, endpoint))
     case AsyncIncrementSupersedeFrame(turn, supersede) =>
       localReactive.right.get.asyncIncrementSupersedeFrame(localTurnParameterInstance(turn, endpoint), localTurnParameterInstance(supersede, endpoint))
+    case AsyncDeframeReframe(turn, reframe) =>
+      localReactive.right.get.asyncDeframeReframe(localTurnParameterInstance(turn, endpoint), localTurnParameterInstance(reframe, endpoint))
     case AsyncResolveUnchanged(turn) =>
       localReactive.right.get.asyncResolvedUnchanged(localTurnParameterInstance(turn, endpoint))
     case AsyncResolveUnchangedFollowFrame(turn, followFrame) =>
@@ -551,10 +561,19 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
       assert(turn.host == host)
       doAsync(endpoint, AsyncIncrementFrame(turn.guid))
     }
+    override def asyncDecrementFrame(turn: FullMVTurn): Unit = {
+      assert(turn.host == host)
+      doAsync(endpoint, AsyncDecrementFrame(turn.guid))
+    }
     override def asyncIncrementSupersedeFrame(turn: FullMVTurn, supersede: FullMVTurn): Unit = {
       assert(turn.host == host)
       assert(supersede.host == host)
       doAsync(endpoint, AsyncIncrementSupersedeFrame(turn.guid, supersede.guid))
+    }
+    override def asyncDeframeReframe(turn: FullMVTurn, reframe: FullMVTurn): Unit = {
+      assert(turn.host == host)
+      assert(reframe.host == host)
+      doAsync(endpoint, AsyncDeframeReframe(turn.guid, reframe.guid))
     }
     override def asyncResolvedUnchanged(turn: FullMVTurn): Unit = {
       assert(turn.host == host)

@@ -7,8 +7,6 @@ import rescala.core._
 import rescala.fullmv.tasks._
 import rescala.fullmv.{FullMVEngine, FullMVState, FullMVStruct, FullMVTurn, TurnPhase}
 
-
-
 trait ReactiveReflection[-P] extends Reactive[FullMVStruct] with ReactiveReflectionProxy[Pulse[P]] {
   self: RENamed =>
   val host: FullMVEngine
@@ -19,10 +17,20 @@ trait ReactiveReflection[-P] extends Reactive[FullMVStruct] with ReactiveReflect
     turn.newBranchFromRemote(TurnPhase.Framing)
     submit(Framing(turn, this))
   }
+  override def asyncDecrementFrame(turn: FullMVTurn): Unit = {
+    turn.newBranchFromRemote(TurnPhase.Framing)
+    submit(Deframing(turn, this))
+  }
   override def asyncIncrementSupersedeFrame(turn: FullMVTurn, supersede: FullMVTurn): Unit = {
     turn.newBranchFromRemote(TurnPhase.Framing)
     submit(SupersedeFraming(turn, this, supersede))
   }
+
+  override def asyncDeframeReframe(turn: FullMVTurn, reframe: FullMVTurn): Unit = {
+    turn.newBranchFromRemote(TurnPhase.Framing)
+    submit(DeframeReframing(turn, this, reframe))
+  }
+
   override def asyncResolvedUnchanged(turn: FullMVTurn): Unit = {
     turn.newBranchFromRemote(TurnPhase.Executing)
     submit(Notification(turn, this, changed = false))
