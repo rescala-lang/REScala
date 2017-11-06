@@ -87,7 +87,7 @@ trait SubsumableLock extends SubsumableLockProxy with Hosted {
 }
 
 object SubsumableLock {
-  val DEBUG = true
+  val DEBUG = false
 
   def underLock[R](defender: FullMVTurn, contender: FullMVTurn, timeout: Duration)(thunk: => R): Option[R] = {
     assert(defender.host == contender.host)
