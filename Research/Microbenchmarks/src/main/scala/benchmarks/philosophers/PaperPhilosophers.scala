@@ -1,9 +1,11 @@
 package benchmarks.philosophers
 
-import java.util.concurrent.Executors
+import java.util.concurrent.{Executors, ThreadLocalRandom}
 
 import rescala.core.{Engine, REName, Struct}
+import rescala.parrp.Backoff
 
+import scala.annotation.tailrec
 import scala.concurrent.{Await, Future, TimeoutException}
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
@@ -103,35 +105,58 @@ class PaperPhilosophers[S <: Struct](val size: Int, val engine: Engine[S]) {
     phils(idx).set(Thinking)
   }
 
+  def eatRandomOnce(threadIndex: Int, threadCount: Int): Unit = {
+    val seatsServed = size / threadCount + (if (threadIndex < size % threadCount) 1 else 0)
+    val seating: Int = threadIndex + ThreadLocalRandom.current().nextInt(seatsServed) * threadCount
+    val bo = new Backoff()
+    @tailrec def retryEating(): Unit = {
+      maybeEat(seating)
+      if(hasEaten(seating)) {
+        rest(seating)
+      } else {
+        bo.backoff()
+        retryEating()
+      }
+    }
+    retryEating()
+  }
+
   def total: Int = successCount.now
 }
 
 object PaperPhilosophers {
   def main(args: Array[String]): Unit = {
-    val SIZE = if(args.length >= 1) Integer.parseInt(args(0)) else 5
-    val engine = new rescala.fullmv.FullMVEngine(Duration.Zero, s"PaperPhilosophers($SIZE)")
-    val table = new PaperPhilosophers(SIZE, engine)
+    val tableSize = if(args.length >= 1) Integer.parseInt(args(0)) else 5
+    val threadCount = if(args.length >= 2) Integer.parseInt(args(1)) else tableSize
+    val duration = if(args.length >= 3) Integer.parseInt(args(2)) else 0
 
-    val end = System.currentTimeMillis() + 10000
+    val engine = new rescala.fullmv.FullMVEngine(Duration.Zero, s"PaperPhilosophers($tableSize,$threadCount)")
+    val table = new PaperPhilosophers(tableSize, engine)
+
+    val continue: () => Boolean = if(duration == 0) {
+      println("Running in interactive mode: press <Enter> to terminate.")
+      () => System.in.available() <= 0
+    } else {
+      val end = System.currentTimeMillis() + duration
+      () => System.currentTimeMillis() < end
+    }
     def driver(idx: Int): Int = {
       var localCount = 0
-      while(System.currentTimeMillis() < end) {
-        table.maybeEat(idx)
-        if(table.hasEaten(idx)) {
-          localCount += 1
-          table.rest(idx)
-        }
+      while(continue()) {
+        table.eatRandomOnce(idx, threadCount)
+        localCount += 1
       }
       localCount
     }
 
-    val executor = Executors.newFixedThreadPool(SIZE)
+    val executor = Executors.newFixedThreadPool(threadCount)
     val execContext = scala.concurrent.ExecutionContext.fromExecutor(executor)
-    val threads = for(i <- 0 until SIZE) yield Future { driver(i) }(execContext)
+    val threads = for(i <- 0 until threadCount) yield Future { driver(i) }(execContext)
 
-    while(System.currentTimeMillis() < end) Thread.sleep(end - System.currentTimeMillis())
+    while(continue()) { Thread.sleep(10) }
+    val timeout = System.currentTimeMillis() + 500
     val scores = threads.map{ t =>
-      Await.ready(t, (end + 500 - System.currentTimeMillis()).millis )
+      Await.ready(t, (timeout - System.currentTimeMillis()).millis )
       t.value.get
     }
     executor.shutdown()
@@ -149,12 +174,17 @@ object PaperPhilosophers {
     if(scores.exists(_.isFailure)) {
       println("There were failures -> not accessing total score")
     } else {
-      println("Total score: " + table.total)
+      val individualsSum = scores.map(_.get).sum
+      if(table.total == individualsSum){
+        println("Total score: " + table.total + " (matches individual scores' sum)")
+      } else {
+        println("Total score: " + table.total + " (differs from individual scores' sum of " + individualsSum + ")")
+      }
     }
 
     val remainingTurns = engine.instances.size()
     if(remainingTurns != 0) println(remainingTurns + " turn instances were not garbage collected")
     val remainingLocks = engine.lockHost.instances.size()
-    if(remainingLocks == 0) println(remainingLocks + " lock instances were not garbage collected")
+    if(remainingLocks != 0) println(remainingLocks + " lock instances were not garbage collected")
   }
 }
