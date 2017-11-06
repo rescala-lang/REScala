@@ -20,9 +20,8 @@ if ($OSNAME eq "MSWin32") {
 }
 my $OUTDIR = 'out';
 my $RESULTDIR = 'results';
-my $BSUB_TIME = "0:55";
-my $BSUB_QUEUE = "deflt_auto";
-my $BSUB_REQUIRE = "select[ mpi && avx ]";
+my $BSUB_TIME = "0:55:00";
+my $BSUB_REQUIRE = "avx&mpi";
 my $BSUB_CORES = "16";
 
 my @ENGINES = qw<parrp stm synchron locksweep>;
@@ -76,7 +75,7 @@ sub init {
   mkdir $RESULTDIR;
   mkdir "$RESULTDIR/$GITREF";
   mkdir $OUTDIR;
-  chdir "..";
+  chdir "../..";
 
   system('./sbt', 'set scalacOptions in ThisBuild ++= List("-Xdisable-assertions", "-Xelide-below", "9999999")', 'project microbench', 'stage', 'compileJmh');
   qx[perl -p -i -e 's#exec java \\\$JAVA_OPTS -cp "#exec java \\\$JAVA_OPTS -cp "\\\$PROJECT_DIR/Microbench/target/scala-2.11/jmh-classes:#g' ./Microbench/target/start];
@@ -107,7 +106,7 @@ sub submitAllAsOne {
 
 sub submit {
   my ($job) = @_;
-  open (my $BSUB, "|-", qq[bsub -q $BSUB_QUEUE -x -n $BSUB_CORES -W $BSUB_TIME -R "$BSUB_REQUIRE" ]);
+  open (my $BSUB, "|-", qq[sbatch --exclusive -n 1 -c $BSUB_CORES -C $BSUB_REQUIRE -t $BSUB_TIME ]);
   print $BSUB $job;
   close $BSUB;
 }
@@ -636,31 +635,27 @@ sub selection {
 sub hhlrjob {
   my ($name, $programstring) = @_;
   return  <<ENDPROGRAM;
-#!/bin/sh
+```#!/bin/sh
 # Job name
-#BSUB -J $name
+#SBATCH -J REScalaBenchmark
 #
-# File / path where STDOUT will be written, the %J is the job id
-#BSUB -o $OUTDIR/$name-%J.out
-#
-# File / path where STDERR will be written, the %J is the job id
-# #BSUB -e $OUTDIR/$name-%J.err
+# File / path where STDOUT will be written, the %.j is the job id
+#SBATCH -o parrp-%j.out
 #
 # Request the time you need for execution in [hour:]minute
-#BSUB -W $BSUB_TIME
+#SBATCH -t 00:30:00
 #
 # Required resources
-#BSUB -R "$BSUB_REQUIRE"
+#SBATCH -C avx&mpi
 #
 # Request vitual memory you need for your job in MB
-#BSUB -M 2048
+#SBATCH --mem-per-cpu=128
 #
 # Request the number of compute slots you want to use
-#BSUB -n $BSUB_CORES
-#BSUB -q $BSUB_QUEUE
+#SBATCH -n 1
+#SBATCH -c 16
 # request exclusive access
-#BSUB -x
-
+#SBATCH --exclusive
 module unload openmpi
 module load java
 echo "--------- processors ------------------------"

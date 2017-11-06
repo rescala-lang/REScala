@@ -125,14 +125,16 @@ object PaperPhilosophers {
       localCount
     }
 
-    val executor = scala.concurrent.ExecutionContext.fromExecutor(Executors.newFixedThreadPool(SIZE))
-    val threads = for(i <- 0 until SIZE) yield Future { driver(i) }(executor)
+    val executor = Executors.newFixedThreadPool(SIZE)
+    val execContext = scala.concurrent.ExecutionContext.fromExecutor(executor)
+    val threads = for(i <- 0 until SIZE) yield Future { driver(i) }(execContext)
 
     while(System.currentTimeMillis() < end) Thread.sleep(end - System.currentTimeMillis())
     val scores = threads.map{ t =>
       Await.ready(t, (end + 500 - System.currentTimeMillis()).millis )
       t.value.get
     }
+    executor.shutdown()
 
     println("Philosophers done. Individual scores:")
     println("\t" + scores.zipWithIndex.map { case (count, idx) => idx + ": " + count }.mkString("\n\t"))
@@ -150,7 +152,9 @@ object PaperPhilosophers {
       println("Total score: " + table.total)
     }
 
-    assert(engine.instances.size() == 0, "some turn instances were not garbage collected")
-    assert(engine.lockHost.instances.size() == 0, "some lock instances were not garbage collected")
+    val remainingTurns = engine.instances.size()
+    if(remainingTurns != 0) println(remainingTurns + " turn instances were not garbage collected")
+    val remainingLocks = engine.lockHost.instances.size()
+    if(remainingLocks == 0) println(remainingLocks + " lock instances were not garbage collected")
   }
 }
