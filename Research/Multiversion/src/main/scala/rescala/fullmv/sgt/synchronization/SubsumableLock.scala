@@ -67,7 +67,8 @@ trait SubsumableLock extends SubsumableLockProxy with Hosted {
   }
   def localAddRefs(refs: Int): Unit = {
     assert(refs > 0)
-    assert(refCount.getAndAdd(refs) > 0)
+    val newCount = refCount.getAndAdd(refs)
+    assert(newCount > 0)
   }
   def localSubRefs(refs: Int): Unit = {
     assert(refs > 0)
@@ -86,7 +87,7 @@ trait SubsumableLock extends SubsumableLockProxy with Hosted {
 }
 
 object SubsumableLock {
-  val DEBUG = false
+  val DEBUG = true
 
   def underLock[R](defender: FullMVTurn, contender: FullMVTurn, timeout: Duration)(thunk: => R): Option[R] = {
     assert(defender.host == contender.host)
