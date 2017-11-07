@@ -11,7 +11,7 @@ import rescala.core.Struct
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @Warmup(iterations = 5, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
 @Measurement(iterations = 5, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
-@Fork(1)
+@Fork(value=1, jvmArgsPrepend = Array("-XX:+PrintCompilation", "-XX:+PrintGCDetails"))
 @Threads(2)
 class PaperPhilosopherCompetition[S <: Struct] {
   @Benchmark
@@ -26,7 +26,7 @@ class PaperCompetition[S <: Struct] {
   var philosophers: Int = _
   var table: PaperPhilosophers[S] = _
 
-  @Setup
+  @Setup(Level.Iteration)
   def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam[S]) = {
     table = new PaperPhilosophers(philosophers, engineParam.engine)
   }

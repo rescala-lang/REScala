@@ -12,7 +12,8 @@ trait Hosted {
   val host: Host[_]
   val guid: Host.GUID
   override def equals(obj: scala.Any): Boolean = obj.isInstanceOf[Hosted] && obj.asInstanceOf[Hosted].guid == guid
-  override def hashCode(): Int = guid.hashCode()
+  val hc = (guid ^ (guid >>> 32)).toInt
+  override def hashCode(): Int = hc
 }
 
 object Host {

@@ -89,6 +89,13 @@ trait SubsumableLock extends SubsumableLockProxy with Hosted {
 object SubsumableLock {
   val DEBUG = false
 
+  def underLock[R](contender: FullMVTurn, timeout: Duration)(thunk: => R): R = {
+    val lockedRoot = Await.result(contender.lock(), timeout)
+    try { thunk } finally {
+      lockedRoot.asyncUnlock()
+    }
+  }
+
   def underLock[R](defender: FullMVTurn, contender: FullMVTurn, timeout: Duration)(thunk: => R): Option[R] = {
     assert(defender.host == contender.host)
     if(DEBUG) System.out.println(s"[${Thread.currentThread().getName}] syncing $defender and $contender")
@@ -98,10 +105,9 @@ object SubsumableLock {
     @inline @tailrec def trySecondAndSpinFirstIfFailed(lockedRootA: SubsumableLock): Option[R] = {
       Await.result(defender.trySubsume(lockedRootA), timeout) match {
         case Successful =>
-          val res = try { thunk } finally {
+          Some(try { thunk } finally {
             lockedRootA.asyncUnlock()
-          }
-          Some(res)
+          })
         case Blocked =>
           val newLockedRootA = Await.result(lockedRootA.spinOnce(backoff.getAndIncrementBackoff()), timeout)
           trySecondAndSpinFirstIfFailed(newLockedRootA)

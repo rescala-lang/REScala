@@ -387,18 +387,18 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     position
   }
 
+  @tailrec private def destabilizeBackwardsUntilFrame(): Unit = {
+    if(firstFrame < _versions.size) {
+      val version = _versions(firstFrame)
+      assert(version.stable, s"cannot destabilize $firstFrame: $version")
+      version.stable = false
+    }
+    firstFrame -= 1
+    if(!_versions(firstFrame).isFrame) destabilizeBackwardsUntilFrame()
+  }
+
   private def incrementFrameResultAfterNewFirstFrameWasCreated(txn: T, position: Int) = {
     val previousFirstFrame = firstFrame
-
-    @tailrec @inline def destabilizeBackwardsUntilFrame(): Unit = {
-      if(firstFrame < _versions.size) {
-        val version = _versions(firstFrame)
-        assert(version.stable, s"cannot destabilize $firstFrame: $version")
-        version.stable = false
-      }
-      firstFrame -= 1
-      if(!_versions(firstFrame).isFrame) destabilizeBackwardsUntilFrame()
-    }
     destabilizeBackwardsUntilFrame()
     assert(firstFrame == position, s"destablizeBackwards did not reach $position: ${_versions(position)} but stopped at $firstFrame: ${_versions(firstFrame)}")
 
@@ -409,17 +409,17 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     }
   }
 
+  @tailrec private def stabilizeForwardsUntilFrame(): Unit = {
+    firstFrame += 1
+    if(firstFrame < _versions.size) {
+      val version = _versions(firstFrame)
+      assert(!version.stable, s"cannot stabilize $firstFrame: $version")
+      version.stable = true
+      if (!version.isFrame) stabilizeForwardsUntilFrame()
+    }
+  }
 
   private def deframeResultAfterPreviousFirstFrameWasRemoved(txn: T, position: Int) = {
-    @tailrec @inline def stabilizeForwardsUntilFrame(): Unit = {
-      firstFrame += 1
-      if(firstFrame < _versions.size) {
-        val version = _versions(firstFrame)
-        assert(!version.stable, s"cannot stabilize $firstFrame: $version")
-        version.stable = true
-        if (!version.isFrame) stabilizeForwardsUntilFrame()
-      }
-    }
     stabilizeForwardsUntilFrame()
 
     if(firstFrame < _versions.size) {
@@ -510,7 +510,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
             NotificationResultAction.GlitchFreeReady
           } else {
             // ResolvedFirstFrameToUnchanged
-            progressToNextWriteForNotification(s"$this notify ResolvedFirstFrame($position)ToUnchanged", version.out)
+            progressToNextWriteForNotification(version.out)
           }
         } else {
           if (version.changed > 0) {
@@ -551,7 +551,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     }
     version.changed = 0
 
-    val result = progressToNextWriteForNotification(s"$this ReevOut($position)${if(maybeValue.isDefined) "Changed" else "Unchanged"}", version.out)
+    val result = progressToNextWriteForNotification(version.out)
     assertOptimizationsIntegrity(s"reevOut($turn, ${maybeValue.isDefined}) -> $result")
     result
   }
@@ -562,31 +562,18 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     * whether or not the possibly encountered write [[Version.isReadyForReevaluation]].
     * @return the notification and next reevaluation descriptor.
     */
-  private def progressToNextWriteForNotification(debugOutputString: => String, out: Set[OutDep]): NotificationResultAction.NotificationOutAndSuccessorOperation[T, OutDep] = {
-    @tailrec
-    def progressToNextWriteForNotification0(): NotificationResultAction.NotificationOutAndSuccessorOperation[T, OutDep] = {
-      firstFrame += 1
-      if (firstFrame < _versions.size) {
-        val version = _versions(firstFrame)
-
-        assert(!version.stable, s"$debugOutputString cannot stabilize already-stable $version at position $firstFrame")
-        assert(!version.isWritten, s"$debugOutputString found unstable but written $version at position $firstFrame")
-        version.stable = true
-
-        if (version.isFrame) {
-          if (version.isReadyForReevaluation) {
-            NotificationResultAction.NotificationOutAndSuccessorOperation.NextReevaluation(out, version.txn)
-          } else {
-            NotificationResultAction.NotificationOutAndSuccessorOperation.FollowFraming(out, version.txn)
-          }
-        } else {
-          progressToNextWriteForNotification0()
-        }
+  private def progressToNextWriteForNotification(out: Set[OutDep]): NotificationResultAction.NotificationOutAndSuccessorOperation[T, OutDep] = {
+    stabilizeForwardsUntilFrame()
+    val res = if(firstFrame < _versions.size) {
+      val version = _versions(firstFrame)
+      if(version.isReadyForReevaluation) {
+        NotificationResultAction.NotificationOutAndSuccessorOperation.NextReevaluation(out, version.txn)
       } else {
-        NotificationResultAction.NotificationOutAndSuccessorOperation.NoSuccessor(out)
+        NotificationResultAction.NotificationOutAndSuccessorOperation.FollowFraming(out, version.txn)
       }
+    } else {
+      NotificationResultAction.NotificationOutAndSuccessorOperation.NoSuccessor(out)
     }
-    val res = progressToNextWriteForNotification0()
     notifyAll()
     res
   }
@@ -807,7 +794,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     (successorWrittenVersions, maybeSuccessorFrame)
   }
 
-  private var nextGcAtSize: Int = 5
+  private var nextGcAtSize: Int = 10
   private def maybeGC(): Int = {
     // placeholder in case we want to have some mechanic that reduces the frequency of GC runs
     if(_versions.size > nextGcAtSize) {

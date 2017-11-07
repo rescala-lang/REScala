@@ -64,24 +64,24 @@ class PaperPhilosophers[S <: Struct](val size: Int, val engine: Engine[S]) {
     }
 
   // "Static" Sight
-  //    val sights = for(idx <- 0 until SIZE) yield
-  //      REName.named(s"sight($idx)") { implicit ! =>
-  //        Signal[Sight] {
-  //          val prevIdx = (idx - 1 + SIZE) % SIZE
-  //          (forks(prevIdx)(), forks(idx)()) match {
-  //            case (Free, Free) =>
-  //              Ready
-  //            case (Taken(left), Taken(right)) if left == idx && right == idx =>
-  //              Done
-  //            case (Taken(by), _) =>
-  //              assert(by != idx)
-  //              Blocked(by)
-  //            case (_, Taken(by)) =>
-  //              assert(by != idx)
-  //              Blocked(by)
-  //          }
-  //        }
-  //      }
+//  val sights = for(idx <- 0 until size) yield
+//    REName.named(s"sight($idx)") { implicit ! =>
+//      Signal[Sight] {
+//        val prevIdx = (idx - 1 + size) % size
+//        (forks(prevIdx)(), forks(idx)()) match {
+//          case (Free, Free) =>
+//            Ready
+//          case (Taken(left), Taken(right)) if left == idx && right == idx =>
+//            Done
+//          case (Taken(by), _) =>
+//            assert(by != idx)
+//            Blocked(by)
+//          case (_, Taken(by)) =>
+//            assert(by != idx)
+//            Blocked(by)
+//        }
+//      }
+//    }
 
   val sightChngs: Seq[Event[Sight]] =
     for(i <- 0 until size) yield sights(i).changed

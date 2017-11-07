@@ -19,8 +19,10 @@ trait FullMVAction extends RecursiveAction {
         new Exception(s"Task $this failed on Thread ${Thread.currentThread().getName}.", e).printStackTrace()
         Traversable.empty
     }
-    val self = forks.head
-    for(fork <- forks.tail) fork.fork()
-    self.compute()
+    if(forks.nonEmpty) {
+      val self = forks.head
+      for (fork <- forks.tail) fork.fork()
+      self.compute()
+    }
   }
 }
