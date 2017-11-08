@@ -57,7 +57,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
       isReleasable || { NodeVersionHistory.this.wait(); isReleasable }
     }
   }
-  private class Version(val txn: T, var stable: Boolean, var out: Set[OutDep], var pending: Int, var changed: Int, var value: Option[V]) extends BlockOnHistoryManagedBlocker {
+  class Version(val txn: T, var stable: Boolean, var out: Set[OutDep], var pending: Int, var changed: Int, var value: Option[V]) extends BlockOnHistoryManagedBlocker {
     // txn >= Executing, stable == true, node reevaluation completed changed
     def isWritten: Boolean = changed == 0 && value.isDefined
     // txn <= WrapUp, any following versions are stable == false
@@ -133,146 +133,208 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
   def assertOptimizationsIntegrity(debugOutputDescription: => String): Unit = {
     def debugStatement(whatsWrong: String): String = s"$debugOutputDescription left $whatsWrong in $this"
 
-    assert(_versions.nonEmpty, debugStatement("version list was cleared"))
+    assert(size <= _versions.length, debugStatement("size out of bounds"))
+    assert(size > 0, debugStatement("version list empty"))
+    assert(!_versions.take(size).contains(null), debugStatement("null version in bounds"))
+    assert(!_versions.drop(size).exists(_ != null), debugStatement("non-null version outside bounds"))
     assert(_versions(0).isWritten, debugStatement("first version not written"))
 
     assert(firstFrame > 0, debugStatement("firstFrame out of bounds negative"))
-    assert(firstFrame <= _versions.size, debugStatement("firstFrame out of bounds positive"))
-    assert(firstFrame == _versions.size || _versions(firstFrame).isFrame, debugStatement("firstFrame not frame"))
+    assert(firstFrame <= size, debugStatement("firstFrame out of bounds positive"))
+    assert(firstFrame == size || _versions(firstFrame).isFrame, debugStatement("firstFrame not frame"))
     assert(!_versions.take(firstFrame).exists(_.isFrame), debugStatement("firstFrame not first"))
 
     assert(latestWritten >= 0, debugStatement("latestWritten out of bounds negative"))
-    assert(latestWritten < _versions.size, debugStatement("latestWritten out of bounds positive"))
+    assert(latestWritten < size, debugStatement("latestWritten out of bounds positive"))
     assert(_versions(latestWritten).isWritten, debugStatement("latestWritten not written"))
-    assert(!_versions.drop(latestWritten + 1).exists(_.isWritten), debugStatement("latestWritten not latest"))
+    assert(!_versions.slice(latestWritten + 1, size).exists(_.isWritten), debugStatement("latestWritten not latest"))
 
-    assert(!_versions.zipWithIndex.exists{case (version, index) => version.stable != (index <= firstFrame)}, debugStatement("broken version stability"))
+    assert(!_versions.take(size).zipWithIndex.exists{case (version, index) => version.stable != (index <= firstFrame)}, debugStatement("broken version stability"))
   }
 
-  override def toString: String = super.toString + s" -> latestWritten $latestWritten, ${if(firstFrame > _versions.size) "no frames" else "firstFrame "+firstFrame}): \n  " + _versions.zipWithIndex.map{case (version, index) => s"$index: $version"}.mkString("\n  ")
+  override def toString: String = super.toString + s" -> size $size, latestWritten $latestWritten, ${if(firstFrame > size) "no frames" else "firstFrame "+firstFrame}): \n  " + _versions.zipWithIndex.map{case (version, index) => s"$index: $version"}.mkString("\n  ")
 
   // =================== STORAGE ====================
 
-  private val _versions = new ArrayBuffer[Version](6)
-  _versions += new Version(init, stable = true, out = Set(), pending = 0, changed = 0, Some(valuePersistency.initialValue))
+  var _versions = new Array[Version](11)
+  _versions(0) = new Version(init, stable = true, out = Set(), pending = 0, changed = 0, Some(valuePersistency.initialValue))
+  var size = 1
   var latestValue: V = valuePersistency.initialValue
 
-  /**
-    * creates a version and inserts it at the given position; default parameters create a "read" version
-    * @param position the position
-    * @param txn the transaction this version is associated with
-    * @param pending the number of pending notifications, none by default
-    * @param changed the number of already received change notifications, none by default
-    * @return the created version
-    */
-  private def createVersion(position: Int, txn: T, pending: Int = 0, changed: Int = 0): Version = {
-    assert(position > 0, "cannot create a version at negative position")
-    val version = new Version(txn, stable = position <= firstFrame, _versions(position - 1).out, pending, changed, None)
-    _versions.insert(position, version)
-    if(position <= firstFrame) firstFrame += 1
-    if(position <= latestWritten) latestWritten += 1
+  private def createHole(position: Int) = {
+    if (_versions.length == size) {
+      val newVersions = new Array[Version](size + size / 2)
+      System.arraycopy(_versions, 0, newVersions, 0, position)
+      System.arraycopy(_versions, position, newVersions, position + 1, size - position)
+      _versions = newVersions
+    } else {
+      System.arraycopy(_versions, position, _versions, position + 1, size - position)
+    }
+  }
+
+  private def createVersionInHole(position: Int, txn: T) = {
+    val version = new Version(txn, stable = position <= firstFrame, _versions(position - 1).out, pending = 0, changed = 0, None)
+    size += 1
+    _versions(position) = version
+    if (position <= firstFrame) firstFrame += 1
+    if (position <= latestWritten) latestWritten += 1
     version
   }
 
-
   // =================== NAVIGATION ====================
-  var firstFrame: Int = _versions.size
+  var firstFrame: Int = size
   var latestWritten: Int = 0
 
   /**
-    * performs binary search for the given transaction in _versions. If no version associated with the given
-    * transaction is found, it establishes an order in sgt against all other versions' transactions, placing
-    * the given transaction as late as possible. For this it first finds the latest possible insertion point. Assume,
-    * for a given txn, this is between versions y and z. As the latest point is used, it is txn < z.txn. To fixate this
-    * order, the search thus attempts to establish y.txn < txn in sgt. This may fail, however, if concurrent
-    * threads intervened and established txn < y.txn. For this case, the search keeps track of the latest x for which
-    * x.txn < txn is already established. It then restarts the search in the reduced fallback range between x and y.
+    * performs binary search for the given transaction in _versions. This establishes an order in sgt against all other
+    * versions' transactions, placing the given transaction as late as possible with respect to transaction's current
+    * phases. If asked, a new version is created at the found position. May expunge any number of obsolete versions.
     * @param lookFor the transaction to look for
     * @param from current from index of the search range
     * @param to current to index (exclusive) of the search range
-    * @return the index of the version associated with the given transaction, or if no such version exists the negative
-    *         index it would have to be inserted. Note that we assume no insertion to ever occur at index 0 -- the
-    *         the first version of any node is either from the transaction that created it or from some completed
-    *         transaction. In the former case, no preceding transaction should be aware of the node's existence. In the
-    *         latter case, there are no preceding transactions that still execute operations. Thus insertion at index 0
-    *         should be impossible. A return value of 0 thus means "found at 0", rather than "should insert at 0"
+    * @param versionRequired whether or not a version should be created, in case none exists for the given transaction
+    * @return a tuple consisting of: (a) the index of the version associated with the given transaction, or if no such
+    *         version exists and was not requested to be created, the negative index at which it would have to be
+    *         inserted (b) how many versions were expunged for garbage collection. Note that we assume no insertion to
+    *         ever occur at index 0 -- the the first version of any node is either from the transaction that created it
+    *         or from some completed transaction. In the former case, no preceding transaction should be aware of the
+    *         node's existence. In the latter case, there are no preceding transactions that still execute operations.
+    *         Thus insertion at index 0 should be impossible. A return value of 0 thus means "found at 0", rather than
+    *         "should insert at 0"
     */
-  private def findOrPidgeonHole(lookFor: T, from: Int, to: Int): Int = {
+  private def findOrPigeonHole(lookFor: T, from: Int, to: Int, versionRequired: Boolean): (Int, Int) = {
     assert(from <= to, s"binary search started with backwards indices from $from to $to")
-    assert(to <= _versions.size, s"binary search upper bound $to beyond history size ${_versions.size}")
-    assert(to == _versions.size || DecentralizedSGT.getOrder(_versions(to).txn, lookFor) != FirstFirst, s"to = $to successor for non-blocking search of known static $lookFor pointed to version of ${_versions(to).txn} which is ordered earlier.")
-    assert(DecentralizedSGT.getOrder(_versions(from - 1).txn, lookFor) != SecondFirst, s"from - 1 = ${from - 1} predecessor for non-blocking search of $lookFor pointed to version of ${_versions(from - 1).txn} which is already ordered later.")
+    assert(to <= size, s"binary search upper bound $to beyond history size $size")
+    assert(to == size || Set[PartialOrderResult](SecondFirstSameSCC, UnorderedSCCUnknown).contains(DecentralizedSGT.getOrder(_versions(to).txn, lookFor)), s"to = $to successor for non-blocking search of known static $lookFor pointed to version of ${_versions(to).txn} which is ordered earlier.")
+    assert(DecentralizedSGT.getOrder(_versions(from - 1).txn, lookFor) != SecondFirstSameSCC, s"from - 1 = ${from - 1} predecessor for non-blocking search of $lookFor pointed to version of ${_versions(from - 1).txn} which is already ordered later.")
     assert(from > 0, s"binary search started with non-positive lower bound $from")
 
-    val res = findOrPidgeonHoleNonblocking(lookFor, from, fromIsKnownPredecessor = false, to)
+    val (posOrInsert, canGCupto) = findOrPigeonHoleNonblocking(lookFor, from, fromIsKnownPredecessor = false, to, 0, knownSameSCC = false)
 
-    if(res >= 0) {
-      assert(res < _versions.size, s"binary search returned found at $res for $lookFor, which is out of bounds in $this")
-      assert(_versions(res).txn == lookFor, s"binary search returned found at $res for $lookFor, which is wrong in $this")
+    assert(_versions(canGCupto).txn.phase == TurnPhase.Completed, s"binary search returned $posOrInsert for $lookFor with GC hint $canGCupto pointing to a non-completed transaction in $this")
+    assert(canGCupto < math.abs(posOrInsert), s"binary search returned $posOrInsert for $lookFor inside garbage collected section (< $canGCupto) in $this")
+
+    assert(posOrInsert < size, s"binary search returned found at $posOrInsert for $lookFor, which is out of bounds in $this")
+    assert(posOrInsert < 0 || _versions(posOrInsert).txn == lookFor, s"binary search returned found at $posOrInsert for $lookFor, which is wrong in $this")
+    assert(posOrInsert >= 0 || -posOrInsert <= size, s"binary search returned insert at ${-posOrInsert}, which is out of bounds in $this")
+    assert(posOrInsert >= 0 || Set[PartialOrderResult](FirstFirstSameSCC, FirstFirstSCCUnkown).contains(DecentralizedSGT.getOrder(_versions(-posOrInsert - 1).txn, lookFor)), s"binary search returned insert at ${-posOrInsert} for $lookFor, but predecessor isn't ordered first in $this")
+    assert(posOrInsert >= 0 || -posOrInsert == to || DecentralizedSGT.getOrder(_versions(-posOrInsert).txn, lookFor) == SecondFirstSameSCC, s"binary search returned insert at ${-posOrInsert} for $lookFor, but it isn't ordered before successor in $this")
+
+    // compute a possible location for gc to leave a hole
+    val mustCreateVersion = versionRequired && posOrInsert < 0
+    val holeLocation = if (mustCreateVersion) -posOrInsert else size
+
+    // maybe perform gc and leave said hole
+    val gcdFromHint = if(canGCupto > 0) {
+      val gcd = gcBeforeLeaveHole(canGCupto, holeLocation)
+//      if(gcd == 0) assertOptimizationsIntegrity(s"hinted GC after search($lookFor, ${from - gcd}, ${to - gcd})->($canGCupto, $posOrInsert)")
+      gcd
     } else {
-      assert(DecentralizedSGT.getOrder(_versions(-res - 1).txn, lookFor) == FirstFirst, s"binary search returned insert at ${-res} for $lookFor, but predecessor isn't ordered first in $this")
-      assert(-res == to || DecentralizedSGT.getOrder(_versions(-res).txn, lookFor) == SecondFirst, s"binary search returned insert at ${-res} for $lookFor, but it isn't ordered before successor in $this")
+      0
     }
-    res
+
+    val gcd = if (versionRequired && size == _versions.length) {
+      assert(gcdFromHint == 0, s"gc based on search gc hint ${canGCupto} removed $gcdFromHint versions, but the array supposedly is still at max capacity in $this")
+      val gcd = fullGCLeaveHole(holeLocation)
+//      if(gcd == 0) assertOptimizationsIntegrity(s"full GC after search($lookFor, ${from - gcd}, ${to - gcd})->($canGCupto, $posOrInsert)")
+      gcd
+    } else {
+      gcdFromHint
+    }
+
+    // maybe create required version in the hole, create the hole beforehand if GC didn't
+    if(mustCreateVersion) {
+      val correctedHoleLocation = holeLocation - gcd
+      if(gcd == 0) createHole(correctedHoleLocation)
+      createVersionInHole(correctedHoleLocation, lookFor)
+//      if(gcd != 0) assertOptimizationsIntegrity(s"search($lookFor, ${from - gcd}, ${to - gcd})->($canGCupto, $posOrInsert)+gcd($gcd)+insertion($correctedHoleLocation)")
+      (correctedHoleLocation, gcd)
+    } else if (posOrInsert < 0) {
+      (posOrInsert + gcd, gcd)
+    } else {
+      (posOrInsert - gcd, gcd)
+    }
   }
 
   @tailrec
-  private def findOrPidgeonHoleNonblocking(lookFor: T, from: Int, fromIsKnownPredecessor: Boolean, to: Int): Int = {
+  private def findOrPigeonHoleNonblocking(lookFor: T, from: Int, fromIsKnownPredecessor: Boolean, to: Int, canGCupto: Int, knownSameSCC: Boolean): (Int, Int) = {
     if (to == from) {
       if(!fromIsKnownPredecessor) {
         val pred = _versions(from - 1).txn
         val unblockedOrder = DecentralizedSGT.getOrder(pred, lookFor)
-        assert(unblockedOrder != SecondFirst)
-        if(unblockedOrder != FirstFirst) {
-          val establishedOrder = SubsumableLock.underLock(pred, lookFor, host.timeout) {
-            DecentralizedSGT.ensureOrder(pred, lookFor, host.timeout)
+        assert(unblockedOrder != SecondFirstSameSCC)
+        if(unblockedOrder == UnorderedSCCUnknown) {
+          val maybeLockedRoot = if (knownSameSCC) {
+            Some(SubsumableLock.acquireLock(lookFor, host.timeout))
+          } else {
+            SubsumableLock.acquireLock(pred, lookFor, host.timeout)
           }
-          assert(establishedOrder.contains(FirstFirst) || DecentralizedSGT.getOrder(pred, lookFor) == FirstFirst, s"establishing order under lock failed due to opponent completing, but completion did not induce implicit ordering")
+          maybeLockedRoot match {
+            case Some(lockedRoot) =>
+              try {
+                val establishedOrder = DecentralizedSGT.ensureOrder(pred, lookFor, host.timeout)
+                assert(establishedOrder == FirstFirst)
+              } finally { lockedRoot.asyncUnlock() }
+            case None =>
+              assert(DecentralizedSGT.getOrder(pred, lookFor) == FirstFirstSCCUnkown, s"establishing order under lock failed due to opponent completing, but completion did not induce implicit ordering")
+          }
         }
       }
-      -from
+      (-from, canGCupto)
     } else {
       val idx = from+(to-from-1)/2
       val candidate = _versions(idx).txn
+      val nextGcUpto = if(candidate.phase == TurnPhase.Completed) idx else canGCupto
       if(candidate == lookFor) {
-        idx
+        (idx, canGCupto)
       } else DecentralizedSGT.getOrder(candidate, lookFor) match {
-        case FirstFirst =>
-          findOrPidgeonHoleNonblocking(lookFor, idx + 1, fromIsKnownPredecessor = true, to)
-        case SecondFirst =>
-          findOrPidgeonHoleNonblocking(lookFor, from, fromIsKnownPredecessor, idx)
-        case Unordered =>
-          SubsumableLock.underLock(candidate, lookFor, host.timeout) {
-            findOrPidgeonHoleLocked(lookFor, from, fromIsKnownPredecessor, to)
-          } match {
-            case Some(res) => res
-            case None =>
-              assert(DecentralizedSGT.getOrder(candidate, lookFor) == FirstFirst, s"continuing search under lock failed due to entry opponent completing, but completion did not induce implicit ordering")
-              findOrPidgeonHoleNonblocking(lookFor, idx + 1, fromIsKnownPredecessor = true, to)
+        case FirstFirstSCCUnkown =>
+          findOrPigeonHoleNonblocking(lookFor, idx + 1, fromIsKnownPredecessor = true, to, nextGcUpto, knownSameSCC)
+        case FirstFirstSameSCC =>
+          findOrPigeonHoleNonblocking(lookFor, idx + 1, fromIsKnownPredecessor = true, to, nextGcUpto, knownSameSCC = true)
+        case SecondFirstSameSCC =>
+          findOrPigeonHoleNonblocking(lookFor, from, fromIsKnownPredecessor, idx, nextGcUpto, knownSameSCC = true)
+        case UnorderedSCCUnknown =>
+          val lockedRoot = SubsumableLock.acquireLock(lookFor, host.timeout)
+          if(knownSameSCC) {
+            try {
+              findOrPigeonHoleLocked(lookFor, from, fromIsKnownPredecessor, to, nextGcUpto)
+            } finally { lockedRoot.asyncUnlock() }
+          } else {
+            SubsumableLock.trySubsumeDefender(lockedRoot, candidate, host.timeout) match {
+              case Some(newLockedRoot) =>
+                try {
+                  findOrPigeonHoleLocked(lookFor, from, fromIsKnownPredecessor, to, nextGcUpto)
+                } finally { newLockedRoot.asyncUnlock() }
+              case None =>
+                assert(DecentralizedSGT.getOrder(candidate, lookFor) == FirstFirstSCCUnkown, s"continuing search under lock failed due to entry opponent completing, but completion did not induce implicit ordering")
+                findOrPigeonHoleNonblocking(lookFor, idx + 1, fromIsKnownPredecessor = true, to, nextGcUpto, knownSameSCC)
+            }
           }
       }
     }
   }
 
   @tailrec
-  private def findOrPidgeonHoleLocked(lookFor: T, from: Int, fromKnownOrdered: Boolean, to: Int): Int = {
+  private def findOrPigeonHoleLocked(lookFor: T, from: Int, fromKnownOrdered: Boolean, to: Int, canGCupto: Int): (Int, Int) = {
     if (to == from) {
       if(!fromKnownOrdered) {
         val pred = _versions(from - 1).txn
         val establishedOrder = DecentralizedSGT.ensureOrder(pred, lookFor, host.timeout)
         assert(establishedOrder == FirstFirst)
       }
-      -from
+      (-from, canGCupto)
     } else {
       val idx = from+(to-from-1)/2
       val candidate = _versions(idx).txn
+      val nextGcUpto = if(candidate.phase == TurnPhase.Completed) idx else canGCupto
       if(candidate == lookFor) {
-        idx
+        (idx, canGCupto)
       } else DecentralizedSGT.ensureOrder(candidate, lookFor, host.timeout) match {
         case FirstFirst =>
-          findOrPidgeonHoleLocked(lookFor, idx + 1, fromKnownOrdered = true, to)
+          findOrPigeonHoleLocked(lookFor, idx + 1, fromKnownOrdered = true, to, nextGcUpto)
         case SecondFirst =>
-          findOrPidgeonHoleLocked(lookFor, from, fromKnownOrdered, idx)
+          findOrPigeonHoleLocked(lookFor, from, fromKnownOrdered, idx, nextGcUpto)
       }
     }
   }
@@ -283,15 +345,16 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     * @param txn the transaction
     * @return the position (positive values) or insertion point (negative values)
     */
-  private def findFrameFraming(txn: T): Int = {
-    findOrPidgeonHole(txn, latestWritten + 1, _versions.size)
+  private def getFramePositionFraming(txn: T, minPos: Int): (Int, Int) = {
+    findOrPigeonHole(txn, minPos, size, versionRequired = true)
   }
 
-  private def findFramePropagating(txn: T): Int = {
-    if(firstFrame < _versions.size && _versions(firstFrame).txn == txn)
-      firstFrame
+  private def getFramePositionPropagating(txn: T): (Int, Int) = {
+    if(firstFrame < size && _versions(firstFrame).txn == txn)
+      // common-case shortcut attempt: receive notification for firstFrame
+      (firstFrame, 0)
     else
-      findFrameFraming(txn)
+      getFramePositionFraming(txn, latestWritten + 1)
   }
 
   /**
@@ -301,9 +364,12 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     * @param txn the transaction
     * @return the position (positive values) or insertion point (negative values)
     */
-  private def findFinal/*Propagating*/(txn: T)  = {
-    if(_versions(latestWritten).txn == txn) latestWritten else
-      findOrPidgeonHole(txn, 1, firstFrame)
+  private def findFinalPosition/*Propagating*/(txn: T, versionRequired: Boolean): (Int, Int) = {
+    if(_versions(latestWritten).txn == txn)
+      // common-case shortcut attempt: read latest written value
+      (latestWritten, 0)
+    else
+      findOrPigeonHole(txn, 1, firstFrame, versionRequired)
   }
 
 
@@ -315,7 +381,6 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     * @param txn the transaction visiting the node for framing
     */
   override def incrementFrame(txn: T): FramingBranchResult[T, OutDep] = synchronized {
-    maybeGC()
     val result = incrementFrame0(txn)
     assertOptimizationsIntegrity(s"incrementFrame($txn) -> $result")
     result
@@ -327,13 +392,15 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     * @param supersede the transaction whose frame was superseded by the visiting transaction at the previous node
     */
   override def incrementSupersedeFrame(txn: T, supersede: T): FramingBranchResult[T, OutDep] = synchronized {
-    maybeGC()
-    val position = updateOrCreatePending(txn, 1)
+    val position = getFramePositionFraming(txn, latestWritten + 1)._1
+    val version = _versions(position)
+    version.pending += 1
     val result = if(position < firstFrame && _versions(position).pending == 1) {
-      updateOrCreatePending(supersede, -1)
-      incrementFrameResultAfterNewFirstFrameWasCreated(txn, position)
+      val(supersedePos, gcd) = getFramePositionFraming(supersede, position)
+      _versions(supersedePos).pending -= 1
+      incrementFrameResultAfterNewFirstFrameWasCreated(txn, position - gcd)
     } else {
-      decrementFrame0(supersede)
+      decrementFrame0(supersede, position)
     }
     assertOptimizationsIntegrity(s"incrementSupersedeFrame($txn, $supersede) -> $result")
     result
@@ -346,49 +413,44 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
   }
 
   override def decrementReframe(txn: T, reframe: T): FramingBranchResult[T, OutDep] = synchronized {
-    val position = updateOrCreatePending(txn, -1)
-    val result = if(position == firstFrame && _versions(position).pending == 0) {
-      updateOrCreatePending(reframe, 1)
-      deframeResultAfterPreviousFirstFrameWasRemoved(txn, position)
+    val position = getFramePositionFraming(txn, latestWritten + 1)._1
+    val version = _versions(position)
+    version.pending += -1
+    val result = if(position == firstFrame && version.pending == 0) {
+      val(reframePos, gcd) = getFramePositionFraming(reframe, position)
+      _versions(reframePos).pending += 1
+      deframeResultAfterPreviousFirstFrameWasRemoved(txn, position - gcd)
     } else {
-      incrementFrame0(reframe)
+      incrementFrame0(reframe, position)
     }
     assertOptimizationsIntegrity(s"deframeReframe($txn, $reframe) -> $result")
     result
   }
 
-  private def incrementFrame0(txn: T): FramingBranchResult[T, OutDep] = {
-    val position: Int = updateOrCreatePending(txn, 1)
-    if (position < firstFrame && _versions(position).pending == 1) {
+  private def incrementFrame0(txn: T, minPos: Int = latestWritten + 1): FramingBranchResult[T, OutDep] = {
+    val position = getFramePositionFraming(txn, minPos)._1
+    val version = _versions(position)
+    version.pending += 1
+    if (position < firstFrame && version.pending == 1) {
       incrementFrameResultAfterNewFirstFrameWasCreated(txn, position)
     } else {
       FramingBranchResult.FramingBranchEnd
     }
   }
 
-  private def decrementFrame0(txn: T): FramingBranchResult[T, OutDep] = {
-    val position = updateOrCreatePending(txn, -1)
-    if (position == firstFrame && _versions(position).pending == 0) {
+  private def decrementFrame0(txn: T, minPos: Int = latestWritten + 1): FramingBranchResult[T, OutDep] = {
+    val position = getFramePositionFraming(txn, minPos)._1
+    val version = _versions(position)
+    version.pending -= 1
+    if (position == firstFrame && version.pending == 0) {
       deframeResultAfterPreviousFirstFrameWasRemoved(txn, position)
     } else {
       FramingBranchResult.FramingBranchEnd
     }
   }
 
-  private def updateOrCreatePending(txn: T, by: Int) = {
-    val maybeFoundPosition = findFrameFraming(txn)
-    val position = if (maybeFoundPosition >= 0) {
-      _versions(maybeFoundPosition).pending += by
-      maybeFoundPosition
-    } else {
-      createVersion(-maybeFoundPosition, txn, pending = by)
-      -maybeFoundPosition
-    }
-    position
-  }
-
   @tailrec private def destabilizeBackwardsUntilFrame(): Unit = {
-    if(firstFrame < _versions.size) {
+    if(firstFrame < size) {
       val version = _versions(firstFrame)
       assert(version.stable, s"cannot destabilize $firstFrame: $version")
       version.stable = false
@@ -402,7 +464,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     destabilizeBackwardsUntilFrame()
     assert(firstFrame == position, s"destablizeBackwards did not reach $position: ${_versions(position)} but stopped at $firstFrame: ${_versions(firstFrame)}")
 
-    if(previousFirstFrame < _versions.size) {
+    if(previousFirstFrame < size) {
       FramingBranchResult.FrameSupersede(_versions(position).out, txn, _versions(previousFirstFrame).txn)
     } else {
       FramingBranchResult.Frame(_versions(position).out, txn)
@@ -411,7 +473,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
 
   @tailrec private def stabilizeForwardsUntilFrame(): Unit = {
     firstFrame += 1
-    if(firstFrame < _versions.size) {
+    if(firstFrame < size) {
       val version = _versions(firstFrame)
       assert(!version.stable, s"cannot stabilize $firstFrame: $version")
       version.stable = true
@@ -422,7 +484,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
   private def deframeResultAfterPreviousFirstFrameWasRemoved(txn: T, position: Int) = {
     stabilizeForwardsUntilFrame()
 
-    if(firstFrame < _versions.size) {
+    if(firstFrame < size) {
       FramingBranchResult.DeframeReframe(_versions(position).out, txn, _versions(firstFrame).txn)
     } else {
       FramingBranchResult.Deframe(_versions(position).out, txn)
@@ -439,7 +501,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     * @param changed whether or not the dependency changed
     */
   override def notify(txn: T, changed: Boolean): NotificationResultAction[T, OutDep] = synchronized {
-    val result = notify0(findFramePropagating(txn), txn, changed)
+    val result = notify0(getFramePositionPropagating(txn)._1, txn, changed)
     assertOptimizationsIntegrity(s"notify($txn, $changed) -> $result")
     result
   }
@@ -451,77 +513,48 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     * @param followFrame a transaction for which to create a subsequent frame, furthering its partial framing.
     */
   override def notifyFollowFrame(txn: T, changed: Boolean, followFrame: T): NotificationResultAction[T, OutDep] = synchronized {
-    maybeGC()
-    val position = findFramePropagating(txn)
+    val position = getFramePositionPropagating(txn)._1
 
-    // do follow framing
-    val followFrameMinPosition = if (position > 0) position + 1 else -position
-    // because we know that txn << followTxn, followTxn cannot be involved with firstFrame stuff.
-    // thus followTxn also does not need this framing propagated by itself.
-    val followPosition = findOrPidgeonHole(followFrame, followFrameMinPosition, _versions.size)
-    if (followPosition >= 0) {
-      _versions(followPosition).pending += 1
-    } else {
-      createVersion(-followPosition, followFrame, pending = 1)
-    }
+    val (followFramePos, gcd) = findOrPigeonHole(followFrame, position + 1, size, versionRequired = true)
+    _versions(followFramePos).pending += 1
 
-    val result = notify0(position, txn, changed)
+    val result = notify0(position - gcd, txn, changed)
     assertOptimizationsIntegrity(s"notifyFollowFrame($txn, $changed, $followFrame) -> $result")
     result
   }
 
   private def notify0(position: Int, txn: T, changed: Boolean): NotificationResultAction[T, OutDep] = {
-    if(position < 0) {
-      assert(-position != firstFrame, "(no)change notification, which overtook (a) discovery retrofitting or " +
-        "(b) predecessor (no)change notification with followFraming for this transaction, wants to create FirstFrame, " +
-        "which should be impossible because firstFrame should be (a) the predecessor reevaluation performing said retrofitting or " +
-        "(b) the predecessor reevaluation pending reception of said (no)change notification.")
-      // note: this case occurs if a (no)change notification overtook discovery retrofitting, and sets pending to -1!
-      // In this case, we simply return the results as if discovery retrofitting had already happened: As we know
-      // that it is still in progress, there must be a preceding active reevaluation (hence above assertion), so the
-      // retrofitting would simply create a queued frame, which this notification would either:
-      if(changed) {
-        // convert into a queued reevaluation
-        createVersion(-position, txn, pending = -1, changed = 1)
-        NotificationResultAction.GlitchFreeReadyButQueued
-      } else {
-        // or resolve into an unchanged marker
-        createVersion(-position, txn, pending = -1)
-        NotificationResultAction.ResolvedNonFirstFrameToUnchanged
-      }
-    } else {
-      val version = _versions(position)
-      // This assertion is probably pointless as it only verifies a subset of assertStabilityIsCorrect, i.e., if this
-      // would fail, then assertStabilityIsCorrect will have failed at the end of the previous operation already.
-      assert((position == firstFrame) == version.stable, "firstFrame and stable diverted..")
+    val version = _versions(position)
+    // This assertion is probably pointless as it only verifies a subset of assertStabilityIsCorrect, i.e., if this
+    // would fail, then assertStabilityIsCorrect will have failed at the end of the previous operation already.
+    assert((position == firstFrame) == version.stable, "firstFrame and stable diverted..")
 
-      // note: if the notification overtook a previous turn's notification with followFraming for this transaction,
-      // pending may update from 0 to -1 here
-      version.pending -= 1
-      if (changed) {
-        // note: if drop retrofitting overtook the change notification, change may update from -1 to 0 here!
-        version.changed += 1
-      }
+    // note: if the notification overtook a previous turn's notification with followFraming for this transaction,
+    // pending may update from 0 to -1 here
+    version.pending -= 1
+    if (changed) {
+      // note: if drop retrofitting overtook the change notification, change may update from -1 to 0 here!
+      version.changed += 1
+    }
 
-      // check if the notification triggers subsequent actions
-      if (version.pending == 0) {
-        if (position == firstFrame) {
-          if (version.changed > 0) {
-            NotificationResultAction.GlitchFreeReady
-          } else {
-            // ResolvedFirstFrameToUnchanged
-            progressToNextWriteForNotification(version.out)
-          }
+    // check if the notification triggers subsequent actions
+    if (version.pending == 0) {
+      if (position == firstFrame) {
+        if (version.changed > 0) {
+          NotificationResultAction.GlitchFreeReady
         } else {
-          if (version.changed > 0) {
-            NotificationResultAction.GlitchFreeReadyButQueued
-          } else {
-            NotificationResultAction.ResolvedNonFirstFrameToUnchanged
-          }
+          // ResolvedFirstFrameToUnchanged
+          progressToNextWriteForNotification(version.out)
         }
       } else {
-        NotificationResultAction.NotGlitchFreeReady
+        if (version.changed > 0) {
+          NotificationResultAction.GlitchFreeReadyButQueued
+        } else {
+          NotificationResultAction.ResolvedNonFirstFrameToUnchanged
+        }
       }
+    } else {
+      NotificationResultAction.NotGlitchFreeReady
     }
   }
 
@@ -564,7 +597,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     */
   private def progressToNextWriteForNotification(out: Set[OutDep]): NotificationResultAction.NotificationOutAndSuccessorOperation[T, OutDep] = {
     stabilizeForwardsUntilFrame()
-    val res = if(firstFrame < _versions.size) {
+    val res = if(firstFrame < size) {
       val version = _versions(firstFrame)
       if(version.isReadyForReevaluation) {
         NotificationResultAction.NotificationOutAndSuccessorOperation.NextReevaluation(out, version.txn)
@@ -585,14 +618,8 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     * @param txn the executing transaction
     * @return the version's position.
     */
-  private def ensureReadVersion(txn: T, knownMinPos: Int = 1): Int = {
-    val position = findOrPidgeonHole(txn, knownMinPos, _versions.size)
-    if(position < 0) {
-      createVersion(-position, txn)
-      -position
-    } else {
-      position
-    }
+  private def ensureReadVersion(txn: T, knownMinPos: Int = 1): (Int, Int) = {
+    findOrPigeonHole(txn, knownMinPos, size, versionRequired = true)
   }
 
   /**
@@ -604,9 +631,8 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     */
   override def dynamicBefore(txn: T): V = synchronized {
     assert(!valuePersistency.isTransient, s"$txn invoked dynamicBefore on transient node")
-    maybeGC()
     synchronized {
-      val position = ensureReadVersion(txn)
+      val position = ensureReadVersion(txn)._1
       assertOptimizationsIntegrity(s"ensureReadVersion($txn)")
       val version = _versions(position)
       if(version.stable) {
@@ -621,7 +647,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
         ForkJoinPool.managedBlock(version.blockForStable)
 
         synchronized {
-          val stablePosition = if(version.isFrame) firstFrame else findFinal(txn)
+          val stablePosition = if(version.isFrame) firstFrame else findFinalPosition(txn, versionRequired = true)._1
           assert(stablePosition >= 0, "somehow, the version allocated above disappeared..")
           before(txn, stablePosition)
         }
@@ -629,7 +655,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
   }
 
   override def staticBefore(txn: T): V = synchronized {
-    before(txn, math.abs(findFinal(txn)))
+    before(txn, math.abs(findFinalPosition(txn, versionRequired = false)._1))
   }
 
   private def before(txn: T, position: Int): V = synchronized {
@@ -671,8 +697,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     */
   override def dynamicAfter(txn: T): V = {
     synchronized {
-      maybeGC()
-      val position = ensureReadVersion(txn)
+      val position = ensureReadVersion(txn)._1
       val version = _versions(position)
       if(version.isFinal) {
         Left(if(version.value.isDefined) {
@@ -693,14 +718,14 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
           version.value.get
         } else {
           synchronized {
-            beforeOrInit(txn, findFinal(txn))
+            beforeOrInit(txn, findFinalPosition(txn, versionRequired = true)._1)
           }
         }
     }
   }
 
   override def staticAfter(txn: T): V = synchronized {
-    val position = findFinal(txn)
+    val position = findFinalPosition(txn, versionRequired = false)._1
     if(position < 0) {
       beforeOrInit(txn, -position)
     } else {
@@ -721,7 +746,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     * @return the appropriate [[Version.value]].
     */
   override def discover(txn: T, add: OutDep): (Seq[T], Option[T]) = synchronized {
-    val position = ensureReadVersion(txn)
+    val position = ensureReadVersion(txn)._1
     assertOptimizationsIntegrity(s"ensureReadVersion($txn)")
     assert(!_versions(position).out.contains(add), "must not discover an already existing edge!")
     retrofitSourceOuts(position, add, +1)
@@ -733,7 +758,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     * @param remove the removed edge's sink node
     */
   override def drop(txn: T, remove: OutDep): (Seq[T], Option[T]) = synchronized {
-    val position = ensureReadVersion(txn)
+    val position = ensureReadVersion(txn)._1
     assertOptimizationsIntegrity(s"ensureReadVersion($txn)")
     assert(_versions(position).out.contains(remove), "must not drop a non-existing edge!")
     retrofitSourceOuts(position, remove, -1)
@@ -749,7 +774,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     require(math.abs(arity) == 1)
     var minPos = firstFrame
     for(txn <- successorWrittenVersions) {
-      val position = ensureReadVersion(txn, minPos)
+      val position = ensureReadVersion(txn, minPos)._1
       val version = _versions(position)
       // note: if drop retrofitting overtook a change notification, changed may update from 0 to -1 here!
       version.changed += arity
@@ -758,7 +783,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
 
     if (maybeSuccessorFrame.isDefined) {
       val txn = maybeSuccessorFrame.get
-      val position = ensureReadVersion(txn, minPos)
+      val position = ensureReadVersion(txn, minPos)._1
       val version = _versions(position)
       // note: conversely, if a (no)change notification overtook discovery retrofitting, pending may change
       // from -1 to 0 here. No handling is required for this case, because firstFrame < position is an active
@@ -783,91 +808,87 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     // (any version at index firstFrame or later can only be a frame, not written)
     val sizePrediction = math.max(firstFrame - position, 0)
     val successorWrittenVersions = new ArrayBuffer[T](sizePrediction)
-    for(pos <- position until _versions.size) {
+    for(pos <- position until size) {
       val version = _versions(pos)
       if(arity < 0) version.out -= delta else version.out += delta
       // as per above, this is implied false if pos >= firstFrame:
       if(version.isWritten) successorWrittenVersions += version.txn
     }
     if(successorWrittenVersions.size > sizePrediction) System.err.println(s"FullMV retrofitSourceOuts predicted size max($firstFrame - $position, 0) = $sizePrediction, but size eventually was ${successorWrittenVersions.size}")
-    val maybeSuccessorFrame = if (firstFrame < _versions.size) Some(_versions(firstFrame).txn) else None
+    val maybeSuccessorFrame = if (firstFrame < size) Some(_versions(firstFrame).txn) else None
     (successorWrittenVersions, maybeSuccessorFrame)
   }
 
-  private var nextGcAtSize: Int = 10
-  private def maybeGC(): Int = {
-    // placeholder in case we want to have some mechanic that reduces the frequency of GC runs
-    if(_versions.size > nextGcAtSize) {
-      val dumped = gcObsoleteVersions()
-      nextGcAtSize += 5 - dumped
-      dumped
+  def fullGC(): Int = synchronized {
+    fullGCLeaveHole(size)
+  }
+
+  def fullGCLeaveHole(leaveInsertSlot: Int): Int = {
+    if(size > 1) {
+      @tailrec @inline def findLastCompleted(from: Int, to: Int): Int = {
+        if (to < from) {
+          if (_versions(from).txn.phase == TurnPhase.Completed) from else from - 1
+        } else {
+          val idx = from + (to - from - 1) / 2
+          val candidate = _versions(idx).txn
+          if (candidate.phase == TurnPhase.Completed) {
+            // maybe candidate is last completed
+            if (_versions(idx + 1).txn.phase == TurnPhase.Completed) findLastCompleted(idx + 1, to) else idx
+          } else {
+            // maybe candidate is first uncompleted
+            if (_versions(idx - 1).txn.phase == TurnPhase.Completed) idx - 1 else findLastCompleted(from, idx - 1)
+          }
+        }
+      }
+      val lastCompleted = if(_versions(firstFrame - 1).txn.phase == TurnPhase.Completed)
+        // common case shortcut and corner case: all transactions that can be completed are completed (e.g., graph is in resting state)
+        firstFrame - 1
+      else
+        findLastCompleted(1, firstFrame - 2)
+
+      assert(_versions(lastCompleted).txn.phase == TurnPhase.Completed)
+      // cannot make this assertion because the previously last completed turn may already no longer be the last turn at
+      // this point, as successive turns might have concurrently completed
+      //assert(lastCompleted + 1 == size || _versions(lastCompleted + 1).txn.phase != TurnPhase.Completed)
+
+      if (lastCompleted > 0) gcBeforeLeaveHole(lastCompleted, leaveInsertSlot) else 0
     } else {
       0
     }
   }
 
-  def gcObsoleteVersions(): Int = synchronized {
-    if(_versions.size > 1) {
-      @tailrec
-      def findLastCompleted(from: Int, to: Int): Int = {
-        if (to < from) {
-          if (_versions(from).txn.phase == TurnPhase.Completed) {
-            from
-          } else {
-            0
-          }
-        } else {
-          val idx = from + (to - from - 1) / 2
-          val candidate = _versions(idx).txn
-          if (candidate.phase == TurnPhase.Completed) {
-            if (_versions(idx + 1).txn.phase == TurnPhase.Completed) {
-              findLastCompleted(idx + 1, to)
-            } else {
-              idx
-            }
-          } else {
-            if (_versions(idx - 1).txn.phase == TurnPhase.Completed) {
-              idx - 1
-            } else {
-              findLastCompleted(from, idx - 1)
-            }
-          }
-        }
-      }
-
-      val lastCompleted = if(_versions.last.txn.phase == TurnPhase.Completed) {
-        _versions.size - 1
+  private def gcBeforeLeaveHole(knownCompleted: Int, leaveInsertSlot: Int): Int = {
+    assert(leaveInsertSlot <= size)
+    assert(knownCompleted > 0)
+    val insertSlotIsLast = leaveInsertSlot == size
+    if (_versions(knownCompleted).value.isDefined) {
+      // if lastCompleted is a written version, then just dump all preceding versions
+      firstFrame -= knownCompleted
+      latestWritten -= knownCompleted
+      val elementsBeforeSlot = leaveInsertSlot - knownCompleted
+      System.arraycopy(_versions, knownCompleted, _versions, 0, elementsBeforeSlot)
+      if(leaveInsertSlot < size) System.arraycopy(_versions, leaveInsertSlot, _versions, elementsBeforeSlot + 1, size - leaveInsertSlot)
+      size -= knownCompleted
+      java.util.Arrays.fill(_versions.asInstanceOf[Array[AnyRef]], size + (if (insertSlotIsLast) 0 else 1), _versions.length, null)
+      knownCompleted
+    } else if (knownCompleted > 1) {
+      // if lastCompleted is not a written version, then dump all preceding versions except for the last written one
+      val dumpCount = knownCompleted - 1
+      firstFrame -= dumpCount
+      _versions(0) = if (latestWritten <= knownCompleted && _versions(latestWritten).txn.phase == TurnPhase.Completed) {
+        val result = _versions(latestWritten)
+        latestWritten = 0
+        result
       } else {
-        findLastCompleted(1, math.min(_versions.size - 2, firstFrame))
+        latestWritten -= dumpCount
+        lastWriteUpTo(knownCompleted)
       }
-      assert(_versions(lastCompleted).txn.phase == TurnPhase.Completed)
-      if (lastCompleted > 0) {
-        if (_versions(lastCompleted).value.isDefined) {
-          firstFrame -= lastCompleted
-          latestWritten -= lastCompleted
-          _versions.remove(0, lastCompleted)
-          assertOptimizationsIntegrity(s"gc1")
-          lastCompleted
-        } else if(lastCompleted > 1) {
-          val dumpCount = lastCompleted - 1
-          firstFrame -= dumpCount
-          _versions(0) = if(latestWritten <= lastCompleted && _versions(latestWritten).txn.phase == TurnPhase.Completed) {
-            val result = _versions(latestWritten)
-            latestWritten = 0
-            result
-          } else {
-            latestWritten -= dumpCount
-            lastWriteUpTo(lastCompleted)
-          }
-          _versions.remove(1, dumpCount)
-          assertOptimizationsIntegrity(s"gc2")
-          dumpCount
-        } else {
-          0
-        }
-      } else {
-        0
-      }
+      val elementsBeforeSlot = leaveInsertSlot - knownCompleted
+      System.arraycopy(_versions, knownCompleted, _versions, 1, elementsBeforeSlot)
+      if(leaveInsertSlot < size) System.arraycopy(_versions, leaveInsertSlot, _versions, elementsBeforeSlot + 2, size - leaveInsertSlot)
+      size -= dumpCount
+      java.util.Arrays.fill(_versions.asInstanceOf[Array[AnyRef]], size + (if (insertSlotIsLast) 0 else 1), _versions.length, null)
+      dumpCount
     } else {
       0
     }

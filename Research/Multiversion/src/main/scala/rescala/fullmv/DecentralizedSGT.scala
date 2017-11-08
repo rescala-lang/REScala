@@ -12,12 +12,14 @@ object DecentralizedSGT extends SerializationGraphTracking[FullMVTurn] {
     assert(defender.phase > TurnPhase.Initialized, s"$defender is not started and should thus not be involved in any operations")
     assert(contender.phase > TurnPhase.Initialized, s"$contender is not started and should thus not be involved in any operations")
     assert(contender.phase < TurnPhase.Completed, s"$contender cannot be a searcher (already completed).")
-    if(defender.phase == TurnPhase.Completed || contender.isTransitivePredecessor(defender)) {
-      FirstFirst
+    if(defender.phase == TurnPhase.Completed) {
+      FirstFirstSCCUnkown
+    } else if (contender.isTransitivePredecessor(defender)) {
+      FirstFirstSameSCC
     } else if (defender.isTransitivePredecessor(contender)) {
-      SecondFirst
+      SecondFirstSameSCC
     } else {
-      Unordered
+      UnorderedSCCUnknown
     }
   }
 

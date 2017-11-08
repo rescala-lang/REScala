@@ -89,25 +89,22 @@ trait SubsumableLock extends SubsumableLockProxy with Hosted {
 object SubsumableLock {
   val DEBUG = false
 
-  def underLock[R](contender: FullMVTurn, timeout: Duration)(thunk: => R): R = {
-    val lockedRoot = Await.result(contender.lock(), timeout)
-    try { thunk } finally {
-      lockedRoot.asyncUnlock()
-    }
+  def acquireLock[R](contender: FullMVTurn, timeout: Duration): SubsumableLock = {
+    Await.result(contender.lock(), timeout)
   }
 
-  def underLock[R](defender: FullMVTurn, contender: FullMVTurn, timeout: Duration)(thunk: => R): Option[R] = {
+  def acquireLock[R](defender: FullMVTurn, contender: FullMVTurn, timeout: Duration): Option[SubsumableLock] = {
     assert(defender.host == contender.host)
-    if(DEBUG) System.out.println(s"[${Thread.currentThread().getName}] syncing $defender and $contender")
-    val lockedRootA = Await.result(contender.lock(), timeout)
+    if (DEBUG) System.out.println(s"[${Thread.currentThread().getName}] syncing $defender and $contender")
+    trySubsumeDefender(acquireLock(contender, timeout), defender, timeout)
+  }
 
+  def trySubsumeDefender(lockedRootA: SubsumableLock, defender: FullMVTurn, timeout: Duration): Option[SubsumableLock] = {
     val backoff = new Backoff()
-    @inline @tailrec def trySecondAndSpinFirstIfFailed(lockedRootA: SubsumableLock): Option[R] = {
+    @inline @tailrec def trySecondAndSpinFirstIfFailed(lockedRootA: SubsumableLock): Option[SubsumableLock] = {
       Await.result(defender.trySubsume(lockedRootA), timeout) match {
         case Successful =>
-          Some(try { thunk } finally {
-            lockedRootA.asyncUnlock()
-          })
+          Some(lockedRootA)
         case Blocked =>
           val newLockedRootA = Await.result(lockedRootA.spinOnce(backoff.getAndIncrementBackoff()), timeout)
           trySecondAndSpinFirstIfFailed(newLockedRootA)
@@ -117,6 +114,24 @@ object SubsumableLock {
       }
     }
     trySecondAndSpinFirstIfFailed(lockedRootA)
+  }
+
+  def underLock[R](contender: FullMVTurn, timeout: Duration)(thunk: => R): R = {
+    val lockedRoot = acquireLock(contender, timeout)
+    runThunkAndUnlock(lockedRoot, thunk)
+  }
+
+  private def runThunkAndUnlock[R](lockedRoot: SubsumableLock, thunk: => R) = {
+    try {
+      thunk
+    } finally {
+      lockedRoot.asyncUnlock()
+    }
+  }
+
+  def underLock[R](defender: FullMVTurn, contender: FullMVTurn, timeout: Duration)(thunk: => R): Option[R] = {
+    val res: Option[SubsumableLock] = acquireLock(defender, contender, timeout)
+    res.map(runThunkAndUnlock(_, thunk))
   }
 
   val futureNone: Future[None.type] = Future.successful(None)
