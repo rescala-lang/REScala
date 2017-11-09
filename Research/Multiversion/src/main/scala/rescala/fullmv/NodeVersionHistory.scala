@@ -52,12 +52,7 @@ object NotificationResultAction {
 class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePersistency: ValuePersistency[V]) extends FullMVState[V, T, InDep, OutDep] {
   override val host: FullMVEngine = init.host
 
-  trait BlockOnHistoryManagedBlocker extends ManagedBlocker {
-    override def block(): Boolean = NodeVersionHistory.this.synchronized {
-      isReleasable || { NodeVersionHistory.this.wait(); isReleasable }
-    }
-  }
-  class Version(val txn: T, var stable: Boolean, var out: Set[OutDep], var pending: Int, var changed: Int, var value: Option[V]) extends BlockOnHistoryManagedBlocker {
+  class Version(val txn: T, var stable: Boolean, var out: Set[OutDep], var pending: Int, var changed: Int, var value: Option[V]) extends ManagedBlocker {
     // txn >= Executing, stable == true, node reevaluation completed changed
     def isWritten: Boolean = changed == 0 && value.isDefined
     // txn <= WrapUp, any following versions are stable == false
@@ -80,6 +75,16 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
       value.get
     }
 
+    var finalWaiters: Int = 0
+    var stableWaiters: Int = 0
+    override def block(): Boolean = NodeVersionHistory.this.synchronized {
+      isReleasable || {
+        finalWaiters += 1
+        NodeVersionHistory.this.wait()
+        finalWaiters -= 1
+        isReleasable }
+    }
+
     override def isReleasable: Boolean = NodeVersionHistory.this.synchronized {
       isFinal
     }
@@ -92,7 +97,14 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     private var _blockForStable: ManagedBlocker = null
     def blockForStable: ManagedBlocker = {
       if(_blockForStable == null) {
-        _blockForStable = new BlockOnHistoryManagedBlocker {
+        _blockForStable = new ManagedBlocker {
+          override def block(): Boolean = NodeVersionHistory.this.synchronized {
+            isReleasable || {
+              stableWaiters += 1
+              NodeVersionHistory.this.wait()
+              stableWaiters -= 1
+              isReleasable }
+          }
           override def isReleasable: Boolean = NodeVersionHistory.this.synchronized {
             stable
           }
@@ -161,7 +173,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
   var size = 1
   var latestValue: V = valuePersistency.initialValue
 
-  private def createHole(position: Int) = {
+  private def createHole(position: Int): Unit = {
     if (_versions.length == size) {
       val newVersions = new Array[Version](size + size / 2)
       System.arraycopy(_versions, 0, newVersions, 0, position)
@@ -234,7 +246,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     }
 
     val gcd = if (versionRequired && size == _versions.length) {
-      assert(gcdFromHint == 0, s"gc based on search gc hint ${canGCupto} removed $gcdFromHint versions, but the array supposedly is still at max capacity in $this")
+      assert(gcdFromHint == 0, s"gc based on search gc hint $canGCupto removed $gcdFromHint versions, but the array supposedly is still at max capacity in $this")
       val gcd = fullGCLeaveHole(holeLocation)
 //      if(gcd == 0) assertOptimizationsIntegrity(s"full GC after search($lookFor, ${from - gcd}, ${to - gcd})->($canGCupto, $posOrInsert)")
       gcd
@@ -471,18 +483,29 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     }
   }
 
-  @tailrec private def stabilizeForwardsUntilFrame(): Unit = {
-    firstFrame += 1
-    if(firstFrame < size) {
-      val version = _versions(firstFrame)
-      assert(!version.stable, s"cannot stabilize $firstFrame: $version")
-      version.stable = true
-      if (!version.isFrame) stabilizeForwardsUntilFrame()
+  private def stabilizeForwardsUntilFrame(): Boolean = {
+    @tailrec @inline def stabilizeForwardsUntilFrame0(encounteredWaiter: Boolean): Boolean = {
+      firstFrame += 1
+      if (firstFrame < size) {
+        val version = _versions(firstFrame)
+        assert(!version.stable, s"cannot stabilize $firstFrame: $version")
+        version.stable = true
+        val updatedEncounteredWaiters = encounteredWaiter || version.stableWaiters > 0
+        if (!version.isFrame) {
+          stabilizeForwardsUntilFrame0(updatedEncounteredWaiters || version.finalWaiters > 0)
+        } else {
+          updatedEncounteredWaiters
+        }
+      } else {
+        encounteredWaiter
+      }
     }
+    stabilizeForwardsUntilFrame0(_versions(firstFrame).finalWaiters > 0)
   }
 
   private def deframeResultAfterPreviousFirstFrameWasRemoved(txn: T, position: Int) = {
-    stabilizeForwardsUntilFrame()
+    val encounteredWaiters = stabilizeForwardsUntilFrame()
+    assert(!encounteredWaiters, "someone was waiting for a version by a framing transaction, but only executing transactions should perform waiting and they should never see framing transactions' versions.")
 
     if(firstFrame < size) {
       FramingBranchResult.DeframeReframe(_versions(position).out, txn, _versions(firstFrame).txn)
@@ -544,7 +567,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
           NotificationResultAction.GlitchFreeReady
         } else {
           // ResolvedFirstFrameToUnchanged
-          progressToNextWriteForNotification(version.out)
+          progressToNextWriteForNotification(version)
         }
       } else {
         if (version.changed > 0) {
@@ -584,7 +607,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     }
     version.changed = 0
 
-    val result = progressToNextWriteForNotification(version.out)
+    val result = progressToNextWriteForNotification(version)
     assertOptimizationsIntegrity(s"reevOut($turn, ${maybeValue.isDefined}) -> $result")
     result
   }
@@ -595,19 +618,19 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     * whether or not the possibly encountered write [[Version.isReadyForReevaluation]].
     * @return the notification and next reevaluation descriptor.
     */
-  private def progressToNextWriteForNotification(out: Set[OutDep]): NotificationResultAction.NotificationOutAndSuccessorOperation[T, OutDep] = {
-    stabilizeForwardsUntilFrame()
+  private def progressToNextWriteForNotification(finalizedVersion: Version): NotificationResultAction.NotificationOutAndSuccessorOperation[T, OutDep] = {
+    val encounteredWaiters = stabilizeForwardsUntilFrame()
     val res = if(firstFrame < size) {
-      val version = _versions(firstFrame)
-      if(version.isReadyForReevaluation) {
-        NotificationResultAction.NotificationOutAndSuccessorOperation.NextReevaluation(out, version.txn)
+      val newFirstFrame = _versions(firstFrame)
+      if(newFirstFrame.isReadyForReevaluation) {
+        NotificationResultAction.NotificationOutAndSuccessorOperation.NextReevaluation(finalizedVersion.out, newFirstFrame.txn)
       } else {
-        NotificationResultAction.NotificationOutAndSuccessorOperation.FollowFraming(out, version.txn)
+        NotificationResultAction.NotificationOutAndSuccessorOperation.FollowFraming(finalizedVersion.out, newFirstFrame.txn)
       }
     } else {
-      NotificationResultAction.NotificationOutAndSuccessorOperation.NoSuccessor(out)
+      NotificationResultAction.NotificationOutAndSuccessorOperation.NoSuccessor(finalizedVersion.out)
     }
-    notifyAll()
+    if(encounteredWaiters) notifyAll()
     res
   }
 
