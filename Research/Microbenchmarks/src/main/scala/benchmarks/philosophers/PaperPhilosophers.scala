@@ -10,7 +10,7 @@ import scala.concurrent.{Await, Future, TimeoutException}
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
-class PaperPhilosophers[S <: Struct](val size: Int, val engine: Engine[S]) {
+class PaperPhilosophers[S <: Struct](val size: Int, val engine: Engine[S], dynamicEdgeChanges: Boolean) {
   import engine._
 
   sealed trait Philosopher
@@ -47,41 +47,36 @@ class PaperPhilosophers[S <: Struct](val size: Int, val engine: Engine[S]) {
     REName.named(s"sight($idx)") { implicit ! =>
       Signal[Sight] {
         val prevIdx = (idx - 1 + size) % size
-        forks(prevIdx)() match {
-          case Free => forks(idx)() match {
-            case Taken(neighbor) => Blocked(neighbor)
-            case Free => Ready
-          }
-          case Taken(by) =>
-            if (by == idx) {
-              assert(forks(idx)() == Taken(idx))
-              Done
-            } else {
-              Blocked(by)
+        if(dynamicEdgeChanges) {
+          forks(prevIdx)() match {
+            case Free => forks(idx)() match {
+              case Taken(neighbor) => Blocked(neighbor)
+              case Free => Ready
             }
+            case Taken(by) =>
+              if (by == idx) {
+                assert(forks(idx)() == Taken(idx))
+                Done
+              } else {
+                Blocked(by)
+              }
+          }
+        } else {
+          (forks(prevIdx)(), forks(idx)()) match {
+            case (Free, Free) =>
+              Ready
+            case (Taken(left), Taken(right)) if left == idx && right == idx =>
+              Done
+            case (Taken(by), _) =>
+              assert(by != idx)
+              Blocked(by)
+            case (_, Taken(by)) =>
+              assert(by != idx)
+              Blocked(by)
+          }
         }
       }
     }
-
-  // "Static" Sight
-//  val sights = for(idx <- 0 until size) yield
-//    REName.named(s"sight($idx)") { implicit ! =>
-//      Signal[Sight] {
-//        val prevIdx = (idx - 1 + size) % size
-//        (forks(prevIdx)(), forks(idx)()) match {
-//          case (Free, Free) =>
-//            Ready
-//          case (Taken(left), Taken(right)) if left == idx && right == idx =>
-//            Done
-//          case (Taken(by), _) =>
-//            assert(by != idx)
-//            Blocked(by)
-//          case (_, Taken(by)) =>
-//            assert(by != idx)
-//            Blocked(by)
-//        }
-//      }
-//    }
 
   val sightChngs: Seq[Event[Sight]] =
     for(i <- 0 until size) yield sights(i).changed
@@ -131,7 +126,7 @@ object PaperPhilosophers {
     val duration = if(args.length >= 3) Integer.parseInt(args(2)) else 0
 
     val engine = new rescala.fullmv.FullMVEngine(Duration.Zero, s"PaperPhilosophers($tableSize,$threadCount)")
-    val table = new PaperPhilosophers(tableSize, engine)
+    val table = new PaperPhilosophers(tableSize, engine, true)
 
     val continue: () => Boolean = if(duration == 0) {
       println("Running in interactive mode: press <Enter> to terminate.")

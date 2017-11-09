@@ -22,12 +22,25 @@ class PaperPhilosopherCompetition[S <: Struct] {
 
 @State(Scope.Benchmark)
 class PaperCompetition[S <: Struct] {
+  @Param(Array("dynamic","semi-static"))
+  var dynamicity: String = _
   @Param(Array("16", "32"))
   var philosophers: Int = _
   var table: PaperPhilosophers[S] = _
 
+  @Setup(Level.Trial)
+  def printSystemStats() = {
+    var assertions = false
+    @inline def captureAssertionsEnabled = {
+      assertions = true
+      true
+    }
+    assert(captureAssertionsEnabled)
+    println("Running on " + Runtime.getRuntime.availableProcessors() + " cores with assertions " + (if(assertions) "enabled." else "disabled."))
+  }
+
   @Setup(Level.Iteration)
   def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam[S]) = {
-    table = new PaperPhilosophers(philosophers, engineParam.engine)
+    table = new PaperPhilosophers(philosophers, engineParam.engine, dynamicity == "dynamic")
   }
 }
