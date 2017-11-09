@@ -1,8 +1,8 @@
 package rescala.fullmv.mirrors
 
+import rescala.fullmv.FullMVEngine
 import rescala.fullmv.mirrors.Host.GUID
 import rescala.fullmv.sgt.synchronization.SubsumableLock
-import rescala.fullmv.transmitter.ReactiveTransmittable
 
 import scala.concurrent.Future
 
@@ -20,7 +20,7 @@ class SubsumableLockReflection(override val host: SubsumableLockHost, override v
         res.localAddRefs(addHops)
       }
       (0, res)
-    }(ReactiveTransmittable.notWorthToMoveToTaskpool)
+    }(FullMVEngine.notWorthToMoveToTaskpool)
   }
 
   override def trySubsume0(hopCount: Int, lastHopWasGCd: Boolean, lockedNewParent: SubsumableLock): Future[(Int, Option[SubsumableLock])] = {
@@ -36,17 +36,17 @@ class SubsumableLockReflection(override val host: SubsumableLockHost, override v
           if(addHops > 0) localAddRefs(addHops)
         } else {
           val addHops = 1 + hopCount + (if(lastHopWasGCd) 1 else 0)
-          if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this remote trySubsume succeeded, sending $res ${addHops} new refs")
+          if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this remote trySubsume succeeded, sending $res $addHops new refs")
           newParent.localAddRefs(addHops)
         }
-        (0, res)}(ReactiveTransmittable.notWorthToMoveToTaskpool)
+        (0, res)}(FullMVEngine.notWorthToMoveToTaskpool)
     }
   }
 
   override def asyncUnlock0(): Unit = proxy.remoteAsyncUnlock()
   override def spinOnce0(backoff: Long): Future[(Int, SubsumableLock)] = proxy.remoteSpinOnce(backoff).map { res =>
     (0, res)
-  }(ReactiveTransmittable.notWorthToMoveToTaskpool)
+  }(FullMVEngine.notWorthToMoveToTaskpool)
 
   override def remoteAsyncUnlock(): Unit = proxy.remoteAsyncUnlock()
   override def remoteLock(): Future[SubsumableLock] = proxy.remoteLock()

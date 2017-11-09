@@ -4,9 +4,9 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.LockSupport
 
+import rescala.fullmv.FullMVEngine
 import rescala.fullmv.mirrors.{Host, SubsumableLockHost}
 import rescala.fullmv.sgt.synchronization.SubsumableLock._
-import rescala.fullmv.transmitter.ReactiveTransmittable
 import rescala.parrp.Backoff
 
 import scala.annotation.tailrec
@@ -62,7 +62,7 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
         case subsumed@Subsumed(parent) =>
           parent.trySubsume0(hopCount + 1, lastHopWasGCd = false, lockedNewParent).map { res =>
             trySwap(subsumed, res._2.getOrElse(lockedNewParent), res)
-          }(ReactiveTransmittable.notWorthToMoveToTaskpool)
+          }(FullMVEngine.notWorthToMoveToTaskpool)
         case GarbageCollected =>
           throw new AssertionError("let's see if this can happen..")
         case GarbageCollectedSubsumed(parent) =>
@@ -101,7 +101,7 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
         LockSupport.unpark(waiters.peek())
         parent.lock0(hopCount + 1, lastHopWasGCd = false).map { res =>
           trySwap(subsumed, res._2, res)
-        }(ReactiveTransmittable.notWorthToMoveToTaskpool)
+        }(FullMVEngine.notWorthToMoveToTaskpool)
       case GarbageCollected =>
         throw new AssertionError("let's see if this can happen..")
       case GarbageCollectedSubsumed(parent) =>
@@ -176,7 +176,7 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
         newRoot.localSubRefs(failedRefChanges)
       }
       newRoot
-    }(ReactiveTransmittable.notWorthToMoveToTaskpool)
+    }(FullMVEngine.notWorthToMoveToTaskpool)
   }
   override def remoteSpinOnce(backoff: Long): Future[SubsumableLock] = {
     spinOnce0(backoff).map{ case (failedRefChanges, newRoot) =>
@@ -185,7 +185,7 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
         newRoot.localSubRefs(failedRefChanges)
       }
       newRoot
-    }(ReactiveTransmittable.notWorthToMoveToTaskpool)
+    }(FullMVEngine.notWorthToMoveToTaskpool)
   }
   override def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[Option[SubsumableLock]] = {
     trySubsume0(0, lastHopWasGCd = false, lockedNewParent).map { case (failedRefChanges, res) =>
@@ -195,7 +195,7 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
         newRoot.localSubRefs(failedRefChanges)
       }
       res
-    }(ReactiveTransmittable.notWorthToMoveToTaskpool)
+    }(FullMVEngine.notWorthToMoveToTaskpool)
   }
 
   @tailrec final override protected def dumped(): Unit = {

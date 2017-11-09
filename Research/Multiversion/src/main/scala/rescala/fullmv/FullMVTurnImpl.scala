@@ -6,7 +6,6 @@ import java.util.concurrent.locks.{LockSupport, ReentrantLock}
 import rescala.fullmv.TurnPhase.Type
 import rescala.fullmv.mirrors.{FullMVTurnReflectionProxy, Host}
 import rescala.fullmv.sgt.synchronization._
-import rescala.fullmv.transmitter.ReactiveTransmittable
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ArrayBuffer
@@ -220,7 +219,7 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
     res.map{ case (failedRefChanges, newRoot) =>
       casLockAndNotifyFailedRefChanges(l, failedRefChanges, newRoot)
       newRoot
-    }(ReactiveTransmittable.notWorthToMoveToTaskpool)
+    }(FullMVEngine.notWorthToMoveToTaskpool)
   }
 
   @tailrec final override def trySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult] = {
@@ -238,7 +237,7 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
         l.localSubRefs(1)
         casLockAndNotifyFailedRefChanges(l, failedRefChanges, newParentIfFailed.getOrElse(lockedNewParent))
         if(newParentIfFailed.isDefined) Blocked else Successful
-      }(ReactiveTransmittable.notWorthToMoveToTaskpool)
+      }(FullMVEngine.notWorthToMoveToTaskpool)
     }
   }
 

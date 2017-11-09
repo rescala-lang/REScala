@@ -1,7 +1,7 @@
 package rescala.fullmv.transmitter
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
-import java.util.concurrent.{ConcurrentHashMap, Executor, ThreadLocalRandom}
+import java.util.concurrent.{ConcurrentHashMap, ThreadLocalRandom}
 
 import rescala.core.Reactive
 import rescala.core._
@@ -24,10 +24,6 @@ case class Response(requestId: Long) extends MessageType
 
 object ReactiveTransmittable {
   val DEBUG: Boolean = FullMVEngine.DEBUG
-
-  val notWorthToMoveToTaskpool: ExecutionContextExecutor = ExecutionContext.fromExecutor(new Executor{
-    override def execute(command: Runnable): Unit = command.run()
-  })
 
   type EndPointWithInfrastructure[T] = Endpoint[MessageWithInfrastructure[T], MessageWithInfrastructure[T]]
   type MessageWithInfrastructure[T] = (Long, T)
@@ -251,7 +247,7 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
               case Success(response) =>
                 if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host replying $requestId: $response")
                 endpoint.send((requestId, response.toTuple))
-            }(ReactiveTransmittable.notWorthToMoveToTaskpool)
+            }(FullMVEngine.notWorthToMoveToTaskpool)
           }
         })
       case (requestId, response: Response) =>
@@ -389,59 +385,59 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
       val (initPhase, initPreds) = localTurnReceiverInstance(receiver).addReplicator(new FullMVTurnReflectionProxyToEndpoint(receiver, endpoint))
       Future.successful(AddReplicatorResponse(initPhase, initPreds))
     case AddRemoteBranch(receiver, forPhase) =>
-      localTurnReceiverInstance(receiver).addRemoteBranch(forPhase).map(_ => UnitResponse)(notWorthToMoveToTaskpool)
+      localTurnReceiverInstance(receiver).addRemoteBranch(forPhase).map(_ => UnitResponse)(FullMVEngine.notWorthToMoveToTaskpool)
     case AcquirePhaseLockAndGetEstablishmentBundle(receiver) =>
       localTurnReceiverInstance(receiver).acquirePhaseLockAndGetEstablishmentBundle().map {
         case (phase, predecessorTree) => AcquirePhaseLockAndGetEstablishmentBundleResponse(phase, predecessorTree.map { turn =>
           assert(turn.host == host)
           turn.guid
         })
-      }(ReactiveTransmittable.notWorthToMoveToTaskpool)
+      }(FullMVEngine.notWorthToMoveToTaskpool)
     case AddPredecessorAndReleasePhaseLock(receiver, predecessorSpanningTree) =>
-      localTurnReceiverInstance(receiver).addPredecessorAndReleasePhaseLock(predecessorSpanningTree.map(localTurnParameterInstance(_, endpoint))).map(_ => UnitResponse)(notWorthToMoveToTaskpool)
+      localTurnReceiverInstance(receiver).addPredecessorAndReleasePhaseLock(predecessorSpanningTree.map(localTurnParameterInstance(_, endpoint))).map(_ => UnitResponse)(FullMVEngine.notWorthToMoveToTaskpool)
     case MaybeNewReachableSubtree(receiver, attachBelow, spanningSubTreeRoot) =>
-      localTurnReceiverInstance(receiver).maybeNewReachableSubtree(localTurnParameterInstance(attachBelow, endpoint), spanningSubTreeRoot.map(localTurnParameterInstance(_, endpoint))).map(_ => UnitResponse)(notWorthToMoveToTaskpool)
+      localTurnReceiverInstance(receiver).maybeNewReachableSubtree(localTurnParameterInstance(attachBelow, endpoint), spanningSubTreeRoot.map(localTurnParameterInstance(_, endpoint))).map(_ => UnitResponse)(FullMVEngine.notWorthToMoveToTaskpool)
     case NewSuccessor(receiver, successor) =>
-      localTurnReceiverInstance(receiver).newSuccessor(localTurnParameterInstance(successor, endpoint)).map(_ => UnitResponse)(notWorthToMoveToTaskpool)
+      localTurnReceiverInstance(receiver).newSuccessor(localTurnParameterInstance(successor, endpoint)).map(_ => UnitResponse)(FullMVEngine.notWorthToMoveToTaskpool)
 
     case TurnGetLockedRoot(receiver) =>
       localTurnReceiverInstance(receiver).getLockedRoot.map { res =>
         MaybeLockResponse(res)
-      }(notWorthToMoveToTaskpool)
+      }(FullMVEngine.notWorthToMoveToTaskpool)
     case TurnLock(receiver) =>
       localTurnReceiverInstance(receiver).lock().map { newParent =>
         newParent.localAddRefs(1)
         assert(newParent.host == host)
         LockResponse(newParent.guid)
-      }(notWorthToMoveToTaskpool)
+      }(FullMVEngine.notWorthToMoveToTaskpool)
     case TurnTrySubsume(receiver, lockedNewParent) =>
       localTurnReceiverInstance(receiver).trySubsume(localLockParameterInstance(lockedNewParent, endpoint)).map { r =>
         TurnTrySubsumeResponse(r)
-      }(notWorthToMoveToTaskpool)
+      }(FullMVEngine.notWorthToMoveToTaskpool)
 
 
     case NewPredecessors(receiver, predecessors) =>
-      localTurnReflectionReceiverInstance(receiver).newPredecessors(predecessors).map(_ => UnitResponse)(notWorthToMoveToTaskpool)
+      localTurnReflectionReceiverInstance(receiver).newPredecessors(predecessors).map(_ => UnitResponse)(FullMVEngine.notWorthToMoveToTaskpool)
     case NewPhase(receiver, phase) =>
-      localTurnReflectionReceiverInstance(receiver).newPhase(phase).map(_ => UnitResponse)(notWorthToMoveToTaskpool)
+      localTurnReflectionReceiverInstance(receiver).newPhase(phase).map(_ => UnitResponse)(FullMVEngine.notWorthToMoveToTaskpool)
 
 
     case LockGetLockedRoot(receiver) =>
       localLockReceiverInstance(receiver).getLockedRoot.map { res =>
         MaybeLockResponse(res)
-      }(notWorthToMoveToTaskpool)
+      }(FullMVEngine.notWorthToMoveToTaskpool)
     case LockLock(receiver) =>
       localLockReceiverInstance(receiver).remoteLock().map { newParent =>
         newParent.localAddRefs(1)
         assert(newParent.host == host)
         LockResponse(newParent.guid)
-      }(notWorthToMoveToTaskpool)
+      }(FullMVEngine.notWorthToMoveToTaskpool)
     case LockSpinOnce(receiver, backoff) =>
       localLockReceiverInstance(receiver).remoteSpinOnce(backoff).map { newParent =>
         newParent.localAddRefs(1)
         assert(newParent.host == host)
         LockResponse(newParent.guid)
-      }(notWorthToMoveToTaskpool)
+      }(FullMVEngine.notWorthToMoveToTaskpool)
     case LockTrySubsume(receiver, lockedNewParent) =>
       localLockReceiverInstance(receiver).remoteTrySubsume(localLockParameterInstance(lockedNewParent, endpoint)).map { newParentIfFailed =>
         MaybeLockResponse(newParentIfFailed.map { failedNewParent =>
@@ -449,7 +445,7 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
           assert(failedNewParent.host == host)
           failedNewParent.guid
         })
-      }(notWorthToMoveToTaskpool)
+      }(FullMVEngine.notWorthToMoveToTaskpool)
 
     case otherwise =>
       throw new AssertionError("undefined message : "+otherwise)
@@ -457,7 +453,7 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
 
   class FullMVTurnMirrorProxyToEndpoint(val guid: Host.GUID, endpoint: EndPointWithInfrastructure[Msg]) extends FullMVTurnProxy {
     override def addRemoteBranch(forPhase: Type): Future[Unit] = {
-      doRequest(endpoint, AddRemoteBranch(guid, forPhase)).map(_ => ())(notWorthToMoveToTaskpool)
+      doRequest(endpoint, AddRemoteBranch(guid, forPhase)).map(_ => ())(FullMVEngine.notWorthToMoveToTaskpool)
     }
 
     override def asyncRemoteBranchComplete(forPhase: TurnPhase.Type): Unit = {
@@ -473,7 +469,7 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
       doRequest(endpoint, AddPredecessorAndReleasePhaseLock(guid,  predecessorSpanningTree.map { turn =>
         assert(turn.host == host)
         turn.guid
-      })).map(_ => ())(notWorthToMoveToTaskpool)
+      })).map(_ => ())(FullMVEngine.notWorthToMoveToTaskpool)
     }
     override def asyncReleasePhaseLock(): Unit = {
       doAsync(endpoint, AsyncReleasePhaseLock(guid))
@@ -483,18 +479,18 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
       doRequest(endpoint, MaybeNewReachableSubtree(guid, attachBelow.guid, spanningSubTreeRoot.map { turn =>
         assert(turn.host == host)
         turn.guid
-      })).map(_ => ())(notWorthToMoveToTaskpool)
+      })).map(_ => ())(FullMVEngine.notWorthToMoveToTaskpool)
     }
     override def newSuccessor(successor: FullMVTurn): Future[Unit] = {
       assert(successor.host == host)
-      doRequest(endpoint, NewSuccessor(guid, successor.guid)).map(_ => ())(notWorthToMoveToTaskpool)
+      doRequest(endpoint, NewSuccessor(guid, successor.guid)).map(_ => ())(FullMVEngine.notWorthToMoveToTaskpool)
     }
 
     override def getLockedRoot: Future[Option[Host.GUID]] = {
       doRequest(endpoint, TurnGetLockedRoot(guid)).map {
         case MaybeLockResponse(maybeRoot) =>
           maybeRoot
-      }(notWorthToMoveToTaskpool)
+      }(FullMVEngine.notWorthToMoveToTaskpool)
     }
     override def lock(): Future[SubsumableLock] = {
       doRequest(endpoint, TurnLock(guid)).map {
@@ -513,11 +509,11 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
 
   class FullMVTurnReflectionProxyToEndpoint(val guid: Host.GUID, endpoint: EndPointWithInfrastructure[Msg]) extends FullMVTurnReflectionProxy {
     override def newPredecessors(predecessors: Seq[GUID]): Future[Unit] = {
-      doRequest(endpoint, NewPredecessors(guid, predecessors)).map(_ => ())(notWorthToMoveToTaskpool)
+      doRequest(endpoint, NewPredecessors(guid, predecessors)).map(_ => ())(FullMVEngine.notWorthToMoveToTaskpool)
     }
 
     override def newPhase(phase: TurnPhase.Type): Future[Unit] = {
-      doRequest(endpoint, NewPhase(guid, phase)).map(_ => ())(notWorthToMoveToTaskpool)
+      doRequest(endpoint, NewPhase(guid, phase)).map(_ => ())(FullMVEngine.notWorthToMoveToTaskpool)
     }
   }
 
@@ -529,7 +525,7 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
       doRequest(endpoint, LockGetLockedRoot(guid)).map {
         case MaybeLockResponse(maybeRoot) =>
           maybeRoot
-      }(notWorthToMoveToTaskpool)
+      }(FullMVEngine.notWorthToMoveToTaskpool)
     }
     override def remoteLock(): Future[SubsumableLock] = {
       doRequest(endpoint, LockLock(guid)).map {

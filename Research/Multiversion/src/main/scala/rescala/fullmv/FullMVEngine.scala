@@ -1,6 +1,6 @@
 package rescala.fullmv
 
-import java.util.concurrent.{ForkJoinPool, RecursiveAction}
+import java.util.concurrent.{Executor, ForkJoinPool}
 
 import rescala.core.{EngineImpl, ReSourciV}
 import rescala.fullmv.NotificationResultAction.GlitchFreeReady
@@ -8,6 +8,7 @@ import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperat
 import rescala.fullmv.mirrors.{FullMVTurnHost, Host, HostImpl, SubsumableLockHostImpl}
 import rescala.fullmv.tasks.{Framing, Notification, NotificationWithFollowFrame}
 
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import scala.concurrent.duration._
 import scala.util.Try
 
@@ -117,4 +118,8 @@ object FullMVEngine {
   val DEBUG = false
 
   val default = new FullMVEngine(10.seconds, "default")
+
+  val notWorthToMoveToTaskpool: ExecutionContextExecutor = ExecutionContext.fromExecutor(new Executor{
+    override def execute(command: Runnable): Unit = command.run()
+  })
 }

@@ -2,7 +2,6 @@ package rescala.fullmv.mirrors.localcloning
 
 import rescala.fullmv.mirrors._
 import rescala.fullmv.sgt.synchronization.SubsumableLock
-import rescala.fullmv.transmitter.ReactiveTransmittable
 import rescala.fullmv.{FullMVEngine, FullMVTurn, TransactionSpanningTreeNode, TurnPhase}
 
 import scala.concurrent.Future
@@ -22,7 +21,7 @@ object FullMVTurnLocalClone {
         override def acquirePhaseLockAndGetEstablishmentBundle(): Future[(TurnPhase.Type, TransactionSpanningTreeNode[FullMVTurn])] = {
           localMirror.acquirePhaseLockAndGetEstablishmentBundle().map { case (phase, spanningTree) =>
             (phase, spanningTree.map(FullMVTurnLocalClone(_, reflectionHost)))
-          }(ReactiveTransmittable.notWorthToMoveToTaskpool)
+          }(FullMVEngine.notWorthToMoveToTaskpool)
         }
         override def asyncRemoteBranchComplete(forPhase: TurnPhase.Type): Unit = localMirror.asyncRemoteBranchComplete(forPhase)
         override def addRemoteBranch(forPhase: TurnPhase.Type): Future[Unit] = localMirror.addRemoteBranch(forPhase)
@@ -30,7 +29,7 @@ object FullMVTurnLocalClone {
         override def asyncReleasePhaseLock(): Unit = localMirror.asyncReleasePhaseLock()
 
         override def getLockedRoot = localMirror.getLockedRoot
-        override def lock() = localMirror.lock().map(SubsumableLockLocalClone(_, reflectionHost.lockHost))(ReactiveTransmittable.notWorthToMoveToTaskpool)
+        override def lock() = localMirror.lock().map(SubsumableLockLocalClone(_, reflectionHost.lockHost))(FullMVEngine.notWorthToMoveToTaskpool)
         override def trySubsume(lockedNewParent: SubsumableLock) = localMirror.trySubsume(SubsumableLockLocalClone(lockedNewParent, mirrorHost.lockHost))
       }
 

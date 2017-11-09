@@ -2,9 +2,8 @@ package rescala.fullmv.sgt.synchronization
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import rescala.fullmv.FullMVTurn
+import rescala.fullmv.{FullMVEngine, FullMVTurn}
 import rescala.fullmv.mirrors._
-import rescala.fullmv.transmitter.ReactiveTransmittable
 import rescala.parrp.Backoff
 
 import scala.annotation.tailrec
@@ -53,7 +52,7 @@ trait SubsumableLock extends SubsumableLockProxy with Hosted {
         localSubRefs(1)
       }
       newRoot
-    }(ReactiveTransmittable.notWorthToMoveToTaskpool)
+    }(FullMVEngine.notWorthToMoveToTaskpool)
   }
 
   def tryNewLocalRef(): Boolean = {

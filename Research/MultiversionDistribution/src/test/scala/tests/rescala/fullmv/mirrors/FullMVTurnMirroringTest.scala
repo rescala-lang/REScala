@@ -1,4 +1,4 @@
-package tests.rescala.fullmv.mirror
+package tests.rescala.fullmv.mirrors
 
 import org.scalatest.FunSuite
 import rescala.fullmv._
