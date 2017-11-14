@@ -1,6 +1,6 @@
 ---
 title: Manual
-version: 0.3
+version: 0.4
 nav: 3
 sidebar: manual
 ---
@@ -10,11 +10,11 @@ sidebar: manual
 Create a `build.sbt` file in an empty folder with the following contents:
 
 ```scala
-scalaVersion := "2.12.2"
+scalaVersion := "2.12.4"
 
 resolvers += Resolver.bintrayRepo("stg-tud", "maven")
 
-libraryDependencies += "de.tuda.stg" %% "rescala" % "0.19.0"
+libraryDependencies += "de.tuda.stg" %% "rescala" % "0.20.0"
 ```
 
 Install [sbt](http://www.scala-sbt.org/) and run `sbt console` inside the folder,

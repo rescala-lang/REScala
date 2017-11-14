@@ -50,7 +50,8 @@ lazy val testsJVM = tests.jvm.dependsOn(testToolsJVM % "test->test", stm)
 lazy val testsJS = tests.js.dependsOn(testToolsJS % "test->test")
 
 lazy val documentation = project.in(file("Documentation/DocumentationProject"))
-  .settings(cfg.base, cfg.noPublish)
+  .settings(cfg.base, cfg.noPublish,
+    scalacOptions += "-Xlint:-unused")
   .enablePlugins(TutPlugin)
   .dependsOn(rescalaJVM, rescalaJS)
 
@@ -73,7 +74,7 @@ lazy val reswing = project.in(file("Extensions/RESwing"))
 
 lazy val rescalatags = project.in(file("Extensions/Rescalatags"))
   .settings(cfg.base, cfg.strictScalac, cfg.bintray, cfg.test,
-    cfg.js, lib.scalatags, jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv)
+    cfg.js, lib.scalatags, jsDependencies += RuntimeDOM)
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(rescalaJS)
 
@@ -190,7 +191,7 @@ lazy val cfg = new {
 
   val base = List(
     organization := "de.tuda.stg",
-    version := "0.20.0-SNAPSHOT",
+    version := "0.20.0",
     scalaVersion := version_212,
     baseScalac,
     autoAPIMappings := true // scaladoc
@@ -291,7 +292,7 @@ lazy val lib = new {
     "org.codehaus.jsr166-mirror" % "jsr166y" % "1.7.0",
     "org.scala-lang.modules" %% "scala-xml" % "1.0.6")
 
-  lazy val scalaswing = libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "2.0.0"
+  lazy val scalaswing = libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "2.0.1"
   lazy val scalatest = libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.4" % "test"
 
 
@@ -321,7 +322,7 @@ lazy val lib = new {
 
   val scalaXml = libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.0.6"
 
-  val scalatags = libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.6.5"
+  val scalatags = libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.6.7"
 
   val akka = {
     val akkaVersion = "2.5.4"
