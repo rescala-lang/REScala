@@ -140,14 +140,14 @@ class ReTable[A <: AnyRef](
   rowHeight using (peer.rowHeight _, peer.rowHeight= _, "rowHeight")
   autoResizeMode using (peer.autoResizeMode _, peer.autoResizeMode= _, "autoResizeMode")
 
-  showHorizontalLines using (peer.peer.getShowHorizontalLines _,
+  showHorizontalLines using (() => peer.peer.getShowHorizontalLines(),
                              peer.peer.setShowHorizontalLines _, "showHorizontalLines")
-  showVerticalLines using (peer.peer.getShowVerticalLines _,
+  showVerticalLines using (() => peer.peer.getShowVerticalLines(),
                            peer.peer.setShowVerticalLines _, "showVerticalLines")
   gridColor using (peer.gridColor _, peer.gridColor= _, "gridColor")
-  fillsViewportHeight using (peer.peer.getFillsViewportHeight _,
+  fillsViewportHeight using (() => peer.peer.getFillsViewportHeight(),
                              peer.peer.setFillsViewportHeight _, "fillsViewportHeight")
-  selectionForeground using (peer.selectionForeground _, peer.selectionForeground= _,
+  selectionForeground using (() => peer.selectionForeground, peer.selectionForeground= _,
                              "selectionForeground")
   selectionBackground using (peer.selectionBackground _, peer.selectionBackground= _,
                              "selectionBackground")
@@ -162,8 +162,8 @@ class ReTable[A <: AnyRef](
       peer.peer.clearSelection
     else
       peer.peer.setRowSelectionInterval(range._1, range._2) }
-  selectAll using peer.peer.selectAll _
-  clearSelection using peer.peer.clearSelection _
+  selectAll using (() => peer.peer.selectAll())
+  clearSelection using (() => peer.peer.clearSelection())
 
   val changed = ReSwingEvent using classOf[TableChanged]
   val structureChanged = ReSwingEvent using classOf[TableStructureChanged]

@@ -36,10 +36,10 @@ class ReTextComponent(
 
   editable using (peer.editable _, peer.editable_= _, "editable")
 
-  cut using peer.cut _
-  copy using peer.copy _
-  paste using peer.paste _
-  selectAll using peer.selectAll _
+  cut using (() => peer.cut())
+  copy using (() => peer.copy())
+  paste using (() => peer.paste())
+  selectAll using (() => peer.selectAll())
 
   class ReCaret(
       val position: ReSwingValue[Int],
