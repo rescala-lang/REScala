@@ -51,8 +51,8 @@ abstract class RescalaInterface[S <: Struct] {
     * val result: Signal[String] = Signal { a().toString + b().toString}
     * }}}
     */
-  final def Signal[A](expression: A): Signal[A] = macro ReactiveMacros.SignalMacro[A, S]
-  final def Event[A](expression: Option[A]): Event[A] = macro ReactiveMacros.EventMacro[A, S]
+  final def Signal[A](expression: A)(implicit ticket: CreationTicket): Signal[A] = macro ReactiveMacros.SignalMacro[A, S]
+  final def Event[A](expression: Option[A])(implicit ticket: CreationTicket): Event[A] = macro ReactiveMacros.EventMacro[A, S]
 
   val Events = reactives.Events
   val Signals = reactives.Signals

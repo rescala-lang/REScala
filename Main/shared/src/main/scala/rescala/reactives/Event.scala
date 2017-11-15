@@ -48,8 +48,6 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with Observable[T, S
 
   final def abortOnError()(implicit ticket: CreationTicket[S]): Event[T, S] = recover{case t => throw new UnhandledFailureException(this, t)}
 
-  def mapMacro[A](expression: T => A): Event[A, S] = macro EventMapMacro[T, A, S]
-
   /** Events disjunction. */
   final def ||[U >: T](other: Event[U, S])(implicit ticket: CreationTicket[S]): Event[U, S] = {
     Events.static(s"(or $this $other)", this, other) { st =>
@@ -96,15 +94,16 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with Observable[T, S
     }
   }
 
+  final def map[A](expression: T => A)(implicit ticket: CreationTicket[S]): Event[A, S] = macro EventMapMacro[T, A, S]
   /** Transform the event parameter */
-  final def map[U](mapping: T => U)(implicit ticket: CreationTicket[S]): Event[U, S] = Events.static(s"(map $this)", this) {  st => st.staticDepend(this).map(mapping) }
+  final def staticMap[U](mapping: T => U)(implicit ticket: CreationTicket[S]): Event[U, S] = Events.static(s"(map $this)", this) {  st => st.staticDepend(this).map(mapping) }
 
   final def dMap[U](mapping: DynamicTicket[S] => T => U)(implicit ticket: CreationTicket[S]): Event[U, S] = Events.dynamic(this) {
     dt => dt.depend(this).map(v => mapping(dt)(v))
   }
 
   /** Drop the event parameter; equivalent to map((_: Any) => ()) */
-  final def dropParam(implicit ticket: CreationTicket[S]): Event[Unit, S] = map(_ => ())
+  final def dropParam(implicit ticket: CreationTicket[S]): Event[Unit, S] = staticMap(_ => ())
 
 
   /** folds events with a given fold function to create a Signal */
