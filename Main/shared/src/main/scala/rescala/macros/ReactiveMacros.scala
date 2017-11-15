@@ -34,12 +34,47 @@ object ReactiveMacros {
   }
 
 
+  def EventMapMacro[T: c.WeakTypeTag, A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag](c: blackbox.Context)(expression: c.Expr[T => A]): c.Expr[Event[A, S]] = {
+    import c.universe._
+
+    if (!c.hasErrors) {
+
+      val mapFunctionArgumentTermName = TermName(c.freshName("eventValue$"))
+      val mapFunctionArgumentIdent = Ident(mapFunctionArgumentTermName)
+      internal setType(mapFunctionArgumentIdent, weakTypeOf[Event[T, S]])
+
+      val constructedExpression = q"""$mapFunctionArgumentIdent.apply().map($expression)"""
+      val (cutOutSignals, signalExpression, filteredDetections) = ReactiveMacro(c)(c.Expr[Option[A]](constructedExpression))
+
+      val extendedDetections = mapFunctionArgumentIdent :: filteredDetections
+
+      // create SignalSynt object
+      // use fully-qualified name, so no extra import is needed
+      val body =
+      q"""{
+          val $mapFunctionArgumentTermName = ${c.prefix}
+          ${termNames.ROOTPKG}.rescala.reactives.Events.dynamic[${weakTypeOf[A]}, ${weakTypeOf[S]}](..$extendedDetections){$signalExpression}
+        }
+        """
+
+      // assemble the SignalSynt object and the signal values that are accessed
+      // by the object, but were cut out of the signal expression during the code
+      // transformation
+      val block = Typed(Block(cutOutSignals.reverse, body), TypeTree(weakTypeOf[Event[A, S]]))
+
+      println(showCode(block))
+
+      c.Expr[Event[A, S]](c.retyper untypecheck block)
+    }
+    else
+      c.Expr[Event[A, S]](q"""throw new ${termNames.ROOTPKG}.scala.NotImplementedError("event macro not expanded")""")
+  }
 
   def EventMacro[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag](c: blackbox.Context)(expression: c.Expr[A]): c.Expr[Event[A, S]] = {
     import c.universe._
 
     if (!c.hasErrors) {
-      val (cutOutSignals, signalExpression, filteredDetections ) =  ReactiveMacro(c)(expression)
+      val (cutOutSignals, signalExpression, filteredDetections) = ReactiveMacro(c)(expression)
 
       // create SignalSynt object
       // use fully-qualified name, so no extra import is needed
@@ -338,6 +373,7 @@ object ReactiveMacros {
         }
       case tree =>
         if (isMethodWithPotentialNonLocalSideEffects(tree) &&
+          tree.tpe != null &&
           tree.tpe =:= typeOf[Unit])
           potentialSideEffectWarning(tree.pos)
     }

@@ -2,6 +2,8 @@ package rescala.reactives
 
 import rescala.core.Pulse.{Exceptional, NoChange, Value}
 import rescala.core._
+import rescala.macros.ReactiveMacros.EventMapMacro
+import scala.language.experimental.macros
 import rescala.reactives.RExceptions.UnhandledFailureException
 
 import scala.annotation.compileTimeOnly
@@ -46,6 +48,7 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with Observable[T, S
 
   final def abortOnError()(implicit ticket: CreationTicket[S]): Event[T, S] = recover{case t => throw new UnhandledFailureException(this, t)}
 
+  def mapMacro[A](expression: T => A): Event[A, S] = macro EventMapMacro[T, A, S]
 
   /** Events disjunction. */
   final def ||[U >: T](other: Event[U, S])(implicit ticket: CreationTicket[S]): Event[U, S] = {
