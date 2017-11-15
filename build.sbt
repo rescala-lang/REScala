@@ -191,7 +191,7 @@ lazy val microbench = project.in(file("Research/Microbenchmarks"))
 lazy val cfg = new {
 
   val version_211 = "2.11.11"
-  val version_212 = "2.12.3"
+  val version_212 = "2.12.4"
 
 
   val base = List(
@@ -293,7 +293,7 @@ lazy val lib = new {
 
   lazy val rss = libraryDependencies ++= Seq(
     "joda-time" % "joda-time" % "2.9.9",
-    "org.joda" % "joda-convert" % "1.8.3",
+    "org.joda" % "joda-convert" % "1.9.2",
     "org.codehaus.jsr166-mirror" % "jsr166y" % "1.7.0",
     "org.scala-lang.modules" %% "scala-xml" % "1.0.6")
 
@@ -330,7 +330,7 @@ lazy val lib = new {
   val scalatags = libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.6.7"
 
   val akka = {
-    val akkaVersion = "2.5.4"
+    val akkaVersion = "2.5.6"
     // akka:
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
@@ -348,7 +348,7 @@ lazy val lib = new {
   )
 
   val scalafx = Seq(
-    libraryDependencies += "org.scalafx" %% "scalafx" % "8.0.102-R11",
+    libraryDependencies += "org.scalafx" %% "scalafx" % "8.0.144-R12",
     scalaswing,
     unmanagedJars in Compile += Attributed.blank(file(System.getenv("JAVA_HOME") + "/lib/ext/jfxrt.jar"))
   )
