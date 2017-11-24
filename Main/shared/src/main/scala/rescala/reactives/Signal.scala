@@ -32,7 +32,7 @@ trait Signal[+A, S <: Struct] extends ReSourciV[Pulse[A], S] with Observable[A, 
     try { engine.singleNow(this).get }
     catch {
       case EmptySignalControlThrowable => throw new NoSuchElementException(s"Signal $this is empty")
-      case other: Throwable => throw new IllegalStateException("Signal has an error value", other)
+      case other: Throwable => throw new IllegalStateException(s"Signal $this has an error value", other)
     }
   }
 
