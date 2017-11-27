@@ -11,7 +11,7 @@ object Globals {
   implicit val engine: Engine[Struct] = Engines.byName[Struct](engineName)
 
   var taskSupport: ForkJoinTaskSupport = _
-  def setParallelism(n: Int) = {
+  def setParallelism(n: Int): Unit = {
     if (taskSupport != null) taskSupport.environment.shutdown()
     taskSupport = {
       new ForkJoinTaskSupport(new java.util.concurrent.ForkJoinPool(n))
