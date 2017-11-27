@@ -14,7 +14,7 @@ object Globals {
   def setParallelism(n: Int) = {
     if (taskSupport != null) taskSupport.environment.shutdown()
     taskSupport = {
-      new ForkJoinTaskSupport(new java.util.concurrent.ForkJoinPool)
+      new ForkJoinTaskSupport(new java.util.concurrent.ForkJoinPool(n))
     }
   }
 
