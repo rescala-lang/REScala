@@ -102,6 +102,7 @@ object ReactiveMacros {
         case q"$reactive.apply()" => Some(reactive)
         case q"$reactive.!" => Some(reactive)
         case q"$reactive.unary_!" => Some(reactive)
+        case q"$reactive.value" => Some(reactive)
         case _ => None
       }
     }

@@ -31,6 +31,8 @@ trait Signal[+A, S <: Struct] extends ReSourciV[Pulse[A], S] with Observable[A, 
   final def ! : A = throw new IllegalAccessException(s"$this.! called outside of macro")
   @compileTimeOnly("Signal.unary_! can only be used inside of Signal expressions")
   final def unary_! : A = throw new IllegalAccessException(s"$this.unary_! called outside of macro")
+  @compileTimeOnly("Signal.unary_! can only be used inside of Signal expressions")
+  final def value : A = throw new IllegalAccessException(s"$this.value called outside of macro")
 
   final def now(implicit engine: Engine[S], @deprecated("unused", "") ev: Signal.NowAllowed.type): A = {
     try { engine.singleNow(this).get }
