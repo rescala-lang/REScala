@@ -2,12 +2,13 @@ package rescala.reactives
 
 import rescala.core.Pulse.{Exceptional, NoChange, Value}
 import rescala.core._
-import rescala.macros.ReactiveMacros.EventMapMacro
+import rescala.macros.ReactiveMacros
 import scala.language.experimental.macros
 import rescala.reactives.RExceptions.UnhandledFailureException
 
 import scala.annotation.compileTimeOnly
 import scala.collection.immutable.{LinearSeq, Queue}
+
 
 /**
   * Base signal interface for all signal implementations.
@@ -96,7 +97,7 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with Observable[T, S
     }
   }
 
-  final def map[A](expression: T => A)(implicit ticket: CreationTicket[S]): Event[A, S] = macro EventMapMacro[T, A, S]
+  final def map[A](expression: T => A)(implicit ticket: CreationTicket[S]): Event[A, S] = macro ReactiveMacros.EventMapMacro[T, A, S]
   /** Transform the event parameter */
   final def staticMap[U](mapping: T => U)(implicit ticket: CreationTicket[S]): Event[U, S] = Events.static(s"(map $this)", this) {  st => st.staticDepend(this).map(mapping) }
 
