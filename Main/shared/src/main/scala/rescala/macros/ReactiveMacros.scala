@@ -7,6 +7,7 @@ import retypecheck._
 import scala.reflect.macros.blackbox
 
 class ReactiveMacros(val c: blackbox.Context) {
+
   import c.universe._
 
   def SignalMacro[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag](expression: c.Expr[A])(ticket: c.Tree): c.Expr[Signal[A, S]] = {
@@ -86,25 +87,8 @@ class ReactiveMacros(val c: blackbox.Context) {
   }
 
 
-
-  def ReactiveMacro[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag](expression: c.Expr[A]): (List[c.universe.ValDef], c.universe.Tree, List[c.universe.Tree], List[c.universe.Tree]) = {
-
-
-//    def treeTypeNullWarning(): Unit =
-//            c.warning(c.enclosingPosition,
-//              "internal warning: tree type was null, " +
-//                "this should not happen but the signal may still work")
-
-
-
-    val uncheckedExpressions: Set[Tree] = calcUncheckedExpressions(expression)
-    checkForPotentialSideEffects(expression, uncheckedExpressions)
-
-    // all symbols that are defined within the macro expression
-    val symbolsDefinedInsideMacroExpression: Map[Symbol, DefTree] = (expression.tree collect {
-      case defTree: DefTree => defTree.symbol -> defTree
-    }).toMap
-
+  def ReactiveMacro[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag](expression: c.Expr[A]): (List[ValDef], Tree, List[Tree], List[Tree]) = {
+    val weAnalysis = new WholeExpressionAnalysis(expression.tree)
     // the name of the generated turn argument passed to the signal closure
     // every Signal { ... } macro instance gets expanded into a dynamic signal
     val signalTicketTermName = TermName(c.freshName("ticket$"))
@@ -117,43 +101,6 @@ class ReactiveMacros(val c: blackbox.Context) {
     var detectedReactives = List[Tree]()
 
     object transformer extends Transformer {
-
-      /** - is not a reactive value resulting from a function that is
-        *   itself called on a reactive value
-        *   (so the expression does not contained "chained" reactives)
-        * - does not reference definitions that are defined within the
-        *   macro expression but not within e
-        *   (note that such a case can lead to unintentional behavior) */
-      def containsCriticalReferences(reactive: c.universe.Tree): Boolean = reactive.filter { tree =>
-        val critical = tree match {
-          // check if reactive results from a function that is
-          // itself called on a reactive value
-          case REApply(_) => true
-          // check reference definitions that are defined within the
-          // macro expression but not within the reactive
-          case tree: SymTree =>
-            symbolsDefinedInsideMacroExpression get tree.symbol match {
-              case Some(defTree) => !(reactive exists {_ == defTree})
-              case _ => false
-            }
-
-          // "uncritical" reactive that can be cut out
-          case _ => false
-        }
-
-        if (critical) checkAndWarnReactiveConstructions(reactive, uncheckedExpressions)
-
-        critical
-      }.nonEmpty
-
-      private def isReactiveThatCanBeCutOut(reactive: c.universe.Tree): Boolean = {
-        isReactive(reactive) &&
-          reactive.symbol.isTerm &&
-          !reactive.symbol.asTerm.isVal &&
-          !reactive.symbol.asTerm.isVar &&
-          !reactive.symbol.asTerm.isAccessor &&
-          !containsCriticalReferences(reactive)
-      }
 
       override def transform(tree: Tree): Tree =
         tree match {
@@ -188,7 +135,7 @@ class ReactiveMacros(val c: blackbox.Context) {
           //   Signal { s() }
           // }
           //
-          case reactive@(TypeApply(_, _) | Apply(_, _) | Select(_, _)) if isReactiveThatCanBeCutOut(reactive) =>
+          case reactive@(TypeApply(_, _) | Apply(_, _) | Select(_, _)) if weAnalysis.isReactiveThatCanBeCutOut(reactive) =>
 
             // create the signal definition to be cut out of the
             // macro expression and its substitution variable
@@ -208,20 +155,83 @@ class ReactiveMacros(val c: blackbox.Context) {
 
     val innerTree = transformer transform expression.tree
 
-    // SignalSynt argument function
-    val signalExpression = q"{$signalTicketTermName: ${ weakTypeOf[DynamicTicket[S]] } => $innerTree }"
+    val signalExpression = q"{$signalTicketTermName: ${weakTypeOf[DynamicTicket[S]]} => $innerTree }"
 
-    // upper bound parameters, only use static outside declarations
-    // note that this potentially misses many dependencies
-    // these will be detected dynamically, but that may cause multiple evaluations when creating a signal
-    val filteredDetections = detectedReactives.filter(tree =>
-      tree.forAll{ t => !symbolsDefinedInsideMacroExpression.contains(t.symbol)} &&
-        tree.symbol.isTerm &&
-        (tree.symbol.asTerm.isVal ||
-          tree.symbol.asTerm.isVar))
+
+    val filteredDetections = weAnalysis.findFirstOrderDependenciesLowerBound(detectedReactives)
 
     (cutOutSignals, signalExpression, filteredDetections, detectedReactives)
   }
+
+  class WholeExpressionAnalysis(expression: Tree) {
+    val uncheckedExpressions: Set[Tree] = calcUncheckedExpressions(expression)
+
+    // all symbols that are defined within the macro expression
+    val symbolsDefinedInsideMacroExpression: Map[Symbol, DefTree] = (expression collect {
+      case defTree: DefTree => defTree.symbol -> defTree
+    }).toMap
+
+
+    def checkForPotentialSideEffects() =  ReactiveMacros.this.checkForPotentialSideEffects(expression, uncheckedExpressions)
+
+    /** upper bound parameters, only use static outside declarations
+      * note that this potentially misses many dependencies
+      * these will be detected dynamically, but that may cause multiple evaluations when creating a signal */
+    def findFirstOrderDependenciesLowerBound(detectedReactives: List[Tree]): List[Tree] = {
+      detectedReactives.filter(tree =>
+        tree.forAll { t => !symbolsDefinedInsideMacroExpression.contains(t.symbol) } &&
+          tree.symbol.isTerm &&
+          (tree.symbol.asTerm.isVal ||
+            tree.symbol.asTerm.isVar))
+    }
+
+    /** - is not a reactive value resulting from a function that is
+      *   itself called on a reactive value
+      *   (so the expression does not contained "chained" reactives)
+      * - does not reference definitions that are defined within the
+      *   macro expression but not within e
+      *   (note that such a case can lead to unintentional behavior) */
+    def containsCriticalReferences(reactive: c.universe.Tree): Boolean = reactive.filter { tree =>
+      val critical = tree match {
+        // check if reactive results from a function that is
+        // itself called on a reactive value
+        case REApply(_) => true
+        // check reference definitions that are defined within the
+        // macro expression but not within the reactive
+        case tree: SymTree =>
+          symbolsDefinedInsideMacroExpression get tree.symbol match {
+            case Some(defTree) => !(reactive exists {_ == defTree})
+            case _ => false
+          }
+
+        // "uncritical" reactive that can be cut out
+        case _ => false
+      }
+
+      if (critical) checkAndWarnReactiveConstructions(reactive, uncheckedExpressions)
+
+      critical
+    }.nonEmpty
+
+    def isReactiveThatCanBeCutOut(reactive: c.universe.Tree): Boolean = {
+      isReactive(reactive) &&
+        reactive.symbol.isTerm &&
+        !reactive.symbol.asTerm.isVal &&
+        !reactive.symbol.asTerm.isVar &&
+        !reactive.symbol.asTerm.isAccessor &&
+        !containsCriticalReferences(reactive)
+    }
+
+  }
+
+
+
+  //    def treeTypeNullWarning(): Unit =
+  //            c.warning(c.enclosingPosition,
+  //              "internal warning: tree type was null, " +
+  //                "this should not happen but the signal may still work")
+
+
 
   def isReactive(tree: Tree): Boolean = {
     val staticSignalClass = c.mirror staticClass "_root_.rescala.reactives.Signal"
@@ -245,8 +255,8 @@ class ReactiveMacros(val c: blackbox.Context) {
   }
 
   /** find expressions annotated with @scala.annotation.unchecked  */
-  def calcUncheckedExpressions[A: c.WeakTypeTag](expression: c.Expr[A]): Set[c.universe.Tree] = {
-    (expression.tree collect {
+  def calcUncheckedExpressions[A: c.WeakTypeTag](expression: Tree): Set[c.universe.Tree] = {
+    (expression collect {
       case tree@Typed(_, _)
         if (tree.tpe match {
           case AnnotatedType(annotations, _) =>
@@ -315,7 +325,7 @@ class ReactiveMacros(val c: blackbox.Context) {
   }
 
   def checkForPotentialSideEffects[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag]
-    (expression: c.Expr[A], uncheckedExpressions: Set[c.universe.Tree]): Unit = {
+    (expression: Tree, uncheckedExpressions: Set[c.universe.Tree]): Unit = {
     // collect expression annotated to be unchecked and do not issue warnings
     // for those (use the standard Scala unchecked annotation for that purpose)
 
@@ -357,7 +367,7 @@ class ReactiveMacros(val c: blackbox.Context) {
         "Statement may either be unnecessary or have side effects. " +
           "Signal expressions should have no side effects.")
 
-    expression.tree foreach {
+    expression foreach {
       case Block(stats, _) =>
         stats foreach { stat =>
           if (isMethodWithPotentialNonLocalSideEffects(stat))
