@@ -13,11 +13,11 @@ class ReactiveMacros(val c: blackbox.Context) {
   def SignalMacro[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag](expression: c.Expr[A])(ticket: c.Tree): c.Expr[Signal[A, S]] = {
 
     if (!c.hasErrors) {
-      val (cutOutSignals, signalExpression, filteredDetections, _) = ReactiveMacro(expression)
+      val mp@MacroPieces(_, _, cutOutSignals, filteredDetections, _) = ReactiveMacro(expression)
 
       // create SignalSynt object
       // use fully-qualified name, so no extra import is needed
-      val body = q"${termNames.ROOTPKG}.rescala.reactives.Signals.dynamic[${weakTypeOf[A]}, ${weakTypeOf[S]}](..$filteredDetections)($signalExpression)($ticket)"
+      val body = q"${termNames.ROOTPKG}.rescala.reactives.Signals.dynamic[${weakTypeOf[A]}, ${weakTypeOf[S]}](..${filteredDetections ::: cutOutSignals})(${mp.userComputation})($ticket)"
 
       // assemble the SignalSynt object and the signal values that are accessed
       // by the object, but were cut out of the signal expression during the code
@@ -35,30 +35,33 @@ class ReactiveMacros(val c: blackbox.Context) {
 
     if (!c.hasErrors) {
 
-      val mapFunctionArgumentTermName = TermName(c.freshName("eventValue$"))
-      val mapFunctionArgumentIdent = Ident(mapFunctionArgumentTermName)
-      internal setType(mapFunctionArgumentIdent, weakTypeOf[Event[T, S]])
+      val mp = ReactiveMacro(expression)
 
-      val constructedExpression = q"""$mapFunctionArgumentIdent.apply().map($expression)"""
-      val (cutOutSignals, transformedExpression, filteredDetections, detections) = ReactiveMacro(c.Expr[Option[A]](constructedExpression))
+      val body = if (mp.detectedReactives.isEmpty) {
+        q"""${c.prefix}.staticMap($expression)($ticket)"""
+      }
+      else {
 
-      val body = if (detections.size > 1) {
-        val extendedDetections = mapFunctionArgumentIdent :: filteredDetections
+        val mapFunctionArgumentTermName = TermName(c.freshName("eventValue$"))
+        val mapFunctionArgumentIdent = Ident(mapFunctionArgumentTermName)
+        internal setType(mapFunctionArgumentIdent, weakTypeOf[Event[T, S]])
 
-        // create SignalSynt object
-        // use fully-qualified name, so no extra import is needed
+        val extendedDetections = mapFunctionArgumentIdent :: mp.filteredDetections ::: mp.cutOutSignals
+
+        val mp2 = mp.copy(innerTree = q"""${mp.ticketTermName}.depend($mapFunctionArgumentIdent).map(${mp.innerTree})""")
+
         q"""{
           val $mapFunctionArgumentTermName = ${c.prefix}
-          ${termNames.ROOTPKG}.rescala.reactives.Events.dynamic[${weakTypeOf[A]}, ${weakTypeOf[S]}](..$extendedDetections){$transformedExpression}($ticket)
+          ${termNames.ROOTPKG}.rescala.reactives.Events.dynamic[${weakTypeOf[A]}, ${weakTypeOf[S]}](..$extendedDetections){${mp2.userComputation}}($ticket)
         }"""
-      } else {
-        q"""${c.prefix}.staticMap($expression)($ticket)"""
       }
 
       // assemble the SignalSynt object and the signal values that are accessed
       // by the object, but were cut out of the signal expression during the code
       // transformation
-      val block = Typed(Block(cutOutSignals.reverse, body), TypeTree(weakTypeOf[Event[A, S]]))
+      val block = Typed(Block(mp.cutOutSignals.reverse, body), TypeTree(weakTypeOf[Event[A, S]]))
+
+      println(s"################################\n${show(block, printTypes = false, printPositions = false, printOwners = false)}")
 
       c.Expr[Event[A, S]](c.retyper untypecheck block)
     }
@@ -69,16 +72,16 @@ class ReactiveMacros(val c: blackbox.Context) {
   def EventMacro[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag](expression: c.Expr[A])(ticket: c.Tree): c.Expr[Event[A, S]] = {
 
     if (!c.hasErrors) {
-      val (cutOutSignals, signalExpression, filteredDetections, _) = ReactiveMacro(expression)
+      val mp = ReactiveMacro(expression)
 
       // create SignalSynt object
       // use fully-qualified name, so no extra import is needed
-      val body = q"${termNames.ROOTPKG}.rescala.reactives.Events.dynamic[${weakTypeOf[A]}, ${weakTypeOf[S]}](..$filteredDetections)($signalExpression)($ticket)"
+      val body = q"${termNames.ROOTPKG}.rescala.reactives.Events.dynamic[${weakTypeOf[A]}, ${weakTypeOf[S]}](..${mp.filteredDetections ::: mp.cutOutSignals})(${mp.userComputation})($ticket)"
 
       // assemble the SignalSynt object and the signal values that are accessed
       // by the object, but were cut out of the signal expression during the code
       // transformation
-      val block = Typed(Block(cutOutSignals.reverse, body), TypeTree(weakTypeOf[Event[A, S]]))
+      val block = Typed(Block(mp.cutOutSignals.reverse, body), TypeTree(weakTypeOf[Event[A, S]]))
 
       c.Expr[Event[A, S]](c.retyper untypecheck block)
     }
@@ -86,14 +89,18 @@ class ReactiveMacros(val c: blackbox.Context) {
       c.Expr[Event[A, S]](q"""throw new ${termNames.ROOTPKG}.scala.NotImplementedError("event macro not expanded")""")
   }
 
+  case class MacroPieces(innerTree: Tree, ticketTermName : TermName,  cutOutSignals : List[ValDef], filteredDetections : List[Tree], detectedReactives : List[Tree] ) {
+    def userComputation[S <: Struct: c.WeakTypeTag] = q"{$ticketTermName: ${weakTypeOf[DynamicTicket[S]]} => $innerTree }"
 
-  def ReactiveMacro[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag](expression: c.Expr[A]): (List[ValDef], Tree, List[Tree], List[Tree]) = {
+  }
+
+  def ReactiveMacro[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag](expression: c.Expr[A]): MacroPieces = {
     val weAnalysis = new WholeExpressionAnalysis(expression.tree)
     // the name of the generated turn argument passed to the signal closure
     // every Signal { ... } macro instance gets expanded into a dynamic signal
-    val signalTicketTermName = TermName(c.freshName("ticket$"))
-    val signalTicketIdent = Ident(signalTicketTermName)
-    internal setType(signalTicketIdent, weakTypeOf[DynamicTicket[S]])
+    val ticketTermName: TermName = TermName(c.freshName("ticket$"))
+    val ticketIdent: Ident = Ident(ticketTermName)
+    internal setType(ticketIdent, weakTypeOf[DynamicTicket[S]])
 
     // the signal values that will be cut out of the Signal expression
     var cutOutSignals = List[ValDef]()
@@ -106,7 +113,7 @@ class ReactiveMacros(val c: blackbox.Context) {
         tree match {
           // replace any used CreationTicket in a Signal expression with the correct turn source for the current turn
           case turnSource@q"$_.fromEngineImplicit[..$_](...$_)" if turnSource.tpe =:= weakTypeOf[CreationTicket[S]] && turnSource.symbol.owner == symbolOf[LowPriorityCreationImplicits] =>
-            q"${termNames.ROOTPKG}.rescala.core.CreationTicket.fromTicketDImplicit($signalTicketTermName, ${termNames.ROOTPKG}.rescala.core.REName.create)"
+            q"${termNames.ROOTPKG}.rescala.core.CreationTicket.fromTicketDImplicit($ticketIdent, ${termNames.ROOTPKG}.rescala.core.REName.create)"
 
           // Access every reactive through the ticket argument
           // to obtain dynamic dependencies
@@ -117,7 +124,7 @@ class ReactiveMacros(val c: blackbox.Context) {
           //   Signals.dynamic { s => s.depend(reactive_1) + s.depend(reactive_2) }
           case tree@REApply(reactive) =>
             detectedReactives ::= reactive
-            val reactiveApply = q"$signalTicketIdent.depend"
+            val reactiveApply = q"$ticketIdent.depend"
             internal.setType(reactiveApply, tree.tpe)
             q"$reactiveApply(${transform(reactive)})"
 
@@ -154,13 +161,9 @@ class ReactiveMacros(val c: blackbox.Context) {
     }
 
     val innerTree = transformer transform expression.tree
-
-    val signalExpression = q"{$signalTicketTermName: ${weakTypeOf[DynamicTicket[S]]} => $innerTree }"
-
-
     val filteredDetections = weAnalysis.findFirstOrderDependenciesLowerBound(detectedReactives)
 
-    (cutOutSignals, signalExpression, filteredDetections, detectedReactives)
+    MacroPieces(innerTree, ticketTermName, cutOutSignals, filteredDetections, detectedReactives)
   }
 
   class WholeExpressionAnalysis(expression: Tree) {
@@ -225,19 +228,16 @@ class ReactiveMacros(val c: blackbox.Context) {
   }
 
 
-
-  //    def treeTypeNullWarning(): Unit =
-  //            c.warning(c.enclosingPosition,
-  //              "internal warning: tree type was null, " +
-  //                "this should not happen but the signal may still work")
-
-
+  def treeTypeNullWarning(): Unit =
+    c.warning(c.enclosingPosition,
+      "internal warning: tree type was null, " +
+        "this should not happen but the signal may still work")
 
   def isReactive(tree: Tree): Boolean = {
     val staticSignalClass = c.mirror staticClass "_root_.rescala.reactives.Signal"
     val staticEventClass = c.mirror staticClass "_root_.rescala.reactives.Event"
 
-    if (tree.tpe == null) {/*treeTypeNullWarning();*/ false}
+    if (tree.tpe == null) {treeTypeNullWarning(); false}
     else
       !(tree.tpe <:< definitions.NullTpe) &&
         !(tree.tpe <:< definitions.NothingTpe) &&

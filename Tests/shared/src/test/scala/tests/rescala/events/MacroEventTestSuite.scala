@@ -104,4 +104,22 @@ class MacroEventTestSuite extends RETests {
     assert(res.now === 3)
 
   }
+
+
+  allEngines("cut out created signals") { engine => import engine._
+    val e1 = Evt[Int]
+
+    val event =  Event { Some{ e1.count.value } }
+
+    val res = event.latest()
+
+    e1.fire(1)
+    assert(res.now === 1)
+    e1.fire(2)
+    assert(res.now === 2)
+    e1.fire(3)
+    assert(res.now === 3)
+
+  }
+
 }
