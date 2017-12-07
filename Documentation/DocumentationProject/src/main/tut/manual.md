@@ -632,7 +632,7 @@ def snapshot[V](e : Event[_], s: Signal[V]): Signal[V]
 The `fold` function creates a signal by folding events with a
 given function. Initially the signal holds the `init`
 value. Every time a new event arrives, the function `f` is
-applied to the previous previous value of the signal and to the value
+applied to the previous value of the signal and to the value
 associated to the event. The result is the new value of the signal.
 
 `fold[T,A](e: Event[T], init: A)(f :(A,T)=>A): Signal[A]`
