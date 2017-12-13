@@ -228,17 +228,18 @@ class DynamicSignalTestSuite extends RETests with Whenever {
     val v0 = Var("level 0")
     val v3 = v0.map(_ + "level 1").map(_  + "level 2").map(_ + "level 3")
 
-    val `dynamic signal changing from level 1 to level 4` = Signal {
+    val `dynamic signal changing from level 1 to level 5` = Signal {
       if (v0() == "level 0") v0() else {
         v3.map(_ + "level 4 inner").apply()
       }
     }
-    assert(`dynamic signal changing from level 1 to level 4`.now == "level 0")
-    assertLevel(`dynamic signal changing from level 1 to level 4`, 1)
+    assert(`dynamic signal changing from level 1 to level 5`.now == "level 0")
+    //note: will start with level 5 because of static guess of current level done by the macro expansion
+    assertLevel(`dynamic signal changing from level 1 to level 5`, 5)
 
     v0.set("level0+")
-    assert(`dynamic signal changing from level 1 to level 4`.now == "level0+level 1level 2level 3level 4 inner")
-    assertLevel(`dynamic signal changing from level 1 to level 4`, 5)
+    assert(`dynamic signal changing from level 1 to level 5`.now == "level0+level 1level 2level 3level 4 inner")
+    assertLevel(`dynamic signal changing from level 1 to level 5`, 5)
   }
 
   allEngines("creating signals in signals based on changing signals dynamic"){ engine => import engine._

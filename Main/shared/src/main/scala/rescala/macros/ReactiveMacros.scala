@@ -1,7 +1,6 @@
 package rescala.macros
 
 import rescala.core.{CreationTicket, DynamicTicket, LowPriorityCreationImplicits, Struct}
-import rescala.reactives.{Event, Signal}
 import retypecheck._
 
 import scala.reflect.macros.blackbox
@@ -13,7 +12,7 @@ class ReactiveMacros(val c: blackbox.Context) {
   def SignalMacro[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag]
   (expression: c.Expr[A])(ticket: c.Tree): c.Tree = {
 
-    if (!c.hasErrors)
+    if (c.hasErrors)
       return q"""throw new ${termNames.ROOTPKG}.scala.NotImplementedError("macro not expanded because of other compilation errors")"""
 
     val mp = ReactiveMacro(expression)
@@ -30,7 +29,7 @@ class ReactiveMacros(val c: blackbox.Context) {
   def EventMapMacro[T: c.WeakTypeTag, A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag]
   (expression: c.Expr[T => A])(ticket: c.Tree): c.Tree = {
 
-    if (!c.hasErrors)
+    if (c.hasErrors)
       return q"""throw new ${termNames.ROOTPKG}.scala.NotImplementedError("macro not expanded because of other compilation errors")"""
 
     val mp = ReactiveMacro(expression)
@@ -42,7 +41,7 @@ class ReactiveMacros(val c: blackbox.Context) {
 
       val mapFunctionArgumentTermName = TermName(c.freshName("eventValue$"))
       val mapFunctionArgumentIdent = Ident(mapFunctionArgumentTermName)
-      internal setType(mapFunctionArgumentIdent, weakTypeOf[Event[T, S]])
+      //internal setType(mapFunctionArgumentIdent, weakTypeOf[Event[T, S]])
 
       val extendedDetections = mapFunctionArgumentIdent :: mp.filteredDetections ::: mp.cutOutReactiveTerms
 
@@ -60,7 +59,7 @@ class ReactiveMacros(val c: blackbox.Context) {
   def EventMacro[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag]
   (expression: c.Expr[A])(ticket: c.Tree): c.Tree = {
 
-    if (!c.hasErrors)
+    if (c.hasErrors)
       return q"""throw new ${termNames.ROOTPKG}.scala.NotImplementedError("macro not expanded because of other compilation errors")"""
 
     val mp = ReactiveMacro(expression)
@@ -72,7 +71,7 @@ class ReactiveMacros(val c: blackbox.Context) {
   }
 
   private def makeBlock[S <: Struct : c.WeakTypeTag, A: c.WeakTypeTag](mp: MacroPieces, body: c.universe.Tree): c.Tree = {
-    val block = Typed(Block(mp.cutOutReactiveVals.reverse, body), TypeTree(weakTypeOf[Signal[A, S]]))
+    val block = Block(mp.cutOutReactiveVals.reverse, body)
     c.retyper untypecheck block
   }
 
