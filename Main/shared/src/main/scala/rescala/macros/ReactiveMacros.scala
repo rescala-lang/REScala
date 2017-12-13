@@ -10,86 +10,79 @@ class ReactiveMacros(val c: blackbox.Context) {
 
   import c.universe._
 
-  def SignalMacro[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag](expression: c.Expr[A])(ticket: c.Tree): c.Expr[Signal[A, S]] = {
+  def SignalMacro[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag]
+  (expression: c.Expr[A])(ticket: c.Tree): c.Tree = {
 
-    if (!c.hasErrors) {
-      val mp@MacroPieces(_, _, cutOutSignals, filteredDetections, _) = ReactiveMacro(expression)
+    if (!c.hasErrors)
+      return q"""throw new ${termNames.ROOTPKG}.scala.NotImplementedError("macro not expanded because of other compilation errors")"""
 
-      // create SignalSynt object
-      // use fully-qualified name, so no extra import is needed
-      val body = q"${termNames.ROOTPKG}.rescala.reactives.Signals.dynamic[${weakTypeOf[A]}, ${weakTypeOf[S]}](..${filteredDetections ::: cutOutSignals})(${mp.userComputation})($ticket)"
-
-      // assemble the SignalSynt object and the signal values that are accessed
-      // by the object, but were cut out of the signal expression during the code
-      // transformation
-      val block = Typed(Block(cutOutSignals.reverse, body), TypeTree(weakTypeOf[Signal[A, S]]))
-
-      c.Expr[Signal[A, S]](c.retyper untypecheck block)
-    }
-    else
-      c.Expr[Signal[A, S]](q"""throw new ${termNames.ROOTPKG}.scala.NotImplementedError("signal macro not expanded")""")
+    val mp = ReactiveMacro(expression)
+    // create SignalSynt object
+    // use fully-qualified name, so no extra import is needed
+    val body =
+      q"""${termNames.ROOTPKG}.rescala.reactives.Signals.dynamic[${weakTypeOf[A]}, ${weakTypeOf[S]}](
+         ..${mp.filteredDetections ::: mp.cutOutReactiveTerms}
+         ){${mp.userComputation}}($ticket)"""
+    makeBlock(mp, body)
   }
 
 
-  def EventMapMacro[T: c.WeakTypeTag, A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag](expression: c.Expr[T => A])(ticket: c.Tree): c.Expr[Event[A, S]] = {
+  def EventMapMacro[T: c.WeakTypeTag, A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag]
+  (expression: c.Expr[T => A])(ticket: c.Tree): c.Tree = {
 
-    if (!c.hasErrors) {
+    if (!c.hasErrors)
+      return q"""throw new ${termNames.ROOTPKG}.scala.NotImplementedError("macro not expanded because of other compilation errors")"""
 
-      val mp = ReactiveMacro(expression)
+    val mp = ReactiveMacro(expression)
 
-      val body = if (mp.detectedReactives.isEmpty) {
-        q"""${c.prefix}.staticMap($expression)($ticket)"""
-      }
-      else {
-
-        val mapFunctionArgumentTermName = TermName(c.freshName("eventValue$"))
-        val mapFunctionArgumentIdent = Ident(mapFunctionArgumentTermName)
-        internal setType(mapFunctionArgumentIdent, weakTypeOf[Event[T, S]])
-
-        val extendedDetections = mapFunctionArgumentIdent :: mp.filteredDetections ::: mp.cutOutSignals
-
-        val mp2 = mp.copy(innerTree = q"""${mp.ticketTermName}.depend($mapFunctionArgumentIdent).map(${mp.innerTree})""")
-
-        q"""{
-          val $mapFunctionArgumentTermName = ${c.prefix}
-          ${termNames.ROOTPKG}.rescala.reactives.Events.dynamic[${weakTypeOf[A]}, ${weakTypeOf[S]}](..$extendedDetections){${mp2.userComputation}}($ticket)
-        }"""
-      }
-
-      // assemble the SignalSynt object and the signal values that are accessed
-      // by the object, but were cut out of the signal expression during the code
-      // transformation
-      val block = Typed(Block(mp.cutOutSignals.reverse, body), TypeTree(weakTypeOf[Event[A, S]]))
-
-      println(s"################################\n${show(block, printTypes = false, printPositions = false, printOwners = false)}")
-
-      c.Expr[Event[A, S]](c.retyper untypecheck block)
+    val body = if (mp.detectedReactives.isEmpty) {
+      q"""${c.prefix}.staticMap($expression)($ticket)"""
     }
-    else
-      c.Expr[Event[A, S]](q"""throw new ${termNames.ROOTPKG}.scala.NotImplementedError("event macro not expanded")""")
+    else {
+
+      val mapFunctionArgumentTermName = TermName(c.freshName("eventValue$"))
+      val mapFunctionArgumentIdent = Ident(mapFunctionArgumentTermName)
+      internal setType(mapFunctionArgumentIdent, weakTypeOf[Event[T, S]])
+
+      val extendedDetections = mapFunctionArgumentIdent :: mp.filteredDetections ::: mp.cutOutReactiveTerms
+
+      val mp2 = mp.copy(innerTree = q"""${mp.ticketTermName}.depend($mapFunctionArgumentIdent).map(${mp.innerTree})""")
+
+      q"""{
+        val $mapFunctionArgumentTermName = ${c.prefix}
+        ${termNames.ROOTPKG}.rescala.reactives.Events.dynamic[${weakTypeOf[A]}, ${weakTypeOf[S]}](..$extendedDetections){${mp2.userComputation}}($ticket)
+      }"""
+    }
+
+    makeBlock(mp, body)
   }
 
-  def EventMacro[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag](expression: c.Expr[A])(ticket: c.Tree): c.Expr[Event[A, S]] = {
+  def EventMacro[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag]
+  (expression: c.Expr[A])(ticket: c.Tree): c.Tree = {
 
-    if (!c.hasErrors) {
-      val mp = ReactiveMacro(expression)
+    if (!c.hasErrors)
+      return q"""throw new ${termNames.ROOTPKG}.scala.NotImplementedError("macro not expanded because of other compilation errors")"""
 
-      // create SignalSynt object
-      // use fully-qualified name, so no extra import is needed
-      val body = q"${termNames.ROOTPKG}.rescala.reactives.Events.dynamic[${weakTypeOf[A]}, ${weakTypeOf[S]}](..${mp.filteredDetections ::: mp.cutOutSignals})(${mp.userComputation})($ticket)"
-
-      // assemble the SignalSynt object and the signal values that are accessed
-      // by the object, but were cut out of the signal expression during the code
-      // transformation
-      val block = Typed(Block(mp.cutOutSignals.reverse, body), TypeTree(weakTypeOf[Event[A, S]]))
-
-      c.Expr[Event[A, S]](c.retyper untypecheck block)
-    }
-    else
-      c.Expr[Event[A, S]](q"""throw new ${termNames.ROOTPKG}.scala.NotImplementedError("event macro not expanded")""")
+    val mp = ReactiveMacro(expression)
+    val body =
+      q"""${termNames.ROOTPKG}.rescala.reactives.Events.dynamic[${weakTypeOf[A]}, ${weakTypeOf[S]}](
+         ..${mp.filteredDetections ::: mp.cutOutReactiveTerms}
+         )(${mp.userComputation})($ticket)"""
+    makeBlock(mp, body)
   }
 
-  case class MacroPieces(innerTree: Tree, ticketTermName : TermName,  cutOutSignals : List[ValDef], filteredDetections : List[Tree], detectedReactives : List[Tree] ) {
+  private def makeBlock[S <: Struct : c.WeakTypeTag, A: c.WeakTypeTag](mp: MacroPieces, body: c.universe.Tree): c.Tree = {
+    val block = Typed(Block(mp.cutOutReactiveVals.reverse, body), TypeTree(weakTypeOf[Signal[A, S]]))
+    c.retyper untypecheck block
+  }
+
+  case class MacroPieces(
+    innerTree: Tree,
+    ticketTermName : TermName,
+    cutOutReactiveVals : List[ValDef],
+    cutOutReactiveTerms : List[Tree],
+    filteredDetections : List[Tree],
+    detectedReactives : List[Tree] ) {
     def userComputation[S <: Struct: c.WeakTypeTag] = q"{$ticketTermName: ${weakTypeOf[DynamicTicket[S]]} => $innerTree }"
 
   }
@@ -103,7 +96,8 @@ class ReactiveMacros(val c: blackbox.Context) {
     internal setType(ticketIdent, weakTypeOf[DynamicTicket[S]])
 
     // the signal values that will be cut out of the Signal expression
-    var cutOutSignals = List[ValDef]()
+    var cutOutReactivesVals = List[ValDef]()
+    var cutOutReactiveTerms = List[Tree]()
     // list of detected inner signals
     var detectedReactives = List[Tree]()
 
@@ -149,7 +143,8 @@ class ReactiveMacros(val c: blackbox.Context) {
             val cutOutReactiveTermName = TermName(c.freshName("reactive$"))
 
             val signalDef = q"val $cutOutReactiveTermName = $reactive"
-            cutOutSignals ::= signalDef
+            cutOutReactiveTerms ::= Ident(cutOutReactiveTermName)
+            cutOutReactivesVals ::= signalDef
 
             val ident = Ident(cutOutReactiveTermName)
             internal setType(ident, reactive.tpe)
@@ -163,7 +158,7 @@ class ReactiveMacros(val c: blackbox.Context) {
     val innerTree = transformer transform expression.tree
     val filteredDetections = weAnalysis.findFirstOrderDependenciesLowerBound(detectedReactives)
 
-    MacroPieces(innerTree, ticketTermName, cutOutSignals, filteredDetections, detectedReactives)
+    MacroPieces(innerTree, ticketTermName, cutOutReactivesVals, cutOutReactiveTerms, filteredDetections, detectedReactives)
   }
 
   class WholeExpressionAnalysis(expression: Tree) {
