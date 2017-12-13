@@ -3,15 +3,10 @@
 shellPrompt in ThisBuild := { state => Project.extract(state).currentRef.project + "> " }
 // do not spam console with too many errors
 maxErrors := 5
-crossScalaVersions := Seq(cfg.version_211, cfg.version_212)
+crossScalaVersions := Seq(cfg.version_211)
 (incOptions in ThisBuild) := (incOptions in ThisBuild).value.withLogRecompileOnMacro(false)
 
-lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(rescalaJVM,
-  rescalaJS, microbench, reswing, examples, examplesReswing, caseStudyEditor,
-  caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags,
-  datastructures, universe, reactiveStreams, documentation,
-  stm, testToolsJVM, testToolsJS, testsJVM, testsJS, caseStudyShapes, caseStudyMill,
-  dividi, paroli)
+lazy val androidRescala = project.in(file(".")).settings(cfg.base).aggregate(rescalaJVM, rescalaJS, barometer4Android, reandroidthings)
   .settings(cfg.noPublish)
 
 
@@ -22,7 +17,8 @@ lazy val rescala = crossProject.in(file("Main"))
     lib.retypecheck, lib.sourcecode, lib.circe,
     cfg.strictScalac, cfg.snapshotAssertions,
     cfg.generateLiftFunctions,
-    cfg.bintray)
+    cfg.bintray,
+    androidAware)
   .jvmSettings()
   .jsSettings(cfg.js)
 //  .nativeSettings(
@@ -33,142 +29,56 @@ lazy val rescalaJVM = rescala.jvm
 
 lazy val rescalaJS = rescala.js
 
-//lazy val rescalaNative = rescala.native
-
-lazy val testTools = crossProject.in(file("TestTools"))
-  .settings(name := "rescala-testtoolss", cfg.base, cfg.noPublish, cfg.test)
-  .dependsOn(rescala)
-  .jvmSettings().jsSettings(cfg.js)
-lazy val testToolsJVM = testTools.jvm
-lazy val testToolsJS = testTools.js
-
-lazy val tests = crossProject.in(file("Tests"))
-  .settings(name := "rescala-tests", cfg.noPublish, cfg.base, cfg.test)
-  .dependsOn(rescala)
-  .jvmSettings().jsSettings(cfg.js)
-lazy val testsJVM = tests.jvm.dependsOn(testToolsJVM % "test->test", stm)
-lazy val testsJS = tests.js.dependsOn(testToolsJS % "test->test")
-
-lazy val documentation = project.in(file("Documentation/DocumentationProject"))
-  .settings(cfg.base, cfg.noPublish,
-    scalacOptions += "-Xlint:-unused")
-  .enablePlugins(TutPlugin)
-  .dependsOn(rescalaJVM, rescalaJS)
-
-
-// ===================================================================================== Extensions
-
-lazy val reactiveStreams = project.in(file("Extensions/ReactiveStreams"))
-  .settings(cfg.base, cfg.noPublish, lib.reactivestreams)
+lazy val reandroidthings = project.in(file("REAndroidThings"))
+  .settings(name := "reandroidthings",cfg.base, cfg.noPublish,
+    javacOptions ++= Seq("-source", "1.7", "-target", "1.7"))
+  .enablePlugins(AndroidLib)
   .dependsOn(rescalaJVM)
-
-lazy val reswing = project.in(file("Extensions/RESwing"))
-  .settings(name := "reswing", cfg.base, cfg.bintray, cfg.strictScalac, lib.scalaswing)
-  .dependsOn(rescalaJVM)
-
-lazy val rescalatags = project.in(file("Extensions/Rescalatags"))
-  .settings(cfg.base, cfg.strictScalac, cfg.bintray, cfg.test,
-    cfg.js, lib.scalatags, jsDependencies += RuntimeDOM)
-  .enablePlugins(ScalaJSPlugin)
-  .dependsOn(rescalaJS)
-
-lazy val datastructures = project.in(file("Extensions/Datastructures"))
-  .dependsOn(rescalaJVM)
-  .settings(cfg.base, name := "datastructures", lib.scalatest, cfg.noPublish)
-
-lazy val stm = project.in(file("Extensions/STM"))
-  .settings(cfg.base, cfg.noPublish, lib.scalaStm)
-  .dependsOn(rescalaJVM)
-
-lazy val crdts = project.in(file("Extensions/crdts"))
-  .dependsOn(rescalaJVM)
-  .settings(name := "recrdt", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.akka, lib.scalaLogback)
-
-lazy val rescalafx = project.in(file("Extensions/javafx"))
-  .dependsOn(rescalaJVM)
-  .settings(name := "rescalafx", cfg.base, cfg.noPublish, lib.scalafx)
+  .settings(
+    commonAndroidSettings,
+    resolvers += Resolver.bintrayRepo("google", "androidthings"),
+    name := "reandroidthings",
+    libraryDependencies += "com.google.android.things" % "androidthings" % "0.4.1-devpreview" % "provided",
+    libraryDependencies += "com.google.android.things.contrib" % "driver-bmx280" % "0.3" % "compile",
+    libraryDependencies += "com.google.android.things.contrib" % "driver-ht16k33" % "0.3" % "compile"
+  )
 
 // ===================================================================================== Examples
 
-lazy val examples = project.in(file("Examples/examples"))
-  .dependsOn(rescalaJVM)
-  .settings(name := "rescala-examples", cfg.base, cfg.noPublish, lib.scalaswing)
+lazy val barometer4Android = project.in(file("Examples/Barometer4Android"))
+  .enablePlugins(AndroidApp)
+  .dependsOn(reandroidthings)
+  .settings(
+    commonAndroidSettings,
+    name := "barometer4Android",
+    cfg.base, cfg.noPublish,
+    android.useSupportVectors)
 
-lazy val pongDemo = project.in(file("Examples/PongDemo"))
-  .dependsOn(rescalaJVM)
-  .settings(name := "pong-demo", cfg.base, cfg.noPublish, lib.scalaswing)
-
-lazy val examplesReswing = project.in(file("Examples/examples-reswing"))
-  .dependsOn(reswing)
-  .settings(name := "reswing-examples", cfg.base, cfg.noPublish)
-
-lazy val caseStudyEditor = project.in(file("Examples/Editor"))
-  .dependsOn(reswing)
-  .settings(name := "editor-case-study", cfg.base, cfg.noPublish)
-
-lazy val caseStudyRSSEvents = project.in(file("Examples/RSSReader/ReactiveScalaReader.Events"))
-  .dependsOn(reswing)
-  .settings(name := "rssreader-case-study", lib.rss, cfg.base, cfg.noPublish, cfg.test)
-
-lazy val caseStudyRSSReactive = project.in(file("Examples/RSSReader/ReactiveScalaReader.Reactive"))
-  .dependsOn(reswing)
-  .settings(cfg.base, name := "rssreader-case-study-reactive", lib.rss, cfg.noPublish, cfg.test)
-
-lazy val caseStudyRSSSimple = project.in(file("Examples/RSSReader/SimpleRssReader"))
-  .dependsOn(reswing)
-  .settings(cfg.base, name := "rssreader-case-study-simple", lib.rss, cfg.noPublish, cfg.test)
-
-lazy val universe = project.in(file("Examples/Universe"))
-  .dependsOn(rescalaJVM)
-  .settings(cfg.base, cfg.noPublish, name := "rescala-universe", com.typesafe.sbt.SbtStartScript.startScriptForClassesSettings)
-
-lazy val caseStudyShapes = project.in(file("Examples/Shapes"))
-  .dependsOn(reswing)
-  .settings(cfg.base, cfg.noPublish, name := "shapes-case-study", lib.scalaXml)
-
-lazy val caseStudyMill = project.in(file("Examples/Mill"))
-  .dependsOn(reswing)
-  .settings(cfg.base, cfg.noPublish, name := "mill-case-study")
-
-lazy val todolist = project.in(file("Examples/Todolist"))
-  .enablePlugins(ScalaJSPlugin)
-  .dependsOn(rescalatags)
-  .settings(cfg.base, cfg.noPublish, name := "todolist", scalaSource in Compile := baseDirectory.value)
-
-lazy val dividi = project.in(file("Examples/dividi"))
-  .dependsOn(crdts)
-  .settings(name := "dividi", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.akka, lib.scalaLogback, lib.scalafx)
-
-lazy val paroli = project.in(file("Examples/paroli-chat"))
-  .dependsOn(crdts)
-  .settings(name := "paroli-chat", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.akka, lib.scalaLogback, lib.jline)
-
-
-// ===================================================================================== Research
-
-lazy val fullmv = project.in(file("Research/Multiversion"))
-  .settings( cfg.base, name := "rescala-multiversion",
-    cfg.test, cfg.noPublish)
-  .dependsOn(rescalaJVM, testToolsJVM % "test->test")
-
-lazy val distributedFullmv = project.in(file("Research/MultiversionDistribution"))
-  .settings( cfg.base, name := "rescala-distributed-multiversion",
-    cfg.test, cfg.noPublish, lib.retierTransmitter)
-  .dependsOn(fullmv, testToolsJVM % "test->test")
-
-lazy val meta = project.in(file("Research/Meta"))
-  .dependsOn(rescalaJVM)
-  .settings(cfg.base, cfg.test, cfg.noPublish, name := "meta")
-
-lazy val microbench = project.in(file("Research/Microbenchmarks"))
-  .enablePlugins(JmhPlugin)
-  .settings(name := "microbenchmarks", cfg.base, cfg.noPublish, mainClass in Compile := Some("org.openjdk.jmh.Main"),
-    com.typesafe.sbt.SbtStartScript.startScriptForClassesSettings,
-    TaskKey[Unit]("compileJmh") := Seq(compile in pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh).dependOn.value)
-  .dependsOn(stm, fullmv)
 
 
 // ===================================================================================== Settings
+
+
+// android
+
+lazy val androidDependencies = libraryDependencies ++= Seq(
+  scalaOrganization.value % "scala-reflect" % scalaVersion.value,
+  "com.android.support" % "appcompat-v7" % "25.3.1",
+  "com.android.support.test" % "runner" % "0.5" % "androidTest",
+  "com.android.support.test.espresso" % "espresso-core" % "2.2.2" % "androidTest")
+
+lazy val androidAware = Seq(
+  buildToolsVersion in Android := Some("26.0.1"),
+  minSdkVersion in Android := "24",
+  platformTarget in Android := "android-26",
+  javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
+  exportJars := true)
+
+lazy val commonAndroidSettings = androidAware ++ Seq(
+  instrumentTestRunner := "android.support.test.runner.AndroidJUnitRunner",
+  proguardOptions in Android ++= Seq("-dontwarn com.google.android.things.contrib.**"),
+  androidDependencies)
+
 
 lazy val cfg = new {
 
@@ -179,7 +89,7 @@ lazy val cfg = new {
   val base = List(
     organization := "de.tuda.stg",
     version := "0.20.0",
-    scalaVersion := version_212,
+    scalaVersion := version_211,
     baseScalac,
     autoAPIMappings := true // scaladoc
   )
@@ -267,6 +177,12 @@ lazy val cfg = new {
 
 lazy val lib = new {
 
+  lazy val android = libraryDependencies ++= Seq(
+    "com.android.support" % "appcompat-v7" % "25.3.1",
+    "com.android.support.test" % "runner" % "0.5" % "androidTest",
+    "com.android.support.test.espresso" % "espresso-core" % "2.2.2" % "androidTest",
+    scalaOrganization.value % "scala-reflect" % scalaVersion.value)
+
   lazy val rss = libraryDependencies ++= Seq(
     "joda-time" % "joda-time" % "2.9.9",
     "org.joda" % "joda-convert" % "1.9.2",
@@ -337,4 +253,3 @@ lazy val lib = new {
     libraryDependencies += "de.tuda.stg" %% "retier-serializer-upickle" % "0.0.1-SNAPSHOT" % "test")
 
 }
-
