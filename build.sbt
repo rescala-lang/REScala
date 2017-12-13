@@ -361,3 +361,4 @@ lazy val lib = new {
     libraryDependencies += "de.tuda.stg" %% "retier-serializer-upickle" % "0.0.1-SNAPSHOT" % "test")
 
 }
+
