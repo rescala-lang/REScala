@@ -76,7 +76,12 @@ lazy val androidAware = Seq(
 
 lazy val commonAndroidSettings = androidAware ++ Seq(
   instrumentTestRunner := "android.support.test.runner.AndroidJUnitRunner",
-  proguardOptions in Android ++= Seq("-dontwarn com.google.android.things.contrib.**"),
+  proguardOptions in Android ++= Seq(
+    "-dontwarn com.google.android.things.contrib.**",
+    // the entries are probably only used inside the macro and not contained in the final project, I hope.
+    "-dontwarn io.circe.generic.util.macros.DerivationMacros$Members$$Entry",
+    "-dontwarn io.circe.generic.util.macros.DerivationMacros$Members$$Entry$"
+  ),
   androidDependencies)
 
 
