@@ -1,6 +1,6 @@
 package rescala.crdts
 
-import akka.actor.ActorSystem
+import akka.actor.{ActorRef, ActorSystem}
 import com.typesafe.config.ConfigFactory
 import rescala._
 import rescala.crdts.pvars.{subscribe, _}
@@ -14,7 +14,7 @@ object testSignalExpressions {
     val config = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + 2506).
       withFallback(ConfigFactory.load())
     val system: ActorSystem = ActorSystem("ClusterSystem", config)
-    implicit val engine = system.actorOf(DistributionEngine.props("Host1", 1000), "Host1")
+    implicit val engine: ActorRef = system.actorOf(DistributionEngine.props("Host1", 1000), "Host1")
 
     val c1 = PGrowOnlyCounter()
     val c2 = PGrowOnlyCounter(1)
@@ -22,6 +22,8 @@ object testSignalExpressions {
     val sig = Signal {
       c1() + c2()
     }
+
+    println(sig.now)
 
 
     val v1 = Var(List(0))
@@ -53,11 +55,11 @@ object testSignalExpressions {
     println("sig4: " +
       subscribedSig.now)
 
-    Thread sleep 10000 // TODO: implement failsafe variant
+    Thread sleep 2000 // TODO: implement failsafe variant
     println("sig4: " +
       subscribedSig.now)
 
-    // system.terminate()
+    system.terminate()
   }
 }
 
@@ -69,8 +71,7 @@ object testVertices {
     val v3 = Vertex("[Alice]: How are you?")
 
 
-    val vset = Set(v1,v1)
-    //println(v1)
+    //val vset = Set(v1,v1)
     Thread sleep 2000
 
     val u1 = Vertex("System: Hello Bob")
@@ -82,7 +83,7 @@ object testVertices {
     r = r.append(v2)
     r = r.addRight(v2, v3)
 
-    var r3: RGOA[String] = RGOA.empty
+    //var r3: RGOA[String] = RGOA.empty
 
     var s:RGOA[String] = RGOA()
     s = s.append(u1).append(u2).append(u3)
@@ -144,7 +145,7 @@ object testDistribution {
 /**
   * Created by julian on 05.07.17.
   */
-object main {
+object CRDTsMainTest {
   def main(args: Array[String]): Unit = {
     val system: ActorSystem = ActorSystem("crdtTestbench")
 
