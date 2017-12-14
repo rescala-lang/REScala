@@ -2,8 +2,8 @@ package rescala.crdts
 
 import akka.actor.ActorSystem
 import com.typesafe.config.ConfigFactory
-import pvars.{subscribe, _}
 import rescala._
+import rescala.crdts.pvars.{subscribe, _}
 import rescala.crdts.statecrdts.sequences.{RGA, RGOA, Vertex}
 
 //noinspection ScalaUnusedSymbol

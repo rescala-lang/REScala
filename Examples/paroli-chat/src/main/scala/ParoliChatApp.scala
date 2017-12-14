@@ -1,18 +1,17 @@
-import java.util.Scanner
 
 import akka.cluster.Cluster
-import akka.cluster.ClusterEvent._
 import rescala.crdts.pvars._
 import com.typesafe.config.ConfigFactory
 import akka.actor._
 import akka.actor.Props
+import rescala.crdts.statecrdts.sequences.Vertex
 
 import scala.tools.jline
 
 /**
   * Created by julian on 26.07.17.
   */
-object ChatApp {
+object ParoliChatApp {
   val console = new jline.console.ConsoleReader()
 
   def main(args: Array[String]): Unit = if (args.length >= 1) args(0) match {
@@ -27,7 +26,7 @@ object ChatApp {
     val joinAddress = Cluster(system).selfAddress
     Cluster(system).join(joinAddress)
 
-    val logActor = system.actorOf(Props[MemberListener], "memberListener")
+    /*val logActor =*/ system.actorOf(Props[MemberListener], "memberListener")
   }
 
   def startup(name: String, port: String): Unit = {

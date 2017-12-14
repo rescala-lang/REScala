@@ -82,7 +82,7 @@ lazy val stm = project.in(file("Extensions/STM"))
 
 lazy val crdts = project.in(file("Extensions/crdts"))
   .dependsOn(rescalaJVM)
-  .settings(name := "recrdt", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.akka, lib.scalaLogback)
+  .settings(name := "recrdt", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.akka, lib.scalaLogback, cfg.strictScalac)
 
 lazy val rescalafx = project.in(file("Extensions/javafx"))
   .dependsOn(rescalaJVM)
@@ -137,11 +137,11 @@ lazy val todolist = project.in(file("Examples/Todolist"))
 
 lazy val dividi = project.in(file("Examples/dividi"))
   .dependsOn(crdts)
-  .settings(name := "dividi", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.akka, lib.scalaLogback, lib.scalafx)
+  .settings(name := "dividi", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.akka, lib.scalaLogback, lib.scalafx, cfg.strictScalac)
 
 lazy val paroli = project.in(file("Examples/paroli-chat"))
   .dependsOn(crdts)
-  .settings(name := "paroli-chat", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.akka, lib.scalaLogback, lib.jline)
+  .settings(name := "paroli-chat", cfg.base, cfg.noPublish, cfg.mappingFilters, lib.akka, lib.scalaLogback, lib.jline, cfg.strictScalac)
 
 
 // ===================================================================================== Research

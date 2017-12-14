@@ -3,8 +3,8 @@ package rescala.crdts.pvars
 import akka.actor.ActorRef
 import akka.pattern.ask
 import akka.util.Timeout
-import rescala.crdts.pvars.DistributionEngine.{PublishReadOnly, PublishVar}
 import rescala._
+import rescala.crdts.pvars.DistributionEngine.{PublishReadOnly, PublishVar}
 import rescala.crdts.statecrdts.StateCRDT
 
 import scala.concurrent.Await
@@ -23,9 +23,7 @@ import scala.concurrent.duration.{Duration, _}
 trait Publishable[A <: StateCRDT] {
   lazy val changes: Event[A] = internalChanges || externalChanges
   lazy val crdtSignal: Signal[A] = changes.fold(initial) { (c1, c2) =>
-    c1.merge(c2) match {
-      case a: A => a
-    }
+    c1.merge(c2).asInstanceOf[A]
   }
   lazy val valueSignal: Signal[A#valueType] = crdtSignal.map(_.value)
 

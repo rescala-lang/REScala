@@ -24,7 +24,7 @@ case class TwoPSet[A](payload: (Set[A], Set[A])) extends RemovableStateCRDTSet[A
     case s: TwoPSet[A] =>
       val e = entries ++ s.entries
       val t = tombstones ++ s.tombstones
-      new TwoPSet(e, t)
+      new TwoPSet((e, t))
   }
 
   override def fromPayload(payload: payloadType): selfType = TwoPSet(payload)

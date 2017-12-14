@@ -25,7 +25,7 @@ class DistributionEngine(hostName: String = InetAddress.getLocalHost.getHostAddr
 
   if (pulseEvery > 0) { //noinspection ScalaUnusedSymbol
     // update from time to time, if pulse is set
-    val tick = context.system.scheduler.schedule(500 millis, pulseEvery millis, self, "tick")
+    /*val tick = */ context.system.scheduler.schedule(500.millis, pulseEvery.millis, self, "tick")
   }
 
   private val logger: Logger = Logger[DistributionEngine]
@@ -44,7 +44,7 @@ class DistributionEngine(hostName: String = InetAddress.getLocalHost.getHostAddr
         case SubscribeVar(varName, evt) => extChangeEvts += varName -> evt; subscribe(varName)
         case UpdateMessage(varName, value, hostRef) =>
           if (hostRef != self){
-            context.system.scheduler.scheduleOnce(delayTime milliseconds) { // delay messages if delay set
+            context.system.scheduler.scheduleOnce(delayTime.milliseconds) { // delay messages if delay set
               logger.debug(s"[$hostName] received value $value for $varName from ${hostRef.path.name}")
               val newHosts = registry(varName) + hostRef
               registry += (varName -> newHosts) // add sender to registry
@@ -54,15 +54,15 @@ class DistributionEngine(hostName: String = InetAddress.getLocalHost.getHostAddr
             }
           }
         case QueryMessage(varName, hostRef) =>
-          context.system.scheduler.scheduleOnce(delayTime milliseconds) { // delay messages if delay set
+          context.system.scheduler.scheduleOnce(delayTime.milliseconds) { // delay messages if delay set
             logger.debug(s"[$hostName] ${hostRef.path.name} queried variable $varName")
             broadcastUpdates(varName, pVars(varName).crdtSignal.now)
           }
         case SyncAllMessage => pVars foreach {
-          case (varName: String, pVar: Publishable[StateCRDT]) => broadcastUpdates(varName, pVar.crdtSignal.now)
+          case (varName, pVar) => broadcastUpdates(varName, pVar.crdtSignal.now)
         }
         case "tick" => pVars foreach { // pulse updates every second
-          case (varName: String, pVar: Publishable[StateCRDT]) => mediator ! Publish(varName, UpdateMessage(varName, pVar.crdtSignal.now, self))
+          case (varName, pVar) => mediator ! Publish(varName, UpdateMessage(varName, pVar.crdtSignal.now, self))
         }
       }
   }
@@ -105,7 +105,7 @@ class DistributionEngine(hostName: String = InetAddress.getLocalHost.getHostAddr
   }
 
   def subscribe(varName: String): Unit = {
-    implicit val timeout = Timeout(20.second)
+    implicit val timeout: Timeout = Timeout(20.second)
 
     mediator ! Publish(varName, QueryMessage(varName, self))
     // Query value from all subscribers. This will also update our registry of other hosts.
@@ -171,19 +171,15 @@ object DistributionEngine {
 
   def ip: String = InetAddress.getLocalHost.getHostAddress
 
-  def subscribe[A](name: String, initial: A)(implicit engine: ActorRef): Signal[A] = subscribe(name).map {
+  def subscribe[A](name: String, initial: A)(implicit engine: ActorRef): Signal[A] = subscribe[A](name).map {
     case None => initial
-    case a: A => a
+    case Some(a) => a
   }
 
-  def subscribe(name: String)(implicit engine: ActorRef): Signal[Any] = {
+  def subscribe[A] (name: String)(implicit engine: ActorRef): Signal[Option[A]] = {
     val evt = Evt[StateCRDT]
     engine ! SubscribeVar(name, evt)
-    evt.latestOption().map {
-      // return latest crdt or None if we didn't receive a value yet
-      case Some(crdt) => crdt.value
-      case _ => None
-    }
+    evt.map(_.value.asInstanceOf[A]).latestOption()
   }
 
   def setDelay(time: Time)(implicit engine: ActorRef): Unit = engine ! SetDelay(time)

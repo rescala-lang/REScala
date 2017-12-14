@@ -4,12 +4,10 @@ import akka.actor.ActorRef
 import rescala._
 import rescala.crdts.statecrdts.StateCRDT
 
-import scala.util.hashing.Hashing.Default
+import scala.language.implicitConversions
 
 
 package object pvars {
-  val Vertex = statecrdts.sequences.Vertex
-
   object subscribe {
     def apply[A](name: String, default: A)(implicit engine: ActorRef) = DistributionEngine.subscribe(name,default)(engine)
     def apply[A](name: String)(implicit engine: ActorRef) = DistributionEngine.subscribe(name)(engine)

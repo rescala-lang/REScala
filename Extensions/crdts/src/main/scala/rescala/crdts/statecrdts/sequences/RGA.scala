@@ -93,7 +93,7 @@ case class RGA[A](payload: (TwoPSet[Vertex[Any]], HashMap[Vertex[Any], Vertex[An
       // merge vertices
       val mergedVertices = vertices.merge(r.vertices)
 
-      fromPayload(mergedVertices, mergedEdges)
+      fromPayload((mergedVertices, mergedEdges))
   }
 
   override def fromPayload(payload: payloadType): RGA[A] = RGA(payload)
