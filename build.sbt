@@ -74,7 +74,7 @@ lazy val rescalatags = project.in(file("Extensions/Rescalatags"))
 
 lazy val datastructures = project.in(file("Extensions/Datastructures"))
   .dependsOn(rescalaJVM)
-  .settings(cfg.base, name := "datastructures", lib.scalatest, cfg.noPublish)
+  .settings(cfg.base, name := "datastructures", lib.scalatest, cfg.noPublish, cfg.strictScalac)
 
 lazy val stm = project.in(file("Extensions/STM"))
   .settings(cfg.base, cfg.noPublish, lib.scalaStm)

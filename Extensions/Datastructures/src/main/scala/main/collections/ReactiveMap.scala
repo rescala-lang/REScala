@@ -16,7 +16,7 @@ trait ReactiveMap[A,B, ConcreteType[_,_]] extends SignalWrapper {
 	val add = liftMutating1(_ + (_: (A,B))) _
 	val remove = liftMutating1(_ - (_: A)) _
 	val update = liftMutating2(_.updated(_: A, _: B)) _
-	val size = liftPure0(_.size) _
+	val size: () => rescala.Signal[Int] = liftPure0(_.size) _
 	val get = liftPure1(_.get(_: A)) _
 
 	def +=(elem: Signal[(A, B)]): Unit = {
