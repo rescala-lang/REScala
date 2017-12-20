@@ -42,7 +42,7 @@ class LocalStorageStore(domain: String = "") extends TwoVersionEngine[ReStoringS
     res
   }
 
-  def getName(r: Reactive) = r.state.name
+  def getName(r: ReSource) = r.state.name
 
   override protected def makeTurn(priorTurn: Option[ReStoringTurn]): ReStoringTurn = new ReStoringTurn(this)
   lazy override val toString: String = s"Engine(Restoring: $domain)"
