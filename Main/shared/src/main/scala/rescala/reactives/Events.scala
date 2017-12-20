@@ -18,7 +18,7 @@ object Events {
       val pulse = {
         val st = turn.makeStaticReevaluationTicket()
         val from = st.staticBefore(signal)
-        val to = st.staticDepend(signal)
+        val to = st.staticDependPulse(signal)
         if (from != Pulse.empty && from != to) Pulse.Value(Diff(from, to))
         else Pulse.NoChange
       }
@@ -36,24 +36,27 @@ object Events {
   }
 
   /** the basic method to create static events */
-  def static[T, S <: Struct](name: String, dependencies: ReSource[S]*)(calculate: StaticTicket[S] => Pulse[T])(implicit maybe: CreationTicket[S]): Event[T, S] = maybe { initTurn =>
+  def staticInternal[T, S <: Struct](name: String, dependencies: ReSource[S]*)(calculate: StaticTicket[S] => Pulse[T])(implicit ticket: CreationTicket[S]): Event[T, S] = ticket { initTurn =>
     initTurn.create[Pulse[T], StaticEvent[T, S]](dependencies.toSet, ValuePersistency.Event) {
       state => new StaticEvent[T, S](state, calculate, name) with Disconnectable[S]
     }
   }
 
+  def static[T, S <: Struct](dependencies: ReSource[S]*)(calculate: StaticTicket[S] => Option[T])(implicit ticket: CreationTicket[S]): Event[T, S] =
+    staticInternal(ticket.rename.name, dependencies: _*)(st => Pulse.fromOption(calculate(st)))
+
   /** create dynamic events */
-  def dynamic[T, S <: Struct](dependencies: ReSource[S]*)(expr: DynamicTicket[S] => Option[T])(implicit maybe: CreationTicket[S]): Event[T, S] = {
-    maybe { initialTurn =>
+  def dynamic[T, S <: Struct](dependencies: ReSource[S]*)(expr: DynamicTicket[S] => Option[T])(implicit ticket: CreationTicket[S]): Event[T, S] = {
+    ticket { initialTurn =>
       initialTurn.create[Pulse[T], DynamicEvent[T, S]](dependencies.toSet, ValuePersistency.DynamicEvent) {
-        state => new DynamicEvent[T, S](state, expr.andThen(Pulse.fromOption), maybe.rename) with Disconnectable[S]
+        state => new DynamicEvent[T, S](state, expr.andThen(Pulse.fromOption), ticket.rename) with Disconnectable[S]
       }
     }
   }
 
-  def change[A, S <: Struct](signal: Signal[A, S])(implicit maybe: CreationTicket[S]): Event[Diff[A], S] = maybe { initTurn =>
+  def change[A, S <: Struct](signal: Signal[A, S])(implicit ticket: CreationTicket[S]): Event[Diff[A], S] = ticket { initTurn =>
     initTurn.create[Pulse[Diff[A]], ChangeEvent[A, S]](Set(signal), ValuePersistency.Event) {
-      state => new ChangeEvent[A, S](state, signal, maybe.rename) with Disconnectable[S]
+      state => new ChangeEvent[A, S](state, signal, ticket.rename) with Disconnectable[S]
     }
   }
 }

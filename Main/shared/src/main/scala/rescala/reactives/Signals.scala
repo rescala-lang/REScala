@@ -47,7 +47,7 @@ object Signals extends GeneratedSignalLift {
   }
 
   def lift[A, S <: Struct, R](los: Seq[Signal[A, S]])(fun: Seq[A] => R)(implicit maybe: CreationTicket[S]): Signal[R, S] = {
-    static(los: _*) { t => fun(los.map(s => t.staticDepend(s).get)) }
+    static(los: _*) { t => fun(los.map(s => t.staticDepend(s))) }
   }
 
   /** creates a signal that has dynamic dependencies (which are detected at runtime with Signal.apply(turn)) */

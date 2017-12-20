@@ -43,7 +43,7 @@ trait Signal[+A, S <: Struct] extends ReSourciV[Pulse[A], S] with Observable[A, 
   }
 
   final def recover[R >: A](onFailure: PartialFunction[Throwable,R])(implicit ticket: CreationTicket[S]): Signal[R, S] = Signals.static(this) { st =>
-    try st.staticDepend(this).get catch {
+    try st.staticDepend(this) catch {
       case NonFatal(e) => onFailure.applyOrElse[Throwable, R](e, throw _)
     }
   }
@@ -55,7 +55,7 @@ trait Signal[+A, S <: Struct] extends ReSourciV[Pulse[A], S] with Observable[A, 
   final def abortOnError()(implicit ticket: CreationTicket[S]): Signal[A, S] = recover{case t => throw new UnhandledFailureException(this, t)}
 
   final def withDefault[R >: A](value: R)(implicit ticket: CreationTicket[S]): Signal[R, S] = Signals.static(this) { (st) =>
-    try st.staticDepend(this).get catch {
+    try st.staticDepend(this) catch {
       case EmptySignalControlThrowable => value
     }
   }
@@ -80,8 +80,8 @@ trait Signal[+A, S <: Struct] extends ReSourciV[Pulse[A], S] with Observable[A, 
     * Create an event that fires every time the signal changes. The value associated
     * to the event is the new value of the signal
     */
-  final def changed(implicit ticket: CreationTicket[S]): Event[A, S] = Events.static(s"(changed $this)", this) { st =>
-    st.staticDepend(this) match {
+  final def changed(implicit ticket: CreationTicket[S]): Event[A, S] = Events.staticInternal(s"(changed $this)", this) { st =>
+    st.staticDependPulse(this) match {
       case Pulse.empty => Pulse.NoChange
       case other => other
     }

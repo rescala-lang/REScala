@@ -33,7 +33,7 @@ object Observe {
   }
 
   private def scheduleHandler[T, S <: Struct](obs: Obs[T,S], turn:Turn[S], dependency: ReSourciV[Pulse[T], S], fun: T => Unit, fail: Throwable => Unit) = {
-    turn.makeStaticReevaluationTicket().staticDepend(dependency) match {
+    turn.makeStaticReevaluationTicket().staticDependPulse(dependency) match {
       case Pulse.NoChange =>
       case Pulse.empty =>
       case Pulse.Value(v) => turn.observe(() => fun(v))

@@ -1,6 +1,6 @@
 package rescala.macros
 
-import rescala.core.{CreationTicket, DynamicTicket, LowPriorityCreationImplicits, Struct}
+import rescala.core.{CreationTicket, DynamicTicket, LowPriorityCreationImplicits, StaticTicket, Struct}
 import retypecheck._
 
 import scala.reflect.macros.blackbox
@@ -10,25 +10,29 @@ class ReactiveMacros(val c: blackbox.Context) {
   import c.universe._
 
   def SignalMacro[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag]
-  (expression: c.Expr[A])(ticket: c.Tree): c.Tree = {
+  (expression: c.Expr[A])(ticket: c.Tree): c.Tree = ReactiveExpression(TermName("Signals"), expression, ticket)
+
+  def EventMacro[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag]
+  (expression: c.Expr[A])(ticket: c.Tree): c.Tree = ReactiveExpression(TermName("Events"), expression, ticket)
+
+  def ReactiveExpression[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag]
+  (signalsOrEvents: TermName, expression: c.Expr[A], ticket: c.Tree): c.Tree = {
 
     if (c.hasErrors)
       return q"""throw new ${termNames.ROOTPKG}.scala.NotImplementedError("macro not expanded because of other compilation errors")"""
 
     val mp = ReactiveMacro(expression)
-    // create SignalSynt object
-    // use fully-qualified name, so no extra import is needed
+    val creationMethod = TermName(if (mp.hasOnlyStaticAccess()) "static" else "dynamic")
     val body =
-      q"""${termNames.ROOTPKG}.rescala.reactives.Signals.dynamic[${weakTypeOf[A]}, ${weakTypeOf[S]}](
-         ..${mp.filteredDetections ::: mp.cutOutReactiveTerms}
+      q"""${termNames.ROOTPKG}.rescala.reactives.$signalsOrEvents.$creationMethod[${weakTypeOf[A]}, ${weakTypeOf[S]}](
+         ..${mp.detectedStaticReactives ::: mp.cutOutReactiveTerms}
          ){${mp.userComputation}}($ticket)"""
-    makeBlock(mp, body)
+    mp.makeBlock(body)
   }
 
 
   def EventMapMacro[T: c.WeakTypeTag, A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag]
   (expression: c.Expr[T => A])(ticket: c.Tree): c.Tree = {
-
     if (c.hasErrors)
       return q"""throw new ${termNames.ROOTPKG}.scala.NotImplementedError("macro not expanded because of other compilation errors")"""
 
@@ -43,46 +47,42 @@ class ReactiveMacros(val c: blackbox.Context) {
       val mapFunctionArgumentIdent = Ident(mapFunctionArgumentTermName)
       //internal setType(mapFunctionArgumentIdent, weakTypeOf[Event[T, S]])
 
-      val extendedDetections = mapFunctionArgumentIdent :: mp.filteredDetections ::: mp.cutOutReactiveTerms
+      val extendedDetections = mapFunctionArgumentIdent :: mp.detectedStaticReactives ::: mp.cutOutReactiveTerms
 
-      val mp2 = mp.copy(innerTree = q"""${mp.ticketTermName}.depend($mapFunctionArgumentIdent).map(${mp.innerTree})""")
+      val valueAccessMethod = TermName(if (mp.hasOnlyStaticAccess()) "staticDepend" else "depend")
+      val mp2 = mp.copy(innerTree = q"""${mp.ticketTermName}.$valueAccessMethod($mapFunctionArgumentIdent).map(${mp.innerTree})""")
 
+
+      val creationMethod = TermName(if (mp.hasOnlyStaticAccess()) "static" else "dynamic")
       q"""{
         val $mapFunctionArgumentTermName = ${c.prefix}
-        ${termNames.ROOTPKG}.rescala.reactives.Events.dynamic[${weakTypeOf[A]}, ${weakTypeOf[S]}](..$extendedDetections){${mp2.userComputation}}($ticket)
+        ${termNames.ROOTPKG}.rescala.reactives.Events.$creationMethod[${weakTypeOf[A]}, ${weakTypeOf[S]}](..$extendedDetections){${mp2.userComputation}}($ticket)
       }"""
     }
 
-    makeBlock(mp, body)
+    mp.makeBlock(body)
   }
 
-  def EventMacro[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag]
-  (expression: c.Expr[A])(ticket: c.Tree): c.Tree = {
 
-    if (c.hasErrors)
-      return q"""throw new ${termNames.ROOTPKG}.scala.NotImplementedError("macro not expanded because of other compilation errors")"""
-
-    val mp = ReactiveMacro(expression)
-    val body =
-      q"""${termNames.ROOTPKG}.rescala.reactives.Events.dynamic[${weakTypeOf[A]}, ${weakTypeOf[S]}](
-         ..${mp.filteredDetections ::: mp.cutOutReactiveTerms}
-         )(${mp.userComputation})($ticket)"""
-    makeBlock(mp, body)
-  }
-
-  private def makeBlock[S <: Struct : c.WeakTypeTag, A: c.WeakTypeTag](mp: MacroPieces, body: c.universe.Tree): c.Tree = {
-    val block = Block(mp.cutOutReactiveVals.reverse, body)
-    c.retyper untypecheck block
-  }
 
   case class MacroPieces(
     innerTree: Tree,
     ticketTermName : TermName,
     cutOutReactiveVals : List[ValDef],
     cutOutReactiveTerms : List[Tree],
-    filteredDetections : List[Tree],
+    detectedStaticReactives: List[Tree],
     detectedReactives : List[Tree] ) {
-    def userComputation[S <: Struct: c.WeakTypeTag] = q"{$ticketTermName: ${weakTypeOf[DynamicTicket[S]]} => $innerTree }"
+    def userComputation[S <: Struct : c.WeakTypeTag]: Tree = {
+      val ticketType = if (hasOnlyStaticAccess()) weakTypeOf[StaticTicket[S]] else weakTypeOf[DynamicTicket[S]]
+      q"{$ticketTermName: $ticketType => $innerTree }"
+    }
+
+    def makeBlock[S <: Struct : c.WeakTypeTag, A: c.WeakTypeTag](body: c.universe.Tree): c.Tree = {
+      val block: c.universe.Tree = Block(cutOutReactiveVals.reverse, body)
+      ReTyper(c).untypecheck(block)
+    }
+
+    def hasOnlyStaticAccess(): Boolean = detectedStaticReactives.size == detectedReactives.size
 
   }
 
@@ -92,13 +92,14 @@ class ReactiveMacros(val c: blackbox.Context) {
     // every Signal { ... } macro instance gets expanded into a dynamic signal
     val ticketTermName: TermName = TermName(c.freshName("ticket$"))
     val ticketIdent: Ident = Ident(ticketTermName)
-    internal setType(ticketIdent, weakTypeOf[DynamicTicket[S]])
+    //internal setType(ticketIdent, weakTypeOf[DynamicTicket[S]])
 
     // the signal values that will be cut out of the Signal expression
     var cutOutReactivesVals = List[ValDef]()
     var cutOutReactiveTerms = List[Tree]()
     // list of detected inner signals
     var detectedReactives = List[Tree]()
+    var detectedStaticReactives = List[Tree]()
 
     object transformer extends Transformer {
 
@@ -106,7 +107,7 @@ class ReactiveMacros(val c: blackbox.Context) {
         tree match {
           // replace any used CreationTicket in a Signal expression with the correct turn source for the current turn
           case turnSource@q"$_.fromEngineImplicit[..$_](...$_)" if turnSource.tpe =:= weakTypeOf[CreationTicket[S]] && turnSource.symbol.owner == symbolOf[LowPriorityCreationImplicits] =>
-            q"${termNames.ROOTPKG}.rescala.core.CreationTicket.fromTicketDImplicit($ticketIdent, ${termNames.ROOTPKG}.rescala.core.REName.create)"
+            q"${termNames.ROOTPKG}.rescala.core.CreationTicket(${termNames.ROOTPKG}.scala.Left($ticketIdent.creation))(${termNames.ROOTPKG}.rescala.core.REName.create)"
 
           // Access every reactive through the ticket argument
           // to obtain dynamic dependencies
@@ -117,7 +118,12 @@ class ReactiveMacros(val c: blackbox.Context) {
           //   Signals.dynamic { s => s.depend(reactive_1) + s.depend(reactive_2) }
           case tree@REApply(reactive) =>
             detectedReactives ::= reactive
-            val reactiveApply = q"$ticketIdent.depend"
+            val reactiveApply =
+              if (weAnalysis.isStaticDependency(reactive)) {
+                detectedStaticReactives ::= reactive
+                q"$ticketIdent.staticDepend"
+              }
+              else q"$ticketIdent.depend"
             internal.setType(reactiveApply, tree.tpe)
             q"$reactiveApply(${transform(reactive)})"
 
@@ -155,10 +161,12 @@ class ReactiveMacros(val c: blackbox.Context) {
     }
 
     val innerTree = transformer transform expression.tree
-    val filteredDetections = weAnalysis.findFirstOrderDependenciesLowerBound(detectedReactives)
 
-    MacroPieces(innerTree, ticketTermName, cutOutReactivesVals, cutOutReactiveTerms, filteredDetections, detectedReactives)
+    MacroPieces(innerTree, ticketTermName, cutOutReactivesVals, cutOutReactiveTerms, detectedStaticReactives, detectedReactives)
   }
+
+
+
 
   class WholeExpressionAnalysis(expression: Tree) {
     val uncheckedExpressions: Set[Tree] = calcUncheckedExpressions(expression)
@@ -169,19 +177,15 @@ class ReactiveMacros(val c: blackbox.Context) {
     }).toMap
 
 
-    def checkForPotentialSideEffects() =  ReactiveMacros.this.checkForPotentialSideEffects(expression, uncheckedExpressions)
+    def checkForPotentialSideEffects(): Unit = ReactiveMacros.this.checkForPotentialSideEffects(expression, uncheckedExpressions)
 
-    /** upper bound parameters, only use static outside declarations
-      * note that this potentially misses many dependencies
-      * these will be detected dynamically, but that may cause multiple evaluations when creating a signal */
-    def findFirstOrderDependenciesLowerBound(detectedReactives: List[Tree]): List[Tree] = {
-      detectedReactives.filter(tree =>
+    /** detects reactives which are guaranteed to be accessed statically inside the macro */
+    def isStaticDependency(tree: c.universe.Tree): Boolean = {
         tree.forAll { t => !symbolsDefinedInsideMacroExpression.contains(t.symbol) } &&
           tree.symbol.isTerm &&
           (tree.symbol.asTerm.isVal ||
-            tree.symbol.asTerm.isVar))
+            tree.symbol.asTerm.isVar)
     }
-
     /** - is not a reactive value resulting from a function that is
       *   itself called on a reactive value
       *   (so the expression does not contained "chained" reactives)

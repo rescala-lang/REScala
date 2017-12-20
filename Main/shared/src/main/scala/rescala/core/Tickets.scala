@@ -31,7 +31,7 @@ final class DynamicTicket[S <: Struct] private[rescala](val creation: Computatio
   private[rescala] var indepsAfter: Set[ReSource[S]] = Set.empty
   private[rescala] var indepsAdded: Set[ReSource[S]] = Set.empty
 
-  private[rescala] def dynamicDepend[A](reactive: ReSourciV[A, S]): A = {
+  private[rescala] def dependDynamic[A](reactive: ReSourciV[A, S]): A = {
     if (indepsBefore(reactive)) {
       indepsAfter += reactive
       creation.staticAfter(reactive)
@@ -46,27 +46,48 @@ final class DynamicTicket[S <: Struct] private[rescala](val creation: Computatio
     }
   }
 
+  private[rescala] def dependStatic[A](reactive: ReSourciV[A, S]): A = {
+    indepsAfter += reactive
+    creation.staticAfter(reactive)
+  }
+
   def before[A](reactive: Signal[A, S]): A = {
     creation.dynamicBefore(reactive).get
   }
 
   def depend[A](reactive: Signal[A, S]): A = {
-    dynamicDepend(reactive).get
+    dependDynamic(reactive).get
   }
 
   def depend[A](reactive: Event[A, S]): Option[A] = {
-    dynamicDepend(reactive).toOption
+    dependDynamic(reactive).toOption
+  }
+
+  def staticDepend[A](reactive: Signal[A, S]): A = {
+    dependStatic(reactive).get
+  }
+
+  def staticDepend[A](reactive: Event[A, S]): Option[A] = {
+    dependStatic(reactive).toOption
   }
 
   def indepsRemoved: Set[ReSource[S]] = indepsBefore.diff(indepsAfter)
 }
 
 final class StaticTicket[S <: Struct] private[rescala](val creation: ComputationStateAccess[S] with Creation[S]) extends AnyVal with AnyTicket {
-  private[rescala] def staticBefore[A](reactive: ReSourciV[A, S]): A = {
+  private[rescala]  def staticBefore[A](reactive: ReSourciV[A, S]): A = {
     creation.staticBefore(reactive)
   }
-  private[rescala] def staticDepend[A](reactive: ReSourciV[A, S]): A = {
+  private[rescala] def staticDependPulse[A](reactive: ReSourciV[A, S]): A = {
     creation.staticAfter(reactive)
+  }
+
+  def staticDepend[A](reactive: Signal[A, S]): A = {
+    staticDependPulse(reactive: ReSourciV[Pulse[A], S]).get
+  }
+
+  def staticDepend[A](reactive: Event[A, S]): Option[A] = {
+    staticDependPulse(reactive: ReSourciV[Pulse[A], S]).toOption
   }
 }
 

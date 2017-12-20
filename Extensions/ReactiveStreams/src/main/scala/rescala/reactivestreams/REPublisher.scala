@@ -27,7 +27,7 @@ object REPublisher {
     var cancelled = false
 
     override protected[rescala] def reevaluate(ticket: Turn[S], before: Pulse[T], indeps: Set[ReSource[S]]): ReevaluationResult[Value, S] = {
-      ticket.makeStaticReevaluationTicket().staticDepend(dependency).toOptionTry match {
+      ticket.makeStaticReevaluationTicket().staticDependPulse(dependency).toOptionTry match {
         case None => ReevaluationResult.Static[T, S](Pulse.NoChange, indeps)
         case Some(tryValue) =>
           synchronized {

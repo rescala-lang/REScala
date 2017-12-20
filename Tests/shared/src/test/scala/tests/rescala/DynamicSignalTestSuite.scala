@@ -93,32 +93,32 @@ class DynamicSignalTestSuite extends RETests with Whenever {
 
 
   allEngines("signal Does Not Reevaluate The Expression If Depends On IsUpdated That Is Not In Current Dependencies"){ engine => import engine._
-    val v1 = Var(true)
-    val v2 = Var(0)
-    val v3 = Var(10)
-    var i = 0
-    val s = Signal {
-      i += 1
-      if (v1()) v2() else v3()
+    val condition = Var(true)
+    val ifTrue = Var(0)
+    val ifFalse = Var(10)
+    var reevaluations = 0
+    val s = Signals.dynamic(condition, ifTrue, ifFalse) { (dt: DynamicTicket) =>
+      reevaluations += 1
+      if (dt.depend(condition)) dt.depend(ifTrue) else dt.depend(ifFalse)
     }
 
-    assert(i == 1)
+    assert(reevaluations == 1)
     assert(s.now == 0)
-    v2.set(1)
-    assert(i == 2)
+    ifTrue.set(1)
+    assert(reevaluations == 2)
     assert(s.now == 1)
-    v3.set(11) // No effect
-    assert(i == 2)
+    ifFalse.set(11) // No effect
+    assert(reevaluations == 2)
     assert(s.now == 1)
 
-    v1.set(false)
-    assert(i == 3)
+    condition.set(false)
+    assert(reevaluations == 3)
     assert(s.now == 11)
-    v3.set(12)
-    assert(i == 4)
+    ifFalse.set(12)
+    assert(reevaluations == 4)
     assert(s.now == 12)
-    v2.set(2) // No effect
-    assert(i == 4)
+    ifTrue.set(2) // No effect
+    assert(reevaluations == 4)
     assert(s.now == 12)
   }
 
