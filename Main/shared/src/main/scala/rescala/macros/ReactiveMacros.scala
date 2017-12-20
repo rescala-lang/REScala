@@ -86,6 +86,8 @@ class ReactiveMacros(val c: blackbox.Context) {
 
   }
 
+  object IsCutOut
+
   def ReactiveMacro[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag](expression: c.Expr[A]): MacroPieces = {
     val weAnalysis = new WholeExpressionAnalysis(expression.tree)
     // the name of the generated turn argument passed to the signal closure
@@ -116,7 +118,8 @@ class ReactiveMacros(val c: blackbox.Context) {
           //   Signal { reactive_1() + reactive_2() }
           // to
           //   Signals.dynamic { s => s.depend(reactive_1) + s.depend(reactive_2) }
-          case tree@REApply(reactive) =>
+          case tree@REApply(untransformedReactive) =>
+            val reactive = transform(untransformedReactive)
             detectedReactives ::= reactive
             val reactiveApply =
               if (weAnalysis.isStaticDependency(reactive)) {
@@ -125,7 +128,7 @@ class ReactiveMacros(val c: blackbox.Context) {
               }
               else q"$ticketIdent.depend"
             internal.setType(reactiveApply, tree.tpe)
-            q"$reactiveApply(${transform(reactive)})"
+            q"$reactiveApply($reactive)"
 
           // cut signal values out of the signal expression, that could
           // potentially create a new signal object for every access
@@ -152,6 +155,7 @@ class ReactiveMacros(val c: blackbox.Context) {
             cutOutReactivesVals ::= signalDef
 
             val ident = Ident(cutOutReactiveTermName)
+            internal updateAttachment (ident, IsCutOut)
             internal setType(ident, reactive.tpe)
             ident
 
@@ -180,11 +184,11 @@ class ReactiveMacros(val c: blackbox.Context) {
     def checkForPotentialSideEffects(): Unit = ReactiveMacros.this.checkForPotentialSideEffects(expression, uncheckedExpressions)
 
     /** detects reactives which are guaranteed to be accessed statically inside the macro */
-    def isStaticDependency(tree: c.universe.Tree): Boolean = {
-        tree.forAll { t => !symbolsDefinedInsideMacroExpression.contains(t.symbol) } &&
-          tree.symbol.isTerm &&
-          (tree.symbol.asTerm.isVal ||
-            tree.symbol.asTerm.isVar)
+    def isStaticDependency(tree: c.universe.Tree): Boolean = tree.forAll { t =>
+      !symbolsDefinedInsideMacroExpression.contains(t.symbol) &&
+             (internal.attachments(t).contains[IsCutOut.type]
+          || t.symbol.isType
+          || (t.symbol.isTerm && t.symbol.asTerm.isStable))
     }
     /** - is not a reactive value resulting from a function that is
       *   itself called on a reactive value

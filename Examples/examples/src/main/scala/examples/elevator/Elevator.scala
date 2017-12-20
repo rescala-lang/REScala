@@ -24,6 +24,9 @@ class Elevator(val nFloors: Int) {
   // helper function integrating values over tick (time)
   def integrate(f: => Int): Signal[Int] = tick.iterate(0) {_ + f /* *delta_t */}
 
+
+
+  val position: Signal[Int] = integrate {speed.now * direction.now}
   // Define Signals describing state and behavior of the elevator
   val destination = Signal {
     queue.head() match {
@@ -31,8 +34,6 @@ class Elevator(val nFloors: Int) {
       case Some(target) => FloorPos(target)
     }
   }
-
-  val position: Signal[Int] = integrate {speed.now * direction.now}
   val speed = tick.iterate(0) { v => math.min(v + accelaration.now, MaxSpeed) }
   val stopped = Signal {speed() == 0}
   val distance = Signal {destination() - position()}

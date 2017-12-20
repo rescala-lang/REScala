@@ -10,6 +10,8 @@ object TimeElapsing extends App {
 
   println("start!")
 
+
+
   val tick = Var(0)
   val second = Signal{ tick() % 60 }
   val minute = Signal{ tick()/60 % 60 }
