@@ -190,9 +190,10 @@ class ReactiveMacros(val c: blackbox.Context) {
     /** detects reactives which are guaranteed to be accessed statically inside the macro */
     def isStaticDependency(tree: c.universe.Tree): Boolean = tree.forAll { t =>
       !symbolsDefinedInsideMacroExpression.contains(t.symbol) &&
-             (internal.attachments(t).contains[IsCutOut.type]
-          || t.symbol.isType
-          || (t.symbol.isTerm && t.symbol.asTerm.isStable))
+        (internal.attachments(t).contains[IsCutOut.type]
+          || (t.symbol != null
+          && (t.symbol.isType
+          || (t.symbol.isTerm && t.symbol.asTerm.isStable))))
     }
     /** - is not a reactive value resulting from a function that is
       *   itself called on a reactive value
