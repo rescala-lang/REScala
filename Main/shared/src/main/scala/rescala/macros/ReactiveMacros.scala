@@ -111,6 +111,10 @@ class ReactiveMacros(val c: blackbox.Context) {
           case turnSource@q"$_.fromEngineImplicit[..$_](...$_)" if turnSource.tpe =:= weakTypeOf[CreationTicket[S]] && turnSource.symbol.owner == symbolOf[LowPriorityCreationImplicits] =>
             q"${termNames.ROOTPKG}.rescala.core.CreationTicket(${termNames.ROOTPKG}.scala.Left($ticketIdent.creation))(${termNames.ROOTPKG}.rescala.core.REName.create)"
 
+          case tree@q"$reactive.now" =>
+            c.warning(tree.pos, "Using `now` inside a reactive expression does not create a dependency, " +
+              "and can result in glitches. Use `apply` instead.")
+            super.transform(tree)
           // Access every reactive through the ticket argument
           // to obtain dynamic dependencies
           //
