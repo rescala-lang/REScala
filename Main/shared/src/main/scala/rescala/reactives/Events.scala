@@ -19,7 +19,7 @@ object Events {
         val st = turn.makeStaticReevaluationTicket()
         val from = st.staticBefore(signal)
         val to = st.staticDependPulse(signal)
-        if (from != Pulse.empty && from != to) Pulse.Value(Diff(from, to))
+        if (from != Pulse.empty && to != Pulse.empty && from != to) Pulse.Value(Diff(from, to))
         else Pulse.NoChange
       }
       ReevaluationResult.Static(pulse, indeps)
