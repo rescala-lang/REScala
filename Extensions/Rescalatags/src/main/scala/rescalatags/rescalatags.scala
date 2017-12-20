@@ -35,8 +35,8 @@ package object rescalatags {
 
 
     private class REFrag(rendered: Signal[dom.Node, S], val observe: Observe[S], engine: Engine[S]) extends Frag {
-      def applyTo(t: dom.Element) = t.appendChild(rendered.now(engine, implicitly))
-      def render: dom.Node = rendered.now(engine, implicitly)
+      def applyTo(t: dom.Element) = t.appendChild(rendered.now(engine))
+      def render: dom.Node = rendered.now(engine)
     }
   }
 

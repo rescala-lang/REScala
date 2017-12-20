@@ -7,12 +7,6 @@ import rescala.reactives.Signals.Diff
 import scala.annotation.compileTimeOnly
 import scala.util.control.NonFatal
 
-object Signal {
-  //@annotation.implicitAmbiguous("Do not use now during propagation. You have a Ticket available, use the accessors defined there.")
-  implicit object NowAllowed
-  @compileTimeOnly("only for implicit conflicts")
-  implicit def nowNotAllowed(implicit @deprecated("unused", "") ticket: AnyTicket): NowAllowed.type = ???
-}
 /**
   * Base signal interface for all signal implementations.
   * Please note that any signal implementation should have the SL type parameter set to itself and be paired with
@@ -34,7 +28,7 @@ trait Signal[+A, S <: Struct] extends ReSourciV[Pulse[A], S] with Observable[A, 
   @compileTimeOnly("Signal.unary_! can only be used inside of Signal expressions")
   final def value : A = throw new IllegalAccessException(s"$this.value called outside of macro")
 
-  final def now(implicit engine: Engine[S], @deprecated("unused", "") ev: Signal.NowAllowed.type): A = {
+  final def now(implicit engine: Engine[S]): A = {
     try { engine.singleNow(this).get }
     catch {
       case EmptySignalControlThrowable => throw new NoSuchElementException(s"Signal $this is empty")
