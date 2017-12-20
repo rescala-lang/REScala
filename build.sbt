@@ -6,12 +6,38 @@ maxErrors := 5
 crossScalaVersions := Seq(cfg.version_211, cfg.version_212)
 (incOptions in ThisBuild) := (incOptions in ThisBuild).value.withLogRecompileOnMacro(false)
 
-lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(rescalaJVM,
-  rescalaJS, microbench, reswing, examples, examplesReswing, caseStudyEditor,
-  caseStudyRSSEvents, caseStudyRSSReactive, caseStudyRSSSimple, rescalatags,
-  datastructures, universe, reactiveStreams, documentation,
-  stm, testToolsJVM, testToolsJS, testsJVM, testsJS, caseStudyShapes, caseStudyMill,
-  crdts, dividi, paroli)
+lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
+  caseStudyEditor,
+  caseStudyMill,
+  caseStudyRSSEvents,
+  caseStudyRSSReactive,
+  caseStudyRSSSimple,
+  caseStudyShapes,
+  crdts,
+  datastructures,
+  distributedFullmv,
+  dividi,
+  documentation,
+  examples,
+  examplesReswing,
+  fullmv,
+  //meta,
+  microbench,
+  paroli,
+  pongDemo,
+  reactiveStreams,
+  rescalaJS,
+  rescalaJVM,
+  rescalafx,
+  rescalatags,
+  reswing,
+  stm,
+  testToolsJS,
+  testToolsJVM,
+  testsJS,
+  testsJVM,
+  todolist,
+  universe)
   .settings(cfg.noPublish)
 
 
