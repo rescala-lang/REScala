@@ -48,7 +48,7 @@ class CatchUp {
   val y = Signal {mouseY() + yOffset().toInt}
 
   // Old mouse position, some time ago
-  val mouseDelayed = mouse.position.changed.delay(mouse.position.now,20)
+  val mouseDelayed: Signal[Point] = mouse.position.changed.last(20).map(_.headOption.getOrElse(mouse.position.now))
   val delayedX = Signal {mouseDelayed().getX.toInt}
   val delayedY = Signal {mouseDelayed().getY.toInt}
 

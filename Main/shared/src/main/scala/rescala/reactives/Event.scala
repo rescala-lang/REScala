@@ -206,11 +206,4 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with Observable[T, S
     }(turn)
   }
 
-  /** Like latest, but delays the value of the resulting signal by n occurrences */
-  final def delay[T1 >: T](init: => T1, n: Int)(implicit ticket: CreationTicket[S], ev : ReSerializable[Queue[T1]]): Signal[T1, S] = ticket { turn =>
-    lazy val initL = init
-    val history: Signal[LinearSeq[T1], S] = last[T1](n + 1)(turn, ev)
-    history.map { h => if (h.lengthCompare(n) <= 0) initL else h.head }(turn)
-  }
-
 }
