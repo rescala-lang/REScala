@@ -601,32 +601,6 @@ v.set(3)
 assert(test == 2)
 ```
 
-<!-- # Advanced Conversion Functions
-
-Some of the conversion functions can be called on a signal providing
-an event as the first parameter or can be called on an event providing
-a signal as the first parameter. While the behavior is the same, the
-signature of the function is obviously different. For example, the
-function `snapshot` can return a signal that is updated on an
-event occurrence. Hence, the function can be exposed both on the
-`Signal` and the `Event` interface. For example:
-
-```scala
-val e: Event[V]  = … // An event
-val s: Signal[V] = … // A signal
-
-e.snapshot[V](s: Signal[V]): Signal[V]
-s.snapshot[V](e : Event[_]): Signal[V]
-```
-
-For simplicity, in those cases, we document the signature of the
-function with all the interested objects in the parameters. For
-example:
-
-```scala
-def snapshot[V](e : Event[_], s: Signal[V]): Signal[V]
-``` -->
-
 ## Fold
 
 The `fold` function creates a signal by folding events with a
@@ -744,30 +718,6 @@ assert(s.now == 0)
 e(1)
 e(3)
 assert(s.now == 2)
-```
-
-## Snapshot
-
-Returns a signal updated only when ```e``` fires. If ```s``` in the
-meanwhile changes its value, the change is ignored. When the event
-```e``` fires, the resulting signal is updated to the current value
-of ```s```.
-
-```snapshot[V](e : Event[_], s: Signal[V]): Signal[V]```
-
-Example:
-
-```tut:book
-val e = Evt[Int]()
-val v =  Var(1)
-val s1 = Signal{ v() + 1 }
-val s = e.snapshot(s1)
-e(1)
-assert(s.now == 2)
-v.set(2)
-assert(s.now == 2)
-e(1)
-assert(s.now == 3)
 ```
 
 ## Change
