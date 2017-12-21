@@ -205,31 +205,6 @@ class IFunTest extends RETests {
 
   }
 
-  /* snapshot */
-  allEngines("snapshot the Initial Value Is Set Correctly") { engine => import engine._
-    val e = Evt[Int]
-    val v1 = Var(1)
-    val s1 = v1.map {_ + 1}
-    val s = e.snapshot(s1)
-
-    assert(s.now == 2)
-  }
-
-  allEngines("snapshot takesA Snapshot When The Event Occurs") { engine => import engine._
-    val e = Evt[Int]
-    val v1 = Var(1)
-    val s1 = v1.map {_ + 1}
-    val s = e.snapshot(s1)
-
-    e.fire(1)
-    assert(s.now == 2)
-
-    v1.set(2)
-    assert(s.now == 2)
-    e.fire(1)
-    assert(s.now == 3)
-  }
-
 
   /* delay[T](e: Event[T], init: T, n: Int): Signal[T] */
   allEngines("delay the Initial Value Is Set Correctly") { engine => import engine._

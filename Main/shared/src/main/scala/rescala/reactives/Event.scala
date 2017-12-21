@@ -180,16 +180,6 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with Observable[T, S
     Signals.dynamic(switched, a, b) { s => if (s.dependDynamic(switched).get) s.dependDynamic(b).get else s.dependDynamic(a).get }(ict)
   }
 
-  /** Return a Signal that is updated only when e fires, and has the value of the signal s */
-  final def snapshot[A: ReSerializable](s: Signal[A, S])(implicit ticket: CreationTicket[S]): Signal[A, S] = ticket { ct =>
-    Signals.staticFold[A, S](
-      Set(this, s),
-      ct.dynamicBefore(s)) { (st, current) =>
-      st.staticDependPulse(this).toOption.fold(current())(_ => st.staticDependPulse(s).get)
-    }(ct)(ticket.rename)
-  }
-
-
   /** Switch to a new Signal once, on the occurrence of event e. */
   final def switchOnce[A, T1 >: T](original: Signal[A, S], newSignal: Signal[A, S])(implicit ticket: CreationTicket[S], ev: ReSerializable[Option[T1]]): Signal[A, S] = ticket { turn =>
     val latest = latestOption[T1]()(turn, ev)

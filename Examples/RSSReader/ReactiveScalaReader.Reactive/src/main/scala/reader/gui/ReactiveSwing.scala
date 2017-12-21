@@ -10,7 +10,7 @@ class ReListViewEx[A](
   extends
     ReListView[A](listData, visibleRowCount) {
 
-  val selectedIndex = selection.changed.snapshot(selection.leadIndex) //#SIG //#IF
+  val selectedIndex: Signal[Int] = selection.changed.map(_ => selection.leadIndex()).latest(0) //#SIG //#IF
   val selectedItem = Signal { //#SIG
     if (selectedIndex() >= 0 && selectedIndex() < listData.apply().size)
       Some(listData.apply().apply(selectedIndex()))
