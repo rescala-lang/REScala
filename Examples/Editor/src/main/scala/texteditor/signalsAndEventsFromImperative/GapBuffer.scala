@@ -51,16 +51,14 @@ class GapBuffer {
       map { offset: Int => (offsets.now._2, offset) }).latest((0, 0)) //#EF //#IF
 
   offsets.changed += { //#HDL
-    _ match {
-      case (prev, cur) =>
-        // the caret has moved
-        // which requires copying text from one segment to the other
-        // to ensure that the gap starts at the current caret position
-        val (post, dist) = (buf.length - size.now + prev, math.abs(cur - prev))
-        val (src, dest) = if (prev < cur) (post, prev) else (cur, post - dist)
+    case (prev, cur) =>
+      // the caret has moved
+      // which requires copying text from one segment to the other
+      // to ensure that the gap starts at the current caret position
+      val (post, dist) = (buf.length - size.now + prev, math.abs(cur - prev))
+      val (src, dest) = if (prev < cur) (post, prev) else (cur, post - dist)
 
-        Array.copy(buf, src, buf, dest, dist)
-    }
+      Array.copy(buf, src, buf, dest, dist)
   }
 
   val caret = Signal { offsets()._2 } //#SIG
