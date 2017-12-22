@@ -47,8 +47,8 @@ final class DynamicTicket[S <: Struct] private[rescala](val creation: Computatio
   }
 
   private[rescala] def dependStatic[A](reactive: ReSourciV[A, S]): A = {
-    indepsAfter += reactive
-    creation.staticAfter(reactive)
+    // static dependencies are currently not optimized, for mixed usages
+    dependDynamic(reactive)
   }
 
   def before[A](reactive: Signal[A, S]): A = {
