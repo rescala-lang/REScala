@@ -37,7 +37,7 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
   private def applyResult(head: ReSource[S], minLevel: Int = -42)(res: ReevaluationResult[head.Value, S]): Unit = {
     if (res.valueChanged) {
       writeState(head)(res.value)
-      head.state.outgoing(this).foreach(levelQueue.enqueue(-42))
+      head.state.outgoing(this).foreach(levelQueue.enqueue(minLevel))
       _changed ::= head
     }
   }
