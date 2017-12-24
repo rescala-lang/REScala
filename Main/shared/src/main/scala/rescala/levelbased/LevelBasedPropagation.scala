@@ -13,6 +13,11 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
 
   val levelQueue = new LevelQueue[S](this)(this)
 
+  override def clear(): Unit = {
+    super.clear()
+    _changed = Nil
+  }
+
   override def evaluate(head: Reactive[S]): Unit = {
     val res = head.reevaluate(this, head.state.base(token), head.state.incoming(this))
     if (!res.indepsChanged) {

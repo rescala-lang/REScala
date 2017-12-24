@@ -13,10 +13,17 @@ import scala.util.control.NonFatal
 trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropagation[S] with TurnImpl[S] {
   outer =>
 
-  val token: Token = Token()
+  private var _token: Token = Token()
+  def token: Token = _token
 
   private val toCommit = scala.collection.mutable.ArrayBuffer[Committable[S]]()
   private val observers = scala.collection.mutable.ArrayBuffer[() => Unit]()
+
+  def clear(): Unit = {
+    toCommit.clear()
+    observers.clear()
+    _token = Token()
+  }
 
   override def schedule(commitable: Committable[S]): Unit = toCommit += commitable
 
