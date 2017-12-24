@@ -313,8 +313,8 @@ lazy val lib = new {
   }
 
   val reactivestreams = libraryDependencies ++= List(
-    "org.reactivestreams" % "reactive-streams" % "1.0.1",
-    "org.reactivestreams" % "reactive-streams-tck" % "1.0.1"
+    "org.reactivestreams" % "reactive-streams" % "1.0.2",
+    "org.reactivestreams" % "reactive-streams-tck" % "1.0.2"
   )
 
   val scalaStm = libraryDependencies += "org.scala-stm" %% "scala-stm" % "0.8"
@@ -333,7 +333,7 @@ lazy val lib = new {
   val scalatags = libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.6.7"
 
   val akka = {
-    val akkaVersion = "2.5.6"
+    val akkaVersion = "2.5.8"
     // akka:
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
