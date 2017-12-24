@@ -56,28 +56,23 @@ class FullMVEngine(val timeout: Duration, val name: String) extends EngineImpl[F
         setWrites
       } else {
         for (change <- admissionTicket.initialChanges) {
-          val res = change.v(
-            if (change.r.state.asInstanceOf[NodeVersionHistory[_, _, _, _]].valuePersistency.isTransient) {
-              change.r.state.asInstanceOf[NodeVersionHistory[change.r.Value, _, _, _]].valuePersistency.initialValue
-            } else {
-              change.r.state.dynamicBefore(turn)
-            })
-          val notificationResult = change.r.state.notify(turn, changed = true)
+          val res = change.value
+          val notificationResult = change.source.state.notify(turn, changed = true)
           assert(notificationResult == GlitchFreeReady)
-          val reevOutResult = change.r.state.reevOut(turn, if (res.valueChanged) Some(res.value) else None)
+          val reevOutResult = change.source.state.reevOut(turn, Some(res))
           reevOutResult match {
             case NoSuccessor(out) =>
               val diff = out.size - 1
               if (diff != 0) turn.activeBranchDifferential(TurnPhase.Executing, diff)
-              for (succ <- out) threadPool.submit(Notification(turn, succ, res.valueChanged))
+              for (succ <- out) threadPool.submit(Notification(turn, succ, changed = true))
             case FollowFraming(out, succTxn: FullMVTurn) =>
               val diff = out.size - 1
               if (diff != 0) turn.activeBranchDifferential(TurnPhase.Executing, diff)
-              for (succ <- out) threadPool.submit(NotificationWithFollowFrame(turn, succ, res.valueChanged, succTxn))
+              for (succ <- out) threadPool.submit(NotificationWithFollowFrame(turn, succ, changed = true, succTxn))
             case otherwise => throw new AssertionError("Source reevaluation should not be able to yield " + otherwise)
           }
         }
-        setWrites.diff(admissionTicket.initialChanges.map(_.r).toSet)
+        setWrites.diff(admissionTicket.initialChanges.map(_.source).toSet)
       }
       for (i <- noChanges) {
         val notificationResult = i.state.notify(turn, changed = false)

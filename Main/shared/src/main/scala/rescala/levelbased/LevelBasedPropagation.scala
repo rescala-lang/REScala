@@ -34,12 +34,13 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
     }
   }
 
-  private def applyResult(head: ReSource[S], minLevel: Int = -42)(res: ReevaluationResult[head.Value, S]): Unit = {
-    if (res.valueChanged) {
-      writeState(head)(res.value)
-      head.state.outgoing(this).foreach(levelQueue.enqueue(minLevel))
-      _changed ::= head
-    }
+  private def applyResult(head: ReSource[S], minLevel: Int = -42)(res: ReevaluationResult[head.Value, S]): Unit =
+    if (res.valueChanged) writeValue(head, minLevel)(res.value)
+
+  private def writeValue(head: ReSource[S], minLevel: Int = -42)(value: head.Value): Unit = {
+    writeState(head)(value)
+    head.state.outgoing(this).foreach(levelQueue.enqueue(minLevel))
+    _changed ::= head
   }
 
   private def maximumLevel(dependencies: Set[ReSource[S]]): Int = dependencies.foldLeft(-1)((acc, r) => math.max(acc, r.state.level(this)))
@@ -64,7 +65,7 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
   }
 
   override def initializationPhase(initialChanges: Traversable[InitialChange[S]]): Unit = initialChanges.foreach { ic =>
-    applyResult(ic.r)(ic.v(ic.r.state.base(token)))
+    writeValue(ic.source)(ic.value)
   }
 
   def propagationPhase(): Unit = levelQueue.evaluateQueue()

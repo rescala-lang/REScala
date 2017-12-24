@@ -28,7 +28,7 @@ class ParallelLockSweep(backoff: Backoff, ex: Executor, engine: TwoVersionEngine
   }
 
   def asyncEvaluate(head: Reactive[TState]): Unit = {
-    if (head.state.anyInputChanged != this) synchronized { done(head, hasChanged = false, head.state.outgoing(this)) }
+    if (head.state.anyInputChanged != this) synchronized { done(head, hasChanged = false) }
     else {
       jobsRunning.incrementAndGet()
       ex.execute {
@@ -55,7 +55,7 @@ class ParallelLockSweep(backoff: Backoff, ex: Executor, engine: TwoVersionEngine
         head.state.hasWritten = this
 
         // done(head, res.valueChanged, res.commitValueChange())
-        done(head, res.valueChanged, head.state.outgoing(this))
+        done(head, res.valueChanged)
       }
     }
   }

@@ -3,7 +3,6 @@ package rescala.core
 import rescala.reactives.{Event, Signal}
 
 import scala.annotation.implicitNotFound
-import scala.collection.mutable
 import scala.language.implicitConversions
 
 /* tickets are created by the REScala schedulers, to restrict operations to the correct scopes */
@@ -91,19 +90,21 @@ final class StaticTicket[S <: Struct] private[rescala](val creation: Computation
   }
 }
 
-trait InitialChange[S <: Struct]{
-  val r: ReSource[S]
-  def v(before: r.Value): ReevaluationResult[r.Value, S]
+
+abstract class InitialChange[S <: Struct]{
+  val source: ReSource[S]
+  def value: source.Value
 }
+
 final class AdmissionTicket[S <: Struct] private[rescala](val creation: ComputationStateAccess[S] with Creation[S]) extends AnyTicket {
 
-  var wrapUp: WrapUpTicket[S] => Unit = null
+  private[rescala] var wrapUp: WrapUpTicket[S] => Unit = null
 
-  val _initialChanges: mutable.Map[ReSource[S], InitialChange[S]] = mutable.HashMap()
-  def initialChanges: Traversable[InitialChange[S]] = _initialChanges.values
-  def recordChange[T](ic: InitialChange[S]): Unit = {
-    assert(!_initialChanges.contains(ic.r), "must not admit same source twice in one turn")
-    _initialChanges.put(ic.r, ic)
+  private var _initialChanges: List[InitialChange[S]] = Nil
+  private[rescala] def initialChanges: Traversable[InitialChange[S]] = _initialChanges
+  private[rescala] def recordChange[T](ic: InitialChange[S]): Unit = {
+    assert(! _initialChanges.exists(_.source == ic.source), "must not admit same source twice in one turn")
+    _initialChanges ::= ic
   }
   def now[A](reactive: Signal[A, S]): A = {
     creation.dynamicBefore(reactive).get

@@ -7,10 +7,13 @@ abstract class Source[T, S <: Struct](initialState: S#State[Pulse[T], S], name: 
   final override protected[rescala] def state: S#State[Pulse[T], S] = initialState
 
   final def admit(value: T)(implicit ticket: AdmissionTicket[S]): Unit = admitPulse(Pulse.Value(value))
-  final def admitPulse(value: Pulse[T])(implicit ticket: AdmissionTicket[S]): Unit = ticket.recordChange(new InitialChange[S] {
-    override val r: Source[T, S] = Source.this
-    override def v(before: Pulse[T]): ReevaluationResult[Pulse[T], S] = ReevaluationResult.Static(if (before == value) Pulse.NoChange else value, Set.empty)
-  })
+  final def admitPulse(pulse: Pulse[T])(implicit ticket: AdmissionTicket[S]): Unit = {
+    if (ticket.creation.staticBefore(this) != pulse)
+      ticket.recordChange(new InitialChange[S] {
+        override val source: Source.this.type = Source.this
+        override def value: Value = pulse
+      })
+  }
 }
 
 /**
@@ -20,7 +23,7 @@ abstract class Source[T, S <: Struct](initialState: S#State[Pulse[T], S], name: 
   * @tparam T Type returned when the event fires
   * @tparam S Struct type used for the propagation of the event
   */
-final class Evt[T, S <: Struct] private[rescala] (initialState: S#State[Pulse[T], S], name: REName) extends Source[T, S](initialState, name) with Event[T, S] {
+final class Evt[T, S <: Struct] private[rescala](initialState: S#State[Pulse[T], S], name: REName) extends Source[T, S](initialState, name) with Event[T, S] {
   /** Trigger the event */
   def apply(value: T)(implicit fac: Engine[S]): Unit = fire(value)
   def fire()(implicit fac: Engine[S], ev: Unit =:= T): Unit = fire(ev(Unit))(fac)
@@ -44,12 +47,11 @@ object Evt {
   * @tparam A Type stored by the signal
   * @tparam S Struct type used for the propagation of the signal
   */
-final class Var[A, S <: Struct] private[rescala] (initialState: S#State[Pulse[A], S], name: REName) extends Source[A, S](initialState, name) with Signal[A, S] {
+final class Var[A, S <: Struct] private[rescala](initialState: S#State[Pulse[A], S], name: REName) extends Source[A, S](initialState, name) with Signal[A, S] {
   def update(value: A)(implicit fac: Engine[S]): Unit = set(value)
   def set(value: A)(implicit fac: Engine[S]): Unit = fac.transaction(this) {admit(value)(_)}
 
   def transform(f: A => A)(implicit fac: Engine[S]): Unit = fac.transaction(this) { t =>
-    // minor TODO should f be evaluated only during reevaluation, given t.selfBefore(this) as parameter?
     admit(f(t.now(this)))(t)
   }
 

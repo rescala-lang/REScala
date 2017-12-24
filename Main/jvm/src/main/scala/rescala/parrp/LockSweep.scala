@@ -123,20 +123,23 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
   }
 
 
-  override def initializationPhase(initialChanges: Traversable[InitialChange[TState]]): Unit =     initialChanges.foreach{ ic =>
-    ic.r.state.counter = 0
-    ic.r.state.anyInputChanged = this
-    ic.r.state.hasChanged = this
-    applyResult(ic.r)(ic.v(ic.r.state.base(token)))
+  override def initializationPhase(initialChanges: Traversable[InitialChange[TState]]): Unit = initialChanges.foreach { ic =>
+    ic.source.state.counter = 0
+    ic.source.state.anyInputChanged = this
+    ic.source.state.hasChanged = this
+    ic.source.state.hasWritten = this
+    writeState(ic.source)(ic.value)
+    done(ic.source, hasChanged = true)
   }
+
   override def propagationPhase(): Unit = {
     while (!queue.isEmpty) {
       evaluate(queue.pop())
     }
   }
 
-  def done(head: ReSource[TState], hasChanged: Boolean, outgoings: collection.Set[Reactive[TState]]): Unit = {
-    outgoings.foreach { r =>
+  def done(head: ReSource[TState], hasChanged: Boolean): Unit = {
+    head.state.outgoing(this).foreach { r =>
       r.state.counter -= 1
       if (hasChanged) r.state.anyInputChanged = this
       if (r.state.counter <= 0) enqueue(r)
@@ -148,23 +151,19 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
   }
 
   def evaluate(head: Reactive[TState]): Unit = {
-    if (head.state.anyInputChanged != this) done(head, hasChanged = false, head.state.outgoing(this))
+    if (head.state.anyInputChanged != this) done(head, hasChanged = false)
     else {
       val res = head.reevaluate(this, head.state.base(token), head.state.incoming(this))
       res.commitDependencyDiff(this, head)
-      applyResult(head)(res)
-    }
-  }
+      if (head.state.isGlitchFreeReady) {
+        // val outgoings = res.commitValueChange()
+        if (res.valueChanged) writeState(head)(res.value)
 
-  private def applyResult(head: ReSource[TState])(res: ReevaluationResult[head.Value, TState]) = {
-    if (head.state.isGlitchFreeReady) {
-      // val outgoings = res.commitValueChange()
-      if (res.valueChanged) writeState(head)(res.value)
+        head.state.hasWritten = this
 
-      head.state.hasWritten = this
-
-      // done(head, res.valueChanged, outgoings)
-      done(head, res.valueChanged, head.state.outgoing(this))
+        // done(head, res.valueChanged, outgoings)
+        done(head, res.valueChanged)
+      }
     }
   }
 
