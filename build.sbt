@@ -15,7 +15,7 @@ lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
   caseStudyShapes,
   crdts,
   datastructures,
-  distributedFullmv,
+  //distributedFullmv,
   dividi,
   documentation,
   examples,
@@ -146,7 +146,8 @@ lazy val caseStudyRSSSimple = project.in(file("Examples/RSSReader/SimpleRssReade
 
 lazy val universe = project.in(file("Examples/Universe"))
   .dependsOn(rescalaJVM)
-  .settings(cfg.base, cfg.noPublish, name := "rescala-universe", com.typesafe.sbt.SbtStartScript.startScriptForClassesSettings)
+  .settings(cfg.base, cfg.noPublish, name := "rescala-universe")
+  .enablePlugins(JavaAppPackaging)
 
 lazy val caseStudyShapes = project.in(file("Examples/Shapes"))
   .dependsOn(reswing)
@@ -189,8 +190,8 @@ lazy val meta = project.in(file("Research/Meta"))
 lazy val microbench = project.in(file("Research/Microbenchmarks"))
   .enablePlugins(JmhPlugin)
   .settings(name := "microbenchmarks", cfg.base, cfg.noPublish, mainClass in Compile := Some("org.openjdk.jmh.Main"),
-    com.typesafe.sbt.SbtStartScript.startScriptForClassesSettings,
     TaskKey[Unit]("compileJmh") := Seq(compile in pl.project13.scala.sbt.SbtJmh.JmhKeys.Jmh).dependOn.value)
+  .enablePlugins(JavaAppPackaging)
   .dependsOn(stm, fullmv)
 
 
