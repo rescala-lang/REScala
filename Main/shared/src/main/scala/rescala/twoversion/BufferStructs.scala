@@ -53,7 +53,7 @@ abstract class PropagationStructImpl[P, S <: Struct](override var current: P, ov
 
   def incoming(turn: Turn[S]): Set[ReSource[S]] = _incoming
   def updateIncoming(reactives: Set[ReSource[S]])(turn: Turn[S]): Unit = _incoming = reactives
-  override def outgoing(turn: Turn[S]): collection.Set[Reactive[S]] = _outgoing.keySet
+  override def outgoing(turn: Turn[S]): Iterator[Reactive[S]] = _outgoing.keysIterator
   override def discover(reactive: Reactive[S])(turn: Turn[S]): Unit = _outgoing.put(reactive, None)
   override def drop(reactive: Reactive[S])(turn: Turn[S]): Unit = _outgoing -= reactive
 }
@@ -73,7 +73,7 @@ trait GraphStruct extends Struct {
 trait GraphStructType[S <: Struct] {
   def incoming(turn: Turn[S]): Set[ReSource[S]]
   def updateIncoming(reactives: Set[ReSource[S]])(turn: Turn[S]): Unit
-  def outgoing(turn: Turn[S]): collection.Set[Reactive[S]]
+  def outgoing(turn: Turn[S]): Iterator[Reactive[S]]
   def discover(reactive: Reactive[S])(turn: Turn[S]): Unit
   def drop(reactive: Reactive[S])(turn: Turn[S]): Unit
 }

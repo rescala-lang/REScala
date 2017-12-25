@@ -28,7 +28,7 @@ class STMStructType[P, S <: Struct](initialValue: P, transient: Boolean) extends
   override def level(turn: Turn[S]): Int = _level.get(inTxn(turn))
   override def drop(reactive: Reactive[S])(turn: Turn[S]): Unit = _outgoing.transformAndGet(_ - reactive)(inTxn(turn))
   override def updateLevel(i: Int)(turn: Turn[S]): Int = _level.transformAndGet(math.max(_, i))(inTxn(turn))
-  override def outgoing(turn: Turn[S]): collection.Set[Reactive[S]] = _outgoing.get(inTxn(turn))
+  override def outgoing(turn: Turn[S]): Iterator[Reactive[S]] = _outgoing.get(inTxn(turn)).iterator
   def updateIncoming(reactives: Set[ReSource[S]])(turn: Turn[S]): Unit = _incoming.set(reactives)(inTxn(turn))
   override def discover(reactive: Reactive[S])(turn: Turn[S]): Unit = _outgoing.transformAndGet(_ + reactive)(inTxn(turn))
 

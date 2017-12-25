@@ -3,19 +3,21 @@ package rescala.levelbased
 import rescala.core.{InitialChange, ReSource, Reactive, ReevaluationResult}
 import rescala.twoversion.TwoVersionPropagationImpl
 
+import scala.collection.mutable.ArrayBuffer
+
 /**
   * Further implementation of level-based propagation based on the common propagation implementation.
   *
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
 trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[S] with LevelQueue.Evaluator[S] {
-  private var _changed = List.empty[ReSource[S]]
+  private val _changed = ArrayBuffer[ReSource[S]]()
 
   val levelQueue = new LevelQueue[S](this)(this)
 
   override def clear(): Unit = {
     super.clear()
-    _changed = Nil
+    _changed.clear()
   }
 
   override def evaluate(head: Reactive[S]): Unit = {
@@ -40,7 +42,7 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
   private def writeValue(head: ReSource[S], minLevel: Int = -42)(value: head.Value): Unit = {
     writeState(head)(value)
     head.state.outgoing(this).foreach(levelQueue.enqueue(minLevel))
-    _changed ::= head
+    _changed += head
   }
 
   private def maximumLevel(dependencies: Set[ReSource[S]]): Int = dependencies.foldLeft(-1)((acc, r) => math.max(acc, r.state.level(this)))
