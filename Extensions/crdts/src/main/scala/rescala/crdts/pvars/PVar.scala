@@ -9,5 +9,5 @@ case class PVar[A <: StateCRDT](initial: A) extends Publishable[A] {
 
   def apply(a: A): Unit = set(a)
 
-  def set(a: A): Unit = internalChanges(a)
+  def set(a: A): Unit = internalChanges.fire(a)
 }

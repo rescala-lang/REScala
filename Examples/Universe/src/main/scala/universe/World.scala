@@ -25,7 +25,7 @@ class World(val width: Int = 100, val height: Int = 100) {
   var updates: List[() => Unit] = Nil
   def status = statusString.now
   def tick() = {
-    time.tick(())
+    time.tick.fire()
     board.removeDead()
     val pc = board.elements.par
     pc.tasksupport = Globals.taskSupport

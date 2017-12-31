@@ -24,7 +24,7 @@ sealed abstract class ReSwingValue[T: ReSerializable] {
   private[reswing] def get: T
   private[reswing] def use(setter: T => Unit): Unit
 
-  final private[reswing] def update(value: T): Unit = { latestValue = value; if (event.isDefined) event()(value) }
+  final private[reswing] def update(value: T): Unit = { latestValue = value; if (event.isDefined) event().fire(value) }
   final private[reswing] def initLazily(initLazily: ReSwingValue[T] => Unit): Unit = { if (signal.isDefined) initLazily(this) else init = initLazily }
   final private[reswing] def initPerform(): Unit = { if (init != null) { init(this); init = null } }
 }

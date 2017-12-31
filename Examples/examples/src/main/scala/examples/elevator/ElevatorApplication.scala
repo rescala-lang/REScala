@@ -18,7 +18,7 @@ object ElevatorApplication extends SimpleSwingApplication {
   override def main(args: Array[String]): Unit = {
     super.main(args)
     while (true) {
-      Swing onEDTWait {elevator.tick(())}
+      Swing onEDTWait {elevator.tick.fire()}
       Thread sleep 50
     }
   }
@@ -35,7 +35,7 @@ class ElevatorApplication(val elevator: Elevator) {
           contents += new Button {
             this.bounds
             text = elevator.nameOfFloor(i)
-            reactions += { case _ => elevator callToFloor i }
+            reactions += { case _ => elevator.callToFloor.fire(i) }
           }
         }
       }

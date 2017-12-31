@@ -27,9 +27,9 @@ case class PVertexList[A](initial: RGA[A] = RGA.empty[A],
     * @param position the vertex left of the new vertex
     * @param vertex   the vertex to be inserted
     */
-  def addRight[A1 >: A](position: Vertex[A1], vertex: Vertex[A]): Unit = internalChanges(crdtSignal.now.addRight(position, vertex))
+  def addRight[A1 >: A](position: Vertex[A1], vertex: Vertex[A]): Unit = internalChanges.fire(crdtSignal.now.addRight(position, vertex))
 
-  def append(vertex: Vertex[A]): Unit = internalChanges(crdtSignal.now.append(vertex))
+  def append(vertex: Vertex[A]): Unit = internalChanges.fire(crdtSignal.now.append(vertex))
 
   def successor[A1 >: A](v: Vertex[A1]): Vertex[A1] = crdtSignal.now.successor(v)
 

@@ -47,7 +47,7 @@ class Fetcher {
 
     if (!(urlsToFetch contains url)) {
       urlsToFetch += url
-      urlAdded(url)
+      urlAdded.fire(url)
       fetch(url) // immediately perform a fetch
     }
   }
@@ -59,7 +59,7 @@ class Fetcher {
   val removeURL = Observable { (url: URL) =>  //never used
     if (!(urlsToFetch contains url)) {
       urlsToFetch -= url
-      urlRemoved(url)
+      urlRemoved.fire(url)
     }
   }
 

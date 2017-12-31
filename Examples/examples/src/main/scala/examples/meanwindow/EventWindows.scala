@@ -14,10 +14,10 @@ object EventWindows extends App {
   }
   mean.changed += {println(_)}
 
-  e(2)
-  e(1)
-  e(3)
-  e(4)
-  e(1)
-  e(1)
+  e.fire(2)
+  e.fire(1)
+  e.fire(3)
+  e.fire(4)
+  e.fire(1)
+  e.fire(1)
 }

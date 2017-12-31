@@ -137,7 +137,7 @@ class XmlParser { // TODO: candidate for refactoring
         items.map { i => RSSItem.changeSource(i, Some(channel)) } }
     }
     yield {
-      items foreach { explicitItemParsed(_) }
+      items foreach { explicitItemParsed.fire(_) }
       (channel, items)
     }
   }

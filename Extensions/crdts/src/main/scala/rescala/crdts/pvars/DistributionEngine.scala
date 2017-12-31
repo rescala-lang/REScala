@@ -50,7 +50,7 @@ class DistributionEngine(hostName: String = InetAddress.getLocalHost.getHostAddr
               registry += (varName -> newHosts) // add sender to registry
               logger.debug(s"registry is now: $registry")
               // issue external change event
-              extChangeEvts(varName)(value)
+              extChangeEvts(varName).fire(value)
             }
           }
         case QueryMessage(varName, hostRef) =>

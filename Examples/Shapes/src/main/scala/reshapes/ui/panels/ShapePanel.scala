@@ -53,7 +53,7 @@ class ShapeView(shape: Shape, state: DrawingSpaceState) extends ReBoxPanel(Orien
   peer.contents += deleteButton
 
   mouse.clicks.clicked += { _ =>  //#HDL
-    state.select(if (state.selectedShape.now != shape) shape else null) }
+    state.select.fire(if (state.selectedShape.now != shape) shape else null) }
 
   state.selectedShape.changed += { selected =>   //#HDL
     peer.background = if (selected == shape) SELECTED_COLOR else NOT_SELECTED_COLOR

@@ -40,7 +40,7 @@ class GUI(store: FeedStore,
                                    Swing.EmptyIcon,
                                    Nil,
                                    "")
-      input.foreach { requestURLAddition(_) }
+      input.foreach { requestURLAddition.fire(_) }
     }
 
     menuBar = new MenuBar {

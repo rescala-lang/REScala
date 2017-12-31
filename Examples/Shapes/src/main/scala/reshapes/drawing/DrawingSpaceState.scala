@@ -105,7 +105,7 @@ class NetworkSpaceState(
               updating = true
               drawingStateSpace.clear.fire()
               for (shape <- shapes)
-                drawingStateSpace execute new CreateShape(shape)
+                drawingStateSpace.execute.fire(new CreateShape(shape))
               updating = false
             }
             socket.close()

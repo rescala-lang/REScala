@@ -27,9 +27,9 @@ object LinePaintingEScala extends SimpleSwingApplication {
 
     /* Bind the EScala events to the Swing events */
     reactions += {
-      case e: MousePressed => mousePressed(e.point)
-      case e: MouseDragged => mouseDragged(e.point)
-      case e: MouseReleased => mouseReleased(e.point)
+      case e: MousePressed => mousePressed.fire(e.point)
+      case e: MouseDragged => mouseDragged.fire(e.point)
+      case e: MouseReleased => mouseReleased.fire(e.point)
       case KeyTyped(_, 'c', _, _) => cKeyTyped.fire()
       case _: FocusLost => focusLost.fire()
     }

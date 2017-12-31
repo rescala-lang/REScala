@@ -75,9 +75,9 @@ abstract class Animal(implicit world: World) extends BoardElement {
   }
 
   /** Some imperative code that is called each tick */
-  final override def doStep(pos: Pos): Unit = step((pos, false))
+  final override def doStep(pos: Pos): Unit = step.fire((pos, false))
 
-  private def savage() = step((Pos(0, 0), true))
+  private def savage() = step.fire((Pos(0, 0), true))
 
 
   // partial function for collecting food, dependant on state of the object

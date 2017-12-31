@@ -38,7 +38,7 @@ class LoadAction extends Action("Load") {
       ReShapes.drawingSpaceState.now.clear.fire()
       for (shape <- Shape.deserialize(XML.loadFile(fileChooser.selectedFile),
                                       ReShapes.drawingSpaceState.now))
-        ReShapes.drawingSpaceState.now execute new CreateShape(shape)
+        ReShapes.drawingSpaceState.now.execute.fire(new CreateShape(shape))
     }
   }
 }

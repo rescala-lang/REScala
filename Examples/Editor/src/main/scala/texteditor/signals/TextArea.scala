@@ -99,7 +99,7 @@ class TextArea(text: String) extends ReComponent {
 
     // dot as offset
     lazy val dot = Signal {caret()._1}
-    def changeDot(value: Int) = changed((value, mark.now))
+    def changeDot(value: Int) = changed.fire((value, mark.now))
 
     // dot as position (row and column)
     lazy val dotPos = Signal {LineOffset.position(content(), dot())}
@@ -107,7 +107,7 @@ class TextArea(text: String) extends ReComponent {
 
     // mark as offset
     lazy val mark = Signal {caret()._2}
-    def changeMark(value: Int) = changed((dot.now, value))
+    def changeMark(value: Int) = changed.fire((dot.now, value))
 
     // mark as position (row and column)
     lazy val markPos = Signal {LineOffset.position(content(), mark())}
@@ -115,7 +115,7 @@ class TextArea(text: String) extends ReComponent {
 
     // caret location as offset
     def offset = dot
-    def changeOffset(value: Int) = changed((value, value))
+    def changeOffset(value: Int) = changed.fire((value, value))
 
     // caret location as position (row and column)
     def position = dotPos

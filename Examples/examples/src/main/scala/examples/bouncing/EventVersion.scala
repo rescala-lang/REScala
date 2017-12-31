@@ -31,7 +31,7 @@ class EventVersion {
     def n: Int = _n
     def n_=(newVal: Int): Unit = {
       _n = newVal
-      changed(n)
+      changed.fire(n)
     }
   }
 
@@ -41,7 +41,7 @@ class EventVersion {
   def tick(): Unit = {
     x.n += speed.x
     y.n += speed.y
-    hasTicked(())
+    hasTicked.fire()
   }
 
   val hasTicked = Evt[Unit] // Can be afterExec

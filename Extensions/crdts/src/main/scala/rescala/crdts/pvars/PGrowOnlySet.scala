@@ -7,7 +7,7 @@ case class PGrowOnlySet[A](initial: GSet[A] = GSet[A](),
                            internalChanges: Evt[GSet[A]] = Evt[GSet[A]],
                            externalChanges: Evt[GSet[A]] = Evt[GSet[A]]) extends Publishable[GSet[A]] {
 
-  def add(a: A): Unit = internalChanges(crdtSignal.now.add(a))
+  def add(a: A): Unit = internalChanges.fire(crdtSignal.now.add(a))
 
   def contains(a: A): Boolean = crdtSignal.now.contains(a)
 }

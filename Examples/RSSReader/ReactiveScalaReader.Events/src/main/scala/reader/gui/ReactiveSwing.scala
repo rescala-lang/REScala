@@ -19,7 +19,7 @@ class ReListViewEx[A](
 
   def selectedItem_=(item: Option[A]) = {
     selectedItemField = item
-    selectedItemChanged(item)
+    selectedItemChanged.fire(item)
     println(item);
   }
 

@@ -7,9 +7,9 @@ case class PSet[A](initial: ORSet[A] = ORSet(),
                    internalChanges: Evt[ORSet[A]] = Evt[ORSet[A]],
                    externalChanges: Evt[ORSet[A]] = Evt[ORSet[A]]) extends Publishable[ORSet[A]] {
 
-  def add(a: A): Unit = internalChanges(crdtSignal.now.add(a))
+  def add(a: A): Unit = internalChanges.fire(crdtSignal.now.add(a))
 
-  def remove(a: A): Unit = internalChanges(crdtSignal.now.remove(a))
+  def remove(a: A): Unit = internalChanges.fire(crdtSignal.now.remove(a))
 
   def contains(a: A): Boolean = crdtSignal.now.contains(a)
 }

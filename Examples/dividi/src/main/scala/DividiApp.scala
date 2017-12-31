@@ -288,7 +288,7 @@ object DividiApp extends JFXApp {
             val payer = username
             val timestamp = System.currentTimeMillis
             // Transaction(title: Title, amount: Amount, payer: Payer, sharedBetween: Set[Payer], timestamp: Timestamp)
-            newTransaction(Transaction(purposeText, amountDecimal, payer, peopleInvolved, timestamp))
+            newTransaction.fire(Transaction(purposeText, amountDecimal, payer, peopleInvolved, timestamp))
           }
 
           content = new VBox {

@@ -126,7 +126,7 @@ class TextArea extends ReComponent {
 
     // dot as offset
     def dot = buffer.caret
-    def dot_=(value: Int) = change((value, mark))
+    def dot_=(value: Int) = change.fire((value, mark))
 
     // dot as position (row and column)
     def dotPos = LineOffset.position(buffer.iterator, dot)
@@ -135,7 +135,7 @@ class TextArea extends ReComponent {
     // mark as offset
     protected[TextArea] var markOffset = 0
     def mark = markOffset
-    def mark_=(value: Int) = change((dot, value))
+    def mark_=(value: Int) = change.fire((dot, value))
 
     // mark as position (row and column)
     def markPos = LineOffset.position(buffer.iterator, mark)
@@ -143,7 +143,7 @@ class TextArea extends ReComponent {
 
     // caret location as offset
     def offset = dot
-    def offset_=(value: Int) = change((value, value))
+    def offset_=(value: Int) = change.fire((value, value))
 
     // caret location as position (row and column)
     def position = dotPos

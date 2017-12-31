@@ -14,7 +14,7 @@ case class PGrowOnlyCounter(initial: GCounter = GCounter(0),
   extends Publishable[GCounter] {
 
   def increase: Int = {
-    internalChanges(crdtSignal.now.increase)
+    internalChanges.fire(crdtSignal.now.increase)
     value
   }
 }

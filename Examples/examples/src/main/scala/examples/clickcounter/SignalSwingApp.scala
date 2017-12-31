@@ -17,7 +17,7 @@ trait ReactiveText {
 class ReactiveLabel extends Label with ReactiveText
 class ReactiveButton extends Button with ReactiveText {
 	val clicked = Evt[ButtonClicked] // wrap the event to escala
-	reactions += { case c @ ButtonClicked(_) => clicked(c) }
+	reactions += { case c @ ButtonClicked(_) => clicked.fire(c) }
 }
 
 

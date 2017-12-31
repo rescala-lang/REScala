@@ -77,9 +77,9 @@ val a = Var(2)
 val b = Var(3)
 val c = Signal { a() + b() }
 println((a.now, b.now, c.now))
-a() = 4
+a set 4
 println((a.now, b.now, c.now))
-b() = 5
+b set 5
 println((a.now, b.now, c.now))
 ```
 
@@ -104,7 +104,7 @@ Vars enable the framework to track changes of input values.
 Vars can be changed directly by the programmer:
 
 ```tut:book
-a() = 10
+a set 10
 b.set("The `set` method does the same as the update syntax above")
 c.transform( list => 0 :: list )
 ```
@@ -202,7 +202,7 @@ space.changed += ((x: Int) => println(x))
 
 while (time.now < 5) {
   Thread sleep 20
-  time() = time.now + 1
+  time set time.now + 1
 }
 ```
 
@@ -225,7 +225,7 @@ the following code:
 ```tut:book
 val e: Event[Int] = space.changed
 val handler:  (Int => Unit) =  ((x: Int) => println(x))
-e += handler
+e observe handler
 ```
 
 Note that using `println(space.now)` would also print the
@@ -358,7 +358,7 @@ def m1(x: Int) = {
 }
 val e = Evt[Int]
 e += m1 _
-e(10)
+e.fire(10)
 ```
 
 ## Firing Events
@@ -372,9 +372,9 @@ example:
 val e1 = Evt[Int]()
 val e2 = Evt[Boolean]()
 val e3 = Evt[(Int,String)]()
-e1(10)
-e2(false)
-e3((10,"Hallo"))
+e1.fire(10)
+e2.fire(false)
+e3.fire((10,"Hallo"))
 ```
 
 When a handler is registered to an event, the handler is executed
@@ -384,8 +384,8 @@ handler.
 ```tut:book
 val e = Evt[Int]()
 e += { x => println(x) }
-e(10)
-e(10)
+e.fire(10)
+e.fire(10)
 ```
 
 If multiple handlers are registered, all of them are executed when the
@@ -396,8 +396,8 @@ order for handler execution.
 val e = Evt[Int]()
 e += { x => println(x) }
 e += { x => println(f"n: $x")}
-e(10)
-e(10)
+e.fire(10)
+e.fire(10)
 ```
 
 ## Unregistering Handlers
@@ -411,11 +411,11 @@ val e = Evt[Int]()
 
 val handler1 = e += println
 val handler2 = e += { x => println(s"n: $x") }
-e(10)
+e.fire(10)
 handler2.remove()
-e(10)
+e.fire(10)
 handler1.remove()
-e(10)
+e.fire(10)
 ```
 
 # Declarative Events
@@ -459,8 +459,8 @@ val e1 = Evt[Int]()
 val e2 = Evt[Int]()
 val e1_OR_e2 = e1 || e2
 e1_OR_e2 += ((x: Int) => println(x))
-e1(1)
-e2(2)
+e1.fire(1)
+e2.fire(2)
 ```
 
 ## Predicate Events
@@ -475,8 +475,8 @@ parameter and a predicate.
 val e = Evt[Int]()
 val e_AND: Event[Int] = e && ((x: Int) => x>10)
 e_AND += ((x: Int) => println(x))
-e(5)
-e(15)
+e.fire(5)
+e.fire(15)
 ```
 
 ## Map Events
@@ -490,8 +490,8 @@ value of the resulting event.
 val e = Evt[Int]()
 val e_MAP: Event[String] = e map ((x: Int) => x.toString)
 e_MAP += ((x: String) => println(s"Here: $x"))
-e(5)
-e(15)
+e.fire(5)
+e.fire(15)
 ```
 
 {::comment}
@@ -505,8 +505,8 @@ operator transforms an `Event[Int]` into an `Event[Unit]`.
 val e = Evt[Int]()
 val e_drop: Event[Unit] = e.dropParam
 e_drop += (_ => println("*"))
-e(10)
-e(10)
+e.fire(10)
+e.fire(10)
 ```
 
 The typical use case for the `dropParam` operator is to make events
@@ -572,11 +572,11 @@ Example:
 val e = Evt[Int]()
 val s: Signal[Int] = e.latest(10)
 assert(s.now == 10)
-e(1)
+e.fire(1)
 assert(s.now == 1)
-e(2)
+e.fire(2)
 assert(s.now == 2)
-e(1)
+e.fire(1)
 assert(s.now == 1)
 ```
 
@@ -617,8 +617,8 @@ Example:
 val e = Evt[Int]()
 val f = (x:Int,y:Int)=>(x+y)
 val s: Signal[Int] = e.fold(10)(f)
-e(1)
-e(2)
+e.fire(1)
+e.fire(2)
 assert(s.now == 13)
 ```
 
@@ -638,13 +638,13 @@ var test: Int = 0
 val e = Evt[Int]()
 val f = (x:Int)=>{test=x; x+1}
 val s: Signal[Int] = e.iterate(10)(f)
-e(1)
+e.fire(1)
 assert(test == 10)
 assert(s.now == 11)
-e(2)
+e.fire(2)
 assert(test == 11)
 assert(s.now == 12)
-e(1)
+e.fire(1)
 assert(test == 12)
 assert(s.now == 13)
 ```
@@ -664,11 +664,11 @@ Example:
 val e = Evt[Int]()
 val s: Signal[Option[Int]] = e.latestOption()
 assert(s.now == None)
-e(1)
+e.fire(1)
 assert(s.now == Option(1))
-e(2)
+e.fire(2)
 assert(s.now == Option(2))
-e(1)
+e.fire(1)
 assert(s.now == Option(1))
 ```
 
@@ -689,10 +689,10 @@ val s: Signal[scala.collection.LinearSeq[Int]] = e.last(5)
 
 s observe println
 
-e(1)
-e(2)
-e(3);e(4);e(5)
-e(6)
+e.fire(1)
+e.fire(2)
+e.fire(3);e.fire(4);e.fire(5)
+e.fire(6)
 ```
 
 ## List
@@ -715,8 +715,8 @@ when the event has never been fired yet, the signal holds the value
 val e = Evt[Int]()
 val s: Signal[Int] = e.count
 assert(s.now == 0)
-e(1)
-e(3)
+e.fire(1)
+e.fire(3)
 assert(s.now == 2)
 ```
 
@@ -787,7 +787,7 @@ val s3 = e.reset(100)(factory)
 assert(s3.now == 1)
 v1.set(1)
 assert(s3.now == 2)
-e(101)
+e.fire(101)
 assert(s3.now == 11)
 v2.set(11)
 assert(s3.now == 12)
@@ -963,7 +963,7 @@ val foo = new Foo(1)
 val varFoo = Var(foo)
 val s = Signal{ varFoo().x + 10 }
 // s.now == 11
-varFoo()= new Foo(2)
+varFoo set (new Foo(2))
 // s.now == 12
 ```
 
@@ -981,7 +981,7 @@ val varFoo = Var(foo)
 val s = Signal{ varFoo().x + 10 }
 // s.now == 11
 foo.x = 2
-varFoo()=foo
+varFoo set foo
 // s.now == 11
 ```
 

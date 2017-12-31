@@ -83,7 +83,7 @@ class TextArea extends ReComponent {
     // dot as offset
     private val dotSignal = Signal{ buffer.caret() }
     def dot = dotSignal
-    def dot_=(value: Int) = buffer.caretChanged(value)
+    def dot_=(value: Int) = buffer.caretChanged.fire(value)
 
     // dot as position (row and column)
     private val dotPosSignal = Signal{ LineOffset.position(buffer.iterable(), dot()) }

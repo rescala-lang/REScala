@@ -19,7 +19,7 @@ object AdvancedTimeElapsing extends App {
   while (true) {
     Thread.sleep(0)
     println((seconds.now, minutes.now, hours.now, days.now))
-    tick(())
+    tick.fire()
   }
 
 }

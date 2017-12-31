@@ -14,9 +14,9 @@ class Observable[T, U](body: T => U) extends (T => U) {
   * trigger events before and after the actual method execution
   */
   def apply(t: T): U = {
-    before(t)
+    before.fire(t)
     val res = body(t)
-    after((t, res))
+    after.fire((t, res))
     res
   }
 }

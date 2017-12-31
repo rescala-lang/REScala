@@ -31,14 +31,14 @@ class Board(val width: Int, val height: Int) {
   /** adds a board element at given position */
   def add(be: BoardElement, pos: Pos): Unit = {
     elements.put(pos, be)
-    elementSpawned(be)
+    elementSpawned.fire(be)
   }
 
   /** removes the board element if present in the board */
   def removeDead() = {
     elements = elements.filter { case (p, be) =>
       if (be.isDead.now) {
-        elementRemoved(be)
+        elementRemoved.fire(be)
         false
       }
       else true

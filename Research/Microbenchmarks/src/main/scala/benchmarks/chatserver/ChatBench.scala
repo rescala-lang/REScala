@@ -21,7 +21,7 @@ class ChatBench[S <: Struct] {
   @Benchmark
   def chat(benchState: BenchState[S], threadParams: ThreadParams, engineParam: EngineParam[S]) = {
     if (engineParam.engine != Engines.unmanaged) {
-      benchState.clients(threadParams.getThreadIndex)("hello")(engineParam.engine)
+      benchState.clients(threadParams.getThreadIndex).fire("hello")(engineParam.engine)
     }
     else {
       val ti = threadParams.getThreadIndex
@@ -31,7 +31,7 @@ class ChatBench[S <: Struct] {
       locks(room1).lock()
       locks(room2).lock()
       try {
-        benchState.clients(threadParams.getThreadIndex)("hello")(engineParam.engine)
+        benchState.clients(threadParams.getThreadIndex).fire("hello")(engineParam.engine)
       }
       finally {
         locks(room2).unlock()

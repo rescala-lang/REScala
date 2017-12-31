@@ -23,7 +23,7 @@ class FeedStore {
     if (!(channelToItems contains channel)) {
       channelToItems += channel -> Set.empty
       val newValue = channelToItems.keys.toList
-      channelsChanged(newValue)
+      channelsChanged.fire(newValue)
     }
 
   /*
@@ -43,7 +43,7 @@ class FeedStore {
     if (addItemAllowed(item)) {
       val channel = item.srcChannel.get
       channelToItems += channel -> { channelToItems(channel) + item }
-      itemAdded(item)
+      itemAdded.fire(item)
     }
 
   def itemsFor(channel: RSSChannel) =

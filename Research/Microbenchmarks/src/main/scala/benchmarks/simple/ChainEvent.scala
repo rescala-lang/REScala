@@ -33,5 +33,5 @@ class ChainEvent[S <: Struct] {
   }
 
   @Benchmark
-  def run(step: Step): Unit = source.apply(step.run())
+  def run(step: Step): Unit = source.fire(step.run())
 }

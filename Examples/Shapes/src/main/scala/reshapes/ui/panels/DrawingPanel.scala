@@ -79,10 +79,10 @@ class DrawingPanel(val state: DrawingSpaceState) extends Panel {
     case e: MouseReleased =>
       state.selectedShape.now match {
         case null =>
-          drawn(new CreateShape(currentShape))
+          drawn.fire(new CreateShape(currentShape))
         case selectedShape =>
-          drawn(new EditShape(selectedShape, currentShape))
-          state.select(currentShape)
+          drawn.fire(new EditShape(selectedShape, currentShape))
+          state.select.fire(currentShape)
       }
       currentShape = null
       repaint

@@ -25,6 +25,7 @@ abstract class Source[T, S <: Struct](initialState: S#State[Pulse[T], S], name: 
   */
 final class Evt[T, S <: Struct] private[rescala](initialState: S#State[Pulse[T], S], name: REName) extends Source[T, S](initialState, name) with Event[T, S] {
   /** Trigger the event */
+  @deprecated("use .fire instead of apply", "0.21.0")
   def apply(value: T)(implicit fac: Engine[S]): Unit = fire(value)
   def fire()(implicit fac: Engine[S], ev: Unit =:= T): Unit = fire(ev(Unit))(fac)
   def fire(value: T)(implicit fac: Engine[S]): Unit = fac.transaction(this) {admit(value)(_)}

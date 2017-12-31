@@ -13,15 +13,15 @@ object ReactiveUtil {
 
     def apply[T](e: => Event[T]): Event[T] = {
       val ev = Evt[T]
-      events += { () => e.observe(ev.apply) }
+      events += { () => e.observe(ev.fire) }
       ev
     }
 
     def apply[T](s: => Signal[T], init: T = null.asInstanceOf[T]): Signal[T] = {
       val ev = Evt[T]
       events += { () =>
-        s.observe(ev.apply)
-        ev.apply(s.now)
+        s.observe(ev.fire)
+        ev.fire(s.now)
       }
       ev latest init
     }

@@ -23,10 +23,10 @@ class Mouse {
 
 	/* Scala swing reaction */
 	val react: scala.swing.Reactions.Reaction =  {
-        case e: MouseMoved => { mouseMovedE(e.point) }
-        case e: MousePressed => mousePressedE(e.point)
-        case e: MouseDragged => { mouseDraggedE(e.point) }
-        case e: MouseReleased => mouseReleasedE(e.point)
+        case e: MouseMoved => { mouseMovedE.fire(e.point) }
+        case e: MousePressed => mousePressedE.fire(e.point)
+        case e: MouseDragged => { mouseDraggedE.fire(e.point) }
+        case e: MouseReleased => mouseReleasedE.fire(e.point)
      }
 
 }
