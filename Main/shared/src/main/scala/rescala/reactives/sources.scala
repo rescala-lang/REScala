@@ -48,7 +48,7 @@ object Evt {
   * @tparam S Struct type used for the propagation of the signal
   */
 final class Var[A, S <: Struct] private[rescala](initialState: S#State[Pulse[A], S], name: REName) extends Source[A, S](initialState, name) with Signal[A, S] {
-  def update(value: A)(implicit fac: Engine[S]): Unit = set(value)
+  //def update(value: A)(implicit fac: Engine[S]): Unit = set(value)
   def set(value: A)(implicit fac: Engine[S]): Unit = fac.transaction(this) {admit(value)(_)}
 
   def transform(f: A => A)(implicit fac: Engine[S]): Unit = fac.transaction(this) { t =>

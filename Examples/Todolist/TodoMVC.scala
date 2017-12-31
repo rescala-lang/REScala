@@ -76,7 +76,7 @@ object TodoMVC extends JSApp {
           onclick:={ e: dom.UIEvent =>
             println("eh?")
             tasks.now.foreach { it =>
-              it.done() = !e.target.asInstanceOf[dom.html.Input].checked } }),
+              it.done set !e.target.asInstanceOf[dom.html.Input].checked } }),
         label(`for`:="toggle-all", "Mark all as complete"),
         Signal { ul(`class`:="todo-list", tasks().map { t =>
 
@@ -88,12 +88,12 @@ object TodoMVC extends JSApp {
             div(
               `class`:="view",
 
-              ondblclick:={ e: dom.UIEvent => t.editing() = true },
+              ondblclick:={ e: dom.UIEvent => t.editing set true },
 
               input( `class`:="toggle", `type`:="checkbox",
                 if (t.done()) checked else "",
                 onchange:={ e: dom.UIEvent =>
-                  t.done() = e.target.asInstanceOf[dom.html.Input].checked }
+                  t.done set e.target.asInstanceOf[dom.html.Input].checked }
               ),
 
               label(t.desc()),
@@ -108,8 +108,8 @@ object TodoMVC extends JSApp {
               value:=t.desc(),
               onchange:={ e: dom.UIEvent =>
                 val input = e.target.asInstanceOf[dom.html.Input]
-                t.editing() = false
-                t.desc() = input.value
+                t.editing set false
+                t.desc set input.value
               }
             )
           )
@@ -118,15 +118,15 @@ object TodoMVC extends JSApp {
       ),
 
 //            onchange := { e: dom.UIEvent =>
-//              t.desc() = e.target.asInstanceOf[dom.html.Input].value
-//              tasks() = tasks.now.filter { (x)=> x.desc.now != "" }
+//              t.desc set e.target.asInstanceOf[dom.html.Input].value
+//              tasks set tasks.now.filter { (x)=> x.desc.now != "" }
 //            }
 
       input(
         `type`:="button",
         `class`:=Signal { if (tasks().size==0) "hidden" else ""},
         value:="remove all done todos", onclick:={ e: dom.UIEvent =>
-          tasks() = tasks.now.filter { t => !t.done.now }
+          tasks set tasks.now.filter { t => !t.done.now }
         }
       )
     ).render, document.body.firstElementChild)

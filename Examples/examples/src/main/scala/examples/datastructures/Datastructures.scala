@@ -20,10 +20,10 @@ class SQueue[T] {
   lazy val isEmpty = Signal {_queue().isEmpty}
 
   // methods mutating the state of the SQueue
-  def enqueue(elem: T) = _queue() = _queue.now.enqueue(elem)
+  def enqueue(elem: T) = _queue set _queue.now.enqueue(elem)
   def dequeue(): T = {
     val (first, tail): (T, Queue[T]) = _queue.now.dequeue
-    _queue() = tail
+    _queue set tail
     first
   }
 }
@@ -31,7 +31,7 @@ class SQueue[T] {
 object SQueue {
   def apply[T](xs: T*): SQueue[T] = {
     val sq: SQueue[T] = new SQueue[T]
-    sq._queue() = sq._queue.now.enqueue(xs.toList)
+    sq._queue set sq._queue.now.enqueue(xs.toList)
     sq
   }
 }

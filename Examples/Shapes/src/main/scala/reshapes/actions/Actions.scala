@@ -22,7 +22,7 @@ class SaveAction extends Action("Save") {
     if (fileChooser.showDialog(null, "save") == FileChooser.Result.Approve) {
       XML.save(fileChooser.selectedFile.getCanonicalPath,
                Shape.serialize(ReShapes.drawingSpaceState.now.shapes.now))
-      ReShapes.drawingSpaceState.now.fileName() = fileChooser.selectedFile.getName
+      ReShapes.drawingSpaceState.now.fileName set fileChooser.selectedFile.getName
       ReShapes.ui.tabbedPane.pages(ReShapes.ui.tabbedPane.selection.index).title = fileChooser.selectedFile.getName
     }
   }

@@ -25,7 +25,7 @@ trait ReactiveText extends Reactor {
   }
   // out signal
   lazy val text_out = Signal {userSet()}
-  reactions += { case EditDone(_) => userSet() = text }
+  reactions += { case EditDone(_) => userSet set text }
 }
 
 class ReactiveTextfield extends TextField with ReactiveText {

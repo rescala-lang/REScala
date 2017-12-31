@@ -138,12 +138,13 @@ object ReShapes extends SimpleSwingApplication {
 
   reactions += {
     case SelectionChanged(ui.tabbedPane) =>
-      drawingSpaceState() =
+      drawingSpaceState.set(
         if (ui.tabbedPane.selection.index != -1
               && (panelDrawingSpaceStates contains ui.tabbedPane.selection.page))
             panelDrawingSpaceStates(ui.tabbedPane.selection.page)._1
         else
           null
+      )
 
       if (ui.tabbedPane.pages.size > 0)
         menu.update.fire()

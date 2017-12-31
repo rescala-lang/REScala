@@ -65,7 +65,7 @@ object SimpleTodo extends JSApp {
             if (t.done()) checked:="checked" else "",
 
             onchange:={ e: dom.UIEvent =>
-              t.done() = e.target.asInstanceOf[dom.html.Input].checked
+              t.done set e.target.asInstanceOf[dom.html.Input].checked
             }
           ) },
 
@@ -74,8 +74,8 @@ object SimpleTodo extends JSApp {
             lazy val todoinput: dom.html.Input = input(
               value := t.desc(),
               onchange := { e: dom.UIEvent =>
-                t.desc() = todoinput.value
-  //              tasks() = tasks.now.filter { (x)=> x.desc.now != "" }
+                t.desc set todoinput.value
+  //              tasks set tasks.now.filter { (x)=> x.desc.now != "" }
               }
               ).render
             todoinput
@@ -87,7 +87,7 @@ object SimpleTodo extends JSApp {
         `type`:="button",
         `class`:=Signal { if (tasks().size==0) "hidden" else ""},
         value:="remove all done todos", onclick:={ e: dom.UIEvent =>
-          tasks() = tasks.now.filter { t => !t.done.now }
+          tasks set tasks.now.filter { t => !t.done.now }
         }
       )
     ).render)

@@ -68,7 +68,7 @@ class RestoringVar[S <: Struct] {
   }
 
   @Benchmark
-  def singleVar(step: Step): Unit = sourceVar() = step.run()
+  def singleVar(step: Step): Unit = sourceVar set step.run()
 }
 
 @BenchmarkMode(Array(Mode.Throughput))
