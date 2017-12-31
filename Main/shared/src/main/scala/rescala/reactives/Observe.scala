@@ -66,7 +66,7 @@ object Observe {
 trait Observable[+P, S <: Struct] {
   this : ReSourciV[Pulse[P], S] =>
   /** add an observer */
-  def observe(
+  final def observe(
     onSuccess: P => Unit,
     onFailure: Throwable => Unit = null
   )(implicit ticket: CreationTicket[S]): Observe[S] = Observe.strong(this)(onSuccess, onFailure)
