@@ -178,14 +178,14 @@ lazy val fullmv = project.in(file("Research/Multiversion"))
     cfg.test, cfg.noPublish)
   .dependsOn(rescalaJVM, testToolsJVM % "test->test")
 
-lazy val distributedFullmv = project.in(file("Research/MultiversionDistribution"))
-  .settings( cfg.base, name := "rescala-distributed-multiversion",
-    cfg.test, cfg.noPublish, lib.retierTransmitter)
-  .dependsOn(fullmv, testToolsJVM % "test->test")
-
-lazy val meta = project.in(file("Research/Meta"))
-  .dependsOn(rescalaJVM)
-  .settings(cfg.base, cfg.test, cfg.noPublish, name := "meta")
+//lazy val distributedFullmv = project.in(file("Research/MultiversionDistribution"))
+//  .settings( cfg.base, name := "rescala-distributed-multiversion",
+//    cfg.test, cfg.noPublish, lib.retierTransmitter)
+//  .dependsOn(fullmv, testToolsJVM % "test->test")
+//
+//lazy val meta = project.in(file("Research/Meta"))
+//  .dependsOn(rescalaJVM)
+//  .settings(cfg.base, cfg.test, cfg.noPublish, name := "meta")
 
 lazy val microbench = project.in(file("Research/Microbenchmarks"))
   .enablePlugins(JmhPlugin)
