@@ -39,9 +39,9 @@ class ReactiveSetSpec extends FunSpec {
 	        val a = Var(2)
 	        collection += a
 	        assertResult(false)(contains3.now)
-	        a() = 3
+	        a set 3
 	        assertResult(true)(contains3.now)
-	        a() = 2
+	        a set 2
 	        assertResult(false)(contains3.now)
 	    }
 
@@ -54,9 +54,9 @@ class ReactiveSetSpec extends FunSpec {
 	        assertResult(false)(contains3.now)
 	        collection += 3
 	        assertResult(true)(contains3.now)
-	        a() = 3
+	        a set 3
 	        assertResult(true)(contains3.now)
-	        a() = 2
+	        a set 2
 	        assertResult(true)(contains3.now)
 	    }
 
@@ -66,7 +66,7 @@ class ReactiveSetSpec extends FunSpec {
 	        val a = Var(2)
 	        collection += a
 	        assertResult(false)(contains3.now)
-	        a() = 3
+	        a set 3
 	        assertResult(true)(contains3.now)
 	        collection -= 3
 	        assertResult(false)(contains3.now)
@@ -80,9 +80,9 @@ class ReactiveSetSpec extends FunSpec {
 	        collection -= remove
 
 	        assertResult(true)(contains3.now)
-	        remove() = 3
+	        remove set 3
 	        assertResult(false)(contains3.now)
-	        remove() = 2
+	        remove set 2
 	        assertResult(true)(contains3.now)
 	    }
 
@@ -100,11 +100,11 @@ class ReactiveSetSpec extends FunSpec {
 	            assertResult(true)(contains2.now)
 	            assertResult(false)(contains3.now)
 
-	            add() = 3
+	            add set 3
 	            assertResult(false)(contains2.now)
 	            assertResult(true)(contains3.now)
 
-	            remove() = 3
+	            remove set 3
 	            assertResult(true)(contains2.now)
 	            assertResult(true)(contains3.now)
 	        }
@@ -122,11 +122,11 @@ class ReactiveSetSpec extends FunSpec {
 	            assertResult(false)(contains2.now)
 	            assertResult(false)(contains3.now)
 
-	            add() = 3
+	            add set 3
 	            assertResult(false)(contains2.now)
 	            assertResult(true)(contains3.now)
 
-	            remove() = 3
+	            remove set 3
 	            assertResult(false)(contains2.now)
 	            assertResult(false)(contains3.now)
 	        }
@@ -151,10 +151,10 @@ class ReactiveSetSpec extends FunSpec {
 	            collection += 4
 	            assertResult(true)(filtered.contains(4).now)
 
-	            b() = 3
+	            b set 3
 	            assertResult(false)(filtered.contains(2).now)
 
-	            a() = 2
+	            a set 2
 	            assertResult(true)(filtered.contains(2).now)
 
 	            collection -= 4
@@ -178,14 +178,14 @@ class ReactiveSetSpec extends FunSpec {
 	            filteredCollection += a
 	            assertResult(false)(filteredContains2.now)
 
-	            a() = 2
+	            a set 2
 	            assertResult(true)(filteredContains2.now)
 
-	            b() = 3
+	            b set 3
 	            assertResult(false)(contains2.now)
 	            assertResult(true)(filteredContains2.now)
 
-	            a() = 3
+	            a set 3
 	            assertResult(false)(contains2.now)
 	            assertResult(false)(filteredContains2.now)
 	        }
@@ -208,7 +208,7 @@ class ReactiveSetSpec extends FunSpec {
 	            assertResult(false)(transformedContains4.now)
 	            assertResult(true)(transformedContains6.now)
 
-	            a() = 2
+	            a set 2
 	            assertResult(true)(transformedContains2.now)
 	            assertResult(true)(transformedContains4.now)
 	            assertResult(false)(transformedContains6.now)
@@ -239,13 +239,13 @@ class ReactiveSetSpec extends FunSpec {
 
             assertResult(4)(sum.now)
 
-            a() = 2
+            a set 2
             assertResult(3)(sum.now)
 
             collection += 3
             assertResult(6)(sum.now)
 
-            b() = 1
+            b set 1
             assertResult(5)(sum.now)
     	}
 
@@ -268,7 +268,7 @@ class ReactiveSetSpec extends FunSpec {
             assertResult(true)(momentContains9.now)
             assertResult(false)(momentContains11.now)
 
-            b() = 3
+            b set 3
             assertResult(false)(momentContains9.now)
     	}
 	}

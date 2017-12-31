@@ -13,7 +13,7 @@ class EventCreationTest extends RETests {
     val e0 = Evt[Int]
     val e1 = e0.map(identity)
     e1.map(_ => e0.map {_ + 1}.observe {res = _})
-    e0(10)
+    e0.fire(10)
 
     assert(res === 11)
 

@@ -39,7 +39,7 @@ class ReactiveMapSpec extends FunSpec {
 	        assertResult(None)(res.now)
 	        collection += 3 -> 2
 	        assertResult(None)(res.now)
-	        idx() = 3
+	        idx set 3
 	        assertResult(Some(2))(res.now)
 	    }
 
@@ -54,11 +54,11 @@ class ReactiveMapSpec extends FunSpec {
 	        assertResult(Some(2))(res1.now)
 	        collection.update(key1, value1)
 	        assertResult(Some(2))(res1.now)
-	        key1() = 3
+	        key1 set 3
 	        assertResult(Some(4))(res1.now)
-	        value1() = 1
+	        value1 set 1
 	        assertResult(Some(1))(res1.now)
-	        key1() = 2
+	        key1 set 2
 	        assertResult(Some(2))(res1.now)
 	    }
 
@@ -71,17 +71,17 @@ class ReactiveMapSpec extends FunSpec {
 	        assertResult(None)(a.now)
 	        collection += b
 	        assertResult(Some(2))(a.now)
-	        b() = 3->1
+	        b set 3->1
 	        assertResult(Some(1))(a.now)
 	        assertResult(None)(c.now)
-	        b() = 2->1
+	        b set 2->1
 	        assertResult(None)(a.now)
 	        assertResult(Some(1))(c.now)
 	        collection -= d
 	        assertResult(Some(1))(c.now)
-	        d() = 2
+	        d set 2
 	        assertResult(None)(c.now)
-	        d() = 3
+	        d set 3
 	        assertResult(Some(1))(c.now)
 
 	    }
@@ -107,7 +107,7 @@ class ReactiveMapSpec extends FunSpec {
 	        //assertResult(11)(folded.now)
 	        //assertResult(Some(9))(mappedA.now)
 
-	        c() = 3->2
+	        c set 3->2
 	        assertResult(Some(3))(filteredA.now)
 	        assertResult(Some(2))(filteredB.now)
 	        //assertResult(10)(folded.now)

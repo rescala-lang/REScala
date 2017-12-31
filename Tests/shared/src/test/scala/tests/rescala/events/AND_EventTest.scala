@@ -16,8 +16,8 @@ class AND_EventTest extends RETests {
     val e1_AND_e2 = e1 zip e2
     e1_AND_e2 += ((x: (Int, Int)) => { test += 1 })
 
-    e1(10)
-    e2(10)
+    e1.fire(10)
+    e2.fire(10)
     assert(test == 0)
 
 
@@ -30,10 +30,10 @@ class AND_EventTest extends RETests {
     val e1_AND_e2 = e1 zip e2
     e1_AND_e2 += ((x: (Int, Int)) => { test += 1 })
 
-    e1(10)
-    e2(10)
-    e1(10)
-    e2(10)
+    e1.fire(10)
+    e2.fire(10)
+    e1.fire(10)
+    e2.fire(10)
     assert(test == 0)
 
   }
@@ -50,7 +50,7 @@ class AND_EventTest extends RETests {
     e3 += ((x: Int) => { test += 1 })
     e2_AND_e3 += ((x: (Int, Int)) => { test += 1 })
 
-    e1(10)
+    e1.fire(10)
     assert(test == 4)
   }
 

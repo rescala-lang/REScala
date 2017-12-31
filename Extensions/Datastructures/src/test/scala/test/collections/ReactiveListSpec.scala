@@ -42,8 +42,8 @@ class ReactiveListSpec extends FunSpec {
             assertResult(4)(fourthElement.now)
             assertResult(5)(fifthElement.now)
 
-            a() = 5
-            b() = 4
+            a set 5
+            b set 4
             assertResult(5)(fourthElement.now)
             assertResult(4)(fifthElement.now)
         }
@@ -60,11 +60,11 @@ class ReactiveListSpec extends FunSpec {
             assertResult(2)(secondElement.now)
             assertResult(4)(idxElement.now)
 
-            idx() = 1
+            idx set 1
             assertResult(4)(secondElement.now)
             assertResult(4)(idxElement.now)
 
-            idx() = 2
+            idx set 2
             assertResult(2)(secondElement.now)
             assertResult(4)(idxElement.now)
         }

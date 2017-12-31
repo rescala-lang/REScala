@@ -15,8 +15,8 @@ class dropParam_EventTest extends RETests {
     val e1_drop: Event[Unit] = e1.dropParam
     e1_drop += ((x) => { test += 1; })
 
-    e1(10)
-    e1(10)
+    e1.fire(10)
+    e1.fire(10)
     assert(test == 2)
   }
 

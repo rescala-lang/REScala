@@ -190,7 +190,7 @@ class DynamicSignalTestSuite extends RETests with Whenever {
       }
 
       assert(testsig.now === 1)
-      outside() = 2
+      outside set 2
       assert(testsig.now === 2)
     }
   }
@@ -204,7 +204,7 @@ class DynamicSignalTestSuite extends RETests with Whenever {
     val testsig = dynsig.flatten
 
       assert(testsig.now === 1)
-    outside() = 2
+    outside set 2
     assert(testsig.now === 2)
   }
 

@@ -14,13 +14,13 @@ class PredicateEventTest extends RETests {
     val e2 = e1 filter ((x: Int) => cond)
     e2 += ((x: Int) => { test += 1 })
 
-    e1(10)
-    e1(10)
-    e1(10)
+    e1.fire(10)
+    e1.fire(10)
+    e1.fire(10)
     assert(test == 0)
     cond = true
-    e1(10)
-    //e1(10)
+    e1.fire(10)
+    //e1.fire(10)
     //assert(test == 2)
   }
 

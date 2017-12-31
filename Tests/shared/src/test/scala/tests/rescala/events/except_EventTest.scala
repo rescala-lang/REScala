@@ -11,7 +11,7 @@ class except_EventTest extends tests.rescala.RETests {
     val e1_except_e2 = e1 \ e2
     e1_except_e2 += ((x: Int) => { test += 1 })
 
-    e1(10)
+    e1.fire(10)
     assert(test == 1)
 
   }
@@ -23,7 +23,7 @@ class except_EventTest extends tests.rescala.RETests {
     val e1_except_e2 = e1 \ e2
     e1_except_e2 += ((x: Int) => { test += 1 })
 
-    e2(10)
+    e2.fire(10)
     assert(test == 0)
 
   }
@@ -40,15 +40,15 @@ class except_EventTest extends tests.rescala.RETests {
     e1_except_e2 += ((x: Int) => { test += 1 })
 
 
-    e1(10)
+    e1.fire(10)
     assert(test == 1)
 
     cond = true
-    e1(10)
+    e1.fire(10)
     assert(test == 1)
 
     cond = false
-    e1(10)
+    e1.fire(10)
     assert(test == 2)
 
   }
@@ -66,15 +66,15 @@ class except_EventTest extends tests.rescala.RETests {
     e1_except_e2 += ((x: Int) => { value = x })
 
 
-    e1(10)
+    e1.fire(10)
     assert(value == 10)
 
     cond = true
-    e1(11)
+    e1.fire(11)
     assert(value == 10)
 
     cond = false
-    e1(12)
+    e1.fire(12)
     assert(value == 12)
 
   }

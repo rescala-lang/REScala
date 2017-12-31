@@ -101,9 +101,9 @@ class MacroTestSuite extends RETests {
 
     s.change += { _ => test += 1 }
     assert(s.now === 0)
-    e(2)
+    e.fire(2)
     assert(s.now === 4)
-    e(3)
+    e.fire(3)
     assert(s.now === 6)
     assert(test === 2)
   }
@@ -117,9 +117,9 @@ class MacroTestSuite extends RETests {
 
     s.change += { _ => test += 1 }
     assert(s.now === None)
-    e(2)
+    e.fire(2)
     assert(s.now === Some(2))
-    e(3)
+    e.fire(3)
     assert(s.now === Some(3))
     assert(test === 2)
   }
@@ -147,9 +147,9 @@ class MacroTestSuite extends RETests {
     a.obj()
     s.change += { _ => test += 1 }
     assert(s.now === 0)
-    e(2)
+    e.fire(2)
     assert(s.now === 4)
-    e(3)
+    e.fire(3)
     assert(s.now === 6)
     assert(test === 2)
   }
@@ -162,9 +162,9 @@ class MacroTestSuite extends RETests {
     val c = Signal(b()())
 
     assert(c.now === 3)
-    a() = 4
+    a set 4
     assert(c.now === 4)
-    b() = Signal(5)
+    b set Signal(5)
     assert(c.now === 5)
 
   }
@@ -178,9 +178,9 @@ class MacroTestSuite extends RETests {
     }
 
     assert(b.now === 3)
-    a() = 4
+    a set 4
     assert(b.now === 4)
-    a() = 5
+    a set 5
     assert(b.now === 5)
   }
 
@@ -197,8 +197,8 @@ class MacroTestSuite extends RETests {
     }
 
     assert(testsig.now === 10)
-    outside() = 2
-    inside() = 11
+    outside set 2
+    inside set 11
     assert(testsig.now === 11)
     assert(sig.now === 2)
   }
@@ -218,8 +218,8 @@ class MacroTestSuite extends RETests {
     }
 
     assert(testsig.now === 1)
-    outside() = 2
-    inside() = 11
+    outside set 2
+    inside set 11
     assert(testsig.now === 2)
   }
 
@@ -262,13 +262,13 @@ class MacroTestSuite extends RETests {
     }
 
     assert(sig.now == "value15")
-    v2() = new A(3)
+    v2 set new A(3)
     assert(sig.now == "value15")
-    v1() = new A(3)
+    v1 set new A(3)
     assert(sig.now == "value19")
-    v2() = B(4)
+    v2 set B(4)
     assert(sig.now == "value29")
-    v1() = new A(5)
+    v1 set new A(5)
     assert(sig.now == "value37")
   }
 
@@ -285,15 +285,15 @@ class MacroTestSuite extends RETests {
     }
 
     assert(sig.now == 0)
-    v1() = 5
+    v1 set 5
     assert(sig.now == 0)
-    v2() = true
+    v2 set true
     assert(sig.now == 5)
-    v1() = 2
+    v1 set 2
     assert(sig.now == 2)
-    v2() = false
+    v2 set false
     assert(sig.now == 0)
-    v1() = 8
+    v1 set 8
     assert(sig.now == 0)
   }
 
@@ -312,13 +312,13 @@ class MacroTestSuite extends RETests {
     }
 
     assert(sig.now == 2)
-    v2() = 50
+    v2 set 50
     assert(sig.now == 2)
-    v1() = List(7, 8, 9)
+    v1 set List(7, 8, 9)
     assert(sig.now == 50)
-    v2() = 4
+    v2 set 4
     assert(sig.now == 4)
-    v1() = List(10, 11)
+    v1 set List(10, 11)
     assert(sig.now == 11)
   }
 
@@ -387,15 +387,15 @@ class MacroTestSuite extends RETests {
     }
 
     assert(testsig.now === -1)
-    evt(100)
+    evt.fire(100)
     assert(testsig.now === 100)
-    v() = 10
+    v set 10
     assert(testsig.now === 110)
-    evt(10)
+    evt.fire(10)
     assert(testsig.now === 20)
-    evt(5)
+    evt.fire(5)
     assert(testsig.now === 15)
-    v() = 50
+    v set 50
     assert(testsig.now === 55)
   }
 
@@ -411,11 +411,11 @@ class MacroTestSuite extends RETests {
     val sig = Signal { v() map (_.s()) }
 
     assert(sig.now === List(1, 2))
-    v1() = 5
+    v1 set 5
     assert(sig.now === List(5, 2))
-    v2() = 7
+    v2 set 7
     assert(sig.now === List(5, 7))
-    v() = v.now.reverse
+    v set v.now.reverse
     assert(sig.now === List(7, 5))
   }
 
@@ -432,17 +432,17 @@ class MacroTestSuite extends RETests {
     val sig = Signal { s().signal().signal(): @unchecked }
 
     assert(sig.now === 20)
-    v1() = 30
+    v1 set 30
     assert(sig.now === 30)
-    v2() = new {def signal = Signal { 7 + v1() } }
+    v2 set new {def signal = Signal { 7 + v1() } }
     assert(sig.now === 37)
-    v1() = 10
+    v1 set 10
     assert(sig.now === 17)
-    v3() = new {val signal = Signal { new {def signal = Signal { v1() } } } }
+    v3 set new {val signal = Signal { new {def signal = Signal { v1() } } } }
     assert(sig.now === 10)
-    v2() = new {def signal = Signal { 10 + v1() } }
+    v2 set new {def signal = Signal { 10 + v1() } }
     assert(sig.now === 10)
-    v1() = 80
+    v1 set 80
     assert(sig.now === 80)
   }
 
@@ -459,7 +459,7 @@ class MacroTestSuite extends RETests {
     val sig = Signal { getSignal(o)() }
 
     assert(sig.now === 20)
-    v() = 30
+    v set 30
     assert(sig.now === 30)
   }
 
@@ -476,7 +476,7 @@ class MacroTestSuite extends RETests {
     val sig = Signal { getSignal(o).latestOption().apply() }
 
     assert(sig.now === None)
-    e(30)
+    e.fire(30)
     assert(sig.now === Some(30))
   }
 
@@ -492,10 +492,10 @@ class MacroTestSuite extends RETests {
     }
     assert(macroRes.now === 0, "before, macro")
     assert(normalRes.now === 0, "before, normal")
-    e1(1)
+    e1.fire(1)
     assert(macroRes.now === 1, "after, macro")
     assert(normalRes.now === 1, "after, normal")
-    e1(1)
+    e1.fire(1)
     assert(macroRes.now === 2, "end, macro")
     assert(normalRes.now === 1, "end, normal")
   }

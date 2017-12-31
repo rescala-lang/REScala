@@ -15,11 +15,11 @@ class MacroEventTestSuite extends RETests {
     val res = snapshotEvent.latest(0)
 
     assert(res.now === 0)
-    ev1(10)
+    ev1.fire(10)
     assert(res.now === 18)
     v1.set(7)
     assert(res.now === 18)
-    ev1(10)
+    ev1.fire(10)
     assert(res.now === 17)
 
   }
@@ -32,11 +32,11 @@ class MacroEventTestSuite extends RETests {
     val res = snapshotEvent.latest(0)
 
     assert(res.now === 0)
-    ev1(10)
+    ev1.fire(10)
     assert(res.now === 18)
     v1.set(7)
     assert(res.now === 18)
-    ev1(10)
+    ev1.fire(10)
     assert(res.now === 17)
 
   }
@@ -48,11 +48,11 @@ class MacroEventTestSuite extends RETests {
     val res = snapshotEvent.latest(0)
 
     assert(res.now === 0)
-    ev1(10)
+    ev1.fire(10)
     assert(res.now === 11)
-    ev1(20)
+    ev1.fire(20)
     assert(res.now === 21)
-    ev1(10)
+    ev1.fire(10)
     assert(res.now === 11)
 
   }
@@ -64,9 +64,9 @@ class MacroEventTestSuite extends RETests {
     val res = Signal {List(e1(), e2()).flatten.sum}
 
     assert(res.now === 0)
-    e1(10)
+    e1.fire(10)
     assert(res.now === 10)
-    e2(11)
+    e2.fire(11)
     assert(res.now === 11)
     update(e1 -> 10, e2 -> 10)
     assert(res.now === 20)
@@ -80,9 +80,9 @@ class MacroEventTestSuite extends RETests {
     val res = event.latest(Nil)
 
     assert(res.now === Nil)
-    e1(9)
+    e1.fire(9)
     assert(res.now === List(9))
-    e2(10)
+    e2.fire(10)
     assert(res.now === List(10))
     update(e1 -> 11, e2 -> 12)
     assert(res.now === List(11, 12))

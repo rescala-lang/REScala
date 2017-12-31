@@ -52,24 +52,24 @@ class SimpleReactiveSetSpec extends FunSpec {
             assertResult(true)(contains3.now)
             assertResult(false)(contains4.now)
 
-            a() = 3
-            b() = 4
+            a set 3
+            b set 4
             assertResult(false)(contains3.now)
             assertResult(true)(contains4.now)
 
-            c() = 4
+            c set 4
             assertResult(false)(contains3.now)
             assertResult(false)(contains4.now)
 
-            a() = 1
+            a set 1
             assertResult(true)(contains3.now)
             assertResult(false)(contains4.now)
 
-            c() = 3
+            c set 3
             assertResult(false)(contains3.now)
             assertResult(true)(contains4.now)
 
-            b() = 3
+            b set 3
             assertResult(false)(contains3.now)
             assertResult(false)(contains4.now)
         }
@@ -105,7 +105,7 @@ class SimpleReactiveSetSpec extends FunSpec {
             sut.filterSelf(f)
             assertResult(false)(res.now)
 
-            f() = (_: Int) % 2 != 0
+            f set ((_: Int) % 2 != 0)
             assertResult(true)(res.now)
         }
 	}

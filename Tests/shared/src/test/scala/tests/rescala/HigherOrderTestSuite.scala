@@ -83,7 +83,7 @@ class HigherOrderTestSuite extends RETests {
 
 
     // 3. Selector changes, both signals fire changes
-    selector() = s2
+    selector set s2
     assert(sDerefChanged)
     assert(sHigherChanged)
 
@@ -137,7 +137,7 @@ class HigherOrderTestSuite extends RETests {
     var dereferencedChanged = false
     dereferenced.changed += { _ => dereferencedChanged = true }
 
-    tick(())
+    tick.fire()
     assert(count.now == 1)
     assert(doubled.now ==2)
     assert(mod2.now == 1)
@@ -146,7 +146,7 @@ class HigherOrderTestSuite extends RETests {
     dereferencedChanged = false
     assert(dereferenced.now == 1)
 
-    tick(())
+    tick.fire()
     assert(count.now == 2)
     assert(doubled.now ==4)
     assert(mod2.now == 0)
@@ -167,16 +167,16 @@ class HigherOrderTestSuite extends RETests {
     var lastEvent = -1
     unwrapped += { lastEvent = _ }
 
-    e1(1)
+    e1.fire(1)
     assert(lastEvent == 1)
-    e2(2)
+    e2.fire(2)
     assert(lastEvent == 1)
-    eventSelector() = e2 //select new event source
-    e2(3)
+    eventSelector set e2 //select new event source
+    e2.fire(3)
     assert(lastEvent == 3)
-    e1(4)
+    e1.fire(4)
     assert(lastEvent == 3)
-    e2(5)
+    e2.fire(5)
     assert(lastEvent == 5)
   }
 
@@ -228,9 +228,9 @@ class HigherOrderTestSuite extends RETests {
     var log = List[String]()
     unwrapped += (log ::= _)
 
-    e1.apply(0)
+    e1.fire(0)
     assert(log == List("level 2"))
-    e1.apply(1)
+    e1.fire(1)
     assert(log == List("level 1", "level 2"))
   }
 
@@ -246,9 +246,9 @@ class HigherOrderTestSuite extends RETests {
     var log = List[String]()
     unwrapped += (log ::= _)
 
-    e1.apply(0)
+    e1.fire(0)
     assert(log == List("B"))
-    e1.apply(1)
+    e1.fire(1)
     assert(log == List("A", "B"))
   }
 
@@ -259,21 +259,21 @@ class HigherOrderTestSuite extends RETests {
 //    val res = f1.list()
 //    val e2 = Evt[Int]
 //    val e3 = Evt[Int]
-//    e2(10)
-//    e3(10)
+//    e2.fire(10)
+//    e3.fire(10)
 //
 //    assert(res.now === Nil)
-//    e1(e2)
+//    e1.fire(e2)
 //    assert(res.now === Nil)
-//    e3(10)
+//    e3.fire(10)
 //    assert(res.now === Nil)
-//    e2(10)
+//    e2.fire(10)
 //    assert(res.now === List(10))
-//    e1(e3)
+//    e1.fire(e3)
 //    assert(res.now === List(10))
-//    e2(20)
+//    e2.fire(20)
 //    assert(res.now === List(10))
-//    e3(30)
+//    e3.fire(30)
 //    assert(res.now === List(30, 10))
 //
 //  }

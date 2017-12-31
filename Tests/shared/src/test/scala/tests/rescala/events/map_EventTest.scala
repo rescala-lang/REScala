@@ -13,8 +13,8 @@ class map_EventTest extends RETests {
     val e1_map = e1 map ((x: Int) => x * 2)
     e1_map += ((x: Int) => { test += 1 })
 
-    e1(10)
-    e1(10)
+    e1.fire(10)
+    e1.fire(10)
     assert(test == 2)
   }
 
@@ -24,8 +24,8 @@ class map_EventTest extends RETests {
     val e1_map = e1 map ((x: Int) => x * 2)
     e1_map += ((x: Int) => { test = x })
 
-    e1(10)
-    e1(10)
+    e1.fire(10)
+    e1.fire(10)
     assert(test == 20)
   }
 
