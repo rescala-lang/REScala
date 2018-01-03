@@ -21,7 +21,7 @@ if ($OSNAME eq "MSWin32") {
 my $OUTDIR = 'out';
 my $RESULTDIR = 'results';
 my $SCHEDULER_TIME = "0:55:00";
-my $SCHEDULER_REQUIRE = "avx&mpi";
+my $SCHEDULER_REQUIRE = "avx\\&mpi";
 my $SCHEDULER_CORES = "16";
 
 my @ENGINES = qw<parrp stm synchron locksweep>;
@@ -711,15 +711,15 @@ sub selection {
 sub hhlrjob {
   my ($name, $programstring) = @_;
   return  <<ENDPROGRAM;
-```#!/bin/sh
+#!/bin/sh
 # Job name
 #SBATCH -J REScalaBenchmark
 #
 # File / path where STDOUT will be written, the %.j is the job id
-#SBATCH -o parrp-%j.out
+#SBATCH -o job-%j.out
 #
 # Request the time you need for execution in [hour:]minute
-#SBATCH -t 00:30:00
+#SBATCH -t 00:55:00
 #
 # Required resources
 #SBATCH -C avx&mpi
@@ -735,7 +735,7 @@ sub hhlrjob {
 module unload openmpi
 module load java
 echo "--------- processors ------------------------"
-cat /proc/cpuinfo
+lscpu
 echo "--------- java version ----------------------"
 java -version
 echo "---------------------------------------------"
