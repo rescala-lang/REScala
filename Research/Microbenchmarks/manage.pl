@@ -40,7 +40,7 @@ my %BASECONFIG = (
   si => "false", # synchronize iterations
   wi => 5, # warmup iterations
   w => "1000ms", # warmup time
-  f => 1, # forks
+  f => 5, # forks
   i => 5, # iterations
   r => "1000ms", # time per iteration
   to => "10s", #timeout
@@ -59,7 +59,7 @@ chomp $GITREF;
 
 my $command = shift @ARGV;
 # my @RUN = @ARGV ? @ARGV : qw<philosophers halfDynamicPhilosophers simplePhil expensiveConflict singleDynamic singleVar turnCreation simpleFan simpleReverseFan simpleNaturalGraph multiReverseFan stmbank chatServer simpleChain dynamicStacks noconflictPhilosophers>;
-my @RUN = @ARGV ? @ARGV : qw<snapshotOverhead snapshotRestoringVsInitial>;
+my @RUN = @ARGV ? @ARGV : qw<snapshotOverhead snapshotRestoringVsInitial snapshotRestoringVsRecomputation errorPropagationVsMonadic>;
 say "selected: " . (join " ", sort @RUN);
 say "available: " . (join " ", sort keys %{&selection()});
 
@@ -679,6 +679,25 @@ sub selection {
           t => 1,
         ),
         "benchmarks.restoring.RestoringSnapshotVsRecomputation"
+      );
+      push @runs, {name => $name, program => $program};
+
+      @runs;
+    },
+
+    errorPropagationVsMonadic => sub {
+      my @runs;
+
+      my $name = "errorPropagationVsMonadic";
+      my $program = makeRunString( $name,
+        fromBaseConfig(
+          p => { # parameters
+            engineName => (join ',', "synchron"),
+            size => (join ",", @SIZES),
+          },
+          t => 1,
+        ),
+        "benchmarks.errorprop.MonadicErrors"
       );
       push @runs, {name => $name, program => $program};
 
