@@ -30,7 +30,6 @@ class RestoringSimple[S <: Struct] {
   def setup(size: Size, engineParam: EngineParam[S]) = {
     engine = engineParam.engine
     source = engine.Evt[Int]()
-    val otherSource = engine.Evt[Int]()
     result = Nil
     if (size.size <= 0) result = List(source.map(_+1))
     val split = math.round(size.size * foldPercent)
@@ -39,7 +38,6 @@ class RestoringSimple[S <: Struct] {
     }
     for (_ <- Range(split, size.size)) {
       result = source.map(_ + 1) :: result
-      otherSource.count
     }
   }
 
