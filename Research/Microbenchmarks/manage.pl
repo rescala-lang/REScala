@@ -58,8 +58,8 @@ my $GITREF = qx[git show -s --format=%H HEAD];
 chomp $GITREF;
 
 my $command = shift @ARGV;
-my @RUN = @ARGV ? @ARGV : qw<philosophers halfDynamicPhilosophers simplePhil expensiveConflict singleDynamic singleVar turnCreation simpleFan simpleReverseFan simpleNaturalGraph multiReverseFan stmbank chatServer simpleChain dynamicStacks noconflictPhilosophers>;
-
+# my @RUN = @ARGV ? @ARGV : qw<philosophers halfDynamicPhilosophers simplePhil expensiveConflict singleDynamic singleVar turnCreation simpleFan simpleReverseFan simpleNaturalGraph multiReverseFan stmbank chatServer simpleChain dynamicStacks noconflictPhilosophers>;
+my @RUN = @ARGV ? @ARGV : qw<snapshotOverhead snapshotRestoringVsInitial>;
 say "selected: " . (join " ", sort @RUN);
 say "available: " . (join " ", sort keys %{&selection()});
 
@@ -79,9 +79,8 @@ sub init {
   mkdir $OUTDIR;
   chdir "../..";
 
-  system('./sbt', 'set scalacOptions in ThisBuild ++= List("-Xdisable-assertions", "-Xelide-below", "9999999")', 'project microbench', 'stage', 'compileJmh');
-  #qx[perl -p -i -e 's#exec java \\\$JAVA_OPTS -cp "#exec java \\\$JAVA_OPTS -cp "\\\$PROJECT_DIR/Research/Microbenchmarks/target/scala-2.11/jmh-classes:#g' ./Research/Microbenchmarks/target/start];
-  #system('sbt','clean', 'jmh:compile', 'jmh:stage');
+  system('./sbt', 'set scalacOptions in ThisBuild ++= List("-Xdisable-assertions", "-Xelide-below", "9999999")',
+    'project microbench', 'jmh:compile', 'jmh:stage');
   chdir $MAINDIR;
 }
 
@@ -644,6 +643,24 @@ sub selection {
           t => 1,
         ),
         "benchmarks.restoring.RestoringSimple"
+      );
+      push @runs, {name => $name, program => $program};
+
+      @runs;
+    },
+
+    snapshotRestoringVsInitial => sub {
+      my @runs;
+
+      my $name = "RestoringSnapshotVsInitial";
+      my $program = makeRunString( $name,
+        fromBaseConfig(
+          p => { # parameters
+            size => (join ",", @SIZES),
+          },
+          t => 1,
+        ),
+        "benchmarks.restoring.RestoringSnapshotVsInitial"
       );
       push @runs, {name => $name, program => $program};
 
