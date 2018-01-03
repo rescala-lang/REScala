@@ -14,15 +14,15 @@ use Data::Dumper;
 my $MAINDIR = dirname(__FILE__);
 chdir $MAINDIR;
 
-my $EXECUTABLE = './target/start';
+my $EXECUTABLE = './target/universal/stage/bin/main';
 if ($OSNAME eq "MSWin32") {
   $EXECUTABLE =~ s#/#\\#g;
 }
 my $OUTDIR = 'out';
 my $RESULTDIR = 'results';
-my $BSUB_TIME = "0:55:00";
-my $BSUB_REQUIRE = "avx&mpi";
-my $BSUB_CORES = "16";
+my $SCHEDULER_TIME = "0:55:00";
+my $SCHEDULER_REQUIRE = "avx&mpi";
+my $SCHEDULER_CORES = "16";
 
 my @ENGINES = qw<parrp stm synchron locksweep>;
 my @ENGINES_UNMANAGED = (@ENGINES, "unmanaged");
@@ -78,7 +78,7 @@ sub init {
   chdir "../..";
 
   system('./sbt', 'set scalacOptions in ThisBuild ++= List("-Xdisable-assertions", "-Xelide-below", "9999999")', 'project microbench', 'stage', 'compileJmh');
-  qx[perl -p -i -e 's#exec java \\\$JAVA_OPTS -cp "#exec java \\\$JAVA_OPTS -cp "\\\$PROJECT_DIR/Research/Microbenchmarks/target/scala-2.11/jmh-classes:#g' ./Research/Microbenchmarks/target/start];
+  #qx[perl -p -i -e 's#exec java \\\$JAVA_OPTS -cp "#exec java \\\$JAVA_OPTS -cp "\\\$PROJECT_DIR/Research/Microbenchmarks/target/scala-2.11/jmh-classes:#g' ./Research/Microbenchmarks/target/start];
   #system('sbt','clean', 'jmh:compile', 'jmh:stage');
   chdir $MAINDIR;
 }
@@ -106,9 +106,9 @@ sub submitAllAsOne {
 
 sub submit {
   my ($job) = @_;
-  open (my $BSUB, "|-", qq[sbatch --exclusive -n 1 -c $BSUB_CORES -C $BSUB_REQUIRE -t $BSUB_TIME ]);
-  print $BSUB $job;
-  close $BSUB;
+  open (my $SCHEDULER, "|-", qq[sbatch --exclusive -n 1 -c $SCHEDULER_CORES -C $SCHEDULER_REQUIRE -t $SCHEDULER_TIME ]);
+  print $SCHEDULER $job;
+  close $SCHEDULER;
 }
 
 sub makeRunString {
