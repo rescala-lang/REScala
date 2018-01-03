@@ -108,10 +108,13 @@ class ReactiveMacros(val c: blackbox.Context) {
       override def transform(tree: Tree): Tree =
         tree match {
           // replace any used CreationTicket in a Signal expression with the correct turn source for the current turn
-          case turnSource@q"$_.fromEngineImplicit[..$_](...$_)" if turnSource.tpe =:= weakTypeOf[CreationTicket[S]] && turnSource.symbol.owner == symbolOf[LowPriorityCreationImplicits] =>
+          //q"$_.fromEngineImplicit[..$_](...$_)"
+          case turnSource@Apply(TypeApply(Select(_, TermName("fromEngineImplicit")), _), _)
+            if turnSource.tpe =:= weakTypeOf[CreationTicket[S]] && turnSource.symbol.owner == symbolOf[LowPriorityCreationImplicits] =>
+            println(turnSource)
             q"${termNames.ROOTPKG}.rescala.core.CreationTicket(${termNames.ROOTPKG}.scala.Left($ticketIdent.creation))(${termNames.ROOTPKG}.rescala.core.REName.create)"
 
-          case tree@q"$reactive.now" =>
+          case tree@Select(reactive, TermName("now")) =>
             c.warning(tree.pos, "Using `now` inside a reactive expression does not create a dependency, " +
               "and can result in glitches. Use `apply` instead.")
             super.transform(tree)
@@ -253,10 +256,12 @@ class ReactiveMacros(val c: blackbox.Context) {
 
   object REApply {
     def unapply(arg: Tree): Option[Tree] = arg match {
-      case q"$reactive.apply()" if isReactive(reactive) => Some(reactive)
-      case q"$reactive.!" if isReactive(reactive) => Some(reactive)
-      case q"$reactive.unary_!" if isReactive(reactive)  => Some(reactive)
-      case q"$reactive.value" if isReactive(reactive)  => Some(reactive)
+      case Apply(Select(reactive, TermName(tn)), Nil)
+        if List("apply").contains(tn) && isReactive(reactive) =>
+        Some(reactive)
+      case Select(reactive, tn)
+        if List("!", "unary_!", "value").contains(tn.decodedName.toString) && isReactive(reactive) =>
+        Some(reactive)
       case _ => None
     }
   }

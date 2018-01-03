@@ -133,6 +133,8 @@ final class WrapUpTicket[S <: Struct] private[rescala](val creation: Computation
   " such turn is present, an implicit Engine is accepted instead.")
 final case class CreationTicket[S <: Struct](self: Either[Creation[S], Engine[S]])(val rename: REName) {
 
+  def isInnerTicket(): Boolean = self.isLeft
+
   def apply[T](f: Creation[S] => T): T = self match {
     case Left(integrated) => f(integrated)
     case Right(engine) => engine.create(f)

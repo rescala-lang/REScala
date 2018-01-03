@@ -500,4 +500,17 @@ class MacroTestSuite extends RETests {
     assert(normalRes.now === 1, "end, normal")
   }
 
+
+  allEngines("correctly replace ticket during macro expansion"){ engine => import engine._
+
+    def wantsTicket(implicit ct: engine.CreationTicket, ct2: engine.CreationTicket) = {
+      ct == ct2 && ct.isInnerTicket() && ct2.isInnerTicket()
+    }
+
+    val s = Signal { wantsTicket }
+
+    assert(s.now === true)
+
+  }
+
 }
