@@ -23,7 +23,7 @@ class RestoringTest extends FunSuite {
     }
 
     {
-      implicit val engine1 = new ReStoringEngine(restoreFrom = snapshot.toSeq)
+      implicit val engine1 = new ReStoringEngine(restoreFrom = snapshot)
       val e = engine1.Evt[Unit]()
       val c = e.count()
 
@@ -59,7 +59,7 @@ class RestoringTest extends FunSuite {
     }
 
     {
-      implicit val engine1 = new ReStoringEngine(restoreFrom = snapshot.toSeq)
+      implicit val engine1 = new ReStoringEngine(restoreFrom = snapshot)
       val e = engine1.Evt[Unit]()
       val c = e.count()
 

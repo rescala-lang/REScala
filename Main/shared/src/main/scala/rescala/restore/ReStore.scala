@@ -4,6 +4,8 @@ import rescala.core.{ReSerializable, ReSource, Struct, ValuePersistency}
 import rescala.levelbased.{LevelBasedPropagation, LevelStruct, LevelStructTypeImpl}
 import rescala.twoversion.{TwoVersionEngine, TwoVersionPropagation}
 
+import scala.collection.mutable
+
 class ReStoringTurn(restore: ReStore) extends LevelBasedPropagation[ReStoringStruct] {
 
   override protected def makeDerivedStructState[P](valuePersistency: ValuePersistency[P]): ReStoringStructType[P, ReStoringStruct] = {
@@ -52,9 +54,9 @@ trait ReStore {
 }
 
 
-class ReStoringEngine(domain: String = "", restoreFrom: Seq[(String, String)] = Nil) extends TwoVersionEngine[ReStoringStruct, ReStoringTurn] with ReStore {
+class ReStoringEngine(domain: String = "", restoreFrom: mutable.Map[String, String] = mutable.HashMap()) extends TwoVersionEngine[ReStoringStruct, ReStoringTurn] with ReStore {
 
-  val values: scala.collection.mutable.HashMap[String, String] = scala.collection.mutable.HashMap(restoreFrom: _*)
+  def values: mutable.Map[String, String] = restoreFrom
   var count = 0
   def nextName(): String = {
     count += 1
@@ -62,7 +64,7 @@ class ReStoringEngine(domain: String = "", restoreFrom: Seq[(String, String)] = 
   }
   override def put(key: String, value: String): Unit = values.put(key, value)
   override def get(key: String): Option[String] = values.get(key)
-  def snapshot(): Map[String, String] = values.toMap
+  def snapshot(): mutable.Map[String, String] = values
 
   override protected def makeTurn(priorTurn: Option[ReStoringTurn]): ReStoringTurn = new ReStoringTurn(this)
   lazy override val toString: String = s"Engine(Restoring: $domain)"

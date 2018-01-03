@@ -76,9 +76,9 @@ class RestoringVar[S <: Struct] {
 @Fork(3)
 @Threads(1)
 @State(Scope.Thread)
-class RestoringSnapshot[S <: Struct] {
+class RestoringSnapshotVsInitial[S <: Struct] {
 
-  var snapshot: Seq[(String, String)] = _
+  var snapshot: scala.collection.mutable.Map[String, String] = _
 
   def build(implicit engine: ReStoringEngine, size: Int) = {
     val source = engine.Evt[Int]()
@@ -94,7 +94,7 @@ class RestoringSnapshot[S <: Struct] {
     val (source, res) = build(engine, size.size)
     source.fire(10)(engine)
     source.fire(20)(engine)
-    snapshot = engine.snapshot().toSeq
+    snapshot = engine.snapshot()
   }
 
   @Benchmark
