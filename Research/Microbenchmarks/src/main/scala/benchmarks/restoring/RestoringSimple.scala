@@ -2,7 +2,7 @@ package benchmarks.restoring
 
 import java.util.concurrent.TimeUnit
 
-import benchmarks.{EngineParam, Size, Step}
+import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations._
 import rescala.core.{Engine, Struct}
 import rescala.reactives.{Evt, Var}
@@ -98,10 +98,10 @@ class RestoringSnapshotVsInitial[S <: Struct] {
   }
 
   @Benchmark
-  def fresh(size: Size): Unit = build(new ReStoringEngine(), size.size)
+  def fresh(size: Size) = build(new ReStoringEngine(), size.size)
 
   @Benchmark
-  def restored(size: Size): Unit = {
+  def restored(size: Size) = {
     val engine = new ReStoringEngine(restoreFrom = snapshot)
     build(engine, size.size)
   }
@@ -109,3 +109,66 @@ class RestoringSnapshotVsInitial[S <: Struct] {
 
 }
 
+@BenchmarkMode(Array(Mode.Throughput))
+@OutputTimeUnit(TimeUnit.MILLISECONDS)
+@Warmup(iterations = 3, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
+@Measurement(iterations = 3, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
+@Fork(3)
+@Threads(1)
+@State(Scope.Thread)
+class RestoringSnapshotVsRecomputationA[S <: Struct] {
+
+  var snapshot: scala.collection.mutable.Map[String, String] = _
+
+  def build(implicit engine: ReStoringEngine, size: Int) = {
+    val source = engine.Evt[Int]()
+    val res = source.list().map(_.size)
+    (source, res)
+  }
+
+  @Setup
+  def setup(size: Size, workload: Workload) = {
+    val engine = new ReStoringEngine()
+    val (source, res) = build(engine, size.size)
+    for (i <- 1 to size.size) source.fire(i)(engine)
+    snapshot = engine.snapshot()
+  }
+
+  @Benchmark
+  def restored(size: Size) = {
+    val engine = new ReStoringEngine(restoreFrom = snapshot)
+    build(engine, size.size)
+  }
+}
+
+@BenchmarkMode(Array(Mode.Throughput))
+@OutputTimeUnit(TimeUnit.MILLISECONDS)
+@Warmup(iterations = 3, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
+@Measurement(iterations = 3, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
+@Fork(3)
+@Threads(1)
+@State(Scope.Thread)
+class RestoringSnapshotVsRecomputationB[S <: Struct] {
+
+  var snapshot: scala.collection.mutable.Map[String, String] = _
+
+  def build(implicit engine: ReStoringEngine, size: Int) = {
+    val source = engine.Evt[Int]()
+    val res = source.count().map(List.tabulate(_)(identity))
+    (source, res)
+  }
+
+  @Setup
+  def setup(size: Size, workload: Workload) = {
+    val engine = new ReStoringEngine()
+    val (source, res) = build(engine, size.size)
+    for (i <- 1 to size.size) source.fire(i)(engine)
+    snapshot = engine.snapshot()
+  }
+
+  @Benchmark
+  def derived(size: Size) = {
+    val engine = new ReStoringEngine(restoreFrom = snapshot)
+    build(engine, size.size)
+  }
+}

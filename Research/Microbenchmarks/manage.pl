@@ -40,7 +40,7 @@ my %BASECONFIG = (
   si => "false", # synchronize iterations
   wi => 5, # warmup iterations
   w => "1000ms", # warmup time
-  f => 5, # forks
+  f => 1, # forks
   i => 5, # iterations
   r => "1000ms", # time per iteration
   to => "10s", #timeout
@@ -661,6 +661,24 @@ sub selection {
           t => 1,
         ),
         "benchmarks.restoring.RestoringSnapshotVsInitial"
+      );
+      push @runs, {name => $name, program => $program};
+
+      @runs;
+    },
+
+    snapshotRestoringVsRecomputation => sub {
+      my @runs;
+
+      my $name = "RestoringSnapshotVsRecomputation";
+      my $program = makeRunString( $name,
+        fromBaseConfig(
+          p => { # parameters
+            size => (join ",", (1,10,100,1000,10000)),
+          },
+          t => 1,
+        ),
+        "benchmarks.restoring.RestoringSnapshotVsRecomputation"
       );
       push @runs, {name => $name, program => $program};
 
