@@ -14,7 +14,7 @@ use Data::Dumper;
 my $MAINDIR = dirname(__FILE__);
 chdir $MAINDIR;
 
-my $EXECUTABLE = './target/universal/stage/bin/main';
+my $EXECUTABLE = './target/universal/stage/bin/microbenchmarks';
 if ($OSNAME eq "MSWin32") {
   $EXECUTABLE =~ s#/#\\#g;
 }
@@ -26,12 +26,14 @@ my $SCHEDULER_CORES = "16";
 
 my @ENGINES = qw<parrp stm synchron locksweep>;
 my @ENGINES_UNMANAGED = (@ENGINES, "unmanaged");
+my @ENGINES_SNAPSHOTS = ("synchron", "restoring");
 my @THREADS = (1..16);
 my @REDUCED_THREADS = (8);
 my @STEPS = (1,8,16,24,32,64);
-my @SIZES = (10,100,1000);
+my @SIZES = (100);
 my @CHATSERVERSIZES = (1,2,4,8,16,32);
 my @PHILOSOPHERS = (16, 32, 64, 128);
+my @SNAPSHOT_FOLDPERCENT = map {$_ / 10} (0..10);
 my @LAYOUTS = qw<alternating>;
 my %BASECONFIG = (
   # global locking does not deal well with sync iterations
@@ -624,6 +626,26 @@ sub selection {
           );
           push @runs, {name => $name, program => $program};
       }
+
+      @runs;
+    },
+
+    snapshotOverhead => sub {
+      my @runs;
+
+      my $name = "snapshotOverhead";
+      my $program = makeRunString( $name,
+        fromBaseConfig(
+          p => { # parameters
+            engineName => (join ',', @ENGINES_SNAPSHOTS),
+            size => (join ",", @SIZES),
+            foldPercent => (join ",", @SNAPSHOT_FOLDPERCENT)
+          },
+          t => 1,
+        ),
+        "benchmarks.restoring.RestoringSimple"
+      );
+      push @runs, {name => $name, program => $program};
 
       @runs;
     },
