@@ -24,14 +24,15 @@ my $CSVDIR = 'resultStore';
 my $OUTDIR = 'fig';
 my $BARGRAPH = abs_path("bargraph.pl");
 
-our $FONT = "Times";
+our $FONT = "Linux Libertine";
 our $FONTSIZE = "30";
 
 our $NAME_FINE = "Handcrafted";
-our $NAME_COARSE = "G-Lock";
+our $NAME_COARSE = "Unmodified";
 our $NAME_LOCKSWEEP = "MV-RP";
 our $NAME_PARRP = "ParRP";
 our $NAME_STM = "STM-RP";
+our $NAME_RESTORING = "Snapshots";
 
 our $YTIC_COUNT = 4;
 our $YRANGE_ROUND = 100;
@@ -51,6 +52,7 @@ our $VERTICAL_LINE = undef;
 our $X_VARYING = "Threads";
 our $BARGRAPH_LEGEND =
 "legendx=inside";
+our %ADDIITONAL_GNUPLOT_PARAMS = ();
 
 our $MANUAL_BARGRAPH_HACK = 0;
 
@@ -61,6 +63,7 @@ sub prettyName($name) {
   $name =~ s/stm|REScalaSTM|STM/$NAME_STM/;
   $name =~ s/synchron|REScalaSynchron/$NAME_COARSE/;
   $name =~ s/unmanaged/$NAME_FINE/;
+  $name =~ s/restoring/$NAME_RESTORING/;
   return $name;
 }
 
@@ -68,10 +71,11 @@ sub styleByName($name) {
   given($name) {
     when (/$NAME_PARRP/)     { 'linecolor "dark-green" lt 2 lw 2 pt 6  ps 1' }
     when (/$NAME_STM/)       { 'linecolor "blue"       lt 2 lw 2 pt 5  ps 1' }
-    when (/$NAME_COARSE/)    { 'linecolor "red"        lt 2 lw 2 pt 9  ps 1' }
+    when (/$NAME_COARSE/)    { 'linecolor "blue"       lt 2 lw 2 pt 9  ps 1' }
     when (/fair/)            { 'linecolor "light-blue" lt 2 lw 2 pt 8  ps 1' }
     when (/$NAME_LOCKSWEEP/) { 'linecolor "dark-green" lt 2 lw 2 pt 7  ps 1' }
     when (/$NAME_FINE/)      { 'linecolor "black"      lt 2 lw 2 pt 11 ps 1' }
+    when (/$NAME_RESTORING/) { 'linecolor "dark-green" lt 2 lw 2 pt 6  ps 1' }
     default { '' }
   }
 }
@@ -89,6 +93,35 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
   chdir $OUTDIR;
 
   makeLegend();
+  #miscBenchmarks();
+  restorationBenchmarks();
+
+  $DBH->commit();
+}
+
+sub restorationBenchmarks() {
+  { # fold percentages
+    my $benchmark = "benchmarks.restoring.RestoringSimple.countMany";
+    local $X_VARYING = "Param: foldPercent";
+    for my $foldNodes (queryChoices("Param: size", Benchmark => $benchmark)) {
+      #local $LEGEND_POS = "right top" if $foldNodes == 4;
+      plotBenchmarksFor("folds", "$foldNodes",
+        (map {{Title => $_, "Param: engineName" => $_ , Benchmark => $benchmark, "Param: size" => $foldNodes }}
+          queryChoices("Param: engineName", Benchmark => $benchmark, "Param: size" => $foldNodes)),);
+    }
+  }
+
+  { # resotring vs deriving
+    local $X_VARYING = "Param: size";
+    local $LEGEND_POS = "right top";
+    local %ADDIITONAL_GNUPLOT_PARAMS = (logscale => "x 10");
+    plotBenchmarksFor("restoreVsDerive", "restoreVsDerive",
+      {Title => "restore", Benchmark => "benchmarks.restoring.RestoringSnapshotVsRecomputationA.restored"},
+      {Title => "derive", Benchmark => "benchmarks.restoring.RestoringSnapshotVsRecomputationB.derived"});
+  }
+}
+
+sub miscBenchmarks() {
 
   for my $dynamic (queryChoices("Param: tableType")) {
     for my $philosophers (queryChoices("Param: philosophers", "Param: tableType" => $dynamic)) {
@@ -316,8 +349,6 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
       (map {{Title => $_, "Param: engineName" => $_ , Benchmark => "UniverseCaseStudy" }}
           queryChoices("Param: engineName", Benchmark => "UniverseCaseStudy")));
   }
-
-  $DBH->commit();
 }
 
 sub query($varying, @keys) {
@@ -456,7 +487,8 @@ sub plotDatasets($group, $name, $additionalParams, @datasets) {
     #ylabel => "Operations per millisecond",
     # xrange => "reverse",
     %MARGINS,
-    %$additionalParams
+    %$additionalParams,
+    %ADDIITONAL_GNUPLOT_PARAMS
   );
   if (defined $VERTICAL_LINE) {
     $chart->line(
