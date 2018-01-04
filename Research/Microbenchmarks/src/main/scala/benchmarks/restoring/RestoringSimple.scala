@@ -76,11 +76,11 @@ class RestoringVar[S <: Struct] {
 @Fork(3)
 @Threads(1)
 @State(Scope.Thread)
-class RestoringSnapshotVsInitial[S <: Struct] {
+class RestoringSnapshotVsInitial {
 
   var snapshot: scala.collection.mutable.Map[String, String] = _
 
-  def build(implicit engine: ReStoringEngine, size: Int) = {
+  def build[S <: Struct](implicit engine: Engine[S], size: Int) = {
     val source = engine.Evt[Int]()
     val res = for (i <- 1 to size) yield {
       source.count.map(_+1).map(_+1)
@@ -104,6 +104,11 @@ class RestoringSnapshotVsInitial[S <: Struct] {
   def restored(size: Size) = {
     val engine = new ReStoringEngine(restoreFrom = snapshot)
     build(engine, size.size)
+  }
+
+  @Benchmark
+  def noSnapshots(size: Size) = {
+    build(rescala.Engines.synchron, size.size)
   }
 
 
