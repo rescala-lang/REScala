@@ -24,10 +24,12 @@ my $SCHEDULER_TIME = "0:55:00";
 my $SCHEDULER_REQUIRE = "avx\\&mpi";
 my $SCHEDULER_CORES = "16";
 
-my @ENGINES = qw<parrp stm synchron locksweep>;
-my @ENGINES_UNMANAGED = (@ENGINES, "unmanaged");
+# my @ENGINES = qw<parrp stm synchron locksweep>;
+my @ENGINES = qw<synchron>;
+# my @ENGINES_UNMANAGED = (@ENGINES, "unmanaged");
+my @ENGINES_UNMANAGED = (@ENGINES);
 my @ENGINES_SNAPSHOTS = ("synchron", "restoring");
-my @THREADS = (1..16);
+my @THREADS = (1);
 my @REDUCED_THREADS = (8);
 my @STEPS = (1,8,16,24,32,64);
 my @SIZES = (100);
@@ -59,7 +61,7 @@ chomp $GITREF;
 
 my $command = shift @ARGV;
 # my @RUN = @ARGV ? @ARGV : qw<philosophers halfDynamicPhilosophers simplePhil expensiveConflict singleDynamic singleVar turnCreation simpleFan simpleReverseFan simpleNaturalGraph multiReverseFan stmbank chatServer simpleChain dynamicStacks noconflictPhilosophers>;
-my @RUN = @ARGV ? @ARGV : qw<snapshotOverhead snapshotRestoringVsInitial snapshotRestoringVsRecomputation errorPropagationVsMonadic>;
+my @RUN = @ARGV ? @ARGV : qw<snapshotOverhead snapshotRestoringVsInitial snapshotRestoringVsRecomputation errorPropagationVsMonadic simpleNaturalGraph>;
 say "selected: " . (join " ", sort @RUN);
 say "available: " . (join " ", sort keys %{&selection()});
 
