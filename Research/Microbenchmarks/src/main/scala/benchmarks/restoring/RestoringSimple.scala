@@ -125,7 +125,7 @@ class RestoringSnapshotVsRecomputationA[S <: Struct] {
 
   var snapshot: scala.collection.mutable.Map[String, String] = _
 
-  def build(implicit engine: ReStoringEngine, size: Int) = {
+  def build(implicit engine: ReStoringEngine) = {
     val source = engine.Evt[Int]()
     val res = source.list().map(_.size)
     (source, res)
@@ -134,7 +134,7 @@ class RestoringSnapshotVsRecomputationA[S <: Struct] {
   @Setup
   def setup(size: Size, workload: Workload) = {
     val engine = new ReStoringEngine()
-    val (source, res) = build(engine, size.size)
+    val (source, res) = build(engine)
     for (i <- 1 to size.size) source.fire(i)(engine)
     snapshot = engine.snapshot()
   }
@@ -142,7 +142,7 @@ class RestoringSnapshotVsRecomputationA[S <: Struct] {
   @Benchmark
   def restored(size: Size) = {
     val engine = new ReStoringEngine(restoreFrom = snapshot)
-    build(engine, size.size)
+    build(engine)
   }
 }
 
@@ -157,7 +157,7 @@ class RestoringSnapshotVsRecomputationB[S <: Struct] {
 
   var snapshot: scala.collection.mutable.Map[String, String] = _
 
-  def build(implicit engine: ReStoringEngine, size: Int) = {
+  def build(implicit engine: ReStoringEngine) = {
     val source = engine.Evt[Int]()
     val res = source.count().map(List.tabulate(_)(identity))
     (source, res)
@@ -166,7 +166,7 @@ class RestoringSnapshotVsRecomputationB[S <: Struct] {
   @Setup
   def setup(size: Size, workload: Workload) = {
     val engine = new ReStoringEngine()
-    val (source, res) = build(engine, size.size)
+    val (source, res) = build(engine)
     for (i <- 1 to size.size) source.fire(i)(engine)
     snapshot = engine.snapshot()
   }
@@ -174,6 +174,6 @@ class RestoringSnapshotVsRecomputationB[S <: Struct] {
   @Benchmark
   def derived(size: Size) = {
     val engine = new ReStoringEngine(restoreFrom = snapshot)
-    build(engine, size.size)
+    build(engine)
   }
 }
