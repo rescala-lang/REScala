@@ -205,7 +205,7 @@ lazy val cfg = new {
 
   val base = List(
     organization := "de.tuda.stg",
-    version := "0.20.0",
+    version := "0.21.0-SNAPSHOT",
     scalaVersion := version_212,
     baseScalac,
     autoAPIMappings := true // scaladoc
@@ -217,12 +217,48 @@ lazy val cfg = new {
     lib.scalatest
   )
 
-  val bintray = List(
+
+  /*
+  * Have your Bintray credentials stored as
+    [documented here](http://www.scala-sbt.org/1.0/docs/Publishing.html#Credentials),
+    using realm `Bintray API Realm` and host `api.bintray.com`
+  * Log in to Bintray and publish the files that were sent
+  */
+  lazy val bintray = Seq(
+    publishArtifact in Compile := true,
+    publishArtifact in Test := false,
     licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")),
-    bintrayOrganization := Some("stg-tud")
+    scmInfo := Some(
+      ScmInfo(
+        browseUrl = url("https://github.com/guidosalva/REScala/"),
+        connection =
+          "scm:git:git@github.com:guidosalva/REScala.git"
+      )
+    ),
+    // Publish to Bintray, without the sbt-bintray plugin
+    publishMavenStyle := true,
+    publishTo := {
+      val proj = moduleName.value
+      val ver  = version.value
+      if (isSnapshot.value) {
+        None // Bintray does not support snapshots
+      } else {
+        val url = new java.net.URL(
+          s"https://api.bintray.com/content/stg-tud/maven/$proj/$ver")
+        val patterns = Resolver.ivyStylePatterns
+        Some(Resolver.url("bintray", url)(patterns))
+      }
+    }
   )
 
-  val noPublish = List(
+  // val bintrayPlugin = List(
+  //   licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")),
+  //   bintrayOrganization := Some("stg-tud")
+  // )
+
+  lazy val noPublish = Seq(
+    publishArtifact := false,
+    packagedArtifacts := Map.empty,
     publish := {},
     publishLocal := {}
   )
