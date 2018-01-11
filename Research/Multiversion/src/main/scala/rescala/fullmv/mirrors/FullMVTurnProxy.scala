@@ -9,8 +9,8 @@ trait FullMVTurnProxy extends SubsumableLockEntryPoint {
   def addRemoteBranch(forPhase: TurnPhase.Type): Future[Unit]
   def asyncRemoteBranchComplete(forPhase: TurnPhase.Type): Unit
 
-  def acquirePhaseLockAndGetEstablishmentBundle(): Future[(TurnPhase.Type, TransactionSpanningTreeNode[FullMVTurn])]
-  def addPredecessorAndReleasePhaseLock(predecessorSpanningTree: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit]
+  def acquirePhaseLockIfAtMost(maxPhase: TurnPhase.Type): Future[TurnPhase.Type]
+  def addPredecessor(tree: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit]
   def asyncReleasePhaseLock(): Unit
 
   def maybeNewReachableSubtree(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit]

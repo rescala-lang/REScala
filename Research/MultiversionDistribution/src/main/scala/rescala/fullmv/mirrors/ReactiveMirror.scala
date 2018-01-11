@@ -78,7 +78,7 @@ class ReactiveMirror[A](val getValue: FullMVTurn => A, val reflectionProxy: Reac
   }
   override def latestValue: Value = ???
   override def reevIn(turn: FullMVTurn): Nothing = ???
-  override def reevOut(turn: FullMVTurn, maybeValue: Option[Value]): NotificationResultAction.NotificationOutAndSuccessorOperation[FullMVTurn, Reactive[FullMVStruct]] = ???
+  override def reevOut(turn: FullMVTurn, maybeValue: Option[Value]): NotificationResultAction.ReevOutResult[FullMVTurn, Reactive[FullMVStruct]] = ???
   override def dynamicBefore(txn: FullMVTurn): Nothing = ???
   override def staticBefore(txn: FullMVTurn): Nothing = ???
   override def dynamicAfter(txn: FullMVTurn): Nothing = ???

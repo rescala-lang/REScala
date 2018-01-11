@@ -1,29 +1,31 @@
 package rescala.fullmv
 
 import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
-import java.util.concurrent.locks.{LockSupport, ReentrantLock}
+import java.util.concurrent.locks.{LockSupport, ReentrantReadWriteLock}
 
+import rescala.core.{InitialChange, ReSource}
 import rescala.fullmv.TurnPhase.Type
 import rescala.fullmv.mirrors.{FullMVTurnReflectionProxy, Host}
 import rescala.fullmv.sgt.synchronization._
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 
 class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GUID, val userlandThread: Thread, initialLock: SubsumableLock) extends FullMVTurn {
+  var initialChanges: collection.Map[ReSource[FullMVStruct], InitialChange[FullMVStruct]] = _
+
   // counts the sum of in-flight notifications, in-progress reevaluations.
   var activeBranches = new AtomicInteger(0)
 
   object replicatorLock
-  val phaseLock = new ReentrantLock()
-  object phaseParking
+  val phaseLock = new ReentrantReadWriteLock()
   @volatile var phase: TurnPhase.Type = TurnPhase.Initialized
 
   val subsumableLock: AtomicReference[SubsumableLock] = new AtomicReference(initialLock)
   val successorsIncludingSelf: ArrayBuffer[FullMVTurn] = ArrayBuffer(this) // this is implicitly a set
-  val selfNode = new MutableTransactionSpanningTreeNode[FullMVTurn](this)
-  @volatile var predecessorSpanningTreeNodes: Map[FullMVTurn, MutableTransactionSpanningTreeNode[FullMVTurn]] = Map(this -> selfNode)
+  @volatile var selfNode = new MutableTransactionSpanningTreeRoot[FullMVTurn](this) // this is also implicitly a set
+  @volatile var predecessorSpanningTreeNodes: Map[FullMVTurn, IMutableTransactionSpanningTreeNode[FullMVTurn]] = Map(this -> selfNode)
 
   var replicators: Set[FullMVTurnReflectionProxy] = Set.empty
 
@@ -59,46 +61,72 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
 
   def awaitAndSwitchPhase(newPhase: TurnPhase.Type): Unit = {
     assert(newPhase > this.phase, s"$this cannot progress backwards to phase $newPhase.")
-    @tailrec def awaitAndAtomicCasPhaseAndGetReps(): Set[FullMVTurnReflectionProxy] = {
-      awaitBranchCountZero()
-      val compare = awaitAllPredecessorsPhase(newPhase)
-      phaseLock.lock()
-      val success = try {
-        if (activeBranches.get == 0 && (predecessorSpanningTreeNodes eq compare)) {
-          replicatorLock.synchronized {
-            phaseParking.synchronized {
-              this.phase = newPhase
-              phaseParking.notifyAll()
+    @inline @tailrec def awaitAndSwitchPhase0(firstUnknownPredecessorIndex: Int, parkAfter: Long, registeredForWaiting: FullMVTurn): Unit = {
+      if (activeBranches.get() > 0) {
+        if (registeredForWaiting != null) {
+          registeredForWaiting.waiters.remove(this.userlandThread)
+//          parkRestart.add(head.asInstanceOf[ReevaluationResultHandling[ReSource[FullMVStruct]]].node.toString)
+//        } else if (parkAfter > 0) {
+//          spinRestart.add(head.asInstanceOf[ReevaluationResultHandling[ReSource[FullMVStruct]]].node.toString)
+        }
+        awaitBranchCountZero()
+        awaitAndSwitchPhase0(firstUnknownPredecessorIndex, 0L, null)
+      } else if (firstUnknownPredecessorIndex == selfNode.size) {
+        assert(registeredForWaiting == null, s"$this is still registered on $registeredForWaiting as waiter despite having finished waiting for it")
+        phaseLock.writeLock.lock()
+        // make thread-safe sure that we haven't received any new predecessors that might
+        // not be in the next phase yet. Only once that's sure we can also thread-safe sure
+        // check that no predecessors pushed any tasks into our queue anymore. And only then
+        // can we phase switch.
+        if (firstUnknownPredecessorIndex == selfNode.size && activeBranches.get() == 0) {
+          this.phase = newPhase
+          phaseLock.writeLock.unlock()
+          val it = waiters.entrySet().iterator()
+          while (it.hasNext) {
+            val waiter = it.next()
+            if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] ${FullMVTurnImpl.this} phase switch unparking ${waiter.getKey.getName}.")
+            if (waiter.getValue <= newPhase) LockSupport.unpark(waiter.getKey)
+          }
+          if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this switched phase.")
+        } else {
+          phaseLock.writeLock.unlock()
+          awaitAndSwitchPhase0(firstUnknownPredecessorIndex, 0L, null)
+        }
+      } else {
+        val currentUnknownPredecessor = selfNode.children(firstUnknownPredecessorIndex).txn
+        if(currentUnknownPredecessor.phase < newPhase) {
+          if (registeredForWaiting != null) {
+            if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this parking for $currentUnknownPredecessor.")
+            LockSupport.park(currentUnknownPredecessor)
+            if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this unparked.")
+            awaitAndSwitchPhase0(firstUnknownPredecessorIndex, 0L, currentUnknownPredecessor)
+          } else {
+            val now = System.nanoTime()
+            val parkTimeSet = parkAfter > 0L
+            if(parkTimeSet && now > parkAfter) {
+              currentUnknownPredecessor.waiters.put(this.userlandThread, newPhase)
+              awaitAndSwitchPhase0(firstUnknownPredecessorIndex, 0L, currentUnknownPredecessor)
+            } else {
+              val end = now + FullMVTurnImpl.CONSTANT_BACKOFF
+              do {
+                Thread.`yield`()
+              } while (System.nanoTime() < end)
+              awaitAndSwitchPhase0(firstUnknownPredecessorIndex, if(parkTimeSet) parkAfter else now + FullMVTurnImpl.MAX_BACKOFF, null)
             }
-            if (newPhase == TurnPhase.Completed) {
-              predecessorSpanningTreeNodes = Map.empty
-              selfNode.children = Set.empty
-              val l = subsumableLock.getAndSet(null)
-              if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this deallocating, dropping reference on $l.")
-              l.localSubRefs(1)
-              host.dropInstance(guid, this)
-            }
-            if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this switched phase.")
-            Some(replicators)
           }
         } else {
-          None
+          if (registeredForWaiting != null) {
+            currentUnknownPredecessor.waiters.remove(this.userlandThread)
+            //            parkSwitch += 1
+            //          } else if (parkAfter > 0) {
+            //            spinSwitch += 1
+          }
+          awaitAndSwitchPhase0(firstUnknownPredecessorIndex + 1, 0L, null)
         }
-      } finally {
-        phaseLock.unlock()
-      }
-      success match {
-        case None => awaitAndAtomicCasPhaseAndGetReps()
-        case Some(x) => x
       }
     }
-    val reps = awaitAndAtomicCasPhaseAndGetReps()
-    val forwards = reps.map(_.newPhase(newPhase))
-    for(call <- forwards) {
-      Await.result(call, host.timeout)
-    }
+    awaitAndSwitchPhase0(0, 0L, null)
   }
-
 
   private def awaitBranchCountZero(): Unit = {
     while (activeBranches.get > 0) {
@@ -106,22 +134,73 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
     }
   }
 
-  private def awaitAllPredecessorsPhase(atLeast: TurnPhase.Type) = {
-    val preds = predecessorSpanningTreeNodes
-    if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this awaiting phase $atLeast+ on predecessors ${preds.keySet - this}")
-    preds.keySet.foreach { waitFor =>
-      if(waitFor != this) waitFor.awaitPhase(atLeast)
-    }
-    preds
+  private def beginPhase(phase: TurnPhase.Type): Unit = {
+    assert(this.phase == TurnPhase.Initialized, s"$this already begun")
+    assert(activeBranches.get() == 0, s"$this cannot begin $phase: ${activeBranches.get()} branches active!")
+    assert(selfNode.size == 0, s"$this cannot begin $phase: already has predecessors!")
+    if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this begun.")
+    this.phase = phase
   }
 
+  def beginFraming(): Unit = beginPhase(TurnPhase.Framing)
+  def beginExecuting(): Unit = beginPhase(TurnPhase.Executing)
 
-  //========================================================Remote State Control============================================================
+  //  def resetStatistics() = {
+  //    spinSwitch = 0
+  //    parkSwitch = 0
+  //    spinRestart.clear()
+  //    parkRestart.clear()
+  //  }
 
-  override def awaitPhase(atLeast: TurnPhase.Type): Unit = phaseParking.synchronized {
-    while(phase < atLeast) {
-      phaseParking.wait()
-    }
+  def completeFraming(): Unit = {
+    assert(this.phase == TurnPhase.Framing, s"$this cannot complete framing: Not in framing phase")
+    //    resetStatistics()
+    awaitAndSwitchPhase(TurnPhase.Executing)
+    assert(phase == TurnPhase.Executing, s"wat? $this")
+    //    FullMVTurn.framesync.synchronized {
+    //      val maybeCount1 = FullMVTurn.spinSwitchStatsFraming.get(spinSwitch)
+    //      FullMVTurn.spinSwitchStatsFraming.put(spinSwitch, if(maybeCount1 == null) 1L else maybeCount1 + 1L)
+    //      val maybeCount2 = FullMVTurn.parkSwitchStatsFraming.get(parkSwitch)
+    //      FullMVTurn.parkSwitchStatsFraming.put(parkSwitch, if(maybeCount2 == null) 1L else maybeCount2 + 1L)
+    //      val it1 = spinRestart.iterator()
+    //      while(it1.hasNext) {
+    //        val key = it1.next()
+    //        val maybeCount3 = FullMVTurn.spinRestartStatsFraming.get(key)
+    //        FullMVTurn.spinRestartStatsFraming.put(key, if (maybeCount3 == null) 1L else maybeCount3 + 1L)
+    //      }
+    //      val it2 = parkRestart.iterator()
+    //      while(it2.hasNext) {
+    //        val key = it2.next()
+    //        val maybeCount4 = FullMVTurn.parkRestartStatsFraming.get(key)
+    //        FullMVTurn.parkRestartStatsFraming.put(key, if (maybeCount4 == null) 1L else maybeCount4 + 1L)
+    //      }
+    //    }
+  }
+
+  def completeExecuting(): Unit = {
+    assert(this.phase == TurnPhase.Executing, s"$this cannot complete executing: Not in executing phase")
+    //    resetStatistics()
+    awaitAndSwitchPhase(TurnPhase.Completed)
+    predecessorSpanningTreeNodes = Map.empty
+    selfNode = null
+    //    FullMVTurn.execsync.synchronized {
+    //      val maybeCount1 = FullMVTurn.spinSwitchStatsExecuting.get(spinSwitch)
+    //      FullMVTurn.spinSwitchStatsExecuting.put(spinSwitch, if(maybeCount1 == null) 1L else maybeCount1 + 1L)
+    //      val maybeCount2 = FullMVTurn.parkSwitchStatsExecuting.get(parkSwitch)
+    //      FullMVTurn.parkSwitchStatsExecuting.put(parkSwitch, if(maybeCount2 == null) 1L else maybeCount2 + 1L)
+    //      val it1 = spinRestart.iterator()
+    //      while(it1.hasNext) {
+    //        val key = it1.next()
+    //        val maybeCount3 = FullMVTurn.spinRestartStatsExecuting.get(key)
+    //        FullMVTurn.spinRestartStatsExecuting.put(key, if (maybeCount3 == null) 1L else maybeCount3 + 1L)
+    //      }
+    //      val it2 = parkRestart.iterator()
+    //      while(it2.hasNext) {
+    //        val key = it2.next()
+    //        val maybeCount4 = FullMVTurn.parkRestartStatsExecuting.get(key)
+    //        FullMVTurn.parkRestartStatsExecuting.put(key, if (maybeCount4 == null) 1L else maybeCount4 + 1L)
+    //      }
+    //    }
   }
 
   //========================================================Ordering Search and Establishment Interface============================================================
@@ -131,60 +210,66 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
     predecessorSpanningTreeNodes.contains(txn)
   }
 
-
-  override def acquirePhaseLockAndGetEstablishmentBundle(): Future[(TurnPhase.Type, TransactionSpanningTreeNode[FullMVTurn])] = {
-    // TODO think about how and where to try{}finally{unlock()} this..
-    phaseLock.lock()
-    Future.successful((phase, selfNode))
+  def acquirePhaseLockIfAtMost(maxPhase: TurnPhase.Type): Future[TurnPhase.Type] = Future.successful {
+    val pOptimistic = phase
+    if(pOptimistic > maxPhase) {
+      pOptimistic
+    } else {
+      phaseLock.readLock().lock()
+      val pSecure = phase
+      if (pSecure > maxPhase) phaseLock.readLock().unlock()
+      pSecure
+    }
   }
 
-  def addPredecessorAndReleasePhaseLock(predecessorSpanningTree: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = {
-    @inline def predecessor = predecessorSpanningTree.txn
-    assert(Await.result(predecessor.getLockedRoot, host.timeout).isDefined || predecessor.phase == TurnPhase.Completed, s"establishing order $predecessor -> $this: predecessor not locked")
-    assert(Await.result(getLockedRoot, host.timeout).isDefined, s"establishing order $predecessor -> $this: successor not locked")
-    assert(!isTransitivePredecessor(predecessor), s"attempted to establish already existing predecessor relation $predecessor -> $this")
-    if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this new predecessor $predecessor.")
-    val possiblyRemoteExecutions = successorsIncludingSelf.map(_.maybeNewReachableSubtree(this, predecessorSpanningTree))
-    for(pre <- possiblyRemoteExecutions) {
-      Await.result(pre, host.timeout)
+  def addPredecessor(predecessorSpanningTree: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = {
+    assert(SerializationGraphTracking.lock.isHeldByCurrentThread, s"addPredecessor by thread that doesn't hold the SGT lock")
+    assert(!isTransitivePredecessor(predecessorSpanningTree.txn), s"attempted to establish already existing predecessor relation ${predecessorSpanningTree.txn} -> $this")
+    if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this new predecessor ${predecessorSpanningTree.txn}.")
+    val incompleteCallsAccumulator = ArrayBuffer[Future[Unit]]()
+    for(succ <- successorsIncludingSelf) {
+      val call = succ.maybeNewReachableSubtree(this, predecessorSpanningTree)
+      if(!call.isCompleted) incompleteCallsAccumulator += call
     }
-    phaseLock.unlock()
-    Future.unit
+    incompleteCallsAccumulator.foldLeft(Future.unit) { (fu, call) => fu.flatMap(_ => call)(FullMVEngine.notWorthToMoveToTaskpool) }
   }
 
   override def maybeNewReachableSubtree(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = {
     if (!isTransitivePredecessor(spanningSubTreeRoot.txn)) {
-      val buffer = ArrayBuffer[FullMVTurn]()
+      val incompleteCallsAccumulator = ArrayBuffer[Future[Unit]]()
       val reps = replicatorLock.synchronized {
-        copySubTreeRootAndAssessChildren(attachBelow, spanningSubTreeRoot, buffer)
+        copySubTreeRootAndAssessChildren(attachBelow, spanningSubTreeRoot, incompleteCallsAccumulator)
         replicators
       }
 
-      val newSuccessorRemoteCalls = buffer.map(_.newSuccessor(this))
-      val preds = buffer.map(_.guid)
-      val newPredecessorRemoteCalls = reps.map(_.newPredecessors(preds))
+      for (replicator <- reps) {
+        val newPredCall = replicator.newPredecessors(selfNode)
+        if (!newPredCall.isCompleted) incompleteCallsAccumulator += newPredCall
+      }
 
-      for(call <- newSuccessorRemoteCalls) {
-        Await.result(call, host.timeout)
-      }
-      for(call <- newPredecessorRemoteCalls) {
-        Await.result(call, host.timeout)
-      }
+//      for(call <- incompleteCallsAccumulator) Await.result(call, host.timeout)
+//    }
+//    Future.unit
+      incompleteCallsAccumulator.foldLeft(Future.unit) { (fu, call) => fu.flatMap(_ => call)(FullMVEngine.notWorthToMoveToTaskpool) }
+    } else {
+      Future.unit
     }
-    Future.unit
   }
 
-  private def copySubTreeRootAndAssessChildren(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn], buffer: collection.generic.Growable[FullMVTurn]): Unit = {
+  private def copySubTreeRootAndAssessChildren(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn], newSuccessorCallsAccumulator: collection.generic.Growable[Future[Unit]]): Unit = {
     val newTransitivePredecessor = spanningSubTreeRoot.txn
     assert(newTransitivePredecessor.host == host, s"new predecessor $newTransitivePredecessor of $this is hosted on ${newTransitivePredecessor.host} different from $host")
-    buffer += newTransitivePredecessor
+    val newSuccessorCall = newTransitivePredecessor.newSuccessor(this)
+    if(!newSuccessorCall.isCompleted) newSuccessorCallsAccumulator += newSuccessorCall
     val copiedSpanningTreeNode = new MutableTransactionSpanningTreeNode(newTransitivePredecessor)
     predecessorSpanningTreeNodes += newTransitivePredecessor -> copiedSpanningTreeNode
-    predecessorSpanningTreeNodes(attachBelow).children += copiedSpanningTreeNode
+    predecessorSpanningTreeNodes(attachBelow).addChild(copiedSpanningTreeNode)
 
-    for (child <- spanningSubTreeRoot.children) {
+    val it = spanningSubTreeRoot.iterator()
+    while(it.hasNext) {
+      val child = it.next()
       if(!isTransitivePredecessor(child.txn)) {
-        copySubTreeRootAndAssessChildren(newTransitivePredecessor, child, buffer)
+        copySubTreeRootAndAssessChildren(newTransitivePredecessor, child, newSuccessorCallsAccumulator)
       }
     }
   }
@@ -195,16 +280,15 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
     Future.unit
   }
 
-  override def asyncReleasePhaseLock(): Unit = phaseLock.unlock()
+  override def asyncReleasePhaseLock(): Unit = phaseLock.readLock().unlock()
 
   //========================================================State Replication============================================================
 
-  override def addReplicator(replicator: FullMVTurnReflectionProxy): (TurnPhase.Type, Seq[Host.GUID]) = {
-    val (p, preds) = replicatorLock.synchronized {
+  override def addReplicator(replicator: FullMVTurnReflectionProxy): (TurnPhase.Type, TransactionSpanningTreeNode[FullMVTurn]) = {
+    replicatorLock.synchronized {
       replicators += replicator
-      (phase, predecessorSpanningTreeNodes.keySet)
+      (phase, selfNode)
     }
-    (p, (preds - this).toSeq.map(_.guid))
   }
 
   //========================================================SSG SCC Mutual Exclusion Control============================================================
@@ -261,4 +345,20 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
   //========================================================ToString============================================================
 
   override def toString: String = s"FullMVTurn($guid on $host, ${TurnPhase.toString(phase)}${if(activeBranches.get != 0) s"(${activeBranches.get})" else ""})"
+}
+
+object FullMVTurnImpl {
+  val CONSTANT_BACKOFF = 7500L // 7.5µs
+  val MAX_BACKOFF = 100000L // 100µs
+
+  //  object framesync
+  //  var spinSwitchStatsFraming = new java.util.HashMap[Int, java.lang.Long]()
+  //  var parkSwitchStatsFraming = new java.util.HashMap[Int, java.lang.Long]()
+  //  val spinRestartStatsFraming = new java.util.HashMap[String, java.lang.Long]()
+  //  val parkRestartStatsFraming =  new java.util.HashMap[String, java.lang.Long]()
+  //  object execsync
+  //  var spinSwitchStatsExecuting = new java.util.HashMap[Int, java.lang.Long]()
+  //  var parkSwitchStatsExecuting = new java.util.HashMap[Int, java.lang.Long]()
+  //  val spinRestartStatsExecuting = new java.util.HashMap[String, java.lang.Long]()
+  //  val parkRestartStatsExecuting = new java.util.HashMap[String, java.lang.Long]()
 }

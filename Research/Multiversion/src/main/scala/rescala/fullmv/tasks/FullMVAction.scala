@@ -4,25 +4,12 @@ import java.util.concurrent.RecursiveAction
 
 import rescala.fullmv.FullMVTurn
 
-import scala.annotation.tailrec
-
 trait FullMVAction extends RecursiveAction {
   val turn: FullMVTurn
-
-  def doCompute(): Traversable[FullMVAction]
-
-  @tailrec final override def compute(): Unit = {
-    val forks = try{
-     doCompute()
-    } catch {
-      case e: Throwable =>
-        new Exception(s"Task $this failed on Thread ${Thread.currentThread().getName}.", e).printStackTrace()
-        Traversable.empty
-    }
-    if(forks.nonEmpty) {
-      val self = forks.head
-      for (fork <- forks.tail) fork.fork()
-      self.compute()
+  override def compute(): Unit = {
+    try { doCompute() } catch {
+      case t: Throwable => new Exception(this + " failed on " + Thread.currentThread().getName, t).printStackTrace()
     }
   }
+  def doCompute(): Unit
 }

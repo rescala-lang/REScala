@@ -1,6 +1,7 @@
 package rescala.fullmv.transmitter
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
+import java.util.concurrent.locks.LockSupport
 import java.util.concurrent.{ConcurrentHashMap, ThreadLocalRandom}
 
 import rescala.core.Reactive
@@ -29,7 +30,7 @@ object ReactiveTransmittable {
   type MessageWithInfrastructure[T] = (Long, T)
 
   type Msg[+T] = (String, Host.GUID, Host.GUID, Option[T], Seq[(Host.GUID, T)], TurnPhase.Type, CaseClassTransactionSpanningTreeNode[Host.GUID], Boolean, Long, Seq[Host.GUID])
-  def allEmpty[T](name: String): Msg[T] = (name, Host.dummyGuid, Host.dummyGuid, None, Seq.empty, TurnPhase.dummy, CaseClassTransactionSpanningTreeNode[Host.GUID](Host.dummyGuid, Set.empty), false, 0L, Seq.empty)
+  def allEmpty[T](name: String): Msg[T] = (name, Host.dummyGuid, Host.dummyGuid, None, Seq.empty, TurnPhase.dummy, CaseClassTransactionSpanningTreeNode[Host.GUID](Host.dummyGuid, Array.empty), false, 0L, Seq.empty)
   val ASYNC_REQUEST = 0
 
   sealed trait Message[+P] {
@@ -46,7 +47,7 @@ object ReactiveTransmittable {
       case AsyncNewValue(turn, value) => allEmpty("AsyncNewValue").copy(_2 = turn, _4 = Some(value))
       case AsyncNewValueFollowFrame(turn, value, followFrame) => allEmpty("AsyncNewValueFollowFrame").copy(_2 = turn, _3 = followFrame, _4 = Some(value))
       case AddReplicator(turn) => allEmpty("AddReplicator").copy(_2 = turn)
-      case AddReplicatorResponse(initPhase, initPreds) => allEmpty("AddReplicatorResponse").copy(_6 = initPhase, _10 = initPreds)
+      case AddReplicatorResponse(initPhase, initPreds) => allEmpty("AddReplicatorResponse").copy(_6 = initPhase, _7 = initPreds)
       case AddRemoteBranch(turn, forPhase) => allEmpty("AddRemoteBranch").copy(_2 = turn, _6 = forPhase)
       case AsyncRemoteBranchComplete(turn, forPhase) => allEmpty("AsyncRemoteBranchComplete").copy(_2 = turn, _6 = forPhase)
       case AcquirePhaseLockAndGetEstablishmentBundle(turn) => allEmpty("AcquirePhaseLockAndGetEstablishmentBundle").copy(_2 = turn)
@@ -69,7 +70,7 @@ object ReactiveTransmittable {
       case LockTrySubsume(lock, lockedNewParent) => allEmpty("LockTrySubsume").copy(_2 = lock, _3 = lockedNewParent)
       case LockUnlock(lock) => allEmpty("LockUnlock").copy(_2 = lock)
       case LockRemoteRefDropped(lock) => allEmpty("LockRemoteRefDropped").copy(_2 = lock)
-      case NewPredecessors(turn, newPredecessors) => allEmpty("NewPredecessors").copy(_2 = turn, _10 = newPredecessors)
+      case NewPredecessors(turn, newPredecessors) => allEmpty("NewPredecessors").copy(_2 = turn, _7 = newPredecessors)
       case NewPhase(turn, phase) => allEmpty("NewPhase").copy(_2 = turn, _6 = phase)
     }
   }
@@ -87,7 +88,7 @@ object ReactiveTransmittable {
       case ("AsyncNewValue", turn, _, Some(value), _, _, _, _, _, _) => AsyncNewValue(turn, value)
       case ("AsyncNewValueFollowFrame", turn, followFrame, Some(value), _, _, _, _, _, _) => AsyncNewValueFollowFrame(turn, value, followFrame)
       case ("AddReplicator", turn, _, _, _, _, _, _, _, _) => AddReplicator(turn)
-      case ("AddReplicatorResponse", _, _, _, _, initPhase, _, _, _, initPreds) => AddReplicatorResponse(initPhase, initPreds)
+      case ("AddReplicatorResponse", _, _, _, _, initPhase, initPreds, _, _, _) => AddReplicatorResponse(initPhase, initPreds)
       case ("AddRemoteBranch", turn, _, _, _, forPhase, _, _, _, _) => AddRemoteBranch(turn, forPhase)
       case ("AsyncRemoteBranchComplete", turn, _, _, _, forPhase, _, _, _, _)=> AsyncRemoteBranchComplete(turn, forPhase)
       case ("AcquirePhaseLockAndGetEstablishmentBundle", turn, _, _, _, _, _, _, _, _) => AcquirePhaseLockAndGetEstablishmentBundle(turn)
@@ -110,7 +111,7 @@ object ReactiveTransmittable {
       case ("LockTrySubsume", lock, lockedNewParent, _, _, _, _, _, _, _) => LockTrySubsume(lock, lockedNewParent)
       case ("LockUnlock", lock, _, _, _, _, _, _, _, _) => LockUnlock(lock)
       case ("LockRemoteRefDropped", lock, _, _, _, _, _, _, _, _) => LockRemoteRefDropped(lock)
-      case ("NewPredecessors", turn, _, _, _, _, _, _, _, newPredecessors) => NewPredecessors(turn, newPredecessors)
+      case ("NewPredecessors", turn, _, _, _, _, newPredecessors, _, _, _) => NewPredecessors(turn, newPredecessors)
       case ("NewPhase", turn, _, _, _, phase, _, _, _, _) => NewPhase(turn, phase)
       case otherwise =>
         val e = new AssertionError("Unrecognized message: " + otherwise)
@@ -138,7 +139,7 @@ object ReactiveTransmittable {
   case class AsyncNewValueFollowFrame[P](turn: Host.GUID, value: P, followFrame: Host.GUID) extends Async[P]
 
   case class AddReplicator(turn: Host.GUID) extends Request[Nothing] { override type Response = AddReplicatorResponse }
-  case class AddReplicatorResponse(initPhase: TurnPhase.Type, initPreds: Seq[Host.GUID]) extends Response[Nothing]
+  case class AddReplicatorResponse(initPhase: TurnPhase.Type, initPreds: CaseClassTransactionSpanningTreeNode[Host.GUID]) extends Response[Nothing]
   case class AddRemoteBranch(turn: Host.GUID, forPhase: TurnPhase.Type) extends Request[Nothing] { override type Response = UnitResponse.type }
   case class AsyncRemoteBranchComplete(turn: Host.GUID, forPhase: TurnPhase.Type) extends Async[Nothing]
   case class AcquirePhaseLockAndGetEstablishmentBundle(turn: Host.GUID) extends Request[Nothing]{ override type Response = AcquirePhaseLockAndGetEstablishmentBundleResponse }
@@ -162,7 +163,7 @@ object ReactiveTransmittable {
   case class LockUnlock(lock: Host.GUID) extends Async[Nothing]
   case class LockRemoteRefDropped(lock: Host.GUID) extends Async[Nothing]
 
-  case class NewPredecessors(turn: Host.GUID, newPredecessors: Seq[Host.GUID]) extends Request[Nothing]{ override type Response = UnitResponse.type }
+  case class NewPredecessors(turn: Host.GUID, newPredecessors: CaseClassTransactionSpanningTreeNode[Host.GUID]) extends Request[Nothing]{ override type Response = UnitResponse.type }
   case class NewPhase(turn: Host.GUID, phase: TurnPhase.Type) extends Request[Nothing]{ override type Response = UnitResponse.type }
 
   sealed trait Pluse[+P] {
@@ -299,12 +300,16 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
       val instance = new FullMVTurnReflection(host, guid, new FullMVTurnMirrorProxyToEndpoint(guid, endpoint))
       doCache(instance)
       val AddReplicatorResponse(initPhase, initPreds) =  Await.result(doRequest(endpoint, AddReplicator(guid)), host.timeout)
-      instance.newPredecessors(initPreds)
+      instance.newPredecessors(initPreds.map(localTurnParameterInstance(_, endpoint)))
       instance.newPhase(initPhase)
       instance
     }, Unit)
     // TODO there might be a cleverer way to do this..
-    turn.awaitPhase(TurnPhase.Initialized + 1)
+    if(turn.phase <= TurnPhase.Initialized) {
+      turn.waiters.put(Thread.currentThread(), TurnPhase.Initialized + 1)
+      while(turn.phase <= TurnPhase.Initialized) LockSupport.park(turn)
+      turn.waiters.remove(Thread.currentThread())
+    }
     turn
   }
 
@@ -383,7 +388,7 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
       }, maybeFirstFrame.map(_.guid)))
     case AddReplicator(receiver) =>
       val (initPhase, initPreds) = localTurnReceiverInstance(receiver).addReplicator(new FullMVTurnReflectionProxyToEndpoint(receiver, endpoint))
-      Future.successful(AddReplicatorResponse(initPhase, initPreds))
+      Future.successful(AddReplicatorResponse(initPhase, initPreds.map(_.guid)))
     case AddRemoteBranch(receiver, forPhase) =>
       localTurnReceiverInstance(receiver).addRemoteBranch(forPhase).map(_ => UnitResponse)(FullMVEngine.notWorthToMoveToTaskpool)
     case AcquirePhaseLockAndGetEstablishmentBundle(receiver) =>
@@ -417,7 +422,7 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
 
 
     case NewPredecessors(receiver, predecessors) =>
-      localTurnReflectionReceiverInstance(receiver).newPredecessors(predecessors).map(_ => UnitResponse)(FullMVEngine.notWorthToMoveToTaskpool)
+      localTurnReflectionReceiverInstance(receiver).newPredecessors(predecessors.map(localTurnParameterInstance(_, endpoint))).map(_ => UnitResponse)(FullMVEngine.notWorthToMoveToTaskpool)
     case NewPhase(receiver, phase) =>
       localTurnReflectionReceiverInstance(receiver).newPhase(phase).map(_ => UnitResponse)(FullMVEngine.notWorthToMoveToTaskpool)
 
@@ -508,8 +513,8 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
   }
 
   class FullMVTurnReflectionProxyToEndpoint(val guid: Host.GUID, endpoint: EndPointWithInfrastructure[Msg]) extends FullMVTurnReflectionProxy {
-    override def newPredecessors(predecessors: Seq[GUID]): Future[Unit] = {
-      doRequest(endpoint, NewPredecessors(guid, predecessors)).map(_ => ())(FullMVEngine.notWorthToMoveToTaskpool)
+    override def newPredecessors(predecessors: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = {
+      doRequest(endpoint, NewPredecessors(guid, predecessors.map(_.guid))).map(_ => ())(FullMVEngine.notWorthToMoveToTaskpool)
     }
 
     override def newPhase(phase: TurnPhase.Type): Future[Unit] = {

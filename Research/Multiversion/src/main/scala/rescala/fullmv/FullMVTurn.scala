@@ -1,10 +1,11 @@
 package rescala.fullmv
 
-import java.util.concurrent.ForkJoinTask
+import java.util.concurrent.{ConcurrentHashMap, ForkJoinTask}
 
 import rescala.core._
-import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation.NoSuccessor
-import rescala.fullmv.mirrors.{FullMVTurnProxy, FullMVTurnReflectionProxy, Host, Hosted}
+import rescala.fullmv.NotificationResultAction._
+import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation._
+import rescala.fullmv.mirrors.{FullMVTurnProxy, FullMVTurnReflectionProxy, Hosted}
 import rescala.fullmv.tasks.{Notification, Reevaluation}
 
 trait FullMVTurn extends TurnImpl[FullMVStruct] with FullMVTurnProxy with Hosted {
@@ -13,9 +14,10 @@ trait FullMVTurn extends TurnImpl[FullMVStruct] with FullMVTurnProxy with Hosted
   //========================================================Internal Management============================================================
 
   // ===== Turn State Manangement External API
+  val waiters = new ConcurrentHashMap[Thread, TurnPhase.Type]()
+  def selfNode: TransactionSpanningTreeNode[FullMVTurn]
   // should be mirrored/buffered locally
   def phase: TurnPhase.Type
-  def awaitPhase(atLeast: TurnPhase.Type): Unit
   def activeBranchDifferential(forState: TurnPhase.Type, differential: Int): Unit
   def newBranchFromRemote(forState: TurnPhase.Type): Unit
 
@@ -25,7 +27,7 @@ trait FullMVTurn extends TurnImpl[FullMVStruct] with FullMVTurnProxy with Hosted
 
   // ===== Remote Replication Stuff
   // should be local-only, but needs to be available on remote mirrors too to support multi-hop communication.
-  def addReplicator(replicator: FullMVTurnReflectionProxy): (TurnPhase.Type, Seq[Host.GUID])
+  def addReplicator(replicator: FullMVTurnReflectionProxy): (TurnPhase.Type, TransactionSpanningTreeNode[FullMVTurn])
 
   //========================================================Scheduler Interface============================================================
 
@@ -43,10 +45,11 @@ trait FullMVTurn extends TurnImpl[FullMVStruct] with FullMVTurnProxy with Hosted
   }
 
   override def ignite(reactive: Reactive[FullMVStruct], incoming: Set[ReSource[FullMVStruct]], ignitionRequiresReevaluation: Boolean): Unit = {
+//    assert(Thread.currentThread() == userlandThread, s"$this ignition of $reactive on different thread ${Thread.currentThread().getName}")
     if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this igniting $reactive on $incoming")
     incoming.foreach { discover =>
       discover.state.dynamicAfter(this) // TODO should we get rid of this?
-      val (successorWrittenVersions, maybeFollowFrame) = discover.state.discover(this, reactive)
+    val (successorWrittenVersions, maybeFollowFrame) = discover.state.discover(this, reactive)
       reactive.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, 1)
     }
     reactive.state.incomings = incoming
@@ -55,42 +58,42 @@ trait FullMVTurn extends TurnImpl[FullMVStruct] with FullMVTurnProxy with Hosted
     // This matches the required behavior where the code that creates this reactive is expecting the initial
     // reevaluation (if one is required) to have been completed, but cannot access values from subsequent turns
     // and hence does not need to wait for those.
-    activeBranchDifferential(TurnPhase.Executing, 1)
     val ignitionNotification = Notification(this, reactive, changed = ignitionRequiresReevaluation)
-    val notificationResult = ignitionNotification.doCompute()
-    if(notificationResult.nonEmpty) {
-      assert(notificationResult.size == 1)
-      assert(notificationResult.head == Reevaluation(this, reactive))
-      val reevaluation = notificationResult.head.asInstanceOf[Reevaluation]
-      val nextReev = reevaluation.doCompute()
-      if(nextReev.nonEmpty) {
-        assert(notificationResult.size == 1)
-        assert(notificationResult.head.isInstanceOf[Reevaluation])
-        val followReev = notificationResult.head.asInstanceOf[Reevaluation]
-        if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this ignite $reactive reevaluated, delegating successor reevaluation for ${followReev.turn} to pool.")
-        if (ForkJoinTask.inForkJoinPool()) {
-          followReev.fork()
+    ignitionNotification.deliverNotification() match {
+      case NotGlitchFreeReady =>
+        if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this ignite $reactive did not spawn reevaluation.")
+      // ignore
+      case GlitchFreeReady =>
+        if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this ignite $reactive spawned reevaluation.")
+        activeBranchDifferential(TurnPhase.Executing, 1)
+        Reevaluation(this, reactive).compute()
+      case NextReevaluation(out, succTxn) if out.isEmpty =>
+        if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this ignite $reactive spawned reevaluation for successor $succTxn.")
+        succTxn.activeBranchDifferential(TurnPhase.Executing, 1)
+        val succReev = Reevaluation(succTxn, reactive)
+        if(ForkJoinTask.inForkJoinPool()) {
+          succReev.fork()
         } else {
-          // this should be the case if reactive is created during admission or wrap-up phase
-          host.threadPool.submit(followReev)
+          host.threadPool.submit(succReev)
         }
-      } else {
-        if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this ignite $reactive reevaluated, no successor reevaluation.")
-      }
-    } else {
-      if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this ignite $reactive did not spawn reevaluation.")
+      case otherOut: NotificationOutAndSuccessorOperation[FullMVTurn, Reactive[FullMVStruct]] if otherOut.out.isEmpty =>
+      // ignore
+      case other =>
+        throw new AssertionError(s"$this ignite $reactive: unexpected result: $other")
     }
   }
 
 
   override private[rescala] def discover(node: ReSource[FullMVStruct], addOutgoing: Reactive[FullMVStruct]): Unit = {
-    val (successorWrittenVersions, maybeFollowFrame) = node.state.discover(this, addOutgoing)
+    val r@(successorWrittenVersions, maybeFollowFrame) = node.state.discover(this, addOutgoing)
+    assert((successorWrittenVersions ++ maybeFollowFrame).forall(retrofit => retrofit == this || retrofit.isTransitivePredecessor(this)), s"$this retrofitting contains predecessors: discover $node -> $addOutgoing retrofits $r from ${node.state}")
     if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] Reevaluation($this,$addOutgoing) discovering $node -> $addOutgoing re-queueing $successorWrittenVersions and re-framing $maybeFollowFrame")
     addOutgoing.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, 1)
   }
 
   override private[rescala] def drop(node: ReSource[FullMVStruct], removeOutgoing: Reactive[FullMVStruct]): Unit = {
-    val (successorWrittenVersions, maybeFollowFrame) = node.state.drop(this, removeOutgoing)
+    val r@(successorWrittenVersions, maybeFollowFrame) = node.state.drop(this, removeOutgoing)
+    assert((successorWrittenVersions ++ maybeFollowFrame).forall(retrofit => retrofit == this || retrofit.isTransitivePredecessor(this)), s"$this retrofitting contains predecessors: drop $node -> $removeOutgoing retrofits $r from ${node.state}")
     if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] Reevaluation($this,$removeOutgoing) dropping $node -> $removeOutgoing de-queueing $successorWrittenVersions and de-framing $maybeFollowFrame")
     removeOutgoing.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, -1)
   }
@@ -102,5 +105,4 @@ trait FullMVTurn extends TurnImpl[FullMVStruct] with FullMVTurnProxy with Hosted
   override private[rescala] def dynamicBefore[P](reactive: ReSourciV[P, FullMVStruct]) = reactive.state.dynamicBefore(this)
   override private[rescala] def dynamicAfter[P](reactive: ReSourciV[P, FullMVStruct]) = reactive.state.dynamicAfter(this)
 
-  override def observe(f: () => Unit): Unit = f()
-}
+  override def observe(f: () => Unit): Unit = f()}

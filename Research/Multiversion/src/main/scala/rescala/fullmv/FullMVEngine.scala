@@ -3,10 +3,8 @@ package rescala.fullmv
 import java.util.concurrent.{Executor, ForkJoinPool}
 
 import rescala.core.{EngineImpl, ReSourciV}
-import rescala.fullmv.NotificationResultAction.GlitchFreeReady
-import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation.{FollowFraming, NoSuccessor}
 import rescala.fullmv.mirrors.{FullMVTurnHost, Host, HostImpl, SubsumableLockHostImpl}
-import rescala.fullmv.tasks.{Framing, Notification, NotificationWithFollowFrame}
+import rescala.fullmv.tasks.{Framing, SourceNotification}
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import scala.concurrent.duration._
@@ -30,79 +28,52 @@ class FullMVEngine(val timeout: Duration, val name: String) extends EngineImpl[F
 
   override private[rescala] def executeTurn[R](declaredWrites: Traversable[ReSource], admissionPhase: (AdmissionTicket) => R): R = {
     val turn = newTurn()
-    val setWrites = declaredWrites.toSet // this *should* be part of the interface..
-    if(setWrites.nonEmpty) {
-      // framing phase
-      turn.awaitAndSwitchPhase(TurnPhase.Framing)
-      turn.activeBranchDifferential(TurnPhase.Framing, setWrites.size)
-      for (i <- setWrites) threadPool.submit(Framing(turn, i))
-    }
-
-    turn.awaitAndSwitchPhase(TurnPhase.Executing)
-
-    // admission phase
-    val admissionTicket = turn.makeAdmissionPhaseTicket()
-    val admissionResult = Try { withTurn(turn) { admissionPhase(admissionTicket) } }
-    if(FullMVEngine.DEBUG) admissionResult match {
-      case scala.util.Failure(e) => e.printStackTrace()
-      case _ =>
-    }
-    assert(turn.activeBranches.get == 0, s"Admission phase left ${turn.activeBranches.get} active branches.")
-
-    // propagation phase
-    if(setWrites.nonEmpty) {
-      turn.activeBranchDifferential(TurnPhase.Executing, setWrites.size)
-      val noChanges = if (admissionResult.isFailure) {
-        setWrites
+    withTurn(turn) {
+      val setWrites = declaredWrites.toSet // this *should* be part of the interface..
+      if (setWrites.nonEmpty) {
+        // framing phase
+        turn.beginFraming()
+        turn.activeBranchDifferential(TurnPhase.Framing, setWrites.size)
+        for (i <- setWrites) threadPool.submit(Framing(turn, i))
+        turn.completeFraming()
       } else {
-        for (change <- admissionTicket.initialChanges) {
-          val res = change.value
-          val notificationResult = change.source.state.notify(turn, changed = true)
-          assert(notificationResult == GlitchFreeReady)
-          val reevOutResult = change.source.state.reevOut(turn, Some(res))
-          reevOutResult match {
-            case NoSuccessor(out) =>
-              val diff = out.size - 1
-              if (diff != 0) turn.activeBranchDifferential(TurnPhase.Executing, diff)
-              for (succ <- out) threadPool.submit(Notification(turn, succ, changed = true))
-            case FollowFraming(out, succTxn: FullMVTurn) =>
-              val diff = out.size - 1
-              if (diff != 0) turn.activeBranchDifferential(TurnPhase.Executing, diff)
-              for (succ <- out) threadPool.submit(NotificationWithFollowFrame(turn, succ, changed = true, succTxn))
-            case otherwise => throw new AssertionError("Source reevaluation should not be able to yield " + otherwise)
-          }
-        }
-        setWrites.diff(admissionTicket.initialChanges.map(_.source).toSet)
+        turn.beginExecuting()
       }
-      for (i <- noChanges) {
-        val notificationResult = i.state.notify(turn, changed = false)
-        notificationResult match {
-          case NoSuccessor(out) =>
-            val diff = out.size - 1
-            if (diff != 0) turn.activeBranchDifferential(TurnPhase.Executing, diff)
-            for (succ <- out) threadPool.submit(Notification(turn, succ, changed = false))
-          case FollowFraming(out, succTxn: FullMVTurn) =>
-            val diff = out.size - 1
-            if (diff != 0) turn.activeBranchDifferential(TurnPhase.Executing, diff)
-            for (succ <- out) threadPool.submit(NotificationWithFollowFrame(turn, succ, changed = false, succTxn))
-          case otherwise => throw new AssertionError("Source reevaluation should not be able to yield " + otherwise)
+
+      // admission phase
+      val admissionTicket = turn.makeAdmissionPhaseTicket()
+      val admissionResult = Try { admissionPhase(admissionTicket) }
+      if (FullMVEngine.DEBUG) admissionResult match {
+        case scala.util.Failure(e) => e.printStackTrace()
+        case _ =>
+      }
+      assert(turn.activeBranches.get == 0, s"Admission phase left ${turn.activeBranches.get()} tasks undone.")
+
+      // propagation phase
+      if (setWrites.nonEmpty) {
+        turn.initialChanges = admissionTicket.initialChanges
+        turn.activeBranchDifferential(TurnPhase.Executing, setWrites.size)
+        for(write <- setWrites) threadPool.submit(SourceNotification(turn, write, admissionResult.isSuccess && admissionTicket.initialChanges.contains(write)))
+      }
+
+      // wrap-up "phase" (executes in parallel with propagation)
+      val transactionResult = if(admissionTicket.wrapUp == null){
+        admissionResult
+      } else {
+        val wrapUpTicket = turn.makeWrapUpPhaseTicket()
+        admissionResult.map{ i =>
+          // executed in map call so that exceptions in wrapUp make the transaction result a Failure
+          admissionTicket.wrapUp(wrapUpTicket)
+          i
         }
       }
+
+      // turn completion
+      turn.completeExecuting()
+
+      // result
+      transactionResult.get
     }
-
-    // propagation completion
-    if(FullMVEngine.SEPARATE_WRAPUP_PHASE) turn.awaitAndSwitchPhase(TurnPhase.WrapUp)
-
-    // wrap-up "phase" (executes in parallel with propagation)
-    admissionResult.map{ i => admissionTicket.wrapUp(turn.makeWrapUpPhaseTicket()); i }
-
-    if(FullMVEngine.SEPARATE_WRAPUP_PHASE) assert(turn.activeBranches.get == 0, s"WrapUp phase left ${turn.activeBranches.get} active branches.")
-
-    // turn completion
-    turn.awaitAndSwitchPhase(TurnPhase.Completed)
-
-    // result
-    admissionResult.get
   }
 
   override def toString: String = "Host " + name

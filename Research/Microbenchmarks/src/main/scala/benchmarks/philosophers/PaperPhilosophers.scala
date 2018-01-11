@@ -227,6 +227,7 @@ object PaperPhilosophers {
     }
     if(scores.exists(_.isFailure)) {
       println("There were failures -> not accessing total score")
+      println("Thread pool state: "+engine.threadPool)
     } else {
       val individualsSum = scores.map(_.get).sum
       if(table.total == individualsSum){
