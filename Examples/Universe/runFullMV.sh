@@ -1,9 +1,9 @@
 #!/bin/sh
 # Job name
-#SBATCH -J universe-parrp
+#SBATCH -J universe-fullmv
 #
 # output file
-#SBATCH -o universe-parrp-%j.txt
+#SBATCH -o universe-fullmv-%j.txt
 #
 # Project ID
 #SBATCH -A project00625
@@ -36,5 +36,5 @@ java -version
 echo "---------------------------------------------"
 
 export LANG=en_US.UTF-8
-export JAVA_OPTS="-Xmx1024m -Xms1024m -DengineName=parrp"
+export JAVA_OPTS="-Xmx1024m -Xms1024m -DengineName=fullmv"
 ./target/start

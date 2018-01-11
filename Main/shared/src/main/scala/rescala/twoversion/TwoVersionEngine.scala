@@ -36,7 +36,7 @@ trait TwoVersionEngine[S <: TwoVersionStruct, TImpl <: TwoVersionPropagation[S] 
       val result = withTurn(turn) {
         val admissionTicket = turn.makeAdmissionPhaseTicket()
         val admissionResult = admissionPhase(admissionTicket)
-        turn.initializationPhase(admissionTicket.initialChanges)
+        turn.initializationPhase(admissionTicket.initialChanges.values)
         turn.propagationPhase()
         if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(turn.makeWrapUpPhaseTicket())
         admissionResult

@@ -32,7 +32,7 @@ object Signals extends GeneratedSignalLift {
   }
 
   /** creates a signal that statically depends on the dependencies with a given initial value */
-  private[rescala] def staticFold[T: ReSerializable, S <: Struct](dependencies: Set[ReSource[S]], init: Pulse[T])(expr: (StaticTicket[S], () => T) => T)(ict: Creation[S])(name: REName): Signal[T, S] = {
+  def staticFold[T: ReSerializable, S <: Struct](dependencies: Set[ReSource[S]], init: Pulse[T])(expr: (StaticTicket[S], () => T) => T)(ict: Creation[S])(name: REName): Signal[T, S] = {
     ict.create[Pulse[T], StaticSignal[T, S]](dependencies, ValuePersistency.InitializedSignal[T](init)) {
       state => new StaticSignal[T, S](state, expr, name) with Disconnectable[S]
     }

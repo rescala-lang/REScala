@@ -1,29 +1,36 @@
 #!/bin/sh
 # Job name
-#BSUB -J REScalaBenchmark
+#SBATCH -J universe-stm
 #
-# File / path where STDOUT will be written, the %J is the job id
-#BSUB -o stm-%J.out
+# output file
+#SBATCH -o universe-stm-%j.txt
+#
+# Project ID
+#SBATCH -A project00625
 #
 # Request the time you need for execution in [hour:]minute
-#BSUB -W 23:30
+#SBATCH -t 00:30:00
 #
 # Required resources
-#BSUB -R "select[ mpi && avx ]"
+#SBATCH -C avx&mpi
 #
 # Request vitual memory you need for your job in MB
-#BSUB -M 2048
+#SBATCH --mem-per-cpu 128
 #
-# Request the number of compute slots you want to use
-#BSUB -n 16
-#BSUB -q deflt_auto
+# Number of tasks
+#SBATCH -n 1
+# Number of Nodes
+#SBATCH -N 1
+# CPUs per task for multi-threaded tasks
+#SBATCH -c 16
 # request exclusive access
-#BSUB -x
+#SBATCH --exclusive
 
 module unload openmpi
 module load java
 echo "--------- processors ------------------------"
-cat /proc/cpuinfo
+#cat /proc/cpuinfo
+lscpu
 echo "--------- java version ----------------------"
 java -version
 echo "---------------------------------------------"

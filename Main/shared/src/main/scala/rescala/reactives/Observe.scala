@@ -14,6 +14,7 @@ trait Observe[S <: Struct] {
 }
 
 object Observe {
+  def dereferenceAllStrongObserversWARNINGonlyUseThisIfYouKnowWhatYouAreDoing(): Unit = strongObserveReferences.clear()
 
   private val strongObserveReferences = scala.collection.mutable.HashSet[Observe[_]]()
 

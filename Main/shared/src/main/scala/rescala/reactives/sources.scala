@@ -8,7 +8,7 @@ abstract class Source[T, S <: Struct](initialState: S#State[Pulse[T], S], name: 
 
   final def admit(value: T)(implicit ticket: AdmissionTicket[S]): Unit = admitPulse(Pulse.Value(value))
   final def admitPulse(pulse: Pulse[T])(implicit ticket: AdmissionTicket[S]): Unit = {
-    if (ticket.creation.staticBefore(this) != pulse)
+    if (ticket.creation.dynamicBefore(this) != pulse)
       ticket.recordChange(new InitialChange[S] {
         override val source: Source.this.type = Source.this
         override def value: Value = pulse

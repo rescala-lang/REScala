@@ -5,7 +5,7 @@ import java.util.concurrent.locks.{Lock, ReentrantLock}
 import java.util.concurrent.{ThreadLocalRandom, TimeUnit}
 
 import benchmarks.philosophers.PhilosopherTable.{Seating, Thinking}
-import benchmarks.{EngineParam, Workload}
+import benchmarks.{BusyThreads, EngineParam, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
 import rescala.core.Struct
@@ -49,24 +49,40 @@ class PhilosopherCompetition[S <: Struct] {
     val secondLock = comp.locks(pos(1))
     val thirdLock = comp.locks(pos(2))
     firstLock.lock()
-    try {
+    val res = try {
       secondLock.lock()
       try {
         thirdLock.lock()
         try {
-          tryUpdateCycle(comp, seating)
+          comp.table.tryEat(seating)
         }
         finally {thirdLock.unlock()}
       }
       finally {secondLock.unlock()}
     }
     finally {firstLock.unlock()}
+    if (res) {
+      firstLock.lock()
+      try {
+        secondLock.lock()
+        try {
+          thirdLock.lock()
+          try {
+            seating.philosopher.set(Thinking)(comp.table.engine)
+          }
+          finally {thirdLock.unlock()}
+        }
+        finally {secondLock.unlock()}
+      }
+      finally {firstLock.unlock()}
+    }
+    !res
   }
 }
 
 
 @State(Scope.Benchmark)
-class Competition[S <: Struct] {
+class Competition[S <: Struct] extends BusyThreads {
 
   @Param(Array("16", "32"))
   var philosophers: Int = _

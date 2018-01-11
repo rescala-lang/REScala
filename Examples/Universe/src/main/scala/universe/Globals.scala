@@ -8,7 +8,11 @@ import scala.collection.parallel.ForkJoinTaskSupport
 object Globals {
   val engineName = System.getProperty("engineName", "parrp")
 
-  implicit val engine: Engine[Struct] = Engines.byName[Struct](engineName)
+  implicit val engine: Engine[Struct] = engineName match {
+    case "fullmv" => new rescala.fullmv.FullMVEngine(scala.concurrent.duration.Duration.Zero, "fullmv-universe").asInstanceOf[Engine[Struct]]
+    case "stm" => rescala.stm.STMEngine.stm.asInstanceOf[Engine[Struct]]
+    case _ =>  Engines.byName[Struct](engineName)
+  }
 
   var taskSupport: ForkJoinTaskSupport = _
   def setParallelism(n: Int): Unit = {

@@ -66,7 +66,12 @@ class World(val width: Int = 100, val height: Int = 100) {
   def runPlan() = {
     val pc = updates.par
     pc.tasksupport = Globals.taskSupport
-    pc.foreach { _.apply() }
+    pc.foreach { u =>
+      try {
+        u()
+      } catch {
+        case e: Throwable => e.printStackTrace()
+    }}
     updates = Nil
   }
 }
