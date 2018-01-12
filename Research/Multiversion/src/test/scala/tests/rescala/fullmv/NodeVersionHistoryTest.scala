@@ -5,7 +5,6 @@ import rescala.core.{Pulse, ValuePersistency}
 import rescala.fullmv.FramingBranchResult.{Deframe, Frame, FramingBranchEnd}
 import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation.FollowFraming
 import rescala.fullmv._
-import rescala.fullmv.sgt.synchronization.SubsumableLock
 
 import scala.concurrent.duration.Duration
 
@@ -27,9 +26,9 @@ class NodeVersionHistoryTest extends FunSuite {
     framing1.awaitAndSwitchPhase(TurnPhase.Framing)
     val framing2 = engine.newTurn()
     framing2.awaitAndSwitchPhase(TurnPhase.Framing)
-    assert(SubsumableLock.underLock(framing1, framing2, Duration.Zero) {
-      DecentralizedSGT.ensureOrder(framing1, framing2, Duration.Zero)
-    }.contains(FirstFirst))
+    val lock = SerializationGraphTracking.acquireLock(framing1, framing2, UnlockedUnknown)
+    framing2.addPredecessor(framing1.selfNode)
+    lock.unlock()
 
     assert(n.incrementFrame(framing2) === FramingBranchEnd) // End because earlier frame by reevaluate turn exists
 

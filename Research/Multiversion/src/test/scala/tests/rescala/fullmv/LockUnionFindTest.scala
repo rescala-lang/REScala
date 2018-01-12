@@ -15,7 +15,7 @@ class LockUnionFindTest extends FunSuite {
 
   test("single lock gc works") {
     val turn = engine.newTurn()
-    turn.awaitAndSwitchPhase(TurnPhase.Framing)
+    turn.beginFraming()
     val lock = turn.subsumableLock.get
 
     if(SubsumableLock.DEBUG) println(s"single lock gc with $turn using $lock")
@@ -24,13 +24,13 @@ class LockUnionFindTest extends FunSuite {
     assert(engine.getInstance(turn.guid) === Some(turn))
     assert(engine.lockHost.getInstance(lock.guid) === Some(lock))
 
-    turn.awaitAndSwitchPhase(TurnPhase.Executing)
+    turn.completeFraming()
 
     assert(lock.refCount.get === 1)
     assert(engine.getInstance(turn.guid) === Some(turn))
     assert(engine.lockHost.getInstance(lock.guid) === Some(lock))
 
-    turn.awaitAndSwitchPhase(TurnPhase.Completed)
+    turn.completeExecuting()
 
     assert(lock.refCount.get <= 0)
     assert(engine.getInstance(turn.guid) === None)
@@ -39,7 +39,7 @@ class LockUnionFindTest extends FunSuite {
 
   test("lock/unlock holds a temporary reference") {
     val turn = engine.newTurn()
-    turn.awaitAndSwitchPhase(TurnPhase.Framing)
+    turn.beginFraming()
     val lock = turn.subsumableLock.get
 
     assert(lock.refCount.get === 1)
@@ -55,10 +55,10 @@ class LockUnionFindTest extends FunSuite {
 
   test("spinlock retains temporary reference") {
     val turn = engine.newTurn()
-    turn.awaitAndSwitchPhase(TurnPhase.Framing)
+    turn.beginExecuting()
     val lock = turn.subsumableLock.get
     val l1 = Await.result(turn.lock(), Duration.Zero)
-    turn.awaitAndSwitchPhase(TurnPhase.Completed)
+    turn.completeExecuting()
 
     assert(lock.refCount.get === 1)
 
@@ -75,11 +75,11 @@ class LockUnionFindTest extends FunSuite {
 
   test("single subsumed gc works") {
     val turn1 = engine.newTurn()
-    turn1.awaitAndSwitchPhase(TurnPhase.Framing)
+    turn1.beginExecuting()
     val lock1 = turn1.subsumableLock.get()
 
     val turn2 = engine.newTurn()
-    turn2.awaitAndSwitchPhase(TurnPhase.Framing)
+    turn2.beginExecuting()
     val lock2 = turn2.subsumableLock.get()
 
     if(SubsumableLock.DEBUG) println(s"single subsumed gc with $turn1 using $lock1 and $turn2 using $lock2")
@@ -95,14 +95,14 @@ class LockUnionFindTest extends FunSuite {
     assert(engine.getInstance(turn2.guid) === Some(turn2))
     assert(engine.lockHost.getInstance(lock2.guid) === None)
 
-    turn1.awaitAndSwitchPhase(TurnPhase.Completed)
+    turn1.completeExecuting()
 
     assert(lock1.refCount.get === 1) // turn2
     assert(engine.getInstance(turn1.guid) === None)
     assert(engine.lockHost.getInstance(lock1.guid) === Some(lock1))
     assert(engine.getInstance(turn2.guid) === Some(turn2))
 
-    turn2.awaitAndSwitchPhase(TurnPhase.Completed)
+    turn2.completeExecuting()
 
     assert(lock1.refCount.get <= 0)
     assert(engine.lockHost.getInstance(lock1.guid) === None)
@@ -113,7 +113,7 @@ class LockUnionFindTest extends FunSuite {
     val maxIdx = 10
     val turns = Array.fill(maxIdx + 1) {
       val turn = engine.newTurn()
-      turn.awaitAndSwitchPhase(TurnPhase.Framing)
+      turn.beginExecuting()
       turn
     }
     val locks = turns.map(_.subsumableLock.get)
@@ -132,9 +132,9 @@ class LockUnionFindTest extends FunSuite {
     }
     assert(locks(maxIdx).refCount.get === 3) // lock(count-1), turn(count-1), turn(count)
 
-    turns(1).awaitAndSwitchPhase(TurnPhase.Completed)
-    turns(2).awaitAndSwitchPhase(TurnPhase.Completed)
-    turns(4).awaitAndSwitchPhase(TurnPhase.Completed)
+    turns(1).completeExecuting()
+    turns(2).completeExecuting()
+    turns(4).completeExecuting()
 
     assert(locks(0).refCount.get <= 0) // gc'd
     assert(locks(1).refCount.get === 1) // turn 0
@@ -163,7 +163,7 @@ class LockUnionFindTest extends FunSuite {
 
   test("lock/spinlock/unlock holds a temporary reference") {
     val turn1 = engine.newTurn()
-    turn1.awaitAndSwitchPhase(TurnPhase.Framing)
+    turn1.beginExecuting()
     val lock1 = turn1.subsumableLock.get
     assert(lock1.refCount.get === 1)
 
@@ -171,10 +171,10 @@ class LockUnionFindTest extends FunSuite {
     assert(lock1.refCount.get === 2) // turn1, thread2
 
     val turn2 = engine.newTurn()
-    turn2.awaitAndSwitchPhase(TurnPhase.Framing)
+    turn2.beginExecuting()
     val lock2 = turn2.subsumableLock.get
     val l2 = Await.result(turn2.lock(), Duration.Zero)
-    turn2.awaitAndSwitchPhase(TurnPhase.Completed)
+    turn2.completeExecuting()
     assert(lock2.refCount.get === 1) // thread1
 
     val max = System.currentTimeMillis() + 500
@@ -211,17 +211,17 @@ class LockUnionFindTest extends FunSuite {
     l3.asyncUnlock()
     assert(lock2.refCount.get === 1) // turn1
 
-    turn1.awaitAndSwitchPhase(TurnPhase.Completed)
+    turn1.completeExecuting()
     assert(lock2.refCount.get <= 0)
   }
 
   test("underLock works") {
     val turn1 = engine.newTurn()
-    turn1.awaitAndSwitchPhase(TurnPhase.Framing)
+    turn1.beginExecuting()
     val lock1 = turn1.subsumableLock.get()
 
     val turn2 = engine.newTurn()
-    turn2.awaitAndSwitchPhase(TurnPhase.Framing)
+    turn2.beginExecuting()
     val lock2 = turn2.subsumableLock.get()
 
     assert(lock1.refCount.get === 1)
@@ -239,6 +239,7 @@ class LockUnionFindTest extends FunSuite {
   test("lock works") {
     // we can lock
     val a = engine.newTurn()
+    a.beginExecuting()
     val res = Spawn{ Await.result(a.lock(), Duration.Zero) }.join(101)
 
     // lock is exclusive and blocks
@@ -252,7 +253,9 @@ class LockUnionFindTest extends FunSuite {
 
   test("union works") {
     val a = engine.newTurn()
+    a.beginExecuting()
     val b = engine.newTurn()
+    b.beginExecuting()
 
     val res = Spawn{ Await.result(b.lock(), Duration.Zero) }.join(101)
 

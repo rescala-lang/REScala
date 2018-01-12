@@ -183,6 +183,10 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
     awaitAndSwitchPhase(TurnPhase.Completed)
     predecessorSpanningTreeNodes = Map.empty
     selfNode = null
+    val l = subsumableLock.getAndSet(null)
+    if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this deallocating, dropping reference on $l.")
+    l.localSubRefs(1)
+    host.dropInstance(guid, this)
     //    FullMVTurn.execsync.synchronized {
     //      val maybeCount1 = FullMVTurn.spinSwitchStatsExecuting.get(spinSwitch)
     //      FullMVTurn.spinSwitchStatsExecuting.put(spinSwitch, if(maybeCount1 == null) 1L else maybeCount1 + 1L)

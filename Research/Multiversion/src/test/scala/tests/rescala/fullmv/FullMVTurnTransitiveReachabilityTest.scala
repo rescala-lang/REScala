@@ -1,7 +1,7 @@
 package tests.rescala.fullmv
 
 import org.scalatest.FunSuite
-import rescala.fullmv.{FullMVTurnImpl, TurnPhase}
+import rescala.fullmv.{FullMVTurnImpl, SerializationGraphTracking, TurnPhase}
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -23,17 +23,16 @@ class FullMVTurnTransitiveReachabilityTest extends FunSuite {
       tA
     }
     Await.result(trees.head._2.lock(), Duration.Zero)
-
-    for((from, tos) <- edges; to <- tos) {
-      val fromTree = trees(from)
-      val toTree = trees(to)
-      if(!fromTree.isTransitivePredecessor(toTree)) {
-        val (_, toTreeRoot) = Await.result(toTree.acquirePhaseLockAndGetEstablishmentBundle(), Duration.Zero)
-        Await.result(fromTree.acquirePhaseLockAndGetEstablishmentBundle(), Duration.Zero)
-        Await.result(fromTree.addPredecessorAndReleasePhaseLock(toTreeRoot), Duration.Zero)
-        toTree.asyncReleasePhaseLock()
+    SerializationGraphTracking.lock.lock()
+    try {
+      for ((from, tos) <- edges; to <- tos) {
+        val fromTree = trees(from)
+        val toTree = trees(to)
+        if (!fromTree.isTransitivePredecessor(toTree)) {
+          Await.result(fromTree.addPredecessor(toTree.selfNode), Duration.Zero)
+        }
       }
-    }
+    } finally SerializationGraphTracking.lock.unlock()
 
     var transitiveClosure = edges
     for(via <- edges.keySet) {
