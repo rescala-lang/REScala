@@ -1,17 +1,18 @@
 package daimpl.todomvc
 
-import scala.scalajs.js.JSApp
-import scalatags.JsDom.all._
-import scalatags.JsDom.tags2.section
-import rescalatags._
-import rescala.LocalStorageStore
 import org.scalajs.dom
 import org.scalajs.dom.html.Input
 import org.scalajs.dom.{UIEvent, document}
+import rescala.LocalStorageStore
 import rescala.core.ReCirce.recirce
 import rescala.core.ReSerializable
+import rescalatags._
 
-object TodoMVC extends JSApp {
+import scala.scalajs.js.annotation.JSExportTopLevel
+import scalatags.JsDom.all._
+import scalatags.JsDom.tags2.section
+
+object TodoMVC {
 
   implicit val storingEngine: LocalStorageStore = new LocalStorageStore()
   import storingEngine._
@@ -34,6 +35,7 @@ object TodoMVC extends JSApp {
 //    unique += 1
   }
 
+  @JSExportTopLevel("daimpl.simpletodo.TodoMVC.main")
   def main(): Unit = {
 
     val innerTasks = List(

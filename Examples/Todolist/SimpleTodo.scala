@@ -1,13 +1,14 @@
 package daimpl.simpletodo
 
-import scala.scalajs.js.JSApp
-import scalatags.JsDom.all._
+import org.scalajs.dom
+import org.scalajs.dom.document
 import rescala._
 import rescalatags._
-import org.scalajs.dom
-import dom.document
 
-object SimpleTodo extends JSApp {
+import scala.scalajs.js.annotation.JSExportTopLevel
+import scalatags.JsDom.all._
+
+object SimpleTodo {
   var unique = 0
 
   class Task(desc_ : String, done_ : Boolean) {
@@ -17,6 +18,7 @@ object SimpleTodo extends JSApp {
     unique += 1
   }
 
+  @JSExportTopLevel("daimpl.simpletodo.SimpleTodo.main")
   def main(): Unit = {
 
     val tasks = Var(List(
