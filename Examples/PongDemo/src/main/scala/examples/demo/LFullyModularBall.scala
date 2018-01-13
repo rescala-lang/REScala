@@ -65,8 +65,8 @@ object LFullyModularBall extends Main {
     val velocityY = verticalBounceSources.flatten[Event[List[Option[Any]]]]
                     .fold(initVy / Clock.NanoSecond) { (old, _ ) => -old }
 
-    val incX = Clock.ticks.dMap(dt => tick => Right[Point, Double](tick.toDouble * dt.before(velocityX)))
-    val incY = Clock.ticks.dMap(dt => tick => Right[Point, Double](tick.toDouble * dt.before(velocityY)))
+    val incX = Clock.ticks.map(tick => Right[Point, Double](tick.toDouble * velocityX.value))
+    val incY = Clock.ticks.map(tick => Right[Point, Double](tick.toDouble * velocityY.value))
 
     val reset = resetIn.map(pos => Left[Point, Double](pos))
 

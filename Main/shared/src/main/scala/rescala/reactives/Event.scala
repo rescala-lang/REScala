@@ -101,10 +101,6 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with Observable[T, S
   /** Transform the event parameter */
   final def staticMap[U](mapping: T => U)(implicit ticket: CreationTicket[S]): Event[U, S] = Events.staticInternal(s"(map $this)", this) {  st => st.staticDependPulse(this).map(mapping) }
 
-  final def dMap[U](mapping: DynamicTicket[S] => T => U)(implicit ticket: CreationTicket[S]): Event[U, S] = Events.dynamic(this) {
-    dt => dt.depend(this).map(v => mapping(dt)(v))
-  }
-
   /** Drop the event parameter; equivalent to map((_: Any) => ()) */
   final def dropParam(implicit ticket: CreationTicket[S]): Event[Unit, S] = staticMap(_ => ())
 

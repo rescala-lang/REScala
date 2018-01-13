@@ -51,8 +51,8 @@ object INumericResettableCircle extends Main {
   val velocityX = Signal {(panel.width() / 2 - 50).toDouble * math.sin(angle()) / Clock.NanoSecond}
   val velocityY = Signal {(panel.height() / 2 - 50).toDouble * math.cos(angle()) / Clock.NanoSecond}
 
-  val incX = Clock.ticks.dMap(dt => tick => Right[Point, Double](tick.toDouble * dt.before(velocityX)))
-  val incY = Clock.ticks.dMap(dt => tick => Right[Point, Double](tick.toDouble * dt.before(velocityY)))
+  val incX = Clock.ticks.map(tick => Right[Point, Double](tick.toDouble * velocityX.value))
+  val incY = Clock.ticks.map(tick => Right[Point, Double](tick.toDouble * velocityY.value))
 
   val reset = panel.Mouse.middleButton.pressed.map(pos => Left[Point, Double](pos))
 
@@ -60,7 +60,7 @@ object INumericResettableCircle extends Main {
     case (_, Left(Point(x, _))) => x.toDouble
     case (pX, Right(inc)) => pX + inc
   }
-  val posY = (reset || incX).fold(0d){
+  val posY = (reset || incY).fold(0d){
     case (_, Left(Point(_, y))) => y.toDouble
     case (pY, Right(inc)) => pY + inc
   }

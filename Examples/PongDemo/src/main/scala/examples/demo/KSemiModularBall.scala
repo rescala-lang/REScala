@@ -4,6 +4,7 @@ import examples.demo.GModularClockCircle.Clock
 import examples.demo.ui.{Circle, Point, Shape, ShapesPanel}
 import rescala._
 
+//TODO: I do not see where a cyclic dependency occurs? also before was replaced by just a normal value access.
 /**
   * We now convert our BouncingBall into an external Module, similar
   * to Clock earlier. We begin by wrapping the movement code into
@@ -32,8 +33,8 @@ object KSemiModularBall extends Main {
     val velocityX = panel.Mouse.leftButton.pressed.fold(initVx / Clock.NanoSecond) { (old, _) => -old }
     val velocityY = panel.Mouse.rightButton.pressed.fold(initVy / Clock.NanoSecond) { (old, _ ) => -old }
 
-    val incX = Clock.ticks.dMap(dt => tick => Right[Point, Double](tick.toDouble * dt.before(velocityX)))
-    val incY = Clock.ticks.dMap(dt => tick => Right[Point, Double](tick.toDouble * dt.before(velocityY)))
+    val incX = Clock.ticks.map(tick => Right[Point, Double](tick.toDouble * velocityX.value))
+    val incY = Clock.ticks.map(tick => Right[Point, Double](tick.toDouble * velocityY.value))
 
     val reset = resetIn.map(pos => Left[Point, Double](pos))
 
@@ -41,7 +42,7 @@ object KSemiModularBall extends Main {
       case (_, Left(Point(x, _))) => x.toDouble
       case (pX, Right(inc)) => pX + inc
     }
-    val posY = (reset || incX).fold(0d){
+    val posY = (reset || incY).fold(0d){
       case (_, Left(Point(_, y))) => y.toDouble
       case (pY, Right(inc)) => pY + inc
     }
