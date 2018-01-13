@@ -78,7 +78,7 @@ object TodoMVC extends JSApp {
             tasks.now.foreach { it =>
               it.done set !e.target.asInstanceOf[dom.html.Input].checked } }),
         label(`for`:="toggle-all", "Mark all as complete"),
-        Signal { ul(`class`:="todo-list", tasks().map { t =>
+        Signal.dynamic { ul(`class`:="todo-list", tasks().map { t =>
 
           li(
             `class`:=

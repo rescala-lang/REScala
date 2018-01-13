@@ -30,7 +30,7 @@ class SingleSwitch[S <: Struct] {
     source = Var(step.get())
     val d1 = Var("true")
     val d2 = Var("false")
-    engine.Signal {
+    engine.Signal.dynamic {
       if (step.test(source())) d1() else d2()
     }
 

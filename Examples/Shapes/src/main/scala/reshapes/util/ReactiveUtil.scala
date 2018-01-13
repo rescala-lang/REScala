@@ -90,7 +90,7 @@ object ReactiveUtil {
   object UnionEvent {
     def apply[T, E[T] <: Event[T], L[E] <: Traversable[E]]
              (signal: Signal[L[E[T]]]): Event[T] = {
-      Event {
+      Event.dynamic {
         signal().flatMap(e => e()).headOption
       }
     }

@@ -24,7 +24,7 @@ class ChatServer[S <: Struct]()(val engine: Engine[S]) {
 
   def create(room: Room): Boolean = {
     val clients: Clients = Var(Nil)
-    val newMessages: NewMessages = Event {
+    val newMessages: NewMessages = Event.dynamic {
       val messages: List[String] = clients().flatMap(_.apply())
       if (messages.isEmpty) None else Some(messages)
     }

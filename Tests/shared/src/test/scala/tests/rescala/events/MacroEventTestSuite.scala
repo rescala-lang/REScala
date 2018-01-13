@@ -92,7 +92,7 @@ class MacroEventTestSuite extends RETests {
   allEngines("higher order events") { engine => import engine._
     val e1 = Evt[Signal[Int]]
 
-    val event =  Event { Some{ e1.value.get.value } }
+    val event =  Event.dynamic { Some{ e1.value.get.value } }
 
     val res = event.latest()
 

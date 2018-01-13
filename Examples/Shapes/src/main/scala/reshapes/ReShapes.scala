@@ -82,7 +82,7 @@ object ReShapes extends SimpleSwingApplication {
   }
 
   val menu = new MenuBar {
-    val undo = new ReMenuItem("Undo", enabled = Signal {  //#SIG //#IS( // )
+    val undo = new ReMenuItem("Undo", enabled = Signal.dynamic {  //#SIG //#IS( // )
       drawingSpaceState() != null && drawingSpaceState().commands().nonEmpty })
 
     val merge = new ReMenu(

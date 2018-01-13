@@ -31,7 +31,7 @@ class Pong(val tick: Evt[Unit], val mouse: Mouse) {
   val rightRacket = new Racket(RightRacketPos, y)
 
   val rackets = Signal {List(leftRacket, rightRacket)}
-  val areas = Signal {rackets().map(_.area())}
+  val areas = Signal.dynamic {rackets().map(_.area())}
   val ballInRacket = Signal {areas().exists(_.contains(x(), y()))}
   val collisionRacket = ballInRacket.changedTo(true)
 

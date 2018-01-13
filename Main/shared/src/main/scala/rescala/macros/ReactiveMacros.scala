@@ -21,7 +21,7 @@ class ReactiveMacros(val c: blackbox.Context) {
     if (c.hasErrors)
       return q"""throw new ${termNames.ROOTPKG}.scala.NotImplementedError("macro not expanded because of other compilation errors")"""
 
-    val mp = ReactiveMacro(expression)
+    val mp = ReactiveMacro(expression, requireStatic = c.macroApplication.symbol.name.toString != "dynamic")
     val creationMethod = TermName(if (mp.hasOnlyStaticAccess()) "static" else "dynamic")
     val body =
       q"""${termNames.ROOTPKG}.rescala.reactives.$signalsOrEvents.$creationMethod[${weakTypeOf[A]}, ${weakTypeOf[S]}](
@@ -45,7 +45,6 @@ class ReactiveMacros(val c: blackbox.Context) {
 
       val mapFunctionArgumentTermName = TermName(c.freshName("eventValue$"))
       val mapFunctionArgumentIdent = Ident(mapFunctionArgumentTermName)
-      //internal setType(mapFunctionArgumentIdent, weakTypeOf[Event[T, S]])
 
       val extendedDetections = mapFunctionArgumentIdent :: mp.detectedStaticReactives ::: mp.cutOutReactiveTerms
 
@@ -88,7 +87,7 @@ class ReactiveMacros(val c: blackbox.Context) {
 
   object IsCutOut
 
-  def ReactiveMacro[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag](expression: c.Expr[A]): MacroPieces = {
+  def ReactiveMacro[A: c.WeakTypeTag, S <: Struct : c.WeakTypeTag](expression: c.Expr[A], requireStatic: Boolean = false): MacroPieces = {
     val weAnalysis = new WholeExpressionAnalysis(expression.tree)
     // the name of the generated turn argument passed to the signal closure
     // every Signal { ... } macro instance gets expanded into a dynamic signal
@@ -111,7 +110,6 @@ class ReactiveMacros(val c: blackbox.Context) {
           //q"$_.fromEngineImplicit[..$_](...$_)"
           case turnSource@Apply(TypeApply(Select(_, TermName("fromEngineImplicit")), _), _)
             if turnSource.tpe =:= weakTypeOf[CreationTicket[S]] && turnSource.symbol.owner == symbolOf[LowPriorityCreationImplicits] =>
-            println(turnSource)
             q"${termNames.ROOTPKG}.rescala.core.CreationTicket(${termNames.ROOTPKG}.scala.Left($ticketIdent.creation))(${termNames.ROOTPKG}.rescala.core.REName.create)"
 
           case tree@Select(reactive, TermName("now")) =>
@@ -133,7 +131,10 @@ class ReactiveMacros(val c: blackbox.Context) {
                 detectedStaticReactives ::= reactive
                 q"$ticketIdent.staticDepend"
               }
-              else q"$ticketIdent.depend"
+              else {
+                if (requireStatic) c.error(tree.pos, "access to reactive may be dynamic")
+                q"$ticketIdent.depend"
+              }
             internal.setType(reactiveApply, tree.tpe)
             q"$reactiveApply($reactive)"
 

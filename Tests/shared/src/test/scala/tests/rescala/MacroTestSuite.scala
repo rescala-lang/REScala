@@ -159,7 +159,7 @@ class MacroTestSuite extends RETests {
 
     val a = Var(3)
     val b = Var(Signal(a()))
-    val c = Signal(b()())
+    val c = Signal.dynamic(b()())
 
     assert(c.now === 3)
     a set 4
@@ -172,7 +172,7 @@ class MacroTestSuite extends RETests {
 
   allEngines("nested Defined Signals"){ engine => import engine._
     val a = Var(3)
-    val b = Signal {
+    val b = Signal.dynamic {
       val c = Signal { a() }
       c()
     }
@@ -191,7 +191,7 @@ class MacroTestSuite extends RETests {
 
     def sig = Signal { outside() }
 
-    val testsig = Signal {
+    val testsig = Signal.dynamic {
       def sig = Signal { inside() }
       sig()
     }
@@ -209,7 +209,7 @@ class MacroTestSuite extends RETests {
 
     def sig()(implicit turnSource: CreationTicket) = Signal { outside() }
 
-    val testsig = Signal {
+    val testsig = Signal.dynamic {
       {
         def sig = Signal { inside() }
         sig()
@@ -335,7 +335,7 @@ class MacroTestSuite extends RETests {
     val v1 = Var(1)
     val v2 = Var(2)
     val s1 = Signal { List(Some(v1), None, Some(v2), None) }
-    val s2 = Signal {
+    val s2 = Signal.dynamic {
       s1() collect { case Some(n) => n() }
     }
     assert(s2.now === List(1, 2))
@@ -379,7 +379,7 @@ class MacroTestSuite extends RETests {
 
     val evt = Evt[Int]
 
-    val testsig = Signal {
+    val testsig = Signal.dynamic {
       val localsig = obj.sig
       val latest = evt latest -1
 
@@ -408,7 +408,7 @@ class MacroTestSuite extends RETests {
     val v2 = Var { 2 }
     val v = Var { List(new {val s = v1 }, new {val s = v2 }) }
 
-    val sig = Signal { v() map (_.s()) }
+    val sig = Signal.dynamic { v() map (_.s()) }
 
     assert(sig.now === List(1, 2))
     v1 set 5
@@ -429,7 +429,7 @@ class MacroTestSuite extends RETests {
 
     val s = Signal { v3() }
 
-    val sig = Signal { s().signal().signal(): @unchecked }
+    val sig = Signal.dynamic { s().signal().signal(): @unchecked }
 
     assert(sig.now === 20)
     v1 set 30

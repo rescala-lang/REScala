@@ -29,7 +29,7 @@ abstract class PaperPhilosophers[S <: Struct](val size: Int, val engine: Engine[
 
   val forks = for(idx <- 0 until size) yield
     REName.named(s"fork($idx)"){ implicit! =>
-      Signal[Fork] {
+      Signal.dynamic[Fork] {
         val nextIdx = (idx + 1) % size
         (phils(idx)(), phils(nextIdx)()) match {
           case (Thinking, Thinking) => Free
@@ -48,7 +48,7 @@ abstract class PaperPhilosophers[S <: Struct](val size: Int, val engine: Engine[
   // Dynamic Sight
   val sights = for(idx <- 0 until size) yield
     REName.named(s"sight($idx)") { implicit ! =>
-      Signal[Sight] {
+      Signal.dynamic[Sight] {
         val prevIdx = (idx - 1 + size) % size
         if(dynamicEdgeChanges) {
           forks(prevIdx)() match {

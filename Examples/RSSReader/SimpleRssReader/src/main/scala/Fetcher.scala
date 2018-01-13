@@ -6,8 +6,8 @@ import scala.xml.{NodeSeq, XML}
 
 class Fetcher(val url: URL) {
 
-  var listOfUrl: Signal[NodeSeq] = Signal{defaultLoadMethod(url)}
-  var ChTitle: Signal[String] = Signal{(listOfUrl()\ "title").text}
+  val listOfUrl: Signal[NodeSeq] = Signal{defaultLoadMethod(url)}
+  val ChTitle: Signal[String] = Signal{(listOfUrl()\ "title").text}
 
   private def defaultLoadMethod(urlA: URL): NodeSeq = {
     var channel: NodeSeq = null

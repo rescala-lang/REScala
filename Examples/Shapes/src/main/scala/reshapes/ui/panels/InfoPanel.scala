@@ -13,29 +13,29 @@ import reswing.ReLabel
 class InfoPanel extends FlowPanel {
   def state = ReShapes.drawingSpaceState
 
-  val shapeCount = Signal {  //#SIG
+  val shapeCount = Signal.dynamic {  //#SIG
     if (state() != null) "#elements: %d" format state().shapes().size else "" }
 
-  val color = Signal {  //#SIG
+  val color = Signal.dynamic {  //#SIG
     if (state() != null)
       "color: %d-%d-%d" format
         (state().color().getRed, state().color().getGreen, state().color().getBlue)
     else ""
   }
 
-  val strokeWidth = Signal {   //#SIG
+  val strokeWidth = Signal.dynamic {   //#SIG
     if (state() != null) "stroke width: %d" format state().strokeWidth() else "" }
 
-  val nextShape = Signal {   //#SIG
+  val nextShape = Signal.dynamic {   //#SIG
     if (state() != null) "next shape: %s" format state().nextShape().toString else "" }
 
-  val selectedShape = Signal {  //#SIG
+  val selectedShape = Signal.dynamic {  //#SIG
     if (state() != null && state().selectedShape() != null)
       "selected: %s" format state().selectedShape().toString
     else ""
   }
 
-  contents += new ReLabel(Signal {   //#SIG //#IS( //)
+  contents += new ReLabel(Signal.dynamic {   //#SIG //#IS( //)
     "%s | %s | %s | %s | %s" format
       (shapeCount(), color(), strokeWidth(), nextShape(), selectedShape()) } )
 }

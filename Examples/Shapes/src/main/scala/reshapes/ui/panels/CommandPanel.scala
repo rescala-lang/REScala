@@ -18,7 +18,7 @@ import reswing.ReButton
 class CommandPanel extends BoxPanel(Orientation.Vertical) {
   def state = ReShapes.drawingSpaceState
 
-  val commands = Signal { if (state() != null) state().commands() else List.empty } //#SIG
+  val commands = Signal.dynamic { if (state() != null) state().commands() else List.empty } //#SIG
 
   val buttonsEvents = Signal { //#SIG
     commands() map { command =>

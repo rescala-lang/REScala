@@ -51,7 +51,7 @@ class Elevator(val nFloors: Int) {
     FloorPos.indexOf(FloorPos.sortBy(f => math.abs(f - p)).head)
   }
   val reached = Signal {stopped() && position() == destination()}
-  val reachedFloor: Event[Int] = reached.changed && {_ == true} map { (_: Boolean) => currentFloor.now }
+  val reachedFloor: Event[Int] = reached.changed && {_ == true} map { (_: Boolean) => currentFloor.value }
 
   val waitingTime = reachedFloor.reset(0) { (floor: Int) =>
     tick.iterate(WaitingTime) {_ - (if (isWaiting.now) 1 else 0)}

@@ -1,7 +1,6 @@
 package rescala
 
 import rescala.core.{ReSerializable, Struct}
-import rescala.macros.ReactiveMacros
 import rescala.reactives.Source
 
 import scala.language.existentials
@@ -51,8 +50,16 @@ abstract class RescalaInterface[S <: Struct] {
     * val result: Signal[String] = Signal { a().toString + b().toString}
     * }}}
     */
-  final def Signal[A](expression: A)(implicit ticket: CreationTicket): Signal[A] = macro ReactiveMacros.SignalMacro[A, S]
-  final def Event[A](expression: Option[A])(implicit ticket: CreationTicket): Event[A] = macro ReactiveMacros.EventMacro[A, S]
+  object Signal {
+    final def apply[A](expression: A)(implicit ticket: CreationTicket): Signal[A] = macro rescala.macros.ReactiveMacros.SignalMacro[A, S]
+    final def static[A](expression: A)(implicit ticket: CreationTicket): Signal[A] = macro rescala.macros.ReactiveMacros.SignalMacro[A, S]
+    final def dynamic[A](expression: A)(implicit ticket: CreationTicket): Signal[A] = macro rescala.macros.ReactiveMacros.SignalMacro[A, S]
+  }
+  object Event {
+    final def apply[A](expression: Option[A])(implicit ticket: CreationTicket): Event[A] = macro rescala.macros.ReactiveMacros.EventMacro[A, S]
+    final def static[A](expression: Option[A])(implicit ticket: CreationTicket): Event[A] = macro rescala.macros.ReactiveMacros.EventMacro[A, S]
+    final def dynamic[A](expression: Option[A])(implicit ticket: CreationTicket): Event[A] = macro rescala.macros.ReactiveMacros.EventMacro[A, S]
+  }
 
   val Events = reactives.Events
   val Signals = reactives.Signals

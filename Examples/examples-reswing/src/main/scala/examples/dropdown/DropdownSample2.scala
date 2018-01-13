@@ -26,7 +26,7 @@ object DropdownSample2 extends SimpleSwingApplication {
     val val4 = Signal {col4.text()}
 
     val listOfSignals = Signal {List(val1, val2, val3, val4)}
-    val options = Signal {listOfSignals().map(_ ())}
+    val options = Signal.dynamic {listOfSignals().map(_ ())}
 
 
     val dropdown = new ReDynamicComboBox(options = options, selection = -1)
@@ -34,7 +34,7 @@ object DropdownSample2 extends SimpleSwingApplication {
     val validSelection = Signal {if (options().indices.contains(selectionIndex())) Some(selectionIndex()) else None}
 
     // select the currently selected item manually
-    val currentSelectedItem = Signal {validSelection().map { i => listOfSignals()(i)() }}
+    val currentSelectedItem = Signal.dynamic {validSelection().map { i => listOfSignals()(i)() }}
     val outputString = Signal {currentSelectedItem().getOrElse("Nothing")}
     val outputField = new ReTextField(text = outputString)
 

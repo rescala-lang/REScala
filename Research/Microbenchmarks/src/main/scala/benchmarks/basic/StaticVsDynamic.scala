@@ -41,7 +41,7 @@ class StaticVsDynamic[S <: Struct] {
     b = engine.Var { 20 }
 
     if (static) Signals.lift(source, a, b){(s, a, b) => if (s) a else b}
-    else engine.Signal { if (source()) a() else b() }
+    else engine.Signal.dynamic { if (source()) a() else b() }
 
   }
 

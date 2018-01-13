@@ -57,7 +57,7 @@ class GUI(store: FeedStore,
       peer.renderer = ListView.Renderer(_.title)
     }
 
-    val selectedChannelItems = Signal { //#SIG
+    val selectedChannelItems = Signal.dynamic { //#SIG
       channelList.selectedItem() match {
         case Some(channel) => store.channels().get(channel) match {
           case Some(items) => items().toSeq

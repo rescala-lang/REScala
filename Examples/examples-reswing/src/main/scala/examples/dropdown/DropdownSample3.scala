@@ -19,7 +19,7 @@ object DropdownSample3 extends SimpleSwingApplication {
   val nFields = Signal {fields().size}
 
   val listOfSignals = Signal {fields()}
-  val options = Signal {listOfSignals().map(_ ())}
+  val options = Signal.dynamic {listOfSignals().map(_ ())}
 
   val innerChanged = Signal {listOfSignals().map(_.changed)}
   val anyChangedWrapped = Signal {innerChanged().reduce((a, b) => a || b)}
@@ -33,7 +33,7 @@ object DropdownSample3 extends SimpleSwingApplication {
   val validSelection = Signal {if (options().indices.contains(selectionIndex())) Some(selectionIndex()) else None}
 
   // select the currently selected item manually
-  val currentSelectedItem = Signal {validSelection().map { i => listOfSignals()(i)() }}
+  val currentSelectedItem = Signal.dynamic {validSelection().map { i => listOfSignals()(i)() }}
   val outputString = Signal {currentSelectedItem().getOrElse("Nothing")}
   val outputField = new ReTextField(text = outputString)
 

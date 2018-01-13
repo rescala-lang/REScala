@@ -21,7 +21,7 @@ class EvaluationOrderWithHigherOrderSignalsTest extends RETests {
 
       val ho = Var(x: Signal[String])
       var reevaluationRestartTracker = List.empty[String]
-      val flatten = Signal {
+      val flatten = Signal.dynamic {
         val res = ho()()
         reevaluationRestartTracker ::= res
         res

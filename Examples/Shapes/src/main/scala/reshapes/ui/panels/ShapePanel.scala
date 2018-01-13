@@ -23,7 +23,7 @@ import reswing.ReButton
 class ShapePanel extends BoxPanel(Orientation.Vertical) {
   def state = ReShapes.drawingSpaceState
 
-  val shapes = Signal { if (state() != null) state().shapes() else List.empty } //#SIG
+  val shapes = Signal.dynamic { if (state() != null) state().shapes() else List.empty } //#SIG
 
   val shapeViews = Signal { shapes() map { shape => new ShapeView(shape, state()) } } //#SIG
 

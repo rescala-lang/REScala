@@ -50,7 +50,7 @@ object SimpleTodo extends JSApp {
         )
       }.asFrag,
 
-      Signal { ul(tasks().map { t =>
+      Signal.dynamic { ul(tasks().map { t =>
         li(
 
           // TODO why does this work, implicit function?
