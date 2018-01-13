@@ -22,8 +22,6 @@ trait Creation[S <: Struct] {
     val state = makeSourceStructState(valuePersistency)
     instantiateReactive(state)
   }
-  private[rescala] def dynamicBefore[P](reactive: ReSourciV[P, S]): P
-
 
   /**
     * to be implemented by the scheduler, called when a new state storage object is required for instantiating a new reactive.
