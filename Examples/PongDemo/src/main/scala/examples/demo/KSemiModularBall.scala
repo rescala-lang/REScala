@@ -4,7 +4,6 @@ import examples.demo.GModularClockCircle.Clock
 import examples.demo.ui.{Circle, Point, Shape, ShapesPanel}
 import rescala._
 
-//TODO: I do not see where a cyclic dependency occurs? also before was replaced by just a normal value access.
 /**
   * We now convert our BouncingBall into an external Module, similar
   * to Clock earlier. We begin by wrapping the movement code into

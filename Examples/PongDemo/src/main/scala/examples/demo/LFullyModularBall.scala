@@ -67,6 +67,7 @@ object LFullyModularBall extends Main {
       y = verticalBounceSources.flatten[Event[List[Option[Any]]]]
         .fold(initVy / Clock.NanoSecond) { (old, _ ) => -old }.value)}
 
+    //TODO: using now to remove cycle …
     val inc = Clock.ticks.map(tick => Right[Point, Pos](velocity.now * tick.toDouble))
 
     val reset = resetIn.map(pos => Left[Point, Pos](pos))
