@@ -24,11 +24,11 @@ my $CSVDIR = 'resultStore';
 my $OUTDIR = 'fig';
 my $BARGRAPH = abs_path("bargraph.pl");
 
-our $FONT = "Linux Libertine";
+our $FONT = "Latin Modern Roman";
 our $FONTSIZE = "30";
 
 our $NAME_FINE = "Handcrafted";
-our $NAME_COARSE = "Unmodified";
+our $NAME_COARSE = "No snapshots";
 our $NAME_LOCKSWEEP = "MV-RP";
 our $NAME_PARRP = "ParRP";
 our $NAME_STM = "STM-RP";
@@ -41,18 +41,18 @@ our $BARGRAPH_YFORMAT = "%1.1f";
 our $LEGEND_POS = "off";
 our $YRANGE = "[0:]";
 our $XRANGE = "[:]";
-our $GNUPLOT_TERMINAL = "pdf size 5,2.5";
+our $GNUPLOT_TERMINAL = "pdf size 6,3";
 our %MARGINS = (
-    lmargin => 5.8,
-    rmargin => 1.5,
-    tmargin => 0.3,
+    lmargin => 8.8,
+    rmargin => 1.7,
+    tmargin => 0.4,
     bmargin => 1.5,
   );
 our $VERTICAL_LINE = undef;
 our $X_VARYING = "Threads";
 our $BARGRAPH_LEGEND =
 "legendx=inside";
-our %ADDIITONAL_GNUPLOT_PARAMS = ();
+our %ADDITIONAL_GNUPLOT_PARAMS = ();
 
 our $MANUAL_BARGRAPH_HACK = 0;
 
@@ -71,11 +71,11 @@ sub styleByName($name) {
   given($name) {
     when (/$NAME_PARRP/)     { 'linecolor "dark-green" lt 2 lw 2 pt 6  ps 1' }
     when (/$NAME_STM/)       { 'linecolor "blue"       lt 2 lw 2 pt 5  ps 1' }
-    when (/$NAME_COARSE/)    { 'linecolor "blue"       lt 2 lw 2 pt 9  ps 1' }
+    when (/$NAME_COARSE|Restore/)    { 'linecolor "blue"       lt 2 lw 2 pt 9  ps 1' }
     when (/fair/)            { 'linecolor "light-blue" lt 2 lw 2 pt 8  ps 1' }
     when (/$NAME_LOCKSWEEP/) { 'linecolor "dark-green" lt 2 lw 2 pt 7  ps 1' }
     when (/$NAME_FINE/)      { 'linecolor "black"      lt 2 lw 2 pt 11 ps 1' }
-    when (/$NAME_RESTORING/) { 'linecolor "dark-green" lt 2 lw 2 pt 6  ps 1' }
+    when (/$NAME_RESTORING|Derive/) { 'linecolor "dark-green" lt 2 lw 2 pt 6  ps 1' }
     default { '' }
   }
 }
@@ -101,11 +101,12 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=". $DBPATH,"","",{AutoCommit => 0,Prin
 
 sub restorationBenchmarks() {
   { # fold percentages
+    local $LEGEND_POS = "left bottom";
     my $benchmark = "benchmarks.restoring.RestoringSimple.countMany";
     local $X_VARYING = "Param: foldPercent";
     for my $foldNodes (queryChoices("Param: size", Benchmark => $benchmark)) {
       #local $LEGEND_POS = "right top" if $foldNodes == 4;
-      plotBenchmarksFor("folds", "$foldNodes",
+      plotBenchmarksFor("folds", "foldPercentage$foldNodes",
         (map {{Title => $_, "Param: engineName" => $_ , Benchmark => $benchmark, "Param: size" => $foldNodes }}
           queryChoices("Param: engineName", Benchmark => $benchmark, "Param: size" => $foldNodes)),);
     }
@@ -114,10 +115,10 @@ sub restorationBenchmarks() {
   { # resotring vs deriving
     local $X_VARYING = "Param: size";
     local $LEGEND_POS = "right top";
-    local %ADDIITONAL_GNUPLOT_PARAMS = (logscale => "x 10");
+    local %ADDITIONAL_GNUPLOT_PARAMS = (logscale => "x 10");
     plotBenchmarksFor("restoreVsDerive", "restoreVsDerive",
-      {Title => "restore", Benchmark => "benchmarks.restoring.RestoringSnapshotVsRecomputationA.restored"},
-      {Title => "derive", Benchmark => "benchmarks.restoring.RestoringSnapshotVsRecomputationB.derived"});
+      {Title => "Restore", Benchmark => "benchmarks.restoring.RestoringSnapshotVsRecomputationA.restored"},
+      {Title => "Derive", Benchmark => "benchmarks.restoring.RestoringSnapshotVsRecomputationB.derived"});
   }
 }
 
@@ -486,9 +487,10 @@ sub plotDatasets($group, $name, $additionalParams, @datasets) {
     #logscale => "x 2; set logscale y 10",
     #ylabel => "Operations per millisecond",
     # xrange => "reverse",
+    ylabel => "Ops/ms",
     %MARGINS,
     %$additionalParams,
-    %ADDIITONAL_GNUPLOT_PARAMS
+    %ADDITIONAL_GNUPLOT_PARAMS
   );
   if (defined $VERTICAL_LINE) {
     $chart->line(
