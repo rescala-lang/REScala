@@ -2,6 +2,7 @@ package examples.demo.ui
 
 import java.awt.{Color, Graphics2D}
 
+import examples.demo.Pos
 import rescala._
 
 trait Shape extends Serializable {
@@ -13,11 +14,13 @@ trait Shape extends Serializable {
   def drawSnapshot(g: Graphics2D)(implicit turn: AdmissionTicket): Unit
 }
 
-class Circle (override val centerX: Signal[Int],
-              override val centerY: Signal[Int],
+class Circle (center: Signal[examples.demo.Pos],
               val diameter: Signal[Int],
               val border: Signal[Option[Color]] = Var(Some(Color.BLACK)),
               val fill: Signal[Option[Color]] = Var(None)) extends Shape {
+  def this(cx: Signal[Int], cy: Signal[Int], dia: Signal[Int]) = this(Signal{ Pos(cx.value, cy.value)}, dia)
+  override val centerX: rescala.Signal[Int] = center.map(_.x.toInt)
+  override val centerY: rescala.Signal[Int] = center.map(_.y.toInt)
   override val changed = centerX.changed || centerY.changed || diameter.changed || border.changed || fill.changed
   override val hitboxWidth = diameter
   override val hitboxHeight = diameter

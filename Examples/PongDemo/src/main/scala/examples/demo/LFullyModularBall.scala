@@ -3,6 +3,7 @@ package examples.demo
 import java.awt.Color
 
 import examples.demo.GModularClockCircle.Clock
+import examples.demo.KSemiModularBall.panel
 import examples.demo.ui.{Circle, Point, Shape, ShapesPanel}
 import rescala._
 
@@ -60,26 +61,22 @@ object LFullyModularBall extends Main {
     val verticalBounceSources: Var[List[Event[Any]]] = Var(List())
     val filteredHorizontalBounceSources = horizontalBounceSources.map(_.map(_.recover{case _: IllegalArgumentException => None}))
 
-    val velocityX = filteredHorizontalBounceSources.flatten[Event[List[Option[Any]]]]
-                    .fold(initVx / Clock.NanoSecond) { (old, _) => -old }
-    val velocityY = verticalBounceSources.flatten[Event[List[Option[Any]]]]
-                    .fold(initVy / Clock.NanoSecond) { (old, _ ) => -old }
+    val velocity = Signal { Pos(
+      x = filteredHorizontalBounceSources.flatten[Event[List[Option[Any]]]]
+        .fold(initVx / Clock.NanoSecond) { (old, _) => -old }.value,
+      y = verticalBounceSources.flatten[Event[List[Option[Any]]]]
+        .fold(initVy / Clock.NanoSecond) { (old, _ ) => -old }.value)}
 
-    val incX = Clock.ticks.map(tick => Right[Point, Double](tick.toDouble * velocityX.value))
-    val incY = Clock.ticks.map(tick => Right[Point, Double](tick.toDouble * velocityY.value))
+    val inc = Clock.ticks.map(tick => Right[Point, Pos](velocity.now * tick.toDouble))
 
-    val reset = resetIn.map(pos => Left[Point, Double](pos))
+    val reset = resetIn.map(pos => Left[Point, Pos](pos))
 
-    val posX = (reset || incX).fold(0d){
-      case (_, Left(Point(x, _))) => x.toDouble
+    val pos = (reset || inc).fold(Pos(0,0)){
+      case (_, Left(Point(x, y))) => Pos(x, y)
       case (pX, Right(inc)) => pX + inc
     }
-    val posY = (reset || incY).fold(0d){
-      case (_, Left(Point(_, y))) => y.toDouble
-      case (pY, Right(inc)) => pY + inc
-    }
 
-    val shape = new Circle(posX.map(_.toInt), posY.map(_.toInt), diameter, fill = Var(Some(Color.GREEN)))
+    val shape = new Circle(pos, diameter)
   }
 
   val shapes = Var[List[Shape]](List.empty)

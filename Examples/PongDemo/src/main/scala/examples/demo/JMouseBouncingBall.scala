@@ -21,22 +21,18 @@ object JMouseBouncingBall extends Main {
   val shapes = Var[List[Shape]](List.empty)
   val panel = new ShapesPanel(shapes)
 
-  val velocityX = panel.Mouse.leftButton.pressed.fold(200d / Clock.NanoSecond) { (old, _) => -old }
-  val velocityY = panel.Mouse.rightButton.pressed.fold(150d / Clock.NanoSecond) { (old, _ ) => -old }
+  val velocity = Signal { Pos(
+    x = panel.Mouse.leftButton.pressed.fold(200d / Clock.NanoSecond) { (old, _) => -old }.value,
+    y = panel.Mouse.rightButton.pressed.fold(150d / Clock.NanoSecond) { (old, _ ) => -old }.value)}
 
-  val incX = Clock.ticks.map(tick => Right[Point, Double](tick.toDouble * velocityX.value))
-  val incY = Clock.ticks.map(tick => Right[Point, Double](tick.toDouble * velocityY.value))
+  val inc = Clock.ticks.map(tick => Right[Point, Pos](velocity.value * tick.toDouble))
 
-  val reset = panel.Mouse.middleButton.pressed.map(pos => Left[Point, Double](pos))
+  val reset = panel.Mouse.middleButton.pressed.map(pos => Left[Point, Pos](pos))
 
-  val posX = (reset || incX).fold(0d){
-    case (_, Left(Point(x, _))) => x.toDouble
+  val pos = (reset || inc).fold(Pos(0,0)){
+    case (_, Left(Point(x, y))) => Pos(x, y)
     case (pX, Right(inc)) => pX + inc
   }
-  val posY = (reset || incY).fold(0d){
-    case (_, Left(Point(_, y))) => y.toDouble
-    case (pY, Right(inc)) => pY + inc
-  }
 
-  shapes.transform(new Circle(posX.map(_.toInt), posY.map(_.toInt), Var(50)) :: _)
+  shapes.transform(new Circle(pos, Var(50)) :: _)
 }

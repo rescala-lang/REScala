@@ -27,12 +27,12 @@ object CClockCirclingCircle extends SimpleSwingApplication {
 
   val angle = nsTime.map( _.toDouble / NanoSecond * math.Pi)
 
-  val posX = angle.map(a => 100d * math.sin(a))
-  val posY = angle.map(a => 100d * math.cos(a))
+  val pos = angle.map(a => Pos(100d * math.sin(a), 100d * math.cos(a)))
+
 
   override lazy val top = {
     val panel = new ShapesPanel(Var(List(
-      new Circle(posX.map(_.toInt), posY.map(_.toInt), Var(50))
+      new Circle(pos, Var(50))
     )))
     panel.preferredSize = new Dimension(400, 300)
     new MainFrame {

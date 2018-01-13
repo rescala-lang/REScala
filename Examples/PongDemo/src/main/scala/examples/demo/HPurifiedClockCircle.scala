@@ -20,14 +20,16 @@ object HPurifiedClockCircle extends Main {
 
   val angle = Clock.nsTime.map( _.toDouble / Clock.NanoSecond * math.Pi)
 
-  val velocityX = Signal {(panel.width() / 2 - 50).toDouble * math.sin(angle()) / Clock.NanoSecond}
-  val velocityY = Signal {(panel.height() / 2 - 50).toDouble * math.cos(angle()) / Clock.NanoSecond}
 
-  val incX = Clock.ticks.map(tick => tick.toDouble * velocityX.value)
-  val incY = Clock.ticks.map(tick => tick.toDouble * velocityY.value)
+  val velocity = Signal { Pos(
+    x = (panel.width() / 2 - 50).toDouble * math.sin(angle()) / Clock.NanoSecond,
+    y = (panel.height() / 2 - 50).toDouble * math.cos(angle()) / Clock.NanoSecond
+  )}
 
-  val posX = incX.fold(0d) { (cur, inc) => cur + inc }
-  val posY = incY.fold(0d) { (cur, inc) => cur + inc }
 
-  shapes.transform(new Circle(posX.map(_.toInt), posY.map(_.toInt), Var(50)) :: _)
+  val inc = Clock.ticks.map(tick => velocity.value * tick.toDouble)
+
+  val pos = inc.fold(Pos(0,0)) { (cur, inc) => cur + inc }
+
+  shapes.transform(new Circle(pos, Var(50)) :: _)
 }

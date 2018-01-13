@@ -46,10 +46,12 @@ object DScaledClockCircle extends SimpleSwingApplication {
 
   val angle = nsTime.map( _.toDouble / NanoSecond * math.Pi)
 
-  val posX = Signal {(panel.width() / 2 - 50).toDouble * math.sin(angle())}
-  val posY = Signal {(panel.height() / 2 - 50).toDouble * math.cos(angle())}
+  val pos = Signal { Pos(
+    (panel.width() / 2 - 50).toDouble * math.sin(angle()),
+    (panel.height() / 2 - 50).toDouble * math.cos(angle())) }
 
-  shapes.transform(new Circle(posX.map(_.toInt), posY.map(_.toInt), Var(50)) :: _)
+
+  shapes.transform(new Circle(pos, Var(50)) :: _)
 
   override lazy val top = {
     panel.preferredSize = new Dimension(400, 300)
