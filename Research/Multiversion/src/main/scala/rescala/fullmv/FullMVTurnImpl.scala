@@ -235,7 +235,7 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
     for(succ <- successorsIncludingSelf) {
       val call = succ.maybeNewReachableSubtree(this, predecessorSpanningTree)
       if(!call.isCompleted || call.value.get.isFailure) {
-        throw new AssertionError("foo") //incompleteCallsAccumulator += call
+        incompleteCallsAccumulator += call
       }
     }
 //    for(call <- incompleteCallsAccumulator) Await.result(call, host.timeout)
@@ -247,14 +247,18 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
     if (!isTransitivePredecessor(spanningSubTreeRoot.txn)) {
       val incompleteCallsAccumulator = ArrayBuffer[Future[Unit]]()
       val reps = replicatorLock.synchronized {
-        copySubTreeRootAndAssessChildren(attachBelow, spanningSubTreeRoot, incompleteCallsAccumulator)
+        // accumulate all changes offline and then batch-publish them in a single volatile write.
+        // this prevents concurrent threads from seeing some of the newly established relations,
+        // but not yet some transitive ones of those, which may violate several assertions
+        // (although this doesn't actually break anything beyond these assertions)
+        predecessorSpanningTreeNodes = copySubTreeRootAndAssessChildren(predecessorSpanningTreeNodes, attachBelow, spanningSubTreeRoot, incompleteCallsAccumulator)
         replicators
       }
 
       for (replicator <- reps) {
         val newPredCall = replicator.newPredecessors(selfNode)
         if(!newPredCall.isCompleted || newPredCall.value.get.isFailure) {
-          throw new AssertionError("bar") //incompleteCallsAccumulator += newPredCall
+          incompleteCallsAccumulator += newPredCall
         }
       }
       incompleteCallsAccumulator.foldLeft(Future.unit) { (fu, call) => fu.flatMap(_ => call)(FullMVEngine.notWorthToMoveToTaskpool) }
@@ -263,24 +267,25 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
     }
   }
 
-  private def copySubTreeRootAndAssessChildren(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn], newSuccessorCallsAccumulator: collection.generic.Growable[Future[Unit]]): Unit = {
+  private def copySubTreeRootAndAssessChildren(bufferPredecessorSpanningTreeNodes: Map[FullMVTurn, IMutableTransactionSpanningTreeNode[FullMVTurn]], attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn], newSuccessorCallsAccumulator: collection.generic.Growable[Future[Unit]]): Map[FullMVTurn, IMutableTransactionSpanningTreeNode[FullMVTurn]] = {
     val newTransitivePredecessor = spanningSubTreeRoot.txn
     assert(newTransitivePredecessor.host == host, s"new predecessor $newTransitivePredecessor of $this is hosted on ${newTransitivePredecessor.host} different from $host")
     val newSuccessorCall = newTransitivePredecessor.newSuccessor(this)
     if(!newSuccessorCall.isCompleted || newSuccessorCall.value.get.isFailure) {
-      throw new AssertionError("baz") //newSuccessorCallsAccumulator += newSuccessorCall
+      newSuccessorCallsAccumulator += newSuccessorCall
     }
     val copiedSpanningTreeNode = new MutableTransactionSpanningTreeNode(newTransitivePredecessor)
-    predecessorSpanningTreeNodes += newTransitivePredecessor -> copiedSpanningTreeNode
-    predecessorSpanningTreeNodes(attachBelow).addChild(copiedSpanningTreeNode)
+    var updatedBufferPredecessorSpanningTreeNodes = bufferPredecessorSpanningTreeNodes + (newTransitivePredecessor -> copiedSpanningTreeNode)
+    updatedBufferPredecessorSpanningTreeNodes(attachBelow).addChild(copiedSpanningTreeNode)
 
     val it = spanningSubTreeRoot.iterator()
     while(it.hasNext) {
       val child = it.next()
       if(!isTransitivePredecessor(child.txn)) {
-        copySubTreeRootAndAssessChildren(newTransitivePredecessor, child, newSuccessorCallsAccumulator)
+        updatedBufferPredecessorSpanningTreeNodes = copySubTreeRootAndAssessChildren(updatedBufferPredecessorSpanningTreeNodes, newTransitivePredecessor, child, newSuccessorCallsAccumulator)
       }
     }
+    updatedBufferPredecessorSpanningTreeNodes
   }
 
   override def newSuccessor(successor: FullMVTurn): Future[Unit] = {
