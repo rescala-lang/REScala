@@ -412,7 +412,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
       val (fromOrderedSuccessfully, changedSCCState) = tryOrderFromFraming(lookFor, fromFinal, fromFinalPredecessorRelationIsRecorded, fromSpeculative, sccState)
       val unlocked = changedSCCState.unlockedIfLocked()
       if(fromOrderedSuccessfully == Succeeded) {
-        (-fromSpeculative, UnlockedSameSCC)
+        (-fromSpeculative, unlocked)
       } else {
         assert(unlocked == UnlockedSameSCC, s"establishing from relationship failed, but $lookFor is supposedly not in same SCC")
         findOrPigeonHoleFramingPredictive0(lookFor, fromFinal, fromFinalPredecessorRelationIsRecorded, fromFinal - 1, fromSpeculative, UnlockedSameSCC)
@@ -742,7 +742,7 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
       // common-case shortcut attempt: read latest completed reevaluation
       latestReevOut
     } else {
-      val res = findOrPigeonHolePropagatingPredictive(txn, latestGChint + 1, fromFinalPredecessorRelationIsRecorded = true, firstFrame, toFinalRelationIsRecorded = firstFrame == size, UnlockedSameSCC)._1
+      val res = findOrPigeonHolePropagatingPredictive(txn, latestGChint + 1, fromFinalPredecessorRelationIsRecorded = true, firstFrame, toFinalRelationIsRecorded = firstFrame == size, UnlockedUnknown /* minor TODO might be able to have KnownSame here? */)._1
       assert(res < 0 || _versions(res).isFinal, s"found version $res of $txn isn't final in $this")
       assert(res < 0 || _versions(res).txn == txn, s"found version $res doesn't belong to $txn in $this")
       assert(res >= 0 || _versions(-res - 1).isFinal, s"predecessor version of insert point $res of $txn isn't final in $this")
@@ -951,6 +951,10 @@ class NodeVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePe
     * return the resulting notification out (with reframing if subsequent write is found).
     */
   override def reevOut(turn: T, maybeValue: Option[V]): NotificationResultAction.ReevOutResult[T, OutDep] = synchronized {
+    maybeValue match {
+      case Some(rescala.core.Pulse.Exceptional(t)) => t.printStackTrace()
+      case _ => //ignore
+    }
     val position = firstFrame
     val version = _versions(position)
     assert(version.txn == turn, s"$turn called reevDone, but first frame is $version (different transaction)")

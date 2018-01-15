@@ -89,6 +89,7 @@ object SubsumableLock {
   val DEBUG = false
 
   def acquireLock[R](contender: FullMVTurn, timeout: Duration): SubsumableLock = {
+    if (DEBUG) System.out.println(s"[${Thread.currentThread().getName}] syncing $contender")
     Await.result(contender.lock(), timeout)
   }
 

@@ -38,7 +38,7 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
       assert(lockedNewParent eq this, s"instance caching broken? $this came into contact with reflection of itLockedRoot on same host")
       assert(state.get == LockedRoot, s"passed in a TryLockResult indicates that $this was successfully locked, but it currently isn't!")
       val addHops = hopCount + (if(lastHopWasGCd) 1 else 0)
-      if (DEBUG) println(s"[${Thread.currentThread().getName}]: trySubsume $this to itLockedRoot reentrant success; $addHops new refs")
+      if (DEBUG) println(s"[${Thread.currentThread().getName}] trySubsume $this to itself reentrant success; $addHops new refs")
       if(addHops > 0) localAddRefs(addHops)
       futureZeroNone
     } else {
@@ -47,16 +47,16 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
           val success = state.compareAndSet(UnlockedRoot, Subsumed(lockedNewParent))
           if(success) {
             val addHops = 2 + hopCount + (if(lastHopWasGCd) 1 else 0)
-            if (DEBUG) println(s"[${Thread.currentThread().getName}]: trySubsume $this succeeded; passing $addHops new refs")
+            if (DEBUG) println(s"[${Thread.currentThread().getName}] trySubsume $this succeeded; passing $addHops new refs")
             lockedNewParent.localAddRefs(addHops)
             Future.successful((0, None))
           } else {
-            if (DEBUG) println(s"[${Thread.currentThread().getName}]: retrying contended trySubsume $this to $lockedNewParent")
+            if (DEBUG) println(s"[${Thread.currentThread().getName}] retrying contended trySubsume $this to $lockedNewParent")
             trySubsume0(hopCount, lastHopWasGCd, lockedNewParent)
           }
         case LockedRoot =>
           val addHops = hopCount + (if(lastHopWasGCd) 1 else 0)
-          if (DEBUG) println(s"[${Thread.currentThread().getName}]: trySubsume $this to $lockedNewParent blocked; $addHops new refs")
+          if (DEBUG) println(s"[${Thread.currentThread().getName}] trySubsume $this to $lockedNewParent blocked; $addHops new refs")
           if(addHops > 0) localAddRefs(addHops)
           Future.successful((0, Some(this)))
         case subsumed@Subsumed(parent) =>
@@ -77,22 +77,22 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
       case UnlockedRoot =>
         if(state.compareAndSet(UnlockedRoot, LockedRoot)) {
           val addHops = hopCount + (if(lastHopWasGCd) 1 else 0)
-          if(DEBUG) println(s"[${Thread.currentThread().getName}]: locked $this; $addHops new refs")
+          if(DEBUG) println(s"[${Thread.currentThread().getName}] locked $this; $addHops new refs")
           if(addHops > 0) localAddRefs(addHops)
           Future.successful((0, this))
         } else {
-          if(DEBUG) println(s"[${Thread.currentThread().getName}]: retrying contended lock attempt of $this")
+          if(DEBUG) println(s"[${Thread.currentThread().getName}] retrying contended lock attempt of $this")
           lock0(hopCount, lastHopWasGCd)
         }
       case LockedRoot =>
         val thread = Thread.currentThread()
-        if(DEBUG) println(s"[${Thread.currentThread().getName}]: waiting for lock on $this")
+        if(DEBUG) println(s"[${Thread.currentThread().getName}] waiting for lock on $this")
         waiters.add(thread)
 
         while(waiters.peek() != thread || state.get == LockedRoot) {
-          if(DEBUG) println(s"[${Thread.currentThread().getName}]: parking on $this")
+          if(DEBUG) println(s"[${Thread.currentThread().getName}] parking on $this")
           LockSupport.park(this)
-          if(DEBUG) println(s"[${Thread.currentThread().getName}]: unparked on $this")
+          if(DEBUG) println(s"[${Thread.currentThread().getName}] unparked on $this")
         }
 
         waiters.remove()
@@ -113,7 +113,7 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
   private def unlock0(): Unit = {
     if (!state.compareAndSet(LockedRoot, UnlockedRoot)) throw new AssertionError(s"$this unlock failed due to contention!?")
     val peeked = waiters.peek()
-    if (DEBUG) println(s"[${Thread.currentThread().getName}]: release $this, unparking $peeked")
+    if (DEBUG) println(s"[${Thread.currentThread().getName}] release $this, unparking $peeked")
     LockSupport.unpark(peeked)
   }
 
@@ -155,7 +155,7 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
       from.parent.localSubRefs(1)
       res
     } else {
-      if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this parent cas $from to $to failed due to contention")
+      if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this parent cas $from to $to failed due to contention")
       val (failedRefChanges, t) = res
       (failedRefChanges + 1, t)
     }
@@ -202,7 +202,7 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
     state.get match {
       case UnlockedRoot =>
         if(state.compareAndSet(UnlockedRoot, GarbageCollected)) {
-          if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this no refs remaining, deallocated")
+          if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this no refs remaining, deallocated")
         } else {
           dumped()
         }
@@ -210,7 +210,7 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
         throw new AssertionError(s"$this was garbage collected while locked")
       case x@Subsumed(parent) =>
         if(state.compareAndSet(x, GarbageCollectedSubsumed(x.parent))) {
-          if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this no refs remaining, deallocating and dropping ref on parent $parent")
+          if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this no refs remaining, deallocating and dropping ref on parent $parent")
           parent.localSubRefs(1)
         } else {
           dumped()

@@ -10,7 +10,7 @@ import rescala.fullmv.sgt.synchronization._
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 
 class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GUID, val userlandThread: Thread, initialLock: SubsumableLock) extends FullMVTurn {
   var initialChanges: collection.Map[ReSource[FullMVStruct], InitialChange[FullMVStruct]] = _
@@ -227,14 +227,19 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
   }
 
   def addPredecessor(predecessorSpanningTree: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = {
-    assert(SerializationGraphTracking.lock.isHeldByCurrentThread, s"addPredecessor by thread that doesn't hold the SGT lock")
+    assert(Await.result(getLockedRoot, host.timeout).isDefined, s"addPredecessor while own lock isn't held")
+    assert(Await.result(getLockedRoot, host.timeout) == Await.result(predecessorSpanningTree.txn.getLockedRoot, host.timeout) || predecessorSpanningTree.txn.phase == TurnPhase.Completed, s"addPredecessor while $this under lock ${Await.result(getLockedRoot, host.timeout)} but ${predecessorSpanningTree.txn} under ${Await.result(predecessorSpanningTree.txn.getLockedRoot, host.timeout)}.")
     assert(!isTransitivePredecessor(predecessorSpanningTree.txn), s"attempted to establish already existing predecessor relation ${predecessorSpanningTree.txn} -> $this")
     if(FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this new predecessor ${predecessorSpanningTree.txn}.")
     val incompleteCallsAccumulator = ArrayBuffer[Future[Unit]]()
     for(succ <- successorsIncludingSelf) {
       val call = succ.maybeNewReachableSubtree(this, predecessorSpanningTree)
-      if(!call.isCompleted) incompleteCallsAccumulator += call
+      if(!call.isCompleted || call.value.get.isFailure) {
+        throw new AssertionError("foo") //incompleteCallsAccumulator += call
+      }
     }
+//    for(call <- incompleteCallsAccumulator) Await.result(call, host.timeout)
+//    Future.unit
     incompleteCallsAccumulator.foldLeft(Future.unit) { (fu, call) => fu.flatMap(_ => call)(FullMVEngine.notWorthToMoveToTaskpool) }
   }
 
@@ -248,12 +253,10 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
 
       for (replicator <- reps) {
         val newPredCall = replicator.newPredecessors(selfNode)
-        if (!newPredCall.isCompleted) incompleteCallsAccumulator += newPredCall
+        if(!newPredCall.isCompleted || newPredCall.value.get.isFailure) {
+          throw new AssertionError("bar") //incompleteCallsAccumulator += newPredCall
+        }
       }
-
-//      for(call <- incompleteCallsAccumulator) Await.result(call, host.timeout)
-//    }
-//    Future.unit
       incompleteCallsAccumulator.foldLeft(Future.unit) { (fu, call) => fu.flatMap(_ => call)(FullMVEngine.notWorthToMoveToTaskpool) }
     } else {
       Future.unit
@@ -264,7 +267,9 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
     val newTransitivePredecessor = spanningSubTreeRoot.txn
     assert(newTransitivePredecessor.host == host, s"new predecessor $newTransitivePredecessor of $this is hosted on ${newTransitivePredecessor.host} different from $host")
     val newSuccessorCall = newTransitivePredecessor.newSuccessor(this)
-    if(!newSuccessorCall.isCompleted) newSuccessorCallsAccumulator += newSuccessorCall
+    if(!newSuccessorCall.isCompleted || newSuccessorCall.value.get.isFailure) {
+      throw new AssertionError("baz") //newSuccessorCallsAccumulator += newSuccessorCall
+    }
     val copiedSpanningTreeNode = new MutableTransactionSpanningTreeNode(newTransitivePredecessor)
     predecessorSpanningTreeNodes += newTransitivePredecessor -> copiedSpanningTreeNode
     predecessorSpanningTreeNodes(attachBelow).addChild(copiedSpanningTreeNode)

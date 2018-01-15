@@ -26,7 +26,10 @@ class NodeVersionHistoryTest extends FunSuite {
     framing1.awaitAndSwitchPhase(TurnPhase.Framing)
     val framing2 = engine.newTurn()
     framing2.awaitAndSwitchPhase(TurnPhase.Framing)
-    val lock = SerializationGraphTracking.acquireLock(framing1, framing2, UnlockedUnknown)
+    val lock = SerializationGraphTracking.tryLock(framing1, framing2, UnlockedUnknown) match {
+      case x@LockedSameSCC(_) => x
+      case other => fail("not locked: " + other)
+    }
     framing2.addPredecessor(framing1.selfNode)
     lock.unlock()
 
@@ -36,6 +39,6 @@ class NodeVersionHistoryTest extends FunSuite {
     n.retrofitSinkFrames(Seq.empty, Some(framing1), -1)
     assert(n.reevOut(reevaluate, Some(Pulse.Value(11))) === FollowFraming(Set.empty, framing2))
 
-    assert(n.incrementSupersedeFrame(framing1, framing2) == Deframe(Set.empty, framing2))
+    assert(n.incrementSupersedeFrame(framing1, framing2) === Deframe(Set.empty, framing2))
   }
 }

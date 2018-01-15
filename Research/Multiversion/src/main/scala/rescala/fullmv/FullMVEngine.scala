@@ -80,7 +80,6 @@ class FullMVEngine(val timeout: Duration, val name: String) extends EngineImpl[F
 }
 
 object FullMVEngine {
-  val SEPARATE_WRAPUP_PHASE = false
   val DEBUG = false
 
   val default = new FullMVEngine(10.seconds, "default")
