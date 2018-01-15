@@ -236,5 +236,7 @@ object PaperPhilosophers {
         println("Total score: " + table.total + " (differs from individual scores' sum of " + individualsSum + ")")
       }
     }
+    println(engine.instances.size() + " turn instances remain.")
+    println(engine.lockHost.instances.size() + " lock instances remain.")
   }
 }

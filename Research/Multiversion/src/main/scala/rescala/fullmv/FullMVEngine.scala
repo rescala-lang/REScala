@@ -18,7 +18,8 @@ class FullMVEngine(val timeout: Duration, val name: String) extends EngineImpl[F
   override val dummy: FullMVTurnImpl = {
     val dummy = new FullMVTurnImpl(this, Host.dummyGuid, null, lockHost.newLock())
     instances.put(Host.dummyGuid, dummy)
-    dummy.awaitAndSwitchPhase(TurnPhase.Completed)
+    dummy.beginExecuting()
+    dummy.completeExecuting()
     dummy
   }
 
