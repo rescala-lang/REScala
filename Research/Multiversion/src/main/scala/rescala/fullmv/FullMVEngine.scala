@@ -6,7 +6,7 @@ import rescala.core.{EngineImpl, ReSourciV}
 import rescala.fullmv.mirrors.{FullMVTurnHost, Host, HostImpl, SubsumableLockHostImpl}
 import rescala.fullmv.tasks.{Framing, SourceNotification}
 
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 import scala.concurrent.duration._
 import scala.util.Try
 
@@ -87,4 +87,24 @@ object FullMVEngine {
   val notWorthToMoveToTaskpool: ExecutionContextExecutor = ExecutionContext.fromExecutor(new Executor{
     override def execute(command: Runnable): Unit = command.run()
   })
+
+  type CallAccumulator[T] = List[Future[T]]
+  def newAccumulator(): CallAccumulator[Unit] = Nil
+  def broadcast[C](collection: Iterable[C])(makeCall: C => Future[Unit]): Future[Unit] = {
+    condenseCallResults(accumulateBroadcastFutures(newAccumulator(), collection) (makeCall))
+  }
+  def accumulateBroadcastFutures[T, C](accumulator: CallAccumulator[T], collection: Iterable[C])(makeCall: C => Future[T]): CallAccumulator[T] = {
+    collection.foldLeft(accumulator){ (acc, elem) => accumulateFuture(acc, makeCall(elem)) }
+  }
+  def accumulateFuture[T](accumulator: CallAccumulator[T], call: Future[T]): CallAccumulator[T] = {
+    if(!call.isCompleted || call.value.get.isFailure) {
+      call :: accumulator
+    } else {
+      accumulator
+    }
+  }
+  def condenseCallResults(accumulator: Iterable[Future[Unit]]): Future[Unit] = {
+    // TODO this should collect exceptions..
+    accumulator.foldLeft(Future.unit) { (fu, call) => fu.flatMap(_ => call)(notWorthToMoveToTaskpool) }
+  }
 }

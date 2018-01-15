@@ -12,7 +12,7 @@ import scala.concurrent.{Await, Future}
 class FullMVTurnReflection(override val host: FullMVEngine, override val guid: Host.GUID, val proxy: FullMVTurnProxy) extends FullMVTurn with SubsumableLockEntryPoint with FullMVTurnReflectionProxy {
   object phaseParking
   var phase: TurnPhase.Type = TurnPhase.Initialized
-  object subLock
+  object replicatorLock
   var selfNode: TransactionSpanningTreeNode[FullMVTurn] = _
   @volatile var predecessors: Set[FullMVTurn] = Set()
 
@@ -47,7 +47,7 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
 
   override def isTransitivePredecessor(txn: FullMVTurn): Boolean = txn == this || predecessors(txn)
 
-  override def addReplicator(replicator: FullMVTurnReflectionProxy): (TurnPhase.Type, TransactionSpanningTreeNode[FullMVTurn]) = subLock.synchronized {
+  override def addReplicator(replicator: FullMVTurnReflectionProxy): (TurnPhase.Type, TransactionSpanningTreeNode[FullMVTurn]) = replicatorLock.synchronized {
     replicators += replicator
     (phase, selfNode)
   }
@@ -59,39 +59,28 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
   }
 
   override def newPredecessors(predecessors: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = {
-    val reps = subLock.synchronized {
+    val reps = replicatorLock.synchronized {
       this.selfNode = predecessors
-      indexChildren(selfNode)
       replicators
     }
-    val forwards = reps.map(_.newPredecessors(predecessors))
-    for(call <- forwards) {
-      Await.result(call, host.timeout)
-    }
-    Future.successful(Unit)
+    indexChildren(selfNode)
+    FullMVEngine.broadcast(reps) {_.newPredecessors(predecessors) }
   }
 
   override def newPhase(phase: TurnPhase.Type): Future[Unit] = {
-    val reps = subLock.synchronized {
-      if(this.phase < phase) {
+    if(this.phase < phase) {
+      val reps = replicatorLock.synchronized {
         this.phase = phase
-        phaseParking.synchronized {
-          phaseParking.notifyAll()
-        }
-        if (phase == TurnPhase.Completed) {
-          predecessors = Set.empty
-          host.dropInstance(guid, this)
-        }
         replicators
-      } else {
-        Set.empty
       }
+      if (phase == TurnPhase.Completed) {
+        predecessors = Set.empty
+        host.dropInstance(guid, this)
+      }
+      FullMVEngine.broadcast(reps) { _.newPhase(phase) }
+    } else {
+      Future.unit
     }
-    val forwards = reps.map(_.newPhase(phase))
-    for (call <- forwards) {
-      Await.result(call, host.timeout)
-    }
-    Future.successful(Unit)
   }
 
   override def asyncRemoteBranchComplete(forPhase: Type): Unit = proxy.asyncRemoteBranchComplete(forPhase)
