@@ -1,7 +1,7 @@
 package tests.rescala.fullmv
 
 import org.scalatest.FunSuite
-import rescala.fullmv.{FullMVEngine, FullMVTurn, TurnPhase}
+import rescala.fullmv.{FullMVEngine, FullMVTurn}
 import rescala.fullmv.sgt.synchronization.{Blocked, Deallocated, SubsumableLock, Successful}
 import rescala.testhelper.Spawn
 

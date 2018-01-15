@@ -1,7 +1,7 @@
 package tests.rescala.fullmv
 
 import org.scalatest.FunSuite
-import rescala.fullmv.{FullMVTurnImpl, SerializationGraphTracking, TurnPhase}
+import rescala.fullmv.{FullMVTurnImpl, TurnPhase}
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -41,7 +41,6 @@ class FullMVTurnTransitiveReachabilityTest extends FunSuite {
       tA
     }
     Await.result(trees.head._2.lock(), Duration.Zero)
-    SerializationGraphTracking.lock.lock()
     trees
   }
 
@@ -65,15 +64,10 @@ class FullMVTurnTransitiveReachabilityTest extends FunSuite {
     val nodes = edges.keySet
 
     val trees = makeTreesUnderSingleLockedLock(nodes)
-    try {
-
-      var addedEdges = Map[Int, Set[Int]]().withDefaultValue(Set())
-      for ((from, tos) <- edges; to <- tos) {
-        addedEdges = addEdgeIfPossibleAndVerify(nodes, trees, addedEdges, from, to)
-      }
-
-    } finally SerializationGraphTracking.lock.unlock()
-
+    var addedEdges = Map[Int, Set[Int]]().withDefaultValue(Set())
+    for ((from, tos) <- edges; to <- tos) {
+      addedEdges = addEdgeIfPossibleAndVerify(nodes, trees, addedEdges, from, to)
+    }
   }
 
   private def addEdgeIfPossibleAndVerify(nodes: Set[Int], trees: Map[Int, FullMVTurnImpl], addedEdges: Map[Int, Set[Int]], from: Int, to: Int): Map[Int, Set[Int]] = {
@@ -95,14 +89,10 @@ class FullMVTurnTransitiveReachabilityTest extends FunSuite {
     val random = new Random()
     val nodes = (0 until SIZE).toSet
     val trees = makeTreesUnderSingleLockedLock(nodes)
-    try {
-      var addedEdges = Map[Int, Set[Int]]().withDefaultValue(Set())
-      for(_ <- 0 until SIZE*SIZE) {
-        val from, to = random.nextInt(SIZE)
-
-        addedEdges = addEdgeIfPossibleAndVerify(nodes, trees, addedEdges, from, to)
-      }
-
-    } finally SerializationGraphTracking.lock.unlock()
+    var addedEdges = Map[Int, Set[Int]]().withDefaultValue(Set())
+    for(_ <- 0 until SIZE*SIZE) {
+      val from, to = random.nextInt(SIZE)
+      addedEdges = addEdgeIfPossibleAndVerify(nodes, trees, addedEdges, from, to)
+    }
   }
 }
