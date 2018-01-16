@@ -208,7 +208,9 @@ lazy val cfg = new {
     version := "0.21.0-SNAPSHOT",
     scalaVersion := version_212,
     baseScalac,
-    autoAPIMappings := true // scaladoc
+    // scaladoc
+    autoAPIMappings := true,
+    Compile / doc / scalacOptions += "-groups",
   )
 
   val test = List(
