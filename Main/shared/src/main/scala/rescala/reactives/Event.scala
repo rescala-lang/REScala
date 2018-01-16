@@ -30,7 +30,7 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with Observable[T, S
   /** Uses a partial function `onFailure` to recover an error carried by the event into a value when returning Some(value),
     * or filters the error when returning None */
   final def recover[R >: T](onFailure: PartialFunction[Throwable, Option[R]])(implicit ticket: CreationTicket[S]): Event[R, S] =
-    Events.staticInternal(s"(recover $this)", this) { st =>
+    Events.staticNamed(s"(recover $this)", this) { st =>
       st.staticDependPulse(this) match {
         case Exceptional(t) => onFailure.applyOrElse[Throwable, Option[R]](t, throw _).fold[Pulse[R]](Pulse.NoChange)(Pulse.Value(_))
         case other => other
@@ -40,12 +40,12 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with Observable[T, S
   /** Collects the results from a partial function
     * @group operator */
   final def collect[U](pf: PartialFunction[T, U])(implicit ticket: CreationTicket[S]): Event[U, S] =
-    Events.staticInternal(s"(collect $this)", this) { st => st.staticDependPulse(this).collect(pf) }
+    Events.staticNamed(s"(collect $this)", this) { st => st.staticDependPulse(this).collect(pf) }
 
   /** Events disjunction.
     * @group operator */
   final def ||[U >: T](other: Event[U, S])(implicit ticket: CreationTicket[S]): Event[U, S] = {
-    Events.staticInternal(s"(or $this $other)", this, other) { st =>
+    Events.staticNamed(s"(or $this $other)", this, other) { st =>
       val tp = st.staticDependPulse(this)
       if (tp.isChange) tp else st.staticDependPulse(other)
     }
@@ -53,7 +53,7 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with Observable[T, S
 
   /** EV filtered with a predicate
     * @group operator*/
-  final def filter(pred: T => Boolean)(implicit ticket: CreationTicket[S]): Event[T, S] = Events.staticInternal(s"(filter $this)", this) { st => st.staticDependPulse(this).filter(pred) }
+  final def filter(pred: T => Boolean)(implicit ticket: CreationTicket[S]): Event[T, S] = Events.staticNamed(s"(filter $this)", this) { st => st.staticDependPulse(this).filter(pred) }
   /** EV filtered with a predicate
     * @group operator*/
   final def &&(pred: T => Boolean)(implicit ticket: CreationTicket[S]): Event[T, S] = filter(pred)
@@ -61,7 +61,7 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with Observable[T, S
   /** EV is triggered except if the other one is triggered
     * @group operator*/
   final def \[U](except: Event[U, S])(implicit ticket: CreationTicket[S]): Event[T, S] = {
-    Events.staticInternal(s"(except $this  $except)", this, except) { st =>
+    Events.staticNamed(s"(except $this  $except)", this, except) { st =>
       st.staticDependPulse(except) match {
         case NoChange => st.staticDependPulse(this)
         case Value(_) => Pulse.NoChange
@@ -73,7 +73,7 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with Observable[T, S
   /** Events conjunction
     * @group operator*/
   final def and[U, R](other: Event[U, S])(merger: (T, U) => R)(implicit ticket: CreationTicket[S]): Event[R, S] = {
-    Events.staticInternal(s"(and $this $other)", this, other) { st =>
+    Events.staticNamed(s"(and $this $other)", this, other) { st =>
       for {
         left <- st.staticDependPulse(this)
         right <- st.staticDependPulse(other)
@@ -88,7 +88,7 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with Observable[T, S
   /** Event disjunction with a merge method creating a tuple of both optional event parameters wrapped
     * @group operator*/
   final def zipOuter[U](other: Event[U, S])(implicit ticket: CreationTicket[S]): Event[(Option[T], Option[U]), S] = {
-    Events.staticInternal(s"(zipOuter $this $other)", this, other) { st =>
+    Events.staticNamed(s"(zipOuter $this $other)", this, other) { st =>
       val left = st.staticDependPulse(this)
       val right = st.staticDependPulse(other)
       if (right.isChange || left.isChange) Value(left.toOption -> right.toOption) else NoChange
@@ -98,7 +98,7 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with Observable[T, S
   /** Transform the event parameter
     * @group operator*/
   final def map[A](expression: T => A)(implicit ticket: CreationTicket[S]): Event[A, S] = macro rescala.macros.ReactiveMacros.EventMapMacro[T, A, S]
-  final def staticMap[U](mapping: T => U)(implicit ticket: CreationTicket[S]): Event[U, S] = Events.staticInternal(s"(map $this)", this) { st => st.staticDependPulse(this).map(mapping) }
+  final def staticMap[U](mapping: T => U)(implicit ticket: CreationTicket[S]): Event[U, S] = Events.staticNamed(s"(map $this)", this) { st => st.staticDependPulse(this).map(mapping) }
 
   /** Drop the event parameter; equivalent to map((_: Any) => ())
     * @group operator*/

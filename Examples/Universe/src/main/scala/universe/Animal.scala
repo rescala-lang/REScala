@@ -119,10 +119,10 @@ abstract class Animal(implicit world: World) extends BoardElement {
   val isFertile = isAdult
 
   private val energyDrain: Signal[Int] =
-    Signals.lift(age, state, world.board.animalsAlive) { (a, s, alive) =>
-      (alive / (world.board.width + world.board.height)) +
-        (a / 2) +
-        (s match {
+    Signal.static {
+      (world.board.animalsAlive.value / (world.board.width + world.board.height)) +
+        (age.value / 2) +
+        (state.value match {
           case Moving(_) => Animal.MoveCost
           case Procreating(_) => Animal.ProcreateCost
           case FallPrey => Animal.AttackAmount

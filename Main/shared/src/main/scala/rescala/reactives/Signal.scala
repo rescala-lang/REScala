@@ -3,7 +3,7 @@ package rescala.reactives
 import rescala.core._
 import rescala.macros.MacroAccessors
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
-import rescala.reactives.Signals.Diff
+import rescala.reactives.Signals.{Diff, static}
 
 import scala.util.control.NonFatal
 
@@ -52,7 +52,8 @@ trait Signal[+A, S <: Struct] extends ReSourciV[Pulse[A], S] with Observable[A, 
 
   /** Return a Signal with f applied to the value
     * @group operator */
-  final def map[B](f: A => B)(implicit ticket: CreationTicket[S]): Signal[B, S] = Signals.lift(this)(f)
+  final def map[B](f: A => B)(implicit ticket: CreationTicket[S]): Signal[B, S] =
+    static(this) { t => f(t.staticDepend(this)) }
 
   /** Flattens the inner reactive.
     * @group operator */
@@ -70,7 +71,7 @@ trait Signal[+A, S <: Struct] extends ReSourciV[Pulse[A], S] with Observable[A, 
   /** Create an event that fires every time the signal changes. The value associated
     * to the event is the new value of the signal
     * @group conversion */
-  final def changed(implicit ticket: CreationTicket[S]): Event[A, S] = Events.staticInternal(s"(changed $this)", this) { st =>
+  final def changed(implicit ticket: CreationTicket[S]): Event[A, S] = Events.staticNamed(s"(changed $this)", this) { st =>
     st.staticDependPulse(this) match {
       case Pulse.empty => Pulse.NoChange
       case other => other

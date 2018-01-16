@@ -12,7 +12,7 @@ class Time {
   val day = hours map (_ / 24)
   val hour = hours map (_ % 24)
   val week = day map (_ / 7)
-  val timestring = Signals.lift(week, day, hour) { (w, d, h) => s"Week: $w Day: $d  hour: $h" }
+  val timestring = Signal.static(s"Week: ${week.value} Day: ${day.value}  hour: ${hour.value}")
   val newWeek = week.changed
   override def toString: String = timestring.now
 }
