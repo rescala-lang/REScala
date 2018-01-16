@@ -16,8 +16,7 @@ abstract class Source[T, S <: Struct](initialState: S#State[Pulse[T], S], name: 
   }
 }
 
-/**
-  * Source events that can be imperatively updated
+/** Source events with imperative occurrences
   *
   * @param initialState of by the event
   * @tparam T Type returned when the event fires
@@ -32,17 +31,14 @@ final class Evt[T, S <: Struct] private[rescala](initialState: S#State[Pulse[T],
   override def disconnect()(implicit engine: Scheduler[S]): Unit = ()
 }
 
-/**
-  * Companion object that allows external users to create new source events.
-  */
+/** Creates new [[Evt]]s */
 object Evt {
   def apply[T, S <: Struct]()(implicit ticket: CreationTicket[S]): Evt[T, S] = ticket { t =>
     t.createSource[Pulse[T], Evt[T, S]](ValuePersistency.Event)(new Evt[T, S](_, ticket.rename))
   }
 }
 
-/**
-  * Source signals that can be imperatively updated
+/** Source signals with imperatively updates.
   *
   * @param initialState of the signal
   * @tparam A Type stored by the signal
@@ -61,9 +57,7 @@ final class Var[A, S <: Struct] private[rescala](initialState: S#State[Pulse[A],
   override def disconnect()(implicit engine: Scheduler[S]): Unit = ()
 }
 
-/**
-  * Companion object that allows external users to create new source signals.
-  */
+/** Creates new [[Var]]s */
 object Var {
   def apply[T: ReSerializable, S <: Struct](initval: T)(implicit ticket: CreationTicket[S]): Var[T, S] = fromChange(Pulse.Value(initval))
   def empty[T: ReSerializable, S <: Struct]()(implicit ticket: CreationTicket[S]): Var[T, S] = fromChange(Pulse.empty)
