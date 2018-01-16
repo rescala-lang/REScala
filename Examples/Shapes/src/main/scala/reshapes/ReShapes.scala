@@ -1,56 +1,23 @@
 package reshapes
 
-import java.net.BindException
-import java.net.ConnectException
+import java.net.{BindException, ConnectException}
+import javax.swing.JOptionPane
+
+import rescala._
+import reshapes.actions.{LoadAction, SaveAction}
+import reshapes.drawing.{Command, DrawingSpaceState, MergeDrawingSpaces, NetworkSpaceState}
+import reshapes.figures.Shape
+import reshapes.ui.dialogs.{NewTabDialog, ServerDialog}
+import reshapes.ui.panels.{CommandPanel, DrawingPanel, InfoPanel, ShapePanel, ShapeSelectionPanel, ShowCoordinateSystem, ShowIntersection, ShowNameLabels, StrokeInputPanel}
+import reshapes.util.ReactiveUtil.{UnionEvent, bilateralValues}
+import reswing.ReMenuItem.toMenuItem
+import reswing.{ReMenu, ReMenuItem, ReSwingValue}
 
 import scala.collection.mutable.HashMap
-import scala.swing.Action
-import scala.swing.BorderPanel
-import scala.swing.BorderPanel.Position
-import scala.swing.Component
-import scala.swing.Dimension
-import scala.swing.MainFrame
-import scala.swing.Menu
-import scala.swing.MenuBar
-import scala.swing.MenuItem
-import scala.swing.Separator
-import scala.swing.SimpleSwingApplication
-import scala.swing.Swing
-import scala.swing.TabbedPane
-import scala.swing.event.SelectionChanged
-
-import drawing.DrawingSpaceState
-import javax.swing.JOptionPane
-import rescala._
-import rescala._
-import rescala._
-import rescala._
-import rescala._
-import reshapes.actions.LoadAction
-import reshapes.actions.SaveAction
-import reshapes.drawing.Command
-import reshapes.drawing.MergeDrawingSpaces
-import reshapes.drawing.NetworkSpaceState
-import reshapes.figures.Shape
-import reshapes.ui.dialogs.NewTabDialog
-import reshapes.ui.dialogs.ServerDialog
-import reshapes.ui.panels.CommandPanel
-import reshapes.ui.panels.DrawingPanel
-import reshapes.ui.panels.InfoPanel
-import reshapes.ui.panels.ShapePanel
-import reshapes.ui.panels.ShapeSelectionPanel
-import reshapes.ui.panels.ShowCoordinateSystem
-import reshapes.ui.panels.ShowIntersection
-import reshapes.ui.panels.ShowNameLabels
-import reshapes.ui.panels.StrokeInputPanel
-import reshapes.util.ReactiveUtil.UnionEvent
-import reshapes.util.ReactiveUtil.bilateralValues
-import reswing.ReSwingValue
-import reswing.ReMenu
-import reswing.ReMenuItem
-import reswing.ReMenuItem.toMenuItem
-
 import scala.language.reflectiveCalls
+import scala.swing.BorderPanel.Position
+import scala.swing.{Action, BorderPanel, Component, Dimension, MainFrame, Menu, MenuBar, MenuItem, Separator, SimpleSwingApplication, Swing, TabbedPane}
+import scala.swing.event.SelectionChanged
 
 object ReShapes extends SimpleSwingApplication {
   private val panelDrawingSpaceStates = new HashMap[TabbedPane.Page, (DrawingSpaceState, NetworkSpaceState)]
@@ -98,14 +65,13 @@ object ReShapes extends SimpleSwingApplication {
 
     private lazy val itemsEvents: Signal[Seq[(Component, Event[Command])]] =  //#SIG
       (update map { _: Any =>  //#EF
-        (ui.tabbedPane.pages filter
-          { tab => tab.index != ui.tabbedPane.selection.index } map
-          { tab =>
-            val item = new ReMenuItem(tab.title) //#IS( // )
-            val command = item.clicked map { _: Any =>  //#EF
-              new MergeDrawingSpaces(panelDrawingSpaceStates(tab)._1) }
-            (item: Component, command)
-          })
+        ui.tabbedPane.pages filter { tab => tab.index != ui.tabbedPane.selection.index } map { tab =>
+          val item = new ReMenuItem(tab.title) //#IS( // )
+        val command = item.clicked map { _: Any => //#EF
+          new MergeDrawingSpaces(panelDrawingSpaceStates(tab)._1)
+        }
+          (item: Component, command)
+        }
       }) latest Seq.empty  //#IF
 
     contents += new Menu("File") {
@@ -169,7 +135,7 @@ object ReShapes extends SimpleSwingApplication {
           override lazy val executed: Event[Command] =  //#EVT
             value(panel.drawn || ui.shapePanel.deleted || menu.merged) && isCurrentState _  //#EF //#EF //#EF
           override lazy val reverted: Event[Command] = value(ui.commandPanel.revert || //#EVT //#EF
-              (menu.undo.clicked map {_: Any => commands.now.head })) && isCurrentState _ //#EF //#EF
+              (menu.undo.clicked map {_: Any => commands.value.head })) && isCurrentState _ //#EF //#EF
         }
 
         (state, panel)

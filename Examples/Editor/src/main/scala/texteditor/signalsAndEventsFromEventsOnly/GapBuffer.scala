@@ -48,26 +48,24 @@ class GapBuffer {
   private val size = Var(0) //#VAR
   private val offsets: Signal[(Int, Int)] = (caretChanged && //#SIG //#EF
       { offset => offset >= 0 && offset <= size.now }
-      map { offset: Int => (offsets.now._2, offset) }).latest((0, 0)) //#EF //#IF
+      map { offset: Int => (offsets.value._2, offset) }).latest((0, 0)) //#EF //#IF
 
-  offsets.changed += { //#IF //#HDL
-    _ match {
-      case (prev, cur) =>
-        // the caret has moved
-        // which requires copying text from one segment to the other
-        // to ensure that the gap starts at the current caret position
-        val (post, dist) = (buf.length - size.now + prev, math.abs(cur - prev))
-        val (src, dest) = if (prev < cur) (post, prev) else (cur, post - dist)
+  offsets.changed += {
+    case (prev, cur) =>
+      // the caret has moved
+      // which requires copying text from one segment to the other
+      // to ensure that the gap starts at the current caret position
+      val (post, dist) = (buf.length - size.now + prev, math.abs(cur - prev))
+      val (src, dest) = if (prev < cur) (post, prev) else (cur, post - dist)
 
-        Array.copy(buf, src, buf, dest, dist)
-    }
+      Array.copy(buf, src, buf, dest, dist)
   }
 
   val caret = Signal { offsets()._2 } //#SIG
 
   val iterable = Signal{  //#SIG
     val (b, s) = (buf, size())
-    new Iterable[Char] { def iterator = new CharacterIterator(b, s, caret.now) } : Iterable[Char]
+    new Iterable[Char] { def iterator = new CharacterIterator(b, s, caret.value) } : Iterable[Char]
   }
 
   val length = Signal { size() }  //#SIG
@@ -80,7 +78,7 @@ class GapBuffer {
       expand(size.now + str.length)
 
     val post = buf.length - size.now + caret.now
-    str.copyToArray(buf, post - str.length, str.length);
+    str.copyToArray(buf, post - str.length, str.length)
     size.transform( _ + str.length)
   }
 

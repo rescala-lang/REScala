@@ -133,7 +133,7 @@ class MillDrawer(val game: MillGame)
   }
 
   val indexClicked = (mouse.clicks.released map { e: MouseReleased => //#EF
-    val index = coordinates.now.indexWhere {
+    val index = coordinates.value.indexWhere {
       p => (p distance ((e.point.x, e.point.y))) < ClickArea
     }
     SlotIndex(index)

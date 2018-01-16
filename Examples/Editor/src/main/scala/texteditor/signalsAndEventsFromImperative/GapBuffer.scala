@@ -48,7 +48,7 @@ class GapBuffer {
   private val size = Var(0) //#VAR
   private val offsets: Signal[(Int, Int)] = (caretChanged && //#SIG //#EF
       { offset => offset >= 0 && offset <= size.now }
-      map { offset: Int => (offsets.now._2, offset) }).latest((0, 0)) //#EF //#IF
+      map { offset: Int => (offsets.value._2, offset) }).latest((0, 0)) //#EF //#IF
 
   offsets.changed += { //#HDL
     case (prev, cur) =>
@@ -65,7 +65,7 @@ class GapBuffer {
 
   val iterable = Signal{  //#SIG
     val (b, s) = (buf, size())
-    new Iterable[Char] { def iterator = new CharacterIterator(b, s, caret.now) } : Iterable[Char]
+    new Iterable[Char] { def iterator = new CharacterIterator(b, s, caret.value) } : Iterable[Char]
   }
 
   val length = Signal { size() }  //#SIG

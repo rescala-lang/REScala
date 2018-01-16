@@ -151,43 +151,41 @@ class TextArea extends ReComponent {
     .map { e: KeyPressed => //#EF
       val offset = e.key match {
         case Key.Left =>
-          caret.offset.now - (if (posInLinebreak(caret.offset.now - 1)) 2 else 1)
+          caret.offset.value - (if (posInLinebreak(caret.offset.value - 1)) 2 else 1)
         case Key.Right =>
-          caret.offset.now + (if (posInLinebreak(caret.offset.now + 1)) 2 else 1)
+          caret.offset.value + (if (posInLinebreak(caret.offset.value + 1)) 2 else 1)
         case Key.Up =>
-          val position = Position(max(0, caret.position.now.row - 1), caret.position.now.col)
-          LineOffset.offset(buffer.iterable.now, position)
+          val position = Position(max(0, caret.position.value.row - 1), caret.position.value.col)
+          LineOffset.offset(buffer.iterable.value, position)
         case Key.Down =>
-          val position = Position(min(lineCount.now - 1, caret.position.now.row + 1), caret.position.now.col)
-          LineOffset.offset(buffer.iterable.now, position)
+          val position = Position(min(lineCount.value - 1, caret.position.value.row + 1), caret.position.value.col)
+          LineOffset.offset(buffer.iterable.value, position)
         case Key.Home =>
           var offset = 0
-          for ((ch, i) <- buffer.iterable.now.iterator.zipWithIndex)
-            if (i < caret.offset.now && (ch == '\r' || ch == '\n'))
+          for ((ch, i) <- buffer.iterable.value.iterator.zipWithIndex)
+            if (i < caret.offset.value && (ch == '\r' || ch == '\n'))
               offset = i + 1;
           offset
         case Key.End =>
-          caret.offset.now +
-            buffer.iterable.now.iterator.drop(caret.offset.now).takeWhile {
+          caret.offset.value +
+            buffer.iterable.value.iterator.drop(caret.offset.value).takeWhile {
               ch => ch != '\r' && ch != '\n'
             }.size
       }
-      if (e.modifiers == Key.Modifier.Shift) (offset, caret.mark.now) else (offset, offset)
+      if (e.modifiers == Key.Modifier.Shift) (offset, caret.mark.value) else (offset, offset)
     } || //#EF
     (keys.pressed && { e => e.modifiers == Key.Modifier.Control && e.key == Key.A }) //#EF
-      .map { _: KeyPressed => (charCount.now, 0) } || //#EF
+      .map { _: KeyPressed => (charCount.value, 0) } || //#EF
     (mouse.clicks.pressed || mouse.moves.dragged).map { e: MouseEvent => //#EF //#EF //#EF
       val position = positionFromPoint(e.point)
-      val offset = LineOffset.offset(buffer.iterable.now, position)
-      e match {case _: MouseDragged => (offset, caret.mark.now) case _ => (offset, offset)}
+      val offset = LineOffset.offset(buffer.iterable.value, position)
+      e match {case _: MouseDragged => (offset, caret.mark.value) case _ => (offset, offset)}
     } || //#EF
-    selectedAll.map { _: Unit => (charCount.now, 0) } += //#HDL
+    selectedAll.map { _: Unit => (charCount.value, 0) } += //#HDL
     {
-      _ match {
-        case (dot, mark) =>
-          caret.dot = dot
-          caret.mark = mark
-      }
+      case (dot, mark) =>
+        caret.dot = dot
+        caret.mark = mark
     }
 
   // Content change by pressed backspace, deletion or character key, Ctrl+V or paste event
@@ -200,10 +198,10 @@ class TextArea extends ReComponent {
       .map {
       (_: KeyTyped).char match {
         //#EF
-        case '\b' => if (selected.now.nonEmpty) (0, "")
-        else (-min(if (posInLinebreak(caret.dot.now - 1)) 2 else 1, caret.dot.now), "")
-        case '\u007f' => if (selected.now.nonEmpty) (0, "")
-        else ((if (posInLinebreak(caret.dot.now + 1)) 2 else 1), "")
+        case '\b' => if (selected.value.nonEmpty) (0, "")
+        else (-min(if (posInLinebreak(caret.dot.value - 1)) 2 else 1, caret.dot.value), "")
+        case '\u007f' => if (selected.value.nonEmpty) (0, "")
+        else (if (posInLinebreak(caret.dot.value + 1)) 2 else 1, "")
         case c => (0, c.toString)
       }
     } += //#HDL
@@ -227,8 +225,8 @@ class TextArea extends ReComponent {
   copied || (keys.pressed && { e => e.modifiers == Key.Modifier.Control && e.key == Key.C }) += //#EF //#EF //#HDL
     { _ =>
       if (selected.now.nonEmpty) {
-        val s = new StringSelection(selected.now.mkString);
-        clipboard.setContents(s, s);
+        val s = new StringSelection(selected.now.mkString)
+        clipboard.setContents(s, s)
       }
     }
 
