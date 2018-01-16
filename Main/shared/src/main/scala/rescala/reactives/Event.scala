@@ -16,7 +16,7 @@ import scala.collection.immutable.{LinearSeq, Queue}
   * This relationship needs to be symmetrical.
   *
   * @tparam T Type returned when the event fires
-  * @tparam S Struct type used for the propagation of the event
+  * @tparam S Internal [[Struct]] type, used by the propagation algorithm.
   */
 trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with Observable[T, S] {
 

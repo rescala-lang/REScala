@@ -3,37 +3,34 @@ package rescala.core
 import scala.language.higherKinds
 
 
+/** Every [[ReSource]] has an internal data[[Struct]]ure which is externally defined by the scheduler.
+  * Its main use is to allow the external algorithm to manage concurrency for the internal data. */
 trait Struct { type State[P, S <: Struct] }
 
+/** Source of (reactive) values, the [[Struct]] ([[S]]) defines how the state is stored internally,
+  * and how dependencies are managed.
+  * See [[ComputationStateAccess]] for value access methods of the state,
+  * and [[ReevaluationStateAccess]] for dependency access.*/
 trait ReSource[S <: Struct] {
   type Value
   protected[rescala] def state: S#State[Value, S]
 }
 
-/** A reactive value is something that can be reevaluated
-  *
-  * @tparam S Defines the structure of the internal state, as used by the propagation engine.
-  */
+/** Makes the Value type well known, such that user computations can read values from (e.g., before, after, etc.)*/
+trait ReSourciV[+P, S <: Struct] extends ReSource[S] { type Value <: P}
+
+/** A reactive value is something that can be reevaluated */
 trait Reactive[S <: Struct] extends ReSource[S] {
 
-  /** Internal state of this reactive, managed by the propagation engine */
+  /** called if any of the dependencies ([[ReSource]]s) changed in the current update turn,
+    * after all (known) dependencies are updated */
   protected[rescala] def reevaluate(turn: Turn[S], before: Value, indeps: Set[ReSource[S]]): ReevaluationResult[Value, S]
 }
 
-trait ReSourciV[+P, S <: Struct] extends ReSource[S] { type Value <: P}
-
-/**
-  * A reactive with a known value type, such that user computations can read values from (e.g., before, after, etc.)
-  *
-  * @tparam P Value type stored by the reactive
-  * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
-  */
-trait ReactiV[+P, S <: Struct] extends ReSourciV[P, S] with Reactive[S]
-
-/**
-  * A base implementation for all reactives, tying together the Readable interface for user computations and the Writeable interface for schedulers.
-  */
-abstract class Base[P, S <: Struct](initialState: S#State[Pulse[P], S], rename: REName) extends RENamed(rename) with ReactiV[Pulse[P], S] with Reactive[S] {
+/** Base implementation for reactives, combining [[ReSourciV]] for value access, with [[Reactive]] for scheduling,
+  * together with a [[REName]] and asking for an [[initialState]]. */
+abstract class Base[P, S <: Struct](initialState: S#State[Pulse[P], S], rename: REName)
+  extends RENamed(rename) with  ReSourciV[Pulse[P], S] with Reactive[S] {
   override type Value = Pulse[P]
   final override protected[rescala] def state: S#State[Pulse[P], S] = initialState
 }
