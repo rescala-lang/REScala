@@ -1,7 +1,7 @@
 package rescala.levelbased
 
-import rescala.core.{Engine, ReSource, ValuePersistency}
-import rescala.twoversion.TwoVersionEngineImpl
+import rescala.core.{Scheduler, ReSource, ValuePersistency}
+import rescala.twoversion.TwoVersionSchedulerImpl
 
 /**
   * Basic implementations of propagation engines
@@ -17,12 +17,12 @@ trait LevelBasedPropagationEngines {
     override def dynamicDependencyInteraction(dependency: ReSource[SimpleStruct]): Unit = {}
   }
 
-  type SimpleEngine = Engine[SimpleStruct]
+  type SimpleEngine = Scheduler[SimpleStruct]
 
 
   implicit val synchron: SimpleEngine = {
     val synchronTurn = new SimpleNoLock
-    new TwoVersionEngineImpl[SimpleStruct, SimpleNoLock]("Synchron", () =>  synchronTurn ) {
+    new TwoVersionSchedulerImpl[SimpleStruct, SimpleNoLock]("Synchron", () =>  synchronTurn ) {
       override protected[rescala] def executeTurn[R](initialWrites: Traversable[ReSource], admissionPhase: AdmissionTicket => R): R =
         synchronized {
           try super.executeTurn(initialWrites, admissionPhase)
@@ -31,7 +31,7 @@ trait LevelBasedPropagationEngines {
     }
   }
 
-  implicit val unmanaged: SimpleEngine = new TwoVersionEngineImpl[SimpleStruct, SimpleNoLock]("Unmanaged", () => new SimpleNoLock())
+  implicit val unmanaged: SimpleEngine = new TwoVersionSchedulerImpl[SimpleStruct, SimpleNoLock]("Unmanaged", () => new SimpleNoLock())
 
 }
 

@@ -1,4 +1,4 @@
-import rescala.core.{Engine, ReSerializable}
+import rescala.core.{Scheduler, ReSerializable}
 import rescala.parrp.ParRP
 
 /** REScala has two main abstractions. [[rescala.Event]] and [[rescala.Signal]] commonly referred to as reactives.
@@ -8,6 +8,6 @@ import rescala.parrp.ParRP
   * signals additionally can be created using [[rescala.Signal]] expressions.
   **/
 package object rescala extends RescalaInterface[ParRP] {
-  override def explicitEngine: Engine[ParRP] = rescala.Engines.parrp
+  override def explicitEngine: Scheduler[ParRP] = rescala.Engines.parrp
   implicit def noSerialization[T]: ReSerializable[T] = ReSerializable.serializationUnavailable
 }

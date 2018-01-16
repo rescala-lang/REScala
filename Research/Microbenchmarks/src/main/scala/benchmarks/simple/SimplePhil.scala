@@ -4,7 +4,7 @@ import java.util.concurrent.TimeUnit
 
 import benchmarks.{EngineParam, Step}
 import org.openjdk.jmh.annotations._
-import rescala.core.{Engine, Struct}
+import rescala.core.{Scheduler, Struct}
 import rescala.reactives._
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -18,7 +18,7 @@ class SimplePhil[S <: Struct] {
 
   import benchmarks.philosophers.PhilosopherTable._
 
-  implicit var engine: Engine[S] = _
+  implicit var engine: Scheduler[S] = _
 
   var phil: Var[Philosopher, S] = _
   var vision: Signal[Vision, S] = _

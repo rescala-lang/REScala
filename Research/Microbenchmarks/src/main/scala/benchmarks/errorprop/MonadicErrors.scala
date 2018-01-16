@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
-import rescala.core.{Engine, Struct}
+import rescala.core.{Scheduler, Struct}
 import rescala.reactives.Event
 
 import scala.util.Try
@@ -19,7 +19,7 @@ import scala.util.Try
 @State(Scope.Thread)
 class MonadicErrors[S <: Struct] {
 
-  implicit var engine: Engine[S] = _
+  implicit var engine: Scheduler[S] = _
 
   var fire: Int => Unit = _
   var finalresult: Event[Any, S] = _

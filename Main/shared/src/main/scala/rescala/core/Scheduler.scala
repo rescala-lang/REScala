@@ -11,7 +11,7 @@ import scala.util.DynamicVariable
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
 @implicitNotFound(msg = "Could not find an implicit propagation engine. Did you forget an import?")
-trait Engine[S <: Struct] extends RescalaInterface[S] {
+trait Scheduler[S <: Struct] extends RescalaInterface[S] {
 
   override def explicitEngine: this.type = this
 
@@ -21,7 +21,7 @@ trait Engine[S <: Struct] extends RescalaInterface[S] {
 }
 
 
-trait EngineImpl[S <: Struct, ExactTurn <: Turn[S] with Creation[S]] extends Engine[S] {
+trait SchedulerImpl[S <: Struct, ExactTurn <: Turn[S] with Creation[S]] extends Scheduler[S] {
 
   override private[rescala] def create[T](f: (Creation) => T) = {
     _currentTurn.value match {

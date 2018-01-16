@@ -4,9 +4,9 @@ import java.util.concurrent.TimeUnit
 
 import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations._
-import rescala.core.{Engine, Struct}
+import rescala.core.{Scheduler, Struct}
 import rescala.reactives.{Evt, Var}
-import rescala.restore.ReStoringEngine
+import rescala.restore.ReStoringScheduler
 import rescala.core.ReCirce._
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -18,7 +18,7 @@ import rescala.core.ReCirce._
 @State(Scope.Thread)
 class RestoringSimple[S <: Struct] {
 
-  implicit var engine: Engine[S] = _
+  implicit var engine: Scheduler[S] = _
 
   var source: Evt[Int, S] = _
   var result: List[Any] = _
@@ -56,7 +56,7 @@ class RestoringSimple[S <: Struct] {
 @State(Scope.Thread)
 class RestoringVar[S <: Struct] {
 
-  implicit var engine: Engine[S] = _
+  implicit var engine: Scheduler[S] = _
   var sourceVar: Var[Int, S] = _
 
   @Setup
@@ -80,7 +80,7 @@ class RestoringSnapshotVsInitial {
 
   var snapshot: scala.collection.mutable.Map[String, String] = _
 
-  def build[S <: Struct](implicit engine: Engine[S], size: Int) = {
+  def build[S <: Struct](implicit engine: Scheduler[S], size: Int) = {
     val source = engine.Evt[Int]()
     val res = for (i <- 1 to size) yield {
       source.count.map(_+1).map(_+1)
@@ -90,7 +90,7 @@ class RestoringSnapshotVsInitial {
 
   @Setup
   def setup(size: Size) = {
-    val engine = new ReStoringEngine()
+    val engine = new ReStoringScheduler()
     val (source, res) = build(engine, size.size)
     source.fire(10)(engine)
     source.fire(20)(engine)
@@ -98,11 +98,11 @@ class RestoringSnapshotVsInitial {
   }
 
   @Benchmark
-  def fresh(size: Size) = build(new ReStoringEngine(), size.size)
+  def fresh(size: Size) = build(new ReStoringScheduler(), size.size)
 
   @Benchmark
   def restored(size: Size) = {
-    val engine = new ReStoringEngine(restoreFrom = snapshot)
+    val engine = new ReStoringScheduler(restoreFrom = snapshot)
     build(engine, size.size)
   }
 
@@ -125,7 +125,7 @@ class RestoringSnapshotVsRecomputationA[S <: Struct] {
 
   var snapshot: scala.collection.mutable.Map[String, String] = _
 
-  def build(implicit engine: ReStoringEngine) = {
+  def build(implicit engine: ReStoringScheduler) = {
     val source = engine.Evt[Int]()
     val res = source.list().map(_.size)
     (source, res)
@@ -133,7 +133,7 @@ class RestoringSnapshotVsRecomputationA[S <: Struct] {
 
   @Setup
   def setup(size: Size, workload: Workload) = {
-    val engine = new ReStoringEngine()
+    val engine = new ReStoringScheduler()
     val (source, res) = build(engine)
     for (i <- 1 to size.size) source.fire(i)(engine)
     snapshot = engine.snapshot()
@@ -141,7 +141,7 @@ class RestoringSnapshotVsRecomputationA[S <: Struct] {
 
   @Benchmark
   def restored(size: Size) = {
-    val engine = new ReStoringEngine(restoreFrom = snapshot)
+    val engine = new ReStoringScheduler(restoreFrom = snapshot)
     build(engine)
   }
 }
@@ -157,7 +157,7 @@ class RestoringSnapshotVsRecomputationB[S <: Struct] {
 
   var snapshot: scala.collection.mutable.Map[String, String] = _
 
-  def build(implicit engine: ReStoringEngine) = {
+  def build(implicit engine: ReStoringScheduler) = {
     val source = engine.Evt[Int]()
     val res = source.count().map(List.tabulate(_)(identity))
     (source, res)
@@ -165,7 +165,7 @@ class RestoringSnapshotVsRecomputationB[S <: Struct] {
 
   @Setup
   def setup(size: Size, workload: Workload) = {
-    val engine = new ReStoringEngine()
+    val engine = new ReStoringScheduler()
     val (source, res) = build(engine)
     for (i <- 1 to size.size) source.fire(i)(engine)
     snapshot = engine.snapshot()
@@ -173,7 +173,7 @@ class RestoringSnapshotVsRecomputationB[S <: Struct] {
 
   @Benchmark
   def derived(size: Size) = {
-    val engine = new ReStoringEngine(restoreFrom = snapshot)
+    val engine = new ReStoringScheduler(restoreFrom = snapshot)
     build(engine)
   }
 }

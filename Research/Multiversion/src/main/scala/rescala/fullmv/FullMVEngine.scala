@@ -2,7 +2,7 @@ package rescala.fullmv
 
 import java.util.concurrent.{Executor, ForkJoinPool}
 
-import rescala.core.{EngineImpl, ReSourciV}
+import rescala.core.{SchedulerImpl, ReSourciV}
 import rescala.fullmv.mirrors.{FullMVTurnHost, Host, HostImpl, SubsumableLockHostImpl}
 import rescala.fullmv.tasks.{Framing, SourceNotification}
 
@@ -10,7 +10,7 @@ import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 import scala.concurrent.duration._
 import scala.util.Try
 
-class FullMVEngine(val timeout: Duration, val name: String) extends EngineImpl[FullMVStruct, FullMVTurn] with FullMVTurnHost with HostImpl[FullMVTurn] {
+class FullMVEngine(val timeout: Duration, val name: String) extends SchedulerImpl[FullMVStruct, FullMVTurn] with FullMVTurnHost with HostImpl[FullMVTurn] {
   override object lockHost extends SubsumableLockHostImpl {
     override def toString: String = "Locks " + name
   }

@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 import benchmarks._
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
-import rescala.core.{Engine, REName, Struct}
+import rescala.core.{Scheduler, REName, Struct}
 import rescala.reactives.{Signal, Var}
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -16,7 +16,7 @@ import rescala.reactives.{Signal, Var}
 @Threads(1)
 @State(Scope.Benchmark)
 class SingleChainSignal[S <: Struct] extends BusyThreads {
-  implicit var engine: Engine[S] = _
+  implicit var engine: Scheduler[S] = _
   var source: Var[Int, S] = _
   var result: Signal[Int, S] = _
 

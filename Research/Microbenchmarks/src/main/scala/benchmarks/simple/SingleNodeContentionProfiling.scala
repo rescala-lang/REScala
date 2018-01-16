@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 import benchmarks._
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
-import rescala.core.{Engine, Struct}
+import rescala.core.{Scheduler, Struct}
 import rescala.reactives.{Signal, Signals, Var}
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -16,7 +16,7 @@ import rescala.reactives.{Signal, Signals, Var}
 @Threads(1)
 @State(Scope.Benchmark)
 class SingleNodeContentionProfiling[S <: Struct] extends BusyThreads {
-  implicit var engine: Engine[S] = _
+  implicit var engine: Scheduler[S] = _
   var sources: Array[Var[Int, S]] = _
   var node: Signal[Unit, S] = _
 

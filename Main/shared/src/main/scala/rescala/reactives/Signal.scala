@@ -28,7 +28,7 @@ trait Signal[+A, S <: Struct] extends ReSourciV[Pulse[A], S] with Observable[A, 
   @compileTimeOnly("Signal.unary_! can only be used inside of Signal expressions")
   final def value : A = throw new IllegalAccessException(s"$this.value called outside of macro")
 
-  final def now(implicit engine: Engine[S]): A = {
+  final def now(implicit engine: Scheduler[S]): A = {
     try { engine.singleNow(this).get }
     catch {
       case EmptySignalControlThrowable => throw new NoSuchElementException(s"Signal $this is empty")
@@ -54,7 +54,7 @@ trait Signal[+A, S <: Struct] extends ReSourciV[Pulse[A], S] with Observable[A, 
     }
   }
 
-  def disconnect()(implicit engine: Engine[S]): Unit
+  def disconnect()(implicit engine: Scheduler[S]): Unit
 
   /** Return a Signal with f applied to the value */
   final def map[B](f: A => B)(implicit ticket: CreationTicket[S]): Signal[B, S] = Signals.lift(this)(f)

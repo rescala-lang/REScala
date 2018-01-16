@@ -10,7 +10,7 @@ import rescala.reactives.RExceptions.UnhandledFailureException
   * @tparam S Struct type used for the propagation of the signal
   */
 trait Observe[S <: Struct] {
-  def remove()(implicit fac: Engine[S]): Unit
+  def remove()(implicit fac: Scheduler[S]): Unit
 }
 
 object Observe {
@@ -27,7 +27,7 @@ object Observe {
       scheduleHandler(this, turn, dependency, fun, fail)
       ReevaluationResult.Static[Unit, S](Pulse.NoChange, indeps)
     }
-    override def remove()(implicit fac: Engine[S]): Unit = {
+    override def remove()(implicit fac: Scheduler[S]): Unit = {
       disconnect()
       strongObserveReferences.synchronized(strongObserveReferences.remove(this))
     }

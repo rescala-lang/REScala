@@ -1,7 +1,7 @@
 package tests.rescala
 
 import org.scalatest.FunSuite
-import rescala.restore.ReStoringEngine
+import rescala.restore.ReStoringScheduler
 import rescala.core.ReCirce.recirce
 
 class RestoringTest extends FunSuite {
@@ -9,7 +9,7 @@ class RestoringTest extends FunSuite {
   test("simple save and restore"){
 
     val snapshot = {
-      implicit val engine = new ReStoringEngine()
+      implicit val engine = new ReStoringScheduler()
       val e = engine.Evt[Unit]()
       val c = e.count()
 
@@ -23,7 +23,7 @@ class RestoringTest extends FunSuite {
     }
 
     {
-      implicit val engine1 = new ReStoringEngine(restoreFrom = snapshot)
+      implicit val engine1 = new ReStoringScheduler(restoreFrom = snapshot)
       val e = engine1.Evt[Unit]()
       val c = e.count()
 
@@ -39,7 +39,7 @@ class RestoringTest extends FunSuite {
   test("save and restore with changes in between"){
 
     val snapshot = {
-      implicit val engine = new ReStoringEngine()
+      implicit val engine = new ReStoringScheduler()
       val e = engine.Evt[Unit]()
       val c = e.count()
 
@@ -59,7 +59,7 @@ class RestoringTest extends FunSuite {
     }
 
     {
-      implicit val engine1 = new ReStoringEngine(restoreFrom = snapshot)
+      implicit val engine1 = new ReStoringScheduler(restoreFrom = snapshot)
       val e = engine1.Evt[Unit]()
       val c = e.count()
 

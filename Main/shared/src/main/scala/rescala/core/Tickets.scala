@@ -132,7 +132,7 @@ final class WrapUpTicket[S <: Struct] private[rescala](val creation: Computation
 @implicitNotFound(msg = "could not generate a turn source." +
   " An available implicit Ticket will serve as turn source, or if no" +
   " such turn is present, an implicit Engine is accepted instead.")
-final case class CreationTicket[S <: Struct](self: Either[Creation[S], Engine[S]])(val rename: REName) {
+final case class CreationTicket[S <: Struct](self: Either[Creation[S], Scheduler[S]])(val rename: REName) {
 
   def isInnerTicket(): Boolean = self.isLeft
 
@@ -157,7 +157,7 @@ object CreationTicket extends LowPriorityCreationImplicits {
 }
 
 sealed trait LowPriorityCreationImplicits {
-  implicit def fromEngineImplicit[S <: Struct](implicit factory: Engine[S], line: REName): CreationTicket[S] = CreationTicket(Right(factory))(line)
-  implicit def fromEngine[S <: Struct](factory: Engine[S])(implicit line: REName): CreationTicket[S] = CreationTicket(Right(factory))(line)
-  implicit def fromNameImplicit[S <: Struct](line: String)(implicit factory: Engine[S]): CreationTicket[S] = CreationTicket(Right(factory))(line)
+  implicit def fromEngineImplicit[S <: Struct](implicit factory: Scheduler[S], line: REName): CreationTicket[S] = CreationTicket(Right(factory))(line)
+  implicit def fromEngine[S <: Struct](factory: Scheduler[S])(implicit line: REName): CreationTicket[S] = CreationTicket(Right(factory))(line)
+  implicit def fromNameImplicit[S <: Struct](line: String)(implicit factory: Scheduler[S]): CreationTicket[S] = CreationTicket(Right(factory))(line)
 }

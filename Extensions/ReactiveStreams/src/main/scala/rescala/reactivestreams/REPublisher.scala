@@ -2,18 +2,18 @@ package rescala.reactivestreams
 
 
 import org.reactivestreams.{Publisher, Subscriber, Subscription}
-import rescala.core.{Base, Engine, Pulse, REName, ReSource, ReSourciV, ReevaluationResult, Struct, Turn, ValuePersistency}
+import rescala.core.{Base, Scheduler, Pulse, REName, ReSource, ReSourciV, ReevaluationResult, Struct, Turn, ValuePersistency}
 
 import scala.util.{Failure, Success}
 
 
 object REPublisher {
 
-  def apply[T, S <: Struct](dependency: ReSourciV[Pulse[T], S])(implicit fac: Engine[S]): REPublisher[T, S] =
+  def apply[T, S <: Struct](dependency: ReSourciV[Pulse[T], S])(implicit fac: Scheduler[S]): REPublisher[T, S] =
     new REPublisher[T, S](dependency, fac)
 
 
-  class REPublisher[T, S <: Struct](dependency: ReSourciV[Pulse[T], S], fac: Engine[S]) extends Publisher[T] {
+  class REPublisher[T, S <: Struct](dependency: ReSourciV[Pulse[T], S], fac: Scheduler[S]) extends Publisher[T] {
 
     override def subscribe(s: Subscriber[_ >: T]): Unit = {
       val sub = REPublisher.subscription(dependency, s, fac)
@@ -26,7 +26,7 @@ object REPublisher {
     bud: S#State[Pulse[T], S],
     dependency: ReSourciV[Pulse[T], S],
     subscriber: Subscriber[_ >: T],
-    fac: Engine[S],
+    fac: Scheduler[S],
     name: REName
   ) extends Base[T, S](bud, name) with Subscription {
 
@@ -72,7 +72,7 @@ object REPublisher {
   def subscription[T, S <: Struct](
     dependency: ReSourciV[Pulse[T], S],
     subscriber: Subscriber[_ >: T],
-    fac: Engine[S]
+    fac: Scheduler[S]
   ): SubscriptionReactive[T, S] = {
     fac.transaction() { ticket =>
       ticket.creation.create[Pulse[T], SubscriptionReactive[T, S]](Set(dependency), ValuePersistency.DerivedSignal) { state =>

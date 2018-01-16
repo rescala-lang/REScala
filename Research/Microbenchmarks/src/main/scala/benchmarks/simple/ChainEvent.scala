@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
-import rescala.core.{Engine, Struct}
+import rescala.core.{Scheduler, Struct}
 import rescala.reactives.{Event, Evt}
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -17,7 +17,7 @@ import rescala.reactives.{Event, Evt}
 @State(Scope.Thread)
 class ChainEvent[S <: Struct] {
 
-  implicit var engine: Engine[S] = _
+  implicit var engine: Scheduler[S] = _
 
   var source: Evt[Int, S] = _
   var result: Event[Int, S] = _

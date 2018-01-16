@@ -1,6 +1,6 @@
 package rescala
 
-import rescala.core.Engine
+import rescala.core.Scheduler
 import rescala.levelbased.LevelBasedPropagationEngines
 
 object Engines extends LevelBasedPropagationEngines {
@@ -8,7 +8,7 @@ object Engines extends LevelBasedPropagationEngines {
 
   val all: List[SimpleEngine] = List(synchron, unmanaged)
 
-  val locksweep: Engine[_] = null
-  val parallellocksweep: Engine[_] = null
+  val locksweep: Scheduler[_] = null
+  val parallellocksweep: Scheduler[_] = null
 
 }

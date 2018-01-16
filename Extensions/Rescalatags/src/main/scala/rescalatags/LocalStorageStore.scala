@@ -3,12 +3,12 @@ package rescala
 import org.scalajs.dom
 import org.scalajs.dom.raw.Storage
 import rescala.restore.{ReStore, ReStoringStruct, ReStoringTurn}
-import rescala.twoversion.TwoVersionEngine
+import rescala.twoversion.TwoVersionScheduler
 
 import scala.collection.mutable
 import scala.util.Random
 
-class LocalStorageStore(domain: String = "") extends TwoVersionEngine[ReStoringStruct, ReStoringTurn] with ReStore {
+class LocalStorageStore(domain: String = "") extends TwoVersionScheduler[ReStoringStruct, ReStoringTurn] with ReStore {
 
   val storage: Storage = dom.window.localStorage
 

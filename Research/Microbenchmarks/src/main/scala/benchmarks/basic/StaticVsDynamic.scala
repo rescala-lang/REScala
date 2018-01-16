@@ -6,7 +6,7 @@ import java.util.concurrent.locks.ReadWriteLock
 import benchmarks.{EngineParam, Step, Workload}
 import org.openjdk.jmh.annotations.{Benchmark, BenchmarkMode, Fork, Measurement, Mode, OutputTimeUnit, Param, Scope, Setup, State, Threads, Warmup}
 import org.openjdk.jmh.infra.BenchmarkParams
-import rescala.core.{Engine, Struct, Turn}
+import rescala.core.{Scheduler, Struct, Turn}
 import rescala.reactives.{Signal, Signals, Var}
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -18,7 +18,7 @@ import rescala.reactives.{Signal, Signals, Var}
 @State(Scope.Thread)
 class StaticVsDynamic[S <: Struct] {
 
-  implicit var engine: Engine[S] = _
+  implicit var engine: Scheduler[S] = _
 
   @Param(Array("true", "false"))
   var static: Boolean = _

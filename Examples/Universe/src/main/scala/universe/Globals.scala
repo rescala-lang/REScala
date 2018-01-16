@@ -1,16 +1,16 @@
 package universe
 
 import rescala.Engines
-import rescala.core.{Engine, Struct}
+import rescala.core.{Scheduler, Struct}
 
 import scala.collection.parallel.ForkJoinTaskSupport
 
 object Globals {
   val engineName = System.getProperty("engineName", "parrp")
 
-  implicit val engine: Engine[Struct] = engineName match {
-    case "fullmv" => new rescala.fullmv.FullMVEngine(scala.concurrent.duration.Duration.Zero, "fullmv-universe").asInstanceOf[Engine[Struct]]
-    case "stm" => rescala.stm.STMEngine.stm.asInstanceOf[Engine[Struct]]
+  implicit val engine: Scheduler[Struct] = engineName match {
+    case "fullmv" => new rescala.fullmv.FullMVEngine(scala.concurrent.duration.Duration.Zero, "fullmv-universe").asInstanceOf[Scheduler[Struct]]
+    case "stm" => rescala.stm.STMEngine.stm.asInstanceOf[Scheduler[Struct]]
     case _ =>  Engines.byName[Struct](engineName)
   }
 

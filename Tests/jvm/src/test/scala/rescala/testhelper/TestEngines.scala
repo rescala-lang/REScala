@@ -1,8 +1,8 @@
 package rescala.testhelper
 
-import rescala.core.{Engine, Struct}
+import rescala.core.{Scheduler, Struct}
 import rescala.stm.STMEngine
 
 object TestEngines {
-  val all: List[Engine[_ <: Struct]] = rescala.Engines.all ::: List(STMEngine.stm)
+  val all: List[Scheduler[_ <: Struct]] = rescala.Engines.all ::: List(STMEngine.stm)
 }

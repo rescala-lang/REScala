@@ -5,9 +5,9 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import rescala.core.{ReSource, Reactive}
 import rescala.locking._
-import rescala.twoversion.TwoVersionEngineImpl
+import rescala.twoversion.TwoVersionSchedulerImpl
 
-class ParallelLockSweep(backoff: Backoff, ex: Executor, engine: TwoVersionEngineImpl[LSStruct, ParallelLockSweep], priorTurn: Option[ParallelLockSweep]) extends LockSweep(backoff, priorTurn) {
+class ParallelLockSweep(backoff: Backoff, ex: Executor, engine: TwoVersionSchedulerImpl[LSStruct, ParallelLockSweep], priorTurn: Option[ParallelLockSweep]) extends LockSweep(backoff, priorTurn) {
 
   private type TState = LSStruct
 

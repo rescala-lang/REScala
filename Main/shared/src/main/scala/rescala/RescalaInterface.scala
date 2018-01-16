@@ -9,8 +9,8 @@ abstract class RescalaInterface[S <: Struct] {
   // need the import inside of the trait, otherwise scala complains that it is shadowed by rescala.macros
   import scala.language.experimental.macros
 
-  def explicitEngine: rescala.core.Engine[S]
-  implicit def implicitEngine: rescala.core.Engine[S] = explicitEngine
+  def explicitEngine: rescala.core.Scheduler[S]
+  implicit def implicitEngine: rescala.core.Scheduler[S] = explicitEngine
 
   /** Signals represent time changing values of type A */
   final type Signal[+A] = reactives.Signal[A, S]

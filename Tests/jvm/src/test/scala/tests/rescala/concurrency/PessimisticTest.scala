@@ -3,14 +3,14 @@ package tests.rescala.concurrency
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 
 import rescala.Engines
-import rescala.core.Engine
+import rescala.core.Scheduler
 import rescala.parrp.{Backoff, ParRP}
 import rescala.testhelper._
-import rescala.twoversion.TwoVersionEngineImpl
+import rescala.twoversion.TwoVersionSchedulerImpl
 import tests.rescala.RETests
 
 class PessimisticTest extends RETests {
-  engines(Engines.parrp)("SynchronizedReevaluation should synchronize reevaluations"){ (engine: Engine[TestStruct]) =>
+  engines(Engines.parrp)("SynchronizedReevaluation should synchronize reevaluations"){ (engine: Scheduler[TestStruct]) =>
     import engine._
 
     val v1 = Var(false)
@@ -118,7 +118,7 @@ class PessimisticTest extends RETests {
     var regs = 0
     var unregs = 0
 
-    val mockFac = new TwoVersionEngineImpl[ParRP, ParRP]("Reg/Unreg counting ParRP",
+    val mockFac = new TwoVersionSchedulerImpl[ParRP, ParRP]("Reg/Unreg counting ParRP",
       () => new ParRP(new Backoff(), None) {
         override def discover(source: ReSource, sink: Reactive): Unit = {
           if (source eq i0) regs += 1

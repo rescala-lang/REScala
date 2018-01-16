@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import benchmarks.{EngineParam, Workload}
 import org.openjdk.jmh.annotations._
-import rescala.core.{Engine, Struct}
+import rescala.core.{Scheduler, Struct}
 import rescala.reactives._
 
 @AuxCounters
@@ -36,7 +36,7 @@ class ExpensiveConflict[S <: Struct] {
   var cheapSource: Var[Int, S] = _
   var expensiveSource: Var[Int, S] = _
   var result: Signal[Int, S] = _
-  var engine: Engine[S] = _
+  var engine: Scheduler[S] = _
   var tried: Int = _
 
   @Setup(Level.Iteration)

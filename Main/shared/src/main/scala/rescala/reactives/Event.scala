@@ -30,7 +30,7 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with Observable[T, S
   @compileTimeOnly("Event.value can only be used inside of Signal expressions")
   def value : Option[T] = throw new IllegalAccessException(s"$this.value called outside of macro")
 
-  def disconnect()(implicit engine: Engine[S]): Unit
+  def disconnect()(implicit engine: Scheduler[S]): Unit
 
 
   /** collect results from a partial function */

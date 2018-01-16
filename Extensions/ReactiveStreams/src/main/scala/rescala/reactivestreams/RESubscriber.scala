@@ -3,11 +3,11 @@ package rescala.reactivestreams
 import java.util.Objects
 
 import org.reactivestreams.{Subscriber, Subscription}
-import rescala.core.{Engine, Pulse, Struct}
+import rescala.core.{Scheduler, Pulse, Struct}
 
 import rescala.reactives.Evt
 
-class RESubscriber[T, S <: Struct](evt: Evt[T, S], fac: Engine[S]) extends Subscriber[T] {
+class RESubscriber[T, S <: Struct](evt: Evt[T, S], fac: Scheduler[S]) extends Subscriber[T] {
 
   var subscription: Subscription = _
 

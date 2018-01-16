@@ -2,7 +2,7 @@ package benchmarks.philosophers
 
 import java.util.concurrent.{Executors, ThreadLocalRandom}
 
-import rescala.core.{Engine, Pulse, REName, Struct}
+import rescala.core.{Scheduler, Pulse, REName, Struct}
 import rescala.fullmv.FullMVStruct
 import rescala.parrp.Backoff
 
@@ -11,7 +11,7 @@ import scala.concurrent.{Await, Future, TimeoutException}
 import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
 
-abstract class PaperPhilosophers[S <: Struct](val size: Int, val engine: Engine[S], dynamicEdgeChanges: Boolean) {
+abstract class PaperPhilosophers[S <: Struct](val size: Int, val engine: Scheduler[S], dynamicEdgeChanges: Boolean) {
   import engine._
 
   sealed trait Philosopher

@@ -2,7 +2,7 @@ package rescala.restore
 
 import rescala.core.{ReSerializable, ReSource, Struct, ValuePersistency}
 import rescala.levelbased.{LevelBasedPropagation, LevelStruct, LevelStructTypeImpl}
-import rescala.twoversion.{TwoVersionEngine, TwoVersionPropagation}
+import rescala.twoversion.{TwoVersionScheduler, TwoVersionPropagation}
 
 import scala.collection.mutable
 
@@ -54,7 +54,7 @@ trait ReStore {
 }
 
 
-class ReStoringEngine(domain: String = "", restoreFrom: mutable.Map[String, String] = mutable.HashMap()) extends TwoVersionEngine[ReStoringStruct, ReStoringTurn] with ReStore {
+class ReStoringScheduler(domain: String = "", restoreFrom: mutable.Map[String, String] = mutable.HashMap()) extends TwoVersionScheduler[ReStoringStruct, ReStoringTurn] with ReStore {
 
   def values: mutable.Map[String, String] = restoreFrom
   var count = 0
