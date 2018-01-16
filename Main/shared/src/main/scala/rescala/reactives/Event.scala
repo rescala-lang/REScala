@@ -98,11 +98,10 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with Observable[T, S
   /** Transform the event parameter
     * @group operator*/
   final def map[A](expression: T => A)(implicit ticket: CreationTicket[S]): Event[A, S] = macro rescala.macros.ReactiveMacros.EventMapMacro[T, A, S]
-  final def staticMap[U](mapping: T => U)(implicit ticket: CreationTicket[S]): Event[U, S] = Events.staticNamed(s"(map $this)", this) { st => st.staticDependPulse(this).map(mapping) }
 
   /** Drop the event parameter; equivalent to map((_: Any) => ())
     * @group operator*/
-  final def dropParam(implicit ticket: CreationTicket[S]): Event[Unit, S] = staticMap(_ => ())
+  final def dropParam(implicit ticket: CreationTicket[S]): Event[Unit, S] = Events.static(this)(_ => Some(()))
 
 
   /** Folds events with a given operation to create a Signal.

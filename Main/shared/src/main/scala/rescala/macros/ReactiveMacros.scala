@@ -22,12 +22,10 @@ class ReactiveMacros(val c: blackbox.Context) {
       return q"""throw new ${termNames.ROOTPKG}.scala.NotImplementedError("macro not expanded because of other compilation errors")"""
 
     val mp = ReactiveMacro(expression, requireStatic = c.macroApplication.symbol.name.toString != "dynamic")
-    val creationMethod = TermName(if (mp.hasOnlyStaticAccess()) "static" else "dynamic")
-    val body =
-      q"""${termNames.ROOTPKG}.rescala.reactives.$signalsOrEvents.$creationMethod[${weakTypeOf[A]}, ${weakTypeOf[S]}](
-         ..${mp.detectedStaticReactives ::: mp.cutOutReactiveTerms}
-         ){${mp.userComputation}}($ticket)"""
-    mp.makeBlock(body)
+
+    val body = makeExpression[S, A](signalsOrEvents, ticket,
+      mp.detectedStaticReactives ::: mp.cutOutReactiveTerms, mp.hasOnlyStaticAccess(), mp.userComputation)
+    pieceTogether(mp, body)
   }
 
 
@@ -38,10 +36,7 @@ class ReactiveMacros(val c: blackbox.Context) {
 
     val mp = ReactiveMacro(expression)
 
-    val body = if (mp.detectedReactives.isEmpty) {
-      q"""${c.prefix}.staticMap($expression)($ticket)"""
-    }
-    else {
+    val body = {
 
       val mapFunctionArgumentTermName = TermName(c.freshName("eventValue$"))
       val mapFunctionArgumentIdent = Ident(mapFunctionArgumentTermName)
@@ -55,13 +50,32 @@ class ReactiveMacros(val c: blackbox.Context) {
       val creationMethod = TermName(if (mp.hasOnlyStaticAccess()) "static" else "dynamic")
       q"""{
         val $mapFunctionArgumentTermName = ${c.prefix}
-        ${termNames.ROOTPKG}.rescala.reactives.Events.$creationMethod[${weakTypeOf[A]}, ${weakTypeOf[S]}](..$extendedDetections){${mp2.userComputation}}($ticket)
+        ${termNames.ROOTPKG}.rescala.reactives.Events.$creationMethod[${weakTypeOf[A]}, ${weakTypeOf[S]}](..$extendedDetections){
+          ${mp2.userComputation}
+        }($ticket)
       }"""
     }
 
-    mp.makeBlock(body)
+    pieceTogether(mp, body)
   }
 
+  private def makeExpression[S <: Struct : c.WeakTypeTag, A: c.WeakTypeTag](
+    signalsOrEvents: c.universe.TermName,
+    ticket: c.Tree,
+    dependencies: Seq[Tree],
+    isStatic: Boolean,
+    computation: Tree,
+  ) = {
+    val creationMethod = TermName(if (isStatic) "static" else "dynamic")
+    q"""${termNames.ROOTPKG}.rescala.reactives.$signalsOrEvents.$creationMethod[${weakTypeOf[A]}, ${weakTypeOf[S]}](
+         ..${dependencies}
+         ){${computation}}($ticket)"""
+  }
+
+  def pieceTogether[S <: Struct : c.WeakTypeTag, A: c.WeakTypeTag](mp: MacroPieces, body: c.universe.Tree): c.Tree = {
+    val block: c.universe.Tree = Block(mp.cutOutReactiveVals.reverse, body)
+    ReTyper(c).untypecheck(block)
+  }
 
 
   case class MacroPieces(
@@ -76,12 +90,7 @@ class ReactiveMacros(val c: blackbox.Context) {
       q"{$ticketTermName: $ticketType => $innerTree }"
     }
 
-    def makeBlock[S <: Struct : c.WeakTypeTag, A: c.WeakTypeTag](body: c.universe.Tree): c.Tree = {
-      val block: c.universe.Tree = Block(cutOutReactiveVals.reverse, body)
-      ReTyper(c).untypecheck(block)
-    }
-
-    def hasOnlyStaticAccess(): Boolean = detectedStaticReactives.size == detectedReactives.size
+    def hasOnlyStaticAccess(): Boolean = detectedStaticReactives.lengthCompare(detectedReactives.size) == 0
 
   }
 

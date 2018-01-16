@@ -80,6 +80,6 @@ trait Signal[+A, S <: Struct] extends ReSourciV[Pulse[A], S] with Observable[A, 
 
   /** Convenience function filtering to events which change this reactive to value
     * @group conversion */
-  final def changedTo[V](value: V)(implicit ticket: CreationTicket[S]): Event[Unit, S] = (changed filter {_ == value}).dropParam
+  final def changedTo[V >: A](value: V)(implicit ticket: CreationTicket[S]): Event[Unit, S] = changed.filter(_ == value).dropParam
 }
 

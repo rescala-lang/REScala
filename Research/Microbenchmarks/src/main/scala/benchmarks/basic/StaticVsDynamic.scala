@@ -7,7 +7,7 @@ import benchmarks.{EngineParam, Step, Workload}
 import org.openjdk.jmh.annotations.{Benchmark, BenchmarkMode, Fork, Measurement, Mode, OutputTimeUnit, Param, Scope, Setup, State, Threads, Warmup}
 import org.openjdk.jmh.infra.BenchmarkParams
 import rescala.core.{Scheduler, Struct, Turn}
-import rescala.reactives.{Signal, Signals, Var}
+import rescala.reactives.{Signal, Var}
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
