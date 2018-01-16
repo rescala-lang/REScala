@@ -30,14 +30,13 @@ class ReactiveMacros(val c: blackbox.Context) {
     val detections = new RewriteTransformer(weAnalysis, ticketIdent, c.macroApplication.symbol.name.toString != "dynamic")
     val rewrittenTree = detections transform cutOutTree
 
-    val body = makeExpression[S, A](
+    makeExpression[S, A](
       signalsOrEvents,
       ticket,
       detections.detectedStaticReactives,
       detections.detectedDynamicReactives.isEmpty,
-      userComputation(detections.detectedDynamicReactives.isEmpty, ticketTermName, rewrittenTree))
-    val block: c.universe.Tree = Block(cutOut.cutOutReactivesVals.reverse, body)
-    ReTyper(c).untypecheck(block)
+      userComputation(detections.detectedDynamicReactives.isEmpty, ticketTermName, rewrittenTree),
+      cutOut.cutOutReactivesVals.reverse)
   }
 
 
@@ -55,29 +54,25 @@ class ReactiveMacros(val c: blackbox.Context) {
     val detections = new RewriteTransformer[S](weAnalysis, ticketIdent, c.macroApplication.symbol.name.toString != "dynamic")
     val rewrittenTree = detections transform cutOutTree
 
-    val body = {
 
-      val mapFunctionArgumentTermName = TermName(c.freshName("eventValue$"))
-      val mapFunctionArgumentIdent = Ident(mapFunctionArgumentTermName)
+    val mapFunctionArgumentTermName = TermName(c.freshName("eventValue$"))
+    val mapFunctionArgumentIdent = Ident(mapFunctionArgumentTermName)
 
-      val extendedDetections = mapFunctionArgumentIdent :: detections.detectedStaticReactives ::: cutOut.cutOutReactiveIdentifiers
+    val extendedDetections = mapFunctionArgumentIdent :: detections.detectedStaticReactives ::: cutOut.cutOutReactiveIdentifiers
 
-      val valueAccessMethod = TermName(if (detections.detectedDynamicReactives.isEmpty) "staticDepend" else "depend")
+    val valueAccessMethod = TermName(if (detections.detectedDynamicReactives.isEmpty) "staticDepend" else "depend")
 
-      val mapTree = q"""$ticketTermName.$valueAccessMethod($mapFunctionArgumentIdent).map($rewrittenTree)"""
+    val mapTree = q"""$ticketTermName.$valueAccessMethod($mapFunctionArgumentIdent).map($rewrittenTree)"""
 
+    makeExpression[S, A](
+      TermName("Events"),
+      ticket,
+      extendedDetections,
+      detections.detectedDynamicReactives.isEmpty,
+      userComputation(detections.detectedDynamicReactives.isEmpty, ticketTermName, mapTree),
+      (q"val $mapFunctionArgumentTermName = ${c.prefix}" : ValDef) :: cutOut.cutOutReactivesVals.reverse
+    )
 
-      val creationMethod = TermName(if (detections.detectedDynamicReactives.isEmpty) "static" else "dynamic")
-      q"""{
-        val $mapFunctionArgumentTermName = ${c.prefix}
-        ${termNames.ROOTPKG}.rescala.reactives.Events.$creationMethod[${weakTypeOf[A]}, ${weakTypeOf[S]}](..$extendedDetections){
-          ${userComputation(detections.detectedDynamicReactives.isEmpty, ticketTermName, mapTree)}
-        }($ticket)
-      }"""
-    }
-
-    val block: c.universe.Tree = Block(cutOut.cutOutReactivesVals.reverse, body)
-    ReTyper(c).untypecheck(block)
   }
 
   private def makeExpression[S <: Struct : c.WeakTypeTag, A: c.WeakTypeTag](
@@ -86,11 +81,14 @@ class ReactiveMacros(val c: blackbox.Context) {
     dependencies: Seq[Tree],
     isStatic: Boolean,
     computation: Tree,
-  ) = {
+    valDefs: List[ValDef],
+  ): Tree = {
     val creationMethod = TermName(if (isStatic) "static" else "dynamic")
-    q"""${termNames.ROOTPKG}.rescala.reactives.$signalsOrEvents.$creationMethod[${weakTypeOf[A]}, ${weakTypeOf[S]}](
+    val body = q"""${termNames.ROOTPKG}.rescala.reactives.$signalsOrEvents.$creationMethod[${weakTypeOf[A]}, ${weakTypeOf[S]}](
          ..$dependencies
          ){$computation}($ticket)"""
+    val block: c.universe.Tree = Block(valDefs, body)
+    ReTyper(c).untypecheck(block)
   }
 
   def userComputation[S <: Struct : c.WeakTypeTag](hasOnlyStaticAccess: Boolean, ticketTermName: TermName, innerTree: Tree): Tree = {
@@ -174,7 +172,7 @@ class ReactiveMacros(val c: blackbox.Context) {
           // macro expression and its substitution variable
           val cutOutReactiveTermName = TermName(c.freshName("reactive$"))
           val ident = Ident(cutOutReactiveTermName)
-          val signalDef = q"val $cutOutReactiveTermName = $reactive"
+          val signalDef: ValDef = q"val $cutOutReactiveTermName = $reactive"
 
           cutOutReactivesVals ::= signalDef
           cutOutReactiveIdentifiers ::= ident
