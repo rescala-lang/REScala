@@ -128,7 +128,7 @@ class DistributionEngine(hostName: String = InetAddress.getLocalHost.getHostAddr
     if (online) mediator ! Publish(varName, QueryMessage(varName, self))
   }
 
-  /**
+  /*
     * Pull all hosts and return the new merged value for a given name
     */
   /* TODO: implement or remove

@@ -7,10 +7,12 @@ import scala.language.higherKinds
   * Its main use is to allow the external algorithm to manage concurrency for the internal data. */
 trait Struct { type State[P, S <: Struct] }
 
-/** Source of (reactive) values, the [[Struct]] ([[S]]) defines how the state is stored internally,
+/** Source of (reactive) values, the [[Struct]] defines how the state is stored internally,
   * and how dependencies are managed.
   * See [[ComputationStateAccess]] for value access methods of the state,
-  * and [[ReevaluationStateAccess]] for dependency access.*/
+  * and [[ReevaluationStateAccess]] for dependency access.
+  *
+  * @tparam S [[Struct]] defining the internal state */
 trait ReSource[S <: Struct] {
   type Value
   protected[rescala] def state: S#State[Value, S]
@@ -28,7 +30,9 @@ trait Reactive[S <: Struct] extends ReSource[S] {
 }
 
 /** Base implementation for reactives, combining [[ReSourciV]] for value access, with [[Reactive]] for scheduling,
-  * together with a [[REName]] and asking for an [[initialState]]. */
+  * together with a [[REName]] and asking for a [[Struct.State]]
+  * @param initialState the initial state passed by the scheduler
+  * @param rename the name of the reactive, useful for debugging as it often contains positional information */
 abstract class Base[P, S <: Struct](initialState: S#State[Pulse[P], S], rename: REName)
   extends RENamed(rename) with  ReSourciV[Pulse[P], S] with Reactive[S] {
   override type Value = Pulse[P]
