@@ -7,7 +7,7 @@ import rescala._
 import reswing.{ReComponent, ReSwingValue}
 import texteditor.{JScrollableComponent, LineIterator, LineOffset, Position}
 
-import scala.language.{implicitConversions}
+import scala.language.implicitConversions
 import scala.math.{max, min}
 import scala.swing.Component
 import scala.swing.event.{Key, KeyPressed, KeyTyped, MouseDragged, MouseEvent}

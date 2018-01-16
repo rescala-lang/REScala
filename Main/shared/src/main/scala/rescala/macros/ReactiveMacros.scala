@@ -255,13 +255,14 @@ class ReactiveMacros(val c: blackbox.Context) {
         ((tree.tpe.baseClasses contains staticSignalClass) || (tree.tpe.baseClasses contains staticEventClass))
   }
 
+  /** detects variants to access reactives using [[MacroAccessors]] */
   object REApply {
     def unapply(arg: Tree): Option[Tree] = arg match {
-      case Apply(Select(reactive, TermName(tn)), Nil)
-        if List("apply").contains(tn) && isReactive(reactive) =>
+      case Apply(Select(reactive, tn), Nil)
+        if "apply" == tn.decodedName.toString && isReactive(reactive) =>
         Some(reactive)
       case Select(reactive, tn)
-        if List("!", "unary_!", "value").contains(tn.decodedName.toString) && isReactive(reactive) =>
+        if "value" == tn.decodedName.toString && isReactive(reactive) =>
         Some(reactive)
       case _ => None
     }

@@ -45,11 +45,11 @@ class MacroTestSuite extends RETests {
     assert(s1.now === 1)
   }
 
-  allEngines("exclamation mark acces works"){ engine => import engine._
+  allEngines(".value acces works"){ engine => import engine._
 
     val v = Var(List(1,2,3))
-    val s1: Signal[List[Int]] = Signal { v.!.map(_ + 2) }
-    val s2: Signal[List[Int]] = Signal { (!v).map(_ + 2) }
+    val s1: Signal[List[Int]] = Signal { v.value.map(_ + 2) }
+    val s2: Signal[List[Int]] = Signal { v.apply.map(_ + 2) }
 
     assert(s1.now === List(3,4,5))
     assert(s2.now === List(3,4,5))

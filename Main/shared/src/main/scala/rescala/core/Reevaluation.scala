@@ -39,8 +39,12 @@ object ReevaluationResult {
       indepsAfter = indepsAfter, indepsAdded = indepsAdded, indepsRemoved = indepsRemoved)
 }
 
+trait Disconnectable[S <: Struct] {
+  def disconnect()(implicit engine: Scheduler[S]): Unit
+}
 
-trait Disconnectable[S <: Struct] extends Reactive[S] {
+
+trait DisconnectableImpl[S <: Struct] extends Reactive[S] with Disconnectable[S] {
   override type Value >: Pulse[Nothing]
   @volatile private var disconnected = false
   final def disconnect()(implicit engine: Scheduler[S]): Unit = {

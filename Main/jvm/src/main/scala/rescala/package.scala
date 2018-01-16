@@ -9,5 +9,6 @@ import rescala.parrp.ParRP
   **/
 package object rescala extends RescalaInterface[ParRP] {
   override def explicitEngine: Scheduler[ParRP] = rescala.Engines.parrp
+  /** @group internal */
   implicit def noSerialization[T]: ReSerializable[T] = ReSerializable.serializationUnavailable
 }

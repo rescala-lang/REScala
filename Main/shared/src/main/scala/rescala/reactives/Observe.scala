@@ -21,7 +21,7 @@ object Observe {
   private abstract class Obs[T, S <: Struct]
   (bud: S#State[Pulse[Unit], S], dependency: ReSourciV[Pulse[T], S], fun: T => Unit, fail: Throwable => Unit, name: REName)
     extends Base[Unit, S](bud, name) with Reactive[S] with Observe[S]  {
-    this: Disconnectable[S] =>
+    this: DisconnectableImpl[S] =>
 
     override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[Unit], indeps: Set[ReSource[S]]): ReevaluationResult[Value, S] = {
       scheduleHandler(this, turn, dependency, fun, fail)
@@ -46,7 +46,7 @@ object Observe {
 
   def weak[T, S <: Struct](dependency: ReSourciV[Pulse[T], S])(fun: T => Unit, fail: Throwable => Unit)(implicit ct: CreationTicket[S]): Observe[S] = {
     ct(initTurn => initTurn.create[Pulse[Unit], Obs[T, S]](Set(dependency), ValuePersistency.DynamicEvent) { state =>
-      new Obs[T, S](state, dependency, fun, fail, ct.rename) with Disconnectable[S]
+      new Obs[T, S](state, dependency, fun, fail, ct.rename) with DisconnectableImpl[S]
     })
   }
 
@@ -66,7 +66,8 @@ object Observe {
   */
 trait Observable[+P, S <: Struct] {
   this : ReSourciV[Pulse[P], S] =>
-  /** add an observer */
+  /** add an observer
+    * @group accessor */
   final def observe(
     onSuccess: P => Unit,
     onFailure: Throwable => Unit = null

@@ -1,41 +1,37 @@
 package rescala.reactives
 
 import rescala.core._
+import rescala.macros.MacroAccessors
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 import rescala.reactives.Signals.Diff
 
-import scala.annotation.compileTimeOnly
 import scala.util.control.NonFatal
 
-/**
-  * Base signal interface for all signal implementations.
-  * Please note that any signal implementation should have the SL type parameter set to itself and be paired with
-  * exactly one event implementation it is compatible with by setting the EV type parameter.
-  * This relationship needs to be symmetrical.
+/** Time changing value derived from the dependencies.
   *
   * @tparam A Type stored by the signal
   * @tparam S Struct type used for the propagation of the signal
+  *
+  * @groupname operator Signal operators
+  * @groupprio operator 10
+  * @groupname conversion Signal to Event conversions
+  * @groupprio conversion 20
+  * @groupname accessors Accessors and observers
+  * @groupprio accessor 5
   */
-trait Signal[+A, S <: Struct] extends ReSourciV[Pulse[A], S] with Observable[A, S] {
+trait Signal[+A, S <: Struct] extends ReSourciV[Pulse[A], S] with Observable[A, S] with MacroAccessors[A] with Disconnectable[S] {
 
-  // only used inside macro and will be replaced there
-  @compileTimeOnly("Signal.apply can only be used inside of Signal expressions")
-  final def apply(): A = throw new IllegalAccessException(s"$this.apply called outside of macro")
-  @compileTimeOnly("Signal.! can only be used inside of Signal expressions")
-  final def ! : A = throw new IllegalAccessException(s"$this.! called outside of macro")
-  @compileTimeOnly("Signal.unary_! can only be used inside of Signal expressions")
-  final def unary_! : A = throw new IllegalAccessException(s"$this.unary_! called outside of macro")
-  @compileTimeOnly("Signal.unary_! can only be used inside of Signal expressions")
-  final def value : A = throw new IllegalAccessException(s"$this.value called outside of macro")
-
-  final def now(implicit engine: Scheduler[S]): A = {
-    try { engine.singleNow(this).get }
+  /** Returns the current value of the signal
+    * @group accessor */
+  final def now(implicit scheduler: Scheduler[S]): A = {
+    try { scheduler.singleNow(this).get }
     catch {
       case EmptySignalControlThrowable => throw new NoSuchElementException(s"Signal $this is empty")
       case other: Throwable => throw new IllegalStateException(s"Signal $this has an error value", other)
     }
   }
 
+  /** Uses a partial function `onFailure` to recover an error carried by the event into a value. */
   final def recover[R >: A](onFailure: PartialFunction[Throwable,R])(implicit ticket: CreationTicket[S]): Signal[R, S] = Signals.static(this) { st =>
     try st.staticDepend(this) catch {
       case NonFatal(e) => onFailure.applyOrElse[Throwable, R](e, throw _)
@@ -54,12 +50,12 @@ trait Signal[+A, S <: Struct] extends ReSourciV[Pulse[A], S] with Observable[A, 
     }
   }
 
-  def disconnect()(implicit engine: Scheduler[S]): Unit
-
-  /** Return a Signal with f applied to the value */
+  /** Return a Signal with f applied to the value
+    * @group operator */
   final def map[B](f: A => B)(implicit ticket: CreationTicket[S]): Signal[B, S] = Signals.lift(this)(f)
 
-  /** flatten the inner reactive */
+  /** Flattens the inner reactive.
+    * @group operator */
   final def flatten[R](implicit ev: Flatten[A, S, R], ticket: CreationTicket[S]): R = ev.apply(this)(ticket)
 
 //  /** Delays this signal by n occurrences */
@@ -67,13 +63,13 @@ trait Signal[+A, S <: Struct] extends ReSourciV[Pulse[A], S] with Observable[A, 
 //    ticket { implicit ict => changed.delay[A1](ict.turn.staticBefore(this).get, n) }
 
   /** Create an event that fires every time the signal changes. It fires the tuple (oldVal, newVal) for the signal.
-    * Be aware that no change will be triggered when the signal changes to or from empty */
+    * Be aware that no change will be triggered when the signal changes to or from empty
+    * @group conversion */
   final def change(implicit ticket: CreationTicket[S]): Event[Diff[A], S] = Events.change(this)(ticket)
 
-  /**
-    * Create an event that fires every time the signal changes. The value associated
+  /** Create an event that fires every time the signal changes. The value associated
     * to the event is the new value of the signal
-    */
+    * @group conversion */
   final def changed(implicit ticket: CreationTicket[S]): Event[A, S] = Events.staticInternal(s"(changed $this)", this) { st =>
     st.staticDependPulse(this) match {
       case Pulse.empty => Pulse.NoChange
@@ -81,7 +77,8 @@ trait Signal[+A, S <: Struct] extends ReSourciV[Pulse[A], S] with Observable[A, 
     }
   }
 
-  /** Convenience function filtering to events which change this reactive to value */
+  /** Convenience function filtering to events which change this reactive to value
+    * @group conversion */
   final def changedTo[V](value: V)(implicit ticket: CreationTicket[S]): Event[Unit, S] = (changed filter {_ == value}).dropParam
 }
 
