@@ -3,6 +3,7 @@ title: Case Studies
 ---
 # React Shapes
 
+
 ![Shapes](images/shapes.png){: width="480" height="280"}
 ReactShapes is a small
 drawing program. The user can drag and drop
