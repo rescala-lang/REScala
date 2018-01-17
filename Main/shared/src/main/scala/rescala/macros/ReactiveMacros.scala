@@ -35,7 +35,8 @@ class ReactiveMacros(val c: blackbox.Context) {
       ticket,
       detections.detectedStaticReactives,
       detections.detectedDynamicReactives.isEmpty,
-      userComputation(detections.detectedDynamicReactives.isEmpty, ticketTermName, rewrittenTree),
+      ticketTermName,
+      rewrittenTree,
       cutOut.cutOutReactivesVals.reverse)
   }
 
@@ -51,7 +52,7 @@ class ReactiveMacros(val c: blackbox.Context) {
     val weAnalysis = new WholeExpressionAnalysis(expression.tree)
     val cutOut = new CutOutTransformer(weAnalysis)
     val cutOutTree = cutOut.transform(expression.tree)
-    val detections = new RewriteTransformer[S](weAnalysis, ticketIdent, c.macroApplication.symbol.name.toString != "dynamic")
+    val detections = new RewriteTransformer[S](weAnalysis, ticketIdent, requireStatic = true)
     val rewrittenTree = detections transform cutOutTree
 
 
@@ -69,7 +70,8 @@ class ReactiveMacros(val c: blackbox.Context) {
       ticket,
       extendedDetections,
       detections.detectedDynamicReactives.isEmpty,
-      userComputation(detections.detectedDynamicReactives.isEmpty, ticketTermName, mapTree),
+      ticketTermName,
+      mapTree,
       (q"val $mapFunctionArgumentTermName = ${c.prefix}" : ValDef) :: cutOut.cutOutReactivesVals.reverse
     )
 
@@ -77,23 +79,21 @@ class ReactiveMacros(val c: blackbox.Context) {
 
   private def makeExpression[S <: Struct : c.WeakTypeTag, A: c.WeakTypeTag](
     signalsOrEvents: c.universe.TermName,
-    ticket: c.Tree,
+    outerTicket: c.Tree,
     dependencies: Seq[Tree],
     isStatic: Boolean,
-    computation: Tree,
+    innerTicket: TermName,
+    innerTree: Tree,
     valDefs: List[ValDef],
   ): Tree = {
     val creationMethod = TermName(if (isStatic) "static" else "dynamic")
+    val ticketType = if (isStatic) weakTypeOf[StaticTicket[S]] else weakTypeOf[DynamicTicket[S]]
+    val computation = q"{$innerTicket: $ticketType => $innerTree }"
     val body = q"""${termNames.ROOTPKG}.rescala.reactives.$signalsOrEvents.$creationMethod[${weakTypeOf[A]}, ${weakTypeOf[S]}](
          ..$dependencies
-         ){$computation}($ticket)"""
+         ){$computation}($outerTicket)"""
     val block: c.universe.Tree = Block(valDefs, body)
     ReTyper(c).untypecheck(block)
-  }
-
-  def userComputation[S <: Struct : c.WeakTypeTag](hasOnlyStaticAccess: Boolean, ticketTermName: TermName, innerTree: Tree): Tree = {
-    val ticketType = if (hasOnlyStaticAccess) weakTypeOf[StaticTicket[S]] else weakTypeOf[DynamicTicket[S]]
-    q"{$ticketTermName: $ticketType => $innerTree }"
   }
 
   object IsCutOut
