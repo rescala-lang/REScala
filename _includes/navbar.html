@@ -13,13 +13,17 @@
             {% for dropdownPage in navs %}
               {% assign c = '/' | append: check %}
               {% if dropdownPage.url contains c %}
-                <li> <a href="{{ site.github.baseurl }}{{ dropdownPage.url }}">{{ dropdownPage.title }}</a></li>
+                <li> <a href="{{ site.github.baseurl }}{{ dropdownPage.url }}" >{{ dropdownPage.title }}</a></li>
               {% endif %}
             {% endfor %}
           {% endfor %}
           </ul>
         {% else %}
-          <a class="{% if page.url == p.url %}current{% endif %}" href="{{ site.github.baseurl}}{{ p.url }}">{{ p.title }}</a>
+          <a class="{% if page.url == p.url %}current{% endif %}" href="{{ site.github.baseurl}}{{ p.url }}">
+            {% if p.title == "Home" %}
+            <span class="rescala-logo"><span class="rescala-logo-re">re:</span><span class="rescala-logo-scala">scala</span></span>
+            {% else %} {{ p.title }} {% endif %}
+          </a>
         {% endif %}
       {% endif %}
     {% endfor %}

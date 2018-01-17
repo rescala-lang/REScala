@@ -3,13 +3,13 @@ title: Home
 nav: 1
 ---
 
-# The REScala Project
+# <span class="rescala-logo-re">re:</span><span class="rescala-logo-scala">scala</span>
+{: class="rescala-logo"}
 
-
-The REScala Project aims to bring the principles of functional reactive programming to the JVM.
-FRP can do more than providing asynchronous collections of events with a rich API of stream transformations,
-we also automatically manage consistent up-to-date state with minimal syntactic overhead,
-and integrate seamlessly into modern, object-oriented and functional, concurrent, distributed programs on the JVM.
+Rescala delivers functional reactive programming on the JVM and the web.
+Providing asynchronous collections of events with a rich API of stream transformations,
+with managed consistent up-to-date state, and minimal syntactic overhead.
+All integrated seamlessly into modern, object-oriented and functional, concurrent, distributed programs.
 
 <!-- {% include slideshow.html %} -->
 
@@ -36,12 +36,12 @@ In particular, functional reactive programming and dataflow programming – whic
 but hardly escape the functional setting. On the other hand, event-based languages directly support events but do not achieve the declarative style of more functional approaches.
 
 
-REScala is a reactive language which integrates concepts from event-based and functional-reactive programming into the object-oriented world.
-REScala supports the development of reactive applications by fostering a functional and declarative style which complements the advantages of object-oriented design.
+Rescala is a reactive language which integrates concepts from event-based and functional-reactive programming into the object-oriented world.
+Rescala supports the development of reactive applications by fostering a functional and declarative style which complements the advantages of object-oriented design.
 
----
-[Get Started](./manual){: class="btn btn-primary"}
-[Sourcecode](https://github.com/guidosalva/REScala/){: class="btn btn-primary"}
+<!-- --- -->
+<!-- [Get Started](./manual){: class="btn btn-primary"}
+[Sourcecode](https://github.com/guidosalva/REScala/){: class="btn btn-primary"} -->
 
 <!-- <a class="github-button" href="https://github.com/guidosalva/REScala/archive/master.zip" data-style="mega" aria-label="Download guidosalva/REScala on GitHub">Download</a> -->
 

@@ -1,7 +1,7 @@
 ---
 ---
 body {
-  padding-top: 70px;
+  padding-top: 52px;
   padding-bottom: 0px;
   font-weight: normal;
   width: calc(100vw - 17px);
@@ -50,8 +50,26 @@ figcaption {
   }
 }
 
+.rescala-logo-re {
+  color:#EC6500;
+}
+.rescala-logo-scala {
+  color:#bbb;
+}
+.rescala-logo {
+  font-weight: bold;
+  font-family: serif;
+}
+
+h1#rescala {
+  text-align: center;
+  padding: 40px 0px;
+  font-size: 6em;
+  margin-top: 0px;
+}
+
 h1,h2,h3,h4 {
-  padding-bottom: 9px;
+  padding-bottom: 10px;
   margin: 40px 0 20px;
   border-bottom: 1px solid #eee;
 }
@@ -179,17 +197,16 @@ h1:before,h2:before,h3:before,h4:before {
     line-height: 1.4em;
     clear: none;
     padding-bottom: 0;
-    display: block;
-    text-align: justify;
+    //display: block;
+    text-align: center;
     // border: 1px solid #eee;
     // border-radius: 30px;
     // border-style: outset;
 
     h1,h2,h3,h4,h5,h6{
-      margin: 0;
-      padding: 5px;
+      // margin: 0;
+      // padding: 5px;
       font-size: large;
-      text-align: center;
     }
   }
 }
