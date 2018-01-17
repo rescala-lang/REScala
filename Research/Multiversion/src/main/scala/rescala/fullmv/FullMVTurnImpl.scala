@@ -330,7 +330,6 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
     if(l == null) {
       Future.successful(Deallocated)
     } else {
-      if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this trySubsume acquired temporary ref on $l")
       val res = l.trySubsume0(0, lockedNewParent)
       res.flatMap {
         case Successful(failedRefChanges) =>

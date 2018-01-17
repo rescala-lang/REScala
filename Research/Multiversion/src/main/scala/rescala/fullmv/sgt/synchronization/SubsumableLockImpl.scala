@@ -163,7 +163,7 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
       case null => // ok
       case Self => throw new AssertionError(s"$this was garbage collected while locked")
       case host.dummy => throw new AssertionError(s"$this was already garbage collected earlier")
-      case parent => // ok
+      case parent => parent.localSubRefs(1)
     }
   }
 }
