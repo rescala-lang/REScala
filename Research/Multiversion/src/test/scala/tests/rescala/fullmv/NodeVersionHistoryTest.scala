@@ -13,19 +13,19 @@ class NodeVersionHistoryTest extends FunSuite {
     val engine = new FullMVEngine(Duration.Zero, "asd")
 
     val createN = engine.newTurn()
-    createN.awaitAndSwitchPhase(TurnPhase.Executing)
+    createN.beginExecuting()
     val n = new NodeVersionHistory[Pulse[Int], FullMVTurn, Int, Int](createN, ValuePersistency.InitializedSignal(Pulse.Value(10)))
-    createN.awaitAndSwitchPhase(TurnPhase.Completed)
+    createN.completeExecuting()
 
     val reevaluate = engine.newTurn()
-    reevaluate.awaitAndSwitchPhase(TurnPhase.Framing)
+    reevaluate.beginFraming()
     assert(n.incrementFrame(reevaluate) === Frame(Set.empty, reevaluate))
-    reevaluate.awaitAndSwitchPhase(TurnPhase.Executing)
+    reevaluate.completeFraming()
 
     val framing1 = engine.newTurn()
-    framing1.awaitAndSwitchPhase(TurnPhase.Framing)
+    framing1.beginFraming()
     val framing2 = engine.newTurn()
-    framing2.awaitAndSwitchPhase(TurnPhase.Framing)
+    framing2.beginFraming()
     val lock = SerializationGraphTracking.tryLock(framing1, framing2, UnlockedUnknown) match {
       case x@LockedSameSCC(_) => x
       case other => fail("not locked: " + other)

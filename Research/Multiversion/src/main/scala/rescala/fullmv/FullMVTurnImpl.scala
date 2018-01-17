@@ -266,22 +266,25 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
   private def copySubTreeRootAndAssessChildren(bufferPredecessorSpanningTreeNodes: Map[FullMVTurn, IMutableTransactionSpanningTreeNode[FullMVTurn]], attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn], newSuccessorCallsAccumulator: FullMVEngine.CallAccumulator[Unit]): Map[FullMVTurn, IMutableTransactionSpanningTreeNode[FullMVTurn]] = {
     val newTransitivePredecessor = spanningSubTreeRoot.txn
     assert(newTransitivePredecessor.host == host, s"new predecessor $newTransitivePredecessor of $this is hosted on ${newTransitivePredecessor.host} different from $host")
+    if(spanningSubTreeRoot.txn.phase < TurnPhase.Completed) {
+      val newSuccessorCall = newTransitivePredecessor.newSuccessor(this)
+      FullMVEngine.accumulateFuture(newSuccessorCallsAccumulator, newSuccessorCall)
 
-    val newSuccessorCall = newTransitivePredecessor.newSuccessor(this)
-    FullMVEngine.accumulateFuture(newSuccessorCallsAccumulator, newSuccessorCall)
+      val copiedSpanningTreeNode = new MutableTransactionSpanningTreeNode(newTransitivePredecessor)
+      var updatedBufferPredecessorSpanningTreeNodes = bufferPredecessorSpanningTreeNodes + (newTransitivePredecessor -> copiedSpanningTreeNode)
+      updatedBufferPredecessorSpanningTreeNodes(attachBelow).addChild(copiedSpanningTreeNode)
 
-    val copiedSpanningTreeNode = new MutableTransactionSpanningTreeNode(newTransitivePredecessor)
-    var updatedBufferPredecessorSpanningTreeNodes = bufferPredecessorSpanningTreeNodes + (newTransitivePredecessor -> copiedSpanningTreeNode)
-    updatedBufferPredecessorSpanningTreeNodes(attachBelow).addChild(copiedSpanningTreeNode)
-
-    val it = spanningSubTreeRoot.iterator()
-    while(it.hasNext) {
-      val child = it.next()
-      if(!isTransitivePredecessor(child.txn)) {
-        updatedBufferPredecessorSpanningTreeNodes = copySubTreeRootAndAssessChildren(updatedBufferPredecessorSpanningTreeNodes, newTransitivePredecessor, child, newSuccessorCallsAccumulator)
+      val it = spanningSubTreeRoot.iterator()
+      while (it.hasNext) {
+        val child = it.next()
+        if (!isTransitivePredecessor(child.txn)) {
+          updatedBufferPredecessorSpanningTreeNodes = copySubTreeRootAndAssessChildren(updatedBufferPredecessorSpanningTreeNodes, newTransitivePredecessor, child, newSuccessorCallsAccumulator)
+        }
       }
+      updatedBufferPredecessorSpanningTreeNodes
+    } else {
+      bufferPredecessorSpanningTreeNodes
     }
-    updatedBufferPredecessorSpanningTreeNodes
   }
 
   override def newSuccessor(successor: FullMVTurn): Future[Unit] = {
@@ -328,16 +331,16 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
   override def trySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult] = {
     val l = subsumableLock.get()
     if(l == null) {
-      Future.successful(Deallocated)
+      Deallocated.futured
     } else {
       val res = l.trySubsume0(0, lockedNewParent)
       res.flatMap {
         case Successful(failedRefChanges) =>
           casLockAndNotifyFailedRefChanges(l, failedRefChanges, lockedNewParent)
-          Future.successful(Successful)
+          Successful.futured
         case Blocked(failedRefChanges, newRoot) =>
           casLockAndNotifyFailedRefChanges(l, failedRefChanges, newRoot)
-          Future.successful(Blocked)
+          Blocked.futured
         case GarbageCollected =>
           trySubsume(lockedNewParent)
       }(FullMVEngine.notWorthToMoveToTaskpool)

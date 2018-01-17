@@ -15,13 +15,21 @@ case class Successful(failedRefChanges: Int) extends TrySubsumeResult0
 sealed trait TryLockResult0
 case class Locked(failedRefChanges: Int, lockedRoot: SubsumableLock) extends TryLockResult0
 
-case object GarbageCollected extends TrySubsumeResult0 with TryLockResult0
+case object GarbageCollected extends TrySubsumeResult0 with TryLockResult0 {
+  val futured = Future.successful(this)
+}
 case class Blocked(failedRefChanges: Int, newParent: SubsumableLock) extends TrySubsumeResult0 with TryLockResult0
 
 sealed trait TrySubsumeResult
-case object Successful extends TrySubsumeResult
-case object Blocked extends TrySubsumeResult
-case object Deallocated extends TrySubsumeResult
+case object Successful extends TrySubsumeResult {
+  val futured = Future.successful(this)
+}
+case object Blocked extends TrySubsumeResult {
+  val futured = Future.successful(this)
+}
+case object Deallocated extends TrySubsumeResult {
+  val futured = Future.successful(this)
+}
 
 trait SubsumableLockEntryPoint {
   def getLockedRoot: Future[Option[Host.GUID]]

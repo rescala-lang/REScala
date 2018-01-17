@@ -13,7 +13,8 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
   object phaseParking
   var phase: TurnPhase.Type = TurnPhase.Initialized
   object replicatorLock
-  var selfNode: TransactionSpanningTreeNode[FullMVTurn] = _
+  var _selfNode: Option[TransactionSpanningTreeNode[FullMVTurn]] = None
+  def selfNode: TransactionSpanningTreeNode[FullMVTurn] = _selfNode.get
   @volatile var predecessors: Set[FullMVTurn] = Set()
 
   var localBranchCountBuffer = new AtomicInteger(0)
@@ -52,22 +53,30 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
     (phase, selfNode)
   }
 
-  private def indexChildren(node: TransactionSpanningTreeNode[FullMVTurn]): Unit = {
-    this.predecessors += node.txn
+  private def indexChildren(predecessors: Set[FullMVTurn], node: TransactionSpanningTreeNode[FullMVTurn]): Set[FullMVTurn] = {
+    val txn = node.txn
+    var maybeChangedPreds = predecessors
+    if(!predecessors.contains(txn)) maybeChangedPreds += txn
     val it = node.iterator()
-    while(it.hasNext) indexChildren(it.next())
+    while(it.hasNext) maybeChangedPreds = indexChildren(maybeChangedPreds, it.next())
+    maybeChangedPreds
   }
 
-  override def newPredecessors(predecessors: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = {
-    val reps = replicatorLock.synchronized {
-      this.selfNode = predecessors
-      replicators
+  override def newPredecessors(tree: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = synchronized {
+    val newPreds = indexChildren(predecessors, selfNode)
+    if(newPreds ne predecessors) {
+      predecessors = newPreds
+      val reps = replicatorLock.synchronized {
+        this._selfNode = Some(tree)
+        replicators
+      }
+      FullMVEngine.broadcast(reps) { _.newPredecessors(tree) }
+    } else {
+      Future.unit
     }
-    indexChildren(selfNode)
-    FullMVEngine.broadcast(reps) {_.newPredecessors(predecessors) }
   }
 
-  override def newPhase(phase: TurnPhase.Type): Future[Unit] = {
+  override def newPhase(phase: TurnPhase.Type): Future[Unit] = synchronized {
     if(this.phase < phase) {
       val reps = replicatorLock.synchronized {
         this.phase = phase
