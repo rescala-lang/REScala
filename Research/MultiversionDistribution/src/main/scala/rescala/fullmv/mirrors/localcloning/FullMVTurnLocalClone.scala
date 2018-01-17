@@ -29,7 +29,7 @@ object FullMVTurnLocalClone {
         override def asyncReleasePhaseLock(): Unit = localMirror.asyncReleasePhaseLock()
 
         override def getLockedRoot = localMirror.getLockedRoot
-        override def lock() = localMirror.lock().map(SubsumableLockLocalClone(_, reflectionHost.lockHost))(FullMVEngine.notWorthToMoveToTaskpool)
+        override def tryLock(): Future[Option[SubsumableLock]] = localMirror.tryLock().map(SubsumableLockLocalClone(_, reflectionHost.lockHost))(FullMVEngine.notWorthToMoveToTaskpool)
         override def trySubsume(lockedNewParent: SubsumableLock) = localMirror.trySubsume(SubsumableLockLocalClone(lockedNewParent, mirrorHost.lockHost))
       }
 

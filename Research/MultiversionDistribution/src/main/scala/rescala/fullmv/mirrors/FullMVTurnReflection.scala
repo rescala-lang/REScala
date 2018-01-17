@@ -94,7 +94,7 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
   override def newSuccessor(successor: FullMVTurn): Future[Unit] = proxy.newSuccessor(successor)
 
   override def getLockedRoot: Future[Option[GUID]] = proxy.getLockedRoot
-  override def lock(): Future[SubsumableLock] = proxy.lock()
+  override def tryLock(): Future[Option[SubsumableLock]] = proxy.tryLock()
   override def trySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult] = proxy.trySubsume(lockedNewParent)
 
   override def toString: String = s"FullMVTurnReflection($guid on $host, ${TurnPhase.toString(phase)}${if(localBranchCountBuffer.get != 0) s"(${localBranchCountBuffer.get})" else ""})"

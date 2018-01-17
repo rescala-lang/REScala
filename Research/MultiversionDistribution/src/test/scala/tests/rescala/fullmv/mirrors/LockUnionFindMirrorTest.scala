@@ -19,7 +19,7 @@ class LockUnionFindMirrorTest extends FunSuite {
 
     val host2 = new FullMVEngine(Duration.Zero, "host2")
     val turn1on2 = FullMVTurnLocalClone(turn1, host2)
-    val lock1on2 = Await.result(turn1on2.lock(), Duration.Zero)
+    val lock1on2 = Await.result(turn1on2.tryLock(), Duration.Zero)
 
     assert(lock1on2 === lock1)
     assert((lock1on2 ne lock1) === true)

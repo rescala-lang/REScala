@@ -410,7 +410,7 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
         MaybeLockResponse(res)
       }(FullMVEngine.notWorthToMoveToTaskpool)
     case TurnLock(receiver) =>
-      localTurnReceiverInstance(receiver).lock().map { newParent =>
+      localTurnReceiverInstance(receiver).tryLock().map { newParent =>
         newParent.localAddRefs(1)
         assert(newParent.host == host)
         LockResponse(newParent.guid)
@@ -432,7 +432,7 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
         MaybeLockResponse(res)
       }(FullMVEngine.notWorthToMoveToTaskpool)
     case LockLock(receiver) =>
-      localLockReceiverInstance(receiver).remoteLock().map { newParent =>
+      localLockReceiverInstance(receiver).remoteTryLock().map { newParent =>
         newParent.localAddRefs(1)
         assert(newParent.host == host)
         LockResponse(newParent.guid)
@@ -497,7 +497,7 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
           maybeRoot
       }(FullMVEngine.notWorthToMoveToTaskpool)
     }
-    override def lock(): Future[SubsumableLock] = {
+    override def tryLock(): Future[Option[SubsumableLock]] = {
       doRequest(endpoint, TurnLock(guid)).map {
         case LockResponse(newParent) =>
           localLockParameterInstance(newParent, endpoint)
@@ -532,7 +532,7 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
           maybeRoot
       }(FullMVEngine.notWorthToMoveToTaskpool)
     }
-    override def remoteLock(): Future[SubsumableLock] = {
+    override def remoteTryLock(): Future[RemoteTryLockResult] = {
       doRequest(endpoint, LockLock(guid)).map {
         case LockResponse(newParent) =>
           localLockParameterInstance(newParent, endpoint)
@@ -544,7 +544,7 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
           localLockParameterInstance(newParent, endpoint)
       }(executeInTaskPool)
     }
-    override def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[Option[SubsumableLock]] = {
+    override def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[RemoteTrySubsumeResult] = {
       assert(lockedNewParent.host == host.lockHost)
       lockedNewParent.localAddRefs(1)
       doRequest(endpoint, LockTrySubsume(guid, lockedNewParent.guid)).map {

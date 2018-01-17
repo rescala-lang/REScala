@@ -2,14 +2,14 @@ package rescala.fullmv.mirrors
 
 import rescala.fullmv.FullMVEngine
 import rescala.fullmv.mirrors.Host.GUID
-import rescala.fullmv.sgt.synchronization.SubsumableLock
+import rescala.fullmv.sgt.synchronization.{SubsumableLock, TrySubsumeResult0}
 
 import scala.concurrent.Future
 
 class SubsumableLockReflection(override val host: SubsumableLockHost, override val guid: Host.GUID, val proxy: SubsumableLockProxy) extends SubsumableLock {
   override def getLockedRoot: Future[Option[GUID]] = proxy.getLockedRoot
-  override def lock0(hopCount: Int, lastHopWasGCd: Boolean): Future[(Int, SubsumableLock)] = {
-    proxy.remoteLock().map { res =>
+  override def tryLock0(hopCount: Int): Future[(Boolean, Int, SubsumableLock)] = {
+    proxy.remoteTryLock().map { res =>
       if(res == this) {
         val addHops = hopCount + (if(lastHopWasGCd) 1 else 0)
         if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this locked remotely; $addHops new refs")
@@ -23,7 +23,7 @@ class SubsumableLockReflection(override val host: SubsumableLockHost, override v
     }(FullMVEngine.notWorthToMoveToTaskpool)
   }
 
-  override def trySubsume0(hopCount: Int, lastHopWasGCd: Boolean, lockedNewParent: SubsumableLock): Future[(Int, Option[SubsumableLock])] = {
+  override def trySubsume0(hopCount: Int, lockedNewParent: SubsumableLock): Future[TrySubsumeResult0] = {
     if(lockedNewParent == this) {
       assert(lockedNewParent eq this, s"instance caching broken? $this came into contact with different reflection of same origin on same host")
       Future.successful((0, None))
@@ -49,9 +49,9 @@ class SubsumableLockReflection(override val host: SubsumableLockHost, override v
   }(FullMVEngine.notWorthToMoveToTaskpool)
 
   override def remoteAsyncUnlock(): Unit = proxy.remoteAsyncUnlock()
-  override def remoteLock(): Future[SubsumableLock] = proxy.remoteLock()
+  override def remoteTryLock(): Future[RemoteTryLockResult] = proxy.remoteTryLock()
   override def remoteSpinOnce(backoff: GUID): Future[SubsumableLock] = proxy.remoteSpinOnce(backoff)
-  override def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[Option[SubsumableLock]] = proxy.remoteTrySubsume(lockedNewParent)
+  override def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[RemoteTrySubsumeResult] = proxy.remoteTrySubsume(lockedNewParent)
 
 
   override protected def dumped(): Unit = {
