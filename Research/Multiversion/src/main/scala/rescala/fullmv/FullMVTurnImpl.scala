@@ -325,32 +325,22 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
     }(FullMVEngine.notWorthToMoveToTaskpool)
   }
 
-  @tailrec final override def trySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult] = {
+  override def trySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult] = {
     val l = subsumableLock.get()
     if(l == null) {
       Future.successful(Deallocated)
-    } else if(!l.tryNewLocalRef()) {
-      assert(l != subsumableLock.get(), "lock was garbage collected despite still being in use?!")
-      trySubsume(lockedNewParent)
     } else {
       if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this trySubsume acquired temporary ref on $l")
       val res = l.trySubsume0(0, lockedNewParent)
       res.flatMap {
         case Successful(failedRefChanges) =>
-          if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this trySubsume dropping temporary ref on $l")
-          l.localSubRefs(1)
           casLockAndNotifyFailedRefChanges(l, failedRefChanges, lockedNewParent)
           Future.successful(Successful)
         case Blocked(failedRefChanges, newRoot) =>
-          if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this trySubsume dropping temporary ref on $l")
-          l.localSubRefs(1)
           casLockAndNotifyFailedRefChanges(l, failedRefChanges, newRoot)
           Future.successful(Blocked)
         case GarbageCollected =>
-          throw new AssertionError(s"concurrent GC of $l should be impossible while $this has a temporary reference.")
-//          if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this trySubsume dropping temporary ref on $l")
-//          l.localSubRefs(1)
-//          this.asInstanceOf[FullMVTurn].trySubsume(lockedNewParent)
+          trySubsume(lockedNewParent)
       }(FullMVEngine.notWorthToMoveToTaskpool)
     }
   }

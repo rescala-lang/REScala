@@ -159,24 +159,11 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
   }
 
   override protected def dumped(): Unit = {
-    state.get match {
-      case null =>
-        if(state.compareAndSet(null, host.dummy)) {
-          if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this no refs remaining, deallocated")
-        } else {
-          throw new AssertionError(s"$this dump failed due to contention!? state is now ${state.get()}")
-        }
-      case Self =>
-        throw new AssertionError(s"$this was garbage collected while locked")
-      case host.dummy =>
-        throw new AssertionError(s"$this was already garbage collected earlier")
-      case parent =>
-        if(state.compareAndSet(parent, host.dummy)) {
-          if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this no refs remaining, deallocating and dropping ref on parent $parent")
-          parent.localSubRefs(1)
-        } else {
-          throw new AssertionError(s"$this dump failed due to contention!? state is now ${state.get()}")
-        }
+    state.getAndSet(host.dummy) match {
+      case null => // ok
+      case Self => throw new AssertionError(s"$this was garbage collected while locked")
+      case host.dummy => throw new AssertionError(s"$this was already garbage collected earlier")
+      case parent => // ok
     }
   }
 }
