@@ -3,7 +3,7 @@ title: Case Studies
 ---
 # React Shapes
 
-![Shapes](./images/shapes.png){: width="480" height="280"}
+![Shapes](images/shapes.png){: width="480" height="280"}
 ReactShapes is a small
 drawing program. The user can drag and drop
 different shapes on a canvas, connect them with
@@ -21,7 +21,7 @@ ReactEdit on GitHub:
 
 # ReactRSS
 
-![RSS Reader](./images/rssreader.png){: width="480" height="280"}
+![RSS Reader](images/rssreader.png){: width="480" height="280"}
 ReactRSS is a RSS feed
 reader displaying a list of channels, which are
 periodically checked for updates.
@@ -35,7 +35,7 @@ ReactEdit on GitHub:
 [https://github.com/guidosalva/rssreader](https://github.com/guidosalva/rssreader)
 
 # React Edit
-![Editor](./images/editor.png){: width="480" height="280"}
+![Editor](images/editor.png){: width="480" height="280"}
 ReactEdit is a minimal text editor implementing
 functionalities like text selection, line counting, and
 cutting-and-pasting of text.
@@ -50,7 +50,7 @@ ReactEdit on GitHub:
 
 # Universe
 
-![Universe](./images/universe.png){: width="420" height="280"}
+![Universe](images/universe.png){: width="420" height="280"}
 
 Universe is a program that simulates a 2D
 environment. The environment is populated by animals and plants; the
