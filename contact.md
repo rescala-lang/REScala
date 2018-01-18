@@ -43,3 +43,7 @@ several people:
 * Julian Haas
 * David Richter
 * Alexander Kopp
+* Isabella Dix
+* Sören Albrecht
+* Christian Volk
+* Andre Pacak
