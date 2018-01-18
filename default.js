@@ -1,12 +1,5 @@
 // wait for html to finish loading, as we need document.body
 window.onload = function () {
-	// listen for clicks on the document and close open dropdowns
-	document.body.addEventListener('click', function(event) {
-		var element = event.target;
-		if (element === undefined || element.classList === undefined || !element.classList.contains("dropdown")) {
-			Util.DOMQueryAll(".dropdown_content.show_content").forEach(function(element) {element.classList.remove("show_content")});
-		}
-	}, true);
 
 	var manualTOC = document.body.querySelector("#toc");
 	if (manualTOC != undefined) {
@@ -31,7 +24,7 @@ window.onload = function () {
 			button.innerHTML = headline.innerHTML;
 			button.href = "#" + headline.id
 			button.classList.add("list-group-item");
-			button.style.paddingLeft = ((depth-1)*30)+10 + "px";
+			//button.style.paddingLeft = ((depth-1)*30)+10 + "px";
 			currentList.appendChild(wrapInLi(button));
 		});
 	}
@@ -53,38 +46,16 @@ window.onload = function () {
 			e.stopPropagation();
 			e.preventDefault();
 		}, true);
-		iconParent.appendChild(c);
+		iconParent.prepend(c);
 		header.classList.add("collapsible");
 	}
 
-/**
- * add a vertical lines to the collapsible element
- * @param {DOMElement} parentNode - The parent node of all elements that can be hidden by collapsing
- * @param {DOMElement} header - The header that is always visible
- */
-	function addVerticalLines(parentNode, header) {
-		var collapsibleItems = parentNode.querySelectorAll("a").length - 1;
-		if (collapsibleItems >= 0) {
-			var hr = document.createElement("hr");
-			var node = header;
-			var level = 1;
-			while (node.id != "toc") {
-				if (node.nodeName == "OL")
-					level += 1;
-				node = node.parentElement;
-			}
-
-			hr.style.left = (30 * level) + "px";
-			header.appendChild(hr);
-		}
-	}
 
 	Util.DOMQueryAll("li").filter(function(li) {
 		var next = li.nextElementSibling;
 		return next != null && next.nodeName == "LI" && next.firstElementChild != null && next.firstElementChild.nodeName == "OL";
 	}).forEach(function(li) {
 		addCollapseIcon(li, li.firstElementChild);
-		addVerticalLines(li.nextElementSibling.firstElementChild, li);
 
 	});
 	updateTOClines();
@@ -136,15 +107,6 @@ function updateTOClines() {
 			hr.style.height = (collapsibleItems * 29) + "px";
 		}
 	});
-}
-
-function dropdown(id) {
-	var d = document.getElementById(id);
-	var rect = d.previousElementSibling.getBoundingClientRect();
-	// show the dropdown
-	d.classList.toggle('show_content');
-	// make sure it knows its place
-	d.style.left = (rect.left-((rect.right-rect.left)/2)) + "px";
 }
 
 function wrapIn(element, wrapperTag) {

@@ -18,22 +18,25 @@
   <link href="{{ site.github.baseurl }}/css/theme.css" rel="stylesheet">
   <!-- styles for syntax highlighting -->
   <link href="{{ site.github.baseurl }}/css/syntax.css" rel="stylesheet">
-
-  <script type="text/javascript" src="{{ site.github.baseurl }}/default.js"> </script>
+  <script type="text/javascript" src="{{ site.baseurl }}/default.js"> </script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"> </script>
+  <script src="{{ site.baseurl }}/dist/js/bootstrap.min.js"></script>
   <!-- <script async defer src="https://buttons.github.io/buttons.js"></script> -->
 </head>
 
 <body>
     {% include navbar.html %}
   <div class="container" role="main">
-    <div id="main-content" class="col-sm-8">
-    {{ content }}
-    </div>
-
     {% if page.sidebar %}
       {% include sidebar_{{ page.sidebar }}.html %}
+      <div id="main-content" class="col-sm-8 col-sm-pull-4">
+      {{ content }}
+      </div>
+    {% else %}
+      <div id="main-content">
+      {{ content }}
+      </div>
     {% endif %}
-
   </div>
   <!-- /container -->
 
