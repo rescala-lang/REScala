@@ -1,12 +1,12 @@
 package tests.rescala.fullmv
 
 import org.scalatest.FunSuite
-import rescala.fullmv.{FullMVTurnImpl, TurnPhase}
+import rescala.fullmv.FullMVTurnImpl
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import rescala.fullmv.FullMVEngine.default._
-import rescala.fullmv.sgt.synchronization.Successful
+import rescala.fullmv.sgt.synchronization.{Locked, Successful}
 
 import scala.util.Random
 
@@ -34,12 +34,12 @@ class FullMVTurnTransitiveReachabilityTest extends FunSuite {
     // put all transactions under a common locked lock, so that all locking assertions hold
     trees.values.foreach(_.beginExecuting())
     trees.values.reduce { (tA, tB) =>
-      val resA = Await.result(tA.tryLock(), Duration.Zero).get
-      assert(Await.result(tB.trySubsume(resA), Duration.Zero) === Successful)
-      resA.asyncUnlock()
+      val resA = Await.result(tA.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
+      assert(Await.result(tB.trySubsume(locked), Duration.Zero) === Successful)
+      locked.asyncUnlock()
       tA
     }
-    Await.result(trees.head._2.tryLock(), Duration.Zero)
+    assert(Await.result(trees.head._2.tryLock(), Duration.Zero).isInstanceOf[Locked])
     trees
   }
 

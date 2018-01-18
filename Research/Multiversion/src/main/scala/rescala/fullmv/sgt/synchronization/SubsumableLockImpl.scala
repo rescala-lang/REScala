@@ -29,7 +29,7 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
       assert(state.get == Self, s"passed in a TryLockResult indicates that $this was successfully locked, but it currently isn't!")
       if (DEBUG) println(s"[${Thread.currentThread().getName}] trySubsume $this to itself reentrant success; $hopCount new refs")
       if(hopCount > 0) localAddRefs(hopCount)
-      Future.successful(Successful(0))
+      Future.successful(Successful0(0))
     } else {
       state.get match {
         case null =>
@@ -37,7 +37,7 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
           if(success) {
             if (DEBUG) println(s"[${Thread.currentThread().getName}] trySubsume $this succeeded; passing ${hopCount + 2} new refs")
             lockedNewParent.localAddRefs(hopCount + 2)
-            Future.successful(Successful(0))
+            Future.successful(Successful0(0))
           } else {
             if (DEBUG) println(s"[${Thread.currentThread().getName}] retrying contended trySubsume $this to $lockedNewParent")
             trySubsume0(hopCount, lockedNewParent)
@@ -45,16 +45,17 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
         case Self =>
           if (DEBUG) println(s"[${Thread.currentThread().getName}] trySubsume $this to $lockedNewParent blocked; $hopCount new refs")
           if(hopCount > 0) localAddRefs(hopCount)
-          Future.successful(Blocked(0, this))
+          Future.successful(Blocked0(0, this))
         case host.dummy =>
-          Future.successful(GarbageCollected)
+          Future.successful(GarbageCollected0)
         case parent =>
           parent.trySubsume0(hopCount + 1, lockedNewParent).flatMap {
-            case Successful(failedRefChanges) =>
-              Future.successful(Successful(failedRefChanges + trySwap(parent, lockedNewParent)))
-            case Blocked(failedRefChanges, newParent) =>
-              Future.successful(Blocked(failedRefChanges + trySwap(parent, newParent), newParent))
-            case GarbageCollected =>
+            case Successful0(failedRefChanges) =>
+              Future.successful(Successful0(failedRefChanges + trySwap(parent, lockedNewParent)))
+            case Blocked0(failedRefChanges, newParent) =>
+              Future.successful(Blocked0(failedRefChanges + trySwap(parent, newParent), newParent))
+            case GarbageCollected0 =>
+              if (DEBUG) println(s"[${Thread.currentThread().getName}] retrying trySubsume $this after parent was concurrently deallocated")
               this.asInstanceOf[SubsumableLock].trySubsume0(hopCount, lockedNewParent)
           }(FullMVEngine.notWorthToMoveToTaskpool)
       }
@@ -67,7 +68,7 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
         if(state.compareAndSet(null, Self)) {
           if(DEBUG) println(s"[${Thread.currentThread().getName}] tryLocked $this; ${hopCount + 1} new refs")
           localAddRefs(hopCount + 1)
-          Future.successful(Locked(0, this))
+          Future.successful(Locked0(0, this))
         } else {
           if(DEBUG) println(s"[${Thread.currentThread().getName}] retrying contended tryLock attempt of $this")
           tryLock0(hopCount)
@@ -75,17 +76,17 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
       case Self =>
         if(DEBUG) println(s"[${Thread.currentThread().getName}] tryLock $this blocked; $hopCount new refs")
         if(hopCount > 0) localAddRefs(hopCount)
-        Future.successful(Blocked(0, this))
+        Future.successful(Blocked0(0, this))
       case host.dummy =>
-        Future.successful(GarbageCollected)
+        Future.successful(GarbageCollected0)
       case parent =>
         parent.tryLock0(hopCount + 1).flatMap {
-          case Locked(failedRefChanges, newRoot) =>
-            Future.successful(Locked(failedRefChanges + trySwap(parent, newRoot), newRoot))
-          case Blocked(failedRefChanges, newRoot) =>
-            Future.successful(Blocked(failedRefChanges + trySwap(parent, newRoot), newRoot))
-          case GarbageCollected =>
-            if(DEBUG) println(s"[${Thread.currentThread().getName}] retrying tryLock $this after parent gc")
+          case Locked0(failedRefChanges, newRoot) =>
+            Future.successful(Locked0(failedRefChanges + trySwap(parent, newRoot), newRoot))
+          case Blocked0(failedRefChanges, newRoot) =>
+            Future.successful(Blocked0(failedRefChanges + trySwap(parent, newRoot), newRoot))
+          case GarbageCollected0 =>
+            if (DEBUG) println(s"[${Thread.currentThread().getName}] retrying tryLock $this after parent was concurrently deallocated")
             this.asInstanceOf[SubsumableLock].tryLock0(hopCount)
         }(FullMVEngine.notWorthToMoveToTaskpool)
     }
@@ -128,15 +129,15 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
   }
   override def remoteTryLock(): Future[RemoteTryLockResult] = {
     tryLock0(0).map{
-      case Locked(failedRefChanges, newRoot) =>
+      case Locked0(failedRefChanges, newRoot) =>
         if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this returning tryLock success to remote, correcting $failedRefChanges failed ref changes to $newRoot")
         if(failedRefChanges != 0) newRoot.localSubRefs(failedRefChanges)
         RemoteLocked(newRoot)
-      case Blocked(failedRefChanges, newRoot) =>
+      case Blocked0(failedRefChanges, newRoot) =>
         if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this returning tryLock failure to remote, correcting $failedRefChanges failed ref changes to $newRoot")
         if(failedRefChanges != 0) newRoot.localSubRefs(failedRefChanges)
         RemoteBlocked(newRoot)
-      case GarbageCollected =>
+      case GarbageCollected0 =>
         if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this returning tryLock abort to remote")
         RemoteGCd
     }(FullMVEngine.notWorthToMoveToTaskpool)
@@ -144,15 +145,15 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
 
   override def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[RemoteTrySubsumeResult] = {
     trySubsume0(0, lockedNewParent).map {
-      case Successful(failedRefChanges) =>
+      case Successful0(failedRefChanges) =>
         if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this returning trySubsume success to remote, correcting $failedRefChanges failed ref changes to $lockedNewParent")
         if(failedRefChanges != 0) lockedNewParent.localSubRefs(failedRefChanges)
         RemoteSubsumed
-      case Blocked(failedRefChanges, newRoot) =>
+      case Blocked0(failedRefChanges, newRoot) =>
         if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this returning trySubsume failure to remote, correcting $failedRefChanges failed ref changes to $newRoot")
         if(failedRefChanges != 0) newRoot.localSubRefs(failedRefChanges)
         RemoteBlocked(newRoot)
-      case GarbageCollected =>
+      case GarbageCollected0 =>
         if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this returning trySubsume abort to remote")
         RemoteGCd
     }(FullMVEngine.notWorthToMoveToTaskpool)

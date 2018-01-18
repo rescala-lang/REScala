@@ -311,20 +311,23 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
     val l = subsumableLock.get
     if(l == null) SubsumableLock.futureNone else l.getLockedRoot
   }
-  override def tryLock(): Future[Option[SubsumableLock]] = {
+  override def tryLock(): Future[TryLockResult] = {
     val l = subsumableLock.get()
-    l.tryLock0(0).flatMap {
-      case Locked(failedRefChanges, newRoot) =>
-        casLockAndNotifyFailedRefChanges(l, failedRefChanges, newRoot)
-        Future.successful(Some(newRoot))
-      case Blocked(failedRefChanges, newRoot) =>
-        casLockAndNotifyFailedRefChanges(l, failedRefChanges, newRoot)
-        SubsumableLock.futureNone
-      case GarbageCollected =>
-        assert(subsumableLock.get() != null, s"this should not be possible while locking only on the contender")
-        assert(subsumableLock.get() != l, s"$l lock attempt returned GC'd although it is still in use")
-        tryLock()
-    }(FullMVEngine.notWorthToMoveToTaskpool)
+    if(l == null) {
+      Deallocated.futured
+    } else {
+      l.tryLock0(0).flatMap {
+        case Locked0(failedRefChanges, newRoot) =>
+          casLockAndNotifyFailedRefChanges(l, failedRefChanges, newRoot)
+          Future.successful(Locked(newRoot))
+        case Blocked0(failedRefChanges, newRoot) =>
+          casLockAndNotifyFailedRefChanges(l, failedRefChanges, newRoot)
+          Blocked.futured
+        case GarbageCollected0 =>
+          assert(subsumableLock.get() != l, s"$l tryLock returned GC'd although it is still referenced")
+          tryLock()
+      }(FullMVEngine.notWorthToMoveToTaskpool)
+    }
   }
 
   override def trySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult] = {
@@ -333,13 +336,14 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
       Deallocated.futured
     } else {
       l.trySubsume0(0, lockedNewParent).flatMap {
-        case Successful(failedRefChanges) =>
+        case Successful0(failedRefChanges) =>
           casLockAndNotifyFailedRefChanges(l, failedRefChanges, lockedNewParent)
           Successful.futured
-        case Blocked(failedRefChanges, newRoot) =>
+        case Blocked0(failedRefChanges, newRoot) =>
           casLockAndNotifyFailedRefChanges(l, failedRefChanges, newRoot)
           Blocked.futured
-        case GarbageCollected =>
+        case GarbageCollected0 =>
+          assert(subsumableLock.get() != l, s"$l trySubsume returned GC'd although it is still referenced")
           trySubsume(lockedNewParent)
       }(FullMVEngine.notWorthToMoveToTaskpool)
     }

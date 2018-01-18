@@ -2,7 +2,7 @@ package tests.rescala.fullmv
 
 import org.scalatest.FunSuite
 import rescala.fullmv._
-import rescala.fullmv.sgt.synchronization.{SubsumableLock, Successful}
+import rescala.fullmv.sgt.synchronization.{Blocked, Locked, SubsumableLock, Successful}
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -41,7 +41,7 @@ class LockUnionFindTest extends FunSuite {
 
     assert(lock.refCount.get === 1)
 
-    val l = Await.result(turn.tryLock(), Duration.Zero).get
+    val l = Await.result(turn.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
 
     assert(lock.refCount.get === 2)
 
@@ -61,7 +61,7 @@ class LockUnionFindTest extends FunSuite {
 
     if(SubsumableLock.DEBUG) println(s"single subsumed gc with $turn1 using $lock1 and $turn2 using $lock2")
 
-    val l1 = Await.result(turn1.tryLock(), Duration.Zero).get
+    val l1 = Await.result(turn1.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
     assert(Await.result(turn2.trySubsume(l1), Duration.Zero) === Successful)
     l1.asyncUnlock()
 
@@ -96,7 +96,7 @@ class LockUnionFindTest extends FunSuite {
     val locks = turns.map(_.subsumableLock.get)
 
     turns.reduce{ (t1, t2) =>
-      val l = Await.result(t2.tryLock(), Duration.Zero).get
+      val l = Await.result(t2.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
       assert(Await.result(t1.trySubsume(l), Duration.Zero) === Successful)
       l.asyncUnlock()
       t2
@@ -124,7 +124,7 @@ class LockUnionFindTest extends FunSuite {
     }
     assert(locks(maxIdx).refCount.get === 3) // lock(count-1), turn(count-1), turn(count)
 
-    Await.result(turns(0).tryLock(), Duration.Zero).get.asyncUnlock()
+    Await.result(turns(0).tryLock(), Duration.Zero).asInstanceOf[Locked].lock.asyncUnlock()
 
     assert(locks(0).refCount.get <= 0) // gc'd
     assert(locks(1).refCount.get <= 0) // gc'd
@@ -167,18 +167,18 @@ class LockUnionFindTest extends FunSuite {
     turn.beginExecuting()
     assert(lock.refCount.get === 1)
 
-    val l = Await.result(turn.tryLock(), Duration.Zero).get
+    val l = Await.result(turn.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
     assert(lock.refCount.get === 2)
 
     // lock is exclusive
-    Await.result(turn.tryLock(), Duration.Zero).isEmpty
+    assert(Await.result(turn.tryLock(), Duration.Zero) == Blocked)
     assert(lock.refCount.get === 2)
 
     l.asyncUnlock()
     assert(lock.refCount.get === 1)
 
     // unlock unblocks
-    val l2 = Await.result(turn.tryLock(), Duration.Zero).get
+    val l2 = Await.result(turn.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
     assert(lock.refCount.get === 2)
 
     turn.completeExecuting()
@@ -193,24 +193,24 @@ class LockUnionFindTest extends FunSuite {
     val b = engine.newTurn()
     b.beginExecuting()
 
-    val l1 = Await.result(b.tryLock(), Duration.Zero).get
+    val l1 = Await.result(b.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
 
     assert(Await.result(a.trySubsume(l1), Duration.Zero) === Successful)
 
     assert(Await.result(a.getLockedRoot, Duration.Zero) === Some(l1.guid))
     assert(Await.result(b.getLockedRoot, Duration.Zero) === Some(l1.guid))
-    assert(Await.result(a.tryLock(), Duration.Zero).isEmpty)
-    assert(Await.result(b.tryLock(), Duration.Zero).isEmpty)
+    assert(Await.result(a.tryLock(), Duration.Zero) == Blocked)
+    assert(Await.result(b.tryLock(), Duration.Zero) == Blocked)
 
     l1.asyncUnlock()
 
-    val l2 = Await.result(a.tryLock(), Duration.Zero).get
-    assert(Await.result(b.tryLock(), Duration.Zero).isEmpty)
+    val l2 = Await.result(a.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
+    assert(Await.result(b.tryLock(), Duration.Zero) == Blocked)
 
     l2.asyncUnlock()
 
-    val l3 = Await.result(b.tryLock(), Duration.Zero).get
-    assert(Await.result(a.tryLock(), Duration.Zero).isEmpty)
+    val l3 = Await.result(b.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
+    assert(Await.result(a.tryLock(), Duration.Zero) == Blocked)
 
     l3.asyncUnlock()
   }

@@ -10,31 +10,33 @@ import scala.annotation.tailrec
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
 
-sealed trait TrySubsumeResult0
-case class Successful(failedRefChanges: Int) extends TrySubsumeResult0
-sealed trait TryLockResult0
-case class Locked(failedRefChanges: Int, lockedRoot: SubsumableLock) extends TryLockResult0
-
-case object GarbageCollected extends TrySubsumeResult0 with TryLockResult0 {
-  val futured = Future.successful(this)
-}
-case class Blocked(failedRefChanges: Int, newParent: SubsumableLock) extends TrySubsumeResult0 with TryLockResult0
-
+sealed trait TryLockResult
+case class Locked(lock: SubsumableLock) extends TryLockResult
 sealed trait TrySubsumeResult
 case object Successful extends TrySubsumeResult {
   val futured = Future.successful(this)
 }
-case object Blocked extends TrySubsumeResult {
+case object Blocked extends TrySubsumeResult with TryLockResult {
   val futured = Future.successful(this)
 }
-case object Deallocated extends TrySubsumeResult {
+case object Deallocated extends TrySubsumeResult with TryLockResult {
   val futured = Future.successful(this)
 }
 
 trait SubsumableLockEntryPoint {
   def getLockedRoot: Future[Option[Host.GUID]]
-  def tryLock(): Future[Option[SubsumableLock]]
+  def tryLock(): Future[TryLockResult]
   def trySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult]
+}
+
+sealed trait TrySubsumeResult0
+case class Successful0(failedRefChanges: Int) extends TrySubsumeResult0
+sealed trait TryLockResult0
+case class Locked0(failedRefChanges: Int, lockedRoot: SubsumableLock) extends TryLockResult0
+
+case class Blocked0(failedRefChanges: Int, newParent: SubsumableLock) extends TrySubsumeResult0 with TryLockResult0
+case object GarbageCollected0 extends TrySubsumeResult0 with TryLockResult0 {
+  val futured = Future.successful(this)
 }
 
 trait SubsumableLock extends SubsumableLockProxy with Hosted {
@@ -95,12 +97,14 @@ object SubsumableLock {
     val bo = new Backoff()
     @tailrec def reTryLock(): SubsumableLock = {
       Await.result(contender.tryLock(), timeout) match {
-        case Some(newParent) =>
+        case Locked(newParent) =>
           if (DEBUG) System.out.println(s"[${Thread.currentThread().getName}] now owns SCC of $contender")
           newParent
-        case None =>
+        case Blocked =>
           bo.backoff()
           reTryLock()
+        case Deallocated =>
+          throw new AssertionError("this should be impossible we're calling tryLock on the contender only, which cannot deallocate concurrently.")
       }
     }
     reTryLock()
@@ -112,7 +116,7 @@ object SubsumableLock {
     val bo = new Backoff()
     @tailrec def reTryLock(): Option[SubsumableLock] = {
       Await.result(contender.tryLock(), timeout) match {
-        case Some(lockedRoot) =>
+        case Locked(lockedRoot) =>
           Await.result(defender.trySubsume(lockedRoot), timeout) match {
             case Successful =>
               if (DEBUG) System.out.println(s"[${Thread.currentThread().getName}] now owns SCC of $defender and $contender")
@@ -126,9 +130,11 @@ object SubsumableLock {
               lockedRoot.asyncUnlock()
               None
           }
-        case None =>
+        case Blocked =>
           bo.backoff()
           reTryLock()
+        case Deallocated =>
+          throw new AssertionError("this should be impossible we're calling tryLock on the contender only, which cannot deallocate concurrently.")
       }
     }
     reTryLock()
