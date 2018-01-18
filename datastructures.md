@@ -4,7 +4,7 @@ title: Datastructures
 # Reactive Datastructures
 
 Reactive Datastructures is a library of datastructures
-based on REScala reactive abstractions. The library is
+based on Rescala reactive abstractions. The library is
 [compatible with the Scala collection framework](http://docs.scala-lang.org/overviews/core/architecture-of-scala-collections.html).
 Attributes are exposed as reactive values
 and operations on the structure are updated reactively.

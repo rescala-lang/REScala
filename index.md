@@ -48,5 +48,5 @@ Rescala supports the development of reactive applications by fostering a functio
 
 
 ---
-REScala is a research project held at TU Darmstadt in the
+Rescala is a research project held at TU Darmstadt in the
 [Software Technology Group.](http://www.stg.tu-darmstadt.de/)
