@@ -3,7 +3,7 @@
 <div class="container">
     <div class="navbar-header">
       <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#rescalaNavbar">&#9776;</button>
-      <a class="navbar-brand" href="{{site.baseurl}}/"><span class="rescala-logo"><span class="rescala-logo-re">re:</span><span class="rescala-logo-scala">scala</span></span></a>
+      <a class="navbar-brand" href="{{site.github.baseurl}}/"><span class="rescala-logo"><span class="rescala-logo-re">re:</span><span class="rescala-logo-scala">scala</span></span></a>
     </div>
     <div class="collapse navbar-collapse" id="rescalaNavbar">
       <ul class="nav navbar-nav">
@@ -28,7 +28,7 @@
               </li>
             {% else %}
               <li {% if page.url == p.url %}class="active"{% endif %}>
-              <a href="{{ site.baseurl}}{{ p.url }}">{{ p.title }} </a>
+              <a href="{{ site.github.baseurl}}{{ p.url }}">{{ p.title }} </a>
               </li>
             {% endif %}
           {% endif %}
