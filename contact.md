@@ -39,4 +39,7 @@ several people:
 * Michael Hausl
 * Moritz Lichter
 * Simon Sprankel
-
+* Nico Ritschel
+* Julian Haas
+* David Richter
+* Alexander Kopp
