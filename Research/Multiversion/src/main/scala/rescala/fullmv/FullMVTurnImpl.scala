@@ -20,7 +20,7 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
 
   object replicatorLock
   val phaseLock = new ReentrantReadWriteLock()
-  @volatile var phase: TurnPhase.Type = TurnPhase.Initialized
+  @volatile var phase: TurnPhase.Type = TurnPhase.Uninitialized
 
   val subsumableLock: AtomicReference[SubsumableLock] = new AtomicReference(initialLock)
   val successorsIncludingSelf: ArrayBuffer[FullMVTurn] = ArrayBuffer(this) // this is implicitly a set
@@ -143,7 +143,7 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
   }
 
   private def beginPhase(phase: TurnPhase.Type): Unit = {
-    assert(this.phase == TurnPhase.Initialized, s"$this already begun")
+    assert(this.phase == TurnPhase.Uninitialized, s"$this already begun")
     assert(activeBranches.get() == 0, s"$this cannot begin $phase: ${activeBranches.get()} branches active!")
     assert(selfNode.size == 0, s"$this cannot begin $phase: already has predecessors!")
     if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] $this begun.")
@@ -235,6 +235,7 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
   }
 
   def addPredecessor(predecessorSpanningTree: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = {
+    assert(predecessorSpanningTree.txn.phase > TurnPhase.Uninitialized, s"$this addition of initializing predecessor ${predecessorSpanningTree.txn} should be impossible")
     assert(Await.result(getLockedRoot, host.timeout).isDefined, s"addPredecessor while own lock isn't held")
     assert(Await.result(getLockedRoot, host.timeout) == Await.result(predecessorSpanningTree.txn.getLockedRoot, host.timeout) || predecessorSpanningTree.txn.phase == TurnPhase.Completed, s"addPredecessor while $this under lock ${Await.result(getLockedRoot, host.timeout)} but ${predecessorSpanningTree.txn} under ${Await.result(predecessorSpanningTree.txn.getLockedRoot, host.timeout)}.")
     assert(!isTransitivePredecessor(predecessorSpanningTree.txn), s"attempted to establish already existing predecessor relation ${predecessorSpanningTree.txn} -> $this")
@@ -312,11 +313,7 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
   }
   override def tryLock(): Future[Option[SubsumableLock]] = {
     val l = subsumableLock.get()
-    // don't need to get a local ref here (see trySubsume) because we only call tryLock on the contender turn.
-    // as the contender turn cannot complete before the task which it is contending is completed, this prevents
-    // races against concurrent deallocations.
-    val res = l.tryLock0(0)
-    res.flatMap {
+    l.tryLock0(0).flatMap {
       case Locked(failedRefChanges, newRoot) =>
         casLockAndNotifyFailedRefChanges(l, failedRefChanges, newRoot)
         Future.successful(Some(newRoot))
@@ -324,6 +321,8 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
         casLockAndNotifyFailedRefChanges(l, failedRefChanges, newRoot)
         SubsumableLock.futureNone
       case GarbageCollected =>
+        assert(subsumableLock.get() != null, s"this should not be possible while locking only on the contender")
+        assert(subsumableLock.get() != l, s"$l lock attempt returned GC'd although it is still in use")
         tryLock()
     }(FullMVEngine.notWorthToMoveToTaskpool)
   }
@@ -333,8 +332,7 @@ class FullMVTurnImpl(override val host: FullMVEngine, override val guid: Host.GU
     if(l == null) {
       Deallocated.futured
     } else {
-      val res = l.trySubsume0(0, lockedNewParent)
-      res.flatMap {
+      l.trySubsume0(0, lockedNewParent).flatMap {
         case Successful(failedRefChanges) =>
           casLockAndNotifyFailedRefChanges(l, failedRefChanges, lockedNewParent)
           Successful.futured

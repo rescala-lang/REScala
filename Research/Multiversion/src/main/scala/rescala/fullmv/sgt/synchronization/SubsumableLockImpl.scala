@@ -17,7 +17,7 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
     state.get match {
       case null => futureNone
       case Self => Future.successful(Some(guid))
-      case host.dummy => futureNone
+      case host.dummy => throw new AssertionError(s"query for locked root on deallocated $this")
       case parent => parent.getLockedRoot
     }
   }

@@ -38,8 +38,8 @@ class FullMVTurnMirroringTest extends FunSuite {
   test("phase propagation") {
     val turn = host0.newTurn()
     val turnA = FullMVTurnLocalClone(turn, hostA)
-    assert(turn.phase === TurnPhase.Initialized)
-    assert(turnA.phase === TurnPhase.Initialized)
+    assert(turn.phase === TurnPhase.Uninitialized)
+    assert(turnA.phase === TurnPhase.Uninitialized)
 
     turn.awaitAndSwitchPhase(TurnPhase.Framing)
     assert(turn.phase === TurnPhase.Framing)

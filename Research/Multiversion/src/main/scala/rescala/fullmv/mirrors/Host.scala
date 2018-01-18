@@ -23,7 +23,7 @@ object Host {
 trait Host[T] {
   val dummy: T
   def getInstance(guid: Host.GUID): Option[T]
-  def getCachedOrReceiveRemote(guid: Host.GUID, instantiateReflection: (T => Unit) => T, wasFound: => Unit): T
+  def getCachedOrReceiveRemote(guid: Host.GUID, instantiateReflection: => T, wasFound: T => Unit = _ => Unit): T
   def dropInstance(guid: GUID, instance: T): Unit
   def createLocal[U <: T](create: Host.GUID => U): U
 }
@@ -31,7 +31,7 @@ trait Host[T] {
 trait HostImpl[T] extends Host[T] {
   val instances: ConcurrentMap[GUID, T] = new ConcurrentHashMap()
   override def getInstance(guid: GUID): Option[T] = Option(instances.get(guid))
-  override def getCachedOrReceiveRemote(guid: Host.GUID, instantiateReflection: (T => Unit) => T, wasFound: => Unit): T = {
+  override def getCachedOrReceiveRemote(guid: Host.GUID, instantiateReflection: => T, wasFound: T => Unit = _ => Unit): T = {
     @inline @tailrec def findOrReserveInstance(): T = {
       val found = instances.putIfAbsent(guid, dummy)
       if(found != dummy) {
@@ -43,13 +43,13 @@ trait HostImpl[T] extends Host[T] {
     }
     val known = findOrReserveInstance()
     if(known != null) {
-      wasFound
+      wasFound(known)
       known
     } else {
-      instantiateReflection { instance: T =>
-        val replaced = instances.replace(guid, dummy, instance)
-        assert(replaced, s"someone stole the dummy placeholder while instantiating remotely received $guid on $this!")
-      }
+      val instance = instantiateReflection
+      val replaced = instances.replace(guid, dummy, instance)
+      assert(replaced, s"someone stole the dummy placeholder while instantiating remotely received $guid on $this!")
+      instance
     }
   }
   override def dropInstance(guid: GUID, instance: T): Unit = {

@@ -9,9 +9,9 @@ import rescala.fullmv.sgt.synchronization.{SubsumableLock, SubsumableLockEntryPo
 
 import scala.concurrent.{Await, Future}
 
-class FullMVTurnReflection(override val host: FullMVEngine, override val guid: Host.GUID, val proxy: FullMVTurnProxy) extends FullMVTurn with SubsumableLockEntryPoint with FullMVTurnReflectionProxy {
+class FullMVTurnReflection(override val host: FullMVEngine, override val guid: Host.GUID, initialPhase: TurnPhase.Type, val proxy: FullMVTurnProxy) extends FullMVTurn with SubsumableLockEntryPoint with FullMVTurnReflectionProxy {
   object phaseParking
-  var phase: TurnPhase.Type = TurnPhase.Initialized
+  @volatile var phase: TurnPhase.Type = initialPhase
   object replicatorLock
   var _selfNode: Option[TransactionSpanningTreeNode[FullMVTurn]] = None
   def selfNode: TransactionSpanningTreeNode[FullMVTurn] = _selfNode.get
