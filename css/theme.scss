@@ -173,6 +173,7 @@ $collapse-dist: 2em;
 }
 
 #back-to-top {
+  z-index: 100;
   position: fixed;
   bottom: 30px;
   right: 30px;
