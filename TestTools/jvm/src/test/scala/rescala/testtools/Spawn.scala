@@ -4,15 +4,17 @@ import java.util.concurrent._
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 class Spawn[T](val threadName: String, val future: Future[T]) {
   def join(milliseconds: Long): T = {
-    Await.ready(future, milliseconds.millis)
-    future.value.get match {
+    Await.ready(future, milliseconds.millis).value.get match {
       case Success(v) => v
       case Failure(ex) => throw new Spawn.SpawnedThreadFailedException(threadName, ex)
     }
+  }
+  def await(milliseconds: Long): Try[T] = {
+    Try { Await.result(future, milliseconds.millis) }
   }
 }
 object Spawn {
