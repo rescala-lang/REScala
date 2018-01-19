@@ -28,20 +28,20 @@ this should allow you to follow along the following examples.
 
 # Introduction
 
-This manual covers the main features of the *REScala* programming language.
+This manual covers the main features of the *Rescala* programming language.
 [Signals and Vars] presents time-changing values
-in *REScala*, [Events](#events) describes events,
+in *Rescala*, [Events](#events) describes events,
 [Conversion Functions](#conversion-functions) covers the conversion functions between
 events and time-changing values, [Technicalities](#technicalities)
 presents technical details that are necessary to correctly run
-*REScala*, [Related](#related) outlines the related work.
+*Rescala*, [Related](#related) outlines the related work.
 
-While a major aspect of *REScala*'s design is the integration of events
+While a major aspect of *Rescala*'s design is the integration of events
 and signals, they can be used separately. For example a programmer can
-use only *REScala* events to design application that do not need
+use only *Rescala* events to design application that do not need
 time-changing values.
 
-**Scope** The manual serves as an introduction of the concepts in *REScala*.
+**Scope** The manual serves as an introduction of the concepts in *Rescala*.
 The full API is covered in the [scaladoc](../scaladoc/) especially for [Signals](../scaladoc/#rescala.reactives.Signal) and [Events](../scaladoc/#rescala.reactives.Signal).
 More details can be found in [[7, 3]](#ref).
 
@@ -53,7 +53,7 @@ references in the [related work](#related).
 
 The code examples in the manual serve as a self contained Scala REPL session,
 all code is executed and results are annotated as comments using [tut](https://github.com/tpolecat/tut).
-To use all features of *REScala* the only required import is:
+To use all features of *Rescala* the only required import is:
 
 ```tut:book
 import rescala._
@@ -238,12 +238,12 @@ into events and back are provided in [Conversion Functions](#conversion-function
 
 # Events
 
-*REScala* supports different kind of events. Imperative events are
+*Rescala* supports different kind of events. Imperative events are
 directly triggered from the user. Declarative events trigger when the
 events they depend on trigger. In reactive applications, events are
 typically used to model changes that happen at discrete points in
 time. For example a mouse click from the user or the arrival of a new
-network packet. Some features of *REScala* events are valid for all
+network packet. Some features of *Rescala* events are valid for all
 event types.
 
 
@@ -261,7 +261,7 @@ event types.
 
 # Imperative events
 
-*REScala* imperative events are triggered imperatively by the
+*Rescala* imperative events are triggered imperatively by the
 programmer. One can think to imperative events as a generalization of
 a method call which supports (multiple) bodies that are registered and
 unregistered dynamically.
@@ -420,7 +420,7 @@ e.fire(10)
 
 # Declarative Events
 
-*REScala* supports declarative events, which are defined as a
+*Rescala* supports declarative events, which are defined as a
 combination of other events. For this purpose it offers operators like
 `e_1 || e_2` , `e_1 && p` , `e_1.map(f)`. Event composition allows to
 express the application logic in a clear and declarative way. Also,
@@ -535,7 +535,7 @@ val e1_OR_e2: Event[Unit] = e1.dropParam || e2
 
 # Conversion Functions
 
-*REScala* provides functions that interface signals and
+*Rescala* provides functions that interface signals and
 events. Conversion functions are fundamental to introduce
 time-changing values into OO applications -- which are usually
 event-based.
@@ -840,7 +840,7 @@ v3.set(false)
 
 In this section we
 collect the most common pitfalls for users that are new to reactive
-programming and *REScala*.
+programming and *Rescala*.
 
 ## Accessing values in signal expressions
 
@@ -1028,7 +1028,7 @@ val s = Signal{ increment(a()) + 1 }
 # Essential Related Work
 {: #related }
 
-A more academic presentation of *REScala* is in [[7]](#ref). A
+A more academic presentation of *Rescala* is in [[7]](#ref). A
 complete bibliography on reactive programming is beyond the scope of
 this work. The interested reader can refer
 to[[1]](#ref) for an overview of reactive programming
@@ -1036,7 +1036,7 @@ and to[[8]](#ref) for the issues
 concerning the integration of RP with object-oriented programming.
 
 
-*REScala* builds on ideas originally developed in
+*Rescala* builds on ideas originally developed in
 EScala [[3]](#ref) -- which supports
 event combination and implicit events. Other reactive languages
 directly represent time-changing values and remove inversion of
@@ -1078,7 +1078,7 @@ report, 2012.
 and S. Krishnamurthi. Flapjax: a programming language for ajax applications.
 OOPSLA ’09, pages 1–20. ACM, 2009.
 
-[7] G. Salvaneschi, G. Hintz, and M. Mezini. REScala: Bridging between objectoriented
+[7] G. Salvaneschi, G. Hintz, and M. Mezini. Rescala: Bridging between objectoriented
 and functional style in reactive applications. In Proceedings of the 13th
 International Conference on Aspect-Oriented Software Development, AOSD ’14,
 New York, NY, USA, Accepted for publication, 2014. ACM.
