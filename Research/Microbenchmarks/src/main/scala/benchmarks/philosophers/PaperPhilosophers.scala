@@ -209,9 +209,7 @@ object PaperPhilosophers {
     while(threads.exists(!_.isCompleted) && continue()) { Thread.sleep(10) }
     val timeout = System.currentTimeMillis() + 3000
     val scores = threads.map{ t =>
-      Try { Await.ready(t, (timeout - System.currentTimeMillis()).millis ) }.flatMap {
-        _ => t.value.get
-      }
+      Try { Await.result(t, (timeout - System.currentTimeMillis()).millis ) }
     }
     executor.shutdown()
 
