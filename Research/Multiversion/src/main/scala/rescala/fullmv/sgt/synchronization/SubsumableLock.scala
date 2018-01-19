@@ -31,6 +31,7 @@ trait SubsumableLockEntryPoint {
 
 sealed trait TrySubsumeResult0
 case class Successful0(failedRefChanges: Int) extends TrySubsumeResult0
+object Successful0 { val zeroFutured = Future.successful(Successful0(0)) }
 sealed trait TryLockResult0
 case class Locked0(failedRefChanges: Int, lockedRoot: SubsumableLock) extends TryLockResult0
 
@@ -55,29 +56,31 @@ trait SubsumableLock extends SubsumableLockProxy with Hosted {
     localSubRefs(1)
   }
 
-  def tryNewLocalRef(): Boolean = {
-    val after = refCount.addAndGet(1)
-    if(after > 0) {
+  @tailrec final def tryNewLocalRef(): Boolean = {
+    val before = refCount.get()
+    if(before == 0) {
+      false
+    } else if(refCount.compareAndSet(before, before + 1)) {
       true
     } else {
-      refCount.addAndGet(-1)
-      false
+      tryNewLocalRef()
     }
   }
 
   def localAddRefs(refs: Int): Unit = {
     assert(refs > 0)
-    val newCount = refCount.getAndAdd(refs)
-    assert(newCount > 0, s"addition of $refs refs on $this resulted in non-positive reference count")
+    val previousCount = refCount.getAndAdd(refs)
+    assert(previousCount > 0, s"cannot add refs on gc'd $this")
   }
 
   def localSubRefs(refs: Int): Unit = {
     assert(refs > 0)
     val remaining = refCount.addAndGet(-refs)
-    assert(remaining >= 0, s"deallocation of $refs refs on $this resulted in negative reference count")
-    if(remaining == 0 && refCount.compareAndSet(0, Int.MinValue / 2)) {
+    if(remaining == 0) {
       host.dropInstance(guid, this)
       dumped()
+    } else {
+      assert(remaining > 0, s"deallocation of $refs refs on $this resulted in negative reference count")
     }
   }
 
@@ -139,6 +142,30 @@ object SubsumableLock {
     }
     reTryLock()
   }
+
+//  def tryLock[R](defender: FullMVTurn, contender: FullMVTurn, timeout: Duration): TryLockResult = {
+//    assert(defender.host == contender.host)
+//    if (DEBUG) System.out.println(s"[${Thread.currentThread().getName}] syncing $defender and $contender into a common SCC")
+//    Await.result(contender.tryLock(), timeout) match {
+//      case Locked(lockedRoot) =>
+//        Await.result(defender.trySubsume(lockedRoot), timeout) match {
+//          case Successful =>
+//            if (DEBUG) System.out.println(s"[${Thread.currentThread().getName}] now owns SCC of $defender and $contender")
+//            Locked(lockedRoot)
+//          case Blocked =>
+//            lockedRoot.asyncUnlock()
+//            Blocked
+//          case Deallocated =>
+//            if (DEBUG) System.out.println(s"[${Thread.currentThread().getName}] aborting sync due to deallocation contention")
+//            lockedRoot.asyncUnlock()
+//            Deallocated
+//        }
+//      case Blocked =>
+//        Blocked
+//      case Deallocated =>
+//        throw new AssertionError("this should be impossible we're calling tryLock on the contender only, which cannot deallocate concurrently.")
+//    }
+//  }
 
   val futureNone: Future[None.type] = Future.successful(None)
 }

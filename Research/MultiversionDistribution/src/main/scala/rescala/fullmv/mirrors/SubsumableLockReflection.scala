@@ -2,33 +2,55 @@ package rescala.fullmv.mirrors
 
 import rescala.fullmv.FullMVEngine
 import rescala.fullmv.mirrors.Host.GUID
-import rescala.fullmv.sgt.synchronization.{SubsumableLock, TrySubsumeResult0}
+import rescala.fullmv.sgt.synchronization._
 
 import scala.concurrent.Future
 
 class SubsumableLockReflection(override val host: SubsumableLockHost, override val guid: Host.GUID, val proxy: SubsumableLockProxy) extends SubsumableLock {
   override def getLockedRoot: Future[Option[GUID]] = proxy.getLockedRoot
-  override def tryLock0(hopCount: Int): Future[(Boolean, Int, SubsumableLock)] = {
-    proxy.remoteTryLock().map { res =>
-      if(res == this) {
-        val addHops = hopCount + (if(lastHopWasGCd) 1 else 0)
-        if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this locked remotely; $addHops new refs")
-        if(addHops > 0) localAddRefs(addHops)
-      } else {
-        val addHops = 1 + hopCount + (if(lastHopWasGCd) 1 else 0)
-        if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this remote lock returned new parent $res, passing $addHops new refs")
-        res.localAddRefs(addHops)
-      }
-      (0, res)
-    }(FullMVEngine.notWorthToMoveToTaskpool)
+  override def tryLock0(hopCount: Int): Future[TryLockResult0] = {
+    if(tryNewLocalRef()) {
+      proxy.remoteTryLock().map { remoteRes =>
+        val res = remoteRes match {
+          case RemoteLocked(lock) =>
+            if (lock == this) {
+              if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this locked remotely; ${hopCount + 1} new refs")
+              localAddRefs(hopCount + 1)
+            } else {
+              if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this locked new remote parent $lock, passing ${hopCount + 1} new refs")
+              lock.localAddRefs(hopCount + 2)
+            }
+            Locked0(0, lock)
+          case RemoteBlocked(lock) =>
+            if (lock == this) {
+              if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this blocked remotely; $hopCount new refs")
+              if (hopCount > 0) localAddRefs(hopCount)
+            } else {
+              if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this blocked on new remote parent $lock, passing ${hopCount + 1} new refs")
+              lock.localAddRefs(hopCount + 1)
+            }
+            Locked0(0, lock)
+          case RemoteGCd =>
+            throw new AssertionError(s"since $this is holding a local reference to the remote $proxy, the remote instance should be prevented from deallocation?")
+        }
+        localSubRefs(1)
+        res
+      }(FullMVEngine.notWorthToMoveToTaskpool)
+    } else {
+      GarbageCollected0.futured
+    }
   }
 
   override def trySubsume0(hopCount: Int, lockedNewParent: SubsumableLock): Future[TrySubsumeResult0] = {
     if(lockedNewParent == this) {
       assert(lockedNewParent eq this, s"instance caching broken? $this came into contact with different reflection of same origin on same host")
-      Future.successful((0, None))
-    } else {
-      proxy.remoteTrySubsume(lockedNewParent).map{ res =>
+      Successful0.zeroFutured
+    } else if(tryNewLocalRef()) {
+      proxy.remoteTrySubsume(lockedNewParent).map{ remoteRes =>
+        val res = remoteRes match {
+          case RemoteSubsumed =>
+
+        }
         val newParent = res.getOrElse(lockedNewParent)
         if(newParent == this) {
           val addHops = hopCount + (if(lastHopWasGCd) 1 else 0)

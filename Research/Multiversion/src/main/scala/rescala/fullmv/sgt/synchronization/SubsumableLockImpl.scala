@@ -28,26 +28,29 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
       assert(lockedNewParent eq this, s"instance caching broken? $this came into contact with reflection of itself on same host")
       assert(state.get == Self, s"passed in a TryLockResult indicates that $this was successfully locked, but it currently isn't!")
       if (DEBUG) println(s"[${Thread.currentThread().getName}] trySubsume $this to itself reentrant success; $hopCount new refs")
+      // safe because already locked and thus cannot be deallocated
       if(hopCount > 0) localAddRefs(hopCount)
-      Future.successful(Successful0(0))
+      Successful0.zeroFutured
     } else {
       state.get match {
         case null =>
           val success = state.compareAndSet(null, lockedNewParent)
           if(success) {
             if (DEBUG) println(s"[${Thread.currentThread().getName}] trySubsume $this succeeded; passing ${hopCount + 2} new refs")
+            // safe because already locked and thus cannot be deallocated
             lockedNewParent.localAddRefs(hopCount + 2)
-            Future.successful(Successful0(0))
+            Successful0.zeroFutured
           } else {
             if (DEBUG) println(s"[${Thread.currentThread().getName}] retrying contended trySubsume $this to $lockedNewParent")
             trySubsume0(hopCount, lockedNewParent)
           }
         case Self =>
           if (DEBUG) println(s"[${Thread.currentThread().getName}] trySubsume $this to $lockedNewParent blocked; $hopCount new refs")
+          // safe because already locked and thus cannot be deallocated
           if(hopCount > 0) localAddRefs(hopCount)
           Future.successful(Blocked0(0, this))
         case host.dummy =>
-          Future.successful(GarbageCollected0)
+          GarbageCollected0.futured
         case parent =>
           parent.trySubsume0(hopCount + 1, lockedNewParent).flatMap {
             case Successful0(failedRefChanges) =>
@@ -67,6 +70,8 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
       case null =>
         if(state.compareAndSet(null, Self)) {
           if(DEBUG) println(s"[${Thread.currentThread().getName}] tryLocked $this; ${hopCount + 1} new refs")
+          // TODO not safe! we probably have to tryAdd the reference before tryLocking the
+          // state, and then re-decrease the reference count to correct it to match whatever case actually occurs.
           localAddRefs(hopCount + 1)
           Future.successful(Locked0(0, this))
         } else {
@@ -75,10 +80,11 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
         }
       case Self =>
         if(DEBUG) println(s"[${Thread.currentThread().getName}] tryLock $this blocked; $hopCount new refs")
+        // safe because already locked and thus cannot be deallocated
         if(hopCount > 0) localAddRefs(hopCount)
         Future.successful(Blocked0(0, this))
       case host.dummy =>
-        Future.successful(GarbageCollected0)
+        GarbageCollected0.futured
       case parent =>
         parent.tryLock0(hopCount + 1).flatMap {
           case Locked0(failedRefChanges, newRoot) =>

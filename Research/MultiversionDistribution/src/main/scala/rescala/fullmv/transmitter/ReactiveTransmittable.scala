@@ -225,7 +225,7 @@ object ReactiveTransmittable {
 abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], S](implicit val host: FullMVEngine, messageTransmittable: Transmittable[ReactiveTransmittable.MessageWithInfrastructure[ReactiveTransmittable.Message[ReactiveTransmittable.Pluse[P]]], S, ReactiveTransmittable.MessageWithInfrastructure[ReactiveTransmittable.Message[ReactiveTransmittable.Pluse[P]]]], serializable: Serializable[S]) extends PushBasedTransmittable[R, ReactiveTransmittable.MessageWithInfrastructure[ReactiveTransmittable.Message[ReactiveTransmittable.Pluse[P]]], S, ReactiveTransmittable.MessageWithInfrastructure[ReactiveTransmittable.Message[ReactiveTransmittable.Pluse[P]]], R] {
   def bundle(turn: FullMVTurn): TurnPushBundle = {
     assert(turn.host == host)
-    (turn.guid, turn.phase, turn.selfNode.map { pred => (pred.guid, pred.phase) })
+    (turn.guid, turn.phase, sendTree(turn.selfNode))
   }
 
   import ReactiveTransmittable._
@@ -437,7 +437,7 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
         receiver -> (localTurnReceiverInstance(receiver) match {
           case Some(turn) =>
             val (predPhase, predTree) = turn.addReplicator(new FullMVTurnReflectionProxyToEndpoint(receiver, endpoint))
-            (predPhase, predTree.map {predPred => (predPred.guid, predPred.phase)})
+            (predPhase, sendTree(predTree))
           case None => (TurnPhase.Completed, CaseClassTransactionSpanningTreeNode((receiver, TurnPhase.Completed), Array.empty))
         })
       }.toMap))
@@ -449,6 +449,13 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
         val preds = receivePredecessorTree(tree, endpoint)
         localReflection.newPredecessors(preds)
       }
+  }
+
+  private def sendTree(predTree: TransactionSpanningTreeNode[FullMVTurn]) = {
+    predTree.map { predPred =>
+      assert(predPred.host == host)
+      (predPred.guid, predPred.phase)
+    }
   }
 
   def receivePredecessorTree(tree: CaseClassTransactionSpanningTreeNode[(Host.GUID, TurnPhase.Type)], endpoint: EndPointWithInfrastructure[Msg]): CaseClassTransactionSpanningTreeNode[FullMVTurn] = {
@@ -573,20 +580,14 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
     }
 
     override def addPredecessor(tree: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = {
-      doRequest(endpoint, AddPredecessor(guid, tree.map { turn =>
-        assert(turn.host == host)
-        (turn.guid, turn.phase)
-      })).map(_ => ())(FullMVEngine.notWorthToMoveToTaskpool)
+      doRequest(endpoint, AddPredecessor(guid, sendTree(tree))).map(_ => ())(FullMVEngine.notWorthToMoveToTaskpool)
     }
     override def asyncReleasePhaseLock(): Unit = {
       doAsync(endpoint, AsyncReleasePhaseLock(guid))
     }
     override def maybeNewReachableSubtree(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = {
       assert(attachBelow.host == host)
-      doRequest(endpoint, MaybeNewReachableSubtree(guid, attachBelow.guid, spanningSubTreeRoot.map { turn =>
-        assert(turn.host == host)
-        (turn.guid, turn.phase)
-      })).map(_ => ())(FullMVEngine.notWorthToMoveToTaskpool)
+      doRequest(endpoint, MaybeNewReachableSubtree(guid, attachBelow.guid, sendTree(spanningSubTreeRoot))).map(_ => ())(FullMVEngine.notWorthToMoveToTaskpool)
     }
     override def newSuccessor(successor: FullMVTurn): Future[Unit] = {
       assert(successor.host == host)
@@ -618,7 +619,7 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
 
   class FullMVTurnReflectionProxyToEndpoint(val guid: Host.GUID, endpoint: EndPointWithInfrastructure[Msg]) extends FullMVTurnReflectionProxy {
     override def newPredecessors(predecessors: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = {
-      doRequest(endpoint, NewPredecessors(guid, predecessors.map { turn => (turn.guid, turn.phase) })).map(_ => ())(FullMVEngine.notWorthToMoveToTaskpool)
+      doRequest(endpoint, NewPredecessors(guid, sendTree(predecessors))).map(_ => ())(FullMVEngine.notWorthToMoveToTaskpool)
     }
 
     override def newPhase(phase: TurnPhase.Type): Future[Unit] = {
