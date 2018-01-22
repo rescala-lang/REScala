@@ -3,7 +3,7 @@ package tests.rescala.fullmv
 import java.util.concurrent.atomic.AtomicReference
 
 import org.scalatest.FunSuite
-import rescala.fullmv.{FullMVEngine, LockedSameSCC, SerializationGraphTracking, UnlockedUnknown}
+import rescala.fullmv._
 import rescala.testhelper.Spawn
 
 import scala.annotation.tailrec
@@ -80,7 +80,12 @@ class LockStressTest extends FunSuite {
       case (Some(score), Failure(_)) => None
       case (Some(score), Success(moreScore)) => Some(score + moreScore)
     } match {
-      case None => println("no total and stats due to failures.")
+      case None =>
+        println("no total and stats due to failures. state snapshot:")
+        println(turns.zipWithIndex.map { case (t, idx) =>
+          val turn = t.get
+          s"$idx: $turn with ${turn.asInstanceOf[FullMVTurnImpl].subsumableLock.get}"
+        }.mkString("\n"))
       case Some(sum) =>
         println(s"lock stress test totaled $sum iterations (individual scores: ${scores.mkString(", ")}")
         turns.foreach(_.get.completeExecuting())

@@ -28,7 +28,7 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
       assert(lockedNewParent eq this, s"instance caching broken? $this came into contact with reflection of itself on same host")
       assert(state.get == Self, s"passed in a TryLockResult indicates that $this was successfully locked, but it currently isn't!")
       if (DEBUG) println(s"[${Thread.currentThread().getName}] trySubsume $this to itself reentrant success; $hopCount new refs")
-      // safe because already locked and thus cannot be deallocated
+      // safe because locked by the current thread and thus cannot be deallocated
       if(hopCount > 0) localAddRefs(hopCount)
       Successful0.zeroFutured
     } else {
@@ -37,7 +37,7 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
           val success = state.compareAndSet(null, lockedNewParent)
           if(success) {
             if (DEBUG) println(s"[${Thread.currentThread().getName}] trySubsume $this succeeded; passing ${hopCount + 2} new refs")
-            // safe because already locked and thus cannot be deallocated
+            // safe because locked by the current thread and thus cannot be deallocated
             lockedNewParent.localAddRefs(hopCount + 2)
             Successful0.zeroFutured
           } else {
@@ -46,9 +46,12 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
           }
         case Self =>
           if (DEBUG) println(s"[${Thread.currentThread().getName}] trySubsume $this to $lockedNewParent blocked; $hopCount new refs")
-          // safe because already locked and thus cannot be deallocated
-          if(hopCount > 0) localAddRefs(hopCount)
-          Future.successful(Blocked0(0, this))
+          // not safe because held by different thread which could concurrently unlock and deallocate?
+          if(hopCount == 0 || tryLocalAddRefs(hopCount)) {
+            Future.successful(Blocked0(0, this))
+          } else {
+            GarbageCollected0.futured
+          }
         case host.dummy =>
           GarbageCollected0.futured
         case parent =>
@@ -70,8 +73,8 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
       case null =>
         if(state.compareAndSet(null, Self)) {
           if(DEBUG) println(s"[${Thread.currentThread().getName}] tryLocked $this; ${hopCount + 1} new refs")
-          // TODO not safe! we probably have to tryAdd the reference before tryLocking the
-          // state, and then re-decrease the reference count to correct it to match whatever case actually occurs.
+          // should be safe because we are now calling tryLock only on the contender, which means there is a guaranteed
+          // reference that will not be deallocated concurrently?
           localAddRefs(hopCount + 1)
           Future.successful(Locked0(0, this))
         } else {
@@ -80,9 +83,12 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
         }
       case Self =>
         if(DEBUG) println(s"[${Thread.currentThread().getName}] tryLock $this blocked; $hopCount new refs")
-        // safe because already locked and thus cannot be deallocated
-        if(hopCount > 0) localAddRefs(hopCount)
-        Future.successful(Blocked0(0, this))
+        // not safe because held by different thread which could concurrently unlock and deallocate?
+        if(hopCount == 0 || tryLocalAddRefs(hopCount)) {
+          Future.successful(Blocked0(0, this))
+        } else {
+          GarbageCollected0.futured
+        }
       case host.dummy =>
         GarbageCollected0.futured
       case parent =>
@@ -122,7 +128,7 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
 
   override def toString: String = {
     val refs = refCount.get()
-    s"Lock($guid on $host, ${if(refs <= 0) "gc'd" else refs + " refs"}, ${state.get match {
+    s"Lock($guid on $host, ${if(refs <= 0) "gc'd" else refs + " refs"}, ${if (this eq host.dummy) "dummy" else state.get match {
       case null => "unlocked"
       case Self => "locked"
       case host.dummy => "gc'd"
@@ -167,10 +173,12 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
 
   override protected def dumped(): Unit = {
     state.getAndSet(host.dummy) match {
-      case null => // ok
+      case null => if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this deallocated without parent")
       case Self => throw new AssertionError(s"$this was garbage collected while locked")
       case host.dummy => throw new AssertionError(s"$this was already garbage collected earlier")
-      case parent => parent.localSubRefs(1)
+      case parent =>
+        if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this deallocated, dropping parent ref on $parent")
+        parent.localSubRefs(1)
     }
   }
 }

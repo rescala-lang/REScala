@@ -13,8 +13,7 @@ object TurnPhase {
     case 1 => "Uninitialized"
     case 2 => "Framing"
     case 3 => "Executing"
-    case 4 => "WrapUp"
-    case 5 => "Completed"
+    case 4 => "Completed"
     case _ => s"unkonwn($phase)"
   }
 }

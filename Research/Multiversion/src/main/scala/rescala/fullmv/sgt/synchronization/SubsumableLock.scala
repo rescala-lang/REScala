@@ -56,21 +56,22 @@ trait SubsumableLock extends SubsumableLockProxy with Hosted {
     localSubRefs(1)
   }
 
-  @tailrec final def tryNewLocalRef(): Boolean = {
+  @tailrec final def tryLocalAddRefs(refs: Int): Boolean = {
     val before = refCount.get()
     if(before == 0) {
       false
-    } else if(refCount.compareAndSet(before, before + 1)) {
+    } else if(refCount.compareAndSet(before, before + refs)) {
       true
     } else {
-      tryNewLocalRef()
+      tryLocalAddRefs(refs)
     }
   }
 
-  def localAddRefs(refs: Int): Unit = {
+  @tailrec final def localAddRefs(refs: Int): Unit = {
     assert(refs > 0)
-    val previousCount = refCount.getAndAdd(refs)
-    assert(previousCount > 0, s"cannot add refs on gc'd $this")
+    val before = refCount.get()
+    assert(before > 0, s"cannot add refs on gc'd $this")
+    if(!refCount.compareAndSet(before, before + refs)) localAddRefs(refs)
   }
 
   def localSubRefs(refs: Int): Unit = {
@@ -100,9 +101,9 @@ object SubsumableLock {
     val bo = new Backoff()
     @tailrec def reTryLock(): SubsumableLock = {
       Await.result(contender.tryLock(), timeout) match {
-        case Locked(newParent) =>
-          if (DEBUG) System.out.println(s"[${Thread.currentThread().getName}] now owns SCC of $contender")
-          newParent
+        case Locked(lockedRoot) =>
+          if (DEBUG) System.out.println(s"[${Thread.currentThread().getName}] now owns SCC of $contender under $lockedRoot")
+          lockedRoot
         case Blocked =>
           bo.backoff()
           reTryLock()
@@ -122,7 +123,7 @@ object SubsumableLock {
         case Locked(lockedRoot) =>
           Await.result(defender.trySubsume(lockedRoot), timeout) match {
             case Successful =>
-              if (DEBUG) System.out.println(s"[${Thread.currentThread().getName}] now owns SCC of $defender and $contender")
+              if (DEBUG) System.out.println(s"[${Thread.currentThread().getName}] now owns SCC of $defender and $contender under $lockedRoot")
               Some(lockedRoot)
             case Blocked =>
               lockedRoot.asyncUnlock()
