@@ -34,7 +34,7 @@ class LockUnionFindTest extends FunSuite {
     assert(engine.lockHost.getInstance(lock.guid) === None)
   }
 
-  test("lock/unlock holds a temporary reference") {
+  test("lock/unlock retains reference count") {
     val turn = engine.newTurn()
     turn.beginFraming()
     val lock = turn.subsumableLock.get
@@ -43,7 +43,7 @@ class LockUnionFindTest extends FunSuite {
 
     val l = Await.result(turn.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
 
-    assert(lock.refCount.get === 2)
+    assert(lock.refCount.get === 1)
 
     l.asyncUnlock()
 
@@ -168,22 +168,22 @@ class LockUnionFindTest extends FunSuite {
     assert(lock.refCount.get === 1)
 
     val l = Await.result(turn.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
-    assert(lock.refCount.get === 2)
+    assert(lock.refCount.get === 1)
 
     // lock is exclusive
     assert(Await.result(turn.tryLock(), Duration.Zero) == Blocked)
-    assert(lock.refCount.get === 2)
+    assert(lock.refCount.get === 1)
 
     l.asyncUnlock()
     assert(lock.refCount.get === 1)
 
     // unlock unblocks
     val l2 = Await.result(turn.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
-    assert(lock.refCount.get === 2)
-
-    turn.completeExecuting()
     assert(lock.refCount.get === 1)
+
     l2.asyncUnlock()
+    assert(lock.refCount.get === 1)
+    turn.completeExecuting()
     assert(lock.refCount.get <= 0)
   }
 

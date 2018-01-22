@@ -72,10 +72,10 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
     state.get match {
       case null =>
         if(state.compareAndSet(null, Self)) {
-          if(DEBUG) println(s"[${Thread.currentThread().getName}] tryLocked $this; ${hopCount + 1} new refs")
+          if(DEBUG) println(s"[${Thread.currentThread().getName}] tryLocked $this; $hopCount new refs")
           // should be safe because we are now calling tryLock only on the contender, which means there is a guaranteed
           // reference that will not be deallocated concurrently?
-          localAddRefs(hopCount + 1)
+          if(hopCount > 0) localAddRefs(hopCount)
           Future.successful(Locked0(0, this))
         } else {
           if(DEBUG) println(s"[${Thread.currentThread().getName}] retrying contended tryLock attempt of $this")
