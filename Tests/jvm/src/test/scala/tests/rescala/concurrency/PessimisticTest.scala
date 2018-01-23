@@ -6,10 +6,8 @@ import rescala.Engines
 import rescala.core.Scheduler
 import rescala.infiltration.Infiltrator
 import rescala.parrp.{Backoff, ParRP}
-import tests.rescala.util._
+import tests.rescala.util.{RETests, ReevaluationTracker, SetAndExtractTransactionHandle, _}
 import rescala.twoversion.TwoVersionSchedulerImpl
-import tests.rescala.RETests
-import tests.rescala.util.{ReevaluationTracker, SetAndExtractTransactionHandle}
 
 class PessimisticTest extends RETests {
   engines(Engines.parrp)("SynchronizedReevaluation should synchronize reevaluations"){ (engine: Scheduler[TestStruct]) =>

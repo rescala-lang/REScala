@@ -1,5 +1,7 @@
 package tests.rescala
 
+import tests.rescala.util.RETests
+
 import scala.language.implicitConversions
 
 class LightImplicitSyntaxTest extends RETests {

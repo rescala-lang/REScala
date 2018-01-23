@@ -1,5 +1,7 @@
 package tests.rescala
 
+import tests.rescala.util.RETests
+
 class DisconnectTests extends RETests {
 
   allEngines("remove incoming dependencies when disconnecting signals") { engine => import engine._

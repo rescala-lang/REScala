@@ -1,11 +1,9 @@
-package tests.rescala
-
+package tests.rescala.signals
 
 import org.scalatest.prop.Whenever
 import rescala.Engines
 import rescala.infiltration.Infiltrator.assertLevel
-
-
+import tests.rescala.util.RETests
 
 
 class DynamicSignalTestSuite extends RETests with Whenever {
@@ -17,11 +15,12 @@ class DynamicSignalTestSuite extends RETests with Whenever {
     var i = 1
     val s = Signal { v() + i }
     i = 2
+    assert(s.now == 2)
     v.set(2)
     assert(s.now == 4)
   }
 
-  allEngines("the Expression Is Note Evaluated Every Time now Is Called"){ engine => import engine._
+  allEngines("the Expression Is Not Evaluated Every Time now Is Called"){ engine => import engine._
     var a = 10
     val s = Signal(1 + 1 + a)
     assert(s.now === 12)

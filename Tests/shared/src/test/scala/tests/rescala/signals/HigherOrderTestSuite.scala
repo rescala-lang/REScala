@@ -1,6 +1,7 @@
-package tests.rescala
+package tests.rescala.signals
 
 import rescala.core.CreationTicket
+import tests.rescala.util.RETests
 
 
 class HigherOrderTestSuite extends RETests {

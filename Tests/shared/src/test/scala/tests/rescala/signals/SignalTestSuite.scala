@@ -1,9 +1,9 @@
-package tests.rescala
+package tests.rescala.signals
 
 import java.util.concurrent.atomic.AtomicInteger
 
 import rescala.infiltration.Infiltrator.assertLevel
-
+import tests.rescala.util.RETests
 
 
 class SignalTestSuite extends RETests {

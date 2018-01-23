@@ -5,6 +5,7 @@ import java.lang.ref.{PhantomReference, ReferenceQueue}
 import org.scalatest.prop.Whenever
 import rescala.reactives.Observe
 import rescala.stm.STMEngine
+import tests.rescala.util.RETests
 
 class GarbageCollectionTest extends RETests with Whenever {
 

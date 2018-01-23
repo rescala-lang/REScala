@@ -1,4 +1,6 @@
-package tests.rescala
+package tests.rescala.signals
+
+import tests.rescala.util.RETests
 
 //These 3 are for JUnitRunner
 

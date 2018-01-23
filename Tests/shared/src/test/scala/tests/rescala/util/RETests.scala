@@ -1,4 +1,4 @@
-package tests.rescala
+package tests.rescala.util
 
 import org.scalactic.source
 import org.scalatest.FunSuite

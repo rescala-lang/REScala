@@ -2,12 +2,12 @@ package tests.rescala.conversions
 
 import rescala.core.Pulse
 import rescala.reactives.RExceptions.EmptySignalControlThrowable
-import tests.rescala.RETests
+import tests.rescala.util.RETests
 
 import scala.collection.LinearSeq
 
 
-class IFunTest extends RETests {
+class Conversions extends RETests {
 
   /* fold */
   allEngines("fold the Initial Value Is Set Correctly") { engine => import engine._
@@ -24,6 +24,22 @@ class IFunTest extends RETests {
     e.fire(1)
     e.fire(1)
     assert(s.now == 12)
+  }
+
+
+  /* count */
+  allEngines("count the Initial Value Is Set Correctly"){ engine => import engine._
+    val e = Evt[Int]
+    val s: Signal[Int] = e.count
+    assert(s.now == 0)
+  }
+
+  allEngines("count the Result Signal Increases When Events Occur"){ engine => import engine._
+    val e = Evt[Int]
+    val s: Signal[Int] = e.count
+    e.fire(1)
+    e.fire(1)
+    assert(s.now == 2)
   }
 
 
