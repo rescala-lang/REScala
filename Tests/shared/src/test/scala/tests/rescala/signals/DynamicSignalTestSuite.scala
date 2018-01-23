@@ -15,7 +15,7 @@ class DynamicSignalTestSuite extends RETests with Whenever {
     var i = 1
     val s = Signal { v() + i }
     i = 2
-    assert(s.now == 2)
+    assert(s.now == 1)
     v.set(2)
     assert(s.now == 4)
   }
