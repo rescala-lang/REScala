@@ -83,11 +83,11 @@ final class StaticTicket[S <: Struct] private[rescala](val creation: Computation
   }
 
   def staticDepend[A](reactive: Signal[A, S]): A = {
-    staticDependPulse(reactive: ReSourciV[Pulse[A], S]).get
+    staticDependPulse(reactive).get
   }
 
   def staticDepend[A](reactive: Event[A, S]): Option[A] = {
-    staticDependPulse(reactive: ReSourciV[Pulse[A], S]).toOption
+    staticDependPulse(reactive).toOption
   }
 }
 
