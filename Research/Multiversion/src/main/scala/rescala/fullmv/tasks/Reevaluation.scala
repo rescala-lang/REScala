@@ -22,7 +22,7 @@ trait RegularReevaluationHandling extends ReevaluationHandling[Reactive[FullMVSt
       case exception: Throwable =>
         System.err.println(s"[FullMV Error] Reevaluation of $node failed with ${exception.getClass.getName}: ${exception.getMessage}; Completing reevaluation as NoChange.")
         exception.printStackTrace()
-        ReevaluationResult.Static[Nothing, FullMVStruct](Pulse.NoChange, node.state.incomings).asInstanceOf[ReevaluationResult[node.Value, FullMVStruct]]
+        ReevaluationResult.StaticPulse[Nothing, FullMVStruct](Pulse.NoChange, node.state.incomings).asInstanceOf[ReevaluationResult[node.Value, FullMVStruct]]
     }
     res.commitDependencyDiff(turn, node)
     processReevaluationResult(if(res.valueChanged) Some(res.value) else None)

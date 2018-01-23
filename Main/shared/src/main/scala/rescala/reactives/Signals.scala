@@ -5,7 +5,7 @@ import rescala.reactives.RExceptions.EmptySignalControlThrowable
 
 import scala.concurrent.{ExecutionContext, Future}
 
-/** Functions to construct signals, you probably want to signal expressions in [[rescala.RescalaInterface.Signal]] for a nicer API.*/
+/** Functions to construct signals, you probably want to signal expressions in [[rescala.RescalaInterface.Signal]] for a nicer API. */
 object Signals {
 
   /** creates a signal that statically depends on the dependencies with a given initial value */
@@ -81,21 +81,23 @@ object Signals {
 
 
 private abstract class StaticSignal[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: (StaticTicket[S], () => T) => T, name: REName)
-  extends Base[T, S](_bud, name) with Signal[T, S] {
+  extends Base[Pulse[T], S](_bud, name) with Signal[T, S] {
 
   override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[T], indeps: Set[ReSource[S]]): ReevaluationResult[Value, S] = {
     def newValue = expr(turn.makeStaticReevaluationTicket(), () => before.get)
 
     val newPulse = Pulse.tryCatch(Pulse.diffPulse(newValue, before))
-    ReevaluationResult.Static(newPulse, indeps)
+    ReevaluationResult.StaticPulse(newPulse, indeps)
   }
 }
 
-private abstract class DynamicSignal[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: DynamicTicket[S] => T, name: REName) extends Base[T, S](_bud, name) with Signal[T, S] {
+private abstract class DynamicSignal[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: DynamicTicket[S] => T, name: REName)
+  extends Base[Pulse[T], S](_bud, name) with Signal[T, S] {
+
   override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[T], indeps: Set[ReSource[S]]): ReevaluationResult[Value, S] = {
     val dt = turn.makeDynamicReevaluationTicket(indeps)
     val newPulse = Pulse.tryCatch {Pulse.diffPulse(expr(dt), before)}
-    ReevaluationResult.Dynamic(newPulse, dt.indepsAfter, dt.indepsAdded, dt.indepsRemoved)
+    ReevaluationResult.DynamicPulse(newPulse, dt.indepsAfter, dt.indepsAdded, dt.indepsRemoved)
   }
 }
 

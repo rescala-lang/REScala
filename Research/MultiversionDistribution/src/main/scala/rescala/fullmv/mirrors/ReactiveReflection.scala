@@ -64,10 +64,10 @@ class ReactiveReflectionImpl[P](override val host: FullMVEngine, var ignoreTurn:
       } else {
         throw new AssertionError(s"$this was reevaluated for $turn but no value was buffered.")
       }
-      ReevaluationResult.Static(Pulse.NoChange: Pulse[P], indeps)
+      ReevaluationResult.StaticPulse(Pulse.NoChange: Pulse[P], indeps)
     } else {
       if(ignoreTurn.contains(turn)) ignoreTurn = None
-      ReevaluationResult.Static(value, indeps)
+      ReevaluationResult.StaticPulse(value, indeps)
     }
   }
 }

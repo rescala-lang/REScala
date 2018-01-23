@@ -20,4 +20,7 @@ object ValuePersistency {
     extends ValuePersistency[Pulse[V]](initialValue, isTransient = false, ignitionRequiresReevaluation = false) {
     def serializable: ReSerializable[Pulse[V]] = ReSerializable.pulseSerializable
   }
+
+  private object _Observer extends ValuePersistency[Unit]((), isTransient = true, ignitionRequiresReevaluation = true)
+  def Observer[V]: ValuePersistency[Unit] = _Observer.asInstanceOf[ValuePersistency[Unit]]
 }

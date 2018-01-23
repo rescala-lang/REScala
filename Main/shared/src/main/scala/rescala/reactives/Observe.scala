@@ -19,13 +19,13 @@ object Observe {
   private val strongObserveReferences = scala.collection.mutable.HashSet[Observe[_]]()
 
   private abstract class Obs[T, S <: Struct]
-  (bud: S#State[Pulse[Unit], S], dependency: ReSourciV[Pulse[T], S], fun: T => Unit, fail: Throwable => Unit, name: REName)
+  (bud: S#State[Unit, S], dependency: ReSourciV[Pulse[T], S], fun: T => Unit, fail: Throwable => Unit, name: REName)
     extends Base[Unit, S](bud, name) with Reactive[S] with Observe[S]  {
     this: DisconnectableImpl[S] =>
 
-    override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[Unit], indeps: Set[ReSource[S]]): ReevaluationResult[Value, S] = {
+    override protected[rescala] def reevaluate(turn: Turn[S], before: Unit, indeps: Set[ReSource[S]]): ReevaluationResult[Value, S] = {
       scheduleHandler(this, turn, dependency, fun, fail)
-      ReevaluationResult.Static[Unit, S](Pulse.NoChange, indeps)
+      ReevaluationResult.Static[Unit, S](Unit, propagate = false, indeps)
     }
     override def remove()(implicit fac: Scheduler[S]): Unit = {
       disconnect()
@@ -45,7 +45,7 @@ object Observe {
   }
 
   def weak[T, S <: Struct](dependency: ReSourciV[Pulse[T], S])(fun: T => Unit, fail: Throwable => Unit)(implicit ct: CreationTicket[S]): Observe[S] = {
-    ct(initTurn => initTurn.create[Pulse[Unit], Obs[T, S]](Set(dependency), ValuePersistency.DynamicEvent) { state =>
+    ct(initTurn => initTurn.create[Unit, Obs[T, S]](Set(dependency), ValuePersistency.Observer) { state =>
       new Obs[T, S](state, dependency, fun, fail, ct.rename) with DisconnectableImpl[S]
     })
   }

@@ -36,13 +36,13 @@ object Events {
 }
 
 private abstract class StaticEvent[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: StaticTicket[S] => Pulse[T], name: REName)
-  extends Base[T, S](_bud, name) with Event[T, S] {
+  extends Base[Pulse[T], S](_bud, name) with Event[T, S] {
   override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[T], indeps: Set[ReSource[S]]): ReevaluationResult[Value, S] =
-    ReevaluationResult.Static(Pulse.tryCatch(expr(turn.makeStaticReevaluationTicket()), onEmpty = NoChange), indeps)
+    ReevaluationResult.StaticPulse(Pulse.tryCatch(expr(turn.makeStaticReevaluationTicket()), onEmpty = NoChange), indeps)
 }
 
 private abstract class ChangeEvent[T, S <: Struct](_bud: S#State[Pulse[Diff[T]], S], signal: Signal[T, S], name: REName)
-  extends Base[Diff[T], S](_bud, name) with Event[Diff[T], S] {
+  extends Base[Pulse[Diff[T]], S](_bud, name) with Event[Diff[T], S] {
   override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[Diff[T]], indeps: Set[ReSource[S]]): ReevaluationResult[Value, S] = {
     val pulse = {
       val st = turn.makeStaticReevaluationTicket()
@@ -51,15 +51,15 @@ private abstract class ChangeEvent[T, S <: Struct](_bud: S#State[Pulse[Diff[T]],
       if (from != Pulse.empty && to != Pulse.empty && from != to) Pulse.Value(Diff(from, to))
       else Pulse.NoChange
     }
-    ReevaluationResult.Static(pulse, indeps)
+    ReevaluationResult.StaticPulse(pulse, indeps)
   }
 }
 
-private abstract class DynamicEvent[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: DynamicTicket[S] => Pulse[T], name: REName) extends Base[T, S](_bud, name) with Event[T, S] {
+private abstract class DynamicEvent[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: DynamicTicket[S] => Pulse[T], name: REName) extends Base[Pulse[T], S](_bud, name) with Event[T, S] {
 
   override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[T], indeps: Set[ReSource[S]]): ReevaluationResult[Value, S] = {
     val dt = turn.makeDynamicReevaluationTicket(indeps)
     val newPulse = Pulse.tryCatch(expr(dt), onEmpty = NoChange)
-    ReevaluationResult.Dynamic(newPulse, dt.indepsAfter, dt.indepsAdded, dt.indepsRemoved)
+    ReevaluationResult.DynamicPulse(newPulse, dt.indepsAfter, dt.indepsAdded, dt.indepsRemoved)
   }
 }

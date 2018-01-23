@@ -33,8 +33,8 @@ trait Reactive[S <: Struct] extends ReSource[S] {
   * together with a [[REName]] and asking for a [[Struct.State]]
   * @param initialState the initial state passed by the scheduler
   * @param rename the name of the reactive, useful for debugging as it often contains positional information */
-abstract class Base[P, S <: Struct](initialState: S#State[Pulse[P], S], rename: REName)
-  extends RENamed(rename) with  ReSourciV[Pulse[P], S] with Reactive[S] {
-  override type Value = Pulse[P]
-  final override protected[rescala] def state: S#State[Pulse[P], S] = initialState
+abstract class Base[P, S <: Struct](initialState: S#State[P, S], rename: REName)
+  extends RENamed(rename) with  ReSourciV[P, S] with Reactive[S] {
+  override type Value = P
+  final override protected[rescala] def state: S#State[P, S] = initialState
 }
