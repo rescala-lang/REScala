@@ -1,7 +1,5 @@
 package universe
 
-import rescala.reactives.Signals
-
 import universe.Globals.engine._
 
 

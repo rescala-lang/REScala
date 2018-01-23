@@ -67,9 +67,9 @@ object ReShapes extends SimpleSwingApplication {
       (update map { _: Any =>  //#EF
         ui.tabbedPane.pages filter { tab => tab.index != ui.tabbedPane.selection.index } map { tab =>
           val item = new ReMenuItem(tab.title) //#IS( // )
-        val command = item.clicked map { _: Any => //#EF
-          new MergeDrawingSpaces(panelDrawingSpaceStates(tab)._1)
-        }
+          val command = item.clicked map { _: Any => //#EF
+            new MergeDrawingSpaces(panelDrawingSpaceStates(tab)._1)
+          }
           (item: Component, command)
         }
       }) latest Seq.empty  //#IF
