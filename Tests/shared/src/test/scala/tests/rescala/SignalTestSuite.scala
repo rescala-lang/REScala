@@ -2,7 +2,7 @@ package tests.rescala
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import rescala.Infiltrator.assertLevel
+import rescala.infiltration.Infiltrator.assertLevel
 
 
 

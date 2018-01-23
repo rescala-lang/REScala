@@ -17,6 +17,6 @@ abstract class RETests extends FunSuite with TableDrivenPropertyChecks {
   }
 
   def allEngines(text: String)(testCase: Scheduler[TestStruct] => Any)(implicit pos: source.Position): Unit = {
-    engines(rescala.testhelper.TestEngines.all: _*)(text)(testCase)(pos)
+    engines(tests.rescala.util.TestEngines.all: _*)(text)(testCase)(pos)
   }
 }

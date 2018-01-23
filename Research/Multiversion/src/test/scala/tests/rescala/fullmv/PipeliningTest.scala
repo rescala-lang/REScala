@@ -2,7 +2,7 @@ package tests.rescala.fullmv
 
 import org.scalatest.FunSuite
 import rescala.fullmv.FullMVEngine.default._
-import rescala.testhelper.Spawn
+import tests.rescala.util.Spawn
 
 class PipeliningTest extends FunSuite {
   test("pipelining works") {

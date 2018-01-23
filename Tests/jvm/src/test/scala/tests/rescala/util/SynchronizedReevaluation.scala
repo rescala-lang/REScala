@@ -1,4 +1,4 @@
-package rescala.testhelper
+package tests.rescala.util
 
 import java.util.concurrent.ForkJoinPool.ManagedBlocker
 import java.util.concurrent.{CountDownLatch, ForkJoinPool}

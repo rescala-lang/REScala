@@ -4,10 +4,12 @@ import java.util.concurrent.{CountDownLatch, TimeUnit}
 
 import rescala.Engines
 import rescala.core.Scheduler
+import rescala.infiltration.Infiltrator
 import rescala.parrp.{Backoff, ParRP}
-import rescala.testhelper._
+import tests.rescala.util._
 import rescala.twoversion.TwoVersionSchedulerImpl
 import tests.rescala.RETests
+import tests.rescala.util.{ReevaluationTracker, SetAndExtractTransactionHandle}
 
 class PessimisticTest extends RETests {
   engines(Engines.parrp)("SynchronizedReevaluation should synchronize reevaluations"){ (engine: Scheduler[TestStruct]) =>
@@ -130,9 +132,8 @@ class PessimisticTest extends RETests {
         }
       })
 
-    import ParRPTestTooling._
 
-    assert(unsafeNow(i1_3) === 42)
+    assert(Infiltrator.unsafeNow(explicitEngine, i1_3) === 42)
     assert(reeval === 1)
     assert(regs === 0)
     assert(unregs === 0)
@@ -140,7 +141,7 @@ class PessimisticTest extends RETests {
     // now, this should create some only in turn dynamic changes
     b0.set(true)(mockFac)
 
-    assert(unsafeNow(i1_3) === 42)
+    assert(Infiltrator.unsafeNow(explicitEngine, i1_3) === 42)
     assert(reeval === 3)
     assert(regs === 0)
     assert(unregs === 0)
@@ -148,7 +149,7 @@ class PessimisticTest extends RETests {
     // this does not
     b0.set(false)(mockFac)
 
-    assert(unsafeNow(i1_3) === 42)
+    assert(Infiltrator.unsafeNow(explicitEngine, i1_3) === 42)
     assert(reeval === 4)
     assert(regs === 0)
     assert(unregs === 0)
@@ -156,7 +157,7 @@ class PessimisticTest extends RETests {
     // this also does not, because the level of the dynamic signals stays on 3
     b0.set(true)(mockFac)
 
-    assert(unsafeNow(i1_3) === 42)
+    assert(Infiltrator.unsafeNow(explicitEngine, i1_3) === 42)
     assert(reeval === 5)
     assert(regs === 0)
     assert(unregs === 0)

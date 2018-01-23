@@ -1,9 +1,8 @@
-package rescala.testhelper
+package tests.rescala.util
 
-
-import rescala.reactives.{Event, Signal}
 import org.scalatest.{Assertions, Matchers}
 import rescala.core.{CreationTicket, Struct}
+import rescala.reactives.{Event, Signal}
 
 class ReevaluationTracker[A, S <: Struct] private() extends Matchers {
   var results: List[A] = Nil

@@ -3,7 +3,7 @@ package tests.rescala.concurrency.philosophers
 import org.scalatest.FunSuite
 import rescala.Engines
 import rescala.core.{Scheduler, Struct}
-import rescala.testhelper.Spawn
+import tests.rescala.util.Spawn
 
 import scala.concurrent.TimeoutException
 import scala.util.{Failure, Success, Try}
