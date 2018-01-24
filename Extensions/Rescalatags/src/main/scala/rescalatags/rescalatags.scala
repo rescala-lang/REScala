@@ -23,7 +23,7 @@ package object rescalatags {
         .recover { case t => span(t.toString).render }
         .withDefault("".render)
 
-      val observer = Observe.weak(result.change)(
+      val observer = Observe.weak(result.change, fireImmediately = false)(
         { case Diff(lastTag, newTag) =>
           if (lastTag.parentNode != null && !scalajs.js.isUndefined(lastTag.parentNode)) {
             lastTag.parentNode.replaceChild(newTag, lastTag)
