@@ -1,10 +1,8 @@
-package tests.rescala.conversions
+package tests.rescala.static.conversions
 
 import rescala.core.{CreationTicket, Pulse}
 import rescala.reactives.RExceptions.EmptySignalControlThrowable
 import tests.rescala.util.RETests
-
-import scala.collection.LinearSeq
 
 
 class Change extends RETests {

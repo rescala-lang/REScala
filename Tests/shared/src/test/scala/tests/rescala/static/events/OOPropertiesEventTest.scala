@@ -1,4 +1,4 @@
-package tests.rescala.statics.events
+package tests.rescala.static.events
 
 import tests.rescala.util.RETests
 
