@@ -1,4 +1,4 @@
-package tests.rescala.statics
+package tests.rescala.statics.signals
 
 import java.util.concurrent.atomic.AtomicInteger
 

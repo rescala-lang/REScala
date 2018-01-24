@@ -1,8 +1,8 @@
-package tests.rescala.statics
+package tests.rescala.statics.signals
 
 import tests.rescala.util.RETests
 
-class MacroTestSuite extends RETests {
+class SignalMacro extends RETests {
 
   allEngines(".value acces works"){ engine => import engine._
 

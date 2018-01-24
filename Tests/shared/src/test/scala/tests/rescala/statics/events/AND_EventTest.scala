@@ -1,4 +1,4 @@
-package tests.rescala.events
+package tests.rescala.statics.events
 
 import tests.rescala.util.RETests
 
@@ -15,7 +15,9 @@ class AND_EventTest extends RETests {
     val e1_AND_e2 = e1 zip e2
     e1_AND_e2 += ((x: (Int, Int)) => { test += 1 })
 
+    assert(test == 0)
     e1.fire(10)
+    assert(test == 0)
     e2.fire(10)
     assert(test == 0)
 

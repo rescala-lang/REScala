@@ -1,4 +1,4 @@
-package tests.rescala.static
+package tests.rescala.statics.signals
 
 import tests.rescala.util.RETests
 
