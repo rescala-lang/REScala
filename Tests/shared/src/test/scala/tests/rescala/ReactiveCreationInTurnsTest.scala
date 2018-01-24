@@ -1,6 +1,5 @@
 package tests.rescala
 
-import rescala.core.CreationTicket
 import tests.rescala.util.RETests
 
 

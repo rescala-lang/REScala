@@ -16,7 +16,9 @@ class OR_EventTest extends RETests {
     val e1_OR_e2 = e1 || e2
     e1_OR_e2 += { _ => test += 1 }
 
+    assert(test == 0)
     e1.fire(10)
+    assert(test == 1)
     e2.fire(10)
     assert(test == 2)
 

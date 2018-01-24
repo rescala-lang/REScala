@@ -150,15 +150,24 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
     queue.push(head)
   }
 
+  def commitDependencyDiff(turn: ReevaluationStateAccess[TState], node: Reactive[TState], dt : DynamicTicket[TState]): Unit = {
+    if(dt.indepsChanged) {
+      dt.indepsRemoved.foreach(turn.drop(_, node))
+      dt.indepsAdded.foreach(turn.discover(_, node))
+      turn.writeIndeps(node, dt.indepsAfter)
+    }
+  }
+
   def evaluate(head: Reactive[TState]): Unit = {
     if (head.state.anyInputChanged != this) done(head, propagate = false)
     else {
-      head.reevaluate(this, head.state.base(token), head.state.incoming(this)) match {
-        case res@ReevaluationResultWithValue(_, _, _, _, _, _, _) =>
-          res.commitDependencyDiff(this, head)
+      val dt = makeDynamicReevaluationTicket(head.state.incoming(this))
+      head.reevaluate(dt, head.state.base(token)) match {
+        case res@ReevaluationResultWithValue(_, _) =>
+          commitDependencyDiff(this, head, dt)
           if (head.state.isGlitchFreeReady) {
             // val outgoings = res.commitValueChange()
-            if (res.valueChanged) writeState(head)(res.value)
+            writeState(head)(res.value)
 
             head.state.hasWritten = this
 
@@ -166,6 +175,15 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
             done(head, res.propagate)
           }
         case ReevaluationResultWithoutValue(propagate) =>
+          commitDependencyDiff(this, head, dt)
+          if (head.state.isGlitchFreeReady) {
+            // val outgoings = res.commitValueChange()
+            head.state.hasWritten = this
+            // done(head, res.valueChanged, outgoings)
+            done(head, propagate)
+          }
+        case ReevaluationResultEffect(obs, propagate) =>
+          observe(obs)
           done(head, propagate)
       }
     }

@@ -27,11 +27,16 @@ import scala.language.implicitConversions
 
 trait AnyTicket extends Any
 
-final class DynamicTicket[S <: Struct] private[rescala](val creation: ComputationStateAccess[S] with Creation[S], val indepsBefore: Set[ReSource[S]]) extends AnyTicket {
+final class DynamicTicket[S <: Struct] private[rescala](creation: ComputationStateAccess[S] with Creation[S], val indepsBefore: Set[ReSource[S]]) extends StaticTicket[S](creation) {
   private[rescala] var indepsAfter: Set[ReSource[S]] = Set.empty
   private[rescala] var indepsAdded: Set[ReSource[S]] = Set.empty
 
+  var enableDynamic = false
+
+  private[rescala] def indepsChanged: Boolean = enableDynamic && (indepsAdded.nonEmpty || indepsRemoved.nonEmpty)
+
   private[rescala] def dependDynamic[A](reactive: ReSourciV[A, S]): A = {
+    require(enableDynamic, "should not use dynamic accesses without enabling dynamic tickets")
     if (indepsBefore(reactive)) {
       indepsAfter += reactive
       creation.staticAfter(reactive)
@@ -46,10 +51,16 @@ final class DynamicTicket[S <: Struct] private[rescala](val creation: Computatio
     }
   }
 
-  private[rescala] def dependStatic[A](reactive: ReSourciV[A, S]): A = {
-    // static dependencies are currently not optimized, for mixed usages
-    dependDynamic(reactive)
+
+  override private[rescala] def staticDependPulse[A](reactive: ReSourciV[A, S]) = {
+    //mixed access for signal expressions needs this
+    if (enableDynamic) {
+      indepsAfter += reactive
+      if (!indepsBefore(reactive)) indepsAdded += reactive
+    }
+    creation.staticAfter(reactive)
   }
+
 
   def before[A](reactive: Signal[A, S]): A = {
     creation.dynamicBefore(reactive).get
@@ -63,18 +74,11 @@ final class DynamicTicket[S <: Struct] private[rescala](val creation: Computatio
     dependDynamic(reactive).toOption
   }
 
-  def staticDepend[A](reactive: Signal[A, S]): A = {
-    dependStatic(reactive).get
-  }
-
-  def staticDepend[A](reactive: Event[A, S]): Option[A] = {
-    dependStatic(reactive).toOption
-  }
 
   def indepsRemoved: Set[ReSource[S]] = indepsBefore.diff(indepsAfter)
 }
 
-final class StaticTicket[S <: Struct] private[rescala](val creation: ComputationStateAccess[S] with Creation[S]) extends AnyVal with AnyTicket {
+sealed class StaticTicket[S <: Struct] private[rescala](val creation: ComputationStateAccess[S] with Creation[S]) extends AnyTicket {
   private[rescala]  def staticBefore[A](reactive: ReSourciV[A, S]): A = {
     creation.staticBefore(reactive)
   }
@@ -149,7 +153,7 @@ object CreationTicket extends LowPriorityCreationImplicits {
   implicit def fromTicketSImplicit[S <: Struct](implicit ticket: StaticTicket[S], line: REName): CreationTicket[S] = CreationTicket(Left(ticket.creation))(line)
   //implicit def fromTicketS[S <: Struct](ticket: StaticTicket[S])(implicit line: REName): CreationTicket[S] = CreationTicket(Left(ticket.creation))
 
-  implicit def fromTicketDImplicit[S <: Struct](implicit ticket: DynamicTicket[S], line: REName): CreationTicket[S] = CreationTicket(Left(ticket.creation))(line)
+  //implicit def fromTicketDImplicit[S <: Struct](implicit ticket: DynamicTicket[S], line: REName): CreationTicket[S] = CreationTicket(Left(ticket.creation))(line)
   //implicit def fromTicketD[S <: Struct](ticket: DynamicTicket[S])(implicit line: REName): CreationTicket[S] = CreationTicket(Left(ticket.creation))
 
   implicit def fromCreationImplicit[S <: Struct](implicit creation: Creation[S], line: REName): CreationTicket[S] = CreationTicket(Left(creation))(line)

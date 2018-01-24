@@ -23,24 +23,19 @@ object Observe {
     extends Base[Unit, S](bud, name) with Reactive[S] with Observe[S]  {
     this: DisconnectableImpl[S] =>
 
-    override protected[rescala] def reevaluate(turn: Turn[S], before: Unit, indeps: Set[ReSource[S]]): ReevaluationResult[Value, S] = {
-      scheduleHandler(this, turn, dependency, fun, fail)
-      ReevaluationResultWithoutValue[S](propagate = false)
+    override protected[rescala] def reevaluate(dt: DynamicTicket[S], before: Value): ReevaluationResult[Value, S] = {
+      dt.staticDependPulse(dependency) match {
+        case Pulse.NoChange => ReevaluationResultWithoutValue[S](propagate = false)
+        case Pulse.empty =>ReevaluationResultWithoutValue[S](propagate = false)
+        case Pulse.Value(v) => ReevaluationResultEffect(() => fun(v), propagate = false)
+        case Pulse.Exceptional(t) =>
+          if (fail eq null) throw new UnhandledFailureException(this, t)
+          else ReevaluationResultEffect(() => fail(t), propagate = false)
+      }
     }
     override def remove()(implicit fac: Scheduler[S]): Unit = {
       disconnect()
       strongObserveReferences.synchronized(strongObserveReferences.remove(this))
-    }
-  }
-
-  private def scheduleHandler[T, S <: Struct](obs: Obs[T,S], turn:Turn[S], dependency: ReSourciV[Pulse[T], S], fun: T => Unit, fail: Throwable => Unit) = {
-    turn.makeStaticReevaluationTicket().staticDependPulse(dependency) match {
-      case Pulse.NoChange =>
-      case Pulse.empty =>
-      case Pulse.Value(v) => turn.observe(() => fun(v))
-      case Pulse.Exceptional(t) =>
-        if (fail eq null) throw new UnhandledFailureException(obs, t)
-        else turn.observe(() => fail(t))
     }
   }
 

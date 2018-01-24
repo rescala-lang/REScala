@@ -1,6 +1,6 @@
 package rescala.levelbased
 
-import rescala.core.{InitialChange, ReSource, Reactive, ReevaluationResultWithValue, ReevaluationResultWithoutValue}
+import rescala.core.{DynamicTicket, InitialChange, ReSource, Reactive, ReevaluationStateAccess}
 import rescala.twoversion.TwoVersionPropagationImpl
 
 import scala.collection.mutable.ArrayBuffer
@@ -20,30 +20,36 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
     _propagating.clear()
   }
 
-  override def evaluate(head: Reactive[S]): Unit = {
-    head.reevaluate(this, head.state.base(token), head.state.incoming(this)) match {
-      case res @ ReevaluationResultWithValue(_, indepsChanged, indepsAfter, _, _, _, propagate) =>
-        if (!indepsChanged) {
-          applyResult(head)(res)
-        } else {
-          val newLevel = maximumLevel(indepsAfter) + 1
-          val redo = head.state.level(this) < newLevel
-          if (redo) {
-            levelQueue.enqueue(newLevel)(head)
-          } else {
-            res.commitDependencyDiff(this, head)
-            applyResult(head, newLevel)(res)
-          }
-        }
-      case ReevaluationResultWithoutValue(propagate) =>
-        if (propagate) enqueueOutgoing(head)
+  def commitDependencyDiff(turn: ReevaluationStateAccess[S], node: Reactive[S], dt : DynamicTicket[S]): Unit = {
+    if(dt.indepsChanged) {
+      dt.indepsRemoved.foreach(turn.drop(_, node))
+      dt.indepsAdded.foreach(turn.discover(_, node))
+      turn.writeIndeps(node, dt.indepsAfter)
     }
-
   }
 
-  private def applyResult(head: ReSource[S], minLevel: Int = -42)(res: ReevaluationResultWithValue[head.Value, S]): Unit = {
-    if (res.valueChanged) {writeValue(head, minLevel)(res.value)}
-    if (res.propagate) enqueueOutgoing(head, minLevel)
+  override def evaluate(head: Reactive[S]): Unit = {
+    val dt = makeDynamicReevaluationTicket(indeps = head.state.incoming(this))
+    val reevRes = head.reevaluate(dt, head.state.base(token))
+
+    if (!dt.indepsChanged) {
+      reevRes.forValue(writeValue(head))
+      reevRes.forEffect(observe)
+      if (reevRes.propagate) enqueueOutgoing(head)
+    } else {
+      val newLevel = maximumLevel(dt.indepsAfter) + 1
+      val redo = head.state.level(this) < newLevel
+      if (redo) {
+        levelQueue.enqueue(newLevel)(head)
+      } else {
+        commitDependencyDiff(this, head, dt)
+        reevRes.forValue(writeValue(head,newLevel))
+        reevRes.forEffect(observe)
+        if (reevRes.propagate) enqueueOutgoing(head, newLevel)
+      }
+    }
+
+
 
   }
 

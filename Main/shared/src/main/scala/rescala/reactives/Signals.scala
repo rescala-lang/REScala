@@ -84,21 +84,21 @@ object Signals {
 private abstract class StaticSignal[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: (StaticTicket[S], () => T) => T, name: REName)
   extends Base[Pulse[T], S](_bud, name) with Signal[T, S] {
 
-  override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[T], indeps: Set[ReSource[S]]): ReevaluationResult[Value, S] = {
-    def newValue = expr(turn.makeStaticReevaluationTicket(), () => before.get)
-
+  override protected[rescala] def reevaluate(st: DynamicTicket[S], before: Pulse[T]): ReevaluationResult[Value, S] = {
+    def newValue = expr(st, () => before.get)
     val newPulse = Pulse.tryCatch(Pulse.diffPulse(newValue, before))
-    ReevaluationResultWithValue.StaticPulse(newPulse, indeps)
+
+    ReevaluationResultWithValue.StaticPulse(newPulse)
   }
 }
 
 private abstract class DynamicSignal[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: DynamicTicket[S] => T, name: REName)
   extends Base[Pulse[T], S](_bud, name) with Signal[T, S] {
 
-  override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[T], indeps: Set[ReSource[S]]): ReevaluationResult[Value, S] = {
-    val dt = turn.makeDynamicReevaluationTicket(indeps)
+  override protected[rescala] def reevaluate(dt: DynamicTicket[S], before: Pulse[T]): ReevaluationResult[Value, S] = {
+    dt.enableDynamic = true
     val newPulse = Pulse.tryCatch {Pulse.diffPulse(expr(dt), before)}
-    ReevaluationResultWithValue.DynamicPulse(newPulse, dt.indepsAfter, dt.indepsAdded, dt.indepsRemoved)
+    ReevaluationResultWithValue.DynamicPulse(newPulse)
   }
 }
 

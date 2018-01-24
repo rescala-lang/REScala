@@ -49,7 +49,7 @@ class Fold extends RETests {
     assert(s.now == 10)
   }
 
-  allEngines("iterate the Functionis Executed Every Time The Event Fires") { engine => import engine._
+  allEngines("iterate the Function is Executed Every Time The Event Fires") { engine => import engine._
     var test: Int = 0
     val e = Evt[Int]
     val f = (x: Int) => {test += 1; x}
