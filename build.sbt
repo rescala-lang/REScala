@@ -266,7 +266,7 @@ lazy val cfg = new {
     "-Xfuture",
   )
 
-  lazy val strictScalac = scalacOptions ++= List(
+  lazy val strictScalac = Compile / compile / scalacOptions ++= List(
     //"-Xlog-implicits" ,
     //"-Yno-predef" ,
     //"-Yno-imports" ,
