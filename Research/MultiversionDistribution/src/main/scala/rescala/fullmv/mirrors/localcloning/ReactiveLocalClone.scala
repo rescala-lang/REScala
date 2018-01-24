@@ -13,7 +13,7 @@ object ReactiveLocalClone {
       val turn = creation /* fuckit */ .asInstanceOf[FullMVTurn]
       creation.create(Set(), valuePersistency) { initialState =>
         val reflection = new ReactiveReflectionImpl[A](turn.host, None, initialState, ticket.rename.derive("SignalReflection")) with Signal[A, FullMVStruct] {
-          override def disconnect()(implicit engine: Engine[FullMVStruct]): Unit = ???
+          override def disconnect()(implicit engine: Scheduler[FullMVStruct]): Unit = ???
         }
         connectAndInitializeLocalPushClone(signal, turn, reflection, valuePersistency.isTransient, ticket.rename.name)
         reflection
@@ -28,7 +28,7 @@ object ReactiveLocalClone {
       creation.create(Set(), valuePersistency) { initialState =>
         val turn = creation /* fuckit */ .asInstanceOf[FullMVTurn]
         val reflection = new ReactiveReflectionImpl[P](turn.host, Some(turn), initialState, ticket.rename.derive("EventReflection")) with Event[P, FullMVStruct] {
-          override def disconnect()(implicit engine: Engine[FullMVStruct]): Unit = ???
+          override def disconnect()(implicit engine: Scheduler[FullMVStruct]): Unit = ???
         }
         connectAndInitializeLocalPushClone(event, turn, reflection, valuePersistency.isTransient, ticket.rename.name)
         reflection

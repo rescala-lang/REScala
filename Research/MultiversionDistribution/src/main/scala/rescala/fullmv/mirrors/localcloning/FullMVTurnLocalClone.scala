@@ -1,52 +1,55 @@
 package rescala.fullmv.mirrors.localcloning
 
 import rescala.fullmv.mirrors._
-import rescala.fullmv.sgt.synchronization.SubsumableLock
+import rescala.fullmv.sgt.synchronization._
 import rescala.fullmv.{FullMVEngine, FullMVTurn, TransactionSpanningTreeNode, TurnPhase}
 
 import scala.concurrent.Future
 
 object FullMVTurnLocalClone {
   def apply(turn: FullMVTurn, reflectionHost: FullMVEngine): FullMVTurn = {
-    reflectionHost.getCachedOrReceiveRemote(turn.guid, { cacheNow =>
+    reflectionHost.getCachedOrReceiveRemote(turn.guid, {
       val mirrorHost = turn.host
       val localMirror: FullMVTurnProxy = turn
       val mirrorProxy: FullMVTurnProxy = new FullMVTurnProxy {
-        override def addPredecessorAndReleasePhaseLock(predecessorSpanningTree: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = {
-          localMirror.addPredecessorAndReleasePhaseLock(predecessorSpanningTree.map(FullMVTurnLocalClone(_, mirrorHost)))
-        }
-        override def maybeNewReachableSubtree(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = {
-          localMirror.maybeNewReachableSubtree(FullMVTurnLocalClone(attachBelow, mirrorHost), spanningSubTreeRoot.map(FullMVTurnLocalClone(_, mirrorHost)))
-        }
-        override def acquirePhaseLockAndGetEstablishmentBundle(): Future[(TurnPhase.Type, TransactionSpanningTreeNode[FullMVTurn])] = {
-          localMirror.acquirePhaseLockAndGetEstablishmentBundle().map { case (phase, spanningTree) =>
-            (phase, spanningTree.map(FullMVTurnLocalClone(_, reflectionHost)))
-          }(FullMVEngine.notWorthToMoveToTaskpool)
-        }
+        override def acquirePhaseLockIfAtMost(maxPhase: TurnPhase.Type): Future[TurnPhase.Type] = localMirror.acquirePhaseLockIfAtMost(maxPhase)
+        override def addPredecessor(tree: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = localMirror.addPredecessor(tree.map(FullMVTurnLocalClone(_, mirrorHost)))
+        override def maybeNewReachableSubtree(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = localMirror.maybeNewReachableSubtree(FullMVTurnLocalClone(attachBelow, mirrorHost), spanningSubTreeRoot.map(FullMVTurnLocalClone(_, mirrorHost)))
+
         override def asyncRemoteBranchComplete(forPhase: TurnPhase.Type): Unit = localMirror.asyncRemoteBranchComplete(forPhase)
         override def addRemoteBranch(forPhase: TurnPhase.Type): Future[Unit] = localMirror.addRemoteBranch(forPhase)
         override def newSuccessor(successor: FullMVTurn): Future[Unit] = localMirror.newSuccessor(FullMVTurnLocalClone(successor, mirrorHost))
         override def asyncReleasePhaseLock(): Unit = localMirror.asyncReleasePhaseLock()
 
-        override def getLockedRoot = localMirror.getLockedRoot
-        override def tryLock(): Future[Option[SubsumableLock]] = localMirror.tryLock().map(SubsumableLockLocalClone(_, reflectionHost.lockHost))(FullMVEngine.notWorthToMoveToTaskpool)
-        override def trySubsume(lockedNewParent: SubsumableLock) = localMirror.trySubsume(SubsumableLockLocalClone(lockedNewParent, mirrorHost.lockHost))
+        override def getLockedRoot: Future[Option[Host.GUID]] = localMirror.getLockedRoot
+        override def remoteTryLock(): Future[TryLockResult] = localMirror.remoteTryLock().map {
+          case Locked(lockedRoot) => Locked(SubsumableLockLocalClone(lockedRoot, reflectionHost.lockHost))
+          case Blocked => Blocked
+          case Deallocated => Deallocated
+        } (FullMVEngine.notWorthToMoveToTaskpool)
+        override def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult] = {
+          val parameterOnMirrorHostWithTemporaryReference = SubsumableLockLocalClone(lockedNewParent, mirrorHost.lockHost)
+          val res = localMirror.remoteTrySubsume(parameterOnMirrorHostWithTemporaryReference)
+          parameterOnMirrorHostWithTemporaryReference.localSubRefs(1)
+          res
+        }
       }
 
-      val reflection = new FullMVTurnReflection(reflectionHost, turn.guid, mirrorProxy)
+      val reflection = new FullMVTurnReflection(reflectionHost, turn.guid, turn.phase, mirrorProxy)
+      // TODO this probably doesnt work due to endless loop; the predecessor turns have to subscibe asynchronously, not as a nested call.
+      reflection.newPredecessors(turn.selfNode.map{ pred =>
+        if(pred == reflection) reflection else FullMVTurnLocalClone(pred, reflectionHost)
+      })
 
       val reflectionProxy = new FullMVTurnReflectionProxy {
         override def newPhase(phase: TurnPhase.Type): Future[Unit] = reflection.newPhase(phase)
-        override def newPredecessors(predecessors: Seq[Host.GUID]): Future[Unit] = reflection.newPredecessors(predecessors)
+        override def newPredecessors(predecessors: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = reflection.newPredecessors(predecessors.map(FullMVTurnLocalClone(_, reflectionHost)))
       }
       val (initPhase, initPreds) = turn.addReplicator(reflectionProxy)
       reflection.newPhase(initPhase)
       reflection.newPredecessors(initPreds)
 
-      // since we initialize synchronously and don't have to worry about blocking receiver threads, its fine to initialize at the end here
-      cacheNow(reflection)
-
       reflection
-    }, Unit)
+    }).instance
   }
 }

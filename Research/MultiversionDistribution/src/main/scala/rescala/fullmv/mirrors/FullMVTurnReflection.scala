@@ -2,10 +2,10 @@ package rescala.fullmv.mirrors
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import rescala.fullmv.{FullMVEngine, FullMVTurn, TransactionSpanningTreeNode, TurnPhase}
+import rescala.fullmv._
 import rescala.fullmv.TurnPhase.Type
 import rescala.fullmv.mirrors.Host.GUID
-import rescala.fullmv.sgt.synchronization.{SubsumableLock, SubsumableLockEntryPoint, TrySubsumeResult}
+import rescala.fullmv.sgt.synchronization.{SubsumableLock, SubsumableLockEntryPoint, TryLockResult, TrySubsumeResult}
 
 import scala.concurrent.{Await, Future}
 
@@ -63,7 +63,7 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
   }
 
   override def newPredecessors(tree: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit] = synchronized {
-    val newPreds = indexChildren(predecessors, selfNode)
+    val newPreds = indexChildren(predecessors, _selfNode.getOrElse(CaseClassTransactionSpanningTreeNode[FullMVTurn](this, Array.empty[CaseClassTransactionSpanningTreeNode[FullMVTurn]])))
     if(newPreds ne predecessors) {
       predecessors = newPreds
       val reps = replicatorLock.synchronized {
@@ -103,8 +103,10 @@ class FullMVTurnReflection(override val host: FullMVEngine, override val guid: H
   override def newSuccessor(successor: FullMVTurn): Future[Unit] = proxy.newSuccessor(successor)
 
   override def getLockedRoot: Future[Option[GUID]] = proxy.getLockedRoot
-  override def tryLock(): Future[Option[SubsumableLock]] = proxy.tryLock()
-  override def trySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult] = proxy.trySubsume(lockedNewParent)
+  override def tryLock(): Future[TryLockResult] = proxy.remoteTryLock()
+  override def remoteTryLock(): Future[TryLockResult] = proxy.remoteTryLock()
+  override def trySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult] = proxy.remoteTrySubsume(lockedNewParent)
+  override def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult] = proxy.remoteTrySubsume(lockedNewParent)
 
   override def toString: String = s"FullMVTurnReflection($guid on $host, ${TurnPhase.toString(phase)}${if(localBranchCountBuffer.get != 0) s"(${localBranchCountBuffer.get})" else ""})"
 }

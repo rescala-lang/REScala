@@ -6,9 +6,10 @@ import rescala.core._
 import rescala.fullmv.NotificationResultAction._
 import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation._
 import rescala.fullmv.mirrors.{FullMVTurnProxy, FullMVTurnReflectionProxy, Hosted}
+import rescala.fullmv.sgt.synchronization.SubsumableLockEntryPoint
 import rescala.fullmv.tasks.{Notification, Reevaluation}
 
-trait FullMVTurn extends TurnImpl[FullMVStruct] with FullMVTurnProxy with Hosted {
+trait FullMVTurn extends TurnImpl[FullMVStruct] with FullMVTurnProxy with SubsumableLockEntryPoint with Hosted {
   override val host: FullMVEngine
 
   //========================================================Internal Management============================================================

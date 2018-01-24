@@ -7,6 +7,7 @@ import rescala.fullmv.sgt.synchronization._
 
 import scala.concurrent.Future
 
+// TODO should be able to shortcut the localAddRefs(x)+failedRefChanges=1 into localAddRefs(x-1)
 class SubsumableLockReflection(override val host: SubsumableLockHost, override val guid: Host.GUID, val proxy: SubsumableLockProxy) extends SubsumableLock {
   override def getLockedRoot: Future[Option[GUID]] = proxy.getLockedRoot
   override def tryLock0(hopCount: Int): Future[TryLockResult0] = {
@@ -15,13 +16,13 @@ class SubsumableLockReflection(override val host: SubsumableLockHost, override v
         val res = remoteRes match {
           case RemoteLocked(lock) =>
             if (lock == this) {
-              if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this locked remotely; ${hopCount + 1} new refs")
+              if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this locked remotely; $hopCount new refs")
               if(hopCount > 0) localAddRefs(hopCount)
             } else {
-              if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this locked new remote parent $lock, passing ${hopCount + 1} new refs")
+              if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this locked remotely under new parent $lock, passing ${hopCount + 1} new refs")
               lock.localAddRefs(hopCount + 1)
             }
-            Locked0(0, lock)
+            Locked0(1, lock)
           case RemoteBlocked(lock) =>
             if (lock == this) {
               if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this blocked remotely; $hopCount new refs")
@@ -30,7 +31,7 @@ class SubsumableLockReflection(override val host: SubsumableLockHost, override v
               if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this blocked on new remote parent $lock, passing ${hopCount + 1} new refs")
               lock.localAddRefs(hopCount + 1)
             }
-            Locked0(0, lock)
+            Blocked0(1, lock)
           case RemoteGCd =>
             throw new AssertionError(s"since $this is holding a local reference to the remote $proxy, the remote instance should be prevented from deallocation?")
         }
@@ -47,19 +48,21 @@ class SubsumableLockReflection(override val host: SubsumableLockHost, override v
       assert(lockedNewParent eq this, s"instance caching broken? $this came into contact with different reflection of same origin on same host")
       if (DEBUG) println(s"[${Thread.currentThread().getName}] trySubsume $this to itself reentrant success; $hopCount new refs")
       // safe because locked by the current thread and thus cannot be deallocated
-      if(hopCount > 0) localAddRefs(hopCount)
-      Successful0.zeroFutured
+      if(hopCount > 1) localAddRefs(hopCount)
+      Future.successful(Successful0(1))
     } else if(tryLocalAddRefs(1)) {
+      if(SubsumableLock.DEBUG) println(s"adding connection establishment reference remote trySubsume parameter $lockedNewParent")
+      lockedNewParent.localAddRefs(1)
       proxy.remoteTrySubsume(lockedNewParent).map{ remoteRes =>
         val res = remoteRes match {
           case RemoteSubsumed =>
             if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this remote trySubsume succeeded, sending ${hopCount + 1} new refs to $lockedNewParent")
             lockedNewParent.localAddRefs(hopCount + 1)
-            Successful0(0)
+            Successful0(1)
           case RemoteBlocked(newParent) =>
             if (SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}]: $this remote trySubsume failed, passing $hopCount new refs to $newParent")
             if(hopCount > 0) localAddRefs(hopCount)
-            Blocked0(0, newParent)
+            Blocked0(1, newParent)
           case RemoteGCd =>
             throw new AssertionError(s"since $this is holding a local reference to the remote $proxy, the remote instance should be prevented from deallocation?")
         }

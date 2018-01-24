@@ -1,11 +1,11 @@
 package rescala.fullmv.mirrors
 
-import rescala.fullmv.sgt.synchronization.SubsumableLockEntryPoint
+import rescala.fullmv.sgt.synchronization.{SubsumableLock, TryLockResult, TrySubsumeResult}
 import rescala.fullmv.{FullMVTurn, TransactionSpanningTreeNode, TurnPhase}
 
 import scala.concurrent.Future
 
-trait FullMVTurnProxy extends SubsumableLockEntryPoint {
+trait FullMVTurnProxy {
   def addRemoteBranch(forPhase: TurnPhase.Type): Future[Unit]
   def asyncRemoteBranchComplete(forPhase: TurnPhase.Type): Unit
 
@@ -15,4 +15,8 @@ trait FullMVTurnProxy extends SubsumableLockEntryPoint {
 
   def maybeNewReachableSubtree(attachBelow: FullMVTurn, spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]): Future[Unit]
   def newSuccessor(successor: FullMVTurn): Future[Unit]
+
+  def getLockedRoot: Future[Option[Host.GUID]]
+  def remoteTryLock(): Future[TryLockResult]
+  def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult]
 }

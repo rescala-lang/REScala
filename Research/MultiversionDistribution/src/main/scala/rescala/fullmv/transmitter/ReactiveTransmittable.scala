@@ -301,17 +301,8 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
     promise.future
   }
 
-  @tailrec final def lookUpLocalLockParameterInstanceWithReference(guid: Host.GUID, endpoint: EndPointWithInfrastructure[Msg]): SubsumableLock = {
-    var instantiated = false
-    val lock = host.lockHost.getCachedOrReceiveRemote(guid, {
-      if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host connecting lock $guid")
-      instantiated = true
-      new SubsumableLockReflection(host.lockHost, guid, new SubsumableLockProxyToEndpoint(guid, endpoint))
-    }, _ => doAsync(endpoint, LockAsyncRemoteRefDropped(guid)))
-    if(instantiated || lock.tryNewLocalRef()) {
-      if(ReactiveTransmittable.DEBUG) println(s"[${Thread.currentThread().getName}] $host retrieved chached instance of $lock, added 1 new ref.")
-      lock
-    } else lookUpLocalLockParameterInstanceWithReference(guid, endpoint)
+  def lookUpLocalLockParameterInstanceWithReference(guid: Host.GUID, endpoint: EndPointWithInfrastructure[Msg]): SubsumableLock = {
+    host.lockHost.getCachedOrReceiveRemoteWithReference(guid, new SubsumableLockProxyToEndpoint(guid, endpoint))
   }
 
   def localLockReceiverInstance(guid: Host.GUID): Option[SubsumableLockProxy] = {
@@ -340,7 +331,7 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
       host.getCachedOrReceiveRemote(predGuid, {
         toConnect += predGuid
         new FullMVTurnReflection(host, predGuid, predPhase, new FullMVTurnMirrorProxyToEndpoint(predGuid, endpoint))
-      })
+      }).instance
     }
 
     val instance = host.getCachedOrReceiveRemote(guid, {
@@ -348,13 +339,16 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
       val turn = new FullMVTurnReflection(host, guid, phase, new FullMVTurnMirrorProxyToEndpoint(guid, endpoint))
       turn.newPredecessors(preds)
       turn
-    }, { found =>
-      if(found.isInstanceOf[FullMVTurnReflection]) {
-        val reflection = found.asInstanceOf[FullMVTurnReflectionProxyToEndpoint]
-        reflection.newPhase(phase)
-        reflection.newPredecessors(preds)
-      }
-    })
+    }) match {
+      case Found(found) =>
+        if(found.isInstanceOf[FullMVTurnReflection]) {
+          val reflection = found.asInstanceOf[FullMVTurnReflectionProxyToEndpoint]
+          reflection.newPhase(phase)
+          reflection.newPredecessors(preds)
+        }
+        found
+      case Instantiated(x) => x
+    }
     if(toConnect.nonEmpty) doAsync(endpoint, AsyncAddReplicator(toConnect))
     instance
   }
@@ -438,7 +432,7 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
           case Some(turn) =>
             val (predPhase, predTree) = turn.addReplicator(new FullMVTurnReflectionProxyToEndpoint(receiver, endpoint))
             (predPhase, sendTree(predTree))
-          case None => (TurnPhase.Completed, CaseClassTransactionSpanningTreeNode((receiver, TurnPhase.Completed), Array.empty))
+          case None => (TurnPhase.Completed, CaseClassTransactionSpanningTreeNode((receiver, TurnPhase.Completed), Array.empty[CaseClassTransactionSpanningTreeNode[(Host.GUID, TurnPhase.Type)]]))
         })
       }.toMap))
     case AsyncAddReplicatorSyncData(syncedData) =>
@@ -464,7 +458,7 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
       host.getCachedOrReceiveRemote(predGuid, {
         toConnect += predGuid
         new FullMVTurnReflection(host, predGuid, predPhase, new FullMVTurnMirrorProxyToEndpoint(predGuid, endpoint))
-      })
+      }).instance
     }
     if(toConnect.nonEmpty) doAsync(endpoint, AsyncAddReplicator(toConnect))
     preds
@@ -505,7 +499,7 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
       }
     case TurnTryLock(receiver) =>
       localTurnReceiverInstance(receiver) match {
-        case Some(turn) => turn.tryLock().map {
+        case Some(turn) => turn.remoteTryLock().map {
           case Locked(lock) =>
             assert(lock.host == host)
             TurnLockedResponse(lock.guid)
@@ -516,7 +510,7 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
       }
     case TurnTrySubsume(receiver, lockedNewParent) =>
       localTurnReceiverInstance(receiver) match {
-        case Some(turn) => turn.trySubsume(lookUpLocalLockParameterInstanceWithReference(lockedNewParent, endpoint)).map {
+        case Some(turn) => turn.remoteTrySubsume(lookUpLocalLockParameterInstanceWithReference(lockedNewParent, endpoint)).map {
           case Successful => TurnSuccessfulResponse
           case Blocked => TurnBlockedResponse
           case Deallocated => TurnDeallocatedResponse
@@ -600,14 +594,14 @@ abstract class ReactiveTransmittable[P, R <: ReSourciV[Pulse[P], FullMVStruct], 
           maybeRoot
       }(FullMVEngine.notWorthToMoveToTaskpool)
     }
-    override def tryLock(): Future[TryLockResult] = {
+    override def remoteTryLock(): Future[TryLockResult] = {
       doRequest(endpoint, TurnTryLock(guid)).map {
         case TurnLockedResponse(lock) => Locked(lookUpLocalLockParameterInstanceWithReference(lock, endpoint))
         case TurnBlockedResponse => Blocked
         case TurnDeallocatedResponse => Deallocated
       }(executeInTaskPool)
     }
-    override def trySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult] = {
+    override def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult] = {
       assert(lockedNewParent.host == host.lockHost)
       doRequest(endpoint, TurnTrySubsume(guid, lockedNewParent.guid)).map {
         case TurnSuccessfulResponse => Successful

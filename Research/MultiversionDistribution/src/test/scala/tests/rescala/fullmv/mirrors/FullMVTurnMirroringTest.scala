@@ -2,9 +2,9 @@ package tests.rescala.fullmv.mirrors
 
 import org.scalatest.FunSuite
 import rescala.fullmv._
-import rescala.fullmv.sgt.synchronization.SubsumableLock
 import rescala.fullmv.mirrors.localcloning.FullMVTurnLocalClone
 
+import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
 class FullMVTurnMirroringTest extends FunSuite {
@@ -104,18 +104,21 @@ class FullMVTurnMirroringTest extends FunSuite {
     // 0 -> A -> B
     val turnOneRoot = host0.newTurn()
     val turnOne: FullMVTurn = turnOneRoot
+    println(s"turnOne on host0: $turnOne with ${turnOne.asInstanceOf[FullMVTurnImpl].subsumableLock.get()}")
     val turnOneA = FullMVTurnLocalClone(turnOne, hostA)
     val turnOneB = FullMVTurnLocalClone(turnOneA, hostB)
 
     // A -> 0 -> B
     val turnTwoRoot = hostA.newTurn()
     val turnTwoA: FullMVTurn = turnTwoRoot
+    println(s"turnTwo on hostA: $turnTwoA with ${turnTwoA.asInstanceOf[FullMVTurnImpl].subsumableLock.get()}")
     val turnTwo = FullMVTurnLocalClone(turnTwoA, host0)
     val turnTwoB = FullMVTurnLocalClone(turnTwo, hostB)
 
     // B -> A -> 0
     val turnThreeRoot = hostB.newTurn()
     val turnThreeB: FullMVTurn = turnThreeRoot
+    println(s"turnThree on hostB: $turnThreeB with ${turnThreeB.asInstanceOf[FullMVTurnImpl].subsumableLock.get()}")
     val turnThreeA = FullMVTurnLocalClone(turnThreeB, hostA)
     val turnThree = FullMVTurnLocalClone(turnThreeA, host0)
 
@@ -144,9 +147,9 @@ class FullMVTurnMirroringTest extends FunSuite {
     assert(turnThreeB.isTransitivePredecessor(turnOneB) === false)
     assert(turnThreeB.isTransitivePredecessor(turnTwoB) === false)
 
-    SubsumableLock.underLock(turnOneB, turnTwoB, Duration.Zero) {
-      assert(DecentralizedSGT.ensureOrder(turnOneB, turnTwoB, Duration.Zero) === FirstFirst)
-    }
+    val locked = SerializationGraphTracking.tryLock(turnOneB, turnTwoB, UnlockedUnknown).asInstanceOf[LockedSameSCC].lock
+    Await.result(turnTwoB.addPredecessor(turnOneB.selfNode), Duration.Zero)
+    locked.asyncUnlock()
 
     assert(turnOne.isTransitivePredecessor(turnTwo) === false)
     assert(turnOne.isTransitivePredecessor(turnThree) === false)
@@ -169,9 +172,9 @@ class FullMVTurnMirroringTest extends FunSuite {
     assert(turnThreeB.isTransitivePredecessor(turnOneB) === false)
     assert(turnThreeB.isTransitivePredecessor(turnTwoB) === false)
 
-    SubsumableLock.underLock(turnThreeA, turnTwoA, Duration.Zero) {
-      assert(DecentralizedSGT.ensureOrder(turnThreeA, turnTwoA, Duration.Zero) === SecondFirst)
-    }
+    val locked2 = SerializationGraphTracking.tryLock(turnOneB, turnTwoB, UnlockedUnknown).asInstanceOf[LockedSameSCC].lock
+    Await.result(turnThreeA.addPredecessor(turnTwoA.selfNode), Duration.Zero)
+    locked2.asyncUnlock()
 
     assert(turnOne.isTransitivePredecessor(turnTwo) === false)
     assert(turnOne.isTransitivePredecessor(turnThree) === false)

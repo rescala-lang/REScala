@@ -272,7 +272,7 @@ lazy val cfg = new {
     "-unchecked",
     "-feature",
     "-Xlint",
-    "-Xfuture"
+    "-Xfuture",
   )
 
   lazy val strictScalac = scalacOptions ++= List(

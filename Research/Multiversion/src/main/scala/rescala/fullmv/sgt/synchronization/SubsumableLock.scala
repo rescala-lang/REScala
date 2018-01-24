@@ -52,8 +52,8 @@ trait SubsumableLock extends SubsumableLockProxy with Hosted {
 
   def asyncUnlock(): Unit = {
     asyncUnlock0()
-    if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this unlocked")
-//    localSubRefs(1)
+    if(SubsumableLock.DEBUG) println(s"[${Thread.currentThread().getName}] $this unlocked, dropping temporary thread reference")
+    localSubRefs(1)
   }
 
   @tailrec final def tryLocalAddRefs(refs: Int): Boolean = {
