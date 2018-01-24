@@ -1,7 +1,5 @@
 package rescala
 
-import java.util.concurrent.{Executor, Executors}
-
 import rescala.core.{Scheduler, Struct}
 import rescala.levelbased.LevelBasedPropagationEngines
 import rescala.parrp._
@@ -22,11 +20,6 @@ object Engines extends LevelBasedPropagationEngines {
   implicit val parrp: Scheduler[ParRP] = parrpWithBackoff(() => new Backoff)
 
   implicit val locksweep: Scheduler[LSStruct] = locksweepWithBackoff(() => new Backoff())
-
-  implicit val parallellocksweep: TwoVersionSchedulerImpl[LSStruct, ParallelLockSweep] = {
-    val ex: Executor = Executors.newWorkStealingPool()
-    new TwoVersionSchedulerImpl[LSStruct, ParallelLockSweep]("ParallelLockSweep", (engine, prior) => new ParallelLockSweep(new Backoff(), ex, engine, prior))
-  }
 
   implicit val default: Scheduler[ParRP] = parrp
 
