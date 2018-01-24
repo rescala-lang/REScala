@@ -8,8 +8,6 @@ package rescala.core
 trait Turn[S <: Struct] {
   private[rescala] def makeDynamicReevaluationTicket(indeps: Set[ReSource[S]]): DynamicTicket[S]
   private[rescala] def makeStaticReevaluationTicket(): StaticTicket[S]
-  private[rescala] def makeAdmissionPhaseTicket(): AdmissionTicket[S]
-  private[rescala] def makeWrapUpPhaseTicket(): WrapUpTicket[S]
 
   /**
     * Registers a new handler function that is called after all changes were written and committed.
