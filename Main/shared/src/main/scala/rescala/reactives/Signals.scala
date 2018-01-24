@@ -88,7 +88,7 @@ private abstract class StaticSignal[T, S <: Struct](_bud: S#State[Pulse[T], S], 
     def newValue = expr(turn.makeStaticReevaluationTicket(), () => before.get)
 
     val newPulse = Pulse.tryCatch(Pulse.diffPulse(newValue, before))
-    ReevaluationResult.StaticPulse(newPulse, indeps)
+    ReevaluationResultWithValue.StaticPulse(newPulse, indeps)
   }
 }
 
@@ -98,7 +98,7 @@ private abstract class DynamicSignal[T, S <: Struct](_bud: S#State[Pulse[T], S],
   override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[T], indeps: Set[ReSource[S]]): ReevaluationResult[Value, S] = {
     val dt = turn.makeDynamicReevaluationTicket(indeps)
     val newPulse = Pulse.tryCatch {Pulse.diffPulse(expr(dt), before)}
-    ReevaluationResult.DynamicPulse(newPulse, dt.indepsAfter, dt.indepsAdded, dt.indepsRemoved)
+    ReevaluationResultWithValue.DynamicPulse(newPulse, dt.indepsAfter, dt.indepsAdded, dt.indepsRemoved)
   }
 }
 

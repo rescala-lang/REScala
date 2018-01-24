@@ -2,7 +2,7 @@ package rescala.reactivestreams
 
 
 import org.reactivestreams.{Publisher, Subscriber, Subscription}
-import rescala.core.{Base, Scheduler, Pulse, REName, ReSource, ReSourciV, ReevaluationResult, Struct, Turn, ValuePersistency}
+import rescala.core.{Base, Scheduler, Pulse, REName, ReSource, ReSourciV, ReevaluationResultWithValue, Struct, Turn, ValuePersistency}
 
 import scala.util.{Failure, Success}
 
@@ -33,23 +33,23 @@ object REPublisher {
     var requested: Long = 0
     var cancelled = false
 
-    override protected[rescala] def reevaluate(ticket: Turn[S], before: Pulse[T], indeps: Set[ReSource[S]]): ReevaluationResult[Value, S] = {
+    override protected[rescala] def reevaluate(ticket: Turn[S], before: Pulse[T], indeps: Set[ReSource[S]]): ReevaluationResultWithValue[Value, S] = {
       ticket.makeStaticReevaluationTicket().staticDependPulse(dependency).toOptionTry match {
-        case None => ReevaluationResult.StaticPulse[T, S](Pulse.NoChange, indeps)
+        case None => ReevaluationResultWithValue.StaticPulse[T, S](Pulse.NoChange, indeps)
         case Some(tryValue) =>
           synchronized {
             while (requested <= 0 && !cancelled) wait(100)
-            if (cancelled) ReevaluationResult.DynamicPulse[T, S](Pulse.NoChange, indepsAfter = Set.empty, indepsAdded = Set.empty, indepsRemoved = Set(dependency))
+            if (cancelled) ReevaluationResultWithValue.DynamicPulse[T, S](Pulse.NoChange, indepsAfter = Set.empty, indepsAdded = Set.empty, indepsRemoved = Set(dependency))
             else {
               requested -= 1
               tryValue match {
                 case Success(v) =>
                   subscriber.onNext(v)
-                  ReevaluationResult.StaticPulse[T, S](Pulse.NoChange, indeps)
+                  ReevaluationResultWithValue.StaticPulse[T, S](Pulse.NoChange, indeps)
                 case Failure(t) =>
                   subscriber.onError(t)
                   cancelled = true
-                  ReevaluationResult.DynamicPulse[T, S](Pulse.NoChange, indepsAfter = Set.empty, indepsAdded = Set.empty, indepsRemoved = Set(dependency))
+                  ReevaluationResultWithValue.DynamicPulse[T, S](Pulse.NoChange, indepsAfter = Set.empty, indepsAdded = Set.empty, indepsRemoved = Set(dependency))
               }
             }
           }

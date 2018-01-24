@@ -1,6 +1,6 @@
 package rescala.reactives
 
-import rescala.core.Pulse.NoChange
+import rescala.core.Pulse.{Exceptional, NoChange, Value}
 import rescala.core._
 import rescala.reactives.Signals.Diff
 
@@ -29,7 +29,7 @@ object Events {
 
   /** Creates change events */
   def change[A, S <: Struct](signal: Signal[A, S])(implicit ticket: CreationTicket[S]): Event[Diff[A], S] = ticket { initTurn =>
-    initTurn.create[Pulse[Diff[A]], ChangeEvent[A, S]](Set(signal), ValuePersistency.Event) {
+    initTurn.create[Pulse[Diff[A]], ChangeEvent[A, S]](Set(signal), ValuePersistency.ChangeEvent) {
       state => new ChangeEvent[A, S](state, signal, ticket.rename) with DisconnectableImpl[S]
     }
   }
@@ -38,20 +38,27 @@ object Events {
 private abstract class StaticEvent[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: StaticTicket[S] => Pulse[T], name: REName)
   extends Base[Pulse[T], S](_bud, name) with Event[T, S] {
   override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[T], indeps: Set[ReSource[S]]): ReevaluationResult[Value, S] =
-    ReevaluationResult.StaticPulse(Pulse.tryCatch(expr(turn.makeStaticReevaluationTicket()), onEmpty = NoChange), indeps)
+    ReevaluationResultWithValue.StaticPulse(Pulse.tryCatch(expr(turn.makeStaticReevaluationTicket()), onEmpty = NoChange), indeps)
 }
+
 
 private abstract class ChangeEvent[T, S <: Struct](_bud: S#State[Pulse[Diff[T]], S], signal: Signal[T, S], name: REName)
   extends Base[Pulse[Diff[T]], S](_bud, name) with Event[Diff[T], S] {
   override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[Diff[T]], indeps: Set[ReSource[S]]): ReevaluationResult[Value, S] = {
-    val pulse = {
-      val st = turn.makeStaticReevaluationTicket()
-      val from = st.staticBefore(signal)
-      val to = st.staticDependPulse(signal)
-      if (from != Pulse.empty && to != Pulse.empty && from != to) Pulse.Value(Diff(from, to))
-      else Pulse.NoChange
+    val st = turn.makeStaticReevaluationTicket()
+    val to = st.staticDependPulse(signal)
+    if (to == Pulse.empty) return ReevaluationResultWithoutValue(propagate = false)
+    before match {
+      case Value(u) =>
+        val from = u.to
+        if (from == to) ReevaluationResultWithoutValue(propagate = false)
+        else ReevaluationResultWithValue.StaticPulse(Pulse.Value(Diff(from, to)), indeps)
+      case NoChange =>
+        val res = Diff(Pulse.empty, st.staticDependPulse(signal))
+        ReevaluationResultWithValue.Static(Pulse.Value(res), valueChanged = true, propagate = false, indeps)
+      case x@Exceptional(_) =>
+        ReevaluationResultWithValue.StaticPulse(x, indeps) //should not happen, change does not acutally access other pulses
     }
-    ReevaluationResult.StaticPulse(pulse, indeps)
   }
 }
 
@@ -60,6 +67,6 @@ private abstract class DynamicEvent[T, S <: Struct](_bud: S#State[Pulse[T], S], 
   override protected[rescala] def reevaluate(turn: Turn[S], before: Pulse[T], indeps: Set[ReSource[S]]): ReevaluationResult[Value, S] = {
     val dt = turn.makeDynamicReevaluationTicket(indeps)
     val newPulse = Pulse.tryCatch(expr(dt), onEmpty = NoChange)
-    ReevaluationResult.DynamicPulse(newPulse, dt.indepsAfter, dt.indepsAdded, dt.indepsRemoved)
+    ReevaluationResultWithValue.DynamicPulse(newPulse, dt.indepsAfter, dt.indepsAdded, dt.indepsRemoved)
   }
 }

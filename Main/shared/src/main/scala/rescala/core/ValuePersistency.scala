@@ -7,6 +7,7 @@ sealed class ValuePersistency[V](
 )
 
 object ValuePersistency {
+
   private object _Event extends ValuePersistency[Pulse[Nothing]](Pulse.NoChange, isTransient = true, ignitionRequiresReevaluation = false)
   def Event[V]: ValuePersistency[Pulse[V]] = _Event.asInstanceOf[ValuePersistency[Pulse[V]]]
 
@@ -26,4 +27,8 @@ object ValuePersistency {
 
   private object _ObserverE extends ValuePersistency[Unit]((), isTransient = true, ignitionRequiresReevaluation = false)
   def EventObserver[V]: ValuePersistency[Unit] = _ObserverE.asInstanceOf[ValuePersistency[Unit]]
+
+  private object _ChangeEvent extends ValuePersistency[Pulse[Nothing]](Pulse.NoChange, isTransient = false, ignitionRequiresReevaluation = true)
+  def ChangeEvent[V]: ValuePersistency[Pulse[V]] = _ChangeEvent.asInstanceOf[ValuePersistency[Pulse[V]]]
+
 }

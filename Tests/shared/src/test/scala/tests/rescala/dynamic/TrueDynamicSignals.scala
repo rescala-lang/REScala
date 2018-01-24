@@ -236,8 +236,7 @@ class TrueDynamicSignals extends RETests {
   allEngines("creating Signals Inside Signals") { engine => import engine._
 
     // ignore for locksweep, as it does not support predeclared levels, so would run into an endless loop below
-    whenever(engine != Engines.locksweep &&
-      engine != rescala.Engines.parallellocksweep) {
+    whenever(engine != Engines.locksweep) {
 
       val outside = Var(1)
 

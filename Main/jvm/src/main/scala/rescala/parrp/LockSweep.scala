@@ -21,7 +21,7 @@ class LSPropagationStruct[P, S <: Struct](current: P, transient: Boolean, val lo
   var counter: Int = 0
   def isGlitchFreeReady: Boolean = counter == 0
   var anyInputChanged: LockSweep = null
-  var hasChanged: LockSweep = null
+  var isPropagating: LockSweep = null
 }
 
 trait LSInterTurn {
@@ -61,7 +61,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
       discover(dep, reactive)
     }
     writeIndeps(reactive, incoming)
-    if(ignitionRequiresReevaluation || incoming.exists(_.state.hasChanged == this)) {
+    if(ignitionRequiresReevaluation || incoming.exists(_.state.isPropagating == this)) {
       reactive.state.anyInputChanged = this
       reactive.state.willWrite = this
       if (reactive.state.isGlitchFreeReady) {
@@ -78,7 +78,6 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
           s"buffer ${pulsing.state}, controlled by ${pulsing.state.lock} with owner ${pulsing.state.lock.getOwner}" +
             s" was written by $this who locks with $key, by now the owner is ${pulsing.state.lock.getOwner}")
     super.writeState(pulsing)(value)
-    pulsing.state.hasChanged = this
   }
 
 
@@ -126,10 +125,9 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
   override def initializationPhase(initialChanges: Traversable[InitialChange[TState]]): Unit = initialChanges.foreach { ic =>
     ic.source.state.counter = 0
     ic.source.state.anyInputChanged = this
-    ic.source.state.hasChanged = this
     ic.source.state.hasWritten = this
     writeState(ic.source)(ic.value)
-    done(ic.source, hasChanged = true)
+    done(ic.source, propagate = true)
   }
 
   override def propagationPhase(): Unit = {
@@ -138,10 +136,12 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
     }
   }
 
-  def done(head: ReSource[TState], hasChanged: Boolean): Unit = {
+  def done(head: ReSource[TState], propagate: Boolean): Unit = {
+    if(propagate) head.state.isPropagating = this
+
     head.state.outgoing(this).foreach { r =>
       r.state.counter -= 1
-      if (hasChanged) r.state.anyInputChanged = this
+      if (propagate) r.state.anyInputChanged = this
       if (r.state.counter <= 0) enqueue(r)
     }
   }
@@ -151,20 +151,25 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
   }
 
   def evaluate(head: Reactive[TState]): Unit = {
-    if (head.state.anyInputChanged != this) done(head, hasChanged = false)
+    if (head.state.anyInputChanged != this) done(head, propagate = false)
     else {
-      val res = head.reevaluate(this, head.state.base(token), head.state.incoming(this))
-      res.commitDependencyDiff(this, head)
-      if (head.state.isGlitchFreeReady) {
-        // val outgoings = res.commitValueChange()
-        if (res.valueChanged) writeState(head)(res.value)
+      head.reevaluate(this, head.state.base(token), head.state.incoming(this)) match {
+        case res@ReevaluationResultWithValue(_, _, _, _, _, _, _) =>
+          res.commitDependencyDiff(this, head)
+          if (head.state.isGlitchFreeReady) {
+            // val outgoings = res.commitValueChange()
+            if (res.valueChanged) writeState(head)(res.value)
 
-        head.state.hasWritten = this
+            head.state.hasWritten = this
 
-        // done(head, res.valueChanged, outgoings)
-        done(head, res.valueChanged)
+            // done(head, res.valueChanged, outgoings)
+            done(head, res.propagate)
+          }
+        case ReevaluationResultWithoutValue(propagate) =>
+          done(head, propagate)
       }
     }
+
   }
 
   override def writeIndeps(node: Reactive[TState], indepsAfter: Set[ReSource[TState]]): Unit = {

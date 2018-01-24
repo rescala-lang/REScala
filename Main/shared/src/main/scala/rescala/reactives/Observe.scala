@@ -25,7 +25,7 @@ object Observe {
 
     override protected[rescala] def reevaluate(turn: Turn[S], before: Unit, indeps: Set[ReSource[S]]): ReevaluationResult[Value, S] = {
       scheduleHandler(this, turn, dependency, fun, fail)
-      ReevaluationResult.Static[Unit, S](Unit, propagate = false, indeps)
+      ReevaluationResultWithoutValue[S](propagate = false)
     }
     override def remove()(implicit fac: Scheduler[S]): Unit = {
       disconnect()

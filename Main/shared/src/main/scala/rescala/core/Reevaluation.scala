@@ -1,15 +1,21 @@
 package rescala.core
 
+
+sealed trait ReevaluationResult[+T, S] {
+  val propagate: Boolean
+}
+
 /**
   * Indicator for the result of a re-evaluation of a reactive value.
   */
-class ReevaluationResult[+T, S <: Struct] private(
-  val valueChanged: Boolean,
-  val indepsChanged: Boolean,
-  val indepsAfter: Set[ReSource[S]],
-  val value: T,
-  indepsAdded: Set[ReSource[S]], indepsRemoved: Set[ReSource[S]]
-) {
+case class ReevaluationResultWithValue[+T, S <: Struct] private(
+  valueChanged: Boolean,
+  indepsChanged: Boolean,
+  indepsAfter: Set[ReSource[S]],
+  value: T,
+  indepsAdded: Set[ReSource[S]], indepsRemoved: Set[ReSource[S]],
+  override val propagate: Boolean
+) extends ReevaluationResult[T, S] {
 
   def commitDependencyDiff(turn: ReevaluationStateAccess[S], node: Reactive[S]): Unit = {
     if(indepsChanged) {
@@ -21,16 +27,20 @@ class ReevaluationResult[+T, S <: Struct] private(
 
 }
 
-object ReevaluationResult {
+case class ReevaluationResultWithoutValue[S <: Struct] (
+  propagate: Boolean
+) extends ReevaluationResult[Nothing, S]
+
+object ReevaluationResultWithValue {
 
   /**
     * Result of the static re-evaluation of a reactive value.
     */
-  def StaticPulse[P, S <: Struct](value: Pulse[P], unchangedIndeps: Set[ReSource[S]]): ReevaluationResult[Pulse[P], S] =
-    Static(value, value.isChange, unchangedIndeps)
+  def StaticPulse[P, S <: Struct](value: Pulse[P], unchangedIndeps: Set[ReSource[S]]): ReevaluationResultWithValue[Pulse[P], S] =
+    Static(value, value.isChange, value.isChange, unchangedIndeps)
 
-  def Static[P, S <: Struct](value: P, propagate: Boolean, unchangedIndeps: Set[ReSource[S]]): ReevaluationResult[P, S] =
-    new ReevaluationResult(value = value, valueChanged = propagate, indepsChanged = false, indepsAfter = unchangedIndeps, indepsAdded = Set.empty, indepsRemoved = Set.empty)
+  def Static[P, S <: Struct](value: P, valueChanged: Boolean, propagate: Boolean, unchangedIndeps: Set[ReSource[S]]): ReevaluationResultWithValue[P, S] =
+    new ReevaluationResultWithValue(value = value, valueChanged = valueChanged, propagate = propagate, indepsChanged = false, indepsAfter = unchangedIndeps, indepsAdded = Set.empty, indepsRemoved = Set.empty)
 
 
 
@@ -39,12 +49,12 @@ object ReevaluationResult {
     * When using a dynamic dependency model, the dependencies of a value may change at runtime if it is re-evaluated
     */
   def DynamicPulse[P, S <: Struct]
-  (value: Pulse[P], indepsAfter: Set[ReSource[S]], indepsAdded: Set[ReSource[S]], indepsRemoved: Set[ReSource[S]]): ReevaluationResult[Pulse[P], S] =
-    Dynamic(value, value.isChange, indepsAfter, indepsAdded, indepsRemoved)
+  (value: Pulse[P], indepsAfter: Set[ReSource[S]], indepsAdded: Set[ReSource[S]], indepsRemoved: Set[ReSource[S]]): ReevaluationResultWithValue[Pulse[P], S] =
+    Dynamic(value, value.isChange, value.isChange, indepsAfter, indepsAdded, indepsRemoved)
 
   def Dynamic[P, S <: Struct]
-  (value: P, propagate: Boolean, indepsAfter: Set[ReSource[S]], indepsAdded: Set[ReSource[S]], indepsRemoved: Set[ReSource[S]]): ReevaluationResult[P, S] =
-    new ReevaluationResult(value = value, valueChanged = propagate, indepsChanged = indepsAdded.nonEmpty || indepsRemoved.nonEmpty,
+  (value: P, valueChanged: Boolean, propagate: Boolean, indepsAfter: Set[ReSource[S]], indepsAdded: Set[ReSource[S]], indepsRemoved: Set[ReSource[S]]): ReevaluationResultWithValue[P, S] =
+    new ReevaluationResultWithValue(value = value, valueChanged = valueChanged, propagate = propagate, indepsChanged = indepsAdded.nonEmpty || indepsRemoved.nonEmpty,
       indepsAfter = indepsAfter, indepsAdded = indepsAdded, indepsRemoved = indepsRemoved)
 }
 
@@ -64,7 +74,7 @@ trait DisconnectableImpl[S <: Struct] extends Reactive[S] with Disconnectable[S]
 
   abstract final override protected[rescala] def reevaluate(turn: Turn[S], before: Value, indeps: Set[ReSource[S]]): ReevaluationResult[Value, S] = {
     if (disconnected) {
-      ReevaluationResult.Dynamic[Value, S](before, propagate = false, indepsAfter = Set.empty, indepsAdded = Set.empty, indepsRemoved = indeps)
+      ReevaluationResultWithValue.Dynamic[Value, S](before, propagate = false, valueChanged = false, indepsAfter = Set.empty, indepsAdded = Set.empty, indepsRemoved = indeps)
     }
     else {
       super.reevaluate(turn, before, indeps)

@@ -1,5 +1,6 @@
 package tests.rescala
 
+import rescala.core.CreationTicket
 import tests.rescala.util.RETests
 
 
@@ -53,22 +54,22 @@ class ReactiveCreationInTurnsTest extends RETests {
       v2.change.observe(v => fail(s"created mapped signals should not change, but change was $v"))
     }
 
-    {
-      val v1 = Var(0)
-      var v2: Signal[Int] = null
-      var v1changedFired = false
-      implicitEngine.transaction(v1) { implicit t =>
-        val c1 = v1.change
-        c1.observe(v => v1changedFired = true)
-        v2 = v1.map(_ + 1)
-        val c2 = v2.change
-        c2.observe(v => fail("created mapped signals should not change when admitting in same turn, but change was " + v))
-        v1.admit(10)
-      }
-      assert(v1changedFired, "created change events should fire when admitting in same turn, but did not.")
-      assert(v1.now == 10)
-      assert(v2.now == 11)
-    }
+//    {
+//      val v1 = Var(0)
+//      var v2: Signal[Int] = null
+//      var v1changedFired = false
+//      implicitEngine.transaction(v1) { implicit t =>
+//        val c1 = v1.change
+//        c1.observe(v => v1changedFired = true)
+//        v2 = v1.map(_ + 1)
+//        val c2 = v2.change
+//        c2.observe(v => fail("created mapped signals should not change when admitting in same turn, but change was " + v))
+//        v1.admit(10)
+//      }
+//      assert(v1changedFired, "created change events should fire when admitting in same turn, but did not.")
+//      assert(v1.now == 10)
+//      assert(v2.now == 11)
+//    }
 
     {
       val v1 = Var(0)
@@ -85,6 +86,31 @@ class ReactiveCreationInTurnsTest extends RETests {
     }
 
   }
+
+//  allEngines("create changes during reevaluation"){ engine => import engine._
+//    val v = Var(1)
+//    val mapped = v.map(_ + 0)
+//
+//    val sm = Signal { mapped.change.apply() }
+//    val sd = dynamic() {t => t.depend(mapped.change(CreationTicket.fromTicketDImplicit(t, implicitly))) }
+//
+//
+//    //intercept[NoSuchElementException](sm.now)
+//    //assert(sm.now.isEmpty)
+//    //assert(sd.now.isEmpty)
+//
+//    v.set(2)
+//
+//    assert(sm.now.get.pair == 1 -> 2)
+//    assert(sd.now.get.pair == 1 -> 2)
+//
+//    v.set(3)
+//
+//    assert(sm.now.get.pair == 2 -> 3)
+//    assert(sd.now.get.pair == 2 -> 3)
+//
+//  }
+
 
 
 }

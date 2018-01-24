@@ -56,7 +56,7 @@ class ReactiveReflectionImpl[P](override val host: FullMVEngine, var ignoreTurn:
   override def buffer(turn: FullMVTurn, value: Pulse[P]): Unit = _buffer.put(turn, value)
   override def submit(action: FullMVAction): Unit = host.threadPool.submit(action)
 
-  override protected[rescala] def reevaluate(turn: Turn[FullMVStruct], before: Value, indeps: Set[ReSource[FullMVStruct]]): ReevaluationResult[Value, FullMVStruct] = {
+  override protected[rescala] def reevaluate(turn: Turn[FullMVStruct], before: Value, indeps: Set[ReSource[FullMVStruct]]): ReevaluationResultWithValue[Value, FullMVStruct] = {
     val value = _buffer.remove(turn)
     if(value == null) {
       if(ignoreTurn.contains(turn)){
@@ -64,10 +64,10 @@ class ReactiveReflectionImpl[P](override val host: FullMVEngine, var ignoreTurn:
       } else {
         throw new AssertionError(s"$this was reevaluated for $turn but no value was buffered.")
       }
-      ReevaluationResult.StaticPulse(Pulse.NoChange: Pulse[P], indeps)
+      ReevaluationResultWithValue.StaticPulse(Pulse.NoChange: Pulse[P], indeps)
     } else {
       if(ignoreTurn.contains(turn)) ignoreTurn = None
-      ReevaluationResult.StaticPulse(value, indeps)
+      ReevaluationResultWithValue.StaticPulse(value, indeps)
     }
   }
 }

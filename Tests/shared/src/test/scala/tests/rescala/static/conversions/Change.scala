@@ -111,7 +111,26 @@ class Change extends RETests {
     assert(test === ((3, 4)))
   }
 
-  /* complex */
+  /* with empty signals */
+
+  allEngines("changing emptyness") { engine => import engine._
+    val v2 = Var.empty[String]
+
+    val e2 = v2.change.map(_.pair).recover{case t => Some("failed" -> t.toString)}
+
+    val ored: Event[(String, String)] = e2
+
+    val log = ored.list()
+
+    assert(log.now === Nil)
+
+    v2.set("two")
+    assert(log.now === List())
+
+    v2.set("three")
+    assert(log.now === List("two" -> "three"))
+  }
+
 
   allEngines("folding changing and emptyness") { engine => import engine._
     val v1 = Var.empty[String]

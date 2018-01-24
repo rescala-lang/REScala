@@ -1,6 +1,6 @@
 package rescala.fullmv.tasks
 
-import rescala.core.{Pulse, ReSource, Reactive, ReevaluationResult}
+import rescala.core.{Pulse, ReSource, Reactive, ReevaluationResultWithValue}
 import rescala.fullmv.NotificationResultAction.{Glitched, ReevOutResult}
 import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation.{FollowFraming, NextReevaluation, NoSuccessor}
 import rescala.fullmv._
@@ -14,7 +14,7 @@ trait RegularReevaluationHandling extends ReevaluationHandling[Reactive[FullMVSt
   def doReevaluation(): Unit = {
 //    assert(Thread.currentThread() == turn.userlandThread, s"$this on different thread ${Thread.currentThread().getName}")
     assert(turn.phase == TurnPhase.Executing, s"$turn cannot reevaluate (requires executing phase")
-    val res: ReevaluationResult[node.Value, FullMVStruct] = try {
+    val res: ReevaluationResultWithValue[node.Value, FullMVStruct] = try {
       turn.host.withTurn(turn) {
         node.reevaluate(turn, node.state.reevIn(turn), node.state.incomings)
       }
@@ -22,7 +22,7 @@ trait RegularReevaluationHandling extends ReevaluationHandling[Reactive[FullMVSt
       case exception: Throwable =>
         System.err.println(s"[FullMV Error] Reevaluation of $node failed with ${exception.getClass.getName}: ${exception.getMessage}; Completing reevaluation as NoChange.")
         exception.printStackTrace()
-        ReevaluationResult.StaticPulse[Nothing, FullMVStruct](Pulse.NoChange, node.state.incomings).asInstanceOf[ReevaluationResult[node.Value, FullMVStruct]]
+        ReevaluationResultWithValue.StaticPulse[Nothing, FullMVStruct](Pulse.NoChange, node.state.incomings).asInstanceOf[ReevaluationResultWithValue[node.Value, FullMVStruct]]
     }
     res.commitDependencyDiff(turn, node)
     processReevaluationResult(if(res.valueChanged) Some(res.value) else None)
