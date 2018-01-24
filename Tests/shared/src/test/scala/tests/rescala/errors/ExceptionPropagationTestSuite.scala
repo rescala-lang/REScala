@@ -1,5 +1,4 @@
-package tests.rescala
-
+package tests.rescala.errors
 
 import rescala.core.Pulse
 import rescala.reactives.RExceptions.UnhandledFailureException

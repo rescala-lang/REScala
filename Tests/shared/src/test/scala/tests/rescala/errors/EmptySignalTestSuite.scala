@@ -1,4 +1,4 @@
-package tests.rescala.signals
+package tests.rescala.errors
 
 import tests.rescala.util.RETests
 

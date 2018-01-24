@@ -1,4 +1,4 @@
-package tests.rescala.signals
+package tests.rescala.statics
 
 import tests.rescala.util.RETests
 
@@ -21,7 +21,7 @@ class MacroTestSuite extends RETests {
     val e = Evt[Int]
     val s: Signal[Int] = Signal { 2 * e.latest(0).apply() }
 
-    s.change += { _ => test += 1 }
+    s.changed += { _ => test += 1 }
     assert(s.now === 0)
     e.fire(2)
     assert(s.now === 4)
@@ -37,7 +37,7 @@ class MacroTestSuite extends RETests {
     val e = Evt[Int]
     val s: Signal[Option[Int]] = Signal { e.latestOption().apply() }
 
-    s.change += { _ => test += 1 }
+    s.changed += { _ => test += 1 }
     assert(s.now === None)
     e.fire(2)
     assert(s.now === Some(2))
@@ -45,6 +45,8 @@ class MacroTestSuite extends RETests {
     assert(s.now === Some(3))
     assert(test === 2)
   }
+
+
 
 
   allEngines("conversion Functions Work In Signals In Object Construction In Overriden Def"){ engine => import engine._
@@ -67,7 +69,7 @@ class MacroTestSuite extends RETests {
     }
 
     a.obj()
-    s.change += { _ => test += 1 }
+    s.changed += { _ => test += 1 }
     assert(s.now === 0)
     e.fire(2)
     assert(s.now === 4)
@@ -77,73 +79,11 @@ class MacroTestSuite extends RETests {
   }
 
 
-  allEngines("signals Nested In Vars"){ engine => import engine._
-
-    val a = Var(3)
-    val b = Var(Signal(a()))
-    val c = Signal.dynamic(b()())
-
-    assert(c.now === 3)
-    a set 4
-    assert(c.now === 4)
-    b set Signal(5)
-    assert(c.now === 5)
-
-  }
 
 
-  allEngines("nested Defined Signals"){ engine => import engine._
-    val a = Var(3)
-    val b = Signal.dynamic {
-      val c = Signal { a() }
-      c()
-    }
-
-    assert(b.now === 3)
-    a set 4
-    assert(b.now === 4)
-    a set 5
-    assert(b.now === 5)
-  }
 
 
-  allEngines("use Of Inside Signal"){ engine => import engine._
-    val outside = Var(1)
-    val inside = Var(10)
 
-    def sig = Signal { outside() }
-
-    val testsig = Signal.dynamic {
-      def sig = Signal { inside() }
-      sig()
-    }
-
-    assert(testsig.now === 10)
-    outside set 2
-    inside set 11
-    assert(testsig.now === 11)
-    assert(sig.now === 2)
-  }
-
-  allEngines("use Of Outside Signal"){ engine => import engine._
-    val outside = Var(1)
-    val inside = Var(10)
-
-    def sig()(implicit turnSource: CreationTicket) = Signal { outside() }
-
-    val testsig = Signal.dynamic {
-      {
-        def sig = Signal { inside() }
-        sig()
-      }
-      sig().apply()
-    }
-
-    assert(testsig.now === 1)
-    outside set 2
-    inside set 11
-    assert(testsig.now === 2)
-  }
 
 
   allEngines("case Classes And Objects"){ engine => import engine._
@@ -253,17 +193,6 @@ class MacroTestSuite extends RETests {
     assert(s2.now === List(1, 2, 4))
   }
 
-  allEngines("pattern Matching Anonymous Function Nested Signals"){ engine => import engine._
-    val v1 = Var(1)
-    val v2 = Var(2)
-    val s1 = Signal { List(Some(v1), None, Some(v2), None) }
-    val s2 = Signal.dynamic {
-      s1() collect { case Some(n) => n() }
-    }
-    assert(s2.now === List(1, 2))
-    v1.set(10)
-    assert(s2.now === List(10, 2))
-  }
 
   allEngines("abstract Type Member"){ engine =>
     // the renamed engines are a workaround for this bug: https://issues.scala-lang.org/browse/SI-10036
@@ -293,80 +222,8 @@ class MacroTestSuite extends RETests {
     assert(s.now == 27)
   }
 
-  allEngines("outer And Inner Values"){ engine => import engine._
-    val v = Var(0)
-    object obj {
-      def sig = Signal { v() }
-    }
-
-    val evt = Evt[Int]
-
-    val testsig = Signal.dynamic {
-      val localsig = obj.sig
-      val latest = evt latest -1
-
-      localsig() + latest()
-    }
-
-    assert(testsig.now === -1)
-    evt.fire(100)
-    assert(testsig.now === 100)
-    v set 10
-    assert(testsig.now === 110)
-    evt.fire(10)
-    assert(testsig.now === 20)
-    evt.fire(5)
-    assert(testsig.now === 15)
-    v set 50
-    assert(testsig.now === 55)
-  }
 
 
-  allEngines("chained Signals1"){ engine => import engine._
-
- import scala.language.reflectiveCalls
-
-    val v1 = Var { 1 }
-    val v2 = Var { 2 }
-    val v = Var { List(new {val s = v1 }, new {val s = v2 }) }
-
-    val sig = Signal.dynamic { v() map (_.s()) }
-
-    assert(sig.now === List(1, 2))
-    v1 set 5
-    assert(sig.now === List(5, 2))
-    v2 set 7
-    assert(sig.now === List(5, 7))
-    v set v.now.reverse
-    assert(sig.now === List(7, 5))
-  }
-
-  allEngines("chained Signals2"){ engine => import engine._
-
- import scala.language.reflectiveCalls
-
-    val v1 = Var { 20 }
-    val v2 = Var { new {def signal = Signal { v1() } } }
-    val v3 = Var { new {val signal = Signal { v2() } } }
-
-    val s = Signal { v3() }
-
-    val sig = Signal.dynamic { s().signal().signal(): @unchecked }
-
-    assert(sig.now === 20)
-    v1 set 30
-    assert(sig.now === 30)
-    v2 set new {def signal = Signal { 7 + v1() } }
-    assert(sig.now === 37)
-    v1 set 10
-    assert(sig.now === 17)
-    v3 set new {val signal = Signal { new {def signal = Signal { v1() } } } }
-    assert(sig.now === 10)
-    v2 set new {def signal = Signal { 10 + v1() } }
-    assert(sig.now === 10)
-    v1 set 80
-    assert(sig.now === 80)
-  }
 
 
   allEngines("function As Getter For Signal"){ engine => import engine._
@@ -400,26 +257,6 @@ class MacroTestSuite extends RETests {
     assert(sig.now === None)
     e.fire(30)
     assert(sig.now === Some(30))
-  }
-
-  allEngines("extracting Signal Side Effects"){ engine => import engine._
-    val e1 = Evt[Int]
-    def newSignal(): Signal[Int] = e1.count()
-
-    val macroRes = Signal {
-      newSignal()()
-    }
-    val normalRes = Signals.dynamic() { t: DynamicTicket =>
-      t.depend(newSignal())
-    }
-    assert(macroRes.now === 0, "before, macro")
-    assert(normalRes.now === 0, "before, normal")
-    e1.fire(1)
-    assert(macroRes.now === 1, "after, macro")
-    assert(normalRes.now === 1, "after, normal")
-    e1.fire(1)
-    assert(macroRes.now === 2, "end, macro")
-    assert(normalRes.now === 1, "end, normal")
   }
 
 

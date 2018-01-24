@@ -1,4 +1,4 @@
-package tests.rescala.signals
+package tests.rescala.static
 
 import tests.rescala.util.RETests
 
@@ -38,15 +38,15 @@ class VarTestSuite extends RETests {
   allEngines("change Event Only Triggered On Value Change"){ engine => import engine._
     var changes = 0
     val v = Var(1)
-    val changed = v.change
-    changed += { _ => changes += 1 }
+    val changed = v.observe { _ => changes += 1 }
 
-    v.set(2)
     assert(changes == 1)
-    v.set(3)
+    v.set(2)
     assert(changes == 2)
     v.set(3)
-    assert(changes == 2)
+    assert(changes == 3)
+    v.set(3)
+    assert(changes == 3)
   }
 
   allEngines("dependant Is Only Invoked On Value Change"){ engine => import engine._
