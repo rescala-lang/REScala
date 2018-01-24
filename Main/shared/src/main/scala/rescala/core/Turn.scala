@@ -5,7 +5,7 @@ package rescala.core
   *
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
-trait Turn[S <: Struct] extends ReevaluationStateAccess[S] {
+trait Turn[S <: Struct] {
   private[rescala] def makeDynamicReevaluationTicket(indeps: Set[ReSource[S]]): DynamicTicket[S]
   private[rescala] def makeStaticReevaluationTicket(): StaticTicket[S]
   private[rescala] def makeAdmissionPhaseTicket(): AdmissionTicket[S]
@@ -21,7 +21,7 @@ trait Turn[S <: Struct] extends ReevaluationStateAccess[S] {
 
 
 
-trait TurnImpl[S <: Struct] extends Turn[S] with Creation[S] with ComputationStateAccess[S] {
+trait TurnImpl[S <: Struct] extends Turn[S] with Creation[S] with ComputationStateAccess[S] with ReevaluationStateAccess[S] {
   private[rescala] def makeDynamicReevaluationTicket(indeps: Set[ReSource[S]]): DynamicTicket[S] = new DynamicTicket[S](this, indeps)
   private[rescala] def makeStaticReevaluationTicket(): StaticTicket[S] = new StaticTicket[S](this)
   private[rescala] def makeAdmissionPhaseTicket(): AdmissionTicket[S] = new AdmissionTicket[S](this)
