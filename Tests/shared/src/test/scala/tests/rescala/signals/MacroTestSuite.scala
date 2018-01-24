@@ -1,49 +1,8 @@
-package tests.rescala
+package tests.rescala.signals
 
-
-import rescala.Infiltrator.assertLevel
+import tests.rescala.util.RETests
 
 class MacroTestSuite extends RETests {
-
-
-
-  allEngines("signal Reevaluates The Expression"){ engine => import engine._
-    val v = Var(0)
-    var i = 1
-    val s: Signal[Int] = Signal { v(): @unchecked; i }
-    i = 2
-    v.set(2)
-    assert(s.now === 2)
-  }
-
-  allEngines("the Expression Is Not Evaluated Every Time Get Val Is Called"){ engine => import engine._
-    var a = 10
-    val s: Signal[Int] = Signal { 1 + 1 + a }
-    assert(s.now === 12)
-    a = 11
-    assert(s.now === 12)
-  }
-
-
-  allEngines("simple Signal Returns Correct Expressions"){ engine => import engine._
-    val s: Signal[Int] = Signal(1 + 1 + 1)
-    assert(s.now === 3)
-  }
-
-  allEngines("the Expression Is Evaluated Only Once"){ engine => import engine._
-
-    var a = 0
-    val v = Var(10)
-    val s1: Signal[Int] = Signal { a += 1; v() % 10 }
-
-
-    assert(a === 1)
-    v.set(11)
-    assert(a === 2)
-    v.set(21)
-    assert(a === 3)
-    assert(s1.now === 1)
-  }
 
   allEngines(".value acces works"){ engine => import engine._
 
@@ -55,43 +14,6 @@ class MacroTestSuite extends RETests {
     assert(s2.now === List(3,4,5))
 
   }
-
-  allEngines("handlers Are Executed"){ engine => import engine._
-
-    var test = 0
-    val v = Var(1)
-
-    val s1 = Signal { 2 * v() }
-    val s2 = Signal { 3 * v() }
-    val s3 = Signal { s1() + s2() }
-
-    s1.changed += { (_) => test += 1 }
-    s2.changed += { (_) => test += 1 }
-    s3.changed += { (_) => test += 1 }
-
-    assert(test === 0)
-
-    v.set(3)
-    assert(test === 3)
-
-  }
-
-  allEngines("level Is Correctly Computed"){ engine => import engine._
-
-    val v = Var(1)
-
-    val s1 = Signal { 2 * v() }
-    val s2 = Signal { 3 * v() }
-    val s3 = Signal { s1() + s2() }
-
-    assertLevel(v, 0)
-    assertLevel(s1, 1)
-    assertLevel(s2, 1)
-    assertLevel(s3, 2)
-
-
-  }
-
 
   allEngines("conversion Function With Argument In Signal"){ engine => import engine._
 
@@ -402,7 +324,7 @@ class MacroTestSuite extends RETests {
 
   allEngines("chained Signals1"){ engine => import engine._
 
-    import scala.language.reflectiveCalls
+ import scala.language.reflectiveCalls
 
     val v1 = Var { 1 }
     val v2 = Var { 2 }
@@ -421,7 +343,7 @@ class MacroTestSuite extends RETests {
 
   allEngines("chained Signals2"){ engine => import engine._
 
-    import scala.language.reflectiveCalls
+ import scala.language.reflectiveCalls
 
     val v1 = Var { 20 }
     val v2 = Var { new {def signal = Signal { v1() } } }

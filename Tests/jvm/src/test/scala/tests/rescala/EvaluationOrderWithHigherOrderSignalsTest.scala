@@ -1,6 +1,7 @@
 package tests.rescala
 
 import rescala.core.Scheduler
+import tests.rescala.util.RETests
 
 sealed trait ChangeX
 case object DontSet extends ChangeX

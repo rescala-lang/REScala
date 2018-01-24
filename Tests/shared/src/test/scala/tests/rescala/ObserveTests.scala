@@ -1,5 +1,7 @@
 package tests.rescala
 
+import tests.rescala.util.RETests
+
 class ObserveTests extends RETests {
 
   allEngines("can observe signals") { engine => import engine._

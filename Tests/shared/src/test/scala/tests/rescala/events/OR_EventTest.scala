@@ -3,7 +3,7 @@ package tests.rescala.events
 import java.util.concurrent.atomic.AtomicInteger
 
 import rescala.core.Pulse
-import tests.rescala.RETests
+import tests.rescala.util.RETests
 
 
 class OR_EventTest extends RETests {

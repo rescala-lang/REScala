@@ -1,6 +1,6 @@
 package tests.rescala
 
-
+import tests.rescala.util.RETests
 
 
 class ReactiveCreationInTurnsTest extends RETests {

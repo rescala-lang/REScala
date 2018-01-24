@@ -1,6 +1,8 @@
 package rescala
 
 import rescala.core.{ReSerializable, Struct}
+import rescala.macros.MacroTags.Static
+import rescala.macros.MacroTags.Dynamic
 import rescala.reactives.Source
 
 import scala.language.existentials
@@ -92,15 +94,26 @@ abstract class RescalaInterface[S <: Struct] {
     * @group create
     **/
   object Signal {
-    final def apply[A](expression: A)(implicit ticket: CreationTicket): Signal[A] = macro rescala.macros.ReactiveMacros.SignalMacro[A, S]
-    final def static[A](expression: A)(implicit ticket: CreationTicket): Signal[A] = macro rescala.macros.ReactiveMacros.SignalMacro[A, S]
-    final def dynamic[A](expression: A)(implicit ticket: CreationTicket): Signal[A] = macro rescala.macros.ReactiveMacros.SignalMacro[A, S]
+    final def apply[A](expression: A)(implicit ticket: CreationTicket): Signal[A] =
+      macro rescala.macros.ReactiveMacros.ReactiveExpression[A, S, Static, rescala.reactives.Signals.type]
+    final def static[A](expression: A)(implicit ticket: CreationTicket): Signal[A] =
+      macro rescala.macros.ReactiveMacros.ReactiveExpression[A, S, Static, rescala.reactives.Signals.type]
+    final def dynamic[A](expression: A)(implicit ticket: CreationTicket): Signal[A] =
+      macro rescala.macros.ReactiveMacros.ReactiveExpression[A, S, Dynamic, rescala.reactives.Signals.type]
   }
-  /** @group create */
+  /** Similar to [[Signal]] expressions, but resulting in an event.
+    * Accessed events return options depending on whether they fire or not,
+    * and the complete result of the expression is an event as well.
+    *
+    * @see [[Signal]]
+    * @group create */
   object Event {
-    final def apply[A](expression: Option[A])(implicit ticket: CreationTicket): Event[A] = macro rescala.macros.ReactiveMacros.EventMacro[A, S]
-    final def static[A](expression: Option[A])(implicit ticket: CreationTicket): Event[A] = macro rescala.macros.ReactiveMacros.EventMacro[A, S]
-    final def dynamic[A](expression: Option[A])(implicit ticket: CreationTicket): Event[A] = macro rescala.macros.ReactiveMacros.EventMacro[A, S]
+    final def apply[A](expression: Option[A])(implicit ticket: CreationTicket): Event[A] =
+      macro rescala.macros.ReactiveMacros.ReactiveExpression[A, S, Static, rescala.reactives.Events.type]
+    final def static[A](expression: Option[A])(implicit ticket: CreationTicket): Event[A] =
+      macro rescala.macros.ReactiveMacros.ReactiveExpression[A, S, Static, rescala.reactives.Events.type]
+    final def dynamic[A](expression: Option[A])(implicit ticket: CreationTicket): Event[A] =
+      macro rescala.macros.ReactiveMacros.ReactiveExpression[A, S, Dynamic, rescala.reactives.Events.type]
   }
 
   /** Contains static methods to create Events

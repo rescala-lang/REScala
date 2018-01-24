@@ -1,5 +1,7 @@
 package tests.rescala
 
+import tests.rescala.util.RETests
+
 class GlitchFreedomTestSuite extends RETests {
 
   allEngines("no Glitches In Simple Case") { engine =>

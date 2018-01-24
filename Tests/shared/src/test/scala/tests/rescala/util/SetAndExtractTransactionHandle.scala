@@ -1,4 +1,4 @@
-package rescala.testhelper
+package tests.rescala.util
 
 import rescala.core.{Creation, Scheduler, Struct}
 import rescala.reactives.Source

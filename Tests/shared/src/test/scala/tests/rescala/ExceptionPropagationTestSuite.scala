@@ -3,6 +3,7 @@ package tests.rescala
 
 import rescala.core.Pulse
 import rescala.reactives.RExceptions.UnhandledFailureException
+import tests.rescala.util.RETests
 
 import scala.util.{Failure, Success, Try}
 

@@ -1,6 +1,8 @@
 package tests.rescala.events
 
-class except_EventTest extends tests.rescala.RETests {
+import tests.rescala.util.RETests
+
+class except_EventTest extends RETests {
 
 
 

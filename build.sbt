@@ -32,8 +32,6 @@ lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
   rescalatags,
   reswing,
   stm,
-  testToolsJS,
-  testToolsJVM,
   testsJS,
   testsJVM,
   todolist,
@@ -60,19 +58,12 @@ lazy val rescalaJS = rescala.js
 
 //lazy val rescalaNative = rescala.native
 
-lazy val testTools = crossProject.in(file("TestTools"))
-  .settings(name := "rescala-testtoolss", cfg.base, cfg.noPublish, cfg.test)
-  .dependsOn(rescala)
-  .jvmSettings().jsSettings(cfg.js)
-lazy val testToolsJVM = testTools.jvm
-lazy val testToolsJS = testTools.js
-
 lazy val tests = crossProject.in(file("Tests"))
   .settings(name := "rescala-tests", cfg.noPublish, cfg.base, cfg.test)
   .dependsOn(rescala)
   .jvmSettings().jsSettings(cfg.js)
-lazy val testsJVM = tests.jvm.dependsOn(testToolsJVM % "test->test", stm)
-lazy val testsJS = tests.js.dependsOn(testToolsJS % "test->test")
+lazy val testsJVM = tests.jvm.dependsOn(stm)
+lazy val testsJS = tests.js
 
 lazy val documentation = project.in(file("Documentation/DocumentationProject"))
   .settings(cfg.base, cfg.noPublish,
@@ -175,12 +166,12 @@ lazy val paroli = project.in(file("Examples/paroli-chat"))
 lazy val fullmv = project.in(file("Research/Multiversion"))
   .settings( cfg.base, name := "rescala-multiversion",
     cfg.test, cfg.noPublish)
-  .dependsOn(rescalaJVM, testToolsJVM % "test->test")
+  .dependsOn(rescalaJVM, testsJVM % "test->test")
 
 lazy val distributedFullmv = project.in(file("Research/MultiversionDistribution"))
   .settings( cfg.base, name := "rescala-distributed-multiversion",
     cfg.test, cfg.noPublish, lib.retierTransmitter)
-  .dependsOn(fullmv, testToolsJVM % "test->test")
+  .dependsOn(fullmv, testsJVM % "test->test")
 
 lazy val meta = project.in(file("Research/Meta"))
   .dependsOn(rescalaJVM)
