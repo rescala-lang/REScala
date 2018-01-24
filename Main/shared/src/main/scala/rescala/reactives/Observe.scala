@@ -44,32 +44,16 @@ object Observe {
     }
   }
 
-  def weak[T, S <: Struct](dependency: ReSourciV[Pulse[T], S])(fun: T => Unit, fail: Throwable => Unit)(implicit ct: CreationTicket[S]): Observe[S] = {
-    ct(initTurn => initTurn.create[Unit, Obs[T, S]](Set(dependency), ValuePersistency.Observer) { state =>
+  def weak[T, S <: Struct](dependency: ReSourciV[Pulse[T], S], fireImmediately: Boolean = true)(fun: T => Unit, fail: Throwable => Unit)(implicit ct: CreationTicket[S]): Observe[S] = {
+    ct(initTurn => initTurn.create[Unit, Obs[T, S]](Set(dependency), if(fireImmediately) ValuePersistency.SignalObserver else ValuePersistency.EventObserver) { state =>
       new Obs[T, S](state, dependency, fun, fail, ct.rename) with DisconnectableImpl[S]
     })
   }
 
-  def strong[T, S <: Struct](dependency: ReSourciV[Pulse[T], S])(fun: T => Unit, fail: Throwable => Unit)(implicit maybe: CreationTicket[S]): Observe[S] = {
-    val obs = weak(dependency)(fun, fail)
+  def strong[T, S <: Struct](dependency: ReSourciV[Pulse[T], S], fireImmediately: Boolean = true)(fun: T => Unit, fail: Throwable => Unit)(implicit maybe: CreationTicket[S]): Observe[S] = {
+    val obs = weak(dependency, fireImmediately)(fun, fail)
     strongObserveReferences.synchronized(strongObserveReferences.add(obs))
     obs
   }
 
-}
-
-/**
-  * Reactives that can be observed by a function outside the reactive graph
-  *
-  * @tparam P Value type stored by the pulse of the reactive value
-  * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
-  */
-trait Observable[+P, S <: Struct] {
-  this : ReSourciV[Pulse[P], S] =>
-  /** add an observer
-    * @group accessor */
-  final def observe(
-    onSuccess: P => Unit,
-    onFailure: Throwable => Unit = null
-  )(implicit ticket: CreationTicket[S]): Observe[S] = Observe.strong(this)(onSuccess, onFailure)
 }

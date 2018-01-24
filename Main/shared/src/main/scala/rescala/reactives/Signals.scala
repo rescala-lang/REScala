@@ -51,6 +51,7 @@ object Signals {
   }
 
   class Diff[+A](val from: Pulse[A], val to: Pulse[A]) {
+
     def _1: A = from.get
     def _2: A = to.get
     def pair: (A, A) = {
@@ -63,7 +64,7 @@ object Signals {
       }
     }
 
-    override def toString: String = "Diff" + pair
+    override def toString: String = s"Diff($from, $to)"
   }
 
   object Diff {

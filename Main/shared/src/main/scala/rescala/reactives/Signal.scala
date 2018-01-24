@@ -19,7 +19,7 @@ import scala.util.control.NonFatal
   * @groupname accessors Accessors and observers
   * @groupprio accessor 5
   */
-trait Signal[+A, S <: Struct] extends ReSourciV[Pulse[A], S] with Observable[A, S] with MacroAccessors[A] with Disconnectable[S] {
+trait Signal[+A, S <: Struct] extends ReSourciV[Pulse[A], S] with MacroAccessors[A] with Disconnectable[S] {
 
   /** Returns the current value of the signal
     * @group accessor */
@@ -30,6 +30,13 @@ trait Signal[+A, S <: Struct] extends ReSourciV[Pulse[A], S] with Observable[A, 
       case other: Throwable => throw new IllegalStateException(s"Signal $this has an error value", other)
     }
   }
+
+  /** add an observer
+    * @group accessor */
+  final def observe(
+    onSuccess: A => Unit,
+    onFailure: Throwable => Unit = null
+  )(implicit ticket: CreationTicket[S]): Observe[S] = Observe.strong(this, fireImmediately = true)(onSuccess, onFailure)
 
   /** Uses a partial function `onFailure` to recover an error carried by the event into a value. */
   final def recover[R >: A](onFailure: PartialFunction[Throwable,R])(implicit ticket: CreationTicket[S]): Signal[R, S] = Signals.static(this) { st =>

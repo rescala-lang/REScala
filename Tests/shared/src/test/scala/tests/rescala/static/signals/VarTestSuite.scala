@@ -38,7 +38,7 @@ class VarTestSuite extends RETests {
   allEngines("change Event Only Triggered On Value Change"){ engine => import engine._
     var changes = 0
     val v = Var(1)
-    val changed = v.observe { _ => changes += 1 }
+    v.observe { _ => changes += 1 }
 
     assert(changes == 1)
     v.set(2)

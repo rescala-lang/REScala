@@ -20,12 +20,19 @@ import scala.language.experimental.macros
   * @groupname accessors Accessors and observers
   * @groupprio accessor 5
   */
-trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with Observable[T, S] with MacroAccessors[Option[T]] with Disconnectable[S] {
+trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[Option[T]] with Disconnectable[S] {
 
   /** Adds an observer.
     * @see observe
     * @group accessor*/
   final def +=(handler: T => Unit)(implicit ticket: CreationTicket[S]): Observe[S] = observe(handler)(ticket)
+
+  /** add an observer
+    * @group accessor */
+  final def observe(
+    onSuccess: T => Unit,
+    onFailure: Throwable => Unit = null
+  )(implicit ticket: CreationTicket[S]): Observe[S] = Observe.strong(this, fireImmediately = false)(onSuccess, onFailure)
 
   /** Uses a partial function `onFailure` to recover an error carried by the event into a value when returning Some(value),
     * or filters the error when returning None */

@@ -1,7 +1,6 @@
 package tests.rescala.reevaluations
 
 import org.scalatest.prop.Whenever
-import rescala.infiltration.Infiltrator.assertLevel
 import tests.rescala.util.RETests
 
 
