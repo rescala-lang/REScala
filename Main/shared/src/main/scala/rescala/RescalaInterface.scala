@@ -156,7 +156,7 @@ abstract class RescalaInterface[S <: Struct] {
     */
   def transactionWithWrapup[I, R](initialWrites: ReSource*)(admissionPhase: AdmissionTicket => I)(wrapUpPhase: (I, WrapUpTicket) => R): R = {
     var res: Option[R] = None
-    explicitEngine.executeTurn(initialWrites, at => {
+    transaction(initialWrites: _*)(at => {
       val apr: I = admissionPhase(at)
       at.wrapUp = wut => { res = Some(wrapUpPhase(apr, wut))}
     })
