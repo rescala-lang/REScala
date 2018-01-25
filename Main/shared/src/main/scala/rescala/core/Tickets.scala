@@ -163,5 +163,5 @@ object CreationTicket extends LowPriorityCreationImplicits {
 sealed trait LowPriorityCreationImplicits {
   implicit def fromEngineImplicit[S <: Struct](implicit factory: Scheduler[S], line: REName): CreationTicket[S] = CreationTicket(Right(factory))(line)
   implicit def fromEngine[S <: Struct](factory: Scheduler[S])(implicit line: REName): CreationTicket[S] = CreationTicket(Right(factory))(line)
-  implicit def fromNameImplicit[S <: Struct](line: String)(implicit factory: Scheduler[S]): CreationTicket[S] = CreationTicket(Right(factory))(line)
+  implicit def fromNameImplicit[S <: Struct](line: String)(implicit outer: CreationTicket[S]): CreationTicket[S] = CreationTicket(outer.self)(line)
 }
