@@ -116,7 +116,7 @@ final class AdmissionTicket[S <: Struct] private[rescala](val creation: Computat
   }
 }
 
-final class WrapUpTicket[S <: Struct] private[rescala](val creation: ComputationStateAccess[S] with Creation[S]) extends AnyVal with AnyTicket {
+final class WrapUpTicket[S <: Struct] private[rescala](val creation: ComputationStateAccess[S]) extends AnyVal with AnyTicket {
   def now[A](reactive: Signal[A, S]): A = {
     creation.dynamicAfter(reactive).get
   }
