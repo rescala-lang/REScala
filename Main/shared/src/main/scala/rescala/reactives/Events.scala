@@ -1,6 +1,7 @@
 package rescala.reactives
 
 import rescala.core.Pulse.{Exceptional, NoChange, Value}
+import rescala.core.Result.NoValue
 import rescala.core._
 import rescala.reactives.Signals.Diff
 
@@ -37,34 +38,34 @@ object Events {
 
 private abstract class StaticEvent[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: StaticTicket[S] => Pulse[T], name: REName)
   extends Base[Pulse[T], S](_bud, name) with Event[T, S] {
-  override protected[rescala] def reevaluate(dt: DynamicTicket[S], before: Pulse[T]): ReevaluationResult[Value, S] =
-    ReevaluationResultWithValue.StaticPulse(Pulse.tryCatch(expr(dt), onEmpty = NoChange))
+  override protected[rescala] def reevaluate(dt: DynamicTicket[S], before: Pulse[T]): Result[Value, S] =
+    Result.fromPulse(Pulse.tryCatch(expr(dt), onEmpty = NoChange))
 }
 
 
 private abstract class ChangeEvent[T, S <: Struct](_bud: S#State[Pulse[Diff[T]], S], signal: Signal[T, S], name: REName)
   extends Base[Pulse[Diff[T]], S](_bud, name) with Event[Diff[T], S] {
-  override protected[rescala] def reevaluate(st: DynamicTicket[S], before: Pulse[Diff[T]]): ReevaluationResult[Value, S] = {
+  override protected[rescala] def reevaluate(st: DynamicTicket[S], before: Pulse[Diff[T]]): Result[Value, S] = {
     val to: Pulse[T] = st.staticDependPulse(signal)
-    if (to == Pulse.empty) return ReevaluationResultWithoutValue(propagate = false)
+    if (to == Pulse.empty) return NoValue(propagate = false)
     before match {
       case Value(u) =>
         val from = u.to
-        if (from == to) ReevaluationResultWithoutValue(propagate = false)
-        else ReevaluationResultWithValue.StaticPulse(Pulse.Value(Diff(from, to)))
+        if (from == to) NoValue(propagate = false)
+        else Result.fromPulse(Pulse.Value(Diff(from, to)))
       case NoChange =>
         val res = Diff(Pulse.empty, st.staticDependPulse(signal))
-        ReevaluationResultWithValue.Static(Pulse.Value(res),propagate = false)
+        Result.Static(Pulse.Value(res),propagate = false)
       case x@Exceptional(_) =>
-        ReevaluationResultWithValue.StaticPulse(x) //should not happen, change does not acutally access other pulses
+        Result.fromPulse(x) //should not happen, change does not acutally access other pulses
     }
   }
 }
 
 private abstract class DynamicEvent[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: DynamicTicket[S] => Pulse[T], name: REName) extends Base[Pulse[T], S](_bud, name) with Event[T, S] {
 
-  override protected[rescala] def reevaluate(dt: DynamicTicket[S], before: Pulse[T]): ReevaluationResult[Value, S] = {
+  override protected[rescala] def reevaluate(dt: DynamicTicket[S], before: Pulse[T]): Result[Value, S] = {
     dt.enableDynamic = true
-    ReevaluationResultWithValue.DynamicPulse(Pulse.tryCatch(expr(dt), onEmpty = NoChange))
+    Result.dynamicFromPulse(Pulse.tryCatch(expr(dt), onEmpty = NoChange))
   }
 }

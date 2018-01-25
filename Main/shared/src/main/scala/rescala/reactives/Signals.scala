@@ -17,7 +17,7 @@ object Signals {
 
   /** creates a new static signal depending on the dependencies, reevaluating the function */
   def static[T, S <: Struct](dependencies: ReSource[S]*)(expr: StaticTicket[S] => T)(implicit ct: CreationTicket[S]): Signal[T, S] = ct { initialTurn =>
-    def ignore2[Ticket, Current, Result](f: Ticket => Result): (Ticket, Current) => Result = (ticket, _) => f(ticket)
+    def ignore2[Ticket, Current, Res](f: Ticket => Res): (Ticket, Current) => Res = (ticket, _) => f(ticket)
 
     initialTurn.create[Pulse[T], StaticSignal[T, S]](dependencies.toSet, ValuePersistency.DerivedSignal) {
       state => new StaticSignal[T, S](state, ignore2(expr), ct.rename) with DisconnectableImpl[S]
@@ -84,21 +84,21 @@ object Signals {
 private abstract class StaticSignal[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: (StaticTicket[S], () => T) => T, name: REName)
   extends Base[Pulse[T], S](_bud, name) with Signal[T, S] {
 
-  override protected[rescala] def reevaluate(st: DynamicTicket[S], before: Pulse[T]): ReevaluationResult[Value, S] = {
+  override protected[rescala] def reevaluate(st: DynamicTicket[S], before: Pulse[T]): Result[Value, S] = {
     def newValue = expr(st, () => before.get)
     val newPulse = Pulse.tryCatch(Pulse.diffPulse(newValue, before))
 
-    ReevaluationResultWithValue.StaticPulse(newPulse)
+    Result.fromPulse(newPulse)
   }
 }
 
 private abstract class DynamicSignal[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: DynamicTicket[S] => T, name: REName)
   extends Base[Pulse[T], S](_bud, name) with Signal[T, S] {
 
-  override protected[rescala] def reevaluate(dt: DynamicTicket[S], before: Pulse[T]): ReevaluationResult[Value, S] = {
+  override protected[rescala] def reevaluate(dt: DynamicTicket[S], before: Pulse[T]): Result[Value, S] = {
     dt.enableDynamic = true
     val newPulse = Pulse.tryCatch {Pulse.diffPulse(expr(dt), before)}
-    ReevaluationResultWithValue.DynamicPulse(newPulse)
+    Result.dynamicFromPulse(newPulse)
   }
 }
 

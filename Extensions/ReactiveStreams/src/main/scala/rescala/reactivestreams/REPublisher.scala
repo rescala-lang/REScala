@@ -2,7 +2,7 @@ package rescala.reactivestreams
 
 
 import org.reactivestreams.{Publisher, Subscriber, Subscription}
-import rescala.core.{Base, DynamicTicket, Pulse, REName, ReSourciV, ReevaluationResult, ReevaluationResultWithoutValue, Scheduler, Struct, ValuePersistency}
+import rescala.core.{Base, DynamicTicket, Pulse, REName, ReSourciV, Result, NoValue, Scheduler, Struct, ValuePersistency}
 
 import scala.util.{Failure, Success}
 
@@ -33,27 +33,27 @@ object REPublisher {
     var requested: Long = 0
     var cancelled = false
 
-    override protected[rescala] def reevaluate(ticket: DynamicTicket[S], before: Pulse[T]): ReevaluationResult[Value, S] = {
+    override protected[rescala] def reevaluate(ticket: DynamicTicket[S], before: Pulse[T]): Result[Value, S] = {
       ticket.staticDependPulse(dependency).toOptionTry match {
-        case None => ReevaluationResultWithoutValue[S](propagate = false)
+        case None => NoValue[S](propagate = false)
         case Some(tryValue) =>
           synchronized {
             while (requested <= 0 && !cancelled) wait(100)
             if (cancelled) {
               ticket.enableDynamic = true
-              ReevaluationResultWithoutValue[S](propagate = false)
+              NoValue[S](propagate = false)
             }
             else {
               requested -= 1
               tryValue match {
                 case Success(v) =>
                   subscriber.onNext(v)
-                  ReevaluationResultWithoutValue[S](propagate = false)
+                  NoValue[S](propagate = false)
                 case Failure(t) =>
                   subscriber.onError(t)
                   cancelled = true
                   ticket.enableDynamic = true
-                  ReevaluationResultWithoutValue[S](propagate = false)
+                  NoValue[S](propagate = false)
               }
             }
           }

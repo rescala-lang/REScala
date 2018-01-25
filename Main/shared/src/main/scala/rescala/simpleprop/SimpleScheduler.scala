@@ -1,6 +1,7 @@
 package rescala.simpleprop
 
-import rescala.core.{ComputationStateAccess, Creation, DynamicTicket, ReSource, ReSourciV, Reactive, ReevaluationResultEffect, ReevaluationResultWithValue, ReevaluationResultWithoutValue, Scheduler, Struct, ValuePersistency}
+import rescala.core.{ComputationStateAccess, Creation, DynamicTicket, ReSource, ReSourciV, Reactive, Scheduler, Struct, ValuePersistency}
+import rescala.core.Result.{Effect, NoValue, WithValue}
 
 trait SimpleStruct extends Struct {
   override type State[P, S <: Struct] = SimpleState[P]
@@ -75,13 +76,13 @@ object Util {
   def evaluate(reactive: Reactive[SimpleStruct], incoming: Set[ReSource[SimpleStruct]]): Unit = {
     val dt = new DynamicTicket[SimpleStruct](new CasWithCreation(), incoming)
     reactive.reevaluate(dt, reactive.state.value) match {
-      case ReevaluationResultWithValue(value, propagate) =>
+      case WithValue(value, propagate) =>
         reactive.state.value = value
         if (propagate) reactive.state.outgoing.foreach(_.state.dirty = true)
         if (dt.indepsChanged) ???
-      case ReevaluationResultWithoutValue(propagate) =>
+      case NoValue(propagate) =>
         if (propagate) reactive.state.outgoing.foreach(_.state.dirty = true)
-      case ReevaluationResultEffect(obs, propagate) =>
+      case Effect(obs, propagate) =>
         obs()
         if (propagate) reactive.state.outgoing.foreach(_.state.dirty = true)
     }
