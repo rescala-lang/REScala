@@ -2,6 +2,7 @@ package rescala.fullmv.mirrors
 
 import java.util.concurrent.ConcurrentHashMap
 
+import rescala.sharedimpl.TurnImpl
 import rescala.core.Reactive
 import rescala.core._
 import rescala.fullmv.tasks._

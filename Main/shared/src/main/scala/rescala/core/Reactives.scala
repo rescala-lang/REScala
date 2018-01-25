@@ -10,8 +10,7 @@ trait Struct { type State[P, S <: Struct] }
 
 /** Source of (reactive) values, the [[Struct]] defines how the state is stored internally,
   * and how dependencies are managed.
-  * See [[ComputationStateAccess]] for value access methods of the state,
-  * and [[ReevaluationStateAccess]] for dependency access.
+  * See [[ComputationStateAccess]] for value access methods of the state.
   *
   * @tparam S [[Struct]] defining the internal state */
 trait ReSource[S <: Struct] {

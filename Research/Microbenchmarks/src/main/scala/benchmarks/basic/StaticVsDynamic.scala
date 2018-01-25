@@ -6,7 +6,8 @@ import java.util.concurrent.locks.ReadWriteLock
 import benchmarks.{EngineParam, Step, Workload}
 import org.openjdk.jmh.annotations.{Benchmark, BenchmarkMode, Fork, Measurement, Mode, OutputTimeUnit, Param, Scope, Setup, State, Threads, Warmup}
 import org.openjdk.jmh.infra.BenchmarkParams
-import rescala.core.{Scheduler, Struct, TurnImpl}
+import rescala.sharedimpl.TurnImpl
+import rescala.core.{Scheduler, Struct}
 import rescala.reactives.{Signal, Var}
 
 @BenchmarkMode(Array(Mode.Throughput))

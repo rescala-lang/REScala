@@ -2,6 +2,7 @@ package rescala.fullmv
 
 import java.util.concurrent.{ConcurrentHashMap, ForkJoinTask}
 
+import rescala.sharedimpl.TurnImpl
 import rescala.core._
 import rescala.fullmv.NotificationResultAction._
 import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation._

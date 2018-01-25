@@ -1,6 +1,7 @@
 package rescala.fullmv.mirrors
 
 
+import rescala.sharedimpl.TurnImpl
 import rescala.core.Reactive
 import rescala.core._
 import rescala.fullmv._

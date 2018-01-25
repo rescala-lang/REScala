@@ -1,6 +1,6 @@
 package rescala.levelbased
 
-import rescala.core.{DynamicTicket, InitialChange, ReSource, Reactive, ReevaluationStateAccess}
+import rescala.core.{InitialChange, ReSource, Reactive}
 import rescala.twoversion.TwoVersionPropagationImpl
 
 import scala.collection.mutable.ArrayBuffer
@@ -20,13 +20,7 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
     _propagating.clear()
   }
 
-  def commitDependencyDiff(turn: ReevaluationStateAccess[S], node: Reactive[S], dt : DynamicTicket[S]): Unit = {
-    if(dt.indepsChanged) {
-      dt.indepsRemoved.foreach(turn.drop(_, node))
-      dt.indepsAdded.foreach(turn.discover(_, node))
-      turn.writeIndeps(node, dt.indepsAfter)
-    }
-  }
+
 
   override def evaluate(head: Reactive[S]): Unit = {
     val dt = makeDynamicReevaluationTicket(indeps = head.state.incoming())
@@ -42,7 +36,7 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
       if (redo) {
         levelQueue.enqueue(newLevel)(head)
       } else {
-        commitDependencyDiff(this, head, dt)
+        commitDependencyDiff(head, dt)
         reevRes.forValue(writeValue(head,newLevel))
         reevRes.forEffect(observe)
         if (reevRes.propagate) enqueueOutgoing(head, newLevel)

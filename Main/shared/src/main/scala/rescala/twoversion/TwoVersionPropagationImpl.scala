@@ -1,5 +1,6 @@
 package rescala.twoversion
 
+import rescala.sharedimpl.TurnImpl
 import rescala.core._
 
 import scala.util.control.NonFatal

@@ -1,6 +1,7 @@
 package rescala.twoversion
 
-import rescala.core.{Creation, ReSourciV, SchedulerImpl, TurnImpl}
+import rescala.core.{Creation, ReSourciV, SchedulerImpl}
+import rescala.sharedimpl.TurnImpl
 
 /**
   * Implementation of the turn handling defined in the Engine trait
