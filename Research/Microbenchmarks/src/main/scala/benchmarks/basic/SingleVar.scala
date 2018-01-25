@@ -7,8 +7,9 @@ import benchmarks.{EngineParam, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
 import rescala.Engines
-import rescala.benchmarkutil.BenchmarkUtil
-import rescala.core.{Scheduler, Struct, TurnImpl}
+import rescala.benchmarkinfiltration.Infiltrator
+import rescala.sharedimpl.TurnImpl
+import rescala.core.{Scheduler, Struct}
 import rescala.reactives.Var
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -69,7 +70,7 @@ class SingleVar[S <: Struct] {
 
   @Benchmark
   def readIllegal(): Boolean = {
-    BenchmarkUtil.directGet(source, illegalTurn)
+    Infiltrator.directGet(source, illegalTurn)
   }
 
 }

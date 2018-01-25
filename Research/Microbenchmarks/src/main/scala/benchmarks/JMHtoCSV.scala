@@ -1,4 +1,4 @@
-package rescala.benchmarkutil
+package benchmarks
 
 import java.io.FileWriter
 
