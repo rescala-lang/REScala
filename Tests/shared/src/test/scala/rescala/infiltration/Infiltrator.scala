@@ -20,6 +20,6 @@ object Infiltrator {
     }
 
   def unsafeNow[T, S <: Struct](engine: Scheduler[S], s: Signal[T, S])(): T = {
-    engine.transaction()(t => t.creation.staticAfter(s).get)
+    engine.transaction()(t => t.cas.staticAfter(s).get)
   }
 }

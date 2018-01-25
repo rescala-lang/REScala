@@ -176,7 +176,7 @@ class PessimisticTest extends RETests {
     // but then bl3 becomes false at level 3, causing il1 to be removed again
     // after that the level is increased and this nonesense no longer happens
     val b2b3i2 = engine.dynamic(bl1) { t =>
-      reeval ::= t.creation
+      reeval ::= t.casc
       if (t.depend(bl1)) {
         if (t.depend(bl3)) {
           val res = t.depend(il1)
@@ -249,7 +249,7 @@ class PessimisticTest extends RETests {
     // but then bl3 becomes false at level 3, causing il1 to be removed again (but il0 is still a dependency)
     // after that the level is increased and this nonesense no longer happens
     val b2b3i2 = engine.dynamic(bl1) { t =>
-      reeval ::= t.creation
+      reeval ::= t.casc
       if (t.depend(bl1)) {
         if (t.depend(bl3)) {
           val res = t.depend(il0) + t.depend(il1)

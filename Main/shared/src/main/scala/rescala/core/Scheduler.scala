@@ -26,7 +26,7 @@ trait SchedulerImpl[S <: Struct, ExactTurn <: Creation[S]] extends Scheduler[S] 
   override private[rescala] def create[T](f: (Creation) => T) = {
     _currentTurn.value match {
       case Some(turn) => f(turn)
-      case None => executeTurn(Set.empty, ticket => f(ticket.creation))
+      case None => executeTurn(Set.empty, ticket => f(ticket.cas))
     }
   }
 

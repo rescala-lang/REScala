@@ -27,7 +27,7 @@ import scala.language.implicitConversions
 
 trait AnyTicket extends Any
 
-final class DynamicTicket[S <: Struct] private[rescala](creation: ComputationStateAccess[S] with Creation[S], val indepsBefore: Set[ReSource[S]]) extends StaticTicket[S](creation) {
+final class DynamicTicket[S <: Struct] private[rescala](casc: ComputationStateAccess[S] with Creation[S], val indepsBefore: Set[ReSource[S]]) extends StaticTicket[S](casc) {
   private[rescala] var indepsAfter: Set[ReSource[S]] = Set.empty
   private[rescala] var indepsAdded: Set[ReSource[S]] = Set.empty
 
@@ -39,15 +39,15 @@ final class DynamicTicket[S <: Struct] private[rescala](creation: ComputationSta
     require(enableDynamic, "should not use dynamic accesses without enabling dynamic tickets")
     if (indepsBefore(reactive)) {
       indepsAfter += reactive
-      creation.staticAfter(reactive)
+      casc.staticAfter(reactive)
     }
     else if (indepsAdded(reactive)) {
-      creation.staticAfter(reactive)
+      casc.staticAfter(reactive)
     }
     else {
       indepsAfter += reactive
       indepsAdded += reactive
-      creation.dynamicAfter(reactive)
+      casc.dynamicAfter(reactive)
     }
   }
 
@@ -58,12 +58,12 @@ final class DynamicTicket[S <: Struct] private[rescala](creation: ComputationSta
       indepsAfter += reactive
       if (!indepsBefore(reactive)) indepsAdded += reactive
     }
-    creation.staticAfter(reactive)
+    casc.staticAfter(reactive)
   }
 
 
   def before[A](reactive: Signal[A, S]): A = {
-    creation.dynamicBefore(reactive).get
+    casc.dynamicBefore(reactive).get
   }
 
   def depend[A](reactive: Signal[A, S]): A = {
@@ -78,12 +78,12 @@ final class DynamicTicket[S <: Struct] private[rescala](creation: ComputationSta
   def indepsRemoved: Set[ReSource[S]] = indepsBefore.diff(indepsAfter)
 }
 
-sealed class StaticTicket[S <: Struct] private[rescala](val creation: ComputationStateAccess[S] with Creation[S]) extends AnyTicket {
+sealed class StaticTicket[S <: Struct] private[rescala](val casc: ComputationStateAccess[S] with Creation[S]) extends AnyTicket {
   private[rescala]  def staticBefore[A](reactive: ReSourciV[A, S]): A = {
-    creation.staticBefore(reactive)
+    casc.staticBefore(reactive)
   }
   private[rescala] def staticDependPulse[A](reactive: ReSourciV[A, S]): A = {
-    creation.staticAfter(reactive)
+    casc.staticAfter(reactive)
   }
 
   def staticDepend[A](reactive: Signal[A, S]): A = {
@@ -101,7 +101,7 @@ abstract class InitialChange[S <: Struct]{
   def value: source.Value
 }
 
-final class AdmissionTicket[S <: Struct] private[rescala](val creation: ComputationStateAccess[S] with Creation[S]) extends AnyTicket {
+final class AdmissionTicket[S <: Struct] private[rescala](val cas: ComputationStateAccess[S] with Creation[S]) extends AnyTicket {
 
   private[rescala] var wrapUp: WrapUpTicket[S] => Unit = null
 
@@ -112,16 +112,16 @@ final class AdmissionTicket[S <: Struct] private[rescala](val creation: Computat
     _initialChanges.put(ic.source, ic)
   }
   def now[A](reactive: Signal[A, S]): A = {
-    creation.dynamicBefore(reactive).get
+    cas.dynamicBefore(reactive).get
   }
 }
 
-final class WrapUpTicket[S <: Struct] private[rescala](val creation: ComputationStateAccess[S]) extends AnyVal with AnyTicket {
+final class WrapUpTicket[S <: Struct] private[rescala](val cas: ComputationStateAccess[S]) extends AnyVal with AnyTicket {
   def now[A](reactive: Signal[A, S]): A = {
-    creation.dynamicAfter(reactive).get
+    cas.dynamicAfter(reactive).get
   }
   def now[A](reactive: Event[A, S]): Option[A] = {
-    creation.dynamicAfter(reactive).toOption
+    cas.dynamicAfter(reactive).toOption
   }
 }
 
@@ -147,10 +147,10 @@ final case class CreationTicket[S <: Struct](self: Either[Creation[S], Scheduler
 }
 
 object CreationTicket extends LowPriorityCreationImplicits {
-  implicit def fromTicketAImplicit[S <: Struct](implicit ticket: AdmissionTicket[S], line: REName): CreationTicket[S] = CreationTicket(Left(ticket.creation))(line)
+  implicit def fromTicketAImplicit[S <: Struct](implicit ticket: AdmissionTicket[S], line: REName): CreationTicket[S] = CreationTicket(Left(ticket.cas))(line)
   //implicit def fromTicketA[S <: Struct](ticket: AdmissionTicket[S])(implicit line: REName): CreationTicket[S] = CreationTicket(Left(ticket.creation))
 
-  implicit def fromTicketSImplicit[S <: Struct](implicit ticket: StaticTicket[S], line: REName): CreationTicket[S] = CreationTicket(Left(ticket.creation))(line)
+  implicit def fromTicketSImplicit[S <: Struct](implicit ticket: StaticTicket[S], line: REName): CreationTicket[S] = CreationTicket(Left(ticket.casc))(line)
   //implicit def fromTicketS[S <: Struct](ticket: StaticTicket[S])(implicit line: REName): CreationTicket[S] = CreationTicket(Left(ticket.creation))
 
   //implicit def fromTicketDImplicit[S <: Struct](implicit ticket: DynamicTicket[S], line: REName): CreationTicket[S] = CreationTicket(Left(ticket.creation))(line)
