@@ -100,6 +100,10 @@ trait FullMVTurn extends TurnImpl[FullMVStruct] with FullMVTurnProxy with Subsum
     removeOutgoing.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, -1)
   }
 
+
+  private[rescala] def makeAdmissionPhaseTicket(): AdmissionTicket[FullMVStruct]
+  private[rescala] def makeWrapUpPhaseTicket(): WrapUpTicket[FullMVStruct]
+
   override private[rescala] def writeIndeps(node: Reactive[FullMVStruct], indepsAfter: Set[ReSource[FullMVStruct]]): Unit = node.state.incomings = indepsAfter
 
   override private[rescala] def staticBefore[P](reactive: ReSourciV[P, FullMVStruct]) = reactive.state.staticBefore(this)

@@ -51,7 +51,7 @@ abstract class RescalaInterface[S <: Struct] {
   /** @group internal */
   final type StaticTicket = rescala.core.StaticTicket[S]
   /** @group internal */
-  final type DynamicTicket = rescala.core.DynamicTicket[S]
+  final type DynamicTicket = rescala.core.ReevTicket[S]
   /** @group internal */
   final type AdmissionTicket = rescala.core.AdmissionTicket[S]
   /** @group internal */

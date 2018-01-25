@@ -1,6 +1,6 @@
 package rescala.macros
 
-import rescala.core.{CreationTicket, DynamicTicket, LowPriorityCreationImplicits, StaticTicket, Struct}
+import rescala.core.{CreationTicket, ReevTicket, LowPriorityCreationImplicits, StaticTicket, Struct}
 import retypecheck._
 
 import scala.reflect.macros.blackbox
@@ -88,7 +88,7 @@ class ReactiveMacros(val c: blackbox.Context) {
     valDefs: List[ValDef],
   ): Tree = {
     val creationMethod = TermName(if (isStatic) "static" else "dynamic")
-    val ticketType = if (isStatic) weakTypeOf[StaticTicket[S]] else weakTypeOf[DynamicTicket[S]]
+    val ticketType = if (isStatic) weakTypeOf[StaticTicket[S]] else weakTypeOf[ReevTicket[S]]
     val computation = q"{$innerTicket: $ticketType => $innerTree }"
     val body = q"""$signalsOrEvents.$creationMethod[${weakTypeOf[A]}, ${weakTypeOf[S]}](
          ..$dependencies
@@ -112,7 +112,7 @@ class ReactiveMacros(val c: blackbox.Context) {
         case turnSource@Apply(TypeApply(Select(_, TermName("fromEngineImplicit")), _), _)
           if turnSource.tpe =:= weakTypeOf[CreationTicket[S]] && turnSource.symbol.owner == symbolOf[LowPriorityCreationImplicits] =>
           q"""${termNames.ROOTPKG}.rescala.core.CreationTicket(
-                  ${termNames.ROOTPKG}.scala.Left($ticketIdent.casc))(
+                  ${termNames.ROOTPKG}.scala.Left($ticketIdent.creation))(
                   ${termNames.ROOTPKG}.rescala.core.REName.create)"""
 
         case tree@Select(reactive, TermName("now")) =>

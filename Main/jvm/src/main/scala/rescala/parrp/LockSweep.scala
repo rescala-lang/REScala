@@ -153,7 +153,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
   def evaluate(head: Reactive[TState]): Unit = {
     if (head.state.anyInputChanged != this) done(head, propagate = false)
     else {
-      val dt = new DynamicTicket[TState](this, head.state.incoming())
+      val dt = makeDynamicReevaluationTicket(head.state.incoming())
       val reevRes = head.reevaluate(dt, head.state.base(token))
 
       commitDependencyDiff(head, dt)

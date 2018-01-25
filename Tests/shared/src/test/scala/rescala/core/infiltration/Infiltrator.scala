@@ -3,6 +3,7 @@ package rescala.core.infiltration
 import rescala.core
 import rescala.core.{Scheduler, Struct}
 import rescala.levelbased.LevelStructType
+import rescala.parrp.ParRP
 import rescala.reactives.Signal
 
 /** Accesses private[rescala] values for some low level tests */
@@ -19,7 +20,7 @@ object Infiltrator {
       case _ =>
     }
 
-  def unsafeNow[T, S <: Struct](engine: Scheduler[S], s: Signal[T, S])(): T = {
-    engine.transaction()(t => t.cas.staticAfter(s).get)
+  def unsafeNow[T](s: Signal[T, ParRP]): T = {
+    s.state.current.get
   }
 }

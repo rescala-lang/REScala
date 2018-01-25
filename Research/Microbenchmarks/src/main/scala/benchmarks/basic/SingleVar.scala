@@ -34,7 +34,7 @@ class SingleVar[S <: Struct] {
     engine = engineParam.engine
     current = false
     source = engine.Var(current)
-    illegalTurn = engine.transaction()(_.cas.asInstanceOf[TurnImpl[S]])
+    illegalTurn = engine.transaction()(_.creation.asInstanceOf[TurnImpl[S]])
     if (engineParam.engine == Engines.unmanaged) lock = new ReentrantReadWriteLock()
   }
 

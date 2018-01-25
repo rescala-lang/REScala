@@ -8,7 +8,7 @@ class CreationTicketTest extends RETests {
 
   /* this test uses some shady planned()(identity) to get the turn object out of the transaction
    * you should not do this. */
-  def getTurn[S2 <: Struct](implicit engine: rescala.core.Scheduler[S2]): rescala.core.Creation[S2] = engine.transaction()(_.cas)
+  def getTurn[S2 <: Struct](implicit engine: rescala.core.Scheduler[S2]): rescala.core.Creation[S2] = engine.transaction()(_.creation)
 
   allEngines("none Dynamic No Implicit") { engine => import engine._
     assert(implicitly[CreationTicket].self === Right(engine))
@@ -17,7 +17,7 @@ class CreationTicketTest extends RETests {
   allEngines("some Dynamic No Implicit") { engine => import engine._
     engine.transaction() { (dynamicTurn: AdmissionTicket) =>
       assert(implicitly[CreationTicket].self === Right(engine))
-      assert(implicitly[CreationTicket].apply(identity) === dynamicTurn.cas)
+      assert(implicitly[CreationTicket].apply(identity) === dynamicTurn.creation)
     }
   }
 
@@ -63,7 +63,7 @@ class CreationTicketTest extends RETests {
     }
     engine.transaction() { dynamic =>
       assert(closure().self === Right(engine))
-      assert(closure().apply(identity) === dynamic.cas)
+      assert(closure().apply(identity) === dynamic.creation)
     }
   }
 

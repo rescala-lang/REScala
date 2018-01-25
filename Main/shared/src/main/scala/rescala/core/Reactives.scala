@@ -10,7 +10,7 @@ trait Struct { type State[P, S <: Struct] }
 
 /** Source of (reactive) values, the [[Struct]] defines how the state is stored internally,
   * and how dependencies are managed.
-  * See [[ComputationStateAccess]] for value access methods of the state.
+  * State can only be accessed with a correct [[Ticket]].
   *
   * @tparam S [[Struct]] defining the internal state */
 trait ReSource[S <: Struct] {
@@ -26,7 +26,7 @@ trait Reactive[S <: Struct] extends ReSource[S] {
 
   /** called if any of the dependencies ([[ReSource]]s) changed in the current update turn,
     * after all (known) dependencies are updated */
-  protected[rescala] def reevaluate(ticket: DynamicTicket[S], before: Value): Result[Value, S]
+  protected[rescala] def reevaluate(ticket: ReevTicket[S], before: Value): Result[Value, S]
 }
 
 /** Base implementation for reactives, combining [[ReSourciV]] for value access, with [[Reactive]] for scheduling,

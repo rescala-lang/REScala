@@ -131,7 +131,7 @@ class PessimisticTest extends RETests {
       })
 
 
-    assert(Infiltrator.unsafeNow(explicitEngine, i1_3) === 42)
+    assert(Infiltrator.unsafeNow(i1_3) === 42)
     assert(reeval === 1)
     assert(regs === 0)
     assert(unregs === 0)
@@ -139,7 +139,7 @@ class PessimisticTest extends RETests {
     // now, this should create some only in turn dynamic changes
     b0.set(true)(mockFac)
 
-    assert(Infiltrator.unsafeNow(explicitEngine, i1_3) === 42)
+    assert(Infiltrator.unsafeNow(i1_3) === 42)
     assert(reeval === 3)
     assert(regs === 0)
     assert(unregs === 0)
@@ -147,7 +147,7 @@ class PessimisticTest extends RETests {
     // this does not
     b0.set(false)(mockFac)
 
-    assert(Infiltrator.unsafeNow(explicitEngine, i1_3) === 42)
+    assert(Infiltrator.unsafeNow(i1_3) === 42)
     assert(reeval === 4)
     assert(regs === 0)
     assert(unregs === 0)
@@ -155,7 +155,7 @@ class PessimisticTest extends RETests {
     // this also does not, because the level of the dynamic signals stays on 3
     b0.set(true)(mockFac)
 
-    assert(Infiltrator.unsafeNow(explicitEngine, i1_3) === 42)
+    assert(Infiltrator.unsafeNow(i1_3) === 42)
     assert(reeval === 5)
     assert(regs === 0)
     assert(unregs === 0)
@@ -176,7 +176,7 @@ class PessimisticTest extends RETests {
     // but then bl3 becomes false at level 3, causing il1 to be removed again
     // after that the level is increased and this nonesense no longer happens
     val b2b3i2 = engine.dynamic(bl1) { t =>
-      reeval ::= t.casc
+      reeval ::= t.creation
       if (t.depend(bl1)) {
         if (t.depend(bl3)) {
           val res = t.depend(il1)
@@ -249,7 +249,7 @@ class PessimisticTest extends RETests {
     // but then bl3 becomes false at level 3, causing il1 to be removed again (but il0 is still a dependency)
     // after that the level is increased and this nonesense no longer happens
     val b2b3i2 = engine.dynamic(bl1) { t =>
-      reeval ::= t.casc
+      reeval ::= t.creation
       if (t.depend(bl1)) {
         if (t.depend(bl3)) {
           val res = t.depend(il0) + t.depend(il1)

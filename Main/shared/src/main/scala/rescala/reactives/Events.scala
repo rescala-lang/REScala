@@ -20,7 +20,7 @@ object Events {
     staticNamed(ticket.rename.name, dependencies: _*)(st => Pulse.fromOption(calculate(st)))
 
   /** Creates dynamic events */
-  def dynamic[T, S <: Struct](dependencies: ReSource[S]*)(expr: DynamicTicket[S] => Option[T])(implicit ticket: CreationTicket[S]): Event[T, S] = {
+  def dynamic[T, S <: Struct](dependencies: ReSource[S]*)(expr: ReevTicket[S] => Option[T])(implicit ticket: CreationTicket[S]): Event[T, S] = {
     ticket { initialTurn =>
       initialTurn.create[Pulse[T], DynamicEvent[T, S]](dependencies.toSet, ValuePersistency.DynamicEvent) {
         state => new DynamicEvent[T, S](state, expr.andThen(Pulse.fromOption), ticket.rename) with DisconnectableImpl[S]
@@ -38,14 +38,14 @@ object Events {
 
 private abstract class StaticEvent[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: StaticTicket[S] => Pulse[T], name: REName)
   extends Base[Pulse[T], S](_bud, name) with Event[T, S] {
-  override protected[rescala] def reevaluate(dt: DynamicTicket[S], before: Pulse[T]): Result[Value, S] =
+  override protected[rescala] def reevaluate(dt: ReevTicket[S], before: Pulse[T]): Result[Value, S] =
     Result.fromPulse(Pulse.tryCatch(expr(dt), onEmpty = NoChange))
 }
 
 
 private abstract class ChangeEvent[T, S <: Struct](_bud: S#State[Pulse[Diff[T]], S], signal: Signal[T, S], name: REName)
   extends Base[Pulse[Diff[T]], S](_bud, name) with Event[Diff[T], S] {
-  override protected[rescala] def reevaluate(st: DynamicTicket[S], before: Pulse[Diff[T]]): Result[Value, S] = {
+  override protected[rescala] def reevaluate(st: ReevTicket[S], before: Pulse[Diff[T]]): Result[Value, S] = {
     val to: Pulse[T] = st.staticDependPulse(signal)
     if (to == Pulse.empty) return NoValue(propagate = false)
     before match {
@@ -62,9 +62,9 @@ private abstract class ChangeEvent[T, S <: Struct](_bud: S#State[Pulse[Diff[T]],
   }
 }
 
-private abstract class DynamicEvent[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: DynamicTicket[S] => Pulse[T], name: REName) extends Base[Pulse[T], S](_bud, name) with Event[T, S] {
+private abstract class DynamicEvent[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: ReevTicket[S] => Pulse[T], name: REName) extends Base[Pulse[T], S](_bud, name) with Event[T, S] {
 
-  override protected[rescala] def reevaluate(dt: DynamicTicket[S], before: Pulse[T]): Result[Value, S] = {
+  override protected[rescala] def reevaluate(dt: ReevTicket[S], before: Pulse[T]): Result[Value, S] = {
     dt.enableDynamic = true
     Result.dynamicFromPulse(Pulse.tryCatch(expr(dt), onEmpty = NoChange))
   }

@@ -7,7 +7,7 @@ object SetAndExtractTransactionHandle {
   def apply[A, S <: Struct](source: Source[A, S], value: A)(implicit engine: Scheduler[S]): Creation[S] = {
     engine.transaction(source) { implicit t =>
       source.admit(value)
-      t.cas
+      t.creation
     }
   }
 }

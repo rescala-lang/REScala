@@ -2,7 +2,7 @@ package rescala.reactivestreams
 
 
 import org.reactivestreams.{Publisher, Subscriber, Subscription}
-import rescala.core.{Base, DynamicTicket, Pulse, REName, ReSourciV, Result, NoValue, Scheduler, Struct, ValuePersistency}
+import rescala.core.{Base, ReevTicket, Pulse, REName, ReSourciV, Result, NoValue, Scheduler, Struct, ValuePersistency}
 
 import scala.util.{Failure, Success}
 
@@ -33,7 +33,7 @@ object REPublisher {
     var requested: Long = 0
     var cancelled = false
 
-    override protected[rescala] def reevaluate(ticket: DynamicTicket[S], before: Pulse[T]): Result[Value, S] = {
+    override protected[rescala] def reevaluate(ticket: ReevTicket[S], before: Pulse[T]): Result[Value, S] = {
       ticket.staticDependPulse(dependency).toOptionTry match {
         case None => NoValue[S](propagate = false)
         case Some(tryValue) =>
@@ -79,7 +79,7 @@ object REPublisher {
     fac: Scheduler[S]
   ): SubscriptionReactive[T, S] = {
     fac.transaction() { ticket =>
-      ticket.cas.create[Pulse[T], SubscriptionReactive[T, S]](Set(dependency), ValuePersistency.DerivedSignal) { state =>
+      ticket.creation.create[Pulse[T], SubscriptionReactive[T, S]](Set(dependency), ValuePersistency.DerivedSignal) { state =>
         new SubscriptionReactive[T, S](state, dependency, subscriber, fac, s"forSubscriber($subscriber)")
       }
     }

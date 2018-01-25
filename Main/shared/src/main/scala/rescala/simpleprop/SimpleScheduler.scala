@@ -1,6 +1,6 @@
 package rescala.simpleprop
 
-import rescala.core.{ComputationStateAccess, Creation, DynamicTicket, ReSource, ReSourciV, Reactive, Scheduler, Struct, ValuePersistency}
+import rescala.core.{Creation, ReevTicket, ReSource, ReSourciV, Reactive, Scheduler, Struct, ValuePersistency}
 
 trait SimpleStruct extends Struct {
   override type State[P, S <: Struct] = SimpleState[P]
@@ -33,17 +33,13 @@ class SimpleCreation() extends Creation[SimpleStruct] {
 
 }
 
-class CasWithCreation() extends SimpleCreation() with ComputationStateAccess[SimpleStruct]  {
-  override private[rescala] def staticAfter[P](reactive: ReSourciV[P, SimpleStruct]) = reactive.state.value
-  override private[rescala] def dynamicBefore[P](reactive: ReSourciV[P, SimpleStruct]) = ???
-  override private[rescala] def dynamicAfter[P](reactive: ReSourciV[P, SimpleStruct]) = ???
-}
-
 
 class SimpleScheduler extends Scheduler[SimpleStruct] {
   override private[rescala] def executeTurn[R](initialWrites: Traversable[ReSource], admissionPhase: AdmissionTicket => R) = {
 
-    val admissionTicket = new AdmissionTicket(new CasWithCreation())
+    val admissionTicket = new AdmissionTicket(new SimpleCreation()) {
+      override def read[A](reactive: ReSourciV[A, SimpleStruct]): A = reactive.state.value
+    }
     val admissionResult = admissionPhase(admissionTicket)
     admissionTicket.initialChanges.valuesIterator.foreach(ic => ic.source.state.value = ic.value)
     val initals = admissionTicket.initialChanges.keys
@@ -72,7 +68,10 @@ object Util {
   }
 
   def evaluate(reactive: Reactive[SimpleStruct], incoming: Set[ReSource[SimpleStruct]]): Unit = {
-    val dt = new DynamicTicket[SimpleStruct](new CasWithCreation(), incoming)
+    val dt = new ReevTicket[SimpleStruct](new SimpleCreation(), incoming) {
+      override def dynamicAfter[A](reactive: ReSourciV[A, SimpleStruct]): A = ???
+      override def staticAfter[A](reactive: ReSourciV[A, SimpleStruct]): A = reactive.state.value
+    }
     val reev = reactive.reevaluate(dt, reactive.state.value)
     if (reev.propagate) reactive.state.outgoing.foreach(_.state.dirty = true)
     if (dt.indepsChanged) ???

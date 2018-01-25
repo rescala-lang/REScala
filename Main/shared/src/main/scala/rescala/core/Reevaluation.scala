@@ -57,7 +57,7 @@ trait DisconnectableImpl[S <: Struct] extends Reactive[S] with Disconnectable[S]
   }
 
 
-  abstract final override protected[rescala] def reevaluate(turn: DynamicTicket[S], before: Value): Result[Value, S] = {
+  abstract final override protected[rescala] def reevaluate(turn: ReevTicket[S], before: Value): Result[Value, S] = {
     if (disconnected) {
       turn.enableDynamic = true
       Result.NoValue[S](propagate = false)

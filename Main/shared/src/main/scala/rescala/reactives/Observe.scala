@@ -24,7 +24,7 @@ object Observe {
     extends Base[Unit, S](bud, name) with Reactive[S] with Observe[S]  {
     this: DisconnectableImpl[S] =>
 
-    override protected[rescala] def reevaluate(dt: DynamicTicket[S], before: Value): Result[Value, S] = {
+    override protected[rescala] def reevaluate(dt: ReevTicket[S], before: Value): Result[Value, S] = {
       dt.staticDependPulse(dependency) match {
         case Pulse.NoChange => NoValue[S](propagate = false)
         case Pulse.empty =>NoValue[S](propagate = false)

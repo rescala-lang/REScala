@@ -1,6 +1,5 @@
 package rescala.twoversion
 
-import rescala.sharedimpl.TurnImpl
 import rescala.core._
 
 import scala.util.control.NonFatal
@@ -11,7 +10,7 @@ import scala.util.control.NonFatal
   *
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   */
-trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropagation[S] with TurnImpl[S] {
+trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropagation[S] with Creation[S] {
   outer =>
 
   private var _token: Token = Token()
@@ -66,20 +65,38 @@ trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropaga
     }
   }
 
-  override private[rescala] def discover(node: ReSource[S], addOutgoing: Reactive[S]): Unit = node.state.discover(addOutgoing)
-  override private[rescala] def drop(node: ReSource[S], removeOutgoing: Reactive[S]): Unit = node.state.drop(removeOutgoing)
+  final def commitDependencyDiff(node: Reactive[S], dt: ReevTicket[S]): Unit = {
+    if(dt.indepsChanged) {
+      dt.indepsRemoved.foreach(drop(_, node))
+      dt.indepsAdded.foreach(discover(_, node))
+      writeIndeps(node, dt.indepsAfter)
+    }
+  }
 
-  override private[rescala] def writeIndeps(node: Reactive[S], indepsAfter: Set[ReSource[S]]): Unit = node.state.updateIncoming(indepsAfter)
+  private[rescala] def discover(node: ReSource[S], addOutgoing: Reactive[S]): Unit = node.state.discover(addOutgoing)
+  private[rescala] def drop(node: ReSource[S], removeOutgoing: Reactive[S]): Unit = node.state.drop(removeOutgoing)
+
+  private[rescala] def writeIndeps(node: Reactive[S], indepsAfter: Set[ReSource[S]]): Unit = node.state.updateIncoming(indepsAfter)
 
   /** allow turn to handle dynamic access to reactives */
   def dynamicDependencyInteraction(dependency: ReSource[S]): Unit
 
-  override private[rescala] def staticAfter[P](reactive: ReSourciV[P, S]) = reactive.state.get(token)
-  override private[rescala] def dynamicBefore[P](reactive: ReSourciV[P, S]) = {
-    dynamicDependencyInteraction(reactive)
-    reactive.state.base(token)
+
+  override private[rescala] def makeAdmissionPhaseTicket() = new AdmissionTicket[S](this) {
+    override def read[A](reactive: ReSourciV[A, S]): A = {
+      dynamicDependencyInteraction(reactive)
+      reactive.state.base(token)
+    }
   }
-  override private[rescala] def dynamicAfter[P](reactive: ReSourciV[P, S]) = {
+  private[rescala] def makeDynamicReevaluationTicket(indeps: Set[ReSource[S]]): ReevTicket[S] = new ReevTicket[S](this, indeps) {
+    override def dynamicAfter[A](reactive: ReSourciV[A, S]): A = TwoVersionPropagationImpl.this.dynamicAfter(reactive)
+    override def staticAfter[A](reactive: ReSourciV[A, S]): A = reactive.state.get(token)
+  }
+  private[rescala] def makeWrapUpPhaseTicket(): WrapUpTicket[S] = new WrapUpTicket[S] {
+    override def dynamicAfter[A](reactive: ReSourciV[A, S]): A = TwoVersionPropagationImpl.this.dynamicAfter(reactive)
+  }
+
+  private[rescala] def dynamicAfter[P](reactive: ReSourciV[P, S]) = {
     // Note: This only synchronizes reactive to be serializable-synchronized, but not glitch-free synchronized.
     // Dynamic reads thus may return glitched values, which the reevaluation handling implemented in subclasses
     // must account for by repeating glitched reevaluations!
