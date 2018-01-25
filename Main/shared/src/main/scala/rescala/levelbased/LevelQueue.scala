@@ -33,7 +33,7 @@ final private[levelbased] class LevelQueue[S <: LevelStruct](evaluator: LevelQue
     * @param dep           Element to add to the queue
     */
   def enqueue(minLevel: Int, needsEvaluate: Boolean = true)(dep: Reactive[S]): Unit = {
-    elements.offer(QueueElement[S](dep.state.level(currentTurn), dep, minLevel, needsEvaluate))
+    elements.offer(QueueElement[S](dep.state.level(), dep, minLevel, needsEvaluate))
   }
 
   /**
@@ -45,10 +45,10 @@ final private[levelbased] class LevelQueue[S <: LevelStruct](evaluator: LevelQue
     val QueueElement(headLevel, head, headMinLevel, reevaluate) = queueElement
     // handle level increases
     if (headLevel < headMinLevel) {
-      head.state.updateLevel(headMinLevel)(currentTurn)
+      head.state.updateLevel(headMinLevel)
       enqueue(headMinLevel, reevaluate)(head)
-      head.state.outgoing(currentTurn).foreach { r =>
-        if (r.state.level(currentTurn) <= headMinLevel)
+      head.state.outgoing().foreach { r =>
+        if (r.state.level() <= headMinLevel)
           enqueue(headMinLevel + 1, needsEvaluate = false)(r)
       }
     }

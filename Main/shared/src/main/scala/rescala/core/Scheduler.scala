@@ -21,7 +21,7 @@ trait Scheduler[S <: Struct] extends RescalaInterface[S] {
 }
 
 
-trait SchedulerImpl[S <: Struct, ExactTurn <: Turn[S] with Creation[S]] extends Scheduler[S] {
+trait SchedulerImpl[S <: Struct, ExactTurn <: Creation[S]] extends Scheduler[S] {
 
   override private[rescala] def create[T](f: (Creation) => T) = {
     _currentTurn.value match {

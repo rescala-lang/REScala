@@ -1,6 +1,6 @@
 package rescala.levelbased
 
-import rescala.core.{Struct, Turn}
+import rescala.core.Struct
 import rescala.twoversion._
 
 import scala.language.higherKinds
@@ -25,8 +25,8 @@ trait SimpleStruct extends LevelStruct {
   * @tparam S Type of the reactive values that are connected to this struct
   */
 trait LevelStructType[S <: Struct] extends GraphStructType[S] {
-  def level(turn: Turn[S]): Int
-  def updateLevel(i: Int)(turn: Turn[S]): Int
+  def level(): Int
+  def updateLevel(i: Int): Int
 }
 
 /**
@@ -42,9 +42,9 @@ class LevelStructTypeImpl[P, S <: Struct](current: P, transient: Boolean)
 
   var _level: Int = 0
 
-  override def level(turn: Turn[S]): Int = _level
+  override def level(): Int = _level
 
-  override def updateLevel(i: Int)(turn: Turn[S]): Int = {
+  override def updateLevel(i: Int): Int = {
     val max = math.max(i, _level)
     _level = max
     max

@@ -16,3 +16,6 @@ trait ReevaluationStateAccess[S <: Struct] {
   // enabling a single bulk replacement update instead of multiple incremental changes.
   private[rescala] def writeIndeps(node: Reactive[S], indepsAfter: Set[ReSource[S]]): Unit
 }
+
+
+

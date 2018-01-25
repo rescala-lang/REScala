@@ -8,7 +8,7 @@ import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.BenchmarkParams
 import rescala.Engines
 import rescala.benchmarkutil.BenchmarkUtil
-import rescala.core.{Scheduler, Struct, Turn}
+import rescala.core.{Scheduler, Struct, TurnImpl}
 import rescala.reactives.Var
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -24,7 +24,7 @@ class SingleVar[S <: Struct] {
 
   var source: Var[Boolean, S] = _
   var current: Boolean = _
-  var illegalTurn: Turn[S] = _
+  var illegalTurn: TurnImpl[S] = _
   var lock: ReadWriteLock = _
 
 
@@ -33,7 +33,7 @@ class SingleVar[S <: Struct] {
     engine = engineParam.engine
     current = false
     source = engine.Var(current)
-    illegalTurn = engine.transaction()(_.creation.asInstanceOf[Turn[S]])
+    illegalTurn = engine.transaction()(_.creation.asInstanceOf[TurnImpl[S]])
     if (engineParam.engine == Engines.unmanaged) lock = new ReentrantReadWriteLock()
   }
 

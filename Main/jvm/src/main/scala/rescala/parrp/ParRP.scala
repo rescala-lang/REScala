@@ -66,7 +66,7 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
       if ((priorKey ne null) && (owner eq priorKey)) throw new IllegalStateException(s"$this tried to lock reactive $reactive owned by its parent $priorKey")
       if (owner ne key) {
         if (reactive.state.lock.tryLock(key) eq key)
-          reactive.state.outgoing(this).foreach {toVisit.offer}
+          reactive.state.outgoing().foreach {toVisit.offer}
         else {
           key.reset()
           backoff.backoff()
@@ -79,7 +79,7 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
 
 
   override def forget(reactive: Reactive[TState]): Unit = levelQueue.remove(reactive)
-  override def admit(reactive: Reactive[TState]): Unit = levelQueue.enqueue(reactive.state.level(this))(reactive)
+  override def admit(reactive: Reactive[TState]): Unit = levelQueue.enqueue(reactive.state.level())(reactive)
 
   /** registering a dependency on a node we do not personally own does require some additional care.
     * we let the other turn update the dependency and admit the dependent into the propagation queue
@@ -106,7 +106,7 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
       owner.turn.drop(source, sink)
       if (source.state.lock.isWriteLock) {
         key.lockKeychain(_.removeFallthrough(owner))
-        if (!sink.state.incoming(this).exists{ inc =>
+        if (!sink.state.incoming().exists{ inc =>
           val lock = inc.state.lock
           lock.isOwner(owner) && lock.isWriteLock
         }) owner.turn.forget(sink)

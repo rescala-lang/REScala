@@ -29,7 +29,7 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
   }
 
   override def evaluate(head: Reactive[S]): Unit = {
-    val dt = makeDynamicReevaluationTicket(indeps = head.state.incoming(this))
+    val dt = makeDynamicReevaluationTicket(indeps = head.state.incoming())
     val reevRes = head.reevaluate(dt, head.state.base(token))
 
     if (!dt.indepsChanged) {
@@ -38,7 +38,7 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
       if (reevRes.propagate) enqueueOutgoing(head)
     } else {
       val newLevel = maximumLevel(dt.indepsAfter) + 1
-      val redo = head.state.level(this) < newLevel
+      val redo = head.state.level() < newLevel
       if (redo) {
         levelQueue.enqueue(newLevel)(head)
       } else {
@@ -58,21 +58,21 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
   }
 
   private def enqueueOutgoing(head: ReSource[S], minLevel: Int = -42) = {
-    head.state.outgoing(this).foreach(levelQueue.enqueue(minLevel))
+    head.state.outgoing().foreach(levelQueue.enqueue(minLevel))
     _propagating += head
   }
 
-  private def maximumLevel(dependencies: Set[ReSource[S]]): Int = dependencies.foldLeft(-1)((acc, r) => math.max(acc, r.state.level(this)))
+  private def maximumLevel(dependencies: Set[ReSource[S]]): Int = dependencies.foldLeft(-1)((acc, r) => math.max(acc, r.state.level()))
 
   override protected def ignite(reactive: Reactive[S], incoming: Set[ReSource[S]], ignitionRequiresReevaluation: Boolean): Unit = {
-    val level = if (incoming.isEmpty) 0 else incoming.map(_.state.level(this)).max + 1
-    reactive.state.updateLevel(level)(this)
+    val level = if (incoming.isEmpty) 0 else incoming.map(_.state.level()).max + 1
+    reactive.state.updateLevel(level)
 
     incoming.foreach { dep =>
       dynamicDependencyInteraction(dep)
       discover(dep, reactive)
     }
-    reactive.state.updateIncoming(incoming)(this)
+    reactive.state.updateIncoming(incoming)
 
     if (ignitionRequiresReevaluation || incoming.exists(_propagating.contains)) {
       if (level <= levelQueue.currentLevel()) {

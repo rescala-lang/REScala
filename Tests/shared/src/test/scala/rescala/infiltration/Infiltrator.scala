@@ -12,7 +12,7 @@ object Infiltrator {
     reactive.state match {
       case rb: LevelStructType[S @unchecked] => {
         val rblevel = maybe.transaction(){at =>
-           rb.level(at.creation.asInstanceOf[core.Turn[S]])
+           rb.level()
         }
         assert(rblevel == level, s"$text, $reactive level was $rblevel but expected $level")
       }

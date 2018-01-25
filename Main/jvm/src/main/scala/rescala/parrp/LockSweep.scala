@@ -103,7 +103,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
           locked.add(reactive)
           reactive.state.counter = 1
           reactive.state.willWrite = this
-          reactive.state.outgoing(this).foreach {stack.offer}
+          reactive.state.outgoing().foreach {stack.offer}
         }
       }
       else {
@@ -139,7 +139,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
   def done(head: ReSource[TState], propagate: Boolean): Unit = {
     if(propagate) head.state.isPropagating = this
 
-    head.state.outgoing(this).foreach { r =>
+    head.state.outgoing().foreach { r =>
       r.state.counter -= 1
       if (propagate) r.state.anyInputChanged = this
       if (r.state.counter <= 0) enqueue(r)
@@ -161,7 +161,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
   def evaluate(head: Reactive[TState]): Unit = {
     if (head.state.anyInputChanged != this) done(head, propagate = false)
     else {
-      val dt = makeDynamicReevaluationTicket(head.state.incoming(this))
+      val dt = makeDynamicReevaluationTicket(head.state.incoming())
       head.reevaluate(dt, head.state.base(token)) match {
         case res@ReevaluationResultWithValue(_, _) =>
           commitDependencyDiff(this, head, dt)
@@ -196,7 +196,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
   }
 
   def recount(reactive: Reactive[TState]): Unit = {
-    reactive.state.counter = reactive.state.incoming(this).count(r => r.state.hasWritten != this && r.state.willWrite == this)
+    reactive.state.counter = reactive.state.incoming().count(r => r.state.hasWritten != this && r.state.willWrite == this)
   }
 
 
@@ -208,16 +208,16 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
     val owner = acquireShared(source)
     if (owner ne key) {
       if (source.state.willWrite != owner.turn) {
-        source.state.discover(sink)(this)
+        source.state.discover(sink)
       }
-      else if (!source.state.outgoing(this).contains(sink)) {
-        source.state.discover(sink)(this)
+      else if (!source.state.outgoing().contains(sink)) {
+        source.state.discover(sink)
         discovered.getOrElseUpdate(owner, mutable.Set.empty).add(sink)
         key.lockKeychain {_.addFallthrough(owner)}
       }
     }
     else {
-      source.state.discover(sink)(this)
+      source.state.discover(sink)
     }
   }
 
@@ -225,15 +225,15 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
   override private[rescala] def drop(source: ReSource[TState], sink: Reactive[TState]) = {
     val owner = acquireShared(source)
     if (owner ne key) {
-      source.state.drop(sink)(this)
+      source.state.drop(sink)
       if (source.state.willWrite != owner.turn) {
         key.lockKeychain(_.removeFallthrough(owner))
-        if (!sink.state.incoming(this).exists(_.state.lock.isOwner(owner))) {
+        if (!sink.state.incoming().exists(_.state.lock.isOwner(owner))) {
           discovered.getOrElseUpdate(owner, mutable.Set.empty).remove(sink)
         }
       }
     }
-    else source.state.drop(sink)(this)
+    else source.state.drop(sink)
   }
 
 
@@ -260,7 +260,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
       else {
         reactive.state.counter = 1
         reactive.state.willWrite = this
-        reactive.state.outgoing(this).foreach { r =>
+        reactive.state.outgoing().foreach { r =>
           stack.push(r)
         }
       }
