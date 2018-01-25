@@ -5,7 +5,7 @@ import rescala.reactives.RExceptions.EmptySignalControlThrowable
 
 import scala.concurrent.{ExecutionContext, Future}
 
-/** Functions to construct signals, you probably want to signal expressions in [[rescala.RescalaInterface.Signal]] for a nicer API. */
+/** Functions to construct signals, you probably want to use signal expressions in [[rescala.RescalaInterface.Signal]] for a nicer API. */
 object Signals {
 
   /** creates a signal that statically depends on the dependencies with a given initial value */

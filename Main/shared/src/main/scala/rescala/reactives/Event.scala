@@ -149,25 +149,30 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
 
   /** Calls f on each occurrence of event e, setting the SL to the generated value.
     * The initial signal is obtained by f(init)
+    * @usecase def set[B >: T, A](init: B)(f: (B => A)): rescala.Signal[A]
     * @group conversion */
   final def set[B >: T : ReSerializable, A](init: B)(f: (B => A))(implicit ticket: CreationTicket[S]): Signal[A, S] =
     latest(init).map(f)
 
   /** returns a signal holding the latest value of the event.
+    * @usecase def latest[A >: T](init: A): rescala.Signal[A]
     * @group conversion */
-  final def latest[T1 >: T : ReSerializable](init: T1)(implicit ticket: CreationTicket[S]): Signal[T1, S] =
+  final def latest[A >: T : ReSerializable](init: A)(implicit ticket: CreationTicket[S]): Signal[A, S] =
     fold(init)((_, v) => v)
   /** returns a signal holding the latest value of the event.
+    * @usecase def latest[A >: T](): rescala.Signal[A]
     * @group conversion */
-  final def latest[T1 >: T : ReSerializable]()(implicit ticket: CreationTicket[S]): Signal[T1, S] =
-    reduce[T1]((_, v) => v)
+  final def latest[A >: T : ReSerializable]()(implicit ticket: CreationTicket[S]): Signal[A, S] =
+    reduce[A]((_, v) => v)
 
   /** Holds the latest value of an event as an Option, None before the first event occured
+    * @usecase def latestOption[A >: T](): rescala.Signal[Option[A]]
     * @group conversion*/
-  final def latestOption[T1 >: T]()(implicit ticket: CreationTicket[S], ev: ReSerializable[Option[T1]]): Signal[Option[T1], S] =
-    fold(None: Option[T1]) { (_, v) => Some(v) }
+  final def latestOption[A >: T]()(implicit ticket: CreationTicket[S], ev: ReSerializable[Option[A]]): Signal[Option[A], S] =
+    fold(None: Option[A]) { (_, v) => Some(v) }
 
   /** calls factory on each occurrence of event e, resetting the SL to a newly generated one
+    * @usecase def reset[T1 >: T, A, R](init: T1)(factory: T1 => Signal[A]): rescala.Signal[A]
     * @group conversion*/
   final def reset[T1 >: T : ReSerializable, A, R](init: T1)(factory: T1 => Signal[A, S])
     (implicit ticket: CreationTicket[S], ev: Flatten[Signal[A, S], S, R]): R =
@@ -175,19 +180,22 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
 
   /** Returns a signal which holds the last n events in a list. At the beginning the
     * list increases in size up to when n values are available
+    * @usecase def last[A >: T](n: Int): rescala.Signal[LinearSeq[A]]
     * @group conversion*/
-  final def last[T1 >: T](n: Int)(implicit ticket: CreationTicket[S], ev: ReSerializable[Queue[T1]]): Signal[LinearSeq[T1], S] = {
-    fold(Queue[T1]()) { (queue: Queue[T1], v: T) =>
+  final def last[A >: T](n: Int)(implicit ticket: CreationTicket[S], ev: ReSerializable[Queue[A]]): Signal[LinearSeq[A], S] = {
+    fold(Queue[A]()) { (queue: Queue[A], v: T) =>
       if (queue.lengthCompare(n) >= 0) queue.tail.enqueue(v) else queue.enqueue(v)
     }
   }
 
   /** collects events resulting in a variable holding a list of all values.
+    * @usecase def list[A >: T](): rescala.Signal[List[A]]
     * @group conversion*/
-  final def list[T1 >: T]()(implicit ticket: CreationTicket[S], ev: ReSerializable[List[T1]]): Signal[List[T1], S] =
-    fold(List[T1]())((acc, v) => v :: acc)
+  final def list[A >: T]()(implicit ticket: CreationTicket[S], ev: ReSerializable[List[A]]): Signal[List[A], S] =
+    fold(List[A]())((acc, v) => v :: acc)
 
   /** Switch back and forth between two signals on occurrence of event e
+    * @usecase def toggle[A](a: Signal[A], b: Signal[A]): rescala.Signal[A]
     * @group conversion*/
   final def toggle[A](a: Signal[A, S], b: Signal[A, S])(implicit ticket: CreationTicket[S], ev: ReSerializable[Boolean]): Signal[A, S] = ticket { ict =>
     val switched: Signal[Boolean, S] = iterate(false) {!_}(ev, ict)
@@ -195,9 +203,10 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
   }
 
   /** Switch to a new Signal once, on the occurrence of event e.
+    * @usecase def switchOnce[A, B >: T](original: Signal[A], newSignal: Signal[A]): rescala.Signal[A]
     * @group conversion*/
-  final def switchOnce[A, T1 >: T](original: Signal[A, S], newSignal: Signal[A, S])(implicit ticket: CreationTicket[S], ev: ReSerializable[Option[T1]]): Signal[A, S] = ticket { turn =>
-    val latest = latestOption[T1]()(turn, ev)
+  final def switchOnce[A, B >: T](original: Signal[A, S], newSignal: Signal[A, S])(implicit ticket: CreationTicket[S], ev: ReSerializable[Option[B]]): Signal[A, S] = ticket { turn =>
+    val latest = latestOption[B]()(turn, ev)
     Signals.dynamic(latest, original, newSignal) { t =>
       t.dependDynamic(latest).get match {
         case None => t.dependDynamic(original).get
@@ -209,9 +218,10 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
   /** Initially the result signal has the value of the original signal.
     * Every time the event fires, the result signal changes to the value of the event,
     * the original signal is no longer used.
+    * @usecase def switchTo[A >: T](original: Signal[A]): rescala.Signal[A]
     * @group conversion */
-  final def switchTo[T1 >: T](original: Signal[T1, S])(implicit ticket: CreationTicket[S], ev: ReSerializable[Option[T1]]): Signal[T1, S] = ticket { turn =>
-    val latest = latestOption[T1]()(turn, ev)
+  final def switchTo[A >: T](original: Signal[A, S])(implicit ticket: CreationTicket[S], ev: ReSerializable[Option[A]]): Signal[A, S] = ticket { turn =>
+    val latest = latestOption[A]()(turn, ev)
     Signals.dynamic(latest, original) { s =>
       s.dependDynamic(latest).get match {
         case None => s.dependDynamic(original).get
