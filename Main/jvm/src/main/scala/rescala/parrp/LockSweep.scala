@@ -2,7 +2,6 @@ package rescala.parrp
 
 import java.util
 
-import rescala.core.Result.{Effect, NoValue, WithValue}
 import rescala.core._
 import rescala.locking._
 import rescala.twoversion.{PropagationStructImpl, TwoVersionPropagationImpl, TwoVersionStruct}
@@ -155,30 +154,17 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
     if (head.state.anyInputChanged != this) done(head, propagate = false)
     else {
       val dt = new DynamicTicket[TState](this, head.state.incoming())
-      head.reevaluate(dt, head.state.base(token)) match {
-        case res@WithValue(_, _) =>
-          commitDependencyDiff(head, dt)
-          if (head.state.isGlitchFreeReady) {
-            // val outgoings = res.commitValueChange()
-            writeState(head)(res.value)
+      val reevRes = head.reevaluate(dt, head.state.base(token))
 
-            head.state.hasWritten = this
+      commitDependencyDiff(head, dt)
+      if (head.state.isGlitchFreeReady) {
+        reevRes.forValue(writeState(head))
+        reevRes.forEffect(observe)
+        head.state.hasWritten = this
 
-            // done(head, res.valueChanged, outgoings)
-            done(head, res.propagate)
-          }
-        case NoValue(propagate) =>
-          commitDependencyDiff(head, dt)
-          if (head.state.isGlitchFreeReady) {
-            // val outgoings = res.commitValueChange()
-            head.state.hasWritten = this
-            // done(head, res.valueChanged, outgoings)
-            done(head, propagate)
-          }
-        case Effect(obs, propagate) =>
-          observe(obs)
-          done(head, propagate)
+        done(head, reevRes.propagate)
       }
+
     }
 
   }
