@@ -26,25 +26,16 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
     val dt = makeDynamicReevaluationTicket(indeps = head.state.incoming())
     val reevRes = head.reevaluate(dt, head.state.base(token))
 
-    if (!dt.indepsChanged) {
-      reevRes.forValue(writeValue(head))
-      reevRes.forEffect(observe)
-      if (reevRes.propagate) enqueueOutgoing(head)
+    val minimalLevel = maximumLevel(dt.indepsAfter) + 1
+    val redo = head.state.level() < minimalLevel
+    if (redo) {
+      levelQueue.enqueue(minimalLevel)(head)
     } else {
-      val newLevel = maximumLevel(dt.indepsAfter) + 1
-      val redo = head.state.level() < newLevel
-      if (redo) {
-        levelQueue.enqueue(newLevel)(head)
-      } else {
-        commitDependencyDiff(head, dt)
-        reevRes.forValue(writeValue(head,newLevel))
-        reevRes.forEffect(observe)
-        if (reevRes.propagate) enqueueOutgoing(head, newLevel)
-      }
+      commitDependencyDiff(head, dt)
+      reevRes.forValue(writeValue(head, minimalLevel))
+      reevRes.forEffect(observe)
+      if (reevRes.propagate) enqueueOutgoing(head, minimalLevel)
     }
-
-
-
   }
 
   private def writeValue(head: ReSource[S], minLevel: Int = -42)(value: head.Value): Unit = {
