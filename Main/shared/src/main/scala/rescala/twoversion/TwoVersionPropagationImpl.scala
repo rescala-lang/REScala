@@ -65,7 +65,6 @@ trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropaga
   /** allow turn to handle dynamic access to reactives */
   def dynamicDependencyInteraction(dependency: ReSource[S]): Unit
 
-  override private[rescala] def staticBefore[P](reactive: ReSourciV[P, S]) = reactive.state.base(token)
   override private[rescala] def staticAfter[P](reactive: ReSourciV[P, S]) = reactive.state.get(token)
   override private[rescala] def dynamicBefore[P](reactive: ReSourciV[P, S]) = {
     dynamicDependencyInteraction(reactive)

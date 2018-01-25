@@ -35,7 +35,6 @@ class SimpleCreation() extends Creation[SimpleStruct] {
 }
 
 class CasWithCreation() extends SimpleCreation() with ComputationStateAccess[SimpleStruct]  {
-  override private[rescala] def staticBefore[P](reactive: ReSourciV[P, SimpleStruct]) = ???
   override private[rescala] def staticAfter[P](reactive: ReSourciV[P, SimpleStruct]) = reactive.state.value
   override private[rescala] def dynamicBefore[P](reactive: ReSourciV[P, SimpleStruct]) = reactive.state.value
   override private[rescala] def dynamicAfter[P](reactive: ReSourciV[P, SimpleStruct]) = ???

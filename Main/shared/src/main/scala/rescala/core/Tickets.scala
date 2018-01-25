@@ -79,9 +79,6 @@ final class DynamicTicket[S <: Struct] private[rescala](casc: ComputationStateAc
 }
 
 sealed class StaticTicket[S <: Struct] private[rescala](val casc: ComputationStateAccess[S] with Creation[S]) extends AnyTicket {
-  private[rescala]  def staticBefore[A](reactive: ReSourciV[A, S]): A = {
-    casc.staticBefore(reactive)
-  }
   private[rescala] def staticDependPulse[A](reactive: ReSourciV[A, S]): A = {
     casc.staticAfter(reactive)
   }
