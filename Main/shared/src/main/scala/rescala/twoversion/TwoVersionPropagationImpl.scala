@@ -57,6 +57,15 @@ trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropaga
     if (failure != null) throw failure
   }
 
+
+  def initialize(ic: InitialChange[S]): Unit
+
+  final override def initializationPhase(initialChanges: Traversable[InitialChange[S]]): Unit = initialChanges.foreach { ic =>
+    if (ic.accept(ic.source.state.base(token))) {
+      initialize(ic)
+    }
+  }
+
   override private[rescala] def discover(node: ReSource[S], addOutgoing: Reactive[S]): Unit = node.state.discover(addOutgoing)
   override private[rescala] def drop(node: ReSource[S], removeOutgoing: Reactive[S]): Unit = node.state.drop(removeOutgoing)
 

@@ -77,9 +77,9 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
     }
   }
 
-  override def initializationPhase(initialChanges: Traversable[InitialChange[S]]): Unit = initialChanges.foreach { ic =>
-    writeValue(ic.source)(ic.value)
-    enqueueOutgoing(ic.source)
+  final override def initialize(ic: InitialChange[S]): Unit = {
+      writeValue(ic.source)(ic.value)
+      enqueueOutgoing(ic.source)
   }
 
   def propagationPhase(): Unit = levelQueue.evaluateQueue()

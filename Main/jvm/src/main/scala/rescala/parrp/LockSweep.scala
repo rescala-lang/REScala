@@ -122,7 +122,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
   }
 
 
-  override def initializationPhase(initialChanges: Traversable[InitialChange[TState]]): Unit = initialChanges.foreach { ic =>
+  final override def initialize(ic: InitialChange[TState]): Unit = {
     ic.source.state.counter = 0
     ic.source.state.anyInputChanged = this
     ic.source.state.hasWritten = this

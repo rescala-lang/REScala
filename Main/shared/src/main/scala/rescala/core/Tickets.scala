@@ -90,6 +90,7 @@ sealed class StaticTicket[S <: Struct] private[rescala](val casc: ComputationSta
 
 abstract class InitialChange[S <: Struct]{
   val source: ReSource[S]
+  def accept(before: source.Value): Boolean
   def value: source.Value
 }
 
