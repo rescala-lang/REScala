@@ -2,7 +2,7 @@ package rescala.reactivestreams
 
 
 import org.reactivestreams.{Publisher, Subscriber, Subscription}
-import rescala.core.{Base, Scheduler, Pulse, REName, ReSource, ReSourciV, ReevaluationResultWithValue, Struct, Turn, ValuePersistency}
+import rescala.core.{Base, DynamicTicket, Pulse, REName, ReSourciV, ReevaluationResult, ReevaluationResultWithoutValue, Scheduler, Struct, ValuePersistency}
 
 import scala.util.{Failure, Success}
 
@@ -33,23 +33,27 @@ object REPublisher {
     var requested: Long = 0
     var cancelled = false
 
-    override protected[rescala] def reevaluate(ticket: Turn[S], before: Pulse[T], indeps: Set[ReSource[S]]): ReevaluationResultWithValue[Value, S] = {
-      ticket.makeStaticReevaluationTicket().staticDependPulse(dependency).toOptionTry match {
-        case None => ReevaluationResultWithValue.StaticPulse[T, S](Pulse.NoChange, indeps)
+    override protected[rescala] def reevaluate(ticket: DynamicTicket[S], before: Pulse[T]): ReevaluationResult[Value, S] = {
+      ticket.staticDependPulse(dependency).toOptionTry match {
+        case None => ReevaluationResultWithoutValue[S](propagate = false)
         case Some(tryValue) =>
           synchronized {
             while (requested <= 0 && !cancelled) wait(100)
-            if (cancelled) ReevaluationResultWithValue.DynamicPulse[T, S](Pulse.NoChange, indepsAfter = Set.empty, indepsAdded = Set.empty, indepsRemoved = Set(dependency))
+            if (cancelled) {
+              ticket.enableDynamic = true
+              ReevaluationResultWithoutValue[S](propagate = false)
+            }
             else {
               requested -= 1
               tryValue match {
                 case Success(v) =>
                   subscriber.onNext(v)
-                  ReevaluationResultWithValue.StaticPulse[T, S](Pulse.NoChange, indeps)
+                  ReevaluationResultWithoutValue[S](propagate = false)
                 case Failure(t) =>
                   subscriber.onError(t)
                   cancelled = true
-                  ReevaluationResultWithValue.DynamicPulse[T, S](Pulse.NoChange, indepsAfter = Set.empty, indepsAdded = Set.empty, indepsRemoved = Set(dependency))
+                  ticket.enableDynamic = true
+                  ReevaluationResultWithoutValue[S](propagate = false)
               }
             }
           }
