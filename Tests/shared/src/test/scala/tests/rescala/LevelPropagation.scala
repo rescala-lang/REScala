@@ -1,6 +1,6 @@
 package tests.rescala
 
-import rescala.infiltration.Infiltrator.assertLevel
+import rescala.core.infiltration.Infiltrator.assertLevel
 import tests.rescala.util.RETests
 
 

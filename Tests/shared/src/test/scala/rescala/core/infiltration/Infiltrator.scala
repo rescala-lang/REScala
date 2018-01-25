@@ -1,4 +1,4 @@
-package rescala.infiltration
+package rescala.core.infiltration
 
 import rescala.core
 import rescala.core.{Scheduler, Struct}

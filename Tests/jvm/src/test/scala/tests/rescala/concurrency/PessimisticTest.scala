@@ -4,7 +4,7 @@ import java.util.concurrent.{CountDownLatch, TimeUnit}
 
 import rescala.Engines
 import rescala.core.Scheduler
-import rescala.infiltration.Infiltrator
+import rescala.core.infiltration.Infiltrator
 import rescala.parrp.{Backoff, ParRP}
 import tests.rescala.util.{RETests, ReevaluationTracker, SetAndExtractTransactionHandle, _}
 import rescala.twoversion.TwoVersionSchedulerImpl
