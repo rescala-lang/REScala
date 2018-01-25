@@ -61,11 +61,6 @@ final class DynamicTicket[S <: Struct] private[rescala](casc: ComputationStateAc
     casc.staticAfter(reactive)
   }
 
-
-  def before[A](reactive: Signal[A, S]): A = {
-    casc.dynamicBefore(reactive).get
-  }
-
   def depend[A](reactive: Signal[A, S]): A = {
     dependDynamic(reactive).get
   }
