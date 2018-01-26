@@ -10,7 +10,7 @@ class SimpleState[V](var value: V, transient: Option[V]) {
   var outgoing: Set[Reactive[SimpleStruct]] = Set.empty
   var discovered = false
   var dirty = false
-  def reset() = {
+  def reset(): Unit = {
     discovered = false
     dirty = false
     transient.foreach(value = _)
