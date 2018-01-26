@@ -40,7 +40,7 @@ trait Signal[+A, S <: Struct] extends ReSourciV[Pulse[A], S] with MacroAccessors
 
   /** Uses a partial function `onFailure` to recover an error carried by the event into a value. */
   final def recover[R >: A](onFailure: PartialFunction[Throwable,R])(implicit ticket: CreationTicket[S]): Signal[R, S] = Signals.static(this) { st =>
-    try st.staticDepend(this) catch {
+    try st.readStatic(this).get catch {
       case NonFatal(e) => onFailure.applyOrElse[Throwable, R](e, throw _)
     }
   }
@@ -52,7 +52,7 @@ trait Signal[+A, S <: Struct] extends ReSourciV[Pulse[A], S] with MacroAccessors
   final def abortOnError()(implicit ticket: CreationTicket[S]): Signal[A, S] = recover{case t => throw new UnhandledFailureException(this, t)}
 
   final def withDefault[R >: A](value: R)(implicit ticket: CreationTicket[S]): Signal[R, S] = Signals.static(this) { (st) =>
-    try st.staticDepend(this) catch {
+    try st.readStatic(this).get catch {
       case EmptySignalControlThrowable => value
     }
   }
@@ -60,7 +60,7 @@ trait Signal[+A, S <: Struct] extends ReSourciV[Pulse[A], S] with MacroAccessors
   /** Return a Signal with f applied to the value
     * @group operator */
   final def map[B](f: A => B)(implicit ticket: CreationTicket[S]): Signal[B, S] =
-    static(this) { t => f(t.staticDepend(this)) }
+    static(this) { t => f(t.readStatic(this).get) }
 
   /** Flattens the inner reactive.
     * @group operator */
@@ -79,7 +79,7 @@ trait Signal[+A, S <: Struct] extends ReSourciV[Pulse[A], S] with MacroAccessors
     * to the event is the new value of the signal
     * @group conversion */
   final def changed(implicit ticket: CreationTicket[S]): Event[A, S] = Events.staticNamed(s"(changed $this)", this) { st =>
-    st.staticDependPulse(this) match {
+    st.readStatic(this) match {
       case Pulse.empty => Pulse.NoChange
       case other => other
     }

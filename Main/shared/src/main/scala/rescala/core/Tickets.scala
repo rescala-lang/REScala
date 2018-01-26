@@ -27,50 +27,31 @@ import scala.language.implicitConversions
 
 class Ticket[S <: Struct](val creation: Creation[S])
 
-abstract class ReevTicket[S <: Struct](casc: Creation[S], val indepsBefore: Set[ReSource[S]]) extends StaticTicket[S](casc) {
-  private[rescala] var indepsAfter: Set[ReSource[S]] = Set.empty
-  private[rescala] var indepsAdded: Set[ReSource[S]] = Set.empty
+abstract class ReevTicket[S <: Struct](creation: Creation[S]) extends StaticTicket[S](creation) {
+  def trackDependencies(): Unit = collectedDependencies = Set.empty
+  private var collectedDependencies: Set[ReSource[S]] = null
+  def getDependencies(): Option[Set[ReSource[S]]] = Option(collectedDependencies)
 
-  var enableDynamic = false
-  def indepsRemoved: Set[ReSource[S]] = indepsBefore.diff(indepsAfter)
-  private[rescala] def indepsChanged: Boolean = enableDynamic && (indepsAdded.nonEmpty || indepsRemoved.nonEmpty)
-
-
-  override private[rescala] def staticDependPulse[A](reactive: ReSourciV[A, S]) = {
-    //mixed access for signal expressions needs this
-    if (enableDynamic) {
-      indepsAfter += reactive
-      if (!indepsBefore(reactive)) indepsAdded += reactive
-    }
+  override def readStatic[A](reactive: ReSourciV[A, S]): A = {
+    if (collectedDependencies != null) collectedDependencies += reactive
     staticAfter(reactive)
   }
 
-  def dynamicAfter[A](reactive: ReSourciV[A, S]): A
-  def depend[A](reactive: Signal[A, S]): A = dependDynamic(reactive).get
-  def depend[A](reactive: Event[A, S]): Option[A] = dependDynamic(reactive).toOption
-
-  private[rescala] def dependDynamic[A](reactive: ReSourciV[A, S]): A = {
-    require(enableDynamic, "should not use dynamic accesses without enabling dynamic tickets")
-    if (indepsBefore(reactive)) {
-      indepsAfter += reactive
-      staticAfter(reactive)
-    }
-    else if (indepsAdded(reactive)) {
-      staticAfter(reactive)
-    }
-    else {
-      indepsAfter += reactive
-      indepsAdded += reactive
-      dynamicAfter(reactive)
-    }
+  def depend[A](reactive: Signal[A, S]): A = readDynamic(reactive).get
+  def depend[A](reactive: Event[A, S]): Option[A] = readDynamic(reactive).toOption
+  def readDynamic[A](reactive: ReSourciV[A, S]): A = {
+    if (collectedDependencies != null) collectedDependencies += reactive
+    dynamicAfter(reactive)
   }
+
+  protected def staticAfter[A](reactive: ReSourciV[A, S]): A
+  protected def dynamicAfter[A](reactive: ReSourciV[A, S]): A
 }
 
-sealed abstract class StaticTicket[S <: Struct](casc: Creation[S]) extends Ticket(casc) {
-  def staticAfter[A](reactive: ReSourciV[A, S]): A
-  private[rescala] def staticDependPulse[A](reactive: ReSourciV[A, S]): A = staticAfter(reactive)
-  final def staticDepend[A](reactive: Signal[A, S]): A = staticDependPulse(reactive).get
-  final def staticDepend[A](reactive: Event[A, S]): Option[A] = staticDependPulse(reactive).toOption
+sealed abstract class StaticTicket[S <: Struct](creation: Creation[S]) extends Ticket(creation) {
+  def staticDepend[A](reactive: Signal[A, S]): A = readStatic(reactive).get
+  def staticDepend[A](reactive: Event[A, S]): Option[A] = readStatic(reactive).toOption
+  def readStatic[A](reactive: ReSourciV[A, S]): A
 }
 
 

@@ -68,13 +68,13 @@ object Util {
   }
 
   def evaluate(reactive: Reactive[SimpleStruct], incoming: Set[ReSource[SimpleStruct]]): Unit = {
-    val dt = new ReevTicket[SimpleStruct](new SimpleCreation(), incoming) {
+    val dt = new ReevTicket[SimpleStruct](new SimpleCreation()) {
       override def dynamicAfter[A](reactive: ReSourciV[A, SimpleStruct]): A = ???
       override def staticAfter[A](reactive: ReSourciV[A, SimpleStruct]): A = reactive.state.value
     }
     val reev = reactive.reevaluate(dt, reactive.state.value)
     if (reev.propagate) reactive.state.outgoing.foreach(_.state.dirty = true)
-    if (dt.indepsChanged) ???
+    if (dt.getDependencies().isDefined) ???
     reev.forValue(reactive.state.value = _)
     reev.forEffect(_())
   }

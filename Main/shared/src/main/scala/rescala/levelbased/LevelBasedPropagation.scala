@@ -23,15 +23,16 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
 
 
   override def evaluate(head: Reactive[S]): Unit = {
-    val dt = makeDynamicReevaluationTicket(indeps = head.state.incoming())
+    val dt = makeDynamicReevaluationTicket()
     val reevRes = head.reevaluate(dt, head.state.base(token))
 
-    val minimalLevel = maximumLevel(dt.indepsAfter) + 1
+    val dependencies: Option[Set[ReSource[S]]] = dt.getDependencies()
+    val minimalLevel = dependencies.fold(0)(maximumLevel(_) + 1)
     val redo = head.state.level() < minimalLevel
     if (redo) {
       levelQueue.enqueue(minimalLevel)(head)
     } else {
-      commitDependencyDiff(head, dt)
+      dependencies.foreach(commitDependencyDiff(head, head.state.incoming()))
       reevRes.forValue(writeValue(head, minimalLevel))
       reevRes.forEffect(observe)
       if (reevRes.propagate) enqueueOutgoing(head, minimalLevel)

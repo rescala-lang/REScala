@@ -4,7 +4,7 @@ import java.util.concurrent.{CountDownLatch, TimeUnit}
 
 import rescala.Engines
 import rescala.core.Scheduler
-import rescala.core.infiltration.Infiltrator
+import rescala.core.infiltration.JVMInfiltrator
 import rescala.parrp.{Backoff, ParRP}
 import tests.rescala.util.{RETests, ReevaluationTracker, SetAndExtractTransactionHandle, _}
 import rescala.twoversion.TwoVersionSchedulerImpl
@@ -131,7 +131,7 @@ class PessimisticTest extends RETests {
       })
 
 
-    assert(Infiltrator.unsafeNow(i1_3) === 42)
+    assert(JVMInfiltrator.unsafeNow(i1_3) === 42)
     assert(reeval === 1)
     assert(regs === 0)
     assert(unregs === 0)
@@ -139,7 +139,7 @@ class PessimisticTest extends RETests {
     // now, this should create some only in turn dynamic changes
     b0.set(true)(mockFac)
 
-    assert(Infiltrator.unsafeNow(i1_3) === 42)
+    assert(JVMInfiltrator.unsafeNow(i1_3) === 42)
     assert(reeval === 3)
     assert(regs === 0)
     assert(unregs === 0)
@@ -147,7 +147,7 @@ class PessimisticTest extends RETests {
     // this does not
     b0.set(false)(mockFac)
 
-    assert(Infiltrator.unsafeNow(i1_3) === 42)
+    assert(JVMInfiltrator.unsafeNow(i1_3) === 42)
     assert(reeval === 4)
     assert(regs === 0)
     assert(unregs === 0)
@@ -155,7 +155,7 @@ class PessimisticTest extends RETests {
     // this also does not, because the level of the dynamic signals stays on 3
     b0.set(true)(mockFac)
 
-    assert(Infiltrator.unsafeNow(i1_3) === 42)
+    assert(JVMInfiltrator.unsafeNow(i1_3) === 42)
     assert(reeval === 5)
     assert(regs === 0)
     assert(unregs === 0)

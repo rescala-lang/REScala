@@ -42,7 +42,7 @@ class StaticVsDynamic[S <: Struct] {
     b = engine.Var { 20 }
 
     if (static) engine.Signals.static(source, a, b){st =>
-      if (st.staticDepend(source)) st.staticDepend(a) else st.staticDepend(b)}
+      if (st.readStatic(source).get) st.readStatic(a).get else st.readStatic(b).get}
     else engine.Signal.dynamic { if (source()) a() else b() }
 
   }

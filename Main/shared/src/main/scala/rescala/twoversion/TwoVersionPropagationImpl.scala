@@ -65,12 +65,12 @@ trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropaga
     }
   }
 
-  final def commitDependencyDiff(node: Reactive[S], dt: ReevTicket[S]): Unit = {
-    if(dt.indepsChanged) {
-      dt.indepsRemoved.foreach(drop(_, node))
-      dt.indepsAdded.foreach(discover(_, node))
-      writeIndeps(node, dt.indepsAfter)
-    }
+  final def commitDependencyDiff(node: Reactive[S], current: Set[ReSource[S]])(updated: Set[ReSource[S]]): Unit = {
+    val indepsRemoved = current -- updated
+    val indepsAdded = updated -- current
+    indepsRemoved.foreach(drop(_, node))
+    indepsAdded.foreach(discover(_, node))
+    writeIndeps(node, updated)
   }
 
   private[rescala] def discover(node: ReSource[S], addOutgoing: Reactive[S]): Unit = node.state.discover(addOutgoing)
@@ -88,7 +88,7 @@ trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropaga
       reactive.state.base(token)
     }
   }
-  private[rescala] def makeDynamicReevaluationTicket(indeps: Set[ReSource[S]]): ReevTicket[S] = new ReevTicket[S](this, indeps) {
+  private[rescala] def makeDynamicReevaluationTicket(): ReevTicket[S] = new ReevTicket[S](this) {
     override def dynamicAfter[A](reactive: ReSourciV[A, S]): A = TwoVersionPropagationImpl.this.dynamicAfter(reactive)
     override def staticAfter[A](reactive: ReSourciV[A, S]): A = reactive.state.get(token)
   }

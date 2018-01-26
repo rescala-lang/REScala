@@ -46,7 +46,7 @@ private abstract class StaticEvent[T, S <: Struct](_bud: S#State[Pulse[T], S], e
 private abstract class ChangeEvent[T, S <: Struct](_bud: S#State[Pulse[Diff[T]], S], signal: Signal[T, S], name: REName)
   extends Base[Pulse[Diff[T]], S](_bud, name) with Event[Diff[T], S] {
   override protected[rescala] def reevaluate(st: ReevTicket[S], before: Pulse[Diff[T]]): Result[Value, S] = {
-    val to: Pulse[T] = st.staticDependPulse(signal)
+    val to: Pulse[T] = st.readStatic(signal)
     if (to == Pulse.empty) return NoValue(propagate = false)
     before match {
       case Value(u) =>
@@ -54,7 +54,7 @@ private abstract class ChangeEvent[T, S <: Struct](_bud: S#State[Pulse[Diff[T]],
         if (from == to) NoValue(propagate = false)
         else Result.fromPulse(Pulse.Value(Diff(from, to)))
       case NoChange =>
-        val res = Diff(Pulse.empty, st.staticDependPulse(signal))
+        val res = Diff(Pulse.empty, st.readStatic(signal))
         Result.Static(Pulse.Value(res),propagate = false)
       case x@Exceptional(_) =>
         Result.fromPulse(x) //should not happen, change does not acutally access other pulses
@@ -65,7 +65,7 @@ private abstract class ChangeEvent[T, S <: Struct](_bud: S#State[Pulse[Diff[T]],
 private abstract class DynamicEvent[T, S <: Struct](_bud: S#State[Pulse[T], S], expr: ReevTicket[S] => Pulse[T], name: REName) extends Base[Pulse[T], S](_bud, name) with Event[T, S] {
 
   override protected[rescala] def reevaluate(dt: ReevTicket[S], before: Pulse[T]): Result[Value, S] = {
-    dt.enableDynamic = true
+    dt.trackDependencies()
     Result.dynamicFromPulse(Pulse.tryCatch(expr(dt), onEmpty = NoChange))
   }
 }
