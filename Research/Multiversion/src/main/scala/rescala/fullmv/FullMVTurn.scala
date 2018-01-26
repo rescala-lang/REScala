@@ -2,7 +2,6 @@ package rescala.fullmv
 
 import java.util.concurrent.{ConcurrentHashMap, ForkJoinTask}
 
-import rescala.sharedimpl.TurnImpl
 import rescala.core._
 import rescala.fullmv.NotificationResultAction._
 import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation._
@@ -10,7 +9,7 @@ import rescala.fullmv.mirrors.{FullMVTurnProxy, FullMVTurnReflectionProxy, Hoste
 import rescala.fullmv.sgt.synchronization.SubsumableLockEntryPoint
 import rescala.fullmv.tasks.{Notification, Reevaluation}
 
-trait FullMVTurn extends TurnImpl[FullMVStruct] with FullMVTurnProxy with SubsumableLockEntryPoint with Hosted {
+trait FullMVTurn extends Creation[FullMVStruct] with FullMVTurnProxy with SubsumableLockEntryPoint with Hosted {
   override val host: FullMVEngine
 
   //========================================================Internal Management============================================================
@@ -86,29 +85,25 @@ trait FullMVTurn extends TurnImpl[FullMVStruct] with FullMVTurnProxy with Subsum
   }
 
 
-  override private[rescala] def discover(node: ReSource[FullMVStruct], addOutgoing: Reactive[FullMVStruct]): Unit = {
+  private[rescala] def discover(node: ReSource[FullMVStruct], addOutgoing: Reactive[FullMVStruct]): Unit = {
     val r@(successorWrittenVersions, maybeFollowFrame) = node.state.discover(this, addOutgoing)
     assert((successorWrittenVersions ++ maybeFollowFrame).forall(retrofit => retrofit == this || retrofit.isTransitivePredecessor(this)), s"$this retrofitting contains predecessors: discover $node -> $addOutgoing retrofits $r from ${node.state}")
     if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] Reevaluation($this,$addOutgoing) discovering $node -> $addOutgoing re-queueing $successorWrittenVersions and re-framing $maybeFollowFrame")
     addOutgoing.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, 1)
   }
 
-  override private[rescala] def drop(node: ReSource[FullMVStruct], removeOutgoing: Reactive[FullMVStruct]): Unit = {
+  private[rescala] def drop(node: ReSource[FullMVStruct], removeOutgoing: Reactive[FullMVStruct]): Unit = {
     val r@(successorWrittenVersions, maybeFollowFrame) = node.state.drop(this, removeOutgoing)
     assert((successorWrittenVersions ++ maybeFollowFrame).forall(retrofit => retrofit == this || retrofit.isTransitivePredecessor(this)), s"$this retrofitting contains predecessors: drop $node -> $removeOutgoing retrofits $r from ${node.state}")
     if (FullMVEngine.DEBUG) println(s"[${Thread.currentThread().getName}] Reevaluation($this,$removeOutgoing) dropping $node -> $removeOutgoing de-queueing $successorWrittenVersions and de-framing $maybeFollowFrame")
     removeOutgoing.state.retrofitSinkFrames(successorWrittenVersions, maybeFollowFrame, -1)
   }
 
+  private[rescala] def writeIndeps(node: Reactive[FullMVStruct], indepsAfter: Set[ReSource[FullMVStruct]]): Unit = node.state.incomings = indepsAfter
 
-  private[rescala] def makeAdmissionPhaseTicket(): AdmissionTicket[FullMVStruct]
-  private[rescala] def makeWrapUpPhaseTicket(): WrapUpTicket[FullMVStruct]
+  private[rescala] def staticBefore[P](reactive: ReSourciV[P, FullMVStruct]) = reactive.state.staticBefore(this)
+  private[rescala] def staticAfter[P](reactive: ReSourciV[P, FullMVStruct]) = reactive.state.staticAfter(this)
+  private[rescala] def dynamicBefore[P](reactive: ReSourciV[P, FullMVStruct]) = reactive.state.dynamicBefore(this)
+  private[rescala] def dynamicAfter[P](reactive: ReSourciV[P, FullMVStruct]) = reactive.state.dynamicAfter(this)
 
-  override private[rescala] def writeIndeps(node: Reactive[FullMVStruct], indepsAfter: Set[ReSource[FullMVStruct]]): Unit = node.state.incomings = indepsAfter
-
-  override private[rescala] def staticBefore[P](reactive: ReSourciV[P, FullMVStruct]) = reactive.state.staticBefore(this)
-  override private[rescala] def staticAfter[P](reactive: ReSourciV[P, FullMVStruct]) = reactive.state.staticAfter(this)
-  override private[rescala] def dynamicBefore[P](reactive: ReSourciV[P, FullMVStruct]) = reactive.state.dynamicBefore(this)
-  override private[rescala] def dynamicAfter[P](reactive: ReSourciV[P, FullMVStruct]) = reactive.state.dynamicAfter(this)
-
-  override def observe(f: () => Unit): Unit = f()}
+  def observe(f: () => Unit): Unit = f()}

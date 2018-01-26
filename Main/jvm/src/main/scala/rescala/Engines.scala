@@ -3,6 +3,7 @@ package rescala
 import rescala.core.{Scheduler, Struct}
 import rescala.levelbased.LevelBasedPropagationEngines
 import rescala.parrp._
+import rescala.simpleprop.SimpleScheduler
 import rescala.twoversion.TwoVersionSchedulerImpl
 
 object Engines extends LevelBasedPropagationEngines {
@@ -12,6 +13,7 @@ object Engines extends LevelBasedPropagationEngines {
     case "unmanaged" => unmanaged.asInstanceOf[Scheduler[S]]
     case "parrp" => parrp.asInstanceOf[Scheduler[S]]
     case "locksweep" => locksweep.asInstanceOf[Scheduler[S]]
+    case "simple" => simple.asInstanceOf[Scheduler[S]]
 
     case other => throw new IllegalArgumentException(s"unknown engine $other")
   }
@@ -22,6 +24,8 @@ object Engines extends LevelBasedPropagationEngines {
   implicit val locksweep: Scheduler[LSStruct] = locksweepWithBackoff(() => new Backoff())
 
   implicit val default: Scheduler[ParRP] = parrp
+
+  implicit val simple: SimpleScheduler = new SimpleScheduler
 
   def locksweepWithBackoff(backOff: () => Backoff): Scheduler[LSStruct]  = new TwoVersionSchedulerImpl[LSStruct, LockSweep]("LockSweep", (_, prior) => new LockSweep(backOff(), prior))
   def parrpWithBackoff(backOff: () => Backoff): Scheduler[ParRP] = new TwoVersionSchedulerImpl[ParRP, ParRP]("ParRP", (_, prior) => new ParRP(backOff(), prior))

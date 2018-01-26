@@ -17,7 +17,7 @@ class SimpleState[V](var value: V, transient: Option[V]) {
   }
 }
 
-class SimpleCreation() extends Creation[SimpleStruct] {
+object SimpleCreation extends Creation[SimpleStruct] {
   override protected[this] def makeDerivedStructState[P](valuePersistency: ValuePersistency[P]): SimpleState[P] =
     new SimpleState[P](valuePersistency.initialValue, if (valuePersistency.isTransient) Some(valuePersistency.initialValue) else None)
   override protected[this] def ignite(reactive: Reactive[SimpleStruct], incoming: Set[ReSource[SimpleStruct]], ignitionRequiresReevaluation: Boolean): Unit = {
@@ -37,7 +37,7 @@ class SimpleCreation() extends Creation[SimpleStruct] {
 class SimpleScheduler extends Scheduler[SimpleStruct] {
   override private[rescala] def executeTurn[R](initialWrites: Traversable[ReSource], admissionPhase: AdmissionTicket => R) = {
 
-    val admissionTicket = new AdmissionTicket(new SimpleCreation()) {
+    val admissionTicket = new AdmissionTicket(SimpleCreation) {
       override def read[A](reactive: ReSourciV[A, SimpleStruct]): A = reactive.state.value
     }
     val admissionResult = admissionPhase(admissionTicket)
@@ -54,7 +54,7 @@ class SimpleScheduler extends Scheduler[SimpleStruct] {
     admissionResult
   }
   override private[rescala] def singleNow[A](reactive: ReSourciV[A, SimpleStruct]) = reactive.state.value
-  override private[rescala] def create[T](f: Creation => T) = f(new SimpleCreation())
+  override private[rescala] def create[T](f: Creation => T) = f(SimpleCreation)
 }
 
 
@@ -68,7 +68,7 @@ object Util {
   }
 
   def evaluate(reactive: Reactive[SimpleStruct], incoming: Set[ReSource[SimpleStruct]]): Unit = {
-    val dt = new ReevTicket[SimpleStruct](new SimpleCreation()) {
+    val dt = new ReevTicket[SimpleStruct](SimpleCreation) {
       override def dynamicAfter[A](reactive: ReSourciV[A, SimpleStruct]): A = ???
       override def staticAfter[A](reactive: ReSourciV[A, SimpleStruct]): A = reactive.state.value
     }

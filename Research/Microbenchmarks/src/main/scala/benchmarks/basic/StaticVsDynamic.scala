@@ -6,7 +6,6 @@ import java.util.concurrent.locks.ReadWriteLock
 import benchmarks.{EngineParam, Step, Workload}
 import org.openjdk.jmh.annotations.{Benchmark, BenchmarkMode, Fork, Measurement, Mode, OutputTimeUnit, Param, Scope, Setup, State, Threads, Warmup}
 import org.openjdk.jmh.infra.BenchmarkParams
-import rescala.sharedimpl.TurnImpl
 import rescala.core.{Scheduler, Struct}
 import rescala.reactives.{Signal, Var}
 
@@ -26,7 +25,6 @@ class StaticVsDynamic[S <: Struct] {
 
   var source: Var[Boolean, S] = _
   var current: Boolean = _
-  var illegalTurn: TurnImpl[S] = _
   var lock: ReadWriteLock = _
   var a: Var[Int, S] = _
   var b: Var[Int, S] = _
