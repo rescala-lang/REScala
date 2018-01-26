@@ -1,7 +1,6 @@
 package rescala.fullmv.tasks
 
-import rescala.core.Result.WithValue
-import rescala.core.{Pulse, ReSource, ReSourciV, Reactive, ReevTicket, Result}
+import rescala.core.{ReSource, ReSourciV, Reactive, ReevTicket, Result}
 import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation.{FollowFraming, NextReevaluation, NoSuccessor}
 import rescala.fullmv.NotificationResultAction.{Glitched, ReevOutResult}
 import rescala.fullmv._
@@ -29,9 +28,18 @@ trait RegularReevaluationHandling extends ReevaluationHandling[Reactive[FullMVSt
         exception.printStackTrace()
         Result.NoValue[FullMVStruct](propagate = false)
     }
-    ticket.getDependencies()//res.commitDependencyDiff(turn, node)
-    res.forValue(value => ())//processReevaluationResult(if(res.valueChanged) Some(res.value) else None)
-    ??? // TODO: implement above
+    ticket.getDependencies().foreach(commitDependencyDiff(node, node.state.incomings))
+    var value = Option(node.state.reevIn(turn))
+    res.forValue(v => value = Some(v))
+    processReevaluationResult(if(res.propagate) value else None)
+  }
+
+  final def commitDependencyDiff(node: Reactive[FullMVStruct], current: Set[ReSource[FullMVStruct]])(updated: Set[ReSource[FullMVStruct]]): Unit = {
+    val indepsRemoved = current -- updated
+    val indepsAdded = updated -- current
+    indepsRemoved.foreach(turn.drop(_, node))
+    indepsAdded.foreach(turn.discover(_, node))
+    turn.writeIndeps(node, updated)
   }
 
   override def createReevaluation(succTxn: FullMVTurn) = Reevaluation(succTxn, node)
