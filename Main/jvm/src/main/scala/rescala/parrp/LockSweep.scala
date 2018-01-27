@@ -8,6 +8,7 @@ import rescala.locking._
 import rescala.twoversion.{PropagationStructImpl, TwoVersionPropagationImpl, TwoVersionStruct}
 
 import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 
 trait LSStruct extends TwoVersionStruct {
   override type State[P, S <: Struct] = LSPropagationStruct[P, S]
@@ -88,7 +89,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
     val stack = new java.util.ArrayDeque[ReSource[TState]](10)
     initialWrites.foreach(stack.offer)
 
-    val locked = new util.ArrayList[ReSource[TState]]
+    val locked = ArrayBuffer[ReSource[TState]]()
 
     val priorKey = priorTurn.map(_.key).orNull
 
@@ -101,18 +102,14 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
           reactive.state.counter += 1
         }
         else {
-          locked.add(reactive)
+          locked += reactive
           reactive.state.counter = 1
           reactive.state.willWrite = this
           reactive.state.outgoing().foreach {stack.offer}
         }
       }
       else {
-        val it = locked.iterator()
-        while (it.hasNext) {
-          val curr = it.next()
-          curr.state.willWrite = null
-        }
+        locked.foreach{ _.state.willWrite = null }
         locked.clear()
         key.reset()
         stack.clear()
