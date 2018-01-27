@@ -29,10 +29,7 @@ trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropaga
 
   def observe(f: () => Unit): Unit = observers += f
 
-  override def commitPhase(): Unit = {
-    val it = toCommit.iterator
-    while (it.hasNext) it.next().commit(this)
-  }
+  override def commitPhase(): Unit = toCommit.foreach{_.commit(this)}
 
   override def rollbackPhase(): Unit = {
     val it = toCommit.iterator
@@ -40,17 +37,12 @@ trait TwoVersionPropagationImpl[S <: TwoVersionStruct] extends TwoVersionPropaga
   }
 
   override def observerPhase(): Unit = {
-    val it = observers.iterator
     var failure: Throwable = null
-    while (it.hasNext) {
-      try {
-        it.next().apply()
-      }
-      catch {
-        case NonFatal(e) => failure = e
-      }
+    observers.foreach { n =>
+      try n.apply()
+      catch {case NonFatal(e) => failure = e}
     }
-    // find the first failure and rethrow the contained exception
+    // find some failure and rethrow the contained exception
     // we should probably aggregate all of the exceptions,
     // but this is not the place to invent exception aggregation
     if (failure != null) throw failure
