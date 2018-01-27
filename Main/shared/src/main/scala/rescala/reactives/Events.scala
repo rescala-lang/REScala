@@ -9,7 +9,7 @@ object Events {
 
   /** the basic method to create static events */
   def staticNamed[T, S <: Struct](name: String, dependencies: ReSource[S]*)(calculate: StaticTicket[S] => Pulse[T])(implicit ticket: CreationTicket[S]): Event[T, S] = ticket { initTurn =>
-    initTurn.create[Pulse[T], StaticEvent[T, S]](dependencies.toSet, ValuePersistency.Event) {
+    initTurn.create[Pulse[T], StaticEvent[T, S]](dependencies.toSet, Initializer.Event) {
       state => new StaticEvent[T, S](state, calculate, name) with DisconnectableImpl[S]
     }
   }
@@ -21,7 +21,7 @@ object Events {
   /** Creates dynamic events */
   def dynamic[T, S <: Struct](dependencies: ReSource[S]*)(expr: DynamicTicket[S] => Option[T])(implicit ticket: CreationTicket[S]): Event[T, S] = {
     ticket { initialTurn =>
-      initialTurn.create[Pulse[T], DynamicEvent[T, S]](dependencies.toSet, ValuePersistency.DynamicEvent) {
+      initialTurn.create[Pulse[T], DynamicEvent[T, S]](dependencies.toSet, Initializer.DynamicEvent) {
         state => new DynamicEvent[T, S](state, expr.andThen(Pulse.fromOption), ticket.rename) with DisconnectableImpl[S]
       }
     }
@@ -29,7 +29,7 @@ object Events {
 
   /** Creates change events */
   def change[A, S <: Struct](signal: Signal[A, S])(implicit ticket: CreationTicket[S]): Event[Diff[A], S] = ticket { initTurn =>
-    initTurn.create[Pulse[Diff[A]], ChangeEvent[A, S]](Set(signal), ValuePersistency.ChangeEvent) {
+    initTurn.create[Pulse[Diff[A]], ChangeEvent[A, S]](Set(signal), Initializer.ChangeEvent) {
       state => new ChangeEvent[A, S](state, signal, ticket.rename) with DisconnectableImpl[S]
     }
   }

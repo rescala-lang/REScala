@@ -1,6 +1,7 @@
 package rescala.levelbased
 
-import rescala.core.{Scheduler, ReSource, ValuePersistency}
+import rescala.core.Initializer.Param
+import rescala.core.{ReSource, Scheduler}
 import rescala.twoversion.TwoVersionSchedulerImpl
 
 /**
@@ -9,7 +10,7 @@ import rescala.twoversion.TwoVersionSchedulerImpl
 trait LevelBasedPropagationEngines {
 
   private[rescala] class SimpleNoLock extends LevelBasedPropagation[SimpleStruct] {
-    override protected def makeDerivedStructState[P](valuePersistency: ValuePersistency[P]): SimpleStruct#State[P, SimpleStruct] = {
+    override protected def makeDerivedStructState[P](valuePersistency: Param[P]): SimpleStruct#State[P, SimpleStruct] = {
       new LevelStructTypeImpl(valuePersistency.initialValue, valuePersistency.isTransient)
     }
     override def releasePhase(): Unit = ()

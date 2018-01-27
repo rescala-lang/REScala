@@ -1,5 +1,6 @@
 package rescala.parrp
 
+import rescala.core.Initializer.Param
 import rescala.core._
 import rescala.levelbased.{LevelBasedPropagation, LevelStruct, LevelStructTypeImpl}
 import rescala.locking._
@@ -39,7 +40,7 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
 
   final val key: Key[ParRPInterTurn] = new Key(this)
 
-  override protected def makeDerivedStructState[P](valuePersistency: ValuePersistency[P]): ParRPStructType[P, ParRP] = {
+  override protected def makeDerivedStructState[P](valuePersistency: Param[P]): ParRPStructType[P, ParRP] = {
     val lock = new TurnLock[ParRPInterTurn]
     val owner = lock.tryLock(key)
     assert(owner eq key, s"$this failed to acquire lock on newly created reactive")

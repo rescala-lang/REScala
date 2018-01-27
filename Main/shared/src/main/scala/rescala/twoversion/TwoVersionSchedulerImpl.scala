@@ -1,6 +1,6 @@
 package rescala.twoversion
 
-import rescala.core.Creation
+import rescala.core.Initializer
 
 /**
   * Implementation of the turn creation function based on a given function as class parameter
@@ -9,7 +9,7 @@ import rescala.core.Creation
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   * @tparam TImpl Turn type used by the engine
   */
-class TwoVersionSchedulerImpl[S <: TwoVersionStruct, TImpl <: TwoVersionPropagation[S] with Creation[S]]
+class TwoVersionSchedulerImpl[S <: TwoVersionStruct, TImpl <: TwoVersionPropagation[S] with Initializer[S]]
 (name: String, newTurn: (TwoVersionSchedulerImpl[S,TImpl], Option[TImpl]) => TImpl) extends TwoVersionScheduler[S, TImpl] {
   def this(name: String, newTurn: () => TImpl) = this(name, (_, _) => newTurn())
 

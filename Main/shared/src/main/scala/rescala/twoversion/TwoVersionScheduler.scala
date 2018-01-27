@@ -1,6 +1,6 @@
 package rescala.twoversion
 
-import rescala.core.{Creation, ReSourciV, SchedulerImpl}
+import rescala.core.{Initializer, ReSourciV, SchedulerImpl}
 
 /**
   * Implementation of the turn handling defined in the Engine trait
@@ -8,7 +8,7 @@ import rescala.core.{Creation, ReSourciV, SchedulerImpl}
   * @tparam S Struct type that defines the spore type used to manage the reactive evaluation
   * @tparam TImpl Turn type used by the engine
   */
-trait TwoVersionScheduler[S <: TwoVersionStruct, TImpl <: TwoVersionPropagation[S] with Creation[S]] extends SchedulerImpl[S, TImpl] {
+trait TwoVersionScheduler[S <: TwoVersionStruct, TImpl <: TwoVersionPropagation[S] with Initializer[S]] extends SchedulerImpl[S, TImpl] {
   override private[rescala] def singleNow[A](reactive: ReSourciV[A, S]) = reactive.state.base(null)
 
   /** goes through the whole turn lifecycle

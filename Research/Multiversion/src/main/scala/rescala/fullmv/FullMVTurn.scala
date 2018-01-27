@@ -2,6 +2,7 @@ package rescala.fullmv
 
 import java.util.concurrent.{ConcurrentHashMap, ForkJoinTask}
 
+import rescala.core.Initializer.Param
 import rescala.core._
 import rescala.fullmv.NotificationResultAction._
 import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation._
@@ -9,7 +10,7 @@ import rescala.fullmv.mirrors.{FullMVTurnProxy, FullMVTurnReflectionProxy, Hoste
 import rescala.fullmv.sgt.synchronization.SubsumableLockEntryPoint
 import rescala.fullmv.tasks.{Notification, Reevaluation}
 
-trait FullMVTurn extends Creation[FullMVStruct] with FullMVTurnProxy with SubsumableLockEntryPoint with Hosted {
+trait FullMVTurn extends Initializer[FullMVStruct] with FullMVTurnProxy with SubsumableLockEntryPoint with Hosted {
   override val host: FullMVEngine
 
   //========================================================Internal Management============================================================
@@ -32,13 +33,13 @@ trait FullMVTurn extends Creation[FullMVStruct] with FullMVTurnProxy with Subsum
 
   //========================================================Scheduler Interface============================================================
 
-  override def makeDerivedStructState[P](valuePersistency: ValuePersistency[P]): NodeVersionHistory[P, FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]] = {
+  override def makeDerivedStructState[P](valuePersistency: Param[P]): NodeVersionHistory[P, FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]] = {
     val state = new NodeVersionHistory[P, FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]](host.dummy, valuePersistency)
     state.incrementFrame(this)
     state
   }
 
-  override protected def makeSourceStructState[P](valuePersistency: ValuePersistency[P]): NodeVersionHistory[P, FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]] = {
+  override protected def makeSourceStructState[P](valuePersistency: Param[P]): NodeVersionHistory[P, FullMVTurn, ReSource[FullMVStruct], Reactive[FullMVStruct]] = {
     val state = makeDerivedStructState(valuePersistency)
     val res = state.notify(this, changed = false)
     assert(res == NoSuccessor(Set.empty))

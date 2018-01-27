@@ -1,6 +1,7 @@
 package rescala.simpleprop
 
-import rescala.core.{Creation, ReSource, ReSourciV, Reactive, ReevTicket, Scheduler, Struct, ValuePersistency}
+import rescala.core.Initializer.Param
+import rescala.core.{Initializer, ReSource, ReSourciV, Reactive, ReevTicket, Scheduler, Struct}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -19,8 +20,8 @@ class SimpleState[V](var value: V, transient: Option[V]) {
   }
 }
 
-object SimpleCreation extends Creation[SimpleStruct] {
-  override protected[this] def makeDerivedStructState[P](valuePersistency: ValuePersistency[P]): SimpleState[P] =
+object SimpleCreation extends Initializer[SimpleStruct] {
+  override protected[this] def makeDerivedStructState[P](valuePersistency: Param[P]): SimpleState[P] =
     new SimpleState[P](valuePersistency.initialValue, if (valuePersistency.isTransient) Some(valuePersistency.initialValue) else None)
   override protected[this] def ignite(reactive: Reactive[SimpleStruct], incoming: Set[ReSource[SimpleStruct]], ignitionRequiresReevaluation: Boolean): Unit = {
 

@@ -59,7 +59,7 @@ abstract class RescalaInterface[S <: Struct] {
   /** @group internal */
   final type CreationTicket = rescala.core.CreationTicket[S]
   /** @group internal */
-  final type Creation = rescala.core.Creation[S]
+  final type Creation = rescala.core.Initializer[S]
   /** @group internal */
   final type Reactive = rescala.core.Reactive[S]
   /** @group internal */

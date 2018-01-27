@@ -2,7 +2,7 @@ package rescala.reactivestreams
 
 
 import org.reactivestreams.{Publisher, Subscriber, Subscription}
-import rescala.core.{Base, Pulse, REName, ReSourciV, ReevTicket, Result, Scheduler, Struct, ValuePersistency}
+import rescala.core.{Base, Pulse, REName, ReSourciV, ReevTicket, Result, Scheduler, Struct, Initializer}
 
 import scala.util.{Failure, Success}
 
@@ -79,7 +79,7 @@ object REPublisher {
     fac: Scheduler[S]
   ): SubscriptionReactive[T, S] = {
     fac.transaction() { ticket =>
-      ticket.creation.create[Pulse[T], SubscriptionReactive[T, S]](Set(dependency), ValuePersistency.DerivedSignal) { state =>
+      ticket.creation.create[Pulse[T], SubscriptionReactive[T, S]](Set(dependency), Initializer.DerivedSignal) { state =>
         new SubscriptionReactive[T, S](state, dependency, subscriber, fac, s"forSubscriber($subscriber)")
       }
     }

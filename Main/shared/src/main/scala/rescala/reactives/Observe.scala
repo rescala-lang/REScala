@@ -40,7 +40,7 @@ object Observe {
   }
 
   def weak[T, S <: Struct](dependency: ReSourciV[Pulse[T], S], fireImmediately: Boolean)(fun: T => Unit, fail: Throwable => Unit)(implicit ct: CreationTicket[S]): Observe[S] = {
-    ct(initTurn => initTurn.create[Unit, Obs[T, S]](Set(dependency), if(fireImmediately) ValuePersistency.SignalObserver else ValuePersistency.EventObserver) { state =>
+    ct(initTurn => initTurn.create[Unit, Obs[T, S]](Set(dependency), if(fireImmediately) Initializer.SignalObserver else Initializer.EventObserver) { state =>
       new Obs[T, S](state, dependency, fun, fail, ct.rename) with DisconnectableImpl[S]
     })
   }

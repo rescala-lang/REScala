@@ -1,6 +1,6 @@
 import org.scalajs.dom
 import org.scalajs.dom.Node
-import rescala.core.{Creation, CreationTicket, Scheduler, Struct}
+import rescala.core.{Initializer, CreationTicket, Scheduler, Struct}
 import rescala.reactives.Signals.Diff
 import rescala.reactives.{Observe, Signal}
 
@@ -17,7 +17,7 @@ package object rescalatags {
       ct { creation => asFragInner(engine)(creation) }
     }
 
-    private def asFragInner(engine: Scheduler[S])(implicit creation: Creation[S]): REFrag = {
+    private def asFragInner(engine: Scheduler[S])(implicit creation: Initializer[S]): REFrag = {
       val result: Signal[Node, S] = signal
         .map(_.render)
         .recover { case t => span(t.toString).render }

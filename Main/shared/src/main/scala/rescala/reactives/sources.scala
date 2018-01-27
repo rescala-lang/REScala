@@ -34,7 +34,7 @@ final class Evt[T, S <: Struct] private[rescala](initialState: S#State[Pulse[T],
 /** Creates new [[Evt]]s */
 object Evt {
   def apply[T, S <: Struct]()(implicit ticket: CreationTicket[S]): Evt[T, S] = ticket { t =>
-    t.createSource[Pulse[T], Evt[T, S]](ValuePersistency.Event)(new Evt[T, S](_, ticket.rename))
+    t.createSource[Pulse[T], Evt[T, S]](Initializer.Event)(new Evt[T, S](_, ticket.rename))
   }
 }
 
@@ -62,7 +62,7 @@ object Var {
   def apply[T: ReSerializable, S <: Struct](initval: T)(implicit ticket: CreationTicket[S]): Var[T, S] = fromChange(Pulse.Value(initval))
   def empty[T: ReSerializable, S <: Struct]()(implicit ticket: CreationTicket[S]): Var[T, S] = fromChange(Pulse.empty)
   private[this] def fromChange[T: ReSerializable, S <: Struct](change: Pulse.Change[T])(implicit ticket: CreationTicket[S]): Var[T, S] = ticket { t =>
-    t.createSource[Pulse[T], Var[T, S]](ValuePersistency.InitializedSignal(change))(new Var[T, S](_, ticket.rename))
+    t.createSource[Pulse[T], Var[T, S]](Initializer.InitializedSignal(change))(new Var[T, S](_, ticket.rename))
   }
 }
 

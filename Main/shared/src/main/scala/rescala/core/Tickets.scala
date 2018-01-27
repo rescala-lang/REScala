@@ -26,9 +26,9 @@ import scala.language.implicitConversions
 //         this cannot be ensured statically, as users can always hide implicitly available current turns.
 
 
-class Ticket[S <: Struct](val creation: Creation[S])
+class Ticket[S <: Struct](val creation: Initializer[S])
 
-abstract class ReevTicket[T, S <: Struct](creation: Creation[S]) extends DynamicTicket[S](creation) with Result[T, S] {
+abstract class ReevTicket[T, S <: Struct](creation: Initializer[S]) extends DynamicTicket[S](creation) with Result[T, S] {
   def trackDependencies(): Unit = collectedDependencies = Set.empty
   private var collectedDependencies: Set[ReSource[S]] = null
   def getDependencies(): Option[Set[ReSource[S]]] = Option(collectedDependencies)
@@ -68,12 +68,12 @@ abstract class ReevTicket[T, S <: Struct](creation: Creation[S]) extends Dynamic
 
 }
 
-abstract class DynamicTicket[S <: Struct](creation: Creation[S]) extends StaticTicket[S](creation) {
+abstract class DynamicTicket[S <: Struct](creation: Initializer[S]) extends StaticTicket[S](creation) {
   def read[V, A](reactive: MacroAccessors[V, A, S]): A = reactive.interpret(dependDynamic(reactive))
   def dependDynamic[A](reactive: ReSourciV[A, S]): A
 }
 
-sealed abstract class StaticTicket[S <: Struct](creation: Creation[S]) extends Ticket(creation) {
+sealed abstract class StaticTicket[S <: Struct](creation: Initializer[S]) extends Ticket(creation) {
   def staticRead[V, A](reactive: MacroAccessors[V, A, S]): A = reactive.interpret(dependStatic(reactive))
   def dependStatic[A](reactive: ReSourciV[A, S]): A
 }
@@ -85,7 +85,7 @@ abstract class InitialChange[S <: Struct]{
   def value: source.Value
 }
 
-abstract class AdmissionTicket[S <: Struct](creation: Creation[S]) extends Ticket(creation) {
+abstract class AdmissionTicket[S <: Struct](creation: Initializer[S]) extends Ticket(creation) {
 
   private[rescala] var wrapUp: WrapUpTicket[S] => Unit = null
 
@@ -119,11 +119,11 @@ abstract class WrapUpTicket[S <: Struct] {
 @implicitNotFound(msg = "could not generate a turn source." +
   " An available implicit Ticket will serve as turn source, or if no" +
   " such turn is present, an implicit Engine is accepted instead.")
-final case class CreationTicket[S <: Struct](self: Either[Creation[S], Scheduler[S]])(val rename: REName) {
+final case class CreationTicket[S <: Struct](self: Either[Initializer[S], Scheduler[S]])(val rename: REName) {
 
   def isInnerTicket(): Boolean = self.isLeft
 
-  def apply[T](f: Creation[S] => T): T = self match {
+  def apply[T](f: Initializer[S] => T): T = self match {
     case Left(integrated) => f(integrated)
     case Right(engine) => engine.create(f)
   }
@@ -132,8 +132,8 @@ final case class CreationTicket[S <: Struct](self: Either[Creation[S], Scheduler
 object CreationTicket extends LowPriorityCreationImplicits {
   implicit def fromTicketImplicit[S <: Struct](implicit ticket: Ticket[S], line: REName): CreationTicket[S] = CreationTicket(Left(ticket.creation))(line)
 
-  implicit def fromCreationImplicit[S <: Struct](implicit creation: Creation[S], line: REName): CreationTicket[S] = CreationTicket(Left(creation))(line)
-  implicit def fromCreation[S <: Struct](creation: Creation[S])(implicit line: REName): CreationTicket[S] = CreationTicket(Left(creation))(line)
+  implicit def fromCreationImplicit[S <: Struct](implicit creation: Initializer[S], line: REName): CreationTicket[S] = CreationTicket(Left(creation))(line)
+  implicit def fromCreation[S <: Struct](creation: Initializer[S])(implicit line: REName): CreationTicket[S] = CreationTicket(Left(creation))(line)
 }
 
 sealed trait LowPriorityCreationImplicits {

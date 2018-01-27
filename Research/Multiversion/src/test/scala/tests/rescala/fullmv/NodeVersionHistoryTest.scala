@@ -1,7 +1,7 @@
 package tests.rescala.fullmv
 
 import org.scalatest.FunSuite
-import rescala.core.{Pulse, ValuePersistency}
+import rescala.core.{Pulse, Initializer}
 import rescala.fullmv.FramingBranchResult.{Deframe, Frame, FramingBranchEnd}
 import rescala.fullmv.NotificationResultAction.NotificationOutAndSuccessorOperation.FollowFraming
 import rescala.fullmv._
@@ -14,7 +14,7 @@ class NodeVersionHistoryTest extends FunSuite {
 
     val createN = engine.newTurn()
     createN.beginExecuting()
-    val n = new NodeVersionHistory[Pulse[Int], FullMVTurn, Int, Int](createN, ValuePersistency.InitializedSignal(Pulse.Value(10)))
+    val n = new NodeVersionHistory[Pulse[Int], FullMVTurn, Int, Int](createN, Initializer.InitializedSignal(Pulse.Value(10)))
     createN.completeExecuting()
 
     val reevaluate = engine.newTurn()
