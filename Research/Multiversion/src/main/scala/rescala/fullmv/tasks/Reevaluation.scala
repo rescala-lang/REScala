@@ -28,7 +28,7 @@ trait RegularReevaluationHandling extends ReevaluationHandling[Reactive[FullMVSt
         exception.printStackTrace()
         ticket.withPropagate(false)
     }
-    ticket.getDependencies().foreach(commitDependencyDiff(node, node.state.incomings))
+    res.getDependencies().foreach(commitDependencyDiff(node, node.state.incomings))
     var value = Option(node.state.reevIn(turn))
     res.forValue(v => value = Some(v))
     processReevaluationResult(if(res.propagate) value else None)

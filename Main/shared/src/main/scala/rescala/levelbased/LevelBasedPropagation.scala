@@ -26,7 +26,7 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
   def evaluateIn(head: Reactive[S])(dt: ReevTicket[head.Value, S]): Unit = {
     val reevRes = head.reevaluate(dt, head.state.base(token))
 
-    val dependencies: Option[Set[ReSource[S]]] = dt.getDependencies()
+    val dependencies: Option[Set[ReSource[S]]] = reevRes.getDependencies()
     val minimalLevel = dependencies.fold(0)(maximumLevel(_) + 1)
     val redo = head.state.level() < minimalLevel
     if (redo) {

@@ -93,7 +93,7 @@ object Util {
   def evaluate(reactive: Reactive[SimpleStruct], incoming: Set[ReSource[SimpleStruct]]): Unit = {
     val reev = reactive.reevaluate(dt.reset(), reactive.state.value)
     if (reev.propagate) reactive.state.outgoing.foreach(_.state.dirty = true)
-    if (dt.getDependencies().isDefined) ???
+    if (reev.getDependencies().isDefined) ???
     reev.forValue(reactive.state.value = _)
     reev.forEffect(_())
   }
