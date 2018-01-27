@@ -27,7 +27,7 @@ import scala.language.implicitConversions
 
 class Ticket[S <: Struct](val creation: Creation[S])
 
-abstract class ReevTicket[S <: Struct](creation: Creation[S]) extends StaticTicket[S](creation) {
+abstract class ReevTicket[T, S <: Struct](creation: Creation[S]) extends DynamicTicket[S](creation) with Result[T, S] {
   def trackDependencies(): Unit = collectedDependencies = Set.empty
   private var collectedDependencies: Set[ReSource[S]] = null
   def getDependencies(): Option[Set[ReSource[S]]] = Option(collectedDependencies)
@@ -37,8 +37,6 @@ abstract class ReevTicket[S <: Struct](creation: Creation[S]) extends StaticTick
     staticAfter(reactive)
   }
 
-  def depend[A](reactive: Signal[A, S]): A = readDynamic(reactive).get
-  def depend[A](reactive: Event[A, S]): Option[A] = readDynamic(reactive).toOption
   def readDynamic[A](reactive: ReSourciV[A, S]): A = {
     if (collectedDependencies != null) collectedDependencies += reactive
     dynamicAfter(reactive)
@@ -46,6 +44,34 @@ abstract class ReevTicket[S <: Struct](creation: Creation[S]) extends StaticTick
 
   protected def staticAfter[A](reactive: ReSourciV[A, S]): A
   protected def dynamicAfter[A](reactive: ReSourciV[A, S]): A
+
+
+  // inline result into ticket, to reduce the amount of garbage during reevaluation
+  var propagate = true
+  var value: T = _
+  var effect: () => Unit = null
+  final def withPropagate(p: Boolean): ReevTicket[T, S] = {propagate = p; this}
+  final def withValue(v: T): ReevTicket[T, S] = {value = v; this}
+  final def withEffect(v: () => Unit): ReevTicket[T, S] = {effect = v; this}
+
+  override def forValue(f: T => Unit): Unit = if (value != null) f(value)
+  override def forEffect(f: (() => Unit) => Unit): Unit = if (effect != null) f(effect)
+
+  def reset[NT](): ReevTicket[NT, S] = {
+    propagate = true
+    value = null.asInstanceOf[T]
+    effect = null
+    collectedDependencies = null
+    this.asInstanceOf[ReevTicket[NT, S]]
+  }
+
+}
+
+abstract class DynamicTicket[S <: Struct](creation: Creation[S]) extends StaticTicket[S](creation) {
+
+  def depend[A](reactive: Signal[A, S]): A = readDynamic(reactive).get
+  def depend[A](reactive: Event[A, S]): Option[A] = readDynamic(reactive).toOption
+  def readDynamic[A](reactive: ReSourciV[A, S]): A
 }
 
 sealed abstract class StaticTicket[S <: Struct](creation: Creation[S]) extends Ticket(creation) {

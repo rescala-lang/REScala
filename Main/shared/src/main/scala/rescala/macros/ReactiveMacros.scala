@@ -1,6 +1,6 @@
 package rescala.macros
 
-import rescala.core.{CreationTicket, ReevTicket, LowPriorityCreationImplicits, StaticTicket, Struct}
+import rescala.core.{CreationTicket, DynamicTicket, LowPriorityCreationImplicits, StaticTicket, Struct}
 import retypecheck._
 
 import scala.reflect.macros.blackbox
@@ -88,7 +88,7 @@ class ReactiveMacros(val c: blackbox.Context) {
     valDefs: List[ValDef],
   ): Tree = {
     val creationMethod = TermName(if (isStatic) "static" else "dynamic")
-    val ticketType = if (isStatic) weakTypeOf[StaticTicket[S]] else weakTypeOf[ReevTicket[S]]
+    val ticketType = if (isStatic) weakTypeOf[StaticTicket[S]] else weakTypeOf[DynamicTicket[S]]
     val computation = q"{$innerTicket: $ticketType => $innerTree }"
     val body = q"""$signalsOrEvents.$creationMethod[${weakTypeOf[A]}, ${weakTypeOf[S]}](
          ..$dependencies

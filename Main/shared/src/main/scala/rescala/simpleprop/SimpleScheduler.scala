@@ -39,6 +39,7 @@ object SimpleCreation extends Creation[SimpleStruct] {
 class SimpleScheduler extends Scheduler[SimpleStruct] {
   override private[rescala] def executeTurn[R](initialWrites: Traversable[ReSource], admissionPhase: AdmissionTicket => R) = {
 
+    // admission
     val admissionTicket = new AdmissionTicket(SimpleCreation) {
       override def read[A](reactive: ReSourciV[A, SimpleStruct]): A = reactive.state.value
     }
@@ -50,10 +51,16 @@ class SimpleScheduler extends Scheduler[SimpleStruct] {
     }.toSeq
     def initialOutgoing = initials.iterator.flatMap(_.state.outgoing)
     initialOutgoing.foreach(_.state.dirty = true)
+
+    // propagation
     val order = Util.toposort(initialOutgoing.toIterable)
     order.reverseIterator.foreach(r => if(r.state.dirty) Util.evaluate(r, Set.empty))
+
+    //cleanup
     initials.foreach(_.state.reset)
     order.foreach(_.state.reset)
+
+    //wrapup
     if (admissionTicket.wrapUp != null) ???
     admissionResult
   }
@@ -77,12 +84,13 @@ object Util {
     res
   }
 
+  val dt = new ReevTicket[Nothing, SimpleStruct](SimpleCreation) {
+    override def dynamicAfter[A](reactive: ReSourciV[A, SimpleStruct]): A = ???
+    override def staticAfter[A](reactive: ReSourciV[A, SimpleStruct]): A = reactive.state.value
+  }
+
   def evaluate(reactive: Reactive[SimpleStruct], incoming: Set[ReSource[SimpleStruct]]): Unit = {
-    val dt = new ReevTicket[SimpleStruct](SimpleCreation) {
-      override def dynamicAfter[A](reactive: ReSourciV[A, SimpleStruct]): A = ???
-      override def staticAfter[A](reactive: ReSourciV[A, SimpleStruct]): A = reactive.state.value
-    }
-    val reev = reactive.reevaluate(dt, reactive.state.value)
+    val reev = reactive.reevaluate(dt.reset(), reactive.state.value)
     if (reev.propagate) reactive.state.outgoing.foreach(_.state.dirty = true)
     if (dt.getDependencies().isDefined) ???
     reev.forValue(reactive.state.value = _)

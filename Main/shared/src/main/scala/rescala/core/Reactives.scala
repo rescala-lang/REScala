@@ -26,7 +26,7 @@ trait Reactive[S <: Struct] extends ReSource[S] {
 
   /** called if any of the dependencies ([[ReSource]]s) changed in the current update turn,
     * after all (known) dependencies are updated */
-  protected[rescala] def reevaluate(ticket: ReevTicket[S], before: Value): Result[Value, S]
+  protected[rescala] def reevaluate(ticket: ReevTicket[Value, S], before: Value): Result[Value, S]
 }
 
 /** Base implementation for reactives, combining [[ReSourciV]] for value access, with [[Reactive]] for scheduling,

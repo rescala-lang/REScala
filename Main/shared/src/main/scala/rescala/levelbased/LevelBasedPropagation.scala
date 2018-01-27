@@ -1,6 +1,6 @@
 package rescala.levelbased
 
-import rescala.core.{InitialChange, ReSource, Reactive}
+import rescala.core.{InitialChange, ReSource, Reactive, ReevTicket}
 import rescala.twoversion.TwoVersionPropagationImpl
 
 import scala.collection.mutable.ArrayBuffer
@@ -20,10 +20,10 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
     _propagating.clear()
   }
 
+  val reevaluaitonTicket: ReevTicket[Nothing, S] = makeDynamicReevaluationTicket()
 
-
-  override def evaluate(head: Reactive[S]): Unit = {
-    val dt = makeDynamicReevaluationTicket()
+  override def evaluate(r: Reactive[S]): Unit = evaluateIn(r)(reevaluaitonTicket.reset())
+  def evaluateIn(head: Reactive[S])(dt: ReevTicket[head.Value, S]): Unit = {
     val reevRes = head.reevaluate(dt, head.state.base(token))
 
     val dependencies: Option[Set[ReSource[S]]] = dt.getDependencies()
@@ -62,7 +62,7 @@ trait LevelBasedPropagation[S <: LevelStruct] extends TwoVersionPropagationImpl[
 
     if (ignitionRequiresReevaluation || incoming.exists(_propagating.contains)) {
       if (level <= levelQueue.currentLevel()) {
-        evaluate(reactive)
+        evaluateIn(reactive)(makeDynamicReevaluationTicket())
       } else {
         levelQueue.enqueue(level)(reactive)
       }

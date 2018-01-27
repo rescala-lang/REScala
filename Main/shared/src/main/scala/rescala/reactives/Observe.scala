@@ -1,6 +1,5 @@
 package rescala.reactives
 
-import rescala.core.Result.{Effect, NoValue}
 import rescala.core._
 import rescala.reactives.RExceptions.UnhandledFailureException
 
@@ -24,14 +23,14 @@ object Observe {
     extends Base[Unit, S](bud, name) with Reactive[S] with Observe[S]  {
     this: DisconnectableImpl[S] =>
 
-    override protected[rescala] def reevaluate(dt: ReevTicket[S], before: Value): Result[Value, S] = {
+    override protected[rescala] def reevaluate(dt: ReevTicket[Value, S], before: Value): Result[Value, S] = {
       dt.readStatic(dependency) match {
-        case Pulse.NoChange => NoValue[S](propagate = false)
-        case Pulse.empty =>NoValue[S](propagate = false)
-        case Pulse.Value(v) => Effect(() => fun(v), propagate = false)
+        case Pulse.NoChange => dt.withPropagate(false)
+        case Pulse.empty => dt.withPropagate(false)
+        case Pulse.Value(v) => dt.withPropagate(false).withEffect(() => fun(v))
         case Pulse.Exceptional(t) =>
           if (fail eq null) throw new UnhandledFailureException(this, t)
-          else Effect(() => fail(t), propagate = false)
+          else dt.withPropagate(false).withEffect(() => fail(t))
       }
     }
     override def remove()(implicit fac: Scheduler[S]): Unit = {
