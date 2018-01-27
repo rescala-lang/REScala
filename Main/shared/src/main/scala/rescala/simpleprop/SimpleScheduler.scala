@@ -41,14 +41,16 @@ class SimpleScheduler extends Scheduler[SimpleStruct] {
       override def read[A](reactive: ReSourciV[A, SimpleStruct]): A = reactive.state.value
     }
     val admissionResult = admissionPhase(admissionTicket)
-    admissionTicket.initialChanges.valuesIterator.foreach(ic => ic.source.state.value = ic.value)
-    val initals = admissionTicket.initialChanges.keys
-    val initialOutgoing = initals.flatMap(r => r.state.outgoing).toSeq
+    val initials = admissionTicket.initialChanges.valuesIterator.collect {
+      case ic if ic.accept(ic.source.state.value) =>
+        ic.source.state.value = ic.value
+        ic.source
+    }.toSeq
+    def initialOutgoing = initials.iterator.flatMap(_.state.outgoing)
     initialOutgoing.foreach(_.state.dirty = true)
-    val order = initialOutgoing.map(Util.toposort).reverse.flatten.toList
+    val order = initialOutgoing.map(Util.toposort).toSeq.reverse.flatten
     order.foreach(r => if(r.state.dirty) Util.evaluate(r, Set.empty))
-
-    initals.foreach(_.state.reset())
+    initials.foreach(_.state.reset)
     order.foreach(_.state.reset)
     if (admissionTicket.wrapUp != null) ???
     admissionResult

@@ -4,8 +4,6 @@ import tests.rescala.util.RETests
 
 class TrueDynamicEvents extends RETests {
 
-
-
   allEngines("higher order events") { engine => import engine._
     val e1 = Evt[Signal[Int]]
 
