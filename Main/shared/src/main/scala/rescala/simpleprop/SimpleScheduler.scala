@@ -1,6 +1,8 @@
 package rescala.simpleprop
 
-import rescala.core.{Creation, ReevTicket, ReSource, ReSourciV, Reactive, Scheduler, Struct, ValuePersistency}
+import rescala.core.{Creation, ReSource, ReSourciV, Reactive, ReevTicket, Scheduler, Struct, ValuePersistency}
+
+import scala.collection.mutable.ArrayBuffer
 
 trait SimpleStruct extends Struct {
   override type State[P, S <: Struct] = SimpleState[P]
@@ -48,8 +50,8 @@ class SimpleScheduler extends Scheduler[SimpleStruct] {
     }.toSeq
     def initialOutgoing = initials.iterator.flatMap(_.state.outgoing)
     initialOutgoing.foreach(_.state.dirty = true)
-    val order = initialOutgoing.map(Util.toposort).toSeq.reverse.flatten
-    order.foreach(r => if(r.state.dirty) Util.evaluate(r, Set.empty))
+    val order = Util.toposort(initialOutgoing.toIterable)
+    order.reverseIterator.foreach(r => if(r.state.dirty) Util.evaluate(r, Set.empty))
     initials.foreach(_.state.reset)
     order.foreach(_.state.reset)
     if (admissionTicket.wrapUp != null) ???
@@ -61,12 +63,18 @@ class SimpleScheduler extends Scheduler[SimpleStruct] {
 
 
 object Util {
-  def toposort(rem: Reactive[SimpleStruct]): List[Reactive[SimpleStruct]] = {
-    if (rem.state.discovered) Nil
-    else {
-      rem.state.discovered = true
-      rem :: rem.state.outgoing.toList.flatMap(toposort)
+  def toposort(rem: Iterable[Reactive[SimpleStruct]]): ArrayBuffer[Reactive[SimpleStruct]] = {
+    val res = ArrayBuffer[Reactive[SimpleStruct]]()
+    def _toposort(rem: Reactive[SimpleStruct]): Unit = {
+      if (rem.state.discovered) ()
+      else {
+        rem.state.discovered = true
+        rem.state.outgoing.foreach(_toposort)
+        res += rem
+      }
     }
+    rem.foreach(_toposort)
+    res
   }
 
   def evaluate(reactive: Reactive[SimpleStruct], incoming: Set[ReSource[SimpleStruct]]): Unit = {
