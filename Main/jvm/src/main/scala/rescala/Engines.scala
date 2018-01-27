@@ -25,7 +25,7 @@ object Engines extends LevelBasedPropagationEngines {
 
   implicit val default: Scheduler[ParRP] = parrp
 
-  implicit val simple: SimpleScheduler = new SimpleScheduler
+  implicit val simple: SimpleScheduler.type = SimpleScheduler
 
   def locksweepWithBackoff(backOff: () => Backoff): Scheduler[LSStruct]  = new TwoVersionSchedulerImpl[LSStruct, LockSweep]("LockSweep", (_, prior) => new LockSweep(backOff(), prior))
   def parrpWithBackoff(backOff: () => Backoff): Scheduler[ParRP] = new TwoVersionSchedulerImpl[ParRP, ParRP]("ParRP", (_, prior) => new ParRP(backOff(), prior))

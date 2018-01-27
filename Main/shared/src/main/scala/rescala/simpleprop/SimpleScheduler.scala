@@ -37,7 +37,9 @@ object SimpleCreation extends Initializer[SimpleStruct] {
 }
 
 
-class SimpleScheduler extends Scheduler[SimpleStruct] {
+object SimpleScheduler extends Scheduler[SimpleStruct] {
+  val initial: ArrayBuffer[Reactive] = ArrayBuffer[Reactive]()
+  val sorted: ArrayBuffer[Reactive] = ArrayBuffer[Reactive]()
   override private[rescala] def executeTurn[R](initialWrites: Traversable[ReSource], admissionPhase: AdmissionTicket => R) = {
 
     // admission
@@ -45,21 +47,24 @@ class SimpleScheduler extends Scheduler[SimpleStruct] {
       override def access[A](reactive: ReSourciV[A, SimpleStruct]): A = reactive.state.value
     }
     val admissionResult = admissionPhase(admissionTicket)
-    val initials = admissionTicket.initialChanges.valuesIterator.collect {
+    val sources = admissionTicket.initialChanges.valuesIterator.collect {
       case ic if ic.accept(ic.source.state.value) =>
         ic.source.state.value = ic.value
         ic.source
     }.toSeq
-    def initialOutgoing = initials.iterator.flatMap(_.state.outgoing)
-    initialOutgoing.foreach(_.state.dirty = true)
+    sources.foreach(_.state.outgoing.foreach(initial += _))
+    initial.foreach(_.state.dirty = true)
 
     // propagation
-    val order = Util.toposort(initialOutgoing.toIterable)
-    order.reverseIterator.foreach(r => if(r.state.dirty) Util.evaluate(r, Set.empty))
+    Util.toposort(initial, sorted)
+    initial.clear()
+    sorted.reverseIterator.foreach(r => if(r.state.dirty) Util.evaluate(r, Set.empty))
 
     //cleanup
-    initials.foreach(_.state.reset)
-    order.foreach(_.state.reset)
+    sources.foreach(_.state.reset)
+    sorted.foreach(_.state.reset)
+
+    sorted.clear()
 
     //wrapup
     if (admissionTicket.wrapUp != null) ???
@@ -71,18 +76,16 @@ class SimpleScheduler extends Scheduler[SimpleStruct] {
 
 
 object Util {
-  def toposort(rem: Iterable[Reactive[SimpleStruct]]): ArrayBuffer[Reactive[SimpleStruct]] = {
-    val res = ArrayBuffer[Reactive[SimpleStruct]]()
+  def toposort(rem: ArrayBuffer[Reactive[SimpleStruct]], sorted: ArrayBuffer[Reactive[SimpleStruct]]): Unit = {
     def _toposort(rem: Reactive[SimpleStruct]): Unit = {
       if (rem.state.discovered) ()
       else {
         rem.state.discovered = true
         rem.state.outgoing.foreach(_toposort)
-        res += rem
+        sorted += rem
       }
     }
     rem.foreach(_toposort)
-    res
   }
 
   val dt = new ReevTicket[Nothing, SimpleStruct](SimpleCreation) {
