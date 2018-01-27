@@ -34,20 +34,23 @@ abstract class ReevTicket[T, S <: Struct](creation: Initializer[S]) extends Dyna
 
   // inline result into ticket, to reduce the amount of garbage during reevaluation
   private var collectedDependencies: Set[ReSource[S]] = null
-  private var propagate = false
+
+  private var _propagate = false
   private var value: T = _
   private var effect: () => Unit = null
   final def trackDependencies(): Unit = collectedDependencies = Set.empty
-  final def withPropagate(p: Boolean): ReevTicket[T, S] = {propagate = p; this}
-  final def withValue(v: T): ReevTicket[T, S] = {require(v != null, "value must not be null"); value = v; propagate = true; this}
+  final def withPropagate(p: Boolean): ReevTicket[T, S] = {_propagate = p; this}
+  final def withValue(v: T): ReevTicket[T, S] = {require(v != null, "value must not be null"); value = v; _propagate = true; this}
   final def withEffect(v: () => Unit): ReevTicket[T, S] = {effect = v; this}
 
+
+  final override def propagate: Boolean = _propagate
   final override def forValue(f: T => Unit): Unit = if (value != null) f(value)
   final override def forEffect(f: (() => Unit) => Unit): Unit = if (effect != null) f(effect)
   final override def getDependencies(): Option[Set[ReSource[S]]] = Option(collectedDependencies)
 
   final def reset[NT](): ReevTicket[NT, S] = {
-    propagate = false
+    _propagate = false
     value = null.asInstanceOf[T]
     effect = null
     collectedDependencies = null
