@@ -58,8 +58,9 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
     * retry when acquire returns false */
   override def preparationPhase(initialWrites: Traversable[ReSource[TState]]): Unit = {
     val toVisit = new java.util.ArrayDeque[ReSource[TState]](10)
-    initialWrites.foreach(toVisit.offer)
-    val priorKey = priorTurn.map(_.key).orNull
+    val offer: ReSource[TState] => Unit = toVisit.offer
+    initialWrites.foreach(offer)
+    val priorKey = priorTurn.fold[Key[ParRPInterTurn]](null)(_.key)
 
     while (!toVisit.isEmpty) {
       val reactive = toVisit.pop()
@@ -67,12 +68,12 @@ class ParRP(backoff: Backoff, priorTurn: Option[ParRP]) extends LevelBasedPropag
       if ((priorKey ne null) && (owner eq priorKey)) throw new IllegalStateException(s"$this tried to lock reactive $reactive owned by its parent $priorKey")
       if (owner ne key) {
         if (reactive.state.lock.tryLock(key) eq key)
-          reactive.state.outgoing().foreach {toVisit.offer}
+          reactive.state.outgoing().foreach {offer}
         else {
           key.reset()
           backoff.backoff()
           toVisit.clear()
-          initialWrites.foreach(toVisit.offer)
+          initialWrites.foreach(offer)
         }
       }
     }
