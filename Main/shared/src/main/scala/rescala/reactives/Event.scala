@@ -51,7 +51,8 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
 
   /** Uses a partial function `onFailure` to recover an error carried by the event into a value when returning Some(value),
     * or filters the error when returning None
-    * @usecase recover[R >: T](onFailure: PartialFunction[Throwable, Option[R]]): rescala.Event[R]*/
+    * @usecase def recover[R >: T](onFailure: PartialFunction[Throwable, Option[R]]): rescala.Event[R]
+    */
   final def recover[R >: T](onFailure: PartialFunction[Throwable, Option[R]])(implicit ticket: CreationTicket[S]): Event[R, S] =
     Events.staticNamed(s"(recover $this)", this) { st =>
       st.dependStatic(this) match {
@@ -67,7 +68,7 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
     Events.staticNamed(s"(collect $this)", this) { st => st.dependStatic(this).collect(pf) }
 
   /** Events disjunction.
-    * @usecase def ||[U >: T](other: Event[U]): rescala.Event[U]
+    * @usecase def ||[U >: T](other: rescala.Event[U]): rescala.Event[U]
     * @group operator */
   final def ||[U >: T](other: Event[U, S])(implicit ticket: CreationTicket[S]): Event[U, S] = {
     Events.staticNamed(s"(or $this $other)", this, other) { st =>
@@ -82,13 +83,13 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
   final def filter(pred: T => Boolean)(implicit ticket: CreationTicket[S]): Event[T, S] =
     Events.staticNamed(s"(filter $this)", this) { st => st.dependStatic(this).filter(pred) }
   /** Filters the event, only propagating the value when the filter is true.
-    * @usecase def fold[A](init: A)(op: (A, T) => A): rescala.Signal[A]
+    * @usecase def &&(pred: T => Boolean): rescala.Event[T]
     * @see filter
     * @group operator*/
   final def &&(pred: T => Boolean)(implicit ticket: CreationTicket[S]): Event[T, S] = filter(pred)
 
   /** Propagates the event only when except does not fire.
-    * @usecase def \[U](except: Event[U]): rescala.Event[T]
+    * @usecase def \[U](except: rescala.Event[U]): rescala.Event[T]
     * @group operator*/
   final def \[U](except: Event[U, S])(implicit ticket: CreationTicket[S]): Event[T, S] = {
     Events.staticNamed(s"(except $this  $except)", this, except) { st =>
@@ -101,7 +102,7 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
   }
 
   /** Merge the event with the other, if both fire simultaneously.
-    * @usecase def and[U, R](other: Event[U]): rescala.Event[R]
+    * @usecase def and[U, R](other: rescala.Event[U]): rescala.Event[R]
     * @group operator*/
   final def and[U, R](other: Event[U, S])(merger: (T, U) => R)(implicit ticket: CreationTicket[S]): Event[R, S] = {
     Events.staticNamed(s"(and $this $other)", this, other) { st =>
@@ -113,7 +114,7 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
   }
 
   /** Merge the event with the other into a tuple, if both fire simultaneously.
-    * @usecase def zip[U](other: Event[U]): rescala.Event[(T, U)]
+    * @usecase def zip[U](other: rescala.Event[U]): rescala.Event[(T, U)]
     * @group operator
     * @see and */
   final def zip[U](other: Event[U, S])(implicit ticket: CreationTicket[S]): Event[(T, U), S] = and(other)(Tuple2.apply)
@@ -203,7 +204,7 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
     fold(None: Option[A]) { (_, v) => Some(v) }
 
   /** calls factory on each occurrence of event e, resetting the SL to a newly generated one
-    * @usecase def reset[T1 >: T, A, R](init: T1)(factory: T1 => Signal[A]): rescala.Signal[A]
+    * @usecase def reset[T1 >: T, A, R](init: T1)(factory: T1 => rescala.Signal[A]): rescala.Signal[A]
     * @group conversion*/
   final def reset[T1 >: T : ReSerializable, A, R](init: T1)(factory: T1 => Signal[A, S])
     (implicit ticket: CreationTicket[S], ev: Flatten[Signal[A, S], S, R]): R =
@@ -226,7 +227,7 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
     fold(List[A]())((acc, v) => v :: acc)
 
   /** Switch back and forth between two signals on occurrence of event e
-    * @usecase def toggle[A](a: Signal[A], b: Signal[A]): rescala.Signal[A]
+    * @usecase def toggle[A](a: rescala.Signal[A], b: rescala.Signal[A]): rescala.Signal[A]
     * @group conversion*/
   final def toggle[A](a: Signal[A, S], b: Signal[A, S])(implicit ticket: CreationTicket[S], ev: ReSerializable[Boolean]): Signal[A, S] = ticket { ict =>
     val switched: Signal[Boolean, S] = iterate(false) {!_}(ev, ict)
@@ -234,7 +235,7 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
   }
 
   /** Switch to a new Signal once, on the occurrence of event e.
-    * @usecase def switchOnce[A, B >: T](original: Signal[A], newSignal: Signal[A]): rescala.Signal[A]
+    * @usecase def switchOnce[A, B >: T](original: rescala.Signal[A], newSignal: rescala.Signal[A]): rescala.Signal[A]
     * @group conversion*/
   final def switchOnce[A, B >: T](original: Signal[A, S], newSignal: Signal[A, S])(implicit ticket: CreationTicket[S], ev: ReSerializable[Option[B]]): Signal[A, S] = ticket { turn =>
     val latest = latestOption[B]()(turn, ev)
@@ -249,7 +250,7 @@ trait Event[+T, S <: Struct] extends ReSourciV[Pulse[T], S] with MacroAccessors[
   /** Initially the result signal has the value of the original signal.
     * Every time the event fires, the result signal changes to the value of the event,
     * the original signal is no longer used.
-    * @usecase def switchTo[A >: T](original: Signal[A]): rescala.Signal[A]
+    * @usecase def switchTo[A >: T](original: rescala.Signal[A]): rescala.Signal[A]
     * @group conversion */
   final def switchTo[A >: T](original: Signal[A, S])(implicit ticket: CreationTicket[S], ev: ReSerializable[Option[A]]): Signal[A, S] = ticket { turn =>
     val latest = latestOption[A]()(turn, ev)
