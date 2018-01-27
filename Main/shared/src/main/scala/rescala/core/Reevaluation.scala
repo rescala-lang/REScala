@@ -10,15 +10,10 @@ trait Result[+T, S <: Struct] {
 
 
 object Result {
-
-  /**
-    * Result of the static re-evaluation of a reactive value.
-    */
   def fromPulse[P, S <: Struct](t: ReevTicket[Pulse[P], S], value: Pulse[P]): Result[Pulse[P], S] = {
     if (value.isChange) t.withValue(value)
     else t
   }
-
 }
 
 trait Disconnectable[S <: Struct] {

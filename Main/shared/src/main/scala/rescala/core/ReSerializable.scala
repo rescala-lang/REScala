@@ -3,6 +3,8 @@ package rescala.core
 import scala.annotation.implicitNotFound
 import scala.util.{Success, Try}
 
+/** Used when the state of a reactive has to be serialized.
+  * By default this is disabled, but certain Schedulers may require it.*/
 @implicitNotFound("${T} is not serializable")
 trait ReSerializable[T] {
   def serialize(value: T): String
@@ -11,7 +13,7 @@ trait ReSerializable[T] {
 
 object ReSerializable {
 
-
+  // do not serialize reactives, or containers of reactives.
   implicit def resevent[R <: Reactive[_]]: ReSerializable[R] = doNotSerialize
   implicit def resarray[R <: Reactive[_]]: ReSerializable[Array[R]] = doNotSerialize
   implicit def restrav[T <: Traversable[_ <: Reactive[_]]]: ReSerializable[T] = doNotSerialize
