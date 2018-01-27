@@ -1,5 +1,6 @@
 package rescala.core
 
+import rescala.macros.MacroAccessors
 import rescala.reactives.{Event, Signal}
 
 import scala.annotation.implicitNotFound
@@ -32,12 +33,12 @@ abstract class ReevTicket[T, S <: Struct](creation: Creation[S]) extends Dynamic
   private var collectedDependencies: Set[ReSource[S]] = null
   def getDependencies(): Option[Set[ReSource[S]]] = Option(collectedDependencies)
 
-  override def readStatic[A](reactive: ReSourciV[A, S]): A = {
+  override def dependStatic[A](reactive: ReSourciV[A, S]): A = {
     if (collectedDependencies != null) collectedDependencies += reactive
     staticAfter(reactive)
   }
 
-  def readDynamic[A](reactive: ReSourciV[A, S]): A = {
+  def dependDynamic[A](reactive: ReSourciV[A, S]): A = {
     if (collectedDependencies != null) collectedDependencies += reactive
     dynamicAfter(reactive)
   }
@@ -51,7 +52,7 @@ abstract class ReevTicket[T, S <: Struct](creation: Creation[S]) extends Dynamic
   var value: T = _
   var effect: () => Unit = null
   final def withPropagate(p: Boolean): ReevTicket[T, S] = {propagate = p; this}
-  final def withValue(v: T): ReevTicket[T, S] = {value = v; propagate = true; this}
+  final def withValue(v: T): ReevTicket[T, S] = {require(v != null, "value must not be null"); value = v; propagate = true; this}
   final def withEffect(v: () => Unit): ReevTicket[T, S] = {effect = v; this}
 
   override def forValue(f: T => Unit): Unit = if (value != null) f(value)
@@ -68,16 +69,13 @@ abstract class ReevTicket[T, S <: Struct](creation: Creation[S]) extends Dynamic
 }
 
 abstract class DynamicTicket[S <: Struct](creation: Creation[S]) extends StaticTicket[S](creation) {
-
-  def depend[A](reactive: Signal[A, S]): A = readDynamic(reactive).get
-  def depend[A](reactive: Event[A, S]): Option[A] = readDynamic(reactive).toOption
-  def readDynamic[A](reactive: ReSourciV[A, S]): A
+  def read[V, A](reactive: MacroAccessors[V, A, S]): A = reactive.interpret(dependDynamic(reactive))
+  def dependDynamic[A](reactive: ReSourciV[A, S]): A
 }
 
 sealed abstract class StaticTicket[S <: Struct](creation: Creation[S]) extends Ticket(creation) {
-  def staticDepend[A](reactive: Signal[A, S]): A = readStatic(reactive).get
-  def staticDepend[A](reactive: Event[A, S]): Option[A] = readStatic(reactive).toOption
-  def readStatic[A](reactive: ReSourciV[A, S]): A
+  def staticRead[V, A](reactive: MacroAccessors[V, A, S]): A = reactive.interpret(dependStatic(reactive))
+  def dependStatic[A](reactive: ReSourciV[A, S]): A
 }
 
 

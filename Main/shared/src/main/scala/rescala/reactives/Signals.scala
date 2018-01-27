@@ -39,15 +39,15 @@ object Signals {
   }
 
   def lift[A, S <: Struct, R](los: Seq[Signal[A, S]])(fun: Seq[A] => R)(implicit maybe: CreationTicket[S]): Signal[R, S] = {
-    static(los: _*) { t => fun(los.map(s => t.readStatic(s).get)) }
+    static(los: _*) { t => fun(los.map(s => t.dependStatic(s).get)) }
   }
 
   def lift[A1, B, S <: Struct](n1: Signal[A1, S])(fun: (A1) => B)(implicit maybe: CreationTicket[S]): Signal[B, S] = {
-    static(n1)(t => fun(t.readStatic(n1).get))
+    static(n1)(t => fun(t.dependStatic(n1).get))
   }
 
   def lift[A1, A2, B, S <: Struct](n1: Signal[A1, S], n2: Signal[A2, S])(fun: (A1, A2) => B)(implicit maybe: CreationTicket[S]): Signal[B, S] = {
-    static(n1, n2)(t => fun(t.readStatic(n1).get, t.readStatic(n2).get))
+    static(n1, n2)(t => fun(t.dependStatic(n1).get, t.dependStatic(n2).get))
   }
 
   class Diff[+A](val from: Pulse[A], val to: Pulse[A]) {

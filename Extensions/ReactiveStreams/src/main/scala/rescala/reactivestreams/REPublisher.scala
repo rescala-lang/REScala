@@ -34,7 +34,7 @@ object REPublisher {
     var cancelled = false
 
     override protected[rescala] def reevaluate(ticket: ReevTicket[Value, S], before: Pulse[T]): Result[Value, S] = {
-      ticket.readStatic(dependency).toOptionTry match {
+      ticket.dependStatic(dependency).toOptionTry match {
         case None => ticket
         case Some(tryValue) =>
           synchronized {

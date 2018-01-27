@@ -62,7 +62,7 @@ class ReactiveMacros(val c: blackbox.Context) {
 
     val extendedDetections = mapFunctionArgumentIdent :: detections.detectedStaticReactives ::: cutOut.cutOutReactiveIdentifiers
 
-    val valueAccessMethod = TermName(if (detections.detectedDynamicReactives.isEmpty) "staticDepend" else "depend")
+    val valueAccessMethod = TermName(if (detections.detectedDynamicReactives.isEmpty) "staticRead" else "read")
 
     val mapTree = q"""$ticketTermName.$valueAccessMethod($mapFunctionArgumentIdent).map($rewrittenTree)"""
 
@@ -131,12 +131,12 @@ class ReactiveMacros(val c: blackbox.Context) {
           val reactiveApply =
             if (weAnalysis.isStaticDependency(reactive)) {
               detectedStaticReactives ::= reactive
-              q"$ticketIdent.staticDepend"
+              q"$ticketIdent.staticRead"
             }
             else {
               detectedDynamicReactives ::= reactive
               if (requireStatic) c.error(tree.pos, "access to reactive may be dynamic")
-              q"$ticketIdent.depend"
+              q"$ticketIdent.read"
             }
           internal.setType(reactiveApply, tree.tpe)
           q"$reactiveApply($reactive)"

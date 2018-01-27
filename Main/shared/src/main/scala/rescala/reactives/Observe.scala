@@ -24,7 +24,7 @@ object Observe {
     this: DisconnectableImpl[S] =>
 
     override protected[rescala] def reevaluate(dt: ReevTicket[Value, S], before: Value): Result[Value, S] = {
-      dt.readStatic(dependency) match {
+      dt.dependStatic(dependency) match {
         case Pulse.NoChange => dt
         case Pulse.empty => dt
         case Pulse.Value(v) => dt.withEffect(() => fun(v))

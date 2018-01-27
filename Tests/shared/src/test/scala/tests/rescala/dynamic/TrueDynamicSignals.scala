@@ -147,7 +147,7 @@ class TrueDynamicSignals extends RETests {
       newSignal()()
     }
     val normalRes = Signals.dynamic() { t: DynamicTicket =>
-      t.depend(newSignal())
+      t.read(newSignal())
     }
     assert(macroRes.now === 0, "before, macro")
     assert(normalRes.now === 0, "before, normal")
@@ -186,7 +186,7 @@ class TrueDynamicSignals extends RETests {
     var reevaluations = 0
     val s = Signals.dynamic(condition, ifTrue, ifFalse) { (dt: DynamicTicket) =>
       reevaluations += 1
-      if (dt.depend(condition)) dt.depend(ifTrue) else dt.depend(ifFalse)
+      if (dt.read(condition)) dt.read(ifTrue) else dt.read(ifFalse)
     }
 
     assert(reevaluations == 1)
@@ -244,7 +244,7 @@ class TrueDynamicSignals extends RETests {
         //remark 01.10.2014: without the bound the inner signal will be enqueued (it is level 0 same as its dependency)
         //this will cause testsig to reevaluate again, after the inner signal is fully updated.
         // leading to an infinite loop
-        t.depend(dynamic(outside) { t => t.depend(outside) })
+        t.read(dynamic(outside) { t => t.read(outside) })
       }
 
       assert(testsig.now === 1)
@@ -260,7 +260,7 @@ class TrueDynamicSignals extends RETests {
 
     val condition = Var(false)
     val `dynamic signal changing from level 1 to level 4` = dynamic(condition) { t =>
-      if (t.depend(condition)) t.depend(v3) else t.depend(v0)
+      if (t.read(condition)) t.read(v3) else t.read(v0)
     }
     assert(`dynamic signal changing from level 1 to level 4`.now == "level 0")
     assertLevel(`dynamic signal changing from level 1 to level 4`, 1)
@@ -275,9 +275,9 @@ class TrueDynamicSignals extends RETests {
     val v3 = v0.map(_ + "level 1").map(_  + "level 2").map(_ + "level 3")
 
     val `dynamic signal changing from level 1 to level 4` = dynamic() { implicit ticket =>
-      if (ticket.depend(v0) == "level 0") ticket.depend(v0) else {
+      if (ticket.read(v0) == "level 0") ticket.read(v0) else {
         // the static bound is necessary here, otherwise we get infinite loops
-        ticket.depend(dynamic(v3) {t => t.depend(v3) + "level 4 inner" })
+        ticket.read(dynamic(v3) {t => t.read(v3) + "level 4 inner" })
       }
     }
     assert(`dynamic signal changing from level 1 to level 4`.now == "level 0")

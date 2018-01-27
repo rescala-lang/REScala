@@ -5,6 +5,7 @@ import rescala.macros.MacroAccessors
 import rescala.reactives.RExceptions.{EmptySignalControlThrowable, UnhandledFailureException}
 import rescala.reactives.Signals.{Diff, static}
 
+import scala.annotation.unchecked.uncheckedVariance
 import scala.util.control.NonFatal
 
 /** Time changing value derived from the dependencies.
@@ -19,7 +20,7 @@ import scala.util.control.NonFatal
   * @groupname accessors Accessors and observers
   * @groupprio accessor 5
   */
-trait Signal[+A, S <: Struct] extends ReSourciV[Pulse[A], S] with MacroAccessors[A] with Disconnectable[S] {
+trait Signal[+A, S <: Struct] extends ReSourciV[Pulse[A], S] with MacroAccessors[Pulse[A], A, S] with Disconnectable[S] {
 
   /** Returns the current value of the signal
     * @group accessor */
@@ -31,6 +32,10 @@ trait Signal[+A, S <: Struct] extends ReSourciV[Pulse[A], S] with MacroAccessors
     }
   }
 
+  /** Interprets the pulse of the signal by returning the value
+    * @group internal */
+  override def interpret(v: Pulse[A]@uncheckedVariance): A = v.get
+
   /** add an observer
     * @group accessor */
   final def observe(
@@ -40,7 +45,7 @@ trait Signal[+A, S <: Struct] extends ReSourciV[Pulse[A], S] with MacroAccessors
 
   /** Uses a partial function `onFailure` to recover an error carried by the event into a value. */
   final def recover[R >: A](onFailure: PartialFunction[Throwable,R])(implicit ticket: CreationTicket[S]): Signal[R, S] = Signals.static(this) { st =>
-    try st.readStatic(this).get catch {
+    try st.dependStatic(this).get catch {
       case NonFatal(e) => onFailure.applyOrElse[Throwable, R](e, throw _)
     }
   }
@@ -52,7 +57,7 @@ trait Signal[+A, S <: Struct] extends ReSourciV[Pulse[A], S] with MacroAccessors
   final def abortOnError()(implicit ticket: CreationTicket[S]): Signal[A, S] = recover{case t => throw new UnhandledFailureException(this, t)}
 
   final def withDefault[R >: A](value: R)(implicit ticket: CreationTicket[S]): Signal[R, S] = Signals.static(this) { (st) =>
-    try st.readStatic(this).get catch {
+    try st.dependStatic(this).get catch {
       case EmptySignalControlThrowable => value
     }
   }
@@ -60,7 +65,7 @@ trait Signal[+A, S <: Struct] extends ReSourciV[Pulse[A], S] with MacroAccessors
   /** Return a Signal with f applied to the value
     * @group operator */
   final def map[B](f: A => B)(implicit ticket: CreationTicket[S]): Signal[B, S] =
-    static(this) { t => f(t.readStatic(this).get) }
+    static(this) { t => f(t.dependStatic(this).get) }
 
   /** Flattens the inner reactive.
     * @group operator */
@@ -79,7 +84,7 @@ trait Signal[+A, S <: Struct] extends ReSourciV[Pulse[A], S] with MacroAccessors
     * to the event is the new value of the signal
     * @group conversion */
   final def changed(implicit ticket: CreationTicket[S]): Event[A, S] = Events.staticNamed(s"(changed $this)", this) { st =>
-    st.readStatic(this) match {
+    st.dependStatic(this) match {
       case Pulse.empty => Pulse.NoChange
       case other => other
     }
