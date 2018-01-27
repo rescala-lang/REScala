@@ -15,7 +15,7 @@ object Result {
     */
   def fromPulse[P, S <: Struct](t: ReevTicket[Pulse[P], S], value: Pulse[P]): Result[Pulse[P], S] = {
     if (value.isChange) t.withValue(value)
-    else t.withPropagate(false)
+    else t
   }
 
 }
@@ -37,7 +37,7 @@ trait DisconnectableImpl[S <: Struct] extends Reactive[S] with Disconnectable[S]
   abstract final override protected[rescala] def reevaluate(turn: ReevTicket[Value, S], before: Value): Result[Value, S] = {
     if (disconnected) {
       turn.trackDependencies()
-      turn.withPropagate(false)
+      turn
     }
     else {
       super.reevaluate(turn, before)

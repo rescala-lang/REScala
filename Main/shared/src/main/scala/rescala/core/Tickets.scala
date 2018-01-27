@@ -47,18 +47,18 @@ abstract class ReevTicket[T, S <: Struct](creation: Creation[S]) extends Dynamic
 
 
   // inline result into ticket, to reduce the amount of garbage during reevaluation
-  var propagate = true
+  var propagate = false
   var value: T = _
   var effect: () => Unit = null
   final def withPropagate(p: Boolean): ReevTicket[T, S] = {propagate = p; this}
-  final def withValue(v: T): ReevTicket[T, S] = {value = v; this}
+  final def withValue(v: T): ReevTicket[T, S] = {value = v; propagate = true; this}
   final def withEffect(v: () => Unit): ReevTicket[T, S] = {effect = v; this}
 
   override def forValue(f: T => Unit): Unit = if (value != null) f(value)
   override def forEffect(f: (() => Unit) => Unit): Unit = if (effect != null) f(effect)
 
   def reset[NT](): ReevTicket[NT, S] = {
-    propagate = true
+    propagate = false
     value = null.asInstanceOf[T]
     effect = null
     collectedDependencies = null

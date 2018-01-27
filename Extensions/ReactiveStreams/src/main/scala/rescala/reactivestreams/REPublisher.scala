@@ -2,8 +2,7 @@ package rescala.reactivestreams
 
 
 import org.reactivestreams.{Publisher, Subscriber, Subscription}
-import rescala.core.Result.NoValue
-import rescala.core.{Base, Pulse, REName, ReSourciV, DynamicTicket, Result, Scheduler, Struct, ValuePersistency}
+import rescala.core.{Base, Pulse, REName, ReSourciV, ReevTicket, Result, Scheduler, Struct, ValuePersistency}
 
 import scala.util.{Failure, Success}
 
@@ -34,27 +33,27 @@ object REPublisher {
     var requested: Long = 0
     var cancelled = false
 
-    override protected[rescala] def reevaluate(ticket: DynamicTicket[S], before: Pulse[T]): Result[Value, S] = {
+    override protected[rescala] def reevaluate(ticket: ReevTicket[Value, S], before: Pulse[T]): Result[Value, S] = {
       ticket.readStatic(dependency).toOptionTry match {
-        case None => NoValue[S](propagate = false)
+        case None => ticket
         case Some(tryValue) =>
           synchronized {
             while (requested <= 0 && !cancelled) wait(100)
             if (cancelled) {
               ticket.trackDependencies()
-              NoValue[S](propagate = false)
+              ticket
             }
             else {
               requested -= 1
               tryValue match {
                 case Success(v) =>
                   subscriber.onNext(v)
-                  NoValue[S](propagate = false)
+                  ticket
                 case Failure(t) =>
                   subscriber.onError(t)
                   cancelled = true
                   ticket.trackDependencies()
-                  NoValue[S](propagate = false)
+                  ticket
               }
             }
           }

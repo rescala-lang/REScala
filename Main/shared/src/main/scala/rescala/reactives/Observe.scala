@@ -25,12 +25,12 @@ object Observe {
 
     override protected[rescala] def reevaluate(dt: ReevTicket[Value, S], before: Value): Result[Value, S] = {
       dt.readStatic(dependency) match {
-        case Pulse.NoChange => dt.withPropagate(false)
-        case Pulse.empty => dt.withPropagate(false)
-        case Pulse.Value(v) => dt.withPropagate(false).withEffect(() => fun(v))
+        case Pulse.NoChange => dt
+        case Pulse.empty => dt
+        case Pulse.Value(v) => dt.withEffect(() => fun(v))
         case Pulse.Exceptional(t) =>
           if (fail eq null) throw new UnhandledFailureException(this, t)
-          else dt.withPropagate(false).withEffect(() => fail(t))
+          else dt.withEffect(() => fail(t))
       }
     }
     override def remove()(implicit fac: Scheduler[S]): Unit = {
