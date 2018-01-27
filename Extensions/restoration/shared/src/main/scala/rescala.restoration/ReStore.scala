@@ -1,4 +1,4 @@
-package rescala.restore
+package rescala.restoration
 
 import rescala.core.Initializer.Param
 import rescala.core.{Initializer, ReSerializable, ReSource, Struct}

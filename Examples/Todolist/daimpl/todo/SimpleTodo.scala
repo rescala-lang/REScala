@@ -1,4 +1,4 @@
-package daimpl.simpletodo
+package daimpl.todo
 
 import org.scalajs.dom
 import org.scalajs.dom.document
@@ -18,7 +18,7 @@ object SimpleTodo {
     unique += 1
   }
 
-  @JSExportTopLevel("daimpl.simpletodo.SimpleTodo.main")
+  @JSExportTopLevel("daimpl.todo.SimpleTodo.main")
   def main(): Unit = {
 
     val tasks = Var(List(

@@ -1,21 +1,22 @@
-package daimpl.todomvc
+package daimpl.todo
 
 import org.scalajs.dom
 import org.scalajs.dom.html.Input
 import org.scalajs.dom.{UIEvent, document}
-import rescala.LocalStorageStore
-import rescala.core.ReCirce.recirce
 import rescala.core.ReSerializable
-import rescalatags._
+import rescala.restoration.LocalStorageStore
 
 import scala.scalajs.js.annotation.JSExportTopLevel
 import scalatags.JsDom.all._
 import scalatags.JsDom.tags2.section
 
+import rescalatags._
+
 object TodoMVC {
 
   implicit val storingEngine: LocalStorageStore = new LocalStorageStore()
   import storingEngine._
+  import rescala.restoration.ReCirce._
 
 //  var unique = 0
 
@@ -35,7 +36,7 @@ object TodoMVC {
 //    unique += 1
   }
 
-  @JSExportTopLevel("daimpl.simpletodo.TodoMVC.main")
+  @JSExportTopLevel("daimpl.todo.TodoMVC.main")
   def main(): Unit = {
 
     val innerTasks = List(
@@ -134,9 +135,3 @@ object TodoMVC {
     ).render, document.body.firstElementChild)
   }
 }
-
-// NOTE that setting a Var inside a Signal leads to the following warning:
-//   Statement may either be unnecessary or have side effects.
-//   Signal expressions should have no side effects.
-// This warning is not executed, but a function is defined.
-// Which happens alot here, for button onclicks handlers.

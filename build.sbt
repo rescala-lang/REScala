@@ -30,6 +30,8 @@ lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
   rescalaJVM,
   rescalafx,
   rescalatags,
+  restoreJVM,
+  restoreJS,
   reswing,
   stm,
   testsJS,
@@ -43,9 +45,13 @@ lazy val rescala = crossProject.in(file("Main"))
   .settings(
     name := "rescala",
     cfg.base,
-    lib.retypecheck, lib.sourcecode, lib.circe,
-    cfg.strictScalac, cfg.snapshotAssertions,
-    cfg.bintray)
+    lib.retypecheck,
+    lib.sourcecode,
+    cfg.strictScalac,
+    cfg.snapshotAssertions,
+    cfg.bintray,
+    lib.reflectionForMacroDefinitions,
+  )
   .jvmSettings()
   .jsSettings(cfg.js)
 //  .nativeSettings(
@@ -81,6 +87,13 @@ lazy val reactiveStreams = project.in(file("Extensions/ReactiveStreams"))
 lazy val reswing = project.in(file("Extensions/RESwing"))
   .settings(name := "reswing", cfg.base, cfg.bintray, cfg.strictScalac, lib.scalaswing)
   .dependsOn(rescalaJVM)
+
+lazy val restore = crossProject.in(file("Extensions/restoration"))
+  .settings(name := "restoration", cfg.base, cfg.strictScalac, lib.circe)
+  .dependsOn(rescala, tests % "test->test")
+  .jsSettings(cfg.js, lib.jsdom)
+lazy val restoreJVM = restore.jvm
+lazy val restoreJS = restore.js
 
 lazy val rescalatags = project.in(file("Extensions/Rescalatags"))
   .settings(cfg.base, cfg.strictScalac, cfg.bintray, cfg.test,
@@ -149,7 +162,7 @@ lazy val caseStudyMill = project.in(file("Examples/Mill"))
 
 lazy val todolist = project.in(file("Examples/Todolist"))
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(rescalatags)
+  .dependsOn(rescalatags, restoreJS)
   .settings(cfg.base, cfg.noPublish, name := "todolist", scalaSource in Compile := baseDirectory.value)
 
 lazy val dividi = project.in(file("Examples/dividi"))
@@ -332,6 +345,8 @@ lazy val lib = new {
   val scalaXml = libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.0.6"
 
   val scalatags = libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.6.7"
+
+  val jsdom = libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "0.9.4"
 
   val akka = {
     val akkaVersion = "2.5.9"

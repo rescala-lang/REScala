@@ -1,8 +1,8 @@
-package tests.rescala
+package tests.restoration
 
 import org.scalatest.FunSuite
-import rescala.restore.ReStoringScheduler
-import rescala.core.ReCirce.recirce
+import rescala.restoration.ReStoringScheduler
+import rescala.restoration.ReCirce._
 
 class RestoringTest extends FunSuite {
 

@@ -19,3 +19,5 @@ Research/Microbenchmarks/Results.zip
 proguard-sbt.txt
 .history
 Research/Microbenchmarks/results/
+Examples/Todolist/node_modules/
+Examples/Todolist/package-lock.json

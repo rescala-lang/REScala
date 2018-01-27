@@ -1,8 +1,7 @@
-package rescala
+package rescala.restoration
 
 import org.scalajs.dom
-import org.scalajs.dom.raw.Storage
-import rescala.restore.{ReStore, ReStoringStruct, ReStoringTurn}
+import org.scalajs.dom.Storage
 import rescala.twoversion.TwoVersionScheduler
 
 import scala.collection.mutable
