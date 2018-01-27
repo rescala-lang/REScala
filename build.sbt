@@ -1,10 +1,10 @@
 
 // set the prompt (for this build) to include the project id.
-shellPrompt in ThisBuild := { state => Project.extract(state).currentRef.project + "> " }
+ThisBuild / shellPrompt := { state => Project.extract(state).currentRef.project + "> " }
 // do not spam console with too many errors
 maxErrors := 5
 crossScalaVersions := Seq(cfg.version_211, cfg.version_212)
-(incOptions in ThisBuild) := (incOptions in ThisBuild).value.withLogRecompileOnMacro(false)
+ThisBuild / incOptions := (ThisBuild / incOptions).value.withLogRecompileOnMacro(false)
 
 lazy val rescalaAggregate = project.in(file(".")).settings(cfg.base).aggregate(
   caseStudyEditor,
@@ -168,10 +168,10 @@ lazy val fullmv = project.in(file("Research/Multiversion"))
     cfg.test, cfg.noPublish)
   .dependsOn(rescalaJVM, testsJVM % "test->test")
 
-lazy val distributedFullmv = project.in(file("Research/MultiversionDistribution"))
-  .settings( cfg.base, name := "rescala-distributed-multiversion",
-    cfg.test, cfg.noPublish, lib.retierTransmitter)
-  .dependsOn(fullmv, testsJVM % "test->test")
+//lazy val distributedFullmv = project.in(file("Research/MultiversionDistribution"))
+//  .settings( cfg.base, name := "rescala-distributed-multiversion",
+//    cfg.test, cfg.noPublish, lib.retierTransmitter)
+//  .dependsOn(fullmv, testsJVM % "test->test")
 
 lazy val meta = project.in(file("Research/Meta"))
   .dependsOn(rescalaJVM)
@@ -310,7 +310,7 @@ lazy val lib = new {
       "io.circe" %%% "circe-core",
       "io.circe" %%% "circe-generic",
       "io.circe" %%% "circe-parser"
-    ).map(_ % "0.8.0")
+    ).map(_ % "0.9.1")
   }
 
   val reactivestreams = libraryDependencies ++= List(
@@ -334,7 +334,7 @@ lazy val lib = new {
   val scalatags = libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.6.7"
 
   val akka = {
-    val akkaVersion = "2.5.8"
+    val akkaVersion = "2.5.9"
     // akka:
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
