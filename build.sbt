@@ -297,8 +297,9 @@ lazy val cfg = new {
     //"-Ymacro-debug-lite" ,
   )
 
-  lazy val snapshotAssertions = scalacOptions ++= (if (!version.value.endsWith("-SNAPSHOT")) List("-Xdisable-assertions", "-Xelide-below", "9999999")
-  else Nil)
+  lazy val snapshotAssertions = scalacOptions ++= (
+    if (!version.value.endsWith("-SNAPSHOT")) List("-Xdisable-assertions", "-Xelide-below", "9999999")
+    else Nil)
 
   val mappingFilters = Seq(
     mappings in (Compile, packageBin) ~= { _.filter(!_._1.getName.endsWith(".conf")) },

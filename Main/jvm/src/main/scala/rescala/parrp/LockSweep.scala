@@ -188,7 +188,7 @@ class LockSweep(backoff: Backoff, priorTurn: Option[LockSweep]) extends TwoVersi
       if (source.state.willWrite != owner.turn) {
         source.state.discover(sink)
       }
-      else if (!source.state.outgoing().contains(sink)) {
+      else if (!source.state.outgoing().exists(_ == sink)) {
         source.state.discover(sink)
         discovered.getOrElseUpdate(owner, mutable.Set.empty).add(sink)
         key.lockKeychain {_.addFallthrough(owner)}

@@ -26,7 +26,7 @@ class STMStructType[P, S <: Struct](initialValue: P, transient: Boolean) extends
   override def level(): Int = _level.get(inTxn())
   override def drop(reactive: Reactive[S]): Unit = _outgoing.transformAndGet(_ - reactive)(inTxn())
   override def updateLevel(i: Int): Int = _level.transformAndGet(math.max(_, i))(inTxn())
-  override def outgoing(): Iterator[Reactive[S]] = _outgoing.get(inTxn()).iterator
+  override def outgoing(): Iterable[Reactive[S]] = _outgoing.get(inTxn())
   def updateIncoming(reactives: Set[ReSource[S]]): Unit = _incoming.set(reactives)(inTxn())
   override def discover(reactive: Reactive[S]): Unit = _outgoing.transformAndGet(_ + reactive)(inTxn())
 
